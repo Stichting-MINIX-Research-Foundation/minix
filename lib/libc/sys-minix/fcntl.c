@@ -10,9 +10,9 @@ __weak_alias(fcntl, _fcntl)
 #endif
 
 #if _ANSI
-PUBLIC int fcntl(int fd, int cmd, ...)
+int fcntl(int fd, int cmd, ...)
 #else
-PUBLIC int fcntl(fd, cmd)
+int fcntl(fd, cmd)
 int fd;
 int cmd;
 #endif

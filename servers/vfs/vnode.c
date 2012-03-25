@@ -42,7 +42,7 @@
 /*===========================================================================*
  *				check_vnode_locks_by_me			     *
  *===========================================================================*/
-PUBLIC void check_vnode_locks_by_me(struct fproc *rfp)
+void check_vnode_locks_by_me(struct fproc *rfp)
 {
 /* Check whether this thread still has locks held on vnodes */
   struct vnode *vp;
@@ -63,7 +63,7 @@ PUBLIC void check_vnode_locks_by_me(struct fproc *rfp)
 /*===========================================================================*
  *				check_vnode_locks			     *
  *===========================================================================*/
-PUBLIC void check_vnode_locks()
+void check_vnode_locks()
 {
   struct vnode *vp;
   int count = 0;
@@ -82,7 +82,7 @@ PUBLIC void check_vnode_locks()
 /*===========================================================================*
  *				get_free_vnode				     *
  *===========================================================================*/
-PUBLIC struct vnode *get_free_vnode()
+struct vnode *get_free_vnode()
 {
 /* Find a free vnode slot in the vnode table (it's not actually allocated) */
   struct vnode *vp;
@@ -108,7 +108,7 @@ PUBLIC struct vnode *get_free_vnode()
 /*===========================================================================*
  *				find_vnode				     *
  *===========================================================================*/
-PUBLIC struct vnode *find_vnode(int fs_e, int ino)
+struct vnode *find_vnode(int fs_e, int ino)
 {
 /* Find a specified (FS endpoint and inode number) vnode in the
  * vnode table */
@@ -124,7 +124,7 @@ PUBLIC struct vnode *find_vnode(int fs_e, int ino)
 /*===========================================================================*
  *				is_vnode_locked				     *
  *===========================================================================*/
-PUBLIC int is_vnode_locked(struct vnode *vp)
+int is_vnode_locked(struct vnode *vp)
 {
 /* Find out whether a thread holds a lock on this vnode or is trying to obtain
  * a lock. */
@@ -136,7 +136,7 @@ PUBLIC int is_vnode_locked(struct vnode *vp)
 /*===========================================================================*
  *				init_vnodes				     *
  *===========================================================================*/
-PUBLIC void init_vnodes(void)
+void init_vnodes(void)
 {
   struct vnode *vp;
 
@@ -154,7 +154,7 @@ PUBLIC void init_vnodes(void)
 /*===========================================================================*
  *				lock_vnode				     *
  *===========================================================================*/
-PUBLIC int lock_vnode(struct vnode *vp, tll_access_t locktype)
+int lock_vnode(struct vnode *vp, tll_access_t locktype)
 {
   int r;
 
@@ -175,7 +175,7 @@ PUBLIC int lock_vnode(struct vnode *vp, tll_access_t locktype)
 /*===========================================================================*
  *				unlock_vnode				     *
  *===========================================================================*/
-PUBLIC void unlock_vnode(struct vnode *vp)
+void unlock_vnode(struct vnode *vp)
 {
 #if LOCK_DEBUG
   int i;
@@ -216,7 +216,7 @@ PUBLIC void unlock_vnode(struct vnode *vp)
 /*===========================================================================*
  *				dup_vnode				     *
  *===========================================================================*/
-PUBLIC void dup_vnode(struct vnode *vp)
+void dup_vnode(struct vnode *vp)
 {
 /* dup_vnode() is called to increment the vnode and therefore the
  * referred inode's counter.
@@ -229,7 +229,7 @@ PUBLIC void dup_vnode(struct vnode *vp)
 /*===========================================================================*
  *				put_vnode				     *
  *===========================================================================*/
-PUBLIC void put_vnode(struct vnode *vp)
+void put_vnode(struct vnode *vp)
 {
 /* Decrease vnode's usage counter and decrease inode's usage counter in the
  * corresponding FS process. Decreasing the fs_count each time we decrease the
@@ -294,7 +294,7 @@ PUBLIC void put_vnode(struct vnode *vp)
 /*===========================================================================*
  *				vnode_clean_refs			     *
  *===========================================================================*/
-PUBLIC void vnode_clean_refs(struct vnode *vp)
+void vnode_clean_refs(struct vnode *vp)
 {
 /* Tell the underlying FS to drop all reference but one. */
 
@@ -313,7 +313,7 @@ PUBLIC void vnode_clean_refs(struct vnode *vp)
 /*===========================================================================*
  *				check_vrefs				     *
  *===========================================================================*/
-PUBLIC int check_vrefs()
+int check_vrefs()
 {
 	int i, bad;
 	int ispipe_flag, ispipe_mode;

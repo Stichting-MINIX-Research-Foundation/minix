@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				stat_inode				     *
  *===========================================================================*/
-PRIVATE int stat_inode(
+static int stat_inode(
   register struct inode *rip,	/* pointer to inode to stat */
   endpoint_t who_e,		/* Caller endpoint */
   cp_grant_id_t gid		/* grant for the stat buf */
@@ -57,7 +57,7 @@ PRIVATE int stat_inode(
 /*===========================================================================*
  *                             fs_stat					     *
  *===========================================================================*/
-PUBLIC int fs_stat(message *fs_m_in, message *fs_m_out)
+int fs_stat(message *fs_m_in, message *fs_m_out)
 {
   register int r;              /* return value */
   register struct inode *rip;  /* target inode */

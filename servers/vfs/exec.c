@@ -35,25 +35,25 @@
 #include <libexec.h>
 #include "exec.h"
 
-FORWARD void lock_exec(void);
-FORWARD void unlock_exec(void);
-FORWARD int exec_newmem(int proc_e, vir_bytes text_addr, vir_bytes
+static void lock_exec(void);
+static void unlock_exec(void);
+static int exec_newmem(int proc_e, vir_bytes text_addr, vir_bytes
 	text_bytes, vir_bytes data_addr, vir_bytes data_bytes, vir_bytes
 	tot_bytes, vir_bytes frame_len, int sep_id, int is_elf, dev_t st_dev,
 	ino_t st_ino, time_t ctime, char *progname, int new_uid, int new_gid,
 	vir_bytes *stack_topp, int *load_textp, int *setugidp);
-FORWARD int is_script(const char *exec_hdr, size_t exec_len);
-FORWARD int patch_stack(struct vnode *vp, char stack[ARG_MAX], vir_bytes
+static int is_script(const char *exec_hdr, size_t exec_len);
+static int patch_stack(struct vnode *vp, char stack[ARG_MAX], vir_bytes
 	*stk_bytes, char path[PATH_MAX]);
-FORWARD int insert_arg(char stack[ARG_MAX], vir_bytes *stk_bytes, char
+static int insert_arg(char stack[ARG_MAX], vir_bytes *stk_bytes, char
 	*arg, int replace);
-FORWARD void patch_ptr(char stack[ARG_MAX], vir_bytes base);
-FORWARD void clo_exec(struct fproc *rfp);
-FORWARD int read_seg(struct vnode *vp, off_t off, int proc_e, int seg,
+static void patch_ptr(char stack[ARG_MAX], vir_bytes base);
+static void clo_exec(struct fproc *rfp);
+static int read_seg(struct vnode *vp, off_t off, int proc_e, int seg,
 	vir_bytes seg_addr, phys_bytes seg_bytes);
-FORWARD int load_aout(struct exec_info *execi);
-FORWARD int load_elf(struct exec_info *execi);
-FORWARD int map_header(char **exec_hdr, const struct vnode *vp);
+static int load_aout(struct exec_info *execi);
+static int load_elf(struct exec_info *execi);
+static int map_header(char **exec_hdr, const struct vnode *vp);
 
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
 
@@ -62,18 +62,18 @@ struct exec_loaders {
 	int (*load_object)(struct exec_info *);
 };
 
-PRIVATE const struct exec_loaders exec_loaders[] = {
+static const struct exec_loaders exec_loaders[] = {
 	{ load_aout },
 	{ load_elf },
 	{ NULL }
 };
 
-PRIVATE char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
+static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
 
 /*===========================================================================*
  *				lock_exec				     *
  *===========================================================================*/
-PRIVATE void lock_exec(void)
+static void lock_exec(void)
 {
   message org_m_in;
   struct fproc *org_fp;
@@ -98,7 +98,7 @@ PRIVATE void lock_exec(void)
 /*===========================================================================*
  *				unlock_exec				     *
  *===========================================================================*/
-PRIVATE void unlock_exec(void)
+static void unlock_exec(void)
 {
   if (mutex_unlock(&exec_lock) != 0)
 	panic("Could not release lock on exec");
@@ -107,7 +107,7 @@ PRIVATE void unlock_exec(void)
 /*===========================================================================*
  *				pm_exec					     *
  *===========================================================================*/
-PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
+int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
 		   vir_bytes frame_len, vir_bytes *pc)
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
@@ -261,7 +261,7 @@ pm_execfinal:
 /*===========================================================================*
  *				load_aout				     *
  *===========================================================================*/
-PRIVATE int load_aout(struct exec_info *execi)
+static int load_aout(struct exec_info *execi)
 {
   int r;
   struct vnode *vp;
@@ -312,7 +312,7 @@ PRIVATE int load_aout(struct exec_info *execi)
 /*===========================================================================*
  *				load_elf				     *
  *===========================================================================*/
-PRIVATE int load_elf(struct exec_info *execi)
+static int load_elf(struct exec_info *execi)
 {
   int r;
   struct vnode *vp;
@@ -367,7 +367,7 @@ PRIVATE int load_elf(struct exec_info *execi)
 /*===========================================================================*
  *				exec_newmem				     *
  *===========================================================================*/
-PRIVATE int exec_newmem(
+static int exec_newmem(
   int proc_e,
   vir_bytes text_addr,
   vir_bytes text_bytes,
@@ -427,7 +427,7 @@ PRIVATE int exec_newmem(
 /*===========================================================================*
  *				is_script				     *
  *===========================================================================*/
-PRIVATE int is_script(const char *exec_hdr, size_t exec_len)
+static int is_script(const char *exec_hdr, size_t exec_len)
 {
 /* Is Interpreted script? */
   assert(exec_hdr != NULL);
@@ -438,7 +438,7 @@ PRIVATE int is_script(const char *exec_hdr, size_t exec_len)
 /*===========================================================================*
  *				patch_stack				     *
  *===========================================================================*/
-PRIVATE int patch_stack(vp, stack, stk_bytes, path)
+static int patch_stack(vp, stack, stk_bytes, path)
 struct vnode *vp;		/* pointer for open script file */
 char stack[ARG_MAX];		/* pointer to stack image within VFS */
 vir_bytes *stk_bytes;		/* size of initial stack */
@@ -512,7 +512,7 @@ char path[PATH_MAX];		/* path to script file */
 /*===========================================================================*
  *				insert_arg				     *
  *===========================================================================*/
-PRIVATE int insert_arg(
+static int insert_arg(
 char stack[ARG_MAX],		/* pointer to stack image within PM */
 vir_bytes *stk_bytes,		/* size of initial stack */
 char *arg,			/* argument to prepend/replace as new argv[0] */
@@ -570,7 +570,7 @@ int replace
 /*===========================================================================*
  *				patch_ptr				     *
  *===========================================================================*/
-PRIVATE void patch_ptr(
+static void patch_ptr(
 char stack[ARG_MAX],		/* pointer to stack image within PM */
 vir_bytes base			/* virtual address of stack base inside user */
 )
@@ -603,7 +603,7 @@ vir_bytes base			/* virtual address of stack base inside user */
 /*===========================================================================*
  *				read_seg				     *
  *===========================================================================*/
-PRIVATE int read_seg(
+static int read_seg(
 struct vnode *vp, 		/* inode descriptor to read from */
 off_t off,			/* offset in file */
 int proc_e,			/* process number (endpoint) */
@@ -680,7 +680,7 @@ phys_bytes seg_bytes		/* how much is to be transferred? */
 /*===========================================================================*
  *				clo_exec				     *
  *===========================================================================*/
-PRIVATE void clo_exec(struct fproc *rfp)
+static void clo_exec(struct fproc *rfp)
 {
 /* Files can be marked with the FD_CLOEXEC bit (in fp->fp_cloexec).
  */
@@ -695,7 +695,7 @@ PRIVATE void clo_exec(struct fproc *rfp)
 /*===========================================================================*
  *				map_header				     *
  *===========================================================================*/
-PRIVATE int map_header(char **exec_hdr, const struct vnode *vp)
+static int map_header(char **exec_hdr, const struct vnode *vp)
 {
   int r;
   u64_t new_pos;

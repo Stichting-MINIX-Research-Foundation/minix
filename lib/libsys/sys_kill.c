@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_kill(proc_ep, signr)
+int sys_kill(proc_ep, signr)
 endpoint_t proc_ep;		/* which proc_ep has exited */
 int signr;			/* signal number: 1 - 16 */
 {

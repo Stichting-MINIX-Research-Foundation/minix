@@ -4,7 +4,7 @@
 /*****************************************************************************
  *    do_bind_device                                                         *
  ****************************************************************************/
-PUBLIC int do_bind_device(message *m)
+int do_bind_device(message *m)
 {
 	struct devman_device *dev;
 	int res;
@@ -53,7 +53,7 @@ PUBLIC int do_bind_device(message *m)
 /*****************************************************************************
  *    do_unbind_device                                                       *
  ****************************************************************************/
-PUBLIC int do_unbind_device(message *m)
+int do_unbind_device(message *m)
 {
 	struct devman_device *dev;
 	int res;

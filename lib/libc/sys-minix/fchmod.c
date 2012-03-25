@@ -8,7 +8,7 @@
 __weak_alias(fchmod, _fchmod)
 #endif
 
-PUBLIC int fchmod(int fd, mode_t mode)
+int fchmod(int fd, mode_t mode)
 {
   message m;
 

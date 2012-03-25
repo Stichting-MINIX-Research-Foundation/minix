@@ -39,22 +39,22 @@
 EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
-FORWARD void sendreply(void);
-FORWARD int get_nice_value(int queue);
-FORWARD void handle_vfs_reply(void);
+static void sendreply(void);
+static int get_nice_value(int queue);
+static void handle_vfs_reply(void);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD int sef_cb_signal_manager(endpoint_t target, int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static int sef_cb_signal_manager(endpoint_t target, int signo);
 
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main()
+int main()
 {
 /* Main routine of the process manager. */
   int result;
@@ -156,7 +156,7 @@ PUBLIC int main()
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -174,7 +174,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the process manager. 
  * Memory use info is collected from the boot monitor, the kernel, and
@@ -307,7 +307,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		            sef_cb_signal_manager                            *
  *===========================================================================*/
-PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
+static int sef_cb_signal_manager(endpoint_t target, int signo)
 {
 /* Process signal on behalf of the kernel. */
   int r;
@@ -321,7 +321,7 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
 /*===========================================================================*
  *				setreply				     *
  *===========================================================================*/
-PUBLIC void setreply(proc_nr, result)
+void setreply(proc_nr, result)
 int proc_nr;			/* process to reply to */
 int result;			/* result of call (usually OK or error #) */
 {
@@ -341,7 +341,7 @@ int result;			/* result of call (usually OK or error #) */
 /*===========================================================================*
  *				sendreply				     *
  *===========================================================================*/
-PRIVATE void sendreply()
+static void sendreply()
 {
   int proc_nr;
   int s;
@@ -371,7 +371,7 @@ PRIVATE void sendreply()
 /*===========================================================================*
  *				get_nice_value				     *
  *===========================================================================*/
-PRIVATE int get_nice_value(queue)
+static int get_nice_value(queue)
 int queue;				/* store mem chunks here */
 {
 /* Processes in the boot image have a priority assigned. The PM doesn't know
@@ -388,7 +388,7 @@ int queue;				/* store mem chunks here */
 /*===========================================================================*
  *				handle_vfs_reply       			     *
  *===========================================================================*/
-PRIVATE void handle_vfs_reply()
+static void handle_vfs_reply()
 {
   struct mproc *rmp;
   endpoint_t proc_e;

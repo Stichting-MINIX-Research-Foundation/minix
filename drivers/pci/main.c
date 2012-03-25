@@ -4,33 +4,33 @@ main.c
 
 #include "pci.h"
 
-PUBLIC struct pci_acl pci_acl[NR_DRIVERS];
+struct pci_acl pci_acl[NR_DRIVERS];
 
-FORWARD void do_init(message *mp);
-FORWARD void do_first_dev(message *mp);
-FORWARD void do_next_dev(message *mp);
-FORWARD void do_find_dev(message *mp);
-FORWARD void do_ids(message *mp);
-FORWARD void do_dev_name_s(message *mp);
-FORWARD void do_slot_name_s(message *mp);
-FORWARD void do_set_acl(message *mp);
-FORWARD void do_del_acl(message *mp);
-FORWARD void do_reserve(message *mp);
-FORWARD void do_attr_r8(message *mp);
-FORWARD void do_attr_r16(message *mp);
-FORWARD void do_attr_r32(message *mp);
-FORWARD void do_attr_w8(message *mp);
-FORWARD void do_attr_w16(message *mp);
-FORWARD void do_attr_w32(message *mp);
-FORWARD void do_get_bar(message *mp);
-FORWARD void do_rescan_bus(message *mp);
-FORWARD void reply(message *mp, int result);
-FORWARD struct rs_pci *find_acl(int endpoint);
+static void do_init(message *mp);
+static void do_first_dev(message *mp);
+static void do_next_dev(message *mp);
+static void do_find_dev(message *mp);
+static void do_ids(message *mp);
+static void do_dev_name_s(message *mp);
+static void do_slot_name_s(message *mp);
+static void do_set_acl(message *mp);
+static void do_del_acl(message *mp);
+static void do_reserve(message *mp);
+static void do_attr_r8(message *mp);
+static void do_attr_r16(message *mp);
+static void do_attr_r32(message *mp);
+static void do_attr_w8(message *mp);
+static void do_attr_w16(message *mp);
+static void do_attr_w32(message *mp);
+static void do_get_bar(message *mp);
+static void do_rescan_bus(message *mp);
+static void reply(message *mp, int result);
+static struct rs_pci *find_acl(int endpoint);
 
 extern int debug;
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
+static void sef_local_startup(void);
 
 int main(void)
 {
@@ -90,7 +90,7 @@ int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -105,7 +105,7 @@ PRIVATE void sef_local_startup()
   sef_startup();
 }
 
-PRIVATE void do_init(mp)
+static void do_init(mp)
 message *mp;
 {
 	int r;
@@ -121,7 +121,7 @@ message *mp;
 			mp->m_source, r);
 }
 
-PRIVATE void do_first_dev(message *mp)
+static void do_first_dev(message *mp)
 {
 	int r, devind;
 	u16_t vid, did;
@@ -149,7 +149,7 @@ PRIVATE void do_first_dev(message *mp)
 	}
 }
 
-PRIVATE void do_next_dev(message *mp)
+static void do_next_dev(message *mp)
 {
 	int r, devind;
 	u16_t vid, did;
@@ -174,7 +174,7 @@ PRIVATE void do_next_dev(message *mp)
 	}
 }
 
-PRIVATE void do_find_dev(mp)
+static void do_find_dev(mp)
 message *mp;
 {
 	int r, devind;
@@ -196,7 +196,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_ids(mp)
+static void do_ids(mp)
 message *mp;
 {
 	int r, devind;
@@ -222,7 +222,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_dev_name_s(mp)
+static void do_dev_name_s(mp)
 message *mp;
 {
 	int r, name_len, len;
@@ -259,7 +259,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_slot_name_s(mp)
+static void do_slot_name_s(mp)
 message *mp;
 {
 	int r, devind, name_len, len;
@@ -295,7 +295,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_set_acl(mp)
+static void do_set_acl(mp)
 message *mp;
 {
 	int i, r, gid;
@@ -338,7 +338,7 @@ message *mp;
 	reply(mp, OK);
 }
 
-PRIVATE void do_del_acl(message *mp)
+static void do_del_acl(message *mp)
 {
 	int i, proc_nr;
 
@@ -378,7 +378,7 @@ PRIVATE void do_del_acl(message *mp)
 	reply(mp, OK);
 }
 
-PRIVATE void do_reserve(message *mp)
+static void do_reserve(message *mp)
 {
 	struct rs_pci *aclp;
 	int r, devind;
@@ -396,7 +396,7 @@ PRIVATE void do_reserve(message *mp)
 	}
 }
 
-PRIVATE void do_attr_r8(mp)
+static void do_attr_r8(mp)
 message *mp;
 {
 	int r, devind, port;
@@ -422,7 +422,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_attr_r16(mp)
+static void do_attr_r16(mp)
 message *mp;
 {
 	int r, devind, port;
@@ -442,7 +442,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_attr_r32(mp)
+static void do_attr_r32(mp)
 message *mp;
 {
 	int r, devind, port;
@@ -468,7 +468,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_attr_w8(mp)
+static void do_attr_w8(mp)
 message *mp;
 {
 	int r, devind, port;
@@ -488,7 +488,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_attr_w16(mp)
+static void do_attr_w16(mp)
 message *mp;
 {
 	int r, devind, port;
@@ -508,7 +508,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_attr_w32(mp)
+static void do_attr_w32(mp)
 message *mp;
 {
 	int r, devind, port;
@@ -528,7 +528,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_get_bar(mp)
+static void do_get_bar(mp)
 message *mp;
 {
 	int r, devind, port, ioflag;
@@ -554,7 +554,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_rescan_bus(mp)
+static void do_rescan_bus(mp)
 message *mp;
 {
 	int r, busnr;
@@ -572,7 +572,7 @@ message *mp;
 }
 
 
-PRIVATE void reply(mp, result)
+static void reply(mp, result)
 message *mp;
 int result;
 {
@@ -586,7 +586,7 @@ int result;
 }
 
 
-PRIVATE struct rs_pci *find_acl(endpoint)
+static struct rs_pci *find_acl(endpoint)
 int endpoint;
 {
 	int i;

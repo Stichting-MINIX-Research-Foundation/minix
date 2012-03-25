@@ -8,7 +8,7 @@
 
 #define LINES 24
 
-PRIVATE void print_region(struct vm_region_info *vri, int *n)
+static void print_region(struct vm_region_info *vri, int *n)
 {
   static int vri_count, vri_prev_set;
   static struct vm_region_info vri_prev;
@@ -61,7 +61,7 @@ PRIVATE void print_region(struct vm_region_info *vri, int *n)
   (*n)++;
 }
 
-PUBLIC void vm_dmp()
+void vm_dmp()
 {
   static struct proc proc[NR_TASKS + NR_PROCS];
   static struct vm_region_info vri[LINES];

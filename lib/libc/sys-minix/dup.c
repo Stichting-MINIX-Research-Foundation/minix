@@ -9,7 +9,7 @@
 __weak_alias(dup, _dup)
 #endif
 
-PUBLIC int dup(fd)
+int dup(fd)
 int fd;
 {
   return(fcntl(fd, F_DUPFD, 0));

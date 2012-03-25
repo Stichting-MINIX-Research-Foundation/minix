@@ -26,7 +26,7 @@ struct ddekit_sem {
 /*****************************************************************************
  *     ddekit_sem_init                                                       *
  *************************+**************************************************/
-PUBLIC ddekit_sem_t *ddekit_sem_init(int value)
+ddekit_sem_t *ddekit_sem_init(int value)
 {  
 	ddekit_sem_t *sem;
 	
@@ -42,7 +42,7 @@ PUBLIC ddekit_sem_t *ddekit_sem_init(int value)
 /*****************************************************************************
  *     ddekit_sem_deinit                                                     *
  ****************************************************************************/
-PUBLIC void ddekit_sem_deinit(ddekit_sem_t *sem)
+void ddekit_sem_deinit(ddekit_sem_t *sem)
 {
 	SEM_DEBUG(p);
 	ddekit_simple_free(sem);	
@@ -51,7 +51,7 @@ PUBLIC void ddekit_sem_deinit(ddekit_sem_t *sem)
 /*****************************************************************************
  *     ddekit_sem_down                                                       *
  ****************************************************************************/
-PUBLIC void ddekit_sem_down(ddekit_sem_t *sem)
+void ddekit_sem_down(ddekit_sem_t *sem)
 {
 	SEM_DEBUG(p);
 	if(sem->count == 0) {
@@ -73,7 +73,7 @@ PUBLIC void ddekit_sem_down(ddekit_sem_t *sem)
 /*****************************************************************************
  *     ddekit_sem_down_try                                                   *
  ****************************************************************************/
-PUBLIC int ddekit_sem_down_try(ddekit_sem_t *sem)
+int ddekit_sem_down_try(ddekit_sem_t *sem)
 {
 	if(sem->count == 0) {
 		return -1;
@@ -85,7 +85,7 @@ PUBLIC int ddekit_sem_down_try(ddekit_sem_t *sem)
 /*****************************************************************************
  *     ddekit_sem_up                                                         *
  ****************************************************************************/
-PUBLIC void ddekit_sem_up(ddekit_sem_t *sem)
+void ddekit_sem_up(ddekit_sem_t *sem)
 {   
 	SEM_DEBUG(p);
 	if (sem->wait_queue == NULL) {
@@ -103,7 +103,7 @@ PUBLIC void ddekit_sem_up(ddekit_sem_t *sem)
 /****************************************************************************
  *     ddekit_sem_down_timed                                                *
  ***************************************************************************/
-PUBLIC int ddekit_sem_down_timed(ddekit_sem_t *sem, int timo )
+int ddekit_sem_down_timed(ddekit_sem_t *sem, int timo )
 {
 	ddekit_panic("not implemented!");
 	return 0;

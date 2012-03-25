@@ -16,7 +16,7 @@
 
 #include "rtl8139.h"
 
-PUBLIC re_t re_state;
+re_t re_state;
 
 static int re_instance;
 
@@ -98,15 +98,15 @@ static void tell_dev(vir_bytes start, size_t size, int pci_bus, int
 /* The message used in the main loop is made global, so that rl_watchdog_f()
  * can change its message type to fake an interrupt message.
  */
-PRIVATE message m;
-PRIVATE int int_event_check;		/* set to TRUE if events arrived */
+static message m;
+static int int_event_check;		/* set to TRUE if events arrived */
 
-PRIVATE u32_t system_hz;
+static u32_t system_hz;
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -200,7 +200,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the rtl8139 driver. */
 	long v;
@@ -233,7 +233,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	re_t *rep;
 
@@ -2231,7 +2231,7 @@ dpeth_t *dep;
 }
 #endif
 
-PRIVATE void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
+static void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
 vir_bytes buf;
 size_t size;
 int pci_bus;

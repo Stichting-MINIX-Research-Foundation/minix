@@ -18,14 +18,14 @@
 
 #include "inc.h"
 
-PRIVATE struct inode inodes[NUM_INODES];
+static struct inode inodes[NUM_INODES];
 
-PRIVATE TAILQ_HEAD(free_head, inode) free_list;
+static TAILQ_HEAD(free_head, inode) free_list;
 
 /*===========================================================================*
  *				init_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *init_inode()
+struct inode *init_inode()
 {
 /* Initialize inode table. Return the root inode.
  */
@@ -65,7 +65,7 @@ PUBLIC struct inode *init_inode()
 /*===========================================================================*
  *				find_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *find_inode(ino_nr)
+struct inode *find_inode(ino_nr)
 ino_t ino_nr;
 {
 /* Get an inode based on its inode number. Do not increase its reference count.
@@ -102,7 +102,7 @@ ino_t ino_nr;
 /*===========================================================================*
  *				get_inode				     *
  *===========================================================================*/
-PUBLIC void get_inode(ino)
+void get_inode(ino)
 struct inode *ino;
 {
 /* Increase the given inode's reference count. If both reference and link
@@ -126,7 +126,7 @@ struct inode *ino;
 /*===========================================================================*
  *				put_inode				     *
  *===========================================================================*/
-PUBLIC void put_inode(ino)
+void put_inode(ino)
 struct inode *ino;
 {
 /* Decrease an inode's reference count. If this count has reached zero, close
@@ -166,7 +166,7 @@ struct inode *ino;
 /*===========================================================================*
  *				link_inode				     *
  *===========================================================================*/
-PUBLIC void link_inode(parent, ino)
+void link_inode(parent, ino)
 struct inode *parent;
 struct inode *ino;
 {
@@ -187,7 +187,7 @@ struct inode *ino;
 /*===========================================================================*
  *				unlink_inode				     *
  *===========================================================================*/
-PUBLIC void unlink_inode(ino)
+void unlink_inode(ino)
 struct inode *ino;
 {
 /* Unlink an inode from its parent. If both reference and link count have
@@ -213,7 +213,7 @@ struct inode *ino;
 /*===========================================================================*
  *				get_free_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_free_inode()
+struct inode *get_free_inode()
 {
 /* Return a free inode object (with reference count 1), if available.
  */
@@ -250,7 +250,7 @@ PUBLIC struct inode *get_free_inode()
 /*===========================================================================*
  *				have_free_inode				     *
  *===========================================================================*/
-PUBLIC int have_free_inode()
+int have_free_inode()
 {
 /* Check whether there are any free inodes at the moment. Kind of lame, but
  * this allows for easier error recovery in some places.
@@ -262,7 +262,7 @@ PUBLIC int have_free_inode()
 /*===========================================================================*
  *				have_used_inode				     *
  *===========================================================================*/
-PUBLIC int have_used_inode()
+int have_used_inode()
 {
 /* Check whether any inodes are still in use, that is, any of the inodes have
  * a reference count larger than zero.
@@ -279,7 +279,7 @@ PUBLIC int have_used_inode()
 /*===========================================================================*
  *				do_putnode				     *
  *===========================================================================*/
-PUBLIC int do_putnode()
+int do_putnode()
 {
 /* Decrease an inode's reference count.
  */

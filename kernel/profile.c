@@ -31,15 +31,15 @@
 char sprof_sample_buffer[SAMPLE_BUFFER_SIZE];
 
 /* Function prototype for the profiling clock handler. */ 
-FORWARD int profile_clock_handler(irq_hook_t *hook);
+static int profile_clock_handler(irq_hook_t *hook);
 
 /* A hook for the profiling clock interrupt handler. */
-PRIVATE irq_hook_t profile_clock_hook;
+static irq_hook_t profile_clock_hook;
 
 /*===========================================================================*
  *			init_profile_clock				     *
  *===========================================================================*/
-PUBLIC void init_profile_clock(u32_t freq)
+void init_profile_clock(u32_t freq)
 {
   int irq;
 
@@ -54,7 +54,7 @@ PUBLIC void init_profile_clock(u32_t freq)
 /*===========================================================================*
  *			profile_clock_stop				     *
  *===========================================================================*/
-PUBLIC void stop_profile_clock()
+void stop_profile_clock()
 {
   arch_stop_profile_clock();
 
@@ -63,7 +63,7 @@ PUBLIC void stop_profile_clock()
   rm_irq_handler(&profile_clock_hook);
 }
 
-PRIVATE void sprof_save_sample(struct proc * p, void * pc)
+static void sprof_save_sample(struct proc * p, void * pc)
 {
 	struct sprof_sample *s;
 
@@ -75,7 +75,7 @@ PRIVATE void sprof_save_sample(struct proc * p, void * pc)
 	sprof_info.mem_used += sizeof(struct sprof_sample);
 }
 
-PRIVATE void sprof_save_proc(struct proc * p)
+static void sprof_save_proc(struct proc * p)
 {
 	struct sprof_proc * s;
 
@@ -87,7 +87,7 @@ PRIVATE void sprof_save_proc(struct proc * p)
 	sprof_info.mem_used += sizeof(struct sprof_proc);
 }
 
-PRIVATE void profile_sample(struct proc * p, void * pc)
+static void profile_sample(struct proc * p, void * pc)
 {
 /* This executes on every tick of the CMOS timer. */
 
@@ -127,7 +127,7 @@ PRIVATE void profile_sample(struct proc * p, void * pc)
 /*===========================================================================*
  *			profile_clock_handler                           *
  *===========================================================================*/
-PRIVATE int profile_clock_handler(irq_hook_t *hook)
+static int profile_clock_handler(irq_hook_t *hook)
 {
   struct proc * p;
   p = get_cpulocal_var(proc_ptr);
@@ -140,7 +140,7 @@ PRIVATE int profile_clock_handler(irq_hook_t *hook)
   return(1);                                    /* reenable interrupts */
 }
 
-PUBLIC void nmi_sprofile_handler(struct nmi_frame * frame)
+void nmi_sprofile_handler(struct nmi_frame * frame)
 {
 	struct proc * p = get_cpulocal_var(proc_ptr);
 	/*
@@ -184,13 +184,13 @@ PUBLIC void nmi_sprofile_handler(struct nmi_frame * frame)
 struct cprof_tbl_s cprof_tbl[CPROF_TABLE_SIZE_KERNEL];
 
 /* Function that returns table size. */
-PUBLIC int profile_get_tbl_size(void)
+int profile_get_tbl_size(void)
 {
   return CPROF_TABLE_SIZE_KERNEL;
 }
 
 /* Function that returns on which execution of procentry to announce. */
-PUBLIC int profile_get_announce(void)
+int profile_get_announce(void)
 {
   return CPROF_ACCOUNCE_KERNEL;
 }
@@ -199,7 +199,7 @@ PUBLIC int profile_get_announce(void)
  * The kernel "announces" its control struct and table locations
  * to itself through this function.
  */
-PUBLIC void profile_register(ctl_ptr, tbl_ptr)
+void profile_register(ctl_ptr, tbl_ptr)
 void *ctl_ptr;
 void *tbl_ptr;
 {

@@ -65,22 +65,22 @@ typedef struct pty {
 #define TTY_CLOSED	0x02	/* tty side has closed down */
 #define PTY_CLOSED	0x04	/* pty side has closed down */
 
-PRIVATE pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
+static pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
-FORWARD int pty_write(tty_t *tp, int try);
-FORWARD void pty_echo(tty_t *tp, int c);
-FORWARD void pty_start(pty_t *pp);
-FORWARD void pty_finish(pty_t *pp);
-FORWARD int pty_read(tty_t *tp, int try);
-FORWARD int pty_close(tty_t *tp, int try);
-FORWARD int pty_icancel(tty_t *tp, int try);
-FORWARD int pty_ocancel(tty_t *tp, int try);
-FORWARD int pty_select(tty_t *tp, message *m);
+static int pty_write(tty_t *tp, int try);
+static void pty_echo(tty_t *tp, int c);
+static void pty_start(pty_t *pp);
+static void pty_finish(pty_t *pp);
+static int pty_read(tty_t *tp, int try);
+static int pty_close(tty_t *tp, int try);
+static int pty_icancel(tty_t *tp, int try);
+static int pty_ocancel(tty_t *tp, int try);
+static int pty_select(tty_t *tp, message *m);
 
 /*===========================================================================*
  *				do_pty					     *
  *===========================================================================*/
-PUBLIC void do_pty(tty_t *tp, message *m_ptr)
+void do_pty(tty_t *tp, message *m_ptr)
 {
 /* Perform an open/close/read/write call on a /dev/ptypX device. */
   pty_t *pp = tp->tty_priv;
@@ -194,7 +194,7 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 /*===========================================================================*
  *				pty_write				     *
  *===========================================================================*/
-PRIVATE int pty_write(tty_t *tp, int try)
+static int pty_write(tty_t *tp, int try)
 {
 /* (*dev_write)() routine for PTYs.  Transfer bytes from the writer on
  * /dev/ttypX to the output buffer.
@@ -270,7 +270,7 @@ PRIVATE int pty_write(tty_t *tp, int try)
 /*===========================================================================*
  *				pty_echo				     *
  *===========================================================================*/
-PRIVATE void pty_echo(tty_t *tp, int c)
+static void pty_echo(tty_t *tp, int c)
 {
 /* Echo one character.  (Like pty_write, but only one character, optionally.) */
 
@@ -293,7 +293,7 @@ PRIVATE void pty_echo(tty_t *tp, int c)
 /*===========================================================================*
  *				pty_start				     *
  *===========================================================================*/
-PRIVATE void pty_start(pty_t *pp)
+static void pty_start(pty_t *pp)
 {
 /* Transfer bytes written to the output buffer to the PTY reader. */
   int count;
@@ -324,7 +324,7 @@ PRIVATE void pty_start(pty_t *pp)
 /*===========================================================================*
  *				pty_finish				     *
  *===========================================================================*/
-PRIVATE void pty_finish(pty_t *pp)
+static void pty_finish(pty_t *pp)
 {
 /* Finish the read request of a PTY reader if there is at least one byte
  * transferred.
@@ -343,7 +343,7 @@ PRIVATE void pty_finish(pty_t *pp)
 /*===========================================================================*
  *				pty_read				     *
  *===========================================================================*/
-PRIVATE int pty_read(tty_t *tp, int try)
+static int pty_read(tty_t *tp, int try)
 {
 /* Offer bytes from the PTY writer for input on the TTY.  (Do it one byte at
  * a time, 99% of the writes will be for one byte, so no sense in being smart.)
@@ -405,7 +405,7 @@ PRIVATE int pty_read(tty_t *tp, int try)
 /*===========================================================================*
  *				pty_close				     *
  *===========================================================================*/
-PRIVATE int pty_close(tty_t *tp, int UNUSED(try))
+static int pty_close(tty_t *tp, int UNUSED(try))
 {
 /* The tty side has closed, so shut down the pty side. */
   pty_t *pp = tp->tty_priv;
@@ -430,7 +430,7 @@ PRIVATE int pty_close(tty_t *tp, int UNUSED(try))
 /*===========================================================================*
  *				pty_icancel				     *
  *===========================================================================*/
-PRIVATE int pty_icancel(tty_t *tp, int UNUSED(try))
+static int pty_icancel(tty_t *tp, int UNUSED(try))
 {
 /* Discard waiting input. */
   pty_t *pp = tp->tty_priv;
@@ -447,7 +447,7 @@ PRIVATE int pty_icancel(tty_t *tp, int UNUSED(try))
 /*===========================================================================*
  *				pty_ocancel				     *
  *===========================================================================*/
-PRIVATE int pty_ocancel(tty_t *tp, int UNUSED(try))
+static int pty_ocancel(tty_t *tp, int UNUSED(try))
 {
 /* Drain the output buffer. */
   pty_t *pp = tp->tty_priv;
@@ -461,7 +461,7 @@ PRIVATE int pty_ocancel(tty_t *tp, int UNUSED(try))
 /*===========================================================================*
  *				pty_init				     *
  *===========================================================================*/
-PUBLIC void pty_init(tty_t *tp)
+void pty_init(tty_t *tp)
 {
   pty_t *pp;
   int line;
@@ -488,7 +488,7 @@ PUBLIC void pty_init(tty_t *tp)
 /*===========================================================================*
  *				pty_status				     *
  *===========================================================================*/
-PUBLIC int pty_status(message *m_ptr)
+int pty_status(message *m_ptr)
 {
 	int i, event_found;
 	pty_t *pp;
@@ -541,7 +541,7 @@ PUBLIC int pty_status(message *m_ptr)
 /*===========================================================================*
  *				select_try_pty				     *
  *===========================================================================*/
-PRIVATE int select_try_pty(tty_t *tp, int ops)
+static int select_try_pty(tty_t *tp, int ops)
 {
   	pty_t *pp = tp->tty_priv;
 	int r = 0;
@@ -566,7 +566,7 @@ PRIVATE int select_try_pty(tty_t *tp, int ops)
 /*===========================================================================*
  *				select_retry_pty			     *
  *===========================================================================*/
-PUBLIC void select_retry_pty(tty_t *tp)
+void select_retry_pty(tty_t *tp)
 {
   	pty_t *pp = tp->tty_priv;
   	int r;
@@ -582,7 +582,7 @@ PUBLIC void select_retry_pty(tty_t *tp)
 /*===========================================================================*
  *				pty_select				     *
  *===========================================================================*/
-PRIVATE int pty_select(tty_t *tp, message *m)
+static int pty_select(tty_t *tp, message *m)
 {
   	pty_t *pp = tp->tty_priv;
 	int ops, ready_ops = 0, watch;

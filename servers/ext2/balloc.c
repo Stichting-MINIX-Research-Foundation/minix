@@ -20,13 +20,13 @@
 #include "const.h"
 
 
-FORWARD block_t alloc_block_bit(struct super_block *sp, block_t origin,
+static block_t alloc_block_bit(struct super_block *sp, block_t origin,
 	struct inode *rip);
 
 /*===========================================================================*
  *                      discard_preallocated_blocks                          *
  *===========================================================================*/
-PUBLIC void discard_preallocated_blocks(struct inode *rip)
+void discard_preallocated_blocks(struct inode *rip)
 {
 /* When called for rip, discard (free) blocks preallocated for rip,
  * otherwise discard all preallocated blocks.
@@ -68,7 +68,7 @@ PUBLIC void discard_preallocated_blocks(struct inode *rip)
 /*===========================================================================*
  *                              alloc_block                                  *
  *===========================================================================*/
-PUBLIC block_t alloc_block(struct inode *rip, block_t block)
+block_t alloc_block(struct inode *rip, block_t block)
 {
 /* Allocate a block for inode. If block is provided, then use it as a goal:
  * try to allocate this block or his neghbors.
@@ -141,13 +141,13 @@ PUBLIC block_t alloc_block(struct inode *rip, block_t block)
 }
 
 
-FORWARD void check_block_number(block_t block, struct super_block *sp,
+static void check_block_number(block_t block, struct super_block *sp,
 	struct group_desc *gd);
 
 /*===========================================================================*
  *                              alloc_block_bit                              *
  *===========================================================================*/
-PRIVATE block_t alloc_block_bit(sp, goal, rip)
+static block_t alloc_block_bit(sp, goal, rip)
 struct super_block *sp;		/* the filesystem to allocate from */
 block_t goal;			/* try to allocate near this block */
 struct inode *rip;		/* used for preallocation */
@@ -273,7 +273,7 @@ struct inode *rip;		/* used for preallocation */
 /*===========================================================================*
  *                        free_block	                                     *
  *===========================================================================*/
-PUBLIC void free_block(struct super_block *sp, bit_t bit_returned)
+void free_block(struct super_block *sp, bit_t bit_returned)
 {
 /* Return a block by turning off its bitmap bit. */
   int group;		/* group number of bit_returned */
@@ -329,7 +329,7 @@ PUBLIC void free_block(struct super_block *sp, bit_t bit_returned)
 }
 
 
-PRIVATE void check_block_number(block_t block, struct super_block *sp,
+static void check_block_number(block_t block, struct super_block *sp,
 				struct group_desc *gd)
 {
 

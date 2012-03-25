@@ -18,10 +18,10 @@
  * Intel architecture performance counters watchdog
  */
 
-PRIVATE struct arch_watchdog intel_arch_watchdog;
-PRIVATE struct arch_watchdog amd_watchdog;
+static struct arch_watchdog intel_arch_watchdog;
+static struct arch_watchdog amd_watchdog;
 
-PRIVATE void intel_arch_watchdog_init(const unsigned cpu)
+static void intel_arch_watchdog_init(const unsigned cpu)
 {
 	u64_t cpuf;
 	u32_t val;
@@ -51,13 +51,13 @@ PRIVATE void intel_arch_watchdog_init(const unsigned cpu)
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 }
 
-PRIVATE void intel_arch_watchdog_reinit(const unsigned cpu)
+static void intel_arch_watchdog_reinit(const unsigned cpu)
 {
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 	ia32_msr_write(INTEL_MSR_PERFMON_CRT0, 0, ex64lo(watchdog->resetval));
 }
 
-PUBLIC int arch_watchdog_init(void)
+int arch_watchdog_init(void)
 {
 	u32_t eax, ebx, ecx, edx;
 	unsigned cpu = cpuid;
@@ -105,11 +105,11 @@ PUBLIC int arch_watchdog_init(void)
 	return 0;
 }
 
-PUBLIC void arch_watchdog_stop(void)
+void arch_watchdog_stop(void)
 {
 }
 
-PUBLIC void arch_watchdog_lockup(const struct nmi_frame * frame)
+void arch_watchdog_lockup(const struct nmi_frame * frame)
 {
 	printf("KERNEL LOCK UP\n"
 			"eax    0x%08x\n"
@@ -144,7 +144,7 @@ PUBLIC void arch_watchdog_lockup(const struct nmi_frame * frame)
 	panic("Kernel lockup");
 }
 
-PUBLIC int i386_watchdog_start(void)
+int i386_watchdog_start(void)
 {
 	if (arch_watchdog_init()) {
 		printf("WARNING watchdog initialization "
@@ -158,7 +158,7 @@ PUBLIC int i386_watchdog_start(void)
 	return 0;
 }
 
-PRIVATE int intel_arch_watchdog_profile_init(const unsigned freq)
+static int intel_arch_watchdog_profile_init(const unsigned freq)
 {
 	u64_t cpuf;
 
@@ -181,7 +181,7 @@ PRIVATE int intel_arch_watchdog_profile_init(const unsigned freq)
 	return OK;
 }
 
-PRIVATE struct arch_watchdog intel_arch_watchdog = {
+static struct arch_watchdog intel_arch_watchdog = {
 	/*.init = */		intel_arch_watchdog_init,
 	/*.reinit = */		intel_arch_watchdog_reinit,
 	/*.profile_init = */	intel_arch_watchdog_profile_init
@@ -191,7 +191,7 @@ PRIVATE struct arch_watchdog intel_arch_watchdog = {
 #define AMD_MSR_EVENT_CTR0		0xc0010004
 #define AMD_MSR_EVENT_SEL0_ENABLE	(1 << 22)
 
-PRIVATE void amd_watchdog_init(const unsigned cpu)
+static void amd_watchdog_init(const unsigned cpu)
 {
 	u64_t cpuf;
 	u32_t val;
@@ -216,14 +216,14 @@ PRIVATE void amd_watchdog_init(const unsigned cpu)
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 }
 
-PRIVATE void amd_watchdog_reinit(const unsigned cpu)
+static void amd_watchdog_reinit(const unsigned cpu)
 {
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 	ia32_msr_write(AMD_MSR_EVENT_CTR0,
 		       ex64hi(watchdog->resetval), ex64lo(watchdog->resetval));
 }
 
-PRIVATE int amd_watchdog_profile_init(const unsigned freq)
+static int amd_watchdog_profile_init(const unsigned freq)
 {
 	u64_t cpuf;
 
@@ -237,7 +237,7 @@ PRIVATE int amd_watchdog_profile_init(const unsigned freq)
 	return OK;
 }
 
-PRIVATE struct arch_watchdog amd_watchdog = {
+static struct arch_watchdog amd_watchdog = {
 	/*.init = */		amd_watchdog_init,
 	/*.reinit = */		amd_watchdog_reinit,
 	/*.profile_init = */	amd_watchdog_profile_init

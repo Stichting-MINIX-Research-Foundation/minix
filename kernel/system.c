@@ -51,14 +51,14 @@
  * because the dummy is declared extern. If an illegal call is given, the 
  * array size will be negative and this won't compile. 
  */
-PRIVATE int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
+static int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
 
 #define map(call_nr, handler) 					\
     {	int call_index = call_nr-KERNEL_CALL; 				\
     	assert(call_index >= 0 && call_index < NR_SYS_CALLS);			\
     call_vec[call_index] = (handler)  ; }
 
-PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
+static void kernel_call_finish(struct proc * caller, message *msg, int result)
 {
   if(result == VMSUSPEND) {
 	  /* Special case: message has to be saved for handling
@@ -95,7 +95,7 @@ PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
   }
 }
 
-PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
+static int kernel_call_dispatch(struct proc * caller, message *msg)
 {
   int result = OK;
   int call_nr;
@@ -136,7 +136,7 @@ PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
  * this function checks the basic syscall parameters and if accepted it
  * dispatches its handling to the right handler
  */
-PUBLIC void kernel_call(message *m_user, struct proc * caller)
+void kernel_call(message *m_user, struct proc * caller)
 {
   int result = OK;
   message msg;
@@ -168,7 +168,7 @@ PUBLIC void kernel_call(message *m_user, struct proc * caller)
 /*===========================================================================*
  *				initialize				     *
  *===========================================================================*/
-PUBLIC void system_init(void)
+void system_init(void)
 {
   register struct priv *sp;
   int i;
@@ -272,7 +272,7 @@ PUBLIC void system_init(void)
 /*===========================================================================*
  *				get_priv				     *
  *===========================================================================*/
-PUBLIC int get_priv(rc, priv_id)
+int get_priv(rc, priv_id)
 register struct proc *rc;		/* new (child) process pointer */
 int priv_id;				/* privilege id */
 {
@@ -304,7 +304,7 @@ int priv_id;				/* privilege id */
 /*===========================================================================*
  *				set_sendto_bit				     *
  *===========================================================================*/
-PUBLIC void set_sendto_bit(const struct proc *rp, int id)
+void set_sendto_bit(const struct proc *rp, int id)
 {
 /* Allow a process to send messages to the process(es) associated with the
  * system privilege structure with the given ID. 
@@ -332,7 +332,7 @@ PUBLIC void set_sendto_bit(const struct proc *rp, int id)
 /*===========================================================================*
  *				unset_sendto_bit			     *
  *===========================================================================*/
-PUBLIC void unset_sendto_bit(const struct proc *rp, int id)
+void unset_sendto_bit(const struct proc *rp, int id)
 {
 /* Prevent a process from sending to another process. Retain the send mask
  * symmetry by also unsetting the bit for the other direction.
@@ -346,7 +346,7 @@ PUBLIC void unset_sendto_bit(const struct proc *rp, int id)
 /*===========================================================================*
  *			      fill_sendto_mask				     *
  *===========================================================================*/
-PUBLIC void fill_sendto_mask(const struct proc *rp, sys_map_t *map)
+void fill_sendto_mask(const struct proc *rp, sys_map_t *map)
 {
   int i;
 
@@ -361,7 +361,7 @@ PUBLIC void fill_sendto_mask(const struct proc *rp, sys_map_t *map)
 /*===========================================================================*
  *				send_sig				     *
  *===========================================================================*/
-PUBLIC void send_sig(endpoint_t ep, int sig_nr)
+void send_sig(endpoint_t ep, int sig_nr)
 {
 /* Notify a system process about a signal. This is straightforward. Simply
  * set the signal that is to be delivered in the pending signals map and 
@@ -381,7 +381,7 @@ PUBLIC void send_sig(endpoint_t ep, int sig_nr)
 /*===========================================================================*
  *				cause_sig				     *
  *===========================================================================*/
-PUBLIC void cause_sig(proc_nr, sig_nr)
+void cause_sig(proc_nr, sig_nr)
 proc_nr_t proc_nr;		/* process to be signalled */
 int sig_nr;			/* signal to be sent */
 {
@@ -443,7 +443,7 @@ int sig_nr;			/* signal to be sent */
 /*===========================================================================*
  *				sig_delay_done				     *
  *===========================================================================*/
-PUBLIC void sig_delay_done(struct proc *rp)
+void sig_delay_done(struct proc *rp)
 {
 /* A process is now known not to send any direct messages.
  * Tell PM that the stop delay has ended, by sending a signal to the process.
@@ -460,7 +460,7 @@ PUBLIC void sig_delay_done(struct proc *rp)
 /*===========================================================================*
  *				umap_bios				     *
  *===========================================================================*/
-PUBLIC phys_bytes umap_bios(vir_addr, bytes)
+phys_bytes umap_bios(vir_addr, bytes)
 vir_bytes vir_addr;		/* virtual address in BIOS segment */
 vir_bytes bytes;		/* # of bytes to be copied */
 {
@@ -485,7 +485,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
 /*===========================================================================*
  *			         clear_ipc				     *
  *===========================================================================*/
-PRIVATE void clear_ipc(
+static void clear_ipc(
   register struct proc *rc	/* slot of process to clean up */
 )
 {
@@ -516,7 +516,7 @@ PRIVATE void clear_ipc(
 /*===========================================================================*
  *			         clear_endpoint				     *
  *===========================================================================*/
-PUBLIC void clear_endpoint(rc)
+void clear_endpoint(rc)
 register struct proc *rc;		/* slot of process to clean up */
 {
   if(isemptyp(rc)) panic("clear_proc: empty process: %d",  rc->p_endpoint);
@@ -549,7 +549,7 @@ register struct proc *rc;		/* slot of process to clean up */
 /*===========================================================================*
  *			       clear_ipc_refs				     *
  *===========================================================================*/
-PUBLIC void clear_ipc_refs(rc, caller_ret)
+void clear_ipc_refs(rc, caller_ret)
 register struct proc *rc;		/* slot of process to clean up */
 int caller_ret;				/* code to return on callers */
 {
@@ -583,7 +583,7 @@ int caller_ret;				/* code to return on callers */
 /*===========================================================================*
  *                              kernel_call_resume                           *
  *===========================================================================*/
-PUBLIC void kernel_call_resume(struct proc *caller)
+void kernel_call_resume(struct proc *caller)
 {
 	int result;
 
@@ -613,7 +613,7 @@ PUBLIC void kernel_call_resume(struct proc *caller)
 /*===========================================================================*
  *                               sched_proc                                  *
  *===========================================================================*/
-PUBLIC int sched_proc(struct proc *p,
+int sched_proc(struct proc *p,
 			int priority,
 			int quantum,
 			int cpu)

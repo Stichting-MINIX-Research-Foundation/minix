@@ -21,7 +21,7 @@ __weak_alias(minix_munmap_text, _minix_munmap_text)
 #include <string.h>
 #include <errno.h>
 
-PUBLIC void *minix_mmap(void *addr, size_t len, int prot, int flags,
+void *minix_mmap(void *addr, size_t len, int prot, int flags,
 	int fd, off_t offset)
 {
 	message m;
@@ -43,7 +43,7 @@ PUBLIC void *minix_mmap(void *addr, size_t len, int prot, int flags,
 	return (void *) m.VMM_RETADDR;
 }
 
-PUBLIC int minix_munmap(void *addr, size_t len)
+int minix_munmap(void *addr, size_t len)
 {
 	message m;
 
@@ -54,7 +54,7 @@ PUBLIC int minix_munmap(void *addr, size_t len)
 }
 
 
-PUBLIC int minix_munmap_text(void *addr, size_t len)
+int minix_munmap_text(void *addr, size_t len)
 {
 	message m;
 
@@ -64,7 +64,7 @@ PUBLIC int minix_munmap_text(void *addr, size_t len)
 	return _syscall(VM_PROC_NR, VM_MUNMAP_TEXT, &m);
 }
 
-PUBLIC void *vm_remap(endpoint_t d,
+void *vm_remap(endpoint_t d,
 			endpoint_t s,
 			void *da,
 			void *sa,
@@ -85,7 +85,7 @@ PUBLIC void *vm_remap(endpoint_t d,
 	return (void *) m.VMRE_RETA;
 }
 
-PUBLIC void *vm_remap_ro(endpoint_t d,
+void *vm_remap_ro(endpoint_t d,
 			endpoint_t s,
 			void *da,
 			void *sa,
@@ -106,7 +106,7 @@ PUBLIC void *vm_remap_ro(endpoint_t d,
 	return (void *) m.VMRE_RETA;
 }
 
-PUBLIC int vm_unmap(endpoint_t endpt, void *addr)
+int vm_unmap(endpoint_t endpt, void *addr)
 {
 	message m;
 
@@ -116,7 +116,7 @@ PUBLIC int vm_unmap(endpoint_t endpt, void *addr)
 	return _syscall(VM_PROC_NR, VM_SHM_UNMAP, &m);
 }
 
-PUBLIC unsigned long vm_getphys(int endpt, void *addr)
+unsigned long vm_getphys(int endpt, void *addr)
 {
 	message m;
 	int r;
@@ -130,7 +130,7 @@ PUBLIC unsigned long vm_getphys(int endpt, void *addr)
 	return m.VMPHYS_RETA;
 }
 
-PUBLIC u8_t vm_getrefcount(endpoint_t endpt, void *addr)
+u8_t vm_getrefcount(endpoint_t endpt, void *addr)
 {
 	message m;
 	int r;

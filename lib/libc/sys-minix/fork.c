@@ -8,7 +8,7 @@
 __weak_alias(fork, _fork)
 #endif
 
-PUBLIC pid_t fork()
+pid_t fork()
 {
   message m;
 

@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_memset(unsigned long pattern, phys_bytes base, phys_bytes bytes)
+int sys_memset(unsigned long pattern, phys_bytes base, phys_bytes bytes)
 {
 /* Zero a block of data.  */
   message mess;

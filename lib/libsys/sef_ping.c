@@ -3,14 +3,14 @@
 #include <minix/sysutil.h>
 
 /* SEF Ping callbacks. */
-PRIVATE struct sef_cbs {
+static struct sef_cbs {
     sef_cb_ping_reply_t                 sef_cb_ping_reply;
 } sef_cbs = {
     SEF_CB_PING_REPLY_DEFAULT
 };
 
 /* SEF Ping prototypes for sef_receive(). */
-PUBLIC int do_sef_ping_request(message *m_ptr);
+int do_sef_ping_request(message *m_ptr);
 
 /* Debug. */
 EXTERN char* sef_debug_header(void);
@@ -18,7 +18,7 @@ EXTERN char* sef_debug_header(void);
 /*===========================================================================*
  *                            do_sef_ping_request             		     *
  *===========================================================================*/
-PUBLIC int do_sef_ping_request(message *m_ptr)
+int do_sef_ping_request(message *m_ptr)
 {
 /* Handle a SEF Ping request. */
 
@@ -40,7 +40,7 @@ PUBLIC int do_sef_ping_request(message *m_ptr)
 /*===========================================================================*
  *                          sef_setcb_ping_reply                             *
  *===========================================================================*/
-PUBLIC void sef_setcb_ping_reply(sef_cb_ping_reply_t cb)
+void sef_setcb_ping_reply(sef_cb_ping_reply_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_ping_reply = cb;
@@ -49,14 +49,14 @@ PUBLIC void sef_setcb_ping_reply(sef_cb_ping_reply_t cb)
 /*===========================================================================*
  *      	           sef_cb_ping_reply_null                            *
  *===========================================================================*/
-PUBLIC void sef_cb_ping_reply_null(endpoint_t UNUSED(source))
+void sef_cb_ping_reply_null(endpoint_t UNUSED(source))
 {
 }
 
 /*===========================================================================*
  *      	           sef_cb_ping_reply_pong                            *
  *===========================================================================*/
-PUBLIC void sef_cb_ping_reply_pong(endpoint_t source)
+void sef_cb_ping_reply_pong(endpoint_t source)
 {
   notify(source);
 }

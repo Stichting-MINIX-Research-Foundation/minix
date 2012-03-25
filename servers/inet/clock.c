@@ -12,17 +12,17 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-PUBLIC int clck_call_expire;
+int clck_call_expire;
 
-PRIVATE time_t curr_time;
-PRIVATE time_t prev_time;
-PRIVATE timer_t *timer_chain;
-PRIVATE time_t next_timeout;
+static time_t curr_time;
+static time_t prev_time;
+static timer_t *timer_chain;
+static time_t next_timeout;
 
-FORWARD void clck_fast_release(timer_t *timer);
-FORWARD void set_timer(void);
+static void clck_fast_release(timer_t *timer);
+static void set_timer(void);
 
-PUBLIC void clck_init()
+void clck_init()
 {
 	clck_call_expire= 0;
 	curr_time= 0;
@@ -31,7 +31,7 @@ PUBLIC void clck_init()
 	timer_chain= 0;
 }
 
-PUBLIC time_t get_time()
+time_t get_time()
 {
 	if (!curr_time)
 	{
@@ -42,7 +42,7 @@ PUBLIC time_t get_time()
 	return curr_time;
 }
 
-PUBLIC void set_time (tim)
+void set_time (tim)
 time_t tim;
 {
 	if (!curr_time && tim >= prev_time)
@@ -59,13 +59,13 @@ time_t tim;
 	}
 }
 
-PUBLIC void reset_time()
+void reset_time()
 {
 	prev_time= curr_time;
 	curr_time= 0;
 }
 
-PUBLIC void clck_timer(timer, timeout, func, fd)
+void clck_timer(timer, timeout, func, fd)
 timer_t *timer;
 time_t timeout;
 timer_func_t func;
@@ -103,14 +103,14 @@ int fd;
 		set_timer();
 }
 
-PUBLIC void clck_tick (mess)
+void clck_tick (mess)
 message *mess;
 {
 	next_timeout= 0;
 	set_timer();
 }
 
-PRIVATE void clck_fast_release (timer)
+static void clck_fast_release (timer)
 timer_t *timer;
 {
 	timer_t *timer_index;
@@ -131,7 +131,7 @@ timer_t *timer;
 	timer->tim_active= 0;
 }
 
-PRIVATE void set_timer()
+static void set_timer()
 {
 	time_t new_time;
 	time_t curr_time;
@@ -157,14 +157,14 @@ PRIVATE void set_timer()
 	}
 }
 
-PUBLIC void clck_untimer (timer)
+void clck_untimer (timer)
 timer_t *timer;
 {
 	clck_fast_release (timer);
 	set_timer();
 }
 
-PUBLIC void clck_expire_timers()
+void clck_expire_timers()
 {
 	time_t curr_time;
 	timer_t *timer_index;

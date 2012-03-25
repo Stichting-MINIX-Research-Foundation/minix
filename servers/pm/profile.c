@@ -19,13 +19,13 @@
 #include "param.h"
 
 #if SPROFILE || CPROFILE
-FORWARD int check_addrs(int info_size);
+static int check_addrs(int info_size);
 #endif
 
 /*===========================================================================*
  *				do_sprofile				     *
  *===========================================================================*/
-PUBLIC int do_sprofile(void)
+int do_sprofile(void)
 {
 #if SPROFILE
 
@@ -57,7 +57,7 @@ PUBLIC int do_sprofile(void)
 /*===========================================================================*
  *				do_cprofile				     *
  *===========================================================================*/
-PUBLIC int do_cprofile(void)
+int do_cprofile(void)
 {
 #if CPROFILE
 
@@ -90,7 +90,7 @@ PUBLIC int do_cprofile(void)
 /*===========================================================================*
  *				check_addrs				     *
  *===========================================================================*/
-PRIVATE int check_addrs(info_size)
+static int check_addrs(info_size)
 int info_size;
 {
   int r;

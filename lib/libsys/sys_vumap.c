@@ -3,7 +3,7 @@
 /*===========================================================================*
  *				sys_vumap				     *
  *===========================================================================*/
-PUBLIC int sys_vumap(
+int sys_vumap(
   endpoint_t endpt,			/* source process endpoint, or SELF */
   struct vumap_vir *vvec,		/* virtual (input) vector */
   int vcount,				/* number of elements in vvec */

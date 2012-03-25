@@ -19,9 +19,9 @@
 #if SPROFILE
 
 /* user address to write info struct */
-PRIVATE vir_bytes sprof_info_addr_vir;
+static vir_bytes sprof_info_addr_vir;
 
-PRIVATE void clean_seen_flag(void)
+static void clean_seen_flag(void)
 {
 	int i;
 
@@ -32,7 +32,7 @@ PRIVATE void clean_seen_flag(void)
 /*===========================================================================*
  *				do_sprofile				     *
  *===========================================================================*/
-PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
+int do_sprofile(struct proc * caller, message * m_ptr)
 {
   int proc_nr;
   int err;

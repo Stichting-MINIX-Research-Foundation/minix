@@ -11,7 +11,7 @@
 /*===========================================================================*
  *                              get_randomness                               *
  *===========================================================================*/
-PUBLIC void get_randomness(rand, source)
+void get_randomness(rand, source)
 struct k_randomness *rand;
 int source;
 {

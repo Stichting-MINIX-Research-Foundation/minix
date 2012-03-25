@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_schedctl(unsigned flags,
+int sys_schedctl(unsigned flags,
 			endpoint_t proc_ep,
 			int priority,
 			int quantum,

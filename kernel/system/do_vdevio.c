@@ -15,15 +15,15 @@
 #if USE_VDEVIO
 
 /* Buffer for SYS_VDEVIO to copy (port,value)-pairs from/ to user. */
-PRIVATE char vdevio_buf[VDEVIO_BUF_SIZE];      
-PRIVATE pvb_pair_t * const pvb = (pvb_pair_t *) vdevio_buf;           
-PRIVATE pvw_pair_t * const pvw = (pvw_pair_t *) vdevio_buf;      
-PRIVATE pvl_pair_t * const pvl = (pvl_pair_t *) vdevio_buf;     
+static char vdevio_buf[VDEVIO_BUF_SIZE];      
+static pvb_pair_t * const pvb = (pvb_pair_t *) vdevio_buf;           
+static pvw_pair_t * const pvw = (pvw_pair_t *) vdevio_buf;      
+static pvl_pair_t * const pvl = (pvl_pair_t *) vdevio_buf;     
 
 /*===========================================================================*
  *			        do_vdevio                                    *
  *===========================================================================*/
-PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
+int do_vdevio(struct proc * caller, message * m_ptr)
 {
 /* Perform a series of device I/O on behalf of a non-kernel process. The 
  * I/O addresses and I/O values are fetched from and returned to some buffer

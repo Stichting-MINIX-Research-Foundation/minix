@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				hgfs_init				     *
  *===========================================================================*/
-PUBLIC int hgfs_init()
+int hgfs_init()
 {
 /* Initialize the library. Return OK on success, or a negative error code
  * otherwise. If EAGAIN is returned, shared folders are disabled; in that
@@ -20,7 +20,7 @@ PUBLIC int hgfs_init()
 /*===========================================================================*
  *				hgfs_cleanup				     *
  *===========================================================================*/
-PUBLIC void hgfs_cleanup()
+void hgfs_cleanup()
 {
 /* Clean up state.
  */
@@ -31,7 +31,7 @@ PUBLIC void hgfs_cleanup()
 /*===========================================================================*
  *				hgfs_enabled				     *
  *===========================================================================*/
-PUBLIC int hgfs_enabled()
+int hgfs_enabled()
 {
 /* Check if shared folders are enabled. Return OK if so, EAGAIN if not, and
  * another negative error code on error.
@@ -43,7 +43,7 @@ PUBLIC int hgfs_enabled()
 /*===========================================================================*
  *				hgfs_queryvol				     *
  *===========================================================================*/
-PUBLIC int hgfs_queryvol(path, free, total)
+int hgfs_queryvol(path, free, total)
 char *path;
 u64_t *free;
 u64_t *total;

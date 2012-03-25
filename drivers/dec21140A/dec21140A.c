@@ -26,28 +26,28 @@
 #include "dec21140A.h"
 
 
-PRIVATE u32_t io_inl(u16_t);
-PRIVATE void io_outl(u16_t, u32_t);
-PRIVATE void do_conf(const message *);
-PRIVATE void do_get_stat_s(message *);
-PRIVATE void do_interrupt(const dpeth_t *);
-PRIVATE void do_reply(dpeth_t *);
-PRIVATE void do_vread_s(const message *, int);
-PRIVATE void do_watchdog(void *);
+static u32_t io_inl(u16_t);
+static void io_outl(u16_t, u32_t);
+static void do_conf(const message *);
+static void do_get_stat_s(message *);
+static void do_interrupt(const dpeth_t *);
+static void do_reply(dpeth_t *);
+static void do_vread_s(const message *, int);
+static void do_watchdog(void *);
 
-PRIVATE void de_update_conf(dpeth_t *);
-PRIVATE int de_probe(dpeth_t *, int skip);
-PRIVATE void de_conf_addr(dpeth_t *);
-PRIVATE void de_first_init(dpeth_t *);
-PRIVATE void de_reset(const dpeth_t *);
-PRIVATE void de_hw_conf(const dpeth_t *);
-PRIVATE void de_start(const dpeth_t *);
-PRIVATE void de_setup_frame(const dpeth_t *);
-PRIVATE u16_t de_read_rom(const dpeth_t *, u8_t, u8_t);
-PRIVATE int de_calc_iov_size(iovec_dat_s_t *);
-PRIVATE void de_next_iov(iovec_dat_s_t *);
-PRIVATE void do_vwrite_s(const message *, int);
-PRIVATE void de_get_userdata_s(int, cp_grant_id_t, vir_bytes, int, void
+static void de_update_conf(dpeth_t *);
+static int de_probe(dpeth_t *, int skip);
+static void de_conf_addr(dpeth_t *);
+static void de_first_init(dpeth_t *);
+static void de_reset(const dpeth_t *);
+static void de_hw_conf(const dpeth_t *);
+static void de_start(const dpeth_t *);
+static void de_setup_frame(const dpeth_t *);
+static u16_t de_read_rom(const dpeth_t *, u8_t, u8_t);
+static int de_calc_iov_size(iovec_dat_s_t *);
+static void de_next_iov(iovec_dat_s_t *);
+static void do_vwrite_s(const message *, int);
+static void de_get_userdata_s(int, cp_grant_id_t, vir_bytes, int, void
 	*);
 
 /* Error messages */
@@ -60,12 +60,12 @@ static char str_StatErrMsg[]  = "Unable to send stats";
 static char str_AlignErrMsg[] = "Bad align of buffer/descriptor";
 static char str_DevName[]     = "dec21140A:eth#?";
 
-PRIVATE dpeth_t de_state;
-PRIVATE int de_instance;
+static dpeth_t de_state;
+static int de_instance;
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				main					     *
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -147,7 +147,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the DEC 21140A driver. */
   int fkeys, sfkeys;
@@ -169,7 +169,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
   return OK;
 }
 
-PRIVATE void do_get_stat_s(message * mp)
+static void do_get_stat_s(message * mp)
 {
   int rc;
   dpeth_t *dep;
@@ -188,7 +188,7 @@ PRIVATE void do_get_stat_s(message * mp)
   return;
 }
 
-PRIVATE void do_conf(const message * mp)
+static void do_conf(const message * mp)
 {
   int r;
   dpeth_t *dep;
@@ -257,7 +257,7 @@ PRIVATE void do_conf(const message * mp)
   return;
 }
 
-PRIVATE void do_reply(dpeth_t * dep)
+static void do_reply(dpeth_t * dep)
 {
   message reply;
   int r, flags = DL_NOFLAGS;
@@ -279,13 +279,13 @@ PRIVATE void do_reply(dpeth_t * dep)
   return;
 }
 
-PRIVATE void do_watchdog(void *UNUSED(message))
+static void do_watchdog(void *UNUSED(message))
 {
   /* nothing here yet */
   return;
 }
 
-PRIVATE int de_probe(dpeth_t *dep, int skip)
+static int de_probe(dpeth_t *dep, int skip)
 {
   int i, r, devind;
   u16_t vid, did, temp16;
@@ -345,7 +345,7 @@ PRIVATE int de_probe(dpeth_t *dep, int skip)
   return TRUE;
 }
 
-PRIVATE u16_t de_read_rom(const dpeth_t *dep, u8_t addr, u8_t nbAddrBits){
+static u16_t de_read_rom(const dpeth_t *dep, u8_t addr, u8_t nbAddrBits){
   u16_t retVal = 0;
   int i;
   u32_t csr = 0;
@@ -421,7 +421,7 @@ static void de_update_conf(dpeth_t * dep)
   return;
 }
 
-PRIVATE void do_vread_s(const message * mp, int from_int)
+static void do_vread_s(const message * mp, int from_int)
 {
   u8_t *buffer;
   u32_t size;
@@ -552,7 +552,7 @@ PRIVATE void do_vread_s(const message * mp, int from_int)
   return;
 }
 
-PRIVATE void de_conf_addr(dpeth_t * dep)
+static void de_conf_addr(dpeth_t * dep)
 {
   static char ea_fmt[] = "x:x:x:x:x:x";
   char ea_key[16];
@@ -574,7 +574,7 @@ PRIVATE void de_conf_addr(dpeth_t * dep)
   return;
 }
 
-PRIVATE void de_first_init(dpeth_t *dep)
+static void de_first_init(dpeth_t *dep)
 {
   int i,j,r;
   vir_bytes descr_vir = (vir_bytes)dep->sendrecv_descr_buf;
@@ -666,7 +666,7 @@ PRIVATE void de_first_init(dpeth_t *dep)
   sys_irqenable(&dep->de_hook);
 }
 
-PRIVATE void do_interrupt(const dpeth_t *dep){  
+static void do_interrupt(const dpeth_t *dep){  
   u32_t val;
   val = io_inl(CSR_ADDR(dep, CSR5));
 
@@ -687,11 +687,11 @@ PRIVATE void do_interrupt(const dpeth_t *dep){
   return;
 }
 
-PRIVATE void de_reset(const dpeth_t *dep){
+static void de_reset(const dpeth_t *dep){
   io_outl(CSR_ADDR(dep, CSR0), CSR0_SWR);
 }
 
-PRIVATE void de_hw_conf(const dpeth_t *dep){
+static void de_hw_conf(const dpeth_t *dep){
   u32_t val;
 
   /* CSR0 - global host bus prop */
@@ -716,13 +716,13 @@ PRIVATE void de_hw_conf(const dpeth_t *dep){
   io_outl(CSR_ADDR(dep, CSR6), val);
 }
 
-PRIVATE void de_start(const dpeth_t *dep){  
+static void de_start(const dpeth_t *dep){  
   u32_t val;
   val = io_inl(CSR_ADDR(dep, CSR6)) | CSR6_ST | CSR6_SR;
   io_outl(CSR_ADDR(dep, CSR6), val);
 }
 
-PRIVATE void de_setup_frame(const dpeth_t *dep){
+static void de_setup_frame(const dpeth_t *dep){
   int i;
   u32_t val;
 
@@ -756,7 +756,7 @@ PRIVATE void de_setup_frame(const dpeth_t *dep){
   return;
 }
 
-PRIVATE int de_calc_iov_size(iovec_dat_s_t * iovp){
+static int de_calc_iov_size(iovec_dat_s_t * iovp){
   int size, ix;
   size = ix = 0;
   
@@ -770,7 +770,7 @@ PRIVATE int de_calc_iov_size(iovec_dat_s_t * iovp){
   return size;
 }
 
-PRIVATE void de_get_userdata_s(int user_proc, cp_grant_id_t grant,
+static void de_get_userdata_s(int user_proc, cp_grant_id_t grant,
 	vir_bytes offset, int count, void *loc_addr){
   int rc;
   vir_bytes len;
@@ -782,7 +782,7 @@ PRIVATE void de_get_userdata_s(int user_proc, cp_grant_id_t grant,
   return;
 }
 
-PRIVATE void de_next_iov(iovec_dat_s_t * iovp){
+static void de_next_iov(iovec_dat_s_t * iovp){
 
   iovp->iod_iovec_s -= IOVEC_NR;
   iovp->iod_iovec_offset += IOVEC_NR * sizeof(iovec_t);
@@ -791,7 +791,7 @@ PRIVATE void de_next_iov(iovec_dat_s_t * iovp){
   return;
 }
 
-PRIVATE void do_vwrite_s(const message * mp, int from_int){
+static void do_vwrite_s(const message * mp, int from_int){
   static u8_t setupDone = 0;
   int size, r, bytes, ix, totalsize;
   dpeth_t *dep;
@@ -881,19 +881,19 @@ PRIVATE void do_vwrite_s(const message * mp, int from_int){
   do_reply(dep);
 }
 
-PRIVATE void warning(const char *type, int err){
+static void warning(const char *type, int err){
   printf("Warning: %s sys_%s failed (%d)\n", str_DevName, type, err);
   return;
 }
 
-PRIVATE u32_t io_inl(u16_t port){
+static u32_t io_inl(u16_t port){
   u32_t value;
   int rc;
   if ((rc = sys_inl(port, &value)) != OK) warning("inl", rc);
   return value;
 }
 
-PRIVATE void io_outl(u16_t port, u32_t value){
+static void io_outl(u16_t port, u32_t value){
   int rc;
   if ((rc = sys_outl(port, value)) != OK) warning("outl", rc);
   return;

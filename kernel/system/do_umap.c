@@ -22,7 +22,7 @@
 /*==========================================================================*
  *				do_umap					    *
  *==========================================================================*/
-PUBLIC int do_umap(struct proc * caller, message * m_ptr)
+int do_umap(struct proc * caller, message * m_ptr)
 {
   int seg_index = m_ptr->CP_SRC_SPACE & SEGMENT_INDEX;
   int endpt = (int) m_ptr->CP_SRC_ENDPT;

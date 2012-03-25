@@ -100,8 +100,8 @@ void eat_dir(Ino_t parent);
 void eat_file(Ino_t inode, int f);
 void enter_dir(Ino_t parent, char *name, Ino_t child);
 void incr_size(Ino_t n, long count);
-PRIVATE ino_t alloc_inode(int mode, int usrid, int grpid);
-PRIVATE zone_t alloc_zone(void);
+static ino_t alloc_inode(int mode, int usrid, int grpid);
+static zone_t alloc_zone(void);
 void add_zone(Ino_t n, zone_t z, long bytes, long cur_time);
 void add_z_1(Ino_t n, zone_t z, long bytes, long cur_time);
 void add_z_2(Ino_t n, zone_t z, long bytes, long cur_time);
@@ -880,7 +880,7 @@ long count;
 /*================================================================
  * 	 	     allocation assist group
  *===============================================================*/
-PRIVATE ino_t alloc_inode(mode, usrid, grpid)
+static ino_t alloc_inode(mode, usrid, grpid)
 int mode, usrid, grpid;
 {
   ino_t num;
@@ -924,7 +924,7 @@ int mode, usrid, grpid;
 }
 
 
-PRIVATE zone_t alloc_zone()
+static zone_t alloc_zone()
 {
   /* Allocate a new zone */
   /* Works for zone > block */

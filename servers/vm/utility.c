@@ -41,7 +41,7 @@
 /*===========================================================================*
  *                              get_mem_map                                  *
  *===========================================================================*/
-PUBLIC int get_mem_map(proc_nr, mem_map)
+int get_mem_map(proc_nr, mem_map)
 int proc_nr;                                    /* process to get map of */
 struct mem_map *mem_map;                        /* put memory map here */
 {
@@ -58,7 +58,7 @@ struct mem_map *mem_map;                        /* put memory map here */
 /*===========================================================================*
  *                              get_mem_chunks                               *
  *===========================================================================*/
-PUBLIC void get_mem_chunks(mem_chunks)
+void get_mem_chunks(mem_chunks)
 struct memory *mem_chunks;                      /* store mem chunks here */ 
 {  
 /* Initialize the free memory list from the 'memory' boot variable.  Translate
@@ -92,7 +92,7 @@ struct memory *mem_chunks;                      /* store mem chunks here */
 /*===========================================================================*
  *                              reserve_proc_mem                             *
  *===========================================================================*/
-PUBLIC void reserve_proc_mem(mem_chunks, map_ptr)
+void reserve_proc_mem(mem_chunks, map_ptr)
 struct memory *mem_chunks;                      /* store mem chunks here */
 struct mem_map *map_ptr;                        /* memory to remove */
 {
@@ -139,7 +139,7 @@ struct mem_map *map_ptr;                        /* memory to remove */
 /*===========================================================================*
  *                              vm_isokendpt                           	     *
  *===========================================================================*/
-PUBLIC int vm_isokendpt(endpoint_t endpoint, int *proc)
+int vm_isokendpt(endpoint_t endpoint, int *proc)
 {
         *proc = _ENDPOINT_P(endpoint);
         if(*proc < 0 || *proc >= NR_PROCS)
@@ -157,7 +157,7 @@ struct proc mytmpproc;
 /*===========================================================================*
  *                              get_stack_ptr                                *
  *===========================================================================*/
-PUBLIC int get_stack_ptr(proc_nr_e, sp)
+int get_stack_ptr(proc_nr_e, sp)
 int proc_nr_e;                                  /* process to get sp of */   
 vir_bytes *sp;                                  /* put stack pointer here */
 {
@@ -172,7 +172,7 @@ vir_bytes *sp;                                  /* put stack pointer here */
 /*===========================================================================*
  *                              do_info                                      *
  *===========================================================================*/
-PUBLIC int do_info(message *m)
+int do_info(message *m)
 {
 	struct vm_stats_info vsi;
 	struct vm_usage_info vui;
@@ -256,7 +256,7 @@ PUBLIC int do_info(message *m)
 /*===========================================================================*
  *				swap_proc_slot	     			     *
  *===========================================================================*/
-PUBLIC int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 {
 	struct vmproc orig_src_vmproc, orig_dst_vmproc;
 
@@ -292,7 +292,7 @@ PUBLIC int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 /*===========================================================================*
  *			      swap_proc_dyn_data	     		     *
  *===========================================================================*/
-PUBLIC int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 {
 	int is_vm;
 	int r;

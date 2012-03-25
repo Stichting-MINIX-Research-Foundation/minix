@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-PUBLIC int closefrom(int fd)
+int closefrom(int fd)
 {
 	int f, ok = 0, e = 0;
 	for(f = fd; f < __MINIX_OPEN_MAX; f++) {

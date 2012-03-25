@@ -14,15 +14,15 @@
 #include "../rs/const.h"
 #include "../rs/type.h"
 
-PUBLIC struct rprocpub rprocpub[NR_SYS_PROCS];
-PUBLIC struct rproc rproc[NR_SYS_PROCS];
+struct rprocpub rprocpub[NR_SYS_PROCS];
+struct rproc rproc[NR_SYS_PROCS];
 
-FORWARD char *s_flags_str(int flags, int sys_flags);
+static char *s_flags_str(int flags, int sys_flags);
 
 /*===========================================================================*
  *				rproc_dmp				     *
  *===========================================================================*/
-PUBLIC void rproc_dmp()
+void rproc_dmp()
 {
   struct rproc *rp;
   struct rprocpub *rpub;
@@ -56,7 +56,7 @@ PUBLIC void rproc_dmp()
 }
 
 
-PRIVATE char *s_flags_str(int flags, int sys_flags)
+static char *s_flags_str(int flags, int sys_flags)
 {
 	static char str[10];
 	str[0] = (flags & RS_ACTIVE)        ? 'A' : '-';

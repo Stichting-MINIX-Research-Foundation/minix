@@ -39,7 +39,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 int debug= 0;
 
-PRIVATE struct pcibus
+static struct pcibus
 {
 	int pb_type;
 	int pb_needinit;
@@ -57,9 +57,9 @@ PRIVATE struct pcibus
 	u16_t (*pb_rsts)(int busind);
 	void (*pb_wsts)(int busind, u16_t value);
 } pcibus[NR_PCIBUS];
-PRIVATE int nr_pcibus= 0;
+static int nr_pcibus= 0;
 
-PRIVATE struct pcidev
+static struct pcidev
 {
 	u8_t pd_busnr;
 	u8_t pd_dev;
@@ -90,68 +90,68 @@ EXTERN struct pci_acl pci_acl[NR_DRIVERS];
 #define PBF_IO		1	/* I/O else memory */
 #define PBF_INCOMPLETE	2	/* not allocated */
 
-PRIVATE int nr_pcidev= 0;
+static int nr_pcidev= 0;
 
-FORWARD void pci_intel_init(void);
-FORWARD void probe_bus(int busind);
-FORWARD int is_duplicate(u8_t busnr, u8_t dev, u8_t func);
-FORWARD void record_irq(int devind);
-FORWARD void record_bars_normal(int devind);
-FORWARD void record_bars_bridge(int devind);
-FORWARD void record_bars_cardbus(int devind);
-FORWARD void record_bars(int devind, int last_reg);
-FORWARD int record_bar(int devind, int bar_nr, int last);
-FORWARD void complete_bridges(void);
-FORWARD void complete_bars(void);
-FORWARD void update_bridge4dev_io(int devind, u32_t io_base, u32_t
+static void pci_intel_init(void);
+static void probe_bus(int busind);
+static int is_duplicate(u8_t busnr, u8_t dev, u8_t func);
+static void record_irq(int devind);
+static void record_bars_normal(int devind);
+static void record_bars_bridge(int devind);
+static void record_bars_cardbus(int devind);
+static void record_bars(int devind, int last_reg);
+static int record_bar(int devind, int bar_nr, int last);
+static void complete_bridges(void);
+static void complete_bars(void);
+static void update_bridge4dev_io(int devind, u32_t io_base, u32_t
 	io_size);
-FORWARD int get_freebus(void);
-FORWARD int do_isabridge(int busind);
-FORWARD void do_pcibridge(int busind);
-FORWARD int get_busind(int busnr);
-FORWARD int do_piix(int devind);
-FORWARD int do_amd_isabr(int devind);
-FORWARD int do_sis_isabr(int devind);
-FORWARD int do_via_isabr(int devind);
+static int get_freebus(void);
+static int do_isabridge(int busind);
+static void do_pcibridge(int busind);
+static int get_busind(int busnr);
+static int do_piix(int devind);
+static int do_amd_isabr(int devind);
+static int do_sis_isabr(int devind);
+static int do_via_isabr(int devind);
 #if 0
-FORWARD void report_vga(int devind);
+static void report_vga(int devind);
 #endif
-FORWARD char *pci_vid_name(u16_t vid);
-FORWARD char *pci_baseclass_name(u8_t baseclass);
-FORWARD char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t
+static char *pci_vid_name(u16_t vid);
+static char *pci_baseclass_name(u8_t baseclass);
+static char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t
 	infclass);
-FORWARD void ntostr(unsigned n, char **str, char *end);
+static void ntostr(unsigned n, char **str, char *end);
 
-FORWARD u8_t pci_attr_r8_u(int devind, int port);
-FORWARD u32_t pci_attr_r32_u(int devind, int port);
+static u8_t pci_attr_r8_u(int devind, int port);
+static u32_t pci_attr_r32_u(int devind, int port);
 
-FORWARD u16_t pci_attr_rsts(int devind);
-FORWARD void pci_attr_wsts(int devind, u16_t value);
-FORWARD u16_t pcibr_std_rsts(int busind);
-FORWARD void pcibr_std_wsts(int busind, u16_t value);
-FORWARD u16_t pcibr_cb_rsts(int busind);
-FORWARD void pcibr_cb_wsts(int busind, u16_t value);
-FORWARD u16_t pcibr_via_rsts(int busind);
-FORWARD void pcibr_via_wsts(int busind, u16_t value);
-FORWARD u8_t pcii_rreg8(int busind, int devind, int port);
-FORWARD u16_t pcii_rreg16(int busind, int devind, int port);
-FORWARD u32_t pcii_rreg32(int busind, int devind, int port);
-FORWARD void pcii_wreg8(int busind, int devind, int port, u8_t value);
-FORWARD void pcii_wreg16(int busind, int devind, int port, u16_t value);
-FORWARD void pcii_wreg32(int busind, int devind, int port, u32_t value);
-FORWARD u16_t pcii_rsts(int busind);
-FORWARD void pcii_wsts(int busind, u16_t value);
-FORWARD void print_capabilities(int devind);
-FORWARD int visible(struct rs_pci *aclp, int devind);
-FORWARD void print_hyper_cap(int devind, u8_t capptr);
+static u16_t pci_attr_rsts(int devind);
+static void pci_attr_wsts(int devind, u16_t value);
+static u16_t pcibr_std_rsts(int busind);
+static void pcibr_std_wsts(int busind, u16_t value);
+static u16_t pcibr_cb_rsts(int busind);
+static void pcibr_cb_wsts(int busind, u16_t value);
+static u16_t pcibr_via_rsts(int busind);
+static void pcibr_via_wsts(int busind, u16_t value);
+static u8_t pcii_rreg8(int busind, int devind, int port);
+static u16_t pcii_rreg16(int busind, int devind, int port);
+static u32_t pcii_rreg32(int busind, int devind, int port);
+static void pcii_wreg8(int busind, int devind, int port, u8_t value);
+static void pcii_wreg16(int busind, int devind, int port, u16_t value);
+static void pcii_wreg32(int busind, int devind, int port, u32_t value);
+static u16_t pcii_rsts(int busind);
+static void pcii_wsts(int busind, u16_t value);
+static void print_capabilities(int devind);
+static int visible(struct rs_pci *aclp, int devind);
+static void print_hyper_cap(int devind, u8_t capptr);
 
-PRIVATE struct machine machine;
-PRIVATE endpoint_t acpi_ep;
+static struct machine machine;
+static endpoint_t acpi_ep;
 
 /*===========================================================================*
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
-PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
+int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the pci driver. */
 	long v;
@@ -195,7 +195,7 @@ PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *		               map_service                                   *
  *===========================================================================*/
-PUBLIC int map_service(rpub)
+int map_service(rpub)
 struct rprocpub *rpub;
 {
 /* Map a new service by registering a new acl entry if required. */
@@ -229,38 +229,38 @@ struct rprocpub *rpub;
 /*===========================================================================*
  *			helper functions for I/O			     *
  *===========================================================================*/
-PUBLIC unsigned pci_inb(u16_t port) {
+unsigned pci_inb(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
 		printf("PCI: warning, sys_inb failed: %d\n", s);
 	return value;
 }
-PUBLIC unsigned pci_inw(u16_t port) {
+unsigned pci_inw(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
 		printf("PCI: warning, sys_inw failed: %d\n", s);
 	return value;
 }
-PUBLIC unsigned pci_inl(u16_t port) {
+unsigned pci_inl(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inl(port, &value)) !=OK)
 		printf("PCI: warning, sys_inl failed: %d\n", s);
 	return value;
 }
-PUBLIC void pci_outb(u16_t port, u8_t value) {
+void pci_outb(u16_t port, u8_t value) {
 	int s;
 	if ((s=sys_outb(port, value)) !=OK)
 		printf("PCI: warning, sys_outb failed: %d\n", s);
 }
-PUBLIC void pci_outw(u16_t port, u16_t value) {
+void pci_outw(u16_t port, u16_t value) {
 	int s;
 	if ((s=sys_outw(port, value)) !=OK)
 		printf("PCI: warning, sys_outw failed: %d\n", s);
 }
-PUBLIC void pci_outl(u16_t port, u32_t value) {
+void pci_outl(u16_t port, u32_t value) {
 	int s;
 	if ((s=sys_outl(port, value)) !=OK)
 		printf("PCI: warning, sys_outl failed: %d\n", s);
@@ -269,7 +269,7 @@ PUBLIC void pci_outl(u16_t port, u32_t value) {
 /*===========================================================================*
  *				pci_find_dev				     *
  *===========================================================================*/
-PUBLIC int pci_find_dev(u8_t bus, u8_t dev, u8_t func, int *devindp)
+int pci_find_dev(u8_t bus, u8_t dev, u8_t func, int *devindp)
 {
 	int devind;
 
@@ -295,7 +295,7 @@ PUBLIC int pci_find_dev(u8_t bus, u8_t dev, u8_t func, int *devindp)
 /*===========================================================================*
  *				pci_first_dev_a				     *
  *===========================================================================*/
-PUBLIC int pci_first_dev_a(
+int pci_first_dev_a(
   struct rs_pci *aclp,
   int *devindp,
   u16_t *vidp,
@@ -325,7 +325,7 @@ PUBLIC int pci_first_dev_a(
 /*===========================================================================*
  *				pci_next_dev				     *
  *===========================================================================*/
-PUBLIC int pci_next_dev_a(
+int pci_next_dev_a(
   struct rs_pci *aclp,
   int *devindp,
   u16_t *vidp,
@@ -355,7 +355,7 @@ PUBLIC int pci_next_dev_a(
 /*===========================================================================*
  *				pci_reserve_a				     *
  *===========================================================================*/
-PUBLIC int pci_reserve_a(devind, proc, aclp)
+int pci_reserve_a(devind, proc, aclp)
 int devind;
 endpoint_t proc;
 struct rs_pci *aclp;
@@ -439,7 +439,7 @@ struct rs_pci *aclp;
 /*===========================================================================*
  *				pci_release				     *
  *===========================================================================*/
-PUBLIC void pci_release(proc)
+void pci_release(proc)
 endpoint_t proc;
 {
 	int i;
@@ -457,7 +457,7 @@ endpoint_t proc;
 /*===========================================================================*
  *				pci_ids_s				     *
  *===========================================================================*/
-PUBLIC int pci_ids_s(int devind, u16_t *vidp, u16_t *didp)
+int pci_ids_s(int devind, u16_t *vidp, u16_t *didp)
 {
 	if (devind < 0 || devind >= nr_pcidev)
 		return EINVAL;
@@ -470,7 +470,7 @@ PUBLIC int pci_ids_s(int devind, u16_t *vidp, u16_t *didp)
 /*===========================================================================*
  *				pci_rescan_bus				     *
  *===========================================================================*/
-PUBLIC void pci_rescan_bus(u8_t busnr)
+void pci_rescan_bus(u8_t busnr)
 {
 	int busind;
 
@@ -487,7 +487,7 @@ PUBLIC void pci_rescan_bus(u8_t busnr)
 /*===========================================================================*
  *				pci_slot_name_s				     *
  *===========================================================================*/
-PUBLIC int pci_slot_name_s(devind, cpp)
+int pci_slot_name_s(devind, cpp)
 int devind;
 char **cpp;
 {
@@ -516,7 +516,7 @@ char **cpp;
 /*===========================================================================*
  *				pci_dev_name				     *
  *===========================================================================*/
-PUBLIC char *pci_dev_name(u16_t vid, u16_t did)
+char *pci_dev_name(u16_t vid, u16_t did)
 {
 	int i;
 
@@ -534,7 +534,7 @@ PUBLIC char *pci_dev_name(u16_t vid, u16_t did)
 /*===========================================================================*
  *				pci_get_bar_s				     *
  *===========================================================================*/
-PUBLIC int pci_get_bar_s(int devind, int port, u32_t *base, u32_t *size,
+int pci_get_bar_s(int devind, int port, u32_t *base, u32_t *size,
 	int *ioflag)
 {
 	int i, reg;
@@ -564,7 +564,7 @@ PUBLIC int pci_get_bar_s(int devind, int port, u32_t *base, u32_t *size,
 /*===========================================================================*
  *				pci_attr_r8_s				     *
  *===========================================================================*/
-PUBLIC int pci_attr_r8_s(int devind, int port, u8_t *vp)
+int pci_attr_r8_s(int devind, int port, u8_t *vp)
 {
 	if (devind < 0 || devind >= nr_pcidev)
 		return EINVAL;
@@ -578,7 +578,7 @@ PUBLIC int pci_attr_r8_s(int devind, int port, u8_t *vp)
 /*===========================================================================*
  *				pci_attr_r8_u				     *
  *===========================================================================*/
-PRIVATE u8_t pci_attr_r8_u(devind, port)
+static u8_t pci_attr_r8_u(devind, port)
 int devind;
 int port;
 {
@@ -592,7 +592,7 @@ int port;
 /*===========================================================================*
  *				pci_attr_r16				     *
  *===========================================================================*/
-PUBLIC u16_t pci_attr_r16(devind, port)
+u16_t pci_attr_r16(devind, port)
 int devind;
 int port;
 {
@@ -606,7 +606,7 @@ int port;
 /*===========================================================================*
  *				pci_attr_r32_s				     *
  *===========================================================================*/
-PUBLIC int pci_attr_r32_s(int devind, int port, u32_t *vp)
+int pci_attr_r32_s(int devind, int port, u32_t *vp)
 {
 	if (devind < 0 || devind >= nr_pcidev)
 		return EINVAL;
@@ -620,7 +620,7 @@ PUBLIC int pci_attr_r32_s(int devind, int port, u32_t *vp)
 /*===========================================================================*
  *				pci_attr_r32_u				     *
  *===========================================================================*/
-PRIVATE u32_t pci_attr_r32_u(devind, port)
+static u32_t pci_attr_r32_u(devind, port)
 int devind;
 int port;
 {
@@ -634,7 +634,7 @@ int port;
 /*===========================================================================*
  *				pci_attr_w8				     *
  *===========================================================================*/
-PUBLIC void pci_attr_w8(int devind, int port, u8_t value)
+void pci_attr_w8(int devind, int port, u8_t value)
 {
 	int busnr, busind;
 
@@ -646,7 +646,7 @@ PUBLIC void pci_attr_w8(int devind, int port, u8_t value)
 /*===========================================================================*
  *				pci_attr_w16				     *
  *===========================================================================*/
-PUBLIC void pci_attr_w16(int devind, int port, u16_t value)
+void pci_attr_w16(int devind, int port, u16_t value)
 {
 	int busnr, busind;
 
@@ -658,7 +658,7 @@ PUBLIC void pci_attr_w16(int devind, int port, u16_t value)
 /*===========================================================================*
  *				pci_attr_w32				     *
  *===========================================================================*/
-PUBLIC void pci_attr_w32(int devind, int port, u32_t value)
+void pci_attr_w32(int devind, int port, u32_t value)
 {
 	int busnr, busind;
 
@@ -670,7 +670,7 @@ PUBLIC void pci_attr_w32(int devind, int port, u32_t value)
 /*===========================================================================*
  *				pci_intel_init				     *
  *===========================================================================*/
-PRIVATE void pci_intel_init()
+static void pci_intel_init()
 {
 	/* Try to detect a know PCI controller. Read the Vendor ID and
 	 * the Device ID for function 0 of device 0.
@@ -770,7 +770,7 @@ PRIVATE void pci_intel_init()
 /*===========================================================================*
  *				probe_bus				     *
  *===========================================================================*/
-PRIVATE void probe_bus(int busind)
+static void probe_bus(int busind)
 {
 	u32_t dev, func, t3;
 	u16_t vid, did, sts;
@@ -927,7 +927,7 @@ PRIVATE void probe_bus(int busind)
 /*===========================================================================*
  *				is_duplicate				     *
  *===========================================================================*/
-PRIVATE int is_duplicate(u8_t busnr, u8_t dev, u8_t func)
+static int is_duplicate(u8_t busnr, u8_t dev, u8_t func)
 {
 	int i;
 
@@ -943,7 +943,7 @@ PRIVATE int is_duplicate(u8_t busnr, u8_t dev, u8_t func)
 	return 0;
 }
 
-PRIVATE int acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
+static int acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
 {
 	int err;
 	message m;
@@ -959,7 +959,7 @@ PRIVATE int acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
 	return ((struct acpi_get_irq_resp *)&m)->irq;
 }
 
-PRIVATE int derive_irq(struct pcidev * dev, int pin)
+static int derive_irq(struct pcidev * dev, int pin)
 {
 	struct pcidev * parent_bridge;
 	int slot;
@@ -979,7 +979,7 @@ PRIVATE int derive_irq(struct pcidev * dev, int pin)
 /*===========================================================================*
  *				record_irq				     *
  *===========================================================================*/
-PRIVATE void record_irq(devind)
+static void record_irq(devind)
 int devind;
 {
 	int ilr, ipr, busnr, busind, cb_devind;
@@ -1078,7 +1078,7 @@ int devind;
 /*===========================================================================*
  *				record_bars_normal			     *
  *===========================================================================*/
-PRIVATE void record_bars_normal(devind)
+static void record_bars_normal(devind)
 int devind;
 {
 	int i, j, clear_01, clear_23, pb_nr;
@@ -1142,7 +1142,7 @@ int devind;
 /*===========================================================================*
  *				record_bars_bridge			     *
  *===========================================================================*/
-PRIVATE void record_bars_bridge(devind)
+static void record_bars_bridge(devind)
 int devind;
 {
 	u32_t base, limit, size;
@@ -1194,7 +1194,7 @@ int devind;
 /*===========================================================================*
  *				record_bars_cardbus			     *
  *===========================================================================*/
-PRIVATE void record_bars_cardbus(devind)
+static void record_bars_cardbus(devind)
 int devind;
 {
 	u32_t base, limit, size;
@@ -1246,7 +1246,7 @@ int devind;
 /*===========================================================================*
  *				record_bars				     *
  *===========================================================================*/
-PRIVATE void record_bars(int devind, int last_reg)
+static void record_bars(int devind, int last_reg)
 {
 	int i, reg, width;
 
@@ -1259,7 +1259,7 @@ PRIVATE void record_bars(int devind, int last_reg)
 /*===========================================================================*
  *				record_bar				     *
  *===========================================================================*/
-PRIVATE int record_bar(devind, bar_nr, last)
+static int record_bar(devind, bar_nr, last)
 int devind;
 int bar_nr;
 int last;
@@ -1405,7 +1405,7 @@ int last;
 /*===========================================================================*
  *				complete_bridges			     *
  *===========================================================================*/
-PRIVATE void complete_bridges()
+static void complete_bridges()
 {
 	int i, freebus, devind, prim_busnr;
 
@@ -1446,7 +1446,7 @@ PRIVATE void complete_bridges()
 /*===========================================================================*
  *				complete_bars				     *
  *===========================================================================*/
-PRIVATE void complete_bars(void)
+static void complete_bars(void)
 {
 	int i, j, r, bar_nr, reg;
 	u32_t memgap_low, memgap_high, iogap_low, iogap_high, io_high,
@@ -1670,7 +1670,7 @@ bad_mem_string:
 /*===========================================================================*
  *				update_bridge4dev_io			     *
  *===========================================================================*/
-PRIVATE void update_bridge4dev_io(
+static void update_bridge4dev_io(
   int devind,
   u32_t io_base,
   u32_t io_size
@@ -1710,7 +1710,7 @@ PRIVATE void update_bridge4dev_io(
 /*===========================================================================*
  *				get_freebus				     *
  *===========================================================================*/
-PRIVATE int get_freebus()
+static int get_freebus()
 {
 	int i, freebus;
 
@@ -1731,7 +1731,7 @@ PRIVATE int get_freebus()
 /*===========================================================================*
  *				do_isabridge				     *
  *===========================================================================*/
-PRIVATE int do_isabridge(busind)
+static int do_isabridge(busind)
 int busind;
 {
 	int i, j, r, type, busnr, unknown_bridge, bridge_dev;
@@ -1840,7 +1840,7 @@ int busind;
  * (pbnr) must be already known to acpi and it must map dev as the connection to
  * the secondary (sbnr) bus
  */
-PRIVATE void acpi_map_bridge(unsigned pbnr, unsigned dev, unsigned sbnr)
+static void acpi_map_bridge(unsigned pbnr, unsigned dev, unsigned sbnr)
 {
 	int err;
 	message m;
@@ -1861,7 +1861,7 @@ PRIVATE void acpi_map_bridge(unsigned pbnr, unsigned dev, unsigned sbnr)
 /*===========================================================================*
  *				do_pcibridge				     *
  *===========================================================================*/
-PRIVATE void do_pcibridge(busind)
+static void do_pcibridge(busind)
 int busind;
 {
 	int i, devind, busnr;
@@ -2015,7 +2015,7 @@ int busind;
 /*===========================================================================*
  *				get_busind					     *
  *===========================================================================*/
-PRIVATE int get_busind(busnr)
+static int get_busind(busnr)
 int busnr;
 {
 	int i;
@@ -2031,7 +2031,7 @@ int busnr;
 /*===========================================================================*
  *				do_piix					     *
  *===========================================================================*/
-PRIVATE int do_piix(int devind)
+static int do_piix(int devind)
 {
 	int i, s, irqrc, irq;
 	u32_t elcr1, elcr2, elcr;
@@ -2075,7 +2075,7 @@ PRIVATE int do_piix(int devind)
 /*===========================================================================*
  *				do_amd_isabr				     *
  *===========================================================================*/
-PRIVATE int do_amd_isabr(int devind)
+static int do_amd_isabr(int devind)
 {
 	int i, busnr, dev, func, xdevind, irq, edge;
 	u8_t levmask;
@@ -2127,7 +2127,7 @@ PRIVATE int do_amd_isabr(int devind)
 /*===========================================================================*
  *				do_sis_isabr				     *
  *===========================================================================*/
-PRIVATE int do_sis_isabr(int devind)
+static int do_sis_isabr(int devind)
 {
 	int i, irq;
 
@@ -2154,7 +2154,7 @@ PRIVATE int do_sis_isabr(int devind)
 /*===========================================================================*
  *				do_via_isabr				     *
  *===========================================================================*/
-PRIVATE int do_via_isabr(int devind)
+static int do_via_isabr(int devind)
 {
 	int i, irq, edge;
 	u8_t levmask;
@@ -2212,7 +2212,7 @@ PRIVATE int do_via_isabr(int devind)
 /*===========================================================================*
  *				report_vga				     *
  *===========================================================================*/
-PRIVATE void report_vga(devind)
+static void report_vga(devind)
 int devind;
 {
 	/* Report the amount of video memory. This is needed by the X11R6
@@ -2247,7 +2247,7 @@ int devind;
 /*===========================================================================*
  *				pci_vid_name				     *
  *===========================================================================*/
-PRIVATE char *pci_vid_name(u16_t vid)
+static char *pci_vid_name(u16_t vid)
 {
 	int i;
 
@@ -2262,7 +2262,7 @@ PRIVATE char *pci_vid_name(u16_t vid)
 /*===========================================================================*
  *				pci_baseclass_name			     *
  *===========================================================================*/
-PRIVATE char *pci_baseclass_name(u8_t baseclass)
+static char *pci_baseclass_name(u8_t baseclass)
 {
 	int i;
 
@@ -2277,7 +2277,7 @@ PRIVATE char *pci_baseclass_name(u8_t baseclass)
 /*===========================================================================*
  *				pci_subclass_name			     *
  *===========================================================================*/
-PRIVATE char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t infclass)
+static char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t infclass)
 {
 	int i;
 
@@ -2300,7 +2300,7 @@ PRIVATE char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t infclass)
 /*===========================================================================*
  *				ntostr					     *
  *===========================================================================*/
-PRIVATE void ntostr(n, str, end)
+static void ntostr(n, str, end)
 unsigned n;
 char **str;
 char *end;
@@ -2339,7 +2339,7 @@ char *end;
 /*===========================================================================*
  *				pci_attr_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pci_attr_rsts(devind)
+static u16_t pci_attr_rsts(devind)
 int devind;
 {
 	int busnr, busind;
@@ -2353,7 +2353,7 @@ int devind;
 /*===========================================================================*
  *				pcibr_std_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pcibr_std_rsts(busind)
+static u16_t pcibr_std_rsts(busind)
 int busind;
 {
 	int devind;
@@ -2365,7 +2365,7 @@ int busind;
 /*===========================================================================*
  *				pcibr_std_wsts				     *
  *===========================================================================*/
-PRIVATE void pcibr_std_wsts(int busind, u16_t value)
+static void pcibr_std_wsts(int busind, u16_t value)
 {
 	int devind;
 	devind= pcibus[busind].pb_devind;
@@ -2380,7 +2380,7 @@ PRIVATE void pcibr_std_wsts(int busind, u16_t value)
 /*===========================================================================*
  *				pcibr_cb_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pcibr_cb_rsts(busind)
+static u16_t pcibr_cb_rsts(busind)
 int busind;
 {
 	int devind;
@@ -2392,7 +2392,7 @@ int busind;
 /*===========================================================================*
  *				pcibr_cb_wsts				     *
  *===========================================================================*/
-PRIVATE void pcibr_cb_wsts(int busind, u16_t value)
+static void pcibr_cb_wsts(int busind, u16_t value)
 {
 	int devind;
 	devind= pcibus[busind].pb_devind;
@@ -2407,7 +2407,7 @@ PRIVATE void pcibr_cb_wsts(int busind, u16_t value)
 /*===========================================================================*
  *				pcibr_via_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pcibr_via_rsts(int busind)
+static u16_t pcibr_via_rsts(int busind)
 {
 	return 0;
 }
@@ -2415,7 +2415,7 @@ PRIVATE u16_t pcibr_via_rsts(int busind)
 /*===========================================================================*
  *				pcibr_via_wsts				     *
  *===========================================================================*/
-PRIVATE void pcibr_via_wsts(int busind, u16_t value)
+static void pcibr_via_wsts(int busind, u16_t value)
 {
 	int devind;
 	devind= pcibus[busind].pb_devind;
@@ -2429,7 +2429,7 @@ PRIVATE void pcibr_via_wsts(int busind, u16_t value)
 /*===========================================================================*
  *				pci_attr_wsts				     *
  *===========================================================================*/
-PRIVATE void pci_attr_wsts(int devind, u16_t value)
+static void pci_attr_wsts(int devind, u16_t value)
 {
 	int busnr, busind;
 
@@ -2442,7 +2442,7 @@ PRIVATE void pci_attr_wsts(int devind, u16_t value)
 /*===========================================================================*
  *				pcii_rreg8				     *
  *===========================================================================*/
-PRIVATE u8_t pcii_rreg8(busind, devind, port)
+static u8_t pcii_rreg8(busind, devind, port)
 int busind;
 int devind;
 int port;
@@ -2467,7 +2467,7 @@ int port;
 /*===========================================================================*
  *				pcii_rreg16				     *
  *===========================================================================*/
-PRIVATE u16_t pcii_rreg16(int busind, int devind, int port)
+static u16_t pcii_rreg16(int busind, int devind, int port)
 {
 	u16_t v;
 	int s;
@@ -2489,7 +2489,7 @@ PRIVATE u16_t pcii_rreg16(int busind, int devind, int port)
 /*===========================================================================*
  *				pcii_rreg32				     *
  *===========================================================================*/
-PRIVATE u32_t pcii_rreg32(int busind, int devind, int port)
+static u32_t pcii_rreg32(int busind, int devind, int port)
 {
 	u32_t v;
 	int s;
@@ -2511,7 +2511,7 @@ PRIVATE u32_t pcii_rreg32(int busind, int devind, int port)
 /*===========================================================================*
  *				pcii_wreg8				     *
  *===========================================================================*/
-PRIVATE void pcii_wreg8(
+static void pcii_wreg8(
   int busind,
   int devind,
   int port,
@@ -2535,7 +2535,7 @@ PRIVATE void pcii_wreg8(
 /*===========================================================================*
  *				pcii_wreg16				     *
  *===========================================================================*/
-PRIVATE void pcii_wreg16(
+static void pcii_wreg16(
   int busind,
   int devind,
   int port,
@@ -2559,7 +2559,7 @@ PRIVATE void pcii_wreg16(
 /*===========================================================================*
  *				pcii_wreg32				     *
  *===========================================================================*/
-PRIVATE void pcii_wreg32(
+static void pcii_wreg32(
   int busind,
   int devind,
   int port,
@@ -2583,7 +2583,7 @@ PRIVATE void pcii_wreg32(
 /*===========================================================================*
  *				pcii_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pcii_rsts(int busind)
+static u16_t pcii_rsts(int busind)
 {
 	u16_t v;
 	int s;
@@ -2597,7 +2597,7 @@ PRIVATE u16_t pcii_rsts(int busind)
 /*===========================================================================*
  *				pcii_wsts				     *
  *===========================================================================*/
-PRIVATE void pcii_wsts(int busind, u16_t value)
+static void pcii_wsts(int busind, u16_t value)
 {
 	int s;
 	PCII_WREG16_(pcibus[busind].pb_busnr, 0, 0, PCI_SR, value);
@@ -2609,7 +2609,7 @@ PRIVATE void pcii_wsts(int busind, u16_t value)
 /*===========================================================================*
  *				print_capabilities			     *
  *===========================================================================*/
-PRIVATE void print_capabilities(int devind)
+static void print_capabilities(int devind)
 {
 	u8_t status, capptr, type, next, subtype;
 	char *str;
@@ -2661,7 +2661,7 @@ PRIVATE void print_capabilities(int devind)
 /*===========================================================================*
  *				visible					     *
  *===========================================================================*/
-PRIVATE int visible(aclp, devind)
+static int visible(aclp, devind)
 struct rs_pci *aclp;
 int devind;
 {
@@ -2703,7 +2703,7 @@ int devind;
 /*===========================================================================*
  *				print_hyper_cap				     *
  *===========================================================================*/
-PRIVATE void print_hyper_cap(int devind, u8_t capptr)
+static void print_hyper_cap(int devind, u8_t capptr)
 { 
 	u32_t v;
 	u16_t cmd;

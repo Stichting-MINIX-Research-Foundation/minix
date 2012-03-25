@@ -23,7 +23,7 @@
 
 #define MEM_TOP 0xFFFFFFFFUL
 
-FORWARD int safecopy(struct proc *, endpoint_t, endpoint_t,
+static int safecopy(struct proc *, endpoint_t, endpoint_t,
 	cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int);
 
 #define HASGRANTTABLE(gr) \
@@ -32,7 +32,7 @@ FORWARD int safecopy(struct proc *, endpoint_t, endpoint_t,
 /*===========================================================================*
  *				verify_grant				     *
  *===========================================================================*/
-PUBLIC int verify_grant(granter, grantee, grant, bytes, access,
+int verify_grant(granter, grantee, grant, bytes, access,
 	offset_in, offset_result, e_granter)
 endpoint_t granter, grantee;	/* copyee, copyer */
 cp_grant_id_t grant;		/* grant id */
@@ -226,7 +226,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 /*===========================================================================*
  *				safecopy				     *
  *===========================================================================*/
-PRIVATE int safecopy(caller, granter, grantee, grantid, src_seg, dst_seg, bytes,
+static int safecopy(caller, granter, grantee, grantid, src_seg, dst_seg, bytes,
 	g_offset, addr, access)
 struct proc * caller;
 endpoint_t granter, grantee;
@@ -344,7 +344,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 /*===========================================================================*
  *				do_safecopy_to				     *
  *===========================================================================*/
-PUBLIC int do_safecopy_to(struct proc * caller, message * m_ptr)
+int do_safecopy_to(struct proc * caller, message * m_ptr)
 {
 	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
 		(cp_grant_id_t) m_ptr->SCP_GID, m_ptr->SCP_SEG, D,
@@ -355,7 +355,7 @@ PUBLIC int do_safecopy_to(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				do_safecopy_from			     *
  *===========================================================================*/
-PUBLIC int do_safecopy_from(struct proc * caller, message * m_ptr)
+int do_safecopy_from(struct proc * caller, message * m_ptr)
 {
 	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
 		(cp_grant_id_t) m_ptr->SCP_GID, D, m_ptr->SCP_SEG,
@@ -366,7 +366,7 @@ PUBLIC int do_safecopy_from(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				do_vsafecopy				     *
  *===========================================================================*/
-PUBLIC int do_vsafecopy(struct proc * caller, message * m_ptr)
+int do_vsafecopy(struct proc * caller, message * m_ptr)
 {
 	static struct vscp_vec vec[SCPVEC_NR];
 	static struct vir_addr src, dst;

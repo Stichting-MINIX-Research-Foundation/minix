@@ -36,7 +36,7 @@
 /*===========================================================================*
  *				do_exec					     *
  *===========================================================================*/
-PUBLIC int do_exec()
+int do_exec()
 {
 	message m;
 
@@ -58,7 +58,7 @@ PUBLIC int do_exec()
 /*===========================================================================*
  *				do_exec_newmem				     *
  *===========================================================================*/
-PUBLIC int do_exec_newmem()
+int do_exec_newmem()
 {
 	int proc_e, proc_n, allow_setuid;
 	char *ptr;
@@ -131,7 +131,7 @@ PUBLIC int do_exec_newmem()
 /*===========================================================================*
  *				do_execrestart				     *
  *===========================================================================*/
-PUBLIC int do_execrestart()
+int do_execrestart()
 {
 	int proc_e, proc_n, result;
 	struct mproc *rmp;
@@ -157,7 +157,7 @@ PUBLIC int do_execrestart()
 /*===========================================================================*
  *				exec_restart				     *
  *===========================================================================*/
-PUBLIC void exec_restart(rmp, result, pc)
+void exec_restart(rmp, result, pc)
 struct mproc *rmp;
 int result;
 vir_bytes pc;

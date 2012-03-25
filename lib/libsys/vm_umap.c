@@ -6,7 +6,7 @@
 /*===========================================================================*
  *                                vm_umap				     *
  *===========================================================================*/
-PUBLIC int vm_umap(int seg, vir_bytes offset, vir_bytes len, phys_bytes *addr)
+int vm_umap(int seg, vir_bytes offset, vir_bytes len, phys_bytes *addr)
 {
     message m;
     int result;

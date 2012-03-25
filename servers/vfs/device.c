@@ -39,17 +39,17 @@
 #include "vmnt.h"
 #include "param.h"
 
-FORWARD void restart_reopen(int major);
-FORWARD int safe_io_conversion(endpoint_t, cp_grant_id_t *, int *,
+static void restart_reopen(int major);
+static int safe_io_conversion(endpoint_t, cp_grant_id_t *, int *,
 	endpoint_t *, void **, size_t, u32_t *);
 
-PRIVATE int dummyproc;
+static int dummyproc;
 
 
 /*===========================================================================*
  *				dev_open				     *
  *===========================================================================*/
-PUBLIC int dev_open(
+int dev_open(
   dev_t dev,			/* device to open */
   endpoint_t proc_e,		/* process to open for */
   int flags			/* mode bits and flags */
@@ -73,7 +73,7 @@ PUBLIC int dev_open(
 /*===========================================================================*
  *				dev_reopen				     *
  *===========================================================================*/
-PUBLIC int dev_reopen(
+int dev_reopen(
   dev_t dev,			/* device to open */
   int filp_no,			/* filp to reopen for */
   int flags			/* mode bits and flags */
@@ -102,7 +102,7 @@ PUBLIC int dev_reopen(
 /*===========================================================================*
  *				dev_close				     *
  *===========================================================================*/
-PUBLIC int dev_close(
+int dev_close(
   dev_t dev,			/* device to close */
   int filp_no
 )
@@ -122,7 +122,7 @@ PUBLIC int dev_close(
 /*===========================================================================*
  *				dev_open				     *
  *===========================================================================*/
-PUBLIC int bdev_open(dev_t dev, int access)
+int bdev_open(dev_t dev, int access)
 {
 /* Open a block device. */
   int major;
@@ -138,7 +138,7 @@ PUBLIC int bdev_open(dev_t dev, int access)
 /*===========================================================================*
  *				bdev_close				     *
  *===========================================================================*/
-PUBLIC int bdev_close(dev_t dev)
+int bdev_close(dev_t dev)
 {
 /* Close a block device. */
   int major;
@@ -154,7 +154,7 @@ PUBLIC int bdev_close(dev_t dev)
 /*===========================================================================*
  *				bdev_ioctl				     *
  *===========================================================================*/
-PRIVATE int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
+static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
 {
 /* Perform an I/O control operation on a block device. */
   struct dmap *dp;
@@ -228,7 +228,7 @@ endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
 /*===========================================================================*
  *				dev_status				     *
  *===========================================================================*/
-PUBLIC void dev_status(message *m)
+void dev_status(message *m)
 {
 /* A device sent us a notification it has something for us. Retrieve it. */
 
@@ -293,7 +293,7 @@ PUBLIC void dev_status(message *m)
 /*===========================================================================*
  *				safe_io_conversion			     *
  *===========================================================================*/
-PRIVATE int safe_io_conversion(driver, gid, op, io_ept, buf, bytes, pos_lo)
+static int safe_io_conversion(driver, gid, op, io_ept, buf, bytes, pos_lo)
 endpoint_t driver;
 cp_grant_id_t *gid;
 int *op;
@@ -359,7 +359,7 @@ u32_t *pos_lo;
   return(0);
 }
 
-PRIVATE int cancel_nblock(struct dmap * dp,
+static int cancel_nblock(struct dmap * dp,
 			int minor,
 			int call,
 			endpoint_t ioproc,
@@ -388,7 +388,7 @@ PRIVATE int cancel_nblock(struct dmap * dp,
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
-PUBLIC int dev_io(
+int dev_io(
   int op,			/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
   dev_t dev,			/* major-minor device number */
   int proc_e,			/* in whose address space is buf? */
@@ -516,7 +516,7 @@ PUBLIC int dev_io(
 /*===========================================================================*
  *				gen_opcl				     *
  *===========================================================================*/
-PUBLIC int gen_opcl(
+int gen_opcl(
   int op,			/* operation, (B)DEV_OPEN or (B)DEV_CLOSE */
   dev_t dev,			/* device to open or close */
   endpoint_t proc_e,		/* process to open/close for */
@@ -568,7 +568,7 @@ PUBLIC int gen_opcl(
 /*===========================================================================*
  *				tty_opcl				     *
  *===========================================================================*/
-PUBLIC int tty_opcl(
+int tty_opcl(
   int op,			/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t dev,			/* device to open or close */
   endpoint_t proc_e,		/* process to open/close for */
@@ -610,7 +610,7 @@ PUBLIC int tty_opcl(
 /*===========================================================================*
  *				ctty_opcl				     *
  *===========================================================================*/
-PUBLIC int ctty_opcl(
+int ctty_opcl(
   int op,			/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t UNUSED(dev),		/* device to open or close */
   endpoint_t UNUSED(proc_e),	/* process to open/close for */
@@ -630,7 +630,7 @@ PUBLIC int ctty_opcl(
 /*===========================================================================*
  *				pm_setsid				     *
  *===========================================================================*/
-PUBLIC void pm_setsid(proc_e)
+void pm_setsid(proc_e)
 int proc_e;
 {
 /* Perform the VFS side of the SETSID call, i.e. get rid of the controlling
@@ -650,7 +650,7 @@ int proc_e;
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-PUBLIC int do_ioctl()
+int do_ioctl()
 {
 /* Perform the ioctl(ls_fd, request, argx) system call (uses m2 fmt). */
 
@@ -689,7 +689,7 @@ PUBLIC int do_ioctl()
 /*===========================================================================*
  *				gen_io					     *
  *===========================================================================*/
-PUBLIC int gen_io(driver_e, mess_ptr)
+int gen_io(driver_e, mess_ptr)
 endpoint_t driver_e;		/* which endpoint to call */
 message *mess_ptr;		/* pointer to message for task */
 {
@@ -739,7 +739,7 @@ message *mess_ptr;		/* pointer to message for task */
 /*===========================================================================*
  *				asyn_io					     *
  *===========================================================================*/
-PUBLIC int asyn_io(task_nr, mess_ptr)
+int asyn_io(task_nr, mess_ptr)
 int task_nr;			/* which task to call */
 message *mess_ptr;		/* pointer to message for task */
 {
@@ -765,7 +765,7 @@ message *mess_ptr;		/* pointer to message for task */
 /*===========================================================================*
  *				ctty_io					     *
  *===========================================================================*/
-PUBLIC int ctty_io(
+int ctty_io(
   endpoint_t UNUSED(task_nr),	/* not used - for compatibility with dmap_t */
   message *mess_ptr		/* pointer to message for task */
 )
@@ -805,7 +805,7 @@ PUBLIC int ctty_io(
 /*===========================================================================*
  *				no_dev					     *
  *===========================================================================*/
-PUBLIC int no_dev(
+int no_dev(
   int UNUSED(op),		/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t UNUSED(dev),		/* device to open or close */
   int UNUSED(proc),		/* process to open/close for */
@@ -819,7 +819,7 @@ PUBLIC int no_dev(
 /*===========================================================================*
  *				no_dev_io				     *
  *===========================================================================*/
-PUBLIC int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
+int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
 {
 /* Called when doing i/o on a nonexistent device. */
   printf("VFS: I/O on unmapped device number\n");
@@ -830,7 +830,7 @@ PUBLIC int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
 /*===========================================================================*
  *				clone_opcl				     *
  *===========================================================================*/
-PUBLIC int clone_opcl(
+int clone_opcl(
   int op,			/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t dev,			/* device to open or close */
   int proc_e,			/* process to open/close for */
@@ -927,7 +927,7 @@ PUBLIC int clone_opcl(
 /*===========================================================================*
  *				bdev_up					     *
  *===========================================================================*/
-PUBLIC void bdev_up(int maj)
+void bdev_up(int maj)
 {
   /* A new block device driver has been mapped in. This may affect both mounted
    * file systems and open block-special files.
@@ -987,7 +987,7 @@ PUBLIC void bdev_up(int maj)
 /*===========================================================================*
  *				cdev_up					     *
  *===========================================================================*/
-PUBLIC void cdev_up(int maj)
+void cdev_up(int maj)
 {
   /* A new character device driver has been mapped in.
   */
@@ -1032,7 +1032,7 @@ PUBLIC void cdev_up(int maj)
 /*===========================================================================*
  *				open_reply				     *
  *===========================================================================*/
-PUBLIC void open_reply(void)
+void open_reply(void)
 {
   struct fproc *rfp;
   endpoint_t proc_e;
@@ -1048,7 +1048,7 @@ PUBLIC void open_reply(void)
 /*===========================================================================*
  *				restart_reopen				     *
  *===========================================================================*/
-PRIVATE void restart_reopen(maj)
+static void restart_reopen(maj)
 int maj;
 {
   int n, r, minor_dev, major_dev, fd_nr;
@@ -1138,7 +1138,7 @@ int maj;
 /*===========================================================================*
  *				reopen_reply				     *
  *===========================================================================*/
-PUBLIC void reopen_reply()
+void reopen_reply()
 {
   endpoint_t driver_e;
   int filp_no, status, maj;

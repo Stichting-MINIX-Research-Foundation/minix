@@ -14,12 +14,12 @@
 
 #if USE_SETALARM
 
-FORWARD void cause_alarm(timer_t *tp);
+static void cause_alarm(timer_t *tp);
 
 /*===========================================================================*
  *				do_setalarm				     *
  *===========================================================================*/
-PUBLIC int do_setalarm(struct proc * caller, message * m_ptr)
+int do_setalarm(struct proc * caller, message * m_ptr)
 {
 /* A process requests a synchronous alarm, or wants to cancel its alarm. */
   long exp_time;		/* expiration time for this alarm */
@@ -58,7 +58,7 @@ PUBLIC int do_setalarm(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				cause_alarm				     *
  *===========================================================================*/
-PRIVATE void cause_alarm(timer_t *tp)
+static void cause_alarm(timer_t *tp)
 {
 /* Routine called if a timer goes off and the process requested a synchronous
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that

@@ -9,7 +9,7 @@ pci_dev_name.c
 /*===========================================================================*
  *				pci_dev_name				     *
  *===========================================================================*/
-PUBLIC char *pci_dev_name(u16_t vid, u16_t did)
+char *pci_dev_name(u16_t vid, u16_t did)
 {
 	static char name[80];	/* We need a better interface for this */
 

@@ -1,7 +1,7 @@
 #include <lib.h>
 #include <unistd.h>
 
-PUBLIC uid_t getnuid(endpoint_t proc_ep)
+uid_t getnuid(endpoint_t proc_ep)
 {
   message m;
   m.m1_i1 = proc_ep;		/* search uid for this process */

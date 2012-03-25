@@ -17,7 +17,7 @@ Copyright 1995 Philip Homburg
 THIS_FILE
 
 #undef tcp_LEmod4G
-PUBLIC int tcp_LEmod4G(n1, n2)
+int tcp_LEmod4G(n1, n2)
 u32_t n1;
 u32_t n2;
 {
@@ -25,7 +25,7 @@ u32_t n2;
 }
 
 #undef tcp_GEmod4G
-PUBLIC int tcp_GEmod4G(n1, n2)
+int tcp_GEmod4G(n1, n2)
 u32_t n1;
 u32_t n2;
 {
@@ -33,7 +33,7 @@ u32_t n2;
 }
 
 #undef tcp_Lmod4G
-PUBLIC int tcp_Lmod4G(n1, n2)
+int tcp_Lmod4G(n1, n2)
 u32_t n1;
 u32_t n2;
 {
@@ -41,14 +41,14 @@ u32_t n2;
 }
 
 #undef tcp_Gmod4G
-PUBLIC int tcp_Gmod4G(n1, n2)
+int tcp_Gmod4G(n1, n2)
 u32_t n1;
 u32_t n2;
 {
 	return !!((u32_t)(n2-n1) & 0x80000000L);
 }
 
-PUBLIC void tcp_extract_ipopt(tcp_conn, ip_hdr)
+void tcp_extract_ipopt(tcp_conn, ip_hdr)
 tcp_conn_t *tcp_conn;
 ip_hdr_t *ip_hdr;
 {
@@ -61,7 +61,7 @@ ip_hdr_t *ip_hdr;
 	DBLOCK(1, printf("ip_hdr options NOT supported (yet?)\n"));
 }
 
-PUBLIC void tcp_extract_tcpopt(tcp_conn, tcp_hdr, mssp)
+void tcp_extract_tcpopt(tcp_conn, tcp_hdr, mssp)
 tcp_conn_t *tcp_conn;
 tcp_hdr_t *tcp_hdr;
 size_t *mssp;
@@ -119,7 +119,7 @@ size_t *mssp;
 	}
 }
 
-PUBLIC u16_t tcp_pack_oneCsum(ip_hdr, tcp_pack)
+u16_t tcp_pack_oneCsum(ip_hdr, tcp_pack)
 ip_hdr_t *ip_hdr;
 acc_t *tcp_pack;
 {
@@ -165,7 +165,7 @@ acc_t *tcp_pack;
 	return sum;
 }
 
-PUBLIC void tcp_get_ipopt(tcp_conn, ip_hdropt)
+void tcp_get_ipopt(tcp_conn, ip_hdropt)
 tcp_conn_t *tcp_conn;
 ip_hdropt_t *ip_hdropt;
 {
@@ -179,7 +179,7 @@ ip_hdropt_t *ip_hdropt;
 	return;
 }
 
-PUBLIC void tcp_get_tcpopt(tcp_conn, tcp_hdropt)
+void tcp_get_tcpopt(tcp_conn, tcp_hdropt)
 tcp_conn_t *tcp_conn;
 tcp_hdropt_t *tcp_hdropt;
 {
@@ -204,7 +204,7 @@ tcp_hdropt_t *tcp_hdropt;
 	return;
 }
 
-PUBLIC acc_t *tcp_make_header(tcp_conn, ref_ip_hdr, ref_tcp_hdr, data)
+acc_t *tcp_make_header(tcp_conn, ref_ip_hdr, ref_tcp_hdr, data)
 tcp_conn_t *tcp_conn;
 ip_hdr_t **ref_ip_hdr;
 tcp_hdr_t **ref_tcp_hdr;
@@ -295,7 +295,7 @@ acc_t *data;
 	return hdr_acc;
 }
 
-PUBLIC void tcp_print_state (tcp_conn)
+void tcp_print_state (tcp_conn)
 tcp_conn_t *tcp_conn;
 {
 #if DEBUG
@@ -319,7 +319,7 @@ tcp_conn_t *tcp_conn;
 #endif
 }
 
-PUBLIC int tcp_check_conn(tcp_conn)
+int tcp_check_conn(tcp_conn)
 tcp_conn_t *tcp_conn;
 {
 	int allright;
@@ -480,7 +480,7 @@ tcp_conn_t *tcp_conn;
 	return allright;
 }
 
-PUBLIC void tcp_print_pack(ip_hdr, tcp_hdr)
+void tcp_print_pack(ip_hdr, tcp_hdr)
 ip_hdr_t *ip_hdr;
 tcp_hdr_t *tcp_hdr;
 {
@@ -516,7 +516,7 @@ tcp_hdr_t *tcp_hdr;
 		printf(" <options %d>", tcp_hdr_len-TCP_MIN_HDR_SIZE);
 }
 
-PUBLIC void tcp_print_conn(tcp_conn)
+void tcp_print_conn(tcp_conn)
 tcp_conn_t *tcp_conn;
 {
 	u32_t iss, irs;

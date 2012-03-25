@@ -41,14 +41,14 @@ static struct ex_s ex_data[] = {
 	{ "SIMD exception", SIGFPE, 386 },
 };
 
-PRIVATE void inkernel_disaster(struct proc *saved_proc,
+static void inkernel_disaster(struct proc *saved_proc,
 	struct exception_frame *frame, struct ex_s *ep, int is_nested);
 
 extern int catch_pagefaults;
 
-PRIVATE void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc);
+static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc);
 
-PRIVATE void pagefault( struct proc *pr,
+static void pagefault( struct proc *pr,
 			struct exception_frame * frame,
 			int is_nested)
 {
@@ -132,7 +132,7 @@ PRIVATE void pagefault( struct proc *pr,
 	return;
 }
 
-PRIVATE void inkernel_disaster(struct proc *saved_proc,
+static void inkernel_disaster(struct proc *saved_proc,
 	struct exception_frame * frame, struct ex_s *ep,
 	int is_nested)
 {
@@ -184,7 +184,7 @@ PRIVATE void inkernel_disaster(struct proc *saved_proc,
 /*===========================================================================*
  *				exception				     *
  *===========================================================================*/
-PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
+void exception_handler(int is_nested, struct exception_frame * frame)
 {
 /* An exception or unexpected interrupt has occurred. */
   register struct ex_s *ep;
@@ -278,7 +278,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 /*===========================================================================*
  *				proc_stacktrace_execute			     *
  *===========================================================================*/
-PRIVATE void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc)
+static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc)
 {
 	reg_t v_hbp;
 	int iskernel;
@@ -322,21 +322,21 @@ PRIVATE void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t p
 /*===========================================================================*
  *				proc_stacktrace			     *
  *===========================================================================*/
-PUBLIC void proc_stacktrace(struct proc *whichproc)
+void proc_stacktrace(struct proc *whichproc)
 {
 #if USE_SYSDEBUG
 	proc_stacktrace_execute(whichproc, whichproc->p_reg.fp, whichproc->p_reg.pc);
 #endif /* USE_SYSDEBUG */
 }
 
-PUBLIC void enable_fpu_exception(void)
+void enable_fpu_exception(void)
 {
 	u32_t cr0 = read_cr0();
 	if(!(cr0 & I386_CR0_TS))
 		write_cr0(cr0 | I386_CR0_TS);
 }
 
-PUBLIC void disable_fpu_exception(void)
+void disable_fpu_exception(void)
 {
 	clts();
 }

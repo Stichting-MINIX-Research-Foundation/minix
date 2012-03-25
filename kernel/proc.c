@@ -48,27 +48,27 @@
 #include "arch_proto.h"
 
 /* Scheduling and message passing functions */
-FORWARD void idle(void);
+static void idle(void);
 /**
  * Made public for use in clock.c (for user-space scheduling)
-FORWARD int mini_send(struct proc *caller_ptr, endpoint_t dst_e, message
+static int mini_send(struct proc *caller_ptr, endpoint_t dst_e, message
 	*m_ptr, int flags);
 */
-FORWARD int mini_receive(struct proc *caller_ptr, endpoint_t src,
+static int mini_receive(struct proc *caller_ptr, endpoint_t src,
 	message *m_ptr, int flags);
-FORWARD int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
+static int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
 	size);
-FORWARD int deadlock(int function, register struct proc *caller,
+static int deadlock(int function, register struct proc *caller,
 	endpoint_t src_dst_e);
-FORWARD int try_async(struct proc *caller_ptr);
-FORWARD int try_one(struct proc *src_ptr, struct proc *dst_ptr);
-FORWARD struct proc * pick_proc(void);
-FORWARD void enqueue_head(struct proc *rp);
+static int try_async(struct proc *caller_ptr);
+static int try_one(struct proc *src_ptr, struct proc *dst_ptr);
+static struct proc * pick_proc(void);
+static void enqueue_head(struct proc *rp);
 
 /* all idles share the same idle_priv structure */
-PRIVATE struct priv idle_priv;
+static struct priv idle_priv;
 
-PRIVATE void set_idle_name(char * name, int n)
+static void set_idle_name(char * name, int n)
 {
         int i, c;
         int p_z = 0;
@@ -118,7 +118,7 @@ PRIVATE void set_idle_name(char * name, int n)
 		break;							\
 	}
 
-PUBLIC void proc_init(void)
+void proc_init(void)
 {
 	struct proc * rp;
 	struct priv *sp;
@@ -174,7 +174,7 @@ PUBLIC void proc_init(void)
 	}
 }
 
-PRIVATE void switch_address_space_idle(void)
+static void switch_address_space_idle(void)
 {
 #ifdef CONFIG_SMP
 	/*
@@ -189,7 +189,7 @@ PRIVATE void switch_address_space_idle(void)
 /*===========================================================================*
  *				idle					     * 
  *===========================================================================*/
-PRIVATE void idle(void)
+static void idle(void)
 {
 	struct proc * p;
 
@@ -247,7 +247,7 @@ PRIVATE void idle(void)
 /*===========================================================================*
  *				switch_to_user				     * 
  *===========================================================================*/
-PUBLIC void switch_to_user(void)
+void switch_to_user(void)
 {
 	/* This function is called an instant before proc_ptr is
 	 * to be scheduled again.
@@ -423,7 +423,7 @@ check_misc_flags:
 /*
  * handler for all synchronous IPC calls
  */
-PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
+static int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 			int call_nr,	/* system call number and flags */
 			endpoint_t src_dst_e,	/* src or dst of the call */
 			message *m_ptr)	/* users pointer to a message */
@@ -543,7 +543,7 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
   return(result);
 }
 
-PUBLIC int do_ipc(reg_t r1, reg_t r2, reg_t r3)
+int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 {
   struct proc *const caller_ptr = get_cpulocal_var(proc_ptr);	/* get pointer to caller */
   int call_nr = (int) r1;
@@ -633,7 +633,7 @@ PUBLIC int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 /*===========================================================================*
  *				deadlock				     * 
  *===========================================================================*/
-PRIVATE int deadlock(function, cp, src_dst_e) 
+static int deadlock(function, cp, src_dst_e) 
 int function;					/* trap number */
 register struct proc *cp;			/* pointer to caller */
 endpoint_t src_dst_e;				/* src or dst process */
@@ -702,7 +702,7 @@ endpoint_t src_dst_e;				/* src or dst process */
 /*===========================================================================*
  *				has_pending				     * 
  *===========================================================================*/
-PRIVATE int has_pending(sys_map_t *map, int src_p, int asynm)
+static int has_pending(sys_map_t *map, int src_p, int asynm)
 {
 /* Check to see if there is a pending message from the desired source
  * available.
@@ -772,7 +772,7 @@ quit_search:
 /*===========================================================================*
  *				has_pending_notify			     *
  *===========================================================================*/
-PUBLIC int has_pending_notify(struct proc * caller, int src_p)
+int has_pending_notify(struct proc * caller, int src_p)
 {
 	sys_map_t * map = &priv(caller)->s_notify_pending;
 	return has_pending(map, src_p, 0);
@@ -781,7 +781,7 @@ PUBLIC int has_pending_notify(struct proc * caller, int src_p)
 /*===========================================================================*
  *				has_pending_asend			     *
  *===========================================================================*/
-PUBLIC int has_pending_asend(struct proc * caller, int src_p)
+int has_pending_asend(struct proc * caller, int src_p)
 {
 	sys_map_t * map = &priv(caller)->s_asyn_pending;
 	return has_pending(map, src_p, 1);
@@ -790,7 +790,7 @@ PUBLIC int has_pending_asend(struct proc * caller, int src_p)
 /*===========================================================================*
  *				unset_notify_pending			     *
  *===========================================================================*/
-PUBLIC void unset_notify_pending(struct proc * caller, int src_p)
+void unset_notify_pending(struct proc * caller, int src_p)
 {
 	sys_map_t * map = &priv(caller)->s_notify_pending;
 	unset_sys_bit(*map, src_p);
@@ -799,7 +799,7 @@ PUBLIC void unset_notify_pending(struct proc * caller, int src_p)
 /*===========================================================================*
  *				mini_send				     * 
  *===========================================================================*/
-PUBLIC int mini_send(
+int mini_send(
   register struct proc *caller_ptr,	/* who is trying to send a message? */
   endpoint_t dst_e,			/* to whom is message being sent? */
   message *m_ptr,			/* pointer to message buffer */
@@ -896,7 +896,7 @@ PUBLIC int mini_send(
 /*===========================================================================*
  *				mini_receive				     * 
  *===========================================================================*/
-PRIVATE int mini_receive(struct proc * caller_ptr,
+static int mini_receive(struct proc * caller_ptr,
 			endpoint_t src_e, /* which message source is wanted */
 			message * m_buff_usr, /* pointer to message buffer */
 			const int flags)
@@ -1043,7 +1043,7 @@ receive_done:
 /*===========================================================================*
  *				mini_notify				     * 
  *===========================================================================*/
-PUBLIC int mini_notify(
+int mini_notify(
   const struct proc *caller_ptr,	/* sender of the notification */
   endpoint_t dst_e			/* which process to notify */
 )
@@ -1139,7 +1139,7 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 /*===========================================================================*
  *				try_deliver_senda			     *
  *===========================================================================*/
-PUBLIC int try_deliver_senda(struct proc *caller_ptr,
+int try_deliver_senda(struct proc *caller_ptr,
 				asynmsg_t *table,
 				size_t size)
 {
@@ -1268,7 +1268,7 @@ asyn_error:
 /*===========================================================================*
  *				mini_senda				     *
  *===========================================================================*/
-PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
+static int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 {
   struct priv *privp;
 
@@ -1285,7 +1285,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 /*===========================================================================*
  *				try_async				     * 
  *===========================================================================*/
-PRIVATE int try_async(caller_ptr)
+static int try_async(caller_ptr)
 struct proc *caller_ptr;
 {
   int r;
@@ -1328,7 +1328,7 @@ struct proc *caller_ptr;
 /*===========================================================================*
  *				try_one					     *
  *===========================================================================*/
-PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
+static int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 {
 /* Try to receive an asynchronous message from 'src_ptr' */
   int r = EAGAIN, done, do_notify;
@@ -1433,7 +1433,7 @@ asyn_error:
 /*===========================================================================*
  *				cancel_async				     *
  *===========================================================================*/
-PUBLIC int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
+int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
 {
 /* Cancel asynchronous messages from src to dst, because dst is not interested
  * in them (e.g., dst has been restarted) */
@@ -1518,7 +1518,7 @@ asyn_error:
 /*===========================================================================*
  *				enqueue					     * 
  *===========================================================================*/
-PUBLIC void enqueue(
+void enqueue(
   register struct proc *rp	/* this process is now runnable */
 )
 {
@@ -1593,7 +1593,7 @@ PUBLIC void enqueue(
  * process on a run queue. We have to put this process back at the fron to be
  * fair
  */
-PRIVATE void enqueue_head(struct proc *rp)
+static void enqueue_head(struct proc *rp)
 {
   const int q = rp->p_priority;	 		/* scheduling queue to use */
 
@@ -1639,7 +1639,7 @@ PRIVATE void enqueue_head(struct proc *rp)
 /*===========================================================================*
  *				dequeue					     * 
  *===========================================================================*/
-PUBLIC void dequeue(struct proc *rp)
+void dequeue(struct proc *rp)
 /* this process is no longer runnable */
 {
 /* A process must be removed from the scheduling queues, for example, because
@@ -1706,7 +1706,7 @@ PUBLIC void dequeue(struct proc *rp)
 /*===========================================================================*
  *				pick_proc				     * 
  *===========================================================================*/
-PRIVATE struct proc * pick_proc(void)
+static struct proc * pick_proc(void)
 {
 /* Decide who to run now.  A new process is selected an returned.
  * When a billable process is selected, record it in 'bill_ptr', so that the 
@@ -1739,7 +1739,7 @@ PRIVATE struct proc * pick_proc(void)
 /*===========================================================================*
  *				endpoint_lookup				     *
  *===========================================================================*/
-PUBLIC struct proc *endpoint_lookup(endpoint_t e)
+struct proc *endpoint_lookup(endpoint_t e)
 {
 	int n;
 
@@ -1752,11 +1752,11 @@ PUBLIC struct proc *endpoint_lookup(endpoint_t e)
  *				isokendpt_f				     *
  *===========================================================================*/
 #if DEBUG_ENABLE_IPC_WARNINGS
-PUBLIC int isokendpt_f(file, line, e, p, fatalflag)
+int isokendpt_f(file, line, e, p, fatalflag)
 const char *file;
 int line;
 #else
-PUBLIC int isokendpt_f(e, p, fatalflag)
+int isokendpt_f(e, p, fatalflag)
 #endif
 endpoint_t e;
 int *p;
@@ -1799,7 +1799,7 @@ const int fatalflag;
 	return ok;
 }
 
-PRIVATE void notify_scheduler(struct proc *p)
+static void notify_scheduler(struct proc *p)
 {
 	message m_no_quantum;
 	int err;
@@ -1832,7 +1832,7 @@ PRIVATE void notify_scheduler(struct proc *p)
 	}
 }
 
-PUBLIC void proc_no_time(struct proc * p)
+void proc_no_time(struct proc * p)
 {
 	if (!proc_kernel_scheduler(p) && priv(p)->s_flags & PREEMPTIBLE) {
 		/* this dequeues the process */
@@ -1851,7 +1851,7 @@ PUBLIC void proc_no_time(struct proc * p)
 	}
 }
 
-PUBLIC void reset_proc_accounting(struct proc *p)
+void reset_proc_accounting(struct proc *p)
 {
   p->p_accounting.preempted = 0;
   p->p_accounting.ipc_sync  = 0;
@@ -1861,7 +1861,7 @@ PUBLIC void reset_proc_accounting(struct proc *p)
   make_zero64(p->p_accounting.enter_queue);
 }
 	
-PUBLIC void copr_not_available_handler(void)
+void copr_not_available_handler(void)
 {
 	struct proc * p;
 	struct proc ** local_fpu_owner;
@@ -1900,7 +1900,7 @@ PUBLIC void copr_not_available_handler(void)
 	NOT_REACHABLE;
 }
 
-PUBLIC void release_fpu(struct proc * p) {
+void release_fpu(struct proc * p) {
 	struct proc ** fpu_owner_ptr;
 
 	fpu_owner_ptr = get_cpu_var_ptr(p->p_cpu, fpu_owner);

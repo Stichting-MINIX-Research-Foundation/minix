@@ -4,7 +4,7 @@
 /*===========================================================================*
  *				sched_stop				     *
  *===========================================================================*/
-PUBLIC int sched_stop(endpoint_t scheduler_e, endpoint_t schedulee_e)
+int sched_stop(endpoint_t scheduler_e, endpoint_t schedulee_e)
 {
 	int rv;
 	message m;

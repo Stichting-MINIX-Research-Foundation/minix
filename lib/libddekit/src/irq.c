@@ -32,16 +32,16 @@ static ddekit_lock_t lock;
  *****************************************************************************/
 
 
-FORWARD void ddekit_irq_lock(void);
-FORWARD void ddekit_irq_unlock(void);
-FORWARD struct ddekit_irq_s* find_by_irq(int irq);
-FORWARD void ddekit_irq_remove(struct ddekit_irq_s *irq_s);
-FORWARD void ddekit_irq_thread(void *data);
+static void ddekit_irq_lock(void);
+static void ddekit_irq_unlock(void);
+static struct ddekit_irq_s* find_by_irq(int irq);
+static void ddekit_irq_remove(struct ddekit_irq_s *irq_s);
+static void ddekit_irq_thread(void *data);
 
 /******************************************************************************
  *       ddekit_irq_lock                                                      *
  *****************************************************************************/
-PRIVATE void  ddekit_irq_lock(void)
+static void  ddekit_irq_lock(void)
 {  
 	ddekit_lock_lock(&lock);
 }
@@ -49,7 +49,7 @@ PRIVATE void  ddekit_irq_lock(void)
 /******************************************************************************
  *       ddekit_irq_unlock                                                    *
  *****************************************************************************/
-PRIVATE void ddekit_irq_unlock(void)
+static void ddekit_irq_unlock(void)
 {  
 	ddekit_lock_unlock(&lock);
 }
@@ -57,7 +57,7 @@ PRIVATE void ddekit_irq_unlock(void)
 /******************************************************************************
  *       find_by_irq                                                          *
  *****************************************************************************/
-PRIVATE struct ddekit_irq_s * find_by_irq(int irq)
+static struct ddekit_irq_s * find_by_irq(int irq)
 { 
 	struct ddekit_irq_s * irq_s;
 	ddekit_irq_lock();
@@ -80,7 +80,7 @@ PRIVATE struct ddekit_irq_s * find_by_irq(int irq)
 /******************************************************************************
  *       ddekit_irq_remove                                                    *
  *****************************************************************************/
-PRIVATE void ddekit_irq_remove(struct ddekit_irq_s *irq_s)
+static void ddekit_irq_remove(struct ddekit_irq_s *irq_s)
 { 
 	struct ddekit_irq_s *i;
 
@@ -114,7 +114,7 @@ PRIVATE void ddekit_irq_remove(struct ddekit_irq_s *irq_s)
 /******************************************************************************
  *       ddekit_irq_thread                                                    *
  *****************************************************************************/
-PRIVATE void ddekit_irq_thread(void *data) 
+static void ddekit_irq_thread(void *data) 
 {
 	/* For each IRQ line an own thread is started */
 	
@@ -239,7 +239,7 @@ void ddekit_init_irqs()
 /******************************************************************************
  *       _ddekit_interrupt_trigger                                            *
  *****************************************************************************/
-PUBLIC void _ddekit_interrupt_trigger(int irq)
+void _ddekit_interrupt_trigger(int irq)
 {  
 	struct ddekit_irq_s *irq_s;
 

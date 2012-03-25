@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				fs_unmount				     *
  *===========================================================================*/
-PUBLIC int fs_unmount(message *fs_m_in, message *fs_m_out)
+int fs_unmount(message *fs_m_in, message *fs_m_out)
 {
 /* Unmount Pipe File Server. */
 

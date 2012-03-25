@@ -38,33 +38,33 @@
 #define TIMER_FREQ  1193182L    /* clock frequency for timer in PC and AT */
 
 /* Global variables used by the console driver and assembly support. */
-PRIVATE phys_bytes vid_size;	/* 0x2000 for color or 0x0800 for mono */
-PRIVATE phys_bytes vid_base;
-PRIVATE unsigned vid_mask;	/* 0x1FFF for color or 0x07FF for mono */
-PRIVATE unsigned blank_color = BLANK_COLOR; /* display code for blank */
+static phys_bytes vid_size;	/* 0x2000 for color or 0x0800 for mono */
+static phys_bytes vid_base;
+static unsigned vid_mask;	/* 0x1FFF for color or 0x07FF for mono */
+static unsigned blank_color = BLANK_COLOR; /* display code for blank */
 
 /* Private variables used by the console driver. */
-PRIVATE int vid_port;		/* I/O port for accessing 6845 */
-PRIVATE int wrap;		/* hardware can wrap? */
-PRIVATE int softscroll;		/* 1 = software scrolling, 0 = hardware */
-PRIVATE int beeping;		/* speaker is beeping? */
-PRIVATE unsigned font_lines;	/* font lines per character */
-PRIVATE unsigned scr_width;	/* # characters on a line */
-PRIVATE unsigned scr_lines;	/* # lines on the screen */
-PRIVATE unsigned scr_size;	/* # characters on the screen */
+static int vid_port;		/* I/O port for accessing 6845 */
+static int wrap;		/* hardware can wrap? */
+static int softscroll;		/* 1 = software scrolling, 0 = hardware */
+static int beeping;		/* speaker is beeping? */
+static unsigned font_lines;	/* font lines per character */
+static unsigned scr_width;	/* # characters on a line */
+static unsigned scr_lines;	/* # lines on the screen */
+static unsigned scr_size;	/* # characters on the screen */
 
 /* tells mem_vid_copy() to blank the screen */
 #define BLANK_MEM ((vir_bytes) 0) 
 
-PRIVATE int disabled_vc = -1;	/* Virtual console that was active when 
+static int disabled_vc = -1;	/* Virtual console that was active when 
 				 * disable_console was called.
 				 */
-PRIVATE int disabled_sm;	/* Scroll mode to be restored when re-enabling
+static int disabled_sm;	/* Scroll mode to be restored when re-enabling
 				 * console
 				 */
 
-PRIVATE char *console_memory = NULL;
-PRIVATE char *font_memory = NULL;
+static char *console_memory = NULL;
+static char *font_memory = NULL;
 
 /* Per console data. */
 typedef struct console {
@@ -99,17 +99,17 @@ typedef struct console {
 		set_6845(VID_ORG, ccons->c_org);		\
 }
 
-PRIVATE int nr_cons= 1;		/* actual number of consoles */
-PRIVATE console_t cons_table[NR_CONS];
-PRIVATE console_t *curcons = NULL;	/* currently visible */
+static int nr_cons= 1;		/* actual number of consoles */
+static console_t cons_table[NR_CONS];
+static console_t *curcons = NULL;	/* currently visible */
 
-PRIVATE int shutting_down = FALSE;	/* don't allow console switches */
+static int shutting_down = FALSE;	/* don't allow console switches */
 
 /* Color if using a color controller. */
 #define color	(vid_port == C_6845)
 
 /* Map from ANSI colors to the attributes used by the PC */
-PRIVATE int ansi_colors[8] = {0, 4, 2, 6, 1, 5, 3, 7};
+static int ansi_colors[8] = {0, 4, 2, 6, 1, 5, 3, 7};
 
 /* Structure used for font management */
 struct sequence {
@@ -118,33 +118,33 @@ struct sequence {
 	unsigned char value;
 };
 
-FORWARD int cons_write(struct tty *tp, int try);
-FORWARD void cons_echo(tty_t *tp, int c);
-FORWARD void out_char(console_t *cons, int c);
-FORWARD void cons_putk(int c);
-FORWARD void beep(void);
-FORWARD void do_escape(console_t *cons, int c);
-FORWARD void flush(console_t *cons);
-FORWARD void parse_escape(console_t *cons, int c);
-FORWARD void scroll_screen(console_t *cons, int dir);
-FORWARD void set_6845(int reg, unsigned val);
-FORWARD void stop_beep(timer_t *tmrp);
-FORWARD void cons_org0(void);
-FORWARD void disable_console(void);
-FORWARD void reenable_console(void);
-FORWARD int ga_program(struct sequence *seq);
-FORWARD int cons_ioctl(tty_t *tp, int);
-FORWARD void mem_vid_copy(vir_bytes src, int dst, int count);
-FORWARD void vid_vid_copy(int src, int dst, int count);
+static int cons_write(struct tty *tp, int try);
+static void cons_echo(tty_t *tp, int c);
+static void out_char(console_t *cons, int c);
+static void cons_putk(int c);
+static void beep(void);
+static void do_escape(console_t *cons, int c);
+static void flush(console_t *cons);
+static void parse_escape(console_t *cons, int c);
+static void scroll_screen(console_t *cons, int dir);
+static void set_6845(int reg, unsigned val);
+static void stop_beep(timer_t *tmrp);
+static void cons_org0(void);
+static void disable_console(void);
+static void reenable_console(void);
+static int ga_program(struct sequence *seq);
+static int cons_ioctl(tty_t *tp, int);
+static void mem_vid_copy(vir_bytes src, int dst, int count);
+static void vid_vid_copy(int src, int dst, int count);
 
 #if 0
-FORWARD void get_6845(int reg, unsigned *val);
+static void get_6845(int reg, unsigned *val);
 #endif
 
 /*===========================================================================*
  *				cons_write				     *
  *===========================================================================*/
-PRIVATE int cons_write(tp, try)
+static int cons_write(tp, try)
 register struct tty *tp;	/* tells which terminal is to be used */
 int try;
 {
@@ -222,7 +222,7 @@ int try;
 /*===========================================================================*
  *				cons_echo				     *
  *===========================================================================*/
-PRIVATE void cons_echo(tp, c)
+static void cons_echo(tp, c)
 register tty_t *tp;		/* pointer to tty struct */
 int c;				/* character to be echoed */
 {
@@ -236,7 +236,7 @@ int c;				/* character to be echoed */
 /*===========================================================================*
  *				out_char				     *
  *===========================================================================*/
-PRIVATE void out_char(cons, c)
+static void out_char(cons, c)
 register console_t *cons;	/* pointer to console struct */
 int c;				/* character to be output */
 {
@@ -331,7 +331,7 @@ int c;				/* character to be output */
 /*===========================================================================*
  *				scroll_screen				     *
  *===========================================================================*/
-PRIVATE void scroll_screen(cons, dir)
+static void scroll_screen(cons, dir)
 register console_t *cons;	/* pointer to console struct */
 int dir;			/* SCROLL_UP or SCROLL_DOWN */
 {
@@ -383,7 +383,7 @@ int dir;			/* SCROLL_UP or SCROLL_DOWN */
 /*===========================================================================*
  *				flush					     *
  *===========================================================================*/
-PRIVATE void flush(cons)
+static void flush(cons)
 register console_t *cons;	/* pointer to console struct */
 {
 /* Send characters buffered in 'ramqueue' to screen memory, check the new
@@ -415,7 +415,7 @@ register console_t *cons;	/* pointer to console struct */
 /*===========================================================================*
  *				parse_escape				     *
  *===========================================================================*/
-PRIVATE void parse_escape(cons, c)
+static void parse_escape(cons, c)
 register console_t *cons;	/* pointer to console struct */
 char c;				/* next character in escape sequence */
 {
@@ -474,7 +474,7 @@ char c;				/* next character in escape sequence */
 /*===========================================================================*
  *				do_escape				     *
  *===========================================================================*/
-PRIVATE void do_escape(cons, c)
+static void do_escape(cons, c)
 register console_t *cons;	/* pointer to console struct */
 char c;				/* next character in escape sequence */
 {
@@ -716,7 +716,7 @@ char c;				/* next character in escape sequence */
 /*===========================================================================*
  *				set_6845				     *
  *===========================================================================*/
-PRIVATE void set_6845(reg, val)
+static void set_6845(reg, val)
 int reg;			/* which register pair to set */
 unsigned val;			/* 16-bit value to set it to */
 {
@@ -736,7 +736,7 @@ unsigned val;			/* 16-bit value to set it to */
 /*===========================================================================*
  *				get_6845				     *
  *===========================================================================*/
-PRIVATE void get_6845(reg, val)
+static void get_6845(reg, val)
 int reg;			/* which register pair to set */
 unsigned *val;			/* 16-bit value to set it to */
 {
@@ -756,7 +756,7 @@ unsigned *val;			/* 16-bit value to set it to */
 /*===========================================================================*
  *				beep					     *
  *===========================================================================*/
-PRIVATE void beep()
+static void beep()
 {
 /* Making a beeping sound on the speaker (output for CRTL-G).
  * This routine works by turning on the bits 0 and 1 in port B of the 8255
@@ -786,7 +786,7 @@ PRIVATE void beep()
 /*===========================================================================*
  *				do_video				     *
  *===========================================================================*/
-PUBLIC void do_video(message *m)
+void do_video(message *m)
 {
 	int r;
 
@@ -861,7 +861,7 @@ PUBLIC void do_video(message *m)
 /*===========================================================================*
  *				beep_x					     *
  *===========================================================================*/
-PUBLIC void beep_x(freq, dur)
+void beep_x(freq, dur)
 unsigned freq;
 clock_t dur;
 {
@@ -896,7 +896,7 @@ clock_t dur;
 /*===========================================================================*
  *				stop_beep				     *
  *===========================================================================*/
-PRIVATE void stop_beep(timer_t *UNUSED(tmrp))
+static void stop_beep(timer_t *UNUSED(tmrp))
 {
 /* Turn off the beeper by turning off bits 0 and 1 in PORT_B. */
   u32_t port_b_val;
@@ -908,7 +908,7 @@ PRIVATE void stop_beep(timer_t *UNUSED(tmrp))
 /*===========================================================================*
  *				scr_init				     *
  *===========================================================================*/
-PUBLIC void scr_init(tp)
+void scr_init(tp)
 tty_t *tp;
 {
 /* Initialize the screen driver. */
@@ -1010,7 +1010,7 @@ tty_t *tp;
 /*===========================================================================*
  *				do_new_kmess				     *
  *===========================================================================*/
-PUBLIC void do_new_kmess()
+void do_new_kmess()
 {
 /* Notification for a new kernel message. */
   static struct kmessages kmess;		/* kmessages structure */
@@ -1057,7 +1057,7 @@ PUBLIC void do_new_kmess()
 /*===========================================================================*
  *				cons_putk				     *
  *===========================================================================*/
-PRIVATE void cons_putk(c)
+static void cons_putk(c)
 int c;				/* character to print */
 {
 /* This procedure is used to print a character on the console.
@@ -1076,7 +1076,7 @@ int c;				/* character to print */
 /*===========================================================================*
  *				toggle_scroll				     *
  *===========================================================================*/
-PUBLIC void toggle_scroll()
+void toggle_scroll()
 {
 /* Toggle between hardware and software scroll. */
 
@@ -1088,7 +1088,7 @@ PUBLIC void toggle_scroll()
 /*===========================================================================*
  *				cons_stop				     *
  *===========================================================================*/
-PUBLIC void cons_stop()
+void cons_stop()
 {
 /* Prepare for halt or reboot. */
   cons_org0();
@@ -1101,7 +1101,7 @@ PUBLIC void cons_stop()
 /*===========================================================================*
  *				cons_org0				     *
  *===========================================================================*/
-PRIVATE void cons_org0()
+static void cons_org0()
 {
 /* Scroll video memory back to put the origin at 0. */
   int cons_line;
@@ -1125,7 +1125,7 @@ PRIVATE void cons_org0()
 /*===========================================================================*
  *				disable_console				     *
  *===========================================================================*/
-PRIVATE void disable_console()
+static void disable_console()
 {
 	if (disabled_vc != -1)
 		return;
@@ -1143,7 +1143,7 @@ PRIVATE void disable_console()
 /*===========================================================================*
  *				reenable_console			     *
  *===========================================================================*/
-PRIVATE void reenable_console()
+static void reenable_console()
 {
 	if (disabled_vc == -1)
 		return;
@@ -1156,7 +1156,7 @@ PRIVATE void reenable_console()
 /*===========================================================================*
  *				select_console				     *
  *===========================================================================*/
-PUBLIC void select_console(int cons_line)
+void select_console(int cons_line)
 {
 /* Set the current console to console number 'cons_line'. */
 
@@ -1174,7 +1174,7 @@ PUBLIC void select_console(int cons_line)
 /*===========================================================================*
  *				con_loadfont				     *
  *===========================================================================*/
-PUBLIC int con_loadfont(m)
+int con_loadfont(m)
 message *m;
 {
   
@@ -1217,7 +1217,7 @@ message *m;
 /*===========================================================================*
  *				ga_program				     *
  *===========================================================================*/
-PRIVATE int ga_program(seq)
+static int ga_program(seq)
 struct sequence *seq;
 {
   pvb_pair_t char_out[14];
@@ -1233,7 +1233,7 @@ struct sequence *seq;
 /*===========================================================================*
  *				cons_ioctl				     *
  *===========================================================================*/
-PRIVATE int cons_ioctl(tty_t *tp, int UNUSED(try))
+static int cons_ioctl(tty_t *tp, int UNUSED(try))
 {
 /* Set the screen dimensions. */
 
@@ -1254,7 +1254,7 @@ PRIVATE int cons_ioctl(tty_t *tp, int UNUSED(try))
 /*===========================================================================*
  *				mem_vid_copy				     *
  *===========================================================================*/
-PRIVATE void mem_vid_copy(vir_bytes src, int dst_index, int count)
+static void mem_vid_copy(vir_bytes src, int dst_index, int count)
 {
 	u16_t *src_mem = (u16_t *) src;
 	while(count > 0) {
@@ -1276,7 +1276,7 @@ PRIVATE void mem_vid_copy(vir_bytes src, int dst_index, int count)
 /*===========================================================================*
  *				vid_vid_copy				     *
  *===========================================================================*/
-PRIVATE void vid_vid_copy(int src_index, int dst_index, int count)
+static void vid_vid_copy(int src_index, int dst_index, int count)
 {
 	int backwards = 0;
 	if(src_index < dst_index)

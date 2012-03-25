@@ -8,7 +8,7 @@
 __weak_alias(fsync, _fsync)
 #endif
 
-PUBLIC int fsync(int fd)
+int fsync(int fd)
 {
   message m;
 

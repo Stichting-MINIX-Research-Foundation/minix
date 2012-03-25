@@ -10,14 +10,14 @@
 #define DEFAULT_INTERVAL	1	/* check host time every second */
 #define DEFAULT_DRIFT		2	/* update time if delta is >= 2 secs */
 
-PRIVATE void *vir_ptr;
-PRIVATE phys_bytes phys_ptr;
-PRIVATE port_t port;
-PRIVATE u32_t ticks;
-PRIVATE int interval;
-PRIVATE int drift;
+static void *vir_ptr;
+static phys_bytes phys_ptr;
+static port_t port;
+static u32_t ticks;
+static int interval;
+static int drift;
 
-PRIVATE struct optset optset_table[] = {
+static struct optset optset_table[] = {
 	{ "interval",	OPT_INT,	&interval, 	10		},
 	{ "drift",	OPT_INT,	&drift,		10		},
 	{ NULL,		0,		NULL,		0		}
@@ -26,7 +26,7 @@ PRIVATE struct optset optset_table[] = {
 /*===========================================================================*
  *				vbox_request				     *
  *===========================================================================*/
-PRIVATE int vbox_request(int req_nr, size_t size)
+static int vbox_request(int req_nr, size_t size)
 {
 	/* Perform a VirtualBox backdoor request. */
 	struct VMMDevRequestHeader *hdr;
@@ -47,7 +47,7 @@ PRIVATE int vbox_request(int req_nr, size_t size)
 /*===========================================================================*
  *				vbox_init				     *
  *===========================================================================*/
-PRIVATE int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the device. */
 	int devind;
@@ -100,7 +100,7 @@ PRIVATE int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				vbox_update_time			     *
  *===========================================================================*/
-PRIVATE void vbox_update_time(void)
+static void vbox_update_time(void)
 {
 	/* Update the current time if it has drifted too far. */
 	struct VMMDevReqHostTime *req;
@@ -126,7 +126,7 @@ PRIVATE void vbox_update_time(void)
 /*===========================================================================*
  *				vbox_signal				     *
  *===========================================================================*/
-PRIVATE void vbox_signal(int signo)
+static void vbox_signal(int signo)
 {
 	/* Process a signal. If it is a SIGTERM, terminate immediately. */
 
@@ -138,7 +138,7 @@ PRIVATE void vbox_signal(int signo)
 /*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/* Perform local SEF initialization. */
 
@@ -153,7 +153,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	/* The main message loop. */
 	message m;

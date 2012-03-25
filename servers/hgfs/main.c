@@ -13,10 +13,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-FORWARD void get_work(endpoint_t *who_e);
-FORWARD void send_reply(int err, int transid);
+static void get_work(endpoint_t *who_e);
+static void send_reply(int err, int transid);
 
-PRIVATE struct optset optset_table[] = {
+static struct optset optset_table[] = {
   { "prefix",   OPT_STRING, opt.prefix,       sizeof(opt.prefix) },
   { "uid",      OPT_INT,    &opt.uid,         10                 },
   { "gid",      OPT_INT,    &opt.gid,         10                 },
@@ -28,14 +28,14 @@ PRIVATE struct optset optset_table[] = {
 };
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *			      sef_cb_init_fresh				     *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize this file server. Called at startup time.
  */
@@ -74,7 +74,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Only check for termination signal, ignore anything else. */
   if (signo != SIGTERM) return;
@@ -94,7 +94,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -111,7 +111,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {
@@ -166,7 +166,7 @@ char *argv[];
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-PRIVATE void get_work(who_e)
+static void get_work(who_e)
 endpoint_t *who_e;
 {
 /* Receive a request message from VFS. Return the request call number.
@@ -182,7 +182,7 @@ endpoint_t *who_e;
 /*===========================================================================*
  *				send_reply				     *
  *===========================================================================*/
-PRIVATE void send_reply(err, transid)
+static void send_reply(err, transid)
 int err;				/* resulting error code */
 int transid;
 {

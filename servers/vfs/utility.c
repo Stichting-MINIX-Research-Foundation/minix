@@ -25,7 +25,7 @@
 /*===========================================================================*
  *				fetch_name				     *
  *===========================================================================*/
-PUBLIC int fetch_name(path, len, flag, dest)
+int fetch_name(path, len, flag, dest)
 char *path;			/* pointer to the path in user space */
 int len;			/* path length, including 0 byte */
 int flag;			/* M3 means path may be in message */
@@ -74,7 +74,7 @@ char *dest;			/* pointer to where path is to be stored */
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys()
+int no_sys()
 {
 /* Somebody has used an illegal system call number */
   return(ENOSYS);
@@ -84,7 +84,7 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *				isokendpt_f				     *
  *===========================================================================*/
-PUBLIC int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc, int fatal)
+int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc, int fatal)
 {
   int failed = 0;
   endpoint_t ke;
@@ -120,7 +120,7 @@ PUBLIC int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc, int
 /*===========================================================================*
  *				clock_time				     *
  *===========================================================================*/
-PUBLIC time_t clock_time()
+time_t clock_time()
 {
 /* This routine returns the time in seconds since 1.1.1970.  MINIX is an
  * astrophysically naive system that assumes the earth rotates at a constant
@@ -141,7 +141,7 @@ PUBLIC time_t clock_time()
 /*===========================================================================*
  *                              in_group                                     *
  *===========================================================================*/
-PUBLIC int in_group(struct fproc *rfp, gid_t grp)
+int in_group(struct fproc *rfp, gid_t grp)
 {
   int i;
 

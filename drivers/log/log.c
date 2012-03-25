@@ -18,23 +18,23 @@
 
 #define LOGINC(n, i)	do { (n) = (((n) + (i)) % LOG_SIZE); } while(0)
 
-PUBLIC struct logdevice logdevices[NR_DEVS];
-PRIVATE struct device log_geom[NR_DEVS];  	/* base and size of devices */
-PRIVATE int log_device = -1;	 		/* current device */
+struct logdevice logdevices[NR_DEVS];
+static struct device log_geom[NR_DEVS];  	/* base and size of devices */
+static int log_device = -1;	 		/* current device */
 
-FORWARD struct device *log_prepare(dev_t device);
-FORWARD int log_transfer(endpoint_t endpt, int opcode, u64_t position,
+static struct device *log_prepare(dev_t device);
+static int log_transfer(endpoint_t endpt, int opcode, u64_t position,
 	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
 	flags);
-FORWARD int log_do_open(message *m_ptr);
-FORWARD int log_cancel(message *m_ptr);
-FORWARD int log_select(message *m_ptr);
-FORWARD int log_other(message *m_ptr);
-FORWARD int subread(struct logdevice *log, int count, endpoint_t endpt,
+static int log_do_open(message *m_ptr);
+static int log_cancel(message *m_ptr);
+static int log_select(message *m_ptr);
+static int log_other(message *m_ptr);
+static int subread(struct logdevice *log, int count, endpoint_t endpt,
 	cp_grant_id_t grant, size_t);
 
 /* Entry points to this driver. */
-PRIVATE struct chardriver log_dtab = {
+static struct chardriver log_dtab = {
   log_do_open,	/* open or mount */
   do_nop,	/* nothing on a close */
   nop_ioctl,	/* ioctl nop */
@@ -48,17 +48,17 @@ PRIVATE struct chardriver log_dtab = {
 };
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
   /* SEF local startup. */
   sef_local_startup();
@@ -72,7 +72,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -94,7 +94,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the log driver. */
   int i;
@@ -118,7 +118,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Only check for a pending message from the kernel, ignore anything else. */
   if (signo != SIGKMESS) return;
@@ -129,7 +129,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				log_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *log_prepare(dev_t device)
+static struct device *log_prepare(dev_t device)
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
 
@@ -142,7 +142,7 @@ PRIVATE struct device *log_prepare(dev_t device)
 /*===========================================================================*
  *				subwrite				     *
  *===========================================================================*/
-PRIVATE int
+static int
 subwrite(struct logdevice *log, int count, endpoint_t endpt,
 	cp_grant_id_t grant, size_t offset, char *localbuf)
 {
@@ -230,7 +230,7 @@ subwrite(struct logdevice *log, int count, endpoint_t endpt,
 /*===========================================================================*
  *				log_append				     *
  *===========================================================================*/
-PUBLIC void
+void
 log_append(char *buf, int count)
 {
 	int w = 0, skip = 0;
@@ -250,7 +250,7 @@ log_append(char *buf, int count)
 /*===========================================================================*
  *				subread					     *
  *===========================================================================*/
-PRIVATE int
+static int
 subread(struct logdevice *log, int count, endpoint_t endpt,
 	cp_grant_id_t grant, size_t offset)
 {
@@ -275,7 +275,7 @@ subread(struct logdevice *log, int count, endpoint_t endpt,
 /*===========================================================================*
  *				log_transfer				     *
  *===========================================================================*/
-PRIVATE int log_transfer(
+static int log_transfer(
   endpoint_t endpt,		/* endpoint of grant owner */
   int opcode,			/* DEV_GATHER_S or DEV_SCATTER_S */
   u64_t UNUSED(position),	/* offset on device to read or write */
@@ -356,7 +356,7 @@ PRIVATE int log_transfer(
 /*============================================================================*
  *				log_do_open				      *
  *============================================================================*/
-PRIVATE int log_do_open(message *m_ptr)
+static int log_do_open(message *m_ptr)
 {
   if (log_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
   return(OK);
@@ -365,7 +365,7 @@ PRIVATE int log_do_open(message *m_ptr)
 /*============================================================================*
  *				log_cancel				      *
  *============================================================================*/
-PRIVATE int log_cancel(message *m_ptr)
+static int log_cancel(message *m_ptr)
 {
   int d;
   d = m_ptr->TTY_LINE;
@@ -379,7 +379,7 @@ PRIVATE int log_cancel(message *m_ptr)
 /*============================================================================*
  *				log_other				      *
  *============================================================================*/
-PRIVATE int log_other(message *m_ptr)
+static int log_other(message *m_ptr)
 {
 	int r;
 
@@ -406,7 +406,7 @@ PRIVATE int log_other(message *m_ptr)
 /*============================================================================*
  *				log_select				      *
  *============================================================================*/
-PRIVATE int log_select(message *m_ptr)
+static int log_select(message *m_ptr)
 {
   int d, ready_ops = 0, ops = 0;
   d = m_ptr->TTY_LINE;

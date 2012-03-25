@@ -34,7 +34,7 @@
 #include "acpi.h"
 #endif
 
-PRIVATE int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
+static int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
 
 extern __dead void poweroff_jmp();
 extern void poweroff16();
@@ -47,17 +47,17 @@ extern void poweroff16_end();
 /* set OSXMMEXCPT[bit 10] if we provide #XM handler. */
 #define CR4_OSXMMEXCPT	(1L<<10)
 
-PUBLIC void * k_stacks;
+void * k_stacks;
 
-FORWARD void ser_debug(int c);
+static void ser_debug(int c);
 #ifdef CONFIG_SMP
-FORWARD void ser_dump_proc_cpu(void);
+static void ser_dump_proc_cpu(void);
 #endif
 #if !CONFIG_OXPCIE
-FORWARD void ser_init(void);
+static void ser_init(void);
 #endif
 
-PUBLIC __dead void arch_monitor(void)
+__dead void arch_monitor(void)
 {
 	monitor();
 }
@@ -118,7 +118,7 @@ reset(void)
 	}
 }
 
-PRIVATE __dead void arch_bios_poweroff(void)
+static __dead void arch_bios_poweroff(void)
 {
 	u32_t cr0;
 	
@@ -134,9 +134,9 @@ PRIVATE __dead void arch_bios_poweroff(void)
 	poweroff_jmp();
 }
 
-PUBLIC int cpu_has_tsc;
+int cpu_has_tsc;
 
-PUBLIC __dead void arch_shutdown(int how)
+__dead void arch_shutdown(int how)
 {
 	u16_t magic;
 	vm_stop();
@@ -236,7 +236,7 @@ PUBLIC __dead void arch_shutdown(int how)
 	NOT_REACHABLE;
 }
 
-PUBLIC void fpu_init(void)
+void fpu_init(void)
 {
 	unsigned short cw, sw;
 
@@ -273,7 +273,7 @@ PUBLIC void fpu_init(void)
         }
 }
 
-PUBLIC void save_local_fpu(struct proc *pr, int retain)
+void save_local_fpu(struct proc *pr, int retain)
 {
 	/* Save process FPU context. If the 'retain' flag is set, keep the FPU
 	 * state as is. If the flag is not set, the state is undefined upon
@@ -292,7 +292,7 @@ PUBLIC void save_local_fpu(struct proc *pr, int retain)
 	}
 }
 
-PUBLIC void save_fpu(struct proc *pr)
+void save_fpu(struct proc *pr)
 {
 #ifdef CONFIG_SMP
 	if (cpuid != pr->p_cpu) {
@@ -322,7 +322,7 @@ PUBLIC void save_fpu(struct proc *pr)
 	}
 }
 
-PUBLIC int restore_fpu(struct proc *pr)
+int restore_fpu(struct proc *pr)
 {
 	int failed;
 
@@ -342,7 +342,7 @@ PUBLIC int restore_fpu(struct proc *pr)
 	return OK;
 }
 
-PUBLIC void cpu_identify(void)
+void cpu_identify(void)
 {
 	u32_t eax, ebx, ecx, edx;
 	unsigned cpu = cpuid;
@@ -376,7 +376,7 @@ PUBLIC void cpu_identify(void)
 	cpu_info[cpu].flags[1] = edx;
 }
 
-PUBLIC void arch_init(void)
+void arch_init(void)
 {
 #ifdef USE_APIC
 	/*
@@ -424,7 +424,7 @@ PUBLIC void arch_init(void)
 }
 
 #ifdef DEBUG_SERIAL
-PUBLIC void ser_putc(char c)
+void ser_putc(char c)
 {
         int i;
         int lsr, thr;
@@ -447,7 +447,7 @@ PUBLIC void ser_putc(char c)
 /*===========================================================================*
  *				do_ser_debug				     * 
  *===========================================================================*/
-PUBLIC void do_ser_debug()
+void do_ser_debug()
 {
 	u8_t c, lsr;
 
@@ -466,7 +466,7 @@ PUBLIC void do_ser_debug()
 	ser_debug(c);
 }
 
-PRIVATE void ser_dump_queue_cpu(unsigned cpu)
+static void ser_dump_queue_cpu(unsigned cpu)
 {
 	int q;
 	struct proc ** rdy_head;
@@ -485,7 +485,7 @@ PRIVATE void ser_dump_queue_cpu(unsigned cpu)
 	}
 }
 
-PRIVATE void ser_dump_queues(void)
+static void ser_dump_queues(void)
 {
 #ifdef CONFIG_SMP
 	unsigned cpu;
@@ -500,7 +500,7 @@ PRIVATE void ser_dump_queues(void)
 #endif
 }
 
-PRIVATE void ser_dump_segs(void)
+static void ser_dump_segs(void)
 {
 	struct proc *pp;
 	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
@@ -517,7 +517,7 @@ PRIVATE void ser_dump_segs(void)
 }
 
 #ifdef CONFIG_SMP
-PRIVATE void dump_bkl_usage(void)
+static void dump_bkl_usage(void)
 {
 	unsigned cpu;
 
@@ -532,7 +532,7 @@ PRIVATE void dump_bkl_usage(void)
 	}
 }
 
-PRIVATE void reset_bkl_usage(void)
+static void reset_bkl_usage(void)
 {
 	memset(kernel_ticks, 0, sizeof(kernel_ticks));
 	memset(bkl_ticks, 0, sizeof(bkl_ticks));
@@ -541,7 +541,7 @@ PRIVATE void reset_bkl_usage(void)
 }
 #endif
 
-PRIVATE void ser_debug(const int c)
+static void ser_debug(const int c)
 {
 	serial_debug_active = 1;
 
@@ -596,7 +596,7 @@ PRIVATE void ser_debug(const int c)
 	serial_debug_active = 0;
 }
 
-PUBLIC void ser_dump_proc()
+void ser_dump_proc()
 {
 	struct proc *pp;
 
@@ -609,7 +609,7 @@ PUBLIC void ser_dump_proc()
 }
 
 #ifdef CONFIG_SMP
-PRIVATE void ser_dump_proc_cpu(void)
+static void ser_dump_proc_cpu(void)
 {
 	struct proc *pp;
 	unsigned cpu;
@@ -629,7 +629,7 @@ PRIVATE void ser_dump_proc_cpu(void)
 
 #if SPROFILE
 
-PUBLIC int arch_init_profile_clock(const u32_t freq)
+int arch_init_profile_clock(const u32_t freq)
 {
   int r;
   /* Set CMOS timer frequency. */
@@ -647,7 +647,7 @@ PUBLIC int arch_init_profile_clock(const u32_t freq)
   return CMOS_CLOCK_IRQ;
 }
 
-PUBLIC void arch_stop_profile_clock(void)
+void arch_stop_profile_clock(void)
 {
   int r;
   /* Disable CMOS timer interrupts. */
@@ -657,7 +657,7 @@ PUBLIC void arch_stop_profile_clock(void)
   outb(RTC_IO, r & ~RTC_B_PIE);
 }
 
-PUBLIC void arch_ack_profile_clock(void)
+void arch_ack_profile_clock(void)
 {
   /* Mandatory read of CMOS register to re-enable timer interrupts. */
   outb(RTC_INDEX, RTC_REG_C);
@@ -669,7 +669,7 @@ PUBLIC void arch_ack_profile_clock(void)
 /* Saved by mpx386.s into these variables. */
 u32_t params_size, params_offset, mon_ds;
 
-PUBLIC int arch_get_params(char *params, int maxsize)
+int arch_get_params(char *params, int maxsize)
 {
 	phys_copy(seg2phys(mon_ds) + params_offset, vir2phys(params),
 		MIN(maxsize, params_size));
@@ -677,7 +677,7 @@ PUBLIC int arch_get_params(char *params, int maxsize)
 	return OK;
 }
 
-PUBLIC int arch_set_params(char *params, int size)
+int arch_set_params(char *params, int size)
 {
 	if(size > params_size)
 		return E2BIG;
@@ -685,7 +685,7 @@ PUBLIC int arch_set_params(char *params, int size)
 	return OK;
 }
 
-PUBLIC void arch_do_syscall(struct proc *proc)
+void arch_do_syscall(struct proc *proc)
 {
   /* do_ipc assumes that it's running because of the current process */
   assert(proc == get_cpulocal_var(proc_ptr));
@@ -694,7 +694,7 @@ PUBLIC void arch_do_syscall(struct proc *proc)
 	  do_ipc(proc->p_reg.cx, proc->p_reg.retreg, proc->p_reg.bx);
 }
 
-PUBLIC struct proc * arch_finish_switch_to_user(void)
+struct proc * arch_finish_switch_to_user(void)
 {
 	char * stk;
 	struct proc * p;
@@ -710,7 +710,7 @@ PUBLIC struct proc * arch_finish_switch_to_user(void)
 	return p;
 }
 
-PUBLIC void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigcontext *sc)
+void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigcontext *sc)
 {
 	int fp_error;
 
@@ -744,7 +744,7 @@ PUBLIC void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigconte
 }
 
 #if !CONFIG_OXPCIE
-PRIVATE void ser_init(void)
+static void ser_init(void)
 {
 	unsigned char lcr;
 	unsigned divisor;

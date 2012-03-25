@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				fs_readsuper				     *
  *===========================================================================*/
-PUBLIC int fs_readsuper(void)
+int fs_readsuper(void)
 {
 	/* This function gets the root inode and sends back its details.
 	 */
@@ -45,7 +45,7 @@ PUBLIC int fs_readsuper(void)
 /*===========================================================================*
  *				fs_unmount				     *
  *===========================================================================*/
-PUBLIC int fs_unmount(void)
+int fs_unmount(void)
 {
 	/* Unmount the file system.
 	 */

@@ -25,14 +25,14 @@ struct ddekit_minix_msg_q {
 	struct ddekit_minix_msg_q *next;
 };
 
-PRIVATE struct ddekit_minix_msg_q * _list = NULL;
-FORWARD void _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq,
+static struct ddekit_minix_msg_q * _list = NULL;
+static void _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq,
 	message *m);
 
 /*****************************************************************************
  *      ddekit_minix_create_msg_q                                            *
  ****************************************************************************/
-PUBLIC struct ddekit_minix_msg_q *
+struct ddekit_minix_msg_q *
 ddekit_minix_create_msg_q(unsigned from, unsigned to)
 {
 	struct ddekit_minix_msg_q *mq =  (struct ddekit_minix_msg_q *)
@@ -58,7 +58,7 @@ ddekit_minix_create_msg_q(unsigned from, unsigned to)
 /*****************************************************************************
  *      ddekit_minix_deregister_msg_q                                        *
  ****************************************************************************/
-PUBLIC void ddekit_minix_deregister_msg_q(struct ddekit_minix_msg_q *mq)
+void ddekit_minix_deregister_msg_q(struct ddekit_minix_msg_q *mq)
 {
 	struct ddekit_minix_msg_q *prev =_list, *it;
 
@@ -81,7 +81,7 @@ PUBLIC void ddekit_minix_deregister_msg_q(struct ddekit_minix_msg_q *mq)
 /*****************************************************************************
  *     _ddekit_minix_queue_msg                                               *
  ****************************************************************************/
-PRIVATE void 
+static void 
 _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq, message *m)
 {
 	int full;
@@ -137,7 +137,7 @@ void ddekit_minix_queue_msg(message *m)
 /*****************************************************************************
  *        ddekit_minix_rcv                                                   *
  ****************************************************************************/
-PUBLIC void ddekit_minix_rcv(struct ddekit_minix_msg_q *mq, message *m) 
+void ddekit_minix_rcv(struct ddekit_minix_msg_q *mq, message *m) 
 {
 	DDEBUG_MSG_VERBOSE("waiting for message");
 	

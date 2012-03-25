@@ -17,12 +17,12 @@ struct ddekit_usb_dev dev_list_head = {
 	.prev = &dev_list_head,
 };
 
-PRIVATE struct ddekit_usb_driver *d_usb_driver;
+static struct ddekit_usb_driver *d_usb_driver;
 
-FORWARD void _ddekit_usb_completion(struct usb_urb *mx);
-FORWARD void _ddekit_usb_connect( unsigned int dev_id, unsigned int
+static void _ddekit_usb_completion(struct usb_urb *mx);
+static void _ddekit_usb_connect( unsigned int dev_id, unsigned int
 	interfaces);
-FORWARD void _ddekit_usb_disconnect(unsigned dev_id);
+static void _ddekit_usb_disconnect(unsigned dev_id);
 
 struct usb_driver mx_usb_driver = {
 	.urb_completion = _ddekit_usb_completion,
@@ -33,7 +33,7 @@ struct usb_driver mx_usb_driver = {
 /*****************************************************************************
  *         _ddekit_usb_completion                                            *
  ****************************************************************************/
-PRIVATE void _ddekit_usb_completion(struct usb_urb *mx_urb)
+static void _ddekit_usb_completion(struct usb_urb *mx_urb)
 {
 
 	struct ddekit_usb_urb *d_urb = (struct ddekit_usb_urb *) mx_urb->priv;
@@ -72,7 +72,7 @@ PRIVATE void _ddekit_usb_completion(struct usb_urb *mx_urb)
 /*****************************************************************************
  *         _ddekit_usb_connect                                               *
  ****************************************************************************/
-PRIVATE void _ddekit_usb_connect(unsigned int dev_id, unsigned int interfaces)
+static void _ddekit_usb_connect(unsigned int dev_id, unsigned int interfaces)
 {
 	struct ddekit_usb_dev *d_dev = (struct ddekit_usb_dev *)
 		ddekit_simple_malloc(sizeof(struct ddekit_usb_dev));
@@ -94,7 +94,7 @@ PRIVATE void _ddekit_usb_connect(unsigned int dev_id, unsigned int interfaces)
 /*****************************************************************************
  *         _ddekit_usb_disconnect                                            *
  ****************************************************************************/
-PUBLIC void _ddekit_usb_disconnect(unsigned dev_id)
+void _ddekit_usb_disconnect(unsigned dev_id)
 {
 	/* find dev */
 	struct ddekit_usb_dev *it;
@@ -118,7 +118,7 @@ PUBLIC void _ddekit_usb_disconnect(unsigned dev_id)
 /*****************************************************************************
  *         ddekit_usb_dev_set_data                                           *
  ****************************************************************************/
-PUBLIC int ddekit_usb_dev_set_data(struct ddekit_usb_dev *dev, void *data)
+int ddekit_usb_dev_set_data(struct ddekit_usb_dev *dev, void *data)
 {
 	dev->data = data;
 	return 0;
@@ -127,7 +127,7 @@ PUBLIC int ddekit_usb_dev_set_data(struct ddekit_usb_dev *dev, void *data)
 /*****************************************************************************
  *         ddekit_usb_dev_get_data                                           *
  ****************************************************************************/
-PUBLIC void *ddekit_usb_dev_get_data(struct ddekit_usb_dev *dev)
+void *ddekit_usb_dev_get_data(struct ddekit_usb_dev *dev)
 {
 	return dev->data;
 }
@@ -135,7 +135,7 @@ PUBLIC void *ddekit_usb_dev_get_data(struct ddekit_usb_dev *dev)
 /*****************************************************************************
  *         ddekit_usb_submit_urb                                             *
  ****************************************************************************/
-PUBLIC int ddekit_usb_submit_urb(struct ddekit_usb_urb *d_urb) 
+int ddekit_usb_submit_urb(struct ddekit_usb_urb *d_urb) 
 {
 	int res;
 	unsigned urb_size = USB_URBSIZE(d_urb->size, d_urb->number_of_packets);
@@ -180,7 +180,7 @@ PUBLIC int ddekit_usb_submit_urb(struct ddekit_usb_urb *d_urb)
 /*****************************************************************************
  *         ddekit_usb_cancle_urb                                             *
  ****************************************************************************/
-PUBLIC int ddekit_usb_cancle_urb(struct ddekit_usb_urb *d_urb)
+int ddekit_usb_cancle_urb(struct ddekit_usb_urb *d_urb)
 {
 	int res;
 
@@ -208,7 +208,7 @@ static void _ddekit_usb_thread()
 /*****************************************************************************
  *         ddekit_usb_init                                             *
  ****************************************************************************/
-PUBLIC int ddekit_usb_init
+int ddekit_usb_init
 (struct ddekit_usb_driver *drv,
  ddekit_usb_malloc_fn     *unused,
  ddekit_usb_free_fn       *_unused) 

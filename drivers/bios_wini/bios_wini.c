@@ -36,7 +36,7 @@
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 
 /* Variables. */
-PRIVATE struct wini {		/* main drive struct, one entry per drive */
+static struct wini {		/* main drive struct, one entry per drive */
   unsigned cylinders;		/* number of cylinders */
   unsigned heads;		/* number of heads */
   unsigned sectors;		/* number of sectors per track */
@@ -48,27 +48,27 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
   struct device subpart[SUB_PER_DRIVE]; /* subpartitions */
 } wini[MAX_DRIVES], *w_wn;
 
-PRIVATE int w_drive;			/* selected drive */
-PRIVATE struct device *w_dv;		/* device's base and size */
-PRIVATE char *bios_buf_v;
-PRIVATE phys_bytes bios_buf_phys;
-PRIVATE int remap_first = 0;		/* Remap drives for CD HD emulation */
+static int w_drive;			/* selected drive */
+static struct device *w_dv;		/* device's base and size */
+static char *bios_buf_v;
+static phys_bytes bios_buf_phys;
+static int remap_first = 0;		/* Remap drives for CD HD emulation */
 #define BIOSBUF 16384
 
 int main(void);
-FORWARD struct device *w_prepare(dev_t device);
-FORWARD struct device *w_part(dev_t minor);
-FORWARD ssize_t w_transfer(dev_t minor, int do_write, u64_t position,
+static struct device *w_prepare(dev_t device);
+static struct device *w_part(dev_t minor);
+static ssize_t w_transfer(dev_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
-FORWARD int w_do_open(dev_t minor, int access);
-FORWARD int w_do_close(dev_t minor);
-FORWARD void w_init(void);
-FORWARD void w_geometry(dev_t minor, struct partition *entry);
-FORWARD int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int w_do_open(dev_t minor, int access);
+static int w_do_close(dev_t minor);
+static void w_init(void);
+static void w_geometry(dev_t minor, struct partition *entry);
+static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
 
 /* Entry points to this driver. */
-PRIVATE struct blockdriver w_dtab = {
+static struct blockdriver w_dtab = {
   BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
   w_do_open,	/* open or mount request, initialize device */
   w_do_close,	/* release device */
@@ -84,13 +84,13 @@ PRIVATE struct blockdriver w_dtab = {
 };
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				bios_winchester_task			     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
   /* SEF local startup. */
   sef_local_startup();
@@ -104,7 +104,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -121,7 +121,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the bios_wini driver. */
   long v;
@@ -139,7 +139,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				w_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *w_prepare(dev_t device)
+static struct device *w_prepare(dev_t device)
 {
 /* Prepare for I/O on a device. */
 
@@ -163,7 +163,7 @@ PRIVATE struct device *w_prepare(dev_t device)
 /*===========================================================================*
  *				w_part					     *
  *===========================================================================*/
-PRIVATE struct device *w_part(dev_t minor)
+static struct device *w_part(dev_t minor)
 {
 /* Return a pointer to the partition information of the given minor device. */
 
@@ -173,7 +173,7 @@ PRIVATE struct device *w_part(dev_t minor)
 /*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
-PRIVATE ssize_t w_transfer(
+static ssize_t w_transfer(
   dev_t minor,			/* minor device number */
   int do_write,			/* read or write? */
   u64_t pos64,			/* offset on device to read or write */
@@ -356,7 +356,7 @@ PRIVATE ssize_t w_transfer(
 /*============================================================================*
  *				w_do_open				      *
  *============================================================================*/
-PRIVATE int w_do_open(dev_t minor, int UNUSED(access))
+static int w_do_open(dev_t minor, int UNUSED(access))
 {
 /* Device open: Initialize the controller and read the partition table. */
 
@@ -376,7 +376,7 @@ PRIVATE int w_do_open(dev_t minor, int UNUSED(access))
 /*============================================================================*
  *				w_do_close				      *
  *============================================================================*/
-PRIVATE int w_do_close(dev_t minor)
+static int w_do_close(dev_t minor)
 {
 /* Device close: Release a device. */
 
@@ -388,7 +388,7 @@ PRIVATE int w_do_close(dev_t minor)
 /*===========================================================================*
  *				w_init					     *
  *===========================================================================*/
-PRIVATE void w_init(void)
+static void w_init(void)
 {
 /* This routine is called at startup to initialize the drive parameters. */
 
@@ -498,7 +498,7 @@ PRIVATE void w_init(void)
 /*============================================================================*
  *				w_geometry				      *
  *============================================================================*/
-PRIVATE void w_geometry(dev_t minor, struct partition *entry)
+static void w_geometry(dev_t minor, struct partition *entry)
 {
   if (w_prepare(minor) == NULL) return;
 
@@ -510,7 +510,7 @@ PRIVATE void w_geometry(dev_t minor, struct partition *entry)
 /*============================================================================*
  *				w_ioctl					      *
  *============================================================================*/
-PRIVATE int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 	int count;

@@ -40,16 +40,16 @@
 #include <minix/chardriver.h>
 #include <minix/ds.h>
 
-PRIVATE int running;
+static int running;
 
 /* Management data for opened devices. */
-PRIVATE int open_devs[MAX_NR_OPEN_DEVICES];
-PRIVATE int next_open_devs_slot = 0;
+static int open_devs[MAX_NR_OPEN_DEVICES];
+static int next_open_devs_slot = 0;
 
 /*===========================================================================*
  *				clear_open_devs				     *
  *===========================================================================*/
-PRIVATE void clear_open_devs(void)
+static void clear_open_devs(void)
 {
 /* Reset the set of previously opened minor devices. */
   next_open_devs_slot = 0;
@@ -58,7 +58,7 @@ PRIVATE void clear_open_devs(void)
 /*===========================================================================*
  *				is_open_dev				     *
  *===========================================================================*/
-PRIVATE int is_open_dev(int device)
+static int is_open_dev(int device)
 {
 /* Check whether the given minor device has previously been opened. */
   int i;
@@ -73,7 +73,7 @@ PRIVATE int is_open_dev(int device)
 /*===========================================================================*
  *				set_open_dev				     *
  *===========================================================================*/
-PRIVATE void set_open_dev(int device)
+static void set_open_dev(int device)
 {
 /* Mark the given minor device as having been opened. */
 
@@ -87,7 +87,7 @@ PRIVATE void set_open_dev(int device)
 /*===========================================================================*
  *				chardriver_announce			     *
  *===========================================================================*/
-PUBLIC void chardriver_announce(void)
+void chardriver_announce(void)
 {
 /* Announce we are up after a fresh start or restart. */
   int r;
@@ -119,7 +119,7 @@ PUBLIC void chardriver_announce(void)
 /*===========================================================================*
  *				async_reply				     *
  *===========================================================================*/
-PRIVATE void async_reply(message *mess, int r)
+static void async_reply(message *mess, int r)
 {
 /* Send a reply using the asynchronous character device protocol. */
   message reply_mess;
@@ -185,7 +185,7 @@ PRIVATE void async_reply(message *mess, int r)
 /*===========================================================================*
  *				sync_reply				     *
  *===========================================================================*/
-PRIVATE void sync_reply(message *m_ptr, int ipc_status, int reply)
+static void sync_reply(message *m_ptr, int ipc_status, int reply)
 {
 /* Reply to a message sent to the driver. */
   endpoint_t caller_e, user_e;
@@ -211,7 +211,7 @@ PRIVATE void sync_reply(message *m_ptr, int ipc_status, int reply)
 /*===========================================================================*
  *				send_reply				     *
  *===========================================================================*/
-PRIVATE void send_reply(int type, message *m_ptr, int ipc_status, int reply)
+static void send_reply(int type, message *m_ptr, int ipc_status, int reply)
 {
 /* Prepare and send a reply message. */
 
@@ -227,7 +227,7 @@ PRIVATE void send_reply(int type, message *m_ptr, int ipc_status, int reply)
 /*===========================================================================*
  *				do_rdwt					     *
  *===========================================================================*/
-PRIVATE int do_rdwt(struct chardriver *cdp, message *mp)
+static int do_rdwt(struct chardriver *cdp, message *mp)
 {
 /* Carry out a single read or write request. */
   iovec_t iovec1;
@@ -261,7 +261,7 @@ PRIVATE int do_rdwt(struct chardriver *cdp, message *mp)
 /*===========================================================================*
  *				do_vrdwt				     *
  *===========================================================================*/
-PRIVATE int do_vrdwt(struct chardriver *cdp, message *mp)
+static int do_vrdwt(struct chardriver *cdp, message *mp)
 {
 /* Carry out an device read or write to/from a vector of user addresses.
  * The "user addresses" are assumed to be safe, i.e. FS transferring to/from
@@ -307,7 +307,7 @@ PRIVATE int do_vrdwt(struct chardriver *cdp, message *mp)
 /*===========================================================================*
  *				handle_notify				     *
  *===========================================================================*/
-PRIVATE void handle_notify(struct chardriver *cdp, message *m_ptr)
+static void handle_notify(struct chardriver *cdp, message *m_ptr)
 {
 /* Take care of the notifications (interrupt and clock messages) by calling the
  * appropiate callback functions. Never send a reply.
@@ -329,7 +329,7 @@ PRIVATE void handle_notify(struct chardriver *cdp, message *m_ptr)
 /*===========================================================================*
  *				handle_request				     *
  *===========================================================================*/
-PRIVATE int handle_request(struct chardriver *cdp, message *m_ptr)
+static int handle_request(struct chardriver *cdp, message *m_ptr)
 {
 /* Call the appropiate driver function, based on the type of request. Return
  * the result code that is to be sent back to the caller, or EDONTREPLY if no
@@ -378,7 +378,7 @@ PRIVATE int handle_request(struct chardriver *cdp, message *m_ptr)
 /*===========================================================================*
  *				chardriver_process			     *
  *===========================================================================*/
-PUBLIC void chardriver_process(struct chardriver *cdp, int driver_type,
+void chardriver_process(struct chardriver *cdp, int driver_type,
   message *m_ptr, int ipc_status)
 {
 /* Handle the given received message. */
@@ -399,7 +399,7 @@ PUBLIC void chardriver_process(struct chardriver *cdp, int driver_type,
 /*===========================================================================*
  *				chardriver_task				     *
  *===========================================================================*/
-PUBLIC void chardriver_task(struct chardriver *cdp, int driver_type)
+void chardriver_task(struct chardriver *cdp, int driver_type)
 {
 /* Main program of any device driver task. */
   int r, ipc_status;
@@ -421,7 +421,7 @@ PUBLIC void chardriver_task(struct chardriver *cdp, int driver_type)
 /*===========================================================================*
  *				do_nop					     *
  *===========================================================================*/
-PUBLIC int do_nop(message *UNUSED(mp))
+int do_nop(message *UNUSED(mp))
 {
   return(OK);
 }
@@ -429,7 +429,7 @@ PUBLIC int do_nop(message *UNUSED(mp))
 /*===========================================================================*
  *				nop_ioctl				     *
  *===========================================================================*/
-PUBLIC int nop_ioctl(message *UNUSED(mp))
+int nop_ioctl(message *UNUSED(mp))
 {
   return(ENOTTY);
 }
@@ -437,7 +437,7 @@ PUBLIC int nop_ioctl(message *UNUSED(mp))
 /*===========================================================================*
  *				nop_alarm				     *
  *===========================================================================*/
-PUBLIC void nop_alarm(message *UNUSED(mp))
+void nop_alarm(message *UNUSED(mp))
 {
 /* Ignore the leftover alarm. */
 }
@@ -445,7 +445,7 @@ PUBLIC void nop_alarm(message *UNUSED(mp))
 /*===========================================================================*
  *				nop_cleanup				     *
  *===========================================================================*/
-PUBLIC void nop_cleanup(void)
+void nop_cleanup(void)
 {
 /* Nothing to clean up. */
 }
@@ -453,7 +453,7 @@ PUBLIC void nop_cleanup(void)
 /*===========================================================================*
  *				nop_cancel				     *
  *===========================================================================*/
-PUBLIC int nop_cancel(message *UNUSED(m))
+int nop_cancel(message *UNUSED(m))
 {
 /* Nothing to do for cancel. */
    return(OK);
@@ -462,7 +462,7 @@ PUBLIC int nop_cancel(message *UNUSED(m))
 /*===========================================================================*
  *				nop_select				     *
  *===========================================================================*/
-PUBLIC int nop_select(message *UNUSED(m))
+int nop_select(message *UNUSED(m))
 {
 /* Nothing to do for select. */
    return(OK);

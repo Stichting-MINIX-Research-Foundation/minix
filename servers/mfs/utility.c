@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys()
+int no_sys()
 {
 /* Somebody has used an illegal system call number */
   printf("no_sys: invalid call %d\n", req_nr);
@@ -18,7 +18,7 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *				conv2					     *
  *===========================================================================*/
-PUBLIC unsigned conv2(norm, w)
+unsigned conv2(norm, w)
 int norm;			/* TRUE if no swap, FALSE for byte swap */
 int w;				/* promotion of 16-bit word to be swapped */
 {
@@ -31,7 +31,7 @@ int w;				/* promotion of 16-bit word to be swapped */
 /*===========================================================================*
  *				conv4					     *
  *===========================================================================*/
-PUBLIC long conv4(norm, x)
+long conv4(norm, x)
 int norm;			/* TRUE if no swap, FALSE for byte swap */
 long x;				/* 32-bit long to be byte swapped */
 {
@@ -50,7 +50,7 @@ long x;				/* 32-bit long to be byte swapped */
 /*===========================================================================*
  *				clock_time				     *
  *===========================================================================*/
-PUBLIC time_t clock_time()
+time_t clock_time()
 {
 /* This routine returns the time in seconds since 1.1.1970.  MINIX is an
  * astrophysically naive system that assumes the earth rotates at a constant
@@ -71,7 +71,7 @@ PUBLIC time_t clock_time()
 /*===========================================================================*
  *				mfs_min					     *
  *===========================================================================*/
-PUBLIC int min(unsigned int l, unsigned int r)
+int min(unsigned int l, unsigned int r)
 {
 	if(r >= l) return(l);
 
@@ -82,7 +82,7 @@ PUBLIC int min(unsigned int l, unsigned int r)
 /*===========================================================================*
  *				mfs_nul					     *
  *===========================================================================*/
-PUBLIC void mfs_nul_f(char *file, int line, char *str, unsigned int len,
+void mfs_nul_f(char *file, int line, char *str, unsigned int len,
 unsigned int maxlen)
 {
   if(len < maxlen && str[len-1] != '\0') {
@@ -98,7 +98,7 @@ unsigned int maxlen)
 /*===========================================================================*
  *				sanity_check				     *
  *===========================================================================*/
-PUBLIC void sanitycheck(char *file, int line)
+void sanitycheck(char *file, int line)
 {
 	MYASSERT(SELF_E > 0);
 	if(superblock.s_dev != NO_DEV) {

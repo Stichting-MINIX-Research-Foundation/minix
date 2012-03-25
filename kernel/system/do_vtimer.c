@@ -18,7 +18,7 @@
 /*===========================================================================*
  *				do_vtimer				     *
  *===========================================================================*/
-PUBLIC int do_vtimer(struct proc * caller, message * m_ptr)
+int do_vtimer(struct proc * caller, message * m_ptr)
 {
 /* Set and/or retrieve the value of one of a process' virtual timers. */
   struct proc *rp;		/* pointer to process the timer belongs to */
@@ -80,7 +80,7 @@ PUBLIC int do_vtimer(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				vtimer_check				     *
  *===========================================================================*/
-PUBLIC void vtimer_check(rp)
+void vtimer_check(rp)
 struct proc *rp;			/* pointer to the process */
 {
   /* This is called from the clock task, so we can be interrupted by the clock

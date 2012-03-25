@@ -16,7 +16,7 @@
 /*===========================================================================*
  *				do_time					     *
  *===========================================================================*/
-PUBLIC int do_time()
+int do_time()
 {
 /* Perform the time(tp) system call. This returns the time in seconds since 
  * 1.1.1970.  MINIX is an astrophysically naive system that assumes the earth 
@@ -37,7 +37,7 @@ PUBLIC int do_time()
 /*===========================================================================*
  *				do_stime				     *
  *===========================================================================*/
-PUBLIC int do_stime()
+int do_stime()
 {
 /* Perform the stime(tp) system call. Retrieve the system's uptime (ticks 
  * since boot) and pass the new time in seconds at system boot to the kernel.
@@ -62,7 +62,7 @@ PUBLIC int do_stime()
 /*===========================================================================*
  *				do_times				     *
  *===========================================================================*/
-PUBLIC int do_times()
+int do_times()
 {
 /* Perform the times(buffer) system call. */
   register struct mproc *rmp = mp;

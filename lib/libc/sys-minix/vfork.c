@@ -8,7 +8,7 @@
 __weak_alias(vfork, _vfork)
 #endif
 
-PUBLIC pid_t vfork()
+pid_t vfork()
 {
   message m;
 

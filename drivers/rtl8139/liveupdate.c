@@ -10,10 +10,10 @@ EXTERN re_t re_state;
     ((s) >= RL_STATE_READ_PROTOCOL_FREE && (s) <= RL_STATE_WRITE_PROTOCOL_FREE)
 
 /* State management helpers. */
-PRIVATE int is_reading;
-PRIVATE int is_writing;
+static int is_reading;
+static int is_writing;
 
-PRIVATE void load_state_info(void)
+static void load_state_info(void)
 {
   re_t *rep;
 
@@ -27,7 +27,7 @@ PRIVATE void load_state_info(void)
 /*===========================================================================*
  *       			 sef_cb_lu_prepare 	 	             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_prepare(int state)
+int sef_cb_lu_prepare(int state)
 {
   int is_ready;
 
@@ -63,7 +63,7 @@ PUBLIC int sef_cb_lu_prepare(int state)
 /*===========================================================================*
  *      		  sef_cb_lu_state_isvalid		             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_isvalid(int state)
+int sef_cb_lu_state_isvalid(int state)
 {
   return SEF_LU_STATE_IS_STANDARD(state) || RL_STATE_IS_CUSTOM(state);
 }
@@ -71,7 +71,7 @@ PUBLIC int sef_cb_lu_state_isvalid(int state)
 /*===========================================================================*
  *      		   sef_cb_lu_state_dump         	             *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_state_dump(int state)
+void sef_cb_lu_state_dump(int state)
 {
   /* Load state information. */
   load_state_info();

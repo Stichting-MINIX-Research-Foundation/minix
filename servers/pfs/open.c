@@ -8,7 +8,7 @@
 /*===========================================================================*
  *				fs_newnode				     *
  *===========================================================================*/
-PUBLIC int fs_newnode(message *fs_m_in, message *fs_m_out)
+int fs_newnode(message *fs_m_in, message *fs_m_out)
 {
   register int r = OK;
   mode_t bits;

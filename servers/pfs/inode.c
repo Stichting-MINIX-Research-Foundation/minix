@@ -19,14 +19,14 @@
 #include "inode.h"
 #include <minix/vfsif.h>
 
-FORWARD void addhash_inode(struct inode * const node);
-FORWARD void unhash_inode(struct inode * const node);
+static void addhash_inode(struct inode * const node);
+static void unhash_inode(struct inode * const node);
 
 
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-PUBLIC int fs_putnode(message *fs_m_in, message *fs_m_out)
+int fs_putnode(message *fs_m_in, message *fs_m_out)
 {
 /* Find the inode specified by the request message and decrease its counter.*/
 
@@ -68,7 +68,7 @@ PUBLIC int fs_putnode(message *fs_m_in, message *fs_m_out)
 /*===========================================================================*
  *				init_inode_cache			     *
  *===========================================================================*/
-PUBLIC void init_inode_cache()
+void init_inode_cache()
 {
   struct inode *rip;
   struct inodelist *rlp;
@@ -95,7 +95,7 @@ PUBLIC void init_inode_cache()
 /*===========================================================================*
  *				addhash_inode   			     *
  *===========================================================================*/
-PRIVATE void addhash_inode(struct inode * const node)
+static void addhash_inode(struct inode * const node)
 {
   int hashi = (int) (node->i_num & INODE_HASH_MASK);
 
@@ -107,7 +107,7 @@ PRIVATE void addhash_inode(struct inode * const node)
 /*===========================================================================*
  *				unhash_inode      			     *
  *===========================================================================*/
-PRIVATE void unhash_inode(struct inode * const node)
+static void unhash_inode(struct inode * const node)
 {
   /* remove from hash table */
   LIST_REMOVE(node, i_hash);
@@ -117,7 +117,7 @@ PRIVATE void unhash_inode(struct inode * const node)
 /*===========================================================================*
  *				get_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_inode(
+struct inode *get_inode(
   dev_t dev,		/* device on which inode resides */
   ino_t numb		/* inode number */
 )
@@ -173,7 +173,7 @@ PUBLIC struct inode *get_inode(
 /*===========================================================================*
  *				find_inode        			     *
  *===========================================================================*/
-PUBLIC struct inode *find_inode(numb)
+struct inode *find_inode(numb)
 ino_t numb;		/* inode number */
 {
 /* Find the inode specified by the inode and device number.
@@ -197,7 +197,7 @@ ino_t numb;		/* inode number */
 /*===========================================================================*
  *				put_inode				     *
  *===========================================================================*/
-PUBLIC void put_inode(rip)
+void put_inode(rip)
 struct inode *rip;	/* pointer to inode to be released */
 {
 /* The caller is no longer using this inode.  If no one else is using it either
@@ -238,7 +238,7 @@ struct inode *rip;	/* pointer to inode to be released */
 /*===========================================================================*
  *				alloc_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
+struct inode *alloc_inode(dev_t dev, mode_t bits)
 {
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 
@@ -286,7 +286,7 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
 /*===========================================================================*
  *				wipe_inode				     *
  *===========================================================================*/
-PUBLIC void wipe_inode(rip)
+void wipe_inode(rip)
 struct inode *rip;	/* the inode to be erased */
 {
 /* Erase some fields in the inode.  This function is called from alloc_inode()
@@ -302,7 +302,7 @@ struct inode *rip;	/* the inode to be erased */
 /*===========================================================================*
  *				free_inode				     *
  *===========================================================================*/
-PUBLIC void free_inode(rip)
+void free_inode(rip)
 struct inode *rip;
 {
 /* Return an inode to the pool of unallocated inodes. */
@@ -318,7 +318,7 @@ struct inode *rip;
 /*===========================================================================*
  *				update_times				     *
  *===========================================================================*/
-PUBLIC void update_times(rip)
+void update_times(rip)
 struct inode *rip;	/* pointer to inode to be read/written */
 {
 /* Various system calls are required by the standard to update atime, ctime,

@@ -13,7 +13,7 @@
 /*===========================================================================*
  *				do_newmap				     *
  *===========================================================================*/
-PUBLIC int do_newmap(struct proc * caller, message * m_ptr)
+int do_newmap(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_newmap().  Fetch the memory map. */
   struct proc *rp;	/* process whose map is to be loaded */
@@ -32,7 +32,7 @@ PUBLIC int do_newmap(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				newmap					     *
  *===========================================================================*/
-PUBLIC int newmap(struct proc *caller, struct proc *rp, struct mem_map *map_ptr)
+int newmap(struct proc *caller, struct proc *rp, struct mem_map *map_ptr)
 {
   int r;
 /* Fetch the memory map. */

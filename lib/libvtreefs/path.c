@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				access_as_dir				     *
  *===========================================================================*/
-PRIVATE int access_as_dir(struct inode *node, vfs_ucred_t *ucred)
+static int access_as_dir(struct inode *node, vfs_ucred_t *ucred)
 {
 	/* Check whether the given inode may be accessed as directory.
 	 * Return OK or an appropriate error code.
@@ -41,7 +41,7 @@ PRIVATE int access_as_dir(struct inode *node, vfs_ucred_t *ucred)
 /*===========================================================================*
  *				next_name				     *
  *===========================================================================*/
-PRIVATE int next_name(char **ptr, char **start, char name[PNAME_MAX+1])
+static int next_name(char **ptr, char **start, char name[PNAME_MAX+1])
 {
 	/* Get the next path component from a path.
 	 */
@@ -71,7 +71,7 @@ PRIVATE int next_name(char **ptr, char **start, char name[PNAME_MAX+1])
 /*===========================================================================*
  *				go_up					     *
  *===========================================================================*/
-PRIVATE int go_up(struct inode *node, struct inode **parent)
+static int go_up(struct inode *node, struct inode **parent)
 {
 	/* Given a directory inode, progress into the parent directory.
 	 */
@@ -90,7 +90,7 @@ PRIVATE int go_up(struct inode *node, struct inode **parent)
 /*===========================================================================*
  *				go_down					     *
  *===========================================================================*/
-PRIVATE int go_down(struct inode *parent, char *name, struct inode **child)
+static int go_down(struct inode *parent, char *name, struct inode **child)
 {
 	/* Given a directory inode and a name, progress into a directory entry.
 	 */
@@ -114,7 +114,7 @@ PRIVATE int go_down(struct inode *parent, char *name, struct inode **child)
 /*===========================================================================*
  *				resolve_link				     *
  *===========================================================================*/
-PRIVATE int resolve_link(struct inode *node, char *pptr, char *tail)
+static int resolve_link(struct inode *node, char *pptr, char *tail)
 {
 	/* Given a symbolic link, resolve and return the contents of the link.
 	 */
@@ -145,7 +145,7 @@ PRIVATE int resolve_link(struct inode *node, char *pptr, char *tail)
 /*===========================================================================*
  *				fs_lookup				     *
  *===========================================================================*/
-PUBLIC int fs_lookup(void)
+int fs_lookup(void)
 {
 	/* Resolve a path string to an inode.
 	 */

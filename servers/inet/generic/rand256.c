@@ -14,15 +14,15 @@ Generate 256-bit random numbers
 #include "inet.h"
 #include "rand256.h"
 
-PRIVATE u32_t base_bits[8];
+static u32_t base_bits[8];
 
-PUBLIC void init_rand256(bits)
+void init_rand256(bits)
 u8_t bits[32];
 {
 	memcpy(base_bits, bits, sizeof(base_bits));
 }
 
-PUBLIC void rand256(bits)
+void rand256(bits)
 u8_t bits[32];
 {
 	u32_t a;

@@ -6,7 +6,7 @@
 /*===========================================================================*
  *				fs_ftrunc				     *
  *===========================================================================*/
-PUBLIC int fs_ftrunc(message *fs_m_in, message *fs_m_out)
+int fs_ftrunc(message *fs_m_in, message *fs_m_out)
 {
   struct inode *rip;
   off_t start, end;
@@ -26,7 +26,7 @@ PUBLIC int fs_ftrunc(message *fs_m_in, message *fs_m_out)
 /*===========================================================================*
  *				truncate_inode				     *
  *===========================================================================*/
-PUBLIC int truncate_inode(rip, newsize)
+int truncate_inode(rip, newsize)
 register struct inode *rip;	/* pointer to inode to be truncated */
 off_t newsize;			/* inode must become this size */
 {

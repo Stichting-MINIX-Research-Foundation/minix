@@ -3,8 +3,8 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE int keys_used = 0;
-PRIVATE struct {
+static int keys_used = 0;
+static struct {
   int used;
   int nvalues;
   void *mvalue;
@@ -15,7 +15,7 @@ PRIVATE struct {
 /*===========================================================================*
  *				mthread_init_keys			     *
  *===========================================================================*/
-PUBLIC void mthread_init_keys(void)
+void mthread_init_keys(void)
 {
 /* Initialize the table of key entries.
  */
@@ -28,7 +28,7 @@ PUBLIC void mthread_init_keys(void)
 /*===========================================================================*
  *				mthread_key_create			     *
  *===========================================================================*/
-PUBLIC int mthread_key_create(mthread_key_t *key, void (*destructor)(void *))
+int mthread_key_create(mthread_key_t *key, void (*destructor)(void *))
 {
 /* Allocate a key.
  */
@@ -60,7 +60,7 @@ PUBLIC int mthread_key_create(mthread_key_t *key, void (*destructor)(void *))
 /*===========================================================================*
  *				mthread_key_delete			     *
  *===========================================================================*/
-PUBLIC int mthread_key_delete(mthread_key_t key)
+int mthread_key_delete(mthread_key_t key)
 {
 /* Free up a key, as well as any associated storage space.
  */
@@ -80,7 +80,7 @@ PUBLIC int mthread_key_delete(mthread_key_t key)
 /*===========================================================================*
  *				mthread_getspecific			     *
  *===========================================================================*/
-PUBLIC void *mthread_getspecific(mthread_key_t key)
+void *mthread_getspecific(mthread_key_t key)
 {
 /* Get this thread's local value for the given key. The default is NULL.
  */
@@ -102,7 +102,7 @@ PUBLIC void *mthread_getspecific(mthread_key_t key)
 /*===========================================================================*
  *				mthread_setspecific			     *
  *===========================================================================*/
-PUBLIC int mthread_setspecific(mthread_key_t key, void *value)
+int mthread_setspecific(mthread_key_t key, void *value)
 {
 /* Set this thread's value for the given key. Allocate more resources as
  * necessary.
@@ -143,7 +143,7 @@ PUBLIC int mthread_setspecific(mthread_key_t key, void *value)
 /*===========================================================================*
  *				mthread_cleanup_values			     *
  *===========================================================================*/
-PUBLIC void mthread_cleanup_values(void)
+void mthread_cleanup_values(void)
 {
 /* Clean up all the values associated with an exiting thread, calling keys'
  * destruction procedures as appropriate.

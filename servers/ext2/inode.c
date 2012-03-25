@@ -22,16 +22,16 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-FORWARD void icopy(struct inode *rip, d_inode *dip, int direction, int
+static void icopy(struct inode *rip, d_inode *dip, int direction, int
 	norm);
-FORWARD void addhash_inode(struct inode *node);
-FORWARD void unhash_inode(struct inode *node);
+static void addhash_inode(struct inode *node);
+static void unhash_inode(struct inode *node);
 
 
 /*===========================================================================*
  *                fs_putnode                                                 *
  *===========================================================================*/
-PUBLIC int fs_putnode(void)
+int fs_putnode(void)
 {
 /* Find the inode specified by the request message and decrease its counter.*/
 
@@ -70,7 +70,7 @@ PUBLIC int fs_putnode(void)
 /*===========================================================================*
  *                init_inode_cache                                           *
  *===========================================================================*/
-PUBLIC void init_inode_cache()
+void init_inode_cache()
 {
   struct inode *rip;
   struct inodelist *rlp;
@@ -96,7 +96,7 @@ PUBLIC void init_inode_cache()
 /*===========================================================================*
  *                addhash_inode                                              *
  *===========================================================================*/
-PRIVATE void addhash_inode(struct inode *node)
+static void addhash_inode(struct inode *node)
 {
   int hashi = node->i_num & INODE_HASH_MASK;
 
@@ -108,7 +108,7 @@ PRIVATE void addhash_inode(struct inode *node)
 /*===========================================================================*
  *                unhash_inode                                               *
  *===========================================================================*/
-PRIVATE void unhash_inode(struct inode *node)
+static void unhash_inode(struct inode *node)
 {
   /* remove from hash table */
   LIST_REMOVE(node, i_hash);
@@ -118,7 +118,7 @@ PRIVATE void unhash_inode(struct inode *node)
 /*===========================================================================*
  *                get_inode                                                  *
  *===========================================================================*/
-PUBLIC struct inode *get_inode(
+struct inode *get_inode(
   dev_t dev,          /* device on which inode resides */
   ino_t numb            /* inode number (ANSI: may not be unshort) */
 )
@@ -196,7 +196,7 @@ PUBLIC struct inode *get_inode(
 /*===========================================================================*
  *                find_inode                                                 *
  *===========================================================================*/
-PUBLIC struct inode *find_inode(
+struct inode *find_inode(
   dev_t dev,          /* device on which inode resides */
   ino_t numb            /* inode number (ANSI: may not be unshort) */
 )
@@ -221,7 +221,7 @@ PUBLIC struct inode *find_inode(
 /*===========================================================================*
  *                put_inode                                                  *
  *===========================================================================*/
-PUBLIC void put_inode(
+void put_inode(
   register struct inode *rip     /* pointer to inode to be released */
 )
 {
@@ -271,7 +271,7 @@ PUBLIC void put_inode(
 /*===========================================================================*
  *                update_times                                               *
  *===========================================================================*/
-PUBLIC void update_times(
+void update_times(
   register struct inode *rip     /* pointer to inode to be read/written */
 )
 {
@@ -302,7 +302,7 @@ PUBLIC void update_times(
 /*===========================================================================*
  *                rw_inode                                                   *
  *===========================================================================*/
-PUBLIC void rw_inode(
+void rw_inode(
   register struct inode *rip,         /* pointer to inode to be read/written */
   int rw_flag                         /* READING or WRITING */
 )
@@ -355,7 +355,7 @@ PUBLIC void rw_inode(
 /*===========================================================================*
  *				icopy					     *
  *===========================================================================*/
-PRIVATE void icopy(
+static void icopy(
   register struct inode *rip,	/* pointer to the in-core inode struct */
   register d_inode *dip,	/* pointer to the on-disk struct */
   int direction,		/* READING (from disk) or WRITING (to disk) */
@@ -415,7 +415,7 @@ PRIVATE void icopy(
 /*===========================================================================*
  *                dup_inode                                                  *
  *===========================================================================*/
-PUBLIC void dup_inode(
+void dup_inode(
   struct inode *ip         /* The inode to be duplicated. */
 )
 {

@@ -19,7 +19,7 @@
 /*===========================================================================*
  *				do_copy					     *
  *===========================================================================*/
-PUBLIC int do_copy(struct proc * caller, message * m_ptr)
+int do_copy(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_vircopy() and sys_physcopy().  Copy data using virtual or
  * physical addressing. Although a single handler function is used, there 

@@ -9,23 +9,23 @@ typedef int ((* acpi_read_t)(phys_bytes addr, void * buff, size_t size));
 
 struct acpi_rsdp acpi_rsdp;
 
-PRIVATE acpi_read_t read_func;
+static acpi_read_t read_func;
 
 #define MAX_RSDT	35 /* ACPI defines 35 signatures */
 
-PRIVATE struct acpi_rsdt {
+static struct acpi_rsdt {
 	struct acpi_sdt_header	hdr;
 	u32_t			data[MAX_RSDT];
 } rsdt;
 	
-PRIVATE struct {
+static struct {
 	char	signature [ACPI_SDT_SIGNATURE_LEN + 1];
 	size_t	length;
 } sdt_trans[MAX_RSDT];
 
-PRIVATE int sdt_count;
+static int sdt_count;
 
-PRIVATE int acpi_check_csum(struct acpi_sdt_header * tb, size_t size)
+static int acpi_check_csum(struct acpi_sdt_header * tb, size_t size)
 {
 	u8_t total = 0;
 	int i;
@@ -34,12 +34,12 @@ PRIVATE int acpi_check_csum(struct acpi_sdt_header * tb, size_t size)
 	return total == 0 ? 0 : -1;
 }
 
-PRIVATE int acpi_check_signature(const char * orig, const char * match)
+static int acpi_check_signature(const char * orig, const char * match)
 {
 	return strncmp(orig, match, ACPI_SDT_SIGNATURE_LEN);
 }
 
-PRIVATE int acpi_read_sdt_at(phys_bytes addr,
+static int acpi_read_sdt_at(phys_bytes addr,
 				struct acpi_sdt_header * tb,
 				size_t size,
 				const char * name)
@@ -84,7 +84,7 @@ PRIVATE int acpi_read_sdt_at(phys_bytes addr,
 	return tb->length;
 }
 
-PUBLIC phys_bytes acpi_get_table_base(const char * name)
+phys_bytes acpi_get_table_base(const char * name)
 {
 	int i;
 
@@ -97,7 +97,7 @@ PUBLIC phys_bytes acpi_get_table_base(const char * name)
 	return (phys_bytes) NULL;
 }
 
-PUBLIC size_t acpi_get_table_length(const char * name)
+size_t acpi_get_table_length(const char * name)
 {
 	int i;
 
@@ -110,7 +110,7 @@ PUBLIC size_t acpi_get_table_length(const char * name)
 	return 0;
 }
 
-PRIVATE void * acpi_madt_get_typed_item(struct acpi_madt_hdr * hdr,
+static void * acpi_madt_get_typed_item(struct acpi_madt_hdr * hdr,
 					unsigned char type,
 					unsigned idx)
 {
@@ -135,7 +135,7 @@ PRIVATE void * acpi_madt_get_typed_item(struct acpi_madt_hdr * hdr,
 }
 
 #if 0
-PRIVATE void * acpi_madt_get_item(struct acpi_madt_hdr * hdr,
+static void * acpi_madt_get_item(struct acpi_madt_hdr * hdr,
 				unsigned idx)
 {
 	u8_t * t, * end;
@@ -154,7 +154,7 @@ PRIVATE void * acpi_madt_get_item(struct acpi_madt_hdr * hdr,
 }
 #endif
 
-PRIVATE int acpi_rsdp_test(void * buff)
+static int acpi_rsdp_test(void * buff)
 {
 	struct acpi_rsdp * rsdp = (struct acpi_rsdp *) buff;
 
@@ -166,7 +166,7 @@ PRIVATE int acpi_rsdp_test(void * buff)
 	return 1;
 }
 
-PRIVATE int get_acpi_rsdp(void)
+static int get_acpi_rsdp(void)
 {
 	u16_t ebda;
 	/*
@@ -192,13 +192,13 @@ PRIVATE int get_acpi_rsdp(void)
 	return 0;
 }
 
-PRIVATE int acpi_read_kernel(phys_bytes addr, void * buff, size_t size)
+static int acpi_read_kernel(phys_bytes addr, void * buff, size_t size)
 {
 	phys_copy(addr, vir2phys(buff), size);
 	return 0;
 }
 
-PUBLIC void acpi_init(void)
+void acpi_init(void)
 {
 	int s, i;
 	read_func = acpi_read_kernel;
@@ -229,7 +229,7 @@ PUBLIC void acpi_init(void)
 	}
 }
 
-PUBLIC struct acpi_madt_ioapic * acpi_get_ioapic_next(void)
+struct acpi_madt_ioapic * acpi_get_ioapic_next(void)
 {
 	static unsigned idx = 0;
 	static struct acpi_madt_hdr * madt_hdr;
@@ -251,7 +251,7 @@ PUBLIC struct acpi_madt_ioapic * acpi_get_ioapic_next(void)
 	return ret;
 }
 
-PUBLIC struct acpi_madt_lapic * acpi_get_lapic_next(void)
+struct acpi_madt_lapic * acpi_get_lapic_next(void)
 {
 	static unsigned idx = 0;
 	static struct acpi_madt_hdr * madt_hdr;

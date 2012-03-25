@@ -22,13 +22,13 @@ void ddekit_pgtab_init(void);
 static  ddekit_thread_t *dispatch_th = 0;
 
 
-FORWARD void dispatcher_thread(void * unused);
-FORWARD void ddekit_dispatcher_thread_init(void);
+static void dispatcher_thread(void * unused);
+static void ddekit_dispatcher_thread_init(void);
 
 /****************************************************************************/
 /*      dispatcher_thread                                                   */
 /****************************************************************************/
-PRIVATE void dispatcher_thread(void *unused) {
+static void dispatcher_thread(void *unused) {
 
 	/* 
 	 * Gets all messages and dispatches them.
@@ -92,7 +92,7 @@ PRIVATE void dispatcher_thread(void *unused) {
 /****************************************************************************/
 /*      ddekit_dispatcher_thread_init                                       */
 /****************************************************************************/
-PRIVATE void ddekit_dispatcher_thread_init()
+static void ddekit_dispatcher_thread_init()
 {
 
 	dispatch_th = ddekit_thread_create(dispatcher_thread, NULL, "dispatch");
@@ -103,7 +103,7 @@ PRIVATE void ddekit_dispatcher_thread_init()
 /****************************************************************************/
 /*      ddekit_init                                                         */
 /****************************************************************************/
-PUBLIC void ddekit_init(void)
+void ddekit_init(void)
 {
 	sef_startup();
 

@@ -21,7 +21,7 @@ struct ddekit_lock {
 /******************************************************************************
  *       ddekit_lock_init_locked                                              *
  *****************************************************************************/
-PUBLIC void ddekit_lock_init_locked(ddekit_lock_t *mtx) 
+void ddekit_lock_init_locked(ddekit_lock_t *mtx) 
 {  
 	(*mtx) = (struct ddekit_lock *)
 		ddekit_simple_malloc(sizeof(struct ddekit_lock));  
@@ -33,7 +33,7 @@ PUBLIC void ddekit_lock_init_locked(ddekit_lock_t *mtx)
 /******************************************************************************
  *       ddekit_lock_init_unlocked                                            *
  *****************************************************************************/
-PUBLIC void ddekit_lock_init_unlocked(ddekit_lock_t *mtx) 
+void ddekit_lock_init_unlocked(ddekit_lock_t *mtx) 
 { 
 	(*mtx) = (struct ddekit_lock *) 
 		ddekit_simple_malloc(sizeof(struct ddekit_lock));  
@@ -44,7 +44,7 @@ PUBLIC void ddekit_lock_init_unlocked(ddekit_lock_t *mtx)
 /******************************************************************************
  *       ddekit_lock_deinit                                                   *
  *****************************************************************************/
-PUBLIC void ddekit_lock_deinit  (ddekit_lock_t *mtx)
+void ddekit_lock_deinit  (ddekit_lock_t *mtx)
 { 
 	ddekit_simple_free(*mtx);
 }
@@ -52,7 +52,7 @@ PUBLIC void ddekit_lock_deinit  (ddekit_lock_t *mtx)
 /******************************************************************************
  *       ddekit_lock_lock                                                     *
  *****************************************************************************/
-PUBLIC void ddekit_lock_lock (ddekit_lock_t *mtx) 
+void ddekit_lock_lock (ddekit_lock_t *mtx) 
 {
 	if ((*mtx)->owner == NULL) {
 		(*mtx)->owner = ddekit_thread_myself();  
@@ -84,7 +84,7 @@ PUBLIC void ddekit_lock_lock (ddekit_lock_t *mtx)
 /******************************************************************************
  *       ddekit_lock_try_lock                                                 *
  *****************************************************************************/
-PUBLIC int ddekit_lock_try_lock(ddekit_lock_t *mtx) 
+int ddekit_lock_try_lock(ddekit_lock_t *mtx) 
 {
 	if ((*mtx)->owner == NULL) {
 		(*mtx)->owner =  ddekit_thread_myself();
@@ -97,7 +97,7 @@ PUBLIC int ddekit_lock_try_lock(ddekit_lock_t *mtx)
 /******************************************************************************
  *       ddekit_lock_unlock                                                   *
  *****************************************************************************/
-PUBLIC void ddekit_lock_unlock  (ddekit_lock_t *mtx) {
+void ddekit_lock_unlock  (ddekit_lock_t *mtx) {
 	ddekit_assert((*mtx)->owner != NULL);
 	(*mtx)->owner = NULL;
 	if((*mtx)->wait_queue) {
@@ -112,7 +112,7 @@ PUBLIC void ddekit_lock_unlock  (ddekit_lock_t *mtx) {
 /******************************************************************************
  *       ddekit_lock_owner                                                    *
  *****************************************************************************/
-PUBLIC int ddekit_lock_owner(ddekit_lock_t *mtx) { 
+int ddekit_lock_owner(ddekit_lock_t *mtx) { 
 	return ddekit_thread_get_id((*mtx)->owner);
 }
 

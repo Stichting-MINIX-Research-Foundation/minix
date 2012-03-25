@@ -202,7 +202,7 @@ void test_map(void)
 }
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
+static void sef_local_startup(void);
 
 /*===========================================================================*
  *				main					     *
@@ -226,7 +226,7 @@ int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Let SEF perform startup. */
   sef_startup();

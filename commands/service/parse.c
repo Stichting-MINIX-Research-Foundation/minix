@@ -32,14 +32,14 @@
 #include "config.h"
 #include "proto.h"
 
-PRIVATE int class_recurs;       /* Nesting level of class statements */
+static int class_recurs;       /* Nesting level of class statements */
 #define MAX_CLASS_RECURS        100     /* Max nesting level for classes */
 
 #include "parse.h"
 
-FORWARD void do_service(config_t *cpe, config_t *config, struct rs_config *);
+static void do_service(config_t *cpe, config_t *config, struct rs_config *);
 
-PRIVATE void do_class(config_t *cpe, config_t *config, struct rs_config *rs_config)
+static void do_class(config_t *cpe, config_t *config, struct rs_config *rs_config)
 {
 	config_t *cp, *cp1;
 
@@ -110,7 +110,7 @@ PRIVATE void do_class(config_t *cpe, config_t *config, struct rs_config *rs_conf
 	class_recurs--;
 }
 
-PRIVATE void do_uid(config_t *cpe, struct rs_start *rs_start)
+static void do_uid(config_t *cpe, struct rs_start *rs_start)
 {
 	uid_t uid;
 	struct passwd *pw;
@@ -155,7 +155,7 @@ PRIVATE void do_uid(config_t *cpe, struct rs_start *rs_start)
 	rs_start->rss_uid= uid;
 }
 
-PRIVATE void do_sigmgr(config_t *cpe, struct rs_start *rs_start)
+static void do_sigmgr(config_t *cpe, struct rs_start *rs_start)
 {
 	endpoint_t sigmgr_ep;
 	int r;
@@ -192,7 +192,7 @@ PRIVATE void do_sigmgr(config_t *cpe, struct rs_start *rs_start)
 	rs_start->rss_sigmgr= sigmgr_ep;
 }
 
-PRIVATE void do_type(config_t *cpe, struct rs_config *rs_config)
+static void do_type(config_t *cpe, struct rs_config *rs_config)
 {
 	if (cpe->next != NULL)
 	{
@@ -223,7 +223,7 @@ PRIVATE void do_type(config_t *cpe, struct rs_config *rs_config)
 			cpe->file, cpe->line);
 }
 
-PRIVATE void do_descr(config_t *cpe, struct rs_config *rs_config)
+static void do_descr(config_t *cpe, struct rs_config *rs_config)
 {
 	if (cpe->next != NULL)
 	{
@@ -249,7 +249,7 @@ PRIVATE void do_descr(config_t *cpe, struct rs_config *rs_config)
 	rs_config->descr = cpe->word;
 }
 
-PRIVATE void do_scheduler(config_t *cpe, struct rs_start *rs_start)
+static void do_scheduler(config_t *cpe, struct rs_start *rs_start)
 {
 	endpoint_t scheduler_ep;
 	int r;
@@ -286,7 +286,7 @@ PRIVATE void do_scheduler(config_t *cpe, struct rs_start *rs_start)
 	rs_start->rss_scheduler= scheduler_ep;
 }
 
-PRIVATE void do_priority(config_t *cpe, struct rs_start *rs_start)
+static void do_priority(config_t *cpe, struct rs_start *rs_start)
 {
 	int priority_val;
 	char *check;
@@ -324,7 +324,7 @@ PRIVATE void do_priority(config_t *cpe, struct rs_start *rs_start)
 	rs_start->rss_priority= priority_val;
 }
 
-PRIVATE void do_quantum(config_t *cpe, struct rs_start *rs_start)
+static void do_quantum(config_t *cpe, struct rs_start *rs_start)
 {
 	int quantum_val;
 	char *check;
@@ -362,7 +362,7 @@ PRIVATE void do_quantum(config_t *cpe, struct rs_start *rs_start)
 	rs_start->rss_quantum= quantum_val;
 }
 
-PRIVATE void do_cpu(config_t *cpe, struct rs_start *rs_start)
+static void do_cpu(config_t *cpe, struct rs_start *rs_start)
 {
 	int cpu;
 	char *check;
@@ -400,7 +400,7 @@ PRIVATE void do_cpu(config_t *cpe, struct rs_start *rs_start)
 	rs_start->rss_cpu= cpu;
 }
 
-PRIVATE void do_irq(config_t *cpe, struct rs_start *rs_start)
+static void do_irq(config_t *cpe, struct rs_start *rs_start)
 {
 	int irq;
 	int first;
@@ -455,7 +455,7 @@ PRIVATE void do_irq(config_t *cpe, struct rs_start *rs_start)
 	}
 }
 
-PRIVATE void do_io(config_t *cpe, struct rs_start *rs_start)
+static void do_io(config_t *cpe, struct rs_start *rs_start)
 {
 	unsigned base, len;
 	int first;
@@ -517,7 +517,7 @@ PRIVATE void do_io(config_t *cpe, struct rs_start *rs_start)
 	}
 }
 
-PRIVATE void do_pci_device(config_t *cpe, struct rs_start *rs_start)
+static void do_pci_device(config_t *cpe, struct rs_start *rs_start)
 {
 	u16_t vid, did;
 	char *check, *check2;
@@ -554,7 +554,7 @@ PRIVATE void do_pci_device(config_t *cpe, struct rs_start *rs_start)
 	}
 }
 
-PRIVATE void do_pci_class(config_t *cpe, struct rs_start *rs_start)
+static void do_pci_class(config_t *cpe, struct rs_start *rs_start)
 {
 	u8_t baseclass, subclass, interface;
 	u32_t class_id, mask;
@@ -607,7 +607,7 @@ PRIVATE void do_pci_class(config_t *cpe, struct rs_start *rs_start)
 	}
 }
 
-PRIVATE void do_pci(config_t *cpe, struct rs_start *rs_start)
+static void do_pci(config_t *cpe, struct rs_start *rs_start)
 {
 	if (cpe == NULL)
 		return;	/* Empty PCI statement */
@@ -637,7 +637,7 @@ PRIVATE void do_pci(config_t *cpe, struct rs_start *rs_start)
 		cpe->word, cpe->file, cpe->line);
 }
 
-PRIVATE void do_ipc(config_t *cpe, struct rs_start *rs_start)
+static void do_ipc(config_t *cpe, struct rs_start *rs_start)
 {
 	char *list;
 	const char *word;
@@ -734,7 +734,7 @@ struct
 	{ NULL,			0 },
 };
 
-PRIVATE void do_vm(config_t *cpe, struct rs_start *rs_start)
+static void do_vm(config_t *cpe, struct rs_start *rs_start)
 {
 	int i, first;
 
@@ -821,7 +821,7 @@ struct
 	{ NULL,		0 }
 };
 
-PRIVATE void do_system(config_t *cpe, struct rs_start *rs_start)
+static void do_system(config_t *cpe, struct rs_start *rs_start)
 {
 	int i, first;
 
@@ -882,7 +882,7 @@ PRIVATE void do_system(config_t *cpe, struct rs_start *rs_start)
 	}
 }
 
-PRIVATE void do_control(config_t *cpe, struct rs_start *rs_start)
+static void do_control(config_t *cpe, struct rs_start *rs_start)
 {
 	int nr_control = 0;
 
@@ -912,7 +912,7 @@ PRIVATE void do_control(config_t *cpe, struct rs_start *rs_start)
 	}
 }
 
-PRIVATE void do_service(config_t *cpe, config_t *config, struct rs_config *rs_config)
+static void do_service(config_t *cpe, config_t *config, struct rs_config *rs_config)
 {
 	struct rs_start *rs_start = &rs_config->rs_start;
 	config_t *cp;
@@ -1031,7 +1031,7 @@ PRIVATE void do_service(config_t *cpe, config_t *config, struct rs_config *rs_co
 	}
 }
 
-PRIVATE const char *do_config(const char *label, char *filename, struct rs_config *rs_config)
+static const char *do_config(const char *label, char *filename, struct rs_config *rs_config)
 {
 	config_t *config, *cp, *cpe;
 	struct passwd *pw;
@@ -1109,7 +1109,7 @@ PRIVATE const char *do_config(const char *label, char *filename, struct rs_confi
 }
 
 /* returns failure */
-PUBLIC const char *parse_config(char *progname, int custom_config, char *req_config,
+const char *parse_config(char *progname, int custom_config, char *req_config,
 	struct rs_config *rs_config)
 {
         char *specificconfig, *specific_pkg_config;

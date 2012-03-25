@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_schedule(endpoint_t proc_ep,
+int sys_schedule(endpoint_t proc_ep,
 			int priority,
 			int quantum,
 			int cpu)

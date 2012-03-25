@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                               sys_enable_iop				     *    
  *===========================================================================*/
-PUBLIC int sys_enable_iop(proc_ep)
+int sys_enable_iop(proc_ep)
 endpoint_t proc_ep;			/* number of process to allow I/O */
 {
     message m_iop;

@@ -12,12 +12,12 @@
 #undef minix_munmap
 #undef minix_munmap_text
 
-PUBLIC int unmap_ok = 0;
+int unmap_ok = 0;
 
 /*===========================================================================*
  *				    minix_munmap            		     *
  *===========================================================================*/
-PUBLIC int minix_munmap(void *addrstart, vir_bytes len)
+int minix_munmap(void *addrstart, vir_bytes len)
 {
   if(!unmap_ok) 
       return ENOSYS;
@@ -28,7 +28,7 @@ PUBLIC int minix_munmap(void *addrstart, vir_bytes len)
 /*===========================================================================*
  *			         minix_munmap_text            		     *
  *===========================================================================*/
-PUBLIC int minix_munmap_text(void *addrstart, vir_bytes len)
+int minix_munmap_text(void *addrstart, vir_bytes len)
 {
   if(!unmap_ok)
       return ENOSYS;

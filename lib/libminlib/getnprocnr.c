@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 
-PUBLIC int getnprocnr(pid_t pid)
+int getnprocnr(pid_t pid)
 {
   message m;
   int t = GETPROCNR;

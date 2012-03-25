@@ -69,8 +69,8 @@
 #define 	IRQ_BAP 1
 #define		ETH_HLEN		14
 
-PRIVATE t_or or_state;
-PRIVATE int or_instance;
+static t_or or_state;
+static int or_instance;
 
 struct ethhdr {
 	u8_t h_dest[ETH_ALEN];
@@ -102,7 +102,7 @@ u8_t encaps_hdr[] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 };
  ********************************************************************/
 
 /* The frequency of each channel in MHz */
-PRIVATE const long channel_frequency[] = {
+static const long channel_frequency[] = {
 	2412, 2417, 2422, 2427, 2432, 2437, 2442,
 	2447, 2452, 2457, 2462, 2467, 2472, 2484
 };
@@ -159,15 +159,15 @@ static void or_dump(message *m);
 /* The message used in the main loop is made global, so that rl_watchdog_f()
  * can change its message type to fake an interrupt message.
  */
-PRIVATE message m;
-PRIVATE int int_event_check;		/* set to TRUE if events arrived */
+static message m;
+static int int_event_check;		/* set to TRUE if events arrived */
 
-PRIVATE u32_t system_hz;
+static u32_t system_hz;
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*****************************************************************************
  *            main                                                           *
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -252,7 +252,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the orinoco driver. */
 	long v;
@@ -278,7 +278,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	t_or *orp;
 

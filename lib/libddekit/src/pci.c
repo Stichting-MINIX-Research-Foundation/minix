@@ -34,13 +34,13 @@ struct ddekit_pci_dev {
 
 struct ddekit_pci_dev pci_devs[PCI_MAX_DEVS];
 
-FORWARD struct ddekit_pci_dev * ddekit_get_dev_helper(int bus, int slot,
+static struct ddekit_pci_dev * ddekit_get_dev_helper(int bus, int slot,
 	int func);
 
 /****************************************************************************/
 /*      ddekit_pci_init_only_one                                            */
 /****************************************************************************/
-PUBLIC void ddekit_pci_init_only_one(int skip) 
+void ddekit_pci_init_only_one(int skip) 
 {	
 	/*
 	 * If skip is not PCI_TAKE_ALL this function will skip skip PCI DEVICES
@@ -108,7 +108,7 @@ PUBLIC void ddekit_pci_init_only_one(int skip)
 /****************************************************************************/
 /*      ddekit_pci_get_device_id                                            */
 /****************************************************************************/
-PUBLIC void ddekit_pci_init(void) 
+void ddekit_pci_init(void) 
 {	
 	ddekit_pci_init_only_one(DDEKIT_PCI_ANY_ID);
 }
@@ -133,7 +133,7 @@ int ddekit_pci_get_device(int nr, int *bus, int *slot, int *func)
 /****************************************************************************/
 /*      ddekit_pci_get_device_id                                            */
 /****************************************************************************/
-PRIVATE struct ddekit_pci_dev * 
+static struct ddekit_pci_dev * 
 ddekit_get_dev_helper(int bus, int slot, int func)
 {  
 	/*
@@ -153,7 +153,7 @@ ddekit_get_dev_helper(int bus, int slot, int func)
 /****************************************************************************/
 /*      ddekit_pci_read                                                     */
 /****************************************************************************/
-PUBLIC int ddekit_pci_read
+int ddekit_pci_read
 (int bus, int slot, int func, int pos, int len, ddekit_uint32_t *val)
 {
 	switch(len) { 
@@ -172,7 +172,7 @@ PUBLIC int ddekit_pci_read
 /****************************************************************************/
 /*      ddekit_pci_write                                                    */
 /****************************************************************************/
-PUBLIC int ddekit_pci_write
+int ddekit_pci_write
 (int bus, int slot, int func, int pos, int len, ddekit_uint32_t val)
 {
 	switch(len) { 
@@ -191,7 +191,7 @@ PUBLIC int ddekit_pci_write
 /****************************************************************************/
 /*      ddekit_pci_readb                                                    */
 /****************************************************************************/
-PUBLIC int ddekit_pci_readb (int bus, int slot, int func, int pos, ddekit_uint8_t  *val) {
+int ddekit_pci_readb (int bus, int slot, int func, int pos, ddekit_uint8_t  *val) {
 	struct ddekit_pci_dev * dev = ddekit_get_dev_helper(bus, slot, func);
 	if (func!=0) {
 		*val=0;
@@ -209,7 +209,7 @@ PUBLIC int ddekit_pci_readb (int bus, int slot, int func, int pos, ddekit_uint8_
 /****************************************************************************/
 /*      ddekit_pci_readw                                                    */
 /****************************************************************************/
-PUBLIC int ddekit_pci_readw
+int ddekit_pci_readw
 (int bus, int slot, int func, int pos, ddekit_uint16_t *val) { 
 	struct ddekit_pci_dev * dev = ddekit_get_dev_helper(bus, slot, func);
 	if (func!=0) {
@@ -228,7 +228,7 @@ PUBLIC int ddekit_pci_readw
 /****************************************************************************/
 /*      ddekit_pci_readl                                                    */
 /****************************************************************************/
-PUBLIC int ddekit_pci_readl
+int ddekit_pci_readl
 (int bus, int slot, int func, int pos, ddekit_uint32_t *val)  { 
 	struct ddekit_pci_dev * dev = ddekit_get_dev_helper(bus, slot, func);
 	if (func!=0) {
@@ -247,7 +247,7 @@ PUBLIC int ddekit_pci_readl
 /****************************************************************************/
 /*      ddekit_pci_writeb                                                   */
 /****************************************************************************/
-PUBLIC int ddekit_pci_writeb
+int ddekit_pci_writeb
 (int bus, int slot, int func, int pos, ddekit_uint8_t val) { 
 	struct ddekit_pci_dev * dev = ddekit_get_dev_helper(bus, slot, func);
 	if (dev) { 
@@ -262,7 +262,7 @@ PUBLIC int ddekit_pci_writeb
 /****************************************************************************/
 /*      ddekit_pci_writel                                                   */
 /****************************************************************************/
-PUBLIC int ddekit_pci_writew
+int ddekit_pci_writew
 (int bus, int slot, int func, int pos, ddekit_uint16_t val) { 
 	struct ddekit_pci_dev * dev = ddekit_get_dev_helper(bus, slot, func);
 	if (dev) { 
@@ -277,7 +277,7 @@ PUBLIC int ddekit_pci_writew
 /****************************************************************************/
 /*      ddekit_pci_writel                                                   */
 /****************************************************************************/
-PUBLIC int ddekit_pci_writel
+int ddekit_pci_writel
 (int bus, int slot, int func, int pos, ddekit_uint32_t val) { 
 	struct ddekit_pci_dev * dev = ddekit_get_dev_helper(bus, slot, func);
 	if (dev) { 
@@ -291,7 +291,7 @@ PUBLIC int ddekit_pci_writel
 /****************************************************************************/
 /*      ddekit_pci_find_device                                              */
 /****************************************************************************/
-PUBLIC struct ddekit_pci_dev *ddekit_pci_find_device
+struct ddekit_pci_dev *ddekit_pci_find_device
 (int *bus, int *slot, int *func, struct ddekit_pci_dev *start)
 { 
 	int i,search=0;
@@ -323,7 +323,7 @@ PUBLIC struct ddekit_pci_dev *ddekit_pci_find_device
 /****************************************************************************/
 /*      ddekit_pci_get_vendor                                               */
 /****************************************************************************/
-PUBLIC unsigned short ddekit_pci_get_vendor(struct ddekit_pci_dev *dev)
+unsigned short ddekit_pci_get_vendor(struct ddekit_pci_dev *dev)
 { 
 	return dev->vid;
 }
@@ -331,7 +331,7 @@ PUBLIC unsigned short ddekit_pci_get_vendor(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_device_id                                            */
 /****************************************************************************/
-PUBLIC unsigned short ddekit_pci_get_device_id(struct ddekit_pci_dev *dev)
+unsigned short ddekit_pci_get_device_id(struct ddekit_pci_dev *dev)
 { 
 	return dev->did;
 }
@@ -344,7 +344,7 @@ PUBLIC unsigned short ddekit_pci_get_device_id(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_enable_device                                            */
 /****************************************************************************/
-PUBLIC int ddekit_pci_enable_device(struct ddekit_pci_dev *dev)
+int ddekit_pci_enable_device(struct ddekit_pci_dev *dev)
 { 
 	WARN_UNIMPL;
 	return 0;
@@ -353,7 +353,7 @@ PUBLIC int ddekit_pci_enable_device(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_disable_device                                           */
 /****************************************************************************/
-PUBLIC int ddekit_pci_disable_device(struct ddekit_pci_dev *dev)
+int ddekit_pci_disable_device(struct ddekit_pci_dev *dev)
 { 
 	WARN_UNIMPL;
 	return 0;
@@ -362,7 +362,7 @@ PUBLIC int ddekit_pci_disable_device(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_set_master                                               */
 /****************************************************************************/
-PUBLIC void ddekit_pci_set_master(struct ddekit_pci_dev *dev)
+void ddekit_pci_set_master(struct ddekit_pci_dev *dev)
 {
 	WARN_UNIMPL;
 }
@@ -371,7 +371,7 @@ PUBLIC void ddekit_pci_set_master(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_sub_vendor                                           */
 /****************************************************************************/
-PUBLIC unsigned short ddekit_pci_get_sub_vendor(struct ddekit_pci_dev *dev)
+unsigned short ddekit_pci_get_sub_vendor(struct ddekit_pci_dev *dev)
 { 
 	WARN_UNIMPL;
 	return 0;
@@ -380,7 +380,7 @@ PUBLIC unsigned short ddekit_pci_get_sub_vendor(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_sub_device                                           */
 /****************************************************************************/
-PUBLIC unsigned short ddekit_pci_get_sub_device(struct ddekit_pci_dev *dev) 
+unsigned short ddekit_pci_get_sub_device(struct ddekit_pci_dev *dev) 
 { 
 	WARN_UNIMPL;
 	return 0;
@@ -389,7 +389,7 @@ PUBLIC unsigned short ddekit_pci_get_sub_device(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_dev_class                                            */
 /****************************************************************************/
-PUBLIC unsigned ddekit_pci_get_dev_class(struct ddekit_pci_dev *dev) 
+unsigned ddekit_pci_get_dev_class(struct ddekit_pci_dev *dev) 
 { 
 	WARN_UNIMPL;
 	return 0;
@@ -398,7 +398,7 @@ PUBLIC unsigned ddekit_pci_get_dev_class(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_irq                                                  */
 /****************************************************************************/
-PUBLIC unsigned long 
+unsigned long 
 ddekit_pci_get_irq(struct ddekit_pci_dev *dev) 
 { 
 	WARN_UNIMPL;
@@ -408,7 +408,7 @@ ddekit_pci_get_irq(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_name                                                 */
 /****************************************************************************/
-PUBLIC char *ddekit_pci_get_name(struct ddekit_pci_dev *dev)
+char *ddekit_pci_get_name(struct ddekit_pci_dev *dev)
 { 
 	WARN_UNIMPL;
 	return 0;
@@ -417,7 +417,7 @@ PUBLIC char *ddekit_pci_get_name(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_slot_name                                            */
 /****************************************************************************/
-PUBLIC char *ddekit_pci_get_slot_name(struct ddekit_pci_dev *dev)
+char *ddekit_pci_get_slot_name(struct ddekit_pci_dev *dev)
 { 
 	WARN_UNIMPL;
 	return 0;
@@ -426,7 +426,7 @@ PUBLIC char *ddekit_pci_get_slot_name(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_resource                                             */
 /****************************************************************************/
-PUBLIC ddekit_pci_res_t *
+ddekit_pci_res_t *
 ddekit_pci_get_resource(struct ddekit_pci_dev *dev, unsigned int idx)
 { 
 	WARN_UNIMPL;
@@ -436,7 +436,7 @@ ddekit_pci_get_resource(struct ddekit_pci_dev *dev, unsigned int idx)
 /****************************************************************************/
 /*      ddekit_pci_irq_enable                                               */
 /****************************************************************************/
-PUBLIC int ddekit_pci_irq_enable
+int ddekit_pci_irq_enable
 (int bus, int slot, int func, int pin, int *irq)
 { 
 	/* call not needed */

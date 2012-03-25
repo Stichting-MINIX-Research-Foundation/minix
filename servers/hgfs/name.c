@@ -15,7 +15,7 @@
 /*===========================================================================*
  *				normalize_name				     *
  *===========================================================================*/
-PUBLIC void normalize_name(dst, src)
+void normalize_name(dst, src)
 char dst[NAME_MAX+1];
 char *src;
 {
@@ -38,7 +38,7 @@ char *src;
 /*===========================================================================*
  *				compare_name				     *
  *===========================================================================*/
-PUBLIC int compare_name(name1, name2)
+int compare_name(name1, name2)
 char *name1;
 char *name2;
 {

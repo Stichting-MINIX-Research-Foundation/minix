@@ -32,7 +32,7 @@
 #include "memlist.h"
 
 /* LRU list. */
-PRIVATE yielded_t *lru_youngest = NULL, *lru_oldest = NULL;
+static yielded_t *lru_youngest = NULL, *lru_oldest = NULL;
 
 /* Should a physblock be mapped writable? */
 #define WRITABLE(r, pb) \
@@ -40,32 +40,32 @@ PRIVATE yielded_t *lru_youngest = NULL, *lru_oldest = NULL;
 		(((r)->flags & (VR_DIRECT | VR_SHARED)) ||	\
 		 (pb)->refcount == 1))
 
-FORWARD int map_new_physblock(struct vmproc *vmp, struct vir_region
+static int map_new_physblock(struct vmproc *vmp, struct vir_region
 	*region, vir_bytes offset, vir_bytes length, phys_bytes what, u32_t
 	allocflags, int written);
 
-FORWARD int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
+static int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	struct phys_region *pr);
 
-FORWARD phys_bytes freeyieldednode(yielded_t *node, int freemem);
+static phys_bytes freeyieldednode(yielded_t *node, int freemem);
 
-FORWARD struct vir_region *map_copy_region(struct vmproc *vmp, struct
+static struct vir_region *map_copy_region(struct vmproc *vmp, struct
 	vir_region *vr);
 
-FORWARD struct phys_region *map_clone_ph_block(struct vmproc *vmp,
+static struct phys_region *map_clone_ph_block(struct vmproc *vmp,
 	struct vir_region *region, struct phys_region *ph, physr_iter *iter);
 
 #if SANITYCHECKS
-FORWARD void lrucheck(void);
+static void lrucheck(void);
 #endif
 
 /* hash table of yielded blocks */
 #define YIELD_HASHSIZE 65536
-PRIVATE yielded_avl vm_yielded_blocks[YIELD_HASHSIZE];
+static yielded_avl vm_yielded_blocks[YIELD_HASHSIZE];
 
-PRIVATE int avl_inited = 0;
+static int avl_inited = 0;
 
-PUBLIC void map_region_init(void)
+void map_region_init(void)
 {
 	int h;
 	assert(!avl_inited);
@@ -74,7 +74,7 @@ PUBLIC void map_region_init(void)
 	avl_inited = 1;
 }
 
-PRIVATE yielded_avl *get_yielded_avl(block_id_t id)
+static yielded_avl *get_yielded_avl(block_id_t id)
 {
 	u32_t h;
 
@@ -89,7 +89,7 @@ PRIVATE yielded_avl *get_yielded_avl(block_id_t id)
 	return &vm_yielded_blocks[h];
 }
 
-PRIVATE char *map_name(struct vir_region *vr)
+static char *map_name(struct vir_region *vr)
 {
 	static char name[100];
 	char *typename, *tag;
@@ -128,7 +128,7 @@ PRIVATE char *map_name(struct vir_region *vr)
 	return name;
 }
 
-PUBLIC void map_printregion(struct vmproc *vmp, struct vir_region *vr)
+void map_printregion(struct vmproc *vmp, struct vir_region *vr)
 {
 	physr_iter iter;
 	struct phys_region *ph;
@@ -149,7 +149,7 @@ PUBLIC void map_printregion(struct vmproc *vmp, struct vir_region *vr)
 /*===========================================================================*
  *				map_printmap				     *
  *===========================================================================*/
-PUBLIC void map_printmap(vmp)
+void map_printmap(vmp)
 struct vmproc *vmp;
 {
 	struct vir_region *vr;
@@ -164,7 +164,7 @@ struct vmproc *vmp;
 	}
 }
 
-PRIVATE struct vir_region *getnextvr(struct vir_region *vr)
+static struct vir_region *getnextvr(struct vir_region *vr)
 {
 	struct vir_region *nextvr;
 	region_iter v_iter;
@@ -187,7 +187,7 @@ PRIVATE struct vir_region *getnextvr(struct vir_region *vr)
 /*===========================================================================*
  *				map_sanitycheck_pt			     *
  *===========================================================================*/
-PRIVATE int map_sanitycheck_pt(struct vmproc *vmp,
+static int map_sanitycheck_pt(struct vmproc *vmp,
 	struct vir_region *vr, struct phys_region *pr)
 {
 	struct phys_block *pb = pr->ph;
@@ -217,7 +217,7 @@ PRIVATE int map_sanitycheck_pt(struct vmproc *vmp,
 /*===========================================================================*
  *				map_sanitycheck			     *
  *===========================================================================*/
-PUBLIC void map_sanitycheck(char *file, int line)
+void map_sanitycheck(char *file, int line)
 {
 	struct vmproc *vmp;
 
@@ -305,7 +305,7 @@ PUBLIC void map_sanitycheck(char *file, int line)
 
 #define LRUCHECK lrucheck()
 
-PRIVATE void lrucheck(void)
+static void lrucheck(void)
 {
 	yielded_t *list;
 
@@ -365,7 +365,7 @@ void blockstats(void)
 /*=========================================================================*
  *				map_ph_writept				*
  *=========================================================================*/
-PRIVATE int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
+static int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	struct phys_region *pr)
 {
 	int rw;
@@ -403,7 +403,7 @@ PRIVATE int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 /*===========================================================================*
  *				region_find_slot_range			     *
  *===========================================================================*/
-PRIVATE vir_bytes region_find_slot_range(struct vmproc *vmp,
+static vir_bytes region_find_slot_range(struct vmproc *vmp,
 		vir_bytes minv, vir_bytes maxv, vir_bytes length)
 {
 	struct vir_region *firstregion;
@@ -490,7 +490,7 @@ PRIVATE vir_bytes region_find_slot_range(struct vmproc *vmp,
 /*===========================================================================*
  *				region_find_slot			     *
  *===========================================================================*/
-PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
+static vir_bytes region_find_slot(struct vmproc *vmp,
 		vir_bytes minv, vir_bytes maxv, vir_bytes length)
 {
 	vir_bytes v, hint = vmp->vm_region_top;
@@ -512,7 +512,7 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
 /*===========================================================================*
  *				map_page_region				     *
  *===========================================================================*/
-PUBLIC struct vir_region *map_page_region(vmp, minv, maxv, length,
+struct vir_region *map_page_region(vmp, minv, maxv, length,
 	what, flags, mapflags)
 struct vmproc *vmp;
 vir_bytes minv;
@@ -604,7 +604,7 @@ USE(newregion,
 /*===========================================================================*
  *				pb_unreferenced				     *
  *===========================================================================*/
-PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
+void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 {
 	struct phys_block *pb;
 
@@ -644,7 +644,7 @@ PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 	}
 }
 
-PRIVATE struct phys_region *reset_physr_iter(struct vir_region *region,
+static struct phys_region *reset_physr_iter(struct vir_region *region,
 	physr_iter *iter, vir_bytes offset)
 {
 	struct phys_region *ph;
@@ -660,7 +660,7 @@ PRIVATE struct phys_region *reset_physr_iter(struct vir_region *region,
 /*===========================================================================*
  *				map_subfree				     *
  *===========================================================================*/
-PRIVATE int map_subfree(struct vmproc *vmp,
+static int map_subfree(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes len)
 {
 	struct phys_region *pr;
@@ -730,7 +730,7 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 /*===========================================================================*
  *				map_free				     *
  *===========================================================================*/
-PRIVATE int map_free(struct vmproc *vmp, struct vir_region *region)
+static int map_free(struct vmproc *vmp, struct vir_region *region)
 {
 	int r;
 
@@ -749,7 +749,7 @@ PRIVATE int map_free(struct vmproc *vmp, struct vir_region *region)
 /*===========================================================================*
  *				yielded_block_cmp			     *
  *===========================================================================*/
-PUBLIC int yielded_block_cmp(struct block_id *id1, struct block_id *id2)
+int yielded_block_cmp(struct block_id *id1, struct block_id *id2)
 {
 	if(id1->owner < id2->owner)
 		return -1;
@@ -762,7 +762,7 @@ PUBLIC int yielded_block_cmp(struct block_id *id1, struct block_id *id2)
 /*===========================================================================*
  *				free_yielded_proc			     *
  *===========================================================================*/
-PRIVATE vir_bytes free_yielded_proc(struct vmproc *vmp)
+static vir_bytes free_yielded_proc(struct vmproc *vmp)
 {
 	vir_bytes total = 0;
 	int h;
@@ -796,7 +796,7 @@ PRIVATE vir_bytes free_yielded_proc(struct vmproc *vmp)
 }
 
 
-PRIVATE phys_bytes freeyieldednode(yielded_t *node, int freemem)
+static phys_bytes freeyieldednode(yielded_t *node, int freemem)
 {
 	yielded_t *older, *younger, *removed;
 	vir_bytes len;
@@ -859,7 +859,7 @@ PRIVATE phys_bytes freeyieldednode(yielded_t *node, int freemem)
 /*========================================================================*
  *				free_yielded				  *
  *========================================================================*/
-PUBLIC vir_bytes free_yielded(vir_bytes max_bytes)
+vir_bytes free_yielded(vir_bytes max_bytes)
 {
 
 /* PRIVATE yielded_t *lru_youngest = NULL, *lru_oldest = NULL; */
@@ -878,7 +878,7 @@ PUBLIC vir_bytes free_yielded(vir_bytes max_bytes)
 /*========================================================================*
  *				map_free_proc				  *
  *========================================================================*/
-PUBLIC int map_free_proc(vmp)
+int map_free_proc(vmp)
 struct vmproc *vmp;
 {
 	struct vir_region *r;
@@ -909,7 +909,7 @@ struct vmproc *vmp;
 /*===========================================================================*
  *				map_lookup				     *
  *===========================================================================*/
-PUBLIC struct vir_region *map_lookup(vmp, offset)
+struct vir_region *map_lookup(vmp, offset)
 struct vmproc *vmp;
 vir_bytes offset;
 {
@@ -932,7 +932,7 @@ vir_bytes offset;
 	return NULL;
 }
 
-PRIVATE u32_t vrallocflags(u32_t flags)
+static u32_t vrallocflags(u32_t flags)
 {
 	u32_t allocflags = 0;
 
@@ -951,7 +951,7 @@ PRIVATE u32_t vrallocflags(u32_t flags)
 /*===========================================================================*
  *				map_new_physblock			     *
  *===========================================================================*/
-PRIVATE int map_new_physblock(vmp, region, start_offset, length,
+static int map_new_physblock(vmp, region, start_offset, length,
 	what_mem, allocflags, written)
 struct vmproc *vmp;
 struct vir_region *region;
@@ -1075,7 +1075,7 @@ int written;
 /*===========================================================================*
  *				map_clone_ph_block			     *
  *===========================================================================*/
-PRIVATE struct phys_region *map_clone_ph_block(vmp, region, ph, iter)
+static struct phys_region *map_clone_ph_block(vmp, region, ph, iter)
 struct vmproc *vmp;
 struct vir_region *region;
 struct phys_region *ph;
@@ -1166,7 +1166,7 @@ physr_iter *iter;
 /*===========================================================================*
  *				map_pf			     *
  *===========================================================================*/
-PUBLIC int map_pf(vmp, region, offset, write)
+int map_pf(vmp, region, offset, write)
 struct vmproc *vmp;
 struct vir_region *region;
 vir_bytes offset;
@@ -1236,7 +1236,7 @@ int write;
 /*===========================================================================*
  *				map_pin_memory      			     *
  *===========================================================================*/
-PUBLIC int map_pin_memory(struct vmproc *vmp)
+int map_pin_memory(struct vmproc *vmp)
 {
 	struct vir_region *vr;
 	int r;
@@ -1257,7 +1257,7 @@ PUBLIC int map_pin_memory(struct vmproc *vmp)
 /*===========================================================================*
  *				map_handle_memory			     *
  *===========================================================================*/
-PUBLIC int map_handle_memory(vmp, region, offset, length, write)
+int map_handle_memory(vmp, region, offset, length, write)
 struct vmproc *vmp;
 struct vir_region *region;
 vir_bytes offset, length;
@@ -1397,7 +1397,7 @@ static int count_phys_regions(struct vir_region *vr)
 /*===========================================================================*
  *				map_copy_region			     	*
  *===========================================================================*/
-PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region *vr)
+static struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region *vr)
 {
 	/* map_copy_region creates a complete copy of the vir_region
 	 * data structure, linking in the same phys_blocks directly,
@@ -1463,7 +1463,7 @@ PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region
 /*===========================================================================*
  *				copy_abs2region			     	*
  *===========================================================================*/
-PUBLIC int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
+int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
 	phys_bytes offset, phys_bytes len)
 
 {
@@ -1509,7 +1509,7 @@ PUBLIC int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
 /*=========================================================================*
  *				map_writept				*
  *=========================================================================*/
-PUBLIC int map_writept(struct vmproc *vmp)
+int map_writept(struct vmproc *vmp)
 {
 	struct vir_region *vr;
 	struct phys_region *ph;
@@ -1545,7 +1545,7 @@ PUBLIC int map_writept(struct vmproc *vmp)
 /*========================================================================*
  *			       map_proc_copy			     	  *
  *========================================================================*/
-PUBLIC int map_proc_copy(dst, src)
+int map_proc_copy(dst, src)
 struct vmproc *dst;
 struct vmproc *src;
 {
@@ -1558,7 +1558,7 @@ struct vmproc *src;
 /*========================================================================*
  *			     map_proc_copy_from			     	  *
  *========================================================================*/
-PUBLIC int map_proc_copy_from(dst, src, start_src_vr)
+int map_proc_copy_from(dst, src, start_src_vr)
 struct vmproc *dst;
 struct vmproc *src;
 struct vir_region *start_src_vr;
@@ -1640,7 +1640,7 @@ struct vir_region *start_src_vr;
 /*========================================================================*
  *				map_proc_kernel		     	  	*
  *========================================================================*/
-PUBLIC struct vir_region *map_proc_kernel(struct vmproc *vmp)
+struct vir_region *map_proc_kernel(struct vmproc *vmp)
 {
 	struct vir_region *vr;
 
@@ -1668,7 +1668,7 @@ PUBLIC struct vir_region *map_proc_kernel(struct vmproc *vmp)
 /*========================================================================*
  *				map_region_extend	     	  	*
  *========================================================================*/
-PUBLIC int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
+int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 	vir_bytes delta)
 {
 	vir_bytes end;
@@ -1700,7 +1700,7 @@ PUBLIC int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 /*========================================================================*
  *				map_region_shrink	     	  	*
  *========================================================================*/
-PUBLIC int map_region_shrink(struct vir_region *vr, vir_bytes delta)
+int map_region_shrink(struct vir_region *vr, vir_bytes delta)
 {
 	assert(vr);
 	assert(vr->flags & VR_ANON);
@@ -1713,7 +1713,7 @@ PUBLIC int map_region_shrink(struct vir_region *vr, vir_bytes delta)
 	return OK;
 }
 
-PUBLIC struct vir_region *map_region_lookup_tag(vmp, tag)
+struct vir_region *map_region_lookup_tag(vmp, tag)
 struct vmproc *vmp;
 u32_t tag;
 {
@@ -1730,12 +1730,12 @@ u32_t tag;
 	return NULL;
 }
 
-PUBLIC void map_region_set_tag(struct vir_region *vr, u32_t tag)
+void map_region_set_tag(struct vir_region *vr, u32_t tag)
 {
 	USE(vr, vr->tag = tag;);
 }
 
-PUBLIC u32_t map_region_get_tag(struct vir_region *vr)
+u32_t map_region_get_tag(struct vir_region *vr)
 {
 	return vr->tag;
 }
@@ -1743,7 +1743,7 @@ PUBLIC u32_t map_region_get_tag(struct vir_region *vr)
 /*========================================================================*
  *				map_unmap_region	     	  	*
  *========================================================================*/
-PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
+int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 	vir_bytes len)
 {
 /* Shrink the region by 'len' bytes, from the start. Unreference
@@ -1808,7 +1808,7 @@ PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 /*========================================================================*
  *				map_remap				  *
  *========================================================================*/
-PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
+int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 		struct vir_region *region, vir_bytes *r, int readonly)
 {
 	struct vir_region *vr;
@@ -1878,7 +1878,7 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 /*========================================================================*
  *				map_get_phys				  *
  *========================================================================*/
-PUBLIC int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r)
+int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r)
 {
 	struct vir_region *vr;
 	struct phys_region *ph;
@@ -1905,7 +1905,7 @@ PUBLIC int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r)
 /*========================================================================*
  *				map_get_ref				  *
  *========================================================================*/
-PUBLIC int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
+int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
 {
 	struct vir_region *vr;
 	struct phys_region *ph;
@@ -1932,7 +1932,7 @@ PUBLIC int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
 /*========================================================================*
  *				get_stats_info				  *
  *========================================================================*/
-PUBLIC void get_stats_info(struct vm_stats_info *vsi)
+void get_stats_info(struct vm_stats_info *vsi)
 {
 	yielded_t *yb;
 
@@ -1945,7 +1945,7 @@ PUBLIC void get_stats_info(struct vm_stats_info *vsi)
 /*========================================================================*
  *				get_usage_info				  *
  *========================================================================*/
-PUBLIC void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
+void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
 {
 	struct vir_region *vr;
 	physr_iter iter;
@@ -1982,7 +1982,7 @@ PUBLIC void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
 /*===========================================================================*
  *				get_region_info				     *
  *===========================================================================*/
-PUBLIC int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
+int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
 	int max, vir_bytes *nextp)
 {
 	struct vir_region *vr;
@@ -2029,7 +2029,7 @@ PUBLIC int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
 /*========================================================================*
  *				regionprintstats			  *
  *========================================================================*/
-PUBLIC void printregionstats(struct vmproc *vmp)
+void printregionstats(struct vmproc *vmp)
 {
 	struct vir_region *vr;
 	struct phys_region *pr;
@@ -2058,7 +2058,7 @@ PUBLIC void printregionstats(struct vmproc *vmp)
 /*===========================================================================*
  *                              do_map_memory                                *
  *===========================================================================*/
-PRIVATE int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
+static int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
         struct vir_region *vrs, struct vir_region *vrd,
         vir_bytes offset_s, vir_bytes offset_d,
         vir_bytes length, int flag)
@@ -2149,7 +2149,7 @@ PRIVATE int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
 /*===========================================================================*
  *				unmap_memory				     *
  *===========================================================================*/
-PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
+int unmap_memory(endpoint_t sour, endpoint_t dest,
 	vir_bytes virt_s, vir_bytes virt_d, vir_bytes length, int flag)
 {
 	struct vmproc *vmd;
@@ -2196,7 +2196,7 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
 /*===========================================================================*
  *                              split_phys                                   *
  *===========================================================================*/
-PRIVATE int split_phys(struct phys_region *pr, vir_bytes point)
+static int split_phys(struct phys_region *pr, vir_bytes point)
 {
         struct phys_region *newpr, *q, *prev = NULL;
         struct phys_block *newpb;
@@ -2244,7 +2244,7 @@ PRIVATE int split_phys(struct phys_region *pr, vir_bytes point)
 /*===========================================================================*
  *                              clean_phys_regions                           *
  *===========================================================================*/
-PRIVATE void clean_phys_regions(struct vir_region *region,
+static void clean_phys_regions(struct vir_region *region,
         vir_bytes offset, vir_bytes length)
 {
 /* Consider @offset as the start address and @offset+length as the end address.
@@ -2279,7 +2279,7 @@ PRIVATE void clean_phys_regions(struct vir_region *region,
 /*===========================================================================*
  *                              rm_phys_regions                              *
  *===========================================================================*/
-PRIVATE void rm_phys_regions(struct vir_region *region,
+static void rm_phys_regions(struct vir_region *region,
         vir_bytes begin, vir_bytes length)
 {
 /* Remove all phys regions between @begin and @begin+length.
@@ -2303,7 +2303,7 @@ PRIVATE void rm_phys_regions(struct vir_region *region,
 /*===========================================================================*
  *				map_memory				     *
  *===========================================================================*/
-PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
+int map_memory(endpoint_t sour, endpoint_t dest,
 	vir_bytes virt_s, vir_bytes virt_d, vir_bytes length, int flag)
 {
 /* This is the entry point. This function will be called by handle_memory() when
@@ -2380,7 +2380,7 @@ map_lookup_phys(struct vmproc *vmp, u32_t tag)
 /*===========================================================================*
  *				get_clean_phys_region			     *
  *===========================================================================*/
-PRIVATE struct phys_region *
+static struct phys_region *
 get_clean_phys_region(struct vmproc *vmp, vir_bytes vaddr, vir_bytes length,
 	struct vir_region **ret_region)
 {
@@ -2441,7 +2441,7 @@ get_clean_phys_region(struct vmproc *vmp, vir_bytes vaddr, vir_bytes length,
 	return ph;
 }
 
-PRIVATE int getblock(struct vmproc *vmp, u64_t id, 
+static int getblock(struct vmproc *vmp, u64_t id, 
 	vir_bytes vaddr, vir_bytes len)
 {
 	yielded_t *yb;
@@ -2491,7 +2491,7 @@ PRIVATE int getblock(struct vmproc *vmp, u64_t id,
 	return OK;
 }
 
-PRIVATE int yieldblock(struct vmproc *vmp, u64_t id,
+static int yieldblock(struct vmproc *vmp, u64_t id,
 	vir_bytes vaddr, vir_bytes len, yielded_t **retyb)
 {
 	yielded_t *newyb;
@@ -2580,7 +2580,7 @@ PRIVATE int yieldblock(struct vmproc *vmp, u64_t id,
 /*===========================================================================*
  *				do_forgetblocks				     *
  *===========================================================================*/
-PUBLIC int do_forgetblocks(message *m)
+int do_forgetblocks(message *m)
 {
 	int n;
 	struct vmproc *vmp;
@@ -2605,7 +2605,7 @@ PUBLIC int do_forgetblocks(message *m)
 /*===========================================================================*
  *				do_forgetblock				     *
  *===========================================================================*/
-PUBLIC int do_forgetblock(message *m)
+int do_forgetblock(message *m)
 {
 	int n;
 	struct vmproc *vmp;
@@ -2641,7 +2641,7 @@ PUBLIC int do_forgetblock(message *m)
 /*===========================================================================*
  *				do_yieldblockgetblock			     *
  *===========================================================================*/
-PUBLIC int do_yieldblockgetblock(message *m)
+int do_yieldblockgetblock(message *m)
 {
 	u64_t yieldid, getid;
 	int n;

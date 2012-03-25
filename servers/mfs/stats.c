@@ -11,7 +11,7 @@
 /*===========================================================================*
  *				count_free_bits				     *
  *===========================================================================*/
-PUBLIC bit_t count_free_bits(sp, map)
+bit_t count_free_bits(sp, map)
 struct super_block *sp;		/* the filesystem to allocate from */
 int map;			/* IMAP (inode map) or ZMAP (zone map) */
 {
@@ -92,7 +92,7 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
 /*===========================================================================*
  *				blockstats				     *
  *===========================================================================*/
-PUBLIC void blockstats(u32_t *blocks, u32_t *free, u32_t *used)
+void blockstats(u32_t *blocks, u32_t *free, u32_t *used)
 {
   struct super_block *sp;
   int scale;

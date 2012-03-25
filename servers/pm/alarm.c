@@ -19,19 +19,19 @@
 
 #define US 1000000	/* shortcut for microseconds per second */
 
-FORWARD clock_t ticks_from_timeval(struct timeval *tv);
-FORWARD void timeval_from_ticks(struct timeval *tv, clock_t ticks);
-FORWARD int is_sane_timeval(struct timeval *tv);
-FORWARD void getset_vtimer(struct mproc *mp, int nwhich, struct
+static clock_t ticks_from_timeval(struct timeval *tv);
+static void timeval_from_ticks(struct timeval *tv, clock_t ticks);
+static int is_sane_timeval(struct timeval *tv);
+static void getset_vtimer(struct mproc *mp, int nwhich, struct
 	itimerval *value, struct itimerval *ovalue);
-FORWARD void get_realtimer(struct mproc *mp, struct itimerval *value);
-FORWARD void set_realtimer(struct mproc *mp, struct itimerval *value);
-FORWARD void cause_sigalrm(struct timer *tp);
+static void get_realtimer(struct mproc *mp, struct itimerval *value);
+static void set_realtimer(struct mproc *mp, struct itimerval *value);
+static void cause_sigalrm(struct timer *tp);
 
 /*===========================================================================*
  *				ticks_from_timeval			     * 
  *===========================================================================*/
-PRIVATE clock_t ticks_from_timeval(tv)
+static clock_t ticks_from_timeval(tv)
 struct timeval *tv;
 {
   clock_t ticks;
@@ -69,7 +69,7 @@ struct timeval *tv;
 /*===========================================================================*
  *				timeval_from_ticks			     * 
  *===========================================================================*/
-PRIVATE void timeval_from_ticks(tv, ticks)
+static void timeval_from_ticks(tv, ticks)
 struct timeval *tv;
 clock_t ticks;
 {
@@ -80,7 +80,7 @@ clock_t ticks;
 /*===========================================================================*
  *				is_sane_timeval				     * 
  *===========================================================================*/
-PRIVATE int is_sane_timeval(tv)
+static int is_sane_timeval(tv)
 struct timeval *tv;
 {
   /* This imposes a reasonable time value range for setitimer. */
@@ -91,7 +91,7 @@ struct timeval *tv;
 /*===========================================================================*
  *				do_itimer				     *
  *===========================================================================*/
-PUBLIC int do_itimer()
+int do_itimer()
 {
   struct itimerval ovalue, value;	/* old and new interval timers */
   int setval, getval;			/* set and/or retrieve the values? */
@@ -157,7 +157,7 @@ PUBLIC int do_itimer()
 /*===========================================================================*
  *				do_alarm				     *
  *===========================================================================*/
-PUBLIC int do_alarm()
+int do_alarm()
 {
   struct itimerval value, ovalue;
   int remaining;		/* previous time left in seconds */
@@ -181,7 +181,7 @@ PUBLIC int do_alarm()
 /*===========================================================================*
  *				getset_vtimer				     * 
  *===========================================================================*/
-PRIVATE void getset_vtimer(rmp, which, value, ovalue)
+static void getset_vtimer(rmp, which, value, ovalue)
 struct mproc *rmp;
 int which;
 struct itimerval *value;
@@ -246,7 +246,7 @@ struct itimerval *ovalue;
 /*===========================================================================*
  *				check_vtimer				     * 
  *===========================================================================*/
-PUBLIC void check_vtimer(proc_nr, sig)
+void check_vtimer(proc_nr, sig)
 int proc_nr;
 int sig;
 {
@@ -272,7 +272,7 @@ int sig;
 /*===========================================================================*
  *				get_realtimer				     * 
  *===========================================================================*/
-PRIVATE void get_realtimer(rmp, value)
+static void get_realtimer(rmp, value)
 struct mproc *rmp;
 struct itimerval *value;
 {
@@ -307,7 +307,7 @@ struct itimerval *value;
 /*===========================================================================*
  *				set_realtimer				     * 
  *===========================================================================*/
-PRIVATE void set_realtimer(rmp, value)
+static void set_realtimer(rmp, value)
 struct mproc *rmp;
 struct itimerval *value;
 {
@@ -329,7 +329,7 @@ struct itimerval *value;
 /*===========================================================================*
  *				set_alarm				     * 
  *===========================================================================*/
-PUBLIC void set_alarm(rmp, ticks)
+void set_alarm(rmp, ticks)
 struct mproc *rmp;		/* process that wants the alarm */
 clock_t ticks;			/* how many ticks delay before the signal */
 {
@@ -345,7 +345,7 @@ clock_t ticks;			/* how many ticks delay before the signal */
 /*===========================================================================*
  *				cause_sigalrm				     * 
  *===========================================================================*/
-PRIVATE void cause_sigalrm(tp)
+static void cause_sigalrm(tp)
 struct timer *tp;
 {
   int proc_nr_n;

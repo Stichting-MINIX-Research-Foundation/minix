@@ -12,7 +12,7 @@
 /*===========================================================================*
  *			        do_sysctl				     *
  *===========================================================================*/
-PUBLIC int do_sysctl(struct proc * caller, message * m_ptr)
+int do_sysctl(struct proc * caller, message * m_ptr)
 {
   vir_bytes len, buf;
   static char mybuf[DIAG_BUFSIZE];

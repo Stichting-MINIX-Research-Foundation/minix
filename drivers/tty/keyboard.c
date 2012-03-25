@@ -25,16 +25,16 @@
 #include "kernel/type.h"
 #include "kernel/proc.h"
 
-PRIVATE u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
+static u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 #include "keymaps/us-std.src"
 };
 
-PRIVATE u16_t keymap_escaped[NR_SCAN_CODES * MAP_COLS] = {
+static u16_t keymap_escaped[NR_SCAN_CODES * MAP_COLS] = {
 #include "keymaps/us-std-esc.src"
 };
 
-PRIVATE int irq_hook_id = -1;
-PRIVATE int aux_irq_hook_id = -1;
+static int irq_hook_id = -1;
+static int aux_irq_hook_id = -1;
 
 /* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
 #define KEYBD		0x60	/* I/O port for keyboard data */
@@ -76,31 +76,31 @@ PRIVATE int aux_irq_hook_id = -1;
 #define CONSOLE		   0	/* line number for console */
 #define KB_IN_BYTES	  32	/* size of keyboard input buffer */
 
-PRIVATE char injbuf[KB_IN_BYTES];
-PRIVATE char *injhead = injbuf;
-PRIVATE char *injtail = injbuf;
-PRIVATE int injcount;
+static char injbuf[KB_IN_BYTES];
+static char *injhead = injbuf;
+static char *injtail = injbuf;
+static int injcount;
 
-PRIVATE char ibuf[KB_IN_BYTES];	/* input buffer */
-PRIVATE char *ihead = ibuf;	/* next free spot in input buffer */
-PRIVATE char *itail = ibuf;	/* scan code to return to TTY */
-PRIVATE int icount;		/* # codes in buffer */
+static char ibuf[KB_IN_BYTES];	/* input buffer */
+static char *ihead = ibuf;	/* next free spot in input buffer */
+static char *itail = ibuf;	/* scan code to return to TTY */
+static int icount;		/* # codes in buffer */
 
-PRIVATE int esc;		/* escape scan code detected? */
-PRIVATE int alt_l;		/* left alt key state */
-PRIVATE int alt_r;		/* right alt key state */
-PRIVATE int alt;		/* either alt key */
-PRIVATE int ctrl_l;		/* left control key state */
-PRIVATE int ctrl_r;		/* right control key state */
-PRIVATE int ctrl;		/* either control key */
-PRIVATE int shift_l;		/* left shift key state */
-PRIVATE int shift_r;		/* right shift key state */
-PRIVATE int shift;		/* either shift key */
-PRIVATE int num_down;		/* num lock key depressed */
-PRIVATE int caps_down;		/* caps lock key depressed */
-PRIVATE int scroll_down;	/* scroll lock key depressed */
-PRIVATE int alt_down;	        /* alt key depressed */
-PRIVATE int locks[NR_CONS];	/* per console lock keys state */
+static int esc;		/* escape scan code detected? */
+static int alt_l;		/* left alt key state */
+static int alt_r;		/* right alt key state */
+static int alt;		/* either alt key */
+static int ctrl_l;		/* left control key state */
+static int ctrl_r;		/* right control key state */
+static int ctrl;		/* either control key */
+static int shift_l;		/* left shift key state */
+static int shift_r;		/* right shift key state */
+static int shift;		/* either shift key */
+static int num_down;		/* num lock key depressed */
+static int caps_down;		/* caps lock key depressed */
+static int scroll_down;	/* scroll lock key depressed */
+static int alt_down;	        /* alt key depressed */
+static int locks[NR_CONS];	/* per console lock keys state */
 
 /* Lock key active bits.  Chosen to be equal to the keyboard LED bits. */
 #define SCROLL_LOCK	0x01
@@ -108,19 +108,19 @@ PRIVATE int locks[NR_CONS];	/* per console lock keys state */
 #define CAPS_LOCK	0x04
 #define ALT_LOCK	0x08
 
-PRIVATE char numpad_map[12] =
+static char numpad_map[12] =
 		{'H', 'Y', 'A', 'B', 'D', 'C', 'V', 'U', 'G', 'S', 'T', '@'};
 
-PRIVATE char *fkey_map[12] =
+static char *fkey_map[12] =
 		{"11", "12", "13", "14", "15", "17",	/* F1-F6 */
 		 "18", "19", "20", "21", "23", "24"};	/* F7-F12 */
 
 /* Variables and definition for observed function keys. */
 typedef struct observer { int proc_nr; int events; } obs_t;
-PRIVATE obs_t  fkey_obs[12];	/* observers for F1-F12 */
-PRIVATE obs_t sfkey_obs[12];	/* observers for SHIFT F1-F12 */
+static obs_t  fkey_obs[12];	/* observers for F1-F12 */
+static obs_t sfkey_obs[12];	/* observers for SHIFT F1-F12 */
 
-PRIVATE struct kbd
+static struct kbd
 {
 	int minor;
 	int nr_open;
@@ -139,7 +139,7 @@ PRIVATE struct kbd
 /* Data that is to be sent to the keyboard. Each byte is ACKed by the
  * keyboard.
  */
-PRIVATE struct kbd_outack
+static struct kbd_outack
 {
 	unsigned char buf[KBD_OUT_BUFSZ];
 	int offset;
@@ -147,28 +147,28 @@ PRIVATE struct kbd_outack
 	int expect_ack;
 } kbdout;
 
-PRIVATE int kbd_watchdog_set= 0;
-PRIVATE int kbd_alive= 1;
-PRIVATE long sticky_alt_mode = 0;
-PRIVATE long debug_fkeys = 1;
-PRIVATE timer_t tmr_kbd_wd;
+static int kbd_watchdog_set= 0;
+static int kbd_alive= 1;
+static long sticky_alt_mode = 0;
+static long debug_fkeys = 1;
+static timer_t tmr_kbd_wd;
 
-FORWARD void handle_req(struct kbd *kbdp, message *m);
-FORWARD int handle_status(struct kbd *kbdp, message *m);
-FORWARD void kbc_cmd0(int cmd);
-FORWARD void kbc_cmd1(int cmd, int data);
-FORWARD int kbc_read(void);
-FORWARD void kbd_send(void);
-FORWARD int kb_ack(void);
-FORWARD int kb_wait(void);
-FORWARD int func_key(int scode);
-FORWARD int scan_keyboard(unsigned char *bp, int *isauxp);
-FORWARD unsigned make_break(int scode);
-FORWARD void set_leds(void);
-FORWARD void show_key_mappings(void);
-FORWARD int kb_read(struct tty *tp, int try);
-FORWARD unsigned map_key(int scode);
-FORWARD void kbd_watchdog(timer_t *tmrp);
+static void handle_req(struct kbd *kbdp, message *m);
+static int handle_status(struct kbd *kbdp, message *m);
+static void kbc_cmd0(int cmd);
+static void kbc_cmd1(int cmd, int data);
+static int kbc_read(void);
+static void kbd_send(void);
+static int kb_ack(void);
+static int kb_wait(void);
+static int func_key(int scode);
+static int scan_keyboard(unsigned char *bp, int *isauxp);
+static unsigned make_break(int scode);
+static void set_leds(void);
+static void show_key_mappings(void);
+static int kb_read(struct tty *tp, int try);
+static unsigned map_key(int scode);
+static void kbd_watchdog(timer_t *tmrp);
 
 int micro_delay(u32_t usecs)
 {
@@ -180,7 +180,7 @@ int micro_delay(u32_t usecs)
 /*===========================================================================*
  *				do_kbd					     *
  *===========================================================================*/
-PUBLIC void do_kbd(message *m)
+void do_kbd(message *m)
 {
 	handle_req(&kbd, m);
 }
@@ -189,7 +189,7 @@ PUBLIC void do_kbd(message *m)
 /*===========================================================================*
  *				kbd_status				     *
  *===========================================================================*/
-PUBLIC int kbd_status(message *m)
+int kbd_status(message *m)
 {
 	int r;
 
@@ -203,7 +203,7 @@ PUBLIC int kbd_status(message *m)
 /*===========================================================================*
  *				do_kbdaux				     *
  *===========================================================================*/
-PUBLIC void do_kbdaux(message *m)
+void do_kbdaux(message *m)
 {
 	handle_req(&kbdaux, m);
 }
@@ -212,7 +212,7 @@ PUBLIC void do_kbdaux(message *m)
 /*===========================================================================*
  *				handle_req				     *
  *===========================================================================*/
-PRIVATE void handle_req(kbdp, m)
+static void handle_req(kbdp, m)
 struct kbd *kbdp;
 message *m;
 {
@@ -393,7 +393,7 @@ message *m;
 /*===========================================================================*
  *				handle_status				     *
  *===========================================================================*/
-PRIVATE int handle_status(kbdp, m)
+static int handle_status(kbdp, m)
 struct kbd *kbdp;
 message *m;
 {
@@ -443,7 +443,7 @@ message *m;
 /*===========================================================================*
  *				map_key					     *
  *===========================================================================*/
-PRIVATE unsigned map_key(scode)
+static unsigned map_key(scode)
 int scode;
 {
 /* Map a scan code to an ASCII code. */
@@ -481,7 +481,7 @@ int scode;
 /*===========================================================================*
  *				kbd_interrupt				     *
  *===========================================================================*/
-PUBLIC void kbd_interrupt(message *UNUSED(m_ptr))
+void kbd_interrupt(message *UNUSED(m_ptr))
 {
 /* A keyboard interrupt has occurred.  Process it. */
   int o, isaux;
@@ -534,7 +534,7 @@ PUBLIC void kbd_interrupt(message *UNUSED(m_ptr))
 }
 
 
-PUBLIC void do_kb_inject(message *msg)
+void do_kb_inject(message *msg)
 {
 	unsigned char scode;
 	/* only handle keyboard events */
@@ -561,7 +561,7 @@ PUBLIC void do_kb_inject(message *msg)
 /*===========================================================================*
  *				kb_read					     *
  *===========================================================================*/
-PRIVATE int kb_read(tp, try)
+static int kb_read(tp, try)
 tty_t *tp;
 int try;
 {
@@ -673,7 +673,7 @@ int try;
 /*===========================================================================*
  *				kbd_send				     *
  *===========================================================================*/
-PRIVATE void kbd_send()
+static void kbd_send()
 {
 	u32_t sb;
 	int r;
@@ -725,7 +725,7 @@ PRIVATE void kbd_send()
 /*===========================================================================*
  *				make_break				     *
  *===========================================================================*/
-PRIVATE unsigned make_break(scode)
+static unsigned make_break(scode)
 int scode;			/* scan code of key just struck or released */
 {
 /* This routine can handle keyboards that interrupt only on key depression,
@@ -833,7 +833,7 @@ int scode;			/* scan code of key just struck or released */
 /*===========================================================================*
  *				set_leds				     *
  *===========================================================================*/
-PRIVATE void set_leds()
+static void set_leds()
 {
 /* Set the LEDs on the caps, num, and scroll lock keys */
   int s;
@@ -854,7 +854,7 @@ PRIVATE void set_leds()
 /*===========================================================================*
  *				kbc_cmd0				     *
  *===========================================================================*/
-PRIVATE void kbc_cmd0(cmd)
+static void kbc_cmd0(cmd)
 int cmd;
 {
 	kb_wait();
@@ -865,7 +865,7 @@ int cmd;
 /*===========================================================================*
  *				kbc_cmd1				     *
  *===========================================================================*/
-PRIVATE void kbc_cmd1(cmd, data)
+static void kbc_cmd1(cmd, data)
 int cmd;
 int data;
 {
@@ -881,7 +881,7 @@ int data;
 /*===========================================================================*
 *                              kbc_read                                     *
 *===========================================================================*/
-PRIVATE int kbc_read()
+static int kbc_read()
 {
 	int i;
 	u32_t byte, st;
@@ -929,7 +929,7 @@ PRIVATE int kbc_read()
 /*===========================================================================*
  *				kb_wait					     *
  *===========================================================================*/
-PRIVATE int kb_wait()
+static int kb_wait()
 {
 /* Wait until the controller is ready; return zero if this times out. */
 
@@ -960,7 +960,7 @@ PRIVATE int kb_wait()
 /*===========================================================================*
  *				kb_ack					     *
  *===========================================================================*/
-PRIVATE int kb_ack()
+static int kb_ack()
 {
 /* Wait until kbd acknowledges last command; return zero if this times out. */
 
@@ -982,7 +982,7 @@ PRIVATE int kb_ack()
 /*===========================================================================*
  *				kb_init					     *
  *===========================================================================*/
-PUBLIC void kb_init(tp)
+void kb_init(tp)
 tty_t *tp;
 {
 /* Initialize the keyboard driver. */
@@ -993,7 +993,7 @@ tty_t *tp;
 /*===========================================================================*
  *				kb_init_once				     *
  *===========================================================================*/
-PUBLIC void kb_init_once(void)
+void kb_init_once(void)
 {
   int i;
   u8_t ccb;
@@ -1053,7 +1053,7 @@ PUBLIC void kb_init_once(void)
 /*===========================================================================*
  *				kbd_loadmap				     *
  *===========================================================================*/
-PUBLIC int kbd_loadmap(m)
+int kbd_loadmap(m)
 message *m;
 {
 /* Load a new keymap. */
@@ -1064,7 +1064,7 @@ message *m;
 /*===========================================================================*
  *				do_fkey_ctl				     *
  *===========================================================================*/
-PUBLIC void do_fkey_ctl(m_ptr)
+void do_fkey_ctl(m_ptr)
 message *m_ptr;			/* pointer to the request message */
 {
 /* This procedure allows processes to register a function key to receive
@@ -1165,7 +1165,7 @@ message *m_ptr;			/* pointer to the request message */
 /*===========================================================================*
  *				func_key				     *
  *===========================================================================*/
-PRIVATE int func_key(scode)
+static int func_key(scode)
 int scode;			/* scan code for a function key */
 {
 /* This procedure traps function keys for debugging purposes. Observers of 
@@ -1210,7 +1210,7 @@ int scode;			/* scan code for a function key */
 /*===========================================================================*
  *				show_key_mappings			     *
  *===========================================================================*/
-PRIVATE void show_key_mappings()
+static void show_key_mappings()
 {
     int i,s;
     struct proc proc;
@@ -1249,7 +1249,7 @@ PRIVATE void show_key_mappings()
 /*===========================================================================*
  *				scan_keyboard				     *
  *===========================================================================*/
-PRIVATE int scan_keyboard(bp, isauxp)
+static int scan_keyboard(bp, isauxp)
 unsigned char *bp;
 int *isauxp;
 {
@@ -1294,7 +1294,7 @@ int *isauxp;
 /*===========================================================================*
  *				kbd_watchdog 				     *
  *===========================================================================*/
-PRIVATE void kbd_watchdog(timer_t *UNUSED(tmrp))
+static void kbd_watchdog(timer_t *UNUSED(tmrp))
 {
 
 	kbd_watchdog_set= 0;

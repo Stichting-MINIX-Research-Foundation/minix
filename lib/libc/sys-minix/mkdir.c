@@ -9,7 +9,7 @@
 __weak_alias(mkdir, _mkdir)
 #endif
 
-PUBLIC int mkdir(const char *name, mode_t mode)
+int mkdir(const char *name, mode_t mode)
 {
   message m;
 

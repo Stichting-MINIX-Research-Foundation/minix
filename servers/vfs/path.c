@@ -33,15 +33,15 @@
  */
 #define DO_POSIX_PATHNAME_RES	0
 
-FORWARD int lookup(struct vnode *dirp, struct lookup *resolve,
+static int lookup(struct vnode *dirp, struct lookup *resolve,
 	node_details_t *node, struct fproc *rfp);
-FORWARD int check_perms(endpoint_t ep, cp_grant_id_t io_gr, size_t
+static int check_perms(endpoint_t ep, cp_grant_id_t io_gr, size_t
 	pathlen);
 
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-PUBLIC struct vnode *advance(dirp, resolve, rfp)
+struct vnode *advance(dirp, resolve, rfp)
 struct vnode *dirp;
 struct lookup *resolve;
 struct fproc *rfp;
@@ -136,7 +136,7 @@ struct fproc *rfp;
 /*===========================================================================*
  *				eat_path				     *
  *===========================================================================*/
-PUBLIC struct vnode *eat_path(resolve, rfp)
+struct vnode *eat_path(resolve, rfp)
 struct lookup *resolve;
 struct fproc *rfp;
 {
@@ -150,7 +150,7 @@ struct fproc *rfp;
 /*===========================================================================*
  *				last_dir				     *
  *===========================================================================*/
-PUBLIC struct vnode *last_dir(resolve, rfp)
+struct vnode *last_dir(resolve, rfp)
 struct lookup *resolve;
 struct fproc *rfp;
 {
@@ -334,7 +334,7 @@ struct fproc *rfp;
 /*===========================================================================*
  *				lookup					     *
  *===========================================================================*/
-PRIVATE int lookup(start_node, resolve, result_node, rfp)
+static int lookup(start_node, resolve, result_node, rfp)
 struct vnode *start_node;
 struct lookup *resolve;
 node_details_t *result_node;
@@ -517,7 +517,7 @@ struct fproc *rfp;
 /*===========================================================================*
  *				lookup_init				     *
  *===========================================================================*/
-PUBLIC void lookup_init(resolve, path, flags, vmp, vp)
+void lookup_init(resolve, path, flags, vmp, vp)
 struct lookup *resolve;
 char *path;
 int flags;
@@ -540,7 +540,7 @@ struct vnode **vp;
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-PUBLIC int get_name(dirp, entry, ename)
+int get_name(dirp, entry, ename)
 struct vnode *dirp;
 struct vnode *entry;
 char ename[NAME_MAX + 1];
@@ -589,7 +589,7 @@ char ename[NAME_MAX + 1];
 /*===========================================================================*
  *				canonical_path				     *
  *===========================================================================*/
-PUBLIC int canonical_path(orig_path, rfp)
+int canonical_path(orig_path, rfp)
 char orig_path[PATH_MAX];
 struct fproc *rfp;
 {
@@ -733,7 +733,7 @@ struct fproc *rfp;
 /*===========================================================================*
  *				check_perms				     *
  *===========================================================================*/
-PRIVATE int check_perms(ep, io_gr, pathlen)
+static int check_perms(ep, io_gr, pathlen)
 endpoint_t ep;
 cp_grant_id_t io_gr;
 size_t pathlen;
@@ -784,7 +784,7 @@ size_t pathlen;
 /*===========================================================================*
  *				do_check_perms				     *
  *===========================================================================*/
-PUBLIC int do_check_perms(void)
+int do_check_perms(void)
 {
   return check_perms(m_in.USER_ENDPT, (cp_grant_id_t) m_in.IO_GRANT,
 		     (size_t) m_in.COUNT);

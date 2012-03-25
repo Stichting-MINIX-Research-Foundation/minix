@@ -9,7 +9,7 @@
 __weak_alias(mkfifo, _mkfifo)
 #endif
 
-PUBLIC int mkfifo(const char *name, mode_t mode)
+int mkfifo(const char *name, mode_t mode)
 {
   return mknod(name, mode | S_IFIFO, (dev_t) 0);
 }

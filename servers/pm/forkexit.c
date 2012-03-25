@@ -31,17 +31,17 @@
 
 #define LAST_FEW            2	/* last few slots reserved for superuser */
 
-FORWARD void zombify(struct mproc *rmp);
-FORWARD void check_parent(struct mproc *child, int try_cleanup);
-FORWARD void tell_parent(struct mproc *child);
-FORWARD void tell_tracer(struct mproc *child);
-FORWARD void tracer_died(struct mproc *child);
-FORWARD void cleanup(register struct mproc *rmp);
+static void zombify(struct mproc *rmp);
+static void check_parent(struct mproc *child, int try_cleanup);
+static void tell_parent(struct mproc *child);
+static void tell_tracer(struct mproc *child);
+static void tracer_died(struct mproc *child);
+static void cleanup(register struct mproc *rmp);
 
 /*===========================================================================*
  *				do_fork					     *
  *===========================================================================*/
-PUBLIC int do_fork()
+int do_fork()
 {
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
@@ -139,7 +139,7 @@ PUBLIC int do_fork()
 /*===========================================================================*
  *				do_srv_fork				     *
  *===========================================================================*/
-PUBLIC int do_srv_fork()
+int do_srv_fork()
 {
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
@@ -234,7 +234,7 @@ PUBLIC int do_srv_fork()
 /*===========================================================================*
  *				do_exit					     *
  *===========================================================================*/
-PUBLIC int do_exit()
+int do_exit()
 {
  /* Perform the exit(status) system call. The real work is done by exit_proc(),
   * which is also called when a process is killed by a signal. System processes
@@ -255,7 +255,7 @@ PUBLIC int do_exit()
 /*===========================================================================*
  *				exit_proc				     *
  *===========================================================================*/
-PUBLIC void exit_proc(rmp, exit_status, dump_core)
+void exit_proc(rmp, exit_status, dump_core)
 register struct mproc *rmp;	/* pointer to the process to be terminated */
 int exit_status;		/* the process' exit status (for parent) */
 int dump_core;			/* flag indicating whether to dump core */
@@ -385,7 +385,7 @@ int dump_core;			/* flag indicating whether to dump core */
 /*===========================================================================*
  *				exit_restart				     *
  *===========================================================================*/
-PUBLIC void exit_restart(rmp, dump_core)
+void exit_restart(rmp, dump_core)
 struct mproc *rmp;		/* pointer to the process being terminated */
 int dump_core;			/* flag indicating whether to dump core */
 {
@@ -445,7 +445,7 @@ int dump_core;			/* flag indicating whether to dump core */
 /*===========================================================================*
  *				do_waitpid				     *
  *===========================================================================*/
-PUBLIC int do_waitpid()
+int do_waitpid()
 {
 /* A process wants to wait for a child to terminate. If a child is already 
  * waiting, go clean it up and let this WAIT call terminate.  Otherwise, 
@@ -535,7 +535,7 @@ PUBLIC int do_waitpid()
 /*===========================================================================*
  *				wait_test				     *
  *===========================================================================*/
-PUBLIC int wait_test(rmp, child)
+int wait_test(rmp, child)
 struct mproc *rmp;			/* process that may be waiting */
 struct mproc *child;			/* process that may be waited for */
 {
@@ -557,7 +557,7 @@ struct mproc *child;			/* process that may be waited for */
 /*===========================================================================*
  *				zombify					     *
  *===========================================================================*/
-PRIVATE void zombify(rmp)
+static void zombify(rmp)
 struct mproc *rmp;
 {
 /* Zombify a process. First check if the exiting process is traced by a process
@@ -595,7 +595,7 @@ struct mproc *rmp;
 /*===========================================================================*
  *				check_parent				     *
  *===========================================================================*/
-PRIVATE void check_parent(child, try_cleanup)
+static void check_parent(child, try_cleanup)
 struct mproc *child;			/* tells which process is exiting */
 int try_cleanup;			/* clean up the child when done? */
 {
@@ -633,7 +633,7 @@ int try_cleanup;			/* clean up the child when done? */
 /*===========================================================================*
  *				tell_parent				     *
  *===========================================================================*/
-PRIVATE void tell_parent(child)
+static void tell_parent(child)
 register struct mproc *child;	/* tells which process is exiting */
 {
   int exitstatus, mp_parent;
@@ -661,7 +661,7 @@ register struct mproc *child;	/* tells which process is exiting */
 /*===========================================================================*
  *				tell_tracer				     *
  *===========================================================================*/
-PRIVATE void tell_tracer(child)
+static void tell_tracer(child)
 struct mproc *child;			/* tells which process is exiting */
 {
   int exitstatus, mp_tracer;
@@ -685,7 +685,7 @@ struct mproc *child;			/* tells which process is exiting */
 /*===========================================================================*
  *				tracer_died				     *
  *===========================================================================*/
-PRIVATE void tracer_died(child)
+static void tracer_died(child)
 struct mproc *child;			/* process being traced */
 {
 /* The process that was tracing the given child, has died for some reason.
@@ -720,7 +720,7 @@ struct mproc *child;			/* process being traced */
 /*===========================================================================*
  *				cleanup					     *
  *===========================================================================*/
-PRIVATE void cleanup(rmp)
+static void cleanup(rmp)
 register struct mproc *rmp;	/* tells which process is exiting */
 {
   /* Release the process table entry and reinitialize some field. */

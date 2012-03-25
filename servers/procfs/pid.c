@@ -6,18 +6,18 @@
 #include <minix/vm.h>
 
 #define S_FRAME_SIZE	4096		/* use malloc if larger than this */
-PRIVATE char s_frame[S_FRAME_SIZE];	/* static storage for process frame */
-PRIVATE char *frame;			/* pointer to process frame buffer */
+static char s_frame[S_FRAME_SIZE];	/* static storage for process frame */
+static char *frame;			/* pointer to process frame buffer */
 
-FORWARD void pid_psinfo(int slot);
-FORWARD void pid_cmdline(int slot);
-FORWARD void pid_environ(int slot);
-FORWARD void pid_map(int slot);
+static void pid_psinfo(int slot);
+static void pid_cmdline(int slot);
+static void pid_environ(int slot);
+static void pid_map(int slot);
 
 /* The files that are dynamically created in each PID directory. The data field
  * contains each file's read function. Subdirectories are not yet supported.
  */
-PUBLIC struct file pid_files[] = {
+struct file pid_files[] = {
 	{ "psinfo",	REG_ALL_MODE,	(data_t) pid_psinfo	},
 	{ "cmdline",	REG_ALL_MODE,	(data_t) pid_cmdline	},
 	{ "environ",	REG_ALL_MODE,	(data_t) pid_environ	},
@@ -28,7 +28,7 @@ PUBLIC struct file pid_files[] = {
 /*===========================================================================*
  *				is_zombie				     *
  *===========================================================================*/
-PRIVATE int is_zombie(int slot)
+static int is_zombie(int slot)
 {
 	/* Is the given slot a zombie process?
 	 */
@@ -40,7 +40,7 @@ PRIVATE int is_zombie(int slot)
 /*===========================================================================*
  *				pid_psinfo				     *
  *===========================================================================*/
-PRIVATE void pid_psinfo(int i)
+static void pid_psinfo(int i)
 {
 	/* Print information used by ps(1) and top(1).
 	 */
@@ -182,7 +182,7 @@ PRIVATE void pid_psinfo(int i)
 /*===========================================================================*
  *				put_frame				     *
  *===========================================================================*/
-PRIVATE void put_frame(void)
+static void put_frame(void)
 {
 	/* If we allocated memory dynamically during a call to get_frame(),
 	 * free it up here.
@@ -195,7 +195,7 @@ PRIVATE void put_frame(void)
 /*===========================================================================*
  *				get_frame				     *
  *===========================================================================*/
-PRIVATE int get_frame(int slot, vir_bytes *basep, vir_bytes *sizep,
+static int get_frame(int slot, vir_bytes *basep, vir_bytes *sizep,
 	size_t *nargsp)
 {
 	/* Get the execution frame from the top of the given process's stack.
@@ -256,7 +256,7 @@ PRIVATE int get_frame(int slot, vir_bytes *basep, vir_bytes *sizep,
 /*===========================================================================*
  *				pid_cmdline				     *
  *===========================================================================*/
-PRIVATE void pid_cmdline(int slot)
+static void pid_cmdline(int slot)
 {
 	/* Dump the process's command line as it is contained in the process
 	 * itself. Each argument is terminated with a null character.
@@ -288,7 +288,7 @@ PRIVATE void pid_cmdline(int slot)
 /*===========================================================================*
  *				pid_environ				     *
  *===========================================================================*/
-PRIVATE void pid_environ(int slot)
+static void pid_environ(int slot)
 {
 	/* Dump the process's initial environment as it is contained in the
 	 * process itself. Each entry is terminated with a null character.
@@ -334,7 +334,7 @@ PRIVATE void pid_environ(int slot)
 /*===========================================================================*
  *				dump_regions				     *
  *===========================================================================*/
-PRIVATE int dump_regions(int slot)
+static int dump_regions(int slot)
 {
 	/* Print the virtual memory regions of a process.
 	 */
@@ -380,7 +380,7 @@ PRIVATE int dump_regions(int slot)
 /*===========================================================================*
  *				dump_segments				     *
  *===========================================================================*/
-PRIVATE void dump_segments(int slot)
+static void dump_segments(int slot)
 {
 	/* Print the memory segments of a process.
 	 */
@@ -400,7 +400,7 @@ PRIVATE void dump_segments(int slot)
 /*===========================================================================*
  *				pid_map					     *
  *===========================================================================*/
-PRIVATE void pid_map(int slot)
+static void pid_map(int slot)
 {
 	/* Print a memory map of the process. Obtain the information from VM if
 	 * possible; otherwise fall back on segments from the kernel.

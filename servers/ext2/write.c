@@ -16,13 +16,13 @@
 #include "inode.h"
 #include "super.h"
 
-FORWARD void wr_indir(struct buf *bp, int index, block_t block);
-FORWARD int empty_indir(struct buf *, struct super_block *);
+static void wr_indir(struct buf *bp, int index, block_t block);
+static int empty_indir(struct buf *, struct super_block *);
 
 /*===========================================================================*
  *				write_map				     *
  *===========================================================================*/
-PUBLIC int write_map(rip, position, new_block, op)
+int write_map(rip, position, new_block, op)
 struct inode *rip;		/* pointer to inode to be changed */
 off_t position;			/* file address to be mapped */
 block_t new_block;		/* block # to be inserted */
@@ -267,7 +267,7 @@ int op;				/* special actions */
 /*===========================================================================*
  *				wr_indir				     *
  *===========================================================================*/
-PRIVATE void wr_indir(bp, index, block)
+static void wr_indir(bp, index, block)
 struct buf *bp;			/* pointer to indirect block */
 int index;			/* index into *bp */
 block_t block;			/* block to write */
@@ -285,7 +285,7 @@ block_t block;			/* block to write */
 /*===========================================================================*
  *				empty_indir				     *
  *===========================================================================*/
-PRIVATE int empty_indir(bp, sb)
+static int empty_indir(bp, sb)
 struct buf *bp;			/* pointer to indirect block */
 struct super_block *sb;		/* superblock of device block resides on */
 {
@@ -303,7 +303,7 @@ struct super_block *sb;		/* superblock of device block resides on */
 /*===========================================================================*
  *				new_block				     *
  *===========================================================================*/
-PUBLIC struct buf *new_block(rip, position)
+struct buf *new_block(rip, position)
 register struct inode *rip;	/* pointer to inode */
 off_t position;			/* file pointer */
 {
@@ -364,7 +364,7 @@ off_t position;			/* file pointer */
 /*===========================================================================*
  *				zero_block				     *
  *===========================================================================*/
-PUBLIC void zero_block(bp)
+void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */

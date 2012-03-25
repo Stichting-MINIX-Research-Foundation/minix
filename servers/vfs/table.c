@@ -14,7 +14,7 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-PUBLIC int (*call_vec[])(void) = {
+int (*call_vec[])(void) = {
 	no_sys,		/*  0 = unused	*/
 	no_sys,		/*  1 = (exit)	*/
 	no_sys,		/*  2 = (fork)	*/
@@ -133,7 +133,7 @@ PUBLIC int (*call_vec[])(void) = {
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
 
-PUBLIC int (*pfs_call_vec[])(void) = {
+int (*pfs_call_vec[])(void) = {
 
 	no_sys,		/* 0 */
 	do_check_perms,	/* 1 */

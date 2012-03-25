@@ -34,9 +34,9 @@
 char *** _penviron;
 
 /* Prototype declarations for PRIVATE functions. */
-FORWARD void announce(void);
+static void announce(void);
 
-PUBLIC void bsp_finish_booting(void)
+void bsp_finish_booting(void)
 {
   int i;
 #if SPROFILE
@@ -110,7 +110,7 @@ PUBLIC void bsp_finish_booting(void)
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
 /* Start the ball rolling. */
   struct boot_image *ip;	/* boot image pointer */
@@ -309,7 +309,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *				announce				     *
  *===========================================================================*/
-PRIVATE void announce(void)
+static void announce(void)
 {
   /* Display the MINIX startup banner. */
   printf("\nMINIX %s.%s. "
@@ -324,7 +324,7 @@ PRIVATE void announce(void)
 /*===========================================================================*
  *				prepare_shutdown			     *
  *===========================================================================*/
-PUBLIC void prepare_shutdown(const int how)
+void prepare_shutdown(const int how)
 {
 /* This function prepares to shutdown MINIX. */
   static timer_t shutdown_timer;
@@ -341,7 +341,7 @@ PUBLIC void prepare_shutdown(const int how)
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/
-PUBLIC void minix_shutdown(timer_t *tp)
+void minix_shutdown(timer_t *tp)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the

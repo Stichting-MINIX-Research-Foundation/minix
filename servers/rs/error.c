@@ -12,24 +12,24 @@ struct errentry {
 };
 
 /* Initialization errors. */
-PRIVATE struct errentry init_errlist[] = {
+static struct errentry init_errlist[] = {
   { ENOSYS,     "service does not support the requested initialization type"  }
 };
-PRIVATE const int init_nerr = sizeof(init_errlist) / sizeof(init_errlist[0]);
+static const int init_nerr = sizeof(init_errlist) / sizeof(init_errlist[0]);
 
 /* Live update errors. */
-PRIVATE struct errentry lu_errlist[] = {
+static struct errentry lu_errlist[] = {
   { ENOSYS,     "service does not support live update"                        },
   { EINVAL,     "service does not support the required state"                 },
   { EBUSY,      "service is not able to prepare for the update now"           },
   { EGENERIC,   "generic error occurred while preparing for the update"       }
 };
-PRIVATE const int lu_nerr = sizeof(lu_errlist) / sizeof(lu_errlist[0]);
+static const int lu_nerr = sizeof(lu_errlist) / sizeof(lu_errlist[0]);
 
 /*===========================================================================*
  *				  rs_strerror				     *
  *===========================================================================*/
-PRIVATE char * rs_strerror(int errnum, struct errentry *errlist, const int nerr)
+static char * rs_strerror(int errnum, struct errentry *errlist, const int nerr)
 {
   int i;
 
@@ -44,7 +44,7 @@ PRIVATE char * rs_strerror(int errnum, struct errentry *errlist, const int nerr)
 /*===========================================================================*
  *				  init_strerror				     *
  *===========================================================================*/
-PUBLIC char * init_strerror(int errnum)
+char * init_strerror(int errnum)
 {
   return rs_strerror(errnum, init_errlist, init_nerr);
 }
@@ -52,7 +52,7 @@ PUBLIC char * init_strerror(int errnum)
 /*===========================================================================*
  *				   lu_strerror				     *
  *===========================================================================*/
-PUBLIC char * lu_strerror(int errnum)
+char * lu_strerror(int errnum)
 {
   return rs_strerror(errnum, lu_errlist, lu_nerr);
 }

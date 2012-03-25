@@ -10,15 +10,15 @@
 #define SAME 1000
 
 
-FORWARD int freesp_inode(struct inode *rip, off_t st, off_t end);
-FORWARD int remove_dir(struct inode *rldirp, struct inode *rip, char
+static int freesp_inode(struct inode *rip, off_t st, off_t end);
+static int remove_dir(struct inode *rldirp, struct inode *rip, char
 	dir_name[MFS_NAME_MAX]);
-FORWARD int unlink_file(struct inode *dirp, struct inode *rip, char
+static int unlink_file(struct inode *dirp, struct inode *rip, char
 	file_name[MFS_NAME_MAX]);
-FORWARD off_t nextblock(off_t pos, int zone_size);
-FORWARD void zerozone_half(struct inode *rip, off_t pos, int half, int
+static off_t nextblock(off_t pos, int zone_size);
+static void zerozone_half(struct inode *rip, off_t pos, int half, int
 	zone_size);
-FORWARD void zerozone_range(struct inode *rip, off_t pos, off_t len);
+static void zerozone_range(struct inode *rip, off_t pos, off_t len);
 
 /* Args to zerozone_half() */
 #define FIRST_HALF	0
@@ -28,7 +28,7 @@ FORWARD void zerozone_range(struct inode *rip, off_t pos, off_t len);
 /*===========================================================================*
  *				fs_link 				     *
  *===========================================================================*/
-PUBLIC int fs_link()
+int fs_link()
 {
 /* Perform the link(name1, name2) system call. */
 
@@ -108,7 +108,7 @@ PUBLIC int fs_link()
 /*===========================================================================*
  *				fs_unlink				     *
  *===========================================================================*/
-PUBLIC int fs_unlink()
+int fs_unlink()
 {
 /* Perform the unlink(name) or rmdir(name) system call. The code for these two
  * is almost the same.  They differ only in some condition testing.  Unlink()
@@ -170,7 +170,7 @@ PUBLIC int fs_unlink()
 /*===========================================================================*
  *                             fs_rdlink                                     *
  *===========================================================================*/
-PUBLIC int fs_rdlink()
+int fs_rdlink()
 {
   block_t b;                   /* block containing link text */
   struct buf *bp;              /* buffer containing link text */
@@ -210,7 +210,7 @@ PUBLIC int fs_rdlink()
 /*===========================================================================*
  *				remove_dir				     *
  *===========================================================================*/
-PRIVATE int remove_dir(rldirp, rip, dir_name)
+static int remove_dir(rldirp, rip, dir_name)
 struct inode *rldirp;		 	/* parent directory */
 struct inode *rip;			/* directory to be removed */
 char dir_name[MFS_NAME_MAX];		/* name of directory to be removed */
@@ -246,7 +246,7 @@ char dir_name[MFS_NAME_MAX];		/* name of directory to be removed */
 /*===========================================================================*
  *				unlink_file				     *
  *===========================================================================*/
-PRIVATE int unlink_file(dirp, rip, file_name)
+static int unlink_file(dirp, rip, file_name)
 struct inode *dirp;		/* parent directory of file */
 struct inode *rip;		/* inode of file, may be NULL too. */
 char file_name[MFS_NAME_MAX];	/* name of file to be removed */
@@ -282,7 +282,7 @@ char file_name[MFS_NAME_MAX];	/* name of file to be removed */
 /*===========================================================================*
  *				fs_rename				     *
  *===========================================================================*/
-PUBLIC int fs_rename()
+int fs_rename()
 {
 /* Perform the rename(name1, name2) system call. */
   struct inode *old_dirp, *old_ip;	/* ptrs to old dir, file inodes */
@@ -487,7 +487,7 @@ PUBLIC int fs_rename()
 /*===========================================================================*
  *				fs_ftrunc				     *
  *===========================================================================*/
-PUBLIC int fs_ftrunc(void)
+int fs_ftrunc(void)
 {
   struct inode *rip;
   off_t start, end;
@@ -515,7 +515,7 @@ PUBLIC int fs_ftrunc(void)
 /*===========================================================================*
  *				truncate_inode				     *
  *===========================================================================*/
-PUBLIC int truncate_inode(rip, newsize)
+int truncate_inode(rip, newsize)
 register struct inode *rip;	/* pointer to inode to be truncated */
 off_t newsize;			/* inode must become this size */
 {
@@ -559,7 +559,7 @@ off_t newsize;			/* inode must become this size */
 /*===========================================================================*
  *				freesp_inode				     *
  *===========================================================================*/
-PRIVATE int freesp_inode(rip, start, end)
+static int freesp_inode(rip, start, end)
 register struct inode *rip;	/* pointer to inode to be partly freed */
 off_t start, end;		/* range of bytes to free (end uninclusive) */
 {
@@ -623,7 +623,7 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
 /*===========================================================================*
  *				nextblock				     *
  *===========================================================================*/
-PRIVATE off_t nextblock(pos, zone_size)
+static off_t nextblock(pos, zone_size)
 off_t pos;
 int zone_size;
 {
@@ -641,7 +641,7 @@ int zone_size;
 /*===========================================================================*
  *				zerozone_half				     *
  *===========================================================================*/
-PRIVATE void zerozone_half(rip, pos, half, zone_size)
+static void zerozone_half(rip, pos, half, zone_size)
 struct inode *rip;
 off_t pos;
 int half;
@@ -672,7 +672,7 @@ int zone_size;
 /*===========================================================================*
  *				zerozone_range				     *
  *===========================================================================*/
-PRIVATE void zerozone_range(rip, pos, len)
+static void zerozone_range(rip, pos, len)
 struct inode *rip;
 off_t pos;
 off_t len;

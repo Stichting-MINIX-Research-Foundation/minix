@@ -8,7 +8,7 @@
 __weak_alias(lseek, _lseek)
 #endif
 
-PUBLIC off_t lseek(fd, offset, whence)
+off_t lseek(fd, offset, whence)
 int fd;
 off_t offset;
 int whence;

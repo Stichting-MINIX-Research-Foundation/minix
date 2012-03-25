@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                               sys_setalarm		     	     	     *
  *===========================================================================*/
-PUBLIC int sys_setalarm(exp_time, abs_time)
+int sys_setalarm(exp_time, abs_time)
 clock_t exp_time;	/* expiration time for the alarm */
 int abs_time;		/* use absolute or relative expiration time */
 {

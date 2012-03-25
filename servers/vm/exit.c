@@ -24,7 +24,7 @@
 #include "util.h"
 #include "sanitycheck.h"
 
-PUBLIC void free_proc(struct vmproc *vmp)
+void free_proc(struct vmproc *vmp)
 {
 	map_free_proc(vmp);
 	if(vmp->vm_flags & VMF_HASPT) {
@@ -38,7 +38,7 @@ PUBLIC void free_proc(struct vmproc *vmp)
 #endif
 }
 
-PUBLIC void clear_proc(struct vmproc *vmp)
+void clear_proc(struct vmproc *vmp)
 {
 	region_init(&vmp->vm_regions_avl);
 	vmp->vm_region_top = 0;
@@ -54,7 +54,7 @@ PUBLIC void clear_proc(struct vmproc *vmp)
 /*===========================================================================*
  *				do_exit					     *
  *===========================================================================*/
-PUBLIC int do_exit(message *msg)
+int do_exit(message *msg)
 {
 	int proc;
 	struct vmproc *vmp;
@@ -97,7 +97,7 @@ SANITYCHECK(SCL_FUNCTIONS);
 /*===========================================================================*
  *				do_willexit				     *
  *===========================================================================*/
-PUBLIC int do_willexit(message *msg)
+int do_willexit(message *msg)
 {
 	int proc;
 	struct vmproc *vmp;

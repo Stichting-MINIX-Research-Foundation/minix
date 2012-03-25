@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				hgfs_opendir				     *
  *===========================================================================*/
-PUBLIC int hgfs_opendir(path, handle)
+int hgfs_opendir(path, handle)
 char *path;
 hgfs_dir_t *handle;
 {
@@ -28,7 +28,7 @@ hgfs_dir_t *handle;
 /*===========================================================================*
  *				hgfs_readdir				     *
  *===========================================================================*/
-PUBLIC int hgfs_readdir(handle, index, buf, size, attr)
+int hgfs_readdir(handle, index, buf, size, attr)
 hgfs_dir_t handle;
 unsigned int index;
 char *buf;
@@ -58,7 +58,7 @@ struct hgfs_attr *attr;
 /*===========================================================================*
  *				hgfs_closedir				     *
  *===========================================================================*/
-PUBLIC int hgfs_closedir(handle)
+int hgfs_closedir(handle)
 hgfs_dir_t handle;
 {
 /* Close an open directory.

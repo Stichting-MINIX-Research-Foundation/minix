@@ -6,7 +6,7 @@
 /*===========================================================================*
  *                                sys_getinfo				     *
  *===========================================================================*/
-PUBLIC int sys_getinfo(request, ptr, len, ptr2, len2)
+int sys_getinfo(request, ptr, len, ptr2, len2)
 int request; 				/* system info requested */
 void *ptr;				/* pointer where to store it */
 int len;				/* max length of value to get */
@@ -28,7 +28,7 @@ int len2;				/* length or process nr */
 /*===========================================================================*
  *                                sys_whoami				     *
  *===========================================================================*/
-PUBLIC int sys_whoami(endpoint_t *who_ep, char *who_name, int len,
+int sys_whoami(endpoint_t *who_ep, char *who_name, int len,
 	int *priv_flags)
 {
 	message m;

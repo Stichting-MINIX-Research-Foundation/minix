@@ -12,7 +12,7 @@
 /*===========================================================================*
  *			      do_endksig				     *
  *===========================================================================*/
-PUBLIC int do_endksig(struct proc * caller, message * m_ptr)
+int do_endksig(struct proc * caller, message * m_ptr)
 {
 /* Finish up after a kernel type signal, caused by a SYS_KILL message or a 
  * call to cause_sig by a task. This is called by a signal manager after

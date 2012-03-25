@@ -16,12 +16,12 @@
 
 #if USE_IRQCTL
 
-FORWARD int generic_handler(irq_hook_t *hook);
+static int generic_handler(irq_hook_t *hook);
 
 /*===========================================================================*
  *				do_irqctl				     *
  *===========================================================================*/
-PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
+int do_irqctl(struct proc * caller, message * m_ptr)
 {
   /* Dismember the request message. */
   int irq_vec;
@@ -141,7 +141,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *			       generic_handler				     *
  *===========================================================================*/
-PRIVATE int generic_handler(hook)
+static int generic_handler(hook)
 irq_hook_t *hook;	
 {
 /* This function handles hardware interrupt in a simple and generic way. All

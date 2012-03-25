@@ -4,7 +4,7 @@
 #include <minix/sysutil.h>
 
 /* SEF Signal callbacks. */
-PRIVATE struct sef_cbs {
+static struct sef_cbs {
     sef_cb_signal_handler_t             sef_cb_signal_handler;
     sef_cb_signal_manager_t             sef_cb_signal_manager;
 } sef_cbs = {
@@ -13,7 +13,7 @@ PRIVATE struct sef_cbs {
 };
 
 /* SEF Signal prototypes for sef_receive(). */
-PUBLIC int do_sef_signal_request(message *m_ptr);
+int do_sef_signal_request(message *m_ptr);
 
 /* Debug. */
 EXTERN char* sef_debug_header(void);
@@ -24,7 +24,7 @@ EXTERN endpoint_t sef_self_endpoint;
 /*===========================================================================*
  *                         process_sigmgr_signals               	     *
  *===========================================================================*/
-PRIVATE void process_sigmgr_signals(void)
+static void process_sigmgr_signals(void)
 {
 /* A signal manager has pending signals in the kernel. Process them. */
   endpoint_t target;
@@ -65,7 +65,7 @@ PRIVATE void process_sigmgr_signals(void)
 /*===========================================================================*
  *                         process_sigmgr_self_signals               	     *
  *===========================================================================*/
-PRIVATE void process_sigmgr_self_signals(sigset_t sigset)
+static void process_sigmgr_self_signals(sigset_t sigset)
 {
 /* A signal manager has pending signals for itself. Process them. */
   int signo;
@@ -81,7 +81,7 @@ PRIVATE void process_sigmgr_self_signals(sigset_t sigset)
 /*===========================================================================*
  *                           do_sef_signal_request             		     *
  *===========================================================================*/
-PUBLIC int do_sef_signal_request(message *m_ptr)
+int do_sef_signal_request(message *m_ptr)
 {
 /* Handle a SEF Signal request. */
   int signo;
@@ -129,7 +129,7 @@ PUBLIC int do_sef_signal_request(message *m_ptr)
 /*===========================================================================*
  *                        sef_setcb_signal_handler                           *
  *===========================================================================*/
-PUBLIC void sef_setcb_signal_handler(sef_cb_signal_handler_t cb)
+void sef_setcb_signal_handler(sef_cb_signal_handler_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_signal_handler = cb;
@@ -138,7 +138,7 @@ PUBLIC void sef_setcb_signal_handler(sef_cb_signal_handler_t cb)
 /*===========================================================================*
  *                        sef_setcb_signal_manager                           *
  *===========================================================================*/
-PUBLIC void sef_setcb_signal_manager(sef_cb_signal_manager_t cb)
+void sef_setcb_signal_manager(sef_cb_signal_manager_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_signal_manager = cb;
@@ -147,14 +147,14 @@ PUBLIC void sef_setcb_signal_manager(sef_cb_signal_manager_t cb)
 /*===========================================================================*
  *       	          sef_cb_signal_handler_null                         *
  *===========================================================================*/
-PUBLIC void sef_cb_signal_handler_null(int signo)
+void sef_cb_signal_handler_null(int signo)
 {
 }
 
 /*===========================================================================*
  *       	          sef_cb_signal_manager_null                         *
  *===========================================================================*/
-PUBLIC int sef_cb_signal_manager_null(endpoint_t target, int signo)
+int sef_cb_signal_manager_null(endpoint_t target, int signo)
 {
   return OK;
 }
@@ -162,7 +162,7 @@ PUBLIC int sef_cb_signal_manager_null(endpoint_t target, int signo)
 /*===========================================================================*
  *       	          sef_cb_signal_handler_term                         *
  *===========================================================================*/
-PUBLIC void sef_cb_signal_handler_term(int signo)
+void sef_cb_signal_handler_term(int signo)
 {
   /* Terminate in case of SIGTERM, ignore other signals. */
   if(signo == SIGTERM) {
@@ -173,7 +173,7 @@ PUBLIC void sef_cb_signal_handler_term(int signo)
 /*===========================================================================*
  *      	      sef_cb_signal_handler_posix_default                    *
  *===========================================================================*/
-PUBLIC void sef_cb_signal_handler_posix_default(int signo)
+void sef_cb_signal_handler_posix_default(int signo)
 {
   switch(signo) {
       /* Ignore when possible. */

@@ -5,9 +5,9 @@
 EXTERN struct logdevice logdevices[NR_DEVS];
 
 /* State management helpers. */
-PRIVATE int is_read_pending;
-PRIVATE int is_select_callback_pending;
-PRIVATE void load_state_info(void)
+static int is_read_pending;
+static int is_select_callback_pending;
+static void load_state_info(void)
 {
   int i, found_pending;
   struct logdevice *log;
@@ -36,7 +36,7 @@ PRIVATE void load_state_info(void)
 /*===========================================================================*
  *       			 sef_cb_lu_prepare 	 	             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_prepare(int state)
+int sef_cb_lu_prepare(int state)
 {
   int is_ready;
 
@@ -68,7 +68,7 @@ PUBLIC int sef_cb_lu_prepare(int state)
 /*===========================================================================*
  *      		  sef_cb_lu_state_isvalid		             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_isvalid(int state)
+int sef_cb_lu_state_isvalid(int state)
 {
   return SEF_LU_STATE_IS_STANDARD(state) || LOG_STATE_IS_CUSTOM(state);
 }
@@ -76,7 +76,7 @@ PUBLIC int sef_cb_lu_state_isvalid(int state)
 /*===========================================================================*
  *      		   sef_cb_lu_state_dump         	             *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_state_dump(int state)
+void sef_cb_lu_state_dump(int state)
 {
   /* Load state information. */
   load_state_info();

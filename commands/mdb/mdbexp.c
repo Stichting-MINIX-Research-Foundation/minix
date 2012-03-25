@@ -16,15 +16,15 @@
 #include <string.h>
 #include "proto.h"
 
-FORWARD long value(char *s , char **s_p , int *seg_p );
-FORWARD long lookup(char *s , char **s_p , int *seg_p );
+static long value(char *s , char **s_p , int *seg_p );
+static long lookup(char *s , char **s_p , int *seg_p );
 
 #define idchar(c) (isalpha(c) || isdigit(c) || (c) == '_')
 
 /* 
  * Get an expression for mdb
  */
-PUBLIC char *getexp(buf, exp_p, seg_p)
+char *getexp(buf, exp_p, seg_p)
 char *buf;
 int *seg_p;
 long *exp_p;
@@ -62,7 +62,7 @@ long *exp_p;
  *	\n	0L
  *	then calls lookup for symbols
  */
-PRIVATE long value(s, s_p, seg_p)
+static long value(s, s_p, seg_p)
 char *s, **s_p;
 int *seg_p;
 {
@@ -94,7 +94,7 @@ int *seg_p;
  * Handle special cases: _start T: D: S: 
  * then call symbolvalue()
  */
-PRIVATE long lookup(s, s_p, seg_p)
+static long lookup(s, s_p, seg_p)
 char *s, **s_p;
 int *seg_p;
 {
@@ -148,7 +148,7 @@ int *seg_p;
 }
 
 /* Skip spaces */
-PUBLIC char *skip(s)
+char *skip(s)
 register char *s;
 {
   while (isspace(*s)) ++s;

@@ -8,21 +8,21 @@
 /*
  * Function prototypes for the hello driver.
  */
-FORWARD int hello_open(message *m);
-FORWARD int hello_close(message *m);
-FORWARD struct device * hello_prepare(dev_t device);
-FORWARD int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
+static int hello_open(message *m);
+static int hello_close(message *m);
+static struct device * hello_prepare(dev_t device);
+static int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
 	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
 	flags);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init(int type, sef_init_info_t *info);
-FORWARD int sef_cb_lu_state_save(int);
-FORWARD int lu_state_restore(void);
+static void sef_local_startup(void);
+static int sef_cb_init(int type, sef_init_info_t *info);
+static int sef_cb_lu_state_save(int);
+static int lu_state_restore(void);
 
 /* Entry points to the hello driver. */
-PRIVATE struct chardriver hello_tab =
+static struct chardriver hello_tab =
 {
     hello_open,
     hello_close,
@@ -37,31 +37,31 @@ PRIVATE struct chardriver hello_tab =
 };
 
 /** Represents the /dev/hello device. */
-PRIVATE struct device hello_device;
+static struct device hello_device;
 
 /** State variable to count the number of times the device has been opened. */
-PRIVATE int open_counter;
+static int open_counter;
 
-PRIVATE int hello_open(message *UNUSED(m))
+static int hello_open(message *UNUSED(m))
 {
     printf("hello_open(). Called %d time(s).\n", ++open_counter);
     return OK;
 }
 
-PRIVATE int hello_close(message *UNUSED(m))
+static int hello_close(message *UNUSED(m))
 {
     printf("hello_close()\n");
     return OK;
 }
 
-PRIVATE struct device * hello_prepare(dev_t UNUSED(dev))
+static struct device * hello_prepare(dev_t UNUSED(dev))
 {
     hello_device.dv_base = make64(0, 0);
     hello_device.dv_size = make64(strlen(HELLO_MESSAGE), 0);
     return &hello_device;
 }
 
-PRIVATE int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
+static int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
     iovec_t *iov, unsigned nr_req, endpoint_t UNUSED(user_endpt),
     unsigned int UNUSED(flags))
 {
@@ -97,14 +97,14 @@ PRIVATE int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
     return ret;
 }
 
-PRIVATE int sef_cb_lu_state_save(int UNUSED(state)) {
+static int sef_cb_lu_state_save(int UNUSED(state)) {
 /* Save the state. */
     ds_publish_u32("open_counter", open_counter, DSF_OVERWRITE);
 
     return OK;
 }
 
-PRIVATE int lu_state_restore() {
+static int lu_state_restore() {
 /* Restore the state. */
     u32_t value;
 
@@ -115,7 +115,7 @@ PRIVATE int lu_state_restore() {
     return OK;
 }
 
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
     /*
      * Register init callbacks. Use the same function for all event types
@@ -138,7 +138,7 @@ PRIVATE void sef_local_startup()
     sef_startup();
 }
 
-PRIVATE int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the hello driver. */
     int do_announce_driver = TRUE;
@@ -171,7 +171,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
     return OK;
 }
 
-PUBLIC int main(void)
+int main(void)
 {
     /*
      * Perform initialization.

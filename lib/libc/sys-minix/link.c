@@ -9,7 +9,7 @@
 __weak_alias(link, _link)
 #endif
 
-PUBLIC int link(const char *name, const char *name2)
+int link(const char *name, const char *name2)
 {
   message m;
 

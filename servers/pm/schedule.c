@@ -17,7 +17,7 @@
 /*===========================================================================*
  *				init_scheduling				     *
  *===========================================================================*/
-PUBLIC void sched_init(void)
+void sched_init(void)
 {
 	struct mproc *trmp;
 	endpoint_t parent_e;
@@ -52,7 +52,7 @@ PUBLIC void sched_init(void)
 /*===========================================================================*
  *				sched_start_user			     *
  *===========================================================================*/
-PUBLIC int sched_start_user(endpoint_t ep, struct mproc *rmp)
+int sched_start_user(endpoint_t ep, struct mproc *rmp)
 {
 	unsigned maxprio;
 	endpoint_t inherit_from;
@@ -86,7 +86,7 @@ PUBLIC int sched_start_user(endpoint_t ep, struct mproc *rmp)
 /*===========================================================================*
  *				sched_nice				     *
  *===========================================================================*/
-PUBLIC int sched_nice(struct mproc *rmp, int nice)
+int sched_nice(struct mproc *rmp, int nice)
 {
 	int rv;
 	message m;

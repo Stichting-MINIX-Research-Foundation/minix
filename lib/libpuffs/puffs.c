@@ -67,13 +67,13 @@ pthread_mutex_t pu_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
 /* Declare some local functions. */
-FORWARD void get_work(message *m_in);
-FORWARD void reply(endpoint_t who, message *m_out);
+static void get_work(message *m_in);
+static void reply(endpoint_t who, message *m_out);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 EXTERN int env_argc;
 EXTERN char **env_argv;
@@ -671,7 +671,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -689,7 +689,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the Minix file server. */
   SELF_E = getprocnr();
@@ -699,7 +699,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Only check for termination signal, ignore anything else. */
   if (signo != SIGTERM) return;
@@ -724,7 +724,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-PRIVATE void get_work(m_in)
+static void get_work(m_in)
 message *m_in;				/* pointer to message */
 {
   int r, srcok = 0;
@@ -761,7 +761,7 @@ message *m_in;				/* pointer to message */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(
+static void reply(
   endpoint_t who,
   message *m_out                       	/* report result */
 )

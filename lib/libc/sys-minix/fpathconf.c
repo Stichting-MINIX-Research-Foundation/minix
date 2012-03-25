@@ -14,7 +14,7 @@
 __weak_alias(fpathconf, _fpathconf)
 #endif
 
-PUBLIC long fpathconf(fd, name)
+long fpathconf(fd, name)
 int fd;				/* file descriptor being interrogated */
 int name;			/* property being inspected */
 {

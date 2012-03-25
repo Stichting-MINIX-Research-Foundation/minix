@@ -1,7 +1,7 @@
 #include <lib.h>
 #include <unistd.h>
 
-PUBLIC int vm_set_priv(int nr, void *buf)
+int vm_set_priv(int nr, void *buf)
 {
 	message m;
 	m.VM_RS_NR = nr;

@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-PUBLIC int mknod(const char *name, mode_t mode, dev_t dev)
+int mknod(const char *name, mode_t mode, dev_t dev)
 {
   message m;
 

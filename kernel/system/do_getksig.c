@@ -15,7 +15,7 @@
 /*===========================================================================*
  *			      do_getksig				     *
  *===========================================================================*/
-PUBLIC int do_getksig(struct proc * caller, message * m_ptr)
+int do_getksig(struct proc * caller, message * m_ptr)
 {
 /* The signal manager is ready to accept signals and repeatedly does a kernel
  * call to get one. Find a process with pending signals. If no signals are

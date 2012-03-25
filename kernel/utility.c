@@ -20,7 +20,7 @@
 /*===========================================================================*
  *			panic                                          *
  *===========================================================================*/
-PUBLIC void panic(const char *fmt, ...)
+void panic(const char *fmt, ...)
 {
   va_list arg;
   /* The system has run aground of a fatal kernel error. Terminate execution. */
@@ -48,7 +48,7 @@ PUBLIC void panic(const char *fmt, ...)
 /*===========================================================================*
  *				kputc				     	     *
  *===========================================================================*/
-PUBLIC void kputc(c)
+void kputc(c)
 int c;					/* character to append */
 {
 /* Accumulate a single character for a kernel message. Send a notification
@@ -86,7 +86,7 @@ int c;					/* character to append */
   return;
 }
 
-PUBLIC void cpu_print_freq(unsigned cpu)
+void cpu_print_freq(unsigned cpu)
 {
 	u64_t freq;
 
@@ -94,7 +94,7 @@ PUBLIC void cpu_print_freq(unsigned cpu)
 	printf("CPU %d freq %lu MHz\n", cpu, div64u(freq, 1000000));
 }
 
-PUBLIC int is_fpu(void)
+int is_fpu(void)
 {
 	return get_cpulocal_var(fpu_presence);
 }

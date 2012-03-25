@@ -12,15 +12,15 @@
 
 #include "inc.h"
 
-PRIVATE LIST_HEAD(hash_head, inode) hash_table[NUM_HASH_SLOTS];
+static LIST_HEAD(hash_head, inode) hash_table[NUM_HASH_SLOTS];
 
-FORWARD void del_one_dentry(struct inode *ino);
-FORWARD unsigned int hash_dentry(struct inode *parent, char *name);
+static void del_one_dentry(struct inode *ino);
+static unsigned int hash_dentry(struct inode *parent, char *name);
 
 /*===========================================================================*
  *				init_dentry				     *
  *===========================================================================*/
-PUBLIC void init_dentry()
+void init_dentry()
 {
 /* Initialize the names hashtable.
  */
@@ -33,7 +33,7 @@ PUBLIC void init_dentry()
 /*===========================================================================*
  *				lookup_dentry				     *
  *===========================================================================*/
-PUBLIC struct inode *lookup_dentry(parent, name)
+struct inode *lookup_dentry(parent, name)
 struct inode *parent;
 char *name;
 {
@@ -64,7 +64,7 @@ char *name;
 /*===========================================================================*
  *				add_dentry				     *
  *===========================================================================*/
-PUBLIC void add_dentry(parent, name, ino)
+void add_dentry(parent, name, ino)
 struct inode *parent;
 char *name;
 struct inode *ino;
@@ -92,7 +92,7 @@ struct inode *ino;
 /*===========================================================================*
  *				del_one_dentry				     *
  *===========================================================================*/
-PRIVATE void del_one_dentry(ino)
+static void del_one_dentry(ino)
 struct inode *ino;
 {
 /* This inode has become inaccessible by name. Disassociate it from its parent
@@ -123,7 +123,7 @@ struct inode *ino;
 /*===========================================================================*
  *				del_dentry				     *
  *===========================================================================*/
-PUBLIC void del_dentry(ino)
+void del_dentry(ino)
 struct inode *ino;
 {
 /* Disassociate an inode from its parent, effectively deleting it. Recursively
@@ -167,7 +167,7 @@ struct inode *ino;
 /*===========================================================================*
  *				hash_dentry				     *
  *===========================================================================*/
-PRIVATE unsigned int hash_dentry(parent, name)
+static unsigned int hash_dentry(parent, name)
 struct inode *parent;
 char *name;
 {

@@ -8,7 +8,7 @@
 __weak_alias(kill, _kill)
 #endif
 
-PUBLIC int kill(proc, sig)
+int kill(proc, sig)
 int proc;			/* which process is to be sent the signal */
 int sig;			/* signal number */
 {

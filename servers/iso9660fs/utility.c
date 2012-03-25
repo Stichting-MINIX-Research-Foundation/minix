@@ -8,7 +8,7 @@
 /*===========================================================================*
  *				do_noop					     *
  *===========================================================================*/
-PUBLIC int do_noop(void)
+int do_noop(void)
 {
 /* Do not do anything. */
   return(OK);
@@ -17,7 +17,7 @@ PUBLIC int do_noop(void)
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys(void)
+int no_sys(void)
 {
 /* Somebody has used an illegal system call number */
   return(EINVAL);

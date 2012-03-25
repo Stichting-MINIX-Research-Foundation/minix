@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-PUBLIC int sys_abort(int how, ...)
+int sys_abort(int how, ...)
 {
 /* Something awful has happened.  Abandon ship. */
 

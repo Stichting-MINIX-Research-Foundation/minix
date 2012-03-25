@@ -17,12 +17,12 @@
 
 #define PRIV_DEBUG 0
 
-FORWARD int update_priv(struct proc *rp, struct priv *priv);
+static int update_priv(struct proc *rp, struct priv *priv);
 
 /*===========================================================================*
  *				do_privctl				     *
  *===========================================================================*/
-PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
+int do_privctl(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_privctl(). Update a process' privileges. If the process is not
  * yet a system process, make sure it gets its own privilege structure.
@@ -317,7 +317,7 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				update_priv				     *
  *===========================================================================*/
-PRIVATE int update_priv(struct proc *rp, struct priv *priv)
+static int update_priv(struct proc *rp, struct priv *priv)
 {
 /* Update the privilege structure of a given process. */
 

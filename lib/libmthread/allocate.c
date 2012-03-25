@@ -7,20 +7,20 @@
 #include "global.h"
 #include "proto.h"
 
-FORWARD int mthread_increase_thread_pool(void);
-FORWARD void mthread_thread_init(mthread_thread_t thread, mthread_attr_t
+static int mthread_increase_thread_pool(void);
+static void mthread_thread_init(mthread_thread_t thread, mthread_attr_t
 	*tattr, void *(*proc)(void *), void *arg);
 
-FORWARD void mthread_thread_stop(mthread_thread_t thread);
-FORWARD void mthread_trampoline(void);
+static void mthread_thread_stop(mthread_thread_t thread);
+static void mthread_trampoline(void);
 
-PRIVATE int initialized = 0;
+static int initialized = 0;
 #ifndef PGSHIFT
 # define PGSHIFT	12	/* XXX: temporarily for ACK */
 #endif
 #define MTHREAD_GUARDSIZE 	(1 << PGSHIFT) 	/* 1 page */
 
-PRIVATE struct __mthread_attr default_attr = {	MTHREAD_STACK_MIN,
+static struct __mthread_attr default_attr = {	MTHREAD_STACK_MIN,
 						NULL,
 						MTHREAD_CREATE_JOINABLE,
 						NULL, NULL };
@@ -28,7 +28,7 @@ PRIVATE struct __mthread_attr default_attr = {	MTHREAD_STACK_MIN,
 /*===========================================================================*
  *				mthread_equal				     *
  *===========================================================================*/
-PUBLIC int mthread_equal(l, r)
+int mthread_equal(l, r)
 mthread_thread_t l;
 mthread_thread_t r;
 {
@@ -42,7 +42,7 @@ mthread_thread_t r;
 /*===========================================================================*
  *				mthread_create				     *
  *===========================================================================*/
-PUBLIC int mthread_create(threadid, tattr, proc, arg)
+int mthread_create(threadid, tattr, proc, arg)
 mthread_thread_t *threadid;
 mthread_attr_t *tattr;
 void *(*proc)(void *);
@@ -78,7 +78,7 @@ void *arg;
 /*===========================================================================*
  *				mthread_detach				     *
  *===========================================================================*/
-PUBLIC int mthread_detach(detach)
+int mthread_detach(detach)
 mthread_thread_t detach;
 {
 /* Mark a thread as detached. Consequently, upon exit, resources allocated for
@@ -107,7 +107,7 @@ mthread_thread_t detach;
 /*===========================================================================*
  *				mthread_exit				     *
  *===========================================================================*/
-PUBLIC void mthread_exit(value)
+void mthread_exit(value)
 void *value;
 {
 /* Make a thread stop running and store the result value. */
@@ -143,7 +143,7 @@ void *value;
 /*===========================================================================*
  *			mthread_find_tcb				     *
  *===========================================================================*/
-PUBLIC mthread_tcb_t * mthread_find_tcb(thread)
+mthread_tcb_t * mthread_find_tcb(thread)
 mthread_thread_t thread;
 {
   mthread_tcb_t *rt = NULL;
@@ -162,7 +162,7 @@ mthread_thread_t thread;
 /*===========================================================================*
  *			mthread_increase_thread_pool			     *
  *===========================================================================*/
-PRIVATE int mthread_increase_thread_pool(void)
+static int mthread_increase_thread_pool(void)
 {
 /* Increase thread pool. No fancy algorithms, just double the size. */
   mthread_tcb_t **new_tcb;
@@ -223,7 +223,7 @@ PRIVATE int mthread_increase_thread_pool(void)
 /*===========================================================================*
  *				mthread_init				     *
  *===========================================================================*/
-PUBLIC void mthread_init(void)
+void mthread_init(void)
 {
 /* Initialize thread system; allocate thread structures and start creating
  * threads.
@@ -256,7 +256,7 @@ PUBLIC void mthread_init(void)
 /*===========================================================================*
  *				mthread_join				     *
  *===========================================================================*/
-PUBLIC int mthread_join(join, value)
+int mthread_join(join, value)
 mthread_thread_t join;
 void **value;
 {
@@ -314,7 +314,7 @@ void **value;
 /*===========================================================================*
  *				mthread_once				     *
  *===========================================================================*/
-PUBLIC int mthread_once(once, proc)
+int mthread_once(once, proc)
 mthread_once_t *once;
 void (*proc)(void);
 {
@@ -334,7 +334,7 @@ void (*proc)(void);
 /*===========================================================================*
  *				mthread_self				     *
  *===========================================================================*/
-PUBLIC mthread_thread_t mthread_self(void)
+mthread_thread_t mthread_self(void)
 {
 /* Return the thread id of the thread calling this function. */
 
@@ -347,7 +347,7 @@ PUBLIC mthread_thread_t mthread_self(void)
 /*===========================================================================*
  *				mthread_thread_init			     *
  *===========================================================================*/
-PRIVATE void mthread_thread_init(thread, tattr, proc, arg)
+static void mthread_thread_init(thread, tattr, proc, arg)
 mthread_thread_t thread;
 mthread_attr_t *tattr;
 void *(*proc)(void *);
@@ -447,7 +447,7 @@ void *arg;
 /*===========================================================================*
  *				mthread_thread_reset			     *
  *===========================================================================*/
-PUBLIC void mthread_thread_reset(thread)
+void mthread_thread_reset(thread)
 mthread_thread_t thread;
 {
 /* Reset the thread to its default values. Free the allocated stack space. */
@@ -480,7 +480,7 @@ mthread_thread_t thread;
 /*===========================================================================*
  *				mthread_thread_stop			     *
  *===========================================================================*/
-PRIVATE void mthread_thread_stop(thread)
+static void mthread_thread_stop(thread)
 mthread_thread_t thread;
 {
 /* Stop thread from running. Deallocate resources. */
@@ -513,7 +513,7 @@ mthread_thread_t thread;
 /*===========================================================================*
  *				mthread_trampoline			     *
  *===========================================================================*/
-PRIVATE void mthread_trampoline(void)
+static void mthread_trampoline(void)
 {
 /* Execute the /current_thread's/ procedure. Store its result. */
 

@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_umap_remote			     *
  *===========================================================================*/
-PUBLIC int sys_umap_remote(proc_ep, grantee, seg, vir_addr, bytes, phys_addr)
+int sys_umap_remote(proc_ep, grantee, seg, vir_addr, bytes, phys_addr)
 endpoint_t proc_ep;			/* process number to do umap for */
 endpoint_t grantee;			/* process nr to check as grantee */
 int seg;				/* T, D, or S segment */

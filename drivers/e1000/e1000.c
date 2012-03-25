@@ -21,37 +21,37 @@
 #include "e1000_reg.h"
 #include "e1000_pci.h"
 
-PRIVATE int e1000_instance;
-PRIVATE e1000_t e1000_state;
+static int e1000_instance;
+static e1000_t e1000_state;
 
-PRIVATE void e1000_init(message *mp);
-PRIVATE void e1000_init_pci(void);
-PRIVATE int e1000_probe(e1000_t *e, int skip);
-PRIVATE int e1000_init_hw(e1000_t *e);
-PRIVATE void e1000_init_addr(e1000_t *e);
-PRIVATE void e1000_init_buf(e1000_t *e);
-PRIVATE void e1000_reset_hw(e1000_t *e);
-PRIVATE void e1000_writev_s(message *mp, int from_int);
-PRIVATE void e1000_readv_s(message *mp, int from_int);
-PRIVATE void e1000_getstat_s(message *mp);
-PRIVATE void e1000_interrupt(message *mp);
-PRIVATE int e1000_link_changed(e1000_t *e);
-PRIVATE void e1000_stop(e1000_t *e);
-PRIVATE uint32_t e1000_reg_read(e1000_t *e, uint32_t reg);
-PRIVATE void e1000_reg_write(e1000_t *e, uint32_t reg, uint32_t value);
-PRIVATE void e1000_reg_set(e1000_t *e, uint32_t reg, uint32_t value);
-PRIVATE void e1000_reg_unset(e1000_t *e, uint32_t reg, uint32_t value);
-PRIVATE u16_t eeprom_eerd(void *e, int reg);
-PRIVATE u16_t eeprom_ich(void *e, int reg);
-PRIVATE int eeprom_ich_init(e1000_t *e);
-PRIVATE int eeprom_ich_cycle(const e1000_t *e, u32_t timeout);
-PRIVATE void reply(e1000_t *e);
-PRIVATE void mess_reply(message *req, message *reply);
+static void e1000_init(message *mp);
+static void e1000_init_pci(void);
+static int e1000_probe(e1000_t *e, int skip);
+static int e1000_init_hw(e1000_t *e);
+static void e1000_init_addr(e1000_t *e);
+static void e1000_init_buf(e1000_t *e);
+static void e1000_reset_hw(e1000_t *e);
+static void e1000_writev_s(message *mp, int from_int);
+static void e1000_readv_s(message *mp, int from_int);
+static void e1000_getstat_s(message *mp);
+static void e1000_interrupt(message *mp);
+static int e1000_link_changed(e1000_t *e);
+static void e1000_stop(e1000_t *e);
+static uint32_t e1000_reg_read(e1000_t *e, uint32_t reg);
+static void e1000_reg_write(e1000_t *e, uint32_t reg, uint32_t value);
+static void e1000_reg_set(e1000_t *e, uint32_t reg, uint32_t value);
+static void e1000_reg_unset(e1000_t *e, uint32_t reg, uint32_t value);
+static u16_t eeprom_eerd(void *e, int reg);
+static u16_t eeprom_ich(void *e, int reg);
+static int eeprom_ich_init(e1000_t *e);
+static int eeprom_ich_cycle(const e1000_t *e, u32_t timeout);
+static void reply(e1000_t *e);
+static void mess_reply(message *req, message *reply);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main					     *
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -125,7 +125,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the e1000 driver. */
     long v;
@@ -153,7 +153,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *			   sef_cb_signal_handler			     *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
     e1000_t *e;
     e = &e1000_state;
@@ -169,7 +169,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				e1000_init				     *
  *===========================================================================*/
-PRIVATE void e1000_init(message *mp)
+static void e1000_init(message *mp)
 {
     static int first_time = 1;
     message reply_mess;
@@ -203,7 +203,7 @@ PRIVATE void e1000_init(message *mp)
 /*===========================================================================*
  *				e1000_int_pci				     *
  *===========================================================================*/
-PRIVATE void e1000_init_pci()
+static void e1000_init_pci()
 {
     e1000_t *e;
 
@@ -220,7 +220,7 @@ PRIVATE void e1000_init_pci()
 /*===========================================================================*
  *				e1000_probe				     *
  *===========================================================================*/
-PRIVATE int e1000_probe(e1000_t *e, int skip)
+static int e1000_probe(e1000_t *e, int skip)
 {
     int r, devind, ioflag;
     u16_t vid, did, cr;
@@ -359,7 +359,7 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
 /*===========================================================================*
  *				e1000_init_hw				     *
  *===========================================================================*/
-PRIVATE int e1000_init_hw(e)
+static int e1000_init_hw(e)
 e1000_t *e;
 {
     int r, i;
@@ -424,7 +424,7 @@ e1000_t *e;
 /*===========================================================================*
  *				e1000_init_addr				     *
  *===========================================================================*/
-PRIVATE void e1000_init_addr(e)
+static void e1000_init_addr(e)
 e1000_t *e;
 {
     static char eakey[]= E1000_ENVVAR "#_EA";
@@ -474,7 +474,7 @@ e1000_t *e;
 /*===========================================================================*
  *				e1000_init_buf				     *
  *===========================================================================*/
-PRIVATE void e1000_init_buf(e)
+static void e1000_init_buf(e)
 e1000_t *e;
 {
     phys_bytes rx_desc_p, rx_buff_p;
@@ -570,7 +570,7 @@ e1000_t *e;
 /*===========================================================================*
  *				e1000_reset_hw				     *
  *===========================================================================*/
-PRIVATE void e1000_reset_hw(e)
+static void e1000_reset_hw(e)
 e1000_t *e;
 {
     /* Assert a Device Reset signal. */
@@ -583,7 +583,7 @@ e1000_t *e;
 /*===========================================================================*
  *				e1000_writev_s				     *
  *===========================================================================*/
-PRIVATE void e1000_writev_s(mp, from_int)
+static void e1000_writev_s(mp, from_int)
 message *mp;
 int from_int;
 {
@@ -676,7 +676,7 @@ int from_int;
 /*===========================================================================*
  *				e1000_readv_s				     *
  *===========================================================================*/
-PRIVATE void e1000_readv_s(mp, from_int)
+static void e1000_readv_s(mp, from_int)
 message *mp;
 int from_int;
 {
@@ -765,7 +765,7 @@ int from_int;
 /*===========================================================================*
  *				e1000_getstat_s				     *
  *===========================================================================*/
-PRIVATE void e1000_getstat_s(mp)
+static void e1000_getstat_s(mp)
 message *mp;
 {
     int r;
@@ -800,7 +800,7 @@ message *mp;
 /*===========================================================================*
  *				e1000_interrupt				     *
  *===========================================================================*/
-PRIVATE void e1000_interrupt(mp)
+static void e1000_interrupt(mp)
 message *mp;
 {
     e1000_t *e;
@@ -837,7 +837,7 @@ message *mp;
 /*===========================================================================*
  *				e1000_link_changed			     *
  *===========================================================================*/
-PRIVATE int e1000_link_changed(e)
+static int e1000_link_changed(e)
 e1000_t *e;
 {
     E1000_DEBUG(4, ("%s: link_changed()\n", e->name));
@@ -847,7 +847,7 @@ e1000_t *e;
 /*===========================================================================*
  *				e1000_stop				     *
  *===========================================================================*/
-PRIVATE void e1000_stop(e)
+static void e1000_stop(e)
 e1000_t *e;
 {
     E1000_DEBUG(3, ("%s: stop()\n", e->name));
@@ -860,7 +860,7 @@ e1000_t *e;
 /*===========================================================================*
  *				e1000_reg_read				     *
  *===========================================================================*/
-PRIVATE uint32_t e1000_reg_read(e, reg)
+static uint32_t e1000_reg_read(e, reg)
 e1000_t *e;
 uint32_t reg;
 {
@@ -879,7 +879,7 @@ uint32_t reg;
 /*===========================================================================*
  *				e1000_reg_write				     *
  *===========================================================================*/
-PRIVATE void e1000_reg_write(e, reg, value)
+static void e1000_reg_write(e, reg, value)
 e1000_t *e;
 uint32_t reg;
 uint32_t value;
@@ -894,7 +894,7 @@ uint32_t value;
 /*===========================================================================*
  *				e1000_reg_set				     *
  *===========================================================================*/
-PRIVATE void e1000_reg_set(e, reg, value)
+static void e1000_reg_set(e, reg, value)
 e1000_t *e;
 uint32_t reg;
 uint32_t value;
@@ -911,7 +911,7 @@ uint32_t value;
 /*===========================================================================*
  *				e1000_reg_unset				     *
  *===========================================================================*/
-PRIVATE void e1000_reg_unset(e, reg, value)
+static void e1000_reg_unset(e, reg, value)
 e1000_t *e;
 uint32_t reg;
 uint32_t value;
@@ -929,7 +929,7 @@ uint32_t value;
 /*===========================================================================*
  *				eeprom_eerd				     *
  *===========================================================================*/
-PRIVATE u16_t eeprom_eerd(v, reg)
+static u16_t eeprom_eerd(v, reg)
 void *v;
 int reg;
 {
@@ -949,7 +949,7 @@ int reg;
 /*===========================================================================* 
  *                              eeprom_ich_init                              * 
  *===========================================================================*/
-PRIVATE int eeprom_ich_init(e)
+static int eeprom_ich_init(e)
 e1000_t *e;
 {
     union ich8_hws_flash_status hsfsts;
@@ -1029,7 +1029,7 @@ out:
 /*===========================================================================* 
  *                              eeprom_ich_cycle                             * 
  *===========================================================================*/
-PRIVATE int eeprom_ich_cycle(const e1000_t *e, u32_t timeout)
+static int eeprom_ich_cycle(const e1000_t *e, u32_t timeout)
 {
     union ich8_hws_flash_ctrl hsflctl;
     union ich8_hws_flash_status hsfsts;
@@ -1062,7 +1062,7 @@ PRIVATE int eeprom_ich_cycle(const e1000_t *e, u32_t timeout)
 /*===========================================================================*
  *				eeprom_ich				     *
  *===========================================================================*/
-PRIVATE u16_t eeprom_ich(v, reg)
+static u16_t eeprom_ich(v, reg)
 void *v;
 int reg;
 {
@@ -1144,7 +1144,7 @@ out:
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(e)
+static void reply(e)
 e1000_t *e;
 {
     message msg;
@@ -1192,7 +1192,7 @@ e1000_t *e;
 /*===========================================================================*
  *				mess_reply				     *
  *===========================================================================*/
-PRIVATE void mess_reply(req, reply_mess)
+static void mess_reply(req, reply_mess)
 message *req;
 message *reply_mess;
 {

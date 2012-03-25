@@ -3,17 +3,17 @@
 #include "inc.h"
 
 /* The number of inodes and hash table slots. */
-PRIVATE unsigned int nr_inodes;
+static unsigned int nr_inodes;
 
 /* The table of all the inodes. */
-PRIVATE struct inode *inode;
+static struct inode *inode;
 
 /* The list of unused inodes. */
-PRIVATE TAILQ_HEAD(unused_head, inode) unused_inodes;
+static TAILQ_HEAD(unused_head, inode) unused_inodes;
 
 /* The hash tables for lookup of <parent,name> and <parent,index> to inode. */
-PRIVATE LIST_HEAD(name_head, inode) *parent_name_head;
-PRIVATE LIST_HEAD(index_head, inode) *parent_index_head;
+static LIST_HEAD(name_head, inode) *parent_name_head;
+static LIST_HEAD(index_head, inode) *parent_index_head;
 
 /* Internal integrity check. */
 #define CHECK_INODE(node)						\
@@ -27,7 +27,7 @@ PRIVATE LIST_HEAD(index_head, inode) *parent_index_head;
 /*===========================================================================*
  *				init_inodes				     *
  *===========================================================================*/
-PUBLIC void init_inodes(unsigned int inodes, struct inode_stat *stat,
+void init_inodes(unsigned int inodes, struct inode_stat *stat,
 	index_t nr_indexed_entries)
 {
 	/* Initialize the inode-related state.
@@ -90,7 +90,7 @@ PUBLIC void init_inodes(unsigned int inodes, struct inode_stat *stat,
 /*===========================================================================*
  *				cleanup_inodes				     *
  *===========================================================================*/
-PUBLIC void cleanup_inodes(void)
+void cleanup_inodes(void)
 {
 	/* Clean up the inode-related state.
 	 */
@@ -104,7 +104,7 @@ PUBLIC void cleanup_inodes(void)
 /*===========================================================================*
  *				parent_name_hash			     *
  *===========================================================================*/
-PRIVATE int parent_name_hash(struct inode *parent, char *name)
+static int parent_name_hash(struct inode *parent, char *name)
 {
 	/* Return the hash value of <parent,name> tuple.
 	 */
@@ -123,7 +123,7 @@ PRIVATE int parent_name_hash(struct inode *parent, char *name)
 /*===========================================================================*
  *				parent_index_hash			     *
  *===========================================================================*/
-PRIVATE int parent_index_hash(struct inode *parent, index_t index)
+static int parent_index_hash(struct inode *parent, index_t index)
 {
 	/* Return the hash value of a <parent,index> tuple.
 	 */
@@ -134,7 +134,7 @@ PRIVATE int parent_index_hash(struct inode *parent, index_t index)
 /*===========================================================================*
  *				purge_inode				     *
  *===========================================================================*/
-PUBLIC void purge_inode(struct inode *parent)
+void purge_inode(struct inode *parent)
 {
 	/* Delete a deletable inode to make room for a new inode.
 	 */
@@ -175,7 +175,7 @@ PUBLIC void purge_inode(struct inode *parent)
 /*===========================================================================*
  *				add_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *add_inode(struct inode *parent, char *name,
+struct inode *add_inode(struct inode *parent, char *name,
 	index_t index, struct inode_stat *stat, index_t nr_indexed_entries,
 	cbdata_t cbdata)
 {
@@ -232,7 +232,7 @@ PUBLIC struct inode *add_inode(struct inode *parent, char *name,
 /*===========================================================================*
  *				get_root_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_root_inode(void)
+struct inode *get_root_inode(void)
 {
 	/* Return the file system's root inode.
 	 */
@@ -244,7 +244,7 @@ PUBLIC struct inode *get_root_inode(void)
 /*===========================================================================*
  *				get_inode_name				     *
  *===========================================================================*/
-PUBLIC char const *get_inode_name(struct inode *node)
+char const *get_inode_name(struct inode *node)
 {
 	/* Return the name that an inode has in its parent directory.
 	 */
@@ -257,7 +257,7 @@ PUBLIC char const *get_inode_name(struct inode *node)
 /*===========================================================================*
  *				get_inode_index				     *
  *===========================================================================*/
-PUBLIC index_t get_inode_index(struct inode *node)
+index_t get_inode_index(struct inode *node)
 {
 	/* Return the index that an inode has in its parent directory.
 	 */
@@ -270,7 +270,7 @@ PUBLIC index_t get_inode_index(struct inode *node)
 /*===========================================================================*
  *				get_inode_cbdata			     *
  *===========================================================================*/
-PUBLIC cbdata_t get_inode_cbdata(struct inode *node)
+cbdata_t get_inode_cbdata(struct inode *node)
 {
 	/* Return the callback data associated with the given inode.
 	 */
@@ -283,7 +283,7 @@ PUBLIC cbdata_t get_inode_cbdata(struct inode *node)
 /*===========================================================================*
  *				get_parent_inode			     *
  *===========================================================================*/
-PUBLIC struct inode *get_parent_inode(struct inode *node)
+struct inode *get_parent_inode(struct inode *node)
 {
 	/* Return an inode's parent inode.
 	 */
@@ -300,7 +300,7 @@ PUBLIC struct inode *get_parent_inode(struct inode *node)
 /*===========================================================================*
  *				get_first_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_first_inode(struct inode *parent)
+struct inode *get_first_inode(struct inode *parent)
 {
 	/* Return a directory's first (non-deleted) child inode.
 	 */
@@ -320,7 +320,7 @@ PUBLIC struct inode *get_first_inode(struct inode *parent)
 /*===========================================================================*
  *				get_next_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_next_inode(struct inode *previous)
+struct inode *get_next_inode(struct inode *previous)
 {
 	/* Return a directory's next (non-deleted) child inode.
 	 */
@@ -339,7 +339,7 @@ PUBLIC struct inode *get_next_inode(struct inode *previous)
 /*===========================================================================*
  *				get_inode_number			     *
  *===========================================================================*/
-PUBLIC int get_inode_number(struct inode *node)
+int get_inode_number(struct inode *node)
 {
 	/* Return the inode number of the given inode.
 	 */
@@ -352,7 +352,7 @@ PUBLIC int get_inode_number(struct inode *node)
 /*===========================================================================*
  *				get_inode_stat				     *
  *===========================================================================*/
-PUBLIC void get_inode_stat(struct inode *node, struct inode_stat *stat)
+void get_inode_stat(struct inode *node, struct inode_stat *stat)
 {
 	/* Retrieve an inode's status.
 	 */
@@ -365,7 +365,7 @@ PUBLIC void get_inode_stat(struct inode *node, struct inode_stat *stat)
 /*===========================================================================*
  *				set_inode_stat				     *
  *===========================================================================*/
-PUBLIC void set_inode_stat(struct inode *node, struct inode_stat *stat)
+void set_inode_stat(struct inode *node, struct inode_stat *stat)
 {
 	/* Set an inode's status.
 	 */
@@ -378,7 +378,7 @@ PUBLIC void set_inode_stat(struct inode *node, struct inode_stat *stat)
 /*===========================================================================*
  *				get_inode_by_name			     *
  *===========================================================================*/
-PUBLIC struct inode *get_inode_by_name(struct inode *parent, char *name)
+struct inode *get_inode_by_name(struct inode *parent, char *name)
 {
 	/* Look up an inode using a <parent,name> tuple.
 	 */
@@ -402,7 +402,7 @@ PUBLIC struct inode *get_inode_by_name(struct inode *parent, char *name)
 /*===========================================================================*
  *				get_inode_by_index			     *
  *===========================================================================*/
-PUBLIC struct inode *get_inode_by_index(struct inode *parent, index_t index)
+struct inode *get_inode_by_index(struct inode *parent, index_t index)
 {
 	/* Look up an inode using a <parent,index> tuple.
 	 */
@@ -426,7 +426,7 @@ PUBLIC struct inode *get_inode_by_index(struct inode *parent, index_t index)
 /*===========================================================================*
  *				find_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *find_inode(ino_t num)
+struct inode *find_inode(ino_t num)
 {
 	/* Retrieve an inode by inode number.
 	 */
@@ -442,7 +442,7 @@ PUBLIC struct inode *find_inode(ino_t num)
 /*===========================================================================*
  *				get_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_inode(ino_t num)
+struct inode *get_inode(ino_t num)
 {
 	/* Retrieve an inode by inode number, and increase its reference count.
 	 */
@@ -458,7 +458,7 @@ PUBLIC struct inode *get_inode(ino_t num)
 /*===========================================================================*
  *				put_inode				     *
  *===========================================================================*/
-PUBLIC void put_inode(struct inode *node)
+void put_inode(struct inode *node)
 {
 	/* Decrease an inode's reference count.
 	 */
@@ -478,7 +478,7 @@ PUBLIC void put_inode(struct inode *node)
 /*===========================================================================*
  *				ref_inode				     *
  *===========================================================================*/
-PUBLIC void ref_inode(struct inode *node)
+void ref_inode(struct inode *node)
 {
 	/* Increase an inode's reference count.
 	 */
@@ -492,7 +492,7 @@ PUBLIC void ref_inode(struct inode *node)
 /*===========================================================================*
  *				unlink_inode				     *
  *===========================================================================*/
-PRIVATE void unlink_inode(struct inode *node)
+static void unlink_inode(struct inode *node)
 {
 	/* Unlink the given node from its parent, if it is still linked in.
 	 */
@@ -517,7 +517,7 @@ PRIVATE void unlink_inode(struct inode *node)
 /*===========================================================================*
  *				delete_inode				     *
  *===========================================================================*/
-PUBLIC void delete_inode(struct inode *node)
+void delete_inode(struct inode *node)
 {
 	/* Delete the given inode. If its reference count is nonzero, or it
 	 * still has children that cannot be deleted for the same reason, keep
@@ -570,7 +570,7 @@ PUBLIC void delete_inode(struct inode *node)
 /*===========================================================================*
  *				is_inode_deleted			     *
  *===========================================================================*/
-PUBLIC int is_inode_deleted(struct inode *node)
+int is_inode_deleted(struct inode *node)
 {
 	/* Return whether the given inode has been deleted.
 	 */
@@ -581,7 +581,7 @@ PUBLIC int is_inode_deleted(struct inode *node)
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-PUBLIC int fs_putnode(void)
+int fs_putnode(void)
 {
 	/* Find the inode specified by the request message, and decrease its
 	 * reference count.

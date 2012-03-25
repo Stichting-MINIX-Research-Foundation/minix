@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_endksig				     *
  *===========================================================================*/
-PUBLIC int sys_endksig(proc_ep)
+int sys_endksig(proc_ep)
 endpoint_t proc_ep;				/* process number */
 {
     message m;

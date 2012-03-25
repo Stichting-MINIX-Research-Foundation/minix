@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_in				     *
  *===========================================================================*/
-PUBLIC int sys_in(port, value, type)
+int sys_in(port, value, type)
 int port; 				/* port address to read from */
 u32_t *value;				/* pointer where to store value */
 int type;				/* byte, word, long */

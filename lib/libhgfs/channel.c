@@ -19,7 +19,7 @@ enum {
 /*===========================================================================*
  *				channel_open				     *
  *===========================================================================*/
-PUBLIC int channel_open(ch, type)
+int channel_open(ch, type)
 struct channel *ch;			/* struct describing the new channel */
 u32_t type;				/* channel type: CH_IN or CH_OUT */
 {
@@ -46,7 +46,7 @@ u32_t type;				/* channel type: CH_IN or CH_OUT */
 /*===========================================================================*
  *				channel_close				     *
  *===========================================================================*/
-PUBLIC void channel_close(ch)
+void channel_close(ch)
 struct channel *ch;			/* backdoor channel to close */
 {
 /* Close a previously opened backdoor channel.
@@ -64,7 +64,7 @@ struct channel *ch;			/* backdoor channel to close */
 /*===========================================================================*
  *				channel_send				     *
  *===========================================================================*/
-PUBLIC int channel_send(ch, buf, len)
+int channel_send(ch, buf, len)
 struct channel *ch;			/* backdoor channel to send to */
 char *buf;				/* buffer to send data from */
 int len;				/* size of the data to send */
@@ -101,7 +101,7 @@ int len;				/* size of the data to send */
 /*===========================================================================*
  *				channel_recv				     *
  *===========================================================================*/
-PUBLIC int channel_recv(ch, buf, max)
+int channel_recv(ch, buf, max)
 struct channel *ch;			/* backdoor channel to receive from */
 char *buf;				/* buffer to receive data into */
 int max;				/* size of the buffer */

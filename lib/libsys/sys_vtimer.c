@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_vtimer(proc, which, newval, oldval)
+int sys_vtimer(proc, which, newval, oldval)
 endpoint_t proc;		/* proc to retrieve/set the timer for */
 int which;			/* timer to retrieve/set */
 clock_t *newval;		/* if non-NULL, set to this new value */

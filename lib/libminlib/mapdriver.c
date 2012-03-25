@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 
-PUBLIC int mapdriver(label, major, dev_style, flags)
+int mapdriver(label, major, dev_style, flags)
 char *label;
 int major;
 int dev_style;

@@ -8,8 +8,8 @@
 #include <assert.h>
 #include "fproc.h"
 
-FORWARD int is_vmnt_locked(struct vmnt *vmp);
-FORWARD void clear_vmnt(struct vmnt *vmp);
+static int is_vmnt_locked(struct vmnt *vmp);
+static void clear_vmnt(struct vmnt *vmp);
 
 /* Is vmp pointer reasonable? */
 #define SANEVMP(v) ((((v) >= &vmnt[0] && (v) < &vmnt[NR_MNTS])))
@@ -22,7 +22,7 @@ FORWARD void clear_vmnt(struct vmnt *vmp);
 /*===========================================================================*
  *				check_vmnt_locks_by_me			     *
  *===========================================================================*/
-PUBLIC void check_vmnt_locks_by_me(struct fproc *rfp)
+void check_vmnt_locks_by_me(struct fproc *rfp)
 {
 /* Check whether this thread still has locks held on vmnts */
   struct vmnt *vmp;
@@ -42,7 +42,7 @@ PUBLIC void check_vmnt_locks_by_me(struct fproc *rfp)
 /*===========================================================================*
  *				check_vmnt_locks			     *
  *===========================================================================*/
-PUBLIC void check_vmnt_locks()
+void check_vmnt_locks()
 {
   struct vmnt *vmp;
   int count = 0;
@@ -62,7 +62,7 @@ PUBLIC void check_vmnt_locks()
 /*===========================================================================*
  *                             mark_vmnt_free				     *
  *===========================================================================*/
-PUBLIC void mark_vmnt_free(struct vmnt *vmp)
+void mark_vmnt_free(struct vmnt *vmp)
 {
   ASSERTVMP(vmp);
 
@@ -73,7 +73,7 @@ PUBLIC void mark_vmnt_free(struct vmnt *vmp)
 /*===========================================================================*
  *                             clear_vmnt				     *
  *===========================================================================*/
-PRIVATE void clear_vmnt(struct vmnt *vmp)
+static void clear_vmnt(struct vmnt *vmp)
 {
 /* Reset vmp to initial parameters */
   ASSERTVMP(vmp);
@@ -92,7 +92,7 @@ PRIVATE void clear_vmnt(struct vmnt *vmp)
 /*===========================================================================*
  *                             get_free_vmnt				     *
  *===========================================================================*/
-PUBLIC struct vmnt *get_free_vmnt(void)
+struct vmnt *get_free_vmnt(void)
 {
   struct vmnt *vmp;
 
@@ -109,7 +109,7 @@ PUBLIC struct vmnt *get_free_vmnt(void)
 /*===========================================================================*
  *                             find_vmnt				     *
  *===========================================================================*/
-PUBLIC struct vmnt *find_vmnt(endpoint_t fs_e)
+struct vmnt *find_vmnt(endpoint_t fs_e)
 {
 /* Find the vmnt belonging to an FS with endpoint 'fs_e' iff it's in use */
   struct vmnt *vp;
@@ -124,7 +124,7 @@ PUBLIC struct vmnt *find_vmnt(endpoint_t fs_e)
 /*===========================================================================*
  *                             init_vmnts				     *
  *===========================================================================*/
-PUBLIC void init_vmnts(void)
+void init_vmnts(void)
 {
 /* Initialize vmnt table */
   struct vmnt *vmp;
@@ -138,7 +138,7 @@ PUBLIC void init_vmnts(void)
 /*===========================================================================*
  *                             is_vmnt_locked				     *
  *===========================================================================*/
-PRIVATE int is_vmnt_locked(struct vmnt *vmp)
+static int is_vmnt_locked(struct vmnt *vmp)
 {
   ASSERTVMP(vmp);
   return(tll_islocked(&vmp->m_lock) || tll_haspendinglock(&vmp->m_lock));
@@ -147,7 +147,7 @@ PRIVATE int is_vmnt_locked(struct vmnt *vmp)
 /*===========================================================================*
  *                             lock_vmnt				     *
  *===========================================================================*/
-PUBLIC int lock_vmnt(struct vmnt *vmp, tll_access_t locktype)
+int lock_vmnt(struct vmnt *vmp, tll_access_t locktype)
 {
   int r;
   tll_access_t initial_locktype;
@@ -177,7 +177,7 @@ PUBLIC int lock_vmnt(struct vmnt *vmp, tll_access_t locktype)
 /*===========================================================================*
  *                             vmnt_unmap_by_endpoint			     *
  *===========================================================================*/
-PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
+void vmnt_unmap_by_endpt(endpoint_t proc_e)
 {
   struct vmnt *vmp;
 
@@ -196,7 +196,7 @@ PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *                             unlock_vmnt				     *
  *===========================================================================*/
-PUBLIC void unlock_vmnt(struct vmnt *vmp)
+void unlock_vmnt(struct vmnt *vmp)
 {
   ASSERTVMP(vmp);
 

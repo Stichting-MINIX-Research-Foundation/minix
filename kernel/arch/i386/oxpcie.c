@@ -8,14 +8,14 @@
 #include "oxpcie.h"
 #include "serial.h"
 
-PRIVATE unsigned char *oxpcie_vaddr = NULL;
+static unsigned char *oxpcie_vaddr = NULL;
 
-PUBLIC void oxpcie_set_vaddr(unsigned char *vaddr)
+void oxpcie_set_vaddr(unsigned char *vaddr)
 {
 	oxpcie_vaddr = vaddr;
 }
 
-PRIVATE void oxpcie_init(void)
+static void oxpcie_init(void)
 {
 	printf("oxpcie_init\n");
 	/* Enable access to EFR and DLM+DLL */
@@ -45,7 +45,7 @@ PRIVATE void oxpcie_init(void)
 	OXPCIE_CPR2 = 0;
 }
 
-PUBLIC void oxpcie_putc(char c)
+void oxpcie_putc(char c)
 {
 	static int inuse = 0;
 
@@ -68,7 +68,7 @@ PUBLIC void oxpcie_putc(char c)
 	}
 }
 
-PUBLIC int oxpcie_in(void)
+int oxpcie_in(void)
 {
 	if(vm_running && oxpcie_vaddr) {
 		int lsr;

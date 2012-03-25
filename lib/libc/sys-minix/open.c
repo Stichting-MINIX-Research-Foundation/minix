@@ -11,9 +11,9 @@ __weak_alias(open, _open)
 #endif
 
 #if _ANSI
-PUBLIC int open(const char *name, int flags, ...)
+int open(const char *name, int flags, ...)
 #else
-PUBLIC int open(const char *name, int flags)
+int open(const char *name, int flags)
 #endif
 {
   va_list argp;

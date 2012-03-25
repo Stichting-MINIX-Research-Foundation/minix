@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				fs_readwrite				     *
  *===========================================================================*/
-PUBLIC int fs_readwrite(message *fs_m_in, message *fs_m_out)
+int fs_readwrite(message *fs_m_in, message *fs_m_out)
 {
   int r, rw_flag;
   struct buf *bp;

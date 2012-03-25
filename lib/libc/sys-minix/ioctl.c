@@ -8,7 +8,7 @@
 __weak_alias(ioctl, _ioctl)
 #endif
 
-PUBLIC int ioctl(fd, request, data)
+int ioctl(fd, request, data)
 int fd;
 int request;
 void *data;

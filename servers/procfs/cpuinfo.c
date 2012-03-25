@@ -5,7 +5,7 @@
 #define CONFIG_MAX_CPUS	1
 #endif
 
-PRIVATE const char * x86_flag[] = {
+static const char * x86_flag[] = {
 	"fpu",
 	"vme",
 	"de",
@@ -72,7 +72,7 @@ PRIVATE const char * x86_flag[] = {
 	"",
 };
 
-PRIVATE void print_cpu_flags(u32_t * flags)
+static void print_cpu_flags(u32_t * flags)
 {
 	int i, j;
 
@@ -86,7 +86,7 @@ PRIVATE void print_cpu_flags(u32_t * flags)
 	buf_printf("\n");
 }
 
-PRIVATE void print_cpu(struct cpu_info * cpu_info, unsigned id)
+static void print_cpu(struct cpu_info * cpu_info, unsigned id)
 {
 	buf_printf("%-16s: %d\n", "processor", id);
 
@@ -113,7 +113,7 @@ PRIVATE void print_cpu(struct cpu_info * cpu_info, unsigned id)
 	buf_printf("\n");
 }
 
-PUBLIC void root_cpuinfo(void)
+void root_cpuinfo(void)
 {
 	struct cpu_info cpu_info[CONFIG_MAX_CPUS];
 	struct machine machine;

@@ -8,7 +8,7 @@
 __weak_alias(getgid, _getgid)
 #endif
 
-PUBLIC gid_t getgid()
+gid_t getgid()
 {
   message m;
 

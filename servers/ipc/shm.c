@@ -9,10 +9,10 @@ struct shm_struct {
 	vir_bytes page;
 	phys_bytes phys;
 };
-PRIVATE struct shm_struct shm_list[MAX_SHM_NR];
-PRIVATE int shm_list_nr = 0;
+static struct shm_struct shm_list[MAX_SHM_NR];
+static int shm_list_nr = 0;
 
-PRIVATE struct shm_struct *shm_find_key(key_t key)
+static struct shm_struct *shm_find_key(key_t key)
 {
 	int i;
 	if (key == IPC_PRIVATE)
@@ -23,7 +23,7 @@ PRIVATE struct shm_struct *shm_find_key(key_t key)
 	return NULL;
 }
 
-PRIVATE struct shm_struct *shm_find_id(int id)
+static struct shm_struct *shm_find_id(int id)
 {
 	int i;
 	for (i = 0; i < shm_list_nr; i++)
@@ -35,7 +35,7 @@ PRIVATE struct shm_struct *shm_find_id(int id)
 /*===========================================================================*
  *				do_shmget		     		     *
  *===========================================================================*/
-PUBLIC int do_shmget(message *m)
+int do_shmget(message *m)
 {
 	struct shm_struct *shm;
 	long key, size, old_size;
@@ -106,7 +106,7 @@ PUBLIC int do_shmget(message *m)
 /*===========================================================================*
  *				do_shmat		     		     *
  *===========================================================================*/
-PUBLIC int do_shmat(message *m)
+int do_shmat(message *m)
 {
 	int id, flag;
 	vir_bytes addr;
@@ -150,7 +150,7 @@ PUBLIC int do_shmat(message *m)
 /*===========================================================================*
  *				update_refcount_and_destroy		     *
  *===========================================================================*/
-PUBLIC void update_refcount_and_destroy(void)
+void update_refcount_and_destroy(void)
 {
 	int i, j;
 
@@ -182,7 +182,7 @@ PUBLIC void update_refcount_and_destroy(void)
 /*===========================================================================*
  *				do_shmdt		     		     *
  *===========================================================================*/
-PUBLIC int do_shmdt(message *m)
+int do_shmdt(message *m)
 {
 	vir_bytes addr;
 	phys_bytes paddr;
@@ -216,7 +216,7 @@ PUBLIC int do_shmdt(message *m)
 /*===========================================================================*
  *				do_shmctl		     		     *
  *===========================================================================*/
-PUBLIC int do_shmctl(message *m)
+int do_shmctl(message *m)
 {
 	int id = m->SHMCTL_ID;
 	int cmd = m->SHMCTL_CMD;
@@ -328,7 +328,7 @@ PUBLIC int do_shmctl(message *m)
 }
 
 #if 0
-PRIVATE void list_shm_ds(void)
+static void list_shm_ds(void)
 {
 	int i;
 	printf("key\tid\tpage\n");
@@ -343,7 +343,7 @@ PRIVATE void list_shm_ds(void)
 /*===========================================================================*
  *				is_shm_nil		     		     *
  *===========================================================================*/
-PUBLIC int is_shm_nil(void)
+int is_shm_nil(void)
 {
 	return (shm_list_nr == 0);
 }

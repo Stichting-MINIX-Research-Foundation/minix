@@ -15,7 +15,7 @@
 /*===========================================================================*
  *				stat_inode				     *
  *===========================================================================*/
-PRIVATE int stat_inode(
+static int stat_inode(
   register struct inode *rip,	/* pointer to inode to stat */
   endpoint_t who_e,		/* Caller endpoint */
   cp_grant_id_t gid		/* grant for the stat buf */
@@ -63,7 +63,7 @@ PRIVATE int stat_inode(
 /*===========================================================================*
  *				fs_fstatfs				     *
  *===========================================================================*/
-PUBLIC int fs_fstatfs()
+int fs_fstatfs()
 {
   struct statfs st;
   struct inode *rip;
@@ -85,7 +85,7 @@ PUBLIC int fs_fstatfs()
 /*===========================================================================*
  *                             fs_stat					     *
  *===========================================================================*/
-PUBLIC int fs_stat()
+int fs_stat()
 {
   register int r;              /* return value */
   register struct inode *rip;  /* target inode */
@@ -101,7 +101,7 @@ PUBLIC int fs_stat()
 /*===========================================================================*
  *                             fs_statvfs                                    *
  *===========================================================================*/
-PUBLIC int fs_statvfs()
+int fs_statvfs()
 {
   struct statvfs st;
   struct super_block *sp;

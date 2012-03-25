@@ -25,7 +25,7 @@ static void warning(const char *type, int err)
 **  Name:	unsigned int inb(unsigned short int port);
 **  Function:	Reads a byte from specified i/o port.
 */
-PUBLIC unsigned int inb(unsigned short port)
+unsigned int inb(unsigned short port)
 {
   u32_t value;
   int rc;
@@ -38,7 +38,7 @@ PUBLIC unsigned int inb(unsigned short port)
 **  Name:	unsigned int inw(unsigned short int port);
 **  Function:	Reads a word from specified i/o port.
 */
-PUBLIC unsigned int inw(unsigned short port)
+unsigned int inw(unsigned short port)
 {
   u32_t value;
   int rc;
@@ -51,7 +51,7 @@ PUBLIC unsigned int inw(unsigned short port)
 **  Name:	unsigned int insb(unsigned short int port, int proc_nr, void *buffer, int count);
 **  Function:	Reads a sequence of bytes from specified i/o port to user space buffer.
 */
-PUBLIC void insb(unsigned short int port, endpoint_t proc_nr,
+void insb(unsigned short int port, endpoint_t proc_nr,
    void *buffer, int count)
 {
   int rc;
@@ -66,7 +66,7 @@ PUBLIC void insb(unsigned short int port, endpoint_t proc_nr,
 **  Name:	void outb(unsigned short int port, unsigned long value);
 **  Function:	Writes a byte to specified i/o port.
 */
-PUBLIC void outb(unsigned short port, unsigned long value)
+void outb(unsigned short port, unsigned long value)
 {
   int rc;
 
@@ -78,7 +78,7 @@ PUBLIC void outb(unsigned short port, unsigned long value)
 **  Name:	void outw(unsigned short int port, unsigned long value);
 **  Function:	Writes a word to specified i/o port.
 */
-PUBLIC void outw(unsigned short port, unsigned long value)
+void outw(unsigned short port, unsigned long value)
 {
   int rc;
 
@@ -90,7 +90,7 @@ PUBLIC void outw(unsigned short port, unsigned long value)
 **  Name:	void outsb(unsigned short int port, int proc_nr, void *buffer, int count);
 **  Function:	Writes a sequence of bytes from user space to specified i/o port.
 */
-PUBLIC void outsb(unsigned short port, endpoint_t proc_nr, void *buffer, int count)
+void outsb(unsigned short port, endpoint_t proc_nr, void *buffer, int count)
 {
   int rc;
 

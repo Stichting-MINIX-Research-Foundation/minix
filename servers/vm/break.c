@@ -44,7 +44,7 @@
 /*===========================================================================*
  *				do_brk					     *
  *===========================================================================*/
-PUBLIC int do_brk(message *msg)
+int do_brk(message *msg)
 {
 /* Perform the brk(addr) system call.
  * The parameter, 'addr' is the new virtual address in D space.
@@ -62,7 +62,7 @@ PUBLIC int do_brk(message *msg)
 /*===========================================================================*
  *				adjust					     *
  *===========================================================================*/
-PUBLIC int adjust(rmp, data_clicks, sp)
+int adjust(rmp, data_clicks, sp)
 struct vmproc *rmp;		/* whose memory is being adjusted? */
 vir_clicks data_clicks;		/* how big is data segment to become? */
 vir_bytes sp;			/* new value of sp */
@@ -163,7 +163,7 @@ vir_bytes sp;			/* new value of sp */
 /*===========================================================================*
  *				real_brk				     *
  *===========================================================================*/
-PUBLIC int real_brk(vmp, v)
+int real_brk(vmp, v)
 struct vmproc *vmp;
 vir_bytes v;
 {

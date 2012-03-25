@@ -17,9 +17,9 @@
 #define SYSCALL_OLD	0x20CD
 #endif
 
-PRIVATE long intaddr;
+static long intaddr;
 
-PUBLIC void start_syscall(addr)
+void start_syscall(addr)
 long addr;
 {
 long old; 
@@ -45,7 +45,7 @@ long old;
 
 }
 
-PUBLIC void do_syscall(addr)
+void do_syscall(addr)
 long addr;
 {
   unsigned reg_ax,reg_bx;

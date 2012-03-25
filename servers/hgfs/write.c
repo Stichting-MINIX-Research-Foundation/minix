@@ -10,13 +10,13 @@
 
 #include "inc.h"
 
-FORWARD int write_file(struct inode *ino, u64_t *posp, size_t *countp,
+static int write_file(struct inode *ino, u64_t *posp, size_t *countp,
 	cp_grant_id_t *grantp);
 
 /*===========================================================================*
  *				write_file				     *
  *===========================================================================*/
-PRIVATE int write_file(ino, posp, countp, grantp)
+static int write_file(ino, posp, countp, grantp)
 struct inode *ino;
 u64_t *posp;
 size_t *countp;
@@ -79,7 +79,7 @@ cp_grant_id_t *grantp;
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-PUBLIC int do_write()
+int do_write()
 {
 /* Write data to a file.
  */
@@ -116,7 +116,7 @@ PUBLIC int do_write()
 /*===========================================================================*
  *				do_ftrunc				     *
  *===========================================================================*/
-PUBLIC int do_ftrunc()
+int do_ftrunc()
 {
 /* Change file size or create file holes.
  */

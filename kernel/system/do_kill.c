@@ -14,7 +14,7 @@
 /*===========================================================================*
  *			          do_kill				     *
  *===========================================================================*/
-PUBLIC int do_kill(struct proc * caller, message * m_ptr)
+int do_kill(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_kill(). Cause a signal to be sent to a process. Any request
  * is added to the map of pending signals and the signal manager

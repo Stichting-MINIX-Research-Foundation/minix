@@ -16,7 +16,7 @@
 /*===========================================================================*
  *			      do_getmcontext				     *
  *===========================================================================*/
-PUBLIC int do_getmcontext(struct proc * caller, message * m_ptr)
+int do_getmcontext(struct proc * caller, message * m_ptr)
 {
 /* Retrieve machine context of a process */
 
@@ -64,7 +64,7 @@ PUBLIC int do_getmcontext(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *			      do_setmcontext				     *
  *===========================================================================*/
-PUBLIC int do_setmcontext(struct proc * caller, message * m_ptr)
+int do_setmcontext(struct proc * caller, message * m_ptr)
 {
 /* Set machine context of a process */
 

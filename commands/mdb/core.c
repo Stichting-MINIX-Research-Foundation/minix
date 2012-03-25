@@ -27,7 +27,7 @@ extern struct proc *prc;
 #define BSIZE  512
 #define LOGBS  9
 
-PRIVATE struct file {
+static struct file {
   int fid;
   char *name;
   long cblock;
@@ -47,26 +47,26 @@ PRIVATE struct file {
 #define e3	smap[1]
 #define f3	smap[2]
 
-PRIVATE long cnt[3];			/* Sizes of segments   */
-PRIVATE int h_size;			/* Size of core header */
-PRIVATE char def_name[] = "core";	/* Default core name   */
+static long cnt[3];			/* Sizes of segments   */
+static int h_size;			/* Size of core header */
+static char def_name[] = "core";	/* Default core name   */
 
 #define SIZE_MP_SEG (sizeof(struct mem_map) * NR_LOCAL_SEGS)
 #define SIZE_KINFO sizeof(struct proc)
 #define SIZE_HEADER SIZE_MP_SEG
 
-FORWARD int kernel_info(int fd );
-FORWARD void setmap(struct file *fp );
-FORWARD void read_info(struct file *fp );
-FORWARD void ill_addr(long d , int segment );
-FORWARD long map_addr(long d , int segment );
-FORWARD unsigned long c_status(void);
-FORWARD long getn(long d, int s);
+static int kernel_info(int fd );
+static void setmap(struct file *fp );
+static void read_info(struct file *fp );
+static void ill_addr(long d , int segment );
+static long map_addr(long d , int segment );
+static unsigned long c_status(void);
+static long getn(long d, int s);
 
 /* 
  * set and display mapping for core file 
  */
-PRIVATE void setmap(fp)
+static void setmap(fp)
 struct file *fp;
 {
 long h = (long) h_size;
@@ -107,7 +107,7 @@ long h = (long) h_size;
 }
 
 /* Print mapping */
-PUBLIC void prtmap()
+void prtmap()
 {
   Printf("%s I & D space\t", (is_separate) ? "Separate " : "Combined ");
   if (corepid > 0) {
@@ -123,7 +123,7 @@ PUBLIC void prtmap()
 }
 
 /* Illegal address */
-PRIVATE void ill_addr(d, segment)
+static void ill_addr(d, segment)
 long d;
 int segment;
 {
@@ -134,7 +134,7 @@ int segment;
 /* Map virtual address -> core file addresses
  * depends on current segment if Separate I & D
  */
-PRIVATE long map_addr(d, segment)
+static long map_addr(d, segment)
 long d;
 int segment;
 {
@@ -175,7 +175,7 @@ int segment;
 
 
 /* Get value with address d and segment s */
-PRIVATE long getn(d, s)
+static long getn(d, s)
 long d;
 int s;
 {
@@ -209,7 +209,7 @@ int s;
 }
 
 /* Read kernel info from core file into lbuf[] */
-PRIVATE int kernel_info(fd)
+static int kernel_info(fd)
 int fd;
 {
   int r;
@@ -225,7 +225,7 @@ int fd;
 /* 
  * Print status info from core  - returns PC
  */
-PRIVATE unsigned long c_status()
+static unsigned long c_status()
 {
   fprintf(stderr, "WARNING: don't know pid from core; using proc nr for pid.\n");
 
@@ -241,7 +241,7 @@ PRIVATE unsigned long c_status()
 }
 
 /* Read memory maps and kernel info from core file */
-PRIVATE void read_info(fp)
+static void read_info(fp)
 struct file *fp;
 {
   struct mem_map seg[NR_LOCAL_SEGS];
@@ -292,7 +292,7 @@ struct file *fp;
 /* initialization for core files 
  * returns PC address from core file 
  */ 
-PUBLIC unsigned long core_init(filename)
+unsigned long core_init(filename)
 char *filename;
 {
   core_file = &Core_File;
@@ -321,7 +321,7 @@ char *filename;
  * always returns 0
  * Similar to core files.
  */ 
-PUBLIC unsigned long file_init(filename)
+unsigned long file_init(filename)
 char *filename;
 {
   core_file = &Core_File;
@@ -349,7 +349,7 @@ char *filename;
  * Read from core file 
  * Called by mdbtrace()
  */
-PUBLIC long read_core(req,  addr, data)
+long read_core(req,  addr, data)
 int req;
 long addr, data;
 {

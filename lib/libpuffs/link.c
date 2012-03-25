@@ -12,7 +12,7 @@
 /*===========================================================================*
  *                              fs_ftrunc                                    *
  *===========================================================================*/
-PUBLIC int fs_ftrunc(void)
+int fs_ftrunc(void)
 {
   int r;
   struct puffs_node *pn;
@@ -68,7 +68,7 @@ PUBLIC int fs_ftrunc(void)
 /*===========================================================================*
  *                              fs_link                                      *
  *===========================================================================*/
-PUBLIC int fs_link()
+int fs_link()
 {
 /* Perform the link(name1, name2) system call. */
 
@@ -152,7 +152,7 @@ PUBLIC int fs_link()
 /*===========================================================================*
  *                             fs_rdlink                                     *
  *===========================================================================*/
-PUBLIC int fs_rdlink()
+int fs_rdlink()
 {
   register int r;              /* return value */
   size_t copylen;
@@ -193,7 +193,7 @@ PUBLIC int fs_rdlink()
 /*===========================================================================*
  *                              fs_rename                                    *
  *===========================================================================*/
-PUBLIC int fs_rename()
+int fs_rename()
 {
 /* Perform the rename(name1, name2) system call. */
   struct puffs_node *old_dirp, *old_ip;      /* ptrs to old dir, file pnodes */
@@ -385,15 +385,15 @@ rename_out:
   return(r);
 }
 
-FORWARD int remove_dir(struct puffs_node *pn_dir, struct puffs_node *pn,
+static int remove_dir(struct puffs_node *pn_dir, struct puffs_node *pn,
 	struct puffs_cn *pcn);
-FORWARD int unlink_file(struct puffs_node *dirp, struct puffs_node *pn,
+static int unlink_file(struct puffs_node *dirp, struct puffs_node *pn,
 	struct puffs_cn *pcn);
 
 /*===========================================================================*
  *                              fs_unlink                                    *
  *===========================================================================*/
-PUBLIC int fs_unlink()
+int fs_unlink()
 {
 /* Perform the unlink(name) or rmdir(name) system call. The code for these two
  * is almost the same.  They differ only in some condition testing.  Unlink()
@@ -467,7 +467,7 @@ PUBLIC int fs_unlink()
 /*===========================================================================*
  *				remove_dir				     *
  *===========================================================================*/
-PRIVATE int remove_dir(pn_dir, pn, pcn)
+static int remove_dir(pn_dir, pn, pcn)
 struct puffs_node *pn_dir;		/* parent directory */
 struct puffs_node *pn;			/* directory to be removed */
 struct puffs_cn *pcn;			/* Name, creads of directory */
@@ -525,7 +525,7 @@ struct puffs_cn *pcn;			/* Name, creads of directory */
 /*===========================================================================*
  *				unlink_file				     *
  *===========================================================================*/
-PRIVATE int unlink_file(dirp, pn, pcn)
+static int unlink_file(dirp, pn, pcn)
 struct puffs_node *dirp;	/* parent directory of file */
 struct puffs_node *pn;		/* pnode of file, may be NULL too. */
 struct puffs_cn *pcn;		/* Name, creads of file */

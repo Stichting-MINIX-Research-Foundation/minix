@@ -384,7 +384,7 @@ static void el1_init(dpeth_t * dep)
 **  Name:	int el1_probe(dpeth_t *dep)
 **  Function:	Checks for presence of the board.
 */
-PUBLIC int el1_probe(dpeth_t * dep)
+int el1_probe(dpeth_t * dep)
 {
   int ix;
 

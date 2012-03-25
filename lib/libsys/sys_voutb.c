@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_voutb				     *
  *===========================================================================*/
-PUBLIC int sys_voutb(pvb_pairs, nr_ports)
+int sys_voutb(pvb_pairs, nr_ports)
 pvb_pair_t *pvb_pairs;			/* (port,byte-value)-pairs */
 int nr_ports;				/* nr of pairs to be processed */
 {

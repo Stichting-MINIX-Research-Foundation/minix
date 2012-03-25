@@ -45,7 +45,7 @@ typedef int irq_hook_t;
 /* ignore interrupt for the moment */
 #define interrupt(x)	do { } while(0)
 
-PRIVATE union tmpbuf
+static union tmpbuf
 {
 	char pad[4096];
 	struct cbl_conf cc;
@@ -136,13 +136,13 @@ fxp_t;
 #define FT_82559	0x4
 #define FT_82801	0x8
 
-PRIVATE int fxp_instance;
+static int fxp_instance;
 
-PRIVATE fxp_t *fxp_state;
+static fxp_t *fxp_state;
 
-PRIVATE timer_t fxp_watchdog;
+static timer_t fxp_watchdog;
 
-PRIVATE u32_t system_hz;
+static u32_t system_hz;
 
 #define fxp_inb(port, offset)	(do_inb((port) + (offset)))
 #define fxp_inl(port, offset)	(do_inl((port) + (offset)))
@@ -184,7 +184,7 @@ static void do_outl(port_t port, u32_t v);
 static void tell_dev(vir_bytes start, size_t size, int pci_bus, int
 	pci_dev, int pci_func);
 
-PRIVATE void handle_hw_intr(void)
+static void handle_hw_intr(void)
 {
 	int r;
 	fxp_t *fp;
@@ -208,9 +208,9 @@ PRIVATE void handle_hw_intr(void)
 }
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main					     *
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -282,7 +282,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the fxp driver. */
 	long v;
@@ -314,7 +314,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	port_t port;
 	fxp_t *fp;
@@ -1986,7 +1986,7 @@ message *reply_mess;
 /*===========================================================================*
  *				eeprom_read				     *
  *===========================================================================*/
-PRIVATE u16_t eeprom_read(fp, reg)
+static u16_t eeprom_read(fp, reg)
 fxp_t *fp;
 int reg;
 {
@@ -2046,7 +2046,7 @@ int reg;
 /*===========================================================================*
  *				eeprom_addrsize				     *
  *===========================================================================*/
-PRIVATE void eeprom_addrsize(fp)
+static void eeprom_addrsize(fp)
 fxp_t *fp;
 {
 	port_t port;
@@ -2104,7 +2104,7 @@ fxp_t *fp;
 /*===========================================================================*
  *				mii_read				     *
  *===========================================================================*/
-PRIVATE u16_t mii_read(fp, reg)
+static u16_t mii_read(fp, reg)
 fxp_t *fp;
 int reg;
 {
@@ -2178,7 +2178,7 @@ static void do_outl(port_t port, u32_t value)
 		panic("sys_outl failed: %d", r);
 }
 
-PRIVATE void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
+static void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
 vir_bytes buf;
 size_t size;
 int pci_bus;

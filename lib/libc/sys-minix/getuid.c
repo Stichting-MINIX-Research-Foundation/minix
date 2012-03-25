@@ -8,7 +8,7 @@
 __weak_alias(getuid, _getuid)
 #endif
 
-PUBLIC uid_t getuid()
+uid_t getuid()
 {
   message m;
 

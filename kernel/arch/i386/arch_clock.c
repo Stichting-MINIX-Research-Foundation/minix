@@ -34,18 +34,18 @@
 #define TIMER_FREQ  1193182    /* clock frequency for timer in PC and AT */
 #define TIMER_COUNT(freq) (TIMER_FREQ/(freq)) /* initial value for counter*/
 
-PRIVATE irq_hook_t pic_timer_hook;		/* interrupt handler hook */
+static irq_hook_t pic_timer_hook;		/* interrupt handler hook */
 
-PRIVATE unsigned probe_ticks;
-PRIVATE u64_t tsc0, tsc1;
+static unsigned probe_ticks;
+static u64_t tsc0, tsc1;
 #define PROBE_TICKS	(system_hz / 10)
 
-PRIVATE unsigned tsc_per_ms[CONFIG_MAX_CPUS];
+static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
 
 /*===========================================================================*
  *				init_8235A_timer			     *
  *===========================================================================*/
-PUBLIC int init_8253A_timer(const unsigned freq)
+int init_8253A_timer(const unsigned freq)
 {
 	/* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz,
 	 * and register the CLOCK task's interrupt handler to be run
@@ -61,7 +61,7 @@ PUBLIC int init_8253A_timer(const unsigned freq)
 /*===========================================================================*
  *				stop_8235A_timer			     *
  *===========================================================================*/
-PUBLIC void stop_8253A_timer(void)
+void stop_8253A_timer(void)
 {
 	/* Reset the clock to the BIOS rate. (For rebooting.) */
 	outb(TIMER_MODE, 0x36);
@@ -69,7 +69,7 @@ PUBLIC void stop_8253A_timer(void)
 	outb(TIMER0, 0);
 }
 
-PRIVATE int calib_cpu_handler(irq_hook_t * UNUSED(hook))
+static int calib_cpu_handler(irq_hook_t * UNUSED(hook))
 {
 	u64_t tsc;
 
@@ -89,7 +89,7 @@ PRIVATE int calib_cpu_handler(irq_hook_t * UNUSED(hook))
 	return 1;
 }
 
-PRIVATE void estimate_cpu_freq(void)
+static void estimate_cpu_freq(void)
 {
 	u64_t tsc_delta;
 	u64_t cpu_freq;
@@ -124,7 +124,7 @@ PRIVATE void estimate_cpu_freq(void)
 	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 
-PUBLIC int init_local_timer(unsigned freq)
+int init_local_timer(unsigned freq)
 {
 #ifdef USE_APIC
 	/* if we know the address, lapic is enabled and we should use it */
@@ -147,7 +147,7 @@ PUBLIC int init_local_timer(unsigned freq)
 	return 0;
 }
 
-PUBLIC void stop_local_timer(void)
+void stop_local_timer(void)
 {
 #ifdef USE_APIC
 	if (lapic_addr) {
@@ -160,7 +160,7 @@ PUBLIC void stop_local_timer(void)
 	}
 }
 
-PUBLIC void restart_local_timer(void)
+void restart_local_timer(void)
 {
 #ifdef USE_APIC
 	if (lapic_addr) {
@@ -169,7 +169,7 @@ PUBLIC void restart_local_timer(void)
 #endif
 }
 
-PUBLIC int register_local_timer_handler(const irq_handler_t handler)
+int register_local_timer_handler(const irq_handler_t handler)
 {
 #ifdef USE_APIC
 	if (lapic_addr) {
@@ -188,7 +188,7 @@ PUBLIC int register_local_timer_handler(const irq_handler_t handler)
 	return 0;
 }
 
-PUBLIC void cycles_accounting_init(void)
+void cycles_accounting_init(void)
 {
 #ifdef CONFIG_SMP
 	unsigned cpu = cpuid;
@@ -200,7 +200,7 @@ PUBLIC void cycles_accounting_init(void)
 	make_zero64(get_cpu_var(cpu, cpu_last_idle));
 }
 
-PUBLIC void context_stop(struct proc * p)
+void context_stop(struct proc * p)
 {
 	u64_t tsc, tsc_delta;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
@@ -297,7 +297,7 @@ PUBLIC void context_stop(struct proc * p)
 	*__tsc_ctr_switch = tsc;
 }
 
-PUBLIC void context_stop_idle(void)
+void context_stop_idle(void)
 {
 	int is_idle;
 #ifdef CONFIG_SMP
@@ -317,17 +317,17 @@ PUBLIC void context_stop_idle(void)
 #endif
 }
 
-PUBLIC u64_t ms_2_cpu_time(unsigned ms)
+u64_t ms_2_cpu_time(unsigned ms)
 {
 	return mul64u(tsc_per_ms[cpuid], ms);
 }
 
-PUBLIC unsigned cpu_time_2_ms(u64_t cpu_time)
+unsigned cpu_time_2_ms(u64_t cpu_time)
 {
 	return div64u(cpu_time, tsc_per_ms[cpuid]);
 }
 
-PUBLIC short cpu_load(void)
+short cpu_load(void)
 {
 	u64_t current_tsc, *current_idle;
 	u64_t tsc_delta, idle_delta, busy;
@@ -365,7 +365,7 @@ PUBLIC short cpu_load(void)
 	return load;
 }
 
-PUBLIC void busy_delay_ms(int ms)
+void busy_delay_ms(int ms)
 {
 	u64_t cycles = ms_2_cpu_time(ms), tsc0, tsc, tsc1;
 	read_tsc_64(&tsc0);

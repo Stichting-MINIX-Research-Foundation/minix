@@ -25,17 +25,17 @@
 #include "puffs.h"
 #include "puffs_priv.h"
 
-PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */
+char dot2[3] = "..";	/* permissions for . and ..		    */
 
-FORWARD char *get_name(char *name, char string[NAME_MAX+1]);
-FORWARD int ltraverse(struct puffs_node *pn, char *suffix);
-FORWARD int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+static char *get_name(char *name, char string[NAME_MAX+1]);
+static int ltraverse(struct puffs_node *pn, char *suffix);
+static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
 	puffs_node **res_inop, size_t *offsetp, int *symlinkp);
 
 /*===========================================================================*
  *                             fs_lookup				     *
  *===========================================================================*/
-PUBLIC int fs_lookup()
+int fs_lookup()
 {
   cp_grant_id_t grant;
   int r, r1, flags, symlinks;
@@ -128,7 +128,7 @@ PUBLIC int fs_lookup()
 /*===========================================================================*
  *                             parse_path				     *
  *===========================================================================*/
-PRIVATE int parse_path(dir_ino, root_ino, flags, res_inop, offsetp, symlinkp)
+static int parse_path(dir_ino, root_ino, flags, res_inop, offsetp, symlinkp)
 ino_t dir_ino;
 ino_t root_ino;
 int flags;
@@ -279,7 +279,7 @@ int *symlinkp;
 /*===========================================================================*
  *                             ltraverse				     *
  *===========================================================================*/
-PRIVATE int ltraverse(pn, suffix)
+static int ltraverse(pn, suffix)
 register struct puffs_node *pn;/* symbolic link */
 char *suffix;			/* current remaining path. Has to point in the
 				 * user_path buffer
@@ -355,7 +355,7 @@ char *suffix;			/* current remaining path. Has to point in the
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-PUBLIC struct puffs_node *advance(pn_dir, string, chk_perm)
+struct puffs_node *advance(pn_dir, string, chk_perm)
 struct puffs_node *pn_dir;	/* pnode for directory to be searched */
 char string[NAME_MAX + 1];	/* component name to look for */
 int chk_perm;			/* check permissions when string is looked up*/
@@ -501,7 +501,7 @@ int chk_perm;			/* check permissions when string is looked up*/
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-PRIVATE char *get_name(path_name, string)
+static char *get_name(path_name, string)
 char *path_name;		/* path name to parse */
 char string[NAME_MAX+1];	/* component extracted from 'old_name' */
 {

@@ -6,7 +6,7 @@
 /*===========================================================================*
  *				sys_safemap				     *
  *===========================================================================*/
-PUBLIC int sys_safemap(endpoint_t grantor, cp_grant_id_t grant,
+int sys_safemap(endpoint_t grantor, cp_grant_id_t grant,
 	vir_bytes grant_offset, vir_bytes my_address,
 	size_t bytes, int my_seg, int writable)
 {
@@ -31,7 +31,7 @@ PUBLIC int sys_safemap(endpoint_t grantor, cp_grant_id_t grant,
 /*===========================================================================*
  *			     sys_saferevmap_gid				     *
  *===========================================================================*/
-PUBLIC int sys_saferevmap_gid(cp_grant_id_t grant)
+int sys_saferevmap_gid(cp_grant_id_t grant)
 {
 /* Grantor revokes safemap by grant id. */
 	message copy_mess;
@@ -45,7 +45,7 @@ PUBLIC int sys_saferevmap_gid(cp_grant_id_t grant)
 /*===========================================================================*
  *			    sys_saferevmap_addr				     *
  *===========================================================================*/
-PUBLIC int sys_saferevmap_addr(vir_bytes addr)
+int sys_saferevmap_addr(vir_bytes addr)
 {
 /* Grantor revokes safemap by address. */
 	message copy_mess;
@@ -59,7 +59,7 @@ PUBLIC int sys_saferevmap_addr(vir_bytes addr)
 /*===========================================================================*
  *				sys_safeunmap				     *
  *===========================================================================*/
-PUBLIC int sys_safeunmap(int my_seg, vir_bytes my_address)
+int sys_safeunmap(int my_seg, vir_bytes my_address)
 {
 /* Requestor unmaps safemap. */
 	message copy_mess;

@@ -56,14 +56,14 @@ extern struct proc *prc;
 #define MAXLINE	128
 #define MAXARG	20
 
-PRIVATE unsigned long lastexp = 0L;	/* last expression and segment */
-PRIVATE int lastseg = NOSEG;
-PRIVATE char *prog;		/* prog name */
-PRIVATE char sbuf[MAXLINE];
-PRIVATE char cbuf[MAXLINE];
-PRIVATE char *cmd;		/* current command   */
-PRIVATE char *cmdstart;		/* start of command  */
-PRIVATE jmp_buf mainlp;
+static unsigned long lastexp = 0L;	/* last expression and segment */
+static int lastseg = NOSEG;
+static char *prog;		/* prog name */
+static char sbuf[MAXLINE];
+static char cbuf[MAXLINE];
+static char *cmd;		/* current command   */
+static char *cmdstart;		/* start of command  */
+static jmp_buf mainlp;
 
 
 struct b_pnt {
@@ -75,30 +75,30 @@ struct b_pnt {
 
 int main(int argc, char *argv[]);
 
-FORWARD void cleanup(void);
-FORWARD void freepnt(struct b_pnt *pnt );
-FORWARD void findbpnt(int verbose );
-FORWARD int exebpnt(int restart );
-FORWARD void catch(int sig );
-FORWARD int run(char *name , char *argstr , int tflg );
-FORWARD int dowait(void);
-FORWARD void backtrace(int all );
-FORWARD void modify(long addr , int cnt , int verbose , int size );
-FORWARD void display(long addr , int req );
-FORWARD void fill(long addr , int req );
-FORWARD void dorun(char *cmd );
-FORWARD void not_for_core(void);
-FORWARD void command(void);
+static void cleanup(void);
+static void freepnt(struct b_pnt *pnt );
+static void findbpnt(int verbose );
+static int exebpnt(int restart );
+static void catch(int sig );
+static int run(char *name , char *argstr , int tflg );
+static int dowait(void);
+static void backtrace(int all );
+static void modify(long addr , int cnt , int verbose , int size );
+static void display(long addr , int req );
+static void fill(long addr , int req );
+static void dorun(char *cmd );
+static void not_for_core(void);
+static void command(void);
 
 
-PRIVATE void cleanup()
+static void cleanup()
 {
   curpid = 0;
   curpnt = NULL;
   while (b_head) freepnt(b_head);
 }
 
-PRIVATE void findbpnt(verbose)
+static void findbpnt(verbose)
 int verbose;
 {
   for (curpnt = b_head; curpnt; curpnt = curpnt->nxt) {
@@ -121,7 +121,7 @@ int verbose;
   if (verbose) Printf("Unknown breakpoint hit.\n");
 }
 
-PRIVATE int exebpnt(restart)
+static int exebpnt(restart)
 int restart;
 {
   ptrace(T_STEP, curpid, 0L, (long) restart);
@@ -132,7 +132,7 @@ int restart;
 }
 
 
-PRIVATE void freepnt(pnt)
+static void freepnt(pnt)
 struct b_pnt *pnt;
 {
   if (pnt->prv)
@@ -146,7 +146,7 @@ struct b_pnt *pnt;
 }
 
 
-PUBLIC long breakpt(addr, cmd)
+long breakpt(addr, cmd)
 long addr;
 char *cmd;
 {
@@ -182,7 +182,7 @@ char *cmd;
   return new->oldval;
 }
 
-PRIVATE void catch(sig)
+static void catch(sig)
 int sig;
 {
   signal(sig, catch);
@@ -192,7 +192,7 @@ int sig;
 }
 
 
-PRIVATE int dowait()
+static int dowait()
 {
   int stat;
 
@@ -215,7 +215,7 @@ PRIVATE int dowait()
 
 
 
-PUBLIC void tstart(req, verbose, val, cnt)
+void tstart(req, verbose, val, cnt)
 int req, verbose, val, cnt;
 {
   if (curpid == 0) {
@@ -255,7 +255,7 @@ int req, verbose, val, cnt;
   if ( verbose ) dasm((long) PC_MEMBER(prc), 1, 1);
 }
 
-PRIVATE int run(name, argstr, tflg)
+static int run(name, argstr, tflg)
 char *name, *argstr;
 int tflg;
 {
@@ -301,7 +301,7 @@ int tflg;
 }
 
 
-PRIVATE void dorun(cmd)
+static void dorun(cmd)
 char *cmd;
 {
   if (curpid = run(prog, cmd, 1)) {
@@ -316,7 +316,7 @@ char *cmd;
 /* 
  * backtrace - inspect the stack
  */ 
-PRIVATE void backtrace(all)
+static void backtrace(all)
 int all;
 {
   unsigned long pc, bp, off, val, obp;
@@ -397,7 +397,7 @@ skiplp:
   while (all && (reg_t) bp);
 }
 
-PRIVATE void modify(addr, cnt, verbose, size)
+static void modify(addr, cnt, verbose, size)
 long addr;
 int cnt, verbose, size;
 {
@@ -438,7 +438,7 @@ int cnt, verbose, size;
   return;
 }
 
-PRIVATE void display(addr, req)
+static void display(addr, req)
 long addr;
 int req;
 {
@@ -533,7 +533,7 @@ exitlp:
   Printf("\n");
 }
 
-PRIVATE void fill(addr, req)
+static void fill(addr, req)
 long addr;
 int req;
 {
@@ -579,13 +579,13 @@ int req;
   while (--count > 0);
 }
 
-PRIVATE void not_for_core()
+static void not_for_core()
 {
   if (corepid > 0)
 	mdb_error("Illegal command for 'core' file\n");
 }
 
-PRIVATE void command()
+static void command()
 {
   char c, *p;
   int i;
@@ -856,14 +856,14 @@ PRIVATE void command()
   if (*cmd == ';') cmd = skip(cmd + 1);
 }
 
-PUBLIC void mdb_error(s)
+void mdb_error(s)
 char *s;
 {
   Printf("%s",s);
   longjmp(mainlp, 0);
 }
 
-PUBLIC int main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {

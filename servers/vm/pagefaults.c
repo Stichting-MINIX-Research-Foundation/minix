@@ -51,7 +51,7 @@ char *pf_errstr(u32_t err)
 /*===========================================================================*
  *				do_pagefaults	     		     *
  *===========================================================================*/
-PUBLIC void do_pagefaults(message *m)
+void do_pagefaults(message *m)
 {
 	endpoint_t ep = m->m_source;
 	u32_t addr = m->VPF_ADDR;
@@ -118,7 +118,7 @@ PUBLIC void do_pagefaults(message *m)
 /*===========================================================================*
  *				   do_memory	     			     *
  *===========================================================================*/
-PUBLIC void do_memory(void)
+void do_memory(void)
 {
 	endpoint_t who, who_s, requestor;
 	vir_bytes mem, mem_s;

@@ -1,7 +1,7 @@
 #include <lib.h>
 #include <unistd.h>
 
-PUBLIC int vm_update(endpoint_t src_e, endpoint_t dst_e)
+int vm_update(endpoint_t src_e, endpoint_t dst_e)
 {
 	message m;
 	m.VM_RS_SRC_ENDPT = src_e;

@@ -18,16 +18,16 @@
 
 
 #define GETDENTS_BUFSIZ  4096
-PRIVATE char getdents_buf[GETDENTS_BUFSIZ];
+static char getdents_buf[GETDENTS_BUFSIZ];
 
 #define RW_BUFSIZ	(128 << 10)
-PRIVATE char rw_buf[RW_BUFSIZ];
+static char rw_buf[RW_BUFSIZ];
 
 
 /*===========================================================================*
  *				fs_readwrite				     *
  *===========================================================================*/
-PUBLIC int fs_readwrite(void)
+int fs_readwrite(void)
 {
   int r = OK, rw_flag;
   cp_grant_id_t gid;
@@ -108,7 +108,7 @@ PUBLIC int fs_readwrite(void)
 /*===========================================================================*
  *				fs_breadwrite				     *
  *===========================================================================*/
-PUBLIC int fs_breadwrite(void)
+int fs_breadwrite(void)
 {
   /* We do not support breads/writes */
   panic("bread write requested, but FS doesn't support it!\n");
@@ -119,7 +119,7 @@ PUBLIC int fs_breadwrite(void)
 /*===========================================================================*
  *				fs_getdents				     *
  *===========================================================================*/
-PUBLIC int fs_getdents(void)
+int fs_getdents(void)
 {
   int r;
   register struct puffs_node *pn;

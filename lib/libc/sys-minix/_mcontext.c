@@ -8,7 +8,7 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-PUBLIC int setmcontext(const mcontext_t *mcp)
+int setmcontext(const mcontext_t *mcp)
 {
   message m;
 
@@ -18,7 +18,7 @@ PUBLIC int setmcontext(const mcontext_t *mcp)
 }
 
 
-PUBLIC int getmcontext(mcontext_t *mcp)
+int getmcontext(mcontext_t *mcp)
 {
   message m;
 

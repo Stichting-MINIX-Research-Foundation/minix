@@ -864,7 +864,7 @@ static int paired_grant(char *buf1, char *buf2, int request,
 /*===========================================================================*
  *				single_revoke				     *
  *===========================================================================*/
-PRIVATE void single_revoke(cp_grant_id_t gid,
+static void single_revoke(cp_grant_id_t gid,
 	const iovec_s_t vector[NR_IOREQS], int count)
 {
 	/* Revoke all grants associated with a request to a single driver.

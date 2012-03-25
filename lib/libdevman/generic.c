@@ -12,16 +12,16 @@
 
 #include "local.h"
 
-PRIVATE endpoint_t devman_ep;
+static endpoint_t devman_ep;
 
-FORWARD int save_string(char *buffer, char *src, size_t *offset);
+static int save_string(char *buffer, char *src, size_t *offset);
 
-PRIVATE TAILQ_HEAD(devlist_head, devman_dev) dev_list;
+static TAILQ_HEAD(devlist_head, devman_dev) dev_list;
 
 /****************************************************************************
  *     save_string                                                          *
  ***************************************************************************/
-PRIVATE int save_string(char *buffer, char *src, size_t *offset)
+static int save_string(char *buffer, char *src, size_t *offset)
 {
 	unsigned old_offset = *offset;
 	size_t len = strlen(src) + 1;
@@ -33,7 +33,7 @@ PRIVATE int save_string(char *buffer, char *src, size_t *offset)
 /****************************************************************************
  *     serialize_dev                                                        *
  ***************************************************************************/
-PUBLIC void *serialize_dev(struct devman_dev *dev, size_t *overall_size)
+void *serialize_dev(struct devman_dev *dev, size_t *overall_size)
 {
 	/* determine size of serialized version of dev */
 	char *buffer;
@@ -99,7 +99,7 @@ PUBLIC void *serialize_dev(struct devman_dev *dev, size_t *overall_size)
 /****************************************************************************
  *     devman_add_device                                                    *
  ***************************************************************************/
-PUBLIC int devman_add_device(struct devman_dev *dev)
+int devman_add_device(struct devman_dev *dev)
 {
 	message msg;
 	int res;
@@ -148,7 +148,7 @@ PUBLIC int devman_add_device(struct devman_dev *dev)
 /****************************************************************************
  *     devman_del_device                                                    *
  ***************************************************************************/
-PUBLIC int devman_del_device(struct devman_dev *dev)
+int devman_del_device(struct devman_dev *dev)
 {
 	message msg;
 	int res;
@@ -182,7 +182,7 @@ PUBLIC int devman_del_device(struct devman_dev *dev)
 /****************************************************************************
  *     devman_get_ep                                                        *
  ***************************************************************************/
-PUBLIC endpoint_t devman_get_ep() 
+endpoint_t devman_get_ep() 
 {
 	return devman_ep;
 }
@@ -190,7 +190,7 @@ PUBLIC endpoint_t devman_get_ep()
 /****************************************************************************
  *     devman_init                                                          *
  ***************************************************************************/
-PUBLIC int devman_init() 
+int devman_init() 
 {
 	int res;
 
@@ -209,7 +209,7 @@ PUBLIC int devman_init()
 /****************************************************************************
  *     do_bind                                                              *
  ***************************************************************************/
-PRIVATE void do_bind(message *m)
+static void do_bind(message *m)
 {
 	struct devman_dev *dev;
 	int res;
@@ -235,7 +235,7 @@ PRIVATE void do_bind(message *m)
 /****************************************************************************
  *     do_unbind                                                            *
  ***************************************************************************/
-PRIVATE void do_unbind(message *m)
+static void do_unbind(message *m)
 {
 	struct devman_dev *dev;
 	int res;
@@ -260,7 +260,7 @@ PRIVATE void do_unbind(message *m)
 /****************************************************************************
  *     devman_handle_msg                                                    *
  ***************************************************************************/
-PUBLIC int devman_handle_msg(message *m)
+int devman_handle_msg(message *m)
 {
 	/* make sure msg comes from devman server */
 	if (m->m_source != devman_ep) {

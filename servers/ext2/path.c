@@ -23,18 +23,18 @@
 #include <minix/vfsif.h>
 #include <minix/libminixfs.h>
 
-PUBLIC char dot1[2] = ".";	/* used for search_dir to bypass the access */
-PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */
+char dot1[2] = ".";	/* used for search_dir to bypass the access */
+char dot2[3] = "..";	/* permissions for . and ..		    */
 
-FORWARD char *get_name(char *name, char string[NAME_MAX+1]);
-FORWARD int ltraverse(struct inode *rip, char *suffix);
-FORWARD int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+static char *get_name(char *name, char string[NAME_MAX+1]);
+static int ltraverse(struct inode *rip, char *suffix);
+static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
 	inode **res_inop, size_t *offsetp, int *symlinkp);
 
 /*===========================================================================*
  *                             fs_lookup				     *
  *===========================================================================*/
-PUBLIC int fs_lookup()
+int fs_lookup()
 {
   cp_grant_id_t grant;
   int r, r1, flags, symlinks;
@@ -120,7 +120,7 @@ PUBLIC int fs_lookup()
 /*===========================================================================*
  *                             parse_path				     *
  *===========================================================================*/
-PRIVATE int parse_path(dir_ino, root_ino, flags, res_inop, offsetp, symlinkp)
+static int parse_path(dir_ino, root_ino, flags, res_inop, offsetp, symlinkp)
 ino_t dir_ino;
 ino_t root_ino;
 int flags;
@@ -280,7 +280,7 @@ int *symlinkp;
 /*===========================================================================*
  *                             ltraverse				     *
  *===========================================================================*/
-PRIVATE int ltraverse(rip, suffix)
+static int ltraverse(rip, suffix)
 register struct inode *rip;	/* symbolic link */
 char *suffix;			/* current remaining path. Has to point in the
 				 * user_path buffer
@@ -363,7 +363,7 @@ char *suffix;			/* current remaining path. Has to point in the
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-PUBLIC struct inode *advance(dirp, string, chk_perm)
+struct inode *advance(dirp, string, chk_perm)
 struct inode *dirp;		/* inode for directory to be searched */
 char string[NAME_MAX + 1];	/* component name to look for */
 int chk_perm;			/* check permissions when string is looked up*/
@@ -432,7 +432,7 @@ int chk_perm;			/* check permissions when string is looked up*/
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-PRIVATE char *get_name(path_name, string)
+static char *get_name(path_name, string)
 char *path_name;		/* path name to parse */
 char string[NAME_MAX+1];	/* component extracted from 'old_name' */
 {
@@ -482,7 +482,7 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
 /*===========================================================================*
  *				search_dir				     *
  *===========================================================================*/
-PUBLIC int search_dir(ldir_ptr, string, numb, flag, check_permissions, ftype)
+int search_dir(ldir_ptr, string, numb, flag, check_permissions, ftype)
 register struct inode *ldir_ptr; /* ptr to inode for dir to search */
 char string[NAME_MAX + 1];	 /* component to search for */
 ino_t *numb;			 /* pointer to inode number */

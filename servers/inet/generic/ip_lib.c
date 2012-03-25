@@ -15,12 +15,12 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-PUBLIC ipaddr_t ip_get_netmask (ipaddr_t hostaddr)
+ipaddr_t ip_get_netmask (ipaddr_t hostaddr)
 {
 	return ip_netmask(ip_nettype(hostaddr));
 }
 
-PUBLIC int ip_chk_hdropt (u8_t *opt, int optlen)
+int ip_chk_hdropt (u8_t *opt, int optlen)
 {
 	int i, security_present= FALSE, lose_source_present= FALSE,
 		strict_source_present= FALSE, record_route_present= FALSE,
@@ -119,7 +119,7 @@ PUBLIC int ip_chk_hdropt (u8_t *opt, int optlen)
 	return NW_OK;
 }
 
-PUBLIC void ip_print_frags(acc_t *acc)
+void ip_print_frags(acc_t *acc)
 {
 #if DEBUG
 	ip_hdr_t *ip_hdr;
@@ -147,14 +147,14 @@ assert (acc->acc_length >= IP_MIN_HDR_SIZE);
 #endif
 }
 
-PUBLIC ipaddr_t ip_get_ifaddr(int port_nr)
+ipaddr_t ip_get_ifaddr(int port_nr)
 {
 	assert(port_nr >= 0 && port_nr < ip_conf_nr);
 
 	return ip_port_table[port_nr].ip_ipaddr;
 }
 
-PUBLIC nettype_t ip_nettype(ipaddr_t ipaddr)
+nettype_t ip_nettype(ipaddr_t ipaddr)
 {
 	u8_t highbyte;
 	nettype_t nettype;
@@ -192,7 +192,7 @@ PUBLIC nettype_t ip_nettype(ipaddr_t ipaddr)
 	return nettype;
 }
 
-PUBLIC ipaddr_t ip_netmask(nettype_t nettype)
+ipaddr_t ip_netmask(nettype_t nettype)
 {
 	switch(nettype)
 	{
@@ -206,7 +206,7 @@ PUBLIC ipaddr_t ip_netmask(nettype_t nettype)
 }
 
 #if 0
-PUBLIC char *ip_nettoa(nettype_t nettype)
+char *ip_nettoa(nettype_t nettype)
 {
 	switch(nettype)
 	{

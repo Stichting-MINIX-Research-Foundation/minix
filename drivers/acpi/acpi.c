@@ -5,11 +5,11 @@
 
 #include "pci.h"
 
-PUBLIC int acpi_enabled;
-PUBLIC struct machine machine;
+int acpi_enabled;
+struct machine machine;
 
 /* don't know where ACPI tables are, we may need to access any memory */
-PRIVATE int init_mem_priv(void)
+static int init_mem_priv(void)
 {
 	struct mem_range mr;
 
@@ -19,7 +19,7 @@ PRIVATE int init_mem_priv(void)
 	return sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr);
 }
 
-PRIVATE void set_machine_mode(void)
+static void set_machine_mode(void)
 {
     ACPI_OBJECT arg1;
     ACPI_OBJECT_LIST args;
@@ -40,7 +40,7 @@ PRIVATE void set_machine_mode(void)
 			    machine.apic_enabled ? "APIC" : "PIC");
 }
 
-PRIVATE ACPI_STATUS init_acpica(void)
+static ACPI_STATUS init_acpica(void)
 {
 	ACPI_STATUS status;
 
@@ -71,7 +71,7 @@ PRIVATE ACPI_STATUS init_acpica(void)
 	return AE_OK;
 }
 
-PUBLIC void init_acpi(void)
+void init_acpi(void)
 {
 	ACPI_STATUS acpi_err;
 	/* test conditions for acpi */
@@ -98,14 +98,14 @@ PUBLIC void init_acpi(void)
 	}
 }
 
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 	init_acpi();
 
 	return OK;
 }
 
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);

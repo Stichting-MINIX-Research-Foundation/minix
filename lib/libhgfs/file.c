@@ -8,7 +8,7 @@
 /*===========================================================================*
  *				hgfs_open				     *
  *===========================================================================*/
-PUBLIC int hgfs_open(path, flags, mode, handle)
+int hgfs_open(path, flags, mode, handle)
 char *path;			/* path name to open */
 int flags;			/* open flags to use */
 int mode;			/* mode to create (user bits only) */
@@ -50,7 +50,7 @@ hgfs_file_t *handle;		/* place to store resulting handle */
 /*===========================================================================*
  *				hgfs_read				     *
  *===========================================================================*/
-PUBLIC int hgfs_read(handle, buf, size, off)
+int hgfs_read(handle, buf, size, off)
 hgfs_file_t handle;		/* handle to open file */
 char *buf;			/* data buffer or NULL */
 size_t size;			/* maximum number of bytes to read */
@@ -84,7 +84,7 @@ u64_t off;			/* file offset */
 /*===========================================================================*
  *				hgfs_write				     *
  *===========================================================================*/
-PUBLIC int hgfs_write(handle, buf, len, off, append)
+int hgfs_write(handle, buf, len, off, append)
 hgfs_file_t handle;		/* handle to open file */
 const char *buf;		/* data buffer or NULL */
 size_t len;			/* number of bytes to write */
@@ -125,7 +125,7 @@ int append;			/* if set, append to file (ignore offset) */
 /*===========================================================================*
  *				hgfs_close				     *
  *===========================================================================*/
-PUBLIC int hgfs_close(handle)
+int hgfs_close(handle)
 hgfs_file_t handle;		/* handle to open file */
 {
 /* Close an open file.
@@ -140,7 +140,7 @@ hgfs_file_t handle;		/* handle to open file */
 /*===========================================================================*
  *				hgfs_readbuf				     *
  *===========================================================================*/
-PUBLIC size_t hgfs_readbuf(ptr)
+size_t hgfs_readbuf(ptr)
 char **ptr;
 {
 /* Return information about the read buffer, for zero-copy purposes. Store a
@@ -162,7 +162,7 @@ char **ptr;
 /*===========================================================================*
  *				hgfs_writebuf				     *
  *===========================================================================*/
-PUBLIC size_t hgfs_writebuf(ptr)
+size_t hgfs_writebuf(ptr)
 char **ptr;
 {
 /* Return information about the write buffer, for zero-copy purposes. Store a

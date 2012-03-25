@@ -11,7 +11,7 @@
  * Call ptrace and check for error if debugging running process
  * Otherwise read 'core' file
  */ 
-PUBLIC long mdbtrace(req, pid, addr, data)
+long mdbtrace(req, pid, addr, data)
 int req, pid;
 long addr, data;
 {
@@ -43,7 +43,7 @@ long addr, data;
 }
 
 /* Used by disassembler */
-PUBLIC u32_t peek_dword(addr)
+u32_t peek_dword(addr)
 off_t addr;
 {
     return mdbtrace(T_GETINS, curpid, addr, 0L);

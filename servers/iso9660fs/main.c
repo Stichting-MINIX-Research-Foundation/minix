@@ -8,17 +8,17 @@
 #include "glo.h"
 
 /* Declare some local functions. */
-FORWARD void get_work(message *m_in);
+static void get_work(message *m_in);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC int main(void) {
+int main(void) {
   endpoint_t who_e;
   int ind, error, transid;
 
@@ -78,7 +78,7 @@ PUBLIC int main(void) {
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -96,7 +96,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the iso9660fs server. */
 
@@ -111,7 +111,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *				sef_cb_signal_handler			     *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Only check for termination signal, ignore anything else. */
   if (signo != SIGTERM) return;
@@ -127,7 +127,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-PRIVATE void get_work(m_in)
+static void get_work(m_in)
 message *m_in;				/* pointer to message */
 {
   int s;					/* receive status */
@@ -138,7 +138,7 @@ message *m_in;				/* pointer to message */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC void reply(who, m_out)
+void reply(who, m_out)
 int who;	
 message *m_out;                       	/* report result */
 {

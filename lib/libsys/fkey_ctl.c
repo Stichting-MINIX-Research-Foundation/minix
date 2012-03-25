@@ -3,7 +3,7 @@
 /*===========================================================================*
  *				fkey_ctl				     *
  *===========================================================================*/
-PUBLIC int fkey_ctl(request, fkeys, sfkeys)
+int fkey_ctl(request, fkeys, sfkeys)
 int request;				/* request to perform */
 int *fkeys;				/* bit masks for F1-F12 keys */
 int *sfkeys;				/* bit masks for Shift F1-F12 keys */

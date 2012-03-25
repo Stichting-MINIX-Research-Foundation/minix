@@ -8,7 +8,7 @@
 __weak_alias(access, _access)
 #endif
 
-PUBLIC int access(name, mode)
+int access(name, mode)
 _CONST char *name;
 int mode;
 {

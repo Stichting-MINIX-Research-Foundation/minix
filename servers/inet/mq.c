@@ -14,8 +14,8 @@ THIS_FILE
 
 #define MQ_SIZE		128
 
-PRIVATE mq_t mq_list[MQ_SIZE];
-PRIVATE mq_t *mq_freelist;
+static mq_t mq_list[MQ_SIZE];
+static mq_t *mq_freelist;
 
 void mq_init()
 {

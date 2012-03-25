@@ -17,7 +17,7 @@ struct reg86u reg86;
 /*===========================================================================*
  *				do_int86					     *
  *===========================================================================*/
-PUBLIC int do_int86(struct proc * caller, message * m_ptr)
+int do_int86(struct proc * caller, message * m_ptr)
 {
   data_copy(caller->p_endpoint, (vir_bytes) m_ptr->INT86_REG86,
 	KERNEL, (vir_bytes) &reg86, sizeof(reg86));

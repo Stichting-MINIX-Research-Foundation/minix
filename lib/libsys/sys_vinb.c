@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_vinb				     *
  *===========================================================================*/
-PUBLIC int sys_vinb(pvb_pairs, nr_ports)
+int sys_vinb(pvb_pairs, nr_ports)
 pvb_pair_t *pvb_pairs;			/* (port,byte-value)-pairs */
 int nr_ports;				/* nr of pairs to be processed */
 {

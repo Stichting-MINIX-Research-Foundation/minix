@@ -16,7 +16,7 @@
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys(int who_e, int call_nr)
+int no_sys(int who_e, int call_nr)
 {
 /* A system call number not implemented by PM has been requested. */
   printf("SCHED: in no_sys, call nr %d from %d\n", call_nr, who_e);
@@ -27,7 +27,7 @@ PUBLIC int no_sys(int who_e, int call_nr)
 /*===========================================================================*
  *				sched_isokendpt			 	     *
  *===========================================================================*/
-PUBLIC int sched_isokendpt(int endpoint, int *proc)
+int sched_isokendpt(int endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
 	if (*proc < 0)
@@ -44,7 +44,7 @@ PUBLIC int sched_isokendpt(int endpoint, int *proc)
 /*===========================================================================*
  *				sched_isemtyendpt		 	     *
  *===========================================================================*/
-PUBLIC int sched_isemtyendpt(int endpoint, int *proc)
+int sched_isemtyendpt(int endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
 	if (*proc < 0)
@@ -59,7 +59,7 @@ PUBLIC int sched_isemtyendpt(int endpoint, int *proc)
 /*===========================================================================*
  *				accept_message				     *
  *===========================================================================*/
-PUBLIC int accept_message(message *m_ptr)
+int accept_message(message *m_ptr)
 {
 	/* accept all messages from PM and RS */
 	switch (m_ptr->m_source) {

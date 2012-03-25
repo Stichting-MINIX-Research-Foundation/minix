@@ -26,33 +26,33 @@ typedef struct {
 	ssize_t value;
 } result_t;
 
-PRIVATE char driver_label[32] = "";	/* driver DS label */
-PRIVATE dev_t driver_minor = -1;	/* driver's partition minor to use */
-PRIVATE endpoint_t driver_endpt;	/* driver endpoint */
+static char driver_label[32] = "";	/* driver DS label */
+static dev_t driver_minor = -1;	/* driver's partition minor to use */
+static endpoint_t driver_endpt;	/* driver endpoint */
 
-PRIVATE int may_write = FALSE;		/* may we write to the device? */
-PRIVATE int sector_size = 512;		/* size of a single disk sector */
-PRIVATE int min_read = 512;		/* minimum total size of read req */
-PRIVATE int element_size = 512;		/* minimum I/O vector element size */
-PRIVATE int max_size = 131072;		/* maximum total size of any req */
+static int may_write = FALSE;		/* may we write to the device? */
+static int sector_size = 512;		/* size of a single disk sector */
+static int min_read = 512;		/* minimum total size of read req */
+static int element_size = 512;		/* minimum I/O vector element size */
+static int max_size = 131072;		/* maximum total size of any req */
 /* Note that we do not test exceeding the max_size limit, so it is safe to set
  * it to a value lower than the driver supports.
  */
 
-PRIVATE struct partition part;		/* base and size of target partition */
+static struct partition part;		/* base and size of target partition */
 
 #define NR_OPENED 10			/* maximum number of opened devices */
-PRIVATE dev_t opened[NR_OPENED];	/* list of currently opened devices */
-PRIVATE int nr_opened = 0;		/* current number of opened devices */
+static dev_t opened[NR_OPENED];	/* list of currently opened devices */
+static int nr_opened = 0;		/* current number of opened devices */
 
-PRIVATE int total_tests = 0;		/* total number of tests performed */
-PRIVATE int failed_tests = 0;		/* number of tests that failed */
-PRIVATE int failed_groups = 0;		/* nr of groups that had failures */
-PRIVATE int group_failure;		/* has this group had a failure yet? */
-PRIVATE int driver_deaths = 0;		/* number of restarts that we saw */
+static int total_tests = 0;		/* total number of tests performed */
+static int failed_tests = 0;		/* number of tests that failed */
+static int failed_groups = 0;		/* nr of groups that had failures */
+static int group_failure;		/* has this group had a failure yet? */
+static int driver_deaths = 0;		/* number of restarts that we saw */
 
 /* Options supported by this driver. */
-PRIVATE struct optset optset_table[] = {
+static struct optset optset_table[] = {
 	{ "label",	OPT_STRING,	driver_label,	sizeof(driver_label) },
 	{ "minor",	OPT_INT,	&driver_minor,	10		     },
 	{ "rw",		OPT_BOOL,	&may_write,	TRUE		     },
@@ -64,7 +64,7 @@ PRIVATE struct optset optset_table[] = {
 	{ NULL,		0,		NULL,		0		     }
 };
 
-PRIVATE int set_result(result_t *res, int type, ssize_t value)
+static int set_result(result_t *res, int type, ssize_t value)
 {
 	/* Set the result to the given result type and with the given optional
 	 * extra value. Return the type.
@@ -75,7 +75,7 @@ PRIVATE int set_result(result_t *res, int type, ssize_t value)
 	return type;
 }
 
-PRIVATE void accept_result(result_t *res, int type, ssize_t value)
+static void accept_result(result_t *res, int type, ssize_t value)
 {
 	/* If the result is of the given type and value, reset it to a success
 	 * result. This allows for a logical OR on error codes.
@@ -85,7 +85,7 @@ PRIVATE void accept_result(result_t *res, int type, ssize_t value)
 		set_result(res, RESULT_OK, 0);
 }
 
-PRIVATE void got_result(result_t *res, char *desc)
+static void got_result(result_t *res, char *desc)
 {
 	/* Process the result of a test. Keep statistics.
 	 */
@@ -142,7 +142,7 @@ PRIVATE void got_result(result_t *res, char *desc)
 	}
 }
 
-PRIVATE void test_group(char *name, int exec)
+static void test_group(char *name, int exec)
 {
 	/* Start a new group of tests.
 	 */
@@ -152,7 +152,7 @@ PRIVATE void test_group(char *name, int exec)
 	group_failure = FALSE;
 }
 
-PRIVATE void reopen_device(dev_t minor)
+static void reopen_device(dev_t minor)
 {
 	/* Reopen a device after we were notified that the driver has died.
 	 * Explicitly ignore any errors here; this is a feeble attempt to get
@@ -169,7 +169,7 @@ PRIVATE void reopen_device(dev_t minor)
 	(void) sendrec(driver_endpt, &m);
 }
 
-PRIVATE int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
+static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 {
 	/* Make a call to the driver, and perform basic checks on the return
 	 * message. Fill in the result structure, wiping out what was in there
@@ -226,7 +226,7 @@ PRIVATE int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 	return set_result(res, RESULT_OK, 0);
 }
 
-PRIVATE int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
+static int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	int write, ssize_t exp, result_t *res)
 {
 	/* Perform a transfer with a safecopy iovec already supplied.
@@ -268,7 +268,7 @@ PRIVATE int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 		return set_result(res, RESULT_TRUNC, exp - m.BDEV_STATUS);
 }
 
-PRIVATE int vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
+static int vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
 	int write, ssize_t exp, result_t *res)
 {
 	/* Perform a transfer, creating and revoking grants for the I/O vector.
@@ -299,7 +299,7 @@ PRIVATE int vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
 	return r;
 }
 
-PRIVATE int simple_xfer(dev_t minor, u64_t pos, u8_t *buf, size_t size,
+static int simple_xfer(dev_t minor, u64_t pos, u8_t *buf, size_t size,
 	int write, ssize_t exp, result_t *res)
 {
 	/* Perform a transfer involving a single buffer.
@@ -312,7 +312,7 @@ PRIVATE int simple_xfer(dev_t minor, u64_t pos, u8_t *buf, size_t size,
 	return vir_xfer(minor, pos, &iov, 1, write, exp, res);
 }
 
-PRIVATE void alloc_buf_and_grant(u8_t **ptr, cp_grant_id_t *grant,
+static void alloc_buf_and_grant(u8_t **ptr, cp_grant_id_t *grant,
 	size_t size, int perms)
 {
 	/* Allocate a buffer suitable for DMA (i.e. contiguous) and create a
@@ -328,7 +328,7 @@ PRIVATE void alloc_buf_and_grant(u8_t **ptr, cp_grant_id_t *grant,
 		panic("unable to allocate grant");
 }
 
-PRIVATE void free_buf_and_grant(u8_t *ptr, cp_grant_id_t grant, size_t size)
+static void free_buf_and_grant(u8_t *ptr, cp_grant_id_t grant, size_t size)
 {
 	/* Revoke a grant and free a buffer.
 	 */
@@ -338,7 +338,7 @@ PRIVATE void free_buf_and_grant(u8_t *ptr, cp_grant_id_t grant, size_t size)
 	free_contig(ptr, size);
 }
 
-PRIVATE void bad_read1(void)
+static void bad_read1(void)
 {
 	/* Test various illegal read transfer requests, part 1.
 	 */
@@ -445,7 +445,7 @@ PRIVATE void bad_read1(void)
 	cpf_revoke(grant);
 }
 
-PRIVATE u32_t get_sum(u8_t *ptr, size_t size)
+static u32_t get_sum(u8_t *ptr, size_t size)
 {
 	/* Compute a checksum over the given buffer.
 	 */
@@ -457,7 +457,7 @@ PRIVATE u32_t get_sum(u8_t *ptr, size_t size)
 	return sum;
 }
 
-PRIVATE u32_t fill_rand(u8_t *ptr, size_t size)
+static u32_t fill_rand(u8_t *ptr, size_t size)
 {
 	/* Fill the given buffer with random data. Return a checksum over the
 	 * resulting data.
@@ -470,7 +470,7 @@ PRIVATE u32_t fill_rand(u8_t *ptr, size_t size)
 	return get_sum(ptr, size);
 }
 
-PRIVATE void test_sum(u8_t *ptr, size_t size, u32_t sum, int should_match,
+static void test_sum(u8_t *ptr, size_t size, u32_t sum, int should_match,
 	result_t *res)
 {
 	/* If the test succeeded so far, check whether the given buffer does
@@ -490,7 +490,7 @@ PRIVATE void test_sum(u8_t *ptr, size_t size, u32_t sum, int should_match,
 	}
 }
 
-PRIVATE void bad_read2(void)
+static void bad_read2(void)
 {
 	/* Test various illegal read transfer requests, part 2.
 	 *
@@ -733,7 +733,7 @@ PRIVATE void bad_read2(void)
 
 #define SECTOR_UNALIGN	2	/* word-aligned and sector-unaligned */
 
-PRIVATE void bad_write(void)
+static void bad_write(void)
 {
 	/* Test various illegal write transfer requests, if writing is allowed.
 	 * If handled correctly, these requests will not actually write data.
@@ -827,7 +827,7 @@ PRIVATE void bad_write(void)
 	free_buf_and_grant(buf_ptr, buf_grant, buf_size);
 }
 
-PRIVATE void vector_and_large_sub(size_t small_size)
+static void vector_and_large_sub(size_t small_size)
 {
 	/* Check whether large vectored requests, and large single requests,
 	 * succeed.
@@ -957,7 +957,7 @@ PRIVATE void vector_and_large_sub(size_t small_size)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void vector_and_large(void)
+static void vector_and_large(void)
 {
 	/* Check whether large vectored requests, and large single requests,
 	 * succeed. These are request patterns commonly used by MFS and the
@@ -987,7 +987,7 @@ PRIVATE void vector_and_large(void)
 	}
 }
 
-PRIVATE void open_device(dev_t minor)
+static void open_device(dev_t minor)
 {
 	/* Open a partition or subpartition. Remember that it has been opened,
 	 * so that we can reopen it later in the event of a driver crash.
@@ -1013,7 +1013,7 @@ PRIVATE void open_device(dev_t minor)
 		"opening a subpartition");
 }
 
-PRIVATE void close_device(dev_t minor)
+static void close_device(dev_t minor)
 {
 	/* Close a partition or subpartition. Remove it from the list of opened
 	 * devices.
@@ -1041,7 +1041,7 @@ PRIVATE void close_device(dev_t minor)
 		"closing a subpartition");
 }
 
-PRIVATE int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
+static int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
 	result_t *res)
 {
 	/* Perform an I/O control request, using a local buffer.
@@ -1077,7 +1077,7 @@ PRIVATE int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
 	return r;
 }
 
-PRIVATE void misc_ioctl(void)
+static void misc_ioctl(void)
 {
 	/* Test some ioctls.
 	 */
@@ -1137,7 +1137,7 @@ PRIVATE void misc_ioctl(void)
 	got_result(&res, "decreased open count after closing");
 }
 
-PRIVATE void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
+static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 {
 	/* Test reads up to, across, and beyond partition limits.
 	 */
@@ -1250,7 +1250,7 @@ PRIVATE void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
+static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 {
 	/* Test writes up to, across, and beyond partition limits. Use the
 	 * first given subpartition to test, and the second to make sure there
@@ -1392,7 +1392,7 @@ PRIVATE void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
+static void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 {
 	/* Create virtual, temporary subpartitions through the DIOCSETP ioctl,
 	 * and perform tests on the resulting subpartitions.
@@ -1459,7 +1459,7 @@ PRIVATE void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	close_device(sub0_minor);
 }
 
-PRIVATE void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
+static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 {
 	/* Create our own subpartitions by writing a partition table, and
 	 * perform tests on the resulting real subpartitions.
@@ -1598,7 +1598,7 @@ PRIVATE void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void part_limits(void)
+static void part_limits(void)
 {
 	/* Test reads and writes up to, across, and beyond partition limits.
 	 * As a side effect, test reading and writing partition sizes and
@@ -1635,7 +1635,7 @@ PRIVATE void part_limits(void)
 
 }
 
-PRIVATE void unaligned_size_io(u64_t base_pos, u8_t *buf_ptr, size_t buf_size,
+static void unaligned_size_io(u64_t base_pos, u8_t *buf_ptr, size_t buf_size,
 	u8_t *sec_ptr[2], int sectors, int pattern, u32_t ssum[5])
 {
 	/* Perform a single small-element I/O read, write, readback test.
@@ -1804,7 +1804,7 @@ PRIVATE void unaligned_size_io(u64_t base_pos, u8_t *buf_ptr, size_t buf_size,
 	got_result(&res, "readback verification");
 }
 
-PRIVATE void unaligned_size(void)
+static void unaligned_size(void)
 {
 	/* Test sector-unaligned sizes in I/O vector elements. The total size
 	 * of the request, however, has to add up to the sector size.
@@ -1905,7 +1905,7 @@ PRIVATE void unaligned_size(void)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void unaligned_pos1(void)
+static void unaligned_pos1(void)
 {
 	/* Test sector-unaligned positions and total sizes for requests. This
 	 * is a read-only test as no driver currently supports sector-unaligned
@@ -2058,7 +2058,7 @@ PRIVATE void unaligned_pos1(void)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void unaligned_pos2(void)
+static void unaligned_pos2(void)
 {
 	/* Test sector-unaligned positions and total sizes for requests, second
 	 * part. This one tests the use of multiple I/O vector elements, and
@@ -2202,7 +2202,7 @@ PRIVATE void unaligned_pos2(void)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void sweep_area(u64_t base_pos)
+static void sweep_area(u64_t base_pos)
 {
 	/* Go over an eight-sector area from left (low address) to right (high
 	 * address), reading and optionally writing in three-sector chunks, and
@@ -2294,7 +2294,7 @@ PRIVATE void sweep_area(u64_t base_pos)
 	free_contig(buf_ptr, buf_size);
 }
 
-PRIVATE void sweep_and_check(u64_t pos, int check_integ)
+static void sweep_and_check(u64_t pos, int check_integ)
 {
 	/* Perform an area sweep at the given position. If asked for, get an
 	 * integrity checksum over the beginning of the disk (first writing
@@ -2350,7 +2350,7 @@ PRIVATE void sweep_and_check(u64_t pos, int check_integ)
 	}
 }
 
-PRIVATE void basic_sweep(void)
+static void basic_sweep(void)
 {
 	/* Perform a basic area sweep.
 	 */
@@ -2360,7 +2360,7 @@ PRIVATE void basic_sweep(void)
 	sweep_area(cvu64(sector_size));
 }
 
-PRIVATE void high_disk_pos(void)
+static void high_disk_pos(void)
 {
 	/* Test 64-bit absolute disk positions. This means that after adding
 	 * partition base to the given position, the driver will be dealing
@@ -2397,7 +2397,7 @@ PRIVATE void high_disk_pos(void)
 	sweep_and_check(base_pos, !cmp64u(part.base, 0));
 }
 
-PRIVATE void high_part_pos(void)
+static void high_part_pos(void)
 {
 	/* Test 64-bit partition-relative disk positions. In other words, use
 	 * within the current partition a position that exceeds a 32-bit value.
@@ -2430,7 +2430,7 @@ PRIVATE void high_part_pos(void)
 	sweep_and_check(base_pos, TRUE);
 }
 
-PRIVATE void high_lba_pos1(void)
+static void high_lba_pos1(void)
 {
 	/* Test 48-bit LBA positions, as opposed to *24-bit*. Drivers that only
 	 * support 48-bit LBA ATA transfers, will treat the lower and upper 24
@@ -2467,7 +2467,7 @@ PRIVATE void high_lba_pos1(void)
 	sweep_and_check(base_pos, !cmp64u(part.base, 0));
 }
 
-PRIVATE void high_lba_pos2(void)
+static void high_lba_pos2(void)
 {
 	/* Test 48-bit LBA positions, as opposed to *28-bit*. That means sector
 	 * numbers in excess of 28-bit values; the old ATA upper limit. The
@@ -2501,7 +2501,7 @@ PRIVATE void high_lba_pos2(void)
 	sweep_and_check(base_pos, !cmp64u(part.base, 0));
 }
 
-PRIVATE void high_pos(void)
+static void high_pos(void)
 {
 	/* Check whether the driver deals well with 64-bit positions and
 	 * 48-bit LBA addresses. We test three cases: disk byte position beyond
@@ -2528,7 +2528,7 @@ PRIVATE void high_pos(void)
 	high_lba_pos2();
 }
 
-PRIVATE void open_primary(void)
+static void open_primary(void)
 {
 	/* Open the primary device. This call has its own test group.
 	 */
@@ -2538,7 +2538,7 @@ PRIVATE void open_primary(void)
 	open_device(driver_minor);
 }
 
-PRIVATE void close_primary(void)
+static void close_primary(void)
 {
 	/* Close the primary device. This call has its own test group.
 	 */
@@ -2550,7 +2550,7 @@ PRIVATE void close_primary(void)
 	assert(nr_opened == 0);
 }
 
-PRIVATE void do_tests(void)
+static void do_tests(void)
 {
 	/* Perform all the tests.
 	 */
@@ -2584,7 +2584,7 @@ PRIVATE void do_tests(void)
 	close_primary();
 }
 
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize.
 	 */
@@ -2611,7 +2611,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	return OK;
 }
 
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/* Initialize the SEF framework.
 	 */
@@ -2621,7 +2621,7 @@ PRIVATE void sef_local_startup(void)
 	sef_startup();
 }
 
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	/* Driver task.
 	 */

@@ -6,7 +6,7 @@
 /*===========================================================================*
  *                                vm_notify_sig				     *
  *===========================================================================*/
-PUBLIC int vm_notify_sig(endpoint_t ep, endpoint_t ipc_ep)
+int vm_notify_sig(endpoint_t ep, endpoint_t ipc_ep)
 {
     message m;
     int result;

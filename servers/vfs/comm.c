@@ -5,13 +5,13 @@
 #include <minix/vfsif.h>
 #include <assert.h>
 
-FORWARD int sendmsg(struct vmnt *vmp, struct fproc *rfp);
-FORWARD int queuemsg(struct vmnt *vmp);
+static int sendmsg(struct vmnt *vmp, struct fproc *rfp);
+static int queuemsg(struct vmnt *vmp);
 
 /*===========================================================================*
  *				sendmsg					     *
  *===========================================================================*/
-PRIVATE int sendmsg(vmp, rfp)
+static int sendmsg(vmp, rfp)
 struct vmnt *vmp;
 struct fproc *rfp;
 {
@@ -39,7 +39,7 @@ struct fproc *rfp;
 /*===========================================================================*
  *				send_work				     *
  *===========================================================================*/
-PUBLIC void send_work(void)
+void send_work(void)
 {
 /* Try to send out as many requests as possible */
   struct vmnt *vmp;
@@ -52,7 +52,7 @@ PUBLIC void send_work(void)
 /*===========================================================================*
  *				fs_cancel				     *
  *===========================================================================*/
-PUBLIC void fs_cancel(struct vmnt *vmp)
+void fs_cancel(struct vmnt *vmp)
 {
 /* Cancel all pending requests for this vmp */
   struct worker_thread *worker;
@@ -68,7 +68,7 @@ PUBLIC void fs_cancel(struct vmnt *vmp)
 /*===========================================================================*
  *				fs_sendmore				     *
  *===========================================================================*/
-PUBLIC void fs_sendmore(struct vmnt *vmp)
+void fs_sendmore(struct vmnt *vmp)
 {
   struct worker_thread *worker;
 
@@ -91,7 +91,7 @@ PUBLIC void fs_sendmore(struct vmnt *vmp)
 /*===========================================================================*
  *				fs_sendrec				     *
  *===========================================================================*/
-PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqmp)
+int fs_sendrec(endpoint_t fs_e, message *reqmp)
 {
   struct vmnt *vmp;
   int r;
@@ -156,7 +156,7 @@ PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqmp)
 /*===========================================================================*
  *				queuemsg				     *
  *===========================================================================*/
-PRIVATE int queuemsg(struct vmnt *vmp)
+static int queuemsg(struct vmnt *vmp)
 {
 /* Put request on queue for vmnt */
 

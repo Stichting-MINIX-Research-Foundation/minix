@@ -21,14 +21,14 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD void setup_read(eth_port_t *eth_port);
-FORWARD void read_int(eth_port_t *eth_port, int count);
-FORWARD void eth_issue_send(eth_port_t *eth_port);
-FORWARD void write_int(eth_port_t *eth_port);
-FORWARD void eth_restart(eth_port_t *eth_port, endpoint_t endpoint);
-FORWARD void send_getstat(eth_port_t *eth_port);
+static void setup_read(eth_port_t *eth_port);
+static void read_int(eth_port_t *eth_port, int count);
+static void eth_issue_send(eth_port_t *eth_port);
+static void write_int(eth_port_t *eth_port);
+static void eth_restart(eth_port_t *eth_port, endpoint_t endpoint);
+static void send_getstat(eth_port_t *eth_port);
 
-PUBLIC void osdep_eth_init()
+void osdep_eth_init()
 {
 	int i, j, rport;
 	struct eth_conf *ecp;
@@ -155,7 +155,7 @@ PUBLIC void osdep_eth_init()
 	}
 }
 
-PUBLIC void eth_write_port(eth_port, pack)
+void eth_write_port(eth_port, pack)
 eth_port_t *eth_port;
 acc_t *pack;
 {
@@ -175,7 +175,7 @@ acc_t *pack;
 	eth_issue_send(eth_port);
 }
 
-PUBLIC void eth_rec(message *m)
+void eth_rec(message *m)
 {
 	int i, r, m_type, flags;
 	eth_port_t *loc_port, *vlan_port;
@@ -362,7 +362,7 @@ PUBLIC void eth_rec(message *m)
 	}
 }
 
-PUBLIC void eth_check_driver(char *label, endpoint_t endpoint)
+void eth_check_driver(char *label, endpoint_t endpoint)
 {
 	int i;
 	eth_port_t *loc_port;
@@ -384,7 +384,7 @@ PUBLIC void eth_check_driver(char *label, endpoint_t endpoint)
 	}
 }
 
-PUBLIC int eth_get_stat(eth_port, eth_stat)
+int eth_get_stat(eth_port, eth_stat)
 eth_port_t *eth_port;
 eth_stat_t *eth_stat;
 {
@@ -417,7 +417,7 @@ eth_stat_t *eth_stat;
 	return SUSPEND;
 }
 
-PUBLIC void eth_set_rec_conf (eth_port, flags)
+void eth_set_rec_conf (eth_port, flags)
 eth_port_t *eth_port;
 u32_t flags;
 {
@@ -478,7 +478,7 @@ u32_t flags;
 	}
 }
 
-PRIVATE void eth_issue_send(eth_port)
+static void eth_issue_send(eth_port)
 eth_port_t *eth_port;
 {
 	int i, r, pack_size;
@@ -557,7 +557,7 @@ eth_port_t *eth_port;
 	eth_port->etp_osdep.etp_state= OEPS_SEND_SENT;
 }
 
-PRIVATE void write_int(eth_port_t *eth_port)
+static void write_int(eth_port_t *eth_port)
 {
 	acc_t *pack;
 	int multicast;
@@ -590,7 +590,7 @@ PRIVATE void write_int(eth_port_t *eth_port)
 	eth_restart_write(eth_port);
 }
 
-PRIVATE void read_int(eth_port, count)
+static void read_int(eth_port, count)
 eth_port_t *eth_port;
 int count;
 {
@@ -654,7 +654,7 @@ int count;
 	setup_read(eth_port);
 }
 
-PRIVATE void setup_read(eth_port)
+static void setup_read(eth_port)
 eth_port_t *eth_port;
 {
 	acc_t *pack, *pack_ptr;
@@ -812,7 +812,7 @@ static void eth_restart(eth_port_t *eth_port, endpoint_t endpoint)
 
 }
 
-PRIVATE void send_getstat(eth_port)
+static void send_getstat(eth_port)
 eth_port_t *eth_port;
 {
 	int r;

@@ -158,7 +158,7 @@
  *
  * 3   720K    1.44M    9       80     300 RPM  250 kbps   PS/2, et al.
  */
-PRIVATE struct density {
+static struct density {
 	u8_t	secpt;		/* sectors per track */
 	u8_t	cyls;		/* tracks per side */
 	u8_t	steps;		/* steps per cylinder (2 = double step) */
@@ -187,7 +187,7 @@ PRIVATE struct density {
 
 #define b(d)	(1 << (d))	/* bit for density d. */
 
-PRIVATE struct test_order {
+static struct test_order {
 	u8_t	t_density;	/* floppy/drive type */
 	u8_t	t_class;	/* limit drive to this class of densities */
 } test_order[NT-1] = {
@@ -203,7 +203,7 @@ PRIVATE struct test_order {
 };
 
 /* Variables. */
-PRIVATE struct floppy {		/* main drive struct, one entry per drive */
+static struct floppy {		/* main drive struct, one entry per drive */
   unsigned fl_curcyl;		/* current cylinder */
   unsigned fl_hardcyl;		/* hardware cylinder, as opposed to: */
   unsigned fl_cylinder;		/* cylinder number addressed */
@@ -217,54 +217,54 @@ PRIVATE struct floppy {		/* main drive struct, one entry per drive */
   struct device fl_part[NR_PARTITIONS];  /* partition's base & size */
 } floppy[NR_DRIVES];
 
-PRIVATE int irq_hook_id;	/* id of irq hook at the kernel */
-PUBLIC int motor_status;	/* bitmap of current motor status */
-PRIVATE int need_reset;		/* set to 1 when controller must be reset */
-PUBLIC unsigned f_drive;	/* selected drive */
-PRIVATE unsigned f_device;	/* selected minor device */
-PRIVATE struct floppy *f_fp;	/* current drive */
-PRIVATE struct density *f_dp;	/* current density parameters */
-PRIVATE struct density *prev_dp;/* previous density parameters */
-PRIVATE unsigned f_sectors;	/* equal to f_dp->secpt (needed a lot) */
-PUBLIC u16_t f_busy;		/* BSY_IDLE, BSY_IO, BSY_WAKEN */
-PRIVATE struct device *f_dv;	/* device's base and size */
-PRIVATE struct disk_parameter_s fmt_param; /* parameters for format */
-PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
+static int irq_hook_id;	/* id of irq hook at the kernel */
+int motor_status;	/* bitmap of current motor status */
+static int need_reset;		/* set to 1 when controller must be reset */
+unsigned f_drive;	/* selected drive */
+static unsigned f_device;	/* selected minor device */
+static struct floppy *f_fp;	/* current drive */
+static struct density *f_dp;	/* current density parameters */
+static struct density *prev_dp;/* previous density parameters */
+static unsigned f_sectors;	/* equal to f_dp->secpt (needed a lot) */
+u16_t f_busy;		/* BSY_IDLE, BSY_IO, BSY_WAKEN */
+static struct device *f_dv;	/* device's base and size */
+static struct disk_parameter_s fmt_param; /* parameters for format */
+static u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
 
 /* The floppy uses various timers. These are managed by the floppy driver
  * itself, because only a single synchronous alarm is available per process.
  * Besides the 'f_tmr_timeout' timer below, the floppy structure for each
  * floppy disk drive contains a 'fl_tmr_stop' timer. 
  */
-PRIVATE timer_t f_tmr_timeout;		/* timer for various timeouts */
-PRIVATE u32_t system_hz;		/* system clock frequency */
-FORWARD void f_expire_tmrs(clock_t stamp);
-FORWARD void stop_motor(timer_t *tp);
-FORWARD void f_timeout(timer_t *tp);
+static timer_t f_tmr_timeout;		/* timer for various timeouts */
+static u32_t system_hz;		/* system clock frequency */
+static void f_expire_tmrs(clock_t stamp);
+static void stop_motor(timer_t *tp);
+static void f_timeout(timer_t *tp);
 
-FORWARD struct device *f_prepare(dev_t device);
-FORWARD struct device *f_part(dev_t minor);
-FORWARD void f_cleanup(void);
-FORWARD ssize_t f_transfer(dev_t minor, int do_write, u64_t position,
+static struct device *f_prepare(dev_t device);
+static struct device *f_part(dev_t minor);
+static void f_cleanup(void);
+static ssize_t f_transfer(dev_t minor, int do_write, u64_t position,
 	endpoint_t proc_nr, iovec_t *iov, unsigned int nr_req, int flags);
-FORWARD int dma_setup(int do_write);
-FORWARD void start_motor(void);
-FORWARD int seek(void);
-FORWARD int fdc_transfer(int do_write);
-FORWARD int fdc_results(void);
-FORWARD int fdc_command(const u8_t *cmd, int len);
-FORWARD void fdc_out(int val);
-FORWARD int recalibrate(void);
-FORWARD void f_reset(void);
-FORWARD int f_intr_wait(void);
-FORWARD int read_id(void);
-FORWARD int f_do_open(dev_t minor, int access);
-FORWARD int f_do_close(dev_t minor);
-FORWARD int test_read(int density);
-FORWARD void f_geometry(dev_t minor, struct partition *entry);
+static int dma_setup(int do_write);
+static void start_motor(void);
+static int seek(void);
+static int fdc_transfer(int do_write);
+static int fdc_results(void);
+static int fdc_command(const u8_t *cmd, int len);
+static void fdc_out(int val);
+static int recalibrate(void);
+static void f_reset(void);
+static int f_intr_wait(void);
+static int read_id(void);
+static int f_do_open(dev_t minor, int access);
+static int f_do_close(dev_t minor);
+static int test_read(int density);
+static void f_geometry(dev_t minor, struct partition *entry);
 
 /* Entry points to this driver. */
-PRIVATE struct blockdriver f_dtab = {
+static struct blockdriver f_dtab = {
   BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
   f_do_open,	/* open or mount request, sense type of diskette */
   f_do_close,	/* nothing on a close */
@@ -283,18 +283,18 @@ static char *floppy_buf;
 static phys_bytes floppy_buf_phys;
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
-PUBLIC int last_was_write;
+int last_was_write;
 
 /*===========================================================================*
  *				floppy_task				     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
   /* SEF local startup. */
   sef_local_startup();
@@ -308,7 +308,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -329,7 +329,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the floppy driver. */
   struct floppy *fp;
@@ -369,7 +369,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   int s;
 
@@ -385,7 +385,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				f_expire_tmrs				     *
  *===========================================================================*/
-PRIVATE void f_expire_tmrs(clock_t stamp)
+static void f_expire_tmrs(clock_t stamp)
 {
 /* A synchronous alarm message was received. Call the watchdog function for
  * each expired timer, if any.
@@ -397,7 +397,7 @@ PRIVATE void f_expire_tmrs(clock_t stamp)
 /*===========================================================================*
  *				f_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *f_prepare(dev_t device)
+static struct device *f_prepare(dev_t device)
 {
 /* Prepare for I/O on a device. */
 
@@ -424,7 +424,7 @@ PRIVATE struct device *f_prepare(dev_t device)
 /*===========================================================================*
  *				f_part					     *
  *===========================================================================*/
-PRIVATE struct device *f_part(dev_t minor)
+static struct device *f_part(dev_t minor)
 {
 /* Return a pointer to the partition information of the given minor device. */
 
@@ -434,7 +434,7 @@ PRIVATE struct device *f_part(dev_t minor)
 /*===========================================================================*
  *				f_cleanup				     *
  *===========================================================================*/
-PRIVATE void f_cleanup(void)
+static void f_cleanup(void)
 {
   /* Start a timer to turn the motor off in a few seconds. */
   set_timer(&f_fp->fl_tmr_stop, MOTOR_OFF, stop_motor, f_drive);
@@ -446,7 +446,7 @@ PRIVATE void f_cleanup(void)
 /*===========================================================================*
  *				f_transfer				     *
  *===========================================================================*/
-PRIVATE ssize_t f_transfer(
+static ssize_t f_transfer(
   dev_t minor,			/* minor device number */
   int do_write,			/* read or write? */
   u64_t pos64,			/* offset on device to read or write */
@@ -690,7 +690,7 @@ PRIVATE ssize_t f_transfer(
 /*===========================================================================*
  *				dma_setup				     *
  *===========================================================================*/
-PRIVATE int dma_setup(int do_write)
+static int dma_setup(int do_write)
 {
 /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
  * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
@@ -734,7 +734,7 @@ PRIVATE int dma_setup(int do_write)
 /*===========================================================================*
  *				start_motor				     *
  *===========================================================================*/
-PRIVATE void start_motor(void)
+static void start_motor(void)
 {
 /* Control of the floppy disk motors is a big pain.  If a motor is off, you
  * have to turn it on first, which takes 1/2 second.  You can't leave it on
@@ -788,7 +788,7 @@ PRIVATE void start_motor(void)
 /*===========================================================================*
  *				stop_motor				     *
  *===========================================================================*/
-PRIVATE void stop_motor(timer_t *tp)
+static void stop_motor(timer_t *tp)
 {
 /* This routine is called from an alarm timer after several seconds have
  * elapsed with no floppy disk activity.  It turns the drive motor off.
@@ -802,7 +802,7 @@ PRIVATE void stop_motor(timer_t *tp)
 /*===========================================================================*
  *				seek					     *
  *===========================================================================*/
-PRIVATE int seek(void)
+static int seek(void)
 {
 /* Issue a SEEK command on the indicated drive unless the arm is already
  * positioned on the correct cylinder.
@@ -866,7 +866,7 @@ PRIVATE int seek(void)
 /*===========================================================================*
  *				fdc_transfer				     *
  *===========================================================================*/
-PRIVATE int fdc_transfer(int do_write)
+static int fdc_transfer(int do_write)
 {
 /* The drive is now on the proper cylinder.  Read, write or format 1 block. */
 
@@ -938,7 +938,7 @@ PRIVATE int fdc_transfer(int do_write)
 /*===========================================================================*
  *				fdc_results				     *
  *===========================================================================*/
-PRIVATE int fdc_results(void)
+static int fdc_results(void)
 {
 /* Extract results from the controller after an operation, then allow floppy
  * interrupts again.
@@ -987,7 +987,7 @@ PRIVATE int fdc_results(void)
 /*===========================================================================*
  *				fdc_command				     *
  *===========================================================================*/
-PRIVATE int fdc_command(
+static int fdc_command(
   const u8_t *cmd,	/* command bytes */
   int len		/* command length */
 )
@@ -1012,7 +1012,7 @@ PRIVATE int fdc_command(
 /*===========================================================================*
  *				fdc_out					     *
  *===========================================================================*/
-PRIVATE void fdc_out(
+static void fdc_out(
   int val		/* write this byte to floppy disk controller */
 )
 {
@@ -1045,7 +1045,7 @@ PRIVATE void fdc_out(
 /*===========================================================================*
  *				recalibrate				     *
  *===========================================================================*/
-PRIVATE int recalibrate(void)
+static int recalibrate(void)
 {
 /* The floppy disk controller has no way of determining its absolute arm
  * position (cylinder).  Instead, it steps the arm a cylinder at a time and
@@ -1087,7 +1087,7 @@ PRIVATE int recalibrate(void)
 /*===========================================================================*
  *				f_reset					     *
  *===========================================================================*/
-PRIVATE void f_reset(void)
+static void f_reset(void)
 {
 /* Issue a reset to the controller.  This is done after any catastrophe,
  * like the controller refusing to respond.
@@ -1160,7 +1160,7 @@ PRIVATE void f_reset(void)
 /*===========================================================================*
  *				f_intr_wait				     *
  *===========================================================================*/
-PRIVATE int f_intr_wait(void)
+static int f_intr_wait(void)
 {
 /* Wait for an interrupt, but not forever.  The FDC may have all the time of
  * the world, but we humans do not.
@@ -1199,7 +1199,7 @@ PRIVATE int f_intr_wait(void)
 /*===========================================================================*
  *				f_timeout				     *
  *===========================================================================*/
-PRIVATE void f_timeout(timer_t *UNUSED(tp))
+static void f_timeout(timer_t *UNUSED(tp))
 {
 /* This routine is called when a timer expires.  Usually to tell that a
  * motor has spun up, but also to forge an interrupt when it takes too long
@@ -1214,7 +1214,7 @@ PRIVATE void f_timeout(timer_t *UNUSED(tp))
 /*===========================================================================*
  *				read_id					     *
  *===========================================================================*/
-PRIVATE int read_id(void)
+static int read_id(void)
 {
 /* Determine current cylinder and sector. */
 
@@ -1247,7 +1247,7 @@ PRIVATE int read_id(void)
 /*===========================================================================*
  *				f_do_open				     *
  *===========================================================================*/
-PRIVATE int f_do_open(dev_t minor, int UNUSED(access))
+static int f_do_open(dev_t minor, int UNUSED(access))
 {
 /* Handle an open on a floppy.  Determine diskette type if need be. */
 
@@ -1306,7 +1306,7 @@ PRIVATE int f_do_open(dev_t minor, int UNUSED(access))
 /*===========================================================================*
  *				f_do_close				     *
  *===========================================================================*/
-PRIVATE int f_do_close(dev_t UNUSED(minor))
+static int f_do_close(dev_t UNUSED(minor))
 {
 /* Handle a close on a floppy.  Nothing to do here. */
 
@@ -1316,7 +1316,7 @@ PRIVATE int f_do_close(dev_t UNUSED(minor))
 /*===========================================================================*
  *				test_read				     *
  *===========================================================================*/
-PRIVATE int test_read(int density)
+static int test_read(int density)
 {
 /* Try to read the highest numbered sector on cylinder 2.  Not all floppy
  * types have as many sectors per track, and trying cylinder 2 finds the
@@ -1346,7 +1346,7 @@ PRIVATE int test_read(int density)
 /*===========================================================================*
  *				f_geometry				     *
  *===========================================================================*/
-PRIVATE void f_geometry(dev_t minor, struct partition *entry)
+static void f_geometry(dev_t minor, struct partition *entry)
 {
   if (f_prepare(minor) == NULL) return;
 

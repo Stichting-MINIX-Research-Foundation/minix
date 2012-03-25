@@ -8,21 +8,21 @@
 
 /* Self variables. */
 #define SEF_SELF_NAME_MAXLEN 20
-PUBLIC char sef_self_name[SEF_SELF_NAME_MAXLEN];
-PUBLIC endpoint_t sef_self_endpoint;
-PUBLIC int sef_self_priv_flags;
-PUBLIC int sef_self_first_receive_done;
+char sef_self_name[SEF_SELF_NAME_MAXLEN];
+endpoint_t sef_self_endpoint;
+int sef_self_priv_flags;
+int sef_self_first_receive_done;
 
 /* Debug. */
 #if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
 #define SEF_DEBUG_HEADER_MAXLEN 32
-PRIVATE time_t sef_debug_boottime = 0;
-PRIVATE u32_t sef_debug_system_hz = 0;
-PRIVATE time_t sef_debug_time_sec = 0;
-PRIVATE time_t sef_debug_time_us = 0;
-PRIVATE char sef_debug_header_buff[SEF_DEBUG_HEADER_MAXLEN];
-FORWARD void sef_debug_refresh_params(void);
-PUBLIC char* sef_debug_header(void);
+static time_t sef_debug_boottime = 0;
+static u32_t sef_debug_system_hz = 0;
+static time_t sef_debug_time_sec = 0;
+static time_t sef_debug_time_us = 0;
+static char sef_debug_header_buff[SEF_DEBUG_HEADER_MAXLEN];
+static void sef_debug_refresh_params(void);
+char* sef_debug_header(void);
 #endif
 
 /* SEF Init prototypes. */
@@ -45,7 +45,7 @@ EXTERN int do_sef_signal_request(message *m_ptr);
 /*===========================================================================*
  *				sef_startup				     *
  *===========================================================================*/
-PUBLIC void sef_startup()
+void sef_startup()
 {
 /* SEF startup interface for system services. */
   int r, status;
@@ -114,7 +114,7 @@ PUBLIC void sef_startup()
 /*===========================================================================*
  *				sef_receive_status			     *
  *===========================================================================*/
-PUBLIC int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
+int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 {
 /* SEF receive() interface for system services. */
   int r, status;
@@ -183,7 +183,7 @@ PUBLIC int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 /*===========================================================================*
  *      	                  sef_exit                                   *
  *===========================================================================*/
-PUBLIC void sef_exit(int status)
+void sef_exit(int status)
 {
 /* System services use a special version of exit() that generates a
  * self-termination signal.
@@ -205,7 +205,7 @@ PUBLIC void sef_exit(int status)
 /*===========================================================================*
  *      	                     _exit                                   *
  *===========================================================================*/
-PUBLIC void _exit(int status)
+void _exit(int status)
 {
 /* Make exit() an alias for sef_exit() for system services. */
   sef_exit(status);
@@ -215,7 +215,7 @@ PUBLIC void _exit(int status)
 /*===========================================================================*
  *      	                    __exit                                   *
  *===========================================================================*/
-PUBLIC void __exit(int status)
+void __exit(int status)
 {
 /* Make exit() an alias for sef_exit() for system services. */
   sef_exit(status);
@@ -226,7 +226,7 @@ PUBLIC void __exit(int status)
 /*===========================================================================*
  *                         sef_debug_refresh_params              	     *
  *===========================================================================*/
-PRIVATE void sef_debug_refresh_params(void)
+static void sef_debug_refresh_params(void)
 {
 /* Refresh SEF debug params. */
   clock_t uptime;
@@ -274,7 +274,7 @@ PRIVATE void sef_debug_refresh_params(void)
 /*===========================================================================*
  *                              sef_debug_header              		     *
  *===========================================================================*/
-PUBLIC char* sef_debug_header(void)
+char* sef_debug_header(void)
 {
 /* Build and return a SEF debug header. */
   sef_debug_refresh_params();

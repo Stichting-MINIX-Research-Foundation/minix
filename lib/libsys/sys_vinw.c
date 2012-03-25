@@ -4,7 +4,7 @@
 /*===========================================================================*
  *                                sys_vinw				     *
  *===========================================================================*/
-PUBLIC int sys_vinw(pvw_pairs, nr_ports)
+int sys_vinw(pvw_pairs, nr_ports)
 pvw_pair_t *pvw_pairs;			/* (port,word-value)-pairs */
 int nr_ports;				/* nr of pairs to be processed */
 {

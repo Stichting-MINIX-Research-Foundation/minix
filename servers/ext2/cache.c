@@ -25,15 +25,15 @@
 #include "super.h"
 #include "inode.h"
 
-FORWARD void rm_lru(struct buf *bp);
-FORWARD void rw_block(struct buf *, int);
+static void rm_lru(struct buf *bp);
+static void rw_block(struct buf *, int);
 
-PRIVATE int vmcache_avail = -1; /* 0 if not available, >0 if available. */
+static int vmcache_avail = -1; /* 0 if not available, >0 if available. */
 
 /*===========================================================================*
  *				get_block				     *
  *===========================================================================*/
-PUBLIC struct buf *get_block(
+struct buf *get_block(
   register dev_t dev,		/* on which device is the block? */
   register block_t block,	/* which block is wanted? */
   int only_search		/* if NO_READ, don't read, else act normal */
@@ -218,7 +218,7 @@ PUBLIC struct buf *get_block(
 /*===========================================================================*
  *				put_block				     *
  *===========================================================================*/
-PUBLIC void put_block(
+void put_block(
   register struct buf *bp,	/* pointer to the buffer to be released */
   int block_type 		/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 )
@@ -281,7 +281,7 @@ PUBLIC void put_block(
 /*===========================================================================*
  *				rw_block				     *
  *===========================================================================*/
-PRIVATE void rw_block(
+static void rw_block(
   register struct buf *bp,	/* buffer pointer */
   int rw_flag 			/* READING or WRITING */
 )
@@ -327,7 +327,7 @@ PRIVATE void rw_block(
 /*===========================================================================*
  *				invalidate				     *
  *===========================================================================*/
-PUBLIC void invalidate(
+void invalidate(
   dev_t device 		/* device whose blocks are to be purged */
 )
 {
@@ -344,7 +344,7 @@ PUBLIC void invalidate(
 /*===========================================================================*
  *				flushall				     *
  *===========================================================================*/
-PUBLIC void flushall(
+void flushall(
   dev_t dev 			/* device to flush */
 )
 {
@@ -373,7 +373,7 @@ PUBLIC void flushall(
 /*===========================================================================*
  *				rw_scattered				     *
  *===========================================================================*/
-PUBLIC void rw_scattered(
+void rw_scattered(
   dev_t dev,			/* major-minor device number */
   struct buf **bufq,		/* pointer to array of buffers */
   int bufqsize,		/* number of buffers */
@@ -476,7 +476,7 @@ PUBLIC void rw_scattered(
 /*===========================================================================*
  *				rm_lru					     *
  *===========================================================================*/
-PRIVATE void rm_lru(
+static void rm_lru(
   struct buf *bp
 )
 {
@@ -500,7 +500,7 @@ PRIVATE void rm_lru(
 /*===========================================================================*
  *				set_blocksize				     *
  *===========================================================================*/
-PUBLIC void set_blocksize(unsigned int blocksize, u32_t blocks,
+void set_blocksize(unsigned int blocksize, u32_t blocks,
 	u32_t freeblocks, dev_t majordev)
 {
   struct buf *bp;
@@ -524,7 +524,7 @@ PUBLIC void set_blocksize(unsigned int blocksize, u32_t blocks,
 /*===========================================================================*
  *                              buf_pool                                     *
  *===========================================================================*/
-PUBLIC void buf_pool(int new_nr_bufs)
+void buf_pool(int new_nr_bufs)
 {
 /* Initialize the buffer pool. */
   register struct buf *bp;

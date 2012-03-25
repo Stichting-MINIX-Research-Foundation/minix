@@ -555,7 +555,7 @@ static void el3_write_id(port_t port)
 **  Name:	int el3_probe(dpeth_t *dep)
 **  Function:	Checks for presence of the board.
 */
-PUBLIC int el3_probe(dpeth_t * dep)
+int el3_probe(dpeth_t * dep)
 {
   port_t id_port;
 

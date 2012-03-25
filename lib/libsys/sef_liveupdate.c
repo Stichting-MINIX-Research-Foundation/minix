@@ -3,10 +3,10 @@
 #include <minix/sysutil.h>
 
 /* SEF Live update variables. */
-PRIVATE int sef_lu_state;
+static int sef_lu_state;
 
 /* SEF Live update callbacks. */
-PRIVATE struct sef_cbs {
+static struct sef_cbs {
     sef_cb_lu_prepare_t                 sef_cb_lu_prepare;
     sef_cb_lu_state_isvalid_t           sef_cb_lu_state_isvalid;
     sef_cb_lu_state_changed_t           sef_cb_lu_state_changed;
@@ -23,15 +23,15 @@ PRIVATE struct sef_cbs {
 };
 
 /* SEF Live update prototypes for sef_receive(). */
-PUBLIC void do_sef_lu_before_receive(void);
-PUBLIC int do_sef_lu_request(message *m_ptr);
+void do_sef_lu_before_receive(void);
+int do_sef_lu_request(message *m_ptr);
 
 /* SEF Live update helpers. */
-PRIVATE void sef_lu_ready(int result);
+static void sef_lu_ready(int result);
 
 /* Debug. */
 EXTERN char* sef_debug_header(void);
-PRIVATE int sef_lu_debug_cycle = 0;
+static int sef_lu_debug_cycle = 0;
 
 /* Information about SELF. */
 EXTERN endpoint_t sef_self_endpoint;
@@ -40,7 +40,7 @@ EXTERN int sef_self_first_receive_done;
 /*===========================================================================*
  *                         do_sef_lu_before_receive             	     *
  *===========================================================================*/
-PUBLIC void do_sef_lu_before_receive()
+void do_sef_lu_before_receive()
 {
 /* Handle SEF Live update before receive events. */
   int r;
@@ -80,7 +80,7 @@ PUBLIC void do_sef_lu_before_receive()
 /*===========================================================================*
  *                               do_sef_lu_request              	     *
  *===========================================================================*/
-PUBLIC int do_sef_lu_request(message *m_ptr)
+int do_sef_lu_request(message *m_ptr)
 {
 /* Handle a SEF Live update request. */
   int state, old_state, is_valid_state;
@@ -121,7 +121,7 @@ PUBLIC int do_sef_lu_request(message *m_ptr)
 /*===========================================================================*
  *				  sef_lu_ready				     *
  *===========================================================================*/
-PRIVATE void sef_lu_ready(int result)
+static void sef_lu_ready(int result)
 {
   message m;
   int old_state, r;
@@ -177,7 +177,7 @@ PRIVATE void sef_lu_ready(int result)
 /*===========================================================================*
  *                            sef_setcb_lu_prepare                           *
  *===========================================================================*/
-PUBLIC void sef_setcb_lu_prepare(sef_cb_lu_prepare_t cb)
+void sef_setcb_lu_prepare(sef_cb_lu_prepare_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_lu_prepare = cb;
@@ -186,7 +186,7 @@ PUBLIC void sef_setcb_lu_prepare(sef_cb_lu_prepare_t cb)
 /*===========================================================================*
  *                         sef_setcb_lu_state_isvalid                        *
  *===========================================================================*/
-PUBLIC void sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_t cb)
+void sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_lu_state_isvalid = cb;
@@ -195,7 +195,7 @@ PUBLIC void sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_t cb)
 /*===========================================================================*
  *                         sef_setcb_lu_state_changed                        *
  *===========================================================================*/
-PUBLIC void sef_setcb_lu_state_changed(sef_cb_lu_state_changed_t cb)
+void sef_setcb_lu_state_changed(sef_cb_lu_state_changed_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_lu_state_changed = cb;
@@ -204,7 +204,7 @@ PUBLIC void sef_setcb_lu_state_changed(sef_cb_lu_state_changed_t cb)
 /*===========================================================================*
  *                          sef_setcb_lu_state_dump                          *
  *===========================================================================*/
-PUBLIC void sef_setcb_lu_state_dump(sef_cb_lu_state_dump_t cb)
+void sef_setcb_lu_state_dump(sef_cb_lu_state_dump_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_lu_state_dump = cb;
@@ -213,7 +213,7 @@ PUBLIC void sef_setcb_lu_state_dump(sef_cb_lu_state_dump_t cb)
 /*===========================================================================*
  *                          sef_setcb_lu_state_save                           *
  *===========================================================================*/
-PUBLIC void sef_setcb_lu_state_save(sef_cb_lu_state_save_t cb)
+void sef_setcb_lu_state_save(sef_cb_lu_state_save_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_lu_state_save = cb;
@@ -222,7 +222,7 @@ PUBLIC void sef_setcb_lu_state_save(sef_cb_lu_state_save_t cb)
 /*===========================================================================*
  *                          sef_setcb_lu_response                            *
  *===========================================================================*/
-PUBLIC void sef_setcb_lu_response(sef_cb_lu_response_t cb)
+void sef_setcb_lu_response(sef_cb_lu_response_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_lu_response = cb;
@@ -231,7 +231,7 @@ PUBLIC void sef_setcb_lu_response(sef_cb_lu_response_t cb)
 /*===========================================================================*
  *      	            sef_cb_lu_prepare_null 	 	             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_prepare_null(int UNUSED(state))
+int sef_cb_lu_prepare_null(int UNUSED(state))
 {
   return ENOTREADY;
 }
@@ -239,7 +239,7 @@ PUBLIC int sef_cb_lu_prepare_null(int UNUSED(state))
 /*===========================================================================*
  *      	         sef_cb_lu_state_isvalid_null		             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_isvalid_null(int UNUSED(state))
+int sef_cb_lu_state_isvalid_null(int UNUSED(state))
 {
   return FALSE;
 }
@@ -247,7 +247,7 @@ PUBLIC int sef_cb_lu_state_isvalid_null(int UNUSED(state))
 /*===========================================================================*
  *                       sef_cb_lu_state_changed_null        		     *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_state_changed_null(int UNUSED(old_state),
+void sef_cb_lu_state_changed_null(int UNUSED(old_state),
    int UNUSED(state))
 {
 }
@@ -255,7 +255,7 @@ PUBLIC void sef_cb_lu_state_changed_null(int UNUSED(old_state),
 /*===========================================================================*
  *                       sef_cb_lu_state_dump_null        		     *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_state_dump_null(int UNUSED(state))
+void sef_cb_lu_state_dump_null(int UNUSED(state))
 {
   sef_lu_dprint("NULL\n");
 }
@@ -263,7 +263,7 @@ PUBLIC void sef_cb_lu_state_dump_null(int UNUSED(state))
 /*===========================================================================*
  *                       sef_cb_lu_state_save_null        		     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_save_null(int UNUSED(result))
+int sef_cb_lu_state_save_null(int UNUSED(result))
 {
   return OK;
 }
@@ -271,7 +271,7 @@ PUBLIC int sef_cb_lu_state_save_null(int UNUSED(result))
 /*===========================================================================*
  *                       sef_cb_lu_response_null        		     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_response_null(message * UNUSED(m_ptr))
+int sef_cb_lu_response_null(message * UNUSED(m_ptr))
 {
   return ENOSYS;
 }
@@ -279,7 +279,7 @@ PUBLIC int sef_cb_lu_response_null(message * UNUSED(m_ptr))
 /*===========================================================================*
  *      	       sef_cb_lu_prepare_always_ready	                     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_prepare_always_ready(int UNUSED(state))
+int sef_cb_lu_prepare_always_ready(int UNUSED(state))
 {
   return OK;
 }
@@ -287,7 +287,7 @@ PUBLIC int sef_cb_lu_prepare_always_ready(int UNUSED(state))
 /*===========================================================================*
  *      	       sef_cb_lu_prepare_never_ready	                     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_prepare_never_ready(int UNUSED(state))
+int sef_cb_lu_prepare_never_ready(int UNUSED(state))
 {
 #if SEF_LU_DEBUG
   sef_lu_debug_begin();
@@ -302,7 +302,7 @@ PUBLIC int sef_cb_lu_prepare_never_ready(int UNUSED(state))
 /*===========================================================================*
  *      	         sef_cb_lu_prepare_crash	                     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_prepare_crash(int UNUSED(state))
+int sef_cb_lu_prepare_crash(int UNUSED(state))
 {
   panic("Simulating a crash at update prepare time...");
 
@@ -312,7 +312,7 @@ PUBLIC int sef_cb_lu_prepare_crash(int UNUSED(state))
 /*===========================================================================*
  *      	      sef_cb_lu_state_isvalid_standard                       *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_isvalid_standard(int state)
+int sef_cb_lu_state_isvalid_standard(int state)
 {
   return SEF_LU_STATE_IS_STANDARD(state);
 }
@@ -320,7 +320,7 @@ PUBLIC int sef_cb_lu_state_isvalid_standard(int state)
 /*===========================================================================*
  *      	      sef_cb_lu_state_isvalid_workfree                       *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_isvalid_workfree(int state)
+int sef_cb_lu_state_isvalid_workfree(int state)
 {
   return (state == SEF_LU_STATE_WORK_FREE);
 }
@@ -328,7 +328,7 @@ PUBLIC int sef_cb_lu_state_isvalid_workfree(int state)
 /*===========================================================================*
  *                       sef_cb_lu_response_rs_reply        		     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_response_rs_reply(message *m_ptr)
+int sef_cb_lu_response_rs_reply(message *m_ptr)
 {
   int r;
 

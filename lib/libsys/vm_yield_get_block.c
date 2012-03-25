@@ -7,7 +7,7 @@
 /*===========================================================================*
  *                                vm_forgetblocks		     	*
  *===========================================================================*/
-PUBLIC void vm_forgetblocks(void)
+void vm_forgetblocks(void)
 {
 	message m;
 	_taskcall(VM_PROC_NR, VM_FORGETBLOCKS, &m);
@@ -17,7 +17,7 @@ PUBLIC void vm_forgetblocks(void)
 /*===========================================================================*
  *                                vm_forgetblock		     	*
  *===========================================================================*/
-PUBLIC int vm_forgetblock(u64_t id)
+int vm_forgetblock(u64_t id)
 {
 	message m;
 
@@ -30,7 +30,7 @@ PUBLIC int vm_forgetblock(u64_t id)
 /*===========================================================================*
  *                                vm_yield_block_get_block	     	*
  *===========================================================================*/
-PUBLIC int vm_yield_block_get_block(u64_t yieldid, u64_t getid,
+int vm_yield_block_get_block(u64_t yieldid, u64_t getid,
 	void *mem, vir_bytes len)
 {
 	message m;

@@ -24,12 +24,12 @@
 struct proc *prc;
 long lbuf[SIZ];		
 
-PRIVATE char segment_name[] = "TDS";
+static char segment_name[] = "TDS";
 
 /* 
  * Display memory maps 
  */
-PUBLIC void disp_maps()
+void disp_maps()
 {
   int i;
   long int vir, phy, len;
@@ -45,7 +45,7 @@ PUBLIC void disp_maps()
   }
 }
 
-PUBLIC void update()
+void update()
 {
   int i;
 
@@ -68,7 +68,7 @@ PUBLIC void update()
 
 }
 
-PUBLIC int disp_regs()
+int disp_regs()
 {
    int i;
 
@@ -118,13 +118,13 @@ PUBLIC int disp_regs()
 #ifdef MINIX_PC
 
 #ifdef __i386
-PRIVATE char regs[] = "fs gs ds es di si bp    bx dx cx ax    ip cs ps sp ss";
+static char regs[] = "fs gs ds es di si bp    bx dx cx ax    ip cs ps sp ss";
 #else
-PRIVATE char regs[] = "es ds di si bp    bx dx cx ax    ip cs ps sp ss";
+static char regs[] = "es ds di si bp    bx dx cx ax    ip cs ps sp ss";
 #endif
 
 /* Get register for pid at offset k */
-PUBLIC long get_reg(pid, k)
+long get_reg(pid, k)
 int pid;
 long k;
 {
@@ -149,7 +149,7 @@ long k;
 
 
 /* Set register for pid at offset k */
-PUBLIC void set_reg(pid, k, value)
+void set_reg(pid, k, value)
 int pid;
 long k;
 long value;
@@ -164,7 +164,7 @@ long value;
 }
 
 
-PUBLIC long reg_addr(s)
+long reg_addr(s)
 char *s;
 {
   long val;
@@ -198,7 +198,7 @@ char *s;
 }
 
 
-PUBLIC int outsegreg(num)
+int outsegreg(num)
 off_t num;
 {
 /* print segment register */
@@ -217,14 +217,14 @@ off_t num;
 #ifdef MINIX_ST
 
 /* Get register for pid at offset k */
-PUBLIC long get_reg(pid, k)
+long get_reg(pid, k)
 int pid;
 long k;
 {
   return ptrace(T_GETUSER, pid, k, 0L);
 }
 
-PUBLIC long reg_addr(s)
+long reg_addr(s)
 char *s;
 {
   long val;

@@ -35,7 +35,7 @@ char BACKUP_LABEL[LABEL_SIZE] = "";		/* backup disk driver label */
 int MAIN_MINOR = -1;				/* main partition minor nr */
 int BACKUP_MINOR = -1;				/* backup partition minor nr */
 
-PRIVATE struct optset optset_table[] = {
+static struct optset optset_table[] = {
   { "label0",	OPT_STRING,	MAIN_LABEL,		LABEL_SIZE	},
   { "label1",	OPT_STRING,	BACKUP_LABEL,		LABEL_SIZE	},
   { "minor0",	OPT_INT,	&MAIN_MINOR,		10		},
@@ -73,9 +73,9 @@ static cp_grant_id_t grant_id;			/* BDEV_GRANT */
 static char *buf_array, *buffer;		/* contiguous buffer */
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				carry					     *
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -443,7 +443,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the filter driver. */
 	int r;
@@ -476,7 +476,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	/* Only check for termination signal, ignore anything else. */
 	if (signo != SIGTERM) return;

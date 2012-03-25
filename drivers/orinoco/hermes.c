@@ -43,7 +43,7 @@
  *                                                                           *
  * Wait msecs milli seconds                                                  *
  *****************************************************************************/
-PRIVATE void milli_delay(unsigned int msecs)
+static void milli_delay(unsigned int msecs)
 {
 	micro_delay((long)msecs * 1000);
 }
@@ -141,7 +141,7 @@ int hermes_cor_reset (hermes_t *hw) {
  * Check whether we have access to the card. Does the SWSUPPORT0 contain the *
  * value we put in it earlier?                                               *
  *****************************************************************************/
-PRIVATE int hermes_present (hermes_t * hw) {
+static int hermes_present (hermes_t * hw) {
 	int i = hermes_read_reg (hw, HERMES_SWSUPPORT0) == HERMES_MAGIC;
 	if (!i)
 		printf("Hermes: Error, card not present?\n");

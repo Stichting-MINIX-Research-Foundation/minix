@@ -27,20 +27,20 @@
 #endif
 #endif
 
-PUBLIC int i386_paging_enabled = 0;
+int i386_paging_enabled = 0;
 
-PRIVATE int psok = 0;
+static int psok = 0;
 
 #define MAX_FREEPDES	2
-PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
+static int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
-FORWARD u32_t phys_get32(phys_bytes v);
-FORWARD void vm_enable_paging(void);
+static u32_t phys_get32(phys_bytes v);
+static void vm_enable_paging(void);
 
 	
-PUBLIC void segmentation2paging(struct proc * current)
+void segmentation2paging(struct proc * current)
 {
 	/* switch to the current process page tables before turning paging on */
 	switch_address_space(current);
@@ -67,7 +67,7 @@ PUBLIC void segmentation2paging(struct proc * current)
  * pde number to be used, and a pointer to it (linear address) is returned
  * for actual use by phys_copy or phys_memset.
  */
-PRIVATE phys_bytes createpde(
+static phys_bytes createpde(
 	const struct proc *pr,	/* Requested process, NULL for physical. */
 	const phys_bytes linaddr,/* Address after segment translation. */
 	phys_bytes *bytes,	/* Size of chunk, function may truncate it. */
@@ -132,7 +132,7 @@ PRIVATE phys_bytes createpde(
 /*===========================================================================*
  *				lin_lin_copy				     *
  *===========================================================================*/
-PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
+static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
 	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
 {
 	u32_t addr;
@@ -214,7 +214,7 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 }
 
 
-PRIVATE u32_t phys_get32(phys_bytes addr)
+static u32_t phys_get32(phys_bytes addr)
 {
 	const u32_t v;
 	int r;
@@ -233,7 +233,7 @@ PRIVATE u32_t phys_get32(phys_bytes addr)
 }
 
 #if 0
-PRIVATE char *cr0_str(u32_t e)
+static char *cr0_str(u32_t e)
 {
 	static char str[80];
 	strcpy(str, "");
@@ -249,7 +249,7 @@ PRIVATE char *cr0_str(u32_t e)
 	return str;
 }
 
-PRIVATE char *cr4_str(u32_t e)
+static char *cr4_str(u32_t e)
 {
 	static char str[80];
 	strcpy(str, "");
@@ -266,12 +266,12 @@ PRIVATE char *cr4_str(u32_t e)
 }
 #endif
 
-PUBLIC void vm_stop(void)
+void vm_stop(void)
 {
 	write_cr0(read_cr0() & ~I386_CR0_PG);
 }
 
-PRIVATE void vm_enable_paging(void)
+static void vm_enable_paging(void)
 {
 	u32_t cr0, cr4;
 	int pgeok;
@@ -311,7 +311,7 @@ PRIVATE void vm_enable_paging(void)
 /*===========================================================================*
  *                              umap_local                                   *
  *===========================================================================*/
-PUBLIC phys_bytes umap_local(rp, seg, vir_addr, bytes)
+phys_bytes umap_local(rp, seg, vir_addr, bytes)
 register struct proc *rp;       /* pointer to proc table entry for process */
 int seg;                        /* T, D, or S segment */
 vir_bytes vir_addr;             /* virtual address in bytes within the seg */
@@ -350,7 +350,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 /*===========================================================================*
  *                              umap_virtual                                 *
  *===========================================================================*/
-PUBLIC phys_bytes umap_virtual(rp, seg, vir_addr, bytes)
+phys_bytes umap_virtual(rp, seg, vir_addr, bytes)
 register struct proc *rp;       /* pointer to proc table entry for process */
 int seg;                        /* T, D, or S segment */
 vir_bytes vir_addr;             /* virtual address in bytes within the seg */
@@ -399,7 +399,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 /*===========================================================================*
  *                              vm_lookup                                    *
  *===========================================================================*/
-PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
+int vm_lookup(const struct proc *proc, const vir_bytes virtual,
  phys_bytes *physical, u32_t *ptent)
 {
 	u32_t *root, *pt;
@@ -455,7 +455,7 @@ PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 /*===========================================================================*
  *				vm_lookup_range				     *
  *===========================================================================*/
-PUBLIC size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
+size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 	phys_bytes *phys_addr, size_t bytes)
 {
 	/* Look up the physical address corresponding to linear virtual address
@@ -507,7 +507,7 @@ PUBLIC size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 /*===========================================================================*
  *                              vm_suspend                                *
  *===========================================================================*/
-PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
+static void vm_suspend(struct proc *caller, const struct proc *target,
 	const vir_bytes linaddr, const vir_bytes len, const int type)
 {
 	/* This range is not OK for this process. Set parameters  
@@ -534,7 +534,7 @@ PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
 /*===========================================================================*
  *				vm_check_range				     *
  *===========================================================================*/
-PUBLIC int vm_check_range(struct proc *caller, struct proc *target,
+int vm_check_range(struct proc *caller, struct proc *target,
 	vir_bytes vir_addr, size_t bytes)
 {
 	/* Public interface to vm_suspend(), for use by kernel calls. On behalf
@@ -562,7 +562,7 @@ PUBLIC int vm_check_range(struct proc *caller, struct proc *target,
 /*===========================================================================*
  *                              delivermsg                                *
  *===========================================================================*/
-PUBLIC void delivermsg(struct proc *rp)
+void delivermsg(struct proc *rp)
 {
 	int r = OK;
 
@@ -589,7 +589,7 @@ PUBLIC void delivermsg(struct proc *rp)
 }
 
 #if 0
-PRIVATE char *flagstr(u32_t e, const int dir)
+static char *flagstr(u32_t e, const int dir)
 {
 	static char str[80];
 	strcpy(str, "");
@@ -606,7 +606,7 @@ PRIVATE char *flagstr(u32_t e, const int dir)
 	return str;
 }
 
-PRIVATE void vm_pt_print(u32_t *pagetable, const u32_t v)
+static void vm_pt_print(u32_t *pagetable, const u32_t v)
 {
 	int pte;
 	int col = 0;
@@ -630,7 +630,7 @@ PRIVATE void vm_pt_print(u32_t *pagetable, const u32_t v)
 	return;
 }
 
-PRIVATE void vm_print(u32_t *root)
+static void vm_print(u32_t *root)
 {
 	int pde;
 
@@ -705,7 +705,7 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 /*===========================================================================*
  *				virtual_copy_f				     *
  *===========================================================================*/
-PUBLIC int virtual_copy_f(caller, src_addr, dst_addr, bytes, vmcheck)
+int virtual_copy_f(caller, src_addr, dst_addr, bytes, vmcheck)
 struct proc * caller;
 struct vir_addr *src_addr;	/* source virtual address */
 struct vir_addr *dst_addr;	/* destination virtual address */
@@ -848,7 +848,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 /*===========================================================================*
  *				data_copy				     *
  *===========================================================================*/
-PUBLIC int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
+int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
 	const endpoint_t to_proc, const vir_bytes to_addr,
 	size_t bytes)
 {
@@ -866,7 +866,7 @@ PUBLIC int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
 /*===========================================================================*
  *				data_copy_vmcheck			     *
  *===========================================================================*/
-PUBLIC int data_copy_vmcheck(struct proc * caller,
+int data_copy_vmcheck(struct proc * caller,
 	const endpoint_t from_proc, const vir_bytes from_addr,
 	const endpoint_t to_proc, const vir_bytes to_addr,
 	size_t bytes)
@@ -885,7 +885,7 @@ PUBLIC int data_copy_vmcheck(struct proc * caller,
 /*===========================================================================*
  *				arch_pre_exec				     *
  *===========================================================================*/
-PUBLIC void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
+void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
 {
 /* set program counter and stack pointer. */
 	pr->p_reg.pc = ip;
@@ -895,7 +895,7 @@ PUBLIC void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
 /*===========================================================================*
  *				arch_umap				     *
  *===========================================================================*/
-PUBLIC int arch_umap(const struct proc *pr, vir_bytes offset, vir_bytes count,
+int arch_umap(const struct proc *pr, vir_bytes offset, vir_bytes count,
 	int seg, phys_bytes *addr)
 {
 	switch(seg) {
@@ -919,12 +919,12 @@ void i386_freepde(const int pde)
 	freepdes[nfreepdes++] = pde;
 }
 
-PRIVATE int oxpcie_mapping_index = -1,
+static int oxpcie_mapping_index = -1,
 	lapic_mapping_index = -1,
 	ioapic_first_index = -1,
 	ioapic_last_index = -1;
 
-PUBLIC int arch_phys_map(const int index,
+int arch_phys_map(const int index,
 			phys_bytes *addr,
 			phys_bytes *len,
 			int *flags)
@@ -988,7 +988,7 @@ PUBLIC int arch_phys_map(const int index,
 	return EINVAL;
 }
 
-PUBLIC int arch_phys_map_reply(const int index, const vir_bytes addr)
+int arch_phys_map_reply(const int index, const vir_bytes addr)
 {
 #ifdef USE_APIC
 	/* if local APIC is enabled */
@@ -1013,7 +1013,7 @@ PUBLIC int arch_phys_map_reply(const int index, const vir_bytes addr)
 	return EINVAL;
 }
 
-PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
+int arch_enable_paging(struct proc * caller, const message * m_ptr)
 {
 	struct vm_ep_data ep_data;
 	int r;
@@ -1099,13 +1099,13 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 	return OK;
 }
 
-PUBLIC void release_address_space(struct proc *pr)
+void release_address_space(struct proc *pr)
 {
 	pr->p_seg.p_cr3_v = NULL;
 }
 
 /* computes a checksum of a buffer of a given length. The byte sum must be zero */
-PUBLIC int platform_tbl_checksum_ok(void *ptr, unsigned int length)
+int platform_tbl_checksum_ok(void *ptr, unsigned int length)
 {
 	u8_t total = 0;
 	unsigned int i;
@@ -1114,7 +1114,7 @@ PUBLIC int platform_tbl_checksum_ok(void *ptr, unsigned int length)
 	return !total;
 }
 
-PUBLIC int platform_tbl_ptr(phys_bytes start,
+int platform_tbl_ptr(phys_bytes start,
 					phys_bytes end,
 					unsigned increment,
 					void * buff,

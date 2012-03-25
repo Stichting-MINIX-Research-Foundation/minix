@@ -15,23 +15,23 @@
 #include "kernel/proc.h"
 
 /* Declare some local functions. */
-FORWARD void boot_image_info_lookup( endpoint_t endpoint, struct
+static void boot_image_info_lookup( endpoint_t endpoint, struct
 	boot_image *image, struct boot_image **ip, struct boot_image_priv **pp,
 	struct boot_image_sys **sp, struct boot_image_dev **dp);
-FORWARD void catch_boot_init_ready(endpoint_t endpoint);
-FORWARD void get_work(message *m_ptr, int *status_ptr);
+static void catch_boot_init_ready(endpoint_t endpoint);
+static void get_work(message *m_ptr, int *status_ptr);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
-FORWARD int sef_cb_signal_manager(endpoint_t target, int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
+static int sef_cb_signal_manager(endpoint_t target, int signo);
 
 
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
 /* This is the main routine of this service. The main loop consists of 
  * three major activities: getting new work, processing the work, and
@@ -134,7 +134,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_response(do_init_ready);
@@ -155,7 +155,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the reincarnation server. */
   struct boot_image *ip;
@@ -483,7 +483,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		            sef_cb_signal_handler                            *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Check for known signals, ignore anything else. */
   switch(signo) {
@@ -499,7 +499,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *		            sef_cb_signal_manager                            *
  *===========================================================================*/
-PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
+static int sef_cb_signal_manager(endpoint_t target, int signo)
 {
 /* Process system signal on behalf of the kernel. */
   int target_p;
@@ -558,7 +558,7 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
 /*===========================================================================*
  *                         boot_image_info_lookup                            *
  *===========================================================================*/
-PRIVATE void boot_image_info_lookup(endpoint, image, ip, pp, sp, dp)
+static void boot_image_info_lookup(endpoint, image, ip, pp, sp, dp)
 endpoint_t endpoint;
 struct boot_image *image;
 struct boot_image **ip;
@@ -633,7 +633,7 @@ struct boot_image_dev **dp;
 /*===========================================================================*
  *			      catch_boot_init_ready                          *
  *===========================================================================*/
-PRIVATE void catch_boot_init_ready(endpoint)
+static void catch_boot_init_ready(endpoint)
 endpoint_t endpoint;
 {
 /* Block and catch an init ready message from the given source. */
@@ -671,7 +671,7 @@ endpoint_t endpoint;
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-PRIVATE void get_work(m_ptr, status_ptr)
+static void get_work(m_ptr, status_ptr)
 message *m_ptr;				/* pointer to message */
 int *status_ptr;			/* pointer to status */
 {

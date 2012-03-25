@@ -19,7 +19,7 @@ extern char *_brksize;
  * as with system calls.  In this way, if a user inadvertently defines a
  * procedure brk, MINIX may continue to work because the true call is _brk.
  */
-PUBLIC int brk(addr)
+int brk(addr)
 void *addr;
 {
   message m;

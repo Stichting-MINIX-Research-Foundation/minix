@@ -26,7 +26,7 @@
 /*===========================================================================*
  *				alloc_bit				     *
  *===========================================================================*/
-PUBLIC bit_t alloc_bit(sp, map, origin)
+bit_t alloc_bit(sp, map, origin)
 struct super_block *sp;		/* the filesystem to allocate from */
 int map;			/* IMAP (inode map) or ZMAP (zone map) */
 bit_t origin;			/* number of bit to start searching at */
@@ -104,7 +104,7 @@ bit_t origin;			/* number of bit to start searching at */
 /*===========================================================================*
  *				free_bit				     *
  *===========================================================================*/
-PUBLIC void free_bit(sp, map, bit_returned)
+void free_bit(sp, map, bit_returned)
 struct super_block *sp;		/* the filesystem to operate on */
 int map;			/* IMAP (inode map) or ZMAP (zone map) */
 bit_t bit_returned;		/* number of bit to insert into the map */
@@ -150,7 +150,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 /*===========================================================================*
  *				get_super				     *
  *===========================================================================*/
-PUBLIC struct super_block *get_super(
+struct super_block *get_super(
   dev_t dev			/* device number whose super_block is sought */
 )
 {
@@ -167,7 +167,7 @@ PUBLIC struct super_block *get_super(
 /*===========================================================================*
  *				get_block_size				     *
  *===========================================================================*/
-PUBLIC unsigned int get_block_size(dev_t dev)
+unsigned int get_block_size(dev_t dev)
 {
   if (dev == NO_DEV)
   	panic("request for block size of NO_DEV");
@@ -180,7 +180,7 @@ PUBLIC unsigned int get_block_size(dev_t dev)
 /*===========================================================================*
  *				rw_super				     *
  *===========================================================================*/
-PRIVATE int rw_super(struct super_block *sp, int writing)
+static int rw_super(struct super_block *sp, int writing)
 {
 /* Read/write a superblock. */
   int r;
@@ -225,7 +225,7 @@ PRIVATE int rw_super(struct super_block *sp, int writing)
 /*===========================================================================*
  *				read_super				     *
  *===========================================================================*/
-PUBLIC int read_super(struct super_block *sp)
+int read_super(struct super_block *sp)
 {
   unsigned int magic;
   block_t offset;
@@ -359,7 +359,7 @@ PUBLIC int read_super(struct super_block *sp)
 /*===========================================================================*
  *				write_super				     *
  *===========================================================================*/
-PUBLIC int write_super(struct super_block *sp)
+int write_super(struct super_block *sp)
 {
   if(sp->s_rd_only)
   	panic("can't write superblock of readonly filesystem");

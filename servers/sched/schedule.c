@@ -14,13 +14,13 @@
 #include <machine/archtypes.h>
 #include "kernel/proc.h" /* for queue constants */
 
-PRIVATE timer_t sched_timer;
-PRIVATE unsigned balance_timeout;
+static timer_t sched_timer;
+static unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
-FORWARD int schedule_process(struct schedproc * rmp, unsigned flags);
-FORWARD void balance_queues(struct timer *tp);
+static int schedule_process(struct schedproc * rmp, unsigned flags);
+static void balance_queues(struct timer *tp);
 
 #define SCHEDULE_CHANGE_PRIO	0x1
 #define SCHEDULE_CHANGE_QUANTUM	0x2
@@ -46,9 +46,9 @@ FORWARD void balance_queues(struct timer *tp);
 /* processes created by RS are sysytem processes */
 #define is_system_proc(p)	((p)->parent == RS_PROC_NR)
 
-PRIVATE unsigned cpu_proc[CONFIG_MAX_CPUS];
+static unsigned cpu_proc[CONFIG_MAX_CPUS];
 
-PRIVATE void pick_cpu(struct schedproc * proc)
+static void pick_cpu(struct schedproc * proc)
 {
 #ifdef CONFIG_SMP
 	unsigned cpu, c;
@@ -87,7 +87,7 @@ PRIVATE void pick_cpu(struct schedproc * proc)
  *				do_noquantum				     *
  *===========================================================================*/
 
-PUBLIC int do_noquantum(message *m_ptr)
+int do_noquantum(message *m_ptr)
 {
 	register struct schedproc *rmp;
 	int rv, proc_nr_n;
@@ -112,7 +112,7 @@ PUBLIC int do_noquantum(message *m_ptr)
 /*===========================================================================*
  *				do_stop_scheduling			     *
  *===========================================================================*/
-PUBLIC int do_stop_scheduling(message *m_ptr)
+int do_stop_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
 	int proc_nr_n;
@@ -139,7 +139,7 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 /*===========================================================================*
  *				do_start_scheduling			     *
  *===========================================================================*/
-PUBLIC int do_start_scheduling(message *m_ptr)
+int do_start_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
 	int rv, proc_nr_n, parent_nr_n;
@@ -253,7 +253,7 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 /*===========================================================================*
  *				do_nice					     *
  *===========================================================================*/
-PUBLIC int do_nice(message *m_ptr)
+int do_nice(message *m_ptr)
 {
 	struct schedproc *rmp;
 	int rv;
@@ -296,7 +296,7 @@ PUBLIC int do_nice(message *m_ptr)
 /*===========================================================================*
  *				schedule_process			     *
  *===========================================================================*/
-PRIVATE int schedule_process(struct schedproc * rmp, unsigned flags)
+static int schedule_process(struct schedproc * rmp, unsigned flags)
 {
 	int err;
 	int new_prio, new_quantum, new_cpu;
@@ -332,7 +332,7 @@ PRIVATE int schedule_process(struct schedproc * rmp, unsigned flags)
  *				start_scheduling			     *
  *===========================================================================*/
 
-PUBLIC void init_scheduling(void)
+void init_scheduling(void)
 {
 	balance_timeout = BALANCE_TIMEOUT * sys_hz();
 	init_timer(&sched_timer);
@@ -348,7 +348,7 @@ PUBLIC void init_scheduling(void)
  * quantum. This function will find all proccesses that have been bumped down,
  * and pulls them back up. This default policy will soon be changed.
  */
-PRIVATE void balance_queues(struct timer *tp)
+static void balance_queues(struct timer *tp)
 {
 	struct schedproc *rmp;
 	int proc_nr;

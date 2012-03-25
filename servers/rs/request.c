@@ -7,12 +7,12 @@
 
 #include "kernel/proc.h"
 
-FORWARD int check_request(struct rs_start *rs_start);
+static int check_request(struct rs_start *rs_start);
 
 /*===========================================================================*
  *				   do_up				     *
  *===========================================================================*/
-PUBLIC int do_up(m_ptr)
+int do_up(m_ptr)
 message *m_ptr;					/* request message pointer */
 {
 /* A request was made to start a new system service. */
@@ -86,7 +86,7 @@ message *m_ptr;					/* request message pointer */
 /*===========================================================================*
  *				do_down					     *
  *===========================================================================*/
-PUBLIC int do_down(message *m_ptr)
+int do_down(message *m_ptr)
 {
   register struct rproc *rp;
   register struct rprocpub *rpub;
@@ -137,7 +137,7 @@ PUBLIC int do_down(message *m_ptr)
 /*===========================================================================*
  *				do_restart				     *
  *===========================================================================*/
-PUBLIC int do_restart(message *m_ptr)
+int do_restart(message *m_ptr)
 {
   struct rproc *rp;
   int s, r;
@@ -185,7 +185,7 @@ PUBLIC int do_restart(message *m_ptr)
 /*===========================================================================*
  *				do_clone				     *
  *===========================================================================*/
-PUBLIC int do_clone(message *m_ptr)
+int do_clone(message *m_ptr)
 {
   struct rproc *rp;
   struct rprocpub *rpub;
@@ -230,7 +230,7 @@ PUBLIC int do_clone(message *m_ptr)
 /*===========================================================================*
  *				    do_edit				     *
  *===========================================================================*/
-PUBLIC int do_edit(message *m_ptr)
+int do_edit(message *m_ptr)
 {
   struct rproc *rp;
   struct rprocpub *rpub;
@@ -321,7 +321,7 @@ PUBLIC int do_edit(message *m_ptr)
 /*===========================================================================*
  *				do_refresh				     *
  *===========================================================================*/
-PUBLIC int do_refresh(message *m_ptr)
+int do_refresh(message *m_ptr)
 {
   register struct rproc *rp;
   register struct rprocpub *rpub;
@@ -359,7 +359,7 @@ PUBLIC int do_refresh(message *m_ptr)
 /*===========================================================================*
  *				do_shutdown				     *
  *===========================================================================*/
-PUBLIC int do_shutdown(message *m_ptr)
+int do_shutdown(message *m_ptr)
 {
   int slot_nr;
   struct rproc *rp;
@@ -390,7 +390,7 @@ PUBLIC int do_shutdown(message *m_ptr)
 /*===========================================================================*
  *				do_init_ready				     *
  *===========================================================================*/
-PUBLIC int do_init_ready(message *m_ptr)
+int do_init_ready(message *m_ptr)
 {
   int who_p;
   message m;
@@ -480,7 +480,7 @@ PUBLIC int do_init_ready(message *m_ptr)
 /*===========================================================================*
  *				do_update				     *
  *===========================================================================*/
-PUBLIC int do_update(message *m_ptr)
+int do_update(message *m_ptr)
 {
   struct rproc *rp;
   struct rproc *new_rp;
@@ -651,7 +651,7 @@ PUBLIC int do_update(message *m_ptr)
 /*===========================================================================*
  *				do_upd_ready				     *
  *===========================================================================*/
-PUBLIC int do_upd_ready(message *m_ptr)
+int do_upd_ready(message *m_ptr)
 {
   struct rproc *rp, *old_rp, *new_rp;
   int who_p;
@@ -728,7 +728,7 @@ PUBLIC int do_upd_ready(message *m_ptr)
 /*===========================================================================*
  *				do_period				     *
  *===========================================================================*/
-PUBLIC void do_period(m_ptr)
+void do_period(m_ptr)
 message *m_ptr;
 {
   register struct rproc *rp;
@@ -826,7 +826,7 @@ message *m_ptr;
 /*===========================================================================*
  *			          do_sigchld				     *
  *===========================================================================*/
-PUBLIC void do_sigchld()
+void do_sigchld()
 {
 /* PM informed us that there are dead children to cleanup. Go get them. */
   pid_t pid;
@@ -867,7 +867,7 @@ PUBLIC void do_sigchld()
 /*===========================================================================*
  *				do_getsysinfo				     *
  *===========================================================================*/
-PUBLIC int do_getsysinfo(m_ptr)
+int do_getsysinfo(m_ptr)
 message *m_ptr;
 {
   vir_bytes src_addr, dst_addr;
@@ -903,7 +903,7 @@ message *m_ptr;
 /*===========================================================================*
  *				do_lookup				     *
  *===========================================================================*/
-PUBLIC int do_lookup(m_ptr)
+int do_lookup(m_ptr)
 message *m_ptr;
 {
 	static char namebuf[100];
@@ -940,7 +940,7 @@ message *m_ptr;
 /*===========================================================================*
  *				   check_request			     *
  *===========================================================================*/
-PRIVATE int check_request(struct rs_start *rs_start)
+static int check_request(struct rs_start *rs_start)
 {
   /* Verify scheduling parameters */
   if (rs_start->rss_scheduler != KERNEL && 

@@ -4,12 +4,12 @@
 #include <minix/vfsif.h>
 #include <minix/bdev.h>
 
-PRIVATE int cleanmount = 1;
+static int cleanmount = 1;
 
 /*===========================================================================*
  *				fs_readsuper				     *
  *===========================================================================*/
-PUBLIC int fs_readsuper()
+int fs_readsuper()
 {
 /* This function reads the superblock of the partition, gets the root inode
  * and sends back the details of them. Note, that the FS process does not
@@ -122,7 +122,7 @@ PUBLIC int fs_readsuper()
 /*===========================================================================*
  *				fs_mountpoint				     *
  *===========================================================================*/
-PUBLIC int fs_mountpoint()
+int fs_mountpoint()
 {
 /* This function looks up the mount point, it checks the condition whether
  * the partition can be mounted on the inode or not. 
@@ -153,7 +153,7 @@ PUBLIC int fs_mountpoint()
 /*===========================================================================*
  *				fs_unmount				     *
  *===========================================================================*/
-PUBLIC int fs_unmount()
+int fs_unmount()
 {
 /* Unmount a file system by device number. */
   int count;

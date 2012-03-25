@@ -1,7 +1,7 @@
 #include <lib.h>
 #include <unistd.h>
 
-PUBLIC int vm_memctl(endpoint_t ep, int req)
+int vm_memctl(endpoint_t ep, int req)
 {
 	message m;
 	m.VM_RS_CTL_ENDPT = ep;

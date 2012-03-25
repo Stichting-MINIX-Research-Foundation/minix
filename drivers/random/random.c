@@ -25,20 +25,20 @@ that data into a seed for a psuedo random number generator.
 				 * re-seed.
 				 */
 
-PRIVATE unsigned long deriv[TOTAL_SOURCES][N_DERIV];
-PRIVATE int pool_ind[TOTAL_SOURCES];
-PRIVATE SHA256_CTX pool_ctx[NR_POOLS];
-PRIVATE unsigned samples= 0;
-PRIVATE int got_seeded= 0;
-PRIVATE u8_t random_key[2*AES_BLOCKSIZE];
-PRIVATE u32_t count_lo, count_hi;
-PRIVATE u32_t reseed_count;
+static unsigned long deriv[TOTAL_SOURCES][N_DERIV];
+static int pool_ind[TOTAL_SOURCES];
+static SHA256_CTX pool_ctx[NR_POOLS];
+static unsigned samples= 0;
+static int got_seeded= 0;
+static u8_t random_key[2*AES_BLOCKSIZE];
+static u32_t count_lo, count_hi;
+static u32_t reseed_count;
 
-FORWARD void add_sample(int source, unsigned long sample);
-FORWARD void data_block(rd_keyinstance *keyp, void *data);
-FORWARD void reseed(void);
+static void add_sample(int source, unsigned long sample);
+static void data_block(rd_keyinstance *keyp, void *data);
+static void reseed(void);
 
-PUBLIC void random_init()
+void random_init()
 {
 	int i, j;
 
@@ -58,14 +58,14 @@ PUBLIC void random_init()
 	reseed_count= 0;
 }
 
-PUBLIC int random_isseeded()
+int random_isseeded()
 {
 	if (got_seeded)
 		return 1;
 	return 0;
 }
 
-PUBLIC void random_update(source, buf, count)
+void random_update(source, buf, count)
 int source;
 rand_t *buf;
 int count;
@@ -82,7 +82,7 @@ int count;
 	reseed();
 }
 
-PUBLIC void random_getbytes(buf, size)
+void random_getbytes(buf, size)
 void *buf;
 size_t size;
 {
@@ -116,7 +116,7 @@ size_t size;
 	data_block(&key, random_key+AES_BLOCKSIZE);
 }
 
-PUBLIC void random_putbytes(buf, size)
+void random_putbytes(buf, size)
 void *buf;
 size_t size;
 {
@@ -131,7 +131,7 @@ size_t size;
 	reseed();
 }
 
-PRIVATE void add_sample(source, sample)
+static void add_sample(source, sample)
 int source;
 unsigned long sample;
 {
@@ -182,7 +182,7 @@ unsigned long sample;
 	pool_ind[source]= pool_nr;
 }
 
-PRIVATE void data_block(keyp, data)
+static void data_block(keyp, data)
 rd_keyinstance *keyp;
 void *data;
 {
@@ -207,7 +207,7 @@ void *data;
 		count_hi++;
 }
 
-PRIVATE void reseed()
+static void reseed()
 {
 	int i;
 	SHA256_CTX ctx;

@@ -3,7 +3,7 @@
 /*****************************************************************************
  *             tty_inject_event                                              *
  *****************************************************************************/
-PUBLIC int tty_inject_event(type, code, val)
+int tty_inject_event(type, code, val)
 int type;
 int code;
 int val;

@@ -124,7 +124,7 @@
 extern struct machine machine;
 
 
-PRIVATE u32_t pci_inb(u16_t port) {
+static u32_t pci_inb(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
@@ -132,7 +132,7 @@ PRIVATE u32_t pci_inb(u16_t port) {
 	return value;
 }
 
-PRIVATE u32_t pci_inw(u16_t port) {
+static u32_t pci_inw(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
@@ -140,7 +140,7 @@ PRIVATE u32_t pci_inw(u16_t port) {
 	return value;
 }
 
-PRIVATE u32_t pci_inl(u16_t port) {
+static u32_t pci_inl(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inl(port, &value)) !=OK)
@@ -148,19 +148,19 @@ PRIVATE u32_t pci_inl(u16_t port) {
 	return value;
 }
 
-PRIVATE void pci_outb(u16_t port, u8_t value) {
+static void pci_outb(u16_t port, u8_t value) {
 	int s;
 	if ((s=sys_outb(port, value)) !=OK)
 		printf("ACPI: warning, sys_outb failed: %d\n", s);
 }
 
-PRIVATE void pci_outw(u16_t port, u16_t value) {
+static void pci_outw(u16_t port, u16_t value) {
 	int s;
 	if ((s=sys_outw(port, value)) !=OK)
 		printf("ACPI: warning, sys_outw failed: %d\n", s);
 }
 
-PRIVATE void pci_outl(u16_t port, u32_t value) {
+static void pci_outl(u16_t port, u32_t value) {
 	int s;
 	if ((s=sys_outl(port, value)) !=OK)
 		printf("ACPI: warning, sys_outl failed: %d\n", s);
@@ -965,7 +965,7 @@ AcpiOsSignal (
  *
  *****************************************************************************/
 
-PUBLIC ACPI_PHYSICAL_ADDRESS AcpiOsGetRootPointer (
+ACPI_PHYSICAL_ADDRESS AcpiOsGetRootPointer (
     void)
 {
 	return machine.acpi_rsdp;

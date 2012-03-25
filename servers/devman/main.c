@@ -35,7 +35,7 @@
 #include "devman.h"
 #include "proto.h"
 
-PRIVATE void init_hook(void) {
+static void init_hook(void) {
 	static int first = 1;
 	
 	if (first) {
@@ -45,7 +45,7 @@ PRIVATE void init_hook(void) {
 }
 
 
-PRIVATE int message_hook (message *m)
+static int message_hook (message *m)
 {
 	switch (m->m_type) {
 		case DEVMAN_ADD_DEV:
@@ -60,7 +60,7 @@ PRIVATE int message_hook (message *m)
 	}
 }
 
-PRIVATE int 
+static int 
 read_hook
 (struct inode *inode, off_t offset, char **ptr, size_t *len, cbdata_t cbdata)
 {
@@ -70,7 +70,7 @@ read_hook
 }
 
 
-PUBLIC int main (int argc, char* argv[])
+int main (int argc, char* argv[])
 {
 
 	struct fs_hooks hooks;

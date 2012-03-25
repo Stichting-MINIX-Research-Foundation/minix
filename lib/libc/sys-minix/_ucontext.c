@@ -15,7 +15,7 @@ void ctx_start(void (*)(void), int, ...);
 /*===========================================================================*
  *				setuctx					     *
  *===========================================================================*/
-PUBLIC int setuctx(const ucontext_t *ucp)
+int setuctx(const ucontext_t *ucp)
 {
   int r;
 
@@ -42,7 +42,7 @@ PUBLIC int setuctx(const ucontext_t *ucp)
 /*===========================================================================*
  *				getuctx					     *
  *===========================================================================*/
-PUBLIC int getuctx(ucontext_t *ucp) 
+int getuctx(ucontext_t *ucp) 
 {
   int r;
 
@@ -69,7 +69,7 @@ PUBLIC int getuctx(ucontext_t *ucp)
 /*===========================================================================*
  *				makecontext				     *
  *===========================================================================*/
-PUBLIC void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
+void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
   va_list ap;
   unsigned int *stack_top;
@@ -157,7 +157,7 @@ PUBLIC void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 /*===========================================================================*
  *				swapcontext				     *
  *===========================================================================*/
-PUBLIC int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
+int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 {
   int r;
 
@@ -186,7 +186,7 @@ PUBLIC int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 /*===========================================================================*
  *				resumecontext				     *
  *===========================================================================*/
-PUBLIC void resumecontext(ucontext_t *ucp)
+void resumecontext(ucontext_t *ucp)
 {
   if (ucp->uc_link == NULL) exit(0);
 

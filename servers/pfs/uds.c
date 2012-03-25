@@ -44,7 +44,7 @@
 uds_fd_t uds_fd_table[NR_FDS];
 
 /* initialize the descriptor table */
-PUBLIC void uds_init(void)
+void uds_init(void)
 {
 	/*
 	 * Setting everything to NULL implicitly sets the
@@ -54,7 +54,7 @@ PUBLIC void uds_init(void)
 }
 
 /* check the permissions of a socket file */
-PRIVATE int check_perms(int minor, struct sockaddr_un *addr)
+static int check_perms(int minor, struct sockaddr_un *addr)
 {
 	int rc;
 	message vfs_m;
@@ -88,7 +88,7 @@ PRIVATE int check_perms(int minor, struct sockaddr_un *addr)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-PRIVATE filp_id_t verify_fd(endpoint_t ep, int fd)
+static filp_id_t verify_fd(endpoint_t ep, int fd)
 {
 	int rc;
 	message vfs_m;
@@ -119,7 +119,7 @@ PRIVATE filp_id_t verify_fd(endpoint_t ep, int fd)
 	return vfs_m.ADDRESS;
 }
 
-PRIVATE int set_filp(filp_id_t sfilp)
+static int set_filp(filp_id_t sfilp)
 {
 	int rc;
 	message vfs_m;
@@ -147,7 +147,7 @@ PRIVATE int set_filp(filp_id_t sfilp)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-PRIVATE int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
+static int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 {
 	int rc;
 	message vfs_m;
@@ -177,7 +177,7 @@ PRIVATE int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 	return vfs_m.m_type;
 }
 
-PRIVATE int put_filp(filp_id_t pfilp)
+static int put_filp(filp_id_t pfilp)
 {
 	int rc;
 	message vfs_m;
@@ -205,7 +205,7 @@ PRIVATE int put_filp(filp_id_t pfilp)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-PRIVATE int cancel_fd(endpoint_t ep, int fd)
+static int cancel_fd(endpoint_t ep, int fd)
 {
 	int rc;
 	message vfs_m;
@@ -234,7 +234,7 @@ PRIVATE int cancel_fd(endpoint_t ep, int fd)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-PUBLIC int perform_connection(message *dev_m_in, message *dev_m_out,
+int perform_connection(message *dev_m_in, message *dev_m_out,
 			struct sockaddr_un *addr, int minorx, int minory)
 {
 	/* there are several places were a connection is established. */
@@ -271,7 +271,7 @@ PUBLIC int perform_connection(message *dev_m_in, message *dev_m_out,
 }
 
 
-PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
+int do_accept(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int minorparent; /* minor number of parent (server) */
@@ -397,7 +397,7 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
-PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
+int do_connect(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	struct sockaddr_un addr;
@@ -556,7 +556,7 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 	return SUSPEND;
 }
 
-PUBLIC int do_listen(message *dev_m_in, message *dev_m_out)
+int do_listen(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc;
@@ -636,7 +636,7 @@ PUBLIC int do_listen(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
-PUBLIC int do_socket(message *dev_m_in, message *dev_m_out)
+int do_socket(message *dev_m_in, message *dev_m_out)
 {
 	int rc;
 	int minor;
@@ -688,7 +688,7 @@ PUBLIC int do_socket(message *dev_m_in, message *dev_m_out)
 	}
 }
 
-PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
+int do_bind(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	struct sockaddr_un addr;
@@ -756,7 +756,7 @@ PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
-PUBLIC int do_getsockname(message *dev_m_in, message *dev_m_out)
+int do_getsockname(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc;
@@ -782,7 +782,7 @@ PUBLIC int do_getsockname(message *dev_m_in, message *dev_m_out)
 	return rc ? EIO : OK;
 }
 
-PUBLIC int do_getpeername(message *dev_m_in, message *dev_m_out)
+int do_getpeername(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc;
@@ -819,7 +819,7 @@ PUBLIC int do_getpeername(message *dev_m_in, message *dev_m_out)
 	}
 }
 
-PUBLIC int do_shutdown(message *dev_m_in, message *dev_m_out)
+int do_shutdown(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc, how;
@@ -882,7 +882,7 @@ PUBLIC int do_shutdown(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
-PUBLIC int do_socketpair_old(message *dev_m_in, message *dev_m_out)
+int do_socketpair_old(message *dev_m_in, message *dev_m_out)
 {
 	int rc;
 	short minorin;
@@ -929,7 +929,7 @@ PUBLIC int do_socketpair_old(message *dev_m_in, message *dev_m_out)
 	return perform_connection(dev_m_in, dev_m_out, &addr, minorx, minory);
 }
 
-PUBLIC int do_socketpair(message *dev_m_in, message *dev_m_out)
+int do_socketpair(message *dev_m_in, message *dev_m_out)
 {
 	int rc;
 	dev_t minorin;
@@ -976,7 +976,7 @@ PUBLIC int do_socketpair(message *dev_m_in, message *dev_m_out)
 	return perform_connection(dev_m_in, dev_m_out, &addr, minorx, minory);
 }
 
-PUBLIC int do_getsockopt_sotype(message *dev_m_in, message *dev_m_out)
+int do_getsockopt_sotype(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc;
@@ -1004,7 +1004,7 @@ PUBLIC int do_getsockopt_sotype(message *dev_m_in, message *dev_m_out)
 	return rc ? EIO : OK;
 }
 
-PUBLIC int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
+int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int peer_minor;
@@ -1045,7 +1045,7 @@ PUBLIC int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 	return rc ? EIO : OK;
 }
 
-PUBLIC int do_getsockopt_peercred_old(message *dev_m_in, message *dev_m_out)
+int do_getsockopt_peercred_old(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int peer_minor;
@@ -1204,7 +1204,7 @@ int do_setsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 }
 
 
-PUBLIC int do_sendto(message *dev_m_in, message *dev_m_out)
+int do_sendto(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc;
@@ -1248,7 +1248,7 @@ PUBLIC int do_sendto(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
-PUBLIC int do_recvfrom(message *dev_m_in, message *dev_m_out)
+int do_recvfrom(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc;
@@ -1327,7 +1327,7 @@ int msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
 	return OK;
 }
 
-PRIVATE int send_fds(int minor, struct ancillary *data)
+static int send_fds(int minor, struct ancillary *data)
 {
 	int rc, i, j;
 
@@ -1361,7 +1361,7 @@ PRIVATE int send_fds(int minor, struct ancillary *data)
 	return OK;
 }
 
-PUBLIC int clear_fds(int minor, struct ancillary *data)
+int clear_fds(int minor, struct ancillary *data)
 {
 /* This function calls put_filp() for all of the FDs in data.
  * This is used when a Unix Domain Socket is closed and there
@@ -1390,7 +1390,7 @@ PUBLIC int clear_fds(int minor, struct ancillary *data)
 	return OK;
 }
 
-PRIVATE int recv_fds(int minor, struct ancillary *data,
+static int recv_fds(int minor, struct ancillary *data,
 					struct msg_control *msg_ctrl)
 {
 	int rc, i, j;
@@ -1446,7 +1446,7 @@ PRIVATE int recv_fds(int minor, struct ancillary *data,
 	return OK;
 }
 
-PRIVATE int recv_cred(int minor, struct ancillary *data,
+static int recv_cred(int minor, struct ancillary *data,
 					struct msg_control *msg_ctrl)
 {
 	struct msghdr msghdr;
@@ -1474,7 +1474,7 @@ PRIVATE int recv_cred(int minor, struct ancillary *data,
 	return OK;
 }
 
-PUBLIC int do_sendmsg(message *dev_m_in, message *dev_m_out)
+int do_sendmsg(message *dev_m_in, message *dev_m_out)
 {
 	int minor, peer, rc, i;
 	struct msg_control msg_ctrl;
@@ -1548,7 +1548,7 @@ PUBLIC int do_sendmsg(message *dev_m_in, message *dev_m_out)
 	return send_fds(minor, &uds_fd_table[peer].ancillary_data);
 }
 
-PUBLIC int do_recvmsg(message *dev_m_in, message *dev_m_out)
+int do_recvmsg(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	int rc;

@@ -8,13 +8,13 @@
 #include "puffs.h"
 #include "puffs_priv.h"
 
-FORWARD int in_group(gid_t grp);
+static int in_group(gid_t grp);
 
 
 /*===========================================================================*
  *				fs_chmod				     *
  *===========================================================================*/
-PUBLIC int fs_chmod()
+int fs_chmod()
 {
 /* Perform the chmod(name, mode) system call. */
   struct puffs_node *pn;
@@ -49,7 +49,7 @@ PUBLIC int fs_chmod()
 /*===========================================================================*
  *				fs_chown				     *
  *===========================================================================*/
-PUBLIC int fs_chown()
+int fs_chown()
 {
   struct puffs_node *pn;
   struct vattr va;
@@ -81,7 +81,7 @@ PUBLIC int fs_chown()
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-PUBLIC int forbidden(register struct puffs_node *pn, mode_t access_desired)
+int forbidden(register struct puffs_node *pn, mode_t access_desired)
 {
 /* Given a pointer to an pnode, 'pn', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the
@@ -132,7 +132,7 @@ PUBLIC int forbidden(register struct puffs_node *pn, mode_t access_desired)
 /*===========================================================================*
  *				in_group				     *
  *===========================================================================*/
-PRIVATE int in_group(gid_t grp)
+static int in_group(gid_t grp)
 {
   int i;
   for(i = 0; i < credentials.vu_ngroups; i++)

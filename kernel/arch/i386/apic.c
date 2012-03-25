@@ -107,8 +107,8 @@
 #define	SPLHI				0xF
 
 
-PUBLIC struct io_apic io_apic[MAX_NR_IOAPICS];
-PUBLIC unsigned nioapics;
+struct io_apic io_apic[MAX_NR_IOAPICS];
+unsigned nioapics;
 
 struct irq;
 typedef void (* eoi_method_t)(struct irq *);
@@ -121,7 +121,7 @@ struct irq {
 	unsigned		state;
 };
 
-PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
+static struct irq io_apic_irq[NR_IRQ_VECTORS];
 
 /* 
  * to make APIC work if SMP is not configured, we need to set the maximal number
@@ -146,20 +146,20 @@ PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
 
 #define VERBOSE_APIC(x) x
 
-PUBLIC int ioapic_enabled;
-PUBLIC u32_t lapic_addr_vaddr;
-PUBLIC vir_bytes lapic_addr;
-PUBLIC vir_bytes lapic_eoi_addr;
-PUBLIC int bsp_lapic_id;
+int ioapic_enabled;
+u32_t lapic_addr_vaddr;
+vir_bytes lapic_addr;
+vir_bytes lapic_eoi_addr;
+int bsp_lapic_id;
 
-PRIVATE volatile unsigned probe_ticks;
-PRIVATE	u64_t tsc0, tsc1;
-PRIVATE	u32_t lapic_tctr0, lapic_tctr1;
+static volatile unsigned probe_ticks;
+static	u64_t tsc0, tsc1;
+static	u32_t lapic_tctr0, lapic_tctr1;
 
-PRIVATE unsigned apic_imcrp;
-PRIVATE const unsigned nlints = 0;
+static unsigned apic_imcrp;
+static const unsigned nlints = 0;
 
-PUBLIC void arch_eoi(void)
+void arch_eoi(void)
 {
 	apic_eoi();
 }
@@ -169,20 +169,20 @@ PUBLIC void arch_eoi(void)
  * arch specific cpulocals. As this variable is write-once-read-only it is ok to
  * have at as an array until we resolve the cpulocals properly
  */
-PRIVATE u32_t lapic_bus_freq[CONFIG_MAX_CPUS];
+static u32_t lapic_bus_freq[CONFIG_MAX_CPUS];
 /* the probe period will be roughly 100ms */
 #define PROBE_TICKS	(system_hz / 10)
 
 #define IOAPIC_IOREGSEL	0x0
 #define IOAPIC_IOWIN	0x10
 
-PRIVATE u32_t ioapic_read(u32_t ioa_base, u32_t reg)
+static u32_t ioapic_read(u32_t ioa_base, u32_t reg)
 {
 	*((u32_t *)(ioa_base + IOAPIC_IOREGSEL)) = (reg & 0xff);
 	return *(u32_t *)(ioa_base + IOAPIC_IOWIN);
 }
 
-PRIVATE void ioapic_write(u32_t ioa_base, u8_t reg, u32_t val)
+static void ioapic_write(u32_t ioa_base, u8_t reg, u32_t val)
 {
 	*((u32_t *)(ioa_base + IOAPIC_IOREGSEL)) = reg;
 	*((u32_t *)(ioa_base + IOAPIC_IOWIN)) = val;
@@ -191,7 +191,7 @@ PRIVATE void ioapic_write(u32_t ioa_base, u8_t reg, u32_t val)
 void lapic_microsec_sleep(unsigned count);
 void apic_idt_init(const int reset);
 
-PRIVATE void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
+static void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
 {
 	u32_t lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
 
@@ -199,7 +199,7 @@ PRIVATE void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
 	ioapic_write(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2, lo);
 }
 
-PRIVATE void ioapic_disable_pin(vir_bytes ioapic_addr, int pin)
+static void ioapic_disable_pin(vir_bytes ioapic_addr, int pin)
 {
 	u32_t lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
 
@@ -208,7 +208,7 @@ PRIVATE void ioapic_disable_pin(vir_bytes ioapic_addr, int pin)
 }
 
 #if 0
-PRIVATE void ioapic_redirt_entry_read(void * ioapic_addr,
+static void ioapic_redirt_entry_read(void * ioapic_addr,
 					int entry,
 					u32_t *hi,
 					u32_t *lo)
@@ -219,7 +219,7 @@ PRIVATE void ioapic_redirt_entry_read(void * ioapic_addr,
 }
 #endif
 
-PRIVATE void ioapic_redirt_entry_write(void * ioapic_addr,
+static void ioapic_redirt_entry_write(void * ioapic_addr,
 					int entry,
 					u32_t hi,
 					u32_t lo)
@@ -243,7 +243,7 @@ PRIVATE void ioapic_redirt_entry_write(void * ioapic_addr,
 
 #define lapic_test_delivery_val(val, vector) ((val) & (1 << ((vector) & 0x1f)))
 
-PRIVATE void ioapic_eoi_level(struct irq * irq)
+static void ioapic_eoi_level(struct irq * irq)
 {
 	reg_t tmr;
 
@@ -285,12 +285,12 @@ PRIVATE void ioapic_eoi_level(struct irq * irq)
 	}
 }
 
-PRIVATE void ioapic_eoi_edge(__unused struct irq * irq)
+static void ioapic_eoi_edge(__unused struct irq * irq)
 {
 	apic_eoi();
 }
 
-PUBLIC void ioapic_eoi(int irq)
+void ioapic_eoi(int irq)
 {
 	if (ioapic_enabled) {
 		io_apic_irq[irq].eoi(&io_apic_irq[irq]);
@@ -299,12 +299,12 @@ PUBLIC void ioapic_eoi(int irq)
 		irq_8259_eoi(irq);
 }
  
-PUBLIC void ioapic_set_id(u32_t addr, unsigned int id)
+void ioapic_set_id(u32_t addr, unsigned int id)
 {
 	ioapic_write(addr, IOAPIC_ID, id << 24);
 }
 
-PUBLIC int ioapic_enable_all(void)
+int ioapic_enable_all(void)
 {
 	i8259_disable();
 
@@ -318,7 +318,7 @@ PUBLIC int ioapic_enable_all(void)
 }
 
 /* disables a single IO APIC */
-PRIVATE void ioapic_disable(struct io_apic * ioapic)
+static void ioapic_disable(struct io_apic * ioapic)
 {
 	unsigned p;
 	
@@ -340,7 +340,7 @@ PRIVATE void ioapic_disable(struct io_apic * ioapic)
 }
 
 /* disables all IO APICs */
-PUBLIC void ioapic_disable_all(void)
+void ioapic_disable_all(void)
 {
 	unsigned ioa;
 	if (!ioapic_enabled)
@@ -365,7 +365,7 @@ PUBLIC void ioapic_disable_all(void)
 	intr_init(INTS_ORIG, 0); /* no auto eoi */
 }
 
-PRIVATE void ioapic_disable_irq(unsigned irq)
+static void ioapic_disable_irq(unsigned irq)
 {
 	assert(io_apic_irq[irq].ioa);
 
@@ -373,7 +373,7 @@ PRIVATE void ioapic_disable_irq(unsigned irq)
 	io_apic_irq[irq].state |= IOAPIC_IRQ_STATE_MASKED;
 }
 
-PRIVATE void ioapic_enable_irq(unsigned irq)
+static void ioapic_enable_irq(unsigned irq)
 {
 	assert(io_apic_irq[irq].ioa);
 
@@ -381,7 +381,7 @@ PRIVATE void ioapic_enable_irq(unsigned irq)
 	io_apic_irq[irq].state &= ~IOAPIC_IRQ_STATE_MASKED;
 }
 
-PUBLIC void ioapic_unmask_irq(unsigned irq)
+void ioapic_unmask_irq(unsigned irq)
 {
 	if (ioapic_enabled)
 		ioapic_enable_irq(irq);
@@ -390,7 +390,7 @@ PUBLIC void ioapic_unmask_irq(unsigned irq)
 		irq_8259_unmask(irq);
 }
 
-PUBLIC void ioapic_mask_irq(unsigned irq)
+void ioapic_mask_irq(unsigned irq)
 {
 	if (ioapic_enabled)
 		ioapic_disable_irq(irq);
@@ -399,12 +399,12 @@ PUBLIC void ioapic_mask_irq(unsigned irq)
 		irq_8259_mask(irq);
 }
 
-PUBLIC unsigned int apicid(void)
+unsigned int apicid(void)
 {
 	return lapic_read(LAPIC_ID) >> 24;
 }
 
-PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
+static int calib_clk_handler(irq_hook_t * UNUSED(hook))
 {
 	u32_t tcrt;
 	u64_t tsc;
@@ -428,7 +428,7 @@ PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
 	return 1;
 }
 
-PRIVATE int spurious_irq_handler(irq_hook_t * UNUSED(hook))
+static int spurious_irq_handler(irq_hook_t * UNUSED(hook))
 {
 	/*
 	 * Do nothing, only unlock the kernel so we do not deadlock!
@@ -437,7 +437,7 @@ PRIVATE int spurious_irq_handler(irq_hook_t * UNUSED(hook))
 	return 1;
 }
 
-PRIVATE void apic_calibrate_clocks(unsigned cpu)
+static void apic_calibrate_clocks(unsigned cpu)
 {
 	u32_t lvtt, val, lapic_delta;
 	u64_t tsc_delta;
@@ -520,7 +520,7 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 
-PUBLIC void lapic_set_timer_one_shot(const u32_t usec)
+void lapic_set_timer_one_shot(const u32_t usec)
 {
 	/* sleep in micro seconds */
 	u32_t lvtt;
@@ -539,7 +539,7 @@ PUBLIC void lapic_set_timer_one_shot(const u32_t usec)
 	lapic_write(LAPIC_LVTTR, lvtt);
 }
 
-PUBLIC void lapic_set_timer_periodic(const unsigned freq)
+void lapic_set_timer_periodic(const unsigned freq)
 {
 	/* sleep in micro seconds */
 	u32_t lvtt;
@@ -558,7 +558,7 @@ PUBLIC void lapic_set_timer_periodic(const unsigned freq)
 	lapic_write(LAPIC_TIMER_ICR, lapic_ticks_per_clock_tick);
 }
 
-PUBLIC void lapic_stop_timer(void)
+void lapic_stop_timer(void)
 {
 	u32_t lvtt;
 	lvtt = lapic_read(LAPIC_LVTTR);
@@ -568,27 +568,27 @@ PUBLIC void lapic_stop_timer(void)
 	lapic_write(LAPIC_TIMER_CCR, 0);
 }
 
-PUBLIC void lapic_restart_timer(void)
+void lapic_restart_timer(void)
 {
 	/* restart the timer only if the counter reached zero, i.e. expired */
 	if (lapic_read(LAPIC_TIMER_CCR) == 0)
 		lapic_set_timer_one_shot(1000000/system_hz);
 }
 
-PUBLIC void lapic_microsec_sleep(unsigned count)
+void lapic_microsec_sleep(unsigned count)
 {
 	lapic_set_timer_one_shot(count);
 	while (lapic_read(LAPIC_TIMER_CCR))
 		arch_pause();
 }
 
-PRIVATE  u32_t lapic_errstatus(void)
+static  u32_t lapic_errstatus(void)
 {
 	lapic_write(LAPIC_ESR, 0);
 	return lapic_read(LAPIC_ESR);
 }
 
-PRIVATE int lapic_disable_in_msr(void)
+static int lapic_disable_in_msr(void)
 {
 	u32_t msr_hi, msr_lo;
 
@@ -600,7 +600,7 @@ PRIVATE int lapic_disable_in_msr(void)
 	return 1;
 }
 
-PUBLIC void lapic_disable(void)
+void lapic_disable(void)
 {
 	/* Disable current APIC and close interrupts from PIC */
 	u32_t val;
@@ -635,7 +635,7 @@ PUBLIC void lapic_disable(void)
 	lapic_disable_in_msr();
 }
 
-PRIVATE int lapic_enable_in_msr(void)
+static int lapic_enable_in_msr(void)
 {
 	u32_t msr_hi, msr_lo;
 
@@ -664,7 +664,7 @@ PRIVATE int lapic_enable_in_msr(void)
 	return 1;
 }
 
-PUBLIC int lapic_enable(unsigned cpu)
+int lapic_enable(unsigned cpu)
 {
 	u32_t val, nlvt;
 
@@ -735,7 +735,7 @@ PUBLIC int lapic_enable(unsigned cpu)
 	return 1;
 }
 
-PUBLIC void apic_spurios_intr_handler(void)
+void apic_spurios_intr_handler(void)
 {
 	static unsigned x;
 
@@ -744,7 +744,7 @@ PUBLIC void apic_spurios_intr_handler(void)
 		printf("WARNING spurious interrupt(s) %d on cpu %d\n", x, cpuid);
 }
 
-PUBLIC void apic_error_intr_handler(void)
+void apic_error_intr_handler(void)
 {
 	static unsigned x;
 
@@ -754,7 +754,7 @@ PUBLIC void apic_error_intr_handler(void)
 				lapic_errstatus(), x, cpuid);
 }
 
-PRIVATE struct gate_table_s gate_table_ioapic[] = {
+static struct gate_table_s gate_table_ioapic[] = {
 	{ apic_hwint0, LAPIC_VECTOR( 0), INTR_PRIVILEGE },
 	{ apic_hwint1, LAPIC_VECTOR( 1), INTR_PRIVILEGE },
 	{ apic_hwint2, LAPIC_VECTOR( 2), INTR_PRIVILEGE },
@@ -824,14 +824,14 @@ PRIVATE struct gate_table_s gate_table_ioapic[] = {
 	{ NULL, 0, 0}
 };
 
-PRIVATE struct gate_table_s gate_table_common[] = {
+static struct gate_table_s gate_table_common[] = {
 	{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
 	{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
 	{ NULL, 0, 0}
 };
 
 #ifdef CONFIG_SMP
-PRIVATE struct gate_table_s gate_table_smp[] = {
+static struct gate_table_s gate_table_smp[] = {
 	{ apic_ipi_sched_intr, APIC_SMP_SCHED_PROC_VECTOR, INTR_PRIVILEGE },
 	{ apic_ipi_halt_intr,  APIC_SMP_CPU_HALT_VECTOR, INTR_PRIVILEGE },
 	{ NULL, 0, 0}
@@ -839,7 +839,7 @@ PRIVATE struct gate_table_s gate_table_smp[] = {
 #endif
 
 #ifdef APIC_DEBUG
-PRIVATE void lapic_set_dummy_handlers(void)
+static void lapic_set_dummy_handlers(void)
 {
 	char * handler;
 	int vect = 32; /* skip the reserved vectors */
@@ -856,7 +856,7 @@ PRIVATE void lapic_set_dummy_handlers(void)
 #endif
 
 /* Build descriptors for interrupt gates in IDT. */
-PUBLIC void apic_idt_init(const int reset)
+void apic_idt_init(const int reset)
 {
 	u32_t val;
 
@@ -905,7 +905,7 @@ PUBLIC void apic_idt_init(const int reset)
 
 }
 
-PRIVATE int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max)
+static int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max)
 {
 	unsigned n = 0;
 	struct acpi_madt_ioapic * acpi_ioa;
@@ -932,7 +932,7 @@ PRIVATE int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max
 	return n;
 }
 
-PUBLIC int detect_ioapics(void)
+int detect_ioapics(void)
 {
 	int status;
 
@@ -948,7 +948,7 @@ PUBLIC int detect_ioapics(void)
 
 #ifdef CONFIG_SMP
 
-PUBLIC void apic_send_ipi(unsigned vector, unsigned cpu, int type)
+void apic_send_ipi(unsigned vector, unsigned cpu, int type)
 {
 	u32_t icr1, icr2;
 
@@ -987,7 +987,7 @@ PUBLIC void apic_send_ipi(unsigned vector, unsigned cpu, int type)
 
 }
 
-PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
+int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 {
 	int timeout;
 	u32_t errstatus = 0;
@@ -1033,7 +1033,7 @@ PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 	return 0;
 }
 
-PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline) 
+int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline) 
 {
 	u32_t ptr, errstatus = 0;
 	int timeout;
@@ -1108,7 +1108,7 @@ PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline)
 #endif
 
 #ifndef CONFIG_SMP
-PUBLIC int apic_single_cpu_init(void)
+int apic_single_cpu_init(void)
 {
 	if (!cpu_feature_apic_on_chip())
 		return 0;
@@ -1143,7 +1143,7 @@ PUBLIC int apic_single_cpu_init(void)
 }
 #endif
 
-PRIVATE eoi_method_t set_eoi_method(unsigned irq)
+static eoi_method_t set_eoi_method(unsigned irq)
 {
 	/*
 	 * in APIC mode the lowest 16 IRQs are reserved for legacy (E)ISA edge
@@ -1156,7 +1156,7 @@ PRIVATE eoi_method_t set_eoi_method(unsigned irq)
 		return ioapic_eoi_level;
 }
 
-PUBLIC void set_irq_redir_low(unsigned irq, u32_t * low)
+void set_irq_redir_low(unsigned irq, u32_t * low)
 {
 	u32_t val = 0;
 
@@ -1182,7 +1182,7 @@ PUBLIC void set_irq_redir_low(unsigned irq, u32_t * low)
 	*low = val;
 }
 
-PUBLIC void ioapic_set_irq(unsigned irq)
+void ioapic_set_irq(unsigned irq)
 {
 	unsigned ioa;
 
@@ -1216,7 +1216,7 @@ PUBLIC void ioapic_set_irq(unsigned irq)
 	}
 }
 
-PUBLIC void ioapic_unset_irq(unsigned irq)
+void ioapic_unset_irq(unsigned irq)
 {
 	assert(irq < NR_IRQ_VECTORS);
 
@@ -1225,7 +1225,7 @@ PUBLIC void ioapic_unset_irq(unsigned irq)
 	io_apic_irq[irq].eoi = NULL;
 }
 
-PUBLIC void ioapic_reset_pic(void)
+void ioapic_reset_pic(void)
 {       
 	apic_idt_init(TRUE); /* reset */
 	idt_reload();
@@ -1238,7 +1238,7 @@ PUBLIC void ioapic_reset_pic(void)
 	intr_init(INTS_ORIG, 0); /* no auto eoi */
 }
 
-PRIVATE void irq_lapic_status(int irq)
+static void irq_lapic_status(int irq)
 {
 	u32_t lo;
 	reg_t tmr, irr, isr;
@@ -1280,7 +1280,7 @@ PRIVATE void irq_lapic_status(int irq)
 			"masked" : "unmasked");
 }
 
-PUBLIC void dump_apic_irq_state(void)
+void dump_apic_irq_state(void)
 {
 	int irq;
 

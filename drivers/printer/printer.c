@@ -86,44 +86,44 @@
  * with the sys_outb() messages exchanged.
  */
 
-PRIVATE endpoint_t caller;	/* process to tell when printing done (FS) */
-PRIVATE int revive_pending;	/* set to true if revive is pending */
-PRIVATE int revive_status;	/* revive status */
-PRIVATE int done_status;	/* status of last output completion */
-PRIVATE int oleft;		/* bytes of output left in obuf */
-PRIVATE unsigned char obuf[128];	/* output buffer */
-PRIVATE unsigned const char *optr;	/* ptr to next char in obuf to print */
-PRIVATE int orig_count;		/* original byte count */
-PRIVATE int port_base;		/* I/O port for printer */
-PRIVATE endpoint_t proc_nr;	/* user requesting the printing */
-PRIVATE cp_grant_id_t grant_nr;	/* grant on which print happens */
-PRIVATE int user_left;		/* bytes of output left in user buf */
-PRIVATE vir_bytes user_vir_d;	/* offset in user buf */
-PUBLIC int writing;		/* nonzero while write is in progress */
-PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
+static endpoint_t caller;	/* process to tell when printing done (FS) */
+static int revive_pending;	/* set to true if revive is pending */
+static int revive_status;	/* revive status */
+static int done_status;	/* status of last output completion */
+static int oleft;		/* bytes of output left in obuf */
+static unsigned char obuf[128];	/* output buffer */
+static unsigned const char *optr;	/* ptr to next char in obuf to print */
+static int orig_count;		/* original byte count */
+static int port_base;		/* I/O port for printer */
+static endpoint_t proc_nr;	/* user requesting the printing */
+static cp_grant_id_t grant_nr;	/* grant on which print happens */
+static int user_left;		/* bytes of output left in user buf */
+static vir_bytes user_vir_d;	/* offset in user buf */
+int writing;		/* nonzero while write is in progress */
+static int irq_hook_id;	/* id of irq hook at kernel */
 
-FORWARD void do_cancel(message *m_ptr);
-FORWARD void output_done(void);
-FORWARD void do_write(message *m_ptr);
-FORWARD void do_status(message *m_ptr);
-FORWARD void prepare_output(void);
-FORWARD int do_probe(void);
-FORWARD void do_initialize(void);
-FORWARD void reply(int code,int replyee,int proc,int status);
-FORWARD void do_printer_output(void);
+static void do_cancel(message *m_ptr);
+static void output_done(void);
+static void do_write(message *m_ptr);
+static void do_status(message *m_ptr);
+static void prepare_output(void);
+static int do_probe(void);
+static void do_initialize(void);
+static void reply(int code,int replyee,int proc,int status);
+static void do_printer_output(void);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
-PUBLIC int is_status_msg_expected = FALSE;
+int is_status_msg_expected = FALSE;
 
 /*===========================================================================*
  *				printer_task				     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
 /* Main routine of the printer task. */
   message pr_mess;		/* buffer for all incoming messages */
@@ -169,7 +169,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -191,7 +191,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the printer driver. */
 
@@ -208,7 +208,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-PRIVATE void do_write(m_ptr)
+static void do_write(m_ptr)
 register message *m_ptr;	/* pointer to the newly arrived message */
 {
 /* The printer is used by sending DEV_WRITE messages to it. Process one. */
@@ -260,7 +260,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 /*===========================================================================*
  *				output_done				     *
  *===========================================================================*/
-PRIVATE void output_done()
+static void output_done()
 {
 /* Previous chunk of printing is finished.  Continue if OK and more.
  * Otherwise, reply to caller (FS).
@@ -300,7 +300,7 @@ PRIVATE void output_done()
 /*===========================================================================*
  *				do_status				     *
  *===========================================================================*/
-PRIVATE void do_status(m_ptr)
+static void do_status(m_ptr)
 register message *m_ptr;	/* pointer to the newly arrived message */
 {
   if (revive_pending) {
@@ -322,7 +322,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 /*===========================================================================*
  *				do_cancel				     *
  *===========================================================================*/
-PRIVATE void do_cancel(m_ptr)
+static void do_cancel(m_ptr)
 register message *m_ptr;	/* pointer to the newly arrived message */
 {
 /* Cancel a print request that has already started.  Usually this means that
@@ -342,7 +342,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(code, replyee, process, status)
+static void reply(code, replyee, process, status)
 int code;			/* TASK_REPLY or REVIVE */
 int replyee;			/* destination for message (normally FS) */
 int process;			/* which user requested the printing */
@@ -361,7 +361,7 @@ int status;			/* number of  chars printed or error code */
 /*===========================================================================*
  *				do_probe				     *
  *===========================================================================*/
-PRIVATE int do_probe(void)
+static int do_probe(void)
 {
 /* See if there is a printer at all. */
 
@@ -378,7 +378,7 @@ PRIVATE int do_probe(void)
 /*===========================================================================*
  *				do_initialize				     *
  *===========================================================================*/
-PRIVATE void do_initialize()
+static void do_initialize()
 {
 /* Set global variables and initialize the printer. */
   static int initialized = FALSE;
@@ -404,7 +404,7 @@ PRIVATE void do_initialize()
 /*==========================================================================*
  *		    	      prepare_output				    *
  *==========================================================================*/
-PRIVATE void prepare_output()
+static void prepare_output()
 {
 /* Start next chunk of printer output. Fetch the data from user space. */
   int s;
@@ -427,7 +427,7 @@ PRIVATE void prepare_output()
 /*===========================================================================*
  *				do_printer_output				     *
  *===========================================================================*/
-PRIVATE void do_printer_output()
+static void do_printer_output()
 {
 /* This function does the actual output to the printer. This is called on an
  * interrupt message sent from the generic interrupt handler that 'forwards'

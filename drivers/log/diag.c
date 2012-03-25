@@ -12,7 +12,7 @@
 /*==========================================================================*
  *				do_new_kmess				    *
  *==========================================================================*/
-PUBLIC void do_new_kmess(void)
+void do_new_kmess(void)
 {
 /* Notification for a new kernel message. */
   static struct kmessages kmess;		/* entire kmess structure */

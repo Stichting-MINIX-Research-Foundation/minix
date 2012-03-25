@@ -135,7 +135,7 @@ int gettynames(void);
  * Tname assumes that the first three letters of the tty's name can be omitted
  * and returns the rest (except for the console, which yields "co").
  */
-PRIVATE char *tname(dev_t dev_nr)
+static char *tname(dev_t dev_nr)
 {
   unsigned int i;
 
@@ -149,7 +149,7 @@ PRIVATE char *tname(dev_t dev_nr)
 }
 
 /* Find a task by its endpoint. */
-PRIVATE struct pstat *findtask(endpoint_t endpt)
+static struct pstat *findtask(endpoint_t endpt)
 {
   struct pstat *ps;
   unsigned int slot;
@@ -168,7 +168,7 @@ PRIVATE struct pstat *findtask(endpoint_t endpt)
 }
 
 /* Return canonical task name of the given endpoint. */
-PRIVATE char *taskname(endpoint_t endpt)
+static char *taskname(endpoint_t endpt)
 {
   struct pstat *ps;
 
@@ -180,7 +180,7 @@ PRIVATE char *taskname(endpoint_t endpt)
 /* Prrecv prints the RECV field for process with pstat buffer pointer ps.
  * This is either "ANY", "taskname", or "(blockreason) taskname".
  */
-PRIVATE char *prrecv(struct pstat *ps)
+static char *prrecv(struct pstat *ps)
 {
   char *blkstr, *task;		/* reason for blocking and task */
   static char recvstr[20];
@@ -212,7 +212,7 @@ PRIVATE char *prrecv(struct pstat *ps)
   return recvstr;
 }
 
-PRIVATE void getkinfo(void)
+static void getkinfo(void)
 {
 	FILE *fp;
 

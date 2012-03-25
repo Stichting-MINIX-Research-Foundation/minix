@@ -8,7 +8,7 @@ unsigned ncpus;
 unsigned ht_per_core;
 unsigned bsp_cpu_id;
 
-PUBLIC struct cpu cpus[CONFIG_MAX_CPUS];
+struct cpu cpus[CONFIG_MAX_CPUS];
 
 /* info passed to another cpu along with a sched ipi */
 struct sched_ipi_data {
@@ -16,7 +16,7 @@ struct sched_ipi_data {
 	volatile u32_t	data;
 };
 
-PRIVATE struct sched_ipi_data  sched_ipi_data[CONFIG_MAX_CPUS];
+static struct sched_ipi_data  sched_ipi_data[CONFIG_MAX_CPUS];
 
 #define SCHED_IPI_STOP_PROC	1
 #define SCHED_IPI_VM_INHIBIT	2
@@ -27,7 +27,7 @@ static volatile unsigned ap_cpus_booted;
 SPINLOCK_DEFINE(big_kernel_lock)
 SPINLOCK_DEFINE(boot_lock)
 
-PUBLIC void wait_for_APs_to_finish_booting(void)
+void wait_for_APs_to_finish_booting(void)
 {
 	unsigned n = 0;
 	int i;
@@ -48,19 +48,19 @@ PUBLIC void wait_for_APs_to_finish_booting(void)
 	BKL_LOCK();
 }
 
-PUBLIC void ap_boot_finished(unsigned cpu)
+void ap_boot_finished(unsigned cpu)
 {
 	ap_cpus_booted++;
 }
 
-PUBLIC void smp_ipi_halt_handler(void)
+void smp_ipi_halt_handler(void)
 {
 	ipi_ack();
 	stop_local_timer();
 	arch_smp_halt_cpu();
 }
 
-PUBLIC void smp_schedule(unsigned cpu)
+void smp_schedule(unsigned cpu)
 {
 	arch_send_smp_schedule_ipi(cpu);
 }
@@ -72,7 +72,7 @@ void smp_sched_handler(void);
  * the task is finished. Also wait before it finishes task sent by another cpu
  * to the same one.
  */
-PRIVATE void smp_schedule_sync(struct proc * p, unsigned task)
+static void smp_schedule_sync(struct proc * p, unsigned task)
 {
 	unsigned cpu = p->p_cpu;
 	unsigned mycpu = cpuid;
@@ -111,7 +111,7 @@ PRIVATE void smp_schedule_sync(struct proc * p, unsigned task)
 	BKL_LOCK();
 }
 
-PUBLIC void smp_schedule_stop_proc(struct proc * p)
+void smp_schedule_stop_proc(struct proc * p)
 {
 	if (proc_is_runnable(p))
 		smp_schedule_sync(p, SCHED_IPI_STOP_PROC);
@@ -120,7 +120,7 @@ PUBLIC void smp_schedule_stop_proc(struct proc * p)
 	assert(RTS_ISSET(p, RTS_PROC_STOP));
 }
 
-PUBLIC void smp_schedule_vminhibit(struct proc * p)
+void smp_schedule_vminhibit(struct proc * p)
 {
 	if (proc_is_runnable(p))
 		smp_schedule_sync(p, SCHED_IPI_VM_INHIBIT);
@@ -129,7 +129,7 @@ PUBLIC void smp_schedule_vminhibit(struct proc * p)
 	assert(RTS_ISSET(p, RTS_VMINHIBIT));
 }
 
-PUBLIC void smp_schedule_stop_proc_save_ctx(struct proc * p)
+void smp_schedule_stop_proc_save_ctx(struct proc * p)
 {
 	/*
 	 * stop the processes and force the complete context of the process to
@@ -139,7 +139,7 @@ PUBLIC void smp_schedule_stop_proc_save_ctx(struct proc * p)
 	assert(RTS_ISSET(p, RTS_PROC_STOP));
 }
 
-PUBLIC void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu)
+void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu)
 {
 	/*
 	 * stop the processes and force the complete context of the process to
@@ -153,7 +153,7 @@ PUBLIC void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu)
 	RTS_UNSET(p, RTS_PROC_STOP);
 }
 
-PUBLIC void smp_sched_handler(void)
+void smp_sched_handler(void)
 {
 	unsigned flgs;
 	unsigned cpu = cpuid;
@@ -191,7 +191,7 @@ PUBLIC void smp_sched_handler(void)
  * already called. It only serves the purpose of acknowledging the IPI and
  * preempting the current process if the CPU was not idle.
  */
-PUBLIC void smp_ipi_sched_handler(void)
+void smp_ipi_sched_handler(void)
 {
 	struct proc * curr;
 

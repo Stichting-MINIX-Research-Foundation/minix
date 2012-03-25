@@ -20,18 +20,18 @@ struct symtab_s
 	unsigned nsym;
 };
 
-PRIVATE struct symtab_s symtab;
-PRIVATE int type_of_exec;
+static struct symtab_s symtab;
+static int type_of_exec;
 
-FORWARD int check_exec(struct exec *hdr);
-FORWARD void sortsyms(struct nlist *array , struct nlist *top );
-FORWARD int symeq(char *t , struct nlist *sp );
-FORWARD int symprefix(char *t , struct nlist *sp );
-FORWARD struct nlist *findsname(char *name, int is_text, int allflag);
-FORWARD void outsym(struct nlist *sp, off_t off);
-FORWARD struct nlist *findsval(off_t value, int where);
+static int check_exec(struct exec *hdr);
+static void sortsyms(struct nlist *array , struct nlist *top );
+static int symeq(char *t , struct nlist *sp );
+static int symprefix(char *t , struct nlist *sp );
+static struct nlist *findsname(char *name, int is_text, int allflag);
+static void outsym(struct nlist *sp, off_t off);
+static struct nlist *findsval(off_t value, int where);
 
-PUBLIC void syminit( filename )
+void syminit( filename )
 char *filename;
 {
 	int fd;
@@ -100,7 +100,7 @@ char *filename;
  * return type of exec
  * or exit
  */
-PRIVATE int check_exec(hdr)
+static int check_exec(hdr)
 struct exec *hdr;
 {
 long magic;
@@ -159,7 +159,7 @@ long magic;
 }
 
 
-PUBLIC long symbolvalue( name, is_text )
+long symbolvalue( name, is_text )
 char *name;
 int is_text;
 {
@@ -178,7 +178,7 @@ register struct nlist *sp;
 		return 0L;
 }
 
-PRIVATE struct nlist *findsname( name, is_text, allflag )
+static struct nlist *findsname( name, is_text, allflag )
 char *name;
 int is_text;
 int allflag;
@@ -240,7 +240,7 @@ int allflag;
 	return NULL;
 }
 
-PRIVATE struct nlist *findsval( value, where )
+static struct nlist *findsval( value, where )
 off_t value;
 int where;
 {
@@ -277,7 +277,7 @@ int where;
 }
 
 
-PUBLIC void printhex(v)
+void printhex(v)
 off_t v;
 {
     if ( v >= 65536L )
@@ -289,7 +289,7 @@ off_t v;
 }
 
 
-PRIVATE void outsym( sp, off )
+static void outsym( sp, off )
 struct nlist *sp;
 off_t off;
 {
@@ -307,7 +307,7 @@ off_t off;
 
 /* shell sort symbols on value */
 
-PRIVATE void sortsyms( array, top )
+static void sortsyms( array, top )
 struct nlist *array;
 struct nlist *top;
 {
@@ -341,7 +341,7 @@ struct nlist *top;
 	while ( (gap /= 3) != 0 );
 }
 
-PUBLIC void symbolic( value, separator )
+void symbolic( value, separator )
 off_t value;
 int separator;
 {
@@ -386,14 +386,14 @@ int separator;
 }
 
 
-PRIVATE int symeq( t, sp )
+static int symeq( t, sp )
 register char *t;
 struct nlist *sp;
 {
 	return strncmp( t, sp->n_name, sizeof sp->n_name ) == 0;
 }
 
-PRIVATE int symprefix( t, sp )
+static int symprefix( t, sp )
 register char *t;
 struct nlist *sp;
 {
@@ -412,7 +412,7 @@ struct nlist *sp;
 
 /* list all symbols - test for selection criteria */
 
-PUBLIC void listsym(cmd)
+void listsym(cmd)
 char *cmd;
 {
 	register struct symtab_s *tp;
@@ -473,7 +473,7 @@ char *cmd;
 }
 
 
-PUBLIC int text_symbol(value)
+int text_symbol(value)
 off_t value;
 {
 struct nlist *sp;
@@ -492,7 +492,7 @@ struct nlist *sp;
 	    return FALSE;
 }
 
-PUBLIC int finds_data(off,data_seg)
+int finds_data(off,data_seg)
 off_t off;
 int data_seg;
 {
@@ -512,7 +512,7 @@ struct nlist *sp;
 	    return FALSE;
 }
 
-PUBLIC int finds_pc(pc)
+int finds_pc(pc)
 off_t pc;
 {
 struct nlist *sp;

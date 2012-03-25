@@ -23,14 +23,14 @@
 #include "debug.h" 
 
 
-FORWARD void lock_pgtab(void);
-FORWARD void unlock_pgtab(void);
-FORWARD struct dde_pgtab_region * allocate_region(void);
-FORWARD void free_region(struct dde_pgtab_region *r);
-FORWARD void add_region(struct dde_pgtab_region *r);
-FORWARD void rm_region(struct dde_pgtab_region *r);
-FORWARD struct dde_pgtab_region * find_region_virt(ddekit_addr_t va);
-FORWARD struct dde_pgtab_region * find_region_phys(ddekit_addr_t pa);
+static void lock_pgtab(void);
+static void unlock_pgtab(void);
+static struct dde_pgtab_region * allocate_region(void);
+static void free_region(struct dde_pgtab_region *r);
+static void add_region(struct dde_pgtab_region *r);
+static void rm_region(struct dde_pgtab_region *r);
+static struct dde_pgtab_region * find_region_virt(ddekit_addr_t va);
+static struct dde_pgtab_region * find_region_phys(ddekit_addr_t pa);
 
 struct dde_pgtab_region {  
 	ddekit_addr_t vm_start; 
@@ -41,8 +41,8 @@ struct dde_pgtab_region {
 	struct dde_pgtab_region *prev;
 };
 
-PRIVATE struct dde_pgtab_region  head = {0,0,0,0,&head,&head}; 
-PRIVATE ddekit_lock_t lock;
+static struct dde_pgtab_region  head = {0,0,0,0,&head,&head}; 
+static ddekit_lock_t lock;
 
 /*
  * INTERNAL HELPERS
@@ -51,7 +51,7 @@ PRIVATE ddekit_lock_t lock;
 /****************************************************************************/
 /*      lock_pgtab                                                          */
 /****************************************************************************/
-PRIVATE void lock_pgtab()
+static void lock_pgtab()
 {
 	ddekit_lock_lock(&lock);
 }
@@ -60,7 +60,7 @@ PRIVATE void lock_pgtab()
 /****************************************************************************/
 /*      unlock_pgtab                                                        */
 /****************************************************************************/
-PRIVATE void unlock_pgtab()
+static void unlock_pgtab()
 {
 	ddekit_lock_unlock(&lock);
 }
@@ -68,7 +68,7 @@ PRIVATE void unlock_pgtab()
 /****************************************************************************/
 /*      dde_pgtab_region                                                    */
 /****************************************************************************/
-PRIVATE struct dde_pgtab_region * allocate_region()
+static struct dde_pgtab_region * allocate_region()
 { 
 	struct dde_pgtab_region * res;
 
@@ -84,7 +84,7 @@ PRIVATE struct dde_pgtab_region * allocate_region()
 /****************************************************************************/
 /*      free_region                                                         */
 /****************************************************************************/
-PRIVATE void free_region(struct dde_pgtab_region *r)
+static void free_region(struct dde_pgtab_region *r)
 {  
 	ddekit_simple_free(r);
 }
@@ -92,7 +92,7 @@ PRIVATE void free_region(struct dde_pgtab_region *r)
 /****************************************************************************/
 /*      add_region                                                          */
 /****************************************************************************/
-PRIVATE void add_region (struct dde_pgtab_region *r)
+static void add_region (struct dde_pgtab_region *r)
 { 
 	r->next    = head.next;
 	head.next  = r; 
@@ -108,7 +108,7 @@ PRIVATE void add_region (struct dde_pgtab_region *r)
 /****************************************************************************/
 /*      rm_region                                                           */
 /****************************************************************************/
-PRIVATE void rm_region(struct dde_pgtab_region *r)
+static void rm_region(struct dde_pgtab_region *r)
 { 
 	if (r->next) {
 		r->next->prev = r->prev; 
@@ -124,7 +124,7 @@ PRIVATE void rm_region(struct dde_pgtab_region *r)
 /****************************************************************************/
 /*      find_region_virt                                                    */
 /****************************************************************************/
-PRIVATE struct dde_pgtab_region * find_region_virt(ddekit_addr_t va)
+static struct dde_pgtab_region * find_region_virt(ddekit_addr_t va)
 {
 	struct dde_pgtab_region * r;
 	
@@ -146,7 +146,7 @@ PRIVATE struct dde_pgtab_region * find_region_virt(ddekit_addr_t va)
 /****************************************************************************/
 /*      find_region_phys                                                    */
 /****************************************************************************/
-PRIVATE struct dde_pgtab_region * find_region_phys(ddekit_addr_t pa)
+static struct dde_pgtab_region * find_region_phys(ddekit_addr_t pa)
 {  
 	struct dde_pgtab_region * r;
 	
@@ -166,7 +166,7 @@ PRIVATE struct dde_pgtab_region * find_region_phys(ddekit_addr_t pa)
 /****************************************************************************/
 /*      ddekit_pgtab_do_fo_each_region                                      */
 /****************************************************************************/
-PUBLIC void ddekit_pgtab_do_fo_each_region(void (*func) (unsigned, unsigned)) {
+void ddekit_pgtab_do_fo_each_region(void (*func) (unsigned, unsigned)) {
 	struct dde_pgtab_region * r;
 	
 	for( r = head.next; r != &head ; r = r->next ) {   
@@ -182,7 +182,7 @@ PUBLIC void ddekit_pgtab_do_fo_each_region(void (*func) (unsigned, unsigned)) {
 /****************************************************************************/
 /*      ddekit_pgtab_set_region                                             */
 /****************************************************************************/
-PUBLIC void ddekit_pgtab_set_region(void *virt, ddekit_addr_t phys, int pages, int type)
+void ddekit_pgtab_set_region(void *virt, ddekit_addr_t phys, int pages, int type)
 { 
 	ddekit_pgtab_set_region_with_size(virt, phys, (4096)*pages, type);
 }
@@ -190,7 +190,7 @@ PUBLIC void ddekit_pgtab_set_region(void *virt, ddekit_addr_t phys, int pages, i
 /****************************************************************************/
 /*      ddekit_pgtab_set_region_with_size                                   */
 /****************************************************************************/
-PUBLIC void ddekit_pgtab_set_region_with_size(void *virt, ddekit_addr_t phys, int size, int type)
+void ddekit_pgtab_set_region_with_size(void *virt, ddekit_addr_t phys, int size, int type)
 {
 	struct dde_pgtab_region * r;
 	
@@ -212,7 +212,7 @@ PUBLIC void ddekit_pgtab_set_region_with_size(void *virt, ddekit_addr_t phys, in
 /****************************************************************************/
 /*      ddekit_pgtab_clear_region                                           */
 /****************************************************************************/
-PUBLIC void ddekit_pgtab_clear_region(void *virt, int type) {
+void ddekit_pgtab_clear_region(void *virt, int type) {
 	
 	struct dde_pgtab_region *r;
 
@@ -234,7 +234,7 @@ PUBLIC void ddekit_pgtab_clear_region(void *virt, int type) {
 /****************************************************************************/
 /*      ddekit_pgtab_get_physaddr                                           */
 /****************************************************************************/
-PUBLIC ddekit_addr_t ddekit_pgtab_get_physaddr(const void *virt)
+ddekit_addr_t ddekit_pgtab_get_physaddr(const void *virt)
 {
 	struct dde_pgtab_region *r;
 	ddekit_addr_t ret = 0;
@@ -253,7 +253,7 @@ PUBLIC ddekit_addr_t ddekit_pgtab_get_physaddr(const void *virt)
 /****************************************************************************/
 /*      ddekit_pgtab_get_virtaddr                                           */
 /****************************************************************************/
-PUBLIC ddekit_addr_t ddekit_pgtab_get_virtaddr(const ddekit_addr_t physical)
+ddekit_addr_t ddekit_pgtab_get_virtaddr(const ddekit_addr_t physical)
 {
 	struct dde_pgtab_region *r;
 	lock_pgtab();
@@ -270,7 +270,7 @@ PUBLIC ddekit_addr_t ddekit_pgtab_get_virtaddr(const ddekit_addr_t physical)
 /****************************************************************************/
 /*      ddekit_pgtab_get_size                                               */
 /****************************************************************************/
-PUBLIC int ddekit_pgtab_get_type(const void *virt)
+int ddekit_pgtab_get_type(const void *virt)
 { 
 	/*
 	 * needed for dde fbsd
@@ -287,7 +287,7 @@ PUBLIC int ddekit_pgtab_get_type(const void *virt)
 /****************************************************************************/
 /*      ddekit_pgtab_get_size                                               */
 /****************************************************************************/
-PUBLIC int ddekit_pgtab_get_size(const void *virt) 
+int ddekit_pgtab_get_size(const void *virt) 
 { 
 	/*
 	 * needed for fbsd
@@ -306,7 +306,7 @@ PUBLIC int ddekit_pgtab_get_size(const void *virt)
 /****************************************************************************/
 /*      ddekit_pgtab_init                                                   */
 /****************************************************************************/
-PUBLIC void ddekit_pgtab_init() {
+void ddekit_pgtab_init() {
 	/* called by ddekit_init() */ 
 	ddekit_lock_init(&lock);
 }

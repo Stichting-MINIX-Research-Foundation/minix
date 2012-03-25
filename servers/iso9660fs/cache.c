@@ -17,16 +17,16 @@
 #include <minix/bdev.h>
 #include "buf.h"
 
-FORWARD int read_block(struct buf *);
+static int read_block(struct buf *);
 
-PUBLIC struct buf *bp_to_pickup = buf; /* This is a pointer to the next node in the
+struct buf *bp_to_pickup = buf; /* This is a pointer to the next node in the
 					  * buffer cache to pick up*/
 
 
 /*===========================================================================*
  *				get_block				     *
  *===========================================================================*/
-PUBLIC struct buf *get_block(block)
+struct buf *get_block(block)
 register block_t block;		/* which block is wanted? */
 {
   register struct buf *bp, *free_bp;
@@ -76,7 +76,7 @@ register block_t block;		/* which block is wanted? */
 /*===========================================================================*
  *				put_block				     *
  *===========================================================================*/
-PUBLIC void put_block(bp)
+void put_block(bp)
 register struct buf *bp;	/* pointer to the buffer to be released */
 {
   if (bp == NULL) return;	/* it is easier to check here than in caller */
@@ -87,7 +87,7 @@ register struct buf *bp;	/* pointer to the buffer to be released */
 /*===========================================================================*
  *				read_block				     *
  *===========================================================================*/
-PRIVATE int read_block(bp)
+static int read_block(bp)
 register struct buf *bp;	/* buffer pointer */
 {
   int r;

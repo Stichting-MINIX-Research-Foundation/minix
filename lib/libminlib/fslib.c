@@ -31,7 +31,7 @@
  * unlikely, but negative bit counts are now possible (though unlikely)
  * and give silly results.
  */ 
-PUBLIC int bitmapsize(nr_bits, block_size)
+int bitmapsize(nr_bits, block_size)
 bit_t nr_bits;
 int block_size;
 {
@@ -46,7 +46,7 @@ int block_size;
 /*===========================================================================*
  *				conv2					     *
  *===========================================================================*/
-PUBLIC unsigned conv2(norm, w)
+unsigned conv2(norm, w)
 int norm;			/* TRUE if no swap, FALSE for byte swap */
 int w;				/* promotion of 16-bit word to be swapped */
 {
@@ -60,7 +60,7 @@ int w;				/* promotion of 16-bit word to be swapped */
 /*===========================================================================*
  *				conv4					     *
  *===========================================================================*/
-PUBLIC long conv4(norm, x)
+long conv4(norm, x)
 int norm;			/* TRUE if no swap, FALSE for byte swap */
 long x;				/* 32-bit long to be byte swapped */
 {
@@ -80,7 +80,7 @@ long x;				/* 32-bit long to be byte swapped */
 /*===========================================================================*
  *				conv_inode				     *
  *===========================================================================*/
-PUBLIC void conv_inode(rip, dip, dip2, rw_flag, magic)
+void conv_inode(rip, dip, dip2, rw_flag, magic)
 register struct inode *rip;	/* pointer to the in-core inode struct */
 register d1_inode *dip;		/* pointer to the V1 on-disk inode struct */
 register d2_inode *dip2;	/* pointer to the V2 on-disk inode struct */
@@ -103,7 +103,7 @@ int magic;			/* magic number of file system */
 /*===========================================================================*
  *				old_icopy				     *
  *===========================================================================*/
-PUBLIC void old_icopy(rip, dip, direction, norm)
+void old_icopy(rip, dip, direction, norm)
 register struct inode *rip;	/* pointer to the in-core inode struct */
 register d1_inode *dip;		/* pointer to the d1_inode inode struct */
 int direction;			/* READING (from disk) or WRITING (to disk) */
@@ -150,7 +150,7 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
 /*===========================================================================*
  *				new_icopy				     *
  *===========================================================================*/
-PUBLIC void new_icopy(rip, dip, direction, norm)
+void new_icopy(rip, dip, direction, norm)
 register struct inode *rip;	/* pointer to the in-core inode struct */
 register d2_inode *dip;	/* pointer to the d2_inode struct */
 int direction;			/* READING (from disk) or WRITING (to disk) */

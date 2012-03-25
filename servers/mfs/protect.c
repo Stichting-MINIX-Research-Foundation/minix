@@ -3,13 +3,13 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-FORWARD int in_group(gid_t grp);
+static int in_group(gid_t grp);
 
 
 /*===========================================================================*
  *				fs_chmod				     *
  *===========================================================================*/
-PUBLIC int fs_chmod()
+int fs_chmod()
 {
 /* Perform the chmod(name, mode) system call. */
 
@@ -43,7 +43,7 @@ PUBLIC int fs_chmod()
 /*===========================================================================*
  *				fs_chown				     *
  *===========================================================================*/
-PUBLIC int fs_chown()
+int fs_chown()
 {
   register struct inode *rip;
   register int r;
@@ -73,7 +73,7 @@ PUBLIC int fs_chown()
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
+int forbidden(register struct inode *rip, mode_t access_desired)
 {
 /* Given a pointer to an inode, 'rip', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the
@@ -125,7 +125,7 @@ PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
 /*===========================================================================*
  *				in_group				     *
  *===========================================================================*/
-PRIVATE int in_group(gid_t grp)
+static int in_group(gid_t grp)
 {
   int i;
 
@@ -143,7 +143,7 @@ PRIVATE int in_group(gid_t grp)
 /*===========================================================================*
  *				read_only				     *
  *===========================================================================*/
-PUBLIC int read_only(ip)
+int read_only(ip)
 struct inode *ip;		/* ptr to inode whose file sys is to be cked */
 {
 /* Check to see if the file system on which the inode 'ip' resides is mounted

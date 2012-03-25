@@ -37,7 +37,7 @@
 /*===========================================================================*
  *				do_trace  				     *
  *===========================================================================*/
-PUBLIC int do_trace()
+int do_trace()
 {
   register struct mproc *child;
   struct ptrace_range pr;
@@ -267,7 +267,7 @@ PUBLIC int do_trace()
 /*===========================================================================*
  *				stop_proc				     *
  *===========================================================================*/
-PUBLIC void stop_proc(rmp, signo)
+void stop_proc(rmp, signo)
 register struct mproc *rmp;
 int signo;
 {

@@ -33,9 +33,6 @@
 #endif
 
 #define EXTERN        extern	/* used in *.h files */
-#define PRIVATE       static	/* PRIVATE x limits the scope of x */
-#define PUBLIC			/* PUBLIC is the opposite of PRIVATE */
-#define FORWARD       static	/* some compilers require this to be 'static'*/
 
 #define TRUE               1	/* used for turning integers into Booleans */
 #define FALSE              0	/* used for turning integers into Booleans */

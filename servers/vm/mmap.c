@@ -35,7 +35,7 @@
 /*===========================================================================*
  *				do_mmap			     		     *
  *===========================================================================*/
-PUBLIC int do_mmap(message *m)
+int do_mmap(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
@@ -113,7 +113,7 @@ PUBLIC int do_mmap(message *m)
 /*===========================================================================*
  *				map_perm_check		     		     *
  *===========================================================================*/
-PUBLIC int map_perm_check(endpoint_t caller, endpoint_t target,
+int map_perm_check(endpoint_t caller, endpoint_t target,
 	phys_bytes physaddr, phys_bytes len)
 {
 	int r;
@@ -141,7 +141,7 @@ PUBLIC int map_perm_check(endpoint_t caller, endpoint_t target,
 /*===========================================================================*
  *				do_map_phys		     		     *
  *===========================================================================*/
-PUBLIC int do_map_phys(message *m)
+int do_map_phys(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
@@ -199,7 +199,7 @@ PUBLIC int do_map_phys(message *m)
 /*===========================================================================*
  *				do_unmap_phys		     		     *
  *===========================================================================*/
-PUBLIC int do_unmap_phys(message *m)
+int do_unmap_phys(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
@@ -234,7 +234,7 @@ PUBLIC int do_unmap_phys(message *m)
 /*===========================================================================*
  *				do_remap		     		     *
  *===========================================================================*/
-PUBLIC int do_remap(message *m)
+int do_remap(message *m)
 {
 	int dn, sn;
 	vir_bytes da, sa, startv;
@@ -303,7 +303,7 @@ PUBLIC int do_remap(message *m)
 /*===========================================================================*
  *				do_shared_unmap		     		     *
  *===========================================================================*/
-PUBLIC int do_shared_unmap(message *m)
+int do_shared_unmap(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
@@ -346,7 +346,7 @@ PUBLIC int do_shared_unmap(message *m)
 /*===========================================================================*
  *				do_get_phys		     		     *
  *===========================================================================*/
-PUBLIC int do_get_phys(message *m)
+int do_get_phys(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
@@ -372,7 +372,7 @@ PUBLIC int do_get_phys(message *m)
 /*===========================================================================*
  *				do_get_refcount		     		     *
  *===========================================================================*/
-PUBLIC int do_get_refcount(message *m)
+int do_get_refcount(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
@@ -398,7 +398,7 @@ PUBLIC int do_get_refcount(message *m)
 /*===========================================================================*
  *                              do_munmap                                    *
  *===========================================================================*/
-PUBLIC int do_munmap(message *m)
+int do_munmap(message *m)
 {
         int r, n;
         struct vmproc *vmp;
@@ -447,7 +447,7 @@ int unmap_ok = 0;
 /*===========================================================================*
  *                     munmap_lin (used for overrides for VM)                *
  *===========================================================================*/
-PRIVATE int munmap_lin(vir_bytes addr, size_t len)
+static int munmap_lin(vir_bytes addr, size_t len)
 {
 	if(addr % VM_PAGE_SIZE) {
 		printf("munmap_lin: offset not page aligned\n");
@@ -471,7 +471,7 @@ PRIVATE int munmap_lin(vir_bytes addr, size_t len)
 /*===========================================================================*
  *                              munmap (override for VM)                    *
  *===========================================================================*/
-PUBLIC int minix_munmap(void *addr, size_t len)
+int minix_munmap(void *addr, size_t len)
 {
 	vir_bytes laddr;
 	if(!unmap_ok)
@@ -483,7 +483,7 @@ PUBLIC int minix_munmap(void *addr, size_t len)
 /*===========================================================================*
  *                              munmap_text (override for VM)                *
  *===========================================================================*/
-PUBLIC int minix_munmap_text(void *addr, size_t len)
+int minix_munmap_text(void *addr, size_t len)
 {
 	vir_bytes laddr;
 	if(!unmap_ok)

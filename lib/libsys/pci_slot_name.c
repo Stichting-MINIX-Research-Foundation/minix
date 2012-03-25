@@ -9,7 +9,7 @@ pci_slot_name.c
 /*===========================================================================*
  *				pci_slot_name				     *
  *===========================================================================*/
-PUBLIC char *pci_slot_name(devind)
+char *pci_slot_name(devind)
 int devind;
 {
 	static char name[80];	/* We need a better interface for this */

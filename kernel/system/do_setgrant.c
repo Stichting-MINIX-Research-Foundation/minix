@@ -12,7 +12,7 @@
 /*===========================================================================*
  *				do_setgrant				     *
  *===========================================================================*/
-PUBLIC int do_setgrant(struct proc * caller, message * m_ptr)
+int do_setgrant(struct proc * caller, message * m_ptr)
 {
 	int r;
 

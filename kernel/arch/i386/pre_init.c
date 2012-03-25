@@ -43,7 +43,7 @@
 #define mb_clear_memrange(start, end) \
 		phys_memset((start), 0, (end)-(start))
 
-PRIVATE void mb_itoa(u32_t val, char * out) 
+static void mb_itoa(u32_t val, char * out) 
 {
 	char ret[ITOA_BUFFER_SIZE];
 	int i = ITOA_BUFFER_SIZE - 2;
@@ -67,7 +67,7 @@ PRIVATE void mb_itoa(u32_t val, char * out)
 	strcpy(out, ret + i + 1);
 }
 
-PRIVATE void mb_itox(u32_t val, char *out) 
+static void mb_itox(u32_t val, char *out) 
 {
 	char ret[9];
 	int i = 7;
@@ -92,7 +92,7 @@ PRIVATE void mb_itox(u32_t val, char *out)
 	strcpy(out, ret + i + 1);
 }
 
-PRIVATE void mb_put_char(char c, int line, int col) 
+static void mb_put_char(char c, int line, int col) 
 {
 	/* Write a char to vga display buffer. */
 	if (line<MULTIBOOT_CONSOLE_LINES&&col<MULTIBOOT_CONSOLE_COLS)
@@ -104,7 +104,7 @@ PRIVATE void mb_put_char(char c, int line, int col)
 			1);
 }
 
-PRIVATE char mb_get_char(int line, int col) 
+static char mb_get_char(int line, int col) 
 {
 	char c;
 	/* Read a char to from display buffer. */
@@ -119,11 +119,11 @@ PRIVATE char mb_get_char(int line, int col)
 }
 
 /* Give non-zero values to avoid them in BSS */
-PRIVATE int print_line = 1, print_col = 1;
+static int print_line = 1, print_col = 1;
 
 #include <sys/video.h>
 	
-PUBLIC void mb_cls(void)
+void mb_cls(void)
 {
 	int i, j;
 	/* Clear screen */
@@ -139,7 +139,7 @@ PUBLIC void mb_cls(void)
 	outb(C_6845+DATA, 0);
 }
 
-PRIVATE void mb_scroll_up(int lines) 
+static void mb_scroll_up(int lines) 
 {
 	int i, j;
 	for (i = 0; i < MULTIBOOT_CONSOLE_LINES; i++ ) {
@@ -153,7 +153,7 @@ PRIVATE void mb_scroll_up(int lines)
 	print_line-= lines;
 }
 
-PUBLIC void mb_print_char(char c)
+void mb_print_char(char c)
 {
 	while (print_line >= MULTIBOOT_CONSOLE_LINES)
 		mb_scroll_up(1);
@@ -177,7 +177,7 @@ PUBLIC void mb_print_char(char c)
 		mb_scroll_up(1);
 }
 
-PUBLIC void mb_print(char *str)
+void mb_print(char *str)
 {
 	while (*str) {
 		mb_print_char(*str);
@@ -191,7 +191,7 @@ PUBLIC void mb_print(char *str)
 #define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
 #define KB_AUX_BYTE	0x20	/* Auxiliary Device Output Buffer Full */
 
-PUBLIC int mb_read_char(unsigned char *ch)
+int mb_read_char(unsigned char *ch)
 {
 	unsigned long b, sb;
 #ifdef DEBUG_SERIAL
@@ -220,7 +220,7 @@ PUBLIC int mb_read_char(unsigned char *ch)
 	return 0;
 }
 
-PRIVATE void mb_print_hex(u32_t value) 
+static void mb_print_hex(u32_t value) 
 {
 	int i;
 	char c;
@@ -238,7 +238,7 @@ PRIVATE void mb_print_hex(u32_t value)
 	mb_print(out);
 }
 
-PRIVATE int mb_set_param(char *name, char *value) 
+static int mb_set_param(char *name, char *value) 
 {
 	char *p = multiboot_param_buf;
 	char *q;
@@ -281,7 +281,7 @@ PRIVATE int mb_set_param(char *name, char *value)
 	return 0;
 }
 
-PRIVATE void get_parameters(multiboot_info_t *mbi) 
+static void get_parameters(multiboot_info_t *mbi) 
 {
 	char mem_value[40], temp[ITOA_BUFFER_SIZE];
 	int i;
@@ -354,7 +354,7 @@ PRIVATE void get_parameters(multiboot_info_t *mbi)
 	}
 }
 
-PRIVATE void mb_extract_image(multiboot_info_t mbi)
+static void mb_extract_image(multiboot_info_t mbi)
 {
 	multiboot_module_t *mb_module_info;
 	multiboot_module_t *module;
@@ -458,7 +458,7 @@ PRIVATE void mb_extract_image(multiboot_info_t mbi)
 	return;
 }
 
-PUBLIC phys_bytes pre_init(u32_t ebx)
+phys_bytes pre_init(u32_t ebx)
 {
 	multiboot_info_t mbi;
 

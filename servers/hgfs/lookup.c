@@ -9,19 +9,19 @@
 
 #include "inc.h"
 
-FORWARD int get_mask(vfs_ucred_t *ucred);
-FORWARD int access_as_dir(struct inode *ino, struct hgfs_attr *attr, int
+static int get_mask(vfs_ucred_t *ucred);
+static int access_as_dir(struct inode *ino, struct hgfs_attr *attr, int
 	uid, int mask);
-FORWARD int next_name(char **ptr, char **start, char name[NAME_MAX+1]);
-FORWARD int go_up(char path[PATH_MAX], struct inode *ino, struct inode
+static int next_name(char **ptr, char **start, char name[NAME_MAX+1]);
+static int go_up(char path[PATH_MAX], struct inode *ino, struct inode
 	**res_ino, struct hgfs_attr *attr);
-FORWARD int go_down(char path[PATH_MAX], struct inode *ino, char *name,
+static int go_down(char path[PATH_MAX], struct inode *ino, char *name,
 	struct inode **res_ino, struct hgfs_attr *attr);
 
 /*===========================================================================*
  *				get_mask				     *
  *===========================================================================*/
-PRIVATE int get_mask(ucred)
+static int get_mask(ucred)
 vfs_ucred_t *ucred;		/* credentials of the caller */
 {
   /* Given the caller's credentials, precompute a search access mask to test
@@ -42,7 +42,7 @@ vfs_ucred_t *ucred;		/* credentials of the caller */
 /*===========================================================================*
  *				access_as_dir				     *
  *===========================================================================*/
-PRIVATE int access_as_dir(ino, attr, uid, mask)
+static int access_as_dir(ino, attr, uid, mask)
 struct inode *ino;		/* the inode to test */
 struct hgfs_attr *attr;		/* attributes of the inode */
 int uid;			/* UID of the caller */
@@ -69,7 +69,7 @@ int mask;			/* search access mask of the caller */
 /*===========================================================================*
  *				next_name				     *
  *===========================================================================*/
-PRIVATE int next_name(ptr, start, name)
+static int next_name(ptr, start, name)
 char **ptr;			/* cursor pointer into path (in, out) */
 char **start;			/* place to store start of name */
 char name[NAME_MAX+1];		/* place to store name */
@@ -102,7 +102,7 @@ char name[NAME_MAX+1];		/* place to store name */
 /*===========================================================================*
  *				go_up					     *
  *===========================================================================*/
-PRIVATE int go_up(path, ino, res_ino, attr)
+static int go_up(path, ino, res_ino, attr)
 char path[PATH_MAX];		/* path to take the last part from */
 struct inode *ino;		/* inode of the current directory */
 struct inode **res_ino;		/* place to store resulting inode */
@@ -131,7 +131,7 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
 /*===========================================================================*
  *				go_down					     *
  *===========================================================================*/
-PRIVATE int go_down(path, parent, name, res_ino, attr)
+static int go_down(path, parent, name, res_ino, attr)
 char path[PATH_MAX];		/* path to add the name to */
 struct inode *parent;		/* inode of the current directory */
 char *name;			/* name of the directory entry */
@@ -190,7 +190,7 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
 /*===========================================================================*
  *				do_lookup				     *
  *===========================================================================*/
-PUBLIC int do_lookup()
+int do_lookup()
 {
 /* Resolve a path string to an inode.
  */

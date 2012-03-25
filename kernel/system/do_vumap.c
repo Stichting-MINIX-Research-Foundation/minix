@@ -19,7 +19,7 @@
 /*===========================================================================*
  *				do_vumap				     *
  *===========================================================================*/
-PUBLIC int do_vumap(struct proc *caller, message *m_ptr)
+int do_vumap(struct proc *caller, message *m_ptr)
 {
 /* Map a vector of grants or local virtual addresses to physical addresses.
  * Designed to be used by drivers to perform an efficient lookup of physical

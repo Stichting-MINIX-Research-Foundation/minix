@@ -34,9 +34,9 @@
 
 
 
-FORWARD int src_reg_read(const DEV_STRUCT * DSP, u16_t reg, u16_t
+static int src_reg_read(const DEV_STRUCT * DSP, u16_t reg, u16_t
 	*data);
-FORWARD int src_reg_write(const DEV_STRUCT * DSP, u16_t reg, u16_t val);
+static int src_reg_write(const DEV_STRUCT * DSP, u16_t reg, u16_t val);
 
 
 int src_init ( DEV_STRUCT * DSP ) {
@@ -103,7 +103,7 @@ int src_init ( DEV_STRUCT * DSP ) {
 }
 
 
-PRIVATE int src_reg_read(const DEV_STRUCT * DSP, u16_t reg, u16_t *data) {
+static int src_reg_read(const DEV_STRUCT * DSP, u16_t reg, u16_t *data) {
 	u32_t dtemp;
 
 	/* wait for ready */
@@ -129,7 +129,7 @@ PRIVATE int src_reg_read(const DEV_STRUCT * DSP, u16_t reg, u16_t *data) {
 }
 
 
-PRIVATE int src_reg_write(const DEV_STRUCT * DSP, u16_t reg, u16_t val) {
+static int src_reg_write(const DEV_STRUCT * DSP, u16_t reg, u16_t val) {
 	u32_t dtemp;
 
 	/* wait for ready */

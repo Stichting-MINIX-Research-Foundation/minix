@@ -15,21 +15,21 @@
 
 #define KRANDOM_PERIOD    1 		/* ticks between krandom calls */
 
-PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
-PRIVATE dev_t m_device;			/* current device */
+static struct device m_geom[NR_DEVS];  /* base and size of each device */
+static dev_t m_device;			/* current device */
 
 extern int errno;			/* error number for PM calls */
 
-FORWARD struct device *r_prepare(dev_t device);
-FORWARD int r_transfer(endpoint_t endpt, int opcode, u64_t position,
+static struct device *r_prepare(dev_t device);
+static int r_transfer(endpoint_t endpt, int opcode, u64_t position,
 	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
 	flags);
-FORWARD int r_do_open(message *m_ptr);
-FORWARD void r_random(message *m_ptr);
-FORWARD void r_updatebin(int source, struct k_randomness_bin *rb);
+static int r_do_open(message *m_ptr);
+static void r_random(message *m_ptr);
+static void r_updatebin(int source, struct k_randomness_bin *rb);
 
 /* Entry points to this driver. */
-PRIVATE struct chardriver r_dtab = {
+static struct chardriver r_dtab = {
   r_do_open,	/* open or mount */
   do_nop,	/* nothing on a close */
   nop_ioctl,	/* no I/O controls supported */
@@ -44,16 +44,16 @@ PRIVATE struct chardriver r_dtab = {
 
 /* Buffer for the /dev/random number generator. */
 #define RANDOM_BUF_SIZE 		1024
-PRIVATE char random_buf[RANDOM_BUF_SIZE];
+static char random_buf[RANDOM_BUF_SIZE];
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
   /* SEF local startup. */
   sef_local_startup();
@@ -67,7 +67,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -85,7 +85,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the random driver. */
   static struct k_randomness krandom;
@@ -122,7 +122,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				r_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *r_prepare(dev_t device)
+static struct device *r_prepare(dev_t device)
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
 
@@ -135,7 +135,7 @@ PRIVATE struct device *r_prepare(dev_t device)
 /*===========================================================================*
  *				r_transfer				     *
  *===========================================================================*/
-PRIVATE int r_transfer(
+static int r_transfer(
   endpoint_t endpt,		/* endpoint of grant owner */
   int opcode,			/* DEV_GATHER or DEV_SCATTER */
   u64_t position,		/* offset on device to read or write */
@@ -212,7 +212,7 @@ PRIVATE int r_transfer(
 /*===========================================================================*
  *				r_do_open				     *
  *===========================================================================*/
-PRIVATE int r_do_open(message *m_ptr)
+static int r_do_open(message *m_ptr)
 {
 /* Check device number on open.
  */
@@ -239,7 +239,7 @@ PRIVATE int r_do_open(message *m_ptr)
 /*===========================================================================*
  *				r_updatebin				     *
  *===========================================================================*/
-PRIVATE void r_updatebin(int source, struct k_randomness_bin *rb)
+static void r_updatebin(int source, struct k_randomness_bin *rb)
 {
   	int r_next, r_size, r_high;
 
@@ -265,7 +265,7 @@ PRIVATE void r_updatebin(int source, struct k_randomness_bin *rb)
 /*===========================================================================*
  *				r_random				     *
  *===========================================================================*/
-PRIVATE void r_random(message *UNUSED(m_ptr))
+static void r_random(message *UNUSED(m_ptr))
 {
   /* Fetch random information from the kernel to update /dev/random. */
   int s;

@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_vmctl(endpoint_t who, int param, u32_t value)
+int sys_vmctl(endpoint_t who, int param, u32_t value)
 {
   message m;
   int r;
@@ -12,7 +12,7 @@ PUBLIC int sys_vmctl(endpoint_t who, int param, u32_t value)
   return(r);
 }
 
-PUBLIC int sys_vmctl_get_cr3_i386(endpoint_t who, u32_t *cr3)
+int sys_vmctl_get_cr3_i386(endpoint_t who, u32_t *cr3)
 {
   message m;
   int r;
@@ -26,7 +26,7 @@ PUBLIC int sys_vmctl_get_cr3_i386(endpoint_t who, u32_t *cr3)
   return(r);
 }
 
-PUBLIC int sys_vmctl_set_addrspace(endpoint_t who,
+int sys_vmctl_set_addrspace(endpoint_t who,
         phys_bytes ptroot, void *ptroot_v)
 {
   message m;
@@ -41,7 +41,7 @@ PUBLIC int sys_vmctl_set_addrspace(endpoint_t who,
   return(r);
 }
 
-PUBLIC int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
+int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
         vir_bytes *len, int *wrflag, endpoint_t *who_s, vir_bytes *mem_s,
         endpoint_t *requestor)
 {
@@ -63,7 +63,7 @@ PUBLIC int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
   return r;
 }
 
-PUBLIC int sys_vmctl_enable_paging(void * data)
+int sys_vmctl_enable_paging(void * data)
 {
 	message m;
 	m.SVMCTL_WHO = SELF;
@@ -72,7 +72,7 @@ PUBLIC int sys_vmctl_enable_paging(void * data)
 	return _kernel_call(SYS_VMCTL, &m);
 }
 
-PUBLIC int sys_vmctl_get_mapping(int index,
+int sys_vmctl_get_mapping(int index,
 	phys_bytes *addr, phys_bytes *len, int *flags)
 {
 	int r;
@@ -94,7 +94,7 @@ PUBLIC int sys_vmctl_get_mapping(int index,
 	return OK;
 }
 
-PUBLIC int sys_vmctl_reply_mapping(int index, vir_bytes addr)
+int sys_vmctl_reply_mapping(int index, vir_bytes addr)
 {
 	message m;
 

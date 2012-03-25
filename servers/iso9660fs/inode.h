@@ -1,6 +1,6 @@
 #include "const.h"
 
-PUBLIC struct dir_record {
+struct dir_record {
   u8_t length;			/* The length of the record */
   u8_t ext_attr_rec_length;
   u32_t loc_extent_l;		/* The same data (in this case loc_extent)is */
@@ -30,7 +30,7 @@ PUBLIC struct dir_record {
 
 } dir_records[NR_DIR_RECORDS];
 
-PUBLIC struct ext_attr_rec {
+struct ext_attr_rec {
   u32_t own_id;
   u32_t group_id;
   u16_t permissions;

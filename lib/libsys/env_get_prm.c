@@ -1,15 +1,15 @@
 #include "sysutil.h"
 #include <string.h>
 
-PUBLIC int env_argc = 0;
-PUBLIC char **env_argv = NULL;
+int env_argc = 0;
+char **env_argv = NULL;
 
-FORWARD char *find_key(const char *params, const char *key);
+static char *find_key(const char *params, const char *key);
 
 /*===========================================================================*
  *				env_setargs				     *
  *===========================================================================*/
-PUBLIC void env_setargs(arg_c, arg_v)
+void env_setargs(arg_c, arg_v)
 int arg_c;
 char *arg_v[];
 {
@@ -20,7 +20,7 @@ char *arg_v[];
 /*===========================================================================*
  *				env_get_param				     *
  *===========================================================================*/
-PUBLIC int env_get_param(key, value, max_len)
+int env_get_param(key, value, max_len)
 char *key;				/* which key to look up */
 char *value;				/* where to store value */
 int max_len;				/* maximum length of value */
@@ -80,7 +80,7 @@ int max_len;				/* maximum length of value */
 /*==========================================================================*
  *				find_key					    *
  *==========================================================================*/
-PRIVATE char *find_key(params,name)
+static char *find_key(params,name)
 const char *params;
 const char *name;
 {

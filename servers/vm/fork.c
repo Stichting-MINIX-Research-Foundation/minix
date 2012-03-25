@@ -32,7 +32,7 @@
 /*===========================================================================*
  *				do_fork					     *
  *===========================================================================*/
-PUBLIC int do_fork(message *msg)
+int do_fork(message *msg)
 {
   int r, proc, childproc, fullvm;
   struct vmproc *vmp, *vmc;

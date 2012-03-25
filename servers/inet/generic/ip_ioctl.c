@@ -19,12 +19,12 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD int ip_checkopt ARGS(( ip_fd_t *ip_fd ));
-FORWARD void reply_thr_get ARGS(( ip_fd_t *ip_fd, size_t
+static int ip_checkopt ARGS(( ip_fd_t *ip_fd ));
+static void reply_thr_get ARGS(( ip_fd_t *ip_fd, size_t
 	reply, int for_ioctl ));
-FORWARD void report_addr ARGS(( ip_port_t *ip_port ));
+static void report_addr ARGS(( ip_port_t *ip_port ));
 
-PUBLIC int ip_ioctl (fd, req)
+int ip_ioctl (fd, req)
 int fd;
 ioreq_t req;
 {
@@ -450,7 +450,7 @@ ioreq_t req;
 		(acc_t *)0, TRUE);
 }
 
-PUBLIC void ip_hash_proto(ip_fd)
+void ip_hash_proto(ip_fd)
 ip_fd_t *ip_fd;
 {
 	ip_port_t *ip_port;
@@ -470,7 +470,7 @@ ip_fd_t *ip_fd;
 	}
 }
 
-PUBLIC void ip_unhash_proto(ip_fd)
+void ip_unhash_proto(ip_fd)
 ip_fd_t *ip_fd;
 {
 	ip_port_t *ip_port;
@@ -500,7 +500,7 @@ ip_fd_t *ip_fd;
 		*ip_fd_p= curr->if_proto_next;
 }
 
-PUBLIC int ip_setconf(ip_port_nr, ipconf)
+int ip_setconf(ip_port_nr, ipconf)
 int ip_port_nr;
 nwio_ipconf_t *ipconf;
 {
@@ -576,7 +576,7 @@ nwio_ipconf_t *ipconf;
 	return 0;
 }
 
-PRIVATE int ip_checkopt (ip_fd)
+static int ip_checkopt (ip_fd)
 ip_fd_t *ip_fd;
 {
 /* bug: we don't check access modes yet */
@@ -621,7 +621,7 @@ ip_fd_t *ip_fd;
 	return NW_OK;
 }
 
-PRIVATE void reply_thr_get(ip_fd, reply, for_ioctl)
+static void reply_thr_get(ip_fd, reply, for_ioctl)
 ip_fd_t *ip_fd;
 size_t reply;
 int for_ioctl;
@@ -632,7 +632,7 @@ int for_ioctl;
 	assert (!result);
 }
 
-PRIVATE void report_addr(ip_port)
+static void report_addr(ip_port)
 ip_port_t *ip_port;
 {
 	int i, hdr_len;

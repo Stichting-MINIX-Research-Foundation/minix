@@ -16,7 +16,7 @@
 /*===========================================================================*
  *				do_abort				     *
  *===========================================================================*/
-PUBLIC int do_abort(struct proc * caller, message * m_ptr)
+int do_abort(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_abort. MINIX is unable to continue. This can originate e.g.
  * in the PM (normal abort) or TTY (after CTRL-ALT-DEL).

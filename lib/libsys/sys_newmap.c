@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_newmap(
+int sys_newmap(
 endpoint_t proc_ep,		/* process whose map is to be changed */
 struct mem_map *ptr		/* pointer to new map */
 )

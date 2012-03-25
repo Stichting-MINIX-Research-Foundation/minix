@@ -60,53 +60,53 @@ THIS_FILE
 
 #if BUF512_NR
 DECLARE_TYPE(buf512, buf512_t, 512);
-PRIVATE acc_t *buf512_freelist;
+static acc_t *buf512_freelist;
 DECLARE_STORAGE(buf512_t, buffers512, BUF512_NR);
-FORWARD void bf_512free ARGS(( acc_t *acc ));
+static void bf_512free ARGS(( acc_t *acc ));
 #endif
 #if BUF2K_NR
 DECLARE_TYPE(buf2K, buf2K_t, (2*1024));
-PRIVATE acc_t *buf2K_freelist;
+static acc_t *buf2K_freelist;
 DECLARE_STORAGE(buf2K_t, buffers2K, BUF2K_NR);
-FORWARD void bf_2Kfree ARGS(( acc_t *acc ));
+static void bf_2Kfree ARGS(( acc_t *acc ));
 #endif
 #if BUF32K_NR
 DECLARE_TYPE(buf32K, buf32K_t, (32*1024));
-PRIVATE acc_t *buf32K_freelist;
+static acc_t *buf32K_freelist;
 DECLARE_STORAGE(buf32K_t, buffers32K, BUF32K_NR);
-FORWARD void bf_32Kfree ARGS(( acc_t *acc ));
+static void bf_32Kfree ARGS(( acc_t *acc ));
 #endif
 
-PRIVATE acc_t *acc_freelist;
+static acc_t *acc_freelist;
 DECLARE_STORAGE(acc_t, accessors, ACC_NR);
 
-PRIVATE bf_freereq_t freereq[CLIENT_NR];
-PRIVATE size_t bf_buf_gran;
+static bf_freereq_t freereq[CLIENT_NR];
+static size_t bf_buf_gran;
 
-PUBLIC size_t bf_free_bufsize;
-PUBLIC acc_t *bf_temporary_acc;
-PUBLIC acc_t *bf_linkcheck_acc;
+size_t bf_free_bufsize;
+acc_t *bf_temporary_acc;
+acc_t *bf_linkcheck_acc;
 
 #ifdef BUF_CONSISTENCY_CHECK
 int inet_buf_debug;
 unsigned buf_generation; 
-PRIVATE bf_checkreq_t checkreq[CLIENT_NR];
+static bf_checkreq_t checkreq[CLIENT_NR];
 #endif
 
 #ifndef BUF_TRACK_ALLOC_FREE
-FORWARD acc_t *bf_small_memreq ARGS(( size_t size ));
+static acc_t *bf_small_memreq ARGS(( size_t size ));
 #else
-FORWARD acc_t *_bf_small_memreq ARGS(( char *clnt_file, int clnt_line,
+static acc_t *_bf_small_memreq ARGS(( char *clnt_file, int clnt_line,
 								size_t size ));
 #define bf_small_memreq(a) _bf_small_memreq(clnt_file, clnt_line, a)
 #endif
-FORWARD void free_accs ARGS(( void ));
+static void free_accs ARGS(( void ));
 #ifdef BUF_CONSISTENCY_CHECK
-FORWARD void count_free_bufs ARGS(( acc_t *list ));
-FORWARD int report_buffer ARGS(( buf_t *buf, char *label, int i ));
+static void count_free_bufs ARGS(( acc_t *list ));
+static int report_buffer ARGS(( buf_t *buf, char *label, int i ));
 #endif
 
-PUBLIC void bf_init()
+void bf_init()
 {
 	int i;
 	size_t buf_s;
@@ -189,10 +189,10 @@ PUBLIC void bf_init()
 }
 
 #ifndef BUF_CONSISTENCY_CHECK
-PUBLIC void bf_logon(func)
+void bf_logon(func)
 bf_freereq_t func;
 #else
-PUBLIC void bf_logon(func, checkfunc)
+void bf_logon(func, checkfunc)
 bf_freereq_t func;
 bf_checkreq_t checkfunc;
 #endif
@@ -217,9 +217,9 @@ bf_memreq
 */
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_memreq(size)
+acc_t *bf_memreq(size)
 #else
-PUBLIC acc_t *_bf_memreq(clnt_file, clnt_line, size)
+acc_t *_bf_memreq(clnt_file, clnt_line, size)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -322,9 +322,9 @@ bf_small_memreq
 */
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PRIVATE acc_t *bf_small_memreq(size)
+static acc_t *bf_small_memreq(size)
 #else
-PRIVATE acc_t *_bf_small_memreq(clnt_file, clnt_line, size)
+static acc_t *_bf_small_memreq(clnt_file, clnt_line, size)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -334,9 +334,9 @@ size_t size;
 }
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC void bf_afree(acc)
+void bf_afree(acc)
 #else
-PUBLIC void _bf_afree(clnt_file, clnt_line, acc)
+void _bf_afree(clnt_file, clnt_line, acc)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -401,9 +401,9 @@ acc_t *acc;
 }
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_dupacc(acc_ptr)
+acc_t *bf_dupacc(acc_ptr)
 #else
-PUBLIC acc_t *_bf_dupacc(clnt_file, clnt_line, acc_ptr)
+acc_t *_bf_dupacc(clnt_file, clnt_line, acc_ptr)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -433,7 +433,7 @@ register acc_t *acc_ptr;
 	return new_acc;
 }
 
-PUBLIC size_t bf_bufsize(acc_ptr)
+size_t bf_bufsize(acc_ptr)
 register acc_t *acc_ptr;
 {
 	register size_t size;
@@ -452,9 +452,9 @@ assert(acc_ptr >= accessors && acc_ptr <= &accessors[ACC_NR-1]);
 }
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_packIffLess(pack, min_len)
+acc_t *bf_packIffLess(pack, min_len)
 #else
-PUBLIC acc_t *_bf_packIffLess(clnt_file, clnt_line, pack, min_len)
+acc_t *_bf_packIffLess(clnt_file, clnt_line, pack, min_len)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -474,9 +474,9 @@ int min_len;
 }
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_pack(old_acc)
+acc_t *bf_pack(old_acc)
 #else
-PUBLIC acc_t *_bf_pack(clnt_file, clnt_line, old_acc)
+acc_t *_bf_pack(clnt_file, clnt_line, old_acc)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -532,9 +532,9 @@ acc_t *old_acc;
 }
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_cut (data, offset, length)
+acc_t *bf_cut (data, offset, length)
 #else
-PUBLIC acc_t *_bf_cut (clnt_file, clnt_line, data, offset, length)
+acc_t *_bf_cut (clnt_file, clnt_line, data, offset, length)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -614,9 +614,9 @@ register unsigned length;
 }
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_delhead (data, offset)
+acc_t *bf_delhead (data, offset)
 #else
-PUBLIC acc_t *_bf_delhead (clnt_file, clnt_line, data, offset)
+acc_t *_bf_delhead (clnt_file, clnt_line, data, offset)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -668,9 +668,9 @@ bf_append
 */
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_append(data_first, data_second)
+acc_t *bf_append(data_first, data_second)
 #else
-PUBLIC acc_t *_bf_append(clnt_file, clnt_line, data_first, data_second)
+acc_t *_bf_append(clnt_file, clnt_line, data_first, data_second)
 char *clnt_file;
 int clnt_line;
 #endif
@@ -818,7 +818,7 @@ assert (offset_old < data_second->acc_length);
 }
 
 #if BUF512_NR
-PRIVATE void bf_512free(acc)
+static void bf_512free(acc)
 acc_t *acc;
 {
 #ifdef BUF_CONSISTENCY_CHECK 
@@ -830,7 +830,7 @@ acc_t *acc;
 }
 #endif
 #if BUF2K_NR
-PRIVATE void bf_2Kfree(acc)
+static void bf_2Kfree(acc)
 acc_t *acc;
 {
 #ifdef BUF_CONSISTENCY_CHECK 
@@ -842,7 +842,7 @@ acc_t *acc;
 }
 #endif
 #if BUF32K_NR
-PRIVATE void bf_32Kfree(acc)
+static void bf_32Kfree(acc)
 acc_t *acc;
 {
 #ifdef BUF_CONSISTENCY_CHECK 
@@ -855,7 +855,7 @@ acc_t *acc;
 #endif
 
 #ifdef BUF_CONSISTENCY_CHECK
-PUBLIC int bf_consistency_check()
+int bf_consistency_check()
 {
 	acc_t *acc;
 	int silent;
@@ -980,7 +980,7 @@ PUBLIC int bf_consistency_check()
 	return !error;
 }
 
-PRIVATE void count_free_bufs(list)
+static void count_free_bufs(list)
 acc_t *list;
 {
 	acc_t *acc;
@@ -1011,7 +1011,7 @@ acc_t *list;
 	}
 }
 
-PRIVATE int report_buffer(buf, label, i)
+static int report_buffer(buf, label, i)
 buf_t *buf;
 char *label;
 int i;
@@ -1047,7 +1047,7 @@ int i;
 	return 1;
 }
 
-PUBLIC void bf_check_acc(acc)
+void bf_check_acc(acc)
 acc_t *acc;
 {
 	buf_t *buf;
@@ -1081,7 +1081,7 @@ acc_t *acc;
 	}
 }
 
-PUBLIC void _bf_mark_1acc(clnt_file, clnt_line, acc)
+void _bf_mark_1acc(clnt_file, clnt_line, acc)
 char *clnt_file;
 int clnt_line;
 acc_t *acc;
@@ -1090,7 +1090,7 @@ acc_t *acc;
 	acc->acc_alloc_line= clnt_line;
 }
 
-PUBLIC void _bf_mark_acc(clnt_file, clnt_line, acc)
+void _bf_mark_acc(clnt_file, clnt_line, acc)
 char *clnt_file;
 int clnt_line;
 acc_t *acc;
@@ -1108,7 +1108,7 @@ acc_t *acc;
 }
 #endif
 
-PUBLIC int bf_linkcheck(acc)
+int bf_linkcheck(acc)
 acc_t *acc;
 {
 	int i;
@@ -1163,7 +1163,7 @@ acc_t *acc;
 	return 1;
 }
 
-PRIVATE void free_accs()
+static void free_accs()
 {
 	int i, j;
 
@@ -1190,9 +1190,9 @@ assert(bf_linkcheck(bf_linkcheck_acc));
 }
 
 #ifndef BUF_TRACK_ALLOC_FREE
-PUBLIC acc_t *bf_align(acc, size, alignment)
+acc_t *bf_align(acc, size, alignment)
 #else
-PUBLIC acc_t *_bf_align(clnt_file, clnt_line, acc, size, alignment)
+acc_t *_bf_align(clnt_file, clnt_line, acc, size, alignment)
 char *clnt_file;
 int clnt_line;
 #endif

@@ -9,7 +9,7 @@ pci_next_dev.c
 /*===========================================================================*
  *				pci_next_dev				     *
  *===========================================================================*/
-PUBLIC int pci_next_dev(devindp, vidp, didp)
+int pci_next_dev(devindp, vidp, didp)
 int *devindp;
 u16_t *vidp;
 u16_t *didp;

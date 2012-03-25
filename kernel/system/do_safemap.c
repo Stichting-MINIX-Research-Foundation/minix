@@ -117,7 +117,7 @@ static void clear_info(struct map_info_s *p)
 /*===========================================================================*
  *				map_invoke_vm				     *
  *===========================================================================*/
-PUBLIC int map_invoke_vm(struct proc * caller,
+int map_invoke_vm(struct proc * caller,
 			int req_type, /* VMPTYPE_... COWMAP, SMAP, SUNMAP */
 			endpoint_t end_d, int seg_d, vir_bytes off_d,
 			endpoint_t end_s, int seg_s, vir_bytes off_s,
@@ -172,7 +172,7 @@ PUBLIC int map_invoke_vm(struct proc * caller,
 /*===========================================================================*
  *				do_safemap				     *
  *===========================================================================*/
-PUBLIC int do_safemap(struct proc * caller, message * m_ptr)
+int do_safemap(struct proc * caller, message * m_ptr)
 {
 	endpoint_t grantor	= m_ptr->SMAP_EP;
 	cp_grant_id_t gid	= (cp_grant_id_t) m_ptr->SMAP_GID;
@@ -222,7 +222,7 @@ PUBLIC int do_safemap(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				safeunmap				     *
  *===========================================================================*/
-PRIVATE int safeunmap(struct proc * caller, struct map_info_s *p)
+static int safeunmap(struct proc * caller, struct map_info_s *p)
 {
 	vir_bytes offset_result;
 	endpoint_t new_grantor;
@@ -250,7 +250,7 @@ PRIVATE int safeunmap(struct proc * caller, struct map_info_s *p)
 /*===========================================================================*
  *				do_saferevmap				     *
  *===========================================================================*/
-PUBLIC int do_saferevmap(struct proc * caller, message * m_ptr)
+int do_saferevmap(struct proc * caller, message * m_ptr)
 {
 	struct map_info_s *p;
 	int flag = m_ptr->SMAP_FLAG;
@@ -267,7 +267,7 @@ PUBLIC int do_saferevmap(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				do_safeunmap				     *
  *===========================================================================*/
-PUBLIC int do_safeunmap(struct proc * caller, message * m_ptr)
+int do_safeunmap(struct proc * caller, message * m_ptr)
 {
 	vir_bytes address = (vir_bytes) m_ptr->SMAP_ADDRESS;
 	int seg = (int)m_ptr->SMAP_SEG;

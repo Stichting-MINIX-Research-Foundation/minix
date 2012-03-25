@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_runctl			     	     *
  *===========================================================================*/
-PUBLIC int sys_runctl(endpoint_t proc_ep, int action, int flags)
+int sys_runctl(endpoint_t proc_ep, int action, int flags)
 {
   message m;
 

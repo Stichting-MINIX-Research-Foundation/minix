@@ -6,7 +6,7 @@
 
 static message m;
 
-PRIVATE int do_invoke_ds(int type, const char *ds_name)
+static int do_invoke_ds(int type, const char *ds_name)
 {
 	cp_grant_id_t g_key;
 	size_t len_key;

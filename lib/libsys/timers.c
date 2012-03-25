@@ -15,13 +15,13 @@
 #include <timers.h>
 #include <minix/sysutil.h>
 
-PRIVATE timer_t *timers = NULL;
-PRIVATE int expiring = 0;
+static timer_t *timers = NULL;
+static int expiring = 0;
 
 /*===========================================================================*
  *                              init_timer                                   *
  *===========================================================================*/
-PUBLIC void init_timer(timer_t *tp)
+void init_timer(timer_t *tp)
 {
         tmr_inittimer(tp);
 }
@@ -29,7 +29,7 @@ PUBLIC void init_timer(timer_t *tp)
 /*===========================================================================*
  *                              set_timer                                    *
  *===========================================================================*/
-PUBLIC void set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
+void set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 {
         int r;
         clock_t now, prev_time = 0, next_time;
@@ -51,7 +51,7 @@ PUBLIC void set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 /*===========================================================================*
  *                              cancel_timer                                 *
  *===========================================================================*/
-PUBLIC void cancel_timer(timer_t *tp)
+void cancel_timer(timer_t *tp)
 {
         clock_t next_time, prev_time;
         prev_time = tmrs_clrtimer(&timers, tp, &next_time);
@@ -69,7 +69,7 @@ PUBLIC void cancel_timer(timer_t *tp)
 /*===========================================================================*
  *                              expire_timers                                *
  *===========================================================================*/
-PUBLIC void expire_timers(clock_t now)
+void expire_timers(clock_t now)
 {
         clock_t next_time;
 

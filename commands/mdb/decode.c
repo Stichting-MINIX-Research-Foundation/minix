@@ -14,13 +14,13 @@
 #include <minix/callnr.h>
 #include "proto.h"
 
-FORWARD void get_message(message *m, unsigned bx);
-FORWARD void get_data(char *s, unsigned bx, int cnt);
+static void get_message(message *m, unsigned bx);
+static void get_data(char *s, unsigned bx, int cnt);
 
-PRIVATE message sent;
-PRIVATE message recv;
-PRIVATE unsigned saved_addr;
-PRIVATE int last_call;
+static message sent;
+static message recv;
+static unsigned saved_addr;
+static int last_call;
 
 #define NOSYS		0
 #define NOP		1
@@ -164,7 +164,7 @@ struct decode_system {
 	REBOOT,		M1_I1,		NOP,	"REBOOT"
 };
 
-PRIVATE void get_message(m,bx)
+static void get_message(m,bx)
 message *m;
 unsigned bx;
 {
@@ -181,7 +181,7 @@ unsigned bx;
 
 }
 
-PRIVATE void get_data(s, bx, cnt)
+static void get_data(s, bx, cnt)
 char *s;
 unsigned bx;
 int cnt;
@@ -199,7 +199,7 @@ int cnt;
 }
 
 
-PUBLIC void decode_result()
+void decode_result()
 {
 
    /* Update message */

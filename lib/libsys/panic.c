@@ -9,7 +9,7 @@
 /*===========================================================================*
  *				panic				     *
  *===========================================================================*/
-PUBLIC void panic(const char *fmt, ...)
+void panic(const char *fmt, ...)
 {
 /* Something awful has happened. Panics are caused when an internal
  * inconsistency is detected, e.g., a programming error or illegal 

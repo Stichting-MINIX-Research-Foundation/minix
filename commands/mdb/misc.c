@@ -12,10 +12,10 @@
 #include <sys/ptrace.h>
 #include "proto.h"
 
-FORWARD void pr_ascii(long val , int size );
+static void pr_ascii(long val , int size );
 
 /* Print ascii */
-PRIVATE void pr_ascii(val, size)
+static void pr_ascii(val, size)
 long val;
 int size;
 {
@@ -42,7 +42,7 @@ int size;
 }
 
 /* Dump stack */
-PUBLIC void dump_stack(cnt)
+void dump_stack(cnt)
 long cnt;
 {
   vir_bytes v, vi;
@@ -81,7 +81,7 @@ long cnt;
 
 
 /* Get file size */ 
-PUBLIC off_t file_size(fd)
+off_t file_size(fd)
 int fd;
 {
 struct stat st;
@@ -95,7 +95,7 @@ struct stat st;
 }
 
 /* Print help page */
-PUBLIC void help_page()
+void help_page()
 {
   outstr("\nHelp for mdb. For more details, type 'command ?'\n");
   outstr("!#\t- Shell escape / Set Variable or register\n");
@@ -133,7 +133,7 @@ PUBLIC void help_page()
   outstr("       mdb [-fc] file\n");
 }
 
-PUBLIC void version_info()
+void version_info()
 {
 	Printf("\nmdb version %s.%d for Minix", MDBVERSION, MDBBUILD );
 	Printf(" %s.%s",  OS_RELEASE, OS_VERSION);
@@ -151,7 +151,7 @@ PUBLIC void version_info()
 }
 
 /* Print help message on command */
-PUBLIC void help_on(h)
+void help_on(h)
 int h;
 {
 

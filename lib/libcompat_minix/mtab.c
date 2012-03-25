@@ -56,7 +56,7 @@ int get_mtab_entry(char *special, char *mounted_on, char *version, char
 	*rw_flag);
 int put_mtab_entry(char *special, char *mounted_on, char *version, char
 	*rw_flag);
-PRIVATE void err(char *prog_name, char *str );
+static void err(char *prog_name, char *str );
 
 
 int load_mtab(prog_name)
@@ -195,7 +195,7 @@ char *rw_flag;
 }
 
 
-PRIVATE void
+static void
 err(prog_name, str)
 char *prog_name, *str;
 {

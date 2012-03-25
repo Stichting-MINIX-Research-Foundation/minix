@@ -40,33 +40,33 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 /* Thread related prototypes */
-FORWARD void thread_cleanup_f(struct fproc *rfp, char *f, int l);
+static void thread_cleanup_f(struct fproc *rfp, char *f, int l);
 #define thread_cleanup(x) thread_cleanup_f(x, __FILE__, __LINE__)
-FORWARD void *do_async_dev_result(void *arg);
-FORWARD void *do_control_msgs(void *arg);
-FORWARD void *do_fs_reply(struct job *job);
-FORWARD void *do_work(void *arg);
-FORWARD void *do_pm(void *arg);
-FORWARD void *do_init_root(void *arg);
-FORWARD void handle_work(void *(*func)(void *arg));
+static void *do_async_dev_result(void *arg);
+static void *do_control_msgs(void *arg);
+static void *do_fs_reply(struct job *job);
+static void *do_work(void *arg);
+static void *do_pm(void *arg);
+static void *do_init_root(void *arg);
+static void handle_work(void *(*func)(void *arg));
 
-FORWARD void get_work(void);
-FORWARD void lock_pm(void);
-FORWARD void unlock_pm(void);
-FORWARD void service_pm(void);
-FORWARD void service_pm_postponed(void);
-FORWARD int unblock(struct fproc *rfp);
+static void get_work(void);
+static void lock_pm(void);
+static void unlock_pm(void);
+static void service_pm(void);
+static void service_pm_postponed(void);
+static int unblock(struct fproc *rfp);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-PRIVATE mutex_t pm_lock;
-PRIVATE endpoint_t receive_from;
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static mutex_t pm_lock;
+static endpoint_t receive_from;
 
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
 /* This is the main program of the file system.  The main loop consists of
  * three major activities: getting new work, processing the work, and sending
@@ -136,7 +136,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       handle_work				     *
  *===========================================================================*/
-PRIVATE void handle_work(void *(*func)(void *arg))
+static void handle_work(void *(*func)(void *arg))
 {
 /* Handle asynchronous device replies and new system calls. If the originating
  * endpoint is an FS endpoint, take extra care not to get in deadlock. */
@@ -177,7 +177,7 @@ PRIVATE void handle_work(void *(*func)(void *arg))
 /*===========================================================================*
  *			       do_async_dev_result				     *
  *===========================================================================*/
-PRIVATE void *do_async_dev_result(void *arg)
+static void *do_async_dev_result(void *arg)
 {
   endpoint_t endpt;
   struct job my_job;
@@ -227,7 +227,7 @@ PRIVATE void *do_async_dev_result(void *arg)
 /*===========================================================================*
  *			       do_control_msgs				     *
  *===========================================================================*/
-PRIVATE void *do_control_msgs(void *arg)
+static void *do_control_msgs(void *arg)
 {
   struct job my_job;
 
@@ -254,7 +254,7 @@ PRIVATE void *do_control_msgs(void *arg)
 /*===========================================================================*
  *			       do_fs_reply				     *
  *===========================================================================*/
-PRIVATE void *do_fs_reply(struct job *job)
+static void *do_fs_reply(struct job *job)
 {
   struct vmnt *vmp;
   struct fproc *rfp;
@@ -281,7 +281,7 @@ PRIVATE void *do_fs_reply(struct job *job)
 /*===========================================================================*
  *				lock_pm					     *
  *===========================================================================*/
-PRIVATE void lock_pm(void)
+static void lock_pm(void)
 {
   message org_m_in;
   struct fproc *org_fp;
@@ -306,7 +306,7 @@ PRIVATE void lock_pm(void)
 /*===========================================================================*
  *				unlock_pm				     *
  *===========================================================================*/
-PRIVATE void unlock_pm(void)
+static void unlock_pm(void)
 {
   if (mutex_unlock(&pm_lock) != 0)
 	panic("Could not release lock on pm");
@@ -315,7 +315,7 @@ PRIVATE void unlock_pm(void)
 /*===========================================================================*
  *			       do_pm					     *
  *===========================================================================*/
-PRIVATE void *do_pm(void *arg)
+static void *do_pm(void *arg)
 {
   struct job my_job;
   struct fproc *rfp;
@@ -335,7 +335,7 @@ PRIVATE void *do_pm(void *arg)
 /*===========================================================================*
  *			       do_pending_pipe					     *
  *===========================================================================*/
-PRIVATE void *do_pending_pipe(void *arg)
+static void *do_pending_pipe(void *arg)
 {
   int r, op;
   struct job my_job;
@@ -370,7 +370,7 @@ PRIVATE void *do_pending_pipe(void *arg)
 /*===========================================================================*
  *			       do_dummy					     *
  *===========================================================================*/
-PUBLIC void *do_dummy(void *arg)
+void *do_dummy(void *arg)
 {
   struct job my_job;
   int r;
@@ -391,7 +391,7 @@ PUBLIC void *do_dummy(void *arg)
 /*===========================================================================*
  *			       do_work					     *
  *===========================================================================*/
-PRIVATE void *do_work(void *arg)
+static void *do_work(void *arg)
 {
   int error;
   struct job my_job;
@@ -458,7 +458,7 @@ PRIVATE void *do_work(void *arg)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -473,7 +473,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 {
 /* Initialize the virtual file server. */
   int s, i;
@@ -585,7 +585,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 /*===========================================================================*
  *			       do_init_root				     *
  *===========================================================================*/
-PRIVATE void *do_init_root(void *arg)
+static void *do_init_root(void *arg)
 {
   struct fproc *rfp;
   struct job my_job;
@@ -619,7 +619,7 @@ PRIVATE void *do_init_root(void *arg)
 /*===========================================================================*
  *				lock_proc				     *
  *===========================================================================*/
-PUBLIC void lock_proc(struct fproc *rfp, int force_lock)
+void lock_proc(struct fproc *rfp, int force_lock)
 {
   int r;
   message org_m_in;
@@ -649,7 +649,7 @@ PUBLIC void lock_proc(struct fproc *rfp, int force_lock)
 /*===========================================================================*
  *				unlock_proc				     *
  *===========================================================================*/
-PUBLIC void unlock_proc(struct fproc *rfp)
+void unlock_proc(struct fproc *rfp)
 {
   int r;
 
@@ -660,7 +660,7 @@ PUBLIC void unlock_proc(struct fproc *rfp)
 /*===========================================================================*
  *				thread_cleanup				     *
  *===========================================================================*/
-PRIVATE void thread_cleanup_f(struct fproc *rfp, char *f, int l)
+static void thread_cleanup_f(struct fproc *rfp, char *f, int l)
 {
 /* Clean up worker thread. Skip parts if this thread is not associated
  * with a particular process (i.e., rfp is NULL) */
@@ -702,7 +702,7 @@ PRIVATE void thread_cleanup_f(struct fproc *rfp, char *f, int l)
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-PRIVATE void get_work()
+static void get_work()
 {
   /* Normally wait for new input.  However, if 'reviving' is
    * nonzero, a suspended process must be awakened.
@@ -770,7 +770,7 @@ PRIVATE void get_work()
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC void reply(whom, result)
+void reply(whom, result)
 int whom;			/* process to reply to */
 int result;			/* result of the call (usually OK or error #) */
 {
@@ -787,7 +787,7 @@ int result;			/* result of the call (usually OK or error #) */
 /*===========================================================================*
  *				service_pm_postponed			     *
  *===========================================================================*/
-PRIVATE void service_pm_postponed(void)
+static void service_pm_postponed(void)
 {
   int r;
   vir_bytes pc;
@@ -842,7 +842,7 @@ PRIVATE void service_pm_postponed(void)
 /*===========================================================================*
  *				service_pm				     *
  *===========================================================================*/
-PRIVATE void service_pm()
+static void service_pm()
 {
   int r, slot;
 
@@ -956,7 +956,7 @@ PRIVATE void service_pm()
 /*===========================================================================*
  *				unblock					     *
  *===========================================================================*/
-PRIVATE int unblock(rfp)
+static int unblock(rfp)
 struct fproc *rfp;
 {
   int blocked_on;

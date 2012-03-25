@@ -15,18 +15,18 @@ struct address_s
     off_t base;
 };
 
-PRIVATE int bits32;
-PRIVATE struct address_s uptr;
+static int bits32;
+static struct address_s uptr;
 
-FORWARD u8_t get8(void);
-FORWARD u16_t get16(void);
-FORWARD u32_t get32(void);
-FORWARD u8_t peek_byte(off_t addr);
-FORWARD u16_t peek_word(off_t addr);
-FORWARD int puti(void);
-FORWARD int outsegaddr(struct address_s *addr);
-FORWARD int outssegaddr(struct address_s *addr);
-FORWARD int show1instruction(void);
+static u8_t get8(void);
+static u16_t get16(void);
+static u32_t get32(void);
+static u8_t peek_byte(off_t addr);
+static u16_t peek_word(off_t addr);
+static int puti(void);
+static int outsegaddr(struct address_s *addr);
+static int outssegaddr(struct address_s *addr);
+static int show1instruction(void);
 
 /************************* UNASM ******************************/
 
@@ -62,73 +62,73 @@ typedef int reg_pt;
 typedef int su16_t;
 typedef int su8_pt;
 
-FORWARD su8_pt get8s(void);
-FORWARD void getmodregrm(void);
-FORWARD void i_00_to_3f(opcode_pt opc );
-FORWARD void i_40_to_5f(opcode_pt opc );
-FORWARD void i_60_to_6f(opcode_pt opc );
-FORWARD void i_70_to_7f(opcode_pt opc );
-FORWARD void i_80(opcode_pt opc );
-FORWARD void i_88(opcode_pt opc );
-FORWARD void i_90(opcode_pt opc );
-FORWARD void i_98(opcode_pt opc );
-FORWARD void i_a0(opcode_pt opc );
-FORWARD void i_a8(opcode_pt opc );
-FORWARD void i_b0(opcode_pt opc );
-FORWARD void i_b8(opcode_pt opc );
-FORWARD void i_c0(opcode_pt opc );
-FORWARD void i_c8(opcode_pt opc );
-FORWARD void i_d0(opcode_pt opc );
-FORWARD void i_d8(opcode_pt opc );
-FORWARD void i_e0(opcode_pt opc );
-FORWARD void i_e8(opcode_pt opc );
-FORWARD void i_f0(opcode_pt opc );
-FORWARD void i_f8(opcode_pt opc );
-FORWARD void outad(opcode_pt opc );
-FORWARD void outad1(opcode_pt opc );
-FORWARD void outalorx(opcode_pt opc );
-FORWARD void outax(void);
-FORWARD void outbptr(void);
-FORWARD void outbwptr(opcode_pt opc );
-FORWARD void outea(opcode_pt wordflags );
-FORWARD void outf1(void);
-FORWARD void out32offset(void);
-FORWARD void outfishy(void);
-FORWARD void outgetaddr(void);
-FORWARD void outimmed(opcode_pt signwordflag );
-FORWARD void outpc(off_t pc );
-FORWARD void outsegpc(void);
-FORWARD void oututstr(char *s );
-FORWARD void outword(void);
-FORWARD void outwptr(void);
-FORWARD void outwsize(void);
-FORWARD void pagef(void);
-FORWARD void shift(opcode_pt opc );
-FORWARD void checkmemory(void);
-FORWARD void CL(void);
-FORWARD void Eb(void);
-FORWARD void Ev(void);
-FORWARD void EvGv(void);
-FORWARD void EvIb(void);
-FORWARD void Ew(void);
-FORWARD void EwRw(void);
-FORWARD void Gv(void);
-FORWARD void Gv1(void);
-FORWARD void GvEv(void);
-FORWARD void GvEw(void);
-FORWARD void GvM(void);
-FORWARD void GvMa(void);
-FORWARD void GvMp(void);
-FORWARD void Ib(void);
-FORWARD void Iw(void);
-FORWARD void Iv(void);
-FORWARD void Jb(void);
-FORWARD void Jv(void);
-FORWARD void Ms(void);
+static su8_pt get8s(void);
+static void getmodregrm(void);
+static void i_00_to_3f(opcode_pt opc );
+static void i_40_to_5f(opcode_pt opc );
+static void i_60_to_6f(opcode_pt opc );
+static void i_70_to_7f(opcode_pt opc );
+static void i_80(opcode_pt opc );
+static void i_88(opcode_pt opc );
+static void i_90(opcode_pt opc );
+static void i_98(opcode_pt opc );
+static void i_a0(opcode_pt opc );
+static void i_a8(opcode_pt opc );
+static void i_b0(opcode_pt opc );
+static void i_b8(opcode_pt opc );
+static void i_c0(opcode_pt opc );
+static void i_c8(opcode_pt opc );
+static void i_d0(opcode_pt opc );
+static void i_d8(opcode_pt opc );
+static void i_e0(opcode_pt opc );
+static void i_e8(opcode_pt opc );
+static void i_f0(opcode_pt opc );
+static void i_f8(opcode_pt opc );
+static void outad(opcode_pt opc );
+static void outad1(opcode_pt opc );
+static void outalorx(opcode_pt opc );
+static void outax(void);
+static void outbptr(void);
+static void outbwptr(opcode_pt opc );
+static void outea(opcode_pt wordflags );
+static void outf1(void);
+static void out32offset(void);
+static void outfishy(void);
+static void outgetaddr(void);
+static void outimmed(opcode_pt signwordflag );
+static void outpc(off_t pc );
+static void outsegpc(void);
+static void oututstr(char *s );
+static void outword(void);
+static void outwptr(void);
+static void outwsize(void);
+static void pagef(void);
+static void shift(opcode_pt opc );
+static void checkmemory(void);
+static void CL(void);
+static void Eb(void);
+static void Ev(void);
+static void EvGv(void);
+static void EvIb(void);
+static void Ew(void);
+static void EwRw(void);
+static void Gv(void);
+static void Gv1(void);
+static void GvEv(void);
+static void GvEw(void);
+static void GvM(void);
+static void GvMa(void);
+static void GvMp(void);
+static void Ib(void);
+static void Iw(void);
+static void Iv(void);
+static void Jb(void);
+static void Jv(void);
+static void Ms(void);
 
 typedef void(*pfv_t) (opcode_pt opc );
 
-PRIVATE pfv_t optable[] =
+static pfv_t optable[] =
 {
  i_00_to_3f,
  i_00_to_3f,
@@ -164,33 +164,33 @@ PRIVATE pfv_t optable[] =
  i_f8,
 };
 
-PRIVATE char fishy[] = "???";
-PRIVATE char movtab[] = "mov\t";
+static char fishy[] = "???";
+static char movtab[] = "mov\t";
 
-PRIVATE char *genreg[] =
+static char *genreg[] =
 {
  "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh",
  "ax", "cx", "dx", "bx", "sp", "bp", "si", "di",
  "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi",
 };
 
-PRIVATE char *segreg[] =
+static char *segreg[] =
 {
  "es", "cs", "ss", "ds", "fs", "gs", "?s", "?s",
 };
 
-PRIVATE char *indreg[] =
+static char *indreg[] =
 {
  "bx+si", "bx+di", "bp+si", "bp+di", "si", "di", "bp", "bx",
 };
 
-PRIVATE char *str_00_to_3f[] =
+static char *str_00_to_3f[] =
 {
  /* index by (opcode >> 3) & 7 */
  "add", "or", "adc", "sbb", "and", "sub", "xor", "cmp",
 };
 
-PRIVATE char *sstr_00_to_3f[] =
+static char *sstr_00_to_3f[] =
 {
  /* index ((opc>>2) & 0x0E) + (opc & 7) - 6 */
  "push\tes", "pop\tes", "push\tcs", "pop\tcs",
@@ -198,7 +198,7 @@ PRIVATE char *sstr_00_to_3f[] =
  "es:", "daa", "cs:", "das", "ss:", "aaa", "ds:", "aas",
 };
 
-PRIVATE char *sstr_0f[] =
+static char *sstr_0f[] =
 {
  "push\tfs", "pop\tfs", fishy, "bt\t", "shld\t", "shld\t", fishy, fishy,
  "push\tgs", "pop\tgs", fishy, "bts\t", "shrd\t", "shrd\t", fishy, "imul\t",
@@ -206,69 +206,69 @@ PRIVATE char *sstr_0f[] =
  fishy, fishy, "", "btc\t", "bsf\t", "bsr\t", "movsx\t", "movsx\t",
 };
 
-PRIVATE char *ssstr_0f[] =
+static char *ssstr_0f[] =
 {
  "sldt\t", "str\t", "lldt\t", "ltr\t", "verr\t", "verw\t", fishy, fishy,
  "sgdt\t", "sidt\t", "lgdt\t", "lidt\t", "smsw\t", fishy, "lmsw\t", fishy,
  fishy, fishy, fishy, fishy, "bt\t", "bts\t", "btr\t", "btc\t",
 };
 
-PRIVATE char *str_40_to_5f[] =
+static char *str_40_to_5f[] =
 {
  /* index by (opcode >> 3) & 3 */
  "inc\t", "dec\t", "push\t", "pop\t",
 };
 
-PRIVATE char *str_60_to_6f[] =
+static char *str_60_to_6f[] =
 {
  "pusha", "popa", "bound\t", "arpl\t", "fs:", "gs:", "os:", "as:",
  "push\t", "imul\t", "push\t", "imul\t", "insb", "ins", "outsb", "outs",
 };
 
-PRIVATE char *str_flags[] =
+static char *str_flags[] =
 {
  /* opcodes 0x70 to 0x7F, and 0x0F80 to 0x0F9F */
  "o", "no", "b", "nb", "z", "nz", "be", "a",
  "s", "ns", "pe", "po", "l", "ge", "le", "g",
 };
 
-PRIVATE char *str_98[] =
+static char *str_98[] =
 {
  "cbw", "cwd", "call\t", "wait", "pushf", "popf", "sahf", "lahf",
  "cwde", "cdq", "call\t", "wait", "pushfd", "popfd", "sahf", "lahf",
 };
 
-PRIVATE char *str_a0[] =
+static char *str_a0[] =
 {
  movtab, movtab, movtab, movtab, "movsb", "movs", "cmpsb", "cmps",
 };
 
-PRIVATE char *str_a8[] =
+static char *str_a8[] =
 {
  "test\t", "test\t", "stosb", "stos", "lodsb", "lods", "scasb", "scas",
 };
 
-PRIVATE char *str_c0[] =
+static char *str_c0[] =
 {
  "", "", "ret\t", "ret", "les\t", "lds\t", movtab, movtab,
 };
 
-PRIVATE char *str_c8[] =
+static char *str_c8[] =
 {
  "enter\t", "leave", "retf\t", "retf", "int\t3", "int\t", "into", "iret",
 };
 
-PRIVATE char *str_d0[] =
+static char *str_d0[] =
 {
  "aam", "aad", "db\td6", "xlat",
 };
 
-PRIVATE char *sstr_d0[] =
+static char *sstr_d0[] =
 {
  "rol", "ror", "rcl", "rcr", "shl", "shr", fishy, "sar",
 };
 
-PRIVATE char *str_d8[] =
+static char *str_d8[] =
 {
  "fadd", "fmul", "fcom", "fcomp", "fsub", "fsubr", "fdiv", "fdivr",
  "fld", NULL, "fst", "fstp", "fldenv", "fldcw", "fstenv", "fstcw",
@@ -280,7 +280,7 @@ PRIVATE char *str_d8[] =
  "fild", NULL, "fist", "fistp", "fbld", "fild", "fbstp", "fistp",
 };
 
-PRIVATE char *str1_d8[] =
+static char *str1_d8[] =
 {
  "fadd", "fmul", "fcom", "fcomp", "fsub", "fsubr", "fdiv", "fdivr",
  "fld", "fxch", "\0\0", NULL, "\0\10", "\0\20", "\0\30", "\0\40",
@@ -292,7 +292,7 @@ PRIVATE char *str1_d8[] =
  NULL, NULL, NULL, NULL, "\0\100", NULL, NULL, NULL,
 };
 
-PRIVATE unsigned char size_d8[] =
+static unsigned char size_d8[] =
 {
  4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 4, 14-28, 2, 14-28, 2,
  4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 4, 0, 10, 0, 10,
@@ -300,7 +300,7 @@ PRIVATE unsigned char size_d8[] =
  2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 10, 8, 10, 8,
 };
 
-PRIVATE char *sstr_d8[] =
+static char *sstr_d8[] =
 {
  "fnop", NULL, NULL, NULL,			/* D9D0 */
  NULL, NULL, NULL, NULL,
@@ -322,57 +322,57 @@ PRIVATE char *sstr_d8[] =
  "fstsw\tax", NULL, NULL, NULL,
 };
 
-PRIVATE char *str_e0[] =
+static char *str_e0[] =
 {
  "loopnz\t", "loopz\t", "loop\t", "jcxz\t",
  "in\t", "in\t", "out\t", "out\t",
 };
 
-PRIVATE char *str_e8[] =
+static char *str_e8[] =
 {
  "call\t", "jmp\t", "jmp\t", "jmp\t",
  "in\t", "in\t", "out\t", "out\t",
 };
 
-PRIVATE char *str_f0[] =
+static char *str_f0[] =
 {
  "lock\t", "db\tf1", "repnz\t", "repz\t",
  "hlt", "cmc",
  /* other 2 from sstr_f0 */
 };
 
-PRIVATE char *sstr_f0[] =
+static char *sstr_f0[] =
 {
  "test\t", fishy, "not\t", "neg\t",
  "mul\t", "imul\t", "div\t", "idiv\t",
 };
 
-PRIVATE char *str_f8[] =
+static char *str_f8[] =
 {
  "clc", "stc", "cli", "sti",
  "cld", "std",
  /* other 2 from sstr_f8 */
 };
 
-PRIVATE char *sstr_f8[] =
+static char *sstr_f8[] =
 {
  "inc\t", "dec\t", "call\t", "call\tfar ",
  "jmp\t", "jmp\tfar ", "push\t", "???\t",
 };
 
-PRIVATE int data_seg;		/* data segment (munged name for asld) */
-PRIVATE unsigned hasize;	/* half address size in bits */
-PRIVATE unsigned hdefsize;
-PRIVATE unsigned hosize;	/* half operand size in bits */
+static int data_seg;		/* data segment (munged name for asld) */
+static unsigned hasize;	/* half address size in bits */
+static unsigned hdefsize;
+static unsigned hosize;	/* half operand size in bits */
 				/* for easy index into reg tables */
-PRIVATE opcode_pt mod;
-PRIVATE off_t offtable[2];
-PRIVATE off_t *offptr;
-PRIVATE off_t *off1ptr;
-PRIVATE opcode_pt reg;
-PRIVATE opcode_pt rm;
+static opcode_pt mod;
+static off_t offtable[2];
+static off_t *offptr;
+static off_t *off1ptr;
+static opcode_pt reg;
+static opcode_pt rm;
 
-PRIVATE su8_pt get8s()
+static su8_pt get8s()
 {
     su8_pt got;
 
@@ -381,7 +381,7 @@ PRIVATE su8_pt get8s()
     return got;
 }
 
-PRIVATE void getmodregrm()
+static void getmodregrm()
 {
     opcode_pt modregrm;
     
@@ -391,7 +391,7 @@ PRIVATE void getmodregrm()
     rm = (modregrm & RM_MASK) >> RM_SHIFT;
 }
 
-PRIVATE void i_00_to_3f(opc)
+static void i_00_to_3f(opc)
 opcode_pt opc;
 {
     opcode_pt sub;
@@ -424,14 +424,14 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_40_to_5f(opc)
+static void i_40_to_5f(opc)
 opcode_pt opc;
 {
     outustr(str_40_to_5f[(opc >> 3) & 3]);
     outustr(genreg[hosize + (opc & 7)]);
 }
 
-PRIVATE void i_60_to_6f(opc)
+static void i_60_to_6f(opc)
 opcode_pt opc;
 {
 /* most for 386, some for 286 */
@@ -485,7 +485,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_70_to_7f(opc)
+static void i_70_to_7f(opc)
 opcode_pt opc;
 {
     outustr("j");
@@ -493,7 +493,7 @@ opcode_pt opc;
     Jb();
 }
 
-PRIVATE void i_80(opc)
+static void i_80(opc)
 opcode_pt opc;
 {
     if (opc >= 4)
@@ -519,7 +519,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_88(opc)
+static void i_88(opc)
 opcode_pt opc;
 {
     if (opc < 4)
@@ -559,7 +559,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_90(opc)
+static void i_90(opc)
 opcode_pt opc;
 {
     if (opc == 0)
@@ -573,7 +573,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_98(opc)
+static void i_98(opc)
 opcode_pt opc;
 {
     outustr((str_98 - 8)[opc + hosize]);
@@ -581,7 +581,7 @@ opcode_pt opc;
 	outsegpc();
 }
 
-PRIVATE void i_a0(opc)
+static void i_a0(opc)
 opcode_pt opc;
 {
     outustr(str_a0[opc]);
@@ -599,7 +599,7 @@ opcode_pt opc;
 	outwsize();
 }
 
-PRIVATE void i_a8(opc)
+static void i_a8(opc)
 opcode_pt opc;
 {
     outustr(str_a8[opc]);
@@ -613,7 +613,7 @@ opcode_pt opc;
 	outwsize();
 }
 
-PRIVATE void i_b0(opc)
+static void i_b0(opc)
 opcode_pt opc;
 {
     outustr(movtab);
@@ -622,7 +622,7 @@ opcode_pt opc;
     Ib();
 }
 
-PRIVATE void i_b8(opc)
+static void i_b8(opc)
 opcode_pt opc;
 {
     outustr(movtab);
@@ -631,7 +631,7 @@ opcode_pt opc;
     Iv();
 }
 
-PRIVATE void i_c0(opc)
+static void i_c0(opc)
 opcode_pt opc;
 {
     outustr(str_c0[opc]);
@@ -654,7 +654,7 @@ opcode_pt opc;
 	shift(opc);
 }
 
-PRIVATE void i_c8(opc)
+static void i_c8(opc)
 opcode_pt opc;
 {
     outustr(str_c8[opc]);
@@ -672,7 +672,7 @@ opcode_pt opc;
 	outwsize();
 }
 
-PRIVATE void i_d0(opc)
+static void i_d0(opc)
 opcode_pt opc;
 {
     opcode_pt aabyte;
@@ -691,7 +691,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_d8(opc)
+static void i_d8(opc)
 opcode_pt opc;
 {
     opcode_pt esc;
@@ -746,7 +746,7 @@ escape:
     outea(opc);
 }
 
-PRIVATE void i_e0(opc)
+static void i_e0(opc)
 opcode_pt opc;
 {
     outustr(str_e0[opc]);
@@ -766,7 +766,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_e8(opc)
+static void i_e8(opc)
 opcode_pt opc;
 {
     outustr(str_e8[opc]);
@@ -793,7 +793,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_f0(opc)
+static void i_f0(opc)
 opcode_pt opc;
 {
     if (opc < 6)
@@ -812,7 +812,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void i_f8(opc)
+static void i_f8(opc)
 opcode_pt opc;
 {
     if (opc < 6)
@@ -829,14 +829,14 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void outad(opc)
+static void outad(opc)
 opcode_pt opc;
 {
     getmodregrm();
     outad1(opc);
 }
 
-PRIVATE void outad1(opc)
+static void outad1(opc)
 opcode_pt opc;
 {
     if (!(opc & TOREGBIT))
@@ -855,7 +855,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void outalorx(opc)
+static void outalorx(opc)
 opcode_pt opc;
 {
     if (opc & WORDBIT)
@@ -864,17 +864,17 @@ opcode_pt opc;
 	outustr(genreg[0]);
 }
 
-PRIVATE void outax()
+static void outax()
 {
     outustr(genreg[hosize]);
 }
 
-PRIVATE void outbptr()
+static void outbptr()
 {
     outustr("byte ptr ");
 }
 
-PRIVATE void outbwptr(opc)
+static void outbwptr(opc)
 opcode_pt opc;
 {
     if (mod != REG_MOD)
@@ -886,7 +886,7 @@ opcode_pt opc;
     }
 }
 
-PRIVATE void outea(wordflags)
+static void outea(wordflags)
 opcode_pt wordflags;
 {
     reg_pt base;
@@ -943,7 +943,7 @@ opcode_pt wordflags;
     }
 }
 
-PRIVATE void outf1()
+static void outf1()
 {
     outustr("st(");
     outbyte((int) (rm + '0'));
@@ -952,7 +952,7 @@ PRIVATE void outf1()
 
 #if (_WORD_SIZE == 4)
 
-PRIVATE void out32offset()
+static void out32offset()
 {
     off_t off;
 
@@ -965,12 +965,12 @@ PRIVATE void out32offset()
 }
 #endif
 
-PRIVATE void outfishy()
+static void outfishy()
 {
     outustr("\t???");
 }
 
-PRIVATE void outgetaddr()
+static void outgetaddr()
 {
     off_t off;
 
@@ -987,7 +987,7 @@ PRIVATE void outgetaddr()
 	outh16((u16_t) off);
 }
 
-PRIVATE void outimmed(signwordflag)
+static void outimmed(signwordflag)
 opcode_pt signwordflag;
 {
     su8_pt byte;
@@ -1012,7 +1012,7 @@ opcode_pt signwordflag;
 	Ib();
 }
 
-PRIVATE void outpc(pc)
+static void outpc(pc)
 off_t pc;
 {
     if (hosize == 8)
@@ -1026,7 +1026,7 @@ off_t pc;
 	outh16((u16_t) pc);
 }
 
-PRIVATE void outsegpc()
+static void outsegpc()
 {
     off_t oldbase;
     off_t pc;
@@ -1043,25 +1043,25 @@ PRIVATE void outsegpc()
     uptr.base = oldbase;
 }
 
-PRIVATE void oututstr(s)
+static void oututstr(s)
 char *s;
 {
     outustr(s);
     outtab();
 }
 
-PRIVATE void outword()
+static void outword()
 {
     outustr("dword " + ((16 - hosize) >> 3));
 }
 
-PRIVATE void outwptr()
+static void outwptr()
 {
     outword();
     outustr("ptr ");
 }
 
-PRIVATE void outwsize()
+static void outwsize()
 {
     if (hosize == 16)
 	outustr("d");
@@ -1069,7 +1069,7 @@ PRIVATE void outwsize()
 	outustr("w");
 }
 
-PRIVATE void pagef()
+static void pagef()
 {
     opcode_pt opc;
     int regbad;
@@ -1214,7 +1214,7 @@ PRIVATE void pagef()
 	outstr(fishy);
 }
 
-PRIVATE int puti()
+static int puti()
 {
     static int hadprefix;
     opcode_pt opcode;
@@ -1270,7 +1270,7 @@ more:
     return TRUE;
 }
 
-PRIVATE void shift(opc)
+static void shift(opc)
 opcode_pt opc;
 {
     getmodregrm();
@@ -1286,28 +1286,28 @@ opcode_pt opc;
 	outbyte('1');
 }
 
-PRIVATE void checkmemory()
+static void checkmemory()
 {
     if (mod == REG_MOD)
 	outfishy();
 }
 
-PRIVATE void CL()
+static void CL()
 {
     outustr(genreg[1]);
 }
 
-PRIVATE void Eb()
+static void Eb()
 {
     outea(0);
 }
 
-PRIVATE void Ev()
+static void Ev()
 {
     outea(WORDBIT);
 }
 
-PRIVATE void EvGv()
+static void EvGv()
 {
     getmodregrm();
     Ev();
@@ -1315,77 +1315,77 @@ PRIVATE void EvGv()
     Gv1();
 }
 
-PRIVATE void EvIb()
+static void EvIb()
 {
     Ev();
     outcomma();
     Ib();
 }
 
-PRIVATE void Ew()
+static void Ew()
 {
     hosize = 8;
     Ev();
 }
 
-PRIVATE void EwRw()
+static void EwRw()
 {
     hosize = 8;
     EvGv();
 }
 
-PRIVATE void Gv()
+static void Gv()
 {
     getmodregrm();
     Gv1();
 }
 
-PRIVATE void Gv1()
+static void Gv1()
 {
     outustr(genreg[hosize + reg]);
 }
 
-PRIVATE void GvEv()
+static void GvEv()
 {
     Gv();
     outcomma();
     Ev();
 }
 
-PRIVATE void GvEw()
+static void GvEw()
 {
     Gv();
     outcomma();
     Ew();
 }
 
-PRIVATE void GvM()
+static void GvM()
 {
     GvEv();
     checkmemory();
 }
 
-PRIVATE void GvMa()
+static void GvMa()
 {
     GvM();
 }
 
-PRIVATE void GvMp()
+static void GvMp()
 {
     GvM();
 }
 
-PRIVATE void Ib()
+static void Ib()
 {
     outh8(get8());
 }
 
-PRIVATE void Iw()
+static void Iw()
 {
     outh16(get16());
 }
 
-PRIVATE void Iv()
+static void Iv()
 {
     if (hosize == 16)
 	outh32(get32());
@@ -1393,7 +1393,7 @@ PRIVATE void Iv()
 	Iw();
 }
 
-PRIVATE void Jb()
+static void Jb()
 {
     off_t pcjump;
 
@@ -1401,7 +1401,7 @@ PRIVATE void Jb()
     outpc(pcjump + uptr.off);
 }
 
-PRIVATE void Jv()
+static void Jv()
 {
     off_t pcjump;
 
@@ -1412,7 +1412,7 @@ PRIVATE void Jv()
     outpc(pcjump + uptr.off);
 }
 
-PRIVATE void Ms()
+static void Ms()
 {
     Ev();
     checkmemory();
@@ -1420,7 +1420,7 @@ PRIVATE void Ms()
 
 /********************* DASM ******************************/
 
-PUBLIC long dasm( addr, count, symflg )
+long dasm( addr, count, symflg )
 long addr;
 int count;
 int symflg;
@@ -1437,7 +1437,7 @@ int symflg;
 }
 
 
-PRIVATE int show1instruction()
+static int show1instruction()
 {
     register int column;
     int idone;
@@ -1481,7 +1481,7 @@ PRIVATE int show1instruction()
 }
 
 
-PRIVATE u8_t get8()
+static u8_t get8()
 {
 /* get 8 bits current instruction pointer and advance pointer */
 
@@ -1492,7 +1492,7 @@ PRIVATE u8_t get8()
     return temp;
 }
 
-PRIVATE u16_t get16()
+static u16_t get16()
 {
 /* get 16 bits from current instruction pointer and advance pointer */
 
@@ -1503,7 +1503,7 @@ PRIVATE u16_t get16()
     return temp;
 }
 
-PRIVATE u32_t get32()
+static u32_t get32()
 {
 /* get 32 bits from current instruction pointer and advance pointer */
 
@@ -1515,7 +1515,7 @@ PRIVATE u32_t get32()
 }
 
 
-PRIVATE int outsegaddr(addr)
+static int outsegaddr(addr)
 struct address_s *addr;
 {
 /* print segmented address */
@@ -1538,7 +1538,7 @@ struct address_s *addr;
     return bytes_printed + 4;
 }
 
-PRIVATE int outssegaddr(addr)
+static int outssegaddr(addr)
 struct address_s *addr;
 {
 /* print 32 bit segmented address and 2 spaces */
@@ -1551,13 +1551,13 @@ struct address_s *addr;
     return bytes_printed + 2;
 }
 
-PRIVATE u8_t peek_byte(addr)
+static u8_t peek_byte(addr)
 off_t addr;
 {
     return (u8_t) peek_dword(addr) & 0xFF; /* 8 bits only */
 }
 
-PRIVATE u16_t peek_word(addr)
+static u16_t peek_word(addr)
 off_t addr;
 {
     return (u16_t) peek_dword(addr);

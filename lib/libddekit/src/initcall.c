@@ -15,7 +15,7 @@ static struct __ddekit_initcall_s head = {0,0,0};
 /****************************************************************************/
 /*        __ddekit_add_initcall                                             */
 /****************************************************************************/
-PUBLIC void __attribute__((used)) 
+void __attribute__((used)) 
 __ddekit_add_initcall(struct __ddekit_initcall_s * ic) {
 
 	/* This function is required for the DDEKIT_INITCALL makro */
@@ -42,7 +42,7 @@ __ddekit_add_initcall(struct __ddekit_initcall_s * ic) {
 /****************************************************************************/
 /*        ddekit_do_initcalls                                               */
 /****************************************************************************/
-PUBLIC void ddekit_do_initcalls()
+void ddekit_do_initcalls()
 { 
 	struct __ddekit_initcall_s *i = 0; 
 

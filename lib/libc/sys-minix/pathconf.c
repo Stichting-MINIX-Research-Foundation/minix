@@ -12,7 +12,7 @@
 __weak_alias(pathconf, _pathconf)
 #endif
 
-PUBLIC long pathconf(path, name)
+long pathconf(path, name)
 _CONST char *path;		/* name of file being interrogated */
 int name;			/* property being inspected */
 {

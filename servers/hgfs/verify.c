@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				verify_path				     *
  *===========================================================================*/
-PUBLIC int verify_path(path, ino, attr, stale)
+int verify_path(path, ino, attr, stale)
 char path[PATH_MAX];
 struct inode *ino;
 struct hgfs_attr *attr;
@@ -60,7 +60,7 @@ int *stale;
 /*===========================================================================*
  *				verify_inode				     *
  *===========================================================================*/
-PUBLIC int verify_inode(ino, path, attr)
+int verify_inode(ino, path, attr)
 struct inode *ino;		/* inode to verify */
 char path[PATH_MAX];		/* buffer in which to store the path */
 struct hgfs_attr *attr;		/* buffer for attributes, or NULL */
@@ -87,7 +87,7 @@ struct hgfs_attr *attr;		/* buffer for attributes, or NULL */
 /*===========================================================================*
  *				verify_dentry				     *
  *===========================================================================*/
-PUBLIC int verify_dentry(parent, name, path, res_ino)
+int verify_dentry(parent, name, path, res_ino)
 struct inode *parent;		/* parent inode: the inode to verify */
 char name[NAME_MAX+1];		/* the given directory entry path component */
 char path[PATH_MAX];		/* buffer to store the resulting path in */

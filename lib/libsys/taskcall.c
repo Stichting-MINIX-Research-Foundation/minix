@@ -6,7 +6,7 @@
 #include <lib.h>
 #include <minix/syslib.h>
 
-PUBLIC int _taskcall(who, syscallnr, msgptr)
+int _taskcall(who, syscallnr, msgptr)
 endpoint_t who;
 int syscallnr;
 register message *msgptr;

@@ -31,7 +31,7 @@
 /*===========================================================================*
  *				do_rs_set_priv				     *
  *===========================================================================*/
-PUBLIC int do_rs_set_priv(message *m)
+int do_rs_set_priv(message *m)
 {
 	int r, n, nr;
 	struct vmproc *vmp;
@@ -59,7 +59,7 @@ PUBLIC int do_rs_set_priv(message *m)
 /*===========================================================================*
  *				do_rs_update	     			     *
  *===========================================================================*/
-PUBLIC int do_rs_update(message *m_ptr)
+int do_rs_update(message *m_ptr)
 {
 	endpoint_t src_e, dst_e, reply_e;
 	int src_p, dst_p;
@@ -115,7 +115,7 @@ PUBLIC int do_rs_update(message *m_ptr)
 /*===========================================================================*
  *		           rs_memctl_make_vm_instance			     *
  *===========================================================================*/
-PRIVATE int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
+static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 {
 	int r;
 	u32_t flags;
@@ -164,7 +164,7 @@ PRIVATE int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 /*===========================================================================*
  *				do_rs_memctl	     			     *
  *===========================================================================*/
-PUBLIC int do_rs_memctl(message *m_ptr)
+int do_rs_memctl(message *m_ptr)
 {
 	endpoint_t ep;
 	int req, r, proc_nr;

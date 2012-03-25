@@ -20,16 +20,16 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, u16_t id,
+static ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, u16_t id,
 	ipproto_t proto, ipaddr_t src, ipaddr_t dst ));
-FORWARD acc_t *merge_frags ARGS(( acc_t *first, acc_t *second ));
-FORWARD int ip_frag_chk ARGS(( acc_t *pack ));
-FORWARD acc_t *reassemble ARGS(( ip_port_t *ip_port, acc_t *pack, 
+static acc_t *merge_frags ARGS(( acc_t *first, acc_t *second ));
+static int ip_frag_chk ARGS(( acc_t *pack ));
+static acc_t *reassemble ARGS(( ip_port_t *ip_port, acc_t *pack, 
 	ip_hdr_t *ip_hdr ));
-FORWARD void route_packets ARGS(( event_t *ev, ev_arg_t ev_arg ));
-FORWARD int broadcast_dst ARGS(( ip_port_t *ip_port, ipaddr_t dest ));
+static void route_packets ARGS(( event_t *ev, ev_arg_t ev_arg ));
+static int broadcast_dst ARGS(( ip_port_t *ip_port, ipaddr_t dest ));
 
-PUBLIC int ip_read(int fd, size_t count)
+int ip_read(int fd, size_t count)
 {
 	ip_fd_t *ip_fd;
 	acc_t *pack;
@@ -65,7 +65,7 @@ PUBLIC int ip_read(int fd, size_t count)
 	return NW_SUSPEND;
 }
 
-PRIVATE acc_t *reassemble (ip_port, pack, pack_hdr)
+static acc_t *reassemble (ip_port, pack, pack_hdr)
 ip_port_t *ip_port;
 acc_t *pack;
 ip_hdr_t *pack_hdr;
@@ -167,7 +167,7 @@ ip_hdr_t *pack_hdr;
 	return NULL;
 }
 
-PRIVATE acc_t *merge_frags (first, second)
+static acc_t *merge_frags (first, second)
 acc_t *first, *second;
 {
 	ip_hdr_t *first_hdr, *second_hdr;
@@ -237,7 +237,7 @@ assert (first_hdr_size + first_datasize == bf_bufsize(first));
 	return first;
 }
 
-PRIVATE ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, u16_t id,
+static ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, u16_t id,
 	ipproto_t proto, ipaddr_t src, ipaddr_t dst ))
 {
 	ip_ass_t *new_ass_ent, *tmp_ass_ent;
@@ -311,7 +311,7 @@ PRIVATE ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, u16_t id,
 	return new_ass_ent;
 }
 
-PRIVATE int ip_frag_chk(pack)
+static int ip_frag_chk(pack)
 acc_t *pack;
 {
 	ip_hdr_t *ip_hdr;
@@ -362,7 +362,7 @@ acc_t *pack;
 	return TRUE;
 }
 
-PUBLIC int ip_sel_read (ip_fd_t *ip_fd)
+int ip_sel_read (ip_fd_t *ip_fd)
 {
 	acc_t *pack;
 
@@ -384,7 +384,7 @@ PUBLIC int ip_sel_read (ip_fd_t *ip_fd)
 	return 0;
 }
 
-PUBLIC void ip_packet2user (ip_fd, pack, exp_time, data_len)
+void ip_packet2user (ip_fd, pack, exp_time, data_len)
 ip_fd_t *ip_fd;
 acc_t *pack;
 time_t exp_time;
@@ -471,7 +471,7 @@ size_t data_len;
 	assert (result >= 0);
 }
 
-PUBLIC void ip_port_arrive (ip_port, pack, ip_hdr)
+void ip_port_arrive (ip_port, pack, ip_hdr)
 ip_port_t *ip_port;
 acc_t *pack;
 ip_hdr_t *ip_hdr;
@@ -589,7 +589,7 @@ ip_hdr_t *ip_hdr;
 	}
 }
 
-PUBLIC void ip_arrived(ip_port, pack)
+void ip_arrived(ip_port, pack)
 ip_port_t *ip_port;
 acc_t *pack;
 {
@@ -718,7 +718,7 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 	ev_enqueue(&ip_port->ip_routeq_event, route_packets, ev_arg);
 }
 
-PUBLIC void ip_arrived_broadcast(ip_port, pack)
+void ip_arrived_broadcast(ip_port, pack)
 ip_port_t *ip_port;
 acc_t *pack;
 {
@@ -784,7 +784,7 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 	ip_port_arrive (ip_port, pack, ip_hdr);
 }
 
-PRIVATE void route_packets(ev, ev_arg)
+static void route_packets(ev, ev_arg)
 event_t *ev;
 ev_arg_t ev_arg;
 {
@@ -992,7 +992,7 @@ ev_arg_t ev_arg;
 	}
 }
 
-PRIVATE int broadcast_dst(ip_port, dest)
+static int broadcast_dst(ip_port, dest)
 ip_port_t *ip_port;
 ipaddr_t dest;
 {

@@ -40,7 +40,7 @@
 #include "proto.h"
 
 /* This array defines all known requests. */
-PRIVATE char *known_requests[] = {
+static char *known_requests[] = {
   "up", 
   "down",
   "refresh", 
@@ -105,28 +105,28 @@ PRIVATE char *known_requests[] = {
  * parameters passed to this utility. Request parameters that are needed
  * are stored globally in the following variables:
  */
-PRIVATE int req_type;
-PRIVATE int do_run= 0;		/* 'run' command instead of 'up' */
-PRIVATE char *req_label = NULL;
-PRIVATE char *req_path = NULL;
-PRIVATE char *req_path_self = SELF_REQ_PATH;
-PRIVATE char *req_args = "";
-PRIVATE int req_major = 0;
-PRIVATE int devman_id = 0;
-PRIVATE int req_dev_style = STYLE_NDEV;
-PRIVATE long req_period = 0;
-PRIVATE char *req_script = NULL;
-PRIVATE char *req_config = PATH_CONFIG;
-PRIVATE int custom_config_file = 0;
-PRIVATE int req_lu_state = DEFAULT_LU_STATE;
-PRIVATE int req_lu_maxtime = DEFAULT_LU_MAXTIME;
+static int req_type;
+static int do_run= 0;		/* 'run' command instead of 'up' */
+static char *req_label = NULL;
+static char *req_path = NULL;
+static char *req_path_self = SELF_REQ_PATH;
+static char *req_args = "";
+static int req_major = 0;
+static int devman_id = 0;
+static int req_dev_style = STYLE_NDEV;
+static long req_period = 0;
+static char *req_script = NULL;
+static char *req_config = PATH_CONFIG;
+static int custom_config_file = 0;
+static int req_lu_state = DEFAULT_LU_STATE;
+static int req_lu_maxtime = DEFAULT_LU_MAXTIME;
 
 /* Buffer to build "/command arg1 arg2 ..." string to pass to RS server. */
-PRIVATE char command[4096];	
+static char command[4096];	
 
 /* An error occurred. Report the problem, print the usage, and exit. 
  */
-PRIVATE void print_usage(char *app_name, char *problem) 
+static void print_usage(char *app_name, char *problem) 
 {
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
@@ -145,7 +145,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
 
 /* A request to the RS server failed. Report and exit. 
  */
-PRIVATE void failure(int request)
+static void failure(int request)
 {
   fprintf(stderr, "Request 0x%x to RS failed: %s (error %d)\n", request, strerror(errno), errno);
   exit(errno);
@@ -155,7 +155,7 @@ PRIVATE void failure(int request)
 /* Parse and verify correctness of arguments. Report problem and exit if an 
  * error is found. Store needed parameters in global variables.
  */
-PRIVATE int parse_arguments(int argc, char **argv, u32_t *rss_flags)
+static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 {
   struct stat stat_buf;
   char *hz, *buff;
@@ -412,7 +412,7 @@ PRIVATE int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 
 /* Main program. 
  */
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   message m;
   int result = EXIT_SUCCESS;

@@ -9,7 +9,7 @@
 
 /* This function is called when the filesystem is umounted. It releases the 
  * super block. */
-PUBLIC int release_v_pri(v_pri)
+int release_v_pri(v_pri)
      register struct iso9660_vd_pri *v_pri;
 {
   /* Release the root dir record */
@@ -21,7 +21,7 @@ PUBLIC int release_v_pri(v_pri)
 /* This function fullfill the super block data structure using the information
  * contained in the stream buf. Such stream is physically read from the device
  * . */
-PUBLIC int create_v_pri(v_pri,buf,address)
+int create_v_pri(v_pri,buf,address)
      register struct iso9660_vd_pri *v_pri;
      register char* buf;
      register unsigned long address;
@@ -80,7 +80,7 @@ PUBLIC int create_v_pri(v_pri,buf,address)
 
 /* This function reads from a ISO9660 filesystem (in the device dev) the
  * super block and saves it in v_pri. */
-PUBLIC int read_vds(
+int read_vds(
   register struct iso9660_vd_pri *v_pri,
   register dev_t dev
 )

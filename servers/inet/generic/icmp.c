@@ -47,50 +47,50 @@ typedef struct icmp_port
 #define ICPS_MAIN	2
 #define ICPS_ERROR	3
 
-PRIVATE icmp_port_t *icmp_port_table;
+static icmp_port_t *icmp_port_table;
 
-FORWARD void icmp_main ARGS(( icmp_port_t *icmp_port ));
-FORWARD acc_t *icmp_getdata ARGS(( int port, size_t offset,
+static void icmp_main ARGS(( icmp_port_t *icmp_port ));
+static acc_t *icmp_getdata ARGS(( int port, size_t offset,
 	size_t count, int for_ioctl ));
-FORWARD int icmp_putdata ARGS(( int port, size_t offset,
+static int icmp_putdata ARGS(( int port, size_t offset,
 	acc_t *data, int for_ioctl ));
-FORWARD void icmp_read ARGS(( icmp_port_t *icmp_port ));
-FORWARD void process_data ARGS(( icmp_port_t *icmp_port,
+static void icmp_read ARGS(( icmp_port_t *icmp_port ));
+static void process_data ARGS(( icmp_port_t *icmp_port,
 	acc_t *data ));
-FORWARD u16_t icmp_pack_oneCsum ARGS(( acc_t *ip_pack ));
-FORWARD void icmp_echo_request ARGS(( icmp_port_t *icmp_port,
+static u16_t icmp_pack_oneCsum ARGS(( acc_t *ip_pack ));
+static void icmp_echo_request ARGS(( icmp_port_t *icmp_port,
 	acc_t *ip_pack, int ip_hdr_len, ip_hdr_t *ip_hdr,
 	acc_t *icmp_pack, int icmp_len, icmp_hdr_t *icmp_hdr ));
-FORWARD void icmp_dst_unreach ARGS(( icmp_port_t *icmp_port,
+static void icmp_dst_unreach ARGS(( icmp_port_t *icmp_port,
 	acc_t *ip_pack, int ip_hdr_len, ip_hdr_t *ip_hdr,
 	acc_t *icmp_pack, int icmp_len, icmp_hdr_t *icmp_hdr ));
-FORWARD void icmp_time_exceeded ARGS(( icmp_port_t *icmp_port,
+static void icmp_time_exceeded ARGS(( icmp_port_t *icmp_port,
 	acc_t *ip_pack, int ip_hdr_len, ip_hdr_t *ip_hdr,
 	acc_t *icmp_pack, int icmp_len, icmp_hdr_t *icmp_hdr ));
-FORWARD void icmp_router_advertisement ARGS(( icmp_port_t *icmp_port,
+static void icmp_router_advertisement ARGS(( icmp_port_t *icmp_port,
 	acc_t *icmp_pack, int icmp_len, icmp_hdr_t *icmp_hdr ));
-FORWARD void icmp_redirect ARGS(( icmp_port_t *icmp_port,
+static void icmp_redirect ARGS(( icmp_port_t *icmp_port,
 	ip_hdr_t *ip_hdr, acc_t *icmp_pack, int icmp_len,
 	icmp_hdr_t *icmp_hdr ));
-FORWARD acc_t *make_repl_ip ARGS(( ip_hdr_t *ip_hdr,
+static acc_t *make_repl_ip ARGS(( ip_hdr_t *ip_hdr,
 	int ip_len ));
-FORWARD void enqueue_pack ARGS(( icmp_port_t *icmp_port,
+static void enqueue_pack ARGS(( icmp_port_t *icmp_port,
 	acc_t *reply_ip_hdr ));
-FORWARD int icmp_rate_limit ARGS(( icmp_port_t *icmp_port,
+static int icmp_rate_limit ARGS(( icmp_port_t *icmp_port,
 	acc_t *reply_ip_hdr ));
-FORWARD void icmp_write ARGS(( event_t *ev, ev_arg_t ev_arg ));
-FORWARD void icmp_buffree ARGS(( int priority ));
-FORWARD acc_t *icmp_err_pack ARGS(( acc_t *pack, icmp_hdr_t **icmp_hdr_pp ));
+static void icmp_write ARGS(( event_t *ev, ev_arg_t ev_arg ));
+static void icmp_buffree ARGS(( int priority ));
+static acc_t *icmp_err_pack ARGS(( acc_t *pack, icmp_hdr_t **icmp_hdr_pp ));
 #ifdef BUF_CONSISTENCY_CHECK
-FORWARD void icmp_bufcheck ARGS(( void ));
+static void icmp_bufcheck ARGS(( void ));
 #endif
 
-PUBLIC void icmp_prep()
+void icmp_prep()
 {
 	icmp_port_table= alloc(ip_conf_nr * sizeof(icmp_port_table[0]));
 }
 
-PUBLIC void icmp_init()
+void icmp_init()
 {
 	int i;
 	icmp_port_t *icmp_port;
@@ -120,7 +120,7 @@ PUBLIC void icmp_init()
 	}
 }
 
-PRIVATE void icmp_main(icmp_port)
+static void icmp_main(icmp_port)
 icmp_port_t *icmp_port;
 {
 	int result;
@@ -160,7 +160,7 @@ icmp_port_t *icmp_port;
 	}
 }
 
-PRIVATE acc_t *icmp_getdata(port, offset, count, for_ioctl)
+static acc_t *icmp_getdata(port, offset, count, for_ioctl)
 int port;
 size_t offset, count;
 int for_ioctl;
@@ -229,7 +229,7 @@ int for_ioctl;
 	return NULL;
 }
 
-PRIVATE int icmp_putdata(port, offset, data, for_ioctl)
+static int icmp_putdata(port, offset, data, for_ioctl)
 int port;
 size_t offset;
 acc_t *data;
@@ -270,7 +270,7 @@ int for_ioctl;
 	}
 }
 
-PRIVATE void icmp_read(icmp_port)
+static void icmp_read(icmp_port)
 icmp_port_t *icmp_port;
 {
 	int result;
@@ -289,7 +289,7 @@ icmp_port_t *icmp_port;
 	}
 }
 
-PUBLIC void icmp_snd_time_exceeded(port_nr, pack, code)
+void icmp_snd_time_exceeded(port_nr, pack, code)
 int port_nr;
 acc_t *pack;
 int code;
@@ -315,7 +315,7 @@ int code;
 	enqueue_pack(icmp_port, pack);
 }
 
-PUBLIC void icmp_snd_redirect(port_nr, pack, code, gw)
+void icmp_snd_redirect(port_nr, pack, code, gw)
 int port_nr;
 acc_t *pack;
 int code;
@@ -345,7 +345,7 @@ ipaddr_t gw;
 	enqueue_pack(icmp_port, pack);
 }
 
-PUBLIC void icmp_snd_unreachable(port_nr, pack, code)
+void icmp_snd_unreachable(port_nr, pack, code)
 int port_nr;
 acc_t *pack;
 int code;
@@ -371,7 +371,7 @@ int code;
 	enqueue_pack(icmp_port, pack);
 }
 
-PUBLIC void icmp_snd_mtu(
+void icmp_snd_mtu(
   int port_nr,
   acc_t *pack,
   u16_t mtu
@@ -402,7 +402,7 @@ PUBLIC void icmp_snd_mtu(
 	enqueue_pack(icmp_port, pack);
 }
 
-PRIVATE void process_data(icmp_port, data)
+static void process_data(icmp_port, data)
 icmp_port_t *icmp_port;
 acc_t *data;
 {
@@ -499,7 +499,7 @@ acc_t *data;
 	bf_afree(icmp_data);
 }
 
-PRIVATE void icmp_echo_request(icmp_port, ip_data, ip_len, ip_hdr,
+static void icmp_echo_request(icmp_port, ip_data, ip_len, ip_hdr,
 	icmp_data, icmp_len, icmp_hdr)
 icmp_port_t *icmp_port;
 acc_t *ip_data, *icmp_data;
@@ -586,7 +586,7 @@ icmp_hdr_t *icmp_hdr;
 	enqueue_pack(icmp_port, repl_ip_hdr);
 }
 
-PRIVATE u16_t icmp_pack_oneCsum(icmp_pack)
+static u16_t icmp_pack_oneCsum(icmp_pack)
 acc_t *icmp_pack;
 {
 	u16_t prev;
@@ -628,7 +628,7 @@ acc_t *icmp_pack;
 	return prev;
 }
 
-PRIVATE acc_t *make_repl_ip(ip_hdr, ip_len)
+static acc_t *make_repl_ip(ip_hdr, ip_len)
 ip_hdr_t *ip_hdr;
 int ip_len;
 {
@@ -658,7 +658,7 @@ int ip_len;
 	return repl;
 }
 
-PRIVATE void enqueue_pack(icmp_port, reply_ip_hdr)
+static void enqueue_pack(icmp_port, reply_ip_hdr)
 icmp_port_t *icmp_port;
 acc_t *reply_ip_hdr;
 {
@@ -702,7 +702,7 @@ acc_t *reply_ip_hdr;
 	}
 }
 
-PRIVATE int icmp_rate_limit(icmp_port, reply_ip_hdr)
+static int icmp_rate_limit(icmp_port, reply_ip_hdr)
 icmp_port_t *icmp_port;
 acc_t *reply_ip_hdr;
 {
@@ -773,7 +773,7 @@ acc_t *reply_ip_hdr;
 	return -1;
 }
 
-PRIVATE void icmp_write(ev, ev_arg)
+static void icmp_write(ev, ev_arg)
 event_t *ev;
 ev_arg_t ev_arg;
 {
@@ -816,7 +816,7 @@ ev_arg_t ev_arg;
 	icmp_port->icp_flags &= ~ICPF_WRITE_IP;
 }
 
-PRIVATE void icmp_buffree(priority)
+static void icmp_buffree(priority)
 int priority;
 {
 	acc_t *tmp_acc;
@@ -840,7 +840,7 @@ int priority;
 }
 
 #ifdef BUF_CONSISTENCY_CHECK
-PRIVATE void icmp_bufcheck()
+static void icmp_bufcheck()
 {
 	int i;
 	icmp_port_t *icmp_port;
@@ -858,7 +858,7 @@ PRIVATE void icmp_bufcheck()
 }
 #endif
 
-PRIVATE void icmp_dst_unreach(icmp_port, ip_pack, ip_hdr_len, ip_hdr, icmp_pack,
+static void icmp_dst_unreach(icmp_port, ip_pack, ip_hdr_len, ip_hdr, icmp_pack,
 	icmp_len, icmp_hdr)
 icmp_port_t *icmp_port;
 acc_t *ip_pack;
@@ -941,7 +941,7 @@ icmp_hdr_t *icmp_hdr;
 	bf_afree(old_ip_pack);
 }
 
-PRIVATE void icmp_time_exceeded(icmp_port, ip_pack, ip_hdr_len, ip_hdr,
+static void icmp_time_exceeded(icmp_port, ip_pack, ip_hdr_len, ip_hdr,
 	icmp_pack, icmp_len, icmp_hdr)
 icmp_port_t *icmp_port;
 acc_t *ip_pack;
@@ -990,7 +990,7 @@ icmp_hdr_t *icmp_hdr;
 	bf_afree(old_ip_pack);
 }
 
-PRIVATE void icmp_router_advertisement(icmp_port, icmp_pack, icmp_len, icmp_hdr)
+static void icmp_router_advertisement(icmp_port, icmp_pack, icmp_len, icmp_hdr)
 icmp_port_t *icmp_port;
 acc_t *icmp_pack;
 int icmp_len;
@@ -1063,7 +1063,7 @@ icmp_hdr_t *icmp_hdr;
 	}
 }
 		
-PRIVATE void icmp_redirect(icmp_port, ip_hdr, icmp_pack, icmp_len, icmp_hdr)
+static void icmp_redirect(icmp_port, ip_hdr, icmp_pack, icmp_len, icmp_hdr)
 icmp_port_t *icmp_port;
 ip_hdr_t *ip_hdr;
 acc_t *icmp_pack;
@@ -1108,7 +1108,7 @@ icmp_hdr_t *icmp_hdr;
 	bf_afree(old_ip_pack);
 }
 
-PRIVATE acc_t *icmp_err_pack(pack, icmp_hdr_pp)
+static acc_t *icmp_err_pack(pack, icmp_hdr_pp)
 acc_t *pack;
 icmp_hdr_t **icmp_hdr_pp;
 {

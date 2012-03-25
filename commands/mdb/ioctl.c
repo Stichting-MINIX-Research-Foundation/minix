@@ -15,7 +15,7 @@
 #include <sgtty.h>
 #include "proto.h"
 
-PRIVATE int get_request;
+static int get_request;
 
 /* 
  * decode ioctl call

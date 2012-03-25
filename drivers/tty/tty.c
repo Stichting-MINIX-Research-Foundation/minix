@@ -101,28 +101,28 @@ unsigned long rs_irq_set = 0;
 
 struct kmessages kmess;
 
-FORWARD void tty_timed_out(timer_t *tp);
-FORWARD void settimer(tty_t *tty_ptr, int enable);
-FORWARD void do_cancel(tty_t *tp, message *m_ptr);
-FORWARD void do_ioctl(tty_t *tp, message *m_ptr);
-FORWARD void do_open(tty_t *tp, message *m_ptr);
-FORWARD void do_close(tty_t *tp, message *m_ptr);
-FORWARD void do_read(tty_t *tp, message *m_ptr);
-FORWARD void do_write(tty_t *tp, message *m_ptr);
-FORWARD void do_select(tty_t *tp, message *m_ptr);
-FORWARD void do_status(message *m_ptr);
-FORWARD void in_transfer(tty_t *tp);
-FORWARD int tty_echo(tty_t *tp, int ch);
-FORWARD void rawecho(tty_t *tp, int ch);
-FORWARD int back_over(tty_t *tp);
-FORWARD void reprint(tty_t *tp);
-FORWARD void dev_ioctl(tty_t *tp);
-FORWARD void setattr(tty_t *tp);
-FORWARD void tty_icancel(tty_t *tp);
-FORWARD void tty_init(void);
+static void tty_timed_out(timer_t *tp);
+static void settimer(tty_t *tty_ptr, int enable);
+static void do_cancel(tty_t *tp, message *m_ptr);
+static void do_ioctl(tty_t *tp, message *m_ptr);
+static void do_open(tty_t *tp, message *m_ptr);
+static void do_close(tty_t *tp, message *m_ptr);
+static void do_read(tty_t *tp, message *m_ptr);
+static void do_write(tty_t *tp, message *m_ptr);
+static void do_select(tty_t *tp, message *m_ptr);
+static void do_status(message *m_ptr);
+static void in_transfer(tty_t *tp);
+static int tty_echo(tty_t *tp, int ch);
+static void rawecho(tty_t *tp, int ch);
+static int back_over(tty_t *tp);
+static void reprint(tty_t *tp);
+static void dev_ioctl(tty_t *tp);
+static void setattr(tty_t *tp);
+static void tty_icancel(tty_t *tp);
+static void tty_init(void);
 
 /* Default attributes. */
-PRIVATE struct termios termios_defaults = {
+static struct termios termios_defaults = {
   TINPUT_DEF, TOUTPUT_DEF, TCTRL_DEF, TLOCAL_DEF, TSPEED_DEF, TSPEED_DEF,
   {
 	TEOF_DEF, TEOL_DEF, TERASE_DEF, TINTR_DEF, TKILL_DEF, TMIN_DEF,
@@ -130,23 +130,23 @@ PRIVATE struct termios termios_defaults = {
 	TREPRINT_DEF, TLNEXT_DEF, TDISCARD_DEF,
   },
 };
-PRIVATE struct winsize winsize_defaults;	/* = all zeroes */
+static struct winsize winsize_defaults;	/* = all zeroes */
 
 /* Global variables for the TTY task (declared extern in tty.h). */
-PUBLIC tty_t tty_table[NR_CONS+NR_RS_LINES+NR_PTYS];
-PUBLIC int ccurrent;			/* currently active console */
-PUBLIC struct machine machine;		/* kernel environment variables */
-PUBLIC u32_t system_hz;
+tty_t tty_table[NR_CONS+NR_RS_LINES+NR_PTYS];
+int ccurrent;			/* currently active console */
+struct machine machine;		/* kernel environment variables */
+u32_t system_hz;
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				tty_task				     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
 /* Main routine of the terminal task. */
 
@@ -291,7 +291,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -309,7 +309,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the tty driver. */
   int r;
@@ -331,7 +331,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Check for known signals, ignore anything else. */
   switch(signo) {
@@ -349,7 +349,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				do_status				     *
  *===========================================================================*/
-PRIVATE void do_status(m_ptr)
+static void do_status(m_ptr)
 message *m_ptr;
 {
   register struct tty *tp;
@@ -436,7 +436,7 @@ message *m_ptr;
 /*===========================================================================*
  *				do_read					     *
  *===========================================================================*/
-PRIVATE void do_read(tp, m_ptr)
+static void do_read(tp, m_ptr)
 register tty_t *tp;		/* pointer to tty struct */
 register message *m_ptr;	/* pointer to message sent to the task */
 {
@@ -503,7 +503,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-PRIVATE void do_write(tp, m_ptr)
+static void do_write(tp, m_ptr)
 register tty_t *tp;
 register message *m_ptr;	/* pointer to message sent to the task */
 {
@@ -544,7 +544,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-PRIVATE void do_ioctl(tp, m_ptr)
+static void do_ioctl(tp, m_ptr)
 register tty_t *tp;
 message *m_ptr;			/* pointer to message sent to task */
 {
@@ -704,7 +704,7 @@ message *m_ptr;			/* pointer to message sent to task */
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-PRIVATE void do_open(tp, m_ptr)
+static void do_open(tp, m_ptr)
 register tty_t *tp;
 message *m_ptr;			/* pointer to message sent to task */
 {
@@ -730,7 +730,7 @@ message *m_ptr;			/* pointer to message sent to task */
 /*===========================================================================*
  *				do_close				     *
  *===========================================================================*/
-PRIVATE void do_close(tp, m_ptr)
+static void do_close(tp, m_ptr)
 register tty_t *tp;
 message *m_ptr;			/* pointer to message sent to task */
 {
@@ -751,7 +751,7 @@ message *m_ptr;			/* pointer to message sent to task */
 /*===========================================================================*
  *				do_cancel				     *
  *===========================================================================*/
-PRIVATE void do_cancel(tp, m_ptr)
+static void do_cancel(tp, m_ptr)
 register tty_t *tp;
 message *m_ptr;			/* pointer to message sent to task */
 {
@@ -787,7 +787,7 @@ message *m_ptr;			/* pointer to message sent to task */
   tty_reply(TASK_REPLY, m_ptr->m_source, proc_nr, r);
 }
 
-PUBLIC int select_try(struct tty *tp, int ops)
+int select_try(struct tty *tp, int ops)
 {
 	int ready_ops = 0;
 
@@ -821,7 +821,7 @@ PUBLIC int select_try(struct tty *tp, int ops)
 	return ready_ops;
 }
 
-PUBLIC int select_retry(struct tty *tp)
+int select_retry(struct tty *tp)
 {
   	if (tp->tty_select_ops && select_try(tp, tp->tty_select_ops))
 		notify(tp->tty_select_proc);
@@ -831,7 +831,7 @@ PUBLIC int select_retry(struct tty *tp)
 /*===========================================================================*
  *				handle_events				     *
  *===========================================================================*/
-PUBLIC void handle_events(tp)
+void handle_events(tp)
 tty_t *tp;			/* TTY to check for events. */
 {
 /* Handle any events pending on a TTY.  These events are usually device
@@ -888,7 +888,7 @@ tty_t *tp;			/* TTY to check for events. */
 /*===========================================================================*
  *				in_transfer				     *
  *===========================================================================*/
-PRIVATE void in_transfer(tp)
+static void in_transfer(tp)
 register tty_t *tp;		/* pointer to terminal to read from */
 {
 /* Transfer bytes from the input queue to a process reading from a terminal. */
@@ -960,7 +960,7 @@ register tty_t *tp;		/* pointer to terminal to read from */
 /*===========================================================================*
  *				in_process				     *
  *===========================================================================*/
-PRIVATE void in_process_send_byte(
+static void in_process_send_byte(
   tty_t *tp,	/* terminal on which character has arrived */
   int ch	/* input character */
 )
@@ -976,7 +976,7 @@ PRIVATE void in_process_send_byte(
 	if (tp->tty_incount == buflen(tp->tty_inbuf)) in_transfer(tp);
 }
  
-PUBLIC int in_process(tp, buf, count, scode)
+int in_process(tp, buf, count, scode)
 register tty_t *tp;		/* terminal on which character has arrived */
 char *buf;			/* buffer with input characters */
 int count;			/* number of input characters */
@@ -1137,7 +1137,7 @@ int scode;			/* scan code */
 /*===========================================================================*
  *				echo					     *
  *===========================================================================*/
-PRIVATE int tty_echo(tp, ch)
+static int tty_echo(tp, ch)
 register tty_t *tp;		/* terminal on which to echo */
 register int ch;		/* pointer to character to echo */
 {
@@ -1198,7 +1198,7 @@ register int ch;		/* pointer to character to echo */
 /*===========================================================================*
  *				rawecho					     *
  *===========================================================================*/
-PRIVATE void rawecho(tp, ch)
+static void rawecho(tp, ch)
 register tty_t *tp;
 int ch;
 {
@@ -1211,7 +1211,7 @@ int ch;
 /*===========================================================================*
  *				back_over				     *
  *===========================================================================*/
-PRIVATE int back_over(tp)
+static int back_over(tp)
 register tty_t *tp;
 {
 /* Backspace to previous character on screen and erase it. */
@@ -1240,7 +1240,7 @@ register tty_t *tp;
 /*===========================================================================*
  *				reprint					     *
  *===========================================================================*/
-PRIVATE void reprint(tp)
+static void reprint(tp)
 register tty_t *tp;		/* pointer to tty struct */
 {
 /* Restore what has been echoed to screen before if the user input has been
@@ -1279,7 +1279,7 @@ register tty_t *tp;		/* pointer to tty struct */
 /*===========================================================================*
  *				out_process				     *
  *===========================================================================*/
-PUBLIC void out_process(tp, bstart, bpos, bend, icount, ocount)
+void out_process(tp, bstart, bpos, bend, icount, ocount)
 tty_t *tp;
 char *bstart, *bpos, *bend;	/* start/pos/end of circular buffer */
 int *icount;			/* # input chars / input chars used */
@@ -1364,7 +1364,7 @@ out_done:
 /*===========================================================================*
  *				dev_ioctl				     *
  *===========================================================================*/
-PRIVATE void dev_ioctl(tp)
+static void dev_ioctl(tp)
 tty_t *tp;
 {
 /* The ioctl's TCSETSW, TCSETSF and TCDRAIN wait for output to finish to make
@@ -1391,7 +1391,7 @@ tty_t *tp;
 /*===========================================================================*
  *				setattr					     *
  *===========================================================================*/
-PRIVATE void setattr(tp)
+static void setattr(tp)
 tty_t *tp;
 {
 /* Apply the new line attributes (raw/canonical, line speed, etc.) */
@@ -1447,7 +1447,7 @@ tty_t *tp;
 /*===========================================================================*
  *				tty_reply				     *
  *===========================================================================*/
-PUBLIC void 
+void 
 tty_reply_f(
 file, line, code, replyee, proc_nr, status)
 char *file;
@@ -1481,7 +1481,7 @@ int status;			/* reply code */
 /*===========================================================================*
  *				sigchar					     *
  *===========================================================================*/
-PUBLIC void sigchar(tp, sig, mayflush)
+void sigchar(tp, sig, mayflush)
 register tty_t *tp;
 int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
 int mayflush;
@@ -1511,7 +1511,7 @@ int mayflush;
 /*===========================================================================*
  *				tty_icancel				     *
  *===========================================================================*/
-PRIVATE void tty_icancel(tp)
+static void tty_icancel(tp)
 register tty_t *tp;
 {
 /* Discard all pending input, tty buffer or device. */
@@ -1524,7 +1524,7 @@ register tty_t *tp;
 /*===========================================================================*
  *				tty_devnop				     *
  *===========================================================================*/
-PRIVATE int tty_devnop(tty_t *UNUSED(tp), int UNUSED(try))
+static int tty_devnop(tty_t *UNUSED(tp), int UNUSED(try))
 {
   /* Some functions need not be implemented at the device level. */
   return 0;
@@ -1533,7 +1533,7 @@ PRIVATE int tty_devnop(tty_t *UNUSED(tp), int UNUSED(try))
 /*===========================================================================*
  *				tty_init				     *
  *===========================================================================*/
-PRIVATE void tty_init()
+static void tty_init()
 {
 /* Initialize tty structure and call device initialization routines. */
 
@@ -1576,7 +1576,7 @@ PRIVATE void tty_init()
 /*===========================================================================*
  *				tty_timed_out				     *
  *===========================================================================*/
-PRIVATE void tty_timed_out(timer_t *tp)
+static void tty_timed_out(timer_t *tp)
 {
 /* This timer has expired. Set the events flag, to force processing. */
   tty_t *tty_ptr;
@@ -1588,7 +1588,7 @@ PRIVATE void tty_timed_out(timer_t *tp)
 /*===========================================================================*
  *				settimer				     *
  *===========================================================================*/
-PRIVATE void settimer(tty_ptr, enable)
+static void settimer(tty_ptr, enable)
 tty_t *tty_ptr;			/* line to set or unset a timer on */
 int enable;			/* set timer if true, otherwise unset */
 {
@@ -1608,7 +1608,7 @@ int enable;			/* set timer if true, otherwise unset */
 /*===========================================================================*
  *				do_select				     *
  *===========================================================================*/
-PRIVATE void do_select(tp, m_ptr)
+static void do_select(tp, m_ptr)
 register tty_t *tp;		/* pointer to tty struct */
 register message *m_ptr;	/* pointer to message sent to the task */
 {

@@ -1,11 +1,11 @@
 #include "inc.h"
 
-PUBLIC int identifier = 0x1234;
-PUBLIC endpoint_t who_e;
-PUBLIC int call_type;
-PUBLIC endpoint_t SELF_E;
+int identifier = 0x1234;
+endpoint_t who_e;
+int call_type;
+endpoint_t SELF_E;
 
-PRIVATE struct {
+static struct {
 	int type;
 	int (*func)(message *);
 	int reply;	/* whether the reply action is passed through */
@@ -21,14 +21,14 @@ PRIVATE struct {
 
 #define SIZE(a) (sizeof(a)/sizeof(a[0]))
 
-PRIVATE int verbose = 0;
+static int verbose = 0;
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
-PUBLIC int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	message m;
 
@@ -107,7 +107,7 @@ PUBLIC int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -125,7 +125,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the ipc server. */
 
@@ -140,7 +140,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		            sef_cb_signal_handler                            *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Only check for termination signal, ignore anything else. */
   if (signo != SIGTERM) return;

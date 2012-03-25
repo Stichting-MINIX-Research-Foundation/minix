@@ -7,12 +7,12 @@
 #define OLD_CTX		&(threads[old_thread]->m_context)
 #define CURRENT_CTX	&(threads[current_thread]->m_context)
 #define CURRENT_STATE	threads[current_thread]->m_state
-PRIVATE int yield_all;
+static int yield_all;
 
 /*===========================================================================*
  *				mthread_getcontext			     *
  *===========================================================================*/
-PUBLIC int mthread_getcontext(ctx)
+int mthread_getcontext(ctx)
 ucontext_t *ctx;
 {
 /* Retrieve this process' current state.*/
@@ -28,7 +28,7 @@ ucontext_t *ctx;
 /*===========================================================================*
  *				mthread_schedule			     *
  *===========================================================================*/
-PUBLIC void mthread_schedule(void)
+void mthread_schedule(void)
 {
 /* Pick a new thread to run and run it. In practice, this involves taking the 
  * first thread off the (FIFO) run queue and resuming that thread. 
@@ -80,7 +80,7 @@ PUBLIC void mthread_schedule(void)
 /*===========================================================================*
  *				mthread_init_scheduler			     *
  *===========================================================================*/
-PUBLIC void mthread_init_scheduler(void)
+void mthread_init_scheduler(void)
 {
 /* Initialize the scheduler */
   mthread_queue_init(&run_queue);
@@ -92,7 +92,7 @@ PUBLIC void mthread_init_scheduler(void)
 /*===========================================================================*
  *				mthread_suspend				     *
  *===========================================================================*/
-PUBLIC void mthread_suspend(state)
+void mthread_suspend(state)
 mthread_state_t state;
 {
 /* Stop the current thread from running. There can be multiple reasons for
@@ -131,7 +131,7 @@ mthread_state_t state;
 /*===========================================================================*
  *				mthread_unsuspend			     *
  *===========================================================================*/
-PUBLIC void mthread_unsuspend(thread)
+void mthread_unsuspend(thread)
 mthread_thread_t thread; /* Thread to make runnable */
 {
 /* Mark the state of a thread runnable and add it to the run queue */
@@ -148,7 +148,7 @@ mthread_thread_t thread; /* Thread to make runnable */
 /*===========================================================================*
  *				mthread_yield				     *
  *===========================================================================*/
-PUBLIC int mthread_yield(void)
+int mthread_yield(void)
 {
 /* Defer further execution of the current thread and let another thread run. */
   mthread_tcb_t *tcb;
@@ -186,7 +186,7 @@ PUBLIC int mthread_yield(void)
 /*===========================================================================*
  *				mthread_yield_all			     *
  *===========================================================================*/
-PUBLIC void mthread_yield_all(void)
+void mthread_yield_all(void)
 {
 /* Yield until there are no more runnable threads left. Two threads calling
  * this function will lead to a deadlock.

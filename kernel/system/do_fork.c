@@ -22,7 +22,7 @@
 /*===========================================================================*
  *				do_fork					     *
  *===========================================================================*/
-PUBLIC int do_fork(struct proc * caller, message * m_ptr)
+int do_fork(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
 #if (_MINIX_CHIP == _CHIP_INTEL)

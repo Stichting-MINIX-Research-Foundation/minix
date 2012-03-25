@@ -8,7 +8,7 @@
  * return 0, when there are no more processes.
  * note that for the return value of 0 and 1, the 'endpt' is set accordingly.
  */
-PUBLIC int vm_query_exit(int *endpt)
+int vm_query_exit(int *endpt)
 {
 	message m;
 	int r;
@@ -23,7 +23,7 @@ PUBLIC int vm_query_exit(int *endpt)
 	return (m.VM_QUERY_IS_MORE ? 1 : 0);
 }
 
-PUBLIC int vm_watch_exit(endpoint_t ep)
+int vm_watch_exit(endpoint_t ep)
 {
 	message m;
 

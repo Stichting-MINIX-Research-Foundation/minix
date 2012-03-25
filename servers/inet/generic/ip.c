@@ -23,27 +23,27 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD void ip_close ARGS(( int fd ));
-FORWARD int ip_cancel ARGS(( int fd, int which_operation ));
-FORWARD int ip_select ARGS(( int fd, unsigned operations ));
+static void ip_close ARGS(( int fd ));
+static int ip_cancel ARGS(( int fd, int which_operation ));
+static int ip_select ARGS(( int fd, unsigned operations ));
 
-FORWARD void ip_buffree ARGS(( int priority ));
+static void ip_buffree ARGS(( int priority ));
 #ifdef BUF_CONSISTENCY_CHECK
-FORWARD void ip_bufcheck ARGS(( void ));
+static void ip_bufcheck ARGS(( void ));
 #endif
-FORWARD void ip_bad_callback ARGS(( struct ip_port *ip_port ));
+static void ip_bad_callback ARGS(( struct ip_port *ip_port ));
 
-PUBLIC ip_port_t *ip_port_table;
-PUBLIC ip_fd_t ip_fd_table[IP_FD_NR];
-PUBLIC ip_ass_t ip_ass_table[IP_ASS_NR];
+ip_port_t *ip_port_table;
+ip_fd_t ip_fd_table[IP_FD_NR];
+ip_ass_t ip_ass_table[IP_ASS_NR];
 
-PUBLIC void ip_prep()
+void ip_prep()
 {
 	ip_port_table= alloc(ip_conf_nr * sizeof(ip_port_table[0]));
 	icmp_prep();
 }
 
-PUBLIC void ip_init()
+void ip_init()
 {
 	int i, j, result;
 	ip_ass_t *ip_ass;
@@ -137,7 +137,7 @@ PUBLIC void ip_init()
 	}
 }
 
-PRIVATE int ip_cancel (fd, which_operation)
+static int ip_cancel (fd, which_operation)
 int fd;
 int which_operation;
 {
@@ -180,7 +180,7 @@ int which_operation;
 	return NW_OK;
 }
 
-PRIVATE int ip_select(fd, operations)
+static int ip_select(fd, operations)
 int fd;
 unsigned operations;
 {
@@ -211,7 +211,7 @@ unsigned operations;
 	return resops;
 }
 
-PUBLIC int ip_open (port, srfd, get_userdata, put_userdata, put_pkt,
+int ip_open (port, srfd, get_userdata, put_userdata, put_pkt,
 	select_res)
 int port;
 int srfd;
@@ -258,7 +258,7 @@ select_res_t select_res;
 	return i;
 }
 
-PRIVATE void ip_close (fd)
+static void ip_close (fd)
 int fd;
 {
 	ip_fd_t *ip_fd;
@@ -280,7 +280,7 @@ int fd;
 	ip_fd->if_flags= IFF_EMPTY;
 }
 
-PRIVATE void ip_buffree(priority)
+static void ip_buffree(priority)
 int priority;
 {
 	int i;
@@ -423,7 +423,7 @@ int priority;
 }
 
 #ifdef BUF_CONSISTENCY_CHECK
-PRIVATE void ip_bufcheck()
+static void ip_bufcheck()
 {
 	int i;
 	ip_port_t *ip_port;
@@ -482,7 +482,7 @@ PRIVATE void ip_bufcheck()
 }
 #endif /* BUF_CONSISTENCY_CHECK */
 
-PRIVATE void ip_bad_callback(ip_port)
+static void ip_bad_callback(ip_port)
 struct ip_port *ip_port;
 {
 	ip_panic(( "no callback filled in for port %d", ip_port->ip_port ));

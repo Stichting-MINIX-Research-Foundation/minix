@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys(void)
+int no_sys(void)
 {
 	/* This call is not recognized by VTreeFS. If a message hook is
 	 * defined, let it handle the call; otherwise return ENOSYS.
@@ -20,7 +20,7 @@ PUBLIC int no_sys(void)
 /*===========================================================================*
  *				do_noop					     *
  *===========================================================================*/
-PUBLIC int do_noop(void)
+int do_noop(void)
 {
 	/* This call has no effect.
 	 */

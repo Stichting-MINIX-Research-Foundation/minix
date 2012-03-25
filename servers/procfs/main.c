@@ -3,10 +3,10 @@
 #include "inc.h"
 #include "cpuinfo.h"
 
-FORWARD void init_hook(void);
+static void init_hook(void);
 
 /* The hook functions that will be called by VTreeFS. */
-PRIVATE struct fs_hooks hooks = {
+static struct fs_hooks hooks = {
 	init_hook,
 	NULL,		/* cleanup_hook */
 	lookup_hook,
@@ -19,7 +19,7 @@ PRIVATE struct fs_hooks hooks = {
 /*===========================================================================*
  *				construct_tree				     *
  *===========================================================================*/
-PRIVATE void construct_tree(struct inode *dir, struct file *files)
+static void construct_tree(struct inode *dir, struct file *files)
 {
 	/* Construct a tree of static files from a null-terminated array of
 	 * file structures, recursively creating directories which have their
@@ -50,7 +50,7 @@ PRIVATE void construct_tree(struct inode *dir, struct file *files)
 /*===========================================================================*
  *				init_hook				     *
  *===========================================================================*/
-PRIVATE void init_hook(void)
+static void init_hook(void)
 {
 	/* Initialization hook. Generate the static part of the tree.
 	 */
@@ -69,7 +69,7 @@ PRIVATE void init_hook(void)
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
 	/* ProcFS entry point.
 	 */

@@ -23,7 +23,7 @@
 /*==========================================================================*
  *				do_umap_remote				    *
  *==========================================================================*/
-PUBLIC int do_umap_remote(struct proc * caller, message * m_ptr)
+int do_umap_remote(struct proc * caller, message * m_ptr)
 {
 /* Map virtual address to physical, for non-kernel processes. */
   int seg_type = m_ptr->CP_SRC_SPACE & SEGMENT_TYPE;

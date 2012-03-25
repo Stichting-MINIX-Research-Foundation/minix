@@ -19,18 +19,18 @@
     (RTS_ISSET(p, RTS_NO_PRIV) || RTS_ISSET(p, RTS_SIG_PENDING) \
     || (RTS_ISSET(p, RTS_RECEIVING) && !RTS_ISSET(p, RTS_SENDING)))
 
-FORWARD void adjust_proc_slot(struct proc *rp, struct proc *from_rp);
-FORWARD void adjust_priv_slot(struct priv *privp, struct priv
+static void adjust_proc_slot(struct proc *rp, struct proc *from_rp);
+static void adjust_priv_slot(struct priv *privp, struct priv
 	*from_privp);
-FORWARD void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
+static void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
 	struct proc *b_copy_rp);
-FORWARD void swap_proc_slot_pointer(struct proc **rpp, struct proc
+static void swap_proc_slot_pointer(struct proc **rpp, struct proc
 	*src_rp, struct proc *dst_rp);
 
 /*===========================================================================*
  *				do_update				     *
  *===========================================================================*/
-PUBLIC int do_update(struct proc * caller, message * m_ptr)
+int do_update(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_update(). Update a process into another by swapping their process
  * slots.
@@ -143,7 +143,7 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *			     adjust_proc_slot				     *
  *===========================================================================*/
-PRIVATE void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
+static void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
 {
   /* Preserve endpoints, slot numbers, priv structure, IPC, FPU pointer. */
   rp->p_endpoint = from_rp->p_endpoint;
@@ -165,7 +165,7 @@ PRIVATE void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
 /*===========================================================================*
  *			     adjust_priv_slot				     *
  *===========================================================================*/
-PRIVATE void adjust_priv_slot(struct priv *privp, struct priv *from_privp)
+static void adjust_priv_slot(struct priv *privp, struct priv *from_privp)
 {
   /* Preserve privilege ids and non-privilege stuff in the priv structure. */
   privp->s_id = from_privp->s_id;
@@ -178,7 +178,7 @@ PRIVATE void adjust_priv_slot(struct priv *privp, struct priv *from_privp)
 /*===========================================================================*
  *				swap_fpu_state				     *
  *===========================================================================*/
-PRIVATE void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
+static void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
     struct proc *b_copy_rp)
 {
   /* Copy the FPU state from process B's copied slot, using B's original FPU
@@ -196,7 +196,7 @@ PRIVATE void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
 /*===========================================================================*
  *			   swap_proc_slot_pointer			     *
  *===========================================================================*/
-PRIVATE void swap_proc_slot_pointer(struct proc **rpp, struct proc *src_rp,
+static void swap_proc_slot_pointer(struct proc **rpp, struct proc *src_rp,
     struct proc *dst_rp)
 {
   if(*rpp == src_rp) {

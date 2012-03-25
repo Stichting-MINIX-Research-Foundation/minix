@@ -42,16 +42,16 @@
 #include <string.h>
 #define BUF_SIZE 4096
 
-PRIVATE char buf[BUF_SIZE + 1];
-PRIVATE size_t off, left, used;
-PRIVATE off_t skip;
+static char buf[BUF_SIZE + 1];
+static size_t off, left, used;
+static off_t skip;
 
 #define MIN(x,y) (x<y?x:y)
 
 /*===========================================================================*
  *				buf_init				     *
  *===========================================================================*/
-PUBLIC void buf_init(off_t start, size_t len)
+void buf_init(off_t start, size_t len)
 {
 	/* Initialize the buffer for fresh use. The first 'start' bytes of the
 	 * produced output are to be skipped. After that, up to a total of
@@ -67,7 +67,7 @@ PUBLIC void buf_init(off_t start, size_t len)
 /*===========================================================================*
  *				buf_printf				     *
  *===========================================================================*/
-PUBLIC void buf_printf(char *fmt, ...)
+void buf_printf(char *fmt, ...)
 {
 	/* Add formatted text to the end of the buffer.
 	 */
@@ -123,7 +123,7 @@ PUBLIC void buf_printf(char *fmt, ...)
 /*===========================================================================*
  *				buf_append				     *
  *===========================================================================*/
-PUBLIC void buf_append(char *data, size_t len)
+void buf_append(char *data, size_t len)
 {
 	/* Add arbitrary data to the end of the buffer.
 	 */
@@ -155,7 +155,7 @@ PUBLIC void buf_append(char *data, size_t len)
 /*===========================================================================*
  *				buf_get					     *
  *===========================================================================*/
-PUBLIC size_t buf_get(char **ptr)
+size_t buf_get(char **ptr)
 {
 	/* Return the buffer's starting address and the length of the used
 	 * part, not counting the trailing null character for the latter.

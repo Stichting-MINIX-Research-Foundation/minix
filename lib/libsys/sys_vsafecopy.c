@@ -3,7 +3,7 @@
 
 #include <minix/safecopies.h>
 
-PUBLIC int sys_vsafecopy(struct vscp_vec *vec, int els)
+int sys_vsafecopy(struct vscp_vec *vec, int els)
 {
 /* Vectored variant of sys_safecopy*. */
 

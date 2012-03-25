@@ -21,14 +21,14 @@ struct mq_cell {
   STAILQ_ENTRY(mq_cell) next;
 };
 
-PRIVATE struct mq_cell pool[MQ_SIZE];
-PRIVATE STAILQ_HEAD(queue, mq_cell) queue[MAX_DEVICES];
-PRIVATE STAILQ_HEAD(free_list, mq_cell) free_list;
+static struct mq_cell pool[MQ_SIZE];
+static STAILQ_HEAD(queue, mq_cell) queue[MAX_DEVICES];
+static STAILQ_HEAD(free_list, mq_cell) free_list;
 
 /*===========================================================================*
  *				mq_init					     *
  *===========================================================================*/
-PUBLIC void mq_init(void)
+void mq_init(void)
 {
 /* Initialize the message queues and message cells.
  */
@@ -46,7 +46,7 @@ PUBLIC void mq_init(void)
 /*===========================================================================*
  *				mq_enqueue				     *
  *===========================================================================*/
-PUBLIC int mq_enqueue(device_id_t device_id, const message *mess,
+int mq_enqueue(device_id_t device_id, const message *mess,
   int ipc_status)
 {
 /* Add a message, including its IPC status, to the message queue of a device.
@@ -73,7 +73,7 @@ PUBLIC int mq_enqueue(device_id_t device_id, const message *mess,
 /*===========================================================================*
  *				mq_dequeue				     *
  *===========================================================================*/
-PUBLIC int mq_dequeue(device_id_t device_id, message *mess, int *ipc_status)
+int mq_dequeue(device_id_t device_id, message *mess, int *ipc_status)
 {
 /* Return and remove a message, including its IPC status, from the message
  * queue of a thread. Return TRUE iff a message was available.

@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				fs_sync					     *
  *===========================================================================*/
-PUBLIC int fs_sync()
+int fs_sync()
 {
   /* Always mounted read only, so nothing to sync */
   return(OK);		/* sync() can't fail */
@@ -17,7 +17,7 @@ PUBLIC int fs_sync()
 /*===========================================================================*
  *				fs_new_driver				     *
  *===========================================================================*/
-PUBLIC int fs_new_driver(void)
+int fs_new_driver(void)
 {
 /* Set a new driver endpoint for this device. */
   dev_t dev;

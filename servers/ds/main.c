@@ -12,20 +12,20 @@
 #include <minix/endpoint.h>
 
 /* Allocate space for the global variables. */
-PRIVATE endpoint_t who_e;	/* caller's proc number */
-PRIVATE int callnr;		/* system call number */
+static endpoint_t who_e;	/* caller's proc number */
+static int callnr;		/* system call number */
 
 /* Declare some local functions. */
-FORWARD void get_work(message *m_ptr);
-FORWARD void reply(endpoint_t whom, message *m_ptr);
+static void get_work(message *m_ptr);
+static void reply(endpoint_t whom, message *m_ptr);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
+static void sef_local_startup(void);
 
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 /* This is the main routine of this service. The main loop consists of 
  * three major activities: getting new work, processing the work, and
@@ -93,7 +93,7 @@ send_reply:
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -108,7 +108,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-PRIVATE void get_work(
+static void get_work(
   message *m_ptr			/* message buffer */
 )
 {
@@ -122,7 +122,7 @@ PRIVATE void get_work(
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(
+static void reply(
   endpoint_t who_e,			/* destination */
   message *m_ptr			/* message buffer */
 )

@@ -15,12 +15,12 @@
 
 #include <fcntl.h>
 
-FORWARD int force_remove(char *path, int dir);
+static int force_remove(char *path, int dir);
 
 /*===========================================================================*
  *				do_create				     *
  *===========================================================================*/
-PUBLIC int do_create()
+int do_create()
 {
 /* Create a new file.
  */
@@ -128,7 +128,7 @@ PUBLIC int do_create()
 /*===========================================================================*
  *				do_mkdir				     *
  *===========================================================================*/
-PUBLIC int do_mkdir()
+int do_mkdir()
 {
 /* Make a new directory.
  */
@@ -177,7 +177,7 @@ PUBLIC int do_mkdir()
 /*===========================================================================*
  *				force_remove				     *
  *===========================================================================*/
-PRIVATE int force_remove(path, dir)
+static int force_remove(path, dir)
 char *path;				/* path to file or directory */
 int dir;				/* TRUE iff directory */
 {
@@ -232,7 +232,7 @@ int dir;				/* TRUE iff directory */
 /*===========================================================================*
  *				do_unlink				     *
  *===========================================================================*/
-PUBLIC int do_unlink()
+int do_unlink()
 {
 /* Delete a file.
  */
@@ -279,7 +279,7 @@ PUBLIC int do_unlink()
 /*===========================================================================*
  *				do_rmdir				     *
  *===========================================================================*/
-PUBLIC int do_rmdir()
+int do_rmdir()
 {
 /* Remove an empty directory.
  */
@@ -327,7 +327,7 @@ PUBLIC int do_rmdir()
 /*===========================================================================*
  *				do_rename				     *
  *===========================================================================*/
-PUBLIC int do_rename()
+int do_rename()
 {
 /* Rename a file or directory.
  */

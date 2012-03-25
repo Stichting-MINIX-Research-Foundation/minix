@@ -16,7 +16,7 @@
 /****************************************************************************/
 /*      ddekit_release_dma                                                  */
 /****************************************************************************/
-PUBLIC int ddekit_request_dma(int nr) { 
+int ddekit_request_dma(int nr) { 
 	WARN_UNIMPL;
 	/* do we stil use isa dma ? imho no.*/ 
 	return -1;
@@ -25,7 +25,7 @@ PUBLIC int ddekit_request_dma(int nr) {
 /****************************************************************************/
 /*      ddekit_request_dma                                                  */
 /****************************************************************************/
-PUBLIC int ddekit_release_dma(int nr) { 
+int ddekit_release_dma(int nr) { 
 	WARN_UNIMPL;
 	/* do we stil use isa dma ? imho no.*/ 
 	return -1;
@@ -37,17 +37,17 @@ PUBLIC int ddekit_release_dma(int nr) {
 /****************************************************************************/
 /*      ddekit_release/request_io                                           */
 /****************************************************************************/
-PUBLIC int ddekit_request_io (ddekit_addr_t start, ddekit_addr_t count) {
+int ddekit_request_io (ddekit_addr_t start, ddekit_addr_t count) {
 	return 0;	
 }
-PUBLIC int ddekit_release_io (ddekit_addr_t start, ddekit_addr_t count) { 
+int ddekit_release_io (ddekit_addr_t start, ddekit_addr_t count) { 
 	return 0;
 }
 
 /****************************************************************************/
 /*      ddekit_request_mem                                                  */
 /****************************************************************************/
-PUBLIC int ddekit_request_mem
+int ddekit_request_mem
 (ddekit_addr_t start, ddekit_addr_t size, ddekit_addr_t *vaddr) {
 	
 	*vaddr = (ddekit_addr_t) vm_map_phys(SELF, (void *)start, size);
@@ -64,7 +64,7 @@ PUBLIC int ddekit_request_mem
 /****************************************************************************/
 /*      ddekit_release_mem                                                  */
 /****************************************************************************/
-PUBLIC int ddekit_release_mem(ddekit_addr_t start, ddekit_addr_t size) 
+int ddekit_release_mem(ddekit_addr_t start, ddekit_addr_t size) 
 {
 	return	vm_unmap_phys(SELF,(void *) start, size );
 }
@@ -72,7 +72,7 @@ PUBLIC int ddekit_release_mem(ddekit_addr_t start, ddekit_addr_t size)
 /****************************************************************************/
 /*      ddekit_inb                                                          */
 /****************************************************************************/
-PUBLIC unsigned char ddekit_inb(ddekit_addr_t port) { 
+unsigned char ddekit_inb(ddekit_addr_t port) { 
 	u32_t ret;
 	if (sys_inb(port, &ret)) {
 		ddekit_panic("sys_inb failed.");
@@ -84,7 +84,7 @@ PUBLIC unsigned char ddekit_inb(ddekit_addr_t port) {
 /****************************************************************************/
 /*      ddekit_inw                                                          */
 /****************************************************************************/
-PUBLIC unsigned short ddekit_inw(ddekit_addr_t port) { 
+unsigned short ddekit_inw(ddekit_addr_t port) { 
 	u32_t ret;
 	if (sys_inw(port, &ret)) {
 		ddekit_panic("sys_inw failed.");
@@ -96,7 +96,7 @@ PUBLIC unsigned short ddekit_inw(ddekit_addr_t port) {
 /****************************************************************************/
 /*      ddekit_inl                                                          */
 /****************************************************************************/
-PUBLIC unsigned long ddekit_inl(ddekit_addr_t port){ 
+unsigned long ddekit_inl(ddekit_addr_t port){ 
 	u32_t ret;
 	if (sys_inl(port, &ret)) { 
 		ddekit_panic("sys_outl failed.");
@@ -108,7 +108,7 @@ PUBLIC unsigned long ddekit_inl(ddekit_addr_t port){
 /****************************************************************************/
 /*      ddekit_outb                                                         */
 /****************************************************************************/
-PUBLIC void ddekit_outb(ddekit_addr_t port, unsigned char val) { 
+void ddekit_outb(ddekit_addr_t port, unsigned char val) { 
 	if (sys_outb(port,val)) {
 		ddekit_panic("sys_outb failed.");
 	}
@@ -118,7 +118,7 @@ PUBLIC void ddekit_outb(ddekit_addr_t port, unsigned char val) {
 /****************************************************************************/
 /*      ddekit_outw                                                         */
 /****************************************************************************/
-PUBLIC void ddekit_outw(ddekit_addr_t port, unsigned short val) {
+void ddekit_outw(ddekit_addr_t port, unsigned short val) {
 	if (sys_outw(port,val)) {
 		ddekit_panic("sys_outw failed.");
 	}
@@ -128,7 +128,7 @@ PUBLIC void ddekit_outw(ddekit_addr_t port, unsigned short val) {
 /****************************************************************************/
 /*      ddekit_outl                                                         */
 /****************************************************************************/
-PUBLIC void ddekit_outl(ddekit_addr_t port, unsigned long val) { 
+void ddekit_outl(ddekit_addr_t port, unsigned long val) { 
 	if (sys_outl(port,val)) {
 		ddekit_panic("sys_outl failed.");
 	}

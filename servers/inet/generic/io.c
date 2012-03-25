@@ -9,7 +9,7 @@ Copyright 1995 Philip Homburg
 #include "inet.h"
 #include "io.h"
 
-PUBLIC void writeIpAddr(addr)
+void writeIpAddr(addr)
 ipaddr_t addr;
 {
 #define addrInBytes ((u8_t *)&addr)
@@ -19,7 +19,7 @@ ipaddr_t addr;
 #undef addrInBytes
 }
 
-PUBLIC void writeEtherAddr(addr)
+void writeEtherAddr(addr)
 ether_addr_t *addr;
 {
 #define addrInBytes ((u8_t *)addr->ea_addr)

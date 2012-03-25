@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                               sys_irqctl				     *
  *===========================================================================*/
-PUBLIC int sys_irqctl(req, irq_vec, policy, hook_id)
+int sys_irqctl(req, irq_vec, policy, hook_id)
 int req;				/* IRQ control request */
 int irq_vec;				/* IRQ vector to control */
 int policy;				/* bit mask for policy flags */

@@ -19,17 +19,17 @@
 #include "const.h"
 
 
-FORWARD bit_t alloc_inode_bit(struct super_block *sp, struct inode
+static bit_t alloc_inode_bit(struct super_block *sp, struct inode
 	*parent, int is_dir);
-FORWARD void free_inode_bit(struct super_block *sp, bit_t bit_returned,
+static void free_inode_bit(struct super_block *sp, bit_t bit_returned,
 	int is_dir);
-FORWARD void wipe_inode(struct inode *rip);
+static void wipe_inode(struct inode *rip);
 
 
 /*===========================================================================*
  *                alloc_inode                                                *
  *===========================================================================*/
-PUBLIC struct inode *alloc_inode(struct inode *parent, mode_t bits)
+struct inode *alloc_inode(struct inode *parent, mode_t bits)
 {
 /* Allocate a free inode on parent's dev, and return a pointer to it. */
 
@@ -87,7 +87,7 @@ PUBLIC struct inode *alloc_inode(struct inode *parent, mode_t bits)
 /*===========================================================================*
  *                free_inode                                                 *
  *===========================================================================*/
-PUBLIC void free_inode(
+void free_inode(
   register struct inode *rip  /* inode to free */
 )
 {
@@ -108,20 +108,20 @@ PUBLIC void free_inode(
 }
 
 
-FORWARD int find_group_dir(struct super_block *sp, struct inode
+static int find_group_dir(struct super_block *sp, struct inode
 	*parent);
-FORWARD int find_group_hashalloc(struct super_block *sp, struct inode
+static int find_group_hashalloc(struct super_block *sp, struct inode
 	*parent);
-FORWARD int find_group_any(struct super_block *sp, struct inode
+static int find_group_any(struct super_block *sp, struct inode
 	*parent);
-FORWARD int find_group_orlov(struct super_block *sp, struct inode
+static int find_group_orlov(struct super_block *sp, struct inode
 	*parent);
 
 
 /*===========================================================================*
  *                              alloc_inode_bit                              *
  *===========================================================================*/
-PRIVATE bit_t alloc_inode_bit(sp, parent, is_dir)
+static bit_t alloc_inode_bit(sp, parent, is_dir)
 struct super_block *sp;         /* the filesystem to allocate from */
 struct inode *parent;		/* parent of newly allocated inode */
 int is_dir;			/* inode will be a directory if it is TRUE */
@@ -202,7 +202,7 @@ int is_dir;			/* inode will be a directory if it is TRUE */
 /*===========================================================================*
  *                          free_inode_bit                                   *
  *===========================================================================*/
-PRIVATE void free_inode_bit(struct super_block *sp, bit_t bit_returned,
+static void free_inode_bit(struct super_block *sp, bit_t bit_returned,
                            int is_dir)
 {
  /* Return an inode by turning off its bitmap bit. */
@@ -252,7 +252,7 @@ PRIVATE void free_inode_bit(struct super_block *sp, bit_t bit_returned,
 
 
 /* it's implemented very close to the linux' find_group_dir() */
-PRIVATE int find_group_dir(struct super_block *sp, struct inode *parent)
+static int find_group_dir(struct super_block *sp, struct inode *parent)
 {
   int avefreei = sp->s_free_inodes_count / sp->s_groups_count;
   struct group_desc *gd, *best_gd = NULL;
@@ -282,7 +282,7 @@ PRIVATE int find_group_dir(struct super_block *sp, struct inode *parent)
  * 2) Quadradically rehash on the group number.
  * 3) Make a linear search for free inode.
  */
-PRIVATE int find_group_hashalloc(struct super_block *sp, struct inode *parent)
+static int find_group_hashalloc(struct super_block *sp, struct inode *parent)
 {
   int ngroups = sp->s_groups_count;
   struct group_desc *gd;
@@ -339,7 +339,7 @@ PRIVATE int find_group_hashalloc(struct super_block *sp, struct inode *parent)
 /* Find first group which has free inode slot.
  * This is similar to what MFS does.
  */
-PRIVATE int find_group_any(struct super_block *sp, struct inode *parent)
+static int find_group_any(struct super_block *sp, struct inode *parent)
 {
   int ngroups = sp->s_groups_count;
   struct group_desc *gd;
@@ -371,7 +371,7 @@ PRIVATE int find_group_any(struct super_block *sp, struct inode *parent)
  * min_inodes).
  *
  */
-PRIVATE int find_group_orlov(struct super_block *sp, struct inode *parent)
+static int find_group_orlov(struct super_block *sp, struct inode *parent)
 {
   int avefreei = sp->s_free_inodes_count / sp->s_groups_count;
   int avefreeb = sp->s_free_blocks_count / sp->s_groups_count;
@@ -449,7 +449,7 @@ PRIVATE int find_group_orlov(struct super_block *sp, struct inode *parent)
 /*===========================================================================*
  *                wipe_inode                                                 *
  *===========================================================================*/
-PRIVATE void wipe_inode(
+static void wipe_inode(
   register struct inode *rip     /* the inode to be erased */
 )
 {

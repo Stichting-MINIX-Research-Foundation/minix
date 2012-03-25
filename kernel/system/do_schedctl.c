@@ -4,7 +4,7 @@
 /*===========================================================================*
  *			          do_schedctl			     *
  *===========================================================================*/
-PUBLIC int do_schedctl(struct proc * caller, message * m_ptr)
+int do_schedctl(struct proc * caller, message * m_ptr)
 {
 	struct proc *p;
 	unsigned flags;

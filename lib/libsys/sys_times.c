@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_times(proc_ep, user_time, sys_time, uptime, boottime)
+int sys_times(proc_ep, user_time, sys_time, uptime, boottime)
 endpoint_t proc_ep;		/* proc_ep whose times are needed */
 clock_t *user_time;		/* time spend in the process itself */
 clock_t *sys_time;		/* time spend in system on behalf of the

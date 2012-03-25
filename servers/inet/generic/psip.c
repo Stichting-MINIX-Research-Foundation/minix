@@ -55,36 +55,36 @@ typedef struct psip_fd
 #define PFF_PROMISC	4
 #define PFF_NEXTHOP	8
 
-PRIVATE psip_port_t *psip_port_table;
-PRIVATE psip_fd_t psip_fd_table[PSIP_FD_NR];
+static psip_port_t *psip_port_table;
+static psip_fd_t psip_fd_table[PSIP_FD_NR];
 
-FORWARD int psip_open ARGS(( int port, int srfd,
+static int psip_open ARGS(( int port, int srfd,
 	get_userdata_t get_userdata, put_userdata_t put_userdata,
 	put_pkt_t pkt_pkt, select_res_t select_res ));
-FORWARD int psip_ioctl ARGS(( int fd, ioreq_t req ));
-FORWARD int psip_read ARGS(( int fd, size_t count ));
-FORWARD int psip_write ARGS(( int fd, size_t count ));
-FORWARD int psip_select ARGS(( int port_nr, unsigned operations ));
-FORWARD void psip_close ARGS(( int fd ));
-FORWARD int psip_cancel ARGS(( int fd, int which_operation ));
-FORWARD void promisc_restart_read ARGS(( psip_port_t *psip_port ));
-FORWARD int psip_setopt ARGS(( psip_fd_t *psip_fd, nwio_psipopt_t *newoptp ));
-FORWARD void psip_buffree ARGS(( int priority ));
-FORWARD void check_promisc ARGS(( psip_port_t *psip_port ));
+static int psip_ioctl ARGS(( int fd, ioreq_t req ));
+static int psip_read ARGS(( int fd, size_t count ));
+static int psip_write ARGS(( int fd, size_t count ));
+static int psip_select ARGS(( int port_nr, unsigned operations ));
+static void psip_close ARGS(( int fd ));
+static int psip_cancel ARGS(( int fd, int which_operation ));
+static void promisc_restart_read ARGS(( psip_port_t *psip_port ));
+static int psip_setopt ARGS(( psip_fd_t *psip_fd, nwio_psipopt_t *newoptp ));
+static void psip_buffree ARGS(( int priority ));
+static void check_promisc ARGS(( psip_port_t *psip_port ));
 #ifdef BUF_CONSISTENCY_CHECK
-FORWARD void psip_bufcheck ARGS(( void ));
+static void psip_bufcheck ARGS(( void ));
 #endif
-FORWARD void reply_thr_put ARGS(( psip_fd_t *psip_fd, int reply,
+static void reply_thr_put ARGS(( psip_fd_t *psip_fd, int reply,
 	int for_ioctl ));
-FORWARD void reply_thr_get ARGS(( psip_fd_t *psip_fd, int reply,
+static void reply_thr_get ARGS(( psip_fd_t *psip_fd, int reply,
 	int for_ioctl ));
 
-PUBLIC void psip_prep()
+void psip_prep()
 {
 	psip_port_table= alloc(psip_conf_nr * sizeof(psip_port_table[0]));
 }
 
-PUBLIC void psip_init()
+void psip_init()
 {
 	int i;
 	psip_port_t *psip_port;
@@ -111,7 +111,7 @@ PUBLIC void psip_init()
 #endif
 }
 
-PUBLIC int psip_enable(port_nr, ip_port_nr)
+int psip_enable(port_nr, ip_port_nr)
 int port_nr;
 int ip_port_nr;
 {
@@ -135,7 +135,7 @@ int ip_port_nr;
 	return NW_OK;
 }
 
-PUBLIC int psip_send(port_nr, dest, pack)
+int psip_send(port_nr, dest, pack)
 int port_nr;
 ipaddr_t dest;
 acc_t *pack;
@@ -248,7 +248,7 @@ acc_t *pack;
 	return NW_SUSPEND;
 }
 
-PRIVATE int psip_open(port, srfd, get_userdata, put_userdata, put_pkt,
+static int psip_open(port, srfd, get_userdata, put_userdata, put_pkt,
 	select_res)
 int port;
 int srfd;
@@ -285,7 +285,7 @@ select_res_t select_res;
 	return i;
 }
 
-PRIVATE int psip_ioctl(fd, req)
+static int psip_ioctl(fd, req)
 int fd;
 ioreq_t req;
 {
@@ -370,7 +370,7 @@ ioreq_t req;
 	return NW_OK;
 }
 
-PRIVATE int psip_read(fd, count)
+static int psip_read(fd, count)
 int fd;
 size_t count;
 {
@@ -422,7 +422,7 @@ size_t count;
 	return NW_OK;
 }
 
-PRIVATE int psip_write(fd, count)
+static int psip_write(fd, count)
 int fd;
 size_t count;
 {
@@ -507,7 +507,7 @@ size_t count;
 	return NW_OK;
 }
 
-PRIVATE int psip_select(fd, operations)
+static int psip_select(fd, operations)
 int fd;
 unsigned operations;
 {
@@ -515,7 +515,7 @@ unsigned operations;
 	return 0;
 }
 
-PRIVATE void psip_close(fd)
+static void psip_close(fd)
 int fd;
 {
 	psip_port_t *psip_port;
@@ -540,7 +540,7 @@ int fd;
 
 }
 
-PRIVATE int psip_cancel(fd, which_operation)
+static int psip_cancel(fd, which_operation)
 int fd;
 int which_operation;
 {
@@ -587,7 +587,7 @@ int which_operation;
 	return NW_OK;
 }
 
-PRIVATE void promisc_restart_read(psip_port)
+static void promisc_restart_read(psip_port)
 psip_port_t *psip_port;
 {
 	psip_fd_t *psip_fd, *prev, *next;
@@ -648,7 +648,7 @@ again:
 	}
 }
 
-PRIVATE int psip_setopt(psip_fd, newoptp)
+static int psip_setopt(psip_fd, newoptp)
 psip_fd_t *psip_fd;
 nwio_psipopt_t *newoptp;
 {
@@ -691,7 +691,7 @@ nwio_psipopt_t *newoptp;
 	return NW_OK;
 }
 
-PRIVATE void check_promisc(psip_port)
+static void check_promisc(psip_port)
 psip_port_t *psip_port;
 {
 	int i;
@@ -733,7 +733,7 @@ psip_port_t *psip_port;
 	}
 }
 
-PRIVATE void psip_buffree (priority)
+static void psip_buffree (priority)
 int priority;
 {
 	int i;
@@ -763,7 +763,7 @@ int priority;
 }
 
 #ifdef BUF_CONSISTENCY_CHECK
-PRIVATE void psip_bufcheck()
+static void psip_bufcheck()
 {
 	int i;
 	psip_port_t *psip_port;
@@ -785,7 +785,7 @@ PRIVATE void psip_bufcheck()
 reply_thr_put
 */
 
-PRIVATE void reply_thr_put(psip_fd, reply, for_ioctl)
+static void reply_thr_put(psip_fd, reply, for_ioctl)
 psip_fd_t *psip_fd;
 int reply;
 int for_ioctl;
@@ -801,7 +801,7 @@ int for_ioctl;
 reply_thr_get
 */
 
-PRIVATE void reply_thr_get(psip_fd, reply, for_ioctl)
+static void reply_thr_get(psip_fd, reply, for_ioctl)
 psip_fd_t *psip_fd;
 int reply;
 int for_ioctl;

@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				do_clear				     *
  *===========================================================================*/
-PUBLIC int do_clear(struct proc * caller, message * m_ptr)
+int do_clear(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_clear. Only the PM can request other process slots to be cleared
  * when a process has exited.

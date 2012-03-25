@@ -9,15 +9,15 @@
 #include <errno.h>
 #include <string.h>
 
-PRIVATE struct usb_urb * pending_urbs = NULL;
-PRIVATE endpoint_t hcd_ep;
+static struct usb_urb * pending_urbs = NULL;
+static endpoint_t hcd_ep;
 
-FORWARD void _usb_urb_complete(struct usb_driver *ud, long urb_id);
+static void _usb_urb_complete(struct usb_driver *ud, long urb_id);
 
 /*****************************************************************************
  *         usb_send_urb                                                      *
  ****************************************************************************/
-PUBLIC int usb_send_urb(struct usb_urb* urb)
+int usb_send_urb(struct usb_urb* urb)
 {
 	message msg;
 	int res;
@@ -77,7 +77,7 @@ PUBLIC int usb_send_urb(struct usb_urb* urb)
 /*****************************************************************************
  *         usb_cancle_urb                                                    *
  ****************************************************************************/
-PUBLIC int usb_cancle_urb(struct usb_urb* urb)
+int usb_cancle_urb(struct usb_urb* urb)
 {
 	int res;
 	message msg;
@@ -118,7 +118,7 @@ PUBLIC int usb_cancle_urb(struct usb_urb* urb)
 /*****************************************************************************
  *         usb_init                                                          *
  ****************************************************************************/
-PUBLIC int usb_init(char *name) 
+int usb_init(char *name) 
 {
 	int res;
 	message msg;
@@ -154,7 +154,7 @@ PUBLIC int usb_init(char *name)
 /*****************************************************************************
  *      _usb_urb_complete                                                    *
  ****************************************************************************/
-PRIVATE void _usb_urb_complete(struct usb_driver *ud, long urb_id)
+static void _usb_urb_complete(struct usb_driver *ud, long urb_id)
 {
 	/* find the corresponding URB in the urb_pending list. */
 	struct usb_urb * urb = NULL;
@@ -193,7 +193,7 @@ PRIVATE void _usb_urb_complete(struct usb_driver *ud, long urb_id)
 /*****************************************************************************
  *         usb_handle_msg                                                    *
  ****************************************************************************/
-PUBLIC int usb_handle_msg(struct usb_driver *ud, message *msg)
+int usb_handle_msg(struct usb_driver *ud, message *msg)
 {
 	/* 
 	 * we expect kind of messages:

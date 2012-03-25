@@ -4,7 +4,7 @@
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys(message *pfs_m_in, message *pfs_m_out)
+int no_sys(message *pfs_m_in, message *pfs_m_out)
 {
 /* Somebody has used an illegal system call number */
   printf("no_sys: invalid call 0x%x to pfs\n", req_nr);
@@ -15,7 +15,7 @@ PUBLIC int no_sys(message *pfs_m_in, message *pfs_m_out)
 /*===========================================================================*
  *				clock_time				     *
  *===========================================================================*/
-PUBLIC time_t clock_time()
+time_t clock_time()
 {
 /* This routine returns the time in seconds since 1.1.1970.  MINIX is an
  * astrophysically naive system that assumes the earth rotates at a constant

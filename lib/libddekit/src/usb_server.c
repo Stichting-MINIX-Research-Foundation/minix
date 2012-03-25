@@ -58,29 +58,29 @@ struct minix_usb_device {
 	unsigned int interfaces; 
 };
 
-FORWARD struct minix_usb_driver *find_driver(endpoint_t ep);
-FORWARD struct minix_usb_driver *find_unused_driver(void);
-FORWARD int add_to_pending_urbs(struct minix_usb_driver *drv, struct
+static struct minix_usb_driver *find_driver(endpoint_t ep);
+static struct minix_usb_driver *find_unused_driver(void);
+static int add_to_pending_urbs(struct minix_usb_driver *drv, struct
 	ddekit_usb_urb *urb);
-FORWARD int remove_from_pending_urbs(struct minix_usb_driver *drv,
+static int remove_from_pending_urbs(struct minix_usb_driver *drv,
 	struct ddekit_usb_urb *urb);
-FORWARD struct ddekit_usb_urb * find_pending_urb(struct minix_usb_driver
+static struct ddekit_usb_urb * find_pending_urb(struct minix_usb_driver
 	*drv, unsigned urb_id);
-FORWARD void register_driver(message *msg);
-FORWARD struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb(struct usb_urb
+static void register_driver(message *msg);
+static struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb(struct usb_urb
 	*mx_urb);
-FORWARD void submit_urb(message *msg);
-FORWARD void cancle_urb(message *msg);
-FORWARD void completion_callback(void *priv);
+static void submit_urb(message *msg);
+static void cancle_urb(message *msg);
+static void completion_callback(void *priv);
 
-FORWARD void prepare_devman_usbdev(struct ddekit_usb_dev * dev, int
+static void prepare_devman_usbdev(struct ddekit_usb_dev * dev, int
 	dev_id, unsigned int interfaces, struct devman_usb_dev *dudev);
-FORWARD void device_disconnect_callback(struct ddekit_usb_dev * dev);
-FORWARD int add_acl(int dev_id, unsigned interfaces, endpoint_t ep);
-FORWARD int del_acl(int dev_id, unsigned interaces, endpoint_t ep);
-FORWARD int handle_msg(message *msg);
-FORWARD void _ddekit_usb_thread();
-FORWARD void device_connect_callback(struct ddekit_usb_dev * dev,
+static void device_disconnect_callback(struct ddekit_usb_dev * dev);
+static int add_acl(int dev_id, unsigned interfaces, endpoint_t ep);
+static int del_acl(int dev_id, unsigned interaces, endpoint_t ep);
+static int handle_msg(message *msg);
+static void _ddekit_usb_thread();
+static void device_connect_callback(struct ddekit_usb_dev * dev,
 	unsigned int interfaces);
 
 char *_ddekit_usb_get_manufacturer(struct ddekit_usb_dev *ddev);
@@ -92,12 +92,12 @@ usb_interface_descriptor_t *_ddekit_usb_get_interface_desc(struct
 	ddekit_usb_dev *ddev, int inum);
 
 
-PRIVATE ddekit_usb_malloc_fn my_malloc;
-PRIVATE ddekit_usb_free_fn my_free;
-PRIVATE struct minix_usb_driver gbl_drivers[MAX_DRIVERS];
-PRIVATE struct minix_usb_device _devices[MAX_DEVS];
+static ddekit_usb_malloc_fn my_malloc;
+static ddekit_usb_free_fn my_free;
+static struct minix_usb_driver gbl_drivers[MAX_DRIVERS];
+static struct minix_usb_device _devices[MAX_DEVS];
 
-PRIVATE struct ddekit_usb_driver my_driver = {
+static struct ddekit_usb_driver my_driver = {
 	.completion = completion_callback,
 	.connect    = device_connect_callback,
 	.disconnect = device_disconnect_callback,
@@ -107,7 +107,7 @@ PRIVATE struct ddekit_usb_driver my_driver = {
 /*****************************************************************************
  *         find_driver                                                       *
  ****************************************************************************/
-PRIVATE struct minix_usb_driver *find_driver(endpoint_t ep) 
+static struct minix_usb_driver *find_driver(endpoint_t ep) 
 {
 	int i;
 	for (i = 0; i < MAX_DRIVERS; i++ ){
@@ -121,7 +121,7 @@ PRIVATE struct minix_usb_driver *find_driver(endpoint_t ep)
 /*****************************************************************************
  *         find_unused_driver                                                *
  ****************************************************************************/
-PRIVATE struct minix_usb_driver *find_unused_driver() 
+static struct minix_usb_driver *find_unused_driver() 
 {
 	int i;
 	for (i = 0; i < MAX_DRIVERS; i++ ){
@@ -135,7 +135,7 @@ PRIVATE struct minix_usb_driver *find_unused_driver()
 /*****************************************************************************
  *         add_to_pending_urbs                                               *
  ****************************************************************************/
-PRIVATE int add_to_pending_urbs(struct minix_usb_driver *drv,
+static int add_to_pending_urbs(struct minix_usb_driver *drv,
                                struct ddekit_usb_urb *urb)
 {
 	int i;
@@ -153,7 +153,7 @@ PRIVATE int add_to_pending_urbs(struct minix_usb_driver *drv,
 /*****************************************************************************
  *         remove_from_pending_urbs                                          *
  ****************************************************************************/
-PRIVATE int remove_from_pending_urbs(struct minix_usb_driver *drv,
+static int remove_from_pending_urbs(struct minix_usb_driver *drv,
                                struct ddekit_usb_urb *urb)
 {
 	int i;
@@ -171,7 +171,7 @@ PRIVATE int remove_from_pending_urbs(struct minix_usb_driver *drv,
 /*****************************************************************************
  *         find_pending_urb                                                  *
  ****************************************************************************/
-PRIVATE struct ddekit_usb_urb * find_pending_urb(struct minix_usb_driver *drv,
+static struct ddekit_usb_urb * find_pending_urb(struct minix_usb_driver *drv,
                                                 unsigned urb_id) 
 {
 	int i;
@@ -188,7 +188,7 @@ PRIVATE struct ddekit_usb_urb * find_pending_urb(struct minix_usb_driver *drv,
 /*****************************************************************************
  *         register_driver                                                   *
  ****************************************************************************/
-PRIVATE void register_driver(message *msg)
+static void register_driver(message *msg)
 {
 	endpoint_t ep = msg->m_source;
 	struct minix_usb_driver *drv;
@@ -222,7 +222,7 @@ PRIVATE void register_driver(message *msg)
 /*****************************************************************************
  *         deregister_driver                                                 *
  ****************************************************************************/
-PRIVATE void deregister_driver(message *msg)
+static void deregister_driver(message *msg)
 {
 	endpoint_t ep = msg->m_source;
 	
@@ -245,7 +245,7 @@ PRIVATE void deregister_driver(message *msg)
 /*****************************************************************************
  *         ddekit_usb_urb_from_mx_urb                                        *
  ****************************************************************************/
-PRIVATE struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb(struct usb_urb *mx_urb)
+static struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb(struct usb_urb *mx_urb)
 {
 	/*
 	 * A helper function that generates (allocates and initializes)
@@ -284,7 +284,7 @@ PRIVATE struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb(struct usb_urb *mx_urb
 /*****************************************************************************
  *         submit_urb                                                        *
  ****************************************************************************/
-PRIVATE void submit_urb(message *msg)
+static void submit_urb(message *msg)
 {
 	/*
 	 * submit_urb
@@ -410,7 +410,7 @@ out:
 /*****************************************************************************
  *         cancle_urb                                                        *
  ****************************************************************************/
-PRIVATE void cancle_urb(message *msg)
+static void cancle_urb(message *msg)
 {
 	endpoint_t ep = msg->m_source;
 
@@ -444,7 +444,7 @@ PRIVATE void cancle_urb(message *msg)
 /*****************************************************************************
  *         completion_callback                                               *
  ****************************************************************************/
-PRIVATE void completion_callback(void *priv)
+static void completion_callback(void *priv)
 {
 	/*
 	 * completion_callback
@@ -497,7 +497,7 @@ PRIVATE void completion_callback(void *priv)
 /*****************************************************************************
  *         prepare_devman_usbdev                                             *
  ****************************************************************************/
-PRIVATE void prepare_devman_usbdev
+static void prepare_devman_usbdev
 (struct ddekit_usb_dev * dev, int dev_id, unsigned int interfaces,
  struct devman_usb_dev *dudev)
 {
@@ -531,7 +531,7 @@ PRIVATE void prepare_devman_usbdev
 /*****************************************************************************
  *         device_connect_callback                                           *
  ****************************************************************************/
-PRIVATE void 
+static void 
 device_connect_callback
 (struct ddekit_usb_dev * dev, unsigned int interfaces) {
 	
@@ -574,7 +574,7 @@ device_connect_callback
 /*****************************************************************************
  *         device_disconnect_callback                                        *
  ****************************************************************************/
-PRIVATE void device_disconnect_callback(struct ddekit_usb_dev * dev)
+static void device_disconnect_callback(struct ddekit_usb_dev * dev)
 {
 	int i;
 	
@@ -616,7 +616,7 @@ PRIVATE void device_disconnect_callback(struct ddekit_usb_dev * dev)
 /*****************************************************************************
  *         add_acl                                                           *
  ****************************************************************************/
-PRIVATE int add_acl(int dev_id, unsigned interfaces, endpoint_t ep)
+static int add_acl(int dev_id, unsigned interfaces, endpoint_t ep)
 {
 	/*
 	 * This functions binds a specific USB interface to a client.
@@ -657,7 +657,7 @@ PRIVATE int add_acl(int dev_id, unsigned interfaces, endpoint_t ep)
 /*****************************************************************************
  *         del_acl                                                           *
  ****************************************************************************/
-PRIVATE int del_acl(int dev_id, unsigned interfaces, endpoint_t ep)
+static int del_acl(int dev_id, unsigned interfaces, endpoint_t ep)
 {
 	struct minix_usb_driver *drv;
 	int dev, withdraw = 0;
@@ -692,7 +692,7 @@ PRIVATE int del_acl(int dev_id, unsigned interfaces, endpoint_t ep)
 /*****************************************************************************
  *         handle_msg                                                        *
  ****************************************************************************/
-PRIVATE int handle_msg(message *msg)
+static int handle_msg(message *msg)
 {
 	/*
 	 * handle_msg 
@@ -721,7 +721,7 @@ PRIVATE int handle_msg(message *msg)
 /*****************************************************************************
  *         devman_tread                                                      *
  ****************************************************************************/
-PRIVATE void devman_thread(void *unused)
+static void devman_thread(void *unused)
 {
 	struct ddekit_minix_msg_q *mq = ddekit_minix_create_msg_q(DEVMAN_BASE,
 	    DEVMAN_BASE + 0xff);
@@ -736,7 +736,7 @@ PRIVATE void devman_thread(void *unused)
 /*****************************************************************************
  *         _ddekit_usb_thread                                                *
  ****************************************************************************/
-PRIVATE void _ddekit_usb_thread(void * unused)
+static void _ddekit_usb_thread(void * unused)
 { 
 	struct ddekit_minix_msg_q *mq = ddekit_minix_create_msg_q(USB_BASE,
 	    USB_BASE + 0xff);
@@ -758,7 +758,7 @@ PRIVATE void _ddekit_usb_thread(void * unused)
 /*****************************************************************************
  *         bind_cb                                                           *
  ****************************************************************************/
-PRIVATE int bind_cb (struct devman_usb_bind_cb_data *data, endpoint_t ep)
+static int bind_cb (struct devman_usb_bind_cb_data *data, endpoint_t ep)
 {
 	if(data) {
 		return add_acl(data->dev_id, data->interface, ep);
@@ -771,7 +771,7 @@ PRIVATE int bind_cb (struct devman_usb_bind_cb_data *data, endpoint_t ep)
 /*****************************************************************************
  *         unbind_cb                                                         *
  ****************************************************************************/
-PRIVATE int unbind_cb (struct devman_usb_bind_cb_data *data, endpoint_t ep)
+static int unbind_cb (struct devman_usb_bind_cb_data *data, endpoint_t ep)
 {
 	if(data) {
 		return del_acl(data->dev_id, data->interface, ep);
@@ -784,7 +784,7 @@ PRIVATE int unbind_cb (struct devman_usb_bind_cb_data *data, endpoint_t ep)
 /*****************************************************************************
  *         ddekit_usb_server_init                                            *
  ****************************************************************************/
-PUBLIC void ddekit_usb_server_init()
+void ddekit_usb_server_init()
 {
 	int i;
 	/*

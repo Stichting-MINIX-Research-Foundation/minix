@@ -1,8 +1,8 @@
 #include <lib.h>
 /* Integer to ASCII for signed decimal integers. */
 
-PRIVATE int next;
-PRIVATE char qbuf[8];
+static int next;
+static char qbuf[8];
 
 char *itoa(int n);
 

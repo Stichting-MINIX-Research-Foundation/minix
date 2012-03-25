@@ -101,7 +101,7 @@ static void ne_init(dpeth_t * dep)
 **  		Note that the NE1000 is an 8bit card and has a memory
 **  		region distict from the 16bit NE2000.
 */
-PUBLIC int ne_probe(dpeth_t * dep)
+int ne_probe(dpeth_t * dep)
 {
   int ix, wd, loc1, loc2;
   char EPROM[32];

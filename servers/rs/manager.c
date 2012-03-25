@@ -12,7 +12,7 @@
 /*===========================================================================*
  *				caller_is_root				     *
  *===========================================================================*/
-PRIVATE int caller_is_root(endpoint)
+static int caller_is_root(endpoint)
 endpoint_t endpoint;				/* caller endpoint */
 {
   uid_t euid;
@@ -30,7 +30,7 @@ endpoint_t endpoint;				/* caller endpoint */
 /*===========================================================================*
  *				caller_can_control			     *
  *===========================================================================*/
-PRIVATE int caller_can_control(endpoint, target_rp)
+static int caller_can_control(endpoint, target_rp)
 endpoint_t endpoint;
 struct rproc *target_rp;
 {
@@ -72,7 +72,7 @@ struct rproc *target_rp;
 /*===========================================================================*
  *			     check_call_permission			     *
  *===========================================================================*/
-PUBLIC int check_call_permission(caller, call, rp)
+int check_call_permission(caller, call, rp)
 endpoint_t caller;
 int call;
 struct rproc *rp;
@@ -121,7 +121,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				copy_rs_start				     *
  *===========================================================================*/
-PUBLIC int copy_rs_start(src_e, src_rs_start, dst_rs_start)
+int copy_rs_start(src_e, src_rs_start, dst_rs_start)
 endpoint_t src_e;
 char *src_rs_start;
 struct rs_start *dst_rs_start;
@@ -137,7 +137,7 @@ struct rs_start *dst_rs_start;
 /*===========================================================================*
  *				copy_label				     *
  *===========================================================================*/
-PUBLIC int copy_label(src_e, src_label, src_len, dst_label, dst_len)
+int copy_label(src_e, src_label, src_len, dst_label, dst_len)
 endpoint_t src_e;
 char *src_label;
 size_t src_len;
@@ -160,7 +160,7 @@ size_t dst_len;
 /*===========================================================================*
  *			        build_cmd_dep				     *
  *===========================================================================*/
-PUBLIC void build_cmd_dep(struct rproc *rp)
+void build_cmd_dep(struct rproc *rp)
 {
   struct rprocpub *rpub;
   int arg_count;
@@ -211,7 +211,7 @@ PUBLIC void build_cmd_dep(struct rproc *rp)
 /*===========================================================================*
  *				 srv_fork				     *
  *===========================================================================*/
-PUBLIC pid_t srv_fork(uid_t reuid, gid_t regid)
+pid_t srv_fork(uid_t reuid, gid_t regid)
 {
   message m;
 
@@ -223,7 +223,7 @@ PUBLIC pid_t srv_fork(uid_t reuid, gid_t regid)
 /*===========================================================================*
  *				 srv_kill				     *
  *===========================================================================*/
-PUBLIC int srv_kill(pid_t pid, int sig)
+int srv_kill(pid_t pid, int sig)
 {
   message m;
 
@@ -235,7 +235,7 @@ PUBLIC int srv_kill(pid_t pid, int sig)
 /*===========================================================================*
  *				 srv_update				     *
  *===========================================================================*/
-PUBLIC int srv_update(endpoint_t src_e, endpoint_t dst_e)
+int srv_update(endpoint_t src_e, endpoint_t dst_e)
 {
   int r;
 
@@ -257,7 +257,7 @@ PUBLIC int srv_update(endpoint_t src_e, endpoint_t dst_e)
 /*===========================================================================*
  *				update_period				     *
  *===========================================================================*/
-PUBLIC void update_period(message *m_ptr)
+void update_period(message *m_ptr)
 {
   clock_t now = m_ptr->NOTIFY_TIMESTAMP;
   short has_update_timed_out;
@@ -294,7 +294,7 @@ PUBLIC void update_period(message *m_ptr)
 /*===========================================================================*
  *				end_update				     *
  *===========================================================================*/
-PUBLIC void end_update(int result, int reply_flag)
+void end_update(int result, int reply_flag)
 {
 /* End the update process. There are two possibilities:
  * 1) the update succeeded. In that case, cleanup the old version and mark the
@@ -353,7 +353,7 @@ PUBLIC void end_update(int result, int reply_flag)
 /*===========================================================================*
  *			     kill_service_debug				     *
  *===========================================================================*/
-PUBLIC int kill_service_debug(file, line, rp, errstr, err)
+int kill_service_debug(file, line, rp, errstr, err)
 char *file;
 int line;
 struct rproc *rp;
@@ -373,7 +373,7 @@ int err;
 /*===========================================================================*
  *			    crash_service_debug				     *
  *===========================================================================*/
-PUBLIC int crash_service_debug(file, line, rp)
+int crash_service_debug(file, line, rp)
 char *file;
 int line;
 struct rproc *rp;
@@ -398,7 +398,7 @@ struct rproc *rp;
 /*===========================================================================*
  *			  cleanup_service_debug				     *
  *===========================================================================*/
-PUBLIC void cleanup_service_debug(file, line, rp)
+void cleanup_service_debug(file, line, rp)
 char *file;
 int line;
 struct rproc *rp;
@@ -433,7 +433,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				create_service				     *
  *===========================================================================*/
-PUBLIC int create_service(rp)
+int create_service(rp)
 struct rproc *rp;
 {
 /* Create the given system service. */
@@ -576,7 +576,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				clone_service				     *
  *===========================================================================*/
-PUBLIC int clone_service(rp, instance_flag)
+int clone_service(rp, instance_flag)
 struct rproc *rp;
 int instance_flag;
 {
@@ -642,7 +642,7 @@ int instance_flag;
 /*===========================================================================*
  *				publish_service				     *
  *===========================================================================*/
-PUBLIC int publish_service(rp)
+int publish_service(rp)
 struct rproc *rp;				/* pointer to service slot */
 {
 /* Publish a service. */
@@ -717,7 +717,7 @@ struct rproc *rp;				/* pointer to service slot */
 /*===========================================================================*
  *			      unpublish_service				     *
  *===========================================================================*/
-PUBLIC int unpublish_service(rp)
+int unpublish_service(rp)
 struct rproc *rp;				/* pointer to service slot */
 {
 /* Unpublish a service. */
@@ -774,7 +774,7 @@ struct rproc *rp;				/* pointer to service slot */
 /*===========================================================================*
  *				run_service				     *
  *===========================================================================*/
-PUBLIC int run_service(rp, init_type)
+int run_service(rp, init_type)
 struct rproc *rp;
 int init_type;
 {
@@ -803,7 +803,7 @@ int init_type;
 /*===========================================================================*
  *				start_service				     *
  *===========================================================================*/
-PUBLIC int start_service(rp)
+int start_service(rp)
 struct rproc *rp;
 {
 /* Start a system service. */
@@ -842,7 +842,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				stop_service				     *
  *===========================================================================*/
-PUBLIC void stop_service(struct rproc *rp,int how)
+void stop_service(struct rproc *rp,int how)
 {
   struct rprocpub *rpub;
   int signo;
@@ -867,7 +867,7 @@ PUBLIC void stop_service(struct rproc *rp,int how)
 /*===========================================================================*
  *				update_service				     *
  *===========================================================================*/
-PUBLIC int update_service(src_rpp, dst_rpp, swap_flag)
+int update_service(src_rpp, dst_rpp, swap_flag)
 struct rproc **src_rpp;
 struct rproc **dst_rpp;
 int swap_flag;
@@ -927,7 +927,7 @@ int swap_flag;
 /*===========================================================================*
  *			      activate_service				     *
  *===========================================================================*/
-PUBLIC void activate_service(struct rproc *rp, struct rproc *ex_rp)
+void activate_service(struct rproc *rp, struct rproc *ex_rp)
 {
 /* Activate a service instance and deactivate another one if requested. */
 
@@ -947,7 +947,7 @@ PUBLIC void activate_service(struct rproc *rp, struct rproc *ex_rp)
 /*===========================================================================*
  *			      reincarnate_service			     *
  *===========================================================================*/
-PUBLIC void reincarnate_service(struct rproc *rp)
+void reincarnate_service(struct rproc *rp)
 {
 /* Restart a service as if it were never started before. */
   struct rprocpub *rpub;
@@ -981,7 +981,7 @@ PUBLIC void reincarnate_service(struct rproc *rp)
 /*===========================================================================*
  *			      terminate_service				     *
  *===========================================================================*/
-PUBLIC void terminate_service(struct rproc *rp)
+void terminate_service(struct rproc *rp)
 {
 /* Handle a termination event for a system service. */
   struct rproc **rps;
@@ -1074,7 +1074,7 @@ PUBLIC void terminate_service(struct rproc *rp)
 /*===========================================================================*
  *				run_script				     *
  *===========================================================================*/
-PRIVATE int run_script(struct rproc *rp)
+static int run_script(struct rproc *rp)
 {
 	int r, endpoint;
 	pid_t pid;
@@ -1129,7 +1129,7 @@ PRIVATE int run_script(struct rproc *rp)
 /*===========================================================================*
  *			      restart_service				     *
  *===========================================================================*/
-PUBLIC void restart_service(struct rproc *rp)
+void restart_service(struct rproc *rp)
 {
 /* Restart service via a recovery script or directly. */
   struct rproc *replica_rp;
@@ -1186,7 +1186,7 @@ PUBLIC void restart_service(struct rproc *rp)
 /*===========================================================================*
  *		         inherit_service_defaults			     *
  *===========================================================================*/
-PUBLIC void inherit_service_defaults(def_rp, rp)
+void inherit_service_defaults(def_rp, rp)
 struct rproc *def_rp;
 struct rproc *rp;
 {
@@ -1216,7 +1216,7 @@ struct rproc *rp;
 /*===========================================================================*
  *		           get_service_instances			     *
  *===========================================================================*/
-PUBLIC void get_service_instances(rp, rps, length)
+void get_service_instances(rp, rps, length)
 struct rproc *rp;
 struct rproc ***rps;
 int *length;
@@ -1239,7 +1239,7 @@ int *length;
 /*===========================================================================*
  *				share_exec				     *
  *===========================================================================*/
-PUBLIC void share_exec(rp_dst, rp_src)
+void share_exec(rp_dst, rp_src)
 struct rproc *rp_dst, *rp_src;
 {
   struct rprocpub *rpub_src;
@@ -1260,7 +1260,7 @@ struct rproc *rp_dst, *rp_src;
 /*===========================================================================*
  *				read_exec				     *
  *===========================================================================*/
-PUBLIC int read_exec(rp)
+int read_exec(rp)
 struct rproc *rp;
 {
   int e, r, fd;
@@ -1309,7 +1309,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				free_exec				     *
  *===========================================================================*/
-PUBLIC void free_exec(rp)
+void free_exec(rp)
 struct rproc *rp;
 {
 /* Free an exec image. */
@@ -1345,7 +1345,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				 edit_slot				     *
  *===========================================================================*/
-PUBLIC int edit_slot(rp, rs_start, source)
+int edit_slot(rp, rs_start, source)
 struct rproc *rp;
 struct rs_start *rs_start;
 endpoint_t source;
@@ -1559,7 +1559,7 @@ endpoint_t source;
 /*===========================================================================*
  *				 init_slot				     *
  *===========================================================================*/
-PUBLIC int init_slot(rp, rs_start, source)
+int init_slot(rp, rs_start, source)
 struct rproc *rp;
 struct rs_start *rs_start;
 endpoint_t source;
@@ -1641,7 +1641,7 @@ endpoint_t source;
 /*===========================================================================*
  *				clone_slot				     *
  *===========================================================================*/
-PUBLIC int clone_slot(rp, clone_rpp)
+int clone_slot(rp, clone_rpp)
 struct rproc *rp;
 struct rproc **clone_rpp;
 {
@@ -1695,7 +1695,7 @@ struct rproc **clone_rpp;
 /*===========================================================================*
  *			    swap_slot_pointer				     *
  *===========================================================================*/
-PRIVATE void swap_slot_pointer(struct rproc **rpp, struct rproc *src_rp,
+static void swap_slot_pointer(struct rproc **rpp, struct rproc *src_rp,
     struct rproc *dst_rp)
 {
   if(*rpp == src_rp) {
@@ -1709,7 +1709,7 @@ PRIVATE void swap_slot_pointer(struct rproc **rpp, struct rproc *src_rp,
 /*===========================================================================*
  *				swap_slot				     *
  *===========================================================================*/
-PUBLIC void swap_slot(src_rpp, dst_rpp)
+void swap_slot(src_rpp, dst_rpp)
 struct rproc **src_rpp;
 struct rproc **dst_rpp;
 {
@@ -1771,7 +1771,7 @@ struct rproc **dst_rpp;
 /*===========================================================================*
  *			   lookup_slot_by_label				     *
  *===========================================================================*/
-PUBLIC struct rproc* lookup_slot_by_label(char *label)
+struct rproc* lookup_slot_by_label(char *label)
 {
 /* Lookup a service slot matching the given label. */
   int slot_nr;
@@ -1795,7 +1795,7 @@ PUBLIC struct rproc* lookup_slot_by_label(char *label)
 /*===========================================================================*
  *			   lookup_slot_by_pid				     *
  *===========================================================================*/
-PUBLIC struct rproc* lookup_slot_by_pid(pid_t pid)
+struct rproc* lookup_slot_by_pid(pid_t pid)
 {
 /* Lookup a service slot matching the given pid. */
   int slot_nr;
@@ -1821,7 +1821,7 @@ PUBLIC struct rproc* lookup_slot_by_pid(pid_t pid)
 /*===========================================================================*
  *			   lookup_slot_by_dev_nr			     *
  *===========================================================================*/
-PUBLIC struct rproc* lookup_slot_by_dev_nr(dev_t dev_nr)
+struct rproc* lookup_slot_by_dev_nr(dev_t dev_nr)
 {
 /* Lookup a service slot matching the given device number. */
   int slot_nr;
@@ -1849,7 +1849,7 @@ PUBLIC struct rproc* lookup_slot_by_dev_nr(dev_t dev_nr)
 /*===========================================================================*
  *			   lookup_slot_by_flags				     *
  *===========================================================================*/
-PUBLIC struct rproc* lookup_slot_by_flags(int flags)
+struct rproc* lookup_slot_by_flags(int flags)
 {
 /* Lookup a service slot matching the given flags. */
   int slot_nr;
@@ -1875,7 +1875,7 @@ PUBLIC struct rproc* lookup_slot_by_flags(int flags)
 /*===========================================================================*
  *				alloc_slot				     *
  *===========================================================================*/
-PUBLIC int alloc_slot(rpp)
+int alloc_slot(rpp)
 struct rproc **rpp;
 {
 /* Alloc a new system service slot. */
@@ -1896,7 +1896,7 @@ struct rproc **rpp;
 /*===========================================================================*
  *				free_slot				     *
  *===========================================================================*/
-PUBLIC void free_slot(rp)
+void free_slot(rp)
 struct rproc *rp;
 {
 /* Free a system service slot. */
@@ -1923,7 +1923,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				get_next_name				     *
  *===========================================================================*/
-PRIVATE char *get_next_name(ptr, name, caller_label)
+static char *get_next_name(ptr, name, caller_label)
 char *ptr;
 char *name;
 char *caller_label;
@@ -1965,7 +1965,7 @@ char *caller_label;
 /*===========================================================================*
  *				add_forward_ipc				     *
  *===========================================================================*/
-PUBLIC void add_forward_ipc(rp, privp)
+void add_forward_ipc(rp, privp)
 struct rproc *rp;
 struct priv *privp;
 {
@@ -2038,7 +2038,7 @@ struct priv *privp;
 /*===========================================================================*
  *				add_backward_ipc			     *
  *===========================================================================*/
-PUBLIC void add_backward_ipc(rp, privp)
+void add_backward_ipc(rp, privp)
 struct rproc *rp;
 struct priv *privp;
 {
@@ -2108,7 +2108,7 @@ struct priv *privp;
 /*===========================================================================*
  *				init_privs				     *
  *===========================================================================*/
-PUBLIC void init_privs(rp, privp)
+void init_privs(rp, privp)
 struct rproc *rp;
 struct priv *privp;
 {

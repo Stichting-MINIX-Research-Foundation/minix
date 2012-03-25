@@ -9,7 +9,7 @@ pci_reserve.c
 /*===========================================================================*
  *				pci_reserve				     *
  *===========================================================================*/
-PUBLIC void pci_reserve(devind)
+void pci_reserve(devind)
 int devind;
 {
 	int r;
@@ -29,7 +29,7 @@ int devind;
 /*===========================================================================*
  *                              pci_reserve_ok                               *
  *===========================================================================*/
-PUBLIC int pci_reserve_ok(int devind)
+int pci_reserve_ok(int devind)
 {
         message m;
 

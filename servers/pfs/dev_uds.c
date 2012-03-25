@@ -32,12 +32,12 @@
 #include "glo.h"
 #include "uds.h"
 
-FORWARD int uds_perform_read(int minor, endpoint_t m_source, size_t
+static int uds_perform_read(int minor, endpoint_t m_source, size_t
 	size, int pretend);
-FORWARD int uds_perform_write(int minor, endpoint_t m_source, size_t
+static int uds_perform_write(int minor, endpoint_t m_source, size_t
 	size, int pretend);
 
-PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
+int uds_open(message *dev_m_in, message *dev_m_out)
 {
 	message fs_m_in, fs_m_out;
 	struct ucred ucred;
@@ -206,7 +206,7 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 	return minor;
 }
 
-PUBLIC int uds_close(message *dev_m_in, message *dev_m_out)
+int uds_close(message *dev_m_in, message *dev_m_out)
 {
 	int minor;
 	message fs_m_in, fs_m_out;
@@ -280,7 +280,7 @@ PUBLIC int uds_close(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
-PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
+int uds_select(message *dev_m_in, message *dev_m_out)
 {
 	int i, bytes;
 	int minor;
@@ -349,7 +349,7 @@ PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
 	return uds_fd_table[minor].sel_ops_out;
 }
 
-PRIVATE int uds_perform_read(int minor, endpoint_t m_source,
+static int uds_perform_read(int minor, endpoint_t m_source,
 	size_t size, int pretend)
 {
 	int rc;
@@ -482,7 +482,7 @@ PRIVATE int uds_perform_read(int minor, endpoint_t m_source,
 	return fs_m_out.RES_NBYTES; /* return number of bytes read */
 }
 
-PRIVATE int uds_perform_write(int minor, endpoint_t m_source,
+static int uds_perform_write(int minor, endpoint_t m_source,
 						size_t size, int pretend)
 {
 	int rc, peer, i;
@@ -648,7 +648,7 @@ PRIVATE int uds_perform_write(int minor, endpoint_t m_source,
 	return fs_m_out.RES_NBYTES; /* return number of bytes written */
 }
 
-PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
+int uds_read(message *dev_m_in, message *dev_m_out)
 {
 	int bytes;
 	int minor;
@@ -698,7 +698,7 @@ PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
 	return bytes;
 }
 
-PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
+int uds_write(message *dev_m_in, message *dev_m_out)
 {
 	int bytes;
 	int minor;
@@ -748,7 +748,7 @@ PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
 	return bytes;
 }
 
-PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
+int uds_ioctl(message *dev_m_in, message *dev_m_out)
 {
 	int rc, minor;
 
@@ -960,7 +960,7 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 	return rc;
 }
 
-PUBLIC int uds_unsuspend(endpoint_t m_source, int minor)
+int uds_unsuspend(endpoint_t m_source, int minor)
 {
 	int r = OK, bytes;
 	message m_out;
@@ -1044,7 +1044,7 @@ PUBLIC int uds_unsuspend(endpoint_t m_source, int minor)
 	return(r);
 }
 
-PUBLIC int uds_cancel(message *dev_m_in, message *dev_m_out)
+int uds_cancel(message *dev_m_in, message *dev_m_out)
 {
 	int i, j;
 	int minor;

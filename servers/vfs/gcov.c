@@ -8,7 +8,7 @@ int gcov_flush(cp_grant_id_t grantid, size_t size );
 /*===========================================================================*
  *				do_gcov_flush				*
  *===========================================================================*/
-PUBLIC int do_gcov_flush()
+int do_gcov_flush()
 {
 /* A userland tool has requested the gcov data from another
  * process (possibly vfs itself). Grant the target process

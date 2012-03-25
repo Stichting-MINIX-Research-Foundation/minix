@@ -28,7 +28,7 @@ struct dmap dmap[NR_DEVICES];
 /*===========================================================================*
  *				do_mapdriver		 		     *
  *===========================================================================*/
-PUBLIC int do_mapdriver()
+int do_mapdriver()
 {
 /* Create a device->driver mapping. RS will tell us which major is driven by
  * this driver, what type of device it is (regular, TTY, asynchronous, clone,
@@ -76,7 +76,7 @@ PUBLIC int do_mapdriver()
 /*===========================================================================*
  *				map_driver		 		     *
  *===========================================================================*/
-PUBLIC int map_driver(label, major, proc_nr_e, style, flags)
+int map_driver(label, major, proc_nr_e, style, flags)
 const char *label;		/* name of the driver */
 int major;			/* major number of the device */
 endpoint_t proc_nr_e;		/* process number of the driver */
@@ -162,7 +162,7 @@ int flags;			/* device flags */
 /*===========================================================================*
  *				dmap_unmap_by_endpt	 		     *
  *===========================================================================*/
-PUBLIC void dmap_unmap_by_endpt(endpoint_t proc_e)
+void dmap_unmap_by_endpt(endpoint_t proc_e)
 {
 /* Lookup driver in dmap table by endpoint and unmap it */
   int major, r;
@@ -181,7 +181,7 @@ PUBLIC void dmap_unmap_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *		               map_service                                   *
  *===========================================================================*/
-PUBLIC int map_service(struct rprocpub *rpub)
+int map_service(struct rprocpub *rpub)
 {
 /* Map a new service by storing its device driver properties. */
   int r;
@@ -207,7 +207,7 @@ PUBLIC int map_service(struct rprocpub *rpub)
 /*===========================================================================*
  *				init_dmap		 		     *
  *===========================================================================*/
-PUBLIC void init_dmap()
+void init_dmap()
 {
 /* Initialize the table with empty device <-> driver mappings. */
   int i;
@@ -220,7 +220,7 @@ PUBLIC void init_dmap()
 /*===========================================================================*
  *				dmap_driver_match	 		     *
  *===========================================================================*/
-PUBLIC int dmap_driver_match(endpoint_t proc, int major)
+int dmap_driver_match(endpoint_t proc, int major)
 {
   if (major < 0 || major >= NR_DEVICES) return(0);
   if (dmap[major].dmap_driver != NONE && dmap[major].dmap_driver == proc)
@@ -232,7 +232,7 @@ PUBLIC int dmap_driver_match(endpoint_t proc, int major)
 /*===========================================================================*
  *				dmap_endpt_up		 		     *
  *===========================================================================*/
-PUBLIC void dmap_endpt_up(endpoint_t proc_e, int is_blk)
+void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 {
 /* A device driver with endpoint proc_e has been restarted. Go tell everyone
  * that might be blocking on it that this device is 'up'.
@@ -252,7 +252,7 @@ PUBLIC void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 /*===========================================================================*
  *				get_dmap		 		     *
  *===========================================================================*/
-PUBLIC struct dmap *get_dmap(endpoint_t proc_e)
+struct dmap *get_dmap(endpoint_t proc_e)
 {
 /* See if 'proc_e' endpoint belongs to a valid dmap entry. If so, return a
  * pointer */

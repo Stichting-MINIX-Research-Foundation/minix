@@ -13,12 +13,12 @@
 #include <minix/config.h> 
 #include <minix/type.h> 
 
-PUBLIC struct mproc mproc[NR_PROCS];
+struct mproc mproc[NR_PROCS];
 
 /*===========================================================================*
  *				mproc_dmp				     *
  *===========================================================================*/
-PRIVATE char *flags_str(int flags)
+static char *flags_str(int flags)
 {
 	static char str[14];
 	str[0] = (flags & WAITING) ? 'W' : '-';
@@ -39,7 +39,7 @@ PRIVATE char *flags_str(int flags)
 	return str;
 }
 
-PUBLIC void mproc_dmp()
+void mproc_dmp()
 {
   struct mproc *mp;
   int i, n=0;
@@ -72,7 +72,7 @@ PUBLIC void mproc_dmp()
 /*===========================================================================*
  *				sigaction_dmp				     *
  *===========================================================================*/
-PUBLIC void sigaction_dmp()
+void sigaction_dmp()
 {
   struct mproc *mp;
   int i, n=0;

@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				path_put				     *
  *===========================================================================*/
-PUBLIC void path_put(path)
+void path_put(path)
 char *path;
 {
 /* Append the given path name in HGFS format to the RPC buffer. Truncate it
@@ -42,7 +42,7 @@ char *path;
 /*===========================================================================*
  *				path_get				     *
  *===========================================================================*/
-PUBLIC int path_get(path, max)
+int path_get(path, max)
 char *path;
 int max;
 {

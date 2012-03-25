@@ -1,7 +1,7 @@
 
 #include "syslib.h"
 
-PUBLIC int sys_sysctl(int code, char *arg1, int arg2)
+int sys_sysctl(int code, char *arg1, int arg2)
 {
   message m;
 
@@ -13,7 +13,7 @@ PUBLIC int sys_sysctl(int code, char *arg1, int arg2)
 
 }
 
-PUBLIC int sys_sysctl_stacktrace(endpoint_t ep)
+int sys_sysctl_stacktrace(endpoint_t ep)
 {
   return sys_sysctl(SYSCTL_CODE_STACKTRACE, NULL, ep);
 }

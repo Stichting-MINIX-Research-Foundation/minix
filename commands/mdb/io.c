@@ -13,21 +13,21 @@
 #define OUTBUFSIZE	512
 #define PAGESIZE	24
 
-PRIVATE int forceupper = FALSE;
-PRIVATE int someupper = FALSE;
-PRIVATE int stringcount = 0;
-PRIVATE char *string_ptr = NULL;	/* stringptr ambiguous at 8th char */
-PRIVATE char *stringstart = NULL;
+static int forceupper = FALSE;
+static int someupper = FALSE;
+static int stringcount = 0;
+static char *string_ptr = NULL;	/* stringptr ambiguous at 8th char */
+static char *stringstart = NULL;
 
-PRIVATE char outbuf[OUTBUFSIZE];
-PRIVATE FILE *cmdfile = stdin;
-PRIVATE FILE *outfile = stdout;
-PRIVATE FILE *logfile;
-PRIVATE int lineno;
+static char outbuf[OUTBUFSIZE];
+static FILE *cmdfile = stdin;
+static FILE *outfile = stdout;
+static FILE *logfile;
+static int lineno;
 
 int _doprnt(const char *format, va_list ap, FILE *stream );
 
-PUBLIC char *get_cmd(cbuf, csize)
+char *get_cmd(cbuf, csize)
 char *cbuf;
 int csize;
 {
@@ -50,7 +50,7 @@ char *r;
   return r;
 }
 
-PUBLIC void openin(s)
+void openin(s)
 char *s;
 {
 char *t;
@@ -70,7 +70,7 @@ char *t;
  * from MINIX library
  * followed by outstr()
  */
-PUBLIC int Printf(const char *format, ...)
+int Printf(const char *format, ...)
 {
 	va_list ap;
 	int retval;
@@ -102,7 +102,7 @@ PUBLIC int Printf(const char *format, ...)
 /* 
  * Set logging options 
  */
-PUBLIC void logging( c, name )
+void logging( c, name )
 int c;
 char *name;
 {
@@ -142,7 +142,7 @@ char *t;
 }
 
 /* Output system error string */
-PUBLIC void do_error(m)
+void do_error(m)
 char *m;
 {
     outstr(m);
@@ -151,7 +151,7 @@ char *m;
     outstr("\n");
 }
 
-PUBLIC void closestring()
+void closestring()
 {
 /* close string device */
 
@@ -159,7 +159,7 @@ PUBLIC void closestring()
     stringstart = string_ptr = NULL;
 }
 
-PUBLIC int mytolower(ch)
+int mytolower(ch)
 int ch;
 {
 /* convert char to lower case */
@@ -170,7 +170,7 @@ int ch;
 }
 
 
-PUBLIC void openstring(string)
+void openstring(string)
 char *string;
 {
 /* open string device */
@@ -179,7 +179,7 @@ char *string;
     stringstart = string_ptr = string;
 }
 
-PUBLIC void outbyte(byte)
+void outbyte(byte)
 int byte;
 {
 /* print char to currently open output devices */
@@ -215,15 +215,15 @@ int byte;
 }
 
 
-PUBLIC void outcomma()
+void outcomma()
 {
 /* print comma */
 
     outbyte(',');
 }
 
-PRIVATE char hexdigits[] = "0123456789ABCDEF";
-PUBLIC void outh4(num)
+static char hexdigits[] = "0123456789ABCDEF";
+void outh4(num)
 unsigned num;
 {
 /* print 4 bits hex */
@@ -231,7 +231,7 @@ unsigned num;
     outbyte(hexdigits[num % 16]);
 }
 
-PUBLIC void outh8(num)
+void outh8(num)
 unsigned num;
 {
 /* print 8 bits hex */
@@ -240,7 +240,7 @@ unsigned num;
     outh4(num);
 }
 
-PUBLIC void outh16(num)
+void outh16(num)
 unsigned num;
 {
 /* print 16 bits hex */
@@ -249,7 +249,7 @@ unsigned num;
     outh8(num);
 }
 
-PUBLIC void outh32(num)
+void outh32(num)
 unsigned num;
 {
 /* print 32 bits hex */
@@ -258,14 +258,14 @@ unsigned num;
     outh16((u16_t) num);
 }
 
-PUBLIC void outspace()
+void outspace()
 {
 /* print space */
 
     outbyte(' ');
 }
 
-PUBLIC void outstr(s)
+void outstr(s)
 register char *s;
 {
 /* print string */
@@ -274,14 +274,14 @@ register char *s;
 	outbyte(*s++);
 }
 
-PUBLIC void outtab()
+void outtab()
 {
 /* print tab */
 
     outbyte('\t');
 }
 
-PUBLIC void outustr(s)
+void outustr(s)
 register char *s;
 {
 /* print string, perhaps converting case to upper */
@@ -293,14 +293,14 @@ register char *s;
 }
 
 
-PUBLIC int stringpos()
+int stringpos()
 {
 /* return current offset of string device */
 
     return string_ptr - stringstart;
 }
 
-PUBLIC int stringtab()
+int stringtab()
 {
 /* return current "tab" spot of string device */
 

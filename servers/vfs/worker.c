@@ -5,15 +5,15 @@
 #include "job.h"
 #include <assert.h>
 
-FORWARD void append_job(struct job *job, void *(*func)(void *arg));
-FORWARD void get_work(struct worker_thread *worker);
-FORWARD void *worker_main(void *arg);
-FORWARD void worker_sleep(struct worker_thread *worker);
-FORWARD void worker_wake(struct worker_thread *worker);
-FORWARD int worker_waiting_for(struct worker_thread *worker, endpoint_t
+static void append_job(struct job *job, void *(*func)(void *arg));
+static void get_work(struct worker_thread *worker);
+static void *worker_main(void *arg);
+static void worker_sleep(struct worker_thread *worker);
+static void worker_wake(struct worker_thread *worker);
+static int worker_waiting_for(struct worker_thread *worker, endpoint_t
 	proc_e);
-PRIVATE int init = 0;
-PRIVATE mthread_attr_t tattr;
+static int init = 0;
+static mthread_attr_t tattr;
 
 #ifdef MKCOVERAGE
 # define TH_STACKSIZE (10 * 1024)
@@ -27,7 +27,7 @@ PRIVATE mthread_attr_t tattr;
 /*===========================================================================*
  *				worker_init				     *
  *===========================================================================*/
-PUBLIC void worker_init(struct worker_thread *wp)
+void worker_init(struct worker_thread *wp)
 {
 /* Initialize worker thread */
   if (!init) {
@@ -58,7 +58,7 @@ PUBLIC void worker_init(struct worker_thread *wp)
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-PRIVATE void get_work(struct worker_thread *worker)
+static void get_work(struct worker_thread *worker)
 {
 /* Find new work to do. Work can be 'queued', 'pending', or absent. In the
  * latter case wait for new work to come in. */
@@ -96,7 +96,7 @@ PRIVATE void get_work(struct worker_thread *worker)
 /*===========================================================================*
  *				worker_available				     *
  *===========================================================================*/
-PUBLIC int worker_available(void)
+int worker_available(void)
 {
   int busy, i;
 
@@ -112,7 +112,7 @@ PUBLIC int worker_available(void)
 /*===========================================================================*
  *				worker_main				     *
  *===========================================================================*/
-PRIVATE void *worker_main(void *arg)
+static void *worker_main(void *arg)
 {
 /* Worker thread main loop */
   struct worker_thread *me;
@@ -141,7 +141,7 @@ PRIVATE void *worker_main(void *arg)
 /*===========================================================================*
  *				dl_worker_start				     *
  *===========================================================================*/
-PUBLIC void dl_worker_start(void *(*func)(void *arg))
+void dl_worker_start(void *(*func)(void *arg))
 {
 /* Start the deadlock resolving worker. This worker is reserved to run in case
  * all other workers are busy and we have to have an additional worker to come
@@ -159,7 +159,7 @@ PUBLIC void dl_worker_start(void *(*func)(void *arg))
 /*===========================================================================*
  *				sys_worker_start			     *
  *===========================================================================*/
-PUBLIC void sys_worker_start(void *(*func)(void *arg))
+void sys_worker_start(void *(*func)(void *arg))
 {
 /* Carry out work for the system (i.e., kernel or PM). If this thread is idle
  * do it right away, else create new job and append it to the queue. */
@@ -177,7 +177,7 @@ PUBLIC void sys_worker_start(void *(*func)(void *arg))
 /*===========================================================================*
  *				append_job				     *
  *===========================================================================*/
-PRIVATE void append_job(struct job *job, void *(*func)(void *arg))
+static void append_job(struct job *job, void *(*func)(void *arg))
 {
 /* Append a job */
 
@@ -201,7 +201,7 @@ PRIVATE void append_job(struct job *job, void *(*func)(void *arg))
 /*===========================================================================*
  *				worker_start				     *
  *===========================================================================*/
-PUBLIC void worker_start(void *(*func)(void *arg))
+void worker_start(void *(*func)(void *arg))
 {
 /* Find an available worker or wait for one */
   int i;
@@ -250,7 +250,7 @@ PUBLIC void worker_start(void *(*func)(void *arg))
 /*===========================================================================*
  *				worker_sleep				     *
  *===========================================================================*/
-PRIVATE void worker_sleep(struct worker_thread *worker)
+static void worker_sleep(struct worker_thread *worker)
 {
   ASSERTW(worker);
   assert(self == worker);
@@ -266,7 +266,7 @@ PRIVATE void worker_sleep(struct worker_thread *worker)
 /*===========================================================================*
  *				worker_wake				     *
  *===========================================================================*/
-PRIVATE void worker_wake(struct worker_thread *worker)
+static void worker_wake(struct worker_thread *worker)
 {
 /* Signal a worker to wake up */
   ASSERTW(worker);
@@ -281,7 +281,7 @@ PRIVATE void worker_wake(struct worker_thread *worker)
 /*===========================================================================*
  *				worker_wait				     *
  *===========================================================================*/
-PUBLIC void worker_wait(void)
+void worker_wait(void)
 {
   struct worker_thread *worker;
 
@@ -300,7 +300,7 @@ PUBLIC void worker_wait(void)
 /*===========================================================================*
  *				worker_signal				     *
  *===========================================================================*/
-PUBLIC void worker_signal(struct worker_thread *worker)
+void worker_signal(struct worker_thread *worker)
 {
   ASSERTW(worker);		/* Make sure we have a valid thread */
   worker_wake(worker);
@@ -309,7 +309,7 @@ PUBLIC void worker_signal(struct worker_thread *worker)
 /*===========================================================================*
  *				worker_stop				     *
  *===========================================================================*/
-PUBLIC void worker_stop(struct worker_thread *worker)
+void worker_stop(struct worker_thread *worker)
 {
   ASSERTW(worker);		/* Make sure we have a valid thread */
   if (worker->w_job.j_fp)
@@ -322,7 +322,7 @@ PUBLIC void worker_stop(struct worker_thread *worker)
 /*===========================================================================*
  *				worker_stop_by_endpt			     *
  *===========================================================================*/
-PUBLIC void worker_stop_by_endpt(endpoint_t proc_e)
+void worker_stop_by_endpt(endpoint_t proc_e)
 {
   struct worker_thread *worker;
   int i;
@@ -342,7 +342,7 @@ PUBLIC void worker_stop_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				worker_self				     *
  *===========================================================================*/
-PUBLIC struct worker_thread *worker_self(void)
+struct worker_thread *worker_self(void)
 {
   struct worker_thread *worker;
   worker = worker_get(mthread_self());
@@ -353,7 +353,7 @@ PUBLIC struct worker_thread *worker_self(void)
 /*===========================================================================*
  *				worker_get				     *
  *===========================================================================*/
-PUBLIC struct worker_thread *worker_get(thread_t worker_tid)
+struct worker_thread *worker_get(thread_t worker_tid)
 {
   int i;
   struct worker_thread *worker;
@@ -378,7 +378,7 @@ PUBLIC struct worker_thread *worker_get(thread_t worker_tid)
 /*===========================================================================*
  *				worker_getjob				     *
  *===========================================================================*/
-PUBLIC struct job *worker_getjob(thread_t worker_tid)
+struct job *worker_getjob(thread_t worker_tid)
 {
   struct worker_thread *worker;
 
@@ -391,7 +391,7 @@ PUBLIC struct job *worker_getjob(thread_t worker_tid)
 /*===========================================================================*
  *				worker_waiting_for			     *
  *===========================================================================*/
-PRIVATE int worker_waiting_for(struct worker_thread *worker, endpoint_t proc_e)
+static int worker_waiting_for(struct worker_thread *worker, endpoint_t proc_e)
 {
   ASSERTW(worker);		/* Make sure we have a valid thread */
 

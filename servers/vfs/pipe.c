@@ -38,7 +38,7 @@
 /*===========================================================================*
  *				do_pipe					     *
  *===========================================================================*/
-PUBLIC int do_pipe()
+int do_pipe()
 {
 /* Perform the pipe(fil_des) system call. */
 
@@ -135,7 +135,7 @@ PUBLIC int do_pipe()
 /*===========================================================================*
  *				map_vnode				     *
  *===========================================================================*/
-PUBLIC int map_vnode(vp, map_to_fs_e)
+int map_vnode(vp, map_to_fs_e)
 struct vnode *vp;
 endpoint_t map_to_fs_e;
 {
@@ -173,7 +173,7 @@ endpoint_t map_to_fs_e;
 /*===========================================================================*
  *				pipe_check				     *
  *===========================================================================*/
-PUBLIC int pipe_check(vp, rw_flag, oflags, bytes, position, notouch)
+int pipe_check(vp, rw_flag, oflags, bytes, position, notouch)
 register struct vnode *vp;	/* the inode of the pipe */
 int rw_flag;			/* READING or WRITING */
 int oflags;			/* flags set by open or fcntl */
@@ -274,7 +274,7 @@ int notouch;			/* check only */
 /*===========================================================================*
  *				suspend					     *
  *===========================================================================*/
-PUBLIC void suspend(int why)
+void suspend(int why)
 {
 /* Take measures to suspend the processing of the present system call.
  * Store the parameters to be used upon resuming in the process table.
@@ -306,7 +306,7 @@ PUBLIC void suspend(int why)
 /*===========================================================================*
  *				wait_for				     *
  *===========================================================================*/
-PUBLIC void wait_for(endpoint_t who)
+void wait_for(endpoint_t who)
 {
   if(who == NONE || who == ANY)
 	panic("suspend on NONE or ANY");
@@ -318,7 +318,7 @@ PUBLIC void wait_for(endpoint_t who)
 /*===========================================================================*
  *				pipe_suspend					     *
  *===========================================================================*/
-PUBLIC void pipe_suspend(filp, buf, size)
+void pipe_suspend(filp, buf, size)
 struct filp *filp;
 char *buf;
 size_t size;
@@ -341,7 +341,7 @@ size_t size;
 /*===========================================================================*
  *				unsuspend_by_endpt			     *
  *===========================================================================*/
-PUBLIC void unsuspend_by_endpt(endpoint_t proc_e)
+void unsuspend_by_endpt(endpoint_t proc_e)
 {
 /* Revive processes waiting for drivers (SUSPENDed) that have disappeared with
  * return code EAGAIN.
@@ -364,7 +364,7 @@ PUBLIC void unsuspend_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				release					     *
  *===========================================================================*/
-PUBLIC void release(vp, op, count)
+void release(vp, op, count)
 register struct vnode *vp;	/* inode of pipe */
 int op;				/* READ, WRITE, OPEN or CREAT */
 int count;			/* max number of processes to release */
@@ -434,7 +434,7 @@ int count;			/* max number of processes to release */
 /*===========================================================================*
  *				revive					     *
  *===========================================================================*/
-PUBLIC void revive(proc_nr_e, returned)
+void revive(proc_nr_e, returned)
 int proc_nr_e;			/* process to revive */
 int returned;			/* if hanging on task, how many bytes read */
 {
@@ -514,7 +514,7 @@ int returned;			/* if hanging on task, how many bytes read */
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-PUBLIC void unpause(endpoint_t proc_e)
+void unpause(endpoint_t proc_e)
 {
 /* A signal has been sent to a user who is paused on the file system.
  * Abort the system call with the EINTR error message.
@@ -619,7 +619,7 @@ PUBLIC void unpause(endpoint_t proc_e)
 /*===========================================================================*
  *				check_pipe			     *
  *===========================================================================*/
-PUBLIC int check_pipe(void)
+int check_pipe(void)
 {
 /* Integrity check; verify that susp_count equals what the fproc table thinks
  * is suspended on a pipe */

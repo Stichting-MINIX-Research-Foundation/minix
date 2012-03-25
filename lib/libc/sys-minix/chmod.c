@@ -8,7 +8,7 @@
 __weak_alias(chmod, _chmod)
 #endif
 
-PUBLIC int chmod(const char *name, mode_t mode)
+int chmod(const char *name, mode_t mode)
 {
   message m;
 

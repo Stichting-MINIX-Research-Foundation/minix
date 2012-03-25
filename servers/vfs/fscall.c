@@ -19,7 +19,7 @@
 #define MAX_DEPTH 1
 
 /* global variables stack */
-PRIVATE struct {
+static struct {
   struct fproc *g_fp;			/* pointer to caller process */
   message g_m_in;			/* request message */
   message g_m_out;			/* reply message */
@@ -30,16 +30,16 @@ PRIVATE struct {
   char g_user_fullpath[PATH_MAX];	/* path to look up */
 } globals[MAX_DEPTH];
 
-PRIVATE int depth = 0;			/* current globals stack level */
+static int depth = 0;			/* current globals stack level */
 
-FORWARD int push_globals(void);
-FORWARD void pop_globals(void);
-FORWARD void set_globals(message *m);
+static int push_globals(void);
+static void pop_globals(void);
+static void set_globals(message *m);
 
 /*===========================================================================*
  *				push_globals				     *
  *===========================================================================*/
-PRIVATE int push_globals()
+static int push_globals()
 {
 /* Save the global variables of the current call onto the globals stack.
  */
@@ -60,7 +60,7 @@ PRIVATE int push_globals()
 /*===========================================================================*
  *				pop_globals				     *
  *===========================================================================*/
-PRIVATE void pop_globals()
+static void pop_globals()
 {
 /* Restore the global variables of a call from the globals stack.
  */
@@ -79,7 +79,7 @@ PRIVATE void pop_globals()
 /*===========================================================================*
  *				set_globals				     *
  *===========================================================================*/
-PRIVATE void set_globals(m)
+static void set_globals(m)
 message *m;				/* request message */
 {
 /* Initialize global variables based on a request message.
@@ -97,7 +97,7 @@ message *m;				/* request message */
 /*===========================================================================*
  *				nested_fs_call				     *
  *===========================================================================*/
-PUBLIC void nested_fs_call(m)
+void nested_fs_call(m)
 message *m;				/* request/reply message pointer */
 {
 /* Handle a nested call from a file system server.

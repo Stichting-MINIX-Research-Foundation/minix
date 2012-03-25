@@ -4,7 +4,7 @@
 /*===========================================================================*
  *                               tickdelay			    	     *
  *===========================================================================*/
-PUBLIC int tickdelay(ticks)
+int tickdelay(ticks)
 long ticks;				/* number of ticks to wait */
 {
 /* This function uses the synchronous alarm to delay for a while. This works

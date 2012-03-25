@@ -33,7 +33,7 @@
 /*===========================================================================*
  *				get_free_pid				     *
  *===========================================================================*/
-PUBLIC pid_t get_free_pid()
+pid_t get_free_pid()
 {
   static pid_t next_pid = INIT_PID + 1;		/* next pid to be assigned */
   register struct mproc *rmp;			/* check process table */
@@ -56,7 +56,7 @@ PUBLIC pid_t get_free_pid()
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys()
+int no_sys()
 {
 /* A system call number not implemented by PM has been requested. */
   return(ENOSYS);
@@ -65,7 +65,7 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *				find_param				     *
  *===========================================================================*/
-PUBLIC char *find_param(name)
+char *find_param(name)
 const char *name;
 {
   register const char *namep;
@@ -85,7 +85,7 @@ const char *name;
 /*===========================================================================*
  *				find_proc  				     *
  *===========================================================================*/
-PUBLIC struct mproc *find_proc(lpid)
+struct mproc *find_proc(lpid)
 pid_t lpid;
 {
   register struct mproc *rmp;
@@ -100,7 +100,7 @@ pid_t lpid;
 /*===========================================================================*
  *				nice_to_priority			     *
  *===========================================================================*/
-PUBLIC int nice_to_priority(int nice, unsigned* new_q)
+int nice_to_priority(int nice, unsigned* new_q)
 {
 	if (nice < PRIO_MIN || nice > PRIO_MAX) return(EINVAL);
 
@@ -117,7 +117,7 @@ PUBLIC int nice_to_priority(int nice, unsigned* new_q)
 /*===========================================================================*
  *				pm_isokendpt			 	     *
  *===========================================================================*/
-PUBLIC int pm_isokendpt(int endpoint, int *proc)
+int pm_isokendpt(int endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
 	if(*proc < -NR_TASKS || *proc >= NR_PROCS)
@@ -132,7 +132,7 @@ PUBLIC int pm_isokendpt(int endpoint, int *proc)
 /*===========================================================================*
  *				tell_vfs			 	     *
  *===========================================================================*/
-PUBLIC void tell_vfs(rmp, m_ptr)
+void tell_vfs(rmp, m_ptr)
 struct mproc *rmp;
 message *m_ptr;
 {

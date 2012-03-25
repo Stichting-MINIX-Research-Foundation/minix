@@ -42,18 +42,18 @@ static int volatile ap_cpu_ready;
 static int volatile cpu_down;
 
 /* there can be at most 255 local APIC ids, each fits in 8 bits */
-PRIVATE unsigned char apicid2cpuid[255];
-PUBLIC unsigned char cpuid2apicid[CONFIG_MAX_CPUS];
+static unsigned char apicid2cpuid[255];
+unsigned char cpuid2apicid[CONFIG_MAX_CPUS];
 
 SPINLOCK_DEFINE(smp_cpu_lock)
 SPINLOCK_DEFINE(dispq_lock)
 
-FORWARD void smp_reinit_vars(void);
+static void smp_reinit_vars(void);
 
 /*
  * copies the 16-bit AP trampoline code to the first 1M of memory
  */
-PRIVATE phys_bytes copy_trampoline(void)
+static phys_bytes copy_trampoline(void)
 {
 	char * s, *end;
 	phys_bytes tramp_base = 0;
@@ -93,7 +93,7 @@ PRIVATE phys_bytes copy_trampoline(void)
 	return tramp_base;
 }
 
-PRIVATE void smp_start_aps(void)
+static void smp_start_aps(void)
 {
 	/* 
 	 * Find an address and align it to a 4k boundary.
@@ -167,12 +167,12 @@ PRIVATE void smp_start_aps(void)
 	NOT_REACHABLE;
 }
 
-PUBLIC void smp_halt_cpu (void) 
+void smp_halt_cpu (void) 
 {
 	NOT_IMPLEMENTED;
 }
 
-PUBLIC void smp_shutdown_aps(void)
+void smp_shutdown_aps(void)
 {
 	unsigned cpu;
 
@@ -209,7 +209,7 @@ exit_shutdown_aps:
 	return;
 }
 
-PRIVATE void ap_finish_booting(void)
+static void ap_finish_booting(void)
 {
 	unsigned cpu = cpuid;
 
@@ -257,13 +257,13 @@ PRIVATE void ap_finish_booting(void)
 	NOT_REACHABLE;
 }
 
-PUBLIC void smp_ap_boot(void)
+void smp_ap_boot(void)
 {
 	switch_k_stack((char *)get_k_stack_top(__ap_id) -
 			X86_STACK_TOP_RESERVED, ap_finish_booting);
 }
 
-PRIVATE void smp_reinit_vars(void)
+static void smp_reinit_vars(void)
 {
 	lapic_addr = lapic_eoi_addr = 0;
 	ioapic_enabled = 0;
@@ -271,7 +271,7 @@ PRIVATE void smp_reinit_vars(void)
 	ncpus = 1;
 }
 
-PRIVATE void tss_init_all(void)
+static void tss_init_all(void)
 {
 	unsigned cpu;
 
@@ -279,7 +279,7 @@ PRIVATE void tss_init_all(void)
 		tss_init(cpu, get_k_stack_top(cpu)); 
 }
 
-PRIVATE int discover_cpus(void)
+static int discover_cpus(void)
 {
 	struct acpi_madt_lapic * cpu;
 
@@ -293,7 +293,7 @@ PRIVATE int discover_cpus(void)
 	return ncpus;
 }
 
-PUBLIC void smp_init (void)
+void smp_init (void)
 {
 	/* read the MP configuration */
 	if (!discover_cpus()) {
@@ -351,7 +351,7 @@ uniproc_fallback:
 	printf("WARNING : SMP initialization failed\n");
 }
 	
-PUBLIC void arch_smp_halt_cpu(void)
+void arch_smp_halt_cpu(void)
 {
 	/* say that we are down */
 	cpu_down = cpuid;
@@ -361,7 +361,7 @@ PUBLIC void arch_smp_halt_cpu(void)
 	for(;;);
 }
 
-PUBLIC void arch_send_smp_schedule_ipi(unsigned cpu)
+void arch_send_smp_schedule_ipi(unsigned cpu)
 {
 	apic_send_ipi(APIC_SMP_SCHED_PROC_VECTOR, cpu, APIC_IPI_DEST);
 }

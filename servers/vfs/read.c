@@ -29,7 +29,7 @@
 /*===========================================================================*
  *				do_read					     *
  *===========================================================================*/
-PUBLIC int do_read()
+int do_read()
 {
   return(do_read_write(READING));
 }
@@ -38,7 +38,7 @@ PUBLIC int do_read()
 /*===========================================================================*
  *				lock_bsf				     *
  *===========================================================================*/
-PUBLIC void lock_bsf(void)
+void lock_bsf(void)
 {
   message org_m_in;
   struct fproc *org_fp;
@@ -62,7 +62,7 @@ PUBLIC void lock_bsf(void)
 /*===========================================================================*
  *				unlock_bsf				     *
  *===========================================================================*/
-PUBLIC void unlock_bsf(void)
+void unlock_bsf(void)
 {
   if (mutex_unlock(&bsf_lock) != 0)
 	panic("failed to unlock block special file lock");
@@ -71,7 +71,7 @@ PUBLIC void unlock_bsf(void)
 /*===========================================================================*
  *				do_read_write				     *
  *===========================================================================*/
-PUBLIC int do_read_write(rw_flag)
+int do_read_write(rw_flag)
 int rw_flag;			/* READING or WRITING */
 {
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
@@ -105,7 +105,7 @@ int rw_flag;			/* READING or WRITING */
 /*===========================================================================*
  *				read_write				     *
  *===========================================================================*/
-PUBLIC int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
+int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 		      endpoint_t for_e)
 {
   register struct vnode *vp;
@@ -209,7 +209,7 @@ PUBLIC int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 /*===========================================================================*
  *				do_getdents				     *
  *===========================================================================*/
-PUBLIC int do_getdents()
+int do_getdents()
 {
 /* Perform the getdents(fd, buf, size) system call. */
   int r = OK;
@@ -242,7 +242,7 @@ PUBLIC int do_getdents()
 /*===========================================================================*
  *				rw_pipe					     *
  *===========================================================================*/
-PUBLIC int rw_pipe(rw_flag, usr_e, f, buf, req_size)
+int rw_pipe(rw_flag, usr_e, f, buf, req_size)
 int rw_flag;			/* READING or WRITING */
 endpoint_t usr_e;
 struct filp *f;

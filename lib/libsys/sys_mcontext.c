@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_getmcontext(proc, mcp)
+int sys_getmcontext(proc, mcp)
 endpoint_t proc;		/* process retrieving context */
 mcontext_t *mcp;		/* where to store context */
 {
@@ -15,7 +15,7 @@ mcontext_t *mcp;		/* where to store context */
   return r;
 }
 
-PUBLIC int sys_setmcontext(proc, mcp)
+int sys_setmcontext(proc, mcp)
 endpoint_t proc;		/* process setting context */
 mcontext_t *mcp;		/* where to get context from */
 {

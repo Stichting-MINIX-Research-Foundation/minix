@@ -2,16 +2,16 @@
 
 #include "inc.h"
 
-PUBLIC struct proc proc[NR_PROCS + NR_TASKS];
-PUBLIC struct mproc mproc[NR_PROCS];
-PUBLIC struct fproc fproc[NR_PROCS];
+struct proc proc[NR_PROCS + NR_TASKS];
+struct mproc mproc[NR_PROCS];
+struct fproc fproc[NR_PROCS];
 
-PRIVATE int nr_pid_entries;
+static int nr_pid_entries;
 
 /*===========================================================================*
  *				slot_in_use				     *
  *===========================================================================*/
-PRIVATE int slot_in_use(int slot)
+static int slot_in_use(int slot)
 {
 	/* Return whether the given slot is in use by a process.
 	 */
@@ -24,7 +24,7 @@ PRIVATE int slot_in_use(int slot)
 /*===========================================================================*
  *				check_owner				     *
  *===========================================================================*/
-PRIVATE int check_owner(struct inode *node, int slot)
+static int check_owner(struct inode *node, int slot)
 {
 	/* Check if the owner user and group ID of the inode are still in sync
 	 * the current effective user and group ID of the given process.
@@ -42,7 +42,7 @@ PRIVATE int check_owner(struct inode *node, int slot)
 /*===========================================================================*
  *				make_stat				     *
  *===========================================================================*/
-PRIVATE void make_stat(struct inode_stat *stat, int slot, int index)
+static void make_stat(struct inode_stat *stat, int slot, int index)
 {
 	/* Fill in an inode_stat structure for the given process slot and
 	 * per-pid file index (or NO_INDEX for the process subdirectory root).
@@ -68,7 +68,7 @@ PRIVATE void make_stat(struct inode_stat *stat, int slot, int index)
 /*===========================================================================*
  *				dir_is_pid				     *
  *===========================================================================*/
-PRIVATE int dir_is_pid(struct inode *node)
+static int dir_is_pid(struct inode *node)
 {
 	/* Return whether the given node is a PID directory.
 	 */
@@ -80,7 +80,7 @@ PRIVATE int dir_is_pid(struct inode *node)
 /*===========================================================================*
  *				update_proc_table			     *
  *===========================================================================*/
-PRIVATE int update_proc_table(void)
+static int update_proc_table(void)
 {
 	/* Get the process table from the kernel.
 	 * Check the magic number in the table entries.
@@ -103,7 +103,7 @@ PRIVATE int update_proc_table(void)
 /*===========================================================================*
  *				update_mproc_table			     *
  *===========================================================================*/
-PRIVATE int update_mproc_table(void)
+static int update_mproc_table(void)
 {
 	/* Get the process table from PM.
 	 * Check the magic number in the table entries.
@@ -127,7 +127,7 @@ PRIVATE int update_mproc_table(void)
 /*===========================================================================*
  *				update_fproc_table			     *
  *===========================================================================*/
-PRIVATE int update_fproc_table(void)
+static int update_fproc_table(void)
 {
 	/* Get the process table from VFS.
 	 */
@@ -138,7 +138,7 @@ PRIVATE int update_fproc_table(void)
 /*===========================================================================*
  *				update_tables				     *
  *===========================================================================*/
-PRIVATE int update_tables(void)
+static int update_tables(void)
 {
 	/* Get the process tables from the kernel, PM, and VFS.
 	 */
@@ -156,7 +156,7 @@ PRIVATE int update_tables(void)
 /*===========================================================================*
  *				init_tree				     *
  *===========================================================================*/
-PUBLIC int init_tree(void)
+int init_tree(void)
 {
 	/* Initialize this module, before VTreeFS is started. As part of the
 	 * process, check if we're not compiled against a kernel different from
@@ -181,7 +181,7 @@ PUBLIC int init_tree(void)
 /*===========================================================================*
  *				out_of_inodes				     *
  *===========================================================================*/
-PRIVATE void out_of_inodes(void)
+static void out_of_inodes(void)
 {
 	/* Out of inodes - the NR_INODES value is set too low. We can not do
 	 * much, but we might be able to continue with degraded functionality,
@@ -201,7 +201,7 @@ PRIVATE void out_of_inodes(void)
 /*===========================================================================*
  *				construct_pid_dirs			     *
  *===========================================================================*/
-PRIVATE void construct_pid_dirs(void)
+static void construct_pid_dirs(void)
 {
 	/* Regenerate the set of PID directories in the root directory of the
 	 * file system. Add new directories and delete old directories as
@@ -288,7 +288,7 @@ PRIVATE void construct_pid_dirs(void)
 /*===========================================================================*
  *				make_one_pid_entry			     *
  *===========================================================================*/
-PRIVATE void make_one_pid_entry(struct inode *parent, char *name, int slot)
+static void make_one_pid_entry(struct inode *parent, char *name, int slot)
 {
 	/* Construct one file in a PID directory, if a file with the given name
 	 * should exist at all.
@@ -321,7 +321,7 @@ PRIVATE void make_one_pid_entry(struct inode *parent, char *name, int slot)
 /*===========================================================================*
  *				make_all_pid_entries			     *
  *===========================================================================*/
-PRIVATE void make_all_pid_entries(struct inode *parent, int slot)
+static void make_all_pid_entries(struct inode *parent, int slot)
 {
 	/* Construct all files in a PID directory.
 	 */
@@ -347,7 +347,7 @@ PRIVATE void make_all_pid_entries(struct inode *parent, int slot)
 /*===========================================================================*
  *				construct_pid_entries			     *
  *===========================================================================*/
-PRIVATE void construct_pid_entries(struct inode *parent, char *name)
+static void construct_pid_entries(struct inode *parent, char *name)
 {
 	/* Construct one requested file entry, or all file entries, in a PID
 	 * directory.
@@ -377,7 +377,7 @@ PRIVATE void construct_pid_entries(struct inode *parent, char *name)
 /*===========================================================================*
  *				pid_read				     *
  *===========================================================================*/
-PRIVATE void pid_read(struct inode *node)
+static void pid_read(struct inode *node)
 {
 	/* Data is requested from one of the files in a PID directory. Call the
 	 * function that is responsible for generating the data for that file.
@@ -402,7 +402,7 @@ PRIVATE void pid_read(struct inode *node)
 /*===========================================================================*
  *				pid_link				     *
  *===========================================================================*/
-PRIVATE int pid_link(struct inode *UNUSED(node), char *ptr, int UNUSED(max))
+static int pid_link(struct inode *UNUSED(node), char *ptr, int UNUSED(max))
 {
 	/* The contents of a symbolic link in a PID directory are requested.
 	 * This function is a placeholder for future use.
@@ -417,7 +417,7 @@ PRIVATE int pid_link(struct inode *UNUSED(node), char *ptr, int UNUSED(max))
 /*===========================================================================*
  *				lookup_hook				     *
  *===========================================================================*/
-PUBLIC int lookup_hook(struct inode *parent, char *name,
+int lookup_hook(struct inode *parent, char *name,
 	cbdata_t UNUSED(cbdata))
 {
 	/* Path name resolution hook, for a specific parent and name pair.
@@ -464,7 +464,7 @@ PUBLIC int lookup_hook(struct inode *parent, char *name,
 /*===========================================================================*
  *				getdents_hook				     *
  *===========================================================================*/
-PUBLIC int getdents_hook(struct inode *node, cbdata_t UNUSED(cbdata))
+int getdents_hook(struct inode *node, cbdata_t UNUSED(cbdata))
 {
 	/* Directory entry retrieval hook, for potentially all files in a
 	 * directory. Make sure that all files that are supposed to be
@@ -485,7 +485,7 @@ PUBLIC int getdents_hook(struct inode *node, cbdata_t UNUSED(cbdata))
 /*===========================================================================*
  *				read_hook				     *
  *===========================================================================*/
-PUBLIC int read_hook(struct inode *node, off_t off, char **ptr,
+int read_hook(struct inode *node, off_t off, char **ptr,
 	size_t *len, cbdata_t cbdata)
 {
 	/* Regular file read hook. Call the appropriate callback function to
@@ -509,7 +509,7 @@ PUBLIC int read_hook(struct inode *node, off_t off, char **ptr,
 /*===========================================================================*
  *				rdlink_hook				     *
  *===========================================================================*/
-PUBLIC int rdlink_hook(struct inode *node, char *ptr, size_t max,
+int rdlink_hook(struct inode *node, char *ptr, size_t max,
 	cbdata_t UNUSED(cbdata))
 {
 	/* Symbolic link resolution hook. Not used yet.

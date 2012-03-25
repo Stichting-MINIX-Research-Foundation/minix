@@ -1,6 +1,6 @@
 #include <dirent.h>
 
-PUBLIC struct buf {
+struct buf {
   char b_data[_MAX_BLOCK_SIZE];		     /* ordinary user data */
   block_t b_blocknr;		/* block number of its (minor) device */
   char b_count;			/* number of users of this buffer */

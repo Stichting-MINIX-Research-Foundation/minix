@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_vinl				     *
  *===========================================================================*/
-PUBLIC int sys_vinl(pvl_pairs, nr_ports)
+int sys_vinl(pvl_pairs, nr_ports)
 pvl_pair_t *pvl_pairs;			/* (port,long-value)-pairs */
 int nr_ports;				/* nr of pairs to be processed */
 {

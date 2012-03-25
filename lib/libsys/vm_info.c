@@ -6,7 +6,7 @@
 /*===========================================================================*
  *                                vm_info_stats				     *
  *===========================================================================*/
-PUBLIC int vm_info_stats(struct vm_stats_info *vsi)
+int vm_info_stats(struct vm_stats_info *vsi)
 {
     message m;
 
@@ -19,7 +19,7 @@ PUBLIC int vm_info_stats(struct vm_stats_info *vsi)
 /*===========================================================================*
  *                                vm_info_usage				     *
  *===========================================================================*/
-PUBLIC int vm_info_usage(endpoint_t who, struct vm_usage_info *vui)
+int vm_info_usage(endpoint_t who, struct vm_usage_info *vui)
 {
     message m;
 
@@ -33,7 +33,7 @@ PUBLIC int vm_info_usage(endpoint_t who, struct vm_usage_info *vui)
 /*===========================================================================*
  *                                vm_info_region			     *
  *===========================================================================*/
-PUBLIC int vm_info_region(endpoint_t who, struct vm_region_info *vri,
+int vm_info_region(endpoint_t who, struct vm_region_info *vri,
 	int count, vir_bytes *next)
 {
     message m;

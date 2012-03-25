@@ -13,7 +13,7 @@
 /*===========================================================================*
  *				stat_dir_record				     *
  *===========================================================================*/
-PRIVATE int stat_dir_record(
+static int stat_dir_record(
   register struct dir_record *dir,	/* pointer to dir record to stat */
   int pipe_pos,   		/* position in a pipe, supplied by fstat() */
   endpoint_t who_e,		/* Caller endpoint */
@@ -78,7 +78,7 @@ PRIVATE int stat_dir_record(
 /*===========================================================================*
  *                             fs_stat					     *
  *===========================================================================*/
-PUBLIC int fs_stat()
+int fs_stat()
 {
   register int r;              /* return value */
   struct dir_record *dir;
@@ -96,7 +96,7 @@ PUBLIC int fs_stat()
 /*===========================================================================*
  *				fs_fstatfs				     *
  *===========================================================================*/
-PUBLIC int fs_fstatfs()
+int fs_fstatfs()
 {
   struct statfs st;
   int r;
@@ -114,7 +114,7 @@ PUBLIC int fs_fstatfs()
 /*===========================================================================*
  *				fs_statvfs				     *
  *===========================================================================*/
-PUBLIC int fs_statvfs()
+int fs_statvfs()
 {
   struct statvfs st;
   int r;

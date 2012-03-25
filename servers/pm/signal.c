@@ -32,14 +32,14 @@
 #include "mproc.h"
 #include "param.h"
 
-FORWARD void unpause(struct mproc *rmp);
-FORWARD int sig_send(struct mproc *rmp, int signo);
-FORWARD void sig_proc_exit(struct mproc *rmp, int signo);
+static void unpause(struct mproc *rmp);
+static int sig_send(struct mproc *rmp, int signo);
+static void sig_proc_exit(struct mproc *rmp, int signo);
 
 /*===========================================================================*
  *				do_sigaction				     *
  *===========================================================================*/
-PUBLIC int do_sigaction()
+int do_sigaction()
 {
   int r;
   struct sigaction svec;
@@ -87,7 +87,7 @@ PUBLIC int do_sigaction()
 /*===========================================================================*
  *				do_sigpending                                *
  *===========================================================================*/
-PUBLIC int do_sigpending()
+int do_sigpending()
 {
   mp->mp_reply.reply_mask = (long) mp->mp_sigpending;
   return OK;
@@ -96,7 +96,7 @@ PUBLIC int do_sigpending()
 /*===========================================================================*
  *				do_sigprocmask                               *
  *===========================================================================*/
-PUBLIC int do_sigprocmask()
+int do_sigprocmask()
 {
 /* Note that the library interface passes the actual mask in sigmask_set,
  * not a pointer to the mask, in order to save a copy.  Similarly,
@@ -151,7 +151,7 @@ PUBLIC int do_sigprocmask()
 /*===========================================================================*
  *				do_sigsuspend                                *
  *===========================================================================*/
-PUBLIC int do_sigsuspend()
+int do_sigsuspend()
 {
   mp->mp_sigmask2 = mp->mp_sigmask;	/* save the old mask */
   mp->mp_sigmask = (sigset_t) m_in.sig_set;
@@ -165,7 +165,7 @@ PUBLIC int do_sigsuspend()
 /*===========================================================================*
  *				do_sigreturn				     *
  *===========================================================================*/
-PUBLIC int do_sigreturn()
+int do_sigreturn()
 {
 /* A user signal handler is done.  Restore context and check for
  * pending unblocked signals.
@@ -185,7 +185,7 @@ PUBLIC int do_sigreturn()
 /*===========================================================================*
  *				do_kill					     *
  *===========================================================================*/
-PUBLIC int do_kill()
+int do_kill()
 {
 /* Perform the kill(pid, signo) system call. */
 
@@ -195,7 +195,7 @@ PUBLIC int do_kill()
 /*===========================================================================*
  *			      do_srv_kill				     *
  *===========================================================================*/
-PUBLIC int do_srv_kill()
+int do_srv_kill()
 {
 /* Perform the srv_kill(pid, signo) system call. */
 
@@ -213,7 +213,7 @@ PUBLIC int do_srv_kill()
 /*===========================================================================*
  *				process_ksig				     *
  *===========================================================================*/
-PUBLIC int process_ksig(endpoint_t proc_nr_e, int signo)
+int process_ksig(endpoint_t proc_nr_e, int signo)
 {
   register struct mproc *rmp;
   int proc_nr;
@@ -293,7 +293,7 @@ PUBLIC int process_ksig(endpoint_t proc_nr_e, int signo)
 /*===========================================================================*
  *				do_pause				     *
  *===========================================================================*/
-PUBLIC int do_pause()
+int do_pause()
 {
 /* Perform the pause() system call. */
 
@@ -304,7 +304,7 @@ PUBLIC int do_pause()
 /*===========================================================================*
  *				sig_proc				     *
  *===========================================================================*/
-PUBLIC void sig_proc(rmp, signo, trace, ksig)
+void sig_proc(rmp, signo, trace, ksig)
 register struct mproc *rmp;	/* pointer to the process to be signaled */
 int signo;			/* signal to send to process (1 to _NSIG-1) */
 int trace;			/* pass signal to tracer first? */
@@ -467,7 +467,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 /*===========================================================================*
  *				sig_proc_exit				     *
  *===========================================================================*/
-PRIVATE void sig_proc_exit(rmp, signo)
+static void sig_proc_exit(rmp, signo)
 struct mproc *rmp;		/* process that must exit */
 int signo;			/* signal that caused termination */
 {
@@ -488,7 +488,7 @@ int signo;			/* signal that caused termination */
 /*===========================================================================*
  *				check_sig				     *
  *===========================================================================*/
-PUBLIC int check_sig(proc_id, signo, ksig)
+int check_sig(proc_id, signo, ksig)
 pid_t proc_id;			/* pid of proc to sig, or 0 or -1, or -pgrp */
 int signo;			/* signal to send to process (0 to _NSIG-1) */
 int ksig;			/* non-zero means signal comes from kernel  */
@@ -566,7 +566,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 /*===========================================================================*
  *				check_pending				     *
  *===========================================================================*/
-PUBLIC void check_pending(rmp)
+void check_pending(rmp)
 register struct mproc *rmp;
 {
   /* Check to see if any pending signals have been unblocked. Deliver as many
@@ -597,7 +597,7 @@ register struct mproc *rmp;
 /*===========================================================================*
  *				restart_sigs				     *
  *===========================================================================*/
-PUBLIC void restart_sigs(rmp)
+void restart_sigs(rmp)
 struct mproc *rmp;
 {
 /* VFS has replied to a request from us; do signal-related work.
@@ -634,7 +634,7 @@ struct mproc *rmp;
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-PRIVATE void unpause(rmp)
+static void unpause(rmp)
 struct mproc *rmp;		/* which process */
 {
 /* A signal is to be sent to a process.  If that process is hanging on a
@@ -693,7 +693,7 @@ struct mproc *rmp;		/* which process */
 /*===========================================================================*
  *				sig_send				     *
  *===========================================================================*/
-PRIVATE int sig_send(rmp, signo)
+static int sig_send(rmp, signo)
 struct mproc *rmp;		/* what process to spawn a signal handler in */
 int signo;			/* signal to send to process (1 to _NSIG-1) */
 {
@@ -771,7 +771,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
 /*===========================================================================*
  *				vm_notify_sig_wrapper			     *
  *===========================================================================*/
-PUBLIC void vm_notify_sig_wrapper(endpoint_t ep)
+void vm_notify_sig_wrapper(endpoint_t ep)
 {
 /* get IPC's endpoint,
  * the reason that we directly get the endpoint

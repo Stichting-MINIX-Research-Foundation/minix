@@ -9,7 +9,7 @@
 __weak_alias(fchown, _fchown)
 #endif
 
-PUBLIC int fchown(int fd, uid_t owner, gid_t grp)
+int fchown(int fd, uid_t owner, gid_t grp)
 {
   message m;
 

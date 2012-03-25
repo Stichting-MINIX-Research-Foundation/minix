@@ -8,7 +8,7 @@
 __weak_alias(chroot, _chroot)
 #endif
 
-PUBLIC int chroot(name)
+int chroot(name)
 _CONST char *name;
 {
   message m;

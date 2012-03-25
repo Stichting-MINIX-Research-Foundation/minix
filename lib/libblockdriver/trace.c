@@ -13,24 +13,24 @@
 #define NO_TRACEDEV		((dev_t) -1)
 #define NO_TIME			((u32_t) -1)
 
-PRIVATE int trace_enabled	= FALSE;
-PRIVATE dev_t trace_dev		= NO_TRACEDEV;
-PRIVATE btrace_entry *trace_buf	= NULL;
-PRIVATE size_t trace_size	= 0;
-PRIVATE size_t trace_pos;
-PRIVATE size_t trace_next;
-PRIVATE u64_t trace_tsc;
+static int trace_enabled	= FALSE;
+static dev_t trace_dev		= NO_TRACEDEV;
+static btrace_entry *trace_buf	= NULL;
+static size_t trace_size	= 0;
+static size_t trace_pos;
+static size_t trace_next;
+static u64_t trace_tsc;
 
 /* Pointers to in-progress trace entries for each thread (all worker threads,
  * plus one for the main thread). Each pointer is set to NULL whenever no
  * operation is currently being traced for that thread, for whatever reason.
  */
-PRIVATE btrace_entry *trace_ptr[MAX_THREADS + 1] = { NULL };
+static btrace_entry *trace_ptr[MAX_THREADS + 1] = { NULL };
 
 /*===========================================================================*
  *				trace_gettime				     *
  *===========================================================================*/
-PRIVATE u32_t trace_gettime(void)
+static u32_t trace_gettime(void)
 {
 /* Return the current time, in microseconds since the start of the trace.
  */
@@ -48,7 +48,7 @@ PRIVATE u32_t trace_gettime(void)
 /*===========================================================================*
  *				trace_ctl				     *
  *===========================================================================*/
-PUBLIC int trace_ctl(dev_t minor, unsigned int request, endpoint_t endpt,
+int trace_ctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 /* Process a block trace control request.
@@ -164,7 +164,7 @@ PUBLIC int trace_ctl(dev_t minor, unsigned int request, endpoint_t endpt,
 /*===========================================================================*
  *				trace_start				     *
  *===========================================================================*/
-PUBLIC void trace_start(thread_id_t id, message *m_ptr)
+void trace_start(thread_id_t id, message *m_ptr)
 {
 /* Start creating a trace entry.
  */
@@ -247,7 +247,7 @@ PUBLIC void trace_start(thread_id_t id, message *m_ptr)
 /*===========================================================================*
  *				trace_setsize				     *
  *===========================================================================*/
-PUBLIC void trace_setsize(thread_id_t id, size_t size)
+void trace_setsize(thread_id_t id, size_t size)
 {
 /* Set the current trace entry's actual (byte) size, for vector requests.
  */
@@ -265,7 +265,7 @@ PUBLIC void trace_setsize(thread_id_t id, size_t size)
 /*===========================================================================*
  *				trace_finish				     *
  *===========================================================================*/
-PUBLIC void trace_finish(thread_id_t id, int result)
+void trace_finish(thread_id_t id, int result)
 {
 /* Finish a trace entry.
  */

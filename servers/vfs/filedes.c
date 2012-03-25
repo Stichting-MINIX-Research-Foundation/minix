@@ -25,13 +25,13 @@
 #include "vnode.h"
 
 
-FORWARD filp_id_t verify_fd(endpoint_t ep, int fd);
+static filp_id_t verify_fd(endpoint_t ep, int fd);
 
 #if LOCK_DEBUG
 /*===========================================================================*
  *				check_filp_locks			     *
  *===========================================================================*/
-PUBLIC void check_filp_locks_by_me(void)
+void check_filp_locks_by_me(void)
 {
 /* Check whether this thread still has filp locks held */
   struct filp *f;
@@ -53,7 +53,7 @@ PUBLIC void check_filp_locks_by_me(void)
 /*===========================================================================*
  *				check_filp_locks			     *
  *===========================================================================*/
-PUBLIC void check_filp_locks(void)
+void check_filp_locks(void)
 {
   struct filp *f;
   int r, count = 0;
@@ -78,7 +78,7 @@ PUBLIC void check_filp_locks(void)
 /*===========================================================================*
  *				init_filps					     *
  *===========================================================================*/
-PUBLIC void init_filps(void)
+void init_filps(void)
 {
 /* Initialize filps */
   struct filp *f;
@@ -92,7 +92,7 @@ PUBLIC void init_filps(void)
 /*===========================================================================*
  *				get_fd					     *
  *===========================================================================*/
-PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
+int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 {
 /* Look for a free file descriptor and a free filp slot.  Fill in the mode word
  * in the latter, but don't claim either one yet, since the open() or creat()
@@ -143,7 +143,7 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 /*===========================================================================*
  *				get_filp				     *
  *===========================================================================*/
-PUBLIC struct filp *get_filp(fild, locktype)
+struct filp *get_filp(fild, locktype)
 int fild;			/* file descriptor */
 tll_access_t locktype;
 {
@@ -156,7 +156,7 @@ tll_access_t locktype;
 /*===========================================================================*
  *				get_filp2				     *
  *===========================================================================*/
-PUBLIC struct filp *get_filp2(rfp, fild, locktype)
+struct filp *get_filp2(rfp, fild, locktype)
 register struct fproc *rfp;
 int fild;			/* file descriptor */
 tll_access_t locktype;
@@ -178,7 +178,7 @@ tll_access_t locktype;
 /*===========================================================================*
  *				find_filp				     *
  *===========================================================================*/
-PUBLIC struct filp *find_filp(struct vnode *vp, mode_t bits)
+struct filp *find_filp(struct vnode *vp, mode_t bits)
 {
 /* Find a filp slot that refers to the vnode 'vp' in a way as described
  * by the mode bit 'bits'. Used for determining whether somebody is still
@@ -202,7 +202,7 @@ PUBLIC struct filp *find_filp(struct vnode *vp, mode_t bits)
 /*===========================================================================*
  *				invalidate_filp				     *
  *===========================================================================*/
-PUBLIC int invalidate_filp(struct filp *rfilp)
+int invalidate_filp(struct filp *rfilp)
 {
 /* Invalidate filp. fp_filp_inuse is not cleared, so filp can't be reused
    until it is closed first. */
@@ -224,7 +224,7 @@ PUBLIC int invalidate_filp(struct filp *rfilp)
 /*===========================================================================*
  *			invalidate_filp_by_endpt			     *
  *===========================================================================*/
-PUBLIC void invalidate_filp_by_endpt(endpoint_t proc_e)
+void invalidate_filp_by_endpt(endpoint_t proc_e)
 {
   struct filp *f;
 
@@ -239,7 +239,7 @@ PUBLIC void invalidate_filp_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				lock_filp				     *
  *===========================================================================*/
-PUBLIC void lock_filp(filp, locktype)
+void lock_filp(filp, locktype)
 struct filp *filp;
 tll_access_t locktype;
 {
@@ -287,7 +287,7 @@ tll_access_t locktype;
 /*===========================================================================*
  *				unlock_filp				     *
  *===========================================================================*/
-PUBLIC void unlock_filp(filp)
+void unlock_filp(filp)
 struct filp *filp;
 {
   /* If this filp holds a soft lock on the vnode, we must be the owner */
@@ -312,7 +312,7 @@ struct filp *filp;
 /*===========================================================================*
  *				unlock_filps				     *
  *===========================================================================*/
-PUBLIC void unlock_filps(filp1, filp2)
+void unlock_filps(filp1, filp2)
 struct filp *filp1;
 struct filp *filp2;
 {
@@ -344,7 +344,7 @@ struct filp *filp2;
 /*===========================================================================*
  *				verify_fd				     *
  *===========================================================================*/
-PRIVATE filp_id_t verify_fd(ep, fd)
+static filp_id_t verify_fd(ep, fd)
 endpoint_t ep;
 int fd;
 {
@@ -366,7 +366,7 @@ int fd;
 /*===========================================================================*
  *                              do_verify_fd                                 *
  *===========================================================================*/
-PUBLIC int do_verify_fd(void)
+int do_verify_fd(void)
 {
   struct filp *rfilp;
   rfilp = (struct filp *) verify_fd(m_in.USER_ENDPT, m_in.COUNT);
@@ -378,7 +378,7 @@ PUBLIC int do_verify_fd(void)
 /*===========================================================================*
  *                              set_filp                                     *
  *===========================================================================*/
-PUBLIC int set_filp(sfilp)
+int set_filp(sfilp)
 filp_id_t sfilp;
 {
   if (sfilp == NULL) return(EINVAL);
@@ -393,7 +393,7 @@ filp_id_t sfilp;
 /*===========================================================================*
  *                              do_set_filp                                  *
  *===========================================================================*/
-PUBLIC int do_set_filp(void)
+int do_set_filp(void)
 {
   return set_filp((filp_id_t) m_in.ADDRESS);
 }
@@ -401,7 +401,7 @@ PUBLIC int do_set_filp(void)
 /*===========================================================================*
  *                              copy_filp                                    *
  *===========================================================================*/
-PUBLIC int copy_filp(to_ep, cfilp)
+int copy_filp(to_ep, cfilp)
 endpoint_t to_ep;
 filp_id_t cfilp;
 {
@@ -432,7 +432,7 @@ filp_id_t cfilp;
 /*===========================================================================*
  *                              do_copy_filp                                 *
  *===========================================================================*/
-PUBLIC int do_copy_filp(void)
+int do_copy_filp(void)
 {
   return copy_filp(m_in.USER_ENDPT, (filp_id_t) m_in.ADDRESS);
 }
@@ -440,7 +440,7 @@ PUBLIC int do_copy_filp(void)
 /*===========================================================================*
  *                              put_filp                                     *
  *===========================================================================*/
-PUBLIC int put_filp(pfilp)
+int put_filp(pfilp)
 filp_id_t pfilp;
 {
   if (pfilp == NULL) {
@@ -455,7 +455,7 @@ filp_id_t pfilp;
 /*===========================================================================*
  *                              do_put_filp                                  *
  *===========================================================================*/
-PUBLIC int do_put_filp(void)
+int do_put_filp(void)
 {
   return put_filp((filp_id_t) m_in.ADDRESS);
 }
@@ -463,7 +463,7 @@ PUBLIC int do_put_filp(void)
 /*===========================================================================*
  *                             cancel_fd				     *
  *===========================================================================*/
-PUBLIC int cancel_fd(ep, fd)
+int cancel_fd(ep, fd)
 endpoint_t ep;
 int fd;
 {
@@ -498,7 +498,7 @@ int fd;
 /*===========================================================================*
  *                              do_cancel_fd                                 *
  *===========================================================================*/
-PUBLIC int do_cancel_fd(void)
+int do_cancel_fd(void)
 {
   return cancel_fd(m_in.USER_ENDPT, m_in.COUNT);
 }
@@ -506,7 +506,7 @@ PUBLIC int do_cancel_fd(void)
 /*===========================================================================*
  *				close_filp				     *
  *===========================================================================*/
-PUBLIC void close_filp(f)
+void close_filp(f)
 struct filp *f;
 {
 /* Close a file. Will also unlock filp when done */

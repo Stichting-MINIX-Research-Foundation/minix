@@ -15,28 +15,28 @@ struct buf {
 #define BUF_PREALLOC	0x1	/* if set, immediately allocate the page */
 #define BUF_ADJACENT	0x2	/* virtually contiguous with the last buffer */
 
-PRIVATE unsigned int count = 0, failures = 0;
+static unsigned int count = 0, failures = 0;
 
-PRIVATE int success;
-PRIVATE char *fail_file;
-PRIVATE int fail_line;
+static int success;
+static char *fail_file;
+static int fail_line;
 
-PRIVATE int relay;
-PRIVATE endpoint_t endpt;
+static int relay;
+static endpoint_t endpt;
 
-PRIVATE int verbose;
+static int verbose;
 
-PRIVATE enum {
+static enum {
 	GE_NONE,		/* no exception */
 	GE_REVOKED,		/* revoked grant */
 	GE_INVALID		/* invalid grant */
 } grant_exception = GE_NONE;
 
-PRIVATE int grant_access = 0;
+static int grant_access = 0;
 
 #define expect(r)	expect_f((r), __FILE__, __LINE__)
 
-PRIVATE void alloc_buf(struct buf *buf, phys_bytes next)
+static void alloc_buf(struct buf *buf, phys_bytes next)
 {
 	void *tmp = NULL;
 	vir_bytes addr;
@@ -108,7 +108,7 @@ PRIVATE void alloc_buf(struct buf *buf, phys_bytes next)
 		panic("unable to allocate noncontiguous range");
 }
 
-PRIVATE void alloc_bufs(struct buf *buf, int count)
+static void alloc_bufs(struct buf *buf, int count)
 {
 	static vir_bytes base = 0x80000000L;
 	phys_bytes next;
@@ -141,7 +141,7 @@ PRIVATE void alloc_bufs(struct buf *buf, int count)
 #endif
 }
 
-PRIVATE void free_bufs(struct buf *buf, int count)
+static void free_bufs(struct buf *buf, int count)
 {
 	int i, j, r;
 
@@ -156,7 +156,7 @@ PRIVATE void free_bufs(struct buf *buf, int count)
 	}
 }
 
-PRIVATE int is_allocated(vir_bytes addr, size_t bytes, phys_bytes *phys)
+static int is_allocated(vir_bytes addr, size_t bytes, phys_bytes *phys)
 {
 	int r;
 
@@ -170,19 +170,19 @@ PRIVATE int is_allocated(vir_bytes addr, size_t bytes, phys_bytes *phys)
 	return r == OK;
 }
 
-PRIVATE int is_buf_allocated(struct buf *buf)
+static int is_buf_allocated(struct buf *buf)
 {
 	return is_allocated(buf->addr, buf->pages * PAGE_SIZE, &buf->phys);
 }
 
-PRIVATE void test_group(char *name)
+static void test_group(char *name)
 {
 	if (verbose)
 		printf("Test group: %s (%s)\n",
 			name, relay ? "relay" : "local");
 }
 
-PRIVATE void expect_f(int res, char *file, int line)
+static void expect_f(int res, char *file, int line)
 {
 	if (!res && success) {
 		success = FALSE;
@@ -191,7 +191,7 @@ PRIVATE void expect_f(int res, char *file, int line)
 	}
 }
 
-PRIVATE void got_result(char *desc)
+static void got_result(char *desc)
 {
 	count++;
 
@@ -206,7 +206,7 @@ PRIVATE void got_result(char *desc)
 	}
 }
 
-PRIVATE int relay_vumap(struct vumap_vir *vvec, int vcount, size_t offset,
+static int relay_vumap(struct vumap_vir *vvec, int vcount, size_t offset,
 	int access, struct vumap_phys *pvec, int *pcount)
 {
 	struct vumap_vir gvvec[MAPVEC_NR + 3];
@@ -266,7 +266,7 @@ PRIVATE int relay_vumap(struct vumap_vir *vvec, int vcount, size_t offset,
 	return (r != OK) ? r : m.m_type;
 }
 
-PRIVATE int do_vumap(endpoint_t endpt, struct vumap_vir *vvec, int vcount,
+static int do_vumap(endpoint_t endpt, struct vumap_vir *vvec, int vcount,
 	size_t offset, int access, struct vumap_phys *pvec, int *pcount)
 {
 	struct vumap_phys pv_backup[MAPVEC_NR + 3];
@@ -308,7 +308,7 @@ PRIVATE int do_vumap(endpoint_t endpt, struct vumap_vir *vvec, int vcount,
 	return r;
 }
 
-PRIVATE void test_basics(void)
+static void test_basics(void)
 {
 	struct vumap_vir vvec[2];
 	struct vumap_phys pvec[4];
@@ -499,7 +499,7 @@ PRIVATE void test_basics(void)
 	free_bufs(buf, 4);
 }
 
-PRIVATE void test_endpt(void)
+static void test_endpt(void)
 {
 	struct vumap_vir vvec[1];
 	struct vumap_phys pvec[1];
@@ -538,7 +538,7 @@ PRIVATE void test_endpt(void)
 	free_bufs(buf, 1);
 }
 
-PRIVATE void test_vector1(void)
+static void test_vector1(void)
 {
 	struct vumap_vir vvec[2];
 	struct vumap_phys pvec[3];
@@ -599,7 +599,7 @@ PRIVATE void test_vector1(void)
 	free_bufs(buf, 2);
 }
 
-PRIVATE void test_vector2(void)
+static void test_vector2(void)
 {
 	struct vumap_vir vvec[2], *vvecp;
 	struct vumap_phys pvec[3], *pvecp;
@@ -710,7 +710,7 @@ PRIVATE void test_vector2(void)
 	free_bufs(buf, 2);
 }
 
-PRIVATE void test_grant(void)
+static void test_grant(void)
 {
 	struct vumap_vir vvec[2];
 	struct vumap_phys pvec[3];
@@ -805,7 +805,7 @@ PRIVATE void test_grant(void)
 	free_bufs(buf, 2);
 }
 
-PRIVATE void test_offset(void)
+static void test_offset(void)
 {
 	struct vumap_vir vvec[2];
 	struct vumap_phys pvec[3];
@@ -943,7 +943,7 @@ PRIVATE void test_offset(void)
 	free_bufs(buf, 4);
 }
 
-PRIVATE void test_access(void)
+static void test_access(void)
 {
 	struct vumap_vir vvec[3];
 	struct vumap_phys pvec[4], *pvecp;
@@ -1130,7 +1130,7 @@ PRIVATE void test_access(void)
 	 */
 }
 
-PRIVATE void phys_limit(struct vumap_vir *vvec, int vcount,
+static void phys_limit(struct vumap_vir *vvec, int vcount,
 	struct vumap_phys *pvec, int pcount, struct buf *buf, char *desc)
 {
 	int i, r;
@@ -1147,7 +1147,7 @@ PRIVATE void phys_limit(struct vumap_vir *vvec, int vcount,
 	got_result(desc);
 }
 
-PRIVATE void test_limits(void)
+static void test_limits(void)
 {
 	struct vumap_vir vvec[MAPVEC_NR + 3];
 	struct vumap_phys pvec[MAPVEC_NR + 3];
@@ -1345,7 +1345,7 @@ PRIVATE void test_limits(void)
 	free_bufs(buf, nr_bufs);
 }
 
-PRIVATE void do_tests(int use_relay)
+static void do_tests(int use_relay)
 {
 	relay = use_relay;
 
@@ -1366,7 +1366,7 @@ PRIVATE void do_tests(int use_relay)
 	test_limits();
 }
 
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	int r;
 
@@ -1392,14 +1392,14 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	return (failures) ? EINVAL : OK;
 }
 
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 
 	sef_startup();
 }
 
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	env_setargs(argc, argv);
 

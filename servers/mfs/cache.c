@@ -26,17 +26,17 @@
 #include "super.h"
 #include "inode.h"
 
-FORWARD void rm_lru(struct buf *bp);
-FORWARD void read_block(struct buf *);
+static void rm_lru(struct buf *bp);
+static void read_block(struct buf *);
 
-PRIVATE int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
+static int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
 
-PRIVATE block_t super_start = 0, super_end = 0; 
+static block_t super_start = 0, super_end = 0; 
 
 /*===========================================================================*
  *				get_block				     *
  *===========================================================================*/
-PUBLIC struct buf *get_block(
+struct buf *get_block(
   register dev_t dev,		/* on which device is the block? */
   register block_t block,	/* which block is wanted? */
   int only_search		/* if NO_READ, don't read, else act normal */
@@ -206,7 +206,7 @@ PUBLIC struct buf *get_block(
 /*===========================================================================*
  *				put_block				     *
  *===========================================================================*/
-PUBLIC void put_block(bp, block_type)
+void put_block(bp, block_type)
 register struct buf *bp;	/* pointer to the buffer to be released */
 int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 {
@@ -259,7 +259,7 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 /*===========================================================================*
  *				alloc_zone				     *
  *===========================================================================*/
-PUBLIC zone_t alloc_zone(
+zone_t alloc_zone(
   dev_t dev,			/* device where zone wanted */
   zone_t z			/* try to allocate new zone near this one */
 )
@@ -302,7 +302,7 @@ PUBLIC zone_t alloc_zone(
 /*===========================================================================*
  *				free_zone				     *
  *===========================================================================*/
-PUBLIC void free_zone(
+void free_zone(
   dev_t dev,				/* device where zone located */
   zone_t numb				/* zone to be returned */
 )
@@ -323,7 +323,7 @@ PUBLIC void free_zone(
 /*===========================================================================*
  *				read_block				     *
  *===========================================================================*/
-PRIVATE void read_block(bp)
+static void read_block(bp)
 register struct buf *bp;	/* buffer pointer */
 {
 /* Read or write a disk block. This is the only routine in which actual disk
@@ -362,7 +362,7 @@ register struct buf *bp;	/* buffer pointer */
 /*===========================================================================*
  *				invalidate				     *
  *===========================================================================*/
-PUBLIC void invalidate(
+void invalidate(
   dev_t device			/* device whose blocks are to be purged */
 )
 {
@@ -400,7 +400,7 @@ int block_write_ok(struct buf *bp)
 /*===========================================================================*
  *				flushall				     *
  *===========================================================================*/
-PUBLIC void flushall(
+void flushall(
   dev_t dev			/* device to flush */
 )
 {
@@ -437,7 +437,7 @@ PUBLIC void flushall(
 /*===========================================================================*
  *				rw_scattered				     *
  *===========================================================================*/
-PUBLIC void rw_scattered(
+void rw_scattered(
   dev_t dev,			/* major-minor device number */
   struct buf **bufq,		/* pointer to array of buffers */
   int bufqsize,			/* number of buffers */
@@ -540,7 +540,7 @@ PUBLIC void rw_scattered(
 /*===========================================================================*
  *				rm_lru					     *
  *===========================================================================*/
-PRIVATE void rm_lru(bp)
+static void rm_lru(bp)
 struct buf *bp;
 {
 /* Remove a block from its LRU chain. */
@@ -563,7 +563,7 @@ struct buf *bp;
 /*===========================================================================*
  *				cache_resize				     *
  *===========================================================================*/
-PRIVATE void cache_resize(unsigned int blocksize, unsigned int bufs)
+static void cache_resize(unsigned int blocksize, unsigned int bufs)
 {
   struct buf *bp;
   struct inode *rip;
@@ -588,7 +588,7 @@ PRIVATE void cache_resize(unsigned int blocksize, unsigned int bufs)
 /*===========================================================================*
  *				bufs_heuristic				     *
  *===========================================================================*/
-PRIVATE int bufs_heuristic(struct super_block *sp)
+static int bufs_heuristic(struct super_block *sp)
 {
   u32_t btotal, bfree, bused;
 
@@ -601,7 +601,7 @@ PRIVATE int bufs_heuristic(struct super_block *sp)
 /*===========================================================================*
  *				set_blocksize				     *
  *===========================================================================*/
-PUBLIC void set_blocksize(struct super_block *sp)
+void set_blocksize(struct super_block *sp)
 {
   int bufs;
 
@@ -626,7 +626,7 @@ PUBLIC void set_blocksize(struct super_block *sp)
 /*===========================================================================*
  *                              buf_pool                                     *
  *===========================================================================*/
-PUBLIC void buf_pool(int new_nr_bufs)
+void buf_pool(int new_nr_bufs)
 {
 /* Initialize the buffer pool. */
   register struct buf *bp;

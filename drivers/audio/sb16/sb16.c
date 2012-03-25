@@ -11,34 +11,34 @@
 #include "mixer.h"
 
 
-FORWARD void dsp_dma_setup(phys_bytes address, int count, int sub_dev);
+static void dsp_dma_setup(phys_bytes address, int count, int sub_dev);
 
-FORWARD int dsp_ioctl(int request, void *val, int *len);
-FORWARD int dsp_set_size(unsigned int size);
-FORWARD int dsp_set_speed(unsigned int speed);
-FORWARD int dsp_set_stereo(unsigned int stereo);
-FORWARD int dsp_set_bits(unsigned int bits);
-FORWARD int dsp_set_sign(unsigned int sign);
-FORWARD int dsp_get_max_frag_size(u32_t *val, int *len);
-
-
-PRIVATE unsigned int DspStereo = DEFAULT_STEREO;
-PRIVATE unsigned int DspSpeed = DEFAULT_SPEED; 
-PRIVATE unsigned int DspBits = DEFAULT_BITS;
-PRIVATE unsigned int DspSign = DEFAULT_SIGN;
-PRIVATE unsigned int DspFragmentSize;
-
-PRIVATE phys_bytes DmaPhys;
-PRIVATE int running = FALSE;
+static int dsp_ioctl(int request, void *val, int *len);
+static int dsp_set_size(unsigned int size);
+static int dsp_set_speed(unsigned int speed);
+static int dsp_set_stereo(unsigned int stereo);
+static int dsp_set_bits(unsigned int bits);
+static int dsp_set_sign(unsigned int sign);
+static int dsp_get_max_frag_size(u32_t *val, int *len);
 
 
-PUBLIC sub_dev_t sub_dev[2];
-PUBLIC special_file_t special_file[3];
-PUBLIC drv_t drv;
+static unsigned int DspStereo = DEFAULT_STEREO;
+static unsigned int DspSpeed = DEFAULT_SPEED; 
+static unsigned int DspBits = DEFAULT_BITS;
+static unsigned int DspSign = DEFAULT_SIGN;
+static unsigned int DspFragmentSize;
+
+static phys_bytes DmaPhys;
+static int running = FALSE;
+
+
+sub_dev_t sub_dev[2];
+special_file_t special_file[3];
+drv_t drv;
 
 
 
-PUBLIC int drv_init(void) {
+int drv_init(void) {
 	drv.DriverName = "SB16";
 	drv.NrOfSubDevices = 2;
 	drv.NrOfSpecialFiles = 3;
@@ -72,7 +72,7 @@ PUBLIC int drv_init(void) {
 }
 
 
-PUBLIC int drv_init_hw(void) {
+int drv_init_hw(void) {
 	int i;
 	int DspVersion[2];
 	Dprint(("drv_init_hw():\n"));
@@ -114,7 +114,7 @@ PUBLIC int drv_init_hw(void) {
 
 
 
-PUBLIC int drv_reset(void) {
+int drv_reset(void) {
 	int i;
 	Dprint(("drv_reset():\n"));
 
@@ -131,7 +131,7 @@ PUBLIC int drv_reset(void) {
 
 
 
-PUBLIC int drv_start(int channel, int DmaMode) {
+int drv_start(int channel, int DmaMode) {
 	Dprint(("drv_start():\n"));
 
 	drv_reset();
@@ -178,7 +178,7 @@ PUBLIC int drv_start(int channel, int DmaMode) {
 
 
 
-PUBLIC int drv_stop(int sub_dev) {
+int drv_stop(int sub_dev) {
 	if(running) {
 		Dprint(("drv_stop():\n"));
 		dsp_command((DspBits == 8 ? DSP_CMD_DMA8HALT : DSP_CMD_DMA16HALT));
@@ -190,7 +190,7 @@ PUBLIC int drv_stop(int sub_dev) {
 
 
 
-PUBLIC int drv_set_dma(u32_t dma, u32_t UNUSED(length), int UNUSED(chan)) {
+int drv_set_dma(u32_t dma, u32_t UNUSED(length), int UNUSED(chan)) {
 	Dprint(("drv_set_dma():\n"));
 	DmaPhys = dma;
 	return OK;
@@ -198,7 +198,7 @@ PUBLIC int drv_set_dma(u32_t dma, u32_t UNUSED(length), int UNUSED(chan)) {
 
 
 
-PUBLIC int drv_reenable_int(int UNUSED(chan)) {
+int drv_reenable_int(int UNUSED(chan)) {
 	Dprint(("drv_reenable_int()\n"));
 	sb16_inb((DspBits == 8 ? DSP_DATA_AVL : DSP_DATA16_AVL));
 	return OK;
@@ -206,33 +206,33 @@ PUBLIC int drv_reenable_int(int UNUSED(chan)) {
 
 
 
-PUBLIC int drv_int_sum(void) {
+int drv_int_sum(void) {
 	return mixer_get(MIXER_IRQ_STATUS) & 0x0F;
 }
 
 
 
-PUBLIC int drv_int(int sub_dev) {
+int drv_int(int sub_dev) {
 	return sub_dev == AUDIO && mixer_get(MIXER_IRQ_STATUS) & 0x03;
 }
 
 
 
-PUBLIC int drv_pause(int chan) {
+int drv_pause(int chan) {
 	drv_stop(chan);
 	return OK;
 }
 
 
 
-PUBLIC int drv_resume(int UNUSED(chan)) {
+int drv_resume(int UNUSED(chan)) {
 	dsp_command((DspBits == 8 ? DSP_CMD_DMA8CONT : DSP_CMD_DMA16CONT));
 	return OK;
 }
 
 
 
-PUBLIC int drv_io_ctl(int request, void *val, int *len, int sub_dev) {
+int drv_io_ctl(int request, void *val, int *len, int sub_dev) {
 	Dprint(("dsp_ioctl: got ioctl %d, argument: %d sub_dev: %d\n", request, val, sub_dev));
 
 	if(sub_dev == AUDIO) {
@@ -246,7 +246,7 @@ PUBLIC int drv_io_ctl(int request, void *val, int *len, int sub_dev) {
 
 
 
-PUBLIC int drv_get_irq(char *irq) {
+int drv_get_irq(char *irq) {
 	Dprint(("drv_get_irq():\n"));
 	*irq = SB_IRQ;
 	return OK;
@@ -254,7 +254,7 @@ PUBLIC int drv_get_irq(char *irq) {
 
 
 
-PUBLIC int drv_get_frag_size(u32_t *frag_size, int UNUSED(sub_dev)) {
+int drv_get_frag_size(u32_t *frag_size, int UNUSED(sub_dev)) {
 	Dprint(("drv_get_frag_size():\n"));
 	*frag_size = DspFragmentSize;
 	return OK;
@@ -262,7 +262,7 @@ PUBLIC int drv_get_frag_size(u32_t *frag_size, int UNUSED(sub_dev)) {
 
 
 
-PRIVATE int dsp_ioctl(int request, void *val, int *len) {
+static int dsp_ioctl(int request, void *val, int *len) {
 	int status;
 	
 	switch(request) {
@@ -281,7 +281,7 @@ PRIVATE int dsp_ioctl(int request, void *val, int *len) {
 
 
 
-PRIVATE void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
+static void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 	pvb_pair_t pvb[9];
 
 	Dprint(("Setting up %d bit DMA\n", DspBits));
@@ -326,7 +326,7 @@ PRIVATE void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 
 
 
-PRIVATE int dsp_set_size(unsigned int size) {
+static int dsp_set_size(unsigned int size) {
 	Dprint(("dsp_set_size(): set fragment size to %u\n", size));
 
 	/* Sanity checks */
@@ -341,7 +341,7 @@ PRIVATE int dsp_set_size(unsigned int size) {
 
 
 
-PRIVATE int dsp_set_speed(unsigned int speed) {
+static int dsp_set_speed(unsigned int speed) {
 	Dprint(("sb16: setting speed to %u, stereo = %d\n", speed, DspStereo));
 
 	if(speed < DSP_MIN_SPEED || speed > DSP_MAX_SPEED) {
@@ -369,7 +369,7 @@ PRIVATE int dsp_set_speed(unsigned int speed) {
 
 
 
-PRIVATE int dsp_set_stereo(unsigned int stereo) {
+static int dsp_set_stereo(unsigned int stereo) {
 	if(stereo) { 
 		DspStereo = 1;
 	} else { 
@@ -381,7 +381,7 @@ PRIVATE int dsp_set_stereo(unsigned int stereo) {
 
 
 
-PRIVATE int dsp_set_bits(unsigned int bits) {
+static int dsp_set_bits(unsigned int bits) {
 	/* Sanity checks */
 	if(bits != 8 && bits != 16) {
 		return EINVAL;
@@ -394,7 +394,7 @@ PRIVATE int dsp_set_bits(unsigned int bits) {
 
 
 
-PRIVATE int dsp_set_sign(unsigned int sign) {
+static int dsp_set_sign(unsigned int sign) {
 	Dprint(("sb16: set sign to %u\n", sign));
 
 	DspSign = (sign > 0 ? 1 : 0); 
@@ -404,7 +404,7 @@ PRIVATE int dsp_set_sign(unsigned int sign) {
 
 
 
-PRIVATE int dsp_get_max_frag_size(u32_t *val, int *len) {
+static int dsp_get_max_frag_size(u32_t *val, int *len) {
 	*len = sizeof(*val);
 	*val = sub_dev[AUDIO].DmaSize / sub_dev[AUDIO].NrOfDmaFragments;
 	return OK;
@@ -412,7 +412,7 @@ PRIVATE int dsp_get_max_frag_size(u32_t *val, int *len) {
 
 
 
-PUBLIC int dsp_command(int value) {
+int dsp_command(int value) {
 	int i;
 
 	for (i = 0; i < SB_TIMEOUT; i++) {
@@ -428,7 +428,7 @@ PUBLIC int dsp_command(int value) {
 
 
 
-PUBLIC int sb16_inb(int port) {	
+int sb16_inb(int port) {	
 	int s;
 	u32_t value;
 
@@ -440,7 +440,7 @@ PUBLIC int sb16_inb(int port) {
 
 
 
-PUBLIC void sb16_outb(int port, int value) {
+void sb16_outb(int port, int value) {
 	int s;
 	
 	if ((s=sys_outb(port, value)) != OK)

@@ -30,7 +30,7 @@ static void set_ee_word(dpeth_t *dep, int a, u16_t w);
 static void ee_wds(dpeth_t *dep);
 #endif
 
-PUBLIC int rtl_probe(dep, skip)
+int rtl_probe(dep, skip)
 struct dpeth *dep;
 int skip;
 {

@@ -7,7 +7,7 @@
 #include <string.h>
 #include <utime.h>
 
-PUBLIC int utime(const char *name, const struct utimbuf *timp)
+int utime(const char *name, const struct utimbuf *timp)
 {
   message m;
 

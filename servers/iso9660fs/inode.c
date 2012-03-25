@@ -10,7 +10,7 @@
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-PUBLIC int fs_putnode()
+int fs_putnode()
 {
 /* Find the inode specified by the request message and decrease its counter. */
   int count;
@@ -40,7 +40,7 @@ PUBLIC int fs_putnode()
 /*===========================================================================*
  *				release_dir_record			     *
  *===========================================================================*/
-PUBLIC int release_dir_record(dir)
+int release_dir_record(dir)
 struct dir_record *dir;
 {
 /* Release a dir record (decrement the counter) */
@@ -65,7 +65,7 @@ struct dir_record *dir;
 /*===========================================================================*
  *				get_free_dir_record			     *
  *===========================================================================*/
-PUBLIC struct dir_record *get_free_dir_record(void)
+struct dir_record *get_free_dir_record(void)
 {
 /* Get a free dir record */
   struct dir_record *dir;
@@ -85,7 +85,7 @@ PUBLIC struct dir_record *get_free_dir_record(void)
 /*===========================================================================*
  *				get_dir_record				     *
  *===========================================================================*/
-PUBLIC struct dir_record *get_dir_record(id_dir_record)
+struct dir_record *get_dir_record(id_dir_record)
 ino_t id_dir_record;
 {
   struct dir_record *dir = NULL;
@@ -115,7 +115,7 @@ ino_t id_dir_record;
 /*===========================================================================*
  *				get_free_ext_attr				     *
  *===========================================================================*/
-PUBLIC struct ext_attr_rec *get_free_ext_attr(void) {
+struct ext_attr_rec *get_free_ext_attr(void) {
 /* Get a free extended attribute structure */
   struct ext_attr_rec *dir;
   for(dir = ext_attr_recs; dir < &ext_attr_recs[NR_ATTR_RECS]; dir++) {
@@ -132,7 +132,7 @@ PUBLIC struct ext_attr_rec *get_free_ext_attr(void) {
 /*===========================================================================*
  *				create_ext_attr				     *
  *===========================================================================*/
-PUBLIC int create_ext_attr(struct ext_attr_rec *ext,char *buffer)
+int create_ext_attr(struct ext_attr_rec *ext,char *buffer)
 {
 /* Fill an extent structure from the data read on the device */
   if (ext == NULL) return(EINVAL);
@@ -161,7 +161,7 @@ PUBLIC int create_ext_attr(struct ext_attr_rec *ext,char *buffer)
 /*===========================================================================*
  *				create_ext_attr				     *
  *===========================================================================*/
-PUBLIC int create_dir_record(dir,buffer,address)
+int create_dir_record(dir,buffer,address)
 struct dir_record *dir;
 char *buffer;
 u32_t address;
@@ -218,7 +218,7 @@ u32_t address;
 /*===========================================================================*
  *			load_dir_record_from_disk			     *
  *===========================================================================*/
-PUBLIC struct dir_record *load_dir_record_from_disk(address)
+struct dir_record *load_dir_record_from_disk(address)
 u32_t address;
 {
 /* This function load a particular dir record from a specific address

@@ -19,7 +19,7 @@
 __weak_alias(sysconf, __sysconf)
 #endif
 
-PRIVATE u32_t get_hz(void)
+static u32_t get_hz(void)
 {
   FILE *fp;
   u32_t hz;
@@ -38,7 +38,7 @@ PRIVATE u32_t get_hz(void)
   return DEFAULT_HZ;
 }
 
-PUBLIC long int sysconf(name)
+long int sysconf(name)
 int name;			/* property being inspected */
 {
   switch(name) {

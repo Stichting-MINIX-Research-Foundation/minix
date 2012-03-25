@@ -11,7 +11,7 @@
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys()
+int no_sys()
 {
 /* Somebody has used an illegal system call number */
   printf("no_sys: invalid call %d\n", req_nr);
@@ -22,7 +22,7 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *				conv2					     *
  *===========================================================================*/
-PUBLIC unsigned conv2(norm, w)
+unsigned conv2(norm, w)
 int norm;			/* TRUE if no swap, FALSE for byte swap */
 int w;				/* promotion of 16-bit word to be swapped */
 {
@@ -35,7 +35,7 @@ int w;				/* promotion of 16-bit word to be swapped */
 /*===========================================================================*
  *				conv4					     *
  *===========================================================================*/
-PUBLIC long conv4(norm, x)
+long conv4(norm, x)
 int norm;			/* TRUE if no swap, FALSE for byte swap */
 long x;				/* 32-bit long to be byte swapped */
 {
@@ -54,7 +54,7 @@ long x;				/* 32-bit long to be byte swapped */
 /*===========================================================================*
  *				clock_time				     *
  *===========================================================================*/
-PUBLIC time_t clock_time()
+time_t clock_time()
 {
 /* This routine returns the time in seconds since 1.1.1970.  MINIX is an
  * astrophysically naive system that assumes the earth rotates at a constant
@@ -75,7 +75,7 @@ PUBLIC time_t clock_time()
 /*===========================================================================*
  *				mfs_min					     *
  *===========================================================================*/
-PUBLIC int min(unsigned int l, unsigned int r)
+int min(unsigned int l, unsigned int r)
 {
   if(r >= l) return(l);
 
@@ -86,7 +86,7 @@ PUBLIC int min(unsigned int l, unsigned int r)
 /*===========================================================================*
  *				mfs_nul					     *
  *===========================================================================*/
-PUBLIC void mfs_nul_f(char *file, int line, char *str, unsigned int len,
+void mfs_nul_f(char *file, int line, char *str, unsigned int len,
 		      unsigned int maxlen)
 {
   if(len < maxlen && str[len-1] != '\0') {
@@ -102,7 +102,7 @@ PUBLIC void mfs_nul_f(char *file, int line, char *str, unsigned int len,
 /*===========================================================================*
  *				sanity_check				     *
  *===========================================================================*/
-PUBLIC void sanitycheck(char *file, int line)
+void sanitycheck(char *file, int line)
 {
 	MYASSERT(SELF_E > 0);
 	if(superblock->s_dev != NO_DEV) {
@@ -116,7 +116,7 @@ PUBLIC void sanitycheck(char *file, int line)
 /*===========================================================================*
  *				ansi_strcmp				     *
  *===========================================================================*/
-PUBLIC int ansi_strcmp(register const char* ansi_s, register const char *s2,
+int ansi_strcmp(register const char* ansi_s, register const char *s2,
 			register size_t ansi_s_length)
 {
 /* Compare non null-terminated string ansi_s (length=ansi_s_length)
@@ -143,7 +143,7 @@ PUBLIC int ansi_strcmp(register const char* ansi_s, register const char *s2,
 /*===========================================================================*
  *				setbit   				     *
  *===========================================================================*/
-PUBLIC bit_t setbit(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
+bit_t setbit(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
 {
   /* Find free bit in bitmap and set. Return number of the bit,
    * if failed return -1.
@@ -192,7 +192,7 @@ PUBLIC bit_t setbit(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
 /*===========================================================================*
  *				setbyte   				     *
  *===========================================================================*/
-PUBLIC bit_t setbyte(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
+bit_t setbyte(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
 {
   /* Find free byte in bitmap and set it. Return number of the starting bit,
    * if failed return -1.
@@ -233,7 +233,7 @@ PUBLIC bit_t setbyte(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
 /*===========================================================================*
  *				unsetbit   				     *
  *===========================================================================*/
-PUBLIC int unsetbit(bitchunk_t *bitmap, bit_t bit)
+int unsetbit(bitchunk_t *bitmap, bit_t bit)
 {
   /* Unset specified bit. If requested bit is already free return -1,
    * otherwise return 0.

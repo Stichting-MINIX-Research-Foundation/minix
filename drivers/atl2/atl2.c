@@ -32,7 +32,7 @@ typedef struct {
 	u8_t data[ATL2_RXD_SIZE - sizeof(u32_t) * 2];
 } rxd_t;
 
-PRIVATE struct {
+static struct {
 	int devind;		/* PCI device index */
 	int irq;		/* IRQ number */
 	int hook_id;		/* IRQ hook ID */
@@ -82,14 +82,14 @@ PRIVATE struct {
 
 #define ATL2_ALIGN_32(n) (((n) + 3) & ~3)
 
-PRIVATE iovec_s_t iovec[NR_IOREQS];
+static iovec_s_t iovec[NR_IOREQS];
 
-PRIVATE int instance;
+static int instance;
 
 /*===========================================================================*
  *				atl2_read_vpd				     *
  *===========================================================================*/
-PRIVATE int atl2_read_vpd(int index, u32_t *res)
+static int atl2_read_vpd(int index, u32_t *res)
 {
 	/* Read a value from the VPD register area.
 	 */
@@ -123,7 +123,7 @@ PRIVATE int atl2_read_vpd(int index, u32_t *res)
 /*===========================================================================*
  *				atl2_get_vpd_hwaddr			     *
  *===========================================================================*/
-PRIVATE int atl2_get_vpd_hwaddr(void)
+static int atl2_get_vpd_hwaddr(void)
 {
 	/* Read the MAC address from the EEPROM, using the Vital Product Data
 	 * register interface.
@@ -176,7 +176,7 @@ PRIVATE int atl2_get_vpd_hwaddr(void)
 /*===========================================================================*
  *				atl2_get_hwaddr				     *
  *===========================================================================*/
-PRIVATE void atl2_get_hwaddr(void)
+static void atl2_get_hwaddr(void)
 {
 	/* Get the MAC address of the card. First try the EEPROM; if that
 	 * fails, just use whatever the card was already set to.
@@ -196,7 +196,7 @@ PRIVATE void atl2_get_hwaddr(void)
 /*===========================================================================*
  *				atl2_read_mdio				     *
  *===========================================================================*/
-PRIVATE int atl2_read_mdio(int addr, u16_t *res)
+static int atl2_read_mdio(int addr, u16_t *res)
 {
 	/* Read a MII PHY register using MDIO.
 	 */
@@ -227,7 +227,7 @@ PRIVATE int atl2_read_mdio(int addr, u16_t *res)
 /*===========================================================================*
  *				atl2_alloc_dma				     *
  *===========================================================================*/
-PRIVATE int atl2_alloc_dma(void)
+static int atl2_alloc_dma(void)
 {
 	/* Allocate DMA ring buffers.
 	 */
@@ -263,7 +263,7 @@ PRIVATE int atl2_alloc_dma(void)
 /*===========================================================================*
  *				atl2_stop				     *
  *===========================================================================*/
-PRIVATE int atl2_stop(void)
+static int atl2_stop(void)
 {
 	/* Stop the device.
 	 */
@@ -299,7 +299,7 @@ PRIVATE int atl2_stop(void)
 /*===========================================================================*
  *				atl2_reset				     *
  *===========================================================================*/
-PRIVATE int atl2_reset(void)
+static int atl2_reset(void)
 {
 	/* Reset the device to a known good state.
 	 */
@@ -334,7 +334,7 @@ PRIVATE int atl2_reset(void)
 /*===========================================================================*
  *				atl2_set_mode				     *
  *===========================================================================*/
-PRIVATE void atl2_set_mode(void)
+static void atl2_set_mode(void)
 {
 	/* Reconfigure the device's promiscuity, multicast, and broadcast mode
 	 * settings.
@@ -357,7 +357,7 @@ PRIVATE void atl2_set_mode(void)
 /*===========================================================================*
  *				atl2_setup				     *
  *===========================================================================*/
-PRIVATE int atl2_setup(void)
+static int atl2_setup(void)
 {
 	/* Set up the device for normal operation.
 	 */
@@ -457,7 +457,7 @@ PRIVATE int atl2_setup(void)
 /*===========================================================================*
  *				atl2_probe				     *
  *===========================================================================*/
-PRIVATE int atl2_probe(int skip)
+static int atl2_probe(int skip)
 {
 	/* Find a matching PCI device.
 	 */
@@ -490,7 +490,7 @@ PRIVATE int atl2_probe(int skip)
 /*===========================================================================*
  *				atl2_init				     *
  *===========================================================================*/
-PRIVATE void atl2_init(int devind)
+static void atl2_init(int devind)
 {
 	/* Initialize the device.
 	 */
@@ -537,7 +537,7 @@ PRIVATE void atl2_init(int devind)
 /*===========================================================================*
  *				atl2_tx_stat				     *
  *===========================================================================*/
-PRIVATE void atl2_tx_stat(u32_t stat)
+static void atl2_tx_stat(u32_t stat)
 {
 	/* Update statistics for packet transmission.
 	 */
@@ -564,7 +564,7 @@ PRIVATE void atl2_tx_stat(u32_t stat)
 /*===========================================================================*
  *				atl2_rx_stat				     *
  *===========================================================================*/
-PRIVATE void atl2_rx_stat(u32_t stat)
+static void atl2_rx_stat(u32_t stat)
 {
 	/* Update statistics for packet receipt.
 	 */
@@ -587,7 +587,7 @@ PRIVATE void atl2_rx_stat(u32_t stat)
 /*===========================================================================*
  *				atl2_tx_advance				     *
  *===========================================================================*/
-PRIVATE int atl2_tx_advance(void)
+static int atl2_tx_advance(void)
 {
 	/* Advance the TxD/TxS tails by as many sent packets as found.
 	 */
@@ -642,7 +642,7 @@ PRIVATE int atl2_tx_advance(void)
 /*===========================================================================*
  *				atl2_rx_advance				     *
  *===========================================================================*/
-PRIVATE void atl2_rx_advance(int next)
+static void atl2_rx_advance(int next)
 {
 	/* Advance the RxD tail by as many failed receipts as possible, and
 	 * see if there is an actual packet left to receive. If 'next' is set,
@@ -710,7 +710,7 @@ PRIVATE void atl2_rx_advance(int next)
 /*===========================================================================*
  *				atl2_reply				     *
  *===========================================================================*/
-PRIVATE void atl2_reply(void)
+static void atl2_reply(void)
 {
 	/* Send a task reply to Inet.
 	 */
@@ -740,7 +740,7 @@ PRIVATE void atl2_reply(void)
 /*===========================================================================*
  *				atl2_readv				     *
  *===========================================================================*/
-PRIVATE void atl2_readv(const message *m, int from_int)
+static void atl2_readv(const message *m, int from_int)
 {
 	/* Read packet data.
 	 */
@@ -835,7 +835,7 @@ suspend:
 /*===========================================================================*
  *				atl2_writev				     *
  *===========================================================================*/
-PRIVATE void atl2_writev(const message *m, int from_int)
+static void atl2_writev(const message *m, int from_int)
 {
 	/* Write packet data.
 	 */
@@ -959,7 +959,7 @@ suspend:
 /*===========================================================================*
  *				atl2_intr				     *
  *===========================================================================*/
-PRIVATE void atl2_intr(const message *UNUSED(m))
+static void atl2_intr(const message *UNUSED(m))
 {
 	/* Interrupt received.
 	 */
@@ -1014,7 +1014,7 @@ PRIVATE void atl2_intr(const message *UNUSED(m))
 /*===========================================================================*
  *				atl2_conf				     *
  *===========================================================================*/
-PRIVATE void atl2_conf(message *m)
+static void atl2_conf(message *m)
 {
 	/* Configure the mode of the card.
 	 */
@@ -1044,7 +1044,7 @@ PRIVATE void atl2_conf(message *m)
 /*===========================================================================*
  *				atl2_getstat				     *
  *===========================================================================*/
-PRIVATE void atl2_getstat(message *m)
+static void atl2_getstat(message *m)
 {
 	/* Copy out statistics.
 	 */
@@ -1062,7 +1062,7 @@ PRIVATE void atl2_getstat(message *m)
 /*===========================================================================*
  *				atl2_dump_link				     *
  *===========================================================================*/
-PRIVATE void atl2_dump_link(void)
+static void atl2_dump_link(void)
 {
 	/* Dump link status.
 	 */
@@ -1099,7 +1099,7 @@ PRIVATE void atl2_dump_link(void)
 /*===========================================================================*
  *				atl2_dump				     *
  *===========================================================================*/
-PRIVATE void atl2_dump(void)
+static void atl2_dump(void)
 {
 	/* Dump statistics.
 	 */
@@ -1143,7 +1143,7 @@ PRIVATE void atl2_dump(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the atl2 driver.
 	 */
@@ -1184,7 +1184,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *			    sef_cb_signal_handler			     *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	/* In case of a termination signal, shut down this driver.
 	 * Stop the device, and deallocate resources as proof of concept.
@@ -1214,7 +1214,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);

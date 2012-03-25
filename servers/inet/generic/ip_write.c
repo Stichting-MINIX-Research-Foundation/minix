@@ -21,9 +21,9 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD void error_reply ARGS(( ip_fd_t *fd, int error ));
+static void error_reply ARGS(( ip_fd_t *fd, int error ));
 
-PUBLIC int ip_write (fd, count)
+int ip_write (fd, count)
 int fd;
 size_t count;
 {
@@ -51,7 +51,7 @@ size_t count;
 	return NW_OK;
 }
 
-PUBLIC int ip_send(fd, data, data_len)
+int ip_send(fd, data, data_len)
 int fd;
 acc_t *data;
 size_t data_len;
@@ -336,7 +336,7 @@ size_t data_len;
 	return r;
 }
 
-PUBLIC void ip_hdr_chksum(ip_hdr, ip_hdr_len)
+void ip_hdr_chksum(ip_hdr, ip_hdr_len)
 ip_hdr_t *ip_hdr;
 int ip_hdr_len;
 {
@@ -344,7 +344,7 @@ int ip_hdr_len;
 	ip_hdr->ih_hdr_chk= ~oneC_sum (0, (u16_t *)ip_hdr, ip_hdr_len);
 }
 
-PUBLIC acc_t *ip_split_pack (ip_port, ref_last, mtu)
+acc_t *ip_split_pack (ip_port, ref_last, mtu)
 ip_port_t *ip_port;
 acc_t **ref_last;
 int mtu;
@@ -497,7 +497,7 @@ int mtu;
 	return first_pack;
 }
 
-PRIVATE void error_reply (ip_fd, error)
+static void error_reply (ip_fd, error)
 ip_fd_t *ip_fd;
 int error;
 {

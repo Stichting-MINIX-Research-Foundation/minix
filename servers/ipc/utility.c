@@ -1,6 +1,6 @@
 #include "inc.h"
 
-PUBLIC int check_perm(struct ipc_perm *req, endpoint_t who, int mode)
+int check_perm(struct ipc_perm *req, endpoint_t who, int mode)
 {
 	int req_mode;
 	int cur_mode;

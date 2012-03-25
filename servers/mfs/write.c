@@ -16,14 +16,14 @@
 #include "super.h"
 
 
-FORWARD void wr_indir(struct buf *bp, int index, zone_t zone);
-FORWARD int empty_indir(struct buf *, struct super_block *);
+static void wr_indir(struct buf *bp, int index, zone_t zone);
+static int empty_indir(struct buf *, struct super_block *);
 
 
 /*===========================================================================*
  *				write_map				     *
  *===========================================================================*/
-PUBLIC int write_map(rip, position, new_zone, op)
+int write_map(rip, position, new_zone, op)
 struct inode *rip;		/* pointer to inode to be changed */
 off_t position;			/* file address to be mapped */
 zone_t new_zone;		/* zone # to be inserted */
@@ -186,7 +186,7 @@ int op;				/* special actions */
 /*===========================================================================*
  *				wr_indir				     *
  *===========================================================================*/
-PRIVATE void wr_indir(bp, index, zone)
+static void wr_indir(bp, index, zone)
 struct buf *bp;			/* pointer to indirect block */
 int index;			/* index into *bp */
 zone_t zone;			/* zone to write */
@@ -211,7 +211,7 @@ zone_t zone;			/* zone to write */
 /*===========================================================================*
  *				empty_indir				     *
  *===========================================================================*/
-PRIVATE int empty_indir(bp, sb)
+static int empty_indir(bp, sb)
 struct buf *bp;			/* pointer to indirect block */
 struct super_block *sb;		/* superblock of device block resides on */
 {
@@ -230,7 +230,7 @@ struct super_block *sb;		/* superblock of device block resides on */
 /*===========================================================================*
  *				clear_zone				     *
  *===========================================================================*/
-PUBLIC void clear_zone(rip, pos, flag)
+void clear_zone(rip, pos, flag)
 register struct inode *rip;	/* inode to clear */
 off_t pos;			/* points to block to clear */
 int flag;			/* 1 if called by new_block, 0 otherwise */
@@ -270,7 +270,7 @@ int flag;			/* 1 if called by new_block, 0 otherwise */
 /*===========================================================================*
  *				new_block				     *
  *===========================================================================*/
-PUBLIC struct buf *new_block(rip, position)
+struct buf *new_block(rip, position)
 register struct inode *rip;	/* pointer to inode */
 off_t position;			/* file pointer */
 {
@@ -325,7 +325,7 @@ off_t position;			/* file pointer */
 /*===========================================================================*
  *				zero_block				     *
  *===========================================================================*/
-PUBLIC void zero_block(bp)
+void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */

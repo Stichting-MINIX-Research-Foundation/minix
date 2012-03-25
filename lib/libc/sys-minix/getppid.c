@@ -8,7 +8,7 @@
 __weak_alias(getppid, _getppid)
 #endif
 
-PUBLIC pid_t getppid()
+pid_t getppid()
 {
   message m;
 

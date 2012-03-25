@@ -21,7 +21,7 @@
 /*===========================================================================*
  *			        do_sdevio                                    *
  *===========================================================================*/
-PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
+int do_sdevio(struct proc * caller, message *m_ptr)
 {
   vir_bytes newoffset;
   endpoint_t newep;

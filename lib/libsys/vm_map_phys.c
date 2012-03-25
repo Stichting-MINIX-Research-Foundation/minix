@@ -7,7 +7,7 @@
 #include <string.h>
 #include <errno.h>
 
-PUBLIC void *vm_map_phys(endpoint_t who, void *phaddr, size_t len)
+void *vm_map_phys(endpoint_t who, void *phaddr, size_t len)
 {
 	message m;
 	int r;
@@ -23,7 +23,7 @@ PUBLIC void *vm_map_phys(endpoint_t who, void *phaddr, size_t len)
 	return (void *) m.VMMP_VADDR_REPLY;
 }
 
-PUBLIC int vm_unmap_phys(endpoint_t who, void *vaddr, size_t len)
+int vm_unmap_phys(endpoint_t who, void *vaddr, size_t len)
 {
 	message m;
 

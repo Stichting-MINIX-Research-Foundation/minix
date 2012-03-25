@@ -12,7 +12,7 @@
 #define ROOT_INO_NR 1
 
 /* Structure for the primary volume descriptor */
-PUBLIC struct iso9660_vd_pri {
+struct iso9660_vd_pri {
   u8_t vd_type;
   char standard_id[ISO9660_SIZE_STANDARD_ID];
   u8_t vd_version;

@@ -25,10 +25,10 @@ struct sem_struct {
 	struct semaphore sems[SEMMSL];
 };
 
-PRIVATE struct sem_struct sem_list[SEMMNI];
-PRIVATE int sem_list_nr = 0;
+static struct sem_struct sem_list[SEMMNI];
+static int sem_list_nr = 0;
 
-PRIVATE struct sem_struct *sem_find_key(key_t key)
+static struct sem_struct *sem_find_key(key_t key)
 {
 	int i;
 	if (key == IPC_PRIVATE)
@@ -39,7 +39,7 @@ PRIVATE struct sem_struct *sem_find_key(key_t key)
 	return NULL;
 }
 
-PRIVATE struct sem_struct *sem_find_id(int id)
+static struct sem_struct *sem_find_id(int id)
 {
 	int i;
 	for (i = 0; i < sem_list_nr; i++)
@@ -51,7 +51,7 @@ PRIVATE struct sem_struct *sem_find_id(int id)
 /*===========================================================================*
  *				do_semget		     		     *
  *===========================================================================*/
-PUBLIC int do_semget(message *m)
+int do_semget(message *m)
 {
 	key_t key;
 	int nsems, flag, id;
@@ -98,7 +98,7 @@ PUBLIC int do_semget(message *m)
 	return OK;
 }
 
-PRIVATE void send_message_to_process(endpoint_t who, int ret, int ignore)
+static void send_message_to_process(endpoint_t who, int ret, int ignore)
 {
 	message m;
 
@@ -106,7 +106,7 @@ PRIVATE void send_message_to_process(endpoint_t who, int ret, int ignore)
 	sendnb(who, &m);
 }
 
-PRIVATE void remove_semaphore(struct sem_struct *sem)
+static void remove_semaphore(struct sem_struct *sem)
 {
 	int i, nr;
 
@@ -129,7 +129,7 @@ PRIVATE void remove_semaphore(struct sem_struct *sem)
 }
 
 #if 0
-PRIVATE void show_semaphore(void)
+static void show_semaphore(void)
 {
 	int i, j, k;
 
@@ -164,7 +164,7 @@ PRIVATE void show_semaphore(void)
 }
 #endif
 
-PRIVATE void remove_process(endpoint_t pt)
+static void remove_process(endpoint_t pt)
 {
 	int i;
 
@@ -210,7 +210,7 @@ PRIVATE void remove_process(endpoint_t pt)
 	}
 }
 
-PRIVATE void update_one_semaphore(struct sem_struct *sem, int is_remove)
+static void update_one_semaphore(struct sem_struct *sem, int is_remove)
 {
 	int i, j, nr;
 	struct semaphore *semaphore;
@@ -266,7 +266,7 @@ PRIVATE void update_one_semaphore(struct sem_struct *sem, int is_remove)
 	}
 }
 
-PRIVATE void update_semaphores(void)
+static void update_semaphores(void)
 {
 	int i;
 
@@ -277,7 +277,7 @@ PRIVATE void update_semaphores(void)
 /*===========================================================================*
  *				do_semctl		     		     *
  *===========================================================================*/
-PUBLIC int do_semctl(message *m)
+int do_semctl(message *m)
 {
 	int r, i;
 	long opt;
@@ -437,7 +437,7 @@ PUBLIC int do_semctl(message *m)
 /*===========================================================================*
  *				do_semop		     		     *
  *===========================================================================*/
-PUBLIC int do_semop(message *m)
+int do_semop(message *m)
 {
 	int id, i, j, r;
 	struct sembuf *sops;
@@ -589,7 +589,7 @@ out:
 /*===========================================================================*
  *				is_sem_nil		     		     *
  *===========================================================================*/
-PUBLIC int is_sem_nil(void)
+int is_sem_nil(void)
 {
 	return (sem_list_nr == 0);
 }
@@ -597,7 +597,7 @@ PUBLIC int is_sem_nil(void)
 /*===========================================================================*
  *				sem_process_vm_notify	     		     *
  *===========================================================================*/
-PUBLIC void sem_process_vm_notify(void)
+void sem_process_vm_notify(void)
 {
 	endpoint_t pt;
 	int r;

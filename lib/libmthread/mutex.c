@@ -3,9 +3,9 @@
 #include "proto.h"
 
 #ifdef MTHREAD_STRICT
-PRIVATE struct __mthread_mutex *vm_front, *vm_rear;
-FORWARD void mthread_mutex_add(mthread_mutex_t *m);
-FORWARD void mthread_mutex_remove(mthread_mutex_t *m);
+static struct __mthread_mutex *vm_front, *vm_rear;
+static void mthread_mutex_add(mthread_mutex_t *m);
+static void mthread_mutex_remove(mthread_mutex_t *m);
 #else
 # define mthread_mutex_add(m)		((*m)->mm_magic = MTHREAD_INIT_MAGIC)
 # define mthread_mutex_remove(m)	((*m)->mm_magic = MTHREAD_NOT_INUSE)
@@ -14,7 +14,7 @@ FORWARD void mthread_mutex_remove(mthread_mutex_t *m);
 /*===========================================================================*
  *				mthread_init_valid_mutexes			     *
  *===========================================================================*/
-PUBLIC void mthread_init_valid_mutexes(void)
+void mthread_init_valid_mutexes(void)
 {
 #ifdef MTHREAD_STRICT
 /* Initialize list of valid mutexes */
@@ -27,7 +27,7 @@ PUBLIC void mthread_init_valid_mutexes(void)
  *				mthread_mutex_add			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-PRIVATE void mthread_mutex_add(m) 
+static void mthread_mutex_add(m) 
 mthread_mutex_t *m;
 {
 /* Add mutex to list of valid, initialized mutexes */
@@ -48,7 +48,7 @@ mthread_mutex_t *m;
 /*===========================================================================*
  *				mthread_mutex_destroy			     *
  *===========================================================================*/
-PUBLIC int mthread_mutex_destroy(mutex)
+int mthread_mutex_destroy(mutex)
 mthread_mutex_t *mutex;
 {
 /* Invalidate mutex and deallocate resources. */
@@ -87,7 +87,7 @@ mthread_mutex_t *mutex;
 /*===========================================================================*
  *				mthread_mutex_init			     *
  *===========================================================================*/
-PUBLIC int mthread_mutex_init(mutex, mattr)
+int mthread_mutex_init(mutex, mattr)
 mthread_mutex_t *mutex;	/* Mutex that is to be initialized */
 mthread_mutexattr_t *mattr;	/* Mutex attribute */
 {
@@ -119,7 +119,7 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 /*===========================================================================*
  *				mthread_mutex_lock			     *
  *===========================================================================*/
-PUBLIC int mthread_mutex_lock(mutex)
+int mthread_mutex_lock(mutex)
 mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 {
 /* Try to lock this mutex. If already locked, append the current thread to
@@ -153,7 +153,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
  *				mthread_mutex_remove			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-PRIVATE void mthread_mutex_remove(m)
+static void mthread_mutex_remove(m)
 mthread_mutex_t *m;
 {
 /* Remove mutex from list of valid, initialized mutexes */
@@ -173,7 +173,7 @@ mthread_mutex_t *m;
 /*===========================================================================*
  *				mthread_mutex_trylock			     *
  *===========================================================================*/
-PUBLIC int mthread_mutex_trylock(mutex)
+int mthread_mutex_trylock(mutex)
 mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 {
 /* Try to lock this mutex and return OK. If already locked, return error. */
@@ -202,7 +202,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 /*===========================================================================*
  *				mthread_mutex_unlock			     *
  *===========================================================================*/
-PUBLIC int mthread_mutex_unlock(mutex)
+int mthread_mutex_unlock(mutex)
 mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
 {
 /* Unlock a previously locked mutex. If there is a pending lock for this mutex 
@@ -231,7 +231,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
  *				mthread_mutex_valid			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-PUBLIC int mthread_mutex_valid(m)
+int mthread_mutex_valid(m)
 mthread_mutex_t *m;
 {
 /* Check to see if mutex is on the list of valid mutexes */
@@ -256,7 +256,7 @@ mthread_mutex_t *m;
  *				mthread_mutex_verify			     *
  *===========================================================================*/
 #ifdef MDEBUG
-PUBLIC int mthread_mutex_verify(void)
+int mthread_mutex_verify(void)
 {
   /* Return true when no mutexes are in use */
   int r = 1;

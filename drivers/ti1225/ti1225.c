@@ -16,7 +16,7 @@ Created:	Dec 2005 by Philip Homburg
 /* The use of interrupts is not yet ready for prime time */
 #define USE_INTS	0
 
-PRIVATE struct port
+static struct port
 {
 	int p_devind;
 	u8_t p_cb_busnr;
@@ -28,16 +28,16 @@ PRIVATE struct port
 	volatile struct csr *csr_ptr;
 } port;
 
-PRIVATE int instance;
-PRIVATE int debug;
+static int instance;
+static int debug;
 
-FORWARD int hw_probe(int skip);
-FORWARD void hw_init(struct port *pp, int devind);
-FORWARD void do_int(struct port *pp);
+static int hw_probe(int skip);
+static void hw_init(struct port *pp, int devind);
+static void do_int(struct port *pp);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				main					     *
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -84,7 +84,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the ti1225 driver. */
 	int r, devind;
@@ -114,7 +114,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				hw_probe				     *
  *===========================================================================*/
-PRIVATE int hw_probe(int skip)
+static int hw_probe(int skip)
 {
 	u16_t vid, did;
 	int devind;
@@ -139,7 +139,7 @@ PRIVATE int hw_probe(int skip)
 /*===========================================================================*
  *				hw_init					     *
  *===========================================================================*/
-PRIVATE void hw_init(struct port *pp, int devind)
+static void hw_init(struct port *pp, int devind)
 {
 	u8_t v8;
 	u16_t v16;
@@ -247,7 +247,7 @@ PRIVATE void hw_init(struct port *pp, int devind)
 /*===========================================================================*
  *				do_int					     *
  *===========================================================================*/
-PRIVATE void do_int(struct port *pp)
+static void do_int(struct port *pp)
 {
 	int devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
 		socket_5v, socket_3v, socket_Xv, socket_Yv;

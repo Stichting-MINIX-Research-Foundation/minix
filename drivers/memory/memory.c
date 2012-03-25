@@ -38,29 +38,29 @@
 
 #define NR_DEVS            (7+RAMDISKS)	/* number of minor devices */
 
-PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
-PRIVATE vir_bytes m_vaddrs[NR_DEVS];
-PRIVATE dev_t m_device;			/* current minor character device */
+static struct device m_geom[NR_DEVS];  /* base and size of each device */
+static vir_bytes m_vaddrs[NR_DEVS];
+static dev_t m_device;			/* current minor character device */
 
-PRIVATE int openct[NR_DEVS];
+static int openct[NR_DEVS];
 
-FORWARD struct device *m_prepare(dev_t device);
-FORWARD int m_transfer(endpoint_t endpt, int opcode, u64_t position,
+static struct device *m_prepare(dev_t device);
+static int m_transfer(endpoint_t endpt, int opcode, u64_t position,
 	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
 	flags);
-FORWARD int m_do_open(message *m_ptr);
-FORWARD int m_do_close(message *m_ptr);
+static int m_do_open(message *m_ptr);
+static int m_do_close(message *m_ptr);
 
-FORWARD struct device *m_block_part(dev_t minor);
-FORWARD int m_block_transfer(dev_t minor, int do_write, u64_t position,
+static struct device *m_block_part(dev_t minor);
+static int m_block_transfer(dev_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
-FORWARD int m_block_open(dev_t minor, int access);
-FORWARD int m_block_close(dev_t minor);
-FORWARD int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t
+static int m_block_open(dev_t minor, int access);
+static int m_block_close(dev_t minor);
+static int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t
 	endpt, cp_grant_id_t grant);
 
 /* Entry points to the CHARACTER part of this driver. */
-PRIVATE struct chardriver m_cdtab = {
+static struct chardriver m_cdtab = {
   m_do_open,	/* open or mount */
   m_do_close,	/* nothing on a close */
   nop_ioctl,	/* no I/O control */
@@ -74,7 +74,7 @@ PRIVATE struct chardriver m_cdtab = {
 };
 
 /* Entry points to the BLOCK part of this driver. */
-PRIVATE struct blockdriver m_bdtab = {
+static struct blockdriver m_bdtab = {
   BLOCKDRIVER_TYPE_DISK,/* handle partition requests */
   m_block_open,		/* open or mount */
   m_block_close,	/* nothing on a close */
@@ -91,19 +91,19 @@ PRIVATE struct blockdriver m_bdtab = {
 
 /* Buffer for the /dev/zero null byte feed. */
 #define ZERO_BUF_SIZE			1024
-PRIVATE char dev_zero[ZERO_BUF_SIZE];
+static char dev_zero[ZERO_BUF_SIZE];
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
   message msg;
   int r, ipc_status;
@@ -129,7 +129,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -147,7 +147,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the memory driver. */
   int i;
@@ -193,7 +193,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				m_is_block				     *
  *===========================================================================*/
-PRIVATE int m_is_block(dev_t minor)
+static int m_is_block(dev_t minor)
 {
 /* Return TRUE iff the given minor device number is for a block device. */
 
@@ -212,7 +212,7 @@ PRIVATE int m_is_block(dev_t minor)
 /*===========================================================================*
  *				m_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *m_prepare(dev_t device)
+static struct device *m_prepare(dev_t device)
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
   if (device >= NR_DEVS || m_is_block(device)) return(NULL);
@@ -224,7 +224,7 @@ PRIVATE struct device *m_prepare(dev_t device)
 /*===========================================================================*
  *				m_transfer				     *
  *===========================================================================*/
-PRIVATE int m_transfer(
+static int m_transfer(
   endpoint_t endpt,		/* endpoint of grant owner */
   int opcode,			/* DEV_GATHER_S or DEV_SCATTER_S */
   u64_t pos64,			/* offset on device to read or write */
@@ -381,7 +381,7 @@ PRIVATE int m_transfer(
 /*===========================================================================*
  *				m_do_open				     *
  *===========================================================================*/
-PRIVATE int m_do_open(message *m_ptr)
+static int m_do_open(message *m_ptr)
 {
 /* Open a memory character device. */
   int r;
@@ -407,7 +407,7 @@ PRIVATE int m_do_open(message *m_ptr)
 /*===========================================================================*
  *				m_do_close				     *
  *===========================================================================*/
-PRIVATE int m_do_close(message *m_ptr)
+static int m_do_close(message *m_ptr)
 {
 /* Close a memory character device. */
   if (m_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
@@ -424,7 +424,7 @@ PRIVATE int m_do_close(message *m_ptr)
 /*===========================================================================*
  *				m_block_part				     *
  *===========================================================================*/
-PRIVATE struct device *m_block_part(dev_t minor)
+static struct device *m_block_part(dev_t minor)
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
   if (minor >= NR_DEVS || !m_is_block(minor)) return(NULL);
@@ -435,7 +435,7 @@ PRIVATE struct device *m_block_part(dev_t minor)
 /*===========================================================================*
  *				m_block_transfer			     *
  *===========================================================================*/
-PRIVATE int m_block_transfer(
+static int m_block_transfer(
   dev_t minor,			/* minor device number */
   int do_write,			/* read or write? */
   u64_t pos64,			/* offset on device to read or write */
@@ -502,7 +502,7 @@ PRIVATE int m_block_transfer(
 /*===========================================================================*
  *				m_block_open				     *
  *===========================================================================*/
-PRIVATE int m_block_open(dev_t minor, int UNUSED(access))
+static int m_block_open(dev_t minor, int UNUSED(access))
 {
 /* Open a memory block device. */
   if (m_block_part(minor) == NULL) return(ENXIO);
@@ -515,7 +515,7 @@ PRIVATE int m_block_open(dev_t minor, int UNUSED(access))
 /*===========================================================================*
  *				m_block_close				     *
  *===========================================================================*/
-PRIVATE int m_block_close(dev_t minor)
+static int m_block_close(dev_t minor)
 {
 /* Close a memory block device. */
   if (m_block_part(minor) == NULL) return(ENXIO);
@@ -556,7 +556,7 @@ PRIVATE int m_block_close(dev_t minor)
 /*===========================================================================*
  *				m_block_ioctl				     *
  *===========================================================================*/
-PRIVATE int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 /* I/O controls for the block devices of the memory driver. Currently there is

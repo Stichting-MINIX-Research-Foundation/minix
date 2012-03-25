@@ -18,7 +18,7 @@
 /*===========================================================================*
  *				do_times				     *
  *===========================================================================*/
-PUBLIC int do_times(struct proc * caller, message * m_ptr)
+int do_times(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_times().  Retrieve the accounting information. */
   register const struct proc *rp;

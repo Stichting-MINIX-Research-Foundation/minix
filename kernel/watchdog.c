@@ -12,7 +12,7 @@ unsigned watchdog_local_timer_ticks = 0U;
 struct arch_watchdog *watchdog;
 int watchdog_enabled;
 
-PRIVATE void lockup_check(struct nmi_frame * frame)
+static void lockup_check(struct nmi_frame * frame)
 {
 	/* FIXME this should be CPU local */
 	static unsigned no_ticks;
@@ -50,7 +50,7 @@ PRIVATE void lockup_check(struct nmi_frame * frame)
 	arch_watchdog_lockup(frame);
 }
 
-PUBLIC void nmi_watchdog_handler(struct nmi_frame * frame)
+void nmi_watchdog_handler(struct nmi_frame * frame)
 {
 #if SPROFILE
 	/*

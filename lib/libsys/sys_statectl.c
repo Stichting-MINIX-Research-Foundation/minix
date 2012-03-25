@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_statectl(int request)
+int sys_statectl(int request)
 {
   message m;
 

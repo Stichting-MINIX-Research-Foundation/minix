@@ -32,17 +32,17 @@
 #include "vmnt.h"
 #include "path.h"
 
-PUBLIC char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
+char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
-FORWARD struct vnode *new_node(struct lookup *resolve, int oflags,
+static struct vnode *new_node(struct lookup *resolve, int oflags,
 	mode_t bits);
-FORWARD int pipe_open(struct vnode *vp, mode_t bits, int oflags);
+static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 
 
 /*===========================================================================*
  *				do_creat				     *
  *===========================================================================*/
-PUBLIC int do_creat()
+int do_creat()
 {
 /* Perform the creat(name, mode) system call. */
   int r;
@@ -58,7 +58,7 @@ PUBLIC int do_creat()
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-PUBLIC int do_open()
+int do_open()
 {
 /* Perform the open(name, flags,...) system call. */
   int create_mode = 0;		/* is really mode_t but this gives problems */
@@ -82,7 +82,7 @@ PUBLIC int do_open()
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
+int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
   int b, r, exist = TRUE, major_dev;
@@ -288,7 +288,7 @@ PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-PRIVATE struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
+static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 {
 /* Try to create a new inode and return a pointer to it. If the inode already
    exists, return a pointer to it as well, but set err_code accordingly.
@@ -466,7 +466,7 @@ PRIVATE struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 /*===========================================================================*
  *				pipe_open				     *
  *===========================================================================*/
-PRIVATE int pipe_open(struct vnode *vp, mode_t bits, int oflags)
+static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 {
 /*  This function is called from common_open. It checks if
  *  there is at least one reader/writer pair for the pipe, if not
@@ -499,7 +499,7 @@ PRIVATE int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 /*===========================================================================*
  *				do_mknod				     *
  *===========================================================================*/
-PUBLIC int do_mknod()
+int do_mknod()
 {
 /* Perform the mknod(name, mode, addr) system call. */
   register mode_t bits, mode_bits;
@@ -543,7 +543,7 @@ PUBLIC int do_mknod()
 /*===========================================================================*
  *				do_mkdir				     *
  *===========================================================================*/
-PUBLIC int do_mkdir()
+int do_mkdir()
 {
 /* Perform the mkdir(name, mode) system call. */
   mode_t bits;			/* mode bits for the new inode */
@@ -579,7 +579,7 @@ PUBLIC int do_mkdir()
 /*===========================================================================*
  *				do_lseek				     *
  *===========================================================================*/
-PUBLIC int do_lseek()
+int do_lseek()
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -635,7 +635,7 @@ PUBLIC int do_lseek()
 /*===========================================================================*
  *				do_llseek				     *
  *===========================================================================*/
-PUBLIC int do_llseek()
+int do_llseek()
 {
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -687,7 +687,7 @@ PUBLIC int do_llseek()
 /*===========================================================================*
  *				do_close				     *
  *===========================================================================*/
-PUBLIC int do_close()
+int do_close()
 {
 /* Perform the close(fd) system call. */
 
@@ -698,7 +698,7 @@ PUBLIC int do_close()
 /*===========================================================================*
  *				close_fd				     *
  *===========================================================================*/
-PUBLIC int close_fd(rfp, fd_nr)
+int close_fd(rfp, fd_nr)
 struct fproc *rfp;
 int fd_nr;
 {
@@ -737,7 +737,7 @@ int fd_nr;
 /*===========================================================================*
  *				close_reply				     *
  *===========================================================================*/
-PUBLIC void close_reply()
+void close_reply()
 {
 	/* No need to do anything */
 }

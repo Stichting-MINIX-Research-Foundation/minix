@@ -18,12 +18,12 @@
 #include "driver.h"
 #include "mq.h"
 
-PRIVATE int running;
+static int running;
 
 /*===========================================================================*
  *			       blockdriver_receive_mq			     *
  *===========================================================================*/
-PUBLIC int blockdriver_receive_mq(message *m_ptr, int *status_ptr)
+int blockdriver_receive_mq(message *m_ptr, int *status_ptr)
 {
 /* receive() interface for drivers with message queueing. */
 
@@ -38,7 +38,7 @@ PUBLIC int blockdriver_receive_mq(message *m_ptr, int *status_ptr)
 /*===========================================================================*
  *				blockdriver_terminate			     *
  *===========================================================================*/
-PUBLIC void blockdriver_terminate(void)
+void blockdriver_terminate(void)
 {
 /* Break out of the main driver loop after finishing the current request. */
 
@@ -48,7 +48,7 @@ PUBLIC void blockdriver_terminate(void)
 /*===========================================================================*
  *				blockdriver_task				     *
  *===========================================================================*/
-PUBLIC void blockdriver_task(struct blockdriver *bdp)
+void blockdriver_task(struct blockdriver *bdp)
 {
 /* Main program of any block device driver task. */
   int r, ipc_status;
@@ -70,7 +70,7 @@ PUBLIC void blockdriver_task(struct blockdriver *bdp)
 /*===========================================================================*
  *				blockdriver_process			     *
  *===========================================================================*/
-PUBLIC void blockdriver_process(struct blockdriver *bdp, message *m_ptr,
+void blockdriver_process(struct blockdriver *bdp, message *m_ptr,
   int ipc_status)
 {
 /* Handle the given received message. */
@@ -91,7 +91,7 @@ PUBLIC void blockdriver_process(struct blockdriver *bdp, message *m_ptr,
 /*===========================================================================*
  *				blockdriver_mq_queue			     *
  *===========================================================================*/
-PUBLIC int blockdriver_mq_queue(message *m, int status)
+int blockdriver_mq_queue(message *m, int status)
 {
 /* Queue a message for later processing. */
 

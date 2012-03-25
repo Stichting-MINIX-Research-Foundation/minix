@@ -17,7 +17,7 @@
 /*===========================================================================*
  *			        do_devio                                     *
  *===========================================================================*/
-PUBLIC int do_devio(struct proc * caller, message * m_ptr)
+int do_devio(struct proc * caller, message * m_ptr)
 {
     struct priv *privp;
     port_t port;

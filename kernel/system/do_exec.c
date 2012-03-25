@@ -16,7 +16,7 @@
 /*===========================================================================*
  *				do_exec					     *
  *===========================================================================*/
-PUBLIC int do_exec(struct proc * caller, message * m_ptr)
+int do_exec(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_exec().  A process has done a successful EXEC. Patch it up. */
   register struct proc *rp;

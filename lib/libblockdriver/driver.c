@@ -48,13 +48,13 @@
 #include "trace.h"
 
 /* Management data for opened devices. */
-PRIVATE int open_devs[MAX_NR_OPEN_DEVICES];
-PRIVATE int next_open_devs_slot = 0;
+static int open_devs[MAX_NR_OPEN_DEVICES];
+static int next_open_devs_slot = 0;
 
 /*===========================================================================*
  *				clear_open_devs				     *
  *===========================================================================*/
-PRIVATE void clear_open_devs(void)
+static void clear_open_devs(void)
 {
 /* Reset the set of previously opened minor devices. */
   next_open_devs_slot = 0;
@@ -63,7 +63,7 @@ PRIVATE void clear_open_devs(void)
 /*===========================================================================*
  *				is_open_dev				     *
  *===========================================================================*/
-PRIVATE int is_open_dev(int device)
+static int is_open_dev(int device)
 {
 /* Check whether the given minor device has previously been opened. */
   int i;
@@ -78,7 +78,7 @@ PRIVATE int is_open_dev(int device)
 /*===========================================================================*
  *				set_open_dev				     *
  *===========================================================================*/
-PRIVATE void set_open_dev(int device)
+static void set_open_dev(int device)
 {
 /* Mark the given minor device as having been opened. */
 
@@ -92,7 +92,7 @@ PRIVATE void set_open_dev(int device)
 /*===========================================================================*
  *				blockdriver_announce			     *
  *===========================================================================*/
-PUBLIC void blockdriver_announce(int type)
+void blockdriver_announce(int type)
 {
 /* Announce we are up after a fresh start or a restart. */
   int r;
@@ -130,7 +130,7 @@ PUBLIC void blockdriver_announce(int type)
 /*===========================================================================*
  *				blockdriver_reply			     *
  *===========================================================================*/
-PUBLIC void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
+void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
 {
 /* Reply to a block request sent to the driver. */
   endpoint_t caller_e;
@@ -167,7 +167,7 @@ PUBLIC void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-PRIVATE int do_open(struct blockdriver *bdp, message *mp)
+static int do_open(struct blockdriver *bdp, message *mp)
 {
 /* Open a minor device. */
 
@@ -177,7 +177,7 @@ PRIVATE int do_open(struct blockdriver *bdp, message *mp)
 /*===========================================================================*
  *				do_close					     *
  *===========================================================================*/
-PRIVATE int do_close(struct blockdriver *bdp, message *mp)
+static int do_close(struct blockdriver *bdp, message *mp)
 {
 /* Close a minor device. */
 
@@ -187,7 +187,7 @@ PRIVATE int do_close(struct blockdriver *bdp, message *mp)
 /*===========================================================================*
  *				do_rdwt					     *
  *===========================================================================*/
-PRIVATE int do_rdwt(struct blockdriver *bdp, message *mp)
+static int do_rdwt(struct blockdriver *bdp, message *mp)
 {
 /* Carry out a single read or write request. */
   iovec_t iovec1;
@@ -216,7 +216,7 @@ PRIVATE int do_rdwt(struct blockdriver *bdp, message *mp)
 /*===========================================================================*
  *				do_vrdwt				     *
  *===========================================================================*/
-PRIVATE int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
+static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 {
 /* Carry out an device read or write to/from a vector of buffers. */
   iovec_t iovec[NR_IOREQS];
@@ -257,7 +257,7 @@ PRIVATE int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 /*===========================================================================*
  *				do_dioctl				     *
  *===========================================================================*/
-PRIVATE int do_dioctl(struct blockdriver *bdp, dev_t minor,
+static int do_dioctl(struct blockdriver *bdp, dev_t minor,
   unsigned int request, endpoint_t endpt, cp_grant_id_t grant)
 {
 /* Carry out a disk-specific I/O control request. */
@@ -307,7 +307,7 @@ PRIVATE int do_dioctl(struct blockdriver *bdp, dev_t minor,
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-PRIVATE int do_ioctl(struct blockdriver *bdp, message *mp)
+static int do_ioctl(struct blockdriver *bdp, message *mp)
 {
 /* Carry out an I/O control request. We forward block trace control requests
  * to the tracing module, and handle setting/getting partitions when the driver
@@ -355,7 +355,7 @@ PRIVATE int do_ioctl(struct blockdriver *bdp, message *mp)
 /*===========================================================================*
  *				blockdriver_handle_notify		     *
  *===========================================================================*/
-PUBLIC void blockdriver_handle_notify(struct blockdriver *bdp, message *m_ptr)
+void blockdriver_handle_notify(struct blockdriver *bdp, message *m_ptr)
 {
 /* Take care of the notifications (interrupt and clock messages) by calling
  * the appropiate callback functions. Never send a reply.
@@ -382,7 +382,7 @@ PUBLIC void blockdriver_handle_notify(struct blockdriver *bdp, message *m_ptr)
 /*===========================================================================*
  *				blockdriver_handle_request		     *
  *===========================================================================*/
-PUBLIC int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr,
+int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr,
 	thread_id_t id)
 {
 /* Call the appropiate driver function, based on the type of request. Return

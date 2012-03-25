@@ -30,7 +30,7 @@
 #include "param.h"
 #include "kernel/proc.h"
 
-PUBLIC struct utsname uts_val = {
+struct utsname uts_val = {
   "Minix",		/* system name */
   "noname",		/* node/network name */
   OS_RELEASE,		/* O.S. release (e.g. 1.5) */
@@ -43,7 +43,7 @@ PUBLIC struct utsname uts_val = {
 #endif
 };
 
-PRIVATE char *uts_tbl[] = {
+static char *uts_tbl[] = {
   uts_val.arch,
   NULL,			/* No kernel architecture */
   uts_val.machine,
@@ -56,13 +56,13 @@ PRIVATE char *uts_tbl[] = {
 };
 
 #if ENABLE_SYSCALL_STATS
-PUBLIC unsigned long calls_stats[NCALLS];
+unsigned long calls_stats[NCALLS];
 #endif
 
 /*===========================================================================*
  *				do_sysuname				     *
  *===========================================================================*/
-PUBLIC int do_sysuname()
+int do_sysuname()
 {
 /* Set or get uname strings. */
 
@@ -126,7 +126,7 @@ PUBLIC int do_sysuname()
 /*===========================================================================*
  *				do_getsysinfo			       	     *
  *===========================================================================*/
-PUBLIC int do_getsysinfo()
+int do_getsysinfo()
 {
   vir_bytes src_addr, dst_addr;
   size_t len;
@@ -167,7 +167,7 @@ PUBLIC int do_getsysinfo()
 /*===========================================================================*
  *				do_getprocnr			             *
  *===========================================================================*/
-PUBLIC int do_getprocnr()
+int do_getprocnr()
 {
   register struct mproc *rmp;
   static char search_key[PROC_NAME_LEN+1];
@@ -232,7 +232,7 @@ PUBLIC int do_getprocnr()
 /*===========================================================================*
  *				do_getepinfo			             *
  *===========================================================================*/
-PUBLIC int do_getepinfo()
+int do_getepinfo()
 {
   register struct mproc *rmp;
   endpoint_t ep;
@@ -254,7 +254,7 @@ PUBLIC int do_getepinfo()
 /*===========================================================================*
  *				do_getepinfo_o			             *
  *===========================================================================*/
-PUBLIC int do_getepinfo_o()
+int do_getepinfo_o()
 {
   register struct mproc *rmp;
   endpoint_t ep;
@@ -284,7 +284,7 @@ PUBLIC int do_getepinfo_o()
 /*===========================================================================*
  *				do_reboot				     *
  *===========================================================================*/
-PUBLIC int do_reboot()
+int do_reboot()
 {
   message m;
 
@@ -325,7 +325,7 @@ PUBLIC int do_reboot()
 /*===========================================================================*
  *				do_getsetpriority			     *
  *===========================================================================*/
-PUBLIC int do_getsetpriority()
+int do_getsetpriority()
 {
 	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
@@ -377,7 +377,7 @@ PUBLIC int do_getsetpriority()
 /*===========================================================================*
  *				do_svrctl				     *
  *===========================================================================*/
-PUBLIC int do_svrctl()
+int do_svrctl()
 {
   int s, req;
   vir_bytes ptr;
@@ -485,7 +485,7 @@ PUBLIC int do_svrctl()
  *===========================================================================*/
 
 extern char *_brksize;
-PUBLIC int brk(brk_addr)
+int brk(brk_addr)
 #ifdef __NBSD_LIBC
 void *brk_addr;
 #else

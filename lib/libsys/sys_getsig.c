@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_getksig				     *
  *===========================================================================*/
-PUBLIC int sys_getksig(proc_ep, k_sig_map)
+int sys_getksig(proc_ep, k_sig_map)
 endpoint_t *proc_ep;			/* return process number here */
 sigset_t *k_sig_map;			/* return signal map here */
 {

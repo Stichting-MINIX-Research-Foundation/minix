@@ -77,7 +77,7 @@
 #define MAXSIZE (SLABSIZES-1+MINSIZE)
 #define USEELEMENTS (1+(VM_PAGE_SIZE/MINSIZE/8))
 
-PRIVATE int pages = 0;
+static int pages = 0;
 
 typedef u8_t element_t;
 #define BITS_FULL (~(element_t)0)
@@ -123,14 +123,14 @@ struct sdh {
 #define LIST_FULL	3
 #define LIST_NUMBER	4
 
-PRIVATE struct slabheader {
+static struct slabheader {
 	struct slabdata {
 		struct	sdh sdh;
 		u8_t 	data[DATABYTES];
 	} *list_head[LIST_NUMBER];
 } slabs[SLABSIZES];
 
-FORWARD int objstats(void *, int, struct slabheader **, struct slabdata
+static int objstats(void *, int, struct slabheader **, struct slabdata
 	**, int *);
 
 #define GETSLAB(b, s) {			\
@@ -218,7 +218,7 @@ struct slabdata *newslabdata(int list)
 /*===========================================================================*
  *				checklist				     *
  *===========================================================================*/
-PRIVATE int checklist(char *file, int line,
+static int checklist(char *file, int line,
 	struct slabheader *s, int l, int bytes)
 {
 	struct slabdata *n = s->list_head[l];
@@ -254,7 +254,7 @@ PRIVATE int checklist(char *file, int line,
 /*===========================================================================*
  *				void slab_sanitycheck			     *
  *===========================================================================*/
-PUBLIC void slab_sanitycheck(char *file, int line)
+void slab_sanitycheck(char *file, int line)
 {
 	int s;
 	for(s = 0; s < SLABSIZES; s++) {
@@ -268,7 +268,7 @@ PUBLIC void slab_sanitycheck(char *file, int line)
 /*===========================================================================*
  *				int slabsane				     *
  *===========================================================================*/
-PUBLIC int slabsane_f(char *file, int line, void *mem, int bytes)
+int slabsane_f(char *file, int line, void *mem, int bytes)
 {
 	struct slabheader *s;
 	struct slabdata *f;
@@ -285,7 +285,7 @@ static int nojunkwarning = 0;
 /*===========================================================================*
  *				void *slaballoc				     *
  *===========================================================================*/
-PUBLIC void *slaballoc(int bytes)
+void *slaballoc(int bytes)
 {
 	int i;
 	int count = 0;
@@ -387,7 +387,7 @@ PUBLIC void *slaballoc(int bytes)
 /*===========================================================================*
  *				int objstats				     *
  *===========================================================================*/
-PRIVATE int objstats(void *mem, int bytes,
+static int objstats(void *mem, int bytes,
 	struct slabheader **sp, struct slabdata **fp, int *ip)
 {
 #if SANITYCHECKS
@@ -448,7 +448,7 @@ PRIVATE int objstats(void *mem, int bytes,
 /*===========================================================================*
  *				void *slabfree				     *
  *===========================================================================*/
-PUBLIC void slabfree(void *mem, int bytes)
+void slabfree(void *mem, int bytes)
 {
 	int i;
 	struct slabheader *s;
@@ -515,7 +515,7 @@ PUBLIC void slabfree(void *mem, int bytes)
 /*===========================================================================*
  *				void *slablock				     *
  *===========================================================================*/
-PUBLIC void slablock(void *mem, int bytes)
+void slablock(void *mem, int bytes)
 {
 	int i;
 	struct slabheader *s;
@@ -532,7 +532,7 @@ PUBLIC void slablock(void *mem, int bytes)
 /*===========================================================================*
  *				void *slabunlock			     *
  *===========================================================================*/
-PUBLIC void slabunlock(void *mem, int bytes)
+void slabunlock(void *mem, int bytes)
 {
 	int i;
 	struct slabheader *s;
@@ -550,7 +550,7 @@ PUBLIC void slabunlock(void *mem, int bytes)
 /*===========================================================================*
  *				void slabstats				     *
  *===========================================================================*/
-PUBLIC void slabstats(void)
+void slabstats(void)
 {
 	int s, total = 0, totalbytes = 0;
 	static int n;

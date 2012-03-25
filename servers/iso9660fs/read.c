@@ -7,13 +7,13 @@
 #endif
 #include "buf.h"
 
-PRIVATE char getdents_buf[GETDENTS_BUFSIZ];
+static char getdents_buf[GETDENTS_BUFSIZ];
 
 
 /*===========================================================================*
  *				fs_read					     *
  *===========================================================================*/
-PUBLIC int fs_read(void) {
+int fs_read(void) {
   int r, chunk, block_size;
   int nrbytes;
   cp_grant_id_t gid;
@@ -76,7 +76,7 @@ PUBLIC int fs_read(void) {
 /*===========================================================================*
  *				fs_bread				     *
  *===========================================================================*/
-PUBLIC int fs_bread(void)
+int fs_bread(void)
 {
   int r, rw_flag, chunk, block_size;
   cp_grant_id_t gid;
@@ -134,7 +134,7 @@ PUBLIC int fs_bread(void)
 /*===========================================================================*
  *				fs_getdents				     *
  *===========================================================================*/
-PUBLIC int fs_getdents(void) {
+int fs_getdents(void) {
   struct dir_record *dir;
   ino_t ino;
   cp_grant_id_t gid;
@@ -280,7 +280,7 @@ PUBLIC int fs_getdents(void) {
 /*===========================================================================*
  *				read_chunk				     *
  *===========================================================================*/
-PUBLIC int read_chunk(dir, position, off, chunk, left, gid, buf_off, block_size, completed)
+int read_chunk(dir, position, off, chunk, left, gid, buf_off, block_size, completed)
 register struct dir_record *dir;/* pointer to inode for file to be rd/wr */
 u64_t position;			/* position within file to read or write */
 unsigned off;			/* off within the current block */

@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-FORWARD struct buf *new_block(dev_t dev, ino_t inum);
+static struct buf *new_block(dev_t dev, ino_t inum);
 
 /*===========================================================================*
  *                              buf_pool                                     *
  *===========================================================================*/
-PUBLIC void buf_pool(void)
+void buf_pool(void)
 {
 /* Initialize the buffer pool. */
 
@@ -23,7 +23,7 @@ PUBLIC void buf_pool(void)
 /*===========================================================================*
  *				get_block				     *
  *===========================================================================*/
-PUBLIC struct buf *get_block(dev_t dev, ino_t inum)
+struct buf *get_block(dev_t dev, ino_t inum)
 {
   struct buf *bp = front;
 
@@ -43,7 +43,7 @@ PUBLIC struct buf *get_block(dev_t dev, ino_t inum)
 /*===========================================================================*
  *				new_block				     *
  *===========================================================================*/
-PRIVATE struct buf *new_block(dev_t dev, ino_t inum)
+static struct buf *new_block(dev_t dev, ino_t inum)
 {
 /* Allocate a new buffer and add it to the double linked buffer list */
   struct buf *bp;
@@ -77,7 +77,7 @@ PRIVATE struct buf *new_block(dev_t dev, ino_t inum)
 /*===========================================================================*
  *				put_block				     *
  *===========================================================================*/
-PUBLIC void put_block(dev_t dev, ino_t inum)
+void put_block(dev_t dev, ino_t inum)
 {
   struct buf *bp;
 

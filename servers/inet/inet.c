@@ -82,15 +82,15 @@ extern int inet_buf_debug;
 u32_t system_hz;
 #endif
 
-FORWARD void nw_conf(void);
-FORWARD void nw_init(void);
-FORWARD void ds_event(void);
+static void nw_conf(void);
+static void nw_init(void);
+static void ds_event(void);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
-PUBLIC int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	mq_t *mq;
 	int ipc_status;
@@ -188,7 +188,7 @@ PUBLIC int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -203,7 +203,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the inet server. */
 	int r;
@@ -301,7 +301,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	return(OK);
 }
 
-PRIVATE void nw_conf()
+static void nw_conf()
 {
 	read_conf();
 	eth_prep();
@@ -312,7 +312,7 @@ PRIVATE void nw_conf()
 	udp_prep();
 }
 
-PRIVATE void nw_init()
+static void nw_init()
 {
 	mq_init();
 	bf_init();
@@ -330,7 +330,7 @@ PRIVATE void nw_init()
 /*===========================================================================*
  *				 ds_event				     *
  *===========================================================================*/
-PRIVATE void ds_event()
+static void ds_event()
 {
 	char key[DS_MAX_KEYLEN];
 	char *driver_prefix = "drv.net.";
@@ -370,14 +370,14 @@ PRIVATE void ds_event()
 		printf("inet: ds_event: ds_check failed: %d\n", r);
 }
 
-PUBLIC void panic0(file, line)
+void panic0(file, line)
 char *file;
 int line;
 {
 	printf("panic at %s, %d: ", file, line);
 }
 
-PUBLIC void inet_panic()
+void inet_panic()
 {
 	printf("\ninet stacktrace: ");
 	util_stacktrace();
@@ -386,7 +386,7 @@ PUBLIC void inet_panic()
 }
 
 #if !NDEBUG
-PUBLIC void bad_assertion(file, line, what)
+void bad_assertion(file, line, what)
 char *file;
 int line;
 char *what;
@@ -397,7 +397,7 @@ char *what;
 }
 
 
-PUBLIC void bad_compare(file, line, lhs, what, rhs)
+void bad_compare(file, line, lhs, what, rhs)
 char *file;
 int line;
 int lhs;

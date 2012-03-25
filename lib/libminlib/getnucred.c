@@ -3,7 +3,7 @@
 #include <sys/ucred.h>
 #include <unistd.h>
 
-PUBLIC int getnucred(endpoint_t proc_ep, struct ucred *ucred)
+int getnucred(endpoint_t proc_ep, struct ucred *ucred)
 {
   message m;
   pid_t pid;

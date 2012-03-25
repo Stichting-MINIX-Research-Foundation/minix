@@ -18,14 +18,14 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD void create_RST ARGS(( tcp_conn_t *tcp_conn,
+static void create_RST ARGS(( tcp_conn_t *tcp_conn,
 	ip_hdr_t *ip_hdr, tcp_hdr_t *tcp_hdr, int data_len ));
-FORWARD void process_data ARGS(( tcp_conn_t *tcp_conn,
+static void process_data ARGS(( tcp_conn_t *tcp_conn,
 	tcp_hdr_t *tcp_hdr, acc_t *tcp_data, int data_len ));
-FORWARD void process_advanced_data ARGS(( tcp_conn_t *tcp_conn,
+static void process_advanced_data ARGS(( tcp_conn_t *tcp_conn,
 	tcp_hdr_t *tcp_hdr, acc_t *tcp_data, int data_len ));
 
-PUBLIC void tcp_frag2conn(tcp_conn, ip_hdr, tcp_hdr, tcp_data, data_len)
+void tcp_frag2conn(tcp_conn, ip_hdr, tcp_hdr, tcp_data, data_len)
 tcp_conn_t *tcp_conn;
 ip_hdr_t *ip_hdr;
 tcp_hdr_t *tcp_hdr;
@@ -796,7 +796,7 @@ TIME-WAIT:
 }
 
 
-PRIVATE void
+static void
 process_data(tcp_conn, tcp_hdr, tcp_data, data_len)
 tcp_conn_t *tcp_conn;
 tcp_hdr_t *tcp_hdr;
@@ -1058,7 +1058,7 @@ int data_len;
 	}
 }
 
-PRIVATE void process_advanced_data(tcp_conn, tcp_hdr, tcp_data, data_len)
+static void process_advanced_data(tcp_conn, tcp_hdr, tcp_data, data_len)
 tcp_conn_t *tcp_conn;
 tcp_hdr_t *tcp_hdr;
 acc_t *tcp_data;
@@ -1120,7 +1120,7 @@ int data_len;
 	tcp_conn->tc_adv_seq= adv_seq;
 }
 				
-PRIVATE void create_RST(tcp_conn, ip_hdr, tcp_hdr, data_len)
+static void create_RST(tcp_conn, ip_hdr, tcp_hdr, data_len)
 tcp_conn_t *tcp_conn;
 ip_hdr_t *ip_hdr;
 tcp_hdr_t *tcp_hdr;
@@ -1218,7 +1218,7 @@ int data_len;
 	tcp_conn_write(tcp_conn, 1);
 }
 
-PUBLIC void
+void
 tcp_fd_read(tcp_conn, enq)
 tcp_conn_t *tcp_conn;
 int enq;					/* Enqueue writes. */
@@ -1390,7 +1390,7 @@ int enq;					/* Enqueue writes. */
 	}
 }
 
-PUBLIC unsigned
+unsigned
 tcp_sel_read(tcp_conn)
 tcp_conn_t *tcp_conn;
 {
@@ -1426,7 +1426,7 @@ tcp_conn_t *tcp_conn;
 	return 1;
 }
 
-PUBLIC void
+void
 tcp_rsel_read(tcp_conn)
 tcp_conn_t *tcp_conn;
 {
@@ -1443,7 +1443,7 @@ tcp_conn_t *tcp_conn;
 		printf("tcp_rsel_read: no select_res\n");
 }
 
-PUBLIC void tcp_bytesavailable(tcp_fd, bytesp)
+void tcp_bytesavailable(tcp_fd, bytesp)
 tcp_fd_t *tcp_fd;
 int *bytesp;
 {

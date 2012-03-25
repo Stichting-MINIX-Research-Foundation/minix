@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 
-PUBLIC int getprocnr()
+int getprocnr()
 {
   message m;
   m.m1_i1 = -1;			/* don't pass pid to search for */

@@ -27,7 +27,7 @@
 /*===========================================================================*
  *				intr_init				     *
  *===========================================================================*/
-PUBLIC int intr_init(const int mine, const int auto_eoi)
+int intr_init(const int mine, const int auto_eoi)
 {
 /* Initialize the 8259s, finishing with all interrupts disabled.  This is
  * only done in protected mode, in real mode we don't touch the 8259s, but
@@ -72,27 +72,27 @@ PUBLIC int intr_init(const int mine, const int auto_eoi)
   return OK;
 }
 
-PUBLIC void irq_8259_unmask(const int irq)
+void irq_8259_unmask(const int irq)
 {
 	const unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
 	outb(ctl_mask, inb(ctl_mask) & ~(1 << (irq & 0x7)));
 }
 
-PUBLIC void irq_8259_mask(const int irq)
+void irq_8259_mask(const int irq)
 {
 	const unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
 	outb(ctl_mask, inb(ctl_mask) | (1 << (irq & 0x7)));
 }
 
 /* Disable 8259 - write 0xFF in OCW1 master and slave. */
-PUBLIC void i8259_disable(void)
+void i8259_disable(void)
 {
 	outb(INT2_CTLMASK, 0xFF);
 	outb(INT_CTLMASK, 0xFF);
 	inb(INT_CTLMASK);
 }
 
-PUBLIC void irq_8259_eoi(int irq)
+void irq_8259_eoi(int irq)
 {
 	if (irq < 8)
 		eoi_8259_master();

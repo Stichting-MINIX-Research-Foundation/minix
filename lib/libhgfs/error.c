@@ -6,7 +6,7 @@
  * that weren't in the original protocol, are being returned now.
  */
 #define NERRS 16
-PRIVATE int error_map[NERRS] = {
+static int error_map[NERRS] = {
   OK,				/* no error */
   ENOENT,			/* no such file/directory */
   EBADF,			/* invalid handle */
@@ -28,7 +28,7 @@ PRIVATE int error_map[NERRS] = {
 /*===========================================================================*
  *				error_convert				     *
  *===========================================================================*/
-PUBLIC int error_convert(err)
+int error_convert(err)
 int err;
 {
 /* Convert a HGFS error into an errno error code.

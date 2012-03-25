@@ -28,26 +28,26 @@ struct ddekit_timer_s {
 };
 
 
-PRIVATE ddekit_sem_t *pending_timer_ints;
+static ddekit_sem_t *pending_timer_ints;
 
 /* are we currently expecting a alarm notify? */
 int _ddekit_timer_pending = 0;
 
-PUBLIC unsigned long long jiffies;
-PUBLIC unsigned long HZ; 
+unsigned long long jiffies;
+unsigned long HZ; 
 
-PRIVATE struct ddekit_timer_s list =  {0,0,-1,1,0}; 
-PRIVATE int _id = 0 ; 
-PRIVATE ddekit_thread_t *th;
-PRIVATE  ddekit_lock_t lock;
+static struct ddekit_timer_s list =  {0,0,-1,1,0}; 
+static int _id = 0 ; 
+static ddekit_thread_t *th;
+static  ddekit_lock_t lock;
 
-FORWARD void lock_timer(void);
-FORWARD void unlock_timer(void);
-FORWARD clock_t get_current_clock(void);
-FORWARD void remove_timer(int id);
-FORWARD int insert_timer(struct ddekit_timer_s *t);
-FORWARD struct ddekit_timer_s * get_next( myclock_t exp );
-FORWARD void ddekit_timer_thread(void *data);
+static void lock_timer(void);
+static void unlock_timer(void);
+static clock_t get_current_clock(void);
+static void remove_timer(int id);
+static int insert_timer(struct ddekit_timer_s *t);
+static struct ddekit_timer_s * get_next( myclock_t exp );
+static void ddekit_timer_thread(void *data);
 
  /****************************************************************************
  *    Private funtions                                                       *
@@ -56,7 +56,7 @@ FORWARD void ddekit_timer_thread(void *data);
 /*****************************************************************************
  *    lock_timer                                                             *
  ****************************************************************************/
-PRIVATE void lock_timer() 
+static void lock_timer() 
 {
 	ddekit_lock_lock(&lock);
 }
@@ -83,7 +83,7 @@ static myclock_t get_current_clock()
 /*****************************************************************************
  *    remove_timer                                                           *
  ****************************************************************************/
-PRIVATE void remove_timer(int id)
+static void remove_timer(int id)
 {
 	/* removes a timer from the timer list */
 	struct ddekit_timer_s *l,*m;  
@@ -112,7 +112,7 @@ PRIVATE void remove_timer(int id)
 /*****************************************************************************
  *    insert_timer                                                           *
  ****************************************************************************/
-PRIVATE int insert_timer(struct ddekit_timer_s *t)
+static int insert_timer(struct ddekit_timer_s *t)
 { 
 	/* inserts a timer to the timer list */
 	int ret;
@@ -146,7 +146,7 @@ PRIVATE int insert_timer(struct ddekit_timer_s *t)
 /*****************************************************************************
  *    get_next                                                               *
  ****************************************************************************/
-PRIVATE struct ddekit_timer_s * get_next( myclock_t exp )
+static struct ddekit_timer_s * get_next( myclock_t exp )
 {  
 	/*
 	 * this one get the next timer, which's timeout expired,
@@ -169,7 +169,7 @@ PRIVATE struct ddekit_timer_s * get_next( myclock_t exp )
 /*****************************************************************************
  *    ddekit_timer_thread                                                    *
  ****************************************************************************/
-PRIVATE void ddekit_timer_thread(void * data)
+static void ddekit_timer_thread(void * data)
 {
 	struct ddekit_timer_s * l;
 
@@ -199,7 +199,7 @@ PRIVATE void ddekit_timer_thread(void * data)
 /*****************************************************************************
  *    ddekit_add_timer                                                       *
  ****************************************************************************/
-PUBLIC int ddekit_add_timer
+int ddekit_add_timer
 (void (*fn)(void *), void *args, unsigned long timeout)
 {
 	struct ddekit_timer_s *t;
@@ -217,7 +217,7 @@ PUBLIC int ddekit_add_timer
 /*****************************************************************************
  *    ddekit_del_timer                                                       *
  ****************************************************************************/
-PUBLIC int ddekit_del_timer(int timer)
+int ddekit_del_timer(int timer)
 { 
 	remove_timer(timer); 
 	return 0;
@@ -226,7 +226,7 @@ PUBLIC int ddekit_del_timer(int timer)
 /*****************************************************************************
  *    ddekit_timer_pending                                                   *
  ****************************************************************************/
-PUBLIC int ddekit_timer_pending(int timer)
+int ddekit_timer_pending(int timer)
 { 
 	int ret=0;
 	struct ddekit_timer_s *t;
@@ -244,7 +244,7 @@ PUBLIC int ddekit_timer_pending(int timer)
 /*****************************************************************************
  *    ddekit_init_timers                                                     *
  ****************************************************************************/
-PUBLIC void ddekit_init_timers(void)
+void ddekit_init_timers(void)
 {
 	static int first_time=0;
 	
@@ -263,7 +263,7 @@ PUBLIC void ddekit_init_timers(void)
 /*****************************************************************************
  *    ddekit_get_timer_thread                                                *
  ****************************************************************************/
-PUBLIC ddekit_thread_t *ddekit_get_timer_thread(void)
+ddekit_thread_t *ddekit_get_timer_thread(void)
 { 
 	return th;
 }
@@ -275,7 +275,7 @@ PUBLIC ddekit_thread_t *ddekit_get_timer_thread(void)
 /*****************************************************************************
  *   _ddekit_timer_interrupt                                                 *
  ****************************************************************************/
-PUBLIC void _ddekit_timer_interrupt(void)
+void _ddekit_timer_interrupt(void)
 {
 	jiffies = get_current_clock(); 
 	DDEBUG_MSG_VERBOSE("now: %d", jiffies);
@@ -285,7 +285,7 @@ PUBLIC void _ddekit_timer_interrupt(void)
 /*****************************************************************************
  *    _ddekit_timer_update                                                   *
  ****************************************************************************/
-PUBLIC void _ddekit_timer_update()
+void _ddekit_timer_update()
 {
 	lock_timer();
 

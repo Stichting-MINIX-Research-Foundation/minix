@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				get_rand				     *
  *===========================================================================*/
-PRIVATE u32_t get_rand(u32_t max)
+static u32_t get_rand(u32_t max)
 {
 	/* Las Vegas algorithm for getting a random number in the range from
 	 * 0 to max, inclusive.
@@ -35,7 +35,7 @@ PRIVATE u32_t get_rand(u32_t max)
 /*===========================================================================*
  *				get_range				     *
  *===========================================================================*/
-PRIVATE size_t get_range(struct fbd_rule *rule, u64_t pos, size_t *size,
+static size_t get_range(struct fbd_rule *rule, u64_t pos, size_t *size,
 	u64_t *skip)
 {
 	/* Compute the range within the given request range that is affected
@@ -82,7 +82,7 @@ PRIVATE size_t get_range(struct fbd_rule *rule, u64_t pos, size_t *size,
 /*===========================================================================*
  *				limit_range				     *
  *===========================================================================*/
-PRIVATE void limit_range(iovec_t *iov, unsigned *count, size_t size)
+static void limit_range(iovec_t *iov, unsigned *count, size_t size)
 {
 	/* Limit the given vector to the given size.
 	 */
@@ -104,7 +104,7 @@ PRIVATE void limit_range(iovec_t *iov, unsigned *count, size_t size)
 /*===========================================================================*
  *				action_io_corrupt			     *
  *===========================================================================*/
-PRIVATE void action_io_corrupt(struct fbd_rule *rule, char *buf, size_t size,
+static void action_io_corrupt(struct fbd_rule *rule, char *buf, size_t size,
 	u64_t pos, int UNUSED(flag))
 {
 	u64_t skip;
@@ -151,7 +151,7 @@ PRIVATE void action_io_corrupt(struct fbd_rule *rule, char *buf, size_t size,
 /*===========================================================================*
  *				action_pre_error			     *
  *===========================================================================*/
-PRIVATE void action_pre_error(struct fbd_rule *rule, iovec_t *iov,
+static void action_pre_error(struct fbd_rule *rule, iovec_t *iov,
 	unsigned *count, size_t *size, u64_t *pos)
 {
 	/* Limit the request to the part that precedes the matched range. */
@@ -163,7 +163,7 @@ PRIVATE void action_pre_error(struct fbd_rule *rule, iovec_t *iov,
 /*===========================================================================*
  *				action_post_error			     *
  *===========================================================================*/
-PRIVATE void action_post_error(struct fbd_rule *rule, size_t UNUSED(osize),
+static void action_post_error(struct fbd_rule *rule, size_t UNUSED(osize),
 	int *result)
 {
 	/* Upon success of the first part, return the specified error code. */
@@ -174,7 +174,7 @@ PRIVATE void action_post_error(struct fbd_rule *rule, size_t UNUSED(osize),
 /*===========================================================================*
  *				action_pre_misdir			     *
  *===========================================================================*/
-PRIVATE void action_pre_misdir(struct fbd_rule *rule, iovec_t *UNUSED(iov),
+static void action_pre_misdir(struct fbd_rule *rule, iovec_t *UNUSED(iov),
 	unsigned *UNUSED(count), size_t *UNUSED(size), u64_t *pos)
 {
 	/* Randomize the request position to fall within the range (and have
@@ -201,7 +201,7 @@ PRIVATE void action_pre_misdir(struct fbd_rule *rule, iovec_t *UNUSED(iov),
 /*===========================================================================*
  *				action_pre_losttorn			     *
  *===========================================================================*/
-PRIVATE void action_pre_losttorn(struct fbd_rule *rule, iovec_t *iov,
+static void action_pre_losttorn(struct fbd_rule *rule, iovec_t *iov,
 	unsigned *count, size_t *size, u64_t *UNUSED(pos))
 {
 	if (*size > rule->params.losttorn.lead)
@@ -213,7 +213,7 @@ PRIVATE void action_pre_losttorn(struct fbd_rule *rule, iovec_t *iov,
 /*===========================================================================*
  *				action_post_losttorn			     *
  *===========================================================================*/
-PRIVATE void action_post_losttorn(struct fbd_rule *UNUSED(rule), size_t osize,
+static void action_post_losttorn(struct fbd_rule *UNUSED(rule), size_t osize,
 	int *result)
 {
 	/* On success, pretend full completion. */
@@ -226,7 +226,7 @@ PRIVATE void action_post_losttorn(struct fbd_rule *UNUSED(rule), size_t osize,
 /*===========================================================================*
  *				action_mask				     *
  *===========================================================================*/
-PUBLIC int action_mask(struct fbd_rule *rule)
+int action_mask(struct fbd_rule *rule)
 {
 	/* Return the hook mask for the given rule's action type. */
 
@@ -244,7 +244,7 @@ PUBLIC int action_mask(struct fbd_rule *rule)
 /*===========================================================================*
  *				action_pre_hook				     *
  *===========================================================================*/
-PUBLIC void action_pre_hook(struct fbd_rule *rule, iovec_t *iov,
+void action_pre_hook(struct fbd_rule *rule, iovec_t *iov,
 	unsigned *count, size_t *size, u64_t *pos)
 {
 	switch (rule->action) {
@@ -268,7 +268,7 @@ PUBLIC void action_pre_hook(struct fbd_rule *rule, iovec_t *iov,
 /*===========================================================================*
  *				action_io_hook				     *
  *===========================================================================*/
-PUBLIC void action_io_hook(struct fbd_rule *rule, char *buf, size_t size,
+void action_io_hook(struct fbd_rule *rule, char *buf, size_t size,
 	u64_t pos, int flag)
 {
 	switch (rule->action) {
@@ -284,7 +284,7 @@ PUBLIC void action_io_hook(struct fbd_rule *rule, char *buf, size_t size,
 /*===========================================================================*
  *				action_post_hook			     *
  *===========================================================================*/
-PUBLIC void action_post_hook(struct fbd_rule *rule, size_t osize, int *result)
+void action_post_hook(struct fbd_rule *rule, size_t osize, int *result)
 {
 	switch (rule->action) {
 	case FBD_ACTION_ERROR:

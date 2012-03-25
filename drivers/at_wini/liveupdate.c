@@ -19,7 +19,7 @@ EXTERN int w_command;
 /*===========================================================================*
  *       			 sef_cb_lu_prepare 	 	             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_prepare(int state)
+int sef_cb_lu_prepare(int state)
 {
   int is_ready;
 
@@ -49,7 +49,7 @@ PUBLIC int sef_cb_lu_prepare(int state)
 /*===========================================================================*
  *      		  sef_cb_lu_state_isvalid		             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_isvalid(int state)
+int sef_cb_lu_state_isvalid(int state)
 {
   return SEF_LU_STATE_IS_STANDARD(state) || AT_STATE_IS_CUSTOM(state);
 }
@@ -57,7 +57,7 @@ PUBLIC int sef_cb_lu_state_isvalid(int state)
 /*===========================================================================*
  *      		   sef_cb_lu_state_dump         	             *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_state_dump(int state)
+void sef_cb_lu_state_dump(int state)
 {
   sef_lu_dprint("at_wini: live update state = %d\n", state);
   sef_lu_dprint("at_wini: w_command = 0x%02X\n", w_command);

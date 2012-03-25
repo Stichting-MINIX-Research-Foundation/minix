@@ -48,18 +48,18 @@ struct symtab_s
 	unsigned int nsym;
 };
 
-PRIVATE struct symtab_s symtab;
+static struct symtab_s symtab;
 
-FORWARD void gnu_sort(struct newnlist *array , struct newnlist *top );
-FORWARD int gnu_symeq(char *t , struct newnlist *sp );
-FORWARD int gnu_symprefix(char *t , struct newnlist *sp );
-FORWARD struct newnlist *gnu_sname(char *name, int is_text, int
+static void gnu_sort(struct newnlist *array , struct newnlist *top );
+static int gnu_symeq(char *t , struct newnlist *sp );
+static int gnu_symprefix(char *t , struct newnlist *sp );
+static struct newnlist *gnu_sname(char *name, int is_text, int
 	allflag);
-FORWARD struct newnlist *gnu_sval(off_t value, int where);
-FORWARD void gnu_sym(struct newnlist *sp, off_t off);
+static struct newnlist *gnu_sval(off_t value, int where);
+static void gnu_sym(struct newnlist *sp, off_t off);
 
 
-PUBLIC void gnu_init( filename )
+void gnu_init( filename )
 char *filename;
 {
         struct exec header;
@@ -131,7 +131,7 @@ char *filename;
 }
 
 
-PUBLIC long gnu_symbolvalue( name, is_text )
+long gnu_symbolvalue( name, is_text )
 char *name;
 int is_text;
 {
@@ -144,7 +144,7 @@ int is_text;
 }
 
 
-PRIVATE struct newnlist *gnu_sname( name, is_text, allflag )
+static struct newnlist *gnu_sname( name, is_text, allflag )
 char *name;
 int is_text;
 int allflag;
@@ -204,7 +204,7 @@ int allflag;
 	return NULL;
 }
 
-PRIVATE struct newnlist *gnu_sval( value, where )
+static struct newnlist *gnu_sval( value, where )
 off_t value;
 int where;
 {
@@ -242,7 +242,7 @@ int where;
 }
 
 
-PRIVATE void gnu_sym( sp, off )
+static void gnu_sym( sp, off )
 struct newnlist *sp;
 off_t off;
 {
@@ -260,7 +260,7 @@ off_t off;
 
 /* shell sort symbols on value */
 
-PRIVATE void gnu_sort( array, top )
+static void gnu_sort( array, top )
 struct newnlist *array;
 struct newnlist *top;
 {
@@ -294,7 +294,7 @@ struct newnlist *top;
 	while ( (gap /= 3) != 0 );
 }
 
-PUBLIC void gnu_symbolic( value, separator )
+void gnu_symbolic( value, separator )
 off_t value;
 int separator;
 {
@@ -330,14 +330,14 @@ int separator;
 }
 
 
-PRIVATE int gnu_symeq( t, sp )
+static int gnu_symeq( t, sp )
 register char *t;
 struct newnlist *sp;
 {
 	return strncmp( t, sp->n_un.n_name, strlen(t) ) == 0;
 }
 
-PRIVATE int gnu_symprefix( t, sp )
+static int gnu_symprefix( t, sp )
 register char *t;
 struct newnlist *sp;
 {
@@ -356,7 +356,7 @@ struct newnlist *sp;
 
 /* list all symbols - test for selection criteria */
 
-PUBLIC void gnu_listsym( tchar )
+void gnu_listsym( tchar )
 char tchar;
 {
 	register struct symtab_s *tp;
@@ -396,7 +396,7 @@ char tchar;
 	}
 }
 
-PUBLIC int gnu_text_symbol(value)
+int gnu_text_symbol(value)
 off_t value;
 {
     struct newnlist *sp;
@@ -410,7 +410,7 @@ off_t value;
 	return FALSE;
 }
 
-PUBLIC int gnu_finds_data(off,data_seg)
+int gnu_finds_data(off,data_seg)
 off_t off;
 int data_seg;
 {
@@ -425,7 +425,7 @@ int data_seg;
 	    return FALSE;
 }
 
-PUBLIC int gnu_finds_pc(pc)
+int gnu_finds_pc(pc)
 off_t pc;
 {
 	struct newnlist *sp;

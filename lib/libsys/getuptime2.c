@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                               getuptime2			    	     *
  *===========================================================================*/
-PUBLIC int getuptime2(ticks, boottime)
+int getuptime2(ticks, boottime)
 clock_t *ticks;				/* uptime in ticks */
 time_t *boottime;
 {

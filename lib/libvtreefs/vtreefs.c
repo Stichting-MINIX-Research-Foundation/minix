@@ -2,18 +2,18 @@
 
 #include "inc.h"
 
-FORWARD int get_work(void);
-FORWARD void send_reply(int err, int transid);
-FORWARD void got_signal(int signal);
+static int get_work(void);
+static void send_reply(int err, int transid);
+static void got_signal(int signal);
 
-PRIVATE unsigned int inodes;
-PRIVATE struct inode_stat *root_stat;
-PRIVATE index_t root_entries;
+static unsigned int inodes;
+static struct inode_stat *root_stat;
+static index_t root_entries;
 
 /*===========================================================================*
  *				init_server				     *
  *===========================================================================*/
-PRIVATE int init_server(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int init_server(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize internal state, and register with VFS.
 	 */
@@ -30,7 +30,7 @@ PRIVATE int init_server(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	sef_setcb_init_fresh(init_server);
 	sef_setcb_init_restart(init_server);
@@ -45,7 +45,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *				start_vtreefs				     *
  *===========================================================================*/
-PUBLIC void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
+void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
 		struct inode_stat *stat, index_t nr_indexed_entries)
 {
 	/* This is the main routine of this service. The main loop consists of
@@ -108,7 +108,7 @@ PUBLIC void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-PRIVATE int get_work(void)
+static int get_work(void)
 {
 	/* Retrieve work. Return the call number.
 	 */
@@ -123,7 +123,7 @@ PRIVATE int get_work(void)
 /*===========================================================================*
  *				send_reply				     *
  *===========================================================================*/
-PRIVATE void send_reply(int err, int transid)
+static void send_reply(int err, int transid)
 {
 	/* Send a reply to the caller.
 	 */
@@ -141,7 +141,7 @@ PRIVATE void send_reply(int err, int transid)
 /*===========================================================================*
  *				got_signal				     *
  *===========================================================================*/
-PRIVATE void got_signal(int signal)
+static void got_signal(int signal)
 {
 	/* We received a signal. If it is a termination signal, and the file
 	 * system has already been unmounted, clean up and exit.

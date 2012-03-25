@@ -4,7 +4,7 @@
 /*=========================================================================*
  *				env_panic				   *
  *=========================================================================*/
-PUBLIC void env_panic(key)
+void env_panic(key)
 char *key;		/* environment variable whose value is bogus */
 {
   static char value[EP_BUF_SIZE] = "<unknown>";

@@ -17,7 +17,7 @@
 /*===========================================================================*
  *			      do_sigsend				     *
  *===========================================================================*/
-PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
+int do_sigsend(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_sigsend, POSIX-style signal handling. */
 

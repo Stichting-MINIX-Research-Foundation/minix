@@ -15,13 +15,13 @@
 #include "../vfs/dmap.h"
 #include <minix/dmap.h>
 
-PUBLIC struct fproc fproc[NR_PROCS];
-PUBLIC struct dmap dmap[NR_DEVICES];
+struct fproc fproc[NR_PROCS];
+struct dmap dmap[NR_DEVICES];
 
 /*===========================================================================*
  *				fproc_dmp				     *
  *===========================================================================*/
-PUBLIC void fproc_dmp()
+void fproc_dmp()
 {
   struct fproc *fp;
   int i, n=0;
@@ -59,7 +59,7 @@ PUBLIC void fproc_dmp()
 /*===========================================================================*
  *				dmap_flags				     *
  *===========================================================================*/
-PRIVATE char * dmap_flags(int flags)
+static char * dmap_flags(int flags)
 {
 	static char fl[10];
 	strcpy(fl, "-----");
@@ -70,7 +70,7 @@ PRIVATE char * dmap_flags(int flags)
 /*===========================================================================*
  *				dmap_style				     *
  *===========================================================================*/
-PRIVATE char * dmap_style(int dev_style)
+static char * dmap_style(int dev_style)
 {
 	static char str[16];
 	switch(dev_style) {
@@ -89,7 +89,7 @@ PRIVATE char * dmap_style(int dev_style)
 /*===========================================================================*
  *				dtab_dmp				     *
  *===========================================================================*/
-PUBLIC void dtab_dmp()
+void dtab_dmp()
 {
     int i;
 

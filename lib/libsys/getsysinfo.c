@@ -3,7 +3,7 @@
 #include <minix/sysinfo.h>
 #include <minix/com.h>
 
-PUBLIC int getsysinfo(
+int getsysinfo(
   endpoint_t who,		/* from whom to request info */
   int what,			/* what information is requested */
   void *where,			/* where to put it */

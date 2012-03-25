@@ -10,15 +10,15 @@
 #include "schedproc.h"
 
 /* Declare some local functions. */
-FORWARD void reply(endpoint_t whom, message *m_ptr);
-FORWARD void sef_local_startup(void);
+static void reply(endpoint_t whom, message *m_ptr);
+static void sef_local_startup(void);
 
-PUBLIC struct machine machine;		/* machine info */
+struct machine machine;		/* machine info */
 
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
 	/* Main routine of the scheduler. */
 	message m_in;	/* the incoming message itself is kept here. */
@@ -104,7 +104,7 @@ sendreply:
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(endpoint_t who_e, message *m_ptr)
+static void reply(endpoint_t who_e, message *m_ptr)
 {
 	int s = send(who_e, m_ptr);    /* send the message */
 	if (OK != s)
@@ -114,7 +114,7 @@ PRIVATE void reply(endpoint_t who_e, message *m_ptr)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/* No init callbacks for now. */
 	/* No live update support for now. */

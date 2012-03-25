@@ -8,7 +8,7 @@
 __weak_alias(getpgrp, _getpgrp)
 #endif
 
-PUBLIC pid_t getpgrp()
+pid_t getpgrp()
 {
   message m;
 

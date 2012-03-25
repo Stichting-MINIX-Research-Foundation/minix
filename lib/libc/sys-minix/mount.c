@@ -23,7 +23,7 @@ __weak_alias(umount2, _umount2)
 
 static char fspath[] = "/sbin/:/usr/pkg/bin/"; /* Must include trailing '/' */
 
-PRIVATE int rs_down(char *label)
+static int rs_down(char *label)
 {
 	char cmd[200];
 	if(strlen(_PATH_SERVICE)+strlen(label)+50 >= sizeof(cmd))
@@ -32,7 +32,7 @@ PRIVATE int rs_down(char *label)
 	return system(cmd);
 }
 
-PUBLIC int mount(special, name, mountflags, type, args)
+int mount(special, name, mountflags, type, args)
 char *name, *special, *type, *args;
 int mountflags;
 {
@@ -163,13 +163,13 @@ int mountflags;
   return r;
 }
 
-PUBLIC int umount(name)
+int umount(name)
 _CONST char *name;
 {
 	return umount2(name, 0);
 }
 
-PUBLIC int umount2(name, flags)
+int umount2(name, flags)
 _CONST char *name;
 int flags;
 {

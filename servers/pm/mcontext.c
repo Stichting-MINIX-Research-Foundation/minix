@@ -10,7 +10,7 @@
 /*===========================================================================*
  *				do_setmcontext				     *
  *===========================================================================*/
-PUBLIC int do_setmcontext()
+int do_setmcontext()
 {
   return sys_setmcontext(who_e, (mcontext_t *) m_in.m1_p1);
 }
@@ -19,7 +19,7 @@ PUBLIC int do_setmcontext()
 /*===========================================================================*
  *				do_getmcontext				     *
  *===========================================================================*/
-PUBLIC int do_getmcontext()
+int do_getmcontext()
 {
   return sys_getmcontext(who_e, (mcontext_t *) m_in.m1_p1);
 }

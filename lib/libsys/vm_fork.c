@@ -6,7 +6,7 @@
 /*===========================================================================*
  *                                vm_fork				     *
  *===========================================================================*/
-PUBLIC int vm_fork(endpoint_t ep, int slot, endpoint_t *childep)
+int vm_fork(endpoint_t ep, int slot, endpoint_t *childep)
 {
     message m;
     int result;

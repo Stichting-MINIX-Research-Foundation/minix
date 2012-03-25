@@ -16,7 +16,7 @@
 /*===========================================================================*
  *				do_profbuf				     *
  *===========================================================================*/
-PUBLIC int do_profbuf(struct proc * caller, message * m_ptr)
+int do_profbuf(struct proc * caller, message * m_ptr)
 {
 /* This kernel call is used by profiled system processes when Call
  * Profiling is enabled. It is called on the first execution of procentry.

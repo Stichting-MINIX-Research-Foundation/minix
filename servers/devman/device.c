@@ -2,20 +2,20 @@
 #include "proto.h"
 
 
-FORWARD struct devman_device*devman_dev_add_child(struct devman_device
+static struct devman_device*devman_dev_add_child(struct devman_device
 	*parent, struct devman_device_info *devinf);
-FORWARD struct devman_device *_find_dev(struct devman_device *dev, int
+static struct devman_device *_find_dev(struct devman_device *dev, int
 	dev_id);
-FORWARD int devman_dev_add_info(struct devman_device *dev, struct
+static int devman_dev_add_info(struct devman_device *dev, struct
 	devman_device_info_entry *entry, char *buf);
-FORWARD int devman_event_read(char **ptr, size_t *len,off_t offset, void
+static int devman_event_read(char **ptr, size_t *len,off_t offset, void
 	*data);
 
-FORWARD int devman_del_device(struct devman_device *dev);
+static int devman_del_device(struct devman_device *dev);
 
-PRIVATE int next_device_id = 1;
+static int next_device_id = 1;
 
-PRIVATE struct inode_stat default_dir_stat = {
+static struct inode_stat default_dir_stat = {
 	/* .mode  = */ S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH,
 	/* .uid   = */ 0,
 	/* .gid   = */ 0,
@@ -23,7 +23,7 @@ PRIVATE struct inode_stat default_dir_stat = {
 	/* .dev   = */ NO_DEV,
 };
 
-PRIVATE struct inode_stat default_file_stat = {
+static struct inode_stat default_file_stat = {
 	/* .mode  = */ S_IFREG | S_IRUSR | S_IRGRP | S_IROTH,
 	/* .uid   = */ 0,
 	/* .gid   = */ 0,
@@ -32,16 +32,16 @@ PRIVATE struct inode_stat default_file_stat = {
 };
 
 
-PRIVATE struct devman_device root_dev; 
-PRIVATE struct devman_event_inode event_inode_data = {
+static struct devman_device root_dev; 
+static struct devman_event_inode event_inode_data = {
 	 TAILQ_HEAD_INITIALIZER(event_inode_data.event_queue),
 };
-PRIVATE struct devman_inode event_inode;
+static struct devman_inode event_inode;
 
 /*===========================================================================*
  *           devman_generate_path                                            *
  *===========================================================================*/
-PRIVATE int 
+static int 
 devman_generate_path(char* buf, int len, struct devman_device *dev)
 {
 	int res =0;
@@ -71,7 +71,7 @@ devman_generate_path(char* buf, int len, struct devman_device *dev)
 /*===========================================================================*
  *          devman_device_add_event                                          *
  *===========================================================================*/
-PRIVATE void 
+static void 
 devman_device_add_event(struct devman_device* dev)
 {
 	struct devman_event * event;
@@ -103,7 +103,7 @@ devman_device_add_event(struct devman_device* dev)
 /*===========================================================================*
  *          devman_device_remove_event                                       *
  *===========================================================================*/
-PRIVATE void 
+static void 
 devman_device_remove_event(struct devman_device* dev)
 {
 	struct devman_event * event;
@@ -136,7 +136,7 @@ devman_device_remove_event(struct devman_device* dev)
 /*===========================================================================*
  *          devman_event_read                                                *
  *===========================================================================*/
-PRIVATE int
+static int
 devman_event_read(char **ptr, size_t *len,off_t offset, void *data)
 {
 	struct devman_event *ev = NULL;
@@ -173,7 +173,7 @@ devman_event_read(char **ptr, size_t *len,off_t offset, void *data)
 /*===========================================================================*
  *          devman_static_info_read                                          *
  *===========================================================================*/
-PRIVATE int
+static int
 devman_static_info_read(char **ptr, size_t *len, off_t offset, void *data)
 {
 	struct devman_static_info_inode *n;
@@ -189,7 +189,7 @@ devman_static_info_read(char **ptr, size_t *len, off_t offset, void *data)
 /*===========================================================================*
  *           devman_init_devices                                             *
  *===========================================================================*/
-PUBLIC void devman_init_devices() 
+void devman_init_devices() 
 {
 	event_inode.data   =  &event_inode_data;
 	event_inode.read_fn =  devman_event_read;
@@ -215,7 +215,7 @@ PUBLIC void devman_init_devices()
 /*===========================================================================*
  *           do_reply                                                        *
  *===========================================================================*/
-PRIVATE void do_reply(message *msg, int res)
+static void do_reply(message *msg, int res)
 {
 	msg->m_type = DEVMAN_REPLY;
 	msg->DEVMAN_RESULT = res;
@@ -225,7 +225,7 @@ PRIVATE void do_reply(message *msg, int res)
 /*===========================================================================*
  *           do_add_device                                                   *
  *===========================================================================*/
-PUBLIC int do_add_device(message *msg)
+int do_add_device(message *msg)
 {
 	endpoint_t ep = msg->m_source;
 	int res;
@@ -283,7 +283,7 @@ PUBLIC int do_add_device(message *msg)
 /*===========================================================================*
  *           _find_dev                                                       *
  *===========================================================================*/
-PRIVATE struct devman_device *
+static struct devman_device *
 _find_dev(struct devman_device *dev, int dev_id)
 {
 	struct devman_device *_dev;
@@ -306,7 +306,7 @@ _find_dev(struct devman_device *dev, int dev_id)
 /*===========================================================================*
  *           devman_find_dev                                                 *
  *===========================================================================*/
-PUBLIC struct devman_device *devman_find_device(int dev_id)
+struct devman_device *devman_find_device(int dev_id)
 {
 	return _find_dev(&root_dev, dev_id);
 }
@@ -314,7 +314,7 @@ PUBLIC struct devman_device *devman_find_device(int dev_id)
 /*===========================================================================*
  *           devman_dev_add_static_info                                      *
  *===========================================================================*/
-PRIVATE int 
+static int 
 devman_dev_add_static_info
 (struct devman_device *dev, char * name, char *data)
 {
@@ -345,7 +345,7 @@ devman_dev_add_static_info
 /*===========================================================================*
  *           devman_dev_add_child                                            *
  *===========================================================================*/
-PRIVATE struct devman_device* 
+static struct devman_device* 
 devman_dev_add_child
 (struct devman_device *parent, struct devman_device_info *devinf)
 {
@@ -398,7 +398,7 @@ devman_dev_add_child
 /*===========================================================================*
  *           devman_dev_add_info                                             *
  *===========================================================================*/
-PRIVATE int 
+static int 
 devman_dev_add_info
 (struct devman_device *dev, struct devman_device_info_entry *entry, char *buf)
 {
@@ -419,7 +419,7 @@ devman_dev_add_info
 /*===========================================================================*
  *           do_del_device                                                   *
  *===========================================================================*/
-PUBLIC int do_del_device(message *msg)
+int do_del_device(message *msg)
 {
 	int dev_id = msg->DEVMAN_DEVICE_ID;
 	
@@ -455,7 +455,7 @@ PUBLIC int do_del_device(message *msg)
 /*===========================================================================*
  *           devman_get_device                                               *
  *===========================================================================*/
-PUBLIC void devman_get_device(struct devman_device *dev)
+void devman_get_device(struct devman_device *dev)
 {
 	if (dev == NULL || dev == &root_dev) {
 		return;
@@ -466,7 +466,7 @@ PUBLIC void devman_get_device(struct devman_device *dev)
 /*===========================================================================*
  *           devman_put_device                                               *
  *===========================================================================*/
-PUBLIC void devman_put_device(struct devman_device *dev)
+void devman_put_device(struct devman_device *dev)
 {
 	if (dev == NULL || dev == &root_dev ) {
 		return;
@@ -480,7 +480,7 @@ PUBLIC void devman_put_device(struct devman_device *dev)
 /*===========================================================================*
  *           devman_del_device                                               *
  *===========================================================================*/
-PRIVATE int devman_del_device(struct devman_device *dev)
+static int devman_del_device(struct devman_device *dev)
 {
 	/* does device have children -> error */
 	/* evtl. remove links */

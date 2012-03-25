@@ -20,13 +20,13 @@
 struct cprof_tbl_s cprof_tbl[CPROF_TABLE_SIZE_OTHER];
 
 /* Function that returns table size. */
-PUBLIC int profile_get_tbl_size(void)
+int profile_get_tbl_size(void)
 {
   return CPROF_TABLE_SIZE_OTHER;
 }
 
 /* Function that returns on which execution of procentry to announce. */
-PUBLIC int profile_get_announce(void)
+int profile_get_announce(void)
 {
   return CPROF_ANNOUNCE_OTHER;
 }
@@ -35,7 +35,7 @@ PUBLIC int profile_get_announce(void)
  * Userspace processes announce their control struct and table locations
  * to the kernel through this function.
  */
-PUBLIC void profile_register(ctl_ptr, tbl_ptr)
+void profile_register(ctl_ptr, tbl_ptr)
 void *ctl_ptr;
 void *tbl_ptr;
 {

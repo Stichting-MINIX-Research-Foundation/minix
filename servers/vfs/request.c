@@ -28,7 +28,7 @@
 /*===========================================================================*
  *			req_breadwrite					     *
  *===========================================================================*/
-PUBLIC int req_breadwrite(
+int req_breadwrite(
   endpoint_t fs_e,
   endpoint_t user_e,
   dev_t dev,
@@ -73,7 +73,7 @@ PUBLIC int req_breadwrite(
 /*===========================================================================*
  *				req_chmod	      			     *
  *===========================================================================*/
-PUBLIC int req_chmod(
+int req_chmod(
   int fs_e,
   ino_t inode_nr,
   mode_t rmode,
@@ -101,7 +101,7 @@ PUBLIC int req_chmod(
 /*===========================================================================*
  *				req_chown          			     *
  *===========================================================================*/
-PUBLIC int req_chown(
+int req_chown(
   endpoint_t fs_e,
   ino_t inode_nr,
   uid_t newuid,
@@ -131,7 +131,7 @@ PUBLIC int req_chown(
 /*===========================================================================*
  *				req_create				     *
  *===========================================================================*/
-PUBLIC int req_create(
+int req_create(
   int fs_e,
   ino_t inode_nr,
   int omode,
@@ -184,7 +184,7 @@ PUBLIC int req_create(
 /*===========================================================================*
  *				req_flush	      			     *
  *===========================================================================*/
-PUBLIC int req_flush(endpoint_t fs_e, dev_t dev)
+int req_flush(endpoint_t fs_e, dev_t dev)
 {
   message m;
 
@@ -200,7 +200,7 @@ PUBLIC int req_flush(endpoint_t fs_e, dev_t dev)
 /*===========================================================================*
  *				req_fstatfs	    			     *
  *===========================================================================*/
-PUBLIC int req_fstatfs(int fs_e, int proc_e, char *buf)
+int req_fstatfs(int fs_e, int proc_e, char *buf)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -226,7 +226,7 @@ PUBLIC int req_fstatfs(int fs_e, int proc_e, char *buf)
 /*===========================================================================*
  *				req_statvfs	    			     *
  *===========================================================================*/
-PUBLIC int req_statvfs(int fs_e, int proc_e, char *buf)
+int req_statvfs(int fs_e, int proc_e, char *buf)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -252,7 +252,7 @@ PUBLIC int req_statvfs(int fs_e, int proc_e, char *buf)
 /*===========================================================================*
  *				req_ftrunc	     			     *
  *===========================================================================*/
-PUBLIC int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
+int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 {
   message m;
 
@@ -272,7 +272,7 @@ PUBLIC int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 /*===========================================================================*
  *				req_getdents	     			     *
  *===========================================================================*/
-PUBLIC int req_getdents(
+int req_getdents(
   endpoint_t fs_e,
   ino_t inode_nr,
   u64_t pos,
@@ -319,7 +319,7 @@ PUBLIC int req_getdents(
 /*===========================================================================*
  *				req_inhibread	  			     *
  *===========================================================================*/
-PUBLIC int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
+int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
 {
   message m;
 
@@ -335,7 +335,7 @@ PUBLIC int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
 /*===========================================================================*
  *				req_link	       			     *
  *===========================================================================*/
-PUBLIC int req_link(
+int req_link(
   endpoint_t fs_e,
   ino_t link_parent,
   char *lastc,
@@ -369,7 +369,7 @@ PUBLIC int req_link(
 /*===========================================================================*
  *				req_lookup	                   	     *
  *===========================================================================*/
-PUBLIC int req_lookup(
+int req_lookup(
   endpoint_t fs_e,
   ino_t dir_ino,
   ino_t root_ino,
@@ -471,7 +471,7 @@ PUBLIC int req_lookup(
 /*===========================================================================*
  *				req_mkdir	      			     *
  *===========================================================================*/
-PUBLIC int req_mkdir(
+int req_mkdir(
   endpoint_t fs_e,
   ino_t inode_nr,
   char *lastc,
@@ -510,7 +510,7 @@ PUBLIC int req_mkdir(
 /*===========================================================================*
  *				req_mknod	      			     *
  *===========================================================================*/
-PUBLIC int req_mknod(
+int req_mknod(
   endpoint_t fs_e,
   ino_t inode_nr,
   char *lastc,
@@ -551,7 +551,7 @@ PUBLIC int req_mknod(
 /*===========================================================================*
  *				req_mountpoint	                 	     *
  *===========================================================================*/
-PUBLIC int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
+int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 {
   message m;
 
@@ -567,7 +567,7 @@ PUBLIC int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 /*===========================================================================*
  *				req_newnode	      			     *
  *===========================================================================*/
-PUBLIC int req_newnode(
+int req_newnode(
   endpoint_t fs_e,
   uid_t uid,
   gid_t gid,
@@ -604,7 +604,7 @@ PUBLIC int req_newnode(
 /*===========================================================================*
  *				req_newdriver          			     *
  *===========================================================================*/
-PUBLIC int req_newdriver(
+int req_newdriver(
   endpoint_t fs_e,
   dev_t dev,
   char *label
@@ -639,7 +639,7 @@ PUBLIC int req_newdriver(
 /*===========================================================================*
  *				req_putnode				     *
  *===========================================================================*/
-PUBLIC int req_putnode(fs_e, inode_nr, count)
+int req_putnode(fs_e, inode_nr, count)
 int fs_e;
 ino_t inode_nr;
 int count;
@@ -659,7 +659,7 @@ int count;
 /*===========================================================================*
  *				req_rdlink	     			     *
  *===========================================================================*/
-PUBLIC int req_rdlink(fs_e, inode_nr, proc_e, buf, len, direct)
+int req_rdlink(fs_e, inode_nr, proc_e, buf, len, direct)
 endpoint_t fs_e;
 ino_t inode_nr;
 endpoint_t proc_e;
@@ -699,7 +699,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
 /*===========================================================================*
  *				req_readsuper	                  	     *
  *===========================================================================*/
-PUBLIC int req_readsuper(
+int req_readsuper(
   endpoint_t fs_e,
   char *label,
   dev_t dev,
@@ -750,7 +750,7 @@ PUBLIC int req_readsuper(
 /*===========================================================================*
  *				req_readwrite				     *
  *===========================================================================*/
-PUBLIC int req_readwrite(fs_e, inode_nr, pos, rw_flag, user_e,
+int req_readwrite(fs_e, inode_nr, pos, rw_flag, user_e,
 	user_addr, num_of_bytes, new_posp, cum_iop)
 endpoint_t fs_e;
 ino_t inode_nr;
@@ -799,7 +799,7 @@ unsigned int *cum_iop;
 /*===========================================================================*
  *				req_rename	     			     *
  *===========================================================================*/
-PUBLIC int req_rename(fs_e, old_dir, old_name, new_dir, new_name)
+int req_rename(fs_e, old_dir, old_name, new_dir, new_name)
 endpoint_t fs_e;
 ino_t old_dir;
 char *old_name;
@@ -842,7 +842,7 @@ char *new_name;
 /*===========================================================================*
  *				req_rmdir	      			     *
  *===========================================================================*/
-PUBLIC int req_rmdir(fs_e, inode_nr, lastc)
+int req_rmdir(fs_e, inode_nr, lastc)
 endpoint_t fs_e;
 ino_t inode_nr;
 char *lastc;
@@ -874,7 +874,7 @@ char *lastc;
 /*===========================================================================*
  *				req_slink	      			     *
  *===========================================================================*/
-PUBLIC int req_slink(
+int req_slink(
   endpoint_t fs_e,
   ino_t inode_nr,
   char *lastc,
@@ -924,7 +924,7 @@ PUBLIC int req_slink(
 /*===========================================================================*
  *				req_stat	       			     *
  *===========================================================================*/
-PUBLIC int req_stat(fs_e, inode_nr, proc_e, buf, pos, stat_version)
+int req_stat(fs_e, inode_nr, proc_e, buf, pos, stat_version)
 int fs_e;
 ino_t inode_nr;
 int proc_e;
@@ -1010,7 +1010,7 @@ int stat_version;
 /*===========================================================================*
  *				req_sync	       			     *
  *===========================================================================*/
-PUBLIC int req_sync(fs_e)
+int req_sync(fs_e)
 endpoint_t fs_e;
 {
   message m;
@@ -1026,7 +1026,7 @@ endpoint_t fs_e;
 /*===========================================================================*
  *				req_unlink	     			     *
  *===========================================================================*/
-PUBLIC int req_unlink(fs_e, inode_nr, lastc)
+int req_unlink(fs_e, inode_nr, lastc)
 endpoint_t fs_e;
 ino_t inode_nr;
 char *lastc;
@@ -1058,7 +1058,7 @@ char *lastc;
 /*===========================================================================*
  *				req_unmount	    			     *
  *===========================================================================*/
-PUBLIC int req_unmount(fs_e)
+int req_unmount(fs_e)
 endpoint_t fs_e;
 {
   message m;
@@ -1074,7 +1074,7 @@ endpoint_t fs_e;
 /*===========================================================================*
  *				req_utime	      			     *
  *===========================================================================*/
-PUBLIC int req_utime(fs_e, inode_nr, actime, modtime)
+int req_utime(fs_e, inode_nr, actime, modtime)
 endpoint_t fs_e;
 ino_t inode_nr;
 time_t actime;

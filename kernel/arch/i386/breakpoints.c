@@ -3,7 +3,7 @@
 
 #include "debugreg.h"
 
-PUBLIC int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
+int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
 {
 	unsigned long dr7, dr7flags;
 	

@@ -17,21 +17,21 @@
 #define MAX_ERROR 5
 #include "common.c"
 
-PUBLIC int errct;
-PRIVATE int count, condition_met;
-PRIVATE int th_a, th_b, th_c, th_d, th_e, th_f, th_g, th_h;
-PRIVATE int mutex_a_step, mutex_b_step, mutex_c_step;
-PRIVATE mutex_t mu[3];
-PRIVATE cond_t condition;
-PRIVATE mutex_t *count_mutex, *condition_mutex;
-PRIVATE once_t once;
-PRIVATE key_t key[MTHREAD_KEYS_MAX+1];
-PRIVATE int values[4];
-PRIVATE int first;
-PRIVATE event_t event;
-PRIVATE int event_a_step, event_b_step;
-PRIVATE rwlock_t rwlock;
-PRIVATE int rwlock_a_step, rwlock_b_step;
+int errct;
+static int count, condition_met;
+static int th_a, th_b, th_c, th_d, th_e, th_f, th_g, th_h;
+static int mutex_a_step, mutex_b_step, mutex_c_step;
+static mutex_t mu[3];
+static cond_t condition;
+static mutex_t *count_mutex, *condition_mutex;
+static once_t once;
+static key_t key[MTHREAD_KEYS_MAX+1];
+static int values[4];
+static int first;
+static event_t event;
+static int event_a_step, event_b_step;
+static rwlock_t rwlock;
+static int rwlock_a_step, rwlock_b_step;
 
 #define VERIFY_RWLOCK(a, b, esub, eno) \
 	GEN_VERIFY(rwlock_a_step, a, rwlock_b_step, b, esub, eno)
@@ -61,27 +61,27 @@ PRIVATE int rwlock_a_step, rwlock_b_step;
 #define MEG 1024*1024
 #define MAGIC ((signed) 0xb4a3f1c2)
 
-FORWARD void destr_a(void *arg);
-FORWARD void destr_b(void *arg);
-FORWARD void *thread_a(void *arg);
-FORWARD void *thread_b(void *arg);
-FORWARD void *thread_c(void *arg);
-FORWARD void *thread_d(void *arg);
-FORWARD void thread_e(void);
-FORWARD void *thread_f(void *arg);
-FORWARD void *thread_g(void *arg);
-FORWARD void *thread_h(void *arg);
-FORWARD void test_scheduling(void);
-FORWARD void test_mutex(void);
-FORWARD void test_condition(void);
-FORWARD void test_attributes(void);
-FORWARD void test_keys(void);
-FORWARD void err(int subtest, int error);
+static void destr_a(void *arg);
+static void destr_b(void *arg);
+static void *thread_a(void *arg);
+static void *thread_b(void *arg);
+static void *thread_c(void *arg);
+static void *thread_d(void *arg);
+static void thread_e(void);
+static void *thread_f(void *arg);
+static void *thread_g(void *arg);
+static void *thread_h(void *arg);
+static void test_scheduling(void);
+static void test_mutex(void);
+static void test_condition(void);
+static void test_attributes(void);
+static void test_keys(void);
+static void err(int subtest, int error);
 
 /*===========================================================================*
  *				thread_a				     *
  *===========================================================================*/
-PRIVATE void *thread_a(void *arg) {
+static void *thread_a(void *arg) {
   th_a++;
   return(NULL);
 }
@@ -90,7 +90,7 @@ PRIVATE void *thread_a(void *arg) {
 /*===========================================================================*
  *				thread_b				     *
  *===========================================================================*/
-PRIVATE void *thread_b(void *arg) {
+static void *thread_b(void *arg) {
   th_b++;
   if (mthread_once(&once, thread_e) != 0) err(10, 1);
   return(NULL);
@@ -100,7 +100,7 @@ PRIVATE void *thread_b(void *arg) {
 /*===========================================================================*
  *				thread_c				     *
  *===========================================================================*/
-PRIVATE void *thread_c(void *arg) {
+static void *thread_c(void *arg) {
   th_c++;
   return(NULL);
 }
@@ -109,7 +109,7 @@ PRIVATE void *thread_c(void *arg) {
 /*===========================================================================*
  *				thread_d				     *
  *===========================================================================*/
-PRIVATE void *thread_d(void *arg) {
+static void *thread_d(void *arg) {
   th_d++;
   mthread_exit(NULL); /* Thread wants to stop running */
   return(NULL);
@@ -119,7 +119,7 @@ PRIVATE void *thread_d(void *arg) {
 /*===========================================================================*
  *				thread_e				     *
  *===========================================================================*/
-PRIVATE void thread_e(void) {
+static void thread_e(void) {
   th_e++;
 }
 
@@ -127,7 +127,7 @@ PRIVATE void thread_e(void) {
 /*===========================================================================*
  *				thread_f				     *
  *===========================================================================*/
-PRIVATE void *thread_f(void *arg) {
+static void *thread_f(void *arg) {
   if (mthread_mutex_lock(condition_mutex) != 0) err(12, 1);
   th_f++;
   if (mthread_cond_signal(&condition) != 0) err(12, 2);
@@ -139,7 +139,7 @@ PRIVATE void *thread_f(void *arg) {
 /*===========================================================================*
  *				thread_g				     *
  *===========================================================================*/
-PRIVATE void *thread_g(void *arg) {
+static void *thread_g(void *arg) {
   char bigarray[MTHREAD_STACK_MIN + 1];
   if (mthread_mutex_lock(condition_mutex) != 0) err(13, 1);
   memset(bigarray, '\0', MTHREAD_STACK_MIN + 1); /* Actually allocate it */
@@ -153,7 +153,7 @@ PRIVATE void *thread_g(void *arg) {
 /*===========================================================================*
  *				thread_h				     *
  *===========================================================================*/
-PRIVATE void *thread_h(void *arg) {
+static void *thread_h(void *arg) {
   char bigarray[2 * MEG];
   int reply;
   if (mthread_mutex_lock(condition_mutex) != 0) err(14, 1);
@@ -170,7 +170,7 @@ PRIVATE void *thread_h(void *arg) {
 /*===========================================================================*
  *				err					     *
  *===========================================================================*/
-PRIVATE void err(int sub, int error) {
+static void err(int sub, int error) {
   /* As we're running with multiple threads, they might all clobber the
    * subtest variable. This wrapper prevents that from happening. */
 
@@ -182,7 +182,7 @@ PRIVATE void err(int sub, int error) {
 /*===========================================================================*
  *				test_scheduling				     *
  *===========================================================================*/
-PRIVATE void test_scheduling(void)
+static void test_scheduling(void)
 {
   unsigned int i;
   thread_t t[7];
@@ -247,7 +247,7 @@ PRIVATE void test_scheduling(void)
 /*===========================================================================*
  *				mutex_a					     *
  *===========================================================================*/
-PRIVATE void *mutex_a(void *arg)
+static void *mutex_a(void *arg)
 {
   mutex_t *mu = (mutex_t *) arg;
 
@@ -303,7 +303,7 @@ PRIVATE void *mutex_a(void *arg)
 /*===========================================================================*
  *				mutex_b					     *
  *===========================================================================*/
-PRIVATE void *mutex_b(void *arg)
+static void *mutex_b(void *arg)
 {
   mutex_t *mu = (mutex_t *) arg;
 
@@ -339,7 +339,7 @@ PRIVATE void *mutex_b(void *arg)
 /*===========================================================================*
  *				mutex_c					     *
  *===========================================================================*/
-PRIVATE void *mutex_c(void *arg)
+static void *mutex_c(void *arg)
 {
   mutex_t *mu = (mutex_t *) arg;
 
@@ -367,7 +367,7 @@ PRIVATE void *mutex_c(void *arg)
 /*===========================================================================*
  *				test_mutex				     *
  *===========================================================================*/
-PRIVATE void test_mutex(void)
+static void test_mutex(void)
 {
   unsigned int i;
   thread_t t[3];
@@ -413,7 +413,7 @@ PRIVATE void test_mutex(void)
 /*===========================================================================*
  *					cond_a				     *
  *===========================================================================*/
-PRIVATE void *cond_a(void *arg)
+static void *cond_a(void *arg)
 {
   cond_t c;
   int did_count = 0;
@@ -462,7 +462,7 @@ PRIVATE void *cond_a(void *arg)
 /*===========================================================================*
  *					cond_b				     *
  *===========================================================================*/
-PRIVATE void *cond_b(void *arg)
+static void *cond_b(void *arg)
 {
   int did_count = 0;
   while(1) {
@@ -489,7 +489,7 @@ PRIVATE void *cond_b(void *arg)
 /*===========================================================================*
  *				cond_broadcast				     *
  *===========================================================================*/
-PRIVATE void *cond_broadcast(void *arg)
+static void *cond_broadcast(void *arg)
 {
   if (mthread_mutex_lock(condition_mutex) != 0) err(9, 1);
 
@@ -507,7 +507,7 @@ PRIVATE void *cond_broadcast(void *arg)
 /*===========================================================================*
  *				test_condition				     *
  *===========================================================================*/
-PRIVATE void test_condition(void)
+static void test_condition(void)
 {
 #define NTHREADS 10
   int i;
@@ -595,7 +595,7 @@ PRIVATE void test_condition(void)
 /*===========================================================================*
  *				test_attributes				     *
  *===========================================================================*/
-PRIVATE void test_attributes(void)
+static void test_attributes(void)
 {
   attr_t tattr;
   thread_t tid;
@@ -765,7 +765,7 @@ PRIVATE void test_attributes(void)
 /*===========================================================================*
  *				destr_a					     *
  *===========================================================================*/
-PRIVATE void destr_a(void *value)
+static void destr_a(void *value)
 {
   int num;
 
@@ -782,7 +782,7 @@ PRIVATE void destr_a(void *value)
 /*===========================================================================*
  *				destr_b					     *
  *===========================================================================*/
-PRIVATE void destr_b(void *value)
+static void destr_b(void *value)
 {
   /* This destructor must never trigger. */
   err(16, 1);
@@ -791,7 +791,7 @@ PRIVATE void destr_b(void *value)
 /*===========================================================================*
  *				key_a					     *
  *===========================================================================*/
-PRIVATE void *key_a(void *arg)
+static void *key_a(void *arg)
 {
   int i;
 
@@ -823,7 +823,7 @@ PRIVATE void *key_a(void *arg)
 /*===========================================================================*
  *				key_b					     *
  *===========================================================================*/
-PRIVATE void *key_b(void *arg)
+static void *key_b(void *arg)
 {
   int i;
 
@@ -849,7 +849,7 @@ PRIVATE void *key_b(void *arg)
 /*===========================================================================*
  *				key_c					     *
  *===========================================================================*/
-PRIVATE void *key_c(void *arg)
+static void *key_c(void *arg)
 {
   /* The only thing that this thread should do, is set a value. */
   if (mthread_setspecific(key[0], (void *) mthread_self()) != 0) err(19, 1);
@@ -864,7 +864,7 @@ PRIVATE void *key_c(void *arg)
 /*===========================================================================*
  *				test_keys				     *
  *===========================================================================*/
-PRIVATE void test_keys(void)
+static void test_keys(void)
 {
   thread_t t[24];
   int i, j;
@@ -939,7 +939,7 @@ PRIVATE void test_keys(void)
 /*===========================================================================*
  *				event_a					     *
  *===========================================================================*/
-PRIVATE void *event_a(void *arg)
+static void *event_a(void *arg)
 {
   VERIFY_EVENT(0, 0, 21, 1);
 
@@ -963,7 +963,7 @@ PRIVATE void *event_a(void *arg)
 /*===========================================================================*
  *				event_b					     *
  *===========================================================================*/
-PRIVATE void *event_b(void *arg)
+static void *event_b(void *arg)
 {
   VERIFY_EVENT(0, 0, 22, 1);
 
@@ -983,7 +983,7 @@ PRIVATE void *event_b(void *arg)
 /*===========================================================================*
  *				test_event				     *
  *===========================================================================*/
-PRIVATE void test_event(void)
+static void test_event(void)
 {
   thread_t t[2];
   int i;
@@ -1022,7 +1022,7 @@ PRIVATE void test_event(void)
 /*===========================================================================*
  *				rwlock_a				     *
  *===========================================================================*/
-PRIVATE void *rwlock_a(void *arg)
+static void *rwlock_a(void *arg)
 {
   /* acquire read lock */
   VERIFY_RWLOCK(0, 0, 24, 1);
@@ -1052,7 +1052,7 @@ PRIVATE void *rwlock_a(void *arg)
 /*===========================================================================*
  *				rwlock_b				     *
  *===========================================================================*/
-PRIVATE void *rwlock_b(void *arg)
+static void *rwlock_b(void *arg)
 {
   /* Step 1: acquire the read lock */
   VERIFY_RWLOCK(1, 0, 25, 1);
@@ -1078,7 +1078,7 @@ PRIVATE void *rwlock_b(void *arg)
 /*===========================================================================*
  *				test_rwlock				     *
  *===========================================================================*/
-PRIVATE void test_rwlock(void)
+static void test_rwlock(void)
 {
   thread_t t[2];
   int i;

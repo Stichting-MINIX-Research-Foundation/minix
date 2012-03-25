@@ -11,26 +11,26 @@
 #include <minix/endpoint.h>
 
 /* Allocate space for the global variables. */
-PRIVATE message m_in;		/* the input message itself */
-PRIVATE message m_out;		/* the output message used for reply */
-PRIVATE endpoint_t who_e;	/* caller's proc number */
-PRIVATE int callnr;		/* system call number */
+static message m_in;		/* the input message itself */
+static message m_out;		/* the output message used for reply */
+static endpoint_t who_e;	/* caller's proc number */
+static int callnr;		/* system call number */
 
 extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
-FORWARD void get_work(void);
-FORWARD void reply(int whom, int result);
+static void get_work(void);
+static void reply(int whom, int result);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 /* This is the main routine of this service. The main loop consists of 
  * three major activities: getting new work, processing the work, and
@@ -75,7 +75,7 @@ PUBLIC int main(int argc, char **argv)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -96,7 +96,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the information server. */
 
@@ -109,7 +109,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *		            sef_cb_signal_handler                            *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
   /* Only check for termination signal, ignore anything else. */
   if (signo != SIGTERM) return;
@@ -123,7 +123,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-PRIVATE void get_work()
+static void get_work()
 {
     int status = 0;
     status = sef_receive(ANY, &m_in);   /* this blocks until message arrives */
@@ -136,7 +136,7 @@ PRIVATE void get_work()
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(who, result)
+static void reply(who, result)
 int who;                           	/* destination */
 int result;                           	/* report result to replyee */
 {

@@ -112,7 +112,7 @@
 #include "ahci.h"
 
 /* Host Bus Adapter (HBA) state. */
-PRIVATE struct {
+static struct {
 	volatile u32_t *base;	/* base address of memory-mapped registers */
 	size_t size;		/* size of memory-mapped register area */
 
@@ -125,7 +125,7 @@ PRIVATE struct {
 } hba_state;
 
 /* Port state. */
-PRIVATE struct port_state {
+static struct port_state {
 	int state;		/* port state */
 	unsigned int flags;	/* port flags */
 
@@ -171,21 +171,21 @@ PRIVATE struct port_state {
 	} cmd_info[NR_CMDS];
 } port_state[NR_PORTS];
 
-PRIVATE int ahci_instance;			/* driver instance number */
+static int ahci_instance;			/* driver instance number */
 
-PRIVATE int ahci_verbose;			/* verbosity level (0..4) */
+static int ahci_verbose;			/* verbosity level (0..4) */
 
 /* Timeout values. These can be overridden with environment variables. */
-PRIVATE long ahci_spinup_timeout = SPINUP_TIMEOUT;
-PRIVATE long ahci_sig_timeout = SIG_TIMEOUT;
-PRIVATE long ahci_sig_checks = NR_SIG_CHECKS;
-PRIVATE long ahci_command_timeout = COMMAND_TIMEOUT;
-PRIVATE long ahci_transfer_timeout = TRANSFER_TIMEOUT;
-PRIVATE long ahci_flush_timeout = FLUSH_TIMEOUT;
+static long ahci_spinup_timeout = SPINUP_TIMEOUT;
+static long ahci_sig_timeout = SIG_TIMEOUT;
+static long ahci_sig_checks = NR_SIG_CHECKS;
+static long ahci_command_timeout = COMMAND_TIMEOUT;
+static long ahci_transfer_timeout = TRANSFER_TIMEOUT;
+static long ahci_flush_timeout = FLUSH_TIMEOUT;
 
-PRIVATE int ahci_map[MAX_DRIVES];		/* device-to-port mapping */
+static int ahci_map[MAX_DRIVES];		/* device-to-port mapping */
 
-PRIVATE int ahci_exiting = FALSE;		/* exit after last close? */
+static int ahci_exiting = FALSE;		/* exit after last close? */
 
 #define BUILD_ARG(port, tag)	(((port) << 8) | (tag))
 #define GET_PORT(arg)		((arg) >> 8)
@@ -196,29 +196,29 @@ PRIVATE int ahci_exiting = FALSE;		/* exit after last close? */
 		printf s;		\
 } while (0)
 
-PRIVATE void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
+static void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 	u8_t packet[ATAPI_PACKET_SIZE], prd_t *prdt, int nr_prds, int write);
-PRIVATE void port_issue(struct port_state *ps, int cmd, clock_t timeout);
-PRIVATE int port_exec(struct port_state *ps, int cmd, clock_t timeout);
-PRIVATE void port_timeout(struct timer *tp);
-PRIVATE void port_disconnect(struct port_state *ps);
+static void port_issue(struct port_state *ps, int cmd, clock_t timeout);
+static int port_exec(struct port_state *ps, int cmd, clock_t timeout);
+static void port_timeout(struct timer *tp);
+static void port_disconnect(struct port_state *ps);
 
-PRIVATE char *ahci_portname(struct port_state *ps);
-PRIVATE int ahci_open(dev_t minor, int access);
-PRIVATE int ahci_close(dev_t minor);
-PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
+static char *ahci_portname(struct port_state *ps);
+static int ahci_open(dev_t minor, int access);
+static int ahci_close(dev_t minor);
+static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iovec, unsigned int count,
 	int flags);
-PRIVATE struct device *ahci_part(dev_t minor);
-PRIVATE void ahci_alarm(clock_t stamp);
-PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static struct device *ahci_part(dev_t minor);
+static void ahci_alarm(clock_t stamp);
+static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
-PRIVATE void ahci_intr(unsigned int irqs);
-PRIVATE int ahci_device(dev_t minor, device_id_t *id);
-PRIVATE struct port_state *ahci_get_port(dev_t minor);
+static void ahci_intr(unsigned int irqs);
+static int ahci_device(dev_t minor, device_id_t *id);
+static struct port_state *ahci_get_port(dev_t minor);
 
 /* AHCI driver table. */
-PRIVATE struct blockdriver ahci_dtab = {
+static struct blockdriver ahci_dtab = {
 	BLOCKDRIVER_TYPE_DISK,
 	ahci_open,
 	ahci_close,
@@ -236,7 +236,7 @@ PRIVATE struct blockdriver ahci_dtab = {
 /*===========================================================================*
  *				atapi_exec				     *
  *===========================================================================*/
-PRIVATE int atapi_exec(struct port_state *ps, int cmd,
+static int atapi_exec(struct port_state *ps, int cmd,
 	u8_t packet[ATAPI_PACKET_SIZE], size_t size, int write)
 {
 	/* Execute an ATAPI command. Return OK or error.
@@ -272,7 +272,7 @@ PRIVATE int atapi_exec(struct port_state *ps, int cmd,
 /*===========================================================================*
  *				atapi_test_unit				     *
  *===========================================================================*/
-PRIVATE int atapi_test_unit(struct port_state *ps, int cmd)
+static int atapi_test_unit(struct port_state *ps, int cmd)
 {
 	/* Test whether the ATAPI device and medium are ready.
 	 */
@@ -287,7 +287,7 @@ PRIVATE int atapi_test_unit(struct port_state *ps, int cmd)
 /*===========================================================================*
  *				atapi_request_sense			     *
  *===========================================================================*/
-PRIVATE int atapi_request_sense(struct port_state *ps, int cmd, int *sense)
+static int atapi_request_sense(struct port_state *ps, int cmd, int *sense)
 {
 	/* Request error (sense) information from an ATAPI device, and return
 	 * the sense key. The additional sense codes are not used at this time.
@@ -316,7 +316,7 @@ PRIVATE int atapi_request_sense(struct port_state *ps, int cmd, int *sense)
 /*===========================================================================*
  *				atapi_load_eject			     *
  *===========================================================================*/
-PRIVATE int atapi_load_eject(struct port_state *ps, int cmd, int load)
+static int atapi_load_eject(struct port_state *ps, int cmd, int load)
 {
 	/* Load or eject a medium in an ATAPI device.
 	 */
@@ -332,7 +332,7 @@ PRIVATE int atapi_load_eject(struct port_state *ps, int cmd, int load)
 /*===========================================================================*
  *				atapi_read_capacity			     *
  *===========================================================================*/
-PRIVATE int atapi_read_capacity(struct port_state *ps, int cmd)
+static int atapi_read_capacity(struct port_state *ps, int cmd)
 {
 	/* Retrieve the LBA count and sector size of an ATAPI medium.
 	 */
@@ -372,7 +372,7 @@ PRIVATE int atapi_read_capacity(struct port_state *ps, int cmd)
 /*===========================================================================*
  *				atapi_check_medium			     *
  *===========================================================================*/
-PRIVATE int atapi_check_medium(struct port_state *ps, int cmd)
+static int atapi_check_medium(struct port_state *ps, int cmd)
 {
 	/* Check whether a medium is present in a removable-media ATAPI device.
 	 * If a new medium is detected, get its total and sector size. Return
@@ -407,7 +407,7 @@ PRIVATE int atapi_check_medium(struct port_state *ps, int cmd)
 /*===========================================================================*
  *				atapi_id_check				     *
  *===========================================================================*/
-PRIVATE int atapi_id_check(struct port_state *ps, u16_t *buf)
+static int atapi_id_check(struct port_state *ps, u16_t *buf)
 {
 	/* Determine whether we support this ATAPI device based on the
 	 * identification data it returned, and store some of its properties.
@@ -462,7 +462,7 @@ PRIVATE int atapi_id_check(struct port_state *ps, u16_t *buf)
 /*===========================================================================*
  *				atapi_transfer				     *
  *===========================================================================*/
-PRIVATE int atapi_transfer(struct port_state *ps, int cmd, u64_t start_lba,
+static int atapi_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 	unsigned int count, int write, prd_t *prdt, int nr_prds)
 {
 	/* Perform data transfer from or to an ATAPI device.
@@ -498,7 +498,7 @@ PRIVATE int atapi_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 /*===========================================================================*
  *				ata_id_check				     *
  *===========================================================================*/
-PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
+static int ata_id_check(struct port_state *ps, u16_t *buf)
 {
 	/* Determine whether we support this ATA device based on the
 	 * identification data it returned, and store some of its properties.
@@ -574,7 +574,7 @@ PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
 /*===========================================================================*
  *				ata_transfer				     *
  *===========================================================================*/
-PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
+static int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 	unsigned int count, int write, int force, prd_t *prdt, int nr_prds)
 {
 	/* Perform data transfer from or to an ATA device.
@@ -624,7 +624,7 @@ PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 /*===========================================================================*
  *				gen_identify				     *
  *===========================================================================*/
-PRIVATE int gen_identify(struct port_state *ps, int blocking)
+static int gen_identify(struct port_state *ps, int blocking)
 {
 	/* Identify an ATA or ATAPI device. If the blocking flag is set, block
 	 * until the command has completed; otherwise return immediately.
@@ -657,7 +657,7 @@ PRIVATE int gen_identify(struct port_state *ps, int blocking)
 /*===========================================================================*
  *				gen_flush_wcache			     *
  *===========================================================================*/
-PRIVATE int gen_flush_wcache(struct port_state *ps)
+static int gen_flush_wcache(struct port_state *ps)
 {
 	/* Flush the device's write cache.
 	 */
@@ -690,7 +690,7 @@ PRIVATE int gen_flush_wcache(struct port_state *ps)
 /*===========================================================================*
  *				gen_get_wcache				     *
  *===========================================================================*/
-PRIVATE int gen_get_wcache(struct port_state *ps, int *val)
+static int gen_get_wcache(struct port_state *ps, int *val)
 {
 	/* Retrieve the status of the device's write cache.
 	 */
@@ -713,7 +713,7 @@ PRIVATE int gen_get_wcache(struct port_state *ps, int *val)
 /*===========================================================================*
  *				gen_set_wcache				     *
  *===========================================================================*/
-PRIVATE int gen_set_wcache(struct port_state *ps, int enable)
+static int gen_set_wcache(struct port_state *ps, int enable)
 {
 	/* Enable or disable the device's write cache.
 	 */
@@ -744,7 +744,7 @@ PRIVATE int gen_set_wcache(struct port_state *ps, int enable)
 /*===========================================================================*
  *				ct_set_fis				     *
  *===========================================================================*/
-PRIVATE vir_bytes ct_set_fis(u8_t *ct, cmd_fis_t *fis, unsigned int tag)
+static vir_bytes ct_set_fis(u8_t *ct, cmd_fis_t *fis, unsigned int tag)
 {
 	/* Fill in the Frame Information Structure part of a command table,
 	 * and return the resulting FIS size (in bytes). We only support the
@@ -782,7 +782,7 @@ PRIVATE vir_bytes ct_set_fis(u8_t *ct, cmd_fis_t *fis, unsigned int tag)
 /*===========================================================================*
  *				ct_set_packet				     *
  *===========================================================================*/
-PRIVATE void ct_set_packet(u8_t *ct, u8_t packet[ATAPI_PACKET_SIZE])
+static void ct_set_packet(u8_t *ct, u8_t packet[ATAPI_PACKET_SIZE])
 {
 	/* Fill in the packet part of a command table.
 	 */
@@ -793,7 +793,7 @@ PRIVATE void ct_set_packet(u8_t *ct, u8_t packet[ATAPI_PACKET_SIZE])
 /*===========================================================================*
  *				ct_set_prdt				     *
  *===========================================================================*/
-PRIVATE void ct_set_prdt(u8_t *ct, prd_t *prdt, int nr_prds)
+static void ct_set_prdt(u8_t *ct, prd_t *prdt, int nr_prds)
 {
 	/* Fill in the PRDT part of a command table.
 	 */
@@ -813,7 +813,7 @@ PRIVATE void ct_set_prdt(u8_t *ct, prd_t *prdt, int nr_prds)
 /*===========================================================================*
  *				port_set_cmd				     *
  *===========================================================================*/
-PRIVATE void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
+static void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 	u8_t packet[ATAPI_PACKET_SIZE], prd_t *prdt, int nr_prds, int write)
 {
 	/* Prepare the given command for execution, by constructing a command
@@ -868,7 +868,7 @@ PRIVATE void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 /*===========================================================================*
  *				port_finish_cmd				     *
  *===========================================================================*/
-PRIVATE void port_finish_cmd(struct port_state *ps, int cmd, int result)
+static void port_finish_cmd(struct port_state *ps, int cmd, int result)
 {
 	/* Finish a command that has either succeeded or failed.
 	 */
@@ -895,7 +895,7 @@ PRIVATE void port_finish_cmd(struct port_state *ps, int cmd, int result)
 /*===========================================================================*
  *				port_fail_cmds				     *
  *===========================================================================*/
-PRIVATE void port_fail_cmds(struct port_state *ps)
+static void port_fail_cmds(struct port_state *ps)
 {
 	/* Fail all ongoing commands for a device.
 	 */
@@ -909,7 +909,7 @@ PRIVATE void port_fail_cmds(struct port_state *ps)
 /*===========================================================================*
  *				port_check_cmds				     *
  *===========================================================================*/
-PRIVATE void port_check_cmds(struct port_state *ps)
+static void port_check_cmds(struct port_state *ps)
 {
 	/* Check what commands have completed, and finish them.
 	 */
@@ -933,7 +933,7 @@ PRIVATE void port_check_cmds(struct port_state *ps)
 /*===========================================================================*
  *				port_find_cmd				     *
  *===========================================================================*/
-PRIVATE int port_find_cmd(struct port_state *ps)
+static int port_find_cmd(struct port_state *ps)
 {
 	/* Find a free command tag to queue the current request.
 	 */
@@ -954,7 +954,7 @@ PRIVATE int port_find_cmd(struct port_state *ps)
 /*===========================================================================*
  *				port_get_padbuf				     *
  *===========================================================================*/
-PRIVATE int port_get_padbuf(struct port_state *ps, size_t size)
+static int port_get_padbuf(struct port_state *ps, size_t size)
 {
 	/* Make available a temporary buffer for use by this port. Enlarge the
 	 * previous buffer if applicable and necessary, potentially changing
@@ -987,7 +987,7 @@ PRIVATE int port_get_padbuf(struct port_state *ps, size_t size)
 /*===========================================================================*
  *				sum_iovec				     *
  *===========================================================================*/
-PRIVATE int sum_iovec(struct port_state *ps, endpoint_t endpt,
+static int sum_iovec(struct port_state *ps, endpoint_t endpt,
 	iovec_s_t *iovec, int nr_req, vir_bytes *total)
 {
 	/* Retrieve the total size of the given I/O vector. Check for alignment
@@ -1024,7 +1024,7 @@ PRIVATE int sum_iovec(struct port_state *ps, endpoint_t endpt,
 /*===========================================================================*
  *				setup_prdt				     *
  *===========================================================================*/
-PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
+static int setup_prdt(struct port_state *ps, endpoint_t endpt,
 	iovec_s_t *iovec, int nr_req, vir_bytes size, vir_bytes lead,
 	int write, prd_t *prdt)
 {
@@ -1107,7 +1107,7 @@ PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
 /*===========================================================================*
  *				port_transfer				     *
  *===========================================================================*/
-PRIVATE ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
+static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 	endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write, int flags)
 {
 	/* Perform an I/O transfer on a port.
@@ -1189,7 +1189,7 @@ PRIVATE ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 /*===========================================================================*
  *				port_start				     *
  *===========================================================================*/
-PRIVATE void port_start(struct port_state *ps)
+static void port_start(struct port_state *ps)
 {
 	/* Start the given port, allowing for the execution of commands and the
 	 * transfer of data on that port.
@@ -1214,7 +1214,7 @@ PRIVATE void port_start(struct port_state *ps)
 /*===========================================================================*
  *				port_restart				     *
  *===========================================================================*/
-PRIVATE void port_restart(struct port_state *ps)
+static void port_restart(struct port_state *ps)
 {
 	/* Restart a port after a fatal error has occurred.
 	 */
@@ -1267,7 +1267,7 @@ PRIVATE void port_restart(struct port_state *ps)
 /*===========================================================================*
  *				port_stop				     *
  *===========================================================================*/
-PRIVATE void port_stop(struct port_state *ps)
+static void port_stop(struct port_state *ps)
 {
 	/* Stop the given port, if not already stopped.
 	 */
@@ -1309,7 +1309,7 @@ PRIVATE void port_stop(struct port_state *ps)
 /*===========================================================================*
  *				port_sig_check				     *
  *===========================================================================*/
-PRIVATE void port_sig_check(struct port_state *ps)
+static void port_sig_check(struct port_state *ps)
 {
 	/* Check whether the device's signature has become available yet, and
 	 * if so, start identifying the device.
@@ -1393,7 +1393,7 @@ PRIVATE void port_sig_check(struct port_state *ps)
 /*===========================================================================*
  *				print_string				     *
  *===========================================================================*/
-PRIVATE void print_string(u16_t *buf, int start, int end)
+static void print_string(u16_t *buf, int start, int end)
 {
 	/* Print a string that is stored as little-endian words and padded with
 	 * trailing spaces.
@@ -1414,7 +1414,7 @@ PRIVATE void print_string(u16_t *buf, int start, int end)
 /*===========================================================================*
  *				port_id_check				     *
  *===========================================================================*/
-PRIVATE void port_id_check(struct port_state *ps, int success)
+static void port_id_check(struct port_state *ps, int success)
 {
 	/* The device identification command has either completed or timed out.
 	 * Decide whether this device is usable or not, and store some of its
@@ -1483,7 +1483,7 @@ PRIVATE void port_id_check(struct port_state *ps, int success)
 /*===========================================================================*
  *				port_connect				     *
  *===========================================================================*/
-PRIVATE void port_connect(struct port_state *ps)
+static void port_connect(struct port_state *ps)
 {
 	/* A device has been found to be attached to this port. Start the port,
 	 * and do timed polling for its signature to become available.
@@ -1508,7 +1508,7 @@ PRIVATE void port_connect(struct port_state *ps)
 /*===========================================================================*
  *				port_disconnect				     *
  *===========================================================================*/
-PRIVATE void port_disconnect(struct port_state *ps)
+static void port_disconnect(struct port_state *ps)
 {
 	/* The device has detached from this port. Stop the port if necessary.
 	 */
@@ -1538,7 +1538,7 @@ PRIVATE void port_disconnect(struct port_state *ps)
 /*===========================================================================*
  *				port_intr				     *
  *===========================================================================*/
-PRIVATE void port_intr(struct port_state *ps)
+static void port_intr(struct port_state *ps)
 {
 	/* Process an interrupt on this port.
 	 */
@@ -1619,7 +1619,7 @@ PRIVATE void port_intr(struct port_state *ps)
 /*===========================================================================*
  *				port_timeout				     *
  *===========================================================================*/
-PRIVATE void port_timeout(struct timer *tp)
+static void port_timeout(struct timer *tp)
 {
 	/* A timeout has occurred on this port. Figure out what the timeout is
 	 * for, and take appropriate action.
@@ -1705,7 +1705,7 @@ PRIVATE void port_timeout(struct timer *tp)
 /*===========================================================================*
  *				port_wait				     *
  *===========================================================================*/
-PRIVATE void port_wait(struct port_state *ps)
+static void port_wait(struct port_state *ps)
 {
 	/* Suspend the current thread until the given port is no longer busy,
 	 * due to either command completion or timeout.
@@ -1722,7 +1722,7 @@ PRIVATE void port_wait(struct port_state *ps)
 /*===========================================================================*
  *				port_issue				     *
  *===========================================================================*/
-PRIVATE void port_issue(struct port_state *ps, int cmd, clock_t timeout)
+static void port_issue(struct port_state *ps, int cmd, clock_t timeout)
 {
 	/* Issue a command to the port, and set a timer to trigger a timeout
 	 * if the command takes too long to complete.
@@ -1751,7 +1751,7 @@ PRIVATE void port_issue(struct port_state *ps, int cmd, clock_t timeout)
 /*===========================================================================*
  *				port_exec				     *
  *===========================================================================*/
-PRIVATE int port_exec(struct port_state *ps, int cmd, clock_t timeout)
+static int port_exec(struct port_state *ps, int cmd, clock_t timeout)
 {
 	/* Execute a command on a port, wait for the command to complete or for
 	 * a timeout, and return whether the command succeeded or not.
@@ -1789,7 +1789,7 @@ PRIVATE int port_exec(struct port_state *ps, int cmd, clock_t timeout)
 /*===========================================================================*
  *				port_alloc				     *
  *===========================================================================*/
-PRIVATE void port_alloc(struct port_state *ps)
+static void port_alloc(struct port_state *ps)
 {
 	/* Allocate memory for the given port. We try to cram everything into
 	 * one 4K-page in order to limit memory usage as much as possible.
@@ -1854,7 +1854,7 @@ PRIVATE void port_alloc(struct port_state *ps)
 /*===========================================================================*
  *				port_free				     *
  *===========================================================================*/
-PRIVATE void port_free(struct port_state *ps)
+static void port_free(struct port_state *ps)
 {
 	/* Free previously allocated memory for the given port.
 	 */
@@ -1874,7 +1874,7 @@ PRIVATE void port_free(struct port_state *ps)
 /*===========================================================================*
  *				port_init				     *
  *===========================================================================*/
-PRIVATE void port_init(struct port_state *ps)
+static void port_init(struct port_state *ps)
 {
 	/* Initialize the given port.
 	 */
@@ -1918,7 +1918,7 @@ PRIVATE void port_init(struct port_state *ps)
 /*===========================================================================*
  *				ahci_probe				     *
  *===========================================================================*/
-PRIVATE int ahci_probe(int skip)
+static int ahci_probe(int skip)
 {
 	/* Find a matching PCI device.
 	 */
@@ -1945,7 +1945,7 @@ PRIVATE int ahci_probe(int skip)
 /*===========================================================================*
  *				ahci_reset				     *
  *===========================================================================*/
-PRIVATE void ahci_reset(void)
+static void ahci_reset(void)
 {
 	/* Reset the HBA. Do not enable AHCI mode afterwards.
 	 */
@@ -1967,7 +1967,7 @@ PRIVATE void ahci_reset(void)
 /*===========================================================================*
  *				ahci_init				     *
  *===========================================================================*/
-PRIVATE void ahci_init(int devind)
+static void ahci_init(int devind)
 {
 	/* Initialize the device.
 	 */
@@ -2048,7 +2048,7 @@ PRIVATE void ahci_init(int devind)
 /*===========================================================================*
  *				ahci_stop				     *
  *===========================================================================*/
-PRIVATE void ahci_stop(void)
+static void ahci_stop(void)
 {
 	/* Disable AHCI, and clean up resources to the extent possible.
 	 */
@@ -2078,7 +2078,7 @@ PRIVATE void ahci_stop(void)
 /*===========================================================================*
  *				ahci_alarm				     *
  *===========================================================================*/
-PRIVATE void ahci_alarm(clock_t stamp)
+static void ahci_alarm(clock_t stamp)
 {
 	/* Process an alarm.
 	 */
@@ -2090,7 +2090,7 @@ PRIVATE void ahci_alarm(clock_t stamp)
 /*===========================================================================*
  *				ahci_intr				     *
  *===========================================================================*/
-PRIVATE void ahci_intr(unsigned int UNUSED(irqs))
+static void ahci_intr(unsigned int UNUSED(irqs))
 {
 	/* Process an interrupt.
 	 */
@@ -2127,7 +2127,7 @@ PRIVATE void ahci_intr(unsigned int UNUSED(irqs))
 /*===========================================================================*
  *				ahci_get_var				     *
  *===========================================================================*/
-PRIVATE void ahci_get_var(char *name, long *v, int timeout)
+static void ahci_get_var(char *name, long *v, int timeout)
 {
 	/* Retrieve an environment variable, and optionall adjust it to the
 	 * scale that we are using internally.
@@ -2144,7 +2144,7 @@ PRIVATE void ahci_get_var(char *name, long *v, int timeout)
 /*===========================================================================*
  *				ahci_get_params				     *
  *===========================================================================*/
-PRIVATE void ahci_get_params(void)
+static void ahci_get_params(void)
 {
 	/* Retrieve and parse parameters passed to this driver, except the
 	 * device-to-port mapping, which has to be parsed later.
@@ -2173,7 +2173,7 @@ PRIVATE void ahci_get_params(void)
 /*===========================================================================*
  *				ahci_set_mapping			     *
  *===========================================================================*/
-PRIVATE void ahci_set_mapping(void)
+static void ahci_set_mapping(void)
 {
 	/* Construct a mapping from device nodes to port numbers.
 	 */
@@ -2226,7 +2226,7 @@ PRIVATE void ahci_set_mapping(void)
 /*===========================================================================*
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the driver.
 	 */
@@ -2256,7 +2256,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				sef_cb_signal_handler			     *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	/* In case of a termination signal, shut down this driver.
 	 */
@@ -2282,7 +2282,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/* Set callbacks and initialize the System Event Framework (SEF).
 	 */
@@ -2301,7 +2301,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *				ahci_portname				     *
  *===========================================================================*/
-PRIVATE char *ahci_portname(struct port_state *ps)
+static char *ahci_portname(struct port_state *ps)
 {
 	/* Return a printable name for the given port. Whenever we can, print a
 	 * "Dx" device number rather than a "Pxx" port number, because the user
@@ -2328,7 +2328,7 @@ PRIVATE char *ahci_portname(struct port_state *ps)
 /*===========================================================================*
  *				ahci_map_minor				     *
  *===========================================================================*/
-PRIVATE struct port_state *ahci_map_minor(dev_t minor, struct device **dvp)
+static struct port_state *ahci_map_minor(dev_t minor, struct device **dvp)
 {
 	/* Map a minor device number to a port and a pointer to the partition's
 	 * device structure. Return NULL if this minor device number does not
@@ -2364,7 +2364,7 @@ PRIVATE struct port_state *ahci_map_minor(dev_t minor, struct device **dvp)
 /*===========================================================================*
  *				ahci_part				     *
  *===========================================================================*/
-PRIVATE struct device *ahci_part(dev_t minor)
+static struct device *ahci_part(dev_t minor)
 {
 	/* Return a pointer to the partition information structure of the given
 	 * minor device.
@@ -2380,7 +2380,7 @@ PRIVATE struct device *ahci_part(dev_t minor)
 /*===========================================================================*
  *				ahci_open				     *
  *===========================================================================*/
-PRIVATE int ahci_open(dev_t minor, int access)
+static int ahci_open(dev_t minor, int access)
 {
 	/* Open a device.
 	 */
@@ -2450,7 +2450,7 @@ PRIVATE int ahci_open(dev_t minor, int access)
 /*===========================================================================*
  *				ahci_close				     *
  *===========================================================================*/
-PRIVATE int ahci_close(dev_t minor)
+static int ahci_close(dev_t minor)
 {
 	/* Close a device.
 	 */
@@ -2506,7 +2506,7 @@ PRIVATE int ahci_close(dev_t minor)
 /*===========================================================================*
  *				ahci_transfer				     *
  *===========================================================================*/
-PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
+static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iovec, unsigned int count, int flags)
 {
 	/* Perform data transfer on the selected device.
@@ -2541,7 +2541,7 @@ PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 /*===========================================================================*
  *				ahci_ioctl				     *
  *===========================================================================*/
-PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 	/* Process I/O control requests.
@@ -2598,7 +2598,7 @@ PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 /*===========================================================================*
  *				ahci_device				     *
  *===========================================================================*/
-PRIVATE int ahci_device(dev_t minor, device_id_t *id)
+static int ahci_device(dev_t minor, device_id_t *id)
 {
 	/* Map a minor device number to a device ID.
 	 */
@@ -2616,7 +2616,7 @@ PRIVATE int ahci_device(dev_t minor, device_id_t *id)
 /*===========================================================================*
  *				ahci_get_port				     *
  *===========================================================================*/
-PRIVATE struct port_state *ahci_get_port(dev_t minor)
+static struct port_state *ahci_get_port(dev_t minor)
 {
 	/* Get the port structure associated with the given minor device.
 	 * Called only from worker threads, so the minor device is already
@@ -2634,7 +2634,7 @@ PRIVATE struct port_state *ahci_get_port(dev_t minor)
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	/* Driver task.
 	 */

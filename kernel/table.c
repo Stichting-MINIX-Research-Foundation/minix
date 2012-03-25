@@ -51,7 +51,7 @@
  * to prioritize ping messages periodically delivered to system processes.
  */
 
-PUBLIC struct boot_image image[] = {
+struct boot_image image[] = {
 /* process nr, flags, stack size, name */
 {ASYNCM,           0,          0, "asyncm"},
 {IDLE,             0,          0, "idle"  },

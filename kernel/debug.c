@@ -16,7 +16,7 @@
 
 #define MAX_LOOP (NR_PROCS + NR_TASKS)
 
-PUBLIC int runqueues_ok_cpu(unsigned cpu)
+int runqueues_ok_cpu(unsigned cpu)
 {
   int q, l = 0;
   register struct proc *xp;
@@ -115,7 +115,7 @@ PUBLIC int runqueues_ok_cpu(unsigned cpu)
 }
 
 #ifdef CONFIG_SMP
-PRIVATE int runqueues_ok_all(void)
+static int runqueues_ok_all(void)
 {
 	unsigned c;
 
@@ -126,14 +126,14 @@ PRIVATE int runqueues_ok_all(void)
 	return 1;	
 }
 
-PUBLIC int runqueues_ok(void)
+int runqueues_ok(void)
 {
 	return runqueues_ok_all();
 }
 
 #else
 
-PUBLIC int runqueues_ok(void)
+int runqueues_ok(void)
 {
 	return runqueues_ok_cpu(0);
 }
@@ -141,7 +141,7 @@ PUBLIC int runqueues_ok(void)
 
 #endif
 
-PUBLIC char *
+char *
 rtsflagstr(const u32_t flags)
 {
 	static char str[100];
@@ -168,7 +168,7 @@ rtsflagstr(const u32_t flags)
 	return str;
 }
 
-PUBLIC char *
+char *
 miscflagstr(const u32_t flags)
 {
 	static char str[100];
@@ -182,7 +182,7 @@ miscflagstr(const u32_t flags)
 	return str;
 }
 
-PUBLIC char *
+char *
 schedulerstr(struct proc *scheduler)
 {
 	if (scheduler != NULL)
@@ -193,7 +193,7 @@ schedulerstr(struct proc *scheduler)
 	return "KERNEL";
 }
 
-PRIVATE void
+static void
 print_proc_name(struct proc *pp)
 {
 	char *name = pp->p_name;
@@ -207,7 +207,7 @@ print_proc_name(struct proc *pp)
 	}
 }
 
-PRIVATE void
+static void
 print_endpoint(endpoint_t ep)
 {
 	int proc_nr;
@@ -240,7 +240,7 @@ print_endpoint(endpoint_t ep)
 	}
 }
 
-PRIVATE void
+static void
 print_sigmgr(struct proc *pp)
 {
 	endpoint_t sig_mgr, bak_sig_mgr;
@@ -254,7 +254,7 @@ print_sigmgr(struct proc *pp)
 	}
 }
 
-PUBLIC void print_proc(struct proc *pp)
+void print_proc(struct proc *pp)
 {
 	endpoint_t dep;
 
@@ -278,7 +278,7 @@ PUBLIC void print_proc(struct proc *pp)
 	printf("\n");
 }
 
-PRIVATE void print_proc_depends(struct proc *pp, const int level)
+static void print_proc_depends(struct proc *pp, const int level)
 {
 	struct proc *depproc = NULL;
 	endpoint_t dep;
@@ -310,13 +310,13 @@ PRIVATE void print_proc_depends(struct proc *pp, const int level)
 	}
 }
 
-PUBLIC void print_proc_recursive(struct proc *pp)
+void print_proc_recursive(struct proc *pp)
 {
 	print_proc_depends(pp, 0);
 }
 
 #if DEBUG_DUMPIPC
-PRIVATE const char *mtypename(int mtype, int iscall)
+static const char *mtypename(int mtype, int iscall)
 {
 	/* use generated file to recognize message types */
 	if (iscall) {
@@ -337,7 +337,7 @@ PRIVATE const char *mtypename(int mtype, int iscall)
 	return NULL;
 }
 
-PRIVATE void printproc(struct proc *rp)
+static void printproc(struct proc *rp)
 {
 	if (rp)
 		printf(" %s(%d)", rp->p_name, rp - proc);
@@ -345,7 +345,7 @@ PRIVATE void printproc(struct proc *rp)
 		printf(" kernel");
 }
 
-PRIVATE void printparam(const char *name, const void *data, size_t size)
+static void printparam(const char *name, const void *data, size_t size)
 {
 	printf(" %s=", name);
 	switch (size) {
@@ -356,7 +356,7 @@ PRIVATE void printparam(const char *name, const void *data, size_t size)
 	}
 }
 
-PRIVATE void printmsg(message *msg, struct proc *src, struct proc *dst, 
+static void printmsg(message *msg, struct proc *src, struct proc *dst, 
 	char operation, int iscall, int printparams)
 {
 	const char *name;
@@ -385,15 +385,15 @@ PRIVATE void printmsg(message *msg, struct proc *src, struct proc *dst,
 #if DEBUG_IPCSTATS
 #define IPCPROCS (NR_PROCS+1)	/* number of slots we need */
 #define KERNELIPC NR_PROCS	/* slot number to use for kernel calls */
-PRIVATE int messages[IPCPROCS][IPCPROCS];
+static int messages[IPCPROCS][IPCPROCS];
 
 #define PRINTSLOTS 20
-PRIVATE struct {
+static struct {
 	int src, dst, messages;
 } winners[PRINTSLOTS];
-PRIVATE int total, goodslots;
+static int total, goodslots;
 
-PRIVATE void printstats(int ticks)
+static void printstats(int ticks)
 {
 	int i;
 	for(i = 0; i < goodslots; i++) {
@@ -407,7 +407,7 @@ PRIVATE void printstats(int ticks)
 	printf("total %d/s\n", persec(total));
 }
 
-PRIVATE void sortstats(void)
+static void sortstats(void)
 {
 	/* Print top message senders/receivers. */
 	int src_slot, dst_slot;
@@ -447,7 +447,7 @@ PRIVATE void sortstats(void)
 	assert(s >= 0 && s < IPCPROCS); \
 }
 
-PRIVATE void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
+static void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
 {
 	int src, dst, now, secs, dt;
 	static int lastprint;
@@ -473,14 +473,14 @@ PRIVATE void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
 #endif
 
 #if DEBUG_IPC_HOOK
-PUBLIC void hook_ipc_msgkcall(message *msg, struct proc *proc)
+void hook_ipc_msgkcall(message *msg, struct proc *proc)
 {
 #if DEBUG_DUMPIPC
 	printmsg(msg, proc, NULL, 'k', 1, 1);
 #endif
 }
 
-PUBLIC void hook_ipc_msgkresult(message *msg, struct proc *proc)
+void hook_ipc_msgkresult(message *msg, struct proc *proc)
 {
 #if DEBUG_DUMPIPC
 	printmsg(msg, NULL, proc, 'k', 0, 0);
@@ -490,7 +490,7 @@ PUBLIC void hook_ipc_msgkresult(message *msg, struct proc *proc)
 #endif
 }
 
-PUBLIC void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst)
+void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst)
 {
 #if DEBUG_DUMPIPC
 	printmsg(msg, src, dst, 'r', src->p_misc_flags & MF_REPLY_PEND, 0);
@@ -500,14 +500,14 @@ PUBLIC void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst)
 #endif
 }
 
-PUBLIC void hook_ipc_msgsend(message *msg, struct proc *src, struct proc *dst)
+void hook_ipc_msgsend(message *msg, struct proc *src, struct proc *dst)
 {
 #if DEBUG_DUMPIPC
 	printmsg(msg, src, dst, 's', src->p_misc_flags & MF_REPLY_PEND, 1);
 #endif
 }
 
-PUBLIC void hook_ipc_clear(struct proc *p)
+void hook_ipc_clear(struct proc *p)
 {
 #if DEBUG_IPCSTATS
 	int slot, i;

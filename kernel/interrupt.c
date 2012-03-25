@@ -22,13 +22,13 @@
 
 
 /* number of lists of IRQ hooks, one list per supported line. */
-PRIVATE irq_hook_t* irq_handlers[NR_IRQ_VECTORS] = {0};
+static irq_hook_t* irq_handlers[NR_IRQ_VECTORS] = {0};
 
 /*===========================================================================*
  *				put_irq_handler				     *
  *===========================================================================*/
 /* Register an interrupt handler.  */
-PUBLIC void put_irq_handler( irq_hook_t* hook, int irq,
+void put_irq_handler( irq_hook_t* hook, int irq,
   const irq_handler_t handler)
 {
   int id;
@@ -74,7 +74,7 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq,
  *				rm_irq_handler				     *
  *===========================================================================*/
 /* Unregister an interrupt handler.  */
-PUBLIC void rm_irq_handler( const irq_hook_t* hook ) {
+void rm_irq_handler( const irq_hook_t* hook ) {
   const int irq = hook->irq; 
   const int id = hook->id;
   irq_hook_t **line;
@@ -115,7 +115,7 @@ PUBLIC void rm_irq_handler( const irq_hook_t* hook ) {
  * the end. Before returning, it unmasks the IRQ if and only if all active ID
  * bits are cleared, and restart a process.
  */
-PUBLIC void irq_handle(int irq)
+void irq_handle(int irq)
 {
   irq_hook_t * hook;
 
@@ -160,7 +160,7 @@ PUBLIC void irq_handle(int irq)
 }
 
 /* Enable/Disable a interrupt line.  */
-PUBLIC void enable_irq(const irq_hook_t *hook)
+void enable_irq(const irq_hook_t *hook)
 {
   if((irq_actids[hook->irq] &= ~hook->id) == 0) {
     hw_intr_unmask(hook->irq);
@@ -168,7 +168,7 @@ PUBLIC void enable_irq(const irq_hook_t *hook)
 }
 
 /* Return true if the interrupt was enabled before call.  */
-PUBLIC int disable_irq(const irq_hook_t *hook)
+int disable_irq(const irq_hook_t *hook)
 {
   if(irq_actids[hook->irq] & hook->id)  /* already disabled */
     return 0;

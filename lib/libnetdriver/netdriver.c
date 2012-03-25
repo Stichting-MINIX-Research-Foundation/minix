@@ -14,12 +14,12 @@
 #include <minix/netdriver.h>
 #include <minix/ds.h>
 
-PRIVATE int conf_expected = TRUE;
+static int conf_expected = TRUE;
 
 /*===========================================================================*
  *			    netdriver_announce				     *
  *===========================================================================*/
-PUBLIC void netdriver_announce()
+void netdriver_announce()
 {
 /* Announce we are up after a fresh start or restart. */
   int r;
@@ -44,7 +44,7 @@ PUBLIC void netdriver_announce()
 /*===========================================================================*
  *			     netdriver_receive				     *
  *===========================================================================*/
-PUBLIC int netdriver_receive(src, m_ptr, status_ptr)
+int netdriver_receive(src, m_ptr, status_ptr)
 endpoint_t src;
 message *m_ptr;
 int *status_ptr;

@@ -36,7 +36,7 @@ static struct query_exit_struct array[NR_PROCS];
 /*===========================================================================*
  *				do_query_exit				     *
  *===========================================================================*/
-PUBLIC int do_query_exit(message *m)
+int do_query_exit(message *m)
 {
 	int i, nr;
 	endpoint_t ep = NONE;
@@ -65,7 +65,7 @@ PUBLIC int do_query_exit(message *m)
 /*===========================================================================*
  *				do_notify_sig				     *
  *===========================================================================*/
-PUBLIC int do_notify_sig(message *m)
+int do_notify_sig(message *m)
 {
 	int i, avails = 0;
 	endpoint_t ep = m->VM_NOTIFY_SIG_ENDPOINT;
@@ -118,7 +118,7 @@ out:
 /*===========================================================================*
  *				do_watch_exit				     *
  *===========================================================================*/
-PUBLIC int do_watch_exit(message *m)
+int do_watch_exit(message *m)
 {
 	endpoint_t e = m->VM_WE_EP;
 	struct vmproc *vmp;
@@ -133,7 +133,7 @@ PUBLIC int do_watch_exit(message *m)
 /*===========================================================================*
  *				init_query_exit				     *
  *===========================================================================*/
-PUBLIC void init_query_exit(void)
+void init_query_exit(void)
 {
 	int i;
 

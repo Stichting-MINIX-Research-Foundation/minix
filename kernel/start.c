@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				cstart					     *
  *===========================================================================*/
-PUBLIC void cstart(
+void cstart(
    u16_t cs,		/* kernel code segment */
    u16_t ds,		/* kernel data segment */
    u16_t mds,		/* monitor data segment */
@@ -124,7 +124,7 @@ PUBLIC void cstart(
  *				get_value				     *
  *===========================================================================*/
 
-PUBLIC char *get_value(
+char *get_value(
   const char *params,			/* boot monitor parameters */
   const char *name			/* key to look up */
 )
@@ -148,7 +148,7 @@ PUBLIC char *get_value(
 /*===========================================================================*
  *				env_get				     	*
  *===========================================================================*/
-PUBLIC char *env_get(const char *name)
+char *env_get(const char *name)
 {
 	return get_value(params_buffer, name);
 }

@@ -7,7 +7,7 @@
 /*=========================================================================*
  *				env_parse				   *
  *=========================================================================*/
-PUBLIC int env_parse(env, fmt, field, param, min, max)
+int env_parse(env, fmt, field, param, min, max)
 char *env;		/* environment variable to inspect */
 char *fmt;		/* template to parse it with */
 int field;		/* field number of value to return */
@@ -93,7 +93,7 @@ badenv:
  *				env_memory_parse			   *
  *=========================================================================*/
 
-PUBLIC int env_memory_parse(mem_chunks, maxchunks)
+int env_memory_parse(mem_chunks, maxchunks)
 struct memory *mem_chunks;	/* where to store the memory bits */
 int maxchunks;			/* how many were found */
 {

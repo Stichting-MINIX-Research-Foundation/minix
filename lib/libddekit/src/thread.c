@@ -17,22 +17,22 @@
 
 
 /* Incremented to generate unique thread IDs */
-PRIVATE unsigned id;
+static unsigned id;
 
-PRIVATE ddekit_thread_t *ready_queue[DDEKIT_THREAD_PRIOS];
+static ddekit_thread_t *ready_queue[DDEKIT_THREAD_PRIOS];
 
-PRIVATE ddekit_thread_t *sleep_queue;
+static ddekit_thread_t *sleep_queue;
 
 /* Handle to the running thread, set in _dde_kit_thread_schedule() */
-PRIVATE ddekit_thread_t *current = NULL;
+static ddekit_thread_t *current = NULL;
 
-FORWARD void _ddekit_thread_start(ddekit_thread_t *th);
-FORWARD void _ddekit_thread_sleep(unsigned long until);
+static void _ddekit_thread_start(ddekit_thread_t *th);
+static void _ddekit_thread_sleep(unsigned long until);
 
 /*****************************************************************************
  *    _ddekit_thread_start                                                   *
  ****************************************************************************/
-PRIVATE void _ddekit_thread_start(ddekit_thread_t *th)
+static void _ddekit_thread_start(ddekit_thread_t *th)
 {
 	/* entry point of newly created threads */
 	th->fun(th->arg);
@@ -42,7 +42,7 @@ PRIVATE void _ddekit_thread_start(ddekit_thread_t *th)
 /*****************************************************************************
  *    _ddekit_thread_sleep                                                   *
  ****************************************************************************/
-PRIVATE void _ddekit_thread_sleep(unsigned long until)
+static void _ddekit_thread_sleep(unsigned long until)
 {
 	current->next = sleep_queue;
 	sleep_queue = current;
@@ -58,7 +58,7 @@ PRIVATE void _ddekit_thread_sleep(unsigned long until)
 /*****************************************************************************
  *    ddekit_yield                                                           *
  ****************************************************************************/
-PUBLIC void ddekit_yield()
+void ddekit_yield()
 {
 	ddekit_thread_schedule();
 }
@@ -66,7 +66,7 @@ PUBLIC void ddekit_yield()
 /*****************************************************************************
  *    ddekit_thread_schedule                                                 *
  ****************************************************************************/
-PUBLIC void ddekit_thread_schedule()
+void ddekit_thread_schedule()
 {
 	_ddekit_thread_enqueue(current);
 	_ddekit_thread_schedule();
@@ -75,7 +75,7 @@ PUBLIC void ddekit_thread_schedule()
 /*****************************************************************************
  *    ddekit_thread_create                                                   *
  ****************************************************************************/
-PUBLIC ddekit_thread_t *
+ddekit_thread_t *
 ddekit_thread_create(void (*fun)(void *), void *arg, const char *name)
 {
 	ddekit_thread_t *th  =  
@@ -130,7 +130,7 @@ ddekit_thread_create(void (*fun)(void *), void *arg, const char *name)
 /*****************************************************************************
  *    ddekit_thread_get_data                                                 *
  ****************************************************************************/
-PUBLIC void *ddekit_thread_get_data(ddekit_thread_t *thread)
+void *ddekit_thread_get_data(ddekit_thread_t *thread)
 {
 	return thread->data;
 }
@@ -138,7 +138,7 @@ PUBLIC void *ddekit_thread_get_data(ddekit_thread_t *thread)
 /*****************************************************************************
  *    ddekit_thread_get_my_data                                              *
  ****************************************************************************/
-PUBLIC void *ddekit_thread_get_my_data(void)
+void *ddekit_thread_get_my_data(void)
 {
 	return current->data;
 }
@@ -146,7 +146,7 @@ PUBLIC void *ddekit_thread_get_my_data(void)
 /*****************************************************************************
  *    ddekit_thread_myself                                                   *
  ****************************************************************************/
-PUBLIC 
+
 ddekit_thread_t *ddekit_thread_myself(void)
 {
 	return current;
@@ -155,7 +155,7 @@ ddekit_thread_t *ddekit_thread_myself(void)
 /*****************************************************************************
  *    ddekit_thread_setup_myself                                             *
  ****************************************************************************/
-PUBLIC 
+
 ddekit_thread_t *ddekit_thread_setup_myself(const char *name) {
 	ddekit_thread_t *th  =  
 	  (ddekit_thread_t *) ddekit_simple_malloc(sizeof(ddekit_thread_t));
@@ -176,7 +176,7 @@ ddekit_thread_t *ddekit_thread_setup_myself(const char *name) {
 /*****************************************************************************
  *    ddekit_thread_set_data                                                 *
  ****************************************************************************/
-PUBLIC void ddekit_thread_set_data(ddekit_thread_t *thread, void *data)
+void ddekit_thread_set_data(ddekit_thread_t *thread, void *data)
 {
 	thread->data=data;
 }
@@ -184,7 +184,7 @@ PUBLIC void ddekit_thread_set_data(ddekit_thread_t *thread, void *data)
 /*****************************************************************************
  *    ddekit_thread_set_my_data                                              *
  ****************************************************************************/
-PUBLIC void ddekit_thread_set_my_data(void *data) 
+void ddekit_thread_set_my_data(void *data) 
 {
 	current->data = data;	
 }
@@ -217,7 +217,7 @@ void ddekit_thread_usleep(unsigned long usecs)
 /*****************************************************************************
  *    ddekit_thread_nsleep                                                   *
  ****************************************************************************/
-PUBLIC void ddekit_thread_nsleep(unsigned long nsecs)
+void ddekit_thread_nsleep(unsigned long nsecs)
 {
 	/* 
 	 * Cannot use usleep here, because it's implemented in vfs.
@@ -242,7 +242,7 @@ PUBLIC void ddekit_thread_nsleep(unsigned long nsecs)
 /*****************************************************************************
  *    ddekit_thread_msleep                                                   *
  ****************************************************************************/
-PUBLIC void ddekit_thread_msleep(unsigned long msecs)
+void ddekit_thread_msleep(unsigned long msecs)
 {
 	unsigned long to;
 	
@@ -270,7 +270,7 @@ PUBLIC void ddekit_thread_msleep(unsigned long msecs)
 /*****************************************************************************
  *    ddekit_thread_sleep                                                   *
  ****************************************************************************/
-PUBLIC void  ddekit_thread_sleep(ddekit_lock_t *lock)
+void  ddekit_thread_sleep(ddekit_lock_t *lock)
 {
 	WARN_UNIMPL;
 }
@@ -278,7 +278,7 @@ PUBLIC void  ddekit_thread_sleep(ddekit_lock_t *lock)
 /*****************************************************************************
  *    ddekit_thread_exit                                                     *
  ****************************************************************************/
-PUBLIC void  ddekit_thread_exit() 
+void  ddekit_thread_exit() 
 {
 	ddekit_sem_down(current->sleep_sem);
 	ddekit_panic("thread running after exit!\n");
@@ -289,7 +289,7 @@ PUBLIC void  ddekit_thread_exit()
 /*****************************************************************************
  *    ddekit_thread_terminate                                                *
  ****************************************************************************/
-PUBLIC void  ddekit_thread_terminate(ddekit_thread_t *thread)
+void  ddekit_thread_terminate(ddekit_thread_t *thread)
 {
 	/* todo */
 }
@@ -297,7 +297,7 @@ PUBLIC void  ddekit_thread_terminate(ddekit_thread_t *thread)
 /*****************************************************************************
  *    ddekit_thread_get_name                                                 *
  ****************************************************************************/
-PUBLIC const char *ddekit_thread_get_name(ddekit_thread_t *thread)
+const char *ddekit_thread_get_name(ddekit_thread_t *thread)
 {
 	return thread->name;
 }
@@ -305,7 +305,7 @@ PUBLIC const char *ddekit_thread_get_name(ddekit_thread_t *thread)
 /*****************************************************************************
  *    ddekit_thread_get_id                                                   *
  ****************************************************************************/
-PUBLIC int ddekit_thread_get_id(ddekit_thread_t *thread)
+int ddekit_thread_get_id(ddekit_thread_t *thread)
 {
 	return thread->id;
 }
@@ -313,7 +313,7 @@ PUBLIC int ddekit_thread_get_id(ddekit_thread_t *thread)
 /*****************************************************************************
  *    ddekit_init_threads                                                    *
  ****************************************************************************/
-PUBLIC void ddekit_init_threads(void)
+void ddekit_init_threads(void)
 {
 	int i;
 	
@@ -333,7 +333,7 @@ PUBLIC void ddekit_init_threads(void)
 /*****************************************************************************
  *    _ddekit_thread_schedule                                                *
  ****************************************************************************/
-PUBLIC void _ddekit_thread_schedule()
+void _ddekit_thread_schedule()
 {
 
 	DDEBUG_MSG_VERBOSE("called schedule id: %d name %s, prio: %d",
@@ -381,7 +381,7 @@ PUBLIC void _ddekit_thread_schedule()
 /*****************************************************************************
  *    _ddekit_thread_enqueue                                                 *
  ****************************************************************************/
-PUBLIC void _ddekit_thread_enqueue(ddekit_thread_t *th) 
+void _ddekit_thread_enqueue(ddekit_thread_t *th) 
 {
 	
 	DDEBUG_MSG_VERBOSE("enqueueing thread: id: %d name %s, prio: %d",
@@ -407,7 +407,7 @@ PUBLIC void _ddekit_thread_enqueue(ddekit_thread_t *th)
 /*****************************************************************************
  *    _ddekit_thread_set_myprio                                              *
  ****************************************************************************/
-PUBLIC void _ddekit_thread_set_myprio(int prio)
+void _ddekit_thread_set_myprio(int prio)
 {
 	DDEBUG_MSG_VERBOSE("changing thread prio, id: %d name %s, old prio: %d, "
 		"new prio: %d",	current->id, current->name, current->prio);
@@ -419,7 +419,7 @@ PUBLIC void _ddekit_thread_set_myprio(int prio)
 /*****************************************************************************
  *    _ddekit_thread_wakeup_sleeping                                         *
  ****************************************************************************/
-PUBLIC void _ddekit_thread_wakeup_sleeping()
+void _ddekit_thread_wakeup_sleeping()
 {
 	ddekit_thread_t *th = sleep_queue;
 	
@@ -464,7 +464,7 @@ PUBLIC void _ddekit_thread_wakeup_sleeping()
 /*****************************************************************************
  *    _ddekit_print_backtrace                                                *
  ****************************************************************************/
-PUBLIC void _ddekit_print_backtrace(ddekit_thread_t *th)
+void _ddekit_print_backtrace(ddekit_thread_t *th)
 {
 	unsigned long bp, pc, hbp;				
 

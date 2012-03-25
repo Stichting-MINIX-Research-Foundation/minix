@@ -17,7 +17,7 @@
 /*===========================================================================*
  *				alloc_bit				     *
  *===========================================================================*/
-PUBLIC bit_t alloc_bit(void)
+bit_t alloc_bit(void)
 {
 /* Allocate a bit from a bit map and return its bit number. */
   bitchunk_t *wptr, *wlim;
@@ -55,7 +55,7 @@ PUBLIC bit_t alloc_bit(void)
 /*===========================================================================*
  *				free_bit				     *
  *===========================================================================*/
-PUBLIC void free_bit(bit_returned)
+void free_bit(bit_returned)
 bit_t bit_returned;		/* number of bit to insert into the inode map*/
 {
   bitchunk_t *k, mask;

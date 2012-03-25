@@ -4,12 +4,12 @@
 #include <minix/sysutil.h>
 #include <minix/gcov.h>
 
-PRIVATE sef_cb_gcov_t sef_cb_gcov = do_gcov_flush_impl;
+static sef_cb_gcov_t sef_cb_gcov = do_gcov_flush_impl;
 
 /*===========================================================================*
  *                            do_sef_gcov_request             		     *
  *===========================================================================*/
-PUBLIC int do_sef_gcov_request(message *m_ptr)
+int do_sef_gcov_request(message *m_ptr)
 {
 	if(!sef_cb_gcov)
 		return ENOSYS;
@@ -22,7 +22,7 @@ PUBLIC int do_sef_gcov_request(message *m_ptr)
 /*===========================================================================*
  *                            sef_setcb_gcov             		     *
  *===========================================================================*/
-PUBLIC void sef_setcb_gcov(sef_cb_gcov_t cb)
+void sef_setcb_gcov(sef_cb_gcov_t cb)
 {
 	sef_cb_gcov = cb;
 }

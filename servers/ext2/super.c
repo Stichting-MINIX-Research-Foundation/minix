@@ -20,22 +20,22 @@
 #include "super.h"
 #include "const.h"
 
-FORWARD off_t ext2_max_size(int block_size);
-FORWARD u32_t ext2_count_dirs(struct super_block *sp);
+static off_t ext2_max_size(int block_size);
+static u32_t ext2_count_dirs(struct super_block *sp);
 
-FORWARD void super_copy(register struct super_block *dest, register
+static void super_copy(register struct super_block *dest, register
 	struct super_block *source);
-FORWARD void copy_group_descriptors(register struct group_desc
+static void copy_group_descriptors(register struct group_desc
 	*dest_array, register struct group_desc *source_array, unsigned int
 	ngroups);
 
-PRIVATE off_t super_block_offset;
+static off_t super_block_offset;
 
 
 /*===========================================================================*
  *                              get_super                                    *
  *===========================================================================*/
-PUBLIC struct super_block *get_super(
+struct super_block *get_super(
   dev_t dev           /* device number whose super_block is sought */
 )
 {
@@ -51,19 +51,19 @@ PUBLIC struct super_block *get_super(
 /*===========================================================================*
  *                              get_block_size                               *
  *===========================================================================*/
-PUBLIC unsigned int get_block_size(dev_t dev)
+unsigned int get_block_size(dev_t dev)
 {
   if (dev == NO_DEV)
 	panic("request for block size of NO_DEV");
   return(fs_block_size);
 }
 
-PRIVATE struct group_desc *ondisk_group_descs;
+static struct group_desc *ondisk_group_descs;
 
 /*===========================================================================*
  *                              read_super                                   *
  *===========================================================================*/
-PUBLIC int read_super(sp)
+int read_super(sp)
 register struct super_block *sp; /* pointer to a superblock */
 {
   /* Read a superblock. */
@@ -214,7 +214,7 @@ register struct super_block *sp; /* pointer to a superblock */
 /*===========================================================================*
  *                              write_super				     *
  *===========================================================================*/
-PUBLIC void write_super(sp)
+void write_super(sp)
 struct super_block *sp; /* pointer to a superblock */
 {
 /* Write a superblock and gdt. */
@@ -271,7 +271,7 @@ struct group_desc* get_group_desc(unsigned int bnum)
 }
 
 
-PRIVATE u32_t ext2_count_dirs(struct super_block *sp)
+static u32_t ext2_count_dirs(struct super_block *sp)
 {
   u32_t count = 0;
   unsigned int i;
@@ -302,7 +302,7 @@ PRIVATE u32_t ext2_count_dirs(struct super_block *sp)
  * Anyway this function is safe for any change.
  * Note: there is also limitation from VFS (to LONG_MAX, i.e. 2GB).
  */
-PRIVATE off_t ext2_max_size(int block_size)
+static off_t ext2_max_size(int block_size)
 {
   /* 12 is EXT2_NDIR_BLOCKS used in calculations. */
   if (EXT2_NDIR_BLOCKS != 12)
@@ -352,7 +352,7 @@ PRIVATE off_t ext2_max_size(int block_size)
 /*===========================================================================*
  *				super_copy				     *
  *===========================================================================*/
-PRIVATE void super_copy(
+static void super_copy(
   register struct super_block *dest,
   register struct super_block *source
 )
@@ -411,7 +411,7 @@ PRIVATE void super_copy(
 /*===========================================================================*
  *				gd_copy 				     *
  *===========================================================================*/
-PRIVATE void gd_copy(
+static void gd_copy(
   register struct group_desc *dest,
   register struct group_desc *source
 )
@@ -434,7 +434,7 @@ PRIVATE void gd_copy(
 /*===========================================================================*
  *			copy_group_descriptors  			     *
  *===========================================================================*/
-PRIVATE void copy_group_descriptors(
+static void copy_group_descriptors(
   register struct group_desc *dest_array,
   register struct group_desc *source_array,
   unsigned int ngroups

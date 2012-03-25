@@ -26,15 +26,15 @@
 #define MUTE							0x80
 
 
-FORWARD int ak4531_write(u8_t address, u8_t data);
-FORWARD int ak4531_finished(void);
-FORWARD int set_volume(struct volume_level *level, int cmd_left, int
+static int ak4531_write(u8_t address, u8_t data);
+static int ak4531_finished(void);
+static int set_volume(struct volume_level *level, int cmd_left, int
 	cmd_right, int max_level);
 
-PRIVATE u16_t base_address; 
-PRIVATE u16_t status_register;
-PRIVATE u16_t status_bit;
-PRIVATE u16_t poll_address;
+static u16_t base_address; 
+static u16_t status_register;
+static u16_t status_bit;
+static u16_t poll_address;
 
 u8_t mixer_values[0x20] = {
 	0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, /* 0x00 - 0x07 */
@@ -53,7 +53,7 @@ u8_t mixer_values[0x20] = {
 
 
 
-PRIVATE int ak4531_finished(void) {
+static int ak4531_finished(void) {
 	int i;
 	u16_t cstat;
 	for (i = 0; i < 0x40000; i++) {
@@ -66,7 +66,7 @@ PRIVATE int ak4531_finished(void) {
 }
 
 
-PRIVATE int ak4531_write (u8_t address, u8_t data) {
+static int ak4531_write (u8_t address, u8_t data) {
 	u16_t to_be_written;
 
 
@@ -80,7 +80,7 @@ PRIVATE int ak4531_write (u8_t address, u8_t data) {
 }
 
 
-PUBLIC int ak4531_init(u16_t base, u16_t status_reg, u16_t bit, 
+int ak4531_init(u16_t base, u16_t status_reg, u16_t bit, 
 		u16_t poll) {
 	int i;
 
@@ -107,7 +107,7 @@ PUBLIC int ak4531_init(u16_t base, u16_t status_reg, u16_t bit,
 }
 
 
-PUBLIC int ak4531_get_set_volume(struct volume_level *level, int flag) {
+int ak4531_get_set_volume(struct volume_level *level, int flag) {
 	int cmd_left, cmd_right, max_level;
 
 	max_level = 0x1f;
@@ -160,7 +160,7 @@ PUBLIC int ak4531_get_set_volume(struct volume_level *level, int flag) {
 }
 
 
-PRIVATE int set_volume(struct volume_level *level, int cmd_left, int cmd_right, 
+static int set_volume(struct volume_level *level, int cmd_left, int cmd_right, 
 		int max_level) {
 
 	if(level->right < 0) level->right = 0;

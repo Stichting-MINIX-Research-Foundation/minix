@@ -6,9 +6,9 @@
 #include "threads.h"
 #include <assert.h>
 
-FORWARD int tll_append(tll_t *tllp, tll_access_t locktype);
+static int tll_append(tll_t *tllp, tll_access_t locktype);
 
-PRIVATE int tll_append(tll_t *tllp, tll_access_t locktype)
+static int tll_append(tll_t *tllp, tll_access_t locktype)
 {
   struct worker_thread *queue;
 
@@ -70,7 +70,7 @@ PRIVATE int tll_append(tll_t *tllp, tll_access_t locktype)
   return(OK);
 }
 
-PUBLIC void tll_downgrade(tll_t *tllp)
+void tll_downgrade(tll_t *tllp)
 {
 /* Downgrade three-level-lock tll from write-only to read-serialized, or from
  * read-serialized to read-only. Caveat: as we can't know whether the next
@@ -109,7 +109,7 @@ PUBLIC void tll_downgrade(tll_t *tllp)
 	assert(tllp->t_owner == NULL);
 }
 
-PUBLIC void tll_init(tll_t *tllp)
+void tll_init(tll_t *tllp)
 {
 /* Initialize three-level-lock tll */
   assert(tllp != NULL);
@@ -122,18 +122,18 @@ PUBLIC void tll_init(tll_t *tllp)
   tllp->t_owner = NULL;
 }
 
-PUBLIC int tll_islocked(tll_t *tllp)
+int tll_islocked(tll_t *tllp)
 {
   return(tllp->t_current != TLL_NONE);
 }
 
-PUBLIC int tll_locked_by_me(tll_t *tllp)
+int tll_locked_by_me(tll_t *tllp)
 {
   assert(self != NULL);
   return(tllp->t_owner == self && !(tllp->t_status & TLL_PEND));
 }
 
-PUBLIC int tll_lock(tll_t *tllp, tll_access_t locktype)
+int tll_lock(tll_t *tllp, tll_access_t locktype)
 {
 /* Try to lock three-level-lock tll with type locktype */
 
@@ -210,7 +210,7 @@ PUBLIC int tll_lock(tll_t *tllp, tll_access_t locktype)
   return(OK);
 }
 
-PUBLIC int tll_haspendinglock(tll_t *tllp)
+int tll_haspendinglock(tll_t *tllp)
 {
 /* Is someone trying to obtain a lock? */
   assert(tllp != NULL);
@@ -220,7 +220,7 @@ PUBLIC int tll_haspendinglock(tll_t *tllp)
   return(tllp->t_write != NULL || tllp->t_serial != NULL);
 }
 
-PUBLIC int tll_unlock(tll_t *tllp)
+int tll_unlock(tll_t *tllp)
 {
 /* Unlock a previously locked three-level-lock tll */
   int signal_owner = 0;
@@ -293,7 +293,7 @@ PUBLIC int tll_unlock(tll_t *tllp)
   return(OK);
 }
 
-PUBLIC void tll_upgrade(tll_t *tllp)
+void tll_upgrade(tll_t *tllp)
 {
 /* Upgrade three-level-lock tll from read-serialized to write-only */
 

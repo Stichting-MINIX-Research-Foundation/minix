@@ -5,7 +5,7 @@
 /*===========================================================================*
  *                                sys_sprof				     *
  *===========================================================================*/
-PUBLIC int sys_sprof(action, size, freq, type, endpt, ctl_ptr, mem_ptr)
+int sys_sprof(action, size, freq, type, endpt, ctl_ptr, mem_ptr)
 int action; 				/* start/stop profiling */
 int size;				/* available profiling memory */
 int freq;				/* sample frequency */

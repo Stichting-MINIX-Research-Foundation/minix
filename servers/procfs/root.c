@@ -5,13 +5,13 @@
 #include <minix/dmap.h>
 #include "cpuinfo.h"
 
-FORWARD void root_hz(void);
-FORWARD void root_uptime(void);
-FORWARD void root_loadavg(void);
-FORWARD void root_kinfo(void);
-FORWARD void root_meminfo(void);
-FORWARD void root_pci(void);
-FORWARD void root_dmap(void);
+static void root_hz(void);
+static void root_uptime(void);
+static void root_loadavg(void);
+static void root_kinfo(void);
+static void root_meminfo(void);
+static void root_pci(void);
+static void root_dmap(void);
 
 struct file root_files[] = {
 	{ "hz",		REG_ALL_MODE,	(data_t) root_hz	},
@@ -28,7 +28,7 @@ struct file root_files[] = {
 /*===========================================================================*
  *				root_hz					     *
  *===========================================================================*/
-PRIVATE void root_hz(void)
+static void root_hz(void)
 {
 	/* Print the system clock frequency.
 	 */
@@ -39,7 +39,7 @@ PRIVATE void root_hz(void)
 /*===========================================================================*
  *				root_loadavg				     *
  *===========================================================================*/
-PRIVATE void root_loadavg(void)
+static void root_loadavg(void)
 {
 	/* Print load averages.
 	 */
@@ -61,7 +61,7 @@ PRIVATE void root_loadavg(void)
 /*===========================================================================*
  *				root_uptime				     *
  *===========================================================================*/
-PRIVATE void root_uptime(void)
+static void root_uptime(void)
 {
 	/* Print the current uptime.
 	 */
@@ -78,7 +78,7 @@ PRIVATE void root_uptime(void)
 /*===========================================================================*
  *				root_kinfo				     *
  *===========================================================================*/
-PRIVATE void root_kinfo(void)
+static void root_kinfo(void)
 {
 	/* Print general kernel information.
 	 */
@@ -93,7 +93,7 @@ PRIVATE void root_kinfo(void)
 /*===========================================================================*
  *				root_meminfo				     *
  *===========================================================================*/
-PRIVATE void root_meminfo(void)
+static void root_meminfo(void)
 {
 	/* Print general memory information.
 	 */
@@ -109,7 +109,7 @@ PRIVATE void root_meminfo(void)
 /*===========================================================================*
  *				root_pci				     *
  *===========================================================================*/
-PRIVATE void root_pci(void)
+static void root_pci(void)
 {
 	/* Print information about PCI devices present in the system.
 	 */
@@ -147,7 +147,7 @@ PRIVATE void root_pci(void)
 /*===========================================================================*
  *				root_dmap				     *
  *===========================================================================*/
-PRIVATE void root_dmap(void)
+static void root_dmap(void)
 {
 	struct dmap dmap[NR_DEVICES];
 	int i;

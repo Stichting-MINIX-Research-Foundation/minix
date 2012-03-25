@@ -8,7 +8,7 @@
 __weak_alias(close, _close)
 #endif
 
-PUBLIC int close(fd)
+int close(fd)
 int fd;
 {
   message m;

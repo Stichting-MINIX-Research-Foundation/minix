@@ -38,22 +38,22 @@ struct ddekit_slab {
 	struct ddekit_slab_slab empty;
 };
 
-FORWARD void ddekit_slab_lock(struct ddekit_slab * sc);
-FORWARD void ddekit_slab_unlock(struct ddekit_slab * sc);
-FORWARD struct ddekit_slab_slab * ddekit_slab_find_slab(struct
+static void ddekit_slab_lock(struct ddekit_slab * sc);
+static void ddekit_slab_unlock(struct ddekit_slab * sc);
+static struct ddekit_slab_slab * ddekit_slab_find_slab(struct
 	ddekit_slab * sc, void * obj);
-FORWARD void ddekit_slab_slab_insert(struct ddekit_slab_slab *list,
+static void ddekit_slab_slab_insert(struct ddekit_slab_slab *list,
 	struct ddekit_slab_slab *s);
-FORWARD void ddekit_slab_slab_remove(struct ddekit_slab_slab *s);
-FORWARD void ddekit_slab_grow(struct ddekit_slab * sc);
-FORWARD void *ddekit_slab_getobj(struct ddekit_slab_slab *s);
-FORWARD void ddekit_slab_free_slab(struct ddekit_slab_slab * sl, int
+static void ddekit_slab_slab_remove(struct ddekit_slab_slab *s);
+static void ddekit_slab_grow(struct ddekit_slab * sc);
+static void *ddekit_slab_getobj(struct ddekit_slab_slab *s);
+static void ddekit_slab_free_slab(struct ddekit_slab_slab * sl, int
 	cont);
 
 /******************************************************************************
  *       ddekit_simple_malloc                                                 *
  *****************************************************************************/
-PUBLIC void *ddekit_simple_malloc(unsigned size)
+void *ddekit_simple_malloc(unsigned size)
 {  
 	/* Simple memory allocation... malloc and free should be ok... */
 	void * r = malloc(size);
@@ -67,7 +67,7 @@ PUBLIC void *ddekit_simple_malloc(unsigned size)
 /******************************************************************************
  *       ddekit_simple_free                                                   *
  *****************************************************************************/
-PUBLIC void ddekit_simple_free(void *p)
+void ddekit_simple_free(void *p)
 { 
 	DDEBUG_MSG_VERBOSE("%p", p);
 	free(p);
@@ -76,7 +76,7 @@ PUBLIC void ddekit_simple_free(void *p)
 /******************************************************************************
  *       ddekit_large_malloc                                                  *
  *****************************************************************************/
-PUBLIC void *ddekit_large_malloc(int size)
+void *ddekit_large_malloc(int size)
 {  
 	ddekit_addr_t phys;	
 	/* allocate a piece of coniguous memory */
@@ -93,7 +93,7 @@ PUBLIC void *ddekit_large_malloc(int size)
 /******************************************************************************
  *       ddekit_large_free                                                    *
  *****************************************************************************/
-PUBLIC void ddekit_large_free(void *p)
+void ddekit_large_free(void *p)
 {  
 	unsigned len;
 	DDEBUG_MSG_VERBOSE("get size of region %x", p); 
@@ -109,7 +109,7 @@ PUBLIC void ddekit_large_free(void *p)
 /******************************************************************************
  *       ddekit_contig_malloc                                                 *
  *****************************************************************************/
-PUBLIC void *ddekit_contig_malloc(unsigned long size, unsigned long low, 
+void *ddekit_contig_malloc(unsigned long size, unsigned long low, 
                                   unsigned long high, unsigned long aligment,  
                                   unsigned long boundary)
 { 
@@ -120,21 +120,21 @@ PUBLIC void *ddekit_contig_malloc(unsigned long size, unsigned long low,
 /******************************************************************************
  *       ddekit_slab_lock                                                     *
  *****************************************************************************/
-PRIVATE DDEKIT_INLINE void ddekit_slab_lock(struct ddekit_slab * sc) {
+static DDEKIT_INLINE void ddekit_slab_lock(struct ddekit_slab * sc) {
 	ddekit_lock_lock(&sc->lock);
 }
 
 /******************************************************************************
  *       ddekit_slab_unlock                                                   *
  *****************************************************************************/
-PRIVATE DDEKIT_INLINE void ddekit_slab_unlock(struct ddekit_slab * sc) {
+static DDEKIT_INLINE void ddekit_slab_unlock(struct ddekit_slab * sc) {
 	ddekit_lock_unlock(&sc->lock);
 }
 
 /******************************************************************************
  *       ddekit_slab_find_slab                                                *
  *****************************************************************************/
-PRIVATE struct ddekit_slab_slab * 
+static struct ddekit_slab_slab * 
 ddekit_slab_find_slab(struct ddekit_slab * sc, void * obj) 
 {  
 
@@ -174,7 +174,7 @@ static void  ddekit_slab_slab_insert(struct ddekit_slab_slab *list,
 /******************************************************************************
  *       ddekit_slab_slab_remove                                              *
  *****************************************************************************/
-PRIVATE void ddekit_slab_slab_remove(struct ddekit_slab_slab *s) 
+static void ddekit_slab_slab_remove(struct ddekit_slab_slab *s) 
 {  
 	s->next->prev     = s->prev;
 	s->prev->next     = s->next; 
@@ -185,7 +185,7 @@ PRIVATE void ddekit_slab_slab_remove(struct ddekit_slab_slab *s)
 /******************************************************************************
  *       ddekit_slab_grow                                                     *
  *****************************************************************************/
-PRIVATE void ddekit_slab_grow(struct ddekit_slab *sc) 
+static void ddekit_slab_grow(struct ddekit_slab *sc) 
 { 
 	/*
 	 * NOTE:
@@ -249,7 +249,7 @@ PRIVATE void ddekit_slab_grow(struct ddekit_slab *sc)
 /******************************************************************************
  *       ddekit_slab_getobj                                                   *
  *****************************************************************************/
-PRIVATE void *ddekit_slab_getobj(struct ddekit_slab_slab *s)
+static void *ddekit_slab_getobj(struct ddekit_slab_slab *s)
 { 
 	struct ddekit_slab *sc; 
 	void *ret = 0; 
@@ -284,7 +284,7 @@ PRIVATE void *ddekit_slab_getobj(struct ddekit_slab_slab *s)
 /******************************************************************************
  *       ddekit_slab_alloc                                                    *
  *****************************************************************************/
-PUBLIC void *ddekit_slab_alloc(struct ddekit_slab * sc)
+void *ddekit_slab_alloc(struct ddekit_slab * sc)
 { 
 	struct ddekit_slab_slab *s=0; 
 
@@ -318,7 +318,7 @@ PUBLIC void *ddekit_slab_alloc(struct ddekit_slab * sc)
 /******************************************************************************
  *       ddekit_slab_free                                                     *
  *****************************************************************************/
-PUBLIC void ddekit_slab_free(struct ddekit_slab *sc, void* obj)
+void ddekit_slab_free(struct ddekit_slab *sc, void* obj)
 {   
 	void **p;	
 
@@ -354,7 +354,7 @@ PUBLIC void ddekit_slab_free(struct ddekit_slab *sc, void* obj)
 /******************************************************************************
  *       ddekit_slab_set_data                                                 *
  *****************************************************************************/
-PUBLIC void ddekit_slab_set_data(struct ddekit_slab * sc, void *data)
+void ddekit_slab_set_data(struct ddekit_slab * sc, void *data)
 {   
 	ddekit_slab_lock(sc);
 	sc->data = data;
@@ -364,7 +364,7 @@ PUBLIC void ddekit_slab_set_data(struct ddekit_slab * sc, void *data)
 /******************************************************************************
  *       ddekit_slab_get_data                                                 *
  *****************************************************************************/
-PUBLIC void *ddekit_slab_get_data (struct ddekit_slab *sc)
+void *ddekit_slab_get_data (struct ddekit_slab *sc)
 {  
 	void *ret;
 	ddekit_slab_lock(sc);
@@ -377,7 +377,7 @@ PUBLIC void *ddekit_slab_get_data (struct ddekit_slab *sc)
 /******************************************************************************
  *       ddekit_slab_init                                                     *
  *****************************************************************************/
-PUBLIC struct ddekit_slab * ddekit_slab_init(unsigned size, int contiguous)
+struct ddekit_slab * ddekit_slab_init(unsigned size, int contiguous)
 {
 
 	struct ddekit_slab * sc = 0;
@@ -412,7 +412,7 @@ PUBLIC struct ddekit_slab * ddekit_slab_init(unsigned size, int contiguous)
 /******************************************************************************
  *       ddekit_slab_free_slab                                                *
  *****************************************************************************/
-PRIVATE void ddekit_slab_free_slab(struct ddekit_slab_slab * sl, int cont) 
+static void ddekit_slab_free_slab(struct ddekit_slab_slab * sl, int cont) 
 {
 
 	struct ddekit_slab_slab *s,*t;
@@ -442,7 +442,7 @@ PRIVATE void ddekit_slab_free_slab(struct ddekit_slab_slab * sl, int cont)
 /******************************************************************************
  *       ddekit_slab_destroy                                                  *
  *****************************************************************************/
-PUBLIC void ddekit_slab_destroy(struct ddekit_slab *sc) 
+void ddekit_slab_destroy(struct ddekit_slab *sc) 
 {
 	DDEBUG_MSG_VERBOSE("%p full", sc);
 	ddekit_slab_free_slab(&sc->full,sc->contiguous);

@@ -58,18 +58,18 @@ struct {
 			(c) < VM_RQ_BASE + ELEMENTS(vm_calls)) ?	\
 			((c) - VM_RQ_BASE) : -1)
 
-FORWARD int map_service(struct rprocpub *rpub);
-FORWARD int vm_acl_ok(endpoint_t caller, int call);
+static int map_service(struct rprocpub *rpub);
+static int vm_acl_ok(endpoint_t caller, int call);
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
-FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
-FORWARD void sef_cb_signal_handler(int signo);
+static void sef_local_startup(void);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(void)
+int main(void)
 {
   message msg;
   int result, who_e, rcv_sts;
@@ -148,7 +148,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -166,7 +166,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the vm server. */
 	int s, i;
@@ -396,7 +396,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *		            sef_cb_signal_handler                            *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	/* Check for known kernel signals, ignore anything else. */
 	switch(signo) {
@@ -420,7 +420,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *		               map_service                                   *
  *===========================================================================*/
-PRIVATE int map_service(rpub)
+static int map_service(rpub)
 struct rprocpub *rpub;
 {
 /* Map a new service by initializing its call mask. */
@@ -440,7 +440,7 @@ struct rprocpub *rpub;
 /*===========================================================================*
  *				vm_acl_ok				     *
  *===========================================================================*/
-PRIVATE int vm_acl_ok(endpoint_t caller, int call)
+static int vm_acl_ok(endpoint_t caller, int call)
 {
 	int n, r;
 

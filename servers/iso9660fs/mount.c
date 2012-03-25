@@ -8,7 +8,7 @@
 /*===========================================================================*
  *				fs_readsuper				     *
  *===========================================================================*/
-PUBLIC int fs_readsuper() {
+int fs_readsuper() {
 
   cp_grant_id_t label_gid;
   size_t label_len;
@@ -61,7 +61,7 @@ PUBLIC int fs_readsuper() {
 /*===========================================================================*
  *				fs_mountpoint				     *
  *===========================================================================*/
-PUBLIC int fs_mountpoint()
+int fs_mountpoint()
 {
 /* This function looks up the mount point, it checks the condition whether
  * the partition can be mounted on the inode or not. 
@@ -93,7 +93,7 @@ PUBLIC int fs_mountpoint()
 /*===========================================================================*
  *				fs_unmount				     *
  *===========================================================================*/
-PUBLIC int fs_unmount(void) {
+int fs_unmount(void) {
   release_v_pri(&v_pri);	/* Release the super block */
   bdev_close(fs_dev);
   unmountdone = TRUE;

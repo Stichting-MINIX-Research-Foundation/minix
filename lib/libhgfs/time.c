@@ -2,12 +2,12 @@
 
 #include "inc.h"
 
-PRIVATE u64_t time_offset;
+static u64_t time_offset;
 
 /*===========================================================================*
  *				time_init				     *
  *===========================================================================*/
-PUBLIC void time_init()
+void time_init()
 {
 /* Initialize the time conversion module.
  */
@@ -24,7 +24,7 @@ PUBLIC void time_init()
 /*===========================================================================*
  *				time_put				     *
  *===========================================================================*/
-PUBLIC void time_put(timep)
+void time_put(timep)
 time_t *timep;
 {
 /* Store a UNIX timestamp pointed to by the given pointer onto the RPC buffer,
@@ -47,7 +47,7 @@ time_t *timep;
 /*===========================================================================*
  *				time_get				     *
  *===========================================================================*/
-PUBLIC void time_get(timep)
+void time_get(timep)
 time_t *timep;
 {
 /* Get a HGFS timestamp from the RPC buffer, convert it into a UNIX timestamp,

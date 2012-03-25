@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				attr_get				     *
  *===========================================================================*/
-PUBLIC void attr_get(attr)
+void attr_get(attr)
 struct hgfs_attr *attr;
 {
 /* Get attribute information from the RPC buffer, storing the requested parts
@@ -35,7 +35,7 @@ struct hgfs_attr *attr;
 /*===========================================================================*
  *				hgfs_getattr				     *
  *===========================================================================*/
-PUBLIC int hgfs_getattr(path, attr)
+int hgfs_getattr(path, attr)
 char *path;
 struct hgfs_attr *attr;
 {
@@ -58,7 +58,7 @@ struct hgfs_attr *attr;
 /*===========================================================================*
  *				hgfs_setattr				     *
  *===========================================================================*/
-PUBLIC int hgfs_setattr(path, attr)
+int hgfs_setattr(path, attr)
 char *path;
 struct hgfs_attr *attr;
 {

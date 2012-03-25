@@ -19,13 +19,13 @@
 #include <minix/const.h>
 #include <minix/optset.h>
 
-FORWARD void optset_parse_entry(struct optset *entry, char *ptr, int
+static void optset_parse_entry(struct optset *entry, char *ptr, int
 	len);
 
 /*===========================================================================*
  *				optset_parse_entry			     *
  *===========================================================================*/
-PRIVATE void optset_parse_entry(entry, ptr, len)
+static void optset_parse_entry(entry, ptr, len)
 struct optset *entry;
 char *ptr;
 int len;
@@ -68,7 +68,7 @@ int len;
 /*===========================================================================*
  *				optset_parse				     *
  *===========================================================================*/
-PUBLIC void optset_parse(table, string)
+void optset_parse(table, string)
 struct optset *table;
 char *string;
 {

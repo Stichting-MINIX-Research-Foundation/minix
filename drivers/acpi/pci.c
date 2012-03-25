@@ -20,14 +20,14 @@ struct pci_bridge {
 	struct pci_bridge	* children[PCI_MAX_DEVICES];
 };
 
-PRIVATE struct pci_bridge pci_root_bridge;
+static struct pci_bridge pci_root_bridge;
 
 struct irq_resource {
 	struct pci_bridge	* bridge;
 	ACPI_PCI_ROUTING_TABLE	* tbl;
 };
 
-PRIVATE struct pci_bridge * find_bridge(struct pci_bridge * root,
+static struct pci_bridge * find_bridge(struct pci_bridge * root,
 					int pbnr,
 					int dev,
 					int sbnr)
@@ -68,7 +68,7 @@ PRIVATE struct pci_bridge * find_bridge(struct pci_bridge * root,
 	return NULL;
 }
 
-PUBLIC void do_map_bridge(message *m)
+void do_map_bridge(message *m)
 {
 	int err = OK;
 	unsigned dev = ((struct acpi_map_bridge_req *)m)->device;
@@ -92,7 +92,7 @@ map_error:
 }
 
 #if 0
-PRIVATE ACPI_STATUS device_get_int(ACPI_HANDLE handle,
+static ACPI_STATUS device_get_int(ACPI_HANDLE handle,
 				char * name,
 				ACPI_INTEGER * val)
 {
@@ -113,7 +113,7 @@ PRIVATE ACPI_STATUS device_get_int(ACPI_HANDLE handle,
 }
 #endif
 
-PUBLIC void do_get_irq(message *m)
+void do_get_irq(message *m)
 {
 	struct pci_bridge * bridge;
 	int irq;
@@ -134,7 +134,7 @@ PUBLIC void do_get_irq(message *m)
 	((struct acpi_get_irq_resp *)m)->irq = irq;
 }
 
-PRIVATE void add_irq(struct pci_bridge * bridge,
+static void add_irq(struct pci_bridge * bridge,
 			unsigned dev,
 			unsigned pin,
 			u8_t irq)
@@ -144,7 +144,7 @@ PRIVATE void add_irq(struct pci_bridge * bridge,
 	bridge->irqtable[dev * PCI_MAX_PINS + pin] = irq;
 }
 
-PRIVATE ACPI_STATUS get_irq_resource(ACPI_RESOURCE *res, void *context)
+static ACPI_STATUS get_irq_resource(ACPI_RESOURCE *res, void *context)
 {
 	struct irq_resource * ires = (struct irq_resource *) context;
 
@@ -165,7 +165,7 @@ PRIVATE ACPI_STATUS get_irq_resource(ACPI_RESOURCE *res, void *context)
 	return AE_OK;
 }
 
-PRIVATE ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
+static ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
 {
 	ACPI_STATUS status;
 	ACPI_BUFFER abuff;
@@ -230,7 +230,7 @@ PRIVATE ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
 	return AE_OK;
 }
 
-PRIVATE void bridge_init_irqtable(struct pci_bridge * bridge)
+static void bridge_init_irqtable(struct pci_bridge * bridge)
 {
 	int i;
 
@@ -238,7 +238,7 @@ PRIVATE void bridge_init_irqtable(struct pci_bridge * bridge)
 		bridge->irqtable[i] = -1;
 }
 
-PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
+static ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
 				UINT32 level,
 				void *context,
 				void **retval)
@@ -283,7 +283,7 @@ PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
 	return status;
 }
 
-PRIVATE ACPI_STATUS add_pci_root_dev(ACPI_HANDLE handle,
+static ACPI_STATUS add_pci_root_dev(ACPI_HANDLE handle,
 				UINT32 level,
 				void *context,
 				void **retval)
@@ -311,7 +311,7 @@ PRIVATE ACPI_STATUS add_pci_root_dev(ACPI_HANDLE handle,
 	return status;
 }
 
-PUBLIC void pci_scan_devices(void)
+void pci_scan_devices(void)
 {
 	ACPI_STATUS status;
 

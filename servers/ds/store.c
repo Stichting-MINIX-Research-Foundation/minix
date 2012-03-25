@@ -2,13 +2,13 @@
 #include "store.h"
 
 /* Allocate space for the data store. */
-PRIVATE struct data_store ds_store[NR_DS_KEYS];
-PRIVATE struct subscription ds_subs[NR_DS_SUBS];
+static struct data_store ds_store[NR_DS_KEYS];
+static struct subscription ds_subs[NR_DS_SUBS];
 
 /*===========================================================================*
  *			      alloc_data_slot				     *
  *===========================================================================*/
-PRIVATE struct data_store *alloc_data_slot(void)
+static struct data_store *alloc_data_slot(void)
 {
 /* Allocate a new data slot. */
   int i;
@@ -24,7 +24,7 @@ PRIVATE struct data_store *alloc_data_slot(void)
 /*===========================================================================*
  *				alloc_sub_slot				     *
  *===========================================================================*/
-PRIVATE struct subscription *alloc_sub_slot(void)
+static struct subscription *alloc_sub_slot(void)
 {
 /* Allocate a new subscription slot. */
   int i;
@@ -40,7 +40,7 @@ PRIVATE struct subscription *alloc_sub_slot(void)
 /*===========================================================================*
  *				lookup_entry				     *
  *===========================================================================*/
-PRIVATE struct data_store *lookup_entry(const char *key_name, int type)
+static struct data_store *lookup_entry(const char *key_name, int type)
 {
 /* Lookup an existing entry by key and type. */
   int i;
@@ -58,7 +58,7 @@ PRIVATE struct data_store *lookup_entry(const char *key_name, int type)
 /*===========================================================================*
  *			     lookup_label_entry				     *
  *===========================================================================*/
-PRIVATE struct data_store *lookup_label_entry(unsigned num)
+static struct data_store *lookup_label_entry(unsigned num)
 {
 /* Lookup an existing label entry by num. */
   int i;
@@ -76,7 +76,7 @@ PRIVATE struct data_store *lookup_label_entry(unsigned num)
 /*===========================================================================*
  *			      lookup_sub				     *
  *===========================================================================*/
-PRIVATE struct subscription *lookup_sub(const char *owner)
+static struct subscription *lookup_sub(const char *owner)
 {
 /* Lookup an existing subscription given its owner. */
   int i;
@@ -93,7 +93,7 @@ PRIVATE struct subscription *lookup_sub(const char *owner)
 /*===========================================================================*
  *				ds_getprocname				     *
  *===========================================================================*/
-PRIVATE char *ds_getprocname(endpoint_t e)
+static char *ds_getprocname(endpoint_t e)
 {
 /* Get a process name given its endpoint. */
 	struct data_store *dsp;
@@ -113,7 +113,7 @@ PRIVATE char *ds_getprocname(endpoint_t e)
 /*===========================================================================*
  *				ds_getprocep				     *
  *===========================================================================*/
-PRIVATE endpoint_t ds_getprocep(const char *s)
+static endpoint_t ds_getprocep(const char *s)
 {
 /* Get a process endpoint given its name. */
 	struct data_store *dsp;
@@ -126,7 +126,7 @@ PRIVATE endpoint_t ds_getprocep(const char *s)
 /*===========================================================================*
  *				 check_auth				     *
  *===========================================================================*/
-PRIVATE int check_auth(const struct data_store *p, endpoint_t ep, int perm)
+static int check_auth(const struct data_store *p, endpoint_t ep, int perm)
 {
 /* Check authorization for a given type of permission. */
 	char *source;
@@ -141,7 +141,7 @@ PRIVATE int check_auth(const struct data_store *p, endpoint_t ep, int perm)
 /*===========================================================================*
  *				get_key_name				     *
  *===========================================================================*/
-PRIVATE int get_key_name(const message *m_ptr, char *key_name)
+static int get_key_name(const message *m_ptr, char *key_name)
 {
 /* Get key name given an input message. */
   int r;
@@ -169,7 +169,7 @@ PRIVATE int get_key_name(const message *m_ptr, char *key_name)
 /*===========================================================================*
  *			     check_snapshot_index			     *
  *===========================================================================*/
-PRIVATE int check_snapshot_index(const struct data_store *dsp, int index)
+static int check_snapshot_index(const struct data_store *dsp, int index)
 {
 /* See if the given snapshot index is valid. */
   int min;
@@ -184,7 +184,7 @@ PRIVATE int check_snapshot_index(const struct data_store *dsp, int index)
 /*===========================================================================*
  *				check_sub_match				     *
  *===========================================================================*/
-PRIVATE int check_sub_match(const struct subscription *subp,
+static int check_sub_match(const struct subscription *subp,
 		struct data_store *dsp, endpoint_t ep)
 {
 /* Check if an entry matches a subscription. Return 1 in case of match. */
@@ -196,7 +196,7 @@ PRIVATE int check_sub_match(const struct subscription *subp,
 /*===========================================================================*
  *			     update_subscribers				     *
  *===========================================================================*/
-PRIVATE void update_subscribers(struct data_store *dsp, int set)
+static void update_subscribers(struct data_store *dsp, int set)
 {
 /* If set = 1, set bit in the sub bitmap of any subscription matching the given
  * entry, otherwise clear it. In both cases, notify the subscriber.
@@ -227,7 +227,7 @@ PRIVATE void update_subscribers(struct data_store *dsp, int set)
 /*===========================================================================*
  *		               map_service                                   *
  *===========================================================================*/
-PRIVATE int map_service(const struct rprocpub *rpub)
+static int map_service(const struct rprocpub *rpub)
 {
 /* Map a new service by registering its label. */
   struct data_store *dsp;
@@ -252,7 +252,7 @@ PRIVATE int map_service(const struct rprocpub *rpub)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PUBLIC int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
+int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 {
 /* Initialize the data store server. */
 	int i, r;
@@ -285,7 +285,7 @@ PUBLIC int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 /*===========================================================================*
  *				do_publish				     *
  *===========================================================================*/
-PUBLIC int do_publish(message *m_ptr)
+int do_publish(message *m_ptr)
 {
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
@@ -402,7 +402,7 @@ PUBLIC int do_publish(message *m_ptr)
 /*===========================================================================*
  *				do_retrieve				     *
  *===========================================================================*/
-PUBLIC int do_retrieve(message *m_ptr)
+int do_retrieve(message *m_ptr)
 {
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
@@ -493,7 +493,7 @@ PUBLIC int do_retrieve(message *m_ptr)
 /*===========================================================================*
  *				do_retrieve_label			     *
  *===========================================================================*/
-PUBLIC int do_retrieve_label(const message *m_ptr)
+int do_retrieve_label(const message *m_ptr)
 {
   struct data_store *dsp;
   int r;
@@ -517,7 +517,7 @@ PUBLIC int do_retrieve_label(const message *m_ptr)
 /*===========================================================================*
  *				do_subscribe				     *
  *===========================================================================*/
-PUBLIC int do_subscribe(message *m_ptr)
+int do_subscribe(message *m_ptr)
 {
   char regex[DS_MAX_KEYLEN+2];
   struct subscription *subp;
@@ -593,7 +593,7 @@ PUBLIC int do_subscribe(message *m_ptr)
 /*===========================================================================*
  *				do_check				     *
  *===========================================================================*/
-PUBLIC int do_check(message *m_ptr)
+int do_check(message *m_ptr)
 {
   struct subscription *subp;
   char *owner;
@@ -640,7 +640,7 @@ PUBLIC int do_check(message *m_ptr)
 /*===========================================================================*
  *				do_delete				     *
  *===========================================================================*/
-PUBLIC int do_delete(message *m_ptr)
+int do_delete(message *m_ptr)
 {
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
@@ -729,7 +729,7 @@ PUBLIC int do_delete(message *m_ptr)
 /*===========================================================================*
  *				do_snapshot				     *
  *===========================================================================*/
-PUBLIC int do_snapshot(message *m_ptr)
+int do_snapshot(message *m_ptr)
 {
   struct data_store *dsp;
   struct dsi_map *p;
@@ -770,7 +770,7 @@ PUBLIC int do_snapshot(message *m_ptr)
 /*===========================================================================*
  *				do_getsysinfo				     *
  *===========================================================================*/
-PUBLIC int do_getsysinfo(const message *m_ptr)
+int do_getsysinfo(const message *m_ptr)
 {
   vir_bytes src_addr;
   size_t length;

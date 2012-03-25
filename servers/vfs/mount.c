@@ -33,22 +33,22 @@
 #include "param.h"
 
 /* Allow the root to be replaced before the first 'real' mount. */
-PRIVATE int have_root = 0;
+static int have_root = 0;
 
 /* Bitmap of in-use "none" pseudo devices. */
-PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
+static bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 
 #define alloc_nonedev(dev) SET_BIT(nonedev, minor(dev) - 1)
 #define free_nonedev(dev) UNSET_BIT(nonedev, minor(dev) - 1)
 
-FORWARD dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX]);
-FORWARD dev_t find_free_nonedev(void);
-FORWARD void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e);
+static dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX]);
+static dev_t find_free_nonedev(void);
+static void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e);
 
 /*===========================================================================*
  *				update_bspec				     *
  *===========================================================================*/
-PRIVATE void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
+static void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 {
 /* Update all block special files for a certain device, to use a new FS endpt
  * to route raw block I/O requests through.
@@ -86,7 +86,7 @@ PRIVATE void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 /*===========================================================================*
  *                              do_fsready                                   *
  *===========================================================================*/
-PUBLIC int do_fsready()
+int do_fsready()
 {
   /* deprecated */
   return(SUSPEND);
@@ -95,7 +95,7 @@ PUBLIC int do_fsready()
 /*===========================================================================*
  *                              do_mount                                     *
  *===========================================================================*/
-PUBLIC int do_mount()
+int do_mount()
 {
 /* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
@@ -156,7 +156,7 @@ PUBLIC int do_mount()
 /*===========================================================================*
  *                              mount_fs				     *
  *===========================================================================*/
-PUBLIC int mount_fs(
+int mount_fs(
 dev_t dev,
 char mountpoint[PATH_MAX],
 endpoint_t fs_e,
@@ -378,7 +378,7 @@ char mount_label[LABEL_MAX] )
 /*===========================================================================*
  *				mount_pfs				     *
  *===========================================================================*/
-PUBLIC void mount_pfs(void)
+void mount_pfs(void)
 {
 /* Mount the Pipe File Server. It's not really mounted onto the file system,
    but it's necessary it has a vmnt entry to make locking easier */
@@ -406,7 +406,7 @@ PUBLIC void mount_pfs(void)
 /*===========================================================================*
  *                              do_umount                                    *
  *===========================================================================*/
-PUBLIC int do_umount(void)
+int do_umount(void)
 {
 /* Perform the umount(name) system call. */
   char label[LABEL_MAX];
@@ -438,7 +438,7 @@ PUBLIC int do_umount(void)
 /*===========================================================================*
  *                              unmount                                      *
  *===========================================================================*/
-PUBLIC int unmount(
+int unmount(
   dev_t dev,			/* block-special device */
   char *label			/* buffer to retrieve label, or NULL */
 )
@@ -517,7 +517,7 @@ PUBLIC int unmount(
 /*===========================================================================*
  *				unmount_all				     *
  *===========================================================================*/
-PUBLIC void unmount_all(void)
+void unmount_all(void)
 {
 /* Unmount all filesystems.  File systems are mounted on other file systems,
  * so you have to pull off the loose bits repeatedly to get it all undone.
@@ -543,7 +543,7 @@ PUBLIC void unmount_all(void)
 /*===========================================================================*
  *                              name_to_dev                                  *
  *===========================================================================*/
-PRIVATE dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX])
+static dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX])
 {
 /* Convert the block special file in 'user_fullpath' to a device number.
  * If the given path is not a block special file, but 'allow_mountpt' is set
@@ -581,7 +581,7 @@ PRIVATE dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX])
 /*===========================================================================*
  *                              is_nonedev				     *
  *===========================================================================*/
-PUBLIC int is_nonedev(dev_t dev)
+int is_nonedev(dev_t dev)
 {
 /* Return whether the given device is a "none" pseudo device.
  */
@@ -594,7 +594,7 @@ PUBLIC int is_nonedev(dev_t dev)
 /*===========================================================================*
  *                              find_free_nonedev			     *
  *===========================================================================*/
-PRIVATE dev_t find_free_nonedev(void)
+static dev_t find_free_nonedev(void)
 {
 /* Find a free "none" pseudo device. Do not allocate it yet.
  */

@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				do_schedule				     *
  *===========================================================================*/
-PUBLIC int do_schedule(struct proc * caller, message * m_ptr)
+int do_schedule(struct proc * caller, message * m_ptr)
 {
 	struct proc *p;
 	int proc_nr;

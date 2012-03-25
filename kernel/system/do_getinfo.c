@@ -22,7 +22,7 @@
 /*===========================================================================*
  *			        update_idle_time			     *
  *===========================================================================*/
-PRIVATE void update_idle_time(void)
+static void update_idle_time(void)
 {
 	int i;
 	struct proc * idl = proc_addr(IDLE);
@@ -38,7 +38,7 @@ PRIVATE void update_idle_time(void)
 /*===========================================================================*
  *			        do_getinfo				     *
  *===========================================================================*/
-PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
+int do_getinfo(struct proc * caller, message * m_ptr)
 {
 /* Request system information to be copied to caller's address space. This
  * call simply copies entire data structures to the caller.

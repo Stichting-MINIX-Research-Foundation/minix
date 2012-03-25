@@ -28,7 +28,7 @@ enum {
 	STATE_UPTIME		/* use the clock to spin */
 };
 
-PUBLIC void spin_init(spin_t *s, u32_t usecs)
+void spin_init(spin_t *s, u32_t usecs)
 {
 	/* Initialize the given spin state structure, set to spin at most the
 	 * given number of microseconds.
@@ -38,7 +38,7 @@ PUBLIC void spin_init(spin_t *s, u32_t usecs)
 	s->s_timeout = FALSE;
 }
 
-PUBLIC int spin_check(spin_t *s)
+int spin_check(spin_t *s)
 {
 	/* Check whether a timeout has taken place. Return TRUE if the caller
 	 * should continue spinning, and FALSE if a timeout has occurred. The

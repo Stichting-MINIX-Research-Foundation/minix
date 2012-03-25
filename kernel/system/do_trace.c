@@ -16,7 +16,7 @@
 /*==========================================================================*
  *				do_trace				    *
  *==========================================================================*/
-PUBLIC int do_trace(struct proc * caller, message * m_ptr)
+int do_trace(struct proc * caller, message * m_ptr)
 {
 /* Handle the debugging commands supported by the ptrace system call
  * The commands are:

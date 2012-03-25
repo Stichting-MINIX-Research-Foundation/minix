@@ -7,13 +7,13 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-FORWARD struct inode *new_node(struct inode *ldirp, char *string, mode_t
+static struct inode *new_node(struct inode *ldirp, char *string, mode_t
 	bits, zone_t z0);
 
 /*===========================================================================*
  *				fs_create				     *
  *===========================================================================*/
-PUBLIC int fs_create()
+int fs_create()
 {
   size_t len;
   int r;
@@ -70,7 +70,7 @@ PUBLIC int fs_create()
 /*===========================================================================*
  *				fs_mknod				     *
  *===========================================================================*/
-PUBLIC int fs_mknod()
+int fs_mknod()
 {
   struct inode *ip, *ldirp;
   char lastc[MFS_NAME_MAX];
@@ -103,7 +103,7 @@ PUBLIC int fs_mknod()
 /*===========================================================================*
  *				fs_mkdir				     *
  *===========================================================================*/
-PUBLIC int fs_mkdir()
+int fs_mkdir()
 {
   int r1, r2;			/* status codes */
   ino_t dot, dotdot;		/* inode numbers for . and .. */
@@ -169,7 +169,7 @@ PUBLIC int fs_mkdir()
 /*===========================================================================*
  *                             fs_slink 				     *
  *===========================================================================*/
-PUBLIC int fs_slink()
+int fs_slink()
 {
   phys_bytes len;
   struct inode *sip;           /* inode containing symbolic link */
@@ -243,7 +243,7 @@ PUBLIC int fs_slink()
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-PRIVATE struct inode *new_node(struct inode *ldirp,
+static struct inode *new_node(struct inode *ldirp,
 	char *string, mode_t bits, zone_t z0)
 {
 /* New_node() is called by fs_open(), fs_mknod(), and fs_mkdir().  
@@ -318,7 +318,7 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
 /*===========================================================================*
  *				fs_inhibread				     *
  *===========================================================================*/
-PUBLIC int fs_inhibread()
+int fs_inhibread()
 {
   struct inode *rip;
   

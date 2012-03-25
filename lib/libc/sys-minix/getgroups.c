@@ -13,7 +13,7 @@ __weak_alias(getgroups, _getgroups)
 #endif
 
 
-PUBLIC int getgroups(int ngroups, gid_t *arr)
+int getgroups(int ngroups, gid_t *arr)
 {
   message m;
   m.m1_i1 = ngroups;

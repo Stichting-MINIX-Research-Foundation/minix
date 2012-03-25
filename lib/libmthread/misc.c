@@ -7,7 +7,7 @@
  *				mthread_debug_f				     *
  *===========================================================================*/
 #ifdef MDEBUG
-PUBLIC void mthread_debug_f(const char *file, int line, const char *msg)
+void mthread_debug_f(const char *file, int line, const char *msg)
 {
   /* Print debug message */
   printf("MTH (%s:%d): %s\n", file, line, msg);
@@ -18,7 +18,7 @@ PUBLIC void mthread_debug_f(const char *file, int line, const char *msg)
  *				mthread_panic_f				     *
  *===========================================================================*/
 #ifdef MDEBUG
-PUBLIC void mthread_panic_f(const char *file, int line, const char *msg)
+void mthread_panic_f(const char *file, int line, const char *msg)
 {
   /* Print panic message to stdout and exit */
   volatile int *sf;
@@ -33,7 +33,7 @@ PUBLIC void mthread_panic_f(const char *file, int line, const char *msg)
   exit(1);
 }
 #else
-PUBLIC void mthread_panic_s(void)
+void mthread_panic_s(void)
 {
   /* Silent panic */
   volatile int *sf;
@@ -49,7 +49,7 @@ PUBLIC void mthread_panic_s(void)
  *				mthread_verify_f			     *
  *===========================================================================*/
 #ifdef MDEBUG
-PUBLIC void mthread_verify_f(char *file, int line)
+void mthread_verify_f(char *file, int line)
 {
   /* Verify library state. It is assumed this function is never called from
    * a spawned thread, but from the 'main' thread. The library should be 
@@ -84,7 +84,7 @@ PUBLIC void mthread_verify_f(char *file, int line)
 /*===========================================================================*
  *				mthread_stats				     *
  *===========================================================================*/
-PUBLIC void mthread_stats(void)
+void mthread_stats(void)
 {
   mthread_thread_t t;
   mthread_tcb_t *tcb;

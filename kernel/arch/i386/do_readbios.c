@@ -13,7 +13,7 @@
 /*===========================================================================*
  *				do_readbios				     *
  *===========================================================================*/
-PUBLIC int do_readbios(struct proc * caller, message * m_ptr)
+int do_readbios(struct proc * caller, message * m_ptr)
 {
   struct vir_addr src, dst;     
         

@@ -4,7 +4,7 @@
 
 #include "com.h"
 
-PRIVATE int do_request(message *m)
+static int do_request(message *m)
 {
 	struct vumap_vir vvec[MAPVEC_NR + 3];
 	struct vumap_phys pvec[MAPVEC_NR + 3];
@@ -36,18 +36,18 @@ PRIVATE int do_request(message *m)
 	return r;
 }
 
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	return OK;
 }
 
-PRIVATE void sef_cb_signal_handler(int sig)
+static void sef_cb_signal_handler(int sig)
 {
 	if (sig == SIGTERM)
 		exit(0);
 }
 
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -55,7 +55,7 @@ PRIVATE void sef_local_startup(void)
 	sef_startup();
 }
 
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	message m;
 	int r;

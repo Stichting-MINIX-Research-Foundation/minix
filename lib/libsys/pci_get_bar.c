@@ -9,7 +9,7 @@ pci_get_bar.c
 /*===========================================================================*
  *				pci_get_bar				     *
  *===========================================================================*/
-PUBLIC int pci_get_bar(devind, port, base, size, ioflag)
+int pci_get_bar(devind, port, base, size, ioflag)
 int devind;
 int port;
 u32_t *base;

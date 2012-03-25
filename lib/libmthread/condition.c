@@ -3,10 +3,10 @@
 #include "proto.h"
 
 #ifdef MTHREAD_STRICT
-PRIVATE struct __mthread_cond *vc_front, *vc_rear;
-FORWARD void mthread_cond_add(mthread_cond_t *c);
-FORWARD void mthread_cond_remove(mthread_cond_t *c);
-FORWARD int mthread_cond_valid(mthread_cond_t *c);
+static struct __mthread_cond *vc_front, *vc_rear;
+static void mthread_cond_add(mthread_cond_t *c);
+static void mthread_cond_remove(mthread_cond_t *c);
+static int mthread_cond_valid(mthread_cond_t *c);
 #else
 # define mthread_cond_add(c)		((*c)->mc_magic = MTHREAD_INIT_MAGIC)
 # define mthread_cond_remove(c)		((*c)->mc_magic = MTHREAD_NOT_INUSE)
@@ -17,7 +17,7 @@ FORWARD int mthread_cond_valid(mthread_cond_t *c);
 /*===========================================================================*
  *				mthread_init_valid_conditions		     *
  *===========================================================================*/
-PUBLIC void mthread_init_valid_conditions(void)
+void mthread_init_valid_conditions(void)
 {
 #ifdef MTHREAD_STRICT
 /* Initialize condition variable list */
@@ -30,7 +30,7 @@ PUBLIC void mthread_init_valid_conditions(void)
  *				mthread_cond_add			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-PRIVATE void mthread_cond_add(c) 
+static void mthread_cond_add(c) 
 mthread_cond_t *c;
 {
 /* Add condition to list of valid, initialized conditions */
@@ -51,7 +51,7 @@ mthread_cond_t *c;
 /*===========================================================================*
  *				mthread_cond_broadcast			     *
  *===========================================================================*/
-PUBLIC int mthread_cond_broadcast(cond)
+int mthread_cond_broadcast(cond)
 mthread_cond_t *cond;
 {
 /* Signal all threads waiting for condition 'cond'. */
@@ -82,7 +82,7 @@ mthread_cond_t *cond;
 /*===========================================================================*
  *				mthread_cond_destroy			     *
  *===========================================================================*/
-PUBLIC int mthread_cond_destroy(cond)
+int mthread_cond_destroy(cond)
 mthread_cond_t *cond;
 {
 /* Destroy a condition variable. Make sure it's not in use */
@@ -119,7 +119,7 @@ mthread_cond_t *cond;
 /*===========================================================================*
  *				mthread_cond_init			     *
  *===========================================================================*/
-PUBLIC int mthread_cond_init(cond, cattr)
+int mthread_cond_init(cond, cattr)
 mthread_cond_t *cond;
 mthread_condattr_t *cattr;
 {
@@ -153,7 +153,7 @@ mthread_condattr_t *cattr;
  *				mthread_cond_remove			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-PRIVATE void mthread_cond_remove(c)
+static void mthread_cond_remove(c)
 mthread_cond_t *c;
 {
 /* Remove condition from list of valid, initialized conditions */
@@ -174,7 +174,7 @@ mthread_cond_t *c;
 /*===========================================================================*
  *				mthread_cond_signal			     *
  *===========================================================================*/
-PUBLIC int mthread_cond_signal(cond)
+int mthread_cond_signal(cond)
 mthread_cond_t *cond;
 {
 /* Signal a thread that condition 'cond' was met. Just a single thread. */
@@ -208,7 +208,7 @@ mthread_cond_t *cond;
  *				mthread_cond_valid			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-PRIVATE int mthread_cond_valid(c)
+static int mthread_cond_valid(c)
 mthread_cond_t *c;
 {
 /* Check to see if cond is on the list of valid conditions */
@@ -233,7 +233,7 @@ mthread_cond_t *c;
  *				mthread_cond_verify			     *
  *===========================================================================*/
 #ifdef MDEBUG
-PUBLIC int mthread_cond_verify(void)
+int mthread_cond_verify(void)
 {
 /* Return true in case no condition variables are in use. */
 
@@ -247,7 +247,7 @@ PUBLIC int mthread_cond_verify(void)
 /*===========================================================================*
  *				mthread_cond_wait			     *
  *===========================================================================*/
-PUBLIC int mthread_cond_wait(cond, mutex)
+int mthread_cond_wait(cond, mutex)
 mthread_cond_t *cond;
 mthread_mutex_t *mutex;
 {

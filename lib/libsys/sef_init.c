@@ -4,7 +4,7 @@
 #include <minix/sysutil.h>
 
 /* SEF Init callbacks. */
-PRIVATE struct sef_cbs {
+static struct sef_cbs {
     sef_cb_init_t                       sef_cb_init_fresh;
     sef_cb_init_t                       sef_cb_init_lu;
     sef_cb_init_t                       sef_cb_init_restart;
@@ -17,8 +17,8 @@ PRIVATE struct sef_cbs {
 };
 
 /* SEF Init prototypes for sef_startup(). */
-PUBLIC int do_sef_rs_init(endpoint_t old_endpoint);
-PUBLIC int do_sef_init_request(message *m_ptr);
+int do_sef_rs_init(endpoint_t old_endpoint);
+int do_sef_init_request(message *m_ptr);
 
 /* Debug. */
 EXTERN char* sef_debug_header(void);
@@ -30,7 +30,7 @@ EXTERN endpoint_t sef_self_priv_flags;
 /*===========================================================================*
  *                              process_init             		     *
  *===========================================================================*/
-PRIVATE int process_init(int type, sef_init_info_t *info)
+static int process_init(int type, sef_init_info_t *info)
 {
 /* Process initialization. */
   int r, result;
@@ -73,7 +73,7 @@ PRIVATE int process_init(int type, sef_init_info_t *info)
 /*===========================================================================*
  *                              do_sef_rs_init             		     *
  *===========================================================================*/
-PUBLIC int do_sef_rs_init(endpoint_t old_endpoint)
+int do_sef_rs_init(endpoint_t old_endpoint)
 {
 /* Special SEF Init for RS. */
   int r;
@@ -101,7 +101,7 @@ PUBLIC int do_sef_rs_init(endpoint_t old_endpoint)
 /*===========================================================================*
  *                            do_sef_init_request             		     *
  *===========================================================================*/
-PUBLIC int do_sef_init_request(message *m_ptr)
+int do_sef_init_request(message *m_ptr)
 {
 /* Handle a SEF Init request. */
   int r;
@@ -123,7 +123,7 @@ PUBLIC int do_sef_init_request(message *m_ptr)
 /*===========================================================================*
  *                         sef_setcb_init_fresh                              *
  *===========================================================================*/
-PUBLIC void sef_setcb_init_fresh(sef_cb_init_t cb)
+void sef_setcb_init_fresh(sef_cb_init_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_init_fresh = cb;
@@ -132,7 +132,7 @@ PUBLIC void sef_setcb_init_fresh(sef_cb_init_t cb)
 /*===========================================================================*
  *                            sef_setcb_init_lu                              *
  *===========================================================================*/
-PUBLIC void sef_setcb_init_lu(sef_cb_init_t cb)
+void sef_setcb_init_lu(sef_cb_init_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_init_lu = cb;
@@ -141,7 +141,7 @@ PUBLIC void sef_setcb_init_lu(sef_cb_init_t cb)
 /*===========================================================================*
  *                         sef_setcb_init_restart                            *
  *===========================================================================*/
-PUBLIC void sef_setcb_init_restart(sef_cb_init_t cb)
+void sef_setcb_init_restart(sef_cb_init_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_init_restart = cb;
@@ -150,7 +150,7 @@ PUBLIC void sef_setcb_init_restart(sef_cb_init_t cb)
 /*===========================================================================*
  *                         sef_setcb_init_response                           *
  *===========================================================================*/
-PUBLIC void sef_setcb_init_response(sef_cb_init_response_t cb)
+void sef_setcb_init_response(sef_cb_init_response_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_init_response = cb;
@@ -159,7 +159,7 @@ PUBLIC void sef_setcb_init_response(sef_cb_init_response_t cb)
 /*===========================================================================*
  *      	              sef_cb_init_null                               *
  *===========================================================================*/
-PUBLIC int sef_cb_init_null(int UNUSED(type),
+int sef_cb_init_null(int UNUSED(type),
    sef_init_info_t *UNUSED(info))
 {
   return OK;
@@ -168,7 +168,7 @@ PUBLIC int sef_cb_init_null(int UNUSED(type),
 /*===========================================================================*
  *                        sef_cb_init_response_null        		     *
  *===========================================================================*/
-PUBLIC int sef_cb_init_response_null(message * UNUSED(m_ptr))
+int sef_cb_init_response_null(message * UNUSED(m_ptr))
 {
   return ENOSYS;
 }
@@ -176,7 +176,7 @@ PUBLIC int sef_cb_init_response_null(message * UNUSED(m_ptr))
 /*===========================================================================*
  *      	              sef_cb_init_fail                               *
  *===========================================================================*/
-PUBLIC int sef_cb_init_fail(int UNUSED(type), sef_init_info_t *UNUSED(info))
+int sef_cb_init_fail(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
   return ENOSYS;
 }
@@ -184,7 +184,7 @@ PUBLIC int sef_cb_init_fail(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *      	              sef_cb_init_reset                              *
  *===========================================================================*/
-PUBLIC int sef_cb_init_reset(int UNUSED(type), sef_init_info_t *UNUSED(info))
+int sef_cb_init_reset(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
   /* Tell RS to reincarnate us, with no old resources, and a new endpoint. */
   return ERESTART;
@@ -193,7 +193,7 @@ PUBLIC int sef_cb_init_reset(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *      	              sef_cb_init_crash                              *
  *===========================================================================*/
-PUBLIC int sef_cb_init_crash(int UNUSED(type), sef_init_info_t *UNUSED(info))
+int sef_cb_init_crash(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
   panic("Simulating a crash at initialization time...");
 
@@ -203,7 +203,7 @@ PUBLIC int sef_cb_init_crash(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *                       sef_cb_init_response_rs_reply        		     *
  *===========================================================================*/
-PUBLIC int sef_cb_init_response_rs_reply(message *m_ptr)
+int sef_cb_init_response_rs_reply(message *m_ptr)
 {
   int r;
 

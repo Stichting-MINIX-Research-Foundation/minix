@@ -21,7 +21,7 @@ static int (*unbind_cb) (struct devman_usb_bind_cb_data *data, endpoint_t ep);
 /****************************************************************************
  *    devman_usb_add_attr                                                   *
  ***************************************************************************/
-PRIVATE void 
+static void 
 devman_usb_add_attr
 (struct devman_dev *dev, char *name, char *data)
 {
@@ -41,7 +41,7 @@ devman_usb_add_attr
 /****************************************************************************
  *    add_device_attributes                                                 *
  ***************************************************************************/
-PRIVATE void 
+static void 
 add_device_attributes
 (struct devman_usb_dev *udev)
 {
@@ -90,7 +90,7 @@ add_device_attributes
 /****************************************************************************
  *     add_interface_attributes                                             *
  ***************************************************************************/
-PRIVATE void 
+static void 
 add_interface_attributes
 (struct devman_usb_interface *intf)
 {
@@ -140,7 +140,7 @@ add_interface_attributes
 /****************************************************************************
  *      devman_usb_device_new                                               *
  ***************************************************************************/
-PUBLIC struct devman_usb_dev* 
+struct devman_usb_dev* 
 devman_usb_device_new
 (int dev_id)
 {
@@ -171,7 +171,7 @@ devman_usb_device_new
 /****************************************************************************
  *     devman_usb_device_delete                                             *
  ***************************************************************************/
-PUBLIC void devman_usb_device_delete(struct devman_usb_dev *udev)
+void devman_usb_device_delete(struct devman_usb_dev *udev)
 {
 	int i;
 	struct devman_static_attribute *attr,*temp;
@@ -197,7 +197,7 @@ PUBLIC void devman_usb_device_delete(struct devman_usb_dev *udev)
 	free(udev);
 }
 
-PRIVATE int devman_usb_bind_cb(void *data, endpoint_t ep) {
+static int devman_usb_bind_cb(void *data, endpoint_t ep) {
 	if (bind_cb) {
 		return bind_cb((struct devman_usb_bind_cb_data *) data, ep);
 	} else {
@@ -205,7 +205,7 @@ PRIVATE int devman_usb_bind_cb(void *data, endpoint_t ep) {
 	}
 }
 
-PRIVATE int devman_usb_unbind_cb(void *data, endpoint_t ep) {
+static int devman_usb_unbind_cb(void *data, endpoint_t ep) {
 	if (unbind_cb) {
 		return unbind_cb((struct devman_usb_bind_cb_data *) data, ep);
 	} else {
@@ -216,7 +216,7 @@ PRIVATE int devman_usb_unbind_cb(void *data, endpoint_t ep) {
 /****************************************************************************
  *     devman_usb_device_add                                                *
  ***************************************************************************/
-PUBLIC int devman_usb_device_add(struct devman_usb_dev *dev)
+int devman_usb_device_add(struct devman_usb_dev *dev)
 {
 	int i,res = 0;
 	add_device_attributes(dev);
@@ -273,7 +273,7 @@ PUBLIC int devman_usb_device_add(struct devman_usb_dev *dev)
 /****************************************************************************
  *     devman_usb_device_remove                                             *
  ***************************************************************************/
-PUBLIC int devman_usb_device_remove(struct devman_usb_dev *dev)
+int devman_usb_device_remove(struct devman_usb_dev *dev)
 {
 	int i, res = 0;
 
@@ -292,7 +292,7 @@ PUBLIC int devman_usb_device_remove(struct devman_usb_dev *dev)
 /****************************************************************************
  *     devman_usb_init                                                      *
  ***************************************************************************/
-PUBLIC void devman_usb_init
+void devman_usb_init
 (int (*_bind_cb)   (struct devman_usb_bind_cb_data *data, endpoint_t ep),
  int (*_unbind_cb) (struct devman_usb_bind_cb_data *data, endpoint_t ep))
 {

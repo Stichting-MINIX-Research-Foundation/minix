@@ -15,22 +15,22 @@
 #define BUF_SIZE (NR_IOREQS * CLICK_SIZE)	/* 256k */
 
 /* Function declarations. */
-PRIVATE int fbd_open(dev_t minor, int access);
-PRIVATE int fbd_close(dev_t minor);
-PRIVATE int fbd_transfer(dev_t minor, int do_write, u64_t position,
+static int fbd_open(dev_t minor, int access);
+static int fbd_close(dev_t minor);
+static int fbd_transfer(dev_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
-PRIVATE int fbd_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int fbd_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
 
 /* Variables. */
-PRIVATE char *fbd_buf;			/* scratch buffer */
+static char *fbd_buf;			/* scratch buffer */
 
-PRIVATE char driver_label[32] = "";	/* driver DS label */
-PRIVATE dev_t driver_minor = -1;	/* driver's partition minor to use */
-PRIVATE endpoint_t driver_endpt;	/* driver endpoint */
+static char driver_label[32] = "";	/* driver DS label */
+static dev_t driver_minor = -1;	/* driver's partition minor to use */
+static endpoint_t driver_endpt;	/* driver endpoint */
 
 /* Entry points to this driver. */
-PRIVATE struct blockdriver fbd_dtab = {
+static struct blockdriver fbd_dtab = {
 	BLOCKDRIVER_TYPE_OTHER,	/* do not handle partition requests */
 	fbd_open,		/* open or mount request, initialize device */
 	fbd_close,		/* release device */
@@ -46,7 +46,7 @@ PRIVATE struct blockdriver fbd_dtab = {
 };
 
 /* Options supported by this driver. */
-PRIVATE struct optset optset_table[] = {
+static struct optset optset_table[] = {
 	{ "label",	OPT_STRING,	driver_label,	sizeof(driver_label) },
 	{ "minor",	OPT_INT,	&driver_minor,	10		     },
 	{ NULL,		0,		NULL,		0		     }
@@ -55,7 +55,7 @@ PRIVATE struct optset optset_table[] = {
 /*===========================================================================*
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 	clock_t uptime;
 	int r;
@@ -97,7 +97,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				sef_cb_signal_handler			     *
  *===========================================================================*/
-PRIVATE void sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	/* Terminate immediately upon receiving a SIGTERM. */
 	if (signo != SIGTERM) return;
@@ -115,7 +115,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -132,7 +132,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	/* SEF local startup. */
 	env_setargs(argc, argv);
@@ -147,7 +147,7 @@ PUBLIC int main(int argc, char **argv)
 /*===========================================================================*
  *				fbd_open				     *
  *===========================================================================*/
-PRIVATE int fbd_open(dev_t UNUSED(minor), int access)
+static int fbd_open(dev_t UNUSED(minor), int access)
 {
 	/* Open a device. */
 	message m;
@@ -172,7 +172,7 @@ PRIVATE int fbd_open(dev_t UNUSED(minor), int access)
 /*===========================================================================*
  *				fbd_close				     *
  *===========================================================================*/
-PRIVATE int fbd_close(dev_t UNUSED(minor))
+static int fbd_close(dev_t UNUSED(minor))
 {
 	/* Close a device. */
 	message m;
@@ -196,7 +196,7 @@ PRIVATE int fbd_close(dev_t UNUSED(minor))
 /*===========================================================================*
  *				fbd_ioctl				     *
  *===========================================================================*/
-PRIVATE int fbd_ioctl(dev_t UNUSED(minor), unsigned int request,
+static int fbd_ioctl(dev_t UNUSED(minor), unsigned int request,
 	endpoint_t endpt, cp_grant_id_t grant)
 {
 	/* Handle an I/O control request. */
@@ -238,7 +238,7 @@ PRIVATE int fbd_ioctl(dev_t UNUSED(minor), unsigned int request,
 /*===========================================================================*
  *				fbd_transfer_direct			     *
  *===========================================================================*/
-PRIVATE ssize_t fbd_transfer_direct(int do_write, u64_t position,
+static ssize_t fbd_transfer_direct(int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int count, int flags)
 {
 	/* Forward the entire transfer request, without any intervention. */
@@ -284,7 +284,7 @@ PRIVATE ssize_t fbd_transfer_direct(int do_write, u64_t position,
 /*===========================================================================*
  *				fbd_transfer_copy			     *
  *===========================================================================*/
-PRIVATE ssize_t fbd_transfer_copy(int do_write, u64_t position,
+static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int count, size_t size,
 	int flags)
 {
@@ -406,7 +406,7 @@ PRIVATE ssize_t fbd_transfer_copy(int do_write, u64_t position,
 /*===========================================================================*
  *				fbd_transfer				     *
  *===========================================================================*/
-PRIVATE int fbd_transfer(dev_t UNUSED(minor), int do_write, u64_t position,
+static int fbd_transfer(dev_t UNUSED(minor), int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags)
 {
 	/* Transfer data from or to the device. */

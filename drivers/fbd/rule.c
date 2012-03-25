@@ -5,14 +5,14 @@
 #include "action.h"
 #include "rule.h"
 
-PRIVATE struct fbd_rule rules[MAX_RULES];
-PRIVATE struct fbd_rule *matches[MAX_RULES];
-PRIVATE int nr_matches;
+static struct fbd_rule rules[MAX_RULES];
+static struct fbd_rule *matches[MAX_RULES];
+static int nr_matches;
 
 /*===========================================================================*
  *				rule_ctl				     *
  *===========================================================================*/
-PUBLIC int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
+int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
 {
 	/* Handle an I/O control request regarding rules. */
 	fbd_rulenum_t i;
@@ -86,7 +86,7 @@ PUBLIC int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
 /*===========================================================================*
  *				rule_match				     *
  *===========================================================================*/
-PRIVATE int rule_match(struct fbd_rule *rule, u64_t pos, size_t size, int flag)
+static int rule_match(struct fbd_rule *rule, u64_t pos, size_t size, int flag)
 {
 	/* Check whether the given rule matches the given parameters. As side
 	 * effect, update counters in the rule as appropriate.
@@ -113,7 +113,7 @@ PRIVATE int rule_match(struct fbd_rule *rule, u64_t pos, size_t size, int flag)
 /*===========================================================================*
  *				rule_find				     *
  *===========================================================================*/
-PUBLIC int rule_find(u64_t pos, size_t size, int flag)
+int rule_find(u64_t pos, size_t size, int flag)
 {
 	/* Find all matching rules, and return a hook mask. */
 	struct fbd_rule *rule;
@@ -150,7 +150,7 @@ PUBLIC int rule_find(u64_t pos, size_t size, int flag)
 /*===========================================================================*
  *				rule_pre_hook				     *
  *===========================================================================*/
-PUBLIC void rule_pre_hook(iovec_t *iov, unsigned *count, size_t *size,
+void rule_pre_hook(iovec_t *iov, unsigned *count, size_t *size,
 	u64_t *pos)
 {
 	int i;
@@ -163,7 +163,7 @@ PUBLIC void rule_pre_hook(iovec_t *iov, unsigned *count, size_t *size,
 /*===========================================================================*
  *				rule_io_hook				     *
  *===========================================================================*/
-PUBLIC void rule_io_hook(char *buf, size_t size, u64_t pos, int flag)
+void rule_io_hook(char *buf, size_t size, u64_t pos, int flag)
 {
 	int i;
 
@@ -175,7 +175,7 @@ PUBLIC void rule_io_hook(char *buf, size_t size, u64_t pos, int flag)
 /*===========================================================================*
  *				rule_post_hook				     *
  *===========================================================================*/
-PUBLIC void rule_post_hook(size_t osize, int *result)
+void rule_post_hook(size_t osize, int *result)
 {
 	int i;
 

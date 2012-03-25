@@ -5,15 +5,15 @@
 
 #include "buf.h"
 
-FORWARD char *get_name(char *name, char string[NAME_MAX+1]);
-FORWARD int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+static char *get_name(char *name, char string[NAME_MAX+1]);
+static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
 	dir_record **res_inop, size_t *offsetp);
 
 
 /*===========================================================================*
  *                             fs_lookup				     *
  *===========================================================================*/
-PUBLIC int fs_lookup() {
+int fs_lookup() {
   cp_grant_id_t grant;
   int r, len, flags;
   size_t offset;
@@ -80,7 +80,7 @@ PUBLIC int fs_lookup() {
 /*===========================================================================*
  *				search_dir				     *
  *===========================================================================*/
-PUBLIC int search_dir(ldir_ptr,string,numb)
+int search_dir(ldir_ptr,string,numb)
      register struct dir_record *ldir_ptr; /*  dir record parent */
      char string[NAME_MAX];	      /* component to search for */
      ino_t *numb;		      /* pointer to new dir record */
@@ -182,7 +182,7 @@ PUBLIC int search_dir(ldir_ptr,string,numb)
 /*===========================================================================*
  *                             parse_path				     *
  *===========================================================================*/
-PRIVATE int parse_path(dir_ino, root_ino, flags, res_inop, offsetp)
+static int parse_path(dir_ino, root_ino, flags, res_inop, offsetp)
 ino_t dir_ino;
 ino_t root_ino;
 int flags;
@@ -281,7 +281,7 @@ size_t *offsetp;
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-PUBLIC int advance(dirp, string, resp)
+int advance(dirp, string, resp)
 struct dir_record *dirp;		/* inode for directory to be searched */
 char string[NAME_MAX];		        /* component name to look for */
 struct dir_record **resp;		/* resulting inode */
@@ -323,7 +323,7 @@ struct dir_record **resp;		/* resulting inode */
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-PRIVATE char *get_name(path_name, string)
+static char *get_name(path_name, string)
 char *path_name;		/* path name to parse */
 char string[NAME_MAX+1];	/* component extracted from 'old_name' */
 {

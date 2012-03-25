@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				make_path				     *
  *===========================================================================*/
-PUBLIC int make_path(path, ino)
+int make_path(path, ino)
 char path[PATH_MAX];
 struct inode *ino;
 {
@@ -68,7 +68,7 @@ struct inode *ino;
 /*===========================================================================*
  *				push_path				     *
  *===========================================================================*/
-PUBLIC int push_path(path, name)
+int push_path(path, name)
 char path[PATH_MAX];
 char *name;
 {
@@ -92,7 +92,7 @@ char *name;
 /*===========================================================================*
  *				pop_path				     *
  *===========================================================================*/
-PUBLIC void pop_path(path)
+void pop_path(path)
 char path[PATH_MAX];
 {
 /* Remove the last component from a path.

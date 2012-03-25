@@ -10,7 +10,7 @@
 /*===========================================================================*
  *				fs_stat					     *
  *===========================================================================*/
-PUBLIC int fs_stat(void)
+int fs_stat(void)
 {
 	/* Retrieve file status.
 	 */
@@ -58,7 +58,7 @@ PUBLIC int fs_stat(void)
 /*===========================================================================*
  *				fs_fstatfs				     *
  *===========================================================================*/
-PUBLIC int fs_fstatfs(void)
+int fs_fstatfs(void)
 {
 	/* Retrieve file system statistics.
 	 */
@@ -74,7 +74,7 @@ PUBLIC int fs_fstatfs(void)
 /*===========================================================================*
  *				fs_fstatfs				     *
  *===========================================================================*/
-PUBLIC int fs_statvfs(void)
+int fs_statvfs(void)
 {
 	/* Retrieve file system statistics.
 	 */

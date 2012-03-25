@@ -42,7 +42,7 @@
 
 /* Function prototype for PRIVATE functions.
  */ 
-FORWARD void load_update(void);
+static void load_update(void);
 
 /* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
  * Each system process possesses a single synchronous alarm timer. If other 
@@ -51,18 +51,18 @@ FORWARD void load_update(void);
  * via (re)set_timer().
  * When a timer expires its watchdog function is run by the CLOCK task. 
  */
-PRIVATE timer_t *clock_timers;	/* queue of CLOCK timers */
-PRIVATE clock_t next_timeout;	/* realtime that next timer expires */
+static timer_t *clock_timers;	/* queue of CLOCK timers */
+static clock_t next_timeout;	/* realtime that next timer expires */
 
 /* The time is incremented by the interrupt handler on each clock tick.
  */
-PRIVATE clock_t realtime = 0;		      /* real time clock */
+static clock_t realtime = 0;		      /* real time clock */
 
 /*
  * The boot processos timer interrupt handler. In addition to non-boot cpus it
  * keeps real time and notifies the clock task if need be
  */
-PUBLIC int timer_int_handler(void)
+int timer_int_handler(void)
 {
 	/* Update user and system accounting times. Charge the current process
 	 * for user time. If the current process is not billable, that is, if a
@@ -153,7 +153,7 @@ PUBLIC int timer_int_handler(void)
 /*===========================================================================*
  *				get_uptime				     *
  *===========================================================================*/
-PUBLIC clock_t get_uptime(void)
+clock_t get_uptime(void)
 {
   /* Get and return the current clock uptime in ticks. */
   return(realtime);
@@ -162,7 +162,7 @@ PUBLIC clock_t get_uptime(void)
 /*===========================================================================*
  *				set_timer				     *
  *===========================================================================*/
-PUBLIC void set_timer(tp, exp_time, watchdog)
+void set_timer(tp, exp_time, watchdog)
 struct timer *tp;		/* pointer to timer structure */
 clock_t exp_time;		/* expiration realtime */
 tmr_func_t watchdog;		/* watchdog to be called */
@@ -177,7 +177,7 @@ tmr_func_t watchdog;		/* watchdog to be called */
 /*===========================================================================*
  *				reset_timer				     *
  *===========================================================================*/
-PUBLIC void reset_timer(tp)
+void reset_timer(tp)
 struct timer *tp;		/* pointer to timer structure */
 {
 /* The timer pointed to by 'tp' is no longer needed. Remove it from both the
@@ -192,7 +192,7 @@ struct timer *tp;		/* pointer to timer structure */
 /*===========================================================================*
  *				load_update				     * 
  *===========================================================================*/
-PRIVATE void load_update(void)
+static void load_update(void)
 {
 	u16_t slot;
 	int enqueued = 0, q;
@@ -225,7 +225,7 @@ PRIVATE void load_update(void)
 	kloadinfo.last_clock = realtime;
 }
 
-PUBLIC int boot_cpu_init_timer(unsigned freq)
+int boot_cpu_init_timer(unsigned freq)
 {
 	if (init_local_timer(freq))
 		return -1;
@@ -237,7 +237,7 @@ PUBLIC int boot_cpu_init_timer(unsigned freq)
 	return 0;
 }
 
-PUBLIC int app_cpu_init_timer(unsigned freq)
+int app_cpu_init_timer(unsigned freq)
 {
 	if (init_local_timer(freq))
 		return -1;

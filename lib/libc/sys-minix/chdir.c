@@ -9,7 +9,7 @@ __weak_alias(chdir, _chdir)
 __weak_alias(fchdir, _fchdir)
 #endif
 
-PUBLIC int chdir(name)
+int chdir(name)
 _CONST char *name;
 {
   message m;
@@ -18,7 +18,7 @@ _CONST char *name;
   return(_syscall(VFS_PROC_NR, CHDIR, &m));
 }
 
-PUBLIC int fchdir(fd)
+int fchdir(fd)
 int fd;
 {
   message m;

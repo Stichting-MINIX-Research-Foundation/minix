@@ -13,7 +13,7 @@
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-PUBLIC int no_sys()
+int no_sys()
 {
 /* Somebody has used an illegal system call number */
   lpuffs_debug("no_sys: invalid call %d\n", req_nr);
@@ -24,7 +24,7 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *                              mfs_nul                                      *
  *===========================================================================*/
-PUBLIC void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
+void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
                       unsigned int maxlen)
 {
   if (len < maxlen && str[len-1] != '\0') {
@@ -37,7 +37,7 @@ PUBLIC void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
 /*===========================================================================*
  *				clock_time				     *
  *===========================================================================*/
-PUBLIC time_t clock_time()
+time_t clock_time()
 {
 /* This routine returns the time in seconds since 1.1.1970.  MINIX is an
  * astrophysically naive system that assumes the earth rotates at a constant
@@ -58,7 +58,7 @@ PUBLIC time_t clock_time()
 /*===========================================================================*
  *				update_times				     *
  *===========================================================================*/
-PUBLIC int update_times(struct puffs_node *pn, int flags, time_t t)
+int update_times(struct puffs_node *pn, int flags, time_t t)
 {
   int r;
   struct vattr va;
@@ -103,7 +103,7 @@ PUBLIC int update_times(struct puffs_node *pn, int flags, time_t t)
 /*===========================================================================*
  *				lpuffs_debug				     *
  *===========================================================================*/
-PUBLIC void lpuffs_debug(const char *format, ...)
+void lpuffs_debug(const char *format, ...)
 {   
   char buffer[256];
   va_list args;

@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				procfs_getloadavg			     *
  *===========================================================================*/
-PUBLIC int procfs_getloadavg(struct load *loadavg, int nelem)
+int procfs_getloadavg(struct load *loadavg, int nelem)
 {
 	/* Retrieve system load average information.
 	 */

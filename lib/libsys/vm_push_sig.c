@@ -6,7 +6,7 @@
 /*===========================================================================*
  *                                vm_push_sig			     *
  *===========================================================================*/
-PUBLIC int vm_push_sig(endpoint_t ep, vir_bytes *old_sp)
+int vm_push_sig(endpoint_t ep, vir_bytes *old_sp)
 {
     message m;
     int result;

@@ -17,7 +17,7 @@
  * use: 65599	nice.
  *      65587   even better.
  */
-PUBLIC long sdbm_hash(char *str, int len)
+long sdbm_hash(char *str, int len)
 {
 	unsigned long n = 0;
 

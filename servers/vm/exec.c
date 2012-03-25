@@ -31,14 +31,14 @@
 
 #include "memory.h"
 
-FORWARD int new_mem(struct vmproc *vmp, vir_bytes text_addr, vir_bytes
+static int new_mem(struct vmproc *vmp, vir_bytes text_addr, vir_bytes
 	text_bytes, vir_bytes data_addr, vir_bytes data_bytes, vir_bytes
 	stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top, int is_elf);
 
 /*===========================================================================*
  *				exec_newmem				     *
  *===========================================================================*/
-PUBLIC int do_exec_newmem(message *msg)
+int do_exec_newmem(message *msg)
 {
 	int r, proc_e, proc_n;
 	vir_bytes stack_top;
@@ -129,7 +129,7 @@ SANITYCHECK(SCL_DETAIL);
 /*===========================================================================*
  *				new_mem					     *
  *===========================================================================*/
-PRIVATE int new_mem(
+static int new_mem(
   struct vmproc *rmp,           /* process to get a new memory map */
   vir_bytes text_addr,          /* text segement load address */
   vir_bytes text_bytes,         /* text segment size in bytes */
@@ -256,7 +256,7 @@ SANITYCHECK(SCL_DETAIL);
 /*===========================================================================*
  *				find_kernel_top				     *
  *===========================================================================*/
-PUBLIC phys_bytes find_kernel_top(void)
+phys_bytes find_kernel_top(void)
 {
 /* Find out where the kernel is, so we know where to start mapping
  * user processes.
@@ -276,7 +276,7 @@ PUBLIC phys_bytes find_kernel_top(void)
 /*===========================================================================*
  *				proc_new				     *
  *===========================================================================*/
-PUBLIC int proc_new(struct vmproc *vmp,
+int proc_new(struct vmproc *vmp,
   phys_bytes vstart,	  /* where to start the process in page table */
   phys_bytes text_addr,   /* address at which to load code */
   phys_bytes text_bytes,  /* how much code, in bytes but page aligned */

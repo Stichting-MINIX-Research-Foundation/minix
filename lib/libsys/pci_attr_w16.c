@@ -9,7 +9,7 @@ pci_attr_w16.c
 /*===========================================================================*
  *				pci_attr_w16				     *
  *===========================================================================*/
-PUBLIC void pci_attr_w16(int devind, int port, u16_t value)
+void pci_attr_w16(int devind, int port, u16_t value)
 {
 	int r;
 	message m;

@@ -53,20 +53,20 @@ typedef struct {
   mthread_rwlock_t barrier;
 } device_t;
 
-PRIVATE struct blockdriver *bdtab;
-PRIVATE int running = FALSE;
+static struct blockdriver *bdtab;
+static int running = FALSE;
 
-PRIVATE mthread_key_t worker_key;
+static mthread_key_t worker_key;
 
-PRIVATE device_t device[MAX_DEVICES];
+static device_t device[MAX_DEVICES];
 
-PRIVATE worker_t *exited[MAX_THREADS];
-PRIVATE int num_exited = 0;
+static worker_t *exited[MAX_THREADS];
+static int num_exited = 0;
 
 /*===========================================================================*
  *				enqueue					     *
  *===========================================================================*/
-PRIVATE void enqueue(device_t *dp, const message *m_src, int ipc_status)
+static void enqueue(device_t *dp, const message *m_src, int ipc_status)
 {
 /* Enqueue a message into the device's queue, and signal the event.
  * Must be called from the master thread.
@@ -81,7 +81,7 @@ PRIVATE void enqueue(device_t *dp, const message *m_src, int ipc_status)
 /*===========================================================================*
  *				try_dequeue				     *
  *===========================================================================*/
-PRIVATE int try_dequeue(device_t *dp, message *m_dst, int *ipc_status)
+static int try_dequeue(device_t *dp, message *m_dst, int *ipc_status)
 {
 /* See if a message can be dequeued from the current worker thread's device
  * queue. If so, dequeue the message and return TRUE. If not, return FALSE.
@@ -94,7 +94,7 @@ PRIVATE int try_dequeue(device_t *dp, message *m_dst, int *ipc_status)
 /*===========================================================================*
  *				dequeue					     *
  *===========================================================================*/
-PRIVATE int dequeue(device_t *dp, worker_t *wp, message *m_dst,
+static int dequeue(device_t *dp, worker_t *wp, message *m_dst,
   int *ipc_status)
 {
 /* Dequeue a message from the current worker thread's device queue. Block the
@@ -119,7 +119,7 @@ PRIVATE int dequeue(device_t *dp, worker_t *wp, message *m_dst,
 /*===========================================================================*
  *				is_transfer_req				     *
  *===========================================================================*/
-PRIVATE int is_transfer_req(int type)
+static int is_transfer_req(int type)
 {
 /* Return whether the given block device request is a transfer request.
  */
@@ -139,7 +139,7 @@ PRIVATE int is_transfer_req(int type)
 /*===========================================================================*
  *				worker_thread				     *
  *===========================================================================*/
-PRIVATE void *worker_thread(void *param)
+static void *worker_thread(void *param)
 {
 /* The worker thread loop. Set up the thread-specific reference to itself and
  * start looping. The loop consists of blocking dequeing and handling messages.
@@ -207,7 +207,7 @@ PRIVATE void *worker_thread(void *param)
 /*===========================================================================*
  *				master_create_worker			     *
  *===========================================================================*/
-PRIVATE void master_create_worker(worker_t *wp, worker_id_t worker_id,
+static void master_create_worker(worker_t *wp, worker_id_t worker_id,
   device_id_t device_id)
 {
 /* Start a new worker thread.
@@ -240,7 +240,7 @@ PRIVATE void master_create_worker(worker_t *wp, worker_id_t worker_id,
 /*===========================================================================*
  *				master_destroy_worker			     *
  *===========================================================================*/
-PRIVATE void master_destroy_worker(worker_t *wp)
+static void master_destroy_worker(worker_t *wp)
 {
 /* Clean up resources used by an exited worker thread.
  */
@@ -261,7 +261,7 @@ PRIVATE void master_destroy_worker(worker_t *wp)
 /*===========================================================================*
  *				master_handle_exits			     *
  *===========================================================================*/
-PRIVATE void master_handle_exits(void)
+static void master_handle_exits(void)
 {
 /* Destroy the remains of all exited threads.
  */
@@ -276,7 +276,7 @@ PRIVATE void master_handle_exits(void)
 /*===========================================================================*
  *				master_handle_request			     *
  *===========================================================================*/
-PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
+static void master_handle_request(message *m_ptr, int ipc_status)
 {
 /* For real request messages, query the device ID, start a thread if none is
  * free and the maximum number of threads for that device has not yet been
@@ -337,7 +337,7 @@ PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
 /*===========================================================================*
  *				master_init				     *
  *===========================================================================*/
-PRIVATE void master_init(struct blockdriver *bdp)
+static void master_init(struct blockdriver *bdp)
 {
 /* Initialize the state of the master thread.
  */
@@ -371,7 +371,7 @@ PRIVATE void master_init(struct blockdriver *bdp)
 /*===========================================================================*
  *				blockdriver_mt_get_tid			     *
  *===========================================================================*/
-PUBLIC thread_id_t blockdriver_mt_get_tid(void)
+thread_id_t blockdriver_mt_get_tid(void)
 {
 /* Return back the ID of this thread.
  */
@@ -388,7 +388,7 @@ PUBLIC thread_id_t blockdriver_mt_get_tid(void)
 /*===========================================================================*
  *				blockdriver_mt_receive			     *
  *===========================================================================*/
-PRIVATE void blockdriver_mt_receive(message *m_ptr, int *ipc_status)
+static void blockdriver_mt_receive(message *m_ptr, int *ipc_status)
 {
 /* Receive a message.
  */
@@ -403,7 +403,7 @@ PRIVATE void blockdriver_mt_receive(message *m_ptr, int *ipc_status)
 /*===========================================================================*
  *				blockdriver_mt_task			     *
  *===========================================================================*/
-PUBLIC void blockdriver_mt_task(struct blockdriver *driver_tab)
+void blockdriver_mt_task(struct blockdriver *driver_tab)
 {
 /* The multithreaded driver task.
  */
@@ -444,7 +444,7 @@ PUBLIC void blockdriver_mt_task(struct blockdriver *driver_tab)
 /*===========================================================================*
  *				blockdriver_mt_terminate		     *
  *===========================================================================*/
-PUBLIC void blockdriver_mt_terminate(void)
+void blockdriver_mt_terminate(void)
 {
 /* Instruct libblockdriver to shut down.
  */
@@ -455,7 +455,7 @@ PUBLIC void blockdriver_mt_terminate(void)
 /*===========================================================================*
  *				blockdriver_mt_sleep			     *
  *===========================================================================*/
-PUBLIC void blockdriver_mt_sleep(void)
+void blockdriver_mt_sleep(void)
 {
 /* Let the current thread sleep until it gets woken up by the master thread.
  */
@@ -472,7 +472,7 @@ PUBLIC void blockdriver_mt_sleep(void)
 /*===========================================================================*
  *				blockdriver_mt_wakeup			     *
  *===========================================================================*/
-PUBLIC void blockdriver_mt_wakeup(thread_id_t id)
+void blockdriver_mt_wakeup(thread_id_t id)
 {
 /* Wake up a sleeping worker thread from the master thread.
  */
@@ -496,7 +496,7 @@ PUBLIC void blockdriver_mt_wakeup(thread_id_t id)
 /*===========================================================================*
  *				blockdriver_mt_set_workers		     *
  *===========================================================================*/
-PUBLIC void blockdriver_mt_set_workers(device_id_t id, int workers)
+void blockdriver_mt_set_workers(device_id_t id, int workers)
 {
 /* Set the number of worker threads for the given device.
  */

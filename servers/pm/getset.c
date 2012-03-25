@@ -16,7 +16,7 @@
 /*===========================================================================*
  *				do_get					     *
  *===========================================================================*/
-PUBLIC int do_get()
+int do_get()
 {
 /* Handle GETUID, GETGID, GETGROUPS, GETGROUPS_O, GETPID, GETPGRP, GETSID,
    ISSETUGID.
@@ -118,7 +118,7 @@ PUBLIC int do_get()
 /*===========================================================================*
  *				do_set					     *
  *===========================================================================*/
-PUBLIC int do_set()
+int do_set()
 {
 /* Handle SETUID, SETEUID, SETGID, SETEGID, SETSID. These calls have in common
  * that, if successful, they will be forwarded to VFS as well.

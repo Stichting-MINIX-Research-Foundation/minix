@@ -22,7 +22,7 @@
 /*===========================================================================*
  *				do_chmod				     *
  *===========================================================================*/
-PUBLIC int do_chmod()
+int do_chmod()
 {
 /* Perform the chmod(name, mode) and fchmod(fd, mode) system calls. */
 
@@ -87,7 +87,7 @@ PUBLIC int do_chmod()
 /*===========================================================================*
  *				do_chown				     *
  *===========================================================================*/
-PUBLIC int do_chown()
+int do_chown()
 {
 /* Perform the chown(path, owner, group) and fchmod(fd, owner, group) system
  * calls. */
@@ -162,7 +162,7 @@ PUBLIC int do_chown()
 /*===========================================================================*
  *				do_umask				     *
  *===========================================================================*/
-PUBLIC int do_umask()
+int do_umask()
 {
 /* Perform the umask(co_mode) system call. */
   register mode_t r;
@@ -176,7 +176,7 @@ PUBLIC int do_umask()
 /*===========================================================================*
  *				do_access				     *
  *===========================================================================*/
-PUBLIC int do_access()
+int do_access()
 {
 /* Perform the access(name, mode) system call. */
   int r;
@@ -211,7 +211,7 @@ PUBLIC int do_access()
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-PUBLIC int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
+int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 {
 /* Given a pointer to an vnode, 'vp', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the
@@ -266,7 +266,7 @@ PUBLIC int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 /*===========================================================================*
  *				read_only				     *
  *===========================================================================*/
-PUBLIC int read_only(vp)
+int read_only(vp)
 struct vnode *vp;		/* ptr to inode whose file sys is to be cked */
 {
 /* Check to see if the file system on which the inode 'ip' resides is mounted

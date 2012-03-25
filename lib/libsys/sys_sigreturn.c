@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_sigreturn				     *
  *===========================================================================*/
-PUBLIC int sys_sigreturn(proc_ep, sig_ctxt)
+int sys_sigreturn(proc_ep, sig_ctxt)
 endpoint_t proc_ep;			/* for which process */
 struct sigmsg *sig_ctxt;		/* POSIX style handling */
 {

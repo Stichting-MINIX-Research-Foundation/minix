@@ -13,7 +13,7 @@
 /*===========================================================================*
  *				 init_service				     *
  *===========================================================================*/
-PUBLIC int init_service(rp, type)
+int init_service(rp, type)
 struct rproc *rp;				/* pointer to process slot */
 int type;					/* type of initialization */
 {
@@ -54,7 +54,7 @@ int type;					/* type of initialization */
 /*===========================================================================*
  *			      fill_send_mask                                 *
  *===========================================================================*/
-PUBLIC void fill_send_mask(send_mask, set_bits)
+void fill_send_mask(send_mask, set_bits)
 sys_map_t *send_mask;		/* the send mask to fill in */
 int set_bits;			/* TRUE sets all bits, FALSE clears all bits */
 {
@@ -72,7 +72,7 @@ int set_bits;			/* TRUE sets all bits, FALSE clears all bits */
 /*===========================================================================*
  *			      fill_call_mask                                 *
  *===========================================================================*/
-PUBLIC void fill_call_mask(calls, tot_nr_calls, call_mask, call_base, is_init)
+void fill_call_mask(calls, tot_nr_calls, call_mask, call_base, is_init)
 int *calls;                     /* the unordered set of calls */
 int tot_nr_calls;               /* the total number of calls */
 bitchunk_t *call_mask;          /* the call mask to fill in */
@@ -114,7 +114,7 @@ int is_init;                    /* set when initializing a call mask */
 /*===========================================================================*
  *			     srv_to_string				     *
  *===========================================================================*/
-PUBLIC char* srv_to_string(rp)
+char* srv_to_string(rp)
 struct rproc *rp;			/* pointer to process slot */
 {
   struct rprocpub *rpub;
@@ -152,7 +152,7 @@ struct rproc *rp;			/* pointer to process slot */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC void reply(who, rp, m_ptr)
+void reply(who, rp, m_ptr)
 endpoint_t who;                        	/* replyee */
 struct rproc *rp;                       /* replyee slot (if any) */
 message *m_ptr;                         /* reply message */
@@ -175,7 +175,7 @@ message *m_ptr;                         /* reply message */
 /*===========================================================================*
  *			      late_reply				     *
  *===========================================================================*/
-PUBLIC void late_reply(rp, code)
+void late_reply(rp, code)
 struct rproc *rp;				/* pointer to process slot */
 int code;					/* status code */
 {
@@ -199,7 +199,7 @@ int code;					/* status code */
 /*===========================================================================*
  *				rs_isokendpt			 	     *
  *===========================================================================*/
-PUBLIC int rs_isokendpt(endpoint_t endpoint, int *proc)
+int rs_isokendpt(endpoint_t endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
 	if(*proc < -NR_TASKS || *proc >= NR_PROCS)
@@ -211,7 +211,7 @@ PUBLIC int rs_isokendpt(endpoint_t endpoint, int *proc)
 /*===========================================================================*
  *				sched_init_proc			 	     *
  *===========================================================================*/
-PUBLIC int sched_init_proc(struct rproc *rp)
+int sched_init_proc(struct rproc *rp)
 {
   int s;
   int is_usr_proc;
@@ -234,7 +234,7 @@ PUBLIC int sched_init_proc(struct rproc *rp)
 /*===========================================================================*
  *				update_sig_mgrs			 	     *
  *===========================================================================*/
-PUBLIC int update_sig_mgrs(struct rproc *rp, endpoint_t sig_mgr,
+int update_sig_mgrs(struct rproc *rp, endpoint_t sig_mgr,
 	endpoint_t bak_sig_mgr)
 {
   int r;

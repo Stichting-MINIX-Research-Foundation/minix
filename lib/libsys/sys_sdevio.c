@@ -3,7 +3,7 @@
 /*===========================================================================*
  *                                sys_sdevio				     *
  *===========================================================================*/
-PUBLIC int sys_sdevio(req, port, proc_nr, buffer, count, offset)
+int sys_sdevio(req, port, proc_nr, buffer, count, offset)
 int req;				/* request: DIO_{IN,OUT}PUT_* */
 long port; 				/* port address to read from */
 endpoint_t proc_nr;			/* process where buffer is */

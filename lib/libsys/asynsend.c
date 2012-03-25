@@ -18,14 +18,14 @@
 #include <errno.h>
 
 #define ASYN_NR	(2*_NR_PROCS)
-PRIVATE asynmsg_t msgtable[ASYN_NR];
-PRIVATE int first_slot = 0, next_slot = 0;
-PRIVATE int initialized = 0;
+static asynmsg_t msgtable[ASYN_NR];
+static int first_slot = 0, next_slot = 0;
+static int initialized = 0;
 
 /*===========================================================================*
  *				asynsend3				     *
  *===========================================================================*/
-PUBLIC int asynsend3(dst, mp, fl)
+int asynsend3(dst, mp, fl)
 endpoint_t dst;
 message *mp;
 int fl;
@@ -147,7 +147,7 @@ int fl;
 /*===========================================================================*
  *				asyn_geterror				     *
  *===========================================================================*/
-PUBLIC int asyn_geterror(endpoint_t *dst, message *msg, int *err)
+int asyn_geterror(endpoint_t *dst, message *msg, int *err)
 {
   int src_ind, flags, result;
 

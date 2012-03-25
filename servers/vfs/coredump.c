@@ -10,27 +10,27 @@
 /* Include ELF headers */
 #include <sys/elf_core.h>
 
-FORWARD void fill_elf_header(Elf32_Ehdr *elf_header, int phnum);
-FORWARD void fill_prog_header(Elf32_Phdr *prog_header, Elf32_Word
+static void fill_elf_header(Elf32_Ehdr *elf_header, int phnum);
+static void fill_prog_header(Elf32_Phdr *prog_header, Elf32_Word
 	p_type, Elf32_Off p_offset, Elf32_Addr p_vaddr, Elf32_Word p_flags,
 	Elf32_Word p_filesz, Elf32_Word p_memsz);
-FORWARD int get_memory_regions(Elf32_Phdr phdrs[]);
-FORWARD void fill_note_segment_and_entries_hdrs(Elf32_Phdr phdrs[],
+static int get_memory_regions(Elf32_Phdr phdrs[]);
+static void fill_note_segment_and_entries_hdrs(Elf32_Phdr phdrs[],
 	Elf32_Nhdr nhdrs[]);
-FORWARD void adjust_offsets(Elf32_Phdr phdrs[], int phnum);
-FORWARD void dump_elf_header(struct filp *f, Elf32_Ehdr elf_header);
-FORWARD void dump_notes(struct filp *f, Elf32_Nhdr nhdrs[], int csig,
+static void adjust_offsets(Elf32_Phdr phdrs[], int phnum);
+static void dump_elf_header(struct filp *f, Elf32_Ehdr elf_header);
+static void dump_notes(struct filp *f, Elf32_Nhdr nhdrs[], int csig,
 	char *proc_name);
-FORWARD void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int
+static void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int
 	phnum);
-FORWARD void dump_segments(struct filp *f, Elf32_Phdr phdrs[], int
+static void dump_segments(struct filp *f, Elf32_Phdr phdrs[], int
 	phnum);
-FORWARD void write_buf(struct filp *f, char *buf, size_t size);
+static void write_buf(struct filp *f, char *buf, size_t size);
 
 /*===========================================================================*
  *				write_elf_core_file			     *
  *===========================================================================*/
-PUBLIC void write_elf_core_file(struct filp *f, int csig, char *proc_name)
+void write_elf_core_file(struct filp *f, int csig, char *proc_name)
 {
 /* First, fill in all the required headers, second, adjust the offsets,
  * third, dump everything into the core file
@@ -76,7 +76,7 @@ PUBLIC void write_elf_core_file(struct filp *f, int csig, char *proc_name)
 /*===========================================================================*
  *				fill_elf_header        			     *
  *===========================================================================*/
-PRIVATE void fill_elf_header (Elf_Ehdr *elf_header, int phnum)
+static void fill_elf_header (Elf_Ehdr *elf_header, int phnum)
 {
   memset((void *) elf_header, 0, sizeof(Elf_Ehdr));
 
@@ -100,7 +100,7 @@ PRIVATE void fill_elf_header (Elf_Ehdr *elf_header, int phnum)
 /*===========================================================================*
  *				fill_prog_header        		     *
  *===========================================================================*/
-PRIVATE void fill_prog_header (Elf_Phdr *prog_header, Elf_Word p_type,
+static void fill_prog_header (Elf_Phdr *prog_header, Elf_Word p_type,
 	Elf_Off p_offset, Elf_Addr p_vaddr, Elf_Word p_flags,
 	Elf_Word p_filesz, Elf_Word p_memsz)
 {
@@ -122,7 +122,7 @@ PRIVATE void fill_prog_header (Elf_Phdr *prog_header, Elf_Word p_type,
 /*===========================================================================*
  *			fill_note_segment_and_entries_hdrs     	     	     *
  *===========================================================================*/
-PRIVATE void fill_note_segment_and_entries_hdrs(Elf_Phdr phdrs[],
+static void fill_note_segment_and_entries_hdrs(Elf_Phdr phdrs[],
 				Elf_Nhdr nhdrs[])
 {
   int filesize;
@@ -158,7 +158,7 @@ PRIVATE void fill_note_segment_and_entries_hdrs(Elf_Phdr phdrs[],
 /*===========================================================================*
  *				adjust_offset   			     *
  *===========================================================================*/
-PRIVATE void adjust_offsets(Elf_Phdr phdrs[], int phnum)
+static void adjust_offsets(Elf_Phdr phdrs[], int phnum)
 {
   int i;
   long offset = sizeof(Elf_Ehdr) + phnum * sizeof(Elf_Phdr);
@@ -172,7 +172,7 @@ PRIVATE void adjust_offsets(Elf_Phdr phdrs[], int phnum)
 /*===========================================================================*
  *				write_buf       			     *
  *===========================================================================*/
-PRIVATE void write_buf(struct filp *f, char *buf, size_t size)
+static void write_buf(struct filp *f, char *buf, size_t size)
 {
   read_write(WRITING, f, buf, size, VFS_PROC_NR);
 }
@@ -180,7 +180,7 @@ PRIVATE void write_buf(struct filp *f, char *buf, size_t size)
 /*===========================================================================*
  *				get_memory_regions			     *
  *===========================================================================*/
-PRIVATE int get_memory_regions(Elf_Phdr phdrs[])
+static int get_memory_regions(Elf_Phdr phdrs[])
 {
   /* Print the virtual memory regions of a process. */
 
@@ -222,7 +222,7 @@ PRIVATE int get_memory_regions(Elf_Phdr phdrs[])
 /*===========================================================================*
  *				dump_notes			             *
  *===========================================================================*/
-PRIVATE void dump_notes(struct filp *f, Elf_Nhdr nhdrs[], int csig,
+static void dump_notes(struct filp *f, Elf_Nhdr nhdrs[], int csig,
 			 char *proc_name)
 {
   char *note_name = ELF_NOTE_MINIX_ELFCORE_NAME "\0";
@@ -264,7 +264,7 @@ PRIVATE void dump_notes(struct filp *f, Elf_Nhdr nhdrs[], int csig,
 /*===========================================================================*
  *				dump_elf_header			             *
  *===========================================================================*/
-PRIVATE void dump_elf_header(struct filp *f, Elf_Ehdr elf_header)
+static void dump_elf_header(struct filp *f, Elf_Ehdr elf_header)
 {
   write_buf(f, (char *) &elf_header, sizeof(Elf_Ehdr));
 }
@@ -272,7 +272,7 @@ PRIVATE void dump_elf_header(struct filp *f, Elf_Ehdr elf_header)
 /*===========================================================================*
  *			  dump_program_headers			             *
  *===========================================================================*/
-PRIVATE void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int phnum)
+static void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int phnum)
 {
   int i;
 
@@ -283,7 +283,7 @@ PRIVATE void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int phnum)
 /*===========================================================================*
  *			      dump_segments 			             *
  *===========================================================================*/
-PRIVATE void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
+static void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
 {
   int i;
   vir_bytes len;

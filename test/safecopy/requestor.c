@@ -36,7 +36,7 @@ int test(size_t size)
 }
 
 /* SEF functions and variables. */
-FORWARD void sef_local_startup(void);
+static void sef_local_startup(void);
 
 /*===========================================================================*
  *				    main				     *
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+static void sef_local_startup()
 {
   /* Let SEF perform startup. */
   sef_startup();

@@ -9,7 +9,7 @@ pci_ids.c
 /*===========================================================================*
  *				pci_ids					     *
  *===========================================================================*/
-PUBLIC void pci_ids(devind, vidp, didp)
+void pci_ids(devind, vidp, didp)
 int devind;
 u16_t *vidp;
 u16_t *didp;

@@ -3,7 +3,7 @@
 
 #include <minix/safecopies.h>
 
-PUBLIC int sys_safecopyfrom(endpoint_t src_e,
+int sys_safecopyfrom(endpoint_t src_e,
 	cp_grant_id_t gr_id, vir_bytes offset,
 	vir_bytes address, size_t bytes,
 	int my_seg)
@@ -25,7 +25,7 @@ PUBLIC int sys_safecopyfrom(endpoint_t src_e,
 
 }
 
-PUBLIC int sys_safecopyto(endpoint_t dst_e,
+int sys_safecopyto(endpoint_t dst_e,
 	cp_grant_id_t gr_id, vir_bytes offset,
 	vir_bytes address, size_t bytes,
 	int my_seg)

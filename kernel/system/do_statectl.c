@@ -12,7 +12,7 @@
 /*===========================================================================*
  *			          do_statectl				     *
  *===========================================================================*/
-PUBLIC int do_statectl(struct proc * caller, message * m_ptr)
+int do_statectl(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_statectl(). A process has issued a state control request. */
 

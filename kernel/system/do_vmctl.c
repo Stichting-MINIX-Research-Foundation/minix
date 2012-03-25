@@ -16,7 +16,7 @@
 /*===========================================================================*
  *				do_vmctl				     *
  *===========================================================================*/
-PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
+int do_vmctl(struct proc * caller, message * m_ptr)
 {
   int proc_nr;
   endpoint_t ep = m_ptr->SVMCTL_WHO;

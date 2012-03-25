@@ -17,7 +17,7 @@
 /*===========================================================================*
  *			        do_iopenable				     *
  *===========================================================================*/
-PUBLIC int do_iopenable(struct proc * caller, message * m_ptr)
+int do_iopenable(struct proc * caller, message * m_ptr)
 {
   int proc_nr;
 

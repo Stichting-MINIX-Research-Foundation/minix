@@ -11,7 +11,7 @@
 /*===========================================================================*
  *				 do_exit				     *
  *===========================================================================*/
-PUBLIC int do_exit(struct proc * caller, message * m_ptr)
+int do_exit(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_exit. A system process has requested to exit. Generate a
  * self-termination signal.

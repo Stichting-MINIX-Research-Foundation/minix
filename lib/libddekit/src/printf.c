@@ -4,7 +4,7 @@
 /****************************************************************************/
 /*     ddekit_print                                                         */
 /****************************************************************************/
-PUBLIC int ddekit_print(const char* c)
+int ddekit_print(const char* c)
 {
 	return ddekit_printf(c);
 }
@@ -12,7 +12,7 @@ PUBLIC int ddekit_print(const char* c)
 /****************************************************************************/
 /*     ddekit_printf                                                        */
 /****************************************************************************/
-PUBLIC int ddekit_printf(const char* fmt, ...)
+int ddekit_printf(const char* fmt, ...)
 {
 	int r;
 	va_list va;
@@ -27,7 +27,7 @@ PUBLIC int ddekit_printf(const char* fmt, ...)
 /****************************************************************************/
 /*     ddekit_vprintf                                                       */
 /****************************************************************************/
-PUBLIC int ddekit_vprintf(const char *fmt, va_list va) 
+int ddekit_vprintf(const char *fmt, va_list va) 
 {
 	return vprintf(fmt, va);
 }

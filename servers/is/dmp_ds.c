@@ -3,9 +3,9 @@
 
 #define LINES 22
 
-PRIVATE struct data_store ds_store[NR_DS_KEYS];
+static struct data_store ds_store[NR_DS_KEYS];
 
-PUBLIC void data_store_dmp()
+void data_store_dmp()
 {
   struct data_store *p;
   static int prev_i = 0;

@@ -19,12 +19,12 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD void ipps_main ARGS(( ip_port_t *ip_port ));
-FORWARD void ipps_set_ipaddr ARGS(( ip_port_t *ip_port ));
-FORWARD int ipps_send ARGS(( struct ip_port *ip_port, ipaddr_t dest, 
+static void ipps_main ARGS(( ip_port_t *ip_port ));
+static void ipps_set_ipaddr ARGS(( ip_port_t *ip_port ));
+static int ipps_send ARGS(( struct ip_port *ip_port, ipaddr_t dest, 
 					acc_t *pack, int type ));
 
-PUBLIC int ipps_init(ip_port)
+int ipps_init(ip_port)
 ip_port_t *ip_port;
 {
 	int result;
@@ -40,7 +40,7 @@ ip_port_t *ip_port;
 	return result;
 }
 
-PUBLIC void ipps_get(ip_port_nr)
+void ipps_get(ip_port_nr)
 int ip_port_nr;
 {
 	int result;
@@ -112,7 +112,7 @@ int ip_port_nr;
 	}
 }
 
-PUBLIC void ipps_put(ip_port_nr, nexthop, pack)
+void ipps_put(ip_port_nr, nexthop, pack)
 int ip_port_nr;
 ipaddr_t nexthop;
 acc_t *pack;
@@ -128,18 +128,18 @@ acc_t *pack;
 		ip_arrived(ip_port, pack);
 }
 
-PRIVATE void ipps_main(ip_port)
+static void ipps_main(ip_port)
 ip_port_t *ip_port;
 {
 	/* nothing to do */
 }
 
-PRIVATE void ipps_set_ipaddr(ip_port)
+static void ipps_set_ipaddr(ip_port)
 ip_port_t *ip_port;
 {
 }
 
-PRIVATE int ipps_send(ip_port, dest, pack, type)
+static int ipps_send(ip_port, dest, pack, type)
 struct ip_port *ip_port;
 ipaddr_t dest;
 acc_t *pack;

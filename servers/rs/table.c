@@ -12,7 +12,7 @@
  * reflects the order boot system services are made runnable and initialized
  * at boot time.
  */
-PUBLIC struct boot_image_priv boot_image_priv_table[] = {
+struct boot_image_priv boot_image_priv_table[] = {
 /*endpoint,     label,   flags, */
 {RS_PROC_NR,   "rs",     RSYS_F },
 {VM_PROC_NR,   "vm",     VM_F   },
@@ -30,7 +30,7 @@ PUBLIC struct boot_image_priv boot_image_priv_table[] = {
 };
 
 /* Definition of the boot image sys table. */
-PUBLIC struct boot_image_sys boot_image_sys_table[] = {
+struct boot_image_sys boot_image_sys_table[] = {
   /*endpoint,         flags                             */
   { RS_PROC_NR,       SRVR_SF                           },
   { VM_PROC_NR,       VM_SF                             },
@@ -43,7 +43,7 @@ PUBLIC struct boot_image_sys boot_image_sys_table[] = {
 };
 
 /* Definition of the boot image dev table. */
-PUBLIC struct boot_image_dev boot_image_dev_table[] = {
+struct boot_image_dev boot_image_dev_table[] = {
   /*endpoint,        flags,   dev_nr,       dev_style,  dev_style2 */
   { TTY_PROC_NR,     SRV_DF,  TTY_MAJOR,    STYLE_TTY,  STYLE_CTTY },
   { MEM_PROC_NR,     SRV_DF,  MEMORY_MAJOR, STYLE_DEV,  STYLE_NDEV },

@@ -31,7 +31,7 @@ void release_node(struct puffs_usermount *pu, struct puffs_node *pn)
 /*===========================================================================*
  *                fs_putnode                                                 *
  *===========================================================================*/
-PUBLIC int fs_putnode(void)
+int fs_putnode(void)
 {
 /* Find the pnode specified by the request message and decrease its counter.
  * Release unused pnode.

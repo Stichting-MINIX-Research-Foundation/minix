@@ -11,7 +11,7 @@
 /*===========================================================================*
  *				sched_inherit				     *
  *===========================================================================*/
-PUBLIC int sched_inherit(endpoint_t scheduler_e, 
+int sched_inherit(endpoint_t scheduler_e, 
 	endpoint_t schedulee_e, endpoint_t parent_e, unsigned maxprio, 
 	endpoint_t *newscheduler_e)
 {
@@ -46,7 +46,7 @@ PUBLIC int sched_inherit(endpoint_t scheduler_e,
 /*===========================================================================*
  *				sched_start				     *
  *===========================================================================*/
-PUBLIC int sched_start(endpoint_t scheduler_e,
+int sched_start(endpoint_t scheduler_e,
 			endpoint_t schedulee_e, 
 			endpoint_t parent_e,
 			int maxprio,

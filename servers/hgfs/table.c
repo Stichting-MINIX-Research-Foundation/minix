@@ -7,7 +7,7 @@
 #define _TABLE
 #include "inc.h"
 
-PUBLIC int (*call_vec[])(void) = {
+int (*call_vec[])(void) = {
 	no_sys,		/*  0			*/
 	no_sys,		/*  1 getnode		*/
 	do_putnode,	/*  2 putnode		*/

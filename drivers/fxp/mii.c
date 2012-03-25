@@ -16,7 +16,7 @@ Media Independent (Ethernet) Interface functions
 /*===========================================================================*
  *				mii_print_stat_speed			     *
  *===========================================================================*/
-PUBLIC void mii_print_stat_speed(u16_t stat, u16_t extstat)
+void mii_print_stat_speed(u16_t stat, u16_t extstat)
 {
 	int fs, ft;
 
@@ -117,7 +117,7 @@ PUBLIC void mii_print_stat_speed(u16_t stat, u16_t extstat)
 /*===========================================================================*
  *				mii_print_techab			     *
  *===========================================================================*/
-PUBLIC void mii_print_techab(u16_t techab)
+void mii_print_techab(u16_t techab)
 {
 	int fs, ft;
 

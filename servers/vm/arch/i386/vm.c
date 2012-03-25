@@ -30,7 +30,7 @@
 /*===========================================================================*
  *				arch_map2vir				     *
  *===========================================================================*/
-PUBLIC vir_bytes arch_map2vir(struct vmproc *vmp, vir_bytes addr)
+vir_bytes arch_map2vir(struct vmproc *vmp, vir_bytes addr)
 {
 	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
 	vir_bytes datastart = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
@@ -46,7 +46,7 @@ PUBLIC vir_bytes arch_map2vir(struct vmproc *vmp, vir_bytes addr)
 /*===========================================================================*
  *				arch_map2str				     *
  *===========================================================================*/
-PUBLIC char *arch_map2str(struct vmproc *vmp, vir_bytes addr)
+char *arch_map2str(struct vmproc *vmp, vir_bytes addr)
 {
 	static char bufstr[100];
 	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
@@ -70,7 +70,7 @@ PUBLIC char *arch_map2str(struct vmproc *vmp, vir_bytes addr)
 /*===========================================================================*
  *				arch_map2info				     *
  *===========================================================================*/
-PUBLIC vir_bytes arch_map2info(struct vmproc *vmp, vir_bytes addr, int *seg,
+vir_bytes arch_map2info(struct vmproc *vmp, vir_bytes addr, int *seg,
 	int *prot)
 {
 	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
@@ -104,7 +104,7 @@ PUBLIC vir_bytes arch_map2info(struct vmproc *vmp, vir_bytes addr, int *seg,
 /*===========================================================================*
  *				arch_addrok				     *
  *===========================================================================*/
-PUBLIC vir_bytes arch_addrok(struct vmproc *vmp, vir_bytes addr)
+vir_bytes arch_addrok(struct vmproc *vmp, vir_bytes addr)
 {
 	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
 	vir_bytes textend = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys +
@@ -123,7 +123,7 @@ PUBLIC vir_bytes arch_addrok(struct vmproc *vmp, vir_bytes addr)
 /*===========================================================================*
  *				arch_vir2map				     *
  *===========================================================================*/
-PUBLIC vir_bytes arch_vir2map(struct vmproc *vmp, vir_bytes addr)
+vir_bytes arch_vir2map(struct vmproc *vmp, vir_bytes addr)
 {
 	vir_bytes datasegbase = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys -
 					  vmp->vm_arch.vm_seg[D].mem_vir);
@@ -134,7 +134,7 @@ PUBLIC vir_bytes arch_vir2map(struct vmproc *vmp, vir_bytes addr)
 /*===========================================================================*
  *				arch_vir2map_text			     *
  *===========================================================================*/
-PUBLIC vir_bytes arch_vir2map_text(struct vmproc *vmp, vir_bytes addr)
+vir_bytes arch_vir2map_text(struct vmproc *vmp, vir_bytes addr)
 {
 	vir_bytes textsegbase = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys -
 					  vmp->vm_arch.vm_seg[T].mem_vir);

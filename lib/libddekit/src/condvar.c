@@ -20,7 +20,7 @@ struct ddekit_condvar {
 /*****************************************************************************/
 /*      ddekit_condvar_init                                                  */
 /*****************************************************************************/
-PUBLIC ddekit_condvar_t * ddekit_condvar_init(void) { 
+ddekit_condvar_t * ddekit_condvar_init(void) { 
 	ddekit_condvar_t *cv;
 	cv = (ddekit_condvar_t *) ddekit_simple_malloc(sizeof(ddekit_condvar_t));
 	DDEBUG_MSG_VERBOSE("cv: %p", cv);
@@ -30,7 +30,7 @@ PUBLIC ddekit_condvar_t * ddekit_condvar_init(void) {
 /*****************************************************************************/
 /*      ddekit_condvar_deinit                                                */
 /*****************************************************************************/
-PUBLIC void ddekit_condvar_deinit(ddekit_condvar_t *cvp) {
+void ddekit_condvar_deinit(ddekit_condvar_t *cvp) {
 	DDEBUG_MSG_VERBOSE("cv: %p", cvp);
 	ddekit_simple_free(cvp); 
 }
@@ -38,7 +38,7 @@ PUBLIC void ddekit_condvar_deinit(ddekit_condvar_t *cvp) {
 /*****************************************************************************/
 /*      ddekit_condvar_wait                                                  */
 /*****************************************************************************/
-PUBLIC void ddekit_condvar_wait(ddekit_condvar_t *cv, ddekit_lock_t *mp) {
+void ddekit_condvar_wait(ddekit_condvar_t *cv, ddekit_lock_t *mp) {
 	
 	DDEBUG_MSG_VERBOSE("wait cv: %p, thread id: %d, name: %s",
 		cv, ddekit_thread_myself()->id,  ddekit_thread_myself()->name);
@@ -65,7 +65,7 @@ PUBLIC void ddekit_condvar_wait(ddekit_condvar_t *cv, ddekit_lock_t *mp) {
 /*****************************************************************************/
 /*      ddekit_condvar_wait_timed                                            */
 /*****************************************************************************/
-PUBLIC int ddekit_condvar_wait_timed
+int ddekit_condvar_wait_timed
 (ddekit_condvar_t *cvp, ddekit_lock_t *mp, int timo)
 {
 	/* 
@@ -79,7 +79,7 @@ PUBLIC int ddekit_condvar_wait_timed
 /*****************************************************************************/
 /*      ddekit_condvar_signal                                                */
 /*****************************************************************************/
-PUBLIC void ddekit_condvar_signal(ddekit_condvar_t *cv) 
+void ddekit_condvar_signal(ddekit_condvar_t *cv) 
 {
 	
 	DDEBUG_MSG_VERBOSE("cv: %p", cv);

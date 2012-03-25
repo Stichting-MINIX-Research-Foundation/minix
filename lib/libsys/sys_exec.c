@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_exec(proc_ep, ptr, prog_name, initpc)
+int sys_exec(proc_ep, ptr, prog_name, initpc)
 endpoint_t proc_ep;		/* process that did exec */
 char *ptr;			/* new stack pointer */
 char *prog_name;		/* name of the new program */

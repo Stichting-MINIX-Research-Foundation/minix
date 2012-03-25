@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				do_memset				     *
  *===========================================================================*/
-PUBLIC int do_memset(struct proc * caller, message * m_ptr)
+int do_memset(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_memset(). This writes a pattern into the specified memory. */
   unsigned char c = m_ptr->MEM_PATTERN;
