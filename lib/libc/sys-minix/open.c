@@ -10,11 +10,7 @@
 __weak_alias(open, _open)
 #endif
 
-#if _ANSI
 int open(const char *name, int flags, ...)
-#else
-int open(const char *name, int flags)
-#endif
 {
   va_list argp;
   message m;

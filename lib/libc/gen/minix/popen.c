@@ -4,7 +4,6 @@
 /* $Header$ */
 #include 	<sys/cdefs.h>
 #include	"namespace.h"
-#include	<minix/ansi.h>
 
 #ifdef __weak_alias
 __weak_alias(popen, _popen)
@@ -26,7 +25,6 @@ typedef union wait wait_arg;
 typedef int wait_arg;
 #endif	/* __BSD4_2 */
 
-#ifdef _ANSI
 int _close(int d);
 int _dup2(int oldd, int newd);		/* not present in System 5 */
 int _execl(const char *name, const char *_arg, ... );
@@ -34,7 +32,6 @@ pid_t _fork(void);
 int _pipe(int fildes[2]);
 pid_t _wait(wait_arg *status);
 void _exit(int status);
-#endif
 
 static int pids[OPEN_MAX];
 
@@ -84,13 +81,8 @@ FILE *stream;
 	wait_arg status;
 	int wret;
 
-#ifdef _ANSI
 	void (*intsave)(int) = signal(SIGINT, SIG_IGN);
 	void (*quitsave)(int) = signal(SIGQUIT, SIG_IGN);
-#else
-	void (*intsave)() = signal(SIGINT, SIG_IGN);
-	void (*quitsave)() = signal(SIGQUIT, SIG_IGN);
-#endif
 	fclose(stream);
 	while ((wret = _wait(&status)) != -1) {
 		if (wret == pids[fd]) break;

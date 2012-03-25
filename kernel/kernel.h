@@ -26,7 +26,6 @@
 
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* global configuration, MUST be first */
-#include <minix/ansi.h>		/* C style: ANSI or K&R, MUST be second */
 #include <sys/types.h>		/* general system types */
 #include <minix/const.h>	/* MINIX specific constants */
 #include <minix/type.h>		/* MINIX specific types, e.g. message */

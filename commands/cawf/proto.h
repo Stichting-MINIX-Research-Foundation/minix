@@ -28,7 +28,6 @@
  *	4. This notice may not be removed or altered.
  */
 
-#include <minix/ansi.h>
 
 #ifdef	UNIX
 # ifdef	USG

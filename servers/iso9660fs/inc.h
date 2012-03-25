@@ -4,7 +4,6 @@
 
 #define VERBOSE		   0	/* display diagnostics */
 
-#include <minix/ansi.h>
 #include <sys/types.h>
 #include <limits.h>
 #include <errno.h>

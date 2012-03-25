@@ -120,11 +120,6 @@ struct termios {
 #define TCIOFF             3	/* transmit a STOP character on the line */
 #define TCION              4	/* transmit a START character on the line */
 
-/* Function Prototypes. */
-#ifndef _MINIX_ANSI_H
-#include <minix/ansi.h>
-#endif
-
 int tcsendbreak(int _fildes, int _duration);
 int tcdrain(int _filedes);
 int tcflush(int _filedes, int _queue_selector);

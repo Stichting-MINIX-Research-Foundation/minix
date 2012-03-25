@@ -4,7 +4,6 @@
 #define _MINIX             1	/* tell headers to include MINIX stuff */
 #define _SYSTEM            1	/* tell headers that this is the kernel */
 
-#include <minix/ansi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -1,10 +1,6 @@
 #ifndef _MINLIB
 #define _MINLIB
 
-#ifndef _MINIX_ANSI_H
-#include <minix/ansi.h>
-#endif
-
 /* Miscellaneous BSD. */
 char *itoa(int _n);
 #ifndef __NBSD_LIBC

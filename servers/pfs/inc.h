@@ -10,7 +10,6 @@
 #include <net/ioctl.h>
 #endif
 
-#include <minix/ansi.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/select.h>

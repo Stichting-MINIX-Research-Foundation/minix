@@ -565,11 +565,7 @@ void test38c()
 #ifdef SIGACTION
   struct sigaction act, oact;
 #else
-#if _ANSI
   void (*oldfunc) (int);
-#else
-  void (*oldfunc) ();
-#endif
 #endif
 
   subtest = 3;

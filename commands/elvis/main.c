@@ -434,11 +434,7 @@ int trapint(signo)
 #if OSK
 	sigmask(-1);
 #endif
-#if TURBOC || __GNUC__ || _ANSI
 	signal(signo, (void (*)())trapint);
-#else
-	signal(signo, trapint);
-#endif
 	doingglobal = FALSE;
 
 	longjmp(jmpenv, 1);

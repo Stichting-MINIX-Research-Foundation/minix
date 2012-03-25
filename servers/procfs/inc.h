@@ -6,7 +6,6 @@
 #define _SYSTEM            1
 
 #include <minix/config.h>
-#include <minix/ansi.h>
 #include <limits.h>
 #include <errno.h>
 #include <signal.h>

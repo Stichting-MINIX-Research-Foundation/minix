@@ -92,11 +92,7 @@ int column= 0, max_column=80;		/* Assume 80 character terminals. */
 struct winsize winsize;
 #endif
 
-#if __minix
-#define PROTO(a) _ARGS(a)
-#else
-#define PROTO(a) ()
-#endif
+#define PROTO(a) a
 
 int main PROTO(( int argc, char **argv ));
 void report PROTO(( int flags ));

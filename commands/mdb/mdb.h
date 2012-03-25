@@ -36,7 +36,6 @@
 
 
 #include <minix/config.h>
-#include <minix/ansi.h>
 #include <sys/types.h>
 
 #include <minix/const.h>

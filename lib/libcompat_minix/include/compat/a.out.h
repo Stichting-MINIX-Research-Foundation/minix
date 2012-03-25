@@ -108,11 +108,6 @@ struct nlist {			/* symbol table entry */
 #define C_EXT		0020	/* external symbol */
 #define C_STAT		0030	/* static */
 
-/* Function prototypes. */
-#ifndef _MINIX_ANSI_H
-#include <minix/ansi.h>
-#endif
-
 int nlist(char *_file, struct nlist *_nl);
 
 #endif /* _AOUT_H */

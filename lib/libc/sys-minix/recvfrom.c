@@ -1,5 +1,4 @@
 #include <sys/cdefs.h>
-#include <minix/ansi.h>
 #include "namespace.h"
 
 #undef NDEBUG

@@ -4,7 +4,6 @@
 #ifndef _MINIX__QUERYPARAM_H
 #define _MINIX__QUERYPARAM_H
 
-#include <minix/ansi.h>
 
 typedef size_t _mnx_size_t;
 

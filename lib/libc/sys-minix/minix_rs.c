@@ -2,7 +2,6 @@
 #define _SYSTEM	1
 #define _MINIX 1
 
-#include <minix/ansi.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>

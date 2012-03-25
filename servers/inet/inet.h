@@ -94,12 +94,6 @@ void inet_panic(void) _NORETURN;
 	do { if (((level) & DEBUG) && (condition)) \
 		{ where(); code; } } while(0)
 
-#if _ANSI
-#define ARGS(x) x
-#else /* _ANSI */
-#define ARGS(x) ()
-#endif /* _ANSI */
-
 extern int this_proc;
 extern char version[];
 

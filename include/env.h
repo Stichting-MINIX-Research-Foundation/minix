@@ -1,5 +1,4 @@
 #ifdef __NBSD_LIBC
-#include <minix/ansi.h>
 #endif
 int env_parse(char *env, char *fmt, int field, long *param, long min,
 	long max);

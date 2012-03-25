@@ -1,6 +1,5 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
-#include <minix/ansi.h>
 
 #include <errno.h>
 #include <stdio.h>

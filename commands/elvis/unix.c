@@ -189,11 +189,7 @@ int ttyread(buf, len, time)
 	int	time;	/* maximum time to allow for reading */
 {
 	/* arrange for timeout */
-#if __GNUC__ || _ANSI
 	signal(SIGALRM, (void (*)()) dummy);
-#else
-	signal(SIGALRM, dummy);
-#endif
 	alarm(time);
 
 	/* perform the blocking read */
@@ -207,11 +203,7 @@ int ttyread(buf, len, time)
 	}
 
 	/* cancel the alarm */
-#if _ANSI
 	signal(SIGALRM, (void (*)())dummy); /* work around a bug in Minix */
-#else
-	signal(SIGALRM, dummy);		    /* work around a bug in Minix */
-#endif
 	alarm(0);
 
 	/* return the number of bytes read */

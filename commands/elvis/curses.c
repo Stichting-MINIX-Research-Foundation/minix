@@ -383,11 +383,7 @@ void resume_curses(quietly)
 	}	
 	exwrote = FALSE;
 
-#if TURBOC || __GNUC__ || _ANSI
 	signal(SIGINT, (void(*)()) trapint);
-#else
-	signal(SIGINT, trapint);
-#endif
 }
 
 /* This function fetches an optional string from termcap */

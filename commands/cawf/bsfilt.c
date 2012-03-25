@@ -42,7 +42,6 @@
 
 #include <sys/types.h>
 
-#include <minix/ansi.h>
 
 #define MAXLL	2048			/* ridiculous maximum line length */
 

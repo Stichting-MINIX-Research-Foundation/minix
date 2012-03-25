@@ -2,7 +2,6 @@
 #define _MTHREAD_H
 
 #include <minix/config.h>	/* MUST be first */
-#include <minix/ansi.h>		/* MUST be second */
 #include <minix/const.h>
 #include <sys/types.h>
 #include <stdio.h>

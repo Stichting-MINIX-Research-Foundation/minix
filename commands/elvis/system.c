@@ -73,11 +73,7 @@ int system(cmd)
 		{
 			status = -1;
 		}
-#if __GNUC__ || _ANSI
 		signal(SIGINT, (void (*)()) trapint);
-#else
-		signal(SIGINT, trapint);
-#endif
 	}
 
 	return status;
@@ -168,11 +164,7 @@ int rpclose(fd)
 
 	close(fd);
 	wait(&status);
-#if __GNUC__ || _ANSI
 	signal(SIGINT, (void (*)()) trapint);
-#else
-	signal(SIGINT, trapint);
-#endif
 	return status;
 }
 

@@ -9,7 +9,6 @@
 
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* MUST be first */
-#include <minix/ansi.h>		/* MUST be second */
 #include <minix/type.h>
 #include <minix/ipc.h>
 #include <minix/com.h>
