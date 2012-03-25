@@ -6,9 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#if defined(__LONG_LONG_SUPPORTED) || (_WORD_SIZE > 2 && __L64)
 #define TEST_64_BIT
-#endif
 
 #define ERR e(__LINE__)
 

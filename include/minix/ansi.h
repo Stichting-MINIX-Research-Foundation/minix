@@ -9,10 +9,6 @@
 #define _ANSI		31459	/* gcc conforms enough even in non-ANSI mode */
 #endif
 
-#if defined(__GNUC__) && !defined(__STRICT_ANSI__) || __STDC_VERSION__ >= 199901
-#define __LONG_LONG_SUPPORTED 1
-#endif
-
 /* Setting of _POSIX_SOURCE (or _NETBSD_SOURCE) in NBSD headers is 
  * done in <sys/featuretest.h> */
 #include <sys/featuretest.h>

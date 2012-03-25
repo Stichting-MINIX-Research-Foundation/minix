@@ -9,44 +9,6 @@
 #include <minix/types.h>
 #endif
 
-#if !defined(__LONG_LONG_SUPPORTED)
-
-u64_t add64(u64_t i, u64_t j);
-u64_t add64u(u64_t i, unsigned j);
-u64_t add64ul(u64_t i, unsigned long j);
-u64_t sub64(u64_t i, u64_t j);
-u64_t sub64u(u64_t i, unsigned j);
-u64_t sub64ul(u64_t i, unsigned long j);
-int bsr64(u64_t i);
-unsigned diff64(u64_t i, u64_t j);
-u64_t cvu64(unsigned i);
-u64_t cvul64(unsigned long i);
-unsigned cv64u(u64_t i);
-unsigned long cv64ul(u64_t i);
-u64_t div64(u64_t i, u64_t j);
-unsigned long div64u(u64_t i, unsigned j);
-u64_t div64u64(u64_t i, unsigned j);
-u64_t rem64(u64_t i, u64_t j);
-unsigned rem64u(u64_t i, unsigned j);
-u64_t mul64(u64_t i, u64_t j);
-u64_t mul64u(unsigned long i, unsigned j);
-int cmp64(u64_t i, u64_t j);
-int cmp64u(u64_t i, unsigned j);
-int cmp64ul(u64_t i, unsigned long j);
-unsigned long ex64lo(u64_t i);
-unsigned long ex64hi(u64_t i);
-u64_t make64(unsigned long lo, unsigned long hi);
-
-#define is_zero64(i)	((i).lo == 0 && (i).hi == 0)
-#define make_zero64(i)	do { (i).lo = (i).hi = 0; } while(0)
-
-#define neg64(i)	do {				\
-				(i).lo = ~(i).lo;	\
-				(i).hi = ~(i).hi;	\
-				(i) = add64u((i), 1);	\
-			} while(0)
-#else
-
 #include <limits.h>
 
 #define is_zero64(i)	((i) == 0)
@@ -208,8 +170,6 @@ static inline u64_t sub64ul(u64_t i, unsigned long j)
 {
 	return i - j;
 }
-
-#endif
 
 u64_t rrotate64(u64_t x, unsigned short b);
 u64_t rshift64(u64_t x, unsigned short b);

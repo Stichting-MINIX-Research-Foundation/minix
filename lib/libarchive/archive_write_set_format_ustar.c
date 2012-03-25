@@ -43,21 +43,11 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_ustar.c 191579 
 #include "archive_private.h"
 #include "archive_write_private.h"
 
-#ifdef __minix
-#include "minix_utils.h"
-#endif
-
-#ifndef __minix
 struct ustar {
 	uint64_t	entry_bytes_remaining;
 	uint64_t	entry_padding;
 };
-#else
-struct ustar {
-	size_t	entry_bytes_remaining;
-	off_t	entry_padding;
-};
-#endif
+
 /*
  * Define structure of POSIX 'ustar' tar header.
  */
@@ -158,15 +148,9 @@ static int	archive_write_ustar_finish(struct archive_write *);
 static int	archive_write_ustar_finish_entry(struct archive_write *);
 static int	archive_write_ustar_header(struct archive_write *,
 		    struct archive_entry *entry);
-#ifndef __minix
 static int	format_256(int64_t, char *, int);
 static int	format_number(int64_t, char *, int size, int max, int strict);
 static int	format_octal(int64_t, char *, int);
-#else
-static int	format_256(int32_t, char *, int);
-static int	format_number(int32_t, char *, int size, int max, int strict);
-static int	format_octal(int32_t, char *, int);
-#endif
 static int	write_nulls(struct archive_write *a, size_t);
 
 /*
@@ -255,11 +239,7 @@ archive_write_ustar_header(struct archive_write *a, struct archive_entry *entry)
 		ret = ret2;
 
 	ustar->entry_bytes_remaining = archive_entry_size(entry);
-#ifndef __minix
 	ustar->entry_padding = 0x1ff & (-(int64_t)ustar->entry_bytes_remaining);
-#else
-	ustar->entry_padding = 0x1ff & (-(int32_t)ustar->entry_bytes_remaining);
-#endif
 	return (ret);
 }
 
@@ -460,7 +440,6 @@ __archive_write_format_header_ustar(struct archive_write *a, char h[512],
 /*
  * Format a number into a field, with some intelligence.
  */
-#ifndef __minix
 static int
 format_number(int64_t v, char *p, int s, int maxsize, int strict)
 {
@@ -490,54 +469,10 @@ format_number(int64_t v, char *p, int s, int maxsize, int strict)
 	/* Base-256 can handle any number, positive or negative. */
 	return (format_256(v, p, maxsize));
 }
-#else
-static int
-format_number(int32_t v, char *p, int s, int maxsize, int strict)
-{
-	/* s could be 11 in some cases causing limit to be shifted by 
-	 * greater than 32 bits so we need a u64_t here
-	 */
-	u64_t limit;
-
-#if !defined(__LONG_LONG_SUPPORTED)
-	limit = lshift64(cvu64(1), s*3);
-#else
-	limit = (1ull << (s*3));
-#endif
-
-	/* "Strict" only permits octal values with proper termination. */
-	if (strict)
-		return (format_octal(v, p, s));
-
-	/*
-	 * In non-strict mode, we allow the number to overwrite one or
-	 * more bytes of the field termination.  Even old tar
-	 * implementations should be able to handle this with no
-	 * problem.
-	 */
-	if (v >= 0) {
-		while (s <= maxsize) {
-			/* if (v < limit) */
-			if (cmp64ul(limit, v) > 0)
-				return (format_octal(v, p, s));
-			s++;
-#if !defined(__LONG_LONG_SUPPORTED)
-			limit = lshift64(limit, 3);
-#else
-			limit <<= 3;
-#endif
-		}
-	}
-
-	/* Base-256 can handle any number, positive or negative. */
-	return (format_256(v, p, maxsize));
-}
-#endif
 
 /*
  * Format a number into the specified field using base-256.
  */
-#ifndef __minix
 static int
 format_256(int64_t v, char *p, int s)
 {
@@ -549,23 +484,10 @@ format_256(int64_t v, char *p, int s)
 	*p |= 0x80; /* Set the base-256 marker bit. */
 	return (0);
 }
-#else
-static int
-format_256(int32_t v, char *p, int s)
-{
-	p += s;
-	while (s-- > 0) {
-		*--p = (char)(v & 0xff);
-		v >>= 8;
-	}
-	*p |= 0x80; /* Set the base-256 marker bit. */
-	return (0);
-}
-#endif
+
 /*
  * Format a number into the specified field.
  */
-#ifndef __minix
 static int
 format_octal(int64_t v, char *p, int s)
 {
@@ -595,37 +517,6 @@ format_octal(int64_t v, char *p, int s)
 
 	return (-1);
 }
-#else
-static int
-format_octal(int32_t v, char *p, int s)
-{
-	int len;
-
-	len = s;
-
-	/* Octal values can't be negative, so use 0. */
-	if (v < 0) {
-		while (len-- > 0)
-			*p++ = '0';
-		return (-1);
-	}
-
-	p += s;		/* Start at the end and work backwards. */
-	while (s-- > 0) {
-		*--p = (char)('0' + (v & 7));
-		v >>= 3;
-	}
-
-	if (v == 0)
-		return (0);
-
-	/* If it overflowed, fill field with max value. */
-	while (len-- > 0)
-		*p++ = '7';
-
-	return (-1);
-}
-#endif
 
 static int
 archive_write_ustar_finish(struct archive_write *a)

@@ -29,8 +29,6 @@
 #undef	TYPEU
 #undef	TYPE_FUNC
 
-#ifdef __LONG_LONG_SUPPORTED
-
 /* test strtoll */
 #define	TYPE        long long
 #define	TYPEU       unsigned long long
@@ -48,8 +46,6 @@
 #undef	TYPE
 #undef	TYPEU
 #undef	TYPE_FUNC
-
-#endif /* defined(__LONG_LONG_SUPPORTED) */
 
 int main(int argc, char **argv)
 {
