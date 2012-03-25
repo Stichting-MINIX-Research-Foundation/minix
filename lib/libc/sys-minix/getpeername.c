@@ -17,14 +17,14 @@
 
 #define DEBUG 0
 
-static int _tcp_getpeername(int sock, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len, nwio_tcpconf_t *tcpconfp);
+static int _tcp_getpeername(int sock, struct sockaddr *restrict address,
+	socklen_t *restrict address_len, nwio_tcpconf_t *tcpconfp);
 
-static int _uds_getpeername(int sock, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len, struct sockaddr_un *uds_addr);
+static int _uds_getpeername(int sock, struct sockaddr *restrict address,
+	socklen_t *restrict address_len, struct sockaddr_un *uds_addr);
 
-int getpeername(int sock, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len)
+int getpeername(int sock, struct sockaddr *restrict address,
+	socklen_t *restrict address_len)
 {
 	int r;
 	nwio_tcpconf_t tcpconf;
@@ -62,8 +62,8 @@ int getpeername(int sock, struct sockaddr *_RESTRICT address,
 	return -1;
 }
 
-static int _tcp_getpeername(int sock, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len, nwio_tcpconf_t *tcpconfp)
+static int _tcp_getpeername(int sock, struct sockaddr *restrict address,
+	socklen_t *restrict address_len, nwio_tcpconf_t *tcpconfp)
 {
 	socklen_t len;
 	struct sockaddr_in sin;
@@ -89,8 +89,8 @@ static int _tcp_getpeername(int sock, struct sockaddr *_RESTRICT address,
 	return 0;
 }
 
-static int _uds_getpeername(int sock, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len, struct sockaddr_un *uds_addr)
+static int _uds_getpeername(int sock, struct sockaddr *restrict address,
+	socklen_t *restrict address_len, struct sockaddr_un *uds_addr)
 {
 	socklen_t len;
 
