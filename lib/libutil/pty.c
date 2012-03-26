@@ -105,7 +105,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 		for (cp = cp2 = TTY_OLD_SUFFIX TTY_NEW_SUFFIX; *cp2; cp2++) {
 			line[5] = 'p';
 			line[9] = *cp2;
-			if ((master = open(line, O_RDWR, 0)) == -1) {
+			if ((master = open(line, O_RDWR | O_NOCTTY, 0)) == -1) {
 				if (errno != ENOENT)
 					continue;	/* busy */
 				if ((size_t)(cp2 - cp + 1) < sizeof(TTY_OLD_SUFFIX))
@@ -120,7 +120,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 #ifndef __minix
 			    revoke(line) == 0 &&
 #endif
-			    (slave = open(line, O_RDWR, 0)) != -1) {
+			    (slave = open(line, O_RDWR | O_NOCTTY, 0)) != -1) {
 #ifndef __minix
 gotit:
 #endif
