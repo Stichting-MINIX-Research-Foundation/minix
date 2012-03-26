@@ -145,13 +145,17 @@ int do_update(struct proc * caller, message * m_ptr)
  *===========================================================================*/
 static void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
 {
-  /* Preserve endpoints, slot numbers, priv structure, IPC, FPU pointer. */
+  /* Preserve endpoints, slot numbers, priv structure, and IPC. */
   rp->p_endpoint = from_rp->p_endpoint;
   rp->p_nr = from_rp->p_nr;
   rp->p_priv = from_rp->p_priv;
   priv(rp)->s_proc_nr = from_rp->p_nr;
   rp->p_caller_q = from_rp->p_caller_q;
+
+#if (_MINIX_CHIP == _CHIP_INTEL)
+  /* Preserve FPU pointer. */
   rp->p_fpu_state.fpu_save_area_p = from_rp->p_fpu_state.fpu_save_area_p;
+#endif
 
   /* preserve scheduling */
   rp->p_scheduler = from_rp->p_scheduler;
@@ -184,6 +188,7 @@ static void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
   /* Copy the FPU state from process B's copied slot, using B's original FPU
    * save area alignment, into process A's slot.
    */
+#if (_MINIX_CHIP == _CHIP_INTEL)
   int align;
 
   align = (int) ((char *) b_orig_rp->p_fpu_state.fpu_save_area_p -
@@ -191,6 +196,7 @@ static void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
 
   memcpy(a_rp->p_fpu_state.fpu_save_area_p,
 	b_copy_rp->p_fpu_state.fpu_image + align, FPU_XFP_SIZE);
+#endif
 }
 
 /*===========================================================================*

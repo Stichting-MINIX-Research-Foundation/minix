@@ -90,7 +90,6 @@ void system_init(void);
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 void clear_endpoint(struct proc *rc);
 void clear_ipc_refs(struct proc *rc, int caller_ret);
-phys_bytes umap_bios(vir_bytes vir_addr, vir_bytes bytes);
 void kernel_call_resume(struct proc *p);
 int sched_proc(struct proc *rp, int priority, int quantum, int cpu);
 
@@ -169,6 +168,7 @@ int data_copy_vmcheck(struct proc *, endpoint_t from, vir_bytes
 	from_addr, endpoint_t to, vir_bytes to_addr, size_t bytes);
 void alloc_segments(struct proc *rp);
 void vm_stop(void);
+phys_bytes umap_bios(vir_bytes vir_addr, vir_bytes bytes);
 phys_bytes umap_local(register struct proc *rp, int seg, vir_bytes
 	vir_addr, vir_bytes bytes);
 phys_bytes umap_virtual(struct proc* rp, int seg, vir_bytes vir_addr,

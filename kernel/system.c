@@ -18,7 +18,6 @@
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via a signal mgr
  *   sig_delay_done:	tell PM that a process is not sending
- *   umap_bios:		map virtual address in BIOS_SEG to physical 
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
  *   sched_proc:	schedule a process
@@ -454,33 +453,6 @@ void sig_delay_done(struct proc *rp)
 
   cause_sig(proc_nr(rp), SIGSNDELAY);
 }
-
-#if _MINIX_CHIP == _CHIP_INTEL
-
-/*===========================================================================*
- *				umap_bios				     *
- *===========================================================================*/
-phys_bytes umap_bios(vir_addr, bytes)
-vir_bytes vir_addr;		/* virtual address in BIOS segment */
-vir_bytes bytes;		/* # of bytes to be copied */
-{
-/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
- * address zero (the first BIOS interrupt vector) is not considered as an 
- * error here, but since the physical address will be zero as well, the 
- * calling function will think an error occurred. This is not a problem,
- * since no one uses the first BIOS interrupt vector.  
- */
-
-  /* Check all acceptable ranges. */
-  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
-  	return (phys_bytes) vir_addr;
-  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
-  	return (phys_bytes) vir_addr;
-
-  printf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
-  return 0;
-}
-#endif
 
 /*===========================================================================*
  *			         clear_ipc				     *

@@ -156,6 +156,7 @@ void proc_init(void)
 		set_idle_name(ip->p_name, i);
 	}
 
+#if (_MINIX_CHIP == _CHIP_INTEL)
 	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
 		/*
 		 * FXSR requires 16-byte alignment of memory image, but
@@ -172,6 +173,7 @@ void proc_init(void)
 		rp->p_fpu_state.fpu_save_area_p =
 			(void *) aligned_fp_area;
 	}
+#endif
 }
 
 static void switch_address_space_idle(void)

@@ -309,6 +309,30 @@ static void vm_enable_paging(void)
 }
 
 /*===========================================================================*
+ *				umap_bios				     *
+ *===========================================================================*/
+phys_bytes umap_bios(vir_addr, bytes)
+vir_bytes vir_addr;		/* virtual address in BIOS segment */
+vir_bytes bytes;		/* # of bytes to be copied */
+{
+/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
+ * address zero (the first BIOS interrupt vector) is not considered as an
+ * error here, but since the physical address will be zero as well, the
+ * calling function will think an error occurred. This is not a problem,
+ * since no one uses the first BIOS interrupt vector.
+ */
+
+  /* Check all acceptable ranges. */
+  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
+	return (phys_bytes) vir_addr;
+  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
+	return (phys_bytes) vir_addr;
+
+  printf("Warning, error in umap_bios, virtual address 0x%lx\n", vir_addr);
+  return 0;
+}
+
+/*===========================================================================*
  *                              umap_local                                   *
  *===========================================================================*/
 phys_bytes umap_local(rp, seg, vir_addr, bytes)
