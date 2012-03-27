@@ -26,7 +26,7 @@ SUBDIR=	add_route arp ash at awk \
 	reboot remsync rev rget rlogin \
 	rotate rsh rshd sed service setup shar acksize \
 	sleep slip sort spell split srccrc \
-	stty su sum svclog swifi sync synctree sysenv \
+	stty sum svclog swifi sync synctree sysenv \
 	syslogd tail tar tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time touch tr \
 	truncate tsort tty udpstat umount uname unexpand \

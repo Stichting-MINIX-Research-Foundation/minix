@@ -2,6 +2,7 @@
 # Timestamp in UTC,minixpath,netbsdpath
 # minixpath:  path in Minix source tree (starting from /usr/src/)
 # netbsdpath: path in BSD source tree (starting from src/)
+2012/02/10 16:16:12,usr.bin/su
 2011/12/25 06:09:09,sys/arch/i386/stand
 2012/02/10 16:16:12,share/zoneinfo
 2012/02/10 16:16:12,share/misc

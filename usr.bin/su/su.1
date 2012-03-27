@@ -1,0 +1,386 @@
+.\" Copyright (c) 1988, 1990, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
+.\"	$NetBSD: su.1,v 1.49 2009/05/18 09:37:44 wiz Exp $
+.\"
+.Dd October 27, 2007
+.Dt SU 1
+.Os
+.Sh NAME
+.Nm su
+.Nd substitute user identity
+.Sh SYNOPSIS
+.Nm
+.Op Fl dfKlm
+.Op Fl c Ar login-class
+.Oo
+.Ar login Ns Op : Ns Ar group
+.Op Ar "shell arguments"
+.Oc
+.Nm
+.Op Fl dfKlm
+.Op Fl c Ar login-class
+.Oo
+.Ns : Ns Ar group
+.Op Ar "shell arguments"
+.Oc
+.Sh DESCRIPTION
+.Nm
+allows one user to become another user
+.Ar login
+without logging out and in as
+the new user.
+If a
+.Ar group
+is specified and
+.Ar login
+is a member of
+.Ar group ,
+then the group is changed to
+.Ar group
+rather than to
+.Ar login Ns 's
+primary group.
+If
+.Ar login
+is omitted and
+.Ar group
+is provided (form two above), then
+.Ar login
+is assumed to be the current username.
+.Pp
+When executed by a user, the
+.Ar login
+user's password is requested.
+When using Kerberos, the password for
+.Ar login
+(or for
+.Dq Ar login Ns .root ,
+if no login is provided) is requested, and
+.Nm
+switches to that user and group ID after obtaining a Kerberos ticket
+granting ticket.
+A shell is then executed, and any additional
+.Ar "shell arguments"
+after the login name are passed to the shell.
+.Nm
+will resort to the local password file to find the password for
+.Ar login
+if there is a Kerberos error.
+If
+.Nm
+is executed by root, no password is requested and a shell
+with the appropriate user ID is executed; no additional Kerberos tickets
+are obtained.
+.Pp
+Alternatively, if the user enters the password "s/key", authentication
+will use the S/Key one-time password system as described in
+.Xr skey 1 .
+S/Key is a Trademark of Bellcore.
+.Pp
+By default, the environment is unmodified with the exception of
+.Ev LOGNAME ,
+.Ev USER ,
+.Ev HOME ,
+.Ev SHELL ,
+and
+.Ev SU_FROM .
+.Ev HOME
+and
+.Ev SHELL
+are set to the target login's default values.
+.Ev LOGNAME
+and
+.Ev USER
+are set to the target login, unless the target login has a user ID of 0,
+in which case they are unmodified.
+.Ev SU_FROM
+is set to the caller's login.
+The invoked shell is the target login's.
+With the exception of
+.Ev SU_FROM
+this is the traditional behavior of
+.Nm .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+Specify a login class.
+You may only override the default class if you're already root.
+See
+.Xr login.conf 5
+for details.
+.It Fl d
+Same as
+.Fl l ,
+but does not change the current directory.
+.It Fl f
+If the invoked shell is
+.Xr csh 1 ,
+this option prevents it from reading the
+.Dq Pa .cshrc
+file.
+If the invoked shell is
+.Xr sh 1 ,
+or
+.Xr ksh 1 ,
+this option unsets
+.Ev ENV ,
+thus preventing the shell from executing the startup file pointed to by
+this variable.
+.It Fl K
+Do not attempt to use Kerberos to authenticate the user.
+.It Fl l
+Simulate a full login.
+The environment is discarded except for
+.Ev HOME ,
+.Ev SHELL ,
+.Ev PATH ,
+.Ev TERM ,
+.Ev LOGNAME ,
+.Ev USER ,
+and
+.Ev SU_FROM .
+.Ev HOME ,
+.Ev SHELL ,
+and
+.Ev SU_FROM
+are modified as above.
+.Ev LOGNAME
+and
+.Ev USER
+are set to the target login.
+.Ev PATH
+is set to the path specified in the
+.Pa /etc/login.conf
+file (or to the default of
+.Dq Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
+).
+.Ev TERM
+is imported from your current environment.
+The invoked shell is the target login's, and
+.Nm
+will change directory to the target login's home directory.
+.It Fl
+Same as
+.Fl l .
+.It Fl m
+Leave the environment unmodified.
+The invoked shell is your login shell, and no directory changes are made.
+As a security precaution, if the target user's shell is a non-standard
+shell (as defined by
+.Xr getusershell 3 )
+and the caller's real uid is
+non-zero,
+.Nm
+will fail.
+.El
+.Pp
+The
+.Fl l
+and
+.Fl m
+options are mutually exclusive; the last one specified
+overrides any previous ones.
+.Pp
+Only users in group
+.Dq wheel
+(normally gid 0),
+as listed in
+.Pa /etc/group ,
+can
+.Nm
+to
+.Dq root ,
+unless group wheel does not exist or has no members.
+(If you do not want anybody to be able to
+.Nm
+to
+.Dq root ,
+make
+.Dq root
+the only member of group
+.Dq wheel ,
+which is the default.)
+.Pp
+For sites with very large user populations, group
+.Dq wheel
+can contain the names of other groups that will be considered authorized
+to
+.Nm
+to
+.Dq root .
+.Pp
+By default (unless the prompt is reset by a startup file) the super-user
+prompt is set to
+.Dq Sy \&#
+to remind one of its awesome power.
+.Sh CUSTOMIZATION
+.Bl -tag -width ""
+.It Changing required group
+For the
+.Xr pam 8
+version of
+.Nm
+the name of the required group can be changed by setting
+.Ar gname
+in
+.Xr pam.conf 5 :
+.Bd -literal
+auth requisite pam_group.so no_warn group=gname root_only fail_safe
+.Ed
+.Pp
+For the non
+.Xr pam 8
+version of
+.Nm
+the same can be achieved by compiling with
+.Dv SU_GROUP
+set to the desired group name.
+.It Supplying own password
+.Nm
+can be configured so that users in a particular group can supply their
+own password to become
+.Dq root .
+For the
+.Xr pam 8
+version of
+.Nm
+this can be done by adding a line to
+.Xr pam.conf 5
+such as:
+.Bd -literal
+auth sufficient pam_group.so no_warn group=gname root_only authenticate
+.Ed
+.Pp
+where
+.Ar gname
+is the name of the desired group.
+For the non
+.Xr pam 8
+version of
+.Nm
+the same can be achieved by compiling with
+.Dv SU_ROOTAUTH
+set to the desired group name.
+.It Indirect groups
+This option is not available with the
+.Xr pam 8
+version of
+.Nm .
+For the non
+.Xr pam 8
+version of
+.Nm ,
+if
+.Dv SU_INDIRECT_GROUP
+is defined, the
+.Ar SU_GROUP
+and
+.Ar SU_ROOTAUTH
+groups are treated as indirect groups.
+The group members of those two groups are treated as groups themselves.
+.El
+.Sh EXIT STATUS
+.Nm
+returns the exit status of the executed subshell, or 1 if any error
+occurred while switching privileges.
+.Sh ENVIRONMENT
+Environment variables used by
+.Nm :
+.Bl -tag -width "HOME"
+.It Ev HOME
+Default home directory of real user ID unless modified as
+specified above.
+.It Ev LOGNAME
+The user ID is always the effective ID (the target user ID) after an
+.Nm
+unless the user ID is 0 (root).
+.It Ev PATH
+Default search path of real user ID unless modified as specified above.
+.It Ev TERM
+Provides terminal type which may be retained for the substituted
+user ID.
+.It Ev USER
+The user ID is always the effective ID (the target user ID) after an
+.Nm
+unless the user ID is 0 (root).
+.El
+.Sh EXAMPLES
+To become user username and use the same environment as in original shell, execute:
+.Bd -literal -offset indent
+su username
+.Ed
+.Pp
+To become user username and use environment as if full login would be performed,
+execute:
+.Bd -literal -offset indent
+su -l username
+.Ed
+.Pp
+When a
+.Fl c
+option is included
+.Em after
+the
+.Ar login
+name it is not a
+.Nm
+option, because any arguments after the
+.Ar login
+are passed to the shell.
+(See
+.Xr csh 1 ,
+.Xr ksh 1
+or
+.Xr sh 1
+for details.)
+To execute arbitrary command with privileges of user
+.Em username ,
+execute:
+.Bd -literal -offset indent
+su username -c "command args"
+.Ed
+.Sh SEE ALSO
+.Xr csh 1 ,
+.Xr kinit 1 ,
+.Xr login 1 ,
+.Xr sh 1 ,
+.Xr skey 1 ,
+.Xr setusercontext 3 ,
+.Xr group 5 ,
+.Xr login.conf 5 ,
+.Xr passwd 5 ,
+.Xr environ 7 ,
+.Xr kerberos 8
+.Sh HISTORY
+A
+.Nm
+command existed in
+.At v5
+(and probably earlier).
