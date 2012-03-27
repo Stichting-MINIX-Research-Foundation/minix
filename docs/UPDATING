@@ -1,3 +1,20 @@
+20120328:
+	The boot loader now defaults to 115200 baud rate to make booting over
+	serial more pleasant. To install the new boot loader do
+
+	# cd /usr/src/sys
+	# make clean install
+	# updateboot
+
+	To boot over serial add the following to /etc/boot.cfg.local (create
+	the file if not present):
+	menu=Start latest serial MINIX 3:load_mods /boot/minix_latest/mod*;multiboot /boot/minix_latest/kernel rootdevname=c0d0p0s0 cttyline=0 cttybaud=115200
+	consdev=com0
+
+	To install the new boot configuration run
+
+	# update_bootcfg
+
 20120306:
 	The base system only looks in /usr/pkg/compiler-rt/lib now, so
 	-L/usr/pkg/lib is gone.

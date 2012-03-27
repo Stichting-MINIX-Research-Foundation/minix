@@ -9,7 +9,7 @@
 #endif
 	.long	5			/* timeout in seconds */
 	.long	0			/* console device 0 => CONSDEV_PC */
-	.long	9600			/* serial baud rate */
+	.long	115200			/* serial baud rate */
 	.space	16			/* md5 boot password */
 	.space	64			/* keyboard xlat map */
 	.long	0			/* console ioaddr */
