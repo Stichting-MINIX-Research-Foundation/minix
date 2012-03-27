@@ -90,7 +90,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `futimens' function. */
-/* #undef HAVE_FUTIMENS */
+#define HAVE_FUTIMENS 1
 
 /* Define to 1 if you have the `futimes' function. */
 #define HAVE_FUTIMES 1
@@ -186,7 +186,7 @@
 /* #undef HAVE_UTIME */
 
 /* Define to 1 if you have the `utimes' function. */
-/* #undef HAVE_UTIMES */
+#define HAVE_UTIMES 1
 
 /* Define to 1 if you have the `wcwidth' function. */
 #define HAVE_WCWIDTH 1

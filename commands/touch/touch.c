@@ -59,7 +59,6 @@ main(int argc, char *argv[])
 {
 	struct stat	 sb;
 	struct timeval	 tv[2];
-	struct utimbuf	 timbuf;
 	int		 aflag, cflag, mflag, ch, fd, len, rval, timeset;
 	char		*p;
 
@@ -141,28 +140,14 @@ main(int argc, char *argv[])
 				continue;
 		}
 
-#if 0
 		if (!aflag)
 			TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
 		if (!mflag)
 			TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
-#else
-		if (!aflag)
-			tv[0].tv_sec = sb.st_atime;
-		if (!mflag)
-			tv[1].tv_sec = sb.st_mtime;
-#endif
 
 		/* Try utimes(2). */
-#if 0
 		if (!utimes(*argv, tv))
 			continue;
-#else
-		timbuf.actime = tv[0].tv_sec;
-		timbuf.modtime = tv[1].tv_sec;
-		if (!utime(*argv, &timbuf))
-			continue;
-#endif
 
 		/* If the user specified a time, nothing else we can do. */
 		if (timeset) {
@@ -176,13 +161,8 @@ main(int argc, char *argv[])
 		 * The permission checks are different, too, in that the
 		 * ability to write the file is sufficient.  Take a shot.
 		 */
-#if 0
 		 if (!utimes(*argv, NULL))
 			continue;
-#else
-		if (!utime(*argv, NULL))
-			continue;
-#endif
 
 		rval = 1;
 		warn("%s", *argv);
@@ -310,13 +290,8 @@ stime_file(char *fname, struct timeval *tvp)
 
 	if (stat(fname, &sb))
 		err(1, "%s", fname);
-#if 0
 	TIMESPEC_TO_TIMEVAL(tvp, &sb.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(tvp + 1, &sb.st_mtimespec);
-#else
-	(tvp + 0)->tv_sec = sb.st_atime;
-	(tvp + 1)->tv_sec = sb.st_mtime;
-#endif
 }
 
 __dead void

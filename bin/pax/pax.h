@@ -35,9 +35,11 @@
  *	@(#)pax.h	8.2 (Berkeley) 4/18/94
  */
 
-#if ! HAVE_NBTOOL_CONFIG_H && !defined(__minix)
+#if ! HAVE_NBTOOL_CONFIG_H
 #define HAVE_LUTIMES 1
+#ifndef __minix
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
+#endif
 #endif
 
 /*
