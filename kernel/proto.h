@@ -81,7 +81,7 @@ int get_priv(register struct proc *rc, int proc_type);
 void set_sendto_bit(const struct proc *rc, int id);
 void unset_sendto_bit(const struct proc *rc, int id);
 void fill_sendto_mask(const struct proc *rc, sys_map_t *map);
-void send_sig(endpoint_t proc_nr, int sig_nr);
+int send_sig(endpoint_t proc_nr, int sig_nr);
 void cause_sig(proc_nr_t proc_nr, int sig_nr);
 void sig_delay_done(struct proc *rp);
 void kernel_call(message *m_user, struct proc * caller);

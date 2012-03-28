@@ -1779,25 +1779,11 @@ const int fatalflag;
 	 * succeed.
 	 */
 	*p = _ENDPOINT_P(e);
-	if(!isokprocn(*p)) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-		printf("kernel:%s:%d: bad endpoint %d: proc %d out of range\n",
-		file, line, e, *p);
-#endif
-	} else if(isemptyn(*p)) {
-#if 0
-	printf("kernel:%s:%d: bad endpoint %d: proc %d empty\n", file, line, e, *p);
-#endif
-	} else if(proc_addr(*p)->p_endpoint != e) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-		printf("kernel:%s:%d: bad endpoint %d: proc %d has ept %d (generation %d vs. %d)\n", file, line,
-		e, *p, proc_addr(*p)->p_endpoint,
-		_ENDPOINT_G(e), _ENDPOINT_G(proc_addr(*p)->p_endpoint));
-#endif
-	} else ok = 1;
-	if(!ok && fatalflag) {
+	ok = 0;
+	if(isokprocn(*p) && !isemptyn(*p) && proc_addr(*p)->p_endpoint == e)
+		ok = 1;
+	if(!ok && fatalflag)
 		panic("invalid endpoint: %d",  e);
-	}
 	return ok;
 }
 

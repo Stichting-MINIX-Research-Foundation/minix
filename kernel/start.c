@@ -56,6 +56,17 @@ void cstart(
   system_hz = DEFAULT_HZ;
 #endif
 
+#ifdef DEBUG_SERIAL
+  /* Intitialize serial debugging */
+  value = env_get(SERVARNAME);
+  if(value && atoi(value) == 0) {
+	do_serial_debug=1;
+
+  	value = env_get(SERBAUDVARNAME);
+  	if (value) serial_debug_baud = atoi(value);
+  }
+#endif
+
   DEBUGEXTRA(("cstart\n"));
 
   /* Record miscellaneous information for user-space servers. */
@@ -71,17 +82,6 @@ void cstart(
   kloadinfo.proc_last_slot = 0;
   for(h = 0; h < _LOAD_HISTORY; h++)
 	kloadinfo.proc_load_history[h] = 0;
-
-#ifdef DEBUG_SERIAL
-  /* Intitialize serial debugging */
-  value = env_get(SERVARNAME);
-  if(value && atoi(value) == 0) {
-	do_serial_debug=1;
-
-  	value = env_get(SERBAUDVARNAME);
-  	if (value) serial_debug_baud = atoi(value);
-  }
-#endif
 
 #ifdef USE_APIC
   value = env_get("no_apic");

@@ -360,7 +360,7 @@ void fill_sendto_mask(const struct proc *rp, sys_map_t *map)
 /*===========================================================================*
  *				send_sig				     *
  *===========================================================================*/
-void send_sig(endpoint_t ep, int sig_nr)
+int send_sig(endpoint_t ep, int sig_nr)
 {
 /* Notify a system process about a signal. This is straightforward. Simply
  * set the signal that is to be delivered in the pending signals map and 
@@ -370,11 +370,13 @@ void send_sig(endpoint_t ep, int sig_nr)
   int proc_nr;
 
   if(!isokendpt(ep, &proc_nr) || isemptyn(proc_nr))
-	panic("send_sig to empty process: %d",  ep);
+	return EINVAL;
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
   mini_notify(proc_addr(SYSTEM), rp->p_endpoint);
+
+  return OK;
 }
 
 /*===========================================================================*
@@ -425,7 +427,8 @@ int sig_nr;			/* signal to be sent */
 	   	rp->p_endpoint, sig_nr);
        }
        sigaddset(&priv(rp)->s_sig_pending, sig_nr);
-       send_sig(rp->p_endpoint, SIGKSIGSM);
+       if(OK != send_sig(rp->p_endpoint, SIGKSIGSM))
+       	panic("send_sig failed");
        return;
   }
 
@@ -434,7 +437,8 @@ int sig_nr;			/* signal to be sent */
       sigaddset(&rp->p_pending, sig_nr);
       if (! (RTS_ISSET(rp, RTS_SIGNALED))) {		/* other pending */
 	  RTS_SET(rp, RTS_SIGNALED | RTS_SIG_PENDING);
-          send_sig(sig_mgr, SIGKSIG);
+          if(OK != send_sig(sig_mgr, SIGKSIG))
+	  	panic("send_sig failed");
       }
   }
 }

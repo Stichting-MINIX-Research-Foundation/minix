@@ -163,7 +163,8 @@ int map_invoke_vm(struct proc * caller,
 
 	/* Connect caller on vmrequest wait queue. */
 	if(!(caller->p_vmrequest.nextrequestor = vmrequest))
-		send_sig(VM_PROC_NR, SIGKMEM);
+		if(OK != send_sig(VM_PROC_NR, SIGKMEM))
+			panic("send_sig failed");
 	vmrequest = caller;
 
 	return OK;
