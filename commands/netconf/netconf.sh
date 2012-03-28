@@ -338,7 +338,7 @@ if [ -n "$prefix" ] ; then
     fi
 fi
 
-if [ "$USER" != root ] ; then
+if [ `whoami` != root ] ; then
     test "$v" = 1 && echo "Please run netconf as root."
     exit 1
 fi
