@@ -178,14 +178,14 @@ static u32_t lapic_bus_freq[CONFIG_MAX_CPUS];
 
 static u32_t ioapic_read(u32_t ioa_base, u32_t reg)
 {
-	*((u32_t *)(ioa_base + IOAPIC_IOREGSEL)) = (reg & 0xff);
-	return *(u32_t *)(ioa_base + IOAPIC_IOWIN);
+	*((volatile u32_t *)(ioa_base + IOAPIC_IOREGSEL)) = (reg & 0xff);
+	return *(volatile u32_t *)(ioa_base + IOAPIC_IOWIN);
 }
 
 static void ioapic_write(u32_t ioa_base, u8_t reg, u32_t val)
 {
-	*((u32_t *)(ioa_base + IOAPIC_IOREGSEL)) = reg;
-	*((u32_t *)(ioa_base + IOAPIC_IOWIN)) = val;
+	*((volatile u32_t *)(ioa_base + IOAPIC_IOREGSEL)) = reg;
+	*((volatile u32_t *)(ioa_base + IOAPIC_IOWIN)) = val;
 }
 
 void lapic_microsec_sleep(unsigned count);
