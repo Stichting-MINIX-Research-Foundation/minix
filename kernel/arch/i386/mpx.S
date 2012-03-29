@@ -26,22 +26,6 @@
 /* sections */
 
 #include <machine/vm.h>
-
-#ifdef __ACK__
-.text
-begtext:
-#ifdef __ACK__
-.rom
-#else
-.data
-#endif
-begrom:
-.data
-begdata:
-.bss
-begbss:
-#endif
-
 #include "../../kernel.h"
 #include <minix/config.h>
 #include <minix/const.h>
@@ -69,10 +53,6 @@ IMPORT(params_offset)
 IMPORT(mon_ds)
 IMPORT(switch_to_user)
 IMPORT(multiboot_init)
-
-/* Exported variables. */
-.globl	begbss
-.globl	begdata
 
 .text
 /*===========================================================================*/
@@ -636,11 +616,7 @@ ENTRY(startup_ap_32)
 /*				data					     */
 /*===========================================================================*/
 
-#ifdef __ACK__
-.rom	/* Before the string table please */
-#else
 .data
-#endif
 .short	0x526F	/* this must be the first data entry (magic #) */
 .bss
 /*

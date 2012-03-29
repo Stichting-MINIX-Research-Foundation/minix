@@ -129,22 +129,6 @@ csinit:
 	pop	%ebp
 	ret
 
-/*===========================================================================*/
-/*				exit					     */
-/*===========================================================================*/
-/*
- * PUBLIC void exit(); 
- * Some library routines use exit, so provide a dummy version. 
- * Actual calls to exit cannot occur in the kernel. 
- * GNU CC likes to call ___main from main() for nonobvious reasons. 
- */
-#ifdef __ACK__
-ENTRY(exit)
-ENTRY(_exit)
-ENTRY(__exit)
-	sti
-	jmp	_C_LABEL(__exit)
-#endif
 
 ENTRY(__main)
 	ret
