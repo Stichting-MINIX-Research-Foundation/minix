@@ -56,8 +56,8 @@ int do_stat()
   if ((ino = find_inode(ino_nr)) == NULL)
 	return EINVAL;
 
-  attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE | HGFS_ATTR_ATIME |
-		HGFS_ATTR_MTIME | HGFS_ATTR_CTIME;
+  attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE | HGFS_ATTR_CRTIME |
+		HGFS_ATTR_ATIME | HGFS_ATTR_MTIME | HGFS_ATTR_CTIME;
 
   if ((r = verify_inode(ino, path, &attr)) != OK)
 	return r;
@@ -74,9 +74,10 @@ int do_stat()
 	stat.st_size = LONG_MAX;
   else
 	stat.st_size = ex64lo(attr.a_size);
-  stat.st_atime = attr.a_atime;
-  stat.st_mtime = attr.a_mtime;
-  stat.st_ctime = attr.a_ctime;
+  stat.st_atimespec = attr.a_atime;
+  stat.st_mtimespec = attr.a_mtime;
+  stat.st_ctimespec = attr.a_ctime;
+  stat.st_birthtimespec = attr.a_crtime;
 
   stat.st_blocks = stat.st_size / S_BLKSIZE;
   if (stat.st_size % S_BLKSIZE != 0)
@@ -159,8 +160,10 @@ int do_utime()
 
   attr.a_mask = HGFS_ATTR_ATIME | HGFS_ATTR_MTIME | HGFS_ATTR_ATIME_SET |
 	HGFS_ATTR_MTIME_SET;
-  attr.a_atime = m_in.REQ_ACTIME;
-  attr.a_mtime = m_in.REQ_MODTIME;
+  attr.a_atime.tv_sec = m_in.REQ_ACTIME;
+  attr.a_atime.tv_nsec = 0;
+  attr.a_mtime.tv_sec = m_in.REQ_MODTIME;
+  attr.a_mtime.tv_nsec = 0;
 
   return hgfs_setattr(path, &attr);
 }

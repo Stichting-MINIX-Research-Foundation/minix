@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <minix/u64.h>
+#include <time.h>
 
 typedef void *hgfs_file_t;		/* handle to open file */
 typedef void *hgfs_dir_t;		/* handle to directory search */
@@ -13,10 +14,10 @@ struct hgfs_attr {
   u32_t a_mask;				/* which fields to retrieve/set */
   mode_t a_mode;			/* file type and permissions */
   u64_t a_size;				/* file size */
-  time_t a_crtime;			/* file creation time */
-  time_t a_atime;			/* file access time */
-  time_t a_mtime;			/* file modification time */
-  time_t a_ctime;			/* file change time */
+  struct timespec a_crtime;		/* file creation time */
+  struct timespec a_atime;		/* file access time */
+  struct timespec a_mtime;		/* file modification time */
+  struct timespec a_ctime;		/* file change time */
 };
 
 #define HGFS_ATTR_SIZE		0x01	/* get/set file size */

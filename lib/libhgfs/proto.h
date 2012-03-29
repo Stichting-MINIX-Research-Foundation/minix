@@ -47,5 +47,5 @@ void rpc_close(void);
 #define time_put PREFIX(time_put)
 #define time_get PREFIX(time_get)
 void time_init(void);
-void time_put(time_t *timep);
-void time_get(time_t *timep);
+void time_put(struct timespec *tsp);
+void time_get(struct timespec *tsp);
