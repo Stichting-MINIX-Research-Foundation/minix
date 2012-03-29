@@ -24,7 +24,6 @@
 755 root    operator /usr/pkg/etc/rc.d
 755 root    operator /home
 755 root    operator /usr/lib
-755 root    operator /usr/lib/advent
 755 root    operator /usr/lib/cawf
 755 root    operator /usr/lib/dict
 755 root    operator /usr/lib/flex
