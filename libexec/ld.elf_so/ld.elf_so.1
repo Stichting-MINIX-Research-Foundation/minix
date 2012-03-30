@@ -1,0 +1,224 @@
+.\"	$NetBSD: ld.elf_so.1,v 1.15 2010/12/17 08:50:26 wiz Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Nick Hudson.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 17, 2010
+.Dt LD.ELF_SO 1
+.Os
+.Sh NAME
+.Nm ld.elf_so
+.Nd run-time link-editor (linker)
+.Sh DESCRIPTION
+.Nm
+is a self-contained, position independent program
+image providing run-time support for loading and
+link-editing shared objects into a process' address space.
+It uses information stored in data structures within the binary (see
+.Xr elf 5 )
+and environment variables to determine which shared objects are needed.
+These shared objects are loaded at a convenient virtual address using the
+.Xr mmap 2
+system call.
+After all shared objects have been successfully loaded,
+.Nm
+proceeds to resolve external references from both
+the main program and all objects loaded.
+Once all required references are resolved control is
+passed to the program via its entry point.
+.Ss Startup
+On the execution of a dynamically linked binary the kernel will load
+the program and its run-time linker as specified in the PT_INTERP
+section in the program header.
+At this point, instead of passing control directly to the program,
+the kernel passes control to the specified linker.
+An auxiliary vector of information is passed that includes
+the address of the program header, the size of each entry in the header,
+and the number of entries.
+The entry point of the program and the base address of where
+.Nm
+is loaded is also supplied.
+.Ss Finding objects
+Each
+.Xr elf 5
+object file may contain information in its dynamic (PT_DYNAMIC) section
+about which shared objects it requires (often referred to as dependencies).
+These dependencies are specified in the optional DT_NEEDED entry within
+the dynamic section.
+Each DT_NEEDED entry refers to a filename string of
+the shared object that is to be searched for.
+.Pp
+The linker will search for libraries in three lists of paths:
+.Bl -enum
+.It
+A user defined list of paths as specified in LD_LIBRARY_PATH and
+.Xr ld.so.conf 5 .
+.Pp
+The use of ld.so.conf should be avoided as the setting of a global search
+path can present a security risk.
+.It
+A list of paths specified within a shared object using a DT_RPATH entry in
+the dynamic section.
+This is defined at shared object link time.
+.It
+The list of default paths which is set to
+.Pa /usr/lib .
+.El
+.Pp
+.Nm
+will expand the following variables if present in the paths:
+.Bl -tag -width $PLATFORM
+.It $HWCAP
+Processor hardware capabilities, for example FPU, MMX, SSE.
+Currently unimplemented.
+.It $ISALIST
+List of instructions sets this processor can execute.
+Currently unimplemented.
+.It $ORIGIN
+The directory of the main object.
+Implemented in
+.Nm
+but the kernel support is currently disabled.
+.It $OSNAME
+The value of the
+.Dv kern.ostype
+.Xr sysctl 3 .
+.It $OSREL
+The value of the
+.Dv kern.osrelease
+.Xr sysctl 3 .
+.It $PLATFORM
+The value of the
+.Dv hw.machine_arch
+.Xr sysctl 3 .
+.El
+.Pp
+Both
+.Dv ${VARIABLE}
+and
+.Dv $VARIABLE
+are recognized.
+.Pp
+The filename string can be considered free form, however, it will almost
+always take the form lib\*[Lt]name\*[Gt].so.\*[Lt]number\*[Gt],
+where name specifies the
+.Sq library
+name and number is conceptually the library's major version number.
+.Pp
+This name and another of the form lib\*[Lt]name\*[Gt].so are normally
+symbolic links to the real shared object which has a filename of the form
+lib\*[Lt]name\*[Gt].so.\*[Lt]major\*[Gt].\*[Lt]minor\*[Gt][.\*[Lt]teeny\*[Gt]].
+This naming convention allows a versioning scheme similar to
+.Xr a.out 5 .
+.Ss Relocation
+.Nm
+will perform all necessary relocations immediately except for relocations
+relating to the Procedure Linkage Table (PLT).
+The PLT is used as a indirection method for procedure
+calls to globally defined functions.
+It allows, through the use of intermediate code, the delayed binding of
+a call to a globally defined function to be performed at procedure call time.
+This
+.Sq lazy
+method is the default (see LD_BIND_NOW).
+.Ss Initialization
+A mechanism is provided for initialization and termination routines
+to be called, on a per-object basis before execution of the program proper
+begins or after the program has completed.
+This gives a shared object an opportunity to perform
+any extra set-up or completion work.
+.Pp
+The DT_INIT and DT_FINI entries in the dynamic section specify the addresses
+of the initialization and termination functions, respectively, for
+the shared object.
+.Nm
+arranges for each initialization function to be called before control is passed
+to the program and for the termination functions to be called by using
+.Xr atexit 3 .
+.Pp
+This mechanism is exploited by the system-supplied constructor
+initialization and destructor code located in
+.Pa /usr/lib/crtbeginS.o
+and
+.Pa /usr/lib/crtendS.o .
+These files are automatically included by
+.Xr cc 1
+and
+.Xr c++ 1
+in the list of object-code files passed to
+.Xr ld 1
+when building a shared C or C++ object.
+.Sh ENVIRONMENT
+If the following environment variables exist they will be used by
+.Nm .
+.Bl -tag -width "LD_LIBRARY_PATH"
+.It Ev LD_LIBRARY_PATH
+A colon separated list of directories, overriding the default search path
+for shared libraries.
+.It Ev LD_PRELOAD
+A colon or space separated list of shared object filenames to be loaded
+.Em after
+the main program but
+.Em before
+its shared object dependencies.
+Space is allowed as a separator for backwards compatibility only.
+Support may be removed in a future release and should not be relied upon.
+.It Ev LD_BIND_NOW
+If defined immediate binding of Procedure Link Table (PLT) entries is
+performed instead of the default lazy method.
+.It Ev LD_DEBUG
+If defined a variety of debug information will be written to the standard
+error of an dynamically linked executed when it is run.
+This variable is only recognized if
+.Nm
+was compiled with debugging support
+.Sy ( -DDEBUG ) .
+.El
+.Sh FILES
+.Bl -tag -width /etc/ld.so.conf -compact
+.It Pa /etc/ld.so.conf
+library location hints supplied by the system administrator.
+.El
+.Sh SEE ALSO
+.Xr ld 1 ,
+.Xr ld.aout_so 1 ,
+.Xr dlfcn 3 ,
+.Xr elf 5
+.Sh HISTORY
+The ELF shared library model employed first appeared in Sys V R4.
+.Pp
+The path expansion variables first appeared in Solaris 10, and
+in
+.Nx 5.0 .
+.Sh SECURITY CONSIDERATIONS
+The environment variables
+.Ev LD_LIBRARY_PATH
+and
+.Ev LD_PRELOAD
+are not honored when executing in a set-user-ID or set-group-ID environment.
+This action is taken to prevent malicious substitution of shared object
+dependencies or interposition of symbols.

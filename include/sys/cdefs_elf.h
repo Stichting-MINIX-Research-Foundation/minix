@@ -64,7 +64,7 @@
 #define	__weak_extern(sym)						\
     __asm(".weak " _C_LABEL_STRING(#sym));
 
-#if __GNUC_PREREQ__(4, 0) && !defined(__minix)
+#if __GNUC_PREREQ__(4, 0)
 #define	__weak_reference(sym)	__attribute__((__weakref__))
 #else
 #define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))

@@ -168,17 +168,15 @@ static LIST_HEAD(, _ns_drec) _ns_drec = LIST_HEAD_INITIALIZER(&_ns_drec);
 static mutex_t _ns_drec_lock = MUTEX_INITIALIZER;
 #endif /* _REENTRANT */
 
-
-/*
- * Runtime determination of whether we are dynamically linked or not.
- */
-#ifdef __ELF__
-extern	int			_DYNAMIC __weak_reference(_DYNAMIC);
-#define	is_dynamic()		(&_DYNAMIC != NULL)
-#else
+#ifndef __ELF__
 #define	is_dynamic()		(0)	/* don't bother - switch to ELF! */
-#endif /* __ELF__ */
-
+#elif __GNUC_PREREQ__(4,2)
+static int rtld_DYNAMIC __attribute__((__weakref__, __alias__("_DYNAMIC")));
+#define	is_dynamic()		(&rtld_DYNAMIC != NULL)
+#else
+extern int _DYNAMIC __weak_reference(_DYNAMIC);
+#define	is_dynamic()		(&_DYNAMIC != NULL)
+#endif
 
 /*
  * size of dynamic array chunk for _nsmap and _nsmap[x].srclist (and other

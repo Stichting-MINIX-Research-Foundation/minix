@@ -1,0 +1,6 @@
+$NetBSD: README,v 1.11 2006/11/24 22:52:16 wiz Exp $
+
+TO DO:
+
+* Support for coexistence of 32-bit and 64-bit ELF on platforms that can
+  do that.

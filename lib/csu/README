@@ -1,0 +1,63 @@
+Overview of the common runtime support
+
+The common runtime support contains two modules, crtbegin and crtend.
+crtbegin is linked before all other object files of the program or
+dynamic library, crtend after all other object files.  They frame the
+lists of constructors, destructors, Java types and exception handling frames.
+
+If done correctly, crtend contains no code and is therefore position
+independent.  crtendS.o is therefore just a link to crtend.o.
+
+crtbegin should be position-independent code.  crtbeginT.o doesn't have
+to be PIC as it is statically linked.  The overhead is generally not
+worth the trouble though.
+
+
+Section types:
+.ctor: writeable
+.dtor: writeable
+.eh_frame: read-only if platform allows mixing read-only and read-write
+sections.  This is supported by GNU ld.
+.jcr: writeable
+.init: executable
+.fini: executable
+
+
+Non-local symbols:
+
+Weak references:
+- _Jv_RegisterClasses,
+- __cxa_finalize (crtbeginS.o)
+- __deregister_frame_info
+- __register_frame_info
+
+Hidden:
+- __dso_handle: pointer to self for crtbeginS.o, NULL otherwise.
+- __CTOR_LIST_END__
+
+
+Initialisation (called from .init):
+
+1.  Check that the init code hasn't started already, otherwise bail out.
+2.  If __register_frame_info is NULL, skip to 4
+3.  Call __register_frame_info with start of .eh_frame as first argument
+    and a data object of at least 8 pointers as second argument.
+4:  If _Jv_RegisterClasses is NULL, skip to 6
+5:  Call _Jv_RegisterClasses with the first pointer of the .jcr section
+    as argument.
+6:  Iterate from the end of the .ctor section to the start.  Skip the
+    terminating NULL and stop when reaching the starting (void *)-1 element.
+    Call the pointers as void (*)(void) functions.
+
+
+Deinitialisation (called from .fini):
+
+1.  Check if the init code has already started, otherwise bail out.
+2.  If this is not crtbeginS.o or __cxa_finalize is NULL, skip to 4.
+3.  Call __cxa_finalize with a pointer into this Dynamic Shared Object (DSO)
+    as first argument.
+4.  Iterate from the start of the .dtor section to the send.  Skip the
+    initial (void *)-1 and stop when reaching the terminating NULL element.
+    Call the pointers as void (*)(void) functions.
+5.  If __deregister_frame_info is NULL, return.
+6.  Call __deregister_frame_info with the start of .eh_frame as the argument.

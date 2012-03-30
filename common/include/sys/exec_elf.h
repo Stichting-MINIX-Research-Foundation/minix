@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.108 2010/12/24 12:41:43 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.117 2011/08/03 00:22:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -169,22 +169,22 @@ typedef struct {
 /* e_ident[EI_OSABI] */
 #define	ELFOSABI_SYSV		0	/* UNIX System V ABI */
 #define	ELFOSABI_HPUX		1	/* HP-UX operating system */
-#define ELFOSABI_NETBSD		2	/* NetBSD */
-#define ELFOSABI_LINUX		3	/* GNU/Linux */
-#define ELFOSABI_HURD		4	/* GNU/Hurd */
-#define ELFOSABI_86OPEN		5	/* 86Open */
-#define ELFOSABI_SOLARIS	6	/* Solaris */
-#define ELFOSABI_MONTEREY	7	/* Monterey */
-#define ELFOSABI_IRIX		8	/* IRIX */
-#define ELFOSABI_FREEBSD	9	/* FreeBSD */
-#define ELFOSABI_TRU64		10	/* TRU64 UNIX */
-#define ELFOSABI_MODESTO	11	/* Novell Modesto */
-#define ELFOSABI_OPENBSD	12	/* OpenBSD */
+#define	ELFOSABI_NETBSD		2	/* NetBSD */
+#define	ELFOSABI_LINUX		3	/* GNU/Linux */
+#define	ELFOSABI_HURD		4	/* GNU/Hurd */
+#define	ELFOSABI_86OPEN		5	/* 86Open */
+#define	ELFOSABI_SOLARIS	6	/* Solaris */
+#define	ELFOSABI_MONTEREY	7	/* Monterey */
+#define	ELFOSABI_IRIX		8	/* IRIX */
+#define	ELFOSABI_FREEBSD	9	/* FreeBSD */
+#define	ELFOSABI_TRU64		10	/* TRU64 UNIX */
+#define	ELFOSABI_MODESTO	11	/* Novell Modesto */
+#define	ELFOSABI_OPENBSD	12	/* OpenBSD */
 #define	ELFOSABI_OPENVMS	13	/* OpenVMS */
 #define	ELFOSABI_NSK		14	/* HP Non-Stop Kernel */
 #define	ELFOSABI_AROS		15	/* Amiga Research OS */
 /* Unofficial OSABIs follow */
-#define ELFOSABI_ARM		97	/* ARM */
+#define	ELFOSABI_ARM		97	/* ARM */
 #define	ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 #define	ELFOSABI_NONE		ELFOSABI_SYSV
@@ -344,7 +344,12 @@ typedef struct {
 #define	PT_NUM		8
 
 #define	PT_LOOS         0x60000000	/* OS-specific range */
-#define	PT_GNU_EH_FRAME	0x6474e550	/* GNU-specific EH frame segment */
+
+/* GNU-specific */
+#define	PT_GNU_EH_FRAME	0x6474e550	/* EH frame segment */
+#define	PT_GNU_STACK	0x6474e551	/* Indicate executable stack */
+#define	PT_GNU_RELRO	0x6474e552      /* Make read-only after relocation */
+
 #define	PT_HIOS         0x6fffffff
 #define	PT_LOPROC	0x70000000	/* Processor-specific range */
 #define	PT_HIPROC	0x7fffffff
@@ -414,11 +419,11 @@ typedef struct {
 #define	SHT_LOOS	0x60000000	/* Operating system specific range */
 #define	SHT_SUNW_move	0x6ffffffa
 #define	SHT_SUNW_syminfo 0x6ffffffc
-#define SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
+#define	SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
 #define	SHT_GNU_verdef	SHT_SUNW_verdef
-#define SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
+#define	SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
 #define	SHT_GNU_verneed	SHT_SUNW_verneed
-#define SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
+#define	SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
 #define	SHT_GNU_versym	SHT_SUNW_versym
 #define	SHT_HIOS	0x6fffffff
 #define	SHT_LOPROC	0x70000000	/* Processor-specific range */
@@ -459,7 +464,7 @@ typedef struct {
 /* Symbol Table index of the undefined symbol */
 #define	ELF_SYM_UNDEFINED	0
 
-#define STN_UNDEF		0	/* undefined index */
+#define	STN_UNDEF		0	/* undefined index */
 
 /* st_info: Symbol Bindings */
 #define	STB_LOCAL		0	/* local symbol */
@@ -571,7 +576,7 @@ typedef struct {
 } Elf32_Move;
 
 #define	ELF32_M_SYM(info)	((info) >> 8)
-#define	ELF32_M_SIZE(info)	(info) & 0xff)
+#define	ELF32_M_SIZE(info)	((info) & 0xff)
 #define	ELF32_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 typedef struct {
@@ -583,7 +588,7 @@ typedef struct {
 } Elf64_Move;
 
 #define	ELF64_M_SYM(info)	((info) >> 8)
-#define	ELF64_M_SIZE(info)	(info) & 0xff)
+#define	ELF64_M_SIZE(info)	((info) & 0xff)
 #define	ELF64_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 /*
@@ -657,12 +662,12 @@ typedef struct {
 #define	DT_NUM		29
 
 #define	DT_LOOS		0x60000000	/* Operating system specific range */
-#define DT_VERSYM	0x6ffffff0	/* Symbol versions */
+#define	DT_VERSYM	0x6ffffff0	/* Symbol versions */
 #define	DT_FLAGS_1	0x6ffffffb	/* ELF dynamic flags */
-#define DT_VERDEF	0x6ffffffc	/* Versions defined by file */
-#define DT_VERDEFNUM	0x6ffffffd	/* Number of versions defined by file */
-#define DT_VERNEED	0x6ffffffe	/* Versions needed by file */
-#define DT_VERNEEDNUM	0x6fffffff	/* Number of versions needed by file */
+#define	DT_VERDEF	0x6ffffffc	/* Versions defined by file */
+#define	DT_VERDEFNUM	0x6ffffffd	/* Number of versions defined by file */
+#define	DT_VERNEED	0x6ffffffe	/* Versions needed by file */
+#define	DT_VERNEEDNUM	0x6fffffff	/* Number of versions needed by file */
 #define	DT_HIOS		0x6fffffff
 #define	DT_LOPROC	0x70000000	/* Processor-specific range */
 #define	DT_HIPROC	0x7fffffff
@@ -741,20 +746,86 @@ typedef struct {
 	Elf64_Word n_type;
 } Elf64_Nhdr;
 
-#define	ELF_NOTE_TYPE_ABI_TAG		1
+#define	ELF_NOTE_GNU_NAMESZ		4
+#define	ELF_NOTE_GNU_NAME		"GNU\0"
 
+/*
+ * GNU-specific note type: ABI tag
+ * name: GNU\0
+ * namesz: 4
+ * desc:
+ *	word[0]: OS tag
+ *	word[1]: major version
+ *	word[2]: minor version
+ *	word[3]: teeny version
+ * descsz: 16
+ */
 /* GNU-specific note name and description sizes */
-#define	ELF_NOTE_ABI_NAMESZ		4
+#define	ELF_NOTE_TYPE_ABI_TAG		1
+#define	ELF_NOTE_ABI_NAME		ELF_NOTE_GNU_NAME
+#define	ELF_NOTE_ABI_NAMESZ		ELF_NOTE_GNU_NAMESZ
 #define	ELF_NOTE_ABI_DESCSZ		16
-/* GNU-specific note name */
-#define	ELF_NOTE_ABI_NAME		"GNU\0"
-
 /* GNU-specific OS/version value stuff */
 #define	ELF_NOTE_ABI_OS_LINUX		0
 #define	ELF_NOTE_ABI_OS_HURD		1
 #define	ELF_NOTE_ABI_OS_SOLARIS		2
+#define	ELF_NOTE_ABI_OS_KFREEBSD	3
+#define	ELF_NOTE_ABI_OS_KNETBSD		4
 
-/* NetBSD-specific note type: Emulation name.  desc is emul name string. */
+/*
+ * GNU-specific note type: Hardware capabilities
+ * name: GNU\0
+ * namesz: 4
+ * desc:
+ *	word[0]: Number of entries
+ *	word[1]: Bitmask of enabled entries
+ *	Followed by a byte id, and a NUL terminated string per entry
+ * descsz: variable
+ */
+#define	ELF_NOTE_TYPE_GNU_HWCAP		2
+
+/*
+ * GNU-specific note type: Build ID generated by ld
+ * name: GNU\0
+ * desc:
+ *	word[0..4] SHA1 [default] 
+ * or
+ *	word[0..3] md5 or uuid
+ * descsz: 16 or 20
+ */
+#define	ELF_NOTE_TYPE_GNU_BUILD_ID	3
+
+/* SuSE-specific note type: version
+ * name: SuSE\0\0\0\0
+ * namesz: 8
+ * desc: 
+ *      word[0] = VVTTMMmm
+ *
+ *	V = version of following data
+ *	T = product type: [box, sles, nld, whatever]
+ *	M = product major version
+ *	m = product minor version
+ * descsz: 8
+ */
+#define	ELF_NOTE_TYPE_SUSE_TAG		0x45537553	/* SuSE in LE */
+/* SuSE-specific note name and description sizes */
+#define	ELF_NOTE_SUSE_NAMESZ		8
+#define	ELF_NOTE_SUSE_DESCSZ		8
+/* SuSE-specific note name */
+#define	ELF_NOTE_SUSE_NAME		"SuSE\0\0\0\0"
+
+/* NetBSD-specific note type: Emulation name.
+ * name: NetBSD\0\0
+ * namesz: 8
+ * desc: 
+ *      word[0]: MMmmrrpp00
+ *
+ *	M = major version
+ *	m = minor version
+ *	r = release ["",A-Z,Z[A-Z] but numeric]
+ *	p = patchlevel
+ * descsz: 4
+ */
 #define	ELF_NOTE_TYPE_NETBSD_TAG	1
 /* NetBSD-specific note name and description sizes */
 #define	ELF_NOTE_NETBSD_NAMESZ		7
@@ -762,26 +833,39 @@ typedef struct {
 /* NetBSD-specific note name */
 #define	ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
 
-/* NetBSD-specific note type: Checksum.  There should be 1 NOTE per PT_LOAD
-   section.  desc is a tuple of <phnum>(16),<chk-type>(16),<chk-value>. */
+/* NetBSD-specific note type: Checksum. 
+ * There should be 1 NOTE per PT_LOAD section.
+ * name: ???
+ * namesz: ???
+ * desc:
+ * 	a tuple of <phnum>(16),<chk-type>(16),<chk-value>.
+ * descsz: ???
+ */
 #define	ELF_NOTE_TYPE_CHECKSUM_TAG	2
 #define	ELF_NOTE_CHECKSUM_CRC32		1
 #define	ELF_NOTE_CHECKSUM_MD5		2
 #define	ELF_NOTE_CHECKSUM_SHA1		3
 #define	ELF_NOTE_CHECKSUM_SHA256	4
 
-/* NetBSD-specific note type: PaX.  There should be 1 NOTE per executable.
-   section.  desc is a 32 bit bitmask */
-#define ELF_NOTE_TYPE_PAX_TAG		3
+/*
+ * NetBSD-specific note type: PaX.
+ * There should be 1 NOTE per executable.
+ * name: PaX\0
+ * namesz: 4
+ * desc:
+ *	word[0]: capability bitmask
+ * descsz: 4
+ */
+#define	ELF_NOTE_TYPE_PAX_TAG		3
 #define	ELF_NOTE_PAX_MPROTECT		0x01	/* Force enable Mprotect */
 #define	ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable Mprotect */
 #define	ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
 #define	ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Servguard */
 #define	ELF_NOTE_PAX_ASLR		0x10	/* Force enable ASLR */
 #define	ELF_NOTE_PAX_NOASLR		0x20	/* Force disable ASLR */
-#define ELF_NOTE_PAX_NAMESZ		4
-#define ELF_NOTE_PAX_NAME		"PaX\0"
-#define ELF_NOTE_PAX_DESCSZ		4
+#define	ELF_NOTE_PAX_NAMESZ		4
+#define	ELF_NOTE_PAX_NAME		"PaX\0"
+#define	ELF_NOTE_PAX_DESCSZ		4
 
 /*
  * NetBSD-specific core file information.
@@ -865,6 +949,11 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Off		Elf32_Off
 #define	Elf_SOff	Elf32_SOff
 #define	Elf_Nhdr	Elf32_Nhdr
+#define	Elf_Verdef	Elf32_Verdef
+#define	Elf_Verdaux	Elf32_Verdaux
+#define	Elf_Verneed	Elf32_Verneed
+#define	Elf_Vernaux	Elf32_Vernaux
+#define	Elf_Versym	Elf32_Versym
 
 #define	ELF_R_SYM	ELF32_R_SYM
 #define	ELF_R_TYPE	ELF32_R_TYPE
@@ -886,6 +975,11 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Off		Elf64_Off
 #define	Elf_SOff	Elf64_SOff
 #define	Elf_Nhdr	Elf64_Nhdr
+#define	Elf_Verdef	Elf64_Verdef
+#define	Elf_Verdaux	Elf64_Verdaux
+#define	Elf_Verneed	Elf64_Verneed
+#define	Elf_Vernaux	Elf64_Vernaux
+#define	Elf_Versym	Elf64_Versym
 
 #define	ELF_R_SYM	ELF64_R_SYM
 #define	ELF_R_TYPE	ELF64_R_TYPE
@@ -944,13 +1038,18 @@ typedef struct {
 /*
  * These constants are used for Elf32_Verdef struct's version number.  
  */
-#define VER_DEF_NONE		0
+#define	VER_DEF_NONE		0
 #define	VER_DEF_CURRENT		1
+
+/*
+ * These constants are used for Elf32_Verdef struct's vd_ndx.
+ */
+#define	VER_DEF_IDX(x)		VER_NDX(x)
 
 /*
  * These constants are used for Elf32_Verdef struct's vd_flags.  
  */
-#define VER_FLG_BASE		0x1
+#define	VER_FLG_BASE		0x1
 #define	VER_FLG_WEAK		0x2
 
 /*
@@ -958,6 +1057,7 @@ typedef struct {
  */
 #define	VER_NDX_LOCAL		0
 #define	VER_NDX_GLOBAL		1
+#define	VER_NDX_GIVEN		2
 
 /*
  * These constants are used for Elf32_Verneed struct's version number.  
@@ -966,7 +1066,17 @@ typedef struct {
 #define	VER_NEED_CURRENT	1
 
 /*
- * GNU Extension hidding symb
+ * These constants are used for Elf32_Vernaux struct's vna_other.
+ */
+#define	VER_NEED_HIDDEN		VER_NDX_HIDDEN
+#define	VER_NEED_IDX(x)		VER_NDX(x)
+
+/* index */
+#define	VER_NDX_HIDDEN		0x8000
+#define	VER_NDX(x)		((x) & ~VER_NDX_HIDDEN)
+
+/*
+ * GNU Extension hidding symbol
  */
 #define	VERSYM_HIDDEN		0x8000
 #define	VERSYM_VERSION		0x7fff
@@ -1019,18 +1129,18 @@ typedef	Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
 
-#define ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
-#define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
-#define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
+#define	ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
+#define	ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
+#define	ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
+#define	ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
+#define	ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
-#define ELF_NO_ADDR	ELF64_NO_ADDR
-#define ELF_LINK_ADDR	ELF64_LINK_ADDR
+#define	ELF_NO_ADDR	ELF64_NO_ADDR
+#define	ELF_LINK_ADDR	ELF64_LINK_ADDR
 #elif defined(ELFSIZE) && (ELFSIZE == 32)
-#define ELF_NO_ADDR	ELF32_NO_ADDR
-#define ELF_LINK_ADDR	ELF32_LINK_ADDR
+#define	ELF_NO_ADDR	ELF32_NO_ADDR
+#define	ELF_LINK_ADDR	ELF32_LINK_ADDR
 #endif
 
 #ifndef ELF32_EHDR_FLAGS_OK
@@ -1060,6 +1170,8 @@ struct elf_args {
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
 #endif
+
+struct ps_strings;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);

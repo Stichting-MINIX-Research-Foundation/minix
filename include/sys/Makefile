@@ -35,7 +35,7 @@ INCS+=	ansi.h atomic.h \
 	tree.h ttycom.h ttydefaults.h \
 	types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h utsname.h uuid.h \
-	wait.h
+	wait.h exec.h
 
 INCSYMLINKS=\
 	sys/fcntl.h ${NETBSDINCSDIR}/fcntl.h \

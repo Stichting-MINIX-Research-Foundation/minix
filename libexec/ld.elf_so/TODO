@@ -1,0 +1,33 @@
+rtld:
+* resolve MIPS binding lossage
+
+binutils/gcc:
+* alpha: why are there GLOB_DAT relocs in ld.elf_so?
+* alpha: bogus textrels in rtti info
+* mips: why are there global GOT relocs in ld.elf_so?
+* mips: bogus textrels in .rel.dyn
+* powerpc: make sure the .got section is always executable
+* powerpc: fix ld scripts so that .rodata is still used for PIC
+
+machine-specific:
+* #ifdefs:
+headers.c:#ifndef __mips__
+headers.c:#ifdef __mips__
+reloc.c:#if defined(__hppa__)
+rtld.c:#if !defined(__hppa__)
+rtld.c:#if !defined(__mips__) && !defined(__hppa__)
+rtld.c:#if !defined(__arm__) && !defined(__mips__) && !defined(__sh__)
+rtld.c:#ifdef __mips__
+rtld.h:#ifdef __mips__
+symbol.c:#ifndef __mips__
+
+issues to research:
+* sh, x86_64 have different absolute and GLOB_DAT relocs; nothing else does
+* sh, vax, x86_64 use addend on PLT; nothing else does
+
+
+rela: alpha hppa m68k powerpc sh sparc sparc64 vax x86_64
+rel: arm i386 mips
+
+- mycroft
+  2003/09/24

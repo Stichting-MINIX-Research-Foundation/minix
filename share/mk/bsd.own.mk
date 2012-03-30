@@ -58,6 +58,14 @@ TOOLCHAIN_MISSING?=	no
 HAVE_GCC=	4
 .endif
 
+.if \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "x86_64"
+USE_COMPILERCRTSTUFF?=  no
+.endif
+USE_COMPILERCRTSTUFF?=  yes
+
 # default to GDB6
 HAVE_GDB?=	6
 
