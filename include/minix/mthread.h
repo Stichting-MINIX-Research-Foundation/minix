@@ -114,6 +114,8 @@ int mthread_setspecific(mthread_key_t key, void *value);
 void mthread_stats(void);
 void mthread_verify_f(char *f, int l);
 #define mthread_verify() mthread_verify_f(__FILE__, __LINE__)
+void mthread_stacktrace(mthread_thread_t t);
+void mthread_stacktraces(void);
 
 /* mutex.c */
 int mthread_mutex_destroy(mthread_mutex_t *mutex);

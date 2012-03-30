@@ -109,3 +109,53 @@ void mthread_stats(void)
 }
 
 #endif
+
+
+/*===========================================================================*
+ *				mthread_stacktrace			     *
+ *===========================================================================*/
+void mthread_stacktrace(mthread_thread_t t)
+{
+  unsigned long bp, hbp, pc;
+  mthread_tcb_t *tcb;
+  ucontext_t *ctx;
+  mcontext_t *mtx;
+  struct stackframe_s *frame;
+
+  printf("thread %d: ", t);
+
+  tcb = mthread_find_tcb(t);
+  ctx = &tcb->m_context;
+  mtx = &ctx->uc_mcontext;
+  frame = &mtx->mc_p_reg;
+  bp = frame->fp;
+
+  while (bp) {
+	pc = ((unsigned long *) bp)[1];
+	hbp = ((unsigned long *) bp)[0];
+
+	printf("0x%lx ", (unsigned long) pc);
+
+	if (hbp != 0 && hbp <= bp) {
+		pc = -1;
+		printf("0x%lx ", (unsigned long) pc);
+		break;
+	}
+	bp = hbp;
+  }
+
+  printf("\n");
+}
+
+/*===========================================================================*
+ *				mthread_stacktraces			     *
+ *===========================================================================*/
+void mthread_stacktraces(void)
+{
+  mthread_thread_t t;
+
+  mthread_stacktrace(MAIN_THREAD);
+
+  for (t = (mthread_thread_t) 0; t < no_threads; t++)
+	mthread_stacktrace(t);
+}
