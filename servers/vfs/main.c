@@ -71,7 +71,7 @@ int main(void)
  * three major activities: getting new work, processing the work, and sending
  * the reply.  This loop never terminates as long as the file system runs.
  */
-  int transid, req;
+  int transid;
   struct job *job;
 
   /* SEF local startup. */
@@ -83,18 +83,20 @@ int main(void)
   while (TRUE) {
 	yield_all();	/* let other threads run */
 	self = NULL;
+	job = NULL;
 	send_work();
 	get_work();
 
 	transid = TRNS_GET_ID(m_in.m_type);
-	req = TRNS_DEL_ID(m_in.m_type);
-	job = worker_getjob( (thread_t) transid - VFS_TRANSID);
-
-	/* Transaction encoding changes original m_type value; restore. */
-	if (job == NULL)
-		m_in.m_type = transid;
-	else
-		m_in.m_type = req;
+	if (IS_VFS_FS_TRANSID(transid)) {
+		job = worker_getjob( (thread_t) transid - VFS_TRANSID);
+		if (job == NULL) {
+			printf("VFS: spurious message %d from endpoint %d\n",
+				m_in.m_type, m_in.m_source);
+			continue;
+		}
+		m_in.m_type = TRNS_DEL_ID(m_in.m_type);
+	}
 
 	if (job != NULL) {
 		do_fs_reply(job);
