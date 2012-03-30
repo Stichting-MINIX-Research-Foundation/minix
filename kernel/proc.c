@@ -446,7 +446,7 @@ static int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
       || !(callname = ipc_call_names[call_nr])) {
 #if DEBUG_ENABLE_IPC_WARNINGS
       printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
-          call_nr, proc_nr(caller_ptr), src_dst_p);
+          call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }

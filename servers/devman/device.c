@@ -79,12 +79,13 @@ devman_device_add_event(struct devman_device* dev)
 	int res;
 	
 	event = malloc(sizeof(struct devman_event));
-	memset(event, 0, sizeof(event));
 
 	if (event == NULL) {
 		panic("devman_device_remove_event: out of memory\n");
 	}
-	
+
+	memset(event, 0, sizeof(*event));
+
 	strcat(event->data, ADD_STRING);
 
 	res = devman_generate_path(event->data, DEVMAN_STRING_LEN - 11 , dev);
@@ -111,12 +112,13 @@ devman_device_remove_event(struct devman_device* dev)
 	int res;
 	
 	event = malloc(sizeof(struct devman_event));
-	memset(event, 0, sizeof(event));
 
 	if (event == NULL) {
 		panic("devman_device_remove_event: out of memory\n");
 	}
-	
+
+	memset(event, 0, sizeof(*event));
+
 	strcat(event->data, REMOVE_STRING);
 
 	res = devman_generate_path(event->data, DEVMAN_STRING_LEN-11, dev);
