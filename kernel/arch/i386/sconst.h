@@ -2,39 +2,7 @@
 #define __SCONST_H__
 
 #include "kernel/const.h"
-
-/* Miscellaneous constants used in assembler code. */
-	W = _WORD_SIZE	/* Machine word size. */
-
-/* Offsets in struct proc. They MUST match proc.h. */
-	P_STACKBASE = 0
-	GSREG = P_STACKBASE
-	FSREG = GSREG+2	/* 386 introduces FS and GS segments*/
-	ESREG = FSREG+2
-	DSREG = ESREG+2
-	DIREG = DSREG+2
-	SIREG = DIREG+W
-	BPREG = SIREG+W
-	STREG = BPREG+W	/* hole for another SP*/
-	BXREG = STREG+W
-	DXREG = BXREG+W
-	CXREG = DXREG+W
-	AXREG = CXREG+W
-	RETADR = AXREG+W	/* return address for save() call*/
-	PCREG = RETADR+W
-	CSREG = PCREG+W
-	PSWREG = CSREG+W
-	SPREG = PSWREG+W
-	SSREG = SPREG+W
-	P_STACKTOP = SSREG+W
-	FP_SAVE_AREA_P = P_STACKTOP
-	P_LDT_SEL = FP_SAVE_AREA_P + 532
-	P_CR3 = P_LDT_SEL+W
-	P_CR3_V = P_CR3+4
-	P_LDT = P_CR3_V+W
-	P_MISC_FLAGS = P_LDT + 50
-	Msize = 9	/* size of a message in 32-bit words*/
-
+#include "kernel/procoffsets.h"
 
 /*
  * offset to current process pointer right after trap, we assume we always have

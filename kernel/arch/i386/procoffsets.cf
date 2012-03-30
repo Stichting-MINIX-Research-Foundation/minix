@@ -1,0 +1,29 @@
+
+include "kernel.h"
+include "proc.h"
+
+struct proc
+member GSREG p_reg.gs
+member FSREG p_reg.fs
+member ESREG p_reg.es
+member DSREG p_reg.ds
+member DIREG p_reg.di
+member SIREG p_reg.si
+member BPREG p_reg.fp
+member STREG p_reg.st
+member BXREG p_reg.bx
+member DXREG p_reg.dx
+member CXREG p_reg.cx
+member AXREG p_reg.retreg
+member RETADR p_reg.retadr
+member PCREG p_reg.pc
+member CSREG p_reg.cs
+member PSWREG p_reg.psw
+member SPREG p_reg.sp
+member SSREG p_reg.ss
+member FP_SAVE_AREA_P p_fpu_state
+member P_LDT_SEL p_seg.p_ldt_sel
+member P_CR3 p_seg.p_cr3
+member P_CR3_V p_seg.p_cr3_v
+member P_LDT p_seg.p_ldt
+

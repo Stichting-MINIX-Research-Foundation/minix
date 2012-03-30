@@ -91,7 +91,7 @@ SRCS+= profile.c do_sprofile.c
 
 debug.d: extracted-errno.h extracted-mfield.h extracted-mtype.h
 
-CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h
+CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h
 
 extracted-errno.h: extract-errno.sh ../include/errno.h
 	${_MKTARGET_CREATE}
