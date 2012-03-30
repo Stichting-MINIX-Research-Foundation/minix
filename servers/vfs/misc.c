@@ -595,11 +595,81 @@ int ruid;
 int do_svrctl()
 {
   int svrctl;
+  vir_bytes ptr;
 
-  svrctl = m_in.svrctl_req;
+  svrctl = job_m_in.svrctl_req;
+  ptr = (vir_bytes) job_m_in.svrctl_argp;
+  if (((svrctl >> 8) & 0xFF) != 'M') return(EINVAL);
 
   switch (svrctl) {
-  /* No control request implemented yet. */
+    case VFSSETPARAM:
+    case VFSGETPARAM:
+	{
+		struct sysgetenv sysgetenv;
+		char search_key[64];
+		char val[64];
+		int r, s;
+
+		/* Copy sysgetenv structure to VFS */
+		if (sys_datacopy(who_e, ptr, SELF, (vir_bytes) &sysgetenv,
+				 sizeof(sysgetenv)) != OK)
+			return(EFAULT);
+
+		/* Basic sanity checking */
+		if (svrctl == VFSSETPARAM) {
+			if (sysgetenv.keylen <= 0 ||
+			    sysgetenv.keylen > (sizeof(search_key) - 1) ||
+			    sysgetenv.vallen <= 0 ||
+			    sysgetenv.vallen >= sizeof(val)) {
+				return(EINVAL);
+			}
+		}
+
+		/* Copy parameter "key" */
+		if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
+				      SELF, (vir_bytes) search_key,
+				      sysgetenv.keylen)) != OK)
+			return(s);
+		search_key[sysgetenv.keylen] = '\0'; /* Limit string */
+
+		/* Is it a parameter we know? */
+		if (svrctl == VFSSETPARAM) {
+			if (!strcmp(search_key, "verbose")) {
+				int verbose_val;
+				if ((s = sys_datacopy(who_e,
+				    (vir_bytes) sysgetenv.val, SELF,
+				    (vir_bytes) &val, sysgetenv.vallen)) != OK)
+					return(s);
+				val[sysgetenv.vallen] = '\0'; /* Limit string */
+				verbose_val = atoi(val);
+				if (verbose_val < 0 || verbose_val > 4) {
+					return(EINVAL);
+				}
+				verbose = verbose_val;
+				r = OK;
+			} else {
+				r = ESRCH;
+			}
+		} else { /* VFSGETPARAM */
+			if (!strcmp(search_key, "print_traces")) {
+				mthread_stacktraces();
+				sysgetenv.val = 0;
+				sysgetenv.vallen = 0;
+				r = OK;
+			} else {
+				r = ESRCH;
+			}
+
+			if (r == OK) {
+				if ((s = sys_datacopy(SELF,
+				    (vir_bytes) &sysgetenv, who_e, ptr,
+				    sizeof(sysgetenv))) != OK)
+					return(s);
+			}
+		}
+
+		return(r);
+	}
     default:
 	return(EINVAL);
   }

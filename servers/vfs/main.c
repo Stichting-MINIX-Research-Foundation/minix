@@ -486,6 +486,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   force_sync = 0;
   receive_from = ANY;
   self = NULL;
+  verbose = 0;
 
   /* Initialize proc endpoints to NONE */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {

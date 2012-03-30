@@ -14,6 +14,7 @@ EXTERN int nr_locks;		/* number of locks currently in place */
 EXTERN int reviving;		/* number of pipe processes to be revived */
 EXTERN int pending;
 EXTERN int sending;
+EXTERN int verbose;
 
 EXTERN dev_t ROOT_DEV;		/* device number of the root device */
 EXTERN int ROOT_FS_E;           /* kernel endpoint of the root FS proc */

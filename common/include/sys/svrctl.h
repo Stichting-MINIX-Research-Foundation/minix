@@ -18,6 +18,10 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 #define PMGETPARAM	_IOW('M',  5, struct sysgetenv)
 #define PMSETPARAM	_IOR('M',  7, struct sysgetenv)
 
+/* VFS controls */
+#define VFSSETPARAM	_IOR('M', 130, struct sysgetenv)
+#define VFSGETPARAM	_IOR('M', 131, struct sysgetenv)
+
 struct sysgetenv {
 	char		*key;		/* Name requested. */
 	size_t		keylen;		/* Length of name including \0. */
