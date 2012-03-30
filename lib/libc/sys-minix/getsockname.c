@@ -25,14 +25,14 @@
 #define DEBUG 0
 */
 
-static int _tcp_getsockname(int fd, struct sockaddr *restrict address,
-   socklen_t *restrict address_len, nwio_tcpconf_t *tcpconfp);
+static int _tcp_getsockname(int fd, struct sockaddr *__restrict address,
+   socklen_t *__restrict address_len, nwio_tcpconf_t *tcpconfp);
 
-static int _uds_getsockname(int fd, struct sockaddr *restrict address,
-   socklen_t *restrict address_len, struct sockaddr_un *uds_addr);
+static int _uds_getsockname(int fd, struct sockaddr *__restrict address,
+   socklen_t *__restrict address_len, struct sockaddr_un *uds_addr);
 
-int getsockname(int fd, struct sockaddr *restrict address,
-   socklen_t *restrict address_len)
+int getsockname(int fd, struct sockaddr *__restrict address,
+   socklen_t *__restrict address_len)
 {
 	int r;
 	nwio_tcpconf_t tcpconf;
@@ -75,8 +75,8 @@ int getsockname(int fd, struct sockaddr *restrict address,
 }
 
 
-static int _tcp_getsockname(int fd, struct sockaddr *restrict address,
-   socklen_t *restrict address_len, nwio_tcpconf_t *tcpconf)
+static int _tcp_getsockname(int fd, struct sockaddr *__restrict address,
+   socklen_t *__restrict address_len, nwio_tcpconf_t *tcpconf)
 {
 	socklen_t len;
 	struct sockaddr_in sin;
@@ -104,8 +104,8 @@ static int _tcp_getsockname(int fd, struct sockaddr *restrict address,
 	return 0;
 }
 
-static int _uds_getsockname(int fd, struct sockaddr *restrict address,
-   socklen_t *restrict address_len, struct sockaddr_un *uds_addr)
+static int _uds_getsockname(int fd, struct sockaddr *__restrict address,
+   socklen_t *__restrict address_len, struct sockaddr_un *uds_addr)
 {
 	socklen_t len;
 

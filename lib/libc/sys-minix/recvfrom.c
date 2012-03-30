@@ -22,22 +22,22 @@
 
 #define DEBUG 0
 
-static ssize_t _tcp_recvfrom(int sock, void *restrict buffer, size_t length,
-	int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len, nwio_tcpconf_t *tcpconfp);
-static ssize_t _udp_recvfrom(int sock, void *restrict buffer, size_t length,
-	int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len, nwio_udpopt_t *udpoptp);
-static ssize_t _uds_recvfrom_conn(int sock, void *restrict buffer,
-	size_t length, int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len, struct sockaddr_un *uds_addr);
-static ssize_t _uds_recvfrom_dgram(int sock, void *restrict buffer,
-	size_t length, int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len);
+static ssize_t _tcp_recvfrom(int sock, void *__restrict buffer, size_t length,
+	int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len, nwio_tcpconf_t *tcpconfp);
+static ssize_t _udp_recvfrom(int sock, void *__restrict buffer, size_t length,
+	int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len, nwio_udpopt_t *udpoptp);
+static ssize_t _uds_recvfrom_conn(int sock, void *__restrict buffer,
+	size_t length, int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len, struct sockaddr_un *uds_addr);
+static ssize_t _uds_recvfrom_dgram(int sock, void *__restrict buffer,
+	size_t length, int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len);
 
-ssize_t recvfrom(int sock, void *restrict buffer, size_t length,
-	int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len)
+ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
+	int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len)
 {
 	int r;
 	nwio_tcpconf_t tcpconf;
@@ -93,9 +93,9 @@ ssize_t recvfrom(int sock, void *restrict buffer, size_t length,
 	return -1;
 }
 
-static ssize_t _tcp_recvfrom(int sock, void *restrict buffer, size_t length,
-	int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len, nwio_tcpconf_t *tcpconfp)
+static ssize_t _tcp_recvfrom(int sock, void *__restrict buffer, size_t length,
+	int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len, nwio_tcpconf_t *tcpconfp)
 {
 	int r;
 	size_t len;
@@ -127,9 +127,9 @@ static ssize_t _tcp_recvfrom(int sock, void *restrict buffer, size_t length,
 	return r;
 }
 
-static ssize_t _udp_recvfrom(int sock, void *restrict buffer, size_t length,
-	int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len, nwio_udpopt_t *udpoptp)
+static ssize_t _udp_recvfrom(int sock, void *__restrict buffer, size_t length,
+	int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len, nwio_udpopt_t *udpoptp)
 {
 	int r, t_errno;
 	size_t buflen, len;
@@ -226,9 +226,9 @@ static ssize_t _udp_recvfrom(int sock, void *restrict buffer, size_t length,
 	return length;
 }
 
-static ssize_t _uds_recvfrom_conn(int sock, void *restrict buffer, 
-	size_t length, int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len, struct sockaddr_un *uds_addr)
+static ssize_t _uds_recvfrom_conn(int sock, void *__restrict buffer, 
+	size_t length, int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len, struct sockaddr_un *uds_addr)
 {
 	int r;
 	size_t len;
@@ -261,9 +261,9 @@ static ssize_t _uds_recvfrom_conn(int sock, void *restrict buffer,
 	return r;
 }
 
-static ssize_t _uds_recvfrom_dgram(int sock, void *restrict buffer, 
-	size_t length, int flags, struct sockaddr *restrict address,
-	socklen_t *restrict address_len)
+static ssize_t _uds_recvfrom_dgram(int sock, void *__restrict buffer, 
+	size_t length, int flags, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len)
 {
 	int r;
 	size_t len;

@@ -20,14 +20,14 @@
 
 #define DEBUG 0
 
-static int _tcp_accept(int sock, struct sockaddr *restrict address,
-	socklen_t *restrict address_len);
+static int _tcp_accept(int sock, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len);
 
-static int _uds_accept(int sock, struct sockaddr *restrict address,
-	socklen_t *restrict address_len);
+static int _uds_accept(int sock, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len);
 
-int accept(int sock, struct sockaddr *restrict address,
-	socklen_t *restrict address_len)
+int accept(int sock, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len)
 {
 	int r;
 	nwio_udpopt_t udpopt;
@@ -60,8 +60,8 @@ int accept(int sock, struct sockaddr *restrict address,
 	return r;
 }
 
-static int _tcp_accept(int sock, struct sockaddr *restrict address,
-	socklen_t *restrict address_len)
+static int _tcp_accept(int sock, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len)
 {
 	int r, s1, t_errno;
 	tcp_cookie_t cookie;
@@ -90,8 +90,8 @@ static int _tcp_accept(int sock, struct sockaddr *restrict address,
 	return s1;
 }
 
-static int _uds_accept(int sock, struct sockaddr *restrict address,
-	socklen_t *restrict address_len)
+static int _uds_accept(int sock, struct sockaddr *__restrict address,
+	socklen_t *__restrict address_len)
 {
 	int s1;
 	int r;

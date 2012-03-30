@@ -12,7 +12,7 @@ gettimeofday.c
 __weak_alias(gettimeofday, _gettimeofday)
 #endif
 
-int gettimeofday(struct timeval *restrict tp, void *restrict tzp)
+int gettimeofday(struct timeval *__restrict tp, void *__restrict tzp)
 {
   message m;
 

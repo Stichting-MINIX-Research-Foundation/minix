@@ -22,16 +22,16 @@
 #define DEBUG 0
 
 static int _tcp_getsockopt(int sock, int level, int option_name,
-	void *restrict option_value, socklen_t *restrict option_len);
+	void *__restrict option_value, socklen_t *__restrict option_len);
 static int _udp_getsockopt(int sock, int level, int option_name,
-	void *restrict option_value, socklen_t *restrict option_len);
+	void *__restrict option_value, socklen_t *__restrict option_len);
 static int _uds_getsockopt(int sock, int level, int option_name,
-	void *restrict option_value, socklen_t *restrict option_len);
+	void *__restrict option_value, socklen_t *__restrict option_len);
 static void getsockopt_copy(void *return_value, size_t return_len,
-	void *restrict option_value, socklen_t *restrict option_len);
+	void *__restrict option_value, socklen_t *__restrict option_len);
 
 int getsockopt(int sock, int level, int option_name,
-        void *restrict option_value, socklen_t *restrict option_len)
+        void *__restrict option_value, socklen_t *__restrict option_len)
 {
 	int r;
 	nwio_tcpopt_t tcpopt;
@@ -83,7 +83,7 @@ int getsockopt(int sock, int level, int option_name,
 }
 
 static void getsockopt_copy(void *return_value, size_t return_len,
-	void *restrict option_value, socklen_t *restrict option_len)
+	void *__restrict option_value, socklen_t *__restrict option_len)
 {
 	/* copy as much data as possible */
 	if (*option_len < return_len)
@@ -96,7 +96,7 @@ static void getsockopt_copy(void *return_value, size_t return_len,
 }
 
 static int _tcp_getsockopt(int sock, int level, int option_name,
-	void *restrict option_value, socklen_t *restrict option_len)
+	void *__restrict option_value, socklen_t *__restrict option_len)
 {
 	int i, r, err;
 
@@ -157,7 +157,7 @@ static int _tcp_getsockopt(int sock, int level, int option_name,
 }
 
 static int _udp_getsockopt(int sock, int level, int option_name,
-	void *restrict option_value, socklen_t *restrict option_len)
+	void *__restrict option_value, socklen_t *__restrict option_len)
 {
 	int i;
 
@@ -177,7 +177,7 @@ static int _udp_getsockopt(int sock, int level, int option_name,
 }
 
 static int _uds_getsockopt(int sock, int level, int option_name,
-	void *restrict option_value, socklen_t *restrict option_len)
+	void *__restrict option_value, socklen_t *__restrict option_len)
 {
 	int i, r;
 	size_t size;

@@ -8,8 +8,8 @@
  * This is the implementation of the function to
  * invoke the interval timer setting system call.
  */
-int setitimer(int which, const struct itimerval *restrict value,
-		struct itimerval *restrict ovalue)
+int setitimer(int which, const struct itimerval *__restrict value,
+		struct itimerval *__restrict ovalue)
 {
   message m;
 
