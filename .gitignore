@@ -10,7 +10,9 @@ cscope.*
 *.[1-9].gz
 *.o
 *.[psS]o
+lib*.so*
 *.a
+*.so.*
 *.d
 .depend
 nbsdsrc/*

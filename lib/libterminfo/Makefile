@@ -2,10 +2,8 @@
 
 .if defined(__MINIX)
 .include "minix-config.inc"
-USE_SHLIBDIR=	no
-.else
-USE_SHLIBDIR=	yes
 .endif
+USE_SHLIBDIR=	yes
 
 LIB=		terminfo
 WARNS=		4
@@ -59,9 +57,7 @@ man: terminfo.5
 gen: hash compiled_terms man
 
 .include <bsd.own.mk>
-.if !defined(__MINIX)
 .include <bsd.shlib.mk>
-.endif
 
 .if ${MKLINKLIB} != "no"
 SYMLINKS+=	libterminfo.a ${LIBDIR}/libtermcap.a

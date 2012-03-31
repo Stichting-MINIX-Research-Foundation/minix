@@ -57,6 +57,10 @@ __RCSID("$NetBSD: load.c,v 1.42 2010/12/24 12:41:43 skrll Exp $");
 #include <sys/sysctl.h>
 #include <dirent.h>
 
+#ifdef __minix
+#define munmap minix_munmap
+#endif
+
 #include "debug.h"
 #include "rtld.h"
 
@@ -211,6 +215,9 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 
 	dbg(("load by name %s %p", name, x));
 	for (; x; x = x->next) {
+#ifdef __minix
+		continue;
+#else
 		if (strcmp(x->name, name) != 0)
 			continue;
 
@@ -274,6 +281,7 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 				
 		}
 		
+#endif
 	}
 
 	if (got)

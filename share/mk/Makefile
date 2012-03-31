@@ -8,7 +8,7 @@ FILES=	bsd.dep.mk bsd.files.mk \
 	bsd.init.mk bsd.kinc.mk bsd.klinks.mk bsd.lib.mk \
 	bsd.links.mk bsd.man.mk bsd.obj.mk bsd.own.mk \
 	bsd.prog.mk bsd.subdir.mk bsd.sys.mk bsd.doc.mk \
-	sys.mk
+	bsd.shlib.mk sys.mk
 
 # MINIX-specific files
 FILES+= minix.bootprog.mk minix.service.mk \

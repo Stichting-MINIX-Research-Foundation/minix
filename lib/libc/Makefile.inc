@@ -19,11 +19,7 @@
 
 USE_FORT?=	yes
 
-.if defined(__MINIX)
-USE_SHLIBDIR= no
-.else
 USE_SHLIBDIR=	yes
-.endif
 
 CITRUS?=	yes
 

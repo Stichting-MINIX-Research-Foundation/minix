@@ -5,6 +5,12 @@
 
 WARNS?=4
 
+# This executable needs to be linked dynamically
+MINIXDYNAMIC=yes
+
+# And the minix gcc currently references /libexec/ld-elf.so.1
+SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld-elf.so.1
+
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
 .include <${BSD_MK_COMPAT_FILE}>
@@ -75,7 +81,7 @@ SRCS+=		stack_protector.c
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/stdlib
 SRCS+=		exit.c
 
-errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
+errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/include/sys/errno.h
 	${TOOL_AWK} -v concat=1 -f ${.ALLSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
@@ -93,8 +99,8 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
-#DBG=		-g
-DBG=		-O3 -fomit-frame-pointer
+DBG=		-g
+#DBG=		-O3 -fomit-frame-pointer
 
 .if ${SHLIBDIR} != ${LIBDIR}
 CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"

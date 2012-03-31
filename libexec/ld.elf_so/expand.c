@@ -62,15 +62,20 @@ static const struct {
 	ADD(PLATFORM)	/* uname -p */
 };
 
+#ifndef __minix
 static int mib[3][2] = {
 	{ CTL_KERN, KERN_OSTYPE },
 	{ CTL_KERN, KERN_OSRELEASE },
 	{ CTL_HW, HW_MACHINE_ARCH },
 };
+#endif
 
 static size_t
 expand(char *buf, const char *execname, int what, size_t bl)
 {
+#ifdef __minix
+	return 0;
+#else
 	const char *p, *ep;
 	char *bp = buf;
 	size_t len;
@@ -106,6 +111,7 @@ expand(char *buf, const char *execname, int what, size_t bl)
 		*bp++ = *p++, bl--;
 
 	return bp - buf;
+#endif
 }
 		
 

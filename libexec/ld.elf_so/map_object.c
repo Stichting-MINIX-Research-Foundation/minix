@@ -119,6 +119,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	int		 nsegs;
 	caddr_t		 mapbase = MAP_FAILED;
 	size_t		 mapsize = 0;
+	size_t		 bsssize = 0;
 	int		 mapflags;
 	Elf_Off		 base_offset;
 #ifdef MAP_ALIGNED
@@ -367,22 +368,29 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		goto bad;
 	}
 
+	bsssize= base_vlimit - data_vlimit;
+   if(bsssize > 0) {
 	/* Overlay the bss segment onto the proper region. */
-	if (mmap(mapbase + data_vlimit - base_vaddr, base_vlimit - data_vlimit,
+	if (mmap(mapbase + data_vlimit - base_vaddr, bsssize,
 	    data_flags, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) ==
 	    MAP_FAILED) {
-		_rtld_error("mmap of bss failed: %s", xstrerror(errno));
+		_rtld_error("mmap of bss (at 0x%lx, 0x%lx bytes) failed: %s",
+			mapbase + data_vlimit - base_vaddr, bsssize, xstrerror(errno));
 		goto bad;
 	}
+    }
 
 	/* Unmap the gap between the text and data. */
 	gap_addr = mapbase + round_up(text_vlimit - base_vaddr);
 	gap_size = data_addr - gap_addr;
+
+#ifndef __minix
 	if (gap_size != 0 && mprotect(gap_addr, gap_size, PROT_NONE) == -1) {
 		_rtld_error("mprotect of text -> data gap failed: %s",
 		    xstrerror(errno));
 		goto bad;
 	}
+#endif
 
 #ifdef RTLD_LOADER
 	/* Clear any BSS in the last page of the data segment. */

@@ -159,9 +159,9 @@ FILESDIR=	/var/db
 # workaround for I18N stuffs: build singlebyte setlocale() for libc.a,
 # multibyte for libc.so.  the quirk should be removed when we support
 # dlopen() from within statically linked binaries.
-.if (${CITRUS} == "yes")
-CSHLIBFLAGS+=	-D_I18N_DYNAMIC
-.endif
+#.if (${CITRUS} == "yes")
+#CSHLIBFLAGS+=	-D_I18N_DYNAMIC
+#.endif
 
 .include <bsd.lib.mk>
 

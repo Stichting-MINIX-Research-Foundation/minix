@@ -66,6 +66,8 @@ USE_COMPILERCRTSTUFF?=  no
 .endif
 USE_COMPILERCRTSTUFF?=  yes
 
+USE_FORT?= no
+
 # default to GDB6
 HAVE_GDB?=	6
 
@@ -730,6 +732,20 @@ MKBINUTILS?=	${MKBFD}
 #
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 MKZFS?=		yes
+.endif
+
+# Some tough Minix defaults
+MKPROFILE?=     no
+MKSTATICLIB:=   yes
+MKLINT:=        no
+
+# Is a clang installed that understands what to do with -shared,
+# needed to build shared libraries? If not then default to no
+# to build them. (It could still be done with gcc though so MKPIC
+# might be set to yes by the user.)
+.if !exists(/usr/pkg/bin/clang.dynok)
+NONPICCLANG=	yes	# Hint to other Makefiles
+MKPIC?=         no
 .endif
 
 #

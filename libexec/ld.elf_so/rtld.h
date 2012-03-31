@@ -47,7 +47,7 @@
 #if defined(_RTLD_SOURCE)
 
 #ifndef	RTLD_DEFAULT_LIBRARY_PATH
-#define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
+#define	RTLD_DEFAULT_LIBRARY_PATH	"/lib:/usr/lib:/libexec"
 #endif
 #define _PATH_LD_HINTS			"/etc/ld.so.conf"
 

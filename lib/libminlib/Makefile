@@ -3,6 +3,8 @@
 INCSDIR= /usr/include
 LIB=	minlib
 
+USE_SHLIBDIR= yes
+
 CPPFLAGS.fslib.c+= -I${MINIXSRCDIR}/servers
 CPPFLAGS.fsversion.c+= -I${MINIXSRCDIR}/servers
 SRCS+= 	fslib.c fsversion.c

@@ -1,5 +1,7 @@
 755 root    operator /
 755 root     operator /bin
+755 root     operator /lib
+755 root     operator /libexec
 755 root     operator /sbin
 755 root    operator /dev
 /dev/mouse -> /dev/kbdaux

@@ -369,4 +369,10 @@ ${TARGETS}:	# ensure existence
 ${.CURDIR}/.gitignore: Makefile
 	echo $(CLEANFILES) $(PROGS) | tr ' ' '\n' >${.TARGET}
 
+.if defined(MINIXDYNAMIC)
+LDFLAGS += -dynamic
+.else
+LDFLAGS += -static
+.endif
+
 .endif	# HOSTPROG

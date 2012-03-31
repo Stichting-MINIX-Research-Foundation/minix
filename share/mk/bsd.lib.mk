@@ -2,7 +2,7 @@
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
-#.include <bsd.shlib.mk>
+.include <bsd.shlib.mk>
 #.include <bsd.gcc.mk>
 # Pull in <bsd.sys.mk> here so we can override its .c.o rule
 .include <bsd.sys.mk>
@@ -11,11 +11,15 @@ LIBISMODULE?=	no
 LIBISPRIVATE?=	no
 LIBISCXX?=	no
 
-# Some tough Minix defaults
-MKPROFILE:=	no
-MKSTATICLIB:=	yes
-MKPIC:=		no
-MKLINT:=	no
+# Build shared libraries if not set to no by now
+MKPIC?=		yes
+
+# If we're making a library but aren't making shared
+# libraries and it's because there's a non-shared-aware clang
+# installed, warn the user that that's the reason.
+.if $(MKPIC) == "no" && defined(NONPICCLANG)
+.warning Old clang, not building shared.
+.endif
 
 _LIB_PREFIX=	lib
 
@@ -518,7 +522,7 @@ DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .else
 LDLIBC ?= -nodefaultlibs
 .if ${LIB} == "c"
-LDADD+= -lgcc_pic
+#LDADD+= -lgcc_pic
 .endif
 .endif
 .endif

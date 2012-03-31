@@ -49,7 +49,9 @@ __RCSID("$NetBSD: paths.c,v 1.40 2009/05/19 20:44:52 christos Exp $");
 #include <sys/gmon.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
+#ifndef __minix
 #include <sys/mbuf.h>
+#endif
 #include <sys/resource.h>
 #include <machine/cpu.h>
 
@@ -336,13 +338,17 @@ void
 _rtld_process_hints(const char *execname, Search_Path **path_p,
     Library_Xform **lib_p, const char *fname)
 {
+
+#ifdef __minix
+	/* Minix doesn't support MAP_SHARED. */
+	return;
+#else
 	int fd;
 	char *buf, small[128];
 	const char *b, *ep, *ptr;
 	struct stat st;
 	ssize_t sz;
 	Search_Path **head_p = path_p;
-
 	if ((fd = open(fname, O_RDONLY)) == -1) {
 		/* Don't complain */
 		return;
@@ -406,8 +412,10 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 
 	if (buf != small)
 		(void)munmap(buf, sz);
+#endif
 }
 
+#ifndef __minix
 /* Basic name -> sysctl MIB translation */
 int
 _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
@@ -476,3 +484,4 @@ bad:
 	xfree(result);
 	return (-1);
 }
+#endif
