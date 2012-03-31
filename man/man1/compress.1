@@ -15,14 +15,28 @@ compress, uncompress, zcat \- compress a file using modified Lempel-Ziv coding
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-c" "Put output on \fIstdout\fR instead of on \fIfile.Z\fR"
-.FL "\-d" "Decompress instead of compress"
-.FL "\-f" "Force output even if there is no saving"
-.FL "\-v" "Verbose mode"
+.TP 5
+.B \-c
+# Put output on \fIstdout\fR instead of on \fIfile.Z\fR
+.TP 5
+.B \-d
+# Decompress instead of compress
+.TP 5
+.B \-f
+# Force output even if there is no saving
+.TP 5
+.B \-v
+# Verbose mode
 .SH EXAMPLES
-.EX "compress <infile >outfile" "Compress 1 file"
-.EX "compress x y z" "Compress 3 files to \fIx.Z\fR, \fIy.Z\fR, and \fIz.Z\fR"
-.EX "compress \-d file.Z" "Decompress \fIfile.Z\fR to \fIfile\fR"
+.TP 20
+.B compress <infile >outfile
+# Compress 1 file
+.TP 20
+.B compress x y z
+# Compress 3 files to \fIx.Z\fR, \fIy.Z\fR, and \fIz.Z\fR
+.TP 20
+.B compress \-d file.Z
+# Decompress \fIfile.Z\fR to \fIfile\fR
 .SH DESCRIPTION
 .PP
 The listed files (or \fIstdin\fR, if none are given) are compressed

@@ -15,12 +15,22 @@ dosdir \- list an MS-DOS directory [IBM]
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-l" "Long listing"
-.FL "\-r" "Recursively descend and print subdirectories"
+.TP 5
+.B \-l
+# Long listing
+.TP 5
+.B \-r
+# Recursively descend and print subdirectories
 .SH EXAMPLES
-.EX "dosdir \-l A" "List root directory on drive A"
-.EX "dosdir \-r C x/y" "Recursively list directory \fIx/y\fR"
-.EX "dosdir \-r fd1" "List device \fI/dev/fd1\fR"
+.TP 20
+.B dosdir \-l A
+# List root directory on drive A
+.TP 20
+.B dosdir \-r C x/y
+# Recursively list directory \fIx/y\fR
+.TP 20
+.B dosdir \-r fd1
+# List device \fI/dev/fd1\fR
 .SH DESCRIPTION
 .PP
 .I Dosdir

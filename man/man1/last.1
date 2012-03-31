@@ -17,15 +17,31 @@ last, uptime \- display recent on-line session records, show uptime
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-f" "Use \fIfile\fR instead of /usr/adm/wtmp"
-.FL "\-r" "Search backwards only to last reboot"
-.FL "\-u" "Print uptime since last reboot"
-.FL "\-\fIn\fP" "Print a maximum of \fIn\fR lines"
+.TP 5
+.B \-f
+# Use \fIfile\fR instead of /usr/adm/wtmp
+.TP 5
+.B \-r
+# Search backwards only to last reboot
+.TP 5
+.B \-u
+# Print uptime since last reboot
+.TP 5
+.B \-\fIn\fP
+# Print a maximum of \fIn\fR lines
 .SH EXAMPLES
-.EX "last reboot" "When was the system last rebooted?"
-.EX "last ast" "When was the last login for ast?"
-.EX "last \-10 tty00 tty01" "Display last 10 logins on tty00 or tty01"
-.EX "uptime" "Display uptime (likewise \fBlast \-u\fR)"
+.TP 20
+.B last reboot
+# When was the system last rebooted?
+.TP 20
+.B last ast
+# When was the last login for ast?
+.TP 20
+.B last \-10 tty00 tty01
+# Display last 10 logins on tty00 or tty01
+.TP 20
+.B uptime
+# Display uptime (likewise \fBlast \-u\fR)
 .SH DESCRIPTION
 .PP
 .I Last

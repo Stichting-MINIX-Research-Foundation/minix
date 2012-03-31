@@ -15,12 +15,22 @@ uud, uudecode \- decode a binary file encoded with uue
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-n" "Do not verify checksums"
-.FL "\-s" "Name of directory where \fI.uue\fR file is"
-.FL "\-t" "Name of directory where output goes"
+.TP 5
+.B \-n
+# Do not verify checksums
+.TP 5
+.B \-s
+# Name of directory where \fI.uue\fR file is
+.TP 5
+.B \-t
+# Name of directory where output goes
 .SH EXAMPLES
-.EX "uud file.uue " "Re-create the original file"
-.EX "uud \- <file.uue" "The \- means use \fIstdin\fR"
+.TP 20
+.B uud file.uue
+# Re-create the original file
+.TP 20
+.B uud \- <file.uue
+# The \- means use \fIstdin\fR
 .SH DESCRIPTION
 .PP
 \fIUud\fR decodes a file encoded with \fIuue\fR or

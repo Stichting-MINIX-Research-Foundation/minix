@@ -17,16 +17,34 @@ uname, arch \- system info
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-s" "System name"
-.FL "\-n" "Node/network name"
-.FL "\-r" "Operating system release"
-.FL "\-v" "Operating system version"
-.FL "\-m" "Machine type"
-.FL "\-p" "Processor family"
-.FL "\-a" "Short for \fB\-snrvm\fR"
+.TP 5
+.B \-s
+# System name
+.TP 5
+.B \-n
+# Node/network name
+.TP 5
+.B \-r
+# Operating system release
+.TP 5
+.B \-v
+# Operating system version
+.TP 5
+.B \-m
+# Machine type
+.TP 5
+.B \-p
+# Processor family
+.TP 5
+.B \-a
+# Short for \fB\-snrvm\fR
 .SH EXAMPLES
-.EX "uname -n" "Print the name of the system"
-.EX "arch" "Print the name of the system architecture"
+.TP 20
+.B uname -n
+# Print the name of the system
+.TP 20
+.B arch
+# Print the name of the system architecture
 .SH DESCRIPTION
 .PP
 \fIUname\fP and \fIarch\fP give information about the system.  The options

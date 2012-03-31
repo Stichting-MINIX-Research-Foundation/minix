@@ -9,8 +9,12 @@ ping \- send ICMP ECHO_REQUEST packets to network hosts
 # \\$2
 ..
 .SH EXAMPLES
-.EX "ping 192.168.1.1" "Ping host 192.168.1.1"
-.EX "ping www.minix3.org 500" "Ping www.minix3.org with 500 byte IP packets"
+.TP 20
+.B ping 192.168.1.1
+# Ping host 192.168.1.1
+.TP 20
+.B ping www.minix3.org 500
+# Ping www.minix3.org with 500 byte IP packets
 .SH DESCRIPTION
 .PP
 Sends ICMP ECHO_REQUEST packets to the specified host and waits for a ECHO_REPLY.

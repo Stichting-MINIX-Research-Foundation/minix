@@ -15,13 +15,25 @@ kill \- send a signal to a process
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-\fIn\fR" "Signal number to send"
-.FL "\-\fINAME\fR" "Named signal to send"
+.TP 5
+.B \-\fIn\fR
+# Signal number to send
+.TP 5
+.B \-\fINAME\fR
+# Named signal to send
 .SH EXAMPLES
-.EX "kill 35" "Send signal 15 to process 35"
-.EX "kill \-9 40" "Send signal 9 to process 40"
-.EX "kill \-2 0" "Send signal 2 to whole terminal process group"
-.EX "kill \-HUP -123" "Send a hangup to process group 123"
+.TP 20
+.B kill 35
+# Send signal 15 to process 35
+.TP 20
+.B kill \-9 40
+# Send signal 9 to process 40
+.TP 20
+.B kill \-2 0
+# Send signal 2 to whole terminal process group
+.TP 20
+.B kill \-HUP -123
+# Send a hangup to process group 123
 .SH DESCRIPTION
 .PP
 A signal is sent to a given process.

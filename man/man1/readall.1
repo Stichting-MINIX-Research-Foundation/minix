@@ -15,11 +15,19 @@ readall \- read a device quickly to check for bad blocks
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-b" "Produce shell script on \fIstdout\fR that calls \fIbadblocks\fR"
-.FL "\-t" "Just print device size"
+.TP 5
+.B \-b
+# Produce shell script on \fIstdout\fR that calls \fIbadblocks\fR
+.TP 5
+.B \-t
+# Just print device size
 .SH EXAMPLES
-.EX "readall /dev/hd0" "Read all of \fI/dev/hd0\fR"
-.EX "readall -b /dev/hd1 >s" "Generate shell script on \fIs\fR"
+.TP 20
+.B readall /dev/hd0
+# Read all of \fI/dev/hd0\fR
+.TP 20
+.B readall -b /dev/hd1 >s
+# Generate shell script on \fIs\fR
 .SH DESCRIPTION
 .PP
 \fIReadall\fR reads all of the named device in large chunks.  

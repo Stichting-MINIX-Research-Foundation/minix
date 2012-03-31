@@ -15,14 +15,28 @@ ps \- process status
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-a" "Print all processes with controlling terminals"
-.FL "\-l" "Give long listing"
-.FL "\-x" "Include processes without a terminal"
-.FL "\-E" "Print kernel endpoint numbers where pids are normally printed"
+.TP 5
+.B \-a
+# Print all processes with controlling terminals
+.TP 5
+.B \-l
+# Give long listing
+.TP 5
+.B \-x
+# Include processes without a terminal
+.TP 5
+.B \-E
+# Print kernel endpoint numbers where pids are normally printed
 .SH EXAMPLES
-.EX "ps " "Show user's own processes in short format"
-.EX "ps \-axlE" "Print all processes and tasks in long format"
-.EX "ps \axlE" "Same -- the '\-' is optional"
+.TP 20
+.B ps
+# Show user's own processes in short format
+.TP 20
+.B ps \-axlE
+# Print all processes and tasks in long format
+.TP 20
+.B ps \axlE
+# Same -- the '\-' is optional
 .SH DESCRIPTION
 .PP
 \fIPs\fR prints the status of active processes.  Normally only the caller's own

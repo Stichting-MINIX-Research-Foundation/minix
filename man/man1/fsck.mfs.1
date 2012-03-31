@@ -15,16 +15,34 @@ fsck \- perform file system consistency check
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-a" "Automatically repair inconsistencies"
-.FL "\-c" "Check and list only the specified i-nodes
-.FL "\-l" "List the files and directories in the filesytem
-.FL "\-r" "Prompt user for repairs if inconsistencies are found
-.FL "\-s" "List the superblock of the file system"
+.TP 5
+.B \-a
+# Automatically repair inconsistencies
+.TP 5
+.B \-c
+# Check and list only the specified i-nodes
+.TP 5
+.B \-l
+# List the files and directories in the filesytem
+.TP 5
+.B \-r
+# Prompt user for repairs if inconsistencies are found
+.TP 5
+.B \-s
+# List the superblock of the file system
 .SH EXAMPLES
-.EX "fsck /dev/c0d0p3" "Check file system on \fI/dev/c0d0p3\fR"
-.EX "fsck \-a /dev/at0" "Automatically fix errors on \fI/dev/at0\fR"
-.EX "fsck \-l /dev/fd0" "List the contents of \fI/dev/fd0\fR"
-.EX "fsck \-c 2 3 /dev/c0d0p2" "Check and list \fI/dev/c0d0p2\fR i-nodes 2 & 3"
+.TP 20
+.B fsck /dev/c0d0p3
+# Check file system on \fI/dev/c0d0p3\fR
+.TP 20
+.B fsck \-a /dev/at0
+# Automatically fix errors on \fI/dev/at0\fR
+.TP 20
+.B fsck \-l /dev/fd0
+# List the contents of \fI/dev/fd0\fR
+.TP 20
+.B fsck \-c 2 3 /dev/c0d0p2
+# Check and list \fI/dev/c0d0p2\fR i-nodes 2 & 3
 .SH DESCRIPTION
 .PP
 \fIFsck\fR performs consistency checks on the file systems which reside 

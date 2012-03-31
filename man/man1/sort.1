@@ -15,22 +15,52 @@ sort \- sort a file of ASCII lines
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-b" "Skip leading blanks when making comparisons"
-.FL "\-c" "Check to see if a file is sorted"
-.FL "\-d" "Dictionary order: ignore punctuation"
-.FL "\-f" "Fold upper case onto lower case"
-.FL "\-i" "Ignore nonASCII characters"
-.FL "\-m" "Merge presorted files"
-.FL "\-n" "Numeric sort order"
-.FL "\-o" "Next argument is output file"
-.FL "\-r" "Reverse the sort order"
-.FL "\-t" "Following character is field separator"
-.FL "\-u" "Unique mode (delete duplicate lines)"
+.TP 5
+.B \-b
+# Skip leading blanks when making comparisons
+.TP 5
+.B \-c
+# Check to see if a file is sorted
+.TP 5
+.B \-d
+# Dictionary order: ignore punctuation
+.TP 5
+.B \-f
+# Fold upper case onto lower case
+.TP 5
+.B \-i
+# Ignore nonASCII characters
+.TP 5
+.B \-m
+# Merge presorted files
+.TP 5
+.B \-n
+# Numeric sort order
+.TP 5
+.B \-o
+# Next argument is output file
+.TP 5
+.B \-r
+# Reverse the sort order
+.TP 5
+.B \-t
+# Following character is field separator
+.TP 5
+.B \-u
+# Unique mode (delete duplicate lines)
 .SH EXAMPLES
-.EX "sort \-nr file" "Sort keys numerically, reversed"
-.EX "sort +2 \-4 file" "Sort using fields 2 and 3 as key"
-.EX "sort +2 \-t: \-o out" "Field separator is \fI:\fP"
-.EX "sort +.3 \-.6" "Characters 3 through 5 form the key"
+.TP 20
+.B sort \-nr file
+# Sort keys numerically, reversed
+.TP 20
+.B sort +2 \-4 file
+# Sort using fields 2 and 3 as key
+.TP 20
+.B sort +2 \-t: \-o out
+# Field separator is \fI:\fP
+.TP 20
+.B sort +.3 \-.6
+# Characters 3 through 5 form the key
 .SH DESCRIPTION
 .PP
 .I Sort

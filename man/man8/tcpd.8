@@ -5,10 +5,12 @@ tcpd, tcpdp \- waits for a TCP connection request and starts a server
 .B tcpd
 .RB [ \-d ]
 .RB [ \-m 
-.RI maxclients ]
-.RI service 
-.RI program
-.RB [ arg ... ]
+.I maxclients
+]
+.I service
+.I program
+.RB [ arg ...
+]
 .SH DESCRIPTION
 .de SP
 .if t .sp 0.4
@@ -75,9 +77,12 @@ to start.
 \\fB\\$1\\fR
 # \\$2
 ..
-.TP 15n
-.EX "tcpd telnet in.telnetd &" "wait for a telnet connection on the normal port"
-.EX "tcpd 8000 in.httpd /etc/httpd8000.conf &" "wait for web page request on port 8000 and use a custom config file for the in.httpd program."
+.TP 20
+.B tcpd telnet in.telnetd &
+# wait for a telnet connection on the normal port
+.TP 20
+.B tcpd 8000 in.httpd /etc/httpd8000.conf &
+# wait for web page request on port 8000 and use a custom config file for the in.httpd program.
 .P
 Note that command lines must be terminated with "&" to return control to the
 calling process, leaving the daemon executing as a background process. 
@@ -85,13 +90,17 @@ calling process, leaving the daemon executing as a background process.
 The above examples show how tcpd might be invoked from /etc/rc or
 another script that runs during system initialization.  You will also
 see this in the supplied startup scripts:
-.EX "daemonize tcpd shell in.rshd" "daemonize is a shell function that tests whether a daemon is present and starts it if so, using the & to start it in the background."
+.TP 20
+.B daemonize tcpd shell in.rshd
+# daemonize is a shell function that tests whether a daemon is present and starts it if so, using the & to start it in the background.
 .P
 Another case that should be mentioned is that when a system administrator
 wants to start (or restart) a daemon from a command line,
 .BR intr (8)
 should be used, like this:
-.EX "intr -d tcpd telnet in.telnetd &" "remove the daemon from a process group and connect its input to /dev/null and its output to /dev/log."   
+.TP 20
+.B intr -d tcpd telnet in.telnetd &
+# remove the daemon from a process group and connect its input to /dev/null and its output to /dev/log.   
 .SH FILES
 .TP 25n
 .B /etc/serv.access

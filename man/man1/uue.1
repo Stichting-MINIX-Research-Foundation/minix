@@ -15,11 +15,19 @@ uue, uuencode \- encode a binary file to ASCII (e.g., for mailing)
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-\fIn\fR" "How many lines to put in each file"
+.TP 5
+.B \-\fIn\fR
+# How many lines to put in each file
 .SH EXAMPLES
-.EX "uue file" "Encode \fIfile\fR to \fIfile.uue\fR"
-.EX "uue file \- >x" "Encode \fIfile\fR and write on \fIstdout\fR"
-.EX "uue \-800 file" "Output on \fIfile.uaa\fR, \fIfile.uab\fR etc."
+.TP 20
+.B uue file
+# Encode \fIfile\fR to \fIfile.uue\fR
+.TP 20
+.B uue file \- >x
+# Encode \fIfile\fR and write on \fIstdout\fR
+.TP 20
+.B uue \-800 file
+# Output on \fIfile.uaa\fR, \fIfile.uab\fR etc.
 .SH DESCRIPTION
 .PP
 \fIUuencode\fR is a famous program that converts an arbitrary (usually binary)

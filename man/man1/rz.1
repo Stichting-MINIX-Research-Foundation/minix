@@ -15,16 +15,34 @@ rz \- receive a file using the zmodem protocol
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-a" "CP/M to UNIX conventions"
-.FL "\-b" "Binary file"
-.FL "\-e" "Escape for all control characters"
-.FL "\-p" "Protect file if it already exists"
-.FL "\-q" "Quiet; opposite of verbose"
-.FL "\-t" "Set \fItimeout\fR in tenths of a second"
-.FL "\-v" "Verbose; opposite of quiet"
-.FL "\-y" "Yes, clobber existing files"
+.TP 5
+.B \-a
+# CP/M to UNIX conventions
+.TP 5
+.B \-b
+# Binary file
+.TP 5
+.B \-e
+# Escape for all control characters
+.TP 5
+.B \-p
+# Protect file if it already exists
+.TP 5
+.B \-q
+# Quiet; opposite of verbose
+.TP 5
+.B \-t
+# Set \fItimeout\fR in tenths of a second
+.TP 5
+.B \-v
+# Verbose; opposite of quiet
+.TP 5
+.B \-y
+# Yes, clobber existing files
 .SH EXAMPLES
-.EX "rz </dev/tty01 >/dev/tty01" "Receive a file"
+.TP 20
+.B rz </dev/tty01 >/dev/tty01
+# Receive a file
 .SH DESCRIPTION
 .PP
 The XMODEM, YMODEM, and ZMODEM family of file transfer programs are widely

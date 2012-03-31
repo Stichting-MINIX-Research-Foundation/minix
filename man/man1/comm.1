@@ -15,12 +15,22 @@ comm \- print lines common to two sorted files
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-1" "Suppress column 1 (lines present only in \fIfile1\fP)" 
-.FL "\-2" "Suppress column 2 (lines present only in \fIfile2\fP)" 
-.FL "\-3" "Suppress column 3 (lines present in both files)"
+.TP 5
+.B \-1
+# Suppress column 1 (lines present only in \fIfile1\fP)
+.TP 5
+.B \-2
+# Suppress column 2 (lines present only in \fIfile2\fP)
+.TP 5
+.B \-3
+# Suppress column 3 (lines present in both files)
 .SH EXAMPLES
-.EX "comm file1 file2" "Print all three columns"
-.EX "comm \-12 file1 file2" "Print only lines common to both files"
+.TP 20
+.B comm file1 file2
+# Print all three columns
+.TP 20
+.B comm \-12 file1 file2
+# Print only lines common to both files
 .SH DESCRIPTION
 .PP
 Two sorted files are read and compared.

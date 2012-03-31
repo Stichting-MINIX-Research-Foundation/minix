@@ -15,19 +15,43 @@ backup \- backup files
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-d" "At top level, only directories are backed up"
-.FL "\-j" "Do not copy junk: \fI *.Z, *.bak, a.out, core\fR, etc"
-.FL "\-m" "If device full, prompt for new diskette"
-.FL "\-n" "Do not backup top-level directories"
-.FL "\-o" "Do not copy \fI*.o\fR files"
-.FL "\-r" "Restore files"
-.FL "\-s" "Do not copy \fI*.s\fR files"
-.FL "\-t" "Preserve creation times"
-.FL "\-v" "Verbose; list files being backed up"
-.FL "\-z" "Compress the files on the backup medium"
+.TP 5
+.B \-d
+# At top level, only directories are backed up
+.TP 5
+.B \-j
+# Do not copy junk: \fI *.Z, *.bak, a.out, core\fR, etc
+.TP 5
+.B \-m
+# If device full, prompt for new diskette
+.TP 5
+.B \-n
+# Do not backup top-level directories
+.TP 5
+.B \-o
+# Do not copy \fI*.o\fR files
+.TP 5
+.B \-r
+# Restore files
+.TP 5
+.B \-s
+# Do not copy \fI*.s\fR files
+.TP 5
+.B \-t
+# Preserve creation times
+.TP 5
+.B \-v
+# Verbose; list files being backed up
+.TP 5
+.B \-z
+# Compress the files on the backup medium
 .SH EXAMPLES
-.EX "backup \-mz . /f0" "Backup current directory compressed"
-.EX "backup /bin /usr/bin" "Backup bin from RAM disk to hard disk"
+.TP 20
+.B backup \-mz . /f0
+# Backup current directory compressed
+.TP 20
+.B backup /bin /usr/bin
+# Backup bin from RAM disk to hard disk
 .SH DESCRIPTION
 .PP
 \fIBackup\fR (recursively) backs up the contents of a given directory and its

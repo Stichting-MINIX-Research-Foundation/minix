@@ -17,9 +17,15 @@ mknod \- create a special file
 # \\$2
 ..
 .SH EXAMPLES
-.EX "mknod /dev/plotter c 7 0" "Create special file for a plotter"
-.EX "mknod /dev/fd3 b 2 3" "Create a device for diskette drive 3"
-.EX "mknod /tmp/stream p" "Create a named pipe"
+.TP 20
+.B mknod /dev/plotter c 7 0
+# Create special file for a plotter
+.TP 20
+.B mknod /dev/fd3 b 2 3
+# Create a device for diskette drive 3
+.TP 20
+.B mknod /tmp/stream p
+# Create a named pipe
 .SH DESCRIPTION
 .PP
 .I Mknod

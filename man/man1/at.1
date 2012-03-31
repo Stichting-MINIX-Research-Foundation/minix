@@ -15,9 +15,15 @@ at \- execute commands at a later time
 # \\$2
 ..
 .SH EXAMPLES
-.EX "at 2315 Jan 31 myfile" "Myfile executed Jan 31 at 11:15 pm"
-.EX "at 0900" "Job input read from \fIstdin\fR"
-.EX "at 0711 4 29 " "Read from \fIstdin\fR, exec on April 29"
+.TP 20
+.B at 2315 Jan 31 myfile
+# Myfile executed Jan 31 at 11:15 pm
+.TP 20
+.B at 0900
+# Job input read from \fIstdin\fR
+.TP 20
+.B at 0711 4 29
+# Read from \fIstdin\fR, exec on April 29
 .SH DESCRIPTION
 .PP
 \fBAt\fR prepares a file to be executed later at the specified time by 

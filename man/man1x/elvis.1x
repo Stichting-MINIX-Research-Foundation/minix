@@ -2,13 +2,27 @@
 .TH ELVIS 1x
 .CD "elvis \(en clone of the Berkeley vi editor"
 .SX "elvis \fR[\fB\(enRerv\fR] [\fB\(ent \fItag\fR] \fR[\fIfile\fR] ..."
-.FL "\(enR" "Set the read-only option"
-.FL "\(ene" "Start up emulating \fIex\fR"
-.FL "\(enr" "Tell the user to use \fIelvrec\fR instead
-.FL "\(ent" "Start editing at the given tag"
-.FL "\(env" "Start up emulating \fIvi\fR"
-.EX "elvis" "Call the editor"
-.EX "elvis prog.c" "edit \fIprog.c\fR"
+.TP 5
+.B \(enR
+# Set the read-only option
+.TP 5
+.B \(ene
+# Start up emulating \fIex\fR
+.TP 5
+.B \(enr
+# Tell the user to use \fIelvrec\fR instead
+.TP 5
+.B \(ent
+# Start editing at the given tag
+.TP 5
+.B \(env
+# Start up emulating \fIvi\fR
+.TP 20
+.B elvis
+# Call the editor
+.TP 20
+.B elvis prog.c
+# edit \fIprog.c\fR
 .PP
 \fIElvis\fR is a full-screen editor closely modeled on the famous Berkeley
 \fIvi\fR editor.

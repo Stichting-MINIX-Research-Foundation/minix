@@ -19,11 +19,21 @@ term \- turn PC into a dumb terminal [IBM]
 # \\$2
 ..
 .SH EXAMPLES
-.EX "term 2400" "Talk to modem at 2400 baud"
-.EX "term 1200 7 even" "1200 baud, 7 bits/char, even parity"
-.EX "term 8 9600 /dev/tty01" "9600 baud, 8 bits/char, no parity, use tty01"
-.EX "term -atdt12345 /dev/tty01" "Start with a command to dial out"
-.EX "term -cH'echo Hello World!' ..." "Bind a shell command to the 'H' key"
+.TP 20
+.B term 2400
+# Talk to modem at 2400 baud
+.TP 20
+.B term 1200 7 even
+# 1200 baud, 7 bits/char, even parity
+.TP 20
+.B term 8 9600 /dev/tty01
+# 9600 baud, 8 bits/char, no parity, use tty01
+.TP 20
+.B term -atdt12345 /dev/tty01
+# Start with a command to dial out
+.TP 20
+.B term -cH'echo Hello World!' ...
+# Bind a shell command to the 'H' key
 .SH DESCRIPTION
 .PP
 \fITerm\fR allows 

@@ -15,10 +15,16 @@ split \- split a large file into several smaller files
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-\fIn\fP" "Number of lines per piece (default: 1000)"
+.TP 5
+.B \-\fIn\fP
+# Number of lines per piece (default: 1000)
 .SH EXAMPLES
-.EX "split \-200 file" "Split \fIfile\fP into pieces of 200 lines each"
-.EX "split file z" "Split \fIfile\fP into \fIzaa\fP, \fIzab\fP, etc."
+.TP 20
+.B split \-200 file
+# Split \fIfile\fP into pieces of 200 lines each
+.TP 20
+.B split file z
+# Split \fIfile\fP into \fIzaa\fP, \fIzab\fP, etc.
 .SH DESCRIPTION
 .PP
 .I Split 

@@ -15,14 +15,28 @@ ifdef \- remove #ifdefs from a file
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-D" "Define symbol permanently"
-.FL "\-I" "Ignore symbol"
-.FL "\-U" "Undefine symbol permanently"
-.FL "\-d" "Define symbol. It may be #undef'ed later"
-.FL "\-t" "Produce a table of the symbols on \fIstdout\fR"
+.TP 5
+.B \-D
+# Define symbol permanently
+.TP 5
+.B \-I
+# Ignore symbol
+.TP 5
+.B \-U
+# Undefine symbol permanently
+.TP 5
+.B \-d
+# Define symbol. It may be #undef'ed later
+.TP 5
+.B \-t
+# Produce a table of the symbols on \fIstdout\fR
 .SH EXAMPLES
-.EX "ifdef \-DUNIX file.c >newfile.c" "Define \fIUNIX\fR"
-.EX "ifdef \-D_MINIX \-UDOS <x.c >y.c "Define \fI_MINIX\fR, undefine \fIDOS\fR"
+.TP 20
+.B ifdef \-DUNIX file.c >newfile.c
+# Define \fIUNIX\fR
+.TP 20
+.B ifdef \-D_MINIX \-UDOS <x.c >y.c
+# Define \fI_MINIX\fR, undefine \fIDOS\fR
 .SH DESCRIPTION
 .PP
 \fIIfdef\fR

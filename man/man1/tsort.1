@@ -15,8 +15,12 @@ tsort \- topological sort [IBM]
 # \\$2
 ..
 .SH EXAMPLES
-.EX "lorder *.s | tsort" "Give library ordering"
-.EX "ar cr libc.a \`lorder *.s | tsort\`" "Build library"
+.TP 20
+.B lorder *.s | tsort
+# Give library ordering
+.TP 20
+.B ar cr libc.a \`lorder *.s | tsort\`
+# Build library
 .SH DESCRIPTION
 .PP
 \fITsort\fR accepts a file of lines containing ordered pairs and builds a

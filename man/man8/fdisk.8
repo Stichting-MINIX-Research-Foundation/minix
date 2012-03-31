@@ -15,11 +15,19 @@ fdisk \- partition a hard disk [IBM]
 # \\$2
 ..
 .SH OPTIONS
-.FL "\fB\-h" "Number of disk heads is \fIm\fR"
-.FL "\fB\-s" "Number of sectors per track is \fIn\fR"
+.TP 5
+.B \fB\-h
+# Number of disk heads is \fIm\fR
+.TP 5
+.B \fB\-s
+# Number of sectors per track is \fIn\fR
 .SH EXAMPLES
-.EX "fdisk /dev/c0d0" "Examine disk partitions"
-.EX "fdisk \-h9 /dev/c0d0" "Examine disk with 9 heads"
+.TP 20
+.B fdisk /dev/c0d0
+# Examine disk partitions
+.TP 20
+.B fdisk \-h9 /dev/c0d0
+# Examine disk with 9 heads
 .SH DESCRIPTION
 .PP
 When \fIfdisk\fR starts up, it reads in the partition table and displays 

@@ -15,17 +15,37 @@ pr \- print a file
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-M" "Use MINIX style line number"
-.FL "\-f" "Do not fold long lines"
-.FL "\-h" "Take next argument as page header"
-.FL "\-l" "Sets page length in lines"
-.FL "\-n" "Number the output lines"
-.FL "\-t" "Do not print page header or trailer"
-.FL "\-w" "Sets line length in characters"
+.TP 5
+.B \-M
+# Use MINIX style line number
+.TP 5
+.B \-f
+# Do not fold long lines
+.TP 5
+.B \-h
+# Take next argument as page header
+.TP 5
+.B \-l
+# Sets page length in lines
+.TP 5
+.B \-n
+# Number the output lines
+.TP 5
+.B \-t
+# Do not print page header or trailer
+.TP 5
+.B \-w
+# Sets line length in characters
 .SH EXAMPLES
-.EX "pr \-w85 \-l60 file" "Use 85 character line, 60 line page"
-.EX "pr \-3 file" "List \fIfile\fP three columns to a page"
-.EX "pr +4 file" "Start printing with page 4"
+.TP 20
+.B pr \-w85 \-l60 file
+# Use 85 character line, 60 line page
+.TP 20
+.B pr \-3 file
+# List \fIfile\fP three columns to a page
+.TP 20
+.B pr +4 file
+# Start printing with page 4
 .SH DESCRIPTION
 .PP
 .I Pr

@@ -15,12 +15,22 @@ paste \- paste multiple files together
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-d" "Set delimiter used to separate columns to \fIlist\fR.
-.FL "\-s" "Print files sequentially, file \fIk\fR on line \fIk\fR.
+.TP 5
+.B \-d
+# Set delimiter used to separate columns to \fIlist\fR.
+.TP 5
+.B \-s
+# Print files sequentially, file \fIk\fR on line \fIk\fR.
 .SH EXAMPLES
-.EX "paste file1 file2" "Print \fIfile1\fR in col 1, \fIfile2\fR in col 2"
-.EX "paste \-s f1 f2" "Print \fIf1\fR on line 1 and \fIf2\fR on line 2"
-.EX "paste -d : file1 file2" "Print the lines separated by a colon"
+.TP 20
+.B paste file1 file2
+# Print \fIfile1\fR in col 1, \fIfile2\fR in col 2
+.TP 20
+.B paste \-s f1 f2
+# Print \fIf1\fR on line 1 and \fIf2\fR on line 2
+.TP 20
+.B paste -d : file1 file2
+# Print the lines separated by a colon
 .SH DESCRIPTION
 .PP
 \fIPaste\fR concatenates corresponding lines of the given input files
