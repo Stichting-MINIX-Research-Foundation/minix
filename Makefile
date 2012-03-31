@@ -15,7 +15,6 @@ usage:
 	@echo "	make libraries     # Compile and install libraries"
 	@echo "	make commands      # Compile all, commands, but don't install"
 	@echo "	make install       # Compile and install commands"
-	@echo "	make gnu-includes  # Install include files for GCC"
 	@echo "	make clean         # Remove all compiler results"
 	@echo "" 
 	@echo "Run 'make' in tools/ to create a new MINIX configuration." 
@@ -31,101 +30,84 @@ usage:
 # etcfiles has to be done first.
 world: mkfiles etcfiles includes libraries dep-all install etcforce
 
-mkfiles:
-	make -C share/mk install
+# subdirs where userland utilities and other executables live
+CMDSDIRS=commands bin sbin usr.bin usr.sbin libexec external
 
-includes:
-	$(MAKE) -C include includes
-	$(MAKE) -C lib includes NBSD_LIBC=yes
-	$(MAKE) -C sys includes
+# subdirs where system stuff lives
+SYSDIRS=sys kernel servers drivers
 
-MKHEADERSS=/usr/pkg/gcc*/libexec/gcc/*/*/install-tools/mkheaders
-gnu-includes: includes
-	SHELL=/bin/sh; for d in $(MKHEADERSS); do if [ -f $$d ] ; then sh -e $$d ; fi; done
+# combination
+CMDSYSDIRS=$(CMDSDIRS) $(SYSDIRS)
 
-libraries: includes
-	$(MAKE) -C lib dependall install
+etcfiles: .PHONY .MAKE
+	${MAKEDIRTARGET} etc install
 
-commands: includes libraries
-	$(MAKE) -C commands all
-	$(MAKE) -C bin all
-	$(MAKE) -C sbin all
-	$(MAKE) -C usr.bin all
-	$(MAKE) -C external all
-	$(MAKE) -C libexec all
-	$(MAKE) -C usr.sbin all
+etcforce: .PHONY .MAKE
+	${MAKEDIRTARGET} etc installforce
 
-dep-all:
-	$(MAKE) -C sys dependall
-	$(MAKE) -C commands dependall
-	$(MAKE) -C bin dependall
-	$(MAKE) -C sbin dependall
-	$(MAKE) -C usr.bin dependall
-	$(MAKE) -C external dependall
-	$(MAKE) -C libexec dependall
-	$(MAKE) -C usr.sbin dependall
-	$(MAKE) -C kernel dependall
-	$(MAKE) -C servers dependall
-	$(MAKE) -C drivers dependall
+mkfiles: .PHONY .MAKE
+	${MAKEDIRTARGET} share/mk install
 
-etcfiles:
-	$(MAKE) -C etc install
+includes: .PHONY .MAKE
+	${MAKEDIRTARGET} include includes
+	${MAKEDIRTARGET} lib includes
+	${MAKEDIRTARGET} sys includes
 
-etcforce:
-	$(MAKE) -C etc installforce
+.for dir in lib lib/csu lib/libc
+do-${dir:S/\//-/g}: .PHONY .MAKE
+	${MAKEDIRTARGET} ${dir} dependall
+	${MAKEDIRTARGET} ${dir} install
+.endfor
 
-all:
-	$(MAKE) -C sys all
-	$(MAKE) -C commands all
-	$(MAKE) -C bin all
-	$(MAKE) -C sbin all
-	$(MAKE) -C usr.bin all
-	$(MAKE) -C external all
-	$(MAKE) -C libexec all
-	$(MAKE) -C usr.sbin all
-	$(MAKE) -C tools all
+# libraries are built by building and installing csu, then libc, then
+# the rest
+libraries: includes .PHONY .MAKE do-lib-csu .WAIT do-lib-libc .WAIT do-lib
 
-install:
-	$(MAKE) -C sys install
-	$(MAKE) -C libexec install
-	$(MAKE) -C man install makedb
-	$(MAKE) -C commands install
-	$(MAKE) -C bin install
-	$(MAKE) -C sbin install
-	$(MAKE) -C usr.bin install
-	$(MAKE) -C external install
-	$(MAKE) -C usr.sbin install
-	$(MAKE) -C servers install
-	$(MAKE) -C share install
-	$(MAKE) -C tools install
+commands: includes libraries .PHONY .MAKE 
+.for dir in $(CMDSDIRS)
+	${MAKEDIRTARGET} ${dir} dependall
+.endfor
 
-clean: mkfiles
-	$(MAKE) -C sys clean
-	$(MAKE) -C commands clean
-	$(MAKE) -C bin clean
-	$(MAKE) -C sbin clean
-	$(MAKE) -C usr.bin clean
-	$(MAKE) -C external clean
-	$(MAKE) -C libexec clean
-	$(MAKE) -C usr.sbin clean
-	$(MAKE) -C share clean
-	$(MAKE) -C tools clean
-	$(MAKE) -C lib clean
-	$(MAKE) -C test clean
+dep-all: .PHONY .MAKE
+.for dir in $(CMDSYSDIRS)
+	${MAKEDIRTARGET} ${dir} dependall
+.endfor
 
-cleandepend: mkfiles
-	$(MAKE) -C lib cleandepend
-	$(MAKE) -C sys cleandepend
-	$(MAKE) -C commands cleandepend
-	$(MAKE) -C bin cleandepend
-	$(MAKE) -C sbin cleandepend
-	$(MAKE) -C usr.bin cleandepend
-	$(MAKE) -C external cleandepend
-	$(MAKE) -C libexec cleandepend
-	$(MAKE) -C usr.sbin cleandepend
-	$(MAKE) -C tools cleandepend
+install: .PHONY .MAKE
+.for dir in $(CMDSYSDIRS)
+	${MAKEDIRTARGET} ${dir} install
+.endfor
+	${MAKEDIRTARGET} man install
+	${MAKEDIRTARGET} man makedb
+	${MAKEDIRTARGET} share install
+	${MAKEDIRTARGET} tools install
 
-# Warn usage change
-elf-libraries:
+clean: mkfiles .PHONY .MAKE
+.for dir in $(CMDSDIRS)
+	${MAKEDIRTARGET} ${dir} clean
+.endfor
+	${MAKEDIRTARGET} sys clean
+	${MAKEDIRTARGET} tools clean
+	${MAKEDIRTARGET} lib clean
+	${MAKEDIRTARGET} test clean
+
+cleandepend: mkfiles .PHONY .MAKE
+.for dir in $(CMDSYSDIRS)
+	${MAKEDIRTARGET} ${dir} cleandepend
+.endfor
+	${MAKEDIRTARGET} lib cleandepend
+
+# Shorthands
+all: .PHONY .MAKE dep-all
+	${MAKEDIRTARGET} tools all
+
+# Obsolete targets
+elf-libraries: .PHONY
 	echo "That target is just libraries now."
 	false
+
+gnu-includes: .PHONY
+	echo "That target is obsolete."
+	echo "Current MINIX GCC packages don't require it any more."
+	false
+
