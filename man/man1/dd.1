@@ -15,9 +15,15 @@ dd \- convert and copy a file
 # \\$2
 ..
 .SH EXAMPLES
-.EX "dd if=/dev/fd0 of=/dev/fd1" "Copy disk 0 to disk 1"
-.EX "dd if=x of=y bs=1w skip=4" "Copy \fIx\fP to \fIy\fP, skipping 4 words"
-.EX "dd if=x of=y count=3" "Copy three 512\-byte blocks"
+.TP 20
+.B dd if=/dev/fd0 of=/dev/fd1
+# Copy disk 0 to disk 1
+.TP 20
+.B dd if=x of=y bs=1w skip=4
+# Copy \fIx\fP to \fIy\fP, skipping 4 words
+.TP 20
+.B dd if=x of=y count=3
+# Copy three 512\-byte blocks
 .SH DESCRIPTION
 .PP
 This command is intended for copying partial files.

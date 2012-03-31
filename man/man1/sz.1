@@ -15,27 +15,67 @@ sz \- send a file using the zmodem protocol
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-L" "Use \fIn\fR-byte packets"
-.FL "\-N" "Overwrite if source is newer/longer"
-.FL "\-b" "Binary file"
-.FL "\-c" "Send command for execution"
-.FL "\-d" "Convert dot to slash in names"
-.FL "\-e" "Escape for all control characters"
-.FL "\-f" "Send full path name"
-.FL "\-i" "Send command and return immediately"
-.FL "\-l" "Flow control every \fIn\fR packets"
-.FL "\-n" "Overwrite destination if source is newer"
-.FL "\-o" "Use old (16-bit) checksum"
-.FL "\-p" "Protect file if it already exists"
-.FL "\-q" "Quiet; opposite of verbose"
-.FL "\-r" "Resume interrupt file transfer"
-.FL "\-t" "Set \fItimeout\fR in tenths of a second"
-.FL "\-u" "Unlink file after successful transmission"
-.FL "\-v" "Verbose; opposite of quiet"
-.FL "\-y" "Yes, clobber existing files"
-.FL "\-+" "Append to an existing file"
+.TP 5
+.B \-L
+# Use \fIn\fR-byte packets
+.TP 5
+.B \-N
+# Overwrite if source is newer/longer
+.TP 5
+.B \-b
+# Binary file
+.TP 5
+.B \-c
+# Send command for execution
+.TP 5
+.B \-d
+# Convert dot to slash in names
+.TP 5
+.B \-e
+# Escape for all control characters
+.TP 5
+.B \-f
+# Send full path name
+.TP 5
+.B \-i
+# Send command and return immediately
+.TP 5
+.B \-l
+# Flow control every \fIn\fR packets
+.TP 5
+.B \-n
+# Overwrite destination if source is newer
+.TP 5
+.B \-o
+# Use old (16-bit) checksum
+.TP 5
+.B \-p
+# Protect file if it already exists
+.TP 5
+.B \-q
+# Quiet; opposite of verbose
+.TP 5
+.B \-r
+# Resume interrupt file transfer
+.TP 5
+.B \-t
+# Set \fItimeout\fR in tenths of a second
+.TP 5
+.B \-u
+# Unlink file after successful transmission
+.TP 5
+.B \-v
+# Verbose; opposite of quiet
+.TP 5
+.B \-y
+# Yes, clobber existing files
+.TP 5
+.B \-+
+# Append to an existing file
 .SH EXAMPLES
-.EX "sz file </dev/tty01 >/dev/tty01" "Send \fIfile\fR"
+.TP 20
+.B sz file </dev/tty01 >/dev/tty01
+# Send \fIfile\fR
 .SH DESCRIPTION
 .PP
 XMODEM, YMODEM, and ZMODEM are a family of protocols that are widely used

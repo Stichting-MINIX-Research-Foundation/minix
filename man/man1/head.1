@@ -15,11 +15,19 @@ head \- print the first few lines of a file
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-n \fIn\fR" "How many lines to print"
-.FL "\-\fIn\fR" "How many lines to print (backwards-compatible)"
+.TP 5
+.B \-n \fIn\fR
+# How many lines to print
+.TP 5
+.B \-\fIn\fR
+# How many lines to print (backwards-compatible)
 .SH EXAMPLES
-.EX "head \-n 6" "Print first 6 lines of \fIstdin\fR"
-.EX "head \-1 file1 file2" "Print first line of two files"
+.TP 20
+.B head \-n 6
+# Print first 6 lines of \fIstdin\fR
+.TP 20
+.B head \-1 file1 file2
+# Print first line of two files
 .SH DESCRIPTION
 .PP
 The first few lines of one or more files are printed.

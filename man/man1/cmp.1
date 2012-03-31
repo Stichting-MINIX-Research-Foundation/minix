@@ -15,11 +15,19 @@ cmp \- compare two files
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-l" "Loud mode. Print bytes that differ (in octal)"
-.FL "\-s" "Silent mode.  Print nothing, just return exit status"
+.TP 5
+.B \-l
+# Loud mode. Print bytes that differ (in octal)
+.TP 5
+.B \-s
+# Silent mode.  Print nothing, just return exit status
 .SH EXAMPLES
-.EX "cmp file1 file2" "Tell whether the files are the same"
-.EX "cmp \-l file1 file2" "Print all corresponding bytes that differ"
+.TP 20
+.B cmp file1 file2
+# Tell whether the files are the same
+.TP 20
+.B cmp \-l file1 file2
+# Print all corresponding bytes that differ
 .SH DESCRIPTION
 .PP
 Two files are compared.

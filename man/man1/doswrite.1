@@ -15,10 +15,16 @@ doswrite \- write a file onto an MS-DOS diskette [IBM]
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-a" "ASCII file"
+.TP 5
+.B \-a
+# ASCII file
 .SH EXAMPLES
-.EX "doswrite A x/y <z" "Write file \fIz\fR to disk as \fIx/y\fR"
-.EX "doswrite \-a B f" "Copy \fIstdin\fR to \s-2MS-DOS\s+2 file \fIf\fR"
+.TP 20
+.B doswrite A x/y <z
+# Write file \fIz\fR to disk as \fIx/y\fR
+.TP 20
+.B doswrite \-a B f
+# Copy \fIstdin\fR to \s-2MS-DOS\s+2 file \fIf\fR
 .SH DESCRIPTION
 .PP
 .I Doswrite

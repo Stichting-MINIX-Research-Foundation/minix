@@ -15,10 +15,16 @@ dosread \- read a file from an MS-DOS diskette [IBM]
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-a" "ASCII file"
+.TP 5
+.B \-a
+# ASCII file
 .SH EXAMPLES
-.EX "dosread C g/adv >adv" "Read file \fIg/adv\fR from hard disk"
-.EX "dosread \-a A prog.c >x" "Read ASCII file \fIprog.c\fR from drive A"
+.TP 20
+.B dosread C g/adv >adv
+# Read file \fIg/adv\fR from hard disk
+.TP 20
+.B dosread \-a A prog.c >x
+# Read ASCII file \fIprog.c\fR from drive A
 .SH DESCRIPTION
 .PP
 .I Dosread

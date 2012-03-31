@@ -17,21 +17,47 @@ mail \- send and receive electronic mail
 # \\$2
 ..
 .SH OPTIONS 
-.FL "\-e" "Exit with status TRUE or FALSE to indicate if there is mail in mailbox"
-.FL "\-p" "Print all mail and then exit"
-.FL "\-q" "Quit program if SIGINT received"
-.FL "\-r" "Reverse print order, i.e., print oldest first"
-.FL "\-f" "Use \fIfile\fR instead of \fI/usr/spool/mail/user\fR as mailbox"
+.TP 5
+.B \-e
+# Exit with status TRUE or FALSE to indicate if there is mail in mailbox
+.TP 5
+.B \-p
+# Print all mail and then exit
+.TP 5
+.B \-q
+# Quit program if SIGINT received
+.TP 5
+.B \-r
+# Reverse print order, i.e., print oldest first
+.TP 5
+.B \-f
+# Use \fIfile\fR instead of \fI/usr/spool/mail/user\fR as mailbox
 .PP
-.FL "\-d" "Force use of the shell variable \fIMAILER\fR"
-.FL "\-t" "Show distribution list as Dist: header in message"
-.FL "\-v" "Verbose mode (passed on to \fIMAILER\fR)"
-.FL "\-s" "Use Subject: \fIsubject\fR"
+.TP 5
+.B \-d
+# Force use of the shell variable \fIMAILER\fR
+.TP 5
+.B \-t
+# Show distribution list as Dist: header in message
+.TP 5
+.B \-v
+# Verbose mode (passed on to \fIMAILER\fR)
+.TP 5
+.B \-s
+# Use Subject: \fIsubject\fR
 .SH EXAMPLES
-.EX "mail ast" "Send a message to \fIast\fR"
-.EX "mail" "Read your mail"
-.EX "cat mail.cdiff | mail -s ''Here's the diff!'' asw " "Pipe program output to mail with a subject line"
-.EX "mail -f /usr/spool/mail/asw" "How root can read asw's mail"
+.TP 20
+.B mail ast
+# Send a message to \fIast\fR
+.TP 20
+.B mail
+# Read your mail
+.TP 20
+.B cat mail.cdiff | mail -s ''Here's the diff!'' asw
+# Pipe program output to mail with a subject line
+.TP 20
+.B mail -f /usr/spool/mail/asw
+# How root can read asw's mail
 .SH DESCRIPTION
 .PP
 \fIMail\fR is an extremely simple electronic mail program.  It can be used

@@ -15,12 +15,22 @@ tr \- translate character codes
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-c" "Complement the set of characters in \fIstring1\fR"
-.FL "\-d" "Delete all characters specified in \fIstring1\fR"
-.FL "\-s" "Squeeze all runs of characters in \fIstring1\fR to one character"
+.TP 5
+.B \-c
+# Complement the set of characters in \fIstring1\fR
+.TP 5
+.B \-d
+# Delete all characters specified in \fIstring1\fR
+.TP 5
+.B \-s
+# Squeeze all runs of characters in \fIstring1\fR to one character
 .SH EXAMPLES
-.EX "tr \(fmA\-Z\(fm \(fma\-z\(fm <x >y     " "Convert upper case to lower case"
-.EX "tr \-d \(fm0123456789\(fm <f1 >f2  " "Delete all digits from \fIf1\fR"
+.TP 20
+.B tr \(fmA\-Z\(fm \(fma\-z\(fm <x >y
+# Convert upper case to lower case
+.TP 20
+.B tr \-d \(fm0123456789\(fm <f1 >f2
+# Delete all digits from \fIf1\fR
 .SH DESCRIPTION
 .PP
 .I Tr
@@ -51,6 +61,10 @@ upper and xdigit. If any of these keywords is encountered between backets and
 colons, it is replaced by respectively alphanumeric characters, alphabetic
 characters, decimal digits, lowercase letters, uppercase letters and 
 hexadecimal digits. The following are equivalent with the given examples:
-.EX "tr \(fm[:upper:]\(fm \(fm[:lower:]\(fm <x >y     " "Convert upper case to lower case"
-.EX "tr \-d \(fm[:digit:]\(fm <f1 >f2  " "Delete all digits from \fIf1\fR"
+.TP 20
+.B tr \(fm[:upper:]\(fm \(fm[:lower:]\(fm <x >y
+# Convert upper case to lower case
+.TP 20
+.B tr \-d \(fm[:digit:]\(fm <f1 >f2
+# Delete all digits from \fIf1\fR
 

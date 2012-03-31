@@ -15,17 +15,37 @@ od \- octal dump
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-b" "Dump bytes in octal"
-.FL "\-c" "Dump bytes as ASCII characters"
-.FL "\-d" "Dump words in decimal"
-.FL "\-h" "Print addresses in hex (default is octal)"
-.FL "\-o" "Dump words in octal (default)"
-.FL "\-v" "Verbose (list duplicate lines)"
-.FL "\-x" "Dump words in hex"
+.TP 5
+.B \-b
+# Dump bytes in octal
+.TP 5
+.B \-c
+# Dump bytes as ASCII characters
+.TP 5
+.B \-d
+# Dump words in decimal
+.TP 5
+.B \-h
+# Print addresses in hex (default is octal)
+.TP 5
+.B \-o
+# Dump words in octal (default)
+.TP 5
+.B \-v
+# Verbose (list duplicate lines)
+.TP 5
+.B \-x
+# Dump words in hex
 .SH EXAMPLES
-.EX "od \-ox file" "Dump \fIfile\fP in octal and hex"
-.EX "od \-d file +1000" "Dump \fIfile\fP starting at byte 01000"
-.EX "od \-c file +10.b" "Dump \fIfile\fP starting at block 10"
+.TP 20
+.B od \-ox file
+# Dump \fIfile\fP in octal and hex
+.TP 20
+.B od \-d file +1000
+# Dump \fIfile\fP starting at byte 01000
+.TP 20
+.B od \-c file +10.b
+# Dump \fIfile\fP starting at block 10
 .SH DESCRIPTION
 .PP
 .I Od

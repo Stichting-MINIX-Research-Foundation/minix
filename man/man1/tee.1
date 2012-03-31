@@ -15,11 +15,19 @@ tee \- divert stdin to a file
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-a" "Append to the files, rather than overwriting"
-.FL "\-i" "Ignore interrupts"
+.TP 5
+.B \-a
+# Append to the files, rather than overwriting
+.TP 5
+.B \-i
+# Ignore interrupts
 .SH EXAMPLES
-.EX "cat file1 file2 | tee x" "Save and display two files"
-.EX "pr file | tee x | lp" "Save the output of \fIpr\fP on \fIx\fP"
+.TP 20
+.B cat file1 file2 | tee x
+# Save and display two files
+.TP 20
+.B pr file | tee x | lp
+# Save the output of \fIpr\fP on \fIx\fP
 .SH DESCRIPTION
 .PP
 .I Tee

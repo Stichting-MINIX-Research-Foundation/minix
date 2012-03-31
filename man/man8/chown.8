@@ -15,10 +15,16 @@ chown \- change owner
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-R" "Change directory hierarchies"
+.TP 5
+.B \-R
+# Change directory hierarchies
 .SH EXAMPLES
-.EX "chown ast file1 file2" "Make \fIast\fR the owner of the files"
-.EX "chown \-R ast:other dir" "Change the owner and group of all files in dir"
+.TP 20
+.B chown ast file1 file2
+# Make \fIast\fR the owner of the files
+.TP 20
+.B chown \-R ast:other dir
+# Change the owner and group of all files in dir
 .SH DESCRIPTION
 .PP
 The owner field (and optionally group field) of the named files is changed

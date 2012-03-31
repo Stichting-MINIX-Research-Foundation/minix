@@ -15,18 +15,40 @@ mkfs \- make a file system
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-L" "Make a listing on standard output"
-.FL "\-d" "Use mod time of \fImkfs\fR binary for all files"
-.FL "\-o" "Use a drive other than 0 or 1 (safety precaution)"
-.FL "\-t" "Do not test if file system fits on the medium"
-.FL "\-1" "Make a version 1 file system (for backward compatibility)"
-.FL "\-i" "Number of i-nodes (files)"
-.FL "\-B" "Filesystem block size (in bytes)"
-.FL "\-b" "Filesystem size (in blocks)"
+.TP 5
+.B \-L
+# Make a listing on standard output
+.TP 5
+.B \-d
+# Use mod time of \fImkfs\fR binary for all files
+.TP 5
+.B \-o
+# Use a drive other than 0 or 1 (safety precaution)
+.TP 5
+.B \-t
+# Do not test if file system fits on the medium
+.TP 5
+.B \-1
+# Make a version 1 file system (for backward compatibility)
+.TP 5
+.B \-i
+# Number of i-nodes (files)
+.TP 5
+.B \-B
+# Filesystem block size (in bytes)
+.TP 5
+.B \-b
+# Filesystem size (in blocks)
 .SH EXAMPLES
-.EX "mkfs /dev/fd1 proto" "Make a file system on \fI/dev/fd1\fR"
-.EX "mkfs -b 360 /dev/fd1" "Make empty 360 block file system"
-.EX "mkfs /dev/fd1 360" "Alternate way to specify the size"
+.TP 20
+.B mkfs /dev/fd1 proto
+# Make a file system on \fI/dev/fd1\fR
+.TP 20
+.B mkfs -b 360 /dev/fd1
+# Make empty 360 block file system
+.TP 20
+.B mkfs /dev/fd1 360
+# Alternate way to specify the size
 .SH DESCRIPTION
 .PP
 .I Mkfs

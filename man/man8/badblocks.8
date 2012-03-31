@@ -15,8 +15,12 @@ badblocks \- put a list of bad blocks in a file
 # \\$2
 ..
 .SH EXAMPLES
-.EX "badblocks /dev/hd1       " "Handle bad blocks on \fI/dev/hd1\fP"
-.EX "badblocks /dev/hd3 310 570 1680 " "Three bad blocks on \fI/dev/hd3\fP"
+.TP 20
+.B badblocks /dev/hd1
+# Handle bad blocks on \fI/dev/hd1\fP
+.TP 20
+.B badblocks /dev/hd3 310 570 1680
+# Three bad blocks on \fI/dev/hd3\fP
 .SH DESCRIPTION
 .PP
 If a device contains bad sectors, it is important to not have them

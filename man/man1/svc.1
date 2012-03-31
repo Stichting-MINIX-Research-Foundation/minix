@@ -19,14 +19,28 @@ svc, ci, co, svclog \- shell version control system
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-l" "For \fIci\fR, checkin, checkout again, and lock file"
-.FL "\-l" "For \fIco\fR, checkout file and then lock the archive"
-.FL "\-u" "After checking in, do not delete the file"
-.FL "\-r" "Check out revision \fIrev\fR instead most recent revision
+.TP 5
+.B \-l
+# For \fIci\fR, checkin, checkout again, and lock file
+.TP 5
+.B \-l
+# For \fIco\fR, checkout file and then lock the archive
+.TP 5
+.B \-u
+# After checking in, do not delete the file
+.TP 5
+.B \-r
+# Check out revision \fIrev\fR instead most recent revision
 .SH EXAMPLES
-.EX "ci \-u file" "Check in \fIfile\fR"
-.EX "co \-l file" "Check out \fIfile\fR and lock archive"
-.EX "co \-r 2 file" "Check out version 2"
+.TP 20
+.B ci \-u file
+# Check in \fIfile\fR
+.TP 20
+.B co \-l file
+# Check out \fIfile\fR and lock archive
+.TP 20
+.B co \-r 2 file
+# Check out version 2
 .SH DESCRIPTION
 .PP
 \fISvc\fR is the Shell Version Control system, patterned on RCS.

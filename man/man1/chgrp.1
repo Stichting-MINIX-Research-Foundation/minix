@@ -15,10 +15,16 @@ chgrp \- change group
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-R" "Change directory hierarchies"
+.TP 5
+.B \-R
+# Change directory hierarchies
 .SH EXAMPLES
-.EX "chgrp system file1 file2" "Make \fIsystem\fR the group of the files"
-.EX "chrgp \-R other dir1" "Make \fIother\fR the group of all files below dir1"
+.TP 20
+.B chgrp system file1 file2
+# Make \fIsystem\fR the group of the files
+.TP 20
+.B chrgp \-R other dir1
+# Make \fIother\fR the group of all files below dir1
 .SH DESCRIPTION
 .PP
 The group field (and optionally owner field) of the named files is changed to 

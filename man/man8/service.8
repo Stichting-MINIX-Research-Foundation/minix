@@ -221,11 +221,17 @@ Tells \fBRS\fR the system is about to shutdown and no system service should
 be restarted upon termination.
 .PP
 .SH EXAMPLES
-.EX "service up /sbin/is -period 5HZ" "Start the IS server and check its status every 5 seconds."
+.TP 20
+.B service up /sbin/is -period 5HZ
+# Start the IS server and check its status every 5 seconds.
 .br
-.EX "service up /usr/sbin/dp8390 -args DPETH0=pci" "Start the DP8390 ethernet driver, passing one argument."
+.TP 20
+.B service up /usr/sbin/dp8390 -args DPETH0=pci
+# Start the DP8390 ethernet driver, passing one argument.
 .br
-.EX "service down lance" "Stop the system service with label lance."
+.TP 20
+.B service down lance
+# Stop the system service with label lance.
 .br
 .SH "SEE ALSO"
 .PP
