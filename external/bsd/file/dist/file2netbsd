@@ -1,0 +1,114 @@
+#! /bin/sh
+#
+#	$NetBSD: file2netbsd,v 1.2 2009/05/08 16:40:10 christos Exp $
+#
+# Copyright (c) 2003 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# file2netbsd:  convert a file source tree into a
+# format suitable for import.  Works on current dir.
+# You can run this only once if you want it to work.
+#
+# based on texinfo2netbsd
+#
+
+if [ -z "$1" ]
+then
+	echo "Usage $0: <file-version>" 1>&2
+	exit 1
+fi
+file_vers="$1"
+
+#
+# (usually) NO NEED TO EDIT BELOW THIS LINE
+#
+
+### Wipe out stuff we don't want
+rm -f .cvsignore
+
+### Remove the $'s around RCS tags
+find . -type f -print | xargs egrep -l '\$(Id|Date|Header|Log|Revision)'\
+    | while read f; do
+	sed -e 's/\$\(Id.*\) \$/\1/' \
+	    -e 's/\$\(Date.*\) \$/\1/' \
+	    -e 's/\$\(Header.*\) \$/\1/' \
+	    -e 's/\$\(Log.*\) \$/\1/' \
+	    -e 's/\$\(Revision.*\) \$/\1/' \
+	    $f > /tmp/file2$$ && mv /tmp/file2$$ $f && \
+	echo removed RCS tag from $f
+done
+
+### Add NetBSD RCS Id
+find . -type f -name '*.[chly]' -print | while read c; do
+	sed -e '1{/$NetBSD/!{i\
+/*	\$NetBSD\$	*/\
+
+};}
+/#ifndef[ 	]lint/{N;/FILE_RCSID/s/\n/\
+#if 0\
+/
+a\
+#else\
+__RCSID("\$NetBSD\$");\
+#endif
+}' $c > /tmp/file3$$
+mv /tmp/file3$$ $c && echo did source mods for $c
+done
+
+#### Move files to proper names
+mv -f doc/file.man doc/file.1
+mv -f doc/libmagic.man doc/libmagic.3
+mv -f doc/magic.man doc/magic.5
+
+#### Add RCS tags to man pages
+find . -type f -name '*.[0-9]' -print | while read m; do
+	sed -e '1{/$NetBSD/!i\
+.\\"	\$NetBSD\$\
+.\\"
+
+}'	    -e 's/__CSECTION__/1/g' \
+	    -e 's/__FSECTION__/5/g' \
+	    -e 's/__VERSION__/'"${file_vers}/g" \
+	    -e 's,__MAGIC__,/usr/share/misc/magic,g' \
+	    $m > /tmp/file4$$
+mv /tmp/file4$$ $m && echo did manpage mods for $m
+done
+
+#### de-"capsize" the magdir
+mv magic/Magdir magic/magdir
+
+#### Make building easier, don't build magic and doc
+echo '/^SUBDIRS/
+t.
+s/^/#/
+-
+s/ magic.*//
+wq' | ed Makefile.in > /dev/null 2>&1
+
+echo done
+
+echo You can import now.  Use the following command:
+echo cvs import src/external/bsd/file/dist CHRISTOS FILE${file_vers%.*}_${file_vers#*.}
+
+exit 0

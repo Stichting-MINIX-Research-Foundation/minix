@@ -1,0 +1,19 @@
+#------------------------------------------------------------------------------
+# diff:  file(1) magic for diff(1) output
+#
+0	search/1	diff\ 		diff output text
+!:mime	text/x-diff
+0	search/1	***\ 		diff output text
+!:mime	text/x-diff
+0	search/1	Only\ in\ 	diff output text
+!:mime	text/x-diff
+0	search/1	Common\ subdirectories:\ 	diff output text
+!:mime	text/x-diff
+
+0	search/1	Index:		RCS/CVS diff output text
+!:mime	text/x-diff
+#
+#------------------------------------------------------------------------------
+# bsdiff:  file(1) magic for bsdiff(1) output
+#
+0	string		BSDIFF40	bsdiff(1) patch file
