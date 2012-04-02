@@ -594,7 +594,7 @@ int ruid;
  *===========================================================================*/
 int do_svrctl()
 {
-  int svrctl;
+  unsigned int svrctl;
   vir_bytes ptr;
 
   svrctl = job_m_in.svrctl_req;
@@ -651,13 +651,19 @@ int do_svrctl()
 				r = ESRCH;
 			}
 		} else { /* VFSGETPARAM */
+			char small_buf[60];
+
+			r = ESRCH;
 			if (!strcmp(search_key, "print_traces")) {
 				mthread_stacktraces();
 				sysgetenv.val = 0;
 				sysgetenv.vallen = 0;
 				r = OK;
-			} else {
-				r = ESRCH;
+			} else if (!strcmp(search_key, "active_threads")) {
+				int active = NR_WTHREADS - worker_available();
+				sprintf(small_buf, "%d", active);
+				sysgetenv.vallen = strlen(small_buf);
+				r = OK;
 			}
 
 			if (r == OK) {
@@ -665,6 +671,13 @@ int do_svrctl()
 				    (vir_bytes) &sysgetenv, who_e, ptr,
 				    sizeof(sysgetenv))) != OK)
 					return(s);
+				if (sysgetenv.val != 0) {
+					if ((s = sys_datacopy(SELF,
+					    (vir_bytes) small_buf, who_e,
+					    (vir_bytes) sysgetenv.val,
+					    sysgetenv.vallen)) != OK)
+						return(s);
+				}
 			}
 		}
 
