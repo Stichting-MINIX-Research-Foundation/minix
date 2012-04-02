@@ -1035,10 +1035,6 @@ struct fproc *rfp;
   blocked_on = rfp->fp_blocked_on;
   m_in.m_source = rfp->fp_endpoint;
   m_in.m_type = rfp->fp_block_callnr;
-  if (call_nr == 6) { /* close() */
-	if (m_in.fd != scratch(fp).file.fd_nr)
-		printf("VFS: would've done something weird\n");
-  }
   m_in.fd = scratch(fp).file.fd_nr;
   m_in.buffer = scratch(fp).io.io_buffer;
   m_in.nbytes = scratch(fp).io.io_nbytes;
