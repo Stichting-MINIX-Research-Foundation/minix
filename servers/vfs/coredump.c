@@ -297,13 +297,18 @@ static void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
 	len = phdrs[i].p_memsz;
 	seg_off = phdrs[i].p_vaddr;
 
-	for (off = 0; off < len; off += CLICK_SIZE) {
+	if (len > LONG_MAX) {
+		printf("VFS: segment too large to dump, truncating\n");
+		len = LONG_MAX;
+	}
+
+	for (off = 0; off < (off_t) len; off += CLICK_SIZE) {
 		r = sys_vircopy(fp->fp_endpoint, D,
 			(vir_bytes) (seg_off + off),
 			SELF, D, (vir_bytes) buf,
 			(phys_bytes) CLICK_SIZE);
 
-		write_buf(f, (char *) buf, (off + CLICK_SIZE <= len) ?
+		write_buf(f, (char *) buf, (off + CLICK_SIZE <= (off_t) len) ?
 					CLICK_SIZE : (len - off));
 	}
   }

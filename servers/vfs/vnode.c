@@ -108,7 +108,7 @@ struct vnode *get_free_vnode()
 /*===========================================================================*
  *				find_vnode				     *
  *===========================================================================*/
-struct vnode *find_vnode(int fs_e, int ino)
+struct vnode *find_vnode(int fs_e, ino_t ino)
 {
 /* Find a specified (FS endpoint and inode number) vnode in the
  * vnode table */

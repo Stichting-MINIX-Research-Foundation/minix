@@ -523,7 +523,8 @@ int replace
  * pointers are really offsets from the start of stack.
  * Return true iff the operation succeeded.
  */
-  int offset, a0, a1;
+  int offset;
+  vir_bytes a0, a1;
   size_t old_bytes = *stk_bytes;
 
   /* Prepending arg adds at least one string and a zero byte. */
@@ -624,7 +625,8 @@ phys_bytes seg_bytes		/* how much is to be transferred? */
   assert((seg == T)||(seg == D));
 
   /* Make sure that the file is big enough */
-  if (vp->v_size < off+seg_bytes) return(EIO);
+  if (off + seg_bytes > LONG_MAX) return(EIO);
+  if ((unsigned long) vp->v_size < off+seg_bytes) return(EIO);
 
   if (seg == T) {
 	/* We have to use a copy loop until safecopies support segments */

@@ -145,7 +145,7 @@ int do_select(void)
   /* Verify that file descriptors are okay to select on */
   for (fd = 0; fd < nfds; fd++) {
 	struct filp *f;
-	int type, ops;
+	unsigned int type, ops;
 
 	/* Because the select() interface implicitly includes file descriptors
 	 * you might not want to select on, we have to figure out whether we're
@@ -311,7 +311,7 @@ static int is_pipe(struct filp *f)
 static int is_supported_major(struct filp *f)
 {
 /* See if this filp is a handle on a device on which we support select() */
-  int m;
+  unsigned int m;
 
   if (!(f && f->filp_vno)) return(FALSE);
   if ((f->filp_vno->v_mode & I_TYPE) != I_CHAR_SPECIAL) return(FALSE);

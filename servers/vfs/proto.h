@@ -316,7 +316,7 @@ void vmnt_unmap_by_endpt(endpoint_t proc_e);
 void check_vnode_locks(void);
 void check_vnode_locks_by_me(struct fproc *rfp);
 struct vnode *get_free_vnode(void);
-struct vnode *find_vnode(int fs_e, int numb);
+struct vnode *find_vnode(int fs_e, ino_t inode);
 void init_vnodes(void);
 int is_vnode_locked(struct vnode *vp);
 int lock_vnode(struct vnode *vp, tll_access_t locktype);

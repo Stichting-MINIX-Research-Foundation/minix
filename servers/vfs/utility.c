@@ -44,7 +44,7 @@ inline int copy_name( size_t len, char *dest)
 
   if (len <= M3_STRING) {
 	/* Just copy the path from the message */
-	int count = 0;
+	unsigned int count = 0;
 	rpu = &dest[0];
 	rpm = job_m_in.pathname;	/* contained in input message */
 	for (count = 0; count <= len; count++)
