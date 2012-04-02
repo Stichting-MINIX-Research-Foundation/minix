@@ -287,6 +287,9 @@ static void *do_fs_reply(struct job *job)
   vmp->m_comm.c_cur_reqs--; /* We've got our reply, make room for others */
   if (rfp->fp_wtid != invalid_thread_id)
 	worker_signal(worker_get(rfp->fp_wtid)); /* Continue this thread */
+  else
+	printf("VFS: consistency error: reply for finished job\n");
+
   return(NULL);
 }
 
