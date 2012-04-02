@@ -1,3 +1,7 @@
+20120402:
+	an installed genassym is required to build the kernel:
+	# make -C usr.bin/genassym install     
+
 20120328:
 	The boot loader now defaults to 115200 baud rate to make booting over
 	serial more pleasant. To install the new boot loader do
