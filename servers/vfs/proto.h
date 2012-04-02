@@ -62,7 +62,6 @@ struct dmap *get_dmap(endpoint_t proc_e);
 int do_mapdriver(void);
 int map_service(struct rprocpub *rpub);
 void dmap_unmap_by_endpt(int proc_nr);
-struct dmap *get_dmap(endpoint_t proc_e);
 int map_driver(const char *label, int major, endpoint_t proc_nr, int
 	dev_style, int flags);
 int map_service(struct rprocpub *rpub);

@@ -87,9 +87,10 @@ int flags;			/* device flags */
  * NONE, we're supposed to unmap it.
  */
 
-  int slot;
+  int slot, s;
   size_t len;
   struct dmap *dp;
+  struct fproc *rfp;
 
   /* Get pointer to device entry in the dmap table. */
   if (major < 0 || major >= NR_DEVICES) return(ENODEV);
@@ -105,12 +106,12 @@ int flags;			/* device flags */
   }
 
   /* Check process number of new driver if it was alive before mapping */
-  if (! (flags & DRV_FORCED)) {
-	struct fproc *rfp;
-
-	if (isokendpt(proc_nr_e, &slot) != OK)
+  s = isokendpt(proc_nr_e, &slot);
+  if (s != OK) {
+	/* This is not a problem only when we force this driver mapping */
+	if (! (flags & DRV_FORCED))
 		return(EINVAL);
-
+  } else {
 	rfp = &fproc[slot];
 	rfp->fp_flags |= FP_SYS_PROC;	/* Process is a driver */
   }

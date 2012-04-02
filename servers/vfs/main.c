@@ -147,31 +147,36 @@ static void handle_work(void *(*func)(void *arg))
 
   proc_e = m_in.m_source;
 
-  if ((vmp = find_vmnt(proc_e)) != NULL) {
-	/* A call back or dev result from an FS endpoint */
-
-	/* Set call back flag. We assume that an FS does only one call back
-	 * at a time */
-	vmp->m_flags |= VMNT_CALLBACK;
-
-	/* When an FS point has to make a call back in order to mount, force
-	 * its device to a "none device" so block reads/writes will be handled
-	 * by ROOT_FS_E.
-	 */
-	if (vmp->m_flags & VMNT_MOUNTING)
-		vmp->m_flags |= VMNT_FORCEROOTBSF;
-
+  if (fp->fp_flags & FP_SYS_PROC) {
 	if (worker_available() == 0) {
-		/* No worker threads available to handle call */
-		if (deadlock_resolving) {
-			/* Already trying to resolve a deadlock, can't
-			 * handle more, sorry */
-			vmp->m_flags &= ~VMNT_CALLBACK;
-			reply(proc_e, EAGAIN);
+		if (!deadlock_resolving) {
+			if ((vmp = find_vmnt(proc_e)) != NULL) {
+				/* A call back or dev result from an FS
+				 * endpoint. Set call back flag. Can do only
+				 * one call back at a time.
+				 */
+				if (vmp->m_flags & VMNT_CALLBACK) {
+					reply(proc_e, EAGAIN);
+					return;
+				}
+				vmp->m_flags |= VMNT_CALLBACK;
+
+				/* When an FS endpoint has to make a call back
+				 * in order to mount, force its device to a
+				 * "none device" so block reads/writes will be
+				 * handled by ROOT_FS_E.
+				 */
+				if (vmp->m_flags & VMNT_MOUNTING)
+					vmp->m_flags |= VMNT_FORCEROOTBSF;
+			}
+			deadlock_resolving = 1;
+			dl_worker_start(func);
 			return;
 		}
-		deadlock_resolving = 1;
-		dl_worker_start(func);
+		/* Already trying to resolve a deadlock, can't
+		 * handle more, sorry */
+
+		reply(proc_e, EAGAIN);
 		return;
 	}
   }
