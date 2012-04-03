@@ -4,11 +4,12 @@
 #include "fproc.h"
 #include <minix/vm.h>
 #include <sys/mman.h>
-#include <machine/elf.h>
+#include <sys/exec_elf.h>
 #include "param.h"
 
 /* Include ELF headers */
 #include <sys/elf_core.h>
+#include <machine/elf.h>
 
 static void fill_elf_header(Elf32_Ehdr *elf_header, int phnum);
 static void fill_prog_header(Elf32_Phdr *prog_header, Elf32_Word

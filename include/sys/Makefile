@@ -47,9 +47,7 @@ INCSYMLINKS=\
 	sys/sha1.h ${NETBSDINCSDIR}/sha1.h \
 	sys/sha2.h ${NETBSDINCSDIR}/sha2.h \
 	sys/md4.h ${NETBSDINCSDIR}/md4.h \
-	sys/md5.h ${NETBSDINCSDIR}/md5.h \
-	sys/exec_elf.h ${NETBSDINCSDIR}/elf.h \
-
+	sys/md5.h ${NETBSDINCSDIR}/md5.h 
 
 #INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
 

@@ -53,6 +53,53 @@ static int protflags(int);	/* Elf flags -> mmap protection */
 
 #define EA_UNDEF		(~(Elf_Addr)0)
 
+#ifdef __minix
+#define mmap	minix_mmap_emulator
+#define munmap	minix_munmap
+
+/* for minix, ignore MAP_SHARED and MAP_FILE for now. */
+#define MAP_SHARED 0
+#define MAP_FILE 0
+#endif
+
+#undef MINIXVERBOSE
+
+static void * minix_mmap_emulator(void *addrhint, size_t size, int prot, int flags, int fd, off_t off)
+{
+	void *ret;
+	int mapflags;
+	size_t s;
+
+	mapflags = flags & (MAP_FIXED);
+
+#ifdef MINIXVERBOSE
+	if(addrhint) {
+		fprintf(stderr, "0x%lx-0x%lx requested\n", addrhint,
+			(char *) addrhint + size);
+	}
+#endif
+
+	if((ret = minix_mmap(addrhint, size, PROT_READ|PROT_WRITE,
+		MAP_ANON|MAP_PRIVATE|MAP_PREALLOC|mapflags, -1, 0)) == MAP_FAILED) {
+		return ret;
+	}
+
+	if(!(mapflags & MAP_ANON)) {
+		if((s=pread(fd, ret, size, off)) <= 0) {
+			munmap(ret, size);
+			return MAP_FAILED;
+		}
+	}
+
+#ifdef MINIXVERBOSE
+	fprintf(stderr, "0x%lx-0x%lx mapped\n",
+		ret, (char *) ret + size);
+
+#endif
+
+	return ret;
+}
+
 /*
  * Map a shared object into memory.  The argument is a file descriptor,
  * which must be open on the object and positioned at its beginning.
@@ -296,8 +343,15 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	base_addr = NULL;
 #endif
 	mapsize = base_vlimit - base_vaddr;
+
+#ifndef __minix
 	mapbase = mmap(base_addr, mapsize, text_flags,
 	    mapflags | MAP_FILE | MAP_PRIVATE, fd, base_offset);
+#else
+	/* minix doesn't want overlapping mmap()s */
+	mapbase = mmap(base_addr, obj->textsize, text_flags,
+	    mapflags | MAP_FILE | MAP_PRIVATE, fd, base_offset);
+#endif
 	if (mapbase == MAP_FAILED) {
 		_rtld_error("mmap of entire address space failed: %s",
 		    xstrerror(errno));

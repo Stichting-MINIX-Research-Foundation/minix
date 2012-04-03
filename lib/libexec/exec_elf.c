@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <libexec.h>
+#include <string.h>
+#include <machine/elf.h>
 
 /* For verbose logging */
 #define ELF_DEBUG 0
@@ -16,10 +18,63 @@
 
 #define SECTOR_SIZE 512
 
-static int __elfN(check_header)(const Elf_Ehdr *hdr);
+static int check_header(const Elf_Ehdr *hdr);
+
+static int elf_sane(const Elf_Ehdr *hdr)
+{
+  if (check_header(hdr) != OK) {
+     return 0;
+  }
+
+  if((hdr->e_type != ET_EXEC) && (hdr->e_type != ET_DYN)) {
+     return 0;
+  }
+
+  if ((hdr->e_phoff > SECTOR_SIZE) ||
+      (hdr->e_phoff + hdr->e_phentsize * hdr->e_phnum) > SECTOR_SIZE) {
+#if ELF_DEBUG
+	printf("peculiar phoff\n");
+#endif
+     return 0;
+  }
+
+  return 1;
+}
+
+static int elf_ph_sane(const Elf_Phdr *phdr)
+{
+  if (rounddown((uintptr_t)phdr, sizeof(Elf_Addr)) != (uintptr_t)phdr) {
+     return 0;
+  }
+  return 1;
+}
+
+static int elf_unpack(const char *exec_hdr,
+	int hdr_len, const Elf_Ehdr **hdr, const Elf_Phdr **phdr)
+{
+  *hdr = (const Elf_Ehdr *)exec_hdr;
+  if(!elf_sane(*hdr)) {
+#if ELF_DEBUG
+	printf("elf_sane failed\n");
+#endif
+  	return ENOEXEC;
+  }
+  *phdr = (const Elf_Phdr *)(exec_hdr + (*hdr)->e_phoff);
+  if(!elf_ph_sane(*phdr)) {
+#if ELF_DEBUG
+	printf("elf_ph_sane failed\n");
+#endif
+  	return ENOEXEC;
+  }
+#if 0
+  if((int)((*phdr) + (*hdr)->e_phnum) >= hdr_len) return ENOEXEC;
+#endif
+  return OK;
+}
 
 int read_header_elf(
   const char *exec_hdr,		/* executable header */
+  int hdr_len,			/* significant bytes in exec_hdr */
   vir_bytes *text_vaddr,	/* text virtual address */
   phys_bytes *text_paddr,	/* text physical address */
   vir_bytes *text_filebytes,	/* text segment size (in the file) */
@@ -36,7 +91,7 @@ int read_header_elf(
   const Elf_Ehdr *hdr = NULL;
   const Elf_Phdr *phdr = NULL;
   unsigned long seg_filebytes, seg_membytes;
-  int i = 0;
+  int e, i = 0;
 
   *text_vaddr = *text_paddr = 0;
   *text_filebytes = *text_membytes = 0;
@@ -44,27 +99,12 @@ int read_header_elf(
   *data_filebytes = *data_membytes = 0;
   *pc = *text_offset = *data_offset = 0;
 
-  hdr = (const Elf_Ehdr *)exec_hdr;
-  if (__elfN(check_header)(hdr) != OK || (hdr->e_type != ET_EXEC))
-  {
-     return ENOEXEC;
-  }
-
-  if ((hdr->e_phoff > SECTOR_SIZE) ||
-      (hdr->e_phoff + hdr->e_phentsize * hdr->e_phnum) > SECTOR_SIZE) {
-     return ENOEXEC;
-  }
-
-  phdr = (const Elf_Phdr *)(exec_hdr + hdr->e_phoff);
-  if (
-#ifdef __NBSD_LIBC
-      rounddown((uintptr_t)phdr, sizeof(Elf_Addr)) != (uintptr_t)phdr
-#else
-      !_minix_aligned(hdr->e_phoff, Elf_Addr)
+  if((e=elf_unpack(exec_hdr, hdr_len, &hdr, &phdr)) != OK) {
+#if ELF_DEBUG
+	printf("elf_unpack failed\n");
 #endif
-     ) {
-     return ENOEXEC;
-  }
+  	return e;
+   }
 
 #if ELF_DEBUG
   printf("Program header file offset (phoff): %ld\n", hdr->e_phoff);
@@ -124,7 +164,12 @@ int read_header_elf(
   return OK;
 }
 
-static int __elfN(check_header)(const Elf_Ehdr *hdr)
+#define IS_ELF(ehdr)	((ehdr).e_ident[EI_MAG0] == ELFMAG0 && \
+			 (ehdr).e_ident[EI_MAG1] == ELFMAG1 && \
+			 (ehdr).e_ident[EI_MAG2] == ELFMAG2 && \
+			 (ehdr).e_ident[EI_MAG3] == ELFMAG3)
+
+static int check_header(const Elf_Ehdr *hdr)
 {
   if (!IS_ELF(*hdr) ||
       hdr->e_ident[EI_DATA] != ELF_TARG_DATA ||
@@ -135,3 +180,66 @@ static int __elfN(check_header)(const Elf_Ehdr *hdr)
 
   return OK;
 }
+
+int elf_phdr(const char *exec_hdr, int hdr_len, vir_bytes *ret_phdr)
+{
+  const Elf_Ehdr *hdr = NULL;
+  const Elf_Phdr *phdr = NULL;
+  int e, i, have_computed_phdr = 1;
+
+  if((e=elf_unpack(exec_hdr, hdr_len, &hdr, &phdr)) != OK) return e;
+
+  for (i = 0; i < hdr->e_phnum; i++) {
+      switch (phdr[i].p_type) {
+      case PT_LOAD:
+      		/* compute phdr based on this heuristic, to be used
+		 * if there is no PT_PHDR
+		 */
+      		if(phdr[i].p_offset == 0) {
+			*ret_phdr = phdr[i].p_vaddr + hdr->e_phoff;
+			have_computed_phdr = 1;
+		}
+		break;
+      case PT_PHDR:
+      	  *ret_phdr = phdr[i].p_vaddr;
+	  return OK;
+      default:
+	  break;;
+      }
+  }
+  if(have_computed_phdr) return OK;
+  return ENOENT;
+}
+
+/* Return >0 if there is an ELF interpreter (i.e. it is a dynamically linked
+ * executable) and we could extract it successfully.
+ * Return 0 if there isn't one.
+ * Return <0 on error.
+ */
+int elf_has_interpreter(const char *exec_hdr,		/* executable header */
+		int hdr_len, char *interp, int maxsz)
+{
+  const Elf_Ehdr *hdr = NULL;
+  const Elf_Phdr *phdr = NULL;
+  int e, i;
+
+  if((e=elf_unpack(exec_hdr, hdr_len, &hdr, &phdr)) != OK) return e;
+
+  for (i = 0; i < hdr->e_phnum; i++) {
+      switch (phdr[i].p_type) {
+      case PT_INTERP:
+      	  if(!interp) return 1;
+      	  if(phdr[i].p_filesz >= maxsz)
+	  	return -1;
+	  if(phdr[i].p_offset + phdr[i].p_filesz >= hdr_len)
+	  	return -1;
+	  memcpy(interp, exec_hdr + phdr[i].p_offset, phdr[i].p_filesz);
+	  interp[phdr[i].p_filesz] = '\0';
+	  return 1;
+      default:
+	  continue;
+      }
+  }
+  return 0;
+}
+

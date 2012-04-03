@@ -253,13 +253,18 @@ static int load_elf(struct exec_info *execi)
   proc_e = execi->proc_e;
 
   /* Read the file header and extract the segment sizes. */
-  r = read_header_elf(execi->image, &text_vaddr, &text_paddr,
+  r = read_header_elf(execi->image, execi->image_len, &text_vaddr, &text_paddr,
 		      &text_filebytes, &text_membytes,
 		      &data_vaddr, &data_paddr,
 		      &data_filebytes, &data_membytes,
 		      &execi->pc, &text_offset, &data_offset);
   if (r != OK) {
       return(r);
+  }
+
+  if(elf_has_interpreter(execi->image, execi->image_len, NULL, 0)) {
+  	printf("RS: can't execute dynamically linked executables\n");
+	return ENOEXEC;
   }
 
   new_uid= getuid();

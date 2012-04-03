@@ -47,6 +47,7 @@ int do_exec()
 	m.PM_PATH_LEN = m_in.exec_len;
 	m.PM_FRAME = m_in.frame_ptr;
 	m.PM_FRAME_LEN = m_in.frame_len;
+	m.PM_EXECFLAGS = m_in.PMEXEC_FLAGS;
 
 	tell_vfs(mp, &m);
 
@@ -148,7 +149,7 @@ int do_execrestart()
 	result= m_in.EXC_RS_RESULT;
 	pc= (vir_bytes)m_in.EXC_RS_PC;
 
-	exec_restart(rmp, result, pc);
+	exec_restart(rmp, result, pc, rmp->mp_frame_addr);
 
 	return OK;
 }
@@ -157,13 +158,13 @@ int do_execrestart()
 /*===========================================================================*
  *				exec_restart				     *
  *===========================================================================*/
-void exec_restart(rmp, result, pc)
+void exec_restart(rmp, result, pc, vfs_newsp)
 struct mproc *rmp;
 int result;
 vir_bytes pc;
+vir_bytes vfs_newsp;
 {
 	int r, sn;
-	char *new_sp;
 
 	if (result != OK)
 	{
@@ -202,8 +203,8 @@ vir_bytes pc;
 	}
 #endif /* USE_TRACE */
 
-	new_sp= (char *)rmp->mp_frame_addr;
-	r= sys_exec(rmp->mp_endpoint, new_sp, rmp->mp_name, pc);
+	/* Call kernel to exec with SP and PC set by VFS. */
+	r= sys_exec(rmp->mp_endpoint, (char *) vfs_newsp, rmp->mp_name, pc);
 	if (r != OK) panic("sys_exec failed: %d", r);
 }
 

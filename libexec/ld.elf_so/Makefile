@@ -38,7 +38,11 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "vax")) &&					\
     ${MKPIC} != "no"
 
+.if ${CC} == "gcc"
 LDFLAGS+=	-shared -symbolic -nostartfiles
+.else
+LDFLAGS+=	-shared -Wl,-Bsymbolic -nostartfiles
+.endif
 LDFLAGS+=	-Wl,-static
 LDFLAGS+=	-Wl,--warn-shared-textrel
 

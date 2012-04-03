@@ -2,7 +2,7 @@
 
 .PATH: ${MINIXSRCDIR}/common/include/sys
 
-INCS+= 	elf32.h elf64.h elf_common.h elf_generic.h \
+INCS+= 	elf64.h elf_common.h elf_generic.h \
 	ioc_block.h ioc_fbd.h ioc_file.h ioc_tape.h ioc_disk.h \
 	ioc_memory.h ioc_sound.h ioc_tty.h \
 	kbdio.h mtio.h svrctl.h video.h vm.h procfs.h elf_core.h exec_elf.h \

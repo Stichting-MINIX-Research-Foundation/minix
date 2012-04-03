@@ -31,9 +31,13 @@
 #include "param.h"
 #include "vnode.h"
 #include <minix/vfsif.h>
+#include <machine/vmparam.h>
 #include <assert.h>
-#include <libexec.h>
+#include <fcntl.h>
 #include "exec.h"
+
+#define _KERNEL	/* for ELF_AUX_ENTRIES */
+#include <libexec.h>
 
 static void lock_exec(void);
 static void unlock_exec(void);
@@ -42,9 +46,9 @@ static int exec_newmem(int proc_e, vir_bytes text_addr, vir_bytes text_bytes,
 	vir_bytes frame_len, int sep_id, int is_elf, dev_t st_dev,
 	ino_t st_ino, time_t ctime, char *progname, int new_uid, int new_gid,
 	vir_bytes *stack_topp, int *load_textp, int *setugidp);
-static int is_script(const char *exec_hdr, size_t exec_len);
 static int patch_stack(struct vnode *vp, char stack[ARG_MAX],
 	size_t *stk_bytes, char path[PATH_MAX]);
+static int is_script(struct exec_info *execi);
 static int insert_arg(char stack[ARG_MAX], size_t *stk_bytes, char *arg,
 	int replace);
 static void patch_ptr(char stack[ARG_MAX], vir_bytes base);
@@ -53,22 +57,26 @@ static int read_seg(struct vnode *vp, off_t off, int proc_e, int seg,
 	vir_bytes seg_addr, phys_bytes seg_bytes);
 static int load_aout(struct exec_info *execi);
 static int load_elf(struct exec_info *execi);
-static int map_header(char **exec_hdr, const struct vnode *vp);
+static int stack_prepare_elf(struct exec_info *execi,
+	char *curstack, size_t *frame_len, int *extrabase);
+static int map_header(struct exec_info *execi);
 
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
 
 /* Array of loaders for different object file formats */
+typedef int (*exechook_t)(struct exec_info *execpackage);
+typedef int (*stackhook_t)(struct exec_info *execi, char *curstack,
+	size_t *frame_len, int *extrabase);
 struct exec_loaders {
-	int (*load_object)(struct exec_info *);
+	exechook_t load_object;	 /* load executable into memory */
+	stackhook_t setup_stack; /* prepare stack before argc and argv push */
 };
 
 static const struct exec_loaders exec_loaders[] = {
-	{ load_aout },
-	{ load_elf },
-	{ NULL }
+	{ load_aout, NULL },
+	{ load_elf,  stack_prepare_elf },
+	{ NULL, NULL }
 };
-
-static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
 
 /*===========================================================================*
  *				lock_exec				     *
@@ -102,111 +110,185 @@ static void unlock_exec(void)
 }
 
 /*===========================================================================*
+ *				get_read_vp				     *
+ *===========================================================================*/
+static int get_read_vp(struct exec_info *execi, char *fullpath,
+	int copyprogname, int sugid, struct lookup *resolve, struct fproc *fp)
+{
+/* Make the executable that we want to exec() into the binary pointed
+ * to by 'fullpath.' This function fills in necessary details in the execi
+ * structure, such as opened vnode. It unlocks and releases the vnode if
+ * it was already there. This makes it easy to change the executable
+ * during the exec(), which is often necessary, by calling this function
+ * more than once. This is specifically necessary when we discover the
+ * executable is actually a script or a dynamically linked executable.
+ */
+	int r;
+
+	/* Caller wants to switch vp to the file in 'fullpath.'
+	 * unlock and put it first if there is any there.
+	 */
+	if(execi->vp) {
+		unlock_vnode(execi->vp);
+		put_vnode(execi->vp);
+		execi->vp = NULL;
+	}
+
+	/* Remember/overwrite the executable name if requested. */
+	if(copyprogname) {
+		char *cp = strrchr(fullpath, '/');
+		if(cp) cp++;
+		else cp = fullpath;
+		strncpy(execi->progname, cp, sizeof(execi->progname)-1);
+		execi->progname[sizeof(execi->progname)-1] = '\0';
+	}
+
+	/* Open executable */
+	if ((execi->vp = eat_path(resolve, fp)) == NULL)
+		return err_code;
+
+	unlock_vmnt(execi->vmp);
+
+	if ((execi->vp->v_mode & I_TYPE) != I_REGULAR)
+		return ENOEXEC;
+	else if ((r = forbidden(fp, execi->vp, X_BIT)) != OK)
+		return r;
+	else
+		r = req_stat(execi->vp->v_fs_e, execi->vp->v_inode_nr,
+			VFS_PROC_NR, (vir_bytes) &(execi->sb), 0, 0);
+
+	if (r != OK) return r;
+
+	/* If caller wants us to, honour suid/guid mode bits. */
+        if (sugid) {
+		/* Deal with setuid/setgid executables */
+		if (execi->vp->v_mode & I_SET_UID_BIT) {
+			execi->new_uid = execi->vp->v_uid;
+			execi->setugid = 1;
+		}
+		if (execi->vp->v_mode & I_SET_GID_BIT) {
+			execi->new_gid = execi->vp->v_gid;
+			execi->setugid = 1;
+		}
+        }
+
+	/* Read in first chunk of file. */
+	if((r=map_header(execi)) != OK)
+		return r;
+
+	return OK;
+}
+
+#define FAILCHECK(expr) if((r=(expr)) != OK) { goto pm_execfinal; } while(0)
+#define Get_read_vp(e,f,p,s,rs,fp) do { \
+	r=get_read_vp(&e,f,p,s,rs,fp); if(r != OK) { FAILCHECK(r); }	\
+	} while(0)
+
+/*===========================================================================*
  *				pm_exec					     *
  *===========================================================================*/
 int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
-		   vir_bytes frame, size_t frame_len, vir_bytes *pc)
+		   vir_bytes frame, size_t frame_len, vir_bytes *pc,
+		   vir_bytes *newsp, int user_exec_flags)
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside VFS, and then to the new core image.
  */
-  int r, r1, round, slot;
+  int r, slot;
   vir_bytes vsp;
   struct fproc *rfp;
-  struct vnode *vp;
-  struct vmnt *vmp;
-  char *cp;
+  int extrabase = 0;
   static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
   struct exec_info execi;
   int i;
-  char fullpath[PATH_MAX];
+  static char fullpath[PATH_MAX],
+  	elf_interpreter[PATH_MAX],
+	finalexec[PATH_MAX];
   struct lookup resolve;
+  stackhook_t makestack = NULL;
 
   lock_exec();
 
+  /* unset execi values are 0. */
+  memset(&execi, 0, sizeof(execi));
+
+  /* passed from exec() libc code */
+  execi.userflags = user_exec_flags;
+
   okendpt(proc_e, &slot);
   rfp = fp = &fproc[slot];
-  vp = NULL;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
-  /* Get the exec file name. */
-  if ((r = fetch_name(path, path_len, fullpath)) != OK)
-	goto pm_execfinal;
-
   /* Fetch the stack from the user before destroying the old core image. */
-  if (frame_len > ARG_MAX) {
-		r = ENOMEM; /* stack too big */
-		goto pm_execfinal;
-  }
+  if (frame_len > ARG_MAX)
+	FAILCHECK(ENOMEM); /* stack too big */
+
   r = sys_datacopy(proc_e, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
 		   (size_t) frame_len);
   if (r != OK) { /* can't fetch stack (e.g. bad virtual addr) */
         printf("VFS: pm_exec: sys_datacopy failed\n");
-        goto pm_execfinal;
+	FAILCHECK(r);
   }
 
   /* The default is to keep the original user and group IDs */
   execi.new_uid = rfp->fp_effuid;
   execi.new_gid = rfp->fp_effgid;
 
-  for (round = 0; round < 2; round++) {
-	/* round = 0 (first attempt), or 1 (interpreted script) */
-	/* Save the name of the program */
-	(cp = strrchr(fullpath, '/')) ? cp++ : (cp = fullpath);
+  /* Get the exec file name. */
+  FAILCHECK(fetch_name(path, path_len, fullpath));
+  strcpy(finalexec, fullpath);
 
-	strncpy(execi.progname, cp, PROC_NAME_LEN-1);
-	execi.progname[PROC_NAME_LEN-1] = '\0';
-	execi.setugid = 0;
+  /* Get_read_vp will return an opened vn in execi.
+   * if necessary it releases the existing vp so we can
+   * switch after we find out what's inside the file.
+   * It reads the start of the file.
+   */
+  Get_read_vp(execi, fullpath, 1, 1, &resolve, fp);
 
-	/* Open executable */
-	if ((vp = eat_path(&resolve, fp)) == NULL) {
-		r = err_code;
-		goto pm_execfinal;
+  /* If this is a script (i.e. has a #!/interpreter line),
+   * retrieve the name of the interpreter and open that
+   * executable instead.
+   */
+  if(is_script(&execi)) {
+  	/* patch_stack will add interpreter name and
+	 * args to stack and retrieve the new binary
+	 * name into fullpath.
+	 */
+  	FAILCHECK(fetch_name(path, path_len, fullpath));
+	FAILCHECK(patch_stack(execi.vp, mbuf, &frame_len, fullpath));
+  	strcpy(finalexec, fullpath);
+	Get_read_vp(execi, fullpath, 1, 0, &resolve, fp);
+  }
+
+  /* If this is a dynamically linked executable, retrieve
+   * the name of that interpreter in elf_interpreter and open that
+   * executable instead. But open the current executable in an
+   * fd for the current process.
+   */
+  if(elf_has_interpreter(execi.hdr, execi.hdr_len,
+	elf_interpreter, sizeof(elf_interpreter))) {
+	/* Switch the executable vnode to the interpreter */
+	execi.is_dyn = 1;
+
+	/* The interpreter (loader) needs an fd to the main program,
+	 * which is currently in finalexec
+	 */
+	if((r = execi.elf_main_fd = common_open(finalexec, O_RDONLY, 0)) < 0) {
+		printf("VFS: exec: dynamic: open main exec failed %s (%d)\n",
+			fullpath, r);
+		FAILCHECK(r);
 	}
-	execi.vp = vp;
-	unlock_vmnt(vmp);
 
-	if ((vp->v_mode & I_TYPE) != I_REGULAR)
-		r = ENOEXEC;
-	else if ((r1 = forbidden(fp, vp, X_BIT)) != OK)
-		r = r1;
-	else
-		r = req_stat(vp->v_fs_e, vp->v_inode_nr, VFS_PROC_NR,
-			     (vir_bytes) &(execi.sb), 0, 0);
-	if (r != OK) goto pm_execfinal;
-
-        if (round == 0) {
-		/* Deal with setuid/setgid executables */
-		if (vp->v_mode & I_SET_UID_BIT) {
-			execi.new_uid = vp->v_uid;
-			execi.setugid = 1;
-		}
-		if (vp->v_mode & I_SET_GID_BIT) {
-			execi.new_gid = vp->v_gid;
-			execi.setugid = 1;
-		}
-        }
-
-	r = map_header(&execi.hdr, execi.vp);
-	if (r != OK) goto pm_execfinal;
-
-	if (!is_script(execi.hdr, execi.vp->v_size) || round != 0)
-		break;
-
-	/* Get fresh copy of the file name. */
-	if ((r = fetch_name(path, path_len, fullpath)) != OK)
-		printf("VFS pm_exec: 2nd fetch_name failed\n");
-	else
-		r = patch_stack(vp, mbuf, &frame_len, fullpath);
-
-	unlock_vnode(vp);
-	put_vnode(vp);
-	vp = NULL;
-	if (r != OK) goto pm_execfinal;
+	/* The executable we need to execute first (loader)
+	 * is in elf_interpreter, and has to be in fullpath to
+	 * be looked up
+	 */
+	strcpy(fullpath, elf_interpreter);
+	Get_read_vp(execi, fullpath, 0, 0, &resolve, fp);
   }
 
   execi.proc_e = proc_e;
@@ -215,28 +297,27 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   for (i = 0; exec_loaders[i].load_object != NULL; i++) {
       r = (*exec_loaders[i].load_object)(&execi);
       /* Loaded successfully, so no need to try other loaders */
-      if (r == OK) break;
+      if (r == OK) { makestack = exec_loaders[i].setup_stack; break; }
   }
 
-  if (r != OK) {   /* No exec loader could load the object */
-	r = ENOEXEC;
-	goto pm_execfinal;
-  }
+  FAILCHECK(r);
 
   /* Save off PC */
   *pc = execi.pc;
 
-  /* Patch up stack and copy it from VFS to new core image. */
+  /* call a stack-setup function if this executable type wants it */
   vsp = execi.stack_top;
-  vsp -= frame_len;
-  patch_ptr(mbuf, vsp);
-  if ((r = sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
-		   (phys_bytes)frame_len)) != OK) {
-	printf("VFS: datacopy failed (%d) trying to copy to %lu\n", r, vsp);
-	goto pm_execfinal;
-  }
+  if(makestack) FAILCHECK(makestack(&execi, mbuf, &frame_len, &extrabase));
 
-  if (r != OK) goto pm_execfinal;
+  /* Patch up stack and copy it from VFS to new core image. */
+  vsp -= frame_len;
+  patch_ptr(mbuf, vsp + extrabase);
+  FAILCHECK(sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
+		   (phys_bytes)frame_len));
+  
+  /* Return new stack pointer to caller */
+  *newsp = vsp;
+
   clo_exec(rfp);
 
   if (execi.setugid) {
@@ -246,10 +327,13 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	rfp->fp_effgid = execi.new_gid;
   }
 
+  /* Remember the new name of the process */
+  strcpy(rfp->fp_name, execi.progname);
+
 pm_execfinal:
-  if (vp != NULL) {
-	unlock_vnode(vp);
-	put_vnode(vp);
+  if (execi.vp != NULL) {
+	unlock_vnode(execi.vp);
+	put_vnode(execi.vp);
   }
   unlock_exec();
   return(r);
@@ -306,6 +390,79 @@ static int load_aout(struct exec_info *execi)
   return(r);
 }
 
+static int stack_prepare_elf(struct exec_info *execi, char *frame, size_t *framelen, int *extrabase)
+{
+	AuxInfo *a;
+	Elf_Ehdr *elf_header;
+	int nulls;
+	char	**mysp = (char **) frame,
+		**mysp_end = (char **) ((char *)frame + *framelen);
+
+	if(!execi->is_dyn)
+		return OK;
+
+	assert(execi->hdr_len >= sizeof(*elf_header));
+	elf_header = (Elf_Ehdr *) execi->hdr;
+
+	/* exec() promises stack space. Now find it. */
+	mysp++;	/* skip argc */
+
+	/* find a terminating NULL entry twice: one for argv[], one for envp[]. */
+	for(nulls = 0; nulls < 2; nulls++) {
+		assert(mysp < mysp_end);
+		while(*mysp && mysp < mysp_end) mysp++;	/* find terminating NULL */
+		if(mysp >= mysp_end) {
+			printf("VFS: malformed stack for exec()\n");
+			return ENOEXEC;
+		}
+		assert(!*mysp);
+		mysp++;
+	}
+
+	/* Userland provides a fully filled stack frame, with argc, argv, envp
+	 * and then all the argv and envp strings; consistent with ELF ABI, except
+	 * for a list of Aux vectors that should be between envp points and the
+	 * start of the strings.
+	 *
+	 * It would take some very unpleasant hackery to insert the aux vectors before
+	 * the strings, and correct all the pointers, so the exec code in libc makes
+	 * space for us first and indicates the fact it did this with this flag.
+	 */
+	if(!(execi->userflags & PMEF_AUXVECTORSPACE)) {
+		char *f = (char *) mysp;
+		int remain;
+		vir_bytes extrabytes = sizeof(*a) * PMEF_AUXVECTORS;
+		
+		/* Create extrabytes more space */
+		remain = *framelen - (int)(f - frame);
+		if(*framelen + extrabytes >= ARG_MAX)
+			return ENOMEM;
+		*framelen += extrabytes;
+		*extrabase += extrabytes;
+		memmove(f+extrabytes, f, remain);
+		memset(f, 0, extrabytes);
+	}
+
+	/* Ok, what mysp points to now we can use for the aux vectors. */
+	a = (AuxInfo *) mysp;
+#define AUXINFO(type, value) \
+	{ assert((char *) a < (char *) mysp_end); a->a_type = type; a->a_v = value; a++; }
+#if 0
+	AUXINFO(AT_PHDR, execi->elf_phdr);
+	AUXINFO(AT_PHENT, elf_header->e_phentsize);
+	AUXINFO(AT_PHNUM, elf_header->e_phnum);
+#endif
+	AUXINFO(AT_BASE, execi->elf_base);
+	AUXINFO(AT_ENTRY, execi->pc);
+	AUXINFO(AT_PAGESZ, PAGE_SIZE);
+	AUXINFO(AT_EXECFD, execi->elf_main_fd);
+
+	/* Always terminate with AT_NULL */
+	AUXINFO(AT_NULL, 0);
+
+	return OK;
+}
+
 /*===========================================================================*
  *				load_elf				     *
  *===========================================================================*/
@@ -318,7 +475,8 @@ static int load_elf(struct exec_info *execi)
   vir_bytes text_vaddr, text_paddr, text_filebytes, text_membytes;
   vir_bytes data_vaddr, data_paddr, data_filebytes, data_membytes;
   off_t text_offset, data_offset;
-  int sep_id, is_elf;
+  int sep_id, is_elf, i;
+  vir_bytes text_base, data_base;
 
   assert(execi != NULL);
   assert(execi->hdr != NULL);
@@ -327,20 +485,39 @@ static int load_elf(struct exec_info *execi)
   proc_e = execi->proc_e;
   vp = execi->vp;
 
+  /* this function can load the dynamic linker, but that 
+   * shouldn't require an interpreter itself.
+   */
+  i = elf_has_interpreter(execi->hdr, execi->hdr_len, NULL, 0);
+  if(i > 0) {
+  	printf("VFS: cannot load dynamically linked executable\n");
+	return ENOEXEC;
+  }
+
   /* Read the file header and extract the segment sizes. */
-  r = read_header_elf(execi->hdr, &text_vaddr, &text_paddr,
+  r = read_header_elf(execi->hdr, execi->hdr_len, &text_vaddr, &text_paddr,
 		      &text_filebytes, &text_membytes,
 		      &data_vaddr, &data_paddr,
 		      &data_filebytes, &data_membytes,
 		      &execi->pc, &text_offset, &data_offset);
-  if (r != OK) return(r);
+
+  if (r != OK) {
+  	return(r);
+  }
+
+  if(elf_phdr(execi->hdr, execi->hdr_len, &execi->elf_phdr) == OK)
+  	if(execi->elf_phdr == 0)	/* 0 should indicate: not known */
+  		printf("VFS: warning: unexpected zero elf_phdr\n");
 
   sep_id = 0;
   is_elf = 1;
   tot_bytes = 0; /* Use default stack size */
+  text_base = trunc_page(text_vaddr);
+  data_base = trunc_page(data_vaddr);
+  execi->elf_base = MIN(text_base, data_base);
   r = exec_newmem(proc_e,
-		  trunc_page(text_vaddr), text_membytes,
-		  trunc_page(data_vaddr), data_membytes,
+                  text_base, text_membytes,
+                  data_base, data_membytes,
 		  tot_bytes, execi->frame_len, sep_id, is_elf,
 		  vp->v_dev, vp->v_inode_nr, execi->sb.st_ctime,
 		  execi->progname, execi->new_uid, execi->new_gid,
@@ -424,12 +601,12 @@ static int exec_newmem(
 /*===========================================================================*
  *				is_script				     *
  *===========================================================================*/
-static int is_script(const char *exec_hdr, size_t exec_len)
+static int is_script(struct exec_info *execi)
 {
 /* Is Interpreted script? */
-  assert(exec_hdr != NULL);
+  assert(execi->hdr != NULL);
 
-  return(exec_hdr[0] == '#' && exec_hdr[1] == '!' && exec_len >= 2);
+  return(execi->hdr[0] == '#' && execi->hdr[1] == '!' && execi->hdr_len >= 2);
 }
 
 /*===========================================================================*
@@ -695,23 +872,27 @@ static void clo_exec(struct fproc *rfp)
 /*===========================================================================*
  *				map_header				     *
  *===========================================================================*/
-static int map_header(char **exec_hdr, const struct vnode *vp)
+static int map_header(struct exec_info *execi)
 {
   int r;
   u64_t new_pos;
   unsigned int cum_io;
   off_t pos;
+  static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
 
   pos = 0;	/* Read from the start of the file */
 
-  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
-		    VFS_PROC_NR, hdr, MIN(vp->v_size, PAGE_SIZE),
-		    &new_pos, &cum_io);
+  /* How much is sensible to read */
+  execi->hdr_len = MIN(execi->vp->v_size, sizeof(hdr));
+  execi->hdr = hdr;
+
+  r = req_readwrite(execi->vp->v_fs_e, execi->vp->v_inode_nr,
+  	cvul64(pos), READING, VFS_PROC_NR, hdr,
+	execi->hdr_len, &new_pos, &cum_io);
   if (r != OK) {
 	printf("VFS: exec: map_header: req_readwrite failed\n");
 	return(r);
   }
 
-  *exec_hdr = hdr;
   return(OK);
 }

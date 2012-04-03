@@ -542,6 +542,12 @@
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
 #define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
 
+/* Field names for EXEC sent from userland to PM. */
+#define PMEXEC_FLAGS	m1_i3	/* PMEF_* */
+
+#define PMEF_AUXVECTORS	20
+#define PMEF_AUXVECTORSPACE 0x01 /* space for PMEF_AUXVECTORS on stack */
+
 /* Flags for PR_FORK_FLAGS. */
 #define PFF_VMINHIBIT	0x01	/* Don't schedule until release by VM. */
 
@@ -797,10 +803,12 @@
 					 */
 #  define PM_FRAME		m7_p2	/* arguments and environment */
 #  define PM_FRAME_LEN		m7_i3	/* size of frame */
+#  define PM_EXECFLAGS		m7_i4	/* PMEXEC_FLAGS */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
 #  define PM_STATUS		m7_i2	/* OK or failure */
 #  define PM_PC			m7_p1	/* program counter */
+#  define PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
 #  define PM_PPROC		m7_i2	/* parent process endpoint */

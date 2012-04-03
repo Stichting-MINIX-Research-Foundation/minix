@@ -46,6 +46,7 @@ EXTERN struct fproc {
   mutex_t fp_lock;		/* mutex to lock fproc object */
   struct job fp_job;		/* pending job */
   thread_t fp_wtid;		/* Thread ID of worker */
+  char fp_name[PROC_NAME_LEN];	/* Last exec() */
 #if LOCK_DEBUG
   int fp_vp_rdlocks;		/* number of read-only locks on vnodes */
   int fp_vmnt_rdlocks;		/* number of read-only locks on vmnts */

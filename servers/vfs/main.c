@@ -791,7 +791,7 @@ void reply(endpoint_t whom, int result)
 static void service_pm_postponed(void)
 {
   int r;
-  vir_bytes pc;
+  vir_bytes pc, newsp;
 
   switch(job_call_nr) {
     case PM_EXEC:
@@ -807,13 +807,14 @@ static void service_pm_postponed(void)
 		stack_frame_len = (size_t) job_m_in.PM_FRAME_LEN;
 
 		r = pm_exec(proc_e, exec_path, exec_path_len, stack_frame,
-			    stack_frame_len, &pc);
+			    stack_frame_len, &pc, &newsp, m_in.PM_EXECFLAGS);
 
 		/* Reply status to PM */
 		m_out.m_type = PM_EXEC_REPLY;
 		m_out.PM_PROC = proc_e;
 		m_out.PM_PC = (void*) pc;
 		m_out.PM_STATUS = r;
+		m_out.PM_NEWSP = (void *) newsp;
 	}
 	break;
 

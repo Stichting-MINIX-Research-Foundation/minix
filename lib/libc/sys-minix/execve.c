@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stddef.h>
+#include <sys/exec_elf.h>
 
 #ifdef __weak_alias
 __weak_alias(execve, _execve)
@@ -23,6 +24,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	char **vp;
 	char *sp;
 	size_t argc;
+	int vectors;
 	size_t frame_size;
 	size_t string_off;
 	size_t n;
@@ -55,9 +57,14 @@ int execve(const char *path, char * const *argv, char * const *envp)
 		string_off+= sizeof(*ap);
 	}
 
-	/* Add an argument count and two terminating nulls. */
-	frame_size+= sizeof(argc) + sizeof(*ap) + sizeof(*ep);
-	string_off+= sizeof(argc) + sizeof(*ap) + sizeof(*ep);
+	/* Add an argument count, two terminating nulls and
+	 * space for the ELF aux vectors, that must come before
+	 * (i.e. at a higher address) then the strings.
+	 */
+	vectors = sizeof(argc) + sizeof(*ap) + sizeof(*ep) +
+		sizeof(AuxInfo) * PMEF_AUXVECTORS;
+	frame_size+= vectors;
+	string_off+= vectors;
 
 	/* Align. */
 	frame_size= (frame_size + sizeof(char *) - 1) & ~(sizeof(char *) - 1);
@@ -100,15 +107,17 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	/* Padding. */
 	while (sp < frame + frame_size) *sp++= 0;
 
+	/* Clear unused message fields */
+	memset(&m, 0, sizeof(m));
+
 	/* We can finally make the system call. */
 	m.m1_i1 = strlen(path) + 1;
 	m.m1_i2 = frame_size;
 	m.m1_p1 = (char *) __UNCONST(path);
 	m.m1_p2 = frame;
 
-	/* Clear unused fields */
-	m.m1_i3 = 0;
-	m.m1_p3 = NULL;
+	/* Tell PM/VFS we have left space for the aux vectors */
+	m.PMEXEC_FLAGS = PMEF_AUXVECTORSPACE;
 
 	(void) _syscall(PM_PROC_NR, EXEC, &m);
 
