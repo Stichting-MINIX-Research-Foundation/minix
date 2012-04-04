@@ -101,6 +101,10 @@ void do_pty(tty_t *tp, message *m_ptr)
 		r = EINVAL;
 		break;
 	}
+	if (pp->rdgrant != GRANT_INVALID) {
+		r = ENOBUFS;
+		break;
+	}
 	pp->rdsendreply = TRUE;
 	pp->rdcaller = m_ptr->m_source;
 	pp->rdproc = m_ptr->USER_ENDPT;
@@ -110,6 +114,7 @@ void do_pty(tty_t *tp, message *m_ptr)
 	pty_start(pp);
 	handle_events(tp);
 	if (pp->rdleft == 0) {
+		pp->rdgrant = GRANT_INVALID;
 		return;			/* already done */
 	}
 
@@ -133,6 +138,10 @@ void do_pty(tty_t *tp, message *m_ptr)
 		r = EINVAL;
 		break;
 	}
+	if (pp->wrgrant != GRANT_INVALID) {
+		r = ENOBUFS;
+		break;
+	}
 	pp->wrsendreply = TRUE;
 	pp->wrcaller = m_ptr->m_source;
 	pp->wrproc = m_ptr->USER_ENDPT;
@@ -141,6 +150,7 @@ void do_pty(tty_t *tp, message *m_ptr)
 	pp->wrleft = m_ptr->COUNT;
 	handle_events(tp);
 	if (pp->wrleft == 0) {
+		pp->wrgrant = GRANT_INVALID;
 		return;			/* already done */
 	}
 
@@ -177,11 +187,13 @@ void do_pty(tty_t *tp, message *m_ptr)
 		/* Cancel a read from a PTY. */
 		r = pp->rdcum > 0 ? pp->rdcum : EAGAIN;
 		pp->rdleft = pp->rdcum = 0;
+		pp->rdgrant = GRANT_INVALID;
 	}
 	if (m_ptr->USER_ENDPT == pp->wrproc) {
 		/* Cancel a write to a PTY. */
 		r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
 		pp->wrleft = pp->wrcum = 0;
+		pp->wrgrant = GRANT_INVALID;
 	}
 	break;
 
@@ -471,6 +483,8 @@ void pty_init(tty_t *tp)
   pp = tp->tty_priv = &pty_table[line];
   pp->tty = tp;
   pp->select_ops = 0;
+  pp->rdgrant = GRANT_INVALID;
+  pp->wrgrant = GRANT_INVALID;
 
   /* Set up output queue. */
   pp->ohead = pp->otail = pp->obuf;
@@ -503,8 +517,8 @@ int pty_status(message *m_ptr)
 			m_ptr->REP_ENDPT = pp->rdproc;
 			m_ptr->REP_IO_GRANT = pp->rdgrant;
 			m_ptr->REP_STATUS = pp->rdcum;
-
 			pp->rdleft = pp->rdcum = 0;
+			pp->rdgrant = GRANT_INVALID;
 			event_found = 1;
 			break;
 		}
@@ -522,6 +536,7 @@ int pty_status(message *m_ptr)
 				m_ptr->REP_STATUS = pp->wrcum;
 
 			pp->wrleft = pp->wrcum = 0;
+			pp->wrgrant = GRANT_INVALID;
 			event_found = 1;
 			break;
 		}

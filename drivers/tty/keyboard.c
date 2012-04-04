@@ -399,7 +399,8 @@ message *m;
 {
 	int n, r;
 
-	if (kbdp->avail && kbdp->req_size && m->m_source == kbdp->incaller)
+	if (kbdp->avail && kbdp->req_size && m->m_source == kbdp->incaller &&
+	    kbdp->req_grant != GRANT_INVALID)
 	{
 		/* Handle read request */
 		n= kbdp->avail;
@@ -423,6 +424,7 @@ message *m;
   		m->REP_ENDPT= kbdp->req_proc;
   		m->REP_IO_GRANT= kbdp->req_grant;
   		m->REP_STATUS= r;
+		kbdp->req_grant = GRANT_INVALID;
 		return 1;
 	}
 	if (kbdp->avail && (kbdp->select_ops & SEL_RD) &&

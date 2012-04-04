@@ -385,8 +385,9 @@ message *m_ptr;
 
 		tp->tty_inleft = tp->tty_incum = 0;
 		tp->tty_inrevived = 0;		/* unmark revive event */
-  		event_found = 1;
-  		break;
+		tp->tty_ingrant = GRANT_INVALID;
+		event_found = 1;
+		break;
 	}
 	else if (tp->tty_outrevived && tp->tty_outcaller == m_ptr->m_source) {
 		
@@ -398,18 +399,21 @@ message *m_ptr;
 
 		tp->tty_outcum = 0;
 		tp->tty_outrevived = 0;		/* unmark revive event */
-  		event_found = 1;
-  		break;
+		tp->tty_outgrant = GRANT_INVALID;
+		event_found = 1;
+		break;
 	}
 	else if (tp->tty_iorevived && tp->tty_iocaller == m_ptr->m_source) {
+
 		/* Suspended request finished. Send a REVIVE. */
 		m_ptr->m_type = DEV_REVIVE;
   		m_ptr->REP_ENDPT = tp->tty_ioproc;
   		m_ptr->REP_IO_GRANT = tp->tty_iogrant;
   		m_ptr->REP_STATUS = tp->tty_iostatus;
 		tp->tty_iorevived = 0;		/* unmark revive event */
-  		event_found = 1;
-  		break;
+		tp->tty_iogrant = GRANT_INVALID;
+		event_found = 1;
+		break;
 	}
   }
 
@@ -451,6 +455,12 @@ register message *m_ptr;	/* pointer to message sent to the task */
   } else
   if (m_ptr->COUNT <= 0) {
 	r = EINVAL;
+  } else if (tp->tty_ingrant != GRANT_INVALID) {
+	/* This is actually a fundamental problem with TTY; it can handle
+	 * only one reader per minor device. If we don't return an error,
+	 * we'll overwrite the previous reader and that process will get
+	 * stuck forever. */
+	r = ENOBUFS;
   } else {
 	/* Copy information from the message to the tty struct. */
 	tp->tty_inrepcode = TASK_REPLY;
@@ -484,8 +494,6 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	/* ...then go back for more. */
 	handle_events(tp);
 	if (tp->tty_inleft == 0)  {
-  		if (tp->tty_select_ops)
-  			select_retry(tp);
 		return;			/* already done */
 	}
 
@@ -529,7 +537,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 
 	/* Try to write. */
 	handle_events(tp);
-	if (tp->tty_outleft == 0) 
+	if (tp->tty_outleft == 0)
 		return;	/* already done */
 
 	/* None or not all the bytes could be written, so suspend the
@@ -772,12 +780,14 @@ message *m_ptr;			/* pointer to message sent to task */
 	tty_icancel(tp); 
 	r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
 	tp->tty_inleft = tp->tty_incum = tp->tty_inrevived = 0;
+	tp->tty_ingrant = GRANT_INVALID;
   } 
   if ((mode & W_BIT) && tp->tty_outleft != 0 && proc_nr == tp->tty_outproc &&
 	tp->tty_outgrant == (cp_grant_id_t) m_ptr->IO_GRANT) {
 	/* Process was writing when killed.  Clean up output. */
 	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 	tp->tty_outleft = tp->tty_outcum = tp->tty_outrevived = 0;
+	tp->tty_outgrant = GRANT_INVALID;
   } 
   if (tp->tty_ioreq != 0 && proc_nr == tp->tty_ioproc) {
 	/* Process was waiting for output to drain. */
@@ -873,6 +883,8 @@ tty_t *tp;			/* TTY to check for events. */
 		tty_reply(tp->tty_inrepcode, tp->tty_incaller, 
 			tp->tty_inproc, tp->tty_incum);
 		tp->tty_inleft = tp->tty_incum = 0;
+		tp->tty_inrevived = 0;
+		tp->tty_ingrant = GRANT_INVALID;
 	}
   }
   if (tp->tty_select_ops)
@@ -953,6 +965,8 @@ register tty_t *tp;		/* pointer to terminal to read from */
 		tty_reply(tp->tty_inrepcode, tp->tty_incaller, 
 			tp->tty_inproc, tp->tty_incum);
 		tp->tty_inleft = tp->tty_incum = 0;
+		tp->tty_inrevived = 0;
+		tp->tty_ingrant = GRANT_INVALID;
 	}
   }
 }
@@ -1551,6 +1565,7 @@ static void tty_init()
 
   	tp->tty_intail = tp->tty_inhead = tp->tty_inbuf;
   	tp->tty_min = 1;
+	tp->tty_ingrant = tp->tty_outgrant = tp->tty_iogrant = GRANT_INVALID;
   	tp->tty_termios = termios_defaults;
   	tp->tty_icancel = tp->tty_ocancel = tp->tty_ioctl = tp->tty_close =
 								tty_devnop;
