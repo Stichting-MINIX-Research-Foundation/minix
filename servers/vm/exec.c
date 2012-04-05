@@ -211,7 +211,7 @@ SANITYCHECK(SCL_DETAIL);
 	 CLICK2ABS(gap_clicks),	/* how big is gap, page-aligned */
 	 0,0,			/* not preallocated */
 	 VM_STACKTOP,		/* regular stack top */
-	 0, is_elf)) != OK) {
+	 0, is_elf, 1)) != OK) {
     SANITYCHECK(SCL_DETAIL);
     printf("VM: new_mem: failed\n");
     if(ptok) {
@@ -288,7 +288,8 @@ int proc_new(struct vmproc *vmp,
   phys_bytes data_start,  /* data starts here, if preallocated, otherwise 0 */
   phys_bytes stacktop,
   int prealloc_stack,
-  int is_elf
+  int is_elf,
+  int full_memview
 )
 {
 	int s;
@@ -311,7 +312,12 @@ int proc_new(struct vmproc *vmp,
 	map_text_addr = vstart + text_addr;
 	vmp->vm_arch.vm_seg[T].mem_phys = ABS2CLICK(map_text_addr);
 	vmp->vm_arch.vm_seg[T].mem_vir = ABS2CLICK(text_addr);
-	vmp->vm_arch.vm_seg[T].mem_len = ABS2CLICK(text_bytes);
+	if(full_memview) {
+		vmp->vm_arch.vm_seg[T].mem_len = ABS2CLICK(VM_DATATOP) -
+			vmp->vm_arch.vm_seg[T].mem_phys;
+	} else {
+		vmp->vm_arch.vm_seg[T].mem_len = ABS2CLICK(text_bytes);
+	}
 
 	vmp->vm_offset = vstart;
 

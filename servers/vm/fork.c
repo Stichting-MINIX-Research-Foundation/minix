@@ -154,7 +154,7 @@ int do_fork(message *msg)
 		stack_bytes, child_gap_bytes, 0, 0,
 		CLICK2ABS(vmc->vm_arch.vm_seg[S].mem_vir +
 			  vmc->vm_arch.vm_seg[S].mem_len),
-		1, is_elf)) != OK) {
+		1, is_elf, 0)) != OK) {
 			printf("VM: fork: proc_new failed\n");
 			return r;
 	}
