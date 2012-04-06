@@ -167,19 +167,11 @@ int real_brk(vmp, v)
 struct vmproc *vmp;
 vir_bytes v;
 {
-	vir_bytes new_sp;
-	vir_clicks new_clicks;
-	int r;
+	if(!(vmp->vm_flags & VMF_HASPT))
+		return OK;
 
-	new_clicks = (vir_clicks) (CLICK_CEIL(v) >> CLICK_SHIFT);
-	if (new_clicks < vmp->vm_arch.vm_seg[D].mem_vir) {
-		printf("VM: real_brk failed because new_clicks too high: %d\n",
-			new_clicks);
-		return(ENOMEM);
-	}
-	new_clicks -= vmp->vm_arch.vm_seg[D].mem_vir;
-	if ((r=get_stack_ptr(vmp->vm_endpoint, &new_sp)) != OK)
-  		panic("couldn't get stack pointer: %d", r);
-	r = adjust(vmp, new_clicks, new_sp);
-	return r;
+	if(map_region_extend_upto_v(vmp, v) == OK)
+		return OK;
+
+	return(ENOMEM);
 }

@@ -1665,6 +1665,42 @@ struct vir_region *map_proc_kernel(struct vmproc *vmp)
 	return vr; /* Return pointer not useful, just non-NULL. */
 }
 
+int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes v)
+{
+	vir_bytes offset, o, end;
+	struct vir_region *vr, *nextvr;
+
+	offset = arch_vir2map(vmp, v);
+
+	if((o=(offset % VM_PAGE_SIZE))) {
+		offset+= VM_PAGE_SIZE - o;
+	}
+
+	if(!(vr = region_search(&vmp->vm_regions_avl, offset, AVL_LESS_EQUAL))) {
+		printf("VM: nothing to extend\n");
+		return ENOMEM;
+	}
+
+	if(!(vr->flags & VR_ANON)) {
+		printf("VM: memory range to extend not anonymous\n");
+		return ENOMEM;
+	}
+
+	assert(vr->vaddr <= offset);
+	if((nextvr = getnextvr(vr))) {
+		assert(offset < nextvr->vaddr);
+	}
+
+	end = vr->vaddr + vr->length;
+
+	if(offset < end)
+		return map_region_shrink(vr, end - offset);
+
+	return map_region_extend(vmp, vr, offset - end);
+
+	return ENOMEM;
+}
+
 /*========================================================================*
  *				map_region_extend	     	  	*
  *========================================================================*/

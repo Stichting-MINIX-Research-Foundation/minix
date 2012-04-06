@@ -144,6 +144,7 @@ struct vir_region * map_page_region(struct vmproc *vmp, vir_bytes min,
 struct vir_region * map_proc_kernel(struct vmproc *dst);
 int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 	vir_bytes delta);
+int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes vir);
 int map_region_shrink(struct vir_region *vr, vir_bytes delta);
 int map_unmap_region(struct vmproc *vmp, struct vir_region *vr,
 	vir_bytes len);
