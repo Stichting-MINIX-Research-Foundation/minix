@@ -19,7 +19,7 @@ SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
 	logwtmp.c logwtmpx.c opendisk.c parsedate.y \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
 	raise_default_signal.c \
-	secure_path.c sockaddr_snprintf.c stat_flags.c \
+	secure_path.c stat_flags.c \
 	ttyaction.c ttymsg.c \
 
 MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
@@ -35,7 +35,7 @@ MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
 
 .else
 SRCS+=	efun.c getbootfile.c \
-	getmntopts.c \
+	getmntopts.c  sockaddr_snprintf.c\
 	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
 	logwtmp.c logwtmpx.c opendisk.c \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
