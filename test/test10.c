@@ -114,10 +114,7 @@ int size;
 {
   int fd;
 
-#if (CHIP == SPARC)
-  size += 4000;
-#endif
-  prog[6] = (long) size;
+  size += 3000;
   fd = creat(name, 0755);
   write(fd, (char *) prog, psize);
   close(fd);

@@ -14,6 +14,7 @@ CFLAGS.test52=-mhard-float
 
 # Some have special libraries
 LDADD.test59= -lmthread
+LDFLAGS.mod= -shared	# make shared object
 
 # Some have an extra file
 OBJS.test57=test57loop.o
@@ -26,7 +27,20 @@ OBJS.test57=test57loop.o
 PROG+= test$(t)
 .endfor
   
-PROG+= t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b
+PROG+= t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b 
+
+.include <bsd.own.mk>
+
+.if $(MKPIC) == "yes"
+# Build them as dynamic executables by default if shared libraries
+# are available; so that the building and executing of dynamic
+# executables is tested
+MINIXDYNAMIC?=yes
+
+# Add test that must be linked dynamically, and its dynamically loaded
+# module
+PROG+= test63 mod
+.endif
 
 .include <bsd.prog.mk>
 
