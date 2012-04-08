@@ -10,7 +10,9 @@
 
 char *name[] = {"t10a", "t10b", "t10c", "t10d", "t10e", "t10f", "t10g", 
 						      "t10h", "t10i", "t10j"};
-long prog[300];
+
+#define PROGBUF_LONGS 3000
+long prog[PROGBUF_LONGS];
 int psize;
 
 #define MAX_ERROR 2
@@ -92,7 +94,7 @@ void mkfiles()
 	printf("Can't open t10a\n");
 	exit(1);
   }
-  psize = read(fd, (char *) prog, 300 * 4);
+  psize = read(fd, (char *) prog, PROGBUF_LONGS * 4);
   cr_file("t10b", 1600);
   cr_file("t10c", 1400);
   cr_file("t10d", 2300);

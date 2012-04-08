@@ -1,117 +1,42 @@
-# Makefile for the tests.
+DBG=-O0 -g
+CFLAGS+= -Wall -Werror -D_NETBSD_SOURCE -fno-builtin -D_MINIX -D_POSIX_SOURCE
+LDADD+= -lm -lcompat_minix
 
-CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE  -g  -Wall -Werror
-CFLAGS+= -D_NETBSD_SOURCE -fno-builtin
-LIBS+= -lm -lcompat_minix
+# Tests have no manpages
+MKMAN=no
 
-OBJ=	       test1  test2  test3  test4  test5  test6  test7  test8  test9  \
-	test10        test12 test13 test14 test15 test16 test17 test18 test19 \
-	test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 \
-	test30 test31 test32        test34 test35 test36 test37 test38 test39 \
-	test40 test41 test42               test45        test47 test48 test49 \
-	test50               test53 test54 test55               test58        \
-	              test62                                                  \
-	t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b \
+# They are all bin-owned; by default normal executable mode
+BINOWN=root
 
-ROOTOBJ= test11 test33 test43 test44 test46 test56 test60 test61
-OTHEROBJ= test51 test52 test57 test59
+# Some have special flags compiling
+CFLAGS.test51=-mhard-float
+CFLAGS.test52=-mhard-float
 
-all:	$(OBJ) $(ROOTOBJ) $(OTHEROBJ) depend
-	chmod 755 *.sh run
+# Some have special libraries
+LDADD.test59= -lmthread
 
-$(OBJ):
-	$(CC) $(CFLAGS) -o $@ $@.c $(LIBS)
+# Some have an extra file
+OBJS.test57=test57loop.o
 
-$(ROOTOBJ):
-	$(CC) $(CFLAGS) $@.c $(LIBS)
-	@install -c -o root -m 4755 a.out $@
-	@rm a.out
+.for t in \
+ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
+21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
+41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 \
+61 62
+PROG+= test$(t)
+.endfor
+  
+PROG+= t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b
 
-depend: .gitignore
+.include <bsd.prog.mk>
 
-.gitignore: Makefile
-	echo $(OBJ) $(OTHEROBJ) $(ROOTOBJ) | tr ' ' '\n' >.gitignore
+# Some are suid-root
+all:
+	chmod 4755 test11 test33 test43 test44 test46 test56 test60 test61
 
-clean:	
+clean: .PHONY .MAKE
 	$(MAKE) -C select clean
-	-rm -rf *.o *.s *.bak test? test?? t10a t11a t11b \
+	rm -rf *.o *.s *.bak test? test?? t10a t11a t11b \
 		t40a t40b t40c t40d t40e t40f \
 		t60a t60b \
 		DIR*
-
-test1:	test1.c
-test2:	test2.c
-test3:	test3.c
-test4:	test4.c
-test5:	test5.c
-test6:	test6.c
-test7:	test7.c
-test8:	test8.c
-test9:	test9.c
-test10:	test10.c
-t10a:	t10a.c
-test11:	test11.c
-t11a:	t11a.c
-t11b:	t11b.c
-test12:	test12.c
-test13:	test13.c
-test14:	test14.c
-test15:	test15.c
-test16:	test16.c
-test17:	test17.c
-test18:	test18.c
-test19:	test19.c
-test20:	test20.c
-test21:	test21.c
-test22:	test22.c
-test23:	test23.c
-test24:	test24.c
-test25:	test25.c
-test26:	test26.c
-test27:	test27.c
-test28:	test28.c
-test29:	test29.c
-test30:	test30.c
-test31:	test31.c
-test32:	test32.c
-test33:	test33.c
-test34:	test34.c
-test35:	test35.c
-test36:	test36.c
-test37:	test37.c
-test38:	test38.c
-test39: test39.c
-test40: test40.c
-t40a: t40a.c
-t40b: t40b.c
-t40c: t40c.c
-t40d: t40d.c
-t40e: t40e.c
-t40f: t40f.c
-test41: test41.c
-test42: test42.c
-test43: test43.c
-test44: test44.c
-test45: test45.c test45.h
-test46: test46.c
-test47: test47.c
-test48: test48.c
-test49: test49.c
-test50: test50.c
-test51: test51.c
-	$(CC) $(CFLAGS) -mhard-float -o $@ $@.c -lm; fi
-test52: test52.c
-	$(CC) $(CFLAGS) -mhard-float -o $@ $@.c -lm; fi
-test54: test54.c
-test55: test55.c
-test56: test56.c
-test57: test57.c test57loop.S
-	$(CC) $(CFLAGS) -o $@ $@.c test57loop.S;
-test58: test58.c
-test59: test59.c
-	$(CC) $(CFLAGS) -o $@ $@.c -lmthread 
-test60: test60.c
-t60a: t60a.c
-t60b: t60b.c
-test61: test61.c
-test62: test62.c
