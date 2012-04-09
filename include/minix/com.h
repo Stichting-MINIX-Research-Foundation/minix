@@ -26,6 +26,7 @@
  *   0x1300 - 0x13FF    TTY Input
  *   0x1400 - 0x14FF	VFS-FS transaction IDs
  *   0x1500 - 0x15FF	Block device requests and responses
+ *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
  *
  * Zero and negative values are widely used for OK and error responses.
  */

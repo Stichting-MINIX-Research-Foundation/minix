@@ -1,11 +1,17 @@
-/* VirtualBox driver - only does regular time sync - by D.C. van Moolenbroek */
+/* VirtualBox driver - by D.C. van Moolenbroek */
+/*
+ * This driver currently performs two tasks:
+ * - synchronizing to the host system time;
+ * - providing an interface for HGCM communication with the host system.
+ */
 #include <minix/drivers.h>
 #include <minix/driver.h>
 #include <minix/optset.h>
 #include <machine/pci.h>
 #include <sys/time.h>
 
-#include "vbox.h"
+#include "vmmdev.h"
+#include "proto.h"
 
 #define DEFAULT_INTERVAL	1	/* check host time every second */
 #define DEFAULT_DRIFT		2	/* update time if delta is >= 2 secs */
@@ -17,6 +23,9 @@ static u32_t ticks;
 static int interval;
 static int drift;
 
+static unsigned int irq;
+static int hook_id;
+
 static struct optset optset_table[] = {
 	{ "interval",	OPT_INT,	&interval, 	10		},
 	{ "drift",	OPT_INT,	&drift,		10		},
@@ -26,22 +35,21 @@ static struct optset optset_table[] = {
 /*===========================================================================*
  *				vbox_request				     *
  *===========================================================================*/
-static int vbox_request(int req_nr, size_t size)
+int vbox_request(struct VMMDevRequestHeader *header, phys_bytes addr,
+	int type, size_t size)
 {
 	/* Perform a VirtualBox backdoor request. */
-	struct VMMDevRequestHeader *hdr;
 	int r;
 
-	hdr = (struct VMMDevRequestHeader *) vir_ptr;
-	hdr->size = size;
-	hdr->version = VMMDEV_BACKDOOR_VERSION;
-	hdr->type = req_nr;
-	hdr->rc = VMMDEV_ERR_PERM;
+	header->size = size;
+	header->version = VMMDEV_BACKDOOR_VERSION;
+	header->type = type;
+	header->result = VMMDEV_ERR_GENERIC;
 
-	if ((r = sys_outl(port, phys_ptr)) != OK)
+	if ((r = sys_outl(port, addr)) != OK)
 		panic("device I/O failed: %d", r);
 
-	return hdr->rc;
+	return header->result;
 }
 
 /*===========================================================================*
@@ -69,7 +77,7 @@ static int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		if (r != 1)
 			panic("backdoor device not found");
 
-		if (vid == VBOX_PCI_VID && did == VBOX_PCI_DID)
+		if (vid == VMMDEV_PCI_VID && did == VMMDEV_PCI_DID)
 			break;
 
 		r = pci_next_dev(&devind, &vid, &did);
@@ -79,14 +87,23 @@ static int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 	port = pci_attr_r32(devind, PCI_BAR) & PCI_BAR_IO_MASK;
 
+	irq = pci_attr_r8(devind, PCI_ILR);
+
+	if ((r = sys_irqsetpolicy(irq, 0 /* IRQ_REENABLE */, &hook_id)) != OK)
+		panic("unable to register IRQ: %d", r);
+
+	if ((r = sys_irqenable(&hook_id)) != OK)
+		panic("unable to enable IRQ: %d", r);
+
 	if ((vir_ptr = alloc_contig(VMMDEV_BUF_SIZE, 0, &phys_ptr)) == NULL)
 		panic("unable to allocate memory");
 
 	req = (struct VMMDevReportGuestInfo *) vir_ptr;
-	req->guest_info.add_version = VMMDEV_GUEST_VERSION;
-	req->guest_info.os_type = VMMDEV_GUEST_OS_OTHER;
+	req->add_version = VMMDEV_GUEST_VERSION;
+	req->os_type = VMMDEV_GUEST_OS_OTHER;
 
-	if ((r = vbox_request(VMMDEV_REQ_REPORTGUESTINFO, sizeof(*req))) !=
+	if ((r = vbox_request(&req->header, phys_ptr,
+			VMMDEV_REQ_REPORTGUESTINFO, sizeof(*req))) !=
 			VMMDEV_ERR_OK)
 		panic("backdoor device not functioning");
 
@@ -95,6 +112,37 @@ static int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	sys_setalarm(ticks, 0);
 
 	return OK;
+}
+
+/*===========================================================================*
+ *				vbox_intr				     *
+ *===========================================================================*/
+static void vbox_intr(void)
+{
+	/* Process an interrupt. */
+	struct VMMDevEvents *req;
+	int r;
+
+	req = (struct VMMDevEvents *) vir_ptr;
+	req->events = 0;
+
+	/* If we cannot retrieve the events mask, we cannot do anything with
+	 * this or any future interrupt either, so return without reenabling
+	 * interrupts.
+	 */
+	if ((r = vbox_request(&req->header, phys_ptr,
+			VMMDEV_REQ_ACKNOWLEDGEEVENTS, sizeof(*req))) !=
+			VMMDEV_ERR_OK) {
+		printf("VBOX: unable to retrieve event mask (%d)\n", r);
+
+		return;
+	}
+
+	if (req->events & VMMDEV_EVENT_HGCM)
+		hgcm_intr();
+
+	if ((r = sys_irqenable(&hook_id)) != OK)
+		panic("unable to reenable IRQ: %d", r);
 }
 
 /*===========================================================================*
@@ -108,7 +156,8 @@ static void vbox_update_time(void)
 
 	req = (struct VMMDevReqHostTime *) vir_ptr;
 
-	if (vbox_request(VMMDEV_REQ_HOSTTIME, sizeof(*req)) == VMMDEV_ERR_OK) {
+	if (vbox_request(&req->header, phys_ptr, VMMDEV_REQ_HOSTTIME,
+			sizeof(*req)) == VMMDEV_ERR_OK) {
 		time(&otime);				/* old time */
 
 		ntime = div64u(req->time, 1000);	/* new time */
@@ -168,6 +217,11 @@ int main(int argc, char **argv)
 
 		if (is_ipc_notify(ipc_status)) {
 			switch (m.m_source) {
+			case HARDWARE:
+				vbox_intr();
+
+				break;
+
 			case CLOCK:
 				vbox_update_time();
 
@@ -181,8 +235,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		printf("VBOX: received message %d from %d\n",
-			m.m_type, m.m_source);
+		hgcm_message(&m, ipc_status);
 	}
 
 	return 0;

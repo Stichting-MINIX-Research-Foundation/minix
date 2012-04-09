@@ -115,6 +115,7 @@ SRCS=  \
 	timers.c \
 	timing.c \
 	tsc_util.c \
+	vbox.c \
 	vm_brk.c \
 	vm_dmacalls.c \
 	vm_exec_newmem.c \
