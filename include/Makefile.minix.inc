@@ -18,7 +18,7 @@ INCS+= 	minix/acpi.h minix/audio_fw.h minix/bitmap.h \
 	minix/sound.h minix/spin.h minix/sys_config.h minix/sysinfo.h \
 	minix/syslib.h minix/sysutil.h minix/timers.h minix/type.h \
 	minix/tty.h minix/u64.h minix/usb.h minix/usb_ch9.h minix/vbox.h \
-	minix/vboxif.h minix/vboxtype.h minix/vm.h \
+	minix/vboxfs.h minix/vboxif.h minix/vboxtype.h minix/vm.h \
 	minix/vfsif.h minix/vtreefs.h minix/libminixfs.h minix/netsock.h
 
 INCS+=	net/gen/arp_io.h net/gen/dhcp.h net/gen/ether.h \
