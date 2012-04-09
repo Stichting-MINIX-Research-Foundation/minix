@@ -1,6 +1,6 @@
 .TH HGFS 8
 .SH NAME
-hgfs \- Host/Guest File System server
+hgfs \- VMware Host/Guest File System server
 .SH SYNOPSIS
 \fBmount \-t hgfs \fR[\fB\-r\fR] [\fB\-o \fIoptions\fR] \fBnone \fImountpoint
 .SH DESCRIPTION
@@ -71,6 +71,7 @@ of HGFS is determined largely by the host. Other file system operations
 because the file system structure as perceived by HGFS may change arbitrarily
 at any time, due to modifications on the host side.
 .SH "SEE ALSO"
-.BR mount (1)
+.BR mount (1),
+.BR vbfs (8)
 .SH AUTHOR
 David van Moolenbroek <dcvmoole@cs.vu.nl>

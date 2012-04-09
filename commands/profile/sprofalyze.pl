@@ -36,6 +36,7 @@ servers/pm/pm
 servers/procfs/procfs
 servers/rs/rs
 servers/sched/sched
+servers/vbfs/vbfs
 servers/vfs/vfs
 servers/vm/vm
 servers/sched/sched

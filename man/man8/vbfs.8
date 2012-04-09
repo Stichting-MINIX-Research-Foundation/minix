@@ -1,0 +1,70 @@
+.TH VBFS 8
+.SH NAME
+vbfs \- VirtualBox Shared Folder File System server
+.SH SYNOPSIS
+\fBmount \-t vbfs \fR[\fB\-r\fR] \fB\-o
+\fBshare=\fIsharename\fR[\fB,\fIoptions\fR] \fBnone \fImountpoint
+.SH DESCRIPTION
+The \fBvbfs\fR server allows one to mount a VirtualBox shared folder as a file
+system. This makes it possible to access selected portions of the VirtualBox
+host file system when MINIX is run as a VirtualBox guest.
+.PP
+The above mount command will mount the vbfs file system onto the directory
+\fImountpoint\fR. The \fB\-r\fR mount option makes the file system read-only;
+note that shared folders may independently have been configured as read-only
+on the VMware host. The \fIoptions\fR field is a string consisting of
+comma-delimited \fIkey\fR or \fIkey\fB=\fIvalue\fR options.
+The vbfs server can mount only one shared folder at a time, and therefore,
+specifying a \fBshare\fR name is required.
+The other options are optional. The following options are supported.
+.TP 4
+\fBshare=\fIname\fR
+This required option specifies the share name to mount. It is currently not
+possible to list the available share names from within MINIX3.
+.TP
+\fBprefix=\fIpath\fR
+This option sets a path prefix that will be prepended to all file system
+operations on the host system. The default is the empty path, exposing the
+entire share. Leading and trailing slashes are ignored.
+.TP
+\fBuid=\fInumber\fR
+This sets the user ID used for all the files and directories in the file
+system, allowing a non-root user to be the owner. The value must be specified
+as a decimal number.
+The default is root (the number \fB0\fR).
+.TP
+\fBgid=\fInumber\fR
+Likewise, sets the group ID for all files and directories.
+The default is operator (the number \fB0\fR).
+.TP
+\fBfmask=\fInumber\fR
+This option sets the file permission mask of regular files. It is specified as
+an octal number. For example, a value of \fB600\fR makes all files readable and
+writable by the owning user (see the "\fBuid\fR" option).
+The default is \fB755\fR.
+.TP
+\fBdmask=\fInumber\fR
+Likewise, sets the file permission mask of directories.
+The default is also \fB755\fR.
+.SH EXAMPLES
+.TP 20
+.B mount \-t vbfs -o share=myshare none /usr/myshare
+# Mount the "\fImyshare\fR" shared folder on \fI/usr/myshare\fR
+.TP 20
+.B mount \-t vbfs \-o share=shared,prefix=foo/bar,uid=20,fmask=644 none /mnt
+# Mount the "\fIfoo/bar\fR" subtree from the "\fIshared\fR" shared folder on
+\fI/mnt\fR
+.SH LIMITATIONS
+VBFS has been designed to provide a convenient means to exchange files between
+the guest and the host system, not as a complete file system implementation.
+As such, it comes with many limitations. Some of these are VBFS implementation
+shortcomings; some are the result of behavioral differences between the host
+file system and the guest's expectations; some are the result of a mismatch
+between MINIX's VFS/FS protocol and the requirements from VBFS; and finally,
+some are the result of the user's ability to change the file system on the
+host system at any time.
+.SH "SEE ALSO"
+.BR mount (1),
+.BR hgfs (8)
+.SH AUTHOR
+David van Moolenbroek <david@minix3.org>
