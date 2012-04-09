@@ -12,6 +12,7 @@ char sef_self_name[SEF_SELF_NAME_MAXLEN];
 endpoint_t sef_self_endpoint;
 int sef_self_priv_flags;
 int sef_self_first_receive_done;
+int sef_self_receiving;
 
 /* Debug. */
 #if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
@@ -119,7 +120,14 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 /* SEF receive() interface for system services. */
   int r, status;
 
+  sef_self_receiving = TRUE;
+
   while(TRUE) {
+      /* If the caller indicated that it no longer wants to receive a message,
+       * return now.
+       */
+      if (!sef_self_receiving)
+          return EINTR;
 
 #if INTERCEPT_SEF_LU_REQUESTS
       /* Handle SEF Live update before receive events. */
@@ -178,6 +186,20 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
   }
 
   return r;
+}
+
+/*===========================================================================*
+ *				sef_cancel				     *
+ *===========================================================================*/
+void sef_cancel(void)
+{
+/* Cancel receiving a message. This function be called from a callback invoked
+ * from within sef_receive_status(), which will then return an EINTR error
+ * code. In particular, this function can be used to exit from the main receive
+ * loop when a signal handler causes the process to want to shut down.
+ */
+
+  sef_self_receiving = FALSE;
 }
 
 /*===========================================================================*
