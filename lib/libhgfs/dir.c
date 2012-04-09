@@ -39,7 +39,7 @@ struct hgfs_attr *attr;
  * number. Upon success, the resulting path name is stored in the given buffer
  * and the given attribute structure is filled selectively as requested. Upon
  * error, the contents of the path buffer and attribute structure are
- * undefined.
+ * undefined. ENOENT is returned upon end of directory.
  */
   int r;
 
@@ -47,12 +47,20 @@ struct hgfs_attr *attr;
   RPC_NEXT32 = (u32_t)handle;
   RPC_NEXT32 = index;
 
+  /* EINVAL signifies end of directory. */
   if ((r = rpc_query()) != OK)
-	return r;
+	return (r == EINVAL) ? ENOENT : OK;
 
   attr_get(attr);
 
-  return path_get(buf, size);
+  if ((r = path_get(buf, size)) != OK)
+	return r;
+
+  /* VMware Player 3 returns an empty name, instead of EINVAL, when reading
+   * from an EOF position right after opening the directory handle. Seems to be
+   * a newly introduced bug..
+   */
+  return (!buf[0]) ? ENOENT : OK;
 }
 
 /*===========================================================================*

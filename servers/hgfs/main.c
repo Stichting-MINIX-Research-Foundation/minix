@@ -60,8 +60,11 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
   /* Initialize the HGFS library. If this fails, exit immediately. */
   r = hgfs_init();
-  if (r != OK && r != EAGAIN) {
-	printf("HGFS: unable to initialize HGFS library (%d)\n", r);
+  if (r != OK) {
+	if (r == EAGAIN)
+		printf("HGFS: shared folders are disabled\n");
+	else
+		printf("HGFS: unable to initialize HGFS library (%d)\n", r);
 
 	return r;
   }

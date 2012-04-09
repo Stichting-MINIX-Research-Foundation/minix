@@ -43,7 +43,8 @@ int do_statvfs()
 
   /* Unfortunately, we cannot be any more specific than this, because we are
    * not given an inode number. Statistics of individual shared folders can
-   * only be obtained by using the "prefix=" option when mounting.
+   * only be obtained by making sure that the root of the file system is an
+   * actual share, and not a list of available shares.
    */
   if ((ino = find_inode(ROOT_INODE_NR)) == NULL)
 	return EINVAL;
@@ -51,9 +52,6 @@ int do_statvfs()
   if ((r = verify_inode(ino, path, NULL)) != OK)
 	return r;
 
-  /* It appears that this call always fails with EACCES ("permission denied")
-   * on read-only folders. As far as I can tell, this is a VMware bug.
-   */
   if ((r = hgfs_queryvol(path, &free, &total)) != OK)
 	return r;
 

@@ -64,18 +64,34 @@ struct hgfs_attr *attr;
 {
 /* Set selected attributes of a file by path name.
  */
+  u8_t mask;
 
   RPC_REQUEST(HGFS_REQ_SETATTR);
 
-  RPC_NEXT8 = (attr->a_mask & HGFS_ATTR_ALL);
+  /* This library implements the HGFS v1 protocol, which is largely
+   * path-oriented. This is the only method to set the file size, and thus,
+   * truncating a deleted file is not possible. This has been fixed in later
+   * HGFS protocol version (v2/v3).
+   */
+  mask = 0;
+  if (attr->a_mask & HGFS_ATTR_MODE) mask |= HGFS_ATTR_MODE;
+  if (attr->a_mask & HGFS_ATTR_SIZE) mask |= HGFS_ATTR_SIZE;
+  if (attr->a_mask & HGFS_ATTR_CRTIME) mask |= HGFS_ATTR_CRTIME;
+  if (attr->a_mask & HGFS_ATTR_ATIME)
+	mask |= HGFS_ATTR_ATIME | HGFS_ATTR_ATIME_SET;
+  if (attr->a_mask & HGFS_ATTR_MTIME)
+	mask |= HGFS_ATTR_MTIME | HGFS_ATTR_MTIME_SET;
+  if (attr->a_mask & HGFS_ATTR_CTIME) mask |= HGFS_ATTR_CTIME;
+
+  RPC_NEXT8 = mask;
 
   RPC_NEXT32 = !!(S_ISDIR(attr->a_mode));
   RPC_NEXT32 = ex64lo(attr->a_size);
   RPC_NEXT32 = ex64hi(attr->a_size);
 
   time_put((attr->a_mask & HGFS_ATTR_CRTIME) ? &attr->a_crtime : NULL);
-  time_put((attr->a_mask & HGFS_ATTR_ATIME_SET) ? &attr->a_atime : NULL);
-  time_put((attr->a_mask & HGFS_ATTR_MTIME_SET) ? &attr->a_mtime : NULL);
+  time_put((attr->a_mask & HGFS_ATTR_ATIME) ? &attr->a_atime : NULL);
+  time_put((attr->a_mask & HGFS_ATTR_MTIME) ? &attr->a_mtime : NULL);
   time_put((attr->a_mask & HGFS_ATTR_CTIME) ? &attr->a_ctime : NULL);
 
   RPC_NEXT8 = HGFS_MODE_TO_PERM(attr->a_mode);

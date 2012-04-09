@@ -59,7 +59,7 @@ cp_grant_id_t *grantp;
 		memset(ptr, 0, chunk);
 	}
 
-	if ((r = hgfs_write(ino->i_file, NULL, chunk, pos, FALSE)) <= 0)
+	if ((r = hgfs_write(ino->i_file, ptr, chunk, pos)) <= 0)
 		break;
 
 	count -= r;

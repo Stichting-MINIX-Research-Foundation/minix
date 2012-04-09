@@ -44,9 +44,7 @@ int do_readsuper()
    * VFS. Print a (hopefully) helpful error message, and abort the mount.
    */
   if ((r = verify_inode(ino, path, &attr)) != OK) {
-	if (r == EAGAIN)
-		printf("HGFS: shared folders disabled\n");
-	else if (opt.prefix[0] && (r == ENOENT || r == EACCES))
+	if (opt.prefix[0] && (r == ENOENT || r == EACCES))
 		printf("HGFS: unable to access the given prefix directory\n");
 	else
 		printf("HGFS: unable to access shared folders\n");

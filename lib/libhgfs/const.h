@@ -60,3 +60,13 @@ enum {
 /* HGFS mode/perms conversion macros */
 #define HGFS_MODE_TO_PERM(m) (((m) & S_IRWXU) >> 6)
 #define HGFS_PERM_TO_MODE(p) (((p) << 6) & S_IRWXU)
+
+/* HGFS attribute flags */
+#define HGFS_ATTR_SIZE		0x01	/* get/set file size */
+#define HGFS_ATTR_CRTIME	0x02	/* get/set file creation time */
+#define HGFS_ATTR_ATIME		0x04	/* get/set file access time */
+#define HGFS_ATTR_MTIME		0x08	/* get/set file modification time */
+#define HGFS_ATTR_CTIME		0x10	/* get/set file change time */
+#define HGFS_ATTR_MODE		0x20	/* get/set file mode */
+#define HGFS_ATTR_ATIME_SET	0x40	/* set specific file access time */
+#define HGFS_ATTR_MTIME_SET	0x80	/* set specific file modify time */

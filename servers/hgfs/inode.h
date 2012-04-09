@@ -20,10 +20,11 @@
  * modifications on the host system are not part of the protocol, so sometimes
  * the server may discover that some files do not exist anymore. In that case,
  * they are marked as DELETED in the inode table. Such files may still be used
- * because of open file handles, but cannot be referenced by path anymore.
- * Unfortunately the HGFS v1 protocol is largely path-oriented, so even
- * truncating a deleted file is not possible. This has been fixed in v2/v3, but
- * we currently use the v1 protocol for VMware backwards compatibility reasons.
+ * because of open file handles, but cannot be referenced by path anymore. The
+ * underlying protocol may not support truncation of open files anyway. Since
+ * we currently cannot guarantee that a file is actually opened before it is
+ * deleted (as this would consistute opening every file being looked up), we
+ * effectively do not properly support open deleted files at all anyway.
  *
  * An inode is REFERENCED iff it has a reference count > 0 *or* has children.
  * An inode is LINKED IN iff it has a parent.
@@ -62,8 +63,8 @@ struct inode {
   unsigned short i_flags;		/* any combination of I_* flags */
   union {
 	TAILQ_ENTRY(inode) u_free;	/* free list chain entry */
-	hgfs_file_t u_file;		/* handle to open HGFS file */
-	hgfs_dir_t u_dir;		/* handle to open HGFS directory */
+	hgfs_file_t u_file;		/* handle to open file */
+	hgfs_dir_t u_dir;		/* handle to open directory */
   } i_u;
   char i_name[NAME_MAX+1];		/* entry name in parent directory */
 };

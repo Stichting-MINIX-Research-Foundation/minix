@@ -74,8 +74,8 @@ u64_t off;			/* file offset */
   len = RPC_NEXT32;
   if (len > max) len = max; /* sanity check */
 
-  /* Only copy out data if we're requested to do so. */
-  if (buf != NULL)
+  /* Only copy out data if we're not operating directly on the RPC buffer. */
+  if (buf != RPC_PTR)
 	memcpy(buf, RPC_PTR, len);
 
   return len;
@@ -84,12 +84,11 @@ u64_t off;			/* file offset */
 /*===========================================================================*
  *				hgfs_write				     *
  *===========================================================================*/
-int hgfs_write(handle, buf, len, off, append)
+int hgfs_write(handle, buf, len, off)
 hgfs_file_t handle;		/* handle to open file */
-const char *buf;		/* data buffer or NULL */
+char *buf;			/* data buffer or NULL */
 size_t len;			/* number of bytes to write */
 u64_t off;			/* file offset */
-int append;			/* if set, append to file (ignore offset) */
 {
 /* Write to an open file. Upon success, return the number of bytes written.
  */
@@ -97,22 +96,13 @@ int append;			/* if set, append to file (ignore offset) */
 
   RPC_REQUEST(HGFS_REQ_WRITE);
   RPC_NEXT32 = (u32_t)handle;
-
-  if (append) {
-	RPC_NEXT8 = 1;
-	RPC_NEXT32 = 0;
-	RPC_NEXT32 = 0;
-  }
-  else {
-	RPC_NEXT8 = 0;
-	RPC_NEXT32 = ex64lo(off);
-	RPC_NEXT32 = ex64hi(off);
-  }
-
+  RPC_NEXT8 = 0;		/* append flag */
+  RPC_NEXT32 = ex64lo(off);
+  RPC_NEXT32 = ex64hi(off);
   RPC_NEXT32 = len;
 
-  /* Only copy in data if we're requested to do so. */
-  if (buf != NULL)
+  /* Only copy in data if we're not operating directly on the RPC buffer. */
+  if (RPC_PTR != buf)
 	memcpy(RPC_PTR, buf, len);
   RPC_ADVANCE(len);
 

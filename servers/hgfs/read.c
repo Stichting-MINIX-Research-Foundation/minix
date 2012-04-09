@@ -48,7 +48,7 @@ int do_read()
   while (count > 0) {
 	chunk = MIN(count, size);
 
-	if ((r = hgfs_read(ino->i_file, NULL, chunk, pos)) <= 0)
+	if ((r = hgfs_read(ino->i_file, ptr, chunk, pos)) <= 0)
 		break;
 
 	chunk = r;
@@ -117,7 +117,7 @@ int do_getdents()
    */
   for (pos = m_in.REQ_SEEK_POS_LO; ; pos++) {
 	/* Determine which inode and name to use for this entry.
-	 * We have no idea whether the HGFS host will give us "." and/or "..",
+	 * We have no idea whether the host will give us "." and/or "..",
 	 * so generate our own and skip those from the host.
 	 */
 	if (pos == 0) {
@@ -144,14 +144,9 @@ int do_getdents()
 		r = hgfs_readdir(ino->i_dir, pos - 2, name, sizeof(name),
 			&attr);
 
-		if (r != OK || !name[0]) {
+		if (r != OK) {
 			/* No more entries? Then close the handle and stop. */
-			/* VMware Player 3 returns an empty name, instead of
-			 * EINVAL, when reading from an EOF position right
-			 * after opening the directory handle. Seems to be a
-			 * newly introduced bug..
-			 */
-			if (r == EINVAL || !name[0]) {
+			if (r == ENOENT) {
 				put_handle(ino);
 
 				break;

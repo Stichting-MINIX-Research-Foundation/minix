@@ -19,7 +19,7 @@ mode_t get_mode(ino, mode)
 struct inode *ino;
 int mode;
 {
-/* Return the mode for an inode, given the inode and the HGFS retrieved mode.
+/* Return the mode for an inode, given the inode and the retrieved mode.
  */
 
   mode &= S_IRWXU;
@@ -31,7 +31,7 @@ int mode;
 	mode = S_IFREG | (mode & opt.file_mask);
 
   if (state.read_only)
-	mode &= ~0222;
+	mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
 
   return mode;
 }
@@ -158,8 +158,7 @@ int do_utime()
   if ((r = verify_inode(ino, path, NULL)) != OK)
 	return r;
 
-  attr.a_mask = HGFS_ATTR_ATIME | HGFS_ATTR_MTIME | HGFS_ATTR_ATIME_SET |
-	HGFS_ATTR_MTIME_SET;
+  attr.a_mask = HGFS_ATTR_ATIME | HGFS_ATTR_MTIME;
   attr.a_atime.tv_sec = m_in.REQ_ACTIME;
   attr.a_atime.tv_nsec = 0;
   attr.a_mtime.tv_sec = m_in.REQ_MODTIME;
