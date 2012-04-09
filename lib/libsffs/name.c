@@ -28,7 +28,7 @@ char *src;
 
   assert(size <= NAME_MAX+1);
 
-  if (opt.case_insens) {
+  if (sffs_params->p_case_insens) {
 	for (i = 0; i < size; i++)
 		*dst++ = tolower(*src++);
   }
@@ -47,7 +47,7 @@ char *name2;
  */
   int r;
 
-  if (opt.case_insens)
+  if (sffs_params->p_case_insens)
 	r = strcasecmp(name1, name2);
   else
 	r = strcmp(name1, name2);

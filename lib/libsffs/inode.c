@@ -34,8 +34,8 @@ struct inode *init_inode()
 
   TAILQ_INIT(&free_list);
 
-  dprintf(("HGFS: %d inodes, %u bytes each, equals %u bytes\n",
-	NUM_INODES, sizeof(struct inode), sizeof(inodes)));
+  dprintf(("%s: %d inodes, %u bytes each, equals %u bytes\n",
+	sffs_name, NUM_INODES, sizeof(struct inode), sizeof(inodes)));
 
   /* Mark all inodes except the root inode as free. */
   for (index = 1; index < NUM_INODES; index++) {
@@ -76,7 +76,7 @@ ino_t ino_nr;
   /* Inode 0 (= index -1) is not a valid inode number. */
   index = INODE_INDEX(ino_nr);
   if (index < 0) {
-	printf("HGFS: VFS passed invalid inode number!\n");
+	printf("%s: VFS passed invalid inode number!\n", sffs_name);
 
 	return NULL;
   }
@@ -87,14 +87,14 @@ ino_t ino_nr;
 
   /* Make sure the generation number matches. */
   if (INODE_GEN(ino_nr) != ino->i_gen) {
-	printf("HGFS: VFS passed outdated inode number!\n");
+	printf("%s: VFS passed outdated inode number!\n", sffs_name);
 
 	return NULL;
   }
 
   /* The VFS/FS protocol only uses referenced inodes. */
   if (ino->i_ref == 0)
-	printf("HGFS: VFS passed unused inode!\n");
+	printf("%s: VFS passed unused inode!\n", sffs_name);
 
   return ino;
 }
@@ -109,7 +109,7 @@ struct inode *ino;
  * count were zero before, remove the inode from the free list.
  */
 
-  dprintf(("HGFS: get_inode(%p) ['%s']\n", ino, ino->i_name));
+  dprintf(("%s: get_inode(%p) ['%s']\n", sffs_name, ino, ino->i_name));
 
   /* (INUSE, CACHED) -> INUSE */
 
@@ -134,7 +134,7 @@ struct inode *ino;
  * reached zero, mark the inode as cached or free.
  */
 
-  dprintf(("HGFS: put_inode(%p) ['%s']\n", ino, ino->i_name));
+  dprintf(("%s: put_inode(%p) ['%s']\n", sffs_name, ino, ino->i_name));
 
   assert(ino != NULL);
   assert(ino->i_ref > 0);
@@ -199,7 +199,7 @@ struct inode *ino;
   parent = ino->i_parent;
 
   LIST_REMOVE(ino, i_next);
-  
+
   if (parent->i_ref == 0 && !HAS_CHILDREN(parent)) {
 	if (parent->i_parent == NULL)
 		TAILQ_INSERT_HEAD(&free_list, parent, i_free);
@@ -223,7 +223,7 @@ struct inode *get_free_inode()
 
   /* If there are no inodes on the free list, we cannot satisfy the request. */
   if (TAILQ_EMPTY(&free_list)) {
-	printf("HGFS: out of inodes!\n");
+	printf("%s: out of inodes!\n", sffs_name);
 
 	return NULL;
   }

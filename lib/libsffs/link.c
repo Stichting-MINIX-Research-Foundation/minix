@@ -26,12 +26,12 @@ int do_create()
  */
   char path[PATH_MAX], name[NAME_MAX+1];
   struct inode *parent, *ino;
-  struct hgfs_attr attr;
-  hgfs_file_t handle;
+  struct sffs_attr attr;
+  sffs_file_t handle;
   int r;
 
   /* We cannot create files on a read-only file system. */
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   /* Get path, name, parent inode and possibly inode for the given path. */
@@ -59,7 +59,8 @@ int do_create()
   }
 
   /* Perform the actual create call. */
-  r = hgfs_open(path, O_CREAT | O_EXCL | O_RDWR, m_in.REQ_MODE, &handle);
+  r = sffs_table->t_open(path, O_CREAT | O_EXCL | O_RDWR, m_in.REQ_MODE,
+	&handle);
 
   if (r != OK) {
 	/* Let's not try to be too clever with error codes here. If something
@@ -73,17 +74,17 @@ int do_create()
   }
 
   /* Get the created file's attributes. */
-  attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE;
-  r = hgfs_getattr(path, &attr);
+  attr.a_mask = SFFS_ATTR_MODE | SFFS_ATTR_SIZE;
+  r = sffs_table->t_getattr(path, &attr);
 
   /* If this fails, or returns a directory, we have a problem. This
    * scenario is in fact possible with race conditions.
    * Simulate a close and return a somewhat appropriate error.
    */
   if (r != OK || S_ISDIR(attr.a_mode)) {
-	printf("HGFS: lost file after creation!\n");
+	printf("%s: lost file after creation!\n", sffs_name);
 
-	hgfs_close(handle);
+	sffs_table->t_close(handle);
 
 	if (ino != NULL) {
 		del_dentry(ino);
@@ -94,7 +95,7 @@ int do_create()
 	return (r == OK) ? EEXIST : r;
   }
 
-  /* We do assume that the HGFS open(O_CREAT|O_EXCL) did its job.
+  /* We do assume that the underlying open(O_CREAT|O_EXCL) call did its job.
    * If we previousy found an inode, get rid of it now. It's old.
    */
   if (ino != NULL) {
@@ -118,8 +119,8 @@ int do_create()
   m_out.RES_MODE = get_mode(ino, attr.a_mode);
   m_out.RES_FILE_SIZE_HI = ex64hi(attr.a_size);
   m_out.RES_FILE_SIZE_LO = ex64lo(attr.a_size);
-  m_out.RES_UID = opt.uid;
-  m_out.RES_GID = opt.gid;
+  m_out.RES_UID = sffs_params->p_uid;
+  m_out.RES_GID = sffs_params->p_gid;
   m_out.RES_DEV = NO_DEV;
 
   return OK;
@@ -137,7 +138,7 @@ int do_mkdir()
   int r;
 
   /* We cannot create directories on a read-only file system. */
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   /* Get the path string and possibly an inode for the given path. */
@@ -153,7 +154,7 @@ int do_mkdir()
 	return r;
 
   /* Perform the actual mkdir call. */
-  r = hgfs_mkdir(path, m_in.REQ_MODE);
+  r = sffs_table->t_mkdir(path, m_in.REQ_MODE);
 
   if (r != OK) {
 	if (ino != NULL)
@@ -181,50 +182,50 @@ static int force_remove(path, dir)
 char *path;				/* path to file or directory */
 int dir;				/* TRUE iff directory */
 {
-/* Remove a file or directory. Wrapper around hgfs_unlink and hgfs_rmdir that
- * makes the target temporarily writable if the operation fails with an access
- * denied error. On Windows hosts, read-only files or directories cannot be
- * removed (even though they can be renamed). In general, the HGFS server
- * follows the behavior of the host file system, but this case just confuses
- * the hell out of the MINIX userland..
+/* Remove a file or directory. Wrapper around unlink and rmdir that makes the
+ * target temporarily writable if the operation fails with an access denied
+ * error. On Windows hosts, read-only files or directories cannot be removed
+ * (even though they can be renamed). In general, the SFFS library follows the
+ * behavior of the host file system, but this case just confuses the hell out
+ * of the MINIX userland..
  */
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   int r, r2;
 
   /* First try to remove the target. */
   if (dir)
-	r = hgfs_rmdir(path);
+	r = sffs_table->t_rmdir(path);
   else
-	r = hgfs_unlink(path);
+	r = sffs_table->t_unlink(path);
 
   if (r != EACCES) return r;
 
   /* If this fails with an access error, retrieve the target's mode. */
-  attr.a_mask = HGFS_ATTR_MODE;
+  attr.a_mask = SFFS_ATTR_MODE;
 
-  r2 = hgfs_getattr(path, &attr);
+  r2 = sffs_table->t_getattr(path, &attr);
 
   if (r2 != OK || (attr.a_mode & S_IWUSR)) return r;
 
   /* If the target is not writable, temporarily set it to writable. */
   attr.a_mode |= S_IWUSR;
 
-  r2 = hgfs_setattr(path, &attr);
+  r2 = sffs_table->t_setattr(path, &attr);
 
   if (r2 != OK) return r;
 
   /* Then try the original operation again. */
   if (dir)
-	r = hgfs_rmdir(path);
+	r = sffs_table->t_rmdir(path);
   else
-	r = hgfs_unlink(path);
+	r = sffs_table->t_unlink(path);
 
   if (r == OK) return r;
 
   /* If the operation still fails, unset the writable bit again. */
   attr.a_mode &= ~S_IWUSR;
 
-  hgfs_setattr(path, &attr);
+  sffs_table->t_setattr(path, &attr);
 
   return r;
 }
@@ -241,7 +242,7 @@ int do_unlink()
   int r;
 
   /* We cannot delete files on a read-only file system. */
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   /* Get the path string and possibly preexisting inode for the given path. */
@@ -288,7 +289,7 @@ int do_rmdir()
   int r;
 
   /* We cannot remove directories on a read-only file system. */
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   /* Get the path string and possibly preexisting inode for the given path. */
@@ -338,7 +339,7 @@ int do_rename()
   int r;
 
   /* We cannot do rename on a read-only file system. */
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   /* Get path strings, names, directory inodes and possibly preexisting inodes
@@ -368,7 +369,7 @@ int do_rename()
   }
 
   /* Perform the actual rename call. */
-  r = hgfs_rename(old_path, new_path);
+  r = sffs_table->t_rename(old_path, new_path);
 
   /* If we failed, or if we have nothing further to do: both inodes are
    * NULL, or they both refer to the same file.

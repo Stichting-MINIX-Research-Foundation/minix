@@ -41,8 +41,8 @@ cp_grant_id_t *grantp;
 
   assert(count > 0);
 
-  /* Use the buffer from libhgfs to eliminate extra copying. */
-  size = hgfs_writebuf(&ptr);
+  /* Use the buffer from below to eliminate extra copying. */
+  size = sffs_table->t_writebuf(&ptr);
   off = 0;
 
   while (count > 0) {
@@ -59,7 +59,7 @@ cp_grant_id_t *grantp;
 		memset(ptr, 0, chunk);
 	}
 
-	if ((r = hgfs_write(ino->i_file, ptr, chunk, pos)) <= 0)
+	if ((r = sffs_table->t_write(ino->i_file, ptr, chunk, pos)) <= 0)
 		break;
 
 	count -= r;
@@ -89,7 +89,7 @@ int do_write()
   cp_grant_id_t grant;
   int r;
 
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
@@ -122,12 +122,12 @@ int do_ftrunc()
  */
   char path[PATH_MAX];
   struct inode *ino;
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   u64_t start, end, delta;
   size_t count;
   int r;
 
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
@@ -143,10 +143,10 @@ int do_ftrunc()
 	if ((r = verify_inode(ino, path, NULL)) != OK)
 		return r;
 
-	attr.a_mask = HGFS_ATTR_SIZE;
+	attr.a_mask = SFFS_ATTR_SIZE;
 	attr.a_size = start;
 
-	r = hgfs_setattr(path, &attr);
+	r = sffs_table->t_setattr(path, &attr);
   } else {
 	/* Write zeroes to the file. We can't create holes. */
 	if (cmp64(end, start) <= 0) return EINVAL;

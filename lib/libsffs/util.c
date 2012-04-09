@@ -32,7 +32,7 @@ char name[NAME_MAX+1];		/* buffer in which store the result */
   if (r != OK) return r;
 
   if (name[len-1] != 0) {
-	printf("HGFS: VFS did not zero-terminate path component!\n");
+	printf("%s: VFS did not zero-terminate path component!\n", sffs_name);
 
 	return EINVAL;
   }

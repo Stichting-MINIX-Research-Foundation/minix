@@ -26,10 +26,11 @@ struct inode *ino;
   p = &buf[sizeof(buf) - 1];
   p[0] = 0;
 
-  dprintf(("HGFS: make_path: constructing path for inode %d\n", ino->i_num));
+  dprintf(("%s: make_path: constructing path for inode %d\n",
+	sffs_name, ino->i_num));
 
   /* Get the length of the prefix, skipping any leading slashes. */
-  for (prefix = opt.prefix; prefix[0] == '/'; prefix++);
+  for (prefix = sffs_params->p_prefix; prefix[0] == '/'; prefix++);
   plen = strlen(prefix);
 
   /* Construct the path right-to-left in a temporary buffer first. */
@@ -60,7 +61,7 @@ struct inode *ino;
   strcpy(path, prefix);
   strcpy(&path[plen], p);
 
-  dprintf(("HGFS: make_path: resulting path is '%s'\n", path));
+  dprintf(("%s: make_path: resulting path is '%s'\n", sffs_name, path));
 
   return OK;
 }

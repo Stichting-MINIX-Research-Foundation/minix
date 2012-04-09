@@ -8,7 +8,7 @@
  *				attr_get				     *
  *===========================================================================*/
 void attr_get(attr)
-struct hgfs_attr *attr;
+struct sffs_attr *attr;
 {
 /* Get attribute information from the RPC buffer, storing the requested parts
  * in the given attr structure.
@@ -20,16 +20,16 @@ struct hgfs_attr *attr;
 
   size_lo = RPC_NEXT32;
   size_hi = RPC_NEXT32;
-  if (attr->a_mask & HGFS_ATTR_SIZE)
+  if (attr->a_mask & SFFS_ATTR_SIZE)
 	attr->a_size = make64(size_lo, size_hi);
 
-  time_get((attr->a_mask & HGFS_ATTR_CRTIME) ? &attr->a_crtime : NULL);
-  time_get((attr->a_mask & HGFS_ATTR_ATIME) ? &attr->a_atime : NULL);
-  time_get((attr->a_mask & HGFS_ATTR_MTIME) ? &attr->a_mtime : NULL);
-  time_get((attr->a_mask & HGFS_ATTR_CTIME) ? &attr->a_ctime : NULL);
+  time_get((attr->a_mask & SFFS_ATTR_CRTIME) ? &attr->a_crtime : NULL);
+  time_get((attr->a_mask & SFFS_ATTR_ATIME) ? &attr->a_atime : NULL);
+  time_get((attr->a_mask & SFFS_ATTR_MTIME) ? &attr->a_mtime : NULL);
+  time_get((attr->a_mask & SFFS_ATTR_CTIME) ? &attr->a_ctime : NULL);
 
   mode |= HGFS_PERM_TO_MODE(RPC_NEXT8);
-  if (attr->a_mask & HGFS_ATTR_MODE) attr->a_mode = mode;
+  if (attr->a_mask & SFFS_ATTR_MODE) attr->a_mode = mode;
 }
 
 /*===========================================================================*
@@ -37,7 +37,7 @@ struct hgfs_attr *attr;
  *===========================================================================*/
 int hgfs_getattr(path, attr)
 char *path;
-struct hgfs_attr *attr;
+struct sffs_attr *attr;
 {
 /* Get selected attributes of a file by path name.
  */
@@ -60,7 +60,7 @@ struct hgfs_attr *attr;
  *===========================================================================*/
 int hgfs_setattr(path, attr)
 char *path;
-struct hgfs_attr *attr;
+struct sffs_attr *attr;
 {
 /* Set selected attributes of a file by path name.
  */
@@ -74,14 +74,14 @@ struct hgfs_attr *attr;
    * HGFS protocol version (v2/v3).
    */
   mask = 0;
-  if (attr->a_mask & HGFS_ATTR_MODE) mask |= HGFS_ATTR_MODE;
-  if (attr->a_mask & HGFS_ATTR_SIZE) mask |= HGFS_ATTR_SIZE;
-  if (attr->a_mask & HGFS_ATTR_CRTIME) mask |= HGFS_ATTR_CRTIME;
-  if (attr->a_mask & HGFS_ATTR_ATIME)
+  if (attr->a_mask & SFFS_ATTR_MODE) mask |= HGFS_ATTR_MODE;
+  if (attr->a_mask & SFFS_ATTR_SIZE) mask |= HGFS_ATTR_SIZE;
+  if (attr->a_mask & SFFS_ATTR_CRTIME) mask |= HGFS_ATTR_CRTIME;
+  if (attr->a_mask & SFFS_ATTR_ATIME)
 	mask |= HGFS_ATTR_ATIME | HGFS_ATTR_ATIME_SET;
-  if (attr->a_mask & HGFS_ATTR_MTIME)
+  if (attr->a_mask & SFFS_ATTR_MTIME)
 	mask |= HGFS_ATTR_MTIME | HGFS_ATTR_MTIME_SET;
-  if (attr->a_mask & HGFS_ATTR_CTIME) mask |= HGFS_ATTR_CTIME;
+  if (attr->a_mask & SFFS_ATTR_CTIME) mask |= HGFS_ATTR_CTIME;
 
   RPC_NEXT8 = mask;
 

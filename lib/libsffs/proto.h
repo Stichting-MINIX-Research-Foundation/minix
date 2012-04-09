@@ -1,3 +1,5 @@
+#ifndef _SFFS_PROTO_H
+#define _SFFS_PROTO_H
 
 /* dentry.c */
 void init_dentry(void);
@@ -67,13 +69,15 @@ int do_noop(void);
 int no_sys(void);
 
 /* verify.c */
-int verify_path(char *path, struct inode *ino, struct hgfs_attr *attr,
+int verify_path(char *path, struct inode *ino, struct sffs_attr *attr,
 	int *stale);
-int verify_inode(struct inode *ino, char path[PATH_MAX], struct
-	hgfs_attr *attr);
-int verify_dentry(struct inode *parent, char name[NAME_MAX+1], char
-	path[PATH_MAX], struct inode **res_ino);
+int verify_inode(struct inode *ino, char path[PATH_MAX],
+	struct sffs_attr *attr);
+int verify_dentry(struct inode *parent, char name[NAME_MAX+1],
+	char path[PATH_MAX], struct inode **res_ino);
 
 /* write.c */
 int do_write(void);
 int do_ftrunc(void);
+
+#endif /* _SFFS_PROTO_H */

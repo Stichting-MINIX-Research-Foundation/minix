@@ -1,5 +1,5 @@
-#ifndef _INODE_H
-#define _INODE_H
+#ifndef _SFFS_INODE_H
+#define _SFFS_INODE_H
 
 /* We cannot use inode number 0, so to be able to use bitmasks to combine
  * inode and generation numbers, we have to use one fewer than the maximum of
@@ -62,16 +62,12 @@ struct inode {
   unsigned short i_ref;			/* VFS reference count */
   unsigned short i_flags;		/* any combination of I_* flags */
   union {
-	TAILQ_ENTRY(inode) u_free;	/* free list chain entry */
-	hgfs_file_t u_file;		/* handle to open file */
-	hgfs_dir_t u_dir;		/* handle to open directory */
-  } i_u;
+	TAILQ_ENTRY(inode) i_free;	/* free list chain entry */
+	sffs_file_t i_file;		/* handle to open file */
+	sffs_dir_t i_dir;		/* handle to open directory */
+  };
   char i_name[NAME_MAX+1];		/* entry name in parent directory */
 };
-
-#define i_free		i_u.u_free
-#define i_file		i_u.u_file
-#define i_dir		i_u.u_dir
 
 #define I_DIR		0x01		/* this inode represents a directory */
 #define I_HANDLE	0x02		/* this inode has an open handle */
@@ -89,4 +85,4 @@ struct inode {
 
 #define MODE_TO_DIRFLAG(m)	(S_ISDIR(m) ? I_DIR : 0)
 
-#endif /* _INODE_H */
+#endif /* _SFFS_INODE_H */

@@ -26,11 +26,11 @@ int mode;
   mode = mode | (mode >> 3) | (mode >> 6);
 
   if (IS_DIR(ino))
-	mode = S_IFDIR | (mode & opt.dir_mask);
+	mode = S_IFDIR | (mode & sffs_params->p_dir_mask);
   else
-	mode = S_IFREG | (mode & opt.file_mask);
+	mode = S_IFREG | (mode & sffs_params->p_file_mask);
 
-  if (state.read_only)
+  if (state.s_read_only)
 	mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
 
   return mode;
@@ -44,7 +44,7 @@ int do_stat()
 /* Retrieve inode status.
  */
   struct inode *ino;
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   struct stat stat;
   char path[PATH_MAX];
   ino_t ino_nr;
@@ -56,19 +56,19 @@ int do_stat()
   if ((ino = find_inode(ino_nr)) == NULL)
 	return EINVAL;
 
-  attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE | HGFS_ATTR_CRTIME |
-		HGFS_ATTR_ATIME | HGFS_ATTR_MTIME | HGFS_ATTR_CTIME;
+  attr.a_mask = SFFS_ATTR_MODE | SFFS_ATTR_SIZE | SFFS_ATTR_CRTIME |
+		SFFS_ATTR_ATIME | SFFS_ATTR_MTIME | SFFS_ATTR_CTIME;
 
   if ((r = verify_inode(ino, path, &attr)) != OK)
 	return r;
 
   memset(&stat, 0, sizeof(struct stat));
 
-  stat.st_dev = state.dev;
+  stat.st_dev = state.s_dev;
   stat.st_ino = ino_nr;
   stat.st_mode = get_mode(ino, attr.a_mode);
-  stat.st_uid = opt.uid;
-  stat.st_gid = opt.gid;
+  stat.st_uid = sffs_params->p_uid;
+  stat.st_gid = sffs_params->p_gid;
   stat.st_rdev = NO_DEV;
   if (cmp64u(attr.a_size, LONG_MAX) > 0)
 	stat.st_size = LONG_MAX;
@@ -109,10 +109,10 @@ int do_chmod()
  */
   struct inode *ino;
   char path[PATH_MAX];
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   int r;
 
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
@@ -122,10 +122,10 @@ int do_chmod()
 	return r;
 
   /* Set the new file mode. */
-  attr.a_mask = HGFS_ATTR_MODE;
+  attr.a_mask = SFFS_ATTR_MODE;
   attr.a_mode = m_in.REQ_MODE; /* no need to convert in this direction */
 
-  if ((r = hgfs_setattr(path, &attr)) != OK)
+  if ((r = sffs_table->t_setattr(path, &attr)) != OK)
 	return r;
 
   /* We have no idea what really happened. Query for the mode again. */
@@ -146,10 +146,10 @@ int do_utime()
  */
   struct inode *ino;
   char path[PATH_MAX];
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   int r;
 
-  if (state.read_only)
+  if (state.s_read_only)
 	return EROFS;
 
   if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
@@ -158,11 +158,11 @@ int do_utime()
   if ((r = verify_inode(ino, path, NULL)) != OK)
 	return r;
 
-  attr.a_mask = HGFS_ATTR_ATIME | HGFS_ATTR_MTIME;
+  attr.a_mask = SFFS_ATTR_ATIME | SFFS_ATTR_MTIME;
   attr.a_atime.tv_sec = m_in.REQ_ACTIME;
   attr.a_atime.tv_nsec = 0;
   attr.a_mtime.tv_sec = m_in.REQ_MODTIME;
   attr.a_mtime.tv_nsec = 0;
 
-  return hgfs_setattr(path, &attr);
+  return sffs_table->t_setattr(path, &attr);
 }

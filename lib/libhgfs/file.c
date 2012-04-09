@@ -12,7 +12,7 @@ int hgfs_open(path, flags, mode, handle)
 char *path;			/* path name to open */
 int flags;			/* open flags to use */
 int mode;			/* mode to create (user bits only) */
-hgfs_file_t *handle;		/* place to store resulting handle */
+sffs_file_t *handle;		/* place to store resulting handle */
 {
 /* Open a file. Store a file handle upon success.
  */
@@ -42,7 +42,7 @@ hgfs_file_t *handle;		/* place to store resulting handle */
   if ((r = rpc_query()) != OK)
 	return r;
 
-  *handle = (hgfs_file_t)RPC_NEXT32;
+  *handle = (sffs_file_t)RPC_NEXT32;
 
   return OK;
 }
@@ -50,8 +50,8 @@ hgfs_file_t *handle;		/* place to store resulting handle */
 /*===========================================================================*
  *				hgfs_read				     *
  *===========================================================================*/
-int hgfs_read(handle, buf, size, off)
-hgfs_file_t handle;		/* handle to open file */
+ssize_t hgfs_read(handle, buf, size, off)
+sffs_file_t handle;		/* handle to open file */
 char *buf;			/* data buffer or NULL */
 size_t size;			/* maximum number of bytes to read */
 u64_t off;			/* file offset */
@@ -84,8 +84,8 @@ u64_t off;			/* file offset */
 /*===========================================================================*
  *				hgfs_write				     *
  *===========================================================================*/
-int hgfs_write(handle, buf, len, off)
-hgfs_file_t handle;		/* handle to open file */
+ssize_t hgfs_write(handle, buf, len, off)
+sffs_file_t handle;		/* handle to open file */
 char *buf;			/* data buffer or NULL */
 size_t len;			/* number of bytes to write */
 u64_t off;			/* file offset */
@@ -116,7 +116,7 @@ u64_t off;			/* file offset */
  *				hgfs_close				     *
  *===========================================================================*/
 int hgfs_close(handle)
-hgfs_file_t handle;		/* handle to open file */
+sffs_file_t handle;		/* handle to open file */
 {
 /* Close an open file.
  */

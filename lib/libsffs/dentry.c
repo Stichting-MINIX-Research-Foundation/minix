@@ -177,7 +177,7 @@ char *name;
   unsigned int val;
   char buf[NAME_MAX+1], *p;
 
-  dprintf(("HGFS: hash_dentry for '%s'\n", name));
+  dprintf(("%s: hash_dentry for '%s'\n", sffs_name, name));
 
   normalize_name(buf, name);
 

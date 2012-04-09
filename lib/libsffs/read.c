@@ -41,14 +41,14 @@ int do_read()
 
   assert(count > 0);
 
-  /* Use the buffer from libhgfs to eliminate extra copying. */
-  size = hgfs_readbuf(&ptr);
+  /* Use the buffer from below to eliminate extra copying. */
+  size = sffs_table->t_readbuf(&ptr);
   off = 0;
 
   while (count > 0) {
 	chunk = MIN(count, size);
 
-	if ((r = hgfs_read(ino->i_file, ptr, chunk, pos)) <= 0)
+	if ((r = sffs_table->t_read(ino->i_file, ptr, chunk, pos)) <= 0)
 		break;
 
 	chunk = r;
@@ -84,14 +84,14 @@ int do_getdents()
   char name[NAME_MAX+1];
   struct inode *ino, *child;
   struct dirent *dent;
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   size_t len, off, user_off, user_left;
   off_t pos;
   int r;
   /* must be at least sizeof(struct dirent) + NAME_MAX */
   static char buf[BLOCK_SIZE];
 
-  attr.a_mask = HGFS_ATTR_MODE;
+  attr.a_mask = SFFS_ATTR_MODE;
 
   if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
@@ -141,8 +141,8 @@ int do_getdents()
 	}
 	else {
 		/* Any other entry, not being "." or "..". */
-		r = hgfs_readdir(ino->i_dir, pos - 2, name, sizeof(name),
-			&attr);
+		r = sffs_table->t_readdir(ino->i_dir, pos - 2, name,
+			sizeof(name), &attr);
 
 		if (r != OK) {
 			/* No more entries? Then close the handle and stop. */

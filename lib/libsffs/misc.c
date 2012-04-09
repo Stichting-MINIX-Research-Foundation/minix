@@ -52,7 +52,7 @@ int do_statvfs()
   if ((r = verify_inode(ino, path, NULL)) != OK)
 	return r;
 
-  if ((r = hgfs_queryvol(path, &free, &total)) != OK)
+  if ((r = sffs_table->t_queryvol(path, &free, &total)) != OK)
 	return r;
 
   memset(&statvfs, 0, sizeof(statvfs));
@@ -68,8 +68,8 @@ int do_statvfs()
   statvfs.f_files = 0;
   statvfs.f_ffree = 0;
   statvfs.f_favail = 0;
-  statvfs.f_fsid = state.dev;
-  statvfs.f_flag = state.read_only ? ST_RDONLY : 0;
+  statvfs.f_fsid = state.s_dev;
+  statvfs.f_flag = state.s_read_only ? ST_RDONLY : 0;
   statvfs.f_flag |= ST_NOTRUNC;
   statvfs.f_namemax = NAME_MAX;
 

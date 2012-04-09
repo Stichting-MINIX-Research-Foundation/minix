@@ -19,35 +19,38 @@ int do_readsuper()
  */
   char path[PATH_MAX];
   struct inode *ino;
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   int r;
 
-  dprintf(("HGFS: readsuper (dev %x, flags %x)\n",
-	(dev_t) m_in.REQ_DEV, m_in.REQ_FLAGS));
+  dprintf(("%s: readsuper (dev %x, flags %x)\n",
+	sffs_name, (dev_t) m_in.REQ_DEV, m_in.REQ_FLAGS));
 
   if (m_in.REQ_FLAGS & REQ_ISROOT) {
-	printf("HGFS: attempt to mount as root device\n");
+	printf("%s: attempt to mount as root device\n", sffs_name);
 
 	return EINVAL;
   }
 
-  state.read_only = !!(m_in.REQ_FLAGS & REQ_RDONLY);
-  state.dev = m_in.REQ_DEV;
+  state.s_read_only = !!(m_in.REQ_FLAGS & REQ_RDONLY);
+  state.s_dev = m_in.REQ_DEV;
 
   init_dentry();
   ino = init_inode();
 
-  attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE;
+  attr.a_mask = SFFS_ATTR_MODE | SFFS_ATTR_SIZE;
 
   /* We cannot continue if we fail to get the properties of the root inode at
    * all, because we cannot guess the details of the root node to return to
    * VFS. Print a (hopefully) helpful error message, and abort the mount.
    */
   if ((r = verify_inode(ino, path, &attr)) != OK) {
-	if (opt.prefix[0] && (r == ENOENT || r == EACCES))
-		printf("HGFS: unable to access the given prefix directory\n");
+	if (r == EAGAIN)
+		printf("%s: shared folders disabled\n", sffs_name);
+	else if (sffs_params->p_prefix[0] && (r == ENOENT || r == EACCES))
+		printf("%s: unable to access the given prefix directory\n",
+			sffs_name);
 	else
-		printf("HGFS: unable to access shared folders\n");
+		printf("%s: unable to access shared folders\n", sffs_name);
 
 	return r;
   }
@@ -56,13 +59,12 @@ int do_readsuper()
   m_out.RES_MODE = get_mode(ino, attr.a_mode);
   m_out.RES_FILE_SIZE_HI = ex64hi(attr.a_size);
   m_out.RES_FILE_SIZE_LO = ex64lo(attr.a_size);
-  m_out.RES_UID = opt.uid;
-  m_out.RES_GID = opt.gid;
+  m_out.RES_UID = sffs_params->p_uid;
+  m_out.RES_GID = sffs_params->p_gid;
   m_out.RES_DEV = NO_DEV;
-
   m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
 
-  state.mounted = TRUE;
+  state.s_mounted = TRUE;
 
   return OK;
 }
@@ -76,7 +78,7 @@ int do_unmount()
  */
   struct inode *ino;
 
-  dprintf(("HGFS: do_unmount\n"));
+  dprintf(("%s: do_unmount\n", sffs_name));
 
   /* Decrease the reference count of the root inode. */
   if ((ino = find_inode(ROOT_INODE_NR)) == NULL)
@@ -86,9 +88,9 @@ int do_unmount()
 
   /* There should not be any referenced inodes anymore now. */
   if (have_used_inode())
-	printf("HGFS: in-use inodes left at unmount time!\n");
+	printf("%s: in-use inodes left at unmount time!\n", sffs_name);
 
-  state.mounted = FALSE;
+  state.s_mounted = FALSE;
 
   return OK;
 }

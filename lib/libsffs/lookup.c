@@ -10,13 +10,13 @@
 #include "inc.h"
 
 static int get_mask(vfs_ucred_t *ucred);
-static int access_as_dir(struct inode *ino, struct hgfs_attr *attr, int
+static int access_as_dir(struct inode *ino, struct sffs_attr *attr, int
 	uid, int mask);
 static int next_name(char **ptr, char **start, char name[NAME_MAX+1]);
 static int go_up(char path[PATH_MAX], struct inode *ino, struct inode
-	**res_ino, struct hgfs_attr *attr);
+	**res_ino, struct sffs_attr *attr);
 static int go_down(char path[PATH_MAX], struct inode *ino, char *name,
-	struct inode **res_ino, struct hgfs_attr *attr);
+	struct inode **res_ino, struct sffs_attr *attr);
 
 /*===========================================================================*
  *				get_mask				     *
@@ -29,12 +29,12 @@ vfs_ucred_t *ucred;		/* credentials of the caller */
    */
   int i;
 
-  if (ucred->vu_uid == opt.uid) return S_IXUSR;
+  if (ucred->vu_uid == sffs_params->p_uid) return S_IXUSR;
 
-  if (ucred->vu_gid == opt.gid) return S_IXGRP;
+  if (ucred->vu_gid == sffs_params->p_gid) return S_IXGRP;
 
   for (i = 0; i < ucred->vu_ngroups; i++)
-	if (ucred->vu_sgroups[i] == opt.gid) return S_IXGRP;
+	if (ucred->vu_sgroups[i] == sffs_params->p_gid) return S_IXGRP;
 
   return S_IXOTH;
 }
@@ -44,7 +44,7 @@ vfs_ucred_t *ucred;		/* credentials of the caller */
  *===========================================================================*/
 static int access_as_dir(ino, attr, uid, mask)
 struct inode *ino;		/* the inode to test */
-struct hgfs_attr *attr;		/* attributes of the inode */
+struct sffs_attr *attr;		/* attributes of the inode */
 int uid;			/* UID of the caller */
 int mask;			/* search access mask of the caller */
 {
@@ -53,7 +53,7 @@ int mask;			/* search access mask of the caller */
  */
   mode_t mode;
 
-  assert(attr->a_mask & HGFS_ATTR_MODE);
+  assert(attr->a_mask & SFFS_ATTR_MODE);
 
   /* The inode must be a directory to begin with. */
   if (!IS_DIR(ino)) return ENOTDIR;
@@ -106,7 +106,7 @@ static int go_up(path, ino, res_ino, attr)
 char path[PATH_MAX];		/* path to take the last part from */
 struct inode *ino;		/* inode of the current directory */
 struct inode **res_ino;		/* place to store resulting inode */
-struct hgfs_attr *attr;		/* place to store inode attributes */
+struct sffs_attr *attr;		/* place to store inode attributes */
 {
 /* Given an inode, progress into the parent directory.
  */
@@ -136,7 +136,7 @@ char path[PATH_MAX];		/* path to add the name to */
 struct inode *parent;		/* inode of the current directory */
 char *name;			/* name of the directory entry */
 struct inode **res_ino;		/* place to store resulting inode */
-struct hgfs_attr *attr;		/* place to store inode attributes */
+struct sffs_attr *attr;		/* place to store inode attributes */
 {
 /* Given a directory inode and a name, progress into a directory entry.
  */
@@ -146,18 +146,18 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
   if ((r = push_path(path, name)) != OK)
 	return r;
 
-  dprintf(("HGFS: go_down: name '%s', path now '%s'\n", name, path));
+  dprintf(("%s: go_down: name '%s', path now '%s'\n", sffs_name, name, path));
 
   ino = lookup_dentry(parent, name);
 
-  dprintf(("HGFS: lookup_dentry('%s') returned %p\n", name, ino));
+  dprintf(("%s: lookup_dentry('%s') returned %p\n", sffs_name, name, ino));
 
   if (ino != NULL)
 	r = verify_path(path, ino, attr, &stale);
   else
-	r = hgfs_getattr(path, attr);
+	r = sffs_table->t_getattr(path, attr);
 
-  dprintf(("HGFS: path query returned %d\n", r));
+  dprintf(("%s: path query returned %d\n", sffs_name, r));
 
   if (r != OK) {
 	if (ino != NULL) {
@@ -170,13 +170,13 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
 		return r;
   }
 
-  dprintf(("HGFS: name '%s'\n", name));
+  dprintf(("%s: name '%s'\n", sffs_name, name));
 
   if (ino == NULL) {
 	if ((ino = get_free_inode()) == NULL)
 		return ENFILE;
 
-	dprintf(("HGFS: inode %p ref %d\n", ino, ino->i_ref));
+	dprintf(("%s: inode %p ref %d\n", sffs_name, ino, ino->i_ref));
 
 	ino->i_flags = MODE_TO_DIRFLAG(attr->a_mode);
 
@@ -197,7 +197,7 @@ int do_lookup()
   ino_t dir_ino_nr, root_ino_nr;
   struct inode *cur_ino, *root_ino;
   struct inode *next_ino = NULL;
-  struct hgfs_attr attr;
+  struct sffs_attr attr;
   char buf[PATH_MAX], path[PATH_MAX];
   char name[NAME_MAX+1];
   char *ptr, *last;
@@ -221,7 +221,7 @@ int do_lookup()
 	return r;
 
   if (buf[len-1] != 0) {
-	printf("HGFS: VFS did not zero-terminate path!\n");
+	printf("%s: VFS did not zero-terminate path!\n", sffs_name);
 
 	return EINVAL;
   }
@@ -231,7 +231,7 @@ int do_lookup()
    */
   if (m_in.REQ_FLAGS & PATH_GET_UCRED) {
 	if (m_in.REQ_UCRED_SIZE != sizeof(ucred)) {
-		printf("HGFS: bad credential structure size\n");
+		printf("%s: bad credential structure size\n", sffs_name);
 
 		return EINVAL;
 	}
@@ -251,12 +251,12 @@ int do_lookup()
   mask = get_mask(&ucred);
 
   /* Start the actual lookup. */
-  dprintf(("HGFS: lookup: got query '%s'\n", buf));
+  dprintf(("%s: lookup: got query '%s'\n", sffs_name, buf));
 
   if ((cur_ino = find_inode(dir_ino_nr)) == NULL)
 	return EINVAL;
 
-  attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE;
+  attr.a_mask = SFFS_ATTR_MODE | SFFS_ATTR_SIZE;
 
   if ((r = verify_inode(cur_ino, path, &attr)) != OK)
 	return r;
@@ -279,7 +279,7 @@ int do_lookup()
 	if ((r = next_name(&ptr, &last, name)) != OK)
 		break;
 
-	dprintf(("HGFS: lookup: next name '%s'\n", name));
+	dprintf(("%s: lookup: next name '%s'\n", sffs_name, name));
 
 	if (!strcmp(name, ".") ||
 			(cur_ino == root_ino && !strcmp(name, "..")))
@@ -304,7 +304,7 @@ int do_lookup()
 	cur_ino = next_ino;
   }
 
-  dprintf(("HGFS: lookup: result %d\n", r));
+  dprintf(("%s: lookup: result %d\n", sffs_name, r));
 
   if (r != OK) {
 	put_inode(cur_ino);
@@ -324,8 +324,8 @@ int do_lookup()
   m_out.RES_MODE = get_mode(cur_ino, attr.a_mode);
   m_out.RES_FILE_SIZE_HI = ex64hi(attr.a_size);
   m_out.RES_FILE_SIZE_LO = ex64lo(attr.a_size);
-  m_out.RES_UID = opt.uid;
-  m_out.RES_GID = opt.gid;
+  m_out.RES_UID = sffs_params->p_uid;
+  m_out.RES_GID = sffs_params->p_gid;
   m_out.RES_DEV = NO_DEV;
 
   return OK;

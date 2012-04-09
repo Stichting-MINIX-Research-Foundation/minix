@@ -31,17 +31,17 @@ struct inode *ino;
 	return r;
 
   if (IS_DIR(ino)) {
-	r = hgfs_opendir(path, &ino->i_dir);
+	r = sffs_table->t_opendir(path, &ino->i_dir);
   }
   else {
-	if (!state.read_only)
-		r = hgfs_open(path, O_RDWR, 0, &ino->i_file);
+	if (!state.s_read_only)
+		r = sffs_table->t_open(path, O_RDWR, 0, &ino->i_file);
 
 	/* Protection or mount status might prevent us from writing. With the
 	 * information that we have available, this is the best we can do..
 	 */
-	if (state.read_only || r != OK)
-		r = hgfs_open(path, O_RDONLY, 0, &ino->i_file);
+	if (state.s_read_only || r != OK)
+		r = sffs_table->t_open(path, O_RDONLY, 0, &ino->i_file);
   }
 
   if (r != OK)
@@ -67,12 +67,13 @@ struct inode *ino;
 
   /* We ignore any errors here, because we can't deal with them anyway. */
   if (IS_DIR(ino))
-	r = hgfs_closedir(ino->i_dir);
+	r = sffs_table->t_closedir(ino->i_dir);
   else
-	r = hgfs_close(ino->i_file);
+	r = sffs_table->t_close(ino->i_file);
 
   if (r != OK)
-	printf("HGFS: put_handle: handle close operation returned %d\n", r);
+	printf("%s: put_handle: handle close operation returned %d\n",
+		sffs_name, r);
 
   ino->i_flags &= ~I_HANDLE;
 }

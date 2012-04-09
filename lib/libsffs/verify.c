@@ -17,7 +17,7 @@
 int verify_path(path, ino, attr, stale)
 char path[PATH_MAX];
 struct inode *ino;
-struct hgfs_attr *attr;
+struct sffs_attr *attr;
 int *stale;
 {
 /* Given a path, and the inode associated with that path, verify if the inode
@@ -32,11 +32,12 @@ int *stale;
  */
   int r;
 
-  attr->a_mask |= HGFS_ATTR_MODE;
+  attr->a_mask |= SFFS_ATTR_MODE;
 
-  r = hgfs_getattr(path, attr);
+  r = sffs_table->t_getattr(path, attr);
 
-  dprintf(("HGFS: verify_path: getattr('%s') returned %d\n", path, r));
+  dprintf(("%s: verify_path: getattr('%s') returned %d\n",
+	sffs_name, path, r));
 
   if (r != OK) {
 	/* If we are told that the path does not exist, delete the inode */
@@ -63,14 +64,14 @@ int *stale;
 int verify_inode(ino, path, attr)
 struct inode *ino;		/* inode to verify */
 char path[PATH_MAX];		/* buffer in which to store the path */
-struct hgfs_attr *attr;		/* buffer for attributes, or NULL */
+struct sffs_attr *attr;		/* buffer for attributes, or NULL */
 {
 /* Given an inode, construct a path identifying the inode, and check whether
  * that path is still valid for that inode (as far as we can tell). As a side
  * effect, store attributes in the given attribute structure if not NULL (its
  * a_mask member must then be set).
  */
-  struct hgfs_attr attr2;
+  struct sffs_attr attr2;
   int r;
 
   if ((r = make_path(path, ino)) != OK) return r;
@@ -104,13 +105,13 @@ struct inode **res_ino;		/* pointer for addressed inode (or NULL) */
   if ((r = verify_inode(parent, path, NULL)) != OK)
 	return r;
 
-  dprintf(("HGFS: verify_dentry: given path is '%s', name '%s'\n", path,
-	name));
+  dprintf(("%s: verify_dentry: given path is '%s', name '%s'\n",
+	sffs_name, path, name));
 
   if ((r = push_path(path, name)) != OK)
 	return r;
 
-  dprintf(("HGFS: verify_dentry: path now '%s'\n", path));
+  dprintf(("%s: verify_dentry: path now '%s'\n", sffs_name, path));
 
   *res_ino = lookup_dentry(parent, name);
 
