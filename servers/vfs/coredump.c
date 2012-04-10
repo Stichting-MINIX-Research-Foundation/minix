@@ -35,12 +35,14 @@ void write_elf_core_file(struct filp *f, int csig, char *proc_name)
 /* First, fill in all the required headers, second, adjust the offsets,
  * third, dump everything into the core file
  */
-#define MAX_REGIONS 20
+#define MAX_REGIONS 100
 #define NR_NOTE_ENTRIES 2
   Elf_Ehdr elf_header;
   Elf_Phdr phdrs[MAX_REGIONS + 1];
   Elf_Nhdr nhdrs[NR_NOTE_ENTRIES];
   int phnum;
+
+  memset(phdrs, 0, sizeof(phdrs));
 
   /* Fill in the NOTE Program Header - at phdrs[0] - and
    * note entries' headers
