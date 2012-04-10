@@ -69,4 +69,6 @@ int main(void)
   if (state <= 1.4 || state >= 1.6) e(3);
 
   quit();
+
+  return 0;
 }
