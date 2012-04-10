@@ -18,3 +18,8 @@ sed	-e 's/^[bc]/& /' -e 's/rw-/6/g' -e 's/r--/4/g' \
 awk '{ printf "\t\t%s %s--%s %d %d %d %d \n", $11, $1, $2, $4, $5, $6, $7; }'
 )
 sed -n '/@DEV/,$p' <${PROTO}  | grep -v @DEV@
+cat proto.common.etc
+if [ -x /libexec/ld.elf_so ]
+then	cat proto.common.dynamic
+fi
+echo '$'

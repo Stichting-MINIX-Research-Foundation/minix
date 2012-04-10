@@ -6,7 +6,6 @@ d--755 0 0
 		dev2name ---755 0 0 dev2name
 		loadramdisk ---755 0 0 loadramdisk
 		mount ---755 0 0 mount
-		newroot ---755 0 0 newroot
 		sh ---755 0 0 sh
 		service ---755 0 0 service
 		sysenv ---755 0 0 sysenv
@@ -22,14 +21,3 @@ d--755 0 0
 	dev d--755 0 0
 @DEV@
 	$
-	etc d--755 0 0
-		system.conf ---644 0 0 system.conf
-		mtab ---644 0 0 mtab
-		passwd ---644 0 0 passwd
-		pwd.db ---644 0 0 pwd.db
-		spwd.db ---600 0 0 spwd.db
-		master.passwd ---600 0 0 master.passwd
-		rc ---755 0 0 rc
-		rs.single ---755 0 0 rs.single
-	$
-$

@@ -2,34 +2,35 @@
 
 .include <bsd.own.mk>
 
-PROGRAMS= at_wini cdprobe dev2name floppy loadramdisk mount \
-	pci procfs sh service sysenv mfs fsck.mfs
-SCRIPTS=newroot
+PROG_DRIVERS=at_wini floppy pci
+PROG_COMMANDS=cdprobe dev2name loadramdisk mount fsck.mfs sysenv sh \
+	service 
+PROG_SERVERS=mfs procfs
+PROG_USRSBIN=pwd_mkdb
+PROGRAMS=$(PROG_DRIVERS) $(PROG_COMMANDS) $(PROG_SERVERS) $(PROG_USRSBIN)
+EXTRA=system.conf master.passwd pwd.db spwd.db rs.single
 
 .if ${MKSMALL} != "yes"
-PROGRAMS+= ahci ext2
-.endif
-
-.if ${MKACPI} != "no"
-PROGRAMS+= acpi
-.endif
-
-.if ${MKSMALL} != "yes"
+PROG_DRIVERS+= ahci
+PROG_SERVERS+= ext2
 PROTO= proto
 .else
 PROTO= proto.small
 .endif
 
-EXTRA=system.conf master.passwd passwd pwd.db spwd.db rs.single
+.if ${MKACPI} != "no"
+PROG_DRIVERS+= acpi
+.endif
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
 CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
+CLEANFILES += $(LIBRARIES)
 
 install: all
 
 realall: image
 
-image:	proto.gen mtab rc $(EXTRA)
+image:	proto.gen mtab rc $(EXTRA) passwd
 	mkfs.mfs image proto.gen || { rm -f image; false; }
 	if fsck.mfs -s image | grep -q CLEAN;	\
 	then	: ;	\
@@ -38,134 +39,56 @@ image:	proto.gen mtab rc $(EXTRA)
 		rm -f image; false;             \
 	fi
 
-ahci: ../ahci/ahci
-	install ${STRIPFLAG} ../$@/$@ $@
+.for driver in $(PROG_DRIVERS)
+$(driver): ../$(driver)/$(driver)
+	install $> $@
 
-../ahci/ahci:
-	$(MAKE) -C ../ahci
+../$(driver)/$(driver):
+	$(MAKE) -C ../$(driver) $(driver)
+.endfor
 
-at_wini: ../at_wini/at_wini
-	install ${STRIPFLAG} ../$@/$@ $@
+.for cmd in $(PROG_COMMANDS)
+.if $(cmd) == sh
+dir.$(cmd)=ash
+.else
+dir.$(cmd)=$(cmd)
+.endif
+$(cmd): ../../commands/$(dir.$(cmd))/$(cmd)
+	install $> $@
 
-../at_wini/at_wini:
-	$(MAKE) -C ../at_wini
+../../commands/$(dir.$(cmd))/$(cmd):
+	$(MAKE) -C ../../commands/$(dir.$(cmd)) $(cmd)
+.endfor
 
-floppy: ../floppy/floppy
-	install ${STRIPFLAG} ../$@/$@ $@
+.for etc in $(EXTRA)
+$(etc): ../../etc/$(etc)
+	install $> $@
+.endfor
 
-../floppy/floppy:
-	$(MAKE) -C ../floppy
+.for cmd in $(PROG_USRSBIN)
+$(cmd): ../../usr.sbin/$(cmd)/$(cmd)
+	install $> $@
 
-acpi: ../acpi/acpi
-	install ${STRIPFLAG} ../$@/$@ $@
+../../usr.sbin/$(cmd)/$(cmd):
+	$(MAKE) -C ../../usr.sbin/$(cmd) $(cmd)
+.endfor
 
-../acpi/acpi:
-	$(MAKE) -C ../acpi
+.for server in $(PROG_SERVERS)
+$(server): ../../servers/$(server)/$(server)
+	install $> $@
 
-pci: ../pci/pci
-	install ${STRIPFLAG} ../$@/$@ $@
-
-../pci/pci:
-	$(MAKE) -C ../pci
-
-cdprobe:  ../../commands/cdprobe/cdprobe
-	install ${STRIPFLAG} ../../commands/$@/$@ $@
-
-../../commands/cdprobe:
-	$(MAKE) -C ../../commands/cdprobe
-
-dev2name:  ../../commands/dev2name/dev2name
-	install ${STRIPFLAG} ../../commands/$@/$@ $@
-
-../../commands/dev2name/dev2name:
-	$(MAKE) -C ../../commands/dev2name
-
-loadramdisk:  ../../commands/loadramdisk/loadramdisk
-	install ${STRIPFLAG} ../../commands/$@/$@ $@
-
-../../commands/loadramdisk/loadramdisk:
-	$(MAKE) -C ../../commands/loadramdisk
-
-mount:  ../../commands/mount/mount
-	install ${STRIPFLAG} ../../commands/$@/$@ $@
-
-../../commands/mount/mount:
-	$(MAKE) -C ../../commands/mount
-
-fsck.mfs:  ../../commands/fsck.mfs/fsck.mfs
-	install ${STRIPFLAG} ../../commands/$@/$@ $@
-
-../../commands/fsck.mfs/fsck.mfs:
-	$(MAKE) -C ../../commands/fsck.mfs
-
-newroot:  ../../commands/newroot/newroot.sh
-	install ${STRIPFLAG} ../../commands/$@/$@.sh $@
-
-../../commands/newroot/newroot:
-	$(MAKE) -C ../../commands/newroot
-
-sysenv:  ../../commands/sysenv/sysenv
-	install ${STRIPFLAG} ../../commands/$@/$@ $@
-
-../../commands/sysenv/sysenv:
-	$(MAKE) -C ../../commands/sysenv
-
-sh:	../../commands/ash/sh
-	install ${STRIPFLAG} ../../commands/ash/$@ $@
-
-../../commands/ash/sh:
-	$(MAKE) -C ../../commands/ash sh
-
-service: ../../commands/service/service
-	install ${STRIPFLAG} ../../commands/service/$@ $@
-
-../../commands/service/service:
-	$(MAKE) -C ../../commands/service
-
-mfs: ../../servers/mfs/mfs
-	install ${STRIPFLAG} ../../servers/mfs/$@ $@
-
-../../servers/mfs/mfs:
-	$(MAKE) -C ../../servers/mfs
-
-procfs: ../../servers/procfs/procfs
-	install ${STRIPFLAG} ../../servers/procfs/$@ $@
-
-../../servers/procfs/procfs:
-	$(MAKE) -C ../../servers/procfs
-
-ext2: ../../servers/ext2/ext2
-	install ${STRIPFLAG} ../../servers/ext2/$@ $@
-
-../../servers/ext2/ext2:
-	$(MAKE) -C ../../servers/ext2
-
-system.conf: ../../etc/system.conf
-	install ${STRIPFLAG} ../../etc/$@ $@
+../../servers/$(server)/$(server):
+	$(MAKE) -C ../../servers/$(server) $(server)
+.endfor
 
 passwd: ../../etc/master.passwd ../../usr.sbin/pwd_mkdb/pwd_mkdb
 	rm -f ../../etc/master.passwd.orig ../../etc/passwd.orig
 	rm -f ../../etc/pwd.db.tmp ../../etc/spwd.db.tmp
 	../../usr.sbin/pwd_mkdb/pwd_mkdb -V 0 -p -d ../../ ../../etc/master.passwd
-	install ${STRIPFLAG} ../../etc/$@ $@
+	install ../../etc/$@ $@
 
-../../usr.sbin/pwd_mkdb/pwd_mkdb:
-	$(MAKE) -C ../../usr.sbin/pwd_mkdb
-
-master.passwd: ../../etc/master.passwd
-	install ${STRIPFLAG} ../../etc/$@ $@
-
-pwd.db: passwd
-	install ${STRIPFLAG} ../../etc/$@ $@
-
-spwd.db: passwd
-	install ${STRIPFLAG} ../../etc/$@ $@
-
-rs.single: ../../etc/rs.single
-	install ${STRIPFLAG} ../../etc/$@ $@
-
-proto.gen: $(PROGRAMS) $(SCRIPTS) proto.sh ${PROTO}
-	for p in $(PROGRAMS); do file $$p | grep -q ELF && strip -s $$p || true; done
+proto.gen: $(PROGRAMS) proto.sh ${PROTO} proto.common.etc proto.common.dynamic proto.sh
+	strip $(PROGRAMS)
 	sh -e proto.sh ${PROTO} >proto.gen
 
 .include <minix.service.mk>

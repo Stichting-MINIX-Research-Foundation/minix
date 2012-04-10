@@ -18,7 +18,7 @@ SUBDIR=	add_route arp ash at awk \
 	less lex loadkeys loadramdisk logger look lp \
 	lpd ls lspci mail make  MAKEDEV \
 	mdb  mesg mined mkfifo mkfs.mfs mknod \
-	mkproto mount mt netconf newroot nice acknm nohup \
+	mkproto mount mt netconf nice acknm nohup \
 	nonamed od paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar pr_routes ps pwd pwdauth \

@@ -1,0 +1,10 @@
+	etc d--755 0 0
+		system.conf ---644 0 0 system.conf
+		mtab ---644 0 0 mtab
+		passwd ---644 0 0 passwd
+		pwd.db ---644 0 0 pwd.db
+		spwd.db ---600 0 0 spwd.db
+		master.passwd ---600 0 0 master.passwd
+		rc ---755 0 0 rc
+		rs.single ---755 0 0 rs.single
+	$
