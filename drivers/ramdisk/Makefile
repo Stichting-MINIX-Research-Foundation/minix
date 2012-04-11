@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-PROGRAMS= at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
+PROGRAMS= at_wini cdprobe dev2name floppy loadramdisk mount \
 	pci procfs sh service sysenv mfs fsck.mfs
 SCRIPTS=newroot
 
@@ -49,12 +49,6 @@ at_wini: ../at_wini/at_wini
 
 ../at_wini/at_wini:
 	$(MAKE) -C ../at_wini
-
-bios_wini: ../bios_wini/bios_wini
-	install ${STRIPFLAG} ../$@/$@ $@
-
-../bios_wini/bios_wini:
-	$(MAKE) -C ../bios_wini
 
 floppy: ../floppy/floppy
 	install ${STRIPFLAG} ../$@/$@ $@

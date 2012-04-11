@@ -49,7 +49,6 @@ drivers/at_wini/at_wini
 drivers/atl2/atl2
 drivers/audio/es1370/es1370
 drivers/audio/es1371/es1371
-drivers/bios_wini/bios_wini
 drivers/dec21140A/dec21140A
 drivers/dp8390/dp8390
 drivers/dpeth/dpeth

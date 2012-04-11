@@ -14,7 +14,6 @@ d--755 0 0
 	sbin d--755 0 0
 		@ACPI@
 		at_wini ---755 0 0 at_wini
-		bios_wini ---755 0 0 bios_wini
 		floppy ---755 0 0 floppy
 		pci ---755 0 0 pci
 		mfs ---755 0 0 mfs

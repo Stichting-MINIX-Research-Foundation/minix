@@ -16,7 +16,6 @@ d--755 0 0
 		@ACPI@
 		ahci ---755 0 0 ahci
 		at_wini ---755 0 0 at_wini
-		bios_wini ---755 0 0 bios_wini
 		ext2 ---755 0 0 ext2
 		floppy ---755 0 0 floppy
 		pci ---755 0 0 pci
