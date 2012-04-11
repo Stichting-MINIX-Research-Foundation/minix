@@ -88,6 +88,8 @@ int do_mmap(message *m)
 			addr = arch_vir2map(vmp, m->VMM_ADDR);
 			vr = map_page_region(vmp, addr, 0, len, MAP_NONE,
 				vrflags, mfflags);
+			if(!vr && (m->VMM_FLAGS & MAP_FIXED))
+				return ENOMEM;
 		}
 		if (!vr) {
 			/* No address given or address already in use. */

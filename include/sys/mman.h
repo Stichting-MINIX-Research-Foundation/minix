@@ -56,6 +56,8 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_ALIGNMENT_64KB	MAP_ALIGN64K
 #define	MAP_IPC_SHARED	0x0100	/* share changes */
 
+#define MAP_FIXED      0x0200  /* require mapping to happen at hint */
+
 /*
  * Error indicator returned by mmap(2)
  */
