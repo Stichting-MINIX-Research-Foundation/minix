@@ -48,7 +48,8 @@ static int tll_append(tll_t *tllp, tll_access_t locktype)
   if (tllp->t_current == TLL_READ) {
 	tllp->t_readonly++;
 	tllp->t_owner = NULL;
-  }
+  } else if (tllp->t_current == TLL_WRITE)
+	assert(tllp->t_readonly == 0);
 
   /* Due to the way upgrading and downgrading works, read-only requests are
    * scheduled to run after a downgraded lock is released (because they are
@@ -164,6 +165,8 @@ int tll_lock(tll_t *tllp, tll_access_t locktype)
 	else { /* Record owner if locktype is read-serialized or write-only */
 		tllp->t_owner = self;
 	}
+	if (tllp->t_current == TLL_WRITE)
+		assert(tllp->t_readonly == 0);
 	return(OK);
   }
 
@@ -239,6 +242,9 @@ int tll_unlock(tll_t *tllp)
 	if ((tllp->t_status & TLL_UPGR) && tllp->t_readonly == 0)
 		signal_owner = 1;
   }
+
+  if (tllp->t_owner == self && tllp->t_current == TLL_WRITE)
+	assert(tllp->t_readonly == 0);
 
   if(tllp->t_owner == self || (tllp->t_owner == NULL && tllp->t_readonly == 0)){
 	/* Let another read-serialized or write-only request obtain access.
