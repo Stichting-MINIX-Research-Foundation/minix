@@ -264,7 +264,7 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
           }
           if (stat(req_path, &stat_buf) == -1) {
 	      perror(req_path);
-              fprintf(stderr, "couldn't get stat binary\n");
+              fprintf(stderr, "%s: couldn't get stat binary\n", argv[ARG_NAME]);
               exit(errno);
           }
           if (! (stat_buf.st_mode & S_IFREG)) {
