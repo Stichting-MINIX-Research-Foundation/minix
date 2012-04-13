@@ -1,8 +1,6 @@
 
 mountfstab()
 {
-	shift `expr $OPTIND - 1`
-
 	fstabfile="$1"
 
 	if [ ! -f $fstabfile ]

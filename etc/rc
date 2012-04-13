@@ -94,7 +94,6 @@ esac
 
 case $action in
 start)
-    echo -n "Multiuser startup in progress ..."
 
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
@@ -110,7 +109,6 @@ start)
     then
         up -n is -period 5HZ
     fi
-    echo
 
     # Set timezone.
     export TZ=GMT0
@@ -175,9 +173,12 @@ start)
 
     if [ "$sflag" ]
     then
-	echo "Single user."
+	echo "Single user. Press ^D to resume multiuser startup."
 	intr sh
+	echo
     fi
+
+    echo "Multiuser startup in progress ..."
 
     case "`printroot -r`":$bootcd in
     /dev/ram:)
