@@ -25,13 +25,11 @@ EXTERN message m_out;		/* the output message used for reply */
 # define who_p		((int) (fp - fproc))
 # define isokslot(p)	(p >= 0 && \
 			 p < (int)(sizeof(fproc) / sizeof(struct fproc)))
-#if 0
-# define who_e		(isokslot(who_p) ? fp->fp_endpoint : m_in.m_source)
-#else
-# define who_e		(isokslot(who_p) && fp->fp_endpoint != NONE ? \
-					fp->fp_endpoint : m_in.m_source)
-#endif
+# define who_e		(self != NULL && fp != NULL ? fp->fp_endpoint : \
+							m_in.m_source)
 # define call_nr	(m_in.m_type)
+# define job_m_in	(self->w_job.j_m_in)
+# define job_call_nr	(job_m_in.m_type)
 # define super_user	(fp->fp_effuid == SU_UID ? 1 : 0)
 # define scratch(p)		(scratchpad[((int) ((p) - fproc))])
 EXTERN struct worker_thread *self;
@@ -42,6 +40,7 @@ EXTERN mutex_t bsf_lock;/* Global lock for access to block special files */
 EXTERN struct worker_thread workers[NR_WTHREADS];
 EXTERN struct worker_thread sys_worker;
 EXTERN struct worker_thread dl_worker;
+EXTERN thread_t invalid_thread_id;
 EXTERN char mount_label[LABEL_MAX];	/* label of file system to mount */
 
 /* The following variables are used for returning results to the caller. */

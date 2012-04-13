@@ -23,20 +23,13 @@
 #include "vmnt.h"
 
 /*===========================================================================*
- *				fetch_name				     *
+ *				copy_name				     *
  *===========================================================================*/
-int fetch_name(path, len, flag, dest)
-char *path;			/* pointer to the path in user space */
-int len;			/* path length, including 0 byte */
-int flag;			/* M3 means path may be in message */
-char *dest;			/* pointer to where path is to be stored */
+inline int copy_name( size_t len, char *dest)
 {
-/* Go get path and put it in 'user_fullpath'.
- * If 'flag' = M3 and 'len' <= M3_STRING, the path is present in 'message'.
- * If it is not, go copy it from user space.
+/* Go get path and put it in 'dest'.
  */
   register char *rpu, *rpm;
-  int r, count;
 
   if (len > PATH_MAX) {	/* 'len' includes terminating-nul */
 	err_code = ENAMETOOLONG;
@@ -44,22 +37,22 @@ char *dest;			/* pointer to where path is to be stored */
   }
 
   /* Check name length for validity. */
-  if (len <= 0) {
+  if (len > SSIZE_MAX) {
 	err_code = EINVAL;
 	return(EGENERIC);
   }
 
-  if (flag == M3 && len <= M3_STRING) {
-	/* Just copy the path from the message to 'user_fullpath'. */
+  if (len <= M3_STRING) {
+	/* Just copy the path from the message */
+	int count = 0;
 	rpu = &dest[0];
-	rpm = m_in.pathname;		/* contained in input message */
-	count = len;
-	do { *rpu++ = *rpm++; } while (--count);
-	r = OK;
+	rpm = job_m_in.pathname;	/* contained in input message */
+	for (count = 0; count <= len; count++)
+		*rpu++ = *rpm++;
   } else {
-	/* String is not contained in the message.  Get it from user space. */
-	r = sys_datacopy(who_e, (vir_bytes) path,
-		VFS_PROC_NR, (vir_bytes) dest, (phys_bytes) len);
+	/* String is not contained in the message. */
+	err_code = EINVAL;
+	return(EGENERIC);
   }
 
   if (dest[len - 1] != '\0') {
@@ -67,7 +60,41 @@ char *dest;			/* pointer to where path is to be stored */
 	return(EGENERIC);
   }
 
-  return(r);
+  return(OK);
+}
+
+/*===========================================================================*
+ *				fetch_name				     *
+ *===========================================================================*/
+int fetch_name(vir_bytes path, size_t len, char *dest)
+{
+/* Go get path and put it in 'dest'.  */
+  int r;
+
+  if (len > PATH_MAX) {	/* 'len' includes terminating-nul */
+	err_code = ENAMETOOLONG;
+	return(EGENERIC);
+  }
+
+  /* Check name length for validity. */
+  if (len > SSIZE_MAX) {
+	err_code = EINVAL;
+	return(EGENERIC);
+  }
+
+  /* String is not contained in the message.  Get it from user space. */
+  r = sys_datacopy(who_e, path, VFS_PROC_NR, (vir_bytes) dest, len);
+  if (r != OK) {
+	err_code = EINVAL;
+	return(r);
+  }
+
+  if (dest[len - 1] != '\0') {
+	err_code = ENAMETOOLONG;
+	return(EGENERIC);
+  }
+
+  return(OK);
 }
 
 
@@ -84,7 +111,8 @@ int no_sys()
 /*===========================================================================*
  *				isokendpt_f				     *
  *===========================================================================*/
-int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc, int fatal)
+int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc,
+       int fatal)
 {
   int failed = 0;
   endpoint_t ke;

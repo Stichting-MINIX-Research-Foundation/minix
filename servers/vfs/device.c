@@ -267,8 +267,8 @@ void dev_status(message *m)
 		 * synchronous character driver */
 		endpt = st.REP_ENDPT;
 		if (endpt == VFS_PROC_NR) {
-			endpt = find_suspended_ep(m->m_source,st.REP_IO_GRANT);
-			if(endpt == NONE) {
+			endpt = find_suspended_ep(m->m_source, st.REP_IO_GRANT);
+			if (endpt == NONE) {
 			  printf("VFS: proc with grant %d from %d not found\n",
 				 st.REP_IO_GRANT, st.m_source);
 			  continue;
@@ -323,12 +323,14 @@ u32_t *pos_lo;
     case VFS_DEV_IOCTL:
 	*pos_lo = *io_ept; /* Old endpoint in POSITION field. */
 	*op = DEV_IOCTL_S;
-	if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
-	if(_MINIX_IOCTL_IOW(m_in.REQUEST)) access |= CPF_READ;
-	if(_MINIX_IOCTL_BIG(m_in.REQUEST))
-		size = _MINIX_IOCTL_SIZE_BIG(m_in.REQUEST);
+	/* For IOCTLs, the bytes parameter encodes requested access method
+	 * and buffer size */
+	if(_MINIX_IOCTL_IOR(bytes)) access |= CPF_WRITE;
+	if(_MINIX_IOCTL_IOW(bytes)) access |= CPF_READ;
+	if(_MINIX_IOCTL_BIG(bytes))
+		size = _MINIX_IOCTL_SIZE_BIG(bytes);
 	else
-		size = _MINIX_IOCTL_SIZE(m_in.REQUEST);
+		size = _MINIX_IOCTL_SIZE(bytes);
 
 	/* Grant access to the buffer even if no I/O happens with the ioctl, in
 	 * order to disambiguate requests with DEV_IOCTL_S.
@@ -482,7 +484,7 @@ int dev_io(
   if (ret == SUSPEND) {
 	if ((flags & O_NONBLOCK) && !is_asyn) {
 		/* Not supposed to block. */
-		ret = cancel_nblock(dp, minor_dev, call_nr, ioproc, gid);
+		ret = cancel_nblock(dp, minor_dev, job_call_nr, ioproc, gid);
 		if (ret == EINTR)
 			ret = EAGAIN;
 	} else {
@@ -497,7 +499,7 @@ int dev_io(
 
 		if ((flags & O_NONBLOCK) && !is_asyn) {
 			/* Not supposed to block, send cancel message */
-			cancel_nblock(dp, minor_dev, call_nr, ioproc, gid);
+			cancel_nblock(dp, minor_dev, job_call_nr, ioproc, gid);
 			/*
 			 * FIXME Should do something about EINTR -> EAGAIN
 			 * mapping
@@ -630,8 +632,7 @@ int ctty_opcl(
 /*===========================================================================*
  *				pm_setsid				     *
  *===========================================================================*/
-void pm_setsid(proc_e)
-int proc_e;
+void pm_setsid(endpoint_t proc_e)
 {
 /* Perform the VFS side of the SETSID call, i.e. get rid of the controlling
  * terminal of a process, and make the process a session leader.
@@ -652,14 +653,17 @@ int proc_e;
  *===========================================================================*/
 int do_ioctl()
 {
-/* Perform the ioctl(ls_fd, request, argx) system call (uses m2 fmt). */
+/* Perform the ioctl(ls_fd, request, argx) system call */
 
-  int r = OK, suspend_reopen;
+  int r = OK, suspend_reopen, ioctlrequest;
   struct filp *f;
   register struct vnode *vp;
   dev_t dev;
+  void *argx;
 
-  scratch(fp).file.fd_nr = m_in.ls_fd;
+  scratch(fp).file.fd_nr = job_m_in.ls_fd;
+  ioctlrequest = job_m_in.REQUEST;
+  argx = job_m_in.ADDRESS;
 
   if ((f = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);
@@ -674,10 +678,10 @@ int do_ioctl()
 	dev = (dev_t) vp->v_sdev;
 
 	if ((vp->v_mode & I_TYPE) == I_BLOCK_SPECIAL)
-		r = bdev_ioctl(dev, who_e, m_in.REQUEST, m_in.ADDRESS);
+		r = bdev_ioctl(dev, who_e, ioctlrequest, argx);
 	else
-		r = dev_io(VFS_DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0),
-		   m_in.REQUEST, f->filp_flags, suspend_reopen);
+		r = dev_io(VFS_DEV_IOCTL, dev, who_e, argx, cvu64(0),
+			   ioctlrequest, f->filp_flags, suspend_reopen);
   }
 
   unlock_filp(f);
@@ -1038,11 +1042,12 @@ void open_reply(void)
   endpoint_t proc_e;
   int slot;
 
-  proc_e = m_in.REP_ENDPT;
+  proc_e = job_m_in.REP_ENDPT;
   if (isokendpt(proc_e, &slot) != OK) return;
   rfp = &fproc[slot];
-  *rfp->fp_sendrec = m_in;
-  worker_signal(worker_get(rfp->fp_wtid));	/* Continue open */
+  *rfp->fp_sendrec = job_m_in;
+  if (rfp->fp_wtid != invalid_thread_id)
+	worker_signal(worker_get(rfp->fp_wtid));	/* Continue open */
 }
 
 /*===========================================================================*
@@ -1146,9 +1151,9 @@ void reopen_reply()
   struct vnode *vp;
   struct dmap *dp;
 
-  driver_e = m_in.m_source;
-  filp_no = m_in.REP_ENDPT;
-  status = m_in.REP_STATUS;
+  driver_e = job_m_in.m_source;
+  filp_no = job_m_in.REP_ENDPT;
+  status = job_m_in.REP_STATUS;
 
   if (filp_no < 0 || filp_no >= NR_FILPS) {
 	printf("VFS: reopen_reply: bad filp number %d from driver %d\n",

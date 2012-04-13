@@ -283,21 +283,13 @@ void suspend(int why)
  * The SUSPEND pseudo error should be returned after calling suspend().
  */
 
-#if DO_SANITYCHECKS
-  if(fp_is_blocked(fp))
-	panic("suspend: called for suspended process");
-
-  if(why == FP_BLOCKED_ON_NONE)
-	panic("suspend: called for FP_BLOCKED_ON_NONE");
-#endif
-
   if (why == FP_BLOCKED_ON_POPEN || why == FP_BLOCKED_ON_PIPE)
 	/* #procs susp'ed on pipe*/
 	susp_count++;
 
   fp->fp_blocked_on = why;
   assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
-  fp->fp_block_callnr = call_nr;
+  fp->fp_block_callnr = job_call_nr;
   fp->fp_flags &= ~FP_SUSP_REOPEN;		/* Clear this flag. The caller
 						 * can set it when needed.
 						 */
@@ -316,7 +308,7 @@ void wait_for(endpoint_t who)
 
 
 /*===========================================================================*
- *				pipe_suspend					     *
+ *				pipe_suspend				     *
  *===========================================================================*/
 void pipe_suspend(filp, buf, size)
 struct filp *filp;
@@ -326,10 +318,6 @@ size_t size;
 /* Take measures to suspend the processing of the present system call.
  * Store the parameters to be used upon resuming in the process table.
  */
-#if DO_SANITYCHECKS
-  if(fp_is_blocked(fp))
-	panic("pipe_suspend: called for suspended process");
-#endif
 
   scratch(fp).file.filp = filp;
   scratch(fp).io.io_buffer = buf;
@@ -434,19 +422,17 @@ int count;			/* max number of processes to release */
 /*===========================================================================*
  *				revive					     *
  *===========================================================================*/
-void revive(proc_nr_e, returned)
-int proc_nr_e;			/* process to revive */
-int returned;			/* if hanging on task, how many bytes read */
+void revive(endpoint_t proc_e, int returned)
 {
 /* Revive a previously blocked process. When a process hangs on tty, this
  * is the way it is eventually released.
  */
-  register struct fproc *rfp;
+  struct fproc *rfp;
   int blocked_on;
   int fd_nr, slot;
   struct filp *fil_ptr;
 
-  if (proc_nr_e == NONE || isokendpt(proc_nr_e, &slot) != OK) return;
+  if (proc_e == NONE || isokendpt(proc_e, &slot) != OK) return;
 
   rfp = &fproc[slot];
   if (!fp_is_blocked(rfp) || (rfp->fp_flags & FP_REVIVED)) return;
@@ -478,18 +464,18 @@ int returned;			/* if hanging on task, how many bytes read */
 		unlock_filp(fil_ptr);
 		put_vnode(fil_ptr->filp_vno);
 		fil_ptr->filp_vno = NULL;
-		reply(proc_nr_e, returned);
+		reply(proc_e, returned);
 	} else {
-		reply(proc_nr_e, fd_nr);
+		reply(proc_e, fd_nr);
 	}
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	scratch(rfp).file.fd_nr = 0;
 	if (blocked_on == FP_BLOCKED_ON_POPEN) {
 		/* process blocked in open or create */
-		reply(proc_nr_e, fd_nr);
+		reply(proc_e, fd_nr);
 	} else if (blocked_on == FP_BLOCKED_ON_SELECT) {
-		reply(proc_nr_e, returned);
+		reply(proc_e, returned);
 	} else {
 		/* Revive a process suspended on TTY or other device.
 		 * Pretend it wants only what there is.
@@ -505,7 +491,7 @@ int returned;			/* if hanging on task, how many bytes read */
 			}
 			rfp->fp_grant = GRANT_INVALID;
 		}
-		reply(proc_nr_e, returned);	/* unblock the process */
+		reply(proc_e, returned);/* unblock the process */
 	}
   }
 }
@@ -615,30 +601,3 @@ void unpause(endpoint_t proc_e)
   reply(proc_e, status);	/* signal interrupted call */
 }
 
-#if DO_SANITYCHECKS
-/*===========================================================================*
- *				check_pipe			     *
- *===========================================================================*/
-int check_pipe(void)
-{
-/* Integrity check; verify that susp_count equals what the fproc table thinks
- * is suspended on a pipe */
-  struct fproc *rfp;
-  int count = 0;
-  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if (rfp->fp_pid == PID_FREE) continue;
-	if ( !(rfp->fp_flags & FP_REVIVED) &&
-	    (rfp->fp_blocked_on == FP_BLOCKED_ON_PIPE ||
-	     rfp->fp_blocked_on == FP_BLOCKED_ON_POPEN)) {
-		count++;
-	}
-  }
-
-  if (count != susp_count) {
-	printf("check_pipe: count %d susp_count %d\n", count, susp_count);
-	return(0);
-  }
-
-  return(l);
-}
-#endif

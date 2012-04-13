@@ -24,31 +24,42 @@
  *===========================================================================*/
 int do_chmod()
 {
-/* Perform the chmod(name, mode) and fchmod(fd, mode) system calls. */
+/* Perform the chmod(name, mode) and fchmod(fd, mode) system calls.
+ * syscall might provide 'name' embedded in the message.
+ */
 
   struct filp *flp;
   struct vnode *vp;
   struct vmnt *vmp;
-  int r;
-  mode_t new_mode;
+  int r, rfd;
+  mode_t result_mode;
   char fullpath[PATH_MAX];
   struct lookup resolve;
+  vir_bytes vname;
+  size_t vname_length;
+  mode_t new_mode;
 
   flp = NULL;
+  vname = (vir_bytes) job_m_in.name;
+  vname_length = (size_t) job_m_in.name_length;
+  rfd = job_m_in.fd;
+  new_mode = (mode_t) job_m_in.mode;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  if (call_nr == CHMOD) {
+  if (job_call_nr == CHMOD) {
 	/* Temporarily open the file */
-	if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
-		return(err_code);
+	if (copy_name(vname_length, fullpath) != OK) {
+		/* Direct copy failed, try fetching from user space */
+		if (fetch_name(vname, vname_length, fullpath) != OK)
+			return(err_code);
+	}
 	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
   } else {	/* call_nr == FCHMOD */
 	/* File is already opened; get a pointer to vnode from filp. */
-	if ((flp = get_filp(m_in.fd, VNODE_WRITE)) == NULL)
-		return(err_code);
+	if ((flp = get_filp(rfd, VNODE_WRITE)) == NULL) return(err_code);
 	vp = flp->filp_vno;
 	dup_vnode(vp);
   }
@@ -65,14 +76,14 @@ int do_chmod()
 	/* Now make the change. Clear setgid bit if file is not in caller's
 	 * group */
 	if (fp->fp_effuid != SU_UID && vp->v_gid != fp->fp_effgid)
-		m_in.mode &= ~I_SET_GID_BIT;
+		new_mode &= ~I_SET_GID_BIT;
 
-	r = req_chmod(vp->v_fs_e, vp->v_inode_nr, m_in.mode, &new_mode);
+	r = req_chmod(vp->v_fs_e, vp->v_inode_nr, new_mode, &result_mode);
 	if (r == OK)
-		vp->v_mode = new_mode;
+		vp->v_mode = result_mode;
   }
 
-  if (call_nr == CHMOD) {
+  if (job_call_nr == CHMOD) {
 	unlock_vnode(vp);
 	unlock_vmnt(vmp);
   } else {	/* FCHMOD */
@@ -94,27 +105,34 @@ int do_chown()
   struct filp *flp;
   struct vnode *vp;
   struct vmnt *vmp;
-  int r;
-  uid_t uid;
-  gid_t gid;
+  int r, rfd;
+  uid_t uid, new_uid;
+  gid_t gid, new_gid;
   mode_t new_mode;
   char fullpath[PATH_MAX];
   struct lookup resolve;
+  vir_bytes vname1;
+  size_t vname1_length;
 
   flp = NULL;
+  vname1 = (vir_bytes) job_m_in.name1;
+  vname1_length = (size_t) job_m_in.name1_length;
+  rfd = job_m_in.fd;
+  uid = job_m_in.owner;
+  gid = job_m_in.group;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  if (call_nr == CHOWN) {
+  if (job_call_nr == CHOWN) {
 	/* Temporarily open the file. */
-	if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+	if (fetch_name(vname1, vname1_length, fullpath) != OK)
 		return(err_code);
 	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
   } else {	/* call_nr == FCHOWN */
 	/* File is already opened; get a pointer to the vnode from filp. */
-	if ((flp = get_filp(m_in.fd, VNODE_WRITE)) == NULL)
+	if ((flp = get_filp(rfd, VNODE_WRITE)) == NULL)
 		return(err_code);
 	vp = flp->filp_vno;
 	dup_vnode(vp);
@@ -128,27 +146,27 @@ int do_chown()
 	if (fp->fp_effuid != SU_UID) {
 		/* Regular users can only change groups of their own files. */
 		if (vp->v_uid != fp->fp_effuid) r = EPERM;
-		if (vp->v_uid != m_in.owner) r = EPERM;	/* no giving away */
-		if (fp->fp_effgid != m_in.group) r = EPERM;
+		if (vp->v_uid != uid) r = EPERM;	/* no giving away */
+		if (fp->fp_effgid != gid) r = EPERM;
 	}
   }
 
   if (r == OK) {
 	/* Do not change uid/gid if new uid/gid is -1. */
-	uid = (m_in.owner == (uid_t)-1 ? vp->v_uid : m_in.owner);
-	gid = (m_in.group == (gid_t)-1 ? vp->v_gid : m_in.group);
+	new_uid = (uid == (uid_t)-1 ? vp->v_uid : uid);
+	new_gid = (gid == (gid_t)-1 ? vp->v_gid : gid);
 
-	if (uid > UID_MAX || gid > GID_MAX)
+	if (new_uid > UID_MAX || new_gid > GID_MAX)
 		r = EINVAL;
-	else if ((r = req_chown(vp->v_fs_e, vp->v_inode_nr, uid, gid,
+	else if ((r = req_chown(vp->v_fs_e, vp->v_inode_nr, new_uid, new_gid,
 				&new_mode)) == OK) {
-		vp->v_uid = uid;
-		vp->v_gid = gid;
+		vp->v_uid = new_uid;
+		vp->v_gid = new_gid;
 		vp->v_mode = new_mode;
 	}
   }
 
-  if (call_nr == CHOWN) {
+  if (job_call_nr == CHOWN) {
 	unlock_vnode(vp);
 	unlock_vmnt(vmp);
   } else {	/* FCHOWN */
@@ -165,11 +183,13 @@ int do_chown()
 int do_umask()
 {
 /* Perform the umask(co_mode) system call. */
-  register mode_t r;
+  mode_t complement, new_umask;
 
-  r = ~fp->fp_umask;		/* set 'r' to complement of old mask */
-  fp->fp_umask = ~(m_in.co_mode & RWX_MODES);
-  return(r);			/* return complement of old mask */
+  new_umask = job_m_in.co_mode;
+
+  complement = ~fp->fp_umask;	/* set 'r' to complement of old mask */
+  fp->fp_umask = ~(new_umask & RWX_MODES);
+  return(complement);		/* return complement of old mask */
 }
 
 
@@ -178,27 +198,39 @@ int do_umask()
  *===========================================================================*/
 int do_access()
 {
-/* Perform the access(name, mode) system call. */
+/* Perform the access(name, mode) system call.
+ * syscall might provide 'name' embedded in the message.
+ */
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
+  vir_bytes vname;
+  size_t vname_length;
+  mode_t access;
+
+  vname = (vir_bytes) job_m_in.name;
+  vname_length = (size_t) job_m_in.name_length;
+  access = job_m_in.mode;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
   /* First check to see if the mode is correct. */
-  if ( (m_in.mode & ~(R_OK | W_OK | X_OK)) != 0 && m_in.mode != F_OK)
+  if ( (access & ~(R_OK | W_OK | X_OK)) != 0 && access != F_OK)
 	return(EINVAL);
 
   /* Temporarily open the file. */
-  if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
-	return(err_code);
+  if (copy_name(vname_length, fullpath) != OK) {
+	/* Direct copy failed, try fetching from user space */
+	if (fetch_name(vname, vname_length, fullpath) != OK)
+		return(err_code);
+  }
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
-  r = forbidden(fp, vp, m_in.mode);
+  r = forbidden(fp, vp, access);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -228,8 +260,8 @@ int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 
   /* Isolate the relevant rwx bits from the mode. */
   bits = vp->v_mode;
-  uid = (call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
-  gid = (call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
+  uid = (job_call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
+  gid = (job_call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
 
   if (uid == SU_UID) {
 	/* Grant read and write permission.  Grant search permission for

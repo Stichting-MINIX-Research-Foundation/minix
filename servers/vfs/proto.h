@@ -44,8 +44,8 @@ int ctty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int clone_opcl(int op, dev_t dev, int proc, int flags);
 int ctty_io(int task_nr, message *mess_ptr);
 int do_ioctl(void);
-void pm_setsid(int proc_e);
-void dev_status(message *);
+void pm_setsid(endpoint_t proc_e);
+void dev_status(message *m);
 void bdev_up(int major);
 void cdev_up(int major);
 endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g);
@@ -71,8 +71,8 @@ int map_service(struct rprocpub *rpub);
 void write_elf_core_file(struct filp *f, int csig, char *exe_name);
 
 /* exec.c */
-int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
-	vir_bytes frame_len, vir_bytes *pc);
+int pm_exec(int proc_e, vir_bytes path, size_t path_len, vir_bytes frame,
+	size_t frame_len, vir_bytes *pc);
 #define check_bsf_lock() do {						\
 	assert(mutex_trylock(&bsf_lock) == 0);				\
 	unlock_bsf();							\
@@ -121,7 +121,7 @@ void lock_revive(void);
 
 /* main.c */
 int main(void);
-void reply(int whom, int result);
+void reply(endpoint_t whom, int result);
 void lock_proc(struct fproc *rfp, int force_lock);
 void unlock_proc(struct fproc *rfp);
 void *do_dummy(void *arg);
@@ -182,18 +182,15 @@ int do_check_perms(void);
 /* pipe.c */
 int do_pipe(void);
 int map_vnode(struct vnode *vp, endpoint_t fs_e);
-void unpause(int proc_nr_e);
+void unpause(endpoint_t proc_e);
 int pipe_check(struct vnode *vp, int rw_flag, int oflags, int bytes,
 	u64_t position, int notouch);
-void release(struct vnode *vp, int call_nr, int count);
-void revive(int proc_nr, int bytes);
-void suspend(int task);
+void release(struct vnode *vp, int op, int count);
+void revive(endpoint_t proc_e, int returned);
+void suspend(int why);
 void pipe_suspend(struct filp *rfilp, char *buf, size_t size);
-void unsuspend_by_endpt(endpoint_t);
-void wait_for(endpoint_t);
-#if DO_SANITYCHECKS
-int check_pipe(void);
-#endif
+void unsuspend_by_endpt(endpoint_t proc_e);
+void wait_for(endpoint_t proc_e);
 
 /* protect.c */
 int do_access(void);
@@ -216,55 +213,52 @@ int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
 	size_t req_size);
 
 /* request.c */
-int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, u64_t
-	pos, unsigned int num_of_bytes, char *user_addr, int rw_flag, u64_t
-	*new_posp, unsigned int *cum_iop);
-int req_chmod(int fs_e, ino_t inode_nr, mode_t rmode, mode_t
-	*new_modep);
-int req_chown(endpoint_t fs_e, ino_t inode_nr, uid_t newuid, gid_t
-	newgid, mode_t *new_modep);
-int req_create(int fs_e, ino_t inode_nr, int omode, uid_t uid, gid_t
-	gid, char *path, node_details_t *res);
+int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, u64_t pos,
+	unsigned int num_of_bytes, char *user_addr, int rw_flag,
+	u64_t *new_posp, unsigned int *cum_iop);
+int req_chmod(int fs_e, ino_t inode_nr, mode_t rmode, mode_t *new_modep);
+int req_chown(endpoint_t fs_e, ino_t inode_nr, uid_t newuid, gid_t newgid,
+	mode_t *new_modep);
+int req_create(int fs_e, ino_t inode_nr, int omode, uid_t uid, gid_t gid,
+	char *path, node_details_t *res);
 int req_flush(endpoint_t fs_e, dev_t dev);
-int req_fstatfs(int fs_e, int who_e, char *buf);
-int req_statvfs(int fs_e, int who_e, char *buf);
+int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
+int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
 int req_getdents(endpoint_t fs_e, ino_t inode_nr, u64_t pos, char *buf,
 	size_t size, u64_t *new_pos, int direct);
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
-int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc, ino_t
-	linked_file);
-int req_lookup(endpoint_t fs_e, ino_t dir_ino, ino_t root_ino, uid_t
-	uid, gid_t gid, struct lookup *resolve, lookup_res_t *res, struct fproc
-	*rfp);
+int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,
+	ino_t linked_file);
+int req_lookup(endpoint_t fs_e, ino_t dir_ino, ino_t root_ino, uid_t uid,
+	gid_t gid, struct lookup *resolve, lookup_res_t *res,
+	struct fproc *rfp);
 int req_mkdir(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
 	gid_t gid, mode_t dmode);
 int req_mknod(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
 	gid_t gid, mode_t dmode, dev_t dev);
 int req_mountpoint(endpoint_t fs_e, ino_t inode_nr);
-int req_newnode(endpoint_t fs_e, uid_t uid, gid_t gid, mode_t dmode,
-	dev_t dev, struct node_details *res);
+int req_newnode(endpoint_t fs_e, uid_t uid, gid_t gid, mode_t dmode, dev_t dev,
+	struct node_details *res);
 int req_putnode(int fs_e, ino_t inode_nr, int count);
-int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t who_e, char
-	*buf, size_t len, int direct);
-int req_readsuper(endpoint_t fs_e, char *driver_name, dev_t dev, int
-	readonly, int isroot, struct node_details *res_nodep, int *con_reqs);
-int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int
-	rw_flag, endpoint_t user_e, char *user_addr, unsigned int num_of_bytes,
+int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
+	vir_bytes buf, size_t len, int direct);
+int req_readsuper(endpoint_t fs_e, char *driver_name, dev_t dev, int readonly,
+	int isroot, struct node_details *res_nodep, int *con_reqs);
+int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int rw_flag,
+	endpoint_t user_e, char *user_addr, unsigned int num_of_bytes,
 	u64_t *new_posp, unsigned int *cum_iop);
-int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t
-	new_dir, char *new_name);
+int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
+	char *new_name);
 int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);
-int req_slink(endpoint_t fs_e, ino_t inode_nr, char *lastc, endpoint_t
-	who_e, char *path_addr, unsigned short path_length, uid_t uid, gid_t
-	gid);
-int req_stat(int fs_e, ino_t inode_nr, int who_e, char *buf, int pos,
-	int stat_version);
+int req_slink(endpoint_t fs_e, ino_t inode_nr, char *lastc, endpoint_t proc_e,
+	vir_bytes path_addr, size_t path_length, uid_t uid, gid_t gid);
+int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
+	int pos, int stat_version);
 int req_sync(endpoint_t fs_e);
 int req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc);
 int req_unmount(endpoint_t fs_e);
-int req_utime(endpoint_t fs_e, ino_t inode_nr, time_t actime, time_t
-	modtime);
+int req_utime(endpoint_t fs_e, ino_t inode_nr, time_t actime, time_t modtime);
 int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
 
 /* stadir.c */
@@ -297,7 +291,8 @@ void tll_upgrade(tll_t *tllp);
 time_t clock_time(void);
 unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
-int fetch_name(char *path, int len, int flag, char *dest);
+int copy_name(size_t len, char *dest);
+int fetch_name(vir_bytes path, size_t len, char *dest);
 int no_sys(void);
 int isokendpt_f(char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
@@ -329,9 +324,6 @@ void unlock_vnode(struct vnode *vp);
 void dup_vnode(struct vnode *vp);
 void put_vnode(struct vnode *vp);
 void vnode_clean_refs(struct vnode *vp);
-#if DO_SANITYCHECKS
-int check_vrefs(void);
-#endif
 
 /* write.c */
 int do_write(void);
@@ -357,7 +349,6 @@ int worker_available(void);
 struct worker_thread *worker_get(thread_t worker_tid);
 struct job *worker_getjob(thread_t worker_tid);
 void worker_init(struct worker_thread *worker);
-struct worker_thread *worker_self(void);
 void worker_signal(struct worker_thread *worker);
 void worker_start(void *(*func)(void *arg));
 void worker_stop(struct worker_thread *worker);

@@ -30,12 +30,12 @@ void check_vmnt_locks_by_me(struct fproc *rfp)
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
 	if (tll_locked_by_me(&vmp->m_lock))
 		panic("Thread %d still holds vmnt lock on vmp %p call_nr=%d\n",
-		      mthread_self(), vmp, call_nr);
+		      mthread_self(), vmp, job_call_nr);
   }
 
   if (rfp->fp_vmnt_rdlocks != 0)
 	panic("Thread %d still holds read locks on a vmnt (%d) call_nr=%d\n",
-	      mthread_self(), rfp->fp_vmnt_rdlocks, call_nr);
+	      mthread_self(), rfp->fp_vmnt_rdlocks, job_call_nr);
 }
 #endif
 

@@ -41,7 +41,7 @@ void check_filp_locks_by_me(void)
 	r = mutex_trylock(&f->filp_lock);
 	if (r == -EDEADLK)
 		panic("Thread %d still holds filp lock on filp %p call_nr=%d\n",
-		      mthread_self(), f, call_nr);
+		      mthread_self(), f, job_call_nr);
 	else if (r == 0) {
 		/* We just obtained the lock, release it */
 		mutex_unlock(&f->filp_lock);
@@ -243,7 +243,6 @@ void lock_filp(filp, locktype)
 struct filp *filp;
 tll_access_t locktype;
 {
-  message org_m_in;
   struct fproc *org_fp;
   struct worker_thread *org_self;
   struct vnode *vp;
@@ -269,14 +268,12 @@ tll_access_t locktype;
   if (mutex_trylock(&filp->filp_lock) != 0) {
 
 	/* Already in use, let's wait for our turn */
-	org_m_in = m_in;
 	org_fp = fp;
 	org_self = self;
 
 	if (mutex_lock(&filp->filp_lock) != 0)
 		panic("unable to obtain lock on filp");
 
-	m_in = org_m_in;
 	fp = org_fp;
 	self = org_self;
   }
@@ -369,7 +366,13 @@ int fd;
 int do_verify_fd(void)
 {
   struct filp *rfilp;
-  rfilp = (struct filp *) verify_fd(m_in.USER_ENDPT, m_in.COUNT);
+  endpoint_t proc_e;
+  int fd;
+
+  proc_e = job_m_in.USER_ENDPT;
+  fd = job_m_in.COUNT;
+
+  rfilp = (struct filp *) verify_fd(proc_e, fd);
   m_out.ADDRESS = (void *) rfilp;
   if (rfilp != NULL) unlock_filp(rfilp);
   return (rfilp != NULL) ? OK : EINVAL;
@@ -395,7 +398,9 @@ filp_id_t sfilp;
  *===========================================================================*/
 int do_set_filp(void)
 {
-  return set_filp((filp_id_t) m_in.ADDRESS);
+  filp_id_t f;
+  f = (filp_id_t) job_m_in.ADDRESS;
+  return set_filp(f);
 }
 
 /*===========================================================================*
@@ -434,7 +439,13 @@ filp_id_t cfilp;
  *===========================================================================*/
 int do_copy_filp(void)
 {
-  return copy_filp(m_in.USER_ENDPT, (filp_id_t) m_in.ADDRESS);
+  endpoint_t proc_e;
+  filp_id_t f;
+
+  proc_e = job_m_in.USER_ENDPT;
+  f = (filp_id_t) job_m_in.ADDRESS;
+
+  return copy_filp(proc_e, f);
 }
 
 /*===========================================================================*
@@ -457,7 +468,9 @@ filp_id_t pfilp;
  *===========================================================================*/
 int do_put_filp(void)
 {
-  return put_filp((filp_id_t) m_in.ADDRESS);
+  filp_id_t f;
+  f = (filp_id_t) job_m_in.ADDRESS;
+  return put_filp(f);
 }
 
 /*===========================================================================*
@@ -500,7 +513,13 @@ int fd;
  *===========================================================================*/
 int do_cancel_fd(void)
 {
-  return cancel_fd(m_in.USER_ENDPT, m_in.COUNT);
+  endpoint_t proc_e;
+  int fd;
+
+  proc_e = job_m_in.USER_ENDPT;
+  fd = job_m_in.COUNT;
+
+  return cancel_fd(proc_e, fd);
 }
 
 /*===========================================================================*

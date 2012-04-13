@@ -27,7 +27,6 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-static int change(struct vnode **iip, char *name_ptr, int len);
 static int change_into(struct vnode **iip, struct vnode *vp);
 
 /*===========================================================================*
@@ -37,10 +36,12 @@ int do_fchdir()
 {
   /* Change directory on already-opened fd. */
   struct filp *rfilp;
-  int r;
+  int r, rfd;
+
+  rfd = job_m_in.fd;
 
   /* Is the file descriptor valid? */
-  if ((rfilp = get_filp(m_in.fd, VNODE_READ)) == NULL) return(err_code);
+  if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
   r = change_into(&fp->fp_wd, rfilp->filp_vno);
   unlock_filp(rfilp);
   return(r);
@@ -51,9 +52,40 @@ int do_fchdir()
  *===========================================================================*/
 int do_chdir()
 {
-/* Perform the chdir(name) system call. */
+/* Perform the chdir(name) system call.
+ * syscall might provide 'name' embedded in the message.
+ */
 
-  return change(&fp->fp_wd, m_in.name, m_in.name_length);
+  int r;
+  struct vnode *vp;
+  struct vmnt *vmp;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+  vir_bytes vname;
+  size_t vname_length;
+
+  vname = (vir_bytes) job_m_in.name;
+  vname_length = (size_t) job_m_in.name_length;
+
+  if (copy_name(vname_length, fullpath) != OK) {
+	/* Direct copy failed, try fetching from user space */
+	if (fetch_name(vname, vname_length, fullpath) != OK)
+		return(err_code);
+  }
+
+  /* Try to open the directory */
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+  if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
+
+  r = change_into(&fp->fp_wd, vp);
+
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
+  put_vnode(vp);
+
+  return(r);
 }
 
 /*===========================================================================*
@@ -61,51 +93,51 @@ int do_chdir()
  *===========================================================================*/
 int do_chroot()
 {
-/* Perform the chroot(name) system call. */
-
-  if (!super_user) return(EPERM);	/* only su may chroot() */
-  return change(&fp->fp_rd, m_in.name, m_in.name_length);
-}
-
-/*===========================================================================*
- *				change					     *
- *===========================================================================*/
-static int change(iip, name_ptr, len)
-struct vnode **iip;		/* pointer to the inode pointer for the dir */
-char *name_ptr;			/* pointer to the directory name to change to */
-int len;			/* length of the directory name string */
-{
-/* Do the actual work for chdir() and chroot(). */
+/* Perform the chroot(name) system call.
+ * syscall might provide 'name' embedded in the message.
+ */
+  int r;
   struct vnode *vp;
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  int r;
+  vir_bytes vname;
+  size_t vname_length;
 
+  vname = (vir_bytes) job_m_in.name;
+  vname_length = (size_t) job_m_in.name_length;
+
+  if (!super_user) return(EPERM);	/* only su may chroot() */
+
+  if (copy_name(vname_length, fullpath) != OK) {
+	/* Direct copy failed, try fetching from user space */
+	if (fetch_name(vname, vname_length, fullpath) != OK)
+		return(err_code);
+  }
+
+  /* Try to open the directory */
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
-
-  /* Try to open the directory */
-  if (fetch_name(name_ptr, len, M3, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = change_into(iip, vp);
+
+  r = change_into(&fp->fp_rd, vp);
+
   unlock_vnode(vp);
   unlock_vmnt(vmp);
   put_vnode(vp);
+
   return(r);
 }
 
 /*===========================================================================*
  *				change_into				     *
  *===========================================================================*/
-static int change_into(iip, vp)
-struct vnode **iip;		/* pointer to the inode pointer for the dir */
-struct vnode *vp;		/* this is what the inode has to become */
+static int change_into(struct vnode **result, struct vnode *vp)
 {
   int r;
 
-  if (*iip == vp) return(OK);	/* Nothing to do */
+  if (*result == vp) return(OK);	/* Nothing to do */
 
   /* It must be a directory and also be searchable */
   if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
@@ -115,9 +147,9 @@ struct vnode *vp;		/* this is what the inode has to become */
   if (r != OK) return(r);
 
   /* Everything is OK.  Make the change. */
-  put_vnode(*iip);		/* release the old directory */
+  put_vnode(*result);		/* release the old directory */
   dup_vnode(vp);
-  *iip = vp;			/* acquire the new one */
+  *result = vp;			/* acquire the new one */
   return(OK);
 }
 
@@ -133,18 +165,23 @@ int do_stat()
   char fullpath[PATH_MAX];
   struct lookup resolve;
   int old_stat = 0;
+  vir_bytes vname1, statbuf;
+  size_t vname1_length;
+
+  vname1 = (vir_bytes) job_m_in.name1;
+  vname1_length = (size_t) job_m_in.name1_length;
+  statbuf = (vir_bytes) job_m_in.m1_p2;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
-  if (call_nr == PREV_STAT)
+  if (job_call_nr == PREV_STAT)
 	old_stat = 1;
 
-  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
-	return(err_code);
+  if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0, old_stat);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, 0, old_stat);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -160,15 +197,17 @@ int do_fstat()
 {
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
-  int r;
-  int pipe_pos = 0;
-  int old_stat = 0;
+  int r, pipe_pos = 0, old_stat = 0, rfd;
+  vir_bytes statbuf;
 
-  if (call_nr == PREV_FSTAT)
+  statbuf = (vir_bytes) job_m_in.buffer;
+  rfd = job_m_in.fd;
+
+  if (job_call_nr == PREV_FSTAT)
 	old_stat = 1;
 
   /* Is the file descriptor valid? */
-  if ((rfilp = get_filp(m_in.fd, VNODE_READ)) == NULL) return(err_code);
+  if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
   /* If we read from a pipe, send position too */
   if (rfilp->filp_vno->v_pipe == I_PIPE) {
@@ -180,7 +219,7 @@ int do_fstat()
   }
 
   r = req_stat(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
-	       who_e, m_in.buffer, pipe_pos, old_stat);
+	       who_e, statbuf, pipe_pos, old_stat);
 
   unlock_filp(rfilp);
 
@@ -194,12 +233,16 @@ int do_fstatfs()
 {
 /* Perform the fstatfs(fd, buf) system call. */
   struct filp *rfilp;
-  int r;
+  int r, rfd;
+  vir_bytes statbuf;
+
+  rfd = job_m_in.fd;
+  statbuf = (vir_bytes) job_m_in.buffer;
 
   /* Is the file descriptor valid? */
-  if( (rfilp = get_filp(m_in.fd, VNODE_READ)) == NULL) return(err_code);
+  if( (rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
-  r = req_fstatfs(rfilp->filp_vno->v_fs_e, who_e, m_in.buffer);
+  r = req_fstatfs(rfilp->filp_vno->v_fs_e, who_e, statbuf);
 
   unlock_filp(rfilp);
 
@@ -207,7 +250,7 @@ int do_fstatfs()
 }
 
 /*===========================================================================*
- *				do_statvfs					     *
+ *				do_statvfs				     *
  *===========================================================================*/
 int do_statvfs()
 {
@@ -217,15 +260,20 @@ int do_statvfs()
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
+  vir_bytes vname1, statbuf;
+  size_t vname1_length;
+
+  vname1 = (vir_bytes) job_m_in.name1;
+  vname1_length = (size_t) job_m_in.name1_length;
+  statbuf = (vir_bytes) job_m_in.name2;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
-  if (fetch_name(m_in.STATVFS_NAME, m_in.STATVFS_LEN, M1, fullpath) != OK)
-	return(err_code);
+  if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_statvfs(vp->v_fs_e, who_e, m_in.STATVFS_BUF);
+  r = req_statvfs(vp->v_fs_e, who_e, statbuf);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -241,13 +289,15 @@ int do_fstatvfs()
 {
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
-  int r;
+  int r, rfd;
+  vir_bytes statbuf;
+
+  rfd = job_m_in.fd;
+  statbuf = (vir_bytes) job_m_in.name2;
 
   /* Is the file descriptor valid? */
-  if ((rfilp = get_filp(m_in.FSTATVFS_FD, VNODE_READ)) == NULL)
-	return(err_code);
-
-  r = req_statvfs(rfilp->filp_vno->v_fs_e, who_e, m_in.FSTATVFS_BUF);
+  if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
+  r = req_statvfs(rfilp->filp_vno->v_fs_e, who_e, statbuf);
 
   unlock_filp(rfilp);
 
@@ -266,18 +316,22 @@ int do_lstat()
   char fullpath[PATH_MAX];
   struct lookup resolve;
   int old_stat = 0;
+  vir_bytes vname1, statbuf;
+  size_t vname1_length;
+
+  vname1 = (vir_bytes) job_m_in.name1;
+  vname1_length = (size_t) job_m_in.name1_length;
+  statbuf = (vir_bytes) job_m_in.name2;
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
-  if (call_nr == PREV_LSTAT)
+  if (job_call_nr == PREV_LSTAT)
 	old_stat = 1;
-  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
-	return(err_code);
-
+  if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0, old_stat);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, 0, old_stat);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);

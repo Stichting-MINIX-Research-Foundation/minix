@@ -22,9 +22,11 @@ int do_gcov_flush()
   int r, n;
   pid_t target;
   message m;
+  vir_bytes buf;
 
-  size = m_in.GCOV_BUFF_SZ;
-  target = m_in.GCOV_PID;
+  size = job_m_in.GCOV_BUFF_SZ;
+  target = job_m_in.GCOV_PID;
+  buf = (vir_bytes) job_m_in.GCOV_BUFF_P;
 
   /* If the wrong process is sent to, the system hangs; so make this root-only.
    */
@@ -43,14 +45,13 @@ int do_gcov_flush()
   rfp = &fproc[n];
 
   /* Grant target process to requestor's buffer. */
-  if ((grantid = cpf_grant_magic(rfp->fp_endpoint, who_e,
-				 (vir_bytes) m_in.GCOV_BUFF_P, size,
-				 CPF_WRITE)) < 0) {
+  if ((grantid = cpf_grant_magic(rfp->fp_endpoint, who_e, buf,
+				 size, CPF_WRITE)) < 0) {
 	printf("VFS: gcov_flush: grant failed\n");
 	return(ENOMEM);
   }
 
-  if(rfp->fp_endpoint == VFS_PROC_NR) {
+  if (rfp->fp_endpoint == VFS_PROC_NR) {
 	/* Request is for VFS itself. */
 	r = gcov_flush(grantid, size);
   } else {

@@ -62,7 +62,12 @@ static int write_seg(struct inode *rip, off_t off, int proc_e, int seg,
 int do_getsysinfo()
 {
   vir_bytes src_addr, dst_addr;
-  size_t len;
+  size_t len, buf_size;
+  int what;
+
+  what = job_m_in.SI_WHAT;
+  dst_addr = (vir_bytes) job_m_in.SI_WHERE;
+  buf_size = (size_t) job_m_in.SI_SIZE;
 
   /* Only su may call do_getsysinfo. This call may leak information (and is not
    * stable enough to be part of the API/ABI). In the future, requests from
@@ -71,7 +76,7 @@ int do_getsysinfo()
 
   if (!super_user) return(EPERM);
 
-  switch(m_in.SI_WHAT) {
+  switch(what) {
     case SI_PROC_TAB:
 	src_addr = (vir_bytes) fproc;
 	len = sizeof(struct fproc) * NR_PROCS;
@@ -90,10 +95,9 @@ int do_getsysinfo()
 	return(EINVAL);
   }
 
-  if (len != m_in.SI_SIZE)
+  if (len != buf_size)
 	return(EINVAL);
 
-  dst_addr = (vir_bytes) m_in.SI_WHERE;
   return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
 }
 
@@ -108,29 +112,31 @@ int do_dup()
  * provided to permit old binary programs to continue to run.
  */
 
-  register int rfd;
-  register struct filp *f;
+  int rfd, rfd2;
+  struct filp *f;
   int r = OK;
 
+  scratch(fp).file.fd_nr = job_m_in.fd;
+  rfd2 = job_m_in.fd2;
+
   /* Is the file descriptor valid? */
-  rfd = m_in.fd & ~DUP_MASK;		/* kill off dup2 bit, if on */
+  rfd = scratch(fp).file.fd_nr & ~DUP_MASK;	/* kill off dup2 bit, if on */
   if ((f = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
   /* Distinguish between dup and dup2. */
-  if (m_in.fd == rfd) {			/* bit not on */
+  if (!(scratch(fp).file.fd_nr & DUP_MASK)) {		/* bit not on */
 	/* dup(fd) */
-	r = get_fd(0, 0, &m_in.fd2, NULL);
+	r = get_fd(0, 0, &rfd2, NULL);
   } else {
 	/* dup2(old_fd, new_fd) */
-	if (m_in.fd2 < 0 || m_in.fd2 >= OPEN_MAX) {
+	if (rfd2 < 0 || rfd2 >= OPEN_MAX) {
 		r = EBADF;
-	} else if (rfd == m_in.fd2) {	/* ignore the call: dup2(x, x) */
-		r = m_in.fd2;
+	} else if (rfd == rfd2) {	/* ignore the call: dup2(x, x) */
+		r = rfd2;
 	} else {
 		/* All is fine, close new_fd if necessary */
-		m_in.fd = m_in.fd2;	/* prepare to close fd2 */
 		unlock_filp(f);		/* or it might deadlock on do_close */
-		(void) do_close();	/* cannot fail */
+		(void) close_fd(fp, rfd2);	/* cannot fail */
 		f = get_filp(rfd, VNODE_READ); /* lock old_fd again */
 	}
   }
@@ -138,9 +144,9 @@ int do_dup()
   if (r == OK) {
 	/* Success. Set up new file descriptors. */
 	f->filp_count++;
-	fp->fp_filp[m_in.fd2] = f;
-	FD_SET(m_in.fd2, &fp->fp_filp_inuse);
-	r = m_in.fd2;
+	fp->fp_filp[rfd2] = f;
+	FD_SET(rfd2, &fp->fp_filp_inuse);
+	r = rfd2;
   }
 
   unlock_filp(f);
@@ -155,23 +161,25 @@ int do_fcntl()
 /* Perform the fcntl(fd, request, ...) system call. */
 
   register struct filp *f;
-  int new_fd, fl, r = OK;
+  int new_fd, fl, r = OK, fcntl_req, fcntl_argx;
   tll_access_t locktype;
 
-  scratch(fp).file.fd_nr = m_in.fd;
-  scratch(fp).io.io_buffer = m_in.buffer;
-  scratch(fp).io.io_nbytes = m_in.nbytes;	/* a.k.a. m_in.request */
+  scratch(fp).file.fd_nr = job_m_in.fd;
+  scratch(fp).io.io_buffer = job_m_in.buffer;
+  scratch(fp).io.io_nbytes = job_m_in.nbytes;	/* a.k.a. m_in.request */
+  fcntl_req = job_m_in.request;
+  fcntl_argx = job_m_in.addr;
 
   /* Is the file descriptor valid? */
-  locktype = (m_in.request == F_FREESP) ? VNODE_WRITE : VNODE_READ;
+  locktype = (fcntl_req == F_FREESP) ? VNODE_WRITE : VNODE_READ;
   if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
 	return(err_code);
 
-  switch (m_in.request) {
+  switch (fcntl_req) {
     case F_DUPFD:
 	/* This replaces the old dup() system call. */
-	if (m_in.addr < 0 || m_in.addr >= OPEN_MAX) r = EINVAL;
-	else if ((r = get_fd(m_in.addr, 0, &new_fd, NULL)) == OK) {
+	if (fcntl_argx < 0 || fcntl_argx >= OPEN_MAX) r = EINVAL;
+	else if ((r = get_fd(fcntl_argx, 0, &new_fd, NULL)) == OK) {
 		f->filp_count++;
 		fp->fp_filp[new_fd] = f;
 		FD_SET(new_fd, &fp->fp_filp_inuse);
@@ -188,7 +196,7 @@ int do_fcntl()
 
     case F_SETFD:
 	/* Set close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
-	if(m_in.addr & FD_CLOEXEC)
+	if (fcntl_argx & FD_CLOEXEC)
 		FD_SET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
 	else
 		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
@@ -203,14 +211,14 @@ int do_fcntl()
     case F_SETFL:
 	/* Set file status flags (O_NONBLOCK and O_APPEND). */
 	fl = O_NONBLOCK | O_APPEND | O_REOPEN;
-	f->filp_flags = (f->filp_flags & ~fl) | (m_in.addr & fl);
+	f->filp_flags = (f->filp_flags & ~fl) | (fcntl_argx & fl);
 	break;
 
     case F_GETLK:
     case F_SETLK:
     case F_SETLKW:
 	/* Set or clear a file lock. */
-	r = lock_op(f, m_in.request);
+	r = lock_op(f, fcntl_req);
 	break;
 
     case F_FREESP:
@@ -225,9 +233,9 @@ int do_fcntl()
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else
 		/* Copy flock data from userspace. */
-		r = sys_datacopy(who_e, (vir_bytes) m_in.name1, SELF,
-				 (vir_bytes) &flock_arg,
-				 (phys_bytes) sizeof(flock_arg));
+		r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer,
+				 SELF, (vir_bytes) &flock_arg,
+				 sizeof(flock_arg));
 
 	if (r != OK) break;
 
@@ -313,7 +321,10 @@ int do_fsync()
   dev_t dev;
   int r = OK;
 
-  if ((rfilp = get_filp(m_in.m1_i1, VNODE_READ)) == NULL) return(err_code);
+  scratch(fp).file.fd_nr = job_m_in.fd;
+
+  if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
+	return(err_code);
   dev = rfilp->filp_vno->v_dev;
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
 	if (vmp->m_dev != NO_DEV && vmp->m_dev == dev &&
@@ -364,10 +375,7 @@ void pm_reboot()
 /*===========================================================================*
  *				pm_fork					     *
  *===========================================================================*/
-void pm_fork(pproc, cproc, cpid)
-int pproc;	/* Parent process */
-int cproc;	/* Child process */
-int cpid;	/* Child process id */
+void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
 {
 /* Perform those aspects of the fork() system call that relate to files.
  * In particular, let the child inherit its parent's file descriptors.
@@ -375,7 +383,7 @@ int cpid;	/* Child process id */
  * system uses the same slot numbers as the kernel.  Only PM makes this call.
  */
 
-  register struct fproc *cp, *pp;
+  struct fproc *cp, *pp;
   int i, parentno, childno;
   mutex_t c_fp_lock;
 
@@ -388,7 +396,7 @@ int cpid;	/* Child process id */
    */
   childno = _ENDPOINT_P(cproc);
   if (childno < 0 || childno >= NR_PROCS)
-	panic("VFS: bogus child for forking: %d", m_in.child_endpt);
+	panic("VFS: bogus child for forking: %d", cproc);
   if (fproc[childno].fp_pid != PID_FREE)
 	panic("VFS: forking on top of in-use child: %d", childno);
 
@@ -411,11 +419,11 @@ int cpid;	/* Child process id */
 
   /* A forking process never has an outstanding grant, as it isn't blocking on
    * I/O. */
-  if(GRANT_VALID(pp->fp_grant)) {
+  if (GRANT_VALID(pp->fp_grant)) {
 	panic("VFS: fork: pp (endpoint %d) has grant %d\n", pp->fp_endpoint,
 	       pp->fp_grant);
   }
-  if(GRANT_VALID(cp->fp_grant)) {
+  if (GRANT_VALID(cp->fp_grant)) {
 	panic("VFS: fork: cp (endpoint %d) has grant %d\n", cp->fp_endpoint,
 	       cp->fp_grant);
   }
@@ -586,7 +594,11 @@ int ruid;
  *===========================================================================*/
 int do_svrctl()
 {
-  switch (m_in.svrctl_req) {
+  int svrctl;
+
+  svrctl = m_in.svrctl_req;
+
+  switch (svrctl) {
   /* No control request implemented yet. */
     default:
 	return(EINVAL);

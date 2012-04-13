@@ -38,6 +38,7 @@ void worker_init(struct worker_thread *wp)
 		panic("couldn't set default thread stack size");
 	if (mthread_attr_setdetachstate(&tattr, MTHREAD_CREATE_DETACHED) != 0)
 		panic("couldn't set default thread detach state");
+	invalid_thread_id = mthread_self(); /* Assuming we're the main thread*/
 	pending = 0;
 	init = 1;
   }
@@ -131,8 +132,14 @@ static void *worker_main(void *arg)
 	/* Carry out work */
 	me->w_job.j_func(&me->w_job);
 
+	/* Deregister if possible */
+	if (me->w_job.j_fp != NULL) {
+		me->w_job.j_fp->fp_wtid = invalid_thread_id;
+	}
+
 	/* Mark ourselves as done */
 	me->w_job.j_func = NULL;
+	me->w_job.j_fp = NULL;
   }
 
   return(NULL);	/* Unreachable */
@@ -283,18 +290,13 @@ static void worker_wake(struct worker_thread *worker)
  *===========================================================================*/
 void worker_wait(void)
 {
-  struct worker_thread *worker;
-
-  worker = worker_self();
-  worker->w_job.j_m_in = m_in;	/* Store important global data */
-  worker->w_job.j_err_code = err_code;
-  assert(fp == worker->w_job.j_fp);
-  worker_sleep(worker);
+  self->w_job.j_err_code = err_code;
+  assert(fp == self->w_job.j_fp);
+  worker_sleep(self);
   /* We continue here after waking up */
-  fp = worker->w_job.j_fp;	/* Restore global data */
-  m_in = worker->w_job.j_m_in;
-  err_code = worker->w_job.j_err_code;
-  assert(worker->w_next == NULL);
+  fp = self->w_job.j_fp;	/* Restore global data */
+  err_code = self->w_job.j_err_code;
+  assert(self->w_next == NULL);
 }
 
 /*===========================================================================*
@@ -337,17 +339,6 @@ void worker_stop_by_endpt(endpoint_t proc_e)
 	if (worker_waiting_for(worker, proc_e))
 		worker_stop(worker);
   }
-}
-
-/*===========================================================================*
- *				worker_self				     *
- *===========================================================================*/
-struct worker_thread *worker_self(void)
-{
-  struct worker_thread *worker;
-  worker = worker_get(mthread_self());
-  assert(worker != NULL);
-  return(worker);
 }
 
 /*===========================================================================*

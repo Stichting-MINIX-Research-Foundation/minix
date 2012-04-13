@@ -80,7 +80,7 @@ static int select_majors[] = { /* List of majors that support selecting on */
 #define SEL_MAJORS	(sizeof(select_majors) / sizeof(select_majors[0]))
 
 /*===========================================================================*
- *				do_select				      *
+ *				do_select				     *
  *===========================================================================*/
 int do_select(void)
 {
@@ -95,8 +95,10 @@ int do_select(void)
   int r, nfds, do_timeout = 0, fd, s;
   struct timeval timeout;
   struct selectentry *se;
+  vir_bytes vtimeout;
 
-  nfds = m_in.SEL_NFDS;
+  nfds = job_m_in.SEL_NFDS;
+  vtimeout = (vir_bytes) job_m_in.SEL_TIMEOUT;
 
   /* Sane amount of file descriptors? */
   if (nfds < 0 || nfds > OPEN_MAX) return(EINVAL);
@@ -110,17 +112,17 @@ int do_select(void)
   se = &selecttab[s];
   wipe_select(se);	/* Clear results of previous usage */
   se->req_endpt = who_e;
-  se->vir_readfds = (fd_set *) m_in.SEL_READFDS;
-  se->vir_writefds = (fd_set *) m_in.SEL_WRITEFDS;
-  se->vir_errorfds = (fd_set *) m_in.SEL_ERRORFDS;
+  se->vir_readfds = (fd_set *) job_m_in.SEL_READFDS;
+  se->vir_writefds = (fd_set *) job_m_in.SEL_WRITEFDS;
+  se->vir_errorfds = (fd_set *) job_m_in.SEL_ERRORFDS;
 
   /* Copy fdsets from the process */
   if ((r = copy_fdsets(se, nfds, FROM_PROC)) != OK) return(r);
 
   /* Did the process set a timeout value? If so, retrieve it. */
-  if (m_in.SEL_TIMEOUT != NULL) {
+  if (vtimeout != 0) {
 	do_timeout = 1;
-	r = sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_TIMEOUT,	SELF, D,
+	r = sys_vircopy(who_e, D, (vir_bytes) vtimeout, SELF, D,
 			(vir_bytes) &timeout, sizeof(timeout));
 	if (r != OK) return(r);
   }
@@ -304,7 +306,7 @@ static int is_pipe(struct filp *f)
 }
 
 /*===========================================================================*
- *				is_supported_major					     *
+ *				is_supported_major			     *
  *===========================================================================*/
 static int is_supported_major(struct filp *f)
 {
@@ -782,7 +784,7 @@ int status;
 	/* Find vnode and check we got a reply from the device we expected */
 	vp = f->filp_vno;
 	assert(vp != NULL);
-	assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL); /* Must be char. special */
+	assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL);
 	if (vp->v_sdev != dev) {
 		printf("VFS (%s:%d): expected reply from dev %d not %d\n",
 			__FILE__, __LINE__, vp->v_sdev, dev);
@@ -1037,7 +1039,7 @@ static void wipe_select(struct selectentry *se)
 }
 
 /*===========================================================================*
- *				select_lock_filp				     *
+ *				select_lock_filp			     *
  *===========================================================================*/
 static void select_lock_filp(struct filp *f, int ops)
 {

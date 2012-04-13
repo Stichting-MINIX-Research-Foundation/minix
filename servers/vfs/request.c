@@ -200,16 +200,16 @@ int req_flush(endpoint_t fs_e, dev_t dev)
 /*===========================================================================*
  *				req_fstatfs	    			     *
  *===========================================================================*/
-int req_fstatfs(int fs_e, int proc_e, char *buf)
+int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf, sizeof(struct statfs),
-			CPF_WRITE);
-  if(grant_id == -1)
-	  panic("req_fstatfs: cpf_grant_magic failed");
+  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct statfs),
+			     CPF_WRITE);
+  if (grant_id == GRANT_INVALID)
+	panic("req_fstatfs: cpf_grant_magic failed");
 
   /* Fill in request message */
   m.m_type = REQ_FSTATFS;
@@ -226,16 +226,16 @@ int req_fstatfs(int fs_e, int proc_e, char *buf)
 /*===========================================================================*
  *				req_statvfs	    			     *
  *===========================================================================*/
-int req_statvfs(int fs_e, int proc_e, char *buf)
+int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf, sizeof(struct statvfs),
+  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct statvfs),
 			CPF_WRITE);
-  if(grant_id == -1)
-	  panic("req_statvfs: cpf_grant_magic failed");
+  if(grant_id == GRANT_INVALID)
+	panic("req_statvfs: cpf_grant_magic failed");
 
   /* Fill in request message */
   m.m_type = REQ_STATVFS;
@@ -663,7 +663,7 @@ int req_rdlink(fs_e, inode_nr, proc_e, buf, len, direct)
 endpoint_t fs_e;
 ino_t inode_nr;
 endpoint_t proc_e;
-char *buf;
+vir_bytes buf;
 size_t len;
 int direct; /* set to 1 to use direct grants instead of magic grants */
 {
@@ -672,12 +672,11 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   cp_grant_id_t grant_id;
 
   if (direct) {
-	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, len, CPF_WRITE);
+	grant_id = cpf_grant_direct(fs_e, buf, len, CPF_WRITE);
   } else {
-	grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf, len,
-								CPF_WRITE);
+	grant_id = cpf_grant_magic(fs_e, proc_e, buf, len, CPF_WRITE);
   }
-  if(grant_id == -1)
+  if (grant_id == -1)
 	  panic("req_rdlink: cpf_grant_magic failed");
 
   /* Fill in request message */
@@ -690,7 +689,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
-  if(r == OK) r = m.RES_NBYTES;
+  if (r == OK) r = m.RES_NBYTES;
 
   return(r);
 }
@@ -879,8 +878,8 @@ int req_slink(
   ino_t inode_nr,
   char *lastc,
   endpoint_t proc_e,
-  char *path_addr,
-  unsigned short path_length,
+  vir_bytes path_addr,
+  size_t path_length,
   uid_t uid,
   gid_t gid
 )
@@ -892,12 +891,11 @@ int req_slink(
 
   len = strlen(lastc) + 1;
   gid_name = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
-  if(gid_name == -1)
+  if (gid_name == GRANT_INVALID)
 	  panic("req_slink: cpf_grant_direct failed");
 
-  gid_buf = cpf_grant_magic(fs_e, proc_e, (vir_bytes) path_addr, path_length,
-			    CPF_READ);
-  if(gid_buf == -1) {
+  gid_buf = cpf_grant_magic(fs_e, proc_e, path_addr, path_length, CPF_READ);
+  if (gid_buf == GRANT_INVALID) {
 	  cpf_revoke(gid_name);
 	  panic("req_slink: cpf_grant_magic failed");
   }
@@ -924,13 +922,8 @@ int req_slink(
 /*===========================================================================*
  *				req_stat	       			     *
  *===========================================================================*/
-int req_stat(fs_e, inode_nr, proc_e, buf, pos, stat_version)
-int fs_e;
-ino_t inode_nr;
-int proc_e;
-char *buf;
-int pos;
-int stat_version;
+int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
+	int pos, int stat_version)
 {
   cp_grant_id_t grant_id;
   int r;
@@ -942,8 +935,8 @@ int stat_version;
 	  grant_id = cpf_grant_direct(fs_e, (vir_bytes) &sb,
 				      sizeof(struct stat), CPF_WRITE);
   else
-	  grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf,
-				sizeof(struct stat), CPF_WRITE);
+	  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct stat),
+				     CPF_WRITE);
 
   if (grant_id < 0)
 	panic("req_stat: cpf_grant_* failed");
@@ -963,7 +956,7 @@ int stat_version;
   if (pos != 0)
 	sb.st_size -= pos;
   if (stat_version == 0) {
-	r = sys_vircopy(SELF, D, (vir_bytes) &sb, proc_e, D, (vir_bytes) buf,
+	r = sys_vircopy(SELF, D, (vir_bytes) &sb, proc_e, D, buf,
 			sizeof(struct stat));
 	return(r);
   }
@@ -1000,7 +993,7 @@ int stat_version;
   old_sb.st_ctime = sb.st_ctime;
 #endif
 
-  r = sys_vircopy(SELF, D, (vir_bytes) &old_sb, proc_e, D, (vir_bytes) buf,
+  r = sys_vircopy(SELF, D, (vir_bytes) &old_sb, proc_e, D, buf,
 		  sizeof(struct minix_prev_stat));
 
   return(r);

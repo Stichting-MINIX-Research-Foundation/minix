@@ -44,38 +44,64 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
  *===========================================================================*/
 int do_creat()
 {
-/* Perform the creat(name, mode) system call. */
-  int r;
+/* Perform the creat(name, mode) system call.
+ * syscall might provide 'name' embedded in the message.
+ */
+
   char fullpath[PATH_MAX];
+  vir_bytes vname;
+  size_t vname_length;
+  mode_t open_mode;
 
-  if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
-	return(err_code);
-  r = common_open(fullpath, O_WRONLY | O_CREAT | O_TRUNC, (mode_t) m_in.mode);
-  return(r);
+  vname = (vir_bytes) job_m_in.name;
+  vname_length = (size_t) job_m_in.name_length;
+  open_mode = (mode_t) job_m_in.mode;
+
+  if (copy_name(vname_length, fullpath) != OK) {
+	/* Direct copy failed, try fetching from user space */
+	if (fetch_name(vname, vname_length, fullpath) != OK)
+		return(err_code);
+  }
+
+  return common_open(fullpath, O_WRONLY | O_CREAT | O_TRUNC, open_mode);
 }
-
 
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
 int do_open()
 {
-/* Perform the open(name, flags,...) system call. */
-  int create_mode = 0;		/* is really mode_t but this gives problems */
-  int r;
+/* Perform the open(name, flags,...) system call.
+ * syscall might provide 'name' embedded in message when not creating file */
+
+  int create_mode;		/* is really mode_t but this gives problems */
+  int open_mode = 0;		/* is really mode_t but this gives problems */
+  int r = OK;
   char fullpath[PATH_MAX];
+  vir_bytes vname;
+  size_t vname_length;
+
+  open_mode = (mode_t) job_m_in.mode;
+  create_mode = job_m_in.c_mode;
 
   /* If O_CREAT is set, open has three parameters, otherwise two. */
-  if (m_in.mode & O_CREAT) {
-	create_mode = m_in.c_mode;
-	r = fetch_name(m_in.c_name, m_in.name1_length, M1, fullpath);
+  if (open_mode & O_CREAT) {
+	vname = (vir_bytes) job_m_in.name1;
+	vname_length = (size_t) job_m_in.name1_length;
+	r = fetch_name(vname, vname_length, fullpath);
   } else {
-	r = fetch_name(m_in.name, m_in.name_length, M3, fullpath);
+	vname = (vir_bytes) job_m_in.name;
+	vname_length = (size_t) job_m_in.name_length;
+	create_mode = 0;
+	if (copy_name(vname_length, fullpath) != OK) {
+		/* Direct copy failed, try fetching from user space */
+		if (fetch_name(vname, vname_length, fullpath) != OK)
+			r = err_code;
+	}
   }
 
   if (r != OK) return(err_code); /* name was bad */
-  r = common_open(fullpath, m_in.mode, create_mode);
-  return(r);
+  return common_open(fullpath, open_mode, create_mode);
 }
 
 
@@ -241,24 +267,23 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 				b = (bits & R_BIT ? R_BIT : W_BIT);
 				filp->filp_count = 0; /* don't find self */
 				if ((filp2 = find_filp(vp, b)) != NULL) {
-					/* Co-reader or writer found. Use it.*/
-					fp->fp_filp[scratch(fp).file.fd_nr] = filp2;
-					filp2->filp_count++;
-					filp2->filp_vno = vp;
-					filp2->filp_flags = oflags;
+				    /* Co-reader or writer found. Use it.*/
+				    fp->fp_filp[scratch(fp).file.fd_nr] = filp2;
+				    filp2->filp_count++;
+				    filp2->filp_vno = vp;
+				    filp2->filp_flags = oflags;
 
-					/* v_count was incremented after the
-					 * vnode has been found. i_count was
-					 * incremented incorrectly in FS, not
-					 * knowing that we were going to use an
-					 * existing filp entry.  Correct this
-					 * error.
-					 */
-					unlock_vnode(vp);
-					put_vnode(vp);
+				    /* v_count was incremented after the vnode
+				     * has been found. i_count was incremented
+				     * incorrectly in FS, not knowing that we
+				     * were going to use an existing filp
+				     * entry.  Correct this error.
+				     */
+				    unlock_vnode(vp);
+				    put_vnode(vp);
 				} else {
-					/* Nobody else found. Restore filp. */
-					filp->filp_count = 1;
+				    /* Nobody else found. Restore filp. */
+				    filp->filp_count = 1;
 				}
 			}
 			break;
@@ -371,7 +396,7 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 					r = req_rdlink(slp->v_fs_e,
 						       slp->v_inode_nr,
 						       VFS_PROC_NR,
-						       path,
+						       (vir_bytes) path,
 						       PATH_MAX - 1, 0);
 					if (r < 0) {
 						/* Failed to read link */
@@ -508,13 +533,20 @@ int do_mknod()
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
+  vir_bytes vname1;
+  size_t vname1_length;
+  dev_t dev;
+
+  vname1 = (vir_bytes) job_m_in.name1;
+  vname1_length = (size_t) job_m_in.name1_length;
+  mode_bits = (mode_t) job_m_in.mk_mode;		/* mode of the inode */
+  dev = job_m_in.m1_i3;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_READ;
 
   /* Only the super_user may make nodes other than fifos. */
-  mode_bits = (mode_t) m_in.mk_mode;		/* mode of the inode */
   if (!super_user && (((mode_bits & I_TYPE) != I_NAMED_PIPE) &&
       ((mode_bits & I_TYPE) != I_UNIX_SOCKET))) {
 	return(EPERM);
@@ -522,8 +554,7 @@ int do_mknod()
   bits = (mode_bits & I_TYPE) | (mode_bits & ALL_MODES & fp->fp_umask);
 
   /* Open directory that's going to hold the new node. */
-  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
-	return(err_code);
+  if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
@@ -531,7 +562,7 @@ int do_mknod()
 	r = ENOTDIR;
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
-		      fp->fp_effgid, bits, m_in.mk_z0);
+		      fp->fp_effgid, bits, dev);
   }
 
   unlock_vnode(vp);
@@ -552,14 +583,20 @@ int do_mkdir()
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
+  vir_bytes vname1;
+  size_t vname1_length;
+  mode_t dirmode;
+
+  vname1 = (vir_bytes) job_m_in.name1;
+  vname1_length = (size_t) job_m_in.name1_length;
+  dirmode = (mode_t) job_m_in.mode;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_READ;
 
-  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
-	return(err_code);
-  bits = I_DIRECTORY | (m_in.mode & RWX_MODES & fp->fp_umask);
+  if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
+  bits = I_DIRECTORY | (dirmode & RWX_MODES & fp->fp_umask);
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
@@ -583,12 +620,16 @@ int do_lseek()
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
-  int r = OK;
-  long offset;
+  int r = OK, seekfd, seekwhence;
+  off_t offset;
   u64_t pos, newpos;
 
+  seekfd = job_m_in.ls_fd;
+  seekwhence = job_m_in.whence;
+  offset = (off_t) job_m_in.offset_lo;
+
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(m_in.ls_fd, VNODE_READ)) == NULL) return(err_code);
+  if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
   if (rfilp->filp_vno->v_pipe == I_PIPE) {
@@ -597,14 +638,13 @@ int do_lseek()
   }
 
   /* The value of 'whence' determines the start position to use. */
-  switch(m_in.whence) {
+  switch(seekwhence) {
     case SEEK_SET: pos = cvu64(0);	break;
     case SEEK_CUR: pos = rfilp->filp_pos;	break;
     case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  offset = m_in.offset_lo;
   if (offset >= 0)
 	newpos = add64ul(pos, offset);
   else
@@ -640,10 +680,16 @@ int do_llseek()
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
   u64_t pos, newpos;
-  int r = OK;
+  int r = OK, seekfd, seekwhence;
+  long off_hi, off_lo;
+
+  seekfd = job_m_in.ls_fd;
+  seekwhence = job_m_in.whence;
+  off_hi = job_m_in.offset_high;
+  off_lo = job_m_in.offset_lo;
 
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(m_in.ls_fd, VNODE_READ)) == NULL) return(err_code);
+  if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
   if (rfilp->filp_vno->v_pipe == I_PIPE) {
@@ -652,19 +698,19 @@ int do_llseek()
   }
 
   /* The value of 'whence' determines the start position to use. */
-  switch(m_in.whence) {
+  switch(seekwhence) {
     case SEEK_SET: pos = cvu64(0);	break;
     case SEEK_CUR: pos = rfilp->filp_pos;	break;
     case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  newpos = add64(pos, make64(m_in.offset_lo, m_in.offset_high));
+  newpos = add64(pos, make64(off_lo, off_hi));
 
   /* Check for overflow. */
-  if (( (long) m_in.offset_high > 0) && cmp64(newpos, pos) < 0)
+  if ((off_hi > 0) && cmp64(newpos, pos) < 0)
       r = EINVAL;
-  else if (( (long) m_in.offset_high < 0) && cmp64(newpos, pos) > 0)
+  else if ((off_hi < 0) && cmp64(newpos, pos) > 0)
       r = EINVAL;
   else {
 	rfilp->filp_pos = newpos;
@@ -691,7 +737,8 @@ int do_close()
 {
 /* Perform the close(fd) system call. */
 
-  return close_fd(fp, m_in.fd);
+  scratch(fp).file.fd_nr = job_m_in.fd;
+  return close_fd(fp, scratch(fp).file.fd_nr);
 }
 
 

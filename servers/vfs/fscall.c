@@ -48,7 +48,7 @@ static int push_globals()
 	return(EPERM);
 
   globals[depth].g_fp = fp;
-  globals[depth].g_m_in = m_in;
+  globals[depth].g_m_in = job_m_in;
   globals[depth].g_m_out = m_out;
   globals[depth].g_super_user = super_user;
 
@@ -71,7 +71,7 @@ static void pop_globals()
   depth--;
 
   fp = globals[depth].g_fp;
-  m_in = globals[depth].g_m_in;
+  job_m_in = globals[depth].g_m_in;
   m_out = globals[depth].g_m_out;
 
 }
@@ -113,10 +113,10 @@ message *m;				/* request/reply message pointer */
 	set_globals(m);
 
 	/* Perform the nested call - only getsysinfo() is allowed right now */
-	if (call_nr == COMMON_GETSYSINFO) {
+	if (job_call_nr == COMMON_GETSYSINFO) {
 		r = do_getsysinfo();
 	} else {
-		printf("VFS: invalid nested call %d from FS %d\n", call_nr,
+		printf("VFS: invalid nested call %d from FS %d\n", job_call_nr,
 			who_e);
 
 		r = ENOSYS;

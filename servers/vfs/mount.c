@@ -103,15 +103,26 @@ int do_mount()
   char fullpath[PATH_MAX];
   char mount_label[LABEL_MAX];
   dev_t dev;
+  int mflags;
+  vir_bytes label, vname1, vname2;
+  size_t vname1_length, vname2_length;
+
+  mflags = job_m_in.mount_flags;
+  label = (vir_bytes) job_m_in.fs_label;
+  vname1 = (vir_bytes) job_m_in.name1;
+  vname1_length = (size_t) job_m_in.name1_length;
+  vname2 = (vir_bytes) job_m_in.name2;
+  vname2_length = (size_t) job_m_in.name2_length;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
 
+
   /* FS process' endpoint number */
-  if (m_in.mount_flags & MS_LABEL16) {
+  if (mflags & MS_LABEL16) {
 	/* Get the label from the caller, and ask DS for the endpoint. */
-	r = sys_datacopy(who_e, (vir_bytes) m_in.fs_label, SELF,
-		(vir_bytes) mount_label, (phys_bytes) sizeof(mount_label));
+	r = sys_datacopy(who_e, label, SELF, (vir_bytes) mount_label,
+			 sizeof(mount_label));
 	if (r != OK) return(r);
 
 	mount_label[sizeof(mount_label)-1] = 0;
@@ -120,7 +131,7 @@ int do_mount()
 	if (r != OK) return(r);
   } else {
 	/* Legacy support: get the endpoint from the request itself. */
-	fs_e = (endpoint_t) m_in.fs_label;
+	fs_e = (endpoint_t) label;
 	mount_label[0] = 0;
   }
 
@@ -128,13 +139,13 @@ int do_mount()
   if (isokendpt(fs_e, &slot) != OK) return(EINVAL);
 
   /* Should the file system be mounted read-only? */
-  rdonly = (m_in.mount_flags & MS_RDONLY);
+  rdonly = (mflags & MS_RDONLY);
 
   /* A null string for block special device means don't use a device at all. */
-  nodev = (m_in.name1_length == 0);
+  nodev = (vname1_length == 0);
   if (!nodev) {
 	/* If 'name' is not for a block special file, return error. */
-	if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+	if (fetch_name(vname1, vname1_length, fullpath) != OK)
 		return(err_code);
 	if ((dev = name_to_dev(FALSE /*allow_mountpt*/, fullpath)) == NO_DEV)
 		return(err_code);
@@ -145,8 +156,7 @@ int do_mount()
   }
 
   /* Fetch the name of the mountpoint */
-  if (fetch_name(m_in.name2, m_in.name2_length, M1, fullpath) != OK)
-	return(err_code);
+  if (fetch_name(vname2, vname2_length, fullpath) != OK) return(err_code);
 
   /* Do the actual job */
   return mount_fs(dev, fullpath, fs_e, rdonly, mount_label);
@@ -408,18 +418,28 @@ void mount_pfs(void)
  *===========================================================================*/
 int do_umount(void)
 {
-/* Perform the umount(name) system call. */
+/* Perform the umount(name) system call.
+ * syscall might provide 'name' embedded in the message.
+ */
   char label[LABEL_MAX];
   dev_t dev;
   int r;
   char fullpath[PATH_MAX];
+  vir_bytes vname;
+  size_t vname_length;
+
+  vname = (vir_bytes) job_m_in.name;
+  vname_length = (size_t) job_m_in.name_length;
 
   /* Only the super-user may do umount. */
   if (!super_user) return(EPERM);
 
   /* If 'name' is not for a block special file or mountpoint, return error. */
-  if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
-	return(err_code);
+  if (copy_name(vname_length, fullpath) != OK) {
+	/* Direct copy failed, try fetching from user space */
+	if (fetch_name(vname, vname_length, fullpath) != OK)
+		return(err_code);
+  }
   if ((dev = name_to_dev(TRUE /*allow_mountpt*/, fullpath)) == NO_DEV)
 	return(err_code);
 

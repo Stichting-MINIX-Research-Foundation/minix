@@ -50,13 +50,13 @@ void check_vnode_locks_by_me(struct fproc *rfp)
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
 	if (tll_locked_by_me(&vp->v_lock)) {
 		panic("Thread %d still holds vnode lock on vp %x call_nr=%d\n",
-		      mthread_self(), vp, call_nr);
+		      mthread_self(), vp, job_call_nr);
 	}
   }
 
   if (rfp->fp_vp_rdlocks != 0)
 	panic("Thread %d still holds read locks on a vnode (%d) call_nr=%d\n",
-	      mthread_self(), rfp->fp_vp_rdlocks, call_nr);
+	      mthread_self(), rfp->fp_vp_rdlocks, job_call_nr);
 }
 #endif
 
@@ -306,84 +306,3 @@ void vnode_clean_refs(struct vnode *vp)
   vp->v_fs_count = 1;
 }
 
-
-#define REFVP(v) { vp = (v); CHECKVN(v); vp->v_ref_check++; }
-
-#if DO_SANITYCHECKS
-/*===========================================================================*
- *				check_vrefs				     *
- *===========================================================================*/
-int check_vrefs()
-{
-	int i, bad;
-	int ispipe_flag, ispipe_mode;
-	struct vnode *vp;
-	struct vmnt *vmp;
-	struct fproc *rfp;
-	struct filp *f;
-
-	/* Clear v_ref_check */
-	for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; ++vp)
-		vp->v_ref_check= 0;
-
-	/* Count reference for processes */
-	for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-		if (rfp->fp_pid == PID_FREE)
-			continue;
-		if(rfp->fp_rd) REFVP(rfp->fp_rd);
-                if(rfp->fp_wd) REFVP(rfp->fp_wd);
-	}
-
-	/* Count references from filedescriptors */
-	for (f = &filp[0]; f < &filp[NR_FILPS]; f++)
-	{
-		if (f->filp_count == 0)
-			continue;
-		REFVP(f->filp_vno);
-	}
-
-	/* Count references to mount points */
-	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp)
-	{
-		if (vmp->m_dev == NO_DEV)
-			continue;
-		REFVP(vmp->m_root_node);
-		if(vmp->m_mounted_on)
-			REFVP(vmp->m_mounted_on);
-	}
-
-	/* Check references */
-	bad= 0;
-	for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; ++vp)
-	{
-		if (vp->v_ref_count != vp->v_ref_check)
-		{
-			printf(
-"Bad reference count for inode %d on device 0x%x: found %d, listed %d\n",
-				vp->v_inode_nr, vp->v_dev, vp->v_ref_check,
-				vp->v_ref_count);
-			printf("last marked at %s, %d\n",
-				vp->v_file, vp->v_line);
-			bad= 1;
-		}
-
-		/* Also check v_pipe */
-		if (vp->v_ref_count != 0)
-		{
-			ispipe_flag= (vp->v_pipe == I_PIPE);
-			ispipe_mode= ((vp->v_mode & I_TYPE) == I_NAMED_PIPE);
-			if (ispipe_flag != ispipe_mode)
-			{
-				printf(
-"Bad v_pipe for inode %d on device 0x%x: found %d, mode 0%o\n",
-				vp->v_inode_nr, vp->v_dev, vp->v_pipe,
-				vp->v_mode);
-				printf("last marked at %s, %d\n",
-					vp->v_file, vp->v_line);
-				bad= 1;
-			}
-		}
-	}
-	return !bad;
-}
-#endif

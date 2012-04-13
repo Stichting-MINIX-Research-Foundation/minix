@@ -35,7 +35,7 @@ int do_mapdriver()
  * etc), and its label. This label is registered with DS, and allows us to
  * retrieve the driver's endpoint.
  */
-  int r, flags, major;
+  int r, flags, major, style;
   endpoint_t endpoint;
   vir_bytes label_vir;
   size_t label_len;
@@ -44,10 +44,13 @@ int do_mapdriver()
   /* Only RS can map drivers. */
   if (who_e != RS_PROC_NR) return(EPERM);
 
-  /* Get the label */
-  label_vir = (vir_bytes) m_in.md_label;
-  label_len = (size_t) m_in.md_label_len;
+  label_vir = (vir_bytes) job_m_in.md_label;
+  label_len = (size_t) job_m_in.md_label_len;
+  major = job_m_in.md_major;
+  flags = job_m_in.md_flags;
+  style = job_m_in.md_style;
 
+  /* Get the label */
   if (label_len+1 > sizeof(label)) { /* Can we store this label? */
 	printf("VFS: do_mapdriver: label too long\n");
 	return(EINVAL);
@@ -67,10 +70,7 @@ int do_mapdriver()
   }
 
   /* Try to update device mapping. */
-  major = m_in.md_major;
-  flags = m_in.md_flags;
-
-  return map_driver(label, major, endpoint, m_in.md_style, flags);
+  return map_driver(label, major, endpoint, style, flags);
 }
 
 /*===========================================================================*

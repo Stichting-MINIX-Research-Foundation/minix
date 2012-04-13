@@ -263,7 +263,7 @@ struct fproc *rfp;
 		}
 
 		r = req_rdlink(sym_vp->v_fs_e, sym_vp->v_inode_nr, NONE,
-				resolve->l_path, PATH_MAX - 1, 1);
+				(vir_bytes) resolve->l_path, PATH_MAX - 1, 1);
 
 		if (r < 0) {
 			/* Failed to read link */
@@ -382,8 +382,8 @@ struct fproc *rfp;
 	root_ino = 0;
 
   /* Set user and group ids according to the system call */
-  uid = (call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
-  gid = (call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
+  uid = (job_call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
+  gid = (job_call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
 
   symloop = 0;	/* Number of symlinks seen so far */
 
@@ -786,6 +786,6 @@ size_t pathlen;
  *===========================================================================*/
 int do_check_perms(void)
 {
-  return check_perms(m_in.USER_ENDPT, (cp_grant_id_t) m_in.IO_GRANT,
-		     (size_t) m_in.COUNT);
+  return check_perms(job_m_in.USER_ENDPT, (cp_grant_id_t) job_m_in.IO_GRANT,
+		     (size_t) job_m_in.COUNT);
 }

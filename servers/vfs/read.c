@@ -40,21 +40,18 @@ int do_read()
  *===========================================================================*/
 void lock_bsf(void)
 {
-  message org_m_in;
   struct fproc *org_fp;
   struct worker_thread *org_self;
 
   if (mutex_trylock(&bsf_lock) == 0)
 	return;
 
-  org_m_in = m_in;
   org_fp = fp;
   org_self = self;
 
   if (mutex_lock(&bsf_lock) != 0)
 	panic("unable to lock block special file lock");
 
-  m_in = org_m_in;
   fp = org_fp;
   self = org_self;
 }
@@ -79,9 +76,9 @@ int rw_flag;			/* READING or WRITING */
   tll_access_t locktype;
   int r;
 
-  scratch(fp).file.fd_nr = m_in.fd;
-  scratch(fp).io.io_buffer = m_in.buffer;
-  scratch(fp).io.io_nbytes = (size_t) m_in.nbytes;
+  scratch(fp).file.fd_nr = job_m_in.fd;
+  scratch(fp).io.io_buffer = job_m_in.buffer;
+  scratch(fp).io.io_nbytes = (size_t) job_m_in.nbytes;
 
   locktype = (rw_flag == READING) ? VNODE_READ : VNODE_WRITE;
   if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
@@ -216,8 +213,13 @@ int do_getdents()
   u64_t new_pos;
   register struct filp *rfilp;
 
+  scratch(fp).file.fd_nr = job_m_in.fd;
+  scratch(fp).io.io_buffer = job_m_in.buffer;
+  scratch(fp).io.io_nbytes = (size_t) job_m_in.nbytes;
+
   /* Is the file descriptor valid? */
-  if ( (rfilp = get_filp(m_in.fd, VNODE_READ)) == NULL) return(err_code);
+  if ( (rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
+	return(err_code);
 
   if (!(rfilp->filp_mode & R_BIT))
 	r = EBADF;
@@ -229,7 +231,8 @@ int do_getdents()
 		panic("do_getdents: can't handle large offsets");
 
 	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
-			 rfilp->filp_pos, m_in.buffer, m_in.nbytes,&new_pos,0);
+			 rfilp->filp_pos, scratch(fp).io.io_buffer,
+			 scratch(fp).io.io_nbytes, &new_pos,0);
 
 	if (r > 0) rfilp->filp_pos = new_pos;
   }

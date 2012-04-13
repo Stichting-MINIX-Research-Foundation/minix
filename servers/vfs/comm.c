@@ -19,9 +19,7 @@ struct fproc *rfp;
  */
   int r, transid;
 
-  if (vmp->m_fs_e == rfp->fp_endpoint) return(EDEADLK);
   vmp->m_comm.c_cur_reqs++;	/* One more request awaiting a reply */
-
   transid = rfp->fp_wtid + VFS_TRANSID;
   rfp->fp_sendrec->m_type = TRNS_ADD_ID(rfp->fp_sendrec->m_type, transid);
   rfp->fp_task = vmp->m_fs_e;
