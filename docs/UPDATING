@@ -1,3 +1,10 @@
+20120413:
+	Boot loader menu now has an option to boot into single user mode. To
+	get the menu option do:
+
+	# cp /usr/src/etc/boot.cfg.default /etc
+	# update_bootcfg
+
 20120402:
 	an installed genassym is required to build the kernel:
 	# make -C usr.bin/genassym install     
