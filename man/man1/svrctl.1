@@ -1,0 +1,65 @@
+.Dd $April 5, 2012$
+.Dt SVRCTL 1
+.Os
+.Sh NAME
+.Nm svrctl
+.Nd send servers control messages
+.Sh SYNOPSIS
+.Nm
+.Ar <vfs|pm> Ar get Ar <request>
+.Nm
+.Ar <vfs|pm> Ar set Ar <request> Ar <value>
+.Sh DESCRIPTION
+The
+.Nm
+utility allows to override the values of variables inside VFS or PM or to
+retrieve the values of variables. The variables that are allowed to be
+overridden are hard coded in the servers.
+.Sh EXAMPLES
+To retrieve how many threads are currently actively carrying out work in VFS:
+.Bd -literal -offset indent
+svrctl vfs get active_threads
+.Ed
+.Pp
+To generate a stack trace of all threads in VFS:
+.Bd -literal -offset indent
+svrctl vfs get print_traces
+.Ed
+.Pp
+To set verbosity level of VFS (allowed values range from 0 to 4)
+.Bd -literal -offset indent
+svrctl vfs set verbose 1
+.Ed
+.Pp
+To retrieve boot monitor parameters (note that these are also available through
+.Xr sysenv 1
+) such as
+.Va rootdevname
+,
+.Va memory
+,
+.Va hz
+, and if set,
+.Va bootopts
+,
+.Va cttyline
+,
+.Va cttybaud
+:
+.Bd -literal -offset indent
+svrctl pm get rootdevname
+svrctl pm get memory
+svrctl pm get hz
+svrctl pm get bootopts
+svrctl pm get cttyline
+svrctl pm get cttybaud
+.Ed
+.Sh EXIT STATUS
+In case
+.Nm
+is not properly invoked or the provided
+.Va request
+is not valid 1 is returned, otherwise 0.
+.Sh AUTHORS
+.An Thomas Veerman
+.Aq thomas@minix3.org
