@@ -25,7 +25,9 @@ struct gatedesc_s {
   u16_t offset_high;
 };
 
-struct segdesc_s gdt[GDT_SIZE]=		/* used in klib.s and mpx.s */
+
+/* used in klib.s and mpx.s */
+struct segdesc_s gdt[GDT_SIZE] __aligned(DESC_SIZE) =
 {	{0},
 	{0,0,0,0}, 				/* GDT descriptor */
 	{0,0,0,0}, 				/* IDT descriptor */
@@ -35,7 +37,9 @@ struct segdesc_s gdt[GDT_SIZE]=		/* used in klib.s and mpx.s */
 	{0xffff,0,0,0x9b,0xcf,0},	/* kernel CS */
 	{0xffff,0,0,0x9b,0xcf,0},	/* temp for BIOS (386: monitor CS at startup) */
 };
-static struct gatedesc_s idt[IDT_SIZE];	/* zero-init so none present */
+
+/* zero-init so none present */
+static struct gatedesc_s idt[IDT_SIZE] __aligned(DESC_SIZE);
 struct tss_s tss[CONFIG_MAX_CPUS];			/* zero init */
 
 static void sdesc(struct segdesc_s *segdp, phys_bytes base, vir_bytes
