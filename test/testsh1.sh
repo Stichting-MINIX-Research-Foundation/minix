@@ -81,7 +81,7 @@ g/c/s//!!!!!/g
 w
 q
 END
-ed x <y >/dev/null
+ed 2>/dev/null x <y >/dev/null
 cat >y <<END
 g/#####/s//a/g
 g/@@@@@/s//b/g
@@ -89,7 +89,7 @@ g/!!!!!/s//c/g
 w
 q
 END
-ed x <y >/dev/null
+ed 2>/dev/null x <y >/dev/null
 if cmp -s x $f; then : ; else echo Error in ed test 1; fi
 rm x y
 

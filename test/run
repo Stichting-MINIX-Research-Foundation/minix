@@ -44,10 +44,11 @@ do
       total=`expr $total + 1`
       FAIL=0
       unset ARG
-      ARG=`eval echo "\\${ARGS_$i}"`
+      testid="`echo $i | sed 's/\..*//'`"
+      ARG=`eval echo "\\${ARGS_$testid}"`
       if [ "$USER" = root ]
          then su - bin -c "cd `pwd`; ./test$i" || FAIL=1
-         else echo ./test$i $ARG || FAIL=1
+         else ./test$i $ARG || FAIL=1
       fi
       if [ $FAIL -eq 0 ]
          then passed=`expr $passed + 1`
