@@ -210,7 +210,7 @@ int do_fstat()
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
   /* If we read from a pipe, send position too */
-  if (rfilp->filp_vno->v_pipe == I_PIPE) {
+  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
 	if (rfilp->filp_mode & R_BIT)
 		if (ex64hi(rfilp->filp_pos) != 0) {
 			panic("do_fstat: bad position in pipe");

@@ -89,7 +89,6 @@ struct vnode *get_free_vnode()
 
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; ++vp) {
 	if (vp->v_ref_count == 0 && !is_vnode_locked(vp)) {
-		vp->v_pipe = NO_PIPE;
 		vp->v_uid  = -1;
 		vp->v_gid  = -1;
 		vp->v_sdev = NO_DEV;

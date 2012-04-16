@@ -19,6 +19,7 @@
 #include <minix/callnr.h>
 #include <minix/u64.h>
 #include <assert.h>
+#include <sys/stat.h>
 #include "fs.h"
 #include "file.h"
 #include "fproc.h"
@@ -570,14 +571,14 @@ struct filp *f;
   }
 
   /* If the inode being closed is a pipe, release everyone hanging on it. */
-  if (vp->v_pipe == I_PIPE) {
+  if (S_ISFIFO(vp->v_mode)) {
 	rw = (f->filp_mode & R_BIT ? WRITE : READ);
 	release(vp, rw, NR_PROCS);
   }
 
   /* If a write has been done, the inode is already marked as DIRTY. */
   if (--f->filp_count == 0) {
-	if (vp->v_pipe == I_PIPE) {
+	if (S_ISFIFO(vp->v_mode)) {
 		/* Last reader or writer is going. Tell PFS about latest
 		 * pipe size.
 		 */

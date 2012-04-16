@@ -105,7 +105,6 @@ int do_pipe()
   vp->v_inode_nr = res.inode_nr;
   vp->v_mapinode_nr = res.inode_nr;
   vp->v_mode = res.fmode;
-  vp->v_pipe = I_PIPE;
   vp->v_pipe_rd_pos= 0;
   vp->v_pipe_wr_pos= 0;
   vp->v_fs_count = 1;

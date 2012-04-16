@@ -246,7 +246,6 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			tll_upgrade(&vp->v_lock);
 			r = map_vnode(vp, PFS_PROC_NR);
 			if (r == OK) {
-				vp->v_pipe = I_PIPE;
 				if (vp->v_ref_count == 1) {
 					vp->v_pipe_rd_pos = 0;
 					vp->v_pipe_wr_pos = 0;
@@ -499,8 +498,6 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
  *  processes hanging on the pipe.
  */
 
-  vp->v_pipe = I_PIPE;
-
   if ((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) return(ENXIO);
 
   /* Find the reader/writer at the other end of the pipe */
@@ -547,8 +544,7 @@ int do_mknod()
   resolve.l_vnode_lock = VNODE_READ;
 
   /* Only the super_user may make nodes other than fifos. */
-  if (!super_user && (((mode_bits & I_TYPE) != I_NAMED_PIPE) &&
-      ((mode_bits & I_TYPE) != I_UNIX_SOCKET))) {
+  if (!super_user && (!S_ISFIFO(mode_bits) && !S_ISSOCK(mode_bits))) {
 	return(EPERM);
   }
   bits = (mode_bits & I_TYPE) | (mode_bits & ALL_MODES & fp->fp_umask);
@@ -558,7 +554,7 @@ int do_mknod()
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
-  if ((vp->v_mode & I_TYPE) != I_DIRECTORY) {
+  if (!S_ISDIR(vp->v_mode)) {
 	r = ENOTDIR;
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
@@ -600,7 +596,7 @@ int do_mkdir()
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
-  if ((vp->v_mode & I_TYPE) != I_DIRECTORY) {
+  if (!S_ISDIR(vp->v_mode)) {
 	r = ENOTDIR;
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mkdir(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
@@ -632,7 +628,7 @@ int do_lseek()
   if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
-  if (rfilp->filp_vno->v_pipe == I_PIPE) {
+  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
 	unlock_filp(rfilp);
 	return(ESPIPE);
   }
@@ -692,7 +688,7 @@ int do_llseek()
   if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
-  if (rfilp->filp_vno->v_pipe == I_PIPE) {
+  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
 	unlock_filp(rfilp);
 	return(ESPIPE);
   }

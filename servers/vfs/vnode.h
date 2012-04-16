@@ -16,7 +16,6 @@ EXTERN struct vnode {
 #if 0
   int v_ref_check;		/* for consistency checks */
 #endif
-  char v_pipe;			/* set to I_PIPE if pipe */
   off_t v_pipe_rd_pos;
   off_t v_pipe_wr_pos;
   endpoint_t v_bfs_e;		/* endpoint number for the FS proces in case
@@ -27,11 +26,6 @@ EXTERN struct vnode {
   struct vmnt *v_vmnt;          /* vmnt object of the partition */
   tll_t v_lock;			/* three-level-lock */
 } vnode[NR_VNODES];
-
-
-/* Field values. */
-#define NO_PIPE            0	/* i_pipe is NO_PIPE if inode is not a pipe */
-#define I_PIPE             1	/* i_pipe is I_PIPE if inode is a pipe */
 
 /* vnode lock types mapping */
 #define VNODE_READ TLL_READ

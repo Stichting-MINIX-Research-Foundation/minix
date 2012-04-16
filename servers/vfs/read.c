@@ -119,7 +119,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 
   if (size > SSIZE_MAX) return(EINVAL);
 
-  if (vp->v_pipe == I_PIPE) {
+  if (S_ISFIFO(vp->v_mode)) {
 	if (fp->fp_cum_io_partial != 0) {
 		panic("VFS: read_write: fp_cum_io_partial not clear");
 	}

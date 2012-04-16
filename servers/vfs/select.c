@@ -9,6 +9,7 @@
 #include "fs.h"
 #include <sys/time.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <string.h>
@@ -302,7 +303,7 @@ static int is_regular_file(struct filp *f)
 static int is_pipe(struct filp *f)
 {
 /* Recognize either anonymous pipe or named pipe (FIFO) */
-  return(f && f->filp_vno && (f->filp_vno->v_mode & I_TYPE) == I_NAMED_PIPE);
+  return(f && f->filp_vno && S_ISFIFO(f->filp_vno->v_mode));
 }
 
 /*===========================================================================*
