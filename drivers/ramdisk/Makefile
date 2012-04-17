@@ -8,7 +8,7 @@ PROG_COMMANDS=cdprobe dev2name loadramdisk mount fsck.mfs sysenv sh \
 PROG_SERVERS=mfs procfs
 PROG_USRSBIN=pwd_mkdb
 PROGRAMS=$(PROG_DRIVERS) $(PROG_COMMANDS) $(PROG_SERVERS) $(PROG_USRSBIN)
-EXTRA=system.conf master.passwd pwd.db spwd.db rs.single
+EXTRA=system.conf master.passwd rs.single 
 
 .if ${MKSMALL} != "yes"
 PROG_DRIVERS+= ahci
@@ -24,13 +24,13 @@ PROG_DRIVERS+= acpi
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
 CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
-CLEANFILES += $(LIBRARIES)
+CLEANFILES += $(LIBRARIES) pwd.db spwd.db
 
 install: all
 
 realall: image
 
-image:	proto.gen mtab rc $(EXTRA) passwd
+image:	proto.gen mtab rc $(EXTRA) pwd.db spwd.db passwd
 	mkfs.mfs image proto.gen || { rm -f image; false; }
 	if fsck.mfs -s image | grep -q CLEAN;	\
 	then	: ;	\
@@ -81,7 +81,7 @@ $(server): ../../servers/$(server)/$(server)
 	$(MAKE) -C ../../servers/$(server) $(server)
 .endfor
 
-passwd: ../../etc/master.passwd ../../usr.sbin/pwd_mkdb/pwd_mkdb
+pwd.db spwd.db passwd: ../../etc/master.passwd ../../usr.sbin/pwd_mkdb/pwd_mkdb
 	rm -f ../../etc/master.passwd.orig ../../etc/passwd.orig
 	rm -f ../../etc/pwd.db.tmp ../../etc/spwd.db.tmp
 	../../usr.sbin/pwd_mkdb/pwd_mkdb -V 0 -p -d ../../ ../../etc/master.passwd

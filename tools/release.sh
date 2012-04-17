@@ -9,9 +9,14 @@ version="`echo $version_pretty | tr . _`"
 PACKAGEDIR=/usr/pkgsrc/packages/$version_pretty/`uname -m`
 
 XBIN=usr/xbin
+XLIB=xlib
 SRC=src
 REPO=git://git.minix3.org/minix
 GITBRANCH=master
+
+LD_LIB="LD_LIBRARY_PATH=/lib:/usr/lib:/$XLIB"
+BUILDPATH="PATH=/$XBIN:/usr/pkg/bin"
+BUILDENV="$BUILDPATH $LD_LIB"
 
 # List of packages included on installation media
 PACKAGELIST=packages.install
@@ -183,16 +188,27 @@ mkdir -m 1777 $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 mkdir -p $RELEASEDIR/$XBIN
+mkdir -p $RELEASEDIR/$XLIB
+mkdir -p $RELEASEDIR/libexec
 mkdir -p $RELEASEDIR/usr/bin
 mkdir -p $RELEASEDIR/bin
 mkdir -p $RELEASEPACKAGE
 
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
+
+# Actual binaries
 cp -p /bin/* /usr/bin/* /usr/sbin/* /sbin/* $RELEASEDIR/$XBIN
-cp -rp /bin/sh /bin/echo /bin/install /bin/rm \
+cp -rp /bin/cat /bin/sh /bin/echo /bin/install /bin/rm \
     /bin/date /bin/ls $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex \
 	/usr/bin/grep /usr/bin/egrep /usr/bin/awk /usr/bin/sed $RELEASEDIR/usr/bin
+
+# For dynamically linked binaries: put interpreter there the
+# system's current crop of shared libraries so they'll run;
+# once they're rebuilt they can be thrown out in favour of the
+# new ones like $XBIN
+cp -p /libexec/ld.elf_so $RELEASEDIR/libexec/
+cp -p /lib/*.so* /usr/lib/*.so* $RELEASEDIR/$XLIB/
 
 CONFIGHEADER=$RELEASEDIR/usr/src/include/minix/sys_config.h
 
@@ -249,7 +265,7 @@ rm -f $RELEASEDIR/usr/$SRC/tools/revision
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
 
 echo " * Make hierarchy"
-chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin sh -x /usr/$SRC/tools/chrootmake.sh etcfiles" || exit 1
+sh -c "$LD_LIB chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/tools/chrootmake.sh etcfiles\"" || exit 1
 
 for p in $PREINSTALLED_PACKAGES
 do	echo " * Pre-installing: $p from $PKG_ADD_URL"
@@ -263,10 +279,11 @@ fi
 echo " * Resetting timestamps"
 find $RELEASEDIR | xargs touch
 echo " * Chroot build"
-chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
+sh -c "$LD_LIB MAKEMAP=$MAKEMAP chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/tools/chrootmake.sh\"" || exit 1
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN
+rm -rf $RELEASEDIR/$XLIB
 # The build process leaves some file in $SRC as bin.
 chown -R root $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue

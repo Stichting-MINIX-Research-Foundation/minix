@@ -6,7 +6,7 @@ SUBDIR=	add_route arp ash at awk \
 	backup badblocks banner basename \
 	btrace cal \
 	cawf cd  cdprobe checkhier cpp \
-	chmod chown chroot ci cksum cleantmp clear cmp co \
+	chmod chown ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut \
 	dd decomp16 DESCRIBE dev2name devsize df dhcpd \
 	dhrystone diff dirname diskctl dumpcore \
