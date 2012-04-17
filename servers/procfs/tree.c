@@ -16,9 +16,18 @@ static int slot_in_use(int slot)
 	/* Return whether the given slot is in use by a process.
 	 */
 
-	return (proc[slot].p_rts_flags != RTS_SLOT_FREE ||
-		(slot >= NR_TASKS &&
-		(mproc[slot - NR_TASKS].mp_flags & IN_USE)));
+	/* For kernel tasks, check only the kernel slot. Tasks do not have a
+	 * PM/VFS process slot.
+	 */
+	if (slot < NR_TASKS)
+		return (proc[slot].p_rts_flags != RTS_SLOT_FREE);
+
+	/* For regular processes, check only the PM slot. Do not check the
+	 * kernel slot, because that would skip zombie processes. The PID check
+	 * should be redundant, but if it fails, procfs could crash.
+	 */
+	return ((mproc[slot - NR_TASKS].mp_flags & IN_USE) &&
+		mproc[slot - NR_TASKS].mp_pid != 0);
 }
 
 /*===========================================================================*
@@ -396,7 +405,7 @@ static void pid_read(struct inode *node)
 	index = get_inode_index(node);
 
 	/* Call the handler procedure for the file. */
-((void (*) (int)) pid_files[index].data)(slot);
+	((void (*) (int)) pid_files[index].data)(slot);
 }
 
 /*===========================================================================*
@@ -498,7 +507,7 @@ int read_hook(struct inode *node, off_t off, char **ptr,
 	if (get_inode_index(node) != NO_INDEX) {
 		pid_read(node);
 	} else {
- ((void (*) (void)) cbdata)();
+		((void (*) (void)) cbdata)();
 	}
 
 	*len = buf_get(ptr);
