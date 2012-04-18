@@ -47,7 +47,7 @@ do
       testid="`echo $i | sed 's/\..*//'`"
       ARG=`eval echo "\\${ARGS_$testid}"`
       if [ "$USER" = root ]
-         then su - bin -c "cd `pwd`; ./test$i" || FAIL=1
+         then su - bin -c "cd `pwd`; ./test$i" $ARG || FAIL=1
          else ./test$i $ARG || FAIL=1
       fi
       if [ $FAIL -eq 0 ]
