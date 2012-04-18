@@ -5,6 +5,7 @@ ROOT=`printroot -r`
 DEFAULTCFG=/etc/boot.cfg.default
 LOCALCFG=/etc/boot.cfg.local
 TMP=/boot.cfg.temp
+DIRSBASE=/boot/minix
 
 filter_missing_entries()
 {
@@ -47,12 +48,12 @@ then
 	latest=`basename \`stat -f "%Y" /boot/minix_latest\``
 fi
 
-[ -d /boot/minix ] && for i in `ls /boot/minix/`
+[ -d $DIRSBASE ] && for i in `ls $DIRSBASE/`
 do
 	build_name="`basename $i`"
 	if [ "$build_name" != "$latest" ]
 	then
-		echo "menu=Start MINIX 3 ($build_name):load_mods $i/mod*;multiboot $i/kernel rootdevname=$rootdevname" >> /$TMP
+		echo "menu=Start MINIX 3 ($build_name):load_mods $DIRSBASE/$i/mod*;multiboot $DIRSBASE/$i/kernel rootdevname=$rootdevname" >> /$TMP
 	fi
 done
 
