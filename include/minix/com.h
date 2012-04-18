@@ -546,7 +546,9 @@
 #define PMEXEC_FLAGS	m1_i3	/* PMEF_* */
 
 #define PMEF_AUXVECTORS	20
+#define PMEF_EXECNAMELEN1 256
 #define PMEF_AUXVECTORSPACE 0x01 /* space for PMEF_AUXVECTORS on stack */
+#define PMEF_EXECNAMESPACE1 0x02 /* space for PMEF_EXECNAMELEN1 execname */
 
 /* Flags for PR_FORK_FLAGS. */
 #define PFF_VMINHIBIT	0x01	/* Don't schedule until release by VM. */

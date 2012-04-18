@@ -73,9 +73,6 @@ static int mib[3][2] = {
 static size_t
 expand(char *buf, const char *execname, int what, size_t bl)
 {
-#ifdef __minix
-	return 0;
-#else
 	const char *p, *ep;
 	char *bp = buf;
 	size_t len;
@@ -93,6 +90,7 @@ expand(char *buf, const char *execname, int what, size_t bl)
 			xerr(1, "bad execname `%s' in AUX vector", execname);
 		break;
 
+#ifndef __minix
 	case 3:	/* OSNAME */
 	case 4:	/* OSREL */
 	case 5:	/* PLATFORM */
@@ -103,6 +101,7 @@ expand(char *buf, const char *execname, int what, size_t bl)
 		}
 		ep = (p = name) + len - 1;
 		break;
+#endif
 	default:
 		return 0;
 	}
@@ -111,7 +110,6 @@ expand(char *buf, const char *execname, int what, size_t bl)
 		*bp++ = *p++, bl--;
 
 	return bp - buf;
-#endif
 }
 		
 

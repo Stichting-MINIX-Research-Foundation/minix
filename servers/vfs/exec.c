@@ -58,7 +58,7 @@ static int read_seg(struct vnode *vp, off_t off, int proc_e, int seg,
 static int load_aout(struct exec_info *execi);
 static int load_elf(struct exec_info *execi);
 static int stack_prepare_elf(struct exec_info *execi,
-	char *curstack, size_t *frame_len, int *extrabase);
+	char *curstack, size_t *frame_len, vir_bytes *vsp, int *extrabase);
 static int map_header(struct exec_info *execi);
 
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
@@ -66,7 +66,7 @@ static int map_header(struct exec_info *execi);
 /* Array of loaders for different object file formats */
 typedef int (*exechook_t)(struct exec_info *execpackage);
 typedef int (*stackhook_t)(struct exec_info *execi, char *curstack,
-	size_t *frame_len, int *extrabase);
+	size_t *frame_len, vir_bytes *, int *extrabase);
 struct exec_loaders {
 	exechook_t load_object;	 /* load executable into memory */
 	stackhook_t setup_stack; /* prepare stack before argc and argv push */
@@ -283,6 +283,9 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 		FAILCHECK(r);
 	}
 
+	/* Remember it */
+	strcpy(execi.execname, finalexec);
+
 	/* The executable we need to execute first (loader)
 	 * is in elf_interpreter, and has to be in fullpath to
 	 * be looked up
@@ -306,11 +309,10 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   *pc = execi.pc;
 
   /* call a stack-setup function if this executable type wants it */
-  vsp = execi.stack_top;
-  if(makestack) FAILCHECK(makestack(&execi, mbuf, &frame_len, &extrabase));
+  vsp = execi.stack_top - frame_len;
+  if(makestack) FAILCHECK(makestack(&execi, mbuf, &frame_len, &vsp, &extrabase));
 
   /* Patch up stack and copy it from VFS to new core image. */
-  vsp -= frame_len;
   patch_ptr(mbuf, vsp + extrabase);
   FAILCHECK(sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
 		   (phys_bytes)frame_len));
@@ -390,9 +392,10 @@ static int load_aout(struct exec_info *execi)
   return(r);
 }
 
-static int stack_prepare_elf(struct exec_info *execi, char *frame, size_t *framelen, int *extrabase)
+static int stack_prepare_elf(struct exec_info *execi, char *frame, size_t *framelen,
+	vir_bytes *newsp, int *extrabase)
 {
-	AuxInfo *a;
+	AuxInfo *a, *term;
 	Elf_Ehdr *elf_header;
 	int nulls;
 	char	**mysp = (char **) frame,
@@ -438,6 +441,7 @@ static int stack_prepare_elf(struct exec_info *execi, char *frame, size_t *frame
 		if(*framelen + extrabytes >= ARG_MAX)
 			return ENOMEM;
 		*framelen += extrabytes;
+		*newsp -= extrabytes;
 		*extrabase += extrabytes;
 		memmove(f+extrabytes, f, remain);
 		memset(f, 0, extrabytes);
@@ -457,8 +461,33 @@ static int stack_prepare_elf(struct exec_info *execi, char *frame, size_t *frame
 	AUXINFO(AT_PAGESZ, PAGE_SIZE);
 	AUXINFO(AT_EXECFD, execi->elf_main_fd);
 
+	/* This is where we add the AT_NULL */
+	term = a;
+
 	/* Always terminate with AT_NULL */
 	AUXINFO(AT_NULL, 0);
+
+	/* Empty space starts here, if any. */
+	if((execi->userflags & PMEF_EXECNAMESPACE1)
+	   && strlen(execi->execname) < PMEF_EXECNAMELEN1) {
+		char *spacestart;
+		vir_bytes userp;
+
+		/* Make space for the real closing AT_NULL entry. */
+		AUXINFO(AT_NULL, 0);
+
+		/* Empty space starts here; we can put the name here. */
+		spacestart = (char *) a;
+		strcpy(spacestart, execi->execname);
+
+		/* What will the address of the string for the user be */
+		userp = *newsp + (spacestart-frame);
+
+		/* Move back to where the AT_NULL is */
+		a = term;
+		AUXINFO(AT_SUN_EXECNAME, userp);
+		AUXINFO(AT_NULL, 0);
+	}
 
 	return OK;
 }

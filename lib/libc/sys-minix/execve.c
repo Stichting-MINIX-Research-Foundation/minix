@@ -24,6 +24,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	char **vp;
 	char *sp;
 	size_t argc;
+	int extra;
 	int vectors;
 	size_t frame_size;
 	size_t string_off;
@@ -63,8 +64,9 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	 */
 	vectors = sizeof(argc) + sizeof(*ap) + sizeof(*ep) +
 		sizeof(AuxInfo) * PMEF_AUXVECTORS;
-	frame_size+= vectors;
-	string_off+= vectors;
+	extra = vectors + PMEF_EXECNAMELEN1;
+	frame_size+= extra;
+	string_off+= extra;
 
 	/* Align. */
 	frame_size= (frame_size + sizeof(char *) - 1) & ~(sizeof(char *) - 1);
@@ -116,8 +118,10 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	m.m1_p1 = (char *) __UNCONST(path);
 	m.m1_p2 = frame;
 
-	/* Tell PM/VFS we have left space for the aux vectors */
-	m.PMEXEC_FLAGS = PMEF_AUXVECTORSPACE;
+	/* Tell PM/VFS we have left space for the aux vectors
+	 * and executable name
+	 */
+	m.PMEXEC_FLAGS = PMEF_AUXVECTORSPACE | PMEF_EXECNAMESPACE1;
 
 	(void) _syscall(PM_PROC_NR, EXEC, &m);
 

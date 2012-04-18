@@ -23,6 +23,7 @@ struct exec_info {
     vir_bytes elf_phdr;			/* Program header location */
     vir_bytes elf_base;			/* Userland addr load address */
     int elf_main_fd;			/* Dyn: FD of main program execuatble */
+    char execname[PATH_MAX];		/* Full executable invocation */
 };
 
 #endif /* !_VFS_EXEC_H_ */

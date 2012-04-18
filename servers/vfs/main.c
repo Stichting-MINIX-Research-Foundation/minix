@@ -807,7 +807,7 @@ static void service_pm_postponed(void)
 		stack_frame_len = (size_t) job_m_in.PM_FRAME_LEN;
 
 		r = pm_exec(proc_e, exec_path, exec_path_len, stack_frame,
-			    stack_frame_len, &pc, &newsp, m_in.PM_EXECFLAGS);
+			    stack_frame_len, &pc, &newsp, job_m_in.PM_EXECFLAGS);
 
 		/* Reply status to PM */
 		m_out.m_type = PM_EXEC_REPLY;
