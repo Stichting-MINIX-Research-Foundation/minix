@@ -175,7 +175,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
 
   /* Set up a grant if necessary. */
   op = VFS_DEV_IOCTL;
-  (void) safe_io_conversion(dp->dmap_driver, &gid, &op, &proc_e, &buf, 0,
+  (void) safe_io_conversion(dp->dmap_driver, &gid, &op, &proc_e, &buf, req,
 	&dummy);
 
   /* Set up the message passed to the task. */
