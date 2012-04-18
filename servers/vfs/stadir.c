@@ -181,7 +181,7 @@ int do_stat()
 
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, 0, old_stat);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, old_stat);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -197,7 +197,7 @@ int do_fstat()
 {
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
-  int r, pipe_pos = 0, old_stat = 0, rfd;
+  int r, old_stat = 0, rfd;
   vir_bytes statbuf;
 
   statbuf = (vir_bytes) job_m_in.buffer;
@@ -209,17 +209,8 @@ int do_fstat()
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
-  /* If we read from a pipe, send position too */
-  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
-	if (rfilp->filp_mode & R_BIT)
-		if (ex64hi(rfilp->filp_pos) != 0) {
-			panic("do_fstat: bad position in pipe");
-		}
-	pipe_pos = ex64lo(rfilp->filp_pos);
-  }
-
   r = req_stat(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
-	       who_e, statbuf, pipe_pos, old_stat);
+	       who_e, statbuf, old_stat);
 
   unlock_filp(rfilp);
 
@@ -331,7 +322,7 @@ int do_lstat()
 	old_stat = 1;
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, 0, old_stat);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, old_stat);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);

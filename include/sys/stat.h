@@ -8,7 +8,6 @@
 #include <sys/time.h>
 #endif
 
-
 struct stat {
   big_dev_t     st_dev;               /* inode's device */
   big_mode_t    st_mode;              /* inode protection mode */
@@ -40,7 +39,6 @@ struct stat {
   u32_t     st_spare[2];
 };
 
-
 struct minix_prev_stat {
   short st_dev;			/* major/minor device number */
   ino_t st_ino;			/* i-node number */
@@ -55,19 +53,16 @@ struct minix_prev_stat {
   time_t st_ctime;		/* time of last file status change */
 };
 
-
 #if defined(_NETBSD_SOURCE)
-/* XXX after updating stat struct we don't want to update all the code */
 #define st_atime		st_atimespec.tv_sec
-#define st_mtime		st_mtimespec.tv_sec
-#define st_ctime		st_ctimespec.tv_sec
-#define st_birthtime            st_birthtimespec.tv_sec
 #define st_atimensec            st_atimespec.tv_nsec
+#define st_mtime		st_mtimespec.tv_sec
 #define st_mtimensec            st_mtimespec.tv_nsec
+#define st_ctime		st_ctimespec.tv_sec
 #define st_ctimensec            st_ctimespec.tv_nsec
+#define st_birthtime            st_birthtimespec.tv_sec
 #define st_birthtimensec        st_birthtimespec.tv_nsec
 #endif
-
 
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */

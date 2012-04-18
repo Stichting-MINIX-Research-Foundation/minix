@@ -253,7 +253,7 @@ int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);
 int req_slink(endpoint_t fs_e, ino_t inode_nr, char *lastc, endpoint_t proc_e,
 	vir_bytes path_addr, size_t path_length, uid_t uid, gid_t gid);
 int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
-	int pos, int stat_version);
+	int old_stat);
 int req_sync(endpoint_t fs_e);
 int req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc);
 int req_unmount(endpoint_t fs_e);

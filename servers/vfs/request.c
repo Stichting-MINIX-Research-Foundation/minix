@@ -923,7 +923,7 @@ int req_slink(
  *				req_stat	       			     *
  *===========================================================================*/
 int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
-	int pos, int stat_version)
+	int old_stat)
 {
   cp_grant_id_t grant_id;
   int r;
@@ -931,12 +931,17 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
   struct stat sb;
   struct minix_prev_stat old_sb; /* for backward compatibility */
 
-  if (pos != 0 || stat_version != 0)
-	  grant_id = cpf_grant_direct(fs_e, (vir_bytes) &sb,
-				      sizeof(struct stat), CPF_WRITE);
-  else
-	  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct stat),
-				     CPF_WRITE);
+  if (old_stat == 1) {
+	/* We're dealing with the old stat() call. First copy stat structure
+	 * to VFS so we can convert the new struct stat to the old version.
+	 */
+	grant_id = cpf_grant_direct(fs_e, (vir_bytes) &sb, sizeof(struct stat),
+				    CPF_WRITE);
+  } else {
+	/* Grant FS access to copy straight into user provided buffer */
+	grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct stat),
+				   CPF_WRITE);
+  }
 
   if (grant_id < 0)
 	panic("req_stat: cpf_grant_* failed");
@@ -950,29 +955,16 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
-  if (r != OK || (pos == 0 && stat_version == 0))
+  if (r != OK || old_stat == 0)
 	return(r);
 
-  if (pos != 0)
-	sb.st_size -= pos;
-  if (stat_version == 0) {
-	r = sys_vircopy(SELF, D, (vir_bytes) &sb, proc_e, D, buf,
-			sizeof(struct stat));
-	return(r);
-  }
-
-  /* User needs old struct stat.
-   * Just 1 prev version at this moment */
-  assert(stat_version == 1);
-
-/* XXX until that st_Xtime macroses used, we have to undefine them,
- * because of minix_prev_stat
- */
+#if defined(_NETBSD_SOURCE)
 #undef st_atime
 #undef st_ctime
 #undef st_mtime
+#endif
 
-/* Copy field by field because of st_gid type mismath and
+/* Copy field by field because of st_gid type mismatch and
  * difference in order after atime.
  */
   old_sb.st_dev = sb.st_dev;
