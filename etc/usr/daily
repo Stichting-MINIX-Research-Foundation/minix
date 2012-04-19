@@ -25,7 +25,9 @@ then
     set -- `ls -lT $timestamp`
     test "$6 $7 $9" = "$(date '+%b %d %Y')" && exit
 fi
->$timestamp
+
+# Update last-run time
+echo >$timestamp
 
 # Remove three day old files from various tmp dirs.
 cleantmp -3 /tmp /usr/tmp /usr/preserve /usr/spool/lpd /usr/spool/at/past
