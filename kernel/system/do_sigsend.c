@@ -46,8 +46,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
     if(proc_used_fpu(rp)) {
 	    /* save the FPU context before saving it to the sig context */
 	    save_fpu(rp);
-	    memcpy(&sc.sc_fpu_state, rp->p_fpu_state.fpu_save_area_p,
-	   	 FPU_XFP_SIZE);
+	    memcpy(&sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE);
     }
   #endif
 

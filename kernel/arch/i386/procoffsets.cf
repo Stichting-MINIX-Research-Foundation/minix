@@ -21,7 +21,6 @@ member CSREG p_reg.cs
 member PSWREG p_reg.psw
 member SPREG p_reg.sp
 member SSREG p_reg.ss
-member FP_SAVE_AREA_P p_fpu_state
 member P_LDT_SEL p_seg.p_ldt_sel
 member P_CR3 p_seg.p_cr3
 member P_CR3_V p_seg.p_cr3_v

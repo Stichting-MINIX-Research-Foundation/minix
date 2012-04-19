@@ -45,8 +45,7 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
 	/* make sure that the FPU context is saved into proc structure first */
 	save_fpu(rp);
 	mc.mc_fpu_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
-	memcpy(&(mc.mc_fpu_state), rp->p_fpu_state.fpu_save_area_p,
-							FPU_XFP_SIZE);
+	memcpy(&(mc.mc_fpu_state), rp->p_seg.fpu_state, FPU_XFP_SIZE);
   } 
 #endif
 
@@ -84,8 +83,7 @@ int do_setmcontext(struct proc * caller, message * m_ptr)
   /* Copy FPU state */
   if (mc.mc_fpu_flags & MF_FPU_INITIALIZED) {
 	rp->p_misc_flags |= MF_FPU_INITIALIZED;
-	memcpy(rp->p_fpu_state.fpu_save_area_p, &(mc.mc_fpu_state),
-								FPU_XFP_SIZE);
+	memcpy(rp->p_seg.fpu_state, &(mc.mc_fpu_state), FPU_XFP_SIZE);
   } else
 	rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
   /* force reloading FPU in either case */

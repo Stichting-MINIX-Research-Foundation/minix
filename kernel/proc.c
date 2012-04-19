@@ -136,6 +136,9 @@ void proc_init(void)
 		rp->p_scheduler = NULL;		/* no user space scheduler */
 		rp->p_priority = 0;		/* no priority */
 		rp->p_quantum_size_ms = 0;	/* no quantum size */
+
+		/* arch-specific initialization */
+		arch_proc_init(i, rp);
 	}
 	for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
 		sp->s_proc_nr = NONE;		/* initialize as free */
@@ -155,25 +158,6 @@ void proc_init(void)
 		ip->p_rts_flags |= RTS_PROC_STOP;
 		set_idle_name(ip->p_name, i);
 	}
-
-#if (_MINIX_CHIP == _CHIP_INTEL)
-	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
-		/*
-		 * FXSR requires 16-byte alignment of memory image, but
-		 * unfortunately a.out does not preserve the alignment while
-		 * linking.  Thus we have to do manual alignment.
-		 */
-		phys_bytes aligned_fp_area;
-		aligned_fp_area =
-			(phys_bytes) &rp->p_fpu_state.fpu_image;
-		if(aligned_fp_area % FPUALIGN) {
-			aligned_fp_area += FPUALIGN -
-				(aligned_fp_area % FPUALIGN);
-		}
-		rp->p_fpu_state.fpu_save_area_p =
-			(void *) aligned_fp_area;
-	}
-#endif
 }
 
 static void switch_address_space_idle(void)

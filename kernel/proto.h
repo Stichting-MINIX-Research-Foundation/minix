@@ -55,6 +55,7 @@ int mini_notify(const struct proc *src, endpoint_t dst);
 void enqueue(struct proc *rp);
 void dequeue(struct proc *rp);
 void switch_to_user(void);
+void arch_proc_init(int nr, struct proc *rp);
 struct proc * arch_finish_switch_to_user(void);
 struct proc *endpoint_lookup(endpoint_t ep);
 #if DEBUG_ENABLE_IPC_WARNINGS

@@ -26,18 +26,9 @@ typedef struct segframe {
 	reg_t p_ldt_sel;    /* selector in gdt with ldt base and limit */
 	reg_t	p_cr3;		/* page table root */
 	u32_t	*p_cr3_v;
+	char	*fpu_state;
 	struct segdesc_s p_ldt[LDT_SIZE]; /* CS, DS and remote */
 } segframe_t;
-
-/* fpu_state_s is used in kernel proc table.
- * Any changes in this structure requires changes in sconst.h,
- * since this structure is used in proc structure. */
-struct fpu_state_s {
-	union fpu_state_u *fpu_save_area_p; /* 16-aligned fpu_save_area */
-	/* fpu_image includes 512 bytes of image itself and
-	 * additional 15 bytes required for manual 16-byte alignment. */
-	char fpu_image[527];
-};
 
 #define INMEMORY(p) (!p->p_seg.p_cr3 || get_cpulocal_var(ptproc) == p)
 

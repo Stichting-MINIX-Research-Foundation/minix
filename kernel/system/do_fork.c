@@ -27,7 +27,7 @@ int do_fork(struct proc * caller, message * m_ptr)
 /* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
 #if (_MINIX_CHIP == _CHIP_INTEL)
   reg_t old_ldt_sel;
-  void *old_fpu_save_area_p;
+  char *old_fpu_save_area_p;
 #endif
   register struct proc *rpc;		/* child process pointer */
   struct proc *rpp;			/* parent process pointer */
@@ -59,16 +59,14 @@ int do_fork(struct proc * caller, message * m_ptr)
   gen = _ENDPOINT_G(rpc->p_endpoint);
 #if (_MINIX_CHIP == _CHIP_INTEL)
   old_ldt_sel = rpc->p_seg.p_ldt_sel;	/* backup local descriptors */
-  old_fpu_save_area_p = rpc->p_fpu_state.fpu_save_area_p;
+  old_fpu_save_area_p = rpc->p_seg.fpu_state;
 #endif
   *rpc = *rpp;				/* copy 'proc' struct */
 #if (_MINIX_CHIP == _CHIP_INTEL)
   rpc->p_seg.p_ldt_sel = old_ldt_sel;	/* restore descriptors */
-  rpc->p_fpu_state.fpu_save_area_p = old_fpu_save_area_p;
+  rpc->p_seg.fpu_state = old_fpu_save_area_p;
   if(proc_used_fpu(rpp))
-	memcpy(rpc->p_fpu_state.fpu_save_area_p,
-	       rpp->p_fpu_state.fpu_save_area_p,
-	       FPU_XFP_SIZE);
+	memcpy(rpc->p_seg.fpu_state, rpp->p_seg.fpu_state, FPU_XFP_SIZE);
 #endif
   if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
 	gen = 1;			/* generation number wraparound */

@@ -275,6 +275,8 @@ void fpu_init(void)
 
 void save_local_fpu(struct proc *pr, int retain)
 {
+	char *state = pr->p_seg.fpu_state;
+
 	/* Save process FPU context. If the 'retain' flag is set, keep the FPU
 	 * state as is. If the flag is not set, the state is undefined upon
 	 * return, and the caller is responsible for reloading a proper state.
@@ -283,12 +285,14 @@ void save_local_fpu(struct proc *pr, int retain)
 	if(!is_fpu())
 		return;
 
+	assert(state);
+
 	if(osfxsr_feature) {
-		fxsave(pr->p_fpu_state.fpu_save_area_p);
+		fxsave(state);
 	} else {
-		fnsave(pr->p_fpu_state.fpu_save_area_p);
+		fnsave(state);
 		if (retain)
-			(void) frstor(pr->p_fpu_state.fpu_save_area_p);
+			(void) frstor(state);
 	}
 }
 
@@ -322,18 +326,41 @@ void save_fpu(struct proc *pr)
 	}
 }
 
+/* reserve a chunk of memory for fpu state; every one has to
+ * be FPUALIGN-aligned.
+ */
+static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __aligned(FPUALIGN);
+
+void arch_proc_init(int nr, struct proc *pr)
+{
+	if(nr < 0) return;
+	char *v;
+
+	assert(nr < NR_PROCS);
+
+	v = fpu_state[nr];
+
+	/* verify alignment */
+	assert(!((vir_bytes)v % FPUALIGN));
+	
+	pr->p_seg.fpu_state = v;
+}
+
 int restore_fpu(struct proc *pr)
 {
 	int failed;
+	char *state = pr->p_seg.fpu_state;
+
+	assert(state);
 
 	if(!proc_used_fpu(pr)) {
 		fninit();
 		pr->p_misc_flags |= MF_FPU_INITIALIZED;
 	} else {
 		if(osfxsr_feature) {
-			failed = fxrstor(pr->p_fpu_state.fpu_save_area_p);
+			failed = fxrstor(state);
 		} else {
-			failed = frstor(pr->p_fpu_state.fpu_save_area_p);
+			failed = frstor(state);
 		}
 
 		if (failed) return EINVAL;
