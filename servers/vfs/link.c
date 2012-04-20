@@ -310,8 +310,16 @@ int do_truncate()
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
   /* Ask FS to truncate the file */
-  if ((r = forbidden(fp, vp, W_BIT)) == OK)
-	r = truncate_vnode(vp, length);
+  if ((r = forbidden(fp, vp, W_BIT)) == OK) {
+	/* If the file size does not change, do not make the actual call. This
+	 * ensures that the file times are retained when the file size remains
+	 * the same, which is a POSIX requirement.
+	 */
+	if (S_ISREG(vp->v_mode) && vp->v_size == length)
+		r = OK;
+	else
+		r = truncate_vnode(vp, length);
+  }
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -326,6 +334,7 @@ int do_ftruncate()
 {
 /* As with do_truncate(), truncate_vnode() does the actual work. */
   struct filp *rfilp;
+  struct vnode *vp;
   int r;
   off_t length;
 
@@ -338,10 +347,18 @@ int do_ftruncate()
   if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_WRITE)) == NULL)
 	return(err_code);
 
+  vp = rfilp->filp_vno;
+
   if (!(rfilp->filp_mode & W_BIT))
 	r = EBADF;
+  else if (S_ISREG(vp->v_mode) && vp->v_size == length)
+	/* If the file size does not change, do not make the actual call. This
+	 * ensures that the file times are retained when the file size remains
+	 * the same, which is a POSIX requirement.
+	 */
+	r = OK;
   else
-	r = truncate_vnode(rfilp->filp_vno, length);
+	r = truncate_vnode(vp, length);
 
   unlock_filp(rfilp);
   return(r);
@@ -361,6 +378,11 @@ off_t newsize;
   assert(tll_locked_by_me(&vp->v_lock));
   file_type = vp->v_mode & I_TYPE;
   if (file_type != I_REGULAR && file_type != I_NAMED_PIPE) return(EINVAL);
+
+  /* We must not compare the old and the new size here: this function may be
+   * called for open(2), which requires an update to the file times if O_TRUNC
+   * is given, even if the file size remains the same.
+   */
   if ((r = req_ftrunc(vp->v_fs_e, vp->v_inode_nr, newsize, 0)) == OK)
 	vp->v_size = newsize;
   return(r);

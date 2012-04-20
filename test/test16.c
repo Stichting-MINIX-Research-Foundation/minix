@@ -126,6 +126,14 @@ void test16a()
   if (yc != pc) e(39);
   if (ym != pm) e(40);
   if (close(fd) != 0) e(41);
+  /* Try once more, now without changing the file size. */
+  sleep(1);
+  if ( (fd = open("T16.e", O_WRONLY|O_TRUNC)) < 0) e(89);
+  get_times("T16.e", &a, &c, &m);
+  if (c != m) e(90);
+  if (c == xc) e(91);
+  if (m == xm) e(92);
+  if (close(fd) != 0) e(93);
 
   /* Test the times for link/unlink. */
   get_times("T16.e", &a, &c, &m);

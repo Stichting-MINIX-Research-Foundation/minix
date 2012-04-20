@@ -533,8 +533,6 @@ off_t newsize;			/* inode must become this size */
   file_type = rip->i_mode & I_TYPE;	/* check to see if file is special */
   if (file_type == I_CHAR_SPECIAL || file_type == I_BLOCK_SPECIAL)
 	return(EINVAL);
-  if (rip->i_size == newsize)
-	return(OK);
   if (newsize > rip->i_sp->s_max_size)	/* don't let inode grow too big */
 	return(EFBIG);
 
