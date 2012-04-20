@@ -145,12 +145,12 @@ struct buf *get_block(
 	 */
 	yieldid = make64(bp->b_dev, bp->b_blocknr);
 	assert(bp->b_bytes == fs_block_size);
-	BP_CLEARDEV(bp);
+	bp->b_dev = NO_DEV;
   }
 
   /* Fill in block's parameters and add it to the hash chain where it goes. */
-  if(dev == NO_DEV) BP_CLEARDEV(bp);
-  else BP_SETDEV(bp, dev);
+  MARKCLEAN(bp);		/* NO_DEV blocks may be marked dirty */
+  bp->b_dev = dev;		/* fill in device number */
   bp->b_blocknr = block;	/* fill in block number */
   bp->b_count++;		/* record that block is being used */
   b = BUFHASH(bp->b_blocknr);
@@ -184,7 +184,7 @@ struct buf *get_block(
 
   if(only_search == PREFETCH) {
 	/* PREFETCH: don't do i/o. */
-	BP_CLEARDEV(bp);
+	bp->b_dev = NO_DEV;
   } else if (only_search == NORMAL) {
 	read_block(bp);
   } else if(only_search == NO_READ) {
@@ -351,7 +351,7 @@ register struct buf *bp;	/* buffer pointer */
 	}
 
 	if (op_failed) {
-		BP_CLEARDEV(bp);	/* invalidate block */
+		bp->b_dev = NO_DEV;	/* invalidate block */
 
 		/* Report read errors to interested parties. */
 		rdwt_err = r;
@@ -371,7 +371,7 @@ void invalidate(
   register struct buf *bp;
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
-	if (bp->b_dev == device) BP_CLEARDEV(bp);
+	if (bp->b_dev == device) bp->b_dev = NO_DEV;
 
   vm_forgetblocks();
 }
@@ -502,13 +502,13 @@ void rw_scattered(
 		if (r < (ssize_t) fs_block_size) {
 			/* Transfer failed. */
 			if (i == 0) {
-				BP_CLEARDEV(bp);	/* Invalidate block */
+				bp->b_dev = NO_DEV;	/* Invalidate block */
 				vm_forgetblocks();
 			}
 			break;
 		}
 		if (rw_flag == READING) {
-			BP_SETDEV(bp, dev);	/* validate block */
+			bp->b_dev = dev;	/* validate block */
 			put_block(bp, PARTIAL_DATA_BLOCK);
 		} else {
 			MARKCLEAN(bp);
@@ -663,7 +663,7 @@ void buf_pool(int new_nr_bufs)
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
         bp->b_blocknr = NO_BLOCK;
-	BP_CLEARDEV(bp);
+        bp->b_dev = NO_DEV;
         bp->b_next = bp + 1;
         bp->b_prev = bp - 1;
         bp->bp = NULL;
