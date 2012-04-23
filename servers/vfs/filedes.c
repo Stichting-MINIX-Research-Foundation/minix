@@ -568,7 +568,7 @@ struct filp *f;
   /* If the inode being closed is a pipe, release everyone hanging on it. */
   if (S_ISFIFO(vp->v_mode)) {
 	rw = (f->filp_mode & R_BIT ? WRITE : READ);
-	release(vp, rw, NR_PROCS);
+	release(vp, rw, susp_count);
   }
 
   /* If a write has been done, the inode is already marked as DIRTY. */
