@@ -55,7 +55,10 @@ int do_pipe()
   if ((r = lock_vmnt(vmp, VMNT_WRITE)) != OK) return(r);
 
   /* See if a free vnode is available */
-  if ((vp = get_free_vnode()) == NULL) return(err_code);
+  if ((vp = get_free_vnode()) == NULL) {
+	unlock_vmnt(vmp);
+	return(err_code);
+  }
   lock_vnode(vp, VNODE_OPCL);
 
   /* Acquire two file descriptors. */
