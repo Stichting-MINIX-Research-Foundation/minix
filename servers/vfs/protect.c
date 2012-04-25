@@ -9,6 +9,7 @@
  */
 
 #include "fs.h"
+#include <sys/stat.h>
 #include <unistd.h>
 #include <minix/callnr.h>
 #include "file.h"
@@ -268,8 +269,7 @@ int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 	 * directories.  Grant execute permission (for non-directories) if
 	 * and only if one of the 'X' bits is set.
 	 */
-	if ( (bits & I_TYPE) == I_DIRECTORY ||
-	     bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
+	if ( S_ISDIR(bits) || bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
 		perm_bits = R_BIT | W_BIT | X_BIT;
 	else
 		perm_bits = R_BIT | W_BIT;

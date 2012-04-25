@@ -552,9 +552,7 @@ char ename[NAME_MAX + 1];
 
   pos = make64(0, 0);
 
-  if ((dirp->v_mode & I_TYPE) != I_DIRECTORY) {
-	return(EBADF);
-  }
+  if (!S_ISDIR(dirp->v_mode)) return(EBADF);
 
   do {
 	r = req_getdents(dirp->v_fs_e, dirp->v_inode_nr, pos, buf, sizeof(buf),

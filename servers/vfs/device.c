@@ -668,8 +668,7 @@ int do_ioctl()
   if ((f = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);
   vp = f->filp_vno;		/* get vnode pointer */
-  if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL &&
-      (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) {
+  if (!S_ISCHR(vp->v_mode) && !S_ISBLK(vp->v_mode)) {
 	r = ENOTTY;
   }
 
@@ -677,7 +676,7 @@ int do_ioctl()
 	suspend_reopen = (f->filp_state != FS_NORMAL);
 	dev = (dev_t) vp->v_sdev;
 
-	if ((vp->v_mode & I_TYPE) == I_BLOCK_SPECIAL)
+	if (S_ISBLK(vp->v_mode))
 		r = bdev_ioctl(dev, who_e, ioctlrequest, argx);
 	else
 		r = dev_io(VFS_DEV_IOCTL, dev, who_e, argx, cvu64(0),
@@ -1013,7 +1012,7 @@ void cdev_up(int maj)
 	rfilp = rfp->fp_filp[fd_nr];
 	vp = rfilp->filp_vno;
 	if (!vp) panic("VFS: cdev_up: no vp");
-	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
+	if (!S_ISCHR(vp->v_mode)) continue;
 	if (major(vp->v_sdev) != maj) continue;
 
 	rfp->fp_flags |= FP_SUSP_REOPEN;
@@ -1066,7 +1065,7 @@ int maj;
   for (rfilp = filp; rfilp < &filp[NR_FILPS]; rfilp++) {
 	if (rfilp->filp_count < 1 || !(vp = rfilp->filp_vno)) continue;
 	if (rfilp->filp_state != FS_NEEDS_REOPEN) continue;
-	if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;
+	if (!S_ISCHR(vp->v_mode)) continue;
 
 	major_dev = major(vp->v_sdev);
 	minor_dev = minor(vp->v_sdev);
@@ -1131,7 +1130,7 @@ int maj;
 
 	vp = rfilp->filp_vno;
 	if (!vp) panic("VFS: restart_reopen: no vp");
-	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
+	if (!S_ISCHR(vp->v_mode)) continue;
 	if (major(vp->v_sdev) != maj) continue;
 
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
@@ -1181,7 +1180,7 @@ void reopen_reply()
 	return;
   }
 
-  if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) {
+  if (!S_ISCHR(vp->v_mode)) {
 	printf("VFS: reopen_reply: bad mode 0%o for filp number %d"
 	       " (from driver %d)\n", vp->v_mode, filp_no, driver_e);
 	return;

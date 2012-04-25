@@ -131,7 +131,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   /* If O_CREATE is set, try to make the file. */
   if (oflags & O_CREAT) {
-        omode = I_REGULAR | (omode & ALL_MODES & fp->fp_umask);
+        omode = I_REGULAR | (omode & ALLPERMS & fp->fp_umask);
 	vp = new_node(&resolve, oflags, omode);
 	r = err_code;
 	if (r == OK) exist = FALSE;	/* We just created the file */
@@ -166,8 +166,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	/* Check protections. */
 	if ((r = forbidden(fp, vp, bits)) == OK) {
 		/* Opening reg. files, directories, and special files differ */
-		switch (vp->v_mode & I_TYPE) {
-		   case I_REGULAR:
+		switch (vp->v_mode & S_IFMT) {
+		   case S_IFREG:
 			/* Truncate regular file if O_TRUNC. */
 			if (oflags & O_TRUNC) {
 				if ((r = forbidden(fp, vp, W_BIT)) != OK)
@@ -175,11 +175,11 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 				truncate_vnode(vp, 0);
 			}
 			break;
-		   case I_DIRECTORY:
+		   case S_IFDIR:
 			/* Directories may be read but not written. */
 			r = (bits & W_BIT ? EISDIR : OK);
 			break;
-		   case I_CHAR_SPECIAL:
+		   case S_IFCHR:
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
 			/* TTY needs to know about the O_NOCTTY flag. */
@@ -188,7 +188,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			else vp = filp->filp_vno; /* Might be updated by
 						   * dev_open/clone_opcl */
 			break;
-		   case I_BLOCK_SPECIAL:
+		   case S_IFBLK:
 
 			lock_bsf();
 
@@ -240,7 +240,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			unlock_bsf();
 			break;
 
-		   case I_NAMED_PIPE:
+		   case S_IFIFO:
 			/* Create a mapped inode on PFS which handles reads
 			   and writes to this named pipe. */
 			tll_upgrade(&vp->v_lock);
@@ -547,7 +547,7 @@ int do_mknod()
   if (!super_user && (!S_ISFIFO(mode_bits) && !S_ISSOCK(mode_bits))) {
 	return(EPERM);
   }
-  bits = (mode_bits & I_TYPE) | (mode_bits & ALL_MODES & fp->fp_umask);
+  bits = (mode_bits & S_IFMT) | (mode_bits & ACCESSPERMS & fp->fp_umask);
 
   /* Open directory that's going to hold the new node. */
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);

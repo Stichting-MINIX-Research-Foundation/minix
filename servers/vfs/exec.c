@@ -149,7 +149,7 @@ static int get_read_vp(struct exec_info *execi, char *fullpath,
 
 	unlock_vmnt(execi->vmp);
 
-	if ((execi->vp->v_mode & I_TYPE) != I_REGULAR)
+	if (!S_ISREG(execi->vp->v_mode))
 		return ENOEXEC;
 	else if ((r = forbidden(fp, execi->vp, X_BIT)) != OK)
 		return r;

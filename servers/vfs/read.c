@@ -108,8 +108,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   register struct vnode *vp;
   u64_t position, res_pos, new_pos;
   unsigned int cum_io, cum_io_incr, res_cum_io;
-  int op, oflags, r, block_spec, char_spec, regular;
-  mode_t mode_word;
+  int op, oflags, r;
 
   position = f->filp_pos;
   oflags = f->filp_flags;
@@ -128,22 +127,13 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   }
 
   op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
-  mode_word = vp->v_mode & I_TYPE;
-  regular = mode_word == I_REGULAR;
 
-  if ((char_spec = (mode_word == I_CHAR_SPECIAL ? 1 : 0))) {
-	if (vp->v_sdev == NO_DEV)
-		panic("VFS: read_write tries to access char dev NO_DEV");
-  }
-
-  if ((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
-	if (vp->v_sdev == NO_DEV)
-		panic("VFS: read_write tries to access block dev NO_DEV");
-  }
-
-  if (char_spec) {			/* Character special files. */
+  if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
 	dev_t dev;
 	int suspend_reopen;
+
+	if (vp->v_sdev == NO_DEV)
+		panic("VFS: read_write tries to access char dev NO_DEV");
 
 	suspend_reopen = (f->filp_state != FS_NORMAL);
 	dev = (dev_t) vp->v_sdev;
@@ -155,7 +145,10 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 		position = add64ul(position, r);
 		r = OK;
 	}
-  } else if (block_spec) {		/* Block special files. */
+  } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */
+	if (vp->v_sdev == NO_DEV)
+		panic("VFS: read_write tries to access block dev NO_DEV");
+
 	lock_bsf();
 
 	r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev, position, size,
@@ -167,7 +160,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 
 	unlock_bsf();
   } else {				/* Regular files */
-	if (rw_flag == WRITING && block_spec == 0) {
+	if (rw_flag == WRITING) {
 		/* Check for O_APPEND flag. */
 		if (oflags & O_APPEND) position = cvul64(vp->v_size);
 	}
@@ -187,7 +180,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
-	if (regular || mode_word == I_DIRECTORY) {
+	if (S_ISREG(vp->v_mode) || S_ISDIR(vp->v_mode)) {
 		if (cmp64ul(position, vp->v_size) > 0) {
 			if (ex64hi(position) != 0) {
 				panic("read_write: file size too big ");
@@ -223,7 +216,7 @@ int do_getdents()
 
   if (!(rfilp->filp_mode & R_BIT))
 	r = EBADF;
-  else if ((rfilp->filp_vno->v_mode & I_TYPE) != I_DIRECTORY)
+  else if (!S_ISDIR(rfilp->filp_vno->v_mode))
 	r = EBADF;
 
   if (r == OK) {

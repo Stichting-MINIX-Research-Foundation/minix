@@ -294,7 +294,7 @@ static int is_deferred(struct selectentry *se)
  *===========================================================================*/
 static int is_regular_file(struct filp *f)
 {
-  return(f && f->filp_vno && (f->filp_vno->v_mode & I_TYPE) == I_REGULAR);
+  return(f && f->filp_vno && S_ISREG(f->filp_vno->v_mode));
 }
 
 /*===========================================================================*
@@ -315,7 +315,7 @@ static int is_supported_major(struct filp *f)
   unsigned int m;
 
   if (!(f && f->filp_vno)) return(FALSE);
-  if ((f->filp_vno->v_mode & I_TYPE) != I_CHAR_SPECIAL) return(FALSE);
+  if (!S_ISCHR(f->filp_vno->v_mode)) return(FALSE);
 
   for (m = 0; m < SEL_MAJORS; m++)
 	if (major(f->filp_vno->v_sdev) == select_majors[m])
@@ -785,7 +785,7 @@ int status;
 	/* Find vnode and check we got a reply from the device we expected */
 	vp = f->filp_vno;
 	assert(vp != NULL);
-	assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL);
+	assert(S_ISCHR(vp->v_mode));
 	if (vp->v_sdev != dev) {
 		printf("VFS (%s:%d): expected reply from dev %d not %d\n",
 			__FILE__, __LINE__, vp->v_sdev, dev);
@@ -882,7 +882,7 @@ int status;
 	for (fd = 0; fd < se->nfds; fd++) {
 		if ((f = se->filps[fd]) == NULL) continue;
 		if ((vp = f->filp_vno) == NULL) continue;
-		if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;
+		if (!S_ISCHR(vp->v_mode)) continue;
 		if (vp->v_sdev != dev) continue;
 
 		select_lock_filp(f, f->filp_select_ops);
@@ -945,7 +945,7 @@ static void select_restart_filps()
 
 		wantops = ops = f->filp_select_ops;
 		vp = f->filp_vno;
-		assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL);
+		assert(S_ISCHR(vp->v_mode));
 		r = do_select_request(se, fd, &wantops);
 		if (r != OK && r != SUSPEND)
 			break; /* Error or bogus return code; abort */

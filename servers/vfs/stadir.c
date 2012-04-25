@@ -140,7 +140,7 @@ static int change_into(struct vnode **result, struct vnode *vp)
   if (*result == vp) return(OK);	/* Nothing to do */
 
   /* It must be a directory and also be searchable */
-  if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
+  if (!S_ISDIR(vp->v_mode))
 	r = ENOTDIR;
   else
 	r = forbidden(fp, vp, X_BIT);	/* Check if dir is searchable*/

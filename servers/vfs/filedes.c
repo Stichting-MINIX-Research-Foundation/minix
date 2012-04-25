@@ -531,7 +531,7 @@ struct filp *f;
 {
 /* Close a file. Will also unlock filp when done */
 
-  int mode_word, rw;
+  int rw;
   dev_t dev;
   struct vnode *vp;
 
@@ -543,10 +543,9 @@ struct filp *f;
 
   if (f->filp_count - 1 == 0 && f->filp_mode != FILP_CLOSED) {
 	/* Check to see if the file is special. */
-	mode_word = vp->v_mode & I_TYPE;
-	if (mode_word == I_CHAR_SPECIAL || mode_word == I_BLOCK_SPECIAL) {
+	if (S_ISCHR(vp->v_mode) || S_ISBLK(vp->v_mode)) {
 		dev = (dev_t) vp->v_sdev;
-		if (mode_word == I_BLOCK_SPECIAL)  {
+		if (S_ISBLK(vp->v_mode))  {
 			lock_bsf();
 			if (vp->v_bfs_e == ROOT_FS_E) {
 				/* Invalidate the cache unless the special is
@@ -556,15 +555,11 @@ struct filp *f;
 				req_flush(vp->v_bfs_e, dev);
 			}
 			unlock_bsf();
-		}
 
-		/* Do any special processing on device close.
-		 * Ignore any errors, even SUSPEND.
-		  */
-		if (mode_word == I_BLOCK_SPECIAL)
-			(void) bdev_close(dev);
-		else
-			(void) dev_close(dev, f-filp);
+			(void) bdev_close(dev);	/* Ignore errors on close */
+		} else {
+			(void) dev_close(dev, f-filp); /* Ignore errors */
+		}
 
 		f->filp_mode = FILP_CLOSED;
 	}

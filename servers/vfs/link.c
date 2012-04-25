@@ -123,7 +123,7 @@ int do_unlink()
   assert(vmp != NULL);	/* We must have locked the vmnt */
 
   /* Make sure that the object is a directory */
-  if ((dirp->v_mode & I_TYPE) != I_DIRECTORY) {
+  if (!S_ISDIR(dirp->v_mode)) {
 	unlock_vnode(dirp);
 	unlock_vmnt(vmp);
 	put_vnode(dirp);
@@ -455,7 +455,7 @@ struct fproc *rfp;
   if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
 
   /* Make sure this is a symbolic link */
-  if ((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK)
+  if (!S_ISLNK(vp->v_mode))
 	r = EINVAL;
   else
 	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, NONE, (vir_bytes) link_path,
@@ -500,7 +500,7 @@ int do_rdlink()
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure this is a symbolic link */
-  if ((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK)
+  if (!S_ISLNK(vp->v_mode))
 	r = EINVAL;
   else
 	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, who_e, buf, buf_size, 0);

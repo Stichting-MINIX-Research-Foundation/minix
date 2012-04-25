@@ -173,7 +173,6 @@ endpoint_t fs_e,
 int rdonly,
 char mount_label[LABEL_MAX] )
 {
-  int rdir, mdir;               /* TRUE iff {root|mount} file is dir */
   int i, r = OK, found, isroot, mount_root, con_reqs, slot;
   struct fproc *tfp, *rfp;
   struct dmap *dp;
@@ -348,9 +347,7 @@ char mount_label[LABEL_MAX] )
   }
 
   /* File types may not conflict. */
-  mdir = ((vp->v_mode & I_TYPE) == I_DIRECTORY); /*TRUE iff dir*/
-  rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
-  if (!mdir && rdir) r = EISDIR;
+  if (!S_ISDIR(vp->v_mode) && S_ISDIR(root_node->v_mode)) r = EISDIR;
 
   /* If error, return the super block and both inodes; release the vmnt. */
   if (r != OK) {
@@ -582,7 +579,7 @@ static dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX])
   /* Request lookup */
   if ((vp = eat_path(&resolve, fp)) == NULL) return(NO_DEV);
 
-  if ((vp->v_mode & I_TYPE) == I_BLOCK_SPECIAL) {
+  if (S_ISBLK(vp->v_mode)) {
 	dev = vp->v_sdev;
   } else if (allow_mountpt && vp->v_vmnt->m_root_node == vp) {
 	dev = vp->v_dev;

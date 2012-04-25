@@ -229,7 +229,7 @@ int do_fcntl()
 	signed long offset;
 
 	/* Check if it's a regular file. */
-	if ((f->filp_vno->v_mode & I_TYPE) != I_REGULAR) r = EINVAL;
+	if (!S_ISREG(f->filp_vno->v_mode)) r = EINVAL;
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else
 		/* Copy flock data from userspace. */
@@ -495,7 +495,7 @@ static void free_proc(struct fproc *exiter, int flags)
 		if ((rfilp = rfp->fp_filp[i]) == NULL) continue;
 		if (rfilp->filp_mode == FILP_CLOSED) continue;
 		vp = rfilp->filp_vno;
-		if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;
+		if (!S_ISCHR(vp->v_mode)) continue;
 		if ((dev_t) vp->v_sdev != dev) continue;
 		lock_filp(rfilp, VNODE_READ);
 		(void) dev_close(dev, rfilp-filp); /* Ignore any errors, even
