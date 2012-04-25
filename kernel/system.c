@@ -253,7 +253,6 @@ void system_init(void)
 
   /* i386-specific. */
 #if _MINIX_CHIP == _CHIP_INTEL
-  map(SYS_INT86, do_int86);  		/* real-mode BIOS calls */ 
   map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
   map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */

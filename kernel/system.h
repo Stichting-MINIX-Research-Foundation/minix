@@ -132,8 +132,6 @@ int do_vdevio(struct proc * caller, message *m_ptr);
 #define do_vdevio NULL
 #endif
 
-int do_int86(struct proc * caller, message *m_ptr);
-
 int do_sdevio(struct proc * caller, message *m_ptr);
 #if ! USE_SDEVIO
 #define do_sdevio NULL

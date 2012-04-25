@@ -40,8 +40,6 @@ EXTERN int irq_use;				/* map of all in-use irq's */
 EXTERN u32_t system_hz;				/* HZ value */
 
 /* Miscellaneous. */
-EXTERN reg_t mon_sp;			/* boot monitor stack */
-EXTERN int mon_return;			/* true if we can return to monitor */
 EXTERN int do_serial_debug;
 EXTERN int serial_debug_baud;
 EXTERN time_t boottime;

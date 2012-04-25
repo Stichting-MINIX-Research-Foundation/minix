@@ -186,7 +186,6 @@ void fpu_init(void);
 int is_fpu(void);
 void ser_putc(char);
 __dead void arch_shutdown(int);
-__dead void arch_monitor(void);
 void restore_user_context(struct proc * p);
 void read_tsc(u32_t *high, u32_t *low);
 int arch_init_profile_clock(u32_t freq);

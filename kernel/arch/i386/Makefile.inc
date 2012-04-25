@@ -6,7 +6,6 @@ HERE=${.CURDIR}/arch/${ARCH}
 .PATH:	${HERE}
 SRCS+=	arch_do_vmctl.c \
 	arch_clock.c \
-	do_int86.c \
 	do_iopenable.c \
 	do_readbios.c \
 	do_sdevio.c \

@@ -57,11 +57,6 @@ static void ser_dump_proc_cpu(void);
 static void ser_init(void);
 #endif
 
-__dead void arch_monitor(void)
-{
-	monitor();
-}
-
 #define     KBCMDP          4       /* kbd controller port (O) */
 #define      KBC_PULSE0     0xfe    /* pulse output bit 0 */
 #define      IO_KBD          0x060           /* 8042 Keyboard */
@@ -138,7 +133,6 @@ int cpu_has_tsc;
 
 __dead void arch_shutdown(int how)
 {
-	u16_t magic;
 	vm_stop();
 
 	/* Mask all interrupts, including the clock. */
@@ -171,44 +165,10 @@ __dead void arch_shutdown(int how)
 
 #if USE_BOOTPARAM
 	if (how == RBT_DEFAULT) {
-		how = mon_return ? RBT_HALT : RBT_RESET;
-	}
-
-	if(how != RBT_RESET) {
-		/* return to boot monitor */
-
-		outb( INT_CTLMASK, 0);            
-		outb( INT2_CTLMASK, 0);
-        
-		/* Return to the boot monitor. Set
-		 * the program if not already done.
-		 */
-		if (how != RBT_MONITOR)
-			arch_set_params("", 1);
-
-		if (mon_return)
-			arch_monitor();
-
-		/* monitor command with no monitor: reset or poweroff 
-		 * depending on the parameters
-		 */
-		if (how == RBT_MONITOR) {
-			how = RBT_RESET;
-		}
+		how = RBT_RESET;
 	}
 
 	switch (how) {
-		case RBT_REBOOT:
-		case RBT_RESET:
-			/* Reset the system by forcing a processor shutdown. 
-			 * First stop the BIOS memory test by setting a soft
-			 * reset flag.
-			 */
-			magic = STOP_MEM_CHECK;
-			phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR,
-       		 	SOFT_RESET_FLAG_SIZE);
-			reset();
-			NOT_REACHABLE;
 
 		case RBT_HALT:
 			/* Poweroff without boot monitor */
@@ -221,11 +181,13 @@ __dead void arch_shutdown(int how)
 			NOT_REACHABLE;
 
 		default:	
-			/* Not possible! trigger panic */
-			assert(how != RBT_MONITOR);
-			assert(how != RBT_DEFAULT);
-			assert(how < RBT_INVALID);
-			panic("unexpected value for how: %d", how);
+		case RBT_REBOOT:
+		case RBT_RESET:
+			/* Reset the system by forcing a processor shutdown. 
+			 * First stop the BIOS memory test by setting a soft
+			 * reset flag.
+			 */
+			reset();
 			NOT_REACHABLE;
 	}
 #else /* !USE_BOOTPARAM */

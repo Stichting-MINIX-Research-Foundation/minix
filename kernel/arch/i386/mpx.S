@@ -95,12 +95,6 @@ kernel_init: /* after pre-init*/
 	mov	%esp, %ebp
 	push	%esi
 	push	%edi
-	cmp	$0, 4(%ebp)	/* monitor return vector is */
-	je	noret	/* nonzero if return possible */
-	incl	_C_LABEL(mon_return)
-noret:
-	movl	%esp, _C_LABEL(mon_sp) /* save stack pointer for later return */
-
 /* Copy the monitor global descriptor table to the address space of kernel and */
 /* switch over to it.  Prot_init() can then update it with immediate effect. */
 

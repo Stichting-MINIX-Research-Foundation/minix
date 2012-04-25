@@ -76,7 +76,6 @@ void exception(struct exception_frame * frame);
 __dead void monitor(void);
 __dead void reset(void);
 __dead void x86_triplefault(void);
-void int86(void);
 reg_t read_cr0(void);
 reg_t read_cr2(void);
 void write_cr0(unsigned long value);
