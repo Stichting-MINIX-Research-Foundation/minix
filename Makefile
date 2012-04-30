@@ -52,6 +52,7 @@ includes: .PHONY .MAKE
 	${MAKEDIRTARGET} include includes
 	${MAKEDIRTARGET} lib includes
 	${MAKEDIRTARGET} sys includes
+	${MAKEDIRTARGET} external includes
 
 .for dir in lib lib/csu lib/libc
 do-${dir:S/\//-/g}: .PHONY .MAKE

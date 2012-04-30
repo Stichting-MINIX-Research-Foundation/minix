@@ -9,7 +9,7 @@ SUBDIR+= libcompat_minix libc libblockdriver libchardriver     \
 	libl libz libfetch libvtreefs libaudiodriver libmthread   \
 	libexec libdevman libusb libminlib libasyn          \
 	libddekit libminixfs libbdev libelf libminc libcrypt libterminfo \
-	libvassert libutil libbz2 libarchive libprop \
+	libvassert libutil libbz2 libprop \
 	libnetsock libpuffs libsffs libhgfs libvboxfs 
 
 SUBDIR+=        ../external/public-domain/xz/lib
@@ -17,6 +17,7 @@ SUBDIR+=        ../external/public-domain/xz/lib
 # libraries that follow depend on earlier ones
 
 SUBDIR+= .WAIT
+SUBDIR+=        ../external/bsd/libarchive/lib  # depends on libxz
 SUBDIR+= librefuse
 SUBDIR+= libcurses
 
