@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-MAKE=make
+MAKE?=make
 
 usage:
 	@echo "" 
