@@ -165,6 +165,10 @@ static void error(char *);
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
+#ifndef __unused
+#define __unused  __attribute__((__unused__))
+#endif
+
 int
 main(int argc __unused, char *argv[])
 {

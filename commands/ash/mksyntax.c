@@ -115,6 +115,10 @@ static void print(char *);
 static void output_type_macros(void);
 static void digit_convert(void);
 
+#ifndef __unused
+#define __unused  __attribute__((__unused__))
+#endif
+
 int
 main(int argc __unused, char **argv __unused)
 {

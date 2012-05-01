@@ -56,10 +56,15 @@ init.c: mkinit alias.c eval.c exec.c input.c jobs.c options.c parser.c \
 	redir.c trap.c var.c
 	./mkinit ${.ALLSRC:S/^mkinit$//}
 
-mkinit: mkinit.o
-mknodes: mknodes.o
-mksyntax: mksyntax.o
-mksignames: mksignames.o
+mkinit: mkinit.lo
+	${HOST_LINK.c}  mkinit.lo -o $@
+
+mknodes: mknodes.lo
+	${HOST_LINK.c} mknodes.lo -o $@
+mksyntax: mksyntax.lo
+	${HOST_LINK.c} mksyntax.lo  -o $@
+mksignames: mksignames.lo
+	${HOST_LINK.c} mksignames.lo -o $@
 
 .ORDER: nodes.c nodes.h
 nodes.c nodes.h: mknodes nodetypes nodes.c.pat

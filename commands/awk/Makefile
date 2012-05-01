@@ -14,8 +14,12 @@ build-tools: maketab
 proctab.c: maketab
 	./maketab > proctab.c
 
-maketab: awkgram.h maketab.c
+maketab.lo: awkgram.h
 
-CLEANFILES= maketab proctab.c
+
+maketab: maketab.lo
+	${HOST_LINK.c} maketab.lo -o $@
+
+CLEANFILES= maketab proctab.c maketab.lo
 
 .include <bsd.prog.mk>
