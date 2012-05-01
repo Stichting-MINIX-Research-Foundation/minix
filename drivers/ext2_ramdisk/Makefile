@@ -47,7 +47,7 @@ image.d: install_files
 	@for f in $(ETCFILES); do  cp $(DESTDIR)/etc/$$f image.d/etc;  done
 	@for f in $(USRBINFILES); do  cp $(DESTDIR)/usr/bin/$$f image.d/usr/bin;  done
 	@for f in $(USRSBINFILES); do  cp $(DESTDIR)/usr/sbin/$$f image.d/usr/sbin;  done
-	@cp rc $(DESTDIR)/etc;
+	@cp rc image.d/etc;
 	if [ ! -z ${EXT2_EXTRA_TREE} ] ; \
 	then \
 		echo "Copying additional files";\
