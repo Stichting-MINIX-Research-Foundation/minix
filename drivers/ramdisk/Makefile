@@ -2,6 +2,11 @@
 
 .include <bsd.own.mk>
 
+TOOL_PWD_MKDB?= ${NETBSDSRCDIR}/usr.sbin/pwd_mkdb/pwd_mkdb
+install:
+
+all:
+
 PROG_DRIVERS=at_wini floppy pci
 PROG_COMMANDS=cdprobe dev2name loadramdisk mount fsck.mfs sysenv sh \
 	service 
@@ -41,7 +46,7 @@ image:	proto.gen mtab rc $(EXTRA) pwd.db spwd.db passwd
 
 .for driver in $(PROG_DRIVERS)
 $(driver): ../$(driver)/$(driver)
-	install $> $@
+	${INSTALL} $> $@
 
 ../$(driver)/$(driver):
 	$(MAKE) -C ../$(driver) $(driver)
@@ -54,7 +59,7 @@ dir.$(cmd)=ash
 dir.$(cmd)=$(cmd)
 .endif
 $(cmd): ../../commands/$(dir.$(cmd))/$(cmd)
-	install $> $@
+	${INSTALL} $> $@
 
 ../../commands/$(dir.$(cmd))/$(cmd):
 	$(MAKE) -C ../../commands/$(dir.$(cmd)) $(cmd)
@@ -62,12 +67,12 @@ $(cmd): ../../commands/$(dir.$(cmd))/$(cmd)
 
 .for etc in $(EXTRA)
 $(etc): ../../etc/$(etc)
-	install $> $@
+	${INSTALL} $> $@
 .endfor
 
 .for cmd in $(PROG_USRSBIN)
 $(cmd): ../../usr.sbin/$(cmd)/$(cmd)
-	install $> $@
+	${INSTALL} $> $@
 
 ../../usr.sbin/$(cmd)/$(cmd):
 	$(MAKE) -C ../../usr.sbin/$(cmd) $(cmd)
@@ -75,7 +80,7 @@ $(cmd): ../../usr.sbin/$(cmd)/$(cmd)
 
 .for server in $(PROG_SERVERS)
 $(server): ../../servers/$(server)/$(server)
-	install $> $@
+	${INSTALL} $> $@
 
 ../../servers/$(server)/$(server):
 	$(MAKE) -C ../../servers/$(server) $(server)
@@ -85,7 +90,7 @@ pwd.db spwd.db passwd: ../../etc/master.passwd ../../usr.sbin/pwd_mkdb/pwd_mkdb
 	rm -f ../../etc/master.passwd.orig ../../etc/passwd.orig
 	rm -f ../../etc/pwd.db.tmp ../../etc/spwd.db.tmp
 	../../usr.sbin/pwd_mkdb/pwd_mkdb -V 0 -p -d ../../ ../../etc/master.passwd
-	install ../../etc/$@ $@
+	${INSTALL} ../../etc/$@ $@
 
 proto.gen: $(PROGRAMS) proto.sh ${PROTO} proto.common.etc proto.common.dynamic proto.sh
 	strip $(PROGRAMS)

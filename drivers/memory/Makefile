@@ -3,6 +3,8 @@ PROG=	memory
 SRCS=	memory.c imgrd.mfs
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
 
+RAMDISK_PATH?= ${NETBSDSRCDIR}/drivers/ramdisk
+
 DPADD+=	${LIBBLOCKDRIVER} ${LIBCHARDRIVER} ${LIBSYS}
 LDADD+=	-lblockdriver -lchardriver -lsys
 
@@ -25,8 +27,11 @@ touch-genfiles:
 	${_MKTARGET_CREATE}
 	${OBJCOPY} -Ibinary -B${ARCH} -Oelf32-${ARCH}-minix $< $@
 
-imgrd.mfs:
-	ln -s ../ramdisk/image $@
+${RAMDISK_PATH}/image: .PHONY
+	${MAKE} -C ${RAMDISK_PATH} image
+
+imgrd.mfs: ${RAMDISK_PATH}/image
+	ln -fs ${RAMDISK_PATH}/image $@
 CLEANFILES+=	imgrd.mfs
 
 .include <minix.bootprog.mk>
