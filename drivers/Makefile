@@ -6,7 +6,7 @@
 .if ${MKIMAGEONLY} == "yes"
 
 # memory driver must be last for ramdisk image
-SUBDIR=	at_wini floppy log tty pci .WAIT ramdisk .WAIT memory
+SUBDIR=	at_wini floppy log tty pci ext2_ramdisk ramdisk memory
 
 .else
 
@@ -14,7 +14,7 @@ SUBDIR=	at_wini floppy log tty pci .WAIT ramdisk .WAIT memory
 SUBDIR+= ahci amddev atl2 at_wini audio dec21140A dp8390 dpeth \
 	e1000 fbd filter floppy fxp hello lance log orinoco pci printer \
 	random readclock rtl8139 rtl8169 ti1225 tty vbox acpi \
-	.WAIT ramdisk .WAIT memory
+	ext2_ramdisk ramdisk memory
 
 .endif
 
