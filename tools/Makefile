@@ -104,7 +104,7 @@ cross_install:
 		mkdir ${DESTDIR}/multiboot;\
 	fi
 #ext2 might be needed
-	for i in ${PROGRAMS} ../servers/ext2/ext2;\
+	for i in ${PROGRAMS} ../kernel/kernel ../servers/ext2/ext2;\
 	do\
 	newname="${DESTDIR}/multiboot/`basename $$i`"; \
 		cp $$i $$newname;\
