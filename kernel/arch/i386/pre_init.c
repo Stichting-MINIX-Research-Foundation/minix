@@ -356,6 +356,7 @@ static void get_parameters(multiboot_info_t *mbi)
 
 static void mb_extract_image(multiboot_info_t mbi)
 {
+	phys_bytes start_paddr = 0x5000000;
 	multiboot_module_t *mb_module_info;
 	multiboot_module_t *module;
 	u32_t mods_count = mbi.mods_count;
@@ -415,20 +416,24 @@ static void mb_extract_image(multiboot_info_t mbi)
 			;
 	    }
 
-	    stack_bytes = round_page(image[NR_TASKS+i].stack_kbytes * 1024);
+	    stack_bytes = image[NR_TASKS+i].stack_kbytes * 1024;
+
+	    text_paddr = start_paddr + (text_vaddr & PAGE_MASK);
 
 	    /* Load text segment */
 	    phys_copy(module->mod_start+text_offset, text_paddr,
 		      text_filebytes);
 	    mb_clear_memrange(text_paddr+text_filebytes,
-			      trunc_page(text_paddr) + text_membytes);
+			      round_page(text_paddr) + text_membytes);
+
+	    data_paddr  = round_page((text_paddr + text_membytes));
+	    data_paddr += data_vaddr & PAGE_MASK;
+	    /* start of next module */
+	    start_paddr = round_page(data_paddr + data_membytes + stack_bytes);
 
 	    /* Load data and stack segments */
-	    phys_copy(module->mod_start+data_offset, data_paddr,
-		      data_filebytes);
-	    mb_clear_memrange(data_paddr+data_filebytes,
-			      trunc_page(data_paddr) + data_membytes
-			      + stack_bytes);
+	    phys_copy(module->mod_start+data_offset, data_paddr, data_filebytes);
+	    mb_clear_memrange(data_paddr+data_filebytes, start_paddr);
 
 	    /* Save memmap for  non-kernel tasks, so subscript past kernel
 	       tasks. */

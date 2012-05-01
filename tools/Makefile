@@ -34,7 +34,6 @@ usage:
 	@echo "	make includes   # Install include files" >&2
 	@echo "	make depend     # Generate dependency files" >&2
 	@echo "	make services   # Compile and install all services" >&2
-	@echo "	make image      # Make needed services and create boot image" >&2
 	@echo "	make install    # Make image, and install to hard disk" >&2
 	@echo "	make hdboot     # Make image, and install to hard disk" >&2
 	@echo "	make fdboot     # Make image, and install to floppy disk" >&2
@@ -48,10 +47,7 @@ usage:
 	@echo "	make fresh install      # new everything" >&2
 	@echo " " >&2
 
-all: services image
-
-image: includes services
-	mkimage $(PROGRAMS)
+all: services
 
 # rebuild the program or system libraries
 includes:
@@ -78,7 +74,7 @@ drivers: includes servers
 bootable:
 	exec su root mkboot bootable
 
-hdboot: image
+hdboot:
 	rm -rf /boot/minix/.temp/
 	mkdir -p /boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
@@ -96,11 +92,24 @@ hdboot: image
 	sh mkboot $@
 	sh ../commands/update_bootcfg/update_bootcfg.sh
 
-fdboot:	image
+fdboot:
 	exec su root mkboot $@
 	@sync
 
 install: includes services hdboot
+
+cross_install:
+	if [ ! -d ${DESTDIR}/multiboot ] ; \
+	then\
+		mkdir ${DESTDIR}/multiboot;\
+	fi
+#ext2 might be needed
+	for i in ${PROGRAMS} ../servers/ext2/ext2;\
+	do\
+	newname="${DESTDIR}/multiboot/`basename $$i`"; \
+		cp $$i $$newname;\
+		strip -s $$newname;\
+	done
 
 # download and update NetBSD reference sources.
 nbsd_fetch:
