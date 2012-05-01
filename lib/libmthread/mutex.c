@@ -12,7 +12,7 @@ static void mthread_mutex_remove(mthread_mutex_t *m);
 #endif
 
 /*===========================================================================*
- *				mthread_init_valid_mutexes			     *
+ *				mthread_init_valid_mutexes		     *
  *===========================================================================*/
 void mthread_init_valid_mutexes(void)
 {
@@ -56,7 +56,7 @@ mthread_mutex_t *mutex;
   mthread_thread_t t;
   mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (mutex == NULL)
   	return(EINVAL);
@@ -95,7 +95,7 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 
   struct __mthread_mutex *m;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (mutex == NULL)
   	return(EAGAIN);
@@ -127,7 +127,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 
   struct __mthread_mutex *m;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (mutex == NULL)
   	return(EINVAL);
@@ -180,7 +180,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 
   struct __mthread_mutex *m;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (mutex == NULL) 
   	return(EINVAL);
@@ -210,7 +210,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
 
   struct __mthread_mutex *m;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (mutex == NULL) 
 	return(EINVAL);
@@ -237,7 +237,7 @@ mthread_mutex_t *m;
 /* Check to see if mutex is on the list of valid mutexes */
   struct __mthread_mutex *loopitem;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   loopitem = vm_front;
 
@@ -262,7 +262,7 @@ int mthread_mutex_verify(void)
   int r = 1;
   struct __mthread_mutex *loopitem;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
 #ifdef MTHREAD_STRICT
   loopitem = vm_front;

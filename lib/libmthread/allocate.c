@@ -33,7 +33,7 @@ mthread_thread_t l;
 mthread_thread_t r;
 {
 /* Compare two thread ids */
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   return(l == r);
 }
@@ -51,7 +51,7 @@ void *arg;
 /* Register procedure proc for execution in a thread. */
   mthread_thread_t thread;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (proc == NULL)
 	return(EINVAL);
@@ -85,7 +85,7 @@ mthread_thread_t detach;
  * this thread are automatically freed.
  */
   mthread_tcb_t *tcb;
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (!isokthreadid(detach)) 
   	return(ESRCH);
@@ -113,7 +113,7 @@ void *value;
 /* Make a thread stop running and store the result value. */
   mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   tcb = mthread_find_tcb(current_thread);
 
@@ -229,27 +229,27 @@ void mthread_init(void)
  * threads.
  */
 
-  if (!initialized) {
-  	no_threads = 0;
-  	used_threads = 0;
-	need_reset = 0;
-  	running_main_thread = 1;/* mthread_init can only be called from the
-  				 * main thread. Calling it from a thread will
-  				 * not enter this clause.
-  				 */
+  if (initialized) return;
 
-  	if (mthread_getcontext(&(mainthread.m_context)) == -1)
-  		mthread_panic("Couldn't save state for main thread");
-  	current_thread = MAIN_THREAD;
+  no_threads = 0;
+  used_threads = 0;
+  need_reset = 0;
+  running_main_thread = 1;	/* mthread_init can only be called from the
+				 * main thread. Calling it from a thread will
+				 * not enter this clause.
+				 */
 
-	mthread_init_valid_mutexes();
-	mthread_init_valid_conditions();
-	mthread_init_valid_attributes();
-	mthread_init_keys();
-	mthread_init_scheduler();
+  if (mthread_getcontext(&(mainthread.m_context)) == -1)
+	mthread_panic("Couldn't save state for main thread");
+  current_thread = MAIN_THREAD;
 
-	initialized = 1;
-  }
+  mthread_init_valid_mutexes();
+  mthread_init_valid_conditions();
+  mthread_init_valid_attributes();
+  mthread_init_keys();
+  mthread_init_scheduler();
+
+  initialized = 1;
 }
 
 
@@ -264,7 +264,7 @@ void **value;
 
   mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (!isokthreadid(join))
   	return(ESRCH);
@@ -320,7 +320,7 @@ void (*proc)(void);
 {
 /* Run procedure proc just once */
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (once == NULL || proc == NULL) 
   	return(EINVAL);
@@ -338,7 +338,7 @@ mthread_thread_t mthread_self(void)
 {
 /* Return the thread id of the thread calling this function. */
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   return(current_thread);
 }

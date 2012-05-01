@@ -58,7 +58,7 @@ mthread_cond_t *cond;
   mthread_thread_t t;
   mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (cond == NULL) 
   	return(EINVAL);
@@ -89,7 +89,7 @@ mthread_cond_t *cond;
   mthread_thread_t t;
   mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (cond == NULL)
   	return(EINVAL);
@@ -126,7 +126,7 @@ mthread_condattr_t *cattr;
 /* Initialize condition variable to a known state. cattr is ignored */
   struct __mthread_cond *c;
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (cond == NULL) 
 	return(EINVAL);
@@ -181,7 +181,7 @@ mthread_cond_t *cond;
   mthread_thread_t t;
   mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (cond == NULL)
 	return(EINVAL);
@@ -214,7 +214,7 @@ mthread_cond_t *c;
 /* Check to see if cond is on the list of valid conditions */
   struct __mthread_cond *loopitem;
 
-  mthread_init();
+  MTHREAD_CHECK_INIT();
 
   loopitem = vc_front;
 
@@ -237,7 +237,7 @@ int mthread_cond_verify(void)
 {
 /* Return true in case no condition variables are in use. */
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   return(vc_front == NULL);
 }
@@ -256,7 +256,7 @@ mthread_mutex_t *mutex;
   struct __mthread_cond *c;
   struct __mthread_mutex *m;
 
-  mthread_init();	/* Make sure libmthread is initialized */
+  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (cond == NULL || mutex == NULL)
 	return(EINVAL);
