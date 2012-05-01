@@ -39,7 +39,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,start
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,start -L${DESTDIR}/${LIBDIR}
 CPPFLAGS+= -DBOOTXX
 # CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/../../lib -I ${.OBJDIR}
@@ -52,7 +52,7 @@ CPPFLAGS+= -DXXfs_read=${FS}_read
 CPPFLAGS+= -DXXfs_stat=${FS}_stat
 CPPFLAGS+= -DFS=${FS}
 # clang generates too big bootxx_xxx
-.if (${CC} == "clang")
+.if !empty(CC:M*clang)
 CPPFLAGS+= -Os
 .endif
 # CPPFLAGS+= -DBOOT_MSG_COM0

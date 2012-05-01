@@ -15,12 +15,12 @@ CFLAGS += -D__kernel__
 
 CPPFLAGS+= -fno-stack-protector -D_NETBSD_SOURCE
 LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
-LDFLAGS+= -nostdlib -L${LIBDIR}
+LDFLAGS+= -nostdlib -L${DESTDIR}/${LIBDIR}
 LDADD+= -lminlib
 DPADD+= ${LIBMINLIB}
-.if ${CC} == "gcc"
+.if !empty(CC:M*gcc)
 LDADD+=	-lgcc -lsys -lgcc -lminc
-.elif ${CC} == "clang"
+.elif !empty(CC:M*clang)
 LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic -lminc
 DPADD+=	${LIBC}
 .endif

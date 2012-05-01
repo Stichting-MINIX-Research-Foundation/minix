@@ -7,8 +7,8 @@ WHATISDBDIR?=	/usr/man
 makedb:
 	${TOOL_MAKEWHATIS} ${DESTDIR}${WHATISDBDIR}
 .if ${MKUNPRIVED} != "no"
- 	echo ".${WHATISDBDIR}/whatis.db type=file mode=0444 uname=${BINOWN} gname=${BINGRP}" \
- 	    | ${METALOG.add}
+# 	echo ".${WHATISDBDIR}/whatis.db type=file mode=0444 uname=${BINOWN} gname=${BINGRP}" \
+# 	    | ${METALOG.add}
 .endif
 
 .include <bsd.subdir.mk>

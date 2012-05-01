@@ -34,7 +34,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start -L${DESTDIR}/${LIBDIR}
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 # Make sure we override any optimization options specified by the user
