@@ -1,12 +1,29 @@
 /*	genmap - output binary keymap			Author: Marcus Hampel
  */
 #include <sys/types.h>
+#ifdef __minix
 #include <minix/keymap.h>
+#else
+#include "../../../include/minix/keymap.h"
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+/*
+ * if we crosscompile those might not be defined,
+ */
+#ifndef u16_t
+#include <stdint.h>
+typedef uint16_t u16_t;
+#endif
+
+#ifndef u8_t
+#include <stdint.h>
+typedef uint8_t u8_t;
+#endif
 
 u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 #include KEYSRC
