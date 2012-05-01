@@ -31,10 +31,6 @@ CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
 CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
 CLEANFILES += $(LIBRARIES) pwd.db spwd.db
 
-install: all
-
-realall: image
-
 image:	proto.gen mtab rc $(EXTRA) pwd.db spwd.db passwd
 	mkfs.mfs image proto.gen || { rm -f image; false; }
 	if fsck.mfs -s image | grep -q CLEAN;	\
