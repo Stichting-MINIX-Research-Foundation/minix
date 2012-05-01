@@ -4,7 +4,7 @@
 #							Author: Kees J. Bot
 
 usage() {
-	echo "Usage: $0 [bootable | hdboot [minix or image] | fdboot [device]]" >&2
+	echo "Usage: $0 [bootable | hdboot | fdboot [device]]" >&2
 	exit 1
 }
 
@@ -17,7 +17,7 @@ rotate_oldest() {
 		# Not much there, do not remove a thing.
 		;;
 	*)
-		# Remove the third-newest $hdboot_t in /boot/$hdboot_t, but
+		# Remove the third-newest image in /boot/$hdboot_t, but
 		# only if there's an older one (which is kept). 
 		echo "rm $root:$base_dir/$3"
 		rm -rf "$base_dir/$3"
@@ -31,19 +31,11 @@ mdec=/usr/mdec	# bootstraps
 
 # Check arguments.
 case "$#:$1" in
-1:bootable | 2:hdboot | [12]:fdboot )
+1:bootable | 1:hdboot | [12]:fdboot )
 	action=$1 dev=$2 size=$3
 	;;
 *)	usage
 esac
-
-if [ "$1" = "hdboot" ]
-then
-	if [ "$2" != "image" -a "$2" != "minix" ]
-	then usage
-	fi
-	hdboot_t="$2"
-fi
 
 # Get the device table.
 FSTAB=/etc/fstab
@@ -77,17 +69,6 @@ esac
 
 case $action in
 hdboot)
-	# Install a new image on the root device.
-	if [ -e $rootdir/boot/$hdboot_t -a ! -d $rootdir/boot/$hdboot_t ]
-	then
-		# /boot/$hdboot_t is not yet a directory!  Fix it.
-		su root -c \
-		    "exec mv $rootdir/boot/$hdboot_t /M"
-		install -d $rootdir/boot/$hdboot_t
-		su root -c \
-		    "exec mv $rootdir/M $rootdir/boot/$hdboot_t/`uname -r`"
-	fi
-
 	sh tell_config OS_RELEASE . OS_VERSION >/tmp/mkb.$$
 	version=`sed 's/[" 	]//g;/^$/d' </tmp/mkb.$$`
 
@@ -119,25 +100,15 @@ hdboot)
 
 	target="${version}${rrevision}${gitrev}"
 
-	rotate_oldest "$rootdir/boot/$hdboot_t"
+	rotate_oldest "$rootdir/boot/minix"
 
 	# rotate system processes. We assume latest ones are in
 	# /boot/modules/.temp and we maintain /boot/modules/ by ourselves.
-	if [ "$hdboot_t" = "minix" ]
-	then
-		[ -d /boot/minix/.temp ] || exit 1
-		rm -rf /boot/minix/"$target"/
-		mv /boot/minix/.temp /boot/minix/"$target"
-		rm -f /boot/minix_latest
-		ln -s minix/"$target" /boot/minix_latest 
-	else
-		# Install the new image.
-		echo "install $hdboot_t $root:/boot/$hdboot_t/$target"
-		install -o root -m 600 $hdboot_t $rootdir/boot/$hdboot_t/$target || exit 1
-
-		# Tell bootloader which image is newest
-		ln -f $rootdir/boot/$hdboot_t/$target $rootdir/boot/${hdboot_t}_latest
-	fi
+	[ -d /boot/minix/.temp ] || exit 1
+	rm -rf /boot/minix/"$target"/
+	mv /boot/minix/.temp /boot/minix/"$target"
+	rm -f /boot/minix_latest
+	ln -s minix/"$target" /boot/minix_latest 
 
 	# Save the revision number.
 	test "$revision" != "$oldrev" && echo $revision >revision

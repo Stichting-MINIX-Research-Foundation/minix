@@ -87,17 +87,13 @@ hdboot: image
 	let n=n+1 >/dev/null;					\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
 	newname="/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
-	cp $$i $$newname;				\
-	if [ -d /boot/image ];				\
-	then	ln -f $$newname /boot/`basename $$i`;	\
-	else	strip -s $$newname;			\
-		gzip $$newname;				\
-	fi						\
+	cp $$i $$newname;					\
+	strip -s $$newname;					\
+	gzip $$newname;						\
 	done
 	cp ../kernel/kernel /boot/minix/.temp/
 	strip -s /boot/minix/.temp/kernel
-	[ -d /boot/image ] && ln -f /boot/minix/.temp/kernel /boot/kernel || true
-	sh mkboot $@ minix
+	sh mkboot $@
 	sh ../commands/update_bootcfg/update_bootcfg.sh
 
 fdboot:	image

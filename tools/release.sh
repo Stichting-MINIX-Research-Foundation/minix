@@ -301,10 +301,9 @@ then
 	fi
 
 	echo " * Removing files to create minimal image"
-	rm -rf $RELEASEDIR/boot/image/* $RELEASEDIR/usr/man/man*/* 	\
+	rm -rf $RELEASEDIR/usr/man/man*/* 	\
 		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src
 	mkdir -p $RELEASEDIR/usr/src/tools
-	ln $RELEASEDIR/boot/image_big $RELEASEDIR/boot/image/$version
 fi
 
 if [ $EXTRAS_INSTALL -ne 0 ] ; then
