@@ -68,9 +68,11 @@ static int check_path_components(const char *path)
 		/* 
 		 * is this a valid path segment? if not, return errno.
 		 * one exception: the last path component need not exist
+		 * - unless it is actually a dangling symlink
 		 */
 		if (stat(buffer, &statbuf) < 0 &&
-			(*path || errno != ENOENT))
+			(*path || errno != ENOENT ||
+			lstat(buffer, &statbuf) == 0))
 			return errno;
 	}
 
@@ -200,7 +202,8 @@ static void check_realpath_recurse(const char *path, int depth)
 	/* don't bother with non-directories. Due to timeouts in drivers we
 	 * might not get expected results and takes way too long */
 	if (stat(path, &st) != 0) {
-		ERR;
+		/* dangling symlinks may cause legitimate failures here */
+		if (lstat(path, &st) != 0) ERR;
 		return;
 	}
 	if (!S_ISDIR(st.st_mode))
