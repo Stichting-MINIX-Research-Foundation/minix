@@ -21,9 +21,9 @@ realall:	file magic.mgc
 .endif
 
 .if ${MKSHARE} != "no"
-magic.mgc: ${PROG}
+magic.mgc: ${TOOL_MKMAGIC}
 	${_MKTARGET_CREATE}
-	${.CURDIR}/${PROG} -C -m ${DIST}/magic/magdir
+	${TOOL_MKMAGIC} -C -m ${DIST}/magic/magdir
 	@mv magdir.mgc ${.TARGET}
 
 .else

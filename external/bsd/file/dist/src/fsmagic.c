@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.5 2011/09/16 21:06:26 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: fsmagic.c,v 1.59 2009/02/03 20:27:51 christos Exp $")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.64 2011/08/14 09:03:12 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.5 2011/09/16 21:06:26 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -65,36 +65,32 @@ __RCSID("$NetBSD: fsmagic.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
 # define minor(dev)  ((dev) & 0xff)
 #endif
 #undef HAVE_MAJOR
-
+#ifdef	S_IFLNK
 private int
 bad_link(struct magic_set *ms, int err, char *buf)
 {
-	const char *errfmt;
 	int mime = ms->flags & MAGIC_MIME;
 	if ((mime & MAGIC_MIME_TYPE) &&
-	    file_printf(ms, "application/x-symlink")
+	    file_printf(ms, "inode/symlink")
 	    == -1)
 		return -1;
 	else if (!mime) {
-		if (err == ELOOP)
-			errfmt = "symbolic link in a loop";
-		else
-			errfmt = "broken symbolic link to `%s'";
 		if (ms->flags & MAGIC_ERROR) {
-			file_error(ms, err, errfmt, buf);
+			file_error(ms, err,
+				   "broken symbolic link to `%s'", buf);
 			return -1;
 		} 
-		if (file_printf(ms, errfmt, buf) == -1)
+		if (file_printf(ms, "broken symbolic link to `%s'", buf) == -1)
 			return -1;
 	}
 	return 1;
 }
-
+#endif
 private int
 handle_mime(struct magic_set *ms, int mime, const char *str)
 {
 	if ((mime & MAGIC_MIME_TYPE)) {
-		if (file_printf(ms, "application/%s", str) == -1)
+		if (file_printf(ms, "inode/%s", str) == -1)
 			return -1;
 		if ((mime & MAGIC_MIME_ENCODING) && file_printf(ms,
 		    "; charset=") == -1)
@@ -140,7 +136,8 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		if (file_printf(ms, "cannot open `%s' (%s)",
 		    fn, strerror(errno)) == -1)
 			return -1;
-		return 1;
+		ms->event_flags |= EVENT_HAD_ERR;
+		return -1;
 	}
 
 	if (!mime) {
@@ -164,7 +161,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 	switch (sb->st_mode & S_IFMT) {
 	case S_IFDIR:
 		if (mime) {
-			if (handle_mime(ms, mime, "x-directory") == -1)
+			if (handle_mime(ms, mime, "directory") == -1)
 				return -1;
 		} else if (file_printf(ms, "directory") == -1)
 			return -1;
@@ -179,7 +176,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		if ((ms->flags & MAGIC_DEVICES) != 0)
 			break;
 		if (mime) {
-			if (handle_mime(ms, mime, "x-character-device") == -1)
+			if (handle_mime(ms, mime, "chardevice") == -1)
 				return -1;
 		} else {
 #ifdef HAVE_STAT_ST_RDEV
@@ -211,7 +208,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		if ((ms->flags & MAGIC_DEVICES) != 0)
 			break;
 		if (mime) {
-			if (handle_mime(ms, mime, "x-block-device") == -1)
+			if (handle_mime(ms, mime, "blockdevice") == -1)
 				return -1;
 		} else {
 #ifdef HAVE_STAT_ST_RDEV
@@ -238,7 +235,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		if((ms->flags & MAGIC_DEVICES) != 0)
 			break;
 		if (mime) {
-			if (handle_mime(ms, mime, "x-fifo") == -1)
+			if (handle_mime(ms, mime, "fifo") == -1)
 				return -1;
 		} else if (file_printf(ms, "fifo (named pipe)") == -1)
 			return -1;
@@ -247,7 +244,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 #ifdef	S_IFDOOR
 	case S_IFDOOR:
 		if (mime) {
-			if (handle_mime(ms, mime, "x-door") == -1)
+			if (handle_mime(ms, mime, "door") == -1)
 				return -1;
 		} else if (file_printf(ms, "door") == -1)
 			return -1;
@@ -262,7 +259,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 			    return -1;
 			}
 			if (mime) {
-				if (handle_mime(ms, mime, "x-symlink") == -1)
+				if (handle_mime(ms, mime, "symlink") == -1)
 					return -1;
 			} else if (file_printf(ms,
 			    "unreadable symlink `%s' (%s)", fn,
@@ -318,7 +315,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 			return p != NULL ? 1 : -1;
 		} else { /* just print what it points to */
 			if (mime) {
-				if (handle_mime(ms, mime, "x-symlink") == -1)
+				if (handle_mime(ms, mime, "symlink") == -1)
 					return -1;
 			} else if (file_printf(ms, "symbolic link to `%s'",
 			    buf) == -1)
@@ -330,7 +327,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 #ifndef __COHERENT__
 	case S_IFSOCK:
 		if (mime) {
-			if (handle_mime(ms, mime, "x-socket") == -1)
+			if (handle_mime(ms, mime, "socket") == -1)
 				return -1;
 		} else if (file_printf(ms, "socket") == -1)
 			return -1;

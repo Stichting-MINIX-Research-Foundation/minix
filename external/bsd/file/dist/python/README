@@ -1,26 +1,13 @@
-
 This directory contains Python bindings to allow you to access the
-libmagic api. At the moment their status is "experimental" and
-they are not built by default. You may need to edit include and library
-search paths in setup.py so that python's distutils build process can 
-find the magic header and lib files.
+libmagic api. At the moment their status is "experimental".
 
-In order to be able to compile magic-python you need to have python
-and the python-dev packages installed.
-
-Python libraries are always built for a particular version of Python
-(2.2, 2.3, etc), and libraries built for one version will not be seen
-by another.
-
-To build:
+You can install the modules either with:
 
 $ python setup.py build
+$ python setup.py install
 
-Now, you can install the modules:
+or, if you have easy_install:
 
-$ cp build/lib.*/magic.so /usr/lib/python2.3/lib-dynload/
-
-(the directory /usr/lib/python2.3 may vary, depending on your installation)
+$ easy_install .
 
 magic-python should work now!
-

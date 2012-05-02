@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.2 2009/05/08 16:40:10 christos Exp $
+#	$NetBSD: file2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
 #
-# Copyright (c) 2003 The NetBSD Foundation, Inc.
+# Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,35 +32,25 @@
 #
 # based on texinfo2netbsd
 #
+PROG="$(basename "$0")"
 
 if [ -z "$1" ]
 then
-	echo "Usage $0: <file-version>" 1>&2
+	echo "Usage: $PROG <directory>" 1>&2
 	exit 1
 fi
-file_vers="$1"
+FILE="$1"
 
-#
-# (usually) NO NEED TO EDIT BELOW THIS LINE
-#
+file_vers="$(awk -F', ' '/AC_INIT\(/ { print $2 }' "$FILE/configure.ac")"
 
 ### Wipe out stuff we don't want
-rm -f .cvsignore
+find "$FILE" -name .cvsignore -delete
 
 ### Remove the $'s around RCS tags
-find . -type f -print | xargs egrep -l '\$(Id|Date|Header|Log|Revision)'\
-    | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Date.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Log.*\) \$/\1/' \
-	    -e 's/\$\(Revision.*\) \$/\1/' \
-	    $f > /tmp/file2$$ && mv /tmp/file2$$ $f && \
-	echo removed RCS tag from $f
-done
+cleantags $d
 
 ### Add NetBSD RCS Id
-find . -type f -name '*.[chly]' -print | while read c; do
+find "$FILE" -type f -name '*.[chly]' -print | while read c; do
 	sed -e '1{/$NetBSD/!{i\
 /*	\$NetBSD\$	*/\
 
@@ -82,7 +72,7 @@ mv -f doc/libmagic.man doc/libmagic.3
 mv -f doc/magic.man doc/magic.5
 
 #### Add RCS tags to man pages
-find . -type f -name '*.[0-9]' -print | while read m; do
+find "$FILE" -type f -name '*.[0-9]' -print | while read m; do
 	sed -e '1{/$NetBSD/!i\
 .\\"	\$NetBSD\$\
 .\\"

@@ -1,4 +1,4 @@
-/*	$NetBSD: encoding.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: encoding.c,v 1.1.1.2 2011/05/12 20:46:52 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: encoding.c,v 1.3 2009/02/03 20:27:51 christos Exp $")
+FILE_RCSID("@(#)$File: encoding.c,v 1.5 2010/07/21 16:47:17 christos Exp $")
 #else
-__RCSID("$NetBSD: encoding.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
+__RCSID("$NetBSD: encoding.c,v 1.1.1.2 2011/05/12 20:46:52 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -57,6 +57,12 @@ private int looks_ucs16(const unsigned char *, size_t, unichar *, size_t *);
 private int looks_latin1(const unsigned char *, size_t, unichar *, size_t *);
 private int looks_extended(const unsigned char *, size_t, unichar *, size_t *);
 private void from_ebcdic(const unsigned char *, size_t, unsigned char *);
+
+#ifdef DEBUG_ENCODING
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 /*
  * Try to determine whether text is in some character code we can
@@ -84,12 +90,16 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 
 	*type = "text";
 	if (looks_ascii(buf, nbytes, *ubuf, ulen)) {
+		DPRINTF(("ascii %" SIZE_T_FORMAT "u\n", *ulen));
 		*code = "ASCII";
 		*code_mime = "us-ascii";
 	} else if (looks_utf8_with_BOM(buf, nbytes, *ubuf, ulen) > 0) {
+		DPRINTF(("utf8/bom %" SIZE_T_FORMAT "u\n", *ulen));
 		*code = "UTF-8 Unicode (with BOM)";
 		*code_mime = "utf-8";
 	} else if (file_looks_utf8(buf, nbytes, *ubuf, ulen) > 1) {
+		DPRINTF(("utf8 %" SIZE_T_FORMAT "u\n", *ulen));
+		*code = "UTF-8 Unicode (with BOM)";
 		*code = "UTF-8 Unicode";
 		*code_mime = "utf-8";
 	} else if ((ucs_type = looks_ucs16(buf, nbytes, *ubuf, ulen)) != 0) {
@@ -100,22 +110,29 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 			*code = "Big-endian UTF-16 Unicode";
 			*code_mime = "utf-16be";
 		}
+		DPRINTF(("ucs16 %" SIZE_T_FORMAT "u\n", *ulen));
 	} else if (looks_latin1(buf, nbytes, *ubuf, ulen)) {
+		DPRINTF(("latin1 %" SIZE_T_FORMAT "u\n", *ulen));
 		*code = "ISO-8859";
 		*code_mime = "iso-8859-1";
 	} else if (looks_extended(buf, nbytes, *ubuf, ulen)) {
+		DPRINTF(("extended %" SIZE_T_FORMAT "u\n", *ulen));
 		*code = "Non-ISO extended-ASCII";
 		*code_mime = "unknown-8bit";
 	} else {
 		from_ebcdic(buf, nbytes, nbuf);
 
 		if (looks_ascii(nbuf, nbytes, *ubuf, ulen)) {
+			DPRINTF(("ebcdic %" SIZE_T_FORMAT "u\n", *ulen));
 			*code = "EBCDIC";
 			*code_mime = "ebcdic";
 		} else if (looks_latin1(nbuf, nbytes, *ubuf, ulen)) {
+			DPRINTF(("ebcdic/international %" SIZE_T_FORMAT "u\n",
+			    *ulen));
 			*code = "International EBCDIC";
 			*code_mime = "ebcdic";
 		} else { /* Doesn't look like text at all */
+			DPRINTF(("binary\n"));
 			rv = 0;
 			*type = "binary";
 		}

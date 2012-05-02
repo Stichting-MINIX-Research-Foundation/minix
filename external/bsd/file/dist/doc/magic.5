@@ -1,7 +1,7 @@
-.\"	$NetBSD: magic.5,v 1.4 2009/05/08 20:20:39 wiz Exp $
+.\"	$NetBSD: magic.5,v 1.6 2011/09/16 21:06:25 christos Exp $
 .\"
-.\" $File: magic.man,v 1.59 2008/11/06 23:22:53 christos Exp $
-.Dd August 30, 2008
+.\" $File: magic.man,v 1.69 2011/05/13 22:11:44 christos Exp $
+.Dd April 20, 2011
 .Dt MAGIC 5
 .Os
 .\" install as magic.4 on USG, magic.5 on V7, Berkeley and Linux systems.
@@ -12,7 +12,7 @@
 This manual page documents the format of the magic file as
 used by the
 .Xr file 1
-command, version 5.03.
+command, version 5.09.
 The
 .Xr file 1
 command identifies the type of a file using,
@@ -53,9 +53,9 @@ A 64-bit double precision IEEE floating point number in this machine's native by
 .It Dv string
 A string of bytes.
 The string type specification can be optionally followed
-by /[Bbc]*.
+by /[WwcCtb]*.
 The
-.Dq B
+.Dq W
 flag compacts whitespace in the target, which must
 contain at least one whitespace character.
 If the magic has
@@ -64,18 +64,55 @@ consecutive blanks, the target needs at least
 .Dv n
 consecutive blanks to match.
 The
-.Dq b
+.Dq w
 flag treats every blank in the target as an optional blank.
-Finally the
+The
 .Dq c
-flag, specifies case insensitive matching: lowercase
+flag, specifies case insensitive matching: lower case
 characters in the magic match both lower and upper case characters in the
-target, whereas upper case characters in the magic only match uppercase
+target, whereas upper case characters in the magic only match upper case
 characters in the target.
+The
+.Dq C
+flag, specifies case insensitive matching: upper case
+characters in the magic match both lower and upper case characters in the
+target, whereas lower case characters in the magic only match upper case
+characters in the target.
+To do a complete case insensitive match, specify both
+.Dq c
+and
+.Dq C .
+The
+.Dq t
+flag, forces the test to be done for text files, while the
+.Dq b
+flag, forces the test to be done for binary files.
 .It Dv pstring
-A Pascal-style string where the first byte is interpreted as the an
+A Pascal-style string where the first byte/short/int is interpreted as the an
 unsigned length.
+The length defaults to byte and can be specified as a modifier.
+The following modifiers are supported:
+.Bl -tag -compact -width B
+.It B
+A byte length (default).
+.It H
+A 2 byte big endian length.
+.It h
+A 2 byte big little length.
+.It L
+A 4 byte big endian length.
+.It l
+A 4 byte big little length.
+.It J
+The length includes itself in its count.
+.El
 The string is not NUL terminated.
+.Dq J
+is used rather than the more
+valuable
+.Dq I
+because this type of length is a feature of the JPEG
+format.
 .It Dv date
 A four-byte value interpreted as a UNIX date.
 .It Dv qdate
@@ -292,7 +329,7 @@ then print the string), with
 The special test
 .Em x
 always evaluates to true.
-.Dv message
+.It Dv message
 The message to be printed if the comparison succeeds.
 If the string contains a
 .Xr printf 3
@@ -353,11 +390,11 @@ on the line indicates the level of the test; a line with no
 .Em \*[Gt]
 at the beginning is considered to be at level 0.
 Tests are arranged in a tree-like hierarchy:
-If a the test on a line at level
+if the test on a line at level
 .Em n
 succeeds, all following tests at level
 .Em n+1
-are performed, and the messages printed if the tests succeed, untile a line
+are performed, and the messages printed if the tests succeed, until a line
 with level
 .Em n
 (or less) appears.
@@ -374,7 +411,7 @@ being examined.
 If the first character following the last
 .Em \*[Gt]
 is a
-.Em (
+.Em \&(
 then the string after the parenthesis is interpreted as an indirect offset.
 That means that the number after the parenthesis is used as an offset in
 the file.

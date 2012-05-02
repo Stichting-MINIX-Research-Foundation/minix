@@ -1,4 +1,4 @@
-/*	$NetBSD: elfclass.h,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: elfclass.h,v 1.1.1.3 2011/09/16 20:37:39 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2008.
@@ -37,6 +37,7 @@
 	switch (type) {
 #ifdef ELFCORE
 	case ET_CORE:
+		flags |= FLAGS_IS_CORE;
 		if (dophn_core(ms, clazz, swap, fd,
 		    (off_t)elf_getu(swap, elfhdr.e_phoff),
 		    elf_getu16(swap, elfhdr.e_phnum), 
@@ -60,8 +61,7 @@
 		    (off_t)elf_getu(swap, elfhdr.e_shoff),
 		    elf_getu16(swap, elfhdr.e_shnum),
 		    (size_t)elf_getu16(swap, elfhdr.e_shentsize),
-		    &flags,
-		    elf_getu16(swap, elfhdr.e_machine)) == -1)
+		    fsize, &flags, elf_getu16(swap, elfhdr.e_machine)) == -1)
 			return -1;
 		break;
 

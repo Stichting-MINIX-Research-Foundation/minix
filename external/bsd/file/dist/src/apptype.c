@@ -1,4 +1,4 @@
-/*	$NetBSD: apptype.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $	*/
+/*	$NetBSD: apptype.c,v 1.1.1.2 2011/09/16 20:37:39 christos Exp $	*/
 
 /*
  * Adapted from: apptype.c, Written by Eberhard Mattes and put into the
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apptype.c,v 1.11 2009/02/04 18:24:32 christos Exp $")
+FILE_RCSID("@(#)$File: apptype.c,v 1.13 2011/09/07 21:57:15 christos Exp $")
 #else
-__RCSID("$NetBSD: apptype.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $");
+__RCSID("$NetBSD: apptype.c,v 1.1.1.2 2011/09/16 20:37:39 christos Exp $");
 #endif
 #endif /* lint */
 
@@ -78,6 +78,7 @@ file_os2_apptype(struct magic_set *ms, const char *fn, const void *buf,
 		if (fwrite(buf, 1, nb, fp) != nb) {
 			file_error(ms, errno, "cannot write tmp file `%s'",
 			    path);
+			(void)fclose(fp);
 			return -1;
 		}
 		(void)fclose(fp);

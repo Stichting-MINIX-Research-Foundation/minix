@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.1.1.2 2011/05/12 20:46:50 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -32,13 +32,11 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: asprintf.c,v 1.3 2009/02/03 20:27:51 christos Exp $")
+FILE_RCSID("@(#)$File: asprintf.c,v 1.4 2010/07/21 16:47:17 christos Exp $")
 #else
-__RCSID("$NetBSD: asprintf.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.1.1.2 2011/05/12 20:46:50 christos Exp $");
 #endif
 #endif
-
-int vasprintf(char **ptr, const char *format_string, va_list vargs);
 
 int asprintf(char **ptr, const char *fmt, ...)
 {

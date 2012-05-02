@@ -1,16 +1,17 @@
+#! /usr/bin/python
+
 import magic
 
-ms = magic.open(magic.MAGIC_NONE)
+ms = magic.open(magic.NONE)
 ms.load()
-type =  ms.file("/path/to/some/file")
-print type
+tp = ms.file("/bin/ls")
+print (tp)
 
-f = file("/path/to/some/file", "r")
-buffer = f.read(4096)
+f = open("/bin/ls", "rb")
+buf = f.read(4096)
 f.close()
 
-type = ms.buffer(buffer)
-print type
+tp = ms.buffer(buf)
+print (tp)
 
 ms.close()
-

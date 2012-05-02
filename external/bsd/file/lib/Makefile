@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/05/08 17:28:02 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/14 09:06:12 christos Exp $
 #
 
 USE_FORT?= no	# data driven bugs?
@@ -31,5 +31,7 @@ MLINKS+=	libmagic.3 magic_open.3 \
 		libmagic.3 magic_load.3
 INCS=		magic.h
 INCSDIR=	/usr/include
+
+COPTS.softmagic.c = -Wno-format-nonliteral
 
 .include <bsd.lib.mk>
