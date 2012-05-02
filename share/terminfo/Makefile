@@ -7,7 +7,6 @@ realall: terminfo.db
 FILES=terminfo.db terminfo
 .if defined(__MINIX)
 FILESDIR=/usr/share/terminfo
-TOOL_TIC=/usr/bin/tic
 .else
 FILESDIR=${BINDIR}/misc
 .endif
