@@ -19,13 +19,15 @@ do
 		group="`echo $line | ${AWK} '{ print $3 }'`"
 		dir="${DESTDIR}`echo $line | ${AWK} '{ print $4 }'`"
 		mkdir -p $dir
+		echo $dir
 		targetdev="`${STAT} -f %d $dir/.`"
 		if [ $targetdev -lt 256 ]
 		then	echo "skipping non-dev $dir properties"
-		elif [ $UNPRIV != yes]
-		then	chown $owner $dir
-			chmod $mode $dir
-			chgrp $group $dir
+		elif [ $UNPRIV != yes ]
+		then
+				chown $owner $dir
+				chmod $mode $dir
+				chgrp $group $dir
 		fi
 	elif [ $NF = 3 ]
 	then	target="`echo $line | ${AWK} '{ print $3 }'`"
