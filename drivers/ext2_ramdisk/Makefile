@@ -11,7 +11,7 @@ SBINFILES = ahci at_wini ext2 floppy mfs procfs \
 ETCFILES  = system.conf mtab passwd pwd.db spwd.db master.passwd \
             rs.single
 
-USRBINFILES  = newroot loadramdisk cdprobe
+USRBINFILES  = loadramdisk cdprobe
 USRSBINFILES  = acpi pci
 IMAGE_DIRS= bin sbin etc usr/bin usr/sbin
 

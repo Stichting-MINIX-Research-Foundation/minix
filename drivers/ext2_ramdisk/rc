@@ -67,7 +67,11 @@ echo "Root device name is $rootdevname"
 if [ -e $FSCK ]
 then	$FSCK -p $rootdevname
 fi
-/usr/bin/newroot $bin_img"$rootdevname"
+
+# Change root from temporary boot ramdisk to the configure
+# root device
+/bin/mount -n $bin_img"$rootdevname" /
+
 /bin/mount -e -n -t procfs none /proc || echo "WARNING: couldn't mount procfs"
 
 exec /bin/sh /etc/rc "$@"
