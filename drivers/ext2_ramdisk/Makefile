@@ -5,7 +5,7 @@
 BINFILES = dev2name mount  sh service \
            sysenv
 
-SBINFILES = ahci at_wini bios_wini ext2 floppy mfs procfs \
+SBINFILES = ahci at_wini ext2 floppy mfs procfs \
             fsck.mfs
 
 ETCFILES  = system.conf mtab passwd pwd.db spwd.db master.passwd \
@@ -32,7 +32,6 @@ install_files:
 	${MAKE} -C ${MINIXSRCDIR}/drivers/acpi install
 	${MAKE} -C ${MINIXSRCDIR}/drivers/ahci install
 	${MAKE} -C ${MINIXSRCDIR}/drivers/at_wini install
-	${MAKE} -C ${MINIXSRCDIR}/drivers/bios_wini install
 	${MAKE} -C ${MINIXSRCDIR}/drivers/floppy install
 	${MAKE} -C ${MINIXSRCDIR}/drivers/pci install
 

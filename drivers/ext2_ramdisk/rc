@@ -13,11 +13,7 @@ then
 fi
 /bin/service -c up /usr/sbin/pci
 /bin/service -cn up /sbin/floppy -dev /dev/fd0
-if [ X`/bin/sysenv bios_wini` = Xyes ]
-then
-	echo Using bios_wini.
-	/bin/service -c up /sbin/bios_wini -dev /dev/c0d0
-elif [ X`/bin/sysenv ahci` = Xyes ]
+if [ X`/bin/sysenv ahci` = Xyes ]
 then
 	# this is here temporarily, for testing purposes
 	/bin/service -c up /sbin/ahci -dev /dev/c0d0 -label ahci_0 -args instance=0
