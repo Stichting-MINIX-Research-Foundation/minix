@@ -359,12 +359,12 @@ void pm_reboot()
    */
   for (i = 0; i < NR_PROCS; i++) {
 	rfp = &fproc[i];
-	if (rfp->fp_endpoint == NONE) continue;
 
 	/* Don't just free the proc right away, but let it finish what it was
 	 * doing first */
 	lock_proc(rfp, 0);
-	free_proc(rfp, 0);
+	if (rfp->fp_endpoint != NONE)
+		free_proc(rfp, 0);
 	unlock_proc(rfp);
   }
 
