@@ -3,15 +3,8 @@
 
 PROG=	kernel
 
-# first-stage, arch-dependent startup code
-SRCS=	mpx.S
-SRCS+=	start.c table.c main.c proc.c \
-	system.c clock.c utility.c interrupt.c \
-	cpulocals.c
-
-.ifdef CONFIG_SMP
-SRCS += smp.c
-.endif
+SRCS=	clock.c cpulocals.c interrupt.c main.c proc.c start.c system.c \
+	table.c utility.c 
 
 DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC}
 LDADD+=	-ltimers -lsys -lexec
@@ -38,19 +31,13 @@ MAN=
 .include "system/Makefile.inc"
 .include "arch/${ARCH}/Makefile.inc"
 
+.ifdef CONFIG_SMP
+SRCS+= smp.c
+.endif
+
 .if ${USE_WATCHDOG} != "no"
-SRCS+= watchdog.c arch_watchdog.c
+SRCS+= watchdog.c
 CPPFLAGS+= -DUSE_WATCHDOG
-.endif
-
-.if ${USE_ACPI} != "no"
-SRCS+= acpi.c
-CPPFLAGS+= -DUSE_ACPI
-.endif
-
-.if ${USE_APIC} != "no"
-SRCS+= apic.c apic_asm.S
-CPPFLAGS+= -DUSE_APIC
 .endif
 
 .if ${USE_MCONTEXT} != "no"
@@ -58,15 +45,14 @@ SRCS+= do_mcontext.c
 CPPFLAGS+= -DUSE_MCONTEXT
 .endif
 
-.if ${USE_DEBUGREG} != "no"
-SRCS+= 	breakpoints.c debugreg.S
-.endif
-
 # Extra debugging routines
 .if ${USE_SYSDEBUG} != "no"
 SRCS+= 	debug.c
 CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
+
+# These come last, so the profiling buffer is at the end of the data segment
+SRCS+= profile.c do_sprofile.c
 
 .if ${USE_LIVEUPDATE} != "no"
 CPPFLAGS+= -DUSE_UPDATE
@@ -79,13 +65,6 @@ CPPFLAGS+= -DUSE_STATECTL
 .if ${USE_TRACE} != "no"
 CPPFLAGS+= -DUSE_TRACE
 .endif
-
-.if ${USE_BOOTPARAM} != "no"
-CPPFLAGS+= -DUSE_BOOTPARAM
-.endif
-
-# These come last, so the profiling buffer is at the end of the data segment
-SRCS+= profile.c do_sprofile.c
 
 .include <bsd.prog.mk>
 

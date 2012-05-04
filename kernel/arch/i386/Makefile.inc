@@ -4,28 +4,29 @@
 
 HERE=${.CURDIR}/arch/${ARCH}
 .PATH:	${HERE}
-SRCS+=	arch_do_vmctl.c \
-	arch_clock.c \
-	do_iopenable.c \
-	do_readbios.c \
-	do_sdevio.c \
-	exception.c \
-	i8259.c \
-	io_inb.S \
-	io_inl.S \
-	io_intr.S \
-	io_inw.S \
-	io_outb.S \
-	io_outl.S \
-	io_outw.S \
-	klib.S \
-	klib16.S \
-	multiboot.S \
-	memory.c \
-	oxpcie.c \
-	protect.c \
-	arch_system.c \
-	pre_init.c
+SRCS+=	arch_clock.c arch_do_vmctl.c arch_system.c \
+	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c io_inb.S \
+	io_inl.S io_intr.S io_inw.S io_outb.S io_outl.S io_outw.S klib.S klib16.S memory.c mpx.S multiboot.S \
+	oxpcie.c pre_init.c protect.c
+
+.if ${USE_ACPI} != "no"
+SRCS+= acpi.c
+CPPFLAGS+= -DUSE_ACPI
+.endif
+
+.if ${USE_APIC} != "no"
+SRCS+= apic.c apic_asm.S
+CPPFLAGS+= -DUSE_APIC
+.endif
+
+.if ${USE_DEBUGREG} != "no"
+SRCS+=  breakpoints.c debugreg.S
+.endif
+
+.if ${USE_WATCHDOG} != "no"
+SRCS+= arch_watchdog.c
+CPPFLAGS+= -DUSE_WATCHDOG
+.endif
 
 apic_asm.d klib.d mpx.d: procoffsets.h
 
