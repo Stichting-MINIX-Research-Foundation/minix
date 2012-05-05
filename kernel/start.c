@@ -41,7 +41,6 @@ void cstart(
   /* Copy the boot parameters to the local buffer. */
   arch_get_params(params_buffer, sizeof(params_buffer));
 
-#if USE_BOOTPARAM
   /* determine verbosity */
   if ((value = env_get(VERBOSEBOOTVARNAME)))
 	  verboseboot = atoi(value);
@@ -52,9 +51,6 @@ void cstart(
 	system_hz = atoi(value);
   if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
 	system_hz = DEFAULT_HZ;
-#else /* !USE_BOOTPARAM */
-  system_hz = DEFAULT_HZ;
-#endif
 
 #ifdef DEBUG_SERIAL
   /* Intitialize serial debugging */

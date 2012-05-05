@@ -163,7 +163,6 @@ __dead void arch_shutdown(int how)
 		reset();
 	}
 
-#if USE_BOOTPARAM
 	if (how == RBT_DEFAULT) {
 		how = RBT_RESET;
 	}
@@ -190,10 +189,6 @@ __dead void arch_shutdown(int how)
 			reset();
 			NOT_REACHABLE;
 	}
-#else /* !USE_BOOTPARAM */
-	/* Poweroff without boot monitor */
-	arch_bios_poweroff();
-#endif
 
 	NOT_REACHABLE;
 }
