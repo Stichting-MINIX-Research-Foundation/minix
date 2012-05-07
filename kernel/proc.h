@@ -54,8 +54,6 @@ struct proc {
 	unsigned long preempted;
   } p_accounting;
 
-  struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
-
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
 
@@ -74,7 +72,7 @@ struct proc {
 
   sigset_t p_pending;		/* bit map for pending kernel signals */
 
-  char p_name[P_NAME_LEN];	/* name of the process, including \0 */
+  char p_name[PROC_NAME_LEN];	/* name of the process, including \0 */
 
   endpoint_t p_endpoint;	/* endpoint number, generation-aware */
 
@@ -237,7 +235,6 @@ struct proc {
 				   We need to resume the kernel call execution
 				   now
 				 */
-#define MF_FULLVM	0x020
 #define MF_DELIVERMSG	0x040	/* Copy message for him before running */
 #define MF_SIG_DELAY	0x080	/* Send signal when no longer sending */
 #define MF_SC_ACTIVE	0x100	/* Syscall tracing: in a system call now */

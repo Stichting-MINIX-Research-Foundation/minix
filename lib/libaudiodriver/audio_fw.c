@@ -933,7 +933,7 @@ static int init_buffers(sub_dev_t *sub_dev_ptr)
 	}
 
 	sub_dev_ptr->DmaPtr = sub_dev_ptr->DmaBuf;
-	i = sys_umap(SELF, D, 
+	i = sys_umap(SELF, VM_D, 
 			(vir_bytes) sub_dev_ptr->DmaBuf, 
 			(phys_bytes) sizeof(sub_dev_ptr->DmaBuf), 
 			&(sub_dev_ptr->DmaPhys));

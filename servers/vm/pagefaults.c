@@ -72,8 +72,8 @@ void do_pagefaults(message *m)
 	/* See if address is valid at all. */
 	if(!(region = map_lookup(vmp, addr))) {
 		assert(PFERR_NOPAGE(err));
-		printf("VM: pagefault: SIGSEGV %d bad addr %s; %s\n",
-				ep, arch_map2str(vmp, addr), pf_errstr(err));
+		printf("VM: pagefault: SIGSEGV %d bad addr 0x%x; %s\n",
+				ep, addr, pf_errstr(err));
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
@@ -88,8 +88,8 @@ void do_pagefaults(message *m)
 
 	/* If process was writing, see if it's writable. */
 	if(!(region->flags & VR_WRITABLE) && wr) {
-		printf("VM: pagefault: SIGSEGV %d ro map 0x%lx %s\n",
-				ep, arch_map2vir(vmp, addr), pf_errstr(err));
+		printf("VM: pagefault: SIGSEGV %d ro map 0x%x %s\n",
+				ep, addr, pf_errstr(err));
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
@@ -203,8 +203,7 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 		if(r != OK) {
 #if VERBOSE
 			printf("VM: memory range 0x%lx-0x%lx not available in %d\n",
-				arch_map2vir(vmp, mem), arch_map2vir(vmp, mem+len),
-				vmp->vm_endpoint);
+				mem, mem+len, vmp->vm_endpoint);
 #endif
 			return r;
 		}

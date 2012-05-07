@@ -33,7 +33,6 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
   int endpt = (int) m_ptr->CP_SRC_ENDPT;
   endpoint_t grantee = (endpoint_t) m_ptr->CP_DST_ENDPT;
   int proc_nr, proc_nr_grantee;
-  int naughty = 0;
   phys_bytes phys_addr = 0, lin_addr = 0;
   struct proc *targetpr;
 
@@ -57,11 +56,6 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
 
   /* See which mapping should be made. */
   switch(seg_type) {
-  case LOCAL_SEG:
-      phys_addr = lin_addr = umap_local(targetpr, seg_index, offset, count);
-      if(!lin_addr) return EFAULT;
-      naughty = 1;
-      break;
   case LOCAL_VM_SEG:
     if(seg_index == MEM_GRANT) {
 	vir_bytes newoffset;
@@ -84,11 +78,11 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
 	/* New lookup. */
 	offset = newoffset;
 	targetpr = proc_addr(new_proc_nr);
-	seg_index = D;
+	seg_index = VIR_ADDR;
       }
 
-      if(seg_index == T || seg_index == D || seg_index == S) {
-        phys_addr = lin_addr = umap_local(targetpr, seg_index, offset, count);
+      if(seg_index == VIR_ADDR) {
+        phys_addr = lin_addr = offset;
       } else {
 	printf("SYSTEM: bogus seg type 0x%lx\n", seg_index);
 	return EFAULT;
@@ -115,7 +109,7 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
   }
 
   m_ptr->CP_DST_ADDR = phys_addr;
-  if(naughty || phys_addr == 0) {
+  if(phys_addr == 0) {
 	  printf("kernel: umap 0x%x done by %d / %s, pc 0x%lx, 0x%lx -> 0x%lx\n",
 		seg_type, caller->p_endpoint, caller->p_name,
 		caller->p_reg.pc, offset, phys_addr);

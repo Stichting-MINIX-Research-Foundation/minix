@@ -50,116 +50,10 @@
 IMPORT(copr_not_available_handler)
 IMPORT(params_size)
 IMPORT(params_offset)
-IMPORT(mon_ds)
 IMPORT(switch_to_user)
 IMPORT(multiboot_init)
 
 .text
-/*===========================================================================*/
-/*				MINIX					     */
-/*===========================================================================*/
-.global MINIX
-MINIX:
-/* this is the entry point for the MINIX kernel */
-
-	jmp _C_LABEL(multiboot_init)
-
-/* Multiboot header here*/
-
-.balign 8
-
-multiboot_magic:
-	.long MULTIBOOT_HEADER_MAGIC
-multiboot_flags:
-	.long MULTIBOOT_FLAGS
-multiboot_checksum:
-	.long -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_FLAGS)
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-/* Video mode */
-multiboot_mode_type:
-	.long MULTIBOOT_VIDEO_MODE_EGA
-multiboot_width:
-	.long MULTIBOOT_CONSOLE_COLS
-multiboot_height:
-	.long MULTIBOOT_CONSOLE_LINES
-multiboot_depth:
-	.long 0
-
-.globl kernel_init
-kernel_init: /* after pre-init*/
-	push	%ebp
-	mov	%esp, %ebp
-	push	%esi
-	push	%edi
-/* Copy the monitor global descriptor table to the address space of kernel and */
-/* switch over to it.  Prot_init() can then update it with immediate effect. */
-
-	sgdt	_C_LABEL(gdt)+GDT_SELECTOR	/* get the monitor gdtr */
-	movl	_C_LABEL(gdt)+GDT_SELECTOR+2, %esi	/* absolute address of GDT */
-	mov	$_C_LABEL(gdt), %ebx	/* address of kernel GDT */
-	mov	$8*8, %ecx	/* copying eight descriptors */
-copygdt:
-	movb    %es:(%esi), %al
-	movb	%al, (%ebx)
-	inc	%esi
-	inc	%ebx
-	loop	copygdt
-	movl	_C_LABEL(gdt)+DS_SELECTOR+2, %eax /* base of kernel data */
-	and	$0x00FFFFFF, %eax	/* only 24 bits */
-	add	$_C_LABEL(gdt), %eax	/* eax = vir2phys(gdt) */
-	movl	%eax, _C_LABEL(gdt)+GDT_SELECTOR+2 /* set base of GDT */
-	lgdt	_C_LABEL(gdt)+GDT_SELECTOR	/* switch over to kernel GDT */
-
-/* Locate boot parameters, set up kernel segment registers and stack. */
-	mov	8(%ebp), %ebx	/* boot parameters offset */
-	mov	12(%ebp), %edx	/* boot parameters length */
-	mov	16(%ebp), %eax	/* address of a.out headers */
-	mov	%ds, %ax	/* kernel data */
-	mov	%ax, %es
-	mov	%ax, %fs
-	mov	%ax, %gs
-	mov	%ax, %ss
-	mov	$_C_LABEL(k_boot_stktop) - 4, %esp	/* set sp to point to the top of kernel stack */
-
-/* Save boot parameters into these global variables for i386 code */
-	movl	%edx, _C_LABEL(params_size)
-	movl	%ebx, _C_LABEL(params_offset)
-	movl	$SS_SELECTOR, _C_LABEL(mon_ds)
-
-/* Call C startup code to set up a proper environment to run main(). */
-	push	%edx
-	push	%ebx
-	push	$SS_SELECTOR
-	push	$DS_SELECTOR
-	push	$CS_SELECTOR
-	call	_C_LABEL(cstart) /* cstart(cs, ds, mds, parmoff, parmlen) */
-	add	$5*4, %esp
-
-/* Reload gdtr, idtr and the segment registers to global descriptor table set */
-/* up by prot_init(). */
-
-	lgdt	_C_LABEL(gdt)+GDT_SELECTOR
-	lidt	_C_LABEL(gdt)+IDT_SELECTOR
-
-	ljmp    $CS_SELECTOR, $csinit
-csinit:
-	movw	$DS_SELECTOR, %ax
-	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %fs
-	mov	%ax, %gs
-	mov	%ax, %ss
-	movw	$TSS_SELECTOR_BOOT, %ax	/* no other TSS is used */
-	ltr	%ax
-	push	$0	/* set flags to known good state */
-	popf	/* esp, clear nested task and int enable */
-	jmp	_C_LABEL(main)	/* main() */
-
-
 /*===========================================================================*/
 /*				interrupt handlers			     */
 /*		interrupt handlers for 386 32-bit protected mode	     */
@@ -419,22 +313,26 @@ ENTRY(restore_user_context)
 	mov	4(%esp), %ebp	/* will assume P_STACKBASE == 0 */
 
 	/* reconstruct the stack for iret */
-	movl	SSREG(%ebp), %eax
-	push	%eax
+	push	$USER_DS_SELECTOR	/* ss */
 	movl	SPREG(%ebp), %eax
 	push	%eax
 	movl	PSWREG(%ebp), %eax
 	push	%eax
-	movl	CSREG(%ebp), %eax
-	push	%eax
+	push	$USER_CS_SELECTOR	/* cs */
 	movl	PCREG(%ebp), %eax
 	push	%eax
 
+	/* Restore segments as the user should see them. */
+	movw	$USER_DS_SELECTOR, %si
+        movw    %si, %ds
+        movw    %si, %es
+        movw    %si, %fs
+        movw    %si, %gs
+
+	/* Same for general-purpose registers. */
 	RESTORE_GP_REGS(%ebp)
 
-	RESTORE_SEGS(%ebp)
-
-	movl	%ss:BPREG(%ebp), %ebp
+	movl	BPREG(%ebp), %ebp
 
 	iret	/* continue process */
 
@@ -582,7 +480,7 @@ ENTRY(startup_ap_32)
 	 * we are in protected mode now, %cs is correct and we need to set the
 	 * data descriptors before we can touch anything
 	 */
-	movw	$DS_SELECTOR, %ax
+	movw	$KERN_DS_SELECTOR, %ax
 	mov	%ax, %ds
 	mov	%ax, %ss
 	mov	%ax, %es
@@ -613,6 +511,10 @@ ENTRY(startup_ap_32)
 .data
 .short	0x526F	/* this must be the first data entry (magic #) */
 .bss
+k_initial_stack:
+.space	K_STACK_SIZE
+LABEL(__k_unpaged_k_initial_stktop)
+
 /*
  * the kernel stack
  */

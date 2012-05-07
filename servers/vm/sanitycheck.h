@@ -24,14 +24,15 @@
 		usedpages_reset();	\
 	slab_sanitycheck(__FILE__, __LINE__);	\
 	for(vmpr = vmproc; vmpr < &vmproc[VMP_NR]; vmpr++) { \
-		if((vmpr->vm_flags & (VMF_INUSE | VMF_HASPT)) == \
-			(VMF_INUSE | VMF_HASPT)) { \
+		if((vmpr->vm_flags & (VMF_INUSE))) { \
 			PT_SANE(&vmpr->vm_pt); \
 		} \
 	} \
 	map_sanitycheck(__FILE__, __LINE__); \
+	mem_sanitycheck(__FILE__, __LINE__); \
 	assert(incheck == 1);	\
 	incheck = 0;		\
+	/* printf("(%s:%d OK) ", __FILE__, __LINE__); */ \
 	} 
 
 #define SLABSANE(ptr) { \

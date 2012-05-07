@@ -44,12 +44,6 @@ struct exec_info {
 
 int elf_has_interpreter(char *exec_hdr, int hdr_len, char *interp, int maxsz);
 int elf_phdr(char *exec_hdr, int hdr_len, vir_bytes *phdr);
-int read_header_elf(char *exec_hdr, int hdr_len,
-   vir_bytes *text_vaddr, phys_bytes *text_paddr,
-   vir_bytes *text_filebytes, vir_bytes *text_membytes,
-   vir_bytes *data_vaddr, phys_bytes *data_paddr,
-   vir_bytes *data_filebytes, vir_bytes *data_membytes,
-   vir_bytes *pc, off_t *text_offset, off_t *data_offset);
 
 void libexec_patch_ptr(char stack[ARG_MAX], vir_bytes base);
 int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *execi);
@@ -57,6 +51,8 @@ int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *execi);
 typedef int (*libexec_exec_loadfunc_t)(struct exec_info *execi);
 int libexec_load_elf(struct exec_info *execi);
 
+int libexec_copy_memcpy(struct exec_info *execi, off_t offset, off_t vaddr, size_t len);
+int libexec_clear_memset(struct exec_info *execi, off_t vaddr, size_t len);
 int libexec_alloc_mmap_prealloc(struct exec_info *execi, off_t vaddr, size_t len);
 int libexec_alloc_mmap_ondemand(struct exec_info *execi, off_t vaddr, size_t len);
 int libexec_clearproc_vm_procctl(struct exec_info *execi);

@@ -38,7 +38,10 @@ void fpu_sigcontext(struct proc *, struct sigframe *fr, struct
 	sigcontext *sc);
 
 /* main.c */
-int main(void);
+#ifndef UNPAGED
+#define kmain __k_unpaged_kmain
+#endif
+void kmain(kinfo_t *cbi);
 void prepare_shutdown(int how);
 __dead void minix_shutdown(struct timer *tp);
 void bsp_finish_booting(void);
@@ -55,7 +58,7 @@ int mini_notify(const struct proc *src, endpoint_t dst);
 void enqueue(struct proc *rp);
 void dequeue(struct proc *rp);
 void switch_to_user(void);
-void arch_proc_init(int nr, struct proc *rp);
+void arch_proc_reset(struct proc *rp);
 struct proc * arch_finish_switch_to_user(void);
 struct proc *endpoint_lookup(endpoint_t ep);
 #if DEBUG_ENABLE_IPC_WARNINGS
@@ -73,8 +76,7 @@ int try_deliver_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
 	size);
 
 /* start.c */
-void cstart(u16_t cs, u16_t ds, u16_t mds, u16_t parmoff, u16_t
-	parmsize);
+void cstart();
 char *env_get(const char *key);
 
 /* system.c */
@@ -87,16 +89,10 @@ void cause_sig(proc_nr_t proc_nr, int sig_nr);
 void sig_delay_done(struct proc *rp);
 void kernel_call(message *m_user, struct proc * caller);
 void system_init(void);
-#define numap_local(proc_nr, vir_addr, bytes) \
-	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 void clear_endpoint(struct proc *rc);
 void clear_ipc_refs(struct proc *rc, int caller_ret);
 void kernel_call_resume(struct proc *p);
 int sched_proc(struct proc *rp, int priority, int quantum, int cpu);
-
-/* system/do_newmap.c */
-int newmap(struct proc * caller, struct proc *rp, struct mem_map
-	*map_ptr);
 
 /* system/do_vtimer.c */
 void vtimer_check(struct proc *rp);
@@ -152,7 +148,8 @@ void stop_profile_clock(void);
 #endif
 
 /* functions defined in architecture-dependent files. */
-void prot_init(void);
+void prot_init();
+void arch_post_init();
 phys_bytes phys_copy(phys_bytes source, phys_bytes dest, phys_bytes
 	count);
 void phys_copy_fault(void);
@@ -169,18 +166,15 @@ int data_copy(endpoint_t from, vir_bytes from_addr, endpoint_t to,
 	vir_bytes to_addr, size_t bytes);
 int data_copy_vmcheck(struct proc *, endpoint_t from, vir_bytes
 	from_addr, endpoint_t to, vir_bytes to_addr, size_t bytes);
-void alloc_segments(struct proc *rp);
-void vm_stop(void);
-phys_bytes umap_local(register struct proc *rp, int seg, vir_bytes
-	vir_addr, vir_bytes bytes);
 phys_bytes umap_virtual(struct proc* rp, int seg, vir_bytes vir_addr,
 	vir_bytes bytes);
 phys_bytes seg2phys(u16_t);
 int vm_memset(endpoint_t who,
 	phys_bytes source, u8_t pattern, phys_bytes count);
-int intr_init(int, int);
+int intr_init(int);
 void halt_cpu(void);
 void arch_init(void);
+void arch_boot_proc(struct boot_image *b, struct proc *p);
 void cpu_identify(void);
 /* arch dependent FPU initialization per CPU */
 void fpu_init(void);
@@ -195,8 +189,9 @@ void arch_stop_profile_clock(void);
 void arch_ack_profile_clock(void);
 void do_ser_debug(void);
 int arch_get_params(char *parm, int max);
-int arch_set_params(char *parm, int max);
-void arch_pre_exec(struct proc *pr, u32_t, u32_t);
+void memory_init(void);
+void mem_clear_mapcache(void);
+void arch_proc_init(struct proc *pr, u32_t, u32_t, char *);
 int arch_do_vmctl(message *m_ptr, struct proc *p);
 int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf,
 	size_t count);
@@ -210,14 +205,12 @@ void arch_do_syscall(struct proc *proc);
 int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int
 	*flags);
 int arch_phys_map_reply(int index, vir_bytes addr);
-int arch_enable_paging(struct proc * caller, const message * m_ptr);
+int arch_enable_paging(struct proc * caller);
 int vm_check_range(struct proc *caller,
        struct proc *target, vir_bytes vir_addr, size_t bytes);
 
-int copy_msg_from_user(struct proc * p, message * user_mbuf, message *
-	dst);
-int copy_msg_to_user(struct proc * p, message * src, message *
-	user_mbuf);
+int copy_msg_from_user(message * user_mbuf, message * dst);
+int copy_msg_to_user(message * src, message * user_mbuf);
 void switch_address_space(struct proc * p);
 void release_address_space(struct proc *pr);
 

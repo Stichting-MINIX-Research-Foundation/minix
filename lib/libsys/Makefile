@@ -74,7 +74,6 @@ SRCS=  \
 	sys_kill.c \
 	sys_mcontext.c \
 	sys_memset.c \
-	sys_newmap.c \
 	sys_out.c \
 	sys_physcopy.c \
 	sys_privctl.c \
@@ -127,7 +126,7 @@ SRCS=  \
 	vm_umap.c \
 	vm_yield_get_block.c \
 	vm_procctl.c \
-	vprintf.c \
+	vprintf.c
 
 .if ${MKCOVERAGE} != "no"
 SRCS+=	gcov.c \

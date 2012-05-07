@@ -13,6 +13,7 @@
  *      VSCP_VEC_SIZE   number of significant elements in vector
  */
 
+#include <assert.h>
 #include <minix/type.h>
 #include <minix/safecopies.h>
 
@@ -245,6 +246,11 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	vir_bytes size;
 #endif
 
+	if(granter == NONE || grantee == NONE) {
+		printf("safecopy: nonsense processes\n");
+		return EFAULT;
+	}
+
 	/* See if there is a reasonable grant table. */
 	if(!(granter_p = endpoint_lookup(granter))) return EINVAL;
 	if(!HASGRANTTABLE(granter_p)) {
@@ -277,8 +283,6 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	granter = new_granter;
 
 	/* Now it's a regular copy. */
-	v_src.segment = D;
-	v_dst.segment = D;
 	v_src.proc_nr_e = *src;
 	v_dst.proc_nr_e = *dst;
 
@@ -373,8 +377,8 @@ int do_vsafecopy(struct proc * caller, message * m_ptr)
 
 	/* Set vector copy parameters. */
 	src.proc_nr_e = caller->p_endpoint;
+	assert(src.proc_nr_e != NONE);
 	src.offset = (vir_bytes) m_ptr->VSCP_VEC_ADDR;
-	src.segment = dst.segment = D;
 	dst.proc_nr_e = KERNEL;
 	dst.offset = (vir_bytes) vec;
 

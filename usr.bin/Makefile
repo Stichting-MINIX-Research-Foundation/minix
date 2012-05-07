@@ -11,6 +11,6 @@ SUBDIR= login indent m4 make mktemp stat tic sed mkdep uniq seq du man \
 SUBDIR+= ministat
 
 # Minix commands
-SUBDIR+= top mkimage
+SUBDIR+= top 
 
 .include <bsd.subdir.mk>

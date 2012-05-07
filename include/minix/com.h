@@ -89,9 +89,6 @@
 #define ROOT_SYS_PROC_NR  RS_PROC_NR
 #define ROOT_USR_PROC_NR  INIT_PROC_NR
 
-/* Number of processes contained in the system image. */
-#define NR_BOOT_PROCS 	(NR_TASKS + LAST_SPECIAL_PROC_NR + 1)
-
 /*===========================================================================*
  *                	   Kernel notification types                         *
  *===========================================================================*/
@@ -307,7 +304,6 @@
 #  define SYS_SIGSEND    (KERNEL_CALL + 9)	/* sys_sigsend() */
 #  define SYS_SIGRETURN  (KERNEL_CALL + 10)	/* sys_sigreturn() */
 
-#  define SYS_NEWMAP     (KERNEL_CALL + 11)	/* sys_newmap() */
 #  define SYS_MEMSET     (KERNEL_CALL + 13)	/* sys_memset() */
 
 #  define SYS_UMAP       (KERNEL_CALL + 14)	/* sys_umap() */
@@ -533,16 +529,13 @@
 #define SIG_MAP        m2_l1	/* used by kernel to pass signal bit map */
 #define SIG_CTXT_PTR   m2_p1	/* pointer to info to restore signal context */
 
-/* Field names for SYS_FORK, _EXEC, _EXIT, _NEWMAP, GETMCONTEXT, SETMCONTEXT.*/
+/* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */
 #define PR_PRIORITY     m1_i2	/* process priority */
 #define PR_SLOT         m1_i2	/* indicates a process slot */
 #define PR_STACK_PTR    m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
 #define PR_NAME_PTR     m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
-#define PR_MEM_PTR      m1_p1	/* tells where memory map is for sys_newmap
-				 * and sys_fork
-				 */
 #define PR_FORK_FLAGS	m1_i3	/* optional flags for fork operation */
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
 #define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
@@ -624,11 +617,8 @@
 #define VMCTL_I386_GETCR3	13
 #define VMCTL_MEMREQ_GET	14
 #define VMCTL_MEMREQ_REPLY	15
-#define VMCTL_INCSP		16
 #define VMCTL_NOPAGEZERO	18
 #define VMCTL_I386_KERNELLIMIT	19
-#define VMCTL_I386_FREEPDE	23
-#define VMCTL_ENABLE_PAGING	24
 #define VMCTL_I386_INVLPG	25
 #define VMCTL_FLUSHTLB		26
 #define VMCTL_KERN_PHYSMAP	27
@@ -636,6 +626,7 @@
 #define VMCTL_SETADDRSPACE	29
 #define VMCTL_VMINHIBIT_SET	30
 #define VMCTL_VMINHIBIT_CLEAR	31
+#define VMCTL_CLEARMAPCACHE	32
 
 /* Codes and field names for SYS_SYSCTL. */
 #define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */
@@ -830,7 +821,7 @@
 
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */
-#define EXC_NM_PTR	m1_p1		/* parameters in struct exec_newmem */
+#define EXC_NM_PTR	m1_p1		/* parameters in struct exec_info */
 /* Results:
  * the status will be in m_type.
  * the top of the stack will be in m1_i1.

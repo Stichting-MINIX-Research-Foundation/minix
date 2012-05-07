@@ -32,7 +32,7 @@ void trampoline(void);
  * 16-bit mode
  */
 extern volatile u32_t __ap_id;
-extern volatile struct segdesc_s __ap_gdt, __ap_idt;
+extern volatile struct desctableptr_s __ap_gdt, __ap_idt;
 extern void * __trampoline_end;
 
 extern u32_t busclock[CONFIG_MAX_CPUS];
@@ -93,6 +93,8 @@ static phys_bytes copy_trampoline(void)
 	return tramp_base;
 }
 
+extern struct desctableptr_s gdt_desc, idt_desc;
+
 static void smp_start_aps(void)
 {
 	/* 
@@ -111,8 +113,8 @@ static void smp_start_aps(void)
 	outb(RTC_IO, 0xA);
 
 	/* prepare gdt and idt for the new cpus */
-	__ap_gdt = gdt[GDT_INDEX];
-	__ap_idt = gdt[IDT_INDEX];
+	__ap_gdt = gdt_desc;
+	__ap_idt = idt_desc;
 
 	if (!(trampoline_base = copy_trampoline())) {
 		printf("Copying trampoline code failed, cannot boot SMP\n");
@@ -136,7 +138,8 @@ static void smp_start_aps(void)
 		}
 
 		__ap_id = cpu;
-		phys_copy(vir2phys(__ap_id), __ap_id_phys, sizeof(__ap_id));
+		phys_copy(vir2phys((void *) &__ap_id),
+			__ap_id_phys, sizeof(__ap_id));
 		mfence();
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
@@ -216,7 +219,7 @@ static void ap_finish_booting(void)
 	/* inform the world of our presence. */
 	ap_cpu_ready = cpu;
 
-	while(!i386_paging_enabled)
+	while(!bootstrap_pagetable_done)
 		arch_pause();
 
 	/*
@@ -232,7 +235,8 @@ static void ap_finish_booting(void)
 	 * we must load some page tables befre we turn paging on. As VM is
 	 * always present we use those
 	 */
-	segmentation2paging(proc_addr(VM_PROC_NR));
+	pg_load();		/* load bootstrap pagetable built by BSP */
+	vm_enable_paging();
 	
 	printf("CPU %d paging is on\n", cpu);
 
@@ -301,7 +305,7 @@ void smp_init (void)
 		goto uniproc_fallback;
 	}
 
-	lapic_addr = phys2vir(LOCAL_APIC_DEF_ADDR);
+	lapic_addr = LOCAL_APIC_DEF_ADDR;
 	ioapic_enabled = 0;
 
 	tss_init_all();
@@ -347,7 +351,7 @@ uniproc_fallback:
 	apic_idt_init(1); /* Reset to PIC idt ! */
 	idt_reload();
 	smp_reinit_vars (); /* revert to a single proc system. */
-	intr_init (INTS_MINIX, 0); /* no auto eoi */
+	intr_init(0); /* no auto eoi */
 	printf("WARNING : SMP initialization failed\n");
 }
 	

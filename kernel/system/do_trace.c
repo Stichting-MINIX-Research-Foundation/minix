@@ -51,15 +51,13 @@ int do_trace(struct proc * caller, message * m_ptr)
   unsigned char ub;
   int i;
 
-#define COPYTOPROC(seg, addr, myaddr, length) {		\
+#define COPYTOPROC(addr, myaddr, length) {		\
 	struct vir_addr fromaddr, toaddr;		\
 	int r;	\
 	fromaddr.proc_nr_e = KERNEL;			\
 	toaddr.proc_nr_e = tr_proc_nr_e;		\
 	fromaddr.offset = (myaddr);			\
 	toaddr.offset = (addr);				\
-	fromaddr.segment = D;				\
-	toaddr.segment = (seg);				\
 	if((r=virtual_copy_vmcheck(caller, &fromaddr,	\
 			&toaddr, length)) != OK) {	\
 		printf("Can't copy in sys_trace: %d\n", r);\
@@ -67,15 +65,13 @@ int do_trace(struct proc * caller, message * m_ptr)
 	}  \
 }
 
-#define COPYFROMPROC(seg, addr, myaddr, length) {	\
+#define COPYFROMPROC(addr, myaddr, length) {	\
 	struct vir_addr fromaddr, toaddr;		\
 	int r;	\
 	fromaddr.proc_nr_e = tr_proc_nr_e;		\
 	toaddr.proc_nr_e = KERNEL;			\
 	fromaddr.offset = (addr);			\
 	toaddr.offset = (myaddr);			\
-	fromaddr.segment = (seg);			\
-	toaddr.segment = D;				\
 	if((r=virtual_copy_vmcheck(caller, &fromaddr,	\
 			&toaddr, length)) != OK) {	\
 		printf("Can't copy in sys_trace: %d\n", r);\
@@ -96,12 +92,12 @@ int do_trace(struct proc * caller, message * m_ptr)
 	return(OK);
 
   case T_GETINS:		/* return value from instruction space */
-	COPYFROMPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA = tr_data;
 	break;
 
   case T_GETDATA:		/* return value from data space */
-	COPYFROMPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA= tr_data;
 	break;
 
@@ -125,12 +121,12 @@ int do_trace(struct proc * caller, message * m_ptr)
 	break;
 
   case T_SETINS:		/* set value in instruction space */
-	COPYTOPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	COPYTOPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA = 0;
 	break;
 
   case T_SETDATA:			/* set value in data space */
-	COPYTOPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	COPYTOPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA = 0;
 	break;
 
@@ -184,13 +180,13 @@ int do_trace(struct proc * caller, message * m_ptr)
 	break;
 
   case T_READB_INS:		/* get value from instruction space */
-	COPYFROMPROC(T, tr_addr, (vir_bytes) &ub, 1);
+	COPYFROMPROC(tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->CTL_DATA = ub;
 	break;
 
   case T_WRITEB_INS:		/* set value in instruction space */
 	ub = (unsigned char) (tr_data & 0xff);
-	COPYTOPROC(T, tr_addr, (vir_bytes) &ub, 1);
+	COPYTOPROC(tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->CTL_DATA = 0;
 	break;
 

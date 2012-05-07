@@ -43,12 +43,6 @@
 #define USE_MEMSET  	   1	/* write char to a given memory area */
 #define USE_RUNCTL         1	/* control stop flags of a process */
 
-/* Length of program names stored in the process table. This is only used
- * for the debugging dumps that can be generated with the IS server. The PM
- * server keeps its own copy of the program name.  
- */
-#define P_NAME_LEN	   8
-
 /* This section contains defines for valuable system resources that are used
  * by device drivers. The number of elements of the vectors is determined by 
  * the maximum needed by any given driver. The number of interrupt hooks may

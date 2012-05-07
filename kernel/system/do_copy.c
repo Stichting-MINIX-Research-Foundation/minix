@@ -26,7 +26,6 @@ int do_copy(struct proc * caller, message * m_ptr)
   struct vir_addr vir_addr[2];	/* virtual source and destination address */
   phys_bytes bytes;		/* number of bytes to copy */
   int i;
-  endpoint_t pe;
 
 #if 0
   if (caller->p_endpoint != PM_PROC_NR && caller->p_endpoint != VFS_PROC_NR &&
@@ -47,11 +46,10 @@ int do_copy(struct proc * caller, message * m_ptr)
 #endif
 
   /* Dismember the command message. */
-  pe = vir_addr[_SRC_].proc_nr_e = m_ptr->CP_SRC_ENDPT;
-  vir_addr[_SRC_].segment = (pe == NONE ? PHYS_SEG : D);
+  vir_addr[_SRC_].proc_nr_e = m_ptr->CP_SRC_ENDPT;
+  vir_addr[_DST_].proc_nr_e = m_ptr->CP_DST_ENDPT;
+
   vir_addr[_SRC_].offset = (vir_bytes) m_ptr->CP_SRC_ADDR;
-  pe = vir_addr[_DST_].proc_nr_e = m_ptr->CP_DST_ENDPT;
-  vir_addr[_DST_].segment = (pe == NONE ? PHYS_SEG : D);
   vir_addr[_DST_].offset = (vir_bytes) m_ptr->CP_DST_ADDR;
   bytes = (phys_bytes) m_ptr->CP_NR_BYTES;
 
@@ -63,10 +61,9 @@ int do_copy(struct proc * caller, message * m_ptr)
       /* Check if process number was given implictly with SELF and is valid. */
       if (vir_addr[i].proc_nr_e == SELF)
 	vir_addr[i].proc_nr_e = caller->p_endpoint;
-      if (vir_addr[i].segment != PHYS_SEG) {
+      if (vir_addr[i].proc_nr_e != NONE) {
 	if(! isokendpt(vir_addr[i].proc_nr_e, &p)) {
-	  printf("do_copy: %d: seg 0x%x, %d not ok endpoint\n",
-		i, vir_addr[i].segment, vir_addr[i].proc_nr_e);
+	  printf("do_copy: %d: %d not ok endpoint\n", i, vir_addr[i].proc_nr_e);
           return(EINVAL); 
         }
       }

@@ -10,12 +10,16 @@
  */
 #include "kernel.h"
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <libexec.h>
 #include <a.out.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
+#include <machine/vmparam.h>
 #include <minix/u64.h>
+#include <minix/type.h>
 #include "proc.h"
 #include "debug.h"
 #include "clock.h"
@@ -102,35 +106,40 @@ void bsp_finish_booting(void)
   machine.processors_count = 1;
   machine.bsp_id = 0;
 #endif
-  
+
   switch_to_user();
   NOT_REACHABLE;
 }
 
 /*===========================================================================*
- *				main                                         *
+ *			kmain 	                             		*
  *===========================================================================*/
-int main(void)
+void kmain(kinfo_t *local_cbi)
 {
 /* Start the ball rolling. */
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register int i, j;
-  size_t argsz;			/* size of arguments passed to crtso on stack */
+
+  /* save a global copy of the boot parameters */
+  memcpy(&kinfo, local_cbi, sizeof(kinfo));
+  memcpy(&kmess, kinfo.kmess, sizeof(kmess));
+
+  /* We can talk now */
+  printf("MINIX booting\n");
+
+  assert(sizeof(kinfo.boot_procs) == sizeof(image));
+  memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
+
+  cstart();
 
   BKL_LOCK();
-   /* Global value to test segment sanity. */
-   magictest = MAGICTEST;
  
    DEBUGEXTRA(("main()\n"));
 
    proc_init();
 
-  /* Set up proc table entries for processes in boot image.  The stacks
-   * of the servers have been added to the data segment by the monitor, so
-   * the stack pointer is set to the end of the data segment.
-   */
-
+  /* Set up proc table entries for processes in boot image. */
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	int schedulable_proc;
 	proc_nr_t proc_nr;
@@ -142,7 +151,13 @@ int main(void)
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	make_zero64(rp->p_cpu_time_left);
-	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
+
+	if(i >= NR_TASKS) {
+		/* Remember this so it can be passed to VM */
+		multiboot_module_t *mb_mod = &kinfo.module_list[i - NR_TASKS];
+		ip->start_addr = mb_mod->mod_start;
+		ip->len = mb_mod->mod_end - mb_mod->mod_start;
+	}
 	
 	reset_proc_accounting(rp);
 
@@ -154,13 +169,23 @@ int main(void)
 	 * process has set their privileges.
 	 */
 	proc_nr = proc_nr(rp);
-	schedulable_proc = (iskerneln(proc_nr) || isrootsysn(proc_nr));
+	schedulable_proc = (iskerneln(proc_nr) || isrootsysn(proc_nr) ||
+		proc_nr == VM_PROC_NR);
 	if(schedulable_proc) {
 	    /* Assign privilege structure. Force a static privilege id. */
             (void) get_priv(rp, static_priv_id(proc_nr));
 
             /* Priviliges for kernel tasks. */
-            if(iskerneln(proc_nr)) {
+	    if(proc_nr == VM_PROC_NR) {
+                priv(rp)->s_flags = VM_F;
+                priv(rp)->s_trap_mask = SRV_T;
+		ipc_to_m = SRV_M;
+		kcalls = SRV_KC;
+                priv(rp)->s_sig_mgr = SELF;
+                rp->p_priority = SRV_Q;
+                rp->p_quantum_size_ms = SRV_QT;
+	    }
+	    else if(iskerneln(proc_nr)) {
                 /* Privilege flags. */
                 priv(rp)->s_flags = (proc_nr == IDLE ? IDL_F : TSK_F);
                 /* Allowed traps. */
@@ -203,63 +228,33 @@ int main(void)
 	    /* Don't let the process run for now. */
             RTS_SET(rp, RTS_NO_PRIV | RTS_NO_QUANTUM);
 	}
-	rp->p_memmap[T].mem_vir  = ABS2CLICK(ip->memmap.text_vaddr);
-	rp->p_memmap[T].mem_phys = ABS2CLICK(ip->memmap.text_paddr);
-	rp->p_memmap[T].mem_len  = ABS2CLICK(ip->memmap.text_bytes);
-	rp->p_memmap[D].mem_vir  = ABS2CLICK(ip->memmap.data_vaddr);
-	rp->p_memmap[D].mem_phys = ABS2CLICK(ip->memmap.data_paddr);
-	rp->p_memmap[D].mem_len  = ABS2CLICK(ip->memmap.data_bytes);
-	rp->p_memmap[S].mem_phys = ABS2CLICK(ip->memmap.data_paddr +
-					     ip->memmap.data_bytes +
-					     ip->memmap.stack_bytes);
-	rp->p_memmap[S].mem_vir  = ABS2CLICK(ip->memmap.data_vaddr +
-					     ip->memmap.data_bytes +
-					     ip->memmap.stack_bytes);
-	rp->p_memmap[S].mem_len  = 0;
 
-	/* Set initial register values.  The processor status word for tasks 
-	 * is different from that of other processes because tasks can
-	 * access I/O; this is not allowed to less-privileged processes 
-	 */
-	rp->p_reg.pc = ip->memmap.entry;
-	rp->p_reg.psw = (iskerneln(proc_nr)) ? INIT_TASK_PSW : INIT_PSW;
-
-	/* Initialize the server stack pointer. Take it down three words
-	 * to give crtso.s something to use as "argc", "argv" and "envp".
-	 */
-	if (isusern(proc_nr)) {		/* user-space process? */ 
-		rp->p_reg.sp = (rp->p_memmap[S].mem_vir +
-				rp->p_memmap[S].mem_len) << CLICK_SHIFT;
-		argsz = 3 * sizeof(reg_t);
-		rp->p_reg.sp -= argsz;
-		phys_memset(rp->p_reg.sp - 
-			(rp->p_memmap[S].mem_vir << CLICK_SHIFT) +
-			(rp->p_memmap[S].mem_phys << CLICK_SHIFT), 
-			0, argsz);
-	}
+	/* Arch-specific state initialization. */
+	arch_boot_proc(ip, rp);
 
 	/* scheduling functions depend on proc_ptr pointing somewhere. */
 	if(!get_cpulocal_var(proc_ptr))
 		get_cpulocal_var(proc_ptr) = rp;
 
-	/* If this process has its own page table, VM will set the
-	 * PT up and manage it. VM will signal the kernel when it has
-	 * done this; until then, don't let it run.
-	 */
-	if(ip->flags & PROC_FULLVM)
+	/* Process isn't scheduled until VM has set up a pagetable for it. */
+	if(rp->p_nr != VM_PROC_NR && rp->p_nr >= 0)
 		rp->p_rts_flags |= RTS_VMINHIBIT;
 
 	rp->p_rts_flags |= RTS_PROC_STOP;
 	rp->p_rts_flags &= ~RTS_SLOT_FREE;
-	alloc_segments(rp);
 	DEBUGEXTRA(("done\n"));
   }
+
+  /* update boot procs info for VM */
+  memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
 
 #define IPCNAME(n) { \
 	assert((n) >= 0 && (n) <= IPCNO_HIGHEST); \
 	assert(!ipc_call_names[n]);	\
 	ipc_call_names[n] = #n; \
 }
+
+  arch_post_init();
 
   IPCNAME(SEND);
   IPCNAME(RECEIVE);
@@ -268,15 +263,16 @@ int main(void)
   IPCNAME(SENDNB);
   IPCNAME(SENDA);
 
-  /* Architecture-dependent initialization. */
-  DEBUGEXTRA(("arch_init()... "));
-  arch_init();
-  DEBUGEXTRA(("done\n"));
-
   /* System and processes initialization */
+  memory_init();
   DEBUGEXTRA(("system_init()... "));
   system_init();
   DEBUGEXTRA(("done\n"));
+
+  /* The bootstrap phase is over, so we can add the physical
+   * memory used for it to the free list.
+   */
+  add_memmap(&kinfo, kinfo.bootstrap_start, kinfo.bootstrap_len);
 
 #ifdef CONFIG_SMP
   if (config_no_apic) {
@@ -303,7 +299,6 @@ int main(void)
 #endif
 
   NOT_REACHABLE;
-  return 1;
 }
 
 /*===========================================================================*
@@ -360,7 +355,127 @@ void minix_shutdown(timer_t *tp)
 #endif
   hw_intr_disable_all();
   stop_local_timer();
-  intr_init(INTS_ORIG, 0);
   arch_shutdown(tp ? tmr_arg(tp)->ta_int : RBT_PANIC);
+}
+
+/*===========================================================================*
+ *				cstart					     *
+ *===========================================================================*/
+void cstart()
+{
+/* Perform system initializations prior to calling main(). Most settings are
+ * determined with help of the environment strings passed by MINIX' loader.
+ */
+  register char *value;				/* value in key=value pair */
+  int h;
+
+  /* low-level initialization */
+  prot_init();
+
+  /* determine verbosity */
+  if ((value = env_get(VERBOSEBOOTVARNAME)))
+	  verboseboot = atoi(value);
+
+  /* Get clock tick frequency. */
+  value = env_get("hz");
+  if(value)
+	system_hz = atoi(value);
+  if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
+	system_hz = DEFAULT_HZ;
+
+  DEBUGEXTRA(("cstart\n"));
+
+  /* Record miscellaneous information for user-space servers. */
+  kinfo.nr_procs = NR_PROCS;
+  kinfo.nr_tasks = NR_TASKS;
+  strncpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
+  kinfo.release[sizeof(kinfo.release)-1] = '\0';
+  strncpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
+  kinfo.version[sizeof(kinfo.version)-1] = '\0';
+
+  /* Load average data initialization. */
+  kloadinfo.proc_last_slot = 0;
+  for(h = 0; h < _LOAD_HISTORY; h++)
+	kloadinfo.proc_load_history[h] = 0;
+
+#ifdef USE_APIC
+  value = env_get("no_apic");
+  if(value)
+	config_no_apic = atoi(value);
+  else
+	config_no_apic = 1;
+  value = env_get("apic_timer_x");
+  if(value)
+	config_apic_timer_x = atoi(value);
+  else
+	config_apic_timer_x = 1;
+#endif
+
+#ifdef USE_WATCHDOG
+  value = env_get("watchdog");
+  if (value)
+	  watchdog_enabled = atoi(value);
+#endif
+
+#ifdef CONFIG_SMP
+  if (config_no_apic)
+	  config_no_smp = 1;
+  value = env_get("no_smp");
+  if(value)
+	config_no_smp = atoi(value);
+  else
+	config_no_smp = 0;
+#endif
+  DEBUGEXTRA(("intr_init(0)\n"));
+
+  intr_init(0);
+
+  arch_init();
+}
+
+/*===========================================================================*
+ *				get_value				     *
+ *===========================================================================*/
+
+char *get_value(
+  const char *params,			/* boot monitor parameters */
+  const char *name			/* key to look up */
+)
+{
+/* Get environment value - kernel version of getenv to avoid setting up the
+ * usual environment array.
+ */
+  register const char *namep;
+  register char *envp;
+
+  for (envp = (char *) params; *envp != 0;) {
+	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
+		;
+	if (*namep == '\0' && *envp == '=') return(envp + 1);
+	while (*envp++ != 0)
+		;
+  }
+  return(NULL);
+}
+
+/*===========================================================================*
+ *				env_get				     	*
+ *===========================================================================*/
+char *env_get(const char *name)
+{
+	return get_value(kinfo.param_buf, name);
+}
+
+void cpu_print_freq(unsigned cpu)
+{
+        u64_t freq;
+
+        freq = cpu_get_freq(cpu);
+        printf("CPU %d freq %lu MHz\n", cpu, div64u(freq, 1000000));
+}
+
+int is_fpu(void)
+{
+        return get_cpulocal_var(fpu_presence);
 }
 

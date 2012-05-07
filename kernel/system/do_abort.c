@@ -35,10 +35,6 @@ int do_abort(struct proc * caller, message * m_ptr)
 		return p;
       }
       paramsbuffer[len] = '\0';
-
-      /* Parameters seem ok, copy them and prepare shutting down. */
-      if((p = arch_set_params(paramsbuffer, len+1)) != OK)
-	return p;
   }
 
   /* Now prepare to shutdown MINIX. */

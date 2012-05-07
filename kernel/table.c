@@ -34,13 +34,6 @@
 #include "ipc.h"
 #include <minix/com.h>
 
-/* Define boot process flags. */
-#define BVM_F   (PROC_FULLVM)                    /* boot processes with VM */
-#define OVM_F   (PERF_SYS_CORE_FULLVM ? PROC_FULLVM : 0) /* critical boot
-                                                           * processes with
-                                                           * optional VM.
-                                                           */
-
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
  * in the boot image and all kernel tasks must come first.
@@ -51,33 +44,26 @@
  * to prioritize ping messages periodically delivered to system processes.
  */
 
-struct boot_image image[] = {
+struct boot_image image[NR_BOOT_PROCS] = {
 /* process nr, flags, stack size, name */
-{ASYNCM,           0,          0, "asyncm"},
-{IDLE,             0,          0, "idle"  },
-{CLOCK,            0,          0, "clock" },
-{SYSTEM,           0,          0, "system"},
-{HARDWARE,         0,          0, "kernel"},
+{ASYNCM,        "asyncm"},
+{IDLE,          "idle"  },
+{CLOCK,         "clock" },
+{SYSTEM,        "system"},
+{HARDWARE,      "kernel"},
                       
-{DS_PROC_NR,   BVM_F,         16, "ds"    },
-{RS_PROC_NR,       0,       8125, "rs"    },
+{DS_PROC_NR,    "ds"    },
+{RS_PROC_NR,    "rs"    },
                       
-{PM_PROC_NR,   OVM_F,         32, "pm"    },
-{SCHED_PROC_NR,OVM_F,         32, "sched" },
-{VFS_PROC_NR,  BVM_F,         16, "vfs"   },
-{MEM_PROC_NR,  BVM_F,          8, "memory"},
-{LOG_PROC_NR,  BVM_F,         32, "log"   },
-{TTY_PROC_NR,  BVM_F,         16, "tty"   },
-{MFS_PROC_NR,  BVM_F,        128, "mfs"   },
-{VM_PROC_NR,       0,        128, "vm"    },
-{PFS_PROC_NR,  BVM_F,        128, "pfs"   },
-{INIT_PROC_NR, BVM_F,         64, "init"  },
+{PM_PROC_NR,    "pm"    },
+{SCHED_PROC_NR, "sched" },
+{VFS_PROC_NR,   "vfs"   },
+{MEM_PROC_NR,   "memory"},
+{LOG_PROC_NR,   "log"   },
+{TTY_PROC_NR,   "tty"   },
+{MFS_PROC_NR,   "mfs"   },
+{VM_PROC_NR,    "vm"    },
+{PFS_PROC_NR,   "pfs"   },
+{INIT_PROC_NR,  "init"  },
 };
 
-/* Verify the size of the system image table at compile time.
- * If a problem is detected, the size of the 'dummy' array will be negative, 
- * causing a compile time error. Note that no space is actually allocated 
- * because 'dummy' is declared extern.
- */
-extern int dummy[(NR_BOOT_PROCS==sizeof(image)/
-	sizeof(struct boot_image))?1:-1];

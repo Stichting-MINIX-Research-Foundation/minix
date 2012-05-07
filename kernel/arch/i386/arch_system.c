@@ -21,7 +21,7 @@
 #include "oxpcie.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
-#include "mb_utils.h"
+#include "direct_utils.h"
 #include <machine/multiboot.h>
 
 #include "glo.h"
@@ -35,10 +35,6 @@
 #endif
 
 static int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
-
-extern __dead void poweroff_jmp();
-extern void poweroff16();
-extern void poweroff16_end();
 
 /* set MP and NE flags to handle FPU exceptions in native mode. */
 #define CR0_MP_NE	0x0022
@@ -56,142 +52,6 @@ static void ser_dump_proc_cpu(void);
 #if !CONFIG_OXPCIE
 static void ser_init(void);
 #endif
-
-#define     KBCMDP          4       /* kbd controller port (O) */
-#define      KBC_PULSE0     0xfe    /* pulse output bit 0 */
-#define      IO_KBD          0x060           /* 8042 Keyboard */
-
-void
-reset(void)
-{
-        uint8_t b;
-        /*
-         * The keyboard controller has 4 random output pins, one of which is
-         * connected to the RESET pin on the CPU in many PCs.  We tell the
-         * keyboard controller to pulse this line a couple of times.
-         */
-        outb(IO_KBD + KBCMDP, KBC_PULSE0);
-        busy_delay_ms(100);
-        outb(IO_KBD + KBCMDP, KBC_PULSE0);
-        busy_delay_ms(100);
-
-        /*
-         * Attempt to force a reset via the Reset Control register at
-         * I/O port 0xcf9.  Bit 2 forces a system reset when it
-         * transitions from 0 to 1.  Bit 1 selects the type of reset
-         * to attempt: 0 selects a "soft" reset, and 1 selects a
-         * "hard" reset.  We try a "hard" reset.  The first write sets
-         * bit 1 to select a "hard" reset and clears bit 2.  The
-         * second write forces a 0 -> 1 transition in bit 2 to trigger
-         * a reset.
-         */
-        outb(0xcf9, 0x2);
-        outb(0xcf9, 0x6);
-        busy_delay_ms(500);  /* wait 0.5 sec to see if that did it */
-
-        /*
-         * Attempt to force a reset via the Fast A20 and Init register
-         * at I/O port 0x92.  Bit 1 serves as an alternate A20 gate.
-         * Bit 0 asserts INIT# when set to 1.  We are careful to only
-         * preserve bit 1 while setting bit 0.  We also must clear bit
-         * 0 before setting it if it isn't already clear.
-         */
-        b = inb(0x92);
-        if (b != 0xff) {
-                if ((b & 0x1) != 0)
-                        outb(0x92, b & 0xfe);
-                outb(0x92, b | 0x1);
-                busy_delay_ms(500);  /* wait 0.5 sec to see if that did it */
-        }
-
-	/* Triple fault */
-	x86_triplefault();
-
-	/* Give up on resetting */
-	while(1) {
-		;
-	}
-}
-
-static __dead void arch_bios_poweroff(void)
-{
-	u32_t cr0;
-	
-	/* Disable paging */
-	cr0 = read_cr0();
-	cr0 &= ~I386_CR0_PG;
-	write_cr0(cr0);
-	/* Copy 16-bit poweroff code to below 1M */
-	phys_copy(
-		(u32_t)&poweroff16,
-		BIOS_POWEROFF_ENTRY,
-		(u32_t)&poweroff16_end-(u32_t)&poweroff16);
-	poweroff_jmp();
-}
-
-int cpu_has_tsc;
-
-__dead void arch_shutdown(int how)
-{
-	vm_stop();
-
-	/* Mask all interrupts, including the clock. */
-	outb( INT_CTLMASK, ~0);
-
-	if(minix_panicing) {
-		unsigned char unused_ch;
-		/* We're panicing? Then retrieve and decode currently
-		 * loaded segment selectors.
-		 */
-		printseg("cs: ", 1, get_cpulocal_var(proc_ptr), read_cs());
-		printseg("ds: ", 0, get_cpulocal_var(proc_ptr), read_ds());
-		if(read_ds() != read_ss()) {
-			printseg("ss: ", 0, NULL, read_ss());
-		}
-
-		/* Printing is done synchronously over serial. */
-		if (do_serial_debug)
-			reset();
-
-		/* Print accumulated diagnostics buffer and reset. */
-		mb_cls();
-		mb_print("Minix panic. System diagnostics buffer:\n\n");
-		mb_print(kmess_buf);
-		mb_print("\nSystem has panicked, press any key to reboot");
-		while (!mb_read_char(&unused_ch))
-			;
-		reset();
-	}
-
-	if (how == RBT_DEFAULT) {
-		how = RBT_RESET;
-	}
-
-	switch (how) {
-
-		case RBT_HALT:
-			/* Poweroff without boot monitor */
-			arch_bios_poweroff();
-			NOT_REACHABLE;
-
-		case RBT_PANIC:
-			/* Allow user to read panic message */
-			for (; ; ) halt_cpu();
-			NOT_REACHABLE;
-
-		default:	
-		case RBT_REBOOT:
-		case RBT_RESET:
-			/* Reset the system by forcing a processor shutdown. 
-			 * First stop the BIOS memory test by setting a soft
-			 * reset flag.
-			 */
-			reset();
-			NOT_REACHABLE;
-	}
-
-	NOT_REACHABLE;
-}
 
 void fpu_init(void)
 {
@@ -288,19 +148,38 @@ void save_fpu(struct proc *pr)
  */
 static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __aligned(FPUALIGN);
 
-void arch_proc_init(int nr, struct proc *pr)
+void arch_proc_reset(struct proc *pr)
 {
-	if(nr < 0) return;
-	char *v;
+	char *v = NULL;
 
-	assert(nr < NR_PROCS);
+	assert(pr->p_nr < NR_PROCS);
 
-	v = fpu_state[nr];
+	if(pr->p_nr >= 0) {
+		v = fpu_state[pr->p_nr];
+		/* verify alignment */
+		assert(!((vir_bytes)v % FPUALIGN));
+		/* initialize state */
+		memset(v, 0, FPU_XFP_SIZE);
+	}
 
-	/* verify alignment */
-	assert(!((vir_bytes)v % FPUALIGN));
-	
+	/* Clear process state. */
+        memset(&pr->p_reg, 0, sizeof(pr->p_reg));
+        if(iskerneln(pr->p_nr))
+        	pr->p_reg.psw = INIT_TASK_PSW;
+        else
+        	pr->p_reg.psw = INIT_PSW;
+
 	pr->p_seg.fpu_state = v;
+
+	/* Initialize the fundamentals that are (initially) the same for all
+	 * processes - the segment selectors it gets to use.
+	 */
+	pr->p_reg.cs = USER_CS_SELECTOR;
+	pr->p_reg.gs = 
+	pr->p_reg.fs = 
+	pr->p_reg.ss = 
+	pr->p_reg.es = 
+	pr->p_reg.ds = USER_DS_SELECTOR;
 }
 
 int restore_fpu(struct proc *pr)
@@ -362,18 +241,6 @@ void cpu_identify(void)
 
 void arch_init(void)
 {
-#ifdef USE_APIC
-	/*
-	 * this is setting kernel segments to cover most of the phys memory. The
-	 * value is high enough to reach local APIC nad IOAPICs before paging is
-	 * turned on.
-	 */
-	prot_set_kern_seg_limit(0xfff00000);
-	reload_ds();
-#endif
-
-	idt_init();
-
 	/* FIXME stupid a.out
 	 * align the stacks in the stack are to the K_STACK_SIZE which is a
 	 * power of 2
@@ -405,28 +272,11 @@ void arch_init(void)
 		BOOT_VERBOSE(printf("APIC not present, using legacy PIC\n"));
 	}
 #endif
+
+	/* Reserve some BIOS ranges */
+	cut_memmap(&kinfo, BIOS_MEM_BEGIN, BIOS_MEM_END);
+	cut_memmap(&kinfo, BASE_MEM_TOP, UPPER_MEM_END);
 }
-
-#ifdef DEBUG_SERIAL
-void ser_putc(char c)
-{
-        int i;
-        int lsr, thr;
-
-#if CONFIG_OXPCIE
-	oxpcie_putc(c);
-#else
-        lsr= COM1_LSR;
-        thr= COM1_THR;
-        for (i= 0; i<100000; i++)
-        {
-                if (inb( lsr) & LSR_THRE)
-                        break;
-        }
-        outb( thr, c);
-#endif
-}
-
 
 /*===========================================================================*
  *				do_ser_debug				     * 
@@ -484,22 +334,6 @@ static void ser_dump_queues(void)
 #endif
 }
 
-static void ser_dump_segs(void)
-{
-	struct proc *pp;
-	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
-	{
-		if (isemptyp(pp))
-			continue;
-		printf("%d: %s ep %d\n", proc_nr(pp), pp->p_name, pp->p_endpoint);
-		printseg("cs: ", 1, pp, pp->p_reg.cs);
-		printseg("ds: ", 0, pp, pp->p_reg.ds);
-		if(pp->p_reg.ss != pp->p_reg.ds) {
-			printseg("ss: ", 0, pp, pp->p_reg.ss);
-		}
-	}
-}
-
 #ifdef CONFIG_SMP
 static void dump_bkl_usage(void)
 {
@@ -548,9 +382,6 @@ static void ser_debug(const int c)
 	case '2':
 		ser_dump_queues();
 		break;
-	case '3':
-		ser_dump_segs();
-		break;
 #ifdef CONFIG_SMP
 	case '4':
 		ser_dump_proc_cpu();
@@ -580,6 +411,7 @@ static void ser_debug(const int c)
 	serial_debug_active = 0;
 }
 
+#if DEBUG_SERIAL
 void ser_dump_proc()
 {
 	struct proc *pp;
@@ -650,25 +482,6 @@ void arch_ack_profile_clock(void)
 
 #endif
 
-/* Saved by mpx386.s into these variables. */
-u32_t params_size, params_offset, mon_ds;
-
-int arch_get_params(char *params, int maxsize)
-{
-	phys_copy(seg2phys(mon_ds) + params_offset, vir2phys(params),
-		MIN(maxsize, params_size));
-	params[maxsize-1] = '\0';
-	return OK;
-}
-
-int arch_set_params(char *params, int size)
-{
-	if(size > params_size)
-		return E2BIG;
-	phys_copy(vir2phys(params), seg2phys(mon_ds) + params_offset, size);
-	return OK;
-}
-
 void arch_do_syscall(struct proc *proc)
 {
   /* do_ipc assumes that it's running because of the current process */
@@ -691,6 +504,12 @@ struct proc * arch_finish_switch_to_user(void)
 	/* set pointer to the process to run on the stack */
 	p = get_cpulocal_var(proc_ptr);
 	*((reg_t *)stk) = (reg_t) p;
+
+	/* make sure IF is on in FLAGS so that interrupts won't be disabled
+	 * once p's context is restored. this should not be possible.
+	 */
+        assert(p->p_reg.psw & (1L << 9));
+
 	return p;
 }
 
@@ -734,14 +553,14 @@ static void ser_init(void)
 	unsigned divisor;
 
 	/* keep BIOS settings if cttybaud is not set */
-	if (serial_debug_baud <= 0) return;
+	if (kinfo.serial_debug_baud <= 0) return;
 
 	/* set DLAB to make baud accessible */
 	lcr = LCR_8BIT | LCR_1STOP | LCR_NPAR;
 	outb(COM1_LCR, lcr | LCR_DLAB);
 
 	/* set baud rate */
-	divisor = UART_BASE_FREQ / serial_debug_baud;
+	divisor = UART_BASE_FREQ / kinfo.serial_debug_baud;
 	if (divisor < 1) divisor = 1;
 	if (divisor > 65535) divisor = 65535;
 	

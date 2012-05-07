@@ -5,7 +5,6 @@
 SRCS+= 	\
 	do_fork.c \
 	do_exec.c \
-	do_newmap.c \
 	do_clear.c \
 	do_exit.c \
 	do_trace.c \

@@ -124,10 +124,6 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 
 	this_vm_vmp = &vmproc[VM_PROC_NR];
 
-	/* Copy settings from current VM. */
-	new_vm_vmp->vm_stacktop = this_vm_vmp->vm_stacktop;
-	new_vm_vmp->vm_arch.vm_data_top = this_vm_vmp->vm_arch.vm_data_top;
-
 	/* Pin memory for the new VM instance. */
 	r = map_pin_memory(new_vm_vmp);
 	if(r != OK) {

@@ -52,4 +52,6 @@ extern int(*call_vec[]) (void);
 extern int(*pfs_call_vec[]) (void);
 extern char mode_map[];	/* mapping from O_ACCMODE mask to R_BIT/W_BIT flags */
 
+EXTERN struct kinfo kinfo;     /* kernel information */
+
 #endif

@@ -29,7 +29,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
   struct proc *procp;
   struct vumap_vir vvec[MAPVEC_NR];
   struct vumap_phys pvec[MAPVEC_NR];
-  vir_bytes vaddr, paddr, vir_addr, lin_addr;
+  vir_bytes vaddr, paddr, vir_addr;
   phys_bytes phys_addr;
   int i, r, proc_nr, vcount, pcount, pmax, access;
   size_t size, chunk, offset;
@@ -89,13 +89,9 @@ int do_vumap(struct proc *caller, message *m_ptr)
 	okendpt(granter, &proc_nr);
 	procp = proc_addr(proc_nr);
 
-	lin_addr = umap_local(procp, D, vir_addr, size);
-	if (!lin_addr)
-		return EFAULT;
-
 	/* Each virtual range is made up of one or more physical ranges. */
 	while (size > 0 && pcount < pmax) {
-		chunk = vm_lookup_range(procp, lin_addr, &phys_addr, size);
+		chunk = vm_lookup_range(procp, vir_addr, &phys_addr, size);
 
 		if (!chunk) {
 			/* Try to get the memory allocated, unless the memory
@@ -107,14 +103,14 @@ int do_vumap(struct proc *caller, message *m_ptr)
 			/* This call may suspend the current call, or return an
 			 * error for a previous invocation.
 			 */
-			return vm_check_range(caller, procp, lin_addr, size);
+			return vm_check_range(caller, procp, vir_addr, size);
 		}
 
 		pvec[pcount].vp_addr = phys_addr;
 		pvec[pcount].vp_size = chunk;
 		pcount++;
 
-		lin_addr += chunk;
+		vir_addr += chunk;
 		size -= chunk;
 	}
 

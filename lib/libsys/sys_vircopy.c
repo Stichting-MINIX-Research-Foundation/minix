@@ -23,8 +23,8 @@ phys_bytes bytes;		/* how many bytes */
   copy_mess.CP_NR_BYTES = (long) bytes;
 
   /* backwards compatability D segs */
-  copy_mess.CP_DST_SPACE_OBSOLETE = D;
-  copy_mess.CP_SRC_SPACE_OBSOLETE = D;
+  copy_mess.CP_DST_SPACE_OBSOLETE = D_OBSOLETE;
+  copy_mess.CP_SRC_SPACE_OBSOLETE = D_OBSOLETE;
 
   return(_kernel_call(SYS_VIRCOPY, &copy_mess));
 }

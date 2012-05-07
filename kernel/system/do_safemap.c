@@ -120,21 +120,12 @@ int map_invoke_vm(struct proc * caller,
 			size_t size, int flag)
 {
 	struct proc *src, *dst;
-	phys_bytes lin_src, lin_dst;
 
 	src = endpoint_lookup(end_s);
 	dst = endpoint_lookup(end_d);
 
-	lin_src = umap_local(src, D, off_s, size);
-	lin_dst = umap_local(dst, D, off_d, size);
-	if(lin_src == 0 || lin_dst == 0) {
-		printf("map_invoke_vm: error in umap_local.\n");
-		return EINVAL;
-	}
-
 	/* Make sure the linear addresses are both page aligned. */
-	if(lin_src % CLICK_SIZE != 0
-		|| lin_dst % CLICK_SIZE != 0) {
+	if(off_s % CLICK_SIZE != 0 || off_d % CLICK_SIZE != 0) {
 		printf("map_invoke_vm: linear addresses not page aligned.\n");
 		return EINVAL;
 	}
@@ -149,9 +140,9 @@ int map_invoke_vm(struct proc * caller,
 	/* Map to the destination. */
 	caller->p_vmrequest.req_type = req_type;
 	caller->p_vmrequest.target = end_d;		/* destination proc */
-	caller->p_vmrequest.params.map.vir_d = lin_dst;	/* destination addr */
+	caller->p_vmrequest.params.map.vir_d = off_d;	/* destination addr */
 	caller->p_vmrequest.params.map.ep_s = end_s;	/* source process */
-	caller->p_vmrequest.params.map.vir_s = lin_src;	/* source address */
+	caller->p_vmrequest.params.map.vir_s = off_s;	/* source address */
 	caller->p_vmrequest.params.map.length = (vir_bytes) size;
 	caller->p_vmrequest.params.map.writeflag = flag;
 

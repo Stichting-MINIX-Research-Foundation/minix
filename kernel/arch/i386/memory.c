@@ -27,24 +27,27 @@
 #endif
 #endif
 
-int i386_paging_enabled = 0;
-
-static int psok = 0;
-
-#define MAX_FREEPDES	2
-static int nfreepdes = 0, freepdes[MAX_FREEPDES];
+phys_bytes video_mem_vaddr = 0;
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
+static int nfreepdes = 0;
+#define MAXFREEPDES	2
+static int freepdes[MAXFREEPDES];
 
 static u32_t phys_get32(phys_bytes v);
-static void vm_enable_paging(void);
 
-	
-void segmentation2paging(struct proc * current)
+void mem_clear_mapcache(void)
 {
-	/* switch to the current process page tables before turning paging on */
-	switch_address_space(current);
-	vm_enable_paging();
+	int i;
+	for(i = 0; i < nfreepdes; i++) {
+		struct proc *ptproc = get_cpulocal_var(ptproc);
+		int pde = freepdes[i];
+		u32_t *ptv;
+		assert(ptproc);
+		ptv = ptproc->p_seg.p_cr3_v;
+		assert(ptv);
+		ptv[pde] = 0;
+	}
 }
 
 /* This function sets up a mapping from within the kernel's address
@@ -65,7 +68,7 @@ void segmentation2paging(struct proc * current)
  *
  * The logical number supplied by the caller is translated into an actual
  * pde number to be used, and a pointer to it (linear address) is returned
- * for actual use by phys_copy or phys_memset.
+ * for actual use by phys_copy or memset.
  */
 static phys_bytes createpde(
 	const struct proc *pr,	/* Requested process, NULL for physical. */
@@ -83,10 +86,10 @@ static phys_bytes createpde(
 	pde = freepdes[free_pde_idx];
 	assert(pde >= 0 && pde < 1024);
 
-	if(pr && ((pr == get_cpulocal_var(ptproc)) || !HASPT(pr))) {
+	if(pr && ((pr == get_cpulocal_var(ptproc)) || iskernelp(pr))) {
 		/* Process memory is requested, and
 		 * it's a process that is already in current page table, or
-		 * a process that is in every page table.
+		 * the kernel, which is always there.
 		 * Therefore linaddr is valid directly, with the requested
 		 * size.
 		 */
@@ -137,9 +140,6 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 {
 	u32_t addr;
 	proc_nr_t procslot;
-
-	assert(vm_running);
-	assert(nfreepdes >= MAX_FREEPDES);
 
 	assert(get_cpulocal_var(ptproc));
 	assert(get_cpulocal_var(proc_ptr));
@@ -219,13 +219,8 @@ static u32_t phys_get32(phys_bytes addr)
 	const u32_t v;
 	int r;
 
-	if(!vm_running) {
-		phys_copy(addr, vir2phys(&v), sizeof(v));
-		return v;
-	}
-
 	if((r=lin_lin_copy(NULL, addr, 
-		proc_addr(SYSTEM), vir2phys(&v), sizeof(v))) != OK) {
+		proc_addr(SYSTEM), (phys_bytes) &v, sizeof(v))) != OK) {
 		panic("lin_lin_copy for phys_get32 failed: %d",  r);
 	}
 
@@ -266,87 +261,6 @@ static char *cr4_str(u32_t e)
 }
 #endif
 
-void vm_stop(void)
-{
-	write_cr0(read_cr0() & ~I386_CR0_PG);
-}
-
-static void vm_enable_paging(void)
-{
-	u32_t cr0, cr4;
-	int pgeok;
-
-	psok = _cpufeature(_CPUF_I386_PSE);
-	pgeok = _cpufeature(_CPUF_I386_PGE);
-
-	cr0= read_cr0();
-	cr4= read_cr4();
-
-	/* First clear PG and PGE flag, as PGE must be enabled after PG. */
-	write_cr0(cr0 & ~I386_CR0_PG);
-	write_cr4(cr4 & ~(I386_CR4_PGE | I386_CR4_PSE));
-
-	cr0= read_cr0();
-	cr4= read_cr4();
-
-	/* Our first page table contains 4MB entries. */
-	if(psok)
-		cr4 |= I386_CR4_PSE;
-
-	write_cr4(cr4);
-
-	/* First enable paging, then enable global page flag. */
-	cr0 |= I386_CR0_PG;
-	write_cr0(cr0 );
-	cr0 |= I386_CR0_WP;
-	write_cr0(cr0);
-
-	/* May we enable these features? */
-	if(pgeok)
-		cr4 |= I386_CR4_PGE;
-
-	write_cr4(cr4);
-}
-
-/*===========================================================================*
- *                              umap_local                                   *
- *===========================================================================*/
-phys_bytes umap_local(rp, seg, vir_addr, bytes)
-register struct proc *rp;       /* pointer to proc table entry for process */
-int seg;                        /* T, D, or S segment */
-vir_bytes vir_addr;             /* virtual address in bytes within the seg */
-vir_bytes bytes;                /* # of bytes to be copied */
-{
-/* Calculate the physical memory address for a given virtual address. */
-  vir_clicks vc;                /* the virtual address in clicks */
-  phys_bytes pa;                /* intermediate variables as phys_bytes */
-  phys_bytes seg_base;
-
-  if(seg != T && seg != D && seg != S)
-	panic("umap_local: wrong seg: %d",  seg);
-
-  if (bytes <= 0) return( (phys_bytes) 0);
-  if (vir_addr + bytes <= vir_addr) return 0;   /* overflow */
-  vc = (vir_addr + bytes - 1) >> CLICK_SHIFT;   /* last click of data */
- 
-  if (seg != T)
-        seg = (vc < rp->p_memmap[D].mem_vir + rp->p_memmap[D].mem_len ? D : S);
-  else if (rp->p_memmap[T].mem_len == 0)	/* common I&D? */
-        seg = D;				/* ptrace needs this */
- 
-  if ((vir_addr>>CLICK_SHIFT) >= rp->p_memmap[seg].mem_vir +
-        rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
- 
-  if (vc >= rp->p_memmap[seg].mem_vir +
-        rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
-  
-  seg_base = (phys_bytes) rp->p_memmap[seg].mem_phys;
-  seg_base = seg_base << CLICK_SHIFT;   /* segment origin in bytes */
-  pa = (phys_bytes) vir_addr;
-  pa -= rp->p_memmap[seg].mem_vir << CLICK_SHIFT;
-  return(seg_base + pa);
-}
-
 /*===========================================================================*
  *                              umap_virtual                                 *
  *===========================================================================*/
@@ -356,22 +270,15 @@ int seg;                        /* T, D, or S segment */
 vir_bytes vir_addr;             /* virtual address in bytes within the seg */
 vir_bytes bytes;                /* # of bytes to be copied */
 {
-	vir_bytes linear;
 	phys_bytes phys = 0;
 
-	if(!(linear = umap_local(rp, seg, vir_addr, bytes))) {
-			printf("SYSTEM:umap_virtual: umap_local failed\n");
-			phys = 0;
-		} else {
-			if(vm_lookup(rp, linear, &phys, NULL) != OK) {
-				printf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%x: 0x%lx failed\n", rp->p_name, seg, vir_addr);
-				phys = 0;
-			} else {
-				if(phys == 0)
-					panic("vm_lookup returned phys: %d",  phys);
-			}
-		}
-	
+	if(vm_lookup(rp, vir_addr, &phys, NULL) != OK) {
+		printf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%x: 0x%lx failed\n", rp->p_name, seg, vir_addr);
+		phys = 0;
+	} else {
+		if(phys == 0)
+			panic("vm_lookup returned phys: %d",  phys);
+	}
 
 	if(phys == 0) {
 		printf("SYSTEM:umap_virtual: lookup failed\n");
@@ -381,9 +288,9 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	/* Now make sure addresses are contiguous in physical memory
 	 * so that the umap makes sense.
 	 */
-	if(bytes > 0 && vm_lookup_range(rp, linear, NULL, bytes) != bytes) {
+	if(bytes > 0 && vm_lookup_range(rp, vir_addr, NULL, bytes) != bytes) {
 		printf("umap_virtual: %s: %lu at 0x%lx (vir 0x%lx) not contiguous\n",
-			rp->p_name, bytes, linear, vir_addr);
+			rp->p_name, bytes, vir_addr, vir_addr);
 		return 0;
 	}
 
@@ -409,11 +316,7 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 	assert(proc);
 	assert(physical);
 	assert(!isemptyp(proc));
-
-	if(!HASPT(proc)) {
-		*physical = virtual;
-		return OK;
-	}
+	assert(HASPT(proc));
 
 	/* Retrieve page directory entry. */
 	root = (u32_t *) proc->p_seg.p_cr3;
@@ -472,9 +375,7 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 
 	assert(proc);
 	assert(bytes > 0);
-
-	if (!HASPT(proc))
-		return bytes;
+	assert(HASPT(proc));
 
 	/* Look up the first page. */
 	if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
@@ -548,9 +449,6 @@ int vm_check_range(struct proc *caller, struct proc *target,
 	 */
 	int r;
 
-	if (!vm_running)
-		return EFAULT;
-
 	if ((caller->p_misc_flags & MF_KCALL_RESUME) &&
 			(r = caller->p_vmrequest.vmresult) != OK)
 		return r;
@@ -570,7 +468,7 @@ void delivermsg(struct proc *rp)
 	assert(rp->p_misc_flags & MF_DELIVERMSG);
 	assert(rp->p_delivermsg.m_source != NONE);
 
-	if (copy_msg_to_user(rp, &rp->p_delivermsg,
+	if (copy_msg_to_user(&rp->p_delivermsg,
 				(message *) rp->p_delivermsg_vir)) {
 		printf("WARNING wrong user pointer 0x%08lx from "
 				"process %s / %d\n",
@@ -671,23 +569,11 @@ int vm_memset(endpoint_t who, phys_bytes ph, const u8_t c, phys_bytes bytes)
 	/* NONE for physical, otherwise virtual */
 	if(who != NONE) {
 		int n;
-		vir_bytes lin;
-		assert(vm_running);
 		if(!isokendpt(who, &n)) return ESRCH;
 		whoptr = proc_addr(n);
-	        if(!(lin = umap_local(whoptr, D, ph, bytes))) return EFAULT;
-		ph = lin;
 	} 
 	
 	p = c | (c << 8) | (c << 16) | (c << 24);
-
-	if(!vm_running) {
-		if(who != NONE) panic("can't vm_memset without vm running");
-		phys_memset(ph, p, bytes);
-		return OK;
-	}
-
-	assert(nfreepdes >= MAX_FREEPDES);
 
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 
@@ -736,9 +622,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 {
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */
-  phys_bytes phys_addr[2];	/* absolute source and destination */ 
-  int seg_index;
-  int i;
+  int i, r;
   struct proc *procs[2];
 
   assert((vmcheck && caller) || (!vmcheck && !caller));
@@ -751,111 +635,57 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   vir_addr[_DST_] = dst_addr;
 
   for (i=_SRC_; i<=_DST_; i++) {
-	int proc_nr, type;
+  	endpoint_t proc_e = vir_addr[i]->proc_nr_e;
+	int proc_nr;
 	struct proc *p;
 
- 	type = vir_addr[i]->segment & SEGMENT_TYPE;
-	if((type != PHYS_SEG) && isokendpt(vir_addr[i]->proc_nr_e, &proc_nr))
-		p = proc_addr(proc_nr);
-	else 
+	if(proc_e == NONE) {
 		p = NULL;
+	} else {
+		if(!isokendpt(proc_e, &proc_nr)) {
+			printf("virtual_copy: no reasonable endpoint\n");
+			return ESRCH;
+		}
+		p = proc_addr(proc_nr);
+	}
 
 	procs[i] = p;
-
-      /* Get physical address. */
-      switch(type) {
-      case LOCAL_SEG:
-      case LOCAL_VM_SEG:
-	  if(!p) {
-		return EDEADSRCDST;
-	  }
-          seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
-	  if(type == LOCAL_SEG)
-	          phys_addr[i] = umap_local(p, seg_index, vir_addr[i]->offset,
-			bytes);
-	  else
-	  	phys_addr[i] = umap_virtual(p, seg_index,
-				vir_addr[i]->offset, bytes);
-	  if(phys_addr[i] == 0) {
-		printf("virtual_copy: map 0x%x failed for %s seg %d, "
-			"offset %lx, len %lu, i %d\n",
-			type, p->p_name, seg_index, vir_addr[i]->offset,
-			bytes, i);
-	  }
-          break;
-      case PHYS_SEG:
-          phys_addr[i] = vir_addr[i]->offset;
-          break;
-      default:
-	  printf("virtual_copy: strange type 0x%x\n", type);
-	  return EINVAL;
-      }
-
-      /* Check if mapping succeeded. */
-      if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG)  {
-      printf("virtual_copy EFAULT\n");
-	  return EFAULT;
-      }
   }
 
-  if(vm_running) {
-	int r;
-
-	if(caller && (caller->p_misc_flags & MF_KCALL_RESUME)) {
-		assert(caller->p_vmrequest.vmresult != VMSUSPEND);
-		if(caller->p_vmrequest.vmresult != OK) {
-	  		return caller->p_vmrequest.vmresult;
-		}
-	}
-
-	if((r=lin_lin_copy(procs[_SRC_], phys_addr[_SRC_],
-		procs[_DST_], phys_addr[_DST_], bytes)) != OK) {
-		struct proc *target = NULL;
-		phys_bytes lin;
-		if(r != EFAULT_SRC && r != EFAULT_DST)
-			panic("lin_lin_copy failed: %d",  r);
-		if(!vmcheck || !caller) {
-	  		return r;
-		}
-
-		if(r == EFAULT_SRC) {
-			lin = phys_addr[_SRC_];
-			target = procs[_SRC_];
-		} else if(r == EFAULT_DST) {
-			lin = phys_addr[_DST_];
-			target = procs[_DST_];
-		} else {
-			panic("r strange: %d",  r);
-		}
-
-		assert(caller);
-		assert(target);
-
-		vm_suspend(caller, target, lin, bytes, VMSTYPE_KERNELCALL);
-		return VMSUSPEND;
-	}
-
-  	return OK;
+  if(caller && (caller->p_misc_flags & MF_KCALL_RESUME)) {
+  	assert(caller->p_vmrequest.vmresult != VMSUSPEND);
+  	if(caller->p_vmrequest.vmresult != OK) {
+    		return caller->p_vmrequest.vmresult;
+  	}
   }
 
-  assert(!vm_running);
+  if((r=lin_lin_copy(procs[_SRC_], vir_addr[_SRC_]->offset,
+  	procs[_DST_], vir_addr[_DST_]->offset, bytes)) != OK) {
+  	struct proc *target = NULL;
+  	phys_bytes lin;
+  	if(r != EFAULT_SRC && r != EFAULT_DST)
+  		panic("lin_lin_copy failed: %d",  r);
+  	if(!vmcheck || !caller) {
+    		return r;
+  	}
 
-  /* can't copy to/from process with PT without VM */
-#define NOPT(p) (!(p) || !HASPT(p))
-  if(!NOPT(procs[_SRC_])) {
-	printf("ignoring page table src: %s / %d at 0x%x\n",
-		procs[_SRC_]->p_name, procs[_SRC_]->p_endpoint, procs[_SRC_]->p_seg.p_cr3);
-}
-  if(!NOPT(procs[_DST_])) {
-	printf("ignoring page table dst: %s / %d at 0x%x\n",
-		procs[_DST_]->p_name, procs[_DST_]->p_endpoint,
-		procs[_DST_]->p_seg.p_cr3);
+  	if(r == EFAULT_SRC) {
+  		lin = vir_addr[_SRC_]->offset;
+  		target = procs[_SRC_];
+  	} else if(r == EFAULT_DST) {
+  		lin = vir_addr[_DST_]->offset;
+  		target = procs[_DST_];
+  	} else {
+  		panic("r strange: %d",  r);
+  	}
+
+	assert(caller);
+	assert(target);
+
+	vm_suspend(caller, target, lin, bytes, VMSTYPE_KERNELCALL);
+	return VMSUSPEND;
   }
 
-  /* Now copy bytes between physical addresseses. */
-  if(phys_copy(phys_addr[_SRC_], phys_addr[_DST_], (phys_bytes) bytes))
-  	return EFAULT;
- 
   return OK;
 }
 
@@ -868,11 +698,12 @@ int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
 {
   struct vir_addr src, dst;
 
-  src.segment = dst.segment = D;
   src.offset = from_addr;
   dst.offset = to_addr;
   src.proc_nr_e = from_proc;
   dst.proc_nr_e = to_proc;
+  assert(src.proc_nr_e != NONE);
+  assert(dst.proc_nr_e != NONE);
 
   return virtual_copy(&src, &dst, bytes);
 }
@@ -887,37 +718,48 @@ int data_copy_vmcheck(struct proc * caller,
 {
   struct vir_addr src, dst;
 
-  src.segment = dst.segment = D;
   src.offset = from_addr;
   dst.offset = to_addr;
   src.proc_nr_e = from_proc;
   dst.proc_nr_e = to_proc;
+  assert(src.proc_nr_e != NONE);
+  assert(dst.proc_nr_e != NONE);
 
   return virtual_copy_vmcheck(caller, &src, &dst, bytes);
 }
 
-/*===========================================================================*
- *				arch_pre_exec				     *
- *===========================================================================*/
-void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
+void memory_init(void)
 {
-/* set program counter and stack pointer. */
-	pr->p_reg.pc = ip;
-	pr->p_reg.sp = sp;
+	assert(nfreepdes == 0);
+
+	freepdes[nfreepdes++] = kinfo.freepde_start++;
+	freepdes[nfreepdes++] = kinfo.freepde_start++;
+
+	assert(kinfo.freepde_start < I386_VM_DIR_ENTRIES);
+	assert(nfreepdes == 2);
+	assert(nfreepdes <= MAXFREEPDES);
 }
 
-/* VM reports page directory slot we're allowed to use freely. */
-void i386_freepde(const int pde)
+/*===========================================================================*
+ *				arch_proc_init				     *
+ *===========================================================================*/
+void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp, char *name)
 {
-	if(nfreepdes >= MAX_FREEPDES)
-		return;
-	freepdes[nfreepdes++] = pde;
+	arch_proc_reset(pr);
+	strcpy(pr->p_name, name);
+
+	/* set custom state we know */
+	pr->p_reg.pc = ip;
+	pr->p_reg.sp = sp;
 }
 
 static int oxpcie_mapping_index = -1,
 	lapic_mapping_index = -1,
 	ioapic_first_index = -1,
-	ioapic_last_index = -1;
+	ioapic_last_index = -1,
+	video_mem_mapping_index = -1;
+
+extern char *video_mem;
 
 int arch_phys_map(const int index,
 			phys_bytes *addr,
@@ -929,6 +771,8 @@ int arch_phys_map(const int index,
 	static char *ser_var = NULL;
 
 	if(first) {
+		video_mem_mapping_index = freeidx++;
+
 #ifdef USE_APIC
 		if(lapic_addr)
 			lapic_mapping_index = freeidx++;
@@ -950,20 +794,28 @@ int arch_phys_map(const int index,
 			}
 		}
 #endif
+
 		first = 0;
 	}
 
 #ifdef USE_APIC
-	/* map the local APIC if enabled */
-	if (index == lapic_mapping_index) {
+	if (index == video_mem_mapping_index) {
+		/* map video memory in so we can print panic messages */
+		*addr = MULTIBOOT_VIDEO_BUFFER;
+		*len = I386_PAGE_SIZE;
+		*flags = 0;
+		return OK;
+	}
+	else if (index == lapic_mapping_index) {
+		/* map the local APIC if enabled */
 		if (!lapic_addr)
 			return EINVAL;
-		*addr = vir2phys(lapic_addr);
+		*addr = lapic_addr;
 		*len = 4 << 10 /* 4kB */;
 		*flags = VMMF_UNCACHED;
 		return OK;
 	}
-	else if (ioapic_enabled && index <= nioapics) {
+	else if (ioapic_enabled && index <= ioapic_last_index) {
 		*addr = io_apic[index - 1].paddr;
 		*len = 4 << 10 /* 4kB */;
 		*flags = VMMF_UNCACHED;
@@ -993,7 +845,8 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 	}
 	else if (ioapic_enabled && index >= ioapic_first_index &&
 		index <= ioapic_last_index) {
-		io_apic[index - ioapic_first_index].vaddr = addr;
+		int i = index - ioapic_first_index;
+		io_apic[i].vaddr = addr;
 		return OK;
 	}
 #endif
@@ -1004,56 +857,22 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 #endif
+	if (index == video_mem_mapping_index) {
+		video_mem_vaddr =  addr;
+		return OK;
+	}
 
 	return EINVAL;
 }
 
-int arch_enable_paging(struct proc * caller, const message * m_ptr)
+int arch_enable_paging(struct proc * caller)
 {
-	struct vm_ep_data ep_data;
-	int r;
+	assert(caller->p_seg.p_cr3);
 
-	/* switch_address_space() checks what is in cr3, and do nothing if it's
-	 * the same as the cr3 of its argument, newptproc.  If MINIX was
-	 * previously booted, this could very well be the case.
-	 *
-	 * The first time switch_address_space() is called, we want to
-	 * force it to do something (load cr3 and set newptproc), so we
-	 * zero cr3, and force paging off to make that a safe thing to do.
-	 *
-	 * After that, segmentation2paging() enables paging with the page table
-	 * of caller loaded.
-	 */
+	/* load caller's page table */
+	switch_address_space(caller);
 
-	vm_stop();
-	write_cr3(0);
-
-	/* switch from segmentation only to paging */
-	segmentation2paging(caller);
-
-	vm_running = 1;
-
-	/*
-	 * copy the extra data associated with the call from userspace
-	 */
-	if((r=data_copy(caller->p_endpoint, (vir_bytes)m_ptr->SVMCTL_VALUE,
-		KERNEL, (vir_bytes) &ep_data, sizeof(ep_data))) != OK) {
-		printf("vmctl_enable_paging: data_copy failed! (%d)\n", r);
-		return r;
-	}
-
-	/*
-	 * when turning paging on i386 we also change the segment limits to make
-	 * the special mappings requested by the kernel reachable
-	 */
-	if ((r = prot_set_kern_seg_limit(ep_data.data_seg_limit)) != OK)
-		return r;
-
-	/*
-	 * install the new map provided by the call
-	 */
-	if (newmap(caller, caller, ep_data.mem_map) != OK)
-		panic("arch_enable_paging: newmap failed");
+	video_mem = (char *) video_mem_vaddr;
 
 #ifdef USE_APIC
 	/* start using the virtual addresses */
@@ -1073,8 +892,6 @@ int arch_enable_paging(struct proc * caller, const message * m_ptr)
 	}
 #if CONFIG_SMP
 	barrier();
-
-	i386_paging_enabled = 1;
 
 	wait_for_APs_to_finish_booting();
 #endif
@@ -1120,7 +937,7 @@ int platform_tbl_ptr(phys_bytes start,
 	phys_bytes addr;
 
 	for (addr = start; addr < end; addr += increment) {
-		phys_copy (addr, vir2phys(buff), size);
+		phys_copy (addr, (phys_bytes) buff, size);
 		if (cmp_f(buff)) {
 			if (phys_addr)
 				*phys_addr = addr;

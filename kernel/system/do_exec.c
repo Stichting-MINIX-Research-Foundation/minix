@@ -21,6 +21,7 @@ int do_exec(struct proc * caller, message * m_ptr)
 /* Handle sys_exec().  A process has done a successful EXEC. Patch it up. */
   register struct proc *rp;
   int proc_nr;
+  char name[PROC_NAME_LEN];
 
   if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr))
 	return EINVAL;
@@ -33,11 +34,14 @@ int do_exec(struct proc * caller, message * m_ptr)
 
   /* Save command name for debugging, ps(1) output, etc. */
   if(data_copy(caller->p_endpoint, (vir_bytes) m_ptr->PR_NAME_PTR,
-	KERNEL, (vir_bytes) rp->p_name, (phys_bytes) P_NAME_LEN - 1) != OK)
-  	strncpy(rp->p_name, "<unset>", P_NAME_LEN);
+	KERNEL, (vir_bytes) name,
+	(phys_bytes) sizeof(name) - 1) != OK)
+  	strncpy(name, "<unset>", PROC_NAME_LEN);
 
-  /* Do architecture-specific exec() stuff. */
-  arch_pre_exec(rp, (u32_t) m_ptr->PR_IP_PTR, (u32_t) m_ptr->PR_STACK_PTR);
+  name[sizeof(name)-1] = '\0';
+
+  /* Set process state. */
+  arch_proc_init(rp, (u32_t) m_ptr->PR_IP_PTR, (u32_t) m_ptr->PR_STACK_PTR, name);
 
   /* No reply to EXEC call */
   RTS_UNSET(rp, RTS_RECEIVING);

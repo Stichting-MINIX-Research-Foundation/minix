@@ -26,6 +26,7 @@ void kputc(int c)
   if (c != 0) { 
         
         /* Append a single character to the output buffer. */
-  	print_buf[buf_count++] = c;
+  	print_buf[buf_count] = c;
+	buf_count++;
   }
 }

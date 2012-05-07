@@ -131,7 +131,7 @@ char
 VAssert_Init(void)
 {
    uint32 eax, ebx, ecx, edx;
-   VA page_address = (VA) &vassert_state.inReplay, ph;
+   VA page_address = (VA) &vassert_state.inReplay;
    if (!VAssert_IsInVM()) {
       return -1;
    }
@@ -143,16 +143,7 @@ VAssert_Init(void)
    }
 #endif
 
-   /* vmware expects a linear address (or is simply forgetting
-    * to adjust the given address for segments)
-    */
-
-   if(sys_umap(SELF, D, page_address, 1, (phys_bytes *) &ph)) {
-   	printf("VAssert_Init: sys_umap failed\n");
-	return -1;
-   }
-
-   libvassert_process_backdoor(CMD_SET_ADDRESS, ph,
+   libvassert_process_backdoor(CMD_SET_ADDRESS, page_address,
    	MAGIC_PORT|(1<<16), &eax, &ebx, &ecx, &edx);
 
    return (eax != -1) ? 0 : -1;

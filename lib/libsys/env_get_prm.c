@@ -26,7 +26,7 @@ char *value;				/* where to store value */
 int max_len;				/* maximum length of value */
 {
   message m;
-  static char mon_params[128*sizeof(char *)];	/* copy parameters here */
+  static char mon_params[MULTIBOOT_PARAM_BUF_SIZE]; /* copy parameters here */
   char *key_value;
   int i, s;
   size_t keylen;

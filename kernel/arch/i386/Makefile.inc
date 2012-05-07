@@ -4,10 +4,37 @@
 
 HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 .PATH:	${HERE}
+
+# objects we want unpaged from -lminlib, -lminc
+MINLIB_OBJS_UNPAGED=_cpufeature.o _cpuid.o get_bp.o
+MINC_OBJS_UNPAGED=strcat.o strlen.o memcpy.o strcpy.o strncmp.o memset.o \
+	memmove.o strcmp.o atoi.o ctype_.o _stdfile.o strtol.o _errno.o errno.o
+SYS_OBJS_UNPAGED=kprintf.o vprintf.o assert.o stacktrace.o
+
+# some object files we give a symbol prefix (or namespace) of __k_unpaged_
+# that must live in their own unique namespace.
+#
+.for UNPAGED_OBJ in head.o pre_init.o direct_tty_utils.o io_outb.o \
+	io_inb.o pg_utils.o klib.o utility.o arch_reset.o \
+	$(MINLIB_OBJS_UNPAGED) $(MINC_OBJS_UNPAGED) $(SYS_OBJS_UNPAGED)
+unpaged_${UNPAGED_OBJ}: ${UNPAGED_OBJ}
+	objcopy --prefix-symbols=__k_unpaged_ ${UNPAGED_OBJ} unpaged_${UNPAGED_OBJ}
+UNPAGED_OBJS += unpaged_${UNPAGED_OBJ}
+.endfor
+
+# we have to extract some object files from libminc.a and libminlib.a
+$(MINLIB_OBJS_UNPAGED) $(MINC_OBJS_UNPAGED) $(SYS_OBJS_UNPAGED): $(LIBMINLIB) $(LIBMINC) $(LIBSYS)
+	ar x $(LIBMINLIB) $(MINLIB_OBJS_UNPAGED)
+	ar x $(LIBMINC) $(MINC_OBJS_UNPAGED)
+	ar x $(LIBSYS) $(SYS_OBJS_UNPAGED)
+
 SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c \
 	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c io_inb.S \
-	io_inl.S io_intr.S io_inw.S io_outb.S io_outl.S io_outw.S klib.S klib16.S memory.c multiboot.S \
-	oxpcie.c pre_init.c protect.c
+	io_inl.S io_intr.S io_inw.S io_outb.S io_outl.S io_outw.S klib.S klib16.S memory.c \
+	oxpcie.c protect.c direct_tty_utils.c arch_reset.c \
+	pg_utils.c
+
+OBJS.kernel+=	${UNPAGED_OBJS}
 
 .if ${USE_ACPI} != "no"
 SRCS+= acpi.c
@@ -28,7 +55,7 @@ SRCS+= arch_watchdog.c
 CPPFLAGS+= -DUSE_WATCHDOG
 .endif
 
-apic_asm.d klib.d mpx.d: procoffsets.h
+apic_asm.d klib.d mpx.d head.d: procoffsets.h
 
 # It's OK to hardcode the arch as i386 here as this and procoffsets.cf
 # are i386-specific.

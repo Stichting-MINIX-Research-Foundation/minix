@@ -3,10 +3,6 @@ include "kernel.h"
 include "proc.h"
 
 struct proc
-member GSREG p_reg.gs
-member FSREG p_reg.fs
-member ESREG p_reg.es
-member DSREG p_reg.ds
 member DIREG p_reg.di
 member SIREG p_reg.si
 member BPREG p_reg.fp
@@ -20,9 +16,4 @@ member PCREG p_reg.pc
 member CSREG p_reg.cs
 member PSWREG p_reg.psw
 member SPREG p_reg.sp
-member SSREG p_reg.ss
-member P_LDT_SEL p_seg.p_ldt_sel
 member P_CR3 p_seg.p_cr3
-member P_CR3_V p_seg.p_cr3_v
-member P_LDT p_seg.p_ldt
-

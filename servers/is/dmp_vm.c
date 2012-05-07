@@ -12,14 +12,12 @@ static void print_region(struct vm_region_info *vri, int *n)
 {
   static int vri_count, vri_prev_set;
   static struct vm_region_info vri_prev;
-  char c;
   int is_repeat;
 
   /* part of a contiguous identical run? */
   is_repeat =
 	vri &&
   	vri_prev_set && 
-  	vri->vri_seg == vri_prev.vri_seg &&
 	vri->vri_prot == vri_prev.vri_prot &&
 	vri->vri_flags == vri_prev.vri_flags &&
 	vri->vri_length == vri_prev.vri_length &&
@@ -44,14 +42,7 @@ static void print_region(struct vm_region_info *vri, int *n)
   /* NULL indicates the end of a list of mappings, nothing else to do */
   if (!vri) return;
 
-  /* first in a run, print all info */
-  switch (vri->vri_seg) {
-  case T: c = 'T'; break;
-  case D: c = 'D'; break;
-  default: c = '?';
-  }
-
-  printf("  %c %08lx-%08lx %c%c%c %c (%lu kB)\n", c, vri->vri_addr,
+  printf("  %08lx-%08lx %c%c%c %c (%lu kB)\n", vri->vri_addr,
 	vri->vri_addr + vri->vri_length,
 	(vri->vri_prot & PROT_READ) ? 'r' : '-',
 	(vri->vri_prot & PROT_WRITE) ? 'w' : '-',

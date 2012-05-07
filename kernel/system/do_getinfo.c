@@ -133,8 +133,8 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	return OK;
     }
     case GET_MONPARAMS: {
-        src_vir = (vir_bytes) params_buffer;
-	length = sizeof(params_buffer);
+        src_vir = (vir_bytes) kinfo.param_buf;
+	length = sizeof(kinfo.param_buf);
         break;
     }
     case GET_RANDOMNESS: {		

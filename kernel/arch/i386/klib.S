@@ -80,16 +80,12 @@ ENTRY(phys_insw)
 	mov	%esp, %ebp
 	cld
 	push	%edi
-	push	%es
 
-	mov	$FLAT_DS_SELECTOR, %ecx
-	mov	%cx, %es
 	mov	8(%ebp), %edx	/* port to read from */
 	mov	12(%ebp), %edi	/* destination addr */
 	mov	16(%ebp), %ecx	/* byte count */
 	shr	$1, %ecx	/* word count */
 	rep insw	/* input many words */
-	pop	%es
 	pop	%edi
 	pop	%ebp
 	ret
@@ -108,15 +104,11 @@ ENTRY(phys_insb)
 	mov	%esp, %ebp
 	cld
 	push	%edi
-	push	%es
 
-	mov	$FLAT_DS_SELECTOR, %ecx
-	mov	%cx, %es
 	mov	8(%ebp), %edx	/* port to read from */
 	mov	12(%ebp), %edi	/* destination addr */
 	mov	16(%ebp), %ecx	/* byte count */
 	rep insb	/* input many bytes */
-	pop	%es
 	pop	%edi
 	pop	%ebp
 	ret
@@ -135,16 +127,12 @@ ENTRY(phys_outsw)
 	mov	%esp, %ebp
 	cld
 	push	%esi
-	push	%ds
 
-	mov	$FLAT_DS_SELECTOR, %ecx
-	mov	%cx, %ds
 	mov	8(%ebp), %edx	/* port to write to */
 	mov	12(%ebp), %esi	/* source addr */
 	mov	16(%ebp), %ecx	/* byte count */
 	shr	$1, %ecx	/* word count */
 	rep outsw	/* output many words */
-	pop	%ds
 	pop	%esi
 	pop	%ebp
 	ret
@@ -163,15 +151,11 @@ ENTRY(phys_outsb)
 	mov	%esp, %ebp
 	cld
 	push	%esi
-	push	%ds
 
-	mov	$FLAT_DS_SELECTOR, %ecx
-	mov	%cx, %ds
 	mov	8(%ebp), %edx	/* port to write to */
 	mov	12(%ebp), %esi	/* source addr */
 	mov	16(%ebp), %ecx	/* byte count */
 	rep outsb	/* output many bytes */
-	pop	%ds
 	pop	%esi
 	pop	%ebp
 	ret
@@ -185,20 +169,18 @@ ENTRY(phys_outsb)
  *			phys_bytes bytecount); 
  * Copy a block of data from anywhere to anywhere in physical memory.
  */
-	PC_ARGS = 4+4+4+4	/* 4 + 4 + 4 */
 /*		es edi esi eip	 src dst len */
 ENTRY(phys_copy)
+	push	%ebp
+	mov	%esp, %ebp
+
 	cld
 	push	%esi
 	push	%edi
-	push	%es
 
-	mov	$FLAT_DS_SELECTOR, %eax
-	mov	%ax, %es
-
-	mov	PC_ARGS(%esp), %esi
-	mov	PC_ARGS+4(%esp), %edi
-	mov	PC_ARGS+4+4(%esp), %eax
+	mov	8(%ebp), %esi
+	mov	12(%ebp), %edi
+	mov	16(%ebp), %eax
 
 	cmp	$10, %eax	/* avoid align overhead for small counts */
 	jb	pc_small
@@ -207,43 +189,40 @@ ENTRY(phys_copy)
 	and	$3, %ecx	/* count for alignment */
 	sub	%ecx, %eax
 
-	rep 	movsb %es:(%esi), %es:(%edi)
+	rep 	movsb (%esi), (%edi)
 	mov	%eax, %ecx
 	shr	$2, %ecx	/* count of dwords */
 
-	rep 	movsl %es:(%esi), %es:(%edi)
+	rep 	movsl (%esi), (%edi)
 	and	$3, %eax
 pc_small:
 	xchg	%eax, %ecx	/* remainder */
 
-	rep 	movsb %es:(%esi), %es:(%edi)
+	rep 	movsb (%esi), (%edi)
 
 	mov	$0, %eax		/* 0 means: no fault */
 LABEL(phys_copy_fault)		/* kernel can send us here */
-	pop	%es
 	pop	%edi
 	pop	%esi
+	pop	%ebp
 	ret
 
 LABEL(phys_copy_fault_in_kernel)	/* kernel can send us here */
-	pop	%es
 	pop	%edi
 	pop	%esi
+	pop	%ebp
 	mov	%cr2, %eax
 	ret
+
 
 /*===========================================================================*/
 /*				copy_msg_from_user			     */
 /*===========================================================================*/
 /*
- * int copy_msg_from_user(struct proc * p, message * user_mbuf, message * dst);
+ * int copy_msg_from_user(message * user_mbuf, message * dst);
  *
  * Copies a message of 36 bytes from user process space to a kernel buffer. This
- * function assumes that the process address space is installed (cr3 loaded) and
- * the local descriptor table of this process is loaded too.
- *
- * The %gs segment register is used to access the userspace memory. We load the
- * process' data segment in this register.
+ * function assumes that the process address space is installed (cr3 loaded).
  *
  * This function from the callers point of view either succeeds or returns an
  * error which gives the caller a chance to respond accordingly. In fact it
@@ -255,39 +234,31 @@ LABEL(phys_copy_fault_in_kernel)	/* kernel can send us here */
  * userspace as if wrong values or request were passed to the kernel
  */
 ENTRY(copy_msg_from_user)
-	push	%gs
-
-	mov	8(%esp), %eax
-	movw	DSREG(%eax), %gs
-
 	/* load the source pointer */
-	mov	12(%esp), %ecx
+	mov	4(%esp), %ecx
 	/* load the destination pointer */
-	mov	16(%esp), %edx
+	mov	8(%esp), %edx
 
-	mov	%gs:0*4(%ecx), %eax
-	mov	%eax, 0*4(%edx)
-	mov	%gs:1*4(%ecx), %eax
+/*	mov	0*4(%ecx), %eax
+	mov	%eax, 0*4(%edx) */ 
+	mov	1*4(%ecx), %eax
 	mov	%eax, 1*4(%edx)
-	mov	%gs:2*4(%ecx), %eax
+	mov	2*4(%ecx), %eax
 	mov	%eax, 2*4(%edx)
-	mov	%gs:3*4(%ecx), %eax
+	mov	3*4(%ecx), %eax
 	mov	%eax, 3*4(%edx)
-	mov	%gs:4*4(%ecx), %eax
+	mov	4*4(%ecx), %eax
 	mov	%eax, 4*4(%edx)
-	mov	%gs:5*4(%ecx), %eax
+	mov	5*4(%ecx), %eax
 	mov	%eax, 5*4(%edx)
-	mov	%gs:6*4(%ecx), %eax
+	mov	6*4(%ecx), %eax
 	mov	%eax, 6*4(%edx)
-	mov	%gs:7*4(%ecx), %eax
+	mov	7*4(%ecx), %eax
 	mov	%eax, 7*4(%edx)
-	mov	%gs:8*4(%ecx), %eax
+	mov	8*4(%ecx), %eax
 	mov	%eax, 8*4(%edx)
 
 LABEL(__copy_msg_from_user_end)
-
-	pop	%gs
-
 	movl	$0, %eax
 	ret
 
@@ -295,48 +266,38 @@ LABEL(__copy_msg_from_user_end)
 /*				copy_msg_to_user			     */
 /*===========================================================================*/
 /*
- * void copy_msg_to_user(struct proc * p, message * src, message * user_mbuf);
+ * void copy_msg_to_user(message * src, message * user_mbuf);
  *
- * Copies a message of 36 bytes to user process space from a kernel buffer. This
- * function assumes that the process address space is installed (cr3 loaded) and
- * the local descriptor table of this process is loaded too.
+ * Copies a message of 36 bytes to user process space from a kernel buffer.
  *
  * All the other copy_msg_from_user() comments apply here as well!
  */
 ENTRY(copy_msg_to_user)
-	push	%gs
-
-	mov	8(%esp), %eax
-	movw	DSREG(%eax), %gs
-
 	/* load the source pointer */
-	mov	12(%esp), %ecx
+	mov	4(%esp), %ecx
 	/* load the destination pointer */
-	mov	16(%esp), %edx
+	mov	8(%esp), %edx
 
 	mov	0*4(%ecx), %eax
-	mov	%eax, %gs:0*4(%edx)
+	mov	%eax, 0*4(%edx)
 	mov	1*4(%ecx), %eax
-	mov	%eax, %gs:1*4(%edx)
+	mov	%eax, 1*4(%edx)
 	mov	2*4(%ecx), %eax
-	mov	%eax, %gs:2*4(%edx)
+	mov	%eax, 2*4(%edx)
 	mov	3*4(%ecx), %eax
-	mov	%eax, %gs:3*4(%edx)
+	mov	%eax, 3*4(%edx)
 	mov	4*4(%ecx), %eax
-	mov	%eax, %gs:4*4(%edx)
+	mov	%eax, 4*4(%edx)
 	mov	5*4(%ecx), %eax
-	mov	%eax, %gs:5*4(%edx)
+	mov	%eax, 5*4(%edx)
 	mov	6*4(%ecx), %eax
-	mov	%eax, %gs:6*4(%edx)
+	mov	%eax, 6*4(%edx)
 	mov	7*4(%ecx), %eax
-	mov	%eax, %gs:7*4(%edx)
+	mov	%eax, 7*4(%edx)
 	mov	8*4(%ecx), %eax
-	mov	%eax, %gs:8*4(%edx)
+	mov	%eax, 8*4(%edx)
 
 LABEL(__copy_msg_to_user_end)
-
-	pop	%gs
-
 	movl	$0, %eax
 	ret
 
@@ -348,8 +309,6 @@ LABEL(__copy_msg_to_user_end)
  * here to continue, clean up and report the error
  */
 ENTRY(__user_copy_msg_pointer_failure)
-	pop	%gs
-
 	movl	$-1, %eax
 	ret
 
@@ -366,12 +325,9 @@ ENTRY(phys_memset)
 	mov	%esp, %ebp
 	push	%esi
 	push	%ebx
-	push	%ds
 
 	mov	8(%ebp), %esi
 	mov	16(%ebp), %eax
-	mov	$FLAT_DS_SELECTOR, %ebx
-	mov	%bx, %ds
 	mov	12(%ebp), %ebx
 	shr	$2, %eax
 fill_start:
@@ -395,36 +351,17 @@ remain_fill:
 fill_done:
 LABEL(memset_fault)		/* kernel can send us here */
 	mov	$0, %eax		/* 0 means: no fault */
-	pop	%ds
 	pop	%ebx
 	pop	%esi
 	pop	%ebp
 	ret
 
 LABEL(memset_fault_in_kernel)		/* kernel can send us here */
-	pop	%ds
 	pop	%ebx
 	pop	%esi
 	pop	%ebp
 	mov	%cr2, %eax
 	ret
-
-
-/*===========================================================================*/
-/*				mem_rdw					     */
-/*===========================================================================*/
-/* 
- * PUBLIC u16_t mem_rdw(U16_t segment, u16_t *offset); 
- * Load and return word at far pointer segment:offset. 
- */
-ENTRY(mem_rdw)
-	mov	%ds, %cx
-	mov	4(%esp), %ds
-	mov	4+4(%esp), %eax	/* offset */
-	movzwl	(%eax), %eax	/* word to return */
-	mov	%cx, %ds
-	ret
-
 
 /*===========================================================================*/
 /*				x86_triplefault				     */
@@ -565,12 +502,13 @@ ARG_EAX_ACTION(fnstcw, fnstcw (%eax));
 /* invlpg */
 ARG_EAX_ACTION(i386_invlpg, invlpg (%eax));
 
-/*===========================================================================*/
-/*				getcr3val				     */
-/*===========================================================================*/
-/* PUBLIC unsigned long getcr3val(void); */
-ENTRY(getcr3val)
-	mov	%cr3, %eax
+ENTRY(x86_load_kerncs)
+	push	%ebp
+	mov	%esp, %ebp
+	mov	8(%ebp), %eax
+	jmp	$KERN_CS_SELECTOR, $newcs
+newcs:
+	pop	%ebp
 	ret
 
 /*
@@ -610,27 +548,6 @@ ENTRY(ia32_msr_write)
 	ret
 
 /*===========================================================================*/
-/*			      idt_reload				     */
-/*===========================================================================*/
-/*  PUBLIC void idt_reload (void); */
-/* reload idt when returning to monitor. */
-ENTRY(idt_reload)
-	lidt	_C_LABEL(gdt)+IDT_SELECTOR /*  reload interrupt descriptor table */
-	ret
-
-/*
- * void reload_segment_regs(void)
- */
-
-#define RELOAD_SEG_REG(reg)	\
-	mov	reg, %ax	;\
-	mov	%ax, reg	;
-
-ENTRY(reload_ds)
-	RELOAD_SEG_REG(%ds)
-	ret
-
-/*===========================================================================*/
 /*			      __switch_address_space			     */
 /*===========================================================================*/
 /* PUBLIC void __switch_address_space(struct proc *p, struct ** ptproc)
@@ -642,8 +559,6 @@ ENTRY(reload_ds)
 ENTRY(__switch_address_space)
 	/* read the process pointer */
 	mov	4(%esp), %edx
-	/* enable process' segment descriptors  */
-	lldt	P_LDT_SEL(%edx)
 	/* get the new cr3 value */
 	movl	P_CR3(%edx), %eax
 	/* test if the new cr3 != NULL */
@@ -663,52 +578,6 @@ ENTRY(__switch_address_space)
 	mov	%edx, (%eax)
 0:
 	ret
-
-/*===========================================================================*/
-/*				poweroff					     */
-/*===========================================================================*/
-/* PUBLIC void poweroff(); */
-/* Jump to 16-bit poweroff code */
-ENTRY(poweroff_jmp)
-	cli
-	/* Make real mode descriptor */
-	mov	$(_C_LABEL(gdt) + SS_SELECTOR), %edi
-	mov	$0x100, %eax
-	movw %ax, 2(%edi)
-	shr	$16, %eax
-	movb	%al, 4(%edi)
-	and	$0xff00, %ax
-	andw	$0xff, 6(%edi)
-	or	%ax, 6(%edi)
-	mov	$0xffff, %eax
-	movw	%ax, (%edi)
-	shr	$16, %eax
-	and	$0xf, %ax
-	andb	$0xf0, 6(%edi)
-	or	%ax, 6(%edi)
-	
-	/* Flush TLB */
-	xor	%eax, %eax
-	mov	%eax, %cr3
-	
-	xor	%esp, %esp /* clear esp for real mode*/
-	
-	/* Reset IDTR */
-	lidt	idt_ptr
-	
-	mov	$SS_SELECTOR, %ax
-	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %fs
-	mov	%ax, %gs
-	mov	%ax, %ss
-	
-	/* Save real mode cr0 in eax */
-	mov	%cr0, %eax
-	andl	$~I386_CR0_PE, %eax
-	
-	/* Jump to 16-bit code that is copied to below 1MB */
-	ljmp	$MON_CS_SELECTOR, $0
 
 /* acknowledge just the master PIC */
 ENTRY(eoi_8259_master)
@@ -909,3 +778,6 @@ ENTRY(switch_k_stack)
 idt_ptr:
 	.short 0x3ff
 	.long 0x0
+
+ldtsel:
+	.long LDT_SELECTOR

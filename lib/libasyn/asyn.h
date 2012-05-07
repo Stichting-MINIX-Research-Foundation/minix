@@ -14,4 +14,6 @@
 
 typedef struct _asynfd asynfd_t;
 
+#undef IDLE
+
 typedef enum state { IDLE, WAITING, PENDING } state_t;

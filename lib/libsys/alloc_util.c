@@ -6,21 +6,6 @@
 #include <sys/mman.h>
 #include <minix/sysutil.h>
 
-int sys_umap_data_fb(endpoint_t ep, vir_bytes buf, vir_bytes len, phys_bytes *phys)
-{
-	int r;
-
-        if((r=sys_umap(ep, VM_D, buf, len, phys)) != OK) {
-		if(r != EINVAL)
-			return r;
-        	r = sys_umap(ep, D, buf, len, phys);
-	}
-
-
-	return r;
-}
-
-
 void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 {
 	vir_bytes buf;
@@ -66,7 +51,7 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 	}
 
 	/* Get physical address, if requested. */
-        if(phys != NULL && sys_umap_data_fb(SELF, buf, len, phys) != OK)
+        if(phys != NULL && sys_umap(SELF, VM_D, buf, len, phys) != OK)
 		panic("sys_umap_data_fb failed");
 
 	return (void *) buf;

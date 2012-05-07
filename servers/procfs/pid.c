@@ -112,18 +112,8 @@ static void pid_psinfo(int i)
 		memset(&vui, 0, sizeof(vui));
 
 		if (!is_zombie(i)) {
-			/* We don't care if this fails. It may still return
-			 * zero memory usage for processes that don't have a
-			 * pagetable, though. Look at vui_total instead.
-			 */
+			/* We don't care if this fails.  */
 			(void) vm_info_usage(proc[i].p_endpoint, &vui);
-
-			if (vui.vui_total == 0L) {
-				vui.vui_total =
-					(proc[i].p_memmap[T].mem_len +
-					proc[i].p_memmap[D].mem_len) <<
-					CLICK_SHIFT;
-			}
 		}
 
 		if (mproc[pi].mp_flags & PAUSED)
@@ -340,7 +330,7 @@ static int dump_regions(int slot)
 	 */
 	struct vm_region_info vri[MAX_VRI_COUNT];
 	vir_bytes next;
-	int i, r, seg, count;
+	int i, r, count;
 
 	count = 0;
 	next = 0;
@@ -356,15 +346,8 @@ static int dump_regions(int slot)
 			break;
 
 		for (i = 0; i < r; i++) {
-			switch (vri[i].vri_seg) {
-			case T: seg = 'T'; break;
-			case D: seg = 'D'; break;
-			default: seg = '?'; break;
-			}
-
-			buf_printf("%c %08lx-%08lx %c%c%c %c\n",
-				seg, vri[i].vri_addr,
-				vri[i].vri_addr + vri[i].vri_length,
+			buf_printf("%08lx-%08lx %c%c%c %c\n",
+				vri[i].vri_addr, vri[i].vri_addr + vri[i].vri_length,
 				(vri[i].vri_prot & PROT_READ) ? 'r' : '-',
 				(vri[i].vri_prot & PROT_WRITE) ? 'w' : '-',
 				(vri[i].vri_prot & PROT_EXEC) ? 'x' : '-',
@@ -375,26 +358,6 @@ static int dump_regions(int slot)
 	} while (r == MAX_VRI_COUNT);
 
 	return count;
-}
-
-/*===========================================================================*
- *				dump_segments				     *
- *===========================================================================*/
-static void dump_segments(int slot)
-{
-	/* Print the memory segments of a process.
-	 */
-	int i;
-
-	for (i = 0; i < NR_LOCAL_SEGS; i++) {
-		buf_printf("%c %08lx-%08lx %s -\n",
-			i == T ? 'T' : 'D',
-			proc[slot].p_memmap[i].mem_vir << CLICK_SHIFT,
-			(proc[slot].p_memmap[i].mem_vir +
-			proc[slot].p_memmap[i].mem_len) << CLICK_SHIFT,
-			(i == T) ? "r-x" :
-			(proc[slot].p_memmap[T].mem_len == 0) ? "rwx" : "rw-");
-	}
 }
 
 /*===========================================================================*
@@ -415,10 +378,4 @@ static void pid_map(int slot)
 		if (dump_regions(slot) != 0)
 			return;
 	}
-
-	/* For kernel tasks, or for processes that have no regions according to
-	 * VM, we assume they are not using virtual memory, and we print their
-	 * segments instead.
-	 */
-	dump_segments(slot);
 }

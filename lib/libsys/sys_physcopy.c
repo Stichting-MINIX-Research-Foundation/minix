@@ -25,8 +25,8 @@ phys_bytes bytes;		/* how many bytes */
   /* provide backwards compatability arguments to old
    * kernels based on process id's; NONE <=> physical
    */
-  copy_mess.CP_DST_SPACE_OBSOLETE = (dst_proc == NONE ? PHYS_SEG : D);
-  copy_mess.CP_SRC_SPACE_OBSOLETE = (src_proc == NONE ? PHYS_SEG : D);
+  copy_mess.CP_DST_SPACE_OBSOLETE = (dst_proc == NONE ? PHYS_SEG : D_OBSOLETE);
+  copy_mess.CP_SRC_SPACE_OBSOLETE = (src_proc == NONE ? PHYS_SEG : D_OBSOLETE);
 
   return(_kernel_call(SYS_PHYSCOPY, &copy_mess));
 }

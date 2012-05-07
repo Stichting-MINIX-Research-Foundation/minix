@@ -27,20 +27,11 @@
 /*===========================================================================*
  *				intr_init				     *
  *===========================================================================*/
-int intr_init(const int mine, const int auto_eoi)
+int intr_init(const int auto_eoi)
 {
-/* Initialize the 8259s, finishing with all interrupts disabled.  This is
- * only done in protected mode, in real mode we don't touch the 8259s, but
- * use the BIOS locations instead.  The flag "mine" is set if the 8259s are
- * to be programmed for MINIX, or to be reset to what the BIOS expects.
- */
-
-      /* The AT and newer PS/2 have two interrupt controllers, one master,
-       * one slaved at IRQ 2.  (We don't have to deal with the PC that
-       * has just one controller, because it must run in real mode.)
-       */
+/* Initialize the 8259s, finishing with all interrupts disabled.  */
       outb( INT_CTL, ICW1_AT);
-      outb( INT_CTLMASK, mine == INTS_MINIX ? IRQ0_VECTOR : BIOS_IRQ0_VEC);
+      outb( INT_CTLMASK, IRQ0_VECTOR);
 					/* ICW2 for master */
       outb( INT_CTLMASK, (1 << CASCADE_IRQ));
 					/* ICW3 tells slaves */
@@ -50,7 +41,7 @@ int intr_init(const int mine, const int auto_eoi)
           outb( INT_CTLMASK, ICW4_AT_MASTER);
       outb( INT_CTLMASK, ~(1 << CASCADE_IRQ)); /* IRQ 0-7 mask */
       outb( INT2_CTL, ICW1_AT);
-      outb( INT2_CTLMASK, mine == INTS_MINIX ? IRQ8_VECTOR : BIOS_IRQ8_VEC);
+      outb( INT2_CTLMASK, IRQ8_VECTOR);
 						/* ICW2 for slave */
       outb( INT2_CTLMASK, CASCADE_IRQ);	/* ICW3 is slave nr */
       if (auto_eoi)
@@ -58,16 +49,6 @@ int intr_init(const int mine, const int auto_eoi)
       else
          outb( INT2_CTLMASK, ICW4_AT_SLAVE);
       outb( INT2_CTLMASK, ~0);		/* IRQ 8-15 mask */
-
-      /* Copy the BIOS vectors from the BIOS to the Minix location, so we
-       * can still make BIOS calls without reprogramming the i8259s.
-       */
-#if IRQ0_VECTOR != BIOS_IRQ0_VEC
-      phys_copy(BIOS_VECTOR(0) * 4L, VECTOR(0) * 4L, 8 * 4L);
-#endif
-#if IRQ8_VECTOR != BIOS_IRQ8_VEC
-      phys_copy(BIOS_VECTOR(8) * 4L, VECTOR(8) * 4L, 8 * 4L);
-#endif
 
   return OK;
 }

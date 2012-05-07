@@ -5,16 +5,18 @@ PROG=	kernel
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
-SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c start.c system.c \
+SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 	table.c utility.c 
 
-DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC}
+LINKERSCRIPT=${.CURDIR}/arch/${ARCH}/kernel.lds
+
+DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC} $(LINKERSCRIPT)
 LDADD+=	-ltimers -lsys -lexec
 
-CFLAGS += -D__kernel__
+CFLAGS += -D__kernel__ 
 
 CPPFLAGS+= -fno-stack-protector -D_NETBSD_SOURCE
-LDFLAGS+= -T ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
+LDFLAGS+= -T $(LINKERSCRIPT)
 LDFLAGS+= -nostdlib -L${DESTDIR}/${LIBDIR}
 LDADD+= -lminlib
 DPADD+= ${LIBMINLIB}
@@ -87,3 +89,5 @@ extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
 
 clean:
 	rm -f extracted-errno.h extracted-mfield.h extracted-mtype.h
+
+

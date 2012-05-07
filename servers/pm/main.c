@@ -399,16 +399,11 @@ static void handle_vfs_reply()
    * Handle its reply first.
    */
   if (call_nr == PM_REBOOT_REPLY) {
-	vir_bytes code_addr;
-	size_t code_size;
-
 	/* Ask the kernel to abort. All system services, including
 	 * the PM, will get a HARD_STOP notification. Await the
 	 * notification in the main loop.
 	 */
-	code_addr = (vir_bytes) monitor_code;
-	code_size = strlen(monitor_code) + 1;
-	sys_abort(abort_flag, PM_PROC_NR, code_addr, code_size);
+	sys_abort(RBT_DEFAULT);
 
 	return;
   }

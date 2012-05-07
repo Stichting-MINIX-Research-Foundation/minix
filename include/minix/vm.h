@@ -55,7 +55,6 @@ struct vm_usage_info {
 };
 
 struct vm_region_info {
-  int vri_seg;			/* segment of virtual region (T or D) */
   vir_bytes vri_addr;		/* base address of region */
   vir_bytes vri_length;		/* length of region */
   int vri_prot;			/* protection flags (PROT_) */

@@ -72,10 +72,7 @@ static void set_idle_name(char * name, int n)
 {
         int i, c;
         int p_z = 0;
-        /*   
-         * P_NAME_LEN limits us to 3 characters for the idle task numer. 999
-         * should be enough though.
-         */
+
         if (n > 999) 
                 n = 999; 
 
@@ -138,7 +135,7 @@ void proc_init(void)
 		rp->p_quantum_size_ms = 0;	/* no quantum size */
 
 		/* arch-specific initialization */
-		arch_proc_init(i, rp);
+		arch_proc_reset(rp);
 	}
 	for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
 		sp->s_proc_nr = NONE;		/* initialize as free */
@@ -387,7 +384,7 @@ check_misc_flags:
 	 */
 	p->p_misc_flags &= ~MF_CONTEXT_SET;
 
-  	assert(!(p->p_misc_flags & MF_FULLVM) || p->p_seg.p_cr3 != 0);
+  	assert(p->p_seg.p_cr3 != 0);
 #ifdef CONFIG_SMP
 	if (p->p_misc_flags & MF_FLUSH_TLB) {
 		if (tlb_must_refresh)
@@ -816,7 +813,7 @@ int mini_send(
 	assert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
 
 	if (!(flags & FROM_KERNEL)) {
-		if(copy_msg_from_user(caller_ptr, m_ptr, &dst_ptr->p_delivermsg))
+		if(copy_msg_from_user(m_ptr, &dst_ptr->p_delivermsg))
 			return EFAULT;
 	} else {
 		dst_ptr->p_delivermsg = *m_ptr;
@@ -851,7 +848,7 @@ int mini_send(
 
 	/* Destination is not waiting.  Block and dequeue caller. */
 	if (!(flags & FROM_KERNEL)) {
-		if(copy_msg_from_user(caller_ptr, m_ptr, &caller_ptr->p_sendmsg))
+		if(copy_msg_from_user(m_ptr, &caller_ptr->p_sendmsg))
 			return EFAULT;
 	} else {
 		caller_ptr->p_sendmsg = *m_ptr;

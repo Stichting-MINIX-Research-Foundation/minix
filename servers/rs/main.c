@@ -49,6 +49,9 @@ int main(void)
   if (OK != (s=sys_getmachine(&machine)))
 	  panic("couldn't get machine info: %d", s);
 
+  if (OK != (s=sys_getkinfo(&kinfo)))
+	  panic("couldn't get kernel kinfo: %d", s);
+
   /* Main loop - get work and do it, forever. */         
   while (TRUE) {              
 
@@ -272,8 +275,11 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       fill_call_mask(calls, NR_SYS_CALLS,
           rp->r_priv.s_k_call_mask, KERNEL_CALL, TRUE);
 
-      /* Set the privilege structure. */
-      if(boot_image_priv->endpoint != RS_PROC_NR) {
+      /* Set the privilege structure. RS and VM are exceptions and are already
+       * running.
+       */
+      if(boot_image_priv->endpoint != RS_PROC_NR &&
+         boot_image_priv->endpoint != VM_PROC_NR) {
           if ((s = sys_privctl(ip->endpoint, SYS_PRIV_SET_SYS, &(rp->r_priv)))
               != OK) {
               panic("unable to set privilege structure: %d", s);
@@ -352,10 +358,11 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       rp = &rproc[boot_image_priv - boot_image_priv_table];
       rpub = rp->r_pub;
 
-      /* RS is already running as we speak. */
-      if(boot_image_priv->endpoint == RS_PROC_NR) {
+      /* RS/VM are already running as we speak. */
+      if(boot_image_priv->endpoint == RS_PROC_NR ||
+         boot_image_priv->endpoint == VM_PROC_NR) {
           if ((s = init_service(rp, SEF_INIT_FRESH)) != OK) {
-              panic("unable to initialize RS: %d", s);
+              panic("unable to initialize %d: %d", boot_image_priv->endpoint, s);
           }
           continue;
       }
@@ -422,7 +429,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       panic("couldn't set alarm: %d", s);
 
 #if USE_LIVEUPDATE
-  /* Now create a new RS instance with a private page table and let the current
+  /* Now create a new RS instance and let the current
    * instance live update into the replica. Clone RS' own slot first.
    */
   rp = rproc_ptr[_ENDPOINT_P(RS_PROC_NR)];

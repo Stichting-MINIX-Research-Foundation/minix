@@ -17,7 +17,7 @@
  * zeroed
  */
 #define TEST_INT_IN_KERNEL(displ, label)	\
-	cmpl	$CS_SELECTOR, displ(%esp)	;\
+	cmpl	$KERN_CS_SELECTOR, displ(%esp)	;\
 	je	label				;
 
 /*
@@ -36,28 +36,12 @@
 	movl	tmp, PSWREG(pptr)			;\
 	movl	(12 + displ)(%esp), tmp			;\
 	movl	tmp, SPREG(pptr)			;\
-	movl	tmp, STREG(pptr)			;\
-	movl	(16 + displ)(%esp), tmp			;\
-	movl	tmp, SSREG(pptr)			;
-
-#define SAVE_SEGS(pptr)		\
-	mov	%ds, %ss:DSREG(pptr)	;\
-	mov	%es, %ss:ESREG(pptr)	;\
-	mov	%fs, %ss:FSREG(pptr)	;\
-	mov	%gs, %ss:GSREG(pptr)	;
-
-#define RESTORE_SEGS(pptr)		\
-	movw	%ss:DSREG(pptr), %ds	;\
-	movw	%ss:ESREG(pptr), %es	;\
-	movw	%ss:FSREG(pptr), %fs	;\
-	movw	%ss:GSREG(pptr), %gs	;
+	movl	tmp, STREG(pptr)
 
 /*
- * restore kernel segments, %ss is kernnel data segment, %cs is aready set and
- * %fs, %gs are not used
- */
+ * restore kernel segments. %cs is aready set and %fs, %gs are not used */
 #define RESTORE_KERNEL_SEGS	\
-	mov	%ss, %si	;\
+	mov	$KERN_DS_SELECTOR, %si	;\
 	mov	%si, %ds	;\
 	mov	%si, %es	;\
 	movw	$0, %si		;\
@@ -65,20 +49,20 @@
 	mov	%si, %fs	;
 
 #define SAVE_GP_REGS(pptr)	\
-	mov	%eax, %ss:AXREG(pptr)		;\
-	mov	%ecx, %ss:CXREG(pptr)		;\
-	mov	%edx, %ss:DXREG(pptr)		;\
-	mov	%ebx, %ss:BXREG(pptr)		;\
-	mov	%esi, %ss:SIREG(pptr)		;\
-	mov	%edi, %ss:DIREG(pptr)		;
+	mov	%eax, AXREG(pptr)		;\
+	mov	%ecx, CXREG(pptr)		;\
+	mov	%edx, DXREG(pptr)		;\
+	mov	%ebx, BXREG(pptr)		;\
+	mov	%esi, SIREG(pptr)		;\
+	mov	%edi, DIREG(pptr)		;
 
 #define RESTORE_GP_REGS(pptr)	\
-	movl	%ss:AXREG(pptr), %eax		;\
-	movl	%ss:CXREG(pptr), %ecx		;\
-	movl	%ss:DXREG(pptr), %edx		;\
-	movl	%ss:BXREG(pptr), %ebx		;\
-	movl	%ss:SIREG(pptr), %esi		;\
-	movl	%ss:DIREG(pptr), %edi		;
+	movl	AXREG(pptr), %eax		;\
+	movl	CXREG(pptr), %ecx		;\
+	movl	DXREG(pptr), %edx		;\
+	movl	BXREG(pptr), %ebx		;\
+	movl	SIREG(pptr), %esi		;\
+	movl	DIREG(pptr), %edi		;
 
 /*
  * save the context of the interrupted process to the structure in the process
@@ -97,12 +81,9 @@
 							;\
 	movl	(CURR_PROC_PTR + 4 + displ)(%esp), %ebp	;\
 							\
-	/* save the segment registers */		\
-	SAVE_SEGS(%ebp)					;\
-							\
 	SAVE_GP_REGS(%ebp)				;\
 	pop	%esi			/* get the orig %ebp and save it */ ;\
-	mov	%esi, %ss:BPREG(%ebp)			;\
+	mov	%esi, BPREG(%ebp)			;\
 							\
 	RESTORE_KERNEL_SEGS				;\
 	SAVE_TRAP_CTX(displ, %ebp, %esi)		;

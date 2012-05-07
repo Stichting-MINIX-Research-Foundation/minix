@@ -8,9 +8,30 @@
  */
 
 #include "kernel/system.h"
+#include <assert.h>
 #include <minix/type.h>
 
 #include "arch_proto.h"
+
+extern phys_bytes video_mem_vaddr;
+
+extern char *video_mem;
+
+static void setcr3(struct proc *p, u32_t cr3, u32_t *v)
+{
+	/* Set process CR3. */
+	p->p_seg.p_cr3 = cr3;
+	assert(p->p_seg.p_cr3);
+	p->p_seg.p_cr3_v = v; 
+	if(p == get_cpulocal_var(ptproc)) {
+		write_cr3(p->p_seg.p_cr3);
+	}
+	if(p->p_nr == VM_PROC_NR) {
+		if (arch_enable_paging(p) != OK)
+			panic("arch_enable_paging failed");
+	}
+	RTS_UNSET(p, RTS_VMINHIBIT);
+}
 
 /*===========================================================================*
  *				arch_do_vmctl				     *
@@ -25,37 +46,8 @@ struct proc *p;
 		m_ptr->SVMCTL_VALUE = p->p_seg.p_cr3;
 		return OK;
 	case VMCTL_SETADDRSPACE:
-		/* Set process CR3. */
-		if(m_ptr->SVMCTL_PTROOT) {
-			p->p_seg.p_cr3 = m_ptr->SVMCTL_PTROOT;
-			p->p_seg.p_cr3_v = (u32_t *) m_ptr->SVMCTL_PTROOT_V;
-			p->p_misc_flags |= MF_FULLVM;
-			if(p == get_cpulocal_var(ptproc)) {
-				write_cr3(p->p_seg.p_cr3);
-			}
-		} else {
-			p->p_seg.p_cr3 = 0;
-			p->p_seg.p_cr3_v = NULL;
-			p->p_misc_flags &= ~MF_FULLVM;
-		}
-		RTS_UNSET(p, RTS_VMINHIBIT);
+		setcr3(p, m_ptr->SVMCTL_PTROOT, (u32_t *) m_ptr->SVMCTL_PTROOT_V);
 		return OK;
-	case VMCTL_INCSP:
-		/* Increase process SP. */
-		p->p_reg.sp += m_ptr->SVMCTL_VALUE;
-		return OK;
-	case VMCTL_I386_KERNELLIMIT:
-	{
-		int r;
-		/* VM wants kernel to increase its segment. */
-		r = prot_set_kern_seg_limit(m_ptr->SVMCTL_VALUE);
-		return r;
-	}
-	case VMCTL_I386_FREEPDE:
-	{
-		i386_freepde(m_ptr->SVMCTL_VALUE);
-		return OK;
-	}
 	case VMCTL_FLUSHTLB:
 	{
 		reload_cr3();
@@ -66,7 +58,6 @@ struct proc *p;
 		i386_invlpg(m_ptr->SVMCTL_VALUE);
 		return OK;
 	}
-
   }
 
 

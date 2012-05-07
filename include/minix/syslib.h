@@ -37,9 +37,8 @@ int sys_abort(int how, ...);
 int sys_enable_iop(endpoint_t proc_ep);
 int sys_exec(endpoint_t proc_ep, char *ptr, char *aout, vir_bytes
 	initpc);
-int sys_fork(endpoint_t parent, endpoint_t child, endpoint_t *, struct
-	mem_map *ptr, u32_t vm, vir_bytes *);
-int sys_newmap(endpoint_t proc_ep, struct mem_map *ptr);
+int sys_fork(endpoint_t parent, endpoint_t child, endpoint_t *, 
+	u32_t vm, vir_bytes *);
 int sys_clear(endpoint_t proc_ep);
 int sys_exit(void);
 int sys_trace(int req, endpoint_t proc_ep, long addr, long *data_p);

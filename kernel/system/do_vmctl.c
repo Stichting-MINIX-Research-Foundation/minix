@@ -120,13 +120,6 @@ int do_vmctl(struct proc * caller, message * m_ptr)
 		RTS_UNSET(p, RTS_VMREQUEST);
 		return OK;
 
-	case VMCTL_ENABLE_PAGING:
-		if(vm_running) 
-			panic("do_vmctl: paging already enabled");
-		if (arch_enable_paging(caller, m_ptr) != OK)
-			panic("do_vmctl: paging enabling failed");
-		return OK;
-
 	case VMCTL_KERN_PHYSMAP:
 	{
 		int i = m_ptr->SVMCTL_VALUE;
@@ -176,6 +169,10 @@ int do_vmctl(struct proc * caller, message * m_ptr)
 		 */
 		bits_fill(p->p_stale_tlb, CONFIG_MAX_CPUS);
 #endif
+		return OK;
+	case VMCTL_CLEARMAPCACHE:
+		/* VM says: forget about old mappings we have cached. */
+		mem_clear_mapcache();
 		return OK;
   }
 

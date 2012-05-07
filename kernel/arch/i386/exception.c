@@ -98,27 +98,18 @@ static void pagefault( struct proc *pr,
 		inkernel_disaster(pr, frame, NULL, is_nested);
 	}
 
-	/* System processes that don't have their own page table can't
-	 * have page faults. VM does have its own page table but also
-	 * can't have page faults (because VM has to handle them).
-	 */
-	if((pr->p_endpoint <= INIT_PROC_NR &&
-	 !(pr->p_misc_flags & MF_FULLVM)) || pr->p_endpoint == VM_PROC_NR) {
+	/* VM can't handle page faults. */
+	if(pr->p_endpoint == VM_PROC_NR) {
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		printf("pagefault for process %d ('%s') on CPU %d, "
+		printf("pagefault for VM on CPU %d, "
 			"pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
-			pr->p_endpoint, pr->p_name, cpuid, pr->p_reg.pc,
-			pagefaultcr2, frame->errcode, is_nested);
-		if(!is_nested) {
-			printf("process vir addr of pagefault is 0x%lx\n",
-				pagefaultcr2 -
-				  (pr->p_memmap[D].mem_phys << CLICK_SHIFT));
-		}
+			cpuid, pr->p_reg.pc, pagefaultcr2, frame->errcode,
+			is_nested);
 		proc_stacktrace(pr);
 		printf("pc of pagefault: 0x%lx\n", frame->eip);
-		cause_sig(proc_nr(pr), SIGSEGV);
+		panic("pagefault in VM");
 
 		return;
 	}
@@ -172,13 +163,9 @@ static void inkernel_disaster(struct proc *saved_proc,
   	proc_stacktrace_execute(proc_addr(SYSTEM), k_ebp, frame->eip);
   }
 
-  printseg("ker cs: ", 1, NULL, frame->cs);
-  printseg("ker ds: ", 0, NULL, DS_SELECTOR);
-
   if (saved_proc) {
 	  printf("scheduled was: process %d (%s), ", saved_proc->p_endpoint, saved_proc->p_name);
-	  printf("pc = %u:0x%x\n", (unsigned) saved_proc->p_reg.cs,
-			  (unsigned) saved_proc->p_reg.pc);
+	  printf("pc = 0x%x\n", (unsigned) saved_proc->p_reg.pc);
 	  proc_stacktrace(saved_proc);
 
 	  panic("Unhandled kernel exception");

@@ -24,10 +24,10 @@ void panic(const char *fmt, ...)
 {
   va_list arg;
   /* The system has run aground of a fatal kernel error. Terminate execution. */
-  if (minix_panicing == ARE_PANICING) {
+  if (kinfo.minix_panicing == ARE_PANICING) {
   	reset();
   }
-  minix_panicing = ARE_PANICING;
+  kinfo.minix_panicing = ARE_PANICING;
   if (fmt != NULL) {
 	printf("kernel panic: ");
   	va_start(arg, fmt);
@@ -38,8 +38,12 @@ void panic(const char *fmt, ...)
   printf("kernel on CPU %d: ", cpuid);
   util_stacktrace();
 
-  printf("current process : ");
-  proc_stacktrace(get_cpulocal_var(proc_ptr));
+#if 0
+  if(get_cpulocal_var(proc_ptr)) {
+	  printf("current process : ");
+	  proc_stacktrace(get_cpulocal_var(proc_ptr));
+  }
+#endif
 
   /* Abort MINIX. */
   minix_shutdown(NULL);
@@ -55,29 +59,29 @@ int c;					/* character to append */
  * to the output driver if an END_OF_KMESS is encountered. 
  */
   if (c != END_OF_KMESS) {
-      static int blpos = 0;
-      int maxblpos = sizeof(kmess_buf) - 2;
+      int maxblpos = sizeof(kmess.kmess_buf) - 2;
 #ifdef DEBUG_SERIAL
-      if (do_serial_debug) {
+      if (kinfo.do_serial_debug) {
 	if(c == '\n')
       		ser_putc('\r');
       	ser_putc(c);
       }
 #endif
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
-      kmess_buf[blpos] = c;
+      kmess.kmess_buf[kmess.blpos] = c;
       if (kmess.km_size < sizeof(kmess.km_buf))
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
-      if(blpos == maxblpos) {
-      	memmove(kmess_buf, kmess_buf+1, sizeof(kmess_buf)-1);
-      } else blpos++;
+      if(kmess.blpos == maxblpos) {
+      	memmove(kmess.kmess_buf,
+		kmess.kmess_buf+1, sizeof(kmess.kmess_buf)-1);
+      } else kmess.blpos++;
   } else {
       int p;
       endpoint_t outprocs[] = OUTPUT_PROCS_ARRAY;
-      if(!(minix_panicing || do_serial_debug)) {
+      if(!(kinfo.minix_panicing || kinfo.do_serial_debug)) {
 	      for(p = 0; outprocs[p] != NONE; p++) {
-		 if(isokprocn(outprocs[p]) && !isemptyn(outprocs[p])) {
+		 if(isokprocn(outprocs[p])) {
        	    send_sig(outprocs[p], SIGKMESS);
 		 }
       	}
@@ -86,15 +90,3 @@ int c;					/* character to append */
   return;
 }
 
-void cpu_print_freq(unsigned cpu)
-{
-	u64_t freq;
-
-	freq = cpu_get_freq(cpu);
-	printf("CPU %d freq %lu MHz\n", cpu, div64u(freq, 1000000));
-}
-
-int is_fpu(void)
-{
-	return get_cpulocal_var(fpu_presence);
-}

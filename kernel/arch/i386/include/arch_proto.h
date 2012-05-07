@@ -53,12 +53,6 @@ void ipc_entry(void);
 void kernel_call_entry(void);
 void level0_call(void);
 
-/* memory.c */
-void segmentation2paging(struct proc * current);
-void i386_freepde(int pde);
-void getcr3val(void);
-
-
 /* exception.c */
 struct exception_frame {
 	reg_t	vector;		/* which interrupt vector was triggered */
@@ -83,6 +77,7 @@ unsigned long read_cr4(void);
 void write_cr4(unsigned long value);
 void write_cr3(unsigned long value);
 unsigned long read_cpu_flags(void);
+phys_bytes vir2phys(void *);
 void phys_insb(u16_t port, phys_bytes buf, size_t count);
 void phys_insw(u16_t port, phys_bytes buf, size_t count);
 void phys_outsb(u16_t port, phys_bytes buf, size_t count);
@@ -105,6 +100,17 @@ int __frstor_end(void *);
 int __frstor_failure(void *);
 unsigned short fnstsw(void);
 void fnstcw(unsigned short* cw);
+void x86_lgdt(void *);
+void x86_lldt(u32_t);
+void x86_ltr(u32_t);
+void x86_lidt(void *);
+void x86_load_kerncs(void);
+void x86_load_ds(u32_t);
+void x86_load_ss(u32_t);
+void x86_load_es(u32_t);
+void x86_load_fs(u32_t);
+void x86_load_gs(u32_t);
+
 
 void switch_k_stack(void * esp, void (* continuation)(void));
 
@@ -147,18 +153,24 @@ struct tss_s {
   u16_t trap;
   u16_t iobase;
 /* u8_t iomap[0]; */
-};
+} __attribute__((packed));
 
-void prot_init(void);
-void idt_init(void);
-void init_dataseg(struct segdesc_s *segdp, phys_bytes base, vir_bytes
-	size, int privilege);
 void enable_iop(struct proc *pp);
-int prot_set_kern_seg_limit(vir_bytes limit);
-void printseg(char *banner, int iscs, struct proc *pr, u32_t selector);
 u32_t read_cs(void);
 u32_t read_ds(void);
 u32_t read_ss(void);
+
+void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len);
+void vm_enable_paging(void);
+void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end);
+phys_bytes pg_roundup(phys_bytes b);
+void pg_info(reg_t *, u32_t **);
+void pg_clear(void);
+void pg_identity(void);
+phys_bytes pg_load(void);
+void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end, kinfo_t *cbi);
+int pg_mapkernel(void);
+void pg_mapproc(struct proc *p, struct boot_image *ip, kinfo_t *cbi);
 
 /* prototype of an interrupt vector table entry */
 struct gate_table_s {
@@ -167,13 +179,11 @@ struct gate_table_s {
 	unsigned char privilege;
 };
 
-extern struct gate_table_s gate_table_pic[];
-
 /* copies an array of vectors to the IDT. The last vector must be zero filled */
 void idt_copy_vectors(struct gate_table_s * first);
+void idt_copy_vectors_pic(void);
 void idt_reload(void);
 
-EXTERN void * k_boot_stktop;
 EXTERN void * k_stacks_start;
 extern void * k_stacks;
 
@@ -196,9 +206,9 @@ reg_t read_ebp(void);
 /*
  * sets up TSS for a cpu and assigns kernel stack and cpu id
  */
-void tss_init(unsigned cpu, void * kernel_stack);
+int tss_init(unsigned cpu, void * kernel_stack);
 
-void int_gate(unsigned vec_nr, vir_bytes offset, unsigned dpl_type);
+void int_gate_idt(unsigned vec_nr, vir_bytes offset, unsigned dpl_type);
 
 void __copy_msg_from_user_end(void);
 void __copy_msg_to_user_end(void);
@@ -210,6 +220,7 @@ int platform_tbl_ptr(phys_bytes start, phys_bytes end, unsigned
 	cmp_f)(void *)));
 
 /* breakpoints.c */
+int breakpoint_set(phys_bytes linaddr, int bp, const int flags);
 #define BREAKPOINT_COUNT		4
 #define BREAKPOINT_FLAG_RW_MASK		(3 << 0)
 #define BREAKPOINT_FLAG_RW_EXEC		(0 << 0)

@@ -23,7 +23,7 @@ int sys_safemap(endpoint_t grantor, cp_grant_id_t grant,
 	copy_mess.SMAP_BYTES = bytes;
 	copy_mess.SMAP_FLAG = writable;
 
-	copy_mess.SMAP_SEG_OBSOLETE = (void *) D;
+	copy_mess.SMAP_SEG_OBSOLETE = (void *) D_OBSOLETE;
 
 	return(_kernel_call(SYS_SAFEMAP, &copy_mess));
 
@@ -67,7 +67,7 @@ int sys_safeunmap(vir_bytes my_address)
 
 	copy_mess.SMAP_ADDRESS = my_address;
 
-	copy_mess.SMAP_SEG_OBSOLETE = (void *) D;
+	copy_mess.SMAP_SEG_OBSOLETE = (void *) D_OBSOLETE;
 
 	return(_kernel_call(SYS_SAFEUNMAP, &copy_mess));
 }

@@ -29,7 +29,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   endpoint_t proc_nr_e = m_ptr->DIO_VEC_ENDPT;
   vir_bytes count = m_ptr->DIO_VEC_SIZE;
   long port = m_ptr->DIO_PORT;
-  phys_bytes phys_buf;
+  phys_bytes vir_buf;
   int i, req_type, req_dir, size, nr_io_range;
   struct priv *privp;
   struct io_range *iorp;
@@ -79,11 +79,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	if(!isokendpt(newep, &proc_nr))
 		return(EINVAL);
      destproc = proc_addr(proc_nr);
-     if ((phys_buf = umap_local(destproc, D,
-	 (vir_bytes) newoffset, count)) == 0) {
-	printf("do_sdevio: umap_local failed\n");
-         return(EFAULT);
-     }
+     vir_buf = newoffset;
   } else {
      if(proc_nr != _ENDPOINT_P(caller->p_endpoint))
      {
@@ -92,9 +88,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	return EPERM;
      }
      /* Get and check physical address. */
-     if ((phys_buf = umap_local(proc_addr(proc_nr), D,
-	 (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
-         return(EFAULT);
+     vir_buf = (phys_bytes) m_ptr->DIO_VEC_ADDR;
      destproc = proc_addr(proc_nr);
   }
      /* current process must be target for phys_* to be OK */
@@ -139,16 +133,16 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   /* Perform device I/O for bytes and words. Longs are not supported. */
   if (req_dir == _DIO_INPUT) { 
       switch (req_type) {
-      case _DIO_BYTE: phys_insb(port, phys_buf, count); break; 
-      case _DIO_WORD: phys_insw(port, phys_buf, count); break; 
+      case _DIO_BYTE: phys_insb(port, vir_buf, count); break; 
+      case _DIO_WORD: phys_insw(port, vir_buf, count); break; 
       default:
   		retval = EINVAL;
 		goto return_error;
       } 
   } else if (req_dir == _DIO_OUTPUT) { 
       switch (req_type) {
-      case _DIO_BYTE: phys_outsb(port, phys_buf, count); break; 
-      case _DIO_WORD: phys_outsw(port, phys_buf, count); break; 
+      case _DIO_BYTE: phys_outsb(port, vir_buf, count); break; 
+      case _DIO_WORD: phys_outsw(port, vir_buf, count); break; 
       default:
   		retval = EINVAL;
 		goto return_error;

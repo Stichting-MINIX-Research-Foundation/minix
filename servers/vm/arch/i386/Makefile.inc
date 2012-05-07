@@ -2,4 +2,4 @@
 
 #Arch-specific sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}
-SRCS+=	vm.c pagetable.c #util.S
+SRCS+=	pagetable.c #util.S

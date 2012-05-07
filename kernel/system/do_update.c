@@ -111,11 +111,6 @@ int do_update(struct proc * caller, message * m_ptr)
   /* Swap global process slot addresses. */
   swap_proc_slot_pointer(get_cpulocal_var_ptr(ptproc), src_rp, dst_rp);
 
-  /* Fix segments. */
-  alloc_segments(src_rp);
-  alloc_segments(dst_rp);
-  prot_init();
-
 #if DEBUG
   printf("do_update: updated %d (%s, %d, %d) into %d (%s, %d, %d)\n",
       src_rp->p_endpoint, src_rp->p_name, src_rp->p_nr, priv(src_rp)->s_proc_nr,

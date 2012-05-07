@@ -1448,38 +1448,16 @@ static void complete_bridges()
  *===========================================================================*/
 static void complete_bars(void)
 {
-	int i, j, r, bar_nr, reg;
+	int i, j, bar_nr, reg;
 	u32_t memgap_low, memgap_high, iogap_low, iogap_high, io_high,
 		base, size, v32, diff1, diff2;
-	char *cp, *next;
-	char memstr[256];
+	kinfo_t kinfo;
 
-	r= env_get_param("memory", memstr, sizeof(memstr));
-	if (r != OK)
-		panic("env_get_param failed: %d", r);
-	
+	if(OK != sys_getkinfo(&kinfo))
+		panic("can't get kinfo");
+
 	/* Set memgap_low to just above physical memory */
-	memgap_low= 0;
-	cp= memstr;
-	while (*cp != '\0')
-	{
-		base= strtoul(cp, &next, 16);
-		if (!(*next) || next == cp || *next != ':')
-			goto bad_mem_string;
-		cp= next+1;
-		size= strtoul(cp, &next, 16);
-		if (next == cp || (*next != ',' && *next != '\0'))
-		if (!*next)
-			goto bad_mem_string;
-		if (base+size > memgap_low)
-			memgap_low= base+size;
-
-		if (*next)
-			cp= next+1;
-		else
-			break;
-	}
-
+	memgap_low= kinfo.mem_high_phys;
 	memgap_high= 0xfe000000;	/* Leave space for the CPU (APIC) */
 
 	if (debug)
@@ -1661,10 +1639,6 @@ static void complete_bars(void)
 		}
 	}
 	return;
-
-bad_mem_string:
-	printf("PCI: bad memory environment string '%s'\n", memstr);
-	panic(NULL);
 }
 
 /*===========================================================================*

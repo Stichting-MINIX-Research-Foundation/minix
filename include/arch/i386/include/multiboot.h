@@ -14,8 +14,6 @@
 
 #define MULTIBOOT_AOUT_KLUDGE 0x00010000
 
-#define MULTIBOOT_FLAGS (MULTIBOOT_MEMORY_INFO | MULTIBOOT_PAGE_ALIGN)
-
 /* consts used for Multiboot pre-init */
 
 #define MULTIBOOT_VIDEO_MODE_EGA 1
@@ -28,13 +26,18 @@
 #define MULTIBOOT_CONSOLE_LINES 25
 #define MULTIBOOT_CONSOLE_COLS 80
 
+#define MULTIBOOT_VIDEO_BUFFER_BYTES \
+	(MULTIBOOT_CONSOLE_LINES*MULTIBOOT_CONSOLE_COLS*2)
 
 #define MULTIBOOT_STACK_SIZE 4096
 #define MULTIBOOT_PARAM_BUF_SIZE 1024
 
+#define MULTIBOOT_MAX_MODS	20
+
 /* Flags to be set in the ’flags’ member of the multiboot info structure. */
 
 #define MULTIBOOT_INFO_MEMORY 0x00000001
+#define MULTIBOOT_INFO_MEM_MAP 0x00000040
 
 /* Is there a boot device set? */
 #define MULTIBOOT_INFO_BOOTDEV 0x00000002
@@ -44,6 +47,8 @@
 
 /* Are there modules to do something with? */
 #define MULTIBOOT_INFO_MODS 0x00000008
+
+#define MULTIBOOT_HIGH_MEM_BASE 0x100000
 
 #ifndef __ASSEMBLY__
 
@@ -73,8 +78,8 @@ struct multiboot_info
 	/* Multiboot info version number */
 	u32_t flags;
 	/* Available memory from BIOS */
-	u32_t mem_lower;
-	u32_t mem_upper;
+	u32_t mem_lower_unused;	/* minix uses memmap instead */
+	u32_t mem_upper_unused;
 	/* "root" partition */
 	u32_t boot_device;
 	/* Kernel command line */
@@ -121,8 +126,18 @@ struct multiboot_mod_list
 };
 typedef struct multiboot_mod_list multiboot_module_t;
 
-/* Buffer for multiboot parameters */
-extern char multiboot_param_buf[];
+#define MULTIBOOT_MEMORY_AVAILABLE              1
+#define MULTIBOOT_MEMORY_RESERVED               2
+struct multiboot_mmap_entry
+{
+	u32_t size;
+	u64_t addr;
+	u64_t len;
+#define MULTIBOOT_MEMORY_AVAILABLE              1
+#define MULTIBOOT_MEMORY_RESERVED               2
+	u32_t type;
+} __attribute__((packed));
+typedef struct multiboot_mmap_entry multiboot_memory_map_t;
 
 #endif /* __ASSEMBLY__ */
 #endif /* __MULTIBOOT_H__ */

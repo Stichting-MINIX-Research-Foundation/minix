@@ -358,7 +358,7 @@ struct memory *chunks;		/* list of free memory chunks */
 }
 
 #if SANITYCHECKS
-static void sanitycheck(void)
+void mem_sanitycheck(char *file, int line)
 {
 	pagerange_t *p, *prevp = NULL;
 	addr_iter iter;
@@ -368,8 +368,10 @@ static void sanitycheck(void)
 		assert(p->size > 0);
 		if(prevp) {
 			assert(prevp->addr < p->addr);
-			assert(prevp->addr + p->addr < p->addr);
+			assert(prevp->addr + prevp->size < p->addr);
 		}
+		usedpages_add(p->addr * VM_PAGE_SIZE, p->size * VM_PAGE_SIZE);
+		prevp = p;
 		addr_incr_iter(&iter);
 	}
 }
@@ -383,9 +385,7 @@ void memstats(int *nodes, int *pages, int *largest)
 	*nodes = 0;
 	*pages = 0;
 	*largest = 0;
-#if SANITYCHECKS
-	sanitycheck();
-#endif
+
 	while((p=addr_get_iter(&iter))) {
 		SLABSANE(p);
 		(*nodes)++;
@@ -424,7 +424,6 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 #endif
 
 	memstats(&firstnodes, &firstpages, &largest);
-	sanitycheck();
 	wantnodes = firstnodes;
 	wantpages = firstpages - pages;
 #endif
@@ -513,7 +512,6 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 
 #if SANITYCHECKS
 	memstats(&finalnodes, &finalpages, &largest);
-	sanitycheck();
 
 	assert(finalnodes == wantnodes);
 	assert(finalpages == wantpages);
@@ -534,7 +532,6 @@ static void free_pages(phys_bytes pageno, int npages)
 	int finalnodes, finalpages, largest;
 
 	memstats(&firstnodes, &firstpages, &largest);
-	sanitycheck();
 
 	wantnodes = firstnodes;
 	wantpages = firstpages + npages;
@@ -561,7 +558,6 @@ static void free_pages(phys_bytes pageno, int npages)
 		wantnodes = firstnodes;
 		wantpages = firstpages + npages;
 
-		sanitycheck();
 #endif
 		assert(npages > 0);
 		USE(pr, pr->addr = pageno;
@@ -593,7 +589,6 @@ static void free_pages(phys_bytes pageno, int npages)
 
 #if SANITYCHECKS
 	memstats(&finalnodes, &finalpages,  &largest);
-	sanitycheck();
 
 	assert(finalnodes == wantnodes);
 	assert(finalpages == wantpages);
@@ -817,7 +812,6 @@ void usedpages_reset(void)
  *===========================================================================*/
 int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 {
-	pagerange_t *pr;
 	u32_t pagestart, pages;
 
 	if(!incheck)
@@ -836,7 +830,6 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 		assert(pagestart < MAXPAGES);
 		thisaddr = pagestart * VM_PAGE_SIZE;
 		if(GET_BIT(pagemap, pagestart)) {
-			int i;
 			printf("%s:%d: usedpages_add: addr 0x%lx reused.\n",
 				file, line, thisaddr);
 			return EFAULT;

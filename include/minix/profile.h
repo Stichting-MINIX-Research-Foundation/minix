@@ -31,7 +31,7 @@ struct sprof_sample {
 
 struct sprof_proc {
 	endpoint_t	proc;
-	char		name[8];
+	char		name[PROC_NAME_LEN];
 };
 
 #include <minix/types.h>

@@ -12,7 +12,7 @@
  *
  * The entry points into this file are:
  *   do_exec:	 perform the EXEC system call
- *   do_exec_newmem: allocate new memory map for a process that tries to exec
+ *   do_newexec: handle PM part of exec call after VFS
  *   do_execrestart: finish the special exec call for RS
  *   exec_restart: finish a regular exec call
  */
@@ -73,14 +73,14 @@ int do_newexec()
 
 	proc_e= m_in.EXC_NM_PROC;
 	if (pm_isokendpt(proc_e, &proc_n) != OK) {
-		panic("do_exec_newmem: got bad endpoint: %d", proc_e);
+		panic("do_newexec: got bad endpoint: %d", proc_e);
 	}
 	rmp= &mproc[proc_n];
 	ptr= m_in.EXC_NM_PTR;
 	r= sys_datacopy(who_e, (vir_bytes)ptr,
 		SELF, (vir_bytes)&args, sizeof(args));
 	if (r != OK)
-		panic("do_exec_newmem: sys_datacopy failed: %d", r);
+		panic("do_newexec: sys_datacopy failed: %d", r);
 
 	allow_setuid = 0;	/* Do not allow setuid execution */
 	rmp->mp_flags &= ~TAINTED;	/* By default not tainted */

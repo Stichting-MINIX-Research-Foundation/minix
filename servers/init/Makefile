@@ -8,6 +8,4 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-LDFLAGS+= -Wl,--section-start=.init=0x0
-
 .include <bsd.prog.mk>

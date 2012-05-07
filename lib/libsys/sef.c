@@ -84,7 +84,9 @@ void sef_startup()
           panic("RS unable to complete init: %d", r);
       }
   }
-  else {
+  else if(sef_self_endpoint == VM_PROC_NR) {
+  	/* VM handles initialization by RS later */
+  } else {
       message m;
 
       /* Wait for an initialization message from RS. We need this to learn the

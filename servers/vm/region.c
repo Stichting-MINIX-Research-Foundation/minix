@@ -133,14 +133,13 @@ void map_printregion(struct vmproc *vmp, struct vir_region *vr)
 	physr_iter iter;
 	struct phys_region *ph;
 	printf("map_printmap: map_name: %s\n", map_name(vr));
-	printf("\t%s (len 0x%lx, %lukB), %s\n",
-		arch_map2str(vmp, vr->vaddr), vr->length,
-			vr->length/1024, map_name(vr));
+	printf("\t%lx (len 0x%lx, %lukB), %p\n",
+		vr->vaddr, vr->length, vr->length/1024, map_name(vr));
 	printf("\t\tphysblocks:\n");
 	physr_start_iter_least(vr->phys, &iter);
 	while((ph = physr_get_iter(&iter))) {
-		printf("\t\t@ %s (refs %d): phys 0x%lx len 0x%lx\n",
-			arch_map2str(vmp, vr->vaddr + ph->offset),
+		printf("\t\t@ %lx (refs %d): phys 0x%lx len 0x%lx\n",
+			(vr->vaddr + ph->offset),
 			ph->ph->refcount, ph->ph->phys, ph->ph->length);
 		physr_incr_iter(&iter);
 	}
@@ -193,9 +192,6 @@ static int map_sanitycheck_pt(struct vmproc *vmp,
 	struct phys_block *pb = pr->ph;
 	int rw;
 	int r;
-
-	if(!(vmp->vm_flags & VMF_HASPT))
-		return OK;
 
 	if(WRITABLE(vr, pb))
 		rw = PTF_WRITE;
@@ -406,7 +402,7 @@ static int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 static vir_bytes region_find_slot_range(struct vmproc *vmp,
 		vir_bytes minv, vir_bytes maxv, vir_bytes length)
 {
-	struct vir_region *firstregion;
+	struct vir_region *lastregion;
 	vir_bytes startv = 0;
 	int foundflag = 0;
 	region_iter iter;
@@ -439,40 +435,50 @@ static vir_bytes region_find_slot_range(struct vmproc *vmp,
 	assert(minv < maxv);
 	assert(minv + length <= maxv);
 
-#define FREEVRANGE(rangestart, rangeend) {		\
+#define FREEVRANGE_TRY(rangestart, rangeend) {		\
 	vir_bytes frstart = (rangestart), frend = (rangeend);	\
 	frstart = MAX(frstart, minv);				\
 	frend   = MIN(frend, maxv);				\
 	if(frend > frstart && (frend - frstart) >= length) {	\
-		startv = frstart;				\
+		startv = frend-length;				\
 		foundflag = 1;					\
 	} }
 
-	/* find region before minv. */
-	region_start_iter(&vmp->vm_regions_avl, &iter, minv, AVL_LESS_EQUAL);
-	firstregion = region_get_iter(&iter);
+#define FREEVRANGE(start, end) {					\
+	assert(!foundflag);						\
+	FREEVRANGE_TRY(((start)+VM_PAGE_SIZE), ((end)-VM_PAGE_SIZE));	\
+	if(!foundflag) {						\
+		FREEVRANGE_TRY((start), (end));				\
+	}								\
+}
 
-	if(!firstregion) {
-		/* This is the free virtual address space before the first region. */
-		region_start_iter(&vmp->vm_regions_avl, &iter, minv, AVL_GREATER_EQUAL);
-		firstregion = region_get_iter(&iter);
-		FREEVRANGE(0, firstregion ? firstregion->vaddr : VM_DATATOP);
+	/* find region after maxv. */
+	region_start_iter(&vmp->vm_regions_avl, &iter, maxv, AVL_GREATER_EQUAL);
+	lastregion = region_get_iter(&iter);
+
+	if(!lastregion) {
+		/* This is the free virtual address space after the last region. */
+		region_start_iter(&vmp->vm_regions_avl, &iter, maxv, AVL_LESS);
+		lastregion = region_get_iter(&iter);
+		FREEVRANGE(lastregion ?
+			lastregion->vaddr+lastregion->length : 0, VM_DATATOP);
 	}
 
 	if(!foundflag) {
 		struct vir_region *vr;
 		while((vr = region_get_iter(&iter)) && !foundflag) {
 			struct vir_region *nextvr;
-			region_incr_iter(&iter);
+			region_decr_iter(&iter);
 			nextvr = region_get_iter(&iter);
-			FREEVRANGE(vr->vaddr + vr->length,
-			  nextvr ? nextvr->vaddr : VM_DATATOP);
+			FREEVRANGE(nextvr ? nextvr->vaddr+nextvr->length : 0,
+			  vr->vaddr);
 		}
 	}
 
 	if(!foundflag) {
 		printf("VM: region_find_slot: no 0x%lx bytes found for %d between 0x%lx and 0x%lx\n",
 			length, vmp->vm_endpoint, minv, maxv);
+		util_stacktrace();
 		return SLOT_FAIL;
 	}
 
@@ -500,7 +506,7 @@ static vir_bytes region_find_slot(struct vmproc *vmp,
 	 */
 
 	if(maxv && hint < maxv && hint >= minv) {
-		v = region_find_slot_range(vmp, hint, maxv, length);
+		v = region_find_slot_range(vmp, minv, hint, length);
 
 		if(v != SLOT_FAIL)
 			return v;
@@ -529,6 +535,11 @@ int mapflags;
 	assert(!(length % VM_PAGE_SIZE));
 
 	SANITYCHECK(SCL_FUNCTIONS);
+
+	if((flags & VR_CONTIG) && !(mapflags & MF_PREALLOC)) {
+		printf("map_page_region: can't make contiguous allocation without preallocating\n");
+		return NULL;
+	}
 
 	startv = region_find_slot(vmp, minv, maxv, length);
 	if (startv == SLOT_FAIL)
@@ -977,7 +988,10 @@ int written;
 
 	if((region->flags & VR_CONTIG) &&
 		(start_offset > 0 || length < region->length)) {
-		printf("VM: map_new_physblock: non-full allocation requested\n");
+		printf("VM: region length 0x%lx, offset 0x%lx length 0x%lx\n",
+			region->length, start_offset, length);
+		map_printmap(vmp);
+		printf("VM: map_new_physblock: non-full contig allocation requested\n");
 		return EFAULT;
 	}
 
@@ -1379,8 +1393,8 @@ int write;
 
 #if SANITYCHECKS
 	if(OK != pt_checkrange(&vmp->vm_pt, region->vaddr+offset, length, write)) {
-		printf("handle mem %s-", arch_map2str(vmp, region->vaddr+offset));
-		printf("%s failed\n", arch_map2str(vmp, region->vaddr+offset+length));
+		printf("handle mem 0x%lx-0x%lx failed\n",
+			region->vaddr+offset,region->vaddr+offset+length);
 		map_printregion(vmp, region);
 		panic("checkrange failed");
 	}
@@ -1647,46 +1661,13 @@ struct vir_region *start_src_vr;
 	return OK;
 }
 
-/*========================================================================*
- *				map_proc_kernel		     	  	*
- *========================================================================*/
-struct vir_region *map_proc_kernel(struct vmproc *vmp)
-{
-	struct vir_region *vr;
-
-	/* We assume these are the first regions to be mapped to
-	 * make the function a bit simpler (free all regions on error).
-	 */
-	assert(!region_search_root(&vmp->vm_regions_avl));
-	assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);
-	assert(!(KERNEL_TEXT % VM_PAGE_SIZE));
-	assert(!(KERNEL_TEXT_LEN % VM_PAGE_SIZE));
-	assert(!(KERNEL_DATA % VM_PAGE_SIZE));
-	assert(!(KERNEL_DATA_LEN % VM_PAGE_SIZE));
-
-	if(!(vr = map_page_region(vmp, KERNEL_TEXT, 0, KERNEL_TEXT_LEN, 
-		KERNEL_TEXT, VR_DIRECT | VR_WRITABLE | VR_NOPF, 0)) ||
-	   !(vr = map_page_region(vmp, KERNEL_DATA, 0, KERNEL_DATA_LEN, 
-		KERNEL_DATA, VR_DIRECT | VR_WRITABLE | VR_NOPF, 0))) {
-		map_free_proc(vmp);
-		return NULL;
-	}
-
-	return vr; /* Return pointer not useful, just non-NULL. */
-}
-
 int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes v)
 {
-	vir_bytes offset, o, end;
+	vir_bytes offset = v, end;
 	struct vir_region *vr, *nextvr;
+	int r = OK;
 
-	offset = arch_vir2map(vmp, v);
-
-	if((o=(offset % VM_PAGE_SIZE))) {
-		offset+= VM_PAGE_SIZE - o;
-	}
-
-	if(!(vr = region_search(&vmp->vm_regions_avl, offset, AVL_LESS_EQUAL))) {
+	if(!(vr = region_search(&vmp->vm_regions_avl, offset, AVL_LESS))) {
 		printf("VM: nothing to extend\n");
 		return ENOMEM;
 	}
@@ -1698,17 +1679,17 @@ int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes v)
 
 	assert(vr->vaddr <= offset);
 	if((nextvr = getnextvr(vr))) {
-		assert(offset < nextvr->vaddr);
+		assert(offset <= nextvr->vaddr);
 	}
 
 	end = vr->vaddr + vr->length;
 
-	if(offset < end)
-		return map_region_shrink(vr, end - offset);
+	offset = roundup(offset, VM_PAGE_SIZE);
 
-	return map_region_extend(vmp, vr, offset - end);
+	if(end < offset)
+		r = map_region_extend(vmp, vr, offset - end);
 
-	return ENOMEM;
+	return r;
 }
 
 /*========================================================================*
@@ -1723,6 +1704,10 @@ int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 	assert(vr);
 	assert(vr->flags & VR_ANON);
 	assert(!(delta % VM_PAGE_SIZE));
+	if(vr->flags & VR_CONTIG) {
+		printf("VM: can't grow contig region\n");
+		return EFAULT;
+	}
 
 	if(!delta) return OK;
 	end = vr->vaddr + vr->length;
@@ -1868,10 +1853,9 @@ int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 
 	/* da is handled differently */
 	if (!da)
-		dst_addr = dvmp->vm_stacktop;
+		dst_addr = 0;
 	else
 		dst_addr = da;
-	dst_addr = arch_vir2map(dvmp, dst_addr);
 
 	/* round up to page size */
 	assert(!(size % VM_PAGE_SIZE));
@@ -2054,8 +2038,8 @@ int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
 		if(!ph1 || !ph2) { assert(!ph1 && !ph2); continue; }
 
 		/* Report start+length of region starting from lowest use. */
-		vri->vri_addr = arch_map2info(vmp, vr->vaddr + ph1->offset,
-			&vri->vri_seg, &vri->vri_prot);
+		vri->vri_addr = vr->vaddr + ph1->offset;
+		vri->vri_prot = 0;
 		vri->vri_length = ph2->offset + ph2->ph->length - ph1->offset;
 
 		/* "AND" the provided protection with per-page protection. */
@@ -2434,7 +2418,7 @@ get_clean_phys_region(struct vmproc *vmp, vir_bytes vaddr, vir_bytes length,
 	vir_bytes regionoffset, mapaddr;
 	struct phys_region *ph;
 
-	mapaddr = arch_vir2map(vmp, vaddr);
+	mapaddr = vaddr;
 
         if(!(region = map_lookup(vmp, mapaddr))) {
 		printf("VM: get_clean_phys_region: 0x%lx not found\n", vaddr);
@@ -2638,11 +2622,6 @@ int do_forgetblocks(message *m)
 
 	vmp = &vmproc[n];
 
-	if(!(vmp->vm_flags & VMF_HASPT)) {
-		printf("do_forgetblocks: no pt\n");
-		return EFAULT;
-	}
-
 	free_yielded_proc(vmp);
 
 	return OK;
@@ -2666,11 +2645,6 @@ int do_forgetblock(message *m)
 			m->m_source);
 
 	vmp = &vmproc[n];
-
-	if(!(vmp->vm_flags & VMF_HASPT)) {
-		printf("do_forgetblock: no pt\n");
-		return EFAULT;
-	}
 
 	id = make64(m->VMFB_IDLO, m->VMFB_IDHI);
 
@@ -2702,11 +2676,6 @@ int do_yieldblockgetblock(message *m)
 			m->m_source);
 
 	vmp = &vmproc[n];
-
-	if(!(vmp->vm_flags & VMF_HASPT)) {
-		printf("do_yieldblockgetblock: no pt\n");
-		return EFAULT;
-	}
 
 	len = m->VMYBGB_LEN;
 

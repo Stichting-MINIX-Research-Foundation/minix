@@ -7,7 +7,7 @@
 /* Global variables. */
 EXTERN struct mproc *mp;	/* ptr to 'mproc' slot of current process */
 EXTERN int procs_in_use;	/* how many processes are marked as IN_USE */
-EXTERN char monitor_params[128*sizeof(char *)];	/* boot monitor parameters */
+EXTERN char monitor_params[MULTIBOOT_PARAM_BUF_SIZE];
 EXTERN struct kinfo kinfo;	/* kernel information */
 
 /* Misc.c */
@@ -25,7 +25,6 @@ EXTERN sigset_t noign_sset;	/* which signals cannot be ignored */
 
 EXTERN u32_t system_hz;		/* System clock frequency. */
 EXTERN int abort_flag;
-EXTERN char monitor_code[256];		
 
 EXTERN struct machine machine;		/* machine info */
 #ifdef CONFIG_SMP

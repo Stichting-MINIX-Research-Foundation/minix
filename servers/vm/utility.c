@@ -39,23 +39,6 @@
 #include "kernel/proc.h"
 
 /*===========================================================================*
- *                              get_mem_map                                  *
- *===========================================================================*/
-int get_mem_map(proc_nr, mem_map)
-int proc_nr;                                    /* process to get map of */
-struct mem_map *mem_map;                        /* put memory map here */
-{
-	struct proc p;
-	int s;
-
-	if ((s=sys_getproc(&p, proc_nr)) != OK)
-		return(s);
-
-	memcpy(mem_map, p.p_memmap, sizeof(p.p_memmap));
-	return(OK);
-}
-
-/*===========================================================================*
  *                              get_mem_chunks                               *
  *===========================================================================*/
 void get_mem_chunks(mem_chunks)
@@ -89,6 +72,7 @@ struct memory *mem_chunks;                      /* store mem chunks here */
   }
 }  
 
+#if 0
 /*===========================================================================*
  *                              reserve_proc_mem                             *
  *===========================================================================*/
@@ -135,6 +119,7 @@ struct mem_map *map_ptr;                        /* memory to remove */
 			map_ptr[T].mem_phys);
   }
 } 
+#endif
 
 /*===========================================================================*
  *                              vm_isokendpt                           	     *
@@ -243,7 +228,7 @@ int do_info(message *m)
 	 * deadlock. Note that no memory mapping can be undone without the
 	 * involvement of VM, so we are safe until we're done.
 	 */
-	r = handle_memory(vmp, arch_vir2map(vmp, ptr), size, 1 /*wrflag*/);
+	r = handle_memory(vmp, ptr, size, 1 /*wrflag*/);
 	if (r != OK) return r;
 
 	/* Now that we know the copy out will succeed, perform the actual copy
@@ -305,9 +290,7 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 		printf("VM: swap_proc_dyn_data: tranferring regions above the stack from old VM (%d) to new VM (%d)\n",
 			src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
 #endif
-		assert(src_vmp->vm_stacktop == dst_vmp->vm_stacktop);
-		r = pt_map_in_range(src_vmp, dst_vmp,
-			arch_vir2map(src_vmp, src_vmp->vm_stacktop), 0);
+		r = pt_map_in_range(src_vmp, dst_vmp, VM_STACKTOP, 0);
 		if(r != OK) {
 			printf("swap_proc_dyn_data: pt_map_in_range failed\n");
 			return r;
@@ -329,15 +312,14 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	 * new instance and prevent state corruption on rollback, we share all
 	 * the regions between the two instances as COW.
 	 */
-	if(!is_vm && (dst_vmp->vm_flags & VMF_HASPT)) {
+	if(!is_vm) {
 		struct vir_region *vr;
-		vr = map_lookup(dst_vmp, arch_vir2map(dst_vmp, dst_vmp->vm_stacktop));
-		if(vr && !map_lookup(src_vmp, arch_vir2map(src_vmp, src_vmp->vm_stacktop))) {
+		vr = map_lookup(dst_vmp, VM_STACKTOP);
+		if(vr && !map_lookup(src_vmp, VM_STACKTOP)) {
 #if LU_DEBUG
 			printf("VM: swap_proc_dyn_data: tranferring regions above the stack from %d to %d\n",
 				src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
 #endif
-			assert(src_vmp->vm_stacktop == dst_vmp->vm_stacktop);
 			r = map_proc_copy_from(src_vmp, dst_vmp, vr);
 			if(r != OK) {
 				return r;

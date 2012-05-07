@@ -216,6 +216,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 
   /* passed from exec() libc code */
   execi.userflags = user_exec_flags;
+  execi.args.stack_high = kinfo.user_sp;
   execi.args.stack_size = DEFAULT_STACK_LIMIT;
 
   okendpt(proc_e, &slot);
@@ -617,15 +618,15 @@ static int read_seg(struct exec_info *execi, off_t off, off_t seg_addr, size_t s
   if (off + seg_bytes > LONG_MAX) return(EIO);
   if ((unsigned long) vp->v_size < off+seg_bytes) return(EIO);
 
-	if ((r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(off), READING,
-			 execi->proc_e, (char*)seg_addr, seg_bytes,
-			 &new_pos, &cum_io)) != OK) {
-	    printf("VFS: read_seg: req_readwrite failed (data)\n");
-	    return(r);
-	}
+  if ((r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(off), READING,
+		 execi->proc_e, (char*)seg_addr, seg_bytes,
+		 &new_pos, &cum_io)) != OK) {
+    printf("VFS: read_seg: req_readwrite failed (data)\n");
+    return(r);
+  }
 
-	if (r == OK && cum_io != seg_bytes)
-		printf("VFS: read_seg segment has not been read properly\n");
+  if (r == OK && cum_io != seg_bytes)
+	printf("VFS: read_seg segment has not been read properly\n");
 
 	return(r);
 }

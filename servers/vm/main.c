@@ -20,6 +20,8 @@
 #include <minix/crtso.h>
 #include <minix/rs.h>
 
+#include <libexec.h>
+#include <ctype.h>
 #include <errno.h>
 #include <string.h>
 #include <env.h>
@@ -38,6 +40,7 @@
 extern int missing_spares;
 
 #include <machine/archtypes.h>
+#include <sys/param.h>
 #include "kernel/const.h"
 #include "kernel/config.h"
 #include "kernel/proc.h"
@@ -60,11 +63,12 @@ struct {
 
 static int map_service(struct rprocpub *rpub);
 static int vm_acl_ok(endpoint_t caller, int call);
+static int do_rs_init(message *m);
 
 /* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 static void sef_cb_signal_handler(int signo);
+
+void init_vm(void);
 
 /*===========================================================================*
  *				main					     *
@@ -76,8 +80,15 @@ int main(void)
   int caller_slot;
   struct vmproc *vmp_caller;
 
-  /* SEF local startup. */
-  sef_local_startup();
+  /* Initialize system so that all processes are runnable */
+  init_vm();
+
+  /* Register init callbacks. */
+  sef_setcb_init_restart(sef_cb_init_fail);
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 
   SANITYCHECK(SCL_TOP);
 
@@ -100,11 +111,14 @@ int main(void)
 	}
 	who_e = msg.m_source;
 	if(vm_isokendpt(who_e, &caller_slot) != OK)
-		panic("invalid caller", who_e);
+		panic("invalid caller %d", who_e);
 	vmp_caller = &vmproc[caller_slot];
 	c = CALLNUMBER(msg.m_type);
 	result = ENOSYS; /* Out of range or restricted calls return this. */
-	if (msg.m_type == VM_PAGEFAULT) {
+	
+	if(msg.m_type == RS_INIT && msg.m_source == RS_PROC_NR) {
+		result = do_rs_init(&msg);
+	} else if (msg.m_type == VM_PAGEFAULT) {
 		if (!IPC_STATUS_FLAGS_TEST(rcv_sts, IPC_FLG_MSG_FROM_KERNEL)) {
 			printf("VM: process %d faked VM_PAGEFAULT "
 					"message!\n", msg.m_source);
@@ -145,55 +159,172 @@ int main(void)
   return(OK);
 }
 
-/*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-static void sef_local_startup()
+static int do_rs_init(message *m)
 {
-  /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fail);
+	int s, i;
+	static struct rprocpub rprocpub[NR_BOOT_PROCS];
 
-  /* No live update support for now. */
+	/* Map all the services in the boot image. */
+	if((s = sys_safecopyfrom(RS_PROC_NR, m->RS_INIT_RPROCTAB_GID, 0,
+		(vir_bytes) rprocpub, sizeof(rprocpub))) != OK) {
+		panic("vm: sys_safecopyfrom (rs) failed: %d", s);
+	}
 
-  /* Register signal callbacks. */
-  sef_setcb_signal_handler(sef_cb_signal_handler);
+	for(i=0;i < NR_BOOT_PROCS;i++) {
+		if(rprocpub[i].in_use) {
+			if((s = map_service(&rprocpub[i])) != OK) {
+				panic("unable to map service: %d", s);
+			}
+		}
+	}
 
-  /* Let SEF perform startup. */
-  sef_startup();
+	/* RS expects this response that it then again wants to reply to: */
+	m->RS_INIT_RESULT = OK;
+	sendrec(RS_PROC_NR, m);
+
+	return(SUSPEND);
 }
 
-/*===========================================================================*
- *				sef_cb_init_fresh			     *
- *===========================================================================*/
-static int sef_cb_init_fresh(int type, sef_init_info_t *info)
+struct vmproc *init_proc(endpoint_t ep_nr)
 {
-/* Initialize the vm server. */
-	int s, i;
-	struct memory mem_chunks[NR_MEMS];
-	struct boot_image image[NR_BOOT_PROCS];
+	static struct boot_image *ip;
+
+	for (ip = &kernel_boot_info.boot_procs[0];
+		ip < &kernel_boot_info.boot_procs[NR_BOOT_PROCS]; ip++) {
+		struct vmproc *vmp;
+
+		if(ip->proc_nr != ep_nr) continue;
+
+		if(ip->proc_nr >= _NR_PROCS || ip->proc_nr < 0)
+			panic("proc: %d", ip->proc_nr);
+
+		vmp = &vmproc[ip->proc_nr];
+		assert(!(vmp->vm_flags & VMF_INUSE));	/* no double procs */
+		clear_proc(vmp);
+		vmp->vm_flags = VMF_INUSE;
+		vmp->vm_endpoint = ip->endpoint;
+		vmp->vm_boot = ip;
+
+		return vmp;
+	}
+
+	panic("no init_proc");
+}
+
+struct vm_exec_info {
+	struct exec_info execi;
 	struct boot_image *ip;
-	struct rprocpub rprocpub[NR_BOOT_PROCS];
-	phys_bytes limit = 0;
-	int is_elf = 0;
+	struct vmproc *vmp;
+};
+
+static int libexec_copy_physcopy(struct exec_info *execi,
+        off_t off, off_t vaddr, size_t len)
+{
+	vir_bytes end;
+	struct vm_exec_info *ei = execi->opaque;
+	end = ei->ip->start_addr + ei->ip->len;
+        assert(ei->ip->start_addr + off + len <= end);
+        return sys_physcopy(NONE, ei->ip->start_addr + off,
+		execi->proc_e, vaddr, len);
+}
+
+static void boot_alloc(struct exec_info *execi, off_t vaddr,
+	size_t len, int flags)
+{
+	struct vmproc *vmp = ((struct vm_exec_info *) execi->opaque)->vmp;
+
+	if(!(map_page_region(vmp, vaddr, 0,
+		len, MAP_NONE, VR_ANON | VR_WRITABLE | VR_UNINITIALIZED, flags))) {
+		panic("VM: exec: map_page_region for boot process failed");
+	}
+}
+
+static int libexec_alloc_vm_prealloc(struct exec_info *execi,
+	off_t vaddr, size_t len)
+{
+	boot_alloc(execi, vaddr, len, MF_PREALLOC);
+	return OK;
+}
+
+static int libexec_alloc_vm_ondemand(struct exec_info *execi,
+	off_t vaddr, size_t len)
+{
+	boot_alloc(execi, vaddr, len, 0);
+	return OK;
+}
+
+void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
+{
+	struct vm_exec_info vmexeci;
+	struct exec_info *execi = &vmexeci.execi;
+	char hdr[VM_PAGE_SIZE];
+
+	memset(&vmexeci, 0, sizeof(vmexeci));
+
+	if(pt_new(&vmp->vm_pt) != OK)
+		panic("VM: no new pagetable");
+
+	if(pt_bind(&vmp->vm_pt, vmp) != OK)
+		panic("VM: pt_bind failed");
+
+	if(sys_physcopy(NONE, ip->start_addr, SELF,
+		(vir_bytes) hdr, sizeof(hdr)) != OK)
+		panic("can't look at boot proc header");
+
+        execi->stack_high = kernel_boot_info.user_sp;
+        execi->stack_size = DEFAULT_STACK_LIMIT;
+        execi->proc_e = vmp->vm_endpoint;
+        execi->hdr = hdr;
+        execi->hdr_len = sizeof(hdr);
+        strcpy(execi->progname, ip->proc_name);
+        execi->frame_len = 0;
+	execi->opaque = &vmexeci;
+
+	vmexeci.ip = ip;
+	vmexeci.vmp = vmp;
+
+        /* callback functions and data */
+        execi->copymem = libexec_copy_physcopy;
+        execi->clearproc = NULL;
+        execi->clearmem = libexec_clear_sys_memset;
+        execi->allocmem_prealloc = libexec_alloc_vm_prealloc;
+        execi->allocmem_ondemand = libexec_alloc_vm_ondemand;
+
+	if(libexec_load_elf(execi) != OK)
+		panic("vm: boot process load of %d failed\n", vmp->vm_endpoint);
+
+        if(sys_exec(vmp->vm_endpoint, (char *) execi->stack_high - 12,
+		(char *) ip->proc_name, execi->pc) != OK)
+		panic("vm: boot process exec of %d failed\n", vmp->vm_endpoint);
+}
+
+void init_vm(void)
+{
+	int s, i;
+	static struct memory mem_chunks[NR_MEMS];
+	static struct boot_image *ip;
 
 #if SANITYCHECKS
 	incheck = nocheck = 0;
 #endif
 
+	/* Retrieve various crucial boot parameters */
+	if(OK != (s=sys_getkinfo(&kernel_boot_info))) {
+		panic("couldn't get bootinfo: %d", s);
+	}
+
+	/* Sanity check */
+	assert(kernel_boot_info.mmap_size > 0);
+	assert(kernel_boot_info.mods_with_kernel > 0);
+
 #if SANITYCHECKS
 	env_parse("vm_sanitychecklevel", "d", 0, &vm_sanitychecklevel, 0, SCL_MAX);
+
+	vm_sanitychecklevel = 1;
 #endif
 
 	/* Get chunks of available memory. */
 	get_mem_chunks(mem_chunks);
-
-	/* Initialize VM's process table. Request a copy of the system
-	 * image table that is defined at the kernel level to see which
-	 * slots to fill in.
-	 */
-	if (OK != (s=sys_getimage(image)))
-		panic("couldn't get image table: %d", s);
 
 	/* Set table to 0. This invalidates all slots (clear VMF_INUSE). */
 	memset(vmproc, 0, sizeof(vmproc));
@@ -202,122 +333,40 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		vmproc[i].vm_slot = i;
 	}
 
-	/* Walk through boot-time system processes that are alive
-	 * now and make valid slot entries for them.
-	 */
-	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
-		phys_bytes proclimit;
-		struct vmproc *vmp;
-
-		if(ip->proc_nr >= _NR_PROCS) { panic("proc: %d", ip->proc_nr); }
-		if(ip->proc_nr < 0 && ip->proc_nr != SYSTEM) continue;
-
-#define GETVMP(v, nr)						\
-		if(nr >= 0) {					\
-			vmp = &vmproc[ip->proc_nr];		\
-		} else if(nr == SYSTEM) {			\
-			vmp = &vmproc[VMP_SYSTEM];		\
-		} else {					\
-			panic("init: crazy proc_nr: %d", nr);	\
-		}
-
-		/* Initialize normal process table slot or special SYSTEM
-		 * table slot. Kernel memory is already reserved.
-		 */
-		GETVMP(vmp, ip->proc_nr);
-
-		/* reset fields as if exited */
-		clear_proc(vmp);
-
-		/* Get memory map for this process from the kernel. */
-		if ((s=get_mem_map(ip->proc_nr, vmp->vm_arch.vm_seg)) != OK)
-			panic("couldn't get process mem_map: %d", s);
-
-		/* Remove this memory from the free list. */
-		reserve_proc_mem(mem_chunks, vmp->vm_arch.vm_seg);
-
-		/* Set memory limit. */
-		proclimit = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_phys +
-			vmp->vm_arch.vm_seg[S].mem_len) - 1;
-
-		if(proclimit > limit)
-			limit = proclimit;
-
-		vmp->vm_flags = VMF_INUSE;
-		vmp->vm_endpoint = ip->endpoint;
-		vmp->vm_stacktop =
-			CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
-				vmp->vm_arch.vm_seg[S].mem_len);
-
-		if (vmp->vm_arch.vm_seg[T].mem_len != 0)
-			vmp->vm_flags |= VMF_SEPARATE;
-	}
-
 	/* region management initialization. */
 	map_region_init();
 
 	/* Architecture-dependent initialization. */
-	pt_init(limit);
+	init_proc(VM_PROC_NR);
+	pt_init();
 
 	/* Initialize tables to all physical memory. */
 	mem_init(mem_chunks);
 	meminit_done = 1;
 
-	/* Architecture-dependent memory initialization. */
-	pt_init_mem();
-
 	/* Give these processes their own page table. */
-	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
+	for (ip = &kernel_boot_info.boot_procs[0];
+		ip < &kernel_boot_info.boot_procs[NR_BOOT_PROCS]; ip++) {
 		struct vmproc *vmp;
-		vir_bytes old_stacktop, old_stacklen;
 
 		if(ip->proc_nr < 0) continue;
 
-		GETVMP(vmp, ip->proc_nr);
+		assert(ip->start_addr);
 
-               if(!(ip->flags & PROC_FULLVM))
-                       continue;
+		/* VM has already been set up by the kernel and pt_init().
+		 * Any other boot process is already in memory and is set up
+		 * here.
+		 */
+		if(ip->proc_nr == VM_PROC_NR) continue;
 
-        	if(pt_new(&vmp->vm_pt) != OK)
-			panic("VM: no new pagetable");
-#define BASICSTACK VM_PAGE_SIZE
-		old_stacktop = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
-				vmp->vm_arch.vm_seg[S].mem_len);
-		if(sys_vmctl(vmp->vm_endpoint, VMCTL_INCSP,
-			VM_STACKTOP - old_stacktop) != OK) {
-			panic("VM: vmctl for new stack failed");
-		}
+		vmp = init_proc(ip->proc_nr);
 
-		old_stacklen =
-			vmp->vm_arch.vm_seg[S].mem_vir +
-			vmp->vm_arch.vm_seg[S].mem_len -
-			vmp->vm_arch.vm_seg[D].mem_len -
-			vmp->vm_arch.vm_seg[D].mem_vir;
+		exec_bootproc(vmp, ip);
 
-		free_mem(vmp->vm_arch.vm_seg[D].mem_phys +
-			vmp->vm_arch.vm_seg[D].mem_len,
-			old_stacklen);
-
-#if defined(__ELF__)
-		is_elf = 1;
-#endif
-
-		if(proc_new(vmp,
-			VM_PROCSTART,
-			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_vir),
-			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len),
-			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_vir),
-			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_len),
-			BASICSTACK,
-			CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
-				vmp->vm_arch.vm_seg[S].mem_len -
-				vmp->vm_arch.vm_seg[D].mem_len -
-				vmp->vm_arch.vm_seg[D].mem_vir) - BASICSTACK,
-			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
-			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
-			    VM_STACKTOP, 0, is_elf, 0) != OK) {
-			panic("failed proc_new for boot process");
-		}
+		/* Free the file blob */
+		assert(!(ip->start_addr % VM_PAGE_SIZE));
+		ip->len = roundup(ip->len, VM_PAGE_SIZE);
+		free_mem(ABS2CLICK(ip->start_addr), ABS2CLICK(ip->len));
 	}
 
 	/* Set up table of calls. */
@@ -372,27 +421,8 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	CALLMAP(VM_FORGETBLOCK, do_forgetblock);
 	CALLMAP(VM_YIELDBLOCKGETBLOCK, do_yieldblockgetblock);
 
-	/* Sanity checks */
-	if(find_kernel_top() >= VM_PROCSTART)
-		panic("kernel loaded too high");
-
 	/* Initialize the structures for queryexit */
 	init_query_exit();
-
-	/* Map all the services in the boot image. */
-	if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
-		(vir_bytes) rprocpub, sizeof(rprocpub))) != OK) {
-		panic("sys_safecopyfrom failed: %d", s);
-	}
-	for(i=0;i < NR_BOOT_PROCS;i++) {
-		if(rprocpub[i].in_use) {
-			if((s = map_service(&rprocpub[i])) != OK) {
-				panic("unable to map service: %d", s);
-			}
-		}
-	}
-
-	return(OK);
 }
 
 /*===========================================================================*

@@ -971,7 +971,6 @@ tty_t *tp;
 	if(font_memory == MAP_FAILED) 
   		panic("Console couldn't map font memory");
 
-
   	vid_size >>= 1;		/* word count */
   	vid_mask = vid_size - 1;
 
@@ -983,6 +982,7 @@ tty_t *tp;
 
   	if (nr_cons > NR_CONS) nr_cons = NR_CONS;
   	if (nr_cons > 1) wrap = 0;
+	if (nr_cons < 1) panic("no consoles");
   	page_size = vid_size / nr_cons;
   }
 

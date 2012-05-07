@@ -23,6 +23,6 @@ struct nmi_frame {
 
 int i386_watchdog_start(void);
 
-#define nmi_in_kernel(f)	((f)->cs == CS_SELECTOR)
+#define nmi_in_kernel(f)	((f)->cs == KERN_CS_SELECTOR)
 
 #endif /* __I386_WATCHDOG_H__ */

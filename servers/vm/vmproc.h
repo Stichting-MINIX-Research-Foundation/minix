@@ -3,7 +3,6 @@
 #define _VMPROC_H 1
 
 #include <pagetable.h>
-#include <arch_vmproc.h>
 #include <minix/bitmap.h>
 #include <machine/archtypes.h>
 
@@ -17,24 +16,14 @@ struct vmproc;
 typedef void (*callback_t)(struct vmproc *who, message *m);
 
 struct vmproc {
-	struct vm_arch	vm_arch; /* architecture-specific data */
 	int		vm_flags;
 	endpoint_t	vm_endpoint;
-	pt_t		vm_pt;	/* page table data, if VMF_HASPT is set */
-	vir_bytes	vm_stacktop;	/* top of stack as seen from process */
-	vir_bytes	vm_offset;	/* offset of addr 0 for process */
-
-	/* File identification for cs sharing. */
-	ino_t vm_ino;		/* inode number of file */
-	dev_t vm_dev;		/* device number of file system */
-	time_t vm_ctime;	/* inode changed time */
+	pt_t		vm_pt;	/* page table data */
+	struct boot_image *vm_boot; /* if boot time process */
 
 	/* Regions in virtual address space. */
 	region_avl vm_regions_avl;
 	vir_bytes  vm_region_top;	/* highest vaddr last inserted */
-
-	/* Heap for brk() to extend. */
-	struct vir_region *vm_heap;
 
 	bitchunk_t vm_call_mask[VM_CALL_MASK_SIZE];
 
@@ -59,12 +48,10 @@ struct vmproc {
 
 /* Bits for vm_flags */
 #define VMF_INUSE	0x001	/* slot contains a process */
-#define VMF_SEPARATE	0x002	/* separate i&d */
-#define VMF_HASPT	0x004	/* has private page table */
-#define VMF_EXITING	0x008	/* PM is cleaning up this process */
-#define VMF_HAS_DMA	0x010	/* Process directly or indirectly granted
+#define VMF_EXITING	0x002	/* PM is cleaning up this process */
+#define VMF_HAS_DMA	0x004	/* Process directly or indirectly granted
 				 * DMA buffers.
 				 */
-#define VMF_WATCHEXIT	0x020	/* Store in queryexit table */
+#define VMF_WATCHEXIT	0x008	/* Store in queryexit table */
 
 #endif

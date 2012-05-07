@@ -18,8 +18,6 @@ int do_readbios(struct proc * caller, message * m_ptr)
   struct vir_addr src, dst;
   vir_bytes len = m_ptr->RDB_SIZE, limit;
 
-  src.segment = PHYS_SEG;
-  dst.segment = D;
   src.offset = m_ptr->RDB_ADDR;
   dst.offset = (vir_bytes) m_ptr->RDB_BUF;
   src.proc_nr_e = NONE;

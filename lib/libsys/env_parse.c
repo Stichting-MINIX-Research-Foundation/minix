@@ -97,44 +97,17 @@ int env_memory_parse(mem_chunks, maxchunks)
 struct memory *mem_chunks;	/* where to store the memory bits */
 int maxchunks;			/* how many were found */
 {
-  int i, done = 0;
-  char *s;
-  struct memory *memp;
-  char memstr[100], *end;
+  static kinfo_t kinfo;
+  int mm;
+
+  sys_getkinfo(&kinfo);
 
   /* Initialize everything to zero. */
-  for (i = 0; i < maxchunks; i++) {
-	memp = &mem_chunks[i];		/* next mem chunk is stored here */
-	memp->base = memp->size = 0;
-  }
+  memset(mem_chunks, 0, maxchunks*sizeof(*mem_chunks));
 
-  /* The available memory is determined by MINIX' boot loader as a list of 
-   * (base:size)-pairs in boothead.s. The 'memory' boot variable is set in
-   * in boot.s.  The format is "b0:s0,b1:s1,b2:s2", where b0:s0 is low mem,
-   * b1:s1 is mem between 1M and 16M, b2:s2 is mem above 16M. Pairs b1:s1 
-   * and b2:s2 are combined if the memory is adjacent. 
-   */
-  if(env_get_param("memory", memstr, sizeof(memstr)-1) != OK)
-	return -1;
-  s = memstr;
-  for (i = 0; i < maxchunks && !done; i++) {
-  	phys_bytes base = 0, size = 0;
-	memp = &mem_chunks[i];		/* next mem chunk is stored here */
-	if (*s != 0) {			/* get fresh data, unless at end */	
-
-	    /* Read fresh base and expect colon as next char. */ 
-	    base = strtoul(s, &end, 0x10);		/* get number */
-	    if (end != s && *end == ':') s = ++end;	/* skip ':' */ 
-	    else *s=0;			/* terminate, should not happen */
-
-	    /* Read fresh size and expect comma or assume end. */ 
-	    size = strtoul(s, &end, 0x10);		/* get number */
-	    if (end != s && *end == ',') s = ++end;	/* skip ',' */
-	    else done = 1;
-	}
-	if (base + size <= base) continue;
-	memp->base = base;
-	memp->size = size;
+  for(mm = 0; mm < MAXMEMMAP; mm++) {
+  	mem_chunks[mm].base = kinfo.memmap[mm].addr;
+  	mem_chunks[mm].size = kinfo.memmap[mm].len;
   }
 
   return OK;

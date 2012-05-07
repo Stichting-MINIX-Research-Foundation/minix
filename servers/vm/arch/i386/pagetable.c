@@ -36,15 +36,13 @@
 
 #include "memory.h"
 
-/* Free PDE slots we tell kernel about */
-#define FREE_PDES	2
-static int first_free_pde = -1;
-
 /* PDE used to map in kernel, kernel physical address. */
-static int id_map_high_pde = -1, pagedir_pde = -1;
+static int pagedir_pde = -1;
 static u32_t global_bit = 0, pagedir_pde_val;
 
-static int proc_pde = 0;
+static multiboot_module_t *kern_mb_mod = NULL;
+static size_t kern_size = 0;
+static int kern_start_pde = -1;
 
 /* 4MB page size available in hardware? */
 static int bigpage_ok = 0;
@@ -56,7 +54,7 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
  * circular dependency on allocating memory and writing it into VM's
  * page table.
  */
-#define SPAREPAGES 25
+#define SPAREPAGES 15
 int missing_spares = SPAREPAGES;
 static struct {
 	void *page;
@@ -67,7 +65,7 @@ static struct {
 static struct {
 	phys_bytes	phys_addr;	/* Physical addr. */
 	phys_bytes	len;		/* Length in bytes. */
-	vir_bytes	lin_addr;	/* Offset in page table. */
+	vir_bytes	vir_addr;	/* Offset in page table. */
 	int		flags;
 } kern_mappings[MAX_KERNMAPPINGS];
 int kernmappings = 0;
@@ -83,19 +81,13 @@ int kernmappings = 0;
 #error CLICK_SIZE must be page size.
 #endif
 
-/* Bytes of virtual address space one pde controls. */
-#define BYTESPERPDE (I386_VM_PT_ENTRIES * I386_PAGE_SIZE)
-
-/* Nevertheless, introduce these macros to make the code readable. */
-#define CLICK2PAGE(c) ((c) / CLICKSPERPAGE)
-
 /* Page table that contains pointers to all page directories. */
 phys_bytes page_directories_phys;
 u32_t *page_directories = NULL;
 
 #define STATIC_SPAREPAGES 10
 
-static char static_sparepages[I386_PAGE_SIZE*STATIC_SPAREPAGES + I386_PAGE_SIZE];
+static char static_sparepages[I386_PAGE_SIZE*STATIC_SPAREPAGES + I386_PAGE_SIZE] __aligned(I386_PAGE_SIZE);
 
 #if SANITYCHECKS
 /*===========================================================================*
@@ -104,7 +96,6 @@ static char static_sparepages[I386_PAGE_SIZE*STATIC_SPAREPAGES + I386_PAGE_SIZE]
 void pt_sanitycheck(pt_t *pt, char *file, int line)
 {
 /* Basic pt sanity check. */
-	int i;
 	int slot;
 
 	MYASSERT(pt);
@@ -121,37 +112,24 @@ void pt_sanitycheck(pt_t *pt, char *file, int line)
 	}
 
 	MYASSERT(usedpages_add(pt->pt_dir_phys, I386_PAGE_SIZE) == OK);
-
-	for(i = proc_pde; i < I386_VM_DIR_ENTRIES; i++) {
-		if(pt->pt_pt[i]) {
-			int pte;
-			MYASSERT(vm_addrok(pt->pt_pt[i], 1));
-			if(!(pt->pt_dir[i] & I386_VM_PRESENT)) {
-				printf("slot %d: pt->pt_pt[%d] = %p, but pt_dir entry 0x%lx\n",
-					slot, i, pt->pt_pt[i], pt->pt_dir[i]);
-			}
-			MYASSERT(pt->pt_dir[i] & I386_VM_PRESENT);
-			MYASSERT(usedpages_add(I386_VM_PFA(pt->pt_dir[i]),
-				I386_PAGE_SIZE) == OK);
-		} else {
-			MYASSERT(!(pt->pt_dir[i] & I386_VM_PRESENT));
-		}
-	}
 }
 #endif
 
 /*===========================================================================*
  *				findhole		     		     *
  *===========================================================================*/
-static u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
+static u32_t findhole(void)
 {
-/* Find a space in the virtual address space of pageteble 'pt',
- * between page-aligned BYTE offsets vmin and vmax, to fit
- * a page in. Return byte offset.
- */
+/* Find a space in the virtual address space of VM. */
 	u32_t curv;
 	int pde = 0, try_restart;
 	static u32_t lastv = 0;
+	pt_t *pt = &vmprocess->vm_pt;
+	extern char _end;	
+	vir_bytes vmin, vmax;
+
+	vmin = (vir_bytes) (&_end) & I386_VM_ADDR_MASK; /* marks end of VM BSS */
+	vmax = VM_STACKTOP;
 
 	/* Input sanity check. */
 	assert(vmin + I386_PAGE_SIZE >= vmin);
@@ -205,17 +183,19 @@ static u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
 static void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 {
 	assert(reason >= 0 && reason < VMP_CATEGORIES);
-	if(vir >= vmprocess->vm_stacktop) {
-		assert(!(vir % I386_PAGE_SIZE)); 
-		assert(!(phys % I386_PAGE_SIZE)); 
-		free_mem(ABS2CLICK(phys), pages);
-		if(pt_writemap(vmprocess, &vmprocess->vm_pt, arch_vir2map(vmprocess, vir),
-			MAP_NONE, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
-			panic("vm_freepages: pt_writemap failed");
-	} else {
-		printf("VM: vm_freepages not freeing VM heap pages (%d)\n",
-			pages);
+	assert(!(vir % I386_PAGE_SIZE)); 
+	assert(!(phys % I386_PAGE_SIZE)); 
+	extern char _end;	
+
+	if(vir < (vir_bytes) &_end) {
+		printf("VM: not freeing static page\n");
+		return;
 	}
+
+	free_mem(ABS2CLICK(phys), pages);
+	if(pt_writemap(vmprocess, &vmprocess->vm_pt, vir,
+		MAP_NONE, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
+		panic("vm_freepages: pt_writemap failed");
 
 #if SANITYCHECKS
 	/* If SANITYCHECKS are on, flush tlb so accessing freed pages is
@@ -295,7 +275,7 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	assert(level >= 1);
 	assert(level <= 2);
 
-	if(level > 1 || !(vmprocess->vm_flags & VMF_HASPT) || !meminit_done) {
+	if(level > 1 || !meminit_done) {
 		void *s;
 		s=vm_getsparepage(phys);
 		level--;
@@ -309,8 +289,7 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	/* VM does have a pagetable, so get a page and map it in there.
 	 * Where in our virtual address space can we put it?
 	 */
-	loc = findhole(pt,  arch_vir2map(vmprocess, vmprocess->vm_stacktop),
-		vmprocess->vm_arch.vm_data_top);
+	loc = findhole();
 	if(loc == NO_MEM) {
 		level--;
 		printf("VM: vm_allocpage: findhole failed\n");
@@ -344,7 +323,7 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	level--;
 
 	/* Return user-space-ready pointer to it. */
-	ret = (void *) arch_map2vir(vmprocess, loc);
+	ret = (void *) loc;
 
 	return ret;
 }
@@ -355,13 +334,12 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 void vm_pagelock(void *vir, int lockflag)
 {
 /* Mark a page allocated by vm_allocpage() unwritable, i.e. only for VM. */
-	vir_bytes m;
+	vir_bytes m = (vir_bytes) vir;
 	int r;
 	u32_t flags = I386_VM_PRESENT | I386_VM_USER;
 	pt_t *pt;
 
 	pt = &vmprocess->vm_pt;
-	m = arch_vir2map(vmprocess, (vir_bytes) vir);
 
 	assert(!(m % I386_PAGE_SIZE));
 
@@ -386,15 +364,9 @@ void vm_pagelock(void *vir, int lockflag)
  *===========================================================================*/
 int vm_addrok(void *vir, int writeflag)
 {
-/* Mark a page allocated by vm_allocpage() unwritable, i.e. only for VM. */
 	pt_t *pt = &vmprocess->vm_pt;
 	int pde, pte;
-	vir_bytes v = arch_vir2map(vmprocess, (vir_bytes) vir);
-
-	/* No PT yet? Don't bother looking. */
-	if(!(vmprocess->vm_flags & VMF_HASPT)) {
-		return 1;
-	}
+	vir_bytes v = (vir_bytes) vir;
 
 	pde = I386_VM_PDE(v);
 	pte = I386_VM_PTE(v);
@@ -471,8 +443,8 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 /* Allocate all the page tables in the range specified. */
 	int pde, first_pde, last_pde;
 
-	first_pde = start ? I386_VM_PDE(start) : proc_pde;
-	last_pde = end ? I386_VM_PDE(end) : I386_VM_DIR_ENTRIES - 1;
+	first_pde = I386_VM_PDE(start);
+	last_pde = I386_VM_PDE(end-1);
 	assert(first_pde >= 0);
 	assert(last_pde < I386_VM_DIR_ENTRIES);
 
@@ -498,6 +470,7 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 				return r;
 			}
 		}
+		assert(pt->pt_dir[pde]);
 		assert(pt->pt_dir[pde] & I386_VM_PRESENT);
 	}
 
@@ -549,7 +522,7 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	end = end ? end : VM_DATATOP;
 	assert(start % I386_PAGE_SIZE == 0);
 	assert(end % I386_PAGE_SIZE == 0);
-	assert(I386_VM_PDE(start) >= proc_pde && start <= end);
+	assert(I386_VM_PDE(start) >= 0 && start <= end);
 	assert(I386_VM_PDE(end) < I386_VM_DIR_ENTRIES);
 
 #if LU_DEBUG
@@ -596,7 +569,6 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	vir_bytes viraddr;
 	pt_t *pt;
 
-	assert(src_vmp->vm_stacktop == dst_vmp->vm_stacktop);
 	pt = &src_vmp->vm_pt;
 
 #if LU_DEBUG
@@ -605,8 +577,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #endif
 
 	/* Transfer mapping to the page directory. */
-	assert((vir_bytes) pt->pt_dir >= src_vmp->vm_stacktop);
-	viraddr = arch_vir2map(src_vmp, (vir_bytes) pt->pt_dir);
+	viraddr = (vir_bytes) pt->pt_dir;
 	physaddr = pt->pt_dir_phys & I386_VM_ADDR_MASK;
 	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
 		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
@@ -619,14 +590,13 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #endif
 
 	/* Scan all non-reserved page-directory entries. */
-	for(pde=proc_pde; pde < I386_VM_DIR_ENTRIES; pde++) {
+	for(pde=0; pde < I386_VM_DIR_ENTRIES; pde++) {
 		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
 			continue;
 		}
 
 		/* Transfer mapping to the page table. */
-		assert((vir_bytes) pt->pt_pt[pde] >= src_vmp->vm_stacktop);
-		viraddr = arch_vir2map(src_vmp, (vir_bytes) pt->pt_pt[pde]);
+		viraddr = (vir_bytes) pt->pt_pt[pde];
 		physaddr = pt->pt_dir[pde] & I386_VM_ADDR_MASK;
 		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
 			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
@@ -634,24 +604,18 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 			return r;
 		}
 	}
-#if LU_DEBUG
-	printf("VM: pt_ptmap: transferred mappings to page tables, pde range %d - %d\n",
-		proc_pde, I386_VM_DIR_ENTRIES - 1);
-#endif
 
 	return OK;
 }
 
 void pt_clearmapcache(void)
 {
-	int f;
 	/* Make sure kernel will invalidate tlb when using current
 	 * pagetable (i.e. vm's) to make new mappings before new cr3
 	 * is loaded.
 	 */
-	for(f = first_free_pde; f < first_free_pde+FREE_PDES; f++) {
-		vmprocess->vm_pt.pt_dir[f] = 0;
-	}
+	if(sys_vmctl(SELF, VMCTL_CLEARMAPCACHE, 0) != OK)
+		panic("VMCTL_CLEARMAPCACHE failed");
 }
 
 /*===========================================================================*
@@ -706,6 +670,7 @@ int pt_writemap(struct vmproc * vmp,
 	 */
 	ret = pt_ptalloc_in_range(pt, v, v + I386_PAGE_SIZE*pages, flags, verify);
 	if(ret != OK) {
+		printf("VM: writemap: pt_ptalloc_in_range failed\n");
 		goto resume_exit;
 	}
 
@@ -715,6 +680,9 @@ int pt_writemap(struct vmproc * vmp,
 		int pde = I386_VM_PDE(v);
 		int pte = I386_VM_PTE(v);
 
+		if(!v) { printf("VM: warning: making zero page for %d\n",
+			vmp->vm_endpoint); }
+
 		assert(!(v % I386_PAGE_SIZE));
 		assert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
 		assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
@@ -722,10 +690,12 @@ int pt_writemap(struct vmproc * vmp,
 		/* Page table has to be there. */
 		assert(pt->pt_dir[pde] & I386_VM_PRESENT);
 
+		/* We do not expect it to be a bigpage. */
+		assert(!(pt->pt_dir[pde] & I386_VM_BIGPAGE));
+
 		/* Make sure page directory entry for this page table
 		 * is marked present and page table entry is available.
 		 */
-		assert((pt->pt_dir[pde] & I386_VM_PRESENT));
 		assert(pt->pt_pt[pde]);
 
 #if SANITYCHECKS
@@ -770,9 +740,6 @@ int pt_writemap(struct vmproc * vmp,
 			}
 		} else {
 			/* Write pagetable entry. */
-#if SANITYCHECKS
-			assert(vm_addrok(pt->pt_pt[pde], 1));
-#endif
 			pt->pt_pt[pde][pte] = entry;
 		}
 
@@ -874,53 +841,62 @@ int pt_new(pt_t *pt)
 	return OK;
 }
 
+static int freepde(void)
+{
+	int p = kernel_boot_info.freepde_start++;
+	assert(kernel_boot_info.freepde_start < I386_VM_DIR_ENTRIES);
+	return p;
+}
+
 /*===========================================================================*
  *                              pt_init                                      *
  *===========================================================================*/
-void pt_init(phys_bytes usedlimit)
+void pt_init(void)
 {
-/* By default, the kernel gives us a data segment with pre-allocated
- * memory that then can't grow. We want to be able to allocate memory
- * dynamically, however. So here we copy the part of the page table
- * that's ours, so we get a private page table. Then we increase the
- * hardware segment size so we can allocate memory above our stack.
- */
         pt_t *newpt;
-        int s, r;
-        vir_bytes v;
-        phys_bytes lo, hi; 
-        vir_bytes extra_clicks;
-        u32_t moveup = 0;
+        int s, r, p;
 	int global_bit_ok = 0;
-	int free_pde;
-	struct vm_ep_data ep_data;
 	vir_bytes sparepages_mem;
-	phys_bytes sparepages_ph;
-	vir_bytes ptr;
-	int f = 0;
+	static u32_t currentpagedir[I386_VM_DIR_ENTRIES];
+	int m = kernel_boot_info.kern_mod;
+	u32_t mycr3;
 
-        /* Shorthand. */
-        newpt = &vmprocess->vm_pt;
+	/* Find what the physical location of the kernel is. */
+	assert(m >= 0);
+	assert(m < kernel_boot_info.mods_with_kernel);
+	assert(kernel_boot_info.mods_with_kernel < MULTIBOOT_MAX_MODS);
+	kern_mb_mod = &kernel_boot_info.module_list[m];
+	kern_size = kern_mb_mod->mod_end - kern_mb_mod->mod_start;
+	assert(!(kern_mb_mod->mod_start % I386_BIG_PAGE_SIZE));
+	assert(!(kernel_boot_info.vir_kern_start % I386_BIG_PAGE_SIZE));
+	kern_start_pde = kernel_boot_info.vir_kern_start / I386_BIG_PAGE_SIZE;
 
         /* Get ourselves spare pages. */
-        ptr = (vir_bytes) static_sparepages;
-        ptr += I386_PAGE_SIZE - (ptr % I386_PAGE_SIZE);
-        if(!(sparepages_mem = ptr))
-		panic("pt_init: aalloc for spare failed");
-        if((r=sys_umap(SELF, VM_D, (vir_bytes) sparepages_mem,
-                I386_PAGE_SIZE*SPAREPAGES, &sparepages_ph)) != OK)
-                panic("pt_init: sys_umap failed: %d", r);
+        sparepages_mem = (vir_bytes) static_sparepages;
+	assert(!(sparepages_mem % I386_PAGE_SIZE));
+
+	/* Spare pages are used to allocate memory before VM has its own page
+	 * table that things (i.e. arbitrary physical memory) can be mapped into.
+	 * We get it by pre-allocating it in our bss (allocated and mapped in by
+	 * the kernel) in static_sparepages. We also need the physical addresses
+	 * though; we look them up now so they are ready for use.
+	 */
 
         missing_spares = 0;
         assert(STATIC_SPAREPAGES < SPAREPAGES);
         for(s = 0; s < SPAREPAGES; s++) {
+		vir_bytes v = (sparepages_mem + s*I386_PAGE_SIZE);;
+		phys_bytes ph;
+        	if((r=sys_umap(SELF, VM_D, (vir_bytes) v,
+	                I386_PAGE_SIZE*SPAREPAGES, &ph)) != OK)
+				panic("pt_init: sys_umap failed: %d", r);
         	if(s >= STATIC_SPAREPAGES) {
         		sparepages[s].page = NULL;
         		missing_spares++;
         		continue;
         	}
-        	sparepages[s].page = (void *) (sparepages_mem + s*I386_PAGE_SIZE);
-        	sparepages[s].phys = sparepages_ph + s*I386_PAGE_SIZE;
+        	sparepages[s].page = (void *) v;
+        	sparepages[s].phys = ph;
         }
 
 	/* global bit and 4MB pages available? */
@@ -931,51 +907,6 @@ void pt_init(phys_bytes usedlimit)
 	if(global_bit_ok)
 		global_bit = I386_VM_GLOBAL;
 
-	/* The kernel and boot time processes need an identity mapping.
-	 * We use full PDE's for this without separate page tables.
-	 * Figure out which pde we can start using for other purposes.
-	 */
-	id_map_high_pde = usedlimit / I386_BIG_PAGE_SIZE;
-
-	/* We have to make mappings up till here. */
-	free_pde = id_map_high_pde+1;
-
-        /* Initial (current) range of our virtual address space. */
-        lo = CLICK2ABS(vmprocess->vm_arch.vm_seg[T].mem_phys);
-        hi = CLICK2ABS(vmprocess->vm_arch.vm_seg[S].mem_phys +
-                vmprocess->vm_arch.vm_seg[S].mem_len);
-                  
-        assert(!(lo % I386_PAGE_SIZE)); 
-        assert(!(hi % I386_PAGE_SIZE));
- 
-        if(lo < VM_PROCSTART) {
-                moveup = VM_PROCSTART - lo;
-                assert(!(VM_PROCSTART % I386_PAGE_SIZE));
-                assert(!(lo % I386_PAGE_SIZE));
-                assert(!(moveup % I386_PAGE_SIZE));
-        }
-        
-        /* Make new page table for ourselves, partly copied
-         * from the current one.
-         */     
-        if(pt_new(newpt) != OK)
-                panic("pt_init: pt_new failed"); 
-
-        /* Set up mappings for VM process. */
-        for(v = lo; v < hi; v += I386_PAGE_SIZE)  {
-                /* We have to write the new position in the PT,
-                 * so we can move our segments.
-                 */ 
-                if(pt_writemap(vmprocess, newpt, v+moveup, v, I386_PAGE_SIZE,
-                        I386_VM_PRESENT|I386_VM_WRITE|I386_VM_USER, 0) != OK)
-                        panic("pt_init: pt_writemap failed");
-        }
-       
-        /* Move segments up too. */
-        vmprocess->vm_arch.vm_seg[T].mem_phys += ABS2CLICK(moveup);
-        vmprocess->vm_arch.vm_seg[D].mem_phys += ABS2CLICK(moveup);
-        vmprocess->vm_arch.vm_seg[S].mem_phys += ABS2CLICK(moveup);
-       
 	/* Allocate us a page table in which to remember page directory
 	 * pointers.
 	 */
@@ -984,28 +915,6 @@ void pt_init(phys_bytes usedlimit)
                 panic("no virt addr for vm mappings");
 
 	memset(page_directories, 0, I386_PAGE_SIZE);
-       
-        /* Increase our hardware data segment to create virtual address
-         * space above our stack. We want to increase it to VM_DATATOP,
-         * like regular processes have.
-         */
-        extra_clicks = ABS2CLICK(VM_DATATOP - hi);
-        vmprocess->vm_arch.vm_seg[S].mem_len += extra_clicks;
-       
-        /* We pretend to the kernel we have a huge stack segment to
-         * increase our data segment.
-         */
-        vmprocess->vm_arch.vm_data_top =
-                (vmprocess->vm_arch.vm_seg[S].mem_vir +
-                vmprocess->vm_arch.vm_seg[S].mem_len) << CLICK_SHIFT;
-       
-        /* Where our free virtual address space starts.
-         * This is only a hint to the VM system.
-         */
-        newpt->pt_virtop = 0;
-
-        /* Let other functions know VM now has a private page table. */
-        vmprocess->vm_flags |= VMF_HASPT;
 
 	/* Now reserve another pde for kernel's own mappings. */
 	{
@@ -1014,7 +923,7 @@ void pt_init(phys_bytes usedlimit)
 		int flags, index = 0;
 		u32_t offset = 0;
 
-		kernmap_pde = free_pde++;
+		kernmap_pde = freepde();
 		offset = kernmap_pde * I386_BIG_PAGE_SIZE;
 
 		while(sys_vmctl_get_mapping(index, &addr, &len,
@@ -1025,17 +934,16 @@ void pt_init(phys_bytes usedlimit)
 			kern_mappings[index].phys_addr = addr;
 			kern_mappings[index].len = len;
 			kern_mappings[index].flags = flags;
-			kern_mappings[index].lin_addr = offset;
+			kern_mappings[index].vir_addr = offset;
 			kern_mappings[index].flags =
-				I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE |
-				global_bit;
+				I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
 			if(flags & VMMF_UNCACHED)
 				kern_mappings[index].flags |= PTF_NOCACHE;
 			if(addr % I386_PAGE_SIZE)
                 		panic("VM: addr unaligned: %d", addr);
 			if(len % I386_PAGE_SIZE)
                 		panic("VM: len unaligned: %d", len);
-			vir = arch_map2vir(&vmproc[VMP_SYSTEM], offset);
+			vir = offset;
 			if(sys_vmctl_reply_mapping(index, vir) != OK)
                 		panic("VM: reply failed");
 			offset += len;
@@ -1045,129 +953,66 @@ void pt_init(phys_bytes usedlimit)
 	}
 
 	/* Find a PDE below processes available for mapping in the
-	 * page directories (readonly).
+	 * page directories.
 	 */
-	pagedir_pde = free_pde++;
+	pagedir_pde = freepde();
 	pagedir_pde_val = (page_directories_phys & I386_VM_ADDR_MASK) |
-			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
+			I386_VM_PRESENT | I386_VM_WRITE;
 
-	/* Tell kernel about free pde's. */
-	first_free_pde = free_pde;
-	while(free_pde*I386_BIG_PAGE_SIZE < VM_PROCSTART && f < FREE_PDES) {
-		if((r=sys_vmctl(SELF, VMCTL_I386_FREEPDE, free_pde++)) != OK) {
-			panic("VMCTL_I386_FREEPDE failed: %d", r);
-		}
-		f++;
+	/* Allright. Now. We have to make our own page directory and page tables,
+	 * that the kernel has already set up, accessible to us. It's easier to
+	 * understand if we just copy all the required pages (i.e. page directory
+	 * and page tables), and set up the pointers as if VM had done it itself.
+	 *
+	 * This allocation will happen without using any page table, and just
+	 * uses spare pages.
+	 */
+        newpt = &vmprocess->vm_pt;
+	if(pt_new(newpt) != OK)
+		panic("vm pt_new failed");
+
+	/* Get our current pagedir so we can see it. */
+	if(sys_vmctl_get_cr3_i386(SELF, &mycr3) != OK)
+		panic("VM: sys_vmctl_get_cr3_i386 failed");
+	if(sys_vircopy(NONE, mycr3, SELF, 
+		(vir_bytes) currentpagedir, I386_PAGE_SIZE) != OK)
+		panic("VM: sys_vircopy failed");
+
+	/* We have mapped in kernel ourselves; now copy mappings for VM
+	 * that kernel made, including allocations for BSS. Skip identity
+	 * mapping bits; just map in VM.
+	 */
+	for(p = 0; p < I386_VM_DIR_ENTRIES; p++) {
+		u32_t entry = currentpagedir[p];
+		phys_bytes ptaddr_kern, ptaddr_us;
+
+		/* BIGPAGEs are kernel mapping (do ourselves) or boot
+		 * identity mapping (don't want).
+		 */
+		if(!(entry & I386_VM_PRESENT)) continue;
+		if((entry & I386_VM_BIGPAGE)) continue;
+
+		if(pt_ptalloc(newpt, p, 0) != OK)
+			panic("pt_ptalloc failed");
+		assert(newpt->pt_dir[p] & I386_VM_PRESENT);
+
+		ptaddr_kern = entry & I386_VM_ADDR_MASK;
+		ptaddr_us = newpt->pt_dir[p] & I386_VM_ADDR_MASK;
+
+		/* Copy kernel-initialized pagetable contents into our
+		 * normally accessible pagetable.
+		 */
+                if(sys_abscopy(ptaddr_kern, ptaddr_us, I386_PAGE_SIZE) != OK)
+			panic("pt_init: abscopy failed");
 	}
 
-	/* first pde in use by process. */
-	proc_pde = free_pde;
-
-        /* Give our process the new, copied, private page table. */
-	pt_mapkernel(newpt);	/* didn't know about vm_dir pages earlier */
-        pt_bind(newpt, vmprocess);
-       
-	/* new segment limit for the kernel after paging is enabled */
-	ep_data.data_seg_limit = free_pde*I386_BIG_PAGE_SIZE;
-	/* the memory map which must be installed after paging is enabled */
-	ep_data.mem_map = vmprocess->vm_arch.vm_seg;
-
-	/* Now actually enable paging. */
-	if(sys_vmctl_enable_paging(&ep_data) != OK)
-        	panic("pt_init: enable paging failed");
-
-        /* Back to reality - this is where the stack actually is. */
-        vmprocess->vm_arch.vm_seg[S].mem_len -= extra_clicks;
-
-        /* Pretend VM stack top is the same as any regular process, not to
-         * have discrepancies with new VM instances later on.
-         */
-        vmprocess->vm_stacktop = VM_STACKTOP;
+	/* Inform kernel vm has a newly built page table. */
+	assert(vmproc[VM_PROC_NR].vm_endpoint == VM_PROC_NR);
+	pt_mapkernel(newpt);
+	pt_bind(newpt, &vmproc[VM_PROC_NR]);
 
         /* All OK. */
         return;
-}
-
-/*===========================================================================*
- *                             pt_init_mem                                   *
- *===========================================================================*/
-void pt_init_mem()
-{
-/* Architecture-specific memory initialization. Make sure all the pages
- * shared with the kernel and VM's page tables are mapped above the stack,
- * so that we can easily transfer existing mappings for new VM instances.
- */
-        phys_bytes new_page_directories_phys;
-	u32_t *new_page_directories;
-        phys_bytes new_pt_dir_phys;
-	u32_t *new_pt_dir;
-        phys_bytes new_pt_phys;
-	u32_t *new_pt; 
-        pt_t *vmpt;
-        int i;
-
-        vmpt = &vmprocess->vm_pt;
-
-        /* We should be running this when VM has been assigned a page
-         * table and memory initialization has already been performed.
-         */
-        assert(vmprocess->vm_flags & VMF_HASPT);
-        assert(meminit_done);
-
-        /* Throw away static spare pages. */
-	vm_checkspares();
-	for(i = 0; i < SPAREPAGES; i++) {
-		if(sparepages[i].page && (vir_bytes) sparepages[i].page
-			< vmprocess->vm_stacktop) {
-			sparepages[i].page = NULL;
-			missing_spares++;
-		}
-	}
-	vm_checkspares();
-
-        /* Rellocate page for page directories pointers. */
-	if(!(new_page_directories = vm_allocpage(&new_page_directories_phys,
-		VMP_PAGETABLE)))
-                panic("unable to reallocated page for page dir ptrs");
-	assert((vir_bytes) new_page_directories >= vmprocess->vm_stacktop);
-	memcpy(new_page_directories, page_directories, I386_PAGE_SIZE);
-	page_directories = new_page_directories;
-	pagedir_pde_val = (new_page_directories_phys & I386_VM_ADDR_MASK) |
-			(pagedir_pde_val & ~I386_VM_ADDR_MASK);
-
-	/* Remap in kernel. */
-	pt_mapkernel(vmpt);
-
-	/* Reallocate VM's page directory. */
-	if((vir_bytes) vmpt->pt_dir < vmprocess->vm_stacktop) {
-		if(!(new_pt_dir= vm_allocpage(&new_pt_dir_phys, VMP_PAGEDIR))) {
-			panic("unable to reallocate VM's page directory");
-		}
-		assert((vir_bytes) new_pt_dir >= vmprocess->vm_stacktop);
-		memcpy(new_pt_dir, vmpt->pt_dir, I386_PAGE_SIZE);
-		vmpt->pt_dir = new_pt_dir;
-		vmpt->pt_dir_phys = new_pt_dir_phys;
-		pt_bind(vmpt, vmprocess);
-	}
-
-	/* Reallocate VM's page tables. */
-	for(i = proc_pde; i < I386_VM_DIR_ENTRIES; i++) {
-		if(!(vmpt->pt_dir[i] & I386_VM_PRESENT)) {
-			continue;
-		}
-		assert(vmpt->pt_pt[i]);
-		if((vir_bytes) vmpt->pt_pt[i] >= vmprocess->vm_stacktop) {
-			continue;
-		}
-		vm_checkspares();
-		if(!(new_pt = vm_allocpage(&new_pt_phys, VMP_PAGETABLE)))
-			panic("unable to reallocate VM's page table");
-		assert((vir_bytes) new_pt >= vmprocess->vm_stacktop);
-		memcpy(new_pt, vmpt->pt_pt[i], I386_PAGE_SIZE);
-		vmpt->pt_pt[i] = new_pt;
-		vmpt->pt_dir[i] = (new_pt_phys & I386_VM_ADDR_MASK) |
-			(vmpt->pt_dir[i] & ~I386_VM_ADDR_MASK);
-	}
 }
 
 /*===========================================================================*
@@ -1200,8 +1045,7 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 	/* This is where the PDE's will be visible to the kernel
 	 * in its address space.
 	 */
-	pdes = (void *) arch_map2vir(&vmproc[VMP_SYSTEM],
-		pagedir_pde*I386_BIG_PAGE_SIZE + 
+	pdes = (void *) (pagedir_pde*I386_BIG_PAGE_SIZE + 
 			slot * I386_PAGE_SIZE);
 
 #if 0
@@ -1209,9 +1053,7 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 		slot, who->vm_endpoint, page_directories[slot], pdes);
 #endif
 	/* Tell kernel about new page table root. */
-	return sys_vmctl_set_addrspace(who->vm_endpoint,
-		pt ? pt->pt_dir_phys : 0,
-		pt ? pdes : 0);
+	return sys_vmctl_set_addrspace(who->vm_endpoint, pt->pt_dir_phys, pdes);
 }
 
 /*===========================================================================*
@@ -1236,32 +1078,34 @@ void pt_free(pt_t *pt)
 int pt_mapkernel(pt_t *pt)
 {
 	int i;
+	int kern_pde = kern_start_pde;
+	phys_bytes addr, mapped = 0;
 
         /* Any i386 page table needs to map in the kernel address space. */
-        assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);
+	assert(bigpage_ok);
+	assert(pagedir_pde >= 0);
+	assert(kern_pde >= 0);
 
-	if(bigpage_ok) {
-		int pde;
-		for(pde = 0; pde <= id_map_high_pde; pde++) {
-			phys_bytes addr;
-			addr = pde * I386_BIG_PAGE_SIZE;
-			assert((addr & I386_VM_ADDR_MASK) == addr);
-			pt->pt_dir[pde] = addr | I386_VM_PRESENT |
-				I386_VM_BIGPAGE | I386_VM_USER |
-				I386_VM_WRITE | global_bit;
-		}
-	} else {
-		panic("VM: pt_mapkernel: no bigpage");
+	/* pt_init() has made sure this is ok. */
+	addr = kern_mb_mod->mod_start;
+
+	/* Actually mapping in kernel */
+	while(mapped < kern_size) {
+		pt->pt_dir[kern_pde] = addr | I386_VM_PRESENT |
+			I386_VM_BIGPAGE | I386_VM_WRITE | global_bit;
+		kern_pde++;
+		mapped += I386_BIG_PAGE_SIZE;
+		addr += I386_BIG_PAGE_SIZE;
 	}
 
-	if(pagedir_pde >= 0) {
-		/* Kernel also wants to know about all page directories. */
-		pt->pt_dir[pagedir_pde] = pagedir_pde_val;
-	}
+	/* Kernel also wants to know about all page directories. */
+	assert(pagedir_pde > kern_pde);
+	pt->pt_dir[pagedir_pde] = pagedir_pde_val;
 
+	/* Kernel also wants various mappings of its own. */
 	for(i = 0; i < kernmappings; i++) {
 		if(pt_writemap(NULL, pt,
-			kern_mappings[i].lin_addr,
+			kern_mappings[i].vir_addr,
 			kern_mappings[i].phys_addr,
 			kern_mappings[i].len,
 			kern_mappings[i].flags, 0) != OK) {

@@ -294,17 +294,6 @@ int do_reboot()
   /* See how the system should be aborted. */
   abort_flag = (unsigned) m_in.reboot_flag;
   if (abort_flag >= RBT_INVALID) return(EINVAL); 
-  if (RBT_MONITOR == abort_flag) {
-	int r;
-	if(m_in.reboot_strlen >= sizeof(monitor_code))
-		return EINVAL;
-	if((r = sys_datacopy(who_e, (vir_bytes) m_in.reboot_code,
-		SELF, (vir_bytes) monitor_code, m_in.reboot_strlen)) != OK)
-		return r;
-	monitor_code[m_in.reboot_strlen] = '\0';
-  }
-  else
-	monitor_code[0] = '\0';
 
   /* Order matters here. When VFS is told to reboot, it exits all its
    * processes, and then would be confused if they're exited again by

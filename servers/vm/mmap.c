@@ -62,9 +62,6 @@ int do_mmap(message *m)
 
 	vmp = &vmproc[n];
 
-	if(!(vmp->vm_flags & VMF_HASPT))
-		return ENXIO;
-
 	if(m->VMM_FD == -1 || (m->VMM_FLAGS & MAP_ANON)) {
 		u32_t vrflags = VR_ANON | VR_WRITABLE;
 		size_t len = (vir_bytes) m->VMM_LEN;
@@ -102,7 +99,7 @@ int do_mmap(message *m)
 		vr = NULL;
 		if (m->VMM_ADDR || (m->VMM_FLAGS & MAP_FIXED)) {
 			/* An address is given, first try at that address. */
-			addr = arch_vir2map(vmp, m->VMM_ADDR);
+			addr = m->VMM_ADDR;
 			vr = map_page_region(vmp, addr, 0, len, MAP_NONE,
 				vrflags, mfflags);
 			if(!vr && (m->VMM_FLAGS & MAP_FIXED))
@@ -110,8 +107,7 @@ int do_mmap(message *m)
 		}
 		if (!vr) {
 			/* No address given or address already in use. */
-			addr = arch_vir2map(vmp, vmp->vm_stacktop);
-			vr = map_page_region(vmp, addr, VM_DATATOP, len,
+			vr = map_page_region(vmp, 0, VM_DATATOP, len,
 				MAP_NONE, vrflags, mfflags);
 		}
 		if (!vr) {
@@ -123,7 +119,7 @@ int do_mmap(message *m)
 
 	/* Return mapping, as seen from process. */
 	assert(vr);
-	m->VMM_RETADDR = arch_map2vir(vmp, vr->vaddr);
+	m->VMM_RETADDR = vr->vaddr;
 
 
 	return OK;
@@ -194,9 +190,6 @@ int do_map_phys(message *m)
 
 	vmp = &vmproc[n];
 
-	if(!(vmp->vm_flags & VMF_HASPT))
-		return ENXIO;
-
 	offset = startaddr % VM_PAGE_SIZE;
 	len += offset;
 	startaddr -= offset;
@@ -204,13 +197,12 @@ int do_map_phys(message *m)
 	if(len % VM_PAGE_SIZE)
 		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
-	if(!(vr = map_page_region(vmp, arch_vir2map(vmp, vmp->vm_stacktop),
-		VM_DATATOP, len, startaddr,
+	if(!(vr = map_page_region(vmp, 0, VM_DATATOP, len, startaddr,
 		VR_DIRECT | VR_NOPF | VR_WRITABLE, 0))) {
 		return ENOMEM;
 	}
 
-	m->VMMP_VADDR_REPLY = (void *) (arch_map2vir(vmp, vr->vaddr) + offset);
+	m->VMMP_VADDR_REPLY = (void *) (vr->vaddr + offset);
 
 	return OK;
 }
@@ -234,8 +226,7 @@ int do_unmap_phys(message *m)
 
 	vmp = &vmproc[n];
 
-	if(!(region = map_lookup(vmp,
-	  arch_vir2map(vmp, (vir_bytes) m->VMUM_ADDR)))) {
+	if(!(region = map_lookup(vmp, (vir_bytes) m->VMUM_ADDR))) {
 		return EINVAL;
 	}
 
@@ -289,8 +280,6 @@ int do_remap(message *m)
 	 * about whether the user needs to bind to
 	 * THAT address or be chosen by the system.
 	 */
-	sa = arch_vir2map(svmp, sa);
-
 	if (!(region = map_lookup(svmp, sa)))
 		return EINVAL;
 
@@ -315,7 +304,7 @@ int do_remap(message *m)
 	if ((r = map_remap(dvmp, da, size, region, &startv, readonly)) != OK)
 		return r;
 
-	m->VMRE_RETA = (char *) arch_map2vir(dvmp, startv);
+	m->VMRE_RETA = (char *) startv;
 	return OK;
 }
 
@@ -339,7 +328,7 @@ int do_shared_unmap(message *m)
 
 	vmp = &vmproc[n];
 
-	addr = arch_vir2map(vmp, m->VMUN_ADDR);
+	addr = m->VMUN_ADDR;
 
 	if(!(vr = map_lookup(vmp, addr))) {
 		printf("VM: addr 0x%lx not found.\n", m->VMUN_ADDR);
@@ -380,7 +369,6 @@ int do_get_phys(message *m)
 		return EINVAL;
 
 	vmp = &vmproc[n];
-	addr = arch_vir2map(vmp, addr);
 
 	r = map_get_phys(vmp, addr, &ret);
 
@@ -406,7 +394,6 @@ int do_get_refcount(message *m)
 		return EINVAL;
 
 	vmp = &vmproc[n];
-	addr = arch_vir2map(vmp, addr);
 
 	r = map_get_ref(vmp, addr, &cnt);
 
@@ -430,13 +417,10 @@ int do_munmap(message *m)
  
         vmp = &vmproc[n];
 
-	if(!(vmp->vm_flags & VMF_HASPT))
-		return ENXIO;
-
 	if(m->m_type == VM_MUNMAP) {
-	        addr = (vir_bytes) arch_vir2map(vmp, (vir_bytes) m->VMUM_ADDR);
+	        addr = (vir_bytes) (vir_bytes) m->VMUM_ADDR;
 	} else if(m->m_type == VM_MUNMAP_TEXT) {
-	        addr = (vir_bytes) arch_vir2map_text(vmp, (vir_bytes) m->VMUM_ADDR);
+	        addr = (vir_bytes) (vir_bytes) m->VMUM_ADDR;
 	} else {
 		panic("do_munmap: strange type");
 	}
@@ -495,7 +479,7 @@ int minix_munmap(void *addr, size_t len)
 	vir_bytes laddr;
 	if(!unmap_ok)
 		return ENOSYS;
-	laddr = (vir_bytes) arch_vir2map(&vmproc[VM_PROC_NR], (vir_bytes) addr);
+	laddr = (vir_bytes) (vir_bytes) addr;
 	return munmap_lin(laddr, len);
 }
 
@@ -507,8 +491,7 @@ int minix_munmap_text(void *addr, size_t len)
 	vir_bytes laddr;
 	if(!unmap_ok)
 		return ENOSYS;
-	laddr = (vir_bytes) arch_vir2map_text(&vmproc[VM_PROC_NR],
-		(vir_bytes) addr);
+	laddr = (vir_bytes) addr;
 	return munmap_lin(laddr, len);
 }
 

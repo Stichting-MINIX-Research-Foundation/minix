@@ -45,7 +45,6 @@ static char *proc_name(int proc_nr);
 static char *s_traps_str(int flags);
 static char *s_flags_str(int flags);
 static char *p_rts_flags_str(int flags);
-static char *boot_flags_str(int flags);
 
 /* Some global data that is shared among several dumping procedures. 
  * Note that the process table copy has the same name as in the kernel
@@ -92,7 +91,7 @@ void kmessages_dmp()
  *===========================================================================*/
 void monparams_dmp()
 {
-  char val[1024];
+  char val[MULTIBOOT_PARAM_BUF_SIZE];
   char *e;
   int r;
 
@@ -161,18 +160,6 @@ void irqtab_dmp()
 }
 
 /*===========================================================================*
- *			      boot_flags_str				     *
- *===========================================================================*/
-static char *boot_flags_str(int flags)
-{
-	static char str[10];
-	str[0] = (flags & PROC_FULLVM)        ? 'V' : '-';
-	str[1] = '\0';
-
-	return str;
-}
-
-/*===========================================================================*
  *				image_dmp				     *
  *===========================================================================*/
 void image_dmp()
@@ -188,9 +175,7 @@ void image_dmp()
   printf("---name- -nr- flags -stack-\n");
   for (m=0; m<NR_BOOT_PROCS; m++) { 
       ip = &image[m];
-      printf("%8s %4d %5s\n",
-          ip->proc_name, ip->proc_nr,
-          boot_flags_str(ip->flags));
+      printf("%8s %4d\n", ip->proc_name, ip->proc_nr);
   }
   printf("\n");
 }
@@ -215,15 +200,6 @@ void kenv_dmp()
 
     printf("Dump of kinfo structure.\n\n");
     printf("Kernel info structure:\n");
-    printf("- code_base:  %5lu\n", kinfo.code_base); 
-    printf("- code_size:  %5lu\n", kinfo.code_size); 
-    printf("- data_base:  %5lu\n", kinfo.data_base); 
-    printf("- data_size:  %5lu\n", kinfo.data_size); 
-    printf("- proc_addr:  %5lu\n", kinfo.proc_addr); 
-    printf("- bootdev_base:  %5lu\n", kinfo.bootdev_base); 
-    printf("- bootdev_size:  %5lu\n", kinfo.bootdev_size); 
-    printf("- ramdev_base:   %5lu\n", kinfo.ramdev_base); 
-    printf("- ramdev_size:   %5lu\n", kinfo.ramdev_size); 
     printf("- nr_procs:     %3u\n", kinfo.nr_procs); 
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- release:      %.6s\n", kinfo.release); 
@@ -341,7 +317,6 @@ void proctab_dmp()
   register struct proc *rp;
   static struct proc *oldrp = BEG_PROC_ADDR;
   int r;
-  phys_clicks text, data, size;
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
@@ -352,10 +327,6 @@ void proctab_dmp()
   printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user----sys-rtsflags-from/to-\n");
 
   PROCLOOP(rp, oldrp)
-	text = rp->p_memmap[T].mem_phys;
-	data = rp->p_memmap[D].mem_phys;
-	size = rp->p_memmap[T].mem_len
-		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
 	printf("%-8.8s %5u %5u %6lu %6lu ",
 	       rp->p_name,
@@ -390,38 +361,6 @@ void procstack_dmp()
   PROCLOOP(rp, oldrp)
 	PRINTRTS(rp);
 	sys_sysctl_stacktrace(rp->p_endpoint);
-  }
-}
-
-/*===========================================================================*
- *				memmap_dmp    				     *
- *===========================================================================*/
-void memmap_dmp()
-{
-  register struct proc *rp;
-  static struct proc *oldrp = proc;
-  int r;
-  phys_clicks size;
-
-  /* First obtain a fresh copy of the current process table. */
-  if ((r = sys_getproctab(proc)) != OK) {
-      printf("IS: warning: couldn't get copy of process table: %d\n", r);
-      return;
-  }
-
-  printf("\n-nr/name--- --pc--   --sp-- -text---- -data---- -stack--- -cr3-\n");
-  PROCLOOP(rp, oldrp)
-	size = rp->p_memmap[T].mem_len
-		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len)
-						- rp->p_memmap[D].mem_phys);
-	printf("%-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8u\n",
-	       rp->p_name,
-	       (unsigned long) rp->p_reg.pc,
-	       (unsigned long) rp->p_reg.sp,
-	       rp->p_memmap[T].mem_phys, rp->p_memmap[T].mem_len,
-	       rp->p_memmap[D].mem_phys, rp->p_memmap[D].mem_len,
-	       rp->p_memmap[S].mem_phys, rp->p_memmap[S].mem_len,
-	       rp->p_seg.p_cr3);
   }
 }
 

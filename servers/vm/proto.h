@@ -2,7 +2,6 @@
 
 struct vmproc;
 struct stat;
-struct mem_map;
 struct memory;
 struct vir_region;
 struct phys_region;
@@ -19,6 +18,7 @@ struct phys_region;
 #include "yielded.h"
 
 /* alloc.c */
+void mem_sanitycheck(char *file, int line);
 phys_clicks alloc_mem(phys_clicks clicks, u32_t flags);
 struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags);
 int do_adddma(message *msg);
@@ -38,7 +38,6 @@ void print_mem_list(struct memlist *ml);
 void mem_init(struct memory *chunks);
 
 /* utility.c */
-int get_mem_map(int proc_nr, struct mem_map *mem_map);
 void get_mem_chunks(struct memory *mem_chunks);
 void reserve_proc_mem(struct memory *mem_chunks, struct mem_map
 	*map_ptr);
@@ -57,15 +56,6 @@ void free_proc(struct vmproc *vmp);
 
 /* fork.c */
 int do_fork(message *msg);
-
-/* exec.c */
-int do_exec_newmem(message *msg);
-int proc_new(struct vmproc *vmp, phys_bytes start, phys_bytes text_addr,
-	phys_bytes text_bytes, phys_bytes data_addr, phys_bytes data_bytes,
-	phys_bytes stack, phys_bytes gap, phys_bytes text_here, phys_bytes
-	data_here, vir_bytes stacktop, int prealloc_stack, int is_elf, int full);
-phys_bytes find_kernel_top(void);
-void regular_segs(struct vmproc *);
 
 /* break.c */
 int do_brk(message *msg);
@@ -99,7 +89,7 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int
 	wrflag);
 
 /* $(ARCH)/pagetable.c */
-void pt_init(phys_bytes limit);
+void pt_init();
 void pt_init_mem(void);
 void pt_check(struct vmproc *vmp);
 int pt_new(pt_t *pt);
@@ -191,15 +181,6 @@ int do_forgetblocks(message *m);
 int do_forgetblock(message *m);
 int do_yieldblockgetblock(message *m);
 vir_bytes free_yielded(vir_bytes bytes);
-
-/* $(ARCH)/vm.c */
-vir_bytes arch_map2vir(struct vmproc *vmp, vir_bytes addr);
-char *arch_map2str(struct vmproc *vmp, vir_bytes addr);
-vir_bytes arch_map2info(struct vmproc *vmp, vir_bytes addr, int *space,
-	int *prot);
-vir_bytes arch_vir2map(struct vmproc *vmp, vir_bytes addr);
-vir_bytes arch_vir2map_text(struct vmproc *vmp, vir_bytes addr);
-vir_bytes arch_addrok(struct vmproc *vmp, vir_bytes addr);
 
 /* rs.c */
 int do_rs_set_priv(message *m);

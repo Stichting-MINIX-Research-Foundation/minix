@@ -1,5 +1,6 @@
 #ifndef _TYPE_H
 #define _TYPE_H
+#include <machine/multiboot.h>
 
 #ifndef _MINIX_SYS_CONFIG_H
 #include <minix/sys_config.h>
@@ -9,6 +10,9 @@
 #include <minix/types.h>
 #endif
 
+#include <minix/const.h>
+#include <minix/com.h>
+
 #include <stdint.h>
 
 /* Type definitions. */
@@ -16,39 +20,12 @@ typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
 typedef unsigned long phys_bytes;	/* physical addr/length in bytes */
 typedef unsigned int phys_clicks;	/* physical addr/length in clicks */
 typedef int endpoint_t;			/* process identifier */
-
 typedef int32_t cp_grant_id_t;		/* A grant ID. */
-
-#if (_MINIX_CHIP == _CHIP_INTEL)
 typedef long unsigned int vir_bytes;	/* virtual addresses/lengths in bytes */
-#endif
-
-#if (_MINIX_CHIP == _CHIP_M68000)
-typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
-#endif
-
-#if (_MINIX_CHIP == _CHIP_SPARC)
-typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
-#endif
-
-/* Memory map for local text, stack, data segments. */
-struct mem_map {
-  vir_clicks mem_vir;		/* virtual address */
-  phys_clicks mem_phys;		/* physical address */
-  vir_clicks mem_len;		/* length */
-};
-
-/* Memory map for remote memory areas, e.g., for the RAM disk. */
-struct far_mem {
-  int in_use;			/* entry in use, unless zero */
-  phys_clicks mem_phys;		/* physical address */
-  vir_clicks mem_len;		/* length */
-};
 
 /* Structure for virtual copying by means of a vector with requests. */
 struct vir_addr {
-  endpoint_t proc_nr_e;
-  int segment;
+  endpoint_t proc_nr_e; /* NONE for phys, otherwise process endpoint */
   vir_bytes offset;
 };
 
@@ -99,27 +76,6 @@ struct sigmsg {
   vir_bytes sm_stkptr;		/* user stack pointer */
 };
 
-/* This is used to obtain system information through SYS_GETINFO. */
-struct kinfo {
-  phys_bytes code_base;		/* base of kernel code */
-  phys_bytes code_size;		
-  phys_bytes data_base;		/* base of kernel data */
-  phys_bytes data_size;
-  vir_bytes proc_addr;		/* virtual address of process table */
-  phys_bytes _kmem_base;	/* kernel memory layout (/dev/kmem) */
-  phys_bytes _kmem_size;
-  phys_bytes bootdev_base;	/* boot device from boot image (/dev/boot) */
-  phys_bytes bootdev_size;
-  phys_bytes ramdev_base;	/* boot device from boot image (/dev/boot) */
-  phys_bytes ramdev_size;
-  phys_bytes _params_base;	/* parameters passed by boot monitor */
-  phys_bytes _params_size;
-  int nr_procs;			/* number of user processes */
-  int nr_tasks;			/* number of kernel tasks */
-  char release[6];		/* kernel release number */
-  char version[6];		/* kernel version number */
-};
-
 /* Load data accounted every this no. of seconds. */
 #define _LOAD_UNIT_SECS		 6 	/* Changing this breaks ABI. */
 
@@ -166,11 +122,54 @@ struct mem_range
 	phys_bytes mr_limit;	/* Highest memory address in range */
 };
 
+/* List of boot-time processes set in kernel/table.c. */
+struct boot_image {
+  int proc_nr;                    	/* process number to use */
+  char proc_name[PROC_NAME_LEN];        /* name in process table */
+  endpoint_t endpoint;                  /* endpoint number when started */
+  phys_bytes start_addr;		/* Where it's in memory */
+  phys_bytes len;
+};
+
 /* Memory chunks. */
 struct memory {
 	phys_bytes	base;
 	phys_bytes	size;
 };
+
+/* This is used to obtain system information through SYS_GETINFO. */
+#define MAXMEMMAP 40
+typedef struct kinfo {
+	/* Straight multiboot-provided info */
+        multiboot_info_t        mbi;
+        multiboot_module_t      module_list[MULTIBOOT_MAX_MODS];
+	multiboot_memory_map_t	memmap[MAXMEMMAP]; /* free mem list */
+	phys_bytes		mem_high_phys;
+	int			mmap_size;
+
+	/* Multiboot-derived */
+        int                     mods_with_kernel; /* no. of mods incl kernel */
+        int                     kern_mod; /* which one is kernel */
+
+	/* Minix stuff, started at bootstrap phase */
+	int			freepde_start;	/* lowest pde unused kernel pde */
+        char                    param_buf[MULTIBOOT_PARAM_BUF_SIZE];
+
+	/* Minix stuff */
+	struct kmessages *kmess;
+	int do_serial_debug;	/* system serial output */
+	int serial_debug_baud;	/* serial baud rate */
+	int minix_panicing;	/* are we panicing? */
+        vir_bytes               user_sp; /* where does kernel want stack set */
+        vir_bytes               user_end; /* upper proc limit */
+        vir_bytes               vir_kern_start; /* kernel addrspace starts */
+	vir_bytes		bootstrap_start, bootstrap_len;
+	struct boot_image	boot_procs[NR_BOOT_PROCS];
+	int nr_procs;		/* number of user processes */
+	int nr_tasks;		/* number of kernel tasks */
+	char release[6];	/* kernel release number */
+	char version[6];	/* kernel version number */
+} kinfo_t;
 
 #define STATICINIT(v, n) \
 	if(!(v)) {	\
@@ -184,6 +183,8 @@ struct kmessages {
   int km_next;                          /* next index to write */
   int km_size;                          /* current size in buffer */
   char km_buf[_KMESS_BUF_SIZE];          /* buffer for messages */
+  char kmess_buf[80*25];           /* printable copy of message buffer */
+  int blpos;				/* kmess_buf position */
 };
 
 #include <minix/config.h>

@@ -7,21 +7,15 @@
 int _cpufeature(int cpufeature)
 {
 	u32_t eax, ebx, ecx, edx;
-	int proc;
 
 	eax = ebx = ecx = edx = 0;
-	proc = getprocessor();
 
-	/* If processor supports CPUID and its CPUID supports enough
-	 * parameters, retrieve EDX feature flags to test against.
-	 */
-	if(proc >= 586) {
-		eax = 0;
+	/* We assume >= pentium for cpuid */
+	eax = 0;
+	_cpuid(&eax, &ebx, &ecx, &edx);
+	if(eax > 0) {
+		eax = 1;
 		_cpuid(&eax, &ebx, &ecx, &edx);
-		if(eax > 0) {
-			eax = 1;
-			_cpuid(&eax, &ebx, &ecx, &edx);
-		}
 	}
 
 	switch(cpufeature) {

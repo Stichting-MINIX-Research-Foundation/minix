@@ -59,7 +59,8 @@ MKDEP_SUFFIXES?=	.o .ln
 # 	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
 .for _lib in \
 	c curses blockdriver chardriver netdriver edit end m sys timers util \
-	bz2 l audiodriver exec ddekit devman usb elf bdev sffs hgfs vboxfs
+	bz2 l audiodriver exec ddekit devman usb elf bdev sffs hgfs vboxfs \
+	minc minlib
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded

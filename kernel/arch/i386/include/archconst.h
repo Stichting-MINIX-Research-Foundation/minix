@@ -8,44 +8,25 @@
 /* Constants for protected mode. */
 
 /* Table sizes. */
-#define GDT_SIZE (FIRST_LDT_INDEX + NR_TASKS + NR_PROCS) 
-					/* spec. and LDT's */
 #define IDT_SIZE 256	/* the table is set to it's maximal size */
 
-/* Fixed global descriptors.  1 to 7 are prescribed by the BIOS. */
-#define GDT_INDEX            1	/* GDT descriptor */
-#define IDT_INDEX            2	/* IDT descriptor */
-#define DS_INDEX             3	/* kernel DS */
-#define ES_INDEX             4	/* kernel ES (386: flag 4 Gb at startup) */
-#define SS_INDEX             5	/* kernel SS (386: monitor SS at startup) */
-#define CS_INDEX             6	/* kernel CS */
-#define MON_CS_INDEX         7	/* temp for BIOS (386: monitor CS at startup) */
-#define TSS_INDEX_FIRST      8	/* first kernel TSS */
-#define TSS_INDEX_BOOT	    TSS_INDEX_FIRST
-#define TSS_INDEX(cpu)      (TSS_INDEX_FIRST + (cpu)) /* per cpu kernel tss */
-#define FIRST_LDT_INDEX     TSS_INDEX(CONFIG_MAX_CPUS)	/* rest of descriptors are LDT's */
+/* GDT layout (SYSENTER/SYSEXIT compliant) */
+#define KERN_CS_INDEX        1
+#define KERN_DS_INDEX        2
+#define USER_CS_INDEX        3
+#define USER_DS_INDEX        4
+#define LDT_INDEX            5
+#define TSS_INDEX_FIRST      6
+#define TSS_INDEX(cpu)       (TSS_INDEX_FIRST + (cpu)) /* per cpu kernel tss */
+#define GDT_SIZE             (TSS_INDEX(CONFIG_MAX_CPUS))	/* LDT descriptor */
 
-/* Descriptor structure offsets. */
-#define DESC_BASE            2	/* to base_low */
-#define DESC_BASE_MIDDLE     4	/* to base_middle */
-#define DESC_ACCESS          5	/* to access byte */
-#define DESC_SIZE            8	/* sizeof (struct segdesc_s) */
-
-/*
- * WARNING no () around the macros, be careful. This is because of ACK assembler
- * and will be fixed after switching to GAS
- */
-#define GDT_SELECTOR		GDT_INDEX * DESC_SIZE
-#define IDT_SELECTOR		IDT_INDEX * DESC_SIZE
-#define DS_SELECTOR		DS_INDEX * DESC_SIZE
-#define ES_SELECTOR		ES_INDEX * DESC_SIZE
-/* flat DS is less privileged ES */
-#define FLAT_DS_SELECTOR	ES_SELECTOR
-#define SS_SELECTOR		SS_INDEX * DESC_SIZE
-#define CS_SELECTOR		CS_INDEX * DESC_SIZE
-#define MON_CS_SELECTOR		MON_CS_INDEX * DESC_SIZE
-#define TSS_SELECTOR(cpu)	(TSS_INDEX(cpu) * DESC_SIZE)
-#define TSS_SELECTOR_BOOT	(TSS_INDEX_BOOT * DESC_SIZE)
+#define SEG_SELECTOR(i)          ((i)*8)
+#define KERN_CS_SELECTOR SEG_SELECTOR(KERN_CS_INDEX)
+#define KERN_DS_SELECTOR SEG_SELECTOR(KERN_DS_INDEX)
+#define USER_CS_SELECTOR (SEG_SELECTOR(USER_CS_INDEX) | USER_PRIVILEGE)
+#define USER_DS_SELECTOR (SEG_SELECTOR(USER_DS_INDEX) | USER_PRIVILEGE)
+#define LDT_SELECTOR SEG_SELECTOR(LDT_INDEX)
+#define TSS_SELECTOR(cpu)	SEG_SELECTOR(TSS_INDEX(cpu))
 
 /* Privileges. */
 #define INTR_PRIVILEGE       0	/* kernel and interrupt handlers */
@@ -140,9 +121,6 @@
 #define IF_MASK 0x00000200
 #define IOPL_MASK 0x003000
 
-#define vir2phys(vir)   ((phys_bytes)((kinfo.data_base + (vir_bytes) (vir))))
-#define phys2vir(ph)   ((vir_bytes)((vir_bytes) (ph) - kinfo.data_base))
-
 #define INTEL_CPUID_GEN_EBX	0x756e6547 /* ASCII value of "Genu" */
 #define INTEL_CPUID_GEN_EDX	0x49656e69 /* ASCII value of "ineI" */
 #define INTEL_CPUID_GEN_ECX	0x6c65746e /* ASCII value of "ntel" */
@@ -167,5 +145,7 @@
  * information like currently scheduled process or current cpu id
  */
 #define X86_STACK_TOP_RESERVED	(2 * sizeof(reg_t))
+
+#define PG_ALLOCATEME ((phys_bytes)-1)
 
 #endif /* _I386_ACONST_H */

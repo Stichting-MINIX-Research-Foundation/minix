@@ -552,7 +552,7 @@ void slabunlock(void *mem, int bytes)
  *===========================================================================*/
 void slabstats(void)
 {
-	int s, total = 0, totalbytes = 0;
+	int s, totalbytes = 0;
 	static int n;
 	n++;
 	if(n%1000) return;

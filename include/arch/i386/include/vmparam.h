@@ -49,9 +49,4 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
-/* As visible from the user space process, where is the top of the
- * stack (first non-stack byte), when in paged mode?
- */
-#define VM_STACKTOP     0x80000000
-
 #endif /* _I386_VMPARAM_H_ */

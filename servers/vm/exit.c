@@ -27,11 +27,7 @@
 void free_proc(struct vmproc *vmp)
 {
 	map_free_proc(vmp);
-	vmp->vm_heap = NULL;
-	if(vmp->vm_flags & VMF_HASPT) {
-		vmp->vm_flags &= ~VMF_HASPT;
-		pt_free(&vmp->vm_pt);
-	}
+	pt_free(&vmp->vm_pt);
 	region_init(&vmp->vm_regions_avl);
 	vmp->vm_region_top = 0;
 #if VMSTATS
@@ -45,7 +41,6 @@ void clear_proc(struct vmproc *vmp)
 	vmp->vm_region_top = 0;
 	vmp->vm_callback = NULL;	/* No pending vfs callback. */
 	vmp->vm_flags = 0;		/* Clear INUSE, so slot is free. */
-	vmp->vm_heap = NULL;
 	vmp->vm_yielded = 0;
 #if VMSTATS
 	vmp->vm_bytecopies = 0;
@@ -74,18 +69,12 @@ SANITYCHECK(SCL_FUNCTIONS);
 
 	if(vmp->vm_flags & VMF_HAS_DMA) {
 		release_dma(vmp);
-	} else if(vmp->vm_flags & VMF_HASPT) {
+	} else {
 		/* Free pagetable and pages allocated by pt code. */
 SANITYCHECK(SCL_DETAIL);
 		free_proc(vmp);
 SANITYCHECK(SCL_DETAIL);
-	} else {
-                 /* Free the data and stack segments. */ 	 
-	         free_mem(vmp->vm_arch.vm_seg[D].mem_phys, 	 
-	                 vmp->vm_arch.vm_seg[S].mem_vir + 	 
-	                 vmp->vm_arch.vm_seg[S].mem_len - 	 
-	                 vmp->vm_arch.vm_seg[D].mem_vir); 	 
-	}
+	} 
 SANITYCHECK(SCL_DETAIL);
 
 	/* Reset process slot fields. */
@@ -134,9 +123,7 @@ int do_procctl(message *msg)
 				return EPERM;
 			free_proc(vmp);
 			pt_new(&vmp->vm_pt);
-			vmp->vm_flags |= VMF_HASPT;
 			pt_bind(&vmp->vm_pt, vmp);
-			regular_segs(vmp);
 			return OK;
 		default:
 			return EINVAL;

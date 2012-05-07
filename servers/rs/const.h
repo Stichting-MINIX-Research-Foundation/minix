@@ -68,7 +68,7 @@
 #define SRV_SF   (SF_CORE_SRV)                 /* system services */
 #define SRVR_SF  (SRV_SF | SF_NEED_REPL)       /* services needing a replica */
 #define DSRV_SF  (0)                           /* dynamic system services */
-#define VM_SF    (SRVR_SF | SF_SYNCH_BOOT)     /* vm */
+#define VM_SF    (SRVR_SF)     			/* vm */
 
 /* Define device flags for the various process types. */
 #define SRV_DF   (DRV_FORCED)            /* system services */

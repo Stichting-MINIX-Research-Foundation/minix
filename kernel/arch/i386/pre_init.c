@@ -1,258 +1,60 @@
-#include "kernel/kernel.h"
+
+#define UNPAGED 1	/* for proper kmain() prototype */
+
+#include "kernel.h"
+#include <assert.h>
+#include <stdlib.h>
 #include <minix/minlib.h>
 #include <minix/const.h>
-/*
- * == IMPORTANT == 
- * Routines in this file can not use any variable in kernel BSS, 
- * since before image is extracted, no BSS is allocated. 
- * So pay attention to any external call (including library call).
- * 
- * */
 #include <minix/types.h>
 #include <minix/type.h>
 #include <minix/com.h>
 #include <sys/param.h>
+#include <sys/reboot.h>
 #include <machine/partition.h>
 #include "string.h"
 #include "arch_proto.h"
 #include "libexec.h"
-#include "mb_utils.h"
+#include "direct_utils.h"
 #include "serial.h"
+#include "glo.h"
 #include <machine/multiboot.h>
 
 #if USE_SYSDEBUG
 #define MULTIBOOT_VERBOSE 1
 #endif
 
-/* FIXME: Share this define with kernel linker script */
-#define MULTIBOOT_KERNEL_ADDR 0x00200000UL
+/* to-be-built kinfo struct, diagnostics buffer */
+kinfo_t kinfo;
+struct kmessages kmess;
 
-/* Granularity used in image file and copying */
-#define GRAN 512
-#define SECT_CEIL(x) ((((x) - 1) / GRAN + 1) * GRAN)
+/* pg_utils.c uses this; in this phase, there is a 1:1 mapping. */
+phys_bytes vir2phys(void *addr) { return (phys_bytes) addr; } 
+
+/* mb_utils.c uses this; we can reach it directly */
+char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
 
-#define mb_load_phymem(buf, phy, len) \
-		phys_copy((phy), (u32_t)(buf), (len))
-
-#define mb_save_phymem(buf, phy, len) \
-		phys_copy((u32_t)(buf), (phy), (len))
-
-#define mb_clear_memrange(start, end) \
-		phys_memset((start), 0, (end)-(start))
-
-static void mb_itoa(u32_t val, char * out) 
+static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi) 
 {
-	char ret[ITOA_BUFFER_SIZE];
-	int i = ITOA_BUFFER_SIZE - 2;
-	/* Although there's a library version of itoa(int n), 
-	* we can't use it since that implementation relies on BSS segment
-	*/
-	ret[ITOA_BUFFER_SIZE - 2] = '0';
-	if (val) {
-		for (; i >= 0; i--) {
-			char c;
-			if (val == 0) break;
-			c = val % 10;
-			val = val / 10;
-				c += '0';
-			ret[i] = c;
-		}
-	}
-	else
-		i--;
-	ret[ITOA_BUFFER_SIZE - 1] = 0;
-	strcpy(out, ret + i + 1);
-}
-
-static void mb_itox(u32_t val, char *out) 
-{
-	char ret[9];
-	int i = 7;
-	/* Convert a number to hex string */
-	ret[7] = '0';
-	if (val) {
-		for (; i >= 0; i--) {
-			char c;
-			if (val == 0) break;
-			c = val & 0xF;
-			val = val >> 4;
-			if (c > 9)
-				c += 'A' - 10;
-			else
-				c += '0';
-			ret[i] = c;
-		}	
-	}
-	else
-		i--;
-	ret[8] = 0;
-	strcpy(out, ret + i + 1);
-}
-
-static void mb_put_char(char c, int line, int col) 
-{
-	/* Write a char to vga display buffer. */
-	if (line<MULTIBOOT_CONSOLE_LINES&&col<MULTIBOOT_CONSOLE_COLS)
-		mb_save_phymem(
-			&c, 
-			MULTIBOOT_VIDEO_BUFFER 
-				+ line * MULTIBOOT_CONSOLE_COLS * 2 
-				+ col * 2, 
-			1);
-}
-
-static char mb_get_char(int line, int col) 
-{
-	char c;
-	/* Read a char to from display buffer. */
-	if (line < MULTIBOOT_CONSOLE_LINES && col < MULTIBOOT_CONSOLE_COLS)
-		mb_load_phymem(
-			&c, 
-			MULTIBOOT_VIDEO_BUFFER 
-			+ line * MULTIBOOT_CONSOLE_COLS * 2 
-			+ col * 2, 
-			1);
-	return c;
-}
-
-/* Give non-zero values to avoid them in BSS */
-static int print_line = 1, print_col = 1;
-
-#include <sys/video.h>
-	
-void mb_cls(void)
-{
-	int i, j;
-	/* Clear screen */
-	for (i = 0; i < MULTIBOOT_CONSOLE_LINES; i++ )
-		for (j = 0; j < MULTIBOOT_CONSOLE_COLS; j++ )
-			mb_put_char(0, i, j);
-	print_line = print_col = 0;
-
-	/* Tell video hardware origin is 0. */
-	outb(C_6845+INDEX, VID_ORG);
-	outb(C_6845+DATA, 0);
-	outb(C_6845+INDEX, VID_ORG+1);
-	outb(C_6845+DATA, 0);
-}
-
-static void mb_scroll_up(int lines) 
-{
-	int i, j;
-	for (i = 0; i < MULTIBOOT_CONSOLE_LINES; i++ ) {
-		for (j = 0; j < MULTIBOOT_CONSOLE_COLS; j++ ) {
-			char c = 0;
-			if(i < MULTIBOOT_CONSOLE_LINES-lines)
-				c = mb_get_char(i + lines, j);
-			mb_put_char(c, i, j);
-		}
-	}
-	print_line-= lines;
-}
-
-void mb_print_char(char c)
-{
-	while (print_line >= MULTIBOOT_CONSOLE_LINES)
-		mb_scroll_up(1);
-
-	if (c == '\n') {
-		while (print_col < MULTIBOOT_CONSOLE_COLS)
-			mb_put_char(' ', print_line, print_col++);
-		print_line++;
-		print_col = 0;
-		return;
-	}
-
-	mb_put_char(c, print_line, print_col++);
-
-	if (print_col >= MULTIBOOT_CONSOLE_COLS) {
-		print_line++;
-		print_col = 0;
-	}
-
-	while (print_line >= MULTIBOOT_CONSOLE_LINES)
-		mb_scroll_up(1);
-}
-
-void mb_print(char *str)
-{
-	while (*str) {
-		mb_print_char(*str);
-		str++;
-	}
-}
-
-/* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
-#define KEYBD		0x60	/* I/O port for keyboard data */
-#define KB_STATUS	0x64	/* I/O port for status on AT */
-#define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
-#define KB_AUX_BYTE	0x20	/* Auxiliary Device Output Buffer Full */
-
-int mb_read_char(unsigned char *ch)
-{
-	unsigned long b, sb;
-#ifdef DEBUG_SERIAL
-	u8_t c, lsr;
-
-	if (do_serial_debug) {
-		lsr= inb(COM1_LSR);
-		if (!(lsr & LSR_DR))
-			return 0;
-		c = inb(COM1_RBR);
-		return 1;
-	}
-#endif /* DEBUG_SERIAL */
-
-	sb = inb(KB_STATUS);
-
-	if (!(sb & KB_OUT_FULL)) {
-		return 0;
-	}
-
-	b = inb(KEYBD);
-
-	if (!(sb & KB_AUX_BYTE))
-		return 1;
-
-	return 0;
-}
-
-static void mb_print_hex(u32_t value) 
-{
-	int i;
-	char c;
-	char out[9] = "00000000";
-	/* Print a hex value */
-	for (i = 7; i >= 0; i--) {
-		c = value % 0x10;
-		value /= 0x10;
-		if (c < 10) 
-			c += '0';
-		else
-			c += 'A'-10;
-		out[i] = c;
-	}
-	mb_print(out);
-}
-
-static int mb_set_param(char *name, char *value) 
-{
-	char *p = multiboot_param_buf;
+	char *p = bigbuf;
+	char *bufend = bigbuf + MULTIBOOT_PARAM_BUF_SIZE;
 	char *q;
 	int namelen = strlen(name);
 	int valuelen = strlen(value);
-	
+
+	/* Some variables we recognize */
+	if(!strcmp(name, SERVARNAME)) { cbi->do_serial_debug = 1; return 0; }
+	if(!strcmp(name, SERBAUDVARNAME)) { cbi->serial_debug_baud = atoi(value); return 0; }
+
 	/* Delete the item if already exists */
 	while (*p) {
 		if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
 			q = p;
 			while (*q) q++;
-			for (q++; 
-				q < multiboot_param_buf + MULTIBOOT_PARAM_BUF_SIZE; 
-				q++, p++)
+			for (q++; q < bufend; q++, p++)
 				*p = *q;
 			break;
 		}
@@ -261,16 +63,12 @@ static int mb_set_param(char *name, char *value)
 		p++;
 	}
 	
-	for (p = multiboot_param_buf;
-		p < multiboot_param_buf + MULTIBOOT_PARAM_BUF_SIZE 
-			&& (*p || *(p + 1));
-		p++)
+	for (p = bigbuf; p < bufend && (*p || *(p + 1)); p++)
 		;
-	if (p > multiboot_param_buf) p++;
+	if (p > bigbuf) p++;
 	
 	/* Make sure there's enough space for the new parameter */
-	if (p + namelen + valuelen + 3 
-		> multiboot_param_buf + MULTIBOOT_PARAM_BUF_SIZE)
+	if (p + namelen + valuelen + 3 > bufend)
 		return -1;
 	
 	strcpy(p, name);
@@ -281,202 +79,172 @@ static int mb_set_param(char *name, char *value)
 	return 0;
 }
 
-static void get_parameters(multiboot_info_t *mbi) 
+int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 {
-	char mem_value[40], temp[ITOA_BUFFER_SIZE];
-	int i;
-	int dev;
-	int ctrlr;
-	int disk, prim, sub;
-	int var_i,value_i;
+	multiboot_module_t *cmp = &mod[cmp_mod];
+	int m;
+
+#define INRANGE(mod, v) ((v) >= mod->mod_start && (v) <= thismod->mod_end)
+#define OVERLAP(mod1, mod2) (INRANGE(mod1, mod2->mod_start) || \
+			INRANGE(mod1, mod2->mod_end))
+	for(m = 0; m < n; m++) {
+		multiboot_module_t *thismod = &mod[m];
+		if(m == cmp_mod) continue;
+		if(OVERLAP(thismod, cmp))
+			return 1;
+	}
+	return 0;
+}
+
+void print_memmap(kinfo_t *cbi)
+{
+	int m;
+	assert(cbi->mmap_size < MAXMEMMAP);
+	for(m = 0; m < cbi->mmap_size; m++) {
+		printf("%08lx-%08lx ",cbi->memmap[m].addr, cbi->memmap[m].addr + cbi->memmap[m].len);
+	}
+	printf("\nsize %08lx\n", cbi->mmap_size);
+}
+
+void get_parameters(u32_t ebx, kinfo_t *cbi) 
+{
+	multiboot_memory_map_t *mmap;
+	multiboot_info_t *mbi = &cbi->mbi;
+	int var_i,value_i, m, k;
 	char *p;
-	const static int dev_cNd0[] = { 0x0300, 0x0800, 0x0A00, 0x0C00, 0x1000 };
-	static char mb_cmd_buff[GRAN] = "add some value to avoid me in BSS";
-	static char var[GRAN] = "add some value to avoid me in BSS";
-	static char value[GRAN] = "add some value to avoid me in BSS";
-	for (i = 0; i < MULTIBOOT_PARAM_BUF_SIZE; i++)
-		multiboot_param_buf[i] = 0;
-	
-	if (mbi->flags & MULTIBOOT_INFO_BOOTDEV) {
-		disk = ((mbi->boot_device&0xff000000) >> 24)-0x80;
-		prim = (mbi->boot_device & 0xff0000) >> 16;
-		if (prim == 0xff)
-		    prim = 0;
-		sub = (mbi->boot_device & 0xff00) >> 8;
-		if (sub == 0xff)
-		    sub = 0;
-		ctrlr = 0;
-		dev = dev_cNd0[ctrlr];
+	extern char _kern_phys_base, _kern_vir_base, _kern_size,
+		_kern_unpaged_start, _kern_unpaged_end;
+	phys_bytes kernbase = (phys_bytes) &_kern_phys_base,
+		kernsize = (phys_bytes) &_kern_size;
+#define BUF 1024
+	static char cmdline[BUF];
 
-		/* Determine the value of rootdev */
-		dev += 0x80
-		    + (disk * NR_PARTITIONS + prim) * NR_PARTITIONS + sub;
+	/* get our own copy of the multiboot info struct and module list */
+	memcpy((void *) mbi, (void *) ebx, sizeof(*mbi));
 
-		mb_itoa(dev, temp);
-		mb_set_param("rootdev", temp);
-		mb_set_param("ramimagedev", temp);
-	}
-	mb_set_param("hz", "60");
-	
-	if (mbi->flags & MULTIBOOT_INFO_MEMORY)
-	{
-		strcpy(mem_value, "800:");
-		mb_itox(
-			mbi->mem_lower * 1024 > MULTIBOOT_LOWER_MEM_MAX ? 
-				MULTIBOOT_LOWER_MEM_MAX : mbi->mem_lower * 1024, 
-			temp);
-		strcat(mem_value, temp);
-		strcat(mem_value, ",100000:");
-		mb_itox(mbi->mem_upper * 1024, temp);
-		strcat(mem_value, temp);
-		mb_set_param("memory", mem_value);
-	}
-	
+	/* Set various bits of info for the higher-level kernel. */
+	cbi->mem_high_phys = 0;
+	cbi->user_sp = (vir_bytes) &_kern_vir_base;
+	cbi->vir_kern_start = (vir_bytes) &_kern_vir_base;
+	cbi->bootstrap_start = (vir_bytes) &_kern_unpaged_start;
+	cbi->bootstrap_len = (vir_bytes) &_kern_unpaged_end -
+		cbi->bootstrap_start;
+	cbi->kmess = &kmess;
+
+	/* set some configurable defaults */
+	cbi->do_serial_debug = 0;
+	cbi->serial_debug_baud = 115200;
+
+	/* parse boot command line */
 	if (mbi->flags&MULTIBOOT_INFO_CMDLINE) {
+		static char var[BUF];
+		static char value[BUF];
+
 		/* Override values with cmdline argument */
-		p = mb_cmd_buff;
-		mb_load_phymem(mb_cmd_buff, mbi->cmdline, GRAN);
+		memcpy(cmdline, (void *) mbi->cmdline, BUF);
+		p = cmdline;
 		while (*p) {
 			var_i = 0;
 			value_i = 0;
 			while (*p == ' ') p++;
 			if (!*p) break;
-			while (*p && *p != '=' && *p != ' ' && var_i < GRAN - 1) 
+			while (*p && *p != '=' && *p != ' ' && var_i < BUF - 1) 
 				var[var_i++] = *p++ ;
 			var[var_i] = 0;
 			if (*p++ != '=') continue; /* skip if not name=value */
-			while (*p && *p != ' ' && value_i < GRAN - 1) 
+			while (*p && *p != ' ' && value_i < BUF - 1) 
 				value[value_i++] = *p++ ;
 			value[value_i] = 0;
 			
-			mb_set_param(var, value);
+			mb_set_param(cbi->param_buf, var, value, cbi);
 		}
 	}
-}
 
-static void mb_extract_image(multiboot_info_t mbi)
-{
-	phys_bytes start_paddr = 0x5000000;
-	multiboot_module_t *mb_module_info;
-	multiboot_module_t *module;
-	u32_t mods_count = mbi.mods_count;
-	int r, i;
-	vir_bytes text_vaddr, text_filebytes, text_membytes;
-	vir_bytes data_vaddr, data_filebytes, data_membytes;
-	phys_bytes text_paddr, data_paddr;
-	vir_bytes stack_bytes;
-	vir_bytes pc;
-	off_t text_offset, data_offset;
+	/* round user stack down to leave a gap to catch kernel
+	 * stack overflow; and to distinguish kernel and user addresses
+	 * at a glance (0xf.. vs 0xe..) 
+	 */
+	cbi->user_sp &= 0xF0000000;
+	cbi->user_end = cbi->user_sp;
 
-	/* Save memory map for kernel tasks */
-	r = read_header_elf((char *) MULTIBOOT_KERNEL_ADDR,
-				4096, /* everything is there */
-			    &text_vaddr, &text_paddr,
-			    &text_filebytes, &text_membytes,
-			    &data_vaddr, &data_paddr,
-			    &data_filebytes, &data_membytes,
-			    &pc, &text_offset, &data_offset);
-
-	for (i = 0; i < NR_TASKS; ++i) {
-	    image[i].memmap.text_vaddr = trunc_page(text_vaddr);
-	    image[i].memmap.text_paddr = trunc_page(text_paddr);
-	    image[i].memmap.text_bytes = text_membytes;
-	    image[i].memmap.data_vaddr = trunc_page(data_vaddr);
-	    image[i].memmap.data_paddr = trunc_page(data_paddr);
-	    image[i].memmap.data_bytes = data_membytes;
-	    image[i].memmap.stack_bytes = 0;
-	    image[i].memmap.entry = pc;
+	assert(!(cbi->bootstrap_start % I386_PAGE_SIZE));
+	cbi->bootstrap_len = rounddown(cbi->bootstrap_len, I386_PAGE_SIZE);
+	assert(mbi->flags & MULTIBOOT_INFO_MODS);
+	assert(mbi->mods_count < MULTIBOOT_MAX_MODS);
+	assert(mbi->mods_count > 0);
+	memcpy(&cbi->module_list, (void *) mbi->mods_addr,
+		mbi->mods_count * sizeof(multiboot_module_t));
+	
+	memset(cbi->memmap, 0, sizeof(cbi->memmap));
+	/* mem_map has a variable layout */
+	if(mbi->flags & MULTIBOOT_INFO_MEM_MAP) {
+		cbi->mmap_size = 0;
+	        for (mmap = (multiboot_memory_map_t *) mbi->mmap_addr;
+       	     (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length;
+       	       mmap = (multiboot_memory_map_t *) 
+		      	((unsigned long) mmap + mmap->size + sizeof(mmap->size))) {
+			if(mmap->type != MULTIBOOT_MEMORY_AVAILABLE) continue;
+			add_memmap(cbi, mmap->addr, mmap->len);
+		}
+	} else {
+		assert(mbi->flags & MULTIBOOT_INFO_MEMORY);
+		add_memmap(cbi, 0, mbi->mem_lower_unused*1024);
+		add_memmap(cbi, 0x100000, mbi->mem_upper_unused*1024);
 	}
 
-#ifdef MULTIBOOT_VERBOSE
-	mb_print("\nKernel:   ");
-	mb_print_hex(trunc_page(text_paddr));
-	mb_print("-");
-	mb_print_hex(trunc_page(data_paddr) + data_membytes);
-	mb_print(" Entry: ");
-	mb_print_hex(pc);
+	/* Sanity check: the kernel nor any of the modules may overlap
+	 * with each other. Pretend the kernel is an extra module for a
+	 * second.
+	 */
+	k = mbi->mods_count;
+	assert(k < MULTIBOOT_MAX_MODS);
+	cbi->module_list[k].mod_start = kernbase;
+	cbi->module_list[k].mod_end = kernbase + kernsize;
+	cbi->mods_with_kernel = mbi->mods_count+1;
+	cbi->kern_mod = k;
+
+	for(m = 0; m < cbi->mods_with_kernel; m++) {
+#if 0
+		printf("checking overlap of module %08lx-%08lx\n",
+		  cbi->module_list[m].mod_start, cbi->module_list[m].mod_end);
 #endif
-
-	mb_module_info = ((multiboot_module_t *)mbi.mods_addr);
-	module = &mb_module_info[0];
-
-	/* Load boot image services into memory and save memory map */
-	for (i = 0; module < &mb_module_info[mods_count]; ++module, ++i) {
-	    r = read_header_elf((char *) module->mod_start,
-				module->mod_end - module->mod_start + 1,
-				&text_vaddr, &text_paddr,
-				&text_filebytes, &text_membytes,
-				&data_vaddr, &data_paddr,
-				&data_filebytes, &data_membytes,
-				&pc, &text_offset, &data_offset);
-	    if (r) {
-		mb_print("fatal: ELF parse failure\n");
-		/* Spin here */
-		while (1)
-			;
-	    }
-
-	    stack_bytes = image[NR_TASKS+i].stack_kbytes * 1024;
-
-	    text_paddr = start_paddr + (text_vaddr & PAGE_MASK);
-
-	    /* Load text segment */
-	    phys_copy(module->mod_start+text_offset, text_paddr,
-		      text_filebytes);
-	    mb_clear_memrange(text_paddr+text_filebytes,
-			      round_page(text_paddr) + text_membytes);
-
-	    data_paddr  = round_page((text_paddr + text_membytes));
-	    data_paddr += data_vaddr & PAGE_MASK;
-	    /* start of next module */
-	    start_paddr = round_page(data_paddr + data_membytes + stack_bytes);
-
-	    /* Load data and stack segments */
-	    phys_copy(module->mod_start+data_offset, data_paddr, data_filebytes);
-	    mb_clear_memrange(data_paddr+data_filebytes, start_paddr);
-
-	    /* Save memmap for  non-kernel tasks, so subscript past kernel
-	       tasks. */
-	    image[NR_TASKS+i].memmap.text_vaddr = trunc_page(text_vaddr);
-	    image[NR_TASKS+i].memmap.text_paddr = trunc_page(text_paddr);
-	    image[NR_TASKS+i].memmap.text_bytes = text_membytes;
-	    image[NR_TASKS+i].memmap.data_vaddr = trunc_page(data_vaddr);
-	    image[NR_TASKS+i].memmap.data_paddr = trunc_page(data_paddr);
-	    image[NR_TASKS+i].memmap.data_bytes = data_membytes;
-	    image[NR_TASKS+i].memmap.stack_bytes = stack_bytes;
-	    image[NR_TASKS+i].memmap.entry = pc;
-
-#ifdef MULTIBOOT_VERBOSE
-	    mb_print("\n");
-	    mb_print_hex(i);
-	    mb_print(": ");
-	    mb_print_hex(trunc_page(text_paddr));
-	    mb_print("-");
-	    mb_print_hex(trunc_page(data_paddr) + data_membytes + stack_bytes);
-	    mb_print(" Entry: ");
-	    mb_print_hex(pc);
-	    mb_print(" Stack: ");
-	    mb_print_hex(stack_bytes);
-	    mb_print(" ");
-	    mb_print((char *)module->cmdline);
-#endif
+		if(overlaps(cbi->module_list, cbi->mods_with_kernel, m))
+			panic("overlapping boot modules/kernel");
+		/* We cut out the bits of memory that we know are
+		 * occupied by the kernel and boot modules.
+		 */
+		cut_memmap(cbi,
+			cbi->module_list[m].mod_start, 
+			cbi->module_list[m].mod_end);
 	}
-
-	return;
 }
 
-phys_bytes pre_init(u32_t ebx)
+kinfo_t *pre_init(u32_t magic, u32_t ebx)
 {
-	multiboot_info_t mbi;
+	/* Get our own copy boot params pointed to by ebx.
+	 * Here we find out whether we should do serial output.
+	 */
+	get_parameters(ebx, &kinfo);
+	
+	/* Say hello. */
+	printf("MINIX loading\n");
 
-	/* Do pre-initialization for multiboot, returning physical address of
-	*  of multiboot module info
-	*/
-	mb_cls();
-	mb_print("\nMINIX booting... ");
-	mb_load_phymem(&mbi, ebx, sizeof(mbi));
-	get_parameters(&mbi);
-	mb_print("\nLoading image... ");
-	mb_extract_image(mbi);
-	return mbi.mods_addr;
+	assert(magic == MULTIBOOT_BOOTLOADER_MAGIC);
+
+	/* Make and load a pagetable that will map the kernel
+	 * to where it should be; but first a 1:1 mapping so
+	 * this code stays where it should be.
+	 */
+	pg_clear();
+	pg_identity();
+	kinfo.freepde_start = pg_mapkernel();
+	pg_load();
+	vm_enable_paging();
+
+	/* Done, return boot info so it can be passed to kmain(). */
+	return &kinfo;
 }
+
+int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
+void minix_shutdown(timer_t *t) { arch_shutdown(RBT_PANIC); }
+void busy_delay_ms(int x) { }

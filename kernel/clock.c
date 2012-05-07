@@ -141,7 +141,7 @@ int timer_int_handler(void)
 		}
 
 #ifdef DEBUG_SERIAL
-		if (do_serial_debug)
+		if (kinfo.do_serial_debug)
 			do_ser_debug();
 #endif
 

@@ -14,6 +14,7 @@
 #include <machine/elf.h>
 #include <machine/vmparam.h>
 #include <machine/memory.h>
+#include <minix/syslib.h>
 
 /* For verbose logging */
 #define ELF_DEBUG 0
@@ -59,113 +60,17 @@ static int elf_unpack(char *exec_hdr,
 {
   *hdr = (Elf_Ehdr *) exec_hdr;
   if(!elf_sane(*hdr)) {
-#if ELF_DEBUG
-	printf("elf_sane failed\n");
-#endif
+	printf("elf_unpack: elf_sane failed\n");
   	return ENOEXEC;
   }
   *phdr = (Elf_Phdr *)(exec_hdr + (*hdr)->e_phoff);
   if(!elf_ph_sane(*phdr)) {
-#if ELF_DEBUG
-	printf("elf_ph_sane failed\n");
-#endif
+	printf("elf_unpack: elf_ph_sane failed\n");
   	return ENOEXEC;
   }
 #if 0
   if((int)((*phdr) + (*hdr)->e_phnum) >= hdr_len) return ENOEXEC;
 #endif
-  return OK;
-}
-
-int read_header_elf(
-  char *exec_hdr,                /* executable header */
-  int hdr_len,                 /* significant bytes in exec_hdr */
-  vir_bytes *text_vaddr,       /* text virtual address */
-  phys_bytes *text_paddr,      /* text physical address */
-  vir_bytes *text_filebytes,   /* text segment size (in the file) */
-  vir_bytes *text_membytes,    /* text segment size (in memory) */
-  vir_bytes *data_vaddr,       /* data virtual address */
-  phys_bytes *data_paddr,      /* data physical address */
-  vir_bytes *data_filebytes,   /* data segment size (in the file) */
-  vir_bytes *data_membytes,    /* data segment size (in memory) */
-  vir_bytes *pc,               /* program entry point (initial PC) */
-  off_t *text_offset,          /* file offset to text segment */
-  off_t *data_offset           /* file offset to data segment */
-)
-{
-  Elf_Ehdr *hdr = NULL;
-  Elf_Phdr *phdr = NULL;
-  unsigned long seg_filebytes, seg_membytes;
-  int e, i = 0;
-
-  *text_vaddr = *text_paddr = 0;
-  *text_filebytes = *text_membytes = 0;
-  *data_vaddr = *data_paddr = 0;
-  *data_filebytes = *data_membytes = 0;
-  *pc = *text_offset = *data_offset = 0;
-
-  if((e=elf_unpack(exec_hdr, hdr_len, &hdr, &phdr)) != OK) {
-#if ELF_DEBUG
-       printf("elf_unpack failed\n");
-#endif
-       return e;
-   }
-
-#if ELF_DEBUG
-  printf("Program header file offset (phoff): %ld\n", hdr->e_phoff);
-  printf("Section header file offset (shoff): %ld\n", hdr->e_shoff);
-  printf("Program header entry size (phentsize): %d\n", hdr->e_phentsize);
-  printf("Program header entry num (phnum): %d\n", hdr->e_phnum);
-  printf("Section header entry size (shentsize): %d\n", hdr->e_shentsize);
-  printf("Section header entry num (shnum): %d\n", hdr->e_shnum);
-  printf("Section name strings index (shstrndx): %d\n", hdr->e_shstrndx);
-  printf("Entry Point: 0x%lx\n", hdr->e_entry);
-#endif
-
-  for (i = 0; i < hdr->e_phnum; i++) {
-      switch (phdr[i].p_type) {
-      case PT_LOAD:
-         if (phdr[i].p_memsz == 0)
-             break;
-         seg_filebytes = phdr[i].p_filesz;
-         seg_membytes = round_page(phdr[i].p_memsz + phdr[i].p_vaddr -
-                                   trunc_page(phdr[i].p_vaddr));
-
-         if (hdr->e_entry >= phdr[i].p_vaddr &&
-             hdr->e_entry < (phdr[i].p_vaddr + phdr[i].p_memsz)) {
-             *text_vaddr = phdr[i].p_vaddr;
-             *text_paddr = phdr[i].p_paddr;
-             *text_filebytes = seg_filebytes;
-             *text_membytes = seg_membytes;
-             *pc = (vir_bytes)hdr->e_entry;
-             *text_offset = phdr[i].p_offset;
-         } else {
-             *data_vaddr = phdr[i].p_vaddr;
-             *data_paddr = phdr[i].p_paddr;
-             *data_filebytes = seg_filebytes;
-             *data_membytes = seg_membytes;
-             *data_offset = phdr[i].p_offset;
-         }
-         break;
-      default:
-         break;
-      }
-  }
-
-#if ELF_DEBUG
-  printf("Text vaddr:     0x%lx\n", *text_vaddr);
-  printf("Text paddr:     0x%lx\n", *text_paddr);
-  printf("Text filebytes: 0x%lx\n", *text_filebytes);
-  printf("Text membytes:  0x%lx\n", *text_membytes);
-  printf("Data vaddr:     0x%lx\n", *data_vaddr);
-  printf("Data paddr:     0x%lx\n", *data_paddr);
-  printf("Data filebyte:  0x%lx\n", *data_filebytes);
-  printf("Data membytes:  0x%lx\n", *data_membytes);
-  printf("PC:             0x%lx\n", *pc);
-  printf("Text offset:    0x%lx\n", *text_offset);
-  printf("Data offset:    0x%lx\n", *data_offset);
-#endif
-
   return OK;
 }
 
@@ -243,8 +148,7 @@ int libexec_load_elf(struct exec_info *execi)
 	}
 
 	execi->stack_size = roundup(execi->stack_size, PAGE_SIZE);
-	execi->stack_high = VM_STACKTOP;
-	assert(!(VM_STACKTOP % PAGE_SIZE));
+	execi->stack_high = rounddown(execi->stack_high, PAGE_SIZE);
 	stacklow = execi->stack_high - execi->stack_size;
 
 	assert(execi->copymem);
@@ -310,6 +214,10 @@ int libexec_load_elf(struct exec_info *execi)
 		if(execi->clearproc) execi->clearproc(execi);
 		return ENOMEM;
 	}
+
+#if ELF_DEBUG
+	printf("stack mmapped 0x%lx-0x%lx\n", stacklow, stacklow+execi->stack_size);
+#endif
 
 	/* record entry point and lowest load vaddr for caller */
 	execi->pc = hdr->e_entry;

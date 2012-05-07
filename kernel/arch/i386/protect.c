@@ -3,19 +3,23 @@
  * for local descriptors in the process table.
  */
 
+#include <string.h>
+#include <assert.h>
+#include <machine/multiboot.h>
+
 #include "kernel/kernel.h"
 #include "kernel/proc.h"
 #include "archconst.h"
 
 #include "arch_proto.h"
 
+#include <libexec.h>
+
 #define INT_GATE_TYPE	(INT_286_GATE | DESC_386_BIT)
 #define TSS_TYPE	(AVL_286_TSS  | DESC_386_BIT)
 
-struct desctableptr_s {
-  char limit[sizeof(u16_t)];
-  char base[sizeof(u32_t)];		/* really u24_t + pad for 286 */
-};
+/* This is OK initially, when the 1:1 mapping is still there. */
+char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 
 struct gatedesc_s {
   u16_t offset_low;
@@ -23,27 +27,20 @@ struct gatedesc_s {
   u8_t pad;			/* |000|XXXXX| ig & trpg, |XXXXXXXX| task g */
   u8_t p_dpl_type;		/* |P|DL|0|TYPE| */
   u16_t offset_high;
-};
+} __attribute__((packed));
 
+/* Storage for gdt, idt and tss. */
+static struct segdesc_s gdt[GDT_SIZE] __aligned(DESC_SIZE);
+struct gatedesc_s idt[IDT_SIZE] __aligned(DESC_SIZE);
+struct tss_s tss[CONFIG_MAX_CPUS];
 
-/* used in klib.s and mpx.s */
-struct segdesc_s gdt[GDT_SIZE] __aligned(DESC_SIZE) =
-{	{0},
-	{0,0,0,0}, 				/* GDT descriptor */
-	{0,0,0,0}, 				/* IDT descriptor */
-	{0xffff,0,0,0x93,0xcf,0}, 	/* kernel DS */
-	{0xffff,0,0,0x93,0xcf,0},	/* kernel ES (386: flag 4 Gb at startup) */
-	{0xffff,0,0,0x93,0xcf,0},	/* kernel SS (386: monitor SS at startup) */
-	{0xffff,0,0,0x9b,0xcf,0},	/* kernel CS */
-	{0xffff,0,0,0x9b,0xcf,0},	/* temp for BIOS (386: monitor CS at startup) */
-};
-
-/* zero-init so none present */
-static struct gatedesc_s idt[IDT_SIZE] __aligned(DESC_SIZE);
-struct tss_s tss[CONFIG_MAX_CPUS];			/* zero init */
-
-static void sdesc(struct segdesc_s *segdp, phys_bytes base, vir_bytes
-	size);
+phys_bytes vir2phys(void *vir)
+{
+	extern char _kern_vir_base, _kern_phys_base;	/* in kernel.lds */
+	u32_t offset = (vir_bytes) &_kern_vir_base -
+		(vir_bytes) &_kern_phys_base;
+	return (phys_bytes)vir - offset;
+}
 
 /*===========================================================================*
  *				enable_iop				     * 
@@ -58,51 +55,60 @@ void enable_iop(struct proc *pp)
   pp->p_reg.psw |= 0x3000;
 }
 
-/*===========================================================================*
- *				seg2phys				     *
- *===========================================================================*/
-phys_bytes seg2phys(const u16_t seg)
-{
-/* Return the base address of a segment, with seg being a 
- * register, or a 286/386 segment selector.
- */
-  phys_bytes base;
-  struct segdesc_s *segdp;
 
-  segdp = &gdt[seg >> 3];
-  base =    ((u32_t) segdp->base_low << 0)
-	| ((u32_t) segdp->base_middle << 16)
-	| ((u32_t) segdp->base_high << 24);
-  return base;
+/*===========================================================================*
+ *				sdesc					     *
+ *===========================================================================*/
+ void sdesc(struct segdesc_s *segdp, phys_bytes base, vir_bytes size)
+{
+/* Fill in the size fields (base, limit and granularity) of a descriptor. */
+  segdp->base_low = base;
+  segdp->base_middle = base >> BASE_MIDDLE_SHIFT;
+  segdp->base_high = base >> BASE_HIGH_SHIFT;
+
+  --size;			/* convert to a limit, 0 size means 4G */
+  if (size > BYTE_GRAN_MAX) {
+	segdp->limit_low = size >> PAGE_GRAN_SHIFT;
+	segdp->granularity = GRANULAR | (size >>
+			     (PAGE_GRAN_SHIFT + GRANULARITY_SHIFT));
+  } else {
+	segdp->limit_low = size;
+	segdp->granularity = size >> GRANULARITY_SHIFT;
+  }
+  segdp->granularity |= DEFAULT;	/* means BIG for data seg */
 }
 
 /*===========================================================================*
  *				init_dataseg				     *
  *===========================================================================*/
-void init_dataseg(register struct segdesc_s *segdp,
+void init_param_dataseg(register struct segdesc_s *segdp,
 	phys_bytes base, vir_bytes size, const int privilege)
 {
 	/* Build descriptor for a data segment. */
 	sdesc(segdp, base, size);
 	segdp->access = (privilege << DPL_SHIFT) | (PRESENT | SEGMENT |
-		WRITEABLE);
+		WRITEABLE | ACCESSED);
 		/* EXECUTABLE = 0, EXPAND_DOWN = 0, ACCESSED = 0 */
+}
+
+void init_dataseg(int index, const int privilege)
+{
+	init_param_dataseg(&gdt[index], 0, 0xFFFFFFFF, privilege);
 }
 
 /*===========================================================================*
  *				init_codeseg				     *
  *===========================================================================*/
-static void init_codeseg(register struct segdesc_s *segdp, phys_bytes base,
-	vir_bytes size, int privilege)
+static void init_codeseg(int index, int privilege)
 {
 	/* Build descriptor for a code segment. */
-	sdesc(segdp, base, size);
-	segdp->access = (privilege << DPL_SHIFT)
+	sdesc(&gdt[index], 0, 0xFFFFFFFF);
+	gdt[index].access = (privilege << DPL_SHIFT)
 	        | (PRESENT | SEGMENT | EXECUTABLE | READABLE);
 		/* CONFORMING = 0, ACCESSED = 0 */
 }
 
-struct gate_table_s gate_table_pic[] = {
+static struct gate_table_s gate_table_pic[] = {
 	{ hwint00, VECTOR( 0), INTR_PRIVILEGE },
 	{ hwint01, VECTOR( 1), INTR_PRIVILEGE },
 	{ hwint02, VECTOR( 2), INTR_PRIVILEGE },
@@ -122,17 +128,47 @@ struct gate_table_s gate_table_pic[] = {
 	{ NULL, 0, 0}
 };
 
-void tss_init(unsigned cpu, void * kernel_stack)
+static struct gate_table_s gate_table_exceptions[] = {
+	{ divide_error, DIVIDE_VECTOR, INTR_PRIVILEGE },
+	{ single_step_exception, DEBUG_VECTOR, INTR_PRIVILEGE },
+	{ nmi, NMI_VECTOR, INTR_PRIVILEGE },
+	{ breakpoint_exception, BREAKPOINT_VECTOR, USER_PRIVILEGE },
+	{ overflow, OVERFLOW_VECTOR, USER_PRIVILEGE },
+	{ bounds_check, BOUNDS_VECTOR, INTR_PRIVILEGE },
+	{ inval_opcode, INVAL_OP_VECTOR, INTR_PRIVILEGE },
+	{ copr_not_available, COPROC_NOT_VECTOR, INTR_PRIVILEGE },
+	{ double_fault, DOUBLE_FAULT_VECTOR, INTR_PRIVILEGE },
+	{ copr_seg_overrun, COPROC_SEG_VECTOR, INTR_PRIVILEGE },
+	{ inval_tss, INVAL_TSS_VECTOR, INTR_PRIVILEGE },
+	{ segment_not_present, SEG_NOT_VECTOR, INTR_PRIVILEGE },
+	{ stack_exception, STACK_FAULT_VECTOR, INTR_PRIVILEGE },
+	{ general_protection, PROTECTION_VECTOR, INTR_PRIVILEGE },
+	{ page_fault, PAGE_FAULT_VECTOR, INTR_PRIVILEGE },
+	{ copr_error, COPROC_ERR_VECTOR, INTR_PRIVILEGE },
+	{ alignment_check, ALIGNMENT_CHECK_VECTOR, INTR_PRIVILEGE },
+	{ machine_check, MACHINE_CHECK_VECTOR, INTR_PRIVILEGE },
+	{ simd_exception, SIMD_EXCEPTION_VECTOR, INTR_PRIVILEGE },
+	{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
+	{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
+	{ NULL, 0, 0}
+};
+
+int tss_init(unsigned cpu, void * kernel_stack)
 {
 	struct tss_s * t = &tss[cpu];
-  
-	t->ss0 = DS_SELECTOR;
-	init_dataseg(&gdt[TSS_INDEX(cpu)], vir2phys(t),
-			sizeof(struct tss_s), INTR_PRIVILEGE);
-	gdt[TSS_INDEX(cpu)].access = PRESENT |
-		(INTR_PRIVILEGE << DPL_SHIFT) | TSS_TYPE;
+	int index = TSS_INDEX(cpu);
+	struct segdesc_s *tssgdt;
 
-	/* Complete building of main TSS. */
+	tssgdt = &gdt[index];
+  
+	init_param_dataseg(tssgdt, (phys_bytes) t,
+			sizeof(struct tss_s), INTR_PRIVILEGE);
+	tssgdt->access = PRESENT | (INTR_PRIVILEGE << DPL_SHIFT) | TSS_TYPE;
+
+	/* Build TSS. */
+	memset(t, 0, sizeof(*t));
+	t->ds = t->es = t->fs = t->gs = t->ss0 = KERN_DS_SELECTOR;
+	t->cs = KERN_CS_SELECTOR;
 	t->iobase = sizeof(struct tss_s);	/* empty i/o permissions map */
 
 	/* 
@@ -145,344 +181,203 @@ void tss_init(unsigned cpu, void * kernel_stack)
 	 * this stak in use when we trap to kernel
 	 */
 	*((reg_t *)(t->sp0 + 1 * sizeof(reg_t))) = cpu;
+
+	return SEG_SELECTOR(index);
 }
 
-/*===========================================================================*
- *				prot_init				     *
- *===========================================================================*/
-void prot_init(void)
+phys_bytes init_segdesc(int gdt_index, void *base, int size)
 {
-/* Set up tables for protected mode.
- * All GDT slots are allocated at compile time.
- */
-  struct desctableptr_s *dtp;
-  unsigned ldt_index;
-  register struct proc *rp;
+	struct desctableptr_s *dtp = (struct desctableptr_s *) &gdt[gdt_index];
+	dtp->limit = size - 1;
+	dtp->base = (phys_bytes) base;
 
-  /* Click-round kernel. */
-  if(kinfo.data_base % CLICK_SIZE)
-	panic("kinfo.data_base not aligned");
-  kinfo.data_size = (phys_bytes) (CLICK_CEIL(kinfo.data_size));
+	return (phys_bytes) dtp;
+}
 
-  /* Build gdt and idt pointers in GDT where the BIOS expects them. */
-  dtp= (struct desctableptr_s *) &gdt[GDT_INDEX];
-  * (u16_t *) dtp->limit = (sizeof gdt) - 1;
-  * (u32_t *) dtp->base = vir2phys(gdt);
+void int_gate(struct gatedesc_s *tab,
+	unsigned vec_nr, vir_bytes offset, unsigned dpl_type)
+{
+/* Build descriptor for an interrupt gate. */
+  register struct gatedesc_s *idp;
 
-  dtp= (struct desctableptr_s *) &gdt[IDT_INDEX];
-  * (u16_t *) dtp->limit = (sizeof idt) - 1;
-  * (u32_t *) dtp->base = vir2phys(idt);
+  idp = &tab[vec_nr];
+  idp->offset_low = offset;
+  idp->selector = KERN_CS_SELECTOR;
+  idp->p_dpl_type = dpl_type;
+  idp->offset_high = offset >> OFFSET_HIGH_SHIFT;
+}
 
-  /* Build segment descriptors for tasks and interrupt handlers. */
-  init_codeseg(&gdt[CS_INDEX],
-  	 kinfo.code_base, kinfo.code_size, INTR_PRIVILEGE);
-  init_dataseg(&gdt[DS_INDEX],
-  	 kinfo.data_base, kinfo.data_size, INTR_PRIVILEGE);
-  init_dataseg(&gdt[ES_INDEX], 0L, 0, INTR_PRIVILEGE);
-
-  /* Build local descriptors in GDT for LDT's in process table.
-   * The LDT's are allocated at compile time in the process table, and
-   * initialized whenever a process' map is initialized or changed.
-   */
-  for (rp = BEG_PROC_ADDR, ldt_index = FIRST_LDT_INDEX;
-       rp < END_PROC_ADDR; ++rp, ldt_index++) {
-	init_dataseg(&gdt[ldt_index], vir2phys(rp->p_seg.p_ldt),
-				     sizeof(rp->p_seg.p_ldt), INTR_PRIVILEGE);
-	gdt[ldt_index].access = PRESENT | LDT;
-	rp->p_seg.p_ldt_sel = ldt_index * DESC_SIZE;
-  }
-
-  /* Build boot TSS */
-  tss_init(0, &k_boot_stktop);
+void int_gate_idt(unsigned vec_nr, vir_bytes offset, unsigned dpl_type)
+{
+	int_gate(idt, vec_nr, offset, dpl_type);
 }
 
 void idt_copy_vectors(struct gate_table_s * first)
 {
 	struct gate_table_s *gtp;
 	for (gtp = first; gtp->gate; gtp++) {
-		int_gate(gtp->vec_nr, (vir_bytes) gtp->gate,
+		int_gate(idt, gtp->vec_nr, (vir_bytes) gtp->gate,
 				PRESENT | INT_GATE_TYPE |
 				(gtp->privilege << DPL_SHIFT));
 	}
 }
 
-/* Build descriptors for interrupt gates in IDT. */
-void idt_init(void)
+void idt_copy_vectors_pic(void)
 {
-	struct gate_table_s gate_table[] = {
-		{ divide_error, DIVIDE_VECTOR, INTR_PRIVILEGE },
-		{ single_step_exception, DEBUG_VECTOR, INTR_PRIVILEGE },
-		{ nmi, NMI_VECTOR, INTR_PRIVILEGE },
-		{ breakpoint_exception, BREAKPOINT_VECTOR, USER_PRIVILEGE },
-		{ overflow, OVERFLOW_VECTOR, USER_PRIVILEGE },
-		{ bounds_check, BOUNDS_VECTOR, INTR_PRIVILEGE },
-		{ inval_opcode, INVAL_OP_VECTOR, INTR_PRIVILEGE },
-		{ copr_not_available, COPROC_NOT_VECTOR, INTR_PRIVILEGE },
-		{ double_fault, DOUBLE_FAULT_VECTOR, INTR_PRIVILEGE },
-		{ copr_seg_overrun, COPROC_SEG_VECTOR, INTR_PRIVILEGE },
-		{ inval_tss, INVAL_TSS_VECTOR, INTR_PRIVILEGE },
-		{ segment_not_present, SEG_NOT_VECTOR, INTR_PRIVILEGE },
-		{ stack_exception, STACK_FAULT_VECTOR, INTR_PRIVILEGE },
-		{ general_protection, PROTECTION_VECTOR, INTR_PRIVILEGE },
-		{ page_fault, PAGE_FAULT_VECTOR, INTR_PRIVILEGE },
-		{ copr_error, COPROC_ERR_VECTOR, INTR_PRIVILEGE },
-		{ alignment_check, ALIGNMENT_CHECK_VECTOR, INTR_PRIVILEGE },
-		{ machine_check, MACHINE_CHECK_VECTOR, INTR_PRIVILEGE },
-		{ simd_exception, SIMD_EXCEPTION_VECTOR, INTR_PRIVILEGE },
-		{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
-		{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
-		{ NULL, 0, 0}
-	};
-
-	idt_copy_vectors(gate_table);
 	idt_copy_vectors(gate_table_pic);
 }
 
-
-/*===========================================================================*
- *				sdesc					     *
- *===========================================================================*/
-static void sdesc(segdp, base, size)
-register struct segdesc_s *segdp;
-phys_bytes base;
-vir_bytes size;
+void idt_init(void)
 {
-/* Fill in the size fields (base, limit and granularity) of a descriptor. */
-  segdp->base_low = base;
-  segdp->base_middle = base >> BASE_MIDDLE_SHIFT;
-  segdp->base_high = base >> BASE_HIGH_SHIFT;
-
-  --size;			/* convert to a limit, 0 size means 4G */
-  if (size > BYTE_GRAN_MAX) {
-	segdp->limit_low = size >> PAGE_GRAN_SHIFT;
-	segdp->granularity = GRANULAR | (size >>
-				     (PAGE_GRAN_SHIFT + GRANULARITY_SHIFT));
-  } else {
-	segdp->limit_low = size;
-	segdp->granularity = size >> GRANULARITY_SHIFT;
-  }
-  segdp->granularity |= DEFAULT;	/* means BIG for data seg */
+	idt_copy_vectors_pic();
+	idt_copy_vectors(gate_table_exceptions);
 }
 
-/*===========================================================================*
- *				int_gate				     *
- *===========================================================================*/
-void int_gate(unsigned vec_nr, vir_bytes offset, unsigned dpl_type)
-{
-/* Build descriptor for an interrupt gate. */
-  register struct gatedesc_s *idp;
+struct desctableptr_s gdt_desc, idt_desc;
 
-  idp = &idt[vec_nr];
-  idp->offset_low = offset;
-  idp->selector = CS_SELECTOR;
-  idp->p_dpl_type = dpl_type;
-  idp->offset_high = offset >> OFFSET_HIGH_SHIFT;
+void idt_reload(void)
+{
+	x86_lidt(&idt_desc);
 }
 
-/*===========================================================================*
- *				alloc_segments				     *
- *===========================================================================*/
-void alloc_segments(register struct proc *rp)
+multiboot_module_t *bootmod(int pnr)
 {
-/* This is called at system initialization from main() and by do_newmap(). 
- * The code has a separate function because of all hardware-dependencies.
- */
-  phys_bytes code_bytes;
-  phys_bytes data_bytes;
-  phys_bytes text_vaddr, data_vaddr;
-  phys_bytes text_segbase, data_segbase;
-  int privilege;
+	int i;
 
-      data_bytes = (phys_bytes) (rp->p_memmap[S].mem_vir + 
-          rp->p_memmap[S].mem_len) << CLICK_SHIFT;
-      if (rp->p_memmap[T].mem_len == 0)
-          code_bytes = data_bytes;	/* common I&D, poor protect */
-      else
-          code_bytes = (phys_bytes) rp->p_memmap[T].mem_len << CLICK_SHIFT;
-      privilege = USER_PRIVILEGE;
+	assert(pnr >= 0);
 
-      text_vaddr = rp->p_memmap[T].mem_vir << CLICK_SHIFT;
-      data_vaddr = rp->p_memmap[D].mem_vir << CLICK_SHIFT;
-      text_segbase = (rp->p_memmap[T].mem_phys -
-		      rp->p_memmap[T].mem_vir) << CLICK_SHIFT;
-      data_segbase = (rp->p_memmap[D].mem_phys -
-		      rp->p_memmap[D].mem_vir) << CLICK_SHIFT;
-
-      init_codeseg(&rp->p_seg.p_ldt[CS_LDT_INDEX],
-		   text_segbase,
-		   text_vaddr + code_bytes, privilege);
-      init_dataseg(&rp->p_seg.p_ldt[DS_LDT_INDEX],
-		   data_segbase,
-		   data_vaddr + data_bytes, privilege);
-      rp->p_reg.cs = (CS_LDT_INDEX * DESC_SIZE) | TI | privilege;
-      rp->p_reg.gs =
-      rp->p_reg.fs =
-      rp->p_reg.ss =
-      rp->p_reg.es =
-      rp->p_reg.ds = (DS_LDT_INDEX*DESC_SIZE) | TI | privilege;
-}
-
-#if 0
-/*===========================================================================*
- *				check_segments				     *
- *===========================================================================*/
-static void check_segments(char *File, int line)
-{
-  int checked = 0;
-int fail = 0;
-struct proc *rp;
-for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
-
-  int privilege;
-  int cs, ds;
-
-		if (isemptyp(rp))
-			continue;
-
-	privilege = USER_PRIVILEGE;
-
-	cs = (CS_LDT_INDEX*DESC_SIZE) | TI | privilege;
-	ds = (DS_LDT_INDEX*DESC_SIZE) | TI | privilege;
-
-#define CHECK(s1, s2) if(s1 != s2) {		\
-	printf("%s:%d: " #s1 " != " #s2 " for ep %d\n", \
-		File, line, rp->p_endpoint); fail++; } checked++;
-
-	CHECK(rp->p_reg.cs, cs);
-	CHECK(rp->p_reg.gs, ds);
-	CHECK(rp->p_reg.fs, ds);
-	CHECK(rp->p_reg.ss, ds);
-	if(rp->p_endpoint != SYSTEM) {
-		CHECK(rp->p_reg.es, ds);
-	}
-	CHECK(rp->p_reg.ds, ds);
-     }
-     if(fail) {
-     	printf("%d/%d checks failed\n", fail, checked);
-     	panic("wrong: %d",  fail);
-     }
-}
-#endif
-
-/*===========================================================================*
- *				printseg			     *
- *===========================================================================*/
-void printseg(char *banner, const int iscs, struct proc *pr,
-  const u32_t selector)
-{
-#if USE_SYSDEBUG
-	u32_t base, limit, index, dpl;
-	struct segdesc_s *desc;
-
-	if(banner) { printf("%s", banner); }
-
-	index = selector >> 3;
-
-	printf("RPL %d, ind %d of ",
-		(selector & RPL_MASK), index);
-
-	if(selector & TI) {
-		printf("LDT");
-		if(index >= LDT_SIZE) {
-			printf("invalid index in ldt\n");
-			return;
+	/* Search for desired process in boot process
+	 * list. The first NR_TASKS ones do not correspond
+	 * to a module, however, so we don't search those.
+	 */
+	for(i = NR_TASKS; i < NR_BOOT_PROCS; i++) {
+		int p;
+		p = i - NR_TASKS;
+		if(image[i].proc_nr == pnr) {
+			assert(p < MULTIBOOT_MAX_MODS);
+			assert(p < kinfo.mbi.mods_count);
+			return &kinfo.module_list[p];
 		}
-		if(!pr) {
-			printf("local selector but unknown process\n");
-			return;
-		}
-		desc = &pr->p_seg.p_ldt[index];
-	} else {
-		printf("GDT");
-		if(index >= GDT_SIZE) {
-			printf("invalid index in gdt\n");
-			return;
-		}
-		desc = &gdt[index];
 	}
 
-	limit = desc->limit_low |
-		(((u32_t) desc->granularity & LIMIT_HIGH) << GRANULARITY_SHIFT);
-
-	if(desc->granularity & GRANULAR) {
-		limit = (limit << PAGE_GRAN_SHIFT) + 0xfff;
-	}
-
-	base = desc->base_low | 
-		((u32_t) desc->base_middle << BASE_MIDDLE_SHIFT) |
-		((u32_t) desc->base_high << BASE_HIGH_SHIFT);
-
-	printf(" -> base 0x%08lx size 0x%08lx ", base, limit+1);
-
-	if(iscs) {
-		if(!(desc->granularity & BIG))
-			printf("16bit ");
-	} else {
-		if(!(desc->granularity & BIG)) 
-			printf("not big ");
-	}
-
-	if(desc->granularity & 0x20) {	/* reserved */
-		panic("granularity reserved field set");
-	}
-
-	if(!(desc->access & PRESENT))
-		printf("notpresent ");
-
-	if(!(desc->access & SEGMENT))
-		printf("system ");
-
-	if(desc->access & EXECUTABLE) {
-		printf("   exec ");
-		if(desc->access & CONFORMING) printf("conforming ");
-		if(!(desc->access & READABLE)) printf("non-readable ");
-	} else {
-		printf("nonexec ");
-		if(desc->access & EXPAND_DOWN) printf("non-expand-down ");
-		if(!(desc->access & WRITEABLE)) printf("non-writable ");
-	}
-
-	if(!(desc->access & ACCESSED)) {
-		printf("nonacc ");
-	}
-
-	dpl = ((u32_t) desc->access & DPL) >> DPL_SHIFT;
-
-	printf("DPL %d\n", dpl);
-
-	return;
-#endif /* USE_SYSDEBUG */
+	panic("boot module %d not found", pnr);
 }
 
 /*===========================================================================*
- *				prot_set_kern_seg_limit			     *
+ *				prot_init				     *
  *===========================================================================*/
-int prot_set_kern_seg_limit(const vir_bytes limit)
+void prot_init()
 {
-	struct proc *rp;
-	int orig_click;
-	int incr_clicks;
+  int sel_tss;
+  extern char k_boot_stktop;
 
-	if(limit <= kinfo.data_base) {
-		printf("prot_set_kern_seg_limit: limit bogus\n");
-		return EINVAL;
+  memset(gdt, 0, sizeof(gdt));
+  memset(idt, 0, sizeof(idt));
+
+  /* Build GDT, IDT, IDT descriptors. */
+  gdt_desc.base = (u32_t) gdt;
+  gdt_desc.limit = sizeof(gdt)-1;
+  idt_desc.base = (u32_t) idt;
+  idt_desc.limit = sizeof(idt)-1;
+  sel_tss = tss_init(0, &k_boot_stktop);
+
+  /* Build GDT */
+  init_param_dataseg(&gdt[LDT_INDEX],
+    (phys_bytes) 0, 0, INTR_PRIVILEGE); /* unusable LDT */
+  gdt[LDT_INDEX].access = PRESENT | LDT;
+  init_codeseg(KERN_CS_INDEX, INTR_PRIVILEGE);
+  init_dataseg(KERN_DS_INDEX, INTR_PRIVILEGE);
+  init_codeseg(USER_CS_INDEX, USER_PRIVILEGE);
+  init_dataseg(USER_DS_INDEX, USER_PRIVILEGE);
+
+  x86_lgdt(&gdt_desc);	/* Load gdt */ 
+  idt_init();
+  idt_reload();
+  x86_lldt(LDT_SELECTOR); 	/* Load bogus ldt */
+  x86_ltr(sel_tss);	/* Load global TSS */
+
+  /* Currently the multiboot segments are loaded; which is fine, but
+   * let's replace them with the ones from our own GDT so we test
+   * right away whether they work as expected.
+   */
+  x86_load_kerncs();
+  x86_load_ds(KERN_DS_SELECTOR);
+  x86_load_es(KERN_DS_SELECTOR);
+  x86_load_fs(KERN_DS_SELECTOR);
+  x86_load_gs(KERN_DS_SELECTOR);
+  x86_load_ss(KERN_DS_SELECTOR);
+
+  /* Set up a new post-relocate bootstrap pagetable so that
+   * we can map in VM, and we no longer rely on pre-relocated
+   * data.
+   */
+
+  pg_clear();
+  pg_identity(); /* Still need 1:1 for lapic and video mem and such. */
+  pg_mapkernel();
+  pg_load();
+  bootstrap_pagetable_done = 1;	/* secondary CPU's can use it too */
+}
+
+void arch_post_init(void)
+{
+  /* Let memory mapping code know what's going on at bootstrap time */
+  struct proc *vm;
+  vm = proc_addr(VM_PROC_NR);
+  get_cpulocal_var(ptproc) = vm;
+  pg_info(&vm->p_seg.p_cr3, &vm->p_seg.p_cr3_v);
+}
+
+int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
+{
+        pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
+  	pg_load();
+        memset((char *) vaddr, 0, len);
+        return OK;
+}
+
+void arch_boot_proc(struct boot_image *ip, struct proc *rp)
+{
+	multiboot_module_t *mod;
+
+	if(rp->p_nr < 0) return;
+
+	mod = bootmod(rp->p_nr);
+
+	/* Important special case: we put VM in the bootstrap pagetable
+	 * so it can run.
+	 */
+
+	if(rp->p_nr == VM_PROC_NR) {
+		struct exec_info execi;
+
+		memset(&execi, 0, sizeof(execi));
+
+		/* exec parameters */
+		execi.stack_high = kinfo.user_sp;
+		execi.stack_size = 16 * 1024;	/* not too crazy as it must be preallocated */
+		execi.proc_e = ip->endpoint;
+		execi.hdr = (char *) mod->mod_start; /* phys mem direct */
+		execi.hdr_len = mod->mod_end - mod->mod_start;
+		strcpy(execi.progname, ip->proc_name);
+		execi.frame_len = 0;
+
+		/* callbacks for use in the kernel */
+		execi.copymem = libexec_copy_memcpy;
+		execi.clearmem = libexec_clear_memset;
+		execi.allocmem_prealloc = libexec_pg_alloc;
+		execi.allocmem_ondemand = libexec_pg_alloc;
+		execi.clearproc = NULL;
+
+		/* parse VM ELF binary and alloc/map it into bootstrap pagetable */
+		libexec_load_elf(&execi);
+
+	        /* Initialize the server stack pointer. Take it down three words
+		 * to give startup code something to use as "argc", "argv" and "envp".
+		 */
+		arch_proc_init(rp, execi.pc, kinfo.user_sp - 3*4, ip->proc_name);
+
+		/* Free VM blob that was just copied into existence. */
+		cut_memmap(&kinfo, mod->mod_start, mod->mod_end);
 	}
-
-	/* Do actual increase. */
-	orig_click = kinfo.data_size / CLICK_SIZE;
-	kinfo.data_size = limit - kinfo.data_base;
-	incr_clicks = kinfo.data_size / CLICK_SIZE - orig_click;
-
-	prot_init();
-
-	/* Increase kernel processes too. */
-	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
-		if (isemptyp(rp) || !iskernelp(rp))
-			continue;
-		rp->p_memmap[S].mem_len += incr_clicks;
-		alloc_segments(rp);
-		rp->p_memmap[S].mem_len -= incr_clicks;
-	}
-
-	return OK;
 }

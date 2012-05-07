@@ -57,24 +57,23 @@
 #define SEGMENT_TYPE  0xFF00	/* bit mask to get segment type */
 #define SEGMENT_INDEX 0x00FF	/* bit mask to get segment index */
 
-#define LOCAL_SEG     0x0000	/* flags indicating local memory segment */
-#define NR_LOCAL_SEGS      3	/* # local segments per process (fixed) */
-#define T                  0	/* proc[i].mem_map[T] is for text */
-#define D                  1	/* proc[i].mem_map[D] is for data */
-#define S                  2	/* proc[i].mem_map[S] is for stack */
+#define D_OBSOLETE         1	/* proc[i].mem_map[D] is for data */
 
 #define PHYS_SEG      0x0400	/* flag indicating entire physical memory */
 
 #define LOCAL_VM_SEG  0x1000	/* same as LOCAL_SEG, but with vm lookup */
-#define VM_D		(LOCAL_VM_SEG | D)
-#define VM_T		(LOCAL_VM_SEG | T)
 #define MEM_GRANT	3
+#define VIR_ADDR	1
+#define VM_D		(LOCAL_VM_SEG | VIR_ADDR)
 #define VM_GRANT	(LOCAL_VM_SEG | MEM_GRANT)
 
 /* Labels used to disable code sections for different reasons. */
 #define DEAD_CODE	   0	/* unused code in normal configuration */
 #define FUTURE_CODE	   0	/* new code to be activated + tested later */
 #define TEMP_CODE	   1	/* active code to be removed later */
+
+/* Number of processes contained in the system image. */
+#define NR_BOOT_PROCS   (NR_TASKS + LAST_SPECIAL_PROC_NR + 1)
 
 /* Process name length in the PM process table, including '\0'. */
 #define PROC_NAME_LEN	16
@@ -156,9 +155,6 @@
 
 #define SERVARNAME		"cttyline"
 #define SERBAUDVARNAME		"cttybaud"
-
-/* Bits for the system property flags in boot image processes. */
-#define PROC_FULLVM    0x100    /* VM sets and manages full pagetable */
 
 /* Bits for s_flags in the privilege structure. */
 #define PREEMPTIBLE     0x002   /* kernel tasks are not preemptible */

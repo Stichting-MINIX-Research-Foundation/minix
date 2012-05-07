@@ -49,6 +49,20 @@ int libexec_clear_sys_memset(struct exec_info *execi, off_t vaddr, size_t len)
 	return sys_memset(execi->proc_e, 0, vaddr, len);
 }
 
+int libexec_copy_memcpy(struct exec_info *execi,
+	off_t off, off_t vaddr, size_t len)
+{
+	assert(off + len <= execi->hdr_len);
+	memcpy((char *) vaddr, (char *) execi->hdr + off, len);
+	return OK;
+}
+
+int libexec_clear_memset(struct exec_info *execi, off_t vaddr, size_t len)
+{
+	memset((char *) vaddr, 0, len);
+	return OK;
+}
+
 void libexec_patch_ptr(char stack[ARG_MAX], vir_bytes base)
 {
 /* When doing an exec(name, argv, envp) call, the user builds up a stack

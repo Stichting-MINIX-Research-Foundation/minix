@@ -63,15 +63,6 @@ int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
   return r;
 }
 
-int sys_vmctl_enable_paging(void * data)
-{
-	message m;
-	m.SVMCTL_WHO = SELF;
-	m.SVMCTL_PARAM = VMCTL_ENABLE_PAGING;
-	m.SVMCTL_VALUE = (u32_t) data;
-	return _kernel_call(SYS_VMCTL, &m);
-}
-
 int sys_vmctl_get_mapping(int index,
 	phys_bytes *addr, phys_bytes *len, int *flags)
 {
