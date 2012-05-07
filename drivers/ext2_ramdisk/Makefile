@@ -39,8 +39,8 @@ install_files:
 image.d: install_files
 	@echo -n "preparing image... "
 	rm -rf image.d
-	@mkdir image.d
-	@for f in $(IMAGE_DIRS); do mkdir -p image.d/$$f;  done
+	${INSTALL_DIR} image.d
+	@for f in $(IMAGE_DIRS); do ${INSTALL_DIR} image.d/$$f;  done
 	@for f in $(BINFILES); do  cp $(DESTDIR)/bin/$$f image.d/bin;  done
 	@for f in $(SBINFILES); do  cp $(DESTDIR)/sbin/$$f image.d/sbin;  done
 	@for f in $(ETCFILES); do  cp $(DESTDIR)/etc/$$f image.d/etc;  done

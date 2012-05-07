@@ -76,7 +76,7 @@ bootable:
 
 hdboot:
 	rm -rf ${DESTDIR}/boot/minix/.temp/
-	mkdir -p ${DESTDIR}/boot/minix/.temp
+	${INSTALL_DIR} {DESTDIR}/boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
 	for i in ${PROGRAMS};					\
 	do							\
@@ -103,21 +103,18 @@ install:
 	fi
 
 cross_install:
-	if [ ! -d ${DESTDIR}/multiboot ] ; \
-	then\
-		mkdir ${DESTDIR}/multiboot;\
-	fi
+	${INSTALL_DIR} ${DESTDIR}/multiboot
 #ext2 might be needed
 	for i in ${PROGRAMS} ../servers/ext2/ext2;	\
 	do								\
 	let n=n+1 >/dev/null;						\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";		\
 	newname="${DESTDIR}/multiboot/$${prefix}$${n}_`basename $$i`";	\
-	cp $$i $$newname;						\
+	${INSTALL} $$i $$newname;						\
 	strip -s $$newname;						\
 	gzip -f $$newname; 						\
 	done
-	cp ../kernel/kernel ${DESTDIR}/multiboot/
+	${INSTALL} ../kernel/kernel ${DESTDIR}/multiboot/
 	strip -s ${DESTDIR}/multiboot/kernel
 
 # download and update NetBSD reference sources.

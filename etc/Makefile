@@ -34,8 +34,8 @@ clean::
 
 install: installpw	# installpw needed to bootstrap pw db
 	@echo "Installing /etc, /usr/etc and /usr/lib.."
-	mkdir -p $(ETC) $(USRLIB)
-	mkdir -p $(ETC)/devmand/scripts
+	${INSTALL_DIR} $(ETC)
+	${INSTALL_DIR} $(ETC)/devmand/scripts
 	@echo "Making hierarchy.."
 	sh mtree.sh mtree/minix.tree ${TOOL_AWK} ${TOOL_STAT} ${MKUNPRIVED} ${DESTDIR};	# DESTDIR must be last; special case!
 	@for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 755 $(ETC)/$$f; fi; done
@@ -49,14 +49,14 @@ install: installpw	# installpw needed to bootstrap pw db
 	fi
 	${INSTALL_FILE} -o root -g operator -m 755 crontab ${DESTDIR}/usr/lib
 	@echo "Making user homedirs.."
-	for u in ${DESTDIR}/usr/ast ${DESTDIR}/root; do  mkdir -p $$u; cp ast/.[aepv]* $$u ; done
+	for u in ${DESTDIR}/usr/ast ${DESTDIR}/root; do  ${INSTALL_DIR} $$u; cp ast/.[aepv]* $$u ; done
 	@echo "Installing fonts.."
 	${INSTALL_FILE} -m 644 -o root -g operator fonts/*.fnt ${DESTDIR}/usr/lib/fonts/
 
 installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(ETC)/rc.subr.minix $(USRETC)/rc $(USR)/Makefile installpw
 
 installpw::
-	if [ ! -d $(ETC) ]; then mkdir $(ETC); chmod 755 $(ETC); fi
+	if [ ! -d $(ETC) ]; then ${INSTALL_DIR} $(ETC); chmod 755 $(ETC); fi
 	@for f in $(PWFILES); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 600 $(ETC)/$$f; fi; done
 	touch ${ETC}/pwd.db; touch ${ETC}/spwd.db; ${TOOL_PWD_MKDB} -d ${ETC}/.. -p -V 0 ${ETC}/master.passwd
 
