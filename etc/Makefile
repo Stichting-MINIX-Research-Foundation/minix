@@ -37,7 +37,7 @@ install: installpw	# installpw needed to bootstrap pw db
 	mkdir -p $(ETC) $(USRLIB)
 	mkdir -p $(ETC)/devmand/scripts
 	@echo "Making hierarchy.."
-	sh mtree.sh mtree/minix.tree ${TOOL_AWK} ${TOOL_STAT} ${DESTDIR} ${MKUNPRIVED}
+	sh mtree.sh mtree/minix.tree ${TOOL_AWK} ${TOOL_STAT} ${MKUNPRIVED} ${DESTDIR};	# DESTDIR must be last; special case!
 	@for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 755 $(ETC)/$$f; fi; done
 	@for f in $(USRFILES); do cp usr/$$f $(USR)/$$f; chmod 644 $(USR)/$$f; done
 	@for f in $(FILES3); do if [ -f $(USRETC)/$$f ]; then :; else cp usr/$$f $(USRETC); chmod 755 $(USRETC)/$$f; fi; done

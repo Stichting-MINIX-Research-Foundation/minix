@@ -1,15 +1,20 @@
 #!/bin/sh
 set -e
 
-if [ $# -ne 5 ]
-then	echo "Usage: $0 mtreefile TOOL_AWK TOOL_STAT DEST_DIR UNPRIV"
+if [ $# -ne 4 -a $# -ne 5 ]
+then	echo "Usage: $0 mtreefile TOOL_AWK TOOL_STAT UNPRIV DESTDIR"
 	exit 1
 fi
 
 AWK=$2
 STAT=$3
-DESTDIR=$4
-UNPRIV=$5
+UNPRIV=$4
+
+if [ $# -eq 5 ]
+then	DESTDIR=$5
+else	DESTDIR="/"	# If not set, default to root (i.e., normal case)
+fi
+
 cat "$1" | while read line
 do
 	NF="`echo $line | ${AWK} '{ print NF }'`"
