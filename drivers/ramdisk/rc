@@ -6,12 +6,12 @@ exec 2>/dev/log
 exec </dev/null
 
 FSCK=/bin/fsck.mfs
-ACPI=/sbin/acpi
+ACPI=/usr/sbin/acpi
 if [ -e $ACPI -a -n "`sysenv acpi`" ]
 then
 	/bin/service -c up $ACPI
 fi
-/bin/service -c up /sbin/pci
+/bin/service -c up /usr/sbin/pci
 /bin/service -cn up /sbin/floppy -dev /dev/fd0
 if [ X`/bin/sysenv ahci` = Xyes ]
 then
@@ -21,7 +21,6 @@ else
 	/bin/service -c up /sbin/at_wini -dev /dev/c0d0 -label at_wini_0
 	/bin/service -cr up /sbin/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1
 fi
-/bin/service -c edit /sbin/mfs -label fs_imgrd
 /bin/service up /sbin/procfs || echo "WARNING: couldn't start procfs"
 
 if /bin/sysenv rootdevname >/dev/null

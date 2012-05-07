@@ -1,10 +1,18 @@
-/dev      d    755  0    0    -    -    -    -    -
-/dev/null c    666  0    0    1    3    0    0    -
-/dev/log  c    666  0    0    4    0    0    0    -
-/dev/console  c    666  0    0    4    0    0    0    -
-/dev/ttyc c    666  0    0    4    1    1    1    4
-/dev/tty  c    666  0    0    5    0    0    0    -
-/dev/tty0 c    666  0    0    4    0    0    1    4
-/dev/imgrd b    666  0    0    1    6    0    0    -
-#/dev/ttyp c    666  0    0    4    128  128  1    16
+/dev      	d	755  0    0    -    -    -    -    -
+/dev/null	c	666  0    0    1    3    0    0    -
+/dev/log	c	666  0    0    4    0    0    0    -
+/dev/console	c	666  0    0    4    0    0    0    -
+/dev/ttyc	c	666  0    0    4    1    1    1    4
+/dev/tty	c	666  0    0    5    0    0    0    -
+/dev/tty0	c	666  0    0    4    0    0    1    4
+/dev/imgrd	b	666  0    0    1    6    0    0    -
+/dev/c0d0	b	600  0    0    3    0    0    0    -
+/dev/c0d0p0s0	b	600  0    0    3    128    0    0    -
+/dev/c0d0p0s1	b	600  0    0    3    129    0    0    -
+/dev/c0d0p0s2	b	600  0    0    3    130    0    0    -
+/dev/c0d0p0s3	b	600  0    0    3    131    0    0    -
+/dev/c0d1	b	600  0    0    3    5      0    0    -
+/dev/c1d0	b	600  0    0    8    0      0    0    -
+/dev/fd0	b	666  0    0    2    0    0    0    -
+#/dev/ttyp	c	666  0    0    4    128  128  1    16
 

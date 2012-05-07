@@ -21,7 +21,6 @@ else
 	/bin/service -c up /sbin/at_wini -dev /dev/c0d0 -label at_wini_0
 	/bin/service -cr up /sbin/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1
 fi
-/bin/service -c edit /sbin/mfs -label fs_imgrd
 /bin/service up /sbin/procfs || echo "WARNING: couldn't start procfs"
 
 if /bin/sysenv rootdevname >/dev/null
@@ -44,10 +43,10 @@ then
 	echo 'Looking for boot CD. This may take a minute.'
 	echo 'Please ignore any error messages.'
 	echo
-	cddev=`/usr/bin/cdprobe` || { echo 'No CD found'; exit 1; }
+	cddev=`cdprobe` || { echo 'No CD found'; exit 1; }
 	export cddev
 	echo "Loading ramdisk from ${cddev}p1"
-	/usr/bin/loadramdisk "$cddev"p1
+	loadramdisk "$cddev"p1
 elif [ "$rootdevname" = "/dev/ram" ]
 then
 	if /bin/sysenv rootdevname >/dev/null
@@ -61,7 +60,7 @@ then
 	fi
 
 	echo "Loading ramdisk from $ramimagename"
-	/usr/bin/loadramdisk "$ramimagename" || echo "WARNING: loadramdisk failed"
+	loadramdisk "$ramimagename" || echo "WARNING: loadramdisk failed"
 fi
 echo "Root device name is $rootdevname"
 if [ -e $FSCK ]

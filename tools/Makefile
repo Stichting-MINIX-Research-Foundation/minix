@@ -75,20 +75,20 @@ bootable:
 	exec su root mkboot bootable
 
 hdboot:
-	rm -rf /boot/minix/.temp/
-	mkdir -p /boot/minix/.temp
+	rm -rf ${DESTDIR}/boot/minix/.temp/
+	mkdir -p ${DESTDIR}/boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
 	for i in ${PROGRAMS};					\
 	do							\
 	let n=n+1 >/dev/null;					\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
-	newname="/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
+	newname="${DESTDIR}/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
 	cp $$i $$newname;					\
 	strip -s $$newname;					\
 	gzip $$newname;						\
 	done
-	cp ../kernel/kernel /boot/minix/.temp/
-	strip -s /boot/minix/.temp/kernel
+	cp ../kernel/kernel ${DESTDIR}/boot/minix/.temp/
+	strip -s ${DESTDIR}/boot/minix/.temp/kernel
 	sh mkboot $@
 	sh ../commands/update_bootcfg/update_bootcfg.sh
 
@@ -96,7 +96,11 @@ fdboot:
 	exec su root mkboot $@
 	@sync
 
-install: includes services hdboot
+install:
+	if [ ${DESTDIR}X != X ];			\
+	then	${MAKE} cross_install;			\
+	else	${MAKE} includes services hdboot;	\
+	fi
 
 cross_install:
 	if [ ! -d ${DESTDIR}/multiboot ] ; \
@@ -104,12 +108,17 @@ cross_install:
 		mkdir ${DESTDIR}/multiboot;\
 	fi
 #ext2 might be needed
-	for i in ${PROGRAMS} ../kernel/kernel ../servers/ext2/ext2;\
-	do\
-	newname="${DESTDIR}/multiboot/`basename $$i`"; \
-		cp $$i $$newname;\
-		strip -s $$newname;\
+	for i in ${PROGRAMS} ../servers/ext2/ext2;	\
+	do								\
+	let n=n+1 >/dev/null;						\
+	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";		\
+	newname="${DESTDIR}/multiboot/$${prefix}$${n}_`basename $$i`";	\
+	cp $$i $$newname;						\
+	strip -s $$newname;						\
+	gzip -f $$newname; 						\
 	done
+	cp ../kernel/kernel ${DESTDIR}/multiboot/
+	strip -s ${DESTDIR}/multiboot/kernel
 
 # download and update NetBSD reference sources.
 nbsd_fetch:
