@@ -309,30 +309,6 @@ static void vm_enable_paging(void)
 }
 
 /*===========================================================================*
- *				umap_bios				     *
- *===========================================================================*/
-phys_bytes umap_bios(vir_addr, bytes)
-vir_bytes vir_addr;		/* virtual address in BIOS segment */
-vir_bytes bytes;		/* # of bytes to be copied */
-{
-/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
- * address zero (the first BIOS interrupt vector) is not considered as an
- * error here, but since the physical address will be zero as well, the
- * calling function will think an error occurred. This is not a problem,
- * since no one uses the first BIOS interrupt vector.
- */
-
-  /* Check all acceptable ranges. */
-  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
-	return (phys_bytes) vir_addr;
-  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
-	return (phys_bytes) vir_addr;
-
-  printf("Warning, error in umap_bios, virtual address 0x%lx\n", vir_addr);
-  return 0;
-}
-
-/*===========================================================================*
  *                              umap_local                                   *
  *===========================================================================*/
 phys_bytes umap_local(rp, seg, vir_addr, bytes)
@@ -737,9 +713,7 @@ struct vir_addr *dst_addr;	/* destination virtual address */
 vir_bytes bytes;		/* # of bytes to copy  */
 int vmcheck;			/* if nonzero, can return VMSUSPEND */
 {
-/* Copy bytes from virtual address src_addr to virtual address dst_addr. 
- * Virtual addresses can be in ABS, LOCAL_SEG, or BIOS_SEG.
- */
+/* Copy bytes from virtual address src_addr to virtual address dst_addr. */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */
   phys_bytes phys_addr[2];	/* absolute source and destination */ 
   int seg_index;
@@ -760,8 +734,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	struct proc *p;
 
  	type = vir_addr[i]->segment & SEGMENT_TYPE;
-	if((type != PHYS_SEG && type != BIOS_SEG) &&
-	   isokendpt(vir_addr[i]->proc_nr_e, &proc_nr))
+	if((type != PHYS_SEG) && isokendpt(vir_addr[i]->proc_nr_e, &proc_nr))
 		p = proc_addr(proc_nr);
 	else 
 		p = NULL;
@@ -789,11 +762,6 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 			bytes, i);
 	  }
           break;
-#if _MINIX_CHIP == _CHIP_INTEL
-      case BIOS_SEG:
-          phys_addr[i] = umap_bios(vir_addr[i]->offset, bytes );
-          break;
-#endif
       case PHYS_SEG:
           phys_addr[i] = vir_addr[i]->offset;
           break;
@@ -915,25 +883,6 @@ void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
 /* set program counter and stack pointer. */
 	pr->p_reg.pc = ip;
 	pr->p_reg.sp = sp;
-}
-
-/*===========================================================================*
- *				arch_umap				     *
- *===========================================================================*/
-int arch_umap(const struct proc *pr, vir_bytes offset, vir_bytes count,
-	int seg, phys_bytes *addr)
-{
-	switch(seg) {
-		case BIOS_SEG:
-			*addr = umap_bios(offset, count);
-			return OK;
-	}
-
-	/* This must be EINVAL; the umap fallback function in
-	 * lib/syslib/alloc_util.c depends on it to detect an
-	 * older kernel (as opposed to mapping error).
-	 */
-	return EINVAL;
 }
 
 /* VM reports page directory slot we're allowed to use freely. */

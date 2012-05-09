@@ -131,10 +131,6 @@ int sys_vtimer(endpoint_t proc_nr, int which, clock_t *newval, clock_t
 int sys_irqctl(int request, int irq_vec, int policy, int *irq_hook_id);
 
 /* Shorthands for sys_vircopy() and sys_physcopy() system calls. */
-#define sys_biosin(bios_vir, dst_vir, bytes) \
-	sys_vircopy(SELF, BIOS_SEG, bios_vir, SELF, D, dst_vir, bytes)
-#define sys_biosout(src_vir, bios_vir, bytes) \
-	sys_vircopy(SELF, D, src_vir, SELF, BIOS_SEG, bios_vir, bytes)
 #define sys_datacopy(src_proc, src_vir, dst_proc, dst_vir, bytes) \
 	sys_vircopy(src_proc, D, src_vir, dst_proc, D, dst_vir, bytes)
 #define sys_textcopy(src_proc, src_vir, dst_proc, dst_vir, bytes) \

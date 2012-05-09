@@ -117,7 +117,6 @@ typedef struct dpeth {
 #define DEI_DEFAULT	0x8000
 
   phys_bytes de_linmem;		/* For boards using shared memory */
-  unsigned short de_memsegm;
   vir_bytes de_memoffs;
   int de_ramsize;		/* Size of on board memory	 */
   int de_offset_page;		/* Offset of shared memory page	 */

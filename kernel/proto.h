@@ -169,7 +169,6 @@ int data_copy_vmcheck(struct proc *, endpoint_t from, vir_bytes
 	from_addr, endpoint_t to, vir_bytes to_addr, size_t bytes);
 void alloc_segments(struct proc *rp);
 void vm_stop(void);
-phys_bytes umap_bios(vir_bytes vir_addr, vir_bytes bytes);
 phys_bytes umap_local(register struct proc *rp, int seg, vir_bytes
 	vir_addr, vir_bytes bytes);
 phys_bytes umap_virtual(struct proc* rp, int seg, vir_bytes vir_addr,
@@ -195,8 +194,6 @@ void do_ser_debug(void);
 int arch_get_params(char *parm, int max);
 int arch_set_params(char *parm, int max);
 void arch_pre_exec(struct proc *pr, u32_t, u32_t);
-int arch_umap(const struct proc *pr, vir_bytes, vir_bytes, int,
-	phys_bytes *);
 int arch_do_vmctl(message *m_ptr, struct proc *p);
 int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf,
 	size_t count);

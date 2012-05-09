@@ -32,7 +32,7 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
   int count = m_ptr->CP_NR_BYTES;
   int endpt = (int) m_ptr->CP_SRC_ENDPT;
   endpoint_t grantee = (endpoint_t) m_ptr->CP_DST_ENDPT;
-  int proc_nr, proc_nr_grantee, r;
+  int proc_nr, proc_nr_grantee;
   int naughty = 0;
   phys_bytes phys_addr = 0, lin_addr = 0;
   struct proc *targetpr;
@@ -105,10 +105,8 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
 	panic("vm_lookup returned zero physical address");
       break;
   default:
-      if((r=arch_umap(targetpr, offset, count, seg_type, &lin_addr))
-	!= OK)
-	return r;
-      phys_addr = lin_addr;
+  	printf("umap: peculiar type\n");
+  	return EINVAL;
   }
 
   if(vm_running && vm_lookup_range(targetpr, lin_addr, NULL, count) != count) {

@@ -204,11 +204,7 @@ static void get_userdata_s(int user_proc, cp_grant_id_t grant,
 static void do_first_init(dpeth_t *dep, const dp_conf_t *dcp)
 {
 
-  if (dep->de_linmem != 0) {
-	dep->de_memsegm = BIOS_SEG;
-	/* phys2seg(&dep->de_memsegm, &dep->de_memoffs, dep->de_linmem); */
-  } else
-	dep->de_linmem = 0xFFFF0000;
+  dep->de_linmem = 0xFFFF0000;
 
   /* Make sure statisics are cleared */
   memset((void *) &(dep->de_stat), 0, sizeof(eth_stat_t));

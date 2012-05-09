@@ -366,9 +366,8 @@ static int do_probe(void)
 /* See if there is a printer at all. */
 
   /* Get the base port for first printer. */
-  if(sys_vircopy(SELF, BIOS_SEG, LPT1_IO_PORT_ADDR,
-	SELF, D, (vir_bytes) &port_base, LPT1_IO_PORT_SIZE) != OK) {
-	panic("do_initialize: sys_vircopy failed");
+  if(sys_readbios(LPT1_IO_PORT_ADDR, &port_base, LPT1_IO_PORT_SIZE) != OK) {
+	panic("do_initialize: sys_readbios failed");
   }
 
   /* If the port is zero, the parallel port is not available at all. */
