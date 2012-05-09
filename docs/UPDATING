@@ -1,3 +1,15 @@
+20120510:
+	WARNING: the shared libraries major revision set to 0 will break
+	existing dynamically linked binaries if they exist.
+
+	There are two risks. One: existing binaries won't find the current
+	libraries; two: linking binaries with both majors present will link
+	them in twice. So the previous libraries have to be removed.
+
+		. re-build world statically first if necessary
+		. remove libraries from /lib and /usr/lib
+		. then build world
+
 20120416:
 	Upgrade your clang to clang-2.9nb6 or clang-3.1nb3 to be able to
 	build shared libraries and dynamically linked executables. The

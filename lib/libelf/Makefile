@@ -63,7 +63,7 @@ CFLAGS+=        -I. -I${.CURDIR}
 SRCS+=		mmap.c
 CFLAGS+=	-DNO_MMAP_FILE
 
-SHLIB_MAJOR=	1
+SHLIB_MAJOR=	0
 
 WARNS?=	6
 

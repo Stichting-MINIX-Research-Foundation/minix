@@ -3,9 +3,9 @@
 	$
 	usr d--755 0 0
 		lib d--755 0 0
-			libc.so.12 ---755 0 0 /lib/libc.so.12
-			libminlib.so.1 ---755 0 0 /lib/libminlib.so.1
-			libcompat_minix.so.1 ---755 0 0 /lib/libcompat_minix.so.1
-			libterminfo.so.1 ---755 0 0 /lib/libterminfo.so.1
+			libc.so.0 ---755 0 0 /lib/libc.so.0
+			libminlib.so.0 ---755 0 0 /lib/libminlib.so.0
+			libcompat_minix.so.0 ---755 0 0 /lib/libcompat_minix.so.0
+			libterminfo.so.0 ---755 0 0 /lib/libterminfo.so.0
 		$
 	$
