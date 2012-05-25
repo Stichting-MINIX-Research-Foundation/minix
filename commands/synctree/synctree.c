@@ -36,19 +36,10 @@
 #include <time.h>
 #include <sys/wait.h>
 
-#if _MINIX
-#include "limits.h"
-#include "minix/config.h"
-
-/*#define BLOCK_SIZE	1024*/
-#define LITTLE_ENDIAN	(_MINIX_CHIP == _CHIP_INTEL)
-#define USE_SHADOWING	(_MINIX_CHIP == _CHIP_M68000)
-#else
-#define LITTLE_ENDIAN	0
-#define USE_SHADOWING	0
-#endif
+#define USE_SHADOWING 0
 
 #ifndef PATH_MAX
+
 #define PATH_MAX	1024
 #endif
 
@@ -88,7 +79,7 @@ enum orders {	/* What back breaking labour should the slave perform? */
 	ADVANCE,	/* Determine next pathname and report it back. */
 	CAT,		/* Send contents of file. */
 	MORE,		/* Send more file contents. */
-	CANCEL,		/* Current pathname is not installed, remove as link. */
+	ORDER_CANCEL,		/* Current pathname is not installed, remove as link. */
 	DIE,		/* Die with exit(0); */
 	DIE_BAD,	/* exit(1); */
 	POSITIVE,	/* Ask a yes/no question expecting yes. */
@@ -591,7 +582,7 @@ static void inform(a) enum answers a;
 static void sendnum(n) long n;
 /* Send number from least to most significant byte. */
 {
-#if LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 	wwrite((char *) &n, sizeof(n));
 #else
 	char buf[NUMBYTES];
@@ -673,7 +664,7 @@ static void slave()
 			} while (n > 0);
 			close(f);
 			break;
-		case CANCEL:
+		case ORDER_CANCEL:
 			cancellink();
 			break;
 		case DIE_BAD:
@@ -791,7 +782,7 @@ static long recnum()
  * is on the wire in little-endian format.  (Mostly run on PC's).
  */
 {
-#if LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 	long n;
 
 	rread((char *) &n, (int) sizeof(n));
@@ -1006,7 +997,7 @@ static void add(update) int update;
 	case S_IFIFO:
 		if (interact && !update) {
 			printf("Create special file %s", Spath);
-			if (!ask('n')) { order(CANCEL); return; }
+			if (!ask('n')) { order(ORDER_CANCEL); return; }
 		}
 		if (makenode(Spath, Sst.st_mode, Sst.st_rdev, Sst.st_size)<0) {
 			fprintf(stderr,
@@ -1021,7 +1012,7 @@ static void add(update) int update;
 	case S_IFLNK:
 		if (interact && !update) {
 			printf("Install %s -> %s", Spath, Slnkpth);
-			if (!ask('n')) { order(CANCEL); return; }
+			if (!ask('n')) { order(ORDER_CANCEL); return; }
 		}
 		if (symlink(Slnkpth, Spath) < 0) {
 			fprintf(stderr, "%s: Can't create symlink %s",
@@ -1037,7 +1028,7 @@ static void add(update) int update;
 	case S_IFREG:
 		if (interact && !update) {
 			printf("Install %s", Spath);
-			if (!ask('n')) { order(CANCEL); return; }
+			if (!ask('n')) { order(ORDER_CANCEL); return; }
 		}
 		order(CAT);
 		if (answer() != DATA) return;
@@ -1076,7 +1067,7 @@ static void add(update) int update;
 		fprintf(stderr,
 			"%s: Won't add file with strange mode %05o: %s\n",
 			arg0, Sst.st_mode, Spath);
-		order(CANCEL);
+		order(ORDER_CANCEL);
 		return;
 	}
 	setmodes(1);
