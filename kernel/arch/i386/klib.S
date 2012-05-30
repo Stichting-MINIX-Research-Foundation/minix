@@ -11,6 +11,53 @@
 #include "sconst.h"
 #include <machine/multiboot.h>
 
+
+/* Easy way to make functions */
+
+/* Make a function of the form func(arg) */
+
+#define STACKARG 8(%ebp)
+
+#define ARG_EAX_ACTION(FUNCTION, ACTION)        ;\
+ENTRY(FUNCTION)                         ;\
+        push    %ebp                    ;\
+        mov     %esp, %ebp              ;\
+        mov     STACKARG, %eax           ;\
+        ACTION                          ;\
+        pop     %ebp                    ;\
+        ret
+
+/* Make a function of the form ret = func() */
+#define ARG_EAX_RETURN(FUNCTION, EXPR)        ;\
+ENTRY(FUNCTION)                         ;\
+        push    %ebp                    ;\
+        mov     %esp, %ebp              ;\
+        mov	EXPR, %eax              ;\
+        pop     %ebp                    ;\
+	ret
+
+/* Make a function of the form ret = func() */
+#define ARG_EAX_SET(FUNCTION, DEST)        ;\
+ENTRY(FUNCTION)                         ;\
+        push    %ebp                    ;\
+        mov     %esp, %ebp              ;\
+	mov     STACKARG, %eax		;\
+        mov	%eax, DEST              ;\
+	jmp 0f /* a jump is required for some sets */ ;\
+0: 	pop     %ebp                    ;\
+        ret	
+
+/* Make a function of the form ret = func() */
+#define ARG_AX_SET(FUNCTION, DEST)        ;\
+ENTRY(FUNCTION)                         ;\
+        push    %ebp                    ;\
+        mov     %esp, %ebp              ;\
+	mov     STACKARG, %eax		;\
+        mov	%ax, DEST               ;\
+	jmp 0f /* a jump is required for some sets */ ;\
+0: 	pop     %ebp                    ;\
+        ret	
+
 /*
  * This file contains a number of assembly code utility routines needed by the
  * kernel.
@@ -450,33 +497,6 @@ ENTRY(fnstsw)
 	fnstsw	%ax
 	ret
 
-/* store control word (non-waiting) */
-ENTRY(fnstcw)
-	push    %eax
-	mov     8(%esp), %eax
-
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	fnstcw	(%eax)
-	pop     %eax
-	ret
-
-/*===========================================================================*/
-/*			      fxsave			     		*/
-/*===========================================================================*/
-ENTRY(fxsave)
-	mov	4(%esp), %eax
-	fxsave	(%eax)		/* Do not change the operand! (gas2ack) */
-	ret
-
-/*===========================================================================*/
-/*			      fnsave			     		*/
-/*===========================================================================*/
-ENTRY(fnsave)
-	mov	4(%esp), %eax
-	fnsave	(%eax)		/* Do not change the operand! (gas2ack) */
-	fwait	/* required for compatibility with processors prior pentium */
-	ret
-
 /*===========================================================================*/
 /*				fxrstor					     */
 /*===========================================================================*/
@@ -502,107 +522,37 @@ ENTRY(__frstor_failure)
 	mov	$1, %eax
 	ret
 
-/*===========================================================================*/
-/*			      read_cr0					     */
-/*===========================================================================*/
-/* PUBLIC unsigned long read_cr0(void); */
-ENTRY(read_cr0)
-	push	%ebp
-	mov	%esp, %ebp
-	mov	%cr0, %eax
-	pop	%ebp
-	ret
+/* Read/write control registers */
+ARG_EAX_RETURN(read_cr0, %cr0);
+ARG_EAX_RETURN(read_cr2, %cr2);
+ARG_EAX_RETURN(read_cr3, %cr3);
+ARG_EAX_RETURN(read_cr4, %cr4);
+ARG_EAX_SET(write_cr4, %cr4);
+ARG_EAX_SET(write_cr0, %cr0);
+ARG_EAX_SET(write_cr3, %cr3);
 
-/*===========================================================================*/
-/*			      write_cr0					     */
-/*===========================================================================*/
-/* PUBLIC void write_cr0(unsigned long value); */
-ENTRY(write_cr0)
-	push	%ebp
-	mov	%esp, %ebp
-	mov	8(%ebp), %eax
-	mov	%eax, %cr0
-	jmp	0f	/* A jump is required for some flags */
-0:
-	pop	%ebp
-	ret
+/* Read/write various descriptor tables */
+ARG_EAX_ACTION(x86_ltr, ltr STACKARG );
+ARG_EAX_ACTION(x86_lidt, lidtl (%eax));
+ARG_EAX_ACTION(x86_lgdt, lgdt (%eax));
+ARG_EAX_ACTION(x86_lldt, lldt STACKARG);
+ARG_EAX_ACTION(x86_sgdt, sgdt (%eax));
+ARG_EAX_ACTION(x86_sidt, sidt (%eax));
 
-/*===========================================================================*/
-/*			      read_cr2					     */
-/*===========================================================================*/
-/* PUBLIC reg_t read_cr2(void); */
-ENTRY(read_cr2)
-	mov	%cr2, %eax
-	ret
+/* Load segments */
+ARG_AX_SET(x86_load_ds, %ds)
+ARG_AX_SET(x86_load_es, %es)
+ARG_AX_SET(x86_load_fs, %fs)
+ARG_AX_SET(x86_load_gs, %gs)
+ARG_AX_SET(x86_load_ss, %ss)
 
-/*===========================================================================*/
-/*			      read_cr3					     */
-/*===========================================================================*/
-/* PUBLIC unsigned long read_cr3(void); */
-ENTRY(read_cr3)
-	push	%ebp
-	mov	%esp, %ebp
+/* FPU */
+ARG_EAX_ACTION(fnsave, fnsave (%eax) ; fwait);
+ARG_EAX_ACTION(fxsave, fxsave (%eax));
+ARG_EAX_ACTION(fnstcw, fnstcw (%eax));
 
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	mov	%cr3, %eax
-	pop	%ebp
-	ret
-
-/*===========================================================================*/
-/*			      read_cr4					     */
-/*===========================================================================*/
-/* PUBLIC unsigned long read_cr4(void); */
-ENTRY(read_cr4)
-	push	%ebp
-	mov	%esp, %ebp
-
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	mov	%cr4, %eax
-	pop	%ebp
-	ret
-
-/*===========================================================================*/
-/*			      write_cr4					     */
-/*===========================================================================*/
-/* PUBLIC void write_cr4(unsigned long value); */
-ENTRY(write_cr4)
-	push	%ebp
-	mov	%esp, %ebp
-	mov	8(%ebp), %eax
-
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	mov	%eax, %cr4
-	jmp	0f
-0:
-	pop	%ebp
-	ret
-
-/*===========================================================================*/
-/*			      write_cr3					     */
-/*===========================================================================*/
-/* PUBLIC void write_cr3(unsigned long value); */
-ENTRY(write_cr3)
-	push	%ebp
-	mov	%esp, %ebp
-	mov	8(%ebp), %eax
-
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	mov	%eax, %cr3
-
-	pop	%ebp
-	ret
-
-/*===========================================================================*/
-/*			      i386_invlpg				     */
-/*===========================================================================*/
-/* PUBLIC void i386_invlpg(unsigned long linaddr); */
-ENTRY(i386_invlpg)
-	push	%ebp
-	mov	%esp, %ebp
-	mov	8(%ebp), %eax
-	invlpg	(%eax)
-	pop	%ebp
-	ret
+/* invlpg */
+ARG_EAX_ACTION(i386_invlpg, invlpg (%eax));
 
 /*===========================================================================*/
 /*				getcr3val				     */
