@@ -18,7 +18,7 @@ int do_brk(void);
 
 /* exec.c */
 int do_exec(void);
-int do_exec_newmem(void);
+int do_newexec(void);
 int do_execrestart(void);
 void exec_restart(struct mproc *rmp, int result, vir_bytes pc, vir_bytes sp);
 

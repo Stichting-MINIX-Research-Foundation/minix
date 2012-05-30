@@ -1,10 +1,5 @@
 #include <machine/vm.h>
 
-/* As visible from the user space process, where is the top of the
- * stack (first non-stack byte), when in paged mode?
- */
-#define VM_STACKTOP     0x80000000
-
 /* And what is the highest addressable piece of memory, when in paged
  * mode? Some data for kernel and stack are subtracted from this, the
  * final results stored in bytes in arch.vm_data_top.

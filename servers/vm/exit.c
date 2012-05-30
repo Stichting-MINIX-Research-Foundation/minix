@@ -27,6 +27,7 @@
 void free_proc(struct vmproc *vmp)
 {
 	map_free_proc(vmp);
+	vmp->vm_heap = NULL;
 	if(vmp->vm_flags & VMF_HASPT) {
 		vmp->vm_flags &= ~VMF_HASPT;
 		pt_free(&vmp->vm_pt);
@@ -135,6 +136,7 @@ int do_procctl(message *msg)
 			pt_new(&vmp->vm_pt);
 			vmp->vm_flags |= VMF_HASPT;
 			pt_bind(&vmp->vm_pt, vmp);
+			regular_segs(vmp);
 			return OK;
 		default:
 			return EINVAL;

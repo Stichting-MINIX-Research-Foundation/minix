@@ -368,7 +368,7 @@ static void mb_extract_image(multiboot_info_t mbi)
 	off_t text_offset, data_offset;
 
 	/* Save memory map for kernel tasks */
-	r = read_header_elf((const char *)MULTIBOOT_KERNEL_ADDR,
+	r = read_header_elf((char *) MULTIBOOT_KERNEL_ADDR,
 				4096, /* everything is there */
 			    &text_vaddr, &text_paddr,
 			    &text_filebytes, &text_membytes,
@@ -401,7 +401,7 @@ static void mb_extract_image(multiboot_info_t mbi)
 
 	/* Load boot image services into memory and save memory map */
 	for (i = 0; module < &mb_module_info[mods_count]; ++module, ++i) {
-	    r = read_header_elf((const char *)module->mod_start,
+	    r = read_header_elf((char *) module->mod_start,
 				module->mod_end - module->mod_start + 1,
 				&text_vaddr, &text_paddr,
 				&text_filebytes, &text_membytes,

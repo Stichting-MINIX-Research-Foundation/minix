@@ -26,6 +26,7 @@
 #include <a.out.h>
 #include <signal.h>
 #include <string.h>
+#include <libexec.h>
 #include <sys/ptrace.h>
 #include "mproc.h"
 #include "param.h"
@@ -46,7 +47,7 @@ int do_exec()
 	m.PM_PATH = m_in.exec_name;
 	m.PM_PATH_LEN = m_in.exec_len;
 	m.PM_FRAME = m_in.frame_ptr;
-	m.PM_FRAME_LEN = m_in.frame_len;
+	m.PM_FRAME_LEN = m_in.msg_frame_len;
 	m.PM_EXECFLAGS = m_in.PMEXEC_FLAGS;
 
 	tell_vfs(mp, &m);
@@ -57,16 +58,15 @@ int do_exec()
 
 
 /*===========================================================================*
- *				do_exec_newmem				     *
+ *				do_newexec				     *
  *===========================================================================*/
-int do_exec_newmem()
+int do_newexec()
 {
 	int proc_e, proc_n, allow_setuid;
 	char *ptr;
 	struct mproc *rmp;
-	struct exec_newmem args;
+	struct exec_info args;
 	int r, flags;
-	char *stack_top;
 
 	if (who_e != VFS_PROC_NR && who_e != RS_PROC_NR)
 		return EPERM;
@@ -82,50 +82,46 @@ int do_exec_newmem()
 	if (r != OK)
 		panic("do_exec_newmem: sys_datacopy failed: %d", r);
 
-	if ((r = vm_exec_newmem(proc_e, &args, sizeof(args), &stack_top,
-				&flags)) == OK) {
-		allow_setuid = 0;	/* Do not allow setuid execution */
-		rmp->mp_flags &= ~TAINTED;	/* By default not tainted */
+	allow_setuid = 0;	/* Do not allow setuid execution */
+	rmp->mp_flags &= ~TAINTED;	/* By default not tainted */
 
-		if (rmp->mp_tracer == NO_TRACER) {
-			/* Okay, setuid execution is allowed */
-			allow_setuid = 1;
-		}
-
-		if (allow_setuid && args.setugid) {
-			rmp->mp_effuid = args.new_uid;
-			rmp->mp_effgid = args.new_gid;
-		}
-
-		/* A process is considered 'tainted' when it's executing with
-		 * setuid or setgid bit set, or when the real{u,g}id doesn't
-		 * match the eff{u,g}id, respectively. */
-		if (allow_setuid && args.setugid) {
-			/* Program has setuid and/or setgid bits set */
-			rmp->mp_flags |= TAINTED;
-		} else if (rmp->mp_effuid != rmp->mp_realuid ||
-			   rmp->mp_effgid != rmp->mp_realgid) {
-			rmp->mp_flags |= TAINTED;
-		}
-
-		/* System will save command line for debugging, ps(1) output, etc. */
-		strncpy(rmp->mp_name, args.progname, PROC_NAME_LEN-1);
-		rmp->mp_name[PROC_NAME_LEN-1] = '\0';
-
-		/* Save offset to initial argc (for procfs) */
-		rmp->mp_frame_addr = (vir_bytes) stack_top - args.args_bytes;
-		rmp->mp_frame_len = args.args_bytes;
-
-		/* Kill process if something goes wrong after this point. */
-		rmp->mp_flags |= PARTIAL_EXEC;
-
-		mp->mp_reply.reply_res2= (vir_bytes) stack_top;
-		mp->mp_reply.reply_res3= flags;
-		if (allow_setuid && args.setugid)
-			mp->mp_reply.reply_res3 |= EXC_NM_RF_ALLOW_SETUID;
-	} else {
-		printf("PM: newmem failed for %s\n", args.progname);
+	if (rmp->mp_tracer == NO_TRACER) {
+		/* Okay, setuid execution is allowed */
+		allow_setuid = 1;
 	}
+
+	if (allow_setuid && args.allow_setuid) {
+		rmp->mp_effuid = args.new_uid;
+		rmp->mp_effgid = args.new_gid;
+	}
+
+	/* A process is considered 'tainted' when it's executing with
+	 * setuid or setgid bit set, or when the real{u,g}id doesn't
+	 * match the eff{u,g}id, respectively. */
+	if (allow_setuid && args.allow_setuid) {
+		/* Program has setuid and/or setgid bits set */
+		rmp->mp_flags |= TAINTED;
+	} else if (rmp->mp_effuid != rmp->mp_realuid ||
+		   rmp->mp_effgid != rmp->mp_realgid) {
+		rmp->mp_flags |= TAINTED;
+	}
+
+	/* System will save command line for debugging, ps(1) output, etc. */
+	strncpy(rmp->mp_name, args.progname, PROC_NAME_LEN-1);
+	rmp->mp_name[PROC_NAME_LEN-1] = '\0';
+
+	/* Save offset to initial argc (for procfs) */
+	rmp->mp_frame_addr = (vir_bytes) args.stack_high - args.frame_len;
+	rmp->mp_frame_len = args.frame_len;
+
+	/* Kill process if something goes wrong after this point. */
+	rmp->mp_flags |= PARTIAL_EXEC;
+
+	mp->mp_reply.reply_res2= (vir_bytes) rmp->mp_frame_addr;
+	mp->mp_reply.reply_res3= flags;
+	if (allow_setuid && args.allow_setuid)
+		mp->mp_reply.reply_res3 |= EXC_NM_RF_ALLOW_SETUID;
+
 	return r;
 }
 

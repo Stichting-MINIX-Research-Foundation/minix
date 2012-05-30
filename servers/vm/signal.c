@@ -55,11 +55,6 @@ int do_push_sig(message *msg)
         sp -= sizeof(struct sigcontext)
                                  + 3 * sizeof(char *) + 2 * sizeof(int);
 
-        if ((r=adjust(vmp, vmp->vm_arch.vm_seg[D].mem_len, sp)) != OK) {
-		printf("VM: do_push_sig: adjust() failed: %d\n", r);
-		return r;
-	}
-
 	return OK;
 }
 

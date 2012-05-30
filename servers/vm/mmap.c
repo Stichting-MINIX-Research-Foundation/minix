@@ -93,7 +93,7 @@ int do_mmap(message *m)
 			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
 		vr = NULL;
-		if (m->VMM_ADDR) {
+		if (m->VMM_ADDR || (m->VMM_FLAGS & MAP_FIXED)) {
 			/* An address is given, first try at that address. */
 			addr = arch_vir2map(vmp, m->VMM_ADDR);
 			vr = map_page_region(vmp, addr, 0, len, MAP_NONE,

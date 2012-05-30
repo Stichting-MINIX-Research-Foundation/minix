@@ -97,9 +97,7 @@
 #define CPROF             99    /* to PM */
 
 /* Calls provided by PM and FS that are not part of the API */
-#define EXEC_NEWMEM	100	/* from VFS or RS to PM: new memory map for
-				 * exec
-				 */
+#define PM_NEWEXEC	100	/* from VFS or RS to PM: new exec */
 #define SRV_FORK  	101	/* to PM: special fork call for RS */
 #define EXEC_RESTART	102	/* to PM: final part of exec for RS */
 #define GETPROCNR	104	/* to PM */

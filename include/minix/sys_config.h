@@ -54,4 +54,7 @@ error "_MINIX_MACHINE has incorrect value (0)"
 
 #define _KMESS_BUF_SIZE  10000
 
+/* Default stack size (limit) */
+#define DEFAULT_STACK_LIMIT (64 * 1024 * 1024)
+
 #endif /* _MINIX_SYS_CONFIG_H */

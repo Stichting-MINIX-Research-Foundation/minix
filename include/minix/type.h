@@ -166,26 +166,6 @@ struct mem_range
 	phys_bytes mr_limit;	/* Highest memory address in range */
 };
 
-/* For EXEC_NEWMEM */
-struct exec_newmem
-{
-	vir_bytes text_addr;	/* Starting address of text section */
-	vir_bytes text_bytes;	/* Length of text section (in bytes) */
-	vir_bytes data_addr;	/* Starting address of data section */
-	vir_bytes data_bytes;	/* Length of data section (in bytes) */
-	vir_bytes tot_bytes;	/* Minimum stack region size (in bytes) */
-	vir_bytes args_bytes;	/* Arguments/environ size on stack (in bytes) */
-	int sep_id;		/* Separate I&D?  */
-	int is_elf;		/* Is ELF exe? */
-	dev_t st_dev;		/* Device holding executable file */
-	ino_t st_ino;		/* Inode of executable file */
-	time_t enst_ctime;	/* Last changed time of executable file */
-	uid_t new_uid;		/* Process UID after exec */
-	gid_t new_gid;		/* Process GID after exec */
-	int setugid;		/* Process is setuid or setgid */
-	char progname[16];	/* Should be at least PROC_NAME_LEN */
-};
-
 /* Memory chunks. */
 struct memory {
 	phys_bytes	base;

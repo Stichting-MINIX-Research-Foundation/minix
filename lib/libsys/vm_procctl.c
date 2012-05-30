@@ -20,3 +20,4 @@ int vm_procctl(endpoint_t ep, int param)
     result = _taskcall(VM_PROC_NR, VM_PROCCTL, &m);
     return(result);
 }
+

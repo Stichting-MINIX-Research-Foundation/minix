@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
 #include <env.h>
 #include <pagetable.h>
 #include <sys/param.h>
@@ -30,228 +31,6 @@
 #include "sanitycheck.h"
 
 #include "memory.h"
-
-static int new_mem(struct vmproc *vmp, vir_bytes text_addr, vir_bytes
-	text_bytes, vir_bytes data_addr, vir_bytes data_bytes, vir_bytes
-	stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top, int is_elf);
-
-/*===========================================================================*
- *				exec_newmem				     *
- *===========================================================================*/
-int do_exec_newmem(message *msg)
-{
-	int r, proc_e, proc_n;
-	vir_bytes stack_top;
-	vir_clicks tc, dc, sc, totc, dvir, s_vir;
-	struct vmproc *vmp;
-	char *ptr;
-	struct exec_newmem args;
-
-	SANITYCHECK(SCL_FUNCTIONS);
-
-	proc_e= msg->VMEN_ENDPOINT;
-	if (vm_isokendpt(proc_e, &proc_n) != OK)
-	{
-		printf("VM: exec_newmem: bad endpoint %d from %d\n",
-			proc_e, msg->m_source);
-		return ESRCH;
-	}
-	vmp= &vmproc[proc_n];
-	ptr= msg->VMEN_ARGSPTR;
-
-	if(msg->VMEN_ARGSSIZE != sizeof(args)) {
-		printf("VM: exec_newmem: args size %d != %u\n",
-			msg->VMEN_ARGSSIZE, sizeof(args));
-		return EINVAL;
-	}
-SANITYCHECK(SCL_DETAIL);
-
-	r= sys_datacopy(msg->m_source, (vir_bytes)ptr,
-		SELF, (vir_bytes)&args, sizeof(args));
-	if (r != OK)
-		panic("exec_newmem: sys_datacopy failed: %d", r);
-
-	/* Minimum stack region (not preallocated)
-	 * Stopgap for better rlimit-based stack size system
-	 */
-	if(args.tot_bytes < MINSTACKREGION) {
-		args.tot_bytes = MINSTACKREGION;
-	}
-
-	/* Check to see if segment sizes are feasible. */
-	tc = (vir_clicks) (CLICK_CEIL(args.text_bytes) >> CLICK_SHIFT);
-	dc = (vir_clicks) (CLICK_CEIL(args.data_bytes) >> CLICK_SHIFT);
-	totc = (vir_clicks) (CLICK_CEIL(args.tot_bytes) >> CLICK_SHIFT);
-	sc = (vir_clicks) (CLICK_CEIL(args.args_bytes) >> CLICK_SHIFT);
-	if (dc >= totc) {
-		printf("VM: newmem: no stack?\n");
-		return(ENOEXEC); /* stack must be at least 1 click */
-	}
-
-	dvir = (args.sep_id ? 0 : tc);
-	s_vir = dvir + (totc - sc);
-	r = (dvir + dc > s_vir) ? ENOMEM : OK;
-	if (r != OK) {
-		printf("VM: newmem: no virtual space?\n");
-		return r;
-	}
-
-	/* Allocate new memory and release old memory.  Fix map and tell
-	 * kernel.
-	 */
-	r = new_mem(vmp, args.text_addr, args.text_bytes,
-		args.data_addr, args.data_bytes,
-		args.args_bytes, args.tot_bytes, &stack_top,
-	        args.is_elf);
-	if (r != OK) {
-		printf("VM: newmem: new_mem failed\n");
-		return(r);
-	}
-
-	/* Save file identification to allow it to be shared. */
-	vmp->vm_ino = args.st_ino;
-	vmp->vm_dev = args.st_dev;
-	vmp->vm_ctime = args.enst_ctime;
-
-	/* set/clear separate I&D flag */
-	if (args.sep_id)
-		vmp->vm_flags |= VMF_SEPARATE;	
-	else
-		vmp->vm_flags &= ~VMF_SEPARATE;
-
-	msg->VMEN_STACK_TOP = (void *) stack_top;
-	msg->VMEN_FLAGS = 0;
-	msg->VMEN_FLAGS |= EXC_NM_RF_LOAD_TEXT;
-
-	return OK;
-}
-
-/*===========================================================================*
- *				new_mem					     *
- *===========================================================================*/
-static int new_mem(
-  struct vmproc *rmp,           /* process to get a new memory map */
-  vir_bytes text_addr,          /* text segement load address */
-  vir_bytes text_bytes,         /* text segment size in bytes */
-  vir_bytes data_addr,          /* data segment load address */
-  vir_bytes data_bytes,         /* size of data (incl bss) in bytes */
-  vir_bytes stk_bytes,          /* size of initial stack segment in bytes */
-  phys_bytes tot_bytes,         /* total memory to allocate, including gap */
-  vir_bytes *stack_top,         /* top of process stack */
-  int is_elf
-)
-{
-/* Allocate new memory and release the old memory.  Change the map and report
- * the new map to the kernel.  Zero the new core image's bss, gap and stack.
- */
-
-  vir_clicks text_clicks, data_clicks, gap_clicks, stack_clicks, tot_clicks;
-  int r, hadpt = 0;
-  struct vmproc *vmpold = &vmproc[VMP_EXECTMP];
-  int ptok = 1;
-
-  SANITYCHECK(SCL_FUNCTIONS);
-
-  assert(rmp->vm_flags & VMF_HASPT);
-
-  /* Acquire the new memory.  Each of the 4 parts: text, (data+bss), gap,
-   * and stack occupies an integral number of clicks, starting at click
-   * boundary.  The data and bss parts are run together with no space.
-   */
-  text_clicks = (vir_clicks) (CLICK_CEIL(text_bytes) >> CLICK_SHIFT);
-  data_clicks = (vir_clicks) (CLICK_CEIL(data_bytes) >> CLICK_SHIFT);
-  stack_clicks = (vir_clicks) (CLICK_CEIL(stk_bytes) >> CLICK_SHIFT);
-  tot_clicks = (vir_clicks) (CLICK_CEIL(tot_bytes) >> CLICK_SHIFT);
-  gap_clicks = tot_clicks - data_clicks - stack_clicks;
-  if ( (int) gap_clicks < 0) {
-	printf("VM: new_mem: no gap?\n");
-	return(ENOMEM);
-  }
-
-
-  /* Keep previous process state for recovery; the sanity check functions
-   * know about the 'vmpold' slot, so the memory that the exec()ing
-   * process is still holding is referenced there.
-   *
-   * Throw away the old page table to avoid having two process slots
-   * using the same vm_pt.
-   * Just recreate it in the case that we have to revert.
-   */
-SANITYCHECK(SCL_DETAIL);
-  rmp->vm_flags &= ~VMF_HASPT;
-  pt_free(&rmp->vm_pt);
-
-  assert(!(vmpold->vm_flags & VMF_INUSE));
-  *vmpold = *rmp;	/* copy current state. */
-#if SANITYCHECKS
-  map_setparent(vmpold);
-#endif
-
-  region_init(&rmp->vm_regions_avl); /* exec()ing process regions thrown out. */
-  rmp->vm_region_top = 0;
-SANITYCHECK(SCL_DETAIL);
-
-  /* Build new process in current slot, without freeing old
-   * one. If it fails, revert.
-   */
-  SANITYCHECK(SCL_DETAIL);
-  if((r=pt_new(&rmp->vm_pt)) != OK) {
-    ptok = 0;
-    printf("exec_newmem: no new pagetable\n");
-  }
-
-  SANITYCHECK(SCL_DETAIL);
-  if(r != OK || (r=proc_new(rmp,
-	 VM_PROCSTART,	/* where to start the process in the page table */
-	 text_addr, /* text load address */
-	 CLICK2ABS(text_clicks),/* how big is the text in bytes, page-aligned */
-	 data_addr, /* data load address */
-	 CLICK2ABS(data_clicks),/* how big is data+bss, page-aligned */
-	 CLICK2ABS(stack_clicks),/* how big is stack, page-aligned */
-	 CLICK2ABS(gap_clicks),	/* how big is gap, page-aligned */
-	 0,0,			/* not preallocated */
-	 VM_STACKTOP,		/* regular stack top */
-	 0, is_elf, 1)) != OK) {
-    SANITYCHECK(SCL_DETAIL);
-    printf("VM: new_mem: failed\n");
-    if(ptok) {
-      rmp->vm_flags &= ~VMF_HASPT;
-      pt_free(&rmp->vm_pt);
-    }
-    *rmp = *vmpold;	/* undo. */
-    map_setparent(rmp);
-    clear_proc(vmpold);	/* disappear. */
-    SANITYCHECK(SCL_DETAIL);
-    if(hadpt) {
-      if(pt_new(&rmp->vm_pt) != OK) {
-	/* We secretly know that making a new pagetable
-	 * in the same slot if one was there will never fail.
-	 */
-	panic("new_mem: pt_new failed: %d", ENOMEM);
-      }
-      rmp->vm_flags |= VMF_HASPT;
-      SANITYCHECK(SCL_DETAIL);
-      if(map_writept(rmp) != OK) {
-	printf("VM: warning: exec undo failed\n");
-      }
-      SANITYCHECK(SCL_DETAIL);
-    }
-    return r;
-  }
-  SANITYCHECK(SCL_DETAIL);
-  /* new process is made; free and unreference
-   * page table and memory still held by exec()ing process.
-   */
-  SANITYCHECK(SCL_DETAIL);
-  free_proc(vmpold);
-  clear_proc(vmpold);	/* disappear. */
-  SANITYCHECK(SCL_DETAIL);
-  *stack_top = VM_STACKTOP;
-
-  SANITYCHECK(SCL_FUNCTIONS);
-
-  return(OK);
-}
 
 /*===========================================================================*
  *				find_kernel_top				     *
@@ -271,6 +50,21 @@ phys_bytes find_kernel_top(void)
 	assert(kernel_top);
 
 	return CLICK2ABS(kernel_top);
+}
+
+void regular_segs(struct vmproc *vmp)
+{
+        int s;
+        memset(vmp->vm_arch.vm_seg, 0, sizeof(vmp->vm_arch.vm_seg));
+        vmp->vm_arch.vm_seg[T].mem_phys =
+	        vmp->vm_arch.vm_seg[D].mem_phys = ABS2CLICK(VM_PROCSTART);
+        vmp->vm_arch.vm_seg[T].mem_len =
+	        vmp->vm_arch.vm_seg[D].mem_len =
+	        vmp->vm_arch.vm_seg[S].mem_len = ABS2CLICK(VM_DATATOP-VM_PROCSTART);
+        if((s=sys_newmap(vmp->vm_endpoint, vmp->vm_arch.vm_seg)) != OK)
+                panic("regular_segs: sys_newmap failed: %d", s);
+        if((s=pt_bind(&vmp->vm_pt, vmp)) != OK)
+                panic("regular_segs: pt_bind failed: %d", s);
 }
 
 /*===========================================================================*
