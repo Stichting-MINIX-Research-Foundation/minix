@@ -406,7 +406,7 @@ void *arg;
 	stackaddr = minix_mmap(NULL, stacksize,
 			       PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
 			       -1, 0);
-	if (stackaddr == NULL)
+	if (stackaddr == MAP_FAILED)
   		mthread_panic("Failed to allocate stack to thread");
 
 #if (_MINIX_CHIP == _CHIP_INTEL)
