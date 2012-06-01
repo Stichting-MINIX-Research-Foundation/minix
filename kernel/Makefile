@@ -3,7 +3,9 @@
 
 PROG=	kernel
 
-SRCS=	clock.c cpulocals.c interrupt.c main.c proc.c start.c system.c \
+.include "arch/${ARCH}/Makefile.inc"
+
+SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c start.c system.c \
 	table.c utility.c 
 
 DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC}
@@ -29,7 +31,6 @@ BINDIR=	/usr/sbin
 MAN=
 
 .include "system/Makefile.inc"
-.include "arch/${ARCH}/Makefile.inc"
 
 .ifdef CONFIG_SMP
 SRCS+= smp.c

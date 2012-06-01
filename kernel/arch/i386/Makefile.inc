@@ -4,9 +4,9 @@
 
 HERE=${.CURDIR}/arch/${ARCH}
 .PATH:	${HERE}
-SRCS+=	arch_clock.c arch_do_vmctl.c arch_system.c \
+SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c \
 	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c io_inb.S \
-	io_inl.S io_intr.S io_inw.S io_outb.S io_outl.S io_outw.S klib.S klib16.S memory.c mpx.S multiboot.S \
+	io_inl.S io_intr.S io_inw.S io_outb.S io_outl.S io_outw.S klib.S klib16.S memory.c multiboot.S \
 	oxpcie.c pre_init.c protect.c
 
 .if ${USE_ACPI} != "no"
