@@ -5,6 +5,7 @@
 #include <string.h>
 #include <lib.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <assert.h>
 #include <signal.h>
 #include "usb_driver.h"
@@ -17,6 +18,7 @@
 #define DEVMAN_TYPE_NAME "dev_type"
 #define PATH_LEN 256
 #define INVAL_MAJOR -1
+#define MAX_CONFIG_DIRS 4
 
 static void main_loop();
 static void handle_event();
@@ -42,11 +44,12 @@ static LIST_HEAD(usb_driver_inst_head, devmand_driver_instance) instances =
 
 static int _run = 1;
 struct global_args {
-	int deamonize;
 	char *path;
-	char *config;
+	char *config_dirs[MAX_CONFIG_DIRS];
+	int config_dir_count ;
 	int major_offset;
 	int verbose;
+	int check_config;
 };
 
 enum dev_type {
@@ -57,14 +60,20 @@ enum dev_type {
 
 extern FILE *yyin;
 
-static struct global_args args = {0,NULL,NULL,25, 0};
+static struct global_args args = {
+	.path = NULL,
+	.config_dirs = {NULL,NULL,NULL,NULL},
+	.config_dir_count = 0,
+	.major_offset = 25, 
+	.verbose = 0,
+	.check_config = 0};
 
 static struct option options[] =
 {
-	{"deamonize", no_argument,       NULL, 'd'},
+	{"dir"   ,    required_argument, NULL, 'd'},
 	{"path",      required_argument, NULL, 'p'},
-	{"config",    required_argument, NULL, 'c'},
 	{"verbose",    required_argument, NULL, 'v'},
+	{"check-config", no_argument,       NULL, 'x'},
 	{0,0,0,0} /* terminating entry */
 };
 
@@ -303,16 +312,72 @@ add_usb_match_id
  *===========================================================================*/
 static void parse_config()
 {
-	yyin = fopen(args.config, "r");
+	int i, status, error;
+	struct stat stats;
+	char * dirname;
 
-	if (yyin < 0) {
-		printf("Can not open config file: %d.\n", errno);
+	DIR * dir;
+	struct dirent entry;
+	struct dirent *result;
+	char config_file[PATH_MAX];
+
+	dbg("Parsing configuration directories... ");
+	/* Next parse the configuration directories */
+	for(i=0; i < args.config_dir_count; i++){
+		dirname = args.config_dirs[i];
+		dbg("Parsing config dir %s ", dirname);
+		status = stat(dirname,&stats);
+		if (status == -1){
+			error = errno;
+			fprintf(stderr,"Failed to read directory '%s':%s"
+			        " (skipping) \n", dirname,strerror(error));
+			continue;
+		}
+		if (!S_ISDIR(stats.st_mode)){
+			fprintf(stderr,"Parse configuration skipping %s" 
+				" (not a directory) \n",dirname);
+			continue;
+		}
+		dir = opendir(dirname);
+		if (dir == NULL){
+			error = errno;
+			fprintf(stderr,"Parse configuration failed to read" 
+			        " dir '%s' (skipping) :%s\n",dirname, 
+				strerror(error));
+			continue;
+		}
+		while( (status = readdir_r(dir,&entry,&result)) == 0 ){
+			if (result == NULL){ /* last entry */ 
+				closedir(dir);
+				break;
+			}
+
+			/* concatenate dir and file name to open it */
+			snprintf(config_file,PATH_MAX, "%s/%s",
+				 dirname,entry.d_name);
+			status = stat(config_file, &stats);
+			if (status == -1){ 
+				error = errno;
+				fprintf(stderr,"Parse configuration Failed to stat" 
+				        " file '%s': %s (skipping)\n",
+					      config_file,strerror(error));
+			}
+			if (S_ISREG(stats.st_mode)){
+				dbg("Parsing file %s",config_file);
+				yyin = fopen(config_file, "r");
+
+				if (yyin < 0) {
+					printf("Can not open config file:" 
+				 	       " %d.\n", errno);
+				}
+				yyparse();
+				dbg("Done.");
+				fclose(yyin);
+			}
+		}
 	}
-	dbg("Parsing configfile... ");
-	yyparse();
-	dbg("Done.");
+	dbg("Parsing configuration directories done... ");
 
-	fclose(yyin);
 }
 
 /*===========================================================================*
@@ -369,44 +434,60 @@ int main(int argc, char *argv[])
 	int opt, optindex, res;
 	struct devmand_usb_driver *driver;
 
-	create_pid_file();
 
 	/* get command line arguments */
-	while ((opt = getopt_long(argc, argv, "vdc:p:h?", options, &optindex))
+	while ((opt = getopt_long(argc, argv, "d:p:vxh?", options, &optindex))
 			!= -1) {
 		switch (opt) {
-			case 'd':
-				args.deamonize = 1;
+			case 'd':/* config directory */
+				if (args.config_dir_count >= MAX_CONFIG_DIRS){
+				 	fprintf(stderr,"Parse arguments: Maximum" 
+					        " of %i configuration directories"
+						" reached skipping directory '%s'\n" 
+						, MAX_CONFIG_DIRS, optarg);
+				 	break;
+				}
+				args.config_dirs[args.config_dir_count] = optarg;
+				args.config_dir_count++;
 				break;
-			case 'p':
+			case 'p': /* sysfs path */
 				args.path = optarg;
 				break;
-			case 'c':
-				args.config = optarg;
-				break;
-			case 'v':
+			case 'v': /* verbose */
 				args.verbose = 1;
 				break;
-			case 'h':
-			case '?':
+			case 'x': /* check config */
+				args.check_config = 1;
+				break;
+			case 'h': /* help */
+			case '?': /* help */
 			default:
 				display_usage(argv[0]);
 				return 0;
 		}
 	}
 
+
 	/* is path set? */
 	if (args.path == NULL) {
 		args.path = "/sys/";
 	}
 
-	/* is path set? */
-	if (args.config == NULL) {
-		args.config = "/etc/devmand/devmand.cfg";
+	/* is the configuration directory set? */
+	if (args.config_dir_count == 0) {
+		dbg("Using default configuration directory");
+		args.config_dirs[0] = "/etc/devmand";
+		args.config_dir_count = 1;
 	}
 
-	dbg("Options:  deamonize: %s,  path: %s",
-	   args.deamonize?"true":"false", args.path);
+	/* If we only check the configuration run and exit imediately */
+	if (args.check_config == 1){
+		fprintf(stdout, "Only parsing configuration\n");
+		parse_config();
+		exit(0);
+	}
+
+	create_pid_file();
 
 	/* create control socket if not exists */
 	res = mkfifo(CONTROL_FIFO_PATH, S_IWRITE);
@@ -421,7 +502,7 @@ int main(int argc, char *argv[])
 		run_cleanscript(driver);
 	}
 
-    signal(SIGINT, sig_int);
+	signal(SIGINT, sig_int);
 
 	main_loop();
 
@@ -841,7 +922,8 @@ static void main_loop()
  *===========================================================================*/
 static void display_usage(const char *name)
 {
-	printf("Usage: %s [-d|--deamonize] [{-p|--pathname} PATH_TO_SYS}"
-	       " [{-c|--config} CONFIG_FILE]\n", name);
+	printf("Usage: %s [{-p|--pathname} PATH_TO_SYS}"
+	       " [{-d|--config-dir} CONFIG_DIR] [-v|--verbose]" 
+	       " [[x||--check-config]\n", name);
 }
 

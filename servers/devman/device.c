@@ -86,7 +86,7 @@ devman_device_add_event(struct devman_device* dev)
 
 	memset(event, 0, sizeof(*event));
 
-	strcat(event->data, ADD_STRING);
+	strncpy(event->data, ADD_STRING, DEVMAN_STRING_LEN - 1);
 
 	res = devman_generate_path(event->data, DEVMAN_STRING_LEN - 11 , dev);
 		
@@ -119,7 +119,7 @@ devman_device_remove_event(struct devman_device* dev)
 
 	memset(event, 0, sizeof(*event));
 
-	strcat(event->data, REMOVE_STRING);
+	strncpy(event->data, REMOVE_STRING, DEVMAN_STRING_LEN - 1);
 
 	res = devman_generate_path(event->data, DEVMAN_STRING_LEN-11, dev);
 	
@@ -262,7 +262,6 @@ int do_add_device(message *msg)
 	}
 
 	dev = devman_dev_add_child(parent, devinf);
-	dev->state = DEVMAN_DEVICE_UNBOUND;
 
 	if (dev == NULL) {
 		res = ENODEV;
@@ -270,6 +269,8 @@ int do_add_device(message *msg)
 		do_reply(msg, res);
 		return 0;
 	}
+
+	dev->state = DEVMAN_DEVICE_UNBOUND;
 	
 	dev->owner = msg->m_source;
 
@@ -355,10 +356,16 @@ devman_dev_add_child
 	char * buffer = (char *) (devinf);
 	char tmp_buf[128];
 	struct devman_device_info_entry *entries;
+
 	/* create device */
 	struct devman_device * dev = malloc(sizeof(struct devman_device));
+	if (dev == NULL) {
+		panic("devman_dev_add_child: out of memory\n");
+	}
+
 
 	if (parent == NULL) {
+		free(dev);
 		return NULL;
 	}
 	
