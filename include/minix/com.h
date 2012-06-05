@@ -942,6 +942,7 @@
 #	define VMM_FLAGS		m5_s2
 #	define VMM_FD			m5_i1
 #	define VMM_OFFSET		m5_i2
+#	define VMM_FORWHOM		m5_l3
 #	define VMM_RETADDR		m5_l1	/* result */
 #define VM_UMAP			(VM_RQ_BASE+11)
 #	define VMU_SEG			m1_i1
@@ -1076,8 +1077,14 @@
 #define VM_REMAP_RO		(VM_RQ_BASE+44)
 /* same args as VM_REMAP */
 
+#define VM_PROCCTL		(VM_RQ_BASE+45)
+#define VMPCTL_PARAM		m1_i1
+#define VMPCTL_WHO		m1_i2
+
+#define VMPPARAM_CLEAR		1	/* values for VMPCTL_PARAM */
+
 /* Total. */
-#define NR_VM_CALLS				45
+#define NR_VM_CALLS				46
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */

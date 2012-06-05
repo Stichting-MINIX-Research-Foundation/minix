@@ -127,6 +127,7 @@ SRCS=  \
 	vm_push_sig.c \
 	vm_umap.c \
 	vm_yield_get_block.c \
+	vm_procctl.c \
 	vprintf.c \
 
 .if ${MKCOVERAGE} != "no"

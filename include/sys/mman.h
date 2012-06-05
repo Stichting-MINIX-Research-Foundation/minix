@@ -4,6 +4,7 @@
 #include <sys/featuretest.h>
 
 #include <machine/ansi.h>
+#include <minix/type.h>
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
@@ -54,9 +55,10 @@ typedef	__off_t		off_t;		/* file offset */
 #define MAP_ALIGN64K	0x0040		/* physically aligned at 64kB */
 #define MAP_LOWER1M	0x0080		/* physically below 16MB */
 #define	MAP_ALIGNMENT_64KB	MAP_ALIGN64K
-#define	MAP_IPC_SHARED	0x0100	/* share changes */
+#define	MAP_IPC_SHARED	0x0100		/* share changes */
 
 #define MAP_FIXED      0x0200  /* require mapping to happen at hint */
+#define MAP_THIRDPARTY	0x0400		/* perform on behalf of any process */
 
 /*
  * Error indicator returned by mmap(2)
@@ -71,6 +73,7 @@ void *	mmap(void *, size_t, int, int, int, off_t);
 int	munmap(void *, size_t);
 #else
 void *	minix_mmap(void *, size_t, int, int, int, off_t);
+void *	minix_mmap_for(endpoint_t, void *, size_t, int, int, int, off_t);
 int	minix_munmap(void *, size_t);
 int 		minix_munmap_text(void *, size_t);
 void *		vm_remap(int d, int s, void *da, void *sa, size_t si);

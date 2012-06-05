@@ -21,8 +21,8 @@ __weak_alias(minix_munmap_text, _minix_munmap_text)
 #include <string.h>
 #include <errno.h>
 
-void *minix_mmap(void *addr, size_t len, int prot, int flags,
-	int fd, off_t offset)
+void *minix_mmap_for(endpoint_t forwhom,
+	void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
 	message m;
 	int r;
@@ -33,6 +33,11 @@ void *minix_mmap(void *addr, size_t len, int prot, int flags,
 	m.VMM_FLAGS = flags;
 	m.VMM_FD = fd;
 	m.VMM_OFFSET = offset;
+	m.VMM_FORWHOM = forwhom;
+
+	if(forwhom != SELF) {
+		m.VMM_FLAGS |= MAP_THIRDPARTY;
+	}
 
 	r = _syscall(VM_PROC_NR, VM_MMAP, &m);
 
@@ -41,6 +46,12 @@ void *minix_mmap(void *addr, size_t len, int prot, int flags,
 	}
 
 	return (void *) m.VMM_RETADDR;
+}
+
+void *minix_mmap(void *addr, size_t len, int prot, int flags,
+	int fd, off_t offset)
+{
+	return minix_mmap_for(SELF, addr, len, prot, flags, fd, offset);
 }
 
 int minix_munmap(void *addr, size_t len)

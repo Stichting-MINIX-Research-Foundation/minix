@@ -70,6 +70,7 @@ int vm_info_stats(struct vm_stats_info *vfi);
 int vm_info_usage(endpoint_t who, struct vm_usage_info *vui);
 int vm_info_region(endpoint_t who, struct vm_region_info *vri, int
 	count, vir_bytes *next);
+int vm_procctl(endpoint_t ep, int param);
 
 #endif /* _MINIX_VM_H */
 

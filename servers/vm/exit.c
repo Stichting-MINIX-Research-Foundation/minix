@@ -114,3 +114,33 @@ int do_willexit(message *msg)
 	return OK;
 }
 
+int do_procctl(message *msg)
+{
+	endpoint_t proc;
+	struct vmproc *vmp;
+
+	if(vm_isokendpt(msg->VMPCTL_WHO, &proc) != OK) {
+		printf("VM: bogus endpoint VM_PROCCTL %d\n",
+			msg->VMPCTL_WHO);
+		return EINVAL;
+	}
+	vmp = &vmproc[proc];
+
+	switch(msg->VMPCTL_PARAM) {
+		case VMPPARAM_CLEAR:
+			if(msg->m_source != RS_PROC_NR
+				&& msg->m_source != VFS_PROC_NR)
+				return EPERM;
+			free_proc(vmp);
+			pt_new(&vmp->vm_pt);
+			vmp->vm_flags |= VMF_HASPT;
+			pt_bind(&vmp->vm_pt, vmp);
+			return OK;
+		default:
+			return EINVAL;
+	}
+
+
+	return OK;
+}
+

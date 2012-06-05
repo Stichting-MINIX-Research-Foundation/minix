@@ -357,6 +357,9 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	CALLMAP(VM_RS_UPDATE, do_rs_update);
 	CALLMAP(VM_RS_MEMCTL, do_rs_memctl);
 
+	/* Calls from RS/VFS */
+	CALLMAP(VM_PROCCTL, do_procctl);
+
 	/* Generic calls. */
 	CALLMAP(VM_REMAP, do_remap);
 	CALLMAP(VM_REMAP_RO, do_remap);

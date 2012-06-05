@@ -43,8 +43,18 @@ int do_mmap(message *m)
 	vir_bytes addr;
 	struct vir_region *vr = NULL;
 
-	if((r=vm_isokendpt(m->m_source, &n)) != OK) {
-		panic("do_mmap: message from strange source: %d", m->m_source);
+	if(m->VMM_FLAGS & MAP_THIRDPARTY) {
+		/* exec()ers, i.e. RS & VFS, can mmap() on behalf of anyone. */
+		if(m->m_source != VFS_PROC_NR && m->m_source != RS_PROC_NR)
+			return EPERM;
+		if((r=vm_isokendpt(m->VMM_FORWHOM, &n)) != OK)
+			return ESRCH;
+	} else {
+		/* regular mmap, i.e. for caller */
+		if((r=vm_isokendpt(m->m_source, &n)) != OK) {
+			panic("do_mmap: message from strange source: %d",
+				m->m_source);
+		}
 	}
 
 	vmp = &vmproc[n];

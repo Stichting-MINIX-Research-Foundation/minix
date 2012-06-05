@@ -731,6 +731,7 @@ struct
 	{ "INFO",		VM_INFO },
 	{ "RS_UPDATE",		VM_RS_UPDATE },
 	{ "RS_MEMCTL",		VM_RS_MEMCTL },
+	{ "PROCCTL",		VM_PROCCTL },
 	{ NULL,			0 },
 };
 

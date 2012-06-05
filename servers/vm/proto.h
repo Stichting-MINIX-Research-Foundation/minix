@@ -52,6 +52,7 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp);
 void clear_proc(struct vmproc *vmp);
 int do_exit(message *msg);
 int do_willexit(message *msg);
+int do_procctl(message *msg);
 void free_proc(struct vmproc *vmp);
 
 /* fork.c */
