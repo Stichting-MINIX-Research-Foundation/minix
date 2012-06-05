@@ -37,8 +37,8 @@ SRCS+= 	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c \
 	random.c strtoll.c strtoul.c strtoull.c strtoumax.c \
 	memchr.c memcmp.c memcpy.c memmove.c popcount32.c popcount64.c \
 	strcasecmp.c strcat.c strchr.c strcmp.c strcpy.c strlcat.c \
-	strlcpy.c strlen.c strncasecmp.c strncmp.c strncpy.c strrchr.c \
-	strsep.c strstr.c ptree.c rb.c sha1.c sha2.c
+	strlcpy.c strlen.c strncasecmp.c strncmp.c strncpy.c strnlen.c \
+	strrchr.c strsep.c strstr.c ptree.c rb.c sha1.c sha2.c
 SRCS+= ${i}
 CPPFLAGS.${i}+= -D_LIBC -I${LIBCSRCDIR}/include
 .endfor
