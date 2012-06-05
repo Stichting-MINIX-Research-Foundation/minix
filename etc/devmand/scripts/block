@@ -1,0 +1,42 @@
+#!/bin/sh
+
+DEVSUFFIXES="p0 p0s0 p0s1 p0s2 p0s3 p1 p1s0 p1s1 p1s2 p1s3 p2 p2s0 p2s1 p2s2 p2s3 p3 p3s0 p3s1 p3s2 p3s3"
+
+if [ "$1" = up ];
+then
+	mknod /dev/$2 b $3 0;
+	mknod /dev/$2p0 b $3 1;
+	mknod /dev/$2p1 b $3 2;
+	mknod /dev/$2p2 b $3 3;
+	mknod /dev/$2p3 b $3 4;
+	mknod /dev/$2p0s0 b $3 128;
+	mknod /dev/$2p0s1 b $3 129;
+	mknod /dev/$2p0s2 b $3 130;
+	mknod /dev/$2p0s3 b $3 131;
+	mknod /dev/$2p1s0 b $3 132;
+	mknod /dev/$2p1s1 b $3 133;
+	mknod /dev/$2p1s2 b $3 134;
+	mknod /dev/$2p1s3 b $3 135;
+	mknod /dev/$2p2s0 b $3 136;
+	mknod /dev/$2p2s1 b $3 137;
+	mknod /dev/$2p2s2 b $3 138;
+	mknod /dev/$2p2s3 b $3 139;
+	mknod /dev/$2p3s0 b $3 140;
+	mknod /dev/$2p3s1 b $3 141;
+	mknod /dev/$2p3s2 b $3 142;
+	mknod /dev/$2p3s3 b $3 143;
+	echo New USB disk at /dev/$2.
+elif [ "$1" = down ];
+then
+	rm /dev/$2;
+	count=1;
+	for SUF in `echo $DEVSUFFIXES`;
+	do 
+		rm /dev/${2}${SUF};
+		count=$(($count+1));
+	done
+elif 
+	[ "$1" = clean ];
+then
+	rm -f /dev/$2*;
+fi

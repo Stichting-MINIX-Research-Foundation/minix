@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if [ "$1" = up ];
+then
+	mknod /dev/$2 c $3 0
+elif [ "$1" = down ];
+then
+	rm /dev/$2
+elif 
+	[ "$1" = clean ];
+then
+	rm -f /dev/$2*;
+fi

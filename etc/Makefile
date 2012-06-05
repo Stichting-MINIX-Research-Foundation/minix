@@ -2,13 +2,26 @@ ETC=/etc/
 USR=/usr/
 USRETC=/usr/etc/
 DEFAULTS=/etc/defaults
+
+#
+# FILES1 are installed in /etc *before* the tree hierarchy is created
+# and can therefore not rely on /etc/groups and /etc/passwd being 
+# present.
 FILES1=group hostname.file inet.conf motd.install mtab profile \
 	protocols rc services termcap utmp rc.cd  \
 	syslog.conf rc.daemons.dist \
 	rs.inet rs.single make.conf system.conf ttys resolv.conf rc.conf \
-	rc.subr rc.subr.minix man.conf shells boot.cfg.default
+	rc.subr rc.subr.minix man.conf shells boot.cfg.default \
+	devmand/scripts/block devmand/scripts/singlechar
 
+#
+# PWFILES are installed in /etc with the 600 permission
+#
 PWFILES=master.passwd
+
+#
+# FILES3 are installed in /usr/etc 755
+#
 FILES3=daily dhcptags.conf rc 
 DEFAULTFILES=rc.conf minix.rc.conf 
 USRFILES=Makefile
@@ -20,6 +33,7 @@ clean::
 install:: installpw	# installpw needed to bootstrap pw db
 	@echo "Installing /etc, /usr/etc and /usr/lib.."
 	mkdir -p $(ETC) $(USRLIB)
+	mkdir -p $(ETC)/devmand/scripts
 	@for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 755 $(ETC)/$$f; fi; done
 	@for f in $(USRFILES); do cp usr/$$f $(USR)/$$f; chmod 644 $(USR)/$$f; done
 	@echo "Making hierarchy.."
