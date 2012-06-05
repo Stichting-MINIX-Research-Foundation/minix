@@ -32,7 +32,7 @@ int ddekit_release_mem(ddekit_addr_t start, ddekit_addr_t count);
  *
  * \return value read from port
  */
-unsigned char dde_kit_inb(ddekit_addr_t port);
+unsigned char ddekit_inb(ddekit_addr_t port);
 
 /**
  * Read I/O port (2-byte)
@@ -41,7 +41,7 @@ unsigned char dde_kit_inb(ddekit_addr_t port);
  *
  * \return value read from port
  */
-unsigned short dde_kit_inw(ddekit_addr_t port);
+unsigned short ddekit_inw(ddekit_addr_t port);
 
 /**
  * Read I/O port (4-byte)
@@ -50,7 +50,7 @@ unsigned short dde_kit_inw(ddekit_addr_t port);
  *
  * \return value read from port
  */
-unsigned long dde_kit_inl(ddekit_addr_t port);
+unsigned long ddekit_inl(ddekit_addr_t port);
 
 /**
  * Write I/O port (byte)
@@ -58,7 +58,7 @@ unsigned long dde_kit_inl(ddekit_addr_t port);
  * \param port  port to write
  * \param val   value to write
  */
-void dde_kit_outb(ddekit_addr_t port, unsigned char val);
+void ddekit_outb(ddekit_addr_t port, unsigned char val);
 
 /**
  * Write I/O port (2-byte)
@@ -66,7 +66,7 @@ void dde_kit_outb(ddekit_addr_t port, unsigned char val);
  * \param port  port to write
  * \param val   value to write
  */
-void dde_kit_outw(ddekit_addr_t port, unsigned short val);
+void ddekit_outw(ddekit_addr_t port, unsigned short val);
 
 /**
  * Write I/O port (4-byte)
@@ -74,7 +74,7 @@ void dde_kit_outw(ddekit_addr_t port, unsigned short val);
  * \param port  port to write
  * \param val   value to write
  */
-void dde_kit_outl(ddekit_addr_t port, unsigned long val);
+void ddekit_outl(ddekit_addr_t port, unsigned long val);
 
 
 #endif

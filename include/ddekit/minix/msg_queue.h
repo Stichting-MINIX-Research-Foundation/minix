@@ -7,9 +7,10 @@
 
 struct ddekit_minix_msg_q; 
 
-void ddekit_minix_queue_msg(message *m);
+void ddekit_minix_queue_msg(message *m, int ipc_status);
 
-void ddekit_minix_rcv(struct ddekit_minix_msg_q * mq, message *m);
+void ddekit_minix_rcv 
+            (struct ddekit_minix_msg_q * mq, message *m, int *ipc_status);
 
 struct ddekit_minix_msg_q *ddekit_minix_create_msg_q(unsigned from,
 	unsigned to);

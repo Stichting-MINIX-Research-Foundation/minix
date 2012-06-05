@@ -8,7 +8,7 @@
 #define DDEBUG DDEKIT_DEBUG_INITCALL
 #endif
 
-#include "debug.h" 
+#include "debug.h"
  
 static struct __ddekit_initcall_s head = {0,0,0};
 

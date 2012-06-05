@@ -30,7 +30,7 @@ static void ddekit_dispatcher_thread_init(void);
 /****************************************************************************/
 static void dispatcher_thread(void *unused) {
 
-	/* 
+	/*
 	 * Gets all messages and dispatches them.
 	 *
 	 * NOTE: this thread runs only when no other ddekit is 
@@ -40,6 +40,7 @@ static void dispatcher_thread(void *unused) {
 	message m;
 	int r;
 	int i;
+	int ipc_status;
 
 	_ddekit_thread_set_myprio(0);
 
@@ -47,17 +48,17 @@ static void dispatcher_thread(void *unused) {
 
 		/* Trigger a timer interrupt at each loop iteration */
 		_ddekit_timer_update();
-		
+
 		/* Wait for messages */
-		if ((r = sef_receive(ANY, &m)) != 0) { 
+		if ((r = sef_receive_status(ANY, &m, &ipc_status)) != 0) { 
 				ddekit_panic("ddekit", "sef_receive failed", r);
 		}
 
-		
+
 		_ddekit_timer_interrupt(); 
-		
+
 		_ddekit_thread_wakeup_sleeping();
-		
+
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) { 
 				case HARDWARE:
@@ -77,15 +78,15 @@ static void dispatcher_thread(void *unused) {
 			}
 
 		} else {
-			
-			/* 
+
+			/*
 			 * I don't know how to handle this msg,
 			 * but maybe we have a msg queue which can
 			 * handle this msg.
 			 */
 
-			ddekit_minix_queue_msg(&m);
-		} 
+			ddekit_minix_queue_msg(&m, ipc_status);
+		}
 	}
 }
 
@@ -114,9 +115,9 @@ void ddekit_init(void)
 	ddekit_init_irqs();
 
 	ddekit_init_timers();
-	
+
 	ddekit_dispatcher_thread_init();
-	
+
 	exit_sem = ddekit_sem_init(0);
 }
 

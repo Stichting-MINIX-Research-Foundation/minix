@@ -52,18 +52,17 @@ static void _ddekit_usb_completion(struct usb_urb *mx_urb)
 
 	if (mx_urb->type == USB_TRANSFER_ISO) {
 		d_urb->start_frame = mx_urb->start_frame;
-		
+
 		memcpy(d_urb->iso_desc, mx_urb->buffer + d_urb->size,
 		       d_urb->number_of_packets * sizeof(struct usb_iso_packet_desc));
 	}
-	
+
 	memcpy(d_urb->data, mx_urb->buffer, d_urb->size);
-	
+
 	/* free mx_urb */
 	ddekit_simple_free(mx_urb);
 
 	/* 'give back' URB */
-	
 
 	d_usb_driver->completion(d_urb->priv);
 }
@@ -139,11 +138,9 @@ int ddekit_usb_submit_urb(struct ddekit_usb_urb *d_urb)
 {
 	int res;
 	unsigned urb_size = USB_URBSIZE(d_urb->size, d_urb->number_of_packets);
-	
 	/* create mx urb out of d_urb */
 	struct usb_urb *mx_urb = (struct usb_urb*) 
 	    ddekit_simple_malloc(urb_size);
-	
 	mx_urb->urb_size = urb_size;
 
 	mx_urb->dev_id = d_urb->dev->id;
@@ -162,18 +159,15 @@ int ddekit_usb_submit_urb(struct ddekit_usb_urb *d_urb)
 	if (mx_urb->type == USB_TRANSFER_ISO) {
 		mx_urb->number_of_packets = d_urb->number_of_packets;
 		mx_urb->start_frame = d_urb->start_frame;
-		
 		memcpy(mx_urb->buffer + d_urb->size, d_urb->iso_desc,
 		    d_urb->number_of_packets * sizeof(struct usb_iso_packet_desc));
 	}
-	
 	memcpy(mx_urb->buffer, d_urb->data, d_urb->size);
 
 	d_urb->ddekit_priv = mx_urb;
 
 	/* submit mx_urb */
 	res = usb_send_urb(mx_urb);
-	
 	return res;
 }
 
@@ -197,14 +191,15 @@ static void _ddekit_usb_thread()
 	struct ddekit_minix_msg_q *mq = ddekit_minix_create_msg_q(USB_BASE, 
 	                                    USB_BASE + 0x1000);
 	message m;
+	int ipc_status;
 
 	while (1) {
-		ddekit_minix_rcv(mq, &m);
-		usb_handle_msg(&mx_usb_driver,&m);
+		ddekit_minix_rcv(mq, &m, &ipc_status);
+		usb_handle_msg(&mx_usb_driver, &m);
 	}
 
 }
-	
+
 /*****************************************************************************
  *         ddekit_usb_init                                             *
  ****************************************************************************/
@@ -213,7 +208,6 @@ int ddekit_usb_init
  ddekit_usb_malloc_fn     *unused,
  ddekit_usb_free_fn       *_unused) 
 {
-	
 	/* start usb_thread */
 	d_usb_driver =  drv;
 	usb_init("dde");

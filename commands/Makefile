@@ -8,7 +8,7 @@ SUBDIR=	add_route arp ash at awk \
 	cawf cd  cdprobe checkhier cpp \
 	chmod chown ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut \
-	dd decomp16 DESCRIBE dev2name devsize df dhcpd \
+	dd decomp16 DESCRIBE dev2name devmand devsize df dhcpd \
 	dhrystone diff dirname diskctl dumpcore \
 	eject elvis env expand factor fbdctl \
 	find finger fingerd fix fold format fortune fsck.mfs \

@@ -415,7 +415,7 @@ static void cancle_urb(message *msg)
 	endpoint_t ep = msg->m_source;
 
 	struct minix_usb_driver *drv;
-	
+
 	msg->USB_RESULT = -1;
 	msg->m_type = USB_REPLY;
 
@@ -425,7 +425,7 @@ static void cancle_urb(message *msg)
 		return; 
 	} else {
 		struct ddekit_usb_urb *d_urb = NULL;
-		
+
 		d_urb = find_pending_urb(drv, msg->USB_URB_ID);
 
 		if (d_urb != NULL) {
@@ -436,7 +436,7 @@ static void cancle_urb(message *msg)
 			msg->USB_RESULT = ENODEV;
 		}
 	}
-	
+
 	send(ep, msg);
 }
 
@@ -468,9 +468,9 @@ static void completion_callback(void *priv)
 	mx_urb->actual_length   = d_urb->actual_length;
 	mx_urb->error_count     = d_urb->error_count; 
 	mx_urb->transfer_flags  = d_urb->transfer_flags;
-	
+
 	remove_from_pending_urbs(drv, d_urb);
-	
+
 	/* copy out URB */
 	res = sys_safecopyto(drv->ep, ctx->gid, 0,
 	    (vir_bytes) ((char*)mx_urb) + sizeof(void*),
@@ -486,7 +486,7 @@ static void completion_callback(void *priv)
 	msg.m_type     = USB_COMPLETE_URB;
 	msg.USB_URB_ID = ctx->urb_id;
 	asynsend3(drv->ep, &msg, AMF_NOREPLY);
-	
+
 	/* free stuff */
 	my_free(ctx);
 	my_free(mx_urb);
@@ -725,10 +725,10 @@ static void devman_thread(void *unused)
 {
 	struct ddekit_minix_msg_q *mq = ddekit_minix_create_msg_q(DEVMAN_BASE,
 	    DEVMAN_BASE + 0xff);
-	
+	int ipc_status;
 	message m;
 	while (1) {
-		ddekit_minix_rcv(mq, &m);
+		ddekit_minix_rcv(mq, &m, &ipc_status);
 		devman_handle_msg(&m);
 	}
 }
@@ -742,6 +742,7 @@ static void _ddekit_usb_thread(void * unused)
 	    USB_BASE + 0xff);
 
 	message m;
+	int ipc_status;
 
 	/* create devman thread */
 	ddekit_thread_t * dmth;
@@ -749,7 +750,7 @@ static void _ddekit_usb_thread(void * unused)
 	dmth = ddekit_thread_create(devman_thread, NULL, "devman_thread");
 
 	while (1) {
-		ddekit_minix_rcv(mq, &m);
+		ddekit_minix_rcv(mq, &m, &ipc_status);
 		handle_msg(&m);
 	}
 }

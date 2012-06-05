@@ -19,6 +19,7 @@ struct ddekit_minix_msg_q {
 	unsigned from, to;
 
 	message messages[MESSAGE_QUEUE_SIZE];
+	int ipc_status[MESSAGE_QUEUE_SIZE];
 	ddekit_sem_t *msg_w_sem, *msg_r_sem;
 	int msg_r_pos, msg_w_pos;
 	
@@ -26,8 +27,8 @@ struct ddekit_minix_msg_q {
 };
 
 static struct ddekit_minix_msg_q * _list = NULL;
-static void _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq,
-	message *m);
+static void _ddekit_minix_queue_msg
+                   (struct ddekit_minix_msg_q *mq, message *m, int ipc_status);
 
 /*****************************************************************************
  *      ddekit_minix_create_msg_q                                            *
@@ -37,7 +38,7 @@ ddekit_minix_create_msg_q(unsigned from, unsigned to)
 {
 	struct ddekit_minix_msg_q *mq =  (struct ddekit_minix_msg_q *)
 	    ddekit_simple_malloc(sizeof(struct ddekit_minix_msg_q));
-	
+
 	mq->from = from;
 	mq->to   = to;
 	mq->msg_w_pos = 0;
@@ -49,10 +50,10 @@ ddekit_minix_create_msg_q(unsigned from, unsigned to)
 	/* TODO: check for overlapping message ranges */
 	mq->next = _list;
 	_list     = mq;
-	
+
 	DDEBUG_MSG_VERBOSE("created msg_q from %x to %x\n", from , to);
 
-	return mq;	
+	return mq;
 }
 
 /*****************************************************************************
@@ -81,8 +82,12 @@ void ddekit_minix_deregister_msg_q(struct ddekit_minix_msg_q *mq)
 /*****************************************************************************
  *     _ddekit_minix_queue_msg                                               *
  ****************************************************************************/
-static void 
-_ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq, message *m)
+static void
+_ddekit_minix_queue_msg (
+	struct ddekit_minix_msg_q *mq,
+	message *m,
+	int ipc_status
+)
 {
 	int full;
 	full = ddekit_sem_down_try(mq->msg_w_sem);
@@ -95,7 +100,7 @@ _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq, message *m)
 		m->m_type = TASK_REPLY;
 		m->REP_STATUS = EAGAIN;
 		result = asynsend(m->m_source, m);
-		
+
 		if (result != 0) {
 			ddekit_panic("unable to send reply to %d: %d\n",
 					m->m_source, result);
@@ -104,7 +109,7 @@ _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq, message *m)
 	} else {
 		/* queue the message */
 		memcpy(&mq->messages[mq->msg_w_pos], m, sizeof(message));
-
+		mq->ipc_status[mq->msg_w_pos] = ipc_status;
 		if (++mq->msg_w_pos == MESSAGE_QUEUE_SIZE) {
 			mq->msg_w_pos = 0;
 		}
@@ -117,10 +122,10 @@ _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq, message *m)
 /*****************************************************************************
  *       ddekit_minix_queue_msg                                              *
  ****************************************************************************/
-void ddekit_minix_queue_msg(message *m) 
+void ddekit_minix_queue_msg(message *m, int ipc_status)
 {
 	struct ddekit_minix_msg_q *it, *mq = NULL;
-	
+
 	for (it = _list; it !=NULL ; it = it->next) {
 		if (m->m_type >= it->from && m->m_type <= it->to) {
 			mq = it;
@@ -131,25 +136,29 @@ void ddekit_minix_queue_msg(message *m)
 		DDEBUG_MSG_VERBOSE("no q for msgtype %x\n", m->m_type);
 		return;
 	}
-	_ddekit_minix_queue_msg(mq,m);
+	_ddekit_minix_queue_msg(mq, m, ipc_status);
 }
 
 /*****************************************************************************
  *        ddekit_minix_rcv                                                   *
  ****************************************************************************/
-void ddekit_minix_rcv(struct ddekit_minix_msg_q *mq, message *m) 
+void ddekit_minix_rcv (
+	struct ddekit_minix_msg_q *mq,
+	message *m,
+	int *ipc_status
+)
 {
 	DDEBUG_MSG_VERBOSE("waiting for message");
-	
+
 	ddekit_sem_down(mq->msg_r_sem);
 
 	memcpy(m, &mq->messages[mq->msg_r_pos], sizeof(message));
-
+	*ipc_status = mq->ipc_status[mq->msg_r_pos];
 	if (++mq->msg_r_pos == MESSAGE_QUEUE_SIZE) {
 		mq->msg_r_pos = 0;
 	}
-	
+
 	DDEBUG_MSG_VERBOSE("unqueing message");
-	
+
 	ddekit_sem_up(mq->msg_w_sem);
 }

@@ -58,3 +58,8 @@ error "_MINIX_MACHINE has incorrect value (0)"
 #define DEFAULT_STACK_LIMIT (64 * 1024 * 1024)
 
 #endif /* _MINIX_SYS_CONFIG_H */
+
+/* Added by release script  */
+#ifndef _VCS_REVISION
+#define _VCS_REVISION "116fcea"
+#endif
