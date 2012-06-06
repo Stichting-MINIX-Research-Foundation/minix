@@ -49,11 +49,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#if 0
 #if defined(__RCSID) && !defined(__lint)
 __RCSID("$NetBSD: mktemp.c,v 1.11 2009/08/15 20:02:28 christos Exp $");
 #endif /* !__lint */
-#endif
 
 static void usage(void) __dead;
 
@@ -81,7 +79,7 @@ main(int argc, char **argv)
 		case 'p':
 			tmpdir = optarg;
 			break;
-
+			
 		case 'q':
 			qflag++;
 			break;
@@ -120,7 +118,7 @@ main(int argc, char **argv)
 	} else if (argc < 1) {
 		usage();
 	}
-
+		
 	/* generate all requested files */
 	while (name != NULL || argc > 0) {
 		if (name == NULL) {
