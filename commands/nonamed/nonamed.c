@@ -921,8 +921,10 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
     unsigned ancount;
     struct hostent localhost;
     static char *noaliases[]= { nil };
-    static ipaddr_t localaddr= HTONL(LOCALHOST);
+    static ipaddr_t localaddr;
     static char *localaddrlist[]= { (char *) &localaddr, nil };
+
+    localaddr = HTONL(LOCALHOST);
 
     if (single) return 0;
 
@@ -967,8 +969,9 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
 
     sethostent(0);
     do {
-	switch (type) {
-	case HTONS(T_A):
+    	int type_host = NTOHS(type);
+	switch (type_host) {
+	case T_A:
 	    if (namecmp(qname, he->h_name) == 0) {
 	      addA:
 		r= dn_comp((u8_t *) he->h_name, cp, arraylimit(dns.data) - cp,
@@ -991,7 +994,7 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
 		break;
 	    }
 	    /*FALL THROUGH*/
-	case HTONS(T_CNAME):
+	case T_CNAME:
 	    domain= namechr(he->h_name, '.');
 	    for (i= 0; he->h_aliases[i] != nil; i++) {
 		namecpy(name, he->h_aliases[i]);
@@ -1025,7 +1028,7 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
 		}
 	    }
 	    break;
-	case HTONS(T_PTR):
+	case T_PTR:
 	    if (ancount > 0) break;
 	    if (he->h_name[0] == '%') break;
 	    sprintf((char *) name, "%d.%d.%d.%d.in-addr.arpa",

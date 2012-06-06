@@ -210,11 +210,7 @@ static int ftpdata_fd = -1;
 char *buff;
 ipaddr_t ripaddr;
 tcpport_t rport;
-#ifdef __NBSD_LIBC
-static tcpport_t lport = htons(0xF000);
-#else
-static tcpport_t lport = HTONS(0xF000);
-#endif
+static tcpport_t lport;
 int s;
 int i;
 int wpid;
@@ -223,6 +219,8 @@ int pfd[2];
 char dummy;
 char port[32];
 int wasopen;
+
+   lport = htons(0xF000);
 
 #ifdef DEBUG
    printf("DOdata %s %s %d %d\n", datacom, file, direction, fd);
