@@ -84,9 +84,9 @@ __RCSID("$NetBSD: process.c,v 1.38 2009/04/13 07:29:55 lukem Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
-
+#ifdef __minix
 #include <minix/termios.h>
-
+#endif
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
