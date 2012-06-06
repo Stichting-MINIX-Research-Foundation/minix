@@ -1,0 +1,124 @@
+#! /bin/sh
+#
+#	$NetBSD: flex2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
+#
+# Copyright (c) 2000 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# flex2netbsd:  convert a flex tree into a
+# netbsd flex source tree, under src/external/bsd/flex/dist,
+# based on flex2netbsd by Bernd Ernesti and changes by Simon Burge
+#
+# Rough instructions for importing new flex release:
+#
+#	$ cd /some/where/temporary
+#	$ tar xpfz /new/flex/release/tar/file
+#	$ sh /usr/src/external/bsd/flex/dist/flex2netbsd flex-2.5.x `pwd`
+#	$ cd src/external/bsd/flex/dist
+#	$ cvs import -m "Import flex 2.5.x" src/external/bsd/flex/dist FLEX flex-2-5-x
+#	$ cd ../../../../../flex-9.x.y
+#	$ run ./configure
+#	$ run make
+#	check the config file and copy it to /usr/src/external/bsd/flex/include
+#	check the manual page against our copy if there are new options and
+#	update
+
+if [ $# -ne 2 ]; then echo "flex2netbsd src dest"; exit 1; fi
+
+r=$1
+d=$2/src/external/bsd/flex/dist
+
+case "$d" in
+	/*)
+		;;
+	*)
+		d=`/bin/pwd`/$d
+		;;
+esac
+
+case "$r" in
+	/*)
+		;;
+	*)
+		r=`/bin/pwd`/$r
+		;;
+esac
+
+echo preparing directory $d
+rm -rf $d
+mkdir -p $d
+
+### Copy the files and directories
+echo copying $r to $d
+cd $r
+pax -rw * $d
+
+### Remove the $'s around RCS tags
+cleantags $d
+
+### Add our NetBSD RCS Id
+find $d -type f -name '*.[chly]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/flex3n$$
+echo "" >>/tmp/flex3n$$
+cat $c  >> /tmp/flex3n$$
+mv /tmp/flex3n$$ $c && echo added NetBSD RCS tag to $c
+	)
+done
+
+find $d -type f -name '*.[0-9]' -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+echo ".\\\"	\$NetBSD\$" >/tmp/flex2m$$
+echo ".\\\"" >>/tmp/flex2m$$
+cat $m >> /tmp/flex2m$$
+mv /tmp/flex2m$$ $m && echo added NetBSD RCS tag to $m
+	)
+done
+
+find $d -type f -name '*.texi' -print | while read t; do
+        sed "2 s/^/@c \$NetBSD\$\\
+/" < $t > /tmp/flex4t$$
+	mv /tmp/flex4t$$ $t && echo added NetBSD RCS tag to $t
+done
+
+echo done
+
+### Clean up any CVS directories that might be around.
+echo "cleaning up CVS residue."
+(
+	cd $d
+	find . -type d -name "CVS" -print | xargs rm -r
+)
+echo done
+
+### Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	cd $d
+	find . -type f -print | xargs chmod u+rw,go+r
+	find . -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
+exit 0

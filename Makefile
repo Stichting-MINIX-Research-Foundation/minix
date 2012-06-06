@@ -50,6 +50,7 @@ mkfiles: .PHONY .MAKE
 
 includes: .PHONY .MAKE
 	${MAKEDIRTARGET} include includes
+	${INSTALL_DIR} ${DESTDIR}/usr/include/g++
 	${MAKEDIRTARGET} lib includes
 	${MAKEDIRTARGET} sys includes
 	${MAKEDIRTARGET} external includes

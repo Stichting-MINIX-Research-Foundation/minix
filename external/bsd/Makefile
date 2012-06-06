@@ -1,3 +1,3 @@
 .include <bsd.own.mk>
-SUBDIR=byacc file mdocml
+SUBDIR=byacc file flex mdocml
 .include <bsd.subdir.mk>
