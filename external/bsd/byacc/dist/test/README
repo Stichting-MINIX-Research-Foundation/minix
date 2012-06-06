@@ -1,0 +1,4 @@
+-- $Id: README,v 1.2 2009/10/29 00:56:20 christos Exp $
+
+The files in this directory are input (.y) and output (.output, .tab.c, .tab.h)
+examples.

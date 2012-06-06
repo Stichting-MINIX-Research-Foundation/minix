@@ -1,0 +1,21 @@
+$NetBSD: NOTES,v 1.2 2009/10/29 00:56:19 christos Exp $
+
+Berkeley Yacc reflects its origins.  The reason so many routines
+use exactly six register variables is that Berkeley Yacc was
+developed on a VAX using PCC.  PCC placed at most six variables
+in registers.  I went to considerable effort to find which six
+variables most belonged in registers.  Changes in machines and
+compilers make that effort worthless, perhaps even harmful.
+
+[Given the previous paragraph, and the fact that GCC does not respect
+ register declarations, and the fact that much of the rest of the
+ 4.4lite2 release had "register" declarations extirpated, I've removed
+ most of the register declarations from the code. I left them in the
+ generated skeleton code "for the hell of it" but they probably should
+ go from there, too. -- pm, July 1997]
+
+[I totally removed the register stuff; we've deprecated it elsewhere
+ in the tree now -- lukem, October 1997]
+
+The code contains many instances where address calculations are
+performed in particular ways to optimize the code for the VAX.

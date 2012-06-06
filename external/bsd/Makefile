@@ -1,3 +1,3 @@
 .include <bsd.own.mk>
-SUBDIR=mdocml file
+SUBDIR=byacc file mdocml
 .include <bsd.subdir.mk>

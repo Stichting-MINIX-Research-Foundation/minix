@@ -32,7 +32,7 @@ SUBDIR=	add_route arp ash at \
 	truncate tsort tty udpstat umount uname unexpand \
 	unstack update uud uue version vol wc \
 	whereis which who write writeisofs fetch \
-	xargs yacc yes zdump zmodem pkgin_cd \
+	xargs yes zdump zmodem pkgin_cd \
 	mktemp worldstone updateboot update_bootcfg
 
 .if ${MACHINE_ARCH} == "i386"
