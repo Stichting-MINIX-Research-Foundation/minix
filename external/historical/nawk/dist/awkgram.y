@@ -23,6 +23,10 @@ THIS SOFTWARE.
 ****************************************************************/
 
 %{
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include "awk.h"
@@ -71,6 +75,7 @@ Node	*arglist = 0;	/* list of args for current function */
 %type	<i>	do st
 %type	<i>	pst opt_pst lbrace rbrace rparen comma nl opt_nl and bor
 %type	<i>	subop print
+%type	<cp>	string
 
 %right	ASGNOP
 %right	'?'
@@ -80,7 +85,7 @@ Node	*arglist = 0;	/* list of args for current function */
 %left	GETLINE
 %nonassoc APPEND EQ GE GT LE LT NE MATCHOP IN '|'
 %left	ARG BLTIN BREAK CALL CLOSE CONTINUE DELETE DO EXIT FOR FUNC 
-%left	GSUB IF INDEX LSUBSTR MATCHFCN NEXT NUMBER
+%left	GENSUB GSUB IF INDEX LSUBSTR MATCHFCN NEXT NUMBER
 %left	PRINT PRINTF RETURN SPLIT SPRINTF STRING SUB SUBSTR
 %left	REGEXPR VAR VARNF IVAR WHILE '('
 %left	CAT
@@ -348,6 +353,11 @@ subop:
 	  SUB | GSUB
 	;
 
+string:
+	  STRING
+	| string STRING		{ $$ = catstr($1, $2); }
+	;
+
 term:
  	  term '/' ASGNOP term		{ $$ = op2(DIVEQ, $1, $4); }
  	| term '+' term			{ $$ = op2(ADD, $1, $3); }
@@ -369,6 +379,22 @@ term:
 	| INCR var			{ $$ = op1(PREINCR, $2); }
 	| var DECR			{ $$ = op1(POSTDECR, $1); }
 	| var INCR			{ $$ = op1(POSTINCR, $1); }
+	| GENSUB '(' reg_expr comma pattern comma pattern ')'
+		{ $$ = op5(GENSUB, NIL, (Node*)makedfa($3, 1), $5, $7, rectonode()); }
+	| GENSUB '(' pattern comma pattern comma pattern ')'
+		{ if (constnode($3))
+			$$ = op5(GENSUB, NIL, (Node *)makedfa(strnode($3), 1), $5, $7, rectonode());
+		  else
+			$$ = op5(GENSUB, (Node *)1, $3, $5, $7, rectonode());
+		}
+	| GENSUB '(' reg_expr comma pattern comma pattern comma pattern ')'
+		{ $$ = op5(GENSUB, NIL, (Node*)makedfa($3, 1), $5, $7, $9); }
+	| GENSUB '(' pattern comma pattern comma pattern comma pattern ')'
+		{ if (constnode($3))
+			$$ = op5(GENSUB, NIL, (Node *)makedfa(strnode($3),1), $5,$7,$9);
+		  else
+			$$ = op5(GENSUB, (Node *)1, $3, $5, $7, $9);
+		}
 	| GETLINE var LT term		{ $$ = op3(GETLINE, $2, itonp($3), $4); }
 	| GETLINE LT term		{ $$ = op3(GETLINE, NIL, itonp($2), $3); }
 	| GETLINE var			{ $$ = op3(GETLINE, $2, NIL, NIL); }
@@ -394,7 +420,7 @@ term:
 	| SPLIT '(' pattern comma varname ')'
 		{ $$ = op4(SPLIT, $3, makearr($5), NIL, (Node*)STRING); }  /* default */
 	| SPRINTF '(' patlist ')'	{ $$ = op1($1, $3); }
-	| STRING	 		{ $$ = celltonode($1, CCON); }
+	| string	 		{ $$ = celltonode($1, CCON); }
 	| subop '(' reg_expr comma pattern ')'
 		{ $$ = op4($1, NIL, (Node*)makedfa($3, 1), $5, rectonode()); }
 	| subop '(' pattern comma pattern ')'

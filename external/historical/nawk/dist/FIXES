@@ -25,6 +25,13 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
 
+May 23, 2010:
+	fixed long-standing overflow bug in run.c; many thanks to
+	nelson beebe for spotting it and providing the fix.
+
+	fixed bug that didn't parse -vd=1 properly; thanks to santiago
+	vila for spotting it.
+
 Feb 8, 2010:
 	i give up.  replaced isblank with isspace in b.c; there are
 	no consistent header files.

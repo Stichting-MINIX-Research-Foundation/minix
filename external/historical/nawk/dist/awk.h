@@ -48,6 +48,7 @@ extern int	safe;		/* 0 => unsafe, 1 => safe */
 #define	RECSIZE	(8 * 1024)	/* sets limit on records, fields, etc., etc. */
 extern int	recsize;	/* size of current record, orig RECSIZE */
 
+extern char	EMPTY[];
 extern char	**FS;
 extern char	**RS;
 extern char	**ORS;
@@ -61,16 +62,15 @@ extern char	**SUBSEP;
 extern Awkfloat *RSTART;
 extern Awkfloat *RLENGTH;
 
-extern char	*record;	/* points to $0 */
+extern uschar	*record;	/* points to $0 */
 extern int	lineno;		/* line number in awk program */
 extern int	errorflag;	/* 1 if error has occurred */
 extern int	donefld;	/* 1 if record broken into fields */
 extern int	donerec;	/* 1 if record is valid (no fld has changed */
-extern char	inputFS[];	/* FS at time of input, for field splitting */
 
 extern int	dbg;
 
-extern	char	*patbeg;	/* beginning of pattern matched */
+extern	uschar	*patbeg;	/* beginning of pattern matched */
 extern	int	patlen;		/* length of pattern matched.  set in b.c */
 
 /* Cell:  all information about a variable or constant */
@@ -126,6 +126,8 @@ extern Cell	*rlengthloc;	/* RLENGTH */
 #define	FTOUPPER 12
 #define	FTOLOWER 13
 #define	FFLUSH	14
+#define FSYSTIME	15
+#define FSTRFTIME	16
 
 /* Node:  parse tree is made of nodes, with Cell's at bottom */
 
@@ -203,8 +205,6 @@ extern	int	pairstack[], paircnt;
 
 #define NCHARS	(256+3)		/* 256 handles 8-bit chars; 128 does 7-bit */
 				/* watch out in match(), etc. */
-#define NSTATES	32
-
 typedef struct rrow {
 	long	ltype;	/* long avoids pointer warnings on 64-bit */
 	union {
@@ -216,16 +216,16 @@ typedef struct rrow {
 } rrow;
 
 typedef struct fa {
-	uschar	gototab[NSTATES][NCHARS];
-	uschar	out[NSTATES];
+	unsigned int	**gototab;
+	uschar	*out;
 	uschar	*restr;
-	int	*posns[NSTATES];
+	int	**posns;
+	int	state_count;
 	int	anchor;
 	int	use;
 	int	initstat;
 	int	curstat;
 	int	accept;
-	int	reset;
 	struct	rrow re[1];	/* variable: actual size set by calling malloc */
 } fa;
 

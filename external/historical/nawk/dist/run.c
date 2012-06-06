@@ -22,19 +22,28 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #define DEBUG
 #include <stdio.h>
 #include <ctype.h>
+#include <wchar.h>
+#include <wctype.h>
 #include <setjmp.h>
 #include <limits.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdint.h>
 #include "awk.h"
 #include "awkgram.h"
 
-#define tempfree(x)	if (istemp(x)) tfree(x); else
+#define tempfree(x)	do { if (istemp(x)) tfree(x); } while (/*CONSTCOND*/0)
+
+void stdinit(void);
 
 /*
 #undef tempfree
@@ -66,32 +75,33 @@ void tempfree(Cell *p) {
 
 jmp_buf env;
 extern	int	pairstack[];
+extern	unsigned int srand_seed;
 
 Node	*winner = NULL;	/* root of parse tree */
 Cell	*tmps;		/* free temporary cells for execution */
 
-static Cell	truecell	={ OBOOL, BTRUE, 0, 0, 1.0, NUM };
+static Cell	truecell	={ OBOOL, BTRUE, 0, 0, 1.0, NUM, NULL };
 Cell	*True	= &truecell;
-static Cell	falsecell	={ OBOOL, BFALSE, 0, 0, 0.0, NUM };
+static Cell	falsecell	={ OBOOL, BFALSE, 0, 0, 0.0, NUM, NULL };
 Cell	*False	= &falsecell;
-static Cell	breakcell	={ OJUMP, JBREAK, 0, 0, 0.0, NUM };
+static Cell	breakcell	={ OJUMP, JBREAK, 0, 0, 0.0, NUM, NULL };
 Cell	*jbreak	= &breakcell;
-static Cell	contcell	={ OJUMP, JCONT, 0, 0, 0.0, NUM };
+static Cell	contcell	={ OJUMP, JCONT, 0, 0, 0.0, NUM, NULL };
 Cell	*jcont	= &contcell;
-static Cell	nextcell	={ OJUMP, JNEXT, 0, 0, 0.0, NUM };
+static Cell	nextcell	={ OJUMP, JNEXT, 0, 0, 0.0, NUM, NULL };
 Cell	*jnext	= &nextcell;
-static Cell	nextfilecell	={ OJUMP, JNEXTFILE, 0, 0, 0.0, NUM };
+static Cell	nextfilecell	={ OJUMP, JNEXTFILE, 0, 0, 0.0, NUM, NULL};
 Cell	*jnextfile	= &nextfilecell;
-static Cell	exitcell	={ OJUMP, JEXIT, 0, 0, 0.0, NUM };
+static Cell	exitcell	={ OJUMP, JEXIT, 0, 0, 0.0, NUM, NULL };
 Cell	*jexit	= &exitcell;
-static Cell	retcell		={ OJUMP, JRET, 0, 0, 0.0, NUM };
+static Cell	retcell		={ OJUMP, JRET, 0, 0, 0.0, NUM, NULL };
 Cell	*jret	= &retcell;
-static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE };
+static Cell	tempcell	={ OCELL, CTEMP, 0, EMPTY, 0.0, NUM|STR|DONTFREE, NULL };
 
 Node	*curnode = NULL;	/* the node being executed, for debugging */
 
 /* buffer memory management */
-int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
+int adjbuf(uschar **pbuf, int *psiz, int minlen, int quantum, uschar **pbptr,
 	const char *whatrtn)
 /* pbuf:    address of pointer to buffer being managed
  * psiz:    address of buffer size variable
@@ -110,7 +120,7 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 		/* round up to next multiple of quantum */
 		if (rminlen)
 			minlen += quantum - rminlen;
-		tbuf = (char *) realloc(*pbuf, minlen);
+		tbuf = realloc(*pbuf, minlen);
 		dprintf( ("adjbuf %s: %d %d (pbuf=%p, tbuf=%p)\n", whatrtn, *psiz, minlen, *pbuf, tbuf) );
 		if (tbuf == NULL) {
 			if (whatrtn)
@@ -127,8 +137,6 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 
 void run(Node *a)	/* execution of parse tree starts here */
 {
-	extern void stdinit(void);
-
 	stdinit();
 	execute(a);
 	closeall();
@@ -216,11 +224,11 @@ struct Frame {	/* stack frame for awk function calls */
 
 struct Frame *frame = NULL;	/* base of stack frames; dynamically allocated */
 int	nframe = 0;		/* number of frames allocated */
-struct Frame *fp = NULL;	/* frame pointer. bottom level unused */
+struct Frame *frp = NULL;	/* frame pointer. bottom level unused */
 
 Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 {
-	static Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE };
+	static const Cell newcopycell = { OCELL, CCOPY, 0, EMPTY, 0.0, NUM|STR|DONTFREE, NULL };
 	int i, ncall, ndef;
 	int freed = 0; /* handles potential double freeing when fcn & param share a tempcell */
 	Node *x;
@@ -233,21 +241,21 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 	if (!isfcn(fcn))
 		FATAL("calling undefined function %s", s);
 	if (frame == NULL) {
-		fp = frame = (struct Frame *) calloc(nframe += 100, sizeof(struct Frame));
+		frp = frame = calloc(nframe += 100, sizeof(*frp));
 		if (frame == NULL)
 			FATAL("out of space for stack frames calling %s", s);
 	}
 	for (ncall = 0, x = a[1]; x != NULL; x = x->nnext)	/* args in call */
 		ncall++;
 	ndef = (int) fcn->fval;			/* args in defn */
-	   dprintf( ("calling %s, %d args (%d in defn), fp=%d\n", s, ncall, ndef, (int) (fp-frame)) );
+	   dprintf( ("calling %s, %d args (%d in defn), fp=%d\n", s, ncall, ndef, (int) (frp-frame)) );
 	if (ncall > ndef)
 		WARNING("function %s called with %d args, uses only %d",
 			s, ncall, ndef);
 	if (ncall + ndef > NARGS)
 		FATAL("function %s has %d arguments, limit %d", s, ncall+ndef, NARGS);
 	for (i = 0, x = a[1]; x != NULL; i++, x = x->nnext) {	/* get call args */
-		   dprintf( ("evaluate args[%d], fp=%d:\n", i, (int) (fp-frame)) );
+		   dprintf( ("evaluate args[%d], fp=%d:\n", i, (int) (frp-frame)) );
 		y = execute(x);
 		oargs[i] = y;
 		   dprintf( ("args[%d]: %s %f <%s>, t=%o\n",
@@ -264,26 +272,25 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 		args[i] = gettemp();
 		*args[i] = newcopycell;
 	}
-	fp++;	/* now ok to up frame */
-	if (fp >= frame + nframe) {
-		int dfp = fp - frame;	/* old index */
-		frame = (struct Frame *)
-			realloc((char *) frame, (nframe += 100) * sizeof(struct Frame));
+	frp++;	/* now ok to up frame */
+	if (frp >= frame + nframe) {
+		int dfp = frp - frame;	/* old index */
+		frame = realloc(frame, (nframe += 100) * sizeof(*frame));
 		if (frame == NULL)
 			FATAL("out of space for stack frames in %s", s);
-		fp = frame + dfp;
+		frp = frame + dfp;
 	}
-	fp->fcncell = fcn;
-	fp->args = args;
-	fp->nargs = ndef;	/* number defined with (excess are locals) */
-	fp->retval = gettemp();
+	frp->fcncell = fcn;
+	frp->args = args;
+	frp->nargs = ndef;	/* number defined with (excess are locals) */
+	frp->retval = gettemp();
 
-	   dprintf( ("start exec of %s, fp=%d\n", s, (int) (fp-frame)) );
+	   dprintf( ("start exec of %s, fp=%d\n", s, (int) (frp-frame)) );
 	y = execute((Node *)(fcn->sval));	/* execute body */
-	   dprintf( ("finished exec of %s, fp=%d\n", s, (int) (fp-frame)) );
+	   dprintf( ("finished exec of %s, fp=%d\n", s, (int) (frp-frame)) );
 
 	for (i = 0; i < ndef; i++) {
-		Cell *t = fp->args[i];
+		Cell *t = frp->args[i];
 		if (isarr(t)) {
 			if (t->csub == CCOPY) {
 				if (i >= ncall) {
@@ -312,9 +319,9 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 	if (freed == 0) {
 		tempfree(y);	/* don't free twice! */
 	}
-	z = fp->retval;			/* return value */
+	z = frp->retval;			/* return value */
 	   dprintf( ("%s returns %g |%s| %o\n", s, getfval(z), getsval(z), z->tval) );
-	fp--;
+	frp--;
 	return(z);
 }
 
@@ -322,14 +329,18 @@ Cell *copycell(Cell *x)	/* make a copy of a cell in a temp */
 {
 	Cell *y;
 
+	/* copy is not constant or field */
+
 	y = gettemp();
+	y->tval = x->tval & ~(CON|FLD|REC);
 	y->csub = CCOPY;	/* prevents freeing until call is over */
 	y->nval = x->nval;	/* BUG? */
-	if (isstr(x))
+	if (isstr(x) /* || x->ctype == OCELL */) {
 		y->sval = tostring(x->sval);
+		y->tval &= ~DONTFREE;
+	} else
+		y->tval |= DONTFREE;
 	y->fval = x->fval;
-	y->tval = x->tval & ~(CON|FLD|REC|DONTFREE);	/* copy is not constant or field */
-							/* is DONTFREE right? */
 	return y;
 }
 
@@ -337,11 +348,11 @@ Cell *arg(Node **a, int n)	/* nth argument of a function */
 {
 
 	n = ptoi(a[0]);	/* argument number, counting from 0 */
-	   dprintf( ("arg(%d), fp->nargs=%d\n", n, fp->nargs) );
-	if (n+1 > fp->nargs)
+	   dprintf( ("arg(%d), fp->nargs=%d\n", n, frp->nargs) );
+	if (n+1 > frp->nargs)
 		FATAL("argument #%d of function %s was not supplied",
-			n+1, fp->fcncell->nval);
-	return fp->args[n];
+			n+1, frp->fcncell->nval);
+	return frp->args[n];
 }
 
 Cell *jump(Node **a, int n)	/* break, continue, next, nextfile, return */
@@ -360,14 +371,14 @@ Cell *jump(Node **a, int n)	/* break, continue, next, nextfile, return */
 		if (a[0] != NULL) {
 			y = execute(a[0]);
 			if ((y->tval & (STR|NUM)) == (STR|NUM)) {
-				setsval(fp->retval, getsval(y));
-				fp->retval->fval = getfval(y);
-				fp->retval->tval |= NUM;
+				setsval(frp->retval, getsval(y));
+				frp->retval->fval = getfval(y);
+				frp->retval->tval |= NUM;
 			}
 			else if (y->tval & STR)
-				setsval(fp->retval, getsval(y));
+				setsval(frp->retval, getsval(y));
 			else if (y->tval & NUM)
-				setfval(fp->retval, getfval(y));
+				setfval(frp->retval, getfval(y));
 			else		/* can't happen */
 				FATAL("bad type variable %d", y->tval);
 			tempfree(y);
@@ -393,11 +404,11 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 	Cell *r, *x;
 	extern Cell **fldtab;
 	FILE *fp;
-	char *buf;
+	uschar *buf;
 	int bufsize = recsize;
-	int mode;
+	int mode, newflag;
 
-	if ((buf = (char *) malloc(bufsize)) == NULL)
+	if ((buf = malloc(bufsize)) == NULL)
 		FATAL("out of memory in getline");
 
 	fflush(stdout);	/* in case someone is waiting for a prompt */
@@ -407,12 +418,12 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 		mode = ptoi(a[1]);
 		if (mode == '|')		/* input pipe */
 			mode = LE;	/* arbitrary flag */
-		fp = openfile(mode, getsval(x));
+		fp = openfile(mode, getsval(x), &newflag);
 		tempfree(x);
 		if (fp == NULL)
 			n = -1;
 		else
-			n = readrec(&buf, &bufsize, fp);
+			n = readrec(&buf, &bufsize, fp, newflag);
 		if (n <= 0) {
 			;
 		} else if (a[0] != NULL) {	/* getline var <file */
@@ -453,11 +464,11 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 	Cell *x, *y, *z;
 	char *s;
 	Node *np;
-	char *buf;
+	uschar *buf;
 	int bufsz = recsize;
 	int nsub = strlen(*SUBSEP);
 
-	if ((buf = (char *) malloc(bufsz)) == NULL)
+	if ((buf = malloc(bufsz)) == NULL)
 		FATAL("out of memory in array");
 
 	x = execute(a[0]);	/* Cell* for symbol table */
@@ -467,9 +478,9 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 		s = getsval(y);
 		if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, "array"))
 			FATAL("out of memory for %s[%s...]", x->nval, buf);
-		strcat(buf, s);
+		strlcat(buf, s, bufsz);
 		if (np->nnext)
-			strcat(buf, *SUBSEP);
+			strlcat(buf, *SUBSEP, bufsz);
 		tempfree(y);
 	}
 	if (!isarr(x)) {
@@ -492,7 +503,7 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 {
 	Cell *x, *y;
 	Node *np;
-	char *s;
+	uschar *s;
 	int nsub = strlen(*SUBSEP);
 
 	x = execute(a[0]);	/* Cell* for symbol table */
@@ -505,8 +516,8 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 		x->sval = (char *) makesymtab(NSYMTAB);
 	} else {
 		int bufsz = recsize;
-		char *buf;
-		if ((buf = (char *) malloc(bufsz)) == NULL)
+		uschar *buf;
+		if ((buf = malloc(bufsz)) == NULL)
 			FATAL("out of memory in adelete");
 		buf[0] = 0;
 		for (np = a[1]; np; np = np->nnext) {
@@ -514,9 +525,9 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 			s = getsval(y);
 			if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, "awkdelete"))
 				FATAL("out of memory deleting %s[%s...]", x->nval, buf);
-			strcat(buf, s);	
+			strlcat(buf, s, bufsz);
 			if (np->nnext)
-				strcat(buf, *SUBSEP);
+				strlcat(buf, *SUBSEP, bufsz);
 			tempfree(y);
 		}
 		freeelem(x, buf);
@@ -530,7 +541,7 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 {
 	Cell *x, *ap, *k;
 	Node *p;
-	char *buf;
+	uschar *buf;
 	char *s;
 	int bufsz = recsize;
 	int nsub = strlen(*SUBSEP);
@@ -544,7 +555,7 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 		ap->tval |= ARR;
 		ap->sval = (char *) makesymtab(NSYMTAB);
 	}
-	if ((buf = (char *) malloc(bufsz)) == NULL) {
+	if ((buf = malloc(bufsz)) == NULL) {
 		FATAL("out of memory in intest");
 	}
 	buf[0] = 0;
@@ -571,7 +582,8 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 Cell *matchop(Node **a, int n)	/* ~ and match() */
 {
 	Cell *x, *y;
-	char *s, *t;
+	uschar *s;
+	char *t;
 	int i;
 	fa *pfa;
 	int (*mf)(fa *, const char *) = match, mode = 0;
@@ -693,7 +705,7 @@ Cell *gettemp(void)	/* get a tempcell */
 	Cell *x;
 
 	if (!tmps) {
-		tmps = (Cell *) calloc(100, sizeof(Cell));
+		tmps = calloc(100, sizeof(*tmps));
 		if (!tmps)
 			FATAL("out of space for temporaries");
 		for(i = 1; i < 100; i++)
@@ -806,19 +818,20 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 
 int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like conversions */
 {
-	char *fmt;
-	char *p, *t;
+	uschar *fmt, *p, *t;
 	const char *os;
 	Cell *x;
 	int flag = 0, n;
 	int fmtwd; /* format width */
 	int fmtsz = recsize;
-	char *buf = *pbuf;
+	uschar *buf = *pbuf;
 	int bufsize = *pbufsize;
+#define FMTSZ(a)   (fmtsz - ((a) - fmt))
+#define BUFSZ(a)   (bufsize - ((a) - buf))
 
 	os = s;
 	p = buf;
-	if ((fmt = (char *) malloc(fmtsz)) == NULL)
+	if ((fmt = malloc(fmtsz)) == NULL)
 		FATAL("out of memory in format()");
 	while (*s) {
 		adjbuf(&buf, &bufsize, MAXNUMSIZE+1+p-buf, recsize, &p, "format1");
@@ -839,12 +852,18 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		for (t = fmt; (*t++ = *s) != '\0'; s++) {
 			if (!adjbuf(&fmt, &fmtsz, MAXNUMSIZE+1+t-fmt, recsize, &t, "format3"))
 				FATAL("format item %.30s... ran format() out of memory", os);
-			if (isalpha((uschar)*s) && *s != 'l' && *s != 'h' && *s != 'L')
+			if (*s == 'l' || *s == 'h' || *s == 'L')
+				goto weird;
+			if (isalpha((uschar)*s))
 				break;	/* the ansi panoply */
 			if (*s == '*') {
+				if (a == NULL)
+					FATAL("not enough args in printf("
+					    "\"%.30s\")", os);
 				x = execute(a);
 				a = a->nnext;
-				sprintf(t-1, "%d", fmtwd=(int) getfval(x));
+				snprintf(t - 1, FMTSZ(t - 1), 
+				    "%d", fmtwd=(int) getfval(x));
 				if (fmtwd < 0)
 					fmtwd = -fmtwd;
 				adjbuf(&buf, &bufsize, fmtwd+1+p-buf, recsize, &p, "format");
@@ -864,12 +883,15 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'd': case 'i':
 			flag = 'd';
 			if(*(s-1) == 'l') break;
-			*(t-1) = 'l';
+			*(t-1) = 'j';
 			*t = 'd';
 			*++t = '\0';
 			break;
 		case 'o': case 'x': case 'X': case 'u':
 			flag = *(s-1) == 'l' ? 'd' : 'u';
+			*(t-1) = 'j';
+			*t = *s;
+			*++t = '\0';
 			break;
 		case 's':
 			flag = 's';
@@ -878,6 +900,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			flag = 'c';
 			break;
 		default:
+		weird:
 			WARNING("weird printf conversion %s", fmt);
 			flag = '?';
 			break;
@@ -891,18 +914,18 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			n = fmtwd;
 		adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format5");
 		switch (flag) {
-		case '?':	sprintf(p, "%s", fmt);	/* unknown, so dump it too */
+		case '?':	snprintf(p, BUFSZ(p), "%s", fmt);	/* unknown, so dump it too */
 			t = getsval(x);
 			n = strlen(t);
 			if (fmtwd > n)
 				n = fmtwd;
 			adjbuf(&buf, &bufsize, 1+strlen(p)+n+p-buf, recsize, &p, "format6");
 			p += strlen(p);
-			sprintf(p, "%s", t);
+			snprintf(p, BUFSZ(p), "%s", t);
 			break;
-		case 'f':	sprintf(p, fmt, getfval(x)); break;
-		case 'd':	sprintf(p, fmt, (long) getfval(x)); break;
-		case 'u':	sprintf(p, fmt, (int) getfval(x)); break;
+		case 'f':	snprintf(p, BUFSZ(p), fmt, getfval(x)); break;
+		case 'd':	snprintf(p, BUFSZ(p), fmt, (intmax_t) getfval(x)); break;
+		case 'u':	snprintf(p, BUFSZ(p), fmt, (uintmax_t) getfval(x)); break;
 		case 's':
 			t = getsval(x);
 			n = strlen(t);
@@ -910,18 +933,18 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				n = fmtwd;
 			if (!adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format7"))
 				FATAL("huge string/format (%d chars) in printf %.30s... ran format() out of memory", n, t);
-			sprintf(p, fmt, t);
+			snprintf(p, BUFSZ(p), fmt, t);
 			break;
 		case 'c':
 			if (isnum(x)) {
 				if (getfval(x))
-					sprintf(p, fmt, (int) getfval(x));
+					snprintf(p, BUFSZ(p), fmt, (int) getfval(x));
 				else {
 					*p++ = '\0'; /* explicit null byte */
 					*p = '\0';   /* next output will start here */
 				}
 			} else
-				sprintf(p, fmt, getsval(x)[0]);
+				snprintf(p, BUFSZ(p), fmt, getsval(x)[0]);
 			break;
 		default:
 			FATAL("can't happen: bad conversion %c in format()", flag);
@@ -946,7 +969,7 @@ Cell *awksprintf(Node **a, int n)		/* sprintf(a[0]) */
 	char *buf;
 	int bufsz=3*recsize;
 
-	if ((buf = (char *) malloc(bufsz)) == NULL)
+	if ((buf = malloc(bufsz)) == NULL)
 		FATAL("out of memory in awksprintf");
 	y = a[0]->nnext;
 	x = execute(a[0]);
@@ -969,7 +992,7 @@ Cell *awkprintf(Node **a, int n)		/* printf */
 	int len;
 	int bufsz=3*recsize;
 
-	if ((buf = (char *) malloc(bufsz)) == NULL)
+	if ((buf = malloc(bufsz)) == NULL)
 		FATAL("out of memory in awkprintf");
 	y = a[0]->nnext;
 	x = execute(a[0]);
@@ -1153,7 +1176,7 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 	getsval(y);
 	n1 = strlen(x->sval);
 	n2 = strlen(y->sval);
-	s = (char *) malloc(n1 + n2 + 1);
+	s = malloc(n1 + n2 + 1);
 	if (s == NULL)
 		FATAL("out of space concatenating %.15s... and %.15s...",
 			x->sval, y->sval);
@@ -1206,6 +1229,7 @@ Cell *dopa2(Node **a, int n)	/* a[0], a[1] { a[2] } */
 	return(False);
 }
 
+static char regexpr[] = "(regexpr)";
 Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 {
 	Cell *x = 0, *y, *ap;
@@ -1223,7 +1247,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		x = execute(a[2]);
 		fs = getsval(x);
 	} else if (arg3type == REGEXPR)
-		fs = "(regexpr)";	/* split(str,arr,/regexpr/) */
+		fs = regexpr;	/* split(str,arr,/regexpr/) */
 	else
 		FATAL("illegal type of split");
 	sep = *fs;
@@ -1247,7 +1271,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			pfa->initstat = 2;
 			do {
 				n++;
-				sprintf(num, "%d", n);
+				snprintf(num, sizeof(num), "%d", n);
 				temp = *patbeg;
 				*patbeg = '\0';
 				if (is_number(s))
@@ -1258,7 +1282,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 				s = patbeg + patlen;
 				if (*(patbeg+patlen-1) == 0 || *s == 0) {
 					n++;
-					sprintf(num, "%d", n);
+					snprintf(num, sizeof(num), "%d", n);
 					setsymtab(num, "", 0.0, STR, (Array *) ap->sval);
 					pfa->initstat = tempstat;
 					goto spdone;
@@ -1268,7 +1292,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 							/* cf gsub and refldbld */
 		}
 		n++;
-		sprintf(num, "%d", n);
+		snprintf(num, sizeof(num), "%d", n);
 		if (is_number(s))
 			setsymtab(num, s, atof(s), STR|NUM, (Array *) ap->sval);
 		else
@@ -1288,7 +1312,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			while (*s!=' ' && *s!='\t' && *s!='\n' && *s!='\0');
 			temp = *s;
 			*s = '\0';
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof(num), "%d", n);
 			if (is_number(t))
 				setsymtab(num, t, atof(t), STR|NUM, (Array *) ap->sval);
 			else
@@ -1301,7 +1325,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		for (n = 0; *s != 0; s++) {
 			char buf[2];
 			n++;
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof(num), "%d", n);
 			buf[0] = *s;
 			buf[1] = 0;
 			if (isdigit((uschar)buf[0]))
@@ -1317,7 +1341,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 				s++;
 			temp = *s;
 			*s = '\0';
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof(num), "%d", n);
 			if (is_number(t))
 				setsymtab(num, t, atof(t), STR|NUM, (Array *) ap->sval);
 			else
@@ -1461,15 +1485,78 @@ Cell *instat(Node **a, int n)	/* for (a[0] in a[1]) a[2] */
 	return True;
 }
 
+void flush_all(void);
+
+static char *nawk_toXXX(const char *s,
+			int (*fun_c)(int),
+			wint_t (*fun_wc)(wint_t))
+{
+	char *buf      = NULL;
+	char *pbuf     = NULL;
+	const char *ps = NULL;
+	size_t n       = 0;
+	mbstate_t mbs, mbs2;
+	wchar_t wc;
+	size_t sz = MB_CUR_MAX;
+
+	if (sz == 1) {
+		buf = tostring(s);
+
+		for (pbuf = buf; *pbuf; pbuf++)
+			*pbuf = fun_c((uschar)*pbuf);
+
+		return buf;
+	} else {
+		/* upper/lower character may be shorter/longer */
+		buf = tostringN(s, strlen(s) * sz + 1);
+
+		memset(&mbs,  0, sizeof(mbs));
+		memset(&mbs2, 0, sizeof(mbs2));
+
+		ps   = s;
+		pbuf = buf;
+		while (n = mbrtowc(&wc, ps, sz, &mbs),
+		       n > 0 && n != (size_t)-1 && n != (size_t)-2)
+		{
+			ps += n;
+
+			n = wcrtomb(pbuf, fun_wc(wc), &mbs2);
+			if (n == (size_t)-1)
+				FATAL("illegal wide character %s", s);
+
+			pbuf += n;
+		}
+
+		*pbuf = 0;
+
+		if (n)
+			FATAL("illegal byte sequence %s", s);
+
+		return buf;
+	}
+}
+
+static char *nawk_toupper(const char *s)
+{
+	return nawk_toXXX(s, toupper, towupper);
+}
+
+static char *nawk_tolower(const char *s)
+{
+	return nawk_toXXX(s, tolower, towlower);
+}
+
 Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg list */
 {
 	Cell *x, *y;
 	Awkfloat u;
-	int t;
-	char *p, *buf;
+	int t, sz;
+	unsigned int tmp;
+	char *buf, *fmt;
 	Node *nextarg;
 	FILE *fp;
-	void flush_all(void);
+	time_t tv;
+	struct tm *tm;
 
 	t = ptoi(a[0]);
 	x = execute(a[1]);
@@ -1517,20 +1604,16 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 			u = time((time_t *)0);
 		else
 			u = getfval(x);
-		srand((unsigned int) u);
+		srand(tmp = (unsigned int) u);
+		u = srand_seed;
+		srand_seed = tmp;
 		break;
 	case FTOUPPER:
 	case FTOLOWER:
-		buf = tostring(getsval(x));
-		if (t == FTOUPPER) {
-			for (p = buf; *p; p++)
-				if (islower((uschar) *p))
-					*p = toupper((uschar)*p);
-		} else {
-			for (p = buf; *p; p++)
-				if (isupper((uschar) *p))
-					*p = tolower((uschar)*p);
-		}
+		if (t == FTOUPPER)
+			buf = nawk_toupper(getsval(x));
+		else
+			buf = nawk_tolower(getsval(x));
 		tempfree(x);
 		x = gettemp();
 		setsval(x, buf);
@@ -1540,11 +1623,41 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		if (isrec(x) || strlen(getsval(x)) == 0) {
 			flush_all();	/* fflush() or fflush("") -> all */
 			u = 0;
-		} else if ((fp = openfile(FFLUSH, getsval(x))) == NULL)
-			u = EOF;
+		} else if ((fp = openfile(FFLUSH, getsval(x), NULL)) == NULL)
+			u = -1;
 		else
 			u = fflush(fp);
 		break;
+	case FSYSTIME:
+		u = time((time_t *) 0); break;
+	case FSTRFTIME:
+		/* strftime([format [,timestamp]]) */
+		if (nextarg) {
+			y = execute(nextarg), nextarg = nextarg->nnext;
+			tv = (time_t) getfval(y);
+			tempfree(y);
+		} else
+			tv = time((time_t *) 0);
+		tm = localtime(&tv);
+
+		if (isrec(x)) {
+			/* format argument not provided, use default */
+			fmt = tostring("%a %b %d %H:%M:%S %Z %Y");
+		} else
+			fmt = tostring(getsval(x));
+
+		sz = 32, buf = NULL;
+		do {
+			if ((buf = realloc(buf, (sz *= 2))) == NULL)
+				FATAL("out of memory in strftime");
+		} while(strftime(buf, sz, fmt, tm) == 0);
+
+		y = gettemp();
+		setsval(y, buf);
+		free(fmt);
+		free(buf);
+
+		return y;
 	default:	/* can't happen */
 		FATAL("illegal function type %d", t);
 		break;
@@ -1602,7 +1715,7 @@ FILE *redirect(int a, Node *b)	/* set up all i/o redirections */
 
 	x = execute(b);
 	fname = getsval(x);
-	fp = openfile(a, fname);
+	fp = openfile(a, fname, NULL);
 	if (fp == NULL)
 		FATAL("can't open file %s", fname);
 	tempfree(x);
@@ -1613,42 +1726,59 @@ struct files {
 	FILE	*fp;
 	const char	*fname;
 	int	mode;	/* '|', 'a', 'w' => LE/LT, GT */
-} files[FOPEN_MAX] ={
-	{ NULL,  "/dev/stdin",  LT },	/* watch out: don't free this! */
-	{ NULL, "/dev/stdout", GT },
-	{ NULL, "/dev/stderr", GT }
-};
+} *files;
+size_t nfiles;
 
 void stdinit(void)	/* in case stdin, etc., are not constants */
 {
+	nfiles = FOPEN_MAX;
+	files = calloc(nfiles, sizeof(*files));
+	if (files == NULL)
+		FATAL("can't allocate file memory for %zu files", nfiles);
 	files[0].fp = stdin;
+	files[0].fname = "/dev/stdin";
+	files[0].mode = LT;
 	files[1].fp = stdout;
+	files[1].fname = "/dev/stdout";
+	files[1].mode = GT;
 	files[2].fp = stderr;
+	files[2].fname = "/dev/stderr";
+	files[2].mode = GT;
 }
 
-FILE *openfile(int a, const char *us)
+FILE *openfile(int a, const char *us, int *pnewflag)
 {
 	const char *s = us;
-	int i, m;
+	size_t i;
+	int m;
 	FILE *fp = 0;
 
 	if (*s == '\0')
 		FATAL("null file name in print or getline");
-	for (i=0; i < FOPEN_MAX; i++)
-		if (files[i].fname && strcmp(s, files[i].fname) == 0) {
-			if (a == files[i].mode || (a==APPEND && files[i].mode==GT))
-				return files[i].fp;
-			if (a == FFLUSH)
-				return files[i].fp;
+	for (i = 0; i < nfiles; i++)
+		if (files[i].fname && strcmp(s, files[i].fname) == 0 &&
+		    (a == files[i].mode || (a==APPEND && files[i].mode==GT) ||
+		     a == FFLUSH)) {
+			if (pnewflag)
+				*pnewflag = 0;
+			return files[i].fp;
 		}
 	if (a == FFLUSH)	/* didn't find it, so don't create it! */
 		return NULL;
 
-	for (i=0; i < FOPEN_MAX; i++)
-		if (files[i].fp == 0)
+	for (i = 0; i < nfiles; i++)
+		if (files[i].fp == NULL)
 			break;
-	if (i >= FOPEN_MAX)
-		FATAL("%s makes too many open files", s);
+	if (i >= nfiles) {
+		struct files *nf;
+		size_t nnf = nfiles + FOPEN_MAX;
+		nf = realloc(files, nnf * sizeof(*nf));
+		if (nf == NULL)
+			FATAL("cannot grow files for %s and %zu files", s, nnf);
+		(void)memset(&nf[nfiles], 0, FOPEN_MAX * sizeof(*nf));
+		nfiles = nnf;
+		files = nf;
+	}
 	fflush(stdout);	/* force a semblance of order */
 	m = a;
 	if (a == GT) {
@@ -1668,15 +1798,17 @@ FILE *openfile(int a, const char *us)
 		files[i].fname = tostring(s);
 		files[i].fp = fp;
 		files[i].mode = m;
+		if (pnewflag)
+			*pnewflag = 1;
 	}
 	return fp;
 }
 
 const char *filename(FILE *fp)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < FOPEN_MAX; i++)
+	for (i = 0; i < nfiles; i++)
 		if (fp == files[i].fp)
 			return files[i].fname;
 	return "???";
@@ -1685,24 +1817,28 @@ const char *filename(FILE *fp)
 Cell *closefile(Node **a, int n)
 {
 	Cell *x;
-	int i, stat;
+	size_t i;
+	int stat;
 
 	n = n;
 	x = execute(a[0]);
 	getsval(x);
 	stat = -1;
-	for (i = 0; i < FOPEN_MAX; i++) {
+	for (i = 0; i < nfiles; i++) {
 		if (files[i].fname && strcmp(x->sval, files[i].fname) == 0) {
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
 			if (files[i].mode == '|' || files[i].mode == LE)
-				stat = pclose(files[i].fp);
+				stat = pclose(files[i].fp) == -1;
 			else
-				stat = fclose(files[i].fp);
-			if (stat == EOF)
-				WARNING( "i/o error occurred closing %s", files[i].fname );
+				stat = fclose(files[i].fp) == EOF;
+			if (stat) {
+				stat = -1;
+				WARNING( "i/o error occurred closing %s",
+				    files[i].fname );
+			}
 			if (i > 2)	/* don't do /dev/std... */
-				xfree(files[i].fname);
+				free(__UNCONST(files[i].fname));
 			files[i].fname = NULL;	/* watch out for ref thru this */
 			files[i].fp = NULL;
 		}
@@ -1715,17 +1851,22 @@ Cell *closefile(Node **a, int n)
 
 void closeall(void)
 {
-	int i, stat;
+	size_t i;
+	int stat;
 
-	for (i = 0; i < FOPEN_MAX; i++) {
+	for (i = 0; i < nfiles; i++) {
 		if (files[i].fp) {
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
-			if (files[i].mode == '|' || files[i].mode == LE)
-				stat = pclose(files[i].fp);
+			if (i == 0)
+				stat = fpurge(files[i].fp) == EOF;
+			else if (i <= 2)
+				stat = fflush(files[i].fp) == EOF;
+			else if (files[i].mode == '|' || files[i].mode == LE)
+				stat = pclose(files[i].fp) == -1;
 			else
-				stat = fclose(files[i].fp);
-			if (stat == EOF)
+				stat = fclose(files[i].fp) == EOF;
+			if (stat)
 				WARNING( "i/o error occurred while closing %s", files[i].fname );
 		}
 	}
@@ -1733,24 +1874,25 @@ void closeall(void)
 
 void flush_all(void)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < FOPEN_MAX; i++)
+	for (i = 0; i < nfiles; i++)
 		if (files[i].fp)
 			fflush(files[i].fp);
 }
 
-void backsub(char **pb_ptr, char **sptr_ptr);
+void backsub(uschar **pb_ptr, const uschar **sptr_ptr);
 
 Cell *sub(Node **a, int nnn)	/* substitute command */
 {
-	char *sptr, *pb, *q;
+	const uschar *sptr;
+	uschar *q;
 	Cell *x, *y, *result;
-	char *t, *buf;
+	uschar *t, *buf, *pb;
 	fa *pfa;
 	int bufsz = recsize;
 
-	if ((buf = (char *) malloc(bufsz)) == NULL)
+	if ((buf = malloc(bufsz)) == NULL)
 		FATAL("out of memory in sub");
 	x = execute(a[3]);	/* target string */
 	t = getsval(x);
@@ -1805,13 +1947,15 @@ Cell *sub(Node **a, int nnn)	/* substitute command */
 Cell *gsub(Node **a, int nnn)	/* global substitute */
 {
 	Cell *x, *y;
-	char *rptr, *sptr, *t, *pb, *q;
-	char *buf;
+	const char *rptr;
+	const uschar *sptr;
+	uschar *t, *q;
+	uschar *pb, *buf;
 	fa *pfa;
 	int mflag, tempstat, num;
 	int bufsz = recsize;
 
-	if ((buf = (char *) malloc(bufsz)) == NULL)
+	if ((buf = malloc(bufsz)) == NULL)
 		FATAL("out of memory in gsub");
 	mflag = 0;	/* if mflag == 0, can replace empty string */
 	num = 0;
@@ -1887,9 +2031,10 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 		adjbuf(&buf, &bufsz, 1+strlen(sptr)+pb-buf, 0, &pb, "gsub");
 		while ((*pb++ = *sptr++) != 0)
 			;
-	done:	if (pb > buf + bufsz)
-			FATAL("gsub result2 %.30s too big; can't happen", buf);
-		*pb = '\0';
+	done:	if (pb < buf + bufsz)
+			*pb = '\0';
+		else if (*(pb-1) != '\0')
+			FATAL("gsub result2 %.30s truncated; can't happen", buf);
 		setsval(x, buf);	/* BUG: should be able to avoid copy + free */
 		pfa->initstat = tempstat;
 	}
@@ -1902,9 +2047,149 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 	return(x);
 }
 
-void backsub(char **pb_ptr, char **sptr_ptr)	/* handle \\& variations */
+Cell *gensub(Node **a, int nnn)	/* global selective substitute */
+	/* XXX incomplete - doesn't support backreferences \0 ... \9 */
+{
+	Cell *x, *y, *res, *h;
+	char *rptr;
+	const uschar *sptr;
+	uschar *q, *pb, *t, *buf;
+	fa *pfa;
+	int mflag, tempstat, num, whichm;
+	int bufsz = recsize;
+
+	if ((buf = malloc(bufsz)) == NULL)
+		FATAL("out of memory in gensub");
+	mflag = 0;	/* if mflag == 0, can replace empty string */
+	num = 0;
+	x = execute(a[4]);	/* source string */
+	t = getsval(x);
+	res = copycell(x);	/* target string - initially copy of source */
+	if (a[0] == 0)		/* 0 => a[1] is already-compiled regexpr */
+		pfa = (fa *) a[1];	/* regular expression */
+	else {
+		y = execute(a[1]);
+		pfa = makedfa(getsval(y), 1);
+		tempfree(y);
+	}
+	y = execute(a[2]);	/* replacement string */
+	h = execute(a[3]);	/* which matches should be replaced */
+	sptr = getsval(h);
+	if (sptr[0] == 'g' || sptr[0] == 'G')
+		whichm = -1;
+	else {
+		/*
+		 * The specified number is index of replacement, starting
+		 * from 1. GNU awk treats index lower than 0 same as
+		 * 1, we do same for compatibility.
+		 */
+		whichm = (int) getfval(h) - 1;
+		if (whichm < 0)
+			whichm = 0;
+	}
+	tempfree(h);
+
+	if (pmatch(pfa, t)) {
+		char *sl;
+
+		tempstat = pfa->initstat;
+		pfa->initstat = 2;
+		pb = buf;
+		rptr = getsval(y);
+		/*
+		 * XXX if there are any backreferences in subst string,
+		 * complain now.
+		 */
+		for(sl=rptr; (sl = strchr(sl, '\\')) && sl[1]; sl++) {
+			if (strchr("0123456789", sl[1])) {
+				FATAL("gensub doesn't support backreferences (subst \"%s\")", rptr);
+			}
+		}
+		
+		do {
+			if (whichm >= 0 && whichm != num) {
+				num++;
+				adjbuf(&buf, &bufsz, (pb - buf) + (patbeg - t) + patlen, recsize, &pb, "gensub");
+
+				/* copy the part of string up to and including
+				 * match to output buffer */
+				while (t < patbeg + patlen)
+					*pb++ = *t++;
+				continue;
+			}
+
+			if (patlen == 0 && *patbeg != 0) {	/* matched empty string */
+				if (mflag == 0) {	/* can replace empty */
+					num++;
+					sptr = rptr;
+					while (*sptr != 0) {
+						adjbuf(&buf, &bufsz, 5+pb-buf, recsize, &pb, "gensub");
+						if (*sptr == '\\') {
+							backsub(&pb, &sptr);
+						} else if (*sptr == '&') {
+							sptr++;
+							adjbuf(&buf, &bufsz, 1+patlen+pb-buf, recsize, &pb, "gensub");
+							for (q = patbeg; q < patbeg+patlen; )
+								*pb++ = *q++;
+						} else
+							*pb++ = *sptr++;
+					}
+				}
+				if (*t == 0)	/* at end */
+					goto done;
+				adjbuf(&buf, &bufsz, 2+pb-buf, recsize, &pb, "gensub");
+				*pb++ = *t++;
+				if (pb > buf + bufsz)	/* BUG: not sure of this test */
+					FATAL("gensub result0 %.30s too big; can't happen", buf);
+				mflag = 0;
+			}
+			else {	/* matched nonempty string */
+				num++;
+				sptr = t;
+				adjbuf(&buf, &bufsz, 1+(patbeg-sptr)+pb-buf, recsize, &pb, "gensub");
+				while (sptr < patbeg)
+					*pb++ = *sptr++;
+				sptr = rptr;
+				while (*sptr != 0) {
+					adjbuf(&buf, &bufsz, 5+pb-buf, recsize, &pb, "gensub");
+					if (*sptr == '\\') {
+						backsub(&pb, &sptr);
+					} else if (*sptr == '&') {
+						sptr++;
+						adjbuf(&buf, &bufsz, 1+patlen+pb-buf, recsize, &pb, "gensub");
+						for (q = patbeg; q < patbeg+patlen; )
+							*pb++ = *q++;
+					} else
+						*pb++ = *sptr++;
+				}
+				t = patbeg + patlen;
+				if (patlen == 0 || *t == 0 || *(t-1) == 0)
+					goto done;
+				if (pb > buf + bufsz)
+					FATAL("gensub result1 %.30s too big; can't happen", buf);
+				mflag = 1;
+			}
+		} while (pmatch(pfa,t));
+		sptr = t;
+		adjbuf(&buf, &bufsz, 1+strlen(sptr)+pb-buf, 0, &pb, "gensub");
+		while ((*pb++ = *sptr++) != 0)
+			;
+	done:	if (pb > buf + bufsz)
+			FATAL("gensub result2 %.30s too big; can't happen", buf);
+		*pb = '\0';
+		setsval(res, buf);
+		pfa->initstat = tempstat;
+	}
+	tempfree(x);
+	tempfree(y);
+	free(buf);
+	return(res);
+}
+
+void backsub(uschar **pb_ptr, const uschar **sptr_ptr)/* handle \\& variations */
 {						/* sptr[0] == '\\' */
-	char *pb = *pb_ptr, *sptr = *sptr_ptr;
+	uschar *pb = *pb_ptr;
+	const uschar *sptr = *sptr_ptr;
 
 	if (sptr[1] == '\\') {
 		if (sptr[2] == '\\' && sptr[3] == '&') { /* \\\& -> \& */

@@ -1,0 +1,732 @@
+.\"	$NetBSD: awk.1,v 1.2 2011/04/20 10:10:32 drochner Exp $
+.\"
+.\" Copyright (C) Lucent Technologies 1997
+.\" All Rights Reserved
+.\"
+.\" Permission to use, copy, modify, and distribute this software and
+.\" its documentation for any purpose and without fee is hereby
+.\" granted, provided that the above copyright notice appear in all
+.\" copies and that both that the copyright notice and this
+.\" permission notice and warranty disclaimer appear in supporting
+.\" documentation, and that the name Lucent Technologies or any of
+.\" its entities not be used in advertising or publicity pertaining
+.\" to distribution of the software without specific, written prior
+.\" permission.
+.\"
+.\" LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+.\" INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+.\" IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+.\" SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+.\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+.\" THIS SOFTWARE.
+.\"
+.Dd May 25, 2008
+.Dt AWK 1
+.Os
+.Sh NAME
+.Nm awk
+.Nd pattern-directed scanning and processing language
+.Sh SYNOPSIS
+.Nm
+.Op Fl F Ar fs
+.Op Fl v Ar var=value
+.Op Fl safe
+.Op Fl d Ns Op Ar N
+.Op Ar prog | Fl f Ar filename
+.Ar
+.Nm
+.Fl version
+.Sh DESCRIPTION
+.Nm
+is the Bell Labs' implementation of the AWK programming language as
+described in the
+.Em The AWK Programming Language
+by
+A. V. Aho, B. W. Kernighan, and P. J. Weinberger.
+.Pp
+.Nm
+scans each input
+.Ar file
+for lines that match any of a set of patterns specified literally in
+.Ar prog
+or in one or more files
+specified as
+.Fl f Ar filename .
+With each pattern
+there can be an associated action that will be performed
+when a line of a
+.Ar file
+matches the pattern.
+Each line is matched against the
+pattern portion of every pattern-action statement;
+the associated action is performed for each matched pattern.
+The file name
+.Ar -
+means the standard input.
+Any
+.Ar file
+of the form
+.Ar var=value
+is treated as an assignment, not a filename,
+and is executed at the time it would have been opened if it were a filename.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl d Ns Op Ar N
+Set debug level to specified number
+.Ar N .
+If the number is omitted, debug level is set to 1.
+.It Fl f Ar filename
+Read the AWK program source from specified file
+.Ar filename ,
+instead of the first command line argument.
+Multiple
+.Fl f
+options may be specified.
+.It Fl F Ar fs
+Set the input field separator
+.Va FS
+to the regular expression
+.Ar fs .
+.It Fl mr Ar NNN , Fl mf Ar NNN
+Obsolete, no longer needed options.
+Set limit on maximum record or
+fields number.
+.It Fl safe
+Potentially unsafe functions such as
+.Fn system
+make the program abort (with a warning message).
+.It Fl v Ar var Ns = Ns Ar value
+Assign the value
+.Ar value
+to the variable
+.Va var
+before
+.Ar prog
+is executed.
+Any number of
+.Fl v
+options may be present.
+.It Fl version
+Print
+.Nm
+version on standard output and exit.
+.El
+.Pp
+An input line is normally made up of fields separated by white space,
+or by regular expression
+.Va FS .
+The fields are denoted
+.Va $1 ,
+.Va $2 ,
+\&..., while
+.Va $0
+refers to the entire line.
+If
+.Va FS
+is null, the input line is split into one field per character.
+.Pp
+A pattern-action statement has the form
+.Lp
+.Dl pattern \&{ action \&}
+.Lp
+A missing \&{ action \&}
+means print the line;
+a missing pattern always matches.
+Pattern-action statements are separated by newlines or semicolons.
+.Pp
+An action is a sequence of statements.
+Statements are terminated by
+semicolons, newlines or right braces.
+An empty
+.Ar expression-list
+stands for
+.Va $0 .
+String constants are quoted
+.Em \&"\ \&" ,
+with the usual C escapes recognized within.
+Expressions take on string or numeric values as appropriate,
+and are built using the
+.Sx Operators
+(see next subsection).
+Variables may be scalars, array elements
+(denoted
+.Va x[i] )
+or fields.
+Variables are initialized to the null string.
+Array subscripts may be any string,
+not necessarily numeric;
+this allows for a form of associative memory.
+Multiple subscripts such as
+.Va [i,j,k]
+are permitted; the constituents are concatenated,
+separated by the value of
+.Va SUBSEP .
+.Ss Operators
+.Nm
+operators, in order of decreasing precedence, are:
+.Pp
+.Bl -tag -width ident -compact
+.It Ic (...)
+Grouping
+.It Ic $
+Field reference
+.It Ic ++ --
+Increment and decrement, can be used either as postfix or prefix.
+.It Ic ^
+Exponentiation (the
+.Ic **
+form is also supported, and
+.Ic **=
+for the assignment operator).
+.It + - \&!
+Unary plus, unary minus and logical negation.
+.It * / %
+Multiplication, division and modulus.
+.It + -
+Addition and subtraction.
+.It Ar space
+String concatenation.
+.It Ic \*[Lt] \*[Gt]
+.It Ic \*[Le] \*[Ge]
+.It Ic != ==
+Regular relational operators
+.It Ic ~ !~
+Regular expression match and not match
+.It Ic in
+Array membership
+.It Ic "\*[Am]\*[Am]"
+Logical AND
+.It Ic "||"
+Logical OR
+.It Ic ?:
+C conditional expression.
+This is used as
+.Ar expr1 Ic \&? Ar expr2 Ic \&: Ar expr3 No .
+If
+.Ar expr1
+is true, the result value is
+.Ar expr2 ,
+otherwise it is
+.Ar expr3 .
+Only one of
+.Ar expr2
+and
+.Ar expr3
+is evaluated.
+.It Ic = += -=
+.It Ic *= /= %= ^=
+Assignment and Operator-Assignment
+.El
+.Ss Control Statements
+The control statements are as follows:
+.Pp
+.Bl -hang -offset indent -width indent -compact
+.It Ic if \&( Ar expression Ic \&) Ar statement Bq Ic else Ar statement
+.It Ic while \&( Ar expression Ic \&) Ar statement
+.It Ic for \&( Ar expression Ic \&; Ar expression Ic \&; \
+Ar expression Ic \&) Ar statement
+.It Ic for \&( Va var Ic in Ar array Ic \&) Ar statement
+.It Ic do Ar statement Ic while \&( Ar expression Ic \&)
+.It Ic break
+.It Ic continue
+.It Ic delete Va array Bq Ar expression
+.It Ic delete Va array
+.It Ic exit Bq Ar expression
+.Ar expression
+.It Ic return Bq Ar expression
+.It Ic \&{ Ar [ statement ... ] Ic \&}
+.El
+.Ss I/O Statements
+The input/output statements are as follows:
+.Pp
+.Bl -tag -width indent
+.It Fn close expr
+Closes the file or pipe
+.Ar expr .
+Returns zero on success; otherwise nonzero.
+.It Fn fflush expr
+Flushes any buffered output for the file or pipe
+.Ar expr .
+Returns zero on success; otherwise nonzero.
+.It Ic getline Bq Va var
+Set
+.Va var
+(or
+.Va $0 if
+.Va var
+is not specified)
+to the next input record from the current input file.
+.Ic getline
+returns 1 for a successful input,
+0 for end of file, and \-1 for an error.
+.It Ic getline Bo Va var Bc Ic \*[Lt] Ar file
+Set
+.Va var
+(or
+.Va $0 if
+.Va var
+is not specified)
+to the next input record from the specified file
+.Ar file .
+.It Ar expr Ic \&| getline
+Pipes the output of
+.Ar expr
+into
+.Ic getline ;
+each call of
+.Ic getline
+returns the next line of output from
+.Ar expr .
+.It Ic next
+Skip remaining patterns on this input line.
+.It Ic nextfile
+Skip rest of this file, open next, start at top.
+.It Ic print Bo Ar expr-list Bc Bq Ic \*[Gt] Ar file
+The
+.Ic print
+statement prints its arguments on the standard output (or to a file
+if
+.Ic \*[Gt] file
+or to a pipe if
+.Ic | Ar expr
+is present),
+separated by the current output field separator
+.Va OFS ,
+and terminated by the
+output record separator
+.Va ORS .
+Both
+.Ar file
+and
+.Ar expr
+may be literal names or parenthesized expressions; identical string values in
+different statements denote the same open file.
+.It Ic printf Ar format Bo Ic \&, Ar expr-list Bc Bq Ic \*[Gt] Ar file
+Format and print its expression list according to
+.Ar format .
+See
+.Xr printf 3
+for list of supported formats and their meaning.
+.El
+.Ss Mathematical and Numeric Functions
+AWK has the following mathematical and numerical functions built-in:
+.Pp
+.Bl -tag -width indent
+.It Fn atan2 x y
+Returns the arctangent of
+.Ar x Ic / Ar y
+in radians.
+See also
+.Xr atan2 3 .
+.It Fn cos expr
+Computes the cosine of
+.Ar expr ,
+measured in radians.
+See also
+.Xr cos 3 .
+.It Fn exp expr
+Computes the exponential value of the given argument
+.Ar expr .
+See also
+.Xr exp 3 .
+.It Fn int expr
+Truncates
+.Ar expr
+to integer.
+.It Fn log expr
+Computes the value of the natural logarithm of argument
+.Ar expr .
+See also
+.Xr log 3 .
+.It Fn rand
+Returns random number between 0 and 1.
+.It Fn sin expr
+Computes the sine of
+.Ar expr ,
+measured in radians.
+See also
+.Xr sin 3 .
+.It Fn sqrt expr
+Computes the non-negative square root of
+.Ar expr .
+See also
+.Xr sqrt 3 .
+.It Fn srand [expr]
+Sets seed for random number generator (
+.Fn rand )
+and returns the previous seed.
+.El
+.Ss String Functions
+AWK has the following string functions built-in:
+.Pp
+.Bl -tag -width indent
+.It Fn gensub r s h [t]
+Search the target string
+.Ar t
+for matches of the regular expression
+.Ar r .
+If
+.Ar h
+is a string beginning with
+.Ic g
+or
+.Ic G ,
+then replace all matches of
+.Ar r
+with
+.Ar s .
+Otherwise,
+.Ar h
+is a number indicating which match of
+.Ar r
+to replace.
+If no
+.Ar t
+is supplied,
+.Va $0
+is used instead.
+.\"Within the replacement text
+.\".Ar s ,
+.\"the sequence
+.\".Ar \en ,
+.\"where
+.\".Ar n
+.\"is a digit from 1 to 9, may be used to indicate just the text that
+.\"matched the
+.\".Ar n Ap th
+.\"parenthesized subexpression.
+.\"The sequence
+.\".Ic \e0
+.\"represents the entire text, as does the character
+.\".Ic & .
+Unlike
+.Fn sub
+and
+.Fn gsub ,
+the modified string is returned as the result of the function,
+and the original target is
+.Em not
+changed.
+Note that the
+.Ar \en
+sequences within replacement string
+.Ar s
+supported by GNU
+.Nm
+are
+.Em not
+supported at this moment.
+.It Fn gsub r t "[s]"
+same as
+.Fn sub
+except that all occurrences of the regular expression
+are replaced;
+.Fn sub
+and
+.Fn gsub
+return the number of replacements.
+.It Fn index s t
+the position in
+.Ar s
+where the string
+.Ar t
+occurs, or 0 if it does not.
+.It Fn length "[string]"
+the length of its argument
+taken as a string,
+or of
+.Va $0
+if no argument.
+.It Fn match s r
+the position in
+.Ar s
+where the regular expression
+.Ar r
+occurs, or 0 if it does not.
+The variables
+.Va RSTART
+and
+.Va RLENGTH
+are set to the position and length of the matched string.
+.It Fn split s a "[fs]"
+splits the string
+.Ar s
+into array elements
+.Va a[1] ,
+.Va a[2] ,
+\&...,
+.Va a[n] ,
+and returns
+.Va n .
+The separation is done with the regular expression
+.Ar fs
+or with the field separator
+.Va FS
+if
+.Ar fs
+is not given.
+An empty string as field separator splits the string
+into one array element per character.
+.It Fn sprintf fmt expr "..."
+Returns the string resulting from formatting
+.Ar expr
+according to the
+.Xr printf 3
+format
+.Ar fmt .
+.It Fn sub r t "[s]"
+substitutes
+.Ar t
+for the first occurrence of the regular expression
+.Ar r
+in the string
+.Ar s .
+If
+.Ar s
+is not given,
+.Va $0
+is used.
+.It Fn substr s m [n]
+Returns the at most
+.Ar n Ns No -character
+substring of
+.Ar s
+starting at position
+.Ar m ,
+counted from 1.
+If
+.Ar n
+is omitted, the rest of
+.Ar s
+is returned.
+.It Fn tolower str
+returns a copy of
+.Ar str
+with all upper-case characters translated to their
+corresponding lower-case equivalents.
+.It Fn toupper str
+returns a copy of
+.Ar str
+with all lower-case characters translated to their
+corresponding upper-case equivalents.
+.El
+.Ss Time Functions
+This
+.Nm
+provides the following two functions for obtaining time
+stamps and formatting them:
+.Bl -tag -width indent
+.It Fn systime
+Returns the value of time in seconds since the start of
+.Tn Unix
+Epoch (Midnight, January 1, 1970, Coordinated Universal Time).
+See also
+.Xr time 3 .
+.It Fn strftime "[format [, timestamp]]"
+Formats the time
+.Ar timestamp
+according to the string
+.Ar format .
+.Ar timestamp
+should be in same form as value returned by
+.Fn systime .
+If
+.Ar timestamp
+is missing, current time is used.
+If
+.Ar format
+is missing, a default format equivalent to the output of
+.Xr date 1
+would be used.
+See the specification of ANSI C
+.Xr strftime 3
+for the format conversions which are supported.
+.El
+.Ss Other built-in functions
+.Bl -tag -width indent
+.It Fn system cmd
+executes
+.Ar cmd
+and returns its exit status
+.El
+.Ss Patterns
+Patterns are arbitrary Boolean combinations
+(with
+.Ic "! || \*[Am]\*[Am]" )
+of regular expressions and
+relational expressions.
+Regular expressions are as in
+.Xr egrep 1 .
+Isolated regular expressions
+in a pattern apply to the entire line.
+Regular expressions may also occur in
+relational expressions, using the operators
+.Ic ~
+and
+.Ic !~ .
+.Ic / re /
+is a constant regular expression;
+any string (constant or variable) may be used
+as a regular expression, except in the position of an isolated regular expression
+in a pattern.
+.Pp
+A pattern may consist of two patterns separated by a comma;
+in this case, the action is performed for all lines
+from an occurrence of the first pattern
+though an occurrence of the second.
+.Pp
+A relational expression is one of the following:
+.Bl -tag -offset indent -width indent -compact
+.It Ar expression matchop regular-expression
+.It Ar expression relop expression
+.It Ar expression Ic in Ar array-name
+.It ( Ar expr , expr,\&... Ic ") in" Ar array-name
+.El
+.Pp
+where a
+.Ar relop
+is any of the six relational operators in C,
+and a
+.Ar matchop
+is either
+.Ic ~
+(matches)
+or
+.Ic !~
+(does not match).
+A conditional is an arithmetic expression,
+a relational expression,
+or a Boolean combination
+of these.
+.Pp
+The special patterns
+.Ic BEGIN
+and
+.Ic END
+may be used to capture control before the first input line is read
+and after the last.
+.Ic BEGIN
+and
+.Ic END
+do not combine with other patterns.
+.Ss Built-in Variables
+Variable names with special meanings:
+.Bl -hang -width FILENAMES
+.It Va ARGC
+argument count, assignable
+.It Va ARGV
+argument array, assignable;
+non-null members are taken as filenames
+.It Va CONVFMT
+conversion format used when converting numbers
+(default
+.Qq %.6g )
+.It Va ENVIRON
+array of environment variables; subscripts are names.
+.It Va FILENAME
+the name of the current input file
+.It Va FNR
+ordinal number of the current record in the current file
+.It Va FS
+regular expression used to separate fields; also settable
+by option
+.Fl F Ar fs .
+.It Va NF
+number of fields in the current record
+.It Va NR
+ordinal number of the current record
+.It Va OFMT
+output format for numbers (default
+.Qq "%.6g"
+)
+.It Va OFS
+output field separator (default blank)
+.It Va ORS
+output record separator (default newline)
+.It Va RS
+input record separator (default newline)
+.It Va RSTART
+Position of the first character matched by
+.Fn match ;
+0 if not match.
+.It Va RLENGTH
+Length of the string matched by
+.Fn match ;
+-1 if no match.
+.It Va SUBSEP
+separates multiple subscripts (default 034)
+.El
+.Ss Functions
+Functions may be defined (at the position of a pattern-action statement) thus:
+.Bd -filled -offset indent
+.Ic function foo(a, b, c) { ...; return x }
+.Ed
+.Pp
+Parameters are passed by value if scalar and by reference if array name;
+functions may be called recursively.
+Parameters are local to the function; all other variables are global.
+Thus local variables may be created by providing excess parameters in
+the function definition.
+.Sh EXAMPLES
+.Bl -tag -width indent -compact
+.It Ic length($0) \*[Gt] 72
+Print lines longer than 72 characters.
+.Pp
+.It Ic \&{ print $2, $1 \&}
+Print first two fields in opposite order.
+.Pp
+.It Ic BEGIN { FS =  \&",[ \et]*|[ \et]+\&" }
+.It Ic "\ \ \ \ \ \ {" print \&$2, \&$1 }
+Same, with input fields separated by comma and/or blanks and tabs.
+.Pp
+.It Ic "\ \ \ \ {" s += $1 }
+.It Ic END { print \&"sum is\&", s, \&" average is\ \&",\ s/NR\ }
+Add up first column, print sum and average.
+.Pp
+.It Ic /start/, /stop/
+Print all lines between start/stop pairs.
+.Pp
+.It Ic BEGIN { # Simulate echo(1)
+.It Ic "\ \ \ \ " for (i = 1; i \*[Lt] ARGC;\ i++)\ printf\ \&"%s\ \&",\ ARGV[i]
+.It Ic "\ \ \ \ " printf \&"\en\&"
+.It Ic "\ \ \ \ " exit }
+.El
+.Sh SEE ALSO
+.Xr egrep 1 ,
+.Xr lex 1 ,
+.Xr sed 1 ,
+.Xr atan2 3 ,
+.Xr cos 3 ,
+.Xr exp 3 ,
+.Xr log 3 ,
+.Xr sin 3 ,
+.Xr sqrt 3 ,
+.Xr strftime 3 ,
+.Xr time 3
+.Pp
+A. V. Aho, B. W. Kernighan, P. J. Weinberger,
+.Em The AWK Programming Language ,
+Addison-Wesley, 1988.
+ISBN 0-201-07981-X
+.Pp
+.Em AWK Language Programming ,
+Edition 1.0, published by the Free Software Foundation, 1995
+.Sh HISTORY
+.Nm nawk
+has been the default system
+.Nm
+since
+.Nx 2.0 ,
+replacing the previously used GNU
+.Nm .
+.Sh BUGS
+There are no explicit conversions between numbers and strings.
+To force an expression to be treated as a number add 0 to it;
+to force it to be treated as a string concatenate
+\&"\&" to it.
+.Pp
+The scope rules for variables in functions are a botch;
+the syntax is worse.

@@ -22,6 +22,10 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,7 +47,11 @@ typedef struct Keyword {
 	int	type;
 } Keyword;
 
-Keyword keywords[] ={	/* keep sorted: binary searched */
+int peek(void);
+int gettok(char **, int *);
+int binsearch(const char *, const Keyword *, int);
+
+const Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "BEGIN",	XBEGIN,		XBEGIN },
 	{ "END",	XEND,		XEND },
 	{ "NF",		VARNF,		VARNF },
@@ -61,6 +69,7 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "for",	FOR,		FOR },
 	{ "func",	FUNC,		FUNC },
 	{ "function",	FUNC,		FUNC },
+	{ "gensub",	GENSUB,		GENSUB },
 	{ "getline",	GETLINE,	GETLINE },
 	{ "gsub",	GSUB,		GSUB },
 	{ "if",		IF,		IF },
@@ -81,9 +90,11 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "sprintf",	SPRINTF,	SPRINTF },
 	{ "sqrt",	FSQRT,		BLTIN },
 	{ "srand",	FSRAND,		BLTIN },
+	{ "strftime",	FSTRFTIME,	BLTIN },
 	{ "sub",	SUB,		SUB },
 	{ "substr",	SUBSTR,		SUBSTR },
 	{ "system",	FSYSTEM,	BLTIN },
+	{ "systime",	FSYSTIME,	BLTIN },
 	{ "tolower",	FTOLOWER,	BLTIN },
 	{ "toupper",	FTOUPPER,	BLTIN },
 	{ "while",	WHILE,		WHILE },
@@ -101,9 +112,9 @@ int peek(void)
 int gettok(char **pbuf, int *psz)	/* get next input token */
 {
 	int c, retc;
-	char *buf = *pbuf;
+	uschar *buf = (uschar *) *pbuf;
 	int sz = *psz;
-	char *bp = buf;
+	uschar *bp = buf;
 
 	c = input();
 	if (c == 0)
@@ -146,7 +157,7 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 		}
 		*bp = 0;
 		strtod(buf, &rem);	/* parse the number */
-		if (rem == buf) {	/* it wasn't a valid number at all */
+		if (rem == (char *)buf) {	/* it wasn't a valid number at all */
 			buf[1] = 0;	/* return one character as token */
 			retc = buf[0];	/* character is its own type */
 			unputstr(rem+1); /* put rest back for later */
@@ -173,7 +184,7 @@ int yylex(void)
 	static char *buf = 0;
 	static int bufsize = 5; /* BUG: setting this small causes core dump! */
 
-	if (buf == 0 && (buf = (char *) malloc(bufsize)) == NULL)
+	if (buf == 0 && (buf = malloc(bufsize)) == NULL)
 		FATAL( "out of space in yylex" );
 	if (sc) {
 		sc = 0;
@@ -357,11 +368,11 @@ int yylex(void)
 int string(void)
 {
 	int c, n;
-	char *s, *bp;
-	static char *buf = 0;
+	uschar *s, *bp;
+	static uschar *buf = 0;
 	static int bufsz = 500;
 
-	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
+	if (buf == 0 && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for strings");
 	for (bp = buf; (c = input()) != '"'; ) {
 		if (!adjbuf(&buf, &bufsz, bp-buf+2, 500, &bp, "string"))
@@ -378,6 +389,7 @@ int string(void)
 		case '\\':
 			c = input();
 			switch (c) {
+			case '\n': break;
 			case '"': *bp++ = '"'; break;
 			case 'n': *bp++ = '\n'; break;	
 			case 't': *bp++ = '\t'; break;
@@ -416,7 +428,9 @@ int string(void)
 				break;
 			    }
 
-			default: 
+			default:
+				WARNING("warning: escape sequence `\\%c' "
+				    "treated as plain `%c'", c, c);
 				*bp++ = c;
 				break;
 			}
@@ -454,7 +468,7 @@ int binsearch(const char *w, const Keyword *kp, int n)
 
 int word(char *w) 
 {
-	Keyword *kp;
+	const Keyword *kp;
 	int c, n;
 
 	n = binsearch(w, keywords, sizeof(keywords)/sizeof(keywords[0]));
@@ -504,11 +518,11 @@ void startreg(void)	/* next call to yylex will return a regular expression */
 int regexpr(void)
 {
 	int c;
-	static char *buf = 0;
+	static uschar *buf = 0;
 	static int bufsz = 500;
-	char *bp;
+	uschar *bp;
 
-	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
+	if (buf == 0 && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for rex expr");
 	bp = buf;
 	for ( ; (c = input()) != '/' && c != 0; ) {

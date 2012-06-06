@@ -1,0 +1,22 @@
+$NetBSD: TODO,v 1.1 2010/08/26 14:57:16 christos Exp $
+
+Besides general regression testing to ensure everything still works
+with nawk instead of gawk, following GNU awk extensions should be implemented
+or handled somehow (the list is probably incomplete, please add entries 
+if anything is missing):
+
+* String functions: gensub() (partly done, finish backref. support)
+* (done) Time functions: strftime(), systime()
+* --posix flag, which would switch off nawk extensions over POSIX awk (?)
+* special file names: /dev/pid, /dev/ppid, /dev/pgrpid, /dev/user,
+	/dev/stdin, /dev/stdout, /dev/stderr, /dev/fd/X
+* special variables: ARGIND, ERRNO, FIELDWIDTHS, IGNORECASE, RT
+
+Also, the manpage should be improved to be generally more helpful
+and document extensions over what POSIX says about awk.
+
+Other misc:
+* run.c: don't limit files[] to FOPEN_MAX (which is ridiculously low),
+  make the limit the current process open file limit
+* nawk doesn't permit empty RE, like
+// { do_something; }

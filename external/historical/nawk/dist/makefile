@@ -26,13 +26,13 @@ CFLAGS = -g
 CFLAGS = -O2
 CFLAGS =
 
+CC = gcc -Wall -g
+CC = /opt/SUNWspro/bin/cc
+CC = /opt/pure/purify/purify cc
+CC = cc
 CC = gcc -Wall -g -Wwrite-strings
 CC = gcc -fprofile-arcs -ftest-coverage # then gcov f1.c; cat f1.c.gcov
-CC = gcc -Wall -g
-CC = cc
 CC = gcc -O4
-CC = cc -O
-
 
 YACC = bison -y
 YACC = yacc
@@ -49,19 +49,13 @@ LISTING = awk.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c \
 SHIP = README FIXES $(SOURCE) ytab[ch].bak makefile makefile.win \
 	vcvars32.bat buildwin.bat awk.1
 
-all: awk
-
-install: awk awk.1
-	install -m 755 -o bin -g operator awk /usr/bin/awk
-	install -m 644 -o bin -g operator awk.1 /usr/man/man1
-
-awk:	ytab.o $(OFILES)
-	$(CC) $(CFLAGS) ytab.o $(OFILES) $(ALLOC)  -lm -o $@
+a.out:	ytab.o $(OFILES)
+	$(CC) $(CFLAGS) ytab.o $(OFILES) $(ALLOC)  -lm
 
 $(OFILES):	awk.h ytab.h proto.h
 
-ytab.o ytab.c ytab.h:	awk.h proto.h awkgram.y
-	$(YACC) $(YFLAGS) awkgram.y 2>/dev/null
+ytab.o:	awk.h proto.h awkgram.y
+	$(YACC) $(YFLAGS) awkgram.y
 	mv y.tab.c ytab.c
 	mv y.tab.h ytab.h
 	$(CC) $(CFLAGS) -c ytab.c
@@ -91,4 +85,4 @@ names:
 	@echo $(LISTING)
 
 clean:
-	rm -f awk *.o *.obj maketab maketab.exe *.bb *.bbg *.da *.gcov *.gcno *.gcda # proctab.c
+	rm -f a.out *.o *.obj maketab maketab.exe ytab.[ch] *.bb *.bbg *.da *.gcov *.gcno *.gcda # proctab.c
