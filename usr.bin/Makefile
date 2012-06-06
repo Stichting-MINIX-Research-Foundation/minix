@@ -5,7 +5,7 @@
 # NetBSD imports
 SUBDIR= login indent m4 make mktemp stat tic sed mkdep uniq seq du man \
 	apropos chpass newgrp passwd bzip2 bzip2recover gzip su genassym \
-	ldd/elf32 .WAIT ldd
+	xinstall ldd/elf32 .WAIT ldd
 
 # Non-NetBSD imports
 SUBDIR+= ministat

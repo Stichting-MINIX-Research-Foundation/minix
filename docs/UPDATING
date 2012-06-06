@@ -1,3 +1,15 @@
+20120608:
+	New install and mk files require the following steps:
+
+	# cp /usr/src/share/mk/*.mk /usr/share/mk
+	# cd /usr/src
+	# make -C usr.bin/xinstall all
+	# cp usr.bin/xinstall/xinstall /usr/bin/install
+	# rm /bin/install
+
+	then do
+	# make clean world
+
 20120510:
 	WARNING: the shared libraries major revision set to 0 will break
 	existing dynamically linked binaries if they exist.

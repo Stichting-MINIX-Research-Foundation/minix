@@ -13,7 +13,7 @@ SUBDIR=	add_route arp ash at \
 	eject elvis env expand factor fbdctl \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	ftp101 gcore gcov-pull getty grep head hexdump host \
-	hostaddr id ifconfig ifdef install \
+	hostaddr id ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread join kill last \
 	less loadkeys loadramdisk logger look lp \
 	lpd ls lspci mail MAKEDEV \

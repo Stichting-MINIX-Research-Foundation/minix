@@ -6,7 +6,7 @@ unix?=		We run MINIX.
 # This variable should be used to differentiate Minix builds in Makefiles.
 __MINIX=	yes
 
-.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y #.sh
+.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
 
 .LIBS:		.a
 
