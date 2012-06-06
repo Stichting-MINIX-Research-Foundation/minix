@@ -1,4 +1,2 @@
-CPPFLAGS+= -D_NETBSD_SOURCE
-
 BINDIR?=/bin
 
