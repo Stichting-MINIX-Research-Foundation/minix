@@ -1,0 +1,66 @@
+.\"	$NetBSD: dbsym.8,v 1.3 2012/03/19 09:13:33 wiz Exp $
+.\"
+.Dd March 19, 2012
+.Dt DBSYM 8
+.Os
+.Sh NAME
+.Nm dbsym
+.Nd copy kernel symbol table into db_symtab space
+.Sh SYNOPSIS
+.Nm
+.Op Fl pv
+.Op Fl b Ar bfdname
+.Ar kernel
+.Sh DESCRIPTION
+.Nm
+is used to copy the symbol table in a newly linked kernel into the
+.Va db_symtab
+array (in the data section) so that the
+.Xr ddb 4
+kernel debugger can find the symbols.
+This program is only used
+on systems for which the boot program does not load the symbol table
+into memory with the kernel.
+The space for these symbols is
+reserved in the data segment using a config option like:
+.Dl options		SYMTAB_SPACE=72000
+The size of the db_symtab array (the value of SYMTAB_SPACE) must be
+at least as large as the kernel symbol table.
+If insufficient space
+is reserved, dbsym will refuse to copy the symbol table.
+.Pp
+To recognize kernel executable format, the
+.Fl b
+flag specifies BFD name of kernel.
+.Pp
+If the
+.Fl p
+flag is given,
+.Nm
+will report the size of the kernel symbol table and the size of the
+db_symtab space.
+Two values are printed out in a line separated by a space.
+.Pp
+If the
+.Fl v
+flag is given,
+.Nm
+will print out status information as
+it is copying the symbol table.
+.Pp
+Note that debugging symbols are not useful to the
+.Xr ddb 4
+kernel debugger, so to minimize the size of the kernel, one should
+either compile the kernel without debugging symbols (no
+.Fl g
+flag) or use the
+.Xr strip 1
+command to strip debugging symbols from the kernel before
+.Nm
+is used to copy the symbol table.
+The command
+.Dl strip -d netbsd
+will strip out debugging symbols.
+.Sh SEE ALSO
+.Xr strip 1 ,
+.Xr ddb 4

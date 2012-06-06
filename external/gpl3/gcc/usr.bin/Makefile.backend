@@ -1,0 +1,53 @@
+#	$NetBSD: Makefile.backend,v 1.2 2011/07/21 03:13:32 mrg Exp $
+
+NOMAN=		# defined
+BINDIR=		/usr/libexec
+
+CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
+		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+
+.include <bsd.own.mk>
+
+DPADD=		${BACKENDOBJ}/libbackend.a ${LIBIBERTYOBJ}/libiberty.a
+LDADD=		-L${BACKENDOBJ} -lbackend -L${LIBIBERTYOBJ} -liberty
+
+CLEANFILES+=	${PROG}-checksum.c ${PROG}-dummy dummy-checksum.d \
+		dummy-checksum.o genchecksum genchecksum.lo
+
+.include <bsd.prog.mk>
+
+# Don't auto-frob .y or .l files.
+.l.c .y.c .y.h:
+	@true
+
+CPPFLAGS.genchecksum.c+=	-DGENERATOR_FILE -I${GCCARCH} -I${DIST}/include -I${BACKENDOBJ}
+
+genchecksum.lo:
+genchecksum: genchecksum.lo
+	${_MKTARGET_LINK}
+	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+# This is a copy of the ${PROG} target from bsd.prog.mk.
+DUMMYOBJS=	${SRCS:N${PROG}-checksum.c:.c=.o} dummy-checksum.o
+${PROG}-dummy: ${DUMMYOBJS}
+	${_MKTARGET_LINK}
+.if defined(DESTDIR)
+	${_CCLINK} -Wl,-nostdlib \
+	    ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} \
+	    -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/  \
+	    ${DUMMYOBJS} ${LDADD} \
+	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib
+.else
+	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${DUMMYOBJS} ${LDADD}
+.endif	# defined(DESTDIR)
+${PROG}-checksum.c: genchecksum ${PROG}-dummy
+	${_MKTARGET_CREATE}
+	./genchecksum ${PROG}-dummy >${.TARGET}
+
+# Find our (local) libraries
+LIBGMPDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp && ${PRINTOBJDIR}
+LIBMPFRDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/mpfr/lib/libmpfr && ${PRINTOBJDIR}
+LIBMPCDIR!=	cd ${NETBSDSRCDIR}/external/lgpl2/mpc/lib/libmpc && ${PRINTOBJDIR}
+
+LIBGMP=		${LIBGMPDIR}/libgmp.a
+LIBMPFR=	${LIBMPFRDIR}/libmpfr.a
+LIBMPC=		${LIBMPCDIR}/libmpc.a

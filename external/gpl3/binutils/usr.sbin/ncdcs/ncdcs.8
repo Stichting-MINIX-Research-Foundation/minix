@@ -1,0 +1,31 @@
+.\"	$NetBSD: ncdcs.8,v 1.1 2009/08/18 20:22:20 skrll Exp $
+.\"
+.\" Copyright 2002 Jochen Roth
+.\" NetBSD changes copyright 2003 John Gordon
+.\" 
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License,
+.\" Version 2, as published by the Free Software Foundation.
+.\"
+.Dd April 18, 2003
+.Dt NCDCS 1
+.Os
+.Sh NAME
+.Nm ncdcs
+.Nd update the CRC & size in an IBM Network Station 1000 bootable
+.Sh SYNOPSIS
+.Nm
+.Ar infile
+.Op Ar outfile
+.Sh DESCRIPTION
+The 
+.Nm
+utility adds the cyclic redundancy check and image size information to
+a bootable NetBSD image.
+The image must contain an NCD firmware header
+at the very beginning of its text segment.
+.Sh HISTORY
+The
+.Nm
+utility came from the Linux IBM Network Station 1000 port by
+Jochen Roth.

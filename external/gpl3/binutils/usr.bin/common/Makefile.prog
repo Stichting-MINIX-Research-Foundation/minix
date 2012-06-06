@@ -1,0 +1,57 @@
+#	$NetBSD: Makefile.prog,v 1.1 2009/08/18 20:22:08 skrll Exp $
+#
+# Common Makefile fragment for a binutils program.
+#
+
+.include <bsd.own.mk>
+
+TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
+
+.include "${.CURDIR}/../common/Makefile.inc"
+.include "${.CURDIR}/../common/arch/${MACHINE_ARCH}/defs.mk"
+
+# Might end in "-new" in GNU makefile
+XPROG=		${PROG:c++filt=cxxfilt}
+BUPROG=		${G_PROGRAMS:M${XPROG}*:S/-/_/}
+
+SRCS=		${G_${BUPROG}_OBJECTS:.o=.c} \
+		${G_${BUPROG}_DEPENDENCIES:M*.o:.o=.c}
+MAN=		${G_man_MANS:M${PROG}.1}
+
+CPPFLAGS+=	-I${.CURDIR}/../common/arch/${MACHINE_ARCH}
+
+LDADD+=		-lintl
+DPADD+=		${LIBINTL}
+
+.if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
+OPCODESOBJ!=	cd ${TOP}/${BFDSUBDIR}/libopcodes && ${PRINTOBJDIR}
+LDADD+=		-L${OPCODESOBJ} -lopcodes
+.if ${MKPICLIB} != "no"
+DPADD+=		${OPCODESOBJ}/libopcodes_pic.a
+.else
+DPADD+=		${OPCODESOBJ}/libopcodes.a
+.endif
+.endif
+
+.if !empty(G_${BUPROG}_DEPENDENCIES:M*/libbfd*)
+BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
+LDADD+=		-L${BFDOBJ} -lbfd
+.if ${MKPICLIB} != "no"
+DPADD+=		${BFDOBJ}/libbfd_pic.a
+.else
+DPADD+=		${BFDOBJ}/libbfd.a
+.endif
+.endif
+
+.if !empty(G_${BUPROG}_DEPENDENCIES:M*/libiberty*)
+IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
+LDADD+=		-L${IBERTYOBJ} -liberty
+DPADD+=		${IBERTYOBJ}/libiberty.a
+.endif
+
+.PATH: ${DIST}/binutils ${DIST}/binutils/doc
+
+.include <bsd.prog.mk>
+
+# Override the .y.c and .y.l rules *after* <bsd.prog.mk>
+.y.c .l.c:

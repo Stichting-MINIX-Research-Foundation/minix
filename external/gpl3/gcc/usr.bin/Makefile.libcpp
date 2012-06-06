@@ -1,0 +1,4 @@
+#	$NetBSD: Makefile.libcpp,v 1.1 2011/06/21 06:03:13 mrg Exp $
+
+DPADD+=		${LIBCPPOBJ}/libcpp.a
+LDADD+=		${LIBCPPOBJ}/libcpp.a

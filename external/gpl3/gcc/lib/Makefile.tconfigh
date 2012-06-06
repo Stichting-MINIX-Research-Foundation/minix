@@ -1,0 +1,10 @@
+#	$NetBSD: Makefile.tconfigh,v 1.1 2011/06/29 01:56:58 mrg Exp $
+
+tconfig.h:
+	${_MKTARGET_CREATE}
+	TM_DEFINES="$(G_tm_defines)" \
+	HEADERS="$(G_xm_include_list)" DEFINES="USED_FOR_TARGET $(G_xm_defines)" \
+	TARGET_CPU_DEFAULT="" \
+	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
+
+CLEANFILES+=	cs-tconfig.h tconfig.h

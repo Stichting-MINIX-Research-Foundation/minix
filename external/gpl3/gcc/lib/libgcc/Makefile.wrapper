@@ -1,0 +1,62 @@
+# $NetBSD: Makefile.wrapper,v 1.1 2011/06/21 06:02:25 mrg Exp $
+
+#
+# libgcc function wrapper
+#
+
+.if !empty(SRCS:M*.*)
+${SRCS}: ${.CURDIR}/Makefile
+	${_MKTARGET_CREATE}
+	{	for i in ${_CPPFLAGS.${.TARGET}:C|-D||}; do \
+			printf "#define "; echo $$i | sed -e 's,=, ,g'; \
+		done; \
+		printf '#include <tmplsrc_${SRCS.${.TARGET}:C|/|_|g}>\n'; \
+	} >${.TARGET}
+
+DPSRCS+=	${SRCS}
+CLEANFILES+=	${SRCS}
+.else
+.undef LIB
+.endif
+
+#
+# libgcc functions that are built in a single file
+#
+
+.if !empty(TMPLSRCS:M*)
+${TMPLSRCS:C|^|tmplsrc_|}: ${.CURDIR}/Makefile
+	${_MKTARGET_CREATE}
+	printf '#include <${.TARGET:C|^tmplsrc_||}>\n' >${.TARGET}
+
+${SRCS}:	${TMPLSRCS:C|^|tmplsrc_|}
+DPSRCS+=	${TMPLSRCS:C|^|tmplsrc_|}
+CLEANFILES+=	${TMPLSRCS:C|^|tmplsrc_|}
+.endif
+
+#
+# soft float functions
+#
+
+.if !empty(TMPLFPSRCS:M*)
+${TMPLFPSRCS:C|^|tmplsrc_|}: ${.CURDIR}/Makefile
+	${_MKTARGET_CREATE}
+	printf '#include "${GCCARCHLIBGCC}/${.TARGET:C|^tmplsrc_||}"\n' >${.TARGET}
+
+${SRCS}:	${TMPLFPSRCS:C|^|tmplsrc_|}
+DPSRCS+=	${TMPLFPSRCS:C|^|tmplsrc_|}
+CLEANFILES+=	${TMPLFPSRCS:C|^|tmplsrc_|}
+.endif
+
+#
+# functions written in an asm file
+#
+
+.if !empty(TMPLASMSRCS:M*.*)
+${TMPLASMSRCS:C|^|tmplsrc_|:C|/|_|g}: ${.CURDIR}/Makefile
+	${_MKTARGET_CREATE}
+	printf '#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
+
+${SRCS}:	${TMPLASMSRCS:C|^|tmplsrc_|:C|/|_|g}
+DPSRCS+=	${TMPLASMSRCS:C|^|tmplsrc_|:C|/|_|g}
+CLEANFILES+=	${TMPLASMSRCS:C|^|tmplsrc_|:C|/|_|g}
+.endif

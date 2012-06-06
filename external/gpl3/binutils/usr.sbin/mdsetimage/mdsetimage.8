@@ -1,0 +1,92 @@
+.\"	$NetBSD: mdsetimage.8,v 1.3 2010/11/07 11:50:23 wiz Exp $
+.\"
+.\" Copyright (c) 1996 Christopher G. Demetriou
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
+.\"
+.Dd November 4, 2010
+.Dt MDSETIMAGE 8
+.Os
+.Sh NAME
+.Nm mdsetimage
+.Nd set kernel RAM disk image
+.Sh SYNOPSIS
+.Nm
+.Op Fl svx
+.Op Fl b Ar bfdname
+.Op Fl I Ar image_symbol
+.Op Fl S Ar size_symbol
+.Ar kernel
+.Ar image
+.Sh DESCRIPTION
+The
+.Nm
+command copies the disk image specified by
+.Ar image
+into the memory disk storage area in
+.Ar kernel .
+The file system present in
+.Ar image
+will typically be used by the kernel
+as the root file system.
+.Pp
+To recognize kernel executable format, the
+.Fl b
+flag specifies BFD name of kernel.
+.Pp
+The
+.Fl I
+and
+.Fl S
+flags specify the symbol names of image and size of memory disk
+drivers respectively.
+.Pp
+If the
+.Fl s
+flags is given,
+.Nm
+will write back the actual disk image size back into
+.Ar kernel .
+.Pp
+If the
+.Fl v
+flag is given,
+.Nm
+will print out status information as
+it is copying the image.
+.Pp
+If the
+.Fl x
+flag is given,
+.Nm
+will extract the disk image from
+.Ar kernel
+into the file
+.Ar image .
+This is the opposite of the default behavior.
+.Sh SEE ALSO
+.Xr md 4 ,
+.Xr mdconfig 8

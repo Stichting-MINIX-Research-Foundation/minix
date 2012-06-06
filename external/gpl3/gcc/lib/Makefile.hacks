@@ -1,0 +1,26 @@
+#	$NetBSD: Makefile.hacks,v 1.2 2011/07/03 07:23:19 mrg Exp $
+
+# some random crap we need in a few places
+
+# these aren't necessary but are #include'd
+FAKEHEADERS=	${EXTRA_FAKEHEADERS} insn-flags.h insn-constants.h sysroot-suffix.h
+${FAKEHEADERS}:
+	${_MKTARGET_CREATE}
+	touch ${.TARGET}
+tm.h ${SRCS}: ${FAKEHEADERS}
+CLEANFILES+=	${FAKEHEADERS}
+
+# arm.h wants MACHMODE aka "enum machine_mode" so we provide a hackful
+# one here to help build libs before gcc itself is built.
+
+# XXX arm hack
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb"
+${OBJS}: insn-modes.h
+# XXX XXX
+${__DPSRCS.d}: insn-modes.h
+insn-modes.h:
+	${_MKTARGET_CREATE}
+	echo "enum machine_mode { X };" > ${.TARGET}
+DPSRCS+=	insn-modes.h
+CLEANFILES+=	insn-modes.h
+.endif
