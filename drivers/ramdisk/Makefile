@@ -27,7 +27,7 @@ PROTO= proto.small
 PROG_DRIVERS+= acpi
 .endif
 
-CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
+CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
 CLEANFILES += $(LIBRARIES) pwd.db spwd.db
 

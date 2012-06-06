@@ -1,4 +1,4 @@
-.PATH: ${MINIXSRCDIR}/lib/libcompat_minix/include
+.PATH: ${NETBSDSRCDIR}/lib/libcompat_minix/include
 
 INCSDIR= /usr/include
 

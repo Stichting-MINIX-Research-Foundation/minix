@@ -5,6 +5,6 @@ SRCS=	tcpd.c
 CPPFLAGS+= -DPARANOID=1
 MAN=
 
-.PATH: ${MINIXSRCDIR}/commands/tcpd
+.PATH: ${NETBSDSRCDIR}/commands/tcpd
 
 .include <bsd.prog.mk>

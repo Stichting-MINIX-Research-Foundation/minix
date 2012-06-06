@@ -1,5 +1,5 @@
 .include <bsd.own.mk>
 
-.PATH: ${MINIXSRCDIR}/common/include/sys
+.PATH: ${NETBSDSRCDIR}/common/include/sys
 
 INCS+= mount.h

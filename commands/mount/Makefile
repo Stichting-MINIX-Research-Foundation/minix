@@ -1,5 +1,5 @@
 PROG=	mount
-CPPFLAGS+= -I${MINIXSRCDIR}/servers
+CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 BINDIR=	/bin
 BINMODE= 4755
 MAN=

@@ -55,7 +55,7 @@ namei: namei.src gennameih.awk
 	${TOOL_AWK} -f gennameih.awk < namei.src
 
 .include <bsd.own.mk>
-.include "${MINIXSRCDIR}/common/include/sys/Makefile.inc"
+.include "${NETBSDSRCDIR}/common/include/sys/Makefile.inc"
 
 .include <bsd.files.mk>
 .include <bsd.kinc.mk>

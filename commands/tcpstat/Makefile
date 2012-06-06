@@ -1,5 +1,5 @@
 PROG=	tcpstat
-CPPFLAGS+= -I${MINIXSRCDIR}/servers -D'ARGS(a)=a'
+CPPFLAGS+= -I${NETBSDSRCDIR}/servers -D'ARGS(a)=a'
 MAN=
 
 .include <bsd.prog.mk>

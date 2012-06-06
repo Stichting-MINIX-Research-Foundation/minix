@@ -127,15 +127,15 @@ nbsd_fetch:
 		date=$$1; minixpath=$$2; origpath=$$3;				\
 		if [ $$# -lt 3 ]; then origpath=$$2; fi;			\
 		echo "retrieving $$origpath ..";				\
-		cd ${MINIXSRCDIR} && cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
+		cd ${NETBSDSRCDIR} && cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
 	done
 
 nbsd_diff:
-	find ${MINIXSRCDIR} -name minix-port.patch | xargs rm
+	find ${NETBSDSRCDIR} -name minix-port.patch | xargs rm
 	cat nbsd_ports | grep -v '^#' | \
-	( cd ${MINIXSRCDIR} && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh tools/nbsd_diff.sh " \
+	( cd ${NETBSDSRCDIR} && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh tools/nbsd_diff.sh " \
 	   "nbsdsrc/src/"origpath" "minixpath" "minixpath"/minix-port.patch");}' )
-	find ${MINIXSRCDIR} -name minix-port.patch | xargs wc -l | sort -n
+	find ${NETBSDSRCDIR} -name minix-port.patch | xargs wc -l | sort -n
 
 
 # clean up compile results

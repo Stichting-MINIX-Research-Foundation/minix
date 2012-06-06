@@ -143,7 +143,7 @@ CPPFLAGS+= -DUSE_LIVEUPDATE
 CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
-CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
 
 .if (${CC} == "gcc") || (${CC} == "clang")
 LDADD+=	-lminc

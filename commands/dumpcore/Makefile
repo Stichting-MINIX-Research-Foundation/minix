@@ -1,5 +1,5 @@
 PROG=	dumpcore
-CPPFLAGS+= -I${MINIXSRCDIR}
+CPPFLAGS+= -I${NETBSDSRCDIR}
 MAN=
 
 .include <bsd.prog.mk>

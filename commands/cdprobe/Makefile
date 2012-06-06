@@ -1,5 +1,5 @@
 PROG=	cdprobe
-CPPFLAGS+= -I${MINIXSRCDIR}/servers
+CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 MAN=
 
 .include <bsd.prog.mk>

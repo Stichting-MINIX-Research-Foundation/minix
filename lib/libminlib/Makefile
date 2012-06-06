@@ -5,8 +5,8 @@ LIB=	minlib
 
 USE_SHLIBDIR= yes
 
-CPPFLAGS.fslib.c+= -I${MINIXSRCDIR}/servers
-CPPFLAGS.fsversion.c+= -I${MINIXSRCDIR}/servers
+CPPFLAGS.fslib.c+= -I${NETBSDSRCDIR}/servers
+CPPFLAGS.fsversion.c+= -I${NETBSDSRCDIR}/servers
 SRCS+= 	fslib.c fsversion.c
 
 # DHCP get/set tags.

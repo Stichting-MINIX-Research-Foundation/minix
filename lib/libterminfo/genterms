@@ -31,8 +31,8 @@
 
 set -e
 : ${TOOL_TIC:=tic}
-: ${MINIXSRCDIR:=/usr/src}
-: ${TERMINFO:=${MINIXSRCDIR}/share/terminfo/terminfo}
+: ${NETBSDSRCDIR:=/usr/src}
+: ${TERMINFO:=${NETBSDSRCDIR}/share/terminfo/terminfo}
 
 echo "/* \$NetBSD\$ */"
 echo "/* * * MODIFIED FOR MINIX * * */"

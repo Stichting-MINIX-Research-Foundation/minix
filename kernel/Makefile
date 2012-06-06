@@ -25,7 +25,7 @@ LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Gener
 DPADD+=	${LIBC}
 .endif
 
-CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
+CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${NETBSDSRCDIR}
 
 BINDIR=	/usr/sbin
 MAN=

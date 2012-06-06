@@ -9,6 +9,6 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS+=	-I${MINIXSRCDIR}
+CPPFLAGS+=	-I${NETBSDSRCDIR}
 
 .include <minix.bootprog.mk>

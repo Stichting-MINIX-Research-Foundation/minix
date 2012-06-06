@@ -12,7 +12,7 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS.memory.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.memory.c+=	-I${NETBSDSRCDIR}
 
 imgrd.d: touch-genfiles
 touch-genfiles:

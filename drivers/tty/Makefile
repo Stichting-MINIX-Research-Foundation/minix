@@ -13,7 +13,7 @@ BINDIR?= /usr/sbin
 SUBDIR= keymaps
 
 # Needs kernel/const.h, etc
-CPPFLAGS+=	-I${MINIXSRCDIR}
+CPPFLAGS+=	-I${NETBSDSRCDIR}
 
 .include <minix.bootprog.mk>
 .include <bsd.subdir.mk>

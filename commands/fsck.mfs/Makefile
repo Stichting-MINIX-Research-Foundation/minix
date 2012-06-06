@@ -1,7 +1,7 @@
-FSCK=   ${MINIXSRCDIR}/sbin/fsck
+FSCK=   ${NETBSDSRCDIR}/sbin/fsck
 PROG=	fsck.mfs
 SRCS=	fsck.c
-CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${FSCK}
+CPPFLAGS+= -I${NETBSDSRCDIR}/servers -I${FSCK}
 BINDIR=	/sbin
 MAN=
 

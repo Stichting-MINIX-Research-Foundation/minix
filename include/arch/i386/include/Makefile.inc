@@ -1,5 +1,5 @@
 .include <bsd.own.mk>
-.PATH: ${MINIXSRCDIR}/common/include/arch/i386
+.PATH: ${NETBSDSRCDIR}/common/include/arch/i386
 
 INCS+=	archtypes.h bios.h cmos.h cpu.h diskparm.h fpu.h int86.h \
 	interrupt.h memory.h multiboot.h partition.h \

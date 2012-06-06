@@ -14,7 +14,7 @@ MAN=
 BINDIR?= /usr/sbin
 
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${ARCH}
-CPPFLAGS+=	-I${MINIXSRCDIR}
+CPPFLAGS+=	-I${NETBSDSRCDIR}
 
 .include "arch/${ARCH}/Makefile.inc"
 .include <minix.bootprog.mk>

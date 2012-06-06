@@ -7,6 +7,6 @@ SRCS=		libmain.c libyywrap.c
 
 LINKS=		${LIBDIR}/libl.a ${LIBDIR}/libfl.a
 
-.PATH:		${MINIXSRCDIR}/commands/lex
+.PATH:		${NETBSDSRCDIR}/commands/lex
 
 .include <bsd.lib.mk>

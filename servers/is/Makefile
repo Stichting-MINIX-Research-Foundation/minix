@@ -13,9 +13,9 @@ MAN=
 
 BINDIR?= /sbin
 
-CPPFLAGS.dmp_kernel.c+=	-I${MINIXSRCDIR}
-CPPFLAGS.dmp_rs.c+=	-I${MINIXSRCDIR}
-CPPFLAGS.dmp_vm.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.dmp_kernel.c+=	-I${NETBSDSRCDIR}
+CPPFLAGS.dmp_rs.c+=	-I${NETBSDSRCDIR}
+CPPFLAGS.dmp_vm.c+=	-I${NETBSDSRCDIR}
 
 # This setting must match the kernel's, as it affects the IRQ hooks table size.
 .if ${USE_APIC} != "no"

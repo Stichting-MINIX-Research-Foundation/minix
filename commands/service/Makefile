@@ -7,6 +7,6 @@ BINDIR= /bin
 MAN.service=
 MAN.printconfig=
 
-CPPFLAGS+=	-I${MINIXSRCDIR}
+CPPFLAGS+=	-I${NETBSDSRCDIR}
 
 .include <bsd.prog.mk>

@@ -1,6 +1,6 @@
 .include <bsd.own.mk>
 
-.PATH: ${MINIXSRCDIR}/common/include/sys
+.PATH: ${NETBSDSRCDIR}/common/include/sys
 
 INCS+= 	elf64.h elf_common.h elf_generic.h \
 	ioc_block.h ioc_fbd.h ioc_file.h ioc_tape.h ioc_disk.h \

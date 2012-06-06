@@ -6,16 +6,16 @@
 
 LIB=		minc
 
-CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
 
-LIBCSRCDIR=${MINIXSRCDIR}/lib/libc
+LIBCSRCDIR=${NETBSDSRCDIR}/lib/libc
 
 MACHINE_ARCH=${MACHINE}
 
 #
 # Shared libc with userspace (/common/lib/libc)
 #
-.include "${MINIXSRCDIR}/common/lib/libc/Makefile.inc"
+.include "${NETBSDSRCDIR}/common/lib/libc/Makefile.inc"
 .include "${.CURDIR}/arch/${MACHINE}/Makefile.libc.inc"
 .if empty(SRCS:Mbyte_swap_8.*)
 SRCS+= bswap64.c
@@ -75,8 +75,8 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/stdlib -I${LIBCSRCDIR}/include
 # Import from gen
 
 errlist.c: ${LIBCSRCDIR}/gen/errlist.awk \
-	   ${MINIXSRCDIR}/include/sys/errno.h
-	cat ${MINIXSRCDIR}/include/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCSRCDIR}/gen/errlist.awk > ${.TARGET}
+	   ${NETBSDSRCDIR}/include/sys/errno.h
+	cat ${NETBSDSRCDIR}/include/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCSRCDIR}/gen/errlist.awk > ${.TARGET}
 
 .for i in assert.c _errno.c errno.c _env.c errlist.c \
 	execle.c getprogname.c sleep.c time.c \

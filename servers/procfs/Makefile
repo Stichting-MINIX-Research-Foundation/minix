@@ -6,7 +6,7 @@
 PROG=	procfs
 SRCS=	buf.c main.c pid.c root.c tree.c util.c cpuinfo.c
 
-CPPFLAGS+= -I${MINIXSRCDIR} -I${MINIXSRCDIR}/servers
+CPPFLAGS+= -I${NETBSDSRCDIR} -I${NETBSDSRCDIR}/servers
 
 DPADD+=	${LIBVTREEFS} ${LIBSYS}
 LDADD+=	-lvtreefs -lsys

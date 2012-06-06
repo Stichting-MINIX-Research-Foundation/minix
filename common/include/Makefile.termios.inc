@@ -1,6 +1,6 @@
 .include <bsd.own.mk>
 
-.PATH: ${MINIXSRCDIR}/common/include
+.PATH: ${NETBSDSRCDIR}/common/include
 
 INCS+= termios.h	
 

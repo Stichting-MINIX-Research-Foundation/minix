@@ -1,6 +1,6 @@
 LIB=		ddekit_usb_client
 
-SRC_DIR = ${MINIXSRCDIR}/lib/libddekit/src 
+SRC_DIR = ${NETBSDSRCDIR}/lib/libddekit/src
 
 VPATH = $(SRC_DIR) 
 

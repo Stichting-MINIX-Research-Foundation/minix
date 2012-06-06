@@ -9,8 +9,8 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS.main.c+=	-I${MINIXSRCDIR}
-CPPFLAGS.schedule.c+=	-I${MINIXSRCDIR}
-CPPFLAGS.utility.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.main.c+=	-I${NETBSDSRCDIR}
+CPPFLAGS.schedule.c+=	-I${NETBSDSRCDIR}
+CPPFLAGS.utility.c+=	-I${NETBSDSRCDIR}
 
 .include <minix.bootprog.mk>

@@ -9,6 +9,6 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS.orinoco.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.orinoco.c+=	-I${NETBSDSRCDIR}
 
 .include <minix.service.mk>
