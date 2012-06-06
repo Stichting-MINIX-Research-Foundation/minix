@@ -1,0 +1,21 @@
+#	$NetBSD: Makefile.gmakehost,v 1.7 2012/01/20 23:01:05 christos Exp $
+#
+# Rules used when building a GNU host package.  Expects MODULE to be set.
+# This version runs ${TOOL_GMAKE} instead of ${MAKE}
+#
+# There's not a lot we can do to build reliably in the face of many
+# available configuration options.  To be as low-overhead as possible,
+# we follow the following scheme:
+#
+# * Configuration is only re-run when an autoconf source file (such as
+#   "configure" or "config.sub") is changed.
+#
+# * "config.status" is run to rebuild Makefiles and .h files if an
+#   autoconf-parsed file (such as Makefile.in) is changed.
+#
+# * If MKUPDATE != "no", "make install" is only run if a build has happened
+#   since the last install in the current directory.
+
+.include <bsd.own.mk>
+MAKE_PROGRAM=${TOOL_GMAKE}
+.include "Makefile.gnuhost"

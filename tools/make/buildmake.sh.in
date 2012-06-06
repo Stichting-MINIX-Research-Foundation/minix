@@ -1,0 +1,23 @@
+#! /bin/sh
+#	$NetBSD: buildmake.sh.in,v 1.8 2006/08/26 22:17:48 christos Exp $
+#
+# buildmake.sh.in - Autoconf-processed shell script for building make(1).
+#
+
+: ${HOST_CC="@CC@"}
+: ${HOST_CFLAGS="@CPPFLAGS@ @CFLAGS@"}
+: ${HOST_LDFLAGS="@LDFLAGS@ @LIBS@"}
+: ${runcmd=""}
+
+docmd () {
+	echo "$1"
+	$1 || exit 1
+}
+
+MKSRCDIR=@srcdir@/../../usr.bin/make
+
+for f in $MKSRCDIR/*.c $MKSRCDIR/lst.lib/*.c; do
+	docmd "${HOST_CC} ${HOST_CFLAGS} @DEFS@ -c $f"
+done
+
+docmd "${HOST_CC} ${HOST_CFLAGS} -o ${_TOOL_PREFIX:-nb}make *.o ${HOST_LDFLAGS}"

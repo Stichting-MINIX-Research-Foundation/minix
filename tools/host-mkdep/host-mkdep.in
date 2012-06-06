@@ -1,0 +1,253 @@
+#!@BSHELL@ -
+#
+#	$NetBSD: host-mkdep.in,v 1.20 2011/06/30 20:09:41 wiz Exp $
+#
+# Copyright (c) 1991, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)mkdep.old.compiler	8.1 (Berkeley) 6/6/93
+#
+
+APPEND=false
+MERGE=false
+OPTIONAL=false
+AWK_OPTIONAL=
+QUIET=false
+CPPFLAGS=
+NEWEXT=.o
+OUTFILE=.depend
+SRCS=
+
+usage()
+{
+	echo "Usage: $0 [-adopq] [-s .suffixes] [-f .depend] -- [flags] file ..." >&2
+	exit 1
+}
+
+set_objlist()
+{
+	if [ -n "$NEWEXT" ]; then
+		oifs="$IFS"
+		IFS=" ,"
+		set -- $NEWEXT
+		IFS="$oifs"
+		objlist=
+		for suf in "$@"; do
+			objlist="$objlist${objlist:+ }$file$suf"
+		done
+	else
+		objlist="$file"
+	fi
+}
+
+# A getopt compatible command line parser in shell comands.
+# (don't trust the shell builtin getopts to be in a known state on error)
+while [ $# -gt 0 ]; do
+	option="${1#-}"
+	[ "$option" = "$1" -o -z "$option" ] && break
+	while
+		optarg="${option#?}"
+		option="${option%$optarg}"
+
+		case "-$option" in
+		-a)	APPEND=true;;
+		-d)	MERGE=true;;
+		-o)	OPTIONAL=true; AWK_OPTIONAL='print ".OPTIONAL:" $0';;
+		-p)	NEWEXT=;;
+		-q)	QUIET=true;;
+
+		-[fs])	# Options with arguments
+			[ -z "$optarg" ] && {
+				[ $# = 1 ] && usage
+				shift
+				optarg="$1"
+			}
+			case "-$option" in
+			-f)	OUTFILE="$optarg";;
+			-s)	NEWEXT="$optarg";;
+			esac
+			optarg=
+			;;
+
+		--)	[ -z "$optarg" ] && shift
+			break 2
+			;;
+
+		*)	$MERGE && usage
+			break 2;
+			;;
+		esac
+		[ -n "$optarg" ]
+	do
+		option="$optarg"
+	done
+	shift
+done
+
+[ $# = 0 ] && usage
+
+if $MERGE; then
+	SRCS="$*"
+else
+	#
+	# Process argument list.
+	# This is tricky, because arguments may contain spaces and other
+	# escapes characters.  The argument list is used like a tail queue.
+	# $cppargs has one x for each unprocessed argument, so when an
+	# argument is processed, it is shifted and the corresponding number
+	# of x's is removed.  The advantage to counting is that suffix removal
+	# works without fork.
+	#
+	cppargs=
+	for arg; do
+		cppargs="x$cppargs"
+	done
+	while [ -n "$cppargs" ]; do
+		case "$1" in
+		-L)			# takes an arg, but ignored
+				shift 2
+				cppargs=${cppargs%xx}
+				;;
+
+		-c|-[lLMOW]*)		# takes no extra args
+				shift
+				cppargs=${cppargs%x}
+				;;
+
+		-[IDU]*)
+				set -- "$@" "$1"
+				shift
+				cppargs=${cppargs%x}
+				;;
+
+		-[IDU]|-include|-isystem|-isysroot)
+				set -- "$@" "$1" "$2"
+				shift 2
+				cppargs=${cppargs%xx}
+				;;
+				
+		-isystem-cxx|-cxx-isystem)
+				set -- "$@" "-isystem" "$2"
+				shift 2
+				cppargs=${cppargs%xx}
+				;;
+
+		-no-cpp-precomp)	# This is a Darwin-specific option.
+				set -- "$@" "$1"
+				shift
+				cppargs=${cppargs%x}
+				;;
+
+		-nostdinc*)	# This is a gcc/g++ ism; ignore if not gcc/g++
+				case "@CFLAGS@" in
+				*-O2*)	# Autoconf puts -O2 when gcc only
+					set -- "$@" "$1"
+					;;
+				esac	
+				shift
+				cppargs=${cppargs%x}
+				;;
+
+		-*)		
+				echo "$0: Unknown option: $1" 1>&2 # all other -options
+				exit 1
+				;;
+
+		*)	
+				SRCS="$SRCS $1"	# source file
+				shift
+				cppargs=${cppargs%x}
+				;;
+		esac
+	done
+fi
+
+[ -z "$SRCS" ] && usage
+
+TMP=/tmp/mkdep$$
+rm -f $TMP
+
+trap 'rm -f $TMP; exit 1' 1 2 3 13 15
+
+if $MERGE; then
+	for f in $SRCS; do
+		if [ ! -f "$f" ]; then
+			if ! $QUIET; then echo "$0: Ignoring $f" >&2; fi
+			continue
+		fi
+		while IFS=':'; read target dependents; do
+			IFS=
+			t1="${target#* }"
+			file="${target%.o}"
+			if [ "$t1" = "$target" -a "$file" != "$target" ]; then
+				set_objlist $file
+				target="$objlist"
+			fi
+			echo "$target:$dependents"
+			if "$OPTIONAL"; then
+				echo ".OPTIONAL:$dependents"
+			fi
+		done <$f
+	done >$TMP
+else
+	for f in $SRCS; do
+		file=${f##*/}
+		file=${file%.*}
+		set_objlist $file
+
+		@CPP@ "$@" $f | @AWK@ '
+			/^#/ {
+				# Be as tolerant as possible.
+				sub(/^#(line)? [ 0-9]*\"?/, "")
+				sub(/^#(pragma).*/, "")
+				sub(/^<.*/, "")
+				sub(/\".*$/, "")
+				sub(/ [ 0-9]*$/, "")
+
+				if ($0 in seenfiles) next
+				if ($0 ~ /y.tab.c/) next
+
+				seenfiles[$0] = 1
+				print "'"$objlist"'" ": " $0
+				'"$AWK_OPTIONAL"'
+			}
+		' >> $TMP
+	done
+fi
+
+if $APPEND; then
+	cat $TMP >> $OUTFILE
+else
+	cat $TMP > $OUTFILE
+fi
+
+rm -f $TMP
+exit 0

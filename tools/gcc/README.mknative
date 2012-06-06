@@ -1,0 +1,69 @@
+$NetBSD: README.mknative,v 1.9 2011/09/21 02:15:18 mrg Exp $
+
+XXX THIS FILE DOES NOT DESCRIBE GCC 4.5 METHODS PROPERLY XXX
+
+This file describes how to bootstrap the native toolchain on a new NetBSD
+platform (and how to update the new toolchain files, if needed).  These
+files may be generated on a cross-compile host without problems.
+
+NOTE:  DO NOT RUN "mknative" BY HAND!  It requires the Makefile in this
+directory to set up certain environments first.
+
+Since libc's features change over time, the config.h files can change as a
+result; thus the instructions below are the same no matter whether
+bootstrapping on a cross or native host.  This is important: even on a
+"native" host, you should bootstrap the toolchain by building from an
+up-to-date source tree to a $DESTDIR using the exact same instructions.
+
+In these notes, MACHINE is the $MACHINE of the target.  These files can be
+cross-generated.  Though a $MACHINE_ARCH all uses the same config files, you
+must pick a specific $MACHINE so that building the requisite bits below will
+work.
+
+1. Set MKMAINTAINERTOOLS=yes in mk.conf.  (Needed so that src/tools/gettext
+   gets built, eliciting proper HAVE_*GETTEXT* defns in config.h files.)
+
+2. Build and install a cross toolchain (via "build.sh -m MACHINE tools").
+
+3. In src/tools/gcc, do "nbmake-MACHINE bootstrap-libgcc".
+
+   This will create just enough glue in src/gnu/lib/libgcc4/arch to make it
+   possible to build, based on the toolchain built in ${.OBJDIR}/build.
+   Because the files generated in this step contain things like
+   -DCROSS_COMPILE, they are not suitable for committing.  Step 8 below
+   will regenerate the "proper" libgcc config files.
+
+4. At top level, do
+   "nbmake-MACHINE do-distrib-dirs obj includes MKGCC=no MKBINUTILS=no".
+
+5. In src/gnu/lib/libgcc4, do "nbmake-MACHINE obj includes".
+
+6. If the platform sets USE_COMPILERCRTSTUFF=yes, then in src/gnu/lib/crtstuff4
+   do "nbmake-MACHINE dependall install"
+
+7. In each of src/lib/csu, src/gnu/lib/libgcc4, and src/lib,
+   do "nbmake-MACHINE dependall install".
+
+   Optionally, all of the following may be set in the environment to reduce
+   the amount of code needed to build at this step.  Basically, it must be
+   possible for static binaries to build and base system libs to exist so
+   that "configure" can do its job for the target--these MK* options omit
+   the rest for this stage of the build.
+
+   MKCRYPTO=no
+   MKLINT=no
+   MKPROFILE=no
+   MKSHARE=no
+
+8. In src/tools/gcc, do "nbmake-MACHINE native-gcc".
+
+   This will do a full configury in ${.OBJDIR}/.native that is a "Canadian"
+   cross toolchain (--build reflects the host platform, but --host and
+   --target are the target).  The result is a tree that would build a
+   native-to-NetBSD compiler on a cross host, and mknative pulls glue data
+   from this.
+
+9. Try out a full build using "nbmake-MACHINE"; the result should include
+   a native compiler.
+
+10. If all is well, commit the glue files added to src/gnu/{lib,usr.bin}/*.

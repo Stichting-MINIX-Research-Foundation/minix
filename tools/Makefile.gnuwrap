@@ -1,0 +1,33 @@
+#	$NetBSD: Makefile.gnuwrap,v 1.9 2003/03/14 05:22:51 thorpej Exp $
+#
+# Wrapper for GNU Makefiles.
+
+.ifndef _WRAPPER_INCLUDED
+_WRAPPER_INCLUDED=1
+
+.ifndef _NOWRAPPER
+.include "${.CURDIR}/Makefile"
+.endif
+
+# Prevent targets in source directories from being rebuilt.
+
+_srcdir:=	${srcdir}
+.MADE:		${.ALLTARGETS:M${_srcdir}/*} Makefile
+
+# Don't rebuild .gmo files, or lex/yacc (which GNU puts in the source tree).
+.po.gmo .l.c .y.c .y.h .x.1:
+	@true
+
+# Make sure this file gets re-loaded recursively.
+.ifndef _NOWRAPPER
+# Some systems have a small ARG_MAX.  On such systems, prevent Make
+# variables set on the command line from being exported in the
+# environment (they will still be set in MAKEOVERRIDES).
+BUILD_OSTYPE!=  uname -s
+.if ${BUILD_OSTYPE} == "Darwin" || ${BUILD_OSTYPE} == "FreeBSD"
+__noenvexport=  -X
+.endif
+_GNUWRAPPER:=	${.PARSEDIR}/${.PARSEFILE}
+MAKE:=		${MAKE} ${__noenvexport} -f ${_GNUWRAPPER}
+.endif
+.endif

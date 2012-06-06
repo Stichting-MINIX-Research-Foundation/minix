@@ -1,0 +1,78 @@
+#	$NetBSD: Makefile.host,v 1.28 2011/04/10 16:52:36 joerg Exp $
+
+NOINFO=		# defined
+NOLINT=		# defined
+NOMAN=		# defined
+
+.include <bsd.own.mk>
+
+.ifndef NOCOMPATLIB
+COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
+.-include	"${COMPATOBJ}/defs.mk"
+.endif
+
+# Resolve pathnames in variables.
+_RESOLVE_VARS=	CFLAGS CPPFLAGS DPADD HOST_CPPFLAGS LDADD
+.for var in ${_RESOLVE_VARS}
+${var}:=	${${var}}
+.endfor
+
+# Switch over to the "real" Makefile.
+.PROGDIR:=	${.CURDIR}/../../${HOST_SRCDIR}
+_CURDIR:=	${.CURDIR}
+HOSTPROG?=	${PROG}
+
+.CURDIR:=	${.PROGDIR}
+.PATH:		${.CURDIR}
+.include "${.CURDIR}/Makefile"
+.-include "${.CURDIR}/../Makefile.inc"
+
+# Resolve pathnames from "real" Makefile, and switch .CURDIR back.
+.for var in ${_RESOLVE_VARS}
+${var}:=	${${var}}
+.endfor
+.CURDIR:=	${_CURDIR}
+.undef		_CURDIR
+
+# Set up the environment for <bsd.hostprog.mk>.
+.if ${USETOOLS} != "yes"
+.undef HOSTPROG
+.endif
+
+HOSTPROGNAME?=	${HOSTPROG}
+HOST_BINDIR?=	${TOOLDIR}/bin
+HOST_CPPFLAGS:=	${HOST_CPPFLAGS} ${CPPFLAGS}
+HOST_CPPFLAGS:=	${HOST_CPPFLAGS:N-Wp,-iremap,*:N--sysroot=*}
+.undef LINKS
+
+SRCS?=		${HOSTPROG}.c
+SRCS+=		${HOST_SRCS}
+
+.PATH:		${.PROGDIR}
+
+# Install rule.
+realinstall: install.host install.files
+install.host: ${HOST_BINDIR}/${HOSTPROGNAME}
+${HOST_BINDIR}/${HOSTPROGNAME}:: ${HOSTPROG}
+	${_MKTARGET_INSTALL}
+	mkdir -p ${HOST_BINDIR}
+	${HOST_INSTALL_FILE} -m ${BINMODE} ${HOSTPROG}${HOSTEXEEXT} ${.TARGET}
+
+.if ${MKUPDATE} == "no"
+.PHONY:		${HOST_BINDIR}/${HOSTPROGNAME}
+.endif
+
+install.files:
+.for F in ${HOSTFILES}
+install.files: ${HOST_FILESDIR}/${F}
+${HOST_FILESDIR}/${F}: ${F}
+	${_MKTARGET_INSTALL}
+	mkdir -p ${HOST_FILESDIR}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
+
+.if ${MKUPDATE} == "no"
+.PHONY:		${HOST_FILESDIR}/${F}
+.endif
+.endfor
+
+.include <bsd.hostprog.mk>

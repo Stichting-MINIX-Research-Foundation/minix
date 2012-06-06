@@ -1,0 +1,643 @@
+/* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
+
+/*      $NetBSD: nbtool_config.h.in,v 1.27 2011/11/03 14:13:53 joerg Exp $    */
+ 
+#ifndef __NETBSD_NBTOOL_CONFIG_H__
+#define __NETBSD_NBTOOL_CONFIG_H__
+
+/* Define to 1 if your `fparseln' function is broken. */
+#undef BROKEN_FPARSELN
+
+/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
+   systems. This function is required for `alloca.c' support on those systems.
+   */
+#undef CRAY_STACKSEG_END
+
+/* Define if using `alloca.c'. */
+#undef C_ALLOCA
+
+/* Define if you have `alloca', as a function or macro. */
+#undef HAVE_ALLOCA
+
+/* Define if you have <alloca.h> and it should be used (not on Ultrix). */
+#undef HAVE_ALLOCA_H
+
+/* Define if you have the <arpa/nameser.h> header file. */
+#undef HAVE_ARPA_NAMESER_H
+
+/* Define if you have the `asnprintf' function. */
+#undef HAVE_ASNPRINTF
+
+/* Define if you have the `asprintf' function. */
+#undef HAVE_ASPRINTF
+
+/* Define if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* Define if you have the `atoll' function. */
+#undef HAVE_ATOLL
+
+/* Define if you have the `basename' function. */
+#undef HAVE_BASENAME
+
+/* Define if you have the <ctype.h> header file. */
+#undef HAVE_CTYPE_H
+
+/* Define to 1 if you have the declaration of `be16dec', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE16DEC
+
+/* Define to 1 if you have the declaration of `be16enc', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE16ENC
+
+/* Define to 1 if you have the declaration of `be16toh', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE16TOH
+
+/* Define to 1 if you have the declaration of `be32dec', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE32DEC
+
+/* Define to 1 if you have the declaration of `be32enc', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE32ENC
+
+/* Define to 1 if you have the declaration of `be32toh', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE32TOH
+
+/* Define to 1 if you have the declaration of `be64dec', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE64DEC
+
+/* Define to 1 if you have the declaration of `be64enc', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE64ENC
+
+/* Define to 1 if you have the declaration of `be64toh', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BE64TOH
+
+/* Define to 1 if you have the declaration of `bswap16', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BSWAP16
+
+/* Define to 1 if you have the declaration of `bswap32', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BSWAP32
+
+/* Define to 1 if you have the declaration of `bswap64', and to 0 if you
+   don't. */
+#undef HAVE_DECL_BSWAP64
+
+/* Define to 1 if you have the declaration of `fstatvfs', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FSTATVFS
+
+/* Define to 1 if you have the declaration of `gid_from_group', and to 0 if
+   you don't. */
+#undef HAVE_DECL_GID_FROM_GROUP
+
+/* Define to 1 if you have the declaration of `group_from_gid', and to 0 if
+   you don't. */
+#undef HAVE_DECL_GROUP_FROM_GID
+
+/* Define to 1 if you have the declaration of `htobe16', and to 0 if you
+   don't. */
+#undef HAVE_DECL_HTOBE16
+
+/* Define to 1 if you have the declaration of `htobe32', and to 0 if you
+   don't. */
+#undef HAVE_DECL_HTOBE32
+
+/* Define to 1 if you have the declaration of `htobe64', and to 0 if you
+   don't. */
+#undef HAVE_DECL_HTOBE64
+
+/* Define to 1 if you have the declaration of `htole16', and to 0 if you
+   don't. */
+#undef HAVE_DECL_HTOLE16
+
+/* Define to 1 if you have the declaration of `htole32', and to 0 if you
+   don't. */
+#undef HAVE_DECL_HTOLE32
+
+/* Define to 1 if you have the declaration of `htole64', and to 0 if you
+   don't. */
+#undef HAVE_DECL_HTOLE64
+
+/* Define to 1 if you have the declaration of `lchflags', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LCHFLAGS
+
+/* Define to 1 if you have the declaration of `lchmod', and to 0 if you don't.
+   */
+#undef HAVE_DECL_LCHMOD
+
+/* Define to 1 if you have the declaration of `lchown', and to 0 if you don't.
+   */
+#undef HAVE_DECL_LCHOWN
+
+/* Define to 1 if you have the declaration of `le16dec', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE16DEC
+
+/* Define to 1 if you have the declaration of `le16enc', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE16ENC
+
+/* Define to 1 if you have the declaration of `le16toh', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE16TOH
+
+/* Define to 1 if you have the declaration of `le32dec', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE32DEC
+
+/* Define to 1 if you have the declaration of `le32enc', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE32ENC
+
+/* Define to 1 if you have the declaration of `le32toh', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE32TOH
+
+/* Define to 1 if you have the declaration of `le64dec', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE64DEC
+
+/* Define to 1 if you have the declaration of `le64enc', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE64ENC
+
+/* Define to 1 if you have the declaration of `le64toh', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LE64TOH
+
+/* Define to 1 if you have the declaration of `optind', and to 0 if you don't.
+   */
+#undef HAVE_DECL_OPTIND
+
+/* Define to 1 if you have the declaration of `optreset', and to 0 if you
+   don't. */
+#undef HAVE_DECL_OPTRESET
+
+/* Define to 1 if you have the declaration of `pwcache_groupdb', and to 0 if
+   you don't. */
+#undef HAVE_DECL_PWCACHE_GROUPDB
+
+/* Define to 1 if you have the declaration of `pwcache_userdb', and to 0 if
+   you don't. */
+#undef HAVE_DECL_PWCACHE_USERDB
+
+/* Define to 1 if you have the declaration of `setgroupent', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SETGROUPENT
+
+/* Define to 1 if you have the declaration of `setpassent', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SETPASSENT
+
+/* Define to 1 if you have the declaration of `strndup', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNDUP
+
+/* Define to 1 if you have the declaration of `strsuftoll', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRSUFTOLL
+
+/* Define to 1 if you have the declaration of `sys_signame', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SYS_SIGNAME
+
+/* Define to 1 if you have the declaration of `uid_from_user', and to 0 if you
+   don't. */
+#undef HAVE_DECL_UID_FROM_USER
+
+/* Define to 1 if you have the declaration of `user_from_uid', and to 0 if you
+   don't. */
+#undef HAVE_DECL_USER_FROM_UID
+
+/* Define if you have the `devname' function. */
+#undef HAVE_DEVNAME
+
+/* Define if you have the <dirent.h> header file, and it defines `DIR'. */
+#undef HAVE_DIRENT_H
+
+/* Define if you have the `dirfd' function. */
+#undef HAVE_DIRFD
+
+/* Define if you have the `dirname' function. */
+#undef HAVE_DIRNAME
+
+/* Define if `dd_fd' is member of `DIR'. */
+#undef HAVE_DIR_DD_FD
+
+/* Define if `__dd_fd' is member of `DIR'. */
+#undef HAVE_DIR___DD_FD
+
+/* Define if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define if you have the <err.h> header file. */
+#undef HAVE_ERR_H
+
+/* Define if you have the `esetfunc' function. */
+#undef HAVE_ESETFUNC
+
+/* Define if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <features.h> header file. */
+#undef HAVE_FEATURES_H
+
+/* Define if you have the `fgetln' function. */
+#undef HAVE_FGETLN
+
+/* Define if you have the `flock' function. */
+#undef HAVE_FLOCK
+
+/* Define if you have the `fparseln' function. */
+#undef HAVE_FPARSELN
+
+/* Define if you have the `fpurge' function. */
+#undef HAVE_FPURGE
+
+/* Define if you have the `futimes' function. */
+#undef HAVE_FUTIMES
+
+/* Define if you have the `getline' function. */
+#undef HAVE_GETLINE
+
+/* Define if you have the `getopt' function. */
+#undef HAVE_GETOPT
+
+/* Define if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define if you have the `getopt_long' function. */
+#undef HAVE_GETOPT_LONG
+
+/* Define if you have the `gid_from_group' function. */
+#undef HAVE_GID_FROM_GROUP
+
+/* Define if you have the `group_from_gid' function. */
+#undef HAVE_GROUP_FROM_GID
+
+/* Define if you have the <grp.h> header file. */
+#undef HAVE_GRP_H
+
+/* Define if you have the `heapsort' function. */
+#undef HAVE_HEAPSORT
+
+/* Define if the system has the type `id_t'. */
+#undef HAVE_ID_T
+
+/* Define if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define if you have the `isblank' function. */
+#undef HAVE_ISBLANK
+
+/* Define if you have the `issetugid' function. */
+#undef HAVE_ISSETUGID
+
+/* Define if you have the `lchflags' function. */
+#undef HAVE_LCHFLAGS
+
+/* Define if you have the `lchmod' function. */
+#undef HAVE_LCHMOD
+
+/* Define if you have the `lchown' function. */
+#undef HAVE_LCHOWN
+
+/* Define if you have the <libgen.h> header file. */
+#undef HAVE_LIBGEN_H
+
+/* Define if you have the `regex' library (-lregex). */
+#undef HAVE_LIBREGEX
+
+/* Define if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
+/* Define if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
+
+/* Define if the system has the type `long long'. */
+#undef HAVE_LONG_LONG
+
+/* Define if you have the `lutimes' function. */
+#undef HAVE_LUTIMES
+
+/* Define if you have the <machine/bswap.h> header file. */
+#undef HAVE_MACHINE_BSWAP_H
+
+/* Define if you have the <machine/endian.h> header file. */
+#undef HAVE_MACHINE_ENDIAN_H
+
+/* Define if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define if you have the `mkdtemp' function. */
+#undef HAVE_MKDTEMP
+
+/* Define if you have the `mkstemp' function. */
+#undef HAVE_MKSTEMP
+
+/* Define if you have the <ndir.h> header file, and it defines `DIR'. */
+#undef HAVE_NDIR_H
+
+/* Define if you have the <netconfig.h> header file. */
+#undef HAVE_NETCONFIG_H
+
+/* Define if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define if you have the <paths.h> header file. */
+#undef HAVE_PATHS_H
+
+/* Define if you have the `poll' function. */
+#undef HAVE_POLL
+
+/* Define if you have the `pread' function. */
+#undef HAVE_PREAD
+
+/* Define if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
+/* Define if you have the `putc_unlocked' function. */
+#undef HAVE_PUTC_UNLOCKED
+
+/* Define if you have the `pwcache_groupdb' function. */
+#undef HAVE_PWCACHE_GROUPDB
+
+/* Define if you have the `pwcache_userdb' function. */
+#undef HAVE_PWCACHE_USERDB
+
+/* Define if you have the <pwd.h> header file. */
+#undef HAVE_PWD_H
+
+/* Define if you have the `pwrite' function. */
+#undef HAVE_PWRITE
+
+/* Define if you have the `raise_default_signal' function. */
+#undef HAVE_RAISE_DEFAULT_SIGNAL
+
+/* Define if you have the `random' function. */
+#undef HAVE_RANDOM
+
+/* Define if you have the <resolv.h> header file. */
+#undef HAVE_RESOLV_H
+
+/* Define if you have the <rpc/types.h> header file. */
+#undef HAVE_RPC_TYPES_H
+
+/* Define if you have the `setenv' function. */
+#undef HAVE_SETENV
+
+/* Define if you have the `setgroupent' function. */
+#undef HAVE_SETGROUPENT
+
+/* Define if you have the `setpassent' function. */
+#undef HAVE_SETPASSENT
+
+/* Define if you have the `setprogname' function. */
+#undef HAVE_SETPROGNAME
+
+/* Define if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
+/* Define if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define if you have the socklen_t type. */
+#undef HAVE_SOCKLEN_T
+
+/* Define if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define if you have the <stddef.h> header file. */
+#undef HAVE_STDDEF_H
+
+/* Define if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define if you have the `strmode' function. */
+#undef HAVE_STRMODE
+
+/* Define if you have the `strndup' function. */
+#undef HAVE_STRNDUP
+
+/* Define if you have the `strsep' function. */
+#undef HAVE_STRSEP
+
+/* Define if you have the `strsuftoll' function. */
+#undef HAVE_STRSUFTOLL
+
+/* Define if you have the `strtoll' function. */
+#undef HAVE_STRTOLL
+
+/* Define if `d_namlen' is member of `struct dirent'. */
+#undef HAVE_STRUCT_DIRENT_D_NAMLEN
+
+/* Define if `f_iosize' is member of `struct statvfs'. */
+#undef HAVE_STRUCT_STATVFS_F_IOSIZE
+
+/* Define if `st_atim' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_ATIM
+
+/* Define if `st_birthtime' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BIRTHTIME
+
+/* Define if `st_birthtimensec' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC
+
+/* Define if `st_flags' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_FLAGS
+
+/* Define if `st_gen' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_GEN
+
+/* Define if `st_mtimensec' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_MTIMENSEC
+
+/* Define if you have the <sys/bswap.h> header file. */
+#undef HAVE_SYS_BSWAP_H
+
+/* Define if you have the <sys/cdefs.h> header file. */
+#undef HAVE_SYS_CDEFS_H
+
+/* Define if you have the <sys/dir.h> header file, and it defines `DIR'. */
+#undef HAVE_SYS_DIR_H
+
+/* Define if you have the <sys/endian.h> header file. */
+#undef HAVE_SYS_ENDIAN_H
+
+/* Define if you have the <sys/featuretest.h> header file. */
+#undef HAVE_SYS_FEATURETEST_H
+
+/* Define if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
+/* Define if you have the <sys/mtio.h> header file. */
+#undef HAVE_SYS_MTIO_H
+
+/* Define if you have the <sys/ndir.h> header file, and it defines `DIR'. */
+#undef HAVE_SYS_NDIR_H
+
+/* Define if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define if you have the <sys/poll.h> header file. */
+#undef HAVE_SYS_POLL_H
+
+/* Define if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define if you have the <sys/syslimits.h> header file. */
+#undef HAVE_SYS_SYSLIMITS_H
+
+/* Define if you have the <sys/sysmacros.h> header file. */
+#undef HAVE_SYS_SYSMACROS_H
+
+/* Define if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define if you have the <sys/utsname.h> header file. */
+#undef HAVE_SYS_UTSNAME_H
+
+/* Define if you have the <sys/wait.h> header file. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Define if you have the `uid_from_user' function. */
+#undef HAVE_UID_FROM_USER
+
+/* Define if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the `user_from_uid' function. */
+#undef HAVE_USER_FROM_UID
+
+/* Define if you have the <util.h> header file. */
+#undef HAVE_UTIL_H
+
+/* Define if the system has the type `u_char'. */
+#undef HAVE_U_CHAR
+
+/* Define if the system has the type `u_int'. */
+#undef HAVE_U_INT
+
+/* Define if the system has the type `u_long'. */
+#undef HAVE_U_LONG
+
+/* Define if the system has the type `u_quad_t'. */
+#undef HAVE_U_QUAD_T
+
+/* Define if the system has the type `u_short'. */
+#undef HAVE_U_SHORT
+
+/* Define if you have the `vasnprintf' function. */
+#undef HAVE_VASNPRINTF
+
+/* Define if you have the `vasprintf' function. */
+#undef HAVE_VASPRINTF
+
+/* Define if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define if you have the `__fpurge' function. */
+#undef HAVE___FPURGE
+
+/* Path to sh(1). */
+#undef PATH_BSHELL
+
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+        STACK_DIRECTION > 0 => grows toward higher addresses
+        STACK_DIRECTION < 0 => grows toward lower addresses
+        STACK_DIRECTION = 0 => direction of growth unknown */
+#undef STACK_DIRECTION
+
+/* Define if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define if your processor stores words with the most significant byte first
+   (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
+/* Define for NetBSD headers. */
+#undef _POSIX_C_SOURCE
+
+/* Define for NetBSD headers. */
+#undef _POSIX_SOURCE
+
+/* Define for NetBSD headers. */
+#undef _XOPEN_SOURCE
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define if you have uint16_t, but not u_int16_t. */
+#undef u_int16_t
+
+/* Define if you have uint32_t, but not u_int32_t. */
+#undef u_int32_t
+
+/* Define if you have uint64_t, but not u_int64_t. */
+#undef u_int64_t
+
+/* Define if you have uint8_t, but not u_int8_t. */
+#undef u_int8_t
+
+/* Define if you have u_int16_t, but not uint16_t. */
+#undef uint16_t
+
+/* Define if you have u_int32_t, but not uint32_t. */
+#undef uint32_t
+
+/* Define if you have u_int64_t, but not uint64_t. */
+#undef uint64_t
+
+/* Define if you have u_int8_t, but not uint8_t. */
+#undef uint8_t
+
+#include "compat_defs.h"
+#endif /* !__NETBSD_NBTOOL_CONFIG_H__ */

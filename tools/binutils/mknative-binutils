@@ -1,0 +1,144 @@
+#!/bin/sh
+#	$NetBSD: mknative-binutils,v 1.8 2011/09/25 04:00:58 christos Exp $
+#
+# Shell script for generating all the constants needed for a native
+# platform build of src/external/gpl3/binutils
+#
+
+# initialise
+
+_TMPDIR=$2
+_TOP=$3
+_PLATFORM=$4
+_VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
+
+. $_TOP/tools/gcc/mknative.common
+
+##### external/gpl3/binutils/lib/libbfd #####
+
+get_libbfd () {
+	mkdir -p $_TOP/external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH
+
+	{
+		getvars bfd/Makefile \
+			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
+			INCLUDES TDEFAULTS
+	} | write_mk external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/defs.mk
+
+	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
+	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfdver.h <$_TMPDIR/bfd/bfdver.h
+	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfd_stdint.h <$_TMPDIR/bfd/bfd_stdint.h
+
+	{
+		cat $_TMPDIR/bfd/config.h
+	} | write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/config.h
+}
+
+##### external/gpl3/binutils/lib/libopcodes #####
+
+get_libopcodes () {
+	mkdir -p $_TOP/external/gpl3/binutils/lib/libopcodes/arch/$MACHINE_ARCH
+
+	{
+		getvars opcodes/Makefile \
+			archdefs BFD_MACHINES libopcodes_la_SOURCES
+	} | write_mk external/gpl3/binutils/lib/libopcodes/arch/$MACHINE_ARCH/defs.mk
+
+	{
+		cat $_TMPDIR/opcodes/config.h
+	} | write_c external/gpl3/binutils/lib/libopcodes/arch/$MACHINE_ARCH/config.h
+}
+
+##### external/gpl3/binutils/lib/libiberty #####
+
+get_libiberty () {
+	mkdir -p $_TOP/external/gpl3/binutils/lib/libiberty/arch/$MACHINE_ARCH
+
+	getvars libiberty/Makefile \
+		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
+		| write_mk external/gpl3/binutils/lib/libiberty/arch/$MACHINE_ARCH/defs.mk
+
+	write_c external/gpl3/binutils/lib/libiberty/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/libiberty/config.h
+}
+
+##### external/gpl3/binutils/usr.bin #####
+
+get_binutils () {
+	### common
+
+	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/common/arch/$MACHINE_ARCH
+
+	{
+		getvars binutils/Makefile \
+			VERSION DEFS INCLUDES PROGRAMS
+		getvars binutils/doc/Makefile \
+			man_MANS TEXINFOS
+		getvars bfd/doc/Makefile \
+			PKGVERSION | sed 's,\\\(.\),\1,'
+		getvars bfd/doc/Makefile \
+			REPORT_BUGS_TEXI
+
+		for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
+			getvars binutils/Makefile ${f}_OBJECTS ${f}_DEPENDENCIES
+		done
+	} | write_mk external/gpl3/binutils/usr.bin/common/arch/$MACHINE_ARCH/defs.mk
+
+	write_c external/gpl3/binutils/usr.bin/common/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/binutils/config.h
+
+	### gas
+
+	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH
+
+	grep -v DEPDIR "$_TMPDIR/gas/Makefile" > "$_TMPDIR/gas/Makefile.nodeps"
+	getvars gas/Makefile.nodeps \
+                DEFS INCLUDES as_new_OBJECTS as_new_LDADD | 
+	sed	-e s/G_as_new_OBJECTS/G_OBJS/ \
+		-e s/G_as_new_LDADD=/G_OBJS+=/ \
+		-e 's/\.\..*a//' |
+	write_mk external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/defs.mk
+
+	for f in config itbl-cpu obj-format targ-cpu targ-env; do
+		write_c external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gas/$f.h
+	done
+
+	### gprof
+
+	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/gprof/arch/$MACHINE_ARCH
+
+	getvars gprof/Makefile \
+		DEFS gprof_OBJECTS INCLUDES TEXINFOS \
+		| write_mk external/gpl3/binutils/usr.bin/gprof/arch/$MACHINE_ARCH/defs.mk
+
+	write_c external/gpl3/binutils/usr.bin/gprof/arch/$MACHINE_ARCH/gconfig.h <$_TMPDIR/gprof/gconfig.h
+
+	### ld
+
+	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/ld/arch/$MACHINE_ARCH
+
+	{
+		getvars ld/Makefile \
+			DEFS EMUL EMULATION_OFILES INCLUDES OFILES STRINGIFY TEXINFOS
+		getvars ld/Makefile \
+			target_alias | sed 's,[\._0-9A-Z]*$,,'
+	} | write_mk external/gpl3/binutils/usr.bin/ld/arch/$MACHINE_ARCH/defs.mk
+
+	for f in config ldemul-list; do
+		write_c external/gpl3/binutils/usr.bin/ld/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/ld/$f.h
+	done
+}
+
+##### main #####
+
+case $1 in
+all|binutils)	# everything (uses "canadian cross" temp environment)
+	get_binutils
+	get_libbfd
+	get_libopcodes
+	get_libiberty
+	exit 0
+	;;
+
+*)	echo invalid arguments; exit 1;;
+esac

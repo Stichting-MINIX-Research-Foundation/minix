@@ -27,7 +27,15 @@ usage:
 # etcfiles also creates a directory hierarchy in its
 # 'make install' target.
 # 
+
 # etcfiles has to be done first.
+
+distribution: etcfiles includes mkfiles libraries do-libgcc .WAIT dep-all install etcforce
+
+do-libgcc: .PHONY .MAKE
+	${MAKEDIRTARGET} external/gpl3/gcc/lib/libgcc/libgcc all
+	${MAKEDIRTARGET} external/gpl3/gcc/lib/libgcc/libgcc install
+
 world: mkfiles etcfiles includes libraries dep-all install etcforce
 
 # subdirs where userland utilities and other executables live

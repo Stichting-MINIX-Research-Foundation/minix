@@ -1,0 +1,87 @@
+$NetBSD: README,v 1.12 2005/04/05 00:21:22 jmc Exp $
+
+Special notes for cross-hosting a NetBSD build on certain platforms.  
+Only those platforms which have been tested to complete a "build.sh" run
+are listed.
+
+All hosts must have a POSIX compatible sh. /bin/sh is assumed unless 
+otherwise set. This can be overridden by setting HOST_SH in the environment.
+
+In addition all hosts must provide the following local tools:
+
+gzip
+
+=====
+
+NetBSD:
+
+* _NETBSD_SOURCE is *not* to be defined/pulled in during compat/tools builds.
+  compat_defs.h will error out if it finds it defined. 
+
+HP-UX:
+
+* zlib must be available.
+  This will be fixed in the future to include zlib in libnbcompat.
+
+=====
+
+LINUX:
+
+* Tested on RedHat Linux 7.1 (i386).
+  Tested on RedHat Linux 7.3 (i686) on 16 Sep 2002.  Requires "LANG=C"
+  in the environment.
+
+* Tested on Redhat Linux 8.0 (i686) in Fall 2003. Requires no special settings.
+
+* Tested on Redhat ES3 and AS3 in spring of 2004. Requires no special settings.
+
+* The gcc (and libstdc++, if needed) package must be installed, along
+  with the typical system development packages (glibc-devel, etc.).
+
+* The ncurses-devel package must be installed (for nbinfo).
+
+* The zlib and zlib-devel packages must be installed.  This will be
+  fixed in the future to include zlib in libnbcompat.
+
+=====
+
+MACOS
+  Requires a case sensitive filesystem such as UFS
+
+* Tested on 10.2.8 with Dec 2002 Developer Tools
+    - may require a fix to /usr/bin/join, netbsd's join should work fine
+* Tested on 10.3 with xcode 1.5
+    - compiles fine out of the box
+
+=====
+
+NETBSD (earlier releases):
+
+* Tested on NetBSD 1.5.2 (machine-independently).
+
+* Should need no special setup.
+
+=====
+
+SOLARIS:
+
+* Tested on Solaris/x86 8 (5.8) with gcc 2.95.2 and Solaris/sparc 8 (5.8)
+  with gcc 3.2 (not yet tested with SUNWspro).
+
+* $HOST_CC needs to be set properly (for gcc, it should be set to "gcc",
+  otherwise the improper /usr/ucb/cc may be invoked by accident).
+
+* The SUNWzlib package (or a built version of zlib visible to $HOST_CC,
+  such as SMCzlib from sunfreeware.com) must be installed.  This will be
+  fixed in the future to include zlib in libnbcompat.
+
+* Needs the following paths, in this order, in $PATH:
+
+      /usr/xpg4/bin
+      /usr/ccs/bin
+      <path to host C and C++ compilers>
+      /usr/bin
+
+  /usr/ucb may optionally be placed before /usr/bin, per your preference,
+  but /usr/ucb *MUST NOT* be before /usr/ccs/bin or before the path to
+  the host C and C++ compilers.

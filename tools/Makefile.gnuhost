@@ -1,0 +1,144 @@
+#	$NetBSD: Makefile.gnuhost,v 1.37 2012/01/21 22:31:15 christos Exp $
+#
+# Rules used when building a GNU host package.  Expects MODULE to be set.
+#
+# There's not a lot we can do to build reliably in the face of many
+# available configuration options.  To be as low-overhead as possible,
+# we follow the following scheme:
+#
+# * Configuration is only re-run when an autoconf source file (such as
+#   "configure" or "config.sub") is changed.
+#
+# * "config.status" is run to rebuild Makefiles and .h files if an
+#   autoconf-parsed file (such as Makefile.in) is changed.
+#
+# * If MKUPDATE != "no", "make install" is only run if a build has happened
+#   since the last install in the current directory.
+
+.include <bsd.own.mk>
+
+# Disable use of pre-compiled headers on Darwin.
+BUILD_OSTYPE!= uname -s
+.if ${BUILD_OSTYPE} == "Darwin"
+HOST_CFLAGS+=-O2 -no-cpp-precomp
+.endif
+MAKE_PROGRAM?=	${MAKE}
+
+GNUHOSTDIST?=	${.CURDIR}/../../external/gpl3/gcc/dist/
+
+FIND_ARGS+=	\! \( -type d \( \
+			-name 'CVS' -o \
+			-name 'config' -o \
+			-name 'doc' -o \
+			-name 'po' -o \
+			-name 'nbsd.mt' -o \
+			-name 'tests*' \
+		\) -prune \)
+
+
+_GNU_GET_SRC!=	${HOST_SH} ${.CURDIR}/../../external/gpl3/gcc/fetch.sh && \
+		${HOST_SH} ${.CURDIR}/../../external/gpl3/binutils/fetch.sh && \
+		${HOST_SH} ${.CURDIR}/../../gnu/dist/fetch.sh
+
+# Do this "find" only if actually building something.
+.if (${USETOOLS} == "yes") && empty(.MAKEFLAGS:M-V*) && \
+    (make(all) || make(realall) || (!make(clean) && !make(cleandir) && !make(obj))) && \
+    !defined(_GNU_CFGSRC)
+
+_GNU_CFGSRC!=	find ${GNUHOSTDIST} ${FIND_ARGS} \
+		-type f \( -name 'config*' -o -name '*.in' \) -print
+.MAKEOVERRIDES+= _GNU_CFGSRC
+.endif
+
+CONFIGURE_ENV+= \
+		AR=${HOST_AR:Q} \
+		AWK=${TOOL_AWK:Q} \
+		CC=${HOST_CC:Q} \
+		CFLAGS=${HOST_CFLAGS:Q} \
+		CPPFLAGS=${HOST_CPPFLAGS:Q} \
+		CXX=${HOST_CXX:Q} \
+		CXXFLAGS=${HOST_CXXFLAGS:Q} \
+		INSTALL=${HOST_INSTALL_FILE:Q} \
+		LDFLAGS=${HOST_LDFLAGS:Q} \
+		LEX=${LEX:Q} \
+		M4=${TOOL_M4:Q} \
+		MAKE=${MAKE_PROGRAM:Q} \
+		PATH="${TOOLDIR}/bin:$$PATH" \
+		RANLIB=${HOST_RANLIB:Q} \
+		YACC=${YACC:Q}
+
+BUILD_ENV+=	${CONFIGURE_ENV}
+
+CONFIGURE_ARGS+=--prefix=${TOOLDIR}
+.if ${MKPIC} == "no"
+CONFIGURE_ARGS+=--disable-shared
+.endif
+
+.if ${MAKE_PROGRAM} == ${MAKE}
+.ifndef _NOWRAPPER
+# Some systems have a small ARG_MAX.  On such systems, prevent Make
+# variables set on the command line from being exported in the
+# environment (they will still be set in MAKEOVERRIDES).
+.if ${BUILD_OSTYPE} == "Darwin" || ${BUILD_OSTYPE} == "FreeBSD"
+__noenvexport=	-X
+.endif
+MAKE_ARGS:=	${__noenvexport} -f ${.PARSEDIR}/Makefile.gnuwrap ${MAKE_ARGS}
+.else
+MAKE_ARGS+=	_NOWRAPPER=1
+.endif
+BUILD_COMMAND=	${BUILD_ENV} ${MAKE} ${MAKE_ARGS}
+.else
+
+# gmake version of this puts MAKE_ARGS in the environment to be sure that
+# sub-gmake's get them, otherwise tools/gcc tries to build libgcc and
+# fails.  it also uses "env -i" to entirely clear out MAKEFLAGS.
+GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/.*(-j ?[0-9]*).*/\1/W}
+BUILD_COMMAND=	/usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS} ${TOOL_GMAKE} ${GMAKE_J_ARGS} -e ${MAKE_ARGS}
+
+.endif
+
+MAKE_ARGS+=	BISON=true DESTDIR= INSTALL=${HOST_INSTALL_FILE:Q}
+
+ALL_TARGET?=	all
+INSTALL_TARGET?=install
+
+BUILD_PLATFORM!= uname -srm | tr ' ' '-'
+CONFIGURE_PLATFORM!= if [ -s .configure_done ]; then cat .configure_done; else echo none; fi
+.if "${BUILD_PLATFORM}" != "${CONFIGURE_PLATFORM}"
+configure_cleanup:
+	@mkdir build 2>/dev/null || true
+	@(echo "Cleaning stale cache files ${BUILD_PLATFORM} != ${CONFIGURE_PLATFORM}")
+	@(cd build && find . -name config.cache -print0 | xargs -0 rm -f)
+configure_cleanup=configure_cleanup
+.endif
+
+.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
+	@mkdir build 2>/dev/null || true
+	@(cd build && ${CONFIGURE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
+	@echo ${BUILD_PLATFORM} > $@
+
+# The .build_done timestamp is only updated if a file actually changes
+# in the build tree during "make all".  This way, if nothing has changed,
+# a "make install MKUPDATE=yes" will do nothing.
+
+.build_done: .configure_done
+	@(cd build && ${BUILD_COMMAND} ${ALL_TARGET})
+	@if [ ! -f $@ ] || [ -n "$$(find build -type f -newer .build_done -print)" ]; \
+		then touch $@; fi
+
+.install_done! ${BUILD:D.build_done}
+	@(cd ${.OBJDIR}/build && ${BUILD_COMMAND} ${INSTALL_TARGET})
+	@touch $@
+
+# Mapping to standard targets.
+
+.if ${USETOOLS} == "yes"
+realall: .build_done
+realinstall: .install_done
+.endif
+
+clean: clean.gnu
+clean.gnu:
+	-rm -r -f .*_done build
+
+.include <bsd.hostprog.mk>

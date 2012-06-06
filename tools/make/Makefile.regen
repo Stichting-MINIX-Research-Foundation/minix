@@ -1,0 +1,8 @@
+#	$NetBSD: Makefile.regen,v 1.1 2007/10/14 20:25:35 apb Exp $
+
+.include "bsd.own.mk"
+
+# Run "${TOOLDIR}/bin/nbmake-${MACHINE} -f Makefile.regen" by hand after
+# editing configure.ac.  See more detailed instructions in configure.ac.
+regen:
+	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoconf
