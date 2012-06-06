@@ -55,7 +55,6 @@ static void patch_ptr(char stack[ARG_MAX], vir_bytes base);
 static void clo_exec(struct fproc *rfp);
 static int read_seg(struct vnode *vp, off_t off, int proc_e, int seg,
 	vir_bytes seg_addr, phys_bytes seg_bytes);
-static int load_aout(struct exec_info *execi);
 static int load_elf(struct exec_info *execi);
 static int stack_prepare_elf(struct exec_info *execi,
 	char *curstack, size_t *frame_len, vir_bytes *vsp, int *extrabase);
@@ -73,7 +72,6 @@ struct exec_loaders {
 };
 
 static const struct exec_loaders exec_loaders[] = {
-	{ load_aout, NULL },
 	{ load_elf,  stack_prepare_elf },
 	{ NULL, NULL }
 };
@@ -338,57 +336,6 @@ pm_execfinal:
 	put_vnode(execi.vp);
   }
   unlock_exec();
-  return(r);
-}
-
-/*===========================================================================*
- *				load_aout				     *
- *===========================================================================*/
-static int load_aout(struct exec_info *execi)
-{
-  int r;
-  struct vnode *vp;
-  int proc_e;
-  off_t off;
-  int hdrlen;
-  int sep_id;
-  vir_bytes text_bytes, data_bytes, bss_bytes;
-  phys_bytes tot_bytes;		/* total space for program, including gap */
-
-  assert(execi != NULL);
-  assert(execi->hdr != NULL);
-  assert(execi->vp != NULL);
-
-  proc_e = execi->proc_e;
-  vp = execi->vp;
-
-  /* Read the file header and extract the segment sizes. */
-  r = read_header_aout(execi->hdr, execi->vp->v_size, &sep_id,
-		       &text_bytes, &data_bytes, &bss_bytes,
-		       &tot_bytes, &execi->pc, &hdrlen);
-  if (r != OK) return(r);
-
-  r = exec_newmem(proc_e, 0 /* text_addr */, text_bytes,
-		  0 /* data_addr */, data_bytes + bss_bytes, tot_bytes,
-		  execi->frame_len, sep_id, 0 /* is_elf */, vp->v_dev,
-		  vp->v_inode_nr, execi->sb.st_ctime, execi->progname,
-		  execi->new_uid, execi->new_gid,
-		  &execi->stack_top, &execi->load_text, &execi->setugid);
-
-  if (r != OK) {
-        printf("VFS: load_aout: exec_newmem failed: %d\n", r);
-        return(r);
-  }
-
-  off = hdrlen;
-
-  /* Read in text and data segments. */
-  if (execi->load_text)
-	r = read_seg(vp, off, proc_e, T, 0, text_bytes);
-  off += text_bytes;
-  if (r == OK)
-	r = read_seg(vp, off, proc_e, D, 0, data_bytes);
-
   return(r);
 }
 

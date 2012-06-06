@@ -3,12 +3,6 @@
 
 #include <sys/exec_elf.h>
 
-/* a.out routines */
-int read_header_aout(const char *exec_hdr, size_t exec_len, int *sep_id,
-   vir_bytes *text_bytes, vir_bytes *data_bytes,
-   vir_bytes *bss_bytes, phys_bytes *tot_bytes, vir_bytes *pc,
-   int *hdrlenp);
-
 /* ELF routines */
 int read_header_elf(const char *exec_hdr, int hdr_len,
    vir_bytes *text_vaddr, phys_bytes *text_paddr,

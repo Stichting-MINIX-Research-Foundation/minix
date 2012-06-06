@@ -19,14 +19,12 @@ static void patch_ptr(char stack[ARG_MAX], vir_bytes base);
 static int exec_restart(int proc_e, int result, vir_bytes pc);
 static int read_seg(struct exec_info *execi, off_t off,
         int proc_e, int seg, vir_bytes seg_addr, phys_bytes seg_bytes);
-static int load_aout(struct exec_info *execi);
 static int load_elf(struct exec_info *execi);
 
 /* Array of loaders for different object formats */
 static struct exec_loaders {
 	int (*load_object)(struct exec_info *);
 } const exec_loaders[] = {
-	{ load_aout },
 	{ load_elf },
 	{ NULL }
 };
@@ -164,75 +162,6 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	}
 
 	return exec_restart(proc_e, OK, execi.pc);
-}
-
-static int load_aout(struct exec_info *execi)
-{
-	int r;
-	int hdrlen, sep_id, load_text, allow_setuid;
-	vir_bytes text_bytes, data_bytes, bss_bytes;
-	phys_bytes tot_bytes;
-	off_t off;
-	uid_t new_uid;
-	gid_t new_gid;
-	int proc_e;
-
-	assert(execi != NULL);
-	assert(execi->image != NULL);
-
-	proc_e = execi->proc_e;
-
-	/* Read the file header and extract the segment sizes. */
-	r = read_header_aout(execi->image, execi->image_len, &sep_id,
-		&text_bytes, &data_bytes, &bss_bytes,
-		&tot_bytes, &execi->pc, &hdrlen);
-	if (r != OK)
-	{
-		return r;
-	}
-
-	new_uid= getuid();
-	new_gid= getgid();
-	allow_setuid = 0;
-
-	/* XXX what should we use to identify the executable? */
-	r= exec_newmem(proc_e, 0 /*text_addr*/, text_bytes,
-		0 /*data_addr*/, data_bytes + bss_bytes, tot_bytes,
-		execi->frame_len, sep_id, 0 /*is_elf*/, 0 /*dev*/, proc_e /*inum*/, 0 /*ctime*/,
-		execi->progname, new_uid, new_gid, &execi->stack_top, &load_text,
-		&allow_setuid);
-	if (r != OK)
-	{
-		printf("RS: load_aout: exec_newmem failed: %d\n", r);
-		exec_restart(proc_e, r, execi->pc);
-		return r;
-	}
-
-	off = hdrlen;
-
-	/* Read in text and data segments. */
-	if (load_text) {
-		r= read_seg(execi, off, proc_e, T, 0, text_bytes);
-		if (r != OK)
-		{
-			printf("RS: load_aout: read_seg failed: %d\n", r);
-			exec_restart(proc_e, r, execi->pc);
-			return r;
-		}
-	}
-	else
-		printf("RS: load_aout: not loading text segment\n");
-
-	off += text_bytes;
-	r= read_seg(execi, off, proc_e, D, 0, data_bytes);
-	if (r != OK)
-	{
-		printf("RS: load_aout: read_seg failed: %d\n", r);
-		exec_restart(proc_e, r, execi->pc);
-		return r;
-	}
-
-	return OK;
 }
 
 static int load_elf(struct exec_info *execi)
