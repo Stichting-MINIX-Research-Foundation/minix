@@ -5,7 +5,7 @@
 BINFILES = dev2name mount  sh service \
            sysenv
 
-SBINFILES = ahci at_wini ext2 floppy mfs procfs \
+SBINFILES = ahci at_wini ext2 floppy procfs \
             fsck.mfs
 
 ETCFILES  = system.conf mtab passwd pwd.db spwd.db master.passwd \
@@ -22,18 +22,18 @@ all:
 # we have to make sure they are already installed
 # (that's a little bit to coarse grain though...)
 install_files:
-	${MAKE} -C ${MINIXSRCDIR}/commands install
-	${MAKE} -C ${MINIXSRCDIR}/usr.bin install
-	${MAKE} -C ${MINIXSRCDIR}/usr.sbin install
-	${MAKE} -C ${MINIXSRCDIR}/usr.bin install
-	${MAKE} -C ${MINIXSRCDIR}/sbin install
-	${MAKE} -C ${MINIXSRCDIR}/bin install
-	${MAKE} -C ${MINIXSRCDIR}/servers install
-	${MAKE} -C ${MINIXSRCDIR}/drivers/acpi install
-	${MAKE} -C ${MINIXSRCDIR}/drivers/ahci install
-	${MAKE} -C ${MINIXSRCDIR}/drivers/at_wini install
-	${MAKE} -C ${MINIXSRCDIR}/drivers/floppy install
-	${MAKE} -C ${MINIXSRCDIR}/drivers/pci install
+	${MAKE} -C ${NETBSDSRCDIR}/commands install
+	${MAKE} -C ${NETBSDSRCDIR}/usr.bin install
+	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin install
+	${MAKE} -C ${NETBSDSRCDIR}/usr.bin install
+	${MAKE} -C ${NETBSDSRCDIR}/sbin install
+	${MAKE} -C ${NETBSDSRCDIR}/bin install
+	${MAKE} -C ${NETBSDSRCDIR}/servers install
+	${MAKE} -C ${NETBSDSRCDIR}/drivers/acpi install
+	${MAKE} -C ${NETBSDSRCDIR}/drivers/ahci install
+	${MAKE} -C ${NETBSDSRCDIR}/drivers/at_wini install
+	${MAKE} -C ${NETBSDSRCDIR}/drivers/floppy install
+	${MAKE} -C ${NETBSDSRCDIR}/drivers/pci install
 
 
 image.d: install_files
