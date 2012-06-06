@@ -2,7 +2,7 @@
 # Makefile for arch-dependent kernel code
 .include <bsd.own.mk>
 
-HERE=${.CURDIR}/arch/${ARCH}
+HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 .PATH:	${HERE}
 SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c \
 	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c io_inb.S \

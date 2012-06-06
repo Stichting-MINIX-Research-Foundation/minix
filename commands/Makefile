@@ -35,7 +35,7 @@ SUBDIR=	add_route arp ash at awk \
 	xargs yacc yes zdump zmodem pkgin_cd \
 	mktemp worldstone updateboot update_bootcfg
 
-.if ${ARCH} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 SUBDIR+=	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump

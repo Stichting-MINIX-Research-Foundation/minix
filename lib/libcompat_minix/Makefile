@@ -2,7 +2,6 @@
 
 LIB=	compat_minix
 CPPFLAGS+= -D_MINIX_COMPAT
-MACHINE_ARCH= ${ARCH}
 USE_SHLIBDIR= yes
 
 .PATH: 	${.CURDIR}

@@ -13,8 +13,8 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${ARCH}
+CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-I${NETBSDSRCDIR}
 
-.include "arch/${ARCH}/Makefile.inc"
+.include "arch/${MACHINE_ARCH}/Makefile.inc"
 .include <minix.bootprog.mk>

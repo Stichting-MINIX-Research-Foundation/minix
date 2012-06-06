@@ -3,7 +3,7 @@
 
 PROG=	kernel
 
-.include "arch/${ARCH}/Makefile.inc"
+.include "arch/${MACHINE_ARCH}/Makefile.inc"
 
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c start.c system.c \
 	table.c utility.c 
@@ -14,7 +14,7 @@ LDADD+=	-ltimers -lsys -lexec
 CFLAGS += -D__kernel__
 
 CPPFLAGS+= -fno-stack-protector -D_NETBSD_SOURCE
-LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
+LDFLAGS+= -T ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 LDFLAGS+= -nostdlib -L${DESTDIR}/${LIBDIR}
 LDADD+= -lminlib
 DPADD+= ${LIBMINLIB}
@@ -25,7 +25,7 @@ LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Gener
 DPADD+=	${LIBC}
 .endif
 
-CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${NETBSDSRCDIR}
+CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH}/include -I${NETBSDSRCDIR}
 
 BINDIR=	/usr/sbin
 MAN=

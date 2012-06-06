@@ -25,7 +25,7 @@ touch-genfiles:
 # but bsd.own.mk has to be upgraded for that.
 .mfs.o:
 	${_MKTARGET_CREATE}
-	${OBJCOPY} -Ibinary -B${ARCH} -Oelf32-${ARCH}-minix $< $@
+	${OBJCOPY} -Ibinary -B${MACHINE_ARCH} -Oelf32-${MACHINE_ARCH}-minix $< $@
 
 ${RAMDISK_PATH}/image: .PHONY
 	${MAKE} -C ${RAMDISK_PATH} image

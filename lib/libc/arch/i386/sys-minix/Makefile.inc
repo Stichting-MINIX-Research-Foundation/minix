@@ -1,5 +1,5 @@
 # rts sources
-.PATH: ${.CURDIR}/arch/${ARCH}/sys-minix
+.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys-minix
 
 SRCS+=   \
 	__sigreturn.S \
