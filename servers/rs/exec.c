@@ -126,7 +126,13 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	strncpy(execi.progname, progname, PROC_NAME_LEN-1);
 	execi.progname[PROC_NAME_LEN-1] = '\0';
 	execi.frame_len = frame_len;
-	execi.load = read_seg;
+
+	/* callback functions and data */
+	execi.copymem = read_seg;
+	execi.clearproc = libexec_clearproc_vm_procctl;
+	execi.clearmem = libexec_clear_sys_memset;
+	execi.allocmem_prealloc = libexec_alloc_mmap_prealloc;
+	execi.allocmem_ondemand = libexec_alloc_mmap_ondemand;
 
 	for(i = 0; exec_loaders[i].load_object != NULL; i++) {
 	    r = (*exec_loaders[i].load_object)(&execi);
@@ -139,6 +145,10 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	    printf("RS: do_exec: loading error %d\n", r);
 	    return r;
 	}
+
+	/* Inform PM */
+        if((r = libexec_pm_newexec(execi.proc_e, &execi)) != OK)
+		return r;
 
 	/* Patch up stack and copy it from RS to new core image. */
 	vsp = execi.stack_high;
@@ -194,7 +204,7 @@ size_t seg_bytes           /* how much is to be transferred? */
   if (off+seg_bytes > execi->hdr_len) return ENOEXEC;
   if((r= sys_vircopy(SELF, D, ((vir_bytes)execi->hdr)+off,
   	execi->proc_e, D, seg_addr, seg_bytes)) != OK) {
-	printf("RS: exec read_seg: copy 0x%lx bytes into %d at 0x%lx failed: %d\n",
+	printf("RS: exec read_seg: copy 0x%x bytes into %d at 0x%lx failed: %d\n",
 		seg_bytes, execi->proc_e, seg_addr, r);
   }
   return r;

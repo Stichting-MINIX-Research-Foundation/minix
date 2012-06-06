@@ -391,11 +391,22 @@ remain_fill:
 	inc	%ebp
 	dec	%eax
 	jmp	remain_fill
+
 fill_done:
+LABEL(memset_fault)		/* kernel can send us here */
+	mov	$0, %eax		/* 0 means: no fault */
 	pop	%ds
 	pop	%ebx
 	pop	%esi
 	pop	%ebp
+	ret
+
+LABEL(memset_fault_in_kernel)		/* kernel can send us here */
+	pop	%ds
+	pop	%ebx
+	pop	%esi
+	pop	%ebp
+	mov	%cr2, %eax
 	ret
 
 

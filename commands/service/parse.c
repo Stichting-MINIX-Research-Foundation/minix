@@ -819,6 +819,7 @@ struct
 	{ "READBIOS",		SYS_READBIOS },
 	{ "STIME",		SYS_STIME },
 	{ "VMCTL",		SYS_VMCTL },
+	{ "MEMSET",		SYS_MEMSET },
 	{ NULL,		0 }
 };
 

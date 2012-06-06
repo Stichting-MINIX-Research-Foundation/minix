@@ -662,16 +662,27 @@ static void vm_print(u32_t *root)
 }
 #endif
 
-/*===========================================================================*
- *				lin_memset				     *
- *===========================================================================*/
-int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
+int vm_memset(endpoint_t who, phys_bytes ph, const u8_t c, phys_bytes bytes)
 {
 	u32_t p;
-
+	int r = OK;
+	struct proc *whoptr = NULL;
+	
+	/* NONE for physical, otherwise virtual */
+	if(who != NONE) {
+		int n;
+		vir_bytes lin;
+		assert(vm_running);
+		if(!isokendpt(who, &n)) return ESRCH;
+		whoptr = proc_addr(n);
+	        if(!(lin = umap_local(whoptr, D, ph, bytes))) return EFAULT;
+		ph = lin;
+	} 
+	
 	p = c | (c << 8) | (c << 16) | (c << 24);
 
 	if(!vm_running) {
+		if(who != NONE) panic("can't vm_memset without vm running");
 		phys_memset(ph, p, bytes);
 		return OK;
 	}
@@ -680,23 +691,33 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 
-	/* With VM, we have to map in the physical memory. 
+	assert(!catch_pagefaults);
+	catch_pagefaults=1;
+
+	/* With VM, we have to map in the memory (virtual or physical). 
 	 * We can do this 4MB at a time.
 	 */
 	while(bytes > 0) {
 		int changed = 0;
-		phys_bytes chunk = bytes, ptr;
-		ptr = createpde(NULL, ph, &chunk, 0, &changed);
+		phys_bytes chunk = bytes, ptr, pfa;
+		ptr = createpde(whoptr, ph, &chunk, 0, &changed);
 		if(changed)
 			reload_cr3(); 
 
 		/* We can memset as many bytes as we have remaining,
 		 * or as many as remain in the 4MB chunk we mapped in.
 		 */
-		phys_memset(ptr, p, chunk);
+		if((pfa=phys_memset(ptr, p, chunk))) {
+			printf("kernel memset pagefault\n");
+			r = EFAULT;
+			break;
+		}
 		bytes -= chunk;
 		ph += chunk;
 	}
+
+	assert(catch_pagefaults);
+	catch_pagefaults=0;
 
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 

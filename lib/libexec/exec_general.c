@@ -12,7 +12,42 @@
 #include <minix/ipc.h>
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <minix/vm.h>
+#include <minix/syslib.h>
+#include <sys/mman.h>
 #include <machine/elf.h>
+
+int libexec_alloc_mmap_prealloc(struct exec_info *execi, off_t vaddr, size_t len)
+{
+	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
+		PROT_READ|PROT_WRITE|PROT_EXEC,
+		MAP_ANON|MAP_PREALLOC|MAP_UNINITIALIZED|MAP_FIXED, -1, 0) == MAP_FAILED) {
+		return ENOMEM;
+	}
+
+	return OK;
+}
+
+int libexec_alloc_mmap_ondemand(struct exec_info *execi, off_t vaddr, size_t len)
+{
+	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
+		PROT_READ|PROT_WRITE|PROT_EXEC,
+		MAP_ANON|MAP_FIXED, -1, 0) == MAP_FAILED) {
+		return ENOMEM;
+	}
+
+	return OK;
+}
+
+int libexec_clearproc_vm_procctl(struct exec_info *execi)
+{
+	return vm_procctl(execi->proc_e, VMPPARAM_CLEAR);
+}
+
+int libexec_clear_sys_memset(struct exec_info *execi, off_t vaddr, size_t len)
+{
+	return sys_memset(execi->proc_e, 0, vaddr, len);
+}
 
 void libexec_patch_ptr(char stack[ARG_MAX], vir_bytes base)
 {

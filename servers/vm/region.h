@@ -55,6 +55,7 @@ typedef struct vir_region {
 #define VR_LOWER1MB	0x010
 #define VR_CONTIG	0x020	/* Must be physically contiguous. */
 #define VR_SHARED	0x040
+#define VR_UNINITIALIZED 0x080	/* Do not clear after allocation  */
 
 /* Mapping type: */
 #define VR_ANON		0x100	/* Memory to be cleared and allocated */

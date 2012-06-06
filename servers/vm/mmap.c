@@ -42,11 +42,14 @@ int do_mmap(message *m)
 	int mfflags = 0;
 	vir_bytes addr;
 	struct vir_region *vr = NULL;
+	int execpriv = 0;
+
+	/* RS and VFS can do slightly more special mmap() things */
+	if(m->m_source == VFS_PROC_NR || m->m_source == RS_PROC_NR)
+		execpriv = 1;
 
 	if(m->VMM_FLAGS & MAP_THIRDPARTY) {
-		/* exec()ers, i.e. RS & VFS, can mmap() on behalf of anyone. */
-		if(m->m_source != VFS_PROC_NR && m->m_source != RS_PROC_NR)
-			return EPERM;
+		if(!execpriv) return EPERM;
 		if((r=vm_isokendpt(m->VMM_FORWHOM, &n)) != OK)
 			return ESRCH;
 	} else {
@@ -79,6 +82,10 @@ int do_mmap(message *m)
 		if(m->VMM_FLAGS & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
 		if(m->VMM_FLAGS & MAP_LOWER1M)  vrflags |= VR_LOWER1MB;
 		if(m->VMM_FLAGS & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
+		if(m->VMM_FLAGS & MAP_UNINITIALIZED) {
+			if(!execpriv) return EPERM;
+			vrflags |= VR_UNINITIALIZED;
+		}
 		if(m->VMM_FLAGS & MAP_IPC_SHARED) {
 			vrflags |= VR_SHARED;
 			/* Shared memory has to be preallocated. */

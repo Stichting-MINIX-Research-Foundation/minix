@@ -90,7 +90,7 @@ void phys_outsw(u16_t port, phys_bytes buf, size_t count);
 u32_t read_cr3(void);
 void reload_cr3(void);
 void i386_invlpg(phys_bytes linaddr);
-void phys_memset(phys_bytes ph, u32_t c, phys_bytes bytes);
+vir_bytes phys_memset(phys_bytes ph, u32_t c, phys_bytes bytes);
 void reload_ds(void);
 void ia32_msr_read(u32_t reg, u32_t * hi, u32_t * lo);
 void ia32_msr_write(u32_t reg, u32_t hi, u32_t lo);

@@ -157,6 +157,8 @@ phys_bytes phys_copy(phys_bytes source, phys_bytes dest, phys_bytes
 	count);
 void phys_copy_fault(void);
 void phys_copy_fault_in_kernel(void);
+void memset_fault(void);
+void memset_fault_in_kernel(void);
 #define virtual_copy(src, dst, bytes) \
 				virtual_copy_f(NULL, src, dst, bytes, 0)
 #define virtual_copy_vmcheck(caller, src, dst, bytes) \
@@ -174,7 +176,8 @@ phys_bytes umap_local(register struct proc *rp, int seg, vir_bytes
 phys_bytes umap_virtual(struct proc* rp, int seg, vir_bytes vir_addr,
 	vir_bytes bytes);
 phys_bytes seg2phys(u16_t);
-int vm_phys_memset(phys_bytes source, u8_t pattern, phys_bytes count);
+int vm_memset(endpoint_t who,
+	phys_bytes source, u8_t pattern, phys_bytes count);
 int intr_init(int, int);
 void halt_cpu(void);
 void arch_init(void);

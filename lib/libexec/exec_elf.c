@@ -220,7 +220,6 @@ int elf_has_interpreter(char *exec_hdr,		/* executable header */
 
 int libexec_load_elf(struct exec_info *execi)
 {
-	int r;
 	Elf_Ehdr *hdr = NULL;
 	Elf_Phdr *phdr = NULL;
 	int e, i = 0;
@@ -240,25 +239,26 @@ int libexec_load_elf(struct exec_info *execi)
 	 */
 	i = elf_has_interpreter(execi->hdr, execi->hdr_len, NULL, 0);
 	if(i > 0) {
-	      printf("libexec: cannot load dynamically linked executable\n");
 	      return ENOEXEC;
 	}
-
-	/* Make VM forget about all existing memory in process. */
-	vm_procctl(execi->proc_e, VMPPARAM_CLEAR);
 
 	execi->stack_size = roundup(execi->stack_size, PAGE_SIZE);
 	execi->stack_high = VM_STACKTOP;
 	assert(!(VM_STACKTOP % PAGE_SIZE));
 	stacklow = execi->stack_high - execi->stack_size;
 
+	assert(execi->copymem);
+	assert(execi->clearmem);
+	assert(execi->allocmem_prealloc);
+	assert(execi->allocmem_ondemand);
+
+	if(execi->clearproc) execi->clearproc(execi);
+
 	for (i = 0; i < hdr->e_phnum; i++) {
 		vir_bytes seg_membytes, page_offset, vaddr;
+		vir_bytes chunk, vfileend, vmemend;
 		Elf_Phdr *ph = &phdr[i];
 		if (ph->p_type != PT_LOAD || ph->p_memsz == 0) continue;
-#if 0
-		printf("index %d memsz 0x%lx vaddr 0x%lx\n", i, ph->p_memsz, ph->p_vaddr);
-#endif
 		vaddr =  ph->p_vaddr;
 		seg_membytes = ph->p_memsz;
 		page_offset = vaddr % PAGE_SIZE;
@@ -268,34 +268,46 @@ int libexec_load_elf(struct exec_info *execi)
 		if(first || startv > vaddr) startv = vaddr;
 		first = 0;
 
-#if 0
-	      	printf("libexec_load_elf: mmap 0x%lx bytes at 0x%lx\n",
-			seg_membytes, vaddr);
-#endif
-
-		/* Tell VM to make us some memory */
-		if(minix_mmap_for(execi->proc_e, (void *) vaddr, seg_membytes,
-			PROT_READ|PROT_WRITE|PROT_EXEC,
-			MAP_ANON|MAP_PREALLOC|MAP_FIXED, -1, 0) == MAP_FAILED) {
-	      		printf("libexec_load_elf: mmap of 0x%lx bytes failed\n", seg_membytes);
-			vm_procctl(execi->proc_e, VMPPARAM_CLEAR);
+		/* make us some memory */
+		if(execi->allocmem_prealloc(execi, vaddr, seg_membytes) != OK) {
+			if(execi->clearproc) execi->clearproc(execi);
 			return ENOMEM;
 		}
 
+#if ELF_DEBUG
+		printf("mmapped 0x%lx-0x%lx\n", vaddr, vaddr+seg_membytes);
+#endif
+
 		/* Copy executable section into it */
-		if(execi->load(execi, ph->p_offset, ph->p_vaddr, ph->p_filesz) != OK) {
-	      		printf("libexec_load_elf: load callback failed\n");
-			vm_procctl(execi->proc_e, VMPPARAM_CLEAR);
+		if(execi->copymem(execi, ph->p_offset, ph->p_vaddr, ph->p_filesz) != OK) {
+			if(execi->clearproc) execi->clearproc(execi);
 			return ENOMEM;
+		}
+
+#if ELF_DEBUG
+		printf("copied 0x%lx-0x%lx\n", ph->p_vaddr, ph->p_vaddr+ph->p_filesz);
+#endif
+
+		/* Clear remaining bits */
+		vfileend  = ph->p_vaddr + ph->p_filesz;
+		vmemend = vaddr + seg_membytes;
+		if((chunk = ph->p_vaddr - vaddr) > 0) {
+#if ELF_DEBUG
+			printf("start clearing 0x%lx-0x%lx\n", vaddr, vaddr+chunk);
+#endif
+			execi->clearmem(execi, vaddr, chunk);
+		}
+		if((chunk = vmemend - vfileend) > 0) {
+#if ELF_DEBUG
+			printf("end clearing 0x%lx-0x%lx\n", vfileend, vaddr+chunk);
+#endif
+			execi->clearmem(execi, vfileend, chunk);
 		}
 	}
 
 	/* Make it a stack */
-	if(minix_mmap_for(execi->proc_e, (void *) stacklow, execi->stack_size,
-		PROT_READ|PROT_WRITE|PROT_EXEC,
-		MAP_ANON|MAP_FIXED, -1, 0) == MAP_FAILED) {
-      		printf("libexec_load_elf: mmap for stack failed\n");
-		vm_procctl(execi->proc_e, VMPPARAM_CLEAR);
+	if(execi->allocmem_ondemand(execi, stacklow, execi->stack_size) != OK) {
+		if(execi->clearproc) execi->clearproc(execi);
 		return ENOMEM;
 	}
 
@@ -303,10 +315,6 @@ int libexec_load_elf(struct exec_info *execi)
 	execi->pc = hdr->e_entry;
 	execi->load_base = startv;
 
-	if((r = libexec_pm_newexec(execi->proc_e, execi)) != OK) {
-	      printf("libexec_load_elf: pm_newexec failed: %d\n", r);
-	}
-
-	return(r);
+	return OK;
 }
 

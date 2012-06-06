@@ -583,6 +583,11 @@ USE(newregion,
 		}
 	}
 
+	/* Pre-allocations should be uninitialized, but after that it's a
+	 * different story.
+	 */
+	newregion->flags &= ~VR_UNINITIALIZED;
+
 	/* Link it. */
 	region_insert(&vmp->vm_regions_avl, newregion);
 
@@ -1266,6 +1271,11 @@ int write;
 	struct phys_region *physr, *nextphysr;
 	int changes = 0;
 	physr_iter iter;
+	u32_t allocflags = 0;
+
+	if(!(region->flags & VR_UNINITIALIZED)) {
+		allocflags = PAF_CLEAR;
+	}
 
 #define FREE_RANGE_HERE(er1, er2) {					\
 	struct phys_region *r1 = (er1), *r2 = (er2);			\
@@ -1277,7 +1287,7 @@ int write;
 	if(start < end) {						\
 		SANITYCHECK(SCL_DETAIL);				\
 		if(map_new_physblock(vmp, region, start,		\
-			end-start, MAP_NONE, PAF_CLEAR, 0) != OK) {	\
+			end-start, MAP_NONE, allocflags, 0) != OK) {	\
 			SANITYCHECK(SCL_DETAIL);			\
 			return ENOMEM;					\
 		}							\

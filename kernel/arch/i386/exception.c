@@ -52,7 +52,7 @@ static void pagefault( struct proc *pr,
 			struct exception_frame * frame,
 			int is_nested)
 {
-	int in_physcopy = 0;
+	int in_physcopy = 0, in_memset = 0;
 
 	reg_t pagefaultcr2;
 	message m_pagefault;
@@ -68,13 +68,21 @@ static void pagefault( struct proc *pr,
 	in_physcopy = (frame->eip > (vir_bytes) phys_copy) &&
 	   (frame->eip < (vir_bytes) phys_copy_fault);
 
+	in_memset = (frame->eip > (vir_bytes) phys_memset) &&
+	   (frame->eip < (vir_bytes) memset_fault);
+
 	if((is_nested || iskernelp(pr)) &&
-		catch_pagefaults && in_physcopy) {
+		catch_pagefaults && (in_physcopy || in_memset)) {
 #if 0
 		printf("pf caught! addr 0x%lx\n", pagefaultcr2);
 #endif
 		if (is_nested) {
-			frame->eip = (reg_t) phys_copy_fault_in_kernel;
+			if(in_physcopy) {
+				assert(!in_memset);
+				frame->eip = (reg_t) phys_copy_fault_in_kernel;
+			} else {
+				frame->eip = (reg_t) memset_fault_in_kernel;
+			}
 		}
 		else {
 			pr->p_reg.pc = (reg_t) phys_copy_fault;

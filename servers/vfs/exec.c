@@ -296,9 +296,14 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	Get_read_vp(execi, fullpath, 0, 0, &resolve, fp);
   }
 
+  /* callback functions and data */
+  execi.args.copymem = read_seg;
+  execi.args.clearproc = libexec_clearproc_vm_procctl;
+  execi.args.clearmem = libexec_clear_sys_memset;
+  execi.args.allocmem_prealloc = libexec_alloc_mmap_prealloc;
+  execi.args.allocmem_ondemand = libexec_alloc_mmap_ondemand;
   execi.args.opaque = &execi;
-  execi.args.load = &read_seg;
-  execi.args.clear = NULL;
+
   execi.args.proc_e = proc_e;
   execi.args.frame_len = frame_len;
 
@@ -309,6 +314,9 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   }
 
   FAILCHECK(r);
+
+  /* Inform PM */
+  FAILCHECK(libexec_pm_newexec(proc_e, &execi.args));
 
   /* Save off PC */
   *pc = execi.args.pc;

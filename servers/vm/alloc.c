@@ -506,7 +506,7 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 
 	if(memflags & PAF_CLEAR) {
 		int s;
-		if ((s= sys_memset(0, CLICK_SIZE*mem,
+		if ((s= sys_memset(NONE, 0, CLICK_SIZE*mem,
 			VM_PAGE_SIZE*pages)) != OK) 
 			panic("alloc_mem: sys_memset failed: %d", s);
 	}
@@ -543,7 +543,7 @@ static void free_pages(phys_bytes pageno, int npages)
 	assert(!addr_search(&addravl, pageno, AVL_EQUAL));
 
 #if JUNKFREE
-       if(sys_memset(0xa5a5a5a5, VM_PAGE_SIZE * pageno,
+       if(sys_memset(NONE, 0xa5a5a5a5, VM_PAGE_SIZE * pageno,
                VM_PAGE_SIZE * npages) != OK)
                        panic("free_pages: sys_memset failed");
 #endif
