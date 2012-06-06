@@ -1,0 +1,9 @@
+# $Id: phony-end,v 1.1 2011/09/29 23:38:04 sjg Exp $
+
+all ok also.ok bug phony:
+	@echo '${.TARGET .PREFIX .IMPSRC:L:@v@$v="${$v}"@}'
+
+.END:	ok also.ok bug
+
+phony bug:	.PHONY
+all: phony
