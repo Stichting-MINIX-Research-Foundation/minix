@@ -32,58 +32,26 @@
 
 # We use the number specified in <sys/param.h>
 
+
 path="$0"
 [ "${path#/*}" = "$path" ] && path="./$path"
-exec < ${path%/*}/../sys/param.h
 
-# Search for line
-# #define __NetBSD_Version__ <ver_num> /* NetBSD <ver_text> */
-#
-# <ver_num> and <ver_text> should match!
+release=`grep OS_RELEASE ${path%/*}/../../include/minix/config.h | awk '{ print $3} ' | tr -d '"'`
+major=`grep OS_VERSION ${path%/*}/../../include/minix/config.h | awk '{ print $3 }' | tr -d '"'  | awk -F. ' { print $1 }'`
+minor=`grep OS_VERSION ${path%/*}/../../include/minix/config.h | awk '{ print $3 }' | tr -d '"'  | awk -F. ' { print $2 }'`
 
-while
-	read define ver_tag rel_num comment_start NetBSD rel_text rest || exit 1
-do
-	[ "$define" = "#define" ] || continue;
-	[ "$ver_tag" = "__NetBSD_Version__" ] || continue
-	break
-done
-
-# default: return MM.mm.pp
-# -m: return MM, representing only the major number; however, for -current,
-#     return the next major number (e.g. for 5.99.nn, return 6)
-# -n: return MM.mm
-# -s: return MMmmpp (no dots)
-
-option="$1"
-
-# ${rel_num} is [M]Mmm00pp00
-rel_num=${rel_num%??}
-rel_MMmm=${rel_num%????}
-rel_MM=${rel_MMmm%??}
-rel_mm=${rel_MMmm#${rel_MM}}
-# rel_pp=${rel_num#${rel_MMmm}00}
-
-# Get patch from text version
-IFS=.
-set -- - $rel_text
-shift 3
-IFS=' '
-set -- $rel_MM ${rel_mm#0} $*
 
 case "$option" in
 -m)
-	echo "$(((${rel_MMmm}+1)/100))"
+	echo $release.$major
 	;;
 -n)
-	echo "${rel_MM}.${rel_mm#0}"
+	echo $release.$major.$minor
 	;;
 -s)
-	IFS=
-	echo "$*"
+	echo $release$major$minor
 	;;
 *)
-	IFS=.
-	echo "$*"
+	echo $release.$major.$minor
 	;;
 esac
