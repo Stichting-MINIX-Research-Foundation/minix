@@ -16,7 +16,6 @@ lib*.so*
 *.d
 .depend
 nbsdsrc/*
-tools/revision
 TAGS
 tags
 GPATH
@@ -35,7 +34,8 @@ usr.bin/mdocml/man/*.7
 etc/passwd
 etc/pwd.db
 etc/spwd.db
-tools/image
-tools/kernel
+releasetools/image
+releasetools/kernel
+releasetools/revision
 share/zoneinfo/builddir
 lib/libc/compat__*
