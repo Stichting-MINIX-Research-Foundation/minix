@@ -11,19 +11,24 @@ GEN_FILES=	*.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 # Specify the programs that are part of the system image.
 KERNEL= kernel
 # PROGRAMS are in the order they should be loaded by boot
+.if ${MKBUILDEXT2RD} != "yes"
+FS=	${NETBSDSRCDIR}/servers/mfs/mfs
+.else
+FS=	${NETBSDSRCDIR}/servers/ext2/ext2
+.endif
 PROGRAMS= \
-	../servers/ds/ds \
-	../servers/rs/rs \
-	../servers/pm/pm \
-	../servers/sched/sched \
-	../servers/vfs/vfs \
-	../drivers/memory/memory \
-	../drivers/log/log \
-	../drivers/tty/tty \
-	../servers/mfs/mfs \
-	../servers/vm/vm \
-	../servers/pfs/pfs \
-	../servers/init/init
+	${NETBSDSRCDIR}/servers/ds/ds \
+	${NETBSDSRCDIR}/servers/rs/rs \
+	${NETBSDSRCDIR}/servers/pm/pm \
+	${NETBSDSRCDIR}/servers/sched/sched \
+	${NETBSDSRCDIR}/servers/vfs/vfs \
+	${NETBSDSRCDIR}/drivers/memory/memory \
+	${NETBSDSRCDIR}/drivers/log/log \
+	${NETBSDSRCDIR}/drivers/tty/tty \
+	${FS} \
+	${NETBSDSRCDIR}/servers/vm/vm \
+	${NETBSDSRCDIR}/servers/pfs/pfs \
+	${NETBSDSRCDIR}/servers/init/init
 
 usage:	
 	@echo " " >&2
@@ -74,9 +79,9 @@ drivers: includes servers
 bootable:
 	exec su root mkboot bootable
 
-hdboot:
+hdboot: services
 	rm -rf ${DESTDIR}/boot/minix/.temp/
-	${INSTALL_DIR} {DESTDIR}/boot/minix/.temp
+	mkdir -p ${DESTDIR}/boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
 	for i in ${PROGRAMS};					\
 	do							\
@@ -97,15 +102,15 @@ fdboot:
 	@sync
 
 install:
-	if [ ${DESTDIR}X != X ];			\
-	then	${MAKE} cross_install;			\
-	else	${MAKE} includes services hdboot;	\
-	fi
+.if ${MKBUILDEXT2RD} != "yes"
+	${MAKE} includes services hdboot
+.else
+	${MAKE} cross_install
+.endif
 
 cross_install:
 	${INSTALL_DIR} ${DESTDIR}/multiboot
-#ext2 might be needed
-	for i in ${PROGRAMS} ../servers/ext2/ext2;	\
+	for i in ${PROGRAMS};						\
 	do								\
 	let n=n+1 >/dev/null;						\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";		\
