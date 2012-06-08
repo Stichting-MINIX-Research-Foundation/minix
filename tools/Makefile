@@ -15,7 +15,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	.WAIT tic \
 	.WAIT lex \
 	.WAIT gmake .WAIT binutils .WAIT gcc \
-		cat pwd_mkdb stat zic \
+		cat file pwd_mkdb stat zic \
 
 
 
