@@ -251,8 +251,10 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			dopreserve = 1;
+#ifdef __minix
 			errx(1,
 			    "Minix lacks support for futimes(3)/utimes(2)");
+#endif
 			break;
 		case 'r':
 			dorename = 1;
