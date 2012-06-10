@@ -18,7 +18,7 @@
 ENTRY(apic_hwint##irq)							\
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
-	SAVE_PROCESS_CTX(0)						;\
+	SAVE_PROCESS_CTX(0, KTS_INT_HARD)				;\
 	push	%ebp							;\
 	call	_C_LABEL(context_stop)					;\
 	add	$4, %esp						;\
@@ -47,7 +47,7 @@ ENTRY(apic_hwint##irq)							\
 #define lapic_intr(func) \
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
-	SAVE_PROCESS_CTX(0)						;\
+	SAVE_PROCESS_CTX(0, KTS_INT_HARD)				;\
 	push	%ebp							;\
 	call	_C_LABEL(context_stop)					;\
 	add	$4, %esp						;\

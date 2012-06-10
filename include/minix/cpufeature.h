@@ -21,6 +21,10 @@
 #define _CPUF_I386_HTT		13	/* Supports HTT */
 #define _CPUF_I386_HTT_MAX_NUM	14	/* Maximal num of threads */
 
+#define _CPUF_I386_MTRR		15
+#define _CPUF_I386_SYSENTER	16	/* Intel SYSENTER instrs */
+#define _CPUF_I386_SYSCALL	17	/* AMD SYSCALL instrs */
+
 int _cpufeature(int featureno);
 
 #endif

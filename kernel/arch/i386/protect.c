@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <minix/cpufeature.h>
 #include <machine/multiboot.h>
 
 #include "kernel/kernel.h"
@@ -24,6 +25,8 @@ char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 struct segdesc_s gdt[GDT_SIZE] __aligned(DESC_SIZE);
 struct gatedesc_s idt[IDT_SIZE] __aligned(DESC_SIZE);
 struct tss_s tss[CONFIG_MAX_CPUS];
+
+u32_t k_percpu_stacks[CONFIG_MAX_CPUS];
 
 int prot_init_done = 0;
 
@@ -141,8 +144,10 @@ static struct gate_table_s gate_table_exceptions[] = {
 	{ alignment_check, ALIGNMENT_CHECK_VECTOR, INTR_PRIVILEGE },
 	{ machine_check, MACHINE_CHECK_VECTOR, INTR_PRIVILEGE },
 	{ simd_exception, SIMD_EXCEPTION_VECTOR, INTR_PRIVILEGE },
-	{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
-	{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
+	{ ipc_entry_softint_orig, IPC_VECTOR_ORIG, USER_PRIVILEGE },
+	{ kernel_call_entry_orig, KERN_CALL_VECTOR_ORIG, USER_PRIVILEGE },
+	{ ipc_entry_softint_um, IPC_VECTOR_UM, USER_PRIVILEGE },
+	{ kernel_call_entry_um, KERN_CALL_VECTOR_UM, USER_PRIVILEGE },
 	{ NULL, 0, 0}
 };
 
@@ -168,12 +173,44 @@ int tss_init(unsigned cpu, void * kernel_stack)
 	 * make space for process pointer and cpu id and point to the first
 	 * usable word
 	 */
-	t->sp0 = ((unsigned) kernel_stack) - X86_STACK_TOP_RESERVED;
+	k_percpu_stacks[cpu] = t->sp0 = ((unsigned) kernel_stack) - X86_STACK_TOP_RESERVED;
 	/* 
 	 * set the cpu id at the top of the stack so we know on which cpu is
 	 * this stak in use when we trap to kernel
 	 */
 	*((reg_t *)(t->sp0 + 1 * sizeof(reg_t))) = cpu;
+
+	/* Set up Intel SYSENTER support if available. */
+	if(minix_feature_flags & MKF_I386_INTEL_SYSENTER) {
+	  ia32_msr_write(INTEL_MSR_SYSENTER_CS, 0, KERN_CS_SELECTOR);
+  	  ia32_msr_write(INTEL_MSR_SYSENTER_ESP, 0, t->sp0);
+  	  ia32_msr_write(INTEL_MSR_SYSENTER_EIP, 0, (u32_t) ipc_entry_sysenter);
+  	}
+
+	/* Set up AMD SYSCALL support if available. */
+	if(minix_feature_flags & MKF_I386_AMD_SYSCALL) {
+		u32_t msr_lo, msr_hi;
+
+		/* set SYSCALL ENABLE bit in EFER MSR */
+		ia32_msr_read(AMD_MSR_EFER, &msr_hi, &msr_lo);
+		msr_lo |= AMD_EFER_SCE;
+		ia32_msr_write(AMD_MSR_EFER, msr_hi, msr_lo);
+
+		/* set STAR register value */
+#define set_star_cpu(forcpu) if(cpu == forcpu) {				\
+		ia32_msr_write(AMD_MSR_STAR,					\
+		  ((u32_t)USER_CS_SELECTOR << 16) | (u32_t)KERN_CS_SELECTOR,	\
+		  (u32_t) ipc_entry_syscall_cpu ## forcpu); }
+		set_star_cpu(0);
+		set_star_cpu(1);
+		set_star_cpu(2);
+		set_star_cpu(3);
+		set_star_cpu(4);
+		set_star_cpu(5);
+		set_star_cpu(6);
+		set_star_cpu(7);
+		assert(CONFIG_MAX_CPUS <= 8);
+  	}
 
 	return SEG_SELECTOR(index);
 }
@@ -284,6 +321,11 @@ void prot_load_selectors(void)
 void prot_init()
 {
   extern char k_boot_stktop;
+
+  if(_cpufeature(_CPUF_I386_SYSENTER))
+	minix_feature_flags |= MKF_I386_INTEL_SYSENTER;
+  if(_cpufeature(_CPUF_I386_SYSCALL))
+	minix_feature_flags |= MKF_I386_AMD_SYSCALL;
 
   memset(gdt, 0, sizeof(gdt));
   memset(idt, 0, sizeof(idt));

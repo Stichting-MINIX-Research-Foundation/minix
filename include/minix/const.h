@@ -173,4 +173,8 @@
 /* magic value to put in struct proc entries for sanity checks. */
 #define PMAGIC 0xC0FFEE1
 
+/* MINIX_KERNFLAGS flags */
+#define MKF_I386_INTEL_SYSENTER	(1L << 0) /* SYSENTER available and supported */
+#define MKF_I386_AMD_SYSCALL	(1L << 1) /* SYSCALL available and supported */
+
 #endif /* _MINIX_CONST_H */

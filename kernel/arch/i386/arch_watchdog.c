@@ -9,11 +9,6 @@
 
 #define CPUID_UNHALTED_CORE_CYCLES_AVAILABLE	0
 
-#define INTEL_MSR_PERFMON_CRT0	0xc1
-#define INTEL_MSR_PERFMON_SEL0	0x186
-
-#define INTEL_MSR_PERFMON_SEL0_ENABLE	(1 << 22)
-
 /*
  * Intel architecture performance counters watchdog
  */

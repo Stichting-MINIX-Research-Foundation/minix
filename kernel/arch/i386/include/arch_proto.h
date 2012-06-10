@@ -47,10 +47,25 @@ void alignment_check(void);
 void machine_check(void);
 void simd_exception(void);
 
+void restore_user_context_int(struct proc *);
+void restore_user_context_sysenter(struct proc *);
+void restore_user_context_syscall(struct proc *);
+
 /* Software interrupt handlers, in numerical order. */
 void trp(void);
-void ipc_entry(void);
-void kernel_call_entry(void);
+void ipc_entry_softint_orig(void);
+void ipc_entry_softint_um(void);
+void ipc_entry_sysenter(void);
+void ipc_entry_syscall_cpu0(void);
+void ipc_entry_syscall_cpu1(void);
+void ipc_entry_syscall_cpu2(void);
+void ipc_entry_syscall_cpu3(void);
+void ipc_entry_syscall_cpu4(void);
+void ipc_entry_syscall_cpu5(void);
+void ipc_entry_syscall_cpu6(void);
+void ipc_entry_syscall_cpu7(void);
+void kernel_call_entry_orig(void);
+void kernel_call_entry_um(void);
 void level0_call(void);
 
 /* exception.c */
@@ -111,6 +126,30 @@ void x86_load_es(u32_t);
 void x86_load_fs(u32_t);
 void x86_load_gs(u32_t);
 
+/* ipc functions in usermapped_ipc.S */
+int usermapped_send_softint(endpoint_t dest, message *m_ptr);
+int usermapped_receive_softint(endpoint_t src, message *m_ptr, int *status_ptr);
+int usermapped_sendrec_softint(endpoint_t src_dest, message *m_ptr);
+int usermapped_sendnb_softint(endpoint_t dest, message *m_ptr);
+int usermapped_notify_softint(endpoint_t dest);
+int usermapped_do_kernel_call_softint(message *m_ptr);
+int usermapped_senda_softint(asynmsg_t *table, size_t count);
+
+int usermapped_send_syscall(endpoint_t dest, message *m_ptr);
+int usermapped_receive_syscall(endpoint_t src, message *m_ptr, int *status_ptr);
+int usermapped_sendrec_syscall(endpoint_t src_dest, message *m_ptr);
+int usermapped_sendnb_syscall(endpoint_t dest, message *m_ptr);
+int usermapped_notify_syscall(endpoint_t dest);
+int usermapped_do_kernel_call_syscall(message *m_ptr);
+int usermapped_senda_syscall(asynmsg_t *table, size_t count);
+
+int usermapped_send_sysenter(endpoint_t dest, message *m_ptr);
+int usermapped_receive_sysenter(endpoint_t src, message *m_ptr, int *status_ptr);
+int usermapped_sendrec_sysenter(endpoint_t src_dest, message *m_ptr);
+int usermapped_sendnb_sysenter(endpoint_t dest, message *m_ptr);
+int usermapped_notify_sysenter(endpoint_t dest);
+int usermapped_do_kernel_call_sysenter(message *m_ptr);
+int usermapped_senda_sysenter(asynmsg_t *table, size_t count);
 
 void switch_k_stack(void * esp, void (* continuation)(void));
 

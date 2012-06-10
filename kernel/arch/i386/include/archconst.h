@@ -150,4 +150,26 @@
 
 #define PG_ALLOCATEME ((phys_bytes)-1)
 
+/* MSRs */
+#define INTEL_MSR_PERFMON_CRT0         0xc1
+#define INTEL_MSR_SYSENTER_CS         0x174
+#define INTEL_MSR_SYSENTER_ESP        0x175
+#define INTEL_MSR_SYSENTER_EIP        0x176
+#define INTEL_MSR_PERFMON_SEL0        0x186
+
+#define INTEL_MSR_PERFMON_SEL0_ENABLE (1 << 22)
+
+#define AMD_EFER_SCE		(1L << 0) /* SYSCALL/SYSRET enabled */
+#define AMD_MSR_EFER		0xC0000080	/* extended features msr */
+#define AMD_MSR_STAR		0xC0000081	/* SYSCALL params msr */
+
+/* trap styles recorded on kernel entry and exit */
+#define KTS_NONE	1 /* invalid */
+#define KTS_INT_HARD	2 /* exception / hard interrupt */
+#define KTS_INT_ORIG	3 /* soft interrupt from libc */
+#define KTS_INT_UM	4 /* soft interrupt from usermapped code */
+#define KTS_FULLCONTEXT	5 /* must restore full context */
+#define KTS_SYSENTER	6 /* SYSENTER instruction (usermapped) */
+#define KTS_SYSCALL	7 /* SYSCALL instruction (usermapped) */
+
 #endif /* _I386_ACONST_H */

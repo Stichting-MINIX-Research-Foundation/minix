@@ -835,8 +835,10 @@ static struct gate_table_s gate_table_ioapic[] = {
 };
 
 static struct gate_table_s gate_table_common[] = {
-	{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
-	{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
+	{ ipc_entry_softint_orig, IPC_VECTOR_ORIG, USER_PRIVILEGE },
+	{ kernel_call_entry_orig, KERN_CALL_VECTOR_ORIG, USER_PRIVILEGE },
+	{ ipc_entry_softint_um, IPC_VECTOR_UM, USER_PRIVILEGE },
+	{ kernel_call_entry_um, KERN_CALL_VECTOR_UM, USER_PRIVILEGE },
 	{ NULL, 0, 0}
 };
 

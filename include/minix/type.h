@@ -168,8 +168,8 @@ struct minix_kerninfo {
 	 */
 #define KERNINFO_MAGIC 0xfc3b84bf
 	u32_t kerninfo_magic;
-	u32_t minix_feature_flags;
-	u32_t flags_unused1;
+	u32_t minix_feature_flags;	/* features in minix kernel */
+	u32_t ki_flags;			/* what is present in this struct */
 	u32_t flags_unused2;
 	u32_t flags_unused3;
 	u32_t flags_unused4;
@@ -177,7 +177,10 @@ struct minix_kerninfo {
 	struct machine		*machine;
 	struct kmessages	*kmessages;
 	struct loadinfo		*loadinfo;
+	struct minix_ipcvecs	*minix_ipcvecs;
 } __packed;
+
+#define MINIX_KIF_IPCVECS	(1L << 0)
 
 #endif /* _TYPE_H */
 

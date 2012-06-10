@@ -174,6 +174,9 @@ int do_vmctl(struct proc * caller, message * m_ptr)
 		/* VM says: forget about old mappings we have cached. */
 		mem_clear_mapcache();
 		return OK;
+	case VMCTL_BOOTINHIBIT_CLEAR:
+		RTS_UNSET(p, RTS_BOOTINHIBIT);
+		return OK;
   }
 
   /* Try architecture-specific vmctls. */

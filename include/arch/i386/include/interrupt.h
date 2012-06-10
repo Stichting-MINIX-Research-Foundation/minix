@@ -25,8 +25,10 @@
 #define OVERFLOW_VECTOR    4	/* from INTO */
 
 /* Fixed system call vector. */
-#define KERN_CALL_VECTOR  32	/* system calls are made with int SYSVEC */
-#define IPC_VECTOR        33	/* interrupt vector for ipc */
+#define KERN_CALL_VECTOR_ORIG  32 /* system calls are made with int SYSVEC */
+#define IPC_VECTOR_ORIG        33 /* interrupt vector for ipc */
+#define KERN_CALL_VECTOR_UM    34 /* user-mapped equivalent */
+#define IPC_VECTOR_UM          35 /* user-mapped equivalent */
 
 /* Hardware interrupt numbers. */
 #ifndef USE_APIC

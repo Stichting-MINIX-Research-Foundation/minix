@@ -49,7 +49,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 #endif
 
   /* Restore the registers. */
-  memcpy(&rp->p_reg, &sc.sc_regs, sizeof(sigregs));
+  arch_proc_setcontext(rp, &sc.sc_regs, 1);
 #if defined(__i386__)
   if(sc.sc_flags & MF_FPU_INITIALIZED)
   {
@@ -59,8 +59,6 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 	release_fpu(rp);
   }
 #endif
-
-  rp->p_misc_flags |= MF_CONTEXT_SET;
 
   return(OK);
 }

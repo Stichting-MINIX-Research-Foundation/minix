@@ -629,6 +629,7 @@
 #define VMCTL_VMINHIBIT_SET	30
 #define VMCTL_VMINHIBIT_CLEAR	31
 #define VMCTL_CLEARMAPCACHE	32
+#define VMCTL_BOOTINHIBIT_CLEAR	33
 
 /* Codes and field names for SYS_SYSCTL. */
 #define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */

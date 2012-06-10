@@ -240,8 +240,10 @@ void kmain(kinfo_t *local_cbi)
 		get_cpulocal_var(proc_ptr) = rp;
 
 	/* Process isn't scheduled until VM has set up a pagetable for it. */
-	if(rp->p_nr != VM_PROC_NR && rp->p_nr >= 0)
+	if(rp->p_nr != VM_PROC_NR && rp->p_nr >= 0) {
 		rp->p_rts_flags |= RTS_VMINHIBIT;
+		rp->p_rts_flags |= RTS_BOOTINHIBIT;
+	}
 
 	rp->p_rts_flags |= RTS_PROC_STOP;
 	rp->p_rts_flags &= ~RTS_SLOT_FREE;

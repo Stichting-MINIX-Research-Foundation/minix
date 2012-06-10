@@ -4,7 +4,7 @@
 	MSGTAB = 8	/* message table */
 	TABCOUNT = 12	/* number of entries in message table */
 
-ENTRY(_senda)
+ENTRY(_senda_orig)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx

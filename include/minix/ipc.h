@@ -5,6 +5,7 @@
 #endif
 #include <minix/ipcconst.h>
 #include <minix/type.h>
+#include <minix/const.h>
 
 /*==========================================================================* 
  * Types relating to messages. 						    *
@@ -152,24 +153,37 @@ typedef struct asynmsg
 #define AMF_NOTIFY_ERR	020	/* Send a notification when AMF_DONE is set and
 				 * delivery of the message failed */
 
-/* Hide names to avoid name space pollution. */
-#define echo		_echo
-#define notify		_notify
-#define sendrec		_sendrec
-#define receive		_receive
-#define send		_send
-#define sendnb		_sendnb
-#define senda		_senda
+int _send_orig(endpoint_t dest, message *m_ptr);
+int _receive_orig(endpoint_t src, message *m_ptr, int *status_ptr);
+int _sendrec_orig(endpoint_t src_dest, message *m_ptr);
+int _sendnb_orig(endpoint_t dest, message *m_ptr);
+int _notify_orig(endpoint_t dest);
+int _senda_orig(asynmsg_t *table, size_t count);
+int _do_kernel_call_orig(message *m_ptr);
 
-int echo(message *m_ptr);
-int notify(endpoint_t dest);
-int sendrec(endpoint_t src_dest, message *m_ptr);
-int receive(endpoint_t src, message *m_ptr, int *status_ptr);
-int send(endpoint_t dest, message *m_ptr);
-int sendnb(endpoint_t dest, message *m_ptr);
-int senda(asynmsg_t *table, size_t count);
 int _minix_kernel_info_struct(struct minix_kerninfo **);
 
-int _do_kernel_call(message *m_ptr);
+struct minix_ipcvecs {
+	int (*send_ptr)(endpoint_t dest, message *m_ptr);
+	int (*receive_ptr)(endpoint_t src, message *m_ptr, int *st);
+	int (*sendrec_ptr)(endpoint_t src_dest, message *m_ptr);
+	int (*sendnb_ptr)(endpoint_t dest, message *m_ptr);
+	int (*notify_ptr)(endpoint_t dest);
+	int (*do_kernel_call_ptr)(message *m_ptr);
+	int (*senda_ptr)(asynmsg_t *table, size_t count);
+};
+
+/* kernel-set IPC vectors retrieved by a constructor in libc/sys-minix/init.c */
+extern struct minix_ipcvecs _minix_ipcvecs;
+
+#define CHOOSETRAP(name) (_minix_ipcvecs. name ## _ptr)
+
+#define send		CHOOSETRAP(send)
+#define receive		CHOOSETRAP(receive)
+#define sendrec		CHOOSETRAP(sendrec)
+#define sendnb		CHOOSETRAP(sendnb)
+#define notify		CHOOSETRAP(notify)
+#define do_kernel_call	CHOOSETRAP(do_kernel_call)
+#define senda		CHOOSETRAP(senda)
 
 #endif /* _IPC_H */

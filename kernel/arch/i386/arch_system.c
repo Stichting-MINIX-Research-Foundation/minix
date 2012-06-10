@@ -7,6 +7,7 @@
 #include <string.h>
 #include <machine/cmos.h>
 #include <machine/bios.h>
+#include <machine/cpu.h>
 #include <minix/portio.h>
 #include <minix/cpufeature.h>
 #include <assert.h>
@@ -149,6 +150,7 @@ static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __aligned(FPUALIGN);
 void arch_proc_reset(struct proc *pr)
 {
 	char *v = NULL;
+	struct stackframe_s reg;
 
 	assert(pr->p_nr < NR_PROCS);
 
@@ -161,11 +163,11 @@ void arch_proc_reset(struct proc *pr)
 	}
 
 	/* Clear process state. */
-        memset(&pr->p_reg, 0, sizeof(pr->p_reg));
+        memset(&reg, 0, sizeof(pr->p_reg));
         if(iskerneln(pr->p_nr))
-        	pr->p_reg.psw = INIT_TASK_PSW;
+        	reg.psw = INIT_TASK_PSW;
         else
-        	pr->p_reg.psw = INIT_PSW;
+        	reg.psw = INIT_PSW;
 
 	pr->p_seg.fpu_state = v;
 
@@ -178,6 +180,9 @@ void arch_proc_reset(struct proc *pr)
 	pr->p_reg.ss = 
 	pr->p_reg.es = 
 	pr->p_reg.ds = USER_DS_SELECTOR;
+
+	/* set full context and make sure it gets restored */
+	arch_proc_setcontext(pr, &reg, 0);
 }
 
 void arch_set_secondary_ipc_return(struct proc *p, u32_t val)
@@ -510,6 +515,94 @@ struct proc * arch_finish_switch_to_user(void)
         assert(p->p_reg.psw & (1L << 9));
 
 	return p;
+}
+
+void arch_proc_setcontext(struct proc *p, struct stackframe_s *state, int isuser)
+{
+	if(isuser) {
+		/* Restore user bits of psw from sc, maintain system bits
+		 * from proc.
+		 */
+		state->psw  =  (state->psw & X86_FLAGS_USER) |
+			(p->p_reg.psw & ~X86_FLAGS_USER);
+	}
+
+	/* someone wants to totally re-initialize process state */
+	assert(sizeof(p->p_reg) == sizeof(*state));
+	memcpy(&p->p_reg, state, sizeof(*state));
+
+	/* further code is instructed to not touch the context
+	 * any more
+	 */
+	p->p_misc_flags |= MF_CONTEXT_SET;
+
+	/* on x86 this requires returning using iret (KTS_INT)
+	 * so that the full context is restored instead of relying on
+	 * the userspace doing it (as it would do on SYSEXIT).
+	 * as ESP and EIP are also reset, userspace won't try to
+	 * restore bogus context after returning.
+	 *
+	 * if the process is not blocked, or the kernel will ignore
+	 * our trap style, we needn't panic but things will probably
+	 * not go well for the process (restored context will be ignored)
+	 * and the situation should be debugged.
+	 */
+	if(!(p->p_rts_flags)) {
+		printf("WARNINIG: setting full context of runnable process\n");
+		print_proc(p);
+		util_stacktrace();
+	}
+	if(p->p_seg.p_kern_trap_style == KTS_NONE)
+		printf("WARNINIG: setting full context of out-of-kernel process\n");
+	p->p_seg.p_kern_trap_style = KTS_FULLCONTEXT;
+}
+
+void restore_user_context(struct proc *p)
+{
+	int trap_style = p->p_seg.p_kern_trap_style;
+#if 0
+#define TYPES 10
+	static int restores[TYPES], n = 0;
+
+	p->p_seg.p_kern_trap_style = KTS_NONE;
+
+	if(trap_style >= 0 && trap_style < TYPES)
+		restores[trap_style]++;
+
+	if(!(n++ % 500000)) {
+		int t;
+		for(t = 0; t < TYPES; t++)
+			if(restores[t])
+				printf("%d: %d   ", t, restores[t]);
+		printf("\n");
+	}
+#endif
+
+	if(trap_style == KTS_SYSENTER) {
+		restore_user_context_sysenter(p);
+		NOT_REACHABLE;
+        }
+
+	if(trap_style == KTS_SYSCALL) {
+		restore_user_context_syscall(p);
+		NOT_REACHABLE;
+	}
+
+        switch(trap_style) {
+                case KTS_NONE:
+                        panic("no entry trap style known");
+                case KTS_INT_HARD:
+                case KTS_INT_UM:
+                case KTS_FULLCONTEXT:
+                case KTS_INT_ORIG:
+			restore_user_context_int(p);
+			NOT_REACHABLE;
+                default:
+                        panic("unknown trap style recorded");
+                        NOT_REACHABLE;
+        }
+
+        NOT_REACHABLE;
 }
 
 void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigcontext *sc)

@@ -159,6 +159,7 @@ struct proc {
 				   pick a new one. Process was dequeued and
 				   should be enqueued at the end of some run
 				   queue again */
+#define RTS_BOOTINHIBIT	0x10000	/* not ready until VM has made it */
 
 /* A process is runnable iff p_rts_flags == 0. */
 #define rts_f_is_runnable(flg)	((flg) == 0)

@@ -59,6 +59,7 @@ void enqueue(struct proc *rp);
 void dequeue(struct proc *rp);
 void switch_to_user(void);
 void arch_proc_reset(struct proc *rp);
+void arch_proc_setcontext(struct proc *rp, struct stackframe_s *state, int user);
 struct proc * arch_finish_switch_to_user(void);
 struct proc *endpoint_lookup(endpoint_t ep);
 #if DEBUG_ENABLE_IPC_WARNINGS

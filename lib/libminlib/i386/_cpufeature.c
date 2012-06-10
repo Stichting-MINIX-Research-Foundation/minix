@@ -3,10 +3,14 @@
 #include <minix/minlib.h>
 #include <minix/cpufeature.h>
 #include <machine/vm.h>
+#include <string.h>
 
 int _cpufeature(int cpufeature)
 {
 	u32_t eax, ebx, ecx, edx;
+	u32_t ef_eax = 0, ef_ebx = 0, ef_ecx = 0, ef_edx = 0;
+	unsigned int family, model, stepping;
+	int is_intel = 0, is_amd = 0;
 
 	eax = ebx = ecx = edx = 0;
 
@@ -14,8 +18,34 @@ int _cpufeature(int cpufeature)
 	eax = 0;
 	_cpuid(&eax, &ebx, &ecx, &edx);
 	if(eax > 0) {
+		char vendor[12];
+		memcpy(vendor,   &ebx, sizeof(ebx));
+		memcpy(vendor+4, &edx, sizeof(edx));
+		memcpy(vendor+8, &ecx, sizeof(ecx));
+		if(!strncmp(vendor, "GenuineIntel", sizeof(vendor)))
+			is_intel = 1;
+		if(!strncmp(vendor, "AuthenticAMD", sizeof(vendor)))
+			is_amd = 1;
 		eax = 1;
 		_cpuid(&eax, &ebx, &ecx, &edx);
+	} else return 0;
+
+	stepping   =  eax        & 0xf;
+	model    = (eax >>  4) & 0xf;
+
+	if(model == 0xf || model == 0x6) {
+		model += ((eax >> 16) & 0xf) << 4;
+	}
+
+	family   = (eax >>  8) & 0xf;
+
+	if(family == 0xf) {
+		family += (eax >> 20) & 0xff;
+	}
+
+	if(is_amd) {
+		ef_eax = 0x80000001;
+		_cpuid(&ef_eax, &ef_ebx, &ef_ecx, &ef_edx);
 	}
 
 	switch(cpufeature) {
@@ -53,6 +83,15 @@ int _cpufeature(int cpufeature)
 			return edx & CPUID1_EDX_HTT;
 		case _CPUF_I386_HTT_MAX_NUM:
 			return (ebx >> 16) & 0xff;
+		case _CPUF_I386_SYSENTER:
+			if(!is_intel) return 0;
+			if(!(edx & CPUID1_EDX_SYSENTER)) return 0;
+			if(family == 6 && model < 3 && stepping < 3) return 0;
+			return 1;
+		case _CPUF_I386_SYSCALL:
+			if(!is_amd) return 0;
+			if(!(ef_edx & CPUID_EF_EDX_SYSENTER)) return 0;
+			return 1;
 	}
 
 	return 0;

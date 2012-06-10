@@ -14,7 +14,7 @@ register message *msgptr;
   int status;
 
   msgptr->m_type = syscallnr;
-  status = _sendrec(who, msgptr);
+  status = sendrec(who, msgptr);
   if (status != 0) return(status);
   return(msgptr->m_type);
 }

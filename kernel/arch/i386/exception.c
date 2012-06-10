@@ -248,11 +248,6 @@ void exception_handler(int is_nested, struct exception_frame * frame)
 			frame->vector, (unsigned long)frame->errcode,
 			(unsigned long)frame->eip, frame->cs,
 			(unsigned long)frame->eflags);
-		printseg("cs: ", 1, saved_proc, frame->cs);
-		printseg("ds: ", 0, saved_proc, saved_proc->p_reg.ds);
-		if(saved_proc->p_reg.ds != saved_proc->p_reg.ss) {
-			printseg("ss: ", 0, saved_proc, saved_proc->p_reg.ss);
-		}
 		proc_stacktrace(saved_proc);
 	}
 

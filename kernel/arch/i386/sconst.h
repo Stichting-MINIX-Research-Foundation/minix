@@ -73,7 +73,7 @@
  * displ is the stack displacement. In case of an exception, there are two extra
  * value on the stack - error code and the exception number
  */
-#define SAVE_PROCESS_CTX(displ) \
+#define SAVE_PROCESS_CTX(displ, trapcode) \
 								\
 	cld /* set the direction flag to a known state */	;\
 								\
@@ -82,6 +82,7 @@
 	movl	(CURR_PROC_PTR + 4 + displ)(%esp), %ebp	;\
 							\
 	SAVE_GP_REGS(%ebp)				;\
+        movl	$trapcode, P_KERN_TRAP_STYLE(%ebp)	;\
 	pop	%esi			/* get the orig %ebp and save it */ ;\
 	mov	%esi, BPREG(%ebp)			;\
 							\

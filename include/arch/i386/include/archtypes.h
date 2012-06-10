@@ -33,6 +33,7 @@ typedef struct segframe {
 	reg_t	p_cr3;		/* page table root */
 	u32_t	*p_cr3_v;
 	char	*fpu_state;
+	int	p_kern_trap_style;
 } segframe_t;
 
 struct cpu_info {

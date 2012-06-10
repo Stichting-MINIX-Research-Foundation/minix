@@ -47,6 +47,7 @@
 /* Selected 386 tss offsets. */
 #define TSS3_S_SP0	4
 
+IMPORT(usermapped_offset)
 IMPORT(copr_not_available_handler)
 IMPORT(params_size)
 IMPORT(params_offset)
@@ -72,7 +73,7 @@ IMPORT(multiboot_init)
 #define hwint_master(irq) \
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
-	SAVE_PROCESS_CTX(0)						;\
+	SAVE_PROCESS_CTX(0, KTS_INT_HARD)				;\
 	push	%ebp							;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	call	_C_LABEL(context_stop)					;\
@@ -132,7 +133,7 @@ ENTRY(hwint07)
 #define hwint_slave(irq)	\
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
-	SAVE_PROCESS_CTX(0)						;\
+	SAVE_PROCESS_CTX(0, KTS_INT_HARD)				;\
 	push	%ebp							;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	call	_C_LABEL(context_stop)					;\
@@ -187,13 +188,83 @@ ENTRY(hwint15)
 /* Interrupt routine for irq 15 */
 	hwint_slave(15)
 
+/* differences with sysenter:
+ *   - we have to find our own per-cpu stack (i.e. post-SYSCALL
+ *     %esp is not configured)
+ *   - we have to save the post-SYSRET %eip, provided by the cpu
+ *     in %ecx
+ *   - the system call parameters are passed in %ecx, so we userland
+ *     code that executes SYSCALL copies %ecx to %edx. So the roles
+ *     of %ecx and %edx are reversed
+ *   - we can use %esi as a scratch register
+ */
+#define ipc_entry_syscall_percpu(cpu)			;\
+ENTRY(ipc_entry_syscall_cpu ## cpu)			;\
+	xchg	%ecx, %edx				;\
+	mov	k_percpu_stacks+4*cpu, %esi		;\
+	mov	(%esi), %ebp 				;\
+	movl	$KTS_SYSCALL, P_KERN_TRAP_STYLE(%ebp)	;\
+	xchg	%esp, %esi				;\
+	jmp	syscall_sysenter_common
+
+ipc_entry_syscall_percpu(0)
+ipc_entry_syscall_percpu(1)
+ipc_entry_syscall_percpu(2)
+ipc_entry_syscall_percpu(3)
+ipc_entry_syscall_percpu(4)
+ipc_entry_syscall_percpu(5)
+ipc_entry_syscall_percpu(6)
+ipc_entry_syscall_percpu(7)
+
+ENTRY(ipc_entry_sysenter)
+	/* SYSENTER simply sets kernel segments, EIP to here, and ESP
+	 * to tss->sp0 (through MSR). so no automatic context saving is done.
+	 * interrupts are disabled.
+	 *
+	 * register usage:
+	 * edi: call type (IPCVEC, KERVEC)
+	 * ebx, eax, ecx: syscall params, set by userland
+	 * esi, edx: esp, eip to restore, set by userland
+	 *
+	 * no state is automatically saved; userland does all of that.
+	 */
+	mov	(%esp), %ebp /* get proc saved by arch_finish_switch_to_user */
+
+	/* inform kernel we entered by sysenter and should
+	 * therefore exit through restore_user_context_sysenter
+	 */
+	movl	$KTS_SYSENTER, P_KERN_TRAP_STYLE(%ebp)
+	add	usermapped_offset, %edx	/* compensate for mapping difference */
+
+syscall_sysenter_common:
+	mov	%esi, SPREG(%ebp)	/* esi is return esp */
+	mov	%edx, PCREG(%ebp)	/* edx is return eip */
+
+	/* check for call type; do_ipc? */
+	cmp	$IPCVEC_UM, %edi
+	jz	ipc_entry_common
+
+	/* check for kernel trap */
+	cmp	$KERVEC_UM, %edi
+	jz	kernel_call_entry_common
+
+	/* unrecognized call number; restore user with error */
+	movl	$-1, AXREG(%ebp)
+	push	%ebp	
+	call	restore_user_context	/* restore_user_context(%ebp); */
+
 /*
  * IPC is only from a process to kernel
  */
-ENTRY(ipc_entry)
+ENTRY(ipc_entry_softint_orig)
+	SAVE_PROCESS_CTX(0, KTS_INT_ORIG)
+	jmp ipc_entry_common
 
-	SAVE_PROCESS_CTX(0)
+ENTRY(ipc_entry_softint_um)
+	SAVE_PROCESS_CTX(0, KTS_INT_UM)
+	jmp ipc_entry_common
 
+ENTRY(ipc_entry_common)
 	/* save the pointer to the current process */
 	push	%ebp
 
@@ -226,10 +297,15 @@ ENTRY(ipc_entry)
 /*
  * kernel call is only from a process to kernel
  */
-ENTRY(kernel_call_entry)
+ENTRY(kernel_call_entry_orig)
+	SAVE_PROCESS_CTX(0, KTS_INT_ORIG)
+	jmp	kernel_call_entry_common
 
-	SAVE_PROCESS_CTX(0)
+ENTRY(kernel_call_entry_um)
+	SAVE_PROCESS_CTX(0, KTS_INT_UM)
+	jmp	kernel_call_entry_common
 
+ENTRY(kernel_call_entry_common)
 	/* save the pointer to the current process */
 	push	%ebp
 
@@ -270,7 +346,7 @@ exception_entry:
 	TEST_INT_IN_KERNEL(12, exception_entry_nested)
 
 exception_entry_from_user:
-	SAVE_PROCESS_CTX(8)
+	SAVE_PROCESS_CTX(8, KTS_INT_HARD)
 
 	/* stop user process cycles */
 	push	%ebp
@@ -306,10 +382,37 @@ exception_entry_nested:
 	/* resume execution at the point of exception */
 	iret
 
-/*===========================================================================*/
-/*				restart					     */
-/*===========================================================================*/
-ENTRY(restore_user_context)
+ENTRY(restore_user_context_sysenter)
+	/* return to userspace using sysexit.
+	 * most of the context saving the userspace process is
+	 * responsible for, we just have to take care of the right EIP
+	 * and ESP restoring here to resume execution, and set EAX and
+	 * EBX to the saved status values.
+	 */
+	mov	4(%esp), %ebp		/* retrieve proc ptr arg */
+	movw	$USER_DS_SELECTOR, %ax
+	movw	%ax, %ds
+	mov	PCREG(%ebp), %edx	/* sysexit restores EIP using EDX */
+	mov	SPREG(%ebp), %ecx	/* sysexit restores ESP using ECX */
+	mov	AXREG(%ebp), %eax	/* trap return value */
+	mov	BXREG(%ebp), %ebx	/* secondary return value */
+	sti				/* enable interrupts */
+	sysexit				/* jump to EIP in user */
+
+ENTRY(restore_user_context_syscall)
+	/* return to userspace using sysret.
+	 * the procedure is very similar to sysexit; it requires
+	 * manual %esp restoring, new EIP in ECX, does not require
+	 * enabling interrupts, and of course sysret instead of sysexit.
+	 */
+	mov	4(%esp), %ebp		/* retrieve proc ptr arg */
+	mov	PCREG(%ebp), %ecx	/* sysret restores EIP using ECX */
+	mov	SPREG(%ebp), %esp	/* restore ESP directly */
+	mov	AXREG(%ebp), %eax	/* trap return value */
+	mov	BXREG(%ebp), %ebx	/* secondary return value */
+	sysret				/* jump to EIP in user */
+
+ENTRY(restore_user_context_int)
 	mov	4(%esp), %ebp	/* will assume P_STACKBASE == 0 */
 
 	/* reconstruct the stack for iret */
@@ -415,7 +518,7 @@ LABEL(inval_opcode)
 LABEL(copr_not_available)
 	TEST_INT_IN_KERNEL(4, copr_not_available_in_kernel)
 	cld			/* set direction flag to a known value */
-	SAVE_PROCESS_CTX(0)
+	SAVE_PROCESS_CTX(0, KTS_INT_HARD)
 	/* stop user process cycles */
 	push	%ebp
 	mov	$0, %ebp
@@ -505,6 +608,7 @@ ENTRY(startup_ap_32)
 
 .data
 .short	0x526F	/* this must be the first data entry (magic #) */
+
 .bss
 k_initial_stack:
 .space	K_STACK_SIZE

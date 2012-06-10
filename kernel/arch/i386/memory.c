@@ -883,7 +883,10 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 	}
 #endif
 	if(index == first_um_idx) {
-		u32_t usermapped_offset;
+		extern struct minix_ipcvecs minix_ipcvecs_sysenter,
+			minix_ipcvecs_syscall,
+			minix_ipcvecs_softint;
+		extern u32_t usermapped_offset;
 		assert(addr > (u32_t) &usermapped_start);
 		usermapped_offset = addr - (u32_t) &usermapped_start;
 		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
@@ -895,12 +898,43 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		ASSIGN(kmessages);
 		ASSIGN(loadinfo);
 
+		/* select the right set of IPC routines to map into processes */
+		if(minix_feature_flags & MKF_I386_INTEL_SYSENTER) {
+			printf("kernel: selecting intel sysenter ipc style\n");
+			minix_kerninfo.minix_ipcvecs = &minix_ipcvecs_sysenter;
+		} else  if(minix_feature_flags & MKF_I386_AMD_SYSCALL) {
+			printf("kernel: selecting amd syscall ipc style\n");
+			minix_kerninfo.minix_ipcvecs = &minix_ipcvecs_syscall;
+		} else	{
+			printf("kernel: selecting fallback (int) ipc style\n");
+			minix_kerninfo.minix_ipcvecs = &minix_ipcvecs_softint;
+		}
+
 		/* adjust the pointers of the functions and the struct
 		 * itself to the user-accessible mapping
 		 */
+		FIXPTR(minix_kerninfo.minix_ipcvecs->send_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->receive_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->sendrec_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->senda_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->sendnb_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->notify_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->do_kernel_call_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs);
+
 		minix_kerninfo.kerninfo_magic = KERNINFO_MAGIC;
 		minix_kerninfo.minix_feature_flags = minix_feature_flags;
 		minix_kerninfo_user = (vir_bytes) FIXEDPTR(&minix_kerninfo);
+
+		/* if libc_ipc is set, disable usermapped ipc functions
+		 * and force binaries to use in-libc fallbacks.
+		 */
+		if(env_get("libc_ipc")) {
+			printf("kernel: forcing in-libc fallback ipc style\n");
+			minix_kerninfo.minix_ipcvecs = NULL;
+		} else {
+			minix_kerninfo.ki_flags |= MINIX_KIF_IPCVECS;
+		}
 
 		return OK;
 	}

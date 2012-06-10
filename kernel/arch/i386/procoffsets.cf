@@ -16,3 +16,5 @@ member CSREG p_reg.cs
 member PSWREG p_reg.psw
 member SPREG p_reg.sp
 member P_CR3 p_seg.p_cr3
+member P_KERN_TRAP_STYLE p_seg.p_kern_trap_style
+member P_MAGIC p_magic

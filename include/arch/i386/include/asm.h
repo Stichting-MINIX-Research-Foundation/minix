@@ -218,6 +218,13 @@
 #ifdef __minix
 #define IMPORT(sym)               \
         .extern _C_LABEL(sym)
+
+#define KERVEC_ORIG 32     /* syscall trap to kernel */
+#define IPCVEC_ORIG 33     /* ipc trap to kernel  */
+
+#define KERVEC_UM 34     /* syscall trap to kernel, user-mapped code */
+#define IPCVEC_UM 35     /* ipc trap to kernel, user-mapped code  */
+
 #endif
 
 #endif /* !_I386_ASM_H_ */

@@ -294,6 +294,10 @@ void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
         if(sys_exec(vmp->vm_endpoint, (char *) execi->stack_high - 12,
 		(char *) ip->proc_name, execi->pc) != OK)
 		panic("vm: boot process exec of %d failed\n", vmp->vm_endpoint);
+
+	/* make it runnable */
+	if(sys_vmctl(vmp->vm_endpoint, VMCTL_BOOTINHIBIT_CLEAR, 0) != OK)
+		panic("VMCTL_BOOTINHIBIT_CLEAR failed");
 }
 
 void init_vm(void)
@@ -301,6 +305,7 @@ void init_vm(void)
 	int s, i;
 	static struct memory mem_chunks[NR_MEMS];
 	static struct boot_image *ip;
+	extern void __minix_init(void);
 
 #if SANITYCHECKS
 	incheck = nocheck = 0;
@@ -414,6 +419,11 @@ void init_vm(void)
 
 	/* Initialize the structures for queryexit */
 	init_query_exit();
+
+	/* Acquire kernel ipc vectors that weren't available
+	 * before VM had determined kernel mappings
+	 */
+	__minix_init();
 }
 
 /*===========================================================================*

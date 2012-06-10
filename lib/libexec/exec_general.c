@@ -13,6 +13,7 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <minix/vm.h>
+#include <minix/ipc.h>
 #include <minix/syslib.h>
 #include <sys/mman.h>
 #include <machine/elf.h>
