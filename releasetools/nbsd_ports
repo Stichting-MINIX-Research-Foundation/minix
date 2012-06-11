@@ -63,5 +63,12 @@
 2010/05/14 16:43:34,dist/bzip2
 2012/01/16 18:47:57,sys/lib/libsa
 2011/10/30 00:28:57,sys/lib/libz
-2012/02/10 16:16:12,external/bsd/file
+2011/09/16 16:16:12,external/bsd/file
 2012/02/10 16:16:12,usr.bin/login
+2012/03/10 19:18:48,external/historical/nawk
+2011/10/08 19:28:39,external/bsd/byacc
+2011/10/08 19:28:39,external/bsd/flex
+2012/03/31 00:12:24,usr.bin/make
+2009/08/15 20:44:56,usr.bin/mktemp
+2012/03/25 16:07:04,usr.sbin/mtree
+2011/09/06 14:00:39,usr.bin/xinstall
