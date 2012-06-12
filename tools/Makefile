@@ -9,7 +9,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT sed .WAIT \
 		genassym \
 		makewhatis mkdep \
-		m4 \
+		mkfs.mfs m4 \
 	.WAIT yacc \
 	.WAIT awk \
 	.WAIT tic \

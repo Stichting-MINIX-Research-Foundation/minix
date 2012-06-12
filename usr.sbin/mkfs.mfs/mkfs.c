@@ -20,27 +20,21 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <minix/config.h>
-#include <minix/const.h>
-#include <minix/type.h>
-#include <minix/minlib.h>
-#include "mfs/const.h"
-#include "mfs/mfsdir.h"
-#if (MACHINE == IBM_PC)
+#include <stdint.h>
+#include "const.h"
+#include "type.h"
+#include "mfsdir.h"
+#if (defined(__minix) && MACHINE == IBM_PC)
 #include <minix/partition.h>
 #include <minix/u64.h>
 #include <sys/ioctl.h>
 #endif
 #include <a.out.h>
-#include <tools.h>
 #include <dirent.h>
 
 #undef EXTERN
 #define EXTERN			/* get rid of EXTERN by making it null */
-#include "mfs/super.h"
-#include "mfs/type.h"
-#include "mfs/inode.h"
-#include <minix/fslib.h>
+#include "super.h"
 
 #ifndef max
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -59,11 +53,25 @@
 #define BINGRP               2
 #define BIT_MAP_SHIFT       13
 #define INODE_MAX       ((unsigned) 65535)
+#define SECTOR_SIZE	   512
 
 
 #ifdef DOS
 maybedefine O_RDONLY 4		/* O_RDONLY | BINARY_BIT */
  maybedefine BWRITE 5		/* O_WRONLY | BINARY_BIT */
+#endif
+
+#if !defined(__minix)
+#define mul64u(a,b)	((a) * (b))
+#define lseek64(a,b,c,d) lseek(a,b,c)
+#ifdef __linux__
+#include <mntent.h>
+#endif
+#endif
+
+#if !defined(__minix)
+typedef uint32_t block_t;
+typedef uint32_t zone_t;
 #endif
 
 extern char *optarg;
@@ -77,42 +85,42 @@ int override = 0, simple = 0, dflag;
 int donttest;			/* skip test if it fits on medium */
 char *progname;
 
-long current_time, bin_time;
+uint32_t current_time, bin_time;
 char *zero, *lastp;
 char *umap_array;	/* bit map tells if block read yet */
 int umap_array_elements = 0;
 block_t zone_map;		/* where is zone map? (depends on # inodes) */
 int inodes_per_block;
 int fs_version;
-unsigned int block_size;
+size_t block_size;
 
 FILE *proto;
 
-#ifdef __NBSD_LIBC
+#if defined(__NBSD_LIBC) || !defined(__minix)
 #define getline _mkfs_getline
 #endif
 
 int main(int argc, char **argv);
 block_t sizeup(char *device);
-void super(zone_t zones, Ino_t inodes);
-void rootdir(Ino_t inode);
-void eat_dir(Ino_t parent);
-void eat_file(Ino_t inode, int f);
-void enter_dir(Ino_t parent, char *name, Ino_t child);
-void incr_size(Ino_t n, long count);
+void super(zone_t zones, ino_t inodes);
+void rootdir(ino_t inode);
+void eat_dir(ino_t parent);
+void eat_file(ino_t inode, int f);
+void enter_dir(ino_t parent, char *name, ino_t child);
+void incr_size(ino_t n, size_t count);
 static ino_t alloc_inode(int mode, int usrid, int grpid);
 static zone_t alloc_zone(void);
-void add_zone(Ino_t n, zone_t z, long bytes, long cur_time);
-void add_z_1(Ino_t n, zone_t z, long bytes, long cur_time);
-void add_z_2(Ino_t n, zone_t z, long bytes, long cur_time);
-void incr_link(Ino_t n);
+void add_zone(ino_t n, zone_t z, size_t bytes, uint32_t cur_time);
+void add_z_1(ino_t n, zone_t z, size_t bytes, uint32_t cur_time);
+void add_z_2(ino_t n, zone_t z, size_t bytes, uint32_t cur_time);
+void incr_link(ino_t n);
 void insert_bit(block_t block, int bit);
 int mode_con(char *p);
 void getline(char line[LINE_LEN], char *parse[MAX_TOKENS]);
 void check_mtab(char *devname);
-long file_time(int f);
+uint32_t file_time(int f);
 void pexit(char *s);
-void copy(char *from, char *to, int count);
+void copy(char *from, char *to, size_t count);
 void print_fs(void);
 int read_and_set(block_t n);
 void special(char *string);
@@ -136,7 +144,7 @@ char *argv[];
 {
   int nread, mode, usrid, grpid, ch;
   block_t blocks, maxblocks;
-  block_t i;
+  size_t i;
   ino_t root_inum;
   ino_t inodes;
   zone_t zones;
@@ -270,7 +278,11 @@ char *argv[];
 		if (blocks == 0) pexit("Can't open prototype file");
 	}
 	if (i == 0) {
-		u32_t kb = div64u(mul64u(blocks, block_size), 1024);
+#if defined(_MINIX) || defined(__minix)
+		uint32_t kb = div64u(mul64u(blocks, block_size), 1024);
+#else
+		uint32_t kb = ((unsigned long long) blocks * block_size) / 1024;
+#endif
 		i = kb / 2;
 		if (kb >= 100000) i = kb / 4;
 
@@ -299,7 +311,7 @@ char *argv[];
   size_t bytes;
   bytes = 1 + blocks/8;
   if(!(umap_array = malloc(bytes))) {
-	fprintf(stderr, "mkfs: can't allocate block bitmap (%d bytes).\n",
+	fprintf(stderr, "mkfs: can't allocate block bitmap (%u bytes).\n",
 		bytes);
 	exit(1);
   }
@@ -325,7 +337,7 @@ char *argv[];
 	testb[block_size/2-1] = 0x1F2F;
 	if ((w=write(fd, (char *) testb, block_size)) != block_size) {
 		if(w < 0) perror("write");
-		printf("%d/%d\n", w, block_size);
+		printf("%d/%u\n", w, block_size);
 		pexit("File system is too big for minor device (write)");
 	}
 	sync();			/* flush write, so if error next read fails */
@@ -381,10 +393,22 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
 block_t sizeup(device)
 char *device;
 {
-  u64_t bytes, resize;
   block_t d;
+#if defined(__minix)
+  u64_t bytes, resize;
   u32_t rem;
+#else
+  off_t size;
+#endif
 
+
+  if ((fd = open(device, O_RDONLY)) == -1) {
+	if (errno != ENOENT)
+		perror("sizeup open");
+	return 0;
+  }
+
+#if defined(__minix)
   if(minix_sizeup(device, &bytes) < 0) {
        perror("sizeup");
        return 0;
@@ -396,12 +420,33 @@ char *device;
   resize = add64u(mul64u(d, block_size), rem);
   if(cmp64(resize, bytes) != 0) {
 	d = ULONG_MAX;
-	fprintf(stderr, "mkfs: truncating FS at %lu blocks\n", d);
+	fprintf(stderr, "mkfs: truncating FS at %u blocks\n", d);
   }
+#else
+  size = lseek(fd, 0, SEEK_END);
+  if (size == (off_t) -1) {
+	  fprintf(stderr, "Cannot get device size fd=%d\n", fd);
+	  exit(-1);
+  }
+  d = size / block_size;
+#endif
 
   return d;
 }
 
+/*
+ * copied from fslib
+ */
+static int bitmapsize(nr_bits, block_size)
+uint32_t nr_bits;
+size_t block_size;
+{
+  block_t nr_blocks;
+
+  nr_blocks = (int) (nr_bits / FS_BITS_PER_BLOCK(block_size));
+  if (((uint32_t) nr_blocks * FS_BITS_PER_BLOCK(block_size)) < nr_bits) ++nr_blocks;
+  return(nr_blocks);
+}
 
 /*================================================================
  *                 super  -  construct a superblock
@@ -414,7 +459,7 @@ ino_t inodes;
   unsigned int i;
   int inodeblks;
   int initblks;
-  u32_t nb;
+  uint32_t nb;
   zone_t v1sq, v2sq;
   zone_t zo;
   struct super_block *sup;
@@ -438,12 +483,12 @@ ino_t inodes;
   }
   
 #define BIGGERBLOCKS "Please try a larger block size for an FS of this size.\n"
-  sup->s_imap_blocks = nb = bitmapsize((bit_t) (1 + inodes), block_size);
+  sup->s_imap_blocks = nb = bitmapsize((uint32_t) (1 + inodes), block_size);
   if(sup->s_imap_blocks != nb) {
 	fprintf(stderr, "mkfs: too many inode bitmap blocks.\n" BIGGERBLOCKS);
 	exit(1);
   }
-  sup->s_zmap_blocks = nb = bitmapsize((bit_t) zones, block_size);
+  sup->s_zmap_blocks = nb = bitmapsize((uint32_t) zones, block_size);
   if(nb != sup->s_zmap_blocks) {
 	fprintf(stderr, "mkfs: too many block bitmap blocks.\n" BIGGERBLOCKS);
 	exit(1);
@@ -468,7 +513,7 @@ ino_t inodes;
   if (fs_version == 1) {
 	sup->s_magic = SUPER_MAGIC;	/* identify super blocks */
 	v1sq = (zone_t) V1_INDIRECTS * V1_INDIRECTS;
-	zo = V1_NR_DZONES + (long) V1_INDIRECTS + v1sq;
+	zo = V1_NR_DZONES + (int) V1_INDIRECTS + v1sq;
   	sup->s_max_size = zo * block_size;
   } else {
 	v2sq = (zone_t) V2_INDIRECTS(block_size) * V2_INDIRECTS(block_size);
@@ -480,9 +525,9 @@ ino_t inodes;
 		sup->s_magic = SUPER_V3;
   		sup->s_block_size = block_size;
   		sup->s_disk_version = 0;
-#define MAX_MAX_SIZE 	((unsigned long) LONG_MAX)
+#define MAX_MAX_SIZE 	(INT_MAX)
   		if(MAX_MAX_SIZE/block_size < zo) {
-	  		sup->s_max_size = MAX_MAX_SIZE;
+	  		sup->s_max_size = (int32_t) MAX_MAX_SIZE;
   		}
 	  	else {
 	  		sup->s_max_size = zo * block_size;
@@ -544,7 +589,7 @@ ino_t parent;
   int mode, usrid, grpid, maj, min, f;
   ino_t n;
   zone_t z;
-  long size;
+  size_t size;
 
   while (1) {
 	getline(line, token);
@@ -579,7 +624,7 @@ ino_t parent;
 		size = 0;
 		if (token[6]) size = atoi(token[6]);
 		size = block_size * size;
-		add_zone(n, (zone_t) ((maj << 8) | min), size, current_time);
+		add_zone(n, (zone_t) (makedev(maj,min)), size, current_time);
 	} else {
 		/* Regular file. Go read it. */
 		if ((f = open(token[4], O_RDONLY)) < 0) {
@@ -604,7 +649,7 @@ int f;
   int ct, i, j, k;
   zone_t z;
   char *buf;
-  long timeval;
+  uint32_t timeval;
 
   buf = alloc_block();
 
@@ -617,9 +662,10 @@ int f;
 		}
 	}
 	timeval = (dflag ? current_time : file_time(f));
-	if (ct) add_zone(inode, z, (long) j, timeval);
+	if (ct) add_zone(inode, z, (size_t) j, timeval);
   } while (ct == block_size);
   close(f);
+  free(buf);
 }
 
 
@@ -633,7 +679,7 @@ char *name;
 {
   /* Enter child in parent directory */
   /* Works for dir > 1 block and zone > block */
-  int i, j, k, l, off;
+  unsigned int i, j, k, l, off;
   block_t b;
   zone_t z;
   char *p1, *p2;
@@ -680,6 +726,7 @@ char *name;
 				p1 = name;
 				p2 = dir_entry[i].mfs_d_name;
 				j = sizeof(dir_entry[i].mfs_d_name);
+				j = 60;
 				while (j--) {
 					*p2++ = *p1;
 					if (*p1 != 0) p1++;
@@ -698,16 +745,13 @@ char *name;
 	}
   }
 
-  printf("Directory-inode %d beyond direct blocks.  Could not enter %s\n",
+  printf("Directory-inode %lu beyond direct blocks.  Could not enter %s\n",
          parent, name);
   pexit("Halt");
 }
 
 
-void add_zone(n, z, bytes, cur_time)
-ino_t n;
-zone_t z;
-long bytes, cur_time;
+void add_zone(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
 {
   if (fs_version == 1) {
 	add_z_1(n, z, bytes, cur_time);
@@ -716,17 +760,14 @@ long bytes, cur_time;
   }
 }
 
-void add_z_1(n, z, bytes, cur_time)
-ino_t n;
-zone_t z;
-long bytes, cur_time;
+void add_z_1(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
 {
   /* Add zone z to inode n. The file has grown by 'bytes' bytes. */
 
   int off, i;
   block_t b;
   zone_t indir;
-  zone1_t blk[V1_INDIRECTS];
+  uint16_t blk[V1_INDIRECTS];
   d1_inode *p;
   d1_inode inode[V1_INODES_PER_BLOCK];
 
@@ -738,7 +779,7 @@ long bytes, cur_time;
   p->d1_mtime = cur_time;
   for (i = 0; i < V1_NR_DZONES; i++)
 	if (p->d1_zone[i] == 0) {
-		p->d1_zone[i] = (zone1_t) z;
+		p->d1_zone[i] = (uint16_t) z;
 		put_block(b, (char *) inode);
 		return;
 	}
@@ -746,24 +787,21 @@ long bytes, cur_time;
 
   /* File has grown beyond a small file. */
   if (p->d1_zone[V1_NR_DZONES] == 0)
-	p->d1_zone[V1_NR_DZONES] = (zone1_t) alloc_zone();
+	p->d1_zone[V1_NR_DZONES] = (uint16_t) alloc_zone();
   indir = p->d1_zone[V1_NR_DZONES];
   put_block(b, (char *) inode);
   b = indir << zone_shift;
   get_block(b, (char *) blk);
   for (i = 0; i < V1_INDIRECTS; i++)
 	if (blk[i] == 0) {
-		blk[i] = (zone1_t) z;
+		blk[i] = (uint16_t) z;
 		put_block(b, (char *) blk);
 		return;
 	}
   pexit("File has grown beyond single indirect");
 }
 
-void add_z_2(n, z, bytes, cur_time)
-ino_t n;
-zone_t z;
-long bytes, cur_time;
+void add_z_2(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
 {
   /* Add zone z to inode n. The file has grown by 'bytes' bytes. */
 
@@ -850,7 +888,7 @@ ino_t n;
 
 void incr_size(n, count)
 ino_t n;
-long count;
+size_t count;
 {
   /* Increment the file-size in inode n */
   block_t b;
@@ -953,14 +991,26 @@ int bit;
 {
   /* Insert 'count' bits in the bitmap */
   int w, s;
+#if defined(__minix)
   bitchunk_t *buf;
+#else
+  uint32_t *buf;
+#endif
 
+#if defined(__minix)
   buf = (bitchunk_t *) alloc_block();
+#else
+  buf = (uint32_t *) alloc_block();
+#endif
 
-  if (block < 0) pexit("insert_bit called with negative argument");
   get_block(block, (char *) buf);
+#if defined(__minix)
   w = bit / (8 * sizeof(bitchunk_t));
   s = bit % (8 * sizeof(bitchunk_t));
+#else
+  w = bit / (8 * sizeof(uint32_t));
+  s = bit % (8 * sizeof(uint32_t));
+#endif
   buf[w] |= (1 << s);
   put_block(block, (char *) buf);
 
@@ -985,12 +1035,12 @@ char *p;
   o2 = *p++ - '0';
   o3 = *p++ - '0';
   mode = (o1 << 6) | (o2 << 3) | o3;
-  if (c1 == 'd') mode += I_DIRECTORY;
-  if (c1 == 'b') mode += I_BLOCK_SPECIAL;
-  if (c1 == 'c') mode += I_CHAR_SPECIAL;
-  if (c1 == '-') mode += I_REGULAR;
-  if (c2 == 'u') mode += I_SET_UID_BIT;
-  if (c3 == 'g') mode += I_SET_GID_BIT;
+  if (c1 == 'd') mode |= S_IFDIR;
+  if (c1 == 'b') mode |= S_IFBLK;
+  if (c1 == 'c') mode |= S_IFCHR;
+  if (c1 == '-') mode |= S_IFREG;
+  if (c2 == 'u') mode |= S_ISUID;
+  if (c3 == 'g') mode |= S_ISGID;
   return(mode);
 }
 
@@ -1041,22 +1091,22 @@ char line[LINE_LEN];
 /*================================================================
  *			other stuff
  *===============================================================*/
-void check_mtab(devname)
-char *devname;			/* /dev/hd1 or whatever */
+void check_mtab(device)
+char *device;			/* /dev/hd1 or whatever */
 {
 /* Check to see if the special file named in s is mounted. */
-
+#if defined(__minix)
   int n, r;
   struct stat sb;
   char special[PATH_MAX + 1], mounted_on[PATH_MAX + 1], version[10], rw_flag[10];
 
-  r= stat(devname, &sb);
+  r= stat(device, &sb);
   if (r == -1)
   {
 	if (errno == ENOENT)
 		return;	/* Does not exist, and therefore not mounted. */
 	fprintf(stderr, "%s: stat %s failed: %s\n",
-		progname, devname, strerror(errno));
+		progname, device, strerror(errno));
 	exit(1);
   }
   if (!S_ISBLK(sb.st_mode))
@@ -1069,17 +1119,124 @@ char *devname;			/* /dev/hd1 or whatever */
   while (1) {
 	n = get_mtab_entry(special, mounted_on, version, rw_flag);
 	if (n < 0) return;
-	if (strcmp(devname, special) == 0) {
+	if (strcmp(device, special) == 0) {
 		/* Can't mkfs on top of a mounted file system. */
 		fprintf(stderr, "%s: %s is mounted on %s\n",
-			progname, devname, mounted_on);
+			progname, device, mounted_on);
 		exit(1);
 	}
   }
+#elif defined(__linux__)
+/* XXX: this code is copyright Theodore T'so and distributed under the GPLv2. Rewrite.
+ */
+	struct mntent 	*mnt;
+	struct stat	st_buf;
+	dev_t		file_dev=0, file_rdev=0;
+	ino_t		file_ino=0;
+	FILE 		*f;
+	int		fd;
+	char 		*mtab_file = "/proc/mounts";
+
+	if ((f = setmntent (mtab_file, "r")) == NULL)
+		goto error;
+
+	if (stat(device, &st_buf) == 0) {
+		if (S_ISBLK(st_buf.st_mode)) {
+			file_rdev = st_buf.st_rdev;
+		} else {
+			file_dev = st_buf.st_dev;
+			file_ino = st_buf.st_ino;
+		}
+	}
+	
+	while ((mnt = getmntent (f)) != NULL) {
+		if (strcmp(device, mnt->mnt_fsname) == 0)
+			break;
+		if (stat(mnt->mnt_fsname, &st_buf) == 0) {
+			if (S_ISBLK(st_buf.st_mode)) {
+				if (file_rdev && (file_rdev == st_buf.st_rdev))
+					break;
+			} else {
+				if (file_dev && ((file_dev == st_buf.st_dev) &&
+						 (file_ino == st_buf.st_ino)))
+					break;
+			}
+		}
+	}
+
+	if (mnt == NULL) {
+		/*
+		 * Do an extra check to see if this is the root device.  We
+		 * can't trust /etc/mtab, and /proc/mounts will only list
+		 * /dev/root for the root filesystem.  Argh.  Instead we
+		 * check if the given device has the same major/minor number
+		 * as the device that the root directory is on.
+		 */
+		if (file_rdev && stat("/", &st_buf) == 0) {
+			if (st_buf.st_dev == file_rdev) {
+				goto is_root;
+			}
+		}
+		goto test_busy;
+	}
+	/* Validate the entry in case /etc/mtab is out of date */
+	/* 
+	 * We need to be paranoid, because some broken distributions
+	 * (read: Slackware) don't initialize /etc/mtab before checking
+	 * all of the non-root filesystems on the disk.
+	 */
+	if (stat(mnt->mnt_dir, &st_buf) < 0) {
+		if (errno == ENOENT) {
+			goto test_busy;
+		}
+		goto error;
+	}
+	if (file_rdev && (st_buf.st_dev != file_rdev)) {
+		goto error;
+	}
+
+	fprintf(stderr, "Device %s is mounted, exiting\n", device);
+	exit(-1);
+
+	/*
+	 * Check to see if we're referring to the root filesystem.
+	 * If so, do a manual check to see if we can open /etc/mtab
+	 * read/write, since if the root is mounted read/only, the
+	 * contents of /etc/mtab may not be accurate.
+	 */
+	if (!strcmp(mnt->mnt_dir, "/")) {
+is_root:
+		fprintf(stderr, "Device %s is mounted as root file system!\n",
+				device);
+		exit(-1);
+	}
+	
+test_busy:
+
+	endmntent (f);
+	if ((stat(device, &st_buf) != 0) ||
+			!S_ISBLK(st_buf.st_mode))
+		return;
+	fd = open(device, O_RDONLY | O_EXCL);
+	if (fd < 0) {
+		if (errno == EBUSY) {
+			fprintf(stderr, "Device %s is used by the system\n", device);
+			exit(-1);
+		}
+	} else
+		close(fd);
+
+	return;
+
+error:
+	endmntent (f);
+	fprintf(stderr, "Error while checking if device %s is mounted\n", device);
+	exit(-1);
+#endif
 }
 
 
-long file_time(f)
+uint32_t file_time(f)
 int f;
 {
 #ifdef UNIX
@@ -1105,7 +1262,7 @@ char *s;
 
 void copy(from, to, count)
 char *from, *to;
-int count;
+size_t count;
 {
   while (count--) *to++ = *from++;
 }
@@ -1129,7 +1286,7 @@ void print_fs()
   d1_inode inode1[V1_INODES_PER_BLOCK];
   d2_inode *inode2;
   unsigned short *usbuf;
-  block_t b, inode_limit;
+  block_t b;
   struct direct *dir;
 
   if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size) * sizeof(*inode2))))
@@ -1167,35 +1324,35 @@ void print_fs()
 		if (k > nrinodes) break;
 		if (fs_version == 1) {
 			if (inode1[i].d1_mode != 0) {
-				printf("Inode %2d:  mode=", k);
+				printf("Inode %2lu:  mode=", k);
 				printf("%06o", inode1[i].d1_mode);
 				printf("  uid=%2d  gid=%2d  size=",
 				inode1[i].d1_uid, inode1[i].d1_gid);
-				printf("%6ld", inode1[i].d1_size);
+				printf("%6d", inode1[i].d1_size);
 				printf("  zone[0]=%d\n", inode1[i].d1_zone[0]);
 			}
-			if ((inode1[i].d1_mode & I_TYPE) == I_DIRECTORY) {
+			if ((inode1[i].d1_mode & S_IFMT) == S_IFDIR) {
 				/* This is a directory */
 				get_block(inode1[i].d1_zone[0], (char *) dir);
 				for (j = 0; j < NR_DIR_ENTRIES(block_size); j++)
 					if (dir[j].mfs_d_ino)
-						printf("\tInode %2d: %s\n", dir[j].mfs_d_ino, dir[j].mfs_d_name);
+						printf("\tInode %2u: %s\n", dir[j].mfs_d_ino, dir[j].mfs_d_name);
 			}
 		} else {
 			if (inode2[i].d2_mode != 0) {
-				printf("Inode %2d:  mode=", k);
+				printf("Inode %2lu:  mode=", k);
 				printf("%06o", inode2[i].d2_mode);
 				printf("  uid=%2d  gid=%2d  size=",
 				inode2[i].d2_uid, inode2[i].d2_gid);
-				printf("%6ld", inode2[i].d2_size);
-				printf("  zone[0]=%ld\n", inode2[i].d2_zone[0]);
+				printf("%6d", inode2[i].d2_size);
+				printf("  zone[0]=%u\n", inode2[i].d2_zone[0]);
 			}
-			if ((inode2[i].d2_mode & I_TYPE) == I_DIRECTORY) {
+			if ((inode2[i].d2_mode & S_IFMT) == S_IFDIR) {
 				/* This is a directory */
 				get_block(inode2[i].d2_zone[0], (char *) dir);
 				for (j = 0; j < NR_DIR_ENTRIES(block_size); j++)
 					if (dir[j].mfs_d_ino)
-						printf("\tInode %2d: %s\n", dir[j].mfs_d_ino, dir[j].mfs_d_name);
+						printf("\tInode %2u: %s\n", dir[j].mfs_d_ino, dir[j].mfs_d_name);
 			}
 		}
 	}

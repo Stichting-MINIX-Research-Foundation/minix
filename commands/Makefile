@@ -17,7 +17,7 @@ SUBDIR=	add_route arp ash at \
 	intr ipcrm ipcs irdpd isoread join kill last \
 	less loadkeys loadramdisk logger look lp \
 	lpd ls lspci mail MAKEDEV \
-	mdb  mesg mined mkfifo mkfs.mfs mknod \
+	mdb  mesg mined mkfifo mknod \
 	mkproto mount mt netconf nice acknm nohup \
 	nonamed od paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
