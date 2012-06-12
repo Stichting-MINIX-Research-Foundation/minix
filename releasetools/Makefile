@@ -110,9 +110,10 @@ install:
 
 cross_install:
 	${INSTALL_DIR} ${DESTDIR}/multiboot
+	n=0;	\
 	for i in ${PROGRAMS};						\
 	do								\
-	let n=n+1 >/dev/null;						\
+	n=`expr $$n + 1`;					\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";		\
 	newname="${DESTDIR}/multiboot/$${prefix}$${n}_`basename $$i`";	\
 	${INSTALL} $$i $$newname;						\
