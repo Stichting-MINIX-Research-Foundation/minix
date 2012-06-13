@@ -32,6 +32,7 @@ ASM=	compat__opendir230.S compat__alphasort30.S compat__ctime50.S \
 	compat__updlastlogx50.S compat__updwtmpx50.S compat__utime50.S \
 	compat__vfork14.S
 SRCS+=	${ASM}
+CLEANFILES+=	${ASM}
 
 .include "../generateasm.mk"
 

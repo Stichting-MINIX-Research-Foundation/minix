@@ -29,7 +29,7 @@ PROG_DRIVERS+= acpi
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
-CLEANFILES += $(LIBRARIES) pwd.db spwd.db
+CLEANFILES += $(LIBRARIES) pwd.db spwd.db passwd
 
 image:	proto.gen mtab rc $(EXTRA) pwd.db spwd.db passwd
 	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }

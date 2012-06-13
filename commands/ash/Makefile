@@ -42,8 +42,8 @@ CPPFLAGS+=${EDIT} ${NO_PATHS_H} ${NO_JOBS}
 
 .PATH:	${.CURDIR}/bltin
 
-CLEANFILES+= mkinit mkinit.o mknodes mknodes.o \
-	mksyntax mksyntax.o mksignames mksignames.o
+CLEANFILES+= mkinit mkinit.lo mknodes mknodes.lo \
+	mksyntax mksyntax.lo mksignames mksignames.lo
 CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 
 build-tools: mkinit mknodes mksyntax mksignames
