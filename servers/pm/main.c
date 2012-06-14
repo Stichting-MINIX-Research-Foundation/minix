@@ -96,7 +96,8 @@ int main()
 				result = SUSPEND;	/* don't reply */
 				break;
 			default :
-				result = ENOSYS;
+				/* ignore notify() from unknown sender */
+				result = SUSPEND;
 		}
 
 		/* done, send reply and continue */
