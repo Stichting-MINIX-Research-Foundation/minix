@@ -32,13 +32,13 @@ CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
 CLEANFILES += $(LIBRARIES) pwd.db spwd.db
 
 image:	proto.gen mtab rc $(EXTRA) pwd.db spwd.db passwd
-	mkfs.mfs image proto.gen || { rm -f image; false; }
-	if fsck.mfs -s image | grep -q CLEAN;	\
-	then	: ;	\
-	else	echo "CLEAN sanity check of image failed."	;	\
-		echo "(Perhaps install current mkfs and fsck.)" ;	\
-		rm -f image; false;             \
-	fi
+	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
+#	if fsck.mfs -s image | grep -q CLEAN;	\
+#	then	: ;	\
+#	else	echo "CLEAN sanity check of image failed."	;	\
+#		echo "(Perhaps install current mkfs and fsck.)" ;	\
+#		rm -f image; false;             \
+#	fi
 
 .for driver in $(PROG_DRIVERS)
 $(driver): ../$(driver)/$(driver)
@@ -85,7 +85,7 @@ $(server): ../../servers/$(server)/$(server)
 pwd.db spwd.db passwd: ../../etc/master.passwd ../../usr.sbin/pwd_mkdb/pwd_mkdb
 	rm -f ../../etc/master.passwd.orig ../../etc/passwd.orig
 	rm -f ../../etc/pwd.db.tmp ../../etc/spwd.db.tmp
-	../../usr.sbin/pwd_mkdb/pwd_mkdb -V 0 -p -d ../../ ../../etc/master.passwd
+	${TOOL_PWD_MKDB} -V 0 -p -d ../../ ../../etc/master.passwd
 	${INSTALL} ../../etc/$@ $@
 
 proto.gen: $(PROGRAMS) proto.sh ${PROTO} proto.common.etc proto.common.dynamic proto.sh

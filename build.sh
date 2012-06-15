@@ -1674,7 +1674,7 @@ EOF
 		eval cat <<EOF
 MAKEWRAPPERMACHINE=${makewrappermachine:-${MACHINE}}; export MAKEWRAPPERMACHINE
 USETOOLS=yes; export USETOOLS
-MKBUILDEXT2RD=yes; export MKBUILDEXT2RD
+MKINSTALLBOOT=no; export MKINSTALLBOOT
 EOF
 	} | eval sort -u "${makewrapout}"
 	eval cat <<EOF "${makewrapout}"

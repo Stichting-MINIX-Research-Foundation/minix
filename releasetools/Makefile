@@ -94,8 +94,13 @@ hdboot: services
 	done
 	cp ../kernel/kernel ${DESTDIR}/boot/minix/.temp/
 	strip -s ${DESTDIR}/boot/minix/.temp/kernel
-	sh mkboot $@
-	sh ../commands/update_bootcfg/update_bootcfg.sh
+	if [ "${MKINSTALLBOOT}" != "no" ] ; then		\
+	sh mkboot $@;						\
+	sh ../commands/update_bootcfg/update_bootcfg.sh;	\
+	else							\
+	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
+	cp ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot;	\
+	fi
 
 fdboot:
 	exec su root mkboot $@
