@@ -717,7 +717,8 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
   unlock_filp(f);
   (void) close_fd(fp, core_fd);	/* ignore failure, we're exiting anyway */
 
-  free_proc(fp, FP_EXITING);
+  if(csig)
+	  free_proc(fp, FP_EXITING);
   return(OK);
 }
 

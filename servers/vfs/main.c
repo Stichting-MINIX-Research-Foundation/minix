@@ -839,7 +839,13 @@ static void service_pm_postponed(void)
 
 		proc_e = job_m_in.PM_PROC;
 		traced_proc_e = job_m_in.PM_TRACED_PROC;
-		term_signal = job_m_in.PM_TERM_SIG;
+		if(job_m_in.PM_PROC != job_m_in.PM_TRACED_PROC) {
+			/* dumpcore request */
+			term_signal = 0;
+		} else {
+			/* dumpcore on exit */
+			term_signal = job_m_in.PM_TERM_SIG;
+		}
 		core_path = (vir_bytes) job_m_in.PM_PATH;
 
 		r = pm_dumpcore(proc_e, term_signal, core_path);
@@ -918,7 +924,12 @@ static void service_pm()
     case PM_DUMPCORE:
 	{
 		endpoint_t proc_e = job_m_in.PM_PROC;
-		okendpt(proc_e, &slot);
+
+		if(isokendpt(proc_e, &slot) != OK) {
+			printf("VFS: proc ep %d not ok\n", proc_e);
+			return;
+		}
+
 		fp = &fproc[slot];
 
 		if (fp->fp_flags & FP_PENDING) {
