@@ -985,7 +985,7 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
   old_sb.st_ctime = sb.st_ctime;
 #endif
 
-  r = sys_vircopy(SELF, D, (vir_bytes) &old_sb, proc_e, D, buf,
+  r = sys_vircopy(SELF, (vir_bytes) &old_sb, proc_e, buf,
 		  sizeof(struct minix_prev_stat));
 
   return(r);

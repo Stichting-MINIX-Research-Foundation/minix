@@ -432,13 +432,17 @@
 #define IOP_ENDPT	m2_l1	/* target endpoint */
 
 /* Field names for _UMAP, _VIRCOPY, _PHYSCOPY. */
-#define CP_SRC_SPACE 	m5_s1	/* T or D space (stack is also D) */
 #define CP_SRC_ENDPT	m5_i1	/* process to copy from */
 #define CP_SRC_ADDR	m5_l1	/* address where data come from */
-#define CP_DST_SPACE	m5_s2	/* T or D space (stack is also D) */
 #define CP_DST_ENDPT	m5_i2	/* process to copy to */
 #define CP_DST_ADDR	m5_l2	/* address where data go to */
 #define CP_NR_BYTES	m5_l3	/* number of bytes to copy */
+
+#define UMAP_SEG 	m5_s1
+
+/* only used for backwards compatability */
+#define CP_SRC_SPACE_OBSOLETE 	m5_s1	/* T or D space (stack is also D) */
+#define CP_DST_SPACE_OBSOLETE	m5_s2	/* T or D space (stack is also D) */
 
 /* Field names for SYS_VUMAP. */
 #define VUMAP_ENDPT	m10_i1	/* grant owner, or SELF for local addresses */

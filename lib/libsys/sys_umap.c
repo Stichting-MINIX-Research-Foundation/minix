@@ -14,7 +14,7 @@ phys_bytes *phys_addr;			/* placeholder for result */
     int result;
 
     m.CP_SRC_ENDPT = proc_ep;
-    m.CP_SRC_SPACE = seg;
+    m.UMAP_SEG = seg;
     m.CP_SRC_ADDR = vir_addr;
     m.CP_NR_BYTES = bytes;
 

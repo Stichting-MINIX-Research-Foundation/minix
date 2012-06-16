@@ -2,10 +2,8 @@
  *   m_type:	SYS_VIRCOPY, SYS_PHYSCOPY
  *
  * The parameters for this kernel call are:
- *    m5_s1:	CP_SRC_SPACE		source virtual segment
  *    m5_l1:	CP_SRC_ADDR		source offset within segment
  *    m5_i1:	CP_SRC_ENDPT		source process number
- *    m5_s2:	CP_DST_SPACE		destination virtual segment
  *    m5_l2:	CP_DST_ADDR		destination offset within segment
  *    m5_i2:	CP_DST_ENDPT		destination process number
  *    m5_l3:	CP_NR_BYTES		number of bytes to copy
@@ -28,6 +26,7 @@ int do_copy(struct proc * caller, message * m_ptr)
   struct vir_addr vir_addr[2];	/* virtual source and destination address */
   phys_bytes bytes;		/* number of bytes to copy */
   int i;
+  endpoint_t pe;
 
 #if 0
   if (caller->p_endpoint != PM_PROC_NR && caller->p_endpoint != VFS_PROC_NR &&
@@ -39,22 +38,20 @@ int do_copy(struct proc * caller, message * m_ptr)
 	{
 		first= 0;
 		printf(
-"do_copy: got request from %d (source %d, seg %d, destination %d, seg %d)\n",
+"do_copy: got request from %d (source %d, destination %d)\n",
 			caller->p_endpoint,
 			m_ptr->CP_SRC_ENDPT,
-			m_ptr->CP_SRC_SPACE,
-			m_ptr->CP_DST_ENDPT,
-			m_ptr->CP_DST_SPACE);
+			m_ptr->CP_DST_ENDPT);
 	}
   }
 #endif
 
   /* Dismember the command message. */
-  vir_addr[_SRC_].proc_nr_e = m_ptr->CP_SRC_ENDPT;
-  vir_addr[_SRC_].segment = m_ptr->CP_SRC_SPACE;
+  pe = vir_addr[_SRC_].proc_nr_e = m_ptr->CP_SRC_ENDPT;
+  vir_addr[_SRC_].segment = (pe == NONE ? PHYS_SEG : D);
   vir_addr[_SRC_].offset = (vir_bytes) m_ptr->CP_SRC_ADDR;
-  vir_addr[_DST_].proc_nr_e = m_ptr->CP_DST_ENDPT;
-  vir_addr[_DST_].segment = m_ptr->CP_DST_SPACE;
+  pe = vir_addr[_DST_].proc_nr_e = m_ptr->CP_DST_ENDPT;
+  vir_addr[_DST_].segment = (pe == NONE ? PHYS_SEG : D);
   vir_addr[_DST_].offset = (vir_bytes) m_ptr->CP_DST_ADDR;
   bytes = (phys_bytes) m_ptr->CP_NR_BYTES;
 

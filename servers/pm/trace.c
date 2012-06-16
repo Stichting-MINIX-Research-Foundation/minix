@@ -41,7 +41,7 @@ int do_trace()
 {
   register struct mproc *child;
   struct ptrace_range pr;
-  int i, r, seg, req;
+  int i, r, req;
   message m;
 
   req = m_in.request;
@@ -190,14 +190,13 @@ int do_trace()
 	if (pr.pr_space != TS_INS && pr.pr_space != TS_DATA) return(EINVAL);
 	if (pr.pr_size == 0 || pr.pr_size > LONG_MAX) return(EINVAL);
 
-	seg = (pr.pr_space == TS_INS) ? T : D;
 	if (req == T_GETRANGE)
-		r = sys_vircopy(child->mp_endpoint, seg, (vir_bytes) pr.pr_addr,
-			who_e, D, (vir_bytes) pr.pr_ptr,
+		r = sys_vircopy(child->mp_endpoint, (vir_bytes) pr.pr_addr,
+			who_e, (vir_bytes) pr.pr_ptr,
 			(phys_bytes) pr.pr_size);
 	else
-		r = sys_vircopy(who_e, D, (vir_bytes) pr.pr_ptr,
-			child->mp_endpoint, seg, (vir_bytes) pr.pr_addr,
+		r = sys_vircopy(who_e, (vir_bytes) pr.pr_ptr,
+			child->mp_endpoint, (vir_bytes) pr.pr_addr,
 			(phys_bytes) pr.pr_size);
 
 	if (r != OK) return(r);

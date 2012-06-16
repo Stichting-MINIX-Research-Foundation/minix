@@ -123,7 +123,7 @@ int do_select(void)
   /* Did the process set a timeout value? If so, retrieve it. */
   if (vtimeout != 0) {
 	do_timeout = 1;
-	r = sys_vircopy(who_e, D, (vir_bytes) vtimeout, SELF, D,
+	r = sys_vircopy(who_e, (vir_bytes) vtimeout, SELF, 
 			(vir_bytes) &timeout, sizeof(timeout));
 	if (r != OK) return(r);
   }
@@ -546,7 +546,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   src_fds = (direction == FROM_PROC) ? se->vir_readfds : &se->ready_readfds;
   dst_fds = (direction == FROM_PROC) ? &se->readfds : se->vir_readfds;
   if (se->vir_readfds) {
-	r = sys_vircopy(src_e, D, (vir_bytes) src_fds, dst_e, D,
+	r = sys_vircopy(src_e, (vir_bytes) src_fds, dst_e, 
 			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
@@ -555,7 +555,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   src_fds = (direction == FROM_PROC) ? se->vir_writefds : &se->ready_writefds;
   dst_fds = (direction == FROM_PROC) ? &se->writefds : se->vir_writefds;
   if (se->vir_writefds) {
-	r = sys_vircopy(src_e, D, (vir_bytes) src_fds, dst_e, D,
+	r = sys_vircopy(src_e, (vir_bytes) src_fds, dst_e, 
 			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
@@ -564,7 +564,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   src_fds = (direction == FROM_PROC) ? se->vir_errorfds : &se->ready_errorfds;
   dst_fds = (direction == FROM_PROC) ? &se->errorfds : se->vir_errorfds;
   if (se->vir_errorfds) {
-	r = sys_vircopy(src_e, D, (vir_bytes) src_fds, dst_e, D,
+	r = sys_vircopy(src_e, (vir_bytes) src_fds, dst_e, 
 			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }

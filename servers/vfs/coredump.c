@@ -304,9 +304,9 @@ static void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
 	}
 
 	for (off = 0; off < (off_t) len; off += CLICK_SIZE) {
-		r = sys_vircopy(fp->fp_endpoint, D,
+		r = sys_vircopy(fp->fp_endpoint,
 			(vir_bytes) (seg_off + off),
-			SELF, D, (vir_bytes) buf,
+			SELF, (vir_bytes) buf,
 			(phys_bytes) CLICK_SIZE);
 
 		write_buf(f, (char *) buf, (off + CLICK_SIZE <= (off_t) len) ?

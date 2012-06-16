@@ -94,8 +94,8 @@ int do_sysuname()
 	/* Copy an uname string to the user. */
 	n = strlen(string) + 1;
 	if (n > m_in.sysuname_len) n = m_in.sysuname_len;
-	r = sys_vircopy(SELF, D, (phys_bytes) string, 
-		mp->mp_endpoint, D, (phys_bytes) m_in.sysuname_value,
+	r = sys_vircopy(SELF, (phys_bytes) string, 
+		mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
 		(phys_bytes) n);
 	if (r < 0) return(r);
 	break;
@@ -107,8 +107,8 @@ int do_sysuname()
 	if (mp->mp_effuid != 0 || len == 0) return(EPERM);
 	n = len < m_in.sysuname_len ? len : m_in.sysuname_len;
 	if (n <= 0) return(EINVAL);
-	r = sys_vircopy(mp->mp_endpoint, D, (phys_bytes) m_in.sysuname_value,
-		SELF, D, (phys_bytes) tmp, (phys_bytes) n);
+	r = sys_vircopy(mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
+		SELF, (phys_bytes) tmp, (phys_bytes) n);
 	if (r < 0) return(r);
 	tmp[n-1] = 0;
 	strcpy(string, tmp);

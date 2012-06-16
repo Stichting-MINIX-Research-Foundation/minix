@@ -55,7 +55,7 @@ int do_mapdriver()
 	printf("VFS: do_mapdriver: label too long\n");
 	return(EINVAL);
   }
-  r = sys_vircopy(who_e, D, label_vir, SELF, D, (vir_bytes) label, label_len);
+  r = sys_vircopy(who_e, label_vir, SELF, (vir_bytes) label, label_len);
   if (r != OK) {
 	printf("VFS: do_mapdriver: sys_vircopy failed: %d\n", r);
 	return(EINVAL);

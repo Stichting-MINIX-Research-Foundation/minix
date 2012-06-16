@@ -3,7 +3,7 @@
  *
  * The parameters for this kernel call are:
  *    m5_i1:	CP_SRC_PROC_NR	(process number)
- *    m5_s1:	CP_SRC_SPACE	(segment where address is: T, D, or S)
+ *    m5_s1:	UMAP_SEG	(segment where address is: T, D, or S)
  *    m5_l1:	CP_SRC_ADDR	(virtual address)
  *    m5_i2:	CP_DST_ENDPT	(process number of grantee to check access for)
  *    m5_l2:	CP_DST_ADDR	(returns physical address)
@@ -26,8 +26,8 @@
 int do_umap_remote(struct proc * caller, message * m_ptr)
 {
 /* Map virtual address to physical, for non-kernel processes. */
-  int seg_type = m_ptr->CP_SRC_SPACE & SEGMENT_TYPE;
-  int seg_index = m_ptr->CP_SRC_SPACE & SEGMENT_INDEX;
+  int seg_type = m_ptr->UMAP_SEG & SEGMENT_TYPE;
+  int seg_index = m_ptr->UMAP_SEG & SEGMENT_INDEX;
   vir_bytes offset = m_ptr->CP_SRC_ADDR;
   int count = m_ptr->CP_NR_BYTES;
   int endpt = (int) m_ptr->CP_SRC_ENDPT;
