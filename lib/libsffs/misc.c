@@ -25,7 +25,7 @@ int do_fstatfs()
   statfs.f_bsize = BLOCK_SIZE; /* arbitrary block size constant */
 
   return sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, 0,
-	(vir_bytes) &statfs, sizeof(statfs), D);
+	(vir_bytes) &statfs, sizeof(statfs));
 }
 
 /*===========================================================================*
@@ -74,5 +74,5 @@ int do_statvfs()
   statvfs.f_namemax = NAME_MAX;
 
   return sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, 0,
-	(vir_bytes) &statvfs, sizeof(statvfs), D);
+	(vir_bytes) &statvfs, sizeof(statvfs));
 }

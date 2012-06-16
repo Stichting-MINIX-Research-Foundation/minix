@@ -119,7 +119,7 @@ void mem2user(dpeth_t *dep, buff_t *rxbuff)
 
 	/* Reads from Rx buffer to user area */
 	r= sys_safecopyto(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 0,
-		(vir_bytes)buffer, bytes, D);
+		(vir_bytes)buffer, bytes);
 	if (r != OK)
 		panic("mem2user: sys_safecopyto failed: %d", r);
 	buffer += bytes;
@@ -149,7 +149,7 @@ void user2mem(dpeth_t *dep, buff_t *txbuff)
 	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of buffer */
 	if (bytes > pktsize) bytes = pktsize;
 	r= sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant,
-		0, (vir_bytes)buffer, bytes, D);
+		0, (vir_bytes)buffer, bytes);
 	if (r != OK)
 		panic("user2mem: sys_safecopyfrom failed: %d", r);
 	buffer += bytes;

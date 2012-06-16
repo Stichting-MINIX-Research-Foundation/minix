@@ -178,7 +178,7 @@ int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	/* Map all the services in the boot image. */
 	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
-		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
+		(vir_bytes) rprocpub, sizeof(rprocpub))) != OK) {
 		panic("sys_safecopyfrom failed: %d", r);
 	}
 	for(i=0;i < NR_BOOT_PROCS;i++) {

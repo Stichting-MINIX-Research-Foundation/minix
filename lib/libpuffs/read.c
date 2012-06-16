@@ -67,7 +67,7 @@ int fs_readwrite(void)
 	bytes_done = nrbytes - bytes_left;
 	if (bytes_done) {
 		r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) 0,
-				   (vir_bytes) rw_buf, bytes_done, D);
+				   (vir_bytes) rw_buf, bytes_done);
 		update_times(pn, ATIME, 0);
 	}
   } else if (rw_flag == WRITING) {
@@ -85,7 +85,7 @@ int fs_readwrite(void)
 	if (r) return(EINVAL);
 
 	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) 0,
-			     (vir_bytes) rw_buf, nrbytes, D);
+			     (vir_bytes) rw_buf, nrbytes);
 	if (r != OK) return(EINVAL);
 
 	if (global_pu->pu_ops.puffs_node_write == NULL)
@@ -165,7 +165,7 @@ int fs_getdents(void)
 
   if (written) {
 	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) 0,
-			     (vir_bytes) getdents_buf, written, D);
+			     (vir_bytes) getdents_buf, written);
 	if (r != OK) return(r);
   }
 

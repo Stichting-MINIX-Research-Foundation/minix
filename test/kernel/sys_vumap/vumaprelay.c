@@ -19,7 +19,7 @@ static int do_request(message *m)
 	access = m->VTR_ACCESS;
 
 	r2 = sys_safecopyfrom(m->m_source, m->VTR_VGRANT, 0, (vir_bytes) vvec,
-		sizeof(vvec[0]) * vcount, D);
+		sizeof(vvec[0]) * vcount);
 	assert(r2 == OK);
 
 	r = sys_vumap(m->m_source, vvec, vcount, offset, access, pvec,
@@ -27,7 +27,7 @@ static int do_request(message *m)
 
 	if (pcount >= 1 && pcount <= MAPVEC_NR + 3) {
 		r2 = sys_safecopyto(m->m_source, m->VTR_PGRANT, 0,
-			(vir_bytes) pvec, sizeof(pvec[0]) * pcount, D);
+			(vir_bytes) pvec, sizeof(pvec[0]) * pcount);
 		assert(r2 == OK);
 	}
 

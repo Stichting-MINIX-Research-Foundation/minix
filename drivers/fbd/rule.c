@@ -33,8 +33,7 @@ int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
 
 		/* Copy in the rule. */
 		if ((r = sys_safecopyfrom(endpt, grant, 0,
-				(vir_bytes) &rules[i-1], sizeof(rules[0]),
-				D)) != OK)
+				(vir_bytes) &rules[i-1], sizeof(rules[0]))) != OK)
 			return r;
 
 		/* Mark the rule as active, and return its number. */
@@ -45,7 +44,7 @@ int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
 	case FBDCDELRULE:
 		/* Copy in the given rule number. */
 		if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i,
-				sizeof(i), D)) != OK)
+				sizeof(i))) != OK)
 			return r;
 
 		/* Fail if the given rule number is not valid or in use.
@@ -64,7 +63,7 @@ int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
 		/* Copy in just the rule number from the given structure. */
 		if ((r = sys_safecopyfrom(endpt, grant,
 				offsetof(struct fbd_rule, num), (vir_bytes) &i,
-				sizeof(i), D)) != OK)
+				sizeof(i))) != OK)
 			return r;
 
 		/* Fail if the given rule number is not valid or in use.
@@ -76,7 +75,7 @@ int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
 
 		/* Copy out the entire rule as is. */
 		return sys_safecopyto(endpt, grant, 0, (vir_bytes) &rules[i-1],
-				sizeof(rules[0]), D);
+				sizeof(rules[0]));
 
 	default:
 		return EINVAL;

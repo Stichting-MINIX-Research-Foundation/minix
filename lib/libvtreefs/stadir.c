@@ -52,7 +52,7 @@ int fs_stat(void)
 
 	/* Copy the struct to user space. */
 	return sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		(vir_bytes) &statbuf, (phys_bytes) sizeof(statbuf), D);
+		(vir_bytes) &statbuf, (phys_bytes) sizeof(statbuf));
 }
 
 /*===========================================================================*
@@ -68,7 +68,7 @@ int fs_fstatfs(void)
 
 	/* Copy the struct to user space. */
 	return sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		(vir_bytes) &statfs, (phys_bytes) sizeof(statfs), D);
+		(vir_bytes) &statfs, (phys_bytes) sizeof(statfs));
 }
 
 /*===========================================================================*
@@ -87,5 +87,5 @@ int fs_statvfs(void)
 	statvfs.f_namemax = PNAME_MAX;
 
 	return sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		(vir_bytes) &statvfs, sizeof(statvfs), D);
+		(vir_bytes) &statvfs, sizeof(statvfs));
 }

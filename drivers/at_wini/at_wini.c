@@ -2213,7 +2213,7 @@ static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	switch (request) {
 	case DIOCTIMEOUT:
 		r= sys_safecopyfrom(endpt, grant, 0, (vir_bytes)&timeout,
-			sizeof(timeout), D);
+			sizeof(timeout));
 
 		if(r != OK)
 		    return r;
@@ -2244,7 +2244,7 @@ static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 			}
 	
 			r= sys_safecopyto(endpt, grant, 0, (vir_bytes)&prev,
-				sizeof(prev), D);
+				sizeof(prev));
 
 			if(r != OK)
 				return r;
@@ -2256,7 +2256,7 @@ static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 		if (w_prepare(minor) == NULL) return ENXIO;
 		count = w_wn->open_ct;
 		r= sys_safecopyto(endpt, grant, 0, (vir_bytes)&count,
-			sizeof(count), D);
+			sizeof(count));
 
 		if(r != OK)
 			return r;

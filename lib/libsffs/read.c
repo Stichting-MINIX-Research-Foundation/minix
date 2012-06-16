@@ -54,7 +54,7 @@ int do_read()
 	chunk = r;
 
 	r = sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, off,
-		(vir_bytes) ptr, chunk, D);
+		(vir_bytes) ptr, chunk);
 
 	if (r != OK)
 		break;
@@ -190,7 +190,7 @@ int do_getdents()
 	/* If our own buffer cannot contain the new record, copy out first. */
 	if (off + len > sizeof(buf)) {
 		r = sys_safecopyto(m_in.m_source, m_in.REQ_GRANT,
-			user_off, (vir_bytes) buf, off, D);
+			user_off, (vir_bytes) buf, off);
 
 		if (r != OK) {
 			put_inode(child);
@@ -218,7 +218,7 @@ int do_getdents()
   /* If there is anything left in our own buffer, copy that out now. */
   if (off > 0) {
 	r = sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, user_off,
-		(vir_bytes) buf, off, D);
+		(vir_bytes) buf, off);
 
 	if (r != OK)
 		return r;

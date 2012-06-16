@@ -317,7 +317,7 @@ static void submit_urb(message *msg)
 
 		/* copy in URB */
 		res = sys_safecopyfrom(ep, msg->USB_GRANT_ID, 0,
-		    (vir_bytes) &mx_urb->dev_id, msg->USB_GRANT_SIZE, D);
+		    (vir_bytes) &mx_urb->dev_id, msg->USB_GRANT_SIZE);
 
 		if (res != 0) {
 			DEBUG_MSG("sys_safecopyfrom failed ");
@@ -474,7 +474,7 @@ static void completion_callback(void *priv)
 	/* copy out URB */
 	res = sys_safecopyto(drv->ep, ctx->gid, 0,
 	    (vir_bytes) ((char*)mx_urb) + sizeof(void*),
-		mx_urb->urb_size - sizeof(void*), D);
+		mx_urb->urb_size - sizeof(void*));
 
 	if (res != 0) {
 		DEBUG_MSG("Copy out failed: %d", res);

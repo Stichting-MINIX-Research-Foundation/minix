@@ -1221,7 +1221,7 @@ readvs_loop:
 			n = count-i;
 		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset,
 			(vir_bytes) rep->re_iovec_s,
-			n * sizeof(rep->re_iovec_s[0]), D);
+			n * sizeof(rep->re_iovec_s[0]));
 		if (cps != OK) {
 			panic("rl_readv_s: sys_safecopyfrom failed: %d", 				cps);
 		}
@@ -1234,7 +1234,7 @@ readvs_loop:
 			}
 
 			cps = sys_safecopyto(mp->m_source, iovp->iov_grant, 0,
-				(vir_bytes) rep->re_rx[index].v_ret_buf + size, s, D);
+				(vir_bytes) rep->re_rx[index].v_ret_buf + size, s);
 			if (cps != OK)
 				panic("rl_readv_s: sys_safecopyto failed: %d", cps);
 
@@ -1357,7 +1357,7 @@ static void rl_writev_s(const message *mp, int from_int)
 			n = count - i;
 		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset,
 			(vir_bytes) rep->re_iovec_s,
-			n * sizeof(rep->re_iovec_s[0]), D);
+			n * sizeof(rep->re_iovec_s[0]));
 		if (cps != OK) {
 			panic("rl_writev_s: sys_safecopyfrom failed: %d", 				cps);
 		}
@@ -1368,7 +1368,7 @@ static void rl_writev_s(const message *mp, int from_int)
 				panic("invalid packet size");
 
 			cps = sys_safecopyfrom(mp->m_source, iovp->iov_grant,
-				0, (vir_bytes) ret, s, D);
+				0, (vir_bytes) ret, s);
 			if (cps != OK) {
 				panic("rl_writev_s: sys_safecopyfrom failed: %d", cps);
 			}
@@ -1519,7 +1519,7 @@ message *mp;
 	stats = rep->re_stat;
 
 	r = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0,
-		(vir_bytes) &stats, sizeof(stats), D);
+		(vir_bytes) &stats, sizeof(stats));
 	if (r != OK)
 		panic("rl_getstat_s: sys_safecopyto failed: %d", r);
 

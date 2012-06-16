@@ -215,7 +215,7 @@ int do_lookup()
 	return EINVAL;
 
   r = sys_safecopyfrom(m_in.m_source, m_in.REQ_GRANT, 0,
-	(vir_bytes) buf, len, D);
+	(vir_bytes) buf, len);
 
   if (r != OK)
 	return r;
@@ -237,7 +237,7 @@ int do_lookup()
 	}
 
 	r = sys_safecopyfrom(m_in.m_source, m_in.REQ_GRANT2, 0,
-		(vir_bytes) &ucred, m_in.REQ_UCRED_SIZE, D);
+		(vir_bytes) &ucred, m_in.REQ_UCRED_SIZE);
 
 	if (r != OK)
 		return r;

@@ -87,7 +87,7 @@ static int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
         case DEV_GATHER_S:
             ret = sys_safecopyto(endpt, (cp_grant_id_t) iov->iov_addr, 0,
                                 (vir_bytes) (HELLO_MESSAGE + ex64lo(position)),
-                                 bytes, D);
+                                 bytes);
             iov->iov_size -= bytes;
             break;
 

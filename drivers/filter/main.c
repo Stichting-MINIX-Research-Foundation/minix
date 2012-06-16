@@ -87,10 +87,10 @@ static int carry(size_t size, int flag_rw)
 
 	if (flag_rw == FLT_WRITE)
 		return sys_safecopyfrom(who_e, grant_id, 0,
-			(vir_bytes) buffer, size, D);
+			(vir_bytes) buffer, size);
 	else
 		return sys_safecopyto(who_e, grant_id, 0,
-			(vir_bytes) buffer, size, D);
+			(vir_bytes) buffer, size);
 }
 
 /*===========================================================================*
@@ -111,11 +111,11 @@ static int vcarry(int grants, iovec_t *iov, int flag_rw, size_t size)
 		if (flag_rw == FLT_WRITE)
 			r = sys_safecopyfrom(who_e,
 				(vir_bytes) iov[i].iov_addr, 0,
-				(vir_bytes) bufp, bytes, D);
+				(vir_bytes) bufp, bytes);
 		else
 			r = sys_safecopyto(who_e,
 				(vir_bytes) iov[i].iov_addr, 0,
-				(vir_bytes) bufp, bytes, D);
+				(vir_bytes) bufp, bytes);
 
 		if(r != OK)
 			return r;
@@ -190,7 +190,7 @@ static int do_vrdwt(int flag_rw)
 	/* Extract informations. */
 	grants = m_in.BDEV_COUNT;
 	if((r = sys_safecopyfrom(who_e, grant_id, 0, (vir_bytes) iov_proc,
-		grants * sizeof(iovec_t), D)) != OK) {
+		grants * sizeof(iovec_t))) != OK) {
 		panic("copying in grant vector failed: %d", r);
 	}
 
@@ -260,7 +260,7 @@ static int do_ioctl(message *m)
 
 		if(sys_safecopyto(who_e, (vir_bytes) grant_id, 0,
 				(vir_bytes) &sizepart,
-				sizeof(struct partition), D) != OK) {
+				sizeof(struct partition)) != OK) {
 			printf("Filter: DIOCGETP safecopyto failed\n");
 			return EIO;
 		}

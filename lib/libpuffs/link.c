@@ -90,7 +90,7 @@ int fs_link()
         return(ENAMETOOLONG);
 
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT, 0,
-                       (vir_bytes) string, (size_t) len, D);
+                       (vir_bytes) string, (size_t) len);
   if (r != OK) return(r);
   NUL(string, len, sizeof(string));
 
@@ -182,7 +182,7 @@ int fs_rdlink()
   }
 
   r = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-		  (vir_bytes) 0, (vir_bytes) path, (size_t) copylen, D);
+		  (vir_bytes) 0, (vir_bytes) path, (size_t) copylen);
   if (r == OK)
 	  fs_m_out.RES_NBYTES = copylen;
 
@@ -219,7 +219,7 @@ int fs_rename()
         return(ENAMETOOLONG);
 
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_OLD,
-                (vir_bytes) 0, (vir_bytes) pcn_src.pcn_name, (size_t) len, D);
+                (vir_bytes) 0, (vir_bytes) pcn_src.pcn_name, (size_t) len);
   if (r != OK) return(r);
   NUL(pcn_src.pcn_name, len, sizeof(pcn_src.pcn_name));
   pcn_src.pcn_namelen = len - 1;
@@ -230,7 +230,7 @@ int fs_rename()
         return(ENAMETOOLONG);
 
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_NEW,
-                (vir_bytes) 0, (vir_bytes) pcn_targ.pcn_name, (size_t) len, D);
+                (vir_bytes) 0, (vir_bytes) pcn_targ.pcn_name, (size_t) len);
   if (r != OK) return(r);
   NUL(pcn_targ.pcn_name, len, sizeof(pcn_targ.pcn_name));
   pcn_targ.pcn_namelen = len - 1;
@@ -415,7 +415,7 @@ int fs_unlink()
 
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
 		       (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
-		       (size_t) len, D);
+		       (size_t) len);
   if (r != OK) return (r);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 

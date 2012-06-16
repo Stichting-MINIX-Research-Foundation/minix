@@ -288,7 +288,7 @@ static int finish_req(int conn, int req, int *code)
 					hgcm_conn[conn].req[req].grant, 0,
 					(vir_bytes)
 					hgcm_conn[conn].req[req].param,
-					count * sizeof(vbox_param_t), D);
+					count * sizeof(vbox_param_t));
 			}
 		}
 
@@ -372,7 +372,7 @@ static int do_open(message *m_ptr, int ipc_status, int *code)
 	connreq = (struct VMMDevHGCMConnect *) hgcm_conn[conn].req[0].ptr;
 	connreq->type = VMMDEV_HGCM_SVCLOC_LOCALHOST_EXISTING;
 	if ((r = sys_safecopyfrom(m_ptr->m_source, m_ptr->VBOX_GRANT, 0,
-			(vir_bytes) connreq->name, m_ptr->VBOX_COUNT, D)) !=
+			(vir_bytes) connreq->name, m_ptr->VBOX_COUNT)) !=
 			OK) {
 		free_conn(conn);
 
@@ -576,7 +576,7 @@ static int do_call(message *m_ptr, int ipc_status, int *code)
 	if (count > 0) {
 		if ((r = sys_safecopyfrom(m_ptr->m_source, m_ptr->VBOX_GRANT,
 				0, (vir_bytes) hgcm_conn[conn].req[req].param,
-				count * sizeof(vbox_param_t), D)) != OK)
+				count * sizeof(vbox_param_t))) != OK)
 			return r;
 	}
 

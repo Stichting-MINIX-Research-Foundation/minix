@@ -228,7 +228,7 @@ int fs_getdents(void) {
 			 * and start from the beginning. */
 			if (tmpbuf_offset + reclen > GETDENTS_BUFSIZ) {
 				r = sys_safecopyto(VFS_PROC_NR, gid, userbuf_off, 
-				    (vir_bytes)getdents_buf, tmpbuf_offset, D);
+				    (vir_bytes)getdents_buf, tmpbuf_offset);
 
 				if (r != OK)
 					panic("fs_getdents: sys_safecopyto failed: %d", r);
@@ -262,7 +262,7 @@ int fs_getdents(void) {
 
   if (tmpbuf_offset != 0) {
 	r = sys_safecopyto(VFS_PROC_NR, gid, userbuf_off,
-			   (vir_bytes) getdents_buf, tmpbuf_offset, D);
+			   (vir_bytes) getdents_buf, tmpbuf_offset);
 	if (r != OK)
 		panic("fs_getdents: sys_safecopyto failed: %d", r);
  
@@ -326,7 +326,7 @@ int *completed;			/* number of bytes copied */
   }
   
   r = sys_safecopyto(VFS_PROC_NR, gid, buf_off,
-		     (vir_bytes) (bp->b_data+off), (phys_bytes) chunk, D);
+		     (vir_bytes) (bp->b_data+off), (phys_bytes) chunk);
 
   put_block(bp);
 

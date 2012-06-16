@@ -173,7 +173,7 @@ static int r_transfer(
  	        if (opcode == DEV_GATHER_S) {
 		    random_getbytes(random_buf, chunk);
 		    r= sys_safecopyto(endpt, grant, vir_offset,
-			(vir_bytes) random_buf, chunk, D);
+			(vir_bytes) random_buf, chunk);
 		    if (r != OK)
 		    {
 			printf("random: sys_safecopyto failed for proc %d, "
@@ -182,7 +182,7 @@ static int r_transfer(
 		    }
  	        } else if (opcode == DEV_SCATTER_S) {
 		    r= sys_safecopyfrom(endpt, grant, vir_offset,
-			(vir_bytes) random_buf, chunk, D);
+			(vir_bytes) random_buf, chunk);
 		    if (r != OK)
 		    {
 			printf("random: sys_safecopyfrom failed for proc %d, "

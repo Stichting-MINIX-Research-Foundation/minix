@@ -192,7 +192,7 @@ static void get_userdata_s(int user_proc, cp_grant_id_t grant,
   vir_bytes len;
 
   len = (count > IOVEC_NR ? IOVEC_NR : count) * sizeof(iovec_t);
-  if ((rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len, D)) != OK)
+  if ((rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len)) != OK)
 	panic(CopyErrMsg, rc);
   return;
 }
@@ -432,7 +432,7 @@ static void do_getstat_s(const message * mp)
   if (dep->de_mode == DEM_ENABLED) (*dep->de_getstatsf) (dep);
   if ((rc = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0,
 			(vir_bytes)&dep->de_stat,
-			(vir_bytes) sizeof(dep->de_stat), 0)) != OK)
+			(vir_bytes) sizeof(dep->de_stat))) != OK)
         panic(CopyErrMsg, rc);
 
   reply_mess.m_type = DL_STAT_REPLY;

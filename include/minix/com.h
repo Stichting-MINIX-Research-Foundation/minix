@@ -559,7 +559,7 @@
 
 /* Field names for SYS_SAFECOPY* */
 #define SCP_FROM_TO	m2_i1	/* from/to whom? */
-#define SCP_SEG		m2_i2	/* my own segment */
+#define SCP_SEG_OBSOLETE m2_i2	/* my own segment */
 #define SCP_GID		m2_i3	/* grant id */
 #define SCP_OFFSET	m2_l1	/* offset within grant */
 #define	SCP_ADDRESS	m2_p1	/* my own address */

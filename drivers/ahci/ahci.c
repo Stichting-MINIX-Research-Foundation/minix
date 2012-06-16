@@ -2563,7 +2563,7 @@ static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 
 	case DIOCOPENCT:
 		return sys_safecopyto(endpt, grant, 0,
-			(vir_bytes) &ps->open_count, sizeof(ps->open_count), D);
+			(vir_bytes) &ps->open_count, sizeof(ps->open_count));
 
 	case DIOCFLUSH:
 		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
@@ -2576,7 +2576,7 @@ static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 			return EIO;
 
 		if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &val,
-			sizeof(val), D)) != OK)
+			sizeof(val))) != OK)
 			return r;
 
 		return gen_set_wcache(ps, val);
@@ -2589,7 +2589,7 @@ static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 			return r;
 
 		return sys_safecopyto(endpt, grant, 0, (vir_bytes) &val,
-			sizeof(val), D);
+			sizeof(val));
 	}
 
 	return EINVAL;

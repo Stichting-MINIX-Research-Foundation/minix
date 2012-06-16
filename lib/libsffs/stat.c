@@ -97,7 +97,7 @@ int do_stat()
   }
 
   return sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, 0,
-	(vir_bytes) &stat, sizeof(stat), D);
+	(vir_bytes) &stat, sizeof(stat));
 }
 
 /*===========================================================================*

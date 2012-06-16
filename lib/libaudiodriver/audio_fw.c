@@ -475,7 +475,7 @@ static int msg_ioctl(const message *m_ptr)
 
 		if(sys_safecopyfrom(m_ptr->m_source, 
 					(vir_bytes)m_ptr->ADDRESS, 0,
-					(vir_bytes)io_ctl_buf, len, D) != OK) {
+					(vir_bytes)io_ctl_buf, len) != OK) {
 			printf("%s:%d: safecopyfrom failed\n", __FILE__, __LINE__);
 		}
 	}
@@ -488,7 +488,7 @@ static int msg_ioctl(const message *m_ptr)
 		/* copy result back to user */
 
 		if(sys_safecopyto(m_ptr->m_source, (vir_bytes)m_ptr->ADDRESS, 0, 
-					(vir_bytes)io_ctl_buf, len, D) != OK) {
+					(vir_bytes)io_ctl_buf, len) != OK) {
 			printf("%s:%d: safecopyto failed\n", __FILE__, __LINE__);
 		}
 
@@ -794,7 +794,7 @@ static void data_from_user(sub_dev_t *subdev)
 				(vir_bytes)subdev->ReviveGrant, 0, 
 				(vir_bytes)subdev->DmaPtr + 
 				subdev->DmaFillNext * subdev->FragSize,
-				(phys_bytes)subdev->FragSize, D);
+				(phys_bytes)subdev->FragSize);
 
 
 		subdev->DmaLength += 1;
@@ -807,7 +807,7 @@ static void data_from_user(sub_dev_t *subdev)
 				(vir_bytes)subdev->ReviveGrant, 0,
 				(vir_bytes)subdev->ExtraBuf + 
 				subdev->BufFillNext * subdev->FragSize, 
-				(phys_bytes)subdev->FragSize, D);
+				(phys_bytes)subdev->FragSize);
 
 		subdev->BufLength += 1;
 
@@ -861,7 +861,7 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 				(vir_bytes)sub_dev_ptr->ReviveGrant,
 				0, (vir_bytes)sub_dev_ptr->ExtraBuf + 
 				sub_dev_ptr->BufReadNext * sub_dev_ptr->FragSize,
-				(phys_bytes)sub_dev_ptr->FragSize, D);
+				(phys_bytes)sub_dev_ptr->FragSize);
 
 		/* adjust the buffer status variables */
 		sub_dev_ptr->BufReadNext = 
@@ -874,7 +874,7 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 				(vir_bytes)sub_dev_ptr->ReviveGrant, 0, 
 				(vir_bytes)sub_dev_ptr->DmaPtr + 
 				sub_dev_ptr->DmaReadNext * sub_dev_ptr->FragSize,
-				(phys_bytes)sub_dev_ptr->FragSize, D);
+				(phys_bytes)sub_dev_ptr->FragSize);
 
 		/* adjust the buffer status variables */
 		sub_dev_ptr->DmaReadNext = 

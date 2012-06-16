@@ -63,7 +63,7 @@ int trace_ctl(dev_t minor, unsigned int request, endpoint_t endpt,
 
 	/* Copy in the requested size. */
 	if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &size,
-		sizeof(size), D)) != OK)
+		sizeof(size))) != OK)
 		return r;
 
 	if (size >= INT_MAX / sizeof(btrace_entry)) return EINVAL;
@@ -103,7 +103,7 @@ int trace_ctl(dev_t minor, unsigned int request, endpoint_t endpt,
 
 	/* Copy in the request code. */
 	if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &ctl,
-		sizeof(ctl), D)) != OK)
+		sizeof(ctl))) != OK)
 		return r;
 
 	/* Start or stop tracing. */
@@ -150,7 +150,7 @@ int trace_ctl(dev_t minor, unsigned int request, endpoint_t endpt,
 
 	if ((r = sys_safecopyto(endpt, grant, 0,
 		(vir_bytes) &trace_buf[trace_next],
-		entries * sizeof(btrace_entry), D)) != OK)
+		entries * sizeof(btrace_entry))) != OK)
 		return r;
 
 	trace_next += entries;

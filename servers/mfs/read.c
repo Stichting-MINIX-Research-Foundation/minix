@@ -280,7 +280,7 @@ int *completed;			/* number of bytes copied */
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			   (vir_bytes) (bp->b_data+off), (size_t) chunk, D);
+			   (vir_bytes) (bp->b_data+off), (size_t) chunk);
   } else if(!block_write_ok(bp)) {
   	/* Let cache layer veto writing to this block */
   	printf("MFS: block write not allowed\n");
@@ -288,7 +288,7 @@ int *completed;			/* number of bytes copied */
   } else {
 	/* Copy a chunk from user space to the block buffer. */
 	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			     (vir_bytes) (bp->b_data+off), (size_t) chunk, D);
+			     (vir_bytes) (bp->b_data+off), (size_t) chunk);
 	MARKDIRTY(bp);
   }
   
@@ -613,7 +613,7 @@ int fs_getdents(void)
 			  r = sys_safecopyto(VFS_PROC_NR, gid,
 			  		     (vir_bytes) userbuf_off, 
 					     (vir_bytes) getdents_buf,
-					     (size_t) tmpbuf_off, D);
+					     (size_t) tmpbuf_off);
 			  if (r != OK) {
 			  	put_inode(rip);
 			  	return(r);
@@ -651,7 +651,7 @@ int fs_getdents(void)
 
   if(tmpbuf_off != 0) {
 	  r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) userbuf_off,
-	  		     (vir_bytes) getdents_buf, (size_t) tmpbuf_off, D);
+	  		     (vir_bytes) getdents_buf, (size_t) tmpbuf_off);
 	  if (r != OK) {
 	  	put_inode(rip);
 	  	return(r);

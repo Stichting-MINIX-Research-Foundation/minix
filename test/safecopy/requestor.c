@@ -17,7 +17,7 @@ int test(size_t size)
 
 	/* Timing. */
 	read_tsc(&high1, &low1);
-	r = sys_safecopyfrom(ep_granter, gid, 0, (long)buf, size, D);
+	r = sys_safecopyfrom(ep_granter, gid, 0, (long)buf, size);
 	read_tsc(&high2, &low2);
 	if(r != OK) {
 		printf("REQUESTOR: error in safecopy: %d\n", r);

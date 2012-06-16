@@ -897,7 +897,7 @@ int size;
 		{
 			r= sys_safecopyfrom(s_cp_req[0].v_from,
 				s_cp_req[0].v_gid, s_cp_req[0].v_offset,
-				s_cp_req[0].v_addr, s_cp_req[0].v_bytes, D);
+				s_cp_req[0].v_addr, s_cp_req[0].v_bytes);
 			if (r <0)
 			{
 				printf("sys_safecopyfrom failed: %d\n", r);
@@ -961,7 +961,7 @@ vir_bytes offset;
 		{
 			r= sys_safecopyto(s_cp_req[0].v_to,
 				s_cp_req[0].v_gid, s_cp_req[0].v_offset,
-				s_cp_req[0].v_addr, s_cp_req[0].v_bytes, D);
+				s_cp_req[0].v_addr, s_cp_req[0].v_bytes);
 			if (r <0)
 			{
 				printf("sys_safecopyto failed: %d\n", r);

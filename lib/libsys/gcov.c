@@ -31,7 +31,7 @@ static void add_buff(void *ptr, int size)
 		size = pos - gcov_buff_sz;
 	}
 
-	r = sys_safecopyto(VFS_PROC_NR, grant, pos, (vir_bytes)ptr, size, D);
+	r = sys_safecopyto(VFS_PROC_NR, grant, pos, (vir_bytes)ptr, size);
 
 	if(r) {
 		printf("libsys: gcov: safecopy failed (%d)\n", r);

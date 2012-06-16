@@ -3,7 +3,6 @@
  *
  * The parameters for this kernel call are:
  *    	SCP_FROM_TO	other endpoint
- *    	SCP_SEG		segment in own address space
  *    	SCP_GID		grant id
  *    	SCP_OFFSET	offset within granted space
  *	SCP_ADDRESS	address in own address space
@@ -24,7 +23,7 @@
 #define MEM_TOP 0xFFFFFFFFUL
 
 static int safecopy(struct proc *, endpoint_t, endpoint_t,
-	cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int);
+	cp_grant_id_t, size_t, vir_bytes, vir_bytes, int);
 
 #define HASGRANTTABLE(gr) \
 	(priv(gr) && priv(gr)->s_grant_table)
@@ -226,12 +225,11 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 /*===========================================================================*
  *				safecopy				     *
  *===========================================================================*/
-static int safecopy(caller, granter, grantee, grantid, src_seg, dst_seg, bytes,
+static int safecopy(caller, granter, grantee, grantid, bytes,
 	g_offset, addr, access)
 struct proc * caller;
 endpoint_t granter, grantee;
 cp_grant_id_t grantid;
-int src_seg, dst_seg;
 size_t bytes;
 vir_bytes g_offset, addr;
 int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
@@ -279,8 +277,8 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	granter = new_granter;
 
 	/* Now it's a regular copy. */
-	v_src.segment = src_seg;
-	v_dst.segment = dst_seg;
+	v_src.segment = D;
+	v_dst.segment = D;
 	v_src.proc_nr_e = *src;
 	v_dst.proc_nr_e = *dst;
 
@@ -347,7 +345,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 int do_safecopy_to(struct proc * caller, message * m_ptr)
 {
 	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
-		(cp_grant_id_t) m_ptr->SCP_GID, m_ptr->SCP_SEG, D,
+		(cp_grant_id_t) m_ptr->SCP_GID, 
 		m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
 		(vir_bytes) m_ptr->SCP_ADDRESS, CPF_WRITE);
 }
@@ -358,7 +356,7 @@ int do_safecopy_to(struct proc * caller, message * m_ptr)
 int do_safecopy_from(struct proc * caller, message * m_ptr)
 {
 	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
-		(cp_grant_id_t) m_ptr->SCP_GID, D, m_ptr->SCP_SEG,
+		(cp_grant_id_t) m_ptr->SCP_GID, 
 		m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
 		(vir_bytes) m_ptr->SCP_ADDRESS, CPF_READ);
 }
@@ -406,7 +404,7 @@ int do_vsafecopy(struct proc * caller, message * m_ptr)
 
 		/* Do safecopy for this element. */
 		if((r=safecopy(caller, granter, caller->p_endpoint,
-			vec[i].v_gid, D, D,
+			vec[i].v_gid,
 			vec[i].v_bytes, vec[i].v_offset,
 			vec[i].v_addr, access)) != OK) {
 			return r;

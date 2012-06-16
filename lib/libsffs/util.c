@@ -27,7 +27,7 @@ char name[NAME_MAX+1];		/* buffer in which store the result */
   if (len <= 1) return EINVAL;
   if (len > NAME_MAX+1) return ENAMETOOLONG;
 
-  r = sys_safecopyfrom(m_in.m_source, grant, 0, (vir_bytes) name, len, D);
+  r = sys_safecopyfrom(m_in.m_source, grant, 0, (vir_bytes) name, len);
 
   if (r != OK) return r;
 

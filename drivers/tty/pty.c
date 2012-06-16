@@ -243,7 +243,7 @@ static int pty_write(tty_t *tp, int try)
 
 	/* Copy from user space to the PTY output buffer. */
 	if ((s = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-		tp->tty_outoffset, (vir_bytes) pp->ohead, count, D))!=OK) {
+		tp->tty_outoffset, (vir_bytes) pp->ohead, count))!=OK) {
 		break;
 	}
 
@@ -320,7 +320,7 @@ static void pty_start(pty_t *pp)
 
 	/* Copy from the output buffer to the readers address space. */
 	if((s = sys_safecopyto(pp->rdcaller, pp->rdgrant,
-		pp->rdoffset, (vir_bytes) pp->otail, count, D)) != OK) {
+		pp->rdoffset, (vir_bytes) pp->otail, count)) != OK) {
 		break;
  	}
 	pp->rdoffset += count;
@@ -389,7 +389,7 @@ static int pty_read(tty_t *tp, int try)
 
 	/* Transfer one character to 'c'. */
 	if ((s = sys_safecopyfrom(pp->wrcaller, pp->wrgrant, pp->wroffset,
-		(vir_bytes) &c, 1, D)) != OK) {
+		(vir_bytes) &c, 1)) != OK) {
 		printf("pty: safecopy failed (error %d)\n", s);
 		break;
 	}

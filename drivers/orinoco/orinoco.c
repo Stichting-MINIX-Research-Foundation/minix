@@ -1210,7 +1210,7 @@ static void or_writev_s (message * mp, int from_int) {
 
 		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset,
 			(vir_bytes) orp->or_iovec_s, 
-			n * sizeof(orp->or_iovec_s[0]), D);
+			n * sizeof(orp->or_iovec_s[0]));
 		if (cps != OK) 
 			printf("orinoco: sys_safecopyfrom failed: %d\n", cps);
 
@@ -1221,7 +1221,7 @@ static void or_writev_s (message * mp, int from_int) {
 			}
 
 			cps = sys_safecopyfrom(mp->m_source, iovp->iov_grant,
-					0, (vir_bytes) databuf + o, s, D);
+					0, (vir_bytes) databuf + o, s);
 			if (cps != OK) 
 				printf("orinoco: sys_safecopyfrom failed:%d\n",
 						cps);
@@ -1601,7 +1601,7 @@ static void or_readv_s (message * mp, int from_int)
 
 		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset, 
 				(vir_bytes)orp->or_iovec_s,
-				n * sizeof(orp->or_iovec_s[0]), D);
+				n * sizeof(orp->or_iovec_s[0]));
 		if (cps != OK) 
 			panic("orinoco: warning: sys_safecopytp failed: %d", cps);
 
@@ -1612,7 +1612,7 @@ static void or_readv_s (message * mp, int from_int)
 				s = length - size;
 			}
 			cps = sys_safecopyto(mp->m_source, iovp->iov_grant, 0, 
-					(vir_bytes) databuf + o, s, D);
+					(vir_bytes) databuf + o, s);
 			if (cps != OK) 
 				panic("orinoco: warning: sys_safecopy failed: %d", cps);
 
@@ -1779,7 +1779,7 @@ static void or_getstat_s (message * mp) {
 	stats = orp->or_stat;
 
 	r = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, 
-				(vir_bytes) &stats, sizeof(stats), D);
+				(vir_bytes) &stats, sizeof(stats));
 	if(r != OK) {
 		panic("or_getstat_s: sys_safecopyto failed: %d", r);
 	}

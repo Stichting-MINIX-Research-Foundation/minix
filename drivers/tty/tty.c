@@ -607,7 +607,7 @@ message *m_ptr;			/* pointer to message sent to task */
     case TCGETS:
 	/* Get the termios attributes. */
 	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
-		(vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
+		(vir_bytes) &tp->tty_termios, (vir_bytes) size);
 	break;
 
     case TCSETSW:
@@ -628,14 +628,14 @@ message *m_ptr;			/* pointer to message sent to task */
     case TCSETS:
 	/* Set the termios attributes. */
 	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
+		0, (vir_bytes) &tp->tty_termios, (vir_bytes) size);
 	if (r != OK) break;
 	setattr(tp);
 	break;
 
     case TCFLSH:
 	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &param.i, (vir_bytes) size, D);
+		0, (vir_bytes) &param.i, (vir_bytes) size);
 	if (r != OK) break;
 	switch (param.i) {
 	    case TCIFLUSH:	tty_icancel(tp);		 	    break;
@@ -647,7 +647,7 @@ message *m_ptr;			/* pointer to message sent to task */
 
     case TCFLOW:
 	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &param.i, (vir_bytes) size, D);
+		0, (vir_bytes) &param.i, (vir_bytes) size);
 	if (r != OK) break;
 	switch (param.i) {
 	    case TCOOFF:
@@ -672,12 +672,12 @@ message *m_ptr;			/* pointer to message sent to task */
 
     case TIOCGWINSZ:
 	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
-		(vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
+		(vir_bytes) &tp->tty_winsize, (vir_bytes) size);
 	break;
 
     case TIOCSWINSZ:
 	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
+		0, (vir_bytes) &tp->tty_winsize, (vir_bytes) size);
 	sigchar(tp, SIGWINCH, 0);
 	break;
 
@@ -928,7 +928,7 @@ register tty_t *tp;		/* pointer to terminal to read from */
 			sys_safecopyto(tp->tty_incaller,
 				tp->tty_ingrant, tp->tty_inoffset,
 				(vir_bytes) buf,
-				(vir_bytes) buflen(buf), D);
+				(vir_bytes) buflen(buf));
 			tp->tty_inoffset += buflen(buf);
 			tp->tty_incum += buflen(buf);
 			bp = buf;
@@ -951,7 +951,7 @@ register tty_t *tp;		/* pointer to terminal to read from */
 	count = bp - buf;
 	sys_safecopyto(tp->tty_incaller,
 		tp->tty_ingrant, tp->tty_inoffset,
-		(vir_bytes) buf, (vir_bytes) count, D);
+		(vir_bytes) buf, (vir_bytes) count);
 	tp->tty_inoffset += count;
 	tp->tty_incum += count;
   }
@@ -1393,7 +1393,7 @@ tty_t *tp;
 	if (tp->tty_ioreq == TCSETSF) tty_icancel(tp);
 	result = sys_safecopyfrom(tp->tty_iocaller, tp->tty_iogrant, 0,
 		(vir_bytes) &tp->tty_termios,
-		(vir_bytes) sizeof(tp->tty_termios), D);
+		(vir_bytes) sizeof(tp->tty_termios));
 	if (result == OK) setattr(tp);
   }
   tp->tty_ioreq = 0;

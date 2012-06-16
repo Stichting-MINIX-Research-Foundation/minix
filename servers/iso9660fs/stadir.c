@@ -69,7 +69,7 @@ static int stat_dir_record(
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, 0, (vir_bytes) &statbuf,
-		     (phys_bytes) sizeof(statbuf), D);
+		     (phys_bytes) sizeof(statbuf));
   
   return(r);
 }
@@ -105,7 +105,7 @@ int fs_fstatfs()
   
   /* Copy the struct to user space. */
   r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		     (vir_bytes) &st, (phys_bytes) sizeof(st), D);
+		     (vir_bytes) &st, (phys_bytes) sizeof(st));
   
   return(r);
 }
@@ -134,7 +134,7 @@ int fs_statvfs()
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0, (vir_bytes) &st,
-		     (phys_bytes) sizeof(st), D);
+		     (phys_bytes) sizeof(st));
   
   return(r);
 }

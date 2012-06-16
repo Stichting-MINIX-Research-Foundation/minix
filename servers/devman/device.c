@@ -244,7 +244,7 @@ int do_add_device(message *msg)
 	}
 	
 	res = sys_safecopyfrom(ep, msg->DEVMAN_GRANT_ID,
-	          0, (vir_bytes) devinf, msg->DEVMAN_GRANT_SIZE, D);
+	          0, (vir_bytes) devinf, msg->DEVMAN_GRANT_SIZE);
 
 	if (res != OK) {
 		res = EINVAL;

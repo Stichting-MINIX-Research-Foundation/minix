@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 		for(i=0;i<NR_TEST_ITERATIONS;i++) {
 			read_tsc_64(&start);
 			r = sys_safecopyfrom(ep_granter, gid, 0, (long)buf,
-				nr_pages*CLICK_SIZE, D);
+				nr_pages*CLICK_SIZE);
 			if(r != OK) {
 				printf("REQUESTOR: safecopy error: %d\n", r);
 				return 1;

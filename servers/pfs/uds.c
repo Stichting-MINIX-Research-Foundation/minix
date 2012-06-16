@@ -303,8 +303,7 @@ int do_accept(message *dev_m_in, message *dev_m_out)
 
 	/* Get the server's address */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &addr, sizeof(struct sockaddr_un),
-		D);
+		(vir_bytes) 0, (vir_bytes) &addr, sizeof(struct sockaddr_un));
 
 	if (rc != OK) {
 		return EIO;
@@ -424,7 +423,7 @@ int do_connect(message *dev_m_in, message *dev_m_out)
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 				(vir_bytes) 0, (vir_bytes) &addr,
-				sizeof(struct sockaddr_un), D);
+				sizeof(struct sockaddr_un));
 
 	if (rc != OK) {
 		return EIO;
@@ -594,7 +593,7 @@ int do_listen(message *dev_m_in, message *dev_m_out)
 	 * don't allow the backlog to shrink
 	 */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &backlog_size, sizeof(int), D);
+		(vir_bytes) 0, (vir_bytes) &backlog_size, sizeof(int));
 
 	if (rc != OK) {
 		return EIO;
@@ -658,7 +657,7 @@ int do_socket(message *dev_m_in, message *dev_m_out)
 	/* get the requested type */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &(uds_fd_table[minor].type),
-		sizeof(int), D);
+		sizeof(int));
 
 	if (rc != OK) {
 
@@ -713,8 +712,7 @@ int do_bind(message *dev_m_in, message *dev_m_out)
 	}
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &addr, sizeof(struct sockaddr_un),
-		D);
+		(vir_bytes) 0, (vir_bytes) &addr, sizeof(struct sockaddr_un));
 
 	if (rc != OK) {
 		return EIO;
@@ -777,7 +775,7 @@ int do_getsockname(message *dev_m_in, message *dev_m_out)
 	 */
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &(uds_fd_table[minor].addr),
-		sizeof(struct sockaddr_un), D);
+		sizeof(struct sockaddr_un));
 
 	return rc ? EIO : OK;
 }
@@ -805,7 +803,7 @@ int do_getpeername(message *dev_m_in, message *dev_m_out)
 		rc = sys_safecopyto(VFS_PROC_NR,
 			(cp_grant_id_t) dev_m_in->IO_GRANT, (vir_bytes) 0,
 			(vir_bytes) &(uds_fd_table[peer_minor].addr),
-			sizeof(struct sockaddr_un), D);
+			sizeof(struct sockaddr_un));
 
 		return rc ? EIO : OK;
 	} else {
@@ -850,7 +848,7 @@ int do_shutdown(message *dev_m_in, message *dev_m_out)
 
 	/* get the 'how' parameter from the process */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-			(vir_bytes) 0, (vir_bytes) &how, sizeof(int), D);
+			(vir_bytes) 0, (vir_bytes) &how, sizeof(int));
 
 	if (rc != OK) {
 		return EIO;
@@ -900,7 +898,7 @@ int do_socketpair_old(message *dev_m_in, message *dev_m_out)
 
 	/* third ioctl param is the minor number of the second socket */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-			(vir_bytes) 0, (vir_bytes) &minorin, sizeof(short), D);
+			(vir_bytes) 0, (vir_bytes) &minorin, sizeof(short));
 
 	if (rc != OK) {
 		return EIO;
@@ -947,7 +945,7 @@ int do_socketpair(message *dev_m_in, message *dev_m_out)
 
 	/* third ioctl param is the minor number of the second socket */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-			(vir_bytes) 0, (vir_bytes) &minorin, sizeof(dev_t), D);
+			(vir_bytes) 0, (vir_bytes) &minorin, sizeof(dev_t));
 
 	if (rc != OK) {
 		return EIO;
@@ -999,7 +997,7 @@ int do_getsockopt_sotype(message *dev_m_in, message *dev_m_out)
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &(uds_fd_table[minor].type),
-		sizeof(int), D);
+		sizeof(int));
 
 	return rc ? EIO : OK;
 }
@@ -1040,7 +1038,7 @@ int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 	}
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &cred, sizeof(struct ucred), D);
+		(vir_bytes) 0, (vir_bytes) &cred, sizeof(struct ucred));
 
 	return rc ? EIO : OK;
 }
@@ -1087,8 +1085,7 @@ int do_getsockopt_peercred_old(message *dev_m_in, message *dev_m_out)
 	cred_old.gid = (char) cred.gid;
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &cred_old, sizeof(struct ucred_old),
-		D);
+		(vir_bytes) 0, (vir_bytes) &cred_old, sizeof(struct ucred_old));
 
 	return rc ? EIO : OK;
 }
@@ -1108,8 +1105,7 @@ int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 	minor = uds_minor(dev_m_in);
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &(sndbuf),
-		sizeof(size_t), D);
+		(vir_bytes) 0, (vir_bytes) &(sndbuf), sizeof(size_t));
 
 	return rc ? EIO : OK;
 }
@@ -1131,7 +1127,7 @@ int do_setsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 				(vir_bytes) 0, (vir_bytes) &sndbuf,
-				sizeof(size_t), D);
+				sizeof(size_t));
 
 	if (rc != OK) {
 		return EIO;
@@ -1163,8 +1159,7 @@ int do_getsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 	minor = uds_minor(dev_m_in);
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &(rcvbuf),
-		sizeof(size_t), D);
+		(vir_bytes) 0, (vir_bytes) &(rcvbuf), sizeof(size_t));
 
 	return rc ? EIO : OK;
 }
@@ -1186,7 +1181,7 @@ int do_setsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 				(vir_bytes) 0, (vir_bytes) &rcvbuf,
-				sizeof(size_t), D);
+				sizeof(size_t));
 
 	if (rc != OK) {
 		return EIO;
@@ -1224,8 +1219,7 @@ int do_sendto(message *dev_m_in, message *dev_m_out)
 	}
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &addr, sizeof(struct sockaddr_un),
-		D);
+		(vir_bytes) 0, (vir_bytes) &addr, sizeof(struct sockaddr_un));
 
 	if (rc != OK) {
 		return EIO;
@@ -1263,7 +1257,7 @@ int do_recvfrom(message *dev_m_in, message *dev_m_out)
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &(uds_fd_table[minor].source),
-		sizeof(struct sockaddr_un), D);
+		sizeof(struct sockaddr_un));
 
 	return rc ? EIO : OK;
 }
@@ -1491,7 +1485,7 @@ int do_sendmsg(message *dev_m_in, message *dev_m_out)
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 					(vir_bytes) 0, (vir_bytes) &msg_ctrl,
-					sizeof(struct msg_control), D);
+					sizeof(struct msg_control));
 
 	if (rc != OK) {
 		return EIO;
@@ -1580,7 +1574,7 @@ int do_recvmsg(message *dev_m_in, message *dev_m_out)
 	 */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 					(vir_bytes) 0, (vir_bytes) &msg_ctrl,
-					sizeof(struct msg_control), D);
+					sizeof(struct msg_control));
 
 	if (rc != OK) {
 		return EIO;
@@ -1617,7 +1611,7 @@ int do_recvmsg(message *dev_m_in, message *dev_m_out)
 	/* send the user the control data */
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &msg_ctrl,
-		sizeof(struct msg_control), D);
+		sizeof(struct msg_control));
 
 	return rc ? EIO : OK;
 }

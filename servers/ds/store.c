@@ -155,7 +155,7 @@ static int get_key_name(const message *m_ptr, char *key_name)
   /* Copy name from caller. */
   r = sys_safecopyfrom(m_ptr->m_source,
 	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, 0, 
-	(vir_bytes) key_name, m_ptr->DS_KEY_LEN, D);
+	(vir_bytes) key_name, m_ptr->DS_KEY_LEN);
   if(r != OK) {
 	printf("DS: publish: copy failed from %d: %d\n", m_ptr->m_source, r);
 	return r;
@@ -268,7 +268,7 @@ int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 
 	/* Map all the services in the boot image. */
 	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
-		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
+		(vir_bytes) rprocpub, sizeof(rprocpub))) != OK) {
 		panic("sys_safecopyfrom failed: %d", r);
 	}
 	for(i=0;i < NR_BOOT_PROCS;i++) {
@@ -353,7 +353,7 @@ int do_publish(message *m_ptr)
 
 	/* Copy the memory range. */
 	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL,
-	        0, (vir_bytes) dsp->u.mem.data, length, D);
+	        0, (vir_bytes) dsp->u.mem.data, length);
 	if(r != OK) {
 		printf("DS: publish: memory map/copy failed from %d: %d\n",
 			m_ptr->m_source, r);
@@ -432,7 +432,7 @@ int do_retrieve(message *m_ptr)
   case DSF_TYPE_MEM:
 	length = MIN(m_ptr->DS_VAL_LEN, dsp->u.mem.length);
 	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL, 0,
-		(vir_bytes) dsp->u.mem.data, length, D);
+		(vir_bytes) dsp->u.mem.data, length);
 	if(r != OK) {
 		printf("DS: retrieve: copy failed to %d: %d\n",	
 			m_ptr->m_source, r);
@@ -471,7 +471,7 @@ int do_retrieve(message *m_ptr)
 		length = MIN(m_ptr->DS_VAL_LEN, dsp->u.map.length);
 		r = sys_safecopyto(m_ptr->m_source,
 		        (cp_grant_id_t) m_ptr->DS_VAL, (vir_bytes) 0,
-			(vir_bytes) data, length, D);
+			(vir_bytes) data, length);
 		if(r != OK) {
 			printf("DS: retrieve: copy failed to %d: %d\n",	
 				m_ptr->m_source, r);
@@ -505,7 +505,7 @@ int do_retrieve_label(const message *m_ptr)
   /* Copy the key name. */
   r = sys_safecopyto(m_ptr->m_source,
 	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, (vir_bytes) 0,
-	(vir_bytes) dsp->key, strlen(dsp->key) + 1, D);
+	(vir_bytes) dsp->key, strlen(dsp->key) + 1);
   if(r != OK) {
 	printf("DS: copy failed from %d: %d\n", m_ptr->m_source, r);
 	return r;
@@ -620,7 +620,7 @@ int do_check(message *m_ptr)
   /* Copy the key name. */
   r = sys_safecopyto(m_ptr->m_source,
 	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, (vir_bytes) 0, 
-	(vir_bytes) ds_store[i].key, strlen(ds_store[i].key) + 1, D);
+	(vir_bytes) ds_store[i].key, strlen(ds_store[i].key) + 1);
   if(r != OK) {
 	printf("DS: check: copy failed from %d: %d\n", m_ptr->m_source, r);
 	return r;

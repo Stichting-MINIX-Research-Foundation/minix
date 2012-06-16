@@ -247,7 +247,7 @@ message *mp;
 		if (len > name_len)
 			len= name_len;
 		r= sys_safecopyto(mp->m_source, name_gid, 0, (vir_bytes)name,
-			len, D);
+			len);
 	}
 
 	mp->m_type= r;
@@ -283,7 +283,7 @@ message *mp;
 		if (len > name_len)
 			len= name_len;
 		r= sys_safecopyto(mp->m_source, gid, 0,
-			(vir_bytes)name, len, D);
+			(vir_bytes)name, len);
 	}
 
 	mp->m_type= r;
@@ -322,7 +322,7 @@ message *mp;
 	gid= mp->m1_i1;
 
 	r= sys_safecopyfrom(mp->m_source, gid, 0, (vir_bytes)&pci_acl[i].acl,
-		sizeof(pci_acl[i].acl), D);
+		sizeof(pci_acl[i].acl));
 	if (r != OK)
 	{
 		printf("PCI: do_set_acl: safecopyfrom failed\n");

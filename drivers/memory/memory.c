@@ -278,10 +278,10 @@ static int m_transfer(
 	    if (position + count > dv_size) count = dv_size - position;
 	    if (opcode == DEV_GATHER_S) {	/* copy actual data */
 	        r=sys_safecopyto(endpt, grant, vir_offset,
-		  dev_vaddr + position, count, D);
+		  dev_vaddr + position, count);
 	    } else {
 	        r=sys_safecopyfrom(endpt, grant, vir_offset,
-		  dev_vaddr + position, count, D);
+		  dev_vaddr + position, count);
 	    }
 	    if(r != OK) {
               panic("I/O copy failed: %d", r);
@@ -339,10 +339,10 @@ static int m_transfer(
 
 	    if (opcode == DEV_GATHER_S) {			/* copy data */
 	           s=sys_safecopyto(endpt, grant,
-		       vir_offset, (vir_bytes) vaddr+page_off, subcount, D);
+		       vir_offset, (vir_bytes) vaddr+page_off, subcount);
 	    } else {
 	           s=sys_safecopyfrom(endpt, grant,
-		       vir_offset, (vir_bytes) vaddr+page_off, subcount, D);
+		       vir_offset, (vir_bytes) vaddr+page_off, subcount);
 	    }
 	    if(s != OK)
 		return s;
@@ -358,7 +358,7 @@ static int m_transfer(
 		while (left > 0) {
 		    chunk = (left > ZERO_BUF_SIZE) ? ZERO_BUF_SIZE : left;
 	             s=sys_safecopyto(endpt, grant,
-		       vir_offset+suboffset, (vir_bytes) dev_zero, chunk, D);
+		       vir_offset+suboffset, (vir_bytes) dev_zero, chunk);
 		    if(s != OK)
 		        return s;
 		    left -= chunk;
@@ -480,10 +480,10 @@ static int m_block_transfer(
 	if (position + count > dv_size) count = dv_size - position;
 	if (!do_write) {	/* copy actual data */
 	        r=sys_safecopyto(endpt, grant, vir_offset,
-		  dev_vaddr + position, count, D);
+		  dev_vaddr + position, count);
 	} else {
 	        r=sys_safecopyfrom(endpt, grant, vir_offset,
-		  dev_vaddr + position, count, D);
+		  dev_vaddr + position, count);
 	}
 	if(r != OK) {
 		panic("I/O copy failed: %d", r);
@@ -582,7 +582,7 @@ static int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 
   /* Get request structure */
   s= sys_safecopyfrom(endpt, grant, 0, (vir_bytes)&ramdev_size,
-	sizeof(ramdev_size), D);
+	sizeof(ramdev_size));
   if (s != OK)
 	return s;
   if(m_vaddrs[minor] && !cmp64(dv->dv_size, cvul64(ramdev_size))) {

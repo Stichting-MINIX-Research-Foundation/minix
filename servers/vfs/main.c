@@ -539,7 +539,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 
   /* Map all the services in the boot image. */
   if ((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
-			    (vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK){
+			    (vir_bytes) rprocpub, sizeof(rprocpub))) != OK){
 	panic("sys_safecopyfrom failed: %d", s);
   }
   for (i = 0; i < NR_BOOT_PROCS; i++) {

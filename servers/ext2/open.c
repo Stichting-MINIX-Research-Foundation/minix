@@ -40,7 +40,7 @@ int fs_create()
 	return(ENAMETOOLONG);
 
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-			      (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
+			      (vir_bytes) 0, (vir_bytes) lastc, (size_t) len);
   if (err_code != OK) return err_code;
   NUL(lastc, len, sizeof(lastc));
 
@@ -90,7 +90,7 @@ int fs_mknod()
 	return(ENAMETOOLONG);
 
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-                             (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
+                             (vir_bytes) 0, (vir_bytes) lastc, (size_t) len);
   if (err_code != OK) return err_code;
   NUL(lastc, len, sizeof(lastc));
 
@@ -128,7 +128,7 @@ int fs_mkdir()
 	return(ENAMETOOLONG);
 
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-			      (vir_bytes) 0, (vir_bytes) lastc, (phys_bytes) len, D);
+			      (vir_bytes) 0, (vir_bytes) lastc, (phys_bytes) len);
   if(err_code != OK) return(err_code);
   NUL(lastc, len, sizeof(lastc));
 
@@ -203,7 +203,7 @@ int fs_slink()
 	return(ENAMETOOLONG);
 
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-		       (vir_bytes) 0, (vir_bytes) string, (size_t) len, D);
+		       (vir_bytes) 0, (vir_bytes) string, (size_t) len);
   if (r != OK) return(r);
   NUL(string, len, sizeof(string));
 
@@ -225,7 +225,7 @@ int fs_slink()
 		r = sys_safecopyfrom(VFS_PROC_NR,
 				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
 				     (vir_bytes) 0, (vir_bytes) sip->i_block,
-                                     (vir_bytes) fs_m_in.REQ_MEM_SIZE, D);
+                                     (vir_bytes) fs_m_in.REQ_MEM_SIZE);
 		sip->i_dirt = DIRTY;
 		link_target_buf = (char*) sip->i_block;
         } else {
@@ -233,7 +233,7 @@ int fs_slink()
 			sys_safecopyfrom(VFS_PROC_NR,
 					 (cp_grant_id_t) fs_m_in.REQ_GRANT3,
 					 (vir_bytes) 0, (vir_bytes) bp->b_data,
-					 (vir_bytes) fs_m_in.REQ_MEM_SIZE, D);
+					 (vir_bytes) fs_m_in.REQ_MEM_SIZE);
 			bp->b_dirt = DIRTY;
 			link_target_buf = bp->b_data;
 		} else {

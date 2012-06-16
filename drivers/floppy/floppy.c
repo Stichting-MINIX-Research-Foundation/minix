@@ -513,7 +513,7 @@ static ssize_t f_transfer(
 		if(proc_nr != SELF) {
 		   s=sys_safecopyfrom(proc_nr, iov->iov_addr,
 			SECTOR_SIZE + iov_offset, (vir_bytes) &fmt_param,
-			(phys_bytes) sizeof(fmt_param), D);
+			(phys_bytes) sizeof(fmt_param));
 		   if(s != OK)
 			panic("sys_safecopyfrom failed: %d", s);
 		} else {
@@ -618,7 +618,7 @@ static ssize_t f_transfer(
 				if(proc_nr != SELF) {
 				   s=sys_safecopyfrom(proc_nr, *ug, *up,
 					(vir_bytes) floppy_buf,
-					 (phys_bytes) SECTOR_SIZE, D);
+					 (phys_bytes) SECTOR_SIZE);
 				   if(s != OK)
 					panic("sys_safecopyfrom failed: %d", s);
 				} else {
@@ -644,7 +644,7 @@ static ssize_t f_transfer(
 			if(proc_nr != SELF) {
 		   	   s=sys_safecopyto(proc_nr, *ug, *up,
 				(vir_bytes) floppy_buf,
-			  	 (phys_bytes) SECTOR_SIZE, D);
+			  	 (phys_bytes) SECTOR_SIZE);
 			if(s != OK)
 				panic("sys_safecopyto failed: %d", s);
 			} else {

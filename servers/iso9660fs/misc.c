@@ -34,7 +34,7 @@ int fs_new_driver(void)
 	return(EINVAL);
 
   r = sys_safecopyfrom(fs_m_in.m_source, label_gid, (vir_bytes) 0,
-	(vir_bytes) label, label_len, D);
+	(vir_bytes) label, label_len);
 
   if (r != OK) {
 	printf("ISOFS: fs_new_driver safecopyfrom failed (%d)\n", r);

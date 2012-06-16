@@ -230,7 +230,7 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
   if (nr_req > NR_IOREQS) nr_req = NR_IOREQS;
 
   if (OK != sys_safecopyfrom(mp->m_source, (vir_bytes) mp->BDEV_GRANT,
-		0, (vir_bytes) iovec, nr_req * sizeof(iovec[0]), D)) {
+		0, (vir_bytes) iovec, nr_req * sizeof(iovec[0]))) {
 	printf("blockdriver: bad I/O vector by: %d\n", mp->m_source);
 	return EINVAL;
   }
@@ -269,7 +269,7 @@ static int do_dioctl(struct blockdriver *bdp, dev_t minor,
   case DIOCSETP:
 	/* Copy just this one partition table entry. */
 	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &entry,
-		sizeof(entry), D);
+		sizeof(entry));
 	if (r != OK)
 		return r;
 
@@ -295,8 +295,7 @@ static int do_dioctl(struct blockdriver *bdp, dev_t minor,
 		entry.sectors = 32;
 	}
 
-	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &entry, sizeof(entry),
-		D);
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &entry, sizeof(entry));
 
 	break;
   }

@@ -178,7 +178,7 @@ static void do_get_stat_s(message * mp)
 
   if ((rc = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0UL,
 			(vir_bytes)&dep->de_stat,
-			sizeof(dep->de_stat), 0)) != OK)
+			sizeof(dep->de_stat))) != OK)
         panic(str_CopyErrMsg, rc);
 
   mp->m_type = DL_STAT_REPLY;
@@ -511,7 +511,7 @@ static void do_vread_s(const message * mp, int from_int)
 	bytes = size;
 
       r= sys_safecopyto(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 0,
-			(vir_bytes)buffer, bytes, D);
+			(vir_bytes)buffer, bytes);
       if (r != OK)
 	panic(str_CopyErrMsg, r);
       buffer += bytes;
@@ -776,7 +776,7 @@ static void de_get_userdata_s(int user_proc, cp_grant_id_t grant,
   vir_bytes len;
 
   len = (count > IOVEC_NR ? IOVEC_NR : count) * sizeof(iovec_t);
-  rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len, D);
+  rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len);
   if (rc != OK)
     panic(str_CopyErrMsg, rc);
   return;
@@ -840,7 +840,7 @@ static void do_vwrite_s(const message * mp, int from_int){
 	bytes = size;		
 
       r= sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant,
-			  0, (vir_bytes)buffer, bytes, D);
+			  0, (vir_bytes)buffer, bytes);
       if (r != OK)
 	panic(str_CopyErrMsg, r);
       buffer += bytes;

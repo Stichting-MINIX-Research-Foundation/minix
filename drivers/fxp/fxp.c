@@ -1012,7 +1012,7 @@ static void fxp_writev_s(const message *mp, int from_int)
 			n= count-i;
 		r= sys_safecopyfrom(iov_endpt, iov_grant, iov_offset,
 			(vir_bytes)fp->fxp_iovec_s,
-			n * sizeof(fp->fxp_iovec_s[0]), D);
+			n * sizeof(fp->fxp_iovec_s[0]));
 		if (r != OK)
 			panic("fxp_writev: sys_safecopyfrom failed: %d", r);
 
@@ -1024,7 +1024,7 @@ static void fxp_writev_s(const message *mp, int from_int)
 			}
 
 			r= sys_safecopyfrom(iov_endpt, iovp->iov_grant,
-				0, (vir_bytes)(txp->tx_buf+o), s, D);
+				0, (vir_bytes)(txp->tx_buf+o), s);
 			if (r != OK) {
 				panic("fxp_writev_s: sys_safecopyfrom failed: %d", r);
 			}
@@ -1147,7 +1147,7 @@ int from_int;
 			n= count-i;
 		r= sys_safecopyfrom(iov_endpt, iov_grant, iov_offset,
 			(vir_bytes)fp->fxp_iovec_s,
-			n * sizeof(fp->fxp_iovec_s[0]), D);
+			n * sizeof(fp->fxp_iovec_s[0]));
 		if (r != OK)
 			panic("fxp_readv_s: sys_safecopyfrom failed: %d", r);
 
@@ -1161,7 +1161,7 @@ int from_int;
 			}
 
 			r= sys_safecopyto(iov_endpt, iovp->iov_grant,
-				0, (vir_bytes)(rfdp->rfd_buf+o), s, D);
+				0, (vir_bytes)(rfdp->rfd_buf+o), s);
 			if (r != OK)
 			{
 				panic("fxp_readv: sys_safecopyto failed: %d", r);
@@ -1447,7 +1447,7 @@ static void fxp_getstat_s(message *mp)
 	stats.ets_OWC= fp->fxp_stat.sc_tx_latecol;
 
 	r= sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, (vir_bytes)&stats,
-		sizeof(stats), D);
+		sizeof(stats));
 	if (r != OK)
 		panic("fxp_getstat_s: sys_safecopyto failed: %d", r);
 

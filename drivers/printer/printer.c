@@ -412,7 +412,7 @@ static void prepare_output()
   if ( (chunk = user_left) > sizeof obuf) chunk = sizeof obuf;
 
   s=sys_safecopyfrom(caller, grant_nr, user_vir_d, (vir_bytes) obuf,
-	chunk, D);
+	chunk);
 
   if(s != OK) {
   	done_status = EFAULT;

@@ -48,7 +48,7 @@ int fs_create()
 
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
 			      (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
-			      (size_t) len, D);
+			      (size_t) len);
   if (err_code != OK) return(err_code);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
@@ -140,7 +140,7 @@ int fs_mknod()
 
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
                              (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
-			     (size_t) len, D);
+			     (size_t) len);
   if (err_code != OK) return(err_code);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
@@ -223,7 +223,7 @@ int fs_mkdir()
 
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
 			      (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
-			      (phys_bytes) len, D);
+			      (phys_bytes) len);
   if (err_code != OK) return(err_code);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
@@ -307,14 +307,14 @@ int fs_slink()
 
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
 		       (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
-		       (size_t) len, D);
+		       (size_t) len);
   if (r != OK) return(r);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
   /* Copy the target path (note that it's not null terminated) */
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT3,
 		       (vir_bytes) 0, (vir_bytes) target, 
-		       (size_t) fs_m_in.REQ_MEM_SIZE, D);
+		       (size_t) fs_m_in.REQ_MEM_SIZE);
   if (r != OK) return(r);
   target[fs_m_in.REQ_MEM_SIZE] = '\0';
 

@@ -33,7 +33,7 @@ int fs_rdlink(void)
 
 	/* Copy out the result. */
 	r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		(vir_bytes) path, len, D);
+		(vir_bytes) path, len);
 	if (r != OK) return r;
 
 	fs_m_out.RES_NBYTES = len;

@@ -1012,7 +1012,7 @@ static void do_vread_s(const message *mp)
    r = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, 0,
                         (vir_bytes)ec->read_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
-                        sizeof(iovec_s_t), D);
+                        sizeof(iovec_s_t));
    if (r != OK)
 	panic("do_vread_s: sys_safecopyfrom failed: %d", r);
    ec->read_iovec.iod_iovec_s    = count;
@@ -1130,7 +1130,7 @@ int from_int;
    r = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, 0,
                         (vir_bytes)ec->write_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
-                        sizeof(iovec_s_t), D);
+                        sizeof(iovec_s_t));
    if (r != OK)
 	panic("do_vwrite_s: sys_safecopyfrom failed: %d", r);
    ec->write_iovec.iod_iovec_s    = count;
@@ -1205,7 +1205,7 @@ vir_bytes count;
       
       if ( (r=sys_safecopyfrom(iovp->iod_proc_nr,
                                iovp->iod_iovec[i].iov_grant, offset,
-                               nic_addr, bytes, D )) != OK )
+                               nic_addr, bytes )) != OK )
          panic("ec_user2nic: sys_safecopyfrom failed: %d", r);
 
       count -= bytes;
@@ -1245,7 +1245,7 @@ vir_bytes count;
       if (bytes > count)
          bytes = count;
       if ( (r=sys_safecopyto( iovp->iod_proc_nr, iovp->iod_iovec[i].iov_grant,
-                              offset, nic_addr, bytes, D )) != OK )
+                              offset, nic_addr, bytes )) != OK )
          panic("ec_nic2user: sys_safecopyto failed: %d", r);
       
       count -= bytes;
@@ -1295,7 +1295,7 @@ iovec_dat_t *iovp;
                         (vir_bytes)iovp->iod_iovec,
                         (iovp->iod_iovec_s > IOVEC_NR ?
                          IOVEC_NR : iovp->iod_iovec_s) *
-                        sizeof(iovec_s_t), D);
+                        sizeof(iovec_s_t));
    if (r != OK)
 	panic("ec_next_iovec: sys_safecopyfrom failed: %d", r);
 }
@@ -1313,7 +1313,7 @@ message *mp;
    ec= &ec_state;
 
    r = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0,
-                      (vir_bytes)&ec->eth_stat, sizeof(ec->eth_stat), D);
+                      (vir_bytes)&ec->eth_stat, sizeof(ec->eth_stat));
 
    if (r != OK)
 	panic("do_getstat_s: sys_safecopyto failed: %d", r);

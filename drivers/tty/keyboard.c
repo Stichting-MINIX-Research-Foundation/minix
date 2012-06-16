@@ -265,7 +265,7 @@ message *m;
 		if (n <= 0)
 			panic("do_kbd(READ): bad n: %d", n);
 		r= sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT, 0, 
-			(vir_bytes) &kbdp->buf[kbdp->offset], n, D);
+			(vir_bytes) &kbdp->buf[kbdp->offset], n);
 		if (r == OK)
 		{
 			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
@@ -292,7 +292,7 @@ message *m;
 		for (i= 0; i<m->COUNT; i++)
 		{
 			r= sys_safecopyfrom(m->m_source, (cp_grant_id_t)
-				m->IO_GRANT, i, (vir_bytes) &c, 1, D);
+				m->IO_GRANT, i, (vir_bytes) &c, 1);
 			if (r != OK)
 				break;
 			kbc_cmd1(KBC_WRITE_AUX, c);
@@ -330,7 +330,7 @@ message *m;
 			
 			r= sys_safecopyfrom(m->m_source, (cp_grant_id_t)
 				m->IO_GRANT, 0, (vir_bytes) &leds,
-				sizeof(leds), D);
+				sizeof(leds));
 			if (r != OK)
 				break;
 			b= 0;
@@ -365,7 +365,7 @@ message *m;
 
 			r = sys_safecopyfrom(m->m_source, (cp_grant_id_t)
 				m->IO_GRANT, 0, (vir_bytes) &bell,
-				sizeof(bell), D);
+				sizeof(bell));
 			if (r != OK)
 				break;
 
@@ -412,7 +412,7 @@ message *m;
 			panic("kbd_status: bad n: %d", n);
 		kbdp->req_size= 0;
 		r= sys_safecopyto(kbdp->incaller, kbdp->req_grant, 0,
-			(vir_bytes)&kbdp->buf[kbdp->offset], n, D);
+			(vir_bytes)&kbdp->buf[kbdp->offset], n);
 		if (r == OK)
 		{
 			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
@@ -1060,7 +1060,7 @@ message *m;
 {
 /* Load a new keymap. */
   return sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT,
-	0, (vir_bytes) keymap, (vir_bytes) sizeof(keymap), D);
+	0, (vir_bytes) keymap, (vir_bytes) sizeof(keymap));
 }
 
 /*===========================================================================*

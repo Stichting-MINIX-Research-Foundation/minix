@@ -54,7 +54,7 @@ static int stat_inode(
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,
-		     (size_t) sizeof(statbuf), D);
+		     (size_t) sizeof(statbuf));
 
   return(r);
 }
@@ -76,7 +76,7 @@ int fs_fstatfs()
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-		     (vir_bytes) 0, (vir_bytes) &st, (size_t) sizeof(st), D);
+		     (vir_bytes) 0, (vir_bytes) &st, (size_t) sizeof(st));
 
   return(r);
 }
@@ -124,7 +124,7 @@ int fs_statvfs()
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0, (vir_bytes) &st,
-                    (phys_bytes) sizeof(st), D);
+                    (phys_bytes) sizeof(st));
 
   return(r);
 }

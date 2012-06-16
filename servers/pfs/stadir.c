@@ -48,7 +48,7 @@ static int stat_inode(
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,
-		(size_t) sizeof(statbuf), D);
+		(size_t) sizeof(statbuf));
 
   return(r);
 }

@@ -50,7 +50,7 @@ int fs_read(void)
 		/* Copy the resulting data to user space. */
 		if (r == OK && len > 0) {
 			r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT,
-				0, (vir_bytes) ptr, len, D);
+				0, (vir_bytes) ptr, len);
 		}
 	} else {
 		/* Feign an empty file. */
@@ -179,7 +179,7 @@ int fs_getdents(void)
 		 */
 		if (off + len > sizeof(buf)) {
 			r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT,
-				user_off, (vir_bytes) buf, off, D);
+				user_off, (vir_bytes) buf, off);
 			if (r != OK) return r;
 
 			user_off += off;
@@ -200,7 +200,7 @@ int fs_getdents(void)
 	/* If there is anything left in our own buffer, copy that out now. */
 	if (off > 0) {
 		r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT,
-			user_off, (vir_bytes) buf, off, D);
+			user_off, (vir_bytes) buf, off);
 		if (r != OK)
 			return r;
 

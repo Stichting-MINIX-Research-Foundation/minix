@@ -50,7 +50,7 @@ cp_grant_id_t *grantp;
 
 	if (grantp != NULL) {
 		r = sys_safecopyfrom(m_in.m_source, *grantp,
-			off, (vir_bytes) ptr, chunk, D);
+			off, (vir_bytes) ptr, chunk);
 
 		if (r != OK)
 			break;

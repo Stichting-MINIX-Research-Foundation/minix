@@ -34,7 +34,7 @@ int fs_lookup() {
 
   /* Copy the pathname and set up caller's user and group id */
   r = sys_safecopyfrom(VFS_PROC_NR, grant, 0, (vir_bytes) user_path, 
-		       (phys_bytes) len, D);
+		       (phys_bytes) len);
   if (r != OK) {
 	printf("ISOFS %s:%d sys_safecopyfrom failed: %d\n",
 		__FILE__, __LINE__, r);

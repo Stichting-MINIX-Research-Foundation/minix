@@ -159,7 +159,7 @@ subwrite(struct logdevice *log, int count, endpoint_t endpt,
 	}
 	else {
 		if((r=sys_safecopyfrom(endpt, grant, offset,
-			(vir_bytes)buf, count, D)) != OK)
+			(vir_bytes)buf, count)) != OK)
 			return r;
 	}
 
@@ -263,7 +263,7 @@ subread(struct logdevice *log, int count, endpoint_t endpt,
 
     	buf = log->log_buffer + log->log_read;
 	if((r=sys_safecopyto(endpt, grant, offset,
-		(vir_bytes)buf, count, D)) != OK)
+		(vir_bytes)buf, count)) != OK)
 		return r;
 
   	LOGINC(log->log_read, count);

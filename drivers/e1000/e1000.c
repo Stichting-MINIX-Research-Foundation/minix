@@ -615,7 +615,7 @@ int from_int;
 	if ((r = sys_safecopyfrom(e->tx_message.m_source,
 				  e->tx_message.DL_GRANT, 0,
 				  (vir_bytes) iovec, e->tx_message.DL_COUNT *
-				  sizeof(iovec_s_t), D)) != OK)
+				  sizeof(iovec_s_t))) != OK)
 	{
 	    panic("sys_safecopyfrom() failed: %d", r);
 	}
@@ -640,7 +640,7 @@ int from_int;
 				     iovec[i].iov_grant, 0,
 				     (vir_bytes) e->tx_buffer +
 				     (tail * E1000_IOBUF_SIZE),
-				      size, D)) != OK)
+				      size)) != OK)
 	    {
 		panic("sys_safecopyfrom() failed: %d", r);
 	    }
@@ -706,7 +706,7 @@ int from_int;
 	if ((r = sys_safecopyfrom(e->rx_message.m_source,
 				  e->rx_message.DL_GRANT, 0,
 				  (vir_bytes) iovec, e->rx_message.DL_COUNT *
-				  sizeof(iovec_s_t), D)) != OK)
+				  sizeof(iovec_s_t))) != OK)
 	{
 	    panic("sys_safecopyfrom() failed: %d", r);
 	}
@@ -741,7 +741,7 @@ int from_int;
 	    if ((r = sys_safecopyto(e->rx_message.m_source, iovec[i].iov_grant,
 				   0, (vir_bytes) e->rx_buffer + bytes + 
 				   (cur * E1000_IOBUF_SIZE),
-				    size, D)) != OK)
+				    size)) != OK)
 	    {
 		panic("sys_safecopyto() failed: %d", r);
 	    }
@@ -791,7 +791,7 @@ message *mp;
     stats.ets_OWC = 0;
 
     sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, (vir_bytes)&stats,
-                   sizeof(stats), D);
+                   sizeof(stats));
     mp->m_type  = DL_STAT_REPLY;
     if((r=send(mp->m_source, mp)) != OK)
 	panic("e1000_getstat: send() failed: %d", r);

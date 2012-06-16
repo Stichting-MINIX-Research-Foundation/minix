@@ -249,7 +249,7 @@ static int rs_write(register tty_t *tp, int try)
 
 	/* Copy from user space to the RS232 output buffer. */
 	sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant, 
-		tp->tty_outoffset, (vir_bytes) rs->ohead, count, D);
+		tp->tty_outoffset, (vir_bytes) rs->ohead, count);
 
 	/* Perform output processing on the output buffer. */
 	out_process(tp, rs->obuf, rs->ohead, bufend(rs->obuf), &count, &ocount);

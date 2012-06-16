@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 	/* Test COW_SMAP2 (with COW safecopy). */
 	FIFO_WAIT(fid_get);
 	buf[0] = BUF_START_REQUESTOR;
-	r = sys_safecopyto(ep_granter, gid, 0, (long)buf, size, D);
+	r = sys_safecopyto(ep_granter, gid, 0, (long)buf, size);
 	if(r != OK) {
 		printf("REQUESTOR: error in sys_safecopyto: %d\n", r);
 		return 1;

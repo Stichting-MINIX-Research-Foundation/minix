@@ -32,7 +32,7 @@ int fs_create()
   /* Copy the last component (i.e., file name) */
   len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-			      (vir_bytes) 0, (vir_bytes) lastc, len, D);
+			      (vir_bytes) 0, (vir_bytes) lastc, len);
   if (err_code != OK) return err_code;
   NUL(lastc, len, sizeof(lastc));
 
@@ -79,7 +79,7 @@ int fs_mknod()
   /* Copy the last component and set up caller's user and group id */
   len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-  			    (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
+  			    (vir_bytes) 0, (vir_bytes) lastc, (size_t) len);
   if (err_code != OK) return err_code;
   NUL(lastc, len, sizeof(lastc));
   
@@ -114,7 +114,7 @@ int fs_mkdir()
   /* Copy the last component and set up caller's user and group id */
   len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-  			   (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
+  			   (vir_bytes) 0, (vir_bytes) lastc, (size_t) len);
   if(err_code != OK) return(err_code);
   NUL(lastc, len, sizeof(lastc));
 
@@ -184,7 +184,7 @@ int fs_slink()
   /* Copy the link name's last component */
   len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
   r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-  			(vir_bytes) 0, (vir_bytes) string, (size_t) len, D);
+  			(vir_bytes) 0, (vir_bytes) string, (size_t) len);
   if (r != OK) return(r);
   NUL(string, len, sizeof(string));
   
@@ -206,7 +206,7 @@ int fs_slink()
   		r = sys_safecopyfrom(VFS_PROC_NR,
   				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
 				     (vir_bytes) 0, (vir_bytes) bp->b_data,
-				     (size_t) fs_m_in.REQ_MEM_SIZE, D);
+				     (size_t) fs_m_in.REQ_MEM_SIZE);
 
 	if(bp != NULL && r == OK) {
 		bp->b_data[_MIN_BLOCK_SIZE-1] = '\0';

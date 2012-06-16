@@ -748,7 +748,7 @@ size_t pathlen;
 
   rfp = &(fproc[slot]);
   r = sys_safecopyfrom(PFS_PROC_NR, io_gr, (vir_bytes) 0,
-				(vir_bytes) canon_path, pathlen, D);
+				(vir_bytes) canon_path, pathlen);
   if (r != OK) return(r);
   canon_path[pathlen] = '\0';
 
@@ -760,7 +760,7 @@ size_t pathlen;
 
   /* copy canon_path back to PFS */
   r = sys_safecopyto(PFS_PROC_NR, (cp_grant_id_t) io_gr, (vir_bytes) 0,
-				(vir_bytes) canon_path, pathlen, D);
+				(vir_bytes) canon_path, pathlen);
   if (r != OK) return(r);
 
   /* Now do permissions checking */

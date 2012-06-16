@@ -17,7 +17,7 @@ int fs_lookup_credentials(vfs_ucred_t *credentials,
 
   if(cred_size == sizeof(*credentials)) {
            r = sys_safecopyfrom(VFS_PROC_NR, grant2, (vir_bytes) 0,
-                                (vir_bytes) credentials, cred_size, D);
+                                (vir_bytes) credentials, cred_size);
            if (r != OK) {
 	   	printf("FS: cred copy (regular) failed.\n");
 	   	return(r);
@@ -25,7 +25,7 @@ int fs_lookup_credentials(vfs_ucred_t *credentials,
   } else if(cred_size == sizeof(old_cred)) {
            int g;
            r = sys_safecopyfrom(VFS_PROC_NR, grant2, (vir_bytes) 0,
-                                (vir_bytes) &old_cred, sizeof(old_cred), D);
+                                (vir_bytes) &old_cred, sizeof(old_cred));
            if (r != OK) {
 	   	printf("FS: cred copy (fallback) failed.\n");
 	   	return(r);

@@ -57,7 +57,7 @@ int fs_lookup()
 
   /* Copy the pathname and set up caller's user and group id */
   r = sys_safecopyfrom(VFS_PROC_NR, grant, /*offset*/ 0,
-            (vir_bytes) user_path, (size_t) len, D);
+            (vir_bytes) user_path, (size_t) len);
   if (r != OK) return(r);
 
   /* Verify this is a null-terminated path. */
@@ -85,7 +85,7 @@ int fs_lookup()
 	if (len > path_size) return(ENAMETOOLONG);
 
 	r1 = sys_safecopyto(VFS_PROC_NR, grant, (vir_bytes) 0,
-			    (vir_bytes) user_path, (size_t) len, D);
+			    (vir_bytes) user_path, (size_t) len);
 	if (r1 != OK) return(r1);
   }
 

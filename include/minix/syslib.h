@@ -148,9 +148,9 @@ int sys_physcopy(endpoint_t src_proc, int src_seg, vir_bytes src_vir,
 
 /* Grant-based copy functions. */
 int sys_safecopyfrom(endpoint_t source, cp_grant_id_t grant, vir_bytes
-	grant_offset, vir_bytes my_address, size_t bytes, int my_seg);
+	grant_offset, vir_bytes my_address, size_t bytes);
 int sys_safecopyto(endpoint_t dest, cp_grant_id_t grant, vir_bytes
-	grant_offset, vir_bytes my_address, size_t bytes, int my_seg);
+	grant_offset, vir_bytes my_address, size_t bytes);
 int sys_vsafecopy(struct vscp_vec *copyvec, int elements);
 
 int sys_memset(endpoint_t who, unsigned long pattern,

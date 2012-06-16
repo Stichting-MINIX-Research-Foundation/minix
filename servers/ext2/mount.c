@@ -43,7 +43,7 @@ int fs_readsuper()
 	return(EINVAL);
 
   r = sys_safecopyfrom(fs_m_in.m_source, label_gid, 0,
-		       (vir_bytes)fs_dev_label, label_len, D);
+		       (vir_bytes)fs_dev_label, label_len);
   if (r != OK) {
 	printf("%s:%d fs_readsuper: safecopyfrom failed: %d\n",
 	       __FILE__, __LINE__, r);

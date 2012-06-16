@@ -172,7 +172,7 @@ int try;
   do {
 	if (count > sizeof(buf)) count = sizeof(buf);
 	if ((result = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-		tp->tty_outoffset, (vir_bytes) buf, count, D)) != OK)
+		tp->tty_outoffset, (vir_bytes) buf, count)) != OK)
 		break;
 	tp->tty_outoffset += count;
 	tbuf = buf;
@@ -813,7 +813,7 @@ void do_video(message *m)
 
 	   		r = sys_safecopyfrom(m->m_source,
 				(cp_grant_id_t) m->IO_GRANT, 0,
-				(vir_bytes) &mapreqvm, sizeof(mapreqvm), D);
+				(vir_bytes) &mapreqvm, sizeof(mapreqvm));
 
 			if (r != OK)
 			{
@@ -834,7 +834,7 @@ void do_video(message *m)
 	   			if((r = sys_safecopyto(m->m_source,
 				  (cp_grant_id_t) m->IO_GRANT, 0,
 				  (vir_bytes) &mapreqvm,
-				  sizeof(mapreqvm), D)) != OK) {
+				  sizeof(mapreqvm))) != OK) {
 				  printf("tty: sys_safecopyto failed\n");
 				}
 			} else {
@@ -1204,7 +1204,7 @@ message *m;
   result = ga_program(seq1);	/* bring font memory into view */
 
   if(sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT, 0,
-	(vir_bytes) font_memory, GA_FONT_SIZE, D) != OK) {
+	(vir_bytes) font_memory, GA_FONT_SIZE) != OK) {
 	printf("tty: copying from %d failed\n", m->m_source);
 	return EFAULT;
   }
