@@ -5,7 +5,6 @@
  *	SMAP_EP		endpoint of the grantor
  *	SMAP_GID	grant id
  *	SMAP_OFFSET	offset of the grant space
- *	SMAP_SEG	segment
  *	SMAP_ADDRESS	address
  *    	SMAP_BYTES	bytes to be copied
  *    	SMAP_FLAG	access, writable map or not?
@@ -32,7 +31,6 @@ struct map_info_s {
 
 	/* Grantee. */
 	endpoint_t grantee;
-	int seg;
 	vir_bytes address;
 
 	/* Length. */
@@ -47,7 +45,7 @@ static struct map_info_s map_info[MAX_MAP_INFO];
  *===========================================================================*/
 static int add_info(endpoint_t grantor, endpoint_t grantee, cp_grant_id_t gid,
 		vir_bytes offset, vir_bytes address_Dseg,
-		int seg, vir_bytes address, vir_bytes bytes)
+		vir_bytes address, vir_bytes bytes)
 {
 	int i;
 
@@ -64,7 +62,6 @@ static int add_info(endpoint_t grantor, endpoint_t grantee, cp_grant_id_t gid,
 	map_info[i].gid = gid;
 	map_info[i].address_Dseg = address_Dseg;
 	map_info[i].offset = offset;
-	map_info[i].seg = seg;
 	map_info[i].address = address;
 	map_info[i].bytes = bytes;
 
@@ -91,14 +88,13 @@ static struct map_info_s *get_revoke_info(endpoint_t grantor, int flag, int arg)
 /*===========================================================================*
  *				get_unmap_info				     *
  *===========================================================================*/
-static struct map_info_s *get_unmap_info(endpoint_t grantee, int seg,
+static struct map_info_s *get_unmap_info(endpoint_t grantee, 
 	vir_bytes address)
 {
 	int i;
 	for(i = 0; i < MAX_MAP_INFO; i++) {
 		if(map_info[i].flag == 1
 			&& map_info[i].grantee == grantee
-			&& map_info[i].seg == seg
 			&& map_info[i].address == address)
 			return &map_info[i];
 	}
@@ -119,8 +115,8 @@ static void clear_info(struct map_info_s *p)
  *===========================================================================*/
 int map_invoke_vm(struct proc * caller,
 			int req_type, /* VMPTYPE_... COWMAP, SMAP, SUNMAP */
-			endpoint_t end_d, int seg_d, vir_bytes off_d,
-			endpoint_t end_s, int seg_s, vir_bytes off_s,
+			endpoint_t end_d, vir_bytes off_d,
+			endpoint_t end_s, vir_bytes off_s,
 			size_t size, int flag)
 {
 	struct proc *src, *dst;
@@ -129,8 +125,8 @@ int map_invoke_vm(struct proc * caller,
 	src = endpoint_lookup(end_s);
 	dst = endpoint_lookup(end_d);
 
-	lin_src = umap_local(src, seg_s, off_s, size);
-	lin_dst = umap_local(dst, seg_d, off_d, size);
+	lin_src = umap_local(src, D, off_s, size);
+	lin_dst = umap_local(dst, D, off_d, size);
 	if(lin_src == 0 || lin_dst == 0) {
 		printf("map_invoke_vm: error in umap_local.\n");
 		return EINVAL;
@@ -178,7 +174,6 @@ int do_safemap(struct proc * caller, message * m_ptr)
 	endpoint_t grantor	= m_ptr->SMAP_EP;
 	cp_grant_id_t gid	= (cp_grant_id_t) m_ptr->SMAP_GID;
 	vir_bytes offset	= (vir_bytes) m_ptr->SMAP_OFFSET;
-	int seg			= (int) m_ptr->SMAP_SEG;
 	vir_bytes address	= (vir_bytes) m_ptr->SMAP_ADDRESS;
 	vir_bytes bytes		= (vir_bytes) m_ptr->SMAP_BYTES;
 	int flag		= m_ptr->SMAP_FLAG;
@@ -211,13 +206,13 @@ int do_safemap(struct proc * caller, message * m_ptr)
 
 	/* Add map info. */
 	r = add_info(new_grantor, caller->p_endpoint, gid, offset,
-			offset_result, seg, address, bytes);
+			offset_result, address, bytes);
 	if(r != OK)
 		return r;
 
 	/* Invoke VM. */
 	return map_invoke_vm(caller, VMPTYPE_SMAP,
-		caller->p_endpoint, seg, address, new_grantor, D, offset_result, bytes,flag);
+		caller->p_endpoint, address, new_grantor, offset_result, bytes,flag);
 }
 
 /*===========================================================================*
@@ -237,8 +232,8 @@ static int safeunmap(struct proc * caller, struct map_info_s *p)
 	}
 
 	r = map_invoke_vm(caller, VMPTYPE_SUNMAP,
-		p->grantee, p->seg, p->address,
-		new_grantor, D, offset_result,
+		p->grantee, p->address,
+		new_grantor, offset_result,
 		p->bytes, 0);
 	clear_info(p);
 	if(r != OK) {
@@ -271,11 +266,10 @@ int do_saferevmap(struct proc * caller, message * m_ptr)
 int do_safeunmap(struct proc * caller, message * m_ptr)
 {
 	vir_bytes address = (vir_bytes) m_ptr->SMAP_ADDRESS;
-	int seg = (int)m_ptr->SMAP_SEG;
 	struct map_info_s *p;
 	int r;
 
-	while((p = get_unmap_info(caller->p_endpoint, seg, address)) != NULL) {
+	while((p = get_unmap_info(caller->p_endpoint, address)) != NULL) {
 		if((r = safeunmap(caller, p)) != OK)
 			return r;
 	}

@@ -135,7 +135,7 @@ void hook_ipc_clear(struct proc *proc);
 
 /* system/do_safemap.c */
 int map_invoke_vm(struct proc * caller, int req_type, endpoint_t end_d,
-	int seg_d, vir_bytes off_d, endpoint_t end_s, int seg_s, vir_bytes
+	vir_bytes off_d, endpoint_t end_s, vir_bytes
 	off_s, size_t size, int flag);
 
 /* system/do_safecopy.c */

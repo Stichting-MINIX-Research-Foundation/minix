@@ -8,7 +8,7 @@
  *===========================================================================*/
 int sys_safemap(endpoint_t grantor, cp_grant_id_t grant,
 	vir_bytes grant_offset, vir_bytes my_address,
-	size_t bytes, int my_seg, int writable)
+	size_t bytes, int writable)
 {
 /* Map a block of data for which the other process has previously
  * granted permission. 
@@ -19,10 +19,11 @@ int sys_safemap(endpoint_t grantor, cp_grant_id_t grant,
 	copy_mess.SMAP_EP = grantor;
 	copy_mess.SMAP_GID = grant;
 	copy_mess.SMAP_OFFSET = grant_offset;
-	copy_mess.SMAP_SEG = (void*) my_seg;
 	copy_mess.SMAP_ADDRESS = my_address;
 	copy_mess.SMAP_BYTES = bytes;
 	copy_mess.SMAP_FLAG = writable;
+
+	copy_mess.SMAP_SEG_OBSOLETE = (void *) D;
 
 	return(_kernel_call(SYS_SAFEMAP, &copy_mess));
 
@@ -59,13 +60,14 @@ int sys_saferevmap_addr(vir_bytes addr)
 /*===========================================================================*
  *				sys_safeunmap				     *
  *===========================================================================*/
-int sys_safeunmap(int my_seg, vir_bytes my_address)
+int sys_safeunmap(vir_bytes my_address)
 {
 /* Requestor unmaps safemap. */
 	message copy_mess;
 
-	copy_mess.SMAP_SEG = (void*) my_seg;
 	copy_mess.SMAP_ADDRESS = my_address;
+
+	copy_mess.SMAP_SEG_OBSOLETE = (void *) D;
 
 	return(_kernel_call(SYS_SAFEUNMAP, &copy_mess));
 }

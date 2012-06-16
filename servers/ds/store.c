@@ -374,7 +374,7 @@ int do_publish(message *m_ptr)
 
 	/* Map memory. */
 	r = sys_safemap(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL, 0,
-		(vir_bytes) dsp->u.map.data, length, D, 0);
+		(vir_bytes) dsp->u.map.data, length, 0);
 	if(r != OK) {
 		printf("DS: publish: memory map/copy failed from %d: %d\n",
 			m_ptr->m_source, r);
@@ -696,7 +696,7 @@ int do_delete(message *m_ptr)
 	break;
   case DSF_TYPE_MAP:
 	/* Unmap the mapped data. */
-	r = sys_safeunmap(D, (vir_bytes)dsp->u.map.data);
+	r = sys_safeunmap((vir_bytes)dsp->u.map.data);
 	if(r != OK)
 		printf("DS: sys_safeunmap failed. Grant already revoked?\n");
 

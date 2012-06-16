@@ -158,11 +158,10 @@ int sys_memset(endpoint_t who, unsigned long pattern,
 
 /* Grant-based map functions. */
 int sys_safemap(endpoint_t grantor, cp_grant_id_t grant, vir_bytes
-	grant_offset, vir_bytes my_address, size_t bytes, int my_seg, int
-	writable);
+	grant_offset, vir_bytes my_address, size_t bytes, int writable);
 int sys_saferevmap_gid(cp_grant_id_t grant);
 int sys_saferevmap_addr(vir_bytes addr);
-int sys_safeunmap(int my_seg, vir_bytes my_address);
+int sys_safeunmap(vir_bytes my_address);
 
 int sys_vumap(endpoint_t endpt, struct vumap_vir *vvec,
 	int vcount, size_t offset, int access, struct vumap_phys *pvec,

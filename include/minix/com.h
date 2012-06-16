@@ -573,10 +573,11 @@
 #define SMAP_EP		m2_i1
 #define SMAP_GID	m2_i2
 #define SMAP_OFFSET	m2_i3
-#define SMAP_SEG	m2_p1
 #define SMAP_ADDRESS	m2_l1
 #define SMAP_BYTES	m2_l2
 #define SMAP_FLAG	m2_s1
+
+#define SMAP_SEG_OBSOLETE	m2_p1
 
 /* Field names for SYS_SPROF, _CPROF, _PROFBUF. */
 #define PROF_ACTION    m7_i1    /* start/stop/reset/get */

@@ -194,7 +194,7 @@ int ds_retrieve_map(const char *ds_name, char *vaddr, size_t *length,
 			*length = (size_t) m.DS_VAL_LEN;
 		*length = (size_t) CLICK_FLOOR(*length);
 		r = sys_safemap(DS_PROC_NR, m.DS_VAL, 0,
-				(vir_bytes)vaddr, *length, D, 0);
+				(vir_bytes)vaddr, *length, 0);
 
 	/* Copy mapped memory range or a snapshot. */
 	} else if(flags & (DSMF_COPY_MAPPED|DSMF_COPY_SNAPSHOT)) {
