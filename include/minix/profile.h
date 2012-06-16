@@ -21,7 +21,7 @@ struct sprof_info_s {
   int idle_samples;
   int system_samples;
   int user_samples;
-} sprof_info_inst;
+};
 
 /* What a profiling sample looks like (used for sizeof()). */
 struct sprof_sample {
@@ -80,7 +80,7 @@ void profile_register(void *ctl_ptr, void *tbl_ptr);
 struct cprof_info_s {
   int mem_used;
   int err;
-} cprof_info_inst;
+};
 
 /* Data structures for control structure and profiling data table in the
  * in the profiled processes. 
@@ -89,14 +89,14 @@ struct cprof_ctl_s {
   int reset;				/* kernel sets to have table reset */
   int slots_used;			/* proc writes nr slots used in table */
   int err;				/* proc writes errors that occurred */
-} cprof_ctl_inst;
+};
 
 struct cprof_tbl_s {
   struct cprof_tbl_s *next;		/* next in chain */
   char cpath[CPROF_CPATH_MAX_LEN];	/* string with call path */
   int calls;				/* nr of executions of path */
   u64_t cycles;				/* execution time of path, in cycles */
-} cprof_tbl_inst;
+};
 
 int sprofile(int action, int size, int freq, int type, void *ctl_ptr,
 	void *mem_ptr);

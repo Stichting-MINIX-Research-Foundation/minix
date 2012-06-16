@@ -18,10 +18,6 @@
 #include "mproc.h"
 #include "param.h"
 
-#if SPROFILE || CPROFILE
-static int check_addrs(int info_size);
-#endif
-
 /*===========================================================================*
  *				do_sprofile				     *
  *===========================================================================*/
@@ -34,9 +30,6 @@ int do_sprofile(void)
   switch(m_in.PROF_ACTION) {
 
   case PROF_START:
-	if ((r = check_addrs(sizeof(sprof_info_inst)))) /* check pointers */
-		return r;
-
 	return sys_sprof(PROF_START, m_in.PROF_MEM_SIZE, m_in.PROF_FREQ,
 			m_in.PROF_INTR_TYPE,
 			who_e, m_in.PROF_CTL_PTR, m_in.PROF_MEM_PTR);
@@ -66,9 +59,6 @@ int do_cprofile(void)
   switch(m_in.PROF_ACTION) {
 
   case PROF_GET:
-	if (r = check_addrs(sizeof(cprof_info_inst))) /* check user pointers */
-		return r;
-
 	return sys_cprof(PROF_GET, m_in.PROF_MEM_SIZE, who_e,
 		m_in.PROF_CTL_PTR, m_in.PROF_MEM_PTR);
 
@@ -83,33 +73,4 @@ int do_cprofile(void)
 	return ENOSYS;
 #endif
 }
-
-
-#if SPROFILE || CPROFILE
-
-/*===========================================================================*
- *				check_addrs				     *
- *===========================================================================*/
-static int check_addrs(info_size)
-int info_size;
-{
-  int r;
-  phys_bytes p;
-
-  /* Check if supplied pointers point into user process. */
-  if ((r = sys_umap_remote(who_e, SELF, VM_D, (vir_bytes) m_in.PROF_CTL_PTR,
-	 					 1, &p)) != OK) {
-	printf("PM: PROFILE: umap failed for process %d\n", who_e);
-	return r;                                    
-  }  
-
-  if ((r =sys_umap_remote(who_e, SELF, VM_D, (vir_bytes) m_in.PROF_MEM_PTR,
- 					 1, &p)) != OK) {
-	printf("PM: PROFILE: umap failed for process %d\n", who_e);
-	return r;                                    
-  }  
-  return 0;
-}
-
-#endif
 

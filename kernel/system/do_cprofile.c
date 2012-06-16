@@ -18,6 +18,9 @@
 
 #if CPROFILE
 
+static struct cprof_ctl_s cprof_ctl_inst;
+static struct cprof_tbl_s cprof_tbl_inst;
+
 /*===========================================================================*
  *				do_cprofile				     *
  *===========================================================================*/
