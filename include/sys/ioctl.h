@@ -13,13 +13,14 @@
  * used in each header file are shown in the comment following.
  */
 
-#include <sys/ioc_tty.h>	/* 'T' 't' 'k'		*/
-#include <sys/ioc_net.h>	/* 'n'			*/
-#include <sys/ioc_disk.h>	/* 'd'			*/
-#include <sys/ioc_file.h>	/* 'f'			*/
+#include <sys/ioc_tty.h>		/* 'T' 't' 'k'	*/
+#include <sys/ioc_net.h>		/* 'n'			*/
+#include <sys/ioc_disk.h>		/* 'd'			*/
+#include <sys/ioc_file.h>		/* 'f'			*/
 #include <sys/ioc_memory.h>	/* 'm'			*/
-#include <sys/ioc_tape.h>	/* 'M'			*/
-#include <sys/ioc_sound.h>	/* 's'			*/
+#include <sys/ioc_tape.h>		/* 'M'			*/
+#include <sys/ioc_sound.h>		/* 's'			*/
+#include <sys/ioc_mmc.h>		/* 'e'			*/
 
 #if defined(_NETBSD_SOURCE)
 #define		TIOCDRAIN 	TCDRAIN
