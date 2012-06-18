@@ -11,11 +11,6 @@ GEN_FILES=	*.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 # Specify the programs that are part of the system image.
 KERNEL= kernel
 # PROGRAMS are in the order they should be loaded by boot
-.if ${MKBUILDEXT2RD} != "yes"
-FS=	${NETBSDSRCDIR}/servers/mfs/mfs
-.else
-FS=	${NETBSDSRCDIR}/servers/ext2/ext2
-.endif
 PROGRAMS= \
 	${NETBSDSRCDIR}/servers/ds/ds \
 	${NETBSDSRCDIR}/servers/rs/rs \
@@ -25,7 +20,7 @@ PROGRAMS= \
 	${NETBSDSRCDIR}/drivers/memory/memory \
 	${NETBSDSRCDIR}/drivers/log/log \
 	${NETBSDSRCDIR}/drivers/tty/tty \
-	${FS} \
+	${NETBSDSRCDIR}/servers/mfs/mfs \
 	${NETBSDSRCDIR}/servers/vm/vm \
 	${NETBSDSRCDIR}/servers/pfs/pfs \
 	${NETBSDSRCDIR}/servers/init/init
@@ -107,26 +102,7 @@ fdboot:
 	@sync
 
 install:
-.if ${MKBUILDEXT2RD} != "yes"
 	${MAKE} includes services hdboot
-.else
-	${MAKE} cross_install
-.endif
-
-cross_install:
-	${INSTALL_DIR} ${DESTDIR}/multiboot
-	n=0;	\
-	for i in ${PROGRAMS};						\
-	do								\
-	n=`expr $$n + 1`;					\
-	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";		\
-	newname="${DESTDIR}/multiboot/$${prefix}$${n}_`basename $$i`";	\
-	${INSTALL} $$i $$newname;						\
-	strip -s $$newname;						\
-	gzip -f $$newname; 						\
-	done
-	${INSTALL} ../kernel/kernel ${DESTDIR}/multiboot/
-	strip -s ${DESTDIR}/multiboot/kernel
 
 # download and update NetBSD reference sources.
 nbsd_fetch:

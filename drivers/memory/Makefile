@@ -5,12 +5,7 @@ SRCS=	memory.c imgrd.mfs
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
 MKBUILDEXT2RD?=	no
 
-.if ${MKBUILDEXT2RD} != "yes"
 RAMDISK_PATH= ${NETBSDSRCDIR}/drivers/ramdisk
-.else
-RAMDISK_PATH= ${NETBSDSRCDIR}/drivers/ramdisk_ext2
-.endif
-
 DPADD+=	${LIBBLOCKDRIVER} ${LIBCHARDRIVER} ${LIBSYS}
 LDADD+=	-lblockdriver -lchardriver -lsys
 
