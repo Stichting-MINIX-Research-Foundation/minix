@@ -29,7 +29,6 @@
 #include <minix/u64.h>
 #include <sys/ioctl.h>
 #endif
-#include <a.out.h>
 #include <dirent.h>
 
 #undef EXTERN
