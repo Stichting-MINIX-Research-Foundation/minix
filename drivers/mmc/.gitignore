@@ -1,0 +1,6 @@
+.depend
+mmcblk.d
+*.gcno
+*.gcda
+lcov.mmcblk
+mmcblk

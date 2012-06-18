@@ -37,6 +37,9 @@ Where key is one of the following:
   c0d0p0s0 c0d1p0s0 ...	  # Subparts c0d0p[0-3]s[0-3], c0d1p[0-3]s[0-3], ...
   c1d0(p0)(s0)		  # Likewise for controller 1
   c0t0 c0t1 c1t0 ...	  # Make tape devices c0t0, c0t0n, c0t1, ...
+  mmc0d0 mmc1d0 ...       # Make MMC card mmc0d0, mmc0d1, ...
+  mmc0d0p0 mmc0d0p1 ...   # Make MMC partitions mmc0d0p[0-3]
+  mmc0d0p0s0 ...          # Make MMC sub partitions mmc0d0p0s[0-3]
   console lp tty log	  # One of these makes all four
   ttyc1 ... ttyc7         # Virtual consoles
   tty00 ... tty03         # Make serial lines
@@ -192,6 +195,51 @@ do
 	$e mknod video c 4 125
 	$e chmod 600 video
 	$e chgrp operator video
+	;;
+    mmc[0-3]d[0-7])
+	# MMC Whole disk
+	instance=`expr $dev : 'mmc\\(.\\)'`
+	maj=`expr $instance + 19`
+	# Whole disk devices.
+	d=`expr $dev : 'mmc.d\\(.\\)'`	# Disk number.
+	m=`expr $d '*' 5`		# Minor device number.
+	$e mknod $dev b $maj $m
+	$e chmod 600 $dev
+	;;
+    mmc[0-3]d[0-7]p[0-3])
+	# MMC primary partitions.
+	instance=`expr $dev : 'mmc\\(.\\)'`
+	maj=`expr $instance + 19`
+	n=`expr $dev : '\\(.*\\).'`	# Name prefix.
+	d=`expr $dev : 'mmc.d\\(.\\)'`	# Disk number.
+	alldev=
+
+	for p in 0 1 2 3
+	do
+	    m=`expr $d '*' 5 + 1 + $p`	# Minor device number.
+	    $e mknod $n$p b $maj $m
+	    alldev="$alldev $n$p"
+	done
+	echo $alldev | xargs $e chmod 600
+	;;
+    mmc[0-3]d[0-7]p[0-3]s[0-3])
+	# MMC subpartitions
+	instance=`expr $dev : 'mmc\\(.\\)'`
+	maj=`expr $instance + 19`
+	n=`expr $dev : '\\(.*\\)...'`	# Name prefix.
+	d=`expr $dev : 'mmc.d\\(.\\)'`	# Disk number.
+	alldev=
+
+	for p in 0 1 2 3
+	do
+	    for s in 0 1 2 3
+	    do
+		m=`expr 128 + $d '*' 16 + $p '*' 4 + $s`  # Minor device nr.
+		$e mknod ${n}${p}s${s} b $maj $m
+		alldev="$alldev ${n}${p}s${s}"
+	    done
+	done
+	echo $alldev | xargs $e chmod 600
 	;;
     ttyc[1-7])
 	# Virtual consoles.
