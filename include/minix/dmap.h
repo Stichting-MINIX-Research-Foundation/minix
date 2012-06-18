@@ -38,6 +38,10 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define RANDOM_MAJOR		  16	/* 16 = /dev/random (random driver)   */
 #define HELLO_MAJOR		  17	/* 17 = /dev/hello  (hello driver)    */
 #define UDS_MAJOR		  18	/* 18 = /dev/uds    (pfs)             */
+#define MMC0_MAJOR		  19	/* 19 = /dev/mmc0   (mmc instance 1)  */
+#define MMC1_MAJOR		  20	/* 20 = /dev/mmc1   (mmc instance 2)  */
+#define MMC2_MAJOR		  21	/* 21 = /dev/mmc2   (mmc instance 3)  */
+#define MMC3_MAJOR		  22	/* 22 = /dev/mmc3   (mmc instance 4)  */
 
 
 /* Minor device numbers for memory driver. */
