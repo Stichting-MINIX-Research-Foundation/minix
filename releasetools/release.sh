@@ -198,9 +198,8 @@ echo " * Transfering bootstrap dirs to $RELEASEDIR"
 
 # Actual binaries
 cp -p /bin/* /usr/bin/* /usr/sbin/* /sbin/* $RELEASEDIR/$XBIN
-cp -rp /bin/cat /bin/sh /bin/echo /bin/install /bin/rm \
-    /bin/date /bin/ls $RELEASEDIR/bin
-cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex \
+cp -rp /bin/cat /bin/sh /bin/echo /bin/rm /bin/date /bin/ls $RELEASEDIR/bin
+cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/install \
 	/usr/bin/grep /usr/bin/egrep /usr/bin/awk /usr/bin/sed $RELEASEDIR/usr/bin
 
 # For dynamically linked binaries: put interpreter there the
@@ -261,11 +260,11 @@ mkdir -p $RELEASEDIR/usr/share/mk
 chmod 755 $RELEASEDIR/usr/share/mk
 cp $RELEASEDIR/usr/src/share/mk/* $RELEASEDIR/usr/share/mk/
 chown -R root $RELEASEDIR/usr/share/mk
-rm -f $RELEASEDIR/usr/$SRC/tools/revision
-cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
+rm -f $RELEASEDIR/usr/$SRC/releasetools/revision
+cp chrootmake.sh $RELEASEDIR/usr/$SRC/releasetools/chrootmake.sh
 
 echo " * Make hierarchy"
-sh -c "$LD_LIB chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/tools/chrootmake.sh etcfiles\"" || exit 1
+sh -c "$LD_LIB chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/releasetools/chrootmake.sh etcfiles\"" || exit 1
 
 for p in $PREINSTALLED_PACKAGES
 do	echo " * Pre-installing: $p from $PKG_ADD_URL"
@@ -279,7 +278,7 @@ fi
 echo " * Resetting timestamps"
 find $RELEASEDIR | xargs touch
 echo " * Chroot build"
-sh -c "$LD_LIB MAKEMAP=$MAKEMAP chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/tools/chrootmake.sh\"" || exit 1
+sh -c "$LD_LIB MAKEMAP=$MAKEMAP chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/releasetools/chrootmake.sh\"" || exit 1
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN
@@ -303,7 +302,7 @@ then
 	echo " * Removing files to create minimal image"
 	rm -rf $RELEASEDIR/usr/man/man*/* 	\
 		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src
-	mkdir -p $RELEASEDIR/usr/src/tools
+	mkdir -p $RELEASEDIR/usr/src/releasetools
 fi
 
 if [ $EXTRAS_INSTALL -ne 0 ] ; then

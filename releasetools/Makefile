@@ -120,7 +120,7 @@ nbsd_fetch:
 nbsd_diff:
 	find ${NETBSDSRCDIR} -name minix-port.patch | xargs rm
 	cat nbsd_ports | grep -v '^#' | \
-	( cd ${NETBSDSRCDIR} && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh tools/nbsd_diff.sh " \
+	( cd ${NETBSDSRCDIR} && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh releasetools/nbsd_diff.sh " \
 	   "nbsdsrc/src/"origpath" "minixpath" "minixpath"/minix-port.patch");}' )
 	find ${NETBSDSRCDIR} -name minix-port.patch | xargs wc -l | sort -n
 
