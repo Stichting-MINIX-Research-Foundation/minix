@@ -1,0 +1,18 @@
+
+include <minix/type.h>
+include <sys/ucontext.h>
+
+struct __ucontext
+member UC_FLAGS uc_flags
+member UC_LINK uc_link
+member MAGIC uc_mcontext.mc_magic
+member DI uc_mcontext.mc_p_reg.di
+member SI uc_mcontext.mc_p_reg.si
+member BP uc_mcontext.mc_p_reg.fp
+member AX uc_mcontext.mc_p_reg.retreg
+member BX uc_mcontext.mc_p_reg.bx
+member CX uc_mcontext.mc_p_reg.cx
+member DX uc_mcontext.mc_p_reg.dx
+member PC uc_mcontext.mc_p_reg.pc
+member SP uc_mcontext.mc_p_reg.sp
+

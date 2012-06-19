@@ -1,4 +1,5 @@
 #include <machine/asm.h>
+#include <ucontextoffsets.h>
 
 #ifdef __ACK__
 .text
@@ -19,31 +20,6 @@ begbss:
 IMPORT(getuctx)
 IMPORT(setuctx)
 IMPORT(resumecontext)
-
-
-/* Offsets into ucontext_t structure. Keep in sync with <sys/ucontext.h>! */
-#define UC_FLAGS	0 
-#define UC_LINK		UC_FLAGS + 4
-#define MCTX		UC_LINK + 4
-#define MAGIC		MCTX
-#define GS		MAGIC+4
-#define FS		GS+2
-#define ES		FS+2
-#define DS		ES+2
-#define DI		DS+2
-#define SI		DI+4
-#define BP		SI+4
-#define ST		BP+4	/* Hole for another SP */
-#define BX		ST+4
-#define DX		BX+4
-#define CX		DX+4
-#define AX		CX+4
-#define RETADR		AX+4
-#define PC		RETADR+4
-#define CS		PC+4
-#define PSW		CS+4
-#define SP		PSW+4
-#define SS		SP+4
 
 
 /* MCF_MAGIC value from <mcontext.h> */
