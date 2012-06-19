@@ -199,7 +199,7 @@ echo " * Transfering bootstrap dirs to $RELEASEDIR"
 # Actual binaries
 cp -p /bin/* /usr/bin/* /usr/sbin/* /sbin/* $RELEASEDIR/$XBIN
 cp -rp /bin/cat /bin/sh /bin/echo /bin/rm /bin/date /bin/ls $RELEASEDIR/bin
-cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/install \
+cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/install /usr/bin/m4 \
 	/usr/bin/grep /usr/bin/egrep /usr/bin/awk /usr/bin/sed $RELEASEDIR/usr/bin
 
 # For dynamically linked binaries: put interpreter there the
@@ -262,6 +262,8 @@ cp $RELEASEDIR/usr/src/share/mk/* $RELEASEDIR/usr/share/mk/
 chown -R root $RELEASEDIR/usr/share/mk
 rm -f $RELEASEDIR/usr/$SRC/releasetools/revision
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/releasetools/chrootmake.sh
+mkdir -p $RELEASEDIR/etc
+cp $RELEASEDIR/usr/src/etc/group $RELEASEDIR/etc
 
 echo " * Make hierarchy"
 sh -c "$LD_LIB chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/releasetools/chrootmake.sh etcfiles\"" || exit 1
