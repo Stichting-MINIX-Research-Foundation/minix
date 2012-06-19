@@ -11,7 +11,6 @@
 #include "usb_driver.h"
 #include "proto.h"
 
-#define CONTROL_FIFO_PATH "/var/tmp/devmand_control"
 #define SERVICE_BINARY "/bin/service"
 
 
@@ -383,7 +382,6 @@ static void parse_config()
  *           cleanup                                                        *
  *===========================================================================*/
 static void cleanup() {
-	int res;
 	struct devmand_driver_instance *inst;
 	/* destroy fifo */
 	dbg("cleaning up... ");
@@ -392,10 +390,6 @@ static void cleanup() {
 		dbg("stopping driver %s", inst->label);
 		run_downscript (inst);
 		stop_driver(inst);
-	}
-	res = remove(CONTROL_FIFO_PATH);
-	if (res != 0) {
-		fprintf(stderr, "WARNING: could not remove control fifo");
 	}
 	unlink("/var/run/devmand.pid");
 }
@@ -430,7 +424,7 @@ void create_pid_file()
  *===========================================================================*/
 int main(int argc, char *argv[])
 {
-	int opt, optindex, res;
+	int opt, optindex;
 	struct devmand_usb_driver *driver;
 
 
@@ -487,14 +481,6 @@ int main(int argc, char *argv[])
 	}
 
 	create_pid_file();
-
-	/* create control socket if not exists */
-	res = mkfifo(CONTROL_FIFO_PATH, S_IWRITE);
-
-	if ( !((res == 0) || (res == EEXIST)) ) {
-		fprintf(stderr, "Could not create control FIFO (%d)\n", res);
-		exit(1);
-	}
 
 	parse_config();
 	LIST_FOREACH(driver, &drivers, list) {
@@ -907,7 +893,6 @@ static void main_loop()
 		fclose(fd);
 
 		if (res == NULL) {
-			/* TODO: wait for control events */
 			usleep(50000);
 			continue;
 		}
