@@ -22,6 +22,7 @@
 755 ast     other    /usr/ast
 755 root    operator /usr/bin
 /usr/bin/cc -> /usr/pkg/bin/clang
+/usr/bin/strip -> /usr/pkg/bin/strip
 755 root    operator /usr/etc
 755 root    operator /usr/pkg
 755 root    operator /usr/pkg/etc
