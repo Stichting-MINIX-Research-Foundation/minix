@@ -329,21 +329,20 @@ static void parse_config()
 		status = stat(dirname,&stats);
 		if (status == -1){
 			error = errno;
-			fprintf(stderr,"Failed to read directory '%s':%s"
-			        " (skipping) \n", dirname,strerror(error));
+			dbg("Failed to read directory '%s':%s (skipping) \n", 
+			    dirname,strerror(error));
 			continue;
 		}
 		if (!S_ISDIR(stats.st_mode)){
-			fprintf(stderr,"Parse configuration skipping %s" 
-				" (not a directory) \n",dirname);
+			dbg("Parse configuration skipping %s "
+			    "(not a directory) \n",dirname);
 			continue;
 		}
 		dir = opendir(dirname);
 		if (dir == NULL){
 			error = errno;
-			fprintf(stderr,"Parse configuration failed to read" 
-			        " dir '%s' (skipping) :%s\n",dirname, 
-				strerror(error));
+			dbg("Parse configuration failed to read dir '%s'"
+			    "(skipping) :%s\n",dirname, strerror(error));
 			continue;
 		}
 		while( (status = readdir_r(dir,&entry,&result)) == 0 ){
@@ -358,16 +357,16 @@ static void parse_config()
 			status = stat(config_file, &stats);
 			if (status == -1){ 
 				error = errno;
-				fprintf(stderr,"Parse configuration Failed to stat" 
-				        " file '%s': %s (skipping)\n",
-					      config_file,strerror(error));
+				dbg("Parse configuration Failed to stat file "
+				    "'%s': %s (skipping)\n", config_file,
+				    strerror(error));
 			}
 			if (S_ISREG(stats.st_mode)){
 				dbg("Parsing file %s",config_file);
 				yyin = fopen(config_file, "r");
 
 				if (yyin < 0) {
-					printf("Can not open config file:" 
+					dbg("Can not open config file:" 
 				 	       " %d.\n", errno);
 				}
 				yyparse();
