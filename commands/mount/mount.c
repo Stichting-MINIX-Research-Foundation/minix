@@ -15,24 +15,27 @@
 #include <sys/svrctl.h>
 #include <stdio.h>
 #include "mfs/const.h"
+#include <fstab.h>
 
 #define MINIX_FS_TYPE "mfs"
 
 int main(int argc, char **argv);
 void list(void);
 void usage(void);
+void update_mtab(char *dev, char *mountpoint, char *fstype, int mountflags);
+int mount_all(void);
+
+static int write_mtab = 1;
 
 int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int i, n, v = 0, mountflags, write_mtab;
-  char **ap, *vs, *opt, *err, *type, *args, *device;
-  char special[PATH_MAX], mounted_on[PATH_MAX], version[10], rw_flag[10];
+  int all = 0, i, v = 0, mountflags;
+  char **ap, *opt, *err, *type, *args, *device;
 
   if (argc == 1) list();	/* just list /etc/mtab */
   mountflags = 0;
-  write_mtab = 1;
   type = NULL;
   args = NULL;
   ap = argv+1;
@@ -50,6 +53,7 @@ char *argv[];
 		case 'o':	if (++i == argc) usage();
 				args = argv[i];
 				break;
+		case 'a':	all = 1; break;
 		default:	usage();
 		}
 	} else {
@@ -59,7 +63,10 @@ char *argv[];
   *ap = NULL;
   argc = (ap - argv);
 
-  if (argc != 3 || *argv[1] == 0) usage();
+  if (!all && (argc != 3 || *argv[1] == 0)) usage();
+  if (all == 1) {
+	return mount_all();
+  }
 
   device = argv[1];
   if (!strcmp(device, "none")) device = NULL;
@@ -79,7 +86,7 @@ char *argv[];
 	err = strerror(errno);
 	fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
 		argv[1], argv[2], err);
-	exit(1);
+	return(EXIT_FAILURE);
   }
 
   /* The mount has completed successfully. Tell the user. */
@@ -87,46 +94,49 @@ char *argv[];
 	argv[1], mountflags & MS_RDONLY ? "only" : "write", argv[2]);
   
   /* Update /etc/mtab. */
-  if (!write_mtab) return 0;
-  n = load_mtab("mount");
-  if (n < 0) exit(1);		/* something is wrong. */
+  update_mtab(argv[1], argv[2], type, mountflags);
+  return(EXIT_SUCCESS);
+}
 
-  /* Loop on all the /etc/mtab entries, copying each one to the output buf. */
-  while (1) {
-	n = get_mtab_entry(special, mounted_on, version, rw_flag);
-	if (n < 0) break;
-	n = put_mtab_entry(special, mounted_on, version, rw_flag);
+void
+update_mtab(char *dev, char *mountpoint, char *fstype, int mountflags)
+{
+	int n;
+	char *vs;
+	char special[PATH_MAX], mounted_on[PATH_MAX], version[10], rw_flag[10];
+
+	if (!write_mtab) return;
+	n = load_mtab("mount");
+	if (n < 0) exit(1);		/* something is wrong. */
+
+	/* Loop on all the /etc/mtab entries, copying each one to the output
+	 * buf. */
+	while (1) {
+		n = get_mtab_entry(special, mounted_on, version, rw_flag);
+		if (n < 0) break;
+		n = put_mtab_entry(special, mounted_on, version, rw_flag);
+		if (n < 0) {
+			std_err("mount: /etc/mtab has grown too large\n");
+			exit(1);
+		}
+	}
+	/* For MFS, use a version number. Otherwise, use the FS type name. */
+	if (!strcmp(fstype, MINIX_FS_TYPE)) {
+		vs = "MFSv3";
+	} else if (strlen(fstype) < sizeof(version)) {
+		vs = fstype;
+	} else {
+		vs = "-";
+	}
+	n = put_mtab_entry(dev, mountpoint, vs,
+			     (mountflags & MS_RDONLY ? "ro" : "rw") );
 	if (n < 0) {
 		std_err("mount: /etc/mtab has grown too large\n");
 		exit(1);
 	}
-  }
-  /* For MFS, use a version number. Otherwise, use the FS type name. */
-  if (!strcmp(type, MINIX_FS_TYPE)) {
-	switch (v) {
-		case FSVERSION_MFS1: vs = "MFSv1"; break;
-		case FSVERSION_MFS2: vs = "MFSv2"; break;
-		case FSVERSION_MFS3: vs = "MFSv3"; break;
-		default: vs = "0"; break;
-	}
-  } else {
-	/* Keep the version field sufficiently short. */
-	if (strlen(type) < sizeof(version))
-		vs = type;
-	else
-		vs = "-";
-  }
-  n = put_mtab_entry(argv[1], argv[2], vs,
-		     (mountflags & MS_RDONLY ? "ro" : "rw") );
-  if (n < 0) {
-	std_err("mount: /etc/mtab has grown too large\n");
-	exit(1);
-  }
 
-  n = rewrite_mtab("mount");
-  return(0);
+	n = rewrite_mtab("mount");
 }
-
 
 void list()
 {
@@ -147,9 +157,58 @@ void list()
   exit(0);
 }
 
+int
+has_opt(char *mntopts, char *option)
+{
+	char *optbuf, *opt;
+	int found = 0;
+
+	optbuf = strdup(mntopts);
+	for (opt = optbuf; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
+		if (!strcmp(opt, option)) found = 1;
+	}
+	free (optbuf);
+	return(found);
+}
+
+
+int
+mount_all()
+{
+	struct fstab *fs;
+	char mountpoint[PATH_MAX];
+
+	while ((fs = getfsent()) != NULL) {
+		int ro = 0;
+		int mountflags = 0;
+		if (realpath(fs->fs_file, mountpoint) == NULL) {
+			fprintf(stderr, "Can't mount on %s\n", fs->fs_file);
+			return(EXIT_FAILURE);
+		}
+		if (has_opt(fs->fs_mntops, "noauto"))
+			continue;
+		if (!strcmp(mountpoint, "/"))
+			continue; /* Not remounting root */
+		if (has_opt(fs->fs_mntops, "ro"))
+			ro = 1;
+
+		if (ro) {
+			mountflags |= MS_RDONLY;
+		}
+
+		if (mount(fs->fs_spec, mountpoint, mountflags, fs->fs_vfstype,
+			NULL) == 0) {
+			update_mtab(fs->fs_spec, fs->fs_file, fs->fs_vfstype,
+					mountflags);
+		} else {
+			return(EXIT_FAILURE);
+		}
+	}
+	return(EXIT_SUCCESS);
+}
 
 void usage()
 {
-  std_err("Usage: mount [-r] [-e] [-t type] [-o options] special name\n");
+  std_err("Usage: mount [-a] [-r] [-e] [-t type] [-o options] special name\n");
   exit(1);
 }

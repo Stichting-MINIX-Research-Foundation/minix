@@ -1,7 +1,5 @@
 # /etc/rc - System startup script run by init before going multiuser.
 
-. /etc/rc.subr.minix
-
 exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
@@ -147,7 +145,7 @@ start)
 		if [ "$fstabline" = "# Poor man's File System Table." ]
 		then	mountfstab_poorman	# Old minix /etc/fstab
 		else	fsck -x / $fflag $fsckopts
-			mountfstab $FSTAB
+			mount -a
 		fi
     fi
 

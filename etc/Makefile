@@ -13,7 +13,7 @@ FILES1=group hostname.file inet.conf motd.install mtab profile \
 	protocols rc services termcap utmp rc.cd  \
 	syslog.conf rc.daemons.dist \
 	rs.inet rs.single make.conf system.conf ttys resolv.conf rc.conf \
-	rc.subr rc.subr.minix man.conf shells boot.cfg.default \
+	rc.subr man.conf shells boot.cfg.default \
 	devmand/scripts/block devmand/scripts/singlechar
 
 #
@@ -53,7 +53,7 @@ install: installpw	# installpw needed to bootstrap pw db
 	@echo "Installing fonts.."
 	${INSTALL_FILE} -m 644 -o root -g operator fonts/*.fnt ${DESTDIR}/usr/lib/fonts/
 
-installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(ETC)/rc.subr.minix $(USRETC)/rc $(USR)/Makefile installpw
+installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(USRETC)/rc $(USR)/Makefile installpw
 
 installpw::
 	if [ ! -d $(ETC) ]; then ${INSTALL_DIR} $(ETC); chmod 755 $(ETC); fi
@@ -70,9 +70,6 @@ $(ETC)/rs.single: rs.single .PHONY
 	${INSTALL_FILE} -m 755 -o root -g operator $> $@
 
 $(ETC)/system.conf: system.conf .PHONY
-	${INSTALL_FILE} -m 644 -o root -g operator $> $@
-
-$(ETC)/rc.subr.minix: rc.subr.minix .PHONY
 	${INSTALL_FILE} -m 644 -o root -g operator $> $@
 
 $(USRETC)/rc: usr/rc .PHONY

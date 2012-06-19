@@ -16,6 +16,9 @@ mount \- mount a file system
 ..
 .SH OPTIONS
 .TP 5
+.B \-a
+# All file systems in /etc/fstab except \/ are mounted. File systems marked 'noauto' are skipped
+.TP 5
 .B \-r
 # File system is mounted read-only
 .TP 5
@@ -34,6 +37,9 @@ mount \- mount a file system
 .TP 20
 .B mount \-t procfs none /proc
 # Mount proc file system on \fI/proc\fP
+.TP 20
+.B mount \-a
+# Mount all file systems listed in /etc/fstab except \/.
 .SH DESCRIPTION
 .PP
 The file system contained on the special file \fIspecial\fP is mounted on
