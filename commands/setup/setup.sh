@@ -739,25 +739,18 @@ $fshome"
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
 # Make bootable.
-	# XXX we have to use "-f" here, because installboot worries about BPB, which
-	# we don't have...
-	installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
-	cat >/mnt/boot.cfg <<END_BOOT_CFG
-menu=Start MINIX 3:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel rootdevname=$root
-menu=Start Custom MINIX 3:load_mods /boot/minix_latest/mod*;multiboot /boot/minix_latest/kernel rootdevname=$root
-menu=Drop to boot prompt:prompt
-clear=1
-timeout=5
-default=2
-END_BOOT_CFG
-umount /dev/$root >/dev/null || exit 	# Unmount the new root.
-mount /dev/$usr /mnt >/dev/null || exit
+mount /dev/$usr /mnt/usr >/dev/null || exit
+# XXX we have to use "-f" here, because installboot worries about BPB, which
+# we don't have...
+installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
+cp /mnt/usr/src/etc/boot.cfg.default /mnt/boot.cfg
+chroot /mnt update_bootcfg
 
-pfile="/mnt/src/tools/fdbootparams"
+pfile="/mnt/usr/src/tools/fdbootparams"
 echo "rootdev=$root; ramimagedev=$root; save" >$pfile
 # Save name of CD drive
-cddrive="`mount | grep usr | awk '{ print $1 }' | sed 's/p.*//'`" 
-echo "cddrive=$cddrive" >>/mnt/etc/rc.package
+cddrive="`mount | grep /usr | awk '{ print $1 }' | sed 's/p.*//'`"
+echo "cddrive=$cddrive" >>/mnt/usr/etc/rc.package
 
 bios="`echo $primary | sed -e 's/d./dX/g' -e 's/c.//g'`"
 
@@ -777,17 +770,12 @@ then	if mount /dev/$home /home 2>/dev/null
 fi
 
 echo "Saving random data.."
-dd if=/dev/random of=/mnt/adm/random.dat bs=1024 count=1
-
-umount /dev/$usr >/dev/null || exit
+dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
 
 # Networking.
 echo ""
 echo " --- Step 8: Select your Ethernet chip ---------------------------------"
 echo ""
-
-mount /dev/$root /mnt >/dev/null || exit
-mount /dev/$usr /mnt/usr >/dev/null || exit
 
 /bin/netconf -p /mnt || echo FAILED TO CONFIGURE NETWORK
 
