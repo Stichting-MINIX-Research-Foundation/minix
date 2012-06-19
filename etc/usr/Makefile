@@ -1,3 +1,4 @@
+.include <bsd.own.mk>
 # Makefile - installed as /usr/Makefile
 #
 # Provides simple targets to download and maintain /usr/pkgsrc etc.
