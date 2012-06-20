@@ -7,9 +7,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define DUMMY_SIZE_IN_BLOCKS 100
 static char dummy_data[SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS];
+
+static struct device device_geometry = {
+	.dv_base = 0,
+	.dv_size = SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS
+};
 
 /* Prototypes for the block device */
 static int block_open(dev_t minor, int access);
@@ -34,10 +40,12 @@ static struct blockdriver mmc_driver = {
   NULL                /* no threading support */
 };
 
+
 int main(int argc, char **argv)
 {
   /* SEF startup */
   sef_startup();
+  printf("Initializing the MMB block device\n");	
   blockdriver_task(&mmc_driver);
 
   return EXIT_SUCCESS;
@@ -49,7 +57,7 @@ int main(int argc, char **argv)
 static int block_open(dev_t minor, int access)
 {
   /* open on the memory device nothing special to do here */
-  //TODO: increase open count */
+  //TODO: increase open count ? */
   return OK;
 }
 
@@ -59,7 +67,7 @@ static int block_open(dev_t minor, int access)
 static int block_close(dev_t minor)
 {
   /* handle close on the memory device nothing special to do here */
-  //TODO: decrease the open count */
+  //TODO: decrease the open count ? */
   return OK;
 }
 
@@ -76,8 +84,54 @@ static int block_transfer(
   int flags             /* transfer flags */
   )
 {
-	u64_t size;
-	/* determin the transfer size */
+	//TODO: better understand the return value of this method
+	//libblockdriver apparently expects either the number of
+	//written/read byte or an error code so I don't understand 
+	//the return OK;
 
+	unsigned int counter;
+	iovec_t *ciov;          /* Current IO Vector */
+	struct device * dev;    /* The device used */
+	vir_bytes io_size; 
+	vir_bytes input_offset; 
+	int r;
+
+	/* get the current "device" geomerty */
+	dev = block_part(minor);
+
+	input_offset =0;
+
+	if (position >  dev->dv_size) { return OK; }; /* Why is this OK??*/
+
+	ciov = iov;
+	for( counter = 0 ; counter < nr_req ; counter ++){
+		printf("HELLO\n");	
+		assert(ciov != NULL);
+		io_size = ciov->iov_size;
+
+		/* check we are not reading past the end */
+		if (position + input_offset + io_size > dev->dv_size ) {
+			io_size = dev->dv_size - position - input_offset;
+		};
+		if(do_write){
+			/* @TODO understand why the thrid argument of safecopyto is not of pointer type */
+			r=sys_safecopyto(endpt, ciov->iov_addr,0 /* offset */,(vir_bytes) dummy_data + input_offset ,io_size);
+		} else {
+			r=sys_safecopyfrom(endpt, ciov->iov_addr,0 /* offset */,(vir_bytes) dummy_data + input_offset,io_size);
+		}
+		if (r != OK){
+			panic("I/O copy failed: %d", r);
+		}
+		ciov++;		
+		input_offset += io_size;
+	}
 	return OK;
+}
+
+/*===========================================================================*
+ *                    block_part                                             *
+ *===========================================================================*/
+static struct device *block_part(dev_t minor)
+{
+	return  &device_geometry;
 }

@@ -2,8 +2,8 @@
 PROG=	mmcblk
 SRCS=	mmcblk.c
 
-DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
-LDADD+=	-lchardriver -lsys
+DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}
+LDADD+=	-lblockdriver -lsys
 CLEANFILES+=.depend mmcblk.d
 
 MAN=
