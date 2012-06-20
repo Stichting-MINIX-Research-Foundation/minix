@@ -6,4 +6,6 @@
 PROG=	sed
 SRCS=	compile.c main.c misc.c process.c
 
+SYMLINKS=    ${BINDIR}/stat /bin/stat
+
 .include <bsd.prog.mk>
