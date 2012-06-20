@@ -89,7 +89,7 @@ static int block_transfer(
 	//written/read byte or an error code so I don't understand 
 	//the return OK;
 
-	unsigned int counter;
+	unsigned long counter;
 	iovec_t *ciov;          /* Current IO Vector */
 	struct device * dev;    /* The device used */
 	vir_bytes io_size; 
@@ -114,10 +114,11 @@ static int block_transfer(
 			io_size = dev->dv_size - position - input_offset;
 		};
 		if(do_write){
-			/* @TODO understand why the thrid argument of safecopyto is not of pointer type */
-			r=sys_safecopyto(endpt, ciov->iov_addr,0 /* offset */,(vir_bytes) dummy_data + input_offset ,io_size);
+			printf("DO WRITE (counter=%lu,iov_addr=%lu,position=%lu,offset=%lu and size %lu )\n",counter,ciov->iov_addr,(unsigned long) position, input_offset, io_size );
+			r=sys_safecopyfrom(endpt, ciov->iov_addr,input_offset ,(vir_bytes) dummy_data + position + input_offset,io_size);
 		} else {
-			r=sys_safecopyfrom(endpt, ciov->iov_addr,0 /* offset */,(vir_bytes) dummy_data + input_offset,io_size);
+			printf("DO READ (counter=%lu,iov_addr=%lu,position=%lu,offset=%lu and size %lu )\n",counter,ciov->iov_addr,(unsigned long) position, input_offset, io_size );
+			r=sys_safecopyto(endpt, ciov->iov_addr,0 /* offset */,(vir_bytes) dummy_data  + position + input_offset ,io_size);
 		}
 		if (r != OK){
 			panic("I/O copy failed: %d", r);
@@ -125,7 +126,7 @@ static int block_transfer(
 		ciov++;		
 		input_offset += io_size;
 	}
-	return OK;
+	return input_offset;
 }
 
 /*===========================================================================*
@@ -135,3 +136,4 @@ static struct device *block_part(dev_t minor)
 {
 	return  &device_geometry;
 }
+
