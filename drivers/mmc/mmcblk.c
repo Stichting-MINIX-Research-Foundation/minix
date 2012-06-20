@@ -1,4 +1,5 @@
-/* This file contains a generic in memory block driver that will be hoocked to the mmc 
+/* 
+ * This file contains a generic in memory block driver that will be hooked to the mmc 
  * sub-system
  */
 #include <minix/syslib.h>
@@ -9,7 +10,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define DUMMY_SIZE_IN_BLOCKS 100
+#define DUMMY_SIZE_IN_BLOCKS 1000
 static char dummy_data[SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS];
 
 static struct device device_geometry = {
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
 {
   /* SEF startup */
   sef_startup();
-  printf("Initializing the MMB block device\n");	
+  printf("Initializing the MMC block device\n");	
   blockdriver_task(&mmc_driver);
 
   return EXIT_SUCCESS;
@@ -84,49 +85,59 @@ static int block_transfer(
   int flags             /* transfer flags */
   )
 {
-	//TODO: better understand the return value of this method
-	//libblockdriver apparently expects either the number of
-	//written/read byte or an error code so I don't understand 
-	//the return OK;
-
 	unsigned long counter;
 	iovec_t *ciov;          /* Current IO Vector */
 	struct device * dev;    /* The device used */
-	vir_bytes io_size; 
-	vir_bytes input_offset; 
+	vir_bytes io_size;      /* size to read/write to/from the iov */
+	vir_bytes bytes_written; 
 	int r;
 
 	/* get the current "device" geomerty */
 	dev = block_part(minor);
 
-	input_offset =0;
+	bytes_written =0;
 
-	if (position >  dev->dv_size) { return OK; }; /* Why is this OK??*/
+	/* are we trying to start reading past the end */
+	if (position > dev->dv_size) { return ENXIO; }; 
 
+	if (nr_req != 1){
+		printf("Number of request > 1 \n");
+	}
 	ciov = iov;
 	for( counter = 0 ; counter < nr_req ; counter ++){
-		printf("HELLO\n");	
 		assert(ciov != NULL);
+
+		/* Assume we are to tranfer the amount of data given in the 
+		 * input/output vector but ensure we are not doing i/o past 
+		 * our own boundaries 
+		 */
 		io_size = ciov->iov_size;
 
-		/* check we are not reading past the end */
-		if (position + input_offset + io_size > dev->dv_size ) {
-			io_size = dev->dv_size - position - input_offset;
+		/* check we are not reading/writing past the end */
+		if (position + bytes_written + io_size > dev->dv_size ) {
+			io_size = dev->dv_size - ( position + bytes_written );
 		};
 		if(do_write){
-			printf("DO WRITE (counter=%lu,iov_addr=%lu,position=%lu,offset=%lu and size %lu )\n",counter,ciov->iov_addr,(unsigned long) position, input_offset, io_size );
-			r=sys_safecopyfrom(endpt, ciov->iov_addr,input_offset ,(vir_bytes) dummy_data + position + input_offset,io_size);
+			/* Read io_size bytes from i/o vector starting at 0 
+			 * and write it to out buffer at the correct offset */
+			r=sys_safecopyfrom(endpt, ciov->iov_addr,0 /* offset */, 
+			                      (vir_bytes) dummy_data + position 
+					      + bytes_written, io_size);
 		} else {
-			printf("DO READ (counter=%lu,iov_addr=%lu,position=%lu,offset=%lu and size %lu )\n",counter,ciov->iov_addr,(unsigned long) position, input_offset, io_size );
-			r=sys_safecopyto(endpt, ciov->iov_addr,0 /* offset */,(vir_bytes) dummy_data  + position + input_offset ,io_size);
+			/* Read io_size bytes from our data at the correct 
+			 * offset and write it to the output buffer at 0 */
+			r=sys_safecopyto(endpt, ciov->iov_addr,0 /* offset */,
+			                    (vir_bytes) dummy_data  + position 
+					    + bytes_written , io_size);
 		}
 		if (r != OK){
-			panic("I/O copy failed: %d", r);
+			panic("I/O %s failed: %d", (do_write)?"write":"read", r);
 		}
+
 		ciov++;		
-		input_offset += io_size;
+		bytes_written += io_size;
 	}
-	return input_offset;
+	return bytes_written;
 }
 
 /*===========================================================================*
@@ -136,4 +147,3 @@ static struct device *block_part(dev_t minor)
 {
 	return  &device_geometry;
 }
-
