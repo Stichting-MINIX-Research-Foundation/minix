@@ -6,6 +6,6 @@
 PROG=	sed
 SRCS=	compile.c main.c misc.c process.c
 
-SYMLINKS=    ${BINDIR}/sed /bin/sed
+SYMLINKS?=    ${BINDIR}/sed /bin/sed
 
 .include <bsd.prog.mk>
