@@ -38,6 +38,7 @@ __RCSID("$NetBSD: map_object.c,v 1.41 2010/10/16 10:27:07 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,55 +50,27 @@ __RCSID("$NetBSD: map_object.c,v 1.41 2010/10/16 10:27:07 skrll Exp $");
 #include "debug.h"
 #include "rtld.h"
 
+#ifdef __minix
+#define munmap minix_munmap
+#endif
+
+#define MINIXVERBOSE 0
+
 static int protflags(int);	/* Elf flags -> mmap protection */
 
 #define EA_UNDEF		(~(Elf_Addr)0)
 
-#ifdef __minix
-#define mmap	minix_mmap_emulator
-#define munmap	minix_munmap
-
-/* for minix, ignore MAP_SHARED and MAP_FILE for now. */
-#define MAP_SHARED 0
-#define MAP_FILE 0
-#endif
-
-#undef MINIXVERBOSE
-
-static void * minix_mmap_emulator(void *addrhint, size_t size, int prot, int flags, int fd, off_t off)
+static void Pread(void *addr, size_t size, int fd, off_t off)
 {
-	void *ret;
-	int mapflags;
-	size_t s;
-
-	mapflags = flags & (MAP_FIXED);
-
-#ifdef MINIXVERBOSE
-	if(addrhint) {
-		fprintf(stderr, "0x%lx-0x%lx requested\n", addrhint,
-			(char *) addrhint + size);
+	int s;
+	if((s=pread(fd,addr, size, off)) < 0) {
+		_rtld_error("pread failed");
+		exit(1);
 	}
+
+#if MINIXVERBOSE
+	fprintf(stderr, "read 0x%lx bytes from offset 0x%lx to addr 0x%lx\n", size, off, addr);
 #endif
-
-	if((ret = minix_mmap(addrhint, size, PROT_READ|PROT_WRITE,
-		MAP_ANON|MAP_PRIVATE|MAP_PREALLOC|mapflags, -1, 0)) == MAP_FAILED) {
-		return ret;
-	}
-
-	if(!(mapflags & MAP_ANON)) {
-		if((s=pread(fd, ret, size, off)) <= 0) {
-			munmap(ret, size);
-			return MAP_FAILED;
-		}
-	}
-
-#ifdef MINIXVERBOSE
-	fprintf(stderr, "0x%lx-0x%lx mapped\n",
-		ret, (char *) ret + size);
-
-#endif
-
-	return ret;
 }
 
 /*
@@ -159,8 +132,17 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		obj->ino = sb->st_ino;
 	}
 
+#ifdef __minix
+	ehdr = minix_mmap(NULL, _rtld_pagesz, PROT_READ|PROT_WRITE,
+		MAP_PREALLOC|MAP_ANON, -1, (off_t)0);
+	Pread(ehdr, _rtld_pagesz, fd, 0);
+#if MINIXVERBOSE
+	fprintf(stderr, "minix mmap for header: 0x%lx\n", ehdr);
+#endif
+#else
 	ehdr = mmap(NULL, _rtld_pagesz, PROT_READ, MAP_FILE | MAP_SHARED, fd,
 	    (off_t)0);
+#endif
 	obj->ehdr = ehdr;
 	if (ehdr == MAP_FAILED) {
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
@@ -349,9 +331,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	mapbase = mmap(base_addr, mapsize, text_flags,
 	    mapflags | MAP_FILE | MAP_PRIVATE, fd, base_offset);
 #else
-	/* minix doesn't want overlapping mmap()s */
-	mapbase = mmap(base_addr, obj->textsize, text_flags,
-	    mapflags | MAP_FILE | MAP_PRIVATE, fd, base_offset);
+	mapbase = minix_mmap(base_addr, mapsize, PROT_READ|PROT_WRITE,
+	    MAP_ANON | MAP_PREALLOC, -1, 0);
+#if MINIXVERBOSE
+	fprintf(stderr, "minix mmap for whole block: 0x%lx-0x%lx\n", mapbase, mapbase+mapsize);
+#endif
+	Pread(mapbase, obj->textsize, fd, 0);
 #endif
 	if (mapbase == MAP_FAILED) {
 		_rtld_error("mmap of entire address space failed: %s",
@@ -361,13 +346,18 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 
 	/* Overlay the data segment onto the proper region. */
 	data_addr = mapbase + (data_vaddr - base_vaddr);
+#ifdef __minix
+	Pread(data_addr, data_vlimit - data_vaddr, fd, data_offset);
+#else
 	if (mmap(data_addr, data_vlimit - data_vaddr, data_flags,
 	    MAP_FILE | MAP_PRIVATE | MAP_FIXED, fd, data_offset) ==
 	    MAP_FAILED) {
 		_rtld_error("mmap of data failed: %s", xstrerror(errno));
 		goto bad;
 	}
+#endif
 
+#ifndef __minix
 	bsssize= base_vlimit - data_vlimit;
    if(bsssize > 0) {
 	/* Overlay the bss segment onto the proper region. */
@@ -384,7 +374,6 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	gap_addr = mapbase + round_up(text_vlimit - base_vaddr);
 	gap_size = data_addr - gap_addr;
 
-#ifndef __minix
 	if (gap_size != 0 && mprotect(gap_addr, gap_size, PROT_NONE) == -1) {
 		_rtld_error("mprotect of text -> data gap failed: %s",
 		    xstrerror(errno));

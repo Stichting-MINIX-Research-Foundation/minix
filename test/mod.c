@@ -18,7 +18,6 @@ long modfunction(long v1, long *argcookie, long v2) {
   }
   *argcookie = MAGIC3;
   cookie = MAGIC2;
-  atexit(exithandler);
   return MAGIC1;
 }
 
