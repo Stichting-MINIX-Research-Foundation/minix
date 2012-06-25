@@ -4,6 +4,8 @@ LIB=		lzma
 USE_SHLIBDIR=	yes
 NOLINT=		yes
 
+LIBDPLIBS+=      c        ${.CURDIR}/../../../../lib/libc
+
 .include <bsd.init.mk>
 
 # There are two different lzma.h files.
