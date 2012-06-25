@@ -1,0 +1,51 @@
+$NetBSD: README,v 1.3 2012/03/20 08:21:38 mrg Exp $
+
+GMP in NetBSD.  We need GMP for GCC >= 4.2.
+
+
+Building GMP without configure - how to port GMP build to a new platform.
+
+The GMP build doesn't map very well to normal make.  The ./configure phase
+creates a bunch of symlinks and weeds out the sources lists, and there are
+files with the same name in different subdirectories linked into the same
+final product.  All of these issues need to be dealt with.
+
+There are a few steps to this:
+
+	- run ./configure, save the output
+
+	- create src/external/gpl3/gmp/lib/libgmp/arch/${MACHINE_ARCH} dir,
+	  and copy these files into it:
+		config.h
+		config.m4
+		gmp-mparam.h
+		gmp.h
+		mp.h
+
+	  some of these files might have src/obj references.  in particular
+	  fix GMP_MPARAM_H_SUGGEST to start from ./mpn/... and make sure
+	  we #define __GMP_CC to "gcc -std=gnu99".  XXX  make this automatic
+
+
+	- parse the ./configure output and note all created symlinks
+	  for mpn.  these need to be converted into a new Makefile.inc.
+	  there is a script in this subdir build-gmp-Makefile.inc.awk
+	  that can be used to do this.  it should just work to generate
+	  the first section of Makefile.inc if fed the entire configure
+	  output.
+
+	  assembler files generally want -DOPERATION_${foo} defined for
+	  each way they are compiled or pre-processed.  the pre-processor
+	  used is m4 to parse, and we and create .s files from the .asm
+	  files that we then we feed into $CC.
+
+The amd64 port is a good reference to compare.  The trialdivtab.h
+generation may need to be moved the into libgmp/Makefile itself.
+
+
+This is still a work in progress and methods used to build may be
+changed at any time.
+
+
+mrg@netbsd.org
+- 2011/06/22

@@ -78,9 +78,10 @@ hdboot: services
 	rm -rf ${DESTDIR}/boot/minix/.temp/
 	mkdir -p ${DESTDIR}/boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
+	n=0;							\
 	for i in ${PROGRAMS};					\
 	do							\
-	let n=n+1 >/dev/null;					\
+	n=`expr $$n + 1`;					\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
 	newname="${DESTDIR}/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
 	cp $$i $$newname;					\

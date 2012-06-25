@@ -38,7 +38,10 @@ FIND_ARGS+=	\! \( -type d \( \
 
 _GNU_GET_SRC!=	${HOST_SH} ${.CURDIR}/../../external/gpl3/gcc/fetch.sh && \
 		${HOST_SH} ${.CURDIR}/../../external/gpl3/binutils/fetch.sh && \
-		${HOST_SH} ${.CURDIR}/../../gnu/dist/fetch.sh
+		${HOST_SH} ${.CURDIR}/../../gnu/dist/fetch.sh && \
+		${HOST_SH} ${.CURDIR}/../../external/lgpl2/mpc/fetch.sh && \
+		${HOST_SH} ${.CURDIR}/../../external/lgpl3/gmp/fetch.sh && \
+		${HOST_SH} ${.CURDIR}/../../external/lgpl3/mpfr/fetch.sh
 
 # Do this "find" only if actually building something.
 .if (${USETOOLS} == "yes") && empty(.MAKEFLAGS:M-V*) && \

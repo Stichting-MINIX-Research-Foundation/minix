@@ -2,6 +2,8 @@
 
 .include <bsd.own.mk>
 
+HAVE_GCC= 45	# On Minix
+
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
 
@@ -41,14 +43,11 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-pkgversion="NetBSD nb2 20111202" \
 			${VAX_CONFIGURE_ARGS} \
 			--enable-__cxa_atexit \
-			--target=i386-elf-minix \
-			--with-as="${TOOLDIR}/i386-elf-minix/bin/as" \
-			--with-ld="${TOOLDIR}/i386-elf-minix/bin/ld" \
+			--target=${MACHINE_ARCH}-elf-minix \
 			--disable-threads \
 			--disable-visibility \
 			--enable-__cxa_atexit \
 			--disable-libunwind
-#			--with-headers="/home/thomas/Documents/minix/cc3/obj/destdir.i386/usr/include"
 
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
