@@ -3,22 +3,25 @@
 # Make sure we're in our directory (i.e., where this shell script is)
 echo $0
 cd `dirname $0`
-url="http://www.mpfr.org/mpfr-current/mpfr-3.1.0.tar.bz2"
+
+# Configure fetch method
+URL="http://www.minix3.org/distfiles-minix/mpfr-3.1.0.tar.bz2"
+BACKUP_URL="http://www.mpfr.org/mpfr-current/mpfr-3.1.0.tar.bz2"
+FETCH=wget
+which curl >/dev/null
+if [ $? -eq 0 ]; then
+	FETCH="curl -O -f"
+fi
 
 # Fetch sources if not available
 if [ ! -d dist ];
 then
-        if [ ! -f mpfr-3.1.0.tar.bz2 ];
-        then
-                which curl >/dev/null
-                if [ $? -eq 0 ]; then
-                        curl -O $url
-                else
-                        # Default to wget
-                        wget $url
-                fi
-        fi
-
+        if [ ! -f mpfr-3.1.0.tar.bz2 ]; then
+		$FETCH $URL
+		if [ $? -ne 0 ]; then
+			$FETCH $BACKUP_URL
+		fi
+	fi
 
 	tar -xf mpfr-3.1.0.tar.bz2
 	mv mpfr-3.1.0 dist
