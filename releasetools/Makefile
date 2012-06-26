@@ -3,6 +3,7 @@
 .include "nbsd.config"
 
 .include <bsd.own.mk>
+.include <bsd.sys.mk>
 
 u=/usr
 MDEC=	/usr/mdec
@@ -76,7 +77,7 @@ bootable:
 
 hdboot: services
 	rm -rf ${DESTDIR}/boot/minix/.temp/
-	mkdir -p ${DESTDIR}/boot/minix/.temp
+	${INSTALL_DIR} ${DESTDIR}/boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
 	n=0;							\
 	for i in ${PROGRAMS};					\
@@ -84,18 +85,18 @@ hdboot: services
 	n=`expr $$n + 1`;					\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
 	newname="${DESTDIR}/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
-	cp $$i $$newname;					\
-	strip -s $$newname;					\
+	${INSTALL} $$i $$newname;				\
+	${STRIP} -s $$newname;					\
 	gzip $$newname;						\
 	done
 	cp ../kernel/kernel ${DESTDIR}/boot/minix/.temp/
-	strip -s ${DESTDIR}/boot/minix/.temp/kernel
+	${STRIP} -s ${DESTDIR}/boot/minix/.temp/kernel
 	if [ "${MKINSTALLBOOT}" != "no" ] ; then		\
-	sh mkboot $@;						\
-	sh ../commands/update_bootcfg/update_bootcfg.sh;	\
+	${HOST_SH} mkboot $@;					\
+	${HOST_SH} ../commands/update_bootcfg/update_bootcfg.sh;\
 	else							\
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
-	cp ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot;	\
+	${INSTALL} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot;	\
 	fi
 
 fdboot:
