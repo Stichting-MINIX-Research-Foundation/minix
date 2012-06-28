@@ -28,14 +28,14 @@ __RCSID("$NetBSD: localtime.c,v 1.54 2011/01/15 15:42:10 christos Exp $");
 #include "reentrant.h"
 
 #if defined(__weak_alias)
-__weak_alias(ctime_r,_ctime_r)
-__weak_alias(ctime_rz,_ctime_rz)
+__weak_alias(ctime_r,__ctime_r50)
+__weak_alias(ctime_rz,__ctime_rz50)
 __weak_alias(daylight,_daylight)
-__weak_alias(mktime_z,_mktime_z)
-__weak_alias(localtime_r,_localtime_r)
-__weak_alias(localtime_rz,_localtime_rz)
-__weak_alias(posix2time,_posix2time)
-__weak_alias(posix2time_z,_posix2time_z)
+__weak_alias(mktime_z,__mktime_z50)
+__weak_alias(localtime_r,__localtime_r50)
+__weak_alias(localtime_rz,__localtime_rz50)
+__weak_alias(posix2time,__posix2time50)
+__weak_alias(posix2time_z,__posix2time_z50)
 __weak_alias(tzname,_tzname)
 #endif
 

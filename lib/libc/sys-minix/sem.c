@@ -16,10 +16,6 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#ifdef __weak_alias
-__weak_alias(sem, _sem)
-#endif
-
 static int get_ipc_endpt(endpoint_t *pt)
 {
 	return minix_rs_lookup("ipc", pt);

@@ -1,6 +1,6 @@
 # $NetBSD: Makefile,v 1.8 2007/11/05 13:41:52 pooka Exp $
 
-USE_FORT?=	yes	# data driven bugs?
+USE_FORT?=	no	# data driven bugs?
 
 LIB=		refuse
 LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs

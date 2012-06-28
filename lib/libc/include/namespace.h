@@ -222,8 +222,8 @@
 #define confstr			_confstr
 #define csetexpandtc		_csetexpandtc
 #define ctermid			_ctermid
-#define ctime_r			_ctime_r
-#define ctime_rz		_ctime_rz
+#define ctime_r			__ctime_r50
+#define ctime_rz		__ctime_rz50
 #define daemon			_daemon
 #define dbopen			_dbopen
 #define devname			_devname
@@ -434,15 +434,15 @@
 #define lcong48			_lcong48
 #define llabs			_llabs
 #define lldiv			_lldiv
-#define localtime_r		_localtime_r
-#define localtime_rz		_localtime_rz
+#define localtime_r		__localtime_r50
+#define localtime_rz		__localtime_rz50
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define lseek			_lseek
 #define mergesort		_mergesort
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
-#define mktime_z		_mktime_z
+#define mktime_z		__mktime_z50
 #define mpool_close		_mpool_close
 #define mpool_filter		_mpool_filter
 #define mpool_get		_mpool_get
@@ -477,8 +477,8 @@
 #define pmap_unset		_pmap_unset
 #define pollts			_pollts
 #define popen			_popen
-#define posix2time		_posix2time
-#define posix2time_z		_posix2time_z
+#define posix2time		__posix2time50
+#define posix2time_z		__posix2time_z50
 #define pread			_pread
 #define pselect			_pselect
 #define psignal			_psignal
@@ -924,7 +924,7 @@
 #define minix_mmap _minix_mmap
 #define minix_munmap _minix_munmap
 #define minix_munmap_text _minix_munmap_text
-#define vfork _vfork
+#define vfork __vfork14
 #endif /* __minix */
 
 #endif /* __weak_alias */

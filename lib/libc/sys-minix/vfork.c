@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(vfork, _vfork)
+__weak_alias(vfork, __vfork14)
 #endif
 
 pid_t vfork()
