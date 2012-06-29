@@ -46,7 +46,7 @@ typedef struct {
 	mess_9 m_m9;
 	mess_10 m_m10;
   } m_u;
-} message;
+} message __aligned(16);
 
 /* The following defines provide names for useful members. */
 #define m1_i1  m_u.m_m1.m1i1
