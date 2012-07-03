@@ -188,9 +188,6 @@ start)
     esac
 
     echo -n "Starting hotplugging infrastructure... "
-    service up /sbin/devman
-    mount -e -t devman none /sys
-    rm -f /var/tmp/devmand_control
     rm -f /var/run/devmand.pid
     devmand -d /etc/devmand -d /usr/pkg/etc/devmand &
     echo "done."
@@ -216,8 +213,6 @@ down|stop)
     then 
     	/usr/pkg/etc/rc.d/usbd stop
     fi
-    umount -e /sys
-    service down devman
     # Tell RS server we're going down.
     service shutdown
     ;;

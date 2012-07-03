@@ -1,3 +1,12 @@
+20120703:
+	The device manager(devman) is now started automatically during the 
+	mount -a operation.  As fstab is generated during installation it is 
+	required to manually insert the following entry in fstab. Failing to 
+	do so will result in the devmand daemon to be able to open the events 
+	file in /sys.
+
+	none  /sys  devman  rw,rslabel=devman 0 0
+
 20120608:
 	New install and mk files require the following steps:
 
