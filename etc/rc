@@ -189,10 +189,6 @@ start)
 
     echo -n "Starting hotplugging infrastructure... "
     service up /sbin/devman
-    if [ ! -d /sys ]
-    then
-        mkdir /sys
-    fi
     mount -e -t devman none /sys
     rm -f /var/tmp/devmand_control
     rm -f /var/run/devmand.pid

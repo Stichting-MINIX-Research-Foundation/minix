@@ -16,6 +16,7 @@
 555  root   operator /proc
 700  root   operator /root
 755  root   operator /sbin
+755  root   operator /sys
 1777 root   operator /tmp
 755  root   operator /usr
 755  root   operator /usr/adm
