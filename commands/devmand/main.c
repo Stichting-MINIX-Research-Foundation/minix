@@ -510,6 +510,7 @@ static enum dev_type determine_type (char *path)
 
 	if (mypath == NULL) {
 		fprintf(stderr, "ERROR: out of mem\n");
+		cleanup();
 		exit(1);
 	}
 
@@ -862,7 +863,6 @@ static void main_loop()
 	char ev_path[128];
 	char buf[256];
 	int len;
-
 	FILE* fd;
 	len = strlen(args.path);
 
@@ -872,6 +872,7 @@ static void main_loop()
 
 	if (len > 128 - 7 /*len of "events" */) {
 		fprintf(stderr, "pathname to long\n");
+		cleanup();
 		exit(1);
 	}
 
@@ -885,7 +886,9 @@ static void main_loop()
 
 		fd = fopen(ev_path, "r");
 		if (fd == NULL) {
-			fprintf(stderr, "ERROR: could not open event file...\n");
+			fprintf(stderr,"devmand error: could not open event "
+				"file %s bailing out\n", ev_path);
+			cleanup();
 			exit(1);
 		}
 
