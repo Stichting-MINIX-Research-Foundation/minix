@@ -32,6 +32,7 @@ static int rs_down(char *label)
 	return system(cmd);
 }
 
+char *find_rslabel(char *args_line);
 int mount(special, name, mountflags, type, args)
 char *name, *special, *type, *args;
 int mountflags;
@@ -43,6 +44,7 @@ int mountflags;
   char path[PATH_MAX];
   char cmd[200];
   char *p;
+  char *rslabel;
   int reuse = 0;
   int use_existing = 0;
 
@@ -80,8 +82,17 @@ int mountflags;
 		}
 		sprintf(label, "fs_%.12s", p);
 	} else {
-		if (stat(name, &statbuf) < 0) return -1;
-		sprintf(label, "fs_%04x%llx", statbuf.st_dev, statbuf.st_ino);
+		/* check for a rslabel option in the arguments and try to use 
+		 * that. 
+		 */
+		rslabel = find_rslabel(args);
+		if (rslabel != NULL){
+			snprintf(label,16,rslabel);
+			free(rslabel);
+		} else {
+			if (stat(name, &statbuf) < 0) return -1;
+			sprintf(label, "fs_%04x%llx", statbuf.st_dev, statbuf.st_ino);
+		}
 	}
   } else {
 		/* label to long? */
@@ -192,3 +203,46 @@ int flags;
 
   return r;
 }
+
+char *find_rslabel(args_line)
+char *args_line;
+{
+  /**
+   * Find and return the rslabel as given as optional
+   * agument to the mount command e.g. 
+   *  mount -o rslabel=bla 
+   * or
+   *  mount -o rw,rslabel=bla 
+   * or as found in fstab
+   **/
+  char *buf, *input,*saveptr;
+  buf = input = saveptr = NULL;
+
+  if (args_line == NULL) return NULL;
+
+  /* copy the input args_line we are going to modify it*/
+  input = strndup(args_line,20);
+  if (input == NULL) /* EOM */
+	return NULL; /* it is not that bad to not find a label */
+	
+  /* locate rslabel= in the input */
+  buf = strstr(input,"rslabel=");
+  if (buf == NULL) {
+	free(input);
+	return NULL;
+  }
+
+  /* tokenise on "," starting from rslabel (e.g null terminate )*/
+  buf = strtok_r(buf,",",&saveptr);
+  /* tokenise the result again using = and take the second entry */
+  buf = strtok_r(buf,"=",&saveptr);
+  buf = strtok_r(NULL,"=",&saveptr);
+  /* buf is now either NULL if there was no second token or 
+   * the value we are searchig for 
+   */
+  if (buf != NULL)
+	buf = strdup(buf); 
+  free(input);
+  return buf;
+}
+
