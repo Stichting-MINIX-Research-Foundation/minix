@@ -36,12 +36,13 @@
 
 #if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/sys.h"
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip.h"
 #include "lwip/icmp.h"
 #include "lwip/err.h"
+#include "lwip/ip6.h"
+#include "lwip/ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,11 +157,11 @@ enum tcp_state {
  */
 #define TCP_PCB_COMMON(type) \
   type *next; /* for the linked list */ \
-  enum tcp_state state; /* TCP state */ \
-  u8_t prio; \
   void *callback_arg; \
   /* the accept callback for listen- and normal pcbs, if LWIP_CALLBACK_API */ \
   DEF_ACCEPT_CALLBACK \
+  enum tcp_state state; /* TCP state */ \
+  u8_t prio; \
   /* ports are in host byte order */ \
   u16_t local_port
 
@@ -187,21 +188,23 @@ struct tcp_pcb {
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */
+
+  /* Timers */
+  u8_t polltmr, pollinterval;
+  u8_t last_timer;
+  u32_t tmr;
+
   /* receiver variables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window available */
   u16_t rcv_ann_wnd; /* receiver window to announce */
   u32_t rcv_ann_right_edge; /* announced right edge of window */
 
-  /* Timers */
-  u32_t tmr;
-  u8_t polltmr, pollinterval;
-  
   /* Retransmission timer. */
   s16_t rtime;
-  
+
   u16_t mss;   /* maximum segment size */
-  
+
   /* RTT (round trip time) estimation variables */
   u32_t rttest; /* RTT estimate in 500ms ticks */
   u32_t rtseq;  /* sequence number being timed */
@@ -211,24 +214,25 @@ struct tcp_pcb {
   u8_t nrtx;    /* number of retransmissions */
 
   /* fast retransmit/recovery */
-  u32_t lastack; /* Highest acknowledged seqno. */
   u8_t dupacks;
-  
+  u32_t lastack; /* Highest acknowledged seqno. */
+
   /* congestion avoidance/control variables */
-  u16_t cwnd;  
+  u16_t cwnd;
   u16_t ssthresh;
 
   /* sender variables */
   u32_t snd_nxt;   /* next new seqno to be sent */
-  u16_t snd_wnd;   /* sender window */
   u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last
                              window update. */
   u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */
+  u16_t snd_wnd;   /* sender window */
+  u16_t snd_wnd_max; /* the maximum sender window announced by the remote host */
 
   u16_t acked;
-  
+
   u16_t snd_buf;   /* Available buffer space for sending (in bytes). */
-#define TCP_SNDQUEUELEN_OVERFLOW (0xffff-3)
+#define TCP_SNDQUEUELEN_OVERFLOW (0xffffU-3)
   u16_t snd_queuelen; /* Available buffer space for sending (in tcp_segs). */
 
 #if TCP_OVERSIZE
@@ -271,7 +275,7 @@ struct tcp_pcb {
 #endif /* LWIP_TCP_KEEPALIVE */
   
   /* Persist timer counter */
-  u32_t persist_cnt;
+  u8_t persist_cnt;
   /* Persist timer back-off */
   u8_t persist_backoff;
 
@@ -279,7 +283,7 @@ struct tcp_pcb {
   u8_t keep_cnt_sent;
 };
 
-struct tcp_pcb_listen {  
+struct tcp_pcb_listen {
 /* Common members of all PCB types */
   IP_PCB;
 /* Protocol specific PCB members */
@@ -289,6 +293,9 @@ struct tcp_pcb_listen {
   u8_t backlog;
   u8_t accepts_pending;
 #endif /* TCP_LISTEN_BACKLOG */
+#if LWIP_IPV6
+  u8_t accept_any_ip_version;
+#endif /* LWIP_IPV6 */
 };
 
 #if LWIP_EVENT_API
@@ -333,7 +340,7 @@ void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
   (((struct tcp_pcb_listen *)(pcb))->accepts_pending--); } while(0)
 #else  /* TCP_LISTEN_BACKLOG */
 #define          tcp_accepted(pcb) LWIP_ASSERT("pcb->state == LISTEN (called for wrong pcb?)", \
-                                               pcb->state == LISTEN)
+                                               (pcb)->state == LISTEN)
 #endif /* TCP_LISTEN_BACKLOG */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
@@ -366,6 +373,19 @@ err_t            tcp_output  (struct tcp_pcb *pcb);
 
 
 const char* tcp_debug_state_str(enum tcp_state s);
+
+#if LWIP_IPV6
+struct tcp_pcb * tcp_new_ip6 (void);
+#define          tcp_bind_ip6(pcb, ip6addr, port) \
+                   tcp_bind(pcb, ip6_2_ip(ip6addr), port)
+#define          tcp_connect_ip6(pcb, ip6addr, port, connected) \
+                   tcp_connect(pcb, ip6_2_ip(ip6addr), port, connected)
+struct tcp_pcb * tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
+#define          tcp_listen_dual(pcb) tcp_listen_dual_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
+#else /* LWIP_IPV6 */
+#define          tcp_listen_dual_with_backlog(pcb, backlog) tcp_listen_with_backlog(pcb, backlog)
+#define          tcp_listen_dual(pcb) tcp_listen(pcb)
+#endif /* LWIP_IPV6 */
 
 
 #ifdef __cplusplus

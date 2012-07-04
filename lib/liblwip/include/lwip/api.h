@@ -73,23 +73,50 @@ extern "C" {
 /** If a nonblocking write has been rejected before, poll_tcp needs to
     check if the netconn is writable again */
 #define NETCONN_FLAG_CHECK_WRITESPACE         0x10
+#if LWIP_IPV6
+/** If this flag is set then only IPv6 communication is allowed on the
+    netconn. As per RFC#3493 this features defaults to OFF allowing
+    dual-stack usage by default. */
+#define NETCONN_FLAG_IPV6_V6ONLY              0x20
+#endif /* LWIP_IPV6 */
 
 
 /* Helpers to process several netconn_types by the same code */
-#define NETCONNTYPE_GROUP(t)    (t&0xF0)
-#define NETCONNTYPE_DATAGRAM(t) (t&0xE0)
+#define NETCONNTYPE_GROUP(t)         ((t)&0xF0)
+#define NETCONNTYPE_DATAGRAM(t)      ((t)&0xE0)
+#if LWIP_IPV6
+#define NETCONN_TYPE_IPV6            0x08
+#define NETCONNTYPE_ISIPV6(t)        ((t)&0x08)
+#define NETCONNTYPE_ISUDPLITE(t)     (((t)&0xF7) == NETCONN_UDPLITE)
+#define NETCONNTYPE_ISUDPNOCHKSUM(t) (((t)&0xF7) == NETCONN_UDPNOCHKSUM)
+#else /* LWIP_IPV6 */
+#define NETCONNTYPE_ISUDPLITE(t)     ((t) == NETCONN_UDPLITE)
+#define NETCONNTYPE_ISUDPNOCHKSUM(t) ((t) == NETCONN_UDPNOCHKSUM)
+#endif /* LWIP_IPV6 */
 
 /** Protocol family and type of the netconn */
 enum netconn_type {
-  NETCONN_INVALID    = 0,
+  NETCONN_INVALID     = 0,
   /* NETCONN_TCP Group */
-  NETCONN_TCP        = 0x10,
+  NETCONN_TCP         = 0x10,
+#if LWIP_IPV6
+  NETCONN_TCP_IPV6    = NETCONN_TCP | NETCONN_TYPE_IPV6 /* 0x18 */,
+#endif /* LWIP_IPV6 */
   /* NETCONN_UDP Group */
-  NETCONN_UDP        = 0x20,
-  NETCONN_UDPLITE    = 0x21,
-  NETCONN_UDPNOCHKSUM= 0x22,
+  NETCONN_UDP         = 0x20,
+  NETCONN_UDPLITE     = 0x21,
+  NETCONN_UDPNOCHKSUM = 0x22,
+#if LWIP_IPV6
+  NETCONN_UDP_IPV6         = NETCONN_UDP | NETCONN_TYPE_IPV6 /* 0x28 */,
+  NETCONN_UDPLITE_IPV6     = NETCONN_UDPLITE | NETCONN_TYPE_IPV6 /* 0x29 */,
+  NETCONN_UDPNOCHKSUM_IPV6 = NETCONN_UDPNOCHKSUM | NETCONN_TYPE_IPV6 /* 0x2a */,
+#endif /* LWIP_IPV6 */
   /* NETCONN_RAW Group */
-  NETCONN_RAW        = 0x40
+  NETCONN_RAW         = 0x40
+#if LWIP_IPV6
+  ,
+  NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6 /* 0x48 */
+#endif /* LWIP_IPV6 */
 };
 
 /** Current state of the netconn. Non-TCP netconns are always
@@ -111,13 +138,13 @@ enum netconn_evt {
   NETCONN_EVT_ERROR
 };
 
-#if LWIP_IGMP
+#if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
 /** Used for netconn_join_leave_group() */
 enum netconn_igmp {
   NETCONN_JOIN,
   NETCONN_LEAVE
 };
-#endif /* LWIP_IGMP */
+#endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
 /* forward-declare some structs to avoid to include their headers */
 struct ip_pcb;
@@ -159,6 +186,11 @@ struct netconn {
 #if LWIP_SOCKET
   int socket;
 #endif /* LWIP_SOCKET */
+#if LWIP_SO_SNDTIMEO
+  /** timeout to wait for sending data (which means enqueueing data for sending
+      in internal buffers) */
+  s32_t send_timeout;
+#endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVTIMEO
   /** timeout to wait for new data to be received
       (or connections to arrive for listening netconns) */
@@ -168,12 +200,11 @@ struct netconn {
   /** maximum amount of bytes queued in recvmbox
       not used for TCP: adjust TCP_WND instead! */
   int recv_bufsize;
-#endif /* LWIP_SO_RCVBUF */
   /** number of bytes currently in recvmbox to be received,
       tested against recv_bufsize to limit bytes on recvmbox
-      for UDP and RAW
-      @todo: should only be necessary with LWIP_SO_RCVBUF==1 */
+      for UDP and RAW, used for FIONREAD */
   s16_t recv_avail;
+#endif /* LWIP_SO_RCVBUF */
   /** flags holding more netconn-internal state, see NETCONN_FLAG_* defines */
   u8_t flags;
 #if LWIP_TCP
@@ -231,18 +262,34 @@ void    netconn_recved(struct netconn *conn, u32_t length);
 err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
                        ip_addr_t *addr, u16_t port);
 err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
-err_t   netconn_write(struct netconn *conn, const void *dataptr, size_t size,
-                      u8_t apiflags);
+err_t   netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
+                             u8_t apiflags, size_t *bytes_written);
+#define netconn_write(conn, dataptr, size, apiflags) \
+          netconn_write_partly(conn, dataptr, size, apiflags, NULL)
 err_t   netconn_close(struct netconn *conn);
 err_t   netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx);
 
-#if LWIP_IGMP
+#if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
 err_t   netconn_join_leave_group(struct netconn *conn, ip_addr_t *multiaddr,
                                  ip_addr_t *netif_addr, enum netconn_igmp join_or_leave);
-#endif /* LWIP_IGMP */
+#endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 #if LWIP_DNS
 err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #endif /* LWIP_DNS */
+#if LWIP_IPV6
+
+#define netconn_bind_ip6(conn, ip6addr, port) (NETCONNTYPE_ISIPV6((conn)->type) ? \
+        netconn_bind(conn, ip6_2_ip(ip6addr), port) : ERR_VAL)
+#define netconn_connect_ip6(conn, ip6addr, port) (NETCONNTYPE_ISIPV6((conn)->type) ? \
+        netconn_connect(conn, ip6_2_ip(ip6addr), port) : ERR_VAL)
+#define netconn_sendto_ip6(conn, buf, ip6addr, port) (NETCONNTYPE_ISIPV6((conn)->type) ? \
+        netconn_sendto(conn, buf, ip6_2_ip(ip6addr), port) : ERR_VAL)
+#if LWIP_IPV6_MLD
+#define netconn_join_leave_group_ip6(conn, multiaddr, srcaddr, join_or_leave) (NETCONNTYPE_ISIPV6((conn)->type) ? \
+        netconn_join_leave_group(conn, ip6_2_ip(multiaddr), ip6_2_ip(srcaddr), join_or_leave) :\
+        ERR_VAL)
+#endif /* LWIP_IPV6_MLD*/
+#endif /* LWIP_IPV6 */
 
 #define netconn_err(conn)               ((conn)->last_err)
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
@@ -263,6 +310,12 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 /** TCP: Get the no-auto-recved status of netconn calls (see NETCONN_FLAG_NO_AUTO_RECVED) */
 #define netconn_get_noautorecved(conn)        (((conn)->flags & NETCONN_FLAG_NO_AUTO_RECVED) != 0)
 
+#if LWIP_SO_SNDTIMEO
+/** Set the send timeout in milliseconds */
+#define netconn_set_sendtimeout(conn, timeout)      ((conn)->send_timeout = (timeout))
+/** Get the send timeout in milliseconds */
+#define netconn_get_sendtimeout(conn)               ((conn)->send_timeout)
+#endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
 /** Set the receive timeout in milliseconds */
 #define netconn_set_recvtimeout(conn, timeout)      ((conn)->recv_timeout = (timeout))

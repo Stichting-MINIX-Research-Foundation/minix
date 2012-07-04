@@ -39,6 +39,7 @@
 #include "lwip/err.h"
 
 #include "lwip/ip_addr.h"
+#include "lwip/ip6_addr.h"
 
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
@@ -48,6 +49,9 @@ struct dhcp;
 #if LWIP_AUTOIP
 struct autoip;
 #endif
+#if LWIP_IPV6_DHCP6
+#include "lwip/dhcp6.h"
+#endif /* LWIP_IPV6_DHCP6 */
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,6 +121,18 @@ typedef err_t (*netif_input_fn)(struct pbuf *p, struct netif *inp);
  */
 typedef err_t (*netif_output_fn)(struct netif *netif, struct pbuf *p,
        ip_addr_t *ipaddr);
+#if LWIP_IPV6
+/** Function prototype for netif->output_ip6 functions. Called by lwIP when a packet
+ * shall be sent. For ethernet netif, set this to 'nd_output' and set
+ * 'linkoutput'.
+ *
+ * @param netif The netif which shall send a packet
+ * @param p The packet to send (p->payload points to IP header)
+ * @param ipaddr The IPv6 address to which the packet shall be sent
+ */
+typedef err_t (*netif_output_ip6_fn)(struct netif *netif, struct pbuf *p,
+       ip6_addr_t *ipaddr);
+#endif /* LWIP_IPV6 */
 /** Function prototype for netif->linkoutput functions. Only used for ethernet
  * netifs. This function is called by ARP when a packet shall be sent.
  *
@@ -129,6 +145,11 @@ typedef void (*netif_status_callback_fn)(struct netif *netif);
 /** Function prototype for netif igmp_mac_filter functions */
 typedef err_t (*netif_igmp_mac_filter_fn)(struct netif *netif,
        ip_addr_t *group, u8_t action);
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+/** Function prototype for netif mld_mac_filter functions */
+typedef err_t (*netif_mld_mac_filter_fn)(struct netif *netif,
+       ip6_addr_t *group, u8_t action);
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
@@ -142,6 +163,13 @@ struct netif {
   ip_addr_t netmask;
   ip_addr_t gw;
 
+#if LWIP_IPV6
+  /** Array of IPv6 addresses for this netif. */
+  ip6_addr_t ip6_addr[LWIP_IPV6_NUM_ADDRESSES];
+  /** The state of each IPv6 address (Tentative, Preferred, etc).
+   * @see ip6_addr.h */
+  u8_t ip6_addr_state[LWIP_IPV6_NUM_ADDRESSES];
+#endif /* LWIP_IPV6 */
   /** This function is called by the network device driver
    *  to pass a packet up the TCP/IP stack. */
   netif_input_fn input;
@@ -153,6 +181,12 @@ struct netif {
    *  to send a packet on the interface. This function outputs
    *  the pbuf as-is on the link medium. */
   netif_linkoutput_fn linkoutput;
+#if LWIP_IPV6
+  /** This function is called by the IPv6 module when it wants
+   *  to send a packet on the interface. This function typically
+   *  first resolves the hardware address, then sends the packet. */
+  netif_output_ip6_fn output_ip6;
+#endif /* LWIP_IPV6 */
 #if LWIP_NETIF_STATUS_CALLBACK
   /** This function is called when the netif state is set to up or down
    */
@@ -163,6 +197,10 @@ struct netif {
    */
   netif_status_callback_fn link_callback;
 #endif /* LWIP_NETIF_LINK_CALLBACK */
+#if LWIP_NETIF_REMOVE_CALLBACK
+  /** This function is called when the netif has been removed */
+  netif_status_callback_fn remove_callback;
+#endif /* LWIP_NETIF_REMOVE_CALLBACK */
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
   void *state;
@@ -174,6 +212,18 @@ struct netif {
   /** the AutoIP client state information for this netif */
   struct autoip *autoip;
 #endif
+#if LWIP_IPV6_AUTOCONFIG
+  /** is this netif enabled for IPv6 autoconfiguration */
+  u8_t ip6_autoconfig_enabled;
+#endif /* LWIP_IPV6_AUTOCONFIG */
+#if LWIP_IPV6_SEND_ROUTER_SOLICIT
+  /** Number of Router Solicitation messages that remain to be sent. */
+  u8_t rs_count;
+#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
+#if LWIP_IPV6_DHCP6
+  /** the DHCPv6 client state information for this netif */
+  struct dhcp6 *dhcp6;
+#endif /* LWIP_IPV6_DHCP6 */
 #if LWIP_NETIF_HOSTNAME
   /* the hostname for this netif, NULL is a valid value */
   char*  hostname;
@@ -208,10 +258,15 @@ struct netif {
   u32_t ifoutdiscards;
 #endif /* LWIP_SNMP */
 #if LWIP_IGMP
-  /** This function could be called to add or delete a entry in the multicast
+  /** This function could be called to add or delete an entry in the multicast
       filter table of the ethernet MAC.*/
   netif_igmp_mac_filter_fn igmp_mac_filter;
 #endif /* LWIP_IGMP */
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+  /** This function could be called to add or delete an entry in the IPv6 multicast
+      filter table of the ethernet MAC. */
+  netif_mld_mac_filter_fn mld_mac_filter;
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 #if LWIP_NETIF_HWADDRHINT
   u8_t *addr_hint;
 #endif /* LWIP_NETIF_HWADDRHINT */
@@ -280,6 +335,9 @@ void netif_set_down(struct netif *netif);
 #if LWIP_NETIF_STATUS_CALLBACK
 void netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback);
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
+#if LWIP_NETIF_REMOVE_CALLBACK
+void netif_set_remove_callback(struct netif *netif, netif_status_callback_fn remove_callback);
+#endif /* LWIP_NETIF_REMOVE_CALLBACK */
 
 void netif_set_link_up(struct netif *netif);
 void netif_set_link_down(struct netif *netif);
@@ -307,6 +365,20 @@ void netif_poll(struct netif *netif);
 void netif_poll_all(void);
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
+
+#if LWIP_IPV6
+#define netif_ip6_addr(netif, i)  (&((netif)->ip6_addr[(i)]))
+#define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[(i)])
+#define netif_ip6_addr_set_state(netif, i, state)  ((netif)->ip6_addr_state[(i)] = (state))
+s8_t netif_matches_ip6_addr(struct netif * netif, ip6_addr_t * ip6addr);
+void netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit);
+#endif /* LWIP_IPV6 */
+
+#if LWIP_NETIF_HWADDRHINT
+#define NETIF_SET_HWADDRHINT(netif, hint) ((netif)->addr_hint = (hint))
+#else /* LWIP_NETIF_HWADDRHINT */
+#define NETIF_SET_HWADDRHINT(netif, hint)
+#endif /* LWIP_NETIF_HWADDRHINT */
 
 #ifdef __cplusplus
 }

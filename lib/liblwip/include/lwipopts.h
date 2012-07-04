@@ -235,7 +235,7 @@
  * interfaces. If you are going to run lwIP on a device with only one network
  * interface, define this to 0.
  */
-#define IP_FORWARD                      0
+#define IP_FORWARD                      1
 
 /**
  * IP_OPTIONS: Defines the behavior for IP options.
