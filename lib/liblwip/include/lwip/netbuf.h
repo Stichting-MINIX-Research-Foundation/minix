@@ -35,6 +35,7 @@
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
+#include "lwip/ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +48,7 @@ extern "C" {
 
 struct netbuf {
   struct pbuf *p, *ptr;
-  ip_addr_t addr;
+  ipX_addr_t addr;
   u16_t port;
 #if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
 #if LWIP_CHECKSUM_ON_COPY
@@ -55,7 +56,7 @@ struct netbuf {
 #endif /* LWIP_CHECKSUM_ON_COPY */
   u16_t toport_chksum;
 #if LWIP_NETBUF_RECVINFO
-  ip_addr_t toaddr;
+  ipX_addr_t toaddr;
 #endif /* LWIP_NETBUF_RECVINFO */
 #endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */
 };
@@ -81,18 +82,28 @@ void              netbuf_first    (struct netbuf *buf);
 #define netbuf_copy(buf,dataptr,len) netbuf_copy_partial(buf, dataptr, len, 0)
 #define netbuf_take(buf, dataptr, len) pbuf_take((buf)->p, dataptr, len)
 #define netbuf_len(buf)              ((buf)->p->tot_len)
-#define netbuf_fromaddr(buf)         (&((buf)->addr))
-#define netbuf_set_fromaddr(buf, fromaddr) ip_addr_set((&(buf)->addr), fromaddr)
+#define netbuf_fromaddr(buf)         (ipX_2_ip(&((buf)->addr)))
+#define netbuf_set_fromaddr(buf, fromaddr) ip_addr_set(ipX_2_ip(&((buf)->addr)), fromaddr)
 #define netbuf_fromport(buf)         ((buf)->port)
 #if LWIP_NETBUF_RECVINFO
-#define netbuf_destaddr(buf)         (&((buf)->toaddr))
-#define netbuf_set_destaddr(buf, destaddr) ip_addr_set((&(buf)->addr), destaddr)
+#define netbuf_destaddr(buf)         (ipX_2_ip(&((buf)->toaddr)))
+#define netbuf_set_destaddr(buf, destaddr) ip_addr_set(ipX_2_ip(&((buf)->toaddr)), destaddr)
 #define netbuf_destport(buf)         (((buf)->flags & NETBUF_FLAG_DESTADDR) ? (buf)->toport_chksum : 0)
 #endif /* LWIP_NETBUF_RECVINFO */
 #if LWIP_CHECKSUM_ON_COPY
 #define netbuf_set_chksum(buf, chksum) do { (buf)->flags = NETBUF_FLAG_CHKSUM; \
                                             (buf)->toport_chksum = chksum; } while(0)
 #endif /* LWIP_CHECKSUM_ON_COPY */
+
+#if LWIP_IPV6
+#define netbuf_fromaddr_ip6(buf)         (ipX_2_ip6(&((buf)->addr)))
+#define netbuf_set_fromaddr_ip6(buf, fromaddr) ip6_addr_set(ipX_2_ip6(&((buf)->addr)), fromaddr)
+#define netbuf_destaddr_ip6(buf)         (ipX_2_ip6(&((buf)->toaddr)))
+#define netbuf_set_destaddr_ip6(buf, destaddr) ip6_addr_set(ipX_2_ip6(&((buf)->toaddr)), destaddr)
+#endif /* LWIP_IPV6 */
+
+#define netbuf_fromaddr_ipX(buf)         (&((buf)->addr))
+#define netbuf_destaddr_ipX(buf)         (&((buf)->toaddr))
 
 #ifdef __cplusplus
 }

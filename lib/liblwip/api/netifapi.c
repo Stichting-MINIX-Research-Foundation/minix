@@ -41,8 +41,8 @@
 /**
  * Call netif_add() inside the tcpip_thread context.
  */
-void
-do_netifapi_netif_add(struct netifapi_msg_msg *msg)
+static void
+netifapi_do_netif_add(struct netifapi_msg_msg *msg)
 {
   if (!netif_add( msg->netif,
                   msg->msg.add.ipaddr,
@@ -61,8 +61,8 @@ do_netifapi_netif_add(struct netifapi_msg_msg *msg)
 /**
  * Call netif_set_addr() inside the tcpip_thread context.
  */
-void
-do_netifapi_netif_set_addr(struct netifapi_msg_msg *msg)
+static void
+netifapi_do_netif_set_addr(struct netifapi_msg_msg *msg)
 {
   netif_set_addr( msg->netif,
                   msg->msg.add.ipaddr,
@@ -76,8 +76,8 @@ do_netifapi_netif_set_addr(struct netifapi_msg_msg *msg)
  * Call the "errtfunc" (or the "voidfunc" if "errtfunc" is NULL) inside the
  * tcpip_thread context.
  */
-void
-do_netifapi_netif_common(struct netifapi_msg_msg *msg)
+static void
+netifapi_do_netif_common(struct netifapi_msg_msg *msg)
 {
   if (msg->msg.common.errtfunc != NULL) {
     msg->err = msg->msg.common.errtfunc(msg->netif);
@@ -104,7 +104,7 @@ netifapi_netif_add(struct netif *netif,
                    netif_input_fn input)
 {
   struct netifapi_msg msg;
-  msg.function = do_netifapi_netif_add;
+  msg.function = netifapi_do_netif_add;
   msg.msg.netif = netif;
   msg.msg.msg.add.ipaddr  = ipaddr;
   msg.msg.msg.add.netmask = netmask;
@@ -129,7 +129,7 @@ netifapi_netif_set_addr(struct netif *netif,
                         ip_addr_t *gw)
 {
   struct netifapi_msg msg;
-  msg.function = do_netifapi_netif_set_addr;
+  msg.function = netifapi_do_netif_set_addr;
   msg.msg.netif = netif;
   msg.msg.msg.add.ipaddr  = ipaddr;
   msg.msg.msg.add.netmask = netmask;
@@ -149,7 +149,7 @@ netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
                        netifapi_errt_fn errtfunc)
 {
   struct netifapi_msg msg;
-  msg.function = do_netifapi_netif_common;
+  msg.function = netifapi_do_netif_common;
   msg.msg.netif = netif;
   msg.msg.msg.common.voidfunc = voidfunc;
   msg.msg.msg.common.errtfunc = errtfunc;

@@ -1,6 +1,6 @@
 LIB = lwip
 
-CPPFLAGS += -I${.CURDIR}/include/ -D_SYSTEM
+CPPFLAGS += -I${.CURDIR}/include/ -I${.CURDIR}/include/ipv4 -I${.CURDIR}/include/ipv6 -D_SYSTEM
 
 #.include "${.CURDIR}/api/Makefile.inc"
 .include "${.CURDIR}/core/Makefile.inc"
@@ -9,3 +9,4 @@ CPPFLAGS += -I${.CURDIR}/include/ -D_SYSTEM
 SRCS += sys_arch.c
 
 .include <bsd.lib.mk>
+.include <bsd.own.mk>

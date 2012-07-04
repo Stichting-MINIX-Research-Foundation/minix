@@ -70,12 +70,15 @@ struct pbuf * ip_reass(struct pbuf *p);
 /** A custom pbuf that holds a reference to another pbuf, which is freed
  * when this custom pbuf is freed. This is used to create a custom PBUF_REF
  * that points into the original pbuf. */
+#ifndef __LWIP_PBUF_CUSTOM_REF__
+#define __LWIP_PBUF_CUSTOM_REF__
 struct pbuf_custom_ref {
   /** 'base class' */
   struct pbuf_custom pc;
   /** pointer to the original pbuf that is referenced */
   struct pbuf *original;
 };
+#endif /* __LWIP_PBUF_CUSTOM_REF__ */
 #endif /* !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF */
 
 err_t ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest);

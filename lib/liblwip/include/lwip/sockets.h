@@ -42,6 +42,7 @@
 
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
+#include "lwip/inet6.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,17 +54,34 @@ struct sockaddr_in {
   u8_t sin_family;
   u16_t sin_port;
   struct in_addr sin_addr;
-  char sin_zero[8];
+#define SIN_ZERO_LEN 8
+  char sin_zero[SIN_ZERO_LEN];
 };
+
+#if LWIP_IPV6
+struct sockaddr_in6 {
+  u8_t sin6_len;             /* length of this structure */
+  u8_t sin6_family;          /* AF_INET6                 */
+  u16_t sin6_port;           /* Transport layer port #   */
+  u32_t sin6_flowinfo;       /* IPv6 flow information    */
+  struct in6_addr sin6_addr; /* IPv6 address             */
+};
+#endif /* LWIP_IPV6 */
 
 struct sockaddr {
   u8_t sa_len;
   u8_t sa_family;
-  u16_t sa_data[14];
+#if LWIP_IPV6
+  u8_t sa_data[22];
+#else /* LWIP_IPV6 */
+  u8_t sa_data[14];
+#endif /* LWIP_IPV6 */
 };
 
-#ifndef socklen_t
-#  define socklen_t u32_t
+/* If your port already typedef's socklen_t, define SOCKLEN_T_DEFINED
+   to prevent this code from redefining it. */
+#if !defined(socklen_t) && !defined(SOCKLEN_T_DEFINED)
+typedef u32_t socklen_t;
 #endif
 
 /* Socket protocol types (TCP/UDP/RAW) */
@@ -118,12 +136,21 @@ struct linger {
 
 #define AF_UNSPEC       0
 #define AF_INET         2
+#if LWIP_IPV6
+#define AF_INET6        10
+#else /* LWIP_IPV6 */
+#define AF_INET6        AF_UNSPEC
+#endif /* LWIP_IPV6 */
 #define PF_INET         AF_INET
+#define PF_INET6        AF_INET6
 #define PF_UNSPEC       AF_UNSPEC
 
 #define IPPROTO_IP      0
 #define IPPROTO_TCP     6
 #define IPPROTO_UDP     17
+#if LWIP_IPV6
+#define IPPROTO_IPV6    41
+#endif /* LWIP_IPV6 */
 #define IPPROTO_UDPLITE 136
 
 /* Flags we can use with send and recv. */
@@ -150,6 +177,13 @@ struct linger {
 #define TCP_KEEPINTVL  0x04    /* set pcb->keep_intvl - Use seconds for get/setsockopt */
 #define TCP_KEEPCNT    0x05    /* set pcb->keep_cnt   - Use number of probes sent for get/setsockopt */
 #endif /* LWIP_TCP */
+
+#if LWIP_IPV6
+/*
+ * Options for level IPPROTO_IPV6
+ */
+#define IPV6_V6ONLY 27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
+#endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE
 /*
@@ -280,9 +314,9 @@ typedef struct ip_mreq {
 #endif
 
 #ifndef SHUT_RD
-  #define SHUT_RD   1
-  #define SHUT_WR   2
-  #define SHUT_RDWR 3
+  #define SHUT_RD   0
+  #define SHUT_WR   1
+  #define SHUT_RDWR 2
 #endif
 
 /* FD_SET used for lwip_select */
@@ -363,6 +397,7 @@ int lwip_fcntl(int s, int cmd, int val);
 #define read(a,b,c)           lwip_read(a,b,c)
 #define write(a,b,c)          lwip_write(a,b,c)
 #define close(s)              lwip_close(s)
+#define fcntl(a,b,c)          lwip_fcntl(a,b,c)
 #endif /* LWIP_POSIX_SOCKETS_IO_NAMES */
 
 #endif /* LWIP_COMPAT_SOCKETS */
