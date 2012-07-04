@@ -50,9 +50,9 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
-#include "lwip/sys.h"
-#include <lwip/stats.h>
-#include <lwip/snmp.h>
+#include "lwip/stats.h"
+#include "lwip/snmp.h"
+#include "lwip/ethip6.h"
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
 
@@ -239,6 +239,7 @@ ethernetif_input(struct netif *netif)
   switch (htons(ethhdr->type)) {
   /* IP or ARP packet? */
   case ETHTYPE_IP:
+  case ETHTYPE_IPV6:
   case ETHTYPE_ARP:
 #if PPPOE_SUPPORT
   /* PPPoE packet? */
@@ -305,6 +306,9 @@ ethernetif_init(struct netif *netif)
    * from it if you have to do some checks before sending (e.g. if link
    * is available...) */
   netif->output = etharp_output;
+#if LWIP_IPV6
+  netif->output_ip6 = ethip6_output;
+#endif /* LWIP_IPV6 */
   netif->linkoutput = low_level_output;
   
   ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);

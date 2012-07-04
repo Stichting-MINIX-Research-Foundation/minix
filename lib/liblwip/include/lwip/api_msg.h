@@ -48,9 +48,10 @@
 extern "C" {
 #endif
 
+/* For the netconn API, these values are use as a bitmask! */
 #define NETCONN_SHUT_RD   1
 #define NETCONN_SHUT_WR   2
-#define NETCONN_SHUT_RDWR 3
+#define NETCONN_SHUT_RDWR (NETCONN_SHUT_RD | NETCONN_SHUT_WR)
 
 /* IP addresses and port numbers are expected to be in
  * the same byte order as in the corresponding pcb.
@@ -66,45 +67,48 @@ struct api_msg_msg {
   err_t err;
   /** Depending on the executed function, one of these union members is used */
   union {
-    /** used for do_send */
+    /** used for lwip_netconn_do_send */
     struct netbuf *b;
-    /** used for do_newconn */
+    /** used for lwip_netconn_do_newconn */
     struct {
       u8_t proto;
     } n;
-    /** used for do_bind and do_connect */
+    /** used for lwip_netconn_do_bind and lwip_netconn_do_connect */
     struct {
       ip_addr_t *ipaddr;
       u16_t port;
     } bc;
-    /** used for do_getaddr */
+    /** used for lwip_netconn_do_getaddr */
     struct {
-      ip_addr_t *ipaddr;
+      ipX_addr_t *ipaddr;
       u16_t *port;
       u8_t local;
     } ad;
-    /** used for do_write */
+    /** used for lwip_netconn_do_write */
     struct {
       const void *dataptr;
       size_t len;
       u8_t apiflags;
+#if LWIP_SO_SNDTIMEO
+      u32_t time_started;
+#endif /* LWIP_SO_SNDTIMEO */
     } w;
-    /** used for do_recv */
+    /** used for lwip_netconn_do_recv */
     struct {
       u32_t len;
     } r;
-    /** used for do_close (/shutdown) */
+    /** used for lwip_netconn_do_close (/shutdown) */
     struct {
       u8_t shut;
     } sd;
-#if LWIP_IGMP
-    /** used for do_join_leave_group */
+#if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
+    /** used for lwip_netconn_do_join_leave_group */
     struct {
-      ip_addr_t *multiaddr;
-      ip_addr_t *netif_addr;
+      ipX_addr_t *multiaddr;
+      ipX_addr_t *netif_addr;
       enum netconn_igmp join_or_leave;
     } jl;
-#endif /* LWIP_IGMP */
+#endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 #if TCP_LISTEN_BACKLOG
     struct {
       u8_t backlog;
@@ -124,9 +128,9 @@ struct api_msg {
 };
 
 #if LWIP_DNS
-/** As do_gethostbyname requires more arguments but doesn't require a netconn,
+/** As lwip_netconn_do_gethostbyname requires more arguments but doesn't require a netconn,
     it has its own struct (to avoid struct api_msg getting bigger than necessary).
-    do_gethostbyname must be called using tcpip_callback instead of tcpip_apimsg
+    lwip_netconn_do_gethostbyname must be called using tcpip_callback instead of tcpip_apimsg
     (see netconn_gethostbyname). */
 struct dns_api_msg {
   /** Hostname to query or dotted IP address string */
@@ -141,24 +145,24 @@ struct dns_api_msg {
 };
 #endif /* LWIP_DNS */
 
-void do_newconn         ( struct api_msg_msg *msg);
-void do_delconn         ( struct api_msg_msg *msg);
-void do_bind            ( struct api_msg_msg *msg);
-void do_connect         ( struct api_msg_msg *msg);
-void do_disconnect      ( struct api_msg_msg *msg);
-void do_listen          ( struct api_msg_msg *msg);
-void do_send            ( struct api_msg_msg *msg);
-void do_recv            ( struct api_msg_msg *msg);
-void do_write           ( struct api_msg_msg *msg);
-void do_getaddr         ( struct api_msg_msg *msg);
-void do_close           ( struct api_msg_msg *msg);
-void do_shutdown        ( struct api_msg_msg *msg);
-#if LWIP_IGMP
-void do_join_leave_group( struct api_msg_msg *msg);
-#endif /* LWIP_IGMP */
+void lwip_netconn_do_newconn         ( struct api_msg_msg *msg);
+void lwip_netconn_do_delconn         ( struct api_msg_msg *msg);
+void lwip_netconn_do_bind            ( struct api_msg_msg *msg);
+void lwip_netconn_do_connect         ( struct api_msg_msg *msg);
+void lwip_netconn_do_disconnect      ( struct api_msg_msg *msg);
+void lwip_netconn_do_listen          ( struct api_msg_msg *msg);
+void lwip_netconn_do_send            ( struct api_msg_msg *msg);
+void lwip_netconn_do_recv            ( struct api_msg_msg *msg);
+void lwip_netconn_do_write           ( struct api_msg_msg *msg);
+void lwip_netconn_do_getaddr         ( struct api_msg_msg *msg);
+void lwip_netconn_do_close           ( struct api_msg_msg *msg);
+void lwip_netconn_do_shutdown        ( struct api_msg_msg *msg);
+#if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
+void lwip_netconn_do_join_leave_group( struct api_msg_msg *msg);
+#endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
 #if LWIP_DNS
-void do_gethostbyname(void *arg);
+void lwip_netconn_do_gethostbyname(void *arg);
 #endif /* LWIP_DNS */
 
 struct netconn* netconn_alloc(enum netconn_type t, netconn_callback callback);

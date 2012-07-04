@@ -40,6 +40,7 @@
 #include "lwip/netif.h"
 #include "lwip/ip_addr.h"
 #include "lwip/ip.h"
+#include "lwip/ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,6 +88,26 @@ struct udp_pcb;
 typedef void (*udp_recv_fn)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     ip_addr_t *addr, u16_t port);
 
+#if LWIP_IPV6
+/** Function prototype for udp pcb IPv6 receive callback functions
+ * The callback is responsible for freeing the pbuf
+ * if it's not used any more.
+ *
+ * @param arg user supplied argument (udp_pcb.recv_arg)
+ * @param pcb the udp_pcb which received data
+ * @param p the packet buffer that was received
+ * @param addr the remote IPv6 address from which the packet was received
+ * @param port the remote port from which the packet was received
+ */
+typedef void (*udp_recv_ip6_fn)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
+    ip6_addr_t *addr, u16_t port);
+#endif /* LWIP_IPV6 */
+
+#if LWIP_IPV6
+#define UDP_PCB_RECV_IP6  udp_recv_ip6_fn ip6;
+#else
+#define UDP_PCB_RECV_IP6
+#endif /* LWIP_IPV6 */
 
 struct udp_pcb {
 /* Common members of all PCB types */
@@ -111,7 +132,10 @@ struct udp_pcb {
 #endif /* LWIP_UDPLITE */
 
   /** receive callback function */
-  udp_recv_fn recv;
+  union {
+    udp_recv_fn ip4;
+    UDP_PCB_RECV_IP6
+  }recv;
   /** user-supplied argument for the recv callback */
   void *recv_arg;  
 };
@@ -154,7 +178,27 @@ err_t            udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
 /* The following functions are the lower layer interface to UDP. */
 void             udp_input      (struct pbuf *p, struct netif *inp);
 
-#define udp_init() /* Compatibility define, not init needed. */
+void             udp_init       (void);
+
+#if LWIP_IPV6
+struct udp_pcb * udp_new_ip6(void);
+#define          udp_bind_ip6(pcb, ip6addr, port) \
+                   udp_bind(pcb, ip6_2_ip(ip6addr), port)
+#define          udp_connect_ip6(pcb, ip6addr, port) \
+                   udp_connect(pcb, ip6_2_ip(ip6addr), port)
+#define          udp_recv_ip6(pcb, recv_ip6_fn, recv_arg) \
+                   udp_recv(pcb, (udp_recv_fn)recv_ip6_fn, recv_arg)
+#define          udp_sendto_ip6(pcb, pbuf, ip6addr, port) \
+                   udp_sendto(pcb, pbuf, ip6_2_ip(ip6addr), port)
+#define          udp_sendto_if_ip6(pcb, pbuf, ip6addr, port, netif) \
+                   udp_sendto_if(pcb, pbuf, ip6_2_ip(ip6addr), port, netif)
+#if LWIP_CHECKSUM_ON_COPY
+#define          udp_sendto_chksum_ip6(pcb, pbuf, ip6addr, port, have_chk, chksum) \
+                   udp_sendto_chksum(pcb, pbuf, ip6_2_ip(ip6addr), port, have_chk, chksum)
+#define          udp_sendto_if_chksum_ip6(pcb, pbuf, ip6addr, port, netif, have_chk, chksum) \
+                   udp_sendto_if_chksum(pcb, pbuf, ip6_2_ip(ip6addr), port, netif, have_chk, chksum)
+#endif /*LWIP_CHECKSUM_ON_COPY */
+#endif /* LWIP_IPV6 */
 
 #if UDP_DEBUG
 void udp_debug_print(struct udp_hdr *udphdr);

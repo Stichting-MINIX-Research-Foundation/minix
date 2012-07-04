@@ -1,5 +1,5 @@
 .PATH: \
-	${.CURDIR}/core ${.CURDIR}/core/ipv4 ${.CURDIR}/core/snmp
+	${.CURDIR}/core ${.CURDIR}/core/ipv4 ${.CURDIR}/core/ipv6 ${.CURDIR}/core/snmp
 
 SRCS += \
 	def.c \
@@ -18,15 +18,24 @@ SRCS += \
 	memp.c \
 	pbuf.c \
 	stats.c \
+	inet_chksum.c \
 	\
-	ip.c \
+	ip4.c \
 	igmp.c \
 	icmp.c \
-	ip_addr.c \
+	ip4_addr.c \
 	ip_frag.c \
-	inet.c \
 	autoip.c \
-	inet_chksum.c \
+	\
+	dhcp6.c \
+	ethip6.c \
+	icmp6.c \
+	inet6.c \
+	ip6.c \
+	ip6_addr.c \
+	ip6_frag.c \
+	mld6.c \
+	nd6.c \
 	\
 	mib_structs.c \
 	mib2.c \
