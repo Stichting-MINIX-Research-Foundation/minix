@@ -176,11 +176,14 @@ int
 mount_all()
 {
 	struct fstab *fs;
+	int ro, mountflags;
 	char mountpoint[PATH_MAX];
+  	char *device, *err;
 
 	while ((fs = getfsent()) != NULL) {
-		int ro = 0;
-		int mountflags = 0;
+		ro = 0;
+		mountflags = 0;
+		device = NULL;
 		if (realpath(fs->fs_file, mountpoint) == NULL) {
 			fprintf(stderr, "Can't mount on %s\n", fs->fs_file);
 			return(EXIT_FAILURE);
@@ -191,16 +194,26 @@ mount_all()
 			continue; /* Not remounting root */
 		if (has_opt(fs->fs_mntops, "ro"))
 			ro = 1;
-
 		if (ro) {
 			mountflags |= MS_RDONLY;
 		}
 
-		if (mount(fs->fs_spec, mountpoint, mountflags, fs->fs_vfstype,
-			NULL) == 0) {
+		device = fs->fs_spec;
+		/* passing a null string for block special device means don't 
+		 * use a device at all and this is what we need to do for 
+		 * entries starting with "none"
+		 */
+		if (!strcmp(device, "none")) 
+			device = NULL;
+
+		if (mount(device, mountpoint, mountflags, fs->fs_vfstype,
+			fs->fs_mntops) == 0) {
 			update_mtab(fs->fs_spec, fs->fs_file, fs->fs_vfstype,
 					mountflags);
 		} else {
+			err = strerror(errno);
+			fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
+				fs->fs_spec, fs->fs_file, err);
 			return(EXIT_FAILURE);
 		}
 	}
