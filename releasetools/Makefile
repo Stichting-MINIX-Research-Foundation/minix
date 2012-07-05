@@ -86,12 +86,11 @@ hdboot: services
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
 	newname="${DESTDIR}/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
 	${INSTALL} $$i $$newname;				\
-	${STRIP} -s $$newname;					\
-	gzip $$newname;						\
 	done
 	cp ../kernel/kernel ${DESTDIR}/boot/minix/.temp/
-	${STRIP} -s ${DESTDIR}/boot/minix/.temp/kernel
 	if [ "${MKINSTALLBOOT}" != "no" ] ; then		\
+	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
+	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
 	${HOST_SH} mkboot $@;					\
 	${HOST_SH} ../commands/update_bootcfg/update_bootcfg.sh;\
 	else							\
