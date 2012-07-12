@@ -107,6 +107,9 @@ void bsp_finish_booting(void)
   machine.bsp_id = 0;
 #endif
 
+  /* Kernel may no longer use bits of memory as VM will be running soon */
+  kernel_may_alloc = 0;
+
   switch_to_user();
   NOT_REACHABLE;
 }
@@ -127,6 +130,9 @@ void kmain(kinfo_t *local_cbi)
 
   /* We can talk now */
   printf("MINIX booting\n");
+
+  /* Kernel may use bits of main memory before VM is started */
+  kernel_may_alloc = 1;
 
   assert(sizeof(kinfo.boot_procs) == sizeof(image));
   memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));

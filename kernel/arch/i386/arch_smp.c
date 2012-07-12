@@ -11,7 +11,10 @@
 #include "arch_proto.h"
 #include "kernel/glo.h"
 #include <unistd.h>
+#include <assert.h>
 #include <stdlib.h>
+#include <machine/archtypes.h>
+#include <archconst.h>
 #include <machine/cmos.h>
 #include <machine/bios.h>
 #include <minix/portio.h>
@@ -31,8 +34,9 @@ void trampoline(void);
  * They have to be in location which is reachable using absolute addressing in
  * 16-bit mode
  */
-extern volatile u32_t __ap_id;
+extern volatile u32_t __ap_id, __ap_pt;
 extern volatile struct desctableptr_s __ap_gdt, __ap_idt;
+extern u32_t __ap_gdt_tab, __ap_idt_tab;
 extern void * __trampoline_end;
 
 extern u32_t busclock[CONFIG_MAX_CPUS];
@@ -50,81 +54,84 @@ SPINLOCK_DEFINE(dispq_lock)
 
 static void smp_reinit_vars(void);
 
+/* These are initialized in protect.c */
+extern struct segdesc_s gdt[GDT_SIZE];
+extern struct gatedesc_s idt[IDT_SIZE];
+extern struct tss_s tss[CONFIG_MAX_CPUS];
+extern int prot_init_done;	/* Indicates they are ready */
+
+static phys_bytes trampoline_base;
+
+static u32_t ap_lin_addr(void *vaddr)
+{
+	assert(trampoline_base);
+	return (u32_t) vaddr - (u32_t) &trampoline + trampoline_base;
+}
+
 /*
  * copies the 16-bit AP trampoline code to the first 1M of memory
  */
-static phys_bytes copy_trampoline(void)
+void copy_trampoline(void)
 {
 	char * s, *end;
-	phys_bytes tramp_base = 0;
-	unsigned tramp_size;
+	unsigned tramp_size, tramp_start = (unsigned)&trampoline;;
 
-	tramp_size = (unsigned) &__trampoline_end - (unsigned)&trampoline;
-	s = env_get("memory");
-	if (!s)
-		return 0;
+	/* The trampoline code/data is made to be page-aligned. */
+	assert(!(tramp_start % I386_PAGE_SIZE));
 
-	while (*s != 0) {
-		phys_bytes base = 0xfffffff;
-		unsigned size;
-		/* Read fresh base and expect colon as next char. */ 
-		base = strtoul(s, &end, 0x10);		/* get number */
-		if (end != s && *end == ':')
-			s = ++end;	/* skip ':' */ 
-		else
-			*s=0;
+	tramp_size = (unsigned) &__trampoline_end - tramp_start;
+	trampoline_base = alloc_lowest(&kinfo, tramp_size);
 
-		/* Read fresh size and expect comma or assume end. */ 
-		size = strtoul(s, &end, 0x10);		/* get number */
-		if (end != s && *end == ',')
-			s = ++end;	/* skip ',' */
+	/* The memory allocator finds the lowest available memory.. 
+	 * Verify it's low enough
+	 */
+	assert(trampoline_base + tramp_size < (1 << 20));
 
-		tramp_base = (base + 0xfff) & ~(0xfff);
-		/* the address must be less than 1M */
-		if (tramp_base >= (1 << 20))
-			continue;
-		if (size - (tramp_base - base) < tramp_size)
-			continue;
-		break;
-	}
+	/* prepare gdt and idt for the new cpus; make copies
+	 * of both the tables and the descriptors of them
+	 * in their boot addressing environment.
+	 */
+	assert(prot_init_done);
+	memcpy(&__ap_gdt_tab, gdt, sizeof(gdt));
+	memcpy(&__ap_idt_tab, gdt, sizeof(idt));
+	__ap_gdt.base = ap_lin_addr(&__ap_gdt_tab);
+	__ap_gdt.limit = sizeof(gdt)-1;
+	__ap_idt.base = ap_lin_addr(&__ap_idt_tab);
+	__ap_idt.limit = sizeof(idt)-1;
 
-	phys_copy(vir2phys(trampoline), tramp_base, tramp_size);
-
-	return tramp_base;
+	phys_copy(trampoline, trampoline_base, tramp_size);
 }
 
-extern struct desctableptr_s gdt_desc, idt_desc;
+extern int booting_cpu;	/* tell protect.c what to do */
 
 static void smp_start_aps(void)
 {
-	/* 
-	 * Find an address and align it to a 4k boundary.
-	 */
 	unsigned cpu;
-	u32_t biosresetvector;
-	phys_bytes trampoline_base, __ap_id_phys;
+	u32_t biosresetvector, *newptpos;
+	phys_bytes __ap_id_phys;
+	struct proc *bootstrap_pt = get_cpulocal_var(ptproc);
 
 	/* TODO hack around the alignment problem */
 
-	phys_copy (0x467, vir2phys(&biosresetvector), sizeof(u32_t));
+	phys_copy (0x467, &biosresetvector, sizeof(u32_t));
 
 	/* set the bios shutdown code to 0xA */
 	outb(RTC_INDEX, 0xF);
 	outb(RTC_IO, 0xA);
 
-	/* prepare gdt and idt for the new cpus */
-	__ap_gdt = gdt_desc;
-	__ap_idt = idt_desc;
+	assert(bootstrap_pt);
+	assert(bootstrap_pt->p_seg.p_cr3);
+	__ap_pt  = bootstrap_pt->p_seg.p_cr3;
+	assert(__ap_pt);
 
-	if (!(trampoline_base = copy_trampoline())) {
-		printf("Copying trampoline code failed, cannot boot SMP\n");
-		ncpus = 1;
-	}
+	copy_trampoline();
+
+	/* New locations for cpu id, pagetable root */
 	__ap_id_phys = trampoline_base +
 		(phys_bytes) &__ap_id - (phys_bytes)&trampoline;
 
 	/* setup the warm reset vector */
-	phys_copy(vir2phys(&trampoline_base), 0x467, sizeof(u32_t));
+	phys_copy(&trampoline_base, 0x467, sizeof(u32_t));
 
 	/* okay, we're ready to go.  boot all of the ap's now.  we loop through
 	 * using the processor's apic id values.
@@ -137,9 +144,8 @@ static void smp_start_aps(void)
 			continue;
 		}
 
-		__ap_id = cpu;
-		phys_copy(vir2phys((void *) &__ap_id),
-			__ap_id_phys, sizeof(__ap_id));
+		__ap_id = booting_cpu = cpu;
+		phys_copy((void *) &__ap_id, __ap_id_phys, sizeof(__ap_id));
 		mfence();
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
@@ -161,7 +167,7 @@ static void smp_start_aps(void)
 		}
 	}
 
-	phys_copy(vir2phys(&biosresetvector),(phys_bytes)0x467,sizeof(u32_t));
+	phys_copy(&biosresetvector,(phys_bytes)0x467,sizeof(u32_t));
 
 	outb(RTC_INDEX, 0xF);
 	outb(RTC_IO, 0);
@@ -219,9 +225,6 @@ static void ap_finish_booting(void)
 	/* inform the world of our presence. */
 	ap_cpu_ready = cpu;
 
-	while(!bootstrap_pagetable_done)
-		arch_pause();
-
 	/*
 	 * Finish processor initialisation.  CPUs must be excluded from running.
 	 * lapic timer calibration locks and unlocks the BKL because of the
@@ -231,14 +234,7 @@ static void ap_finish_booting(void)
 	spinlock_lock(&boot_lock);
 	BKL_LOCK();
 
-	/*
-	 * we must load some page tables befre we turn paging on. As VM is
-	 * always present we use those
-	 */
-	pg_load();		/* load bootstrap pagetable built by BSP */
-	vm_enable_paging();
-	
-	printf("CPU %d paging is on\n", cpu);
+	printf("CPU %d is up\n", cpu);
 
 	cpu_identify();
 

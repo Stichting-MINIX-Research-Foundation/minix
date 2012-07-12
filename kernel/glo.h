@@ -59,11 +59,11 @@ EXTERN u64_t cpu_hz[CONFIG_MAX_CPUS];
 #ifdef CONFIG_SMP
 EXTERN int config_no_smp; /* optionaly turn off SMP */
 #endif
-EXTERN int bootstrap_pagetable_done;
 
 /* VM */
 EXTERN int vm_running;
 EXTERN int catch_pagefaults;
+EXTERN int kernel_may_alloc;
 
 /* Variables that are initialized elsewhere are just extern here. */
 extern struct boot_image image[NR_BOOT_PROCS]; 	/* system image processes */

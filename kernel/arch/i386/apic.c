@@ -365,6 +365,11 @@ void ioapic_disable_all(void)
 
 static void ioapic_disable_irq(unsigned irq)
 {
+	if(!(io_apic_irq[irq].ioa)) {
+		printf("ioapic_disable_irq: no ioa set for irq %d!\n", irq);
+		return;
+	}
+
 	assert(io_apic_irq[irq].ioa);
 
 	ioapic_disable_pin(io_apic_irq[irq].ioa->addr, io_apic_irq[irq].pin);
@@ -373,6 +378,11 @@ static void ioapic_disable_irq(unsigned irq)
 
 static void ioapic_enable_irq(unsigned irq)
 {
+	if(!(io_apic_irq[irq].ioa)) {
+		printf("ioapic_enable_irq: no ioa set for irq %d!\n", irq);
+		return;
+	}
+
 	assert(io_apic_irq[irq].ioa);
 
 	ioapic_enable_pin(io_apic_irq[irq].ioa->addr, io_apic_irq[irq].pin);
@@ -915,16 +925,17 @@ static int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max)
 		if (acpi_ioa == NULL)
 			break;
 
+		assert(acpi_ioa->address);
+
 		ioa[n].id = acpi_ioa->id;
 		ioa[n].addr = acpi_ioa->address;
 		ioa[n].paddr = (phys_bytes) acpi_ioa->address;
 		ioa[n].gsi_base = acpi_ioa->global_int_base;
 		ioa[n].pins = ((ioapic_read(ioa[n].addr,
 				IOAPIC_VERSION) & 0xff0000) >> 16)+1;
-		printf("IO APIC %d addr 0x%lx paddr 0x%lx pins %d\n",
-				acpi_ioa->id, ioa[n].addr, ioa[n].paddr,
+		printf("IO APIC idx %d id %d addr 0x%lx paddr 0x%lx pins %d\n",
+				n, acpi_ioa->id, ioa[n].addr, ioa[n].paddr,
 				ioa[n].pins);
-
 		n++;
 	}
 

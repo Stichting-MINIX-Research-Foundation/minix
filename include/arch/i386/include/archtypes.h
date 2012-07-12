@@ -16,6 +16,14 @@ struct segdesc_s {		/* segment descriptor for protected mode */
   u8_t base_high;
 } __attribute__((packed));
 
+struct gatedesc_s {
+  u16_t offset_low;
+  u16_t selector;
+  u8_t pad;                     /* |000|XXXXX| ig & trpg, |XXXXXXXX| task g */
+  u8_t p_dpl_type;              /* |P|DL|0|TYPE| */
+  u16_t offset_high;
+} __attribute__((packed));
+
 struct desctableptr_s {
   u16_t limit;
   u32_t base;

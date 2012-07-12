@@ -37,6 +37,9 @@ char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
 
+/* Kernel may use memory */
+int kernel_may_alloc = 1;
+
 static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi) 
 {
 	char *p = bigbuf;
@@ -94,16 +97,6 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 			return 1;
 	}
 	return 0;
-}
-
-void print_memmap(kinfo_t *cbi)
-{
-	int m;
-	assert(cbi->mmap_size < MAXMEMMAP);
-	for(m = 0; m < cbi->mmap_size; m++) {
-		printf("%08lx-%08lx ",cbi->memmap[m].addr, cbi->memmap[m].addr + cbi->memmap[m].len);
-	}
-	printf("\nsize %08lx\n", cbi->mmap_size);
 }
 
 void get_parameters(u32_t ebx, kinfo_t *cbi) 
@@ -225,9 +218,6 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 	 * Here we find out whether we should do serial output.
 	 */
 	get_parameters(ebx, &kinfo);
-	
-	/* Say hello. */
-	printf("MINIX loading\n");
 
 	assert(magic == MULTIBOOT_BOOTLOADER_MAGIC);
 
@@ -236,7 +226,7 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 	 * this code stays where it should be.
 	 */
 	pg_clear();
-	pg_identity();
+	pg_identity(&kinfo);
 	kinfo.freepde_start = pg_mapkernel();
 	pg_load();
 	vm_enable_paging();

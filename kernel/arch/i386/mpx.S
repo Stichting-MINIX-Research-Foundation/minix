@@ -479,27 +479,22 @@ ENTRY(startup_ap_32)
 	/*
 	 * we are in protected mode now, %cs is correct and we need to set the
 	 * data descriptors before we can touch anything
+	 *
+	 * first load the regular, highly mapped idt, gdt
 	 */
-	movw	$KERN_DS_SELECTOR, %ax
-	mov	%ax, %ds
-	mov	%ax, %ss
-	mov	%ax, %es
-	movw	$0, %ax
-	mov	%ax, %fs
-	mov	%ax, %gs
 
-	/* load TSS for this cpu which was prepared by BSP */
-	movl	_C_LABEL(__ap_id), %ecx
-	shl	$3, %cx
-	mov	$TSS_SELECTOR(0), %eax
-	add	%cx, %ax
-	ltr	%ax
-	
 	/*
 	 * use the boot stack for now. The running CPUs are already using their
 	 * own stack, the rest is still waiting to be booted
 	 */
+	movw	$KERN_DS_SELECTOR, %ax
+	mov	%ax, %ds
+	mov	%ax, %ss
 	mov	$_C_LABEL(k_boot_stktop) - 4, %esp
+
+	/* load the highly mapped idt, gdt, per-cpu tss */
+	call	_C_LABEL(prot_load_selectors)
+
 	jmp	_C_LABEL(smp_ap_boot)
 	hlt
 #endif

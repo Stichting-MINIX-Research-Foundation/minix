@@ -206,6 +206,7 @@ void context_stop(struct proc * p)
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 #ifdef CONFIG_SMP
 	unsigned cpu = cpuid;
+	int must_bkl_unlock = 0;
 
 	/*
 	 * This function is called only if we switch from kernel to user or idle
@@ -222,7 +223,7 @@ void context_stop(struct proc * p)
 		tmp = sub64(tsc, *__tsc_ctr_switch);
 		kernel_ticks[cpu] = add64(kernel_ticks[cpu], tmp);
 		p->p_cycles = add64(p->p_cycles, tmp);
-		BKL_UNLOCK();
+		must_bkl_unlock = 1;
 	} else {
 		u64_t bkl_tsc;
 		atomic_t succ;
@@ -295,6 +296,12 @@ void context_stop(struct proc * p)
 	}
 
 	*__tsc_ctr_switch = tsc;
+
+#ifdef CONFIG_SMP
+	if(must_bkl_unlock) {
+		BKL_UNLOCK();
+	}
+#endif
 }
 
 void context_stop_idle(void)

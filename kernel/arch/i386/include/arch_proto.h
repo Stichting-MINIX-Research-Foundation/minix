@@ -161,12 +161,13 @@ u32_t read_ds(void);
 u32_t read_ss(void);
 
 void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len);
+phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len);
 void vm_enable_paging(void);
 void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end);
 phys_bytes pg_roundup(phys_bytes b);
 void pg_info(reg_t *, u32_t **);
 void pg_clear(void);
-void pg_identity(void);
+void pg_identity(kinfo_t *);
 phys_bytes pg_load(void);
 void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end, kinfo_t *cbi);
 int pg_mapkernel(void);

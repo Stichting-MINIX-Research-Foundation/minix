@@ -28,6 +28,8 @@
 #define LDT_SELECTOR SEG_SELECTOR(LDT_INDEX)
 #define TSS_SELECTOR(cpu)	SEG_SELECTOR(TSS_INDEX(cpu))
 
+#define DESC_SIZE	8
+
 /* Privileges. */
 #define INTR_PRIVILEGE       0	/* kernel and interrupt handlers */
 #define USER_PRIVILEGE       3	/* servers and user processes */

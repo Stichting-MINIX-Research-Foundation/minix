@@ -8,7 +8,7 @@ PROG=	kernel
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 	table.c utility.c 
 
-LINKERSCRIPT=${.CURDIR}/arch/${ARCH}/kernel.lds
+LINKERSCRIPT=${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 
 DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC} $(LINKERSCRIPT)
 LDADD+=	-ltimers -lsys -lexec

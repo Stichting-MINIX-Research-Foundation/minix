@@ -164,11 +164,11 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 #ifdef CONFIG_SMP
 		unsigned cpu = cpuid;
 
-		if (GET_BIT(srcproc->p_stale_tlb, cpu)) {
+		if (srcproc && GET_BIT(srcproc->p_stale_tlb, cpu)) {
 			changed = 1;
 			UNSET_BIT(srcproc->p_stale_tlb, cpu);
 		}
-		if (GET_BIT(dstproc->p_stale_tlb, cpu)) {
+		if (dstproc && GET_BIT(dstproc->p_stale_tlb, cpu)) {
 			changed = 1;
 			UNSET_BIT(dstproc->p_stale_tlb, cpu);
 		}
@@ -815,10 +815,13 @@ int arch_phys_map(const int index,
 		*flags = VMMF_UNCACHED;
 		return OK;
 	}
-	else if (ioapic_enabled && index <= ioapic_last_index) {
-		*addr = io_apic[index - 1].paddr;
+	else if (ioapic_enabled && index >= ioapic_first_index && index <= ioapic_last_index) {
+		int ioapic_idx = index - ioapic_first_index;
+		*addr = io_apic[ioapic_idx].paddr;
+		assert(*addr);
 		*len = 4 << 10 /* 4kB */;
 		*flags = VMMF_UNCACHED;
+		printf("ioapic map: addr 0x%lx\n", *addr);
 		return OK;
 	}
 #endif

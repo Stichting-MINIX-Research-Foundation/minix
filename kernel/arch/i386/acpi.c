@@ -39,6 +39,24 @@ static int acpi_check_signature(const char * orig, const char * match)
 	return strncmp(orig, match, ACPI_SDT_SIGNATURE_LEN);
 }
 
+static u32_t acpi_phys2vir(u32_t p)
+{
+	if(!vm_running) {
+		printf("acpi: returning 0x%lx as vir addr\n", p);
+		return p;
+	}
+	panic("acpi: can't get virtual address of arbitrary physical address");
+}
+
+static int acpi_phys_copy(phys_bytes phys, void *target, size_t len)
+{
+	if(!vm_running) {
+		memcpy(target, (void *) phys, len);
+		return 0;
+	}
+	panic("can't acpi_phys_copy with vm");
+}
+
 static int acpi_read_sdt_at(phys_bytes addr,
 				struct acpi_sdt_header * tb,
 				size_t size,
@@ -172,7 +190,7 @@ static int get_acpi_rsdp(void)
 	/*
 	 * Read 40:0Eh - to find the starting address of the EBDA.
 	 */
-	phys_copy (0x40E, vir2phys(&ebda), sizeof(ebda));
+	acpi_phys_copy (0x40E, &ebda, sizeof(ebda));
 	if (ebda) {
 		ebda <<= 4;
 		if(platform_tbl_ptr(ebda, ebda + 0x400, 16, &acpi_rsdp,
@@ -192,16 +210,10 @@ static int get_acpi_rsdp(void)
 	return 0;
 }
 
-static int acpi_read_kernel(phys_bytes addr, void * buff, size_t size)
-{
-	phys_copy(addr, vir2phys(buff), size);
-	return 0;
-}
-
 void acpi_init(void)
 {
 	int s, i;
-	read_func = acpi_read_kernel;
+	read_func = acpi_phys_copy;
 
 	if (!get_acpi_rsdp()) {
 		printf("WARNING : Cannot configure ACPI\n");
@@ -238,7 +250,7 @@ struct acpi_madt_ioapic * acpi_get_ioapic_next(void)
 
 	if (idx == 0) {
 		madt_hdr = (struct acpi_madt_hdr *)
-			phys2vir(acpi_get_table_base("APIC"));
+			acpi_phys2vir(acpi_get_table_base("APIC"));
 		if (madt_hdr == NULL)
 			return NULL;
 	}
@@ -260,7 +272,7 @@ struct acpi_madt_lapic * acpi_get_lapic_next(void)
 
 	if (idx == 0) {
 		madt_hdr = (struct acpi_madt_hdr *)
-			phys2vir(acpi_get_table_base("APIC"));
+			acpi_phys2vir(acpi_get_table_base("APIC"));
 		if (madt_hdr == NULL)
 			return NULL;
 	}

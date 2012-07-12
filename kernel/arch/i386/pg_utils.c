@@ -22,6 +22,17 @@ static phys_bytes kern_kernlen = (phys_bytes) &_kern_size;
 /* page directory we can use to map things */
 static u32_t pagedir[1024]  __aligned(4096);
 
+void print_memmap(kinfo_t *cbi)
+{
+        int m;
+        assert(cbi->mmap_size < MAXMEMMAP);
+        for(m = 0; m < cbi->mmap_size; m++) {
+		phys_bytes addr = cbi->memmap[m].addr, endit = cbi->memmap[m].addr + cbi->memmap[m].len;
+                printf("%08lx-%08lx ",addr, endit);
+        }
+        printf("\nsize %08lx\n", cbi->mmap_size);
+}
+
 void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
 {
         int m;
@@ -31,6 +42,8 @@ void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
                 start -= o;
         if((o=end % I386_PAGE_SIZE))
                 end += I386_PAGE_SIZE - o;
+
+	assert(kernel_may_alloc);
 
         for(m = 0; m < cbi->mmap_size; m++) {
                 phys_bytes substart = start, subend = end;
@@ -53,10 +66,29 @@ void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
         }
 }
 
+phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len)
+{
+	/* Allocate the lowest physical page we have. */
+	int m;
+#define EMPTY 0xffffffff
+	phys_bytes lowest = EMPTY;
+	assert(len > 0);
+	len = roundup(len, I386_PAGE_SIZE);
+
+	assert(kernel_may_alloc);
+
+	for(m = 0; m < cbi->mmap_size; m++) {
+		if(cbi->memmap[m].len < len) continue;
+		if(cbi->memmap[m].addr < lowest) lowest = cbi->memmap[m].addr;
+	}
+	assert(lowest != EMPTY);
+	cut_memmap(cbi, lowest, len);
+	return lowest;
+}
+
 void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
 {
         int m;
-	phys_bytes highmark;
 #define LIMIT 0xFFFFF000
         /* Truncate available memory at 4GB as the rest of minix
          * currently can't deal with any bigger.
@@ -69,19 +101,24 @@ void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
         if(len == 0) return;
 	addr = roundup(addr, I386_PAGE_SIZE);
 	len = rounddown(len, I386_PAGE_SIZE);
+
+	assert(kernel_may_alloc);
+
         for(m = 0; m < MAXMEMMAP; m++) {
+		phys_bytes highmark;
                 if(cbi->memmap[m].len) continue;
                 cbi->memmap[m].addr = addr;
                 cbi->memmap[m].len = len;
                 cbi->memmap[m].type = MULTIBOOT_MEMORY_AVAILABLE;
                 if(m >= cbi->mmap_size)
                         cbi->mmap_size = m+1;
+		highmark = addr + len;
+		if(highmark > cbi->mem_high_phys) {
+			cbi->mem_high_phys = highmark;
+		}
+
                 return;
         }
-
-	highmark = addr + len;
-	if(highmark > cbi->mem_high_phys)
-		cbi->mem_high_phys = highmark;
 
         panic("no available memmap slot");
 }
@@ -105,6 +142,9 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 {
 	int m;
 	multiboot_memory_map_t *mmap;
+
+	assert(kernel_may_alloc);
+
 	for(m = cbi->mmap_size-1; m >= 0; m--) {
 		mmap = &cbi->memmap[m];
 		if(!mmap->len) continue;
@@ -120,16 +160,26 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 	panic("can't find free memory");
 }
 
-void pg_identity(void)
+void pg_identity(kinfo_t *cbi)
 {
 	int i;
 	phys_bytes phys;
 
+	/* We map memory that does not correspond to physical memory
+	 * as non-cacheable. Make sure we know what it is.
+	 */
+	assert(cbi->mem_high_phys);
+
         /* Set up an identity mapping page directory */
         for(i = 0; i < I386_VM_DIR_ENTRIES; i++) {
+		u32_t flags = I386_VM_PRESENT | I386_VM_BIGPAGE |
+			I386_VM_USER | I386_VM_WRITE;
+		if((cbi->mem_high_phys & I386_VM_ADDR_MASK_4MB)
+			<= (phys & I386_VM_ADDR_MASK_4MB)) {
+			flags |= I386_VM_PWT | I386_VM_PCD;
+		}
                 phys = i * I386_BIG_PAGE_SIZE;
-                pagedir[i] =  phys | I386_VM_PRESENT | I386_VM_BIGPAGE |
-                        I386_VM_USER | I386_VM_WRITE;
+                pagedir[i] =  phys | flags;
         }
 }
 
@@ -215,6 +265,8 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 	static int mapped_pde = -1;
 	static u32_t *pt = NULL;
 	int pde, pte;
+
+	assert(kernel_may_alloc);
 
 	if(phys == PG_ALLOCATEME) {
 		assert(!(vaddr % I386_PAGE_SIZE));

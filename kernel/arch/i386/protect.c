@@ -21,18 +21,12 @@
 /* This is OK initially, when the 1:1 mapping is still there. */
 char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 
-struct gatedesc_s {
-  u16_t offset_low;
-  u16_t selector;
-  u8_t pad;			/* |000|XXXXX| ig & trpg, |XXXXXXXX| task g */
-  u8_t p_dpl_type;		/* |P|DL|0|TYPE| */
-  u16_t offset_high;
-} __attribute__((packed));
-
 /* Storage for gdt, idt and tss. */
-static struct segdesc_s gdt[GDT_SIZE] __aligned(DESC_SIZE);
+struct segdesc_s gdt[GDT_SIZE] __aligned(DESC_SIZE);
 struct gatedesc_s idt[IDT_SIZE] __aligned(DESC_SIZE);
 struct tss_s tss[CONFIG_MAX_CPUS];
+
+int prot_init_done = 0;
 
 phys_bytes vir2phys(void *vir)
 {
@@ -263,12 +257,33 @@ multiboot_module_t *bootmod(int pnr)
 	panic("boot module %d not found", pnr);
 }
 
+int booting_cpu = 0;
+
+void prot_load_selectors(void)
+{
+  /* this function is called by both prot_init by the BSP and
+   * the early AP booting code in mpx.S by secondary CPU's.
+   * everything is set up the same except for the TSS that is per-CPU.
+   */
+  x86_lgdt(&gdt_desc);	/* Load gdt */ 
+  idt_init();
+  idt_reload();
+  x86_lldt(LDT_SELECTOR); 	/* Load bogus ldt */
+  x86_ltr(TSS_SELECTOR(booting_cpu));
+
+  x86_load_kerncs();
+  x86_load_ds(KERN_DS_SELECTOR);
+  x86_load_es(KERN_DS_SELECTOR);
+  x86_load_fs(KERN_DS_SELECTOR);
+  x86_load_gs(KERN_DS_SELECTOR);
+  x86_load_ss(KERN_DS_SELECTOR);
+}
+
 /*===========================================================================*
  *				prot_init				     *
  *===========================================================================*/
 void prot_init()
 {
-  int sel_tss;
   extern char k_boot_stktop;
 
   memset(gdt, 0, sizeof(gdt));
@@ -279,7 +294,7 @@ void prot_init()
   gdt_desc.limit = sizeof(gdt)-1;
   idt_desc.base = (u32_t) idt;
   idt_desc.limit = sizeof(idt)-1;
-  sel_tss = tss_init(0, &k_boot_stktop);
+  tss_init(0, &k_boot_stktop);
 
   /* Build GDT */
   init_param_dataseg(&gdt[LDT_INDEX],
@@ -290,22 +305,11 @@ void prot_init()
   init_codeseg(USER_CS_INDEX, USER_PRIVILEGE);
   init_dataseg(USER_DS_INDEX, USER_PRIVILEGE);
 
-  x86_lgdt(&gdt_desc);	/* Load gdt */ 
-  idt_init();
-  idt_reload();
-  x86_lldt(LDT_SELECTOR); 	/* Load bogus ldt */
-  x86_ltr(sel_tss);	/* Load global TSS */
-
   /* Currently the multiboot segments are loaded; which is fine, but
    * let's replace them with the ones from our own GDT so we test
    * right away whether they work as expected.
    */
-  x86_load_kerncs();
-  x86_load_ds(KERN_DS_SELECTOR);
-  x86_load_es(KERN_DS_SELECTOR);
-  x86_load_fs(KERN_DS_SELECTOR);
-  x86_load_gs(KERN_DS_SELECTOR);
-  x86_load_ss(KERN_DS_SELECTOR);
+  prot_load_selectors();
 
   /* Set up a new post-relocate bootstrap pagetable so that
    * we can map in VM, and we no longer rely on pre-relocated
@@ -313,10 +317,11 @@ void prot_init()
    */
 
   pg_clear();
-  pg_identity(); /* Still need 1:1 for lapic and video mem and such. */
+  pg_identity(&kinfo); /* Still need 1:1 for lapic and video mem and such. */
   pg_mapkernel();
   pg_load();
-  bootstrap_pagetable_done = 1;	/* secondary CPU's can use it too */
+
+  prot_init_done = 1;
 }
 
 void arch_post_init(void)
