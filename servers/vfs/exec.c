@@ -140,7 +140,7 @@ static int get_read_vp(struct vfs_exec_info *execi,
 		char *cp = strrchr(fullpath, '/');
 		if(cp) cp++;
 		else cp = fullpath;
-		strncpy(execi->args.progname, cp, sizeof(execi->args.progname)-1);
+		strlcpy(execi->args.progname, cp, sizeof(execi->args.progname));
 		execi->args.progname[sizeof(execi->args.progname)-1] = '\0';
 	}
 
@@ -243,7 +243,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 
   /* Get the exec file name. */
   FAILCHECK(fetch_name(path, path_len, fullpath));
-  strcpy(finalexec, fullpath);
+  strlcpy(finalexec, fullpath, PATH_MAX);
 
   /* Get_read_vp will return an opened vn in execi.
    * if necessary it releases the existing vp so we can
@@ -261,9 +261,9 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	 * args to stack and retrieve the new binary
 	 * name into fullpath.
 	 */
-  	FAILCHECK(fetch_name(path, path_len, fullpath));
+	FAILCHECK(fetch_name(path, path_len, fullpath));
 	FAILCHECK(patch_stack(execi.vp, mbuf, &frame_len, fullpath));
-  	strcpy(finalexec, fullpath);
+	strlcpy(finalexec, fullpath, PATH_MAX);
 	Get_read_vp(execi, fullpath, 1, 0, &resolve, fp);
   }
 
@@ -287,13 +287,13 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	}
 
 	/* Remember it */
-	strcpy(execi.execname, finalexec);
+	strlcpy(execi.execname, finalexec, PATH_MAX);
 
 	/* The executable we need to execute first (loader)
 	 * is in elf_interpreter, and has to be in fullpath to
 	 * be looked up
 	 */
-	strcpy(fullpath, elf_interpreter);
+	strlcpy(fullpath, elf_interpreter, PATH_MAX);
 	Get_read_vp(execi, fullpath, 0, 0, &resolve, fp);
   }
 
@@ -344,7 +344,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   }
 
   /* Remember the new name of the process */
-  strcpy(rfp->fp_name, execi.args.progname);
+  strlcpy(rfp->fp_name, execi.args.progname, PROC_NAME_LEN);
 
 pm_execfinal:
   if (execi.vp != NULL) {
@@ -440,7 +440,7 @@ static int stack_prepare_elf(struct vfs_exec_info *execi, char *frame, size_t *f
 
 		/* Empty space starts here; we can put the name here. */
 		spacestart = (char *) a;
-		strcpy(spacestart, execi->execname);
+		strlcpy(spacestart, execi->execname, PATH_MAX);
 
 		/* What will the address of the string for the user be */
 		userp = *newsp + (spacestart-frame);
@@ -585,7 +585,7 @@ int replace
   /* Reposition the strings by offset bytes */
   memmove(stack + a1 + offset, stack + a1, old_bytes - a1);
 
-  strcpy(stack + a0, arg);	/* Put arg in the new space. */
+  strlcpy(stack + a0, arg, PATH_MAX); /* Put arg in the new space. */
 
   if (!replace) {
 	/* Make space for a new argv[0]. */

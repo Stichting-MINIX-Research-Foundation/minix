@@ -317,7 +317,7 @@ char mount_label[LABEL_MAX] )
 	 * Nothing else can go wrong. Perform the mount. */
 	new_vmp->m_root_node = root_node;
 	new_vmp->m_mounted_on = NULL;
-	strcpy(new_vmp->m_label, mount_label);
+	strlcpy(new_vmp->m_label, mount_label, LABEL_MAX);
 	if (is_nonedev(dev)) alloc_nonedev(dev);
 	update_bspec(dev, fs_e, 0 /* Don't send new driver endpoint */);
 
@@ -364,7 +364,7 @@ char mount_label[LABEL_MAX] )
   /* Nothing else can go wrong.  Perform the mount. */
   new_vmp->m_mounted_on = vp;
   new_vmp->m_root_node = root_node;
-  strcpy(new_vmp->m_label, mount_label);
+  strlcpy(new_vmp->m_label, mount_label, LABEL_MAX);
 
   /* Allocate the pseudo device that was found, if not using a real device. */
   if (is_nonedev(dev)) alloc_nonedev(dev);
@@ -404,7 +404,7 @@ void mount_pfs(void)
 
   vmp->m_dev = dev;
   vmp->m_fs_e = PFS_PROC_NR;
-  strcpy(vmp->m_label, "pfs");
+  strlcpy(vmp->m_label, "pfs", LABEL_MAX);
 
   rfp = &fproc[_ENDPOINT_P(PFS_PROC_NR)];
   rfp->fp_flags |= FP_SYS_PROC;	/* PFS is a driver and an FS */
@@ -447,7 +447,7 @@ int do_umount(void)
    */
   if (strlen(label) >= M3_LONG_STRING)	/* should never evaluate to true */
 	label[M3_LONG_STRING-1] = 0;
-  strcpy(m_out.umount_label, label);
+  strlcpy(m_out.umount_label, label, M3_LONG_STRING);
   return(OK);
 }
 
@@ -457,7 +457,7 @@ int do_umount(void)
  *===========================================================================*/
 int unmount(
   dev_t dev,			/* block-special device */
-  char *label			/* buffer to retrieve label, or NULL */
+  char label[LABEL_MAX]		/* buffer to retrieve label, or NULL */
 )
 {
   struct vnode *vp;
@@ -510,7 +510,7 @@ int unmount(
 
   if (is_nonedev(vmp->m_dev)) free_nonedev(vmp->m_dev);
 
-  if (label != NULL) strcpy(label, vmp->m_label);
+  if (label != NULL) strlcpy(label, vmp->m_label, LABEL_MAX);
 
   if (vmp->m_root_node) {	/* PFS lacks a root node */
 	vmp->m_root_node->v_ref_count = 0;

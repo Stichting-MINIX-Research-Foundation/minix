@@ -16,6 +16,7 @@
 #include <minix/endpoint.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include "file.h"
 #include "fproc.h"
@@ -44,11 +45,9 @@ inline int copy_name( size_t len, char *dest)
 
   if (len <= M3_STRING) {
 	/* Just copy the path from the message */
-	unsigned int count = 0;
 	rpu = &dest[0];
 	rpm = job_m_in.pathname;	/* contained in input message */
-	for (count = 0; count <= len; count++)
-		*rpu++ = *rpm++;
+	strncpy(dest, job_m_in.pathname, len);
   } else {
 	/* String is not contained in the message. */
 	err_code = EINVAL;

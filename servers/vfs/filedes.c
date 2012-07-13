@@ -85,7 +85,8 @@ void init_filps(void)
   struct filp *f;
 
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
-	mutex_init(&f->filp_lock, NULL);
+	if (mutex_init(&f->filp_lock, NULL) != 0)
+		panic("Failed to initialize filp mutex");
   }
 
 }

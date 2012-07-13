@@ -209,16 +209,16 @@ struct fproc *rfp;
 		/* Just an entry in the current working directory. Prepend
 		 * "./" in front of the path and resolve it.
 		 */
-		strncpy(dir_entry, resolve->l_path, NAME_MAX);
+		strlcpy(dir_entry, resolve->l_path, NAME_MAX+1);
 		dir_entry[NAME_MAX] = '\0';
 		resolve->l_path[0] = '.';
 		resolve->l_path[1] = '\0';
 	} else if (cp[1] == '\0') {
 		/* Path ends in a slash. The directory entry is '.' */
-		strcpy(dir_entry, ".");
+		strlcpy(dir_entry, ".", NAME_MAX+1);
 	} else {
 		/* A path name for the directory and a directory entry */
-		strncpy(dir_entry, cp+1, NAME_MAX);
+		strlcpy(dir_entry, cp+1, NAME_MAX+1);
 		cp[1] = '\0';
 		dir_entry[NAME_MAX] = '\0';
 	}
@@ -243,7 +243,7 @@ struct fproc *rfp;
 	 * symlink, then we're not at the last directory, yet. */
 
 	/* Copy the directory entry back to user_fullpath */
-	strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
+	strlcpy(resolve->l_path, dir_entry, NAME_MAX + 1);
 
 	/* Look up the directory entry, but do not follow the symlink when it
 	 * is one.
@@ -323,7 +323,7 @@ struct fproc *rfp;
   }
 
   /* Copy the directory entry back to user_fullpath */
-  strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
+  strlcpy(resolve->l_path, dir_entry, NAME_MAX + 1);
 
   /* Turn PATH_RET_SYMLINK flag back on if it was on */
   if (ret_on_symlink) resolve->l_flags |= PATH_RET_SYMLINK;
@@ -571,7 +571,7 @@ char ename[NAME_MAX + 1];
 		cur = (struct dirent *) (buf + consumed);
 		if (entry->v_inode_nr == cur->d_ino) {
 			/* found the entry we were looking for */
-			strncpy(ename, cur->d_name, NAME_MAX);
+			strlcpy(ename, cur->d_name, NAME_MAX+1);
 			ename[NAME_MAX] = '\0';
 			return(OK);
 		}
@@ -601,7 +601,7 @@ struct fproc *rfp;
   struct lookup resolve;
 
   dir_vp = NULL;
-  strncpy(temp_path, orig_path, PATH_MAX);
+  strlcpy(temp_path, orig_path, PATH_MAX);
   temp_path[PATH_MAX - 1] = '\0';
 
   /* First resolve path to the last directory holding the file */
@@ -620,7 +620,7 @@ struct fproc *rfp;
 	/* dir_vp points to dir and resolve path now contains only the
 	 * filename.
 	 */
-	strncpy(orig_path, temp_path, NAME_MAX);	/* Store file name */
+	strlcpy(orig_path, temp_path, NAME_MAX+1);	/* Store file name */
 
 	/* check if the file is a symlink, if so resolve it */
 	r = rdlink_direct(orig_path, temp_path, rfp);
@@ -629,7 +629,7 @@ struct fproc *rfp;
 		break;
 
 	/* encountered a symlink -- loop again */
-	strncpy(orig_path, temp_path, PATH_MAX - 1);
+	strlcpy(orig_path, temp_path, PATH_MAX);
 	symloop++;
   } while (symloop < SYMLOOP_MAX);
 
@@ -646,7 +646,7 @@ struct fproc *rfp;
    * here we start building up the canonical path by climbing up the tree */
   while (dir_vp != rfp->fp_rd) {
 
-	strcpy(temp_path, "..");
+	strlcpy(temp_path, "..", NAME_MAX+1);
 
 	/* check if we're at the root node of the file system */
 	if (dir_vp->v_vmnt->m_root_node == dir_vp) {

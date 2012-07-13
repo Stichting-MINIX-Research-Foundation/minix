@@ -149,7 +149,7 @@ int is_nonedev(dev_t dev);
 void mount_pfs(void);
 int mount_fs(dev_t dev, char fullpath[PATH_MAX+1], endpoint_t fs_e, int
 	rdonly, char mount_label[LABEL_MAX]);
-int unmount(dev_t dev, char *label);
+int unmount(dev_t dev, char label[LABEL_MAX]);
 void unmount_all(void);
 
 /* open.c */

@@ -237,7 +237,7 @@ int do_rename()
 	put_vnode(old_dirp);
 	return(ENAMETOOLONG);
   }
-  strcpy(old_name, fullpath);
+  strlcpy(old_name, fullpath, PATH_MAX);
 
   /* See if 'name2' (new name) exists.  Get dir inode */
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &newvmp, &new_dirp);

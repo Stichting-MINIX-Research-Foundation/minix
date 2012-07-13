@@ -77,7 +77,7 @@ int do_mapdriver()
  *				map_driver		 		     *
  *===========================================================================*/
 int map_driver(label, major, proc_nr_e, style, flags)
-const char *label;		/* name of the driver */
+const char label[LABEL_MAX];	/* name of the driver */
 int major;			/* major number of the device */
 endpoint_t proc_nr_e;		/* process number of the driver */
 int style;			/* style of the device */
@@ -120,7 +120,7 @@ int flags;			/* device flags */
 	len = strlen(label);
 	if (len+1 > sizeof(dp->dmap_label))
 		panic("VFS: map_driver: label too long: %d", len);
-	strcpy(dp->dmap_label, label);
+	strlcpy(dp->dmap_label, label, LABEL_MAX);
   }
 
   /* Store driver I/O routines based on type of device */

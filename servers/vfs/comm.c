@@ -83,7 +83,7 @@ void fs_sendmore(struct vmnt *vmp)
   worker->w_next = NULL;
   sending--;
   assert(sending >= 0);
-  sendmsg(vmp, worker->w_job.j_fp);
+  (void) sendmsg(vmp, worker->w_job.j_fp);
 }
 
 /*===========================================================================*
