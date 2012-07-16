@@ -1,6 +1,6 @@
 # Makefile for the hello driver.
 PROG=	mmcblk
-SRCS=	mmcblk.c
+SRCS=	mmcblk.c mmclog.h
 
 DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}
 LDADD+=	-lblockdriver -lsys

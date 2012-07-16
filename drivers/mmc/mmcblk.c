@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdarg.h>
+
+#include "mmclog.h"
 
 #define DUMMY_SIZE_IN_BLOCKS 1000
 static char dummy_data[SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS];
@@ -16,6 +19,15 @@ static char dummy_data[SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS];
 static struct device device_geometry = {
 	.dv_base = 0,
 	.dv_size = SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS
+};
+
+/*
+ * Define a structure to be used for logging see mmclog.h
+ */
+static struct mmclog log = {
+	.log = mmc_log,
+	.log_level = LEVEL_DEBUG,
+	.name = "mmc_driver",
 };
 
 /* Prototypes for the block device */
@@ -28,25 +40,61 @@ static struct device *block_part(dev_t minor);
 /* Entry points for the BLOCK driver. */
 static struct blockdriver mmc_driver = {
   BLOCKDRIVER_TYPE_DISK,/* handle partition requests */
-  block_open,         /* open or mount */
-  block_close,        /* nothing on a close */
-  block_transfer,     /* do the I/O */
-  NULL,               /* No ioclt's */
-  NULL,               /* no need to clean up (yet)*/
-  block_part,         /* return partition information */
-  NULL,               /* no geometry */
-  NULL,               /* no interrupt processing */
-  NULL,               /* no alarm processing */
-  NULL,               /* no processing of other messages */
-  NULL                /* no threading support */
+  block_open,           /* open or mount */
+  block_close,          /* nothing on a close */
+  block_transfer,       /* do the I/O */
+  NULL,                 /* No ioclt's */
+  NULL,                 /* no need to clean up (yet)*/
+  block_part,           /* return partition information */
+  NULL,                 /* no geometry */
+  NULL,                 /* no interrupt processing */
+  NULL,                 /* no alarm processing */
+  NULL,                 /* no processing of other messages */
+  NULL                  /* no threading support */
 };
 
 
+void apply_env()
+{
+    /* apply the env setting passed to this driver
+     * parameters accepted
+     * log_level=[0-3] (NONE,WARNING,INFO,DEBUG)
+     * instance=[0-3] instance/bus number to use for this driver
+     *
+     * Passing these arguments is done when starting the driver using
+     * the service command in the following way
+     *
+     * service up /sbin/mmcblk -args "log_level=2 instance=1"
+     **/
+    long v;
+
+    /* Initialize the verbosity level. */
+    v = 0;
+    if ( env_parse("log_level", "d", 0, &v, LEVEL_NONE, LEVEL_DEBUG) == EP_SET){
+    	mmc_log_debug(&log,"Setting verbosity level to %d\n",v);
+        log.log_level = v;
+    }
+
+    /* Find out which driver instance we are. */
+    v = 0;
+    if (env_parse("instance", "d", 0, &v, 0, 3) == EP_SET){;
+    	mmc_log_info(&log,"Using instance number %d\n",v);
+    } else {
+    	mmc_log_debug(&log,"Using default instance %d\n",0);
+    }
+}
+
 int main(int argc, char **argv)
 {
+
+  /* Set and apply the environment */
+  env_setargs(argc, argv);
+  apply_env();
+
   /* SEF startup */
   sef_startup();
-  printf("Initializing the MMC block device\n");	
+
+  mmc_log_info(&log,"Initializing the MMC block device\n");
   blockdriver_task(&mmc_driver);
 
   return EXIT_SUCCESS;
@@ -101,19 +149,19 @@ static int block_transfer(
 	if (position > dev->dv_size) { return ENXIO; }; 
 
 	if (nr_req != 1){
-		printf("Number of request > 1 \n");
+		mmc_log_warn(&log,"Number of requests > 1  (%d)\n",nr_req);
 	}
 	ciov = iov;
 	for( counter = 0 ; counter < nr_req ; counter ++){
 		assert(ciov != NULL);
 
-		/* Assume we are to tranfer the amount of data given in the 
+		/* Assume we are to transfer the amount of data given in the
 		 * input/output vector but ensure we are not doing i/o past 
 		 * our own boundaries 
 		 */
 		io_size = ciov->iov_size;
 
-		/* check we are not reading/writing past the end */
+		/* Check we are not reading/writing past the end */
 		if (position + bytes_written + io_size > dev->dv_size ) {
 			io_size = dev->dv_size - ( position + bytes_written );
 		};
