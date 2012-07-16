@@ -12,11 +12,10 @@
 
 #include <assert.h>
 
-#include <minix/type.h>
-#include <minix/type.h>
-#include <minix/safecopies.h>
-
 #include "kernel/system.h"
+#include "kernel.h"
+
+#include <minix/safecopies.h>
 
 #include <signal.h>
 
@@ -119,9 +118,8 @@ int map_invoke_vm(struct proc * caller,
 			endpoint_t end_s, vir_bytes off_s,
 			size_t size, int flag)
 {
-	struct proc *src, *dst;
+	struct proc *dst;
 
-	src = endpoint_lookup(end_s);
 	dst = endpoint_lookup(end_d);
 
 	/* Make sure the linear addresses are both page aligned. */

@@ -30,11 +30,9 @@
  */
 
 #include <minix/com.h>
-#include <minix/endpoint.h>
 #include <minix/ipcconst.h>
 #include <stddef.h>
 #include <signal.h>
-#include <minix/syslib.h>
 #include <assert.h>
 
 #include "debug.h"
@@ -46,6 +44,8 @@
 #include "profile.h"
 
 #include "arch_proto.h"
+
+#include <minix/syslib.h>
 
 /* Scheduling and message passing functions */
 static void idle(void);

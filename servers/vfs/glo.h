@@ -7,6 +7,8 @@
 #define EXTERN
 #endif
 
+#include <minix/param.h>
+
 /* File System global variables */
 EXTERN struct fproc *fp;	/* pointer to caller's fproc struct */
 EXTERN int susp_count;		/* number of procs suspended on pipe */

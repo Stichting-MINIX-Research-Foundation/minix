@@ -201,7 +201,8 @@ void kmain(kinfo_t *local_cbi)
                 kcalls = TSK_KC;                   /* allowed kernel calls */
             }
             /* Priviliges for the root system process. */
-            else if(isrootsysn(proc_nr)) {
+            else {
+	    	assert(isrootsysn(proc_nr));
                 priv(rp)->s_flags= RSYS_F;        /* privilege flags */
                 priv(rp)->s_trap_mask= SRV_T;     /* allowed traps */
                 ipc_to_m = SRV_M;                 /* allowed targets */
@@ -209,10 +210,6 @@ void kmain(kinfo_t *local_cbi)
                 priv(rp)->s_sig_mgr = SRV_SM;     /* signal manager */
                 rp->p_priority = SRV_Q;	          /* priority queue */
                 rp->p_quantum_size_ms = SRV_QT;   /* quantum size */
-            }
-            /* Priviliges for ordinary process. */
-            else {
-		NOT_REACHABLE;
             }
 
             /* Fill in target mask. */
@@ -394,10 +391,8 @@ void cstart()
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
   kinfo.nr_tasks = NR_TASKS;
-  strncpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
-  kinfo.release[sizeof(kinfo.release)-1] = '\0';
-  strncpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
-  kinfo.version[sizeof(kinfo.version)-1] = '\0';
+  strlcpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
+  strlcpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
 
   /* Load average data initialization. */
   kloadinfo.proc_last_slot = 0;

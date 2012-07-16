@@ -17,11 +17,12 @@
 
 #include <minix/config.h>
 
-#include <minix/profile.h>
-#include <minix/portio.h>
 #include "kernel.h"
 #include "profile.h"
 #include "proc.h"
+
+#include <minix/profile.h>
+#include <minix/portio.h>
 
 #if SPROFILE
 

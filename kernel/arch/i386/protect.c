@@ -364,7 +364,7 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		execi.proc_e = ip->endpoint;
 		execi.hdr = (char *) mod->mod_start; /* phys mem direct */
 		execi.hdr_len = mod->mod_end - mod->mod_start;
-		strcpy(execi.progname, ip->proc_name);
+		strlcpy(execi.progname, ip->proc_name, sizeof(execi.progname));
 		execi.frame_len = 0;
 
 		/* callbacks for use in the kernel */

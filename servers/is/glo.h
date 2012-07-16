@@ -1,5 +1,7 @@
 /* Global variables. */
 
+#include <minix/param.h>
+
 /* Parameters needed to keep diagnostics at IS. */
 #define DIAG_BUF_SIZE 1024
 extern char diag_buf[DIAG_BUF_SIZE];	/* buffer for messages */

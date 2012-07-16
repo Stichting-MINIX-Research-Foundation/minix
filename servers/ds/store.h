@@ -6,6 +6,7 @@
 #include <minix/config.h>
 #include <minix/ds.h>
 #include <minix/bitmap.h>
+#include <minix/param.h>
 #include <regex.h>
 
 #define NR_DS_KEYS	(2*NR_SYS_PROCS)	/* number of entries */

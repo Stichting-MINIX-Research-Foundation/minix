@@ -1,15 +1,13 @@
 
 #include <minix/cpufeature.h>
 
-#include <minix/type.h>
-#include <libexec.h>
 #include <assert.h>
 #include "kernel.h"
+#include <libexec.h>
 #include "arch_proto.h"
 
 #include <string.h>
 #include <libexec.h>
-#include <minix/type.h>
 
 /* These are set/computed in kernel.lds. */
 extern char _kern_vir_base, _kern_phys_base, _kern_size;
@@ -174,11 +172,11 @@ void pg_identity(kinfo_t *cbi)
         for(i = 0; i < I386_VM_DIR_ENTRIES; i++) {
 		u32_t flags = I386_VM_PRESENT | I386_VM_BIGPAGE |
 			I386_VM_USER | I386_VM_WRITE;
+                phys = i * I386_BIG_PAGE_SIZE;
 		if((cbi->mem_high_phys & I386_VM_ADDR_MASK_4MB)
 			<= (phys & I386_VM_ADDR_MASK_4MB)) {
 			flags |= I386_VM_PWT | I386_VM_PCD;
 		}
-                phys = i * I386_BIG_PAGE_SIZE;
                 pagedir[i] =  phys | flags;
         }
 }

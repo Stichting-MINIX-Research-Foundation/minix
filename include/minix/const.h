@@ -72,12 +72,6 @@
 #define FUTURE_CODE	   0	/* new code to be activated + tested later */
 #define TEMP_CODE	   1	/* active code to be removed later */
 
-/* Number of processes contained in the system image. */
-#define NR_BOOT_PROCS   (NR_TASKS + LAST_SPECIAL_PROC_NR + 1)
-
-/* Process name length in the PM process table, including '\0'. */
-#define PROC_NAME_LEN	16
-
 /* Miscellaneous */
 #define BYTE            0377	/* mask for 8 bits */
 #define READING            0	/* copy data to user */

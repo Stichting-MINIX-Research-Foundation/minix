@@ -12,6 +12,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <minix/com.h>
 #include <minix/ds.h>
 #include <minix/syslib.h>
+#include <minix/param.h>
 
 #include "pci.h"
 #include <machine/pci_amd.h>

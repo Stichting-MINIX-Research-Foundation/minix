@@ -10,7 +10,6 @@
  */
 
 #include <string.h>
-#include <minix/endpoint.h>
 
 #include "kernel/system.h"
 

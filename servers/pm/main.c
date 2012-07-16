@@ -241,7 +241,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 		/* Set process details found in the image table. */
 		rmp = &mproc[ip->proc_nr];	
-  		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
+  		strlcpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
   		(void) sigemptyset(&rmp->mp_ignore);	
   		(void) sigemptyset(&rmp->mp_sigmask);
   		(void) sigemptyset(&rmp->mp_catch);

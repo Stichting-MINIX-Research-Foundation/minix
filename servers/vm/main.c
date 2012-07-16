@@ -276,7 +276,7 @@ void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
         execi->proc_e = vmp->vm_endpoint;
         execi->hdr = hdr;
         execi->hdr_len = sizeof(hdr);
-        strcpy(execi->progname, ip->proc_name);
+        strlcpy(execi->progname, ip->proc_name, sizeof(execi->progname));
         execi->frame_len = 0;
 	execi->opaque = &vmexeci;
 
@@ -370,9 +370,10 @@ void init_vm(void)
 	}
 
 	/* Set up table of calls. */
-#define CALLMAP(code, func) { int i;			      \
-	if((i=CALLNUMBER(code)) < 0) { panic(#code " invalid: %d", (code)); } \
-	if(i >= NR_VM_CALLS) { panic(#code " invalid: %d", (code)); } \
+#define CALLMAP(code, func) { int i;		      \
+	i=CALLNUMBER(code);				\
+	assert(i >= 0);					\
+	assert(i < NR_VM_CALLS);			\
 	vm_calls[i].vmc_func = (func); 				      \
 	vm_calls[i].vmc_name = #code; 				      \
 }

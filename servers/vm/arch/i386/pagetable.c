@@ -522,7 +522,7 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	end = end ? end : VM_DATATOP;
 	assert(start % I386_PAGE_SIZE == 0);
 	assert(end % I386_PAGE_SIZE == 0);
-	assert(I386_VM_PDE(start) >= 0 && start <= end);
+	assert(start <= end);
 	assert(I386_VM_PDE(end) < I386_VM_DIR_ENTRIES);
 
 #if LU_DEBUG

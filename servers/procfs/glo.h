@@ -1,6 +1,8 @@
 #ifndef _PROCFS_GLO_H
 #define _PROCFS_GLO_H
 
+#include <minix/param.h>
+
 /* pid.c */
 extern struct file pid_files[];
 

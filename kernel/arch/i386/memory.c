@@ -746,7 +746,7 @@ void memory_init(void)
 void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp, char *name)
 {
 	arch_proc_reset(pr);
-	strcpy(pr->p_name, name);
+	strlcpy(pr->p_name, name, sizeof(pr->p_name));
 
 	/* set custom state we know */
 	pr->p_reg.pc = ip;

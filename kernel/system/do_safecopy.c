@@ -14,10 +14,9 @@
  */
 
 #include <assert.h>
-#include <minix/type.h>
-#include <minix/safecopies.h>
 
 #include "kernel/system.h"
+#include "kernel.h"
 
 #define MAX_INDIRECT_DEPTH 5	/* up to how many indirect grants to follow? */
 

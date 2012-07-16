@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <env.h>
 #include <string.h>
+#include <minix/param.h>
 
 
 /*=========================================================================*
@@ -98,9 +99,9 @@ struct memory *mem_chunks;	/* where to store the memory bits */
 int maxchunks;			/* how many were found */
 {
   static kinfo_t kinfo;
-  int mm;
+  int mm, r;
 
-  sys_getkinfo(&kinfo);
+  if((r=sys_getkinfo(&kinfo)) != OK) return r;
 
   /* Initialize everything to zero. */
   memset(mem_chunks, 0, maxchunks*sizeof(*mem_chunks));
