@@ -1,0 +1,5 @@
+[gerrit]
+host=gerrit
+port=2222
+project=minix
+defaultbranch=master
