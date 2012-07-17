@@ -100,53 +100,21 @@ int fs_sendrec(endpoint_t fs_e, message *reqmp)
   }
   if (fs_e == fp->fp_endpoint) return(EDEADLK);
 
-  if (!force_sync) {
-	fp->fp_sendrec = reqmp;	/* Where to store request and reply */
+  fp->fp_sendrec = reqmp;	/* Where to store request and reply */
 
-	/* Find out whether we can send right away or have to enqueue */
-	if (	!(vmp->m_flags & VMNT_CALLBACK) &&
-		vmp->m_comm.c_cur_reqs < vmp->m_comm.c_max_reqs) {
-		/* There's still room to send more and no proc is queued */
-		r = sendmsg(vmp, fp);
-	} else {
-		r = queuemsg(vmp);
-	}
-	self->w_next = NULL;	/* End of list */
-
-	if (r != OK) return(r);
-
-	worker_wait();	/* Yield execution until we've received the reply. */
-  } else if (force_sync == 1) {
-	int r;
-	if (OK != (r = sendrec(fs_e, reqmp))) {
-		printf("VFS: sendrec failed: %d\n", r);
-		util_stacktrace();
-		return(r);
-	}
-  } else if (force_sync == 2) {
-	int r, status;
-	if (OK != (r = asynsend(fs_e, reqmp)) ||
-	    OK != (r = receive(fs_e, reqmp, &status))) {
-		printf("VFS: asynrec failed: %d\n", r);
-		util_stacktrace();
-		return(r);
-	}
-  } else if (force_sync == 3) {
-	int r, status;
-	if (OK != (r = send(fs_e, reqmp)) ||
-	    OK != (r = receive(fs_e, reqmp, &status))) {
-		printf("VFS: sendreceive failed: %d\n", r);
-		util_stacktrace();
-		return(r);
-	}
+  /* Find out whether we can send right away or have to enqueue */
+  if (	!(vmp->m_flags & VMNT_CALLBACK) &&
+	vmp->m_comm.c_cur_reqs < vmp->m_comm.c_max_reqs) {
+	/* There's still room to send more and no proc is queued */
+	r = sendmsg(vmp, fp);
+  } else {
+	r = queuemsg(vmp);
   }
+  self->w_next = NULL;	/* End of list */
 
-  if (force_sync != 0 && reqmp->m_type > 0) {
-	/* XXX: Keep this as long as we're interested in having support
-	 * for synchronous communication. */
-	nested_fs_call(reqmp);
-	return fs_sendrec(fs_e, reqmp);
-  }
+  if (r != OK) return(r);
+
+  worker_wait();	/* Yield execution until we've received the reply. */
 
   return(reqmp->m_type);
 }
