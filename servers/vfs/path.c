@@ -10,9 +10,11 @@
 #include <minix/keymap.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
+#include <stddef.h>
 #include <unistd.h>
 #include <assert.h>
 #include <minix/vfsif.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <dirent.h>
@@ -545,9 +547,11 @@ struct vnode *dirp;
 struct vnode *entry;
 char ename[NAME_MAX + 1];
 {
+#define DIR_ENTRIES 8
+#define DIR_ENTRY_SIZE (sizeof(struct dirent) + NAME_MAX)
   u64_t pos, new_pos;
-  int r, consumed, totalbytes;
-  char buf[(sizeof(struct dirent) + NAME_MAX) * 8];
+  int r, consumed, totalbytes, name_len;
+  char buf[DIR_ENTRY_SIZE * DIR_ENTRIES];
   struct dirent *cur;
 
   pos = make64(0, 0);
@@ -569,9 +573,14 @@ char ename[NAME_MAX + 1];
 
 	do {
 		cur = (struct dirent *) (buf + consumed);
+		name_len = cur->d_reclen - offsetof(struct dirent, d_name) - 1;
+
+		if(cur->d_name + name_len >= &buf[DIR_ENTRIES * DIR_ENTRY_SIZE])
+			return(EINVAL);	/* Rubbish in dir entry */
 		if (entry->v_inode_nr == cur->d_ino) {
 			/* found the entry we were looking for */
-			strlcpy(ename, cur->d_name, NAME_MAX+1);
+			strlcpy(ename, cur->d_name,
+				MIN(name_len + 1, NAME_MAX + 1));
 			ename[NAME_MAX] = '\0';
 			return(OK);
 		}
