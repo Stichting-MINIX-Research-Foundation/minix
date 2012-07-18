@@ -551,10 +551,13 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 				break;
 			}
 		}
+	}
 
-		if (peer == -1) {
-			return ENOENT;
-		}
+	if (peer == -1) {
+		if (pretend)
+			return SUSPEND;
+
+		return ENOENT;
 	}
 
 	/* check if write would overrun buffer. check if message
@@ -565,7 +568,7 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 	if ((uds_fd_table[peer].pos+uds_fd_table[peer].size+size > PIPE_BUF) ||
 		((uds_fd_table[minor].type == SOCK_SEQPACKET ||
 		uds_fd_table[minor].type == SOCK_DGRAM) &&
-		uds_fd_table[peer].size > 0) || (peer == -1)) {
+		uds_fd_table[peer].size > 0)) {
 
 		if (pretend) {
 			return SUSPEND;
