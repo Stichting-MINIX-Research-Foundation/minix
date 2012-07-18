@@ -49,8 +49,8 @@ static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
 	int valuelen = strlen(value);
 
 	/* Some variables we recognize */
-	if(!strcmp(name, SERVARNAME)) { cbi->do_serial_debug = 1; return 0; }
-	if(!strcmp(name, SERBAUDVARNAME)) { cbi->serial_debug_baud = atoi(value); return 0; }
+	if(!strcmp(name, SERVARNAME)) { cbi->do_serial_debug = 1; }
+	if(!strcmp(name, SERBAUDVARNAME)) { cbi->serial_debug_baud = atoi(value); }
 
 	/* Delete the item if already exists */
 	while (*p) {
