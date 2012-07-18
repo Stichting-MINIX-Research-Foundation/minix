@@ -197,7 +197,7 @@ int do_rename()
   vname2 = (vir_bytes) job_m_in.name2;
   vname2_length = job_m_in.name2_length;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &oldvmp, &old_dirp);
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &oldvmp, &old_dirp);
   /* Do not yet request exclusive lock on vmnt to prevent deadlocks later on */
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_READ;
@@ -240,7 +240,7 @@ int do_rename()
   strlcpy(old_name, fullpath, PATH_MAX);
 
   /* See if 'name2' (new name) exists.  Get dir inode */
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &newvmp, &new_dirp);
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &newvmp, &new_dirp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
   if (fetch_name(vname2, vname2_length, fullpath) != OK) r = err_code;
