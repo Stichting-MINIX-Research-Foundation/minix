@@ -182,6 +182,11 @@ void arch_proc_reset(struct proc *pr)
 	pr->p_reg.ds = USER_DS_SELECTOR;
 }
 
+void arch_set_secondary_ipc_return(struct proc *p, u32_t val)
+{
+	p->p_reg.bx = val;
+}
+
 int restore_fpu(struct proc *pr)
 {
 	int failed;

@@ -757,9 +757,13 @@ static int oxpcie_mapping_index = -1,
 	lapic_mapping_index = -1,
 	ioapic_first_index = -1,
 	ioapic_last_index = -1,
-	video_mem_mapping_index = -1;
+	video_mem_mapping_index = -1,
+	usermapped_glo_index = -1,
+	usermapped_index = -1, first_um_idx = -1;
 
 extern char *video_mem;
+
+extern char usermapped_start, usermapped_end, usermapped_nonglo_start;
 
 int arch_phys_map(const int index,
 			phys_bytes *addr,
@@ -769,9 +773,19 @@ int arch_phys_map(const int index,
 	static int first = 1;
 	int freeidx = 0;
 	static char *ser_var = NULL;
+	u32_t glo_len = (u32_t) &usermapped_nonglo_start -
+			(u32_t) &usermapped_start;
 
 	if(first) {
 		video_mem_mapping_index = freeidx++;
+		if(glo_len > 0) {
+			usermapped_glo_index = freeidx++;
+		}
+		
+		usermapped_index = freeidx++;
+		first_um_idx = usermapped_index;
+		if(usermapped_glo_index != -1)
+			first_um_idx = usermapped_glo_index;
 
 #ifdef USE_APIC
 		if(lapic_addr)
@@ -798,21 +812,34 @@ int arch_phys_map(const int index,
 		first = 0;
 	}
 
-#ifdef USE_APIC
-	if (index == video_mem_mapping_index) {
+	if(index == usermapped_glo_index) {
+		*addr = vir2phys(&usermapped_start);
+		*len = glo_len;
+		*flags = VMMF_USER | VMMF_GLO;
+		return OK;
+	}
+	else if(index == usermapped_index) {
+		*addr = vir2phys(&usermapped_nonglo_start);
+		*len = (u32_t) &usermapped_end -
+			(u32_t) &usermapped_nonglo_start;
+		*flags = VMMF_USER;
+		return OK;
+	}
+	else if (index == video_mem_mapping_index) {
 		/* map video memory in so we can print panic messages */
 		*addr = MULTIBOOT_VIDEO_BUFFER;
 		*len = I386_PAGE_SIZE;
-		*flags = 0;
+		*flags = VMMF_WRITE;
 		return OK;
 	}
+#ifdef USE_APIC
 	else if (index == lapic_mapping_index) {
 		/* map the local APIC if enabled */
 		if (!lapic_addr)
 			return EINVAL;
 		*addr = lapic_addr;
 		*len = 4 << 10 /* 4kB */;
-		*flags = VMMF_UNCACHED;
+		*flags = VMMF_UNCACHED | VMMF_WRITE;
 		return OK;
 	}
 	else if (ioapic_enabled && index >= ioapic_first_index && index <= ioapic_last_index) {
@@ -820,7 +847,7 @@ int arch_phys_map(const int index,
 		*addr = io_apic[ioapic_idx].paddr;
 		assert(*addr);
 		*len = 4 << 10 /* 4kB */;
-		*flags = VMMF_UNCACHED;
+		*flags = VMMF_UNCACHED | VMMF_WRITE;
 		printf("ioapic map: addr 0x%lx\n", *addr);
 		return OK;
 	}
@@ -830,7 +857,7 @@ int arch_phys_map(const int index,
 	if(index == oxpcie_mapping_index) {
 		*addr = strtoul(ser_var+2, NULL, 16);
 		*len = 0x4000;
-		*flags = VMMF_UNCACHED;
+		*flags = VMMF_UNCACHED | VMMF_WRITE;
 		return OK;
 	}
 #endif
@@ -860,6 +887,31 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 #endif
+	if(index == first_um_idx) {
+		u32_t usermapped_offset;
+		assert(addr > (u32_t) &usermapped_start);
+		usermapped_offset = addr - (u32_t) &usermapped_start;
+		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
+#define FIXEDPTR(ptr) (void *) ((u32_t)ptr + usermapped_offset)
+#define FIXPTR(ptr) ptr = FIXEDPTR(ptr)
+#define ASSIGN(minixstruct) minix_kerninfo.minixstruct = FIXEDPTR(&minixstruct)
+		ASSIGN(kinfo);
+		ASSIGN(machine);
+		ASSIGN(kmessages);
+		ASSIGN(loadinfo);
+
+		/* adjust the pointers of the functions and the struct
+		 * itself to the user-accessible mapping
+		 */
+		minix_kerninfo.kerninfo_magic = KERNINFO_MAGIC;
+		minix_kerninfo.minix_feature_flags = minix_feature_flags;
+		minix_kerninfo_user = (vir_bytes) FIXEDPTR(&minix_kerninfo);
+
+		return OK;
+	}
+
+	if(index == usermapped_index) return OK;
+
 	if (index == video_mem_mapping_index) {
 		video_mem_vaddr =  addr;
 		return OK;

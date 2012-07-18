@@ -50,6 +50,20 @@ ENTRY(_sendrec)
 	pop	%ebp
 	ret
 
+ENTRY(_minix_kernel_info_struct)
+	push	%ebp
+	movl	%esp, %ebp
+	push	%ebx
+	movl	$0, %eax
+	movl	$0, %ebx
+	movl	$MINIX_KERNINFO, %ecx
+	int	$IPCVEC	/* trap to the kernel */
+	movl	8(%ebp), %ecx	/* ecx = return struct ptr */
+	movl	%ebx, (%ecx)
+	pop	%ebx
+	pop	%ebp
+	ret
+
 ENTRY(_notify)
 	push	%ebp
 	movl	%esp, %ebp

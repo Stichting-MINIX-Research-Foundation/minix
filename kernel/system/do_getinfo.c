@@ -167,11 +167,6 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 
     	break;
     }
-    case GET_KMESSAGES: {
-        length = sizeof(struct kmessages);
-        src_vir = (vir_bytes) &kmess;
-        break;
-    }
     case GET_IRQACTIDS: {
         length = sizeof(irq_actids);
         src_vir = (vir_bytes) irq_actids;

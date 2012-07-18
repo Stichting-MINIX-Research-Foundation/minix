@@ -18,6 +18,7 @@
 
 #include <minix/drivers.h>
 #include <termios.h>
+#include <assert.h>
 #include <sys/ioctl.h>
 #include <sys/vm.h>
 #include <sys/video.h>
@@ -1007,29 +1008,21 @@ tty_t *tp;
   cons_ioctl(tp, 0);
 }
 
+extern struct minix_kerninfo *_minix_kerninfo;
+
 /*===========================================================================*
  *				do_new_kmess				     *
  *===========================================================================*/
 void do_new_kmess()
 {
 /* Notification for a new kernel message. */
-  static struct kmessages kmess;		/* kmessages structure */
+  struct kmessages *kmess_ptr;		/* kmessages structure */
   static int prev_next = 0;			/* previous next seen */
   int bytes;
   int r;
 
-  /* Try to get a fresh copy of the buffer with kernel messages. */
-#if DEAD_CODE	
-  /* During shutdown, the reply is garbled because new notifications arrive
-   * while the system task makes a copy of the kernel messages buffer.
-   * Hence, don't check the return value. 
-   */
-  if ((r=sys_getkmessages(&kmess)) != OK) {
-  	printf("TTY: couldn't get copy of kmessages: %d, 0x%x\n", r,r);
-  	return;
-  }
-#endif
-  sys_getkmessages(&kmess);
+  assert(_minix_kerninfo);
+  kmess_ptr = _minix_kerninfo->kmessages;
 
   /* Print only the new part. Determine how many new bytes there are with 
    * help of the current and previous 'next' index. Note that the kernel
@@ -1037,11 +1030,11 @@ void do_new_kmess()
    * is new data; else we miss % _KMESS_BUF_SIZE here.  
    * Check for size being positive, the buffer might as well be emptied!
    */
-  if (kmess.km_size > 0) {
-      bytes = ((kmess.km_next + _KMESS_BUF_SIZE) - prev_next) % _KMESS_BUF_SIZE;
+  if (kmess_ptr->km_size > 0) {
+      bytes = ((kmess_ptr->km_next + _KMESS_BUF_SIZE) - prev_next) % _KMESS_BUF_SIZE;
       r=prev_next;				/* start at previous old */ 
       while (bytes > 0) {			
-          cons_putk( kmess.km_buf[(r%_KMESS_BUF_SIZE)] );
+          cons_putk( kmess_ptr->km_buf[(r%_KMESS_BUF_SIZE)] );
           bytes --;
           r ++;
       }
@@ -1051,7 +1044,7 @@ void do_new_kmess()
   /* Almost done, store 'next' so that we can determine what part of the
    * kernel messages buffer to print next time a notification arrives.
    */
-  prev_next = kmess.km_next;
+  prev_next = kmess_ptr->km_next;
 }
 
 /*===========================================================================*

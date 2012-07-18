@@ -170,5 +170,23 @@ struct k_randomness {
   } bin[RANDOM_SOURCES];
 };
 
+struct minix_kerninfo {
+	/* Binaries will depend on the offsets etc. in this
+	 * structure, so it can't be changed willy-nilly. In
+	 * other words, it is ABI-restricted.
+	 */
+#define KERNINFO_MAGIC 0xfc3b84bf
+	u32_t kerninfo_magic;
+	u32_t minix_feature_flags;
+	u32_t flags_unused1;
+	u32_t flags_unused2;
+	u32_t flags_unused3;
+	u32_t flags_unused4;
+	struct kinfo		*kinfo;
+	struct machine		*machine;
+	struct kmessages	*kmessages;
+	struct loadinfo		*loadinfo;
+} __packed;
+
 #endif /* _TYPE_H */
 

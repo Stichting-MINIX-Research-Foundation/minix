@@ -9,23 +9,24 @@
 
 #include "log.h"
 
+#include <assert.h>
+
+extern struct minix_kerninfo *_minix_kerninfo;
+
 /*==========================================================================*
  *				do_new_kmess				    *
  *==========================================================================*/
 void do_new_kmess(void)
 {
 /* Notification for a new kernel message. */
-  static struct kmessages kmess;		/* entire kmess structure */
+  static struct kmessages *kmess;		/* entire kmess structure */
   static char print_buf[_KMESS_BUF_SIZE];	/* copy new message here */
   int bytes;
   int i, r;
   static int prev_next = 0;
 
-  /* Try to get a fresh copy of the buffer with kernel messages. */
-  if ((r=sys_getkmessages(&kmess)) != OK) {
-	printf("log: couldn't get copy of kmessages: %d\n", r);
-	return;
-  }
+  assert(_minix_kerninfo);
+  kmess = _minix_kerninfo->kmessages;
 
   /* Print only the new part. Determine how many new bytes there are with 
    * help of the current and previous 'next' index. Note that the kernel
@@ -33,13 +34,13 @@ void do_new_kmess(void)
    * are new data; else we miss % KMESS_BUF_SIZE here.  
    * Check for size being positive, the buffer might as well be emptied!
    */
-  if (kmess.km_size > 0) {
-      bytes = ((kmess.km_next + _KMESS_BUF_SIZE) - prev_next) %
+  if (kmess->km_size > 0) {
+      bytes = ((kmess->km_next + _KMESS_BUF_SIZE) - prev_next) %
 	_KMESS_BUF_SIZE;
       r= prev_next;				/* start at previous old */ 
       i=0;
       while (bytes > 0) {			
-          print_buf[i] = kmess.km_buf[(r%_KMESS_BUF_SIZE)];
+          print_buf[i] = kmess->km_buf[(r%_KMESS_BUF_SIZE)];
           bytes --;
           r ++;
           i ++;
@@ -52,5 +53,5 @@ void do_new_kmess(void)
   /* Almost done, store 'next' so that we can determine what part of the
    * kernel messages buffer to print next time a notification arrives.
    */
-  prev_next = kmess.km_next;
+  prev_next = kmess->km_next;
 }

@@ -608,6 +608,16 @@ int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 	        return EDOM;
   	    return mini_senda(caller_ptr, (asynmsg_t *) r3, msg_size);
   	}
+  	case MINIX_KERNINFO:
+	{
+		/* It might not be initialized yet. */
+	  	if(!minix_kerninfo_user) {
+			return EBADCALL;
+		}
+
+  		arch_set_secondary_ipc_return(caller_ptr, minix_kerninfo_user);
+  		return OK;
+	}
   	default:
 	return EBADCALL;		/* illegal system call */
   }

@@ -26,7 +26,7 @@
 
 /* to-be-built kinfo struct, diagnostics buffer */
 kinfo_t kinfo;
-struct kmessages kmess;
+struct kmessages kmessages;
 
 /* pg_utils.c uses this; in this phase, there is a 1:1 mapping. */
 phys_bytes vir2phys(void *addr) { return (phys_bytes) addr; } 

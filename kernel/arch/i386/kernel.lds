@@ -21,8 +21,14 @@ SECTIONS
 
 	. += _kern_offset;
 
+	. = ALIGN(4096); usermapped_start = .;
+	.usermapped_glo : AT(ADDR(.usermapped_glo) - _kern_offset) { usermapped_glo*.o }
+	. = ALIGN(4096); usermapped_nonglo_start = .;
+	.usermapped : AT(ADDR(.usermapped) - _kern_offset) { usermapped_*.o }
+	. = ALIGN(4096); usermapped_end = .;
 	.text             : AT(ADDR(.text) - _kern_offset) { *(.text*) }
 	.data ALIGN(4096) : AT(ADDR(.data) - _kern_offset) { *(.data .rodata* ) }
+	. = ALIGN(4096);
 	.bss ALIGN(4096)  : AT(ADDR(.bss) - _kern_offset) { *(.bss* COMMON)
 		__k_unpaged__kern_size = . - _kern_vir_base;
 		_kern_size = __k_unpaged__kern_size;

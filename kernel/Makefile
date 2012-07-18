@@ -6,7 +6,7 @@ PROG=	kernel
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
-	table.c utility.c 
+	table.c utility.c usermapped_data.c
 
 LINKERSCRIPT=${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 

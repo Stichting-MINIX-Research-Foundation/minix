@@ -7,6 +7,7 @@
 #define SENDREC	 	   3  	/* SEND + RECEIVE */
 #define NOTIFY		   4	/* asynchronous notify */
 #define SENDNB             5    /* nonblocking send */
+#define MINIX_KERNINFO     6    /* request kernel info structure */
 #define SENDA		   16	/* asynchronous send */
 #define IPCNO_HIGHEST	SENDA
 

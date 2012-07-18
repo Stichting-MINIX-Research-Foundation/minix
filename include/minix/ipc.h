@@ -168,6 +168,7 @@ int receive(endpoint_t src, message *m_ptr, int *status_ptr);
 int send(endpoint_t dest, message *m_ptr);
 int sendnb(endpoint_t dest, message *m_ptr);
 int senda(asynmsg_t *table, size_t count);
+int _minix_kernel_info_struct(struct minix_kerninfo **);
 
 int _do_kernel_call(message *m_ptr);
 

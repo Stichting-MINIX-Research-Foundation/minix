@@ -27,7 +27,7 @@ typedef struct kinfo {
         char                    param_buf[MULTIBOOT_PARAM_BUF_SIZE];
 
         /* Minix stuff */
-        struct kmessages *kmess;
+        struct kmessages *kmessages;
         int do_serial_debug;    /* system serial output */
         int serial_debug_baud;  /* serial baud rate */
         int minix_panicing;     /* are we panicing? */

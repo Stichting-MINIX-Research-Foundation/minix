@@ -71,9 +71,14 @@ void do_pagefaults(message *m)
 
 	/* See if address is valid at all. */
 	if(!(region = map_lookup(vmp, addr))) {
-		assert(PFERR_NOPAGE(err));
-		printf("VM: pagefault: SIGSEGV %d bad addr 0x%x; %s\n",
+		if(PFERR_PROT(err))  {
+			printf("VM: pagefault: SIGSEGV %d protected addr 0x%x; %s\n",
 				ep, addr, pf_errstr(err));
+		} else {
+			assert(PFERR_NOPAGE(err));
+			printf("VM: pagefault: SIGSEGV %d bad addr 0x%x; %s\n",
+					ep, addr, pf_errstr(err));
+		}
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)

@@ -936,9 +936,15 @@ void pt_init(void)
 			kern_mappings[index].flags = flags;
 			kern_mappings[index].vir_addr = offset;
 			kern_mappings[index].flags =
-				I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
+				I386_VM_PRESENT;
 			if(flags & VMMF_UNCACHED)
 				kern_mappings[index].flags |= PTF_NOCACHE;
+			if(flags & VMMF_USER)
+				kern_mappings[index].flags |= I386_VM_USER;
+			if(flags & VMMF_WRITE)
+				kern_mappings[index].flags |= I386_VM_WRITE;
+			if(flags & VMMF_GLO)
+				kern_mappings[index].flags |= I386_VM_GLOBAL;
 			if(addr % I386_PAGE_SIZE)
                 		panic("VM: addr unaligned: %d", addr);
 			if(len % I386_PAGE_SIZE)

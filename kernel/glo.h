@@ -19,11 +19,18 @@
 #include "debug.h"
 
 /* Kernel information structures. This groups vital kernel information. */
-EXTERN struct kinfo kinfo;		/* kernel information for users */
-EXTERN struct machine machine;		/* machine information for users */
-EXTERN struct kmessages kmess;  	/* diagnostic messages in kernel */
-EXTERN struct k_randomness krandom;	/* gather kernel random information */
-EXTERN struct loadinfo kloadinfo;	/* status of load average */
+extern struct kinfo kinfo;		  /* kernel information for users */
+extern struct machine machine;		  /* machine information for users */
+extern struct kmessages kmessages;  	  /* diagnostic messages in kernel */
+extern struct loadinfo loadinfo;	  /* status of load average */
+extern struct minix_kerninfo minix_kerninfo;
+
+EXTERN struct k_randomness krandom; 	/* gather kernel random information */
+
+vir_bytes minix_kerninfo_user;
+
+#define kmess kmessages
+#define kloadinfo loadinfo
 
 /* Process scheduling information and the kernel reentry count. */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */

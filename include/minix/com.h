@@ -459,7 +459,6 @@
 #   define GET_MONPARAMS   4	/* get monitor parameters */
 #   define GET_KENV	   5	/* get kernel environment string */
 #   define GET_IRQHOOKS	   6	/* get the IRQ table */
-#   define GET_KMESSAGES   7	/* get kernel messages */
 #   define GET_PRIVTAB	   8	/* get kernel privileges table */
 #   define GET_KADDRESSES  9	/* get various kernel addresses */
 #   define GET_SCHEDINFO  10	/* get scheduling queues */
@@ -611,6 +610,9 @@
 #define SVMCTL_MAP_PHYS_LEN	m2_l2
 
 #define VMMF_UNCACHED		(1L << 0)
+#define VMMF_USER		(1L << 1)
+#define VMMF_WRITE		(1L << 2)
+#define VMMF_GLO		(1L << 3)
 
 /* Values for SVMCTL_PARAM. */
 #define VMCTL_CLEAR_PAGEFAULT	12
