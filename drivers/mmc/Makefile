@@ -6,6 +6,10 @@ DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}
 LDADD+=	-lblockdriver -lsys
 CLEANFILES+=.depend mmcblk.d
 
+#
+# This is a system driver.
+CPPFLAGS+= -D_SYSTEM=1
+LDFLAGS+= -g
 MAN=
 
 BINDIR?= /usr/sbin
