@@ -652,12 +652,12 @@ int do_lseek()
   } else if ((off_t) ex64lo(newpos) < 0) { /* no negative file size */
 	r = EOVERFLOW;
   } else {
-	rfilp->filp_pos = newpos;
-
 	/* insert the new position into the output message */
 	m_out.reply_l1 = ex64lo(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+		rfilp->filp_pos = newpos;
+
 		/* Inhibit read ahead request */
 		r = req_inhibread(rfilp->filp_vno->v_fs_e,
 				  rfilp->filp_vno->v_inode_nr);
@@ -709,13 +709,13 @@ int do_llseek()
   else if ((off_hi < 0) && cmp64(newpos, pos) > 0)
       r = EINVAL;
   else {
-	rfilp->filp_pos = newpos;
-
 	/* insert the new position into the output message */
 	m_out.reply_l1 = ex64lo(newpos);
 	m_out.reply_l2 = ex64hi(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+		rfilp->filp_pos = newpos;
+
 		/* Inhibit read ahead request */
 		r = req_inhibread(rfilp->filp_vno->v_fs_e,
 				  rfilp->filp_vno->v_inode_nr);
