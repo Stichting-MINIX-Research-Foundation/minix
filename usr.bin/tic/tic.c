@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.10 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: tic.c,v 1.19 2012/06/01 12:08:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.10 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.19 2012/06/01 12:08:40 joerg Exp $");
 
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -47,27 +48,32 @@ __RCSID("$NetBSD: tic.c,v 1.10 2010/02/22 23:05:39 roy Exp $");
 #include <limits.h>
 #include <fcntl.h>
 #include <ndbm.h>
+#include <search.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <term_private.h>
 #include <term.h>
+#include <util.h>
+
+#define	HASH_SIZE	16384	/* 2012-06-01: 3600 entries */
 
 /* We store the full list of terminals we have instead of iterating
    through the database as the sequential iterator doesn't work
    the the data size stored changes N amount which ours will. */
 typedef struct term {
-	struct term *next;
+	SLIST_ENTRY(term) next;
 	char *name;
 	char type;
 	TIC *tic;
 } TERM;
-static TERM *terms;
+static SLIST_HEAD(, term) terms = SLIST_HEAD_INITIALIZER(terms);
 
 static int error_exit;
 static int Sflag;
 static char *dbname;
+static size_t nterm, nalias;
 
 static void
 do_unlink(void)
@@ -77,7 +83,7 @@ do_unlink(void)
 		unlink(dbname);
 }
 
-static void __attribute__((__format__(__printf__, 1, 2)))
+static void __printflike(1, 2)
 dowarn(const char *fmt, ...)
 {
 	va_list va;
@@ -123,28 +129,33 @@ save_term(DBM *db, TERM *term)
 static TERM *
 find_term(const char *name)
 {
-	TERM *term;
-	
-	for (term = terms; term != NULL; term = term->next)
-		if (strcmp(term->name, name) == 0)
-			return term;
-	return NULL;
+	ENTRY elem, *elemp;
+
+	elem.key = __UNCONST(name);
+	elem.data = NULL;
+	elemp = hsearch(elem, FIND);
+	return elemp ? (TERM *)elemp->data : NULL;
 }
 
 static TERM *
 store_term(const char *name, char type)
 {
 	TERM *term;
+	ENTRY elem;
 
-	term = calloc(1, sizeof(*term));
-	if (term == NULL)
-		errx(1, "malloc");
-	term->name = strdup(name);
+	term = ecalloc(1, sizeof(*term));
+	term->name = estrdup(name);
 	term->type = type;
-	if (term->name == NULL)
-		errx(1, "malloc");
-	term->next = terms;
-	terms = term;
+	SLIST_INSERT_HEAD(&terms, term, next);
+	elem.key = estrdup(name);
+	elem.data = term;
+	hsearch(elem, ENTER);
+
+	if (type == 'a')
+		nalias++;
+	else
+		nterm++;
+
 	return term;
 }
 
@@ -179,7 +190,7 @@ process_entry(TBUF *buf, int flags)
 
 	/* Create aliased terms */
 	if (tic->alias != NULL) {
-		alias = p = strdup(tic->alias);
+		alias = p = estrdup(tic->alias);
 		while (p != NULL && *p != '\0') {
 			e = strchr(p, '|');
 			if (e != NULL)
@@ -189,15 +200,12 @@ process_entry(TBUF *buf, int flags)
 				    " term %s", tic->name, p);
 			} else {
 				term = store_term(p, 'a');
-				term->tic = calloc(sizeof(*term->tic), 1);
-				if (term->tic == NULL)
-					err(1, "malloc");
-				term->tic->name = strdup(tic->name);
-				if (term->tic->name == NULL)
-					err(1, "malloc");
+				term->tic = ecalloc(sizeof(*term->tic), 1);
+				term->tic->name = estrdup(tic->name);
 			}
 			p = e;
 		}
+		free(alias);
 	}
 	
 	return 0;
@@ -311,7 +319,7 @@ merge_use(int flags)
 	TERM *term, *uterm;;
 
 	skipped = merged = 0;
-	for (term = terms; term != NULL; term = term->next) {
+	SLIST_FOREACH(term, &terms, next) {
 		if (term->type == 'a')
 			continue;
 		rtic = term->tic;
@@ -357,7 +365,7 @@ merge_use(int flags)
 				cap += sizeof(uint16_t) + num;
 				memn = rtic->extras.bufpos -
 				    (cap - rtic->extras.buf);
-				memcpy(scap, cap, memn);
+				memmove(scap, cap, memn);
 				rtic->extras.bufpos -= cap - scap;
 				cap = scap;
 				rtic->extras.entries--;
@@ -443,7 +451,8 @@ main(int argc, char **argv)
 	char *source, *p, *buf, *ofile;
 	FILE *f;
 	DBM *db;
-	size_t len, buflen, nterm, nalias;
+	size_t buflen;
+	ssize_t len;
 	TBUF tbuf;
 	TERM *term;
 
@@ -490,9 +499,7 @@ main(int argc, char **argv)
 		if (ofile == NULL)
 			ofile = source;
 		len = strlen(ofile) + 9;
-		dbname = malloc(len + 4); /* For adding .db after open */
-		if (dbname == NULL)
-			err(1, "malloc");
+		dbname = emalloc(len + 4); /* For adding .db after open */
 		snprintf(dbname, len, "%s.tmp", ofile);
 		db = dbm_open(dbname, O_CREAT | O_RDWR | O_TRUNC, DEFFILEMODE);
 		if (db == NULL)
@@ -506,12 +513,15 @@ main(int argc, char **argv)
 	} else
 		db = NULL; /* satisfy gcc warning */
 
-	tbuf.buflen = tbuf.bufpos = 0;	
-	while ((buf = fgetln(f, &buflen)) != NULL) {
+	hcreate(HASH_SIZE);
+
+	buf = tbuf.buf = NULL;
+	buflen = tbuf.buflen = tbuf.bufpos = 0;	
+	while ((len = getline(&buf, &buflen, f)) != -1) {
 		/* Skip comments */
 		if (*buf == '#')
 			continue;
-		if (buf[buflen - 1] != '\n') {
+		if (buf[len - 1] != '\n') {
 			process_entry(&tbuf, flags);
 			dowarn("last line is not a comment"
 			    " and does not end with a newline");
@@ -525,13 +535,15 @@ main(int argc, char **argv)
 			process_entry(&tbuf, flags);
 		
 		/* Grow the buffer if needed */
-		grow_tbuf(&tbuf, buflen);
+		grow_tbuf(&tbuf, len);
 		/* Append the string */
-		memcpy(tbuf.buf + tbuf.bufpos, buf, buflen);
-		tbuf.bufpos += buflen;
+		memcpy(tbuf.buf + tbuf.bufpos, buf, len);
+		tbuf.bufpos += len;
 	}
+	free(buf);
 	/* Process the last entry if not done already */
 	process_entry(&tbuf, flags);
+	free(tbuf.buf);
 
 	/* Merge use entries until we have merged all we can */
 	while (merge_use(flags) != 0)
@@ -544,26 +556,16 @@ main(int argc, char **argv)
 
 	if (cflag)
 		return error_exit;
-	
+
 	/* Save the terms */
-	nterm = nalias = 0;
-	for (term = terms; term != NULL; term = term->next) {
+	SLIST_FOREACH(term, &terms, next)
 		save_term(db, term);
-		if (term->type == 'a')
-			nalias++;
-		else
-			nterm++;
-	}
-	
+
 	/* done! */
 	dbm_close(db);
 
 	/* Rename the tmp db to the real one now */
-	len = strlen(ofile) + 4;
-	p = malloc(len);
-	if (p == NULL)
-		err(1, "malloc");
-	snprintf(p, len, "%s.db", ofile);
+	easprintf(&p, "%s.db", ofile);
 	if (rename(dbname, p) == -1)
 		err(1, "rename");
 	free(dbname);
@@ -572,6 +574,18 @@ main(int argc, char **argv)
 	if (sflag != 0)
 		fprintf(stderr, "%zu entries and %zu aliases written to %s\n",
 		    nterm, nalias, p);
+
+#ifdef __VALGRIND__
+	free(p);
+	while ((term = SLIST_FIRST(&terms)) != NULL) {
+		SLIST_REMOVE_HEAD(&terms, next);
+		_ti_freetic(term->tic);
+		free(term->name);
+		free(term);
+	}
+	hdestroy();
+#endif
+
 
 	return EXIT_SUCCESS;
 }
