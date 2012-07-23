@@ -2050,5 +2050,5 @@ main()
 	fi
 }
 
-echo keesj
+echo demo
 main "$@"
