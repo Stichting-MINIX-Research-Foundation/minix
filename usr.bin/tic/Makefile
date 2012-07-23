@@ -6,7 +6,7 @@ WARNS=		4
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libterminfo
 
 .ifndef HOSTPROG
-LDADD+=		-lterminfo
+LDADD+=		-lterminfo -lutil
 DPADD+=		${LIBTERMINFO}
 .endif
 
