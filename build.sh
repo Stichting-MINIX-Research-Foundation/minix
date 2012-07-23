@@ -2050,5 +2050,5 @@ main()
 	fi
 }
 
-main "$@"
 echo keesj
+main "$@"
