@@ -426,9 +426,8 @@ static int fbd_transfer(dev_t UNUSED(minor), int do_write, u64_t position,
 		do_write ? FBD_FLAG_WRITE : FBD_FLAG_READ);
 
 #if DEBUG
-	printf("FBD: %s operation for pos %lx:%08lx size %u -> hooks %x\n",
-		do_write ? "write" : "read", ex64hi(position),
-		ex64lo(position), size, hooks);
+	printf("FBD: %s operation for pos %"PRIx64" size %u -> hooks %x\n",
+		do_write ? "write" : "read", position, size, hooks);
 #endif
 
 	if (hooks & PRE_HOOK)

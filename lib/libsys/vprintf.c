@@ -20,16 +20,16 @@ int vprintf(const char *fmt, va_list argp)
 {
 	int c, charcount = 0;
 	enum { LEFT, RIGHT } adjust;
-	enum { LONG, INT } intsize;
+	enum { LLONG, LONG, INT } intsize;
 	int fill;
 	int width, max, len, base;
 	static char X2C_tab[]= "0123456789ABCDEF";
 	static char x2c_tab[]= "0123456789abcdef";
 	char *x2c;
 	char *p;
-	long i;
-	unsigned long u;
-	char temp[8 * sizeof(long) / 3 + 2];
+	long long i;
+	unsigned long long u;
+	char temp[8 * sizeof(long long) / 3 + 2];
 
 	while ((c= *fmt++) != 0) {
 		if (c != '%') {
@@ -93,13 +93,21 @@ int vprintf(const char *fmt, va_list argp)
 			intsize= LONG;
 			c= *fmt++;
 		}
+		if (c == 'l' || c == 'L') {
+			/* "Long long" key, e.g. %lld. */
+			intsize= LLONG;
+			c= *fmt++;
+		}
 		if (c == 0) break;
 
 		switch (c) {
 			/* Decimal. */
 		case 'd':
-			i= intsize == LONG ? va_arg(argp, long)
-						: va_arg(argp, int);
+			switch (intsize) {
+			case LLONG: i= va_arg(argp, long long); break;
+			case LONG: i= va_arg(argp, long); break;
+			case INT: i= va_arg(argp, int); break;
+			}
 			u= i < 0 ? -i : i;
 			goto int2ascii;
 
@@ -110,7 +118,8 @@ int vprintf(const char *fmt, va_list argp)
 
 			/* Pointer, interpret as %X or %lX. */
 		case 'p':
-			if (sizeof(char *) > sizeof(int)) intsize= LONG;
+			if (sizeof(char *) > sizeof(long)) intsize= LLONG;
+			else if (sizeof(char *) > sizeof(int)) intsize= LONG;
 
 			/* Hexadecimal.  %X prints upper case A-F, not %lx. */
 		case 'X':
@@ -122,8 +131,11 @@ int vprintf(const char *fmt, va_list argp)
 			/* Unsigned decimal. */
 		case 'u':
 		getint:
-			u= intsize == LONG ? va_arg(argp, unsigned long)
-						: va_arg(argp, unsigned int);
+			switch (intsize) {
+			case LLONG: u= va_arg(argp, unsigned long long); break;
+			case LONG: u= va_arg(argp, unsigned long); break;
+			case INT: u= va_arg(argp, unsigned int); break;
+			}
 		int2ascii:
 			p= temp + sizeof(temp)-1;
 			*p= 0;

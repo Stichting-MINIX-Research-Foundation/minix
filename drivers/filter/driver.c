@@ -84,13 +84,14 @@ static int driver_open(int which)
 			return RET_REDO;
 		}
 #if DEBUG
-		printf("Filter: partition size: 0x%s / %lu sectors\n",
-			print64(disk_size), sectors);
+		printf("Filter: partition size: 0x%"PRIx64" / %lu sectors\n",
+			disk_size, sectors);
 #endif
 	} else {
 		if(cmp64(disk_size, part.size)) {
-			printf("Filter: partition size mismatch (%s != %s)\n",
-				print64(part.size), print64(disk_size));
+			printf("Filter: partition size mismatch "
+				"(0x%"PRIx64" != 0x%"PRIx64")\n",
+				part.size, disk_size);
 
 			return RET_REDO;
 		}
@@ -768,7 +769,7 @@ static int paired_sendrec(message *m1, message *m2, int both)
 	int r;
 
 #if DEBUG2
-	printf("paired_sendrec(%d) - <%d,%x:%x,%d> - %x,%x\n",
+	printf("paired_sendrec(%d) - <%d,%lx:%lx,%d> - %x,%x\n",
 		both, m1->m_type, m1->BDEV_POS_HI, m1->BDEV_POS_LO,
 		m1->BDEV_COUNT, m1->BDEV_GRANT, m2->BDEV_GRANT);
 #endif

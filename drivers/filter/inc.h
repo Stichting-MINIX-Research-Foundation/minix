@@ -118,6 +118,5 @@ extern void ds_event(void);
 /* util.c */
 extern char *flt_malloc(size_t size, char *sbuf, size_t ssize);
 extern void flt_free(char *buf, size_t size, const char *sbuf);
-extern char *print64(u64_t p);
 extern clock_t flt_alarm(clock_t dt);
 

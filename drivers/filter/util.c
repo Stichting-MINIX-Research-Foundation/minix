@@ -39,21 +39,6 @@ void flt_free(char *buf, size_t size, const char *sbuf)
 }
 
 /*===========================================================================*
- *				print64					     *
- *===========================================================================*/
-char *print64(u64_t p)
-{
-#define NB 10
-	static int n = 0;
-	static char buf[NB][100];
-	u32_t lo = ex64lo(p), hi = ex64hi(p);
-	n = (n+1) % NB;
-	if(!hi) sprintf(buf[n], "%x", lo);
-	else sprintf(buf[n], "%x%08x", hi, lo);
-	return buf[n];
-}
-
-/*===========================================================================*
  *				flt_alarm				     *
  *===========================================================================*/
 clock_t flt_alarm(clock_t dt)

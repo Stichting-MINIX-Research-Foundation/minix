@@ -568,9 +568,8 @@ int transfer(u64_t pos, char *buffer, size_t *sizep, int flag_rw)
 	r = read_write(phys_pos, ext_buffer, ext_buffer, &res_size, flag_rw);
 
 #if DEBUG2
-	printf("Filter: transfer: read_write(%x:%x, %u, %d) = %d, %u\n",
-		ex64hi(phys_pos), ex64lo(phys_pos), ext_size, flag_rw, r,
-		res_size);
+	printf("Filter: transfer: read_write(%"PRIx64", %u, %d) = %d, %u\n",
+		phys_pos, ext_size, flag_rw, r, res_size);
 #endif
 
 	if (r != OK) {
