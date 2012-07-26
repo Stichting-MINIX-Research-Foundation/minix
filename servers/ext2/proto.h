@@ -21,8 +21,7 @@ void flushall(dev_t dev);
 struct buf *get_block(dev_t dev, block_t block,int only_search);
 void invalidate(dev_t device);
 void put_block(struct buf *bp, int block_type);
-void set_blocksize(unsigned int blocksize, u32_t blocks, u32_t
-	freeblocks, dev_t major);
+void set_blocksize(struct super_block *sp);
 void rw_scattered(dev_t dev, struct buf **bufq, int bufqsize, int
 	rw_flag);
 

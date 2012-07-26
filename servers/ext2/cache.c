@@ -28,7 +28,9 @@
 static void rm_lru(struct buf *bp);
 static void rw_block(struct buf *, int);
 
-static int vmcache_avail = -1; /* 0 if not available, >0 if available. */
+int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
+
+static block_t super_start = 0, super_end = 0;
 
 /*===========================================================================*
  *				get_block				     *
@@ -57,26 +59,10 @@ struct buf *get_block(
   int b;
   static struct buf *bp, *prev_ptr;
   u64_t yieldid = VM_BLOCKID_NONE, getid = make64(dev, block);
-  int vmcache = 0;
 
   assert(buf_hash);
   assert(buf);
   assert(nr_bufs > 0);
-
-  if(vmcache_avail < 0) {
-	/* Test once for the availability of the vm yield block feature. */
-	if(vm_forgetblock(VM_BLOCKID_NONE) == ENOSYS) {
-		vmcache_avail = 0;
-	} else {
-		vmcache_avail = 1;
-	}
-  }
-
-  /* use vmcache if it's available, and allowed, and we're not doing
-   * i/o on a ram disk device.
-   */
-  if(vmcache_avail && may_use_vmcache && major(dev) != MEMORY_MAJOR)
-	vmcache = 1;
 
   ASSERT(fs_block_size > 0);
 
@@ -499,16 +485,16 @@ static void rm_lru(
 }
 
 /*===========================================================================*
- *				set_blocksize				     *
+ *				cache_resize				     *
  *===========================================================================*/
-void set_blocksize(unsigned int blocksize, u32_t blocks,
-	u32_t freeblocks, dev_t majordev)
+static void cache_resize(unsigned int blocksize, unsigned int bufs)
 {
   struct buf *bp;
   struct inode *rip;
-  int new_nr_bufs;
 
-  ASSERT(blocksize > 0);
+#define MINBUFS 10
+  assert(blocksize > 0);
+  assert(bufs >= MINBUFS);
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 	if(bp->b_count != 0) panic("change blocksize with buffer in use");
@@ -516,10 +502,49 @@ void set_blocksize(unsigned int blocksize, u32_t blocks,
   for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
 	if (rip->i_count > 0) panic("change blocksize with inode in use");
 
-  new_nr_bufs = fs_bufs_heuristic(10, blocks, freeblocks, blocksize, majordev);
+  buf_pool(bufs);
 
-  buf_pool(new_nr_bufs);
   fs_block_size = blocksize;
+  super_start = SUPER_BLOCK_BYTES / fs_block_size;
+  super_end = (SUPER_BLOCK_BYTES + _MIN_BLOCK_SIZE - 1) / fs_block_size;
+}
+
+/*===========================================================================*
+ *				bufs_heuristic				     *
+ *===========================================================================*/
+static int bufs_heuristic(struct super_block *sp)
+{
+  u32_t btotal, bfree;
+
+  btotal = sp->s_blocks_count;
+  bfree = sp->s_free_blocks_count;
+  return fs_bufs_heuristic(MINBUFS, btotal, bfree,
+  	sp->s_block_size, major(sp->s_dev));
+}
+
+/*===========================================================================*
+ *				set_blocksize				     *
+ *===========================================================================*/
+void set_blocksize(struct super_block *sp)
+{
+  int bufs;
+
+  cache_resize(sp->s_block_size, MINBUFS);
+  bufs = bufs_heuristic(sp);
+  cache_resize(sp->s_block_size, bufs);
+  
+  /* Decide whether to use seconday cache or not.
+   * Only do this if
+   *	- it's available, and
+   *	- use of it hasn't been disabled for this fs, and
+   *	- our main FS device isn't a memory device
+   */
+
+  vmcache = 0;
+  if(vm_forgetblock(VM_BLOCKID_NONE) != ENOSYS &&
+  	may_use_vmcache && major(sp->s_dev) != MEMORY_MAJOR) {
+	vmcache = 1;
+  }
 }
 
 /*===========================================================================*
@@ -530,12 +555,12 @@ void buf_pool(int new_nr_bufs)
 /* Initialize the buffer pool. */
   register struct buf *bp;
 
-  assert(new_nr_bufs > 0);
+  assert(new_nr_bufs >= MINBUFS);
 
   if(nr_bufs > 0) {
 	assert(buf);
 	(void) fs_sync();
-	for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
+  	for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
 		if(bp->bp) {
 			assert(bp->b_bytes > 0);
 			free_contig(bp->bp, bp->b_bytes);
@@ -568,11 +593,12 @@ void buf_pool(int new_nr_bufs)
         bp->bp = NULL;
         bp->b_bytes = 0;
   }
-  buf[0].b_prev = NULL;
-  buf[nr_bufs - 1].b_next = NULL;
+  front->b_prev = NULL;
+  rear->b_next = NULL;
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) bp->b_hash = bp->b_next;
   buf_hash[0] = front;
 
   vm_forgetblocks();
 }
+
