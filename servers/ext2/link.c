@@ -200,11 +200,12 @@ int fs_rdlink()
 		r = EIO;
 	} else {
 		bp = get_block(rip->i_dev, b, NORMAL);
-		link_text = bp->b_data;
-		if (bp)
+		if (bp != NULL) {
+			link_text = bp->b_data;
 			r = OK;
-		else
+		} else {
 			r = EIO;
+		}
 	}
   } else {
         /* fast symlink, stored in inode */

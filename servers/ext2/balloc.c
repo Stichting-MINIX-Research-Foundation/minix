@@ -210,7 +210,7 @@ struct inode *rip;		/* used for preallocation */
 		/* we preallocate bytes only */
 		ASSERT(EXT2_PREALLOC_BLOCKS == sizeof(char)*CHAR_BIT);
 
-		bit = setbyte(bp->b_bitmap, sp->s_blocks_per_group, word);
+		bit = setbyte(bp->b_bitmap, sp->s_blocks_per_group);
 		if (bit != -1) {
 			block = bit + sp->s_first_data_block +
 					group * sp->s_blocks_per_group;

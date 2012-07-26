@@ -108,12 +108,10 @@ void free_inode(
 }
 
 
-static int find_group_dir(struct super_block *sp, struct inode
-	*parent);
+static int find_group_dir(struct super_block *sp);
 static int find_group_hashalloc(struct super_block *sp, struct inode
 	*parent);
-static int find_group_any(struct super_block *sp, struct inode
-	*parent);
+static int find_group_any(struct super_block *sp);
 static int find_group_orlov(struct super_block *sp, struct inode
 	*parent);
 
@@ -136,13 +134,13 @@ int is_dir;			/* inode will be a directory if it is TRUE */
 	panic("can't alloc inode on read-only filesys.");
 
   if (opt.mfsalloc) {
-	group = find_group_any(sp, parent);
+	group = find_group_any(sp);
   } else {
 	if (is_dir) {
 		if (opt.use_orlov) {
 			group = find_group_orlov(sp, parent);
 		} else {
-			group = find_group_dir(sp, parent);
+			group = find_group_dir(sp);
 		}
 	} else {
 		group = find_group_hashalloc(sp, parent);
@@ -252,7 +250,7 @@ static void free_inode_bit(struct super_block *sp, bit_t bit_returned,
 
 
 /* it's implemented very close to the linux' find_group_dir() */
-static int find_group_dir(struct super_block *sp, struct inode *parent)
+static int find_group_dir(struct super_block *sp)
 {
   int avefreei = sp->s_free_inodes_count / sp->s_groups_count;
   struct group_desc *gd, *best_gd = NULL;
@@ -339,7 +337,7 @@ static int find_group_hashalloc(struct super_block *sp, struct inode *parent)
 /* Find first group which has free inode slot.
  * This is similar to what MFS does.
  */
-static int find_group_any(struct super_block *sp, struct inode *parent)
+static int find_group_any(struct super_block *sp)
 {
   int ngroups = sp->s_groups_count;
   struct group_desc *gd;

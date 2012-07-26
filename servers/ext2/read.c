@@ -22,8 +22,6 @@ static int rw_chunk(struct inode *rip, u64_t position, unsigned off,
 	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
 	buf_off, unsigned int block_size, int *completed);
 
-static char getdents_buf[GETDENTS_BUFSIZ];
-
 static off_t rdahedpos;         /* position to read ahead */
 static struct inode *rdahed_inode;      /* pointer to inode to read ahead */
 
@@ -433,13 +431,19 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   dev_t dev;
   struct buf *bp = NULL;
   static unsigned int readqsize = 0;
-  static struct buf **read_q;
+  static struct buf **read_q = NULL;
 
   if(readqsize != nr_bufs) {
 	if(readqsize > 0) {
 		assert(read_q != NULL);
 		free(read_q);
-	}
+		read_q = NULL;
+		readqsize = 0;
+	} 
+
+	assert(readqsize == 0);
+	assert(read_q == NULL);
+
 	if(!(read_q = malloc(sizeof(read_q[0])*nr_bufs)))
 		panic("couldn't allocate read_q");
 	readqsize = nr_bufs;
@@ -540,7 +544,10 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
  *===========================================================================*/
 int fs_getdents(void)
 {
-  register struct inode *rip;
+#define GETDENTS_BUFSIZE (sizeof(struct dirent) + EXT2_NAME_MAX + 1)
+#define GETDENTS_ENTRIES	8
+  static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
+  struct inode *rip;
   int o, r, done;
   unsigned int block_size, len, reclen;
   ino_t ino;
@@ -569,7 +576,7 @@ int fs_getdents(void)
   block_pos = pos - off;
   done = FALSE;       /* Stop processing directory blocks when done is set */
 
-  memset(getdents_buf, '\0', GETDENTS_BUFSIZ);  /* Avoid leaking any data */
+  memset(getdents_buf, '\0', sizeof(getdents_buf));  /* Avoid leaking any data */
   tmpbuf_off = 0;       /* Offset in getdents_buf */
   userbuf_off = 0;      /* Offset in the user's buffer */
 
@@ -582,9 +589,6 @@ int fs_getdents(void)
 	b = read_map(rip, block_pos); /* get block number */
 	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
 	bp = get_block(rip->i_dev, b, NORMAL);  /* get a dir block */
-
-	if (bp == NO_BLOCK)
-		panic("get_block returned NO_BLOCK");
 	assert(bp != NULL);
 
 	/* Search a directory block. */
@@ -620,20 +624,7 @@ int fs_getdents(void)
 		/* Need the position of this entry in the directory */
 		ent_pos = block_pos + ((char *)d_desc - bp->b_data);
 
-		if (tmpbuf_off + reclen > GETDENTS_BUFSIZ) {
-		r = sys_safecopyto(VFS_PROC_NR, gid,
-				   (vir_bytes) userbuf_off,
-				   (vir_bytes) getdents_buf,
-				   (size_t) tmpbuf_off);
-		if (r != OK) {
-			put_inode(rip);
-			return(r);
-		}
-		userbuf_off += tmpbuf_off;
-		tmpbuf_off = 0;
-		}
-
-		if (userbuf_off + tmpbuf_off + reclen > size) {
+		if (userbuf_off + tmpbuf_off + reclen >= size) {
 			/* The user has no space for one more record */
 			done = TRUE;
 
@@ -643,6 +634,19 @@ int fs_getdents(void)
 			 */
 			new_pos = ent_pos;
 			break;
+		}
+
+		if (tmpbuf_off + reclen >= GETDENTS_BUFSIZE*GETDENTS_ENTRIES) {
+			r = sys_safecopyto(VFS_PROC_NR, gid,
+					   (vir_bytes) userbuf_off,
+					   (vir_bytes) getdents_buf,
+					   (size_t) tmpbuf_off);
+			if (r != OK) {
+				put_inode(rip);
+				return(r);
+			}
+			userbuf_off += tmpbuf_off;
+			tmpbuf_off = 0;
 		}
 
 		dep = (struct dirent *) &getdents_buf[tmpbuf_off];

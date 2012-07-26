@@ -192,7 +192,7 @@ bit_t setbit(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
 /*===========================================================================*
  *				setbyte   				     *
  *===========================================================================*/
-bit_t setbyte(bitchunk_t *bitmap, bit_t max_bits, unsigned int word)
+bit_t setbyte(bitchunk_t *bitmap, bit_t max_bits)
 {
   /* Find free byte in bitmap and set it. Return number of the starting bit,
    * if failed return -1.

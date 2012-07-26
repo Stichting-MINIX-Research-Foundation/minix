@@ -41,7 +41,7 @@ int op;				/* special actions */
   long excess, block_pos;
   char new_ind = 0, new_dbl = 0, new_triple = 0;
   int single = 0, triple = 0;
-  register block_t old_block, b1, b2, b3;
+  block_t old_block = NO_BLOCK, b1 = NO_BLOCK, b2 = NO_BLOCK, b3 = NO_BLOCK;
   struct buf *bp = NULL,
              *bp_dindir = NULL,
              *bp_tindir = NULL;

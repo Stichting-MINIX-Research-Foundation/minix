@@ -351,7 +351,7 @@ void flushall(
 /* Flush all dirty blocks for one device. */
 
   register struct buf *bp;
-  static struct buf **dirty;	/* static so it isn't on stack */
+  static struct buf **dirty = NULL;	/* static so it isn't on stack */
   static int unsigned dirtylistsize = 0;
   int ndirty;
 
@@ -391,6 +391,7 @@ void rw_scattered(
   int j, r;
 
   STATICINIT(iovec, NR_IOREQS);
+  assert(bufq != NULL);
 
   /* (Shell) sort buffers on b_blocknr. */
   gap = 1;

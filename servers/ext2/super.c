@@ -88,7 +88,7 @@ register struct super_block *sp; /* pointer to a superblock */
 
   STATICINIT(ondisk_superblock, 1);
 
-  if (!sp || !ondisk_superblock)
+  if (!ondisk_superblock)
 	panic("can't allocate memory for super_block buffers");
 
   assert(_MIN_BLOCK_SIZE <= sizeof(*ondisk_superblock));

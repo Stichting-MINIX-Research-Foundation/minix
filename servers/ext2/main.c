@@ -32,7 +32,7 @@ static struct optset optset_table[] = {
   { "reserved",		OPT_BOOL,   &opt.use_reserved_blocks,	TRUE    },
   { "prealloc",		OPT_BOOL,   &opt.use_prealloc, 		TRUE	},
   { "noprealloc",	OPT_BOOL,   &opt.use_prealloc, 		FALSE	},
-  { NULL								}
+  { NULL,		0,	    NULL,			0								}
 };
 
 /*===========================================================================*
@@ -125,7 +125,7 @@ static void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-static int sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the Minix file server. */
   int i;

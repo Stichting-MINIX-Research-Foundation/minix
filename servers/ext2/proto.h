@@ -114,7 +114,7 @@ void sanitycheck(char *file, int line);
 int ansi_strcmp(register const char* ansi_s, register const char *s2,
 	register size_t ansi_s_length);
 bit_t setbit(bitchunk_t *bitmap, bit_t max_bits, unsigned int word);
-bit_t setbyte(bitchunk_t *bitmap, bit_t max_bits, unsigned int word);
+bit_t setbyte(bitchunk_t *bitmap, bit_t max_bits);
 int unsetbit(bitchunk_t *bitmap, bit_t bit);
 
 /* write.c */
