@@ -211,7 +211,11 @@ struct fproc *rfp;
 		/* Just an entry in the current working directory. Prepend
 		 * "./" in front of the path and resolve it.
 		 */
-		strlcpy(dir_entry, resolve->l_path, NAME_MAX+1);
+		if (strlcpy(dir_entry, resolve->l_path, NAME_MAX+1) >= NAME_MAX + 1) {
+			err_code = ENAMETOOLONG;
+			res_vp = NULL;
+			break;
+		}
 		dir_entry[NAME_MAX] = '\0';
 		resolve->l_path[0] = '.';
 		resolve->l_path[1] = '\0';
@@ -220,7 +224,11 @@ struct fproc *rfp;
 		strlcpy(dir_entry, ".", NAME_MAX+1);
 	} else {
 		/* A path name for the directory and a directory entry */
-		strlcpy(dir_entry, cp+1, NAME_MAX+1);
+		if (strlcpy(dir_entry, cp+1, NAME_MAX+1) >= NAME_MAX + 1) {
+			err_code = ENAMETOOLONG;
+			res_vp = NULL;
+			break;
+		}
 		cp[1] = '\0';
 		dir_entry[NAME_MAX] = '\0';
 	}
@@ -579,8 +587,10 @@ char ename[NAME_MAX + 1];
 			return(EINVAL);	/* Rubbish in dir entry */
 		if (entry->v_inode_nr == cur->d_ino) {
 			/* found the entry we were looking for */
-			strlcpy(ename, cur->d_name,
-				MIN(name_len + 1, NAME_MAX + 1));
+			int copylen = MIN(name_len + 1, NAME_MAX + 1);
+			if (strlcpy(ename, cur->d_name, copylen) >= copylen) {
+				return(ENAMETOOLONG);
+			}
 			ename[NAME_MAX] = '\0';
 			return(OK);
 		}
@@ -762,9 +772,7 @@ size_t pathlen;
   canon_path[pathlen] = '\0';
 
   /* Turn path into canonical path to the socket file */
-  if ((r = canonical_path(canon_path, rfp)) != OK)
-	return(r);
-
+  if ((r = canonical_path(canon_path, rfp)) != OK) return(r);
   if (strlen(canon_path) >= pathlen) return(ENAMETOOLONG);
 
   /* copy canon_path back to PFS */
