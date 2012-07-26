@@ -157,6 +157,8 @@ void kmain(kinfo_t *local_cbi)
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	make_zero64(rp->p_cpu_time_left);
+	if(i < NR_TASKS)			/* name (tasks only) */
+		strlcpy(rp->p_name, ip->proc_name, sizeof(rp->p_name));
 
 	if(i >= NR_TASKS) {
 		/* Remember this so it can be passed to VM */
