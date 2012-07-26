@@ -47,7 +47,7 @@ int do_fork()
   register struct mproc *rmp;	/* pointer to parent */
   register struct mproc *rmc;	/* pointer to child */
   pid_t new_pid;
-  static int next_child;
+  static int next_child = 0;
   int i, n = 0, s;
   endpoint_t child_ep;
   message m;
@@ -146,7 +146,7 @@ int do_srv_fork()
   register struct mproc *rmc;	/* pointer to child */
   int s;
   pid_t new_pid;
-  static int next_child;
+  static int next_child = 0;
   int i, n = 0;
   endpoint_t child_ep;
   message m;

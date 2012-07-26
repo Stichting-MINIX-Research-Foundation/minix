@@ -90,18 +90,11 @@ int main()
 
 	/* Check for system notifications first. Special cases. */
 	if (is_ipc_notify(ipc_status)) {
-		switch(who_p) {
-			case CLOCK:
-				expire_timers(m_in.NOTIFY_TIMESTAMP);
-				result = SUSPEND;	/* don't reply */
-				break;
-			default :
-				/* ignore notify() from unknown sender */
-				result = SUSPEND;
+		if (who_p == CLOCK) {
+			expire_timers(m_in.NOTIFY_TIMESTAMP);
 		}
 
 		/* done, send reply and continue */
-		if (result != SUSPEND) setreply(who_p, result);
 		sendreply();
 		continue;
 	}
