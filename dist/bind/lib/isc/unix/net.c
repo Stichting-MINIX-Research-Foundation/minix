@@ -94,7 +94,10 @@
 
 #if defined(ISC_PLATFORM_HAVEIPV6)
 # if defined(ISC_PLATFORM_NEEDIN6ADDRANY)
+/* IPV6 FIXME : There is an exact declaration else where */
+#ifndef __minix
 const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
+#endif
 # endif
 
 # if defined(ISC_PLATFORM_NEEDIN6ADDRLOOPBACK)

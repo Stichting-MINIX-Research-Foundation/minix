@@ -165,12 +165,13 @@ internal_current(isc_interfaceiter_t *iter) {
 
 	if ((ifa->ifa_flags & IFF_UP) != 0)
 		iter->current.flags |= INTERFACE_F_UP;
-
+#ifndef __minix
 	if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0)
 		iter->current.flags |= INTERFACE_F_POINTTOPOINT;
 
 	if ((ifa->ifa_flags & IFF_LOOPBACK) != 0)
 		iter->current.flags |= INTERFACE_F_LOOPBACK;
+#endif
 
 	iter->current.af = family;
 

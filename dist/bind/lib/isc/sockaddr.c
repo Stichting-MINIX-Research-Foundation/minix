@@ -33,6 +33,11 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+/* IPV6 FIXME: Redeclaration */
+#ifdef __minix
+extern const struct in6_addr isc_net_in6addrany;
+#endif
+
 isc_boolean_t
 isc_sockaddr_equal(const isc_sockaddr_t *a, const isc_sockaddr_t *b) {
 	return (isc_sockaddr_compare(a, b, ISC_SOCKADDR_CMPADDR|

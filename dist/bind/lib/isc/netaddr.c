@@ -32,6 +32,11 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+/* IPV6 FIXME: Redeclaration */
+#ifdef __minix
+const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
+#endif
+
 isc_boolean_t
 isc_netaddr_equal(const isc_netaddr_t *a, const isc_netaddr_t *b) {
 	REQUIRE(a != NULL && b != NULL);

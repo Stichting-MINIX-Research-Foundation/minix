@@ -38,6 +38,16 @@
 
 #include "errno2result.h"
 
+#ifdef __minix
+/* setrlimit call isn't implemented in MINIX yet
+ * We return success as of now
+ */
+int   setrlimit(int resourse_id, struct rlimit *resource_limit)
+{
+	return 0;
+}
+#endif
+
 static isc_result_t
 resource2rlim(isc_resource_t resource, int *rlim_resource) {
 	isc_result_t result = ISC_R_SUCCESS;

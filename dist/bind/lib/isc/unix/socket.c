@@ -126,6 +126,12 @@ struct isc_socketwait {
 #endif	/* USE_KQUEUE */
 #endif /* !USE_WATCHER_THREAD */
 
+#ifdef __minix
+#ifndef SOMAXCONN
+#define    SOMAXCONN          64
+#endif /* SOMAXCONN */
+#endif /*  __minix   */
+
 /*%
  * Maximum number of allowable open sockets.  This is also the maximum
  * allowable socket file descriptor.
@@ -313,6 +319,8 @@ struct isc__socket {
 	char				name[16];
 	void *				tag;
 
+
+#
 	ISC_LIST(isc_socketevent_t)		send_list;
 	ISC_LIST(isc_socketevent_t)		recv_list;
 	ISC_LIST(isc_socket_newconnev_t)	accept_list;

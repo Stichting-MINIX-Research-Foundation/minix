@@ -58,6 +58,12 @@
 #define HTTP_SENDGROW			1024
 #define HTTP_SEND_MAXLEN		10240
 
+#ifdef __minix
+#ifndef SOMAXCONN
+#define     SOMAXCONN         64
+#endif /* SOMAXCONN */
+#endif /*  __minix  */
+
 /*%
  * HTTP urls.  These are the URLs we manage, and the function to call to
  * provide the data for it.  We pass in the base url (so the same function

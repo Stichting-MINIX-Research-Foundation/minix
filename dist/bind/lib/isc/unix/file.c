@@ -97,6 +97,7 @@ file_stats(const char *file, struct stat *stats) {
 	return (result);
 }
 
+#ifndef __minix
 isc_result_t
 isc_file_getmodtime(const char *file, isc_time_t *time) {
 	isc_result_t result;
@@ -157,6 +158,7 @@ isc_file_settime(const char *file, isc_time_t *time) {
 	return (ISC_R_SUCCESS);
 }
 
+#endif /* !__minix */
 #undef TEMPLATE
 #define TEMPLATE "tmp-XXXXXXXXXX" /*%< 14 characters. */
 

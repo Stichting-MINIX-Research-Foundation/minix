@@ -199,6 +199,14 @@ struct dns_zone {
 	dns_masterformat_t	masterformat;
 	char			*journal;
 	isc_int32_t		journalsize;
+#ifdef __minix
+    /* MINIX doesn't yet offer the utimes() syscall. So, we explicitly
+     * maintain the modified times.
+     */
+
+    isc_time_t          master_mtime;     /* masterfile modified time */
+    isc_time_t          journal_mtime;    /* journal modified time */
+#endif /* __minix   */
 	dns_rdataclass_t	rdclass;
 	dns_zonetype_t		type;
 	unsigned int		flags;
@@ -1459,7 +1467,12 @@ zone_load(dns_zone_t *zone, unsigned int flags) {
 			goto cleanup;
 		}
 
+#ifndef __minix
 		result = isc_file_getmodtime(zone->masterfile, &filetime);
+#else /*  !__minix   */
+        filetime = zone->master_mtime;
+        result = ISC_R_SUCCESS;
+#endif /*  !__minix   */
 		if (result == ISC_R_SUCCESS) {
 			if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_LOADED) &&
 			    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_HASINCLUDE) &&
@@ -3509,10 +3522,19 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 			isc_time_t t;
 			isc_uint32_t delay;
 
+#ifndef __minix
 			result = isc_file_getmodtime(zone->journal, &t);
 			if (result != ISC_R_SUCCESS)
 				result = isc_file_getmodtime(zone->masterfile,
 							     &t);
+#else /* !__minix  */
+            t = zone->journal_mtime;
+            result = ISC_R_SUCCESS;
+            if (result != ISC_R_SUCCESS) {
+                t = zone->master_mtime;
+                result = ISC_R_SUCCESS;
+            }
+#endif /* !__minix  */
 			if (result == ISC_R_SUCCESS)
 				DNS_ZONE_TIME_ADD(&t, zone->expire,
 						  &zone->expiretime);
@@ -9666,6 +9688,7 @@ refresh_callback(isc_task_t *task, isc_event_t *event) {
 		if (zone->masterfile != NULL) {
 			result = ISC_R_FAILURE;
 			if (zone->journal != NULL)
+#ifndef __minix
 				result = isc_file_settime(zone->journal, &now);
 			if (result == ISC_R_SUCCESS &&
 			    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDDUMP) &&
@@ -9675,6 +9698,20 @@ refresh_callback(isc_task_t *task, isc_event_t *event) {
 			} else if (result != ISC_R_SUCCESS)
 				result = isc_file_settime(zone->masterfile,
 							  &now);
+
+#else /* !__minix */
+                zone->journal_mtime = now;
+                result = ISC_R_SUCCESS;
+			if (result == ISC_R_SUCCESS &&
+			    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDDUMP) &&
+			    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DUMPING)) {
+                zone->master_mtime = now;
+                result = ISC_R_SUCCESS;
+            } else if (result != ISC_R_SUCCESS) {
+                zone->master_mtime = now;
+                result = ISC_R_SUCCESS;
+            }
+#endif /* !__minix  */
 			/* Someone removed the file from underneath us! */
 			if (result == ISC_R_FILENOTFOUND) {
 				LOCK_ZONE(zone);
@@ -11814,12 +11851,24 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 		 */
 		if (zone->masterfile != NULL || zone->journal != NULL) {
 			result = ISC_R_FAILURE;
-			if (zone->journal != NULL)
+#ifndef  __minix
+	        if (zone->journal != NULL)
 				result = isc_file_settime(zone->journal, &now);
 			if (result != ISC_R_SUCCESS &&
 			    zone->masterfile != NULL)
 				result = isc_file_settime(zone->masterfile,
 							  &now);
+#else  /* !__minix */
+			if (zone->journal != NULL) {
+                zone->journal_mtime = now;
+                result = ISC_R_SUCCESS;
+            }
+			if (result != ISC_R_SUCCESS &&
+			    zone->masterfile != NULL){
+                zone->master_mtime = now;
+                result = ISC_R_SUCCESS;
+            }
+#endif /*  !__minix */
 			/* Someone removed the file from underneath us! */
 			if (result == ISC_R_FILENOTFOUND &&
 			    zone->masterfile != NULL) {
