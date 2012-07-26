@@ -282,7 +282,7 @@ static void construct_pid_dirs(void)
 			pid = mproc[i - NR_TASKS].mp_pid;
 
 		/* Add the entry for the process slot. */
-		sprintf(name, "%d", pid);
+		snprintf(name, PNAME_MAX + 1, "%d", pid);
 
 		make_stat(&stat, i, NO_INDEX);
 
