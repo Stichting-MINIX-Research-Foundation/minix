@@ -18,7 +18,8 @@ static blkcnt_t estimate_blocks(struct inode *rip)
  * indirect blocks is too costly for a stat call, so we disregard holes and
  * return a conservative estimation.
  */
-  unsigned int zone_size, zones, sindirs, dindirs, nr_indirs, sq_indirs;
+  unsigned int zone_size, zones;
+  blkcnt_t sindirs, dindirs, nr_indirs, sq_indirs;
 
   /* Compute the number of zones used by the file. */
   zone_size = rip->i_sp->s_block_size << rip->i_sp->s_log_zone_size;
@@ -26,16 +27,16 @@ static blkcnt_t estimate_blocks(struct inode *rip)
   zones = (rip->i_size + zone_size - 1) / zone_size;
 
   /* Compute the number of indirect blocks needed for that zone count. */
-  nr_indirs = rip->i_nindirs;
+  nr_indirs = (blkcnt_t) rip->i_nindirs;
   sq_indirs = nr_indirs * nr_indirs;
 
-  sindirs = (zones - rip->i_ndzones + nr_indirs - 1) / nr_indirs;
-  dindirs = (sindirs - 1 + sq_indirs - 1) / sq_indirs;
+  sindirs = (blkcnt_t) (zones - rip->i_ndzones + nr_indirs - 1) / nr_indirs;
+  dindirs = (blkcnt_t) (sindirs - 1 + sq_indirs - 1) / sq_indirs;
 
   /* Return the number of 512-byte blocks corresponding to the number of data
    * zones and indirect blocks.
    */
-  return (zones + sindirs + dindirs) * (zone_size / 512);
+  return((blkcnt_t) (zones + sindirs + dindirs) * (zone_size / 512));
 }
 
 /*===========================================================================*

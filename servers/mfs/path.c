@@ -450,7 +450,7 @@ char string[MFS_NAME_MAX+1];	/* component extracted from 'old_name' */
 
   /* Special case of the string at cp is empty */
   if (len == 0) 
-	strcpy(string, ".");  /* Return "." */
+	strlcpy(string, ".", MFS_NAME_MAX + 1);  /* Return "." */
   else {
 	memcpy(string, cp, len);
 	string[len]= '\0';
