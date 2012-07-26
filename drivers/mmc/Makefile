@@ -9,7 +9,7 @@ CLEANFILES+=.depend mmcblk.d
 #
 # This is a system driver.
 CPPFLAGS+= -D_SYSTEM=1
-LDFLAGS+= -g
+CFLAGS+= -g
 MAN=
 
 BINDIR?= /usr/sbin
