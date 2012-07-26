@@ -1,0 +1,654 @@
+zkt 1.0 -- 15. June 2010
+
+* feat	"/dev/urandom" check added to checkconfig()
+
+* feat	Config compability switch (-C) added to zkt-conf
+
+* feat	zkt-ls has a new switch -s to change sorting of domains from
+	subdomain before parent to subdomain below the parent
+
+* feat	"zkt-ls -T" prints only parent trust anchor
+
+zkt 1.0rc1 -- 1. Apr 2010 (The 1.0 release was sponsored by DOMINIC(r) )
+
+* feat	Several config parameter are printed now in a more consistent and
+	user friendly form.
+	SerialFormat "Incremental" could be abbreviated as "inc" on input.
+
+* bug	use of AC_ARG_ENABLE macros changed in a way that it is possible
+	to use it as a "--disable-FEATURE" switch.
+
+* port	no longer checking for malloc() in configue script.
+	Mainly because it checks only if malloc(0) is allowed and we do
+	not need this.
+
+* port	--disable-color-mode added to configure script
+
+* bug	Makro PRINT_AGE_OF_YEAR renamed to PRINT_AGE_WITH_YEAR in configure.ac
+
+* misc	man page zkt-keyman added
+
+* misc	New command zkt-keyman added as replacement for dnssec-zkt's key
+	management functionality
+
+* misc	man page zkt-ls added
+
+* port	Check for ncurses added to Makefile.in
+
+* misc	Color mode (Option -C) added to zkt-ls (experimental)
+	New source file tcap.c.
+
+* misc	Deprecate "single linked list" version of ZKT. The binary tree
+	version is the default for years, so the VERSION string does no
+	longer contain a "T".  Now, if someone insist on the single link
+	list version (configure --disable-tree) a "S" is added to the
+	version string.
+	Anyway, the code for the single link list version does no longer
+	have the same functionality and will be removed in one of the later
+	releases.
+
+* misc	New command zkt-ls added as replacement for dnssec-zkt's key
+	listing functionality
+
+* func	New key algorithms RSASHA256 and RSAHSHA512 added to dki.[ch]
+	and zconf.c
+	New parameter NSEC3 added. Now it's possible to configure
+	an NSEC3_OPTOUT zone.
+
+* bug	Token parsing function gettok() fixed to recognize tokens
+	with dashes ("zone-statistics" was seen as "zone").
+	Thanks to Andreas Baess for finding this bug.
+	
+* bug	Fixed bug in (re)salting dynamic zones.
+	sig_zone() and gensalt() needs parameter change for this
+
+* func	New option -a added to zkt-conf
+
+* func	In zconf.c CONF_TIMEINT parameter are now able to recognize 
+	"unset" values (which is represented internaly as 0)
+
+* func	Set Max_TTL to sig lifetime for dynamic zones or if Max_TTL
+	is less than 1.
+	max_ttl checks in checkconfig() fixed.
+
+* func	printconfigdiff() added to zconf.c and used by zkt-conf.
+	Now local configs are printed as diff to site wide config.
+
+* misc	man page zkt-signer.8 changed to new command syntax
+
+* func	Per domain logging added. Use parameter LogDomainDir to
+	enable it. For more details see file README.logging.
+
+* func	distribute.sh supports new action type "distkeys" but is
+	currently not used
+
+* misc	LOG_FNAMETMPL changed and moved from config_zkt.h to log.h
+	
+* misc	Default soa serial format changed from "Incremental"
+	to "Unixtime"
+
+* func	dnssec-signer command renamed to zkt-signer. Man page updated.
+
+* func	New command zkt-conf added as replacement for dnssec-zkt -Z
+
+* misc	timeint2str() is now global (zconf.c)
+
+* func	zfparse.c - a rudimentary zone file parser
+	scans minimum and maximum ttl values; adds $INCLUDE dnskey.db
+
+zkt 0.99d -- Not released
+
+* func	Option SIG_DnsKeyKSK for DNSKEY signing with KSK only 
+	added (only useful with BIND9.7)
+
+* misc	For BIND 9.7 compability:
+	Run dnssec-signzone in compability mode ("-C") if
+	SigGenerateDS is true.
+	Run dnssec-keygen in compability mode ("-C -q")
+	Add option -u to dnssec-signzone if NSEC3 chaining is requested
+
+zkt 0.99c -- 1. Aug 2009
+
+* misc	dnssec-signer command line option vars changed to storage
+	class static.
+
+* port	setenv() replaced by putenv() in misc.c
+
+* misc	Install binaries in prefix/bin instead of $HOME/bin.
+	Fixing some spelling errors in dnssec-signzone.8 and
+	dnssec-zkt.8.
+	Thanks to Mans Nilsson.
+
+* port	timegm() check added to configure.ac
+
+* misc	configure.ac, Makefile.in, and doc is now part of distribution
+
+* bug	off by one error fixed in splitpath()
+
+* misc	is_dotfile() renamed to is_dotfilename() (misc.c)
+
+* misc	inc_soaserial() sourced out to soaserial.c
+
+* misc	reload() functions sourced out to nscomm.c
+
+* bug	Introducing parameter "KeyAlgorithm" for both ZSK and
+	KSK keys instead of separate KSK and ZSK algorithms.
+	New functions dki_algo() and dki_findalgo().
+
+* bug	Redirect stderr message (additionally to stdout) of
+	dnssec-signzone command to pipe.
+	Pick up last line of output for logging.
+
+* misc	"Sig_GenerateDS" is no longer a hidden parameter.
+
+* misc	"make clean" now remove the binary files
+	New target "distclean" added to Makefile
+
+* bug	Wrong typecast in zconf.c parsing CONF_TIMEINT (Thanks to Frederick
+	Soderblum and Peter Norin for the patch)
+	Changed all TIMEINT parameter values to long.
+
+* bug	If someone changes the zone.db file in dynamic mode, this will be treated
+	the same way as an initial setup, so the zone.db file will be used as new
+	input file (Thanks to Shane Wegner for this patch)
+
+* bug	Option nsec3_param added to dnssec-signzone command for dynamic zones.
+
+* func	New option "NamedChrootDir" added to dnssec.conf to specify the
+	directory of a chrooted named. Without such an option
+	"dnssec-signer -N named.conf" couldn't find the zone file directory.
+
+* misc 	Default ZSK lifetime set to 12 weeks instead of 3 months (30days) to
+	suppress the warning message about ZSK keysize of 512 bits.
+
+zkt 0.98 -- 28. Dec 2008
+
+* misc 	Target "install-man" added to Makefile
+	man files moved to sub directory "man"
+
+* func	If a BIND version greater equal 9.6.0 is used, option -d doesn't
+	initiate a resigning of a zone. It's just for key rollover.
+
+* func	New pseudo algorithms for NSEC3 DNSKEYS added.
+	Support of NSEC3 hashing if a BIND version greater equal 9.6.0
+	is used. New parameter "SaltBits" added to the config file to
+	set the salt length in bits (default is 24 which means 6 hex nibbles). 
+	The number of hash iterations is set to the default value of
+	dnssec-signzone which depends on key size.
+
+* misc	Renaming of all example zone directories so that the directory
+	name does not end with a dot (Necessary for installing the
+	source tree in an MS-Windows environment).
+	str_tolowerdup() renamed to domain_canonicdup() and code added
+	to append a dot to the domain name if it's not already there.
+
+* misc	Add 'sec' (second) qualifier to debug output in kskrollover().
+
+* bug	Remove a trailing '/' at the -D argument.
+
+* misc	Configure script now uses the BIND_UTIL_PATH out of config_zkt.h
+	if the BIND dnssec-signzone command is not found
+
+* bug	A zone with only a standby key signing key (which means w/o an
+	active ksk) aborts the dnssec-signer command.
+	Fixed by Shane Kerr.
+
+* func	Changed inc_serial() so that the SOA record parser accepts a label
+	other than '@' and an optional ttl value before the class and SOA
+	RR identifier (Both are case insensitive). Thanks to Shane Kerr 
+	for the suggestion.
+
+* bug	Change of global configured key liftetime during a zone signing
+	key rollover results in unnecessary additional pre-published
+	zone signing keys (Thanks to Frank Behrens for the patch)
+
+* misc	Sig_Random config file parameter defaults now to false
+
+* bug	The man page refers the wrong licence (GPL instead of BSD)
+
+zkt 0.97 -- 5. Aug 2008
+
+* bug	LG_* logging level wasn't mapped to syslog level in lg_mesg().
+	gettock() in ncparse.c did not recognize C single line comments "//"
+	(Thanks to Frank Behrens for finding this out)
+
+* misc	dist_and_reload () now calls the "Distribute_Cmd" twice:
+	First with argument "distribute" for signed zone file distribution,
+	second with argument "reload" to initiate a reload.
+	Again see example/flat/dist.sh for an example script.
+
+* bug	full KSK rollover will (mostly) also work for dynamic zones
+	This is a hack and requires further investigation. Currently
+	it will not work if someone is using non standard zone file
+	names.
+
+* misc	default ZSK lifetime set to 3 month
+
+* misc	get_mtime() renamed to file_mtime()
+
+* func	is_exec_ok() added and called in dist_and_reload ()
+
+* func	New parameter "Distribute_Cmd" added for specifing a user
+	defined distribution (and reload) command (See example/flat/dist.sh).
+
+* misc	Changed wording to be a bit more consistent to
+	draft-gudmundsson-life-of-dnskey-00.txt
+	- State of published key will be print as "pub" instead of "pre"
+	  by dnssec-zkt.
+	- Option --pre-publish of dnssec-zkt changed to --published.
+	- Changed wording in all comments and log message from "pre-publish"
+	  to "published".
+
+* func	Highly experimental code to do a full automatic ksk rollover
+	in hierachical mode.
+	ksk_rollover() added in rollover.c; parameter change for ksk_status()
+
+* misc	Changed name of "dnssec-soaserial" to "zkt-soaserial"
+
+* bug	Fixed verbose logging error if -N or -D option was used
+
+* func	Some LG_INFO messages added about key status change
+
+* func	Remove of function to register a new ksk (zktr.[ch])
+
+* misc	Changed licence from GNU GPLv2 to BSD licence
+
+* bug	Fixed bug in logging of ZSK rollover
+
+* misc	Changed tar file to zipped one and archive the files with
+	toplevel directory
+
+* bug	Fixed use of uninitialized vars in zconf.c (line)
+
+* port	Preparation for use of autoconf
+	- config.h renamed to config_zkt.h and change of include directives
+	- conditional include of config.h 
+	- ./configure script is able to determine BIND utility path
+	  (BIND_UTIL_PATH) and version (BIND_VERSION)
+	- compile time options are settable via configure script (--enable-xxx)
+	- For now, the configure script is not able to set the install dir.
+
+* bug	ksk rollover phase2 did not trigger resigning of parent
+	(the parent file was copied to the parent directory only
+	after child zone resigning)
+
+* bug	fixed bad notice message in zskstatus ()
+
+* func	dnssec-zkt -Z print out syslog facility & level with
+	upper case letter and without quotation marks
+
+* func	Syslog facility DAEMON added
+
+zkt 0.96 -- 19. June 2008
+
+* func	Config file option "SIG_Parameter" added.
+
+* func	Function verbmesg() added and used for verbose logging
+	to stdout and/or to syslog resp. file.
+	Config file parameter VerboseLog added to config file.
+
+* bug 	Option -O wasn't recognized by dnssec-signer
+
+* func	Better support of initial setup of dynamic signed
+	zones (just create an empty "zone.db.dsigned" file
+	and run dnssec-signer with option -d).
+
+* func	Improved error logging; incr_soa() errors are written
+	as clear text message instead of error number
+
+* func	elog_mesg() function replaced by a more general
+	logging mechanism.
+	ErrorLog config parameter replaced by LogFile,
+	LogLevel and SyslogFacility, SyslogLevel parameter
+
+* func	New function filesize() added
+
+* func	dki_prt_trustedkey print out old key id if key
+	is revoked 
+
+* func	dki_new() writes gentime (GMT) and proposed key
+	lifetime (days) as comment into the *.key file
+
+* bug	Doing some housekeeping
+
+zkt 0.95 -- 19. April 2008
+
+* misc	This is not a public released version of zkt.
+
+* func	All config file option are now settable via
+	commandline option -O (--option or --config-option)
+
+* misc	Function fatal() now has an exit code of 127.
+	This is necessary because values from 1 to 64 are
+	reflecting the number of errors occured.
+
+* func	Errorlog functionality added
+	All dnssec-signer errors will be logged in the file
+	specified by the Errorlog config file parameter or
+	specified by the command line option -L (--errorlog).
+	If a directory is given, then the logging will occur
+	in a file within this directory which is named
+	like "zkt-<current-date>.log".
+	The dnssec-signer command has an exit code of 0 if
+	no error occured, an exit code of 127 on fatal errors,
+	an exit code from 1 to 63 reflecting the number of errors
+	occured, or an exit code of 64 if more than 63 errors
+	occured.
+
+* func	dnssec-signer: Introducing long options
+
+* bug	New skript added to example/views directory to
+	read in the right config file
+
+* func	New option -f (--lifetime) and -F (--setlifetime)
+	added to dnssec-zkt.
+
+* func	New option -e (--expire) added to dnssec-zkt.
+	(Seems to be that the dnssec-zkt command is a little
+	bit overloaded with options.)
+
+* func	dki.c and zkt.c supports storage of key lifetime,
+	generation time and expiration time as a comment in the
+	.key file.  With this, it's possible to change the default
+	lifetime without any impact on already used keys.
+
+zkt 0.94 -- 6. Dec 2007
+
+* bug	Case mismatch of zone name and key file name prevent
+	dki_read() from reading the key.
+	Thanks to Alan Clegg for finding this out.
+	Added some additional error processing and convert
+	zone name to lower case.
+
+* misc	Builtin default for KSK_randfile changed
+	from NULL to "/dev/urandom".
+
+* bug	dnssec-signer has to use private keys for signing
+	even if the revoke bit is set.
+	To achieve this the file pattern K*.private is added
+	to the dnssec-signzone run.
+
+* bug	Uninitialized variable "len" in sign_zone().
+
+* func	Default config file is settable via environment
+	variable ZKT_CONFFILE
+
+* func	Support of views added
+	Link dnssec-zkt to dnssec-zkt-<view> and
+	dnssec-signer to dnssec-signer-<view>.
+	Option -V and --view added to dnssec-zkt.
+	Option -V added to dnssec-signer.
+	View support added to parse_namedconf().
+
+zkt 0.93 -- 1. Nov 2007
+
+* func	The ksk registration mechanism is disabled by
+	default (see REG_URL in config.h).
+
+* func	Basic support for revoke flag added (RFC5011).
+	Semantic of option -R of dnssec-zkt changed.
+
+* func	Undocumented option -S changed to lower case.
+	Pre-pulished KSK will be shown as "standby" key.
+	New Option -S (standby) for pre-publish KSK.
+
+* func	New command dnssec-soaserial added.
+
+* bug	dnssec-signer do not print the incremented serial
+	number anymore.
+	time2str() fixed bug in time format (HAS_STRFTIME=0).
+
+* port	New build dependencies "solaris", "macos" and "help"
+	added to Makefile.
+
+zkt 0.92 -- 1. Oct 2007
+
+* func	Parameter "Serialformat" in dnssec.conf added .
+	Now it is possible to use the unixtime format for
+	the SOA serial number. If you use BIND 9.4 or
+	greater in conjunction with this, than there is no
+	need for the special SOA serial formating in
+	the zonefile. (Thanks to Jakob Schlyter for the
+	-N option of dnssec-signzone and the suggestion to
+	add the unixtime support to zkt)
+	
+* func	Option --ksk-roll-stat added.
+
+* port	Added macro HAS_GETOPT_LONG to support OS with
+	lack of getopt_long() (e.g. solaris).
+	Options -[01239] added.
+
+* misc	Unused macro HAS_ULONG removed from config.h.
+	Deklaration of unsigned types moved from dki.h to
+	config.h (so it will be available in _all_ source
+	files). Thanks to Mans Nilsson.
+	Unused macro isblank() (ncparse.c) removed.
+
+* bug	In dosigning(): freeze the dynamic zone _before_ copying
+	the zone file.
+
+zkt 0.91 -- 1. Apr 2007
+
+* doc	--ksk-rollover option added to usage().
+
+* func	some experimental code for dynamic zones added.
+	new functions added: copyzonefile(), dyn_update_freeze().
+	New option "-d" added. 
+
+zkt 0.90 -- 6. Dec 2006
+
+* func 	CHECK_RESIGN interval added to config.h.
+	This is the dnssec-signer calling interval (at least 1 day or 86400 sec).
+
+* func 	new function dki_destroy() added; semantic of dk_remove()
+	changed to rename the key files instead of physical deletion.
+
+* doc	Setup of new example directory (flat and hierarchical).
+
+* doc	dnssec-zkt man page updated.
+	Added some comments in misc.c
+
+* misc	function strtaint() renamed to str_untaint(),
+	dki_keycmp() renamed to dki_tagcmp().
+
+* func	New parameter key_ttl added to dnssec.conf.
+	New func dki_prt_dnskeyttl () added.
+	Now dnskey.db is written with key_ttl value.
+
+* func	dnssec-signer: In hierarchical mode sign_zone() copies the
+	parent-file (if such a file exist) instead of the
+	keyset-file to the parent directory.
+
+* func	dnssec-zkt: Option --ksk-roll-phase[123] and function
+	ksk_rollover() added.
+
+* misc	zconf: default values for sigvalidity, resign_int etc. changed,
+	new dnssec.conf example file created.
+
+* func	dnssec-zkt: Long option support added.
+
+zkt 0.83 -- 11. Sep 2006
+
+* bug	dosigning(): Fixed bug in the bug fixing of printing undefined
+	serial number if incr_serial() failed. (Thanks to Randy McCasskill).
+
+zkt 0.82 -- 8. Sep 2006
+
+* bug	Use option -e for dnssec-keygen calls in dki_new(), because
+	an RSA exponent of 3 is vulnerable.
+
+* bug	dosigning(): Fixed bug in printing undefined serial
+	number if incr_serial() failed.
+
+	an RSA exponent of 3 is vulnerable.
+
+* bug	dosigning(): Fixed bug in printing undefined serial
+	number if incr_serial() failed.
+
+zkt 0.81 -- 13. July 2006
+
+* bug	The function ceatekey() won't work with USE_TREE.
+	Size of MAX_DNAME increased.
+
+zkt 0.8 -- 09. July 2006
+
+* func	Now a hierarchical directory structure with subdomains stored in
+	subfolders of the parent domain are allowed. Added copyfile(),
+	cmpfile() and new_keysetfiles() for that.
+
+* func	Config parameter added to choose if the domain name is
+	right or left justified listed by dnssec-zkt (printkeyinfo).
+
+* func	New class of key added ("sep"). A SEP key is a (public) key file
+	without the private counterpart. So we could use the key solely
+	as an secure entry point. (dki.h, dki_read).
+
+zkt 0.70 -- 15. Sep 2005
+
+* func	Experimental code added to use a binary search tree instead of a
+	single linked list. This is mainly for performance improvement for large
+	sites. If you don't want to use it, set USE_TREE in config.h to zero.
+	In the first step only dnssec-zkt use the new data structure.
+	The tree is build over the domain names and each node is the starting point
+	of a linked list of keys.
+	As a result, it's not possible anymore to search on key tags only. You have
+	to specify the domain name plus the tag. :-(
+
+* func	Function parseurl added.
+
+* func	Experimental code to register a new ksk. Currently it's more like
+	a key announcement because of the lack of identification and
+	authentication.
+
+zkt 0.65 -- 22. Aug 2005
+
+* misc	Rewrite of the domaincmp() function. Now it's round about 2 times faster.
+	After some additional changes and the compiler option -O3 the dnssec-zkt
+	on the ~ 12000 zones requires only a minute
+		$ time dnssec-zkt -z -r sec > /dev/null
+		real    0m58.287s
+		user    0m54.610s
+		sys     0m3.680s
+
+* func	A keyset directory is introduced (experimental)
+	The parameter -d is added to the call of the dnssec-signzone command
+	if the config option KeySetDir is set.
+	As a result, all dsset-, keyset- and dlvset- files are stored in one directory.
+	The advantage is, that the chain of trust of all local subzone is build
+	automatically (This is the reason why we sort the zones with the child zones
+	first).
+	The disadvantage is that we store many files in single directory (3 files
+	per zone).
+
+zkt 0.64 -- 1. Aug 2005
+
+* bug	The code for option -Z of dnssec-zkt should be executed before we read the
+	complete directory tree. This is usefull if we have a very deep directory
+	structure and the recursive flag is switched on.
+
+* func	SIG_Pseudorand parameter added.
+
+* func	([KZ]SK)|(SIG)_randfile parameter added.
+
+* func	measure the time used for signing of each zone.
+
+* bug	function logflush() added to misc.c and called by dosigning().
+
+* misc	some perfomance test made:
+	- Directory structure "sec/<firstletter>/domain" with round about 12200 domains
+	- One of the domain is a big one (~ 820000 RRs), the others are mostly very small ones
+	- We use a dsa with 704 bits as ksk and a rsamd5 with 512 bits as zsk on each domain.
+	- All test made on Sun Fire V440 with 4 CPU and 4x2GB main memory
+
+		# sequential signing of all zones 
+		$ time dnssec-signer -v -v -f -D sec
+		real	434m	(~ 7h 14min)
+		user	188
+		sys	175
+
+		# with option -p and -r /dev/urandom
+		$ time dnssec-signer -v -v -f -D sec > log
+		real	96m28.306s
+		user	290m41.980s
+		sys	6m13.790s
+
+		# one process for each firstletter subdirectory
+		$ time par_signer.sh
+		real	394m12.334s
+		user	295m58.390s
+		sys	786m42.479s
+
+		# with option -p and -r /dev/urandom
+		$ time par_signer.sh
+		real	78m49.323s
+		user	284m58.350s
+		sys	5m39.340s
+
+
+		$ time dnssec-zkt -z -r sec > /dev/null
+		real	2m5.722s
+		user	2m0.060s
+		sys	0m4.510s
+
+	
+		# signing the big (820000 RR) domain only
+		$ time dnssec-signer -v -v -f -D sec/b/big-domain
+		real	196m23.165	(~ 3h 16min)
+		user	176m57.610
+		sys	167m27.570
+
+		# with option -p and -r /dev/urandom
+		$ time dnssec-signer -v -v -f -D sec/b/big-domain
+		real	49m53.152
+		user	173m59.520
+		sys	1m40.150
+
+zkt 0.63 -- 14. June 2005
+
+* bug	allow TTL value in keyfiles (see TTL_IN_KEYFILES_ALLOWED
+	in dki_readfile()).
+
+* misc	function strchop() added to misc.c.
+
+zkt 0.62 -- 13. May 2005
+
+* func	dnssec-signer: Option -o added.
+	Now it works a bit more like dnssec-signzone.
+
+* func	strlist.c: prepstrlist and unprepstrlist functions get a
+	second parameter for the delimiter.
+
+* bug	fixed some typos and inaccurate usage of symbolic constants.
+	Doing some housekeeping.
+
+zkt 0.61 -- 3. May 2005
+
+* bug	local config file will not be mentioned if -N switch is used.
+
+zkt 0.6 -- 1. May 2005
+
+* doc	dnssec-signer: man page added.
+
+* func	dnssec-signer: Print out a warning message if ksk lifetime is exceeded.
+
+* func	dnssec-signer: Remaining arguments will be interpreted as zone names
+	(in_strarr () added).
+
+* func	dnssec-signer: Option -D added.
+
+
+zkt 0.51 -- 8. April 2005
+
+* func	dnssec-signer: Option -N added.
+
+* func	dnssec-signer: change of keystatus from pre-published to active
+	resets timestamp of key, thus age of active key counts 0.
+
+* bug	prepstrlist: resulting string was not terminated with '\0'.
+
+* bug	dnssec-signer: do signing if there are additional keys, or the
+	status of any key is changed (function check_keytimestamp).
+
+* func	dnssec-zkt: -l <list> option added.
+
+* func	dnssec-zkt: -p flag defaults to on in key creation mode (-C).

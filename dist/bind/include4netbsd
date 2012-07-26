@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Use this script to update the bind include files used in the nameserver,
+# after you've imported and built the latest bind code. After you run this,
+# cvs import the resulting directory
+#
+# $ cd /usr/src/dist/bind
+# $ ./include4netbsd . /tmp/include
+# $ cd /tmp/include
+# $ cvs -d cvs.netbsd.org:/cvsroot import src/include ISC bind-X-Y-Z
+#
+
+PROG=$(basename $0)
+if [ \( -z "$1" \) -o \( -z "$2" \) ]
+then
+	echo "Usage: $PROG <bind-src> <include-dest>" 1>&2
+	exit 1
+fi
+
+BIND=$1
+INCLUDE=$2
+
+mkdir -p $INCLUDE
+
+for i in netdb.h res_update.h resolv.h
+do
+	cp $BIND/lib/bind/include/$i $INCLUDE
+done
+
+mkdir -p $INCLUDE/arpa
+
+for i in inet.h nameser.h nameser_compat.h
+do
+	cp $BIND/lib/bind/include/arpa/$i $INCLUDE/arpa
+done

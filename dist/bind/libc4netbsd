@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# Use this script to update the libc resolver code, after you've imported
+# the latest bind code. After you run this, cvs import the resulting directory
+#
+# $ cd /usr/src/dist/bind
+# $ ./libc4netbsd . /tmp/libc
+# $ cd /tmp/libc
+# $ cvs -d cvs.netbsd.org:/cvsroot import src/lib/libc ISC bind-X-Y-Z
+#
+
+PROG=$(basename $0)
+if [ \( -z "$1" \) -o \( -z "$2" \) ]
+then
+	echo "Usage: $PROG <bind-src> <libc-dest>" 1>&2
+	exit 1
+fi
+BIND=$1
+LIBC=$2
+
+mkdir -p $LIBC/include/isc
+
+for i in assertions.h dst.h eventlib.h heap.h list.h memcluster.h
+do
+	cp $BIND/lib/bind/include/isc/$i $LIBC/include/isc/$i
+done
+cp $BIND/lib/bind/include/resolv_mt.h $LIBC/include
+
+mkdir -p $LIBC/inet
+
+for i in inet_addr.c inet_cidr_ntop.c inet_cidr_pton.c inet_ntop.c \
+    inet_pton.c nsap_addr.c
+do
+	cp $BIND/lib/bind/inet/$i $LIBC/inet/$i
+done
+
+mkdir -p $LIBC/isc
+
+for i in assertions.c ev_streams.c ev_timers.c eventlib_p.h
+do
+	cp $BIND/lib/bind/isc/$i $LIBC/isc/$i
+done
+
+mkdir -p $LIBC/nameser
+
+for i in ns_name.c ns_netint.c ns_parse.c ns_print.c ns_samedomain.c ns_ttl.c
+do
+	cp $BIND/lib/bind/nameser/$i $LIBC/nameser/$i
+done
+
+mkdir -p $LIBC/resolv
+
+for i in herror.c res_comp.c res_data.c res_debug.c res_debug.h res_init.c \
+    res_mkquery.c res_private.h res_query.c res_send.c
+do
+	cp $BIND/lib/bind/resolv/$i $LIBC/resolv/$i
+done
+
+mkdir -p $LIBC/net
+cp $BIND/lib/bind/isc/base64.c $LIBC/net

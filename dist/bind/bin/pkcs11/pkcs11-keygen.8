@@ -1,0 +1,102 @@
+.\" Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+.\"
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" $Id: pkcs11-keygen.8,v 1.4 2009-10-06 04:40:14 tbox Exp $
+.\"
+.hy 0
+.ad l
+.\"     Title: pkcs11\-keygen
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
+.\"      Date: Sep 18, 2009
+.\"    Manual: BIND9
+.\"    Source: BIND9
+.\"
+.TH "PKCS11\-KEYGEN" "8" "Sep 18, 2009" "BIND9" "BIND9"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+pkcs11\-keygen \- generate RSA keys on a PKCS#11 device
+.SH "SYNOPSIS"
+.HP 14
+\fBpkcs11\-keygen\fR [\fB\-P\fR] [\fB\-m\ \fR\fB\fImodule\fR\fR] [\fB\-s\ \fR\fB\fIslot\fR\fR] [\fB\-e\fR] {\-b\ \fIkeysize\fR} {\-l\ \fIlabel\fR} [\fB\-i\ \fR\fB\fIid\fR\fR] [\fB\-p\ \fR\fB\fIPIN\fR\fR]
+.SH "DESCRIPTION"
+.PP
+\fBpkcs11\-keygen\fR
+causes a PKCS#11 device to generate a new RSA key pair with the specified
+\fBlabel\fR
+and with
+\fBkeysize\fR
+bits of modulus.
+.SH "ARGUMENTS"
+.PP
+\-P
+.RS 4
+Set the new private key to be non\-sensitive and extractable. The allows the private key data to be read from the PKCS#11 device. The default is for private keys to be sensitive and non\-extractable.
+.RE
+.PP
+\-m \fImodule\fR
+.RS 4
+Specify the PKCS#11 provider module. This must be the full path to a shared library object implementing the PKCS#11 API for the device.
+.RE
+.PP
+\-s \fIslot\fR
+.RS 4
+Open the session with the given PKCS#11 slot. The default is slot 0.
+.RE
+.PP
+\-e
+.RS 4
+Use a large exponent.
+.RE
+.PP
+\-b \fIkeysize\fR
+.RS 4
+Create the key pair with
+\fBkeysize\fR
+bits of modulus.
+.RE
+.PP
+\-l \fIlabel\fR
+.RS 4
+Create key objects with the given label. This name must be unique.
+.RE
+.PP
+\-i \fIid\fR
+.RS 4
+Create key objects with id. The id is either an unsigned short 2 byte or an unsigned long 4 byte number.
+.RE
+.PP
+\-p \fIPIN\fR
+.RS 4
+Specify the PIN for the device. If no PIN is provided on the command line,
+\fBpkcs11\-keygen\fR
+will prompt for it.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBpkcs11\-list\fR(3),
+\fBpkcs11\-destroy\fR(3),
+\fBdnssec\-keyfromlabel\fR(3),
+.SH "CAVEAT"
+.PP
+Some PKCS#11 providers crash with big public exponent.
+.SH "AUTHOR"
+.PP
+Internet Systems Consortium
+.SH "COPYRIGHT"
+Copyright \(co 2009 Internet Systems Consortium, Inc. ("ISC")
+.br

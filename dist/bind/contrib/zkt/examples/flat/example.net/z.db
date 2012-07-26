@@ -1,0 +1,34 @@
+;-----------------------------------------------------------------
+;
+;       @(#)    example.net/zone.db
+;
+;-----------------------------------------------------------------
+
+$TTL	7200
+
+@	IN SOA	ns1.example.net. hostmaster.example.net.  (
+				353       ; Serial	
+				43200	; Refresh
+				1800	; Retry
+				2W	; Expire
+				7200 )	; Minimum
+
+		IN  NS		ns1.example.net.
+
+ns1		IN  A		1.0.0.5
+
+example.net. 3600 IN DNSKEY  257 3 5 (
+			BQEAAAABCwxfQLjMaLsvSPFYMFyi/Z5l6f/y1fNROZtCrUSAFca8c4Dc
+			+MK9phlqEtBihnMSBjFsuhyq1w++ubzZF3rVduVXP+loeEW5cGXneM4n
+			m52unLpZfQu0B0h/zwDLrfmedyqqZYb7grXDqFwT0EnI4cL/Ybr40H7u
+			SUyVyLM3c5a8V5RDA2t1PImy7UURv6qusCsRslw+mM5jG0S7Il5cqhug
+			aQ==
+		) ; key id = 33840
+
+example.net. 3600 IN DNSKEY  256 3 5 (
+			BQEAAAABzN3RkyF1Kvf3Go97BN7rNERR86F0nxfyHfXpMdwtqrMFSrkd
+			IboUDtNZBsw+LJmadHRQZDfu79tEz8MUid7aOw==
+		) ; key id = 48089
+
+_domainkey	IN  NS	ns1.example.net.
+

@@ -1,0 +1,97 @@
+#
+# Makefile for WinSock Wrapper (for WinSock 2.0)
+#
+
+# Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
+#  
+# By using this file, you agree to the terms and conditions set forth bellow.
+# 
+# 			LICENSE TERMS AND CONDITIONS 
+# 
+# The following License Terms and Conditions apply, unless a different
+# license is obtained from Japan Network Information Center ("JPNIC"),
+# a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+# Chiyoda-ku, Tokyo 101-0047, Japan.
+# 
+# 1. Use, Modification and Redistribution (including distribution of any
+#    modified or derived work) in source and/or binary forms is permitted
+#    under this License Terms and Conditions.
+# 
+# 2. Redistribution of source code must retain the copyright notices as they
+#    appear in each source code file, this License Terms and Conditions.
+# 
+# 3. Redistribution in binary form must reproduce the Copyright Notice,
+#    this License Terms and Conditions, in the documentation and/or other
+#    materials provided with the distribution.  For the purposes of binary
+#    distribution the "Copyright Notice" refers to the following language:
+#    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+# 
+# 4. The name of JPNIC may not be used to endorse or promote products
+#    derived from this Software without specific prior written approval of
+#    JPNIC.
+# 
+# 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+#    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+#    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+#    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+#    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+#    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+!include <win32.mak>
+
+SYSLIBS = $(libcdll) kernel32.lib advapi32.lib user32.lib
+
+#
+# Files to use
+#
+
+HDRS = dlldef.h ..\common\wrapcommon.h
+SRCS = dllmain.c   dllload.obj dllfunc.c dllstub.c
+OBJS = dllmain.obj dllload.obj dllfunc.obj
+LIBS = ..\common\wrapcommon.lib ..\..\lib\idnkit.lib ..\..\win\iconv.lib
+
+cflags = $(cflags) -I..\..\include
+
+#
+# Targets to Build
+#
+
+TARGETS = ws2_32.dll
+
+all : $(TARGETS)
+
+ws2_32.dll : ws2_32.def $(OBJS) $(LIBS)
+	$(link) $(dlllflags) /OUT:ws2_32.dll /DEF:ws2_32.def $(OBJS) $(LIBS) $(SYSLIBS)
+
+install : $(TARGETS)
+	copy ws2_32.dll ..\bin
+
+clean : force
+	-del *.obj
+	-del *.lib
+	-del *.dll
+	-del *.exp
+
+#
+# Dependencies
+#
+
+dllmain.obj : dllmain.c $(HDRS)
+	$(cc) $(cflags) $(cvarsdll) -DDEBUG $*.c
+
+dllload.obj : dllload.c $(HDRS)
+	$(cc) $(cflags) $(cvarsdll) -DDEBUG $*.c
+
+dllfunc.obj : dllfunc.c dllstub.c $(HDRS)
+	$(cc) $(cflags) $(cvarsdll) -DDEBUG $*.c
+
+ws2_32o.lib : ws2_32o.def
+	LIB /DEF:ws2_32o.def /MACHINE:IX86
+
+force:
+

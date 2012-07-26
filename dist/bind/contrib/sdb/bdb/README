@@ -1,0 +1,37 @@
+(Message trash:37216)
+
+Date:    Wed, 15 May 2002 20:44:45 +0100
+To:      <bind-workers@isc.org>
+From:    Nuno Miguel Rodrigues <nmr@co.sapo.pt>
+Subject: Berkeley DB BIND9 SDB
+
+Replied: Thu, 16 May 2002 11:47:35 +1000
+Replied: Nuno Miguel Rodrigues <nmr@co.sapo.pt>
+Return-Path: <bind-workers-bounce@isc.org>
+X-X-Sender: <nmr@angelina.sl.pt>
+MIME-Version: 1.0
+X-ecartis-version: Ecartis v1.0.0
+Sender:  bind-workers-bounce@isc.org
+Errors-To: bind-workers-bounce@isc.org
+X-original-sender: nmr@co.sapo.pt
+Precedence: bulk
+X-list:  bind-workers
+Status:  
+
+
+
+Hello all,
+
+I'm making available a BIND9 SDB using Berkeley DB 4.0.
+
+You can get it at http://www.dhis.org/~nmr/bind9_berkeleydb_sdb-1.0.tar
+
+Thanks,
+
+
+-- 
+Nuno M. Rodrigues <nmr@co.sapo.pt>
+
+
+
+

@@ -1,0 +1,64 @@
+.TH zone2ldap 1 "8 March 2001"
+.SH NAME
+zone2ldap /- Load BIND 9 Zone files into LDAP Directory
+.SH SYNOPSIS
+zone2ldap  [-D Bind DN] [-w Bind Password] [-b Base DN] [-z Zone] [-f Zone File ] [-h Ldap Host] [-cd] [-v]
+.SH DESCRIPTION
+zone2ldap will parse a complete BIND 9 format DNS zone file, and load
+the contents into an LDAP directory, for use with the LDAP sdb back-end.
+
+If the zone already exists, zone2ldap will exit succesfully. If the zone does not exists, or 
+partially exists, zone2ldap will attempt to add all/missing zone data.
+
+.SS Options
+.TP
+-b 
+LDAP Base DN. LDAP systems require a "base dn", which is generally considered the LDAP Directory root.
+If the zone you are loading is different from the base, then you will need to tell zone2ldap what your LDAP
+base is. 
+.TP
+-v 
+Print version information, and immediatly exit.
+.TP
+-f 
+Zone file.  Bind 9.1 compatible zone file, from which zone information will be read.
+.TP
+-d 
+Dump debug information to standard out. 
+.TP 
+-w 
+LDAP Bind password, corresponding the the value of "-b".
+.TP
+-h 
+LDAP Directory host. This is the hostname of the LDAP system you wish to store zone information on.
+An LDAP server should be listening on port 389 of the target system. This may be ommited, and will default
+to "localhost".
+.TP
+-c 
+This will create the zone portion of the DN you are importing. For instance, if you are creating a domain.com zone,
+zone2ldap should first create "dc=domain,dc=com".  This is useful if you are creating multiple domains.
+.TP
+-z 
+This is the name of the zone specified in the SOA record.
+.SH EXAMPLES
+Following are brief examples of how to import a zone file into your LDAP DIT.
+.SS Loading zone domain.com, with an LDAP Base DN of dc=domain,dc=com
+zone2ldap -D dc=root -w secret -h localhost -z domain.com -f domain.com.zone 
+
+This will add Resource Records into an ALREADY EXISTING dc=domain,dc=com. The final SOA DN in this case, will be 
+dc=@,dc=domain,dc=com
+
+.SS Loading customer.com, if your LDAP Base DN is dc=provider,dc=net.
+zone2ldap -D dc=root -w secret -h localhost -z customer.com -b dc=provider,dc=net -f customer.com.zone -c
+
+This will create dc=customer,dc=com under dc=provider,dc=net, and add all necessary Resource Records. The final
+root DN to the SOA will be dc=@,dc=customer,dc=com,dc=provider,dc=net.
+
+.SH "SEE ALSO"
+named(8) ldap(3) 
+http://www.venaas.no/ldap/bind-sdb/
+.SH "BUGS"
+Send all bug reports to Jeff McNeil <jeff@snapcase.g-rock.net>
+.SH AUTHOR
+Jeff McNeil <jeff@snapcase.g-rock.net>
+

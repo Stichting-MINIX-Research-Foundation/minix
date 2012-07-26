@@ -1,0 +1,107 @@
+<!--
+ - Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $Id: pkcs11-keygen.html,v 1.4 2009-10-06 04:40:14 tbox Exp $ -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>pkcs11-keygen</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
+<a name="man.pkcs11-keygen"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p><span class="application">pkcs11-keygen</span> &#8212; generate RSA keys on a PKCS#11 device</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="cmdsynopsis"><p><code class="command">pkcs11-keygen</code>  [<code class="option">-P</code>] [<code class="option">-m <em class="replaceable"><code>module</code></em></code>] [<code class="option">-s <em class="replaceable"><code>slot</code></em></code>] [<code class="option">-e</code>] {-b <em class="replaceable"><code>keysize</code></em>} {-l <em class="replaceable"><code>label</code></em>} [<code class="option">-i <em class="replaceable"><code>id</code></em></code>] [<code class="option">-p <em class="replaceable"><code>PIN</code></em></code>]</p></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543397"></a><h2>DESCRIPTION</h2>
+<p>
+      <span><strong class="command">pkcs11-keygen</strong></span> causes a PKCS#11 device to generate
+      a new RSA key pair with the specified <code class="option">label</code> and
+      with <code class="option">keysize</code> bits of modulus.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543416"></a><h2>ARGUMENTS</h2>
+<div class="variablelist"><dl>
+<dt><span class="term">-P</span></dt>
+<dd><p>
+            Set the new private key to be non-sensitive and extractable.
+            The allows the private key data to be read from the PKCS#11
+            device.  The default is for private keys to be sensitive and
+            non-extractable.
+          </p></dd>
+<dt><span class="term">-m <em class="replaceable"><code>module</code></em></span></dt>
+<dd><p>
+            Specify the PKCS#11 provider module.  This must be the full
+            path to a shared library object implementing the PKCS#11 API
+            for the device.
+          </p></dd>
+<dt><span class="term">-s <em class="replaceable"><code>slot</code></em></span></dt>
+<dd><p>
+            Open the session with the given PKCS#11 slot.  The default is
+            slot 0.
+          </p></dd>
+<dt><span class="term">-e</span></dt>
+<dd><p>
+            Use a large exponent.
+          </p></dd>
+<dt><span class="term">-b <em class="replaceable"><code>keysize</code></em></span></dt>
+<dd><p>
+            Create the key pair with <code class="option">keysize</code> bits of
+            modulus.
+          </p></dd>
+<dt><span class="term">-l <em class="replaceable"><code>label</code></em></span></dt>
+<dd><p>
+            Create key objects with the given label.
+            This name must be unique.
+          </p></dd>
+<dt><span class="term">-i <em class="replaceable"><code>id</code></em></span></dt>
+<dd><p>
+            Create key objects with id. The id is either
+            an unsigned short 2 byte or an unsigned long 4 byte number.
+          </p></dd>
+<dt><span class="term">-p <em class="replaceable"><code>PIN</code></em></span></dt>
+<dd><p>
+            Specify the PIN for the device.  If no PIN is provided on the
+            command line, <span><strong class="command">pkcs11-keygen</strong></span> will prompt for it.
+          </p></dd>
+</dl></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543563"></a><h2>SEE ALSO</h2>
+<p>
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-list</span>(3)</span>,
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-destroy</span>(3)</span>,
+      <span class="citerefentry"><span class="refentrytitle">dnssec-keyfromlabel</span>(3)</span>,
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543598"></a><h2>CAVEAT</h2>
+<p>Some PKCS#11 providers crash with big public exponent.</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543609"></a><h2>AUTHOR</h2>
+<p><span class="corpauthor">Internet Systems Consortium</span>
+    </p>
+</div>
+</div></body>
+</html>

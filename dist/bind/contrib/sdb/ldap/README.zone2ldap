@@ -1,0 +1,17 @@
+INSTALLATION
+
+To Compile zone2ldap from contrib/sdb directory:
+
+   gcc -g `../../isc-config.sh --cflags isc dns` -c zone2ldap.c
+   gcc -g -o zone2ldap zone2ldap.o `isc-config.sh --libs isc dns` -lldap -llber -lresolv
+
+USAGE:
+
+See zone2ldap.1
+
+BUGS:
+
+Jeff McNeil <jeff@snapcase.g-rock.net>
+
+
+

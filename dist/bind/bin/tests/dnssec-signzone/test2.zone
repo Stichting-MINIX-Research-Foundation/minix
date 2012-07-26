@@ -1,0 +1,8 @@
+;
+;	This is a zone which has one non-KSK DNSKEY record for which the
+; private key file exists.  It should be loaded automatically and the zone
+; correctly signed.
+;
+$TTL 3600
+example.com.	IN	SOA ns hostmaster 00090000 1200 3600 604800 300
+$include Kexample.com.+005+07065.key

@@ -1,0 +1,16 @@
+2010-02-06 00:54:11.045: notice: "example.de.": re-signing triggered: Modified KSK in delegated domain
+2010-02-21 12:51:38.667: notice: "example.de.": re-signing triggered: Modified KSK in delegated domain
+2010-02-25 00:21:05.030: info: "example.de.": new key 39599 generated for publishing
+2010-02-25 00:21:05.030: notice: "example.de.": re-signing triggered: Modfied zone key set
+2010-02-25 00:22:32.667: notice: "example.de.": re-signing triggered: Modfied zone key set
+2010-02-25 23:42:40.317: notice: "example.de.": re-signing triggered: Modified KSK in delegated domain
+2010-03-02 11:00:04.526: notice: "example.de.": re-signing triggered: Modified KSK in delegated domain
+2010-03-02 11:00:16.077: notice: "example.de.": re-signing triggered: Modified KSK in delegated domain
+2010-03-03 23:22:07.163: notice: "example.de.": lifetime of zone signing key 63077 exceeded: ZSK rollover done
+2010-03-03 23:22:07.163: notice: "example.de.": re-signing triggered: Modfied zone key set
+2010-03-12 00:00:27.706: info: "example.de.": old ZSK 63077 removed
+2010-03-12 00:00:27.710: notice: "example.de.": re-signing triggered: Modfied zone key set
+2010-03-12 00:45:26.305: notice: "example.de.": re-signing triggered: Modified KSK in delegated domain
+2010-04-01 01:05:48.848: notice: "example.de.": lifetime of zone signing key 39599 exceeded since 43m41s: ZSK rollover deferred: waiting for published key
+2010-04-01 01:05:48.928: info: "example.de.": new key 9743 generated for publishing
+2010-04-01 01:05:48.929: notice: "example.de.": re-signing triggered: Modfied zone key set

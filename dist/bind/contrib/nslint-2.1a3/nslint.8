@@ -1,0 +1,451 @@
+.\" @(#) $Id: nslint.8,v 1.1 2001-12-21 04:12:03 marka Exp $ (LBL)
+.\"
+.\" Copyright (c) 1994, 1996, 1997, 1999, 2001
+.\"	The Regents of the University of California.  All rights reserved.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that: (1) source code distributions
+.\" retain the above copyright notice and this paragraph in its entirety, (2)
+.\" distributions including binary code include the above copyright notice and
+.\" this paragraph in its entirety in the documentation or other materials
+.\" provided with the distribution, and (3) all advertising materials mentioning
+.\" features or use of this software display the following acknowledgement:
+.\" ``This product includes software developed by the University of California,
+.\" Lawrence Berkeley Laboratory and its contributors.'' Neither the name of
+.\" the University nor the names of its contributors may be used to endorse
+.\" or promote products derived from this software without specific prior
+.\" written permission.
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+.\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+.\"
+.TH nslint 8 "20 March 2001"
+.UC 4
+.SH NAME
+nslint - perform consistency checks on dns files
+.SH SYNOPSIS
+.B nslint
+[
+.B -d
+] [
+.B -b
+.I named.boot
+] [
+.B -B
+.I nslint.boot
+]
+.br
+.B nslint
+[
+.B -d
+] [
+.B -c
+.I named.conf
+] [
+.B -C
+.I nslint.conf
+]
+.SH DESCRIPTION
+.B Nslint
+reads the nameserver configuration files and performs a number of
+consistency checks on the dns records. If any problems are discovered,
+error messages are displayed on
+.I stderr
+and
+.B nslint
+exits with a non-zero status.
+.LP
+Here is a short list of errors
+.B nslint
+detects:
+.IP
+Records that are malformed.
+.IP
+Names that contain dots but are missing a trailing dot.
+.IP
+.B PTR
+records with names that are missing a trailing dot.
+.IP
+Names that contain illegal characters (rfc1034).
+.IP
+.B A
+records
+without matching
+.B PTR
+records
+.IP
+.B PTR
+records
+without matching
+.B A
+records
+.IP
+Names with more than one address on the same subnet.
+.IP
+Addresses in use by more than one name.
+.IP
+Names with
+.B CNAME
+and other records (rfc1033).
+.IP
+Unknown service and/or protocol keywords in
+.B WKS
+records.
+.IP
+Missing quotes.
+.LP
+.SH OPTIONS
+.TP
+.B -b
+Specify an alternate
+.I named.boot
+file. The default is
+.IR /etc/named.boot .
+.TP
+.TP
+.B -c
+Specify an alternate
+.I named.conf
+file. The default is
+.IR /etc/named.conf .
+.TP
+.B -B
+Specify an alternate
+.I nslint.boot
+file. The default is
+.I nslint.boot
+in the last
+.B directory
+line processed in
+.I named.boot
+(or the current working directory).
+This file is processed like a second
+.IR named.boot .
+The most common use is to tell
+.B nslint
+about
+.B A
+records that match
+.B PTR
+records that point outside the domains listed in
+.IR named.boot .
+.TP
+.B -C
+Specify an alternate
+.I nslint.conf
+file. The default is
+.I nslint.conf
+in the last
+.B directory
+line processed in
+.I named.conf
+(or the current working directory).
+This file is processed like a second
+.IR named.conf .
+.TP
+.B -d
+Raise the debugging level. Debugging information is
+displayed on
+.IR stdout .
+.LP
+.B Nslint
+knows how to read old style
+.I named.boot
+and BIND 8's new
+.I named.conf
+files. If both files exist,
+.B nslint
+will prefer
+.I named.conf
+(on the theory that you forgot to delete
+.I named.boot
+when you upgraded to BIND 8).
+.LP
+.SH "ADVANCED CONFIGURATION"
+There are some cases where it is necessary to use the
+advanced configuration features of
+.BR nslint .
+Advanced configuration is done with the
+.I nslint.boot
+file.
+.LP
+The most common is when a site has a demilitarized zone (DMZ).
+The problem here is that the DMZ network will have
+.B PTR
+records for hosts outside its domain. For example lets say
+we have
+.I 128.0.rev
+with:
+.LP
+.RS
+.nf
+.sp .5
+1.1     604800  in      ptr     gateway.lbl.gov.
+2.1     604800  in      ptr     gateway.es.net.
+.sp .5
+.fi
+.RE
+.LP
+Obviously we will define an
+.B A
+record for
+.I gateway.lbl.gov
+pointing to
+.I 128.0.1.1
+but we will get errors because there is no
+.B A
+record defined for
+.IR gateway.es.net .
+The solution is to create a
+.I nslint.boot
+file (in the same directory as the other dns files)
+with:
+.LP
+.RS
+.nf
+.sp .5
+primary es.net                  nslint.es.net
+.sp .5
+.fi
+.RE
+.LP
+And then create the file
+.I nslint.es.net
+with:
+.LP
+.RS
+.nf
+.sp .5
+gateway 1       in      a       128.0.1.2
+.sp .5
+.fi
+.RE
+.LP
+Another problem occurs when there is a
+.B CNAME
+that points to a host outside the local domains. Let's say we have
+.I info.lbl.gov
+pointing to
+.IR larry.es.net :
+.LP
+.RS
+.nf
+.sp .5
+info    604800  in      cname   larry.es.net.
+.sp .5
+.fi
+.RE
+.LP
+In this case we would need:
+.LP
+.RS
+.nf
+.sp .5
+primary es.net                  nslint.es.net
+.sp .5
+.fi
+.RE
+.LP
+in
+.I nslint.boot
+and:
+.LP
+.RS
+.nf
+.sp .5
+larry   1       in      txt     "place holder"
+.sp .5
+.fi
+.RE
+.LP
+.IR nslint.es.net .
+.LP
+One last problem
+when a pseudo host is setup to allow two more
+more actual hosts provide a service. For, let's say that
+.I lbl.gov
+contains:
+.LP
+.RS
+.nf
+.sp .5
+server  604800  in      a       128.0.6.6
+server  604800  in      a       128.0.6.94
+;
+tom     604800  in      a       128.0.6.6
+tom     604800  in      mx 0    lbl.gov.
+;
+jerry   604800  in      a       128.0.6.94
+jerry   604800  in      mx 0    lbl.gov.
+.sp .5
+.fi
+.RE
+.LP
+In this case
+.B nslint
+would complain about missing
+.B PTR
+records and ip addresses in use by more than one host.
+To suppress these warnings, add you would the lines:
+.LP
+.RS
+.nf
+.sp .5
+primary lbl.gov                 nslint.lbl.gov
+primary 0.128.in-addr.arpa      nslint.128.0.rev
+.sp .5
+.fi
+.RE
+.LP
+to
+.I nslint.boot
+and create
+.I nslint.lbl.gov
+with:
+.LP
+.RS
+.nf
+.sp .5
+server  1       in      allowdupa       128.0.6.6
+server  1       in      allowdupa       128.0.6.94
+.sp .5
+.fi
+.RE
+.LP
+and create
+.I nslint.128.0.rev
+with:
+.LP
+.RS
+.nf
+.sp .5
+6.6     604800  in      ptr     server.lbl.gov.
+94.6    604800  in      ptr     server.lbl.gov.
+.sp .5
+.fi
+.RE
+.LP
+In this example, the
+.B allowdupa
+keyword tells
+.B nslint
+that it's ok for
+.I 128.0.6.6
+and
+.I 128.0.6.94
+to be shared by
+.IR server.lbl.gov ,
+.IR tom.lbl.gov ,
+and
+.IR jerry.lbl.gov .
+.LP
+One last
+.B nslint
+feature helps detect hosts that have mistakenly had two ip addresses
+assigned on the same subnet. This can happen when two different
+people request an ip address for the same hostname or when someone
+forgets an address has been assigned and requests a new number.
+.LP
+To detect such
+.B A
+records, add a
+.B nslint
+section to your
+.I nslint.conf
+containing something similar to:
+.LP
+.RS
+.nf
+.sp .5
+nslint {
+.RS
+network "128.0.6/22";
+network "128.0.6 255.255.252.0";
+.RE
+};
+.sp .5
+.fi
+.RE
+.LP
+The two network lines in this example are equivalent ways of saying the same
+thing; that subnet
+.I 128.0.6
+has a 22 bit wide subnet mask.
+.LP
+If you are using
+.IR nslint.boot ,
+the syntax would be:
+.LP
+.RS
+.nf
+.sp .5
+network 128.0.6/22
+network 128.0.6 255.255.252.0
+.sp .5
+.fi
+.RE
+.LP
+Again this shows two ways of saying the same thing.
+.LP
+Using information from the above
+.B network
+statement,
+.B nslint
+would would flag the following
+.B A
+records as being in error:
+.LP
+.RS
+.nf
+.sp .5
+server  1       in      a       128.0.6.48
+server  1       in      a       128.0.7.16
+.sp .5
+.fi
+.RE
+.LP
+Note that if you specify any
+.B network
+lines in your
+.I nslint.conf
+or
+.I nslint.boot
+files,
+.B nslint
+requires you to include lines for all networks;
+otherwise you might forget to add
+.B network
+lines for new networks.
+.LP
+.SH FILES
+.na
+.nh
+.nf
+/etc/named.boot - default named configuration file
+nslint.boot - default nslint configuration file
+.ad
+.hy
+.fi
+.LP
+.SH "SEE ALSO"
+.na
+.nh
+.IR named (8),
+rfc1033,
+rfc1034
+.ad
+.hy
+.SH AUTHOR
+Craig Leres of the
+Lawrence Berkeley National Laboratory, University of California, Berkeley, CA.
+.LP
+The current version is available via anonymous ftp:
+.LP
+.RS
+.I ftp://ftp.ee.lbl.gov/nslint.tar.gz
+.RE
+.SH BUGS
+Please send bug reports to nslint@ee.lbl.gov.
+.LP
+Not everyone is guaranteed to agree with all the checks done.

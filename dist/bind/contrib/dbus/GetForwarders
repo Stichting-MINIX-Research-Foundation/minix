@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+#  This script uses the named D-BUS support, which must be enabled in
+#  the running named with the named '-D' option, to get and print the
+#  list of forwarding zones in the running server.
+# 
+#  It accepts an optional <zone> first argument which is the DNS name 
+#  of the zone whose forwarders (if any) will be retrieved.
+#
+#  If no zone argument is specified, all forwarding zones will be listed.
+#
+#  Usage: GetForwarders [ <zone> ] 
+# 
+#  Copyright(C) Jason Vas Dias<jvdias@redhat.com> Red Hat Inc. 2005
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation at 
+#           http://www.fsf.org/licensing/licenses/gpl.txt
+#  and included in this software distribution as the "LICENSE" file.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+zone=''
+if [ $# -gt 0 ]; then 
+   zone="string:$1";
+fi
+dbus-send --system --type=method_call --print-reply --reply-timeout=20000 --dest=com.redhat.named /com/redhat/named com.redhat.named.text.GetForwarders $zone;

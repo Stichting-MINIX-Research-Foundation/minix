@@ -1,0 +1,856 @@
+2003-03-16
+	* idnkit 1.0 release.
+
+	* DISTFILES, README, README.ja, INSTALL, INSTALL.ja: delete BIND8,
+	Squid and libiconv patches.
+
+2003-03-13
+	* wsock/config/idnconf.tcl: change the version number to '1.0'.
+
+2003-03-12
+	* Makefile.in, lib/Makefile.in: Add 'make install-config' to
+	Makefile target.
+
+2003-03-11
+	* patch/bind9/bind-9.2.2-patch: created.
+
+2003-03-06
+	* lib/punycode.c: idn__punycode_encode() outputs an error message
+	if the input string is over PUNYCODE_MAXINPUT (the value is 3800).
+
+2003-03-05
+	* include/idn/api.h, include/idn/checker.h,
+	include/idn/nameprep.h, include/idn/res.h, include/idn/version.h,
+	lib/Makefile.in, lib/checker.c, lib/idn.conf.sample.in,
+	lib/mapper.c, lib/nameprep.c, lib/nameprepdata.c,
+	lib/normalizer.c, lib/tests/checker.tsy, lib/tests/mapper.tsy,
+	lib/tests/nameprep.tsy, lib/tests/normalizer.tsy,
+	man/idn.conf.5.in, tools/idnconv/idnconv.1, wsock/bin/idn.conf:
+	Add NAMEPREP version 'RFC3491', and remove 'nameprep-11'.
+
+2003-02-18
+	* lib/tests/api-init1.tsy, lib/tests/api-init2.tsy,
+	lib/tests/api-init3.tsy, lib/tests/api-init4-1.tsy,
+	lib/tests/api-init4-2.tsy, lib/tests/api-init4-3.tsy,
+	lib/tests/api-init5-1.tsy, lib/tests/api-init5-2.tsy,
+	lib/tests/api-init5-3.tsy, lib/tests/api.tsy, lib/tests/converter.tsy,
+	lib/tests/res.tsy, lib/tests/punycode.c: Change ACE prefix of Punycode
+	from `zq--' to `xn--'.
+	
+2003-02-13
+	* lib/make.wnt: remove dependencies on obsolete files.
+
+	* INSTALL, INSTALL.ja, configure.in, aclocal.m4: Delete configure's
+	--with-punycode-prefix option.
+
+2003-02-05
+	* lib/res.c: improve performance when encoding/decoding
+	loooooooong domain names.
+
+2003-01-22
+	* lib/res.c: idn_res_encodename() and idn_res_decodename() in
+	libidnkit returns `idn_invalid_name' if local converter is not
+	available.
+
+2003-01-20
+	* lib/normalize.c, lib/unormalize.c, include/idn/unormalize.h,
+	lib/tests/normalizer.tsy: unicode-form-c or unicode-form-c/3.2.0 is
+	no longer supported.
+
+	* lib/mapselector.c, lib/tests/mapselector.tsy:
+	idn_mapselector_add() outputs an error message if invalid scheme
+	name or TLD is given.
+
+	* lib/checker.c, lib/normalizer.c, lib/mapselector.c, lib/res.c:
+	modify error messages.
+
+	* lib/result.c: modify an error message for `idn_invalid_length'.
+
+2003-01-16
+	* lib/checker.c, lib/idn.conf.sample.in, lib/mapper.c, lib/nameprep.c,
+	lib/normalizer.c, lib/unicode.c, lib/tests/checker.tsy, 
+	lib/tests/mapper.tsy, lib/tests/nameprep.tsy, lib/tests/normalizer.tsy,
+	man/idn.conf.5.in, tools/idnconv/idnconv.1:
+	delete support for nameprep-03 and nameprep-09.
+
+	* lib/unicodedata_301.c, lib/unicodedata_310.c, DISTFILES:
+	unicodedata_301.c and unicodedata_310.c are removed.
+
+2003-01-14
+	* tools/idnconv/idnconv.c, tools/idnconv/util.c, tools/idnconv/util.h:
+	remove the restriction on the length of input lines.  idnconv can
+	now handle very long lines.
+
+2003-01-10
+	* lib/converter.c: fix a bug in extending intermediate buffer
+	in converter_iconv_convtoucs4(), which causes incorrect
+	codeset conversion when the input string is very long.
+
+2002-12-06
+	* idnkit 1.0pr2 release (preview release).
+
+2002-12-03
+	* lib/mapper.c, lib/normalize.c: Don't check whether an input string
+	is STD3 ASCII label.
+	lib/res.c: Skip localmap if the string is STD3 ASCII label.
+	
+2002-12-02
+	* lib/tests/iconvchk.c, lib/tests/Makefile.in: enable to check
+	whether codeset names "eucJP" and "SJIS" are available in iconv.
+
+2002-12-01
+	* tools/runidn/stub.c: use RTLD_NEXT for dlsym() if it is available.
+
+2002-11-29
+	* almost all files: change the license terms.
+
+2002-11-25
+	* lib/tests/codeset.h: define character encoding names here.
+	* lib/tests/api-init1.tsy, lib/tests/api-init2.tsy,
+	lib/tests/api-init3.tsy, lib/tests/api-init4-3.tsy, 
+	lib/tests/api-init5-3.tsy, lib/tests/converter.tsy,
+	lib/tests/mapselector.tsy, lib/tests/resconf.tsy: include `codeset.h'.
+	lib/tests/api-init4-1.tsy, lib/tests/api-init4-2.tsy, 
+	lib/tests/api-init5-1.tsy, lib/tests/api-init5-2.tsy,
+	lib/tests/mapselector.tsy, lib/tests/resconf.tsy:
+	Delete the unused cpp macro EUCJP_ENCODING_NAME.
+	* INSTALL, INSTALL.ja: describe `lib/tests/codeset.h'.
+
+	* lib/converter.c: Fix bugs in converter_uescape_convfromucs4()
+	and converter_uescape_convtoucs4() that libidnkit might crash
+	when `from' is very long.
+
+2002-11-15
+	* Makefile.in: `make distclean' also removes `libtool'.
+
+2002-10-25
+	* lib/resconf.c: enable the IDN_CONVERTER_RTCHECK flag when it
+	calls idn_converter_create().
+	* tools/idnconv/util.c: enable the IDN_CONVERTER_RTCHECK flag
+	when it calls idn_converter_setlocalconvertername() or 
+	idn_converter_setidnconvertername().
+
+2002-09-20
+	* wsock/README.txt, wsock/README_j.txt: add description on
+	"Force local DLL reference" button.
+
+2002-09-19
+	* idnkit 1.0pr1 release (preview release).
+
+2002-09-13
+	* README, README.ja: update URIs.
+
+	* lib/Makefile.in, lib/tests/Makefile.in: generate libidntest and
+	libidntestlite for test programs.
+
+2002-09-09
+	* wsock/wsock11/dlldef.h, wsock/wsock11/dllfunc.c,
+	wsock/wsock11/dllload.c, wsock/wsock11/dllmain.c,
+	wsock/wsock20/dlldef.h, wsock/wsock20/dllfunc.c,
+	wsock/wsock20/dllload.c, wsock/wsock20/dllmain.c: take out
+	DLL load/unload from DllMain(). load/unload is delayed until
+	it is really necessary.
+	* wsock/common/checkdll.c, wsock/common/wrapcommon.h: move DLL
+	load/unload functions from wsock/{ws11,ws20}/dllmain.c.
+	* wsock/printf.c: make logging more effective.
+
+	* DISTFILES: remove wsock/common/dllmain.c, which is no longer used.
+
+2002-09-05
+	* lib/mapper.c: fix a bug that idn_mapper_add(ctx, "filemap") aborts.
+
+2002-09-04
+	* lib/nameprep.c: GCC says that a variable declared in
+	idn_nameprep_isvalidbidi() might be used uninitialized.  Fixed.
+
+	* wsock/common/convert.c, wsock/common/printf.c,
+	wsock/common/wrapcommon.h: always reset log output callback procedure
+	before calling idnkit library functions.
+	* wsock/wsock11/dllmain.c, wsock/wsock20/dllmain.c: reset
+	log output callback before unloading.
+
+2002-09-03
+	* lib/tests/testygen, lib/tests/testsuite.c, lib/tests/testsuite.h:
+	add verbose and partial exec modes.
+
+2002-08-29
+	* idnkit 020829 snapshot release.
+
+2002-08-28
+	* lib/tests/testygen: fix generation of main().  It didn't destroy
+	a testsuite context.
+	* lib/tests/testsuite.c: fix a double free bug in
+	idn_testsuite_destroy().
+
+	* lib/filemapper.c: fix one memory leak in read_file().
+	* lib/filemapper.c: fix buffer expansion bug in ucsbuf_grow().
+	* lib/res.c: plug up memory leak in idn_res_decodename().
+
+	* lib/tests/setenv.c: fix memory leak bug.
+
+	* lib/filemapper.c, lib/ucsmap.c, lib/ucsset.c: fix misuse of
+	realloc().
+
+	* lib/converter.c: plug up memory leak in
+	converter_iconv_openfromucs4() and converter_iconv_opentoucs4().
+
+2002-08-27
+	* lib/tests/Makefile.in: support the case where the build directory
+	is different from the source directory.
+
+	* lib/tests/Makefile.in: perform tests for lite library only if
+	`--enable-liteonly' has been specified at configuration.
+
+	* lib/tests/setenv.c, lib/tests/setenv.h, lib/tests/Makefile.in,
+	configure.in: support systems which lack setenv() and/or unsetenv().
+
+	* configure.in, lib/Makefile.in, lib/idn.conf.sample, INSTALL,
+	INSTALL.ja: delete `--with-preference'.
+
+2002-08-26
+	* lib/tests/testygen: new option `-L', which suppresses `#line'
+	cpp lines on output.
+
+	* DISTFILES: Add files for tests.
+	* INSTALL, INSTALL.ja: add the `Test' section.
+
+	* lib/resconf.c: fix trace message of idn_resconf_create().
+
+	* win/README.WIN: update the contents.
+
+	* wsock/config/idnconf.tcl: do not display `force local DLL
+	reference' button on Windows 95 and NT, since it is meaningless
+	for these old OSes.
+
+2002-08-22
+	* lib/mapper.c, lib/normalizer.c: add the procedure for the case
+	that ctx->nschems is 0 to idn_mapper_map() and
+	idn_normalizer_normalize().
+
+	* lib/delimitermap.c: idn_delimitermap_add() and 
+	idn_delimitermap_addall() reject a request to add an invalid
+	codepoint.
+
+2002-08-21
+	* lib/api.c: fix a bug that api_nameinit() didn't call
+	idn_resconf_initialize().
+	* lib/api.c: don't set the `ininitialized' flag if idn_nameinit()
+	returns with an error.
+	* lib/api.c, include/idn/api.h: add idn__setconffile().
+
+	* lib/mapselector.c: idn_mapselector_map() and idn_mapselector_map2()
+	now accept `tld' beginning with a dot.
+
+2002-08-20
+	* wsock/common/checkdll.c: back out 0812 change because the check
+	method doesn't seem to work correctly on WinMe.
+	* wsock/wsock11/dllload.c, wsock/wsock20/dllload.c: add some trace
+	statements.
+	* wsock/config/idnconf.tcl: do not install winsock2 wrapper on
+	Win98/Me.
+
+	* lib/tests/testsuite.c, lib/tests/testsuite.h, lib/tests/testygen:
+	exit the testcase if ASSERT fails.
+
+	* lib/tests/testsuite.c, lib/tests/testsuite.h:
+	replace ASSERT_PTRNOTNULL with ASSERT_PTR_NE.
+
+	* lib/tests/testutil.c, lib/testuil.h: new file.
+	It provides create_conf_file().
+
+2002-08-19
+	* lib/resconf.c: if application calls idn_resconf_create() before 
+	idn_resconf_initialize(), idnkit returns `idn_failure'.
+
+2002-08-15
+	* lib/tests/testsuite.c, lib/tests/testsuite.h, lib/tests/testygen:
+	add two assertion macros: ASSERT_PTR and ASSERT_PTRNOTNULL.
+
+	* lib/converter.c: fix some warning messages.
+
+2002-08-14
+	* lib/resconf.c: fix a but that idnkit aborts if a line in config
+	file lacks an argument.
+
+	* wsock/common/hook.c, wsock/wsock11/dllfunc.c, wsock/wsock20/dllfunc.c
+	: make name resolver APIs return the domain name verbatim (instead
+	of returning error) when name decoding fails.
+
+2002-08-13
+	* lib/Makefile.in, lib/checker.c, lib/converter.c, lib/delimitermap.c,
+	lib/filechecker.c, lib/filemapper.c, lib/mapper.c, lib/mapselector.c,
+	lib/nameprep.c, lib/normalizer.c, lib/punycode.c, lib/race.c,
+	lib/resconf.c, lib/unormalize.c: delete main routines for test.
+
+	* lib/tests/: new directory.
+	* configure.in: Check for path of perl command.
+
+	* wsock/config/idnconf.tcl: correct OS version check routine.
+
+2002-08-12
+	* lib/make.wnt: change amcacez.* to punycode.*.
+	* wsock/common/encoding.c, wsock/common/dump.c, wsock/common/convert.c,
+	wsock/commn/hook.c, wsock/common/printf.c, wsock/common/wrapcommon.h,
+	wsock/wsock11/dllfunc.c, wsock/wsock11/dllload.c,
+	wsock/wsock20/dllfunc.c, wsock/wsock20/dllload.c: add extra argument
+	(specifying buffer length) to some interface functions,	in order to
+	prevent possible buffer overflow.
+	* wsock/common/printf.c: increase message buffer size.
+	* wsock/wsock11/dllmain.c, wsock/wsock20/dllmain.c: call initialize
+	routine before first log output.
+	* wsock/common/checkdll.c: use light-weight DLL checking using
+	LoadLibraryEx.
+
+	* lib/res.c: fix bugs in idn_res_encodename(), idn_res_decodename()
+	and idn_res_decodename2().  They fell into infinite loops when
+	given `tolen' is 0.
+
+2002-08-08
+	* lib/resconf.c, lib/res.c: remove unused functions and variables.
+
+	* lib/Makefile.in tools/idnconv/Makefile.in,
+	tools/runidn/Makefile.in: add @CPPFLAGS@ to $(CFLAGS).
+
+	* lib/res.c: idn_res_decodename2() copies `from' to `to' and
+	returns immediately when the `actions' argument is 0.
+
+2002-08-07
+	* lib/resconf.c: fix a bug in parse_conf() that if `nameprep' or
+	`idn-encoding' directive is defined twice, default value is set
+	to the directive.
+	* lib/resconf.c: cosmetic changes.
+	delete parse_map(), parse_normalize(), parse_prohibit(),
+	parse_unassigned() and parse_bidi().
+
+	* lib/amcacez.c, include/idn/amcacez.h: renamed to lib/punycode.c
+	and include/idn/punycode.h.
+
+	* include/idn/converter.h, lib/converter.h: define
+	idn_converter_getrealname() externally instead of statically
+	defined get_realname().
+
+2002-08-06
+	* lib/resconf.c: arrange processes of obsolete commands in
+	idn_res_loadfile().
+
+	* INSTALL, INSTALL.ja, man/idn.conf.5.in, tools/idnconv/idnconv.1:
+	remove description of RACE and AMC-ACE-Z.
+
+	* lib/resconf.c: fix a bug in handling of local-converter.
+
+	* lib/converter.c: add initialization check in
+	idn_converter_aliasfile() and idn_converter_resetalias().
+
+	* lib/converter.c: free context memory at some right places in
+	idn_converter_create().
+
+2002-08-05
+	* configure.in, lib/Makefile.in, lib/aliaslist.sh: also add the
+	"UTF-8" entry if --with-utf8=NAME option of configure is specified,
+	and NAME is not "UTF-8".
+
+	* tools/idnconv/idnconv.c: call idn_converter_destroy() after
+	idn_resconf_getidnconverter() and idn_resconf_getlocalconverter()
+	in main().
+
+	* lib/res.c: fix a bug in idn_res_decodename2().
+	When the function called idn_res_decodename(), assertion check in
+	idn_res_decodename() may have failed.
+
+	* lib/res.c: call idn_delimitermap_destroy() after
+	idn_resconf_getdelimitermap() in idn_res_encodename() and
+	idn_res_decodename().
+	
+2002-08-02
+	* lib/res.c: fix mismatched pointer type in idn_res_decodename2().
+	* lib/res.c: fix a bug in handling of `auxencoding', in
+	idn_res_decodename2().
+
+2002-08-01
+	* lib/resconf.c: fix two memory leaks in parse_conf().
+
+	* lib/aliaslist.c: fix an error of size measurement in
+	create_item().
+
+2002-07-31
+	* lib/converter.c: AMC-ACE-Z and RACE are now extra ACE.
+
+2002-07-30
+	* idnkit 020730 snapshot release.
+
+	* lib/resconf.c: fix a bug in idn_resconf_create() that it
+	misses initializing `ctx->bidi_checker'.
+
+2002-07-29
+	* tools/idnconv/idnconv.1: describe bidi character check.
+
+2002-07-24
+	* lib/resconf.c: force to add bidi checker at parsing nameprep
+	entry in config file.
+
+2002-07-19
+	* include/idn/checker.h, include/idn/nameprep.h,
+	include/idn/res.h, include/idn/resconf.h, man/idn.conf.5.in,
+	man/libidnkit.3.in, lib/checker.c, lib/nameprep.c, lib/res.c,
+	lib/resconf.c, tools/idnconv/idnconv.c: add bidirectional label
+	check routine.
+
+	* include/idn/api.h, include/idn/res.h, lib/api.c, lib/res.c,
+	tools/idnconv/idnconv.c, tools/idnconv/util.c,
+	tools/idnconv/util.h: change the type of action flag at conversion
+	functions and define it as ``idn_action_t''.
+
+2002-07-18
+	* wsock/config/idnconf.tcl: implement .exe.local file
+	creation/deletion feature.
+	* lib/make.wnt: update list of files according to the recent
+	changes of the library.
+
+2002-07-12
+	* include/idn/nameprpe.h: define idn_biditype_t.
+	* lib/nameprep_template.c, lib/nameprep.c: support for bidi type
+	check is added.
+
+2002-07-11
+	* idnkit 020711 snapshot release.
+
+2002-07-09
+	* man/Makefile.in, man/idn.conf.5.in: force to make and install
+	manpage of idnalias.conf (merely a copy of idn.conf's manpage).
+
+2002-07-08
+	* DISTFILES: `lib/dude.c' and `include/idn/dude.h' are removed.
+	* DISTFILES: `util/Makefile' is added.
+
+	* tools/idnconv/idnconv.c: fix typo in decode_file().
+
+	* tools/idnconv/idnconv.c: Support "-reverse -out ACE".
+
+	* lib/res.c: fix bugs in label_idndecode() and label_idnencode_ace().
+	If UCS4 to UTF-8 conversion is failed with idn_buffer_overflow,
+	we must extends the size of local buffer and try the conversion
+	again.
+
+2002-07-05
+	* tools/idnconv/idnconv.c: treat input as the string of the local
+	encoding specified by "-out" option at reverse conversion.
+
+	* include/idn/api.h, lib/api.c: add idn_decodename2() function.
+
+	* include/idn/res.h, lib/res.c: add idn_res_decodename2()
+	function.
+
+	* include/idn/res.h, lib/res.c: restore IDN_DELIMMAP flag.
+
+2002-07-02
+	* lib/unicodedata_320.c, lib/checker.c, lib/idn.conf.sample.in,
+	lib/mapper.c, lib/nameprep.c, lib/nameprepdata.c, lib/normalizer.c,
+	lib/unicode.c, unicodedata_320.c, include/idn/nameprep.c, DISTFILES,
+	man/idn.conf.5.in: Support NAMEPREP-11 which adopts Unicode-3.2.
+	Support for NAMEPREP-06, -08, -09 are removed.
+
+2002-07-01
+	* tools/idnconv/idnconv.1: added `-A' option.
+
+	* include/idn/res.h, lib/res.c: redefine IDN_ENCODE_QUERY,
+	IDN_DECODE_QUERY, IDN_ENCODE_STORED, IDN_DECODE_STORED, IDN_ENCODE_APP
+	and IDN_DECODE_APP.
+
+2002-06-26
+	* lib/resconf.c, include/idn/resconf.h: define
+	idn_resconf_getauxidnconverter(), idn_resconf_setauxidnconverter()
+	and idn_resconf_setauxidnconvertername().
+
+2002-06-20
+	* lib/res.c: use action flags at round trip check.
+
+2002-06-19
+	* include/idn/res.h, lib/res.c: remove IDN_UNASCHECK flag from
+	IDN_NAMEPREP.
+
+	* include/idn/res.h, lib/res.c: add IDN_ENCODE_QUERY,
+	IDN_DECODE_QUERY, IDN_ENCODE_STORED, and IDN_DECODE_STORED flags.
+
+	* include/idn/res.h, lib/res.c: IDN_ENCODE_APP and IDN_DECODE_APP
+	have same value as flags for conversion of the query string
+	(IDN_ENCODE_QUERY and IDN_DECODE_QUERY) now.
+
+2002-06-17
+	* include/idn/Makefile.in, lib/Makefile.in, lib/converter.c,
+	tools/runidn/Makefile.in, configure, INSTALL, INSTALL.ja:
+	delete DUDE support.
+	* include/idn/dude.h, lib/dude.c: deleted.
+
+	* README, README.ja: update URL of mdnkit FAQ.
+
+	* include/idn/res.h, lib/res.c, lib/idn.conf.sample.in,
+	lib/delimitermap.c, man/libidnkit.3.in: add default delimiters
+	defined in IDNA specification and always forced to do delimiter
+	mapping.
+
+	* lib/resconf.c, man/idn.conf.5.in: remove "delimiter-map" entry
+	support of configuration file.
+
+	* tools/idnconv/idnconv.c, tools/idnconv/idnconv.1: remove
+	"-delimiter-map" and "-d" options.
+
+2002-06-13
+	* wsock/common/encoding.c: fix registry key setting so that
+	it matches what documents say.
+
+2002-06-11
+	* include/idn/delimitermap.h: remove idn_delimitermap_fix()
+	declaration.
+
+2002-06-10
+	* wsock/wsock2/dllfunc.c: fix a bug which makes wrapping of
+	getaddrinfo()/getnameinfo() always fail.
+
+2002-06-05
+	* wsock/wsock2/dllfunc.c, wsock/wsock2/dllstub.c,
+	wsock/wsock2/ws2_32.def: add new APIs introduced by WinXP.
+
+2002-05-22
+	* tools/idnconv/util.c: reset alias information before loading
+	alias information file.
+
+2002-05-20
+	* idnkit 1.0rc1 release.
+
+	* include/idn/res.h: fix typo in a comment.
+
+2002-05-17
+	* include/idn/version.h: set IDNKIT_VERSION to "1.0rc1".
+
+2002-05-13
+	* tools/rpm/mdnkit.spec: renamed to idnkit.spec, and revised
+	for idnkit-1.0.
+
+2002-05-09
+	* tools/idnconv/idnconv.c: now `idnconv -r' can convert a file
+	from ACE to ACE.
+
+2002-05-08
+	* lib/idn.conf.sample.in: delete "encoding-alias-file" entry
+	because idnkit does not support it any longer.
+
+	* lib/nameprepdata.c lib/nameprep.c, lib/mapper.c, lib/normalizer.c,
+	lib/checker.c, lib/idn.conf.sample.in, man/idn.conf.5.in,
+	tools/idnconv/idnconv.1: support NAMEPREP-09.
+
+	* lib/mapper.c, lib/normalizer.c, lib/checker.c, lib/mapselector.c, 
+	* lib/res.c, lib/race.c: spmplify local buffer managements.
+
+	* tools/idnconv/idnconv.c, tools/idnconv/util.c, tools/idnconv/util.h:
+	fix a bug that wrong local encoding is set to a resconf context.
+	
+2002-05-07
+	* tools/idnconv/util.c: delete set_reverse_context().
+	* tools/idnconv/idnconv.c: fix a serious bug in -reverse conversion.
+
+2002-05-04
+	* include/idn/util.h, lib/converter.c, lib/resconf.c, lib/util.c:
+	simplify Windows registry retrieval function interface.
+	* wsock/common/convert.c, wsock/common/dump.c,
+	wsock/common/encoding.c, wsock/common/wrapcommon.h: fix type
+	conflicts.
+	* wsock/wsock11/dlldef.h, wsock/wsock11/dllmain.c,
+	wsock/wsock20/dlldef.h, wsock/wsock20/dllmain.c: fix typo.
+	* wsock/common/jpnicmdn.def, wsock/common/jpnicmdn.h,
+	wsock/config/mdnconf.tcl: removed.
+	* DISTFILES: add new files, remove obsolete files.
+	
+2002-05-02
+	* tools/idnconv/util.c: create a new function set_reverse_context().
+	* tools/idnconv/idnconv.c: fix a bug in handing of reference count
+	of idn_resconf_t contexts.
+
+	* lib/amcacez.c, lib/race.c, lib/dude.c, lib/delimitermap.c,
+	lib/checker.c, lib/mapper.c, lib/mapselector.c, lib/converter.c,
+	lib/normalizer.c, lib/res.c, lib/ucs4.c, lib/debug.c,
+	include/idn/debug.h: output valuable trace logs for developpers.
+
+	* lib/res.c: fix double free bugs.
+
+	* lib/checker.c, include/idn/checker.h: for symbols of the checker
+	module, use `idn_' prefix instead of `idn__' by default.
+
+	* wsock/common/checkdll.c, wsock/common/convert.c,
+	wsock/common/dump.c, wsock/common/encoding.c, wsock/common/hook.c,
+	wsock/common/printf.c, wsock/common/make.wnt,
+	wsock/wsock11/dlldef.h, wsock/wsock11/dllfunc.c,
+	wsock/wsock11/dllload.c , wsock/wsock11/dllmain.c,
+	wsock/wsock11/dllstub.c, wsock/wsock11/make.wnt,
+	wsock/wsock20/dlldef.h, wsock/wsock20/dllfunc.c,
+	wsock/wsock20/dllload.c , wsock/wsock20/dllmain.c,
+	wsock/wsock20/dllstub.c, wsock/wsock20/make.wnt: adapt idnkit
+	interface, change name from `mDN Wrapper' to `idn wrapper'.
+	* wsock/common/wrapcommon.h: created.
+	* wsock/config/idnconf.tcl: created.
+
+2002-05-01
+	* include/idn/util.h, lib/converter.c, lib/resonf.c, lib/util.c:
+	Move alias information initialization scheme from the resconf
+	context initialization to the converter module initialization.
+
+	* tools/idnconv/idnconv.c: fix a bug in main().
+	Wrong localconverer/idnconverter may be set to resconf2.
+
+2002-04-30
+	* lib/res.c, tools/idnconv/idnconv.c: accept non-ace encoding as
+	idn-encoding and ace encoding as local-encoding at normal conversion.
+
+2002-04-23
+	* man/idn.conf.5.in: use the term "unassigned codepoint", not
+	"unassigned character".
+
+2002-04-19
+	* include/idn/api.h, include/idn/res.h:
+	delete cpp macros for backward compatibility, since they are defined
+	in include/mdn/api.h and include/mdn/res.h.
+
+	* include/idn/checker.h, include/idn/converter.h,
+	include/idn/delimitermap.h, include/idn/filechecker.h, 
+	include/idn/filemapper.h, include/idn/mapper.h,
+	include/idn/mapselector.h, include/idn/nameprep.h,
+	include/idn/normalizer.h, include/idn/unormalize.h:
+	fix obsolete descriptions.
+
+2002-04-17
+	* idnkit 1.0beta2 release.
+	
+2002-04-16
+	* configure.in: check AC_FIND_SYSTEM_SHOBJ(libnsl),
+	AC_CHECK_LIB(socket, socket) and AC_CHECK_LIB(nsl, inet_addr)
+	in case of --enable-runidn.
+
+2002-04-15
+	* tools/idnconv/idnconv.1: fix the "REVERSE CONVERSION MECHANISM"
+	section.
+
+2002-04-12
+	* lib/res.c, include/idn/res.h: rename `idn_res_actionstostring()'
+	to `idn__res_actionstostring()'.
+	* lib/mapper.c, lib/checker.c, lib/converter.c: output trace log
+	which shows scheme a name the module is going to perform.
+
+2002-04-10
+	* man/idn.conf.5.in: delete the "SETFILE SECTION".
+
+2002-04-09
+	* tools/runidn/resolver.c: call idn_nameinit() and then call
+	idn_encodename() or idn_decodename().
+
+2002-04-08
+	* include/idn/export.h: created.
+	* include/idn/Makefile.h, DISTFILES: add export.h.
+	* include/idn/api.h, include/idn/converter.h, include/idn/debug.h,
+	include/idn/delimitermap.h, include/idn/localencoding.h,
+	include/idn/log.h, include/idn/mapper.h, include/idn/mapselector.h,
+	include/idn/nameprep.h, include/idn/normalizer.h, include/idn/res.h,
+	include/idn/resconf.h, include/idn/result.h, include/idn/ucs4.h,
+	include/idn/ucsmap.h, include/idn/ucsset.h, include/idn/unormalize.h,
+	include/idn/utf8.h, include/idn/version.h: include export.h. mark
+	exportable functions with IDN_EXPORT macro.
+	* lib/make.wnt: modify to create DLLs.
+	* configure.in: add existance check for pwd.h.
+	* configure, include/config.h.in: rebuilt.
+	* lib/resconf.c, lib/localencoding.c: port to Win32.
+	* include/mdn/version.h: include <idn/version.h> for the declaration
+	of idn_version_getstring().
+	* tools/make.wnt, tools/idnconv/make.wnt: created.
+	* make.wnt: add tools subdirectory.
+	* DISTFILES: add tools/make.wnt and tools/idnconv/make.wnt.
+
+	* include/idn/mapselector.h, lib/mapselector.c:
+	add idn_mapselector_getnotld() and idn_mapselector_getdefaulttld().
+	Instead delete idn_mapselector_no_tld and idn_mapselector_default.
+
+	* lib/api.c, include/mdn/api.h: define mdn_nameinit(),
+	mdn_encodename() and mdn_decodename().
+
+	* DISTFILES: delete `patch/bind8/bind-8.2.3-patch' and
+	`tools/rpm/mdnsproxy.init'.
+
+	* include/idn/aliaslist.h, include/idn/converter.h,
+	lib/aliaslist.c, lib/converter.c: enable to add an alias
+	information item to either top or bottom of the alias information
+	list.
+
+2002-04-05
+	* include/idn/resconf.h, lib/resconf.c: add
+	idn_resconf_setdefaults().
+	* lib/resconf.c: call idn_converter_aliasfile() at parsing the
+	default alias information file automatically.
+	* include/idn/api.h, lib/api.c: modify api_nameinit() to enable to
+	choose initialization scheme.
+
+	* tools/idnconv/idnconv.c, tools/idnconv/idnconv.1: delete `-map',
+	`-normalize', `-prohibit' and `-unassigned' options.
+	* tools/idnconv/idnconv.c: use default configuration if `-noconf'
+	is specified.
+	
+2002-04-04
+	* tools/idnconv/idnconv.1: fix obsolete description.
+	* tools/runidn/runidn.1: likewise.
+
+2002-04-02
+	* configure.in: add --enable-mdnkit-compat option.
+	* include/mdn/Makefile.in, include/mdn/api.h,
+	include/mdn/localencoding.h, include/mdn/log.h, include/mdn/res.h,
+	include/mdn/resconf.h, include/mdn/result.h, include/mdn/utf8.h,
+	include/mdn/version.h: re-added.
+	* include/Makefile.in: add `idn' to SUBDIRS.
+	* lib/Makefile.in, tools/idnconv/Makefile.in, tools/runidn/Makefile.in,
+	man/Makefile.in: support --enable-mdnkit-compat.
+	* lib/localencoding.c, lib/resconf.c: ditto.
+	* INSTALL: ditto.
+
+	* Makefile.in, include/Makefile.in, include/idn/Makefile.in,
+	include/mdn/Makefile, lib/Makefile.in, tools/Makefile.in,
+	tools/idnconv/Makefile.in, tools/runidn/Makefile.in,
+	man/Makefile.in, map/Makefile.in: support DESTDIR and distclean.
+
+2002-03-28
+	* include/idn/api.h: enclose the contents with `extern "C" {...}'
+	if C++ compiler is used.
+
+2002-03-27
+	* man/Makefile.in: generate and install idnrc.5.
+	* man/idn.conf.5.in: describe the user configuration file ~/.idnrc.
+
+	* tools/idnconv/idnconv.1: add missing description of -nolengthcheck,
+	-noasciicheck and -noroundtrip options.
+
+	* lib/checker.c, lib/mapper.c, lib/normalizer.c,
+	lib/idn.conf.sample.in, tools/idnconv/idnconv.1, man/idn.conf.5.in:
+	Add nameprep-08 support, and delete -05 and -07 instead.
+
+2002-03-26
+	* idnkit 1.0beta1 release.
+
+	* NEWS: add description about Major changes in mDNkit 2.3, 2.3.1,
+	2.4.
+	* NEWS: add description about Major changes in idnkit
+	version1.0beta1.
+
+2002-03-25
+	* DISTFILES: add bind-8.3.1-patch and bind-9.2.0-patch.
+	delete bind-9.1.3-patch.
+
+2002-03-22
+	* lib/mapselector.c: fix a bug in handling of the special TLD `-'.
+
+2002-03-20
+	* lib/converter.c: fix a bug in idn_converter_convtoucs4().
+
+	* lib/res.c: fix a bug that IDN_LENCHECK overlook an empty label
+	generated by nameprep-map or localmap (e.g. "XXX.\u{200b}").
+	* lib/res.c: fix a bug that libidnkit aborts when it decodes "."
+
+	* lib/Makefile.in, tools/runidn/Makefile.in: change library
+	version.
+	* include/idn/version.h: set version `1.0beta1'.
+
+	* configure, configure.in: modify some error messages.
+
+2002-03-19
+	* man/idn.conf.5.in, lib/idn.conf.sample.in, tools/idnconv/idnconv.1:
+	delete DUDE from a list of supported encodings.
+
+	* lib/aliaslist.c, lib/debug.c, lib/strhash.c, lib/ucs4.c: they are
+	private modules.
+
+	* include/idn/resolver.h: moved to tools/runidn/resolver.h.
+
+	* tools/runidn/Makefile.in, tools/idnconv/Makefile.in:
+	insert `-I$(srcdir)' into INCS.
+
+2002-03-18
+	* aclocal.m4, configure, configure.in, include/config.h.in,
+	Makefile.in, map/Makefile.in, src/lib/idn.conf.sample.in,
+	tools/idnconv/selectiveencode.h: replace `MDN' with `IDN'.
+
+	* lib/aliaslist.c: change WARNING message into INFO message when
+	idn_aliaslist_aliasfile() finds an error in alias information
+	file.
+	* lib/resconf.c: change user configuration file name.
+	* lib/resconf.c: add procedure to check the existence of default
+	alias information file before letting converter parse the file.
+	* lib/resconf.c: call idn_converter_aliasfile() even when basic
+	configuration files are not found at all.
+
+	* tools/idnconv/idnconv.c: use hexadecimal numbers for values
+	associated with FLAGS_ macros.
+
+	* include/idn/result.h, lib/result.c: rename `idn_too_long' to
+	`idn_invalid_length'.
+	* lib/res.c: In IDN_LENCHECK, return `idn_invalid_length' for an
+	empty label, but return `idn_success'' for the "." domain name.
+
+	* lib/converter.c: DUDE is now extra ACE.
+
+	* lib/mapselector.c, include/idn/mapselector.h: change types of
+	`idn_mapselector_no_tld' and `idn_mapselector_default' from
+	(const unsigned long []) to (const unsigned long *).
+
+	* DISTFILES: syncronize current source structure.
+	
+2002-03-14
+	* configure, configure.in, include/config.h.in: add
+	`--enable-runidn' option to configure script.  Unless the value
+	for this option is set to `yes', runidn command will not be
+	complied and installed.
+
+2002-03-13
+	* man/libidnkit.3.in: describe new idnkit API.
+	* man/idn.conf.5.in: use the term `internationalized' rather than
+	`multilingual'.
+	* lib/Makefile.in: create idnalias.conf.sample correctly even if
+	the object directory is different from the source directory.
+
+2002-03-12
+	* configure, configure.in, lib/Makefile.in: add
+	`--enable-liteonly' option to configure script and change
+	description of lib/Makefile.in for designating compilation and
+	installation of libidnkitlite alone.
+
+2002-03-08
+	* mDNkit is now renamed to idnkit.  Also files, directories,
+	commands and function names are renamed (e.g. mdnconv -> idnconv).
+
+2002-03-07
+	* include/mdn/nameprep.h, lib/nameprep.c, lib/resconf.c: enable
+	libmdn(lite) to run without configuration file and alias file, and
+	also enable to support user configuration file.
+
+2002-03-05
+	* include/mdn/aliaslist.h, lib/aliaslist.c: change year
+	description to `2002' in copyright notice.
+	* lib/aliaslist.c: fix the initialization scheme of structure's
+	members at creation of both list item and list itself.
+	* lib/aliaslist.c: fix the order of function free() call when
+	an error occurs at list item creation.
+	* make.wnt: remove descriptions related to mdnsproxy.
+
+2002-03-04
+	* include/mdn/aliaslist.h, include/mdn/amcacez.h, include/mdn/assert.h,
+	include/mdn/checker.h, include/mdn/converter.h, include/mdn/debug.h,
+	include/mdn/delimitermap.h, include/mdn/dude.h, 
+	include/mdn/filechecker.h, include/mdn/filemapper.h,
+	include/mdn/localencoding.h, include/mdn/log.h, include/mdn/logmacro.h,
+	include/mdn/mapper.h, include/mdn/mapselector.h,
+	include/mdn/nameprep.h, include/mdn/normalizer.h, include/mdn/race.h,
+	include/mdn/res.h, include/mdn/resconf.h, include/mdn/resolver.h,
+	include/mdn/result.h, include/mdn/strhash.h, include/mdn/ucs4.h,
+	include/mdn/ucsmap.h, include/mdn/ucsset.h, include/mdn/unicode.h,
+	include/mdn/unormalize.h, include/mdn/utf8.h, include/mdn/util.h,
+	include/mdn/version.h: enclose the contents with `extern "C" {...}'
+	if C++ compiler is used.
+	* DISTFILES, Makefile.in, configure, configure.in:
+	remove descriptions related to mdnsproxy.
+
+2002-03-01
+	* include/mdn/result.h, lib/result.h: define new error code
+	`mdn_too_long'.
+	* lib/res.c: return `mdn_too_long' if MDN_LENCHECK is failed.

@@ -1,0 +1,9 @@
+To build named with D-BUS support, run
+# make
+in this directory.
+Then cd to the top-level BIND source directory,
+(../..), and 
+# ./configure ...; make
+After building, cd back to contrib/dbus and run:
+# make install
+as root to install the D-BUS configuration files. 

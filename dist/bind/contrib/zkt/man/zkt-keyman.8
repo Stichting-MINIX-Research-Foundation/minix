@@ -1,0 +1,316 @@
+.TH zkt\-keyman 8 "Apr 1, 2010" "ZKT 1.0" ""
+\" turn off hyphenation
+.\"	if n .nh
+.nh
+.SH NAME
+zkt\-keyman \(em A DNSSEC key management tool
+
+.SH SYNOPSYS
+.na
+.B zkt\-keyman
+.BR \-C <label>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-krpz ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B zkt\-keyman
+.BR \-\-create= <label>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-krpz ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+
+.B zkt\-keyman
+.BR \-  { P | A | D | R } <keytag>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B zkt\-keyman
+.BR \-\-published= <keytag>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B zkt\-keyman
+.BR \-\-active= <keytag>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B zkt\-keyman
+.BR \-\-depreciate= <keytag>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B zkt\-keyman
+.BR \-\-rename= <keytag>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+
+.B zkt\-keyman
+.BR \-\-destroy= <keytag>
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+
+.B zkt\-keyman
+.B \-9 | \-\-ksk-rollover
+.br
+.B zkt\-keyman
+.B \-1 | \-\-ksk-roll-phase1
+.I "do.ma.in."
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.br
+.B zkt\-keyman
+.B \-2 | \-\-ksk-roll-phase2
+.I "do.ma.in."
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.br
+.B zkt\-keyman
+.B \-3 | \-\-ksk-roll-phase3
+.I do.ma.in.
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.br
+.B zkt\-keyman
+.B \-0 | \-\-ksk-roll-stat
+.I do.ma.in.
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.br
+.ad
+
+.SH DESCRIPTION
+The 
+.I zkt\-keyman
+command is a wrapper around 
+.I dnssec-keygen(8)
+to assist in dnssec zone key management.
+.PP
+The command is useful in dns key management.
+It is suitable for modification of key status.
+
+.SH GENERAL OPTIONS
+.TP
+.BI \-V " view" ", \-\-view=" view
+Try to read the default configuration out of a file named
+.I dnssec-<view>.conf .
+Instead of specifying the \-V or --view option every time,
+it is also possible to create a hard or softlink to the
+executable file to give it an additional name like 
+.I zkt\-keyman\-<view> .
+.TP
+.BI \-c " file" ", \-\-config=" file
+Read default values from the specified config file.
+Otherwise the default config file is read or build in defaults
+will be used.
+.TP
+.BI \-O " optstr" ", \-\-config-option=" optstr
+Set any config file option via the commandline.
+Several config file options could be specified at the argument string
+but have to be delimited by semicolon (or newline).
+.TP
+.BR \-d ", " \-\-directory
+Skip directory arguments.
+This will be useful in combination with wildcard arguments
+to prevent dnsssec-zkt to list all keys found in subdirectories. 
+For example "zkt\-keyman -d *" will print out a list of all keys only found in
+the current directory.
+Maybe it is easier to use "zkt\-keyman ." instead (without -r set).
+The option works similar to the \-d option of
+.IR ls(1) .
+.TP
+.BR \-k ", " \-\-ksk
+Select key signing keys only (default depends on command mode).
+.TP
+.BR \-z ", " \-\-zsk
+Select zone signing keys only (default depends on command mode).
+.TP
+.BR \-r ", " \-\-recursive
+Recursive mode (default is off).
+.br
+Also settable in the dnssec.conf file (Parameter: Recursive).
+.TP
+.BR \-F ", " \-\-setlifetime
+Set the key lifetime of all the selected keys.
+Use option -k, -z, -l or the file and dir argument for key selection.
+.PP
+
+.SH COMMAND OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Print out the online help.
+.TP
+.BI \-C " zone" ",  \-\-create=" zone
+Create a new zone signing key for the given zone.
+Add option
+.B \-k
+to create a key signing key.
+The key algorithm and key length will be examined from built-in default values
+or from the parameter settings in the
+.I dnssec.conf
+file.
+.br
+The keyfile will be created in the current directory if
+the
+.B \-p
+option is specified.
+.TP
+.BI \-R " keyid" ", \-\-revoke=" keyid
+Revoke the key signing key with the given keyid.
+A revoked key has bit 8 in the flags filed set (see RFC5011).
+The keyid is the numeric keytag with an optionally added zone name separated by a colon.
+.TP
+.BI \-\-rename=" keyid
+Rename the key files of the key with the given keyid
+(Look at key file names starting with an lower 'k').
+The keyid is the numeric keytag with an optionally added zone name separated by a colon.
+.TP
+.BI \-\-destroy= keyid
+Deletes the key with the given keyid.
+The keyid is the numeric keytag with an optionally added zone name separated by a colon.
+Beware that this deletes both private and public keyfiles, thus the key is
+unrecoverable lost.
+.TP
+.BI \-P|A|D " keyid," " \-\-published=" keyid, " \-\-active=" keyid, " \-\-depreciated=" keyid
+Change the status of the given dnssec key to
+published
+.RB ( \-P ),
+active
+.RB ( \-A )
+or depreciated
+.RB ( \-D ).
+The
+.I keyid
+is the numeric keytag with an optionally added zone name separated by a colon.
+Setting the status to "published" or "depreciate" will change the filename
+of the private key file to ".published" or ".depreciated" respectivly.
+This prevents the usage of the key as a signing key by the use of
+.IR dnssec-signzone(8) .
+The time of status change will be stored in the 'mtime' field of the corresponding
+".key" file.
+Key activation via option
+.B \-A
+will restore the original timestamp and file name (".private").
+.TP
+.BI \-\-ksk-roll-phase[123] " do.ma.in."
+Initiate a key signing key rollover of the specified domain.
+This feature is currently in experimental status and is mainly for the use
+in an hierachical environment.
+Use --ksk-rollover for a little more detailed description.
+
+
+.SH SAMPLE USAGE
+.TP 
+.fam C
+.B "zkt-keyman \-C example.net \-k \-r ./zonedir
+.fam T
+Create a new key signing key for the zone "example.net".
+Store the key in the same directory below "zonedir" where the other
+"example.net" keys live.
+.TP
+.fam C
+.B "zkt-keyman \-D 123245 \-r . 
+.fam T
+Depreciate the key with tag "12345" below the current directory,
+.TP
+.fam C
+.B "zkt-keyman --view intern \-C example.net
+.fam T
+Create a new zone key for the internal zone example.net.
+.TP
+.fam C
+.B "zkt-keyman-intern 
+.fam T
+Same as above.
+The binary file
+.I zkt\-keyman
+has another link, named
+.I zkt-keyman-intern
+made, and 
+.I zkt\-keyman
+examines argv[0] to find a view whose zones it proceeds to process.
+
+.SH ENVIRONMENT VARIABLES
+.TP
+ZKT_CONFFILE
+Specifies the name of the default global configuration files.
+
+.SH FILES
+.TP
+.I /var/named/dnssec.conf
+Built-in default global configuration file.
+The name of the default global config file is settable via
+the environment variable ZKT_CONFFILE.
+.TP
+.I /var/named/dnssec-<view>.conf
+View specific global configuration file.
+.TP
+.I ./dnssec.conf
+Local configuration file (only used in
+.B \-C
+mode).
+
+.SH BUGS
+
+.SH AUTHORS
+Holger Zuleger
+
+.SH COPYRIGHT
+Copyright (c) 2005 \- 2008 by Holger Zuleger.
+Licensed under the BSD Licences. There is NO warranty; not even for MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
+.\"--------------------------------------------------
+.SH SEE ALSO
+dnssec-keygen(8), dnssec-signzone(8), rndc(8), named.conf(5), zkt-conf(8), zkt-ls(8), zkt-signer(8)
+.br
+RFC4641 
+"DNSSEC Operational Practices" by Miek Gieben and Olaf Kolkman,
+.br
+DNSSEC HOWTO Tutorial by Olaf Kolkman, RIPE NCC
+.br
+(http://www.nlnetlabs.nl/dnssec_howto/)

@@ -1,0 +1,55 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH QUERY-LOC 1 "January 11, 2005"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+query-loc \- to retrieve and display the location information in the DNS
+.SH SYNOPSIS
+.B query-loc
+.RI [-v] [-d nnn] " host"
+.SH DESCRIPTION
+This manual page documents briefly the
+.B query-loc
+command.
+.PP
+.\" TeX users may be more comfortable with the \fB<whatever>\fP and
+.\" \fI<whatever>\fP escape sequences to invode bold face and italics, 
+.\" respectively.
+\fBquery-loc\fP is a program to retrieve and display the location
+information in the DNS. 
+
+It uses the algorithms described in
+RFC 1876 (and RFC 1101 to get the network names).
+You can find examples of networks wchich implement this scheme
+in the ADDRESSES file.
+ 
+.SH OPTIONS
+.TP
+.B \-v
+Verbose mode. 
+.TP
+.B \-d nnn
+Debug mode. Displays the RFC's algorithm
+
+.SH BUGS
+
+Very few hosts have location information.
+
+.SH AUTHOR
+This manual page was written by Stephane Bortzmeyer
+<bortzmeyer@debian.org>.
+
+.\" $Id: query-loc.1,v 1.1 2008-02-15 01:47:15 marka Exp $

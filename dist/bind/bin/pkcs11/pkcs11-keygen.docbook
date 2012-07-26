@@ -1,0 +1,184 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+               [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $Id: pkcs11-keygen.docbook,v 1.3 2009-10-05 12:23:11 fdupont Exp $ -->
+<refentry id="man.pkcs11-keygen">
+  <refentryinfo>
+    <date>Sep 18, 2009</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>pkcs11-keygen</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>pkcs11-keygen</application></refname>
+    <refpurpose>generate RSA keys on a PKCS#11 device</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2009</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>pkcs11-keygen</command>
+      <arg><option>-P</option></arg>
+      <arg><option>-m <replaceable class="parameter">module</replaceable></option></arg>
+      <arg><option>-s <replaceable class="parameter">slot</replaceable></option></arg>
+      <arg><option>-e</option></arg>
+      <arg choice="req">-b <replaceable class="parameter">keysize</replaceable></arg>
+      <arg choice="req">-l <replaceable class="parameter">label</replaceable></arg>
+      <arg><option>-i <replaceable class="parameter">id</replaceable></option></arg>
+      <arg><option>-p <replaceable class="parameter">PIN</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>pkcs11-keygen</command> causes a PKCS#11 device to generate
+      a new RSA key pair with the specified <option>label</option> and
+      with <option>keysize</option> bits of modulus.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+    <variablelist>
+      <varlistentry>
+        <term>-P</term>
+        <listitem>
+          <para>
+            Set the new private key to be non-sensitive and extractable.
+            The allows the private key data to be read from the PKCS#11
+            device.  The default is for private keys to be sensitive and
+            non-extractable.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-m <replaceable class="parameter">module</replaceable></term>
+        <listitem>
+          <para>
+            Specify the PKCS#11 provider module.  This must be the full
+            path to a shared library object implementing the PKCS#11 API
+            for the device.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-s <replaceable class="parameter">slot</replaceable></term>
+        <listitem>
+          <para>
+            Open the session with the given PKCS#11 slot.  The default is
+            slot 0.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-e</term>
+        <listitem>
+          <para>
+            Use a large exponent.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-b <replaceable class="parameter">keysize</replaceable></term>
+        <listitem>
+          <para>
+            Create the key pair with <option>keysize</option> bits of
+            modulus.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-l <replaceable class="parameter">label</replaceable></term>
+        <listitem>
+          <para>
+            Create key objects with the given label.
+            This name must be unique.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-i <replaceable class="parameter">id</replaceable></term>
+        <listitem>
+          <para>
+            Create key objects with id. The id is either
+            an unsigned short 2 byte or an unsigned long 4 byte number.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-p <replaceable class="parameter">PIN</replaceable></term>
+        <listitem>
+          <para>
+            Specify the PIN for the device.  If no PIN is provided on the
+            command line, <command>pkcs11-keygen</command> will prompt for it.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>pkcs11-list</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcs11-destroy</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>dnssec-keyfromlabel</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>,
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>CAVEAT</title>
+    <para>Some PKCS#11 providers crash with big public exponent.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>AUTHOR</title>
+    <para><corpauthor>Internet Systems Consortium</corpauthor>
+    </para>
+  </refsect1>
+
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->

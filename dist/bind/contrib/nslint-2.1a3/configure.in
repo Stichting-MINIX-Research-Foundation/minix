@@ -1,0 +1,47 @@
+dnl @(#) $Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/configure.in,v 1.1 2001-12-21 04:12:03 marka Exp $ (LBL)
+dnl
+dnl Copyright (c) 1995, 1996, 1997
+dnl	The Regents of the University of California.  All rights reserved.
+dnl
+dnl Process this file with autoconf to produce a configure script.
+dnl
+
+AC_INIT(nslint.c)
+
+AC_CANONICAL_SYSTEM
+
+umask 002
+
+if test -z "$PWD" ; then
+	PWD=`pwd`
+fi
+
+AC_LBL_C_INIT(V_CCOPT, V_INCLS)
+
+AC_CHECK_HEADERS(fcntl.h malloc.h memory.h)
+
+AC_REPLACE_FUNCS(strerror)
+AC_CHECK_LIB(nsl, main)
+AC_CHECK_LIB(socket, main)
+
+AC_CHECK_TYPE(int32_t, int)
+AC_CHECK_TYPE(u_int32_t, u_int)
+
+AC_LBL_DEVEL(V_CCOPT)
+
+if test -r lbl/gnuc.h ; then
+	rm -f gnuc.h
+	ln -s lbl/gnuc.h gnuc.h
+fi
+
+AC_SUBST(V_CCOPT)
+AC_SUBST(V_INCLS)
+
+AC_PROG_INSTALL
+
+AC_OUTPUT(Makefile)
+
+if test -f .devel ; then
+	make depend
+fi
+exit 0

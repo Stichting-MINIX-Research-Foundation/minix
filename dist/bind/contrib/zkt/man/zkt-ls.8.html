@@ -1,0 +1,382 @@
+<!-- Creator     : groff version 1.20.1 -->
+<!-- CreationDate: Tue Mar 23 23:47:33 2010 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>zkt-ls</title>
+
+</head>
+<body>
+
+<h1 align="center">zkt-ls</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSYS">SYNOPSYS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#GENERAL OPTIONS">GENERAL OPTIONS</a><br>
+<a href="#COMMAND OPTIONS">COMMAND OPTIONS</a><br>
+<a href="#SAMPLE USAGE">SAMPLE USAGE</a><br>
+<a href="#ENVIRONMENT VARIABLES">ENVIRONMENT VARIABLES</a><br>
+<a href="#FILES">FILES</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#COPYRIGHT">COPYRIGHT</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">zkt&minus;ls
+&mdash; list dnskeys</p>
+
+<h2>SYNOPSYS
+<a name="SYNOPSYS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;ls
+&minus;H</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;ls</b>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;l</b> <i>list</i>]
+[<b>&minus;adefhkLprtz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>]</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;ls
+&minus;T</b> [<b>&minus;V|--view</b> <i>view</i>]
+[<b>&minus;c</b> <i>file</i>] [<b>&minus;l</b> <i>list</i>]
+[<b>&minus;dhrz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;ls &minus;&minus;list-trustedkeys</b>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;l</b> <i>list</i>]
+[<b>&minus;dhrz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>]</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;ls
+&minus;K</b> [<b>&minus;V|--view</b> <i>view</i>]
+[<b>&minus;c</b> <i>file</i>] [<b>&minus;l</b> <i>list</i>]
+[<b>&minus;dhkrz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;ls &minus;&minus;list-dnskeys</b>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;l</b> <i>list</i>]
+[<b>&minus;dhkrz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The
+<i>zkt-ls</i> command list all dnssec zone keys found in the
+given or predefined default directory. It is also possible
+to specify keyfiles (K*.key) as arguments. With option
+<b>&minus;r</b> subdirectories will be searched recursively
+and all dnssec keys found are listed, sorted by domain name,
+key type and generation time. In that mode the use of option
+<b>&minus;p</b> may be helpful to find the location of the
+keyfile in the directory tree.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Other forms of
+the command, print out keys in a format suitable for a
+trusted-key section (<b>&minus;T</b>) or as a DNSKEY
+(<b>&minus;K</b>) resource record.</p>
+
+<h2>GENERAL OPTIONS
+<a name="GENERAL OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;V</b>
+<i>view</i><b>, &minus;&minus;view=</b><i>view</i></p>
+
+<p style="margin-left:22%;">Try to read the default
+configuration out of a file named
+<i>dnssec-&lt;view&gt;.conf .</i> Instead of specifying the
+&minus;V or --view option every time, it is also possible to
+create a hard or softlink to the executable file to give it
+an additional name like <i>zkt-ls-&lt;view&gt; .</i></p>
+
+<p style="margin-left:11%;"><b>&minus;c</b> <i>file</i><b>,
+&minus;&minus;config=</b><i>file</i></p>
+
+<p style="margin-left:22%;">Read default values from the
+specified config file. Otherwise the default config file is
+read or build in defaults will be used.</p>
+
+<p style="margin-left:11%;"><b>&minus;O</b>
+<i>optstr</i><b>,
+&minus;&minus;config-option=</b><i>optstr</i></p>
+
+<p style="margin-left:22%;">Set any config file option via
+the commandline. Several config file options could be
+specified at the argument string but have to be delimited by
+semicolon (or newline).</p>
+
+<p style="margin-left:11%;"><b>&minus;l</b> <i>list</i><b>,
+&minus;&minus;label=</b><i>list</i></p>
+
+<p style="margin-left:22%;">Print out information solely
+about domains given in the comma or space separated list.
+Take care of, that every domain name has a trailing dot.</p>
+
+<p style="margin-left:11%;"><b>&minus;d</b>,
+<b>&minus;&minus;directory</b></p>
+
+<p style="margin-left:22%;">Skip directory arguments. This
+will be useful in combination with wildcard arguments to
+prevent dnsssec-zkt to list all keys found in
+subdirectories. For example &quot;zkt-ls -d *&quot; will
+print out a list of all keys only found in the current
+directory. Maybe it is easier to use &quot;zkt-ls .&quot;
+instead (without -r set). The option works similar to the
+&minus;d option of <i>ls(1)</i>.</p>
+
+<p style="margin-left:11%;"><b>&minus;L</b>,
+<b>&minus;&minus;left-justify</b></p>
+
+<p style="margin-left:22%;">Print out the domain name left
+justified.</p>
+
+<p style="margin-left:11%;"><b>&minus;k</b>,
+<b>&minus;&minus;ksk</b></p>
+
+<p style="margin-left:22%;">Select and print key signing
+keys only (default depends on command mode).</p>
+
+<p style="margin-left:11%;"><b>&minus;z</b>,
+<b>&minus;&minus;zsk</b></p>
+
+<p style="margin-left:22%;">Select and print zone signing
+keys only (default depends on command mode).</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b>,
+<b>&minus;&minus;recursive</b></p>
+
+<p style="margin-left:22%;">Recursive mode (default is
+off). <br>
+Also settable in the dnssec.conf file (Parameter:
+Recursive).</p>
+
+<p style="margin-left:11%;"><b>&minus;p</b>,
+<b>&minus;&minus;path</b></p>
+
+<p style="margin-left:22%;">Print pathname in listing mode.
+In -C mode, don&rsquo;t create the new key in the same
+directory as (already existing) keys with the same
+label.</p>
+
+<p style="margin-left:11%;"><b>&minus;a</b>,
+<b>&minus;&minus;age</b></p>
+
+<p style="margin-left:22%;">Print age of key in weeks,
+days, hours, minutes and seconds (default is off). <br>
+Also settable in the dnssec.conf file (Parameter:
+PrintAge).</p>
+
+<p style="margin-left:11%;"><b>&minus;f</b>,
+<b>&minus;&minus;lifetime</b></p>
+
+<p style="margin-left:22%;">Print the key lifetime.</p>
+
+<p style="margin-left:11%;"><b>&minus;e</b>,
+<b>&minus;&minus;exptime</b></p>
+
+<p style="margin-left:22%;">Print the key expiration
+time.</p>
+
+<p style="margin-left:11%;"><b>&minus;t</b>,
+<b>&minus;&minus;time</b></p>
+
+<p style="margin-left:22%;">Print the key generation time
+(default is on). <br>
+Also settable in the dnssec.conf file (Parameter:
+PrintTime).</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;h</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>No header or trusted-key section header and trailer in
+-T mode</p></td></tr>
+</table>
+
+<h2>COMMAND OPTIONS
+<a name="COMMAND OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;H</b>,
+<b>&minus;&minus;help</b></p>
+
+<p style="margin-left:22%;">Print out the online help.</p>
+
+<p style="margin-left:11%;"><b>&minus;T</b>,
+<b>&minus;&minus;list-trustedkeys</b></p>
+
+<p style="margin-left:22%;">List all key signing keys as a
+<i>named.conf</i> trusted-key section. Use <b>&minus;h</b>
+to supress the section header/trailer.</p>
+
+<p style="margin-left:11%;"><b>&minus;K</b>,
+<b>&minus;&minus;list-dnskeys</b></p>
+
+<p style="margin-left:22%;">List the public part of all the
+keys in DNSKEY resource record format. Use <b>&minus;h</b>
+to suppress comment lines.</p>
+
+<h2>SAMPLE USAGE
+<a name="SAMPLE USAGE"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;ls
+&minus;r .</b></p>
+
+<p style="margin-left:22%;">Print out a list of all zone
+keys found below the current directory.</p>
+
+<p style="margin-left:11%;"><b>zkt&minus;ls &minus;Z
+&minus;c &quot;&quot;</b></p>
+
+<p style="margin-left:22%;">Print out the compiled in
+default parameters.</p>
+
+<p style="margin-left:11%;"><b>zkt&minus;ls &minus;T
+./zonedir/example.net</b></p>
+
+<p style="margin-left:22%;">Print out a trusted-key section
+containing the key signing keys of
+&quot;example.net&quot;.</p>
+
+<p style="margin-left:11%;"><b>zkt&minus;ls --view
+intern</b></p>
+
+<p style="margin-left:22%;">Print out a list of all zone
+keys found below the directory where all the zones of view
+intern live. There should be a seperate dnssec config file
+<i>dnssec-intern.conf</i> with a directory option to take
+affect of this.</p>
+
+
+<p style="margin-left:11%;"><b>zkt&minus;ls&minus;intern</b></p>
+
+<p style="margin-left:22%;">Same as above. The binary file
+<i>zkt&minus;ls</i> has another link, named
+<i>zkt&minus;ls&minus;intern</i> made, and
+<i>zkt&minus;ls</i> examines argv[0] to find a view whose
+zones it proceeds to process.</p>
+
+<h2>ENVIRONMENT VARIABLES
+<a name="ENVIRONMENT VARIABLES"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">ZKT_CONFFILE</p>
+
+<p style="margin-left:22%;">Specifies the name of the
+default global configuration files.</p>
+
+<h2>FILES
+<a name="FILES"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>/var/named/dnssec.conf</i></p>
+
+<p style="margin-left:22%;">Built-in default global
+configuration file. The name of the default global config
+file is settable via the environment variable
+ZKT_CONFFILE.</p>
+
+
+<p style="margin-left:11%;"><i>/var/named/dnssec-&lt;view&gt;.conf</i></p>
+
+<p style="margin-left:22%;">View specific global
+configuration file.</p>
+
+<p style="margin-left:11%;"><i>./dnssec.conf</i></p>
+
+<p style="margin-left:22%;">Local configuration file (only
+used in <b>&minus;C</b> mode).</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Some of the
+general options will not be meaningful in all of the command
+modes. <br>
+The option <b>&minus;l</b> and the ksk rollover options
+insist on domain names ending with a dot.</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Holger
+Zuleger</p>
+
+<h2>COPYRIGHT
+<a name="COPYRIGHT"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Copyright (c)
+2005 &minus; 2010 by Holger Zuleger. Licensed under the BSD
+Licences. There is NO warranty; not even for MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">dnssec-keygen(8),
+dnssec-signzone(8), rndc(8), named.conf(5), zkt-conf(8),
+zkt-keyman(8), zkt-signer(8) <br>
+RFC4641 &quot;DNSSEC Operational Practices&quot; by Miek
+Gieben and Olaf Kolkman, <br>
+DNSSEC HOWTO Tutorial by Olaf Kolkman, RIPE NCC <br>
+ (http://www.nlnetlabs.nl/dnssec_howto/)</p>
+<hr>
+</body>
+</html>

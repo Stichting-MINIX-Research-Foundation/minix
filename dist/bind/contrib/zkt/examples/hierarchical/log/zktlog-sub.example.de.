@@ -1,0 +1,33 @@
+2010-02-06 00:54:11.044: info: "sub.example.de.": kskrollover phase2: send new key 33580 to the parent zone
+2010-02-21 12:51:38.487: info: "sub.example.de.": kskrollover phase3: Remove old key 3831
+2010-02-21 12:51:38.488: notice: "sub.example.de.": lifetime of zone signing key 320 exceeded: ZSK rollover done
+2010-02-21 12:51:38.556: info: "sub.example.de.": new key 17513 generated for publishing
+2010-02-21 12:51:38.556: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-02-25 00:21:04.838: info: "sub.example.de.": kskrollover phase1: New key 27861 generated
+2010-02-25 00:21:04.838: info: "sub.example.de.": old ZSK 320 removed
+2010-02-25 00:21:04.838: notice: "sub.example.de.": lifetime of zone signing key 65003 exceeded: ZSK rollover done
+2010-02-25 00:21:04.876: info: "sub.example.de.": new key 31547 generated for publishing
+2010-02-25 00:21:04.876: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-02-25 01:01:09.615: info: "sub.example.de.": old ZSK 65003 removed
+2010-02-25 01:01:09.615: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-02-25 23:42:40.316: info: "sub.example.de.": kskrollover phase2: send new key 9663 to the parent zone
+2010-03-02 11:00:04.328: info: "sub.example.de.": kskrollover phase3: Remove old key 59961
+2010-03-02 11:00:04.328: notice: "sub.example.de.": lifetime of zone signing key 17513 exceeded: ZSK rollover done
+2010-03-02 11:00:04.444: info: "sub.example.de.": new key 63530 generated for publishing
+2010-03-02 11:00:04.444: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-03-02 11:00:16.024: info: "sub.example.de.": kskrollover phase1: New key 42639 generated
+2010-03-02 11:00:16.025: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-03-03 23:22:07.066: info: "sub.example.de.": kskrollover phase2: send new key 27861 to the parent zone
+2010-03-03 23:22:07.066: info: "sub.example.de.": old ZSK 17513 removed
+2010-03-03 23:22:07.067: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-03-12 00:00:27.495: info: "sub.example.de.": kskrollover phase3: Remove old key 9663
+2010-03-12 00:00:27.495: notice: "sub.example.de.": lifetime of zone signing key 31547 exceeded: ZSK rollover done
+2010-03-12 00:00:27.609: info: "sub.example.de.": new key 7295 generated for publishing
+2010-03-12 00:00:27.609: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-03-12 00:45:26.265: info: "sub.example.de.": kskrollover phase1: New key 8544 generated
+2010-03-12 00:45:26.265: info: "sub.example.de.": old ZSK 31547 removed
+2010-03-12 00:45:26.266: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-04-01 01:05:48.169: info: "sub.example.de.": kskrollover phase2: send new key 42639 to the parent zone
+2010-04-01 01:05:48.169: notice: "sub.example.de.": lifetime of zone signing key 63530 exceeded: ZSK rollover done
+2010-04-01 01:05:48.650: info: "sub.example.de.": new key 40559 generated for publishing
+2010-04-01 01:05:48.650: notice: "sub.example.de.": re-signing triggered: Modfied zone key set

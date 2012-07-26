@@ -1,0 +1,83 @@
+This is the INSTALL file for 1.0-beta. See
+http://www.venaas.no/ldap/bind-sdb/ for updates or other information.
+
+BUILDING
+
+You need the source for BIND 9.1.0 or newer (for zone transfers you
+will need at least 9.1.1rc3 due to a bug). Basically you need to follow
+the instructions in doc/misc/sdb, if my instructions don't make sense,
+please have a look at those as well.
+
+Copy ldapdb.c to bin/named and ldapdb.h to bin/named/include in the
+source tree.
+
+Next alter bin/named/Makefile.in. Add ldapdb.@O@ to DBDRIVER_OBJS and
+ldapdb.c to DBDRIVER_SRCS. You also need to add something like
+-I/usr/local/include to DBDRIVER_INCLUDES and
+-L/usr/local/lib -lldap -llber -lresolv to DBDRIVER_LIBS
+depending on what LDAP library you have and where you installed it.
+
+Finally you need to edit bin/named/main.c. Below where it says
+"#include "xxdb.h"", add the line "#include <ldapdb.h>". Below where
+it says "xxdb_init();" add the line "ldapdb_init();", and finally
+below where it says "xxdb_clear();", add "ldapdb_clear();".
+
+Now you should hopefully be able to build as usual; first configure
+and then make. If you get an error message about ldap_memfree() not
+being defined, you're probably using an LDAP library with the
+interface defined in RFC 1823. To build, uncomment the "#define
+LDAPDB_RFC1823API" line near the top of ldapdb.c.
+
+Also, if you're using an LDAPv2 only server, you need to change
+the line "#define LDAPDB_LDAP_VERSION 3" in ldapdb.c. Simply
+replace 3 with 2. Instead of editing the file, you may define
+LDAPDB_LDAP_VERSION yourself.
+
+If you want to use TLS, you need to uncommed the #define LDAPDB_TLS"
+line near the top of ldapdb.c.
+
+CONFIGURING
+
+Before you do any configuring of LDAP stuff, please try to configure
+and start bind as usual to see if things work.
+
+To do anything useful, you need to store a zone in some LDAP server.
+You must use a schema called dNSZone. Note that it relies on some
+attribute definitions in the Cosine schema, so that must be included
+as well. The Cosine schema probably comes with your LDAP server. You
+can find dNSZone and further details on how to store the data in your
+LDAP server at http://www.venaas.no/ldap/bind-sdb/
+
+To make BIND use a zone stored in LDAP, you will have to put something
+like this in named.conf:
+
+zone "venaas.com" {
+        type master;
+        database "ldap ldap://158.38.160.245/dc=venaas,dc=com,o=DNS,dc=venaas,dc=no 172800";
+};
+
+When doing lookups BIND will do a sub-tree search below the base in the
+URL. The number 172800 is the TTL which will be used for all entries that
+haven't got the dNSTTL attribute. It is also possible to add a filter to
+the URL, say "ldap://host/base???(o=internal)".
+
+Version 1.0 also has support for simple LDAP bind, that is, binding to
+LDAP using plain text authentication. The bind dn and password is coded
+into the URL as extensions, according to RFC 2255. If you want simple
+bind with say dn "cn=Manager,dc=venaas,dc=no" and password "secret", the
+URL will be something like this:
+
+ldap://158.38.160.245/dc=venaas,dc=com,o=DNS,dc=venaas,dc=no????!bindname=cn=Manager%2cdc=venaas%2cdc=no,!x-bindpw=secret
+
+This URL may also include a filter part if you need it. Note that in
+the bind dn, "," is hex-escaped as "%2c". This is necessary since ","
+is the separator between the extension elements. The "!" in front of
+"bindname" and "x-bindpw" can be omitted if you prefer. "x-bindpw" is
+not standardized, but it's used by several other LDAP applications. See
+RFC 2255 for details.
+
+Finally, if you enabled TLS when compiling, you can also use TLS if
+you like. To do this you use the extension "x-tls", e.g.
+ldap://158.38.160.245/dc=venaas,dc=com,o=DNS,dc=venaas,dc=no????!bindname=cn=Manager%2cdc=venaas%2cdc=no,!x-bindpw=secret,x-tls
+
+Stig Venaas <venaas@uninett.no> 2004-08-15

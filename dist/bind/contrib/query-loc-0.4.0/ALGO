@@ -1,0 +1,48 @@
+Just for info, can be out of date.
+
+
+RFC 1876, 5.2, specially 5.2.3
+
+Important points:
+
+- LOC RRs are always attached to a *name*.
+- we can have two (or more) RRs for one address, one more specific than the other
+
+main
+ if (host is a name) 
+	getLOCbyname
+ else # host is an IP address	
+	gethostbyaddr
+	if (name) 
+		getLOCbyname
+		# If there is none, do not search. We assume the above was sufficient	       # (But check 5.2.2)
+	else
+		getLOCbyaddress
+
+getLOCbyname (host) 
+	get LOC for host
+	if (it exists)
+		OK
+	else
+		get all A records of the name
+		foreach A record
+			getLOCbyaddress
+			OK at the first one found 
+				# we assume they are consistent
+		END
+
+getLOCbyaddress (address)
+	# May receive a mask. Otherwise, deduce it from the class
+	makeNetAddress
+	getLOCbynetwork
+
+getLOCbynetwork
+	get PTR and A for it
+	if (exist)
+		getLOCbyname
+	******* DIFFICULT : we have to manage a stack. See the code
+		makeNetAddress (level--)
+		getLOCbynetwork
+	else
+		END
+	

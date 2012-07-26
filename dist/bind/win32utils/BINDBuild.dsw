@@ -1,0 +1,740 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "BINDInstall"="..\bin\win32\BINDInstall\BINDInstall.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bindevt"="..\lib\win32\bindevt\bindevt.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dig"="..\bin\dig\win32\dig.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblwres
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dighost
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "dighost"="..\bin\dig\win32\dighost.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "host"="..\bin\dig\win32\host.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblwres
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dighost
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "dsfromkey"="..\bin\dnssec\win32\dsfromkey.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "revoke"="..\bin\dnssec\win32\revoke.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "settime"="..\bin\dnssec\win32\settime.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "keygen"="..\bin\dnssec\win32\keygen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libbind9"="..\lib\bind9\win32\libbind9.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libdns"="..\lib\dns\win32\libdns.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libisc"="..\lib\isc\win32\libisc.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libisccc"="..\lib\isccc\win32\libisccc.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libisccfg"="..\lib\isccfg\win32\libisccfg.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "liblwres"="..\lib\lwres\win32\liblwres.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "named"="..\bin\named\win32\named.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblwres
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "namedcheckconf"="..\bin\check\win32\namedcheckconf.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name checktool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "namedcheckzone"="..\bin\check\win32\namedcheckzone.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name checktool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nslookup"="..\bin\dig\win32\nslookup.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblwres
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dighost
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nsupdate"="..\bin\nsupdate\win32\nsupdate.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblwres
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "rndc"="..\bin\rndc\win32\rndc.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name rndcutil
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "rndcconfgen"="..\bin\confgen\win32\rndcconfgen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name confgentool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ddnsconfgen"="..\bin\confgen\win32\ddnsconfgen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name confgentool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "signzone"="..\bin\dnssec\win32\signzone.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "keyfromlabel"="..\bin\dnssec\win32\keyfromlabel.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "dnssectool"="..\bin\dnssec\win32\dnssectool.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "rndcutil"="..\bin\rndc\win32\rndcutil.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "confgentool"="..\bin\confgen\win32\confgentool.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "checktool"="..\bin\check\win32\checktool.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pk11keygen"="..\bin\pkcs11\win32\pk11keygen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pk11list"="..\bin\pkcs11\win32\pk11list.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pk11destroy"="..\bin\pkcs11\win32\pk11destroy.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "arpaname"="..\bin\tools\win32\arpaname.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "genrandom"="..\bin\tools\win32\genrandom.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "journalprint"="..\bin\tools\win32\journalprint.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nsec3hash"="..\bin\tools\win32\nsec3hash.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ischmacfixup"="..\bin\tools\win32\ischmacfixup.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

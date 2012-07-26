@@ -1,0 +1,12 @@
+--- binfmt_elf.c.old	Mon Dec 11 10:49:57 2000
++++ binfmt_elf.c	Wed Nov  1 13:05:23 2000
+@@ -1091,7 +1091,8 @@
+ 
+ 	if (!current->dumpable ||
+ 	    limit < ELF_EXEC_PAGESIZE ||
+-	    atomic_read(&current->mm->count) != 1)
++/*	    atomic_read(&current->mm->count) != 1) */
++	    test_and_set_bit(31, &current->mm->def_flags) != 0)
+ 		return 0;
+ 	current->dumpable = 0;
+ 
