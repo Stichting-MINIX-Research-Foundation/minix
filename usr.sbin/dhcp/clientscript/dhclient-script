@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.12 2006/10/08 17:09:32 riz Exp $
+#MINIX 3.2.0 dhclient-script
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -59,24 +59,24 @@ exit_with_hooks() {
 
 add_new_routes() {
 	for router in $new_routers; do
-		route add default $router
+		add_route -g $router
 	done >/dev/null 2>&1
 
 	set -- $new_static_routes
 	while [ $# -gt 1 ]; do
-		route add $1 $2
+		add_route $1 $2
 		shift; shift
 	done
 }
 
 delete_old_routes() {
 	for router in $old_routers; do
-		route delete default $router
+		del_route default $router
 	done >/dev/null 2>&1
 
 	set -- $old_static_routes
 	while [ $# -gt 1 ]; do
-		route delete $1 $2
+		del_route $1 $2
 		shift; shift
 	done
 
@@ -108,30 +108,32 @@ fi
 
 if [ ! -z "$new_broadcast_address" ]; then
 #	echo New Broadcast Address: $new_broadcast_address
-	new_broadcast_arg="broadcast $new_broadcast_address"
+	new_broadcast_arg=""
+#	new_broadcast_arg="broadcast $new_broadcast_address"
 fi
 
 if [ ! -z "$old_broadcast_address" ]; then
-	old_broadcast_arg="broadcast $old_broadcast_address"
+	old_broadcast_arg=""
+#	old_broadcast_arg="broadcast $old_broadcast_address"
 fi
 
 if [ ! -z "$new_subnet_mask" ]; then
-	new_netmask_arg="netmask $new_subnet_mask"
+	new_netmask_arg="-n $new_subnet_mask"
 fi
 
 if [ ! -z "$old_subnet_mask" ]; then
-	old_netmask_arg="netmask $old_subnet_mask"
+	old_netmask_arg="-n $old_subnet_mask"
 fi
 
 if [ ! -z "$alias_subnet_mask" ]; then
-	alias_subnet_arg="netmask $alias_subnet_mask"
+	alias_subnet_arg="-n $alias_subnet_mask"
 fi
 
 case "$reason" in
 MEDIUM)
-	test -z "$medium" && exit_with_hooks 0
-	eval "ifconfig $interface $medium"
-	eval "ifconfig $interface inet -alias 0.0.0.0 $medium" >/dev/null 2>&1
+	test -z "" && exit_with_hooks 0
+
+	#eval "ifconfig -I $interface -h 0.0.0.0 " >/dev/null 2>&1
 
 	sleep 1
 
@@ -139,14 +141,14 @@ MEDIUM)
 	;;
 
 PREINIT)
-	if [ ! -z "$alias_ip_address" ]; then
-		ifconfig $interface inet \
-		    -alias $alias_ip_address >/dev/null 2>&1
-		route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
-	fi
+	interface=/dev/$interface
+#	if [ ! -z "$alias_ip_address" ]; then
+#		ifconfig -I $interface \
+#		    -h $alias_ip_address >/dev/null 2>&1
+#		del_route $alias_ip_address 127.0.0.1 > /dev/null 2>&1
+#	fi
 
-	ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 \
-	    broadcast 255.255.255.255 up
+	ifconfig -I $interface -h 0.0.0.0 -n 0.0.0.0 \
 
 	exit_with_hooks 0
 	;;
@@ -156,34 +158,25 @@ ARPCHECK|ARPSEND)
 	;;
 
 BOUND|RENEW|REBIND|REBOOT)
+	interface=/dev/$interface
+
 	if [ ! -z "$new_nis_domain" ]; then
-		if type domainname > /dev/null 2>&1; then
-			domainname $new_nis_domain
-		fi
 	fi
 
 	if type hostname > /dev/null 2>&1; then
-		if [ \( -z "$current_hostname" \) -o \
-		    \( "x$new_host_name" = "x$old_hostname" \) ]; then
-			current_hostname=`hostname`
-		fi
-		if [ \( -z "$current_hostname" \) -o \
-		    \( "x$new_host_name" != "x$old_hostname" \) ]; then
-			hostname $new_host_name
-		fi
 	fi
     
 	if [ \( ! -z "$old_ip_address" \) -a \( ! -z "$alias_ip_address" \) -a \
 	    \( "x$alias_ip_address" != "x$old_ip_address" \) ]; then
-		ifconfig $interface inet \
-		    -alias $alias_ip_address > /dev/null 2>&1
-		route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
+		ifconfig -I $interface
+		    -h $alias_ip_address > /dev/null 2>&1
+		del_route $alias_ip_address 127.0.0.1 > /dev/null 2>&1
 	fi
 
 	if [ \( ! -z "$old_ip_address" \) -a \
 	    \( "x$old_ip_address" != "x$new_ip_address" \) ]; then
-		eval "ifconfig $interface inet -alias $old_ip_address $medium"
-		route delete $old_ip_address 127.0.0.1 >/dev/null 2>&1
+		eval "ifconfig -I $interface -h $old_ip_address "
+		del_route $old_ip_address 127.0.0.1 >/dev/null 2>&1
 
 		delete_old_routes
 	fi
@@ -191,47 +184,43 @@ BOUND|RENEW|REBIND|REBOOT)
 	if [ \( -z "$old_ip_address" \) -o \
 	    \( "x$old_ip_address" != "x$new_ip_address" \) -o \
 	    \( "x$reason" = "xBOUND" \) -o \( "x$reason" = "xREBOOT" \) ]; then
-		eval "ifconfig $interface inet $new_ip_address \
-		    $new_netmask_arg $new_broadcast_arg $medium"
-		route add $new_ip_address 127.0.0.1 >/dev/null 2>&1
+		eval "ifconfig -I $interface -h $new_ip_address \
+		    $new_netmask_arg $new_broadcast_arg "
+		add_route $new_ip_address 127.0.0.1 >/dev/null 2>&1
 
 		add_new_routes
 	fi
 
 	if [ \( ! -z "$alias_ip_address" \) -a \
 	    \( "x$new_ip_address" != "x$alias_ip_address" \) ]; then
-		ifconfig $interface inet alias $alias_ip_address \
+		ifconfig -I $interface -h $alias_ip_address \
 		    $alias_subnet_arg
-		route add $alias_ip_address 127.0.0.1
+		add_route $alias_ip_address 127.0.0.1
 	fi
 	make_resolv_conf
 	exit_with_hooks 0
 	;;
 
 EXPIRE|FAIL|RELEASE|STOP)
+	$interface = /dev/$interface
 	if [ ! -z "$old_nis_domain" ]; then
-		if type domainname > /dev/null 2>&1; then
-			# delete the old nis domain name
-			domainname ""
-		fi
 	fi
 
 	if [ ! -z "$alias_ip_address" ]; then
-		ifconfig $interface inet -alias $alias_ip_address 
-		route delete $alias_ip_address 127.0.0.1
+		ifconfig -I $interface -h $alias_ip_address
+		del_route $alias_ip_address 127.0.0.1
 	fi > /dev/null 2>&1
 
 	if [ ! -z "$old_ip_address" ]; then
-		eval "ifconfig $interface inet -alias $old_ip_address $medium"
-		route delete $old_ip_address 127.0.0.1 >/dev/null 2>&1
+		eval "ifconfig -I $interface -h $old_ip_address "
+		del_route $old_ip_address 127.0.0.1 >/dev/null 2>&1
 		delete_old_routes
-
 	fi
 
 	if [ ! -z "$alias_ip_address" ]; then
-		ifconfig $interface inet alias $alias_ip_address \
+		ifconfig -I $interface -h $alias_ip_address \
 		    $alias_subnet_arg
-		route add $alias_ip_address 127.0.0.1
+		add_route $alias_ip_address 127.0.0.1
 	fi
 
 	restore_resolv_conf
@@ -239,25 +228,24 @@ EXPIRE|FAIL|RELEASE|STOP)
 	;;
 
 TIMEOUT)
+	$interface=/dev/$interface
 	if [ ! -z "$alias_ip_address" ]; then
-		ifconfig $interface inet -alias $alias_ip_address
-		route delete $alias_ip_address 127.0.0.1
+		ifconfig -I $interface -h $alias_ip_address
+		del_route $alias_ip_address 127.0.0.1
 	fi > /dev/null 2>&1
 
 	if [ ! -z "$new_host_name" ]; then
 		if type hostname > /dev/null 2>&1; then
-			hostname $new_host_name
+			echo "Unimplemented feature : domainname"
+#			hostname $new_host_name
 		fi
 	fi
 
 	if [ ! -z "$new_nis_domain" ]; then
-		if type domainname > /dev/null 2>&1; then
-			domainname $new_nis_domain
-		fi
 	fi
 
-	eval "ifconfig $interface inet $new_ip_address $new_netmask_arg \
-	    $new_broadcast_arg $medium"
+	eval "ifconfig -I $interface -h $new_ip_address $new_netmask_arg \
+	    $new_broadcast_arg "
 	sleep 1
 
 	if [ ! -z "$new_routers" ]; then
@@ -266,12 +254,12 @@ TIMEOUT)
 			if [ \( ! -z "$alias_ip_address" \) -a \
 			    \( "x$new_ip_address" != "x$alias_ip_address" \) ]
 			then
-				ifconfig $interface inet alias \
-				    $alias_ip_address $alias_subnet_arg
-				route add $alias_ip_address 127.0.0.1
+				ifconfig -I $interface \
+				    -h $alias_ip_address $alias_subnet_arg
+				add_route $alias_ip_address 127.0.0.1
 			fi
 
-			route add $new_ip_address 127.0.0.1 >/dev/null 2>&1
+			add_route $new_ip_address 127.0.0.1 >/dev/null 2>&1
 
 			add_new_routes
 			make_resolv_conf
@@ -279,7 +267,7 @@ TIMEOUT)
 		fi
 	fi
 
-	eval "ifconfig $interface inet -alias $new_ip_address $medium"
+	eval "ifconfig -I $interface -h $new_ip_address "
 
 	delete_old_routes
 
