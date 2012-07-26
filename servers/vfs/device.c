@@ -881,34 +881,32 @@ int clone_opcl(
 
   if (op == DEV_OPEN && dev_mess.REP_STATUS >= 0) {
 	if (dev_mess.REP_STATUS != minor_dev) {
-                struct vnode *vp;
-                struct node_details res;
+		struct vnode *vp;
+		struct node_details res;
 
 		/* A new minor device number has been returned.
-                 * Request PFS to create a temporary device file to hold it.
-                 */
+		 * Request PFS to create a temporary device file to hold it.
+		 */
 
-                /* Device number of the new device. */
+		/* Device number of the new device. */
 		dev = (dev & ~(BYTE << MINOR)) | (dev_mess.REP_STATUS << MINOR);
 
-                /* Issue request */
+		/* Issue request */
 		r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
-			ALL_MODES | I_CHAR_SPECIAL, dev, &res);
-                if (r != OK) {
+		    ALL_MODES | I_CHAR_SPECIAL, dev, &res);
+		if (r != OK) {
 			(void) clone_opcl(DEV_CLOSE, dev, proc_e, 0);
 			return r;
-                }
+		}
 
-                /* Drop old node and use the new values */
-                assert(FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse));
-                vp = fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno;
-
-		unlock_vnode(vp);
-                put_vnode(vp);
+		/* Drop old node and use the new values */
 		if ((vp = get_free_vnode()) == NULL)
 			return(err_code);
-
 		lock_vnode(vp, VNODE_OPCL);
+
+		assert(FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse));
+		unlock_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
+		put_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
 
                 vp->v_fs_e = res.fs_e;
                 vp->v_vmnt = NULL;
