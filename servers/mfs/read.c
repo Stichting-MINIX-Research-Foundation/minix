@@ -17,7 +17,6 @@ static int rw_chunk(struct inode *rip, u64_t position, unsigned off,
 	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
 	buf_off, unsigned int block_size, int *completed);
 
-static char getdents_buf[GETDENTS_BUFSIZ];
 
 /*===========================================================================*
  *				fs_readwrite				     *
@@ -538,6 +537,9 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
  *===========================================================================*/
 int fs_getdents(void)
 {
+#define GETDENTS_BUFSIZE	(sizeof(struct dirent) + MFS_NAME_MAX + 1)
+#define GETDENTS_ENTRIES	8
+  static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
   register struct inode *rip;
   int o, r, done;
   unsigned int block_size, len, reclen;
@@ -569,7 +571,7 @@ int fs_getdents(void)
   done = FALSE;		/* Stop processing directory blocks when done is set */
 
   tmpbuf_off = 0;	/* Offset in getdents_buf */
-  memset(getdents_buf, '\0', GETDENTS_BUFSIZ);	/* Avoid leaking any data */
+  memset(getdents_buf, '\0', sizeof(getdents_buf));	/* Avoid leaking any data */
   userbuf_off = 0;	/* Offset in the user's buffer */
 
   /* The default position for the next request is EOF. If the user's buffer
@@ -609,7 +611,19 @@ int fs_getdents(void)
 		  /* Need the position of this entry in the directory */
 		  ent_pos = block_pos + ((char *) dp - (bp->b_data));
 
-		  if(tmpbuf_off + reclen > GETDENTS_BUFSIZ) {
+		if (userbuf_off + tmpbuf_off + reclen >= size) {
+			  /* The user has no space for one more record */
+			  done = TRUE;
+
+			  /* Record the position of this entry, it is the
+			   * starting point of the next request (unless the
+			   * postion is modified with lseek).
+			   */
+			  new_pos = ent_pos;
+			  break;
+		}
+
+		if (tmpbuf_off + reclen >= GETDENTS_BUFSIZE*GETDENTS_ENTRIES) {
 			  r = sys_safecopyto(VFS_PROC_NR, gid,
 			  		     (vir_bytes) userbuf_off, 
 					     (vir_bytes) getdents_buf,
@@ -621,46 +635,34 @@ int fs_getdents(void)
 
 			  userbuf_off += tmpbuf_off;
 			  tmpbuf_off = 0;
-		  }
-		  
-		  if(userbuf_off + tmpbuf_off + reclen > size) {
-			  /* The user has no space for one more record */
-			  done = TRUE;
-			  
-			  /* Record the position of this entry, it is the
-			   * starting point of the next request (unless the
-			   * postion is modified with lseek).
-			   */
-			  new_pos = ent_pos;
-			  break;
-		  }
+		}
 
-		  dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		  dep->d_ino = dp->mfs_d_ino;
-		  dep->d_off = ent_pos;
-		  dep->d_reclen = (unsigned short) reclen;
-		  memcpy(dep->d_name, dp->mfs_d_name, len);
-		  dep->d_name[len] = '\0';
-		  tmpbuf_off += reclen;
-	  }
+		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
+		dep->d_ino = dp->mfs_d_ino;
+		dep->d_off = ent_pos;
+		dep->d_reclen = (unsigned short) reclen;
+		memcpy(dep->d_name, dp->mfs_d_name, len);
+		dep->d_name[len] = '\0';
+		tmpbuf_off += reclen;
+	}
 
-	  put_block(bp, DIRECTORY_BLOCK);
-	  if(done)
-		  break;
+	put_block(bp, DIRECTORY_BLOCK);
+	if (done)
+		break;
   }
 
-  if(tmpbuf_off != 0) {
-	  r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) userbuf_off,
+  if (tmpbuf_off != 0) {
+	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) userbuf_off,
 	  		     (vir_bytes) getdents_buf, (size_t) tmpbuf_off);
-	  if (r != OK) {
-	  	put_inode(rip);
-	  	return(r);
-	  }
+	if (r != OK) {
+		put_inode(rip);
+		return(r);
+	}
 
-	  userbuf_off += tmpbuf_off;
+	userbuf_off += tmpbuf_off;
   }
 
-  if(done && userbuf_off == 0)
+  if (done && userbuf_off == 0)
 	  r = EINVAL;		/* The user's buffer is too small */
   else {
 	  fs_m_out.RES_NBYTES = userbuf_off;
