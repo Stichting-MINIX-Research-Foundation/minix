@@ -1,0 +1,407 @@
+auth.o: auth.c ../includes/dhcpd.h ../includes/config.h \
+ /usr/include/sys/syslimits.h /usr/include/minix/limits.h \
+ /usr/include/sys/featuretest.h \
+ /usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/sys/types.h \
+ /usr/include/machine/types.h /usr/include/sys/cdefs.h \
+ /usr/include/machine/cdefs.h /usr/include/sys/cdefs_elf.h \
+ /usr/include/machine/int_types.h /usr/include/machine/ansi.h \
+ /usr/include/sys/ansi.h /usr/include/machine/endian.h \
+ /usr/include/sys/endian.h /usr/include/machine/endian_machdep.h \
+ /usr/include/machine/bswap.h /usr/include/machine/byte_swap.h \
+ /usr/include/sys/bswap.h /usr/include/netinet/in.h \
+ /usr/include/netinet6/in6.h /usr/include/sys/socket.h \
+ /usr/include/sys/uio.h /usr/include/sys/ucred.h /usr/include/sys/un.h \
+ /usr/include/string.h /usr/include/sys/null.h /usr/include/arpa/inet.h \
+ /usr/include/errno.h /usr/include/sys/errno.h /usr/include/netdb.h \
+ /usr/include/inttypes.h /usr/include/sys/inttypes.h \
+ /usr/include/sys/stdint.h /usr/include/machine/int_mwgwtypes.h \
+ /usr/include/machine/int_limits.h /usr/include/machine/int_const.h \
+ /usr/include/machine/wchar_limits.h /usr/include/machine/int_fmtio.h \
+ /usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/stddef.h \
+ /usr/include/fcntl.h /usr/include/sys/stat.h \
+ /usr/include/machine/vmparam.h /usr/include/stdio.h \
+ /usr/include/unistd.h /usr/include/sys/unistd.h \
+ /usr/include/minix/type.h /usr/include/minix/sys_config.h \
+ /usr/include/minix/types.h /usr/include/sys/sigtypes.h \
+ /usr/include/stdint.h /usr/include/minix/config.h \
+ /usr/include/machine/interrupt.h /usr/include/sys/reboot.h \
+ /usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/stdlib.h \
+ /usr/include/sys/mman.h /usr/include/ctype.h /usr/include/time.h \
+ /usr/include/sys/time.h /usr/include/sys/select.h \
+ /usr/include/sys/fd_set.h /usr/include/net/if.h /usr/include/setjmp.h \
+ /usr/include/machine/setjmp.h ../includes/cdefs.h ../includes/osdep.h \
+ ../includes/site.h ../includes/arpa/nameser.h \
+ ../includes/arpa/nameser_compat.h ../includes/minires.h \
+ /usr/include/strings.h ../includes/omapip/isclib.h ../includes/config.h \
+ /usr/include/syslog.h ../bind/include/isc/buffer.h \
+ ../bind/include/isc/lang.h ../bind/include/isc/magic.h \
+ ../bind/include/isc/types.h ../bind/include/isc/bind9.h \
+ ../bind/include/isc/namespace.h ../bind/include/isc/int.h \
+ ../bind/include/isc/offset.h \
+ /usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/limits.h \
+ /usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/machine/limits.h \
+ ../bind/include/isc/boolean.h ../bind/include/isc/list.h \
+ ../bind/include/isc/assertions.h ../bind/include/isc/platform.h \
+ ../bind/include/isc/lex.h ../bind/include/isc/region.h \
+ ../bind/include/isc/lib.h ../bind/include/isc/app.h \
+ ../bind/include/isc/eventclass.h ../bind/include/isc/result.h \
+ ../bind/include/isc/mem.h ../bind/include/isc/mutex.h \
+ ../bind/include/isc/xml.h ../bind/include/isc/parseint.h \
+ ../bind/include/isc/socket.h ../bind/include/isc/event.h \
+ ../bind/include/isc/time.h ../bind/include/isc/sockaddr.h \
+ ../bind/include/isc/net.h ../bind/include/isc/task.h \
+ ../bind/include/isc/stdtime.h ../bind/include/isc/timer.h \
+ ../bind/include/isc/heap.h ../bind/include/isc/random.h \
+ ../bind/include/dns/client.h ../bind/include/dns/tsig.h \
+ ../bind/include/isc/refcount.h ../bind/include/isc/atomic.h \
+ ../bind/include/isc/util.h ../bind/include/isc/error.h \
+ /usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include/stdarg.h \
+ ../bind/include/isc/formatcheck.h ../bind/include/isc/rwlock.h \
+ ../bind/include/isc/condition.h ../bind/include/isc/stdio.h \
+ ../bind/include/dns/types.h ../bind/include/dns/enumtype.h \
+ ../bind/include/dns/enumclass.h ../bind/include/dns/name.h \
+ ../bind/include/dst/dst.h ../bind/include/dns/secalg.h \
+ ../bind/include/dst/gssapi.h ../bind/include/dns/fixedname.h \
+ ../bind/include/dns/keyvalues.h ../bind/include/dns/lib.h \
+ ../bind/include/dns/rdata.h ../bind/include/dns/message.h \
+ ../bind/include/dns/compress.h ../bind/include/dns/masterdump.h \
+ ../bind/include/dns/rdataclass.h ../bind/include/dns/rdatalist.h \
+ ../bind/include/dns/rdataset.h ../bind/include/dns/rdatastruct.h \
+ ../bind/include/isc/iterated_hash.h ../bind/include/isc/sha1.h \
+ ../bind/include/dns/rdatatype.h ../bind/include/dns/result.h \
+ ../bind/include/isc/resultclass.h ../bind/include/dns/tsec.h \
+ ../includes/omapip/result.h ../includes/omapip/result.h \
+ ../includes/dhcp.h ../includes/dhcp6.h ../includes/statement.h \
+ ../includes/tree.h ../includes/inet.h ../includes/dhctoken.h \
+ ../includes/omapip/omapip_p.h /usr/include/memory.h \
+ ../includes/omapip/convert.h ../includes/omapip/hash.h \
+ ../includes/omapip/omapip.h ../includes/omapip/trace.h \
+ ../includes/omapip/buffer.h ../includes/omapip/alloc.h \
+ ../includes/failover.h ../includes/ctrace.h
+
+../includes/dhcpd.h:
+
+../includes/config.h:
+
+/usr/include/sys/syslimits.h:
+
+/usr/include/minix/limits.h:
+
+/usr/include/sys/featuretest.h:
+
+/usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/sys/types.h:
+
+/usr/include/machine/types.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/machine/cdefs.h:
+
+/usr/include/sys/cdefs_elf.h:
+
+/usr/include/machine/int_types.h:
+
+/usr/include/machine/ansi.h:
+
+/usr/include/sys/ansi.h:
+
+/usr/include/machine/endian.h:
+
+/usr/include/sys/endian.h:
+
+/usr/include/machine/endian_machdep.h:
+
+/usr/include/machine/bswap.h:
+
+/usr/include/machine/byte_swap.h:
+
+/usr/include/sys/bswap.h:
+
+/usr/include/netinet/in.h:
+
+/usr/include/netinet6/in6.h:
+
+/usr/include/sys/socket.h:
+
+/usr/include/sys/uio.h:
+
+/usr/include/sys/ucred.h:
+
+/usr/include/sys/un.h:
+
+/usr/include/string.h:
+
+/usr/include/sys/null.h:
+
+/usr/include/arpa/inet.h:
+
+/usr/include/errno.h:
+
+/usr/include/sys/errno.h:
+
+/usr/include/netdb.h:
+
+/usr/include/inttypes.h:
+
+/usr/include/sys/inttypes.h:
+
+/usr/include/sys/stdint.h:
+
+/usr/include/machine/int_mwgwtypes.h:
+
+/usr/include/machine/int_limits.h:
+
+/usr/include/machine/int_const.h:
+
+/usr/include/machine/wchar_limits.h:
+
+/usr/include/machine/int_fmtio.h:
+
+/usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/stddef.h:
+
+/usr/include/fcntl.h:
+
+/usr/include/sys/stat.h:
+
+/usr/include/machine/vmparam.h:
+
+/usr/include/stdio.h:
+
+/usr/include/unistd.h:
+
+/usr/include/sys/unistd.h:
+
+/usr/include/minix/type.h:
+
+/usr/include/minix/sys_config.h:
+
+/usr/include/minix/types.h:
+
+/usr/include/sys/sigtypes.h:
+
+/usr/include/stdint.h:
+
+/usr/include/minix/config.h:
+
+/usr/include/machine/interrupt.h:
+
+/usr/include/sys/reboot.h:
+
+/usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/stdlib.h:
+
+/usr/include/sys/mman.h:
+
+/usr/include/ctype.h:
+
+/usr/include/time.h:
+
+/usr/include/sys/time.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/sys/fd_set.h:
+
+/usr/include/net/if.h:
+
+/usr/include/setjmp.h:
+
+/usr/include/machine/setjmp.h:
+
+../includes/cdefs.h:
+
+../includes/osdep.h:
+
+../includes/site.h:
+
+../includes/arpa/nameser.h:
+
+../includes/arpa/nameser_compat.h:
+
+../includes/minires.h:
+
+/usr/include/strings.h:
+
+../includes/omapip/isclib.h:
+
+../includes/config.h:
+
+/usr/include/syslog.h:
+
+../bind/include/isc/buffer.h:
+
+../bind/include/isc/lang.h:
+
+../bind/include/isc/magic.h:
+
+../bind/include/isc/types.h:
+
+../bind/include/isc/bind9.h:
+
+../bind/include/isc/namespace.h:
+
+../bind/include/isc/int.h:
+
+../bind/include/isc/offset.h:
+
+/usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/limits.h:
+
+/usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include-fixed/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/machine/limits.h:
+
+../bind/include/isc/boolean.h:
+
+../bind/include/isc/list.h:
+
+../bind/include/isc/assertions.h:
+
+../bind/include/isc/platform.h:
+
+../bind/include/isc/lex.h:
+
+../bind/include/isc/region.h:
+
+../bind/include/isc/lib.h:
+
+../bind/include/isc/app.h:
+
+../bind/include/isc/eventclass.h:
+
+../bind/include/isc/result.h:
+
+../bind/include/isc/mem.h:
+
+../bind/include/isc/mutex.h:
+
+../bind/include/isc/xml.h:
+
+../bind/include/isc/parseint.h:
+
+../bind/include/isc/socket.h:
+
+../bind/include/isc/event.h:
+
+../bind/include/isc/time.h:
+
+../bind/include/isc/sockaddr.h:
+
+../bind/include/isc/net.h:
+
+../bind/include/isc/task.h:
+
+../bind/include/isc/stdtime.h:
+
+../bind/include/isc/timer.h:
+
+../bind/include/isc/heap.h:
+
+../bind/include/isc/random.h:
+
+../bind/include/dns/client.h:
+
+../bind/include/dns/tsig.h:
+
+../bind/include/isc/refcount.h:
+
+../bind/include/isc/atomic.h:
+
+../bind/include/isc/util.h:
+
+../bind/include/isc/error.h:
+
+/usr/pkg/gcc44/lib/gcc/i386-pc-minix/4.4.6/include/stdarg.h:
+
+../bind/include/isc/formatcheck.h:
+
+../bind/include/isc/rwlock.h:
+
+../bind/include/isc/condition.h:
+
+../bind/include/isc/stdio.h:
+
+../bind/include/dns/types.h:
+
+../bind/include/dns/enumtype.h:
+
+../bind/include/dns/enumclass.h:
+
+../bind/include/dns/name.h:
+
+../bind/include/dst/dst.h:
+
+../bind/include/dns/secalg.h:
+
+../bind/include/dst/gssapi.h:
+
+../bind/include/dns/fixedname.h:
+
+../bind/include/dns/keyvalues.h:
+
+../bind/include/dns/lib.h:
+
+../bind/include/dns/rdata.h:
+
+../bind/include/dns/message.h:
+
+../bind/include/dns/compress.h:
+
+../bind/include/dns/masterdump.h:
+
+../bind/include/dns/rdataclass.h:
+
+../bind/include/dns/rdatalist.h:
+
+../bind/include/dns/rdataset.h:
+
+../bind/include/dns/rdatastruct.h:
+
+../bind/include/isc/iterated_hash.h:
+
+../bind/include/isc/sha1.h:
+
+../bind/include/dns/rdatatype.h:
+
+../bind/include/dns/result.h:
+
+../bind/include/isc/resultclass.h:
+
+../bind/include/dns/tsec.h:
+
+../includes/omapip/result.h:
+
+../includes/omapip/result.h:
+
+../includes/dhcp.h:
+
+../includes/dhcp6.h:
+
+../includes/statement.h:
+
+../includes/tree.h:
+
+../includes/inet.h:
+
+../includes/dhctoken.h:
+
+../includes/omapip/omapip_p.h:
+
+/usr/include/memory.h:
+
+../includes/omapip/convert.h:
+
+../includes/omapip/hash.h:
+
+../includes/omapip/omapip.h:
+
+../includes/omapip/trace.h:
+
+../includes/omapip/buffer.h:
+
+../includes/omapip/alloc.h:
+
+../includes/failover.h:
+
+../includes/ctrace.h:

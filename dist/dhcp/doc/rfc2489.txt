@@ -1,0 +1,283 @@
+
+
+
+
+
+
+Network Working Group                                           R. Droms
+Request for Comments: 2489                           Bucknell University
+BCP: 29                                                     January 1999
+Category: Best Current Practice
+
+
+                Procedure for Defining New DHCP Options
+
+Status of this Memo
+
+   This document specifies an Internet Best Current Practices for the
+   Internet Community, and requests discussion and suggestions for
+   improvements.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+Abstract
+
+   The Dynamic Host Configuration Protocol (DHCP) provides a framework
+   for passing configuration information to hosts on a TCP/IP network.
+   Configuration parameters and other control information are carried in
+   tagged data items that are stored in the 'options' field of the DHCP
+   message.  The data items themselves are also called "options."
+
+   New DHCP options may be defined after the publication of the DHCP
+   specification to accommodate requirements for conveyance of new
+   configuration parameters.  This document describes the procedure for
+   defining new DHCP options.
+
+1. Introduction
+
+   The Dynamic Host Configuration Protocol (DHCP) [1] provides a
+   framework for passing configuration information to hosts on a TCP/IP
+   network.  Configuration parameters and other control information are
+   carried in tagged data items that are stored in the 'options' field
+   of the DHCP message.  The data items themselves are also called
+   "options." [2]
+
+   This document describes the procedure for defining new DHCP options.
+   The procedure will guarantee that:
+
+   * allocation of new option numbers is coordinated from a single
+     authority,
+   * new options are reviewed for technical correctness and
+     appropriateness, and
+   * documentation for new options is complete and published.
+
+
+
+Droms                    Best Current Practice                  [Page 1]
+
+RFC 2489               Defining New DCHP Options            January 1999
+
+
+   As indicated in "Guidelines for Writing an IANA Considerations
+   Section in RFCs" (see references), IANA acts as a central authority
+   for assignment of numbers such as DHCP option codes.  The new
+   procedure outlined in this document will provide guidance to IANA in
+   the assignment of new option codes.
+
+2. Overview and background
+
+   The procedure described in this document modifies and clarifies the
+   procedure for defining new options in RFC 2131 [2].  The primary
+   modification is to the time at which a new DHCP option is assigned an
+   option number.  In the procedure described in this document, the
+   option number is not assigned until specification for the option is
+   about to be published as an RFC.
+
+   Since the publication of RFC 2132, the option number space for
+   publically defined DHCP options (1-127) has almost been exhausted.
+   Many of the defined option numbers have not been followed up with
+   Internet Drafts submitted to the DHC WG.  There has been a lack of
+   specific guidance to IANA from the DHC WG as to the assignment of
+   DHCP option numbers
+
+   The procedure as specified in RFC 2132 does not clearly state that
+   new options are to be reviewed individually for technical
+   correctness, appropriateness and complete documentation.  RFC 2132
+   also does not require that new options are to be submitted to the
+   IESG for review, and that the author of the option specification is
+   responsible for bringing new options to the attention of the IESG.
+   Finally, RFC 2132 does not make clear that newly defined options are
+   not to be incorporated into products, included in other
+   specifications or otherwise used until the specification for the
+   option is published as an RFC.
+
+   In the future, new DHCP option codes will be assigned by IETF
+   consensus.  New DHCP options will be documented in RFCs approved by
+   the IESG, and the codes for those options will be assigned at the
+   time the relevant RFCs are published.  Typically, the IESG will seek
+   input on prospective assignments from appropriate sources (e.g., a
+   relevant Working Group if one exists).  Groups of related options may
+   be combined  into a single specification and reviewed as a set by the
+   IESG.  Prior to assignment of an option code, it is not appropriate
+   to incorporate new options into products, include the specification
+   in other documents or otherwise make use of the new options.
+
+   The DHCP option number space (1-254) is split into two parts.  The
+   site-specific options (128-254) are defined as "Private Use" and
+   require no review by the DHC WG.  The public options (1-127) are
+
+
+
+
+Droms                    Best Current Practice                  [Page 2]
+
+RFC 2489               Defining New DCHP Options            January 1999
+
+
+   defined as "Specification Required" and new options must be reviewed
+   prior to assignment of an option number by IANA.  The details of the
+   review process are given in the following section of this document.
+
+3. Procedure
+
+   The author of a new DHCP option will follow these steps to obtain
+   approval for the option and publication of the specification of the
+   option as an RFC:
+
+   1. The author devises the new option.
+
+   2. The author documents the new option, leaving the option code as
+      "To Be Determined" (TBD), as an Internet Draft.
+
+      The requirement that the new option be documented as an Internet
+      Draft is a matter of expediency.  In theory, the new option could
+      be documented on the back of an envelope for submission; as a
+      practical matter, the specification will eventually become an
+      Internet Draft as part of the review process.
+
+   3. The author submits the Internet Draft for review by the IESG.
+      Preferably, the author will submit the Internet Draft to the DHC
+      Working Group, but the author may choose to submit the Internet
+      Draft directly to the IESG.
+
+      Note that simply publishing the new option as an Internet Draft
+      does not automatically bring the option to the attention of the
+      IESG.  The author of the new option must explicitly forward a
+      request for action on the new option to the DHC WG or the IESG.
+
+   4. The specification of the new option is reviewed by the IESG.  The
+      specification is reviewed by the DHC WG (if it exists) or by the
+      IETF.  If the option is accepted for inclusion in the DHCP
+      specification, the specification of the option is published as an
+      RFC.  It may be published as either a standards-track or a non-
+      standards-track RFC.
+
+   5. At the time of publication as an RFC, IANA assigns a DHCP option
+      number to the new option.
+
+4. References
+
+   [1] Droms, R., "Dynamic Host Configuration Protocol", RFC 2131,
+       March 1997.
+
+   [2] Alexander, S. and R. Droms, "DHCP Options and BOOTP Vendor
+       Extensions", RFC 2132, March 1997.
+
+
+
+Droms                    Best Current Practice                  [Page 3]
+
+RFC 2489               Defining New DCHP Options            January 1999
+
+
+   [3] Droms, R. and K. Fong, "NetWare/IP Domain Name and Information",
+       RFC 2142, November 1997.
+
+   [4] Narten, T. and  H. Alvestrand, "Guidelines for Writing an IANA
+       Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+
+5. Security Considerations
+
+   Information that creates or updates an option number assignment needs
+   to be authenticated.
+
+   An analysis of security issues is required for all newly defined DHCP
+   options.  The description of security issues in the specification of
+   new options must be as accurate as possible.  The specification for a
+   new option may reference the "Security Considerations" section in the
+   DHCP specification [1]; e.g. (from "NetWare/IP Domain Name and
+   Information" [3]):
+
+      DHCP currently provides no authentication or security mechanisms.
+      Potential exposures to attack are discussed in section 7 of the
+      DHCP protocol specification [RFC 2131].
+
+6. IANA Considerations
+
+   RFC 2132 provided guidance to the IANA on the procedure it should
+   follow when assigning option numbers for new DHCP options.  This
+   document updates and replaces those instructions.  In particular,
+   IANA is requested to assign DHCP option numbers only for options that
+   have been approved for publication as RFCs; i.e., documents that have
+   been approved through "IETF consensus" as defined in RFC 2434 [4].
+
+7. Author's Address
+
+   Ralph Droms
+   Computer Science Department
+   323 Dana Engineering
+   Bucknell University
+   Lewisburg, PA 17837
+
+   Phone: (717) 524-1145
+   EMail: droms@bucknell.edu
+
+
+
+
+
+
+
+
+
+
+Droms                    Best Current Practice                  [Page 4]
+
+RFC 2489               Defining New DCHP Options            January 1999
+
+
+8.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Droms                    Best Current Practice                  [Page 5]
+
