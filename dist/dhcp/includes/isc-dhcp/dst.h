@@ -12,6 +12,10 @@ typedef struct dst_key {
 } DST_KEY;
 #endif /* HAS_DST_KEY */
 
+#ifdef __minix
+typedef unsigned char u_char;
+#endif /* __minix  */
+
 /* 
  * DST Crypto API defintions 
  */

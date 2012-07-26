@@ -39,6 +39,9 @@
 
 #include <dns/tsec.h>
 
+#ifdef __minix  /* Note why sys/time.h is needed */
+#include <sys/time.h>
+#endif /* __minix  */
 typedef unsigned int omapi_handle_t;
 
 struct __omapi_object;

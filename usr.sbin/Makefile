@@ -60,4 +60,8 @@ SUBDIR+=npf
 SUBDIR+=pf
 .endif
 
+.if (${MKLWIP} == "yes")
+SUBDIR+= bind dhcp
+.endif
+
 .include <bsd.subdir.mk>

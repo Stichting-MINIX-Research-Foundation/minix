@@ -68,6 +68,10 @@ static const char rcsid[] = "$Id: base64.c,v 1.5.6.1 2009-11-20 01:49:01 sar Exp
 #include "osdep.h"
 #include "arpa/nameser.h"
 
+#ifdef __minix
+typedef unsigned char u_char;
+#endif /* __minix  */
+
 #define Assert(Cond) if (!(Cond)) abort()
 
 static const char Base64[] =
@@ -138,7 +142,7 @@ static const char Pad64 = '=';
    */
 
 int
-b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
+b64_ntop(const u_char *src, size_t srclength, char *target, size_t targsize) {
 	size_t datalength = 0;
 	u_char input[3];
 	u_char output[4];

@@ -36,6 +36,9 @@
 #include <syslog.h>
 #include <sys/time.h>
 
+/* FIXME: For MINIX for inet_pton */
+#include <arpa/inet.h>
+
 TIME default_lease_time = 43200; /* 12 hours... */
 TIME max_lease_time = 86400; /* 24 hours... */
 struct tree_cache *global_options[256];

@@ -108,9 +108,11 @@ void icmp_startup (routep, handler)
 
 		/* Make sure it does routing... */
 		state = 0;
+#ifndef __minix  /* MINIX doesn't support SO_DONTROUTE anyway */
 		if (setsockopt (icmp_state -> socket, SOL_SOCKET, SO_DONTROUTE,
 				(char *)&state, sizeof state) < 0)
 			log_fatal ("Can't disable SO_DONTROUTE on ICMP: %m");
+#endif /* __minix  */
 
 		result = (omapi_register_io_object
 			  ((omapi_object_t *)icmp_state,

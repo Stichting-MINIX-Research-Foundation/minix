@@ -32,8 +32,8 @@ LDADD+= ${NETBSDSRCDIR}/lib/libbindexport/dns/libdnsexport.a
 LDADD+= ${NETBSDSRCDIR}/lib/libbindexport/isc/libiscexport.a
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
-DPADD+= ${NETBSDSRCDIR}/lib/libbindexport/dns/libdns.a
-DPADD+= ${NETBSDSRCDIR}/lib/libbindexport/isc/libisc.a
+DPADD+= ${NETBSDSRCDIR}/lib/libbindexport/dns/libdnsexport.a
+DPADD+= ${NETBSDSRCDIR}/lib/libbindexport/isc/libiscexport.a
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

@@ -128,8 +128,10 @@ void read_resolv_conf (parse_time)
 #endif
 				ns -> addr.sin_family = AF_INET;
 				ns -> addr.sin_port = htons (53);
+#ifndef __minix
 				memset (ns -> addr.sin_zero, 0,
 					sizeof ns -> addr.sin_zero);
+#endif
 			}
 			ns -> rcdate = parse_time;
 			skip_to_semi (cfile);

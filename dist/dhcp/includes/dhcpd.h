@@ -34,6 +34,9 @@
 
 #include "config.h"
 
+#ifdef __minix
+#include <sys/syslimits.h>
+#endif
 #ifndef __CYGWIN32__
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -60,8 +63,10 @@
 
 #include <net/if.h>
 #undef FDDI
+#ifndef __minix
 #include <net/route.h>
 #include <net/if_arp.h>
+#endif /* !__minix */
 #if HAVE_NET_IF_DL_H
 # include <net/if_dl.h>
 #endif
@@ -74,6 +79,57 @@
 #include "arpa/nameser.h"
 
 #include "minires.h"
+
+#ifdef __minix
+
+#define IFNAMSIZ 20
+#define NO_IPHDRINCL 1
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <strings.h>
+#include <stdlib.h>
+
+
+/* MINIX doesn't have struct ifreq
+ * It seems this structure isn't being used for interacting
+ * with the operating system, so we explicitly define it here
+ */
+
+struct ifreq {
+	char ifr_name[IFNAMSIZ];
+	union {
+		struct sockaddr ifru_addr;
+		struct sockaddr ifru_dstaddr;
+		struct sockaddr ifru_broadaddr;
+		short ifru_flags[2];
+		int ifru_metric;
+		int ifru_mtu;
+		int ifru_phys;
+		int ifru_media;
+		caddr_t ifru_data;
+		int ifru_cap[2];
+	} ifr_ifru;
+#define ifr_addr        ifr_ifru.ifru_addr
+#define ifr_dstaddr     ifr_ifru.ifru_dstaddr
+#define ifr_broadaddr   ifr_ifru.ifru_broadaddr
+#define ifr_flags       ifr_ifru.ifru_flags[0]
+#define ifr_prevflags   ifr_ifru.ifru_flags[1]
+#define ifr_metric      ifr_ifru.ifru_metric
+#define ifr_mtu         ifr_ifru.ifru_mtu
+#define ifr_phys        ifr_ifru.ifru_phys
+#define ifr_media       ifr_ifru.ifr_media
+#define ifr_data        ifr_ifru.ifr_data
+#define ifr_reqcap      ifr_ifru.ifru_cap[0]
+#define ifr_curcap      ifr_ifru.ifru_cap[1]
+};
+
+typedef unsigned int    u_int;
+
+#include <isc/types.h>
+#include <isc/namespace.h>
+#endif /* __minix  */
 
 struct hash_table;
 typedef struct hash_table group_hash_t;
@@ -1418,6 +1474,10 @@ typedef unsigned char option_mask [16];
 #ifndef _PATH_DHCPD_CONF
 #define _PATH_DHCPD_CONF	"/etc/dhcpd.conf"
 #endif /* DEBUG */
+
+#ifndef LOCALSTATEDIR
+#define LOCALSTATEDIR           "/var"
+#endif
 
 #ifndef _PATH_DHCPD_DB
 #define _PATH_DHCPD_DB		LOCALSTATEDIR"/db/dhcpd.leases"
@@ -2788,9 +2848,15 @@ u_int32_t checksum (unsigned char *, unsigned, u_int32_t);
 u_int32_t wrapsum (u_int32_t);
 void assemble_hw_header (struct interface_info *, unsigned char *,
 			 unsigned *, struct hardware *);
+#ifndef NO_IPHDRINCL
 void assemble_udp_ip_header (struct interface_info *, unsigned char *,
 			     unsigned *, u_int32_t, u_int32_t,
 			     u_int32_t, unsigned char *, unsigned);
+#else
+void assemble_udp_header (struct interface_info *, unsigned char *,
+			     unsigned *, u_int32_t, u_int32_t,
+			     u_int32_t, unsigned char *, unsigned);
+#endif /* NO_IPDHRINCL */
 ssize_t decode_hw_header (struct interface_info *, unsigned char *,
 			  unsigned, struct hardware *);
 ssize_t decode_udp_ip_header (struct interface_info *, unsigned char *,

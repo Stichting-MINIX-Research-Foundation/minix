@@ -3754,7 +3754,7 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 			data_string_forget (&dp, MDL);
 		}
 	}
-		
+
 	if (decoded_packet -> packet_type)
 		dhcp (decoded_packet);
 	else

@@ -104,8 +104,10 @@ isc_result_t omapi_listen_addr (omapi_object_t *h,
 		sizeof (struct sockaddr_in);
 #endif
 	obj -> address.sin_family = AF_INET;
+#ifndef __minix
 	memset (&(obj -> address.sin_zero), 0,
 		sizeof obj -> address.sin_zero);
+#endif
 
 #if defined (TRACING)
 	/* If we're playing back a trace file, we remember the object

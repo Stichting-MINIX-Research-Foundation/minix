@@ -152,7 +152,7 @@
    the aforementioned problems do not matter to you, or if no other
    API is supported for your system, you may want to go with it. */
 
-/* #define USE_SOCKETS */
+ #define USE_SOCKETS
 
 /* Define this to use the Sun Streams NIT API.
 

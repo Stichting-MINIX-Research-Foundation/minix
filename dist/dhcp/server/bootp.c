@@ -376,7 +376,9 @@ void bootp (packet)
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
+#ifndef __minix
 	memset (to.sin_zero, 0, sizeof to.sin_zero);
+#endif
 
 	/* If this was gatewayed, send it back to the gateway... */
 	if (raw.giaddr.s_addr) {

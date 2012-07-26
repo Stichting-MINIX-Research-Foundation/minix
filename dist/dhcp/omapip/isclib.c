@@ -28,6 +28,7 @@
 #include "dhcpd.h"
 
 #include <sys/time.h>
+#include <isc/namespace.h>
 
 dhcp_context_t dhcp_gbl_ctx;
 

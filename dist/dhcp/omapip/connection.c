@@ -168,8 +168,10 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 			local_sin.sin_len = sizeof local_addr;
 #endif
 			local_sin.sin_family = AF_INET;
+#ifndef __minix
 			memset (&local_sin.sin_zero, 0,
 				sizeof local_sin.sin_zero);
+#endif
 			
 			if (bind (obj -> socket, (struct sockaddr *)&local_sin,
 				  sizeof local_sin) < 0) {
@@ -680,8 +682,10 @@ static isc_result_t omapi_connection_connect_internal (omapi_object_t *h)
 #if defined (HAVE_SA_LEN)
 		c -> remote_addr.sin_len = sizeof c -> remote_addr;
 #endif
+#ifndef __minix
 		memset (&c -> remote_addr.sin_zero, 0,
 			sizeof c -> remote_addr.sin_zero);
+#endif
 		++c -> cptr;
 
 		error = connect (c -> socket,

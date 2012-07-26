@@ -26,6 +26,12 @@
 #include "cdefs.h"
 #include "osdep.h"
 
+#ifdef __minix
+#include <sys/types.h>
+typedef unsigned char u_char;
+#endif /* __minix  */
+
+
 /*
  * Based on the Dynamic DNS reference implementation by Viraj Bais
  * <viraj_bais@ccm.fm.intel.com>

@@ -73,6 +73,9 @@ void (*dhcpv6_packet_handler)(struct interface_info *,
 			      isc_boolean_t);
 #endif /* DHCPv6 */
 
+#ifdef __minix
+extern int if_nametoindex(char *iface);
+#endif
 
 omapi_object_type_t *dhcp_type_interface;
 #if defined (TRACING)
@@ -822,8 +825,10 @@ next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 		return 0;
 	}
 	strcpy(info->name, ifaces->next->ifa_name);
+#ifdef ISC_PLATFORM_HAVESALEN
 	memcpy(&info->addr, ifaces->next->ifa_addr, 
 	       ifaces->next->ifa_addr->sa_len);
+#endif /* ISC_PLATFORM_HAVESALEN */
 	info->flags = ifaces->next->ifa_flags;
 	ifaces->next = ifaces->next->ifa_next;
 	*err = 0;
@@ -966,6 +971,8 @@ discover_interfaces(int state) {
 				break;
 		}
 
+#ifndef __minix    /* MINIX doesn't support such types of devices anyway */
+
 		/* Skip non broadcast interfaces (plus loopback and
 		   point-to-point in case an OS incorrectly marks them
 		   as broadcast). Also skip down interfaces unless we're
@@ -981,6 +988,8 @@ discover_interfaces(int state) {
 		    (!(info.flags & IFF_UP) &&
 		     state != DISCOVER_UNCONFIGURED))
 			continue;
+
+#endif /* __minix  */
 		
 		/* If there isn't already an interface by this name,
 		   allocate one. */

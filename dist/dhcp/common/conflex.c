@@ -34,6 +34,7 @@
 
 #include "dhcpd.h"
 #include <ctype.h>
+#include <sys/mman.h>
 
 static int get_char (struct parse *);
 static void unget_char(struct parse *, int);
@@ -43,6 +44,15 @@ static enum dhcp_token read_string (struct parse *);
 static enum dhcp_token read_number (int, struct parse *);
 static enum dhcp_token read_num_or_name (int, struct parse *);
 static enum dhcp_token intern (char *, enum dhcp_token);
+
+
+#ifdef __minix
+
+#define mmap minix_mmap
+#define munmap minix_munmap
+#define MAP_SHARED MAP_PRIVATE
+
+#endif /* __minix */
 
 isc_result_t new_parse (cfile, file, inbuf, buflen, name, eolp)
 	struct parse **cfile;

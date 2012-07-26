@@ -34,6 +34,8 @@
 
 #include "dhcpd.h"
 
+#include <stdlib.h>
+
 #include <omapip/omapip_p.h>
 
 OMAPI_OBJECT_ALLOC (omapi_protocol, omapi_protocol_object_t,

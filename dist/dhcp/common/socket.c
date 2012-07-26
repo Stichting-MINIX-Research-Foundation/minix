@@ -53,6 +53,62 @@
 #include <net/if_dl.h>
 #endif
 
+#ifdef __minix
+
+#include <net/gen/ether.h>
+#include <net/gen/eth_io.h>
+
+/* IPv6 FIXME : Update after IPv6 is set up */
+#define IPV6_JOIN_GROUP       12
+#define IPV6_MULTICAST_HOPS   16
+#define IPV6_PKTINFO          46
+
+struct ipv6_mreq {
+	struct in6_addr ipv6mr_multiaddr;
+	unsigned int    ipv6mr_interface;
+};
+
+#define DEV_FILE_LEN_MAX	16
+
+void get_hw_addr(const char *name, struct hardware *hw)
+{
+	nwio_ethstat_t ethstat;
+	char dev_file[DEV_FILE_LEN_MAX];
+
+	if (snprintf(dev_file, DEV_FILE_LEN_MAX,
+			"/dev/%s", name) >= DEV_FILE_LEN_MAX) {
+		log_fatal("Device name %s is too long\n", name);
+		return;
+	}
+
+	int eth_fd = open(dev_file, O_RDWR);
+	if (eth_fd < 0) {
+		log_fatal("Could not get access to interface\n");
+		return;
+	}
+
+	if (ioctl(eth_fd, NWIOGETHSTAT, &ethstat) < 0) {
+		/* Device isn't Ethernet */
+		log_fatal("Could not get interface stats\n");
+		close(eth_fd);
+		return;
+	}
+
+
+	hw->hlen = 6 + 1; /* Ethernet hw address is 6 bytes + 1 for type*/
+	hw->hbuf[0] = 1; /* DHCP_HTYPE_ETH */
+
+	/* type comes firts, than the address */
+	memcpy(hw->hbuf + 1, &ethstat.nwes_addr.ea_addr, hw->hlen);
+	close(eth_fd);
+}
+
+int if_nametoindex(char *iface) {
+	return 0;
+}
+
+#endif /* __minix   */
+
 #ifdef USE_SOCKET_FALLBACK
 # if !defined (USE_SOCKET_SEND)
 #  define if_register_send if_register_fallback
@@ -197,23 +253,30 @@ if_register_socket(struct interface_info *info, int family,
 		log_fatal("Can't create dhcp socket: %m");
 	}
 
+	flag = 1;
+#ifndef __minix
+    /* SO_REUSEADDR isn't supported on MINIX yet. So we give up
+     * the functionality to initialize on restart i.e reuseaddr
+     * won't work */
+
 	/* Set the REUSEADDR option so that we don't fail to start if
 	   we're being restarted. */
-	flag = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 			(char *)&flag, sizeof(flag)) < 0) {
 		log_fatal("Can't set SO_REUSEADDR option on dhcp socket: %m");
 	}
+#endif /* !__minix */
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses.
 	   We shouldn't do this for fallback devices, and we can detect that
 	   a device is a fallback because it has no ifp structure. */
+	setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
+			 (char *)&flag, sizeof(flag));
 	if (info->ifp &&
-	    (setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
-			 (char *)&flag, sizeof(flag)) < 0)) {
+        setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
+			 (char *)&flag, sizeof(flag)) < 0) {
 		log_fatal("Can't set SO_BROADCAST option on dhcp socket: %m");
-	}
-
+     }
 #if defined(DHCPv6) && defined(SO_REUSEPORT)
 	/*
 	 * We only set SO_REUSEPORT on AF_INET6 sockets, so that multiple
@@ -1025,6 +1088,7 @@ int can_receive_unicast_unconfigured (ip)
 #endif
 }
 
+
 int supports_multiple_interfaces (ip)
 	struct interface_info *ip;
 {
@@ -1064,7 +1128,6 @@ void maybe_setup_fallback ()
 	}
 #endif
 }
-
 
 #if defined(sun) && defined(USE_V4_PKTINFO)
 /* This code assumes the existence of SIOCGLIFHWADDR */

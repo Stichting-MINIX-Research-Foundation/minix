@@ -45,6 +45,10 @@ SUBDIR+= libcompat_minix libblockdriver libchardriver     \
        libutil libbz2 libprop \
        libnetsock libpuffs libsffs
 
+.if (${MKLWIP} == "yes")
+SUBDIR+=libbind9 libdns liblwres libisc libisccc libisccfg libbindexport
+.endif
+
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR += libvassert libhgfs libvboxfs libvirtio
 .endif

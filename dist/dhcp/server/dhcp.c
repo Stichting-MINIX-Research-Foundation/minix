@@ -1274,7 +1274,9 @@ void dhcpinform (packet, ms_nulltp)
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
+#ifndef __minix
 	memset (to.sin_zero, 0, sizeof to.sin_zero);
+#endif
 
 	/* RFC2131 states the server SHOULD unciast to ciaddr.
 	 * There are two wrinkles - relays, and when ciaddr is zero.
@@ -1445,7 +1447,9 @@ void nak_lease (packet, cip)
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
+#ifndef __minix
 	memset (to.sin_zero, 0, sizeof to.sin_zero);
+#endif
 
 	/* Make sure that the packet is at least as big as a BOOTP packet. */
 	if (outgoing.packet_length < BOOTP_MIN_LEN)
@@ -3144,7 +3148,9 @@ void dhcp_reply (lease)
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
+#ifndef __minix
 	memset (to.sin_zero, 0, sizeof to.sin_zero);
+#endif
 
 #ifdef DEBUG_PACKET
 	dump_raw ((unsigned char *)&raw, packet_length);
