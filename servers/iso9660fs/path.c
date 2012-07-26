@@ -223,7 +223,7 @@ size_t *offsetp;
       while(cp[0] == '/')
 	cp++;
       if (cp[0] == '\0') {
-	strcpy(string, ".");
+	strlcpy(string, ".", NAME_MAX + 1);
 	ncp = cp;
       }
       else
@@ -360,7 +360,7 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
   if (len == 0)
   {
 	/* Return "." */
-	strcpy(string, ".");
+	strlcpy(string, ".", NAME_MAX + 1);
   }
   else
   {

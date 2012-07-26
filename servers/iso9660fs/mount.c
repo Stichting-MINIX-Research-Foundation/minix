@@ -13,12 +13,10 @@ int fs_readsuper() {
   cp_grant_id_t label_gid;
   size_t label_len;
   int r = OK;
-  int readonly;
 
   fs_dev    = fs_m_in.REQ_DEV;
   label_gid = fs_m_in.REQ_GRANT;
   label_len = fs_m_in.REQ_PATH_LEN;
-  readonly  = 1;			/* Always mount devices read only. */
 
   if (label_len > sizeof(fs_dev_label)) 
 	return(EINVAL);
@@ -33,8 +31,8 @@ int fs_readsuper() {
   /* Map the driver label for this major */
   bdev_driver(fs_dev, fs_dev_label);
 
-  /* Open the device the file system lives on */
-  if (bdev_open(fs_dev, readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {
+  /* Open the device the file system lives on in read only mode */
+  if (bdev_open(fs_dev, R_BIT) != OK) {
         return(EINVAL);
   }
 

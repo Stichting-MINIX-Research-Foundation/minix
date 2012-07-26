@@ -188,8 +188,10 @@ int fs_getdents(void) {
 			done = TRUE;
 			release_dir_record(dir_tmp);
 		} else { 	/* The dir record is valid. Copy data... */
-			if (dir_tmp->file_id[0] == 0) strcpy(name,".");
-			else if (dir_tmp->file_id[0] == 1) strcpy(name,"..");
+			if (dir_tmp->file_id[0] == 0)
+				strlcpy(name, ".", NAME_MAX + 1);
+			else if (dir_tmp->file_id[0] == 1)
+				strlcpy(name, "..", NAME_MAX + 1);
 			else {
 				/* Extract the name from the field file_id */
 				strncpy(name, dir_tmp->file_id,
@@ -211,7 +213,7 @@ int fs_getdents(void) {
 				continue;
 			}
 
-			strcpy(name_old,name);
+			strlcpy(name_old, name, NAME_MAX + 1);
 
 			/* Compute the length of the name */
 			cp = memchr(name, '\0', NAME_MAX);
