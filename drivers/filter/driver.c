@@ -393,7 +393,7 @@ static int check_problem(int which, int problem, int retries, int *tell_rs)
 			driver[DRIVER_MAIN] = driver[DRIVER_BACKUP];
 
 			/* This is not necessary. */
-			strcpy(MAIN_LABEL, BACKUP_LABEL);
+			strlcpy(MAIN_LABEL, BACKUP_LABEL, sizeof(MAIN_LABEL));
 			MAIN_MINOR = BACKUP_MINOR;
 		}
 
