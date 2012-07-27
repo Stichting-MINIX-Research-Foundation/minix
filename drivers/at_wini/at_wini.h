@@ -3,6 +3,7 @@
 #include <minix/drvlib.h>
 
 #define VERBOSE		   0	/* display identify messages during boot */
+#define VERBOSE_DMA	   0	/* display DMA debugging information */
 #define ENABLE_ATAPI	   1	/* add ATAPI cd-rom support to driver */
 
 #define ATAPI_DEBUG	    0	/* To debug ATAPI code. */
