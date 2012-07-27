@@ -51,7 +51,7 @@ endpoint_t bdev_driver_set(dev_t dev, char *label)
   assert(major >= 0 && major < NR_DEVICES);
   assert(strlen(label) < sizeof(driver_tab[major].label));
 
-  strcpy(driver_tab[major].label, label);
+  strlcpy(driver_tab[major].label, label, sizeof(driver_tab[major].label));
 
   driver_tab[major].endpt = NONE;
 
