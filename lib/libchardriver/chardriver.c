@@ -131,6 +131,8 @@ static void async_reply(message *mess, int r)
   if (r == ERESTART)
 	return;
 
+  memset(&reply_mess, 0, sizeof(reply_mess));
+
   switch (mess->m_type) {
   case DEV_OPEN:
 	reply_mess.m_type = DEV_OPEN_REPL;
