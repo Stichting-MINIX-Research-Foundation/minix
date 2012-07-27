@@ -9,6 +9,8 @@
 #include <minix/u64.h>
 #include <sys/ioc_block.h>
 
+static btrace_entry buf[BTBUF_SIZE];
+
 static void usage(char *name)
 {
   printf("usage:\n"
@@ -42,7 +44,7 @@ static void btrace_start(char *device, int nr_entries)
 	perror("ioctl(BIOCTRACECTL)");
 
 	size = 0;
-	ioctl(devfd, BIOCTRACEBUF, &size);
+	(void) ioctl(devfd, BIOCTRACEBUF, &size);
 
 	exit(EXIT_FAILURE);
   }
@@ -52,7 +54,6 @@ static void btrace_start(char *device, int nr_entries)
 
 static void btrace_stop(char *device, char *file)
 {
-  btrace_entry buf[BTBUF_SIZE];
   int r, ctl, devfd, outfd;
   size_t size;
 
@@ -163,7 +164,6 @@ static void dump_entry(btrace_entry *entry)
 
 static void btrace_dump(char *file)
 {
-  btrace_entry buf[BTBUF_SIZE];
   int i, r, infd;
 
   if ((infd = open(file, O_RDONLY)) < 0) {
