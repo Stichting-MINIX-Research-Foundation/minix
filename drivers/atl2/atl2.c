@@ -462,7 +462,9 @@ static int atl2_probe(int skip)
 	/* Find a matching PCI device.
 	 */
 	u16_t vid, did;
+#if VERBOSE
 	char *dname;
+#endif
 	int r, devind;
 
 	pci_init();
@@ -477,10 +479,12 @@ static int atl2_probe(int skip)
 			return -1;
 	}
 
+#if VERBOSE
 	dname = pci_dev_name(vid, did);
 	ATL2_DEBUG(("ATL2: found %s (%x/%x) at %s\n",
 		dname ? dname : "<unknown>", vid, did,
 		pci_slot_name(devind)));
+#endif
 
 	pci_reserve(devind);
 
