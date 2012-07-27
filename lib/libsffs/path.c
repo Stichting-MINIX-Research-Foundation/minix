@@ -58,8 +58,8 @@ struct inode *ino;
    */
   if (!prefix[0] && p[0] == '/') p++;
 
-  strcpy(path, prefix);
-  strcpy(&path[plen], p);
+  strlcpy(path, prefix, PATH_MAX);
+  strlcpy(&path[plen], p, PATH_MAX - plen);
 
   dprintf(("%s: make_path: resulting path is '%s'\n", sffs_name, path));
 
@@ -85,7 +85,7 @@ char *name;
 	return ENAMETOOLONG;
 
   if (len > 0) path[len++] = '/';
-  strcpy(&path[len], name);
+  strlcpy(&path[len], name, PATH_MAX - len);
 
   return OK;
 }

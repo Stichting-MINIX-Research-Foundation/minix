@@ -82,7 +82,7 @@ struct inode *ino;
 
   link_inode(parent, ino);
 
-  strcpy(ino->i_name, name);
+  strlcpy(ino->i_name, name, sizeof(ino->i_name));
 
   /* hash_add(ino); */
   slot = hash_dentry(parent, ino->i_name);
