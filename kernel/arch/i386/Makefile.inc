@@ -20,6 +20,7 @@ SYS_OBJS_UNPAGED=kprintf.o vprintf.o assert.o stacktrace.o
 unpaged_${UNPAGED_OBJ}: ${UNPAGED_OBJ}
 	objcopy --prefix-symbols=__k_unpaged_ ${UNPAGED_OBJ} unpaged_${UNPAGED_OBJ}
 UNPAGED_OBJS += unpaged_${UNPAGED_OBJ}
+ORIG_UNPAGED_OBJS += ${UNPAGED_OBJ}
 .endfor
 
 # we have to extract some object files from libminc.a and libminlib.a
@@ -27,6 +28,8 @@ $(MINLIB_OBJS_UNPAGED) $(MINC_OBJS_UNPAGED) $(SYS_OBJS_UNPAGED): $(LIBMINLIB) $(
 	ar x $(LIBMINLIB) $(MINLIB_OBJS_UNPAGED)
 	ar x $(LIBMINC) $(MINC_OBJS_UNPAGED)
 	ar x $(LIBSYS) $(SYS_OBJS_UNPAGED)
+
+CLEANFILES+= $(ORIG_UNPAGED_OBJS)
 
 SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c \
 	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c io_inb.S \
