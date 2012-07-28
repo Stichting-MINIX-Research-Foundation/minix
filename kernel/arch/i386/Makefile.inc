@@ -8,7 +8,8 @@ HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 # objects we want unpaged from -lminlib, -lminc
 MINLIB_OBJS_UNPAGED=_cpufeature.o _cpuid.o get_bp.o
 MINC_OBJS_UNPAGED=strcat.o strlen.o memcpy.o strcpy.o strncmp.o memset.o \
-	memmove.o strcmp.o atoi.o ctype_.o _stdfile.o strtol.o _errno.o errno.o
+	memmove.o strcmp.o atoi.o ctype_.o _stdfile.o strtol.o _errno.o errno.o \
+	udivdi3.o umoddi3.o qdivrem.o
 SYS_OBJS_UNPAGED=kprintf.o vprintf.o assert.o stacktrace.o
 
 # some object files we give a symbol prefix (or namespace) of __k_unpaged_
