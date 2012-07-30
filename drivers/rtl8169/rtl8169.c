@@ -598,7 +598,7 @@ static void rl_pci_conf()
 
 	rep = &re_state;
 
-	strcpy(rep->re_name, "rtl8169#0");
+	strlcpy(rep->re_name, "rtl8169#0", sizeof(rep->re_name));
 	rep->re_name[8] += re_instance;
 	rep->re_seen = FALSE;
 
