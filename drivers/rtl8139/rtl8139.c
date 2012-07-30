@@ -391,7 +391,7 @@ static void rl_pci_conf()
 
 	rep= &re_state;
 
-	strcpy(rep->re_name, "rtl8139#0");
+	strlcpy(rep->re_name, "rtl8139#0", sizeof(rep->re_name));
 	rep->re_name[8] += re_instance;
 	rep->re_seen= FALSE;
 
@@ -800,12 +800,14 @@ static void rl_readv_s(const message *mp, int from_int)
 	d_start= rl_inw(port, RL_CAPR) + RL_CAPR_DATA_OFF;
 	d_end= rl_inw(port, RL_CBR) % RX_BUFSIZE;
 
+#if RX_BUFSIZE <= USHRT_MAX
 	if (d_start >= RX_BUFSIZE)
 	{
 		printf("rl_readv: strange value in RL_CAPR: 0x%x\n",
 			rl_inw(port, RL_CAPR));
 		d_start %= RX_BUFSIZE;
 	}
+#endif
 
 	if (d_end > d_start)
 		amount= d_end-d_start;
