@@ -45,7 +45,7 @@ int fs_read(void)
 		r = vtreefs_hooks->read_hook(node, pos, &ptr, &len,
 			get_inode_cbdata(node));
 
-		assert(len >= 0 && len <= fs_m_in.REQ_NBYTES);
+		assert(len <= fs_m_in.REQ_NBYTES);
 
 		/* Copy the resulting data to user space. */
 		if (r == OK && len > 0) {

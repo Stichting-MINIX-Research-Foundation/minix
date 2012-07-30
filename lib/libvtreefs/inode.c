@@ -211,7 +211,7 @@ struct inode *add_inode(struct inode *parent, char *name,
 	newnode->i_stat = *stat;
 	newnode->i_indexed = nr_indexed_entries;
 	newnode->i_cbdata = cbdata;
-	strcpy(newnode->i_name, name);
+	strlcpy(newnode->i_name, name, sizeof(newnode->i_name));
 
 	/* Add the inode to the list of children inodes of the parent. */
 	TAILQ_INSERT_HEAD(&parent->i_children, newnode, i_siblings);

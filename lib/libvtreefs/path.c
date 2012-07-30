@@ -114,7 +114,7 @@ static int go_down(struct inode *parent, char *name, struct inode **child)
 /*===========================================================================*
  *				resolve_link				     *
  *===========================================================================*/
-static int resolve_link(struct inode *node, char *pptr, char *tail)
+static int resolve_link(struct inode *node, char pptr[PATH_MAX], char *tail)
 {
 	/* Given a symbolic link, resolve and return the contents of the link.
 	 */
@@ -135,9 +135,9 @@ static int resolve_link(struct inode *node, char *pptr, char *tail)
 	if (len + strlen(tail) >= sizeof(path))
 		return ENAMETOOLONG;
 
-	strcat(path, tail);
+	strlcat(path, tail, sizeof(path));
 
-	strcpy(pptr, path);
+	strlcpy(pptr, path, PATH_MAX);
 
 	return OK;
 }
