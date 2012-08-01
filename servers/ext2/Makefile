@@ -11,6 +11,6 @@ LDADD+= -lminixfs -lbdev -lsys
 MAN=
 
 BINDIR?= /sbin
-CFLAGS+= -Wall -Wextra -Werror
+CFLAGS+= -Wall -Wextra
 
 .include <minix.service.mk>
