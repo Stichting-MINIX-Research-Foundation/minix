@@ -408,7 +408,7 @@ static void de_update_conf(dpeth_t * dep)
   char ec_key[16];
   long val;
 
-  strcpy(ec_key, "DEETH0");
+  strlcpy(ec_key, "DEETH0", sizeof(ec_key));
   ec_key[5] += de_instance;
 
   dep->de_mode = DEM_ENABLED;
@@ -559,7 +559,7 @@ static void de_conf_addr(dpeth_t * dep)
   int ix;
   long val;
 
-  strcpy(ea_key, "DEETH0_EA");
+  strlcpy(ea_key, "DEETH0_EA", sizeof(ea_key));
   ea_key[5] += de_instance;
 
   for (ix = 0; ix < SA_ADDR_LEN; ix++) {
