@@ -241,7 +241,7 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 
 	dep = &de_state;
 
-	strcpy(dep->de_name, "dp8390#0");
+	strlcpy(dep->de_name, "dp8390#0", sizeof(dep->de_name));
 	dep->de_name[7] += de_instance;
 
 	/* Announce we are up! */
@@ -331,7 +331,7 @@ static void pci_conf()
 
 	dep= &de_state;
 
-	strcpy(envvar, "DPETH0");
+	strlcpy(envvar, "DPETH0", sizeof(envvar));
 	envvar[5] += de_instance;
 	if (!(dep->de_pci= env_prefix(envvar, "pci")))
 		return;	/* no PCI config */
@@ -764,7 +764,7 @@ dpeth_t *dep;
 	long v;
 
 	/* User defined ethernet address? */
-	strcpy(eakey, "DPETH0_EA");
+	strlcpy(eakey, "DPETH0_EA", sizeof(eakey));
 	eakey[5] += de_instance;
 
 	for (i= 0; i < 6; i++)
