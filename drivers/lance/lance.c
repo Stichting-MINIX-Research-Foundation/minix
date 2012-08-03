@@ -465,7 +465,7 @@ message *mp;
    }
 
    ec= &ec_state;
-   strcpy(ec->port_name, "lance#0");
+   strlcpy(ec->port_name, "lance#0", sizeof(ec->port_name));
    ec->port_name[6] += ec_instance;
 
    if (ec->mode == EC_DISABLED)
@@ -589,7 +589,7 @@ ec_conf_t *ecp;
    static char ec_fmt[] = "x:d:x:x";
 
    /* Get the default settings and modify them from the environment. */
-   strcpy(eckey, "LANCE0");
+   strlcpy(eckey, "LANCE0", sizeof(eckey));
    eckey[5] += ec_instance;
    ec->mode= EC_SINK;
    v= ecp->ec_port;
@@ -710,7 +710,7 @@ ether_card_t *ec;
    long v;
 
    /* User defined ethernet address? */
-   strcpy(eakey, "LANCE0_EA");
+   strlcpy(eakey, "LANCE0_EA", sizeof(eakey));
    eakey[5] += ec_instance;
 
    for (i = 0; i < 6; i++)
@@ -875,7 +875,7 @@ ether_card_t *ec;
          {
             /* free the tx-slot just transmitted */
             isstored[cur_tx_slot_nr]=0;
-            cur_tx_slot_nr = (++cur_tx_slot_nr) & TX_RING_MOD_MASK;
+            cur_tx_slot_nr = (cur_tx_slot_nr + 1) & TX_RING_MOD_MASK;
 
             /* next tx-slot is ready? */
             if (isstored[cur_tx_slot_nr]==1)
@@ -892,9 +892,6 @@ ether_card_t *ec;
             lp->tx_ring[cur_tx_slot_nr].u.addr[3] = 0x83;
             write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_IENA|LANCE_CSR0_TDMD);
          }
-         else
-            if (check==-1)
-               continue;
          /* we set a buffered message in the slot if it exists. */
          /* and transmit it, if needed. */
          if (ec->flags & ECF_SEND_AVAIL)
@@ -1094,7 +1091,7 @@ ether_card_t *ec;
                    LANCE_CSR0_BABL|LANCE_CSR0_CERR|LANCE_CSR0_MISS
                    |LANCE_CSR0_MERR|LANCE_CSR0_IDON|LANCE_CSR0_IENA);
 
-         rx_slot_nr = (++rx_slot_nr) & RX_RING_MOD_MASK;
+         rx_slot_nr = (rx_slot_nr + 1) & RX_RING_MOD_MASK;
       }
       else
          break;
@@ -1154,7 +1151,7 @@ int from_int;
       check=1;
    else
       check=0;
-   tx_slot_nr = (++tx_slot_nr) & TX_RING_MOD_MASK;
+   tx_slot_nr = (tx_slot_nr + 1) & TX_RING_MOD_MASK;
 
    if (check == 1)
    {
