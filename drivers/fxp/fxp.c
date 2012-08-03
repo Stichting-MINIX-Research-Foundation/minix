@@ -63,6 +63,7 @@ typedef struct fxp
 	int fxp_features;		/* Needed? */
 	int fxp_irq;
 	int fxp_type;			/* What kind of hardware */
+	int fxp_ms_regs;		/* Master/slave registers */
 	int fxp_ee_addrlen;		/* #EEPROM address bits */
 	int fxp_tx_alive;
 	int fxp_need_reset;
@@ -404,7 +405,7 @@ static void fxp_pci_conf()
 
 	fp= fxp_state;
 
-	strcpy(fp->fxp_name, "fxp#0");
+	strlcpy(fp->fxp_name, "fxp#0", sizeof(fp->fxp_name));
 	fp->fxp_name[4] += fxp_instance;
 	fp->fxp_seen= FALSE;
 	fp->fxp_features= FFE_NONE;
@@ -424,7 +425,10 @@ static int fxp_probe(fxp_t *fp, int skip)
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr, rev;
-	char *dname, *str;
+	char *str;
+#if VERBOSE
+	char *dname;
+#endif
 
 	r= pci_first_dev(&devind, &vid, &did);
 	if (r == 0)
@@ -437,8 +441,8 @@ static int fxp_probe(fxp_t *fp, int skip)
 			return FALSE;
 	}
 
-	dname= pci_dev_name(vid, did);
 #if VERBOSE
+	dname= pci_dev_name(vid, did);
 	if (!dname)
 		dname= "unknown device";
 	printf("%s: %s (%04x/%04x) at %s\n",
@@ -528,7 +532,6 @@ static int fxp_probe(fxp_t *fp, int skip)
  *===========================================================================*/
 static void fxp_conf_hw(fxp_t *fp)
 {
-	int mwi, ext_stat1, ext_stat2, lim_fifo, i82503, fc;
 #if VERBOSE
 	int i;
 #endif
@@ -593,43 +596,13 @@ static void fxp_conf_hw(fxp_t *fp)
 	printf("\n");
 #endif
 
-	mwi= 0;		/* Do we want "Memory Write and Invalidate"? */
-	ext_stat1= 0;	/* Do we want extended statistical counters? */
-	ext_stat2= 0;	/* Do we want even more statistical counters? */
-	lim_fifo= 0;	/* Limit number of frame in TX FIFO */
-	i82503= 0;	/* Older 10 Mbps interface on the 82557 */
-	fc= 0;		/* Flow control */
-
 	switch(fp->fxp_type)
 	{
 	case FT_82557:
-		if (i82503)
-		{
-			fp->fxp_conf_bytes[8] &= ~CCB8_503_MII;
-			fp->fxp_conf_bytes[15] |= CCB15_CRSCDT;
-		}
 		break;
 	case FT_82558A:
 	case FT_82559:
 	case FT_82801:
-		if (mwi)
-			fp->fxp_conf_bytes[3] |= CCB3_MWIE;
-		if (ext_stat1)
-			fp->fxp_conf_bytes[6] &= ~CCB6_ESC;
-		if (ext_stat2)
-			fp->fxp_conf_bytes[6] &= ~CCB6_TCOSC;
-		if (lim_fifo)
-			fp->fxp_conf_bytes[7] |= CCB7_2FFIFO;
-		if (fc)
-		{
-			/* From FreeBSD driver */
-			fp->fxp_conf_bytes[16]= 0x1f;
-			fp->fxp_conf_bytes[17]= 0x01;
-
-			fp->fxp_conf_bytes[19] |= CCB19_FDRSTAFC |
-				CCB19_FDRSTOFC;
-		}
-
 		fp->fxp_conf_bytes[18] |= CCB18_LROK;
 
 		if (fp->fxp_type == FT_82801)
@@ -642,6 +615,11 @@ static void fxp_conf_hw(fxp_t *fp)
 	default:
 		panic("fxp_conf_hw: bad device type: %d", fp->fxp_type);
 	}
+
+	/* Assume an 82555 (compatible) PHY. The should be changed for
+	 * 82557 NICs with different PHYs
+	 */
+	fp->fxp_ms_regs = 0;	/* No master/slave registers. */
 
 #if VERBOSE
 	for (i= 0; i<CC_BYTES_NR; i++)
@@ -1712,12 +1690,7 @@ static void fxp_report_link(fxp_t *fp)
 		mii_ms_ctrl, mii_ms_status, scr;
 	u32_t oui;
 	int model, rev;
-	int f, link_up, ms_regs;
-
-	/* Assume an 82555 (compatible) PHY. The should be changed for
-	 * 82557 NICs with different PHYs
-	 */
-	ms_regs= 0;	/* No master/slave registers. */
+	int f, link_up;
 
 	fp->fxp_report_link= FALSE;
 
@@ -1737,7 +1710,7 @@ static void fxp_report_link(fxp_t *fp)
 		mii_extstat= mii_read(fp, MII_EXT_STATUS);
 	else
 		mii_extstat= 0;
-	if (ms_regs)
+	if (fp->fxp_ms_regs)
 	{
 		mii_ms_ctrl= mii_read(fp, MII_MS_CTRL);
 		mii_ms_status= mii_read(fp, MII_MS_STATUS);
@@ -1881,7 +1854,7 @@ static void fxp_report_link(fxp_t *fp)
 	mii_print_techab(mii_anlpa);
 	printf("\n");
 
-	if (ms_regs)
+	if (fp->fxp_ms_regs)
 	{
 		printf("%s: ", fp->fxp_name);
 		if (mii_ms_ctrl & MII_MSC_MS_MANUAL)
