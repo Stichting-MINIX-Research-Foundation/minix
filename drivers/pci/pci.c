@@ -121,7 +121,7 @@ static char *pci_vid_name(u16_t vid);
 static char *pci_baseclass_name(u8_t baseclass);
 static char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t
 	infclass);
-static void ntostr(unsigned n, char **str, char *end);
+static void ntostr(unsigned n, char **str, const char *end);
 
 static u8_t pci_attr_r8_u(int devind, int port);
 static u32_t pci_attr_r32_u(int devind, int port);
@@ -2278,7 +2278,7 @@ static char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t infclass)
 static void ntostr(n, str, end)
 unsigned n;
 char **str;
-char *end;
+const char *end;
 {
 	char tmpstr[20];
 	int i;
@@ -2306,7 +2306,7 @@ char *end;
 		(*str)++;
 	}
 	if (*str == end)	
-		end[-1]= '\0';
+		(*str)[-1]= '\0';
 	else
 		**str= '\0';
 }
