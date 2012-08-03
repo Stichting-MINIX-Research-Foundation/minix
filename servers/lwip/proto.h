@@ -43,7 +43,7 @@ static inline int copy_from_user(endpoint_t proc,
 				cp_grant_id_t gid,
 				vir_bytes offset)
 {
-	return sys_safecopyfrom(proc, gid, offset, (vir_bytes)dst_ptr, size, D);
+	return sys_safecopyfrom(proc, gid, offset, (vir_bytes)dst_ptr, size);
 }
 
 static inline int copy_to_user(endpoint_t proc,
@@ -52,7 +52,7 @@ static inline int copy_to_user(endpoint_t proc,
 				cp_grant_id_t gid,
 				vir_bytes offset)
 {
-	return sys_safecopyto(proc, gid, offset, (vir_bytes)src_ptr, size, D);
+	return sys_safecopyto(proc, gid, offset, (vir_bytes)src_ptr, size);
 }
 
 #endif /* __LWIP_PROTO_H__ */
