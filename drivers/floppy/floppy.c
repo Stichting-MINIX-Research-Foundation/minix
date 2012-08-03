@@ -767,7 +767,8 @@ static void start_motor(void)
   set_timer(&f_tmr_timeout, f_dp->start_ms * system_hz / 1000, f_timeout, 0);
   f_busy = BSY_IO;
   do {
-  	driver_receive(ANY, &mess, &ipc_status); 
+	if ((s = driver_receive(ANY, &mess, &ipc_status)) != OK)
+		panic("Couldn't receive message: %d", s);
 
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
@@ -842,8 +843,9 @@ static int seek(void)
  	set_timer(&f_tmr_timeout, system_hz/30, f_timeout, 0);
 	f_busy = BSY_IO;
   	do {
-  		driver_receive(ANY, &mess, &ipc_status); 
-	
+		if ((r = driver_receive(ANY, &mess, &ipc_status)) != OK)
+			panic("Couldn't receive message: %d", r);
+
 		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case CLOCK:
@@ -1120,7 +1122,8 @@ static void f_reset(void)
    * but be prepared to handle a timeout.
    */
   do {
-  	driver_receive(ANY, &mess, &ipc_status); 
+	if ((s = driver_receive(ANY, &mess, &ipc_status)) != OK)
+		panic("Couldn't receive message: %d", s);
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
@@ -1166,11 +1169,12 @@ static int f_intr_wait(void)
  * the world, but we humans do not.
  */
   message mess;
-  int ipc_status;
+  int r, ipc_status;
 
   /* We expect an interrupt, but if a timeout, occurs, report an error. */
   do {
-  	driver_receive(ANY, &mess, &ipc_status); 
+	if ((r = driver_receive(ANY, &mess, &ipc_status)) != OK)
+		panic("Couldn't receive message: %d", r);
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
