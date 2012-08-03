@@ -212,8 +212,8 @@ static void e1000_init_pci()
 
     /* Try to detect e1000's. */
     e = &e1000_state;
-    strcpy(e->name, "e1000#0");
-    e->name[6] += e1000_instance;	
+    strlcpy(e->name, "e1000#0", sizeof(e->name));
+    e->name[6] += e1000_instance;
     e1000_probe(e, e1000_instance);
 }
 
@@ -477,8 +477,8 @@ e1000_t *e;
 static void e1000_init_buf(e)
 e1000_t *e;
 {
-    phys_bytes rx_desc_p, rx_buff_p;
-    phys_bytes tx_desc_p, tx_buff_p;
+    phys_bytes rx_buff_p;
+    phys_bytes tx_buff_p;
     int i;
 
     /* Number of descriptors. */
@@ -492,7 +492,7 @@ e1000_t *e;
     {
     	if ((e->rx_desc = alloc_contig(sizeof(e1000_rx_desc_t) * 
 				       e->rx_desc_count, AC_ALIGN4K, 
-				      &rx_desc_p)) == NULL) {
+				      &e->rx_desc_p)) == NULL) {
 		panic("failed to allocate RX descriptors");
     	}
     	memset(e->rx_desc, 0, sizeof(e1000_rx_desc_t) * e->rx_desc_count);
@@ -521,7 +521,7 @@ e1000_t *e;
     {
         if ((e->tx_desc = alloc_contig(sizeof(e1000_tx_desc_t) * 
 				       e->tx_desc_count, AC_ALIGN4K, 
-				      &tx_desc_p)) == NULL) {
+				      &e->tx_desc_p)) == NULL) {
 		panic("failed to allocate TX descriptors");
     	}
     	memset(e->tx_desc, 0, sizeof(e1000_tx_desc_t) * e->tx_desc_count);
@@ -546,7 +546,7 @@ e1000_t *e;
     /*
      * Setup the receive ring registers.
      */
-    e1000_reg_write(e, E1000_REG_RDBAL, rx_desc_p);
+    e1000_reg_write(e, E1000_REG_RDBAL, e->rx_desc_p);
     e1000_reg_write(e, E1000_REG_RDBAH, 0);
     e1000_reg_write(e, E1000_REG_RDLEN, e->rx_desc_count *
 					sizeof(e1000_rx_desc_t));
@@ -558,7 +558,7 @@ e1000_t *e;
     /*
      * Setup the transmit ring registers.
      */
-    e1000_reg_write(e, E1000_REG_TDBAL, tx_desc_p);
+    e1000_reg_write(e, E1000_REG_TDBAL, e->tx_desc_p);
     e1000_reg_write(e, E1000_REG_TDBAH, 0);
     e1000_reg_write(e, E1000_REG_TDLEN, e->tx_desc_count *
 					sizeof(e1000_tx_desc_t));
