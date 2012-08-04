@@ -25,7 +25,7 @@ SUBDIR=	add_route arp ash at \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
 	reboot remsync rev rget rlogin \
 	rotate rsh rshd service setup shar acksize \
-	sleep slip sort spell split srccrc \
+	sleep slip sort spell split sprofalyze srccrc \
 	stty sum svclog svrctl swifi sync synctree sysenv \
 	syslogd tail tar tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time touch tr \
