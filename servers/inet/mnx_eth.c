@@ -277,6 +277,17 @@ void eth_rec(message *m)
 	}
 	if (loc_port->etp_osdep.etp_state == OEPS_GETSTAT_SENT)
 	{
+		if (m_type == DL_TASK_REPLY)
+		{
+			flags= m->DL_FLAGS;
+
+			if (flags & DL_PACK_SEND)
+				write_int(loc_port);
+			if (flags & DL_PACK_RECV)
+				read_int(loc_port, m->DL_COUNT);
+			return;
+		}
+
 		if (m_type != DL_STAT_REPLY)
 		{
 			printf(
