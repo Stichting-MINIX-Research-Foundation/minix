@@ -135,7 +135,7 @@ int do_trace(struct proc * caller, message * m_ptr)
 	     tr_addr > sizeof(struct stackframe_s) - sizeof(reg_t))
 		return(EFAULT);
 	i = (int) tr_addr;
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
 	/* Altering segment registers might crash the kernel when it
 	 * tries to load them prior to restarting a process, so do
 	 * not allow it.

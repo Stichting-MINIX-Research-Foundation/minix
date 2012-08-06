@@ -311,7 +311,7 @@ static char *p_rts_flags_str(int flags)
 /*===========================================================================*
  *				proctab_dmp    				     *
  *===========================================================================*/
-#if (CHIP == INTEL)
+#if defined(__i386__)
 void proctab_dmp()
 {
 /* Proc table dump */
@@ -339,7 +339,7 @@ void proctab_dmp()
 	printf("\n");
   }
 }
-#endif				/* (CHIP == INTEL) */
+#endif				/* defined(__i386__) */
 
 /*===========================================================================*
  *				procstack_dmp  				     *

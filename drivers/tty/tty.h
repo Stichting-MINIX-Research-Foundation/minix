@@ -154,7 +154,7 @@ int select_retry(struct tty *tp);
 void rs_init(struct tty *tp);
 void rs_interrupt(message *m);
 
-#if (CHIP == INTEL)
+#if defined(__i386__)
 /* console.c */
 void kputc(int c);
 void cons_stop(void);
@@ -183,5 +183,5 @@ void pty_init(struct tty *tp);
 void select_retry_pty(struct tty *tp);
 int pty_status(message *m_ptr);
 
-#endif /* (CHIP == INTEL) */
+#endif /* defined(__i386__) */
 

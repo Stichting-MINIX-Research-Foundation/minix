@@ -356,7 +356,7 @@ int all;
 #endif
 	else if (ADDA(off))
 		off = ADDA_CNT(ptrace(T_GETINS, curpid, pc + 2, 0L)) + bp;
-#if (CHIP == INTEL)
+#if defined(__i386__)
 	else if (INCSP2(off))
 		off = bp + 2*INTSIZE;
 	else if (POPBX2(off))

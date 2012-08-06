@@ -28,7 +28,7 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
   if (iskerneln(proc_nr)) return(EPERM);
   rp = proc_addr(proc_nr);
 
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   if (!proc_used_fpu(rp))
 	return(OK);	/* No state to copy */
 #endif
@@ -38,7 +38,7 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
 		(vir_bytes) &mc, (phys_bytes) sizeof(struct __mcontext))) != OK)
 	return(r);
 
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   /* Copy FPU state */
   mc.mc_fpu_flags = 0;
   if (proc_used_fpu(rp)) {
@@ -79,7 +79,7 @@ int do_setmcontext(struct proc * caller, message * m_ptr)
 		(vir_bytes) &mc, (phys_bytes) sizeof(struct __mcontext))) != OK)
 	return(r);
 
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   /* Copy FPU state */
   if (mc.mc_fpu_flags & MF_FPU_INITIALIZED) {
 	rp->p_misc_flags |= MF_FPU_INITIALIZED;

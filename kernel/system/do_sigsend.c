@@ -42,7 +42,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 
   /* Copy the registers to the sigcontext structure. */
   memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(sigregs));
-  #if (_MINIX_CHIP == _CHIP_INTEL)
+  #if defined(__i386__)
     if(proc_used_fpu(rp)) {
 	    /* save the FPU context before saving it to the sig context */
 	    save_fpu(rp);

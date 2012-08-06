@@ -25,7 +25,7 @@
 int do_fork(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   char *old_fpu_save_area_p;
 #endif
   register struct proc *rpc;		/* child process pointer */
@@ -53,11 +53,11 @@ int do_fork(struct proc * caller, message * m_ptr)
   save_fpu(rpp);
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
   gen = _ENDPOINT_G(rpc->p_endpoint);
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   old_fpu_save_area_p = rpc->p_seg.fpu_state;
 #endif
   *rpc = *rpp;				/* copy 'proc' struct */
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   rpc->p_seg.fpu_state = old_fpu_save_area_p;
   if(proc_used_fpu(rpp))
 	memcpy(rpc->p_seg.fpu_state, rpp->p_seg.fpu_state, FPU_XFP_SIZE);

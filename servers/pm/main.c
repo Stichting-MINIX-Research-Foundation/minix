@@ -285,7 +285,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   if (sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic("can't sync up with VFS");
 
-#if (CHIP == INTEL)
+#if defined(__i386__)
         uts_val.machine[0] = 'i';
         strcpy(uts_val.machine + 1, itoa(getprocessor()));
 #endif  

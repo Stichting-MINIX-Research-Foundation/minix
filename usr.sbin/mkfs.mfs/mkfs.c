@@ -24,7 +24,7 @@
 #include "const.h"
 #include "type.h"
 #include "mfsdir.h"
-#if (defined(__minix) && MACHINE == IBM_PC)
+#if (defined(__minix) && defined(__i386__))
 #include <minix/partition.h>
 #include <minix/u64.h>
 #include <sys/ioctl.h>

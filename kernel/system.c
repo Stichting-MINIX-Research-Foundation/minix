@@ -250,7 +250,7 @@ void system_init(void)
   map(SYS_PROFBUF, do_profbuf);        /* announce locations to kernel */
 
   /* i386-specific. */
-#if _MINIX_CHIP == _CHIP_INTEL
+#if defined(__i386__)
   map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
   map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */

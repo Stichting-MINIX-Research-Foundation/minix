@@ -409,7 +409,7 @@ void *arg;
 	if (stackaddr == MAP_FAILED)
   		mthread_panic("Failed to allocate stack to thread");
 
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
 	guard_start = stackaddr;
 	guard_end = stackaddr + MTHREAD_GUARDSIZE;
 	guarded_stacksize = stackaddr + stacksize - guard_end;

@@ -904,7 +904,7 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 
 static int init_buffers(sub_dev_t *sub_dev_ptr)
 {
-#if (CHIP == INTEL)
+#if defined(__i386__)
 	char *base;
 	size_t size;
 	unsigned left;
@@ -954,10 +954,10 @@ static int init_buffers(sub_dev_t *sub_dev_ptr)
 			sub_dev_ptr->DmaSize, sub_dev_ptr->Nr);
 	return OK;
 
-#else /* CHIP != INTEL */
+#else /* !defined(__i386__) */
 	printf("%s: init_buffers() failed, CHIP != INTEL", drv.DriverName);
 	return EIO;
-#endif /* CHIP == INTEL */
+#endif /* defined(__i386__) */
 }
 
 

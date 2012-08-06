@@ -740,7 +740,7 @@ static void test_attributes(void)
   /* Verify stack hypothesis; we assume a stack is used from the top and grows
    * downwards.
    */
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   if (stackp[0] != MAGIC) err(11, 66); /* End of the stack */
   for (i = no_ints - 1 - 16; i < no_ints; i++)
   	if (stackp[i] != MAGIC) stack_untouched = 0;

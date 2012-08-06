@@ -1539,50 +1539,16 @@ void XT()
 void (*escfunc(c))()
 int c;
 {
-#if (CHIP == M68000)
-#ifndef COMPAT
-  int ch;
-#endif
-#endif
   if (c == '[') {
 	/* Start of ASCII escape sequence. */
 	c = getchar();
-#if (CHIP == M68000)
-#ifndef COMPAT
-	if ((c >= '0') && (c <= '9')) ch = getchar();
-	/* ch is either a tilde or a second digit */
-#endif
-#endif
 	switch (c) {
 	case 'H': return(HO);
 	case 'A': return(UP);
 	case 'B': return(DN);
 	case 'C': return(RT);
 	case 'D': return(LF);
-#if (CHIP == M68000)
-#ifndef COMPAT
-	/* F1 = ESC [ 1 ~ */
-	/* F2 = ESC [ 2 ~ */
-	/* F3 = ESC [ 3 ~ */
-	/* F4 = ESC [ 4 ~ */
-	/* F5 = ESC [ 5 ~ */
-	/* F6 = ESC [ 6 ~ */
-	/* F7 = ESC [ 17 ~ */
-	/* F8 = ESC [ 18 ~ */
-	case '1': 
-	 	  switch (ch) {
-		  case '~': return(SF);
-		  case '7': (void) getchar(); return(MA);
-		  case '8': (void) getchar(); return(CTL);
-                  }
-	case '2': return(SR);
-	case '3': return(PD);
-	case '4': return(PU);
-	case '5': return(FS);
-	case '6': return(EF);
-#endif
-#endif
-#if (CHIP == INTEL)
+#if defined(__i386__)
 	case 'G': return(FS);
 	case 'S': return(SR);
 	case 'T': return(SF);
@@ -1593,23 +1559,6 @@ int c;
 	}
 	return(I);
   }
-#if (CHIP == M68000)
-#ifdef COMPAT
-  if (c == 'O') {
-	/* Start of ASCII function key escape sequence. */
-	switch (getchar()) {
-	case 'P': return(SF);
-	case 'Q': return(SR);
-	case 'R': return(PD);
-	case 'S': return(PU);
-	case 'T': return(FS);
-	case 'U': return(EF);
-	case 'V': return(MA);
-	case 'W': return(CTL);
-	}
-    }
-#endif
-#endif
   return(I);
 }
 

@@ -1,10 +1,6 @@
 #ifndef _MINIX_CONST_H
 #define _MINIX_CONST_H
 
-#ifndef _MINIX_CHIP
-#error _MINIX_CHIP is not defined
-#endif
-
 /* The UNUSED annotation tells the compiler or lint not to complain
  * about an unused variable or function parameter.
  *
@@ -79,11 +75,11 @@
 #define HAVE_SCATTERED_IO  1	/* scattered I/O is now standard */
 
 /* Memory is allocated in clicks. */
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
 #define CLICK_SIZE      4096	/* unit in which memory is allocated */
 #define CLICK_SHIFT       12	/* log2 of CLICK_SIZE */
 #else
-#error No reasonable CHIP setting.
+#error Unsupported arch
 #endif
 
 /* Click alignment macros. */

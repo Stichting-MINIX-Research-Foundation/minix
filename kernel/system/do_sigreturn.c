@@ -38,7 +38,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   sc.sc_psw  =  (sc.sc_psw & X86_FLAGS_USER) |
                 (rp->p_reg.psw & ~X86_FLAGS_USER);
 
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   /* Don't panic kernel if user gave bad selectors. */
   sc.sc_cs = rp->p_reg.cs;
   sc.sc_ds = rp->p_reg.ds;
@@ -52,7 +52,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 
   /* Restore the registers. */
   memcpy(&rp->p_reg, &sc.sc_regs, sizeof(sigregs));
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
   if(sc.sc_flags & MF_FPU_INITIALIZED)
   {
 	memcpy(rp->p_seg.fpu_state, &sc.sc_fpu_state, FPU_XFP_SIZE);

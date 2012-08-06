@@ -139,7 +139,7 @@ typedef struct rs232 {
   char *ohead;			/* next free spot in output buffer */
   char *otail;			/* next char to output */
 
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
   port_t xmit_port;		/* i/o ports */
   port_t recv_port;
   port_t div_low_port;
@@ -168,7 +168,7 @@ typedef struct rs232 {
 
 static rs232_t rs_lines[NR_RS_LINES];
 
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
 /* 8250 base addresses. */
 static port_t addr_8250[] = {
   0x3F8,	/* COM1 */
@@ -352,7 +352,7 @@ static void rs_config(rs232_t *rs)
 	speed_t	speed;
 	int	divisor;
   } s2d[] = {
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
 	{ B50,		UART_FREQ / 50		},
 #endif
 	{ B75,		UART_FREQ / 75		},
@@ -363,14 +363,14 @@ static void rs_config(rs232_t *rs)
 	{ B300,		UART_FREQ / 300		},
 	{ B600,		UART_FREQ / 600		},
 	{ B1200,	UART_FREQ / 1200	},
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
 	{ B1800,	UART_FREQ / 1800	},
 #endif
 	{ B2400,	UART_FREQ / 2400	},
 	{ B4800,	UART_FREQ / 4800	},
 	{ B9600,	UART_FREQ / 9600	},
 	{ B19200,	UART_FREQ / 19200	},
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
 	{ B38400,	UART_FREQ / 38400	},
 	{ B57600,	UART_FREQ / 57600	},
 	{ B115200,	UART_FREQ / 115200L	},

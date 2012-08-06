@@ -588,7 +588,7 @@ message *m_ptr;			/* pointer to message sent to task */
         size = sizeof(struct winsize);
         break;
 
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
     case KIOCSMAP:	/* load keymap (Minix extension) */
         size = sizeof(keymap_t);
         break;
@@ -681,7 +681,7 @@ message *m_ptr;			/* pointer to message sent to task */
 	sigchar(tp, SIGWINCH, 0);
 	break;
 
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
     case KIOCSMAP:
 	/* Load a new keymap (only /dev/console). */
 	if (isconsole(tp)) r = kbd_loadmap(m_ptr);

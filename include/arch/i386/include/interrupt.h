@@ -3,7 +3,7 @@
 #ifndef _INTERRUPT_H
 #define _INTERRUPT_H
 
-#if (CHIP == INTEL)
+#if defined(__i386__)
 
 /* 8259A interrupt controller ports. */
 #define INT_CTL         0x20	/* I/O port for interrupt controller */

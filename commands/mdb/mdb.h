@@ -48,12 +48,10 @@
 
 #undef printf		/* defined as printk in <minix/const.h> */
 
-#if (_MINIX_CHIP == _CHIP_INTEL)
-#if (MACHINE == IBM_PC)
+#if defined(__i386__)
 #define MINIX_PC
 #else
-#error "only the MINIX_PC 1.5.x and later versions works on *86's"
-#endif
+#error "Unsupported arch"
 #endif
 
 #ifdef MINIX_ST	
@@ -81,19 +79,11 @@
 #define CSEG		0x2E	/* 8088 through 80386 */
 #define DSEG		0x3E
 
-#if (_MINIX_CHIP == _CHIP_INTEL )
-#ifdef __i86
-#define N_REG16	2
-#endif
-#ifdef __i386
+#if defined(__i386__)
 #define N_REG16	4  /* 16 bit registers at start of stackframe */ 
 #endif
-#ifndef N_REG16
-#error "N_REG16 not defined"
-#endif
-#endif
 
-#if (_MINIX_CHIP == _CHIP_INTEL )
+#if defined(__i386__)
 #define ADDA(l) ((u16_t) (l) == 0xC481)
 
 #ifdef __i386

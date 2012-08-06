@@ -114,15 +114,12 @@ long magic;
   }
 
   /* Check CPU */
-#if (CHIP == INTEL)
+#if defined(__i386__)
 #if (_WORD_SIZE == 4)
   if (hdr->a_cpu != A_I80386)
 #else
   if (hdr->a_cpu != A_I8086)
 #endif
-#endif 
-#if (CHIP == M68000)
-  if (hdr->a_cpu != A_M68K)
 #endif 
   {
  	Printf("mdb: invalid cpu in exec header - %04x\n",

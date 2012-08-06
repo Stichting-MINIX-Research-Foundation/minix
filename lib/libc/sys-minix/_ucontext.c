@@ -88,7 +88,7 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
   }
 
   if (ucp->uc_mcontext.mc_magic == MCF_MAGIC) {
-#if (_MINIX_CHIP == _CHIP_INTEL)
+#if defined(__i386__)
 	/* The caller provides a pointer to a stack that we can use to run our
 	   context on. When the context starts, control is given to a wrapped 
 	   start routine, which calls a function and cleans up the stack

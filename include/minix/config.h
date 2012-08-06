@@ -17,14 +17,7 @@
  *
  */
 
-/* The MACHINE (called _MINIX_MACHINE) setting can be done
- * in <minix/machine.h>.
- */
 #include <minix/sys_config.h>
-
-#define MACHINE      _MINIX_MACHINE
-
-#define IBM_PC       _MACHINE_IBM_PC
 
 /* Number of slots in the process table for non-kernel processes. The number
  * of system processes defines how many processes with special privileges 
