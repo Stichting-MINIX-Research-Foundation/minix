@@ -13,7 +13,6 @@
 #include <minix/types.h>
 #endif
 
-#if _EM_WSIZE >= 4
 /* Ioctls have the command encoded in the low-order word, and the size
  * of the parameter in the high-order word. The 3 high bits of the high-
  * order word are used to encode the in/out/void status of the parameter.
@@ -55,15 +54,6 @@
 /* Recognize and decode size of a 'big' ioctl call. */
 #define _MINIX_IOCTL_BIG(i) 		((i) & _IOC_BIG)
 #define _MINIX_IOCTL_SIZE_BIG(i)	(((i) >> 8) & _IOCPARM_MASK_BIG)
-
-#else
-/* No fancy encoding on a 16-bit machine. */
-
-#define _IO(x,y)	((x << 8) | y)
-#define _IOR(x,y,t)	_IO(x,y)
-#define _IOW(x,y,t)	_IO(x,y)
-#define _IORW(x,y,t)	_IO(x,y)
-#endif
 
 __BEGIN_DECLS
 int ioctl(int _fd, int _request, void *_data);

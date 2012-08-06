@@ -68,7 +68,7 @@
 #define PC_OFF ((long)&((struct proc *)0)->p_reg.pc)
 #endif
 
-#define ADDRSIZE	_WORD_SIZE
+#define ADDRSIZE	(sizeof(void *))
 #define BITSIZE(size)	(8 * (size))
 #define INTSIZE		(sizeof(int))	/* not quite right for cross-debugger */
 #define LONGSIZE	(sizeof(long))

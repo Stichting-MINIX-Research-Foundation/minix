@@ -2170,9 +2170,7 @@ int do_dma;
    */
   sys_setalarm(wakeup_ticks, 0);
 
-#if _WORD_SIZE > 2
   if (cnt > 0xFFFE) cnt = 0xFFFE;	/* Max data per interrupt. */
-#endif
 
   w_command = ATAPI_PACKETCMD;
   pv_set(outbyte[0], wn->base_cmd + REG_FEAT, do_dma ? FEAT_DMA : 0);

@@ -44,10 +44,8 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   sc.sc_ds = rp->p_reg.ds;
   sc.sc_es = rp->p_reg.es;
   sc.sc_ss = rp->p_reg.ss;
-#if _WORD_SIZE == 4
   sc.sc_fs = rp->p_reg.fs;
   sc.sc_gs = rp->p_reg.gs;
-#endif
 #endif
 
   /* Restore the registers. */

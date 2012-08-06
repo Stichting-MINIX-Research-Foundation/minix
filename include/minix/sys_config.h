@@ -4,11 +4,6 @@
 /*===========================================================================*
  *		This section contains user-settable parameters		     *
  *===========================================================================*/
-/* Word size in bytes (a constant equal to sizeof(int)). */
-#if __ACK__ || __GNUC__
-#define _WORD_SIZE	_EM_WSIZE
-#define _PTR_SIZE	_EM_WSIZE
-#endif
 
 #define _NR_PROCS	256
 #define _NR_SYS_PROCS	64

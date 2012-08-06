@@ -13,8 +13,4 @@
  * the bytes in the pointer are the same, just in case.
  */
 
-#if _EM_PSIZE==2
-char **environ = (char **) 0x5353;
-#else
 char **environ = (char **) 0x53535353;
-#endif

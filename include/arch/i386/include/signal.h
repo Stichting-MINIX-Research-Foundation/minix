@@ -33,10 +33,8 @@ struct sigcontext {
   union fpu_state_u sc_fpu_state;
 };
 
-#if _WORD_SIZE == 4
 #define sc_gs sc_regs.gs
 #define sc_fs sc_regs.fs
-#endif /* _WORD_SIZE == 4 */
 #define sc_es sc_regs.es
 #define sc_ds sc_regs.ds
 #define sc_di sc_regs.di

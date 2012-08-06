@@ -12,11 +12,7 @@
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 
-#if _EM_WSIZE > 2
 #define ARG_MAX 	262144 /* # bytes of args + environ for exec() */
-#else
-#define ARG_MAX 	4096	/* args + environ on small machines */
-#endif
 
 #ifndef CHILD_MAX
 #define	CHILD_MAX	_NO_LIMIT /* max simultaneous processes */

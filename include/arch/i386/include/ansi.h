@@ -52,11 +52,7 @@
 
 #define _BSD_CLOCK_T_		long
 
-#if _EM_PSIZE == _EM_WSIZE
 #define _BSD_PTRDIFF_T_ 	int
-#else /* _EM_PSIZE == _EM_LSIZE */
-#define _BSD_PTRDIFF_T_ 	long
-#endif
 
 #define _BSD_SIZE_T_		unsigned int
 #define	_BSD_SSIZE_T_		int

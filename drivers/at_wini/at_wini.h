@@ -191,11 +191,7 @@
 /* Miscellaneous. */
 #define MAX_DRIVES         8
 #define COMPAT_DRIVES      4
-#if _WORD_SIZE > 2
 #define MAX_SECS	 256	/* controller can transfer this many sectors */
-#else
-#define MAX_SECS	 127	/* but not to a 16 bit process */
-#endif
 #define MAX_ERRORS         4	/* how often to try rd/wt before quitting */
 #define NR_MINORS       (MAX_DRIVES * DEV_PER_DRIVE)
 #define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)

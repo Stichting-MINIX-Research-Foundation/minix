@@ -931,11 +931,7 @@ opcode_pt wordflags;
 	else if (mod == MEM2_MOD)
 	{
 	    outbyte('+');
-#if (_WORD_SIZE == 4)
 	    out32offset();
-#else
-	    outgetaddr();
-#endif
 	}
 	outbyte(RINDIRECT);
 	if (hasize == 16 && rm == 4 && index == 4 && ss != 0)
@@ -950,8 +946,6 @@ static void outf1()
     outbyte(')');
 }
 
-#if (_WORD_SIZE == 4)
-
 static void out32offset()
 {
     off_t off;
@@ -963,7 +957,6 @@ static void out32offset()
 
     outh32(off);
 }
-#endif
 
 static void outfishy()
 {
@@ -1425,11 +1418,7 @@ long addr;
 int count;
 int symflg;
 {
-#if (_WORD_SIZE == 4)
 	bits32 = TRUE;		/* Set mode */
-#else
-	bits32 = FALSE;
-#endif
 	uptr.off = addr;
 	uptr.base = 0;		/* not known */
 	while ( count-- != 0 && show1instruction() )
