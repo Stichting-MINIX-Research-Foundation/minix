@@ -47,7 +47,7 @@ int do_fork()
   register struct mproc *rmp;	/* pointer to parent */
   register struct mproc *rmc;	/* pointer to child */
   pid_t new_pid;
-  static int next_child = 0;
+  static unsigned int next_child = 0;
   int i, n = 0, s;
   endpoint_t child_ep;
   message m;
@@ -70,8 +70,7 @@ int do_fork()
   } while((mproc[next_child].mp_flags & IN_USE) && n <= NR_PROCS);
   if(n > NR_PROCS)
 	panic("do_fork can't find child slot");
-  if(next_child < 0 || next_child >= NR_PROCS
- || (mproc[next_child].mp_flags & IN_USE))
+  if(next_child >= NR_PROCS || (mproc[next_child].mp_flags & IN_USE))
 	panic("do_fork finds wrong child slot: %d", next_child);
 
   /* Memory part of the forking. */
@@ -146,7 +145,7 @@ int do_srv_fork()
   register struct mproc *rmc;	/* pointer to child */
   int s;
   pid_t new_pid;
-  static int next_child = 0;
+  static unsigned int next_child = 0;
   int i, n = 0;
   endpoint_t child_ep;
   message m;
@@ -173,8 +172,7 @@ int do_srv_fork()
   } while((mproc[next_child].mp_flags & IN_USE) && n <= NR_PROCS);
   if(n > NR_PROCS)
 	panic("do_fork can't find child slot");
-  if(next_child < 0 || next_child >= NR_PROCS
- || (mproc[next_child].mp_flags & IN_USE))
+  if(next_child >= NR_PROCS || (mproc[next_child].mp_flags & IN_USE))
 	panic("do_fork finds wrong child slot: %d", next_child);
 
   if((s=vm_fork(rmp->mp_endpoint, next_child, &child_ep)) != OK) {
