@@ -399,7 +399,7 @@ int do_semctl(message *m)
 			printf("SEMCTL: SETALL val: [%d] %d\n", i, buf[i]);
 #endif
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++) {
-			if (buf[i] < 0 || buf[i] > SEMVMX) {
+			if (buf[i] > SEMVMX) {
 				free(buf);
 				update_semaphores();
 				return ERANGE;
@@ -485,8 +485,7 @@ int do_semop(message *m)
 	/* check for value range */
 	r = EFBIG;
 	for (i = 0; i < nsops; i++)
-		if (sops[i].sem_num < 0 ||
-				sops[i].sem_num >= sem->semid_ds.sem_nsems)
+		if (sops[i].sem_num >= sem->semid_ds.sem_nsems)
 			goto out_free;
 
 	/* check for duplicate number */
