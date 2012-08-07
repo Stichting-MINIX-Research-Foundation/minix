@@ -58,7 +58,7 @@ void sef_startup()
       &priv_flags);
   if ( r != OK) {
       sef_self_endpoint = SELF;
-      sprintf(sef_self_name, "%s", "Unknown");
+      strlcpy(sef_self_name, "Unknown", sizeof(sef_self_name));
   }
   sef_self_priv_flags = priv_flags;
   old_endpoint = NONE;
@@ -302,8 +302,9 @@ char* sef_debug_header(void)
 {
 /* Build and return a SEF debug header. */
   sef_debug_refresh_params();
-  sprintf(sef_debug_header_buff, "%s: time = %ds %06dus", 
-      sef_self_name, (int) sef_debug_time_sec, (int) sef_debug_time_us);
+  snprintf(sef_debug_header_buff, sizeof(sef_debug_header_buff),
+      "%s: time = %ds %06dus", sef_self_name, (int) sef_debug_time_sec,
+      (int) sef_debug_time_us);
 
   return sef_debug_header_buff;
 }

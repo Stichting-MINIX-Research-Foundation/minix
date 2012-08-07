@@ -21,7 +21,6 @@ int sched_inherit(endpoint_t scheduler_e,
 	assert(_ENDPOINT_P(scheduler_e) >= 0);
 	assert(_ENDPOINT_P(schedulee_e) >= 0);
 	assert(_ENDPOINT_P(parent_e) >= 0);
-	assert(maxprio >= 0);
 	assert(maxprio < NR_SCHED_QUEUES);
 	assert(newscheduler_e);
 	

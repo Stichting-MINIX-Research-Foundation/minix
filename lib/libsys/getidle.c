@@ -84,6 +84,4 @@ double getidle(void)
 
 	return rfp;
   }
-
-  running = !running;
 }

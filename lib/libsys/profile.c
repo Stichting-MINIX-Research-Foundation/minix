@@ -146,7 +146,7 @@ void procentry (char *name)
 	}
 	/* Set values for new slot. */
 	cprof_slot = &cprof_tbl[control.slots_used++];
-	strcpy(cprof_slot->cpath, cpath);
+	strlcpy(cprof_slot->cpath, cpath, sizeof(cprof_slot->cpath));
 	cprof_slot->calls = 1;
 
 	/* Update index. */

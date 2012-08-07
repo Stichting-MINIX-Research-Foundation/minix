@@ -18,7 +18,8 @@ void ser_putc(char c)
         thr= COM1_THR;
         for (i= 0; i<10000; i++)
         {
-                sys_inb(lsr, &b);
+                if (sys_inb(lsr, &b) != OK)
+			return;
                 if (b & LSR_THRE)
                         break;
         }
