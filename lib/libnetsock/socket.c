@@ -319,19 +319,19 @@ static void socket_request_socket(struct socket * sock, message * m)
 
 	switch (m->m_type) {
 	case DEV_READ_S:
-		if (sock && sock->ops && sock->ops->read)
+		if (sock->ops && sock->ops->read)
 			sock->ops->read(sock, m, blocking);
 		else
 			send_reply(m, EINVAL);
 		return;
 	case DEV_WRITE_S:
-		if (sock && sock->ops && sock->ops->write)
+		if (sock->ops && sock->ops->write)
 			sock->ops->write(sock, m, blocking);
 		else
 			send_reply(m, EINVAL);
 		return;
 	case DEV_IOCTL_S:
-		if (sock && sock->ops && sock->ops->ioctl)
+		if (sock->ops && sock->ops->ioctl)
 			sock->ops->ioctl(sock, m, blocking);
 		else
 			send_reply(m, EINVAL);
@@ -352,7 +352,7 @@ void socket_request(message * m)
 		return;
 	case DEV_CLOSE:
 		sock = get_sock(m->DEVICE);
-		if (sock && sock->ops && sock->ops->close) {
+		if (sock->ops && sock->ops->close) {
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			sock->mess = *m;
 			sock->ops->close(sock, m);
@@ -419,7 +419,7 @@ void socket_request(message * m)
 		sock = get_sock(m->DEVICE);
 		assert(sock->select_ep == NONE || sock->select_ep == m->m_source);
 
-		if (sock && sock->ops && sock->ops->select) {
+		if (sock->ops && sock->ops->select) {
 			sock->select_ep = m->m_source;
 			sock->ops->select(sock, m);
 			if (!sock_select_set(sock))
