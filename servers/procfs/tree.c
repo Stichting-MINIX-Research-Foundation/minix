@@ -411,14 +411,14 @@ static void pid_read(struct inode *node)
 /*===========================================================================*
  *				pid_link				     *
  *===========================================================================*/
-static int pid_link(struct inode *UNUSED(node), char *ptr, int UNUSED(max))
+static int pid_link(struct inode *UNUSED(node), char *ptr, int max)
 {
 	/* The contents of a symbolic link in a PID directory are requested.
 	 * This function is a placeholder for future use.
 	 */
 
 	/* Nothing yet. */
-	strcpy(ptr, "");
+	strlcpy(ptr, "", max);
 
 	return OK;
 }
