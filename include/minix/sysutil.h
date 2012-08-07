@@ -56,8 +56,6 @@ int tsc_calibrate(void);
 u32_t sys_hz(void);
 double getidle(void);
 void util_stacktrace(void);
-void util_nstrcat(char *str, unsigned long n);
-void util_stacktrace_strcat(char *);
 int micro_delay(u32_t micros);
 u32_t tsc_64_to_micros(u64_t tsc);
 u32_t tsc_to_micros(u32_t low, u32_t high);
