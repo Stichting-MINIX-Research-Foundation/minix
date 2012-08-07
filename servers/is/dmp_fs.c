@@ -62,7 +62,7 @@ void fproc_dmp()
 static char * dmap_flags(int flags)
 {
 	static char fl[10];
-	strcpy(fl, "-----");
+	strlcpy(fl, "-----", sizeof(fl));
 	if(flags & DRV_FORCED)  fl[0] = 'F';
 	return fl;
 }
@@ -72,18 +72,15 @@ static char * dmap_flags(int flags)
  *===========================================================================*/
 static char * dmap_style(int dev_style)
 {
-	static char str[16];
 	switch(dev_style) {
-	case STYLE_DEV:	   strcpy(str, "STYLE_DEV"); break;
-	case STYLE_DEVA:   strcpy(str, "STYLE_DEVA"); break;
-	case STYLE_TTY:    strcpy(str, "STYLE_TTY"); break;
-	case STYLE_CTTY:   strcpy(str, "STYLE_CTTY"); break;
-	case STYLE_CLONE:  strcpy(str, "STYLE_CLONE"); break;
-	case STYLE_CLONE_A:  strcpy(str, "STYLE_CLONE_A"); break;
-	default:           strcpy(str, "UNKNOWN"); break;
+	case STYLE_DEV:	     return "STYLE_DEV";
+	case STYLE_DEVA:     return "STYLE_DEVA";
+	case STYLE_TTY:      return "STYLE_TTY";
+	case STYLE_CTTY:     return "STYLE_CTTY";
+	case STYLE_CLONE:    return "STYLE_CLONE";
+	case STYLE_CLONE_A:  return "STYLE_CLONE_A";
+	default:             return "UNKNOWN";
 	}
-
-	return str;
 }
 
 /*===========================================================================*

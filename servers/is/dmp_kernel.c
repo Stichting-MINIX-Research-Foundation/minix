@@ -63,7 +63,7 @@ extern struct minix_kerninfo *_minix_kerninfo;
 void kmessages_dmp()
 {
   struct kmessages *kmess;		/* get copy of kernel messages */
-  char print_buf[_KMESS_BUF_SIZE+1];	/* this one is used to print */
+  static char print_buf[_KMESS_BUF_SIZE+1]; /* this one is used to print */
   int start;				/* calculate start of messages */
   int r;
   int size;

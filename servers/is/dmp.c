@@ -99,11 +99,11 @@ static char *key_name(int key)
 	static char name[15];
 
 	if(key >= F1 && key <= F12)
-		sprintf(name, " F%d", key - F1 + 1);
+		snprintf(name, sizeof(name), " F%d", key - F1 + 1);
 	else if(key >= SF1 && key <= SF12)
-		sprintf(name, "Shift+F%d", key - SF1 + 1);
+		snprintf(name, sizeof(name), "Shift+F%d", key - SF1 + 1);
 	else
-		sprintf(name, "?");
+		strlcpy(name, "?", sizeof(name));
 	return name;
 }
 
