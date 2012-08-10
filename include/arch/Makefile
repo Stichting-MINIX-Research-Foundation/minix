@@ -53,7 +53,7 @@ SUBDIR+= xen
 #	x68k x86_64 xen \
 #	zaurus
 
-INCSYMLINKS= ${MACHINE} /usr/include/machine
+INCSYMLINKS= ${MACHINE_ARCH} /usr/include/machine
 
 INCSYMLINKS+= machine/float.h /usr/include/float.h \
        machine/stdarg.h /usr/include/stdarg.h

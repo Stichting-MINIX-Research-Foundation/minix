@@ -10,13 +10,11 @@ CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
 
 LIBCSRCDIR=${NETBSDSRCDIR}/lib/libc
 
-MACHINE_ARCH=${MACHINE}
-
 #
 # Shared libc with userspace (/common/lib/libc)
 #
 .include "${NETBSDSRCDIR}/common/lib/libc/Makefile.inc"
-.include "${.CURDIR}/arch/${MACHINE}/Makefile.libc.inc"
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.libc.inc"
 .if empty(SRCS:Mbyte_swap_8.*)
 SRCS+= bswap64.c
 .endif
@@ -88,8 +86,8 @@ CLEANFILES+=	errlist.c
 	isnanf_ieee754.c isnand_ieee754.c \
 	isfinitef_ieee754.c isfinited_ieee754.c \
 	signbitf_ieee754.c signbitd_ieee754.c \
-	nanf.c infinityl.c 
-.PATH.c: ${LIBCSRCDIR}/arch/${MACHINE}/gen ${LIBCSRCDIR}/gen/minix \
+	nanf.c
+.PATH.c: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen/minix \
 	${LIBCSRCDIR}/gen ${LIBCSRCDIR}
 SRCS+= ${i}
 CPPFLAGS.${i}+= -I${LIBCSRCDIR}/include
@@ -106,8 +104,8 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/include
 .endfor
 # Import from string
 .for i in strcspn.c strerror.c strerror_r.c strtol.c \
-	bcmp.S bcopy.S bzero.S 
-.PATH.S: ${LIBCSRCDIR}/arch/${MACHINE}/string
+	bcopy.S bzero.S
+.PATH.S: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string
 .PATH.c: ${LIBCSRCDIR}/string
 SRCS+= ${i}
 CPPFLAGS.${i}+= -D_LIBC -I${LIBCSRCDIR}/include
@@ -133,7 +131,7 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/include -I${LIBCSRCDIR}/locale
 	stime.c syscall.c _ucontext.c umask.c unlink.c waitpid.c \
 	brksize.S _ipc.S _senda.S ucontext.S mmap.c init.c
 .PATH.c: ${LIBCSRCDIR}/sys-minix
-.PATH.S: ${LIBCSRCDIR}/arch/${MACHINE}/sys-minix
+.PATH.S: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/sys-minix
 SRCS+= ${i}
 CPPFLAGS.${i}+= -I${LIBCSRCDIR}/include
 .endfor
