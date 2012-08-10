@@ -744,7 +744,7 @@ mount /dev/$usr /mnt/usr >/dev/null || exit
 # XXX we have to use "-f" here, because installboot worries about BPB, which
 # we don't have...
 installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
-cp /mnt/usr/src/etc/boot.cfg.default /mnt/boot.cfg
+cp /mnt/etc/boot.cfg.default /mnt/boot.cfg
 chroot /mnt update_bootcfg
 
 # Save name of CD drive
