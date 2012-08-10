@@ -23,7 +23,7 @@
 #define EMEM			3
 #define EOUTFILE		4
 #define EFREQ			5
-#define EACTION			6	
+#define EACTION			6
 
 #define START			1
 #define STOP			2
@@ -75,13 +75,15 @@ int create_named_pipe(void);
 int alloc_mem(void);
 int init_outfile(void);
 int write_outfile(void);
-int detach(void);
+int write_outfile_cprof(void);
+int write_outfile_sprof(void);
+void detach(void);
 
 int main(int argc, char *argv[])
 {
   int res;
 
-  if (res = handle_args(argc, argv)) {
+  if ((res = handle_args(argc, argv))) {
 	switch(res) {
 		case ESYNTAX:
 			printf("Error in parameters.\n");
@@ -111,7 +113,7 @@ int main(int argc, char *argv[])
 	 * Check the frequency when we know the intr type. Only selected values
 	 * are correct for RTC
 	 */
-	if (action == START && intr_type == PROF_RTC && 
+	if (action == START && intr_type == PROF_RTC &&
 			(freq < MIN_FREQ || freq > MAX_FREQ)) {
 		printf("Incorrect frequency.\n");
 		return 1;
@@ -205,7 +207,7 @@ int handle_args(int argc, char *argv[])
 	       	action = RESET;
 	}
   }
-  
+
   /* No action specified. */
   if (!action) return EHELP;
 
@@ -220,7 +222,7 @@ int handle_args(int argc, char *argv[])
 	if (freq == 0) freq = DEF_FREQ;		   /* default frequency */
   }
   return 0;
-}      
+}
 
 
 int start()
@@ -247,7 +249,7 @@ int start()
 
   if (sprofile(PROF_START, mem_size, freq, intr_type, &sprof_info, mem_ptr)) {
 	perror("sprofile");
-	printf("Error starting profiling.\n");
+	fprintf(stderr, "Error starting profiling.\n");
 	return 1;
   }
 
@@ -259,7 +261,7 @@ int start()
   dup2(log_fd, 2);
 
   if ((npipe_fd = open(NPIPE, O_WRONLY)) < 0) {
-	printf("Unable to open named pipe %s.\n", NPIPE);
+	fprintf(stderr, "Unable to open named pipe %s.\n", NPIPE);
 	return 1;
   } else
 	/* Synchronize with stopper process. */
@@ -272,9 +274,9 @@ int start()
   mem_used = sprof_info.mem_used;
 
   if (mem_used == -1) {
-	  printf("WARNING: Profiling was stopped prematurely due to ");
-	  printf("insufficient memory.\n");
-	  printf("Try increasing available memory using the -m switch.\n");
+	  fprintf(stderr, "WARNING: Profiling was stopped prematurely due to ");
+	  fprintf(stderr, "insufficient memory.\n");
+	  fprintf(stderr, "Try increasing available memory using the -m switch.\n");
   }
 
   if (write_outfile()) return 1;
@@ -303,12 +305,12 @@ int stop()
 
   if (sprofile(PROF_STOP, 0, 0, 0, 0, 0)) {
 	perror("sprofile");
-	printf("Error stopping profiling.\n");
+	fprintf(stderr, "Error stopping profiling.\n");
   	return 1;
   } else printf("Statistical profiling stopped.\n");
 
   if ((npipe_fd = open(NPIPE, O_RDONLY)) < 0) {
-	printf("Unable to open named pipe %s.\n", NPIPE);
+	fprintf(stderr, "Unable to open named pipe %s.\n", NPIPE);
 	return 1;
   } else
 	/* Synchronize with starter process. */
@@ -338,26 +340,26 @@ int get()
 
   if (cprofile(PROF_GET, mem_size, &cprof_info, mem_ptr)) {
 	perror("cprofile");
-	printf("Error getting data.\n");
+	fprintf(stderr, "Error getting data.\n");
 	return 1;
   }
 
   mem_used = cprof_info.mem_used;
 
   if (mem_used == -1) {
-	printf("ERROR: unable to get data due to insufficient memory.\n");
-	printf("Try increasing available memory using the -m switch.\n");
+	fprintf(stderr, "ERROR: unable to get data due to insufficient memory.\n");
+	fprintf(stderr, "Try increasing available memory using the -m switch.\n");
   } else
   if (cprof_info.err) {
-	printf("ERROR: the following error(s) happened during profiling:\n");
+	fprintf(stderr, "ERROR: the following error(s) happened during profiling:\n");
 	if (cprof_info.err & CPROF_CPATH_OVERRUN)
-		printf(" call path overrun\n");
+		fprintf(stderr, " call path overrun\n");
 	if (cprof_info.err & CPROF_STACK_OVERRUN)
-		printf(" call stack overrun\n");
+		fprintf(stderr, " call stack overrun\n");
 	if (cprof_info.err & CPROF_TABLE_OVERRUN)
-		printf(" hash table overrun\n");
-	printf("Try changing values in /usr/src/include/minix/profile.h ");
-	printf("and then rebuild the system.\n");
+		fprintf(stderr, " hash table overrun\n");
+	fprintf(stderr, "Try changing values in /usr/src/include/minix/profile.h ");
+	fprintf(stderr, "and then rebuild the system.\n");
   } else
   if (write_outfile()) return 1;
 
@@ -378,7 +380,7 @@ int reset()
 
   if (cprofile(PROF_RESET, 0, 0, 0)) {
 	perror("cprofile");
-	printf("Error resetting data.\n");
+	fprintf(stderr, "Error resetting data.\n");
 	return 1;
   }
 
@@ -389,8 +391,8 @@ int reset()
 int alloc_mem()
 {
   if ((mem_ptr = malloc(mem_size)) == 0) {
-	printf("Unable to allocate memory.\n");
-	printf("Used chmem to increase available proces memory?\n");
+	fprintf(stderr, "Unable to allocate memory.\n");
+	fprintf(stderr, "Used chmem to increase available proces memory?\n");
 	return 1;
   } else memset(mem_ptr, '\0', mem_size);
 
@@ -401,7 +403,7 @@ int alloc_mem()
 int init_outfile()
 {
   if ((outfile_fd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY)) <= 0) {
-	printf("Unable to create outfile %s.\n", outfile);
+	fprintf(stderr, "Unable to create outfile %s.\n", outfile);
 	return 1;
   } else chmod(outfile, S_IRUSR | S_IWUSR);
 
@@ -412,14 +414,14 @@ int init_outfile()
 int create_named_pipe()
 {
   if ((mkfifo(NPIPE, S_IRUSR | S_IWUSR) == -1) && (errno != EEXIST)) {
-	printf("Unable to create named pipe %s.\n", NPIPE);
+	fprintf(stderr, "Unable to create named pipe %s.\n", NPIPE);
 	return 1;
   } else
 	return 0;
 }
 
 
-int detach()
+void detach()
 {
   setsid();
   (void) chdir("/");
@@ -456,26 +458,46 @@ static char * get_proc_name(endpoint_t ep)
 
 int write_outfile()
 {
-  int n, towrite, written = 0;
-  char *buf = mem_ptr;
+  ssize_t n;
+  int written;
   char header[80];
-  struct sprof_sample *sample;
 
   printf("Writing to %s ...", outfile);
 
   /* Write header. */
   if (SPROF)
-	sprintf(header, "stat\n%d %d %d %d\n",	sprof_info.total_samples,
-						sprof_info.idle_samples,
-					  	sprof_info.system_samples,
-					  	sprof_info.user_samples);
+	sprintf(header, "stat\n%u %u %u\n",	sizeof(struct sprof_info_s),
+						sizeof(struct sprof_sample),
+					  	sizeof(struct sprof_proc));
   else
 	sprintf(header, "call\n%u %u\n",
 				CPROF_CPATH_MAX_LEN, CPROF_PROCNAME_LEN);
 
   n = write(outfile_fd, header, strlen(header));
 
-  if (n < 0) { printf("Error writing to outfile %s.\n", outfile); return 1; }
+  if (n < 0) {
+	fprintf(stderr, "Error writing to outfile %s.\n", outfile);
+	return 1;
+  }
+
+  /* for sprofile, raw data will do; cprofile is handled by a script that needs
+   * some preprocessing to be done by us
+   */
+  if (SPROF) {
+	written = write_outfile_sprof();
+  } else {
+	written = write_outfile_cprof();
+  }
+  if (written < 0) return -1;
+
+  printf(" header %d bytes, data %d bytes.\n", strlen(header), written);
+  return 0;
+}
+
+int write_outfile_cprof()
+{
+  int towrite, written = 0;
+  struct sprof_sample *sample;
 
   /* Write data. */
   towrite = mem_used == -1 ? mem_size : mem_used;
@@ -500,8 +522,8 @@ int write_outfile()
 	  memcpy(entry + 8, &sample->pc, 4);
 
 	  if (write(outfile_fd, entry, 12) != 12) {
-		  printf("Error writing to outfile %s.\n", outfile);
-		  return 1;
+		  fprintf(stderr, "Error writing to outfile %s.\n", outfile);
+		  return -1;
 	  }
 	  towrite -= sizeof(struct sprof_sample);
 	  sample++;
@@ -509,8 +531,28 @@ int write_outfile()
 	  written += 12;
   }
 
-  printf(" header %d bytes, data %d bytes.\n", strlen(header), written);
-
-  return 0;
+  return written;
 }
 
+int write_outfile_sprof()
+{
+  int towrite;
+  ssize_t written, written_total = 0;
+
+  /* write profiling totals */
+  written = write(outfile_fd, &sprof_info, sizeof(sprof_info));
+  if (written != sizeof(sprof_info)) goto error;
+  written_total += written;
+
+  /* write raw samples */
+  towrite = mem_used == -1 ? mem_size : mem_used;
+  written = write(outfile_fd, mem_ptr, towrite);
+  if (written != towrite) goto error;
+  written_total += written;
+
+  return written_total;
+
+error:
+  fprintf(stderr, "Error writing to outfile %s.\n", outfile);
+  return -1;
+}

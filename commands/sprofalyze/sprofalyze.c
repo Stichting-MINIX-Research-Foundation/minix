@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <minix/profile.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,8 @@
 
 /* user-configurable settings */
 #define BINARY_HASHTAB_SIZE 1024
+
+#define ENDPOINT_HASHTAB_SIZE 1024
 
 #define DEBUG 0
 
@@ -23,8 +26,6 @@ static const char *default_binaries[] = {
 static const char *src_path = "/usr/src";
 
 /* types */
-
-#define BINARY_NAME_SIZE 8
 
 #define LINE_WIDTH 80
 
@@ -56,7 +57,7 @@ struct pc_map_l1 {
 };
 
 struct binary_info {
-	char name[BINARY_NAME_SIZE];
+	char name[PROC_NAME_LEN];
 	const char *path;
 	int samples;
 	struct symbol_count *symbols;
@@ -66,16 +67,23 @@ struct binary_info {
 	char no_more_warnings;
 };
 
-struct trace_sample {
-	char name[BINARY_NAME_SIZE];
-	uint32_t pc;
+struct endpoint_info {
+	endpoint_t endpoint;
+	struct binary_info *binary;
+	struct endpoint_info *hashtab_next;
+};
+
+union sprof_record {
+	struct sprof_sample sample;
+	struct sprof_proc proc;
 };
 
 /* global variables */
 static struct binary_info *binaries;
 static struct binary_info *binary_hashtab[BINARY_HASHTAB_SIZE];
+static struct endpoint_info *endpoint_hashtab[ENDPOINT_HASHTAB_SIZE];
 static double minimum_perc = 1.0;
-static int samples_idle, samples_system, samples_total, samples_user;
+static struct sprof_info_s sprof_info;
 
 /* prototypes */
 static struct binary_info *binary_add(const char *path);
@@ -87,6 +95,8 @@ static const char *binary_name(const char *path);
 static int compare_binaries(const void *p1, const void *p2);
 static int compare_symbols(const void *p1, const void *p2);
 static int count_symbols(const struct binary_info *binary, int threshold);
+static void dprint_symbols(const struct binary_info *binary);
+static struct endpoint_info **endpoint_hashtab_get_ptr(endpoint_t endpoint);
 static void load_trace(const char *path);
 static void *malloc_checked(size_t size);
 static unsigned name_hash(const char *name);
@@ -103,7 +113,11 @@ static int read_newline(FILE *file);
 static void read_nm_line(FILE *file, int line, char *name, char *type,
 	unsigned long *addr, unsigned long *size);
 static void read_to_whitespace(FILE *file, char *buffer, size_t size);
-static void sample_store(const struct trace_sample *sample);
+static size_t sample_process(const union sprof_record *data, size_t size,
+	int *samples_read);
+static struct binary_info *sample_load_binary(const struct sprof_proc *sample);
+static void sample_store(struct binary_info *binary,
+	const struct sprof_sample *sample);
 static char *strdup_checked(const char *s);
 static void usage(const char *argv0);
 
@@ -181,7 +195,7 @@ static struct binary_info *binary_add(const char *path) {
 	/* get filename */
 	name = binary_name(path);
 	dprintf("adding binary \"%s\" with name \"%.*s\"\n",
-		path, BINARY_NAME_SIZE, name);
+		path, PROC_NAME_LEN, name);
 	if (strlen(name) == 0) {
 		fprintf(stderr, "error: path \"%s\" does not "
 			"contain a filename\n", path);
@@ -195,7 +209,7 @@ static struct binary_info *binary_add(const char *path) {
 			"previously specified\n", path, (*ptr)->path);
 		return *ptr;
 	}
-	dprintf("using %.*s from \"%s\"\n", BINARY_NAME_SIZE, name, path);
+	dprintf("using %.*s from \"%s\"\n", PROC_NAME_LEN, name, path);
 
 	/* allocate new binary_info */
 	binary = MALLOC_CHECKED(struct binary_info, 1);
@@ -232,7 +246,7 @@ static struct binary_info *binary_find(const char *name) {
 
 	/* search for it */
 	dprintf("searching for binary \"%.*s\" in \"%s\"\n",
-		BINARY_NAME_SIZE, name, src_path);
+		PROC_NAME_LEN, name, src_path);
 	for (i = 0; i < LENGTHOF(default_binaries); i++) {
 		snprintf(path, sizeof(path), "%s/%s", src_path,
 			default_binaries[i]);
@@ -241,7 +255,7 @@ static struct binary_info *binary_find(const char *name) {
 		if (*current_name) {
 			/* paths not ending in slash: use if name matches */
 			if (strncmp(name, current_name,
-				BINARY_NAME_SIZE) != 0) {
+				PROC_NAME_LEN) != 0) {
 				continue;
 			}
 		} else {
@@ -250,8 +264,8 @@ static struct binary_info *binary_find(const char *name) {
 			 */
 			path_end = path + strlen(path);
 			snprintf(path_end, sizeof(path) - (path_end - path),
-				"%.*s/%.*s", BINARY_NAME_SIZE, name,
-				BINARY_NAME_SIZE, name);
+				"%.*s/%.*s", PROC_NAME_LEN, name,
+				PROC_NAME_LEN, name);
 		}
 
 		/* use access to find out whether the binary exists and is
@@ -278,11 +292,11 @@ static struct binary_info **binary_hashtab_get_ptr(const char *name) {
 	/* get pointer to location of the binary in hash table */
 	ptr = &binary_hashtab[name_hash(name) % BINARY_HASHTAB_SIZE];
 	while ((binary = *ptr) && strncmp(binary->name, name,
-		BINARY_NAME_SIZE) != 0) {
+		PROC_NAME_LEN) != 0) {
 		ptr = &binary->hashtab_next;
 	}
-	dprintf("looked up \"%.*s\" in hash table, %sfound\n",
-		BINARY_NAME_SIZE, name, *ptr ? "" : "not ");
+	dprintf("looked up binary \"%.*s\" in hash table, %sfound\n",
+		PROC_NAME_LEN, name, *ptr ? "" : "not ");
 	return ptr;
 }
 
@@ -306,12 +320,9 @@ static void binary_load_pc_map(struct binary_info *binary_info) {
 
 	/* does the file exist? */
 	if (access(binary_info->path, R_OK) < 0) {
-		if (!binary_info->no_more_warnings) {
-			fprintf(stderr, "warning: \"%s\" does not exist or "
-				"not readable.\n", binary_info->path);
-			fprintf(stderr, "         Did you do a make?\n");
-			binary_info->no_more_warnings = 1;
-		}
+		fprintf(stderr, "warning: \"%s\" does not exist or "
+			"not readable.\n", binary_info->path);
+		fprintf(stderr, "         Did you do a make?\n");
 		return;
 	}
 
@@ -425,11 +436,37 @@ static int count_symbols(const struct binary_info *binary, int threshold) {
 	return result;
 }
 
+static void dprint_symbols(const struct binary_info *binary) {
+#if DEBUG
+	const struct symbol_count *symbol;
+	
+	for (symbol = binary->symbols; symbol; symbol = symbol->next) {
+		dprintf("addr=0x%.8lx samples=%8d name=\"%.*s\"\n",
+			(unsigned long) symbol->addr, symbol->samples,
+			SYMBOL_NAME_SIZE, symbol->name);
+	}
+#endif
+}
+
+static struct endpoint_info **endpoint_hashtab_get_ptr(endpoint_t endpoint) {
+	struct endpoint_info *epinfo, **ptr;
+
+	/* get pointer to location of the binary in hash table */
+	ptr = &endpoint_hashtab[(unsigned) endpoint % ENDPOINT_HASHTAB_SIZE];
+	while ((epinfo = *ptr) && epinfo->endpoint != endpoint) {
+		ptr = &epinfo->hashtab_next;
+	}
+	dprintf("looked up endpoint %ld in hash table, %sfound\n",
+		(long) endpoint, *ptr ? "" : "not ");
+	return ptr;
+}
+
 static void load_trace(const char *path) {
+	char buffer[1024];
+	size_t bufindex, bufsize;
 	FILE *file;
-	int s_idle, s_system, s_total, s_user;
+	unsigned size_info, size_sample, size_proc;
 	int samples_read;
-	struct trace_sample sample;
 
 	/* open trace file */
 	file = fopen(path, "rb");
@@ -440,31 +477,54 @@ static void load_trace(const char *path) {
 	}
 
 	/* check file format and update totals */
-	if (fscanf(file, "stat\n%d %d %d %d\n",
-		&s_total, &s_idle, &s_system, &s_user) != 4) {
+	if (fscanf(file, "stat\n%u %u %u\n",
+		&size_info, &size_sample, &size_proc) != 3) {
 		fprintf(stderr, "error: file \"%s\" does not contain an "
 			"sprofile trace\n", path);
 		exit(1);
 	}
-	samples_total += s_total;
-	samples_idle += s_idle;
-	samples_system += s_system;
-	samples_user += s_user;
+	if ((size_info != sizeof(struct sprof_info_s)) ||
+		(size_sample != sizeof(struct sprof_sample)) ||
+		(size_proc != sizeof(struct sprof_proc))) {
+		fprintf(stderr, "error: file \"%s\" is incompatible with this "
+			"version of sprofalyze; recompile sprofalyze with the "
+			"MINIX version that created this file\n", path);
+		exit(1);
+	}
+	if (fread(&sprof_info, sizeof(sprof_info), 1, file) != 1) {
+		fprintf(stderr, "error: totals missing in file \"%s\"\n", path);
+		exit(1);
+	}
 
 	/* read and store samples */
 	samples_read = 0;
-	while (fread(&sample, sizeof(sample), 1, file) == 1) {
-		sample_store(&sample);
-		samples_read++;
+	bufindex = 0;
+	bufsize = 0;
+	for (;;) {
+		/* enough left in the buffer? */
+		if (bufsize - bufindex < sizeof(union sprof_record)) {
+			/* not enough, read some more */
+			memmove(buffer, buffer + bufindex, bufsize - bufindex);
+			bufsize -= bufindex;
+			bufindex = 0;
+			bufsize += fread(buffer + bufsize, 1,
+				sizeof(buffer) - bufsize, file);
+
+			/* are we done? */
+			if (bufsize == 0) break;
+		}
+
+		/* process sample record (either struct sprof_sample or
+		 * struct sprof_proc)
+		 */
+		bufindex += sample_process(
+			(const union sprof_record *) (buffer + bufindex),
+			bufsize - bufindex, &samples_read);
 	}
-	if (samples_read != s_system) {
+	if (samples_read != sprof_info.system_samples) {
 		fprintf(stderr, "warning: number of system samples (%d) in "
 			"\"%s\" does not match number of records (%d)\n",
-			s_system, path, samples_read);
-	}
-	if (!feof(file)) {
-		fprintf(stderr, "warning: partial sample at end of \"%s\", "
-			"was the trace file truncated?\n", path);
+			sprof_info.system_samples, path, samples_read);
 	}
 	fclose(file);
 }
@@ -486,10 +546,10 @@ static unsigned name_hash(const char *name) {
 	unsigned r = 0;
 
 	/* remember: strncpy initializes all bytes */
-	for (i = 0; i < BINARY_NAME_SIZE && name[i]; i++) {
+	for (i = 0; i < PROC_NAME_LEN && name[i]; i++) {
 		r = r * 31 + name[i];
 	}
-	dprintf("name_hash(\"%.*s) = 0x%.8x\n", BINARY_NAME_SIZE, name, r);
+	dprintf("name_hash(\"%.*s\") = 0x%.8x\n", PROC_NAME_LEN, name, r);
 	return r;
 }
 
@@ -504,16 +564,16 @@ static void print_report(void) {
 	printf("Showing processes and functions using at least %3.0f%% "
 		"time.\n\n", minimum_perc);
 	printf("  System process ticks: %10d (%3.0f%%)\n",
-		samples_system, percent(samples_system, samples_total));
+		sprof_info.system_samples, percent(sprof_info.system_samples, sprof_info.total_samples));
 	printf("    User process ticks: %10d (%3.0f%%)          "
 		"Details of system process\n",
-		samples_user, percent(samples_user, samples_total));
+		sprof_info.user_samples, percent(sprof_info.user_samples, sprof_info.total_samples));
 	printf("       Idle time ticks: %10d (%3.0f%%)          "
 		"samples, aggregated and\n",
-		samples_idle, percent(samples_idle, samples_total));
+		sprof_info.idle_samples, percent(sprof_info.idle_samples, sprof_info.total_samples));
 	printf("                        ----------  ----           "
 		"per process, are below.\n");
-	printf("           Total ticks: %10d (100%%)\n\n", samples_total);
+	printf("           Total ticks: %10d (100%%)\n\n", sprof_info.total_samples);
 
 	print_report_overall();
 	print_reports_per_binary();
@@ -526,7 +586,7 @@ static void print_report_overall(void) {
 	int sample_threshold;
 
 	/* count number of symbols to display */
-	sample_threshold = samples_system * minimum_perc / 100;
+	sample_threshold = sprof_info.system_samples * minimum_perc / 100;
 	symbol_count = 0;
 	for (binary = binaries; binary; binary = binary->next) {
 		symbol_count += count_symbols(binary, sample_threshold);
@@ -549,9 +609,9 @@ static void print_report_overall(void) {
 	/* report most common symbols overall */
 	print_separator();
 	printf("Total system process time %*d samples\n",
-		LINE_WIDTH - 34, samples_system);
+		LINE_WIDTH - 34, sprof_info.system_samples);
 	print_separator();
-	print_report_symbols(symbols_sorted, symbol_count, samples_system, 1);
+	print_report_symbols(symbols_sorted, symbol_count, sprof_info.system_samples, 1);
 	free(symbols_sorted);
 }
 
@@ -579,8 +639,8 @@ static void print_report_per_binary(const struct binary_info *binary) {
 	/* report most common symbols for this binary */
 	print_separator();
 	printf("%-*.*s %4.1f%% of system process samples\n",
-		LINE_WIDTH - 32, BINARY_NAME_SIZE, binary->name,
-		percent(binary->samples, samples_system));
+		LINE_WIDTH - 32, PROC_NAME_LEN, binary->name,
+		percent(binary->samples, sprof_info.system_samples));
 	print_separator();
 	print_report_symbols(symbols_sorted, symbol_count, binary->samples, 0);
 	free(symbols_sorted);
@@ -613,7 +673,7 @@ static void print_reports_per_binary(void) {
 		compare_binaries);
 
 	/* display reports for binaries with enough samples */
-	sample_threshold = samples_system * minimum_perc / 100;
+	sample_threshold = sprof_info.system_samples * minimum_perc / 100;
 	samples_shown = 0;
 	for (i = 0; i < binary_count; i++) {
 		if (binaries_sorted[i]->samples < sample_threshold) break;
@@ -622,8 +682,8 @@ static void print_reports_per_binary(void) {
 	}
 	print_separator();
 	printf("processes <%3.0f%% (not showing functions) %*.1f%% of system "
-		"process samples\n", minimum_perc, LINE_WIDTH - 60,
-		percent(samples_system - samples_shown, samples_system));
+		"process samples\n", minimum_perc, LINE_WIDTH - 67,
+		percent(sprof_info.system_samples - samples_shown, sprof_info.system_samples));
 	print_separator();
 
 	free(binaries_sorted);
@@ -636,7 +696,7 @@ static void print_report_symbols(struct symbol_count **symbols,
 	struct symbol_count *symbol;
 
 	/* find out how much space we have available */
-	process_width = show_process ? (BINARY_NAME_SIZE + 1) : 0;
+	process_width = show_process ? (PROC_NAME_LEN + 1) : 0;
 	bar_width = LINE_WIDTH - process_width - SYMBOL_NAME_WIDTH - 17;
 
 	/* print the symbol lines */
@@ -647,7 +707,7 @@ static void print_report_symbols(struct symbol_count **symbols,
 			symbol = symbols[i];
 			printf("%*.*s %*.*s ",
 				process_width,
-				show_process ? BINARY_NAME_SIZE : 0,
+				show_process ? PROC_NAME_LEN : 0,
 				symbol->binary->name,
 				SYMBOL_NAME_WIDTH,
 				SYMBOL_NAME_WIDTH,
@@ -672,10 +732,10 @@ static void print_report_symbols(struct symbol_count **symbols,
 
 	/* print remainder and summary */
 	print_separator();
-	printf("%-*.*s%*d 100.0%%\n\n", BINARY_NAME_SIZE, BINARY_NAME_SIZE,
+	printf("%-*.*s%*d 100.0%%\n\n", PROC_NAME_LEN, PROC_NAME_LEN,
 		(show_process || symbol_count == 0) ?
 		"total" : symbols[0]->binary->name,
-		LINE_WIDTH - BINARY_NAME_SIZE - 7, total);
+		LINE_WIDTH - PROC_NAME_LEN - 7, total);
 }
 
 static void print_separator(void) {
@@ -786,43 +846,80 @@ static void read_to_whitespace(FILE *file, char *buffer, size_t size) {
 	if (size > 0) *buffer = 0;
 }
 
-static void sample_store(const struct trace_sample *sample) {
+static size_t sample_process(const union sprof_record *data, size_t size,
+	int *samples_read) {
+	struct endpoint_info *epinfo, **ptr;
+
+	assert(data);
+	assert(samples_read);
+
+	/* do we have a proper sample? */
+	if (size < sizeof(data->proc) && size < sizeof(data->sample)) {
+		goto error;
+	}
+
+	/* do we know this endpoint? */
+	ptr = endpoint_hashtab_get_ptr(data->proc.proc);
+	if ((epinfo = *ptr)) {
+		/* endpoint known, store sample */
+		if (size < sizeof(data->sample)) goto error;
+		sample_store(epinfo->binary, &data->sample);
+		(*samples_read)++;
+		return sizeof(data->sample);
+	}
+
+	/* endpoint not known, add it */
+	*ptr = epinfo = MALLOC_CHECKED(struct endpoint_info, 1);
+	memset(epinfo, 0, sizeof(struct endpoint_info));
+	epinfo->endpoint = data->proc.proc;
+
+	/* fetch binary based on process name in sample */
+	if (size < sizeof(data->proc)) goto error;
+	epinfo->binary = sample_load_binary(&data->proc);
+	return sizeof(data->proc);
+
+error:
+	fprintf(stderr, "warning: partial sample at end of trace, "
+		"was the trace file truncated?\n");
+	return size;
+}
+
+static struct binary_info *sample_load_binary(
+	const struct sprof_proc *sample) {
 	struct binary_info *binary;
-	int index_l1;
-	char path[PATH_MAX + 1];
-	struct pc_map_l2 *pc_map_l2;
-	struct symbol_count *symbol;
 
 	/* locate binary */
 	binary = binary_find(sample->name);
 	if (!binary) {
 		fprintf(stderr, "warning: ignoring unknown binary \"%.*s\"\n",
-			BINARY_NAME_SIZE, sample->name);
+			PROC_NAME_LEN, sample->name);
 		fprintf(stderr, "         did you include this executable in "
 			"the configuration?\n");
 		fprintf(stderr, "         (use -b to add additional "
 			"binaries)\n");
-
-		/* prevent additional warnings by adding bogus binary */
-		snprintf(path, sizeof(path), "/DOESNOTEXIST/%.*s",
-			BINARY_NAME_SIZE, sample->name);
-		binary = binary_add(strdup_checked(path));
-		binary->no_more_warnings = 1;
-		return;
+		return NULL;
 	}
 
 	/* load symbols if this hasn't been done yet */
-	if (!binary->pc_map) {
-		binary_load_pc_map(binary);
-		if (!binary->pc_map) return;
-	}
+	if (!binary->pc_map) binary_load_pc_map(binary);
+
+	return binary;
+}
+
+static void sample_store(struct binary_info *binary,
+	const struct sprof_sample *sample) {
+	unsigned long index_l1;
+	struct pc_map_l2 *pc_map_l2;
+	struct symbol_count *symbol;
+
+	if (!binary || !binary->pc_map) return;
 
 	/* find the applicable symbol (two-level lookup) */
-	index_l1 = sample->pc / PC_MAP_L2_SIZE;
+	index_l1 = (unsigned long) sample->pc / PC_MAP_L2_SIZE;
 	assert(index_l1 < PC_MAP_L1_SIZE);
 	pc_map_l2 = binary->pc_map->l1[index_l1];
 	if (pc_map_l2) {
-		symbol = pc_map_l2->l2[sample->pc % PC_MAP_L2_SIZE];
+		symbol = pc_map_l2->l2[(unsigned long) sample->pc % PC_MAP_L2_SIZE];
 	} else {
 		symbol = NULL;
 	}
@@ -836,6 +933,7 @@ static void sample_store(const struct trace_sample *sample) {
 			"version\n");
 		fprintf(stderr, "         path: \"%s\"\n", binary->path);
 		binary->no_more_warnings = 1;
+		dprint_symbols(binary);
 	}
 }
 
@@ -855,5 +953,18 @@ static void usage(const char *argv0) {
 	printf("usage:\n");
 	printf("  %s [-p percentage] [-s src-tree-path] "
 		"[-b binary]... file...\n", argv0);
+	printf("\n");
+	printf("sprofalyze aggregates one or more sprofile traces and");
+	printf("reports where time was spent.\n");
+	printf("\n");
+	printf("arguments:\n");
+	printf("-p specifies the cut-off percentage below which binaries\n");
+	printf("   and functions will not be displayed\n");
+	printf("-s specifies the root of the source tree where sprofalyze\n");
+	printf("   should search for unstripped binaries to extract symbols\n");
+	printf("   from\n");
+	printf("-b specifies an additional system binary in the trace that\n");
+	printf("   is not in the source tree; may be specified multiple\n");
+	printf("   times\n");
 	exit(1);
 }
