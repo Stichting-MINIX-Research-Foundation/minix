@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <machine/vm.h>
+#include <machine/vmparam.h>
 #include <minix/minlib.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,8 +24,6 @@ static int reenter;
 #else
 #define LOG(args)
 #endif
-
-#define PAGE_SIZE I386_PAGE_SIZE
 
 struct block {
 	size_t size;
