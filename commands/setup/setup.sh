@@ -747,8 +747,6 @@ installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
 cp /mnt/usr/src/etc/boot.cfg.default /mnt/boot.cfg
 chroot /mnt update_bootcfg
 
-pfile="/mnt/usr/src/tools/fdbootparams"
-echo "rootdev=$root; ramimagedev=$root; save" >$pfile
 # Save name of CD drive
 cddrive="`mount | grep /usr | awk '{ print $1 }' | sed 's/p.*//'`"
 echo "cddrive=$cddrive" >>/mnt/usr/etc/rc.package

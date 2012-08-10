@@ -318,17 +318,6 @@ to see the various options available. Now make a new bootable image by typing
 .PP
 You just rebuilt the operating system, including all the kernel and user-mode
 parts. That did not take very long, did it?
-If you have a legacy floppy disk drive, you can make a
-bootable floppy for use later by inserting a formatted floppy and typing
-.PP
-   make fdboot
-.PP
-When you are asked to complete the path, type:
-.PP
-   fd0
-.PP
-This approach does not currently work with USB floppies since there is no MINIX 3 USB
-floppy disk driver yet. 
 To update the boot image currently installed on the hard disk, type
 .PP
    make hdboot

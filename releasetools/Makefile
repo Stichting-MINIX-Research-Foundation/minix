@@ -37,7 +37,6 @@ usage:
 	@echo "	make services   # Compile and install all services" >&2
 	@echo "	make install    # Make image, and install to hard disk" >&2
 	@echo "	make hdboot     # Make image, and install to hard disk" >&2
-	@echo "	make fdboot     # Make image, and install to floppy disk" >&2
 	@echo "	make bootable   # Make hard disk bootable" >&2
 	@echo "	make nbsd_fetch	# Download current NetBSD reference sources" >&2
 	@echo "	make nbsd_diff	# Update minix-port.patch in NetBSD sources" >&2
@@ -97,10 +96,6 @@ hdboot: services
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
 	${INSTALL} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot;	\
 	fi
-
-fdboot:
-	exec su root mkboot $@
-	@sync
 
 install:
 	${MAKE} includes services hdboot
