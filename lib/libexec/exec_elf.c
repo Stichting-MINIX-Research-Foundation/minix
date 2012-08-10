@@ -159,11 +159,11 @@ int libexec_load_elf(struct exec_info *execi)
 	if(execi->clearproc) execi->clearproc(execi);
 
 	for (i = 0; i < hdr->e_phnum; i++) {
-		vir_bytes seg_membytes, page_offset, vaddr;
+		vir_bytes seg_membytes, page_offset, p_vaddr, vaddr;
 		vir_bytes chunk, vfileend, vmemend;
 		Elf_Phdr *ph = &phdr[i];
 		if (ph->p_type != PT_LOAD || ph->p_memsz == 0) continue;
-		vaddr =  ph->p_vaddr;
+		vaddr = p_vaddr = ph->p_vaddr + execi->load_offset;
 		seg_membytes = ph->p_memsz;
 		page_offset = vaddr % PAGE_SIZE;
 		vaddr -= page_offset;
@@ -183,19 +183,19 @@ int libexec_load_elf(struct exec_info *execi)
 #endif
 
 		/* Copy executable section into it */
-		if(execi->copymem(execi, ph->p_offset, ph->p_vaddr, ph->p_filesz) != OK) {
+		if(execi->copymem(execi, ph->p_offset, p_vaddr, ph->p_filesz) != OK) {
 			if(execi->clearproc) execi->clearproc(execi);
 			return ENOMEM;
 		}
 
 #if ELF_DEBUG
-		printf("copied 0x%lx-0x%lx\n", ph->p_vaddr, ph->p_vaddr+ph->p_filesz);
+		printf("copied 0x%lx-0x%lx\n", p_vaddr, p_vaddr+ph->p_filesz);
 #endif
 
 		/* Clear remaining bits */
-		vfileend  = ph->p_vaddr + ph->p_filesz;
+		vfileend  = p_vaddr + ph->p_filesz;
 		vmemend = vaddr + seg_membytes;
-		if((chunk = ph->p_vaddr - vaddr) > 0) {
+		if((chunk = p_vaddr - vaddr) > 0) {
 #if ELF_DEBUG
 			printf("start clearing 0x%lx-0x%lx\n", vaddr, vaddr+chunk);
 #endif
@@ -220,7 +220,7 @@ int libexec_load_elf(struct exec_info *execi)
 #endif
 
 	/* record entry point and lowest load vaddr for caller */
-	execi->pc = hdr->e_entry;
+	execi->pc = hdr->e_entry + execi->load_offset;
 	execi->load_base = startv;
 
 	return OK;

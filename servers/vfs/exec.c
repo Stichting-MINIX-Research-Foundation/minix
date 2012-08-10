@@ -286,6 +286,11 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 		FAILCHECK(r);
 	}
 
+	/* ld.so is linked at 0, but it can relocate itself; we
+	 * want it higher to trap NULL pointer dereferences. 
+	 */
+	execi.args.load_offset = 0x10000;
+
 	/* Remember it */
 	strlcpy(execi.execname, finalexec, PATH_MAX);
 

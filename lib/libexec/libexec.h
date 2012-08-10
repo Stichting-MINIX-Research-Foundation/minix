@@ -27,6 +27,7 @@ struct exec_info {
     gid_t new_gid;                      /* Process GID after exec */
     int allow_setuid;                   /* Allow set{u,g}id execution? */
     vir_bytes stack_size;		/* Desired stack size */
+    vir_bytes load_offset;		/* Desired load offset */
 
     /* Callback pointers for use by libexec */
     libexec_loadfunc_t copymem;		/* Copy callback */
