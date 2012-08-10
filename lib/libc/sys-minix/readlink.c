@@ -9,7 +9,7 @@
 __weak_alias(readlink, _readlink)
 #endif
 
-int readlink(const char *name, char *buffer, size_t bufsiz)
+ssize_t readlink(const char *name, char *buffer, size_t bufsiz)
 {
   message m;
 

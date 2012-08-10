@@ -4,10 +4,7 @@
 
 #include <dirent.h>
 
-ssize_t getdents(fd, buffer, nbytes)
-int fd;
-char *buffer;
-size_t nbytes;
+ssize_t getdents(int fd, char *buffer, size_t nbytes)
 {
   message m;
 

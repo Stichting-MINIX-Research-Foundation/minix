@@ -97,8 +97,6 @@ int		rl_meta_chars = 0;
 **  Declarations.
 */
 STATIC CHAR	*editinput();
-extern int	read();
-extern int	write();
 #if	defined(USE_TERMCAP)
 extern char	*tgetstr();
 extern int	tgetent();

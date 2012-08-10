@@ -8,10 +8,7 @@
 __weak_alias(read, _read)
 #endif
 
-ssize_t read(fd, buffer, nbytes)
-int fd;
-void *buffer;
-size_t nbytes;
+ssize_t read(int fd, void *buffer, size_t nbytes)
 {
   message m;
 
