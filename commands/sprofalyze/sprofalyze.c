@@ -101,6 +101,7 @@ static void load_trace(const char *path);
 static void *malloc_checked(size_t size);
 static unsigned name_hash(const char *name);
 static float percent(int value, int percent_of);
+static void print_diff(void);
 static void print_report(void);
 static void print_report_overall(void);
 static void print_report_per_binary(const struct binary_info *binary);
@@ -136,7 +137,7 @@ static void usage(const char *argv0);
 #endif
 
 int main(int argc, char **argv) {
-	int opt;
+	int opt, sprofdiff;
 
 #ifdef DEBUG
 	/* disable buffering so the output mixes correctly */
@@ -145,11 +146,15 @@ int main(int argc, char **argv) {
 #endif
 
 	/* parse arguments */
-	while ((opt = getopt(argc, argv, "b:p:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "b:dp:s:")) != -1) {
 		switch (opt) {
 		case 'b':
 			/* additional binary specified */
 			binary_add(optarg);
+			break;
+		case 'd':
+			/* generate output for sprofdiff */
+			sprofdiff = 1;
 			break;
 		case 'p':
 			/* minimum percentage specified */
@@ -175,7 +180,11 @@ int main(int argc, char **argv) {
 	}
 
 	/* print report */
-	print_report();
+	if (sprofdiff) {
+		print_diff();
+	} else {
+		print_report();
+	}
 	return 0;
 }
 
@@ -439,7 +448,7 @@ static int count_symbols(const struct binary_info *binary, int threshold) {
 static void dprint_symbols(const struct binary_info *binary) {
 #if DEBUG
 	const struct symbol_count *symbol;
-	
+
 	for (symbol = binary->symbols; symbol; symbol = symbol->next) {
 		dprintf("addr=0x%.8lx samples=%8d name=\"%.*s\"\n",
 			(unsigned long) symbol->addr, symbol->samples,
@@ -560,7 +569,35 @@ static float percent(int value, int percent_of) {
 	return (percent_of > 0) ? (value * 100.0 / percent_of) : 0;
 }
 
+static void print_diff(void) {
+	const struct binary_info *binary;
+	int binary_samples;
+	const struct symbol_count *symbol;
+
+	/* print out aggregates in a machine-readable format for sprofdiff */
+	printf("(total)\t\t%d\n", sprof_info.total_samples);
+	printf("(system)\t\t%d\n", sprof_info.system_samples);
+	printf("(idle)\t\t%d\n", sprof_info.idle_samples);
+	printf("(user)\t\t%d\n", sprof_info.user_samples);
+	for (binary = binaries; binary; binary = binary->next) {
+		binary_samples = 0;
+		for (symbol = binary->symbols; symbol; symbol = symbol->next) {
+			if (symbol->samples) {
+				printf("%.*s\t%.*s\t%d\n",
+					PROC_NAME_LEN, binary->name,
+					SYMBOL_NAME_SIZE, symbol->name,
+					symbol->samples);
+			}
+			binary_samples += symbol->samples;
+		}
+		printf("%.*s\t(total)\t%d\n",
+			PROC_NAME_LEN, binary->name,
+			binary_samples);
+	}
+}
+
 static void print_report(void) {
+	/* print out human-readable analysis */
 	printf("Showing processes and functions using at least %3.0f%% "
 		"time.\n\n", minimum_perc);
 	printf("  System process ticks: %10d (%3.0f%%)\n",
@@ -951,13 +988,14 @@ static char *strdup_checked(const char *s) {
 
 static void usage(const char *argv0) {
 	printf("usage:\n");
-	printf("  %s [-p percentage] [-s src-tree-path] "
+	printf("  %s [-d] [-p percentage] [-s src-tree-path] "
 		"[-b binary]... file...\n", argv0);
 	printf("\n");
 	printf("sprofalyze aggregates one or more sprofile traces and");
 	printf("reports where time was spent.\n");
 	printf("\n");
 	printf("arguments:\n");
+	printf("-d generates output that can be compared using sprofdiff\n");
 	printf("-p specifies the cut-off percentage below which binaries\n");
 	printf("   and functions will not be displayed\n");
 	printf("-s specifies the root of the source tree where sprofalyze\n");
