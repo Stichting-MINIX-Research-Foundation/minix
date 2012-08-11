@@ -41,8 +41,8 @@ register message *m_ptr;	/* pointer to request message */
 struct proc *p;
 {
   switch(m_ptr->SVMCTL_PARAM) {
-	case VMCTL_I386_GETCR3:
-		/* Get process CR3. */
+	case VMCTL_GET_PDBR:
+		/* Get process page directory base reg (CR3). */
 		m_ptr->SVMCTL_VALUE = p->p_seg.p_cr3;
 		return OK;
 	case VMCTL_SETADDRSPACE:

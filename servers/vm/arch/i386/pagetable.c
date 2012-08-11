@@ -859,7 +859,7 @@ void pt_init(void)
 	vir_bytes sparepages_mem;
 	static u32_t currentpagedir[I386_VM_DIR_ENTRIES];
 	int m = kernel_boot_info.kern_mod;
-	u32_t mycr3;
+	u32_t mypdbr; /* Page Directory Base Register (cr3) value */
 
 	/* Find what the physical location of the kernel is. */
 	assert(m >= 0);
@@ -978,9 +978,9 @@ void pt_init(void)
 		panic("vm pt_new failed");
 
 	/* Get our current pagedir so we can see it. */
-	if(sys_vmctl_get_cr3_i386(SELF, &mycr3) != OK)
-		panic("VM: sys_vmctl_get_cr3_i386 failed");
-	if(sys_vircopy(NONE, mycr3, SELF, 
+	if(sys_vmctl_get_pdbr(SELF, &mypdbr) != OK)
+		panic("VM: sys_vmctl_get_pdbr failed");
+	if(sys_vircopy(NONE, mypdbr, SELF,
 		(vir_bytes) currentpagedir, I386_PAGE_SIZE) != OK)
 		panic("VM: sys_vircopy failed");
 
