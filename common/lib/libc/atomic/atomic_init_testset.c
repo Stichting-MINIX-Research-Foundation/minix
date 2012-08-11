@@ -112,11 +112,14 @@ _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 void
 __libc_atomic_init(void)
 {
+#if !defined(__minix)
 	int ncpu, mib[2];
 	size_t len;
+#endif
 
 	_atomic_cas_fn = _atomic_cas_mp;
 
+#if !defined(__minix)
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU; 
 	len = sizeof(ncpu);
@@ -129,6 +132,7 @@ __libc_atomic_init(void)
 		_atomic_cas_fn = _atomic_cas_up;
 		return;
 	}
+#endif
 }
 
 #undef atomic_cas_32
