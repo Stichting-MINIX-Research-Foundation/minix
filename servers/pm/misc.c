@@ -36,8 +36,10 @@ struct utsname uts_val = {
   OS_RELEASE,		/* O.S. release (e.g. 1.5) */
   OS_VERSION,		/* O.S. version (e.g. 10) */
   "xyzzy",		/* machine (cpu) type (filled in later) */
-#if __i386
+#if defined(__i386__)
   "i386",		/* architecture */
+#elif defined(__arm__)
+  "arm",		/* architecture */
 #else
 #error			/* oops, no 'uname -mk' */
 #endif
