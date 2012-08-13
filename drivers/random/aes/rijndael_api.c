@@ -92,7 +92,8 @@ int rijndael_makekey(rd_keyinstance *key,
 	    else break;
 
 	    if (keylen >= 256/8) return RD_BAD_KEY_MAT;
-	    B(k)[keylen++] = b;
+	    k[keylen/4][keylen%4] = b;
+	    keylen++;
 	}
 	if (c != 0) return RD_BAD_KEY_MAT;
 
