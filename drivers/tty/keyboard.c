@@ -1072,7 +1072,7 @@ message *m_ptr;			/* pointer to the request message */
 /* This procedure allows processes to register a function key to receive
  * notifications if it is pressed. At most one binding per key can exist.
  */
-  int i; 
+  int s, i;
   int result = EINVAL;
 
   switch (m_ptr->FKEY_REQUEST) {	/* see what we must do */
@@ -1161,7 +1161,8 @@ message *m_ptr;			/* pointer to the request message */
 
   /* Almost done, return result to caller. */
   m_ptr->m_type = result;
-  send(m_ptr->m_source, m_ptr);
+  if ((s = sendnb(m_ptr->m_source, m_ptr)) != OK)
+	printf("TTY: unable to reply to %d: %d", m_ptr->m_source, s);
 }
 
 /*===========================================================================*

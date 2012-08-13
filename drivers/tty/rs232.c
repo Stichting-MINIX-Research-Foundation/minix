@@ -217,7 +217,7 @@ static int rs_write(register tty_t *tp, int try)
 /* (*devwrite)() routine for RS232. */
 
   rs232_t *rs = tp->tty_priv;
-  int count, ocount;
+  int r, count, ocount;
 
   if (rs->inhibited != tp->tty_inhibited) {
 	/* Inhibition state has changed. */
@@ -248,8 +248,9 @@ static int rs_write(register tty_t *tp, int try)
 	if (try) return 1;
 
 	/* Copy from user space to the RS232 output buffer. */
-	sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant, 
-		tp->tty_outoffset, (vir_bytes) rs->ohead, count);
+	if ((r = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
+		tp->tty_outoffset, (vir_bytes) rs->ohead, count)) != OK)
+		printf("TTY: sys_safecopyfrom() failed: %d", r);
 
 	/* Perform output processing on the output buffer. */
 	out_process(tp, rs->obuf, rs->ohead, bufend(rs->obuf), &count, &ocount);
@@ -432,7 +433,7 @@ void rs_init(tty_t *tp)
   register rs232_t *rs;
   int line;
   port_t this_8250;
-  int irq;
+  int s, irq;
   char l[10];
 
   /* Associate RS232 and TTY structures. */
@@ -486,8 +487,10 @@ void rs_init(tty_t *tp)
    * and will occur when interrupts are enabled anyway.  Set up the output
    * queue using the status from clearing the modem status interrupt.
    */
-  sys_inb(rs->line_status_port, &dummy);
-  sys_inb(rs->recv_port, &dummy);
+  if ((s = sys_inb(rs->line_status_port, &dummy)) != OK)
+	printf("TTY: sys_inb() failed: %d", s);
+  if ((s = sys_inb(rs->recv_port, &dummy)) != OK)
+	printf("TTY: sys_inb() failed: %d", s);
   rs->ostate = devready(rs) | ORAW | OSWREADY;	/* reads modem_ctl_port */
   rs->ohead = rs->otail = rs->obuf;
 
@@ -641,8 +644,10 @@ static int rs_break(tty_t *tp, int UNUSED(dummy))
 /* Generate a break condition by setting the BREAK bit for 0.4 sec. */
   rs232_t *rs = tp->tty_priv;
   u32_t line_controls;
+  int s;
 
-  sys_inb(rs->line_ctl_port, &line_controls);
+  if ((s = sys_inb(rs->line_ctl_port, &line_controls)) != OK)
+	printf("TTY: sys_inb() failed: %d", s);
   sys_outb(rs->line_ctl_port, line_controls | LC_BREAK);
   /* XXX */
   /* milli_delay(400); */				/* ouch */
@@ -673,6 +678,7 @@ static int rs_close(tty_t *tp, int UNUSED(dummy))
 static void rs232_handler(struct rs232 *rs)
 {
 /* Interrupt hander for RS232. */
+  int s;
 
   while (TRUE) {
 	u32_t v;
@@ -681,7 +687,8 @@ static void rs232_handler(struct rs232 *rs)
 	 * (and then we have to worry about being stuck in the loop too long).
 	 * Unfortunately, some serial cards lock up without this.
 	 */
-	sys_inb(rs->int_id_port, &v);
+	if ((s = sys_inb(rs->int_id_port, &v)) != OK)
+		printf("TTY: sys_inb() failed: %d", s);
 	switch (v) {
 	case IS_RECEIVER_READY:
 		in_int(rs);
@@ -712,14 +719,15 @@ static void in_int(register rs232_t *rs)
  * Put data in the buffer if room, otherwise discard it.
  * Set a flag for the clock interrupt handler to eventually notify TTY.
  */
-
+  int s;
   u32_t c;
 
 #if 0	/* Enable this if you want serial input in the kernel */
   return;
 #endif
 
-  sys_inb(rs->recv_port, &c);
+  if ((s = sys_inb(rs->recv_port, &c)) != OK)
+	printf("TTY: sys_inb() failed: %d", s);
 
   if (!(rs->ostate & ORAW)) {
 	if (c == rs->oxoff) {
@@ -755,9 +763,11 @@ static void line_int(register rs232_t *rs)
 /* rs		line with line status interrupt */
 {
 /* Check for and record errors. */
-
+  int r;
   u32_t s;
-  sys_inb(rs->line_status_port, &s);
+
+  if ((r = sys_inb(rs->line_status_port, &s)) != OK)
+	printf("TTY: sys_inb() failed: %d", r);
   rs->lstatus = s;
   if (rs->lstatus & LS_FRAMING_ERR) ++rs->framing_errors;
   if (rs->lstatus & LS_OVERRUN_ERR) ++rs->overrun_errors;
