@@ -1640,7 +1640,7 @@ dp_conf_t *dcp;
 	}
 #endif
 
-	strcpy(eckey, "DPETH0");
+	strlcpy(eckey, "DPETH0", sizeof(eckey));
 	eckey[5] += de_instance;
 
 	/* Get the default settings and modify them from the environment. */
