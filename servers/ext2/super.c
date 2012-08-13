@@ -109,8 +109,8 @@ register struct super_block *sp; /* pointer to a superblock */
 
   if (sp->s_block_size < _MIN_BLOCK_SIZE
       || sp->s_block_size >_MAX_BLOCK_SIZE) {
+	printf("data block size (%u) is invalid\n", sp->s_block_size);
 	return(EINVAL);
-	printf("data block size is too large\n");
   }
 
   if ((sp->s_block_size % 512) != 0)
