@@ -307,7 +307,7 @@ static int m_transfer(
 		count = dv_size - position;
 	    mem_phys = position;
 
-	    page_off = mem_phys % I386_PAGE_SIZE;
+	    page_off = mem_phys % PAGE_SIZE;
 	    pagestart = mem_phys - page_off; 
 
 	    /* All memory to the map call has to be page-aligned.
@@ -315,11 +315,11 @@ static int m_transfer(
 	     */
 	    if(!any_mapped || pagestart_mapped != pagestart) {
 	     if(any_mapped) {
-		if(vm_unmap_phys(SELF, vaddr, I386_PAGE_SIZE) != OK)
+		if(vm_unmap_phys(SELF, vaddr, PAGE_SIZE) != OK)
 			panic("vm_unmap_phys failed");
 		any_mapped = 0;
 	     }
-	     vaddr = vm_map_phys(SELF, (void *) pagestart, I386_PAGE_SIZE);
+	     vaddr = vm_map_phys(SELF, (void *) pagestart, PAGE_SIZE);
 	     if(vaddr == MAP_FAILED) 
 		r = ENOMEM;
 	     else
@@ -333,7 +333,7 @@ static int m_transfer(
 	   }
 
 	    /* how much to be done within this page. */
-	    subcount = I386_PAGE_SIZE-page_off;
+	    subcount = PAGE_SIZE-page_off;
 	    if(subcount > count)
 		subcount = count;
 
@@ -388,6 +388,7 @@ static int m_do_open(message *m_ptr)
 
 /* Check device number on open. */
   if (m_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
+#if defined(__i386__)
   if (m_device == MEM_DEV)
   {
 	r = sys_enable_iop(m_ptr->USER_ENDPT);
@@ -398,6 +399,7 @@ static int m_do_open(message *m_ptr)
 		return r;
 	}
   }
+#endif
 
   openct[m_device]++;
 
