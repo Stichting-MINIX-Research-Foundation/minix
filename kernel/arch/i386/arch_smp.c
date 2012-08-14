@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <machine/archtypes.h>
 #include <archconst.h>
 #include <machine/cmos.h>
@@ -71,7 +72,6 @@ static u32_t ap_lin_addr(void *vaddr)
  */
 void copy_trampoline(void)
 {
-	char * s, *end;
 	unsigned tramp_size, tramp_start = (unsigned)&trampoline;;
 
 	/* The trampoline code/data is made to be page-aligned. */
@@ -97,7 +97,7 @@ void copy_trampoline(void)
 	__ap_idt.base = ap_lin_addr(&__ap_idt_tab);
 	__ap_idt.limit = sizeof(idt)-1;
 
-	phys_copy(trampoline, trampoline_base, tramp_size);
+	phys_copy((phys_bytes) trampoline, trampoline_base, tramp_size);
 }
 
 extern int booting_cpu;	/* tell protect.c what to do */
@@ -105,13 +105,13 @@ extern int booting_cpu;	/* tell protect.c what to do */
 static void smp_start_aps(void)
 {
 	unsigned cpu;
-	u32_t biosresetvector, *newptpos;
+	u32_t biosresetvector;
 	phys_bytes __ap_id_phys;
 	struct proc *bootstrap_pt = get_cpulocal_var(ptproc);
 
 	/* TODO hack around the alignment problem */
 
-	phys_copy (0x467, &biosresetvector, sizeof(u32_t));
+	phys_copy(0x467, (phys_bytes) &biosresetvector, sizeof(u32_t));
 
 	/* set the bios shutdown code to 0xA */
 	outb(RTC_INDEX, 0xF);
@@ -129,7 +129,7 @@ static void smp_start_aps(void)
 		(phys_bytes) &__ap_id - (phys_bytes)&trampoline;
 
 	/* setup the warm reset vector */
-	phys_copy(&trampoline_base, 0x467, sizeof(u32_t));
+	phys_copy((phys_bytes) &trampoline_base, 0x467, sizeof(u32_t));
 
 	/* okay, we're ready to go.  boot all of the ap's now.  we loop through
 	 * using the processor's apic id values.
@@ -143,7 +143,7 @@ static void smp_start_aps(void)
 		}
 
 		__ap_id = booting_cpu = cpu;
-		phys_copy((void *) &__ap_id, __ap_id_phys, sizeof(__ap_id));
+		phys_copy((phys_bytes) &__ap_id, __ap_id_phys, sizeof(__ap_id));
 		mfence();
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
@@ -165,7 +165,7 @@ static void smp_start_aps(void)
 		}
 	}
 
-	phys_copy(&biosresetvector,(phys_bytes)0x467,sizeof(u32_t));
+	phys_copy((phys_bytes) &biosresetvector, 0x467, sizeof(u32_t));
 
 	outb(RTC_INDEX, 0xF);
 	outb(RTC_IO, 0);
