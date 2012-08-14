@@ -30,11 +30,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-/* Common includes for the system library. */
-#include "debug.h"
 #include "kernel.h"
-#include "proto.h"
-#include "proc.h"
 
 int do_exec(struct proc * caller, message *m_ptr);
 #if ! USE_EXEC

@@ -19,8 +19,6 @@
 #include "arch_proto.h"
 #include "serial.h"
 #include "oxpcie.h"
-#include "kernel/proc.h"
-#include "kernel/debug.h"
 #include "direct_utils.h"
 #include <machine/multiboot.h>
 

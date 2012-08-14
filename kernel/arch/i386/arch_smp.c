@@ -7,9 +7,7 @@
 #define _SMP
 
 #include "kernel/kernel.h"
-#include "kernel/proc.h"
 #include "arch_proto.h"
-#include "kernel/glo.h"
 #include <unistd.h>
 #include <assert.h>
 #include <stdlib.h>

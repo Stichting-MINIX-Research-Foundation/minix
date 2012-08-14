@@ -4,7 +4,6 @@
  */
 
 #include "kernel.h"
-#include "proc.h"
 #include "arch_proto.h"
 
 #include <minix/syslib.h>

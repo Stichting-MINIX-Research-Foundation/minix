@@ -16,7 +16,6 @@
 #include <assert.h>
 
 #include "kernel.h"
-#include "proc.h"
 #include "archconst.h"
 #include "hw_intr.h"
 

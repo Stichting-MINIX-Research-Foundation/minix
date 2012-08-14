@@ -1,6 +1,5 @@
 
 #include "kernel/kernel.h"
-#include "kernel/proc.h"
 #include "kernel/vm.h"
 
 #include <machine/vm.h>
@@ -17,8 +16,6 @@
 
 #include "oxpcie.h"
 #include "arch_proto.h"
-#include "kernel/proto.h"
-#include "kernel/debug.h"
 
 #ifdef USE_APIC
 #include "apic.h"

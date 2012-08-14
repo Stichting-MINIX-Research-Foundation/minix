@@ -8,8 +8,6 @@
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
-#include "kernel/proc.h"
-#include "kernel/proto.h"
 #include <machine/vm.h>
 
 struct ex_s {

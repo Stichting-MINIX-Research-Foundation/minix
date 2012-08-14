@@ -8,7 +8,6 @@
 #include <machine/multiboot.h>
 
 #include "kernel/kernel.h"
-#include "kernel/proc.h"
 #include "archconst.h"
 
 #include "arch_proto.h"

@@ -18,8 +18,6 @@
 #include <minix/config.h>
 
 #include "kernel.h"
-#include "profile.h"
-#include "proc.h"
 
 #include <minix/profile.h>
 #include <minix/portio.h>

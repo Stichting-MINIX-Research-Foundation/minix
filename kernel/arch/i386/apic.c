@@ -10,8 +10,6 @@
 #include <minix/syslib.h>
 #include <machine/cmos.h>
 
-#include "kernel/proc.h"
-#include "kernel/glo.h"
 #include "arch_proto.h"
 
 #include <minix/u64.h>

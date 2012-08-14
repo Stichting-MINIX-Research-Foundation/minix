@@ -10,8 +10,6 @@
 #include <machine/asm.h>
 #include <machine/interrupt.h>
 #include "archconst.h"
-#include "kernel/const.h"
-#include "kernel/proc.h"
 #include "sconst.h"
 #include <machine/multiboot.h>
 

@@ -35,14 +35,10 @@
 #include <signal.h>
 #include <assert.h>
 
-#include "debug.h"
 #include "kernel.h"
-#include "proc.h"
 #include "vm.h"
 #include "clock.h"
 #include "spinlock.h"
-#include "profile.h"
-
 #include "arch_proto.h"
 
 #include <minix/syslib.h>

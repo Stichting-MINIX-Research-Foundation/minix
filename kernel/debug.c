@@ -4,8 +4,6 @@
  */
 
 #include "kernel.h"
-#include "proc.h"
-#include "debug.h"
 
 #include <minix/callnr.h>
 #include <minix/sysutil.h>

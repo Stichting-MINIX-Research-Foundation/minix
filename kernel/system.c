@@ -31,10 +31,8 @@
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  */
 
-#include "debug.h"
 #include "kernel.h"
 #include "system.h"
-#include "proc.h"
 #include "vm.h"
 #include "kernel/clock.h"
 #include <stdlib.h>

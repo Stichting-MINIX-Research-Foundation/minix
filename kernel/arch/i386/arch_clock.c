@@ -7,7 +7,6 @@
 #include "kernel/kernel.h"
 
 #include "kernel/clock.h"
-#include "kernel/proc.h"
 #include "kernel/interrupt.h"
 #include <minix/u64.h>
 #include "glo.h"

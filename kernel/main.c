@@ -20,8 +20,6 @@
 #include <machine/vmparam.h>
 #include <minix/u64.h>
 #include <minix/type.h>
-#include "proc.h"
-#include "debug.h"
 #include "clock.h"
 #include "hw_intr.h"
 #include "arch_proto.h"

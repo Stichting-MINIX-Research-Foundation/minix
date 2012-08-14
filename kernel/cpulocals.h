@@ -4,9 +4,6 @@
 
 #ifndef __ASSEMBLY__
 
-#include "kernel.h"
-#include "proc.h"
-
 #ifdef CONFIG_SMP
 
 /* SMP */

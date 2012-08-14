@@ -30,7 +30,6 @@
  */
 
 #include "kernel.h"
-#include "proc.h"
 #include <minix/endpoint.h>
 #include <assert.h>
 
