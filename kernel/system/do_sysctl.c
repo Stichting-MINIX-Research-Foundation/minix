@@ -46,9 +46,5 @@ int do_sysctl(struct proc * caller, message * m_ptr)
 	printf("do_sysctl: invalid request %d\n", m_ptr->SYSCTL_CODE);
         return(EINVAL);
   }
-
-  panic("do_sysctl: can't happen");
-
-  return(OK);
 }
 

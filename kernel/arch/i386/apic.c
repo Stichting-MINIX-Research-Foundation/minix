@@ -594,6 +594,7 @@ static  u32_t lapic_errstatus(void)
 	return lapic_read(LAPIC_ESR);
 }
 
+#ifdef CONFIG_SMP
 static int lapic_disable_in_msr(void)
 {
 	u32_t msr_hi, msr_lo;
@@ -605,6 +606,7 @@ static int lapic_disable_in_msr(void)
 
 	return 1;
 }
+#endif /* CONFIG_SMP */
 
 void lapic_disable(void)
 {
@@ -626,6 +628,7 @@ void lapic_disable(void)
 		return;
 	}
 
+#ifdef CONFIG_SMP
 	val = lapic_read(LAPIC_LINT0) & 0xFFFE58FF;
 	val |= APIC_ICR_INT_MASK;
 	lapic_write (LAPIC_LINT0, val);
@@ -639,6 +642,7 @@ void lapic_disable(void)
 	lapic_write(LAPIC_SIVR, val);
 
 	lapic_disable_in_msr();
+#endif /* CONFIG_SMP */
 }
 
 static int lapic_enable_in_msr(void)

@@ -932,6 +932,7 @@ static int mini_receive(struct proc * caller_ptr,
 		printf("mini_receive: sending notify from NONE\n");
 	    }
 #endif
+	    assert(src_proc_nr != NONE);
             unset_notify_pending(caller_ptr, src_id);	/* no longer pending */
 
             /* Found a suitable source, deliver the notification message. */
@@ -1250,8 +1251,6 @@ asyn_error:
   }
 
   return(OK);
-
-  return r;
 }
 
 /*===========================================================================*
