@@ -38,7 +38,7 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
 
   /* Verify process number. */
   if (endpt == SELF)
-	proc_nr = _ENDPOINT_P(caller->p_endpoint);
+	okendpt(caller->p_endpoint, &proc_nr);
   else
 	if (! isokendpt(endpt, &proc_nr))
 		return(EINVAL);

@@ -54,7 +54,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
    * that initiated the device I/O. Kernel processes, of course, are denied.
    */
   if (proc_nr_e == SELF)
-	proc_nr = _ENDPOINT_P(caller->p_endpoint);
+	okendpt(caller->p_endpoint, &proc_nr);
   else
 	if(!isokendpt(proc_nr_e, &proc_nr))
 		return(EINVAL);

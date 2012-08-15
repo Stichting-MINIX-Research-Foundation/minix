@@ -14,7 +14,7 @@ int do_schedule(struct proc * caller, message * m_ptr)
 	if (!isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr))
 		return EINVAL;
 
-	p = proc_addr(_ENDPOINT_P(m_ptr->SCHEDULING_ENDPOINT));
+	p = proc_addr(proc_nr);
 
 	/* Only this process' scheduler can schedule it */
 	if (caller != p->p_scheduler)

@@ -23,7 +23,7 @@ int do_iopenable(struct proc * caller, message * m_ptr)
 
 #if 1 /* ENABLE_USERPRIV && ENABLE_USERIOPL */
   if (m_ptr->IOP_ENDPT == SELF) {
-	proc_nr = _ENDPOINT_P(caller->p_endpoint);
+	okendpt(caller->p_endpoint, &proc_nr);
   } else if(!isokendpt(m_ptr->IOP_ENDPT, &proc_nr))
 	return(EINVAL);
   enable_iop(proc_addr(proc_nr));
