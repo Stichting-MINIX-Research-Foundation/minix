@@ -11,7 +11,7 @@ struct machine machine;
 /* don't know where ACPI tables are, we may need to access any memory */
 static int init_mem_priv(void)
 {
-	struct mem_range mr;
+	struct minix_mem_range mr;
 
 	mr.mr_base = 0;
 	mr.mr_limit = 0xffffffff;

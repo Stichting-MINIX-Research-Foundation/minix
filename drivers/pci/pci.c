@@ -364,7 +364,7 @@ struct rs_pci *aclp;
 	int i, r;
 	int ilr;
 	struct io_range ior;
-	struct mem_range mr;
+	struct minix_mem_range mr;
 
 	if (devind < 0 || devind >= nr_pcidev)
 	{

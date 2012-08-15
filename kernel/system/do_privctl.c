@@ -34,7 +34,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
   int ipc_to_m, kcalls;
   int i, r;
   struct io_range io_range;
-  struct mem_range mem_range;
+  struct minix_mem_range mem_range;
   struct priv priv;
   int irq;
 

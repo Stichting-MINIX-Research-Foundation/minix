@@ -49,7 +49,7 @@ struct priv {
   struct io_range s_io_tab[NR_IO_RANGE];
 
   int s_nr_mem_range;		/* allowed memory ranges */
-  struct mem_range s_mem_tab[NR_MEM_RANGE];
+  struct minix_mem_range s_mem_tab[NR_MEM_RANGE];
 
   int s_nr_irq;			/* allowed IRQ lines */
   int s_irq_tab[NR_IRQ];

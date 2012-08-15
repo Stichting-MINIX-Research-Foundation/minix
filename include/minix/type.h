@@ -113,7 +113,7 @@ struct io_range
 	unsigned ior_limit;	/* Highest I/O port in range */
 };
 
-struct mem_range
+struct minix_mem_range
 {
 	phys_bytes mr_base;	/* Lowest memory address in range */
 	phys_bytes mr_limit;	/* Highest memory address in range */
