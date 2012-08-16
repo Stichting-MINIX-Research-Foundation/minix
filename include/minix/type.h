@@ -90,15 +90,6 @@ struct loadinfo {
   clock_t last_clock;
 };
 
-struct cpu_info {
-	u8_t	vendor;
-	u8_t	family;
-	u8_t	model;
-	u8_t	stepping;
-	u32_t	freq;		/* in MHz */
-	u32_t	flags[2];
-};
-
 struct machine {
   unsigned processors_count;	/* how many cpus are available */
   unsigned bsp_id;		/* id of the bootstrap cpu */

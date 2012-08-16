@@ -7,6 +7,7 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/minlib.h>
+#include <machine/archtypes.h>
 
 #include "sysutil.h"
 

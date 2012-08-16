@@ -35,6 +35,15 @@ typedef struct segframe {
 	char	*fpu_state;
 } segframe_t;
 
+struct cpu_info {
+	u8_t	vendor;
+	u8_t	family;
+	u8_t	model;
+	u8_t	stepping;
+	u32_t	freq;		/* in MHz */
+	u32_t	flags[2];
+};
+
 typedef u32_t atomic_t;	/* access to an aligned 32bit value is atomic on i386 */
 
 #endif /* #ifndef _I386_TYPES_H */

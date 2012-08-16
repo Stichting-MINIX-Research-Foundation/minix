@@ -1,6 +1,8 @@
 #ifndef _MINIX_CONST_H
 #define _MINIX_CONST_H
 
+#include <machine/archconst.h>
+
 /* The UNUSED annotation tells the compiler or lint not to complain
  * about an unused variable or function parameter.
  *
@@ -32,8 +34,6 @@
 
 #define TRUE               1	/* used for turning integers into Booleans */
 #define FALSE              0	/* used for turning integers into Booleans */
-
-#define DEFAULT_HZ        60	/* clock freq (software settable on IBM-PC) */
 
 #define SUPER_USER ((uid_t) 0)	/* uid_t of superuser */
 
@@ -75,7 +75,7 @@
 #define HAVE_SCATTERED_IO  1	/* scattered I/O is now standard */
 
 /* Memory is allocated in clicks. */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__arm__)
 #define CLICK_SIZE      4096	/* unit in which memory is allocated */
 #define CLICK_SHIFT       12	/* log2 of CLICK_SIZE */
 #else
