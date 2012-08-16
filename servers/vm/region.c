@@ -196,7 +196,7 @@ static int map_sanitycheck_pt(struct vmproc *vmp,
 	if(WRITABLE(vr, pb))
 		rw = PTF_WRITE;
 	else
-		rw = 0;
+		rw = PTF_READ;
 
 	r = pt_writemap(vmp, &vmp->vm_pt, vr->vaddr + pr->offset,
 	  pb->phys, pb->length, PTF_PRESENT | PTF_USER | rw, WMF_VERIFY);
@@ -375,7 +375,7 @@ static int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	if(WRITABLE(vr, pb))
 		rw = PTF_WRITE;
 	else
-		rw = 0;
+		rw = PTF_READ;
 
 	if(pt_writemap(vmp, &vmp->vm_pt, vr->vaddr + pr->offset,
 	  pb->phys, pb->length, PTF_PRESENT | PTF_USER | rw,
@@ -2112,6 +2112,8 @@ static int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
          */
         if(flag > 0)
                 pt_flag |= PTF_WRITE;
+	else
+                pt_flag |= PTF_READ;
 
         /* Map phys blocks in the source process to the destination process. */
         end = offset_d + length;

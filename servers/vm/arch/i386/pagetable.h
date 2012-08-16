@@ -26,6 +26,7 @@ typedef struct {
 
 /* Mapping flags. */
 #define PTF_WRITE	I386_VM_WRITE
+#define PTF_READ	I386_VM_READ
 #define PTF_PRESENT	I386_VM_PRESENT
 #define PTF_USER	I386_VM_USER
 #define PTF_GLOBAL	I386_VM_GLOBAL
@@ -35,7 +36,7 @@ typedef struct {
 /* For arch-specific PT routines to check if no bits outside
  * the regular flags are set.
  */
-#define PTF_ALLFLAGS	(PTF_WRITE|PTF_PRESENT|PTF_USER|PTF_GLOBAL|PTF_NOCACHE)
+#define PTF_ALLFLAGS   (PTF_READ|PTF_WRITE|PTF_PRESENT|PTF_USER|PTF_GLOBAL|PTF_NOCACHE)
 
 #if SANITYCHECKS
 #define PT_SANE(p) { pt_sanitycheck((p), __FILE__, __LINE__); }
