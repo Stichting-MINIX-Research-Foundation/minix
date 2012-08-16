@@ -171,6 +171,9 @@ phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
   if(memflags & PAF_ALIGN64K) {
   	align_clicks = (64 * 1024) / CLICK_SIZE;
 	clicks += align_clicks;
+  } else if(memflags & PAF_ALIGN16K) {
+	align_clicks = (16 * 1024) / CLICK_SIZE;
+	clicks += align_clicks;
   }
 
   mem = alloc_pages(clicks, memflags, NULL);
