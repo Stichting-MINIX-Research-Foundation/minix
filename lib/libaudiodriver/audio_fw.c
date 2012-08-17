@@ -213,6 +213,12 @@ static int init_driver(void) {
 	static int executed = 0;
 	sub_dev_t* sub_dev_ptr;
 
+	/* initialize basic driver variables */
+	if (drv_init() != OK) {
+		printf("libaudiodriver: Could not initialize driver\n");
+		return EIO;
+	}
+
 	/* init variables, get dma buffers */
 	for (i = 0; i < drv.NrOfSubDevices; i++) {
 
