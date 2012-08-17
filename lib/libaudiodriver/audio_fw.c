@@ -790,11 +790,13 @@ static void data_from_user(sub_dev_t *subdev)
 
 	if (subdev->DmaLength < subdev->NrOfDmaFragments) { /* room in dma buf */
 
-		sys_safecopyfrom(subdev->SourceProcNr, 
+		r = sys_safecopyfrom(subdev->SourceProcNr,
 				(vir_bytes)subdev->ReviveGrant, 0, 
 				(vir_bytes)subdev->DmaPtr + 
 				subdev->DmaFillNext * subdev->FragSize,
 				(phys_bytes)subdev->FragSize);
+		if (r != OK)
+			printf("%s:%d: safecopy failed\n", __FILE__, __LINE__);
 
 
 		subdev->DmaLength += 1;
@@ -803,11 +805,13 @@ static void data_from_user(sub_dev_t *subdev)
 
 	} else { /* room in extra buf */ 
 
-		sys_safecopyfrom(subdev->SourceProcNr, 
+		r = sys_safecopyfrom(subdev->SourceProcNr,
 				(vir_bytes)subdev->ReviveGrant, 0,
 				(vir_bytes)subdev->ExtraBuf + 
 				subdev->BufFillNext * subdev->FragSize, 
 				(phys_bytes)subdev->FragSize);
+		if (r != OK)
+			printf("%s:%d: safecopy failed\n", __FILE__, __LINE__);
 
 		subdev->BufLength += 1;
 
@@ -857,11 +861,13 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 
 	if(sub_dev_ptr->BufLength != 0) { /* data in extra buffer available */
 
-		sys_safecopyto(sub_dev_ptr->SourceProcNr, 
+		r = sys_safecopyto(sub_dev_ptr->SourceProcNr,
 				(vir_bytes)sub_dev_ptr->ReviveGrant,
 				0, (vir_bytes)sub_dev_ptr->ExtraBuf + 
 				sub_dev_ptr->BufReadNext * sub_dev_ptr->FragSize,
 				(phys_bytes)sub_dev_ptr->FragSize);
+		if (r != OK)
+			printf("%s:%d: safecopy failed\n", __FILE__, __LINE__);
 
 		/* adjust the buffer status variables */
 		sub_dev_ptr->BufReadNext = 
@@ -869,12 +875,14 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 		sub_dev_ptr->BufLength -= 1;
 
 	} else { /* extra buf empty, but data in dma buf*/ 
-		sys_safecopyto(
+		r = sys_safecopyto(
 				sub_dev_ptr->SourceProcNr, 
 				(vir_bytes)sub_dev_ptr->ReviveGrant, 0, 
 				(vir_bytes)sub_dev_ptr->DmaPtr + 
 				sub_dev_ptr->DmaReadNext * sub_dev_ptr->FragSize,
 				(phys_bytes)sub_dev_ptr->FragSize);
+		if (r != OK)
+			printf("%s:%d: safecopy failed\n", __FILE__, __LINE__);
 
 		/* adjust the buffer status variables */
 		sub_dev_ptr->DmaReadNext = 
@@ -933,9 +941,7 @@ static int init_buffers(sub_dev_t *sub_dev_ptr)
 	}
 
 	sub_dev_ptr->DmaPtr = sub_dev_ptr->DmaBuf;
-	i = sys_umap(SELF, VM_D, 
-			(vir_bytes) sub_dev_ptr->DmaBuf, 
-			(phys_bytes) sizeof(sub_dev_ptr->DmaBuf), 
+	i = sys_umap(SELF, VM_D, (vir_bytes) base, (phys_bytes) size,
 			&(sub_dev_ptr->DmaPhys));
 
 	if (i != OK) {
