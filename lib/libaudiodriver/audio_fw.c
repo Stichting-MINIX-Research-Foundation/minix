@@ -419,6 +419,7 @@ static int msg_close(int minor_dev_nr) {
 
 
 static int close_sub_dev(int sub_dev_nr) {
+	size_t size;
 	sub_dev_t *sub_dev_ptr;
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 	if (sub_dev_ptr->DmaMode == DEV_WRITE_S && !sub_dev_ptr->OutOfData) {
@@ -436,7 +437,8 @@ static int close_sub_dev(int sub_dev_nr) {
 	/* stop the device */
 	drv_stop(sub_dev_ptr->Nr);
 	/* free the buffers */
-	free(sub_dev_ptr->DmaBuf);
+	size= sub_dev_ptr->DmaSize + 64 * 1024;
+	free_contig(sub_dev_ptr->DmaBuf, size);
 	free(sub_dev_ptr->ExtraBuf);
 	return OK;
 }
