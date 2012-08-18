@@ -244,12 +244,8 @@ void cpu_identify(void)
 
 void arch_init(void)
 {
-	/* FIXME stupid a.out
-	 * align the stacks in the stack are to the K_STACK_SIZE which is a
-	 * power of 2
-	 */
-	k_stacks = (void*) (((vir_bytes)&k_stacks_start + K_STACK_SIZE - 1) &
-							~(K_STACK_SIZE - 1));
+	k_stacks = (void*) &k_stacks_start;
+	assert(!((vir_bytes) k_stacks % K_STACK_SIZE));
 
 #ifndef CONFIG_SMP
 	/*

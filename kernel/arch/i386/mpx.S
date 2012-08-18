@@ -521,7 +521,7 @@ LABEL(k_boot_stktop)	/* top of kernel stack */
 LABEL(k_stacks_start)
 
 /* two pages for each stack, one for data, other as a sandbox */
-.space	2 * (K_STACK_SIZE * (CONFIG_MAX_CPUS + 1))
+.space	2 * (K_STACK_SIZE * CONFIG_MAX_CPUS)
 
 LABEL(k_stacks_end)
 
