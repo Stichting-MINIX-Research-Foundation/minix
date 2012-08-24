@@ -2,5 +2,6 @@
 
 FS=ext2fs
 CLEANFILES= lib
+CPPFLAGS+= -D_MINIX
 
 .include <../Makefile.bootxx>

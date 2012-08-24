@@ -3,4 +3,6 @@
 PROG=	boot_monitor
 CLEANFILES= lib
 
+CPPFLAGS+= -D_MINIX
+
 .include <../Makefile.boot>

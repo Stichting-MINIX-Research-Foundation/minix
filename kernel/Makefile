@@ -15,7 +15,7 @@ LDADD+=	-ltimers -lsys -lexec
 
 CFLAGS += -D__kernel__ 
 
-CPPFLAGS+= -fno-stack-protector -D_NETBSD_SOURCE
+CPPFLAGS+= -fno-stack-protector -D_NETBSD_SOURCE -D_MINIX
 LDFLAGS+= -T $(LINKERSCRIPT)
 LDFLAGS+= -nostdlib -L${DESTDIR}/${LIBDIR}
 LDADD+= -lminlib

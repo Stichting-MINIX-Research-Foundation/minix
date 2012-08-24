@@ -114,12 +114,14 @@ typedef u32_t		big_nlink_t;
 typedef u32_t		big_uid_t;
 
 
+#ifdef _MINIX
 /* some Minix specific types that do not conflict with posix */
 typedef u32_t zone_t;      /* zone number */
 typedef u32_t block_t;     /* block number */
 typedef u32_t bit_t;       /* bit number in a bit map */
 typedef u16_t zone1_t;     /* zone number for V1 file systems */
 typedef u32_t bitchunk_t; /* collection of bits in a bitmap */
+#endif
 
 /* ANSI C makes writing down the promotion of unsigned types very messy.  When
  * sizeof(short) == sizeof(int), there is no promotion, so the type stays
