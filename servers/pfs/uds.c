@@ -1092,7 +1092,6 @@ int do_getsockopt_peercred_old(message *dev_m_in, message *dev_m_out)
 
 int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 {
-	int minor;
 	int rc;
 	size_t sndbuf = PIPE_BUF;
 
@@ -1102,8 +1101,6 @@ int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 				uds_minor(dev_m_in), ++call_count);
 #endif
 
-	minor = uds_minor(dev_m_in);
-
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &(sndbuf), sizeof(size_t));
 
@@ -1112,7 +1109,6 @@ int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 
 int do_setsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 {
-	int minor;
 	int rc;
 	size_t sndbuf;
 
@@ -1121,9 +1117,6 @@ int do_setsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 	printf("(uds) [%d] do_setsockopt_rcvbuf() call_count=%d\n",
 				uds_minor(dev_m_in), ++call_count);
 #endif
-
-	minor = uds_minor(dev_m_in);
-
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 				(vir_bytes) 0, (vir_bytes) &sndbuf,
@@ -1146,7 +1139,6 @@ int do_setsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 
 int do_getsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 {
-	int minor;
 	int rc;
 	size_t rcvbuf = PIPE_BUF;
 
@@ -1156,8 +1148,6 @@ int do_getsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 				uds_minor(dev_m_in), ++call_count);
 #endif
 
-	minor = uds_minor(dev_m_in);
-
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &(rcvbuf), sizeof(size_t));
 
@@ -1166,7 +1156,6 @@ int do_getsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 
 int do_setsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 {
-	int minor;
 	int rc;
 	size_t rcvbuf;
 
@@ -1175,9 +1164,6 @@ int do_setsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 	printf("(uds) [%d] do_setsockopt_rcvbuf() call_count=%d\n",
 				uds_minor(dev_m_in), ++call_count);
 #endif
-
-	minor = uds_minor(dev_m_in);
-
 
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 				(vir_bytes) 0, (vir_bytes) &rcvbuf,

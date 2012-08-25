@@ -222,7 +222,7 @@ int do_shmctl(message *m)
 	int cmd = m->SHMCTL_CMD;
 	struct shmid_ds *ds = (struct shmid_ds *)m->SHMCTL_BUF;
 	struct shmid_ds tmp_ds;
-	struct shm_struct *shm;
+	struct shm_struct *shm = NULL;
 	struct shminfo sinfo;
 	struct shm_info s_info;
 	uid_t uid;

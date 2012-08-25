@@ -1168,7 +1168,6 @@ int try_deliver_senda(struct proc *caller_ptr,
   for (i = 0; i < size; i++) {
 	/* Process each entry in the table and store the result in the table.
 	 * If we're done handling a message, copy the result to the sender. */
-  	int pending_recv = FALSE;
 
 	dst = NONE;
 	/* Copy message to kernel */
@@ -1220,7 +1219,6 @@ int try_deliver_senda(struct proc *caller_ptr,
 		/* Inform receiver that something is pending */
 		set_sys_bit(priv(dst_ptr)->s_asyn_pending, 
 			    priv(caller_ptr)->s_id); 
-		pending_recv = TRUE;
 		done = FALSE;
 		continue;
 	} 

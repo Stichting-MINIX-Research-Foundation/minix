@@ -304,10 +304,16 @@ static void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
 	}
 
 	for (off = 0; off < (off_t) len; off += CLICK_SIZE) {
-		r = sys_vircopy(fp->fp_endpoint,
-			(vir_bytes) (seg_off + off),
+		vir_bytes p = (vir_bytes) (seg_off + off);
+		r = sys_vircopy(fp->fp_endpoint, p,
 			SELF, (vir_bytes) buf,
 			(phys_bytes) CLICK_SIZE);
+
+		if(r != OK) {
+			printf("VFS: vircopy failed for %d @ 0x%lx during coredump\n",
+				fp->fp_endpoint, p);
+			break;
+		}
 
 		write_buf(f, (char *) buf, (off + CLICK_SIZE <= (off_t) len) ?
 					CLICK_SIZE : (len - off));

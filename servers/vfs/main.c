@@ -330,14 +330,8 @@ static void unlock_pm(void)
 /*===========================================================================*
  *			       do_pm					     *
  *===========================================================================*/
-static void *do_pm(void *arg)
+static void *do_pm(void *arg __unused)
 {
-  struct job my_job;
-  struct fproc *rfp;
-
-  my_job = *((struct job *) arg);
-  rfp = fp = my_job.j_fp;
-
   lock_pm();
   service_pm();
   unlock_pm();

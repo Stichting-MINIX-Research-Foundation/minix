@@ -180,10 +180,6 @@ struct rproc *rp;				/* pointer to process slot */
 int code;					/* status code */
 {
 /* If a caller is waiting for a reply, unblock it. */
-  struct rprocpub *rpub;
-
-  rpub = rp->r_pub;
-
   if(rp->r_flags & RS_LATEREPLY) {
       message m;
       m.m_type = code;

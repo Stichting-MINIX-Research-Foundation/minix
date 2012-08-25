@@ -89,7 +89,6 @@ message *m_ptr;					/* request message pointer */
 int do_down(message *m_ptr)
 {
   register struct rproc *rp;
-  register struct rprocpub *rpub;
   int s;
   char label[RS_MAX_LABEL_LEN];
 
@@ -107,7 +106,6 @@ int do_down(message *m_ptr)
           printf("RS: do_down: service '%s' not found\n", label);
       return(ESRCH);
   }
-  rpub = rp->r_pub;
 
   /* Check if the call can be allowed. */
   if((s = check_call_permission(m_ptr->m_source, RS_DOWN, rp)) != OK)
@@ -324,7 +322,6 @@ int do_edit(message *m_ptr)
 int do_refresh(message *m_ptr)
 {
   register struct rproc *rp;
-  register struct rprocpub *rpub;
   int s;
   char label[RS_MAX_LABEL_LEN];
 
@@ -342,7 +339,6 @@ int do_refresh(message *m_ptr)
           printf("RS: do_refresh: service '%s' not found\n", label);
       return(ESRCH);
   }
-  rpub = rp->r_pub;
 
   /* Check if the call can be allowed. */
   if((s = check_call_permission(m_ptr->m_source, RS_REFRESH, rp)) != OK)
@@ -833,7 +829,6 @@ void do_sigchld()
   int status;
   struct rproc *rp;
   struct rproc **rps;
-  struct rprocpub *rpub;
   int i, nr_rps;
 
   if(rs_verbose)
@@ -842,7 +837,6 @@ void do_sigchld()
   while ( (pid = waitpid(-1, &status, WNOHANG)) != 0 ) {
       rp = lookup_slot_by_pid(pid);
       if(rp != NULL) {
-          rpub = rp->r_pub;
 
           if(rs_verbose)
               printf("RS: %s exited via another signal manager\n",

@@ -35,7 +35,6 @@ int do_push_sig(message *msg)
 	int r, n;
 	endpoint_t ep;
 	vir_bytes sp;
-	struct vmproc *vmp;
 
 	ep = msg->VMPS_ENDPOINT;
 
@@ -43,7 +42,6 @@ int do_push_sig(message *msg)
 		printf("VM: bogus endpoint %d from %d\n", ep, msg->m_source);
 		return r;
 	}
-	vmp = &vmproc[n];
 
         if ((r=get_stack_ptr(ep, &sp)) != OK)
                 panic("couldn't get new stack pointer (for sig): %d", r);

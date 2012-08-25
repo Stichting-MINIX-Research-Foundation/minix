@@ -560,7 +560,6 @@ static void vm_print(u32_t *root)
 int vm_memset(endpoint_t who, phys_bytes ph, const u8_t c, phys_bytes bytes)
 {
 	u32_t p;
-	int r = OK;
 	struct proc *whoptr = NULL;
 	
 	/* NONE for physical, otherwise virtual */
@@ -592,7 +591,6 @@ int vm_memset(endpoint_t who, phys_bytes ph, const u8_t c, phys_bytes bytes)
 		 */
 		if((pfa=phys_memset(ptr, p, chunk))) {
 			printf("kernel memset pagefault\n");
-			r = EFAULT;
 			break;
 		}
 		bytes -= chunk;

@@ -282,9 +282,9 @@ static int sr_rwio(m)
 mq_t *m;
 {
 	sr_fd_t *sr_fd;
-	mq_t **q_head_ptr, **q_tail_ptr;
-	int ip_flag, susp_flag, first_flag;
-	int r;
+	mq_t **q_head_ptr = NULL, **q_tail_ptr = NULL;
+	int ip_flag = 0, susp_flag = 0, first_flag = 0;
+	int r = OK;
 	ioreq_t request;
 	size_t size;
 

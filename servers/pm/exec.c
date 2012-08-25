@@ -66,7 +66,7 @@ int do_newexec()
 	char *ptr;
 	struct mproc *rmp;
 	struct exec_info args;
-	int r, flags;
+	int r, flags = 0;
 
 	if (who_e != VFS_PROC_NR && who_e != RS_PROC_NR)
 		return EPERM;

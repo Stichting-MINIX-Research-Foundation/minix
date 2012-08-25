@@ -78,7 +78,6 @@ int main(void)
   message msg;
   int result, who_e, rcv_sts;
   int caller_slot;
-  struct vmproc *vmp_caller;
 
   /* Initialize system so that all processes are runnable */
   init_vm();
@@ -112,7 +111,6 @@ int main(void)
 	who_e = msg.m_source;
 	if(vm_isokendpt(who_e, &caller_slot) != OK)
 		panic("invalid caller %d", who_e);
-	vmp_caller = &vmproc[caller_slot];
 	c = CALLNUMBER(msg.m_type);
 	result = ENOSYS; /* Out of range or restricted calls return this. */
 	

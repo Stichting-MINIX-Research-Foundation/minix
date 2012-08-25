@@ -122,7 +122,7 @@ void direct_print(const char *str)
 
 int direct_read_char(unsigned char *ch)
 {
-	unsigned long b, sb;
+	unsigned long sb;
 
 	sb = inb(KB_STATUS);
 
@@ -130,7 +130,7 @@ int direct_read_char(unsigned char *ch)
 		return 0;
 	}
 
-	b = inb(KEYBD);
+	inb(KEYBD);
 
 	if (!(sb & KB_AUX_BYTE))
 		return 1;

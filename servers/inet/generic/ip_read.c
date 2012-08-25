@@ -71,7 +71,7 @@ acc_t *pack;
 ip_hdr_t *pack_hdr;
 {
 	ip_ass_t *ass_ent;
-	size_t pack_hdr_len, pack_offset, tmp_offset;
+	size_t pack_offset, tmp_offset;
 	u16_t pack_flags_fragoff;
 	acc_t *prev_acc, *curr_acc, *next_acc, *head_acc, *tmp_acc;
 	ip_hdr_t *tmp_hdr;
@@ -81,7 +81,6 @@ ip_hdr_t *pack_hdr;
 		pack_hdr->ih_proto, pack_hdr->ih_src, pack_hdr->ih_dst);
 
 	pack_flags_fragoff= ntohs(pack_hdr->ih_flags_fragoff);
-	pack_hdr_len= (pack_hdr->ih_vers_ihl & IH_IHL_MASK) * 4;
 	pack_offset= (pack_flags_fragoff & IH_FRAGOFF_MASK)*8;
 	pack->acc_ext_link= NULL;
 

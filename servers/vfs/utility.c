@@ -30,8 +30,6 @@ inline int copy_name( size_t len, char *dest)
 {
 /* Go get path and put it in 'dest'.
  */
-  register char *rpu, *rpm;
-
   if (len > PATH_MAX) {	/* 'len' includes terminating-nul */
 	err_code = ENAMETOOLONG;
 	return(EGENERIC);
@@ -45,8 +43,6 @@ inline int copy_name( size_t len, char *dest)
 
   if (len <= M3_STRING) {
 	/* Just copy the path from the message */
-	rpu = &dest[0];
-	rpm = job_m_in.pathname;	/* contained in input message */
 	strncpy(dest, job_m_in.pathname, len);
   } else {
 	/* String is not contained in the message. */

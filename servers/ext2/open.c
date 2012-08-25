@@ -5,6 +5,7 @@
 #include "fs.h"
 #include <sys/stat.h>
 #include <string.h>
+#include <assert.h>
 #include <minix/com.h>
 #include "buf.h"
 #include "inode.h"
@@ -191,7 +192,7 @@ int fs_slink()
   struct inode *ldirp;         /* directory containing link */
   register int r;              /* error code */
   char string[NAME_MAX];       /* last component of the new dir's path name */
-  char* link_target_buf;       /* either sip->i_block or bp->b_data */
+  char* link_target_buf = NULL;       /* either sip->i_block or bp->b_data */
   struct buf *bp = NULL;    /* disk buffer for link */
 
   caller_uid = (uid_t) fs_m_in.REQ_UID;
@@ -241,6 +242,7 @@ int fs_slink()
 		}
 	}
 	if (r == OK) {
+		assert(link_target_buf);
 		link_target_buf[fs_m_in.REQ_MEM_SIZE] = '\0';
 		sip->i_size = (off_t) strlen(link_target_buf);
 		if (sip->i_size != fs_m_in.REQ_MEM_SIZE) {

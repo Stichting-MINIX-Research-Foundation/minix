@@ -34,14 +34,10 @@ size_t data_len;
 {
 	tcp_fd_t *connuser;
 	int tcp_hdr_flags;
-	int ip_hdr_len, tcp_hdr_len;
 	u32_t seg_ack, seg_seq, rcv_hi, snd_una, snd_nxt;
 	u16_t seg_wnd, mtu;
 	size_t mss;
 	int acceptable_ACK, segm_acceptable, send_rst, close_connection;
-
-	ip_hdr_len= (ip_hdr->ih_vers_ihl & IH_IHL_MASK) << 2;
-	tcp_hdr_len= (tcp_hdr->th_data_off & TH_DO_MASK) >> 2;
 
 	tcp_hdr_flags= tcp_hdr->th_flags & TH_FLAGS_MASK;
 	seg_ack= ntohl(tcp_hdr->th_ack_nr);
@@ -1394,11 +1390,8 @@ unsigned
 tcp_sel_read(tcp_conn)
 tcp_conn_t *tcp_conn;
 {
-	tcp_fd_t *tcp_fd;
 	size_t data_size;
 	int fin_recv, urg, push;
-
-	tcp_fd= tcp_conn->tc_fd;
 
 	if (tcp_conn->tc_state == TCS_CLOSED)
 		return 1;
@@ -1449,7 +1442,7 @@ int *bytesp;
 {
 	tcp_conn_t *tcp_conn;
 	size_t data_size;
-	int fin_recv, urg, push;
+	int fin_recv, urg;
 
 	*bytesp= 0;	/* The default is that nothing is available */
 
@@ -1461,7 +1454,6 @@ int *bytesp;
 		return;
 
 	urg= tcp_Gmod4G(tcp_conn->tc_RCV_UP, tcp_conn->tc_RCV_LO);
-	push= (tcp_conn->tc_flags & TCF_RCV_PUSH);
 	fin_recv= (tcp_conn->tc_flags & TCF_FIN_RECV);
 
 	data_size= tcp_conn->tc_RCV_NXT-tcp_conn->tc_RCV_LO;

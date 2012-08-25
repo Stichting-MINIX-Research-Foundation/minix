@@ -1247,12 +1247,6 @@ int *length;
 void share_exec(rp_dst, rp_src)
 struct rproc *rp_dst, *rp_src;
 {
-  struct rprocpub *rpub_src;
-  struct rprocpub *rpub_dst;
-
-  rpub_src = rp_src->r_pub;
-  rpub_dst = rp_dst->r_pub;
-
   if(rs_verbose)
       printf("RS: %s shares exec image with %s\n",
           srv_to_string(rp_dst), srv_to_string(rp_src));
