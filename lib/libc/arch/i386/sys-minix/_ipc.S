@@ -1,9 +1,6 @@
 #include <minix/ipcconst.h>
 #include <machine/asm.h>
 
-	IPCVEC = 33	/* ipc trap to kernel  */
-	KERVEC = 32	/* syscall trap to kernel */
-
 	SRC_DST = 8	/* source/ destination process  */
 	MESSAGE = 12	/* message pointer  */
 	STATUS = 16	/* status pointer  */

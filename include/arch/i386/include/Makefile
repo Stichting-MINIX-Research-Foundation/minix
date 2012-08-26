@@ -14,7 +14,7 @@ INCS= 	ansi.h asm.h bswap.h byte_swap.h cdefs.h \
 	interrupt.h memory.h multiboot.h partition.h \
 	pci.h pci_amd.h pci_intel.h pci_sis.h pci_via.h \
 	ports.h stackframe.h vm.h elf.h elf_machdep.h mutex.h \
-	disklabel.h
+	disklabel.h ipcconst.h
 
 
 .include <bsd.kinc.mk>

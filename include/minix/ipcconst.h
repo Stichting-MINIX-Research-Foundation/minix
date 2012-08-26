@@ -1,6 +1,8 @@
 #ifndef _IPC_CONST_H
 #define _IPC_CONST_H
 
+#include <machine/ipcconst.h>
+
  /* System call numbers that are passed when trapping to the kernel. */
 #define SEND		   1	/* blocking send */
 #define RECEIVE		   2	/* blocking receive */

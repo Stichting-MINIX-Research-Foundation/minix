@@ -5,6 +5,7 @@
  * These definitions are used in the file proc.c.
  */
 #include <minix/com.h>
+#include <minix/ipcconst.h>
 
 /* Masks and flags for system calls. */
 #define NON_BLOCKING    0x0080  /* do not block if target not ready */
@@ -15,7 +16,6 @@
     (target->p_getfrom_e == ANY || target->p_getfrom_e == source_ep))
 
 /* IPC status code macros. */
-#define IPC_STATUS_REG		bx
 #define IPC_STATUS_GET(p)	((p)->p_reg.IPC_STATUS_REG)
 #define IPC_STATUS_CLEAR(p)	((p)->p_reg.IPC_STATUS_REG = 0)
 
