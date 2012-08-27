@@ -24,7 +24,7 @@
 #include "const.h"
 #include "type.h"
 #include "mfsdir.h"
-#if (defined(__minix) && defined(__i386__))
+#if defined(__minix)
 #include <minix/partition.h>
 #include <minix/u64.h>
 #include <sys/ioctl.h>
@@ -277,7 +277,7 @@ char *argv[];
 		if (blocks == 0) pexit("Can't open prototype file");
 	}
 	if (i == 0) {
-#if defined(_MINIX) || defined(__minix)
+#if defined(__minix)
 		uint32_t kb = div64u(mul64u(blocks, block_size), 1024);
 #else
 		uint32_t kb = ((unsigned long long) blocks * block_size) / 1024;
