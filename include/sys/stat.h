@@ -31,7 +31,12 @@ struct stat {
   time_t    st_birthtime;         /* time of creation */
   long      st_birthtimensec;     /* nsec of time of creation */
 #endif
+#ifdef ST_SIZE_OFF_T
+  off_t		st_size;	     	/* file size, in off_t bytes */
+  off_t		st_size_rest;
+#else
   big_off_t st_size;		/* file size, in bytes */
+#endif
   blkcnt_t  st_blocks;		/* blocks allocated for file */
   blksize_t st_blksize;		/* optimal blocksize for I/O */
   u32_t     st_flags;		/* user defined flags for file */
