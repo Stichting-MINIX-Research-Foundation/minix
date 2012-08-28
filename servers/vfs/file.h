@@ -30,8 +30,9 @@ EXTERN struct filp {
 
 #define FILP_CLOSED	0	/* filp_mode: associated device closed */
 
-#define FS_NORMAL	0	/* file descriptor can be used normally */
-#define FS_NEEDS_REOPEN	1	/* file descriptor needs to be re-opened */
+#define FS_NORMAL	000	/* file descriptor can be used normally */
+#define FS_NEEDS_REOPEN	001	/* file descriptor needs to be re-opened */
+#define FS_INVALIDATED	002	/* file was invalidated */
 
 #define FSF_UPDATE	001	/* The driver should be informed about new
 				 * state.

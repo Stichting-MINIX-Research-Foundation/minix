@@ -4,6 +4,7 @@
  */
 
 #include "fs.h"
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -23,7 +24,45 @@
 
 struct dmap dmap[NR_DEVICES];
 
-#define DT_EMPTY { no_dev, no_dev_io, NONE, "", 0, STYLE_NDEV, NULL }
+#define DT_EMPTY { no_dev, no_dev_io, NONE, "", 0, STYLE_NDEV, NULL, NONE, \
+		   0, NULL, 0}
+
+/*===========================================================================*
+ *				lock_dmap		 		     *
+ *===========================================================================*/
+void lock_dmap(struct dmap *dp)
+{
+/* Lock a driver */
+	struct worker_thread *org_self;
+	struct fproc *org_fp;
+	int r;
+
+	assert(dp != NULL);
+	assert(dp->dmap_driver != NONE);
+
+	org_fp = fp;
+	org_self = self;
+
+	if ((r = mutex_lock(dp->dmap_lock_ref)) != 0)
+		panic("unable to get a lock on dmap: %d\n", r);
+
+	fp = org_fp;
+	self = org_self;
+}
+
+/*===========================================================================*
+ *				unlock_dmap		 		     *
+ *===========================================================================*/
+void unlock_dmap(struct dmap *dp)
+{
+/* Unlock a driver */
+	int r;
+
+	assert(dp != NULL);
+
+	if ((r = mutex_unlock(dp->dmap_lock_ref)) != 0)
+		panic("unable to unlock dmap lock: %d\n", r);
+}
 
 /*===========================================================================*
  *				do_mapdriver		 		     *
@@ -98,10 +137,19 @@ int flags;			/* device flags */
 
   /* Check if we're supposed to unmap it. */
  if (proc_nr_e == NONE) {
+	/* Even when a driver is now unmapped and is shortly to be mapped in
+	 * due to recovery, invalidate associated filps if they're character
+	 * special files. More sophisticated recovery mechanisms which would
+	 * reduce the need to invalidate files are possible, but would require
+	 * cooperation of the driver and more recovery framework between RS,
+	 * VFS, and DS.
+	 */
+	invalidate_filp_by_char_major(major);
 	dp->dmap_opcl = no_dev;
 	dp->dmap_io = no_dev_io;
 	dp->dmap_driver = NONE;
 	dp->dmap_flags = flags;
+	dp->dmap_lock_ref = &dp->dmap_lock;
 	return(OK);
   }
 
@@ -186,6 +234,7 @@ int map_service(struct rprocpub *rpub)
 {
 /* Map a new service by storing its device driver properties. */
   int r;
+  struct dmap *fdp, *sdp;
 
   /* Not a driver, nothing more to do. */
   if(rpub->dev_nr == NO_DEV) return(OK);
@@ -200,6 +249,17 @@ int map_service(struct rprocpub *rpub)
 	r = map_driver(rpub->label, rpub->dev_nr+1, rpub->endpoint,
 		       rpub->dev_style2, rpub->dev_flags);
 	if(r != OK) return(r);
+
+	/* To ensure that future dmap lock attempts always lock the same driver
+	 * regardless of major number, refer the second dmap lock reference
+	 * to the first dmap entry.
+	 */
+	fdp = get_dmap_by_major(rpub->dev_nr);
+	sdp = get_dmap_by_major(rpub->dev_nr+1);
+	assert(fdp != NULL);
+	assert(sdp != NULL);
+	assert(fdp != sdp);
+	sdp->dmap_lock_ref = &fdp->dmap_lock;
   }
 
   return(OK);
@@ -219,6 +279,20 @@ void init_dmap()
 }
 
 /*===========================================================================*
+ *				init_dmap_locks		 		     *
+ *===========================================================================*/
+void init_dmap_locks()
+{
+  int i;
+
+  for (i = 0; i < NR_DEVICES; i++) {
+	if (mutex_init(&dmap[i].dmap_lock, NULL) != 0)
+		panic("unable to initialize dmap lock");
+	dmap[i].dmap_lock_ref = &dmap[i].dmap_lock;
+  }
+}
+
+/*===========================================================================*
  *				dmap_driver_match	 		     *
  *===========================================================================*/
 int dmap_driver_match(endpoint_t proc, int major)
@@ -231,6 +305,17 @@ int dmap_driver_match(endpoint_t proc, int major)
 }
 
 /*===========================================================================*
+ *				dmap_by_major		 		     *
+ *===========================================================================*/
+struct dmap *
+get_dmap_by_major(int major)
+{
+	if (major < 0 || major >= NR_DEVICES) return(NULL);
+	if (dmap[major].dmap_driver == NONE) return(NULL);
+	return(&dmap[major]);
+}
+
+/*===========================================================================*
  *				dmap_endpt_up		 		     *
  *===========================================================================*/
 void dmap_endpt_up(endpoint_t proc_e, int is_blk)
@@ -240,12 +325,35 @@ void dmap_endpt_up(endpoint_t proc_e, int is_blk)
  */
 
   int major;
+  struct dmap *dp;
+  struct worker_thread *worker;
+
+  if (proc_e == NONE) return;
+
   for (major = 0; major < NR_DEVICES; major++) {
-	if (dmap_driver_match(proc_e, major)) {
-		if (is_blk)
+	if ((dp = get_dmap_by_major(major)) == NULL) continue;
+	if (dp->dmap_driver == proc_e) {
+		if (is_blk) {
+			if (dp->dmap_recovering) {
+				printf("VFS: driver recovery failure for"
+					" major %d\n", major);
+				if (dp->dmap_servicing != NONE) {
+					worker = worker_get(dp->dmap_servicing);
+					worker_stop(worker);
+				}
+				dp->dmap_recovering = 0;
+				continue;
+			}
+			dp->dmap_recovering = 1;
 			bdev_up(major);
-		else
+			dp->dmap_recovering = 0;
+		} else {
+			if (dp->dmap_servicing != NONE) {
+				worker = worker_get(dp->dmap_servicing);
+				worker_stop(worker);
+			}
 			cdev_up(major);
+		}
 	}
   }
 }

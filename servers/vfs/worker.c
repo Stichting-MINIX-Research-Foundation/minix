@@ -291,7 +291,6 @@ static void worker_wake(struct worker_thread *worker)
 void worker_wait(void)
 {
   self->w_job.j_err_code = err_code;
-  assert(fp == self->w_job.j_fp);
   worker_sleep(self);
   /* We continue here after waking up */
   fp = self->w_job.j_fp;	/* Restore global data */
@@ -314,10 +313,18 @@ void worker_signal(struct worker_thread *worker)
 void worker_stop(struct worker_thread *worker)
 {
   ASSERTW(worker);		/* Make sure we have a valid thread */
-  if (worker->w_job.j_fp)
-	worker->w_job.j_fp->fp_sendrec->m_type = EIO;
-  else
+  if (worker->w_task != NONE) {
+	/* This thread is communicating with a driver or file server */
+	if (worker->w_drv_sendrec != NULL) {			/* Driver */
+		worker->w_drv_sendrec->m_type = EIO;
+	} else if (worker->w_fs_sendrec != NULL) {		/* FS */
+		worker->w_fs_sendrec->m_type = EIO;
+	} else {
+		panic("reply storage consistency error");	/* Oh dear */
+	}
+  } else {
 	worker->w_job.j_m_in.m_type = EIO;
+  }
   worker_wake(worker);
 }
 
@@ -387,7 +394,9 @@ static int worker_waiting_for(struct worker_thread *worker, endpoint_t proc_e)
   ASSERTW(worker);		/* Make sure we have a valid thread */
 
   if (worker->w_job.j_func != NULL) {
-	if (worker->w_job.j_fp != NULL) {
+	if (worker->w_task != NONE)
+		return(worker->w_task == proc_e);
+	else if (worker->w_job.j_fp != NULL) {
 		return(worker->w_job.j_fp->fp_task == proc_e);
 	}
   }

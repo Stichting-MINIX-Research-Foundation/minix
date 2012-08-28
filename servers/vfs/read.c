@@ -135,7 +135,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access char dev NO_DEV");
 
-	suspend_reopen = (f->filp_state != FS_NORMAL);
+	suspend_reopen = (f->filp_state & FS_NEEDS_REOPEN);
 	dev = (dev_t) vp->v_sdev;
 
 	r = dev_io(op, dev, for_e, buf, position, size, oflags,

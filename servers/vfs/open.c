@@ -299,6 +299,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
 		filp->filp_count = 0;
 		filp->filp_vno = NULL;
+		filp->filp_state &= ~FS_INVALIDATED; /* Prevent garbage col. */
 		put_vnode(vp);
 	}
   } else {
