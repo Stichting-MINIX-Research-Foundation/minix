@@ -29,6 +29,9 @@ static struct mmclog log= {
 
 static struct mmc_host host;
 
+#define COPYBUFF_SIZE 0x1000 /* 4k buff */
+static unsigned char copybuff[COPYBUFF_SIZE]; 
+
 #define SLOT_STATE_INITIAL 0x01u
 
 
@@ -212,15 +215,29 @@ static int block_transfer(dev_t minor /* minor device number */,
 	unsigned long counter;
 	iovec_t *ciov; /* Current IO Vector */
 	struct device * dev; /* The device used */
+	struct sd_slot *slot;/* The sd slot the requests is pointed to */
 	vir_bytes io_size; /*  Size to read/write to/from the iov */
 	vir_bytes io_offset; /* Size to read/write to/from the iov */
 	vir_bytes bytes_written;
-	int r;
+	int r,blk_size,i;
 
 	/* get the current "device" geometry */
 	dev= block_part(minor);
+	if (dev == NULL){ 
+		mmc_log_warn(&log, "Transfer requested on unkown device minor(%d)\n",minor);
+		/* Unknown device */
+		return ENXIO;
+	}
 
-	bytes_written= 0;
+	slot= get_slot(minor);
+	assert(slot);
+	assert(slot->card.blk_size != 0);
+	assert(slot->card.blk_size < COPYBUFF_SIZE);
+	/* Starting at a block boundary */
+	assert(position % slot->card.blk_size == 0); 
+	blk_size = slot->card.blk_size;
+	
+	bytes_written = 0;
 
 	/* are we trying to start reading past the end */
 	if (position > dev->dv_size) {
@@ -235,6 +252,7 @@ static int block_transfer(dev_t minor /* minor device number */,
 	ciov= iov;
 	for (counter= 0; counter < nr_req; counter++) {
 		assert(ciov != NULL);
+		assert(ciov->iov_size % blk_size == 0);
 
 		/* Assume we are to transfer the amount of data given in the
 		 * input/output vector but ensure we are not doing i/o past 
@@ -253,16 +271,36 @@ static int block_transfer(dev_t minor /* minor device number */,
 				"offset)=(%d,%d,%d,%d)\n",
 				counter, nr_req,
 				ciov->iov_addr, ciov->iov_size, io_size, io_offset);
-		if (do_write) {
-			/* Read io_size bytes from i/o vector starting at 0 
-			 * and write it to out buffer at the correct offset */
-			r= sys_safecopyfrom(endpt, ciov->iov_addr, 0 /* offset */,
-					(vir_bytes) dummy_data + io_offset, io_size);
-		} else {
-			/* Read io_size bytes from our data at the correct 
-			 * offset and write it to the output buffer at 0 */
-			r= sys_safecopyto(endpt, ciov->iov_addr, 0 /* offset */,
-					(vir_bytes) dummy_data + io_offset, io_size);
+		
+		for(i =0; i < io_size / slot->card.blk_size; i++){
+
+			/* @TODO this code still probably has a few errors */
+			if (do_write) {
+				/* copy a bloc */
+				
+				/* Read io_size bytes from i/o vector starting at 0 
+				 * and write it to out buffer at the correct offset */
+				r= sys_safecopyfrom(endpt, ciov->iov_addr, i * slot->card.blk_size /* offset */,
+						(vir_bytes) copybuff , io_offset/slot->card.blk_size);
+				/* write a singe block  */
+			        slot->host->write(& slot->card,
+					  io_offset/slot->card.blk_size + i,
+					  1,
+					  copybuff);
+			} else {
+				/* read a singe block info copybuff */
+			        slot->host->read(& slot->card,
+					  io_offset/slot->card.blk_size +i,
+					  1,
+					  copybuff);
+				
+				/* Read io_size bytes from our data at the correct 
+				 * offset and write it to the output buffer at 0 */
+				r= sys_safecopyto(endpt, ciov->iov_addr, 
+						   i * slot->card.blk_size  /* offset */,
+						   (vir_bytes) copybuff ,
+						   io_offset/slot->card.blk_size);
+			}
 		}
 		if (r != OK) {
 			/* use _SIGN to reverse the signedness */

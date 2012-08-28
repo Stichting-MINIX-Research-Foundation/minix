@@ -1,4 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <minix/blockdriver.h>
 #include "mmclog.h"
+#include "mmchost.h"
 /*
  * Define a structure to be used for logging
  */
@@ -7,29 +13,8 @@ static struct mmclog log= {
 		.log_level = LEVEL_TRACE,
 		.log_func = default_log };
 
-
-
-void mmchs_host_initialize_host_structure(struct mmc_host * host)
-{
-	/* Initialize the basic data structures host slots and cards */
-	int i;
-
-	host->host_set_instance =mmchs_host_set_instance;
-	host->host_init =mmchs_host_init;
-	host->host_reset = mmchs_host_reset;
-	host->card_detect = mmchs_card_detect;
-	host->card_initialize = mmchs_card_initialize;
-	host->card_release =mmchs_card_release;
-
-	/* initialize data structures */
-	for (i =0; i < MAX_SDLOTS ; i++){
-		//@TODO set initial card and slot state
-		host->slot[i].host = host;
-		host->slot[i].card.slot = & host->slot[i];
-	}
-}
-
 #define DUMMY_SIZE_IN_BLOCKS 0xFFFu
+/* @TODO rename sector into BLOCK_SIZE */
 #define SECTOR_SIZE 512
 static char dummy_data[SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS];
 
@@ -86,6 +71,9 @@ int mmchs_card_detect(struct sd_slot* slot)
 struct sd_card * mmchs_card_initialize(struct sd_slot* slot)
 {
 	init_dummy_sdcard(slot);
+	/* TODO: Add dummy data */
+	slot->card.blk_size = SECTOR_SIZE;
+	slot->card.blk_count = DUMMY_SIZE_IN_BLOCKS;
 	return &slot->card;
 }
 
@@ -96,4 +84,47 @@ int mmchs_card_release(struct sd_card* card)
 	card->open_ct--;
 	/*TODO:Set card state  */
 	return OK;
+}
+
+/* read count blocks into existing buf */
+int mmchs_host_read(struct sd_card *card, 
+	uint32_t blknr, 
+	uint32_t count, 
+	unsigned char * buf)
+{
+	memcpy(buf,&dummy_data[blknr * 512],count * 512);
+	return OK;
+}
+
+
+/* write count blocks */
+int mmchs_host_write(struct sd_card *card, 
+                           uint32_t blknr, 
+                    	   uint32_t count, 
+                           unsigned char * buf)
+{
+	memcpy(&dummy_data[blknr * 512],buf,count * 512);
+	return OK;
+}
+
+void mmchs_host_initialize_host_structure(struct mmc_host * host)
+{
+	/* Initialize the basic data structures host slots and cards */
+	int i;
+
+	host->host_set_instance =mmchs_host_set_instance;
+	host->host_init =mmchs_host_init;
+	host->host_reset = mmchs_host_reset;
+	host->card_detect = mmchs_card_detect;
+	host->card_initialize = mmchs_card_initialize;
+	host->card_release =mmchs_card_release;
+	host->read = mmchs_host_read;
+	host->write = mmchs_host_write;
+
+	/* initialize data structures */
+	for (i =0; i < MAX_SDLOTS ; i++){
+		//@TODO set initial card and slot state
+		host->slot[i].host = host;
+		host->slot[i].card.slot = & host->slot[i];
+	}
 }

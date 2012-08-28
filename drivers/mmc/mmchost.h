@@ -44,19 +44,25 @@ struct sd_card
 
 	/* Card registers */
 	uint32_t cid[4]; /* Card Identification */
-	uint32_t rca; /* Relative card address */
-	uint32_t dsr; /* Driver stage register */
+	uint32_t rca;    /* Relative card address */
+	uint32_t dsr;    /* Driver stage register */
 	uint32_t csd[4]; /* Card specific data */
 	uint32_t scr[2]; /* SD configuration */
-	uint32_t ocr; /* Operation conditions */
+	uint32_t ocr;    /* Operation conditions */
 	uint32_t ssr[5]; /* SD Status */
-	uint32_t csr; /* Card status */
+	uint32_t csr;    /* Card status */
+
+
+	/* some helpers (data comming from the csd) */
+	uint32_t blk_size;
+	uint32_t blk_count; 
 
 	/* drive state: deaf, initialized, dead */
 	unsigned state;
 
 	/* MINIX/block driver related things */
 	int open_ct; /* in-use count */
+
 	/* 1 disks + 4 partitions and 16 possible sub partitions */
 	struct device part[MINOR_PER_DISK + PARTITONS_PER_DISK];
 	struct device subpart[PARTITONS_PER_DISK * SUBPARTITION_PER_PARTITION];
@@ -73,7 +79,6 @@ struct sd_slot
 	struct sd_card card;
 };
 
-struct mmc_command;
 
 /* structure for the host controller */
 struct mmc_host
@@ -91,35 +96,37 @@ struct mmc_host
 	/* Release the card */
 	int (*card_release)(struct sd_card* card);
 
-	/* read a block into existing buf */
+	/* read count blocks into existing buf */
 	int (*read)(struct sd_card *card, 
 	  	    uint32_t blknr, 
                     uint32_t count, 
                     unsigned char * buf);
 
-	/* write a block */
+	/* write count blocks */
 	int (*write)(struct sd_card *card, 
                            uint32_t blknr, 
                     	   uint32_t count, 
                            unsigned char * buf);
 
-	/* Command execution */
-	int (*send_cmd)(struct sd_card* card, struct mmc_command *);
-
 	/* up to 4 slots with 4 SD cards*/
 	struct sd_slot slot[MAX_SDLOTS];
 };
+
+#if 0
+/* Command execution */
+int (*send_cmd)(struct sd_card* card, struct mmc_command *);
 
 /* struct representing an mmc command */
 struct mmc_command
 {
 	uint32_t cmd;
 	uint32_t args;
-	uint32_t[4] resp;
+	uint32_t resp[4];
 	unsigned char* data;
 	uint32_t data_len;
 };
 
+#endif
 /* Hack done for driver registration */
 void mmchs_host_initialize_host_structure(struct mmc_host * host);
 #define host_initialize_host_structure(x) mmchs_host_initialize_host_structure(x)
