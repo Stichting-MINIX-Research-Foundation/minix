@@ -740,7 +740,7 @@ static void test_attributes(void)
   /* Verify stack hypothesis; we assume a stack is used from the top and grows
    * downwards.
    */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__arm__)
   if (stackp[0] != MAGIC) err(11, 66); /* End of the stack */
   for (i = no_ints - 1 - 16; i < no_ints; i++)
   	if (stackp[i] != MAGIC) stack_untouched = 0;

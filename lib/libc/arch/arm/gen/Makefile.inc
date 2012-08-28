@@ -17,9 +17,13 @@ SRCS+=	setjmp.S
 SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S
 
+.if defined(__MINIX)
+# Already defined in sys-minix
+.else
 SRCS+=	makecontext.c resumecontext.c swapcontext.S
 
 SRCS+=	_lwp.c
+.endif
 
 LSRCS.arm.gen=	Lint_bswap16.c Lint_bswap32.c Lint_swapcontext.c
 LSRCS+=		${LSRCS.arm.gen}

@@ -2,7 +2,9 @@
 
 .include <bsd.own.mk>
 
+.if !defined(__MINIX)
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
+.endif
 
 CPPFLAGS += -DSOFTFLOAT
 

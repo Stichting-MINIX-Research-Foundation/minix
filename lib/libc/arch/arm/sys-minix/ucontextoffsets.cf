@@ -1,0 +1,25 @@
+
+include <minix/type.h>
+include <sys/ucontext.h>
+
+struct __ucontext
+member UC_FLAGS uc_flags
+member UC_LINK uc_link
+member MAGIC uc_mcontext.mc_magic
+member REG0 uc_mcontext.mc_p_reg.retreg
+member REG1 uc_mcontext.mc_p_reg.r1
+member REG2 uc_mcontext.mc_p_reg.r2
+member REG3 uc_mcontext.mc_p_reg.r3
+member REG4 uc_mcontext.mc_p_reg.r4
+member REG5 uc_mcontext.mc_p_reg.r5
+member REG6 uc_mcontext.mc_p_reg.r6
+member REG7 uc_mcontext.mc_p_reg.r7
+member REG8 uc_mcontext.mc_p_reg.r8
+member REG9 uc_mcontext.mc_p_reg.r9
+member REG10 uc_mcontext.mc_p_reg.r10
+member FPREG uc_mcontext.mc_p_reg.fp
+member REG12 uc_mcontext.mc_p_reg.r12
+member SPREG uc_mcontext.mc_p_reg.sp
+member LRREG uc_mcontext.mc_p_reg.lr
+member PCREG uc_mcontext.mc_p_reg.pc
+
