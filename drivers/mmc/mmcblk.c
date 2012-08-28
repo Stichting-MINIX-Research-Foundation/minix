@@ -1,6 +1,5 @@
 /* 
- * This file contains a generic in memory block driver that will be hooked
- * to the mmc sub-system
+ * Driver for MultiMediaCards (MMC)
  */
 #include <minix/syslib.h>
 #include <minix/driver.h>
@@ -14,122 +13,19 @@
 #include <stdarg.h>
 #include <signal.h>
 
+
+#include "mmchost.h"
+
 #include "mmclog.h"
-
-#define SUBPARTITION_PER_PARTITION 4 /* 4 sub partitions per partition */
-#define PARTITONS_PER_DISK 4         /* 4 partitions per disk */
-#define MINOR_PER_DISK  1            /* one additional minor to point to */
-
-/**
- * We can have multiple MMC host controller present on the hardware. The MINIX
- * approach to handle this is to run a driver for each instance. Every driver
- * will therefore be stated with an "instance" id and the rest of the code here
- * will assume a single host controller to be present.
- *
- * The SD specification allows multiple cards to be attached to a single host
- * controller using the same lines. I recommend reading SD Specifications Part 1
- * Physical layer Simplified Specification chapter 3 about SD Memory Card system
- * concepts if you want to get a better understanding of this.
- *
- * In practice an MMC host will usually have a single slot attached to it and that
- * Slot may or may not contain a card. On sudden card removal we might want to
- * keep track of the last inserted card and we might therefore at later stage
- * add an additional "last_card" attribute to the card.
- *
- * The following diagram shows the structure that will be used to modulate the
- * hardware written in umlwiki  syntax.
- *
- * [/host/
- *   +instance:int] 1 --- 0..4 [ /slot/
- *                                +card_detect:func ] 1 --- 0..1 [ /card/ ]
- *                                 `
- */
-
-#define MAX_SDLOTS 4
-
-struct mmc_host;
-
-//TODO Add more modes like INACTIVE STATE and such
-#define SD_MODE_CARD_IDENTIFICATION 1
-#define SD_MODE_DATA_TRANSFER_MODE 2
-
-/* struct representing an SD card */
-struct sd_card
-{
-	/* pointer back to the sd slot for convenience */
-	struct sd_slot *slot;
-
-	/* Card registers */
-	uint32_t cid[4]; /* Card Identification */
-	uint32_t rca; /* Relative card address */
-	uint32_t dsr; /* Driver stage register */
-	uint32_t csd[4]; /* Card specific data */
-	uint32_t scr[2]; /* SD configuration */
-	uint32_t ocr; /* Operation conditions */
-	uint32_t ssr[5]; /* SD Status */
-	uint32_t csr; /* Card status */
-
-	/* drive state: deaf, initialized, dead */
-	unsigned state;
-
-	/* MINIX/block driver related things */
-	int open_ct; /* in-use count */
-	/* 1 disks + 4 partitions and 16 possible sub partitions */
-	struct device part[MINOR_PER_DISK + PARTITONS_PER_DISK];
-	struct device subpart[PARTITONS_PER_DISK * SUBPARTITION_PER_PARTITION];
-};
-
-/* struct representing an sd slot */
-struct sd_slot
-{
-	/* pointer back to the host for convenience */
-	struct mmc_host *host;
-	//unsigned index;
-
-	unsigned state;
-	struct sd_card card;
-};
-
-struct mmc_command;
-
-/* struct for the host controller */
-struct mmc_host
-{
-	/* MMC host configuration */
-	int (*host_set_instance)(struct mmc_host *host, int instance);
-	/* MMC host configuration */
-	int (*host_init)(struct mmc_host *host);
-	/* Host controller reset */
-	int (*host_reset)(struct mmc_host *host);
-	/* Card detection (binary yes/no) */
-	int (*card_detect)(struct sd_slot* slot);
-	/* Perform card detection e.g. card type */
-	struct sd_card* (*card_initialize)(struct sd_slot* slot);
-	/* Release the card */
-	int (*card_release)(struct sd_card* card);
-	/* Command execution */
-	int (*send_cmd)(struct sd_card* card, struct mmc_command *);
-
-	/* up to 4 slots with ... 4 cards*/
-	struct sd_slot slot[MAX_SDLOTS];
-};
-
-/* struct representing an mmc command */
-struct mmc_command
-{
-
-};
-
 /*
  * Define a structure to be used for logging
  */
 static struct mmclog log= {
-		.name = "mmc_driver",
+		.name = "mmc_block",
 		.log_level = LEVEL_TRACE,
 		.log_func = default_log };
 
-/* while developing..  don;t rely on proper headers*/
-#include "mmchost.c"
+
 
 static struct mmc_host host;
 
@@ -138,26 +34,7 @@ static struct mmc_host host;
 
 static struct sd_slot * get_slot(dev_t minor);
 
-static void initialize_structures()
-{
-	/* Initialize the basic data structures host slots and cards */
-	int i;
 
-	host.host_set_instance =mmchs_host_set_instance;
-	host.host_init =mmchs_host_init;
-	host.host_reset = mmchs_host_reset;
-	host.card_detect = mmchs_card_detect;
-	host.card_initialize = mmchs_card_initialize;
-	host.card_release =mmchs_card_release;
-
-	/* initialize data structures */
-	for (i =0; i < MAX_SDLOTS ; i++){
-		//@TODO set initial card and slot state
-		host.slot[i].host = &host;
-		host.slot[i].card.slot = & host.slot[i];
-	}
-
-}
 /* Prototypes for the block device */
 static int block_open(dev_t minor, int access);
 static int block_close(dev_t minor);
@@ -172,13 +49,13 @@ static int block_ioctl(dev_t minor,
 		unsigned int request,
 		endpoint_t endpt,
 		cp_grant_id_t grant);
+static struct device *block_part(dev_t minor);
 
 /* System even handling */
 static void sef_local_startup();
 static int block_system_event_cb(int type, sef_init_info_t *info);
 static void block_signal_handler_cb(int signo);
 
-static struct device *block_part(dev_t minor);
 
 /* Entry points for the BLOCK driver. */
 static struct blockdriver mmc_driver= {
@@ -200,7 +77,7 @@ int apply_env()
 {
 	/* apply the env setting passed to this driver
 	 * parameters accepted
-	 * log_level=[0-4] (NONE,WARNING,INFO,DEBUG|TRACE)
+	 * log_level=[0-4] (NONE,WARNING,INFO,DEBUG,TRACE)
 	 * instance=[0-3] instance/bus number to use for this driver
 	 *
 	 * Passing these arguments is done when starting the driver using
@@ -231,8 +108,7 @@ int main(int argc, char **argv)
 {
 	/* Set and apply the environment */
 	env_setargs(argc, argv);
-
-	initialize_structures();
+	host_initialize_host_structure(&host);
 	if (apply_env()) {
 		mmc_log_warn(&log, "Failed while applying environment settings\n");
 		return EXIT_FAILURE;
@@ -455,11 +331,11 @@ static struct device *block_part(dev_t minor)
 	 *  | minor | disk    | partition    | sub  | name   |
 	 *  | 0     | 0       | 0            |      | d0     | first disk
 	 *  | 1     | 0       | 1            |      | d0p0   | first disk , first partition
-	 *  | 1     | 0       | 2            |      | d0p1   | first disk , second partition
-	 *  | 2     | 0       | 3            |      | d0p2   | ..
-	 *  | 3     | 0       | 4            |      | d0p3   |
-	 *  | 4     | 1       | 0            |      | d1     | second disk
-	 *  | 5     | 1       | 1            |      | d1p0   | second disk , first partition
+	 *  | 2     | 0       | 2            |      | d0p1   | first disk , second partition
+	 *  | 3     | 0       | 3            |      | d0p2   | ..
+	 *  | 4     | 0       | 4            |      | d0p3   |
+	 *  | 5     | 1       | 0            |      | d1     | second disk
+	 *  | 6     | 1       | 1            |      | d1p0   | second disk , first partition
 	 *  | ...   | minor/8 | minor % 5    |      |        |
 	 *  | 40    | 7       |  4           |      | d7p3   | eights disk , fourth partition
 	 *  | gap   | --      | --           |      | --     | not used. next start 128 are sub partitions
@@ -519,7 +395,7 @@ static void sef_local_startup()
 	/*
 	 * Register init callbacks. Use the same function for all event types
 	 */
-	sef_setcb_init_fresh(block_system_event_cb); /* Callback on a freh start */
+	sef_setcb_init_fresh(block_system_event_cb); /* Callback on a fresh start */
 	sef_setcb_init_lu(block_system_event_cb); /* Callback on a Live Update */
 	sef_setcb_init_restart(block_system_event_cb); /* Callback on a restart */
 
@@ -574,7 +450,7 @@ static struct sd_slot * get_slot(dev_t minor)
 	/*
 	 * Get an sd_slot based on the minor number.
 	 *
-	 * This driver only supports a single card at the time. Also as
+	 * This driver only supports a single card at at time. Also as
 	 * we are following the major/minor scheme of other driver we
 	 * must return a slot for all minors on disk 0 these are  0-5
 	 * for the disk and 4 main partitions and

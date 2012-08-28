@@ -1,3 +1,34 @@
+#include "mmclog.h"
+/*
+ * Define a structure to be used for logging
+ */
+static struct mmclog log= {
+		.name = "mmc_host",
+		.log_level = LEVEL_TRACE,
+		.log_func = default_log };
+
+
+
+void mmchs_host_initialize_host_structure(struct mmc_host * host)
+{
+	/* Initialize the basic data structures host slots and cards */
+	int i;
+
+	host->host_set_instance =mmchs_host_set_instance;
+	host->host_init =mmchs_host_init;
+	host->host_reset = mmchs_host_reset;
+	host->card_detect = mmchs_card_detect;
+	host->card_initialize = mmchs_card_initialize;
+	host->card_release =mmchs_card_release;
+
+	/* initialize data structures */
+	for (i =0; i < MAX_SDLOTS ; i++){
+		//@TODO set initial card and slot state
+		host->slot[i].host = host;
+		host->slot[i].card.slot = & host->slot[i];
+	}
+}
+
 #define DUMMY_SIZE_IN_BLOCKS 0xFFFu
 #define SECTOR_SIZE 512
 static char dummy_data[SECTOR_SIZE * DUMMY_SIZE_IN_BLOCKS];
@@ -48,6 +79,7 @@ int mmchs_host_reset(struct mmc_host *host)
 
 int mmchs_card_detect(struct sd_slot* slot)
 {
+	/*TODO:Set card state  */
 	return 1;
 }
 
@@ -62,5 +94,6 @@ int mmchs_card_release(struct sd_card* card)
 {
 	assert(card->open_ct == 1);
 	card->open_ct--;
+	/*TODO:Set card state  */
 	return OK;
 }

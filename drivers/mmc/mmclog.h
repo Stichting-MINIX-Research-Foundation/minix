@@ -1,3 +1,5 @@
+#ifndef __MMCLOG_H__
+#define __MMCLOG_H__
 /* 
  * Simple logging functions for the MMC layer
  */
@@ -20,7 +22,7 @@ static const char *level_string[5] = {
  * struct to be initialized by the user of the logging system.
  *
  * name:
- * 	The name attribute is used in loggging statements do diffrencate drivers
+ * 	The name attribute is used in logging statements do differentiate drivers
  *
  * log_level
  * 	The level attribute describes the requested logging level. a level of 1 will
@@ -61,7 +63,9 @@ struct mmclog {
 		__mmc_log(driver, LEVEL_TRACE, fmt, ## args)
 
 
-void default_log (struct mmclog *driver, int level, const char *file, const char *function , int line, const char * fmt, ...)
+#endif /* __MMCLOG_H__ */
+
+static void default_log (struct mmclog *driver, int level, const char *file, const char *function , int line, const char * fmt, ...)
 {
 	va_list args;
 
