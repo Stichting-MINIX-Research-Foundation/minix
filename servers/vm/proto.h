@@ -59,11 +59,7 @@ int do_fork(message *msg);
 
 /* break.c */
 int do_brk(message *msg);
-int adjust(struct vmproc *rmp, vir_clicks data_clicks, vir_bytes sp);
 int real_brk(struct vmproc *vmp, vir_bytes v);
-
-/* signal.c */
-int do_push_sig(message *msg);
 
 /* map_mem.c */
 int map_memory(endpoint_t sour, endpoint_t dest, vir_bytes virt_s,

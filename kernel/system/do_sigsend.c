@@ -38,6 +38,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 	return r;
 
   /* Compute the user stack pointer where sigcontext will be stored. */
+  smsg.sm_stkptr = arch_get_sp(rp);
   scp = (struct sigcontext *) smsg.sm_stkptr - 1;
 
   /* Copy the registers to the sigcontext structure. */

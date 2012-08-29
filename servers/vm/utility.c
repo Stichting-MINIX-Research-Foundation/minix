@@ -137,23 +137,6 @@ int vm_isokendpt(endpoint_t endpoint, int *proc)
 }
 
 
-struct proc mytmpproc;
-
-/*===========================================================================*
- *                              get_stack_ptr                                *
- *===========================================================================*/
-int get_stack_ptr(proc_nr_e, sp)
-int proc_nr_e;                                  /* process to get sp of */   
-vir_bytes *sp;                                  /* put stack pointer here */
-{
-  int s; 
-  
-  if ((s=sys_getproc(&mytmpproc, proc_nr_e)) != OK)     
-        return(s);
-  *sp = mytmpproc.p_reg.sp;
-  return(OK);
-}       
-
 /*===========================================================================*
  *                              do_info                                      *
  *===========================================================================*/

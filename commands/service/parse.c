@@ -714,7 +714,7 @@ struct
 	{ "FORK",		VM_FORK },
 	{ "BRK",		VM_BRK },
 	{ "EXEC_NEWMEM",	VM_EXEC_NEWMEM },
-	{ "PUSH_SIG",		VM_PUSH_SIG },
+	{ "PUSH_SIG",		0 },
 	{ "WILLEXIT",		VM_WILLEXIT },
 	{ "ADDDMA",		VM_ADDDMA },
 	{ "DELDMA",		VM_DELDMA },
@@ -790,7 +790,12 @@ static void do_vm(config_t *cpe, struct rs_start *rs_start)
 		if (vm_table[i].label == NULL)
 			fatal("do_vm: unknown call '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
-		SET_BIT(rs_start->rss_vm, vm_table[i].call_nr - VM_RQ_BASE);
+
+		if(vm_table[i].call_nr) {
+			SET_BIT(rs_start->rss_vm,
+				vm_table[i].call_nr - VM_RQ_BASE);
+		}
+
 		first = FALSE;
 	}
 }

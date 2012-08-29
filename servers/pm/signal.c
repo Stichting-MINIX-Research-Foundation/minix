@@ -701,7 +701,6 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
  * Return TRUE if this succeeded, FALSE otherwise.
  */
   struct sigmsg sigmsg;
-  vir_bytes cur_sp;
   int r, sigflags, slot;
 
   if (!(rmp->mp_flags & UNPAUSED))
@@ -731,11 +730,6 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   }
   sigdelset(&rmp->mp_sigpending, signo);
   sigdelset(&rmp->mp_ksigpending, signo);
-
-  if(vm_push_sig(rmp->mp_endpoint, &cur_sp) != OK)
-	return(FALSE);
-
-  sigmsg.sm_stkptr = cur_sp;
 
   /* Ask the kernel to deliver the signal */
   r = sys_sigsend(rmp->mp_endpoint, &sigmsg);

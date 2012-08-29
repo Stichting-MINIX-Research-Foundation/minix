@@ -927,9 +927,6 @@
 #	define VMEN_ARGSSIZE		m1_i2
 #	define VMEN_FLAGS		m1_i3	/* result */
 #	define VMEN_STACK_TOP		m1_p2	/* result */
-#define VM_PUSH_SIG		(VM_RQ_BASE+4)
-#	define VMPS_ENDPOINT		m1_i1
-#	define VMPS_OLD_SP		m1_p1	/* result */
 #define VM_WILLEXIT		(VM_RQ_BASE+5)
 #	define VMWE_ENDPOINT		m1_i1
 

@@ -545,6 +545,8 @@ void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigcontext *sc)
 	}
 }
 
+reg_t arch_get_sp(struct proc *p) { return p->p_reg.sp; }
+
 #if !CONFIG_OXPCIE
 static void ser_init(void)
 {

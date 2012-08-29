@@ -392,7 +392,6 @@ void init_vm(void)
 	CALLMAP(VM_EXIT, do_exit);
 	CALLMAP(VM_FORK, do_fork);
 	CALLMAP(VM_BRK, do_brk);
-	CALLMAP(VM_PUSH_SIG, do_push_sig);
 	CALLMAP(VM_WILLEXIT, do_willexit);
 	CALLMAP(VM_ADDDMA, do_adddma);
 	CALLMAP(VM_DELDMA, do_deldma);

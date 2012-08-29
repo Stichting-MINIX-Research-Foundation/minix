@@ -11,7 +11,6 @@
  *
  * The entry points into this file are:
  *   do_brk:      BRK/SBRK system calls to grow or shrink the data segment
- *   adjust:      see if a proposed segment adjustment is allowed
  */
 
 #define _SYSTEM 1

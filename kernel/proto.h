@@ -206,6 +206,7 @@ void arch_do_syscall(struct proc *proc);
 int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int
 	*flags);
 int arch_phys_map_reply(int index, vir_bytes addr);
+reg_t arch_get_sp(struct proc *p);
 int arch_enable_paging(struct proc * caller);
 int vm_check_range(struct proc *caller,
        struct proc *target, vir_bytes vir_addr, size_t bytes);
