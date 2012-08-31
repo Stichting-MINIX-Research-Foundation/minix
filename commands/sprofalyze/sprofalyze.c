@@ -346,6 +346,7 @@ static void binary_load_pc_map(struct binary_info *binary_info) {
 		perror("failed to start " NM);
 		exit(-1);
 	}
+	free(command);
 
 	/* read symbols from nm output */
 	assert(!binary_info->symbols);

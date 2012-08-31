@@ -236,6 +236,7 @@ static void print_report(void) {
 	printf("  *    p < 0.05\n");
 	printf("  **   p < 0.01\n");
 	printf("  ***  p < 0.001\n");
+	free(symbol_list);
 }
 
 static void print_report_line(const struct symbol_info *symbol) {
