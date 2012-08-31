@@ -59,8 +59,8 @@ static void load_file(const char *path, int count_index);
 static void *malloc_checked(size_t size);
 static void print_report(void);
 static void print_report_line(const struct symbol_info *symbol);
-static int read_line(FILE *file, char *binary, char *name,
-	unsigned long *samples);
+static int read_line(FILE *file, const char *path, int line, char *binary,
+	char *name, unsigned long *samples);
 static enum symbol_class symbol_classify(const char *binary, const char *name);
 static unsigned string_hash(const char *s, size_t size);
 static struct symbol_info *symbol_find_or_add(const char *binary,
@@ -162,6 +162,7 @@ static void compute_stats(const struct symbol_count *count, unsigned n,
 static void load_file(const char *path, int count_index) {
 	char binary[PROC_NAME_LEN];
 	FILE *file;
+	int line;
 	char name[SYMBOL_NAME_SIZE];
 	unsigned long samples;
 
@@ -175,7 +176,8 @@ static void load_file(const char *path, int count_index) {
 		exit(1);
 	}
 
-	while (read_line(file, binary, name, &samples)) {
+	line = 1;
+	while (read_line(file, path, line++, binary, name, &samples)) {
 		symbol_tally(binary, name, samples, count_index);
 	}
 
@@ -282,8 +284,8 @@ static void print_report_line(const struct symbol_info *symbol) {
 	printf("\n");
 }
 
-static int read_line(FILE *file, char *binary, char *name,
-	unsigned long *samples) {
+static int read_line(FILE *file, const char *path, int line, char *binary, 
+	char *name, unsigned long *samples) {
 	int c, index;
 
 	assert(file);
@@ -304,7 +306,8 @@ static int read_line(FILE *file, char *binary, char *name,
 
 	/* read tab */
 	if (c != '\t') {
-		fprintf(stderr, "error: garbage %d after binary name\n", c);
+		fprintf(stderr, "error: garbage %d after binary name "
+			"(\"%s\", line %d)\n", c, path, line);
 		exit(1);
 	}
 	c = fgetc(file);
@@ -319,7 +322,8 @@ static int read_line(FILE *file, char *binary, char *name,
 
 	/* read tab */
 	if (c != '\t') {
-		fprintf(stderr, "error: garbage %d after symbol name\n", c);
+		fprintf(stderr, "error: garbage %d after symbol name "
+			"(\"%s\", line %d)\n", c, path, line);
 		exit(1);
 	}
 	c = fgetc(file);
@@ -333,7 +337,8 @@ static int read_line(FILE *file, char *binary, char *name,
 
 	/* read newline */
 	if (c != '\n') {
-		fprintf(stderr, "error: garbage %d after sample count\n", c);
+		fprintf(stderr, "error: garbage %d after sample count "
+			"(\"%s\", line %d)\n", c, path, line);
 		exit(1);
 	}
 	return 1;
