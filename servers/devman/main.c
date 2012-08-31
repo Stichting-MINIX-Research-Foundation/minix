@@ -77,12 +77,10 @@ int main (int argc, char* argv[])
 	struct inode_stat root_stat;
 
 	/* fill in the hooks */
-	hooks.init_hook 	= &init_hook;
-	hooks.lookup_hook 	= NULL;				/* use the default behavior of lookup */
-	hooks.getdents_hook = NULL;				/* use the default behavior of getdents */
-	hooks.read_hook 	= read_hook;				/* read hook will never be called */
-	hooks.rdlink_hook 	= NULL;				/* there are no symbolic links in devfs */
-	hooks.message_hook 	= message_hook;		/* handle the ds_update call */
+	memset(&hooks, 0, sizeof(hooks));
+	hooks.init_hook 	= init_hook;
+	hooks.read_hook 	= read_hook; /* read will never be called */
+	hooks.message_hook 	= message_hook;	/* handle the ds_update call */
 
 	root_stat.mode 	= S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH;
 	root_stat.uid 	= 0;
