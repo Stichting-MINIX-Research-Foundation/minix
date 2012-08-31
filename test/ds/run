@@ -2,5 +2,6 @@
 
 PWD=`pwd`
 
-service up ${PWD}/subs -config ${PWD}/system.conf -script ${PWD}/down
-service up ${PWD}/dstest -config ${PWD}/system.conf -script ${PWD}/down
+service up ${PWD}/subs -config system.conf -script /etc/rs.single
+service up ${PWD}/dstest -config system.conf -script /etc/rs.single
+service down subs

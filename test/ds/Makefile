@@ -1,18 +1,14 @@
-all: dstest subs
-	chmod +x down run
+# Makefile for DS tests
+PROG=	dstest subs
+SRCS.dstest=	dstest.c
+SRCS.subs=	subs.c
 
-dstest: dstest.c inc.h
-	cc -o $@ $< -lsys
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-subs: subs.c inc.h
-	cc -o $@ $< -lsys
+MAN=
 
-run: all
-	sh run
+BINDIR?= /usr/sbin
 
-kill:
-	sh down
-
-clean:
-	rm -f dstest subs
-
+.include "Makefile.inc"
+.include <minix.service.mk>

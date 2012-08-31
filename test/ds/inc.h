@@ -1,4 +1,3 @@
-#define _MINIX
 #define _SYSTEM
 #include <stdio.h>
 #include <unistd.h>

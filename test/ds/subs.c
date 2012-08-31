@@ -14,7 +14,7 @@ int main(void)
 	message mess;
 	char key[DS_MAX_KEYLEN];
 	int type;
-	unsigned long num;
+	u32_t num;
 	char string[17];
 	char buf[1000];
 	size_t length = 1000;

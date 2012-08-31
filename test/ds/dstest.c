@@ -12,7 +12,7 @@ char *key_label = "test_label";
 void test_u32(void)
 {
 	int r;
-	unsigned long value;
+	u32_t value;
 
 	/* Publish and retrieve. */
 	r = ds_publish_u32(key_u32, 1234, 0);
@@ -201,8 +201,31 @@ void test_map(void)
 	printf("DSTEST: MAP test successful!\n");
 }
 
-/* SEF functions and variables. */
-static void sef_local_startup(void);
+/*===========================================================================*
+ *			       sef_cb_init_fresh			     *
+ *===========================================================================*/
+static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+{
+	/* Run all the tests. */
+	test_u32();
+	test_str();
+	test_mem();
+	test_map();
+	test_label();
+
+	return OK;
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+static void sef_local_startup(void)
+{
+	/* Let SEF perform startup. */
+	sef_setcb_init_fresh(sef_cb_init_fresh);
+
+	sef_startup();
+}
 
 /*===========================================================================*
  *				main					     *
@@ -212,23 +235,5 @@ int main(void)
 	/* SEF local startup. */
 	sef_local_startup();
 
-	/* Run all the tests. */
-	test_u32();
-	test_str();
-	test_mem();
-	test_map();
-	test_label();
-
 	return 0;
 }
-
-
-/*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-static void sef_local_startup()
-{
-  /* Let SEF perform startup. */
-  sef_startup();
-}
-
