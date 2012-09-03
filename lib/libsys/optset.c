@@ -55,7 +55,7 @@ int len;
 
   case OPT_INT:
 	if (len > 0)
-		val = strtol(ptr, NULL, entry->os_val);
+		val = (int) strtoul(ptr, NULL, entry->os_val);
 	else
 		val = 0;
 
