@@ -453,7 +453,7 @@ int do_umount(void)
 
 
 /*===========================================================================*
- *                              unmount                                      *
+ *                              unmount					     *
  *===========================================================================*/
 int unmount(
   dev_t dev,			/* block-special device */
@@ -551,10 +551,20 @@ void unmount_all(void)
 			unmount(vmp->m_dev, NULL);
 	}
   }
+
+  /* Verify nothing is locked anymore */
   check_vnode_locks();
   check_vmnt_locks();
   check_filp_locks();
   check_bsf_lock();
+
+  /* Verify we succesfully unmounted all file systems */
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
+	if (vmp->m_dev != NO_DEV) {
+		panic("vmp still mounted: %s %d %d\n", vmp->m_label,
+			vmp->m_fs_e, vmp->m_dev);
+	}
+  }
 }
 
 /*===========================================================================*
