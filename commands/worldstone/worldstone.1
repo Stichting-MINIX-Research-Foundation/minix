@@ -6,6 +6,7 @@
 .Nd shell script to consistently execute benchmarks
 .Sh SYNOPSIS
 .Nm worldstone
+.Op Fl s  
 .Op Fl n Ar iterations
 .Op Fl c Ar command
 .Op Fl p Ar command
@@ -44,6 +45,11 @@ branch in /usr/src.
 
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl s
+If set, perform statistical profiling by invoking
+.Xr profile 1
+and executing sprofalyze, suitable for feeding to sprofdiff. This
+requires building world with SPROFILE.
 .It Fl n Ar iterations
 Set the number of iterations to perform, after the initial run.
 The default is 5.

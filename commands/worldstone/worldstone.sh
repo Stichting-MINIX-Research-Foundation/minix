@@ -7,9 +7,10 @@ TAG=time.$(basename $(git --git-dir=/usr/src/.git describe --all --dirty))
 
 set -e
 
-while getopts "n:d:p:c:r:" c
+while getopts "n:d:p:c:r:s" c
 do
         case "$c" in
+		s)	PROFILE=1 ;;
 		n)	ITERATIONS=$OPTARG ;;
 		p)	PRECMD="$OPTARG" ;;
 		c)	COMMAND="$OPTARG" ;;
@@ -43,12 +44,17 @@ echo "First run."
 sh -c "$PRECMD"
 sh -c "$COMMAND"
 
+if [ "$PROFILE" ]; then profile stop || true; fi
+
 for n in `seq 1 $ITERATIONS`
 do	echo -n "$n"
 	sh -c "$PRECMD >/dev/null 2>&1"
 	echo -n "."
 	sync
+	PROF=$LOGFILE.p.$n
+	if [ "$PROFILE" ]; then profile start --rtc -o $PROF -f 3; fi
 	time -C sh -c "$COMMAND >/dev/null 2>&1; sync" 2>>$LOGFILE
+	if [ "$PROFILE" ]; then profile stop; sprofalyze -d $PROF >$PROF.d; fi
 	echo -n " "
 done
 echo "Done."
