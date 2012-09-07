@@ -5,7 +5,7 @@
 # The following commented-out examples of how to run blocktest for certain
 # driver and device pairs. The syntax of the calls is:
 #
-#   blocktest <device> <parameters>
+#   block_test <device> <parameters>
 #
 # <device> is the path to a device to run blocktest on. This may be a full
 # disk, a partition, or a subpartition. If possible, give blocktest the whole
@@ -47,16 +47,16 @@
 
 # AT_WINI ATA TEST (for IDE disk devices)
 
-#blocktest /dev/c0d1 "rw,sector=512,min_read=512,element=2,max=16777216"
+#block_test /dev/c0d1 "rw,sector=512,min_read=512,element=2,max=16777216"
 
 # AT_WINI ATAPI TEST (for IDE CD-ROM devices)
 
-#blocktest /dev/c0d2 "ro,sector=2048,min_read=2,element=2,max=16777216"
+#block_test /dev/c0d2 "ro,sector=2048,min_read=2,element=2,max=16777216"
 
 # AHCI ATA TEST (for SATA disk devices)
 
-#blocktest /dev/c2d0 "rw,sector=512,min_read=2,element=2,max=4194304"
+#block_test /dev/c2d0 "rw,sector=512,min_read=2,element=2,max=4194304"
 
 # AHCI ATAPI TEST (for SATA CD-ROM devices)
 
-#blocktest /dev/c2d1 "ro,sector=2048,min_read=2,element=2,max=4194304"
+#block_test /dev/c2d1 "ro,sector=2048,min_read=2,element=2,max=4194304"

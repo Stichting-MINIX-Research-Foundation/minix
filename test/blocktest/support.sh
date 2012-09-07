@@ -7,9 +7,9 @@ devtopair() {
   if [ ! -z "$label" ]; then echo "label=$label,minor=`stat -f '%Lr' $1`"; fi
 }
 
-# usage: blocktest /dev/cXdY.. "params,for,blocktest"
+# usage: block_test /dev/cXdY.. "params,for,blocktest"
 # runs the blocktest driver on the given device with the given parameters
-blocktest() {
+block_test() {
   if [ ! -x blocktest ]; then echo "compile blocktest first!" >&2; exit 1; fi
   if [ ! -b "$1" ]; then echo "$1 is not a block device" >&2; exit 1; fi
   pair=$(devtopair $1)
