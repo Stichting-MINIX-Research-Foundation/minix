@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
 	while (TRUE) {
 		int r;
-		int i;
+		int ipc_number;
 
 		if ((r = sef_receive(ANY, &m)) != OK)
 			printf("sef_receive failed %d.\n", r);
@@ -62,8 +62,22 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		/* dispatch messages */
-		for (i = 0; i < SIZE(ipc_calls); i++) {
+		/*
+		 * The ipc number in the table can be obtained
+		 * with a simple equation because the values of
+		 * IPC system calls are consecutive and begin
+		 * at ( IPC_BASE + 1 )
+		 */
+
+		ipc_number = call_type - (IPC_BASE + 1);
+
+		/* dispatch message */
+		if (ipc_number >= 0 && ipc_number < SIZE(ipc_calls)) {
+			int result;
+
+			if (ipc_calls[ipc_number].type != call_type)
+				panic("IPC: call table order mismatch");
+
 			/* If any process does an IPC call,
 			 * we have to know about it exiting.
 			 * Tell VM to watch it for us.
@@ -72,13 +86,13 @@ int main(int argc, char *argv[])
 				printf("IPC: watch failed on %d\n", m.m_source);
 			}
 
-			if (ipc_calls[i].type == call_type) {
-				int result;
+			result = ipc_calls[ipc_number].func(&m);
 
-				result = ipc_calls[i].func(&m);
-
-				if (ipc_calls[i].reply)
-					break;
+			/*
+			 * The handler of the IPC call did not
+			 * post a reply.
+			 */
+			if (!ipc_calls[ipc_number].reply) {
 
 				m.m_type = result;
 
@@ -88,11 +102,8 @@ int main(int argc, char *argv[])
 
 				if ((r = sendnb(who_e, &m)) != OK)
 					printf("IPC send error %d.\n", r);
-				break;
 			}
-		}
-
-		if (i == SIZE(ipc_calls)) {
+		} else {
 			/* warn and then ignore */
 			printf("IPC unknown call type: %d from %d.\n",
 				call_type, who_e);
