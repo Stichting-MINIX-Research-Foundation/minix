@@ -1,18 +1,15 @@
 # Makefile for the tests
 
 CC = exec cc
-CFLAGS = -Wall -D_MINIX -D_POSIX_SOURCE -I../lib/
+CFLAGS = -Wall -D_MINIX -D_POSIX_SOURCE -D_NETBSD_SOURCE=1 -I../lib/
 
 PROG =	shmt02 shmt03 shmt04 shmt05 shmt06 \
 	shmt07 shmt08 shmt10 shmt01
 
 all: $(PROG)
 
-$(PROG): tst_res.o
-	$(CC) $(CFLAGS) -o $@ $@.c tst_res.o
-
-tst_res.o: ../lib/tst_res.c
-	$(CC) $(CFLAGS) -c -o tst_res.o ../lib/tst_res.c
+$(PROG): ../libipc.a
+	$(CC) $(CFLAGS) -o $@ $@.c ../libipc.a
 
 test:
 	sh testshm.sh

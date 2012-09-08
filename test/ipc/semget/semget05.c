@@ -72,7 +72,7 @@ int num_sems = 0;		/* count the semaphores created */
 
 int main(int ac, char **av)
 {
-	int lc,getmaxid;				/* loop counter */
+	int lc,getmaxid=0;				/* loop counter */
 	char *msg;			/* message returned from parse_opts */
 	FILE *fp;
 

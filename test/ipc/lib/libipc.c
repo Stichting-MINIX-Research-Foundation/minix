@@ -42,7 +42,7 @@
 #include "ipcsem.h"
 
 #include <pwd.h>
-#include <sys/timeb.h>
+#include <sys/time.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
@@ -61,7 +61,7 @@ getipckey()
 	char curdira[PATH_MAX];
 	size_t size = sizeof(curdira);
 	key_t ipc_key;
-	struct timeb time_info;
+	struct timeval tv;
 
 	if (NULL == (curdir = getcwd(curdira, size))) {
 		tst_brkm(TBROK, cleanup, "Can't get current directory "
@@ -77,11 +77,11 @@ getipckey()
 	 * project identifier is a "random character" produced by
 	 * generating a random number between 0 and 25 and then adding
 	 * that to the ascii value of 'a'.  The "seed" for the random
-	 * number is the millisecond value that is set in the timeb
-	 * structure after calling ftime().
+	 * number is the microsecond value that is set in the timeval
+	 * structure after calling gettimeofday().
 	 */
-	(void)ftime(&time_info);
-	srandom((unsigned int)time_info.millitm);
+	(void) gettimeofday(&tv, NULL);
+	srandom((unsigned int)tv.tv_usec);
 
 	if ((ipc_key = ftok(curdir, ascii_a + random()%26)) == -1) {
 		tst_brkm(TBROK, cleanup, "Can't get msgkey from ftok()");

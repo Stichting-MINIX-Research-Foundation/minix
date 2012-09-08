@@ -17,6 +17,7 @@
 #
 
 all test clean:
+	$(MAKE) -C ./lib $@
 #	$(MAKE) -C ./msgctl $@
 #	$(MAKE) -C ./msgget $@
 #	$(MAKE) -C ./msgrcv $@

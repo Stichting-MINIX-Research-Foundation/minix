@@ -94,7 +94,6 @@ int main(int ac, char **av)
 		TEST(semctl(sem_id_1, 0, IPC_STAT, un_arg));
 	
 		if (TEST_RETURN != -1) {
-printf("result: %d\n", TEST_RETURN);
 			tst_resm(TFAIL, "call succeeded when error expected");
 			continue;
 		}

@@ -16,11 +16,11 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 
-SRCS   = libipc.c
+SRCS   = libipc.c rmobj.c parse_opts.c tst_res.c tst_sig.c tst_tmpdir.c
 OBJS   = $(SRCS:.c=.o)
 LIBIPC = ../libipc.a
 
-CFLAGS += -I../../../../../include -Wall
+CFLAGS += -I../../../../../include -Wall -D_NETBSD_SOURCE=1
 
 all: $(LIBIPC)
 

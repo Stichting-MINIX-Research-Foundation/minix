@@ -61,7 +61,7 @@ extern int Tst_count;           /* Test Case counter for tst_* routines */
 
 
 key_t key;
-sigset_t sigset;
+sigset_t mysigset;
 
 #define  ADDR1  (void *)0x40000000
 #define  ADDR  (void *)0x80000
@@ -81,9 +81,9 @@ int main(void)
 
  signal(SIGUSR1, SIG_DFL);
 
- sigemptyset(&sigset);
- sigaddset(&sigset,SIGUSR1);
- sigprocmask(SIG_BLOCK,&sigset,NULL);
+ sigemptyset(&mysigset);
+ sigaddset(&mysigset,SIGUSR1);
+ sigprocmask(SIG_BLOCK,&mysigset,NULL);
  
  pid = fork();
  switch (pid) {
@@ -109,7 +109,7 @@ if ((shmid = shmget(key, SIZE, IPC_CREAT|0666)) < 0 ) {
 else {
 #ifdef __ia64__
   cp = (char *) shmat(shmid, ADDR1, 0);
-#elif defined(__ARM_ARCH_4T__)
+#elif defined(__ARM_ARCH_4T__) || defined(__minix)
   cp = (char *) shmat(shmid, NULL, 0);
 #else
   cp = (char *) shmat(shmid, ADDR, 0);
@@ -171,8 +171,8 @@ int  shmid,
      chld_pid ;
 char *cp;
 
-sigemptyset(&sigset);
-sigsuspend(&sigset);
+sigemptyset(&mysigset);
+sigsuspend(&mysigset);
 chld_pid = getpid() ;
 /*--------------------------------------------------------*/
 
@@ -187,7 +187,7 @@ else
 {
 #ifdef __ia64__
   cp = (char *) shmat(shmid, ADDR1, 0);
-#elif defined(__ARM_ARCH_4T__)
+#elif defined(__ARM_ARCH_4T__) || defined(__minix)
   cp = (char *) shmat(shmid, NULL, 0);
 #else
   cp = (char *) shmat(shmid, ADDR, 0);

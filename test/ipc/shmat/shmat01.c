@@ -124,7 +124,7 @@ int main(int ac, char **av)
 			addr = shmat(*(TC[i].shmid), (void *)(TC[i].addr),
 				   TC[i].flags);
 			TEST_ERRNO = errno;
-	
+
 			if (addr == (void *)-1) {
 				tst_brkm(TFAIL, cleanup, "%s call failed - "
 					 "errno = %d : %s", TCID, TEST_ERRNO,
