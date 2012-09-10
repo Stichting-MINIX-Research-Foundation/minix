@@ -857,7 +857,7 @@ static void vector_and_large_sub(size_t small_size)
 	 * has dword-sized guards before each chunk and after the last chunk.
 	 * SPTR(n) points to the start of the nth small chunk.
 	 */
-#define SPTR(n) (buf2_ptr + (n) * (sizeof(u32_t) + small_size))
+#define SPTR(n) (buf2_ptr + sizeof(u32_t) + (n) * (sizeof(u32_t) + small_size))
 #define LPTR(n) (buf_ptr + sizeof(u32_t) + small_size * (n))
 
 	/* Write one large chunk, if writing is allowed. */
