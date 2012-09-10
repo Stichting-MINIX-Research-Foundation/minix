@@ -134,6 +134,16 @@ void dexit(char *s, int sectnum, int err);
 void usage(void);
 char *alloc_block(void);
 
+ino_t inocount;
+zone_t zonecount;
+block_t blockcount;
+
+void detect_fs_size(void);
+void sizeup_dir(void);
+void detect_size(void);
+void size_dir(void);
+static int bitmapsize(uint32_t nr_bits, size_t block_size);
+
 /*================================================================
  *                    mkfs  -  make filesystem
  *===============================================================*/
@@ -216,6 +226,9 @@ char *argv[];
  	block_size = _STATIC_BLOCK_SIZE;	/* V1/V2 block size */
   }
 
+  zone_shift = 0;		/* for future use */
+  zone_size = 1 << zone_shift;	/* nr of blocks per zone */
+
   if(!inodes_per_block)
   	inodes_per_block = V2_INODES_PER_BLOCK(block_size);
 
@@ -269,6 +282,14 @@ char *argv[];
 	mode = mode_con(token[0]);
 	usrid = atoi(token[1]);
 	grpid = atoi(token[2]);
+
+	if(blocks == 0 && inodes == 0){
+		detect_fs_size();
+		blocks = blockcount;
+		inodes = inocount;
+		printf("dynamically sized filesystem: %d blocks, %d inodes\n", blocks, 
+			(unsigned int) inodes);
+	}		
   } else {
 	lct = 0;
 	if (optind < argc) {
@@ -369,7 +390,6 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
 
 	put_block((block_t) 0, zero);	/* Write a null boot block. */
 
-  zone_shift = 0;		/* for future use */
   zones = nrblocks >> zone_shift;
 
   super(zones, inodes);
@@ -385,6 +405,89 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
   /* NOTREACHED */
 }				/* end main */
 
+/*================================================================
+ *        detect_fs_size  -  determine image size dynamically
+ *===============================================================*/
+void detect_fs_size()
+{
+  uint32_t point = ftell(proto);
+  
+  inocount = 1;	/* root directory node */
+  zonecount = 0;
+  blockcount = 0;
+  sizeup_dir();
+	
+  uint32_t initb;
+
+  initb = bitmapsize((uint32_t) (1 + inocount), block_size);
+  initb += bitmapsize((uint32_t) zonecount, block_size);
+  initb += START_BLOCK;
+  initb += (inocount + inodes_per_block - 1) / inodes_per_block;
+  initb = (initb + (1 << zone_shift) - 1) >> zone_shift;
+
+  blockcount = initb+zonecount*zone_size;
+  fseek(proto, point, SEEK_SET);
+}
+
+void sizeup_dir()
+{
+  char *token[MAX_TOKENS], *p;
+  char line[LINE_LEN]; 
+  FILE *f;
+  size_t size;
+  int dir_entries = 2;
+  zone_t dir_zones = 0;
+  zone_t nr_dzones;
+
+  if (fs_version == 1) {
+	nr_dzones = V1_NR_DZONES;
+  } else {
+	nr_dzones = V2_NR_DZONES;
+  }
+
+  while (1) {
+	getline(line, token);
+	p = token[0];
+	if (*p == '$') {
+		dir_zones = (dir_entries / (NR_DIR_ENTRIES(block_size) * zone_size));		
+		if(dir_entries % (NR_DIR_ENTRIES(block_size) * zone_size))
+			dir_zones++;
+		/* Assumes directory fits in direct blocks */
+		zonecount += dir_zones;
+		return;
+	}
+
+	p = token[1];
+	inocount++;
+	dir_entries++;
+
+	if (*p == 'd') {
+		sizeup_dir();
+	} else if (*p == 'b' || *p == 'c') {
+
+	} else {
+		if ((f = fopen(token[4], "r")) == NULL) {
+			fprintf(stderr, "%s: Can't open %s: %s\n",
+				progname, token[4], strerror(errno));
+				pexit("dynamic size detection failed");
+		} else {
+			if (fseek(f, 0, SEEK_END) < 0) {
+			fprintf(stderr, "%s: Can't seek to end of %s\n",
+				progname, token[4]);
+				pexit("dynamic size detection failed");
+			}
+			size = ftell(f);
+			fclose(f);
+			zone_t fzones= (size / (zone_size * block_size));
+			if (size % (zone_size * block_size))
+				fzones++;
+			if (fzones > nr_dzones)
+				fzones++;	/* Assumes files fit within single indirect */
+			zonecount += fzones;
+		}
+	}
+  }
+}
 
 /*================================================================
  *                    sizeup  -  determine device size
@@ -533,8 +636,6 @@ ino_t inodes;
 	  	}
 	}
   }
-
-  zone_size = 1 << zone_shift;	/* nr of blocks per zone */
 
   if (lseek(fd, (off_t) _STATIC_BLOCK_SIZE, SEEK_SET) == (off_t) -1) {
 	pexit("super() couldn't seek");

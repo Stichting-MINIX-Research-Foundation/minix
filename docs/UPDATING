@@ -1,3 +1,7 @@
+20120927:
+	Building a new boot image requires the current mkfs.mfs.
+	# make -C usr.sbin/mkfs.mfs clean all install
+
 20120703:
 	The device manager(devman) is now started automatically during the 
 	mount -a operation.  As fstab is generated during installation it is 
