@@ -249,7 +249,7 @@ static int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	m.BDEV_POS_HI = ex64hi(pos);
 	m.BDEV_COUNT = nr_req;
 	m.BDEV_GRANT = grant;
-	m.BDEV_ID = rand();
+	m.BDEV_ID = lrand48();
 
 	r = sendrec_driver(&m, exp, res);
 
@@ -370,7 +370,7 @@ static void bad_read1(void)
 	mt.BDEV_POS_HI = 0L;
 	mt.BDEV_COUNT = 1;
 	mt.BDEV_GRANT = grant;
-	mt.BDEV_ID = rand();
+	mt.BDEV_ID = lrand48();
 
 	memset(&iovt, 0, sizeof(iovt));
 	iovt.iov_grant = grant2;
@@ -465,7 +465,7 @@ static u32_t fill_rand(u8_t *ptr, size_t size)
 	size_t i;
 
 	for (i = 0; i < size; i++)
-		ptr[i] = rand() % 256;
+		ptr[i] = lrand48() % 256;
 
 	return get_sum(ptr, size);
 }
@@ -999,7 +999,7 @@ static void open_device(dev_t minor)
 	m.m_type = BDEV_OPEN;
 	m.BDEV_MINOR = minor;
 	m.BDEV_ACCESS = may_write ? (R_BIT | W_BIT) : R_BIT;
-	m.BDEV_ID = rand();
+	m.BDEV_ID = lrand48();
 
 	sendrec_driver(&m, OK, &res);
 
@@ -1025,7 +1025,7 @@ static void close_device(dev_t minor)
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_CLOSE;
 	m.BDEV_MINOR = minor;
-	m.BDEV_ID = rand();
+	m.BDEV_ID = lrand48();
 
 	sendrec_driver(&m, OK, &res);
 
@@ -1067,7 +1067,7 @@ static int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
 	m.BDEV_POS_HI = 0L;
 	m.BDEV_REQUEST = req;
 	m.BDEV_GRANT = grant;
-	m.BDEV_ID = rand();
+	m.BDEV_ID = lrand48();
 
 	r = sendrec_driver(&m, exp, res);
 
@@ -2606,7 +2606,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	if ((r = getuptime(&now)) != OK)
 		panic("unable to get uptime: %d", r);
 
-	srand(now);
+	srand48(now);
 
 	return OK;
 }
