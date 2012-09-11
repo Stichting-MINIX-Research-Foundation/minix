@@ -33,6 +33,7 @@
 struct mmc_host;
 
 //TODO Add more modes like INACTIVE STATE and such
+#define SD_MODE_UNINITIALIZED 0
 #define SD_MODE_CARD_IDENTIFICATION 1
 #define SD_MODE_DATA_TRANSFER_MODE 2
 

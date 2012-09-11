@@ -1,36 +1,42 @@
 /* 
  * Block driver for Multi Media Cards (MMC).
  */
+/* kernel headers */
 #include <minix/syslib.h>
 #include <minix/driver.h>
 #include <minix/blockdriver.h>
+#include <minix/drvlib.h>
 
+/* system headers */
 #include <sys/ioc_disk.h> /* disk IOCTL's */
 #include <sys/ioc_mmc.h> /* our own IOCTL's */
+
+/* usr headers */
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <stdarg.h>
 #include <signal.h>
 
-
+/* local headers */
 #include "mmchost.h"
-
 #include "mmclog.h"
-/*
- * Define a structure to be used for logging
- */
-static struct mmclog log= {
+
+/* used for logging */
+static struct mmclog log = {
 		.name = "mmc_block",
 		.log_level = LEVEL_TRACE,
 		.log_func = default_log };
 
+/* holding the current host controller */
 static struct mmc_host host;
 
+/* When passing data over a grant one needs to pass
+ * a buffer to sys_safecopy copybuff is used for that*/
 #define COPYBUFF_SIZE 0x1000 /* 4k buff */
 static unsigned char copybuff[COPYBUFF_SIZE];
 
-#define SLOT_STATE_INITIAL 0x01u
+//#define SLOT_STATE_INITIAL 0x01u
 
 static struct sd_slot * get_slot(dev_t minor);
 
@@ -57,7 +63,7 @@ static int block_system_event_cb(int type, sef_init_info_t *info);
 static void block_signal_handler_cb(int signo);
 
 /* Entry points for the BLOCK driver. */
-static struct blockdriver mmc_driver= {
+static struct blockdriver mmc_driver = {
 		BLOCKDRIVER_TYPE_DISK,/* handle partition requests */
 		block_open, /* open or mount */
 		block_close, /*  on a close */
@@ -87,31 +93,34 @@ int apply_env()
 	long v;
 
 	/* Initialize the verbosity level. */
-	v= 0;
+	v = 0;
 	if (env_parse("log_level", "d", 0, &v, LEVEL_NONE, LEVEL_TRACE) == EP_SET) {
 		mmc_log_debug(&log, "Setting verbosity level to %d\n", v);
-		log.log_level= v;
+		log.log_level = v;
 	}
 
 	/* Find out which driver instance we are. */
-	v= 0;
+	v = 0;
 	env_parse("instance", "d", 0, &v, 0, 3);
 	if (host.host_set_instance(&host, v)) {
 		mmc_log_warn(&log, "Failed to set mmc instance to  %d\n", v);
-		return 1; /* NOT OK */
+		return -1; /* NOT OK */
 	}
 	return OK;
 }
 
 int main(int argc, char **argv)
 {
+	host_initialize_host_structure(&host);
+
 	/* Set and apply the environment */
 	env_setargs(argc, argv);
-	host_initialize_host_structure(&host);
 	if (apply_env()) {
 		mmc_log_warn(&log, "Failed while applying environment settings\n");
 		return EXIT_FAILURE;
-	}mmc_log_info(&log, "Initializing the MMC block device\n");
+	}
+
+	mmc_log_info(&log, "Initializing the MMC block device\n");
 	if (host.host_init(&host)) {
 		mmc_log_warn(&log, "Failed to initialize the host controller\n");
 		return EXIT_FAILURE;
@@ -129,7 +138,7 @@ int main(int argc, char **argv)
 static int block_open(dev_t minor, int access)
 {
 	struct sd_slot *slot;
-	slot= get_slot(minor);
+	slot = get_slot(minor);
 	if (!slot) {
 		mmc_log_debug(&log, "Not handling open on non existing slot\n");
 		return EIO;
@@ -146,16 +155,20 @@ static int block_open(dev_t minor, int access)
 	if (slot->card.state == SD_MODE_DATA_TRANSFER_MODE) {
 		assert(slot->card.open_ct >= 0);
 		slot->card.open_ct++;
-		mmc_log_trace(&log, "increased open count to %d\n", slot->card.open_ct);
+		mmc_log_trace(&log, "increased open count to %d\n",
+				slot->card.open_ct);
 		return OK;
 	}
 
 	/* We did not have an sd-card inserted so we are going to probe for it */
 	mmc_log_debug(&log, "First open on (%d)\n", minor);
 	if (!host.card_initialize(slot)) {
+
 		//TODO set card state to INVALID until removed?
 		return EIO;
 	}
+	partition(&mmc_driver, 0 /* first card on bus */, P_PRIMARY,
+			0 /* atapi device?? */);
 	slot->card.open_ct++;
 	assert(slot->card.open_ct == 1);
 	return OK;
@@ -168,7 +181,7 @@ static int block_close(dev_t minor)
 {
 	struct sd_slot *slot;
 
-	slot= get_slot(minor);
+	slot = get_slot(minor);
 	if (!slot) {
 		mmc_log_debug(&log, "Not handling open on non existing slot\n");
 		return EIO;
@@ -179,10 +192,12 @@ static int block_close(dev_t minor)
 	assert(slot->host != NULL);
 	assert(slot->card.open_ct >=1);
 
-	/* If this is not the last open count simply decrease the counter and return */
+	/* If this is not the last open count simply decrease the counter and
+	 * return */
 	if (slot->card.open_ct > 1) {
 		slot->card.open_ct--;
-		mmc_log_trace(&log, "decreased open count to %d\n", slot->card.open_ct);
+		mmc_log_trace(&log, "decreased open count to %d\n",
+				slot->card.open_ct);
 		return OK;
 	}
 
@@ -216,26 +231,50 @@ static int block_transfer(dev_t minor /* minor device number */,
 	vir_bytes bytes_written;
 	int r, blk_size, i;
 
-	/* get the current "device" geometry */
-	dev= block_part(minor);
+	/* @TODO convert the partition address to an absolute address */
+
+	/* Get the current "device" geometry */
+	dev = block_part(minor);
 	if (dev == NULL) {
-		mmc_log_warn(&log, "Transfer requested on unkown device minor(%d)\n",
+		mmc_log_warn(&log, "Transfer requested on unknown device minor(%d)\n",
 				minor);
 		/* Unknown device */
 		return ENXIO;
 	}
 
-	slot= get_slot(minor);
+	slot = get_slot(minor);
+
 	assert(slot);
-	assert(slot->card.blk_size != 0);
-	assert(slot->card.blk_size < COPYBUFF_SIZE);
-	/* Starting at a block boundary */
-	assert(position % slot->card.blk_size == 0);
-	blk_size= slot->card.blk_size;
 
-	bytes_written= 0;
+	/* It is fully up to the driver to decide on restrictions for the parameters of
+	 * transfers, in those cases we return EINVAL */
 
-	/* are we trying to start reading past the end */
+	if (slot->card.blk_size == 0) {
+		mmc_log_warn(&log, "Request on a card with block size of 0\n");
+		return EINVAL;
+	}
+
+	if (slot->card.blk_size > COPYBUFF_SIZE) {
+		mmc_log_warn(&log,
+				"Card block size (%d) exceeds internal buffer size %d\n",
+				slot->card.blk_size, COPYBUFF_SIZE);
+		return EINVAL;
+	}
+
+	if (position % slot->card.blk_size != 0) {
+		/* Starting at a block boundary */
+		mmc_log_warn(
+				&log,
+				"Requests must start at a block boundary (start,block size)=(%016llx,%08x)\n",
+				position, slot->card.blk_size);
+		return EINVAL;
+	}
+
+	blk_size = slot->card.blk_size;
+
+	bytes_written = 0;
+
+	/* Are we trying to start reading past the end */
 	if (position > dev->dv_size) {
 		return ENXIO;
 	};
@@ -245,54 +284,74 @@ static int block_transfer(dev_t minor /* minor device number */,
 		" report success or failure (%d)\n", nr_req);
 	}
 
-	ciov= iov;
-	for (counter= 0; counter < nr_req; counter++) {
+	ciov = iov;
+	for (counter = 0; counter < nr_req; counter++) {
 		assert(ciov != NULL);
-		assert(ciov->iov_size % blk_size == 0);
+
+		if (ciov->iov_size % blk_size != 0) {
+			/* transfer a multiple of blk_size */
+			mmc_log_warn(
+					&log,
+					"Requests must start at a block boundary (start,block size)=(%016llx,%08x)\n",
+					position, slot->card.blk_size);
+			return EINVAL;
+		}
+
+		if (ciov->iov_size == 0) {
+			mmc_log_warn(
+					&log,
+					"Tests must be made happy, returning error on iov_size of 0\n");
+
+			return EINVAL;
+		}
 
 		/* Assume we are to transfer the amount of data given in the
 		 * input/output vector but ensure we are not doing i/o past 
 		 * our own boundaries 
 		 */
-		io_size= ciov->iov_size;
-		io_offset= position + bytes_written;
+		io_size = ciov->iov_size;
+		io_offset = position + bytes_written;
+
 		/* Check we are not reading/writing past the end */
 		if (position + bytes_written + io_size > dev->dv_size) {
-			io_size= dev->dv_size - (position + bytes_written);
+			io_size = dev->dv_size - (position + bytes_written);
 		};
 
 		mmc_log_trace(
 				&log,
-				"I/O %s request(%d/%d) iov(base,size,iosize,"
+				"I/O %s request(%d/%d) iov(grant,size,iosize,"
 				"offset)=(%d,%d,%d,%d)\n",
-				(do_write)?"write":"read",
-				counter, nr_req, ciov->iov_addr, ciov->iov_size, io_size, io_offset);
+				(do_write)?"write":"read", counter, nr_req, ciov->iov_addr, ciov->iov_size, io_size, io_offset);
 
-		for (i= 0; i < io_size / blk_size; i++) {
-
-			/* @TODO this code still probably has a few errors */
+		/* transfer max one block at the time */
+		for (i = 0; i < io_size / blk_size; i++) {
 			if (do_write) {
 				/* copy a bloc */
 
 				/* Read io_size bytes from i/o vector starting at 0 
 				 * and write it to out buffer at the correct offset */
-				r= sys_safecopyfrom(endpt, ciov->iov_addr,
-						i * blk_size /* offset */,
-						(vir_bytes) copybuff, blk_size);
-				/* write a singe block  */
+				r = sys_safecopyfrom(endpt, ciov->iov_addr,
+						i * blk_size /* offset */, (vir_bytes) copybuff,
+						blk_size);
+				/* write a single block  */
 				slot->host->write(&slot->card,
-						(io_offset / blk_size) + i, 1, copybuff);
+						(dev->dv_base / blk_size) + (io_offset / blk_size) + i,
+						1, copybuff);
+				bytes_written += blk_size;
 			} else {
-				/* read a singe block info copybuff */
+				/* read a single block info copybuff */
 				slot->host->read(&slot->card,
-						(io_offset / blk_size) + i, 1, copybuff);
-
-
+						(dev->dv_base / blk_size) + (io_offset / blk_size) + i,
+						1, copybuff);
+				if (endpt == SELF) {
+					mmc_log_warn( &log, "I/O SELF\n");
+				}
 				/* Read io_size bytes from our data at the correct 
 				 * offset and write it to the output buffer at 0 */
-				r= sys_safecopyto(endpt, ciov->iov_addr,
-						i * blk_size /* offset */,
-						(vir_bytes) copybuff, blk_size);
+				r = sys_safecopyto(endpt, ciov->iov_addr,
+						i * blk_size /* offset */, (vir_bytes) copybuff,
+						blk_size);
+				bytes_written += blk_size;
 			}
 		}
 		if (r != OK) {
@@ -302,11 +361,9 @@ static int block_transfer(dev_t minor /* minor device number */,
 					"I/O %s error: %s iov(base,size)=(%d,%d)"
 					" at offset=%d\n",
 					(do_write)?"write":"read", strerror(_SIGN r), ciov->iov_addr, ciov->iov_size, io_offset);
-			return EIO;
+			return EINVAL;
 		}
-
 		ciov++;
-		bytes_written+= io_size;
 	}
 	return bytes_written;
 }
@@ -324,8 +381,8 @@ static int block_ioctl(dev_t minor,
 	mmc_log_trace(&log, "enter (minor,request,endpoint,grant)=(%d,%lu,%d)\n",
 			minor, request, endpt, grant);
 
-	slot= get_slot(minor);
-	if (! slot) {
+	slot = get_slot(minor);
+	if (!slot) {
 		mmc_log_warn(&log, "Doing ioctl on non existing block device(%d)\n",
 				minor);
 		return EINVAL;
@@ -333,14 +390,17 @@ static int block_ioctl(dev_t minor,
 
 	switch (request) {
 		case MIOGETCID:
-				mmc_log_trace(&log, "returing cid\n",minor);
-				return sys_safecopyto(endpt, grant, 0,
-				(vir_bytes) slot->card.cid, sizeof(slot->card.cid));
+			mmc_log_trace(&log, "returing cid\n", minor);
+			return sys_safecopyto(endpt, grant, 0, (vir_bytes) slot->card.cid,
+					sizeof(slot->card.cid));
 		case DIOCOPENCT:
 			//TODO: add a check for card validity */
+			mmc_log_trace(&log, "returning open count %d\n",
+					slot->card.open_ct);
 			/*  return the current open count */
 			return sys_safecopyto(endpt, grant, 0,
-					(vir_bytes) slot->card.open_ct, sizeof(vir_bytes));
+					(vir_bytes) &slot->card.open_ct,
+					sizeof(slot->card.open_ct));
 		case DIOCFLUSH:
 			/* No need to flush but some devices like movinands require 500
 			 * ms inactivity*/
@@ -384,8 +444,8 @@ static struct device *block_part(dev_t minor)
 	struct device *dev;
 	struct sd_slot *slot;
 
-	dev= NULL;
-	slot= get_slot(minor);
+	dev = NULL;
+	slot = get_slot(minor);
 	if (!slot) {
 		mmc_log_warn(&log,
 				"Device information requested for non existing partition "
@@ -394,23 +454,23 @@ static struct device *block_part(dev_t minor)
 	}
 
 	if (!slot->host->card_detect(slot)) {
-		mmc_log_warn(&log, "Device information requested from empty slot(%d)\n",
-				minor);
+		mmc_log_warn(&log,
+				"Device information requested from empty slot(%d)\n", minor);
 		return NULL;
 	}
 
 	if (minor < 5) {
 		/* we are talking about the first disk */
-		dev= &slot->card.part[minor];
+		dev = &slot->card.part[minor];
 		mmc_log_trace(&log,
-				"returning partition(%d) (base,size)=(0x%08x,0x%08x)\n",
+				"returning partition(%d) (base,size)=(0x%016llx,0x%016llx)\n",
 				minor, dev->dv_base, dev->dv_size);
-
 	} else if (minor >= 128 && minor <= 128 + 16) {
 		/* sub partitions of the first disk we don't care about the rest */
-		dev= &slot->card.subpart[minor - 128];
-		mmc_log_trace(&log,
-				"returning sub partition(%d) (base,size)=(0x%08x,0x%08x)\n",
+		dev = &slot->card.subpart[minor - 128];
+		mmc_log_trace(
+				&log,
+				"returning sub partition(%d) (base,size)=(0x%016llx,0x%016llx)\n",
 				minor - 128, dev->dv_base, dev->dv_size);
 
 	} else {

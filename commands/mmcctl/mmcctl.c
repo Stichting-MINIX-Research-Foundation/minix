@@ -12,7 +12,6 @@
 
 #include <sys/ioc_mmc.h>
 
-
 static void show_usage()
 {
 	fprintf(stderr, "Usage: mmcctl device action\n");
@@ -30,10 +29,10 @@ int main(int argc, char **argv)
 		show_usage();
 		return EXIT_FAILURE;
 	}
-	device= argv[1];
-	action= argv[2];
+	device = argv[1];
+	action = argv[2];
 
-	err= stat(device, &stats);
+	err = stat(device, &stats);
 	if (err == -1) {
 		fprintf(stderr, "error can not open device '%s':%s\n", device,
 				strerror(errno));
@@ -45,9 +44,9 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	if (strncmp(action, "cid", 3) == 0) {
-		fprintf(stdout, "getting cid number\n");
-		fd= open(device, O_RDONLY);
+	if (strncmp(action, "cid", 4) == 0) {
+		fprintf(stdout, "getting cid\n");
+		fd = open(device, O_RDONLY);
 		if (fd == -1) {
 			fprintf(stderr, "error can not open device '%s':%s\n", device,
 					strerror(errno));
@@ -55,7 +54,7 @@ int main(int argc, char **argv)
 		}
 
 		uint8_t cid[16];
-		err= ioctl(fd, MIOGETCID, cid);
+		err = ioctl(fd, MIOGETCID, cid);
 		if (err) {
 			fprintf(stderr, "error doing ioctl on device '%s':%s\n", device,
 					strerror(errno));
@@ -74,6 +73,6 @@ int main(int argc, char **argv)
 		return EXIT_SUCCESS;
 	}
 
-	fprintf(stdout, "mmcctl tool\n");
-	return EXIT_SUCCESS;
+	show_usage();
+	return EXIT_FAILURE;
 }

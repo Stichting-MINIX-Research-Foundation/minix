@@ -3,13 +3,26 @@
 /* 
  * Simple logging functions for the MMC layer
  */
-#define LEVEL_NONE 0  /* do not log anything */
-#define LEVEL_WARN 1  /* Information that needs to be known  */
-#define LEVEL_INFO 2  /* Basic information like startup messages and occasional events */
-#define LEVEL_DEBUG 3 /* debug statements about things happening that are less expected */
-#define LEVEL_TRACE 4 /* way to much information for anybody */
 
-static const char *level_string[5]= {
+/*
+ * LEVEL_NONE  do not log anything.
+ *
+ * LEVEL_WARN  Information that needs to be known.
+ *
+ * LEVEL_INFO  Basic information like startup messages and occasional events.
+ *
+ * LEVEL_DEBUG debug statements about things happening that are less expected.
+ *
+ * LEVEL_TRACE Way to much information for anybody.
+ */
+
+#define LEVEL_NONE 0 
+#define LEVEL_WARN 1 
+#define LEVEL_INFO 2 
+#define LEVEL_DEBUG 3 
+#define LEVEL_TRACE 4
+
+static const char *level_string[5] = {
 		"none",
 		"warn",
 		"info",
@@ -19,23 +32,19 @@ static const char *level_string[5]= {
 /*
  * struct to be initialized by the user of the logging system.
  *
- * name:
- * 	The name attribute is used in logging statements do differentiate drivers
+ * name: The name attribute is used in logging statements do differentiate
+ * drivers
  *
- * log_level
- * 	The level attribute describes the requested logging level. a level of 1 will
- * 	only print warnings while a level of 4 will print all the trace information.
+ * log_level The level attribute describes the requested logging level. a level
+ * of 1 will only print warnings while a level of 4 will print all the trace
+ * information.
  *
- * log_func
- * 	The logging function to use to log, mmclog.h provides default_log to display
- * 	information on the kernel output buffer. As a bonus if the requested log level
- * 	is debug or trace the method , file and line number will be printed to the steam.
- *
+ * log_func The logging function to use to log, mmclog.h provides default_log
+ * to display information on the kernel output buffer. As a bonus if the
+ * requested log level is debug or trace the method , file and line number will
+ * be printed to the steam.
  */
-struct mmclog
-{
-	const char *name;
-	int log_level;
+struct mmclog { const char *name; int log_level;
 
 	/* the logging function itself */
 	void (*log_func)(struct mmclog *driver,
@@ -49,7 +58,9 @@ struct mmclog
 };
 
 #define __mmc_log(driver,log_level, fmt, args...) \
-		((driver)->log_func(driver,log_level,  __FILE__, __FUNCTION__, __LINE__,fmt, ## args))
+		((driver)->log_func(driver,log_level, \
+				__FILE__, __FUNCTION__, __LINE__,\
+				fmt, ## args))
 
 /* Log a warning */
 #define mmc_log_warn(driver, fmt, args...) \
