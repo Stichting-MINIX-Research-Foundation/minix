@@ -1,11 +1,11 @@
-/*	$NetBSD: getrawpartition.c,v 1.7 2012/06/25 22:32:47 abs Exp $	*/
+/*	$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,27 +28,62 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getrawpartition.c,v 1.7 2012/06/25 22:32:47 abs Exp $");
-#endif
+__RCSID("$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $");
 
-#include <sys/param.h>
-#include <sys/sysctl.h>
+#include <sys/stat.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <util.h>
 
-int
-getrawpartition(void)
+const char *
+getdiskrawname(char *buf, size_t bufsiz, const char *name)
 {
-	int rawpart, mib[2];
-	size_t varlen;
+	const char *dp = strrchr(name, '/');
+	struct stat st;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_RAWPARTITION;
-	varlen = sizeof(rawpart);
-	if (sysctl(mib, 2, &rawpart, &varlen, NULL, (size_t)0) < 0)
-		return (-1);
+	if (dp == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
 
-	return (rawpart);
+	if (stat(name, &st) == -1)
+		return NULL;
+
+	if (!S_ISBLK(st.st_mode)) {
+		errno = EFTYPE;
+		return NULL;
+	}
+
+	(void)snprintf(buf, bufsiz, "%.*s/r%s", (int)(dp - name), name, dp + 1);
+
+	return buf;
+}
+
+const char *
+getdiskcookedname(char *buf, size_t bufsiz, const char *name)
+{
+	const char *dp;
+	struct stat st;
+
+	if ((dp = strrchr(name, '/')) == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	if (stat(name, &st) == -1)
+		return NULL;
+
+	if (!S_ISCHR(st.st_mode)) {
+		errno = EFTYPE;
+		return NULL;
+	}
+	if (dp[1] != 'r') {
+		errno = EINVAL;
+		return NULL;
+	}
+	(void)snprintf(buf, bufsiz, "%.*s/%s", (int)(dp - name), name, dp + 2);
+
+	return buf;
 }

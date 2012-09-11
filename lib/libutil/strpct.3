@@ -1,0 +1,99 @@
+.\" $NetBSD: strpct.3,v 1.4 2012/01/07 18:40:55 christos Exp $
+.\"
+.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This file was contributed to The NetBSD Foundation by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 7, 2012
+.Dt STRPCT 3
+.Os
+.Sh NAME
+.Nm strpct ,
+.Nm strspct
+.Nd decimal percent formatters
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft char *
+.Fn strpct "char *buf" "size_t bufsiz" "uintmax_t numerator" "uintmax_t denominator" "size_t precision"
+.Ft char *
+.Fn strspct "char *buf" "size_t bufsiz" "intmax_t numerator" "intmax_t denominator" "size_t precision"
+.Sh DESCRIPTION
+The
+.Fn strpct
+function formats the fraction represented by
+.Fa numerator
+and
+.Fa denominator
+into a percentage representation with given number of digits of
+.Fa precision
+without using floating point arithmetic.
+.Sh RETURN VALUES
+.Fn strpct
+and
+.Fn strspct
+always return a pointer to a NUL-terminated (unless
+.Fa buflen
+is
+.Dv 0 )
+formatted string which
+is placed in
+.Fa buf
+and is up to
+.Fa buflen
+characters.
+If there was an overflow, the formatted string will reflect that precision
+loss.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+strpct(buf, buflen, 1, 16, 3);
+\(rA "6.250"
+strpct(buf, buflen, 1, 2, 0);
+\(rA "50"
+.Ed
+.Sh HISTORY
+.Fn strpct
+was originally implemented in
+.Xr csh 1
+for
+.Nx 1.3 .
+It printed into a static buffer, was not locale aware, handled
+.Ft unsigned long
+numbers, and printed a
+.Dq %
+at the end of the number.
+Other programs such as
+.Xr df 1
+and
+.Xr time 1
+started using it.
+.Fn strpct
+and
+.Fn strspct
+appeared separately in libutil for
+.Nx 6.0 .
+.Sh AUTHORS
+.An Erik E. Fair Aq fair@netbsd.org

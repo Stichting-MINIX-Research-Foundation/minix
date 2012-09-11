@@ -1,4 +1,4 @@
-.\"	$NetBSD: openpty.3,v 1.14 2008/11/28 07:17:17 dholland Exp $
+.\"	$NetBSD: openpty.3,v 1.17 2012/07/27 21:33:46 christos Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 28, 2008
+.Dd July 27, 2012
 .Dt OPENPTY 3
 .Os
 .Sh NAME
@@ -68,6 +68,19 @@ If
 .Fa name
 is non-null, the filename of the slave is returned in
 .Fa name .
+The length of
+.Fa name
+is limited to
+.Dv PATH_MAX
+as any other regular path name, so a buffer of this size should be used.
+.\" .Dv 16
+.\" characters in the current
+.\" .Xr ptm 4
+.\" device driver (including the terminating
+.\" .Dv NUL )
+.\" which limits the maximum to
+.\" .Dv 100,000
+.\" ptys.
 If
 .Fa termp
 is non-null, the terminal parameters of the slave will be set to the

@@ -1,0 +1,107 @@
+.\"     $NetBSD: proc_compare.3,v 1.2 2011/10/21 12:58:53 wiz Exp $
+.\"
+.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd October 20, 2011
+.Dt PROC_COMPARE 3
+.Os
+.Sh NAME
+.Nm proc_compare
+.Nd compare two processes' interactivity
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In sys/sysctl.h
+.Ft int
+.Fn "proc_compare" "const struct kinfo_proc2 *p1" "const struct kinfo_lwp *l1" \
+"const struct kinfo_proc2 *p2" "const struct kinfo_lwp *l2"
+.Sh DESCRIPTION
+The
+.Fn proc_compare
+function compares two processes that are on the same terminal for their
+interactivity.
+This means that the process returned is the one that has a better chance
+being the active foreground process on that tty.
+This algorithm is used in the kernel for
+.Dv SIGINFO
+reporting and in userland by
+.Xr w 1 .
+.Pp
+The algorithm used is as follows:
+.Bl -bullet -compact -offset indent
+.It
+If one of them is runnable, it is preferred.
+.It
+If both are runnable, the one with the largest CPU percent is preferred.
+.It
+In a CPU percent tie, the one started more recently wins.
+.It
+If none are runnable, and one of them is a zombie, the non-zombie is preferred
+.It
+If both are zombies, the one started more recently wins.
+.It
+If neither is a zombie, the one with the smaller sleep time wins.
+.It
+In a tie, and one is sleeping in non-interruptible sleep, prefer that one.
+.It
+If both are in the same state, the one started more recently is preferred.
+.El
+In all cases where the most recently started wins, if there was no winner,
+the one with the largest PID wins.
+.Sh RETURN VALUES
+The
+.Fn proc_compare
+function returns
+.Dv 0
+if
+.Fa p1
+is to be preferred
+and
+.Dv 1
+if
+.Fa p2
+is to be preferred.
+.Sh SEE ALSO
+.Xr w 1
+.Sh HISTORY
+The
+.Fn proc_compare
+was extracted from
+.Pa src/sys/kern/tty.c
+and
+.Pa src/usr.bin/w/proc_compare.c
+and merged in
+.Nx 6.0 .
