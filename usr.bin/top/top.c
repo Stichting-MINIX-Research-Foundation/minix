@@ -311,9 +311,9 @@ int cmp_procs(const void *v1, const void *v2)
 	 */
 
 	if(blockedverbose && (p1blocked || p2blocked)) {
-		if(!p1blocked &&  p2blocked)
+		if(!p1blocked && p2blocked)
 			return -1;
-		if( p2blocked && !p1blocked)
+		if(!p2blocked && p1blocked)
 			return 1;
 	} else if((c=cmp64(p1->ticks, p2->ticks)) != 0)
 		return -c;
