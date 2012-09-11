@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.29 2007/12/04 22:09:02 mjf Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.30 2012/04/07 16:16:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.29 2007/12/04 22:09:02 mjf Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.30 2012/04/07 16:16:34 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -448,25 +448,25 @@ gsetrl(login_cap_t *lc, int what, const char *name, int type)
 		return (-1);
 	}
 
-#define	RCUR	r.rlim_cur
-#define	RMAX	r.rlim_max
+#define	RCUR	((quad_t)r.rlim_cur)
+#define	RMAX	((quad_t)r.rlim_max)
 
 	switch (type) {
 	case R_CTIME:
-		RCUR = login_getcaptime(lc, name, RCUR, RCUR);
-		RMAX = login_getcaptime(lc, name, RMAX, RMAX);
+		r.rlim_cur = login_getcaptime(lc, name, RCUR, RCUR);
+		r.rlim_max = login_getcaptime(lc, name, RMAX, RMAX);
 		rl.rlim_cur = login_getcaptime(lc, name_cur, RCUR, RCUR);
 		rl.rlim_max = login_getcaptime(lc, name_max, RMAX, RMAX);
 		break;
 	case R_CSIZE:
-		RCUR = login_getcapsize(lc, name, RCUR, RCUR);
-		RMAX = login_getcapsize(lc, name, RMAX, RMAX);
+		r.rlim_cur = login_getcapsize(lc, name, RCUR, RCUR);
+		r.rlim_max = login_getcapsize(lc, name, RMAX, RMAX);
 		rl.rlim_cur = login_getcapsize(lc, name_cur, RCUR, RCUR);
 		rl.rlim_max = login_getcapsize(lc, name_max, RMAX, RMAX);
 		break;
 	case R_CNUMB:
-		RCUR = login_getcapnum(lc, name, RCUR, RCUR);
-		RMAX = login_getcapnum(lc, name, RMAX, RMAX);
+		r.rlim_cur = login_getcapnum(lc, name, RCUR, RCUR);
+		r.rlim_max = login_getcapnum(lc, name, RMAX, RMAX);
 		rl.rlim_cur = login_getcapnum(lc, name_cur, RCUR, RCUR);
 		rl.rlim_max = login_getcapnum(lc, name_max, RMAX, RMAX);
 		break;
@@ -519,7 +519,7 @@ setuserenv(login_cap_t *lc, envfunc_t senv, void *envp)
 
 	/* allocate ptr array and string */
 	count = i;
-	res = malloc(count * sizeof(char *) + strlen(str) + 1);
+	res = malloc(count * sizeof(*res) + strlen(str) + 1);
 
 	if (!res)
 		return -1;
@@ -575,8 +575,10 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 
 	if (!lc)
 		flc = lc = login_getclass(pwd ? pwd->pw_class : NULL);
-
+#ifdef __minix
 #define LOGIN_SETLOGIN 0
+#endif
+
 	/*
 	 * Without the pwd entry being passed we cannot set either
 	 * the group or the login.  We could complain about it.

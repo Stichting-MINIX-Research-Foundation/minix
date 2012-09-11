@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.50 2010/08/18 08:32:02 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.52 2012/06/25 22:32:47 abs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.50 2010/08/18 08:32:02 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.52 2012/06/25 22:32:47 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -134,9 +134,7 @@ pw_lock(int retries)
 }
 
 int
-pw_mkdb(username, secureonly)
-	const char *username;
-	int secureonly;
+pw_mkdb(const char *username, int secureonly)
 {
 	const char *args[9];
 	int pstat, i;
@@ -172,7 +170,7 @@ pw_mkdb(username, secureonly)
 	}
 	if (WIFEXITED(pstat)) {
 		if (WEXITSTATUS(pstat) != 0) {
-			warnx("pwd_mkdb exited with static %d",
+			warnx("pwd_mkdb exited with status %d",
 			    WEXITSTATUS(pstat));
 			return -1;
 		}

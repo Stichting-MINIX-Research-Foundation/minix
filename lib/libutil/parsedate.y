@@ -573,69 +573,24 @@ yyerror(struct dateinfo *param, const char **inp, const char *s __unused)
 }
 
 
-static time_t
-ToSeconds(
-    time_t	Hours,
-    time_t	Minutes,
-    time_t	Seconds,
-    MERIDIAN	Meridian
-)
-{
-    if (Minutes < 0 || Minutes > 59 || Seconds < 0 || Seconds > 59)
-	return -1;
-    switch (Meridian) {
-    case MER24:
-	if (Hours < 0 || Hours > 23)
-	    return -1;
-	return (Hours * 60L + Minutes) * 60L + Seconds;
-    case MERam:
-	if (Hours < 1 || Hours > 12)
-	    return -1;
-	if (Hours == 12)
-	    Hours = 0;
-	return (Hours * 60L + Minutes) * 60L + Seconds;
-    case MERpm:
-	if (Hours < 1 || Hours > 12)
-	    return -1;
-	if (Hours == 12)
-	    Hours = 0;
-	return ((Hours + 12) * 60L + Minutes) * 60L + Seconds;
-    default:
-	abort ();
-    }
-    /* NOTREACHED */
-}
-
-static int
-isLeap(int year)
-{
-    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-}
-
-
 /* Year is either
    * A negative number, which means to use its absolute value (why?)
    * A number from 0 to 99, which means a year from 1900 to 1999, or
    * The actual year (>=100).  */
 static time_t
 Convert(
-    time_t	Month,
-    time_t	Day,
-    time_t	Year,
-    time_t	Hours,
-    time_t	Minutes,
-    time_t	Seconds,
-    time_t	Timezone,
-    MERIDIAN	Meridian,
-    DSTMODE	DSTmode
+    time_t	Month,		/* month of year [1-12] */
+    time_t	Day,		/* day of month [1-31] */
+    time_t	Year,		/* year; see above comment */
+    time_t	Hours,		/* Hour of day [0-24] */
+    time_t	Minutes,	/* Minute of hour [0-59] */
+    time_t	Seconds,	/* Second of minute [0-60] */
+    time_t	Timezone,	/* Timezone as seconds west of UTC */
+    MERIDIAN	Meridian,	/* Hours are am/pm/24 hour clock */
+    DSTMODE	DSTmode		/* DST on/off/maybe */
 )
 {
-    static int DaysInMonth[12] = {
-	31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-    };
-    time_t	tod;
-    time_t	Julian, oJulian;
-    int		i;
+    struct tm tm;
 
     /* XXX Y2K */
     if (Year < 0)
@@ -644,53 +599,21 @@ Convert(
 	Year += 2000;
     else if (Year < 100)
 	Year += 1900;
-    DaysInMonth[1] = isLeap(Year) ? 29 : 28;
-    if (Year < EPOCH || Month < 1 || Month > 12
-     /* Lint fluff:  "conversion from long may lose accuracy" */
-     || Day < 1 || Day > DaysInMonth[(int)--Month])
-	/* FIXME:
-	 * It would be nice to set a global error string here.
-	 * "February 30 is not a valid date" is much more informative than
-	 * "Can't parse date/time: 100 months" when the user input was
-	 * "100 months" and addition resolved that to February 30, for
-	 * example.  See rcs2-7 in src/sanity.sh for more. */
-	return -1;
 
-    for (Julian = Day - 1, i = 0; i < Month; i++)
-	Julian += DaysInMonth[i];
-
-    oJulian = Julian;
-    for (i = EPOCH; i < Year; i++) {
-	Julian += 365 + isLeap(i);
-	if (oJulian > Julian)
-	    return -1;
-	oJulian = Julian;
+    tm.tm_sec = Seconds;
+    tm.tm_min = Minutes;
+    tm.tm_hour = Hours + (Meridian == MERpm ? 12 : 0);
+    tm.tm_mday = Day;
+    tm.tm_mon = Month - 1;
+    tm.tm_year = Year - 1900;
+    switch (DSTmode) {
+    case DSTon:  tm.tm_isdst = 1; break;
+    case DSToff: tm.tm_isdst = 0; break;
+    default:     tm.tm_isdst = -1; break;
     }
+    tm.tm_gmtoff = -Timezone;
 
-    Julian *= SECSPERDAY;
-    if (oJulian > Julian)
-	return -1;
-    oJulian = Julian;
-    Julian += Timezone * 60L;
-    if (Timezone > 0 && oJulian > Julian)
-	return -1;
-    oJulian = Julian;
-
-    if ((tod = ToSeconds(Hours, Minutes, Seconds, Meridian)) < 0)
-	return -1;
-
-    Julian += tod;
-    if (oJulian > Julian)
-	return -1;
-
-    if (DSTmode == DSTon || (DSTmode == DSTmaybe)) {
-	struct tm  *tm;
-	if ((tm = localtime(&Julian)) == NULL)
-	    return -1;
-	if (tm->tm_isdst)
-	    Julian -= 60 * 60;
-    }
-    return Julian;
+    return mktime(&tm);
 }
 
 
@@ -1008,7 +931,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
 	Start = Convert(param.yyMonth, param.yyDay, param.yyYear, param.yyHour,
 	    param.yyMinutes, param.yySeconds, param.yyTimezone,
 	    param.yyMeridian, param.yyDSTmode);
-	if (Start < 0)
+	if (Start == -1)
 	    return -1;
     }
     else {

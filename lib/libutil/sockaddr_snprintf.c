@@ -38,6 +38,10 @@ __RCSID("$NetBSD: sockaddr_snprintf.c,v 1.9 2008/04/28 20:23:03 martin Exp $");
 #include <sys/un.h>
 
 #include <netinet/in.h>
+#ifndef __minix
+#include <netatalk/at.h>
+#include <net/if_dl.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -115,7 +119,11 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 	if (addr == abuf)
 		name = addr;
 
+#ifndef __minix
+	if (a && getnameinfo(sa, (socklen_t)sa->sa_len, addr = abuf,
+#else
 	if (a && getnameinfo(sa, (socklen_t)len, addr = abuf,
+#endif
 	    (unsigned int)sizeof(abuf), NULL, 0,
 	    NI_NUMERICHOST|NI_NUMERICSERV) != 0)
 		return -1;
@@ -145,7 +153,11 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			ADDS(nbuf);
 			break;
 		case 'l':
+#ifndef __minix
+			(void)snprintf(nbuf, sizeof(nbuf), "%d", sa->sa_len);
+#else
 			(void)snprintf(nbuf, sizeof(nbuf), "%d", len);
+#endif
 			ADDS(nbuf);
 			break;
 		case 'A':
@@ -154,7 +166,11 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			else if (!a)
 				ADDNA();
 			else {
+#ifndef __minix
+				getnameinfo(sa, (socklen_t)sa->sa_len,
+#else
 				getnameinfo(sa, (socklen_t)len,
+#endif
 					name = Abuf,
 					(unsigned int)sizeof(nbuf), NULL, 0, 0);
 				ADDS(name);
@@ -166,7 +182,11 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			else if (p == -1)
 				ADDNA();
 			else {
+#ifndef __minix
+				getnameinfo(sa, (socklen_t)sa->sa_len, NULL, 0,
+#else
 				getnameinfo(sa, (socklen_t)len, NULL, 0,
+#endif
 					port = pbuf,
 					(unsigned int)sizeof(pbuf), 0);
 				ADDS(port);
