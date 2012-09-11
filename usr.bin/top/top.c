@@ -41,6 +41,11 @@
 
 #define TIMECYCLEKEY 't'
 
+#define ORDER_CPU	0
+#define ORDER_MEMORY	1
+#define ORDER_HIGHEST	ORDER_MEMORY
+int order = ORDER_CPU;
+
 u32_t system_hz;
 
 /* name of cpu cycle types, in the order they appear in /psinfo. */
@@ -281,11 +286,17 @@ struct tp {
 	u64_t ticks;
 };
 
-int cmp_ticks(const void *v1, const void *v2)
+int cmp_procs(const void *v1, const void *v2)
 {
 	int c;
 	struct tp *p1 = (struct tp *) v1, *p2 = (struct tp *) v2;
 	int p1blocked, p2blocked;
+
+	if(order == ORDER_MEMORY) {
+		if(p1->p->p_memory < p2->p->p_memory) return 1;
+		if(p1->p->p_memory > p2->p->p_memory) return -1;
+		return 0;
+	}
 
 	p1blocked = !!(p1->p->p_flags & BLOCKED);
 	p2blocked = !!(p2->p->p_flags & BLOCKED);
@@ -464,7 +475,7 @@ void print_procs(int maxlines,
 	if (!cmp64u(total_ticks, 0))
 		return;
 
-	qsort(tick_procs, nprocs, sizeof(tick_procs[0]), cmp_ticks);
+	qsort(tick_procs, nprocs, sizeof(tick_procs[0]), cmp_procs);
 
 	tcyc = div64u(total_ticks, SCALE);
 
@@ -691,6 +702,11 @@ int main(int argc, char *argv[])
 					case 'q':
 						putchar('\r');
 						return 0;
+						break;
+					case 'o':
+						order++;
+						if(order > ORDER_HIGHEST)
+							order = 0;
 						break;
 					case TIMECYCLEKEY:
 						cputimemode++;
