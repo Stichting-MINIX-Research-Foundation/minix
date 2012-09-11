@@ -1,6 +1,6 @@
-#define SUBPARTITION_PER_PARTITION 4 /* 4 sub partitions per partition */
-#define PARTITONS_PER_DISK 4         /* 4 partitions per disk */
-#define MINOR_PER_DISK  1            /* one additional minor to point to */
+#define SUBPARTITION_PER_PARTITION 4	/* 4 sub partitions per partition */
+#define PARTITONS_PER_DISK 4	/* 4 partitions per disk */
+#define MINOR_PER_DISK  1	/* one additional minor to point to */
 
 /**
  * We can have multiple MMC host controller present on the hardware. The MINIX
@@ -29,7 +29,6 @@
 
 #define MAX_SD_SLOTS 4
 
-
 struct mmc_host;
 
 //TODO Add more modes like INACTIVE STATE and such
@@ -44,25 +43,24 @@ struct sd_card
 	struct sd_slot *slot;
 
 	/* Card registers */
-	uint8_t cid[16]; /* Card Identification 128 bits*/
-	uint32_t rca;    /* Relative card address */
-	uint32_t dsr;    /* Driver stage register */
-	uint32_t csd[4]; /* Card specific data */
-	uint32_t scr[2]; /* SD configuration */
-	uint32_t ocr;    /* Operation conditions */
-	uint32_t ssr[5]; /* SD Status */
-	uint32_t csr;    /* Card status */
-
+	uint8_t cid[16];	/* Card Identification 128 bits */
+	uint32_t rca;		/* Relative card address */
+	uint32_t dsr;		/* Driver stage register */
+	uint32_t csd[4];	/* Card specific data */
+	uint32_t scr[2];	/* SD configuration */
+	uint32_t ocr;		/* Operation conditions */
+	uint32_t ssr[5];	/* SD Status */
+	uint32_t csr;		/* Card status */
 
 	/* some helpers (data comming from the csd) */
 	uint32_t blk_size;
-	uint32_t blk_count; 
+	uint32_t blk_count;
 
 	/* drive state: deaf, initialized, dead */
 	unsigned state;
 
 	/* MINIX/block driver related things */
-	int open_ct; /* in-use count */
+	int open_ct;		/* in-use count */
 
 	/* 1 disks + 4 partitions and 16 possible sub partitions */
 	struct device part[MINOR_PER_DISK + PARTITONS_PER_DISK];
@@ -79,43 +77,37 @@ struct sd_slot
 	struct sd_card card;
 };
 
-
 /* structure for the host controller */
 struct mmc_host
 {
 	/* MMC host configuration */
-	int (*host_set_instance)(struct mmc_host *host, int instance);
+	int (*host_set_instance) (struct mmc_host * host, int instance);
 	/* MMC host configuration */
-	int (*host_init)(struct mmc_host *host);
+	int (*host_init) (struct mmc_host * host);
 	/* Host controller reset */
-	int (*host_reset)(struct mmc_host *host);
+	int (*host_reset) (struct mmc_host * host);
 	/* Card detection (binary yes/no) */
-	int (*card_detect)(struct sd_slot* slot);
+	int (*card_detect) (struct sd_slot * slot);
 	/* Perform card detection e.g. card type */
-	struct sd_card* (*card_initialize)(struct sd_slot* slot);
+	struct sd_card *(*card_initialize) (struct sd_slot * slot);
 	/* Release the card */
-	int (*card_release)(struct sd_card* card);
+	int (*card_release) (struct sd_card * card);
 
 	/* read count blocks into existing buf */
-	int (*read)(struct sd_card *card, 
-	  	    uint32_t blknr, 
-                    uint32_t count, 
-                    unsigned char * buf);
+	int (*read) (struct sd_card * card,
+	    uint32_t blknr, uint32_t count, unsigned char *buf);
 
 	/* write count blocks */
-	int (*write)(struct sd_card *card, 
-                           uint32_t blknr, 
-                    	   uint32_t count, 
-                           unsigned char * buf);
+	int (*write) (struct sd_card * card,
+	    uint32_t blknr, uint32_t count, unsigned char *buf);
 
-	/* up to 4 slots with 4 SD cards*/
+	/* up to 4 slots with 4 SD cards */
 	struct sd_slot slot[MAX_SD_SLOTS];
 };
 
-
 #if 0
 /* Command execution */
-int (*send_cmd)(struct sd_card* card, struct mmc_command *);
+int (*send_cmd) (struct sd_card * card, struct mmc_command *);
 
 /* struct representing an mmc command */
 struct mmc_command
@@ -123,12 +115,11 @@ struct mmc_command
 	uint32_t cmd;
 	uint32_t args;
 	uint32_t resp[4];
-	unsigned char* data;
+	unsigned char *data;
 	uint32_t data_len;
 };
 #endif
 
-
 /* Hack done for driver registration */
-void mmchs_host_initialize_host_structure(struct mmc_host * host);
+void mmchs_host_initialize_host_structure(struct mmc_host *host);
 #define host_initialize_host_structure(x) mmchs_host_initialize_host_structure(x)

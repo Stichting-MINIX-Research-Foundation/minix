@@ -6,28 +6,25 @@
 
 /*
  * LEVEL_NONE  do not log anything.
- *
  * LEVEL_WARN  Information that needs to be known.
- *
  * LEVEL_INFO  Basic information like startup messages and occasional events.
- *
  * LEVEL_DEBUG debug statements about things happening that are less expected.
- *
  * LEVEL_TRACE Way to much information for anybody.
  */
 
-#define LEVEL_NONE 0 
-#define LEVEL_WARN 1 
-#define LEVEL_INFO 2 
-#define LEVEL_DEBUG 3 
+#define LEVEL_NONE 0
+#define LEVEL_WARN 1
+#define LEVEL_INFO 2
+#define LEVEL_DEBUG 3
 #define LEVEL_TRACE 4
 
 static const char *level_string[5] = {
-		"none",
-		"warn",
-		"info",
-		"debug",
-		"trace" };
+	"none",
+	"warn",
+	"info",
+	"debug",
+	"trace"
+};
 
 /*
  * struct to be initialized by the user of the logging system.
@@ -47,13 +44,10 @@ static const char *level_string[5] = {
 struct mmclog { const char *name; int log_level;
 
 	/* the logging function itself */
-	void (*log_func)(struct mmclog *driver,
-			int level,
-			const char *file,
-			const char *function,
-			int line,
-			const char * fmt,
-			...);
+	void (*log_func) (struct mmclog * driver,
+	    int level,
+	    const char *file,
+	    const char *function, int line, const char *fmt, ...);
 
 };
 
@@ -80,13 +74,10 @@ struct mmclog { const char *name; int log_level;
 
 #endif /* __MMCLOG_H__ */
 
-static void default_log(struct mmclog *driver,
-		int level,
-		const char *file,
-		const char *function,
-		int line,
-		const char * fmt,
-		...)
+static void
+default_log(struct mmclog *driver,
+    int level,
+    const char *file, const char *function, int line, const char *fmt, ...)
 {
 	va_list args;
 
@@ -95,8 +86,8 @@ static void default_log(struct mmclog *driver,
 	}
 	/* If the wanted level is debug also display line/method information */
 	if (driver->log_level >= LEVEL_DEBUG) {
-		fprintf(stderr, "%s(%s):%s+%d(%s):", driver->name, level_string[level],
-				file, line, function);
+		fprintf(stderr, "%s(%s):%s+%d(%s):", driver->name,
+		    level_string[level], file, line, function);
 	} else {
 		fprintf(stderr, "%s(%s)", driver->name, level_string[level]);
 	}
