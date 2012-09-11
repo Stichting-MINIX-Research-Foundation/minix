@@ -213,6 +213,36 @@ block_close(dev_t minor)
 	return OK;
 }
 
+static int
+copyto(endpoint_t dst_e,
+    cp_grant_id_t gr_id, vir_bytes offset, vir_bytes address, size_t bytes)
+{
+	/* helper function that used memcpy to copy data when the endpoint ==
+	 * SELF */
+	if (dst_e == SELF) {
+		memcpy((char *) gr_id + offset, (char *) address, bytes);
+		return OK;
+	} else {
+		/* Read io_size bytes from our data at the correct * offset
+		 * and write it to the output buffer at 0 */
+		return sys_safecopyto(dst_e, gr_id, offset, address, bytes);
+	}
+}
+
+static int
+copyfrom(endpoint_t src_e,
+    cp_grant_id_t gr_id, vir_bytes offset, vir_bytes address, size_t bytes)
+{
+	/* helper function that used memcpy to copy data when the endpoint ==
+	 * SELF */
+	if (src_e == SELF) {
+		memcpy((char *) address, (char *) gr_id + offset, bytes);
+		return OK;
+	} else {
+		return sys_safecopyfrom(src_e, gr_id, offset, address, bytes);
+	}
+}
+
 /*===========================================================================*
  *                    block_transfer                                         *
  *===========================================================================*/
@@ -246,14 +276,10 @@ block_transfer(dev_t minor,
 
 	assert(slot);
 
-	/* It is fully up to the driver to decide on restrictions for the
-	 * parameters of transfers, in those cases we return EINVAL */
-
 	if (slot->card.blk_size == 0) {
 		mmc_log_warn(&log, "Request on a card with block size of 0\n");
 		return EINVAL;
 	}
-
 	if (slot->card.blk_size > COPYBUFF_SIZE) {
 		mmc_log_warn(&log,
 		    "Card block size (%d) exceeds internal buffer size %d\n",
@@ -261,6 +287,8 @@ block_transfer(dev_t minor,
 		return EINVAL;
 	}
 
+	/* It is fully up to the driver to decide on restrictions for the
+	 * parameters of transfers, in those cases we return EINVAL */
 	if (position % slot->card.blk_size != 0) {
 		/* Starting at a block boundary */
 		mmc_log_warn(&log,
@@ -325,21 +353,12 @@ block_transfer(dev_t minor,
 		/* transfer max one block at the time */
 		for (i = 0; i < io_size / blk_size; i++) {
 			if (do_write) {
-				/* copy a bloc */
-
 				/* Read io_size bytes from i/o vector starting 
 				 * at 0 and write it to out buffer at the
 				 * correct offset */
-				if (endpt == SELF) {
-					panic("untested code\n");
-					memcpy(copybuff,
-					    ciov->iov_addr + i * blk_size,
-					    blk_size);
-				} else {
-					r = sys_safecopyfrom(endpt,
-					    ciov->iov_addr, i * blk_size,
-					    (vir_bytes) copybuff, blk_size);
-				}
+				r = copyfrom(endpt,
+				    ciov->iov_addr, i * blk_size,
+				    (vir_bytes) copybuff, blk_size);
 				/* write a single block */
 				slot->host->write(&slot->card,
 				    (dev->dv_base / blk_size) +
@@ -350,18 +369,12 @@ block_transfer(dev_t minor,
 				slot->host->read(&slot->card,
 				    (dev->dv_base / blk_size) +
 				    (io_offset / blk_size) + i, 1, copybuff);
-				if (endpt == SELF) {
-					memcpy(ciov->iov_addr + i * blk_size,
-					    copybuff, blk_size);
-				} else {
-					/* Read io_size bytes from our data at 
-					 * the correct * offset and write it
-					 * to the output buffer at 0 */
-					r = sys_safecopyto(endpt,
-					    ciov->iov_addr, i * blk_size,
-					    (vir_bytes) copybuff, blk_size);
-
-				}
+				/* Read io_size bytes from our data at the
+				 * correct * offset and write it to the output 
+				 * * buffer at 0 */
+				r = copyto(endpt,
+				    ciov->iov_addr, i * blk_size,
+				    (vir_bytes) copybuff, blk_size);
 				bytes_written += blk_size;
 			}
 		}
