@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.15 2009/01/18 12:13:04 lukem Exp $ */
+/*	$NetBSD: pidlock.c,v 1.16 2012/04/07 16:17:17 christos Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.15 2009/01/18 12:13:04 lukem Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.16 2012/04/07 16:17:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -52,8 +52,8 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 	char	hostname[MAXHOSTNAMELEN + 1];
 	pid_t	pid2 = -1;
 	struct	stat st;
-	int	err;
-	int	f = -1;
+	ssize_t	n;
+	int	f = -1, savee;
 	char	s[256];
 	char	*p;
 	size_t	len;
@@ -114,16 +114,16 @@ lockfailed:
 			goto out;
 		/* Find out who has this lockfile. */
 		if ((f = open(lockfile, O_RDONLY, 0)) != -1)  {
-			if ((err = read(f, s, (size_t)11)) == -1)
+			if ((n = read(f, s, (size_t)11)) == -1)
 				goto out;
-			if (err == 0) {
+			if (n == 0) {
 				errno = EINVAL;
 				goto out;
 			}
 			pid2 = atoi(s);
-			if ((err = read(f, s, sizeof(s) - 2)) == -1)
+			if ((n = read(f, s, sizeof(s) - 2)) == -1)
 				goto out;
-			if (err == 0)
+			if (n == 0)
 				*s = '\0';
 			s[sizeof(s) - 1] = '\0';
 			if ((p = strchr(s, '\n')) != NULL)
@@ -164,11 +164,11 @@ lockfailed:
 	errno = 0;
 	return 0;
 out:
-	err = errno;
+	savee = errno;
 	if (f != -1)
 		(void)close(f);
 	(void)unlink(tempfile);
-	errno = err;
+	errno = savee;
 	return -1;
 }
 
