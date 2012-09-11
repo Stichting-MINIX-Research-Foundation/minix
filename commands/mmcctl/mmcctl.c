@@ -10,8 +10,6 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-#include <sys/ioc_mmc.h>
-
 static void
 show_usage()
 {
@@ -57,7 +55,7 @@ main(int argc, char **argv)
 		}
 
 		uint8_t cid[16];
-		err = ioctl(fd, MIOGETCID, cid);
+		err = ioctl(fd, MMCIOGETCID, cid);
 		if (err) {
 			fprintf(stderr,
 			    "error doing ioctl on device '%s':%s\n", device,

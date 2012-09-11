@@ -401,7 +401,7 @@ block_ioctl(dev_t minor,
 	}
 
 	switch (request) {
-	case MIOGETCID:
+	case MMCIOGETCID:
 		mmc_log_trace(&log, "returing cid\n", minor);
 		return sys_safecopyto(endpt, grant, 0,
 		    (vir_bytes) slot->card.cid, sizeof(slot->card.cid));

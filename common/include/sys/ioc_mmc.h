@@ -12,6 +12,6 @@
 typedef uint8_t cid[16]; 
 
 /* get the card CID */
-#define MIOGETCID _IOR('d',10,cid)
+#define MMCIOGETCID _IOR('e',10,cid)
 
 #endif /* _S_I_MMC_H */
