@@ -163,7 +163,6 @@ static int block_open(dev_t minor, int access)
 	/* We did not have an sd-card inserted so we are going to probe for it */
 	mmc_log_debug(&log, "First open on (%d)\n", minor);
 	if (!host.card_initialize(slot)) {
-
 		//TODO set card state to INVALID until removed?
 		return EIO;
 	}
@@ -322,7 +321,7 @@ static int block_transfer(dev_t minor /* minor device number */,
 				"I/O %s request(%d/%d) iov(grant,size,iosize,"
 				"offset)=(%d,%d,%d,%d)\n",
 				(do_write)?"write":"read", counter, nr_req, ciov->iov_addr, ciov->iov_size, io_size, io_offset);
-
+		r = OK;
 		/* transfer max one block at the time */
 		for (i = 0; i < io_size / blk_size; i++) {
 			if (do_write) {
@@ -330,9 +329,14 @@ static int block_transfer(dev_t minor /* minor device number */,
 
 				/* Read io_size bytes from i/o vector starting at 0 
 				 * and write it to out buffer at the correct offset */
-				r = sys_safecopyfrom(endpt, ciov->iov_addr,
+				if (endpt == SELF) {
+					panic("untested code\n");
+					memcpy(copybuff, ciov->iov_addr + i * blk_size,blk_size);
+				} else {	
+					r = sys_safecopyfrom(endpt, ciov->iov_addr,
 						i * blk_size /* offset */, (vir_bytes) copybuff,
 						blk_size);
+				}
 				/* write a single block  */
 				slot->host->write(&slot->card,
 						(dev->dv_base / blk_size) + (io_offset / blk_size) + i,
@@ -344,17 +348,20 @@ static int block_transfer(dev_t minor /* minor device number */,
 						(dev->dv_base / blk_size) + (io_offset / blk_size) + i,
 						1, copybuff);
 				if (endpt == SELF) {
-					mmc_log_warn( &log, "I/O SELF\n");
-				}
-				/* Read io_size bytes from our data at the correct 
-				 * offset and write it to the output buffer at 0 */
-				r = sys_safecopyto(endpt, ciov->iov_addr,
+					memcpy(ciov->iov_addr + i * blk_size,copybuff,blk_size);
+				} else {
+					/* Read io_size bytes from our data at the correct 
+					* offset and write it to the output buffer at 0 */
+					r = sys_safecopyto(endpt, ciov->iov_addr,
 						i * blk_size /* offset */, (vir_bytes) copybuff,
 						blk_size);
+
+				}
 				bytes_written += blk_size;
 			}
 		}
 		if (r != OK) {
+			/* @TODO: move this code closer to sys_safecopy* */
 			/* use _SIGN to reverse the signedness */
 			mmc_log_warn(
 					&log,
