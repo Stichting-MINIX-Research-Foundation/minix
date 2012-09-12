@@ -7,5 +7,8 @@ HOST_SRCS=	compile.c hash.c
 TERMINFODIR=	${NETBSDSRCDIR}/lib/libterminfo
 
 .include "${.CURDIR}/../Makefile.host"
+.ifndef __MINIX
+.include "${TERMINFODIR}/Makefile.hash"
+.endif
 
 .PATH:		${TERMINFODIR}

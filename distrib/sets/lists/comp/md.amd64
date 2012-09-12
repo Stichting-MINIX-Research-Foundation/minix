@@ -1,0 +1,1287 @@
+# $NetBSD: md.amd64,v 1.177 2012/09/16 18:59:25 tls Exp $
+./usr/include/amd64				comp-c-include
+./usr/include/amd64/ansi.h			comp-c-include
+./usr/include/amd64/aout_machdep.h		comp-c-include
+./usr/include/amd64/asm.h			comp-c-include
+./usr/include/amd64/atomic.h			comp-obsolete		obsolete
+./usr/include/amd64/autoconf.h			comp-obsolete		obsolete
+./usr/include/amd64/bootinfo.h			comp-c-include
+./usr/include/amd64/bswap.h			comp-c-include
+./usr/include/amd64/bus.h			comp-obsolete		obsolete
+./usr/include/amd64/byte_swap.h			comp-c-include
+./usr/include/amd64/cdefs.h			comp-c-include
+./usr/include/amd64/cpu.h			comp-c-include
+./usr/include/amd64/cpufunc.h			comp-c-obsolete		obsolete
+./usr/include/amd64/disklabel.h			comp-c-include
+./usr/include/amd64/elf_machdep.h		comp-c-include
+./usr/include/amd64/endian.h			comp-c-include
+./usr/include/amd64/endian_machdep.h		comp-c-include
+./usr/include/amd64/fenv.h			comp-c-include
+./usr/include/amd64/float.h			comp-c-include
+./usr/include/amd64/fpu.h			comp-c-include
+./usr/include/amd64/frame.h			comp-c-include
+./usr/include/amd64/frame_regs.h		comp-c-include
+./usr/include/amd64/gdt.h			comp-c-include
+./usr/include/amd64/ieee.h			comp-c-include
+./usr/include/amd64/ieeefp.h			comp-c-include
+./usr/include/amd64/int_const.h			comp-c-include
+./usr/include/amd64/int_fmtio.h			comp-c-include
+./usr/include/amd64/int_limits.h		comp-c-include
+./usr/include/amd64/int_mwgwtypes.h		comp-c-include
+./usr/include/amd64/int_types.h			comp-c-include
+./usr/include/amd64/intr.h			comp-c-include
+./usr/include/amd64/intrdefs.h			comp-c-include
+./usr/include/amd64/joystick.h			comp-c-include
+./usr/include/amd64/kcore.h			comp-c-include
+./usr/include/amd64/limits.h			comp-c-include
+./usr/include/amd64/linux32_machdep.h		comp-c-include
+./usr/include/amd64/lock.h			comp-c-include
+./usr/include/amd64/math.h			comp-c-include
+./usr/include/amd64/mcontext.h			comp-c-include
+./usr/include/amd64/mtrr.h			comp-c-include
+./usr/include/amd64/mutex.h			comp-c-include
+./usr/include/amd64/netbsd32_machdep.h		comp-c-include
+./usr/include/amd64/param.h			comp-c-include
+./usr/include/amd64/pcb.h			comp-c-include
+./usr/include/amd64/pci_machdep.h		comp-c-include
+./usr/include/amd64/pio.h			comp-c-include
+./usr/include/amd64/pmap.h			comp-c-include
+./usr/include/amd64/pmc.h			comp-c-include
+./usr/include/amd64/proc.h			comp-c-include
+./usr/include/amd64/profile.h			comp-c-include
+./usr/include/amd64/psl.h			comp-c-include
+./usr/include/amd64/pte.h			comp-c-include
+./usr/include/amd64/ptrace.h			comp-c-include
+./usr/include/amd64/reg.h			comp-c-include
+./usr/include/amd64/rwlock.h			comp-c-include
+./usr/include/amd64/segments.h			comp-c-include
+./usr/include/amd64/setjmp.h			comp-c-include
+./usr/include/amd64/signal.h			comp-c-include
+./usr/include/amd64/specialreg.h		comp-c-include
+./usr/include/amd64/stdarg.h			comp-obsolete		obsolete
+./usr/include/amd64/sysarch.h			comp-c-include
+./usr/include/amd64/trap.h			comp-c-include
+./usr/include/amd64/tss.h			comp-c-include
+./usr/include/amd64/types.h			comp-c-include
+./usr/include/amd64/userret.h			comp-c-include
+./usr/include/amd64/varargs.h			comp-obsolete		obsolete
+./usr/include/amd64/vmparam.h			comp-c-include
+./usr/include/amd64/wchar_limits.h		comp-c-include
+./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/bmiintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/emmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/fma4intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/immintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/lzcntintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/mm3dnow.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/mm_malloc.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/mmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/nmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/pmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/popcntintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/smmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/tmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/ammintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/avxintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/avx2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/bmi2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/bmiintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/emmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/fma4intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/fmaintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/immintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/lzcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/mm3dnow.h		comp-c-include		llvm
+./usr/include/clang-3.2/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-3.2/mmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/nmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/pmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/smmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/tmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/wmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/x86intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/xmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/xopintrin.h		comp-c-include		llvm
+./usr/include/emmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/emmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mm_malloc.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/pmmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/xmmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.5/abmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/bmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cpuid.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cross-stdarg.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/emmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/fma4intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ia32intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/immintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/lwpintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm3dnow.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm_malloc.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/nmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/pmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/popcntintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/smmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/wmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/x86intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xopintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/i386				comp-c-include
+./usr/include/i386/ansi.h			comp-c-include
+./usr/include/i386/aout_machdep.h		comp-c-include
+./usr/include/i386/apmvar.h			comp-c-include
+./usr/include/i386/asm.h			comp-c-include
+./usr/include/i386/bioscall.h			comp-c-include
+./usr/include/i386/bootinfo.h			comp-c-include
+./usr/include/i386/bswap.h			comp-c-include
+./usr/include/i386/bus.h			comp-obsolete		obsolete
+./usr/include/i386/byte_swap.h			comp-c-include
+./usr/include/i386/cdefs.h			comp-c-include
+./usr/include/i386/cpu.h			comp-c-include
+./usr/include/i386/cpufunc.h			comp-c-obsolete		obsolete
+./usr/include/i386/cputypes.h			comp-c-include
+./usr/include/i386/disklabel.h			comp-c-include
+./usr/include/i386/elf_machdep.h		comp-c-include
+./usr/include/i386/endian.h			comp-c-include
+./usr/include/i386/endian_machdep.h		comp-c-include
+./usr/include/i386/fenv.h			comp-c-include
+./usr/include/i386/float.h			comp-c-include
+./usr/include/i386/frame.h			comp-c-include
+./usr/include/i386/freebsd_machdep.h		comp-c-include
+./usr/include/i386/gdt.h			comp-c-include
+./usr/include/i386/ibcs2_machdep.h		comp-c-include
+./usr/include/i386/ieee.h			comp-c-include
+./usr/include/i386/ieeefp.h			comp-c-include
+./usr/include/i386/int_const.h			comp-c-include
+./usr/include/i386/int_fmtio.h			comp-c-include
+./usr/include/i386/int_limits.h			comp-c-include
+./usr/include/i386/int_mwgwtypes.h		comp-c-include
+./usr/include/i386/int_types.h			comp-c-include
+./usr/include/i386/intr.h			comp-c-include
+./usr/include/i386/intrdefs.h			comp-c-include
+./usr/include/i386/joystick.h			comp-c-include
+./usr/include/i386/kcore.h			comp-c-include
+./usr/include/i386/limits.h			comp-c-include
+./usr/include/i386/lock.h			comp-c-include
+./usr/include/i386/math.h			comp-c-include
+./usr/include/i386/mcontext.h			comp-c-include
+./usr/include/i386/mtrr.h			comp-c-include
+./usr/include/i386/multiboot.h			comp-c-include
+./usr/include/i386/mutex.h			comp-c-include
+./usr/include/i386/npx.h			comp-c-include
+./usr/include/i386/param.h			comp-c-include
+./usr/include/i386/pcb.h			comp-c-include
+./usr/include/i386/pio.h			comp-c-include
+./usr/include/i386/pmap.h			comp-c-include
+./usr/include/i386/pmc.h			comp-c-include
+./usr/include/i386/proc.h			comp-c-include
+./usr/include/i386/profile.h			comp-c-include
+./usr/include/i386/psl.h			comp-c-include
+./usr/include/i386/pte.h			comp-c-include
+./usr/include/i386/ptrace.h			comp-c-include
+./usr/include/i386/reg.h			comp-c-include
+./usr/include/i386/rwlock.h			comp-c-include
+./usr/include/i386/segments.h			comp-c-include
+./usr/include/i386/setjmp.h			comp-c-include
+./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/specialreg.h			comp-c-include
+./usr/include/i386/spkr.h			comp-c-include
+./usr/include/i386/stdarg.h			comp-obsolete		obsolete
+./usr/include/i386/svr4_machdep.h		comp-c-include
+./usr/include/i386/sysarch.h			comp-c-include
+./usr/include/i386/trap.h			comp-c-include
+./usr/include/i386/tss.h			comp-c-include
+./usr/include/i386/types.h			comp-c-include
+./usr/include/i386/varargs.h			comp-obsolete		obsolete
+./usr/include/i386/vm86.h			comp-c-include
+./usr/include/i386/vmparam.h			comp-c-include
+./usr/include/i386/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/mm_malloc.h			comp-obsolete		obsolete
+./usr/include/mmintrin.h			comp-obsolete		obsolete
+./usr/include/pmmintrin.h			comp-obsolete		obsolete
+./usr/include/x64_64				comp-obsolete		obsolete
+./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
+./usr/include/x64_64/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/x64_64/asm.h			comp-obsolete		obsolete
+./usr/include/x64_64/bootinfo.h			comp-obsolete		obsolete
+./usr/include/x64_64/bswap.h			comp-obsolete		obsolete
+./usr/include/x64_64/bus.h			comp-obsolete		obsolete
+./usr/include/x64_64/byte_swap.h		comp-obsolete		obsolete
+./usr/include/x64_64/cdefs.h			comp-obsolete		obsolete
+./usr/include/x64_64/cpu.h			comp-obsolete		obsolete
+./usr/include/x64_64/cpufunc.h			comp-obsolete		obsolete
+./usr/include/x64_64/disklabel.h		comp-obsolete		obsolete
+./usr/include/x64_64/elf_machdep.h		comp-obsolete		obsolete
+./usr/include/x64_64/endian.h			comp-obsolete		obsolete
+./usr/include/x64_64/endian_machdep.h		comp-obsolete		obsolete
+./usr/include/x64_64/float.h			comp-obsolete		obsolete
+./usr/include/x64_64/fpu.h			comp-obsolete		obsolete
+./usr/include/x64_64/frame.h			comp-obsolete		obsolete
+./usr/include/x64_64/gdt.h			comp-obsolete		obsolete
+./usr/include/x64_64/ieee.h			comp-obsolete		obsolete
+./usr/include/x64_64/ieeefp.h			comp-obsolete		obsolete
+./usr/include/x64_64/int_const.h		comp-obsolete		obsolete
+./usr/include/x64_64/int_fmtio.h		comp-obsolete		obsolete
+./usr/include/x64_64/int_limits.h		comp-obsolete		obsolete
+./usr/include/x64_64/int_mwgwtypes.h		comp-obsolete		obsolete
+./usr/include/x64_64/int_types.h		comp-obsolete		obsolete
+./usr/include/x64_64/intr.h			comp-obsolete		obsolete
+./usr/include/x64_64/intrdefs.h			comp-obsolete		obsolete
+./usr/include/x64_64/kcore.h			comp-obsolete		obsolete
+./usr/include/x64_64/limits.h			comp-obsolete		obsolete
+./usr/include/x64_64/lock.h			comp-obsolete		obsolete
+./usr/include/x64_64/math.h			comp-obsolete		obsolete
+./usr/include/x64_64/mcontext.h			comp-obsolete		obsolete
+./usr/include/x64_64/mtrr.h			comp-obsolete		obsolete
+./usr/include/x64_64/netbsd32_machdep.h		comp-obsolete		obsolete
+./usr/include/x64_64/param.h			comp-obsolete		obsolete
+./usr/include/x64_64/pcb.h			comp-obsolete		obsolete
+./usr/include/x64_64/pci_machdep.h		comp-obsolete		obsolete
+./usr/include/x64_64/pio.h			comp-obsolete		obsolete
+./usr/include/x64_64/pmap.h			comp-obsolete		obsolete
+./usr/include/x64_64/pmc.h			comp-obsolete		obsolete
+./usr/include/x64_64/proc.h			comp-obsolete		obsolete
+./usr/include/x64_64/profile.h			comp-obsolete		obsolete
+./usr/include/x64_64/psl.h			comp-obsolete		obsolete
+./usr/include/x64_64/pte.h			comp-obsolete		obsolete
+./usr/include/x64_64/ptrace.h			comp-obsolete		obsolete
+./usr/include/x64_64/reg.h			comp-obsolete		obsolete
+./usr/include/x64_64/segments.h			comp-obsolete		obsolete
+./usr/include/x64_64/setjmp.h			comp-obsolete		obsolete
+./usr/include/x64_64/signal.h			comp-obsolete		obsolete
+./usr/include/x64_64/specialreg.h		comp-obsolete		obsolete
+./usr/include/x64_64/stdarg.h			comp-obsolete		obsolete
+./usr/include/x64_64/sysarch.h			comp-obsolete		obsolete
+./usr/include/x64_64/trap.h			comp-obsolete		obsolete
+./usr/include/x64_64/tss.h			comp-obsolete		obsolete
+./usr/include/x64_64/types.h			comp-obsolete		obsolete
+./usr/include/x64_64/userret.h			comp-obsolete		obsolete
+./usr/include/x64_64/varargs.h			comp-obsolete		obsolete
+./usr/include/x64_64/vmparam.h			comp-obsolete		obsolete
+./usr/include/x86				comp-c-include
+./usr/include/x86/aout_machdep.h		comp-c-include
+./usr/include/x86/autoconf.h			comp-obsolete		obsolete
+./usr/include/x86/bootinfo.h			comp-c-include
+./usr/include/x86/bus.h				comp-obsolete		obsolete
+./usr/include/x86/cacheinfo.h			comp-c-include
+./usr/include/x86/cpu.h				comp-c-include
+./usr/include/x86/cpu_ucode.h			comp-c-include
+./usr/include/x86/cputypes.h			comp-c-include
+./usr/include/x86/cpuvar.h			comp-c-include
+./usr/include/x86/float.h			comp-c-include
+./usr/include/x86/ieee.h			comp-c-include
+./usr/include/x86/ieeefp.h			comp-c-include
+./usr/include/x86/intr.h			comp-c-include
+./usr/include/x86/intrdefs.h			comp-c-include
+./usr/include/x86/lock.h			comp-c-include
+./usr/include/x86/math.h			comp-c-include
+./usr/include/x86/mtrr.h			comp-c-include
+./usr/include/x86/mutex.h			comp-c-include
+./usr/include/x86/pio.h				comp-c-include
+./usr/include/x86/pmap.h			comp-c-include
+./usr/include/x86/pmap_pv.h			comp-c-include
+./usr/include/x86/psl.h				comp-c-include
+./usr/include/x86/pte.h				comp-c-include
+./usr/include/x86/rwlock.h			comp-c-include
+./usr/include/x86/specialreg.h			comp-c-include
+./usr/include/x86/sysarch.h			comp-c-include
+./usr/include/x86/trap.h			comp-c-include
+./usr/include/x86/via_padlock.h			comp-c-include
+./usr/include/xen				comp-c-include
+./usr/include/xen/xenio.h			comp-c-include
+./usr/include/xen/xenio3.h			comp-c-include
+./usr/include/xmmintrin.h			comp-obsolete		obsolete
+./usr/lib/i386/crt0.o				comp-c-lib		compat
+./usr/lib/i386/crtbegin.o			comp-c-lib		compat
+./usr/lib/i386/crtbeginS.o			comp-c-lib		compat,pic
+./usr/lib/i386/crtbeginT.o			comp-c-lib		compat,pic
+./usr/lib/i386/crtend.o				comp-c-lib		compat
+./usr/lib/i386/crtendS.o			comp-c-lib		compat,pic
+./usr/lib/i386/crti.o				comp-c-lib		compat
+./usr/lib/i386/crtn.o				comp-c-lib		compat
+./usr/lib/i386/gcrt0.o				comp-c-lib		compat
+./usr/lib/i386/i18n/libBIG5.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libBIG5.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libBIG5_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libBIG5_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libBIG5_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libDECHanyu.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libDECHanyu.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libDECHanyu_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libDECHanyu_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libEUC.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libEUC.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libEUCTW.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libEUCTW.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libEUCTW_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libEUCTW_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libEUC_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libEUC_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libEUC_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libGBK2K.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libGBK2K.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libGBK2K_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libGBK2K_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libGBK2K_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libHZ.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libHZ.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libHZ_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libHZ_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libHZ_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libISO2022.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libISO2022.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libISO2022_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libISO2022_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libISO2022_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libJOHAB.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libJOHAB.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libJOHAB_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libJOHAB_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libJOHAB_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libMSKanji.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libMSKanji.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libMSKanji_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libMSKanji_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libMSKanji_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUES.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libUES.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libUES_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libUES_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUES_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUTF1632.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libUTF1632.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libUTF1632_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libUTF1632_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUTF1632_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUTF7.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libUTF7.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libUTF7_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libUTF7_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUTF7_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUTF8.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libUTF8.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libUTF8_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libUTF8_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libUTF8_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libVIQR.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libVIQR.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libVIQR_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libVIQR_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libVIQR_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libZW.a			comp-c-lib		compat
+./usr/lib/i386/i18n/libZW.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libZW_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libZW_p.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libZW_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/i18n/libiconv_none.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libiconv_none.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libiconv_none_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libiconv_none_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libiconv_none_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libiconv_std.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libiconv_std.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libiconv_std_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libiconv_std_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libiconv_std_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_646.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libmapper_646.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libmapper_646_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libmapper_646_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_646_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_none.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libmapper_none.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libmapper_none_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libmapper_none_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_none_pic.a	comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_parallel.a	comp-c-lib		compat
+./usr/lib/i386/i18n/libmapper_parallel.so	comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libmapper_parallel_g.a	comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libmapper_parallel_p.a	comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_parallel_pic.a	comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_serial.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libmapper_serial.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libmapper_serial_g.a	comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libmapper_serial_p.a	comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_serial_pic.a	comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_std.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libmapper_std.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libmapper_std_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libmapper_std_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_std_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_zone.a		comp-c-lib		compat
+./usr/lib/i386/i18n/libmapper_zone.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/i18n/libmapper_zone_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/i18n/libmapper_zone_p.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libmapper_zone_pic.a	comp-obsolete		obsolete
+./usr/lib/i386/libamu.a				comp-obsolete		obsolete
+./usr/lib/i386/libamu_g.a			comp-obsolete		obsolete
+./usr/lib/i386/libamu_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libamu_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libarchive.a			comp-c-lib		compat
+./usr/lib/i386/libarchive.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libarchive_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libarchive_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libarchive_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libasn1.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libasn1.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libasn1_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libasn1_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libatf-c++.a			comp-c-lib		compat,atf
+./usr/lib/i386/libatf-c++.so			comp-sys-shlib		compat,pic,atf
+./usr/lib/i386/libatf-c++_g.a			comp-c-proflib		compat,debuglib,atf
+./usr/lib/i386/libatf-c++_p.a			comp-c-proflib		compat,profile,atf
+./usr/lib/i386/libatf-c++_pic.a			comp-c-piclib		compat,pic,atf
+./usr/lib/i386/libatf-c.a			comp-c-lib		compat,atf
+./usr/lib/i386/libatf-c.so			comp-sys-shlib		compat,pic,atf
+./usr/lib/i386/libatf-c_g.a			comp-c-proflib		compat,debuglib,atf
+./usr/lib/i386/libatf-c_p.a			comp-c-proflib		compat,profile,atf
+./usr/lib/i386/libatf-c_pic.a			comp-c-piclib		compat,pic,atf
+./usr/lib/i386/libbfd.a				comp-obsolete		obsolete
+./usr/lib/i386/libbfd.so			comp-obsolete		obsolete
+./usr/lib/i386/libbfd_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libbfd_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libbfd_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libbind9.a			comp-c-lib		compat
+./usr/lib/i386/libbind9.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libbind9_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libbind9_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libbind9_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libbluetooth.a			comp-c-lib		compat
+./usr/lib/i386/libbluetooth.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libbluetooth_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libbluetooth_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libbluetooth_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libbsdmalloc.a			comp-c-lib		compat
+./usr/lib/i386/libbsdmalloc.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libbsdmalloc_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libbsdmalloc_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libbsdmalloc_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libbz2.a				comp-c-lib		compat
+./usr/lib/i386/libbz2.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libbz2_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libbz2_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libbz2_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libc.a				comp-c-lib		compat
+./usr/lib/i386/libc.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libc_g.a				comp-c-proflib		compat,debuglib
+./usr/lib/i386/libc_p.a				comp-c-proflib		compat,profile
+./usr/lib/i386/libc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libcom_err.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libcom_err.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libcom_err_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libcom_err_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libcompat.a			comp-c-lib		compat
+./usr/lib/i386/libcompat_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libcompat_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libcompat_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libcrypt.a			comp-c-lib		compat
+./usr/lib/i386/libcrypt.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libcrypt_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libcrypt_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libcrypt_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libcrypto.a			comp-c-lib		compat,crypto
+./usr/lib/i386/libcrypto_g.a			comp-c-proflib		compat,crypto,debuglib
+./usr/lib/i386/libcrypto.so			base-sys-shlib		compat,crypto,pic
+./usr/lib/i386/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
+./usr/lib/i386/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
+./usr/lib/i386/libcrypto_idea.a			comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_idea.so		base-obsolete		obsolete
+./usr/lib/i386/libcrypto_idea_g.a		comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_idea_p.a		comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_idea_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_mdc2.a			comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_mdc2.so		base-obsolete		obsolete
+./usr/lib/i386/libcrypto_mdc2_g.a		comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_mdc2_p.a		comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_mdc2_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_rc5.a			comp-c-lib		crypto_rc5,compat
+./usr/lib/i386/libcrypto_rc5.so			base-sys-shlib		compat,crypto,crypto_rc5,pic
+./usr/lib/i386/libcrypto_rc5_g.a		comp-c-proflib		compat,crypto,crypto_rc5,debuglib
+./usr/lib/i386/libcrypto_rc5_p.a		comp-c-proflib		crypto_rc5,compat,profile
+./usr/lib/i386/libcrypto_rc5_pic.a		comp-c-piclib		compat,crypto,crypto_rc5,pic
+./usr/lib/i386/libcurses.a			comp-c-lib		compat
+./usr/lib/i386/libcurses.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libcurses_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libcurses_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libcurses_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libdes.a				comp-c-lib		compat
+./usr/lib/i386/libdes.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libdes_g.a			-unknown-		compat,debuglib
+./usr/lib/i386/libdes_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libdes_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libdevmapper.a			comp-c-lib		compat,lvm
+./usr/lib/i386/libdevmapper.so			comp-sys-shlib		compat,pic,lvm
+./usr/lib/i386/libdevmapper_g.a			-unknown-		compat,debuglib,lvm
+./usr/lib/i386/libdevmapper_p.a			comp-c-proflib		compat,profile,lvm
+./usr/lib/i386/libdevmapper_pic.a		comp-c-piclib		compat,pic,lvm
+./usr/lib/i386/libdm.a				comp-c-lib		compat
+./usr/lib/i386/libdm.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libdm_g.a			-unknown-		compat,debuglib
+./usr/lib/i386/libdm_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libdm_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libdns.a				comp-c-lib		compat
+./usr/lib/i386/libdns.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libdns_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libdns_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libdns_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libdns_sd.a			comp-c-lib		compat,mdns
+./usr/lib/i386/libdns_sd.so			comp-mdns-shlib		compat,pic,mdns
+./usr/lib/i386/libdns_sd_g.a			comp-c-proflib		compat,debuglib,mdns
+./usr/lib/i386/libdns_sd_p.a			comp-c-proflib		compat,profile,mdns
+./usr/lib/i386/libdns_sd_pic.a			comp-c-piclib		compat,pic,mdns
+./usr/lib/i386/libdwarf.a			comp-c-lib		compat
+./usr/lib/i386/libdwarf.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libdwarf_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libdwarf_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libdwarf_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libedit.a			comp-c-lib		compat
+./usr/lib/i386/libedit.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libedit_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libedit_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libedit_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libelf.a				comp-c-lib		compat
+./usr/lib/i386/libelf.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libelf_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libelf_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libelf_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libevent.a			comp-c-lib		compat
+./usr/lib/i386/libevent.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libevent_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libevent_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libexecinfo.a			comp-c-lib		compat
+./usr/lib/i386/libexecinfo.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libexecinfo_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libexecinfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libexecinfo_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libexpat.a			comp-c-lib		compat
+./usr/lib/i386/libexpat.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libexpat_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libexpat_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libexpat_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libfetch.a			comp-c-lib		compat
+./usr/lib/i386/libfetch.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libfetch_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libfetch_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libfetch_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libfl.a				comp-c-lib		compat
+./usr/lib/i386/libfl_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libfl_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libform.a			comp-c-lib		compat
+./usr/lib/i386/libform.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libform_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libform_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libform_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libgcc.a				comp-c-lib		compat,gcccmds
+./usr/lib/i386/libgcc_eh.a			comp-c-lib		compat,pic,gcccmds
+./usr/lib/i386/libgcc_eh_g.a			comp-c-proflib		compat,debuglib,gcccmds
+./usr/lib/i386/libgcc_eh_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libgcc_eh_pic.a			comp-c-piclib		obsolete
+./usr/lib/i386/libgcc_g.a			comp-c-proflib		compat,debuglib,gcccmds
+./usr/lib/i386/libgcc_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libgcc_pic.a			comp-c-piclib		obsolete
+./usr/lib/i386/libgcc_s.a			comp-obsolete		obsolete
+./usr/lib/i386/libgcc_s.so			comp-sys-shlib		compat,pic,gcccmds
+./usr/lib/i386/libgcc_s_g.a			comp-c-proflib		compat,debuglib,gcccmds
+./usr/lib/i386/libgcc_s_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libgcc_s_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libgcov.a			comp-c-lib		compat,gcccmds
+./usr/lib/i386/libgcov_g.a			comp-c-proflib		compat,debuglib,gcccmds
+./usr/lib/i386/libgcov_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libgcov_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libgmp.a				comp-c-lib		obsolete
+./usr/lib/i386/libgmp.so			comp-sys-shlib		obsolete
+./usr/lib/i386/libgmp_g.a			-unknown-		obsolete
+./usr/lib/i386/libgmp_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libgmp_pic.a			comp-c-piclib		obsolete
+./usr/lib/i386/libgnumalloc.a			comp-c-lib		compat
+./usr/lib/i386/libgnumalloc.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libgnumalloc_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libgnumalloc_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libgnumalloc_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libgomp.a			comp-sys-shlib		compat,gcc=45
+./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=45
+./usr/lib/i386/libgomp_g.a			comp-c-proflib		compat,debuglib,gcc=45
+./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
+./usr/lib/i386/libgssapi.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libgssapi.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libgssapi_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libgssapi_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libgssapi_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libhdb.a				comp-c-lib		compat,kerberos
+./usr/lib/i386/libhdb.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libhdb_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libhdb_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libhdb_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libheimbase.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libheimbase.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libheimbase_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libheimbase_pic.a		comp-c-proflib		compat,pic,kerberos
+./usr/lib/i386/libheimntlm.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libheimntlm.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libheimntlm_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libheimntlm_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libheimntlm_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libhx509.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libhx509.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libhx509_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libhx509_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libhx509_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libi386.a			comp-c-lib		compat
+./usr/lib/i386/libi386.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libi386_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libi386_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libi386_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libiberty.a			comp-obsolete		obsolete
+./usr/lib/i386/libiberty_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libiberty_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libiberty_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libintl.a			comp-c-lib		compat
+./usr/lib/i386/libintl.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libintl_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libintl_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libintl_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libipsec.a			comp-c-lib		compat
+./usr/lib/i386/libipsec.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libipsec_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libipsec_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libipsec_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libisc.a				comp-c-lib		compat
+./usr/lib/i386/libisc.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libisc_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libisc_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libisc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libisccc.a			comp-c-lib		compat
+./usr/lib/i386/libisccc.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libisccc_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libisccc_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libisccc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libisccfg.a			comp-c-lib		compat
+./usr/lib/i386/libisccfg.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libisccfg_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libisccfg_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libisccfg_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libiscsi.a			comp-c-lib		compat,iscsi
+./usr/lib/i386/libiscsi.so			base-sys-shlib		compat,pic,iscsi
+./usr/lib/i386/libiscsi_g.a			base-sys-shlib		compat,debuglib,iscsi
+./usr/lib/i386/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
+./usr/lib/i386/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
+./usr/lib/i386/libisns.a		comp-c-lib	compat
+./usr/lib/i386/libisns.so		comp-sys-shlib	compat
+./usr/lib/i386/libisns_g.a		comp-c-proflib	compat,debuglib
+./usr/lib/i386/libisns_p.a		comp-c-proflib	compat,profile
+./usr/lib/i386/libisns_pic.a		comp-c-piclib	compat,pic
+./usr/lib/i386/libkadm5clnt.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libkadm5clnt.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libkadm5clnt_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libkadm5clnt_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libkadm5clnt_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libkadm5srv.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libkadm5srv.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libkadm5srv_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libkadm5srv_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libkadm5srv_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libkafs.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libkafs.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libkafs_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libkafs_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libkafs_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libkdc.a				comp-c-lib		compat,kerberos
+./usr/lib/i386/libkdc.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libkdc_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libkdc_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libkdc_pic.a			comp-c-proflib		compat,pic,kerberos
+./usr/lib/i386/libkrb5.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libkrb5.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libkrb5_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libkrb5_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libkrb5_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libkvm.a				comp-c-lib		compat
+./usr/lib/i386/libkvm.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libkvm_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libkvm_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libkvm_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libl.a				comp-c-lib		compat
+./usr/lib/i386/libl_g.a				comp-c-proflib		compat,debuglib
+./usr/lib/i386/libl_p.a				comp-c-proflib		compat,profile
+./usr/lib/i386/libl_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/liblber.a			comp-c-lib		compat,ldap
+./usr/lib/i386/liblber.so			comp-sys-shlib		compat,pic,ldap
+./usr/lib/i386/liblber_g.a			comp-c-proflib		compat,debuglib,ldap
+./usr/lib/i386/liblber_p.a			comp-c-proflib		compat,profile,ldap
+./usr/lib/i386/liblber_pic.a			comp-c-piclib		compat,pic,ldap
+./usr/lib/i386/libldap.a			comp-c-lib		compat,ldap
+./usr/lib/i386/libldap.so			comp-sys-shlib		compat,pic,ldap
+./usr/lib/i386/libldap_g.a			comp-c-proflib		compat,debuglib,ldap
+./usr/lib/i386/libldap_p.a			comp-c-proflib		compat,profile,ldap
+./usr/lib/i386/libldap_pic.a			comp-c-piclib		compat,pic,ldap
+./usr/lib/i386/libldap_r.a			comp-c-lib		compat,ldap
+./usr/lib/i386/libldap_r.so			comp-sys-shlib		compat,pic,ldap
+./usr/lib/i386/libldap_r_g.a			comp-c-proflib		compat,debuglib,ldap
+./usr/lib/i386/libldap_r_p.a			comp-c-proflib		compat,profile,ldap
+./usr/lib/i386/libldap_r_pic.a			comp-c-piclib		compat,pic,ldap
+./usr/lib/i386/liblua.a				comp-c-lib		compat
+./usr/lib/i386/liblua_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/liblua_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/liblua_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liblwres.a			comp-c-lib		compat
+./usr/lib/i386/liblwres.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/liblwres_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/liblwres_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/liblwres_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liblzf.a				comp-c-lib		compat
+./usr/lib/i386/liblzf.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/liblzf_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/liblzf_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/liblzf_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liblzma.a			comp-c-lib		compat
+./usr/lib/i386/liblzma.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/liblzma_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/liblzma_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/liblzma_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libm.a				comp-c-lib		compat
+./usr/lib/i386/libm.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libm_g.a				comp-c-proflib		compat,debuglib
+./usr/lib/i386/libm_p.a				comp-c-proflib		compat,profile
+./usr/lib/i386/libm_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libmagic.a			comp-c-lib		compat
+./usr/lib/i386/libmagic.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libmagic_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libmagic_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libmagic_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libmenu.a			comp-c-lib		compat
+./usr/lib/i386/libmenu.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libmenu_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libmenu_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libmenu_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libmj.a				comp-c-lib		compat
+./usr/lib/i386/libmj.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libmj_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libmj_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libmj_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libmpc.a				comp-c-lib		obsolete
+./usr/lib/i386/libmpc.so			comp-sys-shlib		obsolete
+./usr/lib/i386/libmpc_g.a			-unknown-		obsolete
+./usr/lib/i386/libmpc_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libmpc_pic.a			comp-c-piclib		obsolete
+./usr/lib/i386/libmpfr.a			comp-c-lib		obsolete
+./usr/lib/i386/libmpfr.so			comp-sys-shlib		obsolete
+./usr/lib/i386/libmpfr_g.a			-unknown-		obsolete
+./usr/lib/i386/libmpfr_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libmpfr_pic.a			comp-c-piclib		obsolete
+./usr/lib/i386/libnetpgp.a			comp-c-lib		compat
+./usr/lib/i386/libnetpgp.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libnetpgp_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libnetpgp_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libnetpgp_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libnpf.a				comp-c-lib		compat,npf
+./usr/lib/i386/libnpf.so			comp-sys-shlib		compat,npf,pic
+./usr/lib/i386/libnpf_g.a			comp-c-proflib		compat,npf,debuglib
+./usr/lib/i386/libnpf_p.a			comp-c-proflib		compat,npf,profile
+./usr/lib/i386/libnpf_pic.a			comp-c-piclib		compat,npf,pic
+./usr/lib/i386/libobjc.a			comp-c-lib		compat,gcccmds
+./usr/lib/i386/libobjc.so			comp-sys-shlib		compat,pic,gcccmds
+./usr/lib/i386/libobjc_g.a			comp-c-proflib		compat,debuglib,gcccmds
+./usr/lib/i386/libobjc_p.a			comp-c-proflib		compat,profile,gcccmds
+./usr/lib/i386/libobjc_pic.a			comp-c-piclib		compat,pic,gcccmds
+./usr/lib/i386/libopcodes.a			comp-obsolete		obsolete
+./usr/lib/i386/libopcodes.so			comp-obsolete		obsolete
+./usr/lib/i386/libopcodes_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libopcodes_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libopcodes_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libossaudio.a			comp-c-lib		compat
+./usr/lib/i386/libossaudio.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libossaudio_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libossaudio_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libossaudio_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libp2k.a				comp-c-lib		compat,rump
+./usr/lib/i386/libp2k.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/libp2k_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/libp2k_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/libp2k_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/i386/libpam.a				comp-c-lib		compat,pam
+./usr/lib/i386/libpam.so			comp-sys-shlib		compat,pic,pam
+./usr/lib/i386/libpam_g.a			comp-c-proflib		compat,debuglib,pam
+./usr/lib/i386/libpam_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libpam_pic.a			comp-c-piclib		compat,pic,pam
+./usr/lib/i386/libpcap.a			comp-c-lib		compat
+./usr/lib/i386/libpcap.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libpcap_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libpcap_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libpcap_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libpci.a				comp-c-lib		compat
+./usr/lib/i386/libpci.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libpci_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libpci_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libpci_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libperfuse.a			comp-c-lib		compat
+./usr/lib/i386/libperfuse.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libperfuse_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libperfuse_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libperfuse_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libposix.a			comp-c-lib		compat
+./usr/lib/i386/libposix.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libposix_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libposix_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libposix_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libppath.a			comp-c-lib		compat
+./usr/lib/i386/libppath.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libppath_g.a			-unknown-		compat,debuglib
+./usr/lib/i386/libppath_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libppath_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libprop.a			comp-c-lib		compat
+./usr/lib/i386/libprop.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libprop_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libprop_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libprop_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libpthread.a			comp-c-lib		compat
+./usr/lib/i386/libpthread.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libpthread_dbg.a			comp-c-lib		compat
+./usr/lib/i386/libpthread_dbg.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/libpthread_dbg_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/libpthread_dbg_p.a		comp-c-proflib		compat,profile
+./usr/lib/i386/libpthread_dbg_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libpthread_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libpthread_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libpthread_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libpuffs.a			comp-c-lib		compat
+./usr/lib/i386/libpuffs.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libpuffs_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libpuffs_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libpuffs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libquota.a			comp-c-lib		compat
+./usr/lib/i386/libquota.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libquota_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libquota_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libquota_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libradius.a			comp-c-lib		compat
+./usr/lib/i386/libradius.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libradius_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libradius_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libradius_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/librefuse.a			comp-c-lib		compat
+./usr/lib/i386/librefuse.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/librefuse_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/librefuse_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/librefuse_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libresolv.a			comp-c-lib		compat
+./usr/lib/i386/libresolv.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libresolv_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libresolv_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libresolv_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/librmt.a				comp-c-lib		compat
+./usr/lib/i386/librmt_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/librmt_p.a			comp-obsolete		obsolete
+./usr/lib/i386/librmt_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libroken.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libroken.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libroken_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libroken_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libroken_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/librpcsvc.a			comp-c-lib		compat
+./usr/lib/i386/librpcsvc.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/librpcsvc_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/librpcsvc_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/librpcsvc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/librt.a				comp-c-lib		compat
+./usr/lib/i386/librt.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/librt_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/librt_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/librt_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/librump.a			comp-c-lib		compat,rump
+./usr/lib/i386/librump.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/librump_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/librump_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/librump_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/i386/librumpclient.a			comp-c-lib		compat,rump
+./usr/lib/i386/librumpclient.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/librumpclient_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/librumpclient_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/librumpclient_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/i386/librumpcrypto.a			comp-obsolete		obsolete,rump
+./usr/lib/i386/librumpcrypto.so			comp-obsolete		obsolete,rump
+./usr/lib/i386/librumpcrypto_g.a		comp-obsolete		obsolete,rump
+./usr/lib/i386/librumpcrypto_p.a		comp-obsolete		obsolete,rump
+./usr/lib/i386/librumpcrypto_pic.a		comp-obsolete		obsolete,rump
+./usr/lib/i386/librumpdev.a			comp-c-lib		compat,rump
+./usr/lib/i386/librumpdev.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/librumpdev_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/librumpdev_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/librumpdev_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/i386/librumphijack.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/librumphijack_g.a		-unknown-		compat,debuglib,rump
+./usr/lib/i386/librumphijack_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/i386/librumpnet.a			comp-c-lib		compat,rump
+./usr/lib/i386/librumpnet.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/librumpnet_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/librumpnet_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/librumpnet_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/i386/librumpuser.a			comp-c-lib		compat,rump
+./usr/lib/i386/librumpuser.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/librumpuser_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/librumpuser_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/librumpuser_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/i386/librumpvfs.a			comp-c-lib		compat,rump
+./usr/lib/i386/librumpvfs.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/librumpvfs_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/librumpvfs_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/librumpvfs_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/i386/libsaslc.a			comp-c-lib		compat,crypto
+./usr/lib/i386/libsaslc.so			comp-sys-shlib		compat,pic,crypto
+./usr/lib/i386/libsaslc_g.a			comp-c-proflib		compat,debuglib,crypto
+./usr/lib/i386/libsaslc_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/i386/libsaslc_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/i386/libsdp.a				comp-obsolete		obsolete
+./usr/lib/i386/libsdp.so			comp-obsolete		obsolete
+./usr/lib/i386/libsdp_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libsdp_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libskey.a			comp-c-lib		compat,skey
+./usr/lib/i386/libskey.so			comp-sys-shlib		compat,pic,skey
+./usr/lib/i386/libskey_g.a			comp-c-proflib		compat,debuglib,skey
+./usr/lib/i386/libskey_p.a			comp-c-proflib		compat,profile,skey
+./usr/lib/i386/libskey_pic.a			comp-c-piclib		compat,pic,skey
+./usr/lib/i386/libsl.a				comp-c-lib		compat,kerberos
+./usr/lib/i386/libsl.so				comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libsl_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libsl_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libsqlite3.a			comp-c-lib		compat
+./usr/lib/i386/libsqlite3.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libsqlite3_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libsqlite3_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libsqlite3_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libss.a				comp-obsolete		obsolete
+./usr/lib/i386/libss.so				comp-obsolete		obsolete
+./usr/lib/i386/libss_g.a			comp-obsolete		obsolete
+./usr/lib/i386/libss_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libss_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libssh.a				comp-c-lib		compat
+./usr/lib/i386/libssh.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libssh_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libssh_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libssh_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libssl.a				comp-c-lib		compat
+./usr/lib/i386/libssl.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libssl_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libssl_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libssl_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/i386/libstdc++.so			comp-sys-shlib		compat,pic,cxx,gcccmds
+./usr/lib/i386/libstdc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds
+./usr/lib/i386/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
+./usr/lib/i386/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
+./usr/lib/i386/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/i386/libsupc++.so			comp-obsolete		obsolete
+./usr/lib/i386/libsupc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds
+./usr/lib/i386/libsupc++_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libtermcap.a			comp-c-lib		compat
+./usr/lib/i386/libtermcap.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libtermcap_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libtermcap_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libterminfo.a			comp-c-lib		compat
+./usr/lib/i386/libterminfo.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libterminfo_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libterminfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libterminfo_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libtermlib.a			comp-c-lib		compat
+./usr/lib/i386/libtermlib.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libtermlib_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libtermlib_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libtre.a				comp-c-lib		compat
+./usr/lib/i386/libtre.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libtre_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libtre_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libtre_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libukfs.a			comp-c-lib		compat,rump
+./usr/lib/i386/libukfs.so			comp-sys-shlib		compat,pic,rump
+./usr/lib/i386/libukfs_g.a			comp-c-proflib		compat,debuglib,rump
+./usr/lib/i386/libukfs_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/i386/libukfs_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/i386/libusbhid.a			comp-c-lib		compat
+./usr/lib/i386/libusbhid.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libusbhid_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libusbhid_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libusbhid_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libutil.a			comp-c-lib		compat
+./usr/lib/i386/libutil.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libutil_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libutil_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libutil_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libvers.a			comp-obsolete		obsolete
+./usr/lib/i386/libvers_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libvers_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libvers_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libwind.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libwind.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libwind_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libwind_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libwrap.a			comp-c-lib		compat
+./usr/lib/i386/libwrap.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libwrap_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libwrap_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libwrap_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liby.a				comp-c-lib		compat
+./usr/lib/i386/liby_g.a				comp-c-proflib		compat,debuglib
+./usr/lib/i386/liby_p.a				comp-c-proflib		compat,profile
+./usr/lib/i386/liby_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libz.a				comp-c-lib		compat
+./usr/lib/i386/libz.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libz_g.a				comp-c-proflib		compat,debuglib
+./usr/lib/i386/libz_p.a				comp-c-proflib		compat,profile
+./usr/lib/i386/libz_pic.a			comp-c-piclib		compat,pic
+./usr/lib/libx86_64.a				comp-c-lib
+./usr/lib/libx86_64_g.a				comp-c-proflib		debuglib
+./usr/lib/libx86_64_p.a				comp-c-proflib		profile
+./usr/lib/libx86_64_pic.a			comp-c-piclib		pic
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/lib/i386/i18n/libBIG5.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libDECHanyu.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libEUC.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libEUCTW.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libGBK2K.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libHZ.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libISO2022.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libJOHAB.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libMSKanji.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libUES.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libUTF1632.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libUTF7.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libUTF8.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libVIQR.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libZW.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libiconv_none.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libiconv_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libmapper_646.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libmapper_none.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libmapper_parallel.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libmapper_serial.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libmapper_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libamu.so.4.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libasn1.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libasn1.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libatf-c.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/i386/libatf-c++.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/i386/libbfd.so.12.0.debug	comp-compat-shlib	compat,pic,binutils,debug
+./usr/libdata/debug/usr/lib/i386/libbind9.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libc.so.12.185.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libcrypto.so.8.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libcurses.so.7.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdes.so.8.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdevmapper.so.1.0.debug	comp-compat-shlib	compat,pic,lvm,debug
+./usr/libdata/debug/usr/lib/i386/libdm.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdns.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdns_sd.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdwarf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libedit.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libelf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libevent.so.3.2.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libexecinfo.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libexpat.so.2.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libfetch.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libform.so.6.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libgmp.so.10.2.debug	comp-compat-shlib	obsolete
+./usr/libdata/debug/usr/lib/i386/libgnumalloc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libgomp.so.1.0.debug	comp-compat-shlib	compat,pic,debug,gcc=45
+./usr/libdata/debug/usr/lib/i386/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libgssapi.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libhdb.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libhdb.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libheimntlm.so.3.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libheimntlm.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libhx509.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libi386.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libintl.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libipsec.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libisc.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libisccc.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libisccfg.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libiscsi.so.2.0.debug	comp-compat-shlib	compat,pic,debug,iscsi
+./usr/libdata/debug/usr/lib/i386/libisns.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libkadm5clnt.so.12.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libkadm5clnt.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libkadm5srv.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libkadm5srv.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libkafs.so.11.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libkafs.so.12.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libkdc.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libkrb5.so.24.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libkrb5.so.26.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libkvm.so.6.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblber.so.3.2.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/libldap.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblwres.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblzf.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblzma.so.1.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libm.so.0.10.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmagic.so.3.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmenu.so.6.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmj.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmpc.so.2.0.debug	comp-compat-shlib	obsolete
+./usr/libdata/debug/usr/lib/i386/libmpfr.so.4.1.debug	comp-compat-shlib	obsolete
+./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libnpf.so.0.0.debug	comp-compat-shlib	compat,pic,npf,debug
+./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libopcodes.so.5.0.debug	comp-compat-shlib	compat,pic,binutils,debug
+./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/libpam.so.3.0.debug	comp-compat-shlib	compat,pic,pam,debug
+./usr/libdata/debug/usr/lib/i386/libpcap.so.4.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libpci.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libposix.so.0.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libppath.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libprop.so.1.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libpthread.so.1.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libpthread_dbg.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libpuffs.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libquota.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libradius.so.4.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/librefuse.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libresolv.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libroken.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libroken.so.19.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/librpcsvc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/librt.so.1.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/librump.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/librumpclient.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/librumpcrypto.so.0.0.debug	comp-obsolete obsolete,rump
+./usr/libdata/debug/usr/lib/i386/librumpdev.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/librumphijack.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/librumpnet.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/librumpuser.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/librumpvfs.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/libsaslc.so.0.0.debug	comp-compat-shlib	compat,pic,crypto,debug
+./usr/libdata/debug/usr/lib/i386/libskey.so.2.0.debug	comp-compat-shlib	compat,pic,skey,debug
+./usr/libdata/debug/usr/lib/i386/libsl.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libsl.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libsqlite3.so.1.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
+./usr/libdata/debug/usr/lib/i386/libssh.so.19.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssl.so.10.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/libusbhid.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libutil.so.7.21.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libwind.so.0.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libwrap.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libz.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
+./usr/libdata/debug/usr/sbin/acpidump.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/amldb.debug	comp-sysutil-debug	debug
+./usr/libdata/ldscripts/elf_i386.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xu		comp-util-bin		binutils
+./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib		lint
+./usr/share/ldscripts/elf_i386.x		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xbn		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xc		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xd		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xdc		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xdw		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xn		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xr		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xs		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xsc		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xsw		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xu		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_i386.xw		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.x		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xbn		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xc		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xd		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xdc		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xdw		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xn		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xr		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xs		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xsc		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xsw		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xu		comp-obsolete		obsolete
+./usr/share/ldscripts/elf_x86_64.xw		comp-obsolete		obsolete
+./usr/share/ldscripts/i386nbsd.x		comp-obsolete		obsolete
+./usr/share/ldscripts/i386nbsd.xbn		comp-obsolete		obsolete
+./usr/share/ldscripts/i386nbsd.xn		comp-obsolete		obsolete
+./usr/share/ldscripts/i386nbsd.xr		comp-obsolete		obsolete
+./usr/share/ldscripts/i386nbsd.xu		comp-obsolete		obsolete

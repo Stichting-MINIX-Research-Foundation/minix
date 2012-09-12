@@ -1,0 +1,33 @@
+#	$NetBSD: Makefile.distrib,v 1.9 2012/02/17 00:33:25 riz Exp $
+#
+# Makefile snippet to setup various make variables variables used in distrib/:
+#
+# Variables defined:
+#	DISTRIBDIR	Top level of distrib
+#	DISTRIBREV	NetBSD version without dots, as in "59924"
+#	DISTRIBVER	NetBSD version with dots, as in "5.99.24"
+#	DISTRIBVERDEP	Files to depend on for version/revision vars above
+#
+# Commands defined:
+#	MAKESUMS	runs sets/makesums with the appropriate environment
+#	RELEASE_INSTALL	installs release binaries
+#
+#
+
+.if !defined(_MAKEFILE_DISTRIB_)
+_MAKEFILE_DISTRIB_=1
+
+.include <bsd.sys.mk>		# for HOST_SH
+
+DISTRIBDIR=	${NETBSDSRCDIR}/distrib
+DISTRIBREV!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -s
+DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+MODULEVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k
+DISTRIBVERDEP=	${NETBSDSRCDIR}/sys/sys/param.h \
+		${NETBSDSRCDIR}/sys/conf/osrelease.sh
+
+MAKESUMS=	MAKE=${MAKE:Q} CKSUM=${TOOL_CKSUM:Q} ${HOST_SH} ${DISTRIBDIR}/sets/makesums
+RELEASE_INSTALL=${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
+
+
+.endif	# _MAKEFILE_DISTRIB_

@@ -1,0 +1,5 @@
+# $NetBSD: md.hpcmips,v 1.10 2008/11/29 17:57:33 tsutsui Exp $
+./usr/sbin/apm					base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/tpctl				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin

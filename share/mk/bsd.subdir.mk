@@ -1,20 +1,30 @@
-#	$NetBSD: bsd.subdir.mk,v 1.50 2009/11/29 16:00:00 uebayasi Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.52 2010/05/26 00:48:15 uwe Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
 
-# MINIX: cleandepend works for SUBDIRs
-TARGETS+= cleandepend
-.PHONY: cleandepend
-.NOTMAIN: cleandepend
-
 .if !defined(NOSUBDIR)					# {
 
 .for dir in ${SUBDIR}
+.if "${dir}" == ".WAIT"
+# Don't play with .WAIT
+__REALSUBDIR+=${dir}
+.else
+.if "${dir:H}" != ""
+# It is a relative path; make it absolute so exists can't search the path.
+.if exists(${.CURDIR}/${dir}.${MACHINE})
+__REALSUBDIR+=${dir}.${MACHINE}
+.else
+__REALSUBDIR+=${dir}
+.endif
+.else
+# It is an absolute path; leave it alone
 .if exists(${dir}.${MACHINE})
 __REALSUBDIR+=${dir}.${MACHINE}
 .else
 __REALSUBDIR+=${dir}
+.endif
+.endif
 .endif
 .endfor
 

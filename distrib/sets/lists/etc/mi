@@ -1,0 +1,375 @@
+# $NetBSD: mi,v 1.228 2012/02/07 19:13:28 joerg Exp $
+#
+# Note: end-user configuration files that are moved to another location
+#	should not be marked "obsolete"; they should just be removed from
+#	the set list, a custom fix should be added to postinstall(8), and
+#	an item should be added to src/UPDATING for MKUPDATE=yes users.
+#	This is an exception to the general rule that moved/removed files
+#	are marked as "obsolete", because we don't want to arbitrarily
+#	remove end-user configuration files.
+#
+./.cshrc					etc-util-etc
+./.profile					etc-util-etc
+./dev/MAKEDEV					etc-sys-etc
+./dev/MAKEDEV.local				etc-sys-etc
+./dev/MAKEDEV.subr				etc-obsolete		obsolete
+./etc/atf/NetBSD.conf				etc-atf-etc		atf
+./etc/atf/atf-run.hooks				etc-atf-etc		atf
+./etc/atf/common.conf				etc-atf-etc		atf
+./etc/audit-packages.conf			etc-obsolete		obsolete
+./etc/bootptab					etc-bootserver-etc
+./etc/changelist				etc-sys-etc
+./etc/csh.cshrc					etc-util-etc
+./etc/csh.login					etc-util-etc
+./etc/csh.logout				etc-util-etc
+./etc/bluetooth					etc-sys-etc
+./etc/bluetooth/bluetooth.conf			etc-obsolete		obsolete
+./etc/bluetooth/btattach.conf			etc-sys-etc
+./etc/bluetooth/btdevctl.conf			etc-sys-etc
+./etc/bluetooth/btuartd.conf			etc-obsolete		obsolete
+./etc/bluetooth/hosts				etc-sys-etc
+./etc/bluetooth/protocols			etc-sys-etc
+./etc/daily					etc-sys-etc
+./etc/daily.conf				etc-sys-etc
+./etc/default					etc-obsolete		obsolete
+./etc/default/daily.conf			etc-obsolete		obsolete
+./etc/default/monthly.conf			etc-obsolete		obsolete
+./etc/default/rc.conf				etc-obsolete		obsolete
+./etc/default/security.conf			etc-obsolete		obsolete
+./etc/default/weekly.conf			etc-obsolete		obsolete
+./etc/defaults/daily.conf			etc-sys-defaults
+./etc/defaults/monthly.conf			etc-sys-defaults
+./etc/defaults/pf.boot.conf			etc-pf-defaults		pf
+./etc/defaults/rc.conf				etc-sys-defaults
+./etc/defaults/security.conf			etc-sys-defaults
+./etc/defaults/weekly.conf			etc-sys-defaults
+./etc/dhclient-script				etc-obsolete		obsolete
+./etc/dhcpcd.conf				etc-dhcpcd-etc
+./etc/disktab					etc-sysutil-etc
+./etc/dm.conf					etc-games-etc
+./etc/dumpdates					etc-sysutil-etc
+./etc/envsys.conf				etc-sysutil-etc
+./etc/floppytab					etc-sysutil-etc
+./etc/fstab.nfs					etc-obsolete		obsolete
+./etc/fstab.sd					etc-obsolete		obsolete
+./etc/fstab.sd0					etc-obsolete		obsolete
+./etc/fstab.sd1					etc-obsolete		obsolete
+./etc/fstab.sd2					etc-obsolete		obsolete
+./etc/fstab.sd3					etc-obsolete		obsolete
+./etc/fstab.sd4					etc-obsolete		obsolete
+./etc/fstab.sd5					etc-obsolete		obsolete
+./etc/fstab.sd6					etc-obsolete		obsolete
+./etc/fstab.sd7					etc-obsolete		obsolete
+./etc/fstab.tmp					etc-obsolete		obsolete
+./etc/fstab.wd					etc-obsolete		obsolete
+./etc/ftpchroot					etc-netutil-etc
+./etc/ftpusers					etc-netutil-etc
+./etc/gettytab					etc-sysutil-etc
+./etc/gpio.conf					etc-sys-etc
+./etc/group					etc-sys-etc
+./etc/hosts					etc-net-etc
+./etc/hosts.equiv				etc-netutil-etc
+./etc/hosts.lpd					etc-lpr-etc
+./etc/inetd.conf				etc-netutil-etc
+./etc/iscsi/auths				etc-iscsi-etc		iscsi
+./etc/iscsi/targets				etc-iscsi-etc		iscsi
+./etc/lkm.conf					etc-obsolete		obsolete
+./etc/localtime					etc-sys-etc
+./etc/locate.conf				etc-sys-etc
+./etc/login.conf				etc-sys-etc
+./etc/mail.rc					etc-mail-etc
+./etc/mail/aliases				etc-postfix-etc		postfix
+./etc/mailer.conf				etc-mailwrapper-etc
+./etc/man.conf					etc-man-etc
+./etc/master.passwd				etc-sys-etc
+./etc/moduli					etc-secsh-etc		crypto
+./etc/monthly					etc-sys-etc
+./etc/monthly.conf				etc-sys-etc
+./etc/motd					etc-sys-etc
+./etc/mrouted.conf				etc-router-etc
+./etc/mtree/NetBSD.dist				etc-sys-etc
+./etc/mtree/set.etc				etc-sys-etc
+./etc/mtree/special				etc-sys-etc
+./etc/named.conf				etc-bind-etc
+./etc/namedb/127				etc-bind-etc
+./etc/namedb/localhost				etc-bind-etc
+./etc/namedb/loopback.v6			etc-bind-etc
+./etc/namedb/root.cache				etc-bind-etc
+./etc/netconfig					etc-net-etc
+./etc/networks					etc-net-etc
+./etc/newsyslog.conf				etc-sysutil-etc
+./etc/nsswitch.conf				etc-net-etc
+./etc/ntp.conf					etc-ntp-etc
+./etc/obsolete/base				etc-obsolete		obsolete
+./etc/obsolete/comp				etc-obsolete		obsolete
+./etc/obsolete/etc				etc-obsolete		obsolete
+./etc/obsolete/games				etc-obsolete		obsolete
+./etc/obsolete/man				etc-obsolete		obsolete
+./etc/obsolete/misc				etc-obsolete		obsolete
+./etc/obsolete/text				etc-obsolete		obsolete
+./etc/pam.d/README				etc-sys-etc
+./etc/pam.d/display_manager			etc-sys-etc
+./etc/pam.d/ftpd				etc-sys-etc
+./etc/pam.d/gdm					etc-sys-etc
+./etc/pam.d/imap				etc-sys-etc
+./etc/pam.d/kde					etc-sys-etc
+./etc/pam.d/login				etc-sys-etc
+./etc/pam.d/other				etc-sys-etc
+./etc/pam.d/passwd				etc-sys-etc
+./etc/pam.d/pop3				etc-sys-etc
+./etc/pam.d/ppp					etc-sys-etc
+./etc/pam.d/rexecd				etc-sys-etc
+./etc/pam.d/rsh					etc-sys-etc
+./etc/pam.d/sshd				etc-sys-etc
+./etc/pam.d/su					etc-sys-etc
+./etc/pam.d/system				etc-sys-etc
+./etc/pam.d/telnetd				etc-sys-etc
+./etc/pam.d/xdm					etc-sys-etc
+./etc/pam.d/xserver				etc-sys-etc
+./etc/passwd					etc-sys-etc
+./etc/passwd.conf				etc-sys-etc
+./etc/pf.conf					etc-pf-etc		pf
+./etc/pf.os					etc-pf-etc		pf
+./etc/phones					etc-sys-etc
+./etc/postfix/README				etc-postfix-etc		postfix
+./etc/postfix/main.cf				etc-postfix-etc		postfix
+./etc/postfix/master.cf				etc-postfix-etc		postfix
+./etc/postfix/post-install			etc-obsolete		obsolete
+./etc/postfix/postfix-files			etc-obsolete		obsolete
+./etc/postfix/postfix-script			etc-obsolete		obsolete
+./etc/postinstall				etc-obsolete		obsolete
+./etc/powerd/scripts/acadapter			etc-sysutil-etc
+./etc/powerd/scripts/hotkey_button		etc-sysutil-etc
+./etc/powerd/scripts/lid_switch			etc-sysutil-etc
+./etc/powerd/scripts/power_button		etc-sysutil-etc
+./etc/powerd/scripts/reset_button		etc-sysutil-etc
+./etc/powerd/scripts/sensor_battery		etc-sysutil-etc
+./etc/powerd/scripts/sensor_drive		etc-sysutil-etc
+./etc/powerd/scripts/sensor_fan			etc-sysutil-etc
+./etc/powerd/scripts/sensor_indicator		etc-sysutil-etc
+./etc/powerd/scripts/sensor_power		etc-sysutil-etc
+./etc/powerd/scripts/sensor_resistance		etc-sysutil-etc
+./etc/powerd/scripts/sensor_temperature		etc-sysutil-etc
+./etc/powerd/scripts/sensor_voltage		etc-sysutil-etc
+./etc/powerd/scripts/sleep_button		etc-sysutil-etc
+./etc/primes					etc-obsolete		obsolete
+./etc/printcap					etc-lpr-etc
+./etc/profile					etc-util-etc
+./etc/protocols					etc-net-etc
+./etc/pwd.db					etc-sys-etc
+./etc/rbootd.conf				etc-bootserver-etc
+./etc/rc					etc-sys-rc
+./etc/rc.conf					etc-sys-rc
+./etc/rc.d/DAEMON				etc-sys-rc
+./etc/rc.d/DISKS				etc-sys-rc
+./etc/rc.d/LOGIN				etc-sys-rc
+./etc/rc.d/NETWORK				etc-obsolete		obsolete
+./etc/rc.d/NETWORKING				etc-sys-rc
+./etc/rc.d/SERVERS				etc-sys-rc
+./etc/rc.d/accounting				etc-sys-rc
+./etc/rc.d/altqd				etc-router-rc
+./etc/rc.d/amd					etc-amd-rc
+./etc/rc.d/apmd					etc-sys-rc
+./etc/rc.d/bluetooth				etc-sys-rc
+./etc/rc.d/bootconf.sh				etc-sys-rc
+./etc/rc.d/bootparams				etc-bootserver-rc
+./etc/rc.d/btattach				etc-obsolete		obsolete
+./etc/rc.d/btconfig				etc-obsolete		obsolete
+./etc/rc.d/btcontrol				etc-obsolete		obsolete
+./etc/rc.d/btdevctl				etc-obsolete		obsolete
+./etc/rc.d/bthcid				etc-obsolete		obsolete
+./etc/rc.d/btuartd				etc-obsolete		obsolete
+./etc/rc.d/ccd					etc-sys-rc
+./etc/rc.d/cgd					etc-sys-rc
+./etc/rc.d/cleartmp				etc-sys-rc
+./etc/rc.d/cron					etc-cron-rc
+./etc/rc.d/devpubd				etc-sys-rc
+./etc/rc.d/dhclient				etc-dhclient-rc
+./etc/rc.d/dhcpcd				etc-dhcpcd-rc
+./etc/rc.d/dhcpd				etc-dhcpd-rc
+./etc/rc.d/dhcrelay				etc-dhcpd-rc
+./etc/rc.d/dmesg				etc-sys-rc
+./etc/rc.d/downinterfaces			etc-sys-rc
+./etc/rc.d/envsys				etc-sys-rc
+./etc/rc.d/fixsb				etc-obsolete		obsolete
+./etc/rc.d/fsck					etc-sys-rc
+./etc/rc.d/fsck_root				etc-sys-rc
+./etc/rc.d/fsck.sh				etc-obsolete		obsolete
+./etc/rc.d/ftp_proxy				etc-net-rc
+./etc/rc.d/ftpd					etc-net-rc
+./etc/rc.d/hostapd				etc-net-rc
+./etc/rc.d/httpd				etc-net-rc
+./etc/rc.d/gated				etc-obsolete		obsolete
+./etc/rc.d/gpio					etc-sys-rc
+./etc/rc.d/identd				etc-net-rc
+./etc/rc.d/ifwatchd				etc-net-rc
+./etc/rc.d/inetd				etc-net-rc
+./etc/rc.d/ipfilter				etc-ipf-rc
+./etc/rc.d/ipfs					etc-ipf-rc
+./etc/rc.d/ipmon				etc-ipf-rc
+./etc/rc.d/ipnat				etc-ipf-rc
+./etc/rc.d/ipsec				etc-net-rc
+./etc/rc.d/irdaattach				etc-sys-rc
+./etc/rc.d/iscsi_target				etc-iscsi-rc
+./etc/rc.d/isdnd				etc-isdn-rc
+./etc/rc.d/isibootd				etc-bootserver-rc
+./etc/rc.d/kdc					etc-krb5-rc
+./etc/rc.d/kerberos				etc-obsolete		obsolete
+./etc/rc.d/ldconfig				etc-sys-rc
+./etc/rc.d/ldpd					etc-router-rc
+./etc/rc.d/lkm1					etc-obsolete		obsolete
+./etc/rc.d/lkm2					etc-obsolete		obsolete
+./etc/rc.d/lkm3					etc-obsolete		obsolete
+./etc/rc.d/local				etc-sys-rc
+./etc/rc.d/lpd					etc-lpr-rc
+./etc/rc.d/lvm					etc-sys-rc
+./etc/rc.d/makemandb				etc-man-rc
+./etc/rc.d/mdnsd				etc-mdns-rc
+./etc/rc.d/mixerctl				etc-audio-rc
+./etc/rc.d/mopd					etc-bootserver-rc
+./etc/rc.d/motd					etc-sys-rc
+./etc/rc.d/mountall				etc-sys-rc
+./etc/rc.d/mountcritlocal			etc-sys-rc
+./etc/rc.d/mountcritremote			etc-sys-rc
+./etc/rc.d/mountd				etc-nfsserver-rc
+./etc/rc.d/moused				etc-sysutil-rc
+./etc/rc.d/mrouted				etc-router-rc
+./etc/rc.d/named				etc-bind-rc
+./etc/rc.d/ndbootd				etc-bootserver-rc
+./etc/rc.d/network				etc-net-rc
+./etc/rc.d/newsyslog				etc-sys-rc
+./etc/rc.d/nfsd					etc-nfsserver-rc
+./etc/rc.d/nfslocking				etc-nfsserver-rc
+./etc/rc.d/npf					etc-npf-rc
+./etc/rc.d/ntpd					etc-ntp-rc
+./etc/rc.d/ntpdate				etc-ntp-rc
+./etc/rc.d/perusertmp				etc-sys-rc
+./etc/rc.d/pf					etc-net-rc
+./etc/rc.d/pf_boot				etc-net-rc
+./etc/rc.d/pflogd				etc-net-rc
+./etc/rc.d/poffd				etc-obsolete		obsolete
+./etc/rc.d/postfix				etc-postfix-rc
+./etc/rc.d/powerd				etc-sysutil-rc
+./etc/rc.d/ppp					etc-ppp-rc
+./etc/rc.d/pwcheck				etc-sys-rc
+./etc/rc.d/quota				etc-sys-rc
+./etc/rc.d/racoon				etc-net-rc
+./etc/rc.d/raidframe				etc-sys-rc
+./etc/rc.d/raidframeparity			etc-sys-rc
+./etc/rc.d/random_seed				etc-sys-rc
+./etc/rc.d/rarpd				etc-bootserver-rc
+./etc/rc.d/rbootd				etc-bootserver-rc
+./etc/rc.d/rndctl				etc-sys-rc
+./etc/rc.d/root					etc-sys-rc
+./etc/rc.d/route6d				etc-router-rc
+./etc/rc.d/routed				etc-router-rc
+./etc/rc.d/rpcbind				etc-rpcbind-rc
+./etc/rc.d/rtadvd				etc-net-rc
+./etc/rc.d/rtclocaltime				etc-sys-rc
+./etc/rc.d/rtsold				etc-net-rc
+./etc/rc.d/rwho					etc-net-rc
+./etc/rc.d/savecore				etc-sys-rc
+./etc/rc.d/screenblank				etc-sys-rc
+./etc/rc.d/sdpd					etc-obsolete		obsolete
+./etc/rc.d/securelevel				etc-sys-rc
+./etc/rc.d/sshd					etc-secsh-rc
+./etc/rc.d/staticroute				etc-sys-rc
+./etc/rc.d/swap1				etc-sys-rc
+./etc/rc.d/swap2				etc-sys-rc
+./etc/rc.d/sysctl				etc-sys-rc
+./etc/rc.d/sysdb				etc-sys-rc
+./etc/rc.d/syslogd				etc-sys-rc
+./etc/rc.d/systemfs				etc-obsolete		obsolete
+./etc/rc.d/timed				etc-timed-rc
+./etc/rc.d/tpctl				etc-sys-rc
+./etc/rc.d/ttys					etc-sys-rc
+./etc/rc.d/veriexec				etc-sys-rc
+./etc/rc.d/virecover				etc-sys-rc
+./etc/rc.d/wdogctl				etc-sysutil-rc
+./etc/rc.d/wpa_supplicant			etc-net-rc
+./etc/rc.d/wscons				etc-sys-rc
+./etc/rc.d/wsmoused				etc-sys-rc
+./etc/rc.d/xntpd				etc-obsolete		obsolete
+./etc/rc.d/ypbind				etc-nis-rc
+./etc/rc.d/yppasswdd				etc-nis-rc
+./etc/rc.d/ypserv				etc-nis-rc
+./etc/rc.d/ypset				etc-obsolete		obsolete
+./etc/rc.lkm					etc-obsolete		obsolete
+./etc/rc.local					etc-sys-rc
+./etc/rc.shutdown				etc-sys-rc
+./etc/rc.subr					etc-sys-rc
+./etc/rc.wscons					etc-obsolete		obsolete
+./etc/release-info				etc-obsolete		obsolete
+./etc/remote					etc-sys-etc
+./etc/rmt					etc-sysutil-etc
+./etc/rpc					etc-net-etc
+./etc/saslc.d					etc-libsaslc-etc
+./etc/saslc.d/mech				obsolete		obsolete
+./etc/saslc.d/saslc				etc-libsaslc-etc
+./etc/saslc.d/saslc/mech			etc-libsaslc-etc
+./etc/saslc.d/postfix				etc-libsaslc-postfix
+./etc/saslc.d/postfix/mech			etc-libsaslc-postfix
+./etc/security					etc-sys-etc
+./etc/security.conf				etc-sys-etc
+./etc/services					etc-net-etc
+./etc/shells					etc-sys-etc
+./etc/shrc					etc-util-etc
+./etc/skel/.cshrc				etc-sys-etc
+./etc/skel/.login				etc-sys-etc
+./etc/skel/.logout				etc-sys-etc
+./etc/skel/.profile				etc-sys-etc
+./etc/skel/.shrc				etc-sys-etc
+./etc/skeykeys					etc-sys-etc
+./etc/spamd.conf				etc-obsolete		obsolete
+./etc/spwd.db					etc-sys-etc
+./etc/ssh/ssh_config				etc-secsh-etc		crypto
+./etc/ssh/ssh_known_hosts			etc-secsh-etc		crypto
+./etc/ssh/sshd_config				etc-secsh-etc		crypto
+./etc/sysctl.conf				etc-sys-etc
+./etc/syslog.conf				etc-sys-etc
+./etc/ttys					etc-sys-etc
+./etc/weekly					etc-sys-etc
+./etc/weekly.conf				etc-sys-etc
+./etc/wscons.conf				etc-sys-etc
+./root/.cshrc					etc-root-root
+./root/.klogin					etc-root-root
+./root/.login					etc-root-root
+./root/.profile					etc-root-root
+./root/.shrc					etc-root-root
+./var/at/at.deny				etc-cron-root
+./var/crash/minfree				etc-sys-root
+./var/cron/tabs/root				etc-cron-root
+./var/db/locate.database			etc-sys-root
+./var/games/atc_score				etc-games-scores
+./var/games/battlestar.log			etc-games-scores
+./var/games/cfscores				etc-games-scores
+./var/games/criblog				etc-games-scores
+./var/games/hackdir/record			etc-games-scores
+./var/games/larn/llog12.0			etc-games-scores
+./var/games/larn/lscore12.0			etc-games-scores
+./var/games/larn/playerids			etc-games-scores
+./var/games/phantasia/characs			etc-games-scores
+./var/games/phantasia/scoreboard		etc-games-scores
+./var/games/robots_roll				etc-games-scores
+./var/games/rogue.scores			etc-games-scores
+./var/games/saillog				etc-games-scores
+./var/games/snake.log				etc-games-scores
+./var/games/snakerawscores			etc-games-scores
+./var/games/tetris.scores			etc-games-scores
+./var/log/authlog				etc-sys-log
+./var/log/cron					etc-cron-log
+./var/log/lastlog				etc-sys-log
+./var/log/lastlogx				etc-sys-log
+./var/log/lpd-errs				etc-lpr-log
+./var/log/maillog				etc-sendmail-log
+./var/log/messages				etc-sys-log
+./var/log/secure				etc-sys-log
+./var/log/wtmp					etc-sys-log
+./var/log/wtmpx					etc-sys-log
+./var/log/xferlog				etc-netutil-log
+./var/msgs/bounds				etc-sysutil-log
+./var/run/utmp					etc-sys-log
+./var/run/utmpx					etc-sys-log
+./var/yp/Makefile.main				etc-nis-root		yp
+./var/yp/Makefile.yp				etc-nis-root		yp
+./var/yp/nicknames				etc-nis-root		yp

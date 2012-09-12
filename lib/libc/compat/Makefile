@@ -17,6 +17,7 @@ COMPATDIR=${.CURDIR}
 .include "${.CURDIR}/locale/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/rpc/Makefile.inc"
+.include "${.CURDIR}/stdio/Makefile.inc"
 .include "${.CURDIR}/stdlib/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
 

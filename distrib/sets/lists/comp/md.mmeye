@@ -1,0 +1,63 @@
+# $NetBSD: md.mmeye,v 1.30 2011/07/19 15:17:20 dyoung Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/mmeye				comp-c-include
+./usr/include/mmeye/_G_config.h			comp-obsolete		obsolete
+./usr/include/mmeye/ansi.h			comp-c-include
+./usr/include/mmeye/aout_machdep.h		comp-c-include
+./usr/include/mmeye/asm.h			comp-c-include
+./usr/include/mmeye/bootinfo.h			comp-obsolete		obsolete
+./usr/include/mmeye/bswap.h			comp-c-include
+./usr/include/mmeye/bus.h			comp-obsolete		obsolete
+./usr/include/mmeye/cdefs.h			comp-c-include
+./usr/include/mmeye/coff_machdep.h		comp-c-include
+./usr/include/mmeye/conf.h			comp-obsolete		obsolete
+./usr/include/mmeye/cpu.h			comp-c-include
+./usr/include/mmeye/cpufunc.h			comp-obsolete		obsolete
+./usr/include/mmeye/cputypes.h			comp-c-include
+./usr/include/mmeye/db_machdep.h		comp-obsolete 		obsolete
+./usr/include/mmeye/disklabel.h			comp-c-include
+./usr/include/mmeye/elf_machdep.h		comp-c-include
+./usr/include/mmeye/endian.h			comp-c-include
+./usr/include/mmeye/endian_machdep.h		comp-c-include
+./usr/include/mmeye/float.h			comp-c-include
+./usr/include/mmeye/frame.h			comp-c-include
+./usr/include/mmeye/ieee.h			comp-c-include
+./usr/include/mmeye/ieeefp.h			comp-c-include
+./usr/include/mmeye/int_const.h			comp-c-include
+./usr/include/mmeye/int_fmtio.h			comp-c-include
+./usr/include/mmeye/int_limits.h		comp-c-include
+./usr/include/mmeye/int_mwgwtypes.h		comp-c-include
+./usr/include/mmeye/int_types.h			comp-c-include
+./usr/include/mmeye/intr.h			comp-c-include
+./usr/include/mmeye/limits.h			comp-c-include
+./usr/include/mmeye/loadfile_machdep.h		comp-obsolete		obsolete
+./usr/include/mmeye/lock.h			comp-c-include
+./usr/include/mmeye/math.h			comp-c-include
+./usr/include/mmeye/mcontext.h			comp-c-include
+./usr/include/mmeye/mmeye.h			comp-c-include
+./usr/include/mmeye/mutex.h			comp-c-include
+./usr/include/mmeye/param.h			comp-c-include
+./usr/include/mmeye/pcb.h			comp-c-include
+./usr/include/mmeye/pio.h			comp-obsolete		obsolete
+./usr/include/mmeye/pmap.h			comp-c-include
+./usr/include/mmeye/pmc.h			comp-c-include
+./usr/include/mmeye/proc.h			comp-c-include
+./usr/include/mmeye/profile.h			comp-c-include
+./usr/include/mmeye/psl.h			comp-c-include
+./usr/include/mmeye/pte.h			comp-c-include
+./usr/include/mmeye/ptrace.h			comp-c-include
+./usr/include/mmeye/reg.h			comp-c-include
+./usr/include/mmeye/rwlock.h			comp-c-include
+./usr/include/mmeye/segments.h			comp-obsolete		obsolete
+./usr/include/mmeye/setjmp.h			comp-c-include
+./usr/include/mmeye/shbvar.h			comp-obsolete		obsolete
+./usr/include/mmeye/signal.h			comp-c-include
+./usr/include/mmeye/stdarg.h			comp-obsolete		obsolete
+./usr/include/mmeye/trap.h			comp-obsolete		obsolete
+./usr/include/mmeye/types.h			comp-c-include
+./usr/include/mmeye/varargs.h			comp-obsolete		obsolete
+./usr/include/mmeye/vmparam.h			comp-c-include
+./usr/include/mmeye/wchar_limits.h		comp-c-include
+./usr/include/sh3/db_disasm.h			comp-obsolete		obsolete
+./usr/libdata/debug/usr/mdec/bootelf.debug	-unknown-		debug
+./usr/libdata/debug/usr/mdec/osloader.debug	-unknown-		debug

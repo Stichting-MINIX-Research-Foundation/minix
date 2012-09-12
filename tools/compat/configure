@@ -1864,12 +1864,12 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-            echo "$as_me:1867: checking for NetBSD" >&5
-echo $ECHO_N "checking for NetBSD... $ECHO_C" >&6
+            echo "$as_me:1867: checking for MINIX3" >&5
+echo $ECHO_N "checking for MINIX3... $ECHO_C" >&6
       cat >conftest.$ac_ext <<_ACEOF
 #line 1870 "configure"
 #include "confdefs.h"
-#ifdef __NetBSD__
+#ifdef __minix
 	yes
 	#endif
 

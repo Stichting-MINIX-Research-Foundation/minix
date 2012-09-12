@@ -53,11 +53,13 @@ SRCS=	elf.c							\
 	libelf_shdr.c						\
 	libelf_xlate.c						\
 	${GENSRCS}
-INCS=	libelf.h gelf.h elfdefinitions.h
+INCS+=	libelf.h gelf.h elfdefinitions.h
+
 
 GENSRCS=	libelf_fsize.c libelf_msize.c libelf_convert.c
 CLEANFILES=	${GENSRCS}
 CFLAGS+=        -I. -I${.CURDIR}
+
 
 .PATH:		${.CURDIR}/compat
 SRCS+=		mmap.c

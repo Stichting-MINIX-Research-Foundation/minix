@@ -4,14 +4,17 @@
 
 HAVE_GCC= 45	# On Minix
 
+.ifdef __MINIX
+GCC_LANGUAGES=c
+.else
 GCC_LANGUAGES=c c++ objc
+.endif
 MODULE=			gcc4
 
 MKNATIVE_CONFIG_TARGET_LIBS= \
 	configure-target-libiberty \
 	configure-target-libstdc++-v3 \
-	configure-target-libobjc \
-	configure-target-libgcc
+	configure-target-libobjc
 
 .if ${HAVE_GCC} == 45
 MKNATIVE_TARGET=	gcc45
@@ -36,19 +39,20 @@ MULTILIB_ARGS= --disable-multilib
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 
+# LSC FIXME We are not using the correct target ATM, so overrides for now...
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
+			--target=${MACHINE_ARCH}-elf-minix \
+			--disable-libssp \
 			--enable-long-long \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD nb2 20111202" \
+			--with-system-zlib \
 			${VAX_CONFIGURE_ARGS} \
-			--enable-__cxa_atexit \
-			--target=${MACHINE_ARCH}-elf-minix \
 			--disable-threads \
 			--disable-visibility \
-			--enable-__cxa_atexit \
-			--disable-libunwind
-
+			--disable-libunwind \
+			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 .endif
@@ -68,10 +72,14 @@ CONFIGURE_ARGS+= \
 		${MULTILIB_ARGS} \
 		${SOFTFLOAT_ARGS} \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--enable-languages=c
+		--enable-languages="${GCC_LANGUAGES}"
 
 GCC_CPPFLAGS=	-DNETBSD_TOOLS -DTARGET_SYSTEM_ROOT=0 \
 		-DTARGET_SYSTEM_ROOT_RELOCATABLE
+
+.if ${HOST_OSTYPE:C/\-.*//} == "Minix"
+GCC_CPPFLAGS+= -D_NETBSD_SOURCE -D_POSIX_SOURCE -D_COMPAT_MINIX
+.endif
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \

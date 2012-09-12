@@ -1,0 +1,89 @@
+#!/bin/sh
+#
+# $NetBSD: makeobsolete,v 1.31 2009/12/05 15:56:25 cegger Exp $
+#
+# Print out the obsolete files for a set
+# Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
+#    [-t target] [setname ...]
+#
+
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+lists=
+target=./dist
+obsolete=1
+
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [setname ...]
+	-L base,x,ext	make specified lists
+	-b		make netbsd + x11 lists
+	-x 		only make x11 lists
+	-y 		only make extsrc lists
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[${MACHINE_ARCH}]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[${MACHINE}]
+	-s setsdir	directory to find sets	[${setd}]
+	-t target	target directory [${target}]
+	[setname ...] 	sets to build
+USAGE
+	exit 1
+}
+
+while getopts L:bxya:m:s:t: ch; do
+	case ${ch} in
+	L)
+		save_IFS="${IFS}"
+		IFS=,
+		for _list in ${OPTARG}; do
+			case $_list in
+			base)	lists="${lists} ${nlists}" ;;
+			x)	lists="${lists} ${xlists}" ;;
+			ext)	lists="${lists} ${extlists}" ;;
+			esac
+		done
+		IFS="${save_IFS}"
+		;;
+	# backward compat
+	b)
+		lists="${nlists} ${xlists}"
+		;;
+	x)
+		lists="${xlists}"
+		;;
+	y)
+		lists="${extlists}"
+		;;
+	a)
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
+		;;
+	m)
+		MACHINE="${OPTARG}"
+		;;
+	s)
+		setsdir="${OPTARG}"
+		;;
+	t)
+		target="${OPTARG}"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+if [ -n "$1" ]; then
+	lists="$*"
+fi
+
+if [ ! -d "${target}" ]; then
+	echo "target directory [${target}] doesn't exist"
+	exit 1
+fi
+
+for setname in ${lists:-${nlists}}; do
+	file="${target}/${setname}"
+	list_set_files "${setname}" | ${AWK} '{print $1}' | \
+		${SORT} -ru > "${file}"
+done

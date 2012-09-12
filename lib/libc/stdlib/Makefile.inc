@@ -43,10 +43,7 @@ SRCS+= erand48_ieee754.c
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
 .elif (${USE_MINIXMALLOC} != "no")
-SRCS+=	\
-	minix/minix-malloc.c	\
-	minix/minix-calloc.c	\
-	minix/minix-malloc-debug.c
+.include "../minix/Makefile.inc"
 .else
 SRCS+=	malloc.c
 .endif

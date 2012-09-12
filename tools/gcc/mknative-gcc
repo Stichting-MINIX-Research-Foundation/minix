@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.66 2012/01/10 12:27:54 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.67 2012/08/11 16:05:01 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -33,7 +33,7 @@ get_crtstuff () {
 	mkdir -p $_OUTDIR/lib/$_subdir/arch
 
 	getvars gcc/Makefile \
-		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS \
+		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS CRTSTUFF_T_CFLAGS_S \
 		tm_defines xm_file xm_defines \
 		| sed "s,-I$_DESTDIR/usr/include,,g" \
 		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH.mk

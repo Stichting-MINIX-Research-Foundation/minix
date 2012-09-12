@@ -1,0 +1,11 @@
+minix-sys	preserve
+base-sys-root	preserve
+base-sys-share	preserve
+base-sys-shlib	preserve
+base-sys-usr	preserve
+base-sysutil-bin	preserve
+base-sysutil-root	preserve
+base-sysutil-share	preserve
+base-util-bin	preserve
+base-util-root	preserve
+base-util-share	preserve

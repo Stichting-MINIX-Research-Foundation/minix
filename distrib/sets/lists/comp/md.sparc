@@ -1,0 +1,147 @@
+# $NetBSD: md.sparc,v 1.76 2011/07/17 20:54:31 joerg Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sparc				comp-c-include
+./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
+./usr/include/sparc/ansi.h			comp-c-include
+./usr/include/sparc/aout_machdep.h		comp-c-include
+./usr/include/sparc/apmvar.h			comp-c-include
+./usr/include/sparc/asm.h			comp-c-include
+./usr/include/sparc/autoconf.h			comp-c-include
+./usr/include/sparc/bootinfo.h			comp-c-include
+./usr/include/sparc/bswap.h			comp-c-include
+./usr/include/sparc/cdefs.h			comp-c-include
+./usr/include/sparc/cgtworeg.h			comp-c-include
+./usr/include/sparc/conf.h			comp-obsolete		obsolete
+./usr/include/sparc/cpu.h			comp-c-include
+./usr/include/sparc/cpuconf.h			comp-c-include
+./usr/include/sparc/disklabel.h			comp-c-include
+./usr/include/sparc/eeprom.h			comp-c-include
+./usr/include/sparc/elf_machdep.h		comp-c-include
+./usr/include/sparc/endian.h			comp-c-include
+./usr/include/sparc/endian_machdep.h		comp-c-include
+./usr/include/sparc/fbio.h			comp-obsolete		obsolete
+./usr/include/sparc/fenv.h			comp-c-include
+./usr/include/sparc/float.h			comp-c-include
+./usr/include/sparc/frame.h			comp-c-include
+./usr/include/sparc/fsr.h			comp-c-include
+./usr/include/sparc/idprom.h			comp-c-include
+./usr/include/sparc/ieee.h			comp-c-include
+./usr/include/sparc/ieeefp.h			comp-c-include
+./usr/include/sparc/int_const.h			comp-c-include
+./usr/include/sparc/int_fmtio.h			comp-c-include
+./usr/include/sparc/int_limits.h		comp-c-include
+./usr/include/sparc/int_mwgwtypes.h		comp-c-include
+./usr/include/sparc/int_types.h			comp-c-include
+./usr/include/sparc/kbd.h			comp-c-include
+./usr/include/sparc/kbio.h			comp-c-include
+./usr/include/sparc/kcore.h			comp-c-include
+./usr/include/sparc/limits.h			comp-c-include
+./usr/include/sparc/lock.h			comp-c-include
+./usr/include/sparc/math.h			comp-c-include
+./usr/include/sparc/mcontext.h			comp-c-include
+./usr/include/sparc/mutex.h			comp-c-include
+./usr/include/sparc/oldmon.h			comp-c-include
+./usr/include/sparc/openpromio.h		comp-c-include
+./usr/include/sparc/param.h			comp-c-include
+./usr/include/sparc/pcb.h			comp-c-include
+./usr/include/sparc/pmap.h			comp-c-include
+./usr/include/sparc/pmc.h			comp-c-include
+./usr/include/sparc/proc.h			comp-c-include
+./usr/include/sparc/profile.h			comp-c-include
+./usr/include/sparc/psl.h			comp-c-include
+./usr/include/sparc/pte.h			comp-c-include
+./usr/include/sparc/ptrace.h			comp-c-include
+./usr/include/sparc/reg.h			comp-c-include
+./usr/include/sparc/reloc.h			comp-c-include
+./usr/include/sparc/rwlock.h			comp-c-include
+./usr/include/sparc/setjmp.h			comp-c-include
+./usr/include/sparc/signal.h			comp-c-include
+./usr/include/sparc/stdarg.h			comp-obsolete		obsolete
+./usr/include/sparc/tctrl.h			comp-c-include
+./usr/include/sparc/trap.h			comp-c-include
+./usr/include/sparc/types.h			comp-c-include
+./usr/include/sparc/varargs.h			comp-obsolete		obsolete
+./usr/include/sparc/vmparam.h			comp-c-include
+./usr/include/sparc/vuid_event.h		comp-c-include
+./usr/include/sparc/wchar_limits.h		comp-c-include
+./usr/include/sparc64				comp-c-include
+./usr/include/sparc64/_G_config.h		comp-obsolete		obsolete
+./usr/include/sparc64/ansi.h			comp-c-include
+./usr/include/sparc64/aout_machdep.h		comp-c-include
+./usr/include/sparc64/asm.h			comp-c-include
+./usr/include/sparc64/autoconf.h		comp-c-include
+./usr/include/sparc64/bsd_openprom.h		comp-c-include
+./usr/include/sparc64/bswap.h			comp-c-include
+./usr/include/sparc64/bus.h			comp-obsolete		obsolete
+./usr/include/sparc64/cdefs.h			comp-c-include
+./usr/include/sparc64/cgtworeg.h		comp-c-include
+./usr/include/sparc64/conf.h			comp-obsolete		obsolete
+./usr/include/sparc64/cpu.h			comp-c-include
+./usr/include/sparc64/ctlreg.h			comp-c-include
+./usr/include/sparc64/db_machdep.h		comp-obsolete		obsolete
+./usr/include/sparc64/disklabel.h		comp-c-include
+./usr/include/sparc64/eeprom.h			comp-c-include
+./usr/include/sparc64/elf_machdep.h		comp-c-include
+./usr/include/sparc64/endian.h			comp-c-include
+./usr/include/sparc64/endian_machdep.h		comp-c-include
+./usr/include/sparc64/fbio.h			comp-obsolete		obsolete
+./usr/include/sparc64/fbvar.h			comp-obsolete		obsolete
+./usr/include/sparc64/fenv.h			comp-c-include
+./usr/include/sparc64/float.h			comp-c-include
+./usr/include/sparc64/frame.h			comp-c-include
+./usr/include/sparc64/fsr.h			comp-c-include
+./usr/include/sparc64/idprom.h			comp-c-include
+./usr/include/sparc64/ieee.h			comp-c-include
+./usr/include/sparc64/ieeefp.h			comp-c-include
+./usr/include/sparc64/instr.h			comp-c-include
+./usr/include/sparc64/intr.h			comp-c-include
+./usr/include/sparc64/int_const.h		comp-c-include
+./usr/include/sparc64/int_fmtio.h		comp-c-include
+./usr/include/sparc64/int_limits.h		comp-c-include
+./usr/include/sparc64/int_mwgwtypes.h		comp-c-include
+./usr/include/sparc64/int_types.h		comp-c-include
+./usr/include/sparc64/joystick.h		comp-c-include
+./usr/include/sparc64/kbd.h			comp-c-include
+./usr/include/sparc64/kbio.h			comp-c-include
+./usr/include/sparc64/kcore.h			comp-c-include
+./usr/include/sparc64/limits.h			comp-c-include
+./usr/include/sparc64/lock.h			comp-c-include
+./usr/include/sparc64/math.h			comp-c-include
+./usr/include/sparc64/mcontext.h		comp-c-include
+./usr/include/sparc64/mutex.h			comp-c-include
+./usr/include/sparc64/oldmon.h			comp-c-include
+./usr/include/sparc64/openpromio.h		comp-c-include
+./usr/include/sparc64/param.h			comp-c-include
+./usr/include/sparc64/pcb.h			comp-c-include
+./usr/include/sparc64/pmap.h			comp-c-include
+./usr/include/sparc64/pmc.h			comp-c-include
+./usr/include/sparc64/proc.h			comp-c-include
+./usr/include/sparc64/profile.h			comp-c-include
+./usr/include/sparc64/psl.h			comp-c-include
+./usr/include/sparc64/pte.h			comp-c-include
+./usr/include/sparc64/ptrace.h			comp-c-include
+./usr/include/sparc64/reg.h			comp-c-include
+./usr/include/sparc64/reloc.h			comp-c-include
+./usr/include/sparc64/remote-sl.h		comp-c-include
+./usr/include/sparc64/rwlock.h			comp-c-include
+./usr/include/sparc64/setjmp.h			comp-c-include
+./usr/include/sparc64/signal.h			comp-c-include
+./usr/include/sparc64/stdarg.h			comp-obsolete		obsolete
+./usr/include/sparc64/svr4_machdep.h		comp-c-include
+./usr/include/sparc64/trap.h			comp-c-include
+./usr/include/sparc64/types.h			comp-c-include
+./usr/include/sparc64/varargs.h			comp-obsolete		obsolete
+./usr/include/sparc64/vmparam.h			comp-c-include
+./usr/include/sparc64/vuid_event.h		comp-c-include
+./usr/include/sparc64/wchar_limits.h		comp-c-include
+./usr/include/sparc64/z8530var.h		comp-c-include
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libsparc_v8.so.0.0.debug	comp-sys-debug	debug,pic
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tadpolectl.debug	comp-sysutil-debug	debug

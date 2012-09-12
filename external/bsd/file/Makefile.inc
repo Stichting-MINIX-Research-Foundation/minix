@@ -6,11 +6,7 @@ WARNS=4
 BINDIR?= /usr/bin
 USE_FORT?= no	# data-driven bugs?
 
-.if ${USETOOLS} == "yes" 
 TOOL_MKMAGIC?=	${.OBJDIR}/file
-.else
-TOOL_MKMAGIC= ${.CURDIR}/../bin/file
-.endif
 
 MFILESDIR?=	/usr/share/misc
 MFILES?=	magic.mgc

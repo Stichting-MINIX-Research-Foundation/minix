@@ -1,3 +1,5 @@
+# LSC For Now
+NOGCCERROR:= yes
 PROG=	chown
 MAN=
 

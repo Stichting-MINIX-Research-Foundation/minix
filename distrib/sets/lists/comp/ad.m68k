@@ -1,0 +1,66 @@
+# $NetBSD: ad.m68k,v 1.45 2011/07/17 20:54:30 joerg Exp $
+./usr/bin/elf2aout				comp-sysutil-bin
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/math-68881.h		comp-c-include		gcccmds,gcc=45
+./usr/include/m68k				comp-c-include
+./usr/include/m68k/ansi.h			comp-c-include
+./usr/include/m68k/aout_machdep.h		comp-c-include
+./usr/include/m68k/asm.h			comp-c-include
+./usr/include/m68k/asm_single.h			comp-c-include
+./usr/include/m68k/bswap.h			comp-c-include
+./usr/include/m68k/bus_dma.h			comp-c-include
+./usr/include/m68k/byte_swap.h			comp-c-include
+./usr/include/m68k/cacheops.h			comp-c-include
+./usr/include/m68k/cacheops_20.h		comp-c-include
+./usr/include/m68k/cacheops_30.h		comp-c-include
+./usr/include/m68k/cacheops_40.h		comp-c-include
+./usr/include/m68k/cacheops_60.h		comp-c-include
+./usr/include/m68k/cdefs.h			comp-c-include
+./usr/include/m68k/cpu.h			comp-c-include
+./usr/include/m68k/cpuframe.h			comp-c-include
+./usr/include/m68k/db_machdep.h			comp-obsolete		obsolete
+./usr/include/m68k/elf_machdep.h		comp-c-include
+./usr/include/m68k/endian.h			comp-c-include
+./usr/include/m68k/endian_machdep.h		comp-c-include
+./usr/include/m68k/float.h			comp-c-include
+./usr/include/m68k/frame.h			comp-c-include
+./usr/include/m68k/ieee.h			comp-c-include
+./usr/include/m68k/ieeefp.h			comp-c-include
+./usr/include/m68k/int_const.h			comp-c-include
+./usr/include/m68k/int_fmtio.h			comp-c-include
+./usr/include/m68k/int_limits.h			comp-c-include
+./usr/include/m68k/int_mwgwtypes.h		comp-c-include
+./usr/include/m68k/int_types.h			comp-c-include
+./usr/include/m68k/kcore.h			comp-c-include
+./usr/include/m68k/limits.h			comp-c-include
+./usr/include/m68k/lock.h			comp-c-include
+./usr/include/m68k/m68k.h			comp-c-include
+./usr/include/m68k/math.h			comp-c-include
+./usr/include/m68k/mcontext.h			comp-c-include
+./usr/include/m68k/mutex.h			comp-c-include
+./usr/include/m68k/param.h			comp-c-include
+./usr/include/m68k/pcb.h			comp-c-include
+./usr/include/m68k/pmap_motorola.h		comp-c-include
+./usr/include/m68k/pmc.h			comp-c-include
+./usr/include/m68k/proc.h			comp-c-include
+./usr/include/m68k/profile.h			comp-c-include
+./usr/include/m68k/psl.h			comp-c-include
+./usr/include/m68k/pte_motorola.h		comp-c-include
+./usr/include/m68k/ptrace.h			comp-c-include
+./usr/include/m68k/reg.h			comp-c-include
+./usr/include/m68k/rwlock.h			comp-c-include
+./usr/include/m68k/setjmp.h			comp-c-include
+./usr/include/m68k/signal.h			comp-c-include
+./usr/include/m68k/stdarg.h			comp-obsolete		obsolete
+./usr/include/m68k/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/m68k/sync_icache.h		comp-c-include
+./usr/include/m68k/sysctl.h			comp-c-include
+./usr/include/m68k/trap.h			comp-c-include
+./usr/include/m68k/types.h			comp-c-include
+./usr/include/m68k/varargs.h			comp-obsolete		obsolete
+./usr/include/m68k/wchar_limits.h		comp-c-include
+./usr/lib/libm68k.a				comp-c-lib
+./usr/lib/libm68k_p.a				comp-c-lib		profile
+./usr/lib/libm68k_g.a				-unknown-		debuglib
+./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug

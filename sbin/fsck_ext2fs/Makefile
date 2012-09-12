@@ -9,7 +9,7 @@ SRCS=	dir.c inode.c main.c pass1.c pass1b.c pass2.c pass3.c pass4.c \
 	pass5.c fsutil.c setup.c utilities.c ext2fs_bswap.c
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 CPPFLAGS+= -I${FSCK}
-.PATH:	-I/usr/nbsdsrc/src/sys/ufs/ext2fs ${FSCK}
+.PATH:	${NETBSDSRCDIR}/sys/ufs/ext2fs ${FSCK}
 
 SYMLINKS+= $(BINDIR)/$(PROG) $(BINDIR)/fsck.ext2
 

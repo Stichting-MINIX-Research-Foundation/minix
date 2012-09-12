@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.info.mk,v 1.39 2009/02/28 19:18:52 joerg Exp $
+#	$NetBSD: bsd.info.mk,v 1.40 2011/09/10 16:57:35 apb Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-cleandir:	cleaninfo
 realinstall:	infoinstall
 
 ##### Default values
@@ -78,15 +77,11 @@ infoinstall::	${_F}
 .endif # ${MKINFO} != "no"
 
 ##### Clean rules
-CLEANFILES+=	${INFOFILES}
-
-cleaninfo: .PHONY
-.if !empty(CLEANFILES)
-	rm -f ${CLEANFILES}
-.endif
+CLEANDIRFILES+=	${INFOFILES}
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
+.include <bsd.clean.mk>
 
 ${TARGETS}:	# ensure existence

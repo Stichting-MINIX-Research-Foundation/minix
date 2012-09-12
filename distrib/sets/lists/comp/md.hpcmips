@@ -1,0 +1,67 @@
+# $NetBSD: md.hpcmips,v 1.29 2011/07/17 20:54:31 joerg Exp $
+./usr/include/dev/hpc/hpcfbio.h			comp-c-include
+./usr/include/hpcmips				comp-c-include
+./usr/include/hpcmips/_G_config.h		comp-obsolete		obsolete
+./usr/include/hpcmips/ansi.h			comp-c-include
+./usr/include/hpcmips/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/hpcmips/apmvar.h			comp-c-include
+./usr/include/hpcmips/asm.h			comp-c-include
+./usr/include/hpcmips/autoconf.h		comp-c-include
+./usr/include/hpcmips/bootinfo.h		comp-c-include
+./usr/include/hpcmips/bsd-aout.h		comp-obsolete		obsolete
+./usr/include/hpcmips/bswap.h			comp-c-include
+./usr/include/hpcmips/bus.h			comp-c-include
+./usr/include/hpcmips/cdefs.h			comp-c-include
+./usr/include/hpcmips/cpu.h			comp-c-include
+./usr/include/hpcmips/db_machdep.h		comp-obsolete		obsolete
+./usr/include/hpcmips/disklabel.h		comp-c-include
+./usr/include/hpcmips/ecoff_machdep.h		comp-c-include
+./usr/include/hpcmips/elf.h			comp-obsolete		obsolete
+./usr/include/hpcmips/elf_machdep.h		comp-c-include
+./usr/include/hpcmips/endian.h			comp-c-include
+./usr/include/hpcmips/endian_machdep.h		comp-c-include
+./usr/include/hpcmips/float.h			comp-c-include
+./usr/include/hpcmips/ieee.h			comp-c-include
+./usr/include/hpcmips/ieeefp.h			comp-c-include
+./usr/include/hpcmips/int_const.h		comp-c-include
+./usr/include/hpcmips/int_fmtio.h		comp-c-include
+./usr/include/hpcmips/int_limits.h		comp-c-include
+./usr/include/hpcmips/int_mwgwtypes.h		comp-c-include
+./usr/include/hpcmips/int_types.h		comp-c-include
+./usr/include/hpcmips/intr.h			comp-c-include
+./usr/include/hpcmips/kcore.h			comp-c-include
+./usr/include/hpcmips/kdbparam.h		comp-c-include
+./usr/include/hpcmips/limits.h			comp-c-include
+./usr/include/hpcmips/lock.h			comp-c-include
+./usr/include/hpcmips/locore.h			comp-c-include
+./usr/include/hpcmips/math.h			comp-c-include
+./usr/include/hpcmips/mcontext.h		comp-c-include
+./usr/include/hpcmips/mips_opcode.h		comp-c-include
+./usr/include/hpcmips/mutex.h			comp-c-include
+./usr/include/hpcmips/param.h			comp-c-include
+./usr/include/hpcmips/pcb.h			comp-c-include
+./usr/include/hpcmips/pmap.h			comp-c-include
+./usr/include/hpcmips/pmc.h			comp-c-include
+./usr/include/hpcmips/proc.h			comp-c-include
+./usr/include/hpcmips/profile.h			comp-c-include
+./usr/include/hpcmips/psl.h			comp-c-include
+./usr/include/hpcmips/pte.h			comp-c-include
+./usr/include/hpcmips/ptrace.h			comp-c-include
+./usr/include/hpcmips/reg.h			comp-c-include
+./usr/include/hpcmips/regdef.h			comp-c-include
+./usr/include/hpcmips/regnum.h			comp-c-include
+./usr/include/hpcmips/reloc.h			comp-c-include
+./usr/include/hpcmips/rwlock.h			comp-c-include
+./usr/include/hpcmips/setjmp.h			comp-c-include
+./usr/include/hpcmips/signal.h			comp-c-include
+./usr/include/hpcmips/stdarg.h			comp-obsolete		obsolete
+./usr/include/hpcmips/sysconf.h			comp-c-include
+./usr/include/hpcmips/trap.h			comp-c-include
+./usr/include/hpcmips/types.h			comp-c-include
+./usr/include/hpcmips/varargs.h			comp-obsolete		obsolete
+./usr/include/hpcmips/vmparam.h			comp-c-include
+./usr/include/hpcmips/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

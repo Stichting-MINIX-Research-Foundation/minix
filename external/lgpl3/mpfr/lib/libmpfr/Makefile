@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/09/21 02:06:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2012/08/10 16:10:29 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -520,6 +520,4 @@ COPTS.set_ld.c+=	-Wno-error
 
 # Don't warn about functions which cannot be stack smash protected as
 # there are a lot of them.
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS += -Wno-stack-protector
-.endif

@@ -1,0 +1,7 @@
+# $NetBSD: md.shark,v 1.10 2011/12/15 07:52:13 macallan Exp $
+./dev/mouse-qms0				base-obsolete		obsolete
+./dev/qms0					base-obsolete		obsolete
+./usr/sbin/eeprom				base-sysutil-bin
+./sbin/ldconfig					base-sysutil-root	pic
+./usr/libexec/ld.so				base-sys-shlib		pic
+./usr/sbin/ofctl				base-sysutil-bin

@@ -1,0 +1,8 @@
+# $NetBSD: Makefile.dhcpcd,v 1.1 2009/04/07 11:49:17 joerg Exp $
+
+IMAGEDEPENDS+= 	\
+	${DESTDIR}/etc/dhcpcd.conf \
+	${DESTDIR}/libexec/dhcpcd-run-hooks \
+	${DESTDIR}/libexec/dhcpcd-hooks/30-hostname
+
+LISTS+=		${DISTRIBDIR}/common/list.dhcpcd

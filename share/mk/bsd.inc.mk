@@ -54,5 +54,4 @@ inclinkinstall:	.PHONY
 		${_MKSHECHO} ${INSTALL_SYMLINK} $$l $$t; \
 		${INSTALL_SYMLINK} $$l $$t; \
 	 done; )
-
 .endif

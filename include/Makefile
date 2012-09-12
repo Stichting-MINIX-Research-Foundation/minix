@@ -25,6 +25,9 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
 	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
 
+# MINIX Specific headers.
+INCS+=  env.h fetch.h lib.h libutil.h timers.h
+
 .else
 INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
@@ -75,10 +78,12 @@ SUBDIR+=	../common/include/prop
 .endif
 
 .if defined(__MINIX)
-.include "Makefile.minix.inc"
 SUBDIR+=	arch/${MACHINE_ARCH}
 SUBDIR+= 	arch sys minix
 SUBDIR+= 	net netinet netinet6
+SUBDIR+= 	ddekit
+.else
+SUBDIR+=	../common/include/ppath
 .endif
 
 .include <bsd.prog.mk>

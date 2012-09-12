@@ -1,0 +1,2 @@
+# $NetBSD: rescue.ad.m68k,v 1.3 2010/03/10 23:13:09 abs Exp $
+./rescue/edlabel				base-rescue-root	obsolete

@@ -1,0 +1,450 @@
+# $NetBSD: shl.mi,v 1.236 2012/09/18 15:14:42 skrll Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
+./usr/lib/crtbeginS.o				comp-c-lib
+./usr/lib/crtbeginT.o				comp-c-lib
+./usr/lib/crtendS.o				comp-c-lib
+./usr/lib/libarchive_pic.a			comp-c-piclib
+./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
+./usr/lib/libatf-c++_pic.a			comp-atf-piclib		atf
+./usr/lib/libatf-c_pic.a			comp-atf-piclib		atf
+./usr/lib/libatf_pic.a				comp-obsolete		obsolete
+./usr/lib/libavl_pic.a				comp-zfs-piclib		zfs
+./usr/lib/libbind9_pic.a			comp-bind-piclib
+./usr/lib/libbluetooth_pic.a			comp-c-piclib
+./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
+./usr/lib/libbz2_pic.a				comp-c-piclib
+./usr/lib/libc_pic.a				comp-c-piclib
+./usr/lib/libcdk_pic.a				comp-obsolete		obsolete
+./usr/lib/libcom_err_pic.a			comp-c-piclib		kerberos
+./usr/lib/libcompat_pic.a			comp-c-piclib
+./usr/lib/libcrypt_pic.a			comp-c-piclib
+./usr/lib/libcrypto_pic.a			comp-c-piclib		crypto
+./usr/lib/libctf_pic.a				comp-c-piclib		dtrace
+./usr/lib/libcurses_pic.a			comp-c-piclib
+./usr/lib/libdes_pic.a				comp-c-piclib		crypto
+./usr/lib/libdevmapper_pic.a			comp-lvm-piclib		lvm
+./usr/lib/libdm_pic.a				comp-c-piclib
+./usr/lib/libdns_pic.a				comp-bind-piclib
+./usr/lib/libdns_sd_pic.a			comp-mdns-piclib	mdns
+./usr/lib/libdtrace_pic.a			comp-c-piclib		dtrace
+./usr/lib/libdwarf_pic.a			comp-c-piclib
+./usr/lib/libedit_pic.a				comp-c-piclib
+./usr/lib/libelf_pic.a				comp-c-piclib
+./usr/lib/libevent_pic.a			comp-c-piclib
+./usr/lib/libexecinfo_pic.a			comp-c-piclib
+./usr/lib/libexpat_pic.a			comp-c-piclib
+./usr/lib/libfetch_pic.a			comp-c-piclib
+./usr/lib/libform_pic.a				comp-c-piclib
+./usr/lib/libg2c_pic.a				comp-fortran-lib	gcc=3
+./usr/lib/libg2c_pic.a				comp-obsolete		gcc=4,obsolete
+./usr/lib/libgcc_eh.a				comp-c-lib		gcccmds
+./usr/lib/libgcc_eh_p.a				comp-c-proflib		obsolete
+./usr/lib/libgcc_eh_pic.a			comp-c-piclib		obsolete
+./usr/lib/libgcc_pic.a				comp-c-lib		gcc=4
+./usr/lib/libgcc_pic.a				comp-c-lib		obsolete,gcc=45
+./usr/lib/libgmp.so				comp-c-shlib		obsolete
+./usr/lib/libgmp.so.10				comp-c-shlib		obsolete
+./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete
+./usr/lib/libgmp_pic.a				comp-c-piclib		obsolete
+./usr/lib/libgnumalloc_pic.a			comp-c-piclib
+./usr/lib/libgomp_pic.a				comp-c-piclib		gcc=45
+./usr/lib/libgssapi_pic.a			comp-c-piclib		kerberos
+./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
+./usr/lib/libheimbase_pic.a			comp-c-piclib		kerberos
+./usr/lib/libheimntlm_pic.a			comp-c-piclib		kerberos
+./usr/lib/libhx509_pic.a			comp-c-piclib		kerberos
+./usr/lib/libintl_pic.a				comp-c-piclib
+./usr/lib/libipsec_pic.a			comp-c-piclib
+./usr/lib/libisc_pic.a				comp-bind-piclib
+./usr/lib/libisccc_pic.a			comp-bind-piclib
+./usr/lib/libisccfg_pic.a			comp-bind-piclib
+./usr/lib/libiscsi_pic.a			comp-c-piclib		iscsi
+./usr/lib/libisns_pic.a				comp-isns-piclib	
+./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		kerberos
+./usr/lib/libkadm5srv_pic.a			comp-c-piclib		kerberos
+./usr/lib/libkadm_pic.a				comp-obsolete		obsolete
+./usr/lib/libkafs_pic.a				comp-c-piclib		kerberos
+./usr/lib/libkdb_pic.a				comp-obsolete		obsolete
+./usr/lib/libkdc_pic.a				comp-c-piclib		kerberos
+./usr/lib/libkrb5_pic.a				comp-c-piclib		kerberos
+./usr/lib/libkrb_pic.a				comp-obsolete		obsolete
+./usr/lib/libkstream_pic.a			comp-obsolete		obsolete
+./usr/lib/libkvm_pic.a				comp-c-piclib
+./usr/lib/liblber_pic.a				comp-ldap-piclib	ldap
+./usr/lib/libldap_pic.a				comp-ldap-piclib	ldap
+./usr/lib/libldap_r_pic.a			comp-ldap-piclib	ldap
+./usr/lib/liblua_pic.a				comp-c-piclib
+./usr/lib/liblwres_pic.a			comp-bind-piclib
+./usr/lib/liblzf_pic.a				comp-c-piclib
+./usr/lib/liblzma_pic.a				comp-c-piclib
+./usr/lib/libm_pic.a				comp-c-piclib
+./usr/lib/libmagic_pic.a			comp-c-piclib
+./usr/lib/libmenu_pic.a				comp-c-piclib
+./usr/lib/libmj_pic.a				comp-c-piclib
+./usr/lib/libmpc.so				comp-c-shlib		obsolete
+./usr/lib/libmpc.so.2				comp-c-shlib		obsolete
+./usr/lib/libmpc.so.2.0				comp-c-shlib		obsolete
+./usr/lib/libmpc_pic.a				comp-c-piclib		obsolete
+./usr/lib/libmpfr.so				comp-c-shlib		obsolete
+./usr/lib/libmpfr.so.4				comp-c-shlib		obsolete
+./usr/lib/libmpfr.so.4.1			comp-c-shlib		obsolete
+./usr/lib/libmpfr_pic.a				comp-c-piclib		obsolete
+./usr/lib/libmudflap_pic.a			comp-c-piclib		gcc=45
+./usr/lib/libmudflap.so				comp-c-shlib		gcc=45
+./usr/lib/libmudflap.so.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflap.so.0.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth_pic.a			comp-c-piclib		gcc=45
+./usr/lib/libmudflapth.so			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so.0.0			comp-c-shlib		gcc=45
+./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
+./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
+./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
+./usr/lib/libobjc_pic.a				comp-objc-piclib	gcccmds
+./usr/lib/libopcodes.so.5			comp-c-shlib		binutils
+./usr/lib/libopcodes.so.5.0			comp-c-shlib		binutils
+./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
+./usr/lib/libossaudio_pic.a			comp-c-piclib
+./usr/lib/libp2k_pic.a				comp-puffs-piclib	rump
+./usr/lib/libpam_pic.a				comp-c-piclib		pam
+./usr/lib/libpcap_pic.a				comp-c-piclib
+./usr/lib/libpcc_pic.a				comp-obsolete		obsolete
+./usr/lib/libpci_pic.a				comp-c-piclib
+./usr/lib/libperfuse_pic.a			comp-perfuse-piclib
+./usr/lib/libposix_pic.a			comp-c-piclib
+./usr/lib/libppath_pic.a			comp-c-piclib
+./usr/lib/libprop_pic.a				comp-c-piclib
+./usr/lib/libpthread_dbg_pic.a			comp-c-piclib
+./usr/lib/libpthread_pic.a			comp-c-piclib
+./usr/lib/libpuffs_pic.a			comp-puffs-piclib
+./usr/lib/libquota_pic.a			comp-c-piclib
+./usr/lib/libradius_pic.a			comp-c-piclib
+./usr/lib/librefuse_pic.a			comp-refuse-piclib
+./usr/lib/libresolv_pic.a			comp-c-piclib
+./usr/lib/libroken_pic.a			comp-c-piclib		kerberos
+./usr/lib/librpcsvc_pic.a			comp-c-piclib
+./usr/lib/librt_pic.a				comp-c-piclib
+./usr/lib/librump_pic.a				comp-c-piclib		rump
+./usr/lib/librumpclient_pic.a			comp-c-piclib		rump
+./usr/lib/librumpcrypto_pic.a			comp-obsolete		obsolete
+./usr/lib/librumpdev_audio_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_bpf_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_cgd_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_disk_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_dm_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_drvctl_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_fss_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_md_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_pad_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_pud_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_putter_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_scsipi_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_scsitest_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_ugenhc_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_ulpt_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_umass_pic.a		comp-c-piclib		rump
+./usr/lib/librumpdev_usb_pic.a			comp-c-piclib		rump
+./usr/lib/librumpdev_wscons_pic.a		comp-c-piclib		rump
+./usr/lib/librumpfs_cd9660_pic.a		comp-c-piclib		rump
+./usr/lib/librumpfs_efs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_ext2fs_pic.a		comp-c-piclib		rump
+./usr/lib/librumpfs_fdesc_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_ffs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_hfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_kernfs_pic.a		comp-c-piclib		rump
+./usr/lib/librumpfs_lfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_mfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_msdos_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_nfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_nfsserver_pic.a		comp-c-piclib		rump
+./usr/lib/librumpfs_nilfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_ntfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_null_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_nullfs_pic.a		comp-obsolete		obsolete
+./usr/lib/librumpfs_ptyfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_smbfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_syspuffs_pic.a		comp-c-piclib		rump
+./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib		rump
+./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_udf_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_ufs_pic.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_umap_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_umapfs_pic.a		comp-obsolete		obsolete
+./usr/lib/librumpfs_union_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_v7fs_pic.a			comp-c-piclib		rump
+./usr/lib/librumpfs_zfs_pic.a			comp-c-piclib		zfs,rump
+./usr/lib/librumphijack_pic.a			comp-c-piclib		rump
+./usr/lib/librumpkern_crypto_pic.a		comp-c-piclib		rump
+./usr/lib/librumpkern_ksem_pic.a		comp-obsolete		obsolete
+./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		zfs,rump
+./usr/lib/librumpkern_tty_pic.a			comp-c-piclib		rump
+./usr/lib/librumpkern_z_pic.a			comp-c-piclib		rump
+./usr/lib/librumpnet_agr_pic.a			comp-c-piclib		rump
+./usr/lib/librumpnet_bridge_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_local_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_net80211_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_net_pic.a			comp-c-piclib		rump
+./usr/lib/librumpnet_netbt_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_netinet_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_npf.so			comp-c-piclib		rump
+./usr/lib/librumpnet_npf.so.0			comp-c-piclib		rump
+./usr/lib/librumpnet_npf.so.0.0			comp-c-piclib		rump
+./usr/lib/librumpnet_npf_pic.a			comp-c-piclib		rump
+./usr/lib/librumpnet_pic.a			comp-c-piclib		rump
+./usr/lib/librumpnet_shmif_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib		rump
+./usr/lib/librumpuser_pic.a			comp-c-piclib		rump
+./usr/lib/librumpvfs_fifofs_pic.a		comp-c-piclib		rump
+./usr/lib/librumpvfs_layerfs_pic.a		comp-c-piclib		rump
+./usr/lib/librumpvfs_pic.a			comp-c-piclib		rump
+./usr/lib/libsaslc_pic.a			comp-c-piclib		crypto
+./usr/lib/libsdp_pic.a				comp-obsolete		obsolete
+./usr/lib/libskey_pic.a				comp-c-piclib		skey
+./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
+./usr/lib/libsqlite3_pic.a			comp-c-piclib
+./usr/lib/libss_pic.a				comp-obsolete		obsolete
+./usr/lib/libssh_pic.a				comp-c-piclib		crypto
+./usr/lib/libssl_pic.a				comp-c-piclib		crypto
+./usr/lib/libssp_pic.a				comp-obsolete		obsolete
+./usr/lib/libstdc++_pic.a			comp-cxx-piclib		cxx,gcccmds
+./usr/lib/libtermcap_pic.a			comp-c-piclib
+./usr/lib/libterminfo_pic.a			comp-c-piclib
+./usr/lib/libtermlib_pic.a			comp-c-piclib
+./usr/lib/libtre_pic.a				comp-c-piclib
+./usr/lib/libukfs_pic.a				comp-c-piclib		rump
+./usr/lib/libumem_pic.a				comp-zfs-piclib		zfs
+./usr/lib/libusbhid_pic.a			comp-c-piclib
+./usr/lib/libutil_pic.a				comp-c-piclib
+./usr/lib/libuutil_pic.a			comp-zfs-piclib		zfs
+./usr/lib/libwind_pic.a				comp-c-piclib		kerberos
+./usr/lib/libwrap_pic.a				comp-c-piclib
+./usr/lib/libz_pic.a				comp-c-piclib
+./usr/lib/libzfs_pic.a				comp-zfs-piclib		zfs
+./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libEUCTW.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libGBK2K.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libHZ.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libISO2022.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libJOHAB.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libMSKanji.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libUES.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libUTF1632.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libUTF7.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libUTF8.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libVIQR.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libZW.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libiconv_none.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libiconv_std.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libmapper_646.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libmapper_none.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libmapper_parallel.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug
+./usr/libdata/debug/usr/lib/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug
+./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug
+./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
+./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug	comp-atf-debug	atf,debug
+./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug	comp-atf-debug	atf,debug
+./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
+./usr/libdata/debug/usr/lib/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug
+./usr/libdata/debug/usr/lib/libbind9.so.5.7.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libc.so.12.185.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libcrypto.so.8.0.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug
+./usr/libdata/debug/usr/lib/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug
+./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug
+./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libdns.so.5.7.debug 	comp-bind-debug debug
+./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug
+./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug
+./usr/libdata/debug/usr/lib/libdwarf.so.0.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libedit.so.3.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libelf.so.0.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libevent.so.3.2.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libexpat.so.2.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libform.so.6.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug
+./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug
+./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug	comp-c-shlib	obsolete
+./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libgomp.so.1.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libheimbase.so.1.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libheimntlm.so.4.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libintl.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/libisc.so.5.7.debug		comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisccc.so.5.7.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisccfg.so.5.7.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug
+./usr/libdata/debug/usr/lib/libisns.so.0.0.debug	comp-isns-debug	debug
+./usr/libdata/debug/usr/lib/libkadm5clnt.so.13.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libkadm5srv.so.14.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libkafs.so.12.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libkdc.so.2.0.debug		comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libkrb5.so.26.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libkvm.so.6.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug
+./usr/libdata/debug/usr/lib/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug
+./usr/libdata/debug/usr/lib/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug
+./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/liblwres.so.5.7.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/liblzma.so.1.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libm.so.0.10.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libmagic.so.3.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libmj.so.1.0.debug		comp-crypto-debug	debug
+./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug		comp-c-shlib	obsolete
+./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug	comp-c-shlib	obsolete
+./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug		comp-npf-debug	npf,debug
+./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
+./usr/libdata/debug/usr/lib/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug
+./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug
+./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug
+./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/lib/libpam.so.3.0.debug		comp-sys-debug	pam,debug
+./usr/libdata/debug/usr/lib/libpcap.so.4.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/libpci.so.2.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug	comp-perfuse-debug	debug
+./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libppath.so.0.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libpthread.so.1.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/lib/libquota.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libradius.so.4.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/librefuse.so.2.0.debug	comp-refuse-debug	debug
+./usr/libdata/debug/usr/lib/libresolv.so.2.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/libroken.so.19.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/librt.so.1.1.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/librump.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_audio.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_bpf.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_cgd.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_disk.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_dm.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_drvctl.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_fss.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_md.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_netsmb.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_pad.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_pud.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_putter.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_raidframe.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_rnd.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_scsipi.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_scsitest.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_sysmon.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_ubt.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_ucom.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_ugenhc.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_ulpt.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_umass.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_usb.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_wscons.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_cd9660.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_efs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_ext2fs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_fdesc.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_ffs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_hfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_kernfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_lfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_mfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_msdos.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_nfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_nfsserver.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_nilfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_ntfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_null.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_ptyfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_smbfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_syspuffs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_sysvbfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_tmpfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_udf.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_umap.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_union.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_v7fs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_zfs.so.0.0.debug		comp-rump-debug	debug,zfs,rump
+./usr/libdata/debug/usr/lib/librumphijack.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpkern_crypto.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-obsolete		obsolete,rump
+./usr/libdata/debug/usr/lib/librumpkern_solaris.so.0.0.debug	comp-rump-debug	debug,zfs,rump
+./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_agr.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_bridge.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_local.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_net.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_net80211.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_netbt.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_netinet.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_npf.so.0.0.debug		comp-rump-debug	npf,debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_shmif.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_sockin.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_virtif.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpuser.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
+./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libsqlite3.so.1.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libssh.so.19.0.debug	comp-secsh-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssl.so.10.0.debug		comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug
+./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug
+./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug
+./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libtre.so.0.8.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug	comp-sys-debug	debug,rump
+./usr/libdata/debug/usr/lib/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
+./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libutil.so.7.21.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
+./usr/libdata/debug/usr/lib/libwind.so.0.0.debug		comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/libz.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
+./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
+./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-sys-debug	debug,npf

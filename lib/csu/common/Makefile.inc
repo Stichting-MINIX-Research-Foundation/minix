@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.2 2010/12/07 19:51:02 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2012/03/25 06:55:19 joerg Exp $
 
 .include <bsd.own.mk>
 
-COMMON_DIR:=	${.PARSEDIR}
+COMMON_DIR:=	${.CURDIR}/common
 .PATH:		${COMMON_DIR}
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so -I${COMMON_DIR} -I.
@@ -23,7 +23,7 @@ crtbegin.o: crtbegin.S
 
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+	${COMPILE.S} -DPIC -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
@@ -45,22 +45,22 @@ PICFLAGS=	-fPIC
 PICFLAGS=
 .endif
 
-crt0.o: crt0-common.c crt0.S
+crt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.c.o ${.TARGET}.S.o
-	rm -f ${.TARGET}.c.o ${.TARGET}.S.o
+	${COMPILE.c} ${PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
+	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
-gcrt0.o: crt0-common.c crt0.S
+gcrt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.c.o ${.TARGET}.S.o
-	rm -f ${.TARGET}.c.o ${.TARGET}.S.o
+	${COMPILE.c} ${PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
+	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
@@ -68,7 +68,7 @@ gcrt0.o: crt0-common.c crt0.S
 sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${COMMON_DIR}/sysident_assym.cf | \
-	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
 	    > sysident_assym.h.tmp && \
 	mv -f sysident_assym.h.tmp sysident_assym.h
 

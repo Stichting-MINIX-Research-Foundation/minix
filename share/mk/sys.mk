@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.99 2008/09/07 15:54:52 kent Exp $
+#	$NetBSD: sys.mk,v 1.109 2012/06/22 20:32:35 abs Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run MINIX.
@@ -6,55 +6,65 @@ unix?=		We run MINIX.
 # This variable should be used to differentiate Minix builds in Makefiles.
 __MINIX=	yes
 
+COMPILER_TYPE=gnu
+NBSD_LIBC=	yes
+
+.if defined(MKSMALL) && ${MKSMALL} == "yes"
+DBG=	-Os
+CFLAGS+= -DNDEBUG
+.endif
+
 .SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
 
 .LIBS:		.a
 
-### MINIX: see at bottom
-#AR?=		aal
+AR?=		ar
 ARFLAGS?=	rl
 RANLIB?=	ranlib
 
 AS?=		as
 AFLAGS?=
-COMPILE.s?=	${CC} ${AFLAGS} -c
-LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
-#COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c -traditional-cpp
-COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
-LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
+COMPILE.s?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} -c
+LINK.s?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${LDFLAGS}
+_ASM_TRADITIONAL_CPP=	-x assembler-with-cpp
+COMPILE.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${_ASM_TRADITIONAL_CPP} -c
+LINK.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		clang
-.if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "armeb" || \
-    ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
-#DBG?=	-O2
-#MINIX: use -O for now
-DBG?=	-O
-.elif ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
+
+.if ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 # -O2 is too -falign-* zealous for low-memory sh3 machines
 DBG?=	-Os -freorder-blocks
+.elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
+# see src/doc/HACKS for details
+DBG?=	-Os
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
-.elif ${MACHINE_ARCH} == "m68000"
-# see src/doc/HACKS for details
-DBG?=	-O1
 .else
+#MINIX: use -O for now
+#DBG?=	-O2
 DBG?=	-O
-DBG?=
 .endif
 CFLAGS?=	${DBG}
 LDFLAGS?=
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
+
+# C Type Format data is required for DTrace
+# XXX TBD VERSION is not defined
+CTFFLAGS	?=	-L VERSION
+CTFMFLAGS	?=	-t -L VERSION
+
+.if defined(MKDTRACE) && ${MKDTRACE} != "no"
+CTFCONVERT	?=	${TOOL_CTFCONVERT}
+CTFMERGE	?=	${TOOL_CTFMERGE}
+.if defined(CFLAGS) && (${CFLAGS:M-g} != "")
+CTFFLAGS	+=	-g
+CTFMFLAGS	+=	-g
+.else
+CFLAGS		+=	-g
+.endif
+.endif
 
 CXX?=		c++
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99}
@@ -62,8 +72,8 @@ CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
 __ALLSRC2=	${empty(MAKEOBJDIR):?${__ALLSRC1}:${__ALLSRC1:S|^${MAKEOBJDIR}|^obj|}}
 __ALLSRC3=	${empty(NETBSDSRCDIR):?${__ALLSRC2}:${__ALLSRC2:S|^${NETBSDSRCDIR}|^src|}}
-
-_CXXSEED?=	${BUILDSEED:D-frandom-seed=${BUILDSEED:Q}/${__ALLSRC3:O:Q}/${.TARGET:Q}}
+__BUILDSEED=	${BUILDSEED}/${__ALLSRC3:O}/${.TARGET}
+_CXXSEED?=	${BUILDSEED:D-frandom-seed=${__BUILDSEED:hash}}
 
 COMPILE.cc?=	${CXX} ${_CXXSEED} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
@@ -121,8 +131,14 @@ YACC.y?=	${YACC} ${YFLAGS}
 # C
 .c:
 	${LINK.c} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .c.o:
 	${COMPILE.c} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .c.a:
 	${COMPILE.c} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -154,8 +170,14 @@ YACC.y?=	${YACC} ${YFLAGS}
 
 .F:
 	${LINK.F} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .F.o:
 	${COMPILE.F} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .F.a:
 	${COMPILE.F} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -173,8 +195,14 @@ YACC.y?=	${YACC} ${YFLAGS}
 # Pascal
 .p:
 	${LINK.p} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .p.o:
 	${COMPILE.p} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .p.a:
 	${COMPILE.p} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -183,16 +211,28 @@ YACC.y?=	${YACC} ${YFLAGS}
 # Assembly
 .s:
 	${LINK.s} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .s.o:
 	${COMPILE.s} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .s.a:
 	${COMPILE.s} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
 	rm -f ${.PREFIX}.o
 .S:
 	${LINK.S} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .S.o:
 	${COMPILE.S} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .S.a:
 	${COMPILE.S} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -225,18 +265,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 	rm -f y.tab.c
 
 # Shell
-# .sh:
-# 	rm -f ${.TARGET}
-# 	cp ${.IMPSRC} ${.TARGET}
-# 	chmod a+x ${.TARGET}
-
-# MINIX
-
-COMPILER_TYPE=gnu
-AR?=   ar
-NBSD_LIBC=	yes
-
-.if defined(MKSMALL) && ${MKSMALL} == "yes"
-DBG=	-Os
-CFLAGS+= -DNDEBUG
-.endif
+.sh:
+	rm -f ${.TARGET}
+	cp ${.IMPSRC} ${.TARGET}
+	chmod a+x ${.TARGET}

@@ -1,0 +1,21 @@
+# $NetBSD: md.alpha,v 1.40 2011/07/28 20:30:07 dyoung Exp $
+./usr/bin/fdformat				base-util-bin
+./usr/lib/libalpha.so				base-sys-shlib
+./usr/lib/libalpha.so.0				base-sys-shlib
+./usr/lib/libalpha.so.0.0			base-sys-shlib
+./usr/lkm/dummy_pci.o				base-obsolete		obsolete
+./usr/lkm/wi_pcmcia.o				base-obsolete		obsolete
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/bootxx				base-obsolete		obsolete
+./usr/mdec/bootxx.old				base-obsolete		obsolete
+./usr/mdec/bootxx_cd9660			base-sysutil-bin
+./usr/mdec/bootxx_ffs				base-sysutil-bin
+./usr/mdec/bootxx_ffsv2				base-sysutil-bin
+./usr/mdec/bootxx_lfs				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/installboot.old			base-obsolete		obsolete
+./usr/mdec/mkbootimage				base-sysutil-bin
+./usr/mdec/netboot				base-sysutil-bin
+./usr/mdec/setnetbootinfo			base-sysutil-bin
+./usr/mdec/ustarboot				base-sysutil-bin
+./usr/sbin/bad144				base-sysutil-bin

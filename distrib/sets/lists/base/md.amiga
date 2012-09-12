@@ -1,0 +1,19 @@
+# $NetBSD: md.amiga,v 1.54 2008/11/29 17:57:33 tsutsui Exp $
+./sbin/binpatch					base-sysutil-root
+./usr/mdec/boot.amiga				base-sysutil-bin
+./usr/mdec/bootxx_fd				base-sysutil-bin
+./usr/mdec/bootxx_ffs				base-sysutil-bin
+./usr/mdec/fdboot				base-obsolete		obsolete
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/xxboot				base-obsolete		obsolete
+./usr/sbin/grfconfig				base-sysutil-bin
+./usr/sbin/iteconfig				base-sysutil-bin
+./usr/sbin/loadkmap				base-sysutil-bin
+./usr/sbin/videomode				base-sysutil-bin
+./usr/share/keymaps/amiga/din.map		base-sys-share
+./usr/share/keymaps/amiga/es.map		base-sys-share
+./usr/share/keymaps/amiga/fr.map		base-sys-share
+./usr/share/keymaps/amiga/pl_din.map		base-sys-share
+./usr/share/keymaps/amiga/pl_us.map		base-sys-share
+./usr/share/keymaps/amiga/sw.map		base-sys-share
+./usr/share/keymaps/amiga/us.map		base-sys-share

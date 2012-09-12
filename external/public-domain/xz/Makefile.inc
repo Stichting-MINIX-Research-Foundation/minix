@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2010/11/02 16:34:36 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.3 2011/10/16 17:24:32 joerg Exp $
 
 XZHOMEPAGE=	http://tukaani.org/xz/
 XZVERSION=	5.0.0

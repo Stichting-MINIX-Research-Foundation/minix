@@ -1,0 +1,61 @@
+# $NetBSD: md.mvmeppc,v 1.14 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/mvmeppc				comp-c-include
+./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
+./usr/include/mvmeppc/ansi.h			comp-c-include
+./usr/include/mvmeppc/aout_machdep.h		comp-c-include
+./usr/include/mvmeppc/asm.h			comp-c-include
+./usr/include/mvmeppc/atomic.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/bat.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/bootinfo.h		comp-c-include
+./usr/include/mvmeppc/bswap.h			comp-c-include
+./usr/include/mvmeppc/bus.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/cdefs.h			comp-c-include
+./usr/include/mvmeppc/cpu.h			comp-c-include
+./usr/include/mvmeppc/db_machdep.h		comp-obsolete		obsolete
+./usr/include/mvmeppc/disklabel.h		comp-c-include
+./usr/include/mvmeppc/elf_machdep.h		comp-c-include
+./usr/include/mvmeppc/endian.h			comp-c-include
+./usr/include/mvmeppc/endian_machdep.h		comp-c-include
+./usr/include/mvmeppc/float.h			comp-c-include
+./usr/include/mvmeppc/fpu.h			comp-c-include
+./usr/include/mvmeppc/frame.h			comp-c-include
+./usr/include/mvmeppc/ieee.h			comp-c-include
+./usr/include/mvmeppc/ieeefp.h			comp-c-include
+./usr/include/mvmeppc/int_const.h		comp-c-include
+./usr/include/mvmeppc/int_fmtio.h		comp-c-include
+./usr/include/mvmeppc/int_limits.h		comp-c-include
+./usr/include/mvmeppc/int_mwgwtypes.h		comp-c-include
+./usr/include/mvmeppc/int_types.h		comp-c-include
+./usr/include/mvmeppc/intr.h			comp-c-include
+./usr/include/mvmeppc/ipkdb.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/kcore.h			comp-c-include
+./usr/include/mvmeppc/kgdb.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/limits.h			comp-c-include
+./usr/include/mvmeppc/lock.h			comp-c-include
+./usr/include/mvmeppc/math.h			comp-c-include
+./usr/include/mvmeppc/mcontext.h		comp-c-include
+./usr/include/mvmeppc/mutex.h			comp-c-include
+./usr/include/mvmeppc/param.h			comp-c-include
+./usr/include/mvmeppc/pcb.h			comp-c-include
+./usr/include/mvmeppc/pio.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/pmap.h			comp-c-include
+./usr/include/mvmeppc/pmc.h			comp-c-include
+./usr/include/mvmeppc/powerpc.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/proc.h			comp-c-include
+./usr/include/mvmeppc/profile.h			comp-c-include
+./usr/include/mvmeppc/psl.h			comp-c-include
+./usr/include/mvmeppc/pte.h			comp-c-include
+./usr/include/mvmeppc/ptrace.h			comp-c-include
+./usr/include/mvmeppc/reg.h			comp-c-include
+./usr/include/mvmeppc/reloc.h			comp-c-include
+./usr/include/mvmeppc/rwlock.h			comp-c-include
+./usr/include/mvmeppc/setjmp.h			comp-c-include
+./usr/include/mvmeppc/signal.h			comp-c-include
+./usr/include/mvmeppc/spr.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/stdarg.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/trap.h			comp-c-include
+./usr/include/mvmeppc/types.h			comp-c-include
+./usr/include/mvmeppc/varargs.h			comp-obsolete		obsolete
+./usr/include/mvmeppc/vmparam.h			comp-c-include
+./usr/include/mvmeppc/wchar_limits.h		comp-c-include

@@ -4,6 +4,9 @@
 .include <bsd.own.mk>
 
 USE_FORT?= no	# data-driven bugs?
+# LSC Until this is fixed
+NOGCCERROR=yes
+CPPFLAGS+=-isystem ${DESTDIR}/usr/include
 
 WARNS=		4
 

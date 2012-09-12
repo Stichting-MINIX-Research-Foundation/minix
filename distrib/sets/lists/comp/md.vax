@@ -1,0 +1,79 @@
+# $NetBSD: md.vax,v 1.37 2011/11/10 17:18:22 chs Exp $
+./usr/include/ieeefp.h				comp-obsolete		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/vax				comp-c-include
+./usr/include/vax/_G_config.h			comp-obsolete		obsolete
+./usr/include/vax/ansi.h			comp-c-include
+./usr/include/vax/aout_machdep.h		comp-c-include
+./usr/include/vax/asm.h				comp-c-include
+./usr/include/vax/bswap.h			comp-c-include
+./usr/include/vax/bus.h				comp-c-include
+./usr/include/vax/byte_swap.h			comp-c-include
+./usr/include/vax/cdefs.h			comp-c-include
+./usr/include/vax/clock.h			comp-c-include
+./usr/include/vax/coff_machdep.h		comp-c-include
+./usr/include/vax/cpu.h				comp-c-include
+./usr/include/vax/db_machdep.h			comp-obsolete		obsolete
+./usr/include/vax/disklabel.h			comp-c-include
+./usr/include/vax/elf_machdep.h			comp-c-include
+./usr/include/vax/endian.h			comp-c-include
+./usr/include/vax/endian_machdep.h		comp-c-include
+./usr/include/vax/float.h			comp-c-include
+./usr/include/vax/frame.h			comp-c-include
+./usr/include/vax/ibcs2_machdep.h		comp-c-include
+./usr/include/vax/int_const.h			comp-c-include
+./usr/include/vax/int_fmtio.h			comp-c-include
+./usr/include/vax/int_limits.h			comp-c-include
+./usr/include/vax/int_mwgwtypes.h		comp-c-include
+./usr/include/vax/int_types.h			comp-c-include
+./usr/include/vax/ioa.h				comp-c-include
+./usr/include/vax/ka410.h			comp-c-include
+./usr/include/vax/ka420.h			comp-c-include
+./usr/include/vax/ka43.h			comp-c-include
+./usr/include/vax/ka630.h			comp-c-include
+./usr/include/vax/ka650.h			comp-c-include
+./usr/include/vax/ka750.h			comp-c-include
+./usr/include/vax/ka820.h			comp-c-include
+./usr/include/vax/lcgreg.h			comp-c-include
+./usr/include/vax/leds.h			comp-c-include
+./usr/include/vax/limits.h			comp-c-include
+./usr/include/vax/lock.h			comp-c-include
+./usr/include/vax/macros.h			comp-c-include
+./usr/include/vax/math.h			comp-c-include
+./usr/include/vax/mcontext.h			comp-c-include
+./usr/include/vax/mutex.h			comp-c-include
+./usr/include/vax/mtpr.h			comp-c-include
+./usr/include/vax/nexus.h			comp-c-include
+./usr/include/vax/param.h			comp-c-include
+./usr/include/vax/pcb.h				comp-c-include
+./usr/include/vax/pmap.h			comp-c-include
+./usr/include/vax/pmc.h				comp-c-include
+./usr/include/vax/proc.h			comp-c-include
+./usr/include/vax/profile.h			comp-c-include
+./usr/include/vax/psl.h				comp-c-include
+./usr/include/vax/pte.h				comp-c-include
+./usr/include/vax/ptrace.h			comp-c-include
+./usr/include/vax/qdioctl.h			comp-c-include
+./usr/include/vax/qdreg.h			comp-c-include
+./usr/include/vax/qduser.h			comp-c-include
+./usr/include/vax/qevent.h			comp-c-include
+./usr/include/vax/reg.h				comp-c-include
+./usr/include/vax/rpb.h				comp-c-include
+./usr/include/vax/rsp.h				comp-c-include
+./usr/include/vax/rwlock.h			comp-c-include
+./usr/include/vax/scb.h				comp-c-include
+./usr/include/vax/setjmp.h			comp-c-include
+./usr/include/vax/sid.h				comp-c-include
+./usr/include/vax/signal.h			comp-c-include
+./usr/include/vax/stdarg.h			comp-obsolete		obsolete
+./usr/include/vax/trap.h			comp-c-include
+./usr/include/vax/types.h			comp-c-include
+./usr/include/vax/uvax.h			comp-c-include
+./usr/include/vax/varargs.h			comp-obsolete		obsolete
+./usr/include/vax/vaxfp.h			comp-c-include
+./usr/include/vax/vmparam.h			comp-c-include
+./usr/include/vax/vsbus.h			comp-c-include
+./usr/include/vax/wchar_limits.h		comp-c-include
+./usr/lib/c++rt0.o				comp-obsolete		obsolete
+./usr/lib/scrt0.o				comp-obsolete		obsolete
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic

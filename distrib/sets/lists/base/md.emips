@@ -1,0 +1,7 @@
+#	$NetBSD: md.emips,v 1.1 2011/01/26 01:18:45 pooka Exp $
+#
+./boot.emips					base-sysutil-bin
+./usr/mdec/boot.emips				base-sysutil-bin
+./usr/mdec/bootxx_cd9660			base-sysutil-bin
+./usr/mdec/bootxx_ffs				base-sysutil-bin
+./usr/mdec/bootxx_lfs				base-sysutil-bin

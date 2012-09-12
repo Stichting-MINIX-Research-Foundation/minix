@@ -1,0 +1,65 @@
+# $NetBSD: md.mipsco,v 1.20 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/mipsco				comp-c-include
+./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete
+./usr/include/mipsco/ansi.h			comp-c-include
+./usr/include/mipsco/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/mipsco/asm.h			comp-c-include
+./usr/include/mipsco/autoconf.h			comp-c-include
+./usr/include/mipsco/bsd-aout.h			comp-obsolete		obsolete
+./usr/include/mipsco/bswap.h			comp-c-include
+./usr/include/mipsco/bus.h			comp-c-include
+./usr/include/mipsco/cdefs.h			comp-c-include
+./usr/include/mipsco/conf.h			comp-obsolete		obsolete
+./usr/include/mipsco/cpu.h			comp-c-include
+./usr/include/mipsco/db_machdep.h		comp-obsolete		obsolete
+./usr/include/mipsco/disklabel.h		comp-c-include
+./usr/include/mipsco/ecoff_machdep.h		comp-c-include
+./usr/include/mipsco/elf.h			comp-c-include
+./usr/include/mipsco/elf_machdep.h		comp-c-include
+./usr/include/mipsco/endian.h			comp-c-include
+./usr/include/mipsco/endian_machdep.h		comp-c-include
+./usr/include/mipsco/float.h			comp-c-include
+./usr/include/mipsco/ieee.h			comp-c-include
+./usr/include/mipsco/ieeefp.h			comp-c-include
+./usr/include/mipsco/int_const.h		comp-c-include
+./usr/include/mipsco/int_fmtio.h		comp-c-include
+./usr/include/mipsco/int_limits.h		comp-c-include
+./usr/include/mipsco/int_mwgwtypes.h		comp-c-include
+./usr/include/mipsco/int_types.h		comp-c-include
+./usr/include/mipsco/intr.h			comp-c-include
+./usr/include/mipsco/kcore.h			comp-c-include
+./usr/include/mipsco/kdbparam.h			comp-c-include
+./usr/include/mipsco/limits.h			comp-c-include
+./usr/include/mipsco/lock.h			comp-c-include
+./usr/include/mipsco/locore.h			comp-c-include
+./usr/include/mipsco/mainboard.h		comp-c-include
+./usr/include/mipsco/math.h			comp-c-include
+./usr/include/mipsco/mcontext.h			comp-c-include
+./usr/include/mipsco/mips_opcode.h		comp-c-include
+./usr/include/mipsco/mutex.h		comp-c-include
+./usr/include/mipsco/param.h			comp-c-include
+./usr/include/mipsco/pcb.h			comp-c-include
+./usr/include/mipsco/pmap.h			comp-c-include
+./usr/include/mipsco/pmc.h			comp-c-include
+./usr/include/mipsco/proc.h			comp-c-include
+./usr/include/mipsco/profile.h			comp-c-include
+./usr/include/mipsco/psl.h			comp-c-include
+./usr/include/mipsco/pte.h			comp-c-include
+./usr/include/mipsco/ptrace.h			comp-c-include
+./usr/include/mipsco/reg.h			comp-c-include
+./usr/include/mipsco/regdef.h			comp-c-include
+./usr/include/mipsco/regnum.h			comp-c-include
+./usr/include/mipsco/reloc.h			comp-c-include
+./usr/include/mipsco/rwlock.h			comp-c-include
+./usr/include/mipsco/setjmp.h			comp-c-include
+./usr/include/mipsco/signal.h			comp-c-include
+./usr/include/mipsco/stdarg.h			comp-obsolete		obsolete
+./usr/include/mipsco/sysconf.h			comp-c-include
+./usr/include/mipsco/trap.h			comp-c-include
+./usr/include/mipsco/types.h			comp-c-include
+./usr/include/mipsco/varargs.h			comp-obsolete		obsolete
+./usr/include/mipsco/vmparam.h			comp-c-include
+./usr/include/mipsco/wchar_limits.h		comp-c-include
+./usr/include/mipsco/z8530var.h			comp-c-include
+./usr/libdata/debug/usr/mdec/installboot.debug	-unknown-		debug

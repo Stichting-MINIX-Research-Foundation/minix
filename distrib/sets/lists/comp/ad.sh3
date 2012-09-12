@@ -1,0 +1,54 @@
+# $NetBSD: ad.sh3,v 1.28 2011/07/18 17:39:05 dyoung Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sh3				comp-c-include
+./usr/include/sh3/ansi.h			comp-c-include
+./usr/include/sh3/aout_machdep.h		comp-c-include
+./usr/include/sh3/asm.h				comp-c-include
+./usr/include/sh3/bswap.h			comp-c-include
+./usr/include/sh3/bus.h				comp-obsolete		obsolete
+./usr/include/sh3/byte_swap.h			comp-c-include
+./usr/include/sh3/cdefs.h			comp-c-include
+./usr/include/sh3/coff_machdep.h		comp-c-include
+./usr/include/sh3/cpu.h				comp-c-include
+./usr/include/sh3/cputypes.h			comp-c-include
+./usr/include/sh3/db_machdep.h			comp-obsolete		obsolete
+./usr/include/sh3/disklabel.h			comp-c-include
+./usr/include/sh3/elf_machdep.h			comp-c-include
+./usr/include/sh3/endian.h			comp-c-include
+./usr/include/sh3/endian_machdep.h		comp-c-include
+./usr/include/sh3/float.h			comp-c-include
+./usr/include/sh3/frame.h			comp-c-include
+./usr/include/sh3/ieee.h			comp-c-include
+./usr/include/sh3/ieeefp.h			comp-c-include
+./usr/include/sh3/int_const.h			comp-c-include
+./usr/include/sh3/int_fmtio.h			comp-c-include
+./usr/include/sh3/int_limits.h			comp-c-include
+./usr/include/sh3/int_mwgwtypes.h		comp-c-include
+./usr/include/sh3/int_types.h			comp-c-include
+./usr/include/sh3/intr.h			comp-c-include
+./usr/include/sh3/limits.h			comp-c-include
+./usr/include/sh3/lock.h			comp-c-include
+./usr/include/sh3/math.h			comp-c-include
+./usr/include/sh3/mcontext.h			comp-c-include
+./usr/include/sh3/mutex.h			comp-c-include
+./usr/include/sh3/param.h			comp-c-include
+./usr/include/sh3/pcb.h				comp-c-include
+./usr/include/sh3/pmap.h			comp-c-include
+./usr/include/sh3/pmc.h				comp-c-include
+./usr/include/sh3/proc.h			comp-c-include
+./usr/include/sh3/profile.h			comp-c-include
+./usr/include/sh3/psl.h				comp-c-include
+./usr/include/sh3/pte.h				comp-c-include
+./usr/include/sh3/ptrace.h			comp-c-include
+./usr/include/sh3/reg.h				comp-c-include
+./usr/include/sh3/rwlock.h			comp-c-include
+./usr/include/sh3/setjmp.h			comp-c-include
+./usr/include/sh3/sh_opcode.h			comp-c-include
+./usr/include/sh3/signal.h			comp-c-include
+./usr/include/sh3/stdarg.h			comp-obsolete		obsolete
+./usr/include/sh3/types.h			comp-c-include
+./usr/include/sh3/va-sh.h			comp-obsolete	obsolete
+./usr/include/sh3/varargs.h			comp-obsolete		obsolete
+./usr/include/sh3/vmparam.h			comp-c-include
+./usr/include/sh3/wchar_limits.h		comp-c-include

@@ -1,0 +1,54 @@
+# $NetBSD: md.rs6000,v 1.5 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/rs6000				comp-c-include
+./usr/include/rs6000/ansi.h			comp-c-include
+./usr/include/rs6000/aout_machdep.h		comp-c-include
+./usr/include/rs6000/asm.h			comp-c-include
+./usr/include/rs6000/atomic.h			comp-obsolete		obsolete
+./usr/include/rs6000/bootinfo.h			comp-c-include
+./usr/include/rs6000/bswap.h			comp-c-include
+./usr/include/rs6000/cdefs.h			comp-c-include
+./usr/include/rs6000/cpu.h			comp-c-include
+./usr/include/rs6000/disklabel.h		comp-c-include
+./usr/include/rs6000/elf_machdep.h		comp-c-include
+./usr/include/rs6000/endian.h			comp-c-include
+./usr/include/rs6000/endian_machdep.h		comp-c-include
+./usr/include/rs6000/float.h			comp-c-include
+./usr/include/rs6000/fpu.h			comp-c-include
+./usr/include/rs6000/frame.h			comp-c-include
+./usr/include/rs6000/ieee.h			comp-c-include
+./usr/include/rs6000/ieeefp.h			comp-c-include
+./usr/include/rs6000/int_const.h		comp-c-include
+./usr/include/rs6000/int_fmtio.h		comp-c-include
+./usr/include/rs6000/int_limits.h		comp-c-include
+./usr/include/rs6000/int_mwgwtypes.h		comp-c-include
+./usr/include/rs6000/int_types.h		comp-c-include
+./usr/include/rs6000/intr.h			comp-c-include
+./usr/include/rs6000/kcore.h			comp-c-include
+./usr/include/rs6000/limits.h			comp-c-include
+./usr/include/rs6000/lock.h			comp-c-include
+./usr/include/rs6000/math.h			comp-c-include
+./usr/include/rs6000/mcontext.h			comp-c-include
+./usr/include/rs6000/mutex.h			comp-c-include
+./usr/include/rs6000/param.h			comp-c-include
+./usr/include/rs6000/pcb.h			comp-c-include
+./usr/include/rs6000/pmap.h			comp-c-include
+./usr/include/rs6000/pmc.h			comp-c-include
+./usr/include/rs6000/proc.h			comp-c-include
+./usr/include/rs6000/profile.h			comp-c-include
+./usr/include/rs6000/psl.h			comp-c-include
+./usr/include/rs6000/pte.h			comp-c-include
+./usr/include/rs6000/ptrace.h			comp-c-include
+./usr/include/rs6000/reg.h			comp-c-include
+./usr/include/rs6000/reloc.h			comp-c-include
+./usr/include/rs6000/rwlock.h			comp-c-include
+./usr/include/rs6000/setjmp.h			comp-c-include
+./usr/include/rs6000/signal.h			comp-c-include
+./usr/include/rs6000/spr.h			comp-obsolete		obsolete
+./usr/include/rs6000/stdarg.h			comp-obsolete		obsolete
+./usr/include/rs6000/trap.h			comp-c-include
+./usr/include/rs6000/types.h			comp-c-include
+./usr/include/rs6000/varargs.h			comp-obsolete		obsolete
+./usr/include/rs6000/vmparam.h			comp-c-include
+./usr/include/rs6000/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug

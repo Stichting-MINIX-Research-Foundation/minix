@@ -35,23 +35,6 @@ SUBDIR+= sun68k
 SUBDIR+= xen
 .endif
 
-#SUBDIR=acorn26 acorn32 algor alpha amiga amigappc arm arc atari \
-#	bebox \
-#	cats cesfic cobalt \
-#	dreamcast \
-#	evbarm evbmips evbppc evbsh3 ews4800mips\
-#	hp300 hpc hpcarm hpcmips hpcsh \
-#	i386 iyonix \
-#	luna68k \
-#	m68k mac68k macppc mips mipsco mmeye mvme68k \
-#	netwinder news68k newsmips next68k \
-#	ofppc \
-#	pmax powerpc prep \
-#	sandpoint sbmips sgimips sh3 shark sparc sparc64 sun2 sun3 sun68k \
-#	rs6000 \
-#	vax \
-#	x68k x86_64 xen \
-#	zaurus
 
 INCSYMLINKS= ${MACHINE_ARCH} /usr/include/machine
 
@@ -60,3 +43,4 @@ INCSYMLINKS+= machine/float.h /usr/include/float.h \
 
 
 .include <bsd.inc.mk>
+.include <bsd.subdir.mk>

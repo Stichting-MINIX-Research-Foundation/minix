@@ -1,0 +1,18 @@
+# $NetBSD: md.sun3,v 1.14 2009/02/09 16:28:54 abs Exp $
+./usr/X11R6/bin/X					-unknown-	x11
+./usr/X11R6/bin/Xsun					-unknown-	x11
+./usr/X11R6/bin/XsunMono				-unknown-	x11
+./usr/X11R6/bin/constype				-unknown-	x11
+./usr/X11R6/bin/kbd_mode				-unknown-	x11
+./usr/X11R6/man/cat1/Xsun.0				-unknown-	.cat,x11
+./usr/X11R6/man/cat1/XsunMono.0				-unknown-	.cat,x11
+./usr/X11R6/man/cat1/constype.0				-unknown-	.cat,x11
+./usr/X11R6/man/cat1/kbd_mode.0				-unknown-	.cat,x11
+./usr/X11R6/man/html1/Xsun.html				-unknown-	html,x11
+./usr/X11R6/man/html1/XsunMono.html			-unknown-	html,x11
+./usr/X11R6/man/html1/constype.html			-unknown-	html,x11
+./usr/X11R6/man/html1/kbd_mode.html			-unknown-	html,x11
+./usr/X11R6/man/man1/Xsun.1				-unknown-	.man,x11
+./usr/X11R6/man/man1/XsunMono.1				-unknown-	.man,x11
+./usr/X11R6/man/man1/constype.1				-unknown-	.man,x11
+./usr/X11R6/man/man1/kbd_mode.1				-unknown-	.man,x11

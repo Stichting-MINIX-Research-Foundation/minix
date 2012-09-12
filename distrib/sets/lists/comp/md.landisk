@@ -1,0 +1,53 @@
+# $NetBSD: md.landisk,v 1.4 2011/07/18 17:29:20 dyoung Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/landisk				comp-c-include
+./usr/include/landisk/ansi.h			comp-c-include
+./usr/include/landisk/aout_machdep.h		comp-c-include
+./usr/include/landisk/asm.h			comp-c-include
+./usr/include/landisk/bootinfo.h		comp-c-include
+./usr/include/landisk/bswap.h			comp-c-include
+./usr/include/landisk/bus.h			comp-obsolete		obsolete
+./usr/include/landisk/button.h			comp-c-include
+./usr/include/landisk/cdefs.h			comp-c-include
+./usr/include/landisk/coff_machdep.h		comp-c-include
+./usr/include/landisk/cpu.h			comp-c-include
+./usr/include/landisk/cputypes.h		comp-c-include
+./usr/include/landisk/db_machdep.h		comp-c-include
+./usr/include/landisk/disklabel.h		comp-c-include
+./usr/include/landisk/elf_machdep.h		comp-c-include
+./usr/include/landisk/endian.h			comp-c-include
+./usr/include/landisk/endian_machdep.h		comp-c-include
+./usr/include/landisk/float.h			comp-c-include
+./usr/include/landisk/frame.h			comp-c-include
+./usr/include/landisk/ieee.h			comp-c-include
+./usr/include/landisk/ieeefp.h			comp-c-include
+./usr/include/landisk/int_const.h		comp-c-include
+./usr/include/landisk/int_fmtio.h		comp-c-include
+./usr/include/landisk/int_limits.h		comp-c-include
+./usr/include/landisk/int_mwgwtypes.h		comp-c-include
+./usr/include/landisk/int_types.h		comp-c-include
+./usr/include/landisk/intr.h			comp-c-include
+./usr/include/landisk/limits.h			comp-c-include
+./usr/include/landisk/lock.h			comp-c-include
+./usr/include/landisk/loadfile_machdep.h	comp-c-include
+./usr/include/landisk/math.h			comp-c-include
+./usr/include/landisk/mcontext.h		comp-c-include
+./usr/include/landisk/mutex.h			comp-c-include
+./usr/include/landisk/param.h			comp-c-include
+./usr/include/landisk/pcb.h			comp-c-include
+./usr/include/landisk/pmap.h			comp-c-include
+./usr/include/landisk/pmc.h			comp-c-include
+./usr/include/landisk/proc.h			comp-c-include
+./usr/include/landisk/profile.h			comp-c-include
+./usr/include/landisk/psl.h			comp-c-include
+./usr/include/landisk/pte.h			comp-c-include
+./usr/include/landisk/ptrace.h			comp-c-include
+./usr/include/landisk/reg.h			comp-c-include
+./usr/include/landisk/rwlock.h			comp-c-include
+./usr/include/landisk/setjmp.h			comp-c-include
+./usr/include/landisk/signal.h			comp-c-include
+./usr/include/landisk/stdarg.h			comp-obsolete		obsolete
+./usr/include/landisk/types.h			comp-c-include
+./usr/include/landisk/varargs.h			comp-obsolete		obsolete
+./usr/include/landisk/vmparam.h			comp-c-include
+./usr/include/landisk/wchar_limits.h		comp-c-include

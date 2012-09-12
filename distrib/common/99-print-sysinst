@@ -1,0 +1,11 @@
+# $NetBSD: 99-print-sysinst,v 1.1 2009/04/07 11:49:17 joerg Exp $
+
+case "${reason}" in
+BOUND|INFORM|REBIND|REBOOT|RENEW|TIMEOUT)
+	cat > /tmp/dhcpcd-lease << EOF
+host-name=${new_host_name}
+domain-name=${new_domain_name}
+EOF
+	set > /tmp/dhcpcd-lease-all
+	;;
+esac

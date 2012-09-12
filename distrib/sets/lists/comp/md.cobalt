@@ -1,0 +1,61 @@
+# $NetBSD: md.cobalt,v 1.24 2011/07/17 20:54:31 joerg Exp $
+./usr/include/cobalt				comp-c-include
+./usr/include/cobalt/_G_config.h		comp-obsolete		obsolete
+./usr/include/cobalt/ansi.h			comp-c-include
+./usr/include/cobalt/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/cobalt/asm.h			comp-c-include
+./usr/include/cobalt/autoconf.h			comp-c-include
+./usr/include/cobalt/bsd-aout.h			comp-obsolete		obsolete
+./usr/include/cobalt/bswap.h			comp-c-include
+./usr/include/cobalt/cdefs.h			comp-c-include
+./usr/include/cobalt/conf.h			comp-obsolete		obsolete
+./usr/include/cobalt/cpu.h			comp-c-include
+./usr/include/cobalt/db_machdep.h		comp-obsolete		obsolete
+./usr/include/cobalt/disklabel.h		comp-c-include
+./usr/include/cobalt/ecoff_machdep.h		comp-c-include
+./usr/include/cobalt/elf_machdep.h		comp-c-include
+./usr/include/cobalt/endian.h			comp-c-include
+./usr/include/cobalt/endian_machdep.h		comp-c-include
+./usr/include/cobalt/float.h			comp-c-include
+./usr/include/cobalt/ieee.h			comp-c-include
+./usr/include/cobalt/ieeefp.h			comp-c-include
+./usr/include/cobalt/int_const.h		comp-c-include
+./usr/include/cobalt/int_fmtio.h		comp-c-include
+./usr/include/cobalt/int_limits.h		comp-c-include
+./usr/include/cobalt/int_mwgwtypes.h		comp-c-include
+./usr/include/cobalt/int_types.h		comp-c-include
+./usr/include/cobalt/intr.h			comp-c-include
+./usr/include/cobalt/kcore.h			comp-c-include
+./usr/include/cobalt/kdbparam.h			comp-c-include
+./usr/include/cobalt/leds.h			comp-obsolete		obsolete
+./usr/include/cobalt/limits.h			comp-c-include
+./usr/include/cobalt/lock.h			comp-c-include
+./usr/include/cobalt/locore.h			comp-c-include
+./usr/include/cobalt/math.h			comp-c-include
+./usr/include/cobalt/mcontext.h			comp-c-include
+./usr/include/cobalt/mips_opcode.h		comp-c-include
+./usr/include/cobalt/mutex.h			comp-c-include
+./usr/include/cobalt/nvram.h			comp-c-include
+./usr/include/cobalt/param.h			comp-c-include
+./usr/include/cobalt/pcb.h			comp-c-include
+./usr/include/cobalt/pmap.h			comp-c-include
+./usr/include/cobalt/pmc.h			comp-c-include
+./usr/include/cobalt/proc.h			comp-c-include
+./usr/include/cobalt/profile.h			comp-c-include
+./usr/include/cobalt/psl.h			comp-c-include
+./usr/include/cobalt/pte.h			comp-c-include
+./usr/include/cobalt/ptrace.h			comp-c-include
+./usr/include/cobalt/reg.h			comp-c-include
+./usr/include/cobalt/regdef.h			comp-c-include
+./usr/include/cobalt/regnum.h			comp-c-include
+./usr/include/cobalt/reloc.h			comp-c-include
+./usr/include/cobalt/rwlock.h			comp-c-include
+./usr/include/cobalt/setjmp.h			comp-c-include
+./usr/include/cobalt/signal.h			comp-c-include
+./usr/include/cobalt/stdarg.h			comp-obsolete		obsolete
+./usr/include/cobalt/trap.h			comp-c-include
+./usr/include/cobalt/types.h			comp-c-include
+./usr/include/cobalt/varargs.h			comp-obsolete		obsolete
+./usr/include/cobalt/vmparam.h			comp-c-include
+./usr/include/cobalt/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

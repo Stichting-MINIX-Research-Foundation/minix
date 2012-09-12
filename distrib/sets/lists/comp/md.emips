@@ -1,0 +1,57 @@
+#	$NetBSD: md.emips,v 1.2 2011/07/17 20:54:31 joerg Exp $
+#
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/emips				comp-c-include
+./usr/include/emips/ansi.h			comp-c-include
+./usr/include/emips/asm.h			comp-c-include
+./usr/include/emips/autoconf.h			comp-c-include
+./usr/include/emips/bswap.h			comp-c-include
+./usr/include/emips/bus.h			comp-c-include
+./usr/include/emips/cdefs.h			comp-c-include
+./usr/include/emips/cpu.h			comp-c-include
+./usr/include/emips/disklabel.h			comp-c-include
+./usr/include/emips/ecoff_machdep.h		comp-c-include
+./usr/include/emips/elf_machdep.h		comp-c-include
+./usr/include/emips/emipsreg.h			comp-c-include
+./usr/include/emips/endian.h			comp-c-include
+./usr/include/emips/endian_machdep.h		comp-c-include
+./usr/include/emips/float.h			comp-c-include
+./usr/include/emips/ieee.h			comp-c-include
+./usr/include/emips/ieeefp.h			comp-c-include
+./usr/include/emips/int_const.h			comp-c-include
+./usr/include/emips/int_fmtio.h			comp-c-include
+./usr/include/emips/int_limits.h		comp-c-include
+./usr/include/emips/int_mwgwtypes.h		comp-c-include
+./usr/include/emips/int_types.h			comp-c-include
+./usr/include/emips/intr.h			comp-c-include
+./usr/include/emips/kcore.h			comp-c-include
+./usr/include/emips/kdbparam.h			comp-c-include
+./usr/include/emips/limits.h			comp-c-include
+./usr/include/emips/lock.h			comp-c-include
+./usr/include/emips/locore.h			comp-c-include
+./usr/include/emips/math.h			comp-c-include
+./usr/include/emips/mcontext.h			comp-c-include
+./usr/include/emips/mips_opcode.h		comp-c-include
+./usr/include/emips/mutex.h			comp-c-include
+./usr/include/emips/param.h			comp-c-include
+./usr/include/emips/pcb.h			comp-c-include
+./usr/include/emips/pmap.h			comp-c-include
+./usr/include/emips/pmc.h			comp-c-include
+./usr/include/emips/proc.h			comp-c-include
+./usr/include/emips/profile.h			comp-c-include
+./usr/include/emips/psl.h			comp-c-include
+./usr/include/emips/pte.h			comp-c-include
+./usr/include/emips/ptrace.h			comp-c-include
+./usr/include/emips/reg.h			comp-c-include
+./usr/include/emips/regdef.h			comp-c-include
+./usr/include/emips/regnum.h			comp-c-include
+./usr/include/emips/reloc.h			comp-c-include
+./usr/include/emips/rwlock.h			comp-c-include
+./usr/include/emips/setjmp.h			comp-c-include
+./usr/include/emips/signal.h			comp-c-include
+./usr/include/emips/stdarg.h			comp-obsolete		obsolete
+./usr/include/emips/trap.h			comp-c-include
+./usr/include/emips/types.h			comp-c-include
+./usr/include/emips/varargs.h			comp-obsolete		obsolete
+./usr/include/emips/vmparam.h			comp-c-include
+./usr/include/emips/wchar_limits.h		comp-c-include

@@ -15,6 +15,9 @@ CPPFLAGS+= -w -DCRUNCH \
 	-DNO_MODELINE -DNO_OPTCOLS -DNO_DIGRAPH -DNO_EXTENSIONS \
 	-DNO_ERRLIST -DNO_FKEY -DNO_VISIBLE -DNO_COLOR -DNO_POPUP
 
+# LSC Force usage of local getline
+CPPFLAGS+= -D__NBSD_LIBC
+
 ###########################################################################
 ###     The rest of this Makefile contains no user-serviceable parts    ###
 ###########################################################################
@@ -25,13 +28,8 @@ SRCS.elvis= blk.c cmd1.c cmd2.c ctype.c curses.c cut.c ex.c input.c \
    unix.c vars.c vcmd.c vi.c
 
 BINDIR= /usr/bin
-.if !exists(${BINDIR}/vi)
 LINKS+= ${BINDIR}/elvis ${BINDIR}/vi
-.endif
-
-.if !exists(${BINDIR}/ex)
 LINKS+= ${BINDIR}/elvis ${BINDIR}/ex
-.endif
 
 MAN.elvis=
 MAN.ctags=

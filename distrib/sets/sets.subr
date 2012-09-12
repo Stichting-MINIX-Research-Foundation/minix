@@ -1,0 +1,560 @@
+#	$NetBSD: sets.subr,v 1.138 2012/08/08 14:08:01 christos Exp $
+#
+
+#
+# The following variables contain defaults for sets.subr functions and callers:
+#	setsdir			path to src/distrib/sets
+#	nlists			list of base sets
+#	xlists			list of x11 sets
+#	extlists		list of extsrc sets
+#	obsolete		controls if obsolete files are selected instead
+#	module			if != "no", enable MODULE sets
+#	shlib			shared library format (a.out, elf, or "")
+#	stlib			static library format (a.out, elf)
+#
+# The following <bsd.own.mk> variables are exported to the environment:
+#	MACHINE	
+#	MACHINE_ARCH
+#	MACHINE_CPU
+#	HAVE_BINUTILS
+#	HAVE_GCC
+#	HAVE_GDB
+#	HAS_SSP
+#	TOOLCHAIN_MISSING
+#	OBJECT_FMT
+# as well as:
+#
+
+#
+# The following variables refer to tools that are used when building sets:
+#
+: ${AWK:=awk}
+: ${CKSUM:=cksum}
+: ${COMM:=comm}
+: ${DATE:=date}
+: ${DB:=db}
+: ${EGREP:=egrep}
+: ${ENV_CMD:=env}       # ${ENV} is special to sh(1), ksh(1), etc.
+: ${FGREP:=fgrep}
+: ${FIND:=find}
+: ${GREP:=grep}
+: ${GZIP_CMD:=gzip}     # ${GZIP} is special to gzip(1)
+: ${HOSTNAME_CMD:=hostname}	# ${HOSTNAME} is special to bash(1)
+: ${HOST_SH:=sh}
+: ${IDENT:=ident}
+: ${JOIN:=join}
+: ${LS:=ls}
+: ${MAKE:=make}
+: ${MKTEMP:=mktemp}
+: ${MTREE:=mtree}
+: ${PASTE:=paste}
+: ${PAX:=pax}
+: ${PRINTF:=printf}
+: ${SED:=sed}
+: ${SORT:=sort}
+: ${STAT:=stat}
+: ${TSORT:=tsort}
+: ${UNAME:=uname}
+: ${WC:=wc}
+: ${XARGS:=xargs}
+
+#
+# If printf is a shell builtin command, then we can
+# implement cheaper versions of basename and dirname
+# that do not involve any fork/exec overhead.
+# If printf is not builtin, approximate it using echo,
+# and hope there are no weird file names that cause
+# some versions of echo to do the wrong thing.
+# (Converting to this version of dirname speeded up the
+# syspkgdeps script by an order of magnitude, from 68
+# seconds to 6.3 seconds on one particular host.)
+#
+# Note that naive approximations for dirname
+# using ${foo%/*} do not do the right thing in cases
+# where the result should be "/" or ".".
+#
+case "$(type printf)" in
+*builtin*)
+	basename ()
+	{
+		local bn
+		bn="${1##*/}"
+		bn="${bn%$2}"
+		printf "%s\n" "$bn"
+	}
+	dirname ()
+	{
+		local dn
+		case "$1" in
+		?*/*)	dn="${1%/*}" ;;
+		/*)	dn=/ ;;
+		*)	dn=. ;;
+		esac
+		printf "%s\n" "$dn"
+	}
+	;;
+*)
+	basename ()
+	{
+		local bn
+		bn="${1##*/}"
+		bn="${bn%$2}"
+		echo "$bn"
+	}
+	dirname ()
+	{
+		local dn
+		case "$1" in
+		?*/*)	dn="${1%/*}" ;;
+		/*)	dn=/ ;;
+		*)	dn=. ;;
+		esac
+		echo "$dn"
+	}
+	;;
+esac
+
+#####
+
+oIFS=$IFS
+IFS="
+"
+
+for x in $( ${MAKE} -B -f ${rundir}/mkvars.mk mkvars ); do
+	eval export $x
+done
+
+IFS=$oIFS
+
+MKVARS="$( ${MAKE} -B -f ${rundir}/mkvars.mk mkvars | ${SED} -e 's,=.*,,' | ${XARGS} )"
+
+#####
+
+setsdir=${rundir}
+obsolete=0
+if [ "${MKKMOD}" = "no" ]; then
+	module=no			# MODULEs are off.
+	modset=""
+else
+	module=yes
+	modset="modules"
+fi
+if [ "${MKATF}" = "no" ]; then
+	testset=""
+else
+	testset="tests"
+fi
+# Determine lib type. Do this first so stlib also gets set.
+if [ "${OBJECT_FMT}" = "ELF" ]; then
+	shlib=elf
+else
+	shlib=aout
+fi
+stlib=$shlib
+# Now check for MKPIC or specials and turn off shlib if need be.
+if [ "${MKPIC}" = "no" ]; then
+	shlib=no
+fi
+# LSC for Minix
+#nlists="base comp etc games man misc $modset $testset text"
+nlists="minix"
+xlists="xbase xcomp xetc xfont xserver"
+extlists="extbase extcomp extetc"
+
+OSRELEASE=$(${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k)
+MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
+SUBST="s#@MODULEDIR@#${MODULEDIR}#g"
+SUBST="${SUBST};s#@OSRELEASE@#${OSRELEASE}#g"
+SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
+
+#
+# list_set_files setfile [...]
+# 
+# Produce a packing list for setfile(s).
+# In each file, a record consists of a path and a System Package name,
+# separated by whitespace. E.g.,
+#
+# 	# $NetBSD: sets.subr,v 1.138 2012/08/08 14:08:01 christos Exp $
+# 	.			base-sys-root	[keyword[,...]]
+# 	./altroot		base-sys-root
+# 	./bin			base-sys-root
+# 	./bin/[			base-util-root
+# 	./bin/cat		base-util-root
+#		[...]
+#
+# A # in the first column marks a comment.
+#
+# If ${obsolete} != 0, only entries with an "obsolete" keyword will
+# be printed.  All other keywords must be present.
+#
+# The third field is an optional comma separated list of keywords to
+# control if a record is printed; every keyword listed must be enabled
+# for the record to be printed.  The following keywords are available:
+#	dummy			dummy entry (ignored)
+#	obsolete		file is obsolete, and only printed if 
+#				${obsolete} != 0
+#
+#	atf			${MKATF} != no
+#	bfd			obsolete, use binutils.
+#	binutils		${MKBINUTILS} != no
+#	bsdgrep			${MKBSDGREP} != no
+#	catpages		${MKCATPAGES} != no
+#	compat			${MKCOMPAT} != no
+#	crypto			${MKCRYPTO} != no
+#	crypto_rc5		${MKCRYPTO_RC5} != no
+#	cvs			${MKCVS} != no
+#	debug			${MKDEBUG} != no
+#	debuglib		${MKDEBUGLIB} != no
+#	doc			${MKDOC} != no
+#	dtrace			${MKDTRACE} != no
+#	dynamicroot		${MKDYNAMICROOT} != no
+#	extsrc			${MKEXTSRC} != no
+#	gcc			${MKGCC} != no
+#	gcccmds			${MKGCCCMDS} != no
+#	gdb			${MKGDB} != no
+#	hesiod			${MKHESIOD} != no
+#	html			${MKHTML} != no
+#	inet6			${MKINET6} != no
+#	info			${MKINFO} != no
+#	ipfilter		${MKIPFILTER} != no
+#	iscsi			${MKISCSI} != no
+#	kerberos		${MKKERBEROS} != no
+#	kmod			${MKKMOD} != no
+#	ldap			${MKLDAP} != no
+#	lint			${MKLINT} != no
+#	llvm			${MKLLVM} != no
+#	lvm			${MKLVM} != no
+#	makemandb		${MKMAKEMANDB} != no
+#	man			${MKMAN} != no
+#	manpages		${MKMANPAGES} != no
+#	manz			${MKMANZ} != no
+#	mdns			${MKMDNS} != no
+#	nls			${MKNLS} != no
+#	nvi			${MKNVI} != no
+#	pam			${MKPAM} != no
+#	pcc			${MKPCC} != no
+#	pf			${MKPF} != no
+#	pic			${MKPIC} != no
+#	postfix			${MKPOSTFIX} != no
+#	profile			${MKPROFILE} != no
+#	perfuse			${MKPERFUSE} != no
+#	rump			${MKRUMP} != no
+#	share			${MKSHARE} != no
+#	skey			${MKSKEY} != no
+#	solaris			${MKDTRACE} != no or ${MKZFS} != no
+#	ssp			${HAS_SSP} != no
+#	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
+#	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
+#	yp			${MKYP} != no
+#	zfs			${MKZFS} != no
+#
+#	binutils=<n>		<n> = value of ${HAVE_BINUTILS}
+#	gcc=<n>			<n> = value of ${HAVE_GCC}
+#	gdb=<n>			<n> = value of ${HAVE_GDB}
+#
+#	use_inet6		${USE_INET6} != no
+#	use_kerberos		${USE_KERBEROS} != no
+#	use_yp			${USE_YP} != no
+#
+#	.cat			if ${MKMANZ} != "no" && ${MKCATPAGES} != "no"
+#				  automatically append ".gz" to the filename
+#
+#	.man			if ${MKMANZ} != "no" && ${MKMAN} != "no"
+#				  automatically append ".gz" to the filename
+#
+list_set_files()
+{
+	if [ ${MAKEVERBOSE:-2} -lt 3 ]; then
+		verbose=false
+	else
+		verbose=true
+	fi
+	print_set_lists "$@" | \
+	${AWK} -v obsolete=${obsolete} '
+		BEGIN {
+			if (obsolete)
+				wanted["obsolete"] = 1
+		
+			split("'"${MKVARS}"'", needvars)
+			for (vi in needvars) {
+				nv = needvars[vi]
+				kw = tolower(nv)
+				sub(/^mk/, "", kw)
+				sub(/^has_/, "", kw)
+				if (ENVIRON[nv] != "no")
+					wanted[kw] = 1 
+			}
+
+			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
+				if ("binutils" in wanted)
+					wanted["binutils=" "'"${HAVE_BINUTILS}"'"] = 1
+				if ("gcc" in wanted)
+					wanted["gcc=" "'"${HAVE_GCC}"'"] = 1
+				if ("gdb" in wanted)
+					wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
+			}
+			if (("man" in wanted) && ("catpages" in wanted))
+				wanted[".cat"] = 1
+			if (("man" in wanted) && ("manpages" in wanted))
+				wanted[".man"] = 1
+		}
+
+		/^#/ {
+			next;
+		}
+
+		/^-/ {
+			notwanted[substr($1, 2)] = 1;
+			delete list [substr($1, 2)];
+			next;
+		}
+				
+
+		NF > 2 && $3 != "-" {
+			if (notwanted[$1] != "")
+				next;
+			split($3, keywords, ",")
+			show = 1
+			haveobs = 0
+			for (ki in keywords) {
+				kw = keywords[ki]
+				if (("manz" in wanted) &&
+				    (kw == ".cat" || kw == ".man"))
+					$1 = $1 ".gz"
+				if (substr(kw, 1, 1) == "!") {
+					kw = substr(kw, 2)
+					if (kw in wanted)
+						show = 0
+				} else {
+					if (! (kw in wanted))
+						show = 0
+				}
+				if (kw == "obsolete")
+					haveobs = 1
+			}
+			if (obsolete && ! haveobs)
+				next
+			if (show)
+				list[$1] = $0
+			next
+		}
+
+		{
+			if (notwanted[$1] != "")
+				next;
+			if (! obsolete)
+				list[$1] = $0
+		}
+
+		END {
+			for (i in list) {
+				print list[i]
+			}
+		}'
+
+}
+
+#
+# list_set_lists setname
+# 
+# Print to stdout a list of files, one filename per line, which
+# concatenate to create the packing list for setname. E.g.,
+#
+# 	.../lists/base/mi
+# 	.../lists/base/rescue.mi
+# 	.../lists/base/md.i386
+#		[...]
+#
+# For a given setname $set, the following files may be selected from
+# .../list/$set:
+#	mi
+#	mi.ext.*
+#	ad.${MACHINE_ARCH}
+# (or)	ad.${MACHINE_CPU}
+#	ad.${MACHINE_CPU}.shl
+#	md.${MACHINE}.${MACHINE_ARCH}
+# (or)	md.${MACHINE}
+#	stl.mi
+#	stl.${stlib}
+#	shl.mi
+#	shl.mi.ext.*
+#	shl.${shlib}
+#	shl.${shlib}.ext.*
+#	module.mi			if ${module} != no
+#	module.${MACHINE}		if ${module} != no
+#	module.ad.${MACHINE_ARCH}	if ${module} != no
+# (or)	module.ad.${MACHINE_CPU}	if ${module} != no
+#	rescue.shl
+#	rescue.${MACHINE}
+#	rescue.ad.${MACHINE_ARCH}
+# (or)	rescue.ad.${MACHINE_CPU}
+# 	rescue.ad.${MACHINE_CPU}.shl
+#
+# Environment:
+# 	shlib
+# 	stlib
+#
+list_set_lists()
+{
+	setname=$1
+
+	list_set_lists_mi $setname
+	list_set_lists_ad $setname
+	list_set_lists_md $setname
+	list_set_lists_stl $setname
+	list_set_lists_shl $setname
+	list_set_lists_module $setname
+	list_set_lists_rescue $setname
+	return 0
+}
+
+list_set_lists_mi()
+{
+	setdir=$setsdir/lists/$1
+	# always exist!
+	echo $setdir/mi
+}
+
+list_set_lists_ad()
+{
+	setdir=$setsdir/lists/$1
+	[ "${MACHINE}" != "${MACHINE_ARCH}" ] && \
+	list_set_lists_common_ad $1
+}
+
+list_set_lists_md()
+{
+	setdir=$setsdir/lists/$1
+	echo_if_exist $setdir/md.${MACHINE}.${MACHINE_ARCH} || \
+	echo_if_exist $setdir/md.${MACHINE}
+}
+
+list_set_lists_stl()
+{
+	setdir=$setsdir/lists/$1
+	echo_if_exist $setdir/stl.mi
+	echo_if_exist $setdir/stl.${stlib}
+}
+
+list_set_lists_shl()
+{
+	setdir=$setsdir/lists/$1
+	[ "$shlib" != "no" ] || return
+	echo_if_exist $setdir/shl.mi
+	echo_if_exist $setdir/shl.${shlib}
+}
+
+list_set_lists_module()
+{
+	setdir=$setsdir/lists/$1
+	[ "$module" != "no" ] || return
+	echo_if_exist $setdir/module.mi
+	echo_if_exist $setdir/module.${MACHINE}
+	# XXX module never has .shl
+	[ "${MACHINE}" != "${MACHINE_ARCH}" ] && \
+	list_set_lists_common_ad $1 module
+}
+
+list_set_lists_rescue()
+{
+	setdir=$setsdir/lists/$1
+	echo_if_exist $setdir/rescue.mi
+	echo_if_exist $setdir/rescue.${MACHINE}
+	[ "${MACHINE}" != "${MACHINE_ARCH}" ] && \
+	list_set_lists_common_ad $1 rescue
+}
+
+list_set_lists_common_ad()
+{
+	setdir=$setsdir/lists/$1; _prefix=$2
+
+	[ -n "$_prefix" ] && prefix="$_prefix".
+
+	# Prefer a <prefix>.ad.${MACHINE_ARCH} over a
+	# <prefix>.ad.${MACHINE_CPU}, since the arch-
+	# specific one will be more specific than the
+	# cpu-specific one.
+	echo_if_exist $setdir/${prefix}ad.${MACHINE_ARCH} || \
+	echo_if_exist $setdir/${prefix}ad.${MACHINE_CPU}
+	[ "$shlib" != "no" ] && \
+	echo_if_exist $setdir/${prefix}ad.${MACHINE_CPU}.shl
+}
+
+echo_if_exist()
+{
+	[ -f $1 ] && echo $1
+	return $?
+}
+
+echo_if_exist_foreach()
+{
+	local _list=$1; shift
+	for _suffix in $@; do
+		echo_if_exist ${_list}.${_suffix}
+	done
+}
+
+print_set_lists()
+{
+	for setname; do
+		list=$(list_set_lists $setname)
+		for l in $list; do
+			echo $l
+			if $verbose; then
+				echo >&2 "DEBUG: list_set_files: $l"
+			fi
+		done
+	done | ${XARGS} ${SED} ${SUBST}
+}
+
+# arch_to_cpu mach
+#
+# Print the ${MACHINE_CPU} for ${MACHINE_ARCH}=mach,
+# as determined by <bsd.own.mk>.
+#
+arch_to_cpu()
+{
+	MACHINE_ARCH=${1} ${MAKE} -B -f- all <<EOMAKE
+.include <bsd.own.mk>
+all:
+	@echo \${MACHINE_CPU}
+EOMAKE
+}
+
+# arch_to_endian mach
+#
+# Print the ${TARGET_ENDIANNESS} for ${MACHINE_ARCH}=mach,
+# as determined by <bsd.endian.mk>.
+#
+arch_to_endian()
+{
+	MACHINE_ARCH=${1} ${MAKE} -B -f- all <<EOMAKE
+.include <bsd.endian.mk>
+all:
+	@echo \${TARGET_ENDIANNESS}
+EOMAKE
+}
+
+#####
+
+# print_mkvars
+print_mkvars()
+{
+	for v in $MKVARS; do
+		eval echo $v=\$$v
+	done
+}
+
+# print_set_lists_{base,x,ext}
+# list_set_lists_{base,x,ext}
+# list_set_files_{base,x,ext}
+for func in print_set_lists list_set_lists list_set_files; do
+	for x in base x ext; do
+		if [ $x = base ]; then
+			list=nlists
+		else
+			list=${x}lists
+		fi
+		eval ${func}_${x} \(\) \{ $func \$$list \; \}
+	done
+done

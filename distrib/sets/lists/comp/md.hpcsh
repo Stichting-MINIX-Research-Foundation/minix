@@ -1,0 +1,63 @@
+# $NetBSD: md.hpcsh,v 1.26 2011/07/19 15:30:51 dyoung Exp $
+./usr/include/hpcsh				comp-c-include
+./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
+./usr/include/hpcsh/ansi.h			comp-c-include
+./usr/include/hpcsh/aout_machdep.h		comp-c-include
+./usr/include/hpcsh/apmvar.h			comp-c-include
+./usr/include/hpcsh/asm.h			comp-c-include
+./usr/include/hpcsh/bootinfo.h			comp-c-include
+./usr/include/hpcsh/bswap.h			comp-c-include
+./usr/include/hpcsh/bus.h			comp-obsolete		obsolete
+./usr/include/hpcsh/cdefs.h			comp-c-include
+./usr/include/hpcsh/coff_machdep.h		comp-c-include
+./usr/include/hpcsh/conf.h			comp-obsolete		obsolete
+./usr/include/hpcsh/cpu.h			comp-c-include
+./usr/include/hpcsh/cpufunc.h			comp-obsolete		obsolete
+./usr/include/hpcsh/cputypes.h			comp-c-include
+./usr/include/hpcsh/db_machdep.h		comp-obsolete		obsolete
+./usr/include/hpcsh/disklabel.h			comp-c-include
+./usr/include/hpcsh/elf_machdep.h		comp-c-include
+./usr/include/hpcsh/endian.h			comp-c-include
+./usr/include/hpcsh/endian_machdep.h		comp-c-include
+./usr/include/hpcsh/float.h			comp-c-include
+./usr/include/hpcsh/frame.h			comp-c-include
+./usr/include/hpcsh/ieee.h			comp-c-include
+./usr/include/hpcsh/ieeefp.h			comp-c-include
+./usr/include/hpcsh/int_const.h			comp-c-include
+./usr/include/hpcsh/int_fmtio.h			comp-c-include
+./usr/include/hpcsh/int_limits.h		comp-c-include
+./usr/include/hpcsh/int_mwgwtypes.h		comp-c-include
+./usr/include/hpcsh/int_types.h			comp-c-include
+./usr/include/hpcsh/intr.h			comp-c-include
+./usr/include/hpcsh/limits.h			comp-c-include
+./usr/include/hpcsh/lock.h			comp-c-include
+./usr/include/hpcsh/math.h			comp-c-include
+./usr/include/hpcsh/mcontext.h			comp-c-include
+./usr/include/hpcsh/mutex.h			comp-c-include
+./usr/include/hpcsh/param.h			comp-c-include
+./usr/include/hpcsh/pcb.h			comp-c-include
+./usr/include/hpcsh/pio.h			comp-obsolete		obsolete
+./usr/include/hpcsh/pmap.h			comp-c-include
+./usr/include/hpcsh/pmc.h			comp-c-include
+./usr/include/hpcsh/proc.h			comp-c-include
+./usr/include/hpcsh/profile.h			comp-c-include
+./usr/include/hpcsh/psl.h			comp-c-include
+./usr/include/hpcsh/pte.h			comp-c-include
+./usr/include/hpcsh/ptrace.h			comp-c-include
+./usr/include/hpcsh/reg.h			comp-c-include
+./usr/include/hpcsh/rwlock.h			comp-c-include
+./usr/include/hpcsh/segments.h			comp-obsolete		obsolete
+./usr/include/hpcsh/setjmp.h			comp-c-include
+./usr/include/hpcsh/shbvar.h			comp-obsolete		obsolete
+./usr/include/hpcsh/signal.h			comp-c-include
+./usr/include/hpcsh/stdarg.h			comp-obsolete		obsolete
+./usr/include/hpcsh/trap.h			comp-obsolete		obsolete
+./usr/include/hpcsh/types.h			comp-c-include
+./usr/include/hpcsh/varargs.h			comp-obsolete		obsolete
+./usr/include/hpcsh/vmparam.h			comp-c-include
+./usr/include/hpcsh/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sh3/db_disasm.h			comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

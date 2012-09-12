@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2011/04/24 21:42:06 elric Exp $
+#	$NetBSD: Makefile,v 1.55 2012/04/24 16:52:26 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 WARNS?=	2	# XXX -Wcast-qual issues

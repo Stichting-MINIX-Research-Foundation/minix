@@ -1,0 +1,19 @@
+TODO list for system packages
+=============================
+
++ commit Alan Barrett's mods from PR 22514 for system package building
+  from build.sh
++ decide whether to keep a separate system package database of
+  metadata, and, if so, where to keep it
++ if using separate database, add a flag to support this to pkg_*
++ add syspkg support to sysinst
+	+ add pkg_install utilities (and necessary sub-utilities) to
+	  the crunched install tools
+	+ fix sysinst to use them
++ need a tool to create meta-packages
+	+ base-bind meta-pkg created from base-bind-root,
+	  base-bind-bin and base-bind-example
+	+ base meta-pkg created from base-* meta-pkgs
+	+ bundle packages into tar files (`pkgsets'per src/distrib/syspkg/notes)
+	+ meta-pkg content entirely derivable from pkg names (base-*, base-bind-*)
++ add system packages to the release ISOs

@@ -1,0 +1,2 @@
+# $NetBSD: md.sparc,v 1.8 2004/01/11 09:59:49 lukem Exp $
+./etc/ld.so.conf				etc-sys-etc

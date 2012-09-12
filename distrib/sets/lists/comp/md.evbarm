@@ -1,0 +1,50 @@
+# $NetBSD: md.evbarm,v 1.15 2011/07/18 17:18:14 dyoung Exp $
+./usr/include/evbarm				comp-c-include
+./usr/include/evbarm/ansi.h			comp-c-include
+./usr/include/evbarm/aout_machdep.h		comp-c-include
+./usr/include/evbarm/asm.h			comp-c-include
+./usr/include/evbarm/bswap.h			comp-c-include
+./usr/include/evbarm/bus.h			comp-obsolete		obsolete
+./usr/include/evbarm/cdefs.h			comp-c-include
+./usr/include/evbarm/cpu.h			comp-c-include
+./usr/include/evbarm/db_machdep.h		comp-obsolete		obsolete
+./usr/include/evbarm/disklabel.h		comp-c-include
+./usr/include/evbarm/elf_machdep.h		comp-c-include
+./usr/include/evbarm/endian.h			comp-c-include
+./usr/include/evbarm/endian_machdep.h		comp-c-include
+./usr/include/evbarm/float.h			comp-c-include
+./usr/include/evbarm/fp.h			comp-c-include
+./usr/include/evbarm/frame.h			comp-c-include
+./usr/include/evbarm/ieee.h			comp-c-include
+./usr/include/evbarm/ieeefp.h			comp-c-include
+./usr/include/evbarm/int_const.h		comp-c-include
+./usr/include/evbarm/int_fmtio.h		comp-c-include
+./usr/include/evbarm/int_limits.h		comp-c-include
+./usr/include/evbarm/int_mwgwtypes.h		comp-c-include
+./usr/include/evbarm/int_types.h		comp-c-include
+./usr/include/evbarm/intr.h			comp-c-include
+./usr/include/evbarm/ipkdb.h			comp-obsolete		obsolete
+./usr/include/evbarm/joystick.h			comp-c-include
+./usr/include/evbarm/limits.h			comp-c-include
+./usr/include/evbarm/lock.h			comp-c-include
+./usr/include/evbarm/math.h			comp-c-include
+./usr/include/evbarm/mcontext.h			comp-c-include
+./usr/include/evbarm/mutex.h			comp-c-include
+./usr/include/evbarm/param.h			comp-c-include
+./usr/include/evbarm/pcb.h			comp-c-include
+./usr/include/evbarm/pmap.h			comp-c-include
+./usr/include/evbarm/pmc.h			comp-c-include
+./usr/include/evbarm/proc.h			comp-c-include
+./usr/include/evbarm/profile.h			comp-c-include
+./usr/include/evbarm/ptrace.h			comp-c-include
+./usr/include/evbarm/reg.h			comp-c-include
+./usr/include/evbarm/rwlock.h			comp-c-include
+./usr/include/evbarm/setjmp.h			comp-c-include
+./usr/include/evbarm/signal.h			comp-c-include
+./usr/include/evbarm/stdarg.h			comp-obsolete		obsolete
+./usr/include/evbarm/sysarch.h			comp-c-include
+./usr/include/evbarm/trap.h			comp-c-include
+./usr/include/evbarm/types.h			comp-c-include
+./usr/include/evbarm/varargs.h			comp-obsolete		obsolete
+./usr/include/evbarm/vmparam.h			comp-c-include
+./usr/include/evbarm/wchar_limits.h		comp-c-include

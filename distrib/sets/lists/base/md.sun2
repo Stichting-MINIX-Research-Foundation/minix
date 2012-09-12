@@ -1,0 +1,7 @@
+# $NetBSD: md.sun2,v 1.9 2009/02/14 11:33:56 abs Exp $
+./usr/mdec/bootxx				base-sysutil-bin
+./usr/mdec/bootyy				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/netboot				base-sysutil-bin
+./usr/mdec/tapeboot				base-sysutil-bin
+./usr/mdec/ufsboot				base-sysutil-bin

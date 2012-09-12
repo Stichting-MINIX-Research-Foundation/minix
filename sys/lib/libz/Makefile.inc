@@ -19,13 +19,17 @@
 # Default values:
 ZDST?=		${.OBJDIR}/lib/z
 Z_AS?=		library
-ZDOTDIR?= ../../../../../.
 
 .ifndef __MINIX
+ZDOTDIR?= ../../.
+
 ZDIR=		${S:S@^.@${ZDOTDIR}@:Q}/lib/libz
 .else
+ZDOTDIR?= ../../../../../.
+
 ZDIR=		${.CURDIR}/${ZDOTDIR}/lib/libz
 .endif
+
 .if (${Z_AS} == "obj")
 ZLIB=		${ZDST}/libz.o
 ZLIB_PROF=	${ZDST}/libz.po

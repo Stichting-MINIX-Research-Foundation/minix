@@ -44,7 +44,6 @@
 ./usr/include/ddekit
 ./usr/include/ddekit/minix
 ./usr/include/g++
-./usr/include/objc
 ./usr/include/i386
 ./usr/include/lzma
 ./usr/include/minix
@@ -139,8 +138,8 @@
 
 # Symlinks
 /set type=link uid=0 gid=0 mode=0777
-./dev/mouse link=/dev/kbdaux
-./usr/bin/cc link=/usr/pkg/bin/clang
-./usr/bin/strip link=/usr/pkg/bin/strip
-./var/log link=/usr/log
-./var/tmp link=/usr/tmp
+./dev/mouse
+./usr/bin/cc
+./usr/bin/strip
+./var/log
+./var/tmp

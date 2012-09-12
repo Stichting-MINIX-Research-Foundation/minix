@@ -9,22 +9,28 @@ u=/usr
 MDEC=	/usr/mdec
 GEN_FILES=	*.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 
+# LSC detect where were built the objects files
+PROGROOT:= ../..
+.if "${MAKEOBJDIR:S,${.CURDIR},,}" != ""
+PROGROOT:= ${MAKEOBJDIR:S,releasetools,,}
+.endif
+
 # Specify the programs that are part of the system image.
-KERNEL= kernel
+KERNEL= ${PROGROOT}/kernel/kernel
 # PROGRAMS are in the order they should be loaded by boot
 PROGRAMS= \
-	${NETBSDSRCDIR}/servers/ds/ds \
-	${NETBSDSRCDIR}/servers/rs/rs \
-	${NETBSDSRCDIR}/servers/pm/pm \
-	${NETBSDSRCDIR}/servers/sched/sched \
-	${NETBSDSRCDIR}/servers/vfs/vfs \
-	${NETBSDSRCDIR}/drivers/memory/memory \
-	${NETBSDSRCDIR}/drivers/log/log \
-	${NETBSDSRCDIR}/drivers/tty/tty \
-	${NETBSDSRCDIR}/servers/mfs/mfs \
-	${NETBSDSRCDIR}/servers/vm/vm \
-	${NETBSDSRCDIR}/servers/pfs/pfs \
-	${NETBSDSRCDIR}/servers/init/init
+	${PROGROOT}/servers/ds/ds \
+	${PROGROOT}/servers/rs/rs \
+	${PROGROOT}/servers/pm/pm \
+	${PROGROOT}/servers/sched/sched \
+	${PROGROOT}/servers/vfs/vfs \
+	${PROGROOT}/drivers/memory/memory \
+	${PROGROOT}/drivers/log/log \
+	${PROGROOT}/drivers/tty/tty \
+	${PROGROOT}/servers/mfs/mfs \
+	${PROGROOT}/servers/vm/vm \
+	${PROGROOT}/servers/pfs/pfs \
+	${PROGROOT}/servers/init/init
 
 usage:	
 	@echo " " >&2
@@ -51,7 +57,7 @@ all: services
 
 # rebuild the program or system libraries
 includes:
-	$(MAKE) -C .. includes
+	$(MAKE) -C ../ includes
 
 depend: includes .gitignore
 	$(MAKE) -C ../ depend
@@ -74,11 +80,11 @@ drivers: includes servers
 bootable:
 	exec su root mkboot bootable
 
-hdboot: services
-	rm -rf ${DESTDIR}/boot/minix/.temp/
+hdboot: 
+	@rm -rf ${DESTDIR}/boot/minix/.temp/
 	${INSTALL_DIR} ${DESTDIR}/boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
-	n=0;							\
+	@n=0;							\
 	for i in ${PROGRAMS};					\
 	do							\
 	n=`expr $$n + 1`;					\
@@ -86,8 +92,8 @@ hdboot: services
 	newname="${DESTDIR}/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
 	${INSTALL} $$i $$newname;				\
 	done
-	cp ../kernel/kernel ${DESTDIR}/boot/minix/.temp/
-	if [ "${MKINSTALLBOOT}" != "no" ] ; then		\
+	@cp ${PROGROOT}/kernel/kernel ${DESTDIR}/boot/minix/.temp/
+	@if [ "${MKINSTALLBOOT}" != "no" ] ; then		\
 	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
 	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
 	${HOST_SH} mkboot $@;					\
@@ -110,15 +116,15 @@ nbsd_fetch:
 		date=$$1; minixpath=$$2; origpath=$$3;				\
 		if [ $$# -lt 3 ]; then origpath=$$2; fi;			\
 		echo "retrieving $$origpath ..";				\
-		cd ${NETBSDSRCDIR} && cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
+		cd .. && cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
 	done
 
 nbsd_diff:
-	find ${NETBSDSRCDIR} -name minix-port.patch | xargs rm
+	find .. -name minix-port.patch | xargs rm
 	cat nbsd_ports | grep -v '^#' | \
-	( cd ${NETBSDSRCDIR} && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh releasetools/nbsd_diff.sh " \
+	( cd .. && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh releasetools/nbsd_diff.sh " \
 	   "nbsdsrc/src/"origpath" "minixpath" "minixpath"/minix-port.patch");}' )
-	find ${NETBSDSRCDIR} -name minix-port.patch | xargs wc -l | sort -n
+	find .. -name minix-port.patch | xargs wc -l | sort -n
 
 
 # clean up compile results

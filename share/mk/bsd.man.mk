@@ -1,17 +1,12 @@
-#	$NetBSD: bsd.man.mk,v 1.102 2009/10/23 23:12:10 joerg Exp $
+#	$NetBSD: bsd.man.mk,v 1.109 2011/09/10 16:57:35 apb Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
 
-MKCATPAGES := no
-MKHTML := no
-
 ##### Basic targets
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks
 .PHONY:		htmlinstall htmlpages htmllinks
-.if ${MKMANDOC} == "yes"
 .PHONY:		lintmanpages
-.endif
 realinstall:	${MANINSTALL}
 
 ##### Default values
@@ -28,7 +23,6 @@ CATDEPS?=	${TMACDEPDIR}/andoc.tmac \
 		${TMACDEPDIR}/mdoc/doc-ditroff \
 		${TMACDEPDIR}/mdoc/doc-nroff \
 		${TMACDEPDIR}/mdoc/doc-syms
-HTMLDEPS?=	${TMACDEPDIR}/doc2html.tmac
 MANTARGET?=	cat
 
 MAN?=
@@ -40,7 +34,7 @@ _MNUMBERS=	1 2 3 4 5 6 7 8 9
 MANCOMPRESS?=
 MANSUFFIX?=
 .else
-MANCOMPRESS?=	gzip -ncf
+MANCOMPRESS?=	${TOOL_GZIP} -ncf
 MANSUFFIX?=	.gz
 .endif
 
@@ -134,10 +128,7 @@ realall:	${CATPAGES}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 	${_MKTARGET_FORMAT}
-.if defined(USETBL)
-	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
-	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
-.elif ${MKMANDOC} == yes && !defined(NOMANDOC)
+.if ${MKMANDOC} == yes && !defined(NOMANDOC)
 	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
 		${TOOL_MANDOC_ASCII} ${.IMPSRC} ${MANCOMPRESS} \
 		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
@@ -145,6 +136,9 @@ ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 		${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
 		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
 	fi
+.elif defined(USETBL)
+	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
+	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .else
 	${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
@@ -195,25 +189,18 @@ htmlinstall:	htmlpages htmllinks
 htmlpages::	# ensure target exists
 HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
 
+HTMLLINKS=	${MANSUBDIR:?../:}../html%S/%N.html
+HTMLSTYLE=	${MANSUBDIR:?../:}../style.css
+
 realall:	${HTMLPAGES}
 .NOPATH:	${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
-.MADE:	${HTMLDEPS}
 
-${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
+${_MNUMBERS:@N@.$N.html$N@}: 				# build rule
 	${_MKTARGET_FORMAT}
-.if ${MKMANDOC} == "yes" && !defined(NOMANDOC)
-	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
-		${TOOL_MANDOC_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
-		    mv ${.TARGET}.tmp ${.TARGET}; \
-	else \
-		${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
-		    mv ${.TARGET}.tmp ${.TARGET}; \
-	fi
-.else
-	${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
+	${TOOL_MANDOC_HTML} -Oman=${HTMLLINKS} -Ostyle=${HTMLSTYLE} \
+	    ${.IMPSRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
-.endif
 
 .for F in ${HTMLPAGES:O:u}
 # construct installed path
@@ -258,33 +245,28 @@ htmllinks::	${_t}
 ##### Clean rules
 .undef _F
 
-cleandir: cleanman
-.if !empty(CLEANFILES)
-	rm -f ${CLEANFILES}
-.endif
-
-cleanman: .PHONY
 .if !empty(MAN) && (${MKMAN} != "no")
 .if (${MKCATPAGES} != "no")
-	rm -f ${CATPAGES}
+CLEANDIRFILES+= ${CATPAGES}
 .endif
 .if !empty(MANSUFFIX)
-	rm -f ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
+CLEANDIRFILES+= ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
 .endif
 .if ${MKHTML} != "no"
-	rm -f ${HTMLPAGES}
+CLEANDIRFILES+= ${HTMLPAGES}
 .endif
 .endif
 # (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
 
-.if ${MKMANDOC} == "yes" && !empty(MANPAGES)
+.if !empty(MANPAGES)
 lintmanpages: ${MANPAGES}
-	${TOOL_MANDOC_LINT} -Tlint -fstrict ${.ALLSRC}
+	${TOOL_MANDOC_LINT} -Tlint -fstrict -Wall,stop ${.ALLSRC}
 .endif
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.files.mk>
 .include <bsd.sys.mk>
+.include <bsd.clean.mk>
 
 ${TARGETS} catinstall maninstall htmlinstall: # ensure existence

@@ -3,6 +3,8 @@
 LIB=		lzma
 USE_SHLIBDIR=	yes
 NOLINT=		yes
+# LSC MINIX for now...
+NOGCCERROR=yes
 
 LIBDPLIBS+=      c        ${.CURDIR}/../../../../lib/libc
 

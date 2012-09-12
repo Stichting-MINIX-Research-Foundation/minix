@@ -1,0 +1,65 @@
+# $NetBSD: ad.mips,v 1.38 2011/07/17 20:54:30 joerg Exp $
+./usr/bin/elf2aout				comp-obsolete		obsolete
+./usr/bin/elf2ecoff				comp-sysutil-bin
+./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/mips				comp-c-include
+./usr/include/mips/ansi.h			comp-c-include
+./usr/include/mips/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/mips/asm.h			comp-c-include
+./usr/include/mips/bsd-aout.h			comp-obsolete		obsolete
+./usr/include/mips/bswap.h			comp-c-include
+./usr/include/mips/cachectl.h			comp-c-include
+./usr/include/mips/cdefs.h			comp-c-include
+./usr/include/mips/cpu.h			comp-c-include
+./usr/include/mips/cpuregs.h			comp-c-include
+./usr/include/mips/db_machdep.h			comp-obsolete		obsolete
+./usr/include/mips/ecoff_machdep.h		comp-c-include
+./usr/include/mips/elf.h			comp-obsolete		obsolete
+./usr/include/mips/elf_machdep.h		comp-c-include
+./usr/include/mips/endian.h			comp-c-include
+./usr/include/mips/endian_machdep.h		comp-c-include
+./usr/include/mips/float.h			comp-c-include
+./usr/include/mips/ieee.h			comp-c-include
+./usr/include/mips/ieeefp.h			comp-c-include
+./usr/include/mips/int_const.h			comp-c-include
+./usr/include/mips/int_fmtio.h			comp-c-include
+./usr/include/mips/int_limits.h			comp-c-include
+./usr/include/mips/int_mwgwtypes.h		comp-c-include
+./usr/include/mips/int_types.h			comp-c-include
+./usr/include/mips/kcore.h			comp-c-include
+./usr/include/mips/kdbparam.h			comp-c-include
+./usr/include/mips/limits.h			comp-c-include
+./usr/include/mips/lock.h			comp-c-include
+./usr/include/mips/locore.h			comp-c-include
+./usr/include/mips/math.h			comp-c-include
+./usr/include/mips/mcontext.h			comp-c-include
+./usr/include/mips/mips1_pte.h			comp-c-include
+./usr/include/mips/mips3_pte.h			comp-c-include
+./usr/include/mips/mips_opcode.h		comp-c-include
+./usr/include/mips/mips_param.h			comp-c-include
+./usr/include/mips/mutex.h			comp-c-include
+./usr/include/mips/pcb.h			comp-c-include
+./usr/include/mips/pmap.h			comp-c-include
+./usr/include/mips/pmc.h			comp-c-include
+./usr/include/mips/proc.h			comp-c-include
+./usr/include/mips/profile.h			comp-c-include
+./usr/include/mips/psl.h			comp-c-include
+./usr/include/mips/pte.h			comp-c-include
+./usr/include/mips/ptrace.h			comp-c-include
+./usr/include/mips/reg.h			comp-c-include
+./usr/include/mips/regdef.h			comp-c-include
+./usr/include/mips/regnum.h			comp-c-include
+./usr/include/mips/reloc.h			comp-c-include
+./usr/include/mips/rwlock.h			comp-c-include
+./usr/include/mips/setjmp.h			comp-c-include
+./usr/include/mips/signal.h			comp-c-include
+./usr/include/mips/stdarg.h			comp-obsolete		obsolete
+./usr/include/mips/sysarch.h			comp-c-include
+./usr/include/mips/trap.h			comp-c-include
+./usr/include/mips/types.h			comp-c-include
+./usr/include/mips/varargs.h			comp-obsolete		obsolete
+./usr/include/mips/vmparam.h			comp-c-include
+./usr/include/mips/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/bin/elf2aout.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug

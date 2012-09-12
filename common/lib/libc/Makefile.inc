@@ -1,12 +1,13 @@
-# $NetBSD: Makefile.inc,v 1.10 2008/10/26 07:22:50 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.12 2012/07/08 01:21:12 rmind Exp $
 
 COMMON_DIR:=${.PARSEDIR}
 .if defined(__MINIX)
 COMMON_CODEDIRS=atomic gen inet md net quad stdlib string 
+COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
 .else
 COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
+COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160 hash/murmurhash
 .endif
-COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
 
 .if defined(COMMON_MACHINE_ARCH) && !empty(COMMON_MACHINE_ARCH) && \
     exists(${COMMON_DIR}/arch/${COMMON_MACHINE_ARCH})
@@ -29,6 +30,11 @@ COMMON_ARCHDIR=${COMMON_DIR}/arch/${COMMON_ARCHSUBDIR}
 .if exists(${COMMON_ARCHDIR}/${i}/Makefile.inc)
 .include "${COMMON_ARCHDIR}/${i}/Makefile.inc"
 .endif
+.if !empty(CPPFLAGS:M-DLIBKERN_OPTIMISE_SPACE) && \
+    exists(${COMMON_ARCHDIR}/$i/small)
+.PATH.S: ${COMMON_ARCHDIR}/$i/small
+.endif
+
 .if exists(${COMMON_ARCHDIR}/$i)
 .PATH.c: ${COMMON_ARCHDIR}/$i
 .PATH.S: ${COMMON_ARCHDIR}/$i

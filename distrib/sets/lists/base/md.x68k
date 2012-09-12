@@ -1,0 +1,30 @@
+# $NetBSD: md.x68k,v 1.45 2012/10/12 20:16:30 tsutsui Exp $
+./dev/pow0					base-obsolete		obsolete
+./dev/pow1					base-obsolete		obsolete
+./usr/bin/bellctrl				base-util-bin
+./usr/bin/loadfont				base-util-bin
+./usr/bin/loadkmap				base-util-bin
+./usr/bin/palette				base-util-bin
+./usr/bin/rtcalarm				base-obsolete		obsolete
+./usr/bin/tvctrl				base-util-bin
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/fdboot_ufs				base-sysutil-bin
+./usr/mdec/fdboot_ustar				base-sysutil-bin
+./usr/mdec/installboot				base-sysutil-bin
+./usr/mdec/installboot.new			base-obsolete		obsolete
+./usr/mdec/loadbsd.x				base-sysutil-bin
+./usr/mdec/mboot				base-sysutil-bin
+./usr/mdec/netboot				base-sysutil-bin
+./usr/mdec/newdisk				base-sysutil-bin
+./usr/mdec/sdboot_ufs				base-sysutil-bin
+./usr/mdec/xxboot				base-obsolete		obsolete
+./usr/mdec/xxboot_ufs				base-sysutil-bin
+./usr/mdec/xxboot_cd9660			base-sysutil-bin
+./usr/mdec/xxboot_ffsv1				base-sysutil-bin
+./usr/mdec/xxboot_ffsv2				base-sysutil-bin
+./usr/mdec/xxboot_lfsv1				base-sysutil-bin
+./usr/mdec/xxboot_lfsv2				base-sysutil-bin
+./usr/sbin/memswitch				base-sysutil-bin
+./usr/sbin/poffd				base-obsolete		obsolete
+./usr/share/keymaps/x68k/ascii_kmap		base-sys-share
+./usr/share/keymaps/x68k/jis_kmap		base-sys-share

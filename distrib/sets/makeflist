@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+# $NetBSD: makeflist,v 1.76 2009/12/05 15:56:25 cegger Exp $
+#
+# Print out the files in some or all lists.
+# Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
+#
+
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+lists=
+
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${0##*/} [-L base,x,ext] [-bxyo] [-a arch] [-m machine] [-s setsdir] [setname [...]]
+	-L base,x,ext	print specified lists
+	-b		print netbsd + x11 lists
+	-x		print make x11 lists
+	-y		print make extsrc lists
+	-l		just list the selected set names, not the contents
+	-o		only match obsolete files
+	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [${MACHINE_ARCH}]
+	-m machine	set machine (e.g, amiga, i386, macppc) [${MACHINE}]
+	-s setsdir	directory to find sets [${setsdir}]
+	[setname [...]]	sets to build [${lists}]
+USAGE
+	exit 1
+}
+
+# handle args
+while getopts L:bxXloa:m:s: ch; do
+	case ${ch} in
+	L)
+		save_IFS="${IFS}"
+		IFS=,
+		for _list in ${OPTARG}; do
+			case $_list in
+			base)	lists="${lists} ${nlists}" ;;
+			x)	lists="${lists} ${xlists}" ;;
+			ext)	lists="${lists} ${extlists}" ;;
+			esac
+		done
+		IFS="${save_IFS}"
+		;;
+	# backward compat
+	b)
+		lists="${nlists} ${xlists}"
+		;;
+	x)
+		lists="${xlists}"
+		;;
+	y)
+		lists="${extlists}"
+		;;
+	l)
+		listonly=1
+		;;
+	o)
+		obsolete=1
+		;;
+	a)
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
+		;;
+	m)
+		MACHINE="${OPTARG}"
+		;;
+	s)
+		setsdir="${OPTARG}"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+if [ -n "$1" ]; then
+	lists="$*"
+fi
+
+if [ -n "${listonly}" ]; then
+	echo ${lists} | tr ' ' '\n'
+	exit 0
+fi
+
+list_set_files ${lists:-${nlists}} | ${AWK} '{print $1}' | ${SORT} -u

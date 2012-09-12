@@ -1,0 +1,50 @@
+# $NetBSD: md.iyonix,v 1.7 2011/07/18 17:18:14 dyoung Exp $
+./usr/include/iyonix				comp-c-include
+./usr/include/iyonix/ansi.h			comp-c-include
+./usr/include/iyonix/aout_machdep.h		comp-c-include
+./usr/include/iyonix/asm.h			comp-c-include
+./usr/include/iyonix/bswap.h			comp-c-include
+./usr/include/iyonix/bus.h			comp-obsolete		obsolete
+./usr/include/iyonix/cdefs.h			comp-c-include
+./usr/include/iyonix/cpu.h			comp-c-include
+./usr/include/iyonix/db_machdep.h		comp-obsolete		obsolete
+./usr/include/iyonix/disklabel.h		comp-c-include
+./usr/include/iyonix/elf_machdep.h		comp-c-include
+./usr/include/iyonix/endian.h			comp-c-include
+./usr/include/iyonix/endian_machdep.h		comp-c-include
+./usr/include/iyonix/float.h			comp-c-include
+./usr/include/iyonix/fp.h			comp-c-include
+./usr/include/iyonix/frame.h			comp-c-include
+./usr/include/iyonix/ieee.h			comp-c-include
+./usr/include/iyonix/ieeefp.h			comp-c-include
+./usr/include/iyonix/int_const.h		comp-c-include
+./usr/include/iyonix/int_fmtio.h		comp-c-include
+./usr/include/iyonix/int_limits.h		comp-c-include
+./usr/include/iyonix/int_mwgwtypes.h		comp-c-include
+./usr/include/iyonix/int_types.h		comp-c-include
+./usr/include/iyonix/intr.h			comp-c-include
+./usr/include/iyonix/ipkdb.h			comp-obsolete		obsolete
+./usr/include/iyonix/joystick.h			comp-c-include
+./usr/include/iyonix/limits.h			comp-c-include
+./usr/include/iyonix/lock.h			comp-c-include
+./usr/include/iyonix/math.h			comp-c-include
+./usr/include/iyonix/mcontext.h			comp-c-include
+./usr/include/iyonix/mutex.h			comp-c-include
+./usr/include/iyonix/param.h			comp-c-include
+./usr/include/iyonix/pcb.h			comp-c-include
+./usr/include/iyonix/pmap.h			comp-c-include
+./usr/include/iyonix/pmc.h			comp-c-include
+./usr/include/iyonix/proc.h			comp-c-include
+./usr/include/iyonix/profile.h			comp-c-include
+./usr/include/iyonix/ptrace.h			comp-c-include
+./usr/include/iyonix/reg.h			comp-c-include
+./usr/include/iyonix/rwlock.h			comp-c-include
+./usr/include/iyonix/setjmp.h			comp-c-include
+./usr/include/iyonix/signal.h			comp-c-include
+./usr/include/iyonix/stdarg.h			comp-obsolete		obsolete
+./usr/include/iyonix/sysarch.h			comp-c-include
+./usr/include/iyonix/trap.h			comp-c-include
+./usr/include/iyonix/types.h			comp-c-include
+./usr/include/iyonix/varargs.h			comp-obsolete		obsolete
+./usr/include/iyonix/vmparam.h			comp-c-include
+./usr/include/iyonix/wchar_limits.h		comp-c-include

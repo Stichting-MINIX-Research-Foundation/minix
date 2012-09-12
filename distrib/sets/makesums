@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# $NetBSD: makesums,v 1.16 2009/09/19 07:09:54 snj Exp $
+#
+# Make checksum files for files in ``tardir''.  Usage:
+# makesums [-a] [-t tardir] [setname [...]]
+#
+# If -t is omitted, RELEASEDIR must be set and not empty.
+# The ``setname'' arguments comprise a list of files to checksum,
+# and may be omitted (in which case ``*.tgz'' is used).
+# If -A is given, then the checksum are appended to possibly existing files.
+# NOTE: Don't use this when running parallel jobs
+# If -a is given, then the list of sets is ignored, and ``*'' is used.
+#
+# After shell glob expansion, the list of sets is filtered to remove known
+# output file names (of the form *SUM, SHA512 and MD5), non-existent files, and
+# subdirectories. If this filtering leaves no files, then no output files are
+# produced. Otherwise the resulting list of files are checksummed and two
+# output files (MD5 and SHA512) are produced.
+#
+
+prog="${0##*/}"
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+# set defaults
+targetdir="${RELEASEDIR}"
+dash_all=no
+append=\>
+
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${prog} [-A] [-a] [-t targetdir] [setname [...]]
+	-A		Append to possible existing checksum files 
+	-a		checksum all plain files instead of [setname [...]]
+	-t targetdir	\${RELEASEDIR}		[${targetdir}]
+	setname [...]	sets to checksum 	[*.tgz]
+USAGE
+	exit 1
+}
+
+# handle args
+while getopts aAt: ch; do
+	case ${ch} in
+	A)
+		append=\>\>
+		;;
+	a)
+		dash_all=yes
+		;;
+	t)	
+		targetdir="${OPTARG}"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+
+if [ -z "${targetdir}" ]; then
+	echo >&2 "${prog}: \${RELEASEDIR} must be set or provided with -t"
+	exit 1
+fi
+
+cd "${targetdir}"
+pat="$*"
+if [ "${dash_all}" = yes ]; then
+	pat='*'
+elif [ -z "${pat}" ]; then
+	pat='*.tgz'
+fi
+lists="$(${FIND} ${pat} -prune \( -type f -o -type l \) \
+	\! -name '*SUM' \! -name MD5 \! -name SHA512 2>/dev/null)"
+if [ -n "${lists}" ]; then
+	eval ${CKSUM} -a md5  ${lists} ${append} MD5
+	eval ${CKSUM} -a sha512  ${lists} ${append} SHA512
+fi

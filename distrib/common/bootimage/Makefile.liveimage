@@ -1,0 +1,42 @@
+#	$NetBSD: Makefile.liveimage,v 1.2 2012/01/22 16:50:00 tsutsui Exp $
+#
+# Common Makefile to create a bootable FS image for USB flash or emulators
+#
+
+#
+# Required variables:
+#	LIVEIMGBASE
+#		Basename of the liveimage
+#
+# See Makefile.bootimage for other variables.
+#
+
+.if !target(check_LIVEIMGBASE)
+check_LIVEIMGBASE: .PHONY .NOTMAIN
+.if !defined(LIVEIMGBASE)
+	@echo "Error: LIVEIMGBASE is not set"
+	@false
+.else
+	@true
+.endif
+.endif
+
+IMGBASE=	${LIVEIMGBASE}
+
+.include "${NETBSDSRCDIR}/distrib/common/bootimage/Makefile.bootimage"
+
+# LIVEIMG_RELEASEDIR specifies where to install ${LIVEIMGBASE}.img.gz.
+# This should be passed from etc/Makefile or etc/etc.${MACHINE}/Makefile.inc
+# but also set default here for manual builds.
+LIVEIMG_RELEASEDIR?=	${RELEASEMACHINEDIR}/installation/liveimage
+
+# should be defined elsewhere? 
+MKDIR?=		mkdir -p
+
+live_image: check_LIVEIMGBASE check_RELEASEDIR ${IMGBASE}.img.gz
+	${MKDIR} ${LIVEIMG_RELEASEDIR}
+	${RELEASE_INSTALL} ${IMGBASE}.img.gz ${LIVEIMG_RELEASEDIR}
+	# note ${MAKESUM} will be calculated in src/etc/Makefile
+
+release:
+

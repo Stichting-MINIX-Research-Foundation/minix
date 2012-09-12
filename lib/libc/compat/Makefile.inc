@@ -10,6 +10,7 @@ COMPATARCHDIR=${COMPATDIR}/arch/${ARCHSUBDIR}
 .include "${COMPATDIR}/gen/Makefile.inc"
 .include "${COMPATDIR}/net/Makefile.inc"
 .include "${COMPATDIR}/rpc/Makefile.inc"
+.include "${COMPATDIR}/stdio/Makefile.inc"
 .include "${COMPATDIR}/stdlib/Makefile.inc"
 .include "${COMPATDIR}/sys/Makefile.inc"
 .include "${COMPATDIR}/time/Makefile.inc"

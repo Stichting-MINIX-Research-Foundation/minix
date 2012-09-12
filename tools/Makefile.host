@@ -11,6 +11,10 @@ COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
 .-include	"${COMPATOBJ}/defs.mk"
 .endif
 
+.if ${HOST_OSTYPE:C/\-.*//} == "Minix"
+LDADD+= -lcompat_minix
+.endif
+
 # Resolve pathnames in variables.
 _RESOLVE_VARS=	CFLAGS CPPFLAGS DPADD HOST_CPPFLAGS LDADD
 .for var in ${_RESOLVE_VARS}

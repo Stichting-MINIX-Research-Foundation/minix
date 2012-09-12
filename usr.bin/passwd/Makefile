@@ -7,6 +7,9 @@
 USE_YP= no
 USE_KERBEROS= no
 USE_PAM= no
+
+# LSC Until it compiles cleanly...
+NOGCCERROR:=yes
 .endif
 
 USE_FORT?= yes	# setuid

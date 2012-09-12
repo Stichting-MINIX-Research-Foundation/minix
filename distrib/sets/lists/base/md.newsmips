@@ -1,0 +1,4 @@
+# $NetBSD: md.newsmips,v 1.7 2008/11/29 17:57:34 tsutsui Exp $
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/bootxx				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete

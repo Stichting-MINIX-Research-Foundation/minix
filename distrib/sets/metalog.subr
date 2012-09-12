@@ -1,0 +1,88 @@
+# $NetBSD: metalog.subr,v 1.2 2011/02/17 08:41:35 uebayasi Exp $
+
+#
+# xrcs add
+# xrcs update
+# xrcs remove
+#
+#	RCS wrapper for non-interactive scripts.
+#	Excerpted from /etc/security.
+#
+
+xrcs_descr=
+xrcs_msg=
+xrcs_cur=
+xrcs_new=
+
+xrcs_latest()
+{
+	rcslog -rlatest ${xrcs_cur} | \
+	sed -n '/^revision/ { s/^revision //; p; }'
+}
+
+xrcs_retag()
+{
+	previous=$( xrcs_latest 2>/dev/null )
+	if [ -n "$previous" ]; then
+		rcs -q -Nprevious: ${xrcs_cur}
+	fi
+}
+
+xrcs_unlock()
+{
+	rcs -q -u -U -M ${xrcs_cur}
+}
+
+xrcs_ci()
+{
+	xrcs_retag
+	ci -q -f -u -t-"$xrcs_descr" -m"$xrcs_msg" -Nlatest ${xrcs_cur}
+	rcs -q -kb -U ${xrcs_cur}
+}
+
+xrcs_co()
+{
+	co -q -f -u ${xrcs_cur}
+}
+
+xrcs_init()
+{
+	if [ -f ${xrcs_cur},v ]; then
+		xrcs_unlock
+	fi
+
+	if [ -f ${xrcs_cur} ]; then
+		if [ ! -f ${xrcs_cur},v ]; then
+			xrcs_ci
+			xrcs_co
+		fi
+	fi
+}
+
+xrcs_add()
+{
+	xrcs_init
+	cp -p $1 ${xrcs_cur}
+	xrcs_ci
+	xrcs_co
+}
+
+xrcs_update()
+{
+	xrcs_init
+	xrcs_ci
+	xrcs_co
+}
+
+xrcs_remove()
+{
+	xrcs_init
+	cp /dev/null ${xrcs_cur}
+	xrcs_ci
+	rm ${xrcs_cur}
+}
+
+xrcs()
+{
+	eval xrcs_$1
+}

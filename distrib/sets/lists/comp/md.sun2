@@ -1,0 +1,72 @@
+# $NetBSD: md.sun2,v 1.19 2011/07/17 20:54:32 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sun2				comp-c-include
+./usr/include/sun2/_G_config.h			comp-obsolete		obsolete
+./usr/include/sun2/ansi.h			comp-c-include
+./usr/include/sun2/aout_machdep.h		comp-c-include
+./usr/include/sun2/asm.h			comp-c-include
+./usr/include/sun2/autoconf.h			comp-c-include
+./usr/include/sun2/bswap.h			comp-c-include
+./usr/include/sun2/cdefs.h			comp-c-include
+./usr/include/sun2/cpu.h			comp-c-include
+./usr/include/sun2/db_machdep.h			comp-obsolete		obsolete
+./usr/include/sun2/disklabel.h			comp-c-include
+./usr/include/sun2/dvma.h			comp-c-include
+./usr/include/sun2/eeprom.h			comp-c-include
+./usr/include/sun2/elf_machdep.h		comp-c-include
+./usr/include/sun2/endian.h			comp-c-include
+./usr/include/sun2/endian_machdep.h		comp-c-include
+./usr/include/sun2/fbio.h			comp-c-include
+./usr/include/sun2/float.h			comp-c-include
+./usr/include/sun2/frame.h			comp-c-include
+./usr/include/sun2/idprom.h			comp-c-include
+./usr/include/sun2/ieee.h			comp-c-include
+./usr/include/sun2/ieeefp.h			comp-c-include
+./usr/include/sun2/int_const.h			comp-c-include
+./usr/include/sun2/int_fmtio.h			comp-c-include
+./usr/include/sun2/int_limits.h			comp-c-include
+./usr/include/sun2/int_mwgwtypes.h		comp-c-include
+./usr/include/sun2/int_types.h			comp-c-include
+./usr/include/sun2/intr.h			comp-c-include
+./usr/include/sun2/kbd.h			comp-c-include
+./usr/include/sun2/kbio.h			comp-c-include
+./usr/include/sun2/kcore.h			comp-c-include
+./usr/include/sun2/leds.h			comp-c-include
+./usr/include/sun2/limits.h			comp-c-include
+./usr/include/sun2/lock.h			comp-c-include
+./usr/include/sun2/math.h			comp-c-include
+./usr/include/sun2/mcontext.h			comp-c-include
+./usr/include/sun2/mon.h			comp-c-include
+./usr/include/sun2/mutex.h			comp-c-include
+./usr/include/sun2/param.h			comp-c-include
+./usr/include/sun2/pcb.h			comp-c-include
+./usr/include/sun2/pmap.h			comp-c-include
+./usr/include/sun2/pmc.h			comp-c-include
+./usr/include/sun2/proc.h			comp-c-include
+./usr/include/sun2/profile.h			comp-c-include
+./usr/include/sun2/promlib.h			comp-c-include
+./usr/include/sun2/psl.h			comp-c-include
+./usr/include/sun2/pte.h			comp-c-include
+./usr/include/sun2/ptrace.h			comp-c-include
+./usr/include/sun2/reg.h			comp-c-include
+./usr/include/sun2/rwlock.h			comp-c-include
+./usr/include/sun2/setjmp.h			comp-c-include
+./usr/include/sun2/signal.h			comp-c-include
+./usr/include/sun2/stdarg.h			comp-obsolete		obsolete
+./usr/include/sun2/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/sun2/trap.h			comp-c-include
+./usr/include/sun2/types.h			comp-c-include
+./usr/include/sun2/varargs.h			comp-obsolete		obsolete
+./usr/include/sun2/vmparam.h			comp-c-include
+./usr/include/sun2/vuid_event.h			comp-c-include
+./usr/include/sun2/wchar_limits.h		comp-c-include
+./usr/include/sun2/z8530var.h			comp-c-include
+./usr/include/sun68k				comp-c-include
+./usr/include/sun68k/bus.h			comp-c-include
+./usr/include/sun68k/cpu.h			comp-c-include
+./usr/include/sun68k/disklabel.h		comp-c-include
+./usr/include/sun68k/idprom.h			comp-c-include
+./usr/include/sun68k/intr.h			comp-c-include
+./usr/include/sun68k/mon.h			comp-c-include
+./usr/include/sun68k/psl.h			comp-c-include
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete

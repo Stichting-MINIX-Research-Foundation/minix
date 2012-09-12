@@ -9,5 +9,7 @@ CONFIGURE_ARGS+=--disable-shared
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
+.if ${HOST_OSTYPE:C/\-.*//} != "Minix"
 # Force avoiding possibly non-executable install-sh.
 CONFIGURE_ENV+= ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"
+.endif

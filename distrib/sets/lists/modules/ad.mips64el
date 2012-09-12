@@ -1,0 +1,3 @@
+# $NetBSD: ad.mips64el,v 1.1 2009/12/15 05:59:51 mrg Exp $
+./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.37 2012/01/21 22:31:15 christos Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.39 2012/06/19 21:48:33 hans Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -34,14 +34,19 @@ FIND_ARGS+=	\! \( -type d \( \
 			-name 'nbsd.mt' -o \
 			-name 'tests*' \
 		\) -prune \)
+_GNU_GET_SCRIPTS:= \
+	external/gpl3/gcc/fetch.sh \
+	external/gpl3/binutils/fetch.sh \
+	gnu/dist/fetch.sh \
+	external/lgpl2/mpc/fetch.sh \
+	external/lgpl3/gmp/fetch.sh \
+	external/lgpl3/mpfr/fetch.sh
 
-
-_GNU_GET_SRC!=	${HOST_SH} ${.CURDIR}/../../external/gpl3/gcc/fetch.sh && \
-		${HOST_SH} ${.CURDIR}/../../external/gpl3/binutils/fetch.sh && \
-		${HOST_SH} ${.CURDIR}/../../gnu/dist/fetch.sh && \
-		${HOST_SH} ${.CURDIR}/../../external/lgpl2/mpc/fetch.sh && \
-		${HOST_SH} ${.CURDIR}/../../external/lgpl3/gmp/fetch.sh && \
-		${HOST_SH} ${.CURDIR}/../../external/lgpl3/mpfr/fetch.sh
+_gnu_get_src: ${_GNU_GET_SCRIPTS}
+.for name in ${_GNU_GET_SCRIPTS}
+${name}:
+	${HOST_SH} ${.CURDIR}/../../${name}
+.endfor
 
 # Do this "find" only if actually building something.
 .if (${USETOOLS} == "yes") && empty(.MAKEFLAGS:M-V*) && \
@@ -105,17 +110,17 @@ MAKE_ARGS+=	BISON=true DESTDIR= INSTALL=${HOST_INSTALL_FILE:Q}
 ALL_TARGET?=	all
 INSTALL_TARGET?=install
 
-BUILD_PLATFORM!= uname -srm | tr ' ' '-'
+BUILD_PLATFORM!= uname -srm | tr ' ()' '-'
 CONFIGURE_PLATFORM!= if [ -s .configure_done ]; then cat .configure_done; else echo none; fi
 .if "${BUILD_PLATFORM}" != "${CONFIGURE_PLATFORM}"
 configure_cleanup:
 	@mkdir build 2>/dev/null || true
 	@(echo "Cleaning stale cache files ${BUILD_PLATFORM} != ${CONFIGURE_PLATFORM}")
-	@(cd build && find . -name config.cache -print0 | xargs -0 rm -f)
+	@(cd build && find . -name config.cache | xargs rm -f)
 configure_cleanup=configure_cleanup
 .endif
 
-.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
+.configure_done: _gnu_get_src .WAIT ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
 	@mkdir build 2>/dev/null || true
 	@(cd build && ${CONFIGURE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
 	@echo ${BUILD_PLATFORM} > $@

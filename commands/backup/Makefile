@@ -1,3 +1,6 @@
+# LSC For nwo
+NOGCCERROR:= yes
+
 PROG=	backup
 MAN=
 

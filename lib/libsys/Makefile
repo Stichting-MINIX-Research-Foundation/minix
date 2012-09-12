@@ -1,6 +1,9 @@
 # Makefile for libsys
 .include <bsd.own.mk>
 
+# LSC For now
+NOGCCERROR:= yes
+
 LIB=		sys
 
 SRCS=  \
@@ -148,6 +151,7 @@ CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
+CPPFLAGS.vprintf.c+= -D__NBSD_LIBC
 
 .if (${CC} == "gcc") || (${CC} == "clang")
 LDADD+=	-lminc

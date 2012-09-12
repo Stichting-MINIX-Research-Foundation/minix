@@ -59,7 +59,10 @@ SRCS+= arch_watchdog.c
 CPPFLAGS+= -DUSE_WATCHDOG
 .endif
 
-apic_asm.d klib.d mpx.d head.d: procoffsets.h
+sconst.h: procoffsets.h
+apic_asm.S head.S klib16.S klib.S mpx.S: sconst.h
+SRCS+= procoffsets.h
+CPPFLAGS+=-I.
 
 # It's OK to hardcode the arch as i386 here as this and procoffsets.cf
 # are i386-specific.

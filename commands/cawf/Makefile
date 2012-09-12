@@ -33,6 +33,9 @@
 #	malloc() and its relatives (most do).
 #
 #DEFS = -DUNIX -DMALLOCH
+#LSC For now...
+NOGCCERROR:= yes
+
 DEFS= -DUNIX -DUSG -DSTDLIB
 CPPFLAGS+= ${DEFS}
 

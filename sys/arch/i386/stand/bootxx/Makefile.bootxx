@@ -1,8 +1,7 @@
-# $NetBSD: Makefile.bootxx,v 1.42 2011/06/20 06:52:38 mrg Exp $
+# $NetBSD: Makefile.bootxx,v 1.43 2012/08/10 12:18:15 joerg Exp $
 
 S=	${.CURDIR}/../../../../..
 
-ACTIVE_CC?= ${CC}
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
@@ -64,7 +63,6 @@ CPPFLAGS+= -Os
 
 CPPFLAGS+= -DNO_LBA_CHECK
 
-.if defined(HAVE_GCC)
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
@@ -74,7 +72,6 @@ KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
 CPPFLAGS+= -DEPIA_HACK
 CPUFLAGS=  -march=i386 -mtune=i386
-.endif
 .endif
 
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes

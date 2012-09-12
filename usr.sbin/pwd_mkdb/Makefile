@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.19 2009/01/14 23:18:57 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2011/08/25 16:53:25 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,5 +11,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/include
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 .endif
+
+COPTS.pwd_mkdb.c+=	-Wno-format-nonliteral
 
 .include <bsd.prog.mk>
