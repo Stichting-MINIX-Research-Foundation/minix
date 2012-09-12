@@ -249,10 +249,14 @@ copyfrom(endpoint_t src_e,
  *                    block_transfer                                         *
  *===========================================================================*/
 static int
-block_transfer(dev_t minor,
-    int do_write,
-    u64_t position,
-    endpoint_t endpt, iovec_t * iov, unsigned int nr_req, int flags)
+block_transfer(dev_t minor,	/* minor device number */
+    int do_write,		/* read or write? */
+    u64_t position,		/* offset on device to read or write */
+    endpoint_t endpt,		/* process doing the request */
+    iovec_t * iov,		/* pointer to read or write request vector */
+    unsigned int nr_req,	/* length of request vector */
+    int flags			/* transfer flags */
+    )
 {
 	unsigned long counter;
 	iovec_t *ciov;		/* Current IO Vector */
@@ -352,11 +356,10 @@ block_transfer(dev_t minor,
 		mmc_log_trace(&log,
 		    "I/O %s request(%d/%d) iov(grant,size,iosize,"
 		    "offset)=(%d,%d,%d,%d)\n",
-		    (do_write) ? "write" : "read", counter, nr_req,
+		    (do_write) ? "write" : "read", counter + 1, nr_req,
 		    ciov->iov_addr, ciov->iov_size, io_size, io_offset);
 		/* transfer max one block at the time */
 		for (i = 0; i < io_size / blk_size; i++) {
-			r = OK;
 			if (do_write) {
 				/* Read io_size bytes from i/o vector starting 
 				 * at 0 and write it to out buffer at the
@@ -364,10 +367,7 @@ block_transfer(dev_t minor,
 				r = copyfrom(endpt,
 				    ciov->iov_addr, i * blk_size,
 				    (vir_bytes) copybuff, blk_size);
-				if (r != OK){
-					/* @TODO: move this code closer to
-					 * sys_safecopy* */
-					/* use _SIGN to reverse the signedness */
+				if (r != OK) {
 					mmc_log_warn(&log,
 					    "I/O write error: %s iov(base,size)=(%d,%d)"
 					    " at offset=%d\n",
@@ -386,15 +386,12 @@ block_transfer(dev_t minor,
 				    (dev->dv_base / blk_size) +
 				    (io_offset / blk_size) + i, 1, copybuff);
 				/* Read io_size bytes from our data at the
-				 * correct offset and write it to the output 
+				 * correct offset and write it to the output
 				 * buffer at 0 */
 				r = copyto(endpt,
 				    ciov->iov_addr, i * blk_size,
 				    (vir_bytes) copybuff, blk_size);
-				if (r != OK){
-					/* @TODO: move this code closer to
-					 * sys_safecopy* */
-					/* use _SIGN to reverse the signedness */
+				if (r != OK) {
 					mmc_log_warn(&log,
 					    "I/O read error: %s iov(base,size)=(%d,%d)"
 					    " at offset=%d\n",

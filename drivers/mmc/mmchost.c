@@ -21,7 +21,7 @@ static struct mmclog log = {
 };
 
 /* This is currently a dummy driver using an in-memory structure */
-#define DUMMY_SIZE_IN_BLOCKS 0xFFFFu
+#define DUMMY_SIZE_IN_BLOCKS 0xFFFFFu
 #define DUMMY_BLOCK_SIZE 512
 static char dummy_data[DUMMY_BLOCK_SIZE * DUMMY_SIZE_IN_BLOCKS];
 
