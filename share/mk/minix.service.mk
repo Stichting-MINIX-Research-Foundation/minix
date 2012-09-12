@@ -1,6 +1,8 @@
 # MINIX-specific servers/drivers options
 .include <bsd.own.mk>
 
+CPPFLAGS+=	-D__NBSD_LIBC
+
 .if !empty(CC:M*gcc)
 LDADD+= -nodefaultlibs -lgcc -lsys -lgcc -lminc
 .elif !empty(CC:M*clang)

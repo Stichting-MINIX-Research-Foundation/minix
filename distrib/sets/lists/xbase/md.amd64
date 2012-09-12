@@ -1,0 +1,17 @@
+# $NetBSD: md.amd64,v 1.10 2011/01/20 18:55:38 jmcneill Exp $
+./usr/X11R7/share/pciids/pci.ids		-unknown-		obsolete
+./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg
+./usr/X11R7/lib/libI810XvMC.so.1		-unknown-		xorg
+./usr/X11R7/lib/libI810XvMC.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libIntelXvMC.so			-unknown-		xorg
+./usr/X11R7/lib/libIntelXvMC.so.1		-unknown-		xorg
+./usr/X11R7/lib/libIntelXvMC.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libchromeXvMC.so		-unknown-		xorg
+./usr/X11R7/lib/libchromeXvMC.so.1		-unknown-		xorg
+./usr/X11R7/lib/libchromeXvMC.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libchromeXvMCPro.so		-unknown-		xorg
+./usr/X11R7/lib/libchromeXvMCPro.so.1		-unknown-		xorg
+./usr/X11R7/lib/libchromeXvMCPro.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg
+./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg
+./usr/X11R7/lib/libdrm_intel.so.0.0		-unknown-		xorg

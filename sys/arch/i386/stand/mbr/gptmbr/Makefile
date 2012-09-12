@@ -4,7 +4,6 @@ PROG=		gptmbr.bin
 SRCS=		gptmbr.S
 
 AFLAGS.gptmbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS+= "-Wa,--divide"
 
 .include <../Makefile.mbr>
 

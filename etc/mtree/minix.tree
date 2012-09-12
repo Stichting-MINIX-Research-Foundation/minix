@@ -69,6 +69,7 @@
 755  root   operator /usr/man/man8
 755  root   operator /usr/man/man9
 755  root   operator /usr/mdec
+755  root   operator /usr/obj
 755  root   operator /usr/pkg
 755  root   operator /usr/pkg/etc
 755  root   operator /usr/pkg/etc/rc.d

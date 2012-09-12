@@ -1,0 +1,57 @@
+# $NetBSD: md.ofppc,v 1.13 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/ofppc				comp-c-include
+./usr/include/ofppc/_G_config.h			comp-obsolete		obsolete
+./usr/include/ofppc/ansi.h			comp-c-include
+./usr/include/ofppc/aout_machdep.h		comp-c-include
+./usr/include/ofppc/asm.h			comp-c-include
+./usr/include/ofppc/atomic.h			comp-obsolete		obsolete
+./usr/include/ofppc/bat.h			comp-obsolete		obsolete
+./usr/include/ofppc/bswap.h			comp-c-include
+./usr/include/ofppc/cdefs.h			comp-c-include
+./usr/include/ofppc/cpu.h			comp-c-include
+./usr/include/ofppc/db_machdep.h		comp-obsolete		obsolete
+./usr/include/ofppc/disklabel.h			comp-c-include
+./usr/include/ofppc/elf_machdep.h		comp-c-include
+./usr/include/ofppc/endian.h			comp-c-include
+./usr/include/ofppc/endian_machdep.h		comp-c-include
+./usr/include/ofppc/float.h			comp-c-include
+./usr/include/ofppc/fpu.h			comp-c-include
+./usr/include/ofppc/frame.h			comp-c-include
+./usr/include/ofppc/ieee.h			comp-c-include
+./usr/include/ofppc/ieeefp.h			comp-c-include
+./usr/include/ofppc/int_const.h			comp-c-include
+./usr/include/ofppc/int_fmtio.h			comp-c-include
+./usr/include/ofppc/int_limits.h		comp-c-include
+./usr/include/ofppc/int_mwgwtypes.h		comp-c-include
+./usr/include/ofppc/int_types.h			comp-c-include
+./usr/include/ofppc/intr.h			comp-c-include
+./usr/include/ofppc/ipkdb.h			comp-obsolete		obsolete
+./usr/include/ofppc/kcore.h			comp-c-include
+./usr/include/ofppc/limits.h			comp-c-include
+./usr/include/ofppc/lock.h			comp-c-include
+./usr/include/ofppc/math.h			comp-c-include
+./usr/include/ofppc/mcontext.h			comp-c-include
+./usr/include/ofppc/mutex.h			comp-c-include
+./usr/include/ofppc/param.h			comp-c-include
+./usr/include/ofppc/pcb.h			comp-c-include
+./usr/include/ofppc/pmap.h			comp-c-include
+./usr/include/ofppc/pmc.h			comp-c-include
+./usr/include/ofppc/proc.h			comp-c-include
+./usr/include/ofppc/profile.h			comp-c-include
+./usr/include/ofppc/psl.h			comp-c-include
+./usr/include/ofppc/pte.h			comp-c-include
+./usr/include/ofppc/ptrace.h			comp-c-include
+./usr/include/ofppc/reg.h			comp-c-include
+./usr/include/ofppc/reloc.h			comp-c-include
+./usr/include/ofppc/rwlock.h			comp-c-include
+./usr/include/ofppc/setjmp.h			comp-c-include
+./usr/include/ofppc/signal.h			comp-c-include
+./usr/include/ofppc/spr.h			comp-obsolete		obsolete
+./usr/include/ofppc/stdarg.h			comp-obsolete		obsolete
+./usr/include/ofppc/trap.h			comp-c-include
+./usr/include/ofppc/types.h			comp-c-include
+./usr/include/ofppc/varargs.h			comp-obsolete		obsolete
+./usr/include/ofppc/vmparam.h			comp-c-include
+./usr/include/ofppc/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

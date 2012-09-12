@@ -1,0 +1,14 @@
+# $NetBSD: md.vax,v 1.28 2008/11/29 17:57:34 tsutsui Exp $
+./boot						base-sys-root
+./pcs750.bin					base-sys-root
+./sbin/ldconfig					base-sysutil-root	pic
+./usr/libexec/ld.so				base-sys-shlib		pic
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/boot.mop				base-obsolete		obsolete
+./usr/mdec/hpboot				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/raboot				base-sysutil-bin
+./usr/mdec/rdboot				base-sysutil-bin
+./usr/mdec/sdboot				base-sysutil-bin
+./usr/mdec/xxboot				base-sysutil-bin
+./usr/mdec/xxboot_ustarfs			base-sysutil-bin

@@ -1,0 +1,47 @@
+# $NetBSD: services,v 1.4 2009/09/20 19:41:35 abs Exp $
+# Minimal /etc/services file for install
+ftp-data	20/tcp
+ftp-data	20/udp
+ftp	21/tcp
+ftp	21/udp
+bootps	67/tcp
+bootps	67/udp
+bootpc	68/tcp
+bootpc	68/udp
+tftp	69/tcp
+tftp	69/udp
+http	80/tcp
+sunrpc	111/tcp
+sunrpc	111/udp
+sftp	115/tcp
+sftp	115/udp
+mftp	349/tcp
+mftp	349/udp
+shell	514/tcp
+kshell	544/tcp
+kshell	544/udp
+dhcpv6-client	546/tcp
+dhcpv6-client	546/udp
+dhcpv6-server	547/tcp
+dhcpv6-server	547/udp
+ftp-agent	574/tcp
+ftp-agent	574/udp
+dhcp-failover	647/tcp
+dhcp-failover	647/udp
+ftps-data	989/tcp
+ftps-data	989/udp
+ftps	990/tcp
+ftps	990/udp
+tftp-mcast	1758/tcp
+tftp-mcast	1758/udp
+nfs	2049/tcp
+nfs	2049/udp
+tftps	3713/tcp
+tftps	3713/udp
+kftp-data	6620/tcp
+kftp-data	6620/udp
+kftp	6621/tcp
+kftp	6621/udp
+mcftp	6622/tcp
+mcftp	6622/udp
+

@@ -1,0 +1,195 @@
+#! /bin/sh
+#
+# $NetBSD: regpkgset,v 1.12 2009/12/01 15:49:21 apb Exp $
+#
+# Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Alistair Crooks (agc@NetBSD.org)
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+# Usage: regpkgset [options] set
+#
+# Options:
+#   -q		Quiet.
+#   -v		Verbose.
+#   -f		Force.
+#   -m		Ignore errors from missing files.
+#   -u		Update.
+#   -c		Cache some information in ${BUILD_INFO_CACHE}.
+#   -d destdir	Sets DESTDIR.
+#   -t binpkgdir Create a binary package (in *.tgz format) in the
+#		specified directory.  Without this option, a binary
+#		package is not created.
+#   -M metalog	Use the specified metalog file to override file
+#		or directory attributes when creating a binary package.
+#   -N etcdir	Use the specified directory for passwd and group files.
+
+prog="${0##*/}"
+toppid=$$
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+: ${TARGET_ENDIANNESS:="$(arch_to_endian "${MACHINE_ARCH}")"}
+export TARGET_ENDIANNESS
+
+bomb()
+{
+	kill ${toppid}		# in case we were invoked from a subshell
+	exit 1
+}
+
+# A literal newline
+nl='
+'
+
+#
+# cleanup() deletes temporary files.
+#
+es=0
+cleanup()
+{
+	trap - 0
+	[ x"${BUILD_INFO_CACHE}" != x ] && rm -f "${BUILD_INFO_CACHE}"
+	exit ${es}
+}
+trap 'es=128; cleanup' 1 2 3 13 15	# HUP INT QUIT PIPE TERM
+trap 'es=$?; cleanup' 0 		# EXIT
+
+#
+# Parse command line args.
+#
+verbose=false
+quiet=false
+force=false
+allowmissing=false
+update=false
+cache=false
+pkgdir=""
+metalog=""
+etcdir=""
+all_options=""
+while [ $# -gt 1 ]; do
+	# XXX: ${all_options} doesn't correctly handle args with
+	# embedded shell special characters.
+	case "$1" in
+	-q)	quiet=true; verbose=false ;;
+	-v)	verbose=true; quiet=false ;;
+	-f)	force=true ;;
+	-m)	allowmissing=true ;;
+	-u)	update=true ;;
+	-c)	cache=true ;;
+	-d)	DESTDIR="$2"; all_options="${all_options} $1"; shift ;;
+	-d*)	DESTDIR="${1#-?}" ;;
+	-t)	pkgdir="$2"; all_options="${all_options} $1"; shift ;;
+	-t*)	pkgdir="${1#-?}" ;;
+	-M)	metalog="$2"; all_options="${all_options} $1"; shift ;;
+	-M*)	metalog="${1#-?}" ;;
+	-N)	etcdir="$2"; all_options="${all_options} $1"; shift ;;
+	-N*)	etcdir="${1#-?}" ;;
+	-*)	echo "Usage: regpkgset [options] set ..."; bomb ;;
+	*)	break ;;
+	esac
+	all_options="${all_options} $1"
+	shift
+done
+export DESTDIR
+
+if [ $# -lt 1 ]; then
+	echo "Usage: regpkgset [options] set ..."
+	bomb
+fi
+
+case "$1" in
+all)	list="${nlists}" ;;
+*)	list="$*" ;;
+esac
+
+if ${cache}; then
+	BUILD_INFO_CACHE="$(${MKTEMP} "/var/tmp/${prog}-BUILD_INFO.XXXXXX")"
+	export BUILD_INFO_CACHE
+	{
+	# These variables describe the build
+	# environment, not the target.
+	echo "OPSYS=$(${UNAME} -s)"
+	echo "OS_VERSION=$(${UNAME} -r)"
+	${MAKE} -B -f- all <<EOF
+.include <bsd.own.mk>
+all:
+	@echo OBJECT_FMT=${OBJECT_FMT}
+	@echo MACHINE_ARCH=${MACHINE_ARCH}
+	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
+EOF
+	} > "${BUILD_INFO_CACHE}"
+fi
+
+#
+# For each pkgset mentioned in ${list}, get a list of all pkgs in the pkgset.
+#
+# Sort all the pkgs into dependency order (with prerequisite pkgs before
+# pkgs that depend on them).
+#
+# Invoke ${rundir}/regpkg for each pkg, taking care to do it in dependency
+# order.  If there were any pkgs for which we failed to find dependency
+# information, handle them at the end.
+#
+pkgs="$(for pkgset in ${list}; do
+		${HOST_SH} "${rundir}/listpkgs" "${pkgset}" || bomb
+	 done)"
+tsort_input="$(${AWK} '{print $2 " " $1}' <"${rundir}/deps" || bomb)"
+tsort_output="$(echo "${tsort_input}" | ${TSORT} || bomb)"
+for pkg in ${tsort_output}; do
+	case "${nl}${pkgs}${nl}" in
+	*"${nl}${pkg}${nl}"*)
+		# We want this pkg.
+		pkgset="${pkg%%-*}"
+		${verbose} && echo "${prog}: registering ${pkg}"
+		${HOST_SH} "${rundir}/regpkg" ${all_options} \
+			"${pkgset}" "${pkg}" || bomb
+		;;
+	*)	# pkg is mentioned in ${tsort_output} but not in ${pkgs}.
+		# We do not want this pkg.
+		;;
+	esac
+done
+for pkg in ${pkgs}; do
+	case "${nl}${tsort_output}${nl}" in
+	*"${nl}${pkg}${nl}"*)
+		# pkg was in the tsort output, so it would have been
+		# handled above.
+		;;
+	*)	# This pkg was not in the tsort output.
+		# This is probably an error, but process the
+		# pkg anyway.
+		echo >&2 "${prog}: WARNING: ${pkg} is not mentioned in deps file"
+		pkgset="${pkg%%-*}"
+		${verbose} && echo "${prog}: registering ${pkg}"
+		${HOST_SH} "${rundir}/regpkg" ${all_options} \
+			"${pkgset}" "${pkg}" || bomb
+		;;
+	esac
+done
+
+exit 0

@@ -1,0 +1,64 @@
+# $NetBSD: md.hp700,v 1.9 2012/05/27 11:26:38 skrll Exp $
+./usr/include/hp700				comp-c-include
+./usr/include/hp700/ansi.h			comp-c-include
+./usr/include/hp700/aout_machdep.h		comp-c-include
+./usr/include/hp700/asm.h			comp-c-include
+./usr/include/hp700/autoconf.h			comp-c-include
+./usr/include/hp700/bswap.h			comp-c-include
+./usr/include/hp700/bus.h			comp-obsolete		obsolete
+./usr/include/hp700/byte_swap.h			comp-c-include
+./usr/include/hp700/cdefs.h			comp-c-include
+./usr/include/hp700/cpu.h			comp-c-include
+./usr/include/hp700/cpufunc.h			comp-c-include
+./usr/include/hp700/db_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/disklabel.h			comp-c-include
+./usr/include/hp700/eisa_machdep.h		comp-c-include
+./usr/include/hp700/elf_machdep.h		comp-c-include
+./usr/include/hp700/endian.h			comp-c-include
+./usr/include/hp700/endian_machdep.h		comp-c-include
+./usr/include/hp700/exec.h			comp-c-include
+./usr/include/hp700/float.h			comp-c-include
+./usr/include/hp700/frame.h			comp-c-include
+./usr/include/hp700/ieee.h			comp-c-include
+./usr/include/hp700/ieeefp.h			comp-c-include
+./usr/include/hp700/int_const.h			comp-c-include
+./usr/include/hp700/int_fmtio.h			comp-c-include
+./usr/include/hp700/int_limits.h		comp-c-include
+./usr/include/hp700/int_mwgwtypes.h		comp-c-include
+./usr/include/hp700/int_types.h			comp-c-include
+./usr/include/hp700/intr.h			comp-c-include
+./usr/include/hp700/intrdefs.h			comp-c-include
+./usr/include/hp700/iomod.h			comp-c-include
+./usr/include/hp700/isa_machdep.h		comp-c-include
+./usr/include/hp700/kcore.h			comp-c-include
+./usr/include/hp700/limits.h			comp-c-include
+./usr/include/hp700/loadfile_machdep.h		comp-c-include
+./usr/include/hp700/lock.h			comp-c-include
+./usr/include/hp700/math.h			comp-c-include
+./usr/include/hp700/mcontext.h			comp-c-include
+./usr/include/hp700/mutex.h			comp-c-include
+./usr/include/hp700/nvm.h			comp-c-include
+./usr/include/hp700/param.h			comp-c-include
+./usr/include/hp700/pcb.h			comp-c-include
+./usr/include/hp700/pdc.h			comp-c-include
+./usr/include/hp700/pmap.h			comp-c-include
+./usr/include/hp700/pmc.h			comp-c-include
+./usr/include/hp700/proc.h			comp-c-include
+./usr/include/hp700/profile.h			comp-c-include
+./usr/include/hp700/psl.h			comp-c-include
+./usr/include/hp700/pte.h			comp-c-include
+./usr/include/hp700/ptrace.h			comp-c-include
+./usr/include/hp700/reg.h			comp-c-include
+./usr/include/hp700/reloc.h			comp-c-include
+./usr/include/hp700/rwlock.h			comp-c-include
+./usr/include/hp700/setjmp.h			comp-c-include
+./usr/include/hp700/signal.h			comp-c-include
+./usr/include/hp700/som.h			comp-c-include
+./usr/include/hp700/spinlock.h			comp-obsolete		obsolete
+./usr/include/hp700/stdarg.h			comp-obsolete		obsolete
+./usr/include/hp700/trap.h			comp-c-include
+./usr/include/hp700/types.h			comp-c-include
+./usr/include/hp700/varargs.h			comp-obsolete		obsolete
+./usr/include/hp700/vmparam.h			comp-c-include
+./usr/include/hp700/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/mdec/mkboot.debug	comp-sysutil-debug      debug

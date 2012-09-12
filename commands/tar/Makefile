@@ -15,6 +15,7 @@ DPADD+= ${LIBARCHIVE} ${LIBZ} ${LIBBZ2} ${LIBLZMA}
 LDADD+=	-larchive -lbz2 -lz -llzma
 CPPFLAGS+= -DHAVE_CONFIG_H
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/libarchive_fe
+CPPFLAGS+= -D__NBSD_LIBC
 
 LINKS+= ${BINDIR}/bsdtar ${BINDIR}/tar
 MLINKS+= bsdtar.1 tar.1

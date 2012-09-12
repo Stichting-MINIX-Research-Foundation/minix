@@ -1,0 +1,10 @@
+# $NetBSD: md.evbarm,v 1.10 2012/01/30 03:28:35 nisimura Exp $
+./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
+./usr/mdec/gzboot_GEMINI_0x01600000.bin		base-sysutil-bin
+./usr/mdec/gzboot_IQ80310_0x00080000.bin	base-sysutil-bin
+./usr/mdec/gzboot_IQ80321_0xf0080000.bin	base-sysutil-bin
+./usr/mdec/gzboot_SMDK2410_0x00000000.bin	base-sysutil-bin
+./usr/mdec/gzboot_SMDK2800_0x00000000.bin	base-sysutil-bin
+./usr/mdec/gzboot_SMDK2800_0x00100000.bin	base-sysutil-bin
+./usr/mdec/gzboot_TS7200_0x60660000.bin		base-sysutil-bin
+./usr/mdec/bootmini2440				base-sysutil-bin

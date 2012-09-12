@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.37 2012/01/21 22:31:15 christos Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.39 2012/06/19 21:48:33 hans Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -105,13 +105,13 @@ MAKE_ARGS+=	BISON=true DESTDIR= INSTALL=${HOST_INSTALL_FILE:Q}
 ALL_TARGET?=	all
 INSTALL_TARGET?=install
 
-BUILD_PLATFORM!= uname -srm | tr ' ' '-'
+BUILD_PLATFORM!= uname -srm | tr ' ()' '-'
 CONFIGURE_PLATFORM!= if [ -s .configure_done ]; then cat .configure_done; else echo none; fi
 .if "${BUILD_PLATFORM}" != "${CONFIGURE_PLATFORM}"
 configure_cleanup:
 	@mkdir build 2>/dev/null || true
 	@(echo "Cleaning stale cache files ${BUILD_PLATFORM} != ${CONFIGURE_PLATFORM}")
-	@(cd build && find . -name config.cache -print0 | xargs -0 rm -f)
+	@(cd build && find . -name config.cache | xargs rm -f)
 configure_cleanup=configure_cleanup
 .endif
 

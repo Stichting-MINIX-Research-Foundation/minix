@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+# syspkgdeps [-a arch] [-m machine] [-s setsdir] [-p prefix] sets
+#
+# Compute naive package dependencies based on file & directory
+# nesting. E.g., if pkg P contains /foo/bar and Q contains /foo,
+# then Q is considered a dependency of P.
+#
+# Each line of output contains two syspkg names,
+# where the first syspkg depends on the second syspkg.
+#
+
+#set -u
+
+prog="${0##*/}"
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+#
+# set defaults
+#
+prefix=/
+
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [-p prefix] setname [...]
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[${MACHINE_ARCH}]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[${MACHINE}]
+	-s setsdir	directory to find sets			[${setsdir}]
+	-p prefix	prefix for created plist		[${prefix}]
+	setname [...]	sets to find dependencies for
+USAGE
+	exit 1
+}
+
+# parse arguments
+while getopts a:m:p:s: ch; do
+	case ${ch} in
+	a)
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
+		;;
+	m)
+		MACHINE="${OPTARG}"
+		;;
+	p)
+		prefix="${OPTARG}"
+		;;
+	s)
+		setsdir="${OPTARG}"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+if [ $# -lt 1 ]; then
+	usage
+fi
+
+sets="$*"
+case "${sets}" in
+all)	sets="${nlists}" ;;
+esac
+
+# TBD clean up
+SCRATCH="$(${MKTEMP} -d "/var/tmp/${prog}.XXXXXX")"
+
+if [ $? -ne 0 ]; then
+	echo >&2 "${prog}: Could not create scratch directory."
+	exit 1
+fi
+
+PATH_MEMBERSHIP="${SCRATCH}/path-membership"
+PATH_TO_PKGNAME="${SCRATCH}/pathpkg.db"
+PARENT_PKGNAMES="${SCRATCH}/parent-pkgnames"
+PARENT_PATHNAMES="${SCRATCH}/parent-pathnames"
+
+echo >&2 "${prog}: indexing packages by pathnames"
+
+list_set_files ${sets} | ${SED} 's/^\.\///' | \
+${ENV_CMD} PREFIX="${prefix}" ${AWK} '{
+	if ($1 == ".") {
+		print ENVIRON["PREFIX"] " " $2;
+	} else {
+		print ENVIRON["PREFIX"] $1 " " $2;
+	}
+}' | ${SORT} -k 1 -u > "${PATH_MEMBERSHIP}"
+
+${DB} -q -w -f - btree "${PATH_TO_PKGNAME}" < "${PATH_MEMBERSHIP}"
+
+if [ $? -ne 0 ]; then
+	echo >&2 "${prog}: error creating database, aborting"
+	exit 1
+fi
+
+echo >&2 "${prog}: computing parent pathnames"
+
+while read pathname pkgname; do
+	# print parent pathname.
+	# (This uses a cheap implementation of dirname from sets.subr.)
+	dirname "${pathname}"
+done < "${PATH_MEMBERSHIP}" > "${PARENT_PATHNAMES}"
+
+echo >&2 "${prog}: selecting parent packages using parent pathnames"
+
+${DB} -q -f - btree "${PATH_TO_PKGNAME}" < "${PARENT_PATHNAMES}" | \
+	${PASTE} "${PATH_MEMBERSHIP}" - | \
+	${AWK} '{ if ($2 != $4) print $2 " " $4; }' | \
+	${SORT} -u > "${SCRATCH}/alldeps"
+
+if [ $? -ne 0 ]; then
+	echo >&2 "${prog}: error in parent-directory lookup, aborting"
+	exit 1
+fi
+
+echo >&2 "${prog}: checking for cyclic dependencies"
+
+tsort_errors="$(${TSORT} < "${SCRATCH}/alldeps" 2>&1 >/dev/null)"
+
+if [ -n "${tsort_errors}" ]; then
+	# Errors from tsort are usually to do with cyclic dependencies.
+	# The most likely underlying cause is that /foo and /foo/bar/baz
+	# are in syspkg A, but /foo/bar is in syspkg B.
+	echo >&2 "${tsort_errors}" # this is likely to be multiple lines
+	echo >&2 "${prog}: Above messages probably indicate an error in the lists"
+	exit 1
+fi
+
+echo >&2 "${prog}: removing redundant dependencies"
+
+${HOST_SH} "${rundir}/culldeps" < "${SCRATCH}/alldeps"
+
+if [ $? -ne 0 ]; then
+	echo >&2 "${prog}: error in culldeps, aborting"
+	exit 1
+fi

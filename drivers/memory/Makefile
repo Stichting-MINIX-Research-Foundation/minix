@@ -1,5 +1,7 @@
 # Makefile for memory driver (MEMORY)
 
+.include <bsd.own.mk>
+
 PROG=	memory
 SRCS=	memory.c imgrd.mfs
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
@@ -22,17 +24,15 @@ touch-genfiles:
 
 .SUFFIXES:      .mfs .c .o
 
-# 'elf32-${ARCH}-minix' below should really be ${MACHINE_GNU_PLATFORM}
-# but bsd.own.mk has to be upgraded for that.
 .mfs.o:
 	${_MKTARGET_CREATE}
-	${OBJCOPY} -Ibinary -B${MACHINE_ARCH} -Oelf32-${MACHINE_ARCH}-minix $< $@
+	${OBJCOPY} -Ibinary -B${MACHINE_ARCH} -O${MACHINE_GNU_PLATFORM} $< $@
 
-${RAMDISK_PATH}/image: .PHONY
+../ramdisk/image: .PHONY
 	${MAKE} -C ${RAMDISK_PATH} image
 
-imgrd.mfs: ${RAMDISK_PATH}/image
-	ln -fs ${RAMDISK_PATH}/image $@
+imgrd.mfs: ../ramdisk/image
+	ln -fs ../ramdisk/image $@
 CLEANFILES+=	imgrd.mfs
 
 .include <minix.bootprog.mk>

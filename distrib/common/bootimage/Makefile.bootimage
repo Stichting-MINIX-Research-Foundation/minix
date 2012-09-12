@@ -1,0 +1,407 @@
+#	$NetBSD: Makefile.bootimage,v 1.6 2012/04/22 07:23:42 tsutsui Exp $
+#
+# Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#
+# Makefile to create a bootable FS image for USB flash or emulators
+#
+
+#
+# Required variables:
+#	RELEASEDIR
+#		Should be defined in nbmake-${MACHINE}
+#	IMGBASE
+#		Basename of the image
+#
+# Optional variables:
+#	BOOTDISK
+#		device name of target bootable disk specified in /etc/fstab
+#		(default: sd0)
+#	USE_MBR
+#		set yes if target disk image requires MBR partition
+#		(default: no)
+#	MBR_BOOTCODE
+#		optional MBR bootcode which should be installed by fdisk(8)
+#		(default: empty)
+#		- specified MBR_BOOTCODE must exist in ${DESTDIR}/usr/mdec
+#		- if MBR_BOOTCODE is not specified,
+#		  MBR_DEFAULT_BOOTCODE (default: mbr) will be used
+#		  if the target ${MACHINE} has the one in /usr/mdec
+#	USE_SUNLABEL
+#		set yes if target disk image requires Sun's label
+#		(default: no)
+#	INSTALLBOOT_AFTER_DISKLABEL (untested)
+#		set yes if the target ${MACHINE} requires disklabel
+#		to run installboot(8), like hp300
+#		(default: empty)
+#	IMAGEMB
+#		target image size in MB
+#		(default: 2048)
+#	SWAPMB
+#		swap size in target image in MB
+#		(default: 128)
+#	KERN_SET
+#		kernel set name which should be extracted into image
+#		(default: kern-GENERIC)
+#	SETS
+#		binary sets that should be extracted into image
+#		(default: modules base etc comp games man misc tests text
+#			  xbase xcomp xetc xfont xserver)
+#	SETS_DIR
+#		directory path where binary sets are stored
+#		(default: ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets)
+#	IMGFILE_EXTRA
+#		list of additional files to be copied into images,
+#		containing one or more tuples of the form:
+#			FILE	TARGETPATH
+#		for installation image etc.
+#		(default: empty)
+#	IMGDIR_EXTRA
+#		list of additional directories to be copied into images,
+#		containing one or more tuples of the form:
+#			DIR	TARGETPATH
+#		for installation image etc.
+#		(default: empty)
+#		XXX: currently permissions in IMGDIR_EXTRA are not handled
+#	IMGDIR_EXCLUDE
+#		pax(1) options to exclude files which should not copied
+#		into TARGETPATH in IMGDIR_EXTRA
+#		(default: empty)
+#	FSTAB_IN
+#		template file of /etc/fstab
+#		(default: ${DISTRIBDIR}/common/bootimage/fstab.in)
+#	SPEC_IN
+#		default files of spec file for makefs(8)
+#		(default: ${DISTRIBDIR}/common/bootimage/spec.in)
+#	SPEC_EXTRA
+#		additional files of spec file for makefs(8)
+#		(default: empty)
+#	IMGMAKEFSOPTIONS
+#		options passed to makefs(8) to create root file system
+#		(default: -o bsize=16384,fsize=2048,density=8192)
+#	INSTALLBOOTOPTIONS
+#		options passed to installboot(8), e.g., -o console=com0
+#		(default: empty)
+#	PRIMARY_BOOT
+#		primary boot loader that should be installed into
+#		the target image via installboot(8)
+#		(default: empty)
+#	SECONDARY_BOOT
+#		secondary bootloader that should be put into the target image
+#		(default: empty)
+#	SECONDARY_BOOT_ARG
+#		extra arguments that should be passed to installboot(8)
+#		to specify the secondary bootloader
+#		(default: empty)
+#	DISKPROTO_IN
+#		template file of disklabel -R
+#		(default: ${DISTRIBDIR}/common/bootimage/diskproto.in
+#		       or ${DISTRIBDIR}/common/bootimage/diskproto.mbr.in)
+#	OMIT_SWAPIMG
+#		no need to put swap partition into image (for USB stick)
+#		(default: no)
+#
+
+.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.own.mk> 		#
+.include <bsd.endian.mk>	# for TARGET_ENDIANNESS
+
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.if empty(IMGBASE)
+.BEGIN:
+	@echo "Error: IMGBASE is not set"
+	@false
+.endif
+
+# should be defined elsewhere? 
+CAT?=		cat
+CHMOD?=		chmod
+CP?=		cp
+DD?=		dd
+MKDIR?=		mkdir -p
+RM?=		rm
+
+#
+# common definitions for image
+#
+BOOTDISK?=	sd0
+USE_MBR?=	no
+USE_SUNLABEL?=	no
+INSTALLBOOT_AFTER_DISKLABEL?=	no
+
+#
+# size parameters for image
+#
+IMAGEMB?=	2048		# 2048MB
+SWAPMB?=	128		# 128MB
+
+# XXX: SWAPMB could be zero and expr(1) returns exit status 1 in that case
+IMAGESECTORS!=	expr ${IMAGEMB} \* 1024 \* 1024 / 512
+SWAPSECTORS!=	expr ${SWAPMB} \* 1024 \* 1024 / 512 || true
+
+.if ${USE_MBR} == "no"
+LABELSECTORS?=	0
+.else
+#LABELSECTORS?=	63	# historical
+#LABELSECTORS?=	32	# 16KB aligned
+LABELSECTORS?=	2048	# 1MB aligned for modern flash devices
+.endif
+
+FSSECTORS!=	expr ${IMAGESECTORS} - ${SWAPSECTORS} - ${LABELSECTORS}
+FSSIZE!=	expr ${FSSECTORS} \* 512
+
+# parameters for disklabel and MBR
+HEADS=		64
+SECTORS=	32
+CYLINDERS!=	expr ${IMAGESECTORS} / \( ${HEADS} \* ${SECTORS} \)
+SECPERCYLINDERS!= expr ${HEADS} \* ${SECTORS}
+MBRHEADS=	255
+MBRSECTORS=	63
+MBRCYLINDERS!=	expr ${IMAGESECTORS} / \( ${MBRHEADS} \* ${MBRSECTORS} \)
+MBRNETBSD=	169
+
+BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS}
+FSOFFSET=	${LABELSECTORS}
+SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS}
+
+# parameters for sunlabel
+FSCYLINDERS!=	expr ${FSSECTORS} / \( ${HEADS} \* ${SECTORS} \)
+SWAPCYLINDERS!=	expr ${SWAPSECTORS} / \( ${HEADS} \* ${SECTORS} \) || true
+
+
+#
+# definitions to create root fs
+#
+SETS_DEFAULT=	modules base etc comp games man misc tests text
+.if ${MKX11} != "no"
+SETS_DEFAULT+=	xbase xcomp xetc xfont xserver
+.endif
+
+KERN_SET?=	kern-GENERIC
+SETS?=		${SETS_DEFAULT}
+IMG_SETS=	${KERN_SET} ${SETS}
+SETS_DIR?=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
+
+FSTAB_IN?=	${DISTRIBDIR}/common/bootimage/fstab.in
+SPEC_IN?=	${DISTRIBDIR}/common/bootimage/spec.in
+
+IMGMAKEFSOPTIONS?=	-o bsize=16384,fsize=2048,density=8192
+
+WORKDIR?=       work
+WORKSPEC?=      work.spec
+WORKFSTAB?=	work.fstab
+WORKRCCONF?=	work.rc.conf
+WORKFS?=        work.rootfs
+TARGETFS?=      imgroot.fs
+
+CLEANFILES+=	${WORKSPEC} ${WORKFSTAB} ${WORKRCCONF} ${WORKFS}
+CLEANFILES+=	${TARGETFS}
+
+#
+# create root file system for the image
+#
+${TARGETFS}: prepare_md_post
+	@if [ ! -d ${RELEASEDIR}/${RELEASEMACHINEDIR} ]; then 		\
+		echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
+		false; 							\
+	fi;
+	@${MKDIR} ${WORKDIR}
+.for set in ${IMG_SETS}
+	@if [ ! -f ${SETS_DIR}/${set}.tgz ]; then 			\
+		echo "Missing ${SETS_DIR}/${set}.tgz, aborting";	\
+		false; 							\
+	fi
+	@echo Extracting ${set}.tgz ...
+	@(cd ${WORKDIR}; ${TOOL_PAX} -rnz -f ${SETS_DIR}/${set}.tgz .)
+.endfor
+.if defined(SECONDARY_BOOT)
+	@echo Copying secondary boot...
+	${CP} -f ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
+.endif
+	@echo Preparing /etc/fstab ...
+	${TOOL_SED} "s/@@BOOTDISK@@/${BOOTDISK}/" < ${FSTAB_IN} > ${WORKFSTAB}
+	${CP} ${WORKFSTAB} ${WORKDIR}/etc/fstab
+	@echo Setting rc_configured=YES in /etc/rc.conf ...
+	${TOOL_SED} "s/rc_configured=NO/rc_configured=YES/"		\
+	    < ${WORKDIR}/etc/rc.conf > ${WORKRCCONF}
+	${CP} ${WORKRCCONF} ${WORKDIR}/etc/rc.conf
+.if defined(IMGDIR_EXTRA)
+	@echo Copying extra dirs...
+.for _SRCDIR _TARGET in ${IMGDIR_EXTRA}
+	@if [ ! -d ${_SRCDIR} ]; then 					\
+		echo "${_SRCDIR} is not directory, aborting";		\
+		false; 							\
+	fi
+	${MKDIR} ${WORKDIR}/${_TARGET}
+	(cd ${_SRCDIR} ;						\
+	    ${TOOL_PAX} -rw -pe	-v					\
+	    ${IMGDIR_EXCLUDE}						\
+	    . ${.OBJDIR}/${WORKDIR}/${_TARGET} )
+.endfor
+.endif
+.if defined(IMGFILE_EXTRA)
+	@echo Copying extra files...
+.for _SRC _TARGET in ${IMGFILE_EXTRA}
+	@if [ ! -f ${_SRC} ]; then 					\
+		echo "${_SRC} in IMGFILE_EXTRA not found, aborting";	\
+		false; 							\
+	fi
+	@if [ -f ${_SRC} ]; then 					\
+		echo ${CP} ${_SRC} ${WORKDIR}/${_TARGET};		\
+		${CP} ${_SRC} ${WORKDIR}/${_TARGET};			\
+	fi
+.endfor
+.endif
+	@echo Preparing spec files for makefs...
+	${RM} -f ${WORKSPEC}
+	cat ${WORKDIR}/etc/mtree/* |					\
+	    ${TOOL_SED} -e 's/ size=[0-9]*//' > ${WORKSPEC}
+	${HOST_SH} ${WORKDIR}/dev/MAKEDEV -s all |			\
+	    ${TOOL_SED} -e '/^\. type=dir/d' -e 's,^\.,./dev,' >> ${WORKSPEC}
+	cat ${SPEC_IN} >> ${WORKSPEC}
+.if defined(SECONDARY_BOOT)
+	echo "./${SECONDARY_BOOT} type=file uname=root gname=operator mode=0444" \
+	    >> ${WORKSPEC}
+.endif
+.if defined(SPEC_EXTRA)
+	cat ${SPEC_EXTRA} >> ${WORKSPEC}
+.endif
+	@echo Creating rootfs...
+	# XXX /var/spool/ftp/hidden is unreadable
+	${CHMOD} +r ${WORKDIR}/var/spool/ftp/hidden
+	${TOOL_MAKEFS} -M ${FSSIZE} -m ${FSSIZE}			\
+	    -B ${TARGET_ENDIANNESS}					\
+	    -F ${WORKSPEC} -N ${WORKDIR}/etc				\
+	    ${IMGMAKEFSOPTIONS}						\
+	    ${WORKFS} ${WORKDIR}
+.if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} == "no"
+	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTIONS} ${WORKFS} \
+	    ${WORKDIR}/usr/mdec/${PRIMARY_BOOT} ${SECONDARY_BOOT_ARG}
+.endif
+	@echo done.
+	mv ${WORKFS} ${.TARGET}
+
+#
+# definitions to create image
+#
+.if ${USE_MBR} != "no"
+DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.mbr.in
+.else
+DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.in
+.endif
+
+MBR_DEFAULT_BOOTCODE?=	mbr
+
+OMIT_SWAPIMG?=	no
+
+WORKMBR?=	work.mbr
+WORKSWAP?=	work.swap
+WORKLABEL?=	work.diskproto
+WORKIMG?=	work.img
+
+CLEANFILES+=	${WORKMBR} ${WORKSWAP}
+CLEANFILES+=	${WORKLABEL}.tmp ${WORKLABEL}
+CLEANFILES+=	${WORKIMG} ${IMGBASE}.img
+
+${WORKLABEL}:
+	${TOOL_SED}							\
+	    -e "s/@@SECTORS@@/${SECTORS}/"				\
+	    -e "s/@@HEADS@@/${HEADS}/"					\
+	    -e "s/@@SECPERCYLINDERS@@/${SECPERCYLINDERS}/"		\
+	    -e "s/@@CYLINDERS@@/${CYLINDERS}/"				\
+	    -e "s/@@IMAGESECTORS@@/${IMAGESECTORS}/"			\
+	    -e "s/@@FSSECTORS@@/${FSSECTORS}/"				\
+	    -e "s/@@FSOFFSET@@/${FSOFFSET}/"				\
+	    -e "s/@@SWAPSECTORS@@/${SWAPSECTORS}/"			\
+	    -e "s/@@SWAPOFFSET@@/${SWAPOFFSET}/"			\
+	    -e "s/@@BSDPARTSECTORS@@/${BSDPARTSECTORS}/"		\
+	    < ${DISKPROTO_IN} > ${WORKLABEL}.tmp
+	mv ${WORKLABEL}.tmp ${WORKLABEL}
+
+${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
+.if ${USE_MBR} != "no"
+	@echo creating MBR labels...
+	${DD} if=/dev/zero of=${WORKMBR} seek=$$((${IMAGESECTORS} - 1)) count=1
+	${TOOL_FDISK} -f -i -u \
+	    -b ${MBRCYLINDERS}/${MBRHEADS}/${MBRSECTORS}		\
+	    -0 -a -s ${MBRNETBSD}/${FSOFFSET}/${BSDPARTSECTORS}		\
+	    -F ${WORKMBR}
+.if empty(MBR_BOOTCODE)
+	@if [ -f ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE} ]; then 	\
+		echo ${TOOL_FDISK} -f					\
+		    -i -c ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE}	\
+		    -F ${WORKMBR};					\
+		${TOOL_FDISK} -f					\
+		    -i -c ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE}	\
+		    -F ${WORKMBR};					\
+	fi
+.else
+	@if [ ! -f ${WORKDIR}/usr/mdec/${MBR_BOOTCODE} ]; then 		\
+		echo "${MBR_BOOTCODE} is not found in DESTDIR/usr/mdec, aborting"; \
+		false; 							\
+	fi
+	${TOOL_FDISK} -f -i -c ${WORKDIR}/usr/mdec/${MBR_BOOTCODE}	\
+	    -F ${WORKMBR}
+.endif
+	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
+	    ${CAT} - ${TARGETFS} > ${WORKIMG}
+.else
+	${CP} ${TARGETFS} ${WORKIMG}
+.endif
+.if ${OMIT_SWAPIMG} == "no"
+	${DD} if=/dev/zero of=${WORKSWAP} seek=$$((${SWAPSECTORS} - 1)) count=1
+	${CAT} ${WORKSWAP} >> ${WORKIMG}
+.endif
+.if ${USE_SUNLABEL} != "no"
+	@echo Creating sun disklabel...
+	printf 'V ncyl %d\nV nhead %d\nV nsect %d\na %d %d/0/0\nb %d %d/0/0\nW\n' \
+	    ${CYLINDERS} ${HEADS} ${SECTORS} \
+	    ${FSOFFSET} ${FSCYLINDERS} ${FSCYLINDERS} ${SWAPCYLINDERS} | \
+	    ${TOOL_SUNLABEL} -nq ${WORKIMG}
+.endif
+	${TOOL_DISKLABEL} -R -F ${WORKIMG} ${WORKLABEL}
+.if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} != "no"
+	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTOINS} ${WORKIMG} \
+	    ${WORKDIR}/usr/mdec/${PRIMARY_BOOT}
+.endif
+	mv ${WORKIMG} ${.TARGET}
+
+
+CLEANFILES+=	${IMGBASE}.img.gz ${IMGBASE}.img.gz.tmp
+
+${IMGBASE}.img.gz:	${IMGBASE}.img
+	${TOOL_GZIP} -9c ${IMGBASE}.img > ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+
+clean:
+	@if [ -d ${WORKDIR}/var/spool/ftp/hidden ]; then 		\
+		${CHMOD} +r ${WORKDIR}/var/spool/ftp/hidden;		\
+	fi	# XXX
+	${RM} -fr ${WORKDIR}
+
+prepare_md_post: .PHONY
+image_md_post: .PHONY
+image_md_pre: .PHONY
+
+.include <bsd.prog.mk>

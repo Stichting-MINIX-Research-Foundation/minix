@@ -1,0 +1,97 @@
+# $NetBSD: ad.powerpc,v 1.59 2012/06/16 17:01:02 joerg Exp $
+./usr/bin/elf2aout				comp-sysutil-bin
+./usr/bin/psim					comp-debug-bin		gdb
+./usr/include/altivec.h				comp-obsolete		obsolete
+./usr/include/clang-3.0/altivec.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/altivec.h		comp-c-include		llvm
+./usr/include/gcc-4.1/altivec.h			comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.5/altivec.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/paired.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ppc-asm.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ppu_intrinsics.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/si2vmx.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/spe.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/spu2vmx.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/vec_types.h		comp-c-include		gcccmds,gcc=45
+./usr/include/powerpc				comp-c-include
+./usr/include/powerpc/ansi.h			comp-c-include
+./usr/include/powerpc/aout_machdep.h		comp-c-include
+./usr/include/powerpc/asm.h			comp-c-include
+./usr/include/powerpc/atomic.h			comp-obsolete		obsolete
+./usr/include/powerpc/bat.h			comp-obsolete		obsolete
+./usr/include/powerpc/bswap.h			comp-c-include
+./usr/include/powerpc/bus.h			comp-obsolete		obsolete
+./usr/include/powerpc/cdefs.h			comp-c-include
+./usr/include/powerpc/cpu.h			comp-c-include
+./usr/include/powerpc/elf_machdep.h		comp-c-include
+./usr/include/powerpc/endian.h			comp-c-include
+./usr/include/powerpc/endian_machdep.h		comp-c-include
+./usr/include/powerpc/float.h			comp-c-include
+./usr/include/powerpc/fpu.h			comp-c-include
+./usr/include/powerpc/frame.h			comp-c-include
+./usr/include/powerpc/hid.h			comp-obsolete		obsolete
+./usr/include/powerpc/hid_601.h			comp-obsolete		obsolete
+./usr/include/powerpc/ibm4xx			comp-c-include
+./usr/include/powerpc/ibm4xx/cpu.h		comp-c-include
+./usr/include/powerpc/ibm4xx/pmap.h		comp-c-include
+./usr/include/powerpc/ibm4xx/pte.h		comp-obsolete		obsolete
+./usr/include/powerpc/ibm4xx/spr.h		comp-c-include
+./usr/include/powerpc/ibm4xx/tlb.h		comp-c-include
+./usr/include/powerpc/ieee.h			comp-c-include
+./usr/include/powerpc/ieeefp.h			comp-c-include
+./usr/include/powerpc/int_const.h		comp-c-include
+./usr/include/powerpc/int_fmtio.h		comp-c-include
+./usr/include/powerpc/int_limits.h		comp-c-include
+./usr/include/powerpc/int_mwgwtypes.h		comp-c-include
+./usr/include/powerpc/int_types.h		comp-c-include
+./usr/include/powerpc/kcore.h			comp-c-include
+./usr/include/powerpc/limits.h			comp-c-include
+./usr/include/powerpc/lock.h			comp-c-include
+./usr/include/powerpc/machine_type.h		comp-obsolete		obsolete
+./usr/include/powerpc/math.h			comp-c-include
+./usr/include/powerpc/mcontext.h		comp-c-include
+./usr/include/powerpc/mpc6xx			comp-obsolete		obsolete
+./usr/include/powerpc/mpc6xx/bat.h		comp-obsolete		obsolete
+./usr/include/powerpc/mpc6xx/hid.h		comp-obsolete		obsolete
+./usr/include/powerpc/mpc6xx/hid_601.h		comp-obsolete		obsolete
+./usr/include/powerpc/mpc6xx/pmap.h		comp-obsolete		obsolete
+./usr/include/powerpc/mpc6xx/pte.h		comp-obsolete		obsolete
+./usr/include/powerpc/mpc6xx/sr_601.h		comp-obsolete		obsolete
+./usr/include/powerpc/mpc6xx/vmparam.h		comp-obsolete		obsolete
+./usr/include/powerpc/mutex.h			comp-c-include
+./usr/include/powerpc/oea			comp-c-include
+./usr/include/powerpc/oea/bat.h			comp-c-include
+./usr/include/powerpc/oea/hid.h			comp-c-include
+./usr/include/powerpc/oea/hid_601.h		comp-c-include
+./usr/include/powerpc/oea/pmap.h		comp-c-include
+./usr/include/powerpc/oea/pte.h			comp-c-include
+./usr/include/powerpc/oea/spr.h			comp-c-include
+./usr/include/powerpc/oea/sr_601.h		comp-c-include
+./usr/include/powerpc/oea/vmparam.h		comp-c-include
+./usr/include/powerpc/param.h			comp-c-include
+./usr/include/powerpc/pcb.h			comp-c-include
+./usr/include/powerpc/pmap.h			comp-c-include
+./usr/include/powerpc/pmc.h			comp-c-include
+./usr/include/powerpc/proc.h			comp-c-include
+./usr/include/powerpc/profile.h			comp-c-include
+./usr/include/powerpc/psl.h			comp-c-include
+./usr/include/powerpc/pte.h			comp-c-include
+./usr/include/powerpc/ptrace.h			comp-c-include
+./usr/include/powerpc/reg.h			comp-c-include
+./usr/include/powerpc/reloc.h			comp-c-include
+./usr/include/powerpc/rwlock.h			comp-c-include
+./usr/include/powerpc/setjmp.h			comp-c-include
+./usr/include/powerpc/signal.h			comp-c-include
+./usr/include/powerpc/spr.h			comp-c-include
+./usr/include/powerpc/stdarg.h			comp-obsolete		obsolete
+./usr/include/powerpc/trap.h			comp-c-include
+./usr/include/powerpc/types.h			comp-c-include
+./usr/include/powerpc/va-ppc.h			comp-obsolete		obsolete
+./usr/include/powerpc/varargs.h			comp-obsolete		obsolete
+./usr/include/powerpc/vmparam.h			comp-c-include
+./usr/include/powerpc/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/psim.debug		comp-debug-debug	debug,gdb

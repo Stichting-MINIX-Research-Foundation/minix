@@ -8,4 +8,7 @@ PROG=	ftp
 SRCS=	ftp.c local.c file.c xfer.c other.c net.c crc.c
 CPPFLAGS+= -DCRC_ONLY
 
+# LSC Force ftp.c to use its local definition of getline
+CPPFLAGS+= -D__NBSD_LIBC
+
 .include <bsd.prog.mk>

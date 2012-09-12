@@ -1,0 +1,62 @@
+# $NetBSD: md.algor,v 1.16 2011/07/17 20:54:31 joerg Exp $
+./usr/include/algor				comp-c-include
+./usr/include/algor/_G_config.h			comp-obsolete		obsolete
+./usr/include/algor/ansi.h			comp-c-include
+./usr/include/algor/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/algor/asm.h			comp-c-include
+./usr/include/algor/autoconf.h			comp-c-include
+./usr/include/algor/bsd-aout.h			comp-obsolete		obsolete
+./usr/include/algor/bswap.h			comp-c-include
+./usr/include/algor/bus.h			comp-obsolete		obsolete
+./usr/include/algor/cdefs.h			comp-c-include
+./usr/include/algor/cpu.h			comp-c-include
+./usr/include/algor/db_machdep.h		comp-obsolete		obsolete
+./usr/include/algor/disklabel.h			comp-c-include
+./usr/include/algor/ecoff_machdep.h		comp-c-include
+./usr/include/algor/elf_machdep.h		comp-c-include
+./usr/include/algor/endian.h			comp-c-include
+./usr/include/algor/endian_machdep.h		comp-c-include
+./usr/include/algor/float.h			comp-c-include
+./usr/include/algor/ieee.h			comp-c-include
+./usr/include/algor/ieeefp.h			comp-c-include
+./usr/include/algor/int_const.h			comp-c-include
+./usr/include/algor/int_fmtio.h			comp-c-include
+./usr/include/algor/int_limits.h		comp-c-include
+./usr/include/algor/int_mwgwtypes.h		comp-c-include
+./usr/include/algor/int_types.h			comp-c-include
+./usr/include/algor/intr.h			comp-c-include
+./usr/include/algor/isa_machdep.h		comp-c-include
+./usr/include/algor/kcore.h			comp-c-include
+./usr/include/algor/kdbparam.h			comp-c-include
+./usr/include/algor/limits.h			comp-c-include
+./usr/include/algor/lock.h			comp-c-include
+./usr/include/algor/locore.h			comp-c-include
+./usr/include/algor/math.h			comp-c-include
+./usr/include/algor/mcontext.h			comp-c-include
+./usr/include/algor/mips_opcode.h		comp-c-include
+./usr/include/algor/mutex.h			comp-c-include
+./usr/include/algor/param.h			comp-c-include
+./usr/include/algor/pcb.h			comp-c-include
+./usr/include/algor/pci_machdep.h		comp-c-include
+./usr/include/algor/pmap.h			comp-c-include
+./usr/include/algor/pmc.h			comp-c-include
+./usr/include/algor/proc.h			comp-c-include
+./usr/include/algor/profile.h			comp-c-include
+./usr/include/algor/psl.h			comp-c-include
+./usr/include/algor/pte.h			comp-c-include
+./usr/include/algor/ptrace.h			comp-c-include
+./usr/include/algor/reg.h			comp-c-include
+./usr/include/algor/regdef.h			comp-c-include
+./usr/include/algor/regnum.h			comp-c-include
+./usr/include/algor/reloc.h			comp-c-include
+./usr/include/algor/rnd.h			comp-obsolete		obsolete
+./usr/include/algor/rwlock.h			comp-c-include
+./usr/include/algor/setjmp.h			comp-c-include
+./usr/include/algor/signal.h			comp-c-include
+./usr/include/algor/stdarg.h			comp-obsolete		obsolete
+./usr/include/algor/trap.h			comp-c-include
+./usr/include/algor/types.h			comp-c-include
+./usr/include/algor/varargs.h			comp-obsolete		obsolete
+./usr/include/algor/vmparam.h			comp-c-include
+./usr/include/algor/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

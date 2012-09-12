@@ -1,0 +1,3 @@
+# $NetBSD: md.alpha,v 1.1 2009/09/07 02:27:29 jnemeth Exp $
+./@MODULEDIR@/exec_elf64			base-kernel-modules	kmod
+./@MODULEDIR@/exec_elf64/exec_elf64.kmod	base-kernel-modules	kmod

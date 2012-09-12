@@ -1,0 +1,182 @@
+#	$NetBSD: Makefile.mdset,v 1.35 2011/01/01 16:56:18 jym Exp $
+#
+# Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
+#
+
+#
+# Required variables:
+#	NETBSDSRCDIR	Top level of src tree (set by <bsd.own.mk>)
+#	MDSETTARGETS	List of images to ${TOOL_MDSETIMAGE} into kernels,
+#			containing one or more tuples of the form:
+#				KERNEL	IMAGE	FILENAME
+#
+#			The kernel is ${TOOL_MDSETIMAGE} with ${IMAGE},
+#			${STRIP}ped (after the symbols are stored in
+#			${FILENAME}.symbols.gz), and gzipped into
+#			${FILENAME}.gz.
+#
+#			If KERNEL does not contain a `/', use
+#			${KERNOBJDIR}/KERNEL/netbsd as the kernel.
+#
+#			If FILENAME is "-", use "netbsd-${KERNEL}" as
+#			the target name.  This may not be a sensible
+#			name if KERNEL contains a `/'.
+#
+# Optional variables:
+#	MDSET_RELEASEDIR		Where to install release kernels.
+#
+#	MDSET_NOGZIP			If defined, don't gzip any kernels.
+#
+#	MDSET_NOGZIP.${FILENAME}	If defined, don't gzip ${FILENAME}
+#
+#	MDSET_NOIMAGE.${FILENAME}	If defined, don't add ${IMAGE} to
+#					${FILENAME}
+#
+#	MDSET_NOSTRIP			If defined, don't strip any kernels.
+#
+#	MDSET_NOSTRIP.${FILENAME}	If defined, don't strip ${FILENAME}
+#
+#	MDSET_NOSYMBOLS			If defined, don't generate *.symbols.gz
+#
+#	MDSET_NOSYMBOLS.${FILENAME}	If defined, don't generate
+#					${FILENAME}.symbols.gz
+#
+#	MDSET_POST			For each kernel,
+#					execute this after ${NM} / ${STRIP}.
+#					Kernel is available as "${.TARGET}"
+#
+#	MDSET_POST.${FILENAME}		For each kernel named ${FILENAME},
+#					execute this after ${NM} / ${STRIP}.
+#					Kernel is available as "${.TARGET}"
+#
+#	MDSET_SUFFIXES.${FILENAME}	List of extra install kernel suffixes
+#					and build commands to create from
+#					${FILENAME} after its created by
+#					${TOOL_MDSETIMAGE} ; ${NM} ; ${STRIP}:
+#						SUFFIX	COMMANDVAR
+#					"${.TARGET}" is "${FILENAME}.${SUFFIX}"
+#					COMMANDVAR is the name of the variable
+#					containing the command to build
+#					${.TARGET}.
+#
+# Variables modified by this:
+#	KERNELS			List of kernel .gz files to build
+#	KERNELSYMS		List of kernel .symbol.gz files to build
+#
+
+.if !defined(_MAKEFILE_MDSET_)
+_MAKEFILE_MDSET_=1
+
+.include <bsd.kernobj.mk>
+
+.for _K _I _F in ${MDSETTARGETS}			# {
+
+_KERNEL:=${_K}			# (work around obscure issue in make(1))
+.if (${_KERNEL:M*/*} != "")
+_KERNNAME.${_K}.${_F}:=	${_K}
+.else
+_KERNNAME.${_K}.${_F}:=	${KERNOBJDIR}/${_K}/netbsd
+.endif
+
+_FILENAME:=${_F}		# (work around obscure issue in make(1))
+.if ${_FILENAME} == "-"
+_KERNEL.${_K}.${_F}:=	netbsd-${_K}
+_FILENAME:=		${_KERNEL.${_K}.${_F}}
+.else
+_KERNEL.${_K}.${_F}:=	${_F}
+.endif
+
+.for _S _C in ${MDSET_SUFFIXES.${_F}}		# {
+CLEANFILES+=	${_KERNEL.${_K}.${_F}}.${_S}
+
+${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}}
+.if defined(${_C})
+	${${_C}}
+.else
+	@echo "No such variable \"${_C}\""
+	false
+.endif
+
+.if defined(MDSET_NOGZIP.${_FILENAME}) && defined(MDSET_NOGZIP)
+KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}
+.else							# {
+KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}.gz
+
+${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
+	${_MKTARGET_CREATE}
+	-rm -f ${.TARGET}
+	gzip -9nc ${.ALLSRC} > ${.TARGET}
+.endif							# }
+
+.endfor							# }
+
+.if !defined(MDSET_NOSYMBOLS.${_FILENAME}) && !defined(MDSET_NOSYMBOLS)
+KERNELSYMS+=	${_KERNEL.${_K}.${_F}}.symbols.gz
+.endif
+
+.if defined(MDSET_POST.${_FILENAME})
+_POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST.${_FILENAME}}
+.elif defined(MDSET_POST)
+_POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST}
+.endif
+
+
+CLEANFILES+=	${_KERNEL.${_K}.${_F}}
+
+.if defined(MDSET_NOIMAGE.${_FILENAME})
+${_I}=
+.endif
+
+# Darwin requires a special hack - this is documented in
+# doc/HACKS, and just works around the problems described more
+# fully in http://mail-index.netbsd.org/current-users/2008/06/27/msg003242.html
+OPSYS!= uname -s
+.if ${OPSYS} == "Darwin"
+MDSETIMAGEFLAGS=
+.else
+MDSETIMAGEFLAGS=-v
+.endif
+
+${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
+	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
+	@rm -f ${.TARGET} ${.TARGET}.tmp ${.TARGET}.symbols.gz
+	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}.tmp
+.if !defined(MDSET_NOIMAGE.${_FILENAME})
+	${TOOL_MDSETIMAGE} ${MDSETIMAGEFLAGS} ${.TARGET}.tmp ${_I}
+.endif
+.if !defined(MDSET_NOSYMBOLS.${_FILENAME}) && !defined(MDSET_NOSYMBOLS)
+	${NM} ${.TARGET}.tmp | gzip -9n > ${.TARGET}.symbols.gz
+.endif
+.if !defined(MDSET_NOSTRIP.${_FILENAME}) && !defined(MDSET_NOSTRIP)
+	${STRIP} -R .comment -R .ident ${.TARGET}.tmp
+.endif
+	@mv ${.TARGET}.tmp ${.TARGET}
+.if defined(MDSET_POST.${_FILENAME}) || defined(MDSET_POST)
+	${_POST.${.TARGET}}
+.endif
+
+.if defined(MDSET_NOGZIP.${_FILENAME}) || defined(MDSET_NOGZIP)
+KERNELS+=	${_KERNEL.${_K}.${_F}}
+.else							# {
+KERNELS+=	${_KERNEL.${_K}.${_F}}.gz
+
+${_KERNEL.${_K}.${_F}}.gz: ${_KERNEL.${_K}.${_F}}
+	${_MKTARGET_CREATE}
+	-rm -f ${.TARGET}
+	gzip -9nc ${.ALLSRC} > ${.TARGET}
+.endif							# }
+
+.endfor							# }
+
+CLEANFILES+=	${KERNELS} ${KERNELSYMS}
+
+realall: ${KERNELS}
+
+.if defined(MDSET_RELEASEDIR)
+release:: check_RELEASEDIR .WAIT ${KERNELS}
+	${RELEASE_INSTALL} ${KERNELS} ${KERNELSYMS} \
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${MDSET_RELEASEDIR}
+.endif
+
+
+.endif	# _MAKEFILE_MDSET_

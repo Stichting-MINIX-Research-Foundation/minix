@@ -1,0 +1,70 @@
+# $NetBSD: md.bebox,v 1.35 2011/08/10 07:56:59 kiyohara Exp $
+./usr/include/bebox				comp-c-include
+./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
+./usr/include/bebox/ansi.h			comp-c-include
+./usr/include/bebox/aout_machdep.h		comp-c-include
+./usr/include/bebox/asm.h			comp-c-include
+./usr/include/bebox/atomic.h			comp-obsolete		obsolete
+./usr/include/bebox/bat.h			comp-obsolete		obsolete
+./usr/include/bebox/bootinfo.h			comp-c-include
+./usr/include/bebox/bswap.h			comp-c-include
+./usr/include/bebox/bus.h			comp-obsolete		obsolete
+./usr/include/bebox/cdefs.h			comp-c-include
+./usr/include/bebox/conf.h			comp-obsolete		obsolete
+./usr/include/bebox/cpu.h			comp-c-include
+./usr/include/bebox/cpufunc.h			comp-obsolete		obsolete
+./usr/include/bebox/db_machdep.h		comp-obsolete		obsolete
+./usr/include/bebox/disklabel.h			comp-c-include
+./usr/include/bebox/display.h			comp-obsolete		obsolete
+./usr/include/bebox/elf_machdep.h		comp-c-include
+./usr/include/bebox/endian.h			comp-c-include
+./usr/include/bebox/endian_machdep.h		comp-c-include
+./usr/include/bebox/float.h			comp-c-include
+./usr/include/bebox/fpu.h			comp-c-include
+./usr/include/bebox/frame.h			comp-c-include
+./usr/include/bebox/ieee.h			comp-c-include
+./usr/include/bebox/ieeefp.h			comp-c-include
+./usr/include/bebox/int_const.h			comp-c-include
+./usr/include/bebox/int_fmtio.h			comp-c-include
+./usr/include/bebox/int_limits.h		comp-c-include
+./usr/include/bebox/int_mwgwtypes.h		comp-c-include
+./usr/include/bebox/int_types.h			comp-c-include
+./usr/include/bebox/intr.h			comp-c-include
+./usr/include/bebox/ipkdb.h			comp-obsolete		obsolete
+./usr/include/bebox/kcore.h			comp-c-include
+./usr/include/bebox/kgdb.h			comp-obsolete		obsolete
+./usr/include/bebox/limits.h			comp-c-include
+./usr/include/bebox/lock.h			comp-c-include
+./usr/include/bebox/math.h			comp-c-include
+./usr/include/bebox/mcontext.h			comp-c-include
+./usr/include/bebox/mouse.h			comp-obsolete		obsolete
+./usr/include/bebox/mutex.h			comp-c-include
+./usr/include/bebox/param.h			comp-c-include
+./usr/include/bebox/pcb.h			comp-c-include
+./usr/include/bebox/pccons.h			comp-obsolete		obsolete
+./usr/include/bebox/pio.h			comp-obsolete		obsolete
+./usr/include/bebox/pmap.h			comp-c-include
+./usr/include/bebox/pmc.h			comp-c-include
+./usr/include/bebox/powerpc.h			comp-obsolete		obsolete
+./usr/include/bebox/proc.h			comp-c-include
+./usr/include/bebox/profile.h			comp-c-include
+./usr/include/bebox/psl.h			comp-c-include
+./usr/include/bebox/pte.h			comp-c-include
+./usr/include/bebox/ptrace.h			comp-c-include
+./usr/include/bebox/reg.h			comp-c-include
+./usr/include/bebox/reloc.h			comp-c-include
+./usr/include/bebox/rwlock.h			comp-c-include
+./usr/include/bebox/setjmp.h			comp-c-include
+./usr/include/bebox/signal.h			comp-c-include
+./usr/include/bebox/spkr.h			comp-c-include
+./usr/include/bebox/spr.h			comp-obsolete		obsolete
+./usr/include/bebox/stdarg.h			comp-obsolete		obsolete
+./usr/include/bebox/trap.h			comp-c-include
+./usr/include/bebox/types.h			comp-c-include
+./usr/include/bebox/va-ppc.h			comp-obsolete		obsolete
+./usr/include/bebox/varargs.h			comp-obsolete		obsolete
+./usr/include/bebox/vmparam.h			comp-c-include
+./usr/include/bebox/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug

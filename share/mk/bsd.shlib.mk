@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.shlib.mk,v 1.6 2007/08/29 21:34:17 hira Exp $
+#	$NetBSD: bsd.shlib.mk,v 1.8 2012/08/23 21:21:17 joerg Exp $
 
 .if !defined(_BSD_SHLIB_MK_)
 _BSD_SHLIB_MK_=1

@@ -1,0 +1,52 @@
+# $NetBSD: md.zaurus,v 1.9 2011/07/19 15:12:26 dyoung Exp $
+./usr/include/zaurus				comp-c-include
+./usr/include/zaurus/ansi.h			comp-c-include
+./usr/include/zaurus/aout_machdep.h		comp-c-include
+./usr/include/zaurus/apmvar.h			comp-c-include
+./usr/include/zaurus/asm.h			comp-c-include
+./usr/include/zaurus/bswap.h			comp-c-include
+./usr/include/zaurus/bus.h			comp-obsolete		obsolete
+./usr/include/zaurus/cdefs.h			comp-c-include
+./usr/include/zaurus/cpu.h			comp-c-include
+./usr/include/zaurus/disklabel.h		comp-c-include
+./usr/include/zaurus/elf_machdep.h		comp-c-include
+./usr/include/zaurus/endian.h			comp-c-include
+./usr/include/zaurus/endian_machdep.h		comp-c-include
+./usr/include/zaurus/float.h			comp-c-include
+./usr/include/zaurus/fp.h			comp-c-include
+./usr/include/zaurus/frame.h			comp-c-include
+./usr/include/zaurus/ieee.h			comp-c-include
+./usr/include/zaurus/ieeefp.h			comp-c-include
+./usr/include/zaurus/int_const.h		comp-c-include
+./usr/include/zaurus/int_fmtio.h		comp-c-include
+./usr/include/zaurus/int_limits.h		comp-c-include
+./usr/include/zaurus/int_mwgwtypes.h		comp-c-include
+./usr/include/zaurus/int_types.h		comp-c-include
+./usr/include/zaurus/intr.h			comp-c-include
+./usr/include/zaurus/ipkdb.h			comp-obsolete		obsolete
+./usr/include/zaurus/limits.h			comp-c-include
+./usr/include/zaurus/lock.h			comp-c-include
+./usr/include/zaurus/math.h			comp-c-include
+./usr/include/zaurus/mcontext.h			comp-c-include
+./usr/include/zaurus/mutex.h			comp-c-include
+./usr/include/zaurus/param.h			comp-c-include
+./usr/include/zaurus/pcb.h			comp-c-include
+./usr/include/zaurus/pmap.h			comp-c-include
+./usr/include/zaurus/pmc.h			comp-c-include
+./usr/include/zaurus/proc.h			comp-c-include
+./usr/include/zaurus/profile.h			comp-c-include
+./usr/include/zaurus/ptrace.h			comp-c-include
+./usr/include/zaurus/reg.h			comp-c-include
+./usr/include/zaurus/rwlock.h			comp-c-include
+./usr/include/zaurus/setjmp.h			comp-c-include
+./usr/include/zaurus/signal.h			comp-c-include
+./usr/include/zaurus/stdarg.h			comp-obsolete		obsolete
+./usr/include/zaurus/sysarch.h			comp-c-include
+./usr/include/zaurus/trap.h			comp-c-include
+./usr/include/zaurus/types.h			comp-c-include
+./usr/include/zaurus/varargs.h			comp-obsolete		obsolete
+./usr/include/zaurus/vmparam.h			comp-c-include
+./usr/include/zaurus/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

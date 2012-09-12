@@ -1,0 +1,58 @@
+# $NetBSD: md.evbppc,v 1.12 2011/07/17 20:54:31 joerg Exp $
+./usr/include/evbppc				comp-c-include
+./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
+./usr/include/evbppc/ansi.h			comp-c-include
+./usr/include/evbppc/aout_machdep.h		comp-c-include
+./usr/include/evbppc/asm.h			comp-c-include
+./usr/include/evbppc/atomic.h			comp-obsolete		obsolete
+./usr/include/evbppc/bswap.h			comp-c-include
+./usr/include/evbppc/bus.h			comp-obsolete		obsolete
+./usr/include/evbppc/cdefs.h			comp-c-include
+./usr/include/evbppc/cpu.h			comp-c-include
+./usr/include/evbppc/db_machdep.h		comp-obsolete		obsolete
+./usr/include/evbppc/disklabel.h		comp-c-include
+./usr/include/evbppc/elf_machdep.h		comp-c-include
+./usr/include/evbppc/endian.h			comp-c-include
+./usr/include/evbppc/endian_machdep.h		comp-c-include
+./usr/include/evbppc/float.h			comp-c-include
+./usr/include/evbppc/fpu.h			comp-c-include
+./usr/include/evbppc/frame.h			comp-c-include
+./usr/include/evbppc/ieee.h			comp-c-include
+./usr/include/evbppc/ieeefp.h			comp-c-include
+./usr/include/evbppc/int_const.h		comp-c-include
+./usr/include/evbppc/int_fmtio.h		comp-c-include
+./usr/include/evbppc/int_limits.h		comp-c-include
+./usr/include/evbppc/int_mwgwtypes.h		comp-c-include
+./usr/include/evbppc/int_types.h		comp-c-include
+./usr/include/evbppc/intr.h			comp-c-include
+./usr/include/evbppc/ipkdb.h			comp-obsolete		obsolete
+./usr/include/evbppc/kcore.h			comp-c-include
+./usr/include/evbppc/limits.h			comp-c-include
+./usr/include/evbppc/lock.h			comp-c-include
+./usr/include/evbppc/math.h			comp-c-include
+./usr/include/evbppc/mcontext.h			comp-c-include
+./usr/include/evbppc/mutex.h			comp-c-include
+./usr/include/evbppc/param.h			comp-c-include
+./usr/include/evbppc/pcb.h			comp-c-include
+./usr/include/evbppc/pio.h			comp-obsolete		obsolete
+./usr/include/evbppc/pmap.h			comp-c-include
+./usr/include/evbppc/pmc.h			comp-c-include
+./usr/include/evbppc/powerpc.h			comp-obsolete		obsolete
+./usr/include/evbppc/proc.h			comp-c-include
+./usr/include/evbppc/profile.h			comp-c-include
+./usr/include/evbppc/psl.h			comp-c-include
+./usr/include/evbppc/pte.h			comp-c-include
+./usr/include/evbppc/ptrace.h			comp-c-include
+./usr/include/evbppc/reg.h			comp-c-include
+./usr/include/evbppc/reloc.h			comp-c-include
+./usr/include/evbppc/rwlock.h			comp-c-include
+./usr/include/evbppc/setjmp.h			comp-c-include
+./usr/include/evbppc/signal.h			comp-c-include
+./usr/include/evbppc/spr.h			comp-obsolete		obsolete
+./usr/include/evbppc/stdarg.h			comp-obsolete		obsolete
+./usr/include/evbppc/trap.h			comp-c-include
+./usr/include/evbppc/types.h			comp-c-include
+./usr/include/evbppc/varargs.h			comp-obsolete		obsolete
+./usr/include/evbppc/vmparam.h			comp-c-include
+./usr/include/evbppc/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

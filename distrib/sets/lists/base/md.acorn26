@@ -1,0 +1,4 @@
+# $NetBSD: md.acorn26,v 1.6 2008/11/29 17:57:33 tsutsui Exp $
+./usr/mdec/BBBB					base-obsolete		obsolete
+./usr/mdec/boot26				base-sysutil-bin
+./usr/mdec/boot26,ffa				base-sysutil-bin

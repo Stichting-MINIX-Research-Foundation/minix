@@ -1,0 +1,48 @@
+# $NetBSD: md.cesfic,v 1.7 2011/07/17 20:54:31 joerg Exp $
+./usr/include/cesfic				comp-c-include
+./usr/include/cesfic/_G_config.h		comp-obsolete		obsolete
+./usr/include/cesfic/ansi.h			comp-c-include
+./usr/include/cesfic/aout_machdep.h		comp-c-include
+./usr/include/cesfic/asm.h			comp-c-include
+./usr/include/cesfic/bswap.h			comp-c-include
+./usr/include/cesfic/cdefs.h			comp-c-include
+./usr/include/cesfic/cpu.h			comp-c-include
+./usr/include/cesfic/disklabel.h		comp-c-include
+./usr/include/cesfic/elf_machdep.h		comp-c-include
+./usr/include/cesfic/endian.h			comp-c-include
+./usr/include/cesfic/endian_machdep.h		comp-c-include
+./usr/include/cesfic/float.h			comp-c-include
+./usr/include/cesfic/frame.h			comp-c-include
+./usr/include/cesfic/ieee.h			comp-c-include
+./usr/include/cesfic/ieeefp.h			comp-c-include
+./usr/include/cesfic/int_const.h		comp-c-include
+./usr/include/cesfic/int_fmtio.h		comp-c-include
+./usr/include/cesfic/int_limits.h		comp-c-include
+./usr/include/cesfic/int_mwgwtypes.h		comp-c-include
+./usr/include/cesfic/int_types.h		comp-c-include
+./usr/include/cesfic/intr.h			comp-c-include
+./usr/include/cesfic/limits.h			comp-c-include
+./usr/include/cesfic/lock.h			comp-c-include
+./usr/include/cesfic/math.h			comp-c-include
+./usr/include/cesfic/mcontext.h			comp-c-include
+./usr/include/cesfic/mutex.h			comp-c-include
+./usr/include/cesfic/param.h			comp-c-include
+./usr/include/cesfic/pcb.h			comp-c-include
+./usr/include/cesfic/pmap.h			comp-c-include
+./usr/include/cesfic/pmc.h			comp-c-include
+./usr/include/cesfic/proc.h			comp-c-include
+./usr/include/cesfic/profile.h			comp-c-include
+./usr/include/cesfic/psl.h			comp-c-include
+./usr/include/cesfic/pte.h			comp-c-include
+./usr/include/cesfic/ptrace.h			comp-c-include
+./usr/include/cesfic/reg.h			comp-c-include
+./usr/include/cesfic/rwlock.h			comp-c-include
+./usr/include/cesfic/setjmp.h			comp-c-include
+./usr/include/cesfic/signal.h			comp-c-include
+./usr/include/cesfic/stdarg.h			comp-obsolete		obsolete
+./usr/include/cesfic/trap.h			comp-c-include
+./usr/include/cesfic/types.h			comp-c-include
+./usr/include/cesfic/varargs.h			comp-obsolete		obsolete
+./usr/include/cesfic/vmparam.h			comp-c-include
+./usr/include/cesfic/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

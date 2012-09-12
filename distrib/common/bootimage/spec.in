@@ -1,0 +1,5 @@
+# $NetBSD: spec.in,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
+./netbsd	type=file mode=0755 uname=root gname=operator
+./kern		type=dir mode=0755 uname=root gname=operator
+./proc		type=dir mode=0755 uname=root gname=operator
+./tmp		type=dir mode=1777 uname=root gname=operator

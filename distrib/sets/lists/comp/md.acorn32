@@ -1,0 +1,58 @@
+# $NetBSD: md.acorn32,v 1.26 2011/07/19 15:59:51 dyoung Exp $
+#./usr/include/acorn32/devmap.h		comp-c-include
+./usr/include/acorn32				comp-c-include
+./usr/include/acorn32/ansi.h			comp-c-include
+./usr/include/acorn32/aout_machdep.h		comp-c-include
+./usr/include/acorn32/asm.h			comp-c-include
+./usr/include/acorn32/beep.h			comp-obsolete		obsolete
+./usr/include/acorn32/bswap.h			comp-c-include
+./usr/include/acorn32/bus.h			comp-obsolete		obsolete
+./usr/include/acorn32/cdefs.h			comp-c-include
+./usr/include/acorn32/conf.h			comp-obsolete		obsolete
+./usr/include/acorn32/cpu.h			comp-c-include
+./usr/include/acorn32/db_machdep.h		comp-obsolete		obsolete
+./usr/include/acorn32/disklabel.h		comp-c-include
+./usr/include/acorn32/elf_machdep.h		comp-c-include
+./usr/include/acorn32/endian.h			comp-c-include
+./usr/include/acorn32/endian_machdep.h		comp-c-include
+./usr/include/acorn32/float.h			comp-c-include
+./usr/include/acorn32/fp.h			comp-c-include
+./usr/include/acorn32/frame.h			comp-c-include
+./usr/include/acorn32/ieee.h			comp-c-include
+./usr/include/acorn32/ieeefp.h			comp-c-include
+./usr/include/acorn32/int_const.h		comp-c-include
+./usr/include/acorn32/int_fmtio.h		comp-c-include
+./usr/include/acorn32/int_limits.h		comp-c-include
+./usr/include/acorn32/int_mwgwtypes.h		comp-c-include
+./usr/include/acorn32/int_types.h		comp-c-include
+./usr/include/acorn32/intr.h			comp-c-include
+./usr/include/acorn32/ipkdb.h			comp-obsolete		obsolete
+./usr/include/acorn32/joystick.h		comp-c-include
+./usr/include/acorn32/kbd.h			comp-obsolete		obsolete
+./usr/include/acorn32/limits.h			comp-c-include
+./usr/include/acorn32/lock.h			comp-c-include
+./usr/include/acorn32/math.h			comp-c-include
+./usr/include/acorn32/mcontext.h		comp-c-include
+./usr/include/acorn32/mouse.h			comp-obsolete		obsolete
+./usr/include/acorn32/mutex.h			comp-c-include
+./usr/include/acorn32/param.h			comp-c-include
+./usr/include/acorn32/pcb.h			comp-c-include
+./usr/include/acorn32/pmap.h			comp-c-include
+./usr/include/acorn32/pmc.h			comp-c-include
+./usr/include/acorn32/proc.h			comp-c-include
+./usr/include/acorn32/profile.h			comp-c-include
+./usr/include/acorn32/ptrace.h			comp-c-include
+./usr/include/acorn32/reg.h			comp-c-include
+./usr/include/acorn32/rwlock.h			comp-c-include
+./usr/include/acorn32/setjmp.h			comp-c-include
+./usr/include/acorn32/signal.h			comp-c-include
+./usr/include/acorn32/stdarg.h			comp-obsolete		obsolete
+./usr/include/acorn32/sysarch.h			comp-c-include
+./usr/include/acorn32/trap.h			comp-c-include
+./usr/include/acorn32/types.h			comp-c-include
+./usr/include/acorn32/varargs.h			comp-obsolete		obsolete
+./usr/include/acorn32/vconsole.h		comp-obsolete		obsolete
+./usr/include/acorn32/vmparam.h			comp-c-include
+./usr/include/acorn32/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug

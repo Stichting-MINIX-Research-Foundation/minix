@@ -4,10 +4,10 @@ SUBDIR+=	libgcc
 
 .include <bsd.own.mk>
 
-.if ${MKPIC} != "no"
-SUBDIR+=	libgcc_eh libgcc_s
-.endif
+#.if ${MKPIC} != "no"
+#SUBDIR+=	libgcc_eh libgcc_s
+#.endif
 
-SUBDIR+=	libgcov
+#SUBDIR+=	libgcov
 
 .include <bsd.subdir.mk>

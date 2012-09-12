@@ -1,3 +1,6 @@
+#LSC For now...
+NOGCCERROR:= yes
+
 PROG=	badblocks
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 MAN=

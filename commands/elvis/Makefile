@@ -15,6 +15,9 @@ CPPFLAGS+= -w -DCRUNCH \
 	-DNO_MODELINE -DNO_OPTCOLS -DNO_DIGRAPH -DNO_EXTENSIONS \
 	-DNO_ERRLIST -DNO_FKEY -DNO_VISIBLE -DNO_COLOR -DNO_POPUP
 
+# LSC Force usage of local getline
+CPPFLAGS+= -D__NBSD_LIBC
+
 ###########################################################################
 ###     The rest of this Makefile contains no user-serviceable parts    ###
 ###########################################################################

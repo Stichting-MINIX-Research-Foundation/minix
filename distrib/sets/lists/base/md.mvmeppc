@@ -1,0 +1,3 @@
+# $NetBSD: md.mvmeppc,v 1.8 2008/11/29 17:57:34 tsutsui Exp $
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/boot.elf				base-sysutil-bin

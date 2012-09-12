@@ -37,4 +37,7 @@ LINKS+= ${BINDIR}/pax ${BINDIR}/cpio
 
 CPPFLAGS+= -DNET2_STAT=1
 
+# LSC Force usage of local getline
+CPPFLAGS+= -D__NBSD_LIBC
+
 .include <bsd.prog.mk>

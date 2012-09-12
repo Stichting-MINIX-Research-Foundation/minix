@@ -1,0 +1,61 @@
+# $NetBSD: md.evbmips,v 1.16 2011/07/17 20:54:31 joerg Exp $
+./usr/include/evbmips				comp-c-include
+./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
+./usr/include/evbmips/ansi.h			comp-c-include
+./usr/include/evbmips/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/evbmips/asm.h			comp-c-include
+./usr/include/evbmips/bsd-aout.h		comp-obsolete		obsolete
+./usr/include/evbmips/bswap.h			comp-c-include
+./usr/include/evbmips/bus.h			comp-obsolete		obsolete
+./usr/include/evbmips/cdefs.h			comp-c-include
+./usr/include/evbmips/cpu.h			comp-c-include
+./usr/include/evbmips/db_machdep.h		comp-obsolete		obsolete
+./usr/include/evbmips/disklabel.h		comp-c-include
+./usr/include/evbmips/ecoff_machdep.h		comp-c-include
+./usr/include/evbmips/elf_machdep.h		comp-c-include
+./usr/include/evbmips/endian.h			comp-c-include
+./usr/include/evbmips/endian_machdep.h		comp-c-include
+./usr/include/evbmips/float.h			comp-c-include
+./usr/include/evbmips/ieee.h			comp-c-include
+./usr/include/evbmips/ieeefp.h			comp-c-include
+./usr/include/evbmips/int_const.h		comp-c-include
+./usr/include/evbmips/int_fmtio.h		comp-c-include
+./usr/include/evbmips/int_limits.h		comp-c-include
+./usr/include/evbmips/int_mwgwtypes.h		comp-c-include
+./usr/include/evbmips/int_types.h		comp-c-include
+./usr/include/evbmips/intr.h			comp-obsolete		obsolete
+./usr/include/evbmips/isa_machdep.h		comp-obsolete		obsolete
+./usr/include/evbmips/kcore.h			comp-c-include
+./usr/include/evbmips/kdbparam.h		comp-c-include
+./usr/include/evbmips/limits.h			comp-c-include
+./usr/include/evbmips/lock.h			comp-c-include
+./usr/include/evbmips/locore.h			comp-c-include
+./usr/include/evbmips/math.h			comp-c-include
+./usr/include/evbmips/mcontext.h		comp-c-include
+./usr/include/evbmips/mips_opcode.h		comp-c-include
+./usr/include/evbmips/mutex.h			comp-c-include
+./usr/include/evbmips/param.h			comp-c-include
+./usr/include/evbmips/pcb.h			comp-c-include
+./usr/include/evbmips/pci_machdep.h		comp-obsolete		obsolete
+./usr/include/evbmips/pmap.h			comp-c-include
+./usr/include/evbmips/pmc.h			comp-c-include
+./usr/include/evbmips/proc.h			comp-c-include
+./usr/include/evbmips/profile.h			comp-c-include
+./usr/include/evbmips/psl.h			comp-c-include
+./usr/include/evbmips/pte.h			comp-c-include
+./usr/include/evbmips/ptrace.h			comp-c-include
+./usr/include/evbmips/reg.h			comp-c-include
+./usr/include/evbmips/regdef.h			comp-c-include
+./usr/include/evbmips/regnum.h			comp-c-include
+./usr/include/evbmips/reloc.h			comp-c-include
+./usr/include/evbmips/rnd.h			comp-obsolete		obsolete
+./usr/include/evbmips/rwlock.h			comp-c-include
+./usr/include/evbmips/setjmp.h			comp-c-include
+./usr/include/evbmips/signal.h			comp-c-include
+./usr/include/evbmips/stdarg.h			comp-obsolete		obsolete
+./usr/include/evbmips/trap.h			comp-c-include
+./usr/include/evbmips/types.h			comp-c-include
+./usr/include/evbmips/varargs.h			comp-obsolete		obsolete
+./usr/include/evbmips/vmparam.h			comp-c-include
+./usr/include/evbmips/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

@@ -1,0 +1,52 @@
+# $NetBSD: ad.hppa,v 1.6 2011/08/07 01:49:12 mrg Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/hppa				comp-c-include
+./usr/include/hppa/ansi.h			comp-c-include
+./usr/include/hppa/aout_machdep.h		comp-c-include
+./usr/include/hppa/asm.h			comp-c-include
+./usr/include/hppa/bswap.h			comp-c-include
+./usr/include/hppa/byte_swap.h			comp-c-include
+./usr/include/hppa/cdefs.h			comp-c-include
+./usr/include/hppa/cpufunc.h			comp-c-include
+./usr/include/hppa/db_machdep.h			comp-obsolete		obsolete
+./usr/include/hppa/elf_machdep.h		comp-c-include
+./usr/include/hppa/endian_machdep.h		comp-c-include
+./usr/include/hppa/exec.h			comp-c-include
+./usr/include/hppa/float.h			comp-c-include
+./usr/include/hppa/frame.h			comp-c-include
+./usr/include/hppa/ieee.h			comp-c-include
+./usr/include/hppa/ieeefp.h			comp-c-include
+./usr/include/hppa/int_const.h			comp-c-include
+./usr/include/hppa/int_fmtio.h			comp-c-include
+./usr/include/hppa/int_limits.h			comp-c-include
+./usr/include/hppa/int_mwgwtypes.h		comp-c-include
+./usr/include/hppa/int_types.h			comp-c-include
+./usr/include/hppa/kcore.h			comp-c-include
+./usr/include/hppa/limits.h			comp-c-include
+./usr/include/hppa/lock.h			comp-c-include
+./usr/include/hppa/math.h			comp-c-include
+./usr/include/hppa/mcontext.h			comp-c-include
+./usr/include/hppa/mutex.h			comp-c-include
+./usr/include/hppa/param.h			comp-c-include
+./usr/include/hppa/pcb.h			comp-c-include
+./usr/include/hppa/pmap.h			comp-c-include
+./usr/include/hppa/pmc.h			comp-c-include
+./usr/include/hppa/proc.h			comp-c-include
+./usr/include/hppa/profile.h			comp-c-include
+./usr/include/hppa/psl.h			comp-c-include
+./usr/include/hppa/pte.h			comp-c-include
+./usr/include/hppa/ptrace.h			comp-c-include
+./usr/include/hppa/reg.h			comp-c-include
+./usr/include/hppa/reloc.h			comp-c-include
+./usr/include/hppa/rwlock.h			comp-c-include
+./usr/include/hppa/setjmp.h			comp-c-include
+./usr/include/hppa/signal.h			comp-c-include
+./usr/include/hppa/som.h			comp-c-include
+./usr/include/hppa/spinlock.h			comp-obsolete		obsolete
+./usr/include/hppa/stdarg.h			comp-obsolete		obsolete
+./usr/include/hppa/trap.h			comp-c-include
+./usr/include/hppa/types.h			comp-c-include
+./usr/include/hppa/varargs.h			comp-obsolete		obsolete
+./usr/include/hppa/vmparam.h			comp-c-include
+./usr/include/hppa/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

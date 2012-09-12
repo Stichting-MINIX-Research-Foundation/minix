@@ -1,0 +1,63 @@
+# $NetBSD: md.amiga,v 1.58 2011/07/17 20:54:31 joerg Exp $
+./usr/include/amiga				comp-c-include
+./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
+./usr/include/amiga/ansi.h			comp-c-include
+./usr/include/amiga/aout_machdep.h		comp-c-include
+./usr/include/amiga/asm.h			comp-c-include
+./usr/include/amiga/bswap.h			comp-c-include
+./usr/include/amiga/bus.h			comp-c-include
+./usr/include/amiga/cdefs.h			comp-c-include
+./usr/include/amiga/conf.h			comp-obsolete		obsolete
+./usr/include/amiga/cpu.h			comp-c-include
+./usr/include/amiga/cpufunc.h			comp-c-include
+./usr/include/amiga/db_machdep.h		comp-obsolete		obsolete
+./usr/include/amiga/disklabel.h			comp-c-include
+./usr/include/amiga/elf_machdep.h		comp-c-include
+./usr/include/amiga/endian.h			comp-c-include
+./usr/include/amiga/endian_machdep.h		comp-c-include
+./usr/include/amiga/fbio.h			comp-obsolete		obsolete
+./usr/include/amiga/float.h			comp-c-include
+./usr/include/amiga/frame.h			comp-c-include
+./usr/include/amiga/ieee.h			comp-c-include
+./usr/include/amiga/ieeefp.h			comp-c-include
+./usr/include/amiga/int_const.h			comp-c-include
+./usr/include/amiga/int_fmtio.h			comp-c-include
+./usr/include/amiga/int_limits.h		comp-c-include
+./usr/include/amiga/int_mwgwtypes.h		comp-c-include
+./usr/include/amiga/int_types.h			comp-c-include
+./usr/include/amiga/intr.h			comp-c-include
+./usr/include/amiga/kcore.h			comp-c-include
+./usr/include/amiga/limits.h			comp-c-include
+./usr/include/amiga/lock.h			comp-c-include
+./usr/include/amiga/math.h			comp-c-include
+./usr/include/amiga/mcontext.h			comp-c-include
+./usr/include/amiga/mtpr.h			comp-obsolete		obsolete
+./usr/include/amiga/mutex.h			comp-c-include
+./usr/include/amiga/param.h			comp-c-include
+./usr/include/amiga/pcb.h			comp-c-include
+./usr/include/amiga/pmap.h			comp-c-include
+./usr/include/amiga/pmc.h			comp-c-include
+./usr/include/amiga/proc.h			comp-c-include
+./usr/include/amiga/profile.h			comp-c-include
+./usr/include/amiga/psl.h			comp-c-include
+./usr/include/amiga/pte.h			comp-c-include
+./usr/include/amiga/ptrace.h			comp-c-include
+./usr/include/amiga/reg.h			comp-c-include
+./usr/include/amiga/rwlock.h			comp-c-include
+./usr/include/amiga/setjmp.h			comp-c-include
+./usr/include/amiga/signal.h			comp-c-include
+./usr/include/amiga/stdarg.h			comp-obsolete		obsolete
+./usr/include/amiga/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/amiga/trap.h			comp-c-include
+./usr/include/amiga/types.h			comp-c-include
+./usr/include/amiga/varargs.h			comp-obsolete		obsolete
+./usr/include/amiga/vmparam.h			comp-c-include
+./usr/include/amiga/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/lib/c++rt0.o				comp-obsolete		obsolete
+./usr/lib/scrt0.o				comp-obsolete		obsolete
+./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/grfconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/loadkmap.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/videomode.debug	comp-sysutil-debug	debug

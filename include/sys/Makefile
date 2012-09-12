@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.126 2010/03/01 21:10:13 darran Exp $
-
-NETBSDINCSDIR= /usr/include
-INCSDIR= /usr/include/sys
+#	$NetBSD: Makefile,v 1.143 2012/02/19 21:06:57 rmind Exp $
 
 .include <bsd.sys.mk>
 
+INCSDIR= /usr/include/sys
 
 # Present only in minix
 INCS+= ioc_net.h statfs.h
@@ -35,27 +33,24 @@ INCS+=	ansi.h atomic.h \
 	tree.h ttycom.h ttydefaults.h \
 	types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h utsname.h uuid.h \
+	extattr.h \
 	wait.h exec.h
 
 INCSYMLINKS=\
-	sys/fcntl.h ${NETBSDINCSDIR}/fcntl.h \
-	sys/poll.h ${NETBSDINCSDIR}/poll.h \
-	sys/stdint.h ${NETBSDINCSDIR}/stdint.h \
-	sys/syslog.h ${NETBSDINCSDIR}/syslog.h \
-	sys/termios.h ${NETBSDINCSDIR}/termios.h \
-	sys/rmd160.h ${NETBSDINCSDIR}/rmd160.h \
-	sys/sha1.h ${NETBSDINCSDIR}/sha1.h \
-	sys/sha2.h ${NETBSDINCSDIR}/sha2.h \
-	sys/md4.h ${NETBSDINCSDIR}/md4.h \
-	sys/md5.h ${NETBSDINCSDIR}/md5.h 
+	sys/fcntl.h /usr/include/fcntl.h \
+	sys/poll.h /usr/include/poll.h \
+	sys/stdint.h /usr/include/stdint.h \
+	sys/syslog.h /usr/include/syslog.h \
+	sys/termios.h /usr/include/termios.h \
+	sys/rmd160.h /usr/include/rmd160.h \
+	sys/sha1.h /usr/include/sha1.h \
+	sys/sha2.h /usr/include/sha2.h \
+	sys/md4.h /usr/include/md4.h \
+	sys/md5.h /usr/include/md5.h 
 
 #INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
 
 namei: namei.src gennameih.awk
 	${TOOL_AWK} -f gennameih.awk < namei.src
 
-.include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/common/include/sys/Makefile.inc"
-
-.include <bsd.files.mk>
 .include <bsd.kinc.mk>

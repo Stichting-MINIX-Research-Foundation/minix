@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.143 2010/09/04 12:17:58 ahoka Exp $
+#	$NetBSD: Makefile,v 1.149 2012/01/20 16:31:29 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -17,9 +17,6 @@
 # The Hesiod functions are always in libc. To choose that getpwent() and friends
 # actually call the Hesiod functions, put -DHESIOD on the CPPFLAGS line below.
 
-.if defined(__MINIX)
-.include "minix-config.inc"
-.endif
 .include "Makefile.inc"
 
 LIB=		c
@@ -52,17 +49,22 @@ BUILDCOLD?= no
 SUBDIR=compat
 .include <bsd.subdir.mk>
 .else
+.if !defined(__MINIX)
+COMPATDIR=${.CURDIR}/compat
+.include "${.CURDIR}/compat/Makefile.inc"
+.else
+SUBDIR+= pkgconfig
+.include <bsd.subdir.mk>
 COMPATDIR= ${.CURDIR}/compat-minix
 .include "${.CURDIR}/compat-minix/Makefile.inc"
+.endif
 .endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
 .include "${.CURDIR}/atomic/Makefile.inc"
 .include "${.CURDIR}/cdb/Makefile.inc"
 .include "${.CURDIR}/db/Makefile.inc"
-.if (${CITRUS} == "yes")
 .include "${.CURDIR}/citrus/Makefile.inc"
-.endif
 .include "${.CURDIR}/compat-43/Makefile.inc"
 .include "${.CURDIR}/dlfcn/Makefile.inc"
 .include "${.CURDIR}/gdtoa/Makefile.inc"
@@ -82,7 +84,7 @@ COMPATDIR= ${.CURDIR}/compat-minix
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nameser/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "sparc64")
+.if (${MACHINE_ARCH} != "alpha") && (${ARCHSUBDIR} != "sparc64")
 .include "${.CURDIR}/quad/Makefile.inc"
 .endif
 .if (${USE_LIBTRE} == "yes")
@@ -106,6 +108,7 @@ COMPATDIR= ${.CURDIR}/compat-minix
 .if defined(__MINIX)
 .include "${.CURDIR}/sys-minix/Makefile.inc"
 .else
+.include "${.CURDIR}/tls/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
 .endif
 .include "${.CURDIR}/uuid/Makefile.inc"
@@ -141,8 +144,7 @@ realall:
 .else
 realall: tags
 .endif
-tags: ${.OBJDIR}/tags
-${.OBJDIR}/tags: ${SRCS}
+tags: ${SRCS}
 	${_MKTARGET_CREATE}
 	-${TOOL_CTAGS} -w ${.ALLSRC:M*.c}
 	-egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
@@ -150,7 +152,7 @@ ${.OBJDIR}/tags: ${SRCS}
 	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}
 
 .if !defined(__MINIX)
-FILES=		${.OBJDIR}/tags
+FILES=		tags
 FILESNAME=	libc.tags
 FILESDIR=	/var/db
 .endif
@@ -159,16 +161,11 @@ FILESDIR=	/var/db
 # workaround for I18N stuffs: build singlebyte setlocale() for libc.a,
 # multibyte for libc.so.  the quirk should be removed when we support
 # dlopen() from within statically linked binaries.
-#.if (${CITRUS} == "yes")
-#CSHLIBFLAGS+=	-D_I18N_DYNAMIC
-#.endif
+.if !defined(__MINIX)
+CSHLIBFLAGS+=	-D_I18N_DYNAMIC
+.endif
 
 .include <bsd.lib.mk>
 
 # force the dynamic linker to initialize libc first
 SHLIB_SHFLAGS+=	-Wl,-z,initfirst
-
-.include <bsd.own.mk>
-SUBDIR+= pkgconfig
-.include <bsd.subdir.mk>
-

@@ -1,0 +1,77 @@
+#	$NetBSD: Makefile.crunch,v 1.24 2008/10/19 22:05:19 apb Exp $
+#
+# Makefile snippet to build a crunchgen(1)ed binary from the provided lists
+#
+# Required variables:
+#	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
+#	CRUNCHBIN	name of crunchgen(1)ed binary
+#	LISTS		list file(s) to use
+#
+# Optional variables:
+#	SMALLPROG	if != 0, add SMALLPROG=1 to CRUNCHENV.  [default: 1]
+#	SMALLPROG_INET6	if != 0 and SMALLPROG != 0, and ${USE_INET6} != "no",
+#			add SMALLPROG_INET6=1 to CRUNCHENV.  [default: 0]
+#	CRUNCHENV	environment to pass to crunchgen(1) and when building
+#			the crunched program with make(1) (as command line
+#			variables, to override any user provided environment
+#			or make(1) cmdline vars).
+#	CRUNCHGEN_FLAGS	extra options to crunchgen(1)
+#	DESTDIR		destination directory
+#	PARSELISTENV	environment variables to set for parselist.awk
+#
+# Variables modified by this:
+#	CRUNCHENV	may get SMALLPROG=1 or SMALLPROG_INET6=1 added
+#
+
+.if !defined(_MAKEFILE_CRUNCH_)
+_MAKEFILE_CRUNCH_=1
+
+CRUNCHENV+=		AWK=${TOOL_AWK:Q}
+
+SMALLPROG?=		1
+SMALLPROG_INET6?=	0
+.if ${SMALLPROG}				# {
+CRUNCHENV+=		SMALLPROG=1
+.if ${SMALLPROG_INET6} && (${USE_INET6} != "no")
+CRUNCHENV+=		SMALLPROG_INET6=1
+.endif
+.endif						# }
+
+.include "${DISTRIBDIR}/common/Makefile.parselist"
+
+.PHONY:	${CRUNCHBIN}
+${CRUNCHBIN}: ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c
+	${MAKE} ${CRUNCHENV} -f ${CRUNCHBIN}.mk ${CRUNCHBIN}.crunched
+
+${CRUNCHBIN}.c: ${CRUNCHBIN}.mk
+	[ ! -f ${.TARGET} ] || touch ${.TARGET}
+
+${CRUNCHBIN}.cache: ${CRUNCHBIN}.mk
+	[ ! -f ${.TARGET} ] || touch ${.TARGET}
+
+CRUNCHGEN != command -v ${TOOL_CRUNCHGEN:[-1]} || echo
+
+${CRUNCHBIN}.mk: ${CRUNCHBIN}.conf  ${CRUNCHGEN}
+	${CRUNCHENV} ${TOOL_CRUNCHGEN} -f -D ${NETBSDSRCDIR} \
+	    -L ${DESTDIR}/usr/lib -q ${CRUNCHGEN_FLAGS} ${CRUNCHBIN}.conf
+
+${CRUNCHBIN}.conf: ${LISTS} ${PARSELISTDEP}
+	-rm -f ${.TARGET} ${.TARGET}.tmp
+	${PARSELIST} -v mode=crunch ${LISTS} > ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	${CRUNCHBIN} ${CRUNCHBIN}.conf ${CRUNCHBIN}.conf.tmp \
+		${CRUNCHBIN}.cache *.o *.cro *.c
+
+clean cleandir distclean: cleancrunchgen
+
+.PHONY: cleancrunchgen
+
+cleancrunchgen:
+	if [ -f ${CRUNCHBIN}.mk ]; then \
+		${MAKE} -f ${CRUNCHBIN}.mk clean; \
+	fi
+	rm -f ${CRUNCHBIN}.mk
+
+
+.endif	# _MAKEFILE_CRUNCH_

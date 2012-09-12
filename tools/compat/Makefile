@@ -31,7 +31,8 @@ CPPFLAGS+=	-no-cpp-precomp
 CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
 		-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 
-.PATH:		${.CURDIR}/../../lib/libc/gen \
+.PATH:		${.CURDIR}/../../lib/libc/cdb \
+		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/hash \
 		${.CURDIR}/../../lib/libc/hash/md2 \
 		${.CURDIR}/../../lib/libc/hash/md5 \

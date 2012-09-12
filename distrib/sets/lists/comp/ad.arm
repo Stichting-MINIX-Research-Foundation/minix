@@ -1,0 +1,105 @@
+# $NetBSD: ad.arm,v 1.41 2012/08/15 20:38:50 matt Exp $
+./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/arm				comp-c-include
+./usr/include/arm/aeabi.h			comp-c-include
+./usr/include/arm/ansi.h			comp-c-include
+./usr/include/arm/aout_machdep.h		comp-c-include
+./usr/include/arm/arm26				comp-c-include
+./usr/include/arm/arm26/types.h			comp-c-include
+./usr/include/arm/arm32				comp-c-include
+./usr/include/arm/arm32/bus.h			comp-obsolete		obsolete
+./usr/include/arm/arm32/frame.h			comp-c-include
+./usr/include/arm/arm32/katelib.h		comp-c-include
+./usr/include/arm/arm32/param.h			comp-c-include
+./usr/include/arm/arm32/pmap.h			comp-c-include
+./usr/include/arm/arm32/psl.h			comp-c-include
+./usr/include/arm/arm32/pte.h			comp-c-include
+./usr/include/arm/arm32/rtc.h			comp-c-include
+./usr/include/arm/arm32/sysarch.h		comp-obsolete		obsolete
+./usr/include/arm/arm32/types.h			comp-c-include
+./usr/include/arm/arm32/vmparam.h		comp-c-include
+./usr/include/arm/armreg.h			comp-c-include
+./usr/include/arm/asm.h				comp-c-include
+./usr/include/arm/atomic.h			comp-c-include
+./usr/include/arm/bswap.h			comp-c-include
+./usr/include/arm/bus.h				comp-obsolete		obsolete
+./usr/include/arm/byte_swap.h			comp-c-include
+./usr/include/arm/cdefs.h			comp-c-include
+./usr/include/arm/cpu.h				comp-c-include
+./usr/include/arm/cpuconf.h			comp-c-include
+./usr/include/arm/db_machdep.h			comp-obsolete		obsolete
+./usr/include/arm/disklabel.h			comp-c-include
+./usr/include/arm/disklabel_acorn.h		comp-obsolete		obsolete
+./usr/include/arm/elf_machdep.h			comp-c-include
+./usr/include/arm/endian.h			comp-c-include
+./usr/include/arm/endian_machdep.h		comp-c-include
+./usr/include/arm/float.h			comp-c-include
+./usr/include/arm/footbridge			comp-c-include
+./usr/include/arm/footbridge/footbridge_intr.h	comp-c-include
+./usr/include/arm/fp.h				comp-c-include
+./usr/include/arm/frame.h			comp-c-include
+./usr/include/arm/ieee.h			comp-c-include
+./usr/include/arm/ieeefp.h			comp-c-include
+./usr/include/arm/int_const.h			comp-c-include
+./usr/include/arm/int_fmtio.h			comp-c-include
+./usr/include/arm/int_limits.h			comp-c-include
+./usr/include/arm/int_mwgwtypes.h		comp-c-include
+./usr/include/arm/int_types.h			comp-c-include
+./usr/include/arm/iomd				comp-obsolete		obsolete
+./usr/include/arm/iomd/vidc.h			comp-obsolete		obsolete
+./usr/include/arm/ipkdb.h			comp-obsolete		obsolete
+./usr/include/arm/kcore.h			comp-c-include
+./usr/include/arm/limits.h			comp-c-include
+./usr/include/arm/lock.h			comp-c-include
+./usr/include/arm/math.h			comp-c-include
+./usr/include/arm/mcontext.h			comp-c-include
+./usr/include/arm/mutex.h			comp-c-include
+./usr/include/arm/param.h			comp-c-include
+./usr/include/arm/pcb.h				comp-c-include
+./usr/include/arm/pmc.h				comp-c-include
+./usr/include/arm/proc.h			comp-c-include
+./usr/include/arm/profile.h			comp-c-include
+./usr/include/arm/ptrace.h			comp-c-include
+./usr/include/arm/reg.h				comp-c-include
+./usr/include/arm/rwlock.h			comp-c-include
+./usr/include/arm/setjmp.h			comp-c-include
+./usr/include/arm/signal.h			comp-c-include
+./usr/include/arm/stdarg.h			comp-obsolete		obsolete
+./usr/include/arm/swi.h				comp-c-include
+./usr/include/arm/sysarch.h			comp-c-include
+./usr/include/arm/trap.h			comp-c-include
+./usr/include/arm/types.h			comp-c-include
+./usr/include/arm/vfpreg.h			comp-c-include
+./usr/include/arm/varargs.h			comp-obsolete		obsolete
+./usr/include/arm/wchar_limits.h		comp-c-include
+./usr/include/arm32/bootconfig.h		comp-obsolete		obsolete
+./usr/include/arm32/cpufunc.h			comp-obsolete		obsolete
+./usr/include/arm32/cpus.h			comp-obsolete		obsolete
+./usr/include/arm32/disklabel_acorn.h		comp-obsolete		obsolete
+./usr/include/arm32/irqhandler.h		comp-obsolete		obsolete
+./usr/include/arm32/katelib.h			comp-obsolete		obsolete
+./usr/include/arm32/psl.h			comp-obsolete		obsolete
+./usr/include/arm32/pte.h			comp-obsolete		obsolete
+./usr/include/arm32/undefined.h			comp-obsolete		obsolete
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/pmc.h				comp-c-include
+./usr/lib/libarm.a				comp-c-lib
+./usr/lib/libarm_g.a				-unknown-		debuglib
+./usr/lib/libarm32.a				comp-obsolete		obsolete
+./usr/lib/libarm32_p.a				comp-obsolete		obsolete
+./usr/lib/libarm32_pic.a			comp-obsolete		obsolete
+./usr/lib/libarm_p.a				comp-c-lib		profile
+./usr/lib/libarm_pic.a				comp-c-piclib
+./usr/lib/libpmc.a				comp-c-lib
+./usr/lib/libpmc_g.a				-unknown-		debuglib
+./usr/lib/libpmc_p.a				comp-c-proflib		profile
+./usr/lib/libpmc_pic.a				comp-c-piclib
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libarm.so.0.0.debug	comp-sys-debug		debug,pic
+./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug	comp-sys-debug		debug,pic
+./usr/libdata/lint/llib-larm.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-larm32.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint

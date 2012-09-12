@@ -1,0 +1,50 @@
+# $NetBSD: md.netwinder,v 1.14 2011/07/18 17:18:14 dyoung Exp $
+./usr/include/netwinder				comp-c-include
+./usr/include/netwinder/ansi.h			comp-c-include
+./usr/include/netwinder/aout_machdep.h		comp-c-include
+./usr/include/netwinder/asm.h			comp-c-include
+./usr/include/netwinder/bswap.h			comp-c-include
+./usr/include/netwinder/bus.h			comp-obsolete		obsolete
+./usr/include/netwinder/cdefs.h			comp-c-include
+./usr/include/netwinder/cpu.h			comp-c-include
+./usr/include/netwinder/db_machdep.h		comp-obsolete		obsolete
+./usr/include/netwinder/disklabel.h		comp-c-include
+./usr/include/netwinder/elf_machdep.h		comp-c-include
+./usr/include/netwinder/endian.h		comp-c-include
+./usr/include/netwinder/endian_machdep.h	comp-c-include
+./usr/include/netwinder/float.h			comp-c-include
+./usr/include/netwinder/fp.h			comp-c-include
+./usr/include/netwinder/frame.h			comp-c-include
+./usr/include/netwinder/ieee.h			comp-c-include
+./usr/include/netwinder/ieeefp.h		comp-c-include
+./usr/include/netwinder/int_const.h		comp-c-include
+./usr/include/netwinder/int_fmtio.h		comp-c-include
+./usr/include/netwinder/int_limits.h		comp-c-include
+./usr/include/netwinder/int_mwgwtypes.h		comp-c-include
+./usr/include/netwinder/int_types.h		comp-c-include
+./usr/include/netwinder/intr.h			comp-c-include
+./usr/include/netwinder/ipkdb.h			comp-obsolete		obsolete
+./usr/include/netwinder/joystick.h		comp-c-include
+./usr/include/netwinder/limits.h		comp-c-include
+./usr/include/netwinder/lock.h			comp-c-include
+./usr/include/netwinder/math.h			comp-c-include
+./usr/include/netwinder/mcontext.h		comp-c-include
+./usr/include/netwinder/mutex.h			comp-c-include
+./usr/include/netwinder/param.h			comp-c-include
+./usr/include/netwinder/pcb.h			comp-c-include
+./usr/include/netwinder/pmap.h			comp-c-include
+./usr/include/netwinder/pmc.h			comp-c-include
+./usr/include/netwinder/proc.h			comp-c-include
+./usr/include/netwinder/profile.h		comp-c-include
+./usr/include/netwinder/ptrace.h		comp-c-include
+./usr/include/netwinder/reg.h			comp-c-include
+./usr/include/netwinder/rwlock.h		comp-c-include
+./usr/include/netwinder/setjmp.h		comp-c-include
+./usr/include/netwinder/signal.h		comp-c-include
+./usr/include/netwinder/stdarg.h		comp-obsolete		obsolete
+./usr/include/netwinder/sysarch.h		comp-c-include
+./usr/include/netwinder/trap.h			comp-c-include
+./usr/include/netwinder/types.h			comp-c-include
+./usr/include/netwinder/varargs.h		comp-obsolete		obsolete
+./usr/include/netwinder/vmparam.h		comp-c-include
+./usr/include/netwinder/wchar_limits.h		comp-c-include

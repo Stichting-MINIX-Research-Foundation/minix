@@ -1,0 +1,6 @@
+# $NetBSD: md.sgimips,v 1.9 2008/11/29 17:57:34 tsutsui Exp $
+./usr/mdec/aoutboot				base-sysutil-bin
+./usr/mdec/ip2xboot				base-sysutil-bin
+./usr/mdec/ip30boot				base-sysutil-bin
+./usr/mdec/ip3xboot				base-sysutil-bin
+./usr/mdec/sgivol				base-sysutil-bin

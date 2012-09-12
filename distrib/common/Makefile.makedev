@@ -1,0 +1,71 @@
+#	$NetBSD: Makefile.makedev,v 1.18 2012/08/10 05:22:22 matt Exp $
+#
+# Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
+# (if set), otherwise copy .OBJDIR-of-etc/MAKEDEV to ./dev
+#
+# If this is to be used with Makefile.image, then this file should be
+# .include-d first.
+#
+# Required variables:
+#	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
+#	MACHINE		machine name (set externally by build framework)
+#
+# Optional variables:
+#	MAKEDEVTARGETS	targets to create with .OBJDIR-of-etc/MAKEDEV
+#
+# Variables modified by this:
+#	MAKEDEVSCRIPT	path to .OBJDIR-of-etc/MAKEDEV
+#	MTREECONF	may get "devices.spec" added
+#	LISTS		may get "list.makedev" added
+#	IMAGEDEPENDS	may get ${MAKEDEVSCRIPT} added
+#	PARSELISTENV	may get MAKEDEVSCRIPT=... added
+#
+
+.if !defined(_MAKEFILE_MAKEDEV_)
+_MAKEFILE_MAKEDEV_=1
+
+
+MAKEDEVSPEC?=	devices.spec
+
+_MAKEDEVOBJDIR!=cd ${NETBSDSRCDIR}/etc && ${PRINTOBJDIR}
+MAKEDEVSCRIPT=	${_MAKEDEVOBJDIR}/MAKEDEV
+
+CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
+
+
+.if defined(MAKEDEVTARGETS)
+
+#
+#	MAKEDEVTARGETS is set; add those devices to the mtree spec that's
+#	used to build the file system
+#
+MTREECONF+=	${MAKEDEVSPEC}
+
+${MAKEDEVSPEC}:	${MAKEDEVSCRIPT} Makefile \
+		${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV.conf
+		
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET} ${.TARGET}.tmp
+	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+	    ${HOST_SH} ${MAKEDEVSCRIPT} -s ${MAKEDEVTARGETS} \
+	    > ${.TARGET}.tmp
+	${TOOL_SED} -e '/^\. type=dir/d' -e 's,^\.,./dev,' ${.TARGET}.tmp \
+	    | sort -o ${.TARGET}
+
+.else	# ! MAKEDEVTARGETS
+
+#
+#	MAKEDEVTARGETS isn't set; copy in /dev/MAKEDEV and rely upon
+#	init(8) to mount an mfs /dev and recreate the devices by
+#	(effectively) running "cd /dev ; ./MAKEDEV all"
+#
+LISTS+=		${DISTRIBDIR}/common/list.makedev
+IMAGEDEPENDS+=	${MAKEDEVSCRIPT}
+PARSELISTENV+=	MAKEDEVSCRIPT=${MAKEDEVSCRIPT:Q}
+
+${MAKEDEVSPEC}:	.PHONY
+
+.endif	# ! MAKEDEVTARGETS
+
+
+.endif	# _MAKEFILE_MAKEDEV_

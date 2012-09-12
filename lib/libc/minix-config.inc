@@ -1,6 +1,5 @@
 NETBSDINCLUDES= /usr/include/
 
-CITRUS=yes 
 USE_INET6=no
 
 MKYP=no #requires RPC
@@ -9,3 +8,5 @@ USE_MINIXMALLOC=yes
 USE_FORT=no
 USE_LIBTRE=no
 
+NOGCCERROR:= yes
+NOCLANGERROR:= yes

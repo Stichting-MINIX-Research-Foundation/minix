@@ -1,0 +1,5 @@
+# $NetBSD: stl.mi,v 1.1 2010/07/02 21:19:00 mrg Exp $
+./usr/lib/crtbegin.o				comp-c-lib
+./usr/lib/crtend.o				comp-c-lib
+./usr/lib/crti.o				comp-c-lib
+./usr/lib/crtn.o				comp-c-lib

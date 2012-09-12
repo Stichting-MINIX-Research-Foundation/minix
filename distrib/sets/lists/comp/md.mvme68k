@@ -1,0 +1,56 @@
+# $NetBSD: md.mvme68k,v 1.36 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/mvme68k				comp-c-include
+./usr/include/mvme68k/_G_config.h		comp-obsolete		obsolete
+./usr/include/mvme68k/ansi.h			comp-c-include
+./usr/include/mvme68k/aout_machdep.h		comp-c-include
+./usr/include/mvme68k/asm.h			comp-c-include
+./usr/include/mvme68k/autoconf.h		comp-c-include
+./usr/include/mvme68k/bswap.h			comp-c-include
+./usr/include/mvme68k/cdefs.h			comp-c-include
+./usr/include/mvme68k/cpu.h			comp-c-include
+./usr/include/mvme68k/db_machdep.h		comp-obsolete		obsolete
+./usr/include/mvme68k/disklabel.h		comp-c-include
+./usr/include/mvme68k/elf_machdep.h		comp-c-include
+./usr/include/mvme68k/endian.h			comp-c-include
+./usr/include/mvme68k/endian_machdep.h		comp-c-include
+./usr/include/mvme68k/float.h			comp-c-include
+./usr/include/mvme68k/frame.h			comp-c-include
+./usr/include/mvme68k/ieee.h			comp-c-include
+./usr/include/mvme68k/ieeefp.h			comp-c-include
+./usr/include/mvme68k/int_const.h		comp-c-include
+./usr/include/mvme68k/int_fmtio.h		comp-c-include
+./usr/include/mvme68k/int_limits.h		comp-c-include
+./usr/include/mvme68k/int_mwgwtypes.h		comp-c-include
+./usr/include/mvme68k/int_types.h		comp-c-include
+./usr/include/mvme68k/intr.h			comp-c-include
+./usr/include/mvme68k/kcore.h			comp-c-include
+./usr/include/mvme68k/limits.h			comp-c-include
+./usr/include/mvme68k/lock.h			comp-c-include
+./usr/include/mvme68k/math.h			comp-c-include
+./usr/include/mvme68k/mcontext.h		comp-c-include
+./usr/include/mvme68k/mutex.h			comp-c-include
+./usr/include/mvme68k/param.h			comp-c-include
+./usr/include/mvme68k/pcb.h			comp-c-include
+./usr/include/mvme68k/pmap.h			comp-c-include
+./usr/include/mvme68k/pmc.h			comp-c-include
+./usr/include/mvme68k/proc.h			comp-c-include
+./usr/include/mvme68k/profile.h			comp-c-include
+./usr/include/mvme68k/prom.h			comp-c-include
+./usr/include/mvme68k/psl.h			comp-c-include
+./usr/include/mvme68k/pte.h			comp-c-include
+./usr/include/mvme68k/ptrace.h			comp-c-include
+./usr/include/mvme68k/reg.h			comp-c-include
+./usr/include/mvme68k/rwlock.h			comp-c-include
+./usr/include/mvme68k/setjmp.h			comp-c-include
+./usr/include/mvme68k/signal.h			comp-c-include
+./usr/include/mvme68k/stdarg.h			comp-obsolete		obsolete
+./usr/include/mvme68k/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/mvme68k/trap.h			comp-c-include
+./usr/include/mvme68k/types.h			comp-c-include
+./usr/include/mvme68k/varargs.h			comp-obsolete		obsolete
+./usr/include/mvme68k/vmparam.h			comp-c-include
+./usr/include/mvme68k/wchar_limits.h		comp-c-include
+./usr/include/mvme68k/z8530var.h		comp-c-include
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug	debug

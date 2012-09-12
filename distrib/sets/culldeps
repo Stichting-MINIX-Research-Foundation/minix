@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# culldeps
+#
+# Filter redundant dependencies.
+#
+# Each line of input and output contains two syspkg names,
+# where the first syspkg depends on the second syspkg.
+#
+# Emit all the dependencies on the standard input to the standard
+# output EXCEPT the dependencies which can be derived from other
+# dependencies by the transitive rule. For example, omit both A C
+# and A D from
+#
+# 	A B
+# 	B C
+# 	C D
+# 	A C
+# 	A D
+#
+# because A C can be derived from A B and B C by transitivity,
+# and A D can be derived from A B, B C, C D by transitivity.
+#
+
+prog="${0##*/}"
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+SCRATCH="$(${MKTEMP} -d "/var/tmp/${prog}.XXXXXX")"
+NEXTLEFTOVERS="${SCRATCH}/leftovers0"
+LASTJOIN="${SCRATCH}/join0"
+NEXTJOIN="${SCRATCH}/join1"
+TAB="	"
+
+${SORT} -k 1 > "${LASTJOIN}"
+
+LEFTOVERS="${LASTJOIN}"
+
+while [ "$(${WC} -l "${LASTJOIN}" | ${AWK} '{ print $1; }')" -ne 0 ]; do
+
+	#
+	# From dependencies X-requires-Y in ${LEFTOVERS} and Y-requires-Z in
+	# ${LASTJOIN}, produce dependencies X-requires-Z and write them to
+	# ${NEXTJOIN}.
+	#
+	${SORT} -k 2 < "${LEFTOVERS}" | \
+	    ${JOIN} -1 2 -2 1 -o '1.1 2.2' - "${LASTJOIN}" | \
+	    ${SORT} -u > "${NEXTJOIN}"
+	if [ ${DEBUG:-0} -gt 0 ]; then
+		echo >&2 "${prog}: ### begin filtered results ###"
+		${JOIN} -t "${TAB}" "${NEXTJOIN}" "${LEFTOVERS}" | ${SORT} 1>&2
+		echo >&2 "${prog}: ### end filtered results ###"
+	fi
+
+	#
+	# Filter out of ${LEFTOVERS} all of the dependencies X-requires-Z, which
+	# were produced in the previous step. Write the new leftovers to
+	# ${NEXTLEFTOVERS}.
+	#
+	${JOIN} -v 2 -t "${TAB}" "${NEXTJOIN}" "${LEFTOVERS}" | \
+		${SORT} -u > "${NEXTLEFTOVERS}"
+
+	#
+	# Swap output files before repeating. 
+	#
+	LASTJOIN="${NEXTJOIN}"
+	if [ "$(basename "${NEXTJOIN}")" = join0 ]; then
+		NEXTJOIN="${SCRATCH}/join1"
+	else
+		NEXTJOIN="${SCRATCH}/join0"
+	fi
+	LEFTOVERS="${NEXTLEFTOVERS}"
+	if [ "$(basename "${NEXTLEFTOVERS}")" = leftovers0 ]; then
+		NEXTLEFTOVERS="${SCRATCH}/leftovers1"
+	else
+		NEXTLEFTOVERS="${SCRATCH}/leftovers0"
+	fi
+done
+
+#
+# Output all of the dependencies that were not culled and clean up.
+#
+cat "${LEFTOVERS}"
+rm -r "${SCRATCH}"

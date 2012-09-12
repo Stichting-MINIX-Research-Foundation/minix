@@ -1,13 +1,13 @@
 #	$NetBSD: Makefile,v 1.12 2011/05/20 22:29:55 joerg Exp $
 
+S=		${.CURDIR}/../../../..
+
 AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 NOMAN=		# defined
 .include <bsd.own.mk>
 
 STRIPFLAG=	# nothing
-TOOL_SED?=	sed
-NM?=		nm
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
@@ -26,7 +26,8 @@ BINMODE=	444
 .PATH:		${.CURDIR}/..
 
 LDFLAGS+=	-nostdlib -Wl,-e,start
-CPPFLAGS+=	-I. -I${.CURDIR}/../lib # -I${S}
+#CPPFLAGS+=	-I. -I${.CURDIR}/../lib -I${S}
+CPPFLAGS+=	-I. -I${.CURDIR}/../lib
 CPPFLAGS+=	-DPRIMARY_LOAD_ADDRESS=${PRIMARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_LOAD_ADDRESS=${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DDISABLE_KEYPRESS
@@ -39,11 +40,11 @@ AFLAGS+=	-m32
 .if defined(_NetBSD_)
 # NetBSD can be compiled from a foreign host, MINIX do not. So commented out.
 # Make sys/ a local thing for benefit of cross-compilers
-S=		${.CURDIR}/../../../../..
 CPPFLAGS+=	-I${S}
 # And same for machine/; need a bit more work because of symlink
 BUILDSYMLINKS+=	$S/arch/i386/include	machine \
 		$S/arch/x86/include	x86
+
 DPSRCS+=	machine x86
 .endif
 

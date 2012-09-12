@@ -1,0 +1,83 @@
+# $NetBSD: md.alpha,v 1.63 2011/08/12 22:22:49 dyoung Exp $
+./usr/include/alpha				comp-c-include
+./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
+./usr/include/alpha/alpha_cpu.h			comp-c-include
+./usr/include/alpha/ansi.h			comp-c-include
+./usr/include/alpha/aout_machdep.h		comp-c-include
+./usr/include/alpha/asm.h			comp-c-include
+./usr/include/alpha/atomic.h			comp-obsolete		obsolete
+./usr/include/alpha/autoconf.h			comp-c-include
+./usr/include/alpha/bswap.h			comp-c-include
+./usr/include/alpha/bus.h			comp-c-include		obsolete
+./usr/include/alpha/bus_user.h			comp-c-include
+./usr/include/alpha/bwx.h			comp-c-include
+./usr/include/alpha/cdefs.h			comp-c-include
+./usr/include/alpha/cfbreg.h			comp-c-include
+./usr/include/alpha/conf.h			comp-obsolete		obsolete
+./usr/include/alpha/cpu.h			comp-c-include
+./usr/include/alpha/cpuconf.h			comp-c-include
+./usr/include/alpha/db_machdep.h		comp-obsolete		obsolete
+./usr/include/alpha/disklabel.h			comp-c-include
+./usr/include/alpha/ecoff_machdep.h		comp-c-include
+./usr/include/alpha/elf_machdep.h		comp-c-include
+./usr/include/alpha/endian.h			comp-c-include
+./usr/include/alpha/endian_machdep.h		comp-c-include
+./usr/include/alpha/fbio.h			comp-obsolete		obsolete
+./usr/include/alpha/float.h			comp-c-include
+./usr/include/alpha/fpu.h			comp-c-include
+./usr/include/alpha/frame.h			comp-c-include
+./usr/include/alpha/ieee.h			comp-c-include
+./usr/include/alpha/ieeefp.h			comp-c-include
+./usr/include/alpha/int_const.h			comp-c-include
+./usr/include/alpha/int_fmtio.h			comp-c-include
+./usr/include/alpha/int_limits.h		comp-c-include
+./usr/include/alpha/int_mwgwtypes.h		comp-c-include
+./usr/include/alpha/int_types.h			comp-c-include
+./usr/include/alpha/intr.h			comp-c-include
+./usr/include/alpha/intrcnt.h			comp-obsolete		obsolete
+./usr/include/alpha/joystick.h			comp-c-include
+./usr/include/alpha/kbio.h			comp-c-include
+./usr/include/alpha/kcore.h			comp-c-include
+./usr/include/alpha/limits.h			comp-c-include
+./usr/include/alpha/lock.h			comp-c-include
+./usr/include/alpha/math.h			comp-c-include
+./usr/include/alpha/mcontext.h			comp-c-include
+./usr/include/alpha/mutex.h			comp-c-include
+./usr/include/alpha/pal.h			comp-c-include
+./usr/include/alpha/param.h			comp-c-include
+./usr/include/alpha/pcb.h			comp-c-include
+./usr/include/alpha/pio.h			comp-c-include
+./usr/include/alpha/pmap.h			comp-c-include
+./usr/include/alpha/pmc.h			comp-c-include
+./usr/include/alpha/proc.h			comp-c-include
+./usr/include/alpha/profile.h			comp-c-include
+./usr/include/alpha/prom.h			comp-c-include
+./usr/include/alpha/psl.h			comp-c-include
+./usr/include/alpha/pte.h			comp-c-include
+./usr/include/alpha/ptrace.h			comp-c-include
+./usr/include/alpha/reg.h			comp-c-include
+./usr/include/alpha/rpb.h			comp-c-include
+./usr/include/alpha/rwlock.h			comp-c-include
+./usr/include/alpha/setjmp.h			comp-c-include
+./usr/include/alpha/signal.h			comp-c-include
+./usr/include/alpha/stdarg.h			comp-obsolete		obsolete
+./usr/include/alpha/sysarch.h			comp-c-include
+./usr/include/alpha/types.h			comp-c-include
+./usr/include/alpha/varargs.h			comp-obsolete		obsolete
+./usr/include/alpha/vmparam.h			comp-c-include
+./usr/include/alpha/vuid_event.h		comp-c-include
+./usr/include/alpha/wchar_limits.h		comp-c-include
+./usr/include/alpha/wsconsio.h			comp-obsolete		obsolete
+./usr/include/alpha/z8530var.h			comp-c-include
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/ieeefp.h				comp-c-include
+./usr/lib/crtfm.o				comp-c-lib
+./usr/lib/libalpha.a				comp-c-lib
+./usr/lib/libalpha_p.a				comp-c-proflib		profile
+./usr/lib/libalpha_pic.a			comp-c-piclib
+./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib		lint
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libalpha.so.0.0.debug	comp-sys-debug		debug
+./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/mdec/setnetbootinfo.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug

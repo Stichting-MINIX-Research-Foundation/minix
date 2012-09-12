@@ -1,0 +1,6 @@
+# $NetBSD: ad.m68k.shl,v 1.7 2004/08/12 16:07:07 lukem Exp $
+./sbin/ldconfig					base-sysutil-root
+./usr/lib/libm68k.so				base-sys-shlib
+./usr/lib/libm68k.so.0				base-sys-shlib
+./usr/lib/libm68k.so.0.0			base-sys-shlib
+./usr/libexec/ld.so				base-sys-shlib

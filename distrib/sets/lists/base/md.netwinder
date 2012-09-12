@@ -1,0 +1,5 @@
+# $NetBSD: md.netwinder,v 1.11 2008/11/29 17:57:34 tsutsui Exp $
+./dev/beep					base-obsolete		obsolete
+./dev/mouse-qms0				base-obsolete		obsolete
+./dev/pms0					base-obsolete		obsolete
+./dev/qms0					base-obsolete		obsolete

@@ -8,6 +8,8 @@ USE_SHLIBDIR=	yes
 .include "${NETBSDSRCDIR}/common/lib/libutil/Makefile.inc"
 
 WARNS?=	5
+# LSC MINIX Does not compile with -Werror
+NOGCCERROR=yes
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
 LINTFLAGS+=-w
@@ -36,7 +38,7 @@ MAN=	efun.3 getbootfile.3 getfstypename.3 getlabelsector.3 \
 
 .else
 SRCS+=	efun.c getbootfile.c \
-	getfsspecname.c getmntopts.c  sockaddr_snprintf.c\
+	getmntopts.c  sockaddr_snprintf.c\
 	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
 	logwtmp.c logwtmpx.c opendisk.c \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
@@ -45,7 +47,7 @@ SRCS+=	efun.c getbootfile.c \
 	ttyaction.c \
 
 MAN=	efun.3 getbootfile.3 \
-	getmntopts.3 getfsspecname.3 \
+	getmntopts.3 \
 	login.3 login_cap.3 loginx.3 \
 	opendisk.3 openpty.3 pidfile.3 pidlock.3 \
 	pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
@@ -65,9 +67,9 @@ YPREFIX=__pd
 
 .if !defined(__MINIX)
 MLINKS+=getlabelsector.3 getlabeloffset.3
-.endif
 MLINKS+=getlabelsector.3 getlabelusesmbr.3
 MLINKS+=getdiskrawname.3 getdiskcookedname.3
+.endif
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3
 MLINKS+=login_cap.3 login_getclass.3
@@ -109,7 +111,9 @@ MLINKS+=efun.3 evasprintf.3
 MLINKS+=stat_flags.3 string_to_flags.3
 MLINKS+=stat_flags.3 flags_to_string.3
 MLINKS+=snprintb.3 snprintb_m.3
+.if !defined(__MINIX)
 MLINKS+=util.3 libutil.3
 MLINKS+=strpct.3 strspct.3
+.endif
 
 .include <bsd.lib.mk>

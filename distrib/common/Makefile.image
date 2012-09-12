@@ -1,0 +1,140 @@
+#	$NetBSD: Makefile.image,v 1.31 2009/04/03 22:36:35 perry Exp $
+#
+# Makefile snippet to build a tree from the provided lists,
+# and make an ffs file system image from that tree
+#
+# Required variables:
+#	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
+#	LISTS		list file(s) to use
+#	IMAGEDEPENDS	depends for ${IMAGE}
+#	IMAGEENDIAN	endianness of ${IMAGE}
+#	IMAGESIZE	size of ${IMAGE}
+#	MTREECONF	mtree specfiles to use to build a master specfile
+#
+# Optional variables:
+#	IMAGE		name of target image
+#	IMAGEPOSTBUILD	operation to run on ${IMAGE} ${.TARGET} after its built
+#			(if this returns non zero, ${.TARGET} is removed)
+#	CRUNCHBIN	name of crunchgen(1)ed binary
+#	DESTDIR		destination directory
+#	MAKEFS_FLAGS	extra options to ${TOOL_MAKEFS}
+#	PARSELISTENV	environment variables to set for parselist.awk
+#	WORKDIR		directory to build image in to 
+#	IMAGETAR	tar.gz file to create containing ${IMAGE}'s contents
+#
+#	IMAGE_RELEASEDIR	where to install ${IMAGE}.gz
+#	IMAGETAR_RELEASEDIR	where to install ${IMAGETAR}
+#
+
+.if !defined(_MAKEFILE_IMAGE_)
+_MAKEFILE_IMAGE_=1
+
+
+WORKDIR?=	work
+WORKSPEC?=	work.spec
+WORKBUILT?=	work.built
+
+.include "${DISTRIBDIR}/common/Makefile.parselist"
+
+PARSELISTENV+=	TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
+
+
+.if !target(${WORKBUILT})					# {
+${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
+#	There is a .PHONY ${CRUNCHBIN}, so check if out of date by hand
+#	Default to `.' if ${CRUNCHBIN} isn't set, to always force a rebuild.
+	[ "${.OODATE}" = ${CRUNCHBIN:U.} -a -f ${WORKBUILT} -a ${WORKBUILT} -nt ${CRUNCHBIN:U.} ]  || { \
+	${_MKSHMSG} "  build " ${.CURDIR:T}/${WORKDIR}; \
+	rm -rf ${WORKDIR} ${WORKBUILT}; \
+	mkdir -m 755 ${WORKDIR} &&  \
+	${TOOL_MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW && \
+	${PARSELIST} -v mode=populate ${LISTS} | \
+	${HOST_SH} -e ${POPULATE_DEBUG} \
+	&& touch ${WORKBUILT} ; \
+	}
+
+CLEANFILES+=	${WORKBUILT}
+
+clean cleandir distclean: cleanfsimage
+
+.PHONY: cleanfsimage
+
+cleanfsimage:
+	-rm -rf ${WORKDIR} ${WORKBUILT}
+
+.endif	# ! target (${WORKBUILT})				# }
+
+.if !target(${WORKSPEC})					# {
+${WORKSPEC}: ${MTREECONF} ${LISTS} ${PARSELISTDEP}
+	${_MKTARGET_CREATE}
+	-rm -f ${.TARGET} ${.TARGET}.tmp
+	( for i in ${MTREECONF}; do	\
+		echo "# --" ; \
+		echo "# entries from: $$i" ; \
+		echo "#" ; \
+		cat $$i ;		\
+		echo "/unset all" ;	\
+	done ) >> ${.TARGET}.tmp
+	${PARSELIST} -v mode=mtree ${LISTS} >> ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
+.endif	# ! target (${WORKSPEC})				# }
+
+.if defined(IMAGE)						# {
+${IMAGE}: ${WORKBUILT}
+	[ "${.OODATE}" = ${WORKBUILT} -a -f ${IMAGE} -a ! ${IMAGE} -ot ${WORKBUILT} ]  || { \
+	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}; \
+	rm -f ${.TARGET} ${.TARGET}.tmp; \
+	${TOOL_MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
+	    -N ${NETBSDSRCDIR}/etc -o bsize=4096,fsize=512 \
+	    -o optimization=space,minfree=0 \
+	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}; \
+	}
+.if defined(IMAGEPOSTBUILD)
+	${IMAGEPOSTBUILD} || { rm -f ${.TARGET} ; false; }
+.endif
+
+.PHONY: fsimage
+fsimage: ${IMAGE}
+
+${IMAGE}.gz: ${IMAGE}
+	${_MKTARGET_CREATE}
+	-rm -f ${.TARGET}
+	gzip -9nc ${.ALLSRC} > ${.TARGET}
+
+realall: ${IMAGE}
+
+.if defined(IMAGE_RELEASEDIR)
+release:: check_RELEASEDIR .WAIT ${IMAGE}.gz
+	${RELEASE_INSTALL} ${IMAGE}.gz \
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${IMAGE_RELEASEDIR}
+.endif
+
+CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
+.endif	# ! defined(IMAGE)					# }
+
+
+.if defined(IMAGETAR)						# {
+${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
+	${_MKTARGET_CREATE}
+	( cd ${WORKDIR}; \
+	  GZIP=-9n ${TOOL_PAX} -ON ${NETBSDSRCDIR}/etc -wdzM <${.OBJDIR}/${WORKSPEC} \
+	) > ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
+
+realall: ${IMAGETAR}
+
+CLEANFILES+=	${IMAGETAR} ${IMAGETAR}.tmp
+
+.if defined(IMAGETAR_RELEASEDIR)
+release:: check_RELEASEDIR .WAIT ${IMAGETAR}
+	${RELEASE_INSTALL} ${IMAGETAR} \
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${IMAGETAR_RELEASEDIR}
+.endif
+
+.endif	# ! defined(IMAGETAR)					# }
+
+
+.endif	# _MAKEFILE_IMAGE_

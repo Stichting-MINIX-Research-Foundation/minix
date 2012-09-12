@@ -1,0 +1,57 @@
+# $NetBSD: md.ews4800mips,v 1.5 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/ews4800mips			comp-c-include
+./usr/include/ews4800mips/ansi.h		comp-c-include
+./usr/include/ews4800mips/aout_machdep.h	comp-c-include
+./usr/include/ews4800mips/asm.h		comp-c-include
+./usr/include/ews4800mips/bswap.h		comp-c-include
+./usr/include/ews4800mips/cdefs.h		comp-c-include
+./usr/include/ews4800mips/cpu.h		comp-c-include
+./usr/include/ews4800mips/db_machdep.h		comp-obsolete        obsolete
+./usr/include/ews4800mips/disklabel.h		comp-c-include
+./usr/include/ews4800mips/ecoff_machdep.h	comp-c-include
+./usr/include/ews4800mips/elf_machdep.h	comp-c-include
+./usr/include/ews4800mips/endian.h		comp-c-include
+./usr/include/ews4800mips/endian_machdep.h	comp-c-include
+./usr/include/ews4800mips/float.h		comp-c-include
+./usr/include/ews4800mips/ieee.h		comp-c-include
+./usr/include/ews4800mips/ieeefp.h		comp-c-include
+./usr/include/ews4800mips/int_const.h		comp-c-include
+./usr/include/ews4800mips/int_fmtio.h		comp-c-include
+./usr/include/ews4800mips/int_limits.h		comp-c-include
+./usr/include/ews4800mips/int_mwgwtypes.h	comp-c-include
+./usr/include/ews4800mips/int_types.h		comp-c-include
+./usr/include/ews4800mips/intr.h		comp-obsolete	     obsolete
+./usr/include/ews4800mips/kcore.h		comp-c-include
+./usr/include/ews4800mips/kdbparam.h		comp-c-include
+./usr/include/ews4800mips/limits.h		comp-c-include
+./usr/include/ews4800mips/lock.h		comp-c-include
+./usr/include/ews4800mips/locore.h		comp-c-include
+./usr/include/ews4800mips/math.h		comp-c-include
+./usr/include/ews4800mips/mcontext.h		comp-c-include
+./usr/include/ews4800mips/mips_opcode.h	comp-c-include
+./usr/include/ews4800mips/mutex.h		comp-c-include
+./usr/include/ews4800mips/param.h		comp-c-include
+./usr/include/ews4800mips/pcb.h		comp-c-include
+./usr/include/ews4800mips/pdinfo.h		comp-c-include
+./usr/include/ews4800mips/pmap.h		comp-c-include
+./usr/include/ews4800mips/pmc.h		comp-c-include
+./usr/include/ews4800mips/proc.h		comp-c-include
+./usr/include/ews4800mips/profile.h		comp-c-include
+./usr/include/ews4800mips/psl.h		comp-c-include
+./usr/include/ews4800mips/pte.h		comp-c-include
+./usr/include/ews4800mips/ptrace.h		comp-c-include
+./usr/include/ews4800mips/reg.h		comp-c-include
+./usr/include/ews4800mips/regdef.h		comp-c-include
+./usr/include/ews4800mips/regnum.h		comp-c-include
+./usr/include/ews4800mips/reloc.h		comp-c-include
+./usr/include/ews4800mips/rwlock.h		comp-c-include
+./usr/include/ews4800mips/setjmp.h		comp-c-include
+./usr/include/ews4800mips/signal.h		comp-c-include
+./usr/include/ews4800mips/stdarg.h		comp-obsolete		obsolete
+./usr/include/ews4800mips/trap.h		comp-c-include
+./usr/include/ews4800mips/types.h		comp-c-include
+./usr/include/ews4800mips/varargs.h		comp-obsolete		obsolete
+./usr/include/ews4800mips/vmparam.h		comp-c-include
+./usr/include/ews4800mips/vtoc.h		comp-c-include
+./usr/include/ews4800mips/wchar_limits.h	comp-c-include

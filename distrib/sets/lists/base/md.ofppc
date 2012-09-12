@@ -1,0 +1,5 @@
+# $NetBSD: md.ofppc,v 1.11 2010/06/20 21:32:33 matt Exp $
+./usr/mdec/ofwboot				base-sysutil-bin
+./usr/mdec/mkbootinfo				base-sysutil-bin
+./usr/mdec/netbsd.chrp				base-sysutil-bin
+./usr/sbin/ofctl				base-sysutil-bin

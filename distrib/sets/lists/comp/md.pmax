@@ -1,0 +1,67 @@
+# $NetBSD: md.pmax,v 1.63 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/pmax				comp-c-include
+./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
+./usr/include/pmax/ansi.h			comp-c-include
+./usr/include/pmax/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/pmax/asm.h			comp-c-include
+./usr/include/pmax/autoconf.h			comp-c-include
+./usr/include/pmax/bsd-aout.h			comp-obsolete		obsolete
+./usr/include/pmax/bswap.h			comp-c-include
+./usr/include/pmax/bus.h			comp-c-include
+./usr/include/pmax/cdefs.h			comp-c-include
+./usr/include/pmax/conf.h			comp-obsolete		obsolete
+./usr/include/pmax/cpu.h			comp-c-include
+./usr/include/pmax/db_machdep.h			comp-obsolete		obsolete
+./usr/include/pmax/dc7085cons.h			comp-obsolete		obsolete
+./usr/include/pmax/dec_boot.h			comp-obsolete		obsolete
+./usr/include/pmax/disklabel.h			comp-c-include
+./usr/include/pmax/ecoff_machdep.h		comp-c-include
+./usr/include/pmax/elf.h			comp-obsolete		obsolete
+./usr/include/pmax/elf_machdep.h		comp-c-include
+./usr/include/pmax/endian.h			comp-c-include
+./usr/include/pmax/endian_machdep.h		comp-c-include
+./usr/include/pmax/fbio.h			comp-obsolete		obsolete
+./usr/include/pmax/fbvar.h			comp-obsolete		obsolete
+./usr/include/pmax/float.h			comp-c-include
+./usr/include/pmax/ieee.h			comp-c-include
+./usr/include/pmax/ieeefp.h			comp-c-include
+./usr/include/pmax/int_const.h			comp-c-include
+./usr/include/pmax/int_fmtio.h			comp-c-include
+./usr/include/pmax/int_limits.h			comp-c-include
+./usr/include/pmax/int_mwgwtypes.h		comp-c-include
+./usr/include/pmax/int_types.h			comp-c-include
+./usr/include/pmax/intr.h			comp-c-include
+./usr/include/pmax/kcore.h			comp-c-include
+./usr/include/pmax/kdbparam.h			comp-c-include
+./usr/include/pmax/limits.h			comp-c-include
+./usr/include/pmax/lock.h			comp-c-include
+./usr/include/pmax/locore.h			comp-c-include
+./usr/include/pmax/math.h			comp-c-include
+./usr/include/pmax/mcontext.h			comp-c-include
+./usr/include/pmax/mips_opcode.h		comp-c-include
+./usr/include/pmax/mutex.h			comp-c-include
+./usr/include/pmax/param.h			comp-c-include
+./usr/include/pmax/pcb.h			comp-c-include
+./usr/include/pmax/pmap.h			comp-c-include
+./usr/include/pmax/pmc.h			comp-c-include
+./usr/include/pmax/pmioctl.h			comp-obsolete		obsolete
+./usr/include/pmax/proc.h			comp-c-include
+./usr/include/pmax/profile.h			comp-c-include
+./usr/include/pmax/psl.h			comp-c-include
+./usr/include/pmax/pte.h			comp-c-include
+./usr/include/pmax/ptrace.h			comp-c-include
+./usr/include/pmax/reg.h			comp-c-include
+./usr/include/pmax/regdef.h			comp-c-include
+./usr/include/pmax/regnum.h			comp-c-include
+./usr/include/pmax/reloc.h			comp-c-include
+./usr/include/pmax/rwlock.h			comp-c-include
+./usr/include/pmax/setjmp.h			comp-c-include
+./usr/include/pmax/signal.h			comp-c-include
+./usr/include/pmax/stdarg.h			comp-obsolete		obsolete
+./usr/include/pmax/tc_machdep.h			comp-c-include
+./usr/include/pmax/trap.h			comp-c-include
+./usr/include/pmax/types.h			comp-c-include
+./usr/include/pmax/varargs.h			comp-obsolete		obsolete
+./usr/include/pmax/vmparam.h			comp-c-include
+./usr/include/pmax/wchar_limits.h		comp-c-include

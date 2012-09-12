@@ -1,0 +1,296 @@
+#! /bin/sh --
+#
+#	$NetBSD: checkflist,v 1.42 2009/12/11 11:48:41 uebayasi Exp $
+#
+# Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
+
+if [ -z "${DESTDIR}" ]; then
+	echo "DESTDIR must be set"
+	exit 1
+fi
+
+prog="${0##*/}"
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+#
+# * ${SETS_DLIST}: files present in DESTDIR.
+# * ${SETS_FLIST}: files mentioned in flist;
+# * ${SETS_MLIST}: files mentioned in metalog;
+#
+SETS_DLIST="${DESTDIR}/SETS.dlist"
+SETS_FLIST="${DESTDIR}/SETS.flist"
+SETS_MLIST="${DESTDIR}/SETS.mlist"
+
+#
+# * ${SETS_METALOG_EXTRA}: Files in METALOG but missing from DESTDIR."
+# * ${SETS_METALOG_MISSING}: Files in DESTDIR but missing from METALOG."
+# * ${SETS_DESTDIR_EXTRA}: Files in DESTDIR but missing from setlist."
+# * ${SETS_DESTDIR_MISSING}: Files in setlist but missing from DESTDIR."
+#
+SETS_METALOG_EXTRA="${DESTDIR}/SETS.metalog.extra"
+SETS_METALOG_MISSING="${DESTDIR}/SETS.metalog.missing"
+SETS_DESTDIR_EXTRA="${DESTDIR}/SETS.destdir.extra"
+SETS_DESTDIR_MISSING="${DESTDIR}/SETS.destdir.missing"
+
+es=0
+cleanup()
+{
+	if [ ${es} -gt 255 ]; then
+		es=255
+	fi
+	exit ${es}
+}
+trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
+
+origin=.
+xargs=""
+dargs=""
+metalog=
+allowextra=false
+allowmissing=false
+
+# handle args
+while getopts xybL:M:em ch; do
+	case ${ch} in
+	x)
+		xargs="-x"
+		origin="./etc/X11 ./etc/fonts ./usr/X11R6"
+		;;
+	y)
+		xargs="-y"
+		origin="./etc/ext ./usr/ext"
+		;;
+	# backward compat
+	b)
+		xargs="-b"
+		;;
+	L)
+		xargs="-L ${OPTARG}"
+		;;
+	M)
+		metalog="${OPTARG}"
+		;;
+	e)
+		allowextra=true
+		;;
+	m)
+		allowmissing=true
+		;;
+	*)
+		cat 1>&2 <<USAGE
+Usage: ${prog} [-x|-y|-b|-L lists] [-M metalog] [-e] [-m]
+	-x		check only x11 lists
+	-y		check only extsrc lists
+	-b		check netbsd + x11 lists
+	-L base,x,ext	check specified lists
+	-M metalog	metalog file
+	-e		extra files are not considered an error
+	-m		missing files are not considered an error
+USAGE
+		exit 1
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+
+#
+# Exceptions to flist checking (all begin with "./"):
+#
+# * ignore var/db/syspkg and its contents
+# * ignore METALOG and METALOG.*
+# * ignore etc/mtree/set.*
+#
+ignore_exceptions()
+{
+IGNORE_REGEXP_SYSPKG="^\./var/db/syspkg(\$|/)"
+IGNORE_REGEXP_METALOG="^\./METALOG(\..*)?\$"
+IGNORE_REGEXP_SETS="^\./SETS\..*\$"
+IGNORE_REGEXP_MTREE="^\./etc/mtree/set\.[a-z]*\$"
+
+	${EGREP} -v \
+		-e "${IGNORE_REGEXP_SYSPKG}" \
+		-e "${IGNORE_REGEXP_METALOG}" \
+		-e "${IGNORE_REGEXP_SETS}" \
+		-e "${IGNORE_REGEXP_MTREE}"
+}
+
+#
+# Here would be a good place to add custom exceptions to flist checking.
+#
+
+#
+# Make three lists:
+#
+# All three lists are filtered against ${IGNORE_REGEXP}.
+#
+
+generate_dlist()
+{
+( cd "${DESTDIR}" && ${FIND} ${origin} \
+	\( -type d -o -type f -o -type l \) -print ) \
+	| ${SORT} -u | ignore_exceptions >"${SETS_DLIST}"
+}
+
+generate_flist()
+{
+${HOST_SH} "${rundir}/makeflist" ${xargs} ${dargs} \
+	| ${SORT} -u | ignore_exceptions >"${SETS_FLIST}"
+}
+
+generate_mlist()
+{
+if [ -n "${metalog}" ]; then
+	${AWK} '{print $1}' <"${metalog}" \
+	| ${SORT} -u | ignore_exceptions >"${SETS_MLIST}"
+fi
+}
+
+generate_mlist_missing()
+{
+	${COMM} -23 "${SETS_DLIST}" "${SETS_MLIST}" > "${SETS_METALOG_MISSING}"
+}
+
+generate_mlist_extra()
+{
+	${COMM} -13 "${SETS_DLIST}" "${SETS_MLIST}" > "${SETS_METALOG_EXTRA}"
+}
+
+generate_dlist_missing()
+{
+	${COMM} -23 "${SETS_FLIST}" "${SETS_DLIST}" > "${SETS_DESTDIR_MISSING}"
+}
+
+generate_dlist_extra()
+{
+	${COMM} -13 "${SETS_FLIST}" "${SETS_DLIST}" > "${SETS_DESTDIR_EXTRA}"
+}
+
+exist_case_insensitive()
+{
+	while read f; do
+		[ -f "${DESTDIR}/${f}" ] || \
+		[ -d "${DESTDIR}/${f}" ] || \
+		[ -L "${DESTDIR}/${f}" ] || \
+		echo "$f"
+	done
+}
+
+#
+# compare DESTDIR with METALOG, and report on differences.
+#
+compare_metalog()
+{
+    # Handle case insensitive filesystems
+    mv -f "${SETS_METALOG_EXTRA}" "${SETS_METALOG_EXTRA}.all"
+    exist_case_insensitive < "${SETS_METALOG_EXTRA}.all" > "${SETS_METALOG_EXTRA}"
+    rm -f "${SETS_METALOG_EXTRA}.all"
+
+    check_metalog_extra
+    check_metalog_missing
+}
+
+check_metalog_extra()
+{
+    if [ -s "${SETS_METALOG_EXTRA}" ]; then
+	count="$(${AWK} 'END {print NR}' "${SETS_METALOG_EXTRA}")"
+	echo ""
+	echo "=======  ${count} extra files in METALOG  ========="
+	echo "Files in METALOG but missing from DESTDIR."
+	echo "File was deleted after installation ?"
+	echo "------------------------------------------"
+	cat "${SETS_METALOG_EXTRA}"
+	echo "=========  end of ${count} extra files  ==========="
+	echo ""
+	es=1 # this is fatal even if ${allowextra} is true
+    fi
+}
+
+check_metalog_missing()
+{
+    if [ -s "${SETS_METALOG_MISSING}" ]; then
+	count="$(${AWK} 'END {print NR}' "${SETS_METALOG_MISSING}")"
+	echo ""
+	echo "======  ${count} missing files in METALOG  ========"
+	echo "Files in DESTDIR but missing from METALOG."
+	echo "File installed but not registered in METALOG ?"
+	echo "------------------------------------------"
+	cat "${SETS_METALOG_MISSING}"
+	echo "========  end of ${count} missing files  =========="
+	echo ""
+	es=1 # this is fatal even if ${allowmissing} is true
+    fi
+}
+
+#
+# compare flist with DESTDIR, and report on differences.
+#
+compare_destdir()
+{
+# Handle case insensitive filesystems
+mv -f "${SETS_DESTDIR_MISSING}" "${SETS_DESTDIR_MISSING}.all"
+exist_case_insensitive < "${SETS_DESTDIR_MISSING}.all" > "${SETS_DESTDIR_MISSING}"
+rm -f "${SETS_DESTDIR_MISSING}.all"
+
+check_destdir_extra
+check_destdir_missing
+}
+
+check_destdir_extra()
+{
+if [ -s "${SETS_DESTDIR_EXTRA}" ]; then
+	count="$(${AWK} 'END {print NR}' "${SETS_DESTDIR_EXTRA}")"
+	echo ""
+	echo "=======  ${count} extra files in DESTDIR  ========="
+	echo "Files in DESTDIR but missing from flist."
+	echo "File is obsolete or flist is out of date ?"
+	if ${allowextra}; then
+		echo "This is non-fatal, due to '-e' option."
+	else
+		es=1
+	fi
+	echo "------------------------------------------"
+	cat "${SETS_DESTDIR_EXTRA}"
+	echo "=========  end of ${count} extra files  ==========="
+	echo ""
+fi
+}
+
+check_destdir_missing()
+{
+if [ -s "${SETS_DESTDIR_MISSING}" ]; then
+	count="$(${AWK} 'END {print NR}' "${SETS_DESTDIR_MISSING}")"
+	echo ""
+	echo "======  ${count} missing files in DESTDIR  ========"
+	echo "Files in flist but missing from DESTDIR."
+	echo "File wasn't installed ?"
+	if ${allowmissing}; then
+		echo "This is non-fatal, due to '-m' option."
+	else
+		es=1
+	fi
+	echo "------------------------------------------"
+	cat "${SETS_DESTDIR_MISSING}"
+	echo "========  end of ${count} missing files  =========="
+	echo ""
+fi
+}
+
+generate_dlist
+generate_flist
+generate_mlist
+
+generate_mlist_missing
+generate_mlist_extra
+
+generate_dlist_missing
+generate_dlist_extra
+
+if false && [ -n "${metalog}" ]; then
+	# XXX: Temporarily disabled due to problems with obsolete files in metalog
+	compare_metalog
+else
+	compare_destdir
+fi
+
+exit 0		# cleanup will exit with ${es}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/12/13 08:50:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/03/09 23:10:08 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,8 @@ RTLD_FUNCS	= \
 	_rtld_add_paths \
 	_rtld_process_hints \
 	_rtld_sysctl \
+	_rtld_tls_allocate \
+	_rtld_tls_free \
 	_rtld_load_library
 
 .for _d in ${RTLD_FUNCS}

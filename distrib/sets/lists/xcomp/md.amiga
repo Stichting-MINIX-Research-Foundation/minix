@@ -1,0 +1,3 @@
+# $NetBSD: md.amiga,v 1.3 2010/03/15 07:28:56 mrg Exp $
+./usr/libdata/debug/usr/X11R6/bin/Xamiga.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug

@@ -1,0 +1,20 @@
+# $NetBSD: module.mi,v 1.10 2012/08/08 14:15:03 christos Exp $
+#
+# These are only made for ports doing modules.
+#
+./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_builtin.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_modctl.debug	tests-sys-debug		debug,atf,rump
+./usr/tests/modules/Atffile			tests-sys-tests		atf,rump
+./usr/tests/modules/k_helper			tests-sys-tests		atf,rump
+./usr/tests/modules/k_helper/k_helper.kmod	tests-sys-tests		atf,rump
+./usr/tests/modules/k_helper2			tests-sys-tests		atf,rump
+./usr/tests/modules/k_helper2/k_helper2.kmod	tests-sys-tests		atf,rump
+./usr/tests/modules/k_helper3			tests-sys-tests		atf,rump
+./usr/tests/modules/k_helper3/k_helper3		tests-obsolete		obsolete,rump
+./usr/tests/modules/k_uvm			tests-sys-tests		atf,rump
+./usr/tests/modules/k_uvm/k_uvm.kmod		tests-sys-tests		atf,rump
+./usr/tests/modules/t_abi_uvm			tests-sys-tests		atf,rump
+./usr/tests/modules/t_builtin			tests-sys-tests		atf,rump
+./usr/tests/modules/t_modctl			tests-sys-tests		atf,rump
+./usr/tests/modules/t_modload			tests-sys-tests		atf,rump

@@ -1007,13 +1007,13 @@ backup_file()
 			ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
 			rcs -q -kb -U $_cur
 			co -q -f -u $_cur
-			chown root:wheel $_cur $_cur,v
+			chown root:operator $_cur $_cur,v
 			;;
 		remove)
 			cp /dev/null $_cur
 			ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
 			rcs -q -kb -U $_cur
-			chown root:wheel $_cur $_cur,v
+			chown root:operator $_cur $_cur,v
 			rm $_cur
 			;;
 		esac
@@ -1024,7 +1024,7 @@ backup_file()
 				cp -p $_cur $_back
 			fi
 			cp -p $_file $_cur
-			chown root:wheel $_cur
+			chown root:operator $_cur
 			;;
 		remove)
 			mv -f $_cur $_back

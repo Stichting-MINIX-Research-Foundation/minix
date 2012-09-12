@@ -53,7 +53,8 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	vwarn.c vwarnx.c verr.c verrx.c wait.c waitpid.c wordexp.c
 .else
 SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
-	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
+	closedir.c closefrom.c \
+	confstr.c ctermid.c ctype_.c daemon.c \
 	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
 	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
@@ -65,11 +66,11 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	getpass.c getprogname.c getpwent.c getttyent.c \
 	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nftw.c \
-	nice.c nlist.c nlist_aout.c \
-	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
-	pause.c popen.c psignal.c pthread_atfork.c ptree.c pwcache.c \
-	pw_scan.c raise.c randomid.c rb.c readdir.c rewinddir.c \
-	scandir.c seekdir.c setdomainname.c \
+	nice.c nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c \
+	nlist_elf64.c opendir.c pause.c popen.c posix_spawn_sched.c \
+	posix_spawn_fileactions.c posix_spawnp.c psignal.c pthread_atfork.c \
+	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
+	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	siglist.c signal.c signame.c sigrelse.c \
@@ -91,6 +92,7 @@ COPTS.execvp.c = -Wno-stack-protector
 COPTS.execl.c = -Wno-stack-protector
 COPTS.execle.c = -Wno-stack-protector
 COPTS.execlp.c = -Wno-stack-protector
+COPTS.syslog.c = -Wno-format-nonliteral
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
@@ -99,7 +101,8 @@ COPTS.execlp.c = -Wno-stack-protector
 
 .include "${ARCHDIR}/gen/Makefile.inc"
 
-MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
+MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 \
+	confstr.3 \
 	cpuset.3 ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
 	endutxent.3 err.3 exec.3 extattr.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
