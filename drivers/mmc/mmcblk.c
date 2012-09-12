@@ -106,6 +106,8 @@ apply_env()
 int
 main(int argc, char **argv)
 {
+	/* early init of host mmc host controller. This code should depend on
+	 * knowing the hardware that is running bellow. */
 	host_initialize_host_structure(&host);
 
 	/* Set and apply the environment */
@@ -164,7 +166,7 @@ block_open(dev_t minor, int access)
 	 */
 	mmc_log_debug(&log, "First open on (%d)\n", minor);
 	if (!host.card_initialize(slot)) {
-		// TODO set card state to INVALID until removed?
+		// * TODO: set card state to INVALID until removed? */
 		return EIO;
 	}
 	partition(&mmc_driver, 0 /* first card on bus */ , P_PRIMARY,
@@ -217,7 +219,7 @@ static int
 copyto(endpoint_t dst_e,
     cp_grant_id_t gr_id, vir_bytes offset, vir_bytes address, size_t bytes)
 {
-	/* helper function that used memcpy to copy data when the endpoint ==
+	/* Helper function that used memcpy to copy data when the endpoint ==
 	 * SELF */
 	if (dst_e == SELF) {
 		memcpy((char *) gr_id + offset, (char *) address, bytes);
@@ -233,7 +235,7 @@ static int
 copyfrom(endpoint_t src_e,
     cp_grant_id_t gr_id, vir_bytes offset, vir_bytes address, size_t bytes)
 {
-	/* helper function that used memcpy to copy data when the endpoint ==
+	/* Helper function that used memcpy to copy data when the endpoint ==
 	 * SELF */
 	if (src_e == SELF) {
 		memcpy((char *) address, (char *) gr_id + offset, bytes);
@@ -313,9 +315,9 @@ block_transfer(dev_t minor,
 	}
 
 	ciov = iov;
+	/* do some more validation */
 	for (counter = 0; counter < nr_req; counter++) {
 		assert(ciov != NULL);
-
 		if (ciov->iov_size % blk_size != 0) {
 			/* transfer a multiple of blk_size */
 			mmc_log_warn(&log,
@@ -325,14 +327,17 @@ block_transfer(dev_t minor,
 			return EINVAL;
 		}
 
-		if (ciov->iov_size == 0) {
+		if (ciov->iov_size == 0 || ciov->iov_size < 0) {
 			mmc_log_warn(&log,
-			    "Tests must be made happy, "
-			    "returning error on iov_size of 0\n");
-
+			    "Invalid iov size for iov %d of %d size\n",
+			    counter, nr_req, ciov->iov_size);
 			return EINVAL;
 		}
+		ciov++;
+	}
 
+	ciov = iov;
+	for (counter = 0; counter < nr_req; counter++) {
 		/* Assume we are to transfer the amount of data given in the
 		 * input/output vector but ensure we are not doing i/o past
 		 * our own boundaries */
@@ -349,9 +354,9 @@ block_transfer(dev_t minor,
 		    "offset)=(%d,%d,%d,%d)\n",
 		    (do_write) ? "write" : "read", counter, nr_req,
 		    ciov->iov_addr, ciov->iov_size, io_size, io_offset);
-		r = OK;
 		/* transfer max one block at the time */
 		for (i = 0; i < io_size / blk_size; i++) {
+			r = OK;
 			if (do_write) {
 				/* Read io_size bytes from i/o vector starting 
 				 * at 0 and write it to out buffer at the
@@ -359,6 +364,17 @@ block_transfer(dev_t minor,
 				r = copyfrom(endpt,
 				    ciov->iov_addr, i * blk_size,
 				    (vir_bytes) copybuff, blk_size);
+				if (r != OK){
+					/* @TODO: move this code closer to
+					 * sys_safecopy* */
+					/* use _SIGN to reverse the signedness */
+					mmc_log_warn(&log,
+					    "I/O write error: %s iov(base,size)=(%d,%d)"
+					    " at offset=%d\n",
+					    strerror(_SIGN r), ciov->iov_addr,
+					    ciov->iov_size, io_offset);
+					return EINVAL;
+				}
 				/* write a single block */
 				slot->host->write(&slot->card,
 				    (dev->dv_base / blk_size) +
@@ -370,23 +386,24 @@ block_transfer(dev_t minor,
 				    (dev->dv_base / blk_size) +
 				    (io_offset / blk_size) + i, 1, copybuff);
 				/* Read io_size bytes from our data at the
-				 * correct * offset and write it to the output 
-				 * * buffer at 0 */
+				 * correct offset and write it to the output 
+				 * buffer at 0 */
 				r = copyto(endpt,
 				    ciov->iov_addr, i * blk_size,
 				    (vir_bytes) copybuff, blk_size);
+				if (r != OK){
+					/* @TODO: move this code closer to
+					 * sys_safecopy* */
+					/* use _SIGN to reverse the signedness */
+					mmc_log_warn(&log,
+					    "I/O read error: %s iov(base,size)=(%d,%d)"
+					    " at offset=%d\n",
+					    strerror(_SIGN r), ciov->iov_addr,
+					    ciov->iov_size, io_offset);
+					return EINVAL;
+				}
 				bytes_written += blk_size;
 			}
-		}
-		if (r != OK) {
-			/* @TODO: move this code closer to sys_safecopy* */
-			/* use _SIGN to reverse the signedness */
-			mmc_log_warn(&log,
-			    "I/O %s error: %s iov(base,size)=(%d,%d)"
-			    " at offset=%d\n",
-			    (do_write) ? "write" : "read", strerror(_SIGN r),
-			    ciov->iov_addr, ciov->iov_size, io_offset);
-			return EINVAL;
 		}
 		ciov++;
 	}
