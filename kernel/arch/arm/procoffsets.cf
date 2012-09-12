@@ -1,0 +1,24 @@
+
+include "kernel.h"
+include "proc.h"
+
+struct proc
+member REG0 p_reg.retreg
+member REG1 p_reg.r1
+member REG2 p_reg.r2
+member REG3 p_reg.r3
+member REG4 p_reg.r4
+member REG5 p_reg.r5
+member REG6 p_reg.r6
+member REG7 p_reg.r7
+member REG8 p_reg.r8
+member REG9 p_reg.r9
+member REG10 p_reg.r10
+member FPREG p_reg.fp
+member REG12 p_reg.r12
+member SPREG p_reg.sp
+member LRREG p_reg.lr
+member PCREG p_reg.pc
+member PSREG p_reg.psr
+member P_TTBR p_seg.p_ttbr
+

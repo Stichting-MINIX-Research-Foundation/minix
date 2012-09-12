@@ -116,7 +116,14 @@ arm/vm.h
 					*/
 #define ARM_VM_PFE_TLB_CONFLICT   0x10 /* Caused by TLB conflict abort
 					*/
-#define ARM_VM_PFE_W	(1<<11)	/* Caused by write (otherwise read) */
+
+#define ARM_VM_PFE_W	  (1<<11)  /* Caused by write (otherwise read) */
+#define ARM_VM_PFE_FS4    (1<<10)  /* Fault status (bit 4) */
+#define ARM_VM_PFE_FS3_0   0xf     /* Fault status (bits 3:0) */
+
+/* Fault status */
+#define ARM_VM_PFE_FS(s) \
+    ((((s) & ARM_VM_PFE_FS4) >> 6) | ((s) & ARM_VM_PFE_FS3_0))
 
 #ifndef __ASSEMBLY__
 

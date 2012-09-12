@@ -146,6 +146,8 @@ int timer_int_handler(void)
 
 	}
 
+	arch_timer_int_handler();
+
 	return(1);					/* reenable interrupts */
 }
 
