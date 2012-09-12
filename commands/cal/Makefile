@@ -1,3 +1,5 @@
+# LSC For now...
+NOGCCERROR:=yes
 PROG=	cal
 MAN=
 

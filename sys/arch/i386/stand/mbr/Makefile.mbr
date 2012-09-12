@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.mbr,v 1.17 2009/11/20 17:28:19 dsl Exp $
+#	$NetBSD: Makefile.mbr,v 1.18 2011/05/20 15:05:02 joerg Exp $
+
+S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 
@@ -14,8 +16,6 @@ PIE_AFLAGS=
 .include <bsd.own.mk>
 
 STRIPFLAG=	# override
-TOOL_SED?=	sed
-NM?=		nm
 
 SRCS?=		mbr.S
 
@@ -24,10 +24,10 @@ BINMODE=	444
 
 .PATH:		${.CURDIR}/..
 
-LOADADDR=	0x8800
-
 LDFLAGS+=	-nostdlib -Wl,-e,start
-CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -DLOADADDR=${LOADADDR}
+# MINIX LSC DO we need to remove the includes??
+CPPFLAGS+=	-I. -I${.CURDIR}/../../lib #-I${S}
+CPPFLAGS+= -DLOADADDR=${LOADADDR}
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
@@ -46,6 +46,11 @@ AFLAGS+= "-Wa,--divide"
 #DPSRCS+=	machine x86
 
 CLEANFILES+=	${PROG}.tmp
+
+LOADADDR=	0x8800
+
+AFLAGS.mbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}

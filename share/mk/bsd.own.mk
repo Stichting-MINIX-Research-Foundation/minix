@@ -1,8 +1,28 @@
-#	$NetBSD: bsd.own.mk,v 1.603 2009/12/06 16:15:15 uebayasi Exp $
+#	$NetBSD: bsd.own.mk,v 1.706 2012/08/16 05:30:55 matt Exp $
 
-.if !defined(_MINIX_OWN_MK_)
-_MINIX_OWN_MK_=1
+# This needs to be before bsd.init.mk
+.if defined(BSD_MK_COMPAT_FILE)
+.include <${BSD_MK_COMPAT_FILE}>
+.endif
 
+.if !defined(_BSD_OWN_MK_)
+_BSD_OWN_MK_=1
+
+# LSC SAVE SOME TIME...
+MKCLEANVERIFY:=		no
+
+.ifndef HOSTPROG
+# LSC Needed at a lot of places for MINIX
+CPPFLAGS+= -isystem ${DESTDIR}/usr/include
+MKDYNAMICROOT:=		no
+
+# Override MACHINE as the native host make will set it to i686
+_uname_s!= uname -s
+.if ${_uname_s} == "Minix" && ${MACHINE_ARCH} == "i386"
+MACHINE:= i386
+.endif
+
+# LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
 SMP_FLAGS += -DCONFIG_SMP
 .ifdef CONFIG_MAX_CPUS
@@ -11,18 +31,15 @@ SMP_FLAGS += -DCONFIG_MAX_CPUS=${CONFIG_MAX_CPUS}
 .endif
 
 CPPFLAGS+= ${SMP_FLAGS}
+.endif
 
 MAKECONF?=	/etc/make.conf
 .-include "${MAKECONF}"
 
-.ifdef NOASSERTS
-CFLAGS += -DNDEBUG=1
-.endif
-
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/:S/earm/arm/:S/earmeb/arm/:S/powerpc64/powerpc/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -46,45 +63,47 @@ RELEASEMACHINE?=	${MACHINE}
 NEED_OWN_INSTALL_TARGET?=	yes
 
 #
-# This lists the platforms which do not have working in-tree toolchains.
-# For the in-tree gcc 3.3.2 toolchain, this list is empty.
-# If some future port is not supported by the in-tree toolchain, this
-# should be set to "yes" for that port only.
+# This lists the platforms which do not have working in-tree toolchains.  For
+# the in-tree gcc toolchain, this list is empty.
+#
+# If some future port is not supported by the in-tree toolchain, this should
+# be set to "yes" for that port only.
 #
 TOOLCHAIN_MISSING?=	no
 
-# default to GCC4
-.if !defined(HAVE_GCC) && !defined(HAVE_PCC)
-HAVE_GCC=	4
-.if !defined(_GCC_LIBGCCDIR)
-_GCC_LIBGCCDIR= ${DESTDIR}/usr/lib
+#
+# Platforms still using GCC 4.1
+#
+.if ${MKGCC:Uyes} != "no"
+.if ${MACHINE_CPU}  == "vax"
+HAVE_GCC?=    4
+.else
+# Otherwise, default to GCC4.5
+HAVE_GCC?=    45
 .endif
 .endif
 
 .if \
+    ${MACHINE_CPU} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "x86_64"
-USE_COMPILERCRTSTUFF?=  no
+USE_COMPILERCRTSTUFF?=	no
 .endif
-USE_COMPILERCRTSTUFF?=  yes
+USE_COMPILERCRTSTUFF?=	yes
 
-USE_FORT?= no
 
-# default to GDB6
-HAVE_GDB?=	6
-
-# default to binutils 2.19
-HAVE_BINUTILS?=	219
-
-CPPFLAG_ISYSTEM=	-isystem
-.if defined(HAVE_GCC)
-.if ${HAVE_GCC} == 3
-CPPFLAG_ISYSTEMXX=	-isystem-cxx
-.else	# GCC 4
-CPPFLAG_ISYSTEMXX=	-cxx-isystem
+#
+# Platforms still using GDB 6
+#
+.if ${MACHINE_CPU}  == "mips"
+HAVE_GDB?= 6
+.else
+# Otherwise, default to GDB7
+HAVE_GDB?=	7
 .endif
-.endif
+
 
 .if empty(.MAKEFLAGS:M-V*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
@@ -96,14 +115,13 @@ PRINTOBJDIR=	${MAKE} -V .OBJDIR
 PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
 
-
 #
 # Determine if running in the NetBSD source tree by checking for the
 # existence of build.sh and tools/ in the current or a parent directory,
 # and setting _SRC_TOP_ to the result.
 #
 .if !defined(_SRC_TOP_)			# {
-_SRC_TOP_!= cd ${.CURDIR}; while :; do \
+_SRC_TOP_!= cd "${.CURDIR}"; while :; do \
 		here=`pwd`; \
 		[ -f build.sh  ] && [ -d tools ] && { echo $$here; break; }; \
 		case $$here in /) echo ""; break;; esac; \
@@ -122,7 +140,7 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 NETBSDSRCDIR?=	${_SRC_TOP_}
 
 .if !defined(_SRC_TOP_OBJ_)
-_SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
+_SRC_TOP_OBJ_!=		cd "${_SRC_TOP_}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
 
@@ -131,9 +149,7 @@ _SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 
 .if (${_SRC_TOP_} != "") && \
     (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))
-.if (defined(BUILDSH))
 USETOOLS?=	yes
-.endif
 .endif
 USETOOLS?=	no
 
@@ -197,11 +213,11 @@ RANLIB=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 SIZE=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-size
 STRIP=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-strip
 
-CC=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
-CPP=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-cpp
-CXX=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-c++
-FC=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-g77
-OBJC=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
+TOOL_CC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
+TOOL_CPP.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-cpp
+TOOL_CXX.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-c++
+TOOL_FC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-g77
+TOOL_OBJC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .else									# } {
 # Define default locations for common tools.
 .if ${USETOOLS_BINUTILS:Uyes} == "yes"					#  {
@@ -214,29 +230,47 @@ OBJDUMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
 RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
 STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
+
+# GCC supports C, C++, Fortran and Objective C
+TOOL_CC.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+TOOL_CPP.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
+TOOL_CXX.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
+TOOL_FC.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
+TOOL_OBJC.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .endif									#  }
 
-.if defined(HAVE_GCC) && ${USETOOLS_GCC:Uyes} == "yes"			#  {
-CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
-CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
-CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
-FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
-OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
-.endif									#  }
+# Clang supports C, C++ and Objective C
+TOOL_CC.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
+TOOL_CPP.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang-cpp
+TOOL_CXX.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang++
+TOOL_OBJC.clang=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
 
-.if defined(HAVE_PCC) && ${USETOOLS_PCC:Uyes} == "yes"
-CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
-CPP=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
-CXX=		false
-FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
-OBJC=		false
+# PCC supports C and Fortran
+TOOL_CC.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
+TOOL_CPP.pcc=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
+
+#
+# Make sure DESTDIR is set, so that builds with these tools always
+# get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
+# <empty string>, meaning start from /, the root directory.
+#
+DESTDIR?=
+
+.if !defined(HOSTPROG) && !defined(HOSTLIB)
+.  if ${DESTDIR} != ""
+CPPFLAGS+=	--sysroot=${DESTDIR}
+LDFLAGS+=	--sysroot=${DESTDIR}
+.  else
+CPPFLAGS+=	--sysroot=/
+LDFLAGS+=	--sysroot=/
+.  endif
 .endif
-
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
+ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
 ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
 INSTALL=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install
 LEX=		${TOOLDIR}/bin/${_TOOL_PREFIX}lex
@@ -251,15 +285,17 @@ TOOL_AMIGAAOUT2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-aout2bb
 TOOL_AMIGAELF2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-elf2bb
 TOOL_AMIGATXLT=		${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-txlt
 TOOL_ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
-TOOL_ATF_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}atf-compile
 TOOL_AWK=		${TOOLDIR}/bin/${_TOOL_PREFIX}awk
 TOOL_CAP_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb
 TOOL_CAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}cat
 TOOL_CKSUM=		${TOOLDIR}/bin/${_TOOL_PREFIX}cksum
+TOOL_CLANG_TBLGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}clang-tblgen
 TOOL_COMPILE_ET=	${TOOLDIR}/bin/${_TOOL_PREFIX}compile_et
 TOOL_CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
 TOOL_CRUNCHGEN=		MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
 TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
+TOOL_CTFCONVERT=	${TOOLDIR}/bin/${_TOOL_PREFIX}ctfconvert
+TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
 TOOL_DISKLABEL=		${TOOLDIR}/bin/nbdisklabel-${MAKEWRAPPERMACHINE}
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
@@ -277,6 +313,7 @@ TOOL_INDXBIB=		${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
 TOOL_INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
 TOOL_INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
 TOOL_JOIN=		${TOOLDIR}/bin/${_TOOL_PREFIX}join
+TOOL_LLVM_TBLGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}llvm-tblgen
 TOOL_M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
 TOOL_MACPPCFIXCOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc-fixcoff
 TOOL_MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
@@ -287,6 +324,7 @@ TOOL_MANDOC_HTML=	${TOOLDIR}/bin/${_TOOL_PREFIX}mandoc -Thtml
 TOOL_MANDOC_LINT=	${TOOLDIR}/bin/${_TOOL_PREFIX}mandoc -Tlint
 TOOL_MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
 TOOL_MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
+TOOL_M68KELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
 TOOL_MIPSELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
 TOOL_MKCSMAPPER=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkcsmapper
 TOOL_MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
@@ -294,10 +332,13 @@ TOOL_MKFSMFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkfs.mfs
 TOOL_MKLOCALE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
 TOOL_MKMAGIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
 TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
+TOOL_MKUBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
 TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
+TOOL_NBPERF=		${TOOLDIR}/bin/${_TOOL_PREFIX}perf
 TOOL_PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
 TOOL_PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
+TOOL_PIGZ=		${TOOLDIR}/bin/${_TOOL_PREFIX}pigz
 TOOL_PKG_CREATE=	${TOOLDIR}/bin/${_TOOL_PREFIX}pkg_create
 TOOL_POWERPCMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}powerpc-mkbootimage
 TOOL_PWD_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
@@ -309,6 +350,7 @@ TOOL_ROFF_PS=		${TOOL_GROFF} -Tps
 TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
 TOOL_RPCGEN=		RPCGEN_CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
 TOOL_SED=		${TOOLDIR}/bin/${_TOOL_PREFIX}sed
+TOOL_SLC=		${TOOLDIR}/bin/${_TOOL_PREFIX}slc
 TOOL_SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
 TOOL_SPARKCRC=		${TOOLDIR}/bin/${_TOOL_PREFIX}sparkcrc
 TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
@@ -322,19 +364,38 @@ TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 .else	# USETOOLS != yes						# } {
 
+# Clang supports C, C++ and Objective C
+TOOL_CC.clang=		clang
+TOOL_CPP.clang=		clang-cpp
+TOOL_CXX.clang=		clang++
+TOOL_OBJC.clang=	clang
+
+# GCC supports C, C++, Fortran and Objective C
+TOOL_CC.gcc=	gcc
+TOOL_CPP.gcc=	cpp
+TOOL_CXX.gcc=	c++
+TOOL_FC.gcc=	g77
+TOOL_OBJC.gcc=	gcc
+
+# PCC supports C and Fortran
+TOOL_CC.pcc=		pcc
+TOOL_CPP.pcc=		/usr/libexec/pcpp
+
 TOOL_AMIGAAOUT2BB=	amiga-aout2bb
 TOOL_AMIGAELF2BB=	amiga-elf2bb
 TOOL_AMIGATXLT=		amiga-txlt
 TOOL_ASN1_COMPILE=	asn1_compile
-TOOL_ATF_COMPILE=	atf-compile
 TOOL_AWK=		awk
 TOOL_CAP_MKDB=		cap_mkdb
 TOOL_CAT=		cat
 TOOL_CKSUM=		cksum
+TOOL_CLANG_TBLGEN=	clang-tblgen
 TOOL_COMPILE_ET=	compile_et
 TOOL_CONFIG=		config
 TOOL_CRUNCHGEN=		crunchgen
 TOOL_CTAGS=		ctags
+TOOL_CTFCONVERT=	ctfconvert
+TOOL_CTFMERGE=		ctfmerge
 TOOL_DB=		db
 TOOL_DISKLABEL=		disklabel
 TOOL_EQN=		eqn
@@ -352,14 +413,18 @@ TOOL_INDXBIB=		indxbib
 TOOL_INSTALLBOOT=	installboot
 TOOL_INSTALL_INFO=	install-info
 TOOL_JOIN=		join
+TOOL_LLVM_TBLGEN=	llvm-tblgen
 TOOL_M4=		m4
 TOOL_MACPPCFIXCOFF=	macppc-fixcoff
 TOOL_MAKEFS=		makefs
 TOOL_MAKEINFO=		makeinfo
 TOOL_MAKEWHATIS=	/usr/libexec/makewhatis
-#TOOL_MAKEWHATIS=	/usr/bin/makewhatis
+TOOL_MANDOC_ASCII=	mandoc -Tascii
+TOOL_MANDOC_HTML=	mandoc -Thtml -Oman=../html%S/%N.html -Ostyle=../style.css
+TOOL_MANDOC_LINT=	mandoc -Tlint
 TOOL_MDSETIMAGE=	mdsetimage
 TOOL_MENUC=		menuc
+TOOL_M68KELF2AOUT=	m68k-elf2aout
 TOOL_MIPSELF2ECOFF=	mips-elf2ecoff
 TOOL_MKCSMAPPER=	mkcsmapper
 TOOL_MKESDB=		mkesdb
@@ -367,10 +432,13 @@ TOOL_MKFSMFS=		mkfs.mfs
 TOOL_MKLOCALE=		mklocale
 TOOL_MKMAGIC=		file
 TOOL_MKTEMP=		mktemp
+TOOL_MKUBOOTIMAGE=	mkubootimage
 TOOL_MSGC=		msgc
 TOOL_MTREE=		mtree
+TOOL_NBPERF=		nbperf
 TOOL_PAX=		pax
 TOOL_PIC=		pic
+TOOL_PIGZ=		pigz
 TOOL_PKG_CREATE=	pkg_create
 TOOL_POWERPCMKBOOTIMAGE=	powerpc-mkbootimage
 TOOL_PWD_MKDB=		pwd_mkdb
@@ -395,6 +463,48 @@ TOOL_ZIC=		zic
 
 .endif	# USETOOLS != yes						# }
 
+# Fallback to ensure that all variables are defined to something
+TOOL_CC.false=		false
+TOOL_CPP.false=		false
+TOOL_CXX.false=		false
+TOOL_FC.false=		false
+TOOL_OBJC.false=	false
+
+AVAILABLE_COMPILER?=	${HAVE_PCC:Dpcc} ${HAVE_LLVM:Dclang} ${HAVE_GCC:Dgcc} false
+
+.for _t in CC CPP CXX FC OBJC
+ACTIVE_${_t}=	${AVAILABLE_COMPILER:@.c.@ ${ !defined(UNSUPPORTED_COMPILER.${.c.}) && defined(TOOL_${_t}.${.c.}) :? ${.c.} : }@:[1]}
+SUPPORTED_${_t}=${AVAILABLE_COMPILER:Nfalse:@.c.@ ${ !defined(UNSUPPORTED_COMPILER.${.c.}) && defined(TOOL_${_t}.${.c.}) :? ${.c.} : }@}
+.endfor
+# make bugs prevent moving this into the .for loop
+CC=		${TOOL_CC.${ACTIVE_CC}}
+CPP=		${TOOL_CPP.${ACTIVE_CPP}}
+CXX=		${TOOL_CXX.${ACTIVE_CXX}}
+FC=		${TOOL_FC.${ACTIVE_FC}}
+OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
+
+# OBJCOPY flags to create a.out binaries for old firmware
+# shared among src/distrib and ${MACHINE}/conf/Makefile.${MACHINE}.inc
+.if ${MACHINE_CPU} == "arm"
+OBJCOPY_ELF2AOUT_FLAGS?=	\
+	-O a.out-arm-netbsd	\
+	-R .ident		\
+	-R .ARM.attributes	\
+	-R .ARM.exidx		\
+	-R .arm.atpcs		\
+	-R .comment		\
+	-R .debug_abbrev	\
+	-R .debug_info		\
+	-R .debug_line		\
+	-R .debug_frame		\
+	-R .debug_loc		\
+	-R .debug_pubnames	\
+	-R .debug_aranges	\
+	-R .debug_str		\
+	-R .debug_pubtypes	\
+	-R .note.netbsd.ident
+.endif
+
 #
 # Targets to check if DESTDIR or RELEASEDIR is provided
 #
@@ -417,16 +527,6 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 	@true
 .endif
 .endif
-
-
-.if ${USETOOLS} == "yes"						# {
-#
-# Make sure DESTDIR is set, so that builds with these tools always
-# get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
-# <empty string>, meaning start from /, the root directory.
-#
-DESTDIR?=
-.endif									# }
 
 #
 # Build a dynamically linked /bin and /sbin, with the necessary shared
@@ -453,14 +553,20 @@ BINOWN?=	root
 BINMODE?=	755
 NONBINMODE?=	644
 
+# These are here mainly because we don't want suid root in case
+# a Makefile defines BINMODE.
+RUMPBINGRP?=	wheel
+RUMPBINOWN?=	root
+RUMPBINMODE?=	555
+RUMPNONBINMODE?=444
+
 #MANDIR?=	/usr/share/man
 MANDIR?=	/usr/man
 #MANGRP?=	wheel
 MANGRP?=	operator
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
-#MANINSTALL?=	catinstall htmlinstall maninstall
-MANINSTALL?=	maninstall
+MANINSTALL?=	${_MANINSTALL}
 
 INFODIR?=	/usr/share/info
 #INFOGRP?=	wheel
@@ -543,7 +649,7 @@ NOPIC=		# defined
 MKISCSI=	no
 # XXX GCC 4 outputs mcount() calling sequences that try to load values
 # from over 64KB away and this fails to assemble.
-.if defined(HAVE_GCC) && (${HAVE_GCC} == 4)
+.if defined(HAVE_GCC)
 NOPROFILE=	# defined
 .endif
 .endif
@@ -567,8 +673,7 @@ MKPICLIB:=	no
 
 #
 # On VAX using ELF, all objects are PIC, not just shared libraries,
-# so don't build the _pic version.  Unless we are using GCC3 which
-# doesn't support PIC yet.
+# so don't build the _pic version.
 #
 .if ${MACHINE_ARCH} == "vax"
 MKPICLIB=	no
@@ -585,6 +690,8 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # GNU sources and packages sometimes see architecture names differently.
 #
 GNU_ARCH.coldfire=m68k
+GNU_ARCH.earm=arm
+GNU_ARCH.earmeb=armeb
 GNU_ARCH.i386=i486
 GCC_CONFIG_ARCH.i386=i486
 GCC_CONFIG_TUNE.i386=nocona
@@ -599,8 +706,18 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 #
-.if ${OBJECT_FMT} == "ELF" && \
-    (${MACHINE_GNU_ARCH} == "arm" || \
+.if defined(__MINIX)
+.if ${MACHINE_ARCH} == "arm"
+MACHINE_GNU_PLATFORM?=arm-none-eabi
+.elif ${MACHINE_ARCH} == "i386"
+MACHINE_GNU_PLATFORM?=elf32-${MACHINE_ARCH}-minix
+.endif
+# If not found, fallback on default NetBSD target
+.endif # defined(__MINIX)
+
+.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
+MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-eabi
+.elif (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_CPU} == "m68k" || \
@@ -622,11 +739,11 @@ RUMPKMOD=	# defined
 .endif
 
 TARGETS+=	all clean cleandir depend dependall includes \
-		install lint obj regress tags html
+		install lint obj regress tags html analyze
 PHONY_NOTMAIN =	all clean cleandir depend dependall distclean includes \
-		install lint obj regress tags beforedepend afterdepend \
+		install lint obj regress beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
-		html subdir-all subdir-install subdir-depend
+		html subdir-all subdir-install subdir-depend analyze
 .PHONY:		${PHONY_NOTMAIN}
 .NOTMAIN:	${PHONY_NOTMAIN}
 
@@ -648,7 +765,7 @@ distclean:	cleandir
 cleandir:	clean
 
 dependall:	.NOTMAIN realdepend .MAKE
-	@cd ${.CURDIR}; ${MAKE} realall
+	@cd "${.CURDIR}"; ${MAKE} realall
 .endif
 
 #
@@ -688,11 +805,33 @@ MK${var}:=	yes
 #
 # MK* options which have variable defaults.
 #
-.if ${MACHINE} == "amd64" || ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
 MKCOMPAT:=	no
+.endif
+
+#.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
+
+.if ${MACHINE} == "evbppc"
+MKCOMPATMODULES?=	yes
+.else
+MKCOMPATMODULES:=	no
+.endif
+
+#
+# Default mips64 to softfloat now.
+# emips is always softfloat.
+#
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE} == "emips"
+MKSOFTFLOAT?=	yes
+.endif
+
+.if ${MACHINE} == "emips"
+SOFTFLOAT_BITS=	32
 .endif
 
 #
@@ -710,18 +849,34 @@ MKZFS?=		yes
 .endif
 
 # Some tough Minix defaults
-MKPROFILE?=     no
-MKSTATICLIB:=   yes
-MKLINT:=        no
+MKPROFILE?=	no
+MKSTATICLIB:=	yes
+MKLINT:=	no
 
-# Is a clang installed that understands what to do with -shared,
-# needed to build shared libraries? If not then default to no
-# to build them. (It could still be done with gcc though so MKPIC
-# might be set to yes by the user.)
-.if !exists(/usr/pkg/bin/clang.dynok)
-NONPICCLANG=	yes	# Hint to other Makefiles
-MKPIC?=         no
-.endif
+# LSC MINIX does not support these features ATM.
+USE_FORT:=	no
+MKYP:=		no
+MKNLS:=		no
+MKCOVERAGE?=	no
+MKPOSTFIX:=	no
+MKKMOD:=	no
+MKATF:=	 	no
+MKEXTSRC:=	no
+MKRUMP:=	no
+MKSKEY:=	no
+MKCRYPTO:=	no
+MKMDNS:=	no
+MKNPF:=		no
+MKISCSI:=	no
+MKLVM:=		no
+MKKERBEROS:=	no
+MKLDAP:=	no
+MKPAM:=		no
+MKIPFILTER:=	no
+MKGROFF:=	no
+MKHTML:=	no
+MKBINUTILS:=	no
+MKGDB:=		no
 
 #
 # MK* options which default to "yes".
@@ -729,23 +884,27 @@ MKPIC?=         no
 _MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
-	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS \
+	MKCRYPTO MKCOMPLEX MKCVS MKCXX \
 	MKDOC \
-	MKGCC MKGCCCMDS MKGDB \
+	MKGCC MKGCCCMDS MKGDB MKGROFF \
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
 	MKKMOD \
 	MKLDAP MKLINKLIB MKLINT MKLVM \
-	MKMAN \
+	MKMAN MKMANDOC \
 	MKMDNS \
+	MKMAKEMANDB \
 	MKNLS \
+	MKNPF \
 	MKOBJ \
-	MKPAM \
+	MKPAM MKPERFUSE \
 	MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
+	MKRUMP \
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKX11FONTS \
 	MKYP
+
 #MINIX-specific vars
 _MKVARS.yes+= \
 	MKMCONTEXT MKSYSDEBUG MKLIVEUPDATE MKSTATECTL MKTRACE
@@ -759,38 +918,82 @@ ${var}?=	yes
 .endfor
 
 #
-# MK* options which default to "no".
+# Exceptions to the above:
+#
+#.if ${MACHINE} == "evbppc"
+#MKKMOD=		no
+#.endif
+
+#
+# MK* options which default to "no".  Note that MKZFS has a different
+# default for some platforms, see above.
 #
 _MKVARS.no= \
-	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
-	MKEXTSRC MKCOVERAGE \
-	MKMANDOC MKMANZ MKOBJDIRS \
-	MKPCC MKPCCCMDS \
+	MKBSDGREP MKBSDTAR \
+	MKCATPAGES MKCRYPTO_RC5 MKDEBUG \
+	MKDEBUGLIB MKDTRACE MKEXTSRC \
+	MKMANZ MKOBJDIRS \
+	MKLLVM MKPCC \
+	MKPIGZGZIP \
+	MKREPRO \
 	MKSOFTFLOAT MKSTRIPIDENT \
-	MKUNPRIVED MKUPDATE MKX11 MKZFS MKBSDTAR \
-	MKARZERO
+	MKUNPRIVED MKUPDATE MKX11 MKZFS
+
 #MINIX-specific vars
 _MKVARS.no+= \
-	MKIMAGEONLY MKSMALL USETOOLS
+	MKIMAGEONLY MKSMALL
 .if (${MACHINE_ARCH} == "arm")
 _MKVARS.no+= \
 	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI
 .endif
+
 .for var in ${_MKVARS.no}
 ${var}?=no
 .endfor
 
 #
+# Do we default to XFree86 or Xorg for this platform?
+#
+.if \
+    ${MACHINE} == "acorn32"	|| \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amiga"	|| \
+    ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "mac68k"	|| \
+    ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "pmax"	|| \
+    ${MACHINE} == "sun3"	|| \
+    ${MACHINE} == "x68k"
+X11FLAVOUR?=	XFree86
+.else
+X11FLAVOUR?=	Xorg
+.endif
+
+#
 # Force some options off if their dependencies are off.
 #
 
+.if ${MKCXX} == "no"
+MKATF:=		no
+MKGROFF:=	no
+.endif
+
 .if ${MKCRYPTO} == "no"
 MKKERBEROS:=	no
+MKLDAP:=	no
 .endif
 
 .if ${MKMAN} == "no"
 MKCATPAGES:=	no
 MKHTML:=	no
+.endif
+
+_MANINSTALL=	maninstall
+.if ${MKCATPAGES} != "no"
+_MANINSTALL+=	catinstall
+.endif
+.if ${MKHTML} != "no"
+_MANINSTALL+=	htmlinstall
 .endif
 
 .if ${MKLINKLIB} == "no"
@@ -822,7 +1025,6 @@ MKWATCHDOG:=	no
 MKACPI:=	no
 MKAPIC:=	no
 MKMCONTEXT:=	no
-MKCOVERAGE:=	no
 MKDEBUGREG:=	no
 MKSYSDEBUG:=	no
 MKLIVEUPDATE:=	no
@@ -834,13 +1036,16 @@ MKTRACE:=	no
 # install(1) parameters.
 #
 COPY?=		-c
+.if ${HOST_OSTYPE:C/\-.*//} != "Minix"
 .if ${MKUPDATE} == "no"
 PRESERVE?=	
 .else
+#XXX: Not supported by MINIX install
 PRESERVE?=	-p
 .endif
 #XXX: Not supported by MINIX install
-#RENAME?=	-r
+RENAME?=	-r
+.endif
 HRDLINK?=	-l h
 SYMLINK?=	-l s
 
@@ -854,9 +1059,7 @@ INSTPRIV.unpriv=
 .endif
 INSTPRIV?=	${INSTPRIV.unpriv} -N ${NETBSDSRCDIR}/etc
 .endif
-STRIPFLAG?=
-#XXX: Strip flag for MINIX
-#STRIPFLAG?=	-s
+STRIPFLAG?=	
 
 .if ${NEED_OWN_INSTALL_TARGET} != "no"
 INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
@@ -888,9 +1091,18 @@ ${var}?= no
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_LDAP USE_PAM USE_YP \
-USE_WATCHDOG USE_ACPI USE_APIC USE_MCONTEXT USE_DEBUGREG USE_SYSDEBUG \
-USE_LIVEUPDATE USE_STATECTL USE_TRACE USE_PCI
+.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_LDAP USE_PAM USE_YP
+.if (${${var:S/USE_/MK/}} == "no")
+${var}:= no
+.else
+${var}?= yes
+.endif
+.endfor
+
+#MINIX-specific vars
+.for var in \
+	USE_WATCHDOG USE_ACPI USE_APIC USE_MCONTEXT USE_DEBUGREG USE_SYSDEBUG \
+	USE_LIVEUPDATE USE_STATECTL USE_TRACE USE_PCI
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else
@@ -908,15 +1120,140 @@ ${var}?= yes
 #
 # USE_* options which default to "no".
 #
-#.for var in
-#${var}?= no
-#.endfor
+# For now, disable pigz as compressor by default
+.for var in USE_PIGZGZIP USE_LIBTRE
+${var}?= no
+.endfor
 
+.if ${USE_PIGZGZIP} != "no"
+TOOL_GZIP=		${TOOL_PIGZ}
+.else
+TOOL_GZIP=		gzip
+.endif
+
+#
+# Where X11 sources are and where it is installed to.
+#
+.if !defined(X11SRCDIR)
+.if exists(${NETBSDSRCDIR}/../xsrc)
+X11SRCDIR!=		cd "${NETBSDSRCDIR}/../xsrc" && pwd
+.else
+X11SRCDIR=		/usr/xsrc
+.endif
+.endif # !defined(X11SRCDIR)
+
+X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
+X11SRCDIR.local?=	${X11SRCDIR}/local
+.if ${X11FLAVOUR} == "Xorg"
+X11ROOTDIR?=		/usr/X11R7
+.else
+X11ROOTDIR?=		/usr/X11R6
+.endif
+X11BINDIR?=		${X11ROOTDIR}/bin
+X11ETCDIR?=		/etc/X11
+X11FONTDIR?=		${X11ROOTDIR}/lib/X11/fonts
+X11INCDIR?=		${X11ROOTDIR}/include
+X11LIBDIR?=		${X11ROOTDIR}/lib/X11
+X11MANDIR?=		${X11ROOTDIR}/man
+X11SHAREDIR?=		${X11ROOTDIR}/share
+X11USRLIBDIR?=		${X11ROOTDIR}/lib
+
+#
+# New modular-xorg based builds
+#
+X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
+.for _lib in \
+	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
+	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpm \
+	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
+	fontenc xkbfile xkbui Xaw lbxutil Xfontcache pciaccess xcb
+X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
+.endfor
+
+.for _proto in \
+	xcmisc xext xf86bigfont bigreqs input kb x fonts fixes scrnsaver \
+	xinerama dri2 render resource record video xf86dga xf86misc \
+	xf86vidmode composite damage trap gl randr fontcache xf86dri \
+	xcb-
+X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
+.endfor
+
+.for _dir in \
+	xtrans fontconfig expat freetype evieext mkfontscale bdftopcf \
+	xkbcomp xorg-cf-files imake xorg-server xbiff xkbdata xkeyboard-config \
+	xbitmaps appres xeyes xev xedit sessreg pixman \
+	beforelight bitmap editres makedepend fonttosfnt fslsfonts \
+	fstobdf MesaDemos MesaGLUT MesaLib ico iceauth lbxproxy listres lndir \
+	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
+	setxkbmap smproxy twm viewres x11perf xauth xcalc xclipboard \
+	xclock xcmsdb xconsole xcutsel xditview xdpyinfo xdriinfo xdm \
+	xfd xf86dga xfindproxy xfontsel xfwp xgamma xgc xhost xinit \
+	xkill xload xlogo xlsatoms xlsclients xlsfonts xmag xmessage \
+	xmh xmodmap xmore xman xprop xrandr xrdb xrefresh xset \
+	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
+	xwininfo xwud xprehashprinterlist xplsprinters xkbprint xkbevd \
+	xterm xwd xfs xfsinfo xphelloworld xtrap xkbutils xkbcomp \
+	xkeyboard-config xinput xcb-util \
+	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
+	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
+	font-alias \
+	font-bh-100dpi font-bh-75dpi font-bh-lucidatypewriter-100dpi \
+	font-bh-lucidatypewriter-75dpi font-bh-ttf font-bh-type1 \
+	font-bitstream-100dpi font-bitstream-75dpi font-bitstream-type1 \
+	font-cursor-misc font-daewoo-misc font-dec-misc font-ibm-type1 \
+	font-isas-misc font-jis-misc font-misc-misc font-mutt-misc \
+	font-sony-misc font-util ttf-bitstream-vera encodings
+X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
+.endfor
+
+.for _i in \
+	elographics keyboard mouse synaptics vmmouse void ws
+X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
+.endfor
+
+.for _v in \
+	ag10e apm ark ast ati chips cirrus crime \
+	geode glint i128 i740 igs imstt intel mach64 mga \
+	neomagic newport nsc nv nvxbox openchrome pnozz \
+	r128 radeonhd rendition \
+	s3 s3virge savage siliconmotion sis suncg14 \
+	suncg6 sunffb sunleo suntcx \
+	tdfx tga trident tseng vesa vga via vmware wsfb xgi
+X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
+.endfor
+
+.if ${X11FLAVOUR} == "Xorg"
+X11DRI?=			yes
+.endif
+
+X11DRI?=			no
+X11LOADABLE?=			yes
+
+
+#
+# Where extsrc sources are and where it is installed to.
+#
+.if !defined(EXTSRCSRCDIR)
+.if exists(${NETBSDSRCDIR}/../extsrc)
+EXTSRCSRCDIR!=		cd "${NETBSDSRCDIR}/../extsrc" && pwd
+.else
+EXTSRCSRCDIR=		/usr/extsrc
+.endif
+.endif # !defined(EXTSRCSRCDIR)
+
+EXTSRCROOTDIR?=		/usr/ext
+EXTSRCBINDIR?=		${EXTSRCROOTDIR}/bin
+EXTSRCETCDIR?=		/etc/ext
+EXTSRCINCDIR?=		${EXTSRCROOTDIR}/include
+EXTSRCLIBDIR?=		${EXTSRCROOTDIR}/lib/ext
+EXTSRCMANDIR?=		${EXTSRCROOTDIR}/man
+EXTSRCUSRLIBDIR?=	${EXTSRCROOTDIR}/lib
 
 #
 # MAKEDIRTARGET dir target [extra make(1) params]
-#	run "cd $${dir} && ${MAKE} [params] $${target}", with a pretty message
+#	run "cd $${dir} && ${MAKEDIRTARGETENV} ${MAKE} [params] $${target}", with a pretty message
 #
+MAKEDIRTARGETENV?=
 MAKEDIRTARGET=\
 	@_makedirtarget() { \
 		dir="$$1"; shift; \
@@ -932,7 +1269,7 @@ MAKEDIRTARGET=\
 		show=$${this:-.}; \
 		echo "$${target} ===> $${show%/}$${1:+	(with: $$@)}"; \
 		cd "$${real}" \
-		&& ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
+		&& ${MAKEDIRTARGETENV} ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
 	}; \
 	_makedirtarget
 
@@ -944,7 +1281,7 @@ MAKEDIRTARGET=\
 #	3	Ignore the effect of the "@" prefix in make commands
 #	4	Trace shell commands using the shell's -x flag
 #		
-MAKEVERBOSE?=		1
+MAKEVERBOSE?=		2
 
 .if ${MAKEVERBOSE} == 0
 _MKMSG?=	@\#
@@ -996,4 +1333,6 @@ _MKTARGET_YACC?=	${_MKMSG_YACC} ${.CURDIR:T}/${.TARGET}
 TARGETS+=	lintmanpages
 .endif
 
-.endif	# !defined(_MINIX_OWN_MK_)
+TESTSBASE=	/usr/tests
+
+.endif	# !defined(_BSD_OWN_MK_)

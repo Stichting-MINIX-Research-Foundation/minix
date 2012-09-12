@@ -1,7 +1,15 @@
-#	$NetBSD: Makefile,v 1.7 2009/12/13 08:50:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/03/09 23:10:08 joerg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
+
+RTLD_FUNCS	= \
+	_rtld_tls_allocate \
+	_rtld_tls_free \
+
+.for _d in ${RTLD_FUNCS}
+CPPFLAGS+=	-D${_d}=_elf32_${_d}
+.endfor
 
 CPPFLAGS+=	-DELFSIZE=32
 LIB=	ldd_elf32

@@ -2,6 +2,9 @@
 
 .include <bsd.own.mk>
 
+# Remove "drivers/ramdisk" component from path
+PROGROOT:= ${.OBJDIR:S,drivers/ramdisk,,}
+
 TOOL_PWD_MKDB?= ${NETBSDSRCDIR}/usr.sbin/pwd_mkdb/pwd_mkdb
 install:
 
@@ -14,6 +17,7 @@ PROG_SERVERS=mfs procfs
 PROG_USRSBIN=pwd_mkdb
 PROGRAMS=$(PROG_DRIVERS) $(PROG_COMMANDS) $(PROG_SERVERS) $(PROG_USRSBIN)
 EXTRA=system.conf master.passwd rs.single 
+PROTO_FILES=proto.common.etc proto.common.dynamic proto.sh proto.dev
 
 .if ${MKSMALL} != "yes"
 PROG_DRIVERS+= ahci
@@ -29,9 +33,10 @@ PROG_DRIVERS+= acpi
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
-CLEANFILES += $(LIBRARIES) pwd.db spwd.db passwd
+CLEANFILES += $(LIBRARIES)
+CLEANFILES += ${.OBJDIR}/etc/*
 
-image:	proto.gen mtab rc $(EXTRA) pwd.db spwd.db passwd
+image:	proto.gen $(EXTRA) mtab rc pwd.db spwd.db passwd
 	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
 #	if fsck.mfs -s image | grep -q CLEAN;	\
 #	then	: ;	\
@@ -40,12 +45,22 @@ image:	proto.gen mtab rc $(EXTRA) pwd.db spwd.db passwd
 #		rm -f image; false;             \
 #	fi
 
+# LSC ramdisk rc file != /etc/rc
+# mtab not empty!, force execution of the rule to ensure installation
+# Conditionnally execute the command if the target file already exists
+# I have to place .PHONY for the target to work as expected, but I cannot
+# execute the command during an in-tree build (= make xxx)
+.for file in rc mtab ${PROTO} ${PROTO_FILES}
+$(file): ${.CURDIR}/$(file) .PHONY
+	[ -e $@ ] || ${INSTALL} $> $@
+.endfor
+
 .for driver in $(PROG_DRIVERS)
-$(driver): ../$(driver)/$(driver)
+$(driver): ${PROGROOT}/drivers/$(driver)/$(driver)
 	${INSTALL} $> $@
 
-../$(driver)/$(driver):
-	$(MAKE) -C ../$(driver) $(driver)
+${PROGROOT}/drivers/$(driver)/$(driver):
+	$(MAKE) -C ${NETBSDSRCDIR}/drivers/$(driver) $(driver)
 .endfor
 
 .for cmd in $(PROG_COMMANDS)
@@ -54,42 +69,45 @@ dir.$(cmd)=ash
 .else
 dir.$(cmd)=$(cmd)
 .endif
-$(cmd): ../../commands/$(dir.$(cmd))/$(cmd)
+$(cmd): ${PROGROOT}/commands/$(dir.$(cmd))/$(cmd)
 	${INSTALL} $> $@
 
-../../commands/$(dir.$(cmd))/$(cmd):
-	$(MAKE) -C ../../commands/$(dir.$(cmd)) $(cmd)
+${PROGROOT}/commands/$(dir.$(cmd))/$(cmd):
+	$(MAKE) -C ${NETBSDSRCDIR}/commands/$(dir.$(cmd)) $(cmd)
 .endfor
 
 .for etc in $(EXTRA)
-$(etc): ../../etc/$(etc)
+$(etc): ${NETBSDSRCDIR}/etc/$(etc)
 	${INSTALL} $> $@
 .endfor
 
 .for cmd in $(PROG_USRSBIN)
-$(cmd): ../../usr.sbin/$(cmd)/$(cmd)
+$(cmd): ${PROGROOT}/usr.sbin/$(cmd)/$(cmd)
 	${INSTALL} $> $@
 
-../../usr.sbin/$(cmd)/$(cmd):
-	$(MAKE) -C ../../usr.sbin/$(cmd) $(cmd)
+${PROGROOT}/usr.sbin/$(cmd)/$(cmd):
+	$(MAKE) -C ${NETBSDSRCDIR}/usr.sbin/$(cmd) $(cmd)
 .endfor
 
 .for server in $(PROG_SERVERS)
-$(server): ../../servers/$(server)/$(server)
+$(server): ${PROGROOT}/servers/$(server)/$(server)
 	${INSTALL} $> $@
 
-../../servers/$(server)/$(server):
-	$(MAKE) -C ../../servers/$(server) $(server)
+${PROGROOT}/servers/$(server)/$(server):
+	$(MAKE) -C ${NETBSDSRCDIR}/servers/$(server) $(server)
 .endfor
 
-pwd.db spwd.db passwd: ../../etc/master.passwd ../../usr.sbin/pwd_mkdb/pwd_mkdb
-	rm -f ../../etc/master.passwd.orig ../../etc/passwd.orig
-	rm -f ../../etc/pwd.db.tmp ../../etc/spwd.db.tmp
-	${TOOL_PWD_MKDB} -V 0 -p -d ../../ ../../etc/master.passwd
-	${INSTALL} ../../etc/$@ $@
+etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
+	rm -rf ${.OBJDIR}/etc/
+	mkdir -p ${.OBJDIR}/etc
+	${INSTALL} $> $@
+	${TOOL_PWD_MKDB} -V 0 -p -d . etc/master.passwd
 
-proto.gen: $(PROGRAMS) proto.sh ${PROTO} proto.common.etc proto.common.dynamic proto.sh
+pwd.db spwd.db passwd: etc/master.passwd
+	${INSTALL} etc/${.TARGET} ${.TARGET}
+
+proto.gen: ${PROTO} ${PROTO_FILES} ${PROGRAMS}
 	strip $(PROGRAMS)
-	sh -e proto.sh ${PROTO} >proto.gen
+	sh -e proto.sh ${PROTO} >${.OBJDIR}/${.TARGET}
 
 .include <minix.service.mk>

@@ -1,0 +1,26 @@
+# $NetBSD: md.sparc,v 1.80 2010/03/10 23:13:09 abs Exp $
+./sbin/edlabel					base-sysutil-root	obsolete
+./lib/libsparc_v8.so.0				base-sys-shlib		dynamicroot,pic
+./lib/libsparc_v8.so.0.0			base-sys-shlib		dynamicroot,pic
+./sbin/ldconfig					base-sysutil-root	pic
+./usr/bin/fdformat				base-util-bin
+./usr/lib/libsparc_v8.so.0			base-sys-shlib		pic
+./usr/lib/libsparc_v8.so.0.0			base-sys-shlib		pic
+./usr/libexec/ld.so				base-sys-shlib		pic
+./usr/mdec/binstall				base-sysutil-bin
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/boot.388000				base-sysutil-bin
+./usr/mdec/boot.net				base-sysutil-bin
+./usr/mdec/bootblk				base-sysutil-bin
+./usr/mdec/bootjs.elf				base-obsolete		obsolete
+./usr/mdec/bootjs.net				base-sysutil-bin
+./usr/mdec/bootxx				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/ofwboot				base-sysutil-bin
+./usr/mdec/ofwboot.net				base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/apm					base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin
+./usr/sbin/eeprom				base-sysutil-bin
+./usr/sbin/tadpolectl				base-sysutil-bin
+./usr/sbin/ofctl				base-sysutil-bin

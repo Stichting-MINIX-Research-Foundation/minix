@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2008/08/29 00:02:22 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.17 2012/05/07 08:51:47 wiz Exp $
 
 .if defined(__MINIX)
 # ssp-buffer-size=0, __SSP_FORTIFY_LEVEL=0
@@ -27,7 +27,7 @@ COPTS+=		-O0
 
 # XXX blocksort.c gets mis-compiled with 4.1
 .if (${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb") && \
-    (defined(HAVE_GCC) && ${HAVE_GCC} == 4)
+    defined(HAVE_GCC)
 COPTS.blocksort.c+=	-fno-loop-optimize
 .endif
 

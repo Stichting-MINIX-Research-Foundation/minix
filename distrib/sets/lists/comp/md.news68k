@@ -1,0 +1,54 @@
+# $NetBSD: md.news68k,v 1.27 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/news68k				comp-c-include
+./usr/include/news68k/_G_config.h		comp-obsolete		obsolete
+./usr/include/news68k/ansi.h			comp-c-include
+./usr/include/news68k/aout_machdep.h		comp-c-include
+./usr/include/news68k/asm.h			comp-c-include
+./usr/include/news68k/autoconf.h		comp-obsolete		obsolete
+./usr/include/news68k/bbinfo.h			comp-obsolete		obsolete
+./usr/include/news68k/bswap.h			comp-c-include
+./usr/include/news68k/bus.h			comp-c-include
+./usr/include/news68k/cdefs.h			comp-c-include
+./usr/include/news68k/cpu.h			comp-c-include
+./usr/include/news68k/db_machdep.h		comp-obsolete		obsolete
+./usr/include/news68k/disklabel.h		comp-c-include
+./usr/include/news68k/elf_machdep.h		comp-c-include
+./usr/include/news68k/endian.h			comp-c-include
+./usr/include/news68k/endian_machdep.h		comp-c-include
+./usr/include/news68k/float.h			comp-c-include
+./usr/include/news68k/frame.h			comp-c-include
+./usr/include/news68k/ieee.h			comp-c-include
+./usr/include/news68k/ieeefp.h			comp-c-include
+./usr/include/news68k/int_const.h		comp-c-include
+./usr/include/news68k/int_fmtio.h		comp-c-include
+./usr/include/news68k/int_limits.h		comp-c-include
+./usr/include/news68k/int_mwgwtypes.h		comp-c-include
+./usr/include/news68k/int_types.h		comp-c-include
+./usr/include/news68k/intr.h			comp-obsolete		obsolete
+./usr/include/news68k/kcore.h			comp-c-include
+./usr/include/news68k/limits.h			comp-c-include
+./usr/include/news68k/lock.h			comp-c-include
+./usr/include/news68k/math.h			comp-c-include
+./usr/include/news68k/mcontext.h		comp-c-include
+./usr/include/news68k/mutex.h			comp-c-include
+./usr/include/news68k/param.h			comp-c-include
+./usr/include/news68k/pcb.h			comp-c-include
+./usr/include/news68k/pmap.h			comp-c-include
+./usr/include/news68k/pmc.h			comp-c-include
+./usr/include/news68k/proc.h			comp-c-include
+./usr/include/news68k/profile.h			comp-c-include
+./usr/include/news68k/psl.h			comp-c-include
+./usr/include/news68k/pte.h			comp-c-include
+./usr/include/news68k/ptrace.h			comp-c-include
+./usr/include/news68k/reg.h			comp-c-include
+./usr/include/news68k/rwlock.h			comp-c-include
+./usr/include/news68k/setjmp.h			comp-c-include
+./usr/include/news68k/signal.h			comp-c-include
+./usr/include/news68k/stdarg.h			comp-obsolete		obsolete
+./usr/include/news68k/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/news68k/trap.h			comp-c-include
+./usr/include/news68k/types.h			comp-c-include
+./usr/include/news68k/varargs.h			comp-obsolete		obsolete
+./usr/include/news68k/vmparam.h			comp-c-include
+./usr/include/news68k/wchar_limits.h		comp-c-include

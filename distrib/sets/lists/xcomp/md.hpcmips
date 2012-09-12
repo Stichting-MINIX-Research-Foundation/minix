@@ -1,0 +1,6 @@
+# $NetBSD: md.hpcmips,v 1.2 2010/06/18 15:55:33 tsutsui Exp $
+./usr/libdata/debug/usr/X11R6/bin/Xhpc.debug		-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg

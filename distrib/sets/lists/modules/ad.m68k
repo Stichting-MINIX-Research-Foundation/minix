@@ -1,0 +1,7 @@
+# $NetBSD: ad.m68k,v 1.2 2010/10/15 12:20:33 tsutsui Exp $
+./@MODULEDIR@/compat_aoutm68k			base-kernel-modules	kmod
+./@MODULEDIR@/compat_aoutm68k/compat_aoutm68k.kmod base-kernel-modules	kmod
+./@MODULEDIR@/exec_aout				base-kernel-modules	kmod
+./@MODULEDIR@/exec_aout/exec_aout.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod

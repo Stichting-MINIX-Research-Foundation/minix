@@ -1,0 +1,156 @@
+#! /bin/sh
+#
+#	$NetBSD: makesrctars,v 1.38 2009/11/30 16:13:23 uebayasi Exp $
+#
+# makesrctars srcdir setdir
+#	Create source tarballs in setdir from the source under srcdir.
+#
+
+prog="${0##*/}"
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+# set defaults
+xsrcdir=
+quiet=false
+
+GZIP=-9n
+export GZIP
+
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${prog} [-N password/group dir] [-q] [-x xsrcdir] [-y extsrcsrcdir] srcdir setdir
+	-N dir		location which contains master.passwd and group files
+			(defaults to \${srcdir}/etc)
+	-q		quiet operation
+	-x xsrcdir	build xsrc.tgz from xsrcdir
+	-y extsrcsrcdir	build extsrc.tgz from extsrcsrcdir
+	srcdir		location of sources
+	setdir		where to write the .tgz files to
+USAGE
+	exit 1
+}
+
+msg()
+{
+	$quiet || echo $*
+}
+
+
+# handle args
+while getopts N:qx:y: ch; do
+	case ${ch} in
+	q)
+		quiet=true
+		;;
+	x)
+		xsrcdir="${OPTARG}"
+		;;
+	y)
+		extsrcsrcdir="${OPTARG}"
+		;;
+	N)
+		PASSWD="${OPTARG}"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+
+if [ $# -ne 2 ]; then
+	usage
+fi
+srcdir="$1"
+setdir="$2"
+: ${PASSWD:="${srcdir}/etc"}
+
+if [ ! -d "${setdir}" ]; then
+	echo >&2 "${prog}: ${setdir} is not a directory"
+	exit 1
+fi
+
+makeset()
+{(
+	set="${1}.tgz"
+	shift
+	dir="$1"
+	shift
+	intmp="/tmp/in$$"
+	msg "Creating ${set}"
+	if [ "${dir}" != "." ]; then
+		cd "${dir}"
+		srcprefix="${srcprefix}/${dir}"
+	fi
+	# Gets rid of any obj dirs and things below it 
+	echo "obj" > "${intmp}"
+	egrep="$*"
+	if [ "${egrep}" = "" ]; then
+		egrep='.'
+	fi
+	set -f
+	${MTREE} -c -X "${intmp}" | ${MTREE} -CS -k type | \
+		${EGREP} -v 'type=link' | ${EGREP} ${egrep} | \
+		${SED} -e 's:type=file:& mode=0664:' \
+			-e 's:type=dir:& mode=0775:' \
+			-e 's:$: uname=root gname=wsrc:' \
+			-e '/\/move-if-change /s:\(mode\)=[0-9]*:\1=0775:' \
+			-e '/^\.\/build.sh /s:\(mode\)=[0-9]*:\1=0775:' | \
+		${PAX} -M -N "${PASSWD}" -w -d -s'|^\.|'"${srcprefix}"'|' | \
+		${GZIP_CMD} > "${setdir}/${set}"
+	rm -f "${intmp}"
+)}
+
+
+# create (base)src sets
+#
+
+if ! cd "${srcdir}"; then
+	echo >&2 "${prog}: can't chdir to ${srcdir}"
+	exit 1
+fi
+
+srcprefix=usr/src
+export setdir MTREE PAX CKSUM GZIP PASSWD srcprefix
+
+makeset src . -v '^\.\/gnu|^\.\/share|^\.\/sys|^\.\/usr\.bin\/config|^\.\/common'
+
+makeset gnusrc gnu
+
+makeset syssrc . -e '^\..type=dir|^\.\/sys|^\.\/usr\.bin.type=dir|^\.\/usr\.bin\/config|^\.\/common'
+
+makeset sharesrc share
+
+
+# create xsrc sets
+#
+if [ -n "${xsrcdir}" ]; then
+	if ! cd "${xsrcdir}"; then
+		echo >&2 "${prog}: can't chdir to ${xsrcdir}"
+		exit 1
+	fi
+	srcprefix=usr/xsrc
+	makeset xsrc .
+fi
+
+
+# create extsrc sets
+#
+if [ -n "${extsrcsrcdir}" ]; then
+	if ! cd "${extsrcsrcdir}"; then
+		echo >&2 "${prog}: can't chdir to ${extsrcsrcdir}"
+		exit 1
+	fi
+	srcprefix=usr/extsrc
+	makeset extsrc .
+fi
+
+
+msg "Creating checksum files"
+(cd "${setdir}"
+	${CKSUM} -a md5  *.tgz > MD5
+	${CKSUM} -a sha512 *.tgz > SHA512
+)
+exit 0

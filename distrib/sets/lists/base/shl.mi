@@ -1,0 +1,760 @@
+# $NetBSD: shl.mi,v 1.637 2012/09/16 18:59:25 tls Exp $
+#
+# Note:	Don't delete entries from here - mark them as "obsolete" instead,
+#	unless otherwise stated below.
+#
+# Note:	Do not mark "old" major and major.minor shared libraries as
+#	"obsolete"; just remove the entry, as third-party applications
+#	may be linked against the old major shared library, and
+#	that is a symlink to the old major.minor shared library.
+#	e.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
+#	Exceptions to this rule may include shared libraries that
+#	are dlopen()ed at run-time, such as extra locales, etc.
+#
+# Note:	libtermcap and libtermlib are hardlinked and share the same version.
+#
+./lib/libc.so					base-sys-shlib		dynamicroot
+./lib/libc.so.12				base-sys-shlib		dynamicroot
+./lib/libc.so.12.185				base-sys-shlib		dynamicroot
+./lib/libcrypt.so				base-sys-shlib		dynamicroot
+./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
+./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
+./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8.0				base-crypto-shlib	crypto,dynamicroot
+./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
+./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
+./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
+./lib/libedit.so				base-sys-shlib		dynamicroot
+./lib/libedit.so.3				base-sys-shlib		dynamicroot
+./lib/libedit.so.3.0				base-sys-shlib		dynamicroot
+./lib/libevent.so				base-sys-shlib		dynamicroot
+./lib/libevent.so.3				base-sys-shlib		dynamicroot
+./lib/libevent.so.3.2				base-sys-shlib		dynamicroot
+./lib/libgcc_s.so				base-sys-shlib		gcc
+./lib/libgcc_s.so.1				base-sys-shlib		gcc 
+./lib/libgcc_s.so.1.0				base-sys-shlib		gcc
+./lib/libipsec.so				base-net-shlib		dynamicroot
+./lib/libipsec.so.3				base-net-shlib		dynamicroot
+./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
+./lib/libkvm.so					base-sys-shlib		dynamicroot
+./lib/libkvm.so.6				base-sys-shlib		dynamicroot
+./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
+./lib/liblzf.so					base-sys-shlib		dynamicroot
+./lib/liblzf.so.1				base-sys-shlib		dynamicroot
+./lib/liblzf.so.1.0				base-sys-shlib		dynamicroot
+./lib/liblzma.so				base-sys-shlib		dynamicroot
+./lib/liblzma.so.1				base-sys-shlib		dynamicroot
+./lib/liblzma.so.1.1				base-sys-shlib		dynamicroot
+./lib/libm.so					base-sys-shlib		dynamicroot
+./lib/libm.so.0					base-sys-shlib		dynamicroot
+./lib/libm.so.0.10				base-sys-shlib		dynamicroot
+./lib/libppath.so				base-sys-shlib		dynamicroot
+./lib/libppath.so.0				base-sys-shlib		dynamicroot
+./lib/libppath.so.0.0				base-sys-shlib		dynamicroot
+./lib/libprop.so				base-sys-shlib		dynamicroot
+./lib/libprop.so.1				base-sys-shlib		dynamicroot
+./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
+./lib/libradius.so				base-sys-shlib		dynamicroot
+./lib/libradius.so.4				base-sys-shlib		dynamicroot
+./lib/libradius.so.4.0				base-sys-shlib		dynamicroot
+./lib/librumpclient.so				base-sys-shlib		dynamicroot,rump
+./lib/librumpclient.so.0			base-sys-shlib		dynamicroot,rump
+./lib/librumpclient.so.0.0			base-sys-shlib		dynamicroot,rump
+./lib/libtermcap.so				base-sys-shlib		dynamicroot
+./lib/libtermcap.so.0				base-sys-shlib		dynamicroot
+./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
+./lib/libterminfo.so				base-sys-shlib		dynamicroot
+./lib/libterminfo.so.1				base-sys-shlib		dynamicroot
+./lib/libterminfo.so.1.0			base-sys-shlib		dynamicroot
+./lib/libtermlib.so				base-sys-shlib		dynamicroot
+./lib/libtermlib.so.0				base-sys-shlib		dynamicroot
+./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
+./lib/libutil.so				base-sys-shlib		dynamicroot
+./lib/libutil.so.7				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.21				base-sys-shlib		dynamicroot
+./lib/libz.so					base-sys-shlib		dynamicroot
+./lib/libz.so.1					base-sys-shlib		dynamicroot
+./lib/libz.so.1.0				base-sys-shlib		dynamicroot
+./libexec/ld.elf_so				base-sys-shlib		dynamicroot
+./usr/lib/i18n/libBIG5.so			base-i18n-shlib
+./usr/lib/i18n/libBIG5.so.5			base-i18n-shlib
+./usr/lib/i18n/libBIG5.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libDECHanyu.so			base-i18n-shlib
+./usr/lib/i18n/libDECHanyu.so.5			base-i18n-shlib
+./usr/lib/i18n/libDECHanyu.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libEUC.so			base-i18n-shlib
+./usr/lib/i18n/libEUC.so.5			base-i18n-shlib
+./usr/lib/i18n/libEUC.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libEUCTW.so			base-i18n-shlib
+./usr/lib/i18n/libEUCTW.so.5			base-i18n-shlib
+./usr/lib/i18n/libEUCTW.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libGBK2K.so			base-i18n-shlib
+./usr/lib/i18n/libGBK2K.so.5			base-i18n-shlib
+./usr/lib/i18n/libGBK2K.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libHZ.so				base-i18n-shlib
+./usr/lib/i18n/libHZ.so.5			base-i18n-shlib
+./usr/lib/i18n/libHZ.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libISO2022.so			base-i18n-shlib
+./usr/lib/i18n/libISO2022.so.5			base-i18n-shlib
+./usr/lib/i18n/libISO2022.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libJOHAB.so			base-i18n-shlib
+./usr/lib/i18n/libJOHAB.so.5			base-i18n-shlib
+./usr/lib/i18n/libJOHAB.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libMSKanji.so			base-i18n-shlib
+./usr/lib/i18n/libMSKanji.so.5			base-i18n-shlib
+./usr/lib/i18n/libMSKanji.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libUES.so			base-i18n-shlib
+./usr/lib/i18n/libUES.so.5			base-i18n-shlib
+./usr/lib/i18n/libUES.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libUTF1632.so			base-i18n-shlib
+./usr/lib/i18n/libUTF1632.so.5			base-i18n-shlib
+./usr/lib/i18n/libUTF1632.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libUTF7.so			base-i18n-shlib
+./usr/lib/i18n/libUTF7.so.5			base-i18n-shlib
+./usr/lib/i18n/libUTF7.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libUTF8.so			base-i18n-shlib
+./usr/lib/i18n/libUTF8.so.5			base-i18n-shlib
+./usr/lib/i18n/libUTF8.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libVIQR.so			base-i18n-shlib
+./usr/lib/i18n/libVIQR.so.5			base-i18n-shlib
+./usr/lib/i18n/libVIQR.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libZW.so				base-i18n-shlib
+./usr/lib/i18n/libZW.so.5			base-i18n-shlib
+./usr/lib/i18n/libZW.so.5.0			base-i18n-shlib
+./usr/lib/i18n/libiconv_none.so			base-i18n-shlib
+./usr/lib/i18n/libiconv_none.so.5		base-i18n-shlib
+./usr/lib/i18n/libiconv_none.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libiconv_std.so			base-i18n-shlib
+./usr/lib/i18n/libiconv_std.so.5		base-i18n-shlib
+./usr/lib/i18n/libiconv_std.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libmapper_646.so			base-i18n-shlib
+./usr/lib/i18n/libmapper_646.so.5		base-i18n-shlib
+./usr/lib/i18n/libmapper_646.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libmapper_none.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_none.so.5		base-i18n-shlib
+./usr/lib/i18n/libmapper_none.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libmapper_parallel.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_parallel.so.5		base-i18n-shlib
+./usr/lib/i18n/libmapper_parallel.so.5.0	base-i18n-shlib
+./usr/lib/i18n/libmapper_serial.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_serial.so.5		base-i18n-shlib
+./usr/lib/i18n/libmapper_serial.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libmapper_std.so			base-i18n-shlib
+./usr/lib/i18n/libmapper_std.so.5		base-i18n-shlib
+./usr/lib/i18n/libmapper_std.so.5.0		base-i18n-shlib
+./usr/lib/i18n/libmapper_zone.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_zone.so.5		base-i18n-shlib
+./usr/lib/i18n/libmapper_zone.so.5.0		base-i18n-shlib
+./usr/lib/libamu.so.4				base-amd-shlib
+./usr/lib/libamu.so.4.0				base-amd-shlib
+./usr/lib/libarchive.so				base-sys-shlib
+./usr/lib/libarchive.so.3			base-sys-shlib
+./usr/lib/libarchive.so.3.1			base-sys-shlib
+./usr/lib/libasn1.so				base-krb5-shlib		kerberos
+./usr/lib/libasn1.so.9				base-krb5-shlib		kerberos
+./usr/lib/libasn1.so.9.0			base-krb5-shlib		kerberos
+./usr/lib/libatf-c.so				base-atf-shlib		atf
+./usr/lib/libatf-c.so.0				base-atf-shlib		atf
+./usr/lib/libatf-c.so.0.0			base-atf-shlib		atf
+./usr/lib/libatf-c++.so				base-atf-shlib		atf
+./usr/lib/libatf-c++.so.0			base-atf-shlib		atf
+./usr/lib/libatf-c++.so.0.0			base-atf-shlib		atf
+./usr/lib/libavl.so				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libavl.so.0				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libavl.so.0.0          		base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libbfd.so.12				base-sys-shlib		binutils
+./usr/lib/libbfd.so.12.0			base-sys-shlib		binutils
+./usr/lib/libbind9.so				base-bind-shlib
+./usr/lib/libbind9.so.5				base-bind-shlib
+./usr/lib/libbind9.so.5.7			base-bind-shlib
+./usr/lib/libbluetooth.so			base-sys-shlib
+./usr/lib/libbluetooth.so.4			base-sys-shlib
+./usr/lib/libbluetooth.so.4.2			base-sys-shlib
+./usr/lib/libbsdmalloc.so			base-sys-shlib
+./usr/lib/libbsdmalloc.so.0			base-sys-shlib
+./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
+./usr/lib/libbz2.so				base-sys-shlib
+./usr/lib/libbz2.so.1				base-sys-shlib
+./usr/lib/libbz2.so.1.1				base-sys-shlib
+./usr/lib/libc.so				base-sys-shlib
+./usr/lib/libc.so.12				base-sys-shlib
+./usr/lib/libc.so.12.185			base-sys-shlib
+./usr/lib/libcdk.so				base-obsolete		obsolete
+./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
+./usr/lib/libcom_err.so.7			base-krb5-shlib		kerberos
+./usr/lib/libcom_err.so.7.0			base-krb5-shlib		kerberos
+./usr/lib/libcrypt.so				base-sys-shlib
+./usr/lib/libcrypt.so.1				base-sys-shlib
+./usr/lib/libcrypt.so.1.0			base-sys-shlib
+./usr/lib/libcrypto.so				base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8.0			base-crypto-shlib	crypto
+./usr/lib/libcrypto_idea.so.7			base-obsolete		obsolete
+./usr/lib/libcrypto_idea.so.7.0			base-obsolete		obsolete
+./usr/lib/libcrypto_mdc2.so.7			base-obsolete		obsolete
+./usr/lib/libcrypto_mdc2.so.7.0			base-obsolete		obsolete
+./usr/lib/libcrypto_rc5.so			base-crypto-shlib	crypto,crypto_rc5
+./usr/lib/libcrypto_rc5.so.7			base-crypto-shlib	crypto,crypto_rc5
+./usr/lib/libcrypto_rc5.so.7.0			base-crypto-shlib	crypto,crypto_rc5
+./usr/lib/libcrypto_rc5_pic.a			base-crypto-shlib	crypto,crypto_rc5
+./usr/lib/libctf.so				base-sys-shlib		dtrace
+./usr/lib/libctf.so.2				base-sys-shlib		dtrace
+./usr/lib/libctf.so.2.0				base-sys-shlib		dtrace
+./usr/lib/libcurses.so				base-sys-shlib
+./usr/lib/libcurses.so.7			base-sys-shlib
+./usr/lib/libcurses.so.7.0			base-sys-shlib
+./usr/lib/libdes.so				base-crypto-shlib	crypto
+./usr/lib/libdes.so.8				base-crypto-shlib	crypto
+./usr/lib/libdes.so.8.1				base-crypto-shlib	crypto
+./usr/lib/libdevmapper.so			base-lvm-shlib		lvm
+./usr/lib/libdevmapper.so.1			base-lvm-shlib		lvm
+./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
+./usr/lib/libdm.so				base-sys-shlib
+./usr/lib/libdm.so.0				base-sys-shlib
+./usr/lib/libdm.so.0.0				base-sys-shlib
+./usr/lib/libdns.so				base-bind-shlib
+./usr/lib/libdns.so.5				base-bind-shlib
+./usr/lib/libdns.so.5.7				base-bind-shlib
+./usr/lib/libdns_sd.so				base-mdns-shlib		mdns
+./usr/lib/libdns_sd.so.0			base-mdns-shlib		mdns
+./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
+./usr/lib/libdtrace.so				base-sys-shlib		dtrace
+./usr/lib/libdtrace.so.2			base-sys-shlib		dtrace
+./usr/lib/libdtrace.so.2.0			base-sys-shlib		dtrace
+./usr/lib/libdwarf.so				base-sys-shlib
+./usr/lib/libdwarf.so.0				base-sys-shlib
+./usr/lib/libdwarf.so.0.0			base-sys-shlib
+./usr/lib/libedit.so				base-sys-shlib
+./usr/lib/libedit.so.3				base-sys-shlib
+./usr/lib/libedit.so.3.0			base-sys-shlib
+./usr/lib/libelf.so				base-sys-shlib
+./usr/lib/libelf.so.0				base-sys-shlib
+./usr/lib/libelf.so.0.0				base-sys-shlib
+./usr/lib/libevent.so				base-sys-shlib
+./usr/lib/libevent.so.3				base-sys-shlib
+./usr/lib/libevent.so.3.2			base-sys-shlib
+./usr/lib/libexecinfo.so			base-sys-shlib
+./usr/lib/libexecinfo.so.0			base-sys-shlib
+./usr/lib/libexecinfo.so.0.0			base-sys-shlib
+./usr/lib/libexpat.so				base-sys-shlib
+./usr/lib/libexpat.so.2				base-sys-shlib
+./usr/lib/libexpat.so.2.1			base-sys-shlib
+./usr/lib/libfetch.so				base-sys-shlib
+./usr/lib/libfetch.so.3				base-sys-shlib
+./usr/lib/libfetch.so.3.0			base-sys-shlib
+./usr/lib/libform.so				base-sys-shlib
+./usr/lib/libform.so.6				base-sys-shlib
+./usr/lib/libform.so.6.0			base-sys-shlib
+./usr/lib/libg2c.so				base-sys-shlib		gcc=3
+./usr/lib/libg2c.so.2				base-sys-shlib		gcc=3
+./usr/lib/libg2c.so.2.0				base-sys-shlib		gcc=3
+./usr/lib/libgcc_s.so				base-sys-shlib		gcc
+./usr/lib/libgcc_s.so.1				base-sys-shlib		gcc
+./usr/lib/libgcc_s.so.1.0			base-sys-shlib		gcc
+./usr/lib/libgnumalloc.so			base-sys-shlib
+./usr/lib/libgnumalloc.so.1			base-sys-shlib
+./usr/lib/libgnumalloc.so.1.0			base-sys-shlib
+./usr/lib/libgomp.so				base-sys-shlib		gcc=45
+./usr/lib/libgomp.so.1				base-sys-shlib		gcc=45
+./usr/lib/libgomp.so.1.0			base-sys-shlib		gcc=45
+./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.10			base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.10.0			base-krb5-shlib		kerberos
+./usr/lib/libhdb.so				base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.14				base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.14.0			base-krb5-shlib		kerberos
+./usr/lib/libheimbase.so			base-krb5-shlib		kerberos
+./usr/lib/libheimbase.so.1			base-krb5-shlib		kerberos
+./usr/lib/libheimbase.so.1.0			base-krb5-shlib		kerberos
+./usr/lib/libheimntlm.so			base-krb5-shlib		kerberos
+./usr/lib/libheimntlm.so.4			base-krb5-shlib		kerberos
+./usr/lib/libheimntlm.so.4.0			base-krb5-shlib		kerberos
+./usr/lib/libhx509.so				base-krb5-shlib		kerberos
+./usr/lib/libhx509.so.5				base-krb5-shlib		kerberos
+./usr/lib/libhx509.so.5.0			base-krb5-shlib		kerberos
+./usr/lib/libintl.so				base-sys-shlib
+./usr/lib/libintl.so.1				base-sys-shlib
+./usr/lib/libintl.so.1.0			base-sys-shlib
+./usr/lib/libipsec.so				base-net-shlib
+./usr/lib/libipsec.so.3				base-net-shlib
+./usr/lib/libipsec.so.3.0			base-net-shlib
+./usr/lib/libisc.so				base-bind-shlib
+./usr/lib/libisc.so.5				base-bind-shlib
+./usr/lib/libisc.so.5.7				base-bind-shlib
+./usr/lib/libisccc.so				base-bind-shlib
+./usr/lib/libisccc.so.5				base-bind-shlib
+./usr/lib/libisccc.so.5.7			base-bind-shlib
+./usr/lib/libisccfg.so				base-bind-shlib
+./usr/lib/libisccfg.so.5			base-bind-shlib
+./usr/lib/libisccfg.so.5.7			base-bind-shlib
+./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
+./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
+./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi
+./usr/lib/libisns.so				base-isns-shlib	
+./usr/lib/libisns.so.0				base-isns-shlib	
+./usr/lib/libisns.so.0.0			base-isns-shlib	
+./usr/lib/libkadm.so				base-obsolete		obsolete
+./usr/lib/libkadm5clnt.so			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.13			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.13.0			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.14			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.14.0			base-krb5-shlib		kerberos
+./usr/lib/libkafs.so				base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.12				base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.12.0			base-krb5-shlib		kerberos
+./usr/lib/libkdc.so				base-krb5-shlib		kerberos
+./usr/lib/libkdc.so.2				base-krb5-shlib		kerberos
+./usr/lib/libkdc.so.2.0				base-krb5-shlib		kerberos
+./usr/lib/libkdb.so				base-obsolete		obsolete
+./usr/lib/libkrb.so				base-obsolete		obsolete
+./usr/lib/libkrb5.so				base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.26				base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.26.0			base-krb5-shlib		kerberos
+./usr/lib/libkstream.so				base-obsolete		obsolete
+./usr/lib/libkvm.so				base-sys-shlib
+./usr/lib/libkvm.so.6				base-sys-shlib
+./usr/lib/libkvm.so.6.0				base-sys-shlib
+./usr/lib/liblber.so				base-ldap-shlib		ldap
+./usr/lib/liblber.so.3				base-ldap-shlib		ldap
+./usr/lib/liblber.so.3.2			base-ldap-shlib		ldap
+./usr/lib/libldap.so				base-ldap-shlib		ldap
+./usr/lib/libldap.so.4				base-ldap-shlib		ldap
+./usr/lib/libldap.so.4.2			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so				base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.4.2			base-ldap-shlib		ldap
+./usr/lib/liblua.so				base-sys-shlib
+./usr/lib/liblua.so.1				base-sys-shlib
+./usr/lib/liblua.so.1.0				base-sys-shlib
+./usr/lib/liblwres.so				base-bind-shlib
+./usr/lib/liblwres.so.5				base-bind-shlib
+./usr/lib/liblwres.so.5.7			base-bind-shlib
+./usr/lib/liblzma.so				base-sys-shlib
+./usr/lib/liblzma.so.1				base-sys-shlib
+./usr/lib/liblzma.so.1.1			base-sys-shlib
+./usr/lib/liblzf.so				base-sys-shlib
+./usr/lib/liblzf.so.1				base-sys-shlib
+./usr/lib/liblzf.so.1.0				base-sys-shlib
+./usr/lib/libm.so				base-sys-shlib
+./usr/lib/libm.so.0				base-sys-shlib
+./usr/lib/libm.so.0.10				base-sys-shlib
+./usr/lib/libmagic.so				base-sys-shlib
+./usr/lib/libmagic.so.3				base-sys-shlib
+./usr/lib/libmagic.so.3.1			base-sys-shlib
+./usr/lib/libmenu.so				base-sys-shlib
+./usr/lib/libmenu.so.6				base-sys-shlib
+./usr/lib/libmenu.so.6.0			base-sys-shlib
+./usr/lib/libmj.so				base-crypto-shlib	crypto
+./usr/lib/libmj.so.1				base-crypto-shlib	crypto
+./usr/lib/libmj.so.1.0				base-crypto-shlib	crypto
+./usr/lib/libnetpgp.so				base-crypto-shlib	crypto
+./usr/lib/libnetpgp.so.3			base-crypto-shlib	crypto
+./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	crypto
+./usr/lib/libnpf.so				base-npf-shlib		npf
+./usr/lib/libnpf.so.0				base-npf-shlib		npf
+./usr/lib/libnpf.so.0.0				base-npf-shlib		npf
+./usr/lib/libnvpair.so				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libnvpair.so.0			base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libnvpair.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libobjc.so				base-sys-shlib		gcc
+./usr/lib/libobjc.so.3				base-sys-shlib		gcc=4
+./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
+./usr/lib/libobjc.so.3				base-sys-shlib		gcc=45
+./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=45
+./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
+./usr/lib/libopenpgpsdk.so.0			base-obsolete		obsolete
+./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
+./usr/lib/libossaudio.so			base-sys-shlib
+./usr/lib/libossaudio.so.1			base-sys-shlib
+./usr/lib/libossaudio.so.1.0			base-sys-shlib
+./usr/lib/libperfuse.so				base-perfuse-shlib
+./usr/lib/libperfuse.so.0			base-perfuse-shlib
+./usr/lib/libperfuse.so.0.0			base-perfuse-shlib
+./usr/lib/libp2k.so				base-puffs-shlib	rump
+./usr/lib/libp2k.so.2				base-puffs-shlib	rump
+./usr/lib/libp2k.so.2.0				base-puffs-shlib	rump
+./usr/lib/libpam.so				base-sys-shlib		pam
+./usr/lib/libpam.so.3				base-sys-shlib		pam
+./usr/lib/libpam.so.3.0				base-sys-shlib		pam
+./usr/lib/libpcap.so				base-net-shlib
+./usr/lib/libpcap.so.4				base-net-shlib
+./usr/lib/libpcap.so.4.0			base-net-shlib
+./usr/lib/libpci.so				base-sys-shlib
+./usr/lib/libpci.so.2				base-sys-shlib
+./usr/lib/libpci.so.2.0				base-sys-shlib
+./usr/lib/libposix.so				base-sys-shlib
+./usr/lib/libposix.so.0				base-sys-shlib
+./usr/lib/libposix.so.0.1			base-sys-shlib
+./usr/lib/libppath.so				base-sys-shlib
+./usr/lib/libppath.so.0				base-sys-shlib
+./usr/lib/libppath.so.0.0			base-sys-shlib
+./usr/lib/libprop.so				base-sys-shlib
+./usr/lib/libprop.so.1				base-sys-shlib
+./usr/lib/libprop.so.1.1			base-sys-shlib
+./usr/lib/libpthread.so				base-sys-shlib
+./usr/lib/libpthread.so.1			base-sys-shlib
+./usr/lib/libpthread.so.1.1			base-sys-shlib
+./usr/lib/libpthread_dbg.so			base-sys-shlib
+./usr/lib/libpthread_dbg.so.2			base-sys-shlib
+./usr/lib/libpthread_dbg.so.2.0			base-sys-shlib
+./usr/lib/libpuffs.so				base-puffs-shlib
+./usr/lib/libpuffs.so.2				base-puffs-shlib
+./usr/lib/libpuffs.so.2.0			base-puffs-shlib
+./usr/lib/libquota.so				base-sys-shlib
+./usr/lib/libquota.so.1				base-sys-shlib
+./usr/lib/libquota.so.1.0			base-sys-shlib
+./usr/lib/libradius.so				base-net-shlib
+./usr/lib/libradius.so.4			base-net-shlib
+./usr/lib/libradius.so.4.0			base-net-shlib
+./usr/lib/librefuse.so				base-refuse-shlib
+./usr/lib/librefuse.so.2			base-refuse-shlib
+./usr/lib/librefuse.so.2.0			base-refuse-shlib
+./usr/lib/libresolv.so				base-net-shlib
+./usr/lib/libresolv.so.2			base-net-shlib
+./usr/lib/libresolv.so.2.0			base-net-shlib
+./usr/lib/libroken.so				base-krb5-shlib		kerberos
+./usr/lib/libroken.so.19			base-krb5-shlib		kerberos
+./usr/lib/libroken.so.19.0			base-krb5-shlib		kerberos
+./usr/lib/librpcsvc.so				base-net-shlib
+./usr/lib/librpcsvc.so.1			base-net-shlib
+./usr/lib/librpcsvc.so.1.0			base-net-shlib
+./usr/lib/librt.so				base-sys-shlib
+./usr/lib/librt.so.1				base-sys-shlib
+./usr/lib/librt.so.1.1				base-sys-shlib
+./usr/lib/librump.so				base-rump-shlib		rump
+./usr/lib/librump.so.0				base-rump-shlib		rump
+./usr/lib/librump.so.0.0			base-rump-shlib		rump
+./usr/lib/librumpclient.so			base-rumpclient-shlib	rump
+./usr/lib/librumpclient.so.0			base-rumpclient-shlib	rump
+./usr/lib/librumpclient.so.0.0			base-rumpclient-shlib	rump
+./usr/lib/librumpcrypto.so			base-obsolete		obsolete
+./usr/lib/librumpcrypto.so.0			base-obsolete		obsolete
+./usr/lib/librumpcrypto.so.0.0			base-obsolete		obsolete
+./usr/lib/librumpdev.so				base-rump-shlib	rump
+./usr/lib/librumpdev.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_audio.so			base-rump-shlib	rump
+./usr/lib/librumpdev_audio.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_audio.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_bpf.so			base-rump-shlib	rump
+./usr/lib/librumpdev_bpf.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_bpf.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_cgd.so			base-rump-shlib	rump
+./usr/lib/librumpdev_cgd.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_cgd.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_disk.so			base-rump-shlib	rump
+./usr/lib/librumpdev_disk.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_disk.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_dm.so			base-rump-shlib	rump
+./usr/lib/librumpdev_dm.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_dm.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_drvctl.so			base-rump-shlib	rump
+./usr/lib/librumpdev_drvctl.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_drvctl.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_fss.so			base-rump-shlib	rump
+./usr/lib/librumpdev_fss.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_fss.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_md.so			base-rump-shlib	rump
+./usr/lib/librumpdev_md.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_md.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_netsmb.so			base-rump-shlib	rump
+./usr/lib/librumpdev_netsmb.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_netsmb.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_pad.so			base-rump-shlib	rump
+./usr/lib/librumpdev_pad.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_pad.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_pud.so			base-rump-shlib	rump
+./usr/lib/librumpdev_pud.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_pud.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_putter.so			base-rump-shlib	rump
+./usr/lib/librumpdev_putter.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_putter.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_raidframe.so		base-rump-shlib	rump
+./usr/lib/librumpdev_raidframe.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_raidframe.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_rnd.so			base-rump-shlib	rump
+./usr/lib/librumpdev_rnd.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_rnd.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_scsipi.so			base-rump-shlib	rump
+./usr/lib/librumpdev_scsipi.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_scsipi.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_scsitest.so		base-rump-shlib	rump
+./usr/lib/librumpdev_scsitest.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_scsitest.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_sysmon.so			base-rump-shlib	rump
+./usr/lib/librumpdev_sysmon.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_sysmon.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_ubt.so			base-rump-shlib	rump
+./usr/lib/librumpdev_ubt.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_ubt.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_ucom.so			base-rump-shlib	rump
+./usr/lib/librumpdev_ucom.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_ucom.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_ugenhc.so			base-rump-shlib	rump
+./usr/lib/librumpdev_ugenhc.so.0		base-rump-shlib	rump
+./usr/lib/librumpdev_ugenhc.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_ulpt.so			base-rump-shlib	rump
+./usr/lib/librumpdev_ulpt.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_ulpt.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_umass.so			base-rump-shlib	rump
+./usr/lib/librumpdev_umass.so.0 		base-rump-shlib	rump
+./usr/lib/librumpdev_umass.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_usb.so			base-rump-shlib	rump
+./usr/lib/librumpdev_usb.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_usb.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_wscons.so			base-rump-shlib	rump
+./usr/lib/librumpdev_wscons.so.0 		base-rump-shlib	rump
+./usr/lib/librumpdev_wscons.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_cd9660.so			base-rump-shlib	rump
+./usr/lib/librumpfs_cd9660.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_cd9660.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_efs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_efs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_efs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_ext2fs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_ext2fs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_ext2fs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_fdesc.so			base-rump-shlib	rump
+./usr/lib/librumpfs_fdesc.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_fdesc.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_ffs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_ffs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_ffs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_hfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_hfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_hfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_kernfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_kernfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_kernfs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_lfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_lfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_lfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_mfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_mfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_mfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_msdos.so			base-rump-shlib	rump
+./usr/lib/librumpfs_msdos.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_msdos.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_nfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_nfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_nfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_nfsserver.so		base-rump-shlib	rump
+./usr/lib/librumpfs_nfsserver.so.0		base-rump-shlib	rump
+./usr/lib/librumpfs_nfsserver.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_nilfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_nilfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_nilfs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_ntfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_ntfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_ntfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_null.so			base-rump-shlib	rump
+./usr/lib/librumpfs_null.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_null.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_nullfs.so			base-obsolete		obsolete
+./usr/lib/librumpfs_nullfs.so.0			base-obsolete		obsolete
+./usr/lib/librumpfs_nullfs.so.0.0		base-obsolete		obsolete
+./usr/lib/librumpfs_ptyfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_ptyfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_ptyfs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_smbfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_smbfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_smbfs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_syspuffs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_syspuffs.so.0		base-rump-shlib	rump
+./usr/lib/librumpfs_syspuffs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_sysvbfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_sysvbfs.so.0		base-rump-shlib	rump
+./usr/lib/librumpfs_sysvbfs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_tmpfs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_tmpfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_tmpfs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_udf.so			base-rump-shlib	rump
+./usr/lib/librumpfs_udf.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_udf.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_ufs.so			base-obsolete		obsolete
+./usr/lib/librumpfs_ufs.so.0			base-obsolete		obsolete
+./usr/lib/librumpfs_ufs.so.0.0			base-obsolete		obsolete
+./usr/lib/librumpfs_umap.so			base-rump-shlib	rump
+./usr/lib/librumpfs_umap.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_umap.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_umapfs.so			base-obsolete		obsolete
+./usr/lib/librumpfs_umapfs.so.0			base-obsolete		obsolete
+./usr/lib/librumpfs_umapfs.so.0.0		base-obsolete		obsolete
+./usr/lib/librumpfs_union.so			base-rump-shlib	rump
+./usr/lib/librumpfs_union.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_union.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpfs_v7fs.so			base-rump-shlib	rump
+./usr/lib/librumpfs_v7fs.so.0			base-rump-shlib	rump
+./usr/lib/librumpfs_v7fs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpfs_zfs.so			base-rump-shlib		zfs,rump
+./usr/lib/librumpfs_zfs.so.0			base-rump-shlib		zfs,rump
+./usr/lib/librumpfs_zfs.so.0.0			base-rump-shlib		zfs,rump
+./usr/lib/librumpkern_crypto.so			base-rump-shlib	rump
+./usr/lib/librumpkern_crypto.so.0		base-rump-shlib	rump
+./usr/lib/librumpkern_crypto.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpkern_ksem.so			base-obsolete		obsolete
+./usr/lib/librumpkern_ksem.so.0			base-obsolete		obsolete
+./usr/lib/librumpkern_ksem.so.0.0		base-obsolete		obsolete
+./usr/lib/librumpkern_solaris.so		base-rump-shlib		zfs,rump
+./usr/lib/librumpkern_solaris.so.0		base-rump-shlib		zfs,rump
+./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib		zfs,rump
+./usr/lib/librumpkern_tty.so			base-rump-shlib	rump
+./usr/lib/librumpkern_tty.so.0			base-rump-shlib	rump
+./usr/lib/librumpkern_tty.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpkern_z.so			base-rump-shlib	rump
+./usr/lib/librumpkern_z.so.0			base-rump-shlib	rump
+./usr/lib/librumpkern_z.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpnet.so				base-rump-shlib	rump
+./usr/lib/librumpnet.so.0			base-rump-shlib	rump
+./usr/lib/librumpnet.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpnet_agr.so			base-rump-shlib	rump
+./usr/lib/librumpnet_agr.so.0			base-rump-shlib	rump
+./usr/lib/librumpnet_agr.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpnet_bridge.so			base-rump-shlib	rump
+./usr/lib/librumpnet_bridge.so.0		base-rump-shlib	rump
+./usr/lib/librumpnet_bridge.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_local.so			base-rump-shlib	rump
+./usr/lib/librumpnet_local.so.0			base-rump-shlib	rump
+./usr/lib/librumpnet_local.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_net.so			base-rump-shlib	rump
+./usr/lib/librumpnet_net.so.0			base-rump-shlib	rump
+./usr/lib/librumpnet_net.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpnet_net80211.so		base-rump-shlib	rump
+./usr/lib/librumpnet_net80211.so.0		base-rump-shlib	rump
+./usr/lib/librumpnet_net80211.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_netbt.so			base-rump-shlib	rump
+./usr/lib/librumpnet_netbt.so.0			base-rump-shlib	rump
+./usr/lib/librumpnet_netbt.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_netinet.so			base-rump-shlib	rump
+./usr/lib/librumpnet_netinet.so.0		base-rump-shlib	rump
+./usr/lib/librumpnet_netinet.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_shmif.so			base-rump-shlib	rump
+./usr/lib/librumpnet_shmif.so.0			base-rump-shlib	rump
+./usr/lib/librumpnet_shmif.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_sockin.so			base-rump-shlib	rump
+./usr/lib/librumpnet_sockin.so.0		base-rump-shlib	rump
+./usr/lib/librumpnet_sockin.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_virtif.so			base-rump-shlib	rump
+./usr/lib/librumpnet_virtif.so.0		base-rump-shlib	rump
+./usr/lib/librumpnet_virtif.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpuser.so			base-rump-shlib	rump
+./usr/lib/librumpuser.so.0			base-rump-shlib	rump
+./usr/lib/librumpuser.so.0.0			base-rump-shlib	rump
+./usr/lib/librumphijack.so			base-rump-shlib	rump
+./usr/lib/librumphijack.so.0			base-rump-shlib	rump
+./usr/lib/librumphijack.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpvfs.so				base-rump-shlib	rump
+./usr/lib/librumpvfs.so.0			base-rump-shlib	rump
+./usr/lib/librumpvfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpvfs_fifofs.so			base-rump-shlib	rump
+./usr/lib/librumpvfs_fifofs.so.0		base-rump-shlib	rump
+./usr/lib/librumpvfs_fifofs.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpvfs_layerfs.so			base-rump-shlib	rump
+./usr/lib/librumpvfs_layerfs.so.0		base-rump-shlib	rump
+./usr/lib/librumpvfs_layerfs.so.0.0		base-rump-shlib	rump
+./usr/lib/libsaslc.so				base-sys-shlib		crypto
+./usr/lib/libsaslc.so.0				base-sys-shlib		crypto
+./usr/lib/libsaslc.so.0.0			base-sys-shlib		crypto
+./usr/lib/libsdp.so				base-obsolete		obsolete
+./usr/lib/libskey.so				base-sys-shlib		skey
+./usr/lib/libskey.so.2				base-sys-shlib		skey
+./usr/lib/libskey.so.2.0			base-sys-shlib		skey
+./usr/lib/libsl.so				base-krb5-shlib		kerberos
+./usr/lib/libsl.so.5				base-krb5-shlib		kerberos
+./usr/lib/libsl.so.5.0				base-krb5-shlib		kerberos
+./usr/lib/libsqlite3.so				base-sys-shlib
+./usr/lib/libsqlite3.so.1			base-sys-shlib
+./usr/lib/libsqlite3.so.1.1			base-sys-shlib
+./usr/lib/libss.so				base-obsolete		obsolete
+./usr/lib/libssh.so				base-secsh-shlib	crypto
+./usr/lib/libssh.so.19				base-secsh-shlib	crypto
+./usr/lib/libssh.so.19.0			base-secsh-shlib	crypto
+./usr/lib/libssl.so				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10.0				base-crypto-shlib	crypto
+./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx
+./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
+./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
+./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4,cxx
+./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=45,cxx
+./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
+./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx
+./usr/lib/libtermcap.so				base-sys-shlib
+./usr/lib/libtermcap.so.0			base-sys-shlib
+./usr/lib/libtermcap.so.0.6			base-sys-shlib
+./usr/lib/libterminfo.so			base-sys-shlib
+./usr/lib/libterminfo.so.1			base-sys-shlib
+./usr/lib/libterminfo.so.1.0			base-sys-shlib
+./usr/lib/libtermlib.so				base-sys-shlib
+./usr/lib/libtermlib.so.0			base-sys-shlib
+./usr/lib/libtermlib.so.0.6			base-sys-shlib
+./usr/lib/libtre.so				base-sys-shlib
+./usr/lib/libtre.so.0				base-sys-shlib
+./usr/lib/libtre.so.0.8				base-sys-shlib
+./usr/lib/libukfs.so				base-sys-shlib		rump
+./usr/lib/libukfs.so.1				base-sys-shlib		rump
+./usr/lib/libukfs.so.1.0			base-sys-shlib		rump
+./usr/lib/libumem.so				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libumem.so.0				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libumem.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libusbhid.so				base-sys-shlib
+./usr/lib/libusbhid.so.1			base-sys-shlib
+./usr/lib/libusbhid.so.1.0			base-sys-shlib
+./usr/lib/libutil.so				base-sys-shlib
+./usr/lib/libutil.so.7				base-sys-shlib
+./usr/lib/libutil.so.7.21			base-sys-shlib
+./usr/lib/libuutil.so				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libuutil.so.0				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libuutil.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libwind.so				base-krb5-shlib		kerberos
+./usr/lib/libwind.so.0				base-krb5-shlib		kerberos
+./usr/lib/libwind.so.0.0			base-krb5-shlib		kerberos
+./usr/lib/libwrap.so				base-net-shlib
+./usr/lib/libwrap.so.1				base-net-shlib
+./usr/lib/libwrap.so.1.0			base-net-shlib
+./usr/lib/libz.so				base-sys-shlib
+./usr/lib/libz.so.1				base-sys-shlib
+./usr/lib/libz.so.1.0				base-sys-shlib
+./usr/lib/libzfs.so				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libzfs.so.0				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libzfs.so.0.0				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool.so				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libzpool.so.0				base-zfs-shlib		dynamicroot,zfs
+./usr/lib/libzpool.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/lua/5.1/gpio.so                    	base-sys-shlib
+./usr/lib/lua/5.1/sqlite.so                    	base-sys-shlib
+./usr/lib/npf/ext_log.so			base-npf-shlib		npf
+./usr/lib/npf/ext_log.so.0			base-npf-shlib		npf
+./usr/lib/npf/ext_log.so.0.0			base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so			base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so.0		base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so.0.0		base-npf-shlib		npf
+./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
+./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
+./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns
+./usr/lib/security/pam_afslog.so.3		base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_chroot.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_deny.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_echo.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_exec.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_ftpusers.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_group.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_guest.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_krb5.so.3		base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_ksu.so.3			base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_lastlog.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_login_access.so.3	base-sys-shlib		pam
+./usr/lib/security/pam_nologin.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_permit.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_radius.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_rhosts.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_rootok.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_securetty.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_self.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_skey.so.3		base-sys-shlib		skey,pam
+./usr/lib/security/pam_ssh.so.3			base-sys-shlib		crypto,pam
+./usr/lib/security/pam_unix.so.3		base-sys-shlib		pam
+./usr/libexec/ld.elf_so				base-sys-shlib

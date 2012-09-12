@@ -1,0 +1,470 @@
+minix-sys Minix Complete system
+base-adosfs-root Root file system support for Amiga DOS file system support
+base-amd-bin auto-mounter daemon
+base-amd-examples example configuration files for the auto-mounter daemon and utilities
+base-amd-shlib auto-mounter daemon shared library
+base-audio-bin utilities for playing and recording audio
+base-bind-bin the BIND DNS server
+base-bind-examples example configuration files for BIND
+base-bind-root root file system directories required by BIND
+base-bootserver-bin software for booting diskless systems
+base-c-bin utilities for the C programming language
+base-c-usr /usr file system directories required by C programming language utilities
+base-calendar-bin calendar(1) displays lines from the calendar database matching certain dates
+base-calendar-share database of important dates for calendar(1)
+base-cron-bin the cron daemon and related utilities
+base-cron-root root file system directories required by the cron daemon
+base-crypto-bin cryptographic utilities
+base-crypto-examples example configuration files for cryptographic utilities
+base-crypto-root root file system directories required by cryptographic utilities
+base-crypto-shlib shared library providing cryptographic routines
+base-cxx-usr /usr file system directories required by C++ programming language utilities
+base-debug-bin debugging utilities
+base-dhclient-root root file system support for DHCP client software
+base-dhcpd-bin DHCP server
+base-dhcpd-examples example configuration files for DHCP server
+base-efs-root root file system support for efs file system
+base-ext2fs-root root file system support for ext2fs file system
+base-filecorefs-root root file system support for the Acorn FILECORE file system
+base-fstab-examples various example file system tables
+base-games-root root file system support for games
+base-games-share shared data files for games
+base-games-usr directories for the games subsystem
+base-gnats-bin the GNATS bug reporting utility
+base-gnats-share shared data files for the GNATS bug reporting utility
+base-groff-font fonts for the groff family of text formatters
+base-groff-share shared data files for the groff family of text formatters
+base-hesiod-bin utilities for the HESIOD network information system
+base-htmldoc-share HTML documentation
+base-i18n-root directories for internationalisation support
+base-i18n-shlib shared library modules for internationalisation support
+base-ipf-bin IPfilter utilities
+base-ipf-root directories for IPfilter
+base-isdn-bin utilities and daemons for ISDN network connectivity
+base-isdn-examples directories for the ISDN example files
+base-kernel-modules loadable kernel modules
+base-krb5-bin commands and utilities for the Kerberos V network authentication system
+base-krb5-examples example configuration files for the Kerberos V network authentication system
+base-krb5-root root file system support for the Kerberos V network authentication system
+base-krb5-shlib root file system support for the Kerberos V network authentication system
+base-libsaslc-examples example configuration files for the SASL C library
+base-locale-Pig igPey atinLey ocaleley upportsey (Pig-Latin locale support)
+base-locale-bin utilities for working with locales
+base-locale-ca Catalan language locale support
+base-locale-cs Czech language locale support
+base-locale-da Danish language locale support
+base-locale-de German language locale support
+base-locale-el Greek language locale support
+base-locale-en English language locale support
+base-locale-eo Esperanto language locale support
+base-locale-es Spanish language locale support
+base-locale-et Estonian language locale support
+base-locale-fi Finnish language locale support
+base-locale-fr French language locale support
+base-locale-gl	Galician language locale support
+base-locale-he Hebrew language locale support
+base-locale-hr Croatian language locale support
+base-locale-hu Hungarian language locale support
+base-locale-id	Indonesian language locale support
+base-locale-is Icelandic language locale support
+base-locale-it Italian language locale support
+base-locale-ja Japanese language locale support
+base-locale-ko Korean language locale support
+base-locale-lt Lithuanian language locale support
+base-locale-nl Dutch language locale support
+base-locale-no Norwegian language locale support
+base-locale-pl Polish language locale support
+base-locale-pt Portuguese language locale support
+base-locale-ru Russian language locale support
+base-locale-share /usr/share file system support for all locales
+base-locale-sk Slovak language locale support
+base-locale-sl Slovenian language locale support
+base-locale-sv Swedish language locale support
+base-locale-tr	Turkish language locale support
+base-locale-uk Ukrainian language locale support
+base-locale-zh Chinese language locale support
+base-lpr-bin utilities for printing support
+base-lpr-root root file system support for printing utilities
+base-lpr-usr /usr file system support for printing
+base-magic-share shared files for the file(1) utility
+base-mail-bin mail utilities
+base-mail-root root file system support for mail utilities
+base-mailwrapper-bin the mailwrapper(8) program for multiple mailer support
+base-man-bin utilities for reading online manual pages
+base-man-share shared data files for the online manual pages
+base-miscfs-examples example configuration files for miscellaneous file systems
+base-miscfs-root root file system support for miscellaneous file systems
+base-net-shlib shared libraries for network programming
+base-netutil-bin networking utilities
+base-netutil-examples example configuration files for networking programs
+base-netutil-root root file system support for networking utilities
+base-nfsclient-bin network file system client utilities
+base-nfsclient-root root file system support for network file system client utilities
+base-nfsserver-bin network file system server program
+base-nis-bin progams and utilities for the NIS network information system
+base-nis-root root file system support for the NIS network information system
+base-ntfs-root root file system support for the Windows NT file system
+base-ntp-bin utilities for network time protocol support
+base-ntp-root	basic directories for network time protocol support
+base-objc-usr /usr file system support for the Objective C programming language
+base-pf-bin utilities for the PF packet filter
+base-pf-root directories for the PF packet filter
+base-pkgutil-bin package system utilities
+base-postfix-bin the Postfix mailer
+base-postfix-examples example configuration files for the Postfix mailer
+base-postfix-root root file system support for the Postfix mailer
+base-postfix-usr /usr file system support for the Postfix mailer
+base-ppp-bin utilities for the PPP point-to-point remote access protocol
+base-psd-share directory structure for the Programmer's Supplementary Documentation
+base-rcs-bin utilities for the RCS Revision Control System
+base-reference-share directory structure for miscellaneous reference documents
+base-rescue-root statically-linked binaries which can be used in extremis
+base-router-bin network routing utilities
+base-router-examples base directories for network routing utilities
+base-router-root root file system support for network routing utilities
+base-secsh-bin secure shell SSH client and server
+base-sendmail-bin the sendmail(8) mailer
+base-sendmail-root root file system support for the sendmail(8) mailer
+base-sendmail-share shared data files for the sendmail(8) mailer
+base-sendmail-usr /usr file system support for the sendmail(8) mailer
+base-slip-bin the SLIP serial line internet protocol
+base-slip-root root file system support for the SLIP remote access protocol
+base-smbfs-root root file system support for the smbfs client SMB filesystem support
+base-smm-share directory structure for the System Manager's Manual
+base-sup-bin utilities for the SUP software update protocol
+base-sup-examples example configuration files for the SUP software update protocol
+base-sys-devlinks device node symbolic links
+base-sys-examples example configuration files for kernel functionality
+base-sys-root required root file system structure
+base-sys-share required /usr/share file system structure
+base-sys-shlib shared libraries for basic system functionality
+base-sys-usr required /usr file system structure
+base-sysutil-bin system utilities
+base-sysutil-examples example configuration files for miscellaneous system utilities
+base-sysutil-root root file system support for system utilities
+base-sysutil-share shared data files for system utilities
+base-sysutil_locale-share shared locale support for system utilities
+base-termcap-share shared files for terminal capability database
+base-texinfo-bin the GNU texinfo software
+base-texinfo-share shared data files for the GNU texinfo software
+base-texinfo_locale-cs Czech language support for the GNU texinfo software
+base-texinfo_locale-da Danish language support for the GNU texinfo software
+base-texinfo_locale-de German language support for the GNU texinfo software
+base-texinfo_locale-eo	Esperanto language support for the GNU texinfo software
+base-texinfo_locale-fr French language support for the GNU texinfo software
+base-texinfo_locale-he Hebrew language support for the GNU texinfo software
+base-texinfo_locale-hr Croatian language support for the GNU texinfo software
+base-texinfo_locale-ja Japanese language support for the GNU texinfo software
+base-texinfo_locale-nl Dutch language support for the GNU texinfo software
+base-texinfo_locale-no Norwegian language support for the GNU texinfo software
+base-texinfo_locale-ru Russian language support for the GNU texinfo software
+base-texinfo_locale-sv Swedish language support for the GNU texinfo software
+base-texinfo_locale-tr Turkish language support for the GNU texinfo software
+base-texinfo_locale-zh Chinese language support for the GNU texinfo software
+base-timed-bin utilities for the timed(8) network time daemon
+base-tn3270-bin utilities for connecting to IBM VM/CMS systems
+base-usd-share directory structure for the User's Supplementary Documentation
+base-util-bin standard utilities for use by users
+base-util-root root file system support for standard user utilities
+base-util-share shared data files for standard user utilities
+base-util_locale-cs	Czech language support for standard utilities
+base-util_locale-de German language support for standard utilities
+base-util_locale-el Greek language support for standard utilities
+base-util_locale-eo	Esperanto language support for standard utilities
+base-util_locale-es Spanish language support for standard utilities
+base-util_locale-et Estonian language support for standard utilities
+base-util_locale-fr French language support for standard utilities
+base-util_locale-gl	Galician language support for standard utilities
+base-util_locale-hr	Croatian language support for standard utilities
+base-util_locale-id	Indonesian language support for standard utilities
+base-util_locale-it	Italian language support for standard utilities
+base-util_locale-ja	Japanese language support for standard utilities
+base-util_locale-sv Swedish language support for standard utilities
+comp-c-bin compilers and tools for the C programming language
+comp-c-catman formatted manual pages
+comp-c-include header files for the C programming language
+comp-c-lib static libraries and shared library links for the C programming language
+comp-c-lintlib data files for the lint(1) syntax checker
+comp-c-man manual pages source
+comp-c-piclib PIC libraries for C language shared library generation
+comp-c-proflib profiling libraries for the C programming language
+comp-c-root root file system symlinks for software development
+comp-c-share reference files for C language programmers
+comp-c-shlib	shared libraries for binary file utilities and machine opcodes
+comp-c_locale-da Danish language locale support for development utilities
+comp-c_locale-de German language locale support for development utilities
+comp-c_locale-es Spanish language locale support for development utilities
+comp-c_locale-fr French language locale support for development utilities
+comp-c_locale-ko Korean language locale support for development utilities
+comp-c_locale-nl Dutch language locale support for development utilities
+comp-c_locale-no Norwegian language locale support for development utilities
+comp-c_locale-pl Polish language locale support for development utilities
+comp-c_locale-pt Portuguese language locale support for development utilities
+comp-c_locale-sl Slovenian language locale support for development utilities
+comp-c_locale-sv Swedish language locale support for development utilities
+comp-cvs-bin utilities for CVS (Concurrent Version System)
+comp-cvs-catman formatted manual pages for the CVS version control system
+comp-cvs-man manual page source for the CVS version control system
+comp-cxx-bin compilers and tools for the C++ programming language
+comp-cxx-catman formatted manual pages for the C++ programming language
+comp-cxx-include header files for the C++ programming language
+comp-cxx-lib static libraries and shared library links for the C++ programming language
+comp-cxx-man manual pages source for the C++ programming language
+comp-cxx-piclib PIC libraries for C++ language shared library generation
+comp-cxx-proflib profiling libraries for the C++ programming language
+comp-debug-bin utilities for source code debugging
+comp-debug-catman formatted manual pages for debugging utilities
+comp-debug-man manual pages source for debugging utilities
+comp-debug-sbin utilities for kernel debugging
+comp-fortran-bin compilers and tools for the FORTRAN programming language
+comp-fortran-catman formatted manual pages for the FORTRAN programming language
+comp-fortran-lib static libraries and shared library links for the FORTRAN programming language
+comp-fortran-man manual pages source for the FORTRAN programming language
+comp-fortran-piclib PIC libraries for the FORTRAN language shared library generation
+comp-fortran-proflib profiling libraries for the FOTRAN programming language
+comp-fortran-shlib shared libraries for the FORTRAN programming language
+comp-i18n-lib static libraries and shared library links for compiling applications with internationalisation support
+comp-ipf-include header files for the IPfilter C API
+comp-krb5-catman formatted manual pages for Kerberos V support
+comp-krb5-include header files for Kerberos V support
+comp-krb5-lib 	libraries to support Kerberos V compilation
+comp-krb5-man 	source manual pages for Kerberos V support 
+comp-krb5-proflib 	profiling libraries for Kerberos V support 
+comp-krb5c-catman 	pre-formatted manual pages for Kerberos V C support
+comp-objc-bin compilers and tools for the Objective C programming language
+comp-objc-lib static libraries and shared library links for the Objective C programming language
+comp-objc-piclib PIC libraries for Objective C language shared library generation
+comp-objc-proflib profiling libraries for the Objective C programming language
+comp-sys-catman formatted manual pages for kernel programming
+comp-sys-man manual pages source for kernel programming
+comp-sys-shlib	shared library support for basic i386 math and utility libs
+comp-sysutil-catman formatted manual pages for system utilities
+comp-sysutil-man manual pages source for system utilities
+comp-sysutil-root manual pages source for system utilities
+comp-sysutil-sbin system utilities
+comp-util-bin programming utilities
+comp-util-catman formatted manual pages for programming utilities
+comp-util-man manual pages source for programming utilities
+comp-util-sbin system development utilities
+comp-util-share reference files for programming utilities
+etc-amd-rc startup script for auto-mounter daemon
+etc-audio-rc startup script for audio mixer control utility
+etc-bind-etc configuration files for BIND DNS server
+etc-bind-rc startup script for BIND DNS server
+etc-bootserver-etc configuration files for diskless boot server utilities
+etc-bootserver-rc startup script for diskless boot server utilities
+etc-cron-log empty log file for cron(8)
+etc-cron-rc startup script for cron(8) command scheduler
+etc-cron-root root file system support for cron(8) command scheduler
+etc-dhclient-etc configuration files for DHCP dyanamic host configuration protocol client utilities
+etc-dhclient-rc startup script for DHCP dynamic host configuration protocol client
+etc-dhcpd-rc startup script for DHCP dynamic host configuration protocol daemon
+etc-extsrc-rc startup scripts for externally added programs
+etc-games-etc configuration file for games
+etc-games-scores empty score files for games
+etc-ipf-rc startup scripts for IP filter
+etc-isdn-rc startup script for ISDN (Integrated Services Digital Network) network connectivity utilities
+etc-krb5-rc startup script for the Kerberos V authentication service
+etc-libsaslc-etc configuration file for the SASL C library
+etc-libsaslc-postfix configuration file for postfix SASL
+etc-lpr-etc configuration file for printing services
+etc-lpr-log empty log file for printing services
+etc-lpr-rc startup script for printing services
+etc-mail-etc configuration file for mail utilities
+etc-mailwrapper-etc configuration files for the mailwrapper(8) program for multiple mailer support
+etc-man-etc configuration files for the online manual pages
+etc-net-etc configuration files for networking
+etc-net-rc startup files for networking
+etc-netutil-etc configuration files for network utilities
+etc-netutil-log empty log files for networking utilities
+etc-nfsserver-rc startup script for NFS network file system server utilities
+etc-nis-rc startup script for the NIS network information system
+etc-nis-root root file system support for the NIS network file system
+etc-ntp-etc configuration files for the ntpd(8) Network Time Protocol server
+etc-ntp-rc startup script for the ntpd(8) Network Time Protocol server
+etc-pf-defaults default configuration files for the PF packet filter
+etc-pf-etc configuration files for the PF packet filter
+etc-postfix-etc configuration file for the postfix mailer program
+etc-postfix-rc startup script for the postfix mailer program
+etc-ppp-rc startup script for the PPP point-to-point connection protocol
+etc-root-root login configuration files for the user root
+etc-router-etc configuration files for network routing
+etc-router-rc startup scripts for routing services
+etc-secsh-etc configuration file for SSH secure remote shell utility
+etc-secsh-rc startup script for SSH secure remote shell utility
+etc-sendmail-etc configuration files for the sendmail(8) mailer
+etc-sendmail-log empty log files for the sendmail(8) mailer
+etc-sendmail-rc startup script for the sendmail(8) mailer
+etc-sys-defaults default system startup configuration files
+etc-sys-etc system software configuration files
+etc-sys-log empty system log files
+etc-sys-rc standard system startup scripts
+etc-sys-root required root file system structure for system software
+etc-sysutil-etc configuration files for miscellaneous system utilities
+etc-sysutil-log empty log files for miscellaneous system utilities
+etc-sysutil-rc	startup scripts for miscellaneous system utilities
+etc-timed-rc startup script for the timed(8) network time daemon
+etc-util-etc configuration file for standard system utilities
+etc-x11-rc startup scripts for the X11 X Window System
+games-games-bin command line games
+games-games-catman formatted manual pages for command-line games
+games-games-man manual pages source for command-line games
+games-games-root data and score files for command line games
+games-games-share shared data files for command-line games
+games-utils-bin miscellaneous utilities from /usr/games
+games-utils-catman formatted manual pages for miscellaneous utilities from /usr/games
+games-utils-man manual pages source for miscellaneous utilities from /usr/games
+games-utils-share shared data files for miscellaneous utilities from /usr/games
+man-adosfs-catman formatted manual pages for AmigaDOS file system support
+man-adosfs-man manual pages source for AmigaDOS file system support
+man-amd-catman formatted manual pages for the amd(8) auto-mounting daemon
+man-amd-info texinfo documentation for the amd(8) auto-mounting daemon
+man-amd-man manual pages source for the amd(8) auto-mounting daemon
+man-audio-catman formatted manual pages for utilities for playing and recording audio
+man-audio-man manual pages source for utilities for playing and recording audio
+man-bind-catman formatted manual pages for the bind(8) domain name server daemon
+man-bind-man manual pages source for the bind(8) domain name server daemon
+man-bootserver-catman formatted manual pages for utilities to support remote booting of diskless workstations
+man-bootserver-man manual pages source for utilities to support remote booting of diskless workstations
+man-c-catman formatted manual pages for the C programming language
+man-c-info the GNU texinfo software
+man-c-man manual pages source for the C programming language
+man-computil-info texinfo documentation for compiler utilities
+man-cron-catman formatted manual pages for the cron(8) command scheduler
+man-cron-man manual pages source for the cron(8) command scheduler
+man-crypto-catman formatted manual pages for cryptographic utilities
+man-crypto-man manual pages source for cryptographic utilities
+man-cvs-info texinfo documentation for the CVS version control system
+man-cxx-info texinfo documentation for the C++ programming language
+man-debug-catman formatted manual pages for debugging utilities
+man-debug-info texinfo documentation for debugging utilities
+man-debug-man manual pages source for debugging utilities
+man-dhclient-catman formatted manual pages for DHCP (dynamic host configuration protocol) client utilities
+man-dhclient-man manual pages source for DHCP (dynamic host configuration protocol) client utilities
+man-dhcpd-catman formatted manual pages for DHCP (dynamic host configuration protocol) server utilities
+man-dhcpd-man manual pages source for DHCP (dynamic host configuration protocol) server utilities
+man-efs-catman formatted manual pages for the Silicon Graphics efs file system support
+man-efs-man manual pages source for the Silicon Graphics efs file system support
+man-ext2fs-catman formatted manual pages for the Linux ext2fx file system support
+man-ext2fs-man manual pages source for the Linux ext2fx file system support
+man-filecorefs-catman formatted manual pages Acorn FileCore file system support
+man-filecorefs-man manual pages source Acorn FileCore file system support
+man-fortran-info texinfo documentation for the FORTRAN programming language
+man-games-catman formatted man pages for games
+man-games-man manual pages source for games
+man-gnats-catman formatted manual pages for the GNATS bug reported system
+man-gnats-info texinfo documentation for the GNATS bug reported system
+man-gnats-man manual pages source for the GNATS bug reported system
+man-groff-catman formatted manual pages for the groff documentation formatting utility
+man-groff-man manual pages source for the groff documentation formatting utility
+man-hesiod-catman formatted manual pages for the HESIOD network information system
+man-hesiod-man manual pages source for the HESIOD network information system
+man-info-share required file system structure for GNU texinfo documentation
+man-ipf-catman formatted manual pages for the IPfilter packet filtering software
+man-ipf-man manual pages source for the IPfilter packet filtering software
+man-isdn-catman formatted manual pages for ISDN (Integrated Services Data Networking) support
+man-isdn-man manual pages source for ISDN (Integrated Services Data Networking) support
+man-krb5-catman formatted manual pages for the Kerberos V network authentication system
+man-krb5-info the GNU texinfo software
+man-krb5-man manual pages source for the Kerberos V network authentication system
+man-locale-catman formatted manual pages for locale support utilities
+man-locale-man manual pages source for locale support utilities
+man-lpr-catman formatted manual pages for printing support
+man-lpr-man manual pages source for printing support
+man-mail-catman formatted manual pages for mail utilities
+man-mail-man manual pages source for mail utilities
+man-mailwrapper-catman formatted manual pages for the mailwrapper(8) program for multiple mailer support
+man-mailwrapper-man manual pages source for the mailwrapper(8) program for multiple mailer support
+man-man-catman formatted manual pages for the utilities for viewing the online manual
+man-man-man manual pages source for the utilities for viewing the online manual
+man-miscfs-catman the GNU texinfo software
+man-miscfs-man manual pages sources for miscellaneous file system support
+man-net-catman formatted manual pages for networking support
+man-net-man manual pages source for networking support
+man-netutil-catman formatted manual pages for networking utilities
+man-netutil-man manual pages source for networking utilities
+man-nfsclient-catman formatted manual pages for NFS (network file system) client utilities
+man-nfsclient-man manual pages source for NFS (network file system) client utilities
+man-nfsserver-catman formatted manual pages for NFS (network file system) server utilities
+man-nfsserver-man manual pages source for NFS (network file system) server utilities
+man-nis-catman formatted manual pages for the NIS network information system utilities
+man-nis-man manual pages source for the NIS network information system utilities
+man-ntfs-catman formatted manual pages for the Windows NT file system support
+man-ntfs-man manual pages source for the Windows NT file system support
+man-ntp-catman formatted manual pages for the network time protocol utilities
+man-ntp-man manual pages source for the network time protocol utilities
+man-pf-catman formatted manual pages for the PF packet filter
+man-pf-man manual page source for the PF packet filter
+man-pkgutil-catman formatted manual pages for the package system utilities
+man-pkgutil-man manual pages source for the package system utilities
+man-postfix-catman formatted manual pages for the postfix mailer
+man-postfix-man manual pages source for the postfix mailer
+man-ppp-catman formatted manual pages for the ppp point-to-point connection protocol
+man-ppp-man manual pages source for the ppp point-to-point connection protocol
+man-rc-catman formatted manual pages for system startup scripts
+man-rc-man manual pages source for system startup scripts
+man-rcs-catman formatted manual pages for the rcs(1) revision control system
+man-rcs-man manual pages source for the rcs(1) revision control system
+man-reference-catman formatted manual pages for miscellaneous system- and non-system-related reference documents
+man-reference-man manual pages source for miscellaneous system- and non-system-related reference documents
+man-router-catman formatted manual pages for routing utilities
+man-router-man manual pages source for routing utilities
+man-secsh-catman formatted manual pages for the ssh(1) remote secure shell connection utility
+man-secsh-man manual pages source for the ssh(1) remote secure shell connection utility
+man-sendmail-catman formatted manual pages for the sendmail(8) mailer
+man-sendmail-man manual pages source for the sendmail(8) mailer
+man-shlib-catman formatted manual pages for shared library support
+man-shlib-man manual pages source for shared library support
+man-slip-catman formatted manual pages for SLIP (serial line IP) remote access protocol
+man-slip-man manual pages source for SLIP (serial line IP) remote access protocol
+man-smbfs-catman	formatted manual pages for SMB filesystem
+man-smbfs-man	source manual pages for SMB filesystem
+man-sup-catman formatted manual pages for the sup(8) software update protocol
+man-sup-man manual pages source for the sup(8) software update protocol
+man-sys-catman formatted manual pages for base operating system functionality
+man-sys-info the GNU texinfo software
+man-sys-man manual pages source for base operating system functionality
+man-sysutil-catman formatted manual pages for system utilities
+man-sysutil-man manual pages source for system utilities
+man-texinfo-catman	formatted manual pages for texinfo utilities
+man-texinfo-info texinfo documentation for texinfo utilities
+man-texinfo-man	source manual pages for texinfo utilities
+man-timed-catman formatted manual pages for the timed(8) network time daemon
+man-timed-man manual pages source for the timed(8) network time daemon
+man-tn3270-catman formatted manual pages for utilities for connecting to IBM VM/CMS systems
+man-tn3270-man manual pages source for utilities for connecting to IBM VM/CMS systems
+man-util-catman formatted manual pages for basic user utilities
+man-util-info the GNU texinfo software
+man-util-man manual pages source for basic user utilities
+misc-amd-examples example configuration files for automatically mount file systems
+misc-bind-examples example configuration files for bind
+misc-bind-htmldoc HTML documentation for bind
+misc-crypto-examples example configuration files for cryptographic software
+misc-dhcpd-examples example configuration files for dhcpd(8)
+misc-fstab-examples example configuration files for file system tables
+misc-ipf-examples example configuration files for IPfilter
+misc-isdn-examples example configuration files for isdn
+misc-krb5-examples example configuration files for Kerberos5
+misc-libsaslc-examples example configuration files for libsaslc
+misc-netutil-examples example configuration files for network software
+misc-ntp-htmldoc HTML documentation for ntp(8) software
+misc-pf-examples
+misc-postfix-examples example configuration files for postfix
+misc-postfix-htmldoc	HTML documentation for postfix 
+misc-psd-doc the Programmer's Supplementary Documentation for BSD
+misc-reference-share miscellaneous reference documents
+misc-router-examples example configuration files for routing daemons
+misc-sendmail-share m4 templates for sendmail configuration
+misc-smm-doc the System Manager's Manual for BSD
+misc-sup-examples example configuration files for sup(8)
+misc-sys-examples example configuration files for kernel functionality
+misc-sysutil-examples example configuration files for system utilities
+misc-usd-doc the User's Supplementary Documents for BSD
+misc-util-htmldoc HTML documentation for miscellaneous utilities
+text-groff-bin the groff family of text formatters (nroff, troff, groff, and related utilities)
+text-groff-catman formatted manual pages for the groff family of text formatters
+text-groff-font fonts for the groff family of text formatters
+text-groff-man manual page source for the groff family of text formatters
+text-groff-share macros and data files for the groff family of text formatters
+text-texinfo-bin the GNU texinfo software
+text-texinfo-share	shared files for the GNU texinfo software

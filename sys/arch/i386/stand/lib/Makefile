@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2011/06/22 02:49:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.36 2012/08/10 12:18:15 joerg Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -11,7 +11,6 @@ I386_INCLUDE_DOS?= no
 I386_INCLUDE_BUS?= no
 I386_INCLUDE_PS2?= yes
 
-ACTIVE_CC?= ${CC}
 AFLAGS.biosdelay.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.biosgetrtc.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.biosgetsystime.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
@@ -76,6 +75,6 @@ lib${LIB}.o:: ${OBJS}
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
 # XXX
-.if ${HAVE_GCC} == 45
+.if ${HAVE_GCC:U} == 45
 COPTS.biosdisk.c+=	-fno-strict-aliasing
 .endif

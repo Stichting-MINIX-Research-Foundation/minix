@@ -2,6 +2,9 @@
 
 HOSTPROGNAME=	${_TOOL_PREFIX}sed
 HOST_SRCDIR=	usr.bin/sed
+
+.ifdef __MINIX
 SYMLINKS=	# defined so usr.bin/sed/Makefile does not set it
+.endif
 
 .include "${.CURDIR}/../Makefile.host"

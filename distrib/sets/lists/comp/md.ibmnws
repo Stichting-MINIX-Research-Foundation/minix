@@ -1,0 +1,61 @@
+# $NetBSD: md.ibmnws,v 1.10 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ibmnws				comp-c-include
+./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
+./usr/include/ibmnws/ansi.h			comp-c-include
+./usr/include/ibmnws/aout_machdep.h		comp-c-include
+./usr/include/ibmnws/asm.h			comp-c-include
+./usr/include/ibmnws/atomic.h			comp-obsolete		obsolete
+./usr/include/ibmnws/bat.h			comp-obsolete		obsolete
+./usr/include/ibmnws/bswap.h			comp-c-include
+./usr/include/ibmnws/bus.h			comp-obsolete		obsolete
+./usr/include/ibmnws/cdefs.h			comp-c-include
+./usr/include/ibmnws/cpu.h			comp-c-include
+./usr/include/ibmnws/cpufunc.h			comp-obsolete		obsolete
+./usr/include/ibmnws/db_machdep.h		comp-obsolete		obsolete
+./usr/include/ibmnws/disklabel.h		comp-c-include
+./usr/include/ibmnws/elf_machdep.h		comp-c-include
+./usr/include/ibmnws/endian.h			comp-c-include
+./usr/include/ibmnws/endian_machdep.h		comp-c-include
+./usr/include/ibmnws/float.h			comp-c-include
+./usr/include/ibmnws/fpu.h			comp-c-include
+./usr/include/ibmnws/frame.h			comp-c-include
+./usr/include/ibmnws/ieee.h			comp-c-include
+./usr/include/ibmnws/ieeefp.h			comp-c-include
+./usr/include/ibmnws/int_const.h		comp-c-include
+./usr/include/ibmnws/int_fmtio.h		comp-c-include
+./usr/include/ibmnws/int_limits.h		comp-c-include
+./usr/include/ibmnws/int_mwgwtypes.h		comp-c-include
+./usr/include/ibmnws/int_types.h		comp-c-include
+./usr/include/ibmnws/intr.h			comp-c-include
+./usr/include/ibmnws/ipkdb.h			comp-obsolete		obsolete
+./usr/include/ibmnws/kcore.h			comp-c-include
+./usr/include/ibmnws/kgdb.h			comp-obsolete		obsolete
+./usr/include/ibmnws/limits.h			comp-c-include
+./usr/include/ibmnws/lock.h			comp-c-include
+./usr/include/ibmnws/math.h			comp-c-include
+./usr/include/ibmnws/mcontext.h			comp-c-include
+./usr/include/ibmnws/mutex.h			comp-c-include
+./usr/include/ibmnws/param.h			comp-c-include
+./usr/include/ibmnws/pcb.h			comp-c-include
+./usr/include/ibmnws/pio.h			comp-obsolete		obsolete
+./usr/include/ibmnws/pmap.h			comp-c-include
+./usr/include/ibmnws/pmc.h			comp-c-include
+./usr/include/ibmnws/powerpc.h			comp-obsolete		obsolete
+./usr/include/ibmnws/proc.h			comp-c-include
+./usr/include/ibmnws/profile.h			comp-c-include
+./usr/include/ibmnws/psl.h			comp-c-include
+./usr/include/ibmnws/pte.h			comp-c-include
+./usr/include/ibmnws/ptrace.h			comp-c-include
+./usr/include/ibmnws/reg.h			comp-c-include
+./usr/include/ibmnws/reloc.h			comp-c-include
+./usr/include/ibmnws/rwlock.h			comp-c-include
+./usr/include/ibmnws/setjmp.h			comp-c-include
+./usr/include/ibmnws/signal.h			comp-c-include
+./usr/include/ibmnws/spr.h			comp-obsolete		obsolete
+./usr/include/ibmnws/stdarg.h			comp-obsolete		obsolete
+./usr/include/ibmnws/trap.h			comp-c-include
+./usr/include/ibmnws/types.h			comp-c-include
+./usr/include/ibmnws/varargs.h			comp-obsolete		obsolete
+./usr/include/ibmnws/vmparam.h			comp-c-include
+./usr/include/ibmnws/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

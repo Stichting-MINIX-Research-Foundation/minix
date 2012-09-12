@@ -1,0 +1,62 @@
+# $NetBSD: md.sandpoint,v 1.16 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sandpoint				comp-c-include
+./usr/include/sandpoint/_G_config.h		comp-obsolete		obsolete
+./usr/include/sandpoint/ansi.h			comp-c-include
+./usr/include/sandpoint/aout_machdep.h		comp-c-include
+./usr/include/sandpoint/asm.h			comp-c-include
+./usr/include/sandpoint/atomic.h		comp-obsolete		obsolete
+./usr/include/sandpoint/bootinfo.h		comp-c-include
+./usr/include/sandpoint/bswap.h			comp-c-include
+./usr/include/sandpoint/bus.h			comp-obsolete		obsolete
+./usr/include/sandpoint/cdefs.h			comp-c-include
+./usr/include/sandpoint/conf.h			comp-obsolete		obsolete
+./usr/include/sandpoint/cpu.h			comp-c-include
+./usr/include/sandpoint/cpufunc.h		comp-obsolete		obsolete
+./usr/include/sandpoint/db_machdep.h		comp-obsolete		obsolete
+./usr/include/sandpoint/disklabel.h		comp-c-include
+./usr/include/sandpoint/elf_machdep.h		comp-c-include
+./usr/include/sandpoint/endian.h		comp-c-include
+./usr/include/sandpoint/endian_machdep.h	comp-c-include
+./usr/include/sandpoint/float.h			comp-c-include
+./usr/include/sandpoint/fpu.h			comp-c-include
+./usr/include/sandpoint/frame.h			comp-c-include
+./usr/include/sandpoint/ieee.h			comp-c-include
+./usr/include/sandpoint/ieeefp.h		comp-c-include
+./usr/include/sandpoint/int_const.h		comp-c-include
+./usr/include/sandpoint/int_fmtio.h		comp-c-include
+./usr/include/sandpoint/int_limits.h		comp-c-include
+./usr/include/sandpoint/int_mwgwtypes.h		comp-c-include
+./usr/include/sandpoint/int_types.h		comp-c-include
+./usr/include/sandpoint/intr.h			comp-c-include
+./usr/include/sandpoint/ipkdb.h			comp-obsolete		obsolete
+./usr/include/sandpoint/kcore.h			comp-c-include
+./usr/include/sandpoint/kgdb.h			comp-obsolete		obsolete
+./usr/include/sandpoint/limits.h		comp-c-include
+./usr/include/sandpoint/lock.h			comp-c-include
+./usr/include/sandpoint/math.h			comp-c-include
+./usr/include/sandpoint/mcontext.h		comp-c-include
+./usr/include/sandpoint/mutex.h			comp-c-include
+./usr/include/sandpoint/param.h			comp-c-include
+./usr/include/sandpoint/pcb.h			comp-c-include
+./usr/include/sandpoint/pio.h			comp-obsolete		obsolete
+./usr/include/sandpoint/pmap.h			comp-c-include
+./usr/include/sandpoint/pmc.h			comp-c-include
+./usr/include/sandpoint/powerpc.h		comp-obsolete		obsolete
+./usr/include/sandpoint/proc.h			comp-c-include
+./usr/include/sandpoint/profile.h		comp-c-include
+./usr/include/sandpoint/psl.h			comp-c-include
+./usr/include/sandpoint/pte.h			comp-c-include
+./usr/include/sandpoint/ptrace.h		comp-c-include
+./usr/include/sandpoint/reg.h			comp-c-include
+./usr/include/sandpoint/reloc.h			comp-c-include
+./usr/include/sandpoint/rwlock.h		comp-c-include
+./usr/include/sandpoint/setjmp.h		comp-c-include
+./usr/include/sandpoint/signal.h		comp-c-include
+./usr/include/sandpoint/spr.h			comp-obsolete		obsolete
+./usr/include/sandpoint/stdarg.h		comp-obsolete		obsolete
+./usr/include/sandpoint/trap.h			comp-c-include
+./usr/include/sandpoint/types.h			comp-c-include
+./usr/include/sandpoint/varargs.h		comp-obsolete		obsolete
+./usr/include/sandpoint/vmparam.h		comp-c-include
+./usr/include/sandpoint/wchar_limits.h		comp-c-include

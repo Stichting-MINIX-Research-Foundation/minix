@@ -35,6 +35,12 @@
 #ifndef __file_h__
 #define __file_h__
 
+#ifdef __minix
+/* LSC We are being compiled on a minix host, for some reasons
+ * this is not included fast enough, so ugly patch: */
+#include <sys/featuretest.h>
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

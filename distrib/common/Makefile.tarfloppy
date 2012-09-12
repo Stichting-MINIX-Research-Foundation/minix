@@ -1,0 +1,104 @@
+#	$NetBSD: Makefile.tarfloppy,v 1.16 2009/04/03 22:36:35 perry Exp $
+#
+# Makefile snippet to create a set of ustar floppies.
+# Each floppy has an 8KB header, followed by part or all of the ustar archive.
+#
+# Required variables:
+#	NETBSDSRCDIR	Top level of src tree (set by <bsd.own.mk>)
+#	FLOPPYBASE	Basename of floppies. Floppy number ${n} will
+#			be generated as ${FLOPPYBASE}${n}${FLOPPYSUFFIX}
+#	FLOPPYSIZE	Size of floppy in 512 byte blocks.
+#	FLOPPYFILES	Files to write to floppy.
+#			Usually set to "boot ${FLOPPYMETAFILE} netbsd"
+#
+# Optional variables:
+#	FLOPPY_BOOT		Bootstrap to use as "boot".
+#	FLOPPY_BOOT_STRIP	If yes, strip "boot" before use.
+#	FLOPPY_NETBSD		Kernel to to use as "netbsd".
+#	FLOPPYINSTBOOT		Installboot program to use.
+#				USTAR image file is in @IMAGE@.
+#	FLOPPYMAX		Maximum number of floppies to build.
+#				If 1, the final image is installed as
+#				${FLOPPYBASE}${FLOPPYSUFFIX} instead of
+#				${FLOPPYBASE}1${FLOPPYSUFFIX}
+#	FLOPPYMETAFILE		USTAR metafile(s) (optional)
+#	FLOPPYPAD		If defined, pad the last floppy to ${FLOPPYSIZE}
+#	FLOPPYSUFFIX		Suffix of created floppies.
+#	FLOPPY_RELEASEDIR	Where to install release floppies.
+#
+
+.if !defined(_MAKEFILE_TARFLOPPY_)
+_MAKEFILE_TARFLOPPY_=1
+
+
+.if defined(FLOPPY_BOOT)				# {
+CLEANFILES+=	boot
+boot: ${FLOPPY_BOOT}
+	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
+	@rm -f boot
+	@cp ${.ALLSRC} boot
+.if defined(FLOPPY_BOOT_STRIP)
+	@${STRIP} boot
+.endif
+.endif	# FLOPPY_BOOT					# }
+
+.if defined(FLOPPY_BOOT_CFG)
+CLEANFILES+=	boot.cfg
+boot.cfg:	${FLOPPY_BOOT_CFG}
+	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
+	@rm -f ${.TARGET}
+	@cp ${.ALLSRC} ${.TARGET}
+.endif	# FLOPPY_BOOT_CFG
+
+.if defined(FLOPPY_NETBSD)				# {
+CLEANFILES+=	netbsd netbsd.tmp
+.if ${FLOPPY_NETBSD:E}=="gz"
+COPY_CMD=	gunzip -c ${.ALLSRC} > ${.TARGET}.tmp
+COMPRESS_CMD=	gzip -9nc ${.TARGET}.tmp > ${.TARGET}; rm -f ${.TARGET}.tmp
+.else
+COPY_CMD=	cp ${.ALLSRC} ${.TARGET}.tmp
+COMPRESS_CMD=	mv -f ${.TARGET}.tmp ${.TARGET}
+.endif
+netbsd: ${FLOPPY_NETBSD}
+	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
+	${COPY_CMD}
+	${STRIP} -R .comment -R .ident ${.TARGET}.tmp
+	${COMPRESS_CMD}
+.endif	# FLOPPY_NETBSD					# }
+
+
+.if defined(FLOPPYMETAFILE)				# {
+CLEANFILES+=	${FLOPPYMETAFILE}
+${FLOPPYMETAFILE}:
+	${_MKTARGET_CREATE}
+	@rm -f ${FLOPPYMETAFILE}
+	@touch ${FLOPPYMETAFILE}
+.endif	# FLOPPYMETAFILE				# }
+
+
+${FLOPPYBASE}1${FLOPPYSUFFIX}: ${FLOPPYFILES} ${DISTRIBDIR}/common/buildfloppies.sh
+	${_MKTARGET_CREATE} "(from: ${FLOPPYFILES})"
+	PAX=${TOOL_PAX:Q} ${HOST_SH} ${DISTRIBDIR}/common/buildfloppies.sh \
+	    ${FLOPPYINSTBOOT:D-i ${FLOPPYINSTBOOT}} ${FLOPPYPAD:D-p} \
+	    ${FLOPPYMAX:D-m ${FLOPPYMAX}} ${FLOPPYSUFFIX:D-s ${FLOPPYSUFFIX}} \
+	    -N ${DESTDIR}/etc \
+	    ${FLOPPYBASE} ${FLOPPYSIZE} ${FLOPPYFILES}
+
+CLEANFILES+=	${FLOPPYBASE}?${FLOPPYSUFFIX}
+
+
+realall: ${FLOPPYBASE}1${FLOPPYSUFFIX}
+
+.if defined(FLOPPY_RELEASEDIR)
+release:: check_RELEASEDIR .WAIT ${FLOPPYBASE}1${FLOPPYSUFFIX}
+	if [ -e ${FLOPPYBASE}2${FLOPPYSUFFIX} ]; then \
+		${RELEASE_INSTALL} ${FLOPPYBASE}?${FLOPPYSUFFIX} \
+		    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${FLOPPY_RELEASEDIR}; \
+	else \
+		${RELEASE_INSTALL} ${FLOPPYBASE}1${FLOPPYSUFFIX} \
+		    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${FLOPPY_RELEASEDIR}/${FLOPPYBASE}${FLOPPYSUFFIX}; \
+	fi
+.endif
+
+
+.endif	# _MAKEFILE_TARFLOPPY_

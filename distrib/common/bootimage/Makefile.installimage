@@ -1,0 +1,62 @@
+#	$NetBSD: Makefile.installimage,v 1.3 2012/04/22 07:23:42 tsutsui Exp $
+#
+# Common Makefile to create a bootable installation image for USB flash etc.
+#
+
+#
+# Required variables:
+#	INSTIMGBASE
+#		Basename of the liveimage
+#
+# See Makefile.bootimage for other variables.
+#
+
+.if !target(check_INSTIMGBASE)
+check_INSTIMGBASE: .PHONY .NOTMAIN
+.if !defined(INSTIMGBASE)
+	@echo "Error: INSTIMGBASE is not set"
+	@false
+.else
+	@true
+.endif
+.endif
+
+SWAPMB=		0			# no swap
+OMIT_SWAPIMG=	yes			# nothing to write
+
+KERN_SET?=	kern-GENERIC
+SETS?=		modules base etc
+
+FSTAB_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/fstab.install.in
+
+.if ${USE_MBR} != "no"
+DISKPROTO_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/diskproto.noswap.mbr.in
+.else
+DISKPROTO_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/diskproto.noswap.in
+.endif
+
+# XXX: no permission info for makefs(8)
+IMGDIR_EXTRA=	${RELEASEDIR}/${RELEASEMACHINEDIR}	${RELEASEMACHINEDIR}
+IMGDIR_EXCLUDE= 	-s ',./installation/cdrom.*,,gp'
+IMGDIR_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
+IMGDIR_EXCLUDE+=	-s ',./installation/installimage.*,,gp'
+
+IMGBASE=        ${INSTIMGBASE}
+
+.include "${NETBSDSRCDIR}/distrib/common/bootimage/Makefile.bootimage"
+
+# INSTIMG_RELEASEDIR specifies where to install ${INSTIMGBASE}.img.gz.
+# This should be passed from etc/Makefile or etc/etc.${MACHINE}/Makefile.inc
+# but also set default here for manual builds.
+INSTIMG_RELEASEDIR?=	${RELEASEMACHINEDIR}/installation/installimage
+
+# should be defined elsewhere? 
+MKDIR?=		mkdir -p
+
+install_image: check_INSTIMGBASE check_RELEASEDIR ${IMGBASE}.img.gz
+	${MKDIR} ${INSTIMG_RELEASEDIR}
+	${RELEASE_INSTALL} ${IMGBASE}.img.gz ${INSTIMG_RELEASEDIR}
+	# note ${MAKESUM} will be calculated in src/etc/Makefile
+
+release:
+

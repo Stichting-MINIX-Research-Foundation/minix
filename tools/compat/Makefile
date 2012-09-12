@@ -2,6 +2,24 @@
 
 HOSTLIB=	nbcompat
 
+.ifndef __MINIX
+SRCS=		atoll.c basename.c cdbr.c cdbw.c dirname.c \
+		fgetln.c flock.c fparseln.c fpurge.c \
+		getcap.c getline.c getmode.c getopt_long.c gettemp.c \
+		heapsort.c \
+		issetugid.c lchflags.c lchmod.c lchown.c libyywrap.c \
+		md2.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c \
+		mi_vector_hash.c mkdtemp.c \
+		mkstemp.c pread.c putc_unlocked.c pwcache.c pwrite.c \
+		pw_scan.c \
+		raise_default_signal.c rmd160.c rmd160hl.c \
+		setenv.c setgroupent.c \
+		setpassent.c setprogname.c sha1.c sha1hl.c sha2.c \
+		sha256hl.c sha384hl.c sha512hl.c snprintf.c stat_flags.c \
+		strlcat.c strlcpy.c strmode.c strndup.c strsep.c strsuftoll.c \
+		strtoll.c unvis.c vis.c err.c errx.c verr.c verrx.c \
+		vwarn.c vwarnx.c warn.c warnx.c fts.c glob.c efun.c
+.else
 SRCS=		atoll.c basename.c dirname.c fgetln.c flock.c fparseln.c \
 		fpurge.c getline.c getmode.c getopt_long.c gettemp.c \
 		heapsort.c \
@@ -17,6 +35,7 @@ SRCS=		atoll.c basename.c dirname.c fgetln.c flock.c fparseln.c \
 		strlcat.c strlcpy.c strmode.c strndup.c strsep.c strsuftoll.c \
 		strtoll.c unvis.c vis.c err.c errx.c verr.c verrx.c \
 		vwarn.c vwarnx.c warn.c warnx.c fts.c glob.c efun.c
+.endif
 
 BUILD_OSTYPE!=  uname -s
 
@@ -31,7 +50,8 @@ CPPFLAGS+=	-no-cpp-precomp
 CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
 		-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 
-.PATH:		${.CURDIR}/../../lib/libc/gen \
+.PATH:		${.CURDIR}/../../lib/libc/cdb \
+		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/hash \
 		${.CURDIR}/../../lib/libc/hash/md2 \
 		${.CURDIR}/../../lib/libc/hash/md5 \

@@ -1,0 +1,221 @@
+# $NetBSD: md.i386,v 1.127 2012/08/29 17:13:21 drochner Exp $
+./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/bmiintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/emmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/fma4intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/immintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/lzcntintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/mm3dnow.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/mm_malloc.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/mmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/nmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/pmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/popcntintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/smmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/tmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/ammintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/avxintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/avx2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/bmi2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/bmiintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/emmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/fma4intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/fmaintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/immintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/lzcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/mm3dnow.h		comp-c-include		llvm
+./usr/include/clang-3.2/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-3.2/mmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/nmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/pmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/smmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/tmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/wmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/x86intrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/xmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/xopintrin.h		comp-c-include		llvm
+./usr/include/emmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/emmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mm_malloc.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/pmmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/xmmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.5/abmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/bmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cpuid.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cross-stdarg.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/emmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/fma4intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ia32intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/immintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/lwpintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm3dnow.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm_malloc.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/nmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/pmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/popcntintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/smmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/wmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/x86intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xopintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/i386				comp-c-include
+./usr/include/i386/_G_config.h			comp-obsolete		obsolete
+./usr/include/i386/ansi.h			comp-c-include
+./usr/include/i386/aout_machdep.h		comp-c-include
+./usr/include/i386/apmvar.h			comp-c-include
+./usr/include/i386/asm.h			comp-c-include
+./usr/include/i386/atomic.h			comp-obsolete		obsolete
+./usr/include/i386/autoconf.h			comp-obsolete		obsolete
+./usr/include/i386/bioscall.h			comp-c-include
+./usr/include/i386/bootinfo.h			comp-c-include
+./usr/include/i386/bswap.h			comp-c-include
+./usr/include/i386/bus.h			comp-obsolete		obsolete
+./usr/include/i386/byte_swap.h			comp-c-include
+./usr/include/i386/cdefs.h			comp-c-include
+./usr/include/i386/conf.h			comp-obsolete		obsolete
+./usr/include/i386/cpu.h			comp-c-include
+./usr/include/i386/cpufunc.h			comp-c-obsolete		obsolete
+./usr/include/i386/cputypes.h			comp-c-include
+./usr/include/i386/db_machdep.h			comp-obsolete		obsolete
+./usr/include/i386/disklabel.h			comp-c-include
+./usr/include/i386/elf_machdep.h		comp-c-include
+./usr/include/i386/endian.h			comp-c-include
+./usr/include/i386/endian_machdep.h		comp-c-include
+./usr/include/i386/fenv.h			comp-c-include
+./usr/include/i386/float.h			comp-c-include
+./usr/include/i386/frame.h			comp-c-include
+./usr/include/i386/freebsd_machdep.h		comp-c-include
+./usr/include/i386/gdt.h			comp-c-include
+./usr/include/i386/ibcs2_machdep.h		comp-c-include
+./usr/include/i386/ieee.h			comp-c-include
+./usr/include/i386/ieeefp.h			comp-c-include
+./usr/include/i386/int_const.h			comp-c-include
+./usr/include/i386/int_fmtio.h			comp-c-include
+./usr/include/i386/int_limits.h			comp-c-include
+./usr/include/i386/int_mwgwtypes.h		comp-c-include
+./usr/include/i386/int_types.h			comp-c-include
+./usr/include/i386/intr.h			comp-c-include
+./usr/include/i386/intrdefs.h			comp-c-include
+./usr/include/i386/joystick.h			comp-c-include
+./usr/include/i386/kcore.h			comp-c-include
+./usr/include/i386/limits.h			comp-c-include
+./usr/include/i386/loadfile_machdep.h		comp-obsolete		obsolete
+./usr/include/i386/lock.h			comp-c-include
+./usr/include/i386/math.h			comp-c-include
+./usr/include/i386/mcontext.h			comp-c-include
+./usr/include/i386/mouse.h			comp-obsolete		obsolete
+./usr/include/i386/mtrr.h			comp-c-include
+./usr/include/i386/multiboot.h			comp-c-include
+./usr/include/i386/mutex.h			comp-c-include
+./usr/include/i386/npx.h			comp-c-include
+./usr/include/i386/param.h			comp-c-include
+./usr/include/i386/pcb.h			comp-c-include
+./usr/include/i386/pccons.h			comp-obsolete		obsolete
+./usr/include/i386/pio.h			comp-c-include
+./usr/include/i386/pmap.h			comp-c-include
+./usr/include/i386/pmc.h			comp-c-include
+./usr/include/i386/proc.h			comp-c-include
+./usr/include/i386/profile.h			comp-c-include
+./usr/include/i386/psl.h			comp-c-include
+./usr/include/i386/pte.h			comp-c-include
+./usr/include/i386/ptrace.h			comp-c-include
+./usr/include/i386/reg.h			comp-c-include
+./usr/include/i386/rwlock.h			comp-c-include
+./usr/include/i386/segments.h			comp-c-include
+./usr/include/i386/setjmp.h			comp-c-include
+./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/specialreg.h			comp-c-include
+./usr/include/i386/spkr.h			comp-c-include
+./usr/include/i386/stdarg.h			comp-obsolete		obsolete
+./usr/include/i386/svr4_machdep.h		comp-c-include
+./usr/include/i386/sysarch.h			comp-c-include
+./usr/include/i386/trap.h			comp-c-include
+./usr/include/i386/tss.h			comp-c-include
+./usr/include/i386/types.h			comp-c-include
+./usr/include/i386/varargs.h			comp-obsolete		obsolete
+./usr/include/i386/vm86.h			comp-c-include
+./usr/include/i386/vmparam.h			comp-c-include
+./usr/include/i386/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/mm_malloc.h			comp-obsolete		obsolete
+./usr/include/mmintrin.h			comp-obsolete		obsolete
+./usr/include/pmc.h				comp-c-include
+./usr/include/pmmintrin.h			comp-obsolete		obsolete
+./usr/include/x86				comp-c-include
+./usr/include/x86/aout_machdep.h		comp-c-include
+./usr/include/x86/autoconf.h			comp-obsolete		obsolete
+./usr/include/x86/bootinfo.h			comp-c-include
+./usr/include/x86/bus.h				comp-obsolete		obsolete
+./usr/include/x86/cacheinfo.h			comp-c-include
+./usr/include/x86/cpu.h				comp-c-include
+./usr/include/x86/cpu_ucode.h			comp-c-include
+./usr/include/x86/cputypes.h			comp-c-include
+./usr/include/x86/cpuvar.h			comp-c-include
+./usr/include/x86/float.h			comp-c-include
+./usr/include/x86/ieee.h			comp-c-include
+./usr/include/x86/ieeefp.h			comp-c-include
+./usr/include/x86/intr.h			comp-c-include
+./usr/include/x86/intrdefs.h			comp-c-include
+./usr/include/x86/lock.h			comp-c-include
+./usr/include/x86/math.h			comp-c-include
+./usr/include/x86/mtrr.h			comp-c-include
+./usr/include/x86/mutex.h			comp-c-include
+./usr/include/x86/pio.h				comp-c-include
+./usr/include/x86/pmap.h			comp-c-include
+./usr/include/x86/pmap_pv.h			comp-c-include
+./usr/include/x86/psl.h				comp-c-include
+./usr/include/x86/pte.h				comp-c-include
+./usr/include/x86/rwlock.h			comp-c-include
+./usr/include/x86/specialreg.h			comp-c-include
+./usr/include/x86/sysarch.h			comp-c-include
+./usr/include/x86/trap.h			comp-c-include
+./usr/include/x86/via_padlock.h			comp-c-include
+./usr/include/xen				comp-c-include
+./usr/include/xen/xenio.h			comp-c-include
+./usr/include/xen/xenio3.h			comp-c-include
+./usr/include/xmmintrin.h			comp-obsolete		obsolete
+./usr/lib/libi386.a				comp-c-lib
+./usr/lib/libi386_g.a				-unknown-		debuglib
+./usr/lib/libi386_p.a				comp-c-proflib		profile
+./usr/lib/libi386_pic.a				comp-c-piclib		pic
+./usr/lib/libm387.a				comp-c-lib
+./usr/lib/libm387_g.a				-unknown-		debuglib
+./usr/lib/libm387_p.a				comp-c-proflib		profile
+./usr/lib/libm387_pic.a				comp-c-piclib		pic
+./usr/lib/libpmc.a				comp-c-lib
+./usr/lib/libpmc_g.a				-unknown-		debuglib
+./usr/lib/libpmc_p.a				comp-c-proflib		profile
+./usr/lib/libpmc_pic.a				comp-c-piclib		pic
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/pmc.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libi386.so.1.0.debug	comp-sys-debug	pic,debug
+./usr/libdata/debug/usr/lib/libm387.so.0.1.debug	comp-sys-debug	pic,debug
+./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug		comp-sys-debug	pic,debug
+./usr/libdata/debug/usr/sbin/acpidump.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/amldb.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ipwctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	debug
+./usr/libdata/lint/llib-li386.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint

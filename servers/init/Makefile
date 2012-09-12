@@ -4,6 +4,7 @@
 PROG=	init
 SRCS=	init.c
 
+CPPFLAGS.init.c+= -D__NBSD_LIBC
 MAN=
 
 BINDIR?= /usr/sbin

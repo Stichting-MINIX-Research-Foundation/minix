@@ -1,0 +1,58 @@
+# $NetBSD: md.next68k,v 1.32 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/next68k				comp-c-include
+./usr/include/next68k/_G_config.h		comp-obsolete		obsolete
+./usr/include/next68k/ansi.h			comp-c-include
+./usr/include/next68k/aout_machdep.h		comp-c-include
+./usr/include/next68k/asm.h			comp-c-include
+./usr/include/next68k/autoconf.h		comp-c-include
+./usr/include/next68k/bswap.h			comp-c-include
+./usr/include/next68k/bus.h			comp-c-include
+./usr/include/next68k/bus_dma.h			comp-c-include
+./usr/include/next68k/bus_space.h		comp-c-include
+./usr/include/next68k/cdefs.h			comp-c-include
+./usr/include/next68k/cpu.h			comp-c-include
+./usr/include/next68k/db_machdep.h		comp-obsolete		obsolete
+./usr/include/next68k/disklabel.h		comp-c-include
+./usr/include/next68k/elf_machdep.h		comp-c-include
+./usr/include/next68k/endian.h			comp-c-include
+./usr/include/next68k/endian_machdep.h		comp-c-include
+./usr/include/next68k/float.h			comp-c-include
+./usr/include/next68k/frame.h			comp-c-include
+./usr/include/next68k/ieee.h			comp-c-include
+./usr/include/next68k/ieeefp.h			comp-c-include
+./usr/include/next68k/int_const.h		comp-c-include
+./usr/include/next68k/int_fmtio.h		comp-c-include
+./usr/include/next68k/int_limits.h		comp-c-include
+./usr/include/next68k/int_mwgwtypes.h		comp-c-include
+./usr/include/next68k/int_types.h		comp-c-include
+./usr/include/next68k/intr.h			comp-c-include
+./usr/include/next68k/kcore.h			comp-c-include
+./usr/include/next68k/limits.h			comp-c-include
+./usr/include/next68k/lock.h			comp-c-include
+./usr/include/next68k/math.h			comp-c-include
+./usr/include/next68k/mcontext.h		comp-c-include
+./usr/include/next68k/mutex.h			comp-c-include
+./usr/include/next68k/param.h			comp-c-include
+./usr/include/next68k/pcb.h			comp-c-include
+./usr/include/next68k/pmap.h			comp-c-include
+./usr/include/next68k/pmc.h			comp-c-include
+./usr/include/next68k/proc.h			comp-c-include
+./usr/include/next68k/profile.h			comp-c-include
+./usr/include/next68k/psl.h			comp-c-include
+./usr/include/next68k/pte.h			comp-c-include
+./usr/include/next68k/ptrace.h			comp-c-include
+./usr/include/next68k/reg.h			comp-c-include
+./usr/include/next68k/rwlock.h			comp-c-include
+./usr/include/next68k/setjmp.h			comp-c-include
+./usr/include/next68k/signal.h			comp-c-include
+./usr/include/next68k/stdarg.h			comp-obsolete		obsolete
+./usr/include/next68k/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/next68k/trap.h			comp-c-include
+./usr/include/next68k/types.h			comp-c-include
+./usr/include/next68k/varargs.h			comp-obsolete		obsolete
+./usr/include/next68k/vmparam.h			comp-c-include
+./usr/include/next68k/wchar_limits.h		comp-c-include
+./usr/include/next68k/z8530var.h		comp-c-include
+./usr/lib/c++rt0.o				comp-obsolete		obsolete
+./usr/lib/scrt0.o				comp-obsolete		obsolete

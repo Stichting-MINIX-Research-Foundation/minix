@@ -1,0 +1,25 @@
+# $NetBSD: diskproto.mbr.in,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
+type: ESDI
+disk: image
+label: 
+flags:
+bytes/sector: 512
+sectors/track: @@SECTORS@@
+tracks/cylinder: @@HEADS@@
+sectors/cylinder: @@SECPERCYLINDERS@@
+cylinders: @@CYLINDERS@@
+total sectors: @@IMAGESECTORS@@
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # microseconds
+track-to-track seek: 0  # microseconds
+drivedata: 0 
+
+8 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+a:    @@FSSECTORS@@ @@FSOFFSET@@ 4.2BSD 1024 8192 16
+b:    @@SWAPSECTORS@@ @@SWAPOFFSET@@ swap
+c:    @@BSDPARTSECTORS@@ @@FSOFFSET@@ unused 0 0
+d:    @@IMAGESECTORS@@ 0 unused 0 0

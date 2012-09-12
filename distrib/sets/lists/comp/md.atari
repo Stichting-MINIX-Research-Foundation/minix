@@ -1,0 +1,70 @@
+# $NetBSD: md.atari,v 1.58 2011/07/17 20:54:31 joerg Exp $
+./usr/include/atari				comp-c-include
+./usr/include/atari/_G_config.h			comp-obsolete		obsolete
+./usr/include/atari/ahdilabel.h			comp-c-include
+./usr/include/atari/ansi.h			comp-c-include
+./usr/include/atari/aout_machdep.h		comp-c-include
+./usr/include/atari/asm.h			comp-c-include
+./usr/include/atari/bswap.h			comp-c-include
+./usr/include/atari/cdefs.h			comp-c-include
+./usr/include/atari/cpu.h			comp-c-include
+./usr/include/atari/cpufunc.h			comp-c-include
+./usr/include/atari/db_machdep.h		comp-obsolete		obsolete
+./usr/include/atari/disklabel.h			comp-c-include
+./usr/include/atari/elf_machdep.h		comp-c-include
+./usr/include/atari/endian.h			comp-c-include
+./usr/include/atari/endian_machdep.h		comp-c-include
+./usr/include/atari/float.h			comp-c-include
+./usr/include/atari/frame.h			comp-c-include
+./usr/include/atari/grfioctl.h			comp-c-include
+./usr/include/atari/ieee.h			comp-c-include
+./usr/include/atari/ieeefp.h			comp-c-include
+./usr/include/atari/int_const.h			comp-c-include
+./usr/include/atari/int_fmtio.h			comp-c-include
+./usr/include/atari/int_limits.h		comp-c-include
+./usr/include/atari/int_mwgwtypes.h		comp-c-include
+./usr/include/atari/int_types.h			comp-c-include
+./usr/include/atari/intr.h			comp-c-include
+./usr/include/atari/iteioctl.h			comp-c-include
+./usr/include/atari/kbdmap.h			comp-c-include
+./usr/include/atari/kbdreg.h			comp-c-include
+./usr/include/atari/kcore.h			comp-c-include
+./usr/include/atari/limits.h			comp-c-include
+./usr/include/atari/lock.h			comp-c-include
+./usr/include/atari/math.h			comp-c-include
+./usr/include/atari/mcontext.h			comp-c-include
+./usr/include/atari/msioctl.h			comp-c-include
+./usr/include/atari/mtpr.h			comp-c-include
+./usr/include/atari/mutex.h			comp-c-include
+./usr/include/atari/param.h			comp-c-include
+./usr/include/atari/pcb.h			comp-c-include
+./usr/include/atari/pmap.h			comp-c-include
+./usr/include/atari/pmc.h			comp-c-include
+./usr/include/atari/proc.h			comp-c-include
+./usr/include/atari/profile.h			comp-c-include
+./usr/include/atari/psl.h			comp-c-include
+./usr/include/atari/pte.h			comp-c-include
+./usr/include/atari/ptrace.h			comp-c-include
+./usr/include/atari/reg.h			comp-c-include
+./usr/include/atari/rwlock.h			comp-c-include
+./usr/include/atari/setjmp.h			comp-c-include
+./usr/include/atari/signal.h			comp-c-include
+./usr/include/atari/stdarg.h			comp-obsolete		obsolete
+./usr/include/atari/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/atari/trap.h			comp-c-include
+./usr/include/atari/types.h			comp-c-include
+./usr/include/atari/varargs.h			comp-obsolete		obsolete
+./usr/include/atari/vmparam.h			comp-c-include
+./usr/include/atari/vuid_event.h		comp-c-include
+./usr/include/atari/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/sbin/ahdilabel.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/edahdi.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/msconfig.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/bootpref.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/loadkmap.debug	comp-sysutil-debug	debug

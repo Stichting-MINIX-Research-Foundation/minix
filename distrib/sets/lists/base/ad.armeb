@@ -1,0 +1,12 @@
+# $NetBSD: ad.armeb,v 1.5 2010/03/14 23:32:08 mrg Exp $
+#
+# The armeb MACHINE_ARCH never existed in NetBSD as a.out, so we
+#	skip the old a.out compatibility tools.
+#
+./usr/bin/fdformat				base-util-bin
+./usr/lib/libarm.so				base-sys-shlib		pic
+./usr/lib/libarm.so.0				base-sys-shlib		pic
+./usr/lib/libarm.so.0.0				base-sys-shlib		pic
+./usr/lib/libpmc.so				base-sys-shlib		pic
+./usr/lib/libpmc.so.1				base-sys-shlib		pic
+./usr/lib/libpmc.so.1.0				base-sys-shlib		pic

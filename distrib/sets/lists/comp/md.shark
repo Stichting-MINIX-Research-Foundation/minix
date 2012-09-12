@@ -1,0 +1,55 @@
+# $NetBSD: md.shark,v 1.20 2011/12/19 15:09:52 njoly Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/shark				comp-c-include
+./usr/include/shark/ansi.h			comp-c-include
+./usr/include/shark/aout_machdep.h		comp-c-include
+./usr/include/shark/asm.h			comp-c-include
+./usr/include/shark/bswap.h			comp-c-include
+./usr/include/shark/bus.h			comp-obsolete		obsolete
+./usr/include/shark/cdefs.h			comp-c-include
+./usr/include/shark/cpu.h			comp-c-include
+./usr/include/shark/db_machdep.h		comp-obsolete		obsolete
+./usr/include/shark/devmap.h			comp-c-include
+./usr/include/shark/disklabel.h			comp-c-include
+./usr/include/shark/elf_machdep.h		comp-c-include
+./usr/include/shark/endian.h			comp-c-include
+./usr/include/shark/endian_machdep.h		comp-c-include
+./usr/include/shark/float.h			comp-c-include
+./usr/include/shark/fp.h			comp-c-include
+./usr/include/shark/frame.h			comp-c-include
+./usr/include/shark/ieee.h			comp-c-include
+./usr/include/shark/ieeefp.h			comp-c-include
+./usr/include/shark/int_const.h			comp-c-include
+./usr/include/shark/int_fmtio.h			comp-c-include
+./usr/include/shark/int_limits.h		comp-c-include
+./usr/include/shark/int_mwgwtypes.h		comp-c-include
+./usr/include/shark/int_types.h			comp-c-include
+./usr/include/shark/intr.h			comp-c-include
+./usr/include/shark/ipkdb.h			comp-obsolete		obsolete
+./usr/include/shark/joystick.h			comp-c-include
+./usr/include/shark/limits.h			comp-c-include
+./usr/include/shark/lock.h			comp-c-include
+./usr/include/shark/math.h			comp-c-include
+./usr/include/shark/mcontext.h			comp-c-include
+./usr/include/shark/mutex.h			comp-c-include
+./usr/include/shark/param.h			comp-c-include
+./usr/include/shark/pcb.h			comp-c-include
+./usr/include/shark/pmap.h			comp-c-include
+./usr/include/shark/pmc.h			comp-c-include
+./usr/include/shark/proc.h			comp-c-include
+./usr/include/shark/profile.h			comp-c-include
+./usr/include/shark/ptrace.h			comp-c-include
+./usr/include/shark/reg.h			comp-c-include
+./usr/include/shark/rwlock.h			comp-c-include
+./usr/include/shark/setjmp.h			comp-c-include
+./usr/include/shark/signal.h			comp-c-include
+./usr/include/shark/stdarg.h			comp-obsolete		obsolete
+./usr/include/shark/sysarch.h			comp-c-include
+./usr/include/shark/trap.h			comp-c-include
+./usr/include/shark/types.h			comp-c-include
+./usr/include/shark/varargs.h			comp-obsolete		obsolete
+./usr/include/shark/vmparam.h			comp-c-include
+./usr/include/shark/wchar_limits.h		comp-c-include
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

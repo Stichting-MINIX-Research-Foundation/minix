@@ -1,0 +1,58 @@
+# $NetBSD: md.hp300,v 1.61 2011/07/17 20:54:31 joerg Exp $
+./usr/include/hp300				comp-c-include
+./usr/include/hp300/_G_config.h			comp-obsolete		obsolete
+./usr/include/hp300/ansi.h			comp-c-include
+./usr/include/hp300/aout_machdep.h		comp-c-include
+./usr/include/hp300/asm.h			comp-c-include
+./usr/include/hp300/autoconf.h			comp-obsolete		obsolete
+./usr/include/hp300/bswap.h			comp-c-include
+./usr/include/hp300/bus.h			comp-c-include
+./usr/include/hp300/cdefs.h			comp-c-include
+./usr/include/hp300/cpu.h			comp-c-include
+./usr/include/hp300/db_machdep.h		comp-obsolete		obsolete
+./usr/include/hp300/disklabel.h			comp-c-include
+./usr/include/hp300/elf_machdep.h		comp-c-include
+./usr/include/hp300/endian.h			comp-c-include
+./usr/include/hp300/endian_machdep.h		comp-c-include
+./usr/include/hp300/float.h			comp-c-include
+./usr/include/hp300/frame.h			comp-c-include
+./usr/include/hp300/hp300spu.h			comp-c-include
+./usr/include/hp300/hpux_machdep.h		comp-c-include
+./usr/include/hp300/ieee.h			comp-c-include
+./usr/include/hp300/ieeefp.h			comp-c-include
+./usr/include/hp300/int_const.h			comp-c-include
+./usr/include/hp300/int_fmtio.h			comp-c-include
+./usr/include/hp300/int_limits.h		comp-c-include
+./usr/include/hp300/int_mwgwtypes.h		comp-c-include
+./usr/include/hp300/int_types.h			comp-c-include
+./usr/include/hp300/intr.h			comp-obsolete		obsolete
+./usr/include/hp300/kcore.h			comp-c-include
+./usr/include/hp300/limits.h			comp-c-include
+./usr/include/hp300/lock.h			comp-c-include
+./usr/include/hp300/math.h			comp-c-include
+./usr/include/hp300/mcontext.h			comp-c-include
+./usr/include/hp300/mutex.h			comp-c-include
+./usr/include/hp300/param.h			comp-c-include
+./usr/include/hp300/pcb.h			comp-c-include
+./usr/include/hp300/pmap.h			comp-c-include
+./usr/include/hp300/pmc.h			comp-c-include
+./usr/include/hp300/proc.h			comp-c-include
+./usr/include/hp300/profile.h			comp-c-include
+./usr/include/hp300/psl.h			comp-c-include
+./usr/include/hp300/pte.h			comp-c-include
+./usr/include/hp300/ptrace.h			comp-c-include
+./usr/include/hp300/reg.h			comp-c-include
+./usr/include/hp300/rwlock.h			comp-c-include
+./usr/include/hp300/setjmp.h			comp-c-include
+./usr/include/hp300/signal.h			comp-c-include
+./usr/include/hp300/stdarg.h			comp-obsolete		obsolete
+./usr/include/hp300/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/hp300/trap.h			comp-c-include
+./usr/include/hp300/types.h			comp-c-include
+./usr/include/hp300/varargs.h			comp-obsolete		obsolete
+./usr/include/hp300/vmparam.h			comp-c-include
+./usr/include/hp300/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/usr/mdec/mkboot.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/grfinfo.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/hilinfo.debug	comp-obsolete		obsolete

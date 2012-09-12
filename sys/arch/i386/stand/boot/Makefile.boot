@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.56 2011/12/25 06:09:09 tsutsui Exp $
+# $NetBSD: Makefile.boot,v 1.58 2012/08/10 12:18:15 joerg Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -7,7 +7,6 @@ PROG?= boot
 NEWVERSWHAT?= "BIOS Boot"
 VERSIONFILE?= ${.CURDIR}/../version
 
-ACTIVE_CC?= ${CC}
 AFLAGS.biosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
@@ -34,13 +33,14 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
+# MINIX LSC seems to be still needed 
+#LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start -L${DESTDIR}/${LIBDIR}
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
-.if defined(HAVE_GCC)
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
@@ -49,7 +49,6 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
 CPUFLAGS=  -march=i386 -mtune=i386
-.endif
 .endif
 
 CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
@@ -92,9 +91,7 @@ SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
-.endif
 
 # CPPFLAGS+= -DBOOTXX_RAID1_SUPPORT
 
@@ -138,7 +135,6 @@ LIBKERN= # use MINIX minc
 Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
-## XXX ??? LIBZ is set up as usual, we use the regular one
 
 
 cleandir distclean: .WAIT cleanlibdir
@@ -157,6 +153,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then
 # explicitly pull in the required objects before any other library code.
+# MINIX (LSC adding LDADD still needed?)
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
 	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \

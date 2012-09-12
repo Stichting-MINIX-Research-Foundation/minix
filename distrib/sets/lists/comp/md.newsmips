@@ -1,0 +1,67 @@
+# $NetBSD: md.newsmips,v 1.29 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/newsmips				comp-c-include
+./usr/include/newsmips/_G_config.h		comp-obsolete		obsolete
+./usr/include/newsmips/adrsmap.h		comp-c-include
+./usr/include/newsmips/ansi.h			comp-c-include
+./usr/include/newsmips/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/newsmips/asm.h			comp-c-include
+./usr/include/newsmips/autoconf.h		comp-c-include
+./usr/include/newsmips/bsd-aout.h		comp-obsolete		obsolete
+./usr/include/newsmips/bswap.h			comp-c-include
+./usr/include/newsmips/cdefs.h			comp-c-include
+./usr/include/newsmips/conf.h			comp-obsolete		obsolete
+./usr/include/newsmips/cpu.h			comp-c-include
+./usr/include/newsmips/db_machdep.h		comp-obsolete		obsolete
+./usr/include/newsmips/disklabel.h		comp-c-include
+./usr/include/newsmips/ecoff_machdep.h		comp-c-include
+./usr/include/newsmips/elf.h			comp-obsolete		obsolete
+./usr/include/newsmips/elf_machdep.h		comp-c-include
+./usr/include/newsmips/endian.h			comp-c-include
+./usr/include/newsmips/endian_machdep.h		comp-c-include
+./usr/include/newsmips/float.h			comp-c-include
+./usr/include/newsmips/framebuf.h		comp-obsolete		obsolete
+./usr/include/newsmips/ieee.h			comp-c-include
+./usr/include/newsmips/ieeefp.h			comp-c-include
+./usr/include/newsmips/int_const.h		comp-c-include
+./usr/include/newsmips/int_fmtio.h		comp-c-include
+./usr/include/newsmips/int_limits.h		comp-c-include
+./usr/include/newsmips/int_mwgwtypes.h		comp-c-include
+./usr/include/newsmips/int_types.h		comp-c-include
+./usr/include/newsmips/intr.h			comp-c-include
+./usr/include/newsmips/kcore.h			comp-c-include
+./usr/include/newsmips/kdbparam.h		comp-c-include
+./usr/include/newsmips/keyboard.h		comp-obsolete		obsolete
+./usr/include/newsmips/limits.h			comp-c-include
+./usr/include/newsmips/lock.h			comp-c-include
+./usr/include/newsmips/locore.h			comp-c-include
+./usr/include/newsmips/machConst.h		comp-c-include
+./usr/include/newsmips/math.h			comp-c-include
+./usr/include/newsmips/mcontext.h		comp-c-include
+./usr/include/newsmips/mips_opcode.h		comp-c-include
+./usr/include/newsmips/mouse.h			comp-obsolete		obsolete
+./usr/include/newsmips/mutex.h			comp-c-include
+./usr/include/newsmips/param.h			comp-c-include
+./usr/include/newsmips/pcb.h			comp-c-include
+./usr/include/newsmips/pmap.h			comp-c-include
+./usr/include/newsmips/pmc.h			comp-c-include
+./usr/include/newsmips/proc.h			comp-c-include
+./usr/include/newsmips/profile.h		comp-c-include
+./usr/include/newsmips/psl.h			comp-c-include
+./usr/include/newsmips/pte.h			comp-c-include
+./usr/include/newsmips/ptrace.h			comp-c-include
+./usr/include/newsmips/reg.h			comp-c-include
+./usr/include/newsmips/regdef.h			comp-c-include
+./usr/include/newsmips/regnum.h			comp-c-include
+./usr/include/newsmips/reloc.h			comp-c-include
+./usr/include/newsmips/rwlock.h			comp-c-include
+./usr/include/newsmips/setjmp.h			comp-c-include
+./usr/include/newsmips/signal.h			comp-c-include
+./usr/include/newsmips/stdarg.h			comp-obsolete		obsolete
+./usr/include/newsmips/trap.h			comp-c-include
+./usr/include/newsmips/types.h			comp-c-include
+./usr/include/newsmips/varargs.h		comp-obsolete		obsolete
+./usr/include/newsmips/vmparam.h		comp-c-include
+./usr/include/newsmips/wchar_limits.h		comp-c-include
+./usr/include/newsmips/wsconsio.h		comp-c-include
+./usr/include/newsmips/z8530var.h		comp-c-include

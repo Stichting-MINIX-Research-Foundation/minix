@@ -104,6 +104,8 @@ WARNS?=4
 .endif
 
 WARNS?=4
+#i LSC MINIX, do not compile yet with -Werror... 
+NOGCCERROR=yes
 
 .PATH:	${.CURDIR}/man
 .PATH:	${.CURDIR}/src

@@ -1,0 +1,104 @@
+# $NetBSD: md.acorn26,v 1.14 2011/07/19 16:05:09 dyoung Exp $
+./usr/include/acorn26				comp-c-include
+./usr/include/acorn26/ansi.h			comp-c-include
+./usr/include/acorn26/aout_machdep.h		comp-c-include
+./usr/include/acorn26/asm.h			comp-c-include
+./usr/include/acorn26/boot.h			comp-c-include
+./usr/include/acorn26/bswap.h			comp-c-include
+./usr/include/acorn26/bus.h			comp-obsolete		obsolete
+./usr/include/acorn26/cdefs.h			comp-c-include
+./usr/include/acorn26/cpu.h			comp-c-include
+./usr/include/acorn26/db_machdep.h		comp-obsolete		obsolete
+./usr/include/acorn26/disklabel.h		comp-c-include
+./usr/include/acorn26/elf_machdep.h		comp-c-include
+./usr/include/acorn26/endian.h			comp-c-include
+./usr/include/acorn26/endian_machdep.h		comp-c-include
+./usr/include/acorn26/float.h			comp-c-include
+./usr/include/acorn26/fp.h			comp-c-include
+./usr/include/acorn26/frame.h			comp-c-include
+./usr/include/acorn26/ieee.h			comp-c-include
+./usr/include/acorn26/ieeefp.h			comp-c-include
+./usr/include/acorn26/int_const.h		comp-c-include
+./usr/include/acorn26/int_fmtio.h		comp-c-include
+./usr/include/acorn26/int_limits.h		comp-c-include
+./usr/include/acorn26/int_mwgwtypes.h		comp-c-include
+./usr/include/acorn26/int_types.h		comp-c-include
+./usr/include/acorn26/intr.h			comp-c-include
+./usr/include/acorn26/ipkdb.h			comp-obsolete		obsolete
+./usr/include/acorn26/irq.h			comp-c-include
+./usr/include/acorn26/limits.h			comp-c-include
+./usr/include/acorn26/lock.h			comp-c-include
+./usr/include/acorn26/math.h			comp-c-include
+./usr/include/acorn26/mcontext.h		comp-c-include
+./usr/include/acorn26/mutex.h			comp-c-include
+./usr/include/acorn26/param.h			comp-c-include
+./usr/include/acorn26/pcb.h			comp-c-include
+./usr/include/acorn26/pmap.h			comp-c-include
+./usr/include/acorn26/pmc.h			comp-c-include
+./usr/include/acorn26/proc.h			comp-c-include
+./usr/include/acorn26/profile.h			comp-c-include
+./usr/include/acorn26/ptrace.h			comp-c-include
+./usr/include/acorn26/reg.h			comp-c-include
+./usr/include/acorn26/rwlock.h			comp-c-include
+./usr/include/acorn26/setjmp.h			comp-c-include
+./usr/include/acorn26/signal.h			comp-c-include
+./usr/include/acorn26/stdarg.h			comp-obsolete		obsolete
+./usr/include/acorn26/sysarch.h			comp-c-include
+./usr/include/acorn26/trap.h			comp-c-include
+./usr/include/acorn26/types.h			comp-c-include
+./usr/include/acorn26/varargs.h			comp-obsolete		obsolete
+./usr/include/acorn26/vmparam.h			comp-c-include
+./usr/include/acorn26/wchar_limits.h		comp-c-include
+./usr/include/arm/arm32/bus.h			comp-obsolete		obsolete
+./usr/include/arm/arm32/sysarch.h		comp-obsolete		obsolete
+./usr/include/arm26				comp-obsolete		obsolete
+./usr/include/arm26/_G_config.h			comp-obsolete		obsolete
+./usr/include/arm26/ansi.h			comp-obsolete		obsolete
+./usr/include/arm26/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/arm26/armreg.h			comp-obsolete		obsolete
+./usr/include/arm26/asm.h			comp-obsolete		obsolete
+./usr/include/arm26/boot.h			comp-obsolete		obsolete
+./usr/include/arm26/bswap.h			comp-obsolete		obsolete
+./usr/include/arm26/bus.h			comp-obsolete		obsolete
+./usr/include/arm26/cdefs.h			comp-obsolete		obsolete
+./usr/include/arm26/cpu.h			comp-obsolete		obsolete
+./usr/include/arm26/db_machdep.h		comp-obsolete		obsolete
+./usr/include/arm26/disklabel.h			comp-obsolete		obsolete
+./usr/include/arm26/disklabel_acorn.h		comp-obsolete		obsolete
+./usr/include/arm26/elf_machdep.h		comp-obsolete		obsolete
+./usr/include/arm26/endian.h			comp-obsolete		obsolete
+./usr/include/arm26/endian_machdep.h		comp-obsolete		obsolete
+./usr/include/arm26/float.h			comp-obsolete		obsolete
+./usr/include/arm26/fp.h			comp-obsolete		obsolete
+./usr/include/arm26/frame.h			comp-obsolete		obsolete
+./usr/include/arm26/ieee.h			comp-obsolete		obsolete
+./usr/include/arm26/ieeefp.h			comp-obsolete		obsolete
+./usr/include/arm26/int_const.h			comp-obsolete		obsolete
+./usr/include/arm26/int_fmtio.h			comp-obsolete		obsolete
+./usr/include/arm26/int_limits.h		comp-obsolete		obsolete
+./usr/include/arm26/int_mwgwtypes.h		comp-obsolete		obsolete
+./usr/include/arm26/int_types.h			comp-obsolete		obsolete
+./usr/include/arm26/intr.h			comp-obsolete		obsolete
+./usr/include/arm26/ipkdb.h			comp-obsolete		obsolete
+./usr/include/arm26/irq.h			comp-obsolete		obsolete
+./usr/include/arm26/limits.h			comp-obsolete		obsolete
+./usr/include/arm26/lock.h			comp-obsolete		obsolete
+./usr/include/arm26/math.h			comp-obsolete		obsolete
+./usr/include/arm26/param.h			comp-obsolete		obsolete
+./usr/include/arm26/pcb.h			comp-obsolete		obsolete
+./usr/include/arm26/pmap.h			comp-obsolete		obsolete
+./usr/include/arm26/proc.h			comp-obsolete		obsolete
+./usr/include/arm26/profile.h			comp-obsolete		obsolete
+./usr/include/arm26/pte.h			comp-obsolete		obsolete
+./usr/include/arm26/ptrace.h			comp-obsolete		obsolete
+./usr/include/arm26/reg.h			comp-obsolete		obsolete
+./usr/include/arm26/setjmp.h			comp-obsolete		obsolete
+./usr/include/arm26/signal.h			comp-obsolete		obsolete
+./usr/include/arm26/spl.h			comp-obsolete		obsolete
+./usr/include/arm26/stdarg.h			comp-obsolete		obsolete
+./usr/include/arm26/sysarch.h			comp-obsolete		obsolete
+./usr/include/arm26/trap.h			comp-obsolete		obsolete
+./usr/include/arm26/types.h			comp-obsolete		obsolete
+./usr/include/arm26/undefined.h			comp-obsolete		obsolete
+./usr/include/arm26/varargs.h			comp-obsolete		obsolete
+./usr/include/arm26/vmparam.h			comp-obsolete		obsolete

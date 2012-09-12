@@ -4,4 +4,7 @@ PROG=	seq
 DPADD=	${LIBMATH}
 LDADD=	-lm
 
+# LSC Until it compiles cleanly...
+NOGCCERROR:=yes
+
 .include <bsd.prog.mk>

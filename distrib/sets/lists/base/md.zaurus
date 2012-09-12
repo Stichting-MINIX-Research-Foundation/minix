@@ -1,0 +1,7 @@
+# $NetBSD: md.zaurus,v 1.7 2009/03/03 08:02:41 nonaka Exp $
+./usr/mdec/zboot				base-sysutil-bin
+./usr/mdec/zbsdmod.o				base-sysutil-bin
+./usr/sbin/apm					base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/tpctl				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin

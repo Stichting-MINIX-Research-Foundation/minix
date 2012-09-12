@@ -1,0 +1,140 @@
+#!/bin/sh
+#
+# Print out the files in some or all lists.
+# Usage: makeplist [options] setname pkgname
+# options:
+# 	-a arch		set arch (e.g, m68k, mips, powerpc)	
+# 	-m machine	set machine (e.g, amiga, i386, macppc)
+# 	-s setsdir	directory to find sets
+# 	-p prefix	prefix for package creation
+# 	-I realprefix	prefix for eventual installation
+# 	setname pkgname	set and package to build plist for
+#
+
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+prefix=/
+realprefix=/
+got_realprefix=false
+
+usage() {
+	cat 1>&2 <<USAGE
+Usage: $0 [options] setname pkgname"
+options:"
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[${MACHINE_ARCH}]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[${MACHINE}]
+	-s setsdir	directory to find sets			[${setsdir}]
+	-p prefix	prefix for created plist		[${prefix}]
+	-I realprefix	prefix for eventual installation	[${realprefix}]
+	setname pkgname	set and package to build plist for
+USAGE
+	exit 1
+}
+
+# handle args
+while getopts a:I:m:p:s: ch; do
+	case ${ch} in
+	a)
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
+		;;
+	I)
+		realprefix=${OPTARG}
+		got_realprefix=true
+		;;
+	m)
+		MACHINE="${OPTARG}"
+		;;
+	p)
+		prefix="${OPTARG}"
+		;;
+	s)
+		setsdir="${OPTARG}"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+if [ $# -ne 2 ]; then
+	usage
+fi
+setname="$1"
+pkgname="$2"
+
+if ! ${got_realprefix}; then
+    realprefix="${prefix}"
+fi
+
+filename="/tmp/makeplist.$$"
+ffilename="/tmp/makeplist.files.$$"
+dfilename="/tmp/makeplist.dirs.$$"
+
+list_set_files "${setname}" | \
+    ${ENV_CMD} PLISTPKG="${pkgname}" ${AWK} '
+	$2 == ENVIRON["PLISTPKG"] {
+		sub("^\\./", "", $1);
+		print $1
+	}' | ${SORT} -u > "${filename}"
+
+SELECTDIRS="-prune -type d"
+SELECTNONDIRS="! -type d -print -o ( -type d -prune )"
+
+#
+# XXX: The "lists" do not differentiate between directories and files.
+# But we need to differentiate between them, so we do so by checking
+# what's actually present in the file system.  Files or directories that
+# are listed in the "lists" but that do not exist in the file system end
+# up not appearing in our output, and this subverts a large part of the
+# purpose of the "lists".
+#
+# XXX: Given that we have to figure out what is or is not a directory
+# without assistance from the "lists", it would be much more efficient
+# to consult the metalog instead of the file system.
+#
+
+(
+cd "${prefix}"
+
+#
+# Match the directories.  Use find(1) to avoid repeat calls to
+# 'test -d'.
+#
+# This is a little clever.  I cannot use 'xargs find', because
+# find wants for the option arguments to follow the path arguments.
+# So I use 'xargs echo ${SELECTDIRS}' to make a maximum-length proto-command
+# line.  I use 'read' to peel the options off the front of the
+# command-line, and 'find ${args} ${SELECTDIRS}' to put them at the end.
+#
+xargs echo ${SELECTDIRS} < "${filename}" | \
+while read ignore ignore ignore args; do
+	[ -z "${args}" ] && break 
+	${FIND} ${args} ${SELECTDIRS}
+done | ${AWK} '{ print "@dirrm " $1; }' > "${dfilename}"
+
+#
+# Match the non-directories.  Use find(1) to avoid repeat calls to
+# 'test ! -d'.  See 'Match the directories' for an explanation of the
+# cleverness.
+#
+xargs echo ${SELECTNONDIRS} < "${filename}" | \
+while read ignore ignore ignore ignore ignore ignore ignore ignore ignore \
+    ignore args; do
+	[ -z "${args}" ] && break 
+	${FIND} ${args} ${SELECTNONDIRS}
+done > "${ffilename}"
+
+)
+
+echo "@cwd ${realprefix}"
+if [ -s "${ffilename}" ]; then
+	cat "${ffilename}"
+fi
+if [ -s "${dfilename}" ]; then
+        ${SORT} -r "${dfilename}"
+fi
+
+rm -f "${filename}" "${ffilename}" "${dfilename}"
+
+exit 0

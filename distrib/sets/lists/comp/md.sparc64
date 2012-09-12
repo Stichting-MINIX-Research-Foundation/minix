@@ -1,0 +1,1053 @@
+# $NetBSD: md.sparc64,v 1.157 2012/09/16 18:59:25 tls Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sparc				comp-c-include
+./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
+./usr/include/sparc/ansi.h			comp-c-include
+./usr/include/sparc/aout_machdep.h		comp-c-include
+./usr/include/sparc/apmvar.h			comp-c-include
+./usr/include/sparc/asm.h			comp-c-include
+./usr/include/sparc/autoconf.h			comp-c-include
+./usr/include/sparc/bootinfo.h			comp-c-include
+./usr/include/sparc/bswap.h			comp-c-include
+./usr/include/sparc/cdefs.h			comp-c-include
+./usr/include/sparc/cgtworeg.h			comp-c-include
+./usr/include/sparc/conf.h			comp-obsolete		obsolete
+./usr/include/sparc/cpu.h			comp-c-include
+./usr/include/sparc/cpuconf.h			comp-c-include
+./usr/include/sparc/disklabel.h			comp-c-include
+./usr/include/sparc/eeprom.h			comp-c-include
+./usr/include/sparc/elf_machdep.h		comp-c-include
+./usr/include/sparc/endian.h			comp-c-include
+./usr/include/sparc/endian_machdep.h		comp-c-include
+./usr/include/sparc/fbio.h			comp-obsolete		obsolete
+./usr/include/sparc/fenv.h			comp-c-include
+./usr/include/sparc/float.h			comp-c-include
+./usr/include/sparc/frame.h			comp-c-include
+./usr/include/sparc/fsr.h			comp-c-include
+./usr/include/sparc/idprom.h			comp-c-include
+./usr/include/sparc/ieee.h			comp-c-include
+./usr/include/sparc/ieeefp.h			comp-c-include
+./usr/include/sparc/int_const.h			comp-c-include
+./usr/include/sparc/int_fmtio.h			comp-c-include
+./usr/include/sparc/int_limits.h		comp-c-include
+./usr/include/sparc/int_mwgwtypes.h		comp-c-include
+./usr/include/sparc/int_types.h			comp-c-include
+./usr/include/sparc/kbd.h			comp-c-include
+./usr/include/sparc/kbio.h			comp-c-include
+./usr/include/sparc/kcore.h			comp-c-include
+./usr/include/sparc/limits.h			comp-c-include
+./usr/include/sparc/lock.h			comp-c-include
+./usr/include/sparc/math.h			comp-c-include
+./usr/include/sparc/mcontext.h			comp-c-include
+./usr/include/sparc/mutex.h			comp-c-include
+./usr/include/sparc/oldmon.h			comp-c-include
+./usr/include/sparc/openpromio.h		comp-c-include
+./usr/include/sparc/param.h			comp-c-include
+./usr/include/sparc/pcb.h			comp-c-include
+./usr/include/sparc/pmap.h			comp-c-include
+./usr/include/sparc/pmc.h			comp-c-include
+./usr/include/sparc/proc.h			comp-c-include
+./usr/include/sparc/profile.h			comp-c-include
+./usr/include/sparc/psl.h			comp-c-include
+./usr/include/sparc/pte.h			comp-c-include
+./usr/include/sparc/ptrace.h			comp-c-include
+./usr/include/sparc/reg.h			comp-c-include
+./usr/include/sparc/reloc.h			comp-c-include
+./usr/include/sparc/rwlock.h			comp-c-include
+./usr/include/sparc/setjmp.h			comp-c-include
+./usr/include/sparc/signal.h			comp-c-include
+./usr/include/sparc/stdarg.h			comp-obsolete		obsolete
+./usr/include/sparc/tctrl.h			comp-c-include
+./usr/include/sparc/trap.h			comp-c-include
+./usr/include/sparc/types.h			comp-c-include
+./usr/include/sparc/varargs.h			comp-obsolete		obsolete
+./usr/include/sparc/vmparam.h			comp-c-include
+./usr/include/sparc/vuid_event.h		comp-c-include
+./usr/include/sparc/wchar_limits.h		comp-c-include
+./usr/include/sparc64				comp-c-include
+./usr/include/sparc64/_G_config.h		comp-obsolete		obsolete
+./usr/include/sparc64/ansi.h			comp-c-include
+./usr/include/sparc64/aout_machdep.h		comp-c-include
+./usr/include/sparc64/asm.h			comp-c-include
+./usr/include/sparc64/autoconf.h		comp-c-include
+./usr/include/sparc64/bsd_openprom.h		comp-c-include
+./usr/include/sparc64/bswap.h			comp-c-include
+./usr/include/sparc64/bus.h			comp-obsolete		obsolete
+./usr/include/sparc64/cdefs.h			comp-c-include
+./usr/include/sparc64/cgtworeg.h		comp-c-include
+./usr/include/sparc64/conf.h			comp-obsolete		obsolete
+./usr/include/sparc64/cpu.h			comp-c-include
+./usr/include/sparc64/ctlreg.h			comp-c-include
+./usr/include/sparc64/db_machdep.h		comp-obsolete		obsolete
+./usr/include/sparc64/disklabel.h		comp-c-include
+./usr/include/sparc64/eeprom.h			comp-c-include
+./usr/include/sparc64/elf_machdep.h		comp-c-include
+./usr/include/sparc64/endian.h			comp-c-include
+./usr/include/sparc64/endian_machdep.h		comp-c-include
+./usr/include/sparc64/fbio.h			comp-obsolete		obsolete
+./usr/include/sparc64/fbvar.h			comp-obsolete		obsolete
+./usr/include/sparc64/fenv.h			comp-c-include
+./usr/include/sparc64/float.h			comp-c-include
+./usr/include/sparc64/frame.h			comp-c-include
+./usr/include/sparc64/fsr.h			comp-c-include
+./usr/include/sparc64/idprom.h			comp-c-include
+./usr/include/sparc64/ieee.h			comp-c-include
+./usr/include/sparc64/ieeefp.h			comp-c-include
+./usr/include/sparc64/instr.h			comp-c-include
+./usr/include/sparc64/int_const.h		comp-c-include
+./usr/include/sparc64/int_fmtio.h		comp-c-include
+./usr/include/sparc64/int_limits.h		comp-c-include
+./usr/include/sparc64/int_mwgwtypes.h		comp-c-include
+./usr/include/sparc64/int_types.h		comp-c-include
+./usr/include/sparc64/intr.h			comp-c-include
+./usr/include/sparc64/joystick.h		comp-c-include
+./usr/include/sparc64/kbd.h			comp-c-include
+./usr/include/sparc64/kbio.h			comp-c-include
+./usr/include/sparc64/kcore.h			comp-c-include
+./usr/include/sparc64/limits.h			comp-c-include
+./usr/include/sparc64/lock.h			comp-c-include
+./usr/include/sparc64/math.h			comp-c-include
+./usr/include/sparc64/mcontext.h		comp-c-include
+./usr/include/sparc64/mutex.h			comp-c-include
+./usr/include/sparc64/oldmon.h			comp-c-include
+./usr/include/sparc64/openpromio.h		comp-c-include
+./usr/include/sparc64/param.h			comp-c-include
+./usr/include/sparc64/pcb.h			comp-c-include
+./usr/include/sparc64/pmap.h			comp-c-include
+./usr/include/sparc64/pmc.h			comp-c-include
+./usr/include/sparc64/proc.h			comp-c-include
+./usr/include/sparc64/profile.h			comp-c-include
+./usr/include/sparc64/psl.h			comp-c-include
+./usr/include/sparc64/pte.h			comp-c-include
+./usr/include/sparc64/ptrace.h			comp-c-include
+./usr/include/sparc64/reg.h			comp-c-include
+./usr/include/sparc64/reloc.h			comp-c-include
+./usr/include/sparc64/remote-sl.h		comp-c-include
+./usr/include/sparc64/rwlock.h			comp-c-include
+./usr/include/sparc64/setjmp.h			comp-c-include
+./usr/include/sparc64/signal.h			comp-c-include
+./usr/include/sparc64/stdarg.h			comp-obsolete		obsolete
+./usr/include/sparc64/svr4_machdep.h		comp-c-include
+./usr/include/sparc64/trap.h			comp-c-include
+./usr/include/sparc64/types.h			comp-c-include
+./usr/include/sparc64/varargs.h			comp-obsolete		obsolete
+./usr/include/sparc64/vmparam.h			comp-c-include
+./usr/include/sparc64/vuid_event.h		comp-c-include
+./usr/include/sparc64/wchar_limits.h		comp-c-include
+./usr/include/sparc64/z8530var.h		comp-c-include
+./usr/lib/sparc/crt0.o				comp-c-lib		compat
+./usr/lib/sparc/crtbegin.o			comp-c-lib		compat
+./usr/lib/sparc/crtbeginS.o			comp-c-lib		compat,pic
+./usr/lib/sparc/crtbeginT.o			comp-c-lib		compat,pic
+./usr/lib/sparc/crtend.o			comp-c-lib		compat
+./usr/lib/sparc/crtendS.o			comp-c-lib		compat,pic
+./usr/lib/sparc/crti.o				comp-c-lib		compat
+./usr/lib/sparc/crtn.o				comp-c-lib		compat
+./usr/lib/sparc/gcrt0.o				comp-c-lib		compat
+./usr/lib/sparc/i18n/libBIG5.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libBIG5.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libBIG5_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libBIG5_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libDECHanyu.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libDECHanyu.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libDECHanyu_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libDECHanyu_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libEUC.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libEUC.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libEUCTW.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libEUCTW.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libEUCTW_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libEUCTW_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libEUC_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libEUC_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libEUC_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libGBK2K.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libGBK2K.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libGBK2K_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libGBK2K_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libGBK2K_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libHZ.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libHZ.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libHZ_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libHZ_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libHZ_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libISO2022.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libISO2022.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libISO2022_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libISO2022_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libISO2022_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libJOHAB.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libJOHAB.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libJOHAB_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libJOHAB_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libJOHAB_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libMSKanji.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libMSKanji.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libMSKanji_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libMSKanji_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libMSKanji_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUES.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libUES.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libUES_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUES_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUES_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF1632.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libUTF1632.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libUTF1632_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF1632_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF1632_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF7.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libUTF7.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libUTF7_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF7_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF7_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF8.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libUTF8.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libUTF8_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF8_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libUTF8_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libVIQR.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libVIQR.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libVIQR_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libVIQR_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libVIQR_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libZW.a			comp-c-lib		compat
+./usr/lib/sparc/i18n/libZW.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libZW_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libZW_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libZW_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libiconv_none.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libiconv_none.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libiconv_none_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libiconv_none_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libiconv_none_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libiconv_std.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libiconv_std.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libiconv_std_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libiconv_std_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libiconv_std_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_646.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libmapper_646.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libmapper_646_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_646_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_646_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_none.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libmapper_none.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libmapper_none_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_none_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_none_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_parallel.a	comp-c-lib		compat
+./usr/lib/sparc/i18n/libmapper_parallel.so	base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libmapper_parallel_g.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_parallel_p.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_parallel_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_serial.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libmapper_serial.so	base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libmapper_serial_g.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_serial_p.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_serial_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_std.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libmapper_std.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libmapper_std_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_std_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_std_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_zone.a		comp-c-lib		compat
+./usr/lib/sparc/i18n/libmapper_zone.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/i18n/libmapper_zone_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_zone_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/i18n/libmapper_zone_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/libamu_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libarchive.a			comp-c-lib		compat
+./usr/lib/sparc/libarchive.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libarchive_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libarchive_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libarchive_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libasn1.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libasn1.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libasn1_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libasn1_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libatf-c++.a			comp-c-lib		compat,atf
+./usr/lib/sparc/libatf-c++.so			base-sys-shlib		compat,pic,atf
+./usr/lib/sparc/libatf-c++_g.a			-unknown-		compat,debuglib,atf
+./usr/lib/sparc/libatf-c++_p.a			comp-c-proflib		compat,profile,atf
+./usr/lib/sparc/libatf-c++_pic.a		comp-c-piclib		compat,pic,atf
+./usr/lib/sparc/libatf-c.a			comp-c-lib		compat,atf
+./usr/lib/sparc/libatf-c.so			base-sys-shlib		compat,pic,atf
+./usr/lib/sparc/libatf-c_g.a			-unknown-		compat,debuglib,atf
+./usr/lib/sparc/libatf-c_p.a			comp-c-proflib		compat,profile,atf
+./usr/lib/sparc/libatf-c_pic.a			comp-c-piclib		compat,pic,atf
+./usr/lib/sparc/libbfd.a			comp-obsolete		obsolete
+./usr/lib/sparc/libbfd.so			base-obsolete		obsolete
+./usr/lib/sparc/libbfd_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libbfd_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libbfd_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libbind9.a			comp-c-lib		compat
+./usr/lib/sparc/libbind9.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libbind9_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libbind9_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libbind9_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libbluetooth.a			comp-c-lib		compat
+./usr/lib/sparc/libbluetooth.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libbluetooth_g.a		-unknown-		compat,debuglib
+./usr/lib/sparc/libbluetooth_p.a		comp-c-proflib		compat,profile
+./usr/lib/sparc/libbluetooth_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libbsdmalloc.a			comp-c-lib		compat
+./usr/lib/sparc/libbsdmalloc.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libbsdmalloc_g.a		-unknown-		compat,debuglib
+./usr/lib/sparc/libbsdmalloc_p.a		comp-c-proflib		compat,profile
+./usr/lib/sparc/libbsdmalloc_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libbz2.a			comp-c-lib		compat
+./usr/lib/sparc/libbz2.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libbz2_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libbz2_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libbz2_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libc.a				comp-c-lib		compat
+./usr/lib/sparc/libc.so				base-sys-shlib		compat,pic
+./usr/lib/sparc/libc_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libc_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libcom_err.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libcom_err.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libcom_err_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libcom_err_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libcompat.a			comp-c-lib		compat
+./usr/lib/sparc/libcompat_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libcompat_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libcompat_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libcrypt.a			comp-c-lib		compat
+./usr/lib/sparc/libcrypt.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libcrypt_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libcrypt_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libcrypt_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libcrypto.a			comp-c-lib		compat,crypto
+./usr/lib/sparc/libcrypto_g.a			comp-c-proflib		compat,crypto,debuglib
+./usr/lib/sparc/libcrypto.so			base-sys-shlib		compat,crypto,pic
+./usr/lib/sparc/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
+./usr/lib/sparc/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
+./usr/lib/sparc/libcrypto_idea.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_idea.so		base-obsolete		obsolete
+./usr/lib/sparc/libcrypto_idea_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_idea_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_idea_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_mdc2.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_mdc2.so		base-obsolete		obsolete
+./usr/lib/sparc/libcrypto_mdc2_g.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_mdc2_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_mdc2_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_rc5.a			comp-c-lib		crypto_rc5,compat
+./usr/lib/sparc/libcrypto_rc5.so		base-sys-shlib		compat,crypto,crypto_rc5,pic
+./usr/lib/sparc/libcrypto_rc5_g.a		comp-c-proflib		compat,crypto,crypto_rc5,debuglib
+./usr/lib/sparc/libcrypto_rc5_p.a		comp-c-proflib		crypto_rc5,compat,profile
+./usr/lib/sparc/libcrypto_rc5_pic.a		comp-c-piclib		compat,crypto,crypto_rc5,pic
+./usr/lib/sparc/libcurses.a			comp-c-lib		compat
+./usr/lib/sparc/libcurses.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libcurses_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libcurses_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libcurses_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libdes.a			comp-c-lib		compat,crypto
+./usr/lib/sparc/libdes.so			base-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libdes_g.a			-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libdes_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libdes_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libdevmapper.a			comp-c-lib		compat,lvm
+./usr/lib/sparc/libdevmapper.so			base-sys-shlib		compat,pic,lvm
+./usr/lib/sparc/libdevmapper_g.a		-unknown-		compat,debuglib,lvm
+./usr/lib/sparc/libdevmapper_p.a		comp-c-proflib		compat,profile,lvm
+./usr/lib/sparc/libdevmapper_pic.a		comp-c-piclib		compat,pic,lvm
+./usr/lib/sparc/libdm.a				comp-c-lib		compat
+./usr/lib/sparc/libdm.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libdm_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libdm_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libdm_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libdns.a			comp-c-lib		compat
+./usr/lib/sparc/libdns.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libdns_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libdns_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libdns_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libdns_sd.a			comp-c-lib		compat,mdns
+./usr/lib/sparc/libdns_sd.so			base-mdns-shlib		compat,pic,mdns
+./usr/lib/sparc/libdns_sd_g.a			-unknown-		compat,debuglib,mdns
+./usr/lib/sparc/libdns_sd_p.a			comp-c-proflib		compat,profile,mdns
+./usr/lib/sparc/libdns_sd_pic.a			comp-c-piclib		compat,pic,mdns
+./usr/lib/sparc/libdwarf.a			comp-c-lib		compat
+./usr/lib/sparc/libdwarf.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libdwarf_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libdwarf_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libdwarf_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libedit.a			comp-c-lib		compat
+./usr/lib/sparc/libedit.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libedit_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libedit_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libedit_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libelf.a			comp-c-lib		compat
+./usr/lib/sparc/libelf.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libelf_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libelf_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libelf_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libevent.a			comp-c-lib		compat
+./usr/lib/sparc/libevent.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libevent_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libevent_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libexecinfo.a			comp-c-lib		compat
+./usr/lib/sparc/libexecinfo.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libexecinfo_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libexecinfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libexecinfo_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libexpat.a			comp-c-lib		compat
+./usr/lib/sparc/libexpat.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libexpat_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libexpat_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libexpat_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libfetch.a			comp-c-lib		compat
+./usr/lib/sparc/libfetch.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libfetch_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libfetch_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libfetch_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libfl.a				comp-c-lib		compat
+./usr/lib/sparc/libfl_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libfl_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libform.a			comp-c-lib		compat
+./usr/lib/sparc/libform.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libform_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libform_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libform_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libgcc.a			comp-c-lib		compat,gcccmds
+./usr/lib/sparc/libgcc_eh.a			comp-c-lib		compat,pic,gcccmds
+./usr/lib/sparc/libgcc_eh_g.a			-unknown-		compat,debuglib,pic,gcccmds
+./usr/lib/sparc/libgcc_eh_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libgcc_eh_pic.a			comp-c-piclib		obsolete
+./usr/lib/sparc/libgcc_g.a			-unknown-		compat,debuglib,gcccmds
+./usr/lib/sparc/libgcc_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libgcc_pic.a			comp-c-piclib		obsolete
+./usr/lib/sparc/libgcc_s.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgcc_s.so			base-sys-shlib		compat,pic,gcccmds
+./usr/lib/sparc/libgcc_s_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgcc_s_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgcc_s_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgcov.a			comp-c-lib		compat,gcccmds
+./usr/lib/sparc/libgcov_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgcov_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgcov_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgmp.a			comp-c-lib		obsolete
+./usr/lib/sparc/libgmp.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libgmp_g.a			-unknown-		obsolete
+./usr/lib/sparc/libgmp_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libgmp_pic.a			comp-c-piclib		obsolete
+./usr/lib/sparc/libgnumalloc.a			comp-c-lib		compat
+./usr/lib/sparc/libgnumalloc.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libgnumalloc_g.a		-unknown-		compat,debuglib
+./usr/lib/sparc/libgnumalloc_p.a		comp-c-proflib		compat,profile
+./usr/lib/sparc/libgnumalloc_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=45
+./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
+./usr/lib/sparc/libgomp_g.a			-unknown-		compat,debuglib,gcc=45
+./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
+./usr/lib/sparc/libgssapi.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libgssapi.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libgssapi_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libgssapi_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libgssapi_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libhdb.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libhdb.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libhdb_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libhdb_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libhdb_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libheimbase.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libheimbase.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/sparc/libheimbase_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libheimbase_pic.a		comp-c-proflib		compat,pic,kerberos
+./usr/lib/sparc/libheimntlm.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libheimntlm.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libheimntlm_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libheimntlm_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libheimntlm_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libhx509.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libhx509.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libhx509_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libhx509_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libhx509_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libiberty.a			comp-obsolete		obsolete
+./usr/lib/sparc/libiberty_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libiberty_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libiberty_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libintl.a			comp-c-lib		compat
+./usr/lib/sparc/libintl.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libintl_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libintl_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libintl_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libipsec.a			comp-c-lib		compat
+./usr/lib/sparc/libipsec.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libipsec_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libipsec_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libipsec_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libisc.a			comp-c-lib		compat
+./usr/lib/sparc/libisc.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libisc_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libisc_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libisc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libisccc.a			comp-c-lib		compat
+./usr/lib/sparc/libisccc.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libisccc_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libisccc_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libisccc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libisccfg.a			comp-c-lib		compat
+./usr/lib/sparc/libisccfg.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libisccfg_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libisccfg_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libisccfg_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libiscsi.a			comp-c-lib		compat,iscsi
+./usr/lib/sparc/libiscsi.so			base-sys-shlib		compat,pic,iscsi
+./usr/lib/sparc/libiscsi_g.a			-unknown-		compat,debuglib,iscsi
+./usr/lib/sparc/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
+./usr/lib/sparc/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
+./usr/lib/sparc/libisns.a		comp-c-lib	compat
+./usr/lib/sparc/libisns.so		comp-sys-shlib	compat
+./usr/lib/sparc/libisns_g.a		comp-c-piclib	compat,debuglib
+./usr/lib/sparc/libisns_p.a		comp-c-proflib	compat,profile
+./usr/lib/sparc/libisns_pic.a		comp-c-piclib	compat,pic
+./usr/lib/sparc/libkadm5clnt.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libkadm5clnt.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libkadm5clnt_g.a		-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libkadm5clnt_p.a		comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libkadm5clnt_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libkadm5srv.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libkadm5srv.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libkadm5srv_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libkadm5srv_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libkadm5srv_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libkafs.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libkafs.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libkafs_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libkafs_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libkafs_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libkdc.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libkdc.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libkdc_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/sparc/libkdc_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libkdc_pic.a			comp-c-proflib		compat,pic,kerberos
+./usr/lib/sparc/libkrb5.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libkrb5.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libkrb5_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libkrb5_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libkrb5_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libkvm.a			comp-c-lib		compat
+./usr/lib/sparc/libkvm.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libkvm_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libkvm_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libkvm_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libl.a				comp-c-lib		compat
+./usr/lib/sparc/libl_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libl_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libl_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/liblber.a			comp-c-lib		compat,ldap
+./usr/lib/sparc/liblber.so			base-sys-shlib		compat,pic,ldap
+./usr/lib/sparc/liblber_g.a			-unknown-		compat,debuglib,ldap
+./usr/lib/sparc/liblber_p.a			comp-c-proflib		compat,profile,ldap
+./usr/lib/sparc/liblber_pic.a			comp-c-piclib		compat,pic,ldap
+./usr/lib/sparc/libldap.a			comp-c-lib		compat,ldap
+./usr/lib/sparc/libldap.so			base-sys-shlib		compat,pic,ldap
+./usr/lib/sparc/libldap_g.a			-unknown-		compat,debuglib,ldap
+./usr/lib/sparc/libldap_p.a			comp-c-proflib		compat,profile,ldap
+./usr/lib/sparc/libldap_pic.a			comp-c-piclib		compat,pic,ldap
+./usr/lib/sparc/libldap_r.a			comp-c-lib		compat,ldap
+./usr/lib/sparc/libldap_r.so			base-sys-shlib		compat,pic,ldap
+./usr/lib/sparc/libldap_r_g.a			-unknown-		compat,debuglib,ldap
+./usr/lib/sparc/libldap_r_p.a			comp-c-proflib		compat,profile,ldap
+./usr/lib/sparc/libldap_r_pic.a			comp-c-piclib		compat,pic,ldap
+./usr/lib/sparc/liblua.a			comp-c-lib		compat
+./usr/lib/sparc/liblua_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/liblua_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/liblua_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/liblwres.a			comp-c-lib		compat
+./usr/lib/sparc/liblwres.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/liblwres_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/liblwres_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/liblwres_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/liblzf.a			comp-c-lib		compat
+./usr/lib/sparc/liblzf.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/liblzf_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/liblzf_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/liblzf_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/liblzma.a			comp-c-lib		compat
+./usr/lib/sparc/liblzma.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/liblzma_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/liblzma_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/liblzma_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libm.a				comp-c-lib		compat
+./usr/lib/sparc/libm.so				base-sys-shlib		compat,pic
+./usr/lib/sparc/libm_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libm_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libm_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libmagic.a			comp-c-lib		compat
+./usr/lib/sparc/libmagic.so			comp-sys-shlib		compat,pic
+./usr/lib/sparc/libmagic_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libmagic_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libmagic_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libmenu.a			comp-c-lib		compat
+./usr/lib/sparc/libmenu.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libmenu_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libmenu_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libmenu_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libmj.a				comp-c-lib		compat,crypto
+./usr/lib/sparc/libmj.so			comp-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libmj_g.a			-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libmj_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libmj_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libmpc.a			comp-c-lib		obsolete
+./usr/lib/sparc/libmpc.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libmpc_g.a			-unknown-		obsolete
+./usr/lib/sparc/libmpc_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libmpc_pic.a			comp-c-piclib		obsolete
+./usr/lib/sparc/libmpfr.a			comp-c-lib		obsolete
+./usr/lib/sparc/libmpfr.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libmpfr_g.a			-unknown-		obsolete
+./usr/lib/sparc/libmpfr_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libmpfr_pic.a			comp-c-piclib		obsolete
+./usr/lib/sparc/libnetpgp.a			comp-c-lib		compat,crypto
+./usr/lib/sparc/libnetpgp.so			comp-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libnetpgp_g.a			-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libnetpgp_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libnetpgp_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libnpf.a			comp-c-lib		compat,npf
+./usr/lib/sparc/libnpf.so			comp-sys-shlib		compat,pic,npf
+./usr/lib/sparc/libnpf_g.a			-unknown-		compat,debuglib,npf
+./usr/lib/sparc/libnpf_p.a			comp-c-proflib		compat,profile,npf
+./usr/lib/sparc/libnpf_pic.a			comp-c-piclib		compat,pic,npf
+./usr/lib/sparc/libobjc.a			comp-c-lib		compat,gcccmds
+./usr/lib/sparc/libobjc.so			base-sys-shlib		compat,pic,gcccmds
+./usr/lib/sparc/libobjc_g.a			-unknown-		compat,debuglib,gcccmds
+./usr/lib/sparc/libobjc_p.a			comp-c-proflib		compat,profile,gcccmds
+./usr/lib/sparc/libobjc_pic.a			comp-c-piclib		compat,pic,gcccmds
+./usr/lib/sparc/libopcodes.a			comp-obsolete		obsolete
+./usr/lib/sparc/libopcodes.so			base-obsolete		obsolete
+./usr/lib/sparc/libopcodes_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libopcodes_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libopcodes_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/libossaudio.a			comp-c-lib		compat
+./usr/lib/sparc/libossaudio.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libossaudio_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libossaudio_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libossaudio_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libp2k.a			comp-c-lib		compat,rump
+./usr/lib/sparc/libp2k.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/libp2k_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/libp2k_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/libp2k_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/libpam.a			comp-c-lib		compat
+./usr/lib/sparc/libpam.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libpam_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libpam_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libpam_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libpcap.a			comp-c-lib		compat
+./usr/lib/sparc/libpcap.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libpcap_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libpcap_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libpcap_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libpci.a			comp-c-lib		compat
+./usr/lib/sparc/libpci.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libpci_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libpci_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libpci_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libperfuse.a			comp-c-lib		compat
+./usr/lib/sparc/libperfuse.so			comp-sys-shlib		compat,pic
+./usr/lib/sparc/libperfuse_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/sparc/libperfuse_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libperfuse_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libposix.a			comp-c-lib		compat
+./usr/lib/sparc/libposix.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libposix_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libposix_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libposix_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libppath.a			comp-c-lib		compat
+./usr/lib/sparc/libppath.so			comp-sys-shlib		compat,pic
+./usr/lib/sparc/libppath_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libppath_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libprop.a			comp-c-lib		compat
+./usr/lib/sparc/libprop.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libprop_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libprop_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libprop_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libpthread.a			comp-c-lib		compat
+./usr/lib/sparc/libpthread.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libpthread_dbg.a		comp-c-lib		compat
+./usr/lib/sparc/libpthread_dbg.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/libpthread_dbg_g.a		-unknown-		compat,debuglib
+./usr/lib/sparc/libpthread_dbg_p.a		comp-c-proflib		compat,profile
+./usr/lib/sparc/libpthread_dbg_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libpthread_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libpthread_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libpthread_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libpuffs.a			comp-c-lib		compat
+./usr/lib/sparc/libpuffs.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libpuffs_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libpuffs_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libpuffs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libquota.a			comp-c-lib		compat
+./usr/lib/sparc/libquota.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libquota_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libquota_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libquota_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libradius.a			comp-c-lib		compat
+./usr/lib/sparc/libradius.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libradius_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libradius_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libradius_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/librefuse.a			comp-c-lib		compat
+./usr/lib/sparc/librefuse.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/librefuse_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/librefuse_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/librefuse_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libresolv.a			comp-c-lib		compat
+./usr/lib/sparc/libresolv.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libresolv_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libresolv_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libresolv_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/librmt.a			comp-c-lib		compat
+./usr/lib/sparc/librmt_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/librmt_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/librmt_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libroken.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libroken.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libroken_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libroken_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libroken_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/librpcsvc.a			comp-c-lib		compat
+./usr/lib/sparc/librpcsvc.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/librpcsvc_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/librpcsvc_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/librpcsvc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/librt.a				comp-c-lib		compat
+./usr/lib/sparc/librt.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/librt_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/librt_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/librt_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/librump.a			comp-c-lib		compat,rump
+./usr/lib/sparc/librump.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/librump_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/librump_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/librump_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/librumpclient.a			comp-c-lib		compat,rump
+./usr/lib/sparc/librumpclient.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/librumpclient_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/librumpclient_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/librumpclient_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/librumpcrypto.a			comp-obsolete		obsolete,rump
+./usr/lib/sparc/librumpcrypto.so		base-obsolete		obsolete,rump
+./usr/lib/sparc/librumpcrypto_g.a		comp-obsolete		obsolete,rump
+./usr/lib/sparc/librumpcrypto_p.a		comp-obsolete		obsolete,rump
+./usr/lib/sparc/librumpcrypto_pic.a		comp-obsolete		obsolete,rump
+./usr/lib/sparc/librumpdev.a			comp-c-lib		compat,rump
+./usr/lib/sparc/librumpdev.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/librumpdev_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/librumpdev_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/librumpdev_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/librumphijack.so		base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/librumphijack_g.a		-unknown-		compat,debuglib,rump
+./usr/lib/sparc/librumphijack_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/librumpnet.a			comp-c-lib		compat,rump
+./usr/lib/sparc/librumpnet.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/librumpnet_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/librumpnet_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/librumpnet_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/librumpuser.a			comp-c-lib		compat,rump
+./usr/lib/sparc/librumpuser.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/librumpuser_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/librumpuser_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/librumpuser_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/librumpvfs.a			comp-c-lib		compat,rump
+./usr/lib/sparc/librumpvfs.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/librumpvfs_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/librumpvfs_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/librumpvfs_pic.a		comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/libsaslc.a			comp-c-lib		compat,crypto
+./usr/lib/sparc/libsaslc.so			base-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libsaslc_g.a			-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libsaslc_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libsaslc_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libsdp.a			comp-obsolete		obsolete
+./usr/lib/sparc/libsdp.so			base-obsolete		obsolete
+./usr/lib/sparc/libsdp_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libsdp_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libsdp_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libskey.a			comp-c-lib		compat,skey
+./usr/lib/sparc/libskey.so			base-sys-shlib		compat,pic,skey
+./usr/lib/sparc/libskey_g.a			-unknown-		compat,debuglib,skey
+./usr/lib/sparc/libskey_p.a			comp-c-proflib		compat,profile,skey
+./usr/lib/sparc/libskey_pic.a			comp-c-piclib		compat,pic,skey
+./usr/lib/sparc/libsl.a				comp-c-lib		compat,kerberos
+./usr/lib/sparc/libsl.so			base-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libsl_g.a			-unknown-		compat,debuglib,kerberos
+./usr/lib/sparc/libsl_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libsqlite3.a			comp-c-lib		compat
+./usr/lib/sparc/libsqlite3.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libsqlite3_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libsqlite3_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libsqlite3_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libss.a				comp-c-lib		obsolete
+./usr/lib/sparc/libss.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libss_g.a			-unknown-		obsolete
+./usr/lib/sparc/libss_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libss_pic.a			comp-c-piclib		obsolete
+./usr/lib/sparc/libssh.a			comp-c-lib		compat,crypto
+./usr/lib/sparc/libssh.so			base-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libssh_g.a			-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libssh_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libssh_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libssl.a			comp-c-lib		compat,crypto
+./usr/lib/sparc/libssl.so			base-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libssl_g.a			-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libssl_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libssl_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/sparc/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds
+./usr/lib/sparc/libstdc++_g.a			-unknown-		compat,debuglib,cxx,gcccmds
+./usr/lib/sparc/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
+./usr/lib/sparc/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
+./usr/lib/sparc/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/sparc/libsupc++.so			base-obsolete		obsolete
+./usr/lib/sparc/libsupc++_g.a			-unknown-		compat,debuglib,gcccmds
+./usr/lib/sparc/libsupc++_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libtermcap.a			comp-c-lib		compat
+./usr/lib/sparc/libtermcap.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libtermcap_g.a			obsolete		compat,obsolete
+./usr/lib/sparc/libtermcap_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libtermcap_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libterminfo.a			comp-c-lib		compat
+./usr/lib/sparc/libterminfo.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libterminfo_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libterminfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libterminfo_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libtermlib.a			comp-c-lib		compat
+./usr/lib/sparc/libtermlib.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libtermlib_g.a			obsolete		compat,obsolete
+./usr/lib/sparc/libtermlib_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libtermlib_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libtre.a			comp-c-lib		compat
+./usr/lib/sparc/libtre.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libtre_g.a			obsolete		compat,obsolete
+./usr/lib/sparc/libtre_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libtre_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libukfs.a			comp-c-lib		compat,rump
+./usr/lib/sparc/libukfs.so			base-sys-shlib		compat,pic,rump
+./usr/lib/sparc/libukfs_g.a			-unknown-		compat,debuglib,rump
+./usr/lib/sparc/libukfs_p.a			comp-c-proflib		compat,profile,rump
+./usr/lib/sparc/libukfs_pic.a			comp-c-piclib		compat,pic,rump
+./usr/lib/sparc/libusbhid.a			comp-c-lib		compat
+./usr/lib/sparc/libusbhid.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libusbhid_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libusbhid_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libusbhid_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libutil.a			comp-c-lib		compat
+./usr/lib/sparc/libutil.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libutil_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libutil_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libutil_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libvers.a			comp-obsolete		obsolete
+./usr/lib/sparc/libvers_g.a			comp-obsolete		obsolete
+./usr/lib/sparc/libvers_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libvers_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libwind.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libwind.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/sparc/libwind_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libwind_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libwrap.a			comp-c-lib		compat
+./usr/lib/sparc/libwrap.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libwrap_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libwrap_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libwrap_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/liby.a				comp-c-lib		compat
+./usr/lib/sparc/liby_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/liby_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/liby_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libz.a				comp-c-lib		compat
+./usr/lib/sparc/libz.so				base-sys-shlib		compat,pic
+./usr/lib/sparc/libz_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libz_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libz_pic.a			comp-c-piclib		compat,pic
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libBIG5.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libDECHanyu.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libEUC.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libEUCTW.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libGBK2K.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libHZ.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libISO2022.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libJOHAB.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libMSKanji.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libUES.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libUTF1632.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libUTF7.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libUTF8.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libVIQR.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libZW.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libiconv_none.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libiconv_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_646.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_none.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_parallel.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_serial.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libamu.so.4.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libarchive.so.3.1.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libatf-c.so.0.0.debug			comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/sparc/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/sparc/libbfd.so.12.0.debug			comp-compat-shlib	compat,pic,binutils,debug
+./usr/libdata/debug/usr/lib/sparc/libbind9.so.5.7.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libbz2.so.1.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libc.so.12.185.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libcrypt.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libcrypto.so.8.0.debug		comp-compat-shlib	compat,pic,debug,crypto
+./usr/libdata/debug/usr/lib/sparc/libcurses.so.7.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdes.so.8.1.debug			comp-compat-shlib	compat,pic,debug,crypto
+./usr/libdata/debug/usr/lib/sparc/libdevmapper.so.1.0.debug			comp-compat-shlib	compat,pic,debug,lvm
+./usr/libdata/debug/usr/lib/sparc/libdm.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdns.so.5.7.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdns_sd.so.0.0.debug		comp-compat-shlib	compat,pic,debug,mdns
+./usr/libdata/debug/usr/lib/sparc/libdwarf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libedit.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libelf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libevent.so.3.2.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libexecinfo.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libexpat.so.2.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libfetch.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libform.so.6.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libgnumalloc.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libgomp.so.1.0.debug		comp-compat-shlib	compat,pic,debug,gcc=45
+./usr/libdata/debug/usr/lib/sparc/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libhdb.so.14.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libheimbase.so.1.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libheimntlm.so.3.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libheimntlm.so.4.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libhx509.so.5.0.debug			comp-compat-shlib	compat,pic,debug,kerberos
+./usr/libdata/debug/usr/lib/sparc/libintl.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libipsec.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libisc.so.5.7.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libisccc.so.5.7.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libisccfg.so.5.7.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libiscsi.so.2.0.debug			comp-compat-shlib	compat,pic,debug,iscsi
+./usr/libdata/debug/usr/lib/sparc/libisns.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libkadm5clnt.so.13.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libkadm5srv.so.13.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libkadm5srv.so.14.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libkafs.so.11.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libkafs.so.12.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libkdc.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libkrb5.so.24.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libkvm.so.6.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblber.so.3.2.debug			comp-compat-shlib	compat,pic,debug,ldap
+./usr/libdata/debug/usr/lib/sparc/libldap.so.4.2.debug			comp-compat-shlib	compat,pic,debug,ldap
+./usr/libdata/debug/usr/lib/sparc/libldap_r.so.4.2.debug		comp-compat-shlib	compat,pic,debug,ldap
+./usr/libdata/debug/usr/lib/sparc/liblua.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblwres.so.5.7.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblzf.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblzma.so.1.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libm.so.0.10.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libmagic.so.3.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libmenu.so.6.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libmj.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libnetpgp.so.3.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libnpf.so.0.0.debug			comp-compat-shlib	compat,pic,debug,npf
+./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libopcodes.so.5.0.debug		comp-compat-shlib	compat,pic,binutils,debug
+./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libp2k.so.2.0.debug			comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/libpam.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libpcap.so.4.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libpci.so.2.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libperfuse.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libposix.so.0.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libppath.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libprop.so.1.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libpthread.so.1.1.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libpthread_dbg.so.2.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libpuffs.so.2.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libquota.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libradius.so.4.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/librefuse.so.2.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libresolv.so.2.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libroken.so.14.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/sparc/libroken.so.19.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/librpcsvc.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/librt.so.1.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/librump.so.0.0.debug			comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/librumpclient.so.0.0.debug		comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/librumpcrypto.so.0.0.debug		comp-obsolete		obsolete,rump
+./usr/libdata/debug/usr/lib/sparc/librumpdev.so.0.0.debug		comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/librumphijack.so.0.0.debug		comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/librumpnet.so.0.0.debug		comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/librumpuser.so.0.0.debug		comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/librumpvfs.so.0.0.debug		comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/libsaslc.so.0.0.debug			comp-compat-shlib	compat,pic,debug,crypto
+./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey
+./usr/libdata/debug/usr/lib/sparc/libsl.so.5.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libsqlite3.so.1.1.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
+./usr/libdata/debug/usr/lib/sparc/libssh.so.19.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libssl.so.10.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libterminfo.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libtre.so.0.8.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libukfs.so.1.0.debug			comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/sparc/libusbhid.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libutil.so.7.21.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libwind.so.0.0.debug			comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libwrap.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libz.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
+./usr/libdata/ldscripts/elf32_sparc.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf32_sparc.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf64_sparc.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/sparcnbsd.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/sparcnbsd.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/sparcnbsd.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/sparcnbsd.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/sparcnbsd.xu		comp-util-bin		binutils

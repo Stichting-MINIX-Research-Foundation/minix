@@ -1,0 +1,53 @@
+# $NetBSD: md.luna68k,v 1.19 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/luna68k				comp-c-include
+./usr/include/luna68k/_G_config.h		comp-obsolete		obsolete
+./usr/include/luna68k/ansi.h			comp-c-include
+./usr/include/luna68k/aout_machdep.h		comp-c-include
+./usr/include/luna68k/asm.h			comp-c-include
+./usr/include/luna68k/autoconf.h		comp-c-include
+./usr/include/luna68k/bswap.h			comp-c-include
+./usr/include/luna68k/bus.h			comp-c-include
+./usr/include/luna68k/cdefs.h			comp-c-include
+./usr/include/luna68k/cpu.h			comp-c-include
+./usr/include/luna68k/db_machdep.h		comp-obsolete		obsolete
+./usr/include/luna68k/disklabel.h		comp-c-include
+./usr/include/luna68k/elf_machdep.h		comp-c-include
+./usr/include/luna68k/endian.h			comp-c-include
+./usr/include/luna68k/endian_machdep.h		comp-c-include
+./usr/include/luna68k/float.h			comp-c-include
+./usr/include/luna68k/frame.h			comp-c-include
+./usr/include/luna68k/ieee.h			comp-c-include
+./usr/include/luna68k/ieeefp.h			comp-c-include
+./usr/include/luna68k/int_const.h		comp-c-include
+./usr/include/luna68k/int_fmtio.h		comp-c-include
+./usr/include/luna68k/int_limits.h		comp-c-include
+./usr/include/luna68k/int_mwgwtypes.h		comp-c-include
+./usr/include/luna68k/int_types.h		comp-c-include
+./usr/include/luna68k/intr.h			comp-c-include
+./usr/include/luna68k/kcore.h			comp-c-include
+./usr/include/luna68k/limits.h			comp-c-include
+./usr/include/luna68k/lock.h			comp-c-include
+./usr/include/luna68k/math.h			comp-c-include
+./usr/include/luna68k/mcontext.h		comp-c-include
+./usr/include/luna68k/mutex.h			comp-c-include
+./usr/include/luna68k/param.h			comp-c-include
+./usr/include/luna68k/pcb.h			comp-c-include
+./usr/include/luna68k/pmap.h			comp-c-include
+./usr/include/luna68k/pmc.h			comp-c-include
+./usr/include/luna68k/proc.h			comp-c-include
+./usr/include/luna68k/profile.h			comp-c-include
+./usr/include/luna68k/psl.h			comp-c-include
+./usr/include/luna68k/pte.h			comp-c-include
+./usr/include/luna68k/ptrace.h			comp-c-include
+./usr/include/luna68k/reg.h			comp-c-include
+./usr/include/luna68k/rwlock.h			comp-c-include
+./usr/include/luna68k/setjmp.h			comp-c-include
+./usr/include/luna68k/signal.h			comp-c-include
+./usr/include/luna68k/stdarg.h			comp-obsolete		obsolete
+./usr/include/luna68k/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/luna68k/trap.h			comp-c-include
+./usr/include/luna68k/types.h			comp-c-include
+./usr/include/luna68k/varargs.h			comp-obsolete		obsolete
+./usr/include/luna68k/vmparam.h			comp-c-include
+./usr/include/luna68k/wchar_limits.h		comp-c-include

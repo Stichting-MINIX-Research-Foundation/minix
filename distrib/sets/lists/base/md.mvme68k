@@ -1,0 +1,8 @@
+# $NetBSD: md.mvme68k,v 1.22 2009/02/14 11:33:56 abs Exp $
+./usr/mdec/bootsd				base-sysutil-bin
+./usr/mdec/bootst				base-sysutil-bin
+./usr/mdec/bootxx				base-sysutil-bin
+./usr/mdec/installboot				base-sysutil-bin
+./usr/mdec/netboot				base-sysutil-bin
+./usr/mdec/sboot				base-sysutil-bin
+./usr/mdec/stboot				base-sysutil-bin

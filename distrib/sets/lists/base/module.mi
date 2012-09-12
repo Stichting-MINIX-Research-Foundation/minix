@@ -1,0 +1,2 @@
+# $NetBSD: module.mi,v 1.13 2009/12/11 15:22:33 he Exp $
+./var/db/obsolete/modules			base-sys-root

@@ -5,6 +5,8 @@
 
 WARNS=	2
 
+# LSC MINIX, for termios.h ...
+CPPFLAGS+=-D__NBSD_LIBC
 CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterminfo
 .if defined(DEBUG_CURSES)
 CPPFLAGS+=-g -DDEBUG

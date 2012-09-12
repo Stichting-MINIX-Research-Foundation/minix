@@ -1,0 +1,116 @@
+# $NetBSD: md.i386,v 1.141 2012/03/11 06:53:18 riz Exp $
+./dev/lms0					base-obsolete		obsolete
+./dev/mms0					base-obsolete		obsolete
+./dev/pms0					base-obsolete		obsolete
+./dev/ttyv1					base-obsolete		obsolete
+./dev/ttyv2					base-obsolete		obsolete
+./dev/ttyv3					base-obsolete		obsolete
+./dev/ttyv4					base-obsolete		obsolete
+./dev/ttyv5					base-obsolete		obsolete
+./dev/ttyv6					base-obsolete		obsolete
+./dev/ttyv7					base-obsolete		obsolete
+./dev/vga					base-obsolete		obsolete
+./lib/libm387.so				base-sys-shlib		dynamicroot,pic
+./lib/libm387.so.0				base-sys-shlib		dynamicroot,pic
+./lib/libm387.so.0.1				base-sys-shlib		dynamicroot,pic
+./sbin/ldconfig					base-sysutil-root	pic
+./usr/bin/fdformat				base-util-bin
+./usr/bin/fontedit				base-obsolete		obsolete
+./usr/bin/iasl					base-util-bin
+./usr/bin/pmc					base-util-bin
+./usr/bin/vttest				base-obsolete		obsolete
+./usr/lib/libi386.so				base-sys-shlib		pic
+./usr/lib/libi386.so.1				base-sys-shlib		pic
+./usr/lib/libi386.so.1.0			base-sys-shlib		pic
+./usr/lib/libm387.so				base-sys-shlib		pic
+./usr/lib/libm387.so.0				base-sys-shlib		pic
+./usr/lib/libm387.so.0.1			base-sys-shlib		pic
+./usr/lib/libpmc.so				base-sys-shlib		pic
+./usr/lib/libpmc.so.1				base-sys-shlib		pic
+./usr/lib/libpmc.so.1.0				base-sys-shlib		pic
+./usr/libexec/ld.so				base-sys-shlib
+./usr/lkm/aps.o					base-obsolete		obsolete
+./usr/lkm/compat_freebsd.o			base-obsolete		obsolete
+./usr/lkm/compat_linux.o			base-obsolete		obsolete
+./usr/lkm/compat_pecoff.o			base-obsolete		obsolete
+./usr/lkm/compat_svr4.o				base-obsolete		obsolete
+./usr/lkm/dummy_pci.o				base-obsolete		obsolete
+./usr/lkm/exec_freebsd_aout.o			base-obsolete		obsolete
+./usr/lkm/exec_freebsd_elf.o			base-obsolete		obsolete
+./usr/lkm/exec_linux_elf.o			base-obsolete		obsolete
+./usr/lkm/exec_pecoff.o				base-obsolete		obsolete
+./usr/lkm/exec_svr4_elf.o			base-obsolete		obsolete
+./usr/lkm/finsio.o				base-obsolete		obsolete
+./usr/lkm/itesio.o				base-obsolete		obsolete
+./usr/lkm/nsclpcsio.o				base-obsolete		obsolete
+./usr/lkm/powernow.o				base-obsolete		obsolete
+./usr/lkm/smsc.o				base-obsolete		obsolete
+./usr/lkm/ug.o					base-obsolete		obsolete
+./usr/lkm/wi_pcmcia.o				base-obsolete		obsolete
+./usr/mdec/biosboot				base-obsolete		obsolete
+./usr/mdec/biosboot.sym				base-obsolete		obsolete
+./usr/mdec/biosboot_com0.sym			base-obsolete		obsolete
+./usr/mdec/biosboot_com0_115200.sym		base-obsolete		obsolete
+./usr/mdec/biosboot_com0_38400.sym		base-obsolete		obsolete
+./usr/mdec/biosboot_com0_57600.sym		base-obsolete		obsolete
+./usr/mdec/biosboot_com0_9600.sym		base-obsolete		obsolete
+./usr/mdec/biosboot_ps2.sym			base-obsolete		obsolete
+./usr/mdec/biosboot_resetvideo.sym		base-obsolete		obsolete
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/bootfd				base-obsolete		obsolete
+./usr/mdec/bootsd				base-obsolete		obsolete
+./usr/mdec/bootwd				base-obsolete		obsolete
+./usr/mdec/bootxx_cd9660			base-sysutil-bin
+./usr/mdec/bootxx_dosfs				base-obsolete		obsolete
+./usr/mdec/bootxx_ext2fs			base-sysutil-bin
+./usr/mdec/bootxx_fat12				base-sysutil-bin
+./usr/mdec/bootxx_fat16				base-sysutil-bin
+./usr/mdec/bootxx_ffsv1				base-sysutil-bin
+./usr/mdec/bootxx_ffsv2				base-sysutil-bin
+./usr/mdec/bootxx_lfsv1				base-sysutil-bin
+./usr/mdec/bootxx_lfsv2				base-sysutil-bin
+./usr/mdec/bootxx_msdos				base-sysutil-bin
+./usr/mdec/bootxx_ufs				base-obsolete		obsolete
+./usr/mdec/bootxx_ustarfs			base-sysutil-bin
+./usr/mdec/dosboot.com				base-sysutil-bin
+./usr/mdec/fdboot				base-obsolete		obsolete
+./usr/mdec/gptmbr.bin				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/mbr					base-sysutil-bin
+./usr/mdec/mbr_bootsel				base-sysutil-bin
+./usr/mdec/mbr_com0				base-sysutil-bin
+./usr/mdec/mbr_com0_9600			base-sysutil-bin
+./usr/mdec/mbr_ext				base-sysutil-bin
+./usr/mdec/mbr_gpt				base-obsolete		obsolete
+./usr/mdec/mbr_gpt_com0				base-obsolete		obsolete
+./usr/mdec/netboot_3c509.rom			base-obsolete		obsolete
+./usr/mdec/netboot_3c590.rom			base-obsolete		obsolete
+./usr/mdec/netboot_3c90xb.rom			base-obsolete		obsolete
+./usr/mdec/netboot_i82557.rom			base-obsolete		obsolete
+./usr/mdec/netboot_ne2000_isa.rom		base-obsolete		obsolete
+./usr/mdec/netboot_pcnet_isapnp.rom		base-obsolete		obsolete
+./usr/mdec/netboot_pcnet_pci.rom		base-obsolete		obsolete
+./usr/mdec/netboot_wd80x3.rom			base-obsolete		obsolete
+./usr/mdec/pxeboot_ia32.bin			base-sysutil-bin
+./usr/mdec/pxeboot_ia32_com0.bin		base-obsolete		obsolete
+./usr/mdec/sdboot				base-obsolete		obsolete
+./usr/mdec/wdboot				base-obsolete		obsolete
+./usr/sbin/acpidump				base-sysutil-bin
+./usr/sbin/amldb				base-sysutil-bin
+./usr/sbin/apm					base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/bad144				base-sysutil-bin
+./usr/sbin/ipwctl				base-sysutil-bin
+./usr/sbin/ndiscvt				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin
+./usr/share/pcvt				base-obsolete		obsolete
+./usr/share/pcvt/fonts				base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220h.808		base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220h.810		base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220h.814		base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220h.816		base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220l.808		base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220l.810		base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220l.814		base-obsolete		obsolete
+./usr/share/pcvt/fonts/vt220l.816		base-obsolete		obsolete
+./usr/share/pcvt/keycap.pcvt			base-obsolete		obsolete

@@ -1,0 +1,52 @@
+# $NetBSD: md.hpcarm,v 1.17 2011/07/19 15:37:38 dyoung Exp $
+./usr/include/hpcarm				comp-c-include
+./usr/include/hpcarm/ansi.h			comp-c-include
+./usr/include/hpcarm/aout_machdep.h		comp-c-include
+./usr/include/hpcarm/apmvar.h			comp-c-include
+./usr/include/hpcarm/asm.h			comp-c-include
+./usr/include/hpcarm/bswap.h			comp-c-include
+./usr/include/hpcarm/bus.h			comp-obsolete		obsolete
+./usr/include/hpcarm/cdefs.h			comp-c-include
+./usr/include/hpcarm/cpu.h			comp-c-include
+./usr/include/hpcarm/db_machdep.h		comp-obsolete		obsolete
+./usr/include/hpcarm/disklabel.h		comp-c-include
+./usr/include/hpcarm/elf_machdep.h		comp-c-include
+./usr/include/hpcarm/endian.h			comp-c-include
+./usr/include/hpcarm/endian_machdep.h		comp-c-include
+./usr/include/hpcarm/float.h			comp-c-include
+./usr/include/hpcarm/fp.h			comp-c-include
+./usr/include/hpcarm/frame.h			comp-c-include
+./usr/include/hpcarm/ieee.h			comp-c-include
+./usr/include/hpcarm/ieeefp.h			comp-c-include
+./usr/include/hpcarm/int_const.h		comp-c-include
+./usr/include/hpcarm/int_fmtio.h		comp-c-include
+./usr/include/hpcarm/int_limits.h		comp-c-include
+./usr/include/hpcarm/int_mwgwtypes.h		comp-c-include
+./usr/include/hpcarm/int_types.h		comp-c-include
+./usr/include/hpcarm/intr.h			comp-c-include
+./usr/include/hpcarm/ipkdb.h			comp-obsolete		obsolete
+./usr/include/hpcarm/limits.h			comp-c-include
+./usr/include/hpcarm/lock.h			comp-c-include
+./usr/include/hpcarm/math.h			comp-c-include
+./usr/include/hpcarm/mcontext.h			comp-c-include
+./usr/include/hpcarm/mutex.h			comp-c-include
+./usr/include/hpcarm/param.h			comp-c-include
+./usr/include/hpcarm/pcb.h			comp-c-include
+./usr/include/hpcarm/pmap.h			comp-c-include
+./usr/include/hpcarm/pmc.h			comp-c-include
+./usr/include/hpcarm/proc.h			comp-c-include
+./usr/include/hpcarm/profile.h			comp-c-include
+./usr/include/hpcarm/ptrace.h			comp-c-include
+./usr/include/hpcarm/reg.h			comp-c-include
+./usr/include/hpcarm/rwlock.h			comp-c-include
+./usr/include/hpcarm/setjmp.h			comp-c-include
+./usr/include/hpcarm/signal.h			comp-c-include
+./usr/include/hpcarm/stdarg.h			comp-obsolete		obsolete
+./usr/include/hpcarm/sysarch.h			comp-c-include
+./usr/include/hpcarm/trap.h			comp-c-include
+./usr/include/hpcarm/types.h			comp-c-include
+./usr/include/hpcarm/varargs.h			comp-obsolete		obsolete
+./usr/include/hpcarm/vmparam.h			comp-c-include
+./usr/include/hpcarm/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

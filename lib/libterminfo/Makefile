@@ -5,6 +5,8 @@
 .endif
 USE_SHLIBDIR=	yes
 
+# LSC MINIX UNtil the library is fixed..
+NOGCCERROR=yes
 LIB=		terminfo
 WARNS=		4
 

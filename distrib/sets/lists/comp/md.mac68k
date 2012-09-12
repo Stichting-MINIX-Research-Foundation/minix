@@ -1,0 +1,62 @@
+# $NetBSD: md.mac68k,v 1.59 2012/04/06 22:46:16 christos Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/mac68k				comp-c-include
+./usr/include/mac68k/_G_config.h		comp-obsolete		obsolete
+./usr/include/mac68k/adbsys.h			comp-c-include
+./usr/include/mac68k/ansi.h			comp-c-include
+./usr/include/mac68k/aout_machdep.h		comp-c-include
+./usr/include/mac68k/asm.h			comp-c-include
+./usr/include/mac68k/autoconf.h			comp-c-include
+./usr/include/mac68k/bswap.h			comp-c-include
+./usr/include/mac68k/bus.h			comp-c-include
+./usr/include/mac68k/cdefs.h			comp-c-include
+./usr/include/mac68k/cpu.h			comp-c-include
+./usr/include/mac68k/db_machdep.h		comp-obsolete		obsolete
+./usr/include/mac68k/disklabel.h		comp-c-include
+./usr/include/mac68k/elf_machdep.h		comp-c-include
+./usr/include/mac68k/endian.h			comp-c-include
+./usr/include/mac68k/endian_machdep.h		comp-c-include
+./usr/include/mac68k/float.h			comp-c-include
+./usr/include/mac68k/frame.h			comp-c-include
+./usr/include/mac68k/grfioctl.h			comp-c-include
+./usr/include/mac68k/ieee.h			comp-c-include
+./usr/include/mac68k/ieeefp.h			comp-c-include
+./usr/include/mac68k/int_const.h		comp-c-include
+./usr/include/mac68k/int_fmtio.h		comp-c-include
+./usr/include/mac68k/int_limits.h		comp-c-include
+./usr/include/mac68k/int_mwgwtypes.h		comp-c-include
+./usr/include/mac68k/int_types.h		comp-c-include
+./usr/include/mac68k/intr.h			comp-c-include
+./usr/include/mac68k/iteioctl.h			comp-c-include
+./usr/include/mac68k/kcore.h			comp-c-include
+./usr/include/mac68k/keyboard.h			comp-c-include
+./usr/include/mac68k/limits.h			comp-c-include
+./usr/include/mac68k/lock.h			comp-c-include
+./usr/include/mac68k/math.h			comp-c-include
+./usr/include/mac68k/mcontext.h			comp-c-include
+./usr/include/mac68k/mutex.h			comp-c-include
+./usr/include/mac68k/param.h			comp-c-include
+./usr/include/mac68k/pcb.h			comp-c-include
+./usr/include/mac68k/pio.h			comp-c-include
+./usr/include/mac68k/pmap.h			comp-c-include
+./usr/include/mac68k/pmc.h			comp-c-include
+./usr/include/mac68k/proc.h			comp-c-include
+./usr/include/mac68k/profile.h			comp-c-include
+./usr/include/mac68k/psc.h			comp-c-include
+./usr/include/mac68k/psl.h			comp-c-include
+./usr/include/mac68k/pte.h			comp-c-include
+./usr/include/mac68k/ptrace.h			comp-c-include
+./usr/include/mac68k/reg.h			comp-c-include
+./usr/include/mac68k/rwlock.h			comp-c-include
+./usr/include/mac68k/scsi_5380.h		comp-c-include
+./usr/include/mac68k/setjmp.h			comp-c-include
+./usr/include/mac68k/signal.h			comp-c-include
+./usr/include/mac68k/stdarg.h			comp-obsolete		obsolete
+./usr/include/mac68k/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/mac68k/trap.h			comp-c-include
+./usr/include/mac68k/types.h			comp-c-include
+./usr/include/mac68k/varargs.h			comp-obsolete		obsolete
+./usr/include/mac68k/viareg.h			comp-c-include
+./usr/include/mac68k/vmparam.h			comp-c-include
+./usr/include/mac68k/wchar_limits.h		comp-c-include
+./usr/include/mac68k/z8530var.h			comp-c-include

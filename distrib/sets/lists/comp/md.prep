@@ -1,0 +1,66 @@
+# $NetBSD: md.prep,v 1.27 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/prep				comp-c-include
+./usr/include/prep/_G_config.h			comp-obsolete		obsolete
+./usr/include/prep/ansi.h			comp-c-include
+./usr/include/prep/aout_machdep.h		comp-c-include
+./usr/include/prep/asm.h			comp-c-include
+./usr/include/prep/atomic.h			comp-obsolete		obsolete
+./usr/include/prep/bat.h			comp-obsolete		obsolete
+./usr/include/prep/bootinfo.h			comp-c-include
+./usr/include/prep/bswap.h			comp-c-include
+./usr/include/prep/bus.h			comp-obsolete		obsolete
+./usr/include/prep/cdefs.h			comp-c-include
+./usr/include/prep/cpu.h			comp-c-include
+./usr/include/prep/cpufunc.h			comp-obsolete		obsolete
+./usr/include/prep/db_machdep.h			comp-obsolete		obsolete
+./usr/include/prep/disklabel.h			comp-c-include
+./usr/include/prep/elf_machdep.h		comp-c-include
+./usr/include/prep/endian.h			comp-c-include
+./usr/include/prep/endian_machdep.h		comp-c-include
+./usr/include/prep/float.h			comp-c-include
+./usr/include/prep/fpu.h			comp-c-include
+./usr/include/prep/frame.h			comp-c-include
+./usr/include/prep/ieee.h			comp-c-include
+./usr/include/prep/ieeefp.h			comp-c-include
+./usr/include/prep/int_const.h			comp-c-include
+./usr/include/prep/int_fmtio.h			comp-c-include
+./usr/include/prep/int_limits.h			comp-c-include
+./usr/include/prep/int_mwgwtypes.h		comp-c-include
+./usr/include/prep/int_types.h			comp-c-include
+./usr/include/prep/intr.h			comp-c-include
+./usr/include/prep/ipkdb.h			comp-obsolete		obsolete
+./usr/include/prep/kcore.h			comp-c-include
+./usr/include/prep/kgdb.h			comp-obsolete		obsolete
+./usr/include/prep/limits.h			comp-c-include
+./usr/include/prep/lock.h			comp-c-include
+./usr/include/prep/math.h			comp-c-include
+./usr/include/prep/mcontext.h			comp-c-include
+./usr/include/prep/mutex.h			comp-c-include
+./usr/include/prep/nvram.h			comp-c-include
+./usr/include/prep/param.h			comp-c-include
+./usr/include/prep/pcb.h			comp-c-include
+./usr/include/prep/pio.h			comp-obsolete		obsolete
+./usr/include/prep/pmap.h			comp-c-include
+./usr/include/prep/pmc.h			comp-c-include
+./usr/include/prep/powerpc.h			comp-obsolete		obsolete
+./usr/include/prep/proc.h			comp-c-include
+./usr/include/prep/profile.h			comp-c-include
+./usr/include/prep/psl.h			comp-c-include
+./usr/include/prep/pte.h			comp-c-include
+./usr/include/prep/ptrace.h			comp-c-include
+./usr/include/prep/reg.h			comp-c-include
+./usr/include/prep/reloc.h			comp-c-include
+./usr/include/prep/rwlock.h			comp-c-include
+./usr/include/prep/setjmp.h			comp-c-include
+./usr/include/prep/signal.h			comp-c-include
+./usr/include/prep/spkr.h			comp-c-include
+./usr/include/prep/spr.h			comp-obsolete		obsolete
+./usr/include/prep/stdarg.h			comp-obsolete		obsolete
+./usr/include/prep/trap.h			comp-c-include
+./usr/include/prep/types.h			comp-c-include
+./usr/include/prep/varargs.h			comp-obsolete		obsolete
+./usr/include/prep/vmparam.h			comp-c-include
+./usr/include/prep/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug

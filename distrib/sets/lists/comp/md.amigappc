@@ -1,0 +1,63 @@
+# $NetBSD: md.amigappc,v 1.8 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/amigappc				comp-c-include
+./usr/include/amigappc/_G_config.h		comp-obsolete		obsolete
+./usr/include/amigappc/ansi.h			comp-c-include
+./usr/include/amigappc/aout_machdep.h		comp-c-include
+./usr/include/amigappc/asm.h			comp-c-include
+./usr/include/amigappc/atomic.h			comp-obsolete		obsolete
+#XXX./usr/include/amigappc/autoconf.h		comp-c-include
+./usr/include/amigappc/bat.h			comp-obsolete		obsolete
+#XXX./usr/include/amigappc/bus.h			comp-c-include
+./usr/include/amigappc/bswap.h			comp-c-include
+./usr/include/amigappc/bus.h			comp-obsolete		obsolete
+./usr/include/amigappc/cdefs.h			comp-c-include
+./usr/include/amigappc/cpu.h			comp-c-include
+./usr/include/amigappc/db_machdep.h		comp-obsolete		obsolete
+./usr/include/amigappc/disklabel.h		comp-c-include
+./usr/include/amigappc/elf_machdep.h		comp-c-include
+./usr/include/amigappc/endian.h			comp-c-include
+./usr/include/amigappc/endian_machdep.h		comp-c-include
+./usr/include/amigappc/float.h			comp-c-include
+./usr/include/amigappc/fpu.h			comp-c-include
+./usr/include/amigappc/frame.h			comp-c-include
+./usr/include/amigappc/ieee.h			comp-c-include
+./usr/include/amigappc/ieeefp.h			comp-c-include
+./usr/include/amigappc/int_const.h		comp-c-include
+./usr/include/amigappc/int_fmtio.h		comp-c-include
+./usr/include/amigappc/int_limits.h		comp-c-include
+./usr/include/amigappc/int_mwgwtypes.h		comp-c-include
+./usr/include/amigappc/int_types.h		comp-c-include
+./usr/include/amigappc/intr.h			comp-c-include
+./usr/include/amigappc/ipkdb.h			comp-obsolete		obsolete
+./usr/include/amigappc/kcore.h			comp-c-include
+./usr/include/amigappc/limits.h			comp-c-include
+./usr/include/amigappc/lock.h			comp-c-include
+./usr/include/amigappc/machine_type.h		comp-obsolete		obsolete
+./usr/include/amigappc/math.h			comp-c-include
+./usr/include/amigappc/mcontext.h		comp-c-include
+./usr/include/amigappc/mutex.h			comp-c-include
+./usr/include/amigappc/param.h			comp-c-include
+./usr/include/amigappc/pcb.h			comp-c-include
+./usr/include/amigappc/pio.h			comp-obsolete		obsolete
+./usr/include/amigappc/pmap.h			comp-c-include
+./usr/include/amigappc/pmc.h			comp-c-include
+./usr/include/amigappc/powerpc.h		comp-obsolete		obsolete
+./usr/include/amigappc/proc.h			comp-c-include
+./usr/include/amigappc/profile.h		comp-c-include
+./usr/include/amigappc/psl.h			comp-c-include
+./usr/include/amigappc/pte.h			comp-c-include
+./usr/include/amigappc/ptrace.h			comp-c-include
+./usr/include/amigappc/reg.h			comp-c-include
+./usr/include/amigappc/reloc.h			comp-c-include
+./usr/include/amigappc/rwlock.h			comp-c-include
+./usr/include/amigappc/setjmp.h			comp-c-include
+./usr/include/amigappc/signal.h			comp-c-include
+./usr/include/amigappc/spr.h			comp-obsolete		obsolete
+./usr/include/amigappc/stdarg.h			comp-obsolete		obsolete
+./usr/include/amigappc/trap.h			comp-c-include
+./usr/include/amigappc/types.h			comp-c-include
+./usr/include/amigappc/varargs.h		comp-obsolete		obsolete
+./usr/include/amigappc/vmparam.h		comp-c-include
+./usr/include/amigappc/wchar_limits.h		comp-c-include
+./usr/include/amigappc/z8530var.h		comp-obsolete		obsolete

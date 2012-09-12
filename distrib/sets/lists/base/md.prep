@@ -1,0 +1,7 @@
+# $NetBSD: md.prep,v 1.15 2008/11/29 17:57:34 tsutsui Exp $
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/boot_com0				base-sysutil-bin
+./usr/mdec/boot_com0_vreset				base-sysutil-bin
+./usr/mdec/mkbootimage				base-sysutil-bin
+./usr/mdec/installboot			base-obsolete		obsolete
+./usr/sbin/eeprom				base-sysutil-bin

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2009/12/17 06:54:51 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2011/01/23 06:27:32 matt Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
@@ -10,8 +10,7 @@ SRCS+=	gmon.c mcount.c
 MAN+=	moncontrol.3
 MLINKS+=moncontrol.3 monstartup.3
 
-.if (${MACHINE_ARCH} == "mipseb") || (${MACHINE_ARCH} == "mipsel") || \
-    (${MACHINE_ARCH} == "mips64eb") || (${MACHINE_ARCH} == "mips64el")
+.if (${MACHINE_CPU} == "mips")
 # Turn off as(1) warnings on MIPS, since warnings are fatal with WARNS>0
 # and mcount.c causes warnings from as(1).
 # mcount.c should be fixed and this test removed.

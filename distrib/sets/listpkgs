@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# $NetBSD: listpkgs,v 1.12 2006/01/04 13:35:55 apb Exp $
+#
+# List all packages in the given pkgset by parsing the list files.
+#
+
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+prefix=/
+
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [-p prefix] setname
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[${MACHINE_ARCH}]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[${MACHINE}]
+	-s setsdir	directory to find sets			[${setsdir}]
+	setname set to list packages for
+USAGE
+	exit 1
+}
+
+# handle args
+while getopts a:m:s: ch; do
+	case ${ch} in
+	a)
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
+		;;
+	m)
+		MACHINE="${OPTARG}"
+		;;
+	s)
+		setsdir="${OPTARG}"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
+if [ $# -ne 1 ]; then
+	usage
+fi
+setname="$1"
+
+list_set_files "${setname}" | ${AWK} '{print $2}' | ${SORT} -u

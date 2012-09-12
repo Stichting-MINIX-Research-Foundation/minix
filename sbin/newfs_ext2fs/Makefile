@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/05 21:52:31 haad Exp $
+#	$NetBSD: Makefile,v 1.4 2012/03/24 08:22:24 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 WARNS?=	3	# XXX: sign-compare issues
@@ -10,7 +10,6 @@ SRCS=	newfs_ext2fs.c mke2fs.c ext2fs_bswap.c partutil.c
 MAN=	newfs_ext2fs.8
 
 FSCK=${NETBSDSRCDIR}/sbin/fsck
-MYFSCK=${NETBSDSRCDIR}/sbin/fsck_ext2fs
 CPPFLAGS+=-I${.CURDIR} -I${FSCK}
 
 DPADD+= ${LIBUTIL}
@@ -22,6 +21,7 @@ DPADD+=${LIBPROP}
 SYMLINKS+= $(BINDIR)/$(PROG)  $(BINDIR)/newfs_ext2 \
 	$(BINDIR)/$(PROG)  $(BINDIR)/mkfs.ext2
 
-.PATH:	${FSCK} ${MYFSCK} #${NETBSDSRCDIR}/sys/ufs/ext2fs 
+#.PATH:	${NETBSDSRCDIR}/sys/ufs/ext2fs ${FSCK}
+.PATH:	${NETBSDSRCDIR}/sbin/fsck_ext2fs ${FSCK}
 
 .include <bsd.prog.mk>

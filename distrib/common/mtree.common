@@ -1,0 +1,28 @@
+#	$NetBSD: mtree.common,v 1.9 2009/04/07 11:49:17 joerg Exp $
+
+/set				type=dir uname=root gname=operator mode=0755
+
+.
+./bin
+./dev
+./etc
+./libexec
+./libexec/dhcpcd-hooks
+./mnt
+./mnt2
+./kern
+./sbin
+./targetroot
+./tmp				mode=01777
+./usr
+./usr/bin
+./usr/mdec
+./usr/sbin
+./usr/share
+./usr/share/misc
+./var
+./var/db
+./var/run
+./var/log
+./var/spool
+./var/spool/lock

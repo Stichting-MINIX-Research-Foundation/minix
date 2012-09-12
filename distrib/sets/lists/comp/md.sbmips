@@ -1,0 +1,56 @@
+# $NetBSD: md.sbmips,v 1.14 2011/07/17 20:54:31 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sbmips				comp-c-include
+./usr/include/sbmips/_G_config.h		comp-obsolete		obsolete
+./usr/include/sbmips/ansi.h			comp-c-include
+./usr/include/sbmips/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/sbmips/asm.h			comp-c-include
+./usr/include/sbmips/bsd-aout.h			comp-obsolete		obsolete
+./usr/include/sbmips/bswap.h			comp-c-include
+./usr/include/sbmips/cdefs.h			comp-c-include
+./usr/include/sbmips/cpu.h			comp-c-include
+./usr/include/sbmips/db_machdep.h		comp-obsolete 		obsolete
+./usr/include/sbmips/disklabel.h		comp-c-include
+./usr/include/sbmips/ecoff_machdep.h		comp-c-include
+./usr/include/sbmips/elf_machdep.h		comp-c-include
+./usr/include/sbmips/endian.h			comp-c-include
+./usr/include/sbmips/endian_machdep.h		comp-c-include
+./usr/include/sbmips/float.h			comp-c-include
+./usr/include/sbmips/ieee.h			comp-c-include
+./usr/include/sbmips/ieeefp.h			comp-c-include
+./usr/include/sbmips/int_const.h		comp-c-include
+./usr/include/sbmips/int_fmtio.h		comp-c-include
+./usr/include/sbmips/int_limits.h		comp-c-include
+./usr/include/sbmips/int_mwgwtypes.h		comp-c-include
+./usr/include/sbmips/int_types.h		comp-c-include
+./usr/include/sbmips/kcore.h			comp-c-include
+./usr/include/sbmips/kdbparam.h			comp-c-include
+./usr/include/sbmips/limits.h			comp-c-include
+./usr/include/sbmips/lock.h			comp-c-include
+./usr/include/sbmips/locore.h			comp-c-include
+./usr/include/sbmips/math.h			comp-c-include
+./usr/include/sbmips/mcontext.h			comp-c-include
+./usr/include/sbmips/mips_opcode.h		comp-c-include
+./usr/include/sbmips/mutex.h			comp-c-include
+./usr/include/sbmips/param.h			comp-c-include
+./usr/include/sbmips/pcb.h			comp-c-include
+./usr/include/sbmips/pmap.h			comp-c-include
+./usr/include/sbmips/pmc.h			comp-c-include
+./usr/include/sbmips/proc.h			comp-c-include
+./usr/include/sbmips/profile.h			comp-c-include
+./usr/include/sbmips/psl.h			comp-c-include
+./usr/include/sbmips/pte.h			comp-c-include
+./usr/include/sbmips/ptrace.h			comp-c-include
+./usr/include/sbmips/reg.h			comp-c-include
+./usr/include/sbmips/regdef.h			comp-c-include
+./usr/include/sbmips/regnum.h			comp-c-include
+./usr/include/sbmips/reloc.h			comp-c-include
+./usr/include/sbmips/rwlock.h			comp-c-include
+./usr/include/sbmips/setjmp.h			comp-c-include
+./usr/include/sbmips/signal.h			comp-c-include
+./usr/include/sbmips/stdarg.h			comp-obsolete		obsolete
+./usr/include/sbmips/trap.h			comp-c-include
+./usr/include/sbmips/types.h			comp-c-include
+./usr/include/sbmips/varargs.h			comp-obsolete		obsolete
+./usr/include/sbmips/vmparam.h			comp-c-include
+./usr/include/sbmips/wchar_limits.h		comp-c-include

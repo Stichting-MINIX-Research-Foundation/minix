@@ -1,0 +1,11 @@
+#	$NetBSD: list.sysinst.en,v 1.1 2004/04/18 20:04:26 dsl Exp $
+#
+# list file (c.f. parselist.awk) for sysinst-using install media.
+#
+# NOTE:	sysinst needs at least 4 free inodes and a few KB of free disk space.
+#
+
+PROG	sysinst
+PROG	usr/bin/progress
+
+SPECIAL	sysinst	srcdir	distrib/utils/sysinst/arch/${MACHINE}

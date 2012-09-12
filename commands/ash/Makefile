@@ -2,28 +2,9 @@
 
 .include <bsd.own.mk>
 
-YHEADER=1
 PROG=	sh
-
-SHSRCS=	alias.c arith.y arith_lex.l cd.c echo.c error.c eval.c exec.c expand.c \
-	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
-	mystring.c options.c output.c parser.c redir.c show.c \
-	trap.c var.c setmode.c expr.c regexp.c
-GENSRCS= builtins.c init.c nodes.c syntax.c operators.c signames.c
-GENHDRS= builtins.h nodes.h syntax.h token.h operators.h signames.h
-SRCS= ${SHSRCS} ${GENSRCS}
-DPSRCS+=${GENHDRS}
 BINDIR=	/bin
 MAN=
-
-DPADD+= ${LIBL} ${LIBEDIT}
-LDADD+= -ll -ledit
-
-LFLAGS=	-8	# 8-bit lex scanner for arithmetic
-YFLAGS=	-d
-
-# The .depend file can get references to these temporary files
-.OPTIONAL: lex.yy.c y.tab.c
 
 # Enable this line to disable command line editing
 #EDIT=-DNO_HISTORY
@@ -37,55 +18,83 @@ EDIT=-DEDITLINE
 NO_JOBS=-DJOBS=0
 MKB_NO_JOBS=-j
 
-CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
+SRCS=	alias.c arith.y arith_lex.l cd.c eval.c exec.c expand.c \
+	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
+	mystring.c options.c output.c parser.c redir.c show.c \
+	trap.c var.c setmode.c
+
+.include "${.CURDIR}/bltin/Makefile.inc"
+
+GENSRCS= builtins.c init.c nodes.c syntax.c operators.c signames.c
+GENHDRS= builtins.h nodes.h syntax.h token.h operators.h signames.h
+
+SRCS+= ${GENSRCS}
+
+CLEANFILES+=${GENSRCS} ${GENHDRS}
+
+DPADD+= ${LIBL} ${LIBEDIT}
+LDADD+= -ll -ledit
+
+CPPFLAGS+= -DSHELL -D__NBSD_LIBC
 CPPFLAGS+=${EDIT} ${NO_PATHS_H} ${NO_JOBS}
 
-.PATH:	${.CURDIR}/bltin
+CPPFLAGS+= -I. -I${.CURDIR}
 
-CLEANFILES+= mkinit mkinit.lo mknodes mknodes.lo \
-	mksyntax mksyntax.lo mksignames mksignames.lo
-CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
+# A. Generate C tools used to build ash
+.for tool in init nodes signames syntax
+${.OBJDIR}/mk${tool}: ${.CURDIR}/mk${tool}.c
+	${HOST_CC} ${.ALLSRC} -o ${.TARGET}
+.endfor
 
-build-tools: mkinit mknodes mksyntax mksignames
+# B. Generates C sources from C tools
+NODES_ARGS:= ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
+INIT_ARGS:= alias.c eval.c exec.c input.c jobs.c options.c parser.c \
+            redir.c trap.c var.c
 
-.ORDER: builtins.c builtins.h
-builtins.c builtins.h: mkbuiltins builtins.def shell.h
-	cd ${.CURDIR}; sh mkbuiltins ${MKB_NO_JOBS} ${.OBJDIR} shell.h builtins.def
+.for tool in nodes signames syntax
+${tool}.c ${tool}.h: ${.OBJDIR}/mk${tool}
+	${.OBJDIR}/mk${tool} ${${tool:tu}_ARGS}
+.endfor
 
-init.c: mkinit alias.c eval.c exec.c input.c jobs.c options.c parser.c \
-	redir.c trap.c var.c
-	./mkinit ${.ALLSRC:S/^mkinit$//}
+init.c: ${.OBJDIR}/mkinit \
+        alias.c eval.c exec.c input.c jobs.c options.c parser.c \
+        redir.c trap.c var.c
+	${.OBJDIR}/mkinit ${.ALLSRC:S/^${.OBJDIR}/mkinit$//}
 
-mkinit: mkinit.lo
-	${HOST_LINK.c}  mkinit.lo -o $@
+# C. Generates C sources from shell scripts
+token.h:
+	${.CURDIR}/mktokens.sh
 
-mknodes: mknodes.lo
-	${HOST_LINK.c} mknodes.lo -o $@
-mksyntax: mksyntax.lo
-	${HOST_LINK.c} mksyntax.lo  -o $@
-mksignames: mksignames.lo
-	${HOST_LINK.c} mksignames.lo -o $@
+builtins.c builtins.h:
+	${.CURDIR}/mkbuiltins.sh ${MKB_NO_JOBS} . ${.CURDIR}/shell.h ${.CURDIR}/builtins.def
 
-.ORDER: nodes.c nodes.h
-nodes.c nodes.h: mknodes nodetypes nodes.c.pat
-	./mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
+operators.c operators.h:
+	${.CURDIR}/bltin/mkexpr.sh ${.CURDIR}/bltin/unary_op ${.CURDIR}/bltin/binary_op
 
-.ORDER: syntax.c syntax.h
-syntax.c syntax.h: mksyntax
-	./mksyntax
+# D. Generates sources from yacc/lex
+LFLAGS=	-8	# 8-bit lex scanner for arithmetic
 
-token.h: mktokens
-	sh ${.CURDIR}/mktokens
+YFLAGS:= -d
+CLEANFILES+= arith.h arith.y.o
 
-.ORDER: signames.c signames.h
-signames.c signames.h: mksignames
-	./mksignames
+parser.c: token.h
+y.tab.h: arith.y
+arith.h: y.tab.h
+arith_lex.l: arith.h
 
-.ORDER: operators.c operators.h
-operators.c operators.h: mkexpr unary_op binary_op
-	sh ${.CURDIR}/bltin/mkexpr ${.CURDIR}/bltin/unary_op ${.CURDIR}/bltin/binary_op
+# Explicit dependencies to ensure creation when needed
+# LSC FIXME Under MINIX, the build system curiously needs more help.
+# is it because of the missing order tools?
+expand.c: arith.h
+trap.c: signames.h
+cd.c complete.c eval.c exec.c expand.c jobs.c main.c options.c parser.c redir.c show.c trap.c var.c: nodes.h
+eval.c exec.c expand.c input.c input.h jobs.c mystring.c output.c parser.c trap.c var.c: syntax.h
 
-arith.h: arith.c
-arith.c: arith.y
+# LSC: Seems that this file is implicitly taken into account by NetBSD's make, 
+# still seems to be ignored / not found currently.
+# It's a sad story, as it has default rules to manage yacc / lex files. So for
+# a happy ending here it is explicitly included:
+.include <sys.mk>
 
 .include <bsd.prog.mk>
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.83 2012/01/21 20:05:27 tsutsui Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.86 2012/06/04 10:18:01 joerg Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -18,7 +18,7 @@
 
 /* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
    defs. Other platforms may need similiar defines. */
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__minix)
 #define	_ISOC99_SOURCE
 #define _POSIX_SOURCE	1
 #define _POSIX_C_SOURCE	200112L
@@ -71,6 +71,11 @@
 #undef __UNCONST
 #endif
 #define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))
+
+#undef __predict_false
+#define __predict_false(x) (x)
+#undef __predict_true
+#define __predict_true(x) (x)
 
 /* We don't include <pwd.h> here, so that "compat_pwd.h" works. */
 struct passwd;
@@ -214,7 +219,7 @@ char *dirname(char *);
 #else
 /*XXX: Very hacky but no other way to bring this into scope w/o defining
   _NETBSD_SOURCE which we're avoiding. */
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__minix)
 struct _dirdesc {
         int     dd_fd;          /* file descriptor associated with directory */
 	long    dd_loc;         /* offset in current buffer */
@@ -255,7 +260,7 @@ int easprintf(char **, const char *, ...);
 int evasprintf(char **, const char *, va_list);
 #endif
 
-#if !HAVE_FGETLN || defined(__NetBSD__)
+#if !HAVE_FGETLN || defined(__NetBSD__) || defined(__minix)
 char *fgetln(FILE *, size_t *);
 #endif
 
@@ -267,7 +272,7 @@ char *fgetln(FILE *, size_t *);
 int flock(int, int);
 #endif
 
-#if !HAVE_FPARSELN || BROKEN_FPARSELN || defined(__NetBSD__)
+#if !HAVE_FPARSELN || BROKEN_FPARSELN || defined(__NetBSD__) || defined(__minix)
 # define FPARSELN_UNESCESC	0x01
 # define FPARSELN_UNESCCONT	0x02
 # define FPARSELN_UNESCCOMM	0x04
@@ -424,7 +429,7 @@ int setgroupent(int);
 int setpassent(int);
 #endif
 
-#if !HAVE_SETPROGNAME || defined(__NetBSD__)
+#if !HAVE_SETPROGNAME || defined(__NetBSD__) || defined(__minix)
 const char *getprogname(void);
 void setprogname(const char *);
 #endif
@@ -449,7 +454,7 @@ void strmode(mode_t, char *);
 char *strndup(const char *, size_t);
 #endif
 
-#if !HAVE_STRSEP || defined(__NetBSD__)
+#if !HAVE_STRSEP || defined(__NetBSD__) || defined(__minix)
 char *strsep(char **, const char *);
 #endif
 
@@ -1108,7 +1113,7 @@ __GEN_ENDIAN_DEC(64, le)
 #endif
 
 /* Protected by _NETBSD_SOURCE otherwise. */
-#if HAVE_STRUCT_STAT_ST_FLAGS && defined(__NetBSD__)
+#if HAVE_STRUCT_STAT_ST_FLAGS && (defined(__NetBSD__) || defined(__minix))
 #define UF_SETTABLE     0x0000ffff
 #define UF_NODUMP       0x00000001
 #define UF_IMMUTABLE    0x00000002
@@ -1188,9 +1193,9 @@ __GEN_ENDIAN_DEC(64, le)
 #endif
 
 /* Has quad_t but these prototypes don't get pulled into scope. w/o we lose */
-#ifdef __NetBSD__
-quad_t   strtoq __P((const char *, char **, int)); 
-u_quad_t strtouq __P((const char *, char **, int)); 
+#if defined(__NetBSD__) || defined(__minix)
+quad_t   strtoq(const char *, char **, int);
+u_quad_t strtouq(const char *, char **, int);
 #endif
 
 #endif	/* !__NETBSD_COMPAT_DEFS_H__ */

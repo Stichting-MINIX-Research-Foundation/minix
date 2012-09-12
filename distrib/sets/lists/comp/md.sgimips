@@ -1,0 +1,63 @@
+# $NetBSD: md.sgimips,v 1.17 2011/07/17 20:54:31 joerg Exp $
+./usr/include/dev/crmfbreg.h			comp-c-include
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sgimips				comp-c-include
+./usr/include/sgimips/_G_config.h		comp-obsolete		obsolete
+./usr/include/sgimips/ansi.h			comp-c-include
+./usr/include/sgimips/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/sgimips/asm.h			comp-c-include
+./usr/include/sgimips/autoconf.h		comp-c-include
+./usr/include/sgimips/bsd-aout.h		comp-obsolete		obsolete
+./usr/include/sgimips/bswap.h			comp-c-include
+./usr/include/sgimips/cdefs.h			comp-c-include
+./usr/include/sgimips/conf.h			comp-obsolete		obsolete
+./usr/include/sgimips/cpu.h			comp-c-include
+./usr/include/sgimips/db_machdep.h		comp-obsolete		obsolete
+./usr/include/sgimips/disklabel.h		comp-c-include
+./usr/include/sgimips/ecoff_machdep.h		comp-c-include
+./usr/include/sgimips/elf_machdep.h		comp-c-include
+./usr/include/sgimips/endian.h			comp-c-include
+./usr/include/sgimips/endian_machdep.h		comp-c-include
+./usr/include/sgimips/float.h			comp-c-include
+./usr/include/sgimips/ieee.h			comp-c-include
+./usr/include/sgimips/ieeefp.h			comp-c-include
+./usr/include/sgimips/int_const.h		comp-c-include
+./usr/include/sgimips/int_fmtio.h		comp-c-include
+./usr/include/sgimips/int_limits.h		comp-c-include
+./usr/include/sgimips/int_mwgwtypes.h		comp-c-include
+./usr/include/sgimips/int_types.h		comp-c-include
+./usr/include/sgimips/intr.h			comp-c-include
+./usr/include/sgimips/kcore.h			comp-c-include
+./usr/include/sgimips/kdbparam.h		comp-c-include
+./usr/include/sgimips/limits.h			comp-c-include
+./usr/include/sgimips/lock.h			comp-c-include
+./usr/include/sgimips/locore.h			comp-c-include
+./usr/include/sgimips/math.h			comp-c-include
+./usr/include/sgimips/mcontext.h		comp-c-include
+./usr/include/sgimips/mips_opcode.h		comp-c-include
+./usr/include/sgimips/mutex.h			comp-c-include
+./usr/include/sgimips/param.h			comp-c-include
+./usr/include/sgimips/pcb.h			comp-c-include
+./usr/include/sgimips/pci_machdep.h		comp-c-include
+./usr/include/sgimips/pmap.h			comp-c-include
+./usr/include/sgimips/pmc.h			comp-c-include
+./usr/include/sgimips/proc.h			comp-c-include
+./usr/include/sgimips/profile.h			comp-c-include
+./usr/include/sgimips/psl.h			comp-c-include
+./usr/include/sgimips/pte.h			comp-c-include
+./usr/include/sgimips/ptrace.h			comp-c-include
+./usr/include/sgimips/reg.h			comp-c-include
+./usr/include/sgimips/regdef.h			comp-c-include
+./usr/include/sgimips/regnum.h			comp-c-include
+./usr/include/sgimips/reloc.h			comp-c-include
+./usr/include/sgimips/rwlock.h			comp-c-include
+./usr/include/sgimips/setjmp.h			comp-c-include
+./usr/include/sgimips/signal.h			comp-c-include
+./usr/include/sgimips/stdarg.h			comp-obsolete		obsolete
+./usr/include/sgimips/trap.h			comp-c-include
+./usr/include/sgimips/types.h			comp-c-include
+./usr/include/sgimips/varargs.h			comp-obsolete		obsolete
+./usr/include/sgimips/vmparam.h			comp-c-include
+./usr/include/sgimips/wchar_limits.h		comp-c-include
+./usr/include/sgimips/z8530var.h		comp-c-include
+./usr/libdata/debug/usr/mdec/sgivol.debug	-unknown-		debug

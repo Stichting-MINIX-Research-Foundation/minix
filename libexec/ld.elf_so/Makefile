@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.102 2011/01/16 02:36:05 matt Exp $
+#	$NetBSD: Makefile,v 1.112 2012/08/04 15:17:16 matt Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
 
 WARNS?=4
+
+#LSC MINIX until warnings get fixed...
+NOGCCERROR:=yes
 
 # This executable needs to be linked dynamically
 MINIXDYNAMIC=yes
@@ -44,15 +47,12 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "vax")) &&					\
     ${MKPIC} != "no"
 
-.if ${CC} == "gcc"
-LDFLAGS+=	-shared -symbolic -nostartfiles
-.else
-LDFLAGS+=	-shared -Wl,-Bsymbolic -nostartfiles
-.endif
+LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
+		-shared -nostartfiles -nodefaultlibs
 LDFLAGS+=	-Wl,-static
 LDFLAGS+=	-Wl,--warn-shared-textrel
 
-CFLAGS+=	-fvisibility=hidden
+COPTS+=		-fvisibility=hidden
 
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
@@ -100,7 +100,12 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
 DBG=		-g
-#DBG=		-O3 -fomit-frame-pointer
+#COPTS=		-O3 -fomit-frame-pointer
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
+.endif
+
 
 .if ${SHLIBDIR} != ${LIBDIR}
 CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
@@ -120,6 +125,12 @@ DPADD+=		${CLIBOBJ}/libc_pic.a
 .else
 LDADD+=		-lc
 DPADD+=		${CLIBOBJ}/libc.a
+.endif
+
+.if ${MACHINE_CPU} == "hppa" || ${MACHINE_CPU} == "sh3"
+# for $$divU, $$remU etc. (millicode)
+LDADD+=		-lgcc
+DPADD+=		${LIBGCC}
 .endif
 
 STRIPFLAG=

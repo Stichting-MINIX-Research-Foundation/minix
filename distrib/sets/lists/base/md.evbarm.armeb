@@ -1,0 +1,3 @@
+# $NetBSD: md.evbarm.armeb,v 1.4 2012/10/14 12:36:57 msaitoh Exp $
+./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
+./usr/mdec/bootmini2440				base-sysutil-bin

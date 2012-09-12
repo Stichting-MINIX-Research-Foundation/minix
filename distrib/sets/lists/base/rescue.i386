@@ -1,0 +1,2 @@
+# $NetBSD: rescue.i386,v 1.3 2005/05/22 03:45:30 lukem Exp $
+./rescue/ldconfig				base-rescue-root

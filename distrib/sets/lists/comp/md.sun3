@@ -1,0 +1,84 @@
+# $NetBSD: md.sun3,v 1.61 2011/07/17 20:54:32 joerg Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/sun3				comp-c-include
+./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
+./usr/include/sun3/ansi.h			comp-c-include
+./usr/include/sun3/aout_machdep.h		comp-c-include
+./usr/include/sun3/asm.h			comp-c-include
+./usr/include/sun3/autoconf.h			comp-c-include
+./usr/include/sun3/bswap.h			comp-c-include
+./usr/include/sun3/cdefs.h			comp-c-include
+./usr/include/sun3/cg2reg.h			comp-c-include
+./usr/include/sun3/cpu.h			comp-c-include
+./usr/include/sun3/db_machdep.h			comp-obsolete		obsolete
+./usr/include/sun3/disklabel.h			comp-c-include
+./usr/include/sun3/dvma.h			comp-c-include
+./usr/include/sun3/dvma3.h			comp-c-include
+./usr/include/sun3/dvma3x.h			comp-c-include
+./usr/include/sun3/eeprom.h			comp-c-include
+./usr/include/sun3/elf_machdep.h		comp-c-include
+./usr/include/sun3/endian.h			comp-c-include
+./usr/include/sun3/endian_machdep.h		comp-c-include
+./usr/include/sun3/fbio.h			comp-obsolete		obsolete
+./usr/include/sun3/float.h			comp-c-include
+./usr/include/sun3/frame.h			comp-c-include
+./usr/include/sun3/idprom.h			comp-c-include
+./usr/include/sun3/ieee.h			comp-c-include
+./usr/include/sun3/ieeefp.h			comp-c-include
+./usr/include/sun3/int_const.h			comp-c-include
+./usr/include/sun3/int_fmtio.h			comp-c-include
+./usr/include/sun3/int_limits.h			comp-c-include
+./usr/include/sun3/int_mwgwtypes.h		comp-c-include
+./usr/include/sun3/int_types.h			comp-c-include
+./usr/include/sun3/intr.h			comp-c-include
+./usr/include/sun3/kbd.h			comp-c-include
+./usr/include/sun3/kbio.h			comp-c-include
+./usr/include/sun3/kcore.h			comp-c-include
+./usr/include/sun3/leds.h			comp-c-include
+./usr/include/sun3/limits.h			comp-c-include
+./usr/include/sun3/lock.h			comp-c-include
+./usr/include/sun3/math.h			comp-c-include
+./usr/include/sun3/mc68851.h			comp-c-include
+./usr/include/sun3/mcontext.h			comp-c-include
+./usr/include/sun3/mon.h			comp-c-include
+./usr/include/sun3/mutex.h			comp-c-include
+./usr/include/sun3/param.h			comp-c-include
+./usr/include/sun3/param3.h			comp-c-include
+./usr/include/sun3/param3x.h			comp-c-include
+./usr/include/sun3/pcb.h			comp-c-include
+./usr/include/sun3/pmap.h			comp-c-include
+./usr/include/sun3/pmap3.h			comp-c-include
+./usr/include/sun3/pmap3x.h			comp-c-include
+./usr/include/sun3/pmc.h			comp-c-include
+./usr/include/sun3/proc.h			comp-c-include
+./usr/include/sun3/profile.h			comp-c-include
+./usr/include/sun3/psl.h			comp-c-include
+./usr/include/sun3/pte.h			comp-c-include
+./usr/include/sun3/pte3.h			comp-c-include
+./usr/include/sun3/pte3x.h			comp-c-include
+./usr/include/sun3/ptrace.h			comp-c-include
+./usr/include/sun3/reg.h			comp-c-include
+./usr/include/sun3/rwlock.h			comp-c-include
+./usr/include/sun3/setjmp.h			comp-c-include
+./usr/include/sun3/signal.h			comp-c-include
+./usr/include/sun3/stdarg.h			comp-obsolete		obsolete
+./usr/include/sun3/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/sun3/trap.h			comp-c-include
+./usr/include/sun3/types.h			comp-c-include
+./usr/include/sun3/varargs.h			comp-obsolete		obsolete
+./usr/include/sun3/vmparam.h			comp-c-include
+./usr/include/sun3/vmparam3.h			comp-c-include
+./usr/include/sun3/vmparam3x.h			comp-c-include
+./usr/include/sun3/vuid_event.h			comp-c-include
+./usr/include/sun3/wchar_limits.h		comp-c-include
+./usr/include/sun3/z8530var.h			comp-c-include
+./usr/include/sun68k				comp-c-include
+./usr/include/sun68k/bus.h			comp-c-include
+./usr/include/sun68k/cpu.h			comp-c-include
+./usr/include/sun68k/disklabel.h		comp-c-include
+./usr/include/sun68k/idprom.h			comp-c-include
+./usr/include/sun68k/intr.h			comp-c-include
+./usr/include/sun68k/mon.h			comp-c-include
+./usr/include/sun68k/psl.h			comp-c-include
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug

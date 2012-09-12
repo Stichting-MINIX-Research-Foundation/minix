@@ -1,0 +1,227 @@
+#	$NetBSD: Makefile.bootcd,v 1.20 2012/08/17 16:57:59 riz Exp $
+#
+# Makefile snipped to create a CD/DVD ISO
+#
+
+# XXX TODO:
+# 1) merge with src/distrib/cdrom
+# 2) teach makefs to add data from more than 1 directory (see below)
+
+#
+# Required variables:
+#	CDBASE		Basename of the iso
+#
+# Optional variables:
+#	CDRELEASE	Set to 'true' to include $RELEASEDIR/$MACHINE on the CD
+#	CDRELEASE_NOISOS Excludes installation/cdrom directory if set
+#	CDSOURCE	Set to 'true' to include $RELEASEDIR/source on the CD
+#	CDEXTRA		Set to a list of files or directories containing extra
+#			stuff to put on CD (set by build.sh -C flag)
+#	CDBUILDEXTRA	Set to a list of files or directories containing extra
+#			stuff to put on CD (use in Makefiles)
+#	CDEXTRA_SKIP	A list of file exclusion paths to exclude when copying
+#			directories of extra stuff in CDEXTRA AND CDBUILDEXTRA
+#	BOOT		Defaults to $DESTDIR/usr/mdec/boot
+#	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
+#	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
+#	CDMAKEFSOPTIONS	Options for makefs, eg bootimage=i386;bootxx,no-emul-boot
+#	CDROMS_RELEASEDIR Where to install ${CDBASE}.iso
+#	CDINSTKERNEL	instkernel directory (relative to ${.CURDIR})
+#	CDKERNELS	couples of the form:
+#				source	name_on_cd
+#	CDRUNTIME	files/directories to copy from $DESTDIR onto the CD
+# source kernels are copied from ${CDINSTKERNEL} (or its obj dir)
+# note that as of yet, bootxx_cd9660 can't load kernel names of more than
+# 8 chars (though they can be in a sub-directory meaning the pathname is
+# longer than 8 chars)
+#
+
+BOOT?=		${DESTDIR}/usr/mdec/boot
+BOOTXX_CD9660?=	${DESTDIR}/usr/mdec/bootxx_cd9660
+CDRELEASE?=	false
+CDSOURCE?=	false
+.if ${CDRELEASE} == false
+CDROMS_RELEASEDIR?=	${MACHINE}/installation/cdrom
+.else
+CDROMS_RELEASEDIR?=	images
+.endif
+.if defined(CDRELEASE_NOISOS)
+CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
+.endif
+.if !defined(CDRELEASE_LIVEIMAGE)
+CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
+.endif
+.if !defined(CDRELEASE_INSTALLIMAGE)
+CDRELEASE_EXCLUDE+=	-s ',./installation/installimage.*,,gp'
+.endif
+
+.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.own.mk> 		# For PRINTOBJDIR
+.include <bsd.kernobj.mk>	# For KERNSRCDIR
+
+DISTRIBVER!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh
+DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
+ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
+PUBLISHER?= The_NetBSD_Project
+.if defined(CDMAKEFSOPTIONS)
+_CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER},${CDMAKEFSOPTIONS}
+.else
+_CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER}
+.endif
+
+# Stuff that should come from elsewhere - XXX where? - HF
+CP?=		cp
+RM?=		rm
+MKDIR?=		mkdir -p
+CHMOD?=		chmod
+ECHO?=		echo
+
+.if ${CDRELEASE} == false
+CDIMAGE=	${CDBASE}.iso
+.else
+CDIMAGE=	NetBSD-${DISTRIBVER}-${CDBASE:S/cd$//}.iso
+.endif
+
+CLEANFILES+=	${CDIMAGE}
+CLEANFILES+=	bootxx.${MACHINE}
+
+
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.if defined(CDINSTKERNEL)
+_INSTKERNELNOBJDIR!=	cd ${.CURDIR}/${CDINSTKERNEL} && ${PRINTOBJDIR}
+.endif
+.if exists(${DESTDIR}/usr/mdec/bootxx_cd9660)
+.if exists(${DESTDIR}/usr/mdec/boot.${MACHINE})
+BOOT2=boot.${MACHINE}
+.else
+BOOT2=boot
+.endif
+.endif
+
+prepare:
+	${MKDIR} cdrom
+.if defined(CDKERNELS)
+.for kernel target in ${CDKERNELS}
+	${CP} ${_INSTKERNELNOBJDIR}/${kernel} cdrom/${target}
+.endfor
+.if exists(${DESTDIR}/usr/mdec/bootxx_cd9660)
+	${RM} -f cdrom/${BOOT2}
+	${CP} ${DESTDIR}/usr/mdec/${BOOT2} cdrom/${BOOT2}
+	${RM} -f bootxx.${MACHINE}
+	${CP} ${DESTDIR}/usr/mdec/bootxx_cd9660 bootxx.${MACHINE}
+	${CHMOD} +w bootxx.${MACHINE}
+.if defined(CDBOOTOPTIONS)
+	${TOOL_INSTALLBOOT} -m${MACHINE} -e ${CDBOOTOPTIONS} bootxx.${MACHINE}
+.endif
+.endif
+.endif
+
+# Copy $RELEASEDIR/${MACHINE} in the CDROM dir
+#
+# XXX This could be done a lot easier if makefs(8) could
+# XXX include more than one directory on the image - HF
+#
+copy-releasedir:
+	${RM} -f ${RELEASEDIR}/${CDROMS_RELEASEDIR}/${CDIMAGE}
+	if ${CDRELEASE}; then 						\
+		if [ ! -d ${RELEASEDIR}/${RELEASEMACHINEDIR} ]; then 		\
+			echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
+			exit 1; 					\
+		fi; 							\
+		${MKDIR} cdrom/${MACHINE}; 				\
+		curdir=$$(pwd);						\
+		release_destdir=$$(pwd)/cdrom/${MACHINE}; 		\
+		cd ${RELEASEDIR}/${RELEASEMACHINEDIR}; 			\
+		echo Copying $$(pwd) to $$release_destdir ...; 		\
+		${TOOL_PAX} 						\
+			-rw -pe -v 					\
+			${CDRELEASE_EXCLUDE}				\
+			. $$release_destdir; 				\
+		cd $$curdir;						\
+	fi
+	if ${CDSOURCE}; then 						\
+		if [ ! -d ${RELEASEDIR}/source ]; then	 		\
+			echo "Missing ${RELEASEDIR}/source, aborting"; 	\
+			exit 1; 					\
+		fi; 							\
+		${MKDIR} cdrom/source; 					\
+		curdir=$$(pwd);						\
+		release_destdir=$$(pwd)/cdrom/source;	 		\
+		cd ${RELEASEDIR}/source; 				\
+		echo Copying $$(pwd) to $$release_destdir ...;		\
+		${TOOL_PAX} 						\
+			-rw -pe -v 					\
+			. $$release_destdir; 				\
+		cd $$curdir;						\
+	fi
+	if [ "X${CDRUNTIME}}" != "X" ]; then				\
+		curdir=$$(pwd);						\
+		release_destdir=$${curdir}/cdrom;			\
+		cd $$release_destdir;					\
+		cd ${DESTDIR};						\
+		for cde in ${CDRUNTIME};				\
+		do							\
+			${TOOL_PAX} -rw -pp -v $${cde} $$release_destdir;\
+		done;							\
+		cd $$curdir;						\
+	fi
+	if [ "X${CDEXTRA}${CDBUILDEXTRA}" != "X" ]; then		\
+		curdir=`pwd`;						\
+		skipflag="";						\
+		cdextra_skip="${CDEXTRA_SKIP}";				\
+		if [ "X$${cdextra_skip}" != "X" ]; then			\
+			rm -f cdskip;					\
+			for skip in $${cdextra_skip};			\
+			do						\
+				echo $${skip} >> cdskip;		\
+			done;						\
+			skipflag="-X $${curdir}/cdskip";		\
+		fi;							\
+		cdextra="${CDEXTRA}"; 					\
+		cdbuildextra="${CDBUILDEXTRA}"; 			\
+		for cde in $${cdextra} $${cdbuildextra};		\
+		do							\
+			release_destdir=$${curdir}/cdrom;		\
+			if [ -f $${cde} ]; then				\
+				echo Copying $${cde} to $$release_destdir ...;	\
+				${CP} $${cde} $${release_destdir};	\
+			elif [ -d $${cde} ]; then			\
+				cd $${cde};				\
+				echo Copying $$(pwd) to $$release_destdir ...;	\
+				${TOOL_MTREE} -c $${skipflag} |		\
+					${TOOL_PAX} -rw -pe -v -M	\
+					$$release_destdir; 		\
+			else						\
+				echo "Missing $${cde}, aborting"; 	\
+				exit 1; 				\
+			fi; 						\
+			cd $$curdir;					\
+		done;							\
+	fi
+
+image:
+	${TOOL_MAKEFS} -t cd9660 -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
+
+.if ${CDRELEASE} == false
+release: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
+	${MKDIR} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
+	${RELEASE_INSTALL} ${CDIMAGE} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
+
+iso_image:
+.else
+release:
+
+iso_image: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
+	${MKDIR} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
+	${RELEASE_INSTALL} ${CDIMAGE} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
+.endif
+
+clean:
+	${RM} -fr cdrom
+
+prepare_md_post: .PHONY
+image_md_post: .PHONY
+image_md_pre: .PHONY
+
+.include <bsd.prog.mk>

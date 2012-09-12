@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.58 2010/06/19 13:26:52 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.60 2012/01/20 16:31:29 joerg Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -12,7 +12,6 @@ SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	wcstol.c wcstoll.c wcstoimax.c wcstoul.c wcstoull.c wcstoumax.c \
 	wcstod.c wcstof.c wcstold.c wcscoll.c wcsxfrm.c wcsftime.c
 
-.if (${CITRUS} == "yes")
 # citrus multibyte locale support
 # we have quirk for libc.a - see the last part of lib/libc/Makefile
 CPPFLAGS+=	-DWITH_RUNE -I${.CURDIR}
@@ -22,14 +21,6 @@ CPPFLAGS.rune.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus
-.else
-# singlebyte locale - dummy
-CPPFLAGS+=	-UWITH_RUNE
-SRCS+=	aliasname.c bsdctype.c localeio.c \
-	multibyte_sb.c iswctype_sb.c \
-	localeio_lc_ctype.c localeio_lc_monetary.c \
-	localeio_lc_numeric.c localeio_lc_time.c localeio_lc_messages.c
-.endif
 
 MAN+=	setlocale.3 nl_langinfo.3
 
@@ -61,3 +52,5 @@ MLINKS+=towlower.3 towupper.3
 MLINKS+=wcstod.3 wcstof.3 wcstod.3 wcstold.3
 MLINKS+=wcstol.3 wcstoll.3 wcstol.3 wcstoimax.3 \
 	wcstol.3 wcstoul.3 wcstol.3 wcstoull.3 wcstol.3 wcstoumax.3
+
+COPTS.wcsftime.c = -Wno-format-nonliteral

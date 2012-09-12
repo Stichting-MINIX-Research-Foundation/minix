@@ -1,7 +1,6 @@
-#	$NetBSD: bsd.dep.mk,v 1.68 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: bsd.dep.mk,v 1.74 2012/02/19 23:19:37 matt Exp $
 
 ##### Basic targets
-cleandir:	cleandepend
 realdepend:	beforedepend .depend afterdepend
 .ORDER:		beforedepend .depend afterdepend
 
@@ -15,10 +14,19 @@ MKDEP_SUFFIXES?=	.o
 # some of the rules involve .h sources, so remove them from mkdep line
 
 .if defined(SRCS)							# {
-__acpp_flags=	${_TRADITIONAL_CPP}
+__acpp_flags=	${_ASM_TRADITIONAL_CPP}
 
-__DPSRCS.all=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
+.if defined(NODPSRCS)
+.for f in ${SRCS} ${DPSRCS}
+.if "${NODPSRCS:M${f}}" == ""
+__DPSRCS.all+=	${f:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/}
+.endif
+.endfor
+beforedepend: ${DPSRCS}
+.else
+__DPSRCS.all+=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
 		${DPSRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/}
+.endif
 __DPSRCS.d=	${__DPSRCS.all:O:u:M*.d}
 __DPSRCS.notd=	${__DPSRCS.all:O:u:N*.d}
 
@@ -57,23 +65,23 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
 	    ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
-			${DESTDIR}/usr/include/g++} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .endif # defined(SRCS)							# }
 
 ##### Clean rules
-cleandepend: .PHONY
 .if defined(SRCS)
-	rm -f .depend ${__DPSRCS.d} ${.CURDIR}/tags ${CLEANDEPEND}
+CLEANDIRFILES+= .depend ${__DPSRCS.d} ${.CURDIR}/tags ${CLEANDEPEND}
 .endif
 
 ##### Custom rules
 .if !target(tags)
 tags: ${SRCS}
 .if defined(SRCS)
-	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
+	-cd "${.CURDIR}"; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
 .endif
 .endif
+
+##### Pull in related .mk logic
+.include <bsd.clean.mk>
