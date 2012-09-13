@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# 'Recovery' script that doesn't. This script is to be used for drivers that
-# should not be restarted. Instead, the scripts configures the driver 'down'.
+# Recovery script for INET/lwip. It restarts daemons dependent on it in order
+# to recover TCP state.
 
 kill_by_name()
 {
@@ -60,15 +60,26 @@ service down "$1"
 kill_by_name dhcpd
 kill_by_name nonamed
 kill_by_name syslogd
+
+# Wait a moment to let daemons clean themselves up
 sleep 3
 if [ X`/bin/sysenv lwip` = Xyes ]
 then
-	service up /usr/sbin/lwip -script /etc/rs.inet
+	service up /usr/sbin/lwip -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE_A
 	dhcpd --lwip &
 else
-	service up /usr/sbin/inet -script /etc/rs.inet
+	service up /usr/sbin/inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
 	daemonize dhcpd
 fi
 daemonize nonamed -L
 daemonize syslogd
 
+# Restart SSH daemon if installed and running
+if [ -f /usr/pkg/etc/rc.d/sshd ]
+then
+	/usr/pkg/etc/rc.d/sshd status | grep -v not > /dev/null
+	if [ $? -eq 0 ]
+	then
+		/usr/pkg/etc/rc.d/sshd restart
+	fi
+fi
