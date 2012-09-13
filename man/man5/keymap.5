@@ -119,9 +119,7 @@ EXTKEY.
 .SS "Creating/changing keyboard mapping"
 You can create your own keyboard mapping by copying one of the existing
 keymap source files (Standard Minix:
-.BR kernel/keymaps/*.src ,
-Minix-vmd:
-.BR kernel/ibm/keymaps/*.src )
+.BR drivers/tty/keymaps/*.src )
 and modifying the desired keys. Once this has been done, you need to
 recompile the genmap.c file, either by adding a new entry to the Makefile,
 or by running the following commands:
