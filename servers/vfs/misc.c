@@ -727,7 +727,8 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
 /*===========================================================================*
  *				 ds_event				     *
  *===========================================================================*/
-void ds_event(void)
+void *
+ds_event(void *arg)
 {
   char key[DS_MAX_KEYLEN];
   char *blkdrv_prefix = "drv.blk.";
@@ -735,6 +736,11 @@ void ds_event(void)
   u32_t value;
   int type, r, is_blk;
   endpoint_t owner_endpoint;
+
+  struct job my_job;
+
+  my_job = *((struct job *) arg);
+  fp = my_job.j_fp;
 
   /* Get the event and the owner from DS. */
   while ((r = ds_check(key, &type, &owner_endpoint)) == OK) {
@@ -749,7 +755,7 @@ void ds_event(void)
 
 	if ((r = ds_retrieve_u32(key, &value)) != OK) {
 		printf("VFS: ds_event: ds_retrieve_u32 failed\n");
-		return;
+		break;
 	}
 	if (value != DS_DRIVER_UP) continue;
 
@@ -758,4 +764,7 @@ void ds_event(void)
   }
 
   if (r != ENOENT) printf("VFS: ds_event: ds_check failed: %d\n", r);
+
+  thread_cleanup(NULL);
+  return(NULL);
 }

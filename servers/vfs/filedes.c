@@ -77,6 +77,50 @@ void check_filp_locks(void)
 }
 
 /*===========================================================================*
+ *				do_filp_gc					     *
+ *===========================================================================*/
+void *do_filp_gc(void *UNUSED(arg))
+{
+  struct filp *f;
+  struct vnode *vp;
+
+  for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+	if (!(f->filp_state & FS_INVALIDATED)) continue;
+	assert(f->filp_vno != NULL);
+	vp = f->filp_vno;
+
+	/* Synchronize with worker thread that might hold a lock on the vp */
+	lock_vnode(vp, VNODE_OPCL);
+	unlock_vnode(vp);
+
+	/* If garbage collection was invoked due to a failed device open
+	 * request, then common_open has already cleaned up and we have
+	 * nothing to do.
+	 */
+	if (!(f->filp_state & FS_INVALIDATED)) {
+		continue;
+	}
+
+	/* If garbage collection was invoked due to a failed device close
+	 * request, the close_filp has already cleaned up and we have nothing
+	 * to do.
+	 */
+	if (f->filp_mode != FILP_CLOSED) {
+		assert(f->filp_count == 0);
+		f->filp_count = 1;	/* So lock_filp and close_filp will do
+					 * their job */
+		lock_filp(f, VNODE_READ);
+		close_filp(f);
+	}
+
+	f->filp_state &= ~FS_INVALIDATED;
+  }
+
+  thread_cleanup(NULL);
+  return(NULL);
+}
+
+/*===========================================================================*
  *				init_filps					     *
  *===========================================================================*/
 void init_filps(void)
@@ -166,12 +210,16 @@ tll_access_t locktype;
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
   struct filp *filp;
 
-  err_code = EBADF;
-  if (fild < 0 || fild >= OPEN_MAX ) return(NULL);
-  if (rfp->fp_filp[fild] == NULL && FD_ISSET(fild, &rfp->fp_filp_inuse))
+  filp = NULL;
+  if (fild < 0 || fild >= OPEN_MAX)
+	err_code = EBADF;
+  else if (rfp->fp_filp[fild] == NULL && FD_ISSET(fild, &rfp->fp_filp_inuse))
 	err_code = EIO;	/* The filedes is not there, but is not closed either.
 			 */
-  if ((filp = rfp->fp_filp[fild]) != NULL) lock_filp(filp, locktype);
+  else if ((filp = rfp->fp_filp[fild]) == NULL)
+	err_code = EBADF;
+  else
+	lock_filp(filp, locktype);	/* All is fine */
 
   return(filp);	/* may also be NULL */
 }
@@ -220,7 +268,25 @@ int invalidate_filp(struct filp *rfilp)
 	}
   }
 
+  rfilp->filp_state |= FS_INVALIDATED;
   return(n);	/* Report back how often this filp has been invalidated. */
+}
+
+/*===========================================================================*
+ *			invalidate_filp_by_char_major			     *
+ *===========================================================================*/
+void invalidate_filp_by_char_major(int major)
+{
+  struct filp *f;
+
+  for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+	if (f->filp_count != 0 && f->filp_vno != NULL) {
+		if (major(f->filp_vno->v_sdev) == major &&
+		    S_ISCHR(f->filp_vno->v_mode)) {
+			(void) invalidate_filp(f);
+		}
+	}
+  }
 }
 
 /*===========================================================================*
@@ -264,7 +330,6 @@ tll_access_t locktype;
 
   assert(vp->v_ref_count > 0);	/* vnode still in use? */
   assert(filp->filp_vno == vp);	/* vnode still what we think it is? */
-  assert(filp->filp_count > 0); /* filp still in use? */
 
   /* First try to get filp lock right off the bat */
   if (mutex_trylock(&filp->filp_lock) != 0) {
@@ -279,8 +344,6 @@ tll_access_t locktype;
 	fp = org_fp;
 	self = org_self;
   }
-
-  assert(filp->filp_count > 0);	/* Yet again; filp still in use? */
 }
 
 /*===========================================================================*
@@ -293,7 +356,7 @@ struct filp *filp;
   if (filp->filp_softlock != NULL)
 	assert(filp->filp_softlock == fp);
 
-  if (filp->filp_count > 0) {
+  if (filp->filp_count > 0 || filp->filp_state & FS_INVALIDATED) {
 	/* Only unlock vnode if filp is still in use */
 
 	/* and if we don't hold a soft lock */
@@ -557,9 +620,15 @@ struct filp *f;
 			}
 			unlock_bsf();
 
-			(void) bdev_close(dev);	/* Ignore errors on close */
+			/* Attempt to close only when feasible */
+			if (!(f->filp_state & FS_INVALIDATED)) {
+				(void) bdev_close(dev);	/* Ignore errors */
+			}
 		} else {
-			(void) dev_close(dev, f-filp); /* Ignore errors */
+			/* Attempt to close only when feasible */
+			if (!(f->filp_state & FS_INVALIDATED)) {
+				(void) dev_close(dev, f-filp);/*Ignore errors*/
+			}
 		}
 
 		f->filp_mode = FILP_CLOSED;
@@ -572,8 +641,10 @@ struct filp *f;
 	release(vp, rw, susp_count);
   }
 
-  /* If a write has been done, the inode is already marked as DIRTY. */
-  if (--f->filp_count == 0) {
+  f->filp_count--;	/* If filp got invalidated at device closure, the
+			 * count might've become negative now */
+  if (f->filp_count == 0 ||
+      (f->filp_count < 0 && f->filp_state & FS_INVALIDATED)) {
 	if (S_ISFIFO(vp->v_mode)) {
 		/* Last reader or writer is going. Tell PFS about latest
 		 * pipe size.
@@ -585,6 +656,7 @@ struct filp *f;
 	put_vnode(f->filp_vno);
 	f->filp_vno = NULL;
 	f->filp_mode = FILP_CLOSED;
+	f->filp_count = 0;
   } else if (f->filp_count < 0) {
 	panic("VFS: invalid filp count: %d ino %d/%d", f->filp_count,
 	      vp->v_dev, vp->v_inode_nr);

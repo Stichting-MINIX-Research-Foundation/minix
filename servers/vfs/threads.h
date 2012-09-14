@@ -29,6 +29,10 @@ struct worker_thread {
   cond_t w_event;
   struct job w_job;
   struct fproc *w_fp;
+  message *w_fs_sendrec;
+  message *w_drv_sendrec;
+  endpoint_t w_task;
+  struct dmap *w_dmap;
   struct worker_thread *w_next;
 };
 

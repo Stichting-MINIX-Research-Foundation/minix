@@ -430,7 +430,7 @@ message *m_ptr;
   }
 
   /* Almost done. Send back the reply message to the caller. */
-  status = sendnb(m_ptr->m_source, m_ptr);
+  status = send(m_ptr->m_source, m_ptr);
   if (status != OK) {
 	printf("tty`do_status: send to %d failed: %d\n",
 		m_ptr->m_source, status);
@@ -1487,7 +1487,7 @@ int status;			/* reply code */
 	panic("tty_reply sending TTY_REVIVE");
   }
 
-  status = sendnb(replyee, &tty_mess);
+  status = send(replyee, &tty_mess);
   if (status != OK)
 	printf("tty`tty_reply: send to %d failed: %d\n", replyee, status);
 }

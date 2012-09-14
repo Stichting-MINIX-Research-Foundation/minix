@@ -112,25 +112,34 @@ int do_select(void)
 
   se = &selecttab[s];
   wipe_select(se);	/* Clear results of previous usage */
+  se->requestor = fp;
   se->req_endpt = who_e;
   se->vir_readfds = (fd_set *) job_m_in.SEL_READFDS;
   se->vir_writefds = (fd_set *) job_m_in.SEL_WRITEFDS;
   se->vir_errorfds = (fd_set *) job_m_in.SEL_ERRORFDS;
 
   /* Copy fdsets from the process */
-  if ((r = copy_fdsets(se, nfds, FROM_PROC)) != OK) return(r);
+  if ((r = copy_fdsets(se, nfds, FROM_PROC)) != OK) {
+	se->requestor = NULL;
+	return(r);
+  }
 
   /* Did the process set a timeout value? If so, retrieve it. */
   if (vtimeout != 0) {
 	do_timeout = 1;
 	r = sys_vircopy(who_e, (vir_bytes) vtimeout, SELF, 
 			(vir_bytes) &timeout, sizeof(timeout));
-	if (r != OK) return(r);
+	if (r != OK) {
+		se->requestor = NULL;
+		return(r);
+	}
   }
 
   /* No nonsense in the timeval */
-  if (do_timeout && (timeout.tv_sec < 0 || timeout.tv_usec < 0))
+  if (do_timeout && (timeout.tv_sec < 0 || timeout.tv_usec < 0)) {
+	se->requestor = NULL;
 	return(EINVAL);
+  }
 
   /* If there is no timeout, we block forever. Otherwise, we block up to the
    * specified time interval.
@@ -165,6 +174,7 @@ int do_select(void)
 		else /* File descriptor is 'ready' to return EIO */
 			r = EINTR;
 
+		se->requestor = NULL;
 		return(r);
 	}
 
@@ -191,8 +201,10 @@ int do_select(void)
 		}
 	}
 	unlock_filp(f);
-	if (se->type[fd] == -1) /* Type not found */
+	if (se->type[fd] == -1) { /* Type not found */
+		se->requestor = NULL;
 		return(EBADF);
+	}
   }
 
   /* Check all file descriptors in the set whether one is 'ready' now */
@@ -230,6 +242,7 @@ int do_select(void)
 	 */
 	r = copy_fdsets(se, se->nfds, TO_PROC);
 	select_cancel_all(se);
+	se->requestor = NULL;
 
 	if (r != OK)
 		return(r);
@@ -261,9 +274,6 @@ int do_select(void)
 	se->expiry = ticks;
 	set_timer(&se->timer, ticks, select_timeout_check, s);
   }
-
-  /* If we're blocking, the table entry is now valid  */
-  se->requestor = fp;
 
   /* process now blocked */
   suspend(FP_BLOCKED_ON_SELECT);

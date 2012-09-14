@@ -27,6 +27,8 @@
 /* test if the process is blocked on something */
 #define fp_is_blocked(fp)	((fp)->fp_blocked_on != FP_BLOCKED_ON_NONE)
 
+/* test if reply is a driver reply */
+#define IS_DRV_REPLY(x)	(IS_DEV_RS(x) || IS_BDEV_RS(x) || (x) == TASK_REPLY)
 #define DUP_MASK        0100	/* mask to distinguish dup2 from dup */
 
 #define LOOK_UP            0 /* tells search_dir to lookup string */

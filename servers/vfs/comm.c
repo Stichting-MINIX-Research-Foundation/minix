@@ -5,29 +5,27 @@
 #include <minix/vfsif.h>
 #include <assert.h>
 
-static int sendmsg(struct vmnt *vmp, struct fproc *rfp);
+static int sendmsg(struct vmnt *vmp, struct worker_thread *wp);
 static int queuemsg(struct vmnt *vmp);
 
 /*===========================================================================*
  *				sendmsg					     *
  *===========================================================================*/
-static int sendmsg(vmp, rfp)
-struct vmnt *vmp;
-struct fproc *rfp;
+static int sendmsg(struct vmnt *vmp, struct worker_thread *wp)
 {
 /* This is the low level function that sends requests to FS processes.
  */
   int r, transid;
 
   vmp->m_comm.c_cur_reqs++;	/* One more request awaiting a reply */
-  transid = rfp->fp_wtid + VFS_TRANSID;
-  rfp->fp_sendrec->m_type = TRNS_ADD_ID(rfp->fp_sendrec->m_type, transid);
-  rfp->fp_task = vmp->m_fs_e;
-  if ((r = asynsend3(vmp->m_fs_e, rfp->fp_sendrec, AMF_NOREPLY)) != OK) {
+  transid = wp->w_tid + VFS_TRANSID;
+  wp->w_fs_sendrec->m_type = TRNS_ADD_ID(wp->w_fs_sendrec->m_type, transid);
+  wp->w_task = vmp->m_fs_e;
+  if ((r = asynsend3(vmp->m_fs_e, wp->w_fs_sendrec, AMF_NOREPLY)) != OK) {
 	printf("VFS: sendmsg: error sending message. "
-	       "FS_e: %d req_nr: %d err: %d\n", vmp->m_fs_e,
-	       rfp->fp_sendrec->m_type, r);
-		util_stacktrace();
+		"FS_e: %d req_nr: %d err: %d\n", vmp->m_fs_e,
+		wp->w_fs_sendrec->m_type, r);
+	util_stacktrace();
 	return(r);
   }
 
@@ -83,7 +81,41 @@ void fs_sendmore(struct vmnt *vmp)
   worker->w_next = NULL;
   sending--;
   assert(sending >= 0);
-  (void) sendmsg(vmp, worker->w_job.j_fp);
+  (void) sendmsg(vmp, worker);
+}
+
+/*===========================================================================*
+ *				drv_sendrec				     *
+ *===========================================================================*/
+int drv_sendrec(endpoint_t drv_e, message *reqmp)
+{
+	int r;
+	struct dmap *dp;
+
+	if ((dp = get_dmap(drv_e)) == NULL)
+		panic("driver endpoint %d invalid", drv_e);
+
+	lock_dmap(dp);
+	if (dp->dmap_servicing != NONE)
+		panic("driver locking inconsistency");
+	dp->dmap_servicing = self->w_tid;
+	self->w_task = drv_e;
+	self->w_drv_sendrec = reqmp;
+
+	if ((r = asynsend3(drv_e, self->w_drv_sendrec, AMF_NOREPLY)) == OK) {
+		/* Yield execution until we've received the reply */
+		worker_wait();
+	} else {
+		printf("VFS: drv_sendrec: error sending msg to driver %d: %d\n",
+			drv_e, r);
+		util_stacktrace();
+	}
+
+	dp->dmap_servicing = NONE;
+	self->w_task = NONE;
+	self->w_drv_sendrec = NULL;
+	unlock_dmap(dp);
+	return(OK);
 }
 
 /*===========================================================================*
@@ -100,13 +132,13 @@ int fs_sendrec(endpoint_t fs_e, message *reqmp)
   }
   if (fs_e == fp->fp_endpoint) return(EDEADLK);
 
-  fp->fp_sendrec = reqmp;	/* Where to store request and reply */
+  self->w_fs_sendrec = reqmp;	/* Where to store request and reply */
 
   /* Find out whether we can send right away or have to enqueue */
   if (	!(vmp->m_flags & VMNT_CALLBACK) &&
 	vmp->m_comm.c_cur_reqs < vmp->m_comm.c_max_reqs) {
 	/* There's still room to send more and no proc is queued */
-	r = sendmsg(vmp, fp);
+	r = sendmsg(vmp, self);
   } else {
 	r = queuemsg(vmp);
   }

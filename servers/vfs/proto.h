@@ -21,6 +21,7 @@ struct job;
 typedef struct filp * filp_id_t;
 
 /* comm.c */
+int drv_sendrec(endpoint_t drv_e, message *reqm);
 void fs_cancel(struct vmnt *vmp);
 int fs_sendrec(endpoint_t fs_e, message *reqm);
 void fs_sendmore(struct vmnt *vmp);
@@ -29,6 +30,7 @@ void send_work(void);
 /* device.c */
 int dev_open(dev_t dev, endpoint_t proc_e, int flags);
 int dev_reopen(dev_t dev, int filp_no, int flags);
+void dev_reply(struct dmap *dp);
 int dev_close(dev_t dev, int filp_no);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
@@ -36,7 +38,7 @@ int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, u64_t pos,
 	size_t bytes, int flags, int suspend_reopen);
 int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
 int gen_io(endpoint_t driver_e, message *mess_ptr);
-int asyn_io(int task_nr, message *mess_ptr);
+int asyn_io(endpoint_t drv_e, message *mess_ptr);
 int no_dev(int op, dev_t dev, int proc, int flags);
 int no_dev_io(int, message *);
 int tty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
@@ -45,7 +47,7 @@ int clone_opcl(int op, dev_t dev, int proc, int flags);
 int ctty_io(int task_nr, message *mess_ptr);
 int do_ioctl(void);
 void pm_setsid(endpoint_t proc_e);
-void dev_status(message *m);
+void dev_status(endpoint_t drv_e);
 void bdev_up(int major);
 void cdev_up(int major);
 endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g);
@@ -53,12 +55,16 @@ void reopen_reply(void);
 void open_reply(void);
 
 /* dmap.c */
+void lock_dmap(struct dmap *dp);
+void unlock_dmap(struct dmap *dp);
 int do_mapdriver(void);
 void init_dmap(void);
+void init_dmap_locks(void);
 int dmap_driver_match(endpoint_t proc, int major);
 void dmap_endpt_up(int proc_nr, int is_blk);
 void dmap_unmap_by_endpt(int proc_nr);
 struct dmap *get_dmap(endpoint_t proc_e);
+struct dmap *get_dmap_by_major(int major);
 int do_mapdriver(void);
 int map_service(struct rprocpub *rpub);
 void dmap_unmap_by_endpt(int proc_nr);
@@ -78,6 +84,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len, vir_bytes frame,
 			} while(0)
 
 /* filedes.c */
+void *do_filp_gc(void *arg);
 void check_filp_locks(void);
 void check_filp_locks_by_me(void);
 void init_filps(void);
@@ -91,6 +98,7 @@ void unlock_filp(struct filp *filp);
 void unlock_filps(struct filp *filp1, struct filp *filp2);
 int invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
+void invalidate_filp_by_char_major(int major);
 int do_verify_fd(void);
 int set_filp(filp_id_t sfilp);
 int do_set_filp(void);
@@ -120,10 +128,10 @@ void lock_revive(void);
 
 /* main.c */
 int main(void);
-void reply(endpoint_t whom, int result);
 void lock_proc(struct fproc *rfp, int force_lock);
+void reply(endpoint_t whom, int result);
+void thread_cleanup(struct fproc *rfp);
 void unlock_proc(struct fproc *rfp);
-void *do_dummy(void *arg);
 
 /* misc.c */
 int do_dup(void);
@@ -139,7 +147,7 @@ void pm_reboot(void);
 int do_svrctl(void);
 int do_getsysinfo(void);
 int pm_dumpcore(endpoint_t proc_e, int sig, vir_bytes exe_name);
-void ds_event(void);
+void * ds_event(void *arg);
 
 /* mount.c */
 int do_fsready(void);

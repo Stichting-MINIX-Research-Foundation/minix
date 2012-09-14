@@ -40,7 +40,6 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 /* Thread related prototypes */
-static void thread_cleanup(struct fproc *rfp);
 static void *do_async_dev_result(void *arg);
 static void *do_control_msgs(void *arg);
 static void *do_fs_reply(struct job *job);
@@ -110,7 +109,10 @@ int main(void)
 		continue;
 	} else if (is_notify(call_nr)) {
 		/* A task notify()ed us */
-		sys_worker_start(do_control_msgs);
+		if (who_e == DS_PROC_NR)
+			worker_start(ds_event);
+		else
+			sys_worker_start(do_control_msgs);
 		continue;
 	} else if (who_p < 0) { /* i.e., message comes from a task */
 		/* We're going to ignore this message. Tasks should
@@ -126,10 +128,28 @@ int main(void)
 	 * not a problem (requests/replies are simply queued), except when
 	 * they're from an FS endpoint, because these can cause a deadlock.
 	 * handle_work() takes care of the details. */
-	if (IS_DEV_RS(call_nr)) {
+	if (IS_DRV_REPLY(call_nr)) {
 		/* We've got results for a device request */
-		handle_work(do_async_dev_result);
-		continue;
+
+		struct dmap *dp;
+
+		dp = get_dmap(who_e);
+		if (dp != NULL) {
+			if (dev_style_asyn(dp->dmap_style)) {
+				handle_work(do_async_dev_result);
+
+			} else {
+				if (dp->dmap_servicing == NONE) {
+					printf("Got spurious dev reply from %d",
+					who_e);
+				} else {
+					dev_reply(dp);
+				}
+			}
+			continue;
+		}
+		printf("VFS: ignoring dev reply from unknown driver %d\n",
+			who_e);
 	} else {
 		/* Normal syscall. */
 		handle_work(do_work);
@@ -253,12 +273,9 @@ static void *do_control_msgs(void *arg)
   if (job_m_in.m_source == CLOCK) {
 	/* Alarm timer expired. Used only for select(). Check it. */
 	expire_timers(job_m_in.NOTIFY_TIMESTAMP);
-  } else if (job_m_in.m_source == DS_PROC_NR) {
-	/* DS notifies us of an event. */
-	ds_event();
   } else {
 	/* Device notifies us of an event. */
-	dev_status(&job_m_in);
+	dev_status(job_m_in.m_source);
   }
 
   thread_cleanup(NULL);
@@ -271,28 +288,26 @@ static void *do_control_msgs(void *arg)
 static void *do_fs_reply(struct job *job)
 {
   struct vmnt *vmp;
-  struct fproc *rfp;
+  struct worker_thread *wp;
 
   if ((vmp = find_vmnt(who_e)) == NULL)
 	panic("Couldn't find vmnt for endpoint %d", who_e);
 
-  rfp = job->j_fp;
+  wp = worker_get(job->j_fp->fp_wtid);
 
-  if (rfp == NULL || rfp->fp_endpoint == NONE) {
+  if (wp == NULL) {
 	printf("VFS: spurious reply from %d\n", who_e);
 	return(NULL);
   }
 
-  if (rfp->fp_task != who_e)
-	printf("VFS: expected %d to reply, not %d\n", rfp->fp_task, who_e);
-  *rfp->fp_sendrec = m_in;
-  rfp->fp_task = NONE;
+  if (wp->w_task != who_e) {
+	printf("VFS: expected %d to reply, not %d\n", wp->w_task, who_e);
+	return(NULL);
+  }
+  *wp->w_fs_sendrec = m_in;
+  wp->w_task = NONE;
   vmp->m_comm.c_cur_reqs--; /* We've got our reply, make room for others */
-  if (rfp->fp_wtid != invalid_thread_id)
-	worker_signal(worker_get(rfp->fp_wtid)); /* Continue this thread */
-  else
-	printf("VFS: consistency error: reply for finished job\n");
-
+  worker_signal(wp); /* Continue this thread */
   return(NULL);
 }
 
@@ -576,6 +591,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 #endif
   }
 
+  init_dmap_locks();		/* init dmap locks */
   init_vnodes();		/* init vnodes */
   init_vmnts();			/* init vmnt structures */
   init_select();		/* init select() structures */
@@ -665,7 +681,7 @@ void unlock_proc(struct fproc *rfp)
 /*===========================================================================*
  *				thread_cleanup				     *
  *===========================================================================*/
-static void thread_cleanup(struct fproc *rfp)
+void thread_cleanup(struct fproc *rfp)
 {
 /* Clean up worker thread. Skip parts if this thread is not associated
  * with a particular process (i.e., rfp is NULL) */

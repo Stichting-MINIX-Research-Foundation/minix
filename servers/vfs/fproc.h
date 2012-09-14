@@ -42,7 +42,6 @@ EXTERN struct fproc {
   gid_t fp_sgroups[NGROUPS_MAX];/* supplemental groups */
   mode_t fp_umask;		/* mask set by umask system call */
 
-  message *fp_sendrec;		/* request/reply to/from FS/driver */
   mutex_t fp_lock;		/* mutex to lock fproc object */
   struct job fp_job;		/* pending job */
   thread_t fp_wtid;		/* Thread ID of worker */
