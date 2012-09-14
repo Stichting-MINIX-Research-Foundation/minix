@@ -317,8 +317,6 @@ void init_vm(void)
 
 #if SANITYCHECKS
 	env_parse("vm_sanitychecklevel", "d", 0, &vm_sanitychecklevel, 0, SCL_MAX);
-
-	vm_sanitychecklevel = 1;
 #endif
 
 	/* Get chunks of available memory. */
