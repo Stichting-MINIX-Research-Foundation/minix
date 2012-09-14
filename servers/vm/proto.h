@@ -184,3 +184,9 @@ int do_query_exit(message *m);
 int do_watch_exit(message *m);
 int do_notify_sig(message *m);
 void init_query_exit(void);
+
+/* pb.c */
+struct phys_block *pb_new(phys_bytes phys);
+struct phys_region *pb_reference(struct phys_block *newpb,
+	vir_bytes offset, struct vir_region *region);
+void pb_unreferenced(struct vir_region *region, struct phys_region *pr);
