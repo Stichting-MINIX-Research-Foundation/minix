@@ -530,6 +530,11 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	if (proc_id == -1 && signo == SIGKILL &&
 		(rmp->mp_flags & PRIV_PROC)) continue;
 
+	/* Skip VM entirely as it might lead to a deadlock with its signal
+	 * manager if the manager page faults at the same time.
+	 */
+	if (rmp->mp_endpoint == VM_PROC_NR) continue;
+
 	/* Disallow lethal signals sent by user processes to sys processes. */
 	if (!ksig && SIGS_IS_LETHAL(signo) && (rmp->mp_flags & PRIV_PROC)) {
 	    error_code = EPERM;
