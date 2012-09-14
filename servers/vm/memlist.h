@@ -4,8 +4,7 @@
 
 struct memlist {
 	struct memlist *next;
-	phys_bytes	phys;	/* physical address in bytes */
-	phys_bytes	length;	/* length in bytes */
+	phys_bytes	phys;	/* physical address of page */
 };
 
 #endif

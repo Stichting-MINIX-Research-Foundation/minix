@@ -41,13 +41,14 @@ static int free_page_cache_size = 0;
 static phys_bytes mem_low, mem_high;
 
 static void free_pages(phys_bytes addr, int pages);
-static phys_bytes alloc_pages(int pages, int flags, phys_bytes *ret);
+static phys_bytes alloc_pages(int pages, int flags);
 
 #if SANITYCHECKS
-#define PAGESPERGB (1024*1024*1024/VM_PAGE_SIZE) /* 1GB of memory */
-#define MAXPAGES (2*PAGESPERGB)
-#define CHUNKS BITMAP_CHUNKS(MAXPAGES)
-static bitchunk_t pagemap[CHUNKS];
+struct {
+	int used;
+	char *file;
+	int line;
+} pagemap[NUMBER_PHYSICAL_PAGES];
 #endif
 
 #define page_isfree(i) GET_BIT(free_pages_bitmap, i)
@@ -73,10 +74,10 @@ phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
 	clicks += align_clicks;
   }
 
-  mem = alloc_pages(clicks, memflags, NULL);
+  mem = alloc_pages(clicks, memflags);
   if(mem == NO_MEM) {
     free_yielded(clicks * CLICK_SIZE);
-    mem = alloc_pages(clicks, memflags, NULL);
+    mem = alloc_pages(clicks, memflags);
   }
 
   if(mem == NO_MEM)
@@ -154,7 +155,7 @@ void mem_sanitycheck(char *file, int line)
 	int i;
 	for(i = 0; i < NUMBER_PHYSICAL_PAGES; i++) {
 		if(!page_isfree(i)) continue;
-		usedpages_add(i * VM_PAGE_SIZE, VM_PAGE_SIZE);
+		MYASSERT(usedpages_add(i * VM_PAGE_SIZE, VM_PAGE_SIZE) == OK);
 	}
 }
 #endif
@@ -201,7 +202,7 @@ static int findbit(int low, int startscan, int pages, int memflags, int *len)
 		if(!run_length) { freerange_start = i; run_length = 1; }
 		else { freerange_start--; run_length++; }
 		assert(run_length <= pages);
-		if(run_length == pages || (memflags & PAF_FIRSTBLOCK)) {
+		if(run_length == pages) {
 			/* good block found! */
 			*len = run_length;
 			return freerange_start;
@@ -214,7 +215,7 @@ static int findbit(int low, int startscan, int pages, int memflags, int *len)
 /*===========================================================================*
  *				alloc_pages				     *
  *===========================================================================*/
-static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
+static phys_bytes alloc_pages(int pages, int memflags)
 {
 	phys_bytes boundary16 = 16 * 1024 * 1024 / VM_PAGE_SIZE;
 	phys_bytes boundary1  =  1 * 1024 * 1024 / VM_PAGE_SIZE;
@@ -223,24 +224,13 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 	static int lastscan = -1;
 	int startscan, run_length;
 
-#if NONCONTIGUOUS
-	/* If NONCONTIGUOUS is on, allocate physical pages single
-	 * pages at a time, accomplished by returning single pages
-	 * if the caller can handle that (indicated by PAF_FIRSTBLOCK).
-	 */
-	if(memflags & PAF_FIRSTBLOCK) {
-		assert(!(memflags & PAF_CONTIG));
-		pages = 1;
-	}
-#endif
-
 	if(memflags & PAF_LOWER16MB)
 		maxpage = boundary16 - 1;
 	else if(memflags & PAF_LOWER1MB)
 		maxpage = boundary1 - 1;
 	else {
 		/* no position restrictions: check page cache */
-		if((pages == 1 || (memflags & PAF_FIRSTBLOCK))) {
+		if(pages == 1) {
 			while(free_page_cache_size > 0) {
 				i = free_page_cache[free_page_cache_size-1];
 				if(page_isfree(i)) {
@@ -263,28 +253,11 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 		mem = findbit(0, startscan, pages, memflags, &run_length);
 	if(mem == NO_MEM)
 		mem = findbit(0, maxpage, pages, memflags, &run_length);
-
-	if(mem == NO_MEM) {
-		if(len)
-			*len = 0;
+	if(mem == NO_MEM)
 		return NO_MEM;
-	}
 
 	/* remember for next time */
 	lastscan = mem;
-
-	if(memflags & PAF_FIRSTBLOCK) {
-		assert(len);
-		/* block doesn't have to as big as requested;
-		 * return its size though.
-		 */
-		if(run_length < pages) {
-			pages = run_length;
-		}
-	}
-
-	if(len)
-		*len = pages;
 
 	for(i = mem; i < mem + pages; i++) {
 		UNSET_BIT(free_pages_bitmap, i);
@@ -364,14 +337,21 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 	while(pages > 0) {
 		phys_bytes thisaddr;
 		assert(pagestart > 0);
-		assert(pagestart < MAXPAGES);
+		assert(pagestart < NUMBER_PHYSICAL_PAGES);
 		thisaddr = pagestart * VM_PAGE_SIZE;
-		if(GET_BIT(pagemap, pagestart)) {
-			printf("%s:%d: usedpages_add: addr 0x%lx reused.\n",
-				file, line, thisaddr);
+		assert(pagestart >= 0);
+		assert(pagestart < NUMBER_PHYSICAL_PAGES);
+		if(pagemap[pagestart].used) {
+			static int warnings = 0;
+			if(warnings++ < 100)
+				printf("%s:%d: usedpages_add: addr 0x%lx reused, first %s:%d\n",
+					file, line, thisaddr, pagemap[pagestart].file, pagemap[pagestart].line);
+			util_stacktrace();
 			return EFAULT;
 		}
-		SET_BIT(pagemap, pagestart);
+		pagemap[pagestart].used = 1;
+		pagemap[pagestart].file = file;
+		pagemap[pagestart].line = line;
 		pages--;
 		pagestart++;
 	}
@@ -384,9 +364,9 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 /*===========================================================================*
  *				alloc_mem_in_list			     *
  *===========================================================================*/
-struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
+struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags, phys_bytes known)
 {
-	phys_bytes rempages;
+	phys_bytes rempages, phys_count;
 	struct memlist *head = NULL, *tail = NULL;
 
 	assert(bytes > 0);
@@ -394,24 +374,31 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 
 	rempages = bytes / VM_PAGE_SIZE;
 
-	/* unless we are told to allocate all memory
-	 * contiguously, tell alloc function to grab whatever
-	 * block it can find.
-	 */
-	if(!(flags & PAF_CONTIG))
-		flags |= PAF_FIRSTBLOCK;
+	assert(!(flags & PAF_CONTIG));
+
+	if(known != MAP_NONE)
+		phys_count = known;
 
 	do {
 		struct memlist *ml;
-		phys_bytes mem, gotpages;
+		phys_bytes mem;
 		vir_bytes freed = 0;
 
 		do {
-			mem = alloc_pages(rempages, flags, &gotpages);
+			if(known == MAP_NONE) {
+				mem = alloc_pages(1, flags);
 
-			if(mem == NO_MEM) {
-				freed = free_yielded(rempages * VM_PAGE_SIZE);
+				if(mem == NO_MEM) {
+					freed = free_yielded(rempages * VM_PAGE_SIZE);
+				}
+				assert(mem != MAP_NONE);
+			} else {
+				mem = ABS2CLICK(phys_count);
+				phys_count += VM_PAGE_SIZE;
+				assert(mem != MAP_NONE);
+				assert(mem != NO_MEM);
 			}
+			assert(mem != MAP_NONE);
 		} while(mem == NO_MEM && freed > 0);
 
 		if(mem == NO_MEM) {
@@ -422,19 +409,13 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 			return NULL;
 		}
 
-		assert(gotpages <= rempages);
-		assert(gotpages > 0);
-
 		if(!(SLABALLOC(ml))) {
 			free_mem_list(head, 1);
-			free_pages(mem, gotpages);
+			free_pages(mem, VM_PAGE_SIZE);
 			return NULL;
 		}
 
-		USE(ml,
-			ml->phys = CLICK2ABS(mem);
-			ml->length = CLICK2ABS(gotpages);
-			ml->next = NULL;);
+		USE(ml, ml->phys = CLICK2ABS(mem); ml->next = NULL;);
 		if(tail) {
 			USE(tail,
 				tail->next = ml;);
@@ -442,17 +423,15 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 		tail = ml;
 		if(!head)
 			head = ml;
-		rempages -= gotpages;
+		rempages--;
 	} while(rempages > 0);
 
     {
 	struct memlist *ml;
 	for(ml = head; ml; ml = ml->next) {
 		assert(ml->phys);
-		assert(ml->length);
 #if NONCONTIGUOUS
 		if(!(flags & PAF_CONTIG)) {
-			assert(ml->length == VM_PAGE_SIZE);
 			if(ml->next)
 				assert(ml->phys + ml->length != ml->next->phys);
 		}
@@ -472,10 +451,8 @@ void free_mem_list(struct memlist *list, int all)
 		struct memlist *next;
 		next = list->next;
 		assert(!(list->phys % VM_PAGE_SIZE));
-		assert(!(list->length % VM_PAGE_SIZE));
 		if(all)
-			free_pages(list->phys / VM_PAGE_SIZE,
-			list->length / VM_PAGE_SIZE);
+			free_pages(list->phys / VM_PAGE_SIZE, 1);
 		SLABFREE(list);
 		list = next;
 	}
@@ -487,8 +464,7 @@ void free_mem_list(struct memlist *list, int all)
 void print_mem_list(struct memlist *list)
 {
 	while(list) {
-		assert(list->length > 0);
-		printf("0x%lx-0x%lx", list->phys, list->phys+list->length-1);
+		printf("0x%lx-0x%lx", list->phys, list->phys+VM_PAGE_SIZE-1);
 		printf(" ");
 		list = list->next;
 	}

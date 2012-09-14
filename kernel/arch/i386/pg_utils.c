@@ -124,7 +124,7 @@ void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
 u32_t *alloc_pagetable(phys_bytes *ph)
 {
 	u32_t *ret;
-#define PG_PAGETABLES 3
+#define PG_PAGETABLES 6
 	static u32_t pagetables[PG_PAGETABLES][1024]  __aligned(4096);
 	static int pt_inuse = 0;
 	if(pt_inuse >= PG_PAGETABLES) panic("no more pagetables");
