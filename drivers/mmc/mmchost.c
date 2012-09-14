@@ -1,4 +1,6 @@
-/* kernel headers */ #include <minix/blockdriver.h> 
+/* kernel headers */
+#include <minix/blockdriver.h>
+
 /* usr headers */
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,10 +94,14 @@ struct sd_card *
 mmchs_card_initialize(struct sd_slot *slot)
 {
 
-	/* TODO: Add dummy data */
 	slot->card.blk_size = DUMMY_BLOCK_SIZE;
 	slot->card.blk_count = DUMMY_SIZE_IN_BLOCKS;
 	slot->card.state = SD_MODE_DATA_TRANSFER_MODE;
+
+	memset(slot->card.part,0, sizeof (slot->card.part));
+	memset(slot->card.subpart, 0, sizeof(slot->card.subpart));
+	slot->card.part[0].dv_base = 0;
+	slot->card.part[0].dv_size = DUMMY_BLOCK_SIZE * DUMMY_SIZE_IN_BLOCKS;
 	return &slot->card;
 }
 

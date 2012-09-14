@@ -21,13 +21,13 @@ show_usage()
 	fprintf(stderr, "  The path to the mmc device to use\n");
 	fprintf(stderr, " action cid \n");
 	fprintf(stderr, "  cid print the CID of the device \n");
-	fprintf(stderr, " action setloglevel [0-4]\n");
+	fprintf(stderr, " action loglevel [0-4]\n");
 	fprintf(stderr,
-	    "  setloglevel sets the logging level of the driver\n");
+	    "  loglevel sets the logging level of the driver\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "examples:\n");
-	fprintf(stderr, " mmcctl /dev/mmc0 cid\n");
-	fprintf(stderr, " mmcctl /dev/mmc0 loglevel 3\n");
+	fprintf(stderr, " mmcctl /dev/mmc0d0 cid\n");
+	fprintf(stderr, " mmcctl /dev/mmc0d0 loglevel 3\n");
 }
 
 int
@@ -91,7 +91,7 @@ do_setloglevel(const char *device, const char *action, int optargc,
 		return EXIT_FAILURE;
 	}
 	fprintf(stdout, "setting log level to %d\n", level);
-	err = ioctl(fd, MMCIOC_SETLOGLEVEL, &level);
+	err = ioctl(fd, MMCIOC_LOGLEVEL, &level);
 	if (err) {
 		fprintf(stderr,
 		    "error doing ioctl on device '%s':%s\n", device,

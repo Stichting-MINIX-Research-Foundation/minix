@@ -1,6 +1,6 @@
 #ifndef __MMCLOG_H__
 #define __MMCLOG_H__
-/* 
+/*
  * Simple logging functions for the MMC layer
  */
 

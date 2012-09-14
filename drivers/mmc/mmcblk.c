@@ -1,4 +1,4 @@
-/* 
+/*
  * Block driver for Multi Media Cards (MMC).
  */
 /* kernel headers */
@@ -36,8 +36,6 @@ static struct mmc_host host;
  * a buffer to sys_safecopy copybuff is used for that*/
 #define COPYBUFF_SIZE 0x1000	/* 4k buff */
 static unsigned char copybuff[COPYBUFF_SIZE];
-
-//#define SLOT_STATE_INITIAL 0x01u
 
 static struct sd_slot *get_slot(dev_t minor);
 
@@ -143,15 +141,14 @@ block_open(dev_t minor, int access)
 		return OK;
 	}
 
-	/* We did not have an sd-card inserted so we are going to probe for it 
+	/* We did not have an sd-card inserted so we are going to probe for it
 	 */
 	mmc_log_debug(&log, "First open on (%d)\n", minor);
 	if (!host.card_initialize(slot)) {
 		// * TODO: set card state to INVALID until removed? */
 		return EIO;
 	}
-//      memset(slot->card.part,0, sizeof (slot->card.part));
-	memset(slot->card.subpart, 0, sizeof(slot->card.subpart));
+
 	partition(&mmc_driver, 0 /* first card on bus */ , P_PRIMARY,
 	    0 /* atapi device?? */ );
 	slot->card.open_ct++;
@@ -340,7 +337,7 @@ block_transfer(dev_t minor,	/* minor device number */
 		/* transfer max one block at the time */
 		for (i = 0; i < io_size / blk_size; i++) {
 			if (do_write) {
-				/* Read io_size bytes from i/o vector starting 
+				/* Read io_size bytes from i/o vector starting
 				 * at 0 and write it to out buffer at the
 				 * correct offset */
 				r = copyfrom(endpt,
@@ -412,7 +409,7 @@ block_ioctl(dev_t minor,
 		mmc_log_trace(&log, "returning cid\n", minor);
 		return sys_safecopyto(endpt, grant, 0,
 		    (vir_bytes) slot->card.cid, sizeof(slot->card.cid));
-	case MMCIOC_SETLOGLEVEL:
+	case MMCIOC_LOGLEVEL:
 		r = sys_safecopyfrom(endpt, grant, 0,(vir_bytes) &level, sizeof(int));
 		if (r != OK) {
 			mmc_log_warn(&log,
@@ -449,7 +446,7 @@ block_ioctl(dev_t minor,
 static struct device *
 block_part(dev_t minor)
 {
-	/* 
+	/*
 	 * Reuse the existing MINIX major/minor partitioning scheme.
 	 * - 8 drives
 	 * - 5 devices per drive allowing direct access to the disk and up to 4
@@ -538,7 +535,7 @@ sef_local_startup()
 static int
 block_system_event_cb(int type, sef_init_info_t * info)
 {
-	/* 
+	/*
 	 * Callbacks for the System event framework as registered in 
 	 * sef_local_startup */
 	switch (type) {
@@ -576,7 +573,7 @@ block_signal_handler_cb(int signo)
 static struct sd_slot *
 get_slot(dev_t minor)
 {
-	/* 
+	/*
 	 * Get an sd_slot based on the minor number.
 	 *
 	 * This driver only supports a single card at at time. Also as

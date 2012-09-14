@@ -9,10 +9,10 @@
 
 #include <minix/ioctl.h>
 
-typedef uint8_t cid[16]; 
+typedef uint8_t cid[16];
 
 /* Get the card CID */
 #define MMCIOC_GETCID _IOR('e',10,cid)
 /* Change the log level */
-#define MMCIOC_SETLOGLEVEL _IOW('e',11,int)
+#define MMCIOC_LOGLEVEL _IOW('e',11,int)
 #endif /* _S_I_MMC_H */
