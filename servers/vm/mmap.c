@@ -227,7 +227,7 @@ int do_unmap_phys(message *m)
 
 	vmp = &vmproc[n];
 
-	if(!(region = map_lookup(vmp, (vir_bytes) m->VMUM_ADDR))) {
+	if(!(region = map_lookup(vmp, (vir_bytes) m->VMUM_ADDR, NULL))) {
 		return EINVAL;
 	}
 
@@ -281,7 +281,7 @@ int do_remap(message *m)
 	 * about whether the user needs to bind to
 	 * THAT address or be chosen by the system.
 	 */
-	if (!(region = map_lookup(svmp, sa)))
+	if (!(region = map_lookup(svmp, sa, NULL)))
 		return EINVAL;
 
 	if(region->vaddr != sa) {
@@ -331,7 +331,7 @@ int do_shared_unmap(message *m)
 
 	addr = m->VMUN_ADDR;
 
-	if(!(vr = map_lookup(vmp, addr))) {
+	if(!(vr = map_lookup(vmp, addr, NULL))) {
 		printf("VM: addr 0x%lx not found.\n", m->VMUN_ADDR);
 		return EFAULT;
 	}
@@ -421,7 +421,7 @@ int do_munmap(message *m)
 	assert(m->m_type == VM_MUNMAP);
         addr = (vir_bytes) (vir_bytes) m->VMUM_ADDR;
 
-        if(!(vr = map_lookup(vmp, addr))) {
+        if(!(vr = map_lookup(vmp, addr, NULL))) {
                 printf("VM: unmap: virtual address %p not found in %d\n",
                         m->VMUM_ADDR, vmp->vm_endpoint);
                 return EFAULT;

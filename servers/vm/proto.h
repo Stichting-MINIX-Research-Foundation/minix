@@ -137,7 +137,8 @@ int map_free_proc(struct vmproc *vmp);
 int map_proc_copy(struct vmproc *dst, struct vmproc *src);
 int map_proc_copy_from(struct vmproc *dst, struct vmproc *src, struct
 	vir_region *start_src_vr);
-struct vir_region *map_lookup(struct vmproc *vmp, vir_bytes addr);
+struct vir_region *map_lookup(struct vmproc *vmp, vir_bytes addr,
+	struct phys_region **pr);
 int map_pf(struct vmproc *vmp, struct vir_region *region, vir_bytes
 	offset, int write);
 int map_pin_memory(struct vmproc *vmp);
