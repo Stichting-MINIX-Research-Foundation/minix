@@ -28,8 +28,8 @@ main(int argc, char *argv[])
 #define KFACTOR 1024
 	size = atol(argv[1])*KFACTOR;
 
-	if(size <= 0) {
-		fprintf(stderr, "size should be positive.\n");
+	if(size < 0) {
+		fprintf(stderr, "size should be non-negative.\n");
 		return 1;
 	}
 

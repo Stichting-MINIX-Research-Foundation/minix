@@ -984,8 +984,6 @@
 #	define VMUM_ADDR		m1_p1
 #	define VMUM_LEN			m1_i1
 
-#define VM_MUNMAP_TEXT		(VM_RQ_BASE+19)
-
 /* To VM: forget all my yielded blocks. */
 #define VM_FORGETBLOCKS		(VM_RQ_BASE+22)
 
@@ -1090,7 +1088,7 @@
 
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
-    VM_MMAP, VM_MUNMAP, VM_MUNMAP_TEXT, VM_MAP_PHYS, VM_UNMAP_PHYS, \
+    VM_MMAP, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, \
     VM_FORGETBLOCKS, VM_FORGETBLOCK, VM_YIELDBLOCKGETBLOCK, VM_INFO
 
 /*===========================================================================*

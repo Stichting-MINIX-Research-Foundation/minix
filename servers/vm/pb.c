@@ -78,7 +78,7 @@ USE(newphysr,
 /*===========================================================================*
  *				pb_unreferenced				     *
  *===========================================================================*/
-void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
+void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm)
 {
 	struct phys_block *pb;
 
@@ -116,5 +116,5 @@ void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 		SLABFREE(pb);
 	}
 
-	physr_remove(region->phys, pr->offset);
+	if(rm) physr_remove(region->phys, pr->offset);
 }

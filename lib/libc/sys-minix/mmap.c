@@ -12,7 +12,6 @@ __weak_alias(vm_getphys, _vm_getphys)
 __weak_alias(vm_getrefcount, _vm_getrefcount)
 __weak_alias(minix_mmap, _minix_mmap)
 __weak_alias(minix_munmap, _minix_munmap)
-__weak_alias(minix_munmap_text, _minix_munmap_text)
 #endif
 
 
@@ -64,16 +63,6 @@ int minix_munmap(void *addr, size_t len)
 	return _syscall(VM_PROC_NR, VM_MUNMAP, &m);
 }
 
-
-int minix_munmap_text(void *addr, size_t len)
-{
-	message m;
-
-	m.VMUM_ADDR = addr;
-	m.VMUM_LEN = len;
-
-	return _syscall(VM_PROC_NR, VM_MUNMAP_TEXT, &m);
-}
 
 void *vm_remap(endpoint_t d,
 			endpoint_t s,
