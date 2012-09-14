@@ -1,17 +1,5 @@
 /* This file is concerned with allocating and freeing arbitrary-size blocks of
- * physical memory on behalf of the FORK and EXEC system calls.  The key data
- * structure used is the hole table, which maintains a list of holes in memory.
- * It is kept sorted in order of increasing memory address. The addresses
- * it contains refers to physical memory, starting at absolute address 0
- * (i.e., they are not relative to the start of PM).  During system
- * initialization, that part of memory containing the interrupt vectors,
- * kernel, and PM are "allocated" to mark them as not available and to
- * remove them from the hole list.
- *
- * The entry points into this file are:
- *   alloc_mem:	allocate a given sized chunk of memory
- *   free_mem:	release a previously allocated chunk of memory
- *   mem_init:	initialize the tables when PM start up
+ * physical memory.
  */
 
 #define _SYSTEM 1
@@ -49,110 +37,14 @@ addr_avl addravl;
 /* Used for sanity check. */
 static phys_bytes mem_low, mem_high;
 
-struct hole {
-	struct hole *h_next;          /* pointer to next entry on the list */
-	phys_clicks h_base;           /* where does the hole begin? */
-	phys_clicks h_len;            /* how big is the hole? */
-	int freelist;
-	int holelist;
-};
-
-
-#define _NR_HOLES (_NR_PROCS*2)  /* No. of memory holes maintained by VM */
-
-static struct hole hole[_NR_HOLES];
-
-static struct hole *hole_head;	/* pointer to first hole */
-static struct hole *free_slots;/* ptr to list of unused table slots */
-
-static void del_slot(struct hole *prev_ptr, struct hole *hp);
-static void merge(struct hole *hp);
 static void free_pages(phys_bytes addr, int pages);
 static phys_bytes alloc_pages(int pages, int flags, phys_bytes *ret);
 
 #if SANITYCHECKS
-static void holes_sanity_f(char *fn, int line);
-#define CHECKHOLES holes_sanity_f(__FILE__, __LINE__)
-
 #define PAGESPERGB (1024*1024*1024/VM_PAGE_SIZE) /* 1GB of memory */
 #define MAXPAGES (2*PAGESPERGB)
 #define CHUNKS BITMAP_CHUNKS(MAXPAGES)
 static bitchunk_t pagemap[CHUNKS];
-
-#else
-#define CHECKHOLES 
-#endif
-
-#if SANITYCHECKS
-
-/*===========================================================================*
- *				holes_sanity_f				     *
- *===========================================================================*/
-static void holes_sanity_f(file, line)
-char *file;
-int line;
-{
-#define myassert(c) { \
-  if(!(c)) { \
-	printf("holes_sanity_f:%s:%d: %s failed\n", file, line, #c); \
-	util_stacktrace();	\
-	panic("assert failed"); } \
-  }	
-
-	int h, c = 0, n = 0;
-	struct hole *hp;
-
-	/* Reset flags */
-	for(h = 0; h < _NR_HOLES; h++) {
-		hole[h].freelist = 0;
-		hole[h].holelist = 0;
-	}
-
-	/* Mark all holes on freelist. */
-	for(hp = free_slots; hp; hp = hp->h_next) {
-		myassert(!hp->freelist);
-		myassert(!hp->holelist);
-		hp->freelist = 1;
-		myassert(c < _NR_HOLES);
-		c++;
-		n++;
-	}
-
-	/* Mark all holes on holelist. */
-	c = 0;
-	for(hp = hole_head; hp; hp = hp->h_next) {
-		myassert(!hp->freelist);
-		myassert(!hp->holelist);
-		hp->holelist = 1;
-		myassert(c < _NR_HOLES);
-		c++;
-		n++;
-	}
-
-	/* Check there are exactly the right number of nodes. */
-	myassert(n == _NR_HOLES);
-
-	/* Make sure each slot is on exactly one of the list. */
-	c = 0;
-	for(h = 0; h < _NR_HOLES; h++) {
-		hp = &hole[h];
-		myassert(hp->holelist || hp->freelist);
-		myassert(!(hp->holelist && hp->freelist));
-		myassert(c < _NR_HOLES);
-		c++;
-	}
-
-	/* Make sure no holes overlap. */
-	for(hp = hole_head; hp && hp->h_next; hp = hp->h_next) {
-		myassert(hp->holelist);
-		hp->holelist = 1;
-		/* No holes overlap. */
-		myassert(hp->h_base + hp->h_len <= hp->h_next->h_base);
-
-		/* No uncoalesced holes. */
-		myassert(hp->h_base + hp->h_len < hp->h_next->h_base);
-	}
-}
 #endif
 
 /*===========================================================================*
@@ -185,8 +77,6 @@ phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
   if(mem == NO_MEM)
   	return mem;
 
-CHECKHOLES;
-
   if(align_clicks) {
   	phys_clicks o;
   	o = mem % align_clicks;
@@ -197,7 +87,6 @@ CHECKHOLES;
 	  	mem += e;
 	}
   }
-CHECKHOLES;
 
   return mem;
 }
@@ -212,105 +101,11 @@ void free_mem(phys_clicks base, phys_clicks clicks)
  * to the hole list.  If it is contiguous with an existing hole on either end,
  * it is merged with the hole or holes.
  */
-  register struct hole *hp, *new_ptr, *prev_ptr;
-CHECKHOLES;
-
   if (clicks == 0) return;
 
   assert(CLICK_SIZE == VM_PAGE_SIZE);
   free_pages(base, clicks);
   return;
-
-  if ( (new_ptr = free_slots) == NULL) 
-  	panic("hole table full");
-  new_ptr->h_base = base;
-  new_ptr->h_len = clicks;
-  free_slots = new_ptr->h_next;
-  hp = hole_head;
-
-  /* If this block's address is numerically less than the lowest hole currently
-   * available, or if no holes are currently available, put this hole on the
-   * front of the hole list.
-   */
-  if (hp == NULL || base <= hp->h_base) {
-	/* Block to be freed goes on front of the hole list. */
-	new_ptr->h_next = hp;
-	hole_head = new_ptr;
-	merge(new_ptr);
-CHECKHOLES;
-	return;
-  }
-
-  /* Block to be returned does not go on front of hole list. */
-  prev_ptr = NULL;
-  while (hp != NULL && base > hp->h_base) {
-	prev_ptr = hp;
-	hp = hp->h_next;
-  }
-
-  /* We found where it goes.  Insert block after 'prev_ptr'. */
-  new_ptr->h_next = prev_ptr->h_next;
-  prev_ptr->h_next = new_ptr;
-  merge(prev_ptr);		/* sequence is 'prev_ptr', 'new_ptr', 'hp' */
-CHECKHOLES;
-}
-
-/*===========================================================================*
- *				del_slot				     *
- *===========================================================================*/
-static void del_slot(prev_ptr, hp)
-/* pointer to hole entry just ahead of 'hp' */
-register struct hole *prev_ptr;
-/* pointer to hole entry to be removed */
-register struct hole *hp;	
-{
-/* Remove an entry from the hole list.  This procedure is called when a
- * request to allocate memory removes a hole in its entirety, thus reducing
- * the numbers of holes in memory, and requiring the elimination of one
- * entry in the hole list.
- */
-  if (hp == hole_head)
-	hole_head = hp->h_next;
-  else
-	prev_ptr->h_next = hp->h_next;
-
-  hp->h_next = free_slots;
-  hp->h_base = hp->h_len = 0;
-  free_slots = hp;
-}
-
-/*===========================================================================*
- *				merge					     *
- *===========================================================================*/
-static void merge(hp)
-register struct hole *hp;	/* ptr to hole to merge with its successors */
-{
-/* Check for contiguous holes and merge any found.  Contiguous holes can occur
- * when a block of memory is freed, and it happens to abut another hole on
- * either or both ends.  The pointer 'hp' points to the first of a series of
- * three holes that can potentially all be merged together.
- */
-  register struct hole *next_ptr;
-
-  /* If 'hp' points to the last hole, no merging is possible.  If it does not,
-   * try to absorb its successor into it and free the successor's table entry.
-   */
-  if ( (next_ptr = hp->h_next) == NULL) return;
-  if (hp->h_base + hp->h_len == next_ptr->h_base) {
-	hp->h_len += next_ptr->h_len;	/* first one gets second one's mem */
-	del_slot(hp, next_ptr);
-  } else {
-	hp = next_ptr;
-  }
-
-  /* If 'hp' now points to the last hole, return; otherwise, try to absorb its
-   * successor into it.
-   */
-  if ( (next_ptr = hp->h_next) == NULL) return;
-  if (hp->h_base + hp->h_len == next_ptr->h_base) {
-	hp->h_len += next_ptr->h_len;
-	del_slot(hp, next_ptr);
-  }
 }
 
 /*===========================================================================*
@@ -329,16 +124,6 @@ struct memory *chunks;		/* list of free memory chunks */
  * are taken from the list headed by 'free_slots'.
  */
   int i, first = 0;
-  register struct hole *hp;
-
-  /* Put all holes on the free list. */
-  for (hp = &hole[0]; hp < &hole[_NR_HOLES]; hp++) {
-	hp->h_next = hp + 1;
-	hp->h_base = hp->h_len = 0;
-  }
-  hole[_NR_HOLES-1].h_next = NULL;
-  hole_head = NULL;
-  free_slots = &hole[0];
 
   addr_init(&addravl);
 
@@ -356,8 +141,6 @@ struct memory *chunks;		/* list of free memory chunks */
 		first = 0;
 	}
   }
-
-  CHECKHOLES;
 }
 
 #if SANITYCHECKS
