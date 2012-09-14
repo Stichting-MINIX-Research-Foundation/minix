@@ -185,11 +185,9 @@ static u32_t findhole(void)
 /*===========================================================================*
  *				vm_freepages		     		     *
  *===========================================================================*/
-static void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
+void vm_freepages(vir_bytes vir, int pages)
 {
-	assert(reason >= 0 && reason < VMP_CATEGORIES);
 	assert(!(vir % I386_PAGE_SIZE)); 
-	assert(!(phys % I386_PAGE_SIZE)); 
 	extern char _end;	
 
 	if(vir < (vir_bytes) &_end) {
@@ -197,9 +195,9 @@ static void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 		return;
 	}
 
-	free_mem(ABS2CLICK(phys), pages);
 	if(pt_writemap(vmprocess, &vmprocess->vm_pt, vir,
-		MAP_NONE, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
+		MAP_NONE, pages*I386_PAGE_SIZE, 0,
+		WMF_OVERWRITE | WMF_FREE) != OK)
 		panic("vm_freepages: pt_writemap failed");
 
 #if SANITYCHECKS
@@ -1080,8 +1078,7 @@ void pt_free(pt_t *pt)
 
 	for(i = 0; i < I386_VM_DIR_ENTRIES; i++)
 		if(pt->pt_pt[i])
-			vm_freepages((vir_bytes) pt->pt_pt[i],
-				I386_VM_PFA(pt->pt_dir[i]), 1, VMP_PAGETABLE);
+			vm_freepages((vir_bytes) pt->pt_pt[i], 1);
 
 	return;
 }
