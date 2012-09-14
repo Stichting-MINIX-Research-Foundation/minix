@@ -47,7 +47,6 @@ SRCS+=	memset.c
 #
 # Customized versions of libc functions.
 #
-SRCS+= 	calloc.c malloc.c
 SRCS+= 	fputs.c _stdfile.c
 CPPFLAGS.fputs.c+= -I${LIBCSRCDIR}/include
 
@@ -65,7 +64,7 @@ SRCS+=	${i}
 .endfor
 # Import from stdlib
 .for i in abort.c atexit.c atoi.c exit.c getenv.c \
-	getopt.c ldiv.c
+	getopt.c ldiv.c malloc.c
 .PATH.c: ${LIBCSRCDIR}/stdlib
 SRCS+= ${i}
 CPPFLAGS.${i}+= -I${LIBCSRCDIR}/stdlib -I${LIBCSRCDIR}/include 
