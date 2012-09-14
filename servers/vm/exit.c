@@ -67,9 +67,7 @@ SANITYCHECK(SCL_FUNCTIONS);
 		return EINVAL;
 	}
 
-	if(vmp->vm_flags & VMF_HAS_DMA) {
-		release_dma(vmp);
-	} else {
+	{
 		/* Free pagetable and pages allocated by pt code. */
 SANITYCHECK(SCL_DETAIL);
 		free_proc(vmp);

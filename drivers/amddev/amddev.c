@@ -55,13 +55,15 @@ static void init_domain(int index);
 static void init_map(unsigned int ix);
 static int do_add4pci(const message *m);
 static void add_range(phys_bytes busaddr, phys_bytes size);
+#if 0
 static void del_range(phys_bytes busaddr, phys_bytes size);
+static void sef_cb_signal_handler(int signo);
+#endif
 static void report_exceptions(void);
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
 
 int main(void)
 {
@@ -103,8 +105,10 @@ static void sef_local_startup()
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
+#if 0
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
+#endif
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -154,6 +158,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 }
 
 
+#if 0
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
@@ -193,6 +198,7 @@ static void sef_cb_signal_handler(int signo)
 		}
 	}
 }
+#endif
 
 /* Returns 0 if no device found, or 1 if a device is found. */
 static int find_dev(devindp, capaddrp)
@@ -411,6 +417,7 @@ static int do_add4pci(const message *m)
 		return r;
 	}
 
+#if 0
 	r= vm_adddma(proc, start, size);
 	if (r != 0)
 	{
@@ -419,6 +426,7 @@ static int do_add4pci(const message *m)
 			"proc %d: %d\n", size, start, proc, r);
 		return r;
 	}
+#endif
 
 	add_range(busaddr, size);
 
@@ -441,6 +449,7 @@ static void add_range(phys_bytes busaddr, phys_bytes size)
 	}
 }
 
+#if 0
 static void del_range(phys_bytes busaddr, phys_bytes size)
 {
 	phys_bytes o;
@@ -455,6 +464,7 @@ static void del_range(phys_bytes busaddr, phys_bytes size)
 		table[bit/8] |= (1 << (bit % 8));
 	}
 }
+#endif
 
 static void report_exceptions(void)
 {

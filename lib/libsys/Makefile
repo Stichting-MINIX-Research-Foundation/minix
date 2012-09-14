@@ -76,7 +76,6 @@ SRCS=  \
 	tickdelay.c \
 	timers.c \
 	vm_brk.c \
-	vm_dmacalls.c \
 	vm_exit.c \
 	vm_fork.c \
 	vm_info.c \

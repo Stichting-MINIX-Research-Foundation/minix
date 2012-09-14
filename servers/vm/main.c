@@ -391,9 +391,6 @@ void init_vm(void)
 	CALLMAP(VM_FORK, do_fork);
 	CALLMAP(VM_BRK, do_brk);
 	CALLMAP(VM_WILLEXIT, do_willexit);
-	CALLMAP(VM_ADDDMA, do_adddma);
-	CALLMAP(VM_DELDMA, do_deldma);
-	CALLMAP(VM_GETDMA, do_getdma);
 	CALLMAP(VM_NOTIFY_SIG, do_notify_sig);
 
 	/* Calls from RS */

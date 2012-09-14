@@ -49,9 +49,6 @@ struct vmproc {
 /* Bits for vm_flags */
 #define VMF_INUSE	0x001	/* slot contains a process */
 #define VMF_EXITING	0x002	/* PM is cleaning up this process */
-#define VMF_HAS_DMA	0x004	/* Process directly or indirectly granted
-				 * DMA buffers.
-				 */
 #define VMF_WATCHEXIT	0x008	/* Store in queryexit table */
 
 #endif
