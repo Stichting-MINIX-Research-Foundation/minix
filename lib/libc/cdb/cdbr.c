@@ -128,7 +128,7 @@ cdbr_open(const char *path, int flags)
 		return NULL;
 	}
 
-	if (read(fd, cdbr->mmap_base, cdbr->mmap_size) != cdbr->mmap_size)
+	if ((size_t)read(fd, cdbr->mmap_base, cdbr->mmap_size) != cdbr->mmap_size)
 	{
 		free(cdbr->mmap_base);
 		free(cdbr);

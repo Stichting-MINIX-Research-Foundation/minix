@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2011/01/17 23:53:03 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2011/03/15 07:40:18 matt Exp $
 
 .if ${MKSOFTFLOAT} == "no"
 SRCS+=	fabs.S ldexp.S modf.S
@@ -31,6 +31,8 @@ SRCS+=	makecontext.c resumecontext.c _resumecontext.S swapcontext.S _lwp.c
 
 # mips abi builtin extensions (used by GCC for lexical-closure trampoline)
 SRCS+=	cacheflush.c
+
+CPPFLAGS._lwp.c	+= -D_LIBC_SOURCE
 
 LSRCS.mips.gen=	Lint__setjmp.c Lint_bswap16.c Lint_bswap32.c Lint_swapcontext.c
 LSRCS+=		${LSRCS.mips.gen}

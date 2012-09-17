@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.4 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.6 2011/11/21 16:17:48 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #include "SYS.h"
 
+#ifdef SYSLIBC_SCCS
+RCSID("$NetBSD: getcontext.S,v 1.6 2011/11/21 16:17:48 chs Exp $")
+#endif
+
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(getcontext, _getcontext)
 #endif
@@ -44,8 +48,8 @@ ENTRY(_getcontext, 0)
 	jcc	1f
 	jmp	CERROR+2		/* badness happened */
 
-1:	movl	4(%ap),%r2		/* ptr to ucontext */
-	movl	16(%fp),%r3		/* PC to return to */
+1:	movl	4(%ap),%r0		/* ptr to ucontext */
+	movl	16(%fp),%r1		/* PC to return to */
 	movab	2f,16(%fp)		/* let's return early */
 	ret
 	/*
@@ -55,7 +59,9 @@ ENTRY(_getcontext, 0)
 	 * the callers state but we still have control.
 	 */
 	_ALIGN_TEXT
-2:	movq	%ap,(36+12*4)(%r2)	/* adjust AP + SP */
-	movl	%fp,(36+14*4)(%r2)	/* adjust FP */
-	movl	%r3,(36+15*4)(%r2)	/* adjust PC */
-	jmp	(%r3)			/* and return */
+2:	movq	%ap,(36+12*4)(%r0)	/* adjust AP + SP */
+	movl	%fp,(36+14*4)(%r0)	/* adjust FP */
+	movl	%r3,(36+15*4)(%r0)	/* adjust PC */
+	clrl	%r0
+	jmp	(%r1)			/* and return */
+END(_getcontext)

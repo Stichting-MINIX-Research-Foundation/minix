@@ -27,15 +27,16 @@
  * SUCH DAMAGE.
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)exect.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: exect.S,v 1.5 2003/08/07 16:42:33 agc Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
-
 #include "SYS.h"
 #include <machine/psl.h>
+
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	/* .asciz "@(#)exect.s	8.1 (Berkeley) 6/4/93" */
+RCSID("$NetBSD: exect.S,v 1.6 2011/01/25 02:38:15 matt Exp $")
+#endif /* SYSLIBC_SCCS and not lint */
 
 ENTRY(exect, 0)
 	bispsw	$PSL_T
 	chmk	$ SYS_execve
 	jmp	CERROR+2		# exect(file, argv, env)
+END(exect)

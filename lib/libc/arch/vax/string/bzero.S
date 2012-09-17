@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.3 2003/08/07 16:42:32 agc Exp $	*/
+/*	$NetBSD: bzero.S,v 1.4 2011/01/25 02:38:15 matt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,13 +28,14 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#include "DEFS.h"
+
+#if defined(LIBC_SCCS)
+	/* .asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93" */
+RCSID("$NetBSD: bzero.S,v 1.4 2011/01/25 02:38:15 matt Exp $")
+#endif
 
 /* bzero(base, length) */
-
-#include "DEFS.h"
 
 ENTRY(bzero, 0)
 	movl	4(%ap),%r3
@@ -48,3 +49,4 @@ ENTRY(bzero, 0)
 	jgtr	1b
 	movc5	$0,(%r3),$0,8(%ap),(%r3)
 	ret
+END(bzero)

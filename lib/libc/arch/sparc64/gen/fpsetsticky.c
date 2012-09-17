@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.4 2005/12/24 23:10:08 perry Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.6 2012/03/17 21:35:06 martin Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -7,15 +7,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.4 2005/12/24 23:10:08 perry Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.6 2012/03/17 21:35:06 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
+#include <sys/types.h>
 #include <ieeefp.h>
 
 #ifdef __weak_alias
 __weak_alias(fpsetsticky,_fpsetsticky)
+#endif
+
+#ifdef EXCEPTIONS_WITH_SOFTFLOAT
+extern fp_except _softfloat_float_exception_flags;
 #endif
 
 fp_except
@@ -33,5 +38,11 @@ fpsetsticky(sticky)
 
 	__asm("ld %0,%%fsr" : : "m" (*&new));
 
-	return (old >> 5) & 0x1f;
+	old = ((uint32_t)old >> 5) & 0x1f;
+
+#ifdef EXCEPTIONS_WITH_SOFTFLOAT
+	old |= _softfloat_float_exception_flags;
+	_softfloat_float_exception_flags = sticky;
+#endif
+	return old;
 }

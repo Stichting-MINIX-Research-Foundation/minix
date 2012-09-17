@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.4 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.5 2012/03/17 21:35:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.4 2008/04/28 20:22:57 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.5 2012/03/17 21:35:06 martin Exp $");
 #endif
 
 #include <inttypes.h>
@@ -50,6 +50,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	ulong *sp;
 	va_list ap;
 
+	/*LINTED*/
 	sp = (ulong *)((caddr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* Align on quad-word boundary. */
 	sp = (ulong *)((ulong)sp & ~0xf);
@@ -71,6 +72,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	sp[14] = (ulong)sp - 2047;
 	sp[15] = (ulong)_resumecontext - 8;
 
+	/*LINTED*/
 	sp = (ulong *)((caddr_t)sp - 2047);
 
 	gr[_REG_O6] = (__greg_t)sp;

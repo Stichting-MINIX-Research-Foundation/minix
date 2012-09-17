@@ -1,4 +1,4 @@
-/* $NetBSD: qp.c,v 1.7 2008/04/28 20:22:57 martin Exp $ */
+/* $NetBSD: qp.c,v 1.9 2012/03/17 20:48:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -168,12 +168,12 @@ _Qp_mul(float128 *c, float128 *a, float128 *b)
 /*
  * XXX need corresponding softfloat function
  */
-static float128 __zero = {0x4034000000000000, 0x00000000};
+static float128 __sf128_zero = {0x4034000000000000, 0x00000000};
 
 void
 _Qp_neg(float128 *c, float128 *a)
 {
-	*c = float128_sub(__zero, *a);
+	*c = float128_sub(__sf128_zero, *a);
 }
 
 
@@ -271,15 +271,15 @@ _Qp_uxtoq(float128 *c, unsigned long a)
 
 	if (a & 0x8000000000000000ULL) {
 		a = (a >> 1) | (a & 1);
-		*c = int64_to_float128(a);
+		*c = int64_to_float128((long long)a);
 		*c = float128_add(*c, *c);
 	} else
-		*c = int64_to_float128(a);
+		*c = int64_to_float128((long long)a);
 }
 
 
 void
 _Qp_xtoq(float128 *c, long a)
 {
-	*c = int64_to_float128(a);
+	*c = int64_to_float128((long long)a);
 }

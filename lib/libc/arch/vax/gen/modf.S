@@ -27,9 +27,11 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)modf.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: modf.S,v 1.4 2003/08/07 16:42:31 agc Exp $"
+RCSID("$NetBSD: modf.S,v 1.5 2011/01/25 02:38:15 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -40,8 +42,6 @@
  * and stores the integer part indirectly through "iptr".
  */
 
-#include "DEFS.h"
-
 ENTRY(modf, 0)
 	emodd	4(%ap),$0,$0f1.0,%r2,%r0
 	jvs	1f			# integer overflow
@@ -50,6 +50,7 @@ ENTRY(modf, 0)
 1:
 	subd3	%r0,4(%ap),*12(%ap)
 	ret
+END(modf)
 
 ENTRY(modff, 0)
 	emodf	4(%ap),$0,$0f1.0,%r2,%r0
@@ -59,3 +60,4 @@ ENTRY(modff, 0)
 1:
 	subf3	%r0,4(%ap),*8(%ap)
 	ret
+END(modff)

@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.22 2010/09/03 17:22:51 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.24 2012/07/08 00:59:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.22 2010/09/03 17:22:51 matt Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.24 2012/07/08 00:59:34 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,7 +88,6 @@ LEAF(_setjmp)
 	 */
 #ifndef SOFTFLOAT_FOR_GCC
 	cfc1	v0, $31				# too bad cant check if FP used
-	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 #if defined(__mips_n64) || defined(__mips_n32)
 	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
@@ -109,11 +108,12 @@ LEAF(_setjmp)
 	FP_S	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
 	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
+	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 #endif	/* SOFTFLOAT_FOR_GCC */
 	REG_EPILOGUE
 
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(_setjmp)
 
 LEAF(_longjmp)
@@ -139,11 +139,13 @@ LEAF(_longjmp)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L		gp, _OFFSETOF_SC_REGS_GP(a0)
 #endif
+#ifndef SOFTFLOAT_FOR_GCC
 	# get fpu status
+	INT_L		v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
+#endif
 	REG_L		sp, _OFFSETOF_SC_REGS_SP(a0)
 	REG_L		s8, _OFFSETOF_SC_REGS_S8(a0)
 #ifndef SOFTFLOAT_FOR_GCC
-	INT_L		v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	ctc1		v0, $31
 	/*
 	 * In N32, FP registers F20, F22, F24, F26, F28, F30 are callee-saved.
@@ -173,9 +175,8 @@ LEAF(_longjmp)
 #endif	/* SOFTFLOAT_FOR_GCC */
 
 	REG_EPILOGUE
-	move	v0, a1			# get return value in 1st arg
 	j	ra
-	nop
+	 move	v0, a1			# get return value in 1st arg
 
 botch:
 	/*
@@ -183,6 +184,8 @@ botch:
 	 * our caller's GP.
 	 */
 	jal	_C_LABEL(longjmperror)
+	 nop
 	
 	PIC_TAILCALL(abort)
+	 nop
 END(_longjmp)

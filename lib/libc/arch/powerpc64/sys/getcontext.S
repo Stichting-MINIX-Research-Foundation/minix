@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.3 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.4 2011/10/29 16:03:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$NetBSD: getcontext.S,v 1.3 2008/04/28 20:22:57 martin Exp $"
+	.asciz "$NetBSD: getcontext.S,v 1.4 2011/10/29 16:03:33 christos Exp $"
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -50,4 +50,4 @@ ENTRY(_getcontext)
 	stw	%r3,(48 +  3 * 4)(%r5)		# arrange for return value 0
 	blr
 1:
-	b	.__cerror
+	b	PIC_PLT(_C_LABEL(__cerror))

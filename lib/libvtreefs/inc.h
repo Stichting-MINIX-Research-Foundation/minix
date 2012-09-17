@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
+#include <sys/ucred.h>
 #include <limits.h>
 #include <unistd.h>
 #include <signal.h>

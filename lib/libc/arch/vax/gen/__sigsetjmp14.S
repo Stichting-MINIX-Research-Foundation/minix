@@ -27,8 +27,11 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+#include <machine/setjmp.h>
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "$NetBSD: __sigsetjmp14.S,v 1.4 2003/08/07 16:42:31 agc Exp $"
+RCSID("$NetBSD: __sigsetjmp14.S,v 1.5 2011/01/25 02:38:15 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,9 +46,6 @@
  * signal mask.
  */
 
-#include "DEFS.h"
-#include <machine/setjmp.h>
-
 ENTRY(__sigsetjmp14, R6)
 	movl	4(%ap),%r0		# get env pointer
 	movl	8(%ap),(_JBLEN*4)(%r0)	# save "savemask"
@@ -53,6 +53,7 @@ ENTRY(__sigsetjmp14, R6)
 	beql	L1
 	jmp	_C_LABEL(__setjmp14)+2	# yep, do full setjmp
 L1:	jmp	_C_LABEL(_setjmp)+2	# nope, skip to _setjmp
+END(__sigsetjmp14)
 
 ENTRY(__siglongjmp14, 0)
 	movl	4(%ap),%r0		# get env pointer
@@ -60,5 +61,5 @@ ENTRY(__siglongjmp14, 0)
 	beql	L2
 	jmp	_C_LABEL(__longjmp14)+2	# yep, do full longjmp
 L2:	jmp	_C_LABEL(_longjmp)+2	# nope, skip to _longjmp
-
+END(__siglongjmp14)
 

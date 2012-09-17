@@ -1,10 +1,13 @@
-/*	$NetBSD: cerror.S,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: cerror.S,v 1.4 2012/02/27 15:47:11 matt Exp $	*/
 
 #include <machine/asm.h>
 #include "SYS.h"
 
 #ifndef _REENTRANT
 	.globl	_C_LABEL(errno)
+#endif
+#ifdef PIC
+	.protected _C_LABEL(__cerror)
 #endif
 
 ENTRY(__cerror)

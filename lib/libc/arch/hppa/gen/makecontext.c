@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.6 2012/03/22 12:31:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:56 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.6 2012/03/22 12:31:32 skrll Exp $");
 #endif
 
 #include <inttypes.h>
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:56 martin Exp $");
 #include <sys/types.h>
 #include <machine/frame.h>
 
+void __resumecontext(void) __dead;
+
 void
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
@@ -53,8 +55,6 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	uintptr_t *sp;
 	int i;
 	va_list ap;
-
-	void __resumecontext(void);
 
 	/* LINTED uintptr_t is safe */
 	sp  = (uintptr_t *)ucp->uc_stack.ss_sp;
@@ -81,6 +81,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	}
 	gr[_REG_PCOQH] = fp | HPPA_PC_PRIV_USER;
 	gr[_REG_PCOQT] = (fp + 4) | HPPA_PC_PRIV_USER;
+	/* LINTED dp is reg27, ref. above, so initialized */
 	gr[_REG_DP] = dp;
 
 	/* Construct argument list. */

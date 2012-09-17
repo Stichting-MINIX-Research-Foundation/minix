@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.10 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.11 2011/07/10 21:18:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.10 2008/04/28 20:22:57 martin Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.11 2011/07/10 21:18:47 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,32 +53,35 @@ __weak_alias(fpsetsticky,_fpsetsticky)
 fp_except
 fpsetsticky(fp_except mask)
 {
-	uint64_t fpscr;
+	union {
+		double u_d;
+		uint64_t u_fpscr;
+	} ud;
 	fp_except old;
 
-	__asm volatile("mffs %0" : "=f"(fpscr));
-	old = ((uint32_t)fpscr & STICKYBITS) >> STICKYSHFT;
+	__asm volatile("mffs %0" : "=f"(ud.u_d));
+	old = ((uint32_t)ud.u_fpscr & STICKYBITS) >> STICKYSHFT;
 	/*
 	 * FPSCR_VX (aka FP_X_INV) is not a sticky bit but a summary of the
 	 * all the FPSCR_VX* sticky bits.  So when FP_X_INV is cleared then
 	 * clear all of those bits, likewise when it's set, set them all.
 	 */
 	if ((mask & FP_X_INV) == 0)
-		fpscr &= ~INVBITS;
+		ud.u_fpscr &= ~INVBITS;
 	else 
-		fpscr |= INVBITS;
-	fpscr &= ~STICKYBITS;
-	fpscr |= ((uint32_t)mask << STICKYSHFT) & STICKYBITS;
+		ud.u_fpscr |= INVBITS;
+	ud.u_fpscr &= ~STICKYBITS;
+	ud.u_fpscr |= ((uint32_t)mask << STICKYSHFT) & STICKYBITS;
 	/*
 	 * Make FPSCR_FX reflect the presence of a set sticky bit (or not).
 	 */
-	if (fpscr & (STICKYBITS|INVBITS))
-		fpscr |= FPSCR_FX;
+	if (ud.u_fpscr & (STICKYBITS|INVBITS))
+		ud.u_fpscr |= FPSCR_FX;
 	else
-		fpscr &= ~FPSCR_FX;
+		ud.u_fpscr &= ~FPSCR_FX;
 	/*
 	 * Write back the fpscr.
 	 */
-	__asm volatile("mtfsf 0xff,%0" :: "f"(fpscr));
+	__asm volatile("mtfsf 0xff,%0" :: "f"(ud.u_d));
 	return (old);
 }

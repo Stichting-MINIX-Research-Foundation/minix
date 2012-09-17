@@ -1,0 +1,1841 @@
+#	$NetBSD: bsd.README,v 1.300 2012/08/23 21:21:16 joerg Exp $
+#	@(#)bsd.README	8.2 (Berkeley) 4/2/94
+
+This is the README file for the make "include" files for the NetBSD
+source tree.  The files are installed in /usr/share/mk, and are,
+by convention, named with the suffix ".mk".
+
+Note, this file is not intended to replace reading through the .mk
+files for anything tricky.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+RANDOM THINGS WORTH KNOWING:
+
+The files are simply C-style #include files, and pretty much behave like
+you'd expect.  The syntax is slightly different in that a single '.' is
+used instead of the hash mark, i.e. ".include <bsd.prog.mk>".
+
+One difference that will save you lots of debugging time is that inclusion
+of the file is normally done at the *end* of the Makefile.  The reason for
+this is because .mk files often modify variables and behavior based on the
+values of variables set in the Makefile.  To make this work, remember that
+the FIRST target found is the target that is used, i.e. if the Makefile has:
+
+	a:
+		echo a
+	a:
+		echo a number two
+
+the command "make a" will echo "a".  To make things confusing, the SECOND
+variable assignment is the overriding one, i.e. if the Makefile has:
+
+	a=	foo
+	a=	bar
+
+	b:
+		echo ${a}
+
+the command "make b" will echo "bar".  This is for compatibility with the
+way the V7 make behaved.
+
+It's fairly difficult to make the BSD .mk files work when you're building
+multiple programs in a single directory.  It's a lot easier to split up the
+programs than to deal with the problem.  Most of the agony comes from making
+the "obj" directory stuff work right, not because we switched to a new version
+of make.  So, don't get mad at us, figure out a better way to handle multiple
+architectures so we can quit using the symbolic link stuff.  (Imake doesn't
+count.)
+
+The file .depend in the source directory is expected to contain dependencies
+for the source files.  This file is read automatically by make after reading
+the Makefile.
+
+The variable DESTDIR works as before.  It's not set anywhere but will change
+the tree where the file gets installed.
+
+The profiled libraries are no longer built in a different directory than
+the regular libraries.  A new suffix, ".po", is used to denote a profiled
+object, and ".pico" denotes a shared (position-independent) object.
+
+There are various make variables used during the build.
+
+Many variables support a (case sensitive) value of "no" or "yes",
+and are tested with  ${VAR} == "no"  and  ${VAR} != "no" .
+
+
+The basic rule for the variable naming scheme is as follows:
+
+HOST_xxx	A command that runs on the host machine regardless of
+		whether or not the system is being cross compiled, or
+		flags for such a command.
+
+MKxxx		Can be set to "no" to disable functionality, or
+		"yes" to enable it.
+		Usually defaults to "yes", although some variables
+		default to "no".
+		Due to make(1) implementation issues, if a temporary
+		command-line override of a mk.conf(5) or <bsd.own.mk>
+		setting is required whilst still honoring a particular
+		Makefile's setting of MKxxx, use
+			env MKxxx=value make
+		instead of
+			make MKxxx=value
+
+NOxxx		If defined, disables a feature.
+		Not intended for users.
+		This is to allow Makefiles to disable functionality
+		that they don't support (such as missing man pages).
+		NOxxx variables must be defined before <bsd.own.mk>
+		is included.
+
+TOOL_xxx	A tool that is provided as part of the USETOOLS
+		framework.  When not using the USETOOLS framework,
+		TOOL_xxx variables should refer to tools that are
+		already installed on the host system.
+
+The following variables that control how things are made/installed that
+are not set by default. These should not be set by Makefiles; they're for
+the user to define in MAKECONF (see <bsd.own.mk>, below, or mk.conf(5))
+or on the make(1) command line:
+
+BUILD 		If defined, 'make install' checks that the targets in the
+		source directories are up-to-date and remakes them if they
+                are out of date, instead of blindly trying to install
+                out of date or non-existent targets.
+
+MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
+		Default: 2
+		Supported values:
+		    0	Minimal output ("quiet")
+		    1	Describe what is occurring
+		    2	Describe what is occurring and echo the actual command
+		    3	Ignore the effect of the "@" prefix in make commands
+		    4	Trace shell commands using the shell's -x flag
+
+MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
+		with the Automated Testing Framework (ATF).
+		Default: yes
+
+MKBFD		Obsolete, use MKBINUTILS
+
+MKBINUTILS	If "no", don't build binutils (gas, ld, etc and libbfd,
+		libopcodes)
+		Default: yes
+
+MKBSDTAR	If "yes", use the libarchive based cpio and tar instead of
+		the pax frontends.
+		Default: no
+
+MKCATPAGES	If "no", don't build or install the catman pages.
+		Default: no
+
+MKCOMPAT  	If "no", don't build or install the src/compat.
+		Default: yes on amd64/sparc64, no elsewhere.
+
+MKCOMPLEX	If "no", don't build libm support for <complex.h>
+		Default: yes
+
+MKCRYPTO	If "no", no cryptography support will be built into the system,
+		and also acts as "MKKERBEROS=no".
+		Default: yes
+
+MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5
+		Default: no
+
+MKCVS		If "no", don't build or install cvs(1).
+		Default: yes
+
+MKDEBUG		If "no", don't build and install separate debugging symbols
+		into /usr/libdata/debug.
+		Default: no
+
+MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
+		with -DDEBUG.
+		Default: no
+
+MKDOC		If "no", don't build or install the documentation.
+		Default: yes
+
+MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
+		don't install certain libraries in /lib, and don't
+		install the shared linker into /libexec.
+		Default: yes
+
+MKEXTSRC        If not "no", 'make build' also descends into either src/extsrc
+		to cross-build programs and libraries externally added by
+		users, and automatically enables creation of those sets.
+		Default: no
+
+MKGCC		If "no", don't build gcc(1) or any of the GCC-related
+		libraries (libgcc, libobjc, libstdc++).
+		Default: yes
+
+MKGCCCMDS	If "no", don't build gcc(1), but do build the GCC-related
+		libraries (libgcc, libobjc, libstdc++).
+		Default: yes
+
+MKGDB		If "no", don't build gdb(1).
+		Default: yes
+
+MKHESIOD	If "no", disables building of Hesiod infrastructure
+		(libraries and support programs).
+		Default: yes
+
+MKHOSTOBJ	If not "no", for programs intended to be run on the compile
+		host, the name, release, and architecture of the host
+		operating system will be suffixed to the name of the object
+		directory created by "make obj".
+		Default: no
+
+MKHTML		If "no", don't build or install the HTML man pages.
+		Default: yes
+
+MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
+		Has no effect on most platforms.
+		Default: yes
+
+MKSTRIPIDENT	Strip the RCS IDs from program binaries and shared libraries.
+		Default: no
+
+MKINET6		If "no", disables building of INET6 (IPv6) infrastructure
+		(libraries and support programs).  This option must not be
+		set to "no" if MKX11 is not "no".
+		Default: yes
+
+MKINFO		If "no", don't build or install Info documentation from
+		Texinfo source files.
+		Default: yes
+
+MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
+		Default: yes
+
+MKISCSI		If "no", don't build or install iSCSI library or applications
+		(depends on libpthread.)
+		Default: yes
+
+MKKERBEROS	If "no", disables building of Kerberos v5
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKLDAP		If "no", disables building of LDAP infrastructure
+		(libraries and support programs).
+		Default: yes
+
+MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
+		Also:
+			- don't install the .a libraries
+			- don't install _pic.a libraries on PIC systems
+			- don't build .a libraries on PIC systems
+			- don't install the .so symlink on ELF systems
+		I.e, only install the shared library (and the .so.major
+		symlink on ELF).
+		Default: yes
+
+MKLINT		If "no", don't build or install the lint libraries.
+		Default: yes
+
+MKLVM		If "no", don't build or install the logical volume manager
+		and device mapper tools and libraries
+		Default: yes
+
+MKMAN		If "no", don't build or install the man or catman pages,
+		and also acts as "MKCATPAGES=no MKHTML=no".
+		Default: yes
+
+MKMANDOC	If "yes", mandoc is built as tool and used to compile
+		catman or html pages.  A directory can be exempted by
+		defining NOMANDOC.  Individual man pages are exempted
+		if NOMANDOC.${target} is set to "yes".
+		Default: yes
+
+MKMANZ		If not "no", compress manual pages at installation time.
+		Default: no
+
+MKMDNS		If "no", disables building of mDNS infrastructure
+		(libraries and support programs).
+		Default: yes
+
+MKNLS		If "no", don't build or install the NLS files and locale
+		definition files.
+		Default: yes
+
+MKNPF		If "no", don't build or install the NPF and its modules.
+		Default: yes
+
+MKOBJ		If "no", don't enable the rule which creates objdirs,
+		and also acts as "MKOBJDIRS=no".
+		Default: yes
+
+MKOBJDIRS	If "no", don't create objdirs during a "make build".
+		Default: no
+
+MKPAM		If "no", disables building of PAM authentication
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKPCC		If "no", don't build pcc(1) or any of the PCC-related
+		libraries (libpcc, libpccsoftfloat).
+		Default: no
+
+MKPF		If "no", don't build or install the pf programs and LKM.
+		Default: yes
+
+MKPIC		If "no", don't build or install shared libraries, and
+		also acts as "MKPICLIB=no"
+		Default: yes (for MACHINE_ARCHs that support it) 
+
+MKPICINSTALL	If "no", don't install the *_pic.a libraries.
+		Default: yes
+
+MKPICLIB	If "no", don't build *_pic.a libraries, and build the
+		shared object libraries from the .a libraries.
+		A symlink is installed in ${DESTDIR}/usr/lib for the
+		_pic.a library pointing to the .a library.
+		Default: yes
+
+MKPIE		If "no", create regular executables. Otherwise create
+		PIE (Position Independent Executables).
+		Default: no
+
+MKPIGZGZIP	If "no", only install pigz as pigz, not gzip.
+		Default: no
+
+MKPOSTFIX	If "no", don't build or install postfix(1).
+		Default: yes
+
+MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
+		Default: yes
+
+MKREPRO         If "yes", create reproducable builds. This enables
+		different switches to make two builds from the same source tree
+		result in the same build results.
+		Default: no
+
+MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
+		MKMAN=no MKNLS=no".
+		I.e, don't build catman pages, documentation, Info
+		documentation, man pages, NLS files, ...
+		Default: yes
+
+MKSKEY		If "no", disables building of S/key authentication
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKSOFTFLOAT	If not "no", build with options to enable the compiler to
+		generate output containing library calls for floating
+		point and possibly soft-float library support.
+		Default: no
+
+MKSTATICLIB	If "no", don't build or install the normal static (*.a)
+		libraries.
+		Default: yes
+
+MKUNPRIVED	If not "no", don't set the owner/group/mode when installing
+		files or directories, and keep a metadata log of what
+		the owner/group/mode should be.  This allows a
+		non-root "make install".
+		Default: no
+
+MKUPDATE 	If not "no", 'make install' only installs targets that are
+		more recently modified in the source directories that their
+		installed counterparts.
+		Default: no
+
+MKX11		If not "no", depending on the value of ${X11FLAVOUR},
+		'make build' also descends into either src/x11 (XFree86) or
+		src/external/mit/xorg (modular Xorg) to cross-build X11 and
+		automatically enables creation of X sets.
+		Default: no
+
+MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
+		install the X fonts.  The xfont set is still created but
+		will be empty.
+		Default: yes
+
+MKYP		If "no", disables building of YP (NIS)
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKZFS		If "no", do not build and install utilities and libraries 
+		used to manage ZFS file system. Do not build zfs and solaris 
+		compatibility kernel modules.
+		Default: yes on i386/amd64, no elsewhere.
+
+MKRUMP		If "no", do not build and install rump related headers,
+		libraries, and programs.
+		Default: yes
+
+USE_HESIOD	If "no", disables building Hesiod support into
+		various system utilities/libraries that support it.
+		If ${MKHESIOD} is "no", USE_HESIOD will also be
+		forced to "no".
+
+USE_INET6	If "no", disables building INET6 (IPv6) support into
+		various system utilities/libraries that support it.
+		If ${MKINET6} is "no", USE_INET6 will also be
+		forced to "no".
+
+USE_JEMALLOC	If "no", disables building the "jemalloc" allocator
+		designed for improved performance with threaded
+		applications.  The "phkmalloc" allocator as used up
+		before NetBSD-5.0 will be substituted.
+
+USE_KERBEROS	If "no", disables building Kerberos v5
+		support into various system utilities/libraries that
+		support it.  If ${MKKERBEROS} is "no", USE_KERBEROS
+		will also be forced to "no".
+
+USE_LDAP	If "no", disables building LDAP support into various
+		system utilities/libraries that support it.
+		If ${MKLDAP} is "no", USE_LDAP will also be forced to "no".
+
+USE_PAM		If "no", disables building PAM authentication support
+		into various system utilities/libraries that support it.
+		If ${MKPAM} is "no", USE_PAM will also be forced to "no".
+
+USE_SKEY	If "no", disables building S/key authentication
+		support into various system utilities/libraries that
+		support it.  If ${MKSKEY} is "no", USE_SKEY will
+		also be forced to "no".
+		Default: no
+
+USE_SSP		If "no", disables GCC stack protection code, which
+		detects stack overflows and aborts the program. The
+		stack protection code imposes a performance penalty
+		of about 5%.
+		Default: "no", unless "USE_FORT" is set to "yes"
+
+USE_FORT 	If "yes" turns on substitute wrappers for commonly used
+		functions that do not do bounds checking regularly, but
+		they could in some cases by using the gcc
+		__builtin_object_size() function to determine the buffer 
+		size where it is known and detect buffer overflows.
+		These substitute functions are in /usr/include/ssp.
+		Default: depends on the part of the source tree
+
+USE_YP		If "no", disables building YP (NIS) support into
+		various system utilities/libraries that support it.
+		If ${MKYP} is "no", USE_YP will also be forced to "no".
+
+USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
+		Otherwise, build tools/pigz and use nbpigz to compress
+		things.
+		Default: "no".
+
+X11FLAVOUR	Set to "Xorg" or "XFree86", depending on whether to build
+		XFree86 or modular Xorg.  Only matters if MKX11!=no.
+		Default: "Xorg" on amd64, i386, macppc, shark and sparc64,
+		"XFree86" on everything else.
+
+COPTS.lib<lib>
+OBJCOPTS.lib<lib>
+LDADD.lib<lib>
+CPPFLAGS.lib<lib>
+CXXFLAGS.lib<lib>
+COPTS.<prog>
+OBJCCOPTS.<prog>
+LDADD.<prog>
+CPPFLAGS.<prog>
+CXXFLAGS.<prog>	These provide a way to specify additions to the associated
+		variables in a way that applies only to a particular library
+		or program.  <lib> corresponds to the LIB variable set in
+		the library's makefile.  <prog> corresponds to either PROG
+		or PROG_CXX (if set).  For example, if COPTS.libcrypto is
+		set to "-g", "-g" will be added to COPTS only when compiling
+		the crypto library.
+
+The active compiler is selected using the following variables:
+AVAILABLE_COMPILER
+		List of available compiler suites.  Processed in order
+		for selecting the active compiler for each frontend.
+HAVE_PCC	If defined, PCC is present and enabled.
+HAVE_LLVM	If defined, LLVM/Clang is present and enabled.
+UNSUPPORTED_COMPILER.xxx
+		If defined, the support for compiler "xxx" is disabled.
+
+For the frontends (CC, CPP, CXX, FC and OBJC) the following variables exist:
+ACTIVE_CC	Active compile suite for the CC frontend.
+SUPPORTED_CC	Compile suite with support for the CC frontend.
+TOOL_CC.xxx	Path to the CC frontend for compiler "xxx"
+
+=-=-=-=-=   sys.mk   =-=-=-=-=
+
+The include file <sys.mk> has the default rules for all makes, in the BSD
+environment or otherwise.  You probably don't want to touch this file.
+
+=-=-=-=-=   bsd.own.mk   =-=-=-=-=
+
+The include file <bsd.own.mk> contains source tree configuration parameters,
+such as the owners, groups, etc. for both manual pages and binaries, and
+a few global "feature configuration" parameters.
+
+It has no targets.
+
+To get system-specific configuration parameters, <bsd.own.mk> will try to
+include the file specified by the "MAKECONF" variable.  If MAKECONF is not
+set, or no such file exists, the system make configuration file, /etc/mk.conf
+is included.  These files may define any of the variables described below.
+
+<bsd.own.mk> sets the following variables, if they are not already defined
+(defaults are in brackets):
+
+NETBSDSRCDIR	Top of the NetBSD source tree.
+		If _SRC_TOP_ != "", that will be used as the default,
+		otherwise BSDSRCDIR will be used as the default.
+		Various makefiles within the NetBSD source tree will
+		use this to reference the top level of the source tree.
+
+_SRC_TOP_	Top of the system source tree, as determined by <bsd.own.mk>
+		based on the presence of tools/ and build.sh.  This variable
+		is "internal" to <bsd.own.mk>, although its value is only
+		determined once and then propagated to all sub-makes.
+
+BSDSRCDIR	The real path to the system sources, so that 'make obj'
+		will work correctly.  [/usr/src]
+
+BSDOBJDIR	The real path to the system 'obj' tree, so that 'make obj'
+		will work correctly.  [/usr/obj]
+
+BINGRP		Binary group.  [wheel]
+
+BINOWN		Binary owner.  [root]
+
+BINMODE		Binary mode.  [555]
+
+NONBINMODE	Mode for non-executable files.  [444]
+
+MANDIR		Base path for manual installation.  [/usr/share/man/cat]
+
+MANGRP		Manual group.  [wheel]
+
+MANOWN		Manual owner.  [root]
+
+MANMODE		Manual mode.  [${NONBINMODE}]
+
+MANINSTALL	Manual installation type.  Space separated list:
+			catinstall, htmlinstall, maninstall
+		Default value derived from MKCATPAGES and MKHTML.
+
+LDSTATIC	Control program linking; if set blank, link everything
+		dynamically.  If set to "-static", link everything statically.
+		If not set, programs link according to their makefile.
+
+LIBDIR		Base path for library installation.  [/usr/lib]
+
+LINTLIBDIR	Base path for lint(1) library installation.  [/usr/libdata/lint]
+
+LIBGRP		Library group.  [${BINGRP}]
+
+LIBOWN		Library owner.  [${BINOWN}]
+
+LIBMODE		Library mode.  [${NONBINMODE}]
+
+DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
+	        installation.  [/usr/share/doc]
+
+HTMLDOCDIR	Base path for html system documentation installation.
+		[/usr/share/doc/html]
+
+DOCGRP		Documentation group.  [wheel]
+
+DOCOWN		Documentation owner.  [root]
+
+DOCMODE		Documentation mode.  [${NONBINMODE}]
+
+NLSDIR		Base path for Native Language Support files installation.
+		[/usr/share/nls]
+
+NLSGRP		Native Language Support files group.  [wheel]
+
+NLSOWN		Native Language Support files owner.  [root]
+
+NLSMODE		Native Language Support files mode.  [${NONBINMODE}]
+
+X11SRCDIR	The path to the xsrc tree.  [${NETBSDSRCDIR}/../xsrc,
+		if that exists; otherwise /usr/xsrc]
+
+X11SRCDIR.xc	The path to the (old) X11 xc src tree.  [${X11SRCDIR}/xfree/xc]
+
+X11SRCDIR.local	The path to the local X11 src tree.  [${X11SRCDIR}/local]
+
+X11SRCDIR.lib<package>
+X11SRCDIR.<package>
+		The path to the xorg src tree for the specificed package>.
+		[${X11SRCDIR}/external/mit/xorg/<package>/dist]
+
+X11ROOTDIR	Root directory of the X11 installation.  [/usr/X11R6 or
+		[/usr/X11R7]
+
+X11BINDIR	X11 bin directory.  [${X11ROOTDIR}/bin]
+
+X11FONTDIR	X11 font directory.  [${X11ROOTDIR}/lib/X11/fonts]
+
+X11INCDIR	X11 include directory.  [${X11ROOTDIR}/include]
+
+X11LIBDIR	X11 lib/x11 (config) directory.  [${X11ROOTDIR}/lib/X11]
+
+X11MANDIR	X11 manual directory.  [${X11ROOTDIR}/man]
+
+X11USRLIBDIR	X11 library directory.  [${X11ROOTDIR}/lib]
+
+STRIPFLAG	The flag passed to the install program to cause the binary
+		to be stripped.  This is to be used when building your
+		own install script so that the entire system can be made
+		stripped/not-stripped using a single knob.  []
+
+COPY		The flag passed to the install program to cause the binary
+		to be copied rather than moved.  This is to be used when
+		building our own install script so that the entire system
+		can either be installed with copies, or with moves using
+		a single knob.  [-c]
+
+MAKEDIRTARGET dir target [params]
+		Runs "cd $${dir} && ${MAKE} [params] $${target}",
+		displaying a "pretty" message whilst doing so.
+
+RELEASEMACHINEDIR
+		Subdirectory used below RELEASEDIR when building
+		a release.  [${MACHINE}]
+
+RELEASEMACHINE	Subdirectory or path component used for the following
+		paths:
+			distrib/${RELEASEMACHINE}
+			distrib/notes/${RELEASEMACHINE}
+			etc/etc.${RELEASEMACHINE}
+		Used when building a release.  [${MACHINE}]
+
+Additionally, the following variables may be set by <bsd.own.mk> or in a
+make configuration file to modify the behavior of the system build
+process (default values are in brackets along with comments, if set by
+<bsd.own.mk>):
+
+USETOOLS	Indicates whether the tools specified by ${TOOLDIR} should
+		be used as part of a build in progress.
+		Supported values:
+
+		yes	Use the tools from TOOLDIR.
+			Must be set to this if cross-compiling.
+
+		no	Do not use the tools from TOOLDIR, but refuse to
+			build native compilation tool components that are
+			version-specific for that tool.
+
+		never	Do not use the tools from TOOLDIR, even when
+			building native tool components.  This is similar to
+			the traditional NetBSD build method, but does not
+			verify that the compilation tools in use are
+			up-to-date enough in order to build the tree
+			successfully.  This may cause build or runtime
+			problems when building the whole NetBSD source tree.
+
+		Default: "yes" if building all or part of a whole NetBSD
+		source tree (detected automatically); "no" otherwise
+		(to preserve traditional semantics of the <bsd.*.mk>
+		make(1) include files).
+
+OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
+		use ELF -- currently all architectures].
+
+TOOLCHAIN_MISSING
+		If not "no", this indicates that the platform being built
+		does not have a working in-tree toolchain.  If the
+		${MACHINE_ARCH} in question falls into this category,
+		TOOLCHAIN_MISSING is conditionally assigned the value "yes". 
+		Otherwise, the variable is unconditionally assigned the
+		value "no".
+		If not "no", ${MKBINUTILS}, ${MKGCC}, and ${MKGDB} are
+		unconditionally assigned the value "no".
+
+EXTERNAL_TOOLCHAIN
+		This variable is not directly set by <bsd.own.mk>, but
+		including <bsd.own.mk> is the canonical way to gain
+		access to this variable.  The variable should be defined
+		either in the user's environment or in the user's mk.conf
+		file.  If defined, this variable indicates the root of
+		an external toolchain which will be used to build the
+		tree.  For example, if a platform is a ${TOOLCHAIN_MISSING}
+		platform, EXTERNAL_TOOLCHAIN can be used to re-enable the
+		cross-compile framework.
+
+		If EXTERNAL_TOOLCHAIN is defined, ${MKGCC} is unconditionally
+		assigned the value "no", since the external version of the
+		compiler may not be able to build the library components of
+		the in-tree compiler.
+
+		NOTE: This variable is not yet used in as many places as
+		it should be.  Expect the exact semantics of this variable
+		to change in the short term as parts of the cross-compile
+		framework continue to be cleaned up.
+
+The following variables are defined to commands to perform the
+appropriate operation, with the default in [brackets].  Note that
+the defaults change if USETOOLS == "yes":
+
+TOOL_AMIGAAOUT2BB	aout to Amiga bootblock converter.  [amiga-aout2bb]
+
+TOOL_AMIGAELF2BB	ELF to Amiga bootblock converter.  [amiga-elf2bb]
+
+TOOL_AMIGATXLT		Amige assembly language format translator.  [amiga-txlt]
+
+TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
+
+TOOL_AWK		Pattern-directed scanning/processing language.  [awk]
+
+TOOL_CAP_MKDB		Create capability database.  [cap_mkdb]
+
+TOOL_CAT		Concatenate and print files.  [cat]
+
+TOOL_CKSUM		Display file checksums.  [cksum]
+
+TOOL_COMPILE_ET		Error table compiler.  [compile_et]
+
+TOOL_CONFIG		Build kernel compilation directories.  [config]
+
+TOOL_CRUNCHGEN		Generate crunched binary build environment.  [crunchgen]
+
+TOOL_CTAGS		Create a tags file.  [ctags]
+
+TOOL_DB			Manipulate db(3) databases.  [db]
+
+TOOL_DISKLABEL		Read and write disk pack label.  [disklabel]
+
+TOOL_EQN		Format equations for groff.  [eqn]
+
+TOOL_FDISK		MS-DOS partition maintenance program.  [fdisk]
+
+TOOL_FGEN		IEEE 1275 Open Firmware FCode Tokenizer.  [fgen]
+
+TOOL_GENASSYM		Generate constants for assembly files.  [genassym]
+
+TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
+
+TOOL_GMAKE		GNU make utility.  [gmake]
+
+TOOL_GREP		Print lines matching a pattern.  [grep]
+
+TOOL_GROFF		Front end for groff document formatting system.  [groff]
+
+TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
+
+TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
+
+TOOL_HP700MKBOOT	Make bootable image for hp700.  [hp700-mkboot]
+
+TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
+
+TOOL_INSTALLBOOT	Install disk bootstrap software.  [installboot]
+
+TOOL_INSTALL_INFO	Update info/dir entries.  [install-info]
+
+TOOL_JOIN		Relational database operator.  [join]
+
+TOOL_M4			M4 macro language processor.  [m4]
+
+TOOL_MACPPCFIXCOFF	Fix up xcoff headers for macppc.  [macppc-fixcoff]
+
+TOOL_MAKEFS		Create file system image from directory tree.  [makefs]
+
+TOOL_MAKEINFO		Translate Texinfo documents.  [makeinfo]
+
+TOOL_MAKEWHATIS		Create a whatis.db database.  [makewhatis]
+
+TOOL_MDSETIMAGE		Set kernel RAM disk image.  [mdsetimage]
+
+TOOL_MENUC		Menu compiler.  [menuc]
+
+TOOL_MIPSELF2ECOFF	Convert ELF-format executable to ECOFF for mips.
+			[mips-elf2ecoff]
+
+TOOL_MKCSMAPPER		Make charset mapping table.  [mkcsmapper]
+
+TOOL_MKESDB		Make encoding scheme database.  [mkesdb]
+
+TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
+
+TOOL_MKMAGIC		Create database for file(1).  [file]
+
+TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
+
+TOOL_MSGC		Simple message list compiler.  [msgc]
+
+TOOL_MTREE		Map a directory hierarchy.  [mtree]
+
+TOOL_PAX		Manipulate file archives and copy directories.  [pax]
+
+TOOL_PIC		Compile pictures for groff.  [pic]
+
+TOOL_PIGZ		Parallel compressor.  [pigz]
+
+TOOL_POWERPCMKBOOTIMAGE	Make bootable image for powerpc.  [powerpc-mkbootimage]
+
+TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
+
+TOOL_REFER		Preprocess bibliographic references for groff.  [refer]
+
+TOOL_ROFF_ASCII		Generate ASCII groff output.  [nroff]
+
+TOOL_ROFF_DVI		Generate DVI groff output.  [${TOOL_GROFF} -Tdvi]
+
+TOOL_ROFF_HTML		Generate HTML groff output.
+			[${TOOL_GROFF} -Tlatin1 -mdoc2html]
+
+TOOL_ROFF_PS		Generate PS groff output.  [${TOOL_GROFF} -Tps]
+
+TOOL_ROFF_RAW		Generate "raw" groff output.  [${TOOL_GROFF} -Z]
+
+TOOL_RPCGEN		Remote Procedure Call (RPC) protocol compiler.  [rpcgen]
+
+TOOL_SED		Stream editor.  [sed]
+
+TOOL_SOELIM		Eliminate .so's from groff input.  [soelim]
+
+TOOL_SPARKCRC		Generate a crc suitable for use in a sparkive file.
+			[sparkcrc]
+
+TOOL_STAT		Display file status.  [stat]
+
+TOOL_STRFILE		Create a random access file for storing strings.
+			[strfile]
+
+TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
+
+TOOL_TBL		Format tables for groff.  [tbl]
+
+TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
+
+TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
+
+TOOL_ZIC		Time zone compiler.  [zic]
+
+<bsd.own.mk> is generally useful when building your own Makefiles so that
+they use the same default owners etc. as the rest of the tree.
+
+
+=-=-=-=-=   bsd.clean.mk   =-=-=-=-=
+
+The include file <bsd.clean.mk> defines the clean and cleandir
+targets.  It uses the following variables:
+
+CLEANFILES	Files to remove for both the clean and cleandir targets.
+
+CLEANDIRFILES	Files to remove for the cleandir target, but not for
+		the clean target.
+
+MKCLEANSRC	Controls whether or not the clean and cleandir targets
+		will delete files from both the object directory,
+		${.OBJDIR}, and the source directory, ${.CURDIR}.
+
+		If MKCLEANSRC is set to "no", then the file names in
+		CLEANFILES or CLEANDIRFILES are interpreted relative
+		to the object directory, ${.OBJDIR}.  This is the
+		traditional behaviour.
+
+		If MKCLEANSRC is set to "yes", then the file deletion
+		is performed relative to both the object directory,
+		${.OBJDIR}, and the source directory, ${.CURDIR}.  (This
+		has no effect if ${.OBJDIR} is the same as ${.CURDIR}.)
+		Deleting files from ${.CURDIR} is intended to remove
+		stray output files that had been left in the source
+		directory by an earlier build that did not use object
+		directories.
+
+		The default is MKCLEANSRC=yes.  If you always build with
+		separate object directories, and you are sure that there
+		are no stray files in the source directories, then you
+		may set MKCLEANSRC=no to save some time.
+
+MKCLEANVERIFY	Controls whether or not the clean and cleandir targets
+		will verify that files have been deleted.
+
+		If MKCLEANVERIFY is set to "no", then the files will
+		be deleted using a "rm -f" command, and its success or
+		failure will be ignored.
+
+		If MKCLEANVERIFY is set to "yes", then the success of
+		the "rm -f" command will be verified using an "ls"
+		command.
+
+		The default is MKCLEANVERIFY=yes.  If you are sure that
+		there will be no problems caused by file permissions,
+		read-only file systems, or the like, then you may set
+		MKCLEANVERIFY=no to save some time.
+
+To use the clean and cleandir targets defined in <bsd.clean.mk>, other
+Makefiles or bsd.*.mk files should append file names to the CLEANFILES
+or CLEANDIRFILES variables.  For example:
+
+	    CLEANFILES+= a.out
+	    CLEANDIRFILES+= .depend
+
+	    .include <bsd.clean.mk>
+
+
+=-=-=-=-=   bsd.dep.mk   =-=-=-=-=
+
+The include file <bsd.dep.mk> contains the default targets for building
+.depend files.  It creates .d files from entries in SRCS and DPSRCS
+that are C, C++, or Objective C source files, and builds .depend from the
+.d files.  All other files in SRCS and all of DPSRCS will be used as
+dependencies for the .d files.  In order for this to function correctly,
+it should be .included after all other .mk files and directives that may
+modify SRCS or DPSRCS.  It uses the following variables:
+
+SRCS		List of source files to build the program.
+
+DPSRCS		List of source files which are needed for generating
+		dependencies, but are not needed in ${SRCS}.
+
+
+=-=-=-=-=   bsd.files.mk   =-=-=-=-=
+
+The include file <bsd.files.mk> handles the FILES variables and is included
+from <bsd.lib.mk> and <bsd.prog.mk>, and uses the following variables:
+
+FILES		The list of files to install.
+
+CONFIGFILES	Similar semantics to FILES, except that the files
+		are installed by the `configinstall' target,
+		not the `install' target.
+		The FILES* variables documented below also apply.
+
+FILESOWN	File owner.  [${BINOWN}]
+
+FILESGRP	File group.  [${BINGRP}]
+
+FILESMODE	File mode.  [${NONBINMODE}]
+
+FILESDIR	The location to install the files.
+
+FILESNAME	Optional name to install each file as.
+
+FILESOWN_<fn>	File owner of the specific file <fn>.
+
+FILESGRP_<fn>	File group of the specific file <fn>.
+
+FILESMODE_<fn>	File mode of the specific file <fn>.
+
+FILESDIR_<fn>	The location to install the specific file <fn>.
+
+FILESNAME_<fn>	Optional name to install <fn> as.
+
+FILESBUILD	If this variable is defined, then its value will be
+		used as the default for all FILESBUILD_<fn> variables.
+		Otherwise, the default will be "no".
+
+FILESBUILD_<fn>	A value different from "no" will add the file to the list of
+		targets to be built by `realall'.  Users of that variable
+		should provide a target to build the file.
+
+
+BUILDSYMLINKS	List of two word items:
+			lnsrc lntgt
+		For each lnsrc item, create a symlink named lntgt.
+		The lntgt symlinks are removed by the cleandir target.
+
+UUDECODE_FILES	List of files which are stored as <file>.uue in the source
+		tree. Each one will be decoded with ${TOOL_UUDECODE}.
+		The source files have a `.uue' suffix, the generated files do 
+		not.
+
+UUDECODE_FILES_RENAME_<fn>
+		Rename the output from the decode to the provided name.
+		
+		*NOTE: These files are simply decoded, with no install or other
+		       rule applying implicitly except being added to the clean
+		       target.
+
+=-=-=-=-=   bsd.gcc.mk   =-=-=-=-=
+
+The include file <bsd.gcc.mk> computes various parameters related to GCC
+support libraries.  It defines no targets.  <bsd.own.mk> MUST be included
+before <bsd.gcc.mk>.
+
+The primary users of <bsd.gcc.mk> are <bsd.prog.mk> and <bsd.lib.mk>, each
+of which need to know where to find certain GCC support libraries.
+
+The behavior of <bsd.gcc.mk> is influenced by the EXTERNAL_TOOLCHAIN variable,
+which is generally set by the user.  If EXTERNAL_TOOLCHAIN it set, then
+the compiler is asked where to find the support libraries, otherwise the
+support libraries are found in ${DESTDIR}/usr/lib.
+
+<bsd.gcc.mk> sets the following variables:
+
+_GCC_CRTBEGIN	The full path name to crtbegin.o.
+
+_GCC_CRTBEGINS	The full path name to crtbeginS.o.
+
+_GCC_CRTEND	The full path name to crtend.o.
+
+_GCC_CRTENDS	The full path name to crtendS.o.
+
+_GCC_LIBGCCDIR	The directory where libgcc.a is located.
+
+
+=-=-=-=-=   bsd.inc.mk   =-=-=-=-=
+
+The include file <bsd.inc.mk> defines the includes target and uses the
+variables:
+
+INCS		The list of include files.
+
+INCSDIR		The location to install the include files.
+
+INCSNAME	Target name of the include file, if only one; same as
+		FILESNAME, but for include files.
+
+INCSYMLINKS	Similar to SYMLINKS in <bsd.links.mk>, except that these
+		are installed in the 'includes' target and not the
+		(much later) 'install' target.
+
+INCSNAME_<file>	The name file <file> should be installed as, if not <file>,
+		same as FILESNAME_<file>, but for include files.
+
+
+=-=-=-=-=   bsd.info.mk   =-=-=-=-=
+
+The include file <bsd.info.mk> is used to generate and install GNU Info
+documentation from respective Texinfo source files.  It defines three
+implicit targets (.txi.info, .texi.info, and .texinfo.info), and uses the
+following variables:
+
+TEXINFO		List of Texinfo source files.  Info documentation will
+		consist of single files with the extension replaced by
+		.info.
+
+INFOFLAGS	Flags to pass to makeinfo.  []
+
+
+=-=-=-=-=   bsd.kernobj.mk   =-=-=-=-=
+
+The include file <bsd.kernobj.mk> defines variables related to the
+location of kernel sources and object directories.
+
+KERNSRCDIR	Is the location of the top of the kernel src.
+		[${_SRC_TOP_}/sys]
+
+KERNARCHDIR	Is the location of the machine dependent kernel sources.
+		[arch/${MACHINE}]
+
+KERNCONFDIR	Is where the configuration files for kernels are found.
+		[${KERNSRCDIR}/${KERNARCHDIR}/conf]
+
+KERNOBJDIR	Is the kernel build directory.  The kernel GENERIC for
+		instance will be compiled in ${KERNOBJDIR}/GENERIC.
+		The default value is
+		${MAKEOBJDIRPREFIX}${KERNSRCDIR}/${KERNARCHDIR}/compile
+		if it exists or the target 'obj' is being made.
+		Otherwise the default is
+		${KERNSRCDIR}/${KERNARCHDIR}/compile.
+
+It is important that Makefiles (such as those under src/distrib) that
+wish to find compiled kernels use <bsd.kernobj.mk> and ${KERNOBJDIR}
+rather than make assumptions about the location of the compiled kernel.
+
+
+=-=-=-=-=   bsd.kinc.mk   =-=-=-=-=
+
+The include file <bsd.kinc.mk> defines the many targets (includes,
+subdirectories, etc.), and is used by kernel makefiles to handle
+include file installation.  It is intended to be included alone, by
+kernel Makefiles.  It uses similar variables to <bsd.inc.mk>.
+Please see <bsd.kinc.mk> for more details, and keep the documentation
+in that file up to date.
+
+
+=-=-=-=-=   bsd.lib.mk   =-=-=-=-=
+
+The include file <bsd.lib.mk> has support for building libraries.  It has
+the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
+includes, install, lint, and tags.  Additionally, it has a checkver target
+which checks for installed shared object libraries whose version is greater
+that the version of the source. It has a limited number of suffixes,
+consistent with the current needs of the BSD tree.  <bsd.lib.mk> includes
+<bsd.shlib.mk> to get shared library parameters.
+
+It sets/uses the following variables:
+
+LIB		The name of the library to build.
+
+LIBDIR		Target directory for libraries.
+
+MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
+		permissions in files inside its archives to those of
+		the file it was fed. This leads to non-reproduceable
+		builds. If MKARZERO is set to "yes" (default is "no")
+		then the "D" flag is passed to ar, causing the
+		timestamp, uid and gid to be zeroed and the file
+		permissions to be set to 644. This allows .a files
+		from different builds to be bit identical.
+
+SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
+		is not "no".
+
+SHLIB_MAJOR
+SHLIB_MINOR
+SHLIB_TEENY	Major, minor, and teeny version numbers of shared library
+
+USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
+		as the path to install shared libraries to.
+		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
+		Default: no
+
+LIBISMODULE	If not "no", install as ${LIB}.so (without the "lib" prefix),
+		and act as "MKDEBUGLIB=no MKLINT=no MKPICINSTALL=no
+		MKPROFILE=no MKSTATICLIB=no".
+		Default: no
+
+LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no
+		MKPROFILE=no", and don't install the (.a) library.
+		This is useful for "build only" helper libraries.
+		Default: no
+
+LIBISCXX	If not "no", Use ${CXX} instead of ${CC} to link
+		shared libraries.
+		This is useful for C++ libraries.
+		Default: no
+
+LINTLIBDIR	Target directory for lint libraries.
+
+LIBGRP		Library group.
+
+LIBOWN		Library owner.
+
+LIBMODE		Library mode.
+
+LDADD		Additional loader objects.
+
+MAN		The manual pages to be installed (use a .1 - .9 suffix).
+
+NOCHECKVER_<library>
+NOCHECKVER	If set, disables checking for installed shared object
+		libraries with versions greater than the source.  A
+		particular library name, without the "lib" prefix, may
+		be appended to the variable name to disable the check for
+		only that library.
+
+SRCS		List of source files to build the library.  Suffix types
+		.s, .c, and .f are supported.  Note, .s files are preferred
+		to .c files of the same name.  (This is not the default for
+		versions of make.)
+
+LIBDPLIBS	A list of the tuples:
+			libname  path-to-srcdir-of-libname
+
+		For each tuple;
+		     *	LIBDO.libname contains the .OBJDIR of the library
+			`libname', and if it is not set it is determined
+			from the srcdir and added to MAKEOVERRIDES (the
+			latter is to allow for build time optimization).
+		     *	LDADD gets  -L${LIBDO.libname} -llibname    added.
+		     *	DPADD gets  ${LIBDO.libname}/liblibname.so  or
+				    ${LIBDO.libname}/liblibname.a   added.
+
+		This variable may be used for individual libraries, as
+		well as in parent directories to cache common libraries 
+		as a build-time optimization.
+
+The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
+if it exists, as well as the include file <bsd.man.mk>.
+
+It has rules for building profiled objects; profiled libraries are
+built by default.
+
+Libraries are ranlib'd when made.
+
+
+=-=-=-=-=   bsd.links.mk   =-=-=-=-=
+
+The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
+and is included from from <bsd.lib.mk> and <bsd.prog.mk>.
+
+LINKSOWN, LINKSGRP, and LINKSMODE, are relevant only if a metadata log
+is used. The defaults may be modified by other bsd.*.mk files which
+include bsd.links.mk.  In the future, these variables may be replaced
+by a method for explicitly recording hard links in a metadata log.
+
+LINKS		The list of hard links, consisting of pairs of paths:
+			source-file target-file
+		${DESTDIR} is prepended to both paths before linking.
+		For example, to link /bin/test and /bin/[, use:
+			LINKS=/bin/test /bin/[
+
+CONFIGLINKS	Similar semantics to LINKS, except that the links
+		are installed by the `configinstall' target,
+		not the `install' target.
+
+SYMLINKS	The list of symbolic links, consisting of pairs of paths:
+			source-file target-file
+		${DESTDIR} is only prepended to target-file before linking.
+		For example, to symlink /usr/bin/tar to /bin/tar resulting
+		in ${DESTDIR}/usr/bin/tar -> /bin/tar:
+			SYMLINKS=/bin/tar /usr/bin/tar
+
+CONFIGSYMLINKS	Similar semantics to SYMLINKS, except that the symbolic links
+		are installed by the `configinstall' target,
+		not the `install' target.
+
+LINKSOWN	Link owner.  [${BINOWN}]
+
+LINKSGRP	Link group.  [${BINGRP}]
+
+LINKSMODE	Link mode.  [${NONBINMODE}]
+
+LINKSOWN_<fn>	Link owner of the specific file <fn>.
+
+LINKSGRP_<fn>	Link group of the specific file <fn>.
+
+LINKSMODE_<fn>	Link mode of the specific file <fn>.
+
+
+=-=-=-=-=   bsd.man.mk   =-=-=-=-=
+
+The include file <bsd.man.mk> handles installing manual pages and their
+links.
+
+It has a three targets:
+
+	catinstall:
+		Install the preformatted manual pages and their links.
+	htmlinstall:
+		Install the HTML manual pages and their links.
+	maninstall:
+		Install the manual page sources and their links.
+
+It sets/uses the following variables:
+
+MANDIR		Base path for manual installation.
+
+MANGRP		Manual group.
+
+MANOWN		Manual owner.
+
+MANMODE		Manual mode.
+
+MANSUBDIR	Subdirectory under the manual page section, i.e. "/vax"
+		or "/tahoe" for machine specific manual pages.
+
+MAN		The manual pages to be installed (use a .1 - .9 suffix).
+
+MLINKS		List of manual page links (using a .1 - .9 suffix).  The
+		linked-to file must come first, the linked file second,
+		and there may be multiple pairs.
+
+The include file <bsd.man.mk> includes a file named "../Makefile.inc" if
+it exists.
+
+
+=-=-=-=-=   bsd.obj.mk   =-=-=-=-=
+
+The include file <bsd.obj.mk> defines targets related to the creation
+and use of separated object and source directories.
+
+If an environment variable named MAKEOBJDIRPREFIX is set, make(1) uses
+${MAKEOBJDIRPREFIX}${.CURDIR} as the name of the object directory if
+it exists.  Otherwise make(1) looks for the existence of a
+subdirectory (or a symlink to a directory) of the source directory
+into which built targets should be placed.  If an environment variable
+named MAKEOBJDIR is set, make(1) uses its value as the name of the
+object directory; failing that, make first looks for a subdirectory
+named "obj.${MACHINE}", and if that doesn't exist, it looks for "obj".
+
+Object directories are not created automatically by make(1) if they
+don't exist; you need to run a separate "make obj".  (This will happen
+during a top-level build if "MKOBJDIRS" is set to a value other than
+"no").  When the source directory is a subdirectory of ${BSDSRCDIR} --
+and this is determined by a simple string prefix comparison -- object
+directories are created in a separate object directory tree, and a
+symlink to the object directory in that tree is created in the source
+directory; otherwise, "make obj" assumes that you're not in the main
+source tree and that it's not safe to use a separate object tree.
+
+Several variables used by <bsd.obj.mk> control exactly what
+directories and links get created during a "make obj":
+
+MAKEOBJDIR	If set, this is the component name of the object
+		directory.
+
+OBJMACHINE	If this is set but MAKEOBJDIR is not set, creates
+		object directories or links named "obj.${MACHINE}";
+		otherwise, just creates ones named "obj".
+
+USR_OBJMACHINE  If set, and the current directory is a subdirectory of
+		${BSDSRCDIR}, create object directory in the
+		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
+		otherwise, create it in the corresponding subdirectory
+		of ${BSDOBJDIR}
+
+BUILDID		If set, the contents of this variable are appended
+		to the object directory name.  If OBJMACHINE is also
+		set, ".${BUILDID}" is added after ".${MACHINE}".
+
+
+=-=-=-=-=   bsd.prog.mk   =-=-=-=-=
+
+The include file <bsd.prog.mk> handles building programs from one or
+more source files, along with their manual pages.  It has a limited number
+of suffixes, consistent with the current needs of the BSD tree. 
+<bsd.prog.mk> includes <bsd.shlib.mk> to get shared library parameters.
+
+It has eight targets:
+
+	all:
+		build the program and its manual page.  This also
+		creates a GDB initialization file (.gdbinit) in
+		the objdir.  The .gdbinit file sets the shared library
+		prefix to ${DESTDIR} to facilitate cross-debugging.
+	clean:
+		remove the program, any object files and the files a.out,
+		Errs, errs, mklog, and ${PROG}.core.
+	cleandir:
+		remove all of the files removed by the target clean, as
+		well as .depend, tags, and any manual pages.
+		`distclean' is a synonym for `cleandir'.
+	depend:
+		make the dependencies for the source files, and store
+		them in the file .depend.
+	includes:
+		install any header files.
+	install:
+		install the program and its manual pages; if the Makefile
+		does not itself define the target install, the targets
+		beforeinstall and afterinstall may also be used to cause
+		actions immediately before and after the install target
+		is executed.
+	lint:
+		run lint on the source files
+	tags:
+		create a tags file for the source files.
+
+It sets/uses the following variables:
+
+BINGRP		Binary group.
+
+BINOWN		Binary owner.
+
+BINMODE		Binary mode.
+
+CLEANDIRFILES	Additional files to remove for the cleandir target.
+
+CLEANFILES	Additional files to remove for the clean and cleandir targets.
+
+COPTS		Additional flags to the compiler when creating C objects.
+
+COPTS.<fn>	Additional flags to the compiler when creating the
+		C objects for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
+
+CPUFLAGS	Additional flags to the compiler/assembler to select
+		CPU instruction set options, CPU tuning options, etc.
+
+CPUFLAGS.<fn>	Additional flags to the compiler/assembler for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
+
+CPPFLAGS	Additional flags to the C pre-processor.
+
+CPPFLAGS.<fn>	Additional flags to the C pre-processor for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
+
+GDBINIT		List of GDB initialization files to add to "source"
+		directives in the .gdbinit file that is created in the
+		objdir.
+
+LDADD		Additional loader objects.  Usually used for libraries.
+		For example, to load with the compatibility and utility
+		libraries, use:
+
+			LDADD+=-lutil -lcompat
+
+LDFLAGS		Additional linker flags (passed to ${CC} during link).
+
+LINKS		See <bsd.links.mk>
+
+OBJCOPTS	Additional flags to the compiler when creating ObjC objects.
+
+OBJCOPTS.<fn>	Additional flags to the compiler when creating the
+		ObjC objects for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
+
+SYMLINKS	See <bsd.links.mk>
+
+MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
+		defined, "MAN=${PROG}.1" is assumed.
+
+PAXCTL_FLAGS	If defined, run paxctl(1) on the program binary after link
+		time, with the value of this variable as args to paxctl(1).
+
+PAXCTL_FLAGS.${PROG} Custom override for PAXCTL_FLAGS.
+
+PROG		The name of the program to build.  If not supplied, nothing
+		is built.
+
+PROG_CXX	If defined, the name of the program to build.  Also
+		causes <bsd.prog.mk> to link the program with the C++
+		compiler rather than the C compiler.  PROG_CXX overrides
+		the value of PROG if PROG is also set.
+
+PROGNAME	The name that the above program will be installed as, if
+		different from ${PROG}.
+
+SRCS		List of source files to build the program.  If SRCS is not
+		defined, it's assumed to be ${PROG}.c.
+
+DPSRCS		List of source files which are needed for generating
+		dependencies, but are not needed in ${SRCS}.
+
+DPADD		Additional dependencies for the program.  Usually used for
+		libraries.  For example, to depend on the compatibility and
+		utility libraries use:
+
+			DPADD+=${LIBCOMPAT} ${LIBUTIL}
+
+		The following system libraries are predefined for DPADD:
+
+		LIBARCHIVE?=	${DESTDIR}/usr/lib/libarchive.a
+		LIBASN1?=	${DESTDIR}/usr/lib/libasn1.a
+		LIBATF_C?=	${DESTDIR}/usr/lib/libatf-c.a
+		LIBATF_CXX?=	${DESTDIR}/usr/lib/libatf-c++.a
+		LIBBIND9?=	${DESTDIR}/usr/lib/libbind9.a
+		LIBBLUETOOTH?=	${DESTDIR}/usr/lib/libbluetooth.a
+		LIBBSDMALLOC?=	${DESTDIR}/usr/lib/libbsdmalloc.a
+		LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
+		LIBC?=		${DESTDIR}/usr/lib/libc.a
+		LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
+		LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
+		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
+		LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
+		LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
+		LIBCRYPTO_MDC2?=${DESTDIR}/usr/lib/libcrypto_mdc2.a
+		LIBCRYPTO_RC5?=	${DESTDIR}/usr/lib/libcrypto_rc5.a
+		LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
+		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
+		LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
+		LIBDES?=	${DESTDIR}/usr/lib/libdes.a
+		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
+		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
+		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
+		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
+		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
+		LIBFL?=		${DESTDIR}/usr/lib/libfl.a
+		LIBG2C?=	${DESTDIR}/usr/lib/libg2c.a
+		LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+		LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
+		LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
+		LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
+		LIBHEIMBASE?=	${DESTDIR}/usr/lib/libheimbase.a
+		LIBHEIMNTLM?=	${DESTDIR}/usr/lib/libheimntlm.a
+		LIBHX500?=	${DESTDIR}/usr/lib/libhx500.a
+		LIBINTL?=	${DESTDIR}/usr/lib/libintl.a
+		LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
+		LIBISC?=	${DESTDIR}/usr/lib/libisc.a
+		LIBISCCC?=	${DESTDIR}/usr/lib/libisccc.a
+		LIBISCFG?=	${DESTDIR}/usr/lib/libiscfg.a
+		LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
+		LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
+		LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
+		LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
+		LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
+		LIBL?=		${DESTDIR}/usr/lib/libl.a
+		LIBLBER?=	${DESTDIR}/usr/lib/liblber.a
+		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
+		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
+		LIBLUA?=	${DESTDIR}/usr/lib/liblua.a
+		LIBLWRES?=	${DESTDIR}/usr/lib/liblwres.a
+		LIBM?=		${DESTDIR}/usr/lib/libm.a
+		LIBMAGIC?=	${DESTDIR}/usr/lib/libmagic.a
+		LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
+		LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
+		LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
+		LIBPAM?=	${DESTDIR}/usr/lib/libpam.a
+		LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
+		LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
+		LIBPMC?=	${DESTDIR}/usr/lib/libpmc.a
+		LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
+		LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
+		LIBPTHREAD_DBG?=${DESTDIR}/usr/lib/libpthread_dbg.a
+		LIBPUFFS?=	${DESTDIR}/usr/lib/libpuffs.a
+		LIBQUOTA?=	${DESTDIR}/usr/lib/libquota.a
+		LIBRADIUS?=	${DESTDIR}/usr/lib/libradius.a
+		LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
+		LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
+		LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
+		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
+		LIBRT?=		${DESTDIR}/usr/lib/librt.a
+		LIBRUMP?=	${DESTDIR}/usr/lib/librump.a
+		LIBRUMPFS_CD9660FS?=${DESTDIR}/usr/lib/librumpfs_cd9660fs.a
+		LIBRUMPFS_EFS?=	${DESTDIR}/usr/lib/librumpfs_efs.a
+		LIBRUMPFS_EXT2FS?=${DESTDIR}/usr/lib/librumpfs_ext2fs.a
+		LIBRUMPFS_FFS?=	${DESTDIR}/usr/lib/librumpfs_ffs.a
+		LIBRUMPFS_HFS?=	${DESTDIR}/usr/lib/librumpfs_hfs.a
+		LIBRUMPFS_LFS?=	${DESTDIR}/usr/lib/librumpfs_lfs.a
+		LIBRUMPFS_MSDOSFS?=${DESTDIR}/usr/lib/librumpfs_msdosfs.a
+		LIBRUMPFS_NFS?=	${DESTDIR}/usr/lib/librumpfs_nfs.a
+		LIBRUMPFS_NTFS?=${DESTDIR}/usr/lib/librumpfs_ntfs.a
+		LIBRUMPFS_SYSPUFFS?=${DESTDIR}/usr/lib/librumpfs_syspuffs.a
+		LIBRUMPFS_TMPFS?=${DESTDIR}/usr/lib/librumpfs_tmpfs.a
+		LIBRUMPFS_UDF?=	${DESTDIR}/usr/lib/librumpfs_udf.a
+		LIBRUMPFS_UFS?=	${DESTDIR}/usr/lib/librumpfs_ufs.a
+		LIBRUMPUSER?=	${DESTDIR}/usr/lib/librumpuser.a
+		LIBSASLC?=	${DESTDIR}/usr/lib/libsaslc.a
+		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+		LIBSL?=		${DESTDIR}/usr/lib/libsl.a
+		LIBSQLITE3?=	${DESTDIR}/usr/lib/libsqlite3.a
+		LIBSS?=		${DESTDIR}/usr/lib/libss.a
+		LIBSSH?=	${DESTDIR}/usr/lib/libssh.a
+		LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
+		LIBSSP?=	${DESTDIR}/usr/lib/libssp.a
+		LIBSTDCXX?=	${DESTDIR}/usr/lib/libstdc++.a
+		LIBSUPCXX?=	${DESTDIR}/usr/lib/libsupc++.a
+		LIBTERMINFO?=	${DESTDIR}/usr/lib/libterminfo.a
+		LIBTRE?=	${DESTDIR}/usr/lib/libtre.a
+		LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
+		LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
+		LIBWIND?=	${DESTDIR}/usr/lib/libwind.a
+		LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
+		LIBY?=		${DESTDIR}/usr/lib/liby.a
+		LIBZ?=		${DESTDIR}/usr/lib/libz.a
+
+		The following X-Windows libraries are predefined for DPADD:
+
+		LIBFS?=		${DESTDIR}/usr/X11R7/lib/libFS.a
+		LIBGL?=		${DESTDIR}/usr/X11R7/lib/libGL.a
+		LIBGLU?=	${DESTDIR}/usr/X11R7/lib/libGLU.a
+		LIBICE?=	${DESTDIR}/usr/X11R7/lib/libICE.a
+		LIBSM?=		${DESTDIR}/usr/X11R7/lib/libSM.a
+		LIBX11?=	${DESTDIR}/usr/X11R7/lib/libX11.a
+		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
+		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
+		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a
+		LIBXDMCP?=	${DESTDIR}/usr/X11R7/lib/libXdmcp.a
+		LIBXEXT?=	${DESTDIR}/usr/X11R7/lib/libXext.a
+		LIBXFONT?=	${DESTDIR}/usr/X11R7/lib/libXfont.a
+		LIBXFT?=	${DESTDIR}/usr/X11R7/lib/libXft.a
+		LIBXI?=		${DESTDIR}/usr/X11R7/lib/libXi.a
+		LIBXINERAMA?=	${DESTDIR}/usr/X11R7/lib/libXinerama.a
+		LIBXMU?=	${DESTDIR}/usr/X11R7/lib/libXmu.a
+		LIBXMUU?=	${DESTDIR}/usr/X11R7/lib/libXmuu.a
+		LIBXPM?=	${DESTDIR}/usr/X11R7/lib/libXpm.a
+		LIBXRANDR?=	${DESTDIR}/usr/X11R7/lib/libXrandr.a
+		LIBXRENDER?=	${DESTDIR}/usr/X11R7/lib/libXrender.a
+		LIBXSS?=	${DESTDIR}/usr/X11R7/lib/libXss.a
+		LIBXT?=		${DESTDIR}/usr/X11R7/lib/libXt.a
+		LIBXTST?=	${DESTDIR}/usr/X11R7/lib/libXtst.a
+		LIBXV?=		${DESTDIR}/usr/X11R7/lib/libXv.a
+		LIBXXF86DGA?=	${DESTDIR}/usr/X11R7/lib/libXxf86dga.a
+		LIBXXF86MISC?=	${DESTDIR}/usr/X11R7/lib/libXxf86misc.a
+		LIBXXF86VM?=	${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
+		LIBDPS?=	${DESTDIR}/usr/X11R7/lib/libdps.a
+		LIBFNTSTUBS?=	${DESTDIR}/usr/X11R7/lib/libfntstubs.a
+		LIBFONTCACHE?=	${DESTDIR}/usr/X11R7/lib/libfontcache.a
+		LIBFONTCONFIG?=	${DESTDIR}/usr/X11R7/lib/libfontconfig.a
+		LIBFONTENC?=	${DESTDIR}/usr/X11R7/lib/libfontenc.a
+		LIBFREETYPE?=	${DESTDIR}/usr/X11R7/lib/libfreetype.a
+		LIBLBXUTIL?=	${DESTDIR}/usr/X11R7/lib/liblbxutil.a
+		LIBXKBFILE?=	${DESTDIR}/usr/X11R7/lib/libxkbfile.a
+
+SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
+		strings, using xstr(1). Note that this will not work with
+		parallel makes.
+
+STRIPFLAG	The flag passed to the install program to cause the binary
+		to be stripped.
+
+SUBDIR		A list of subdirectories that should be built as well.
+		Each of the targets will execute the same target in the
+		subdirectories.
+
+SCRIPTS		A list of interpreter scripts [file.{sh,csh,pl,awk,...}].
+		These are installed exactly like programs.
+
+SCRIPTSDIR	The location to install the scripts.  Each script can be
+		installed to a separate path by setting SCRIPTSDIR_<script>.
+
+SCRIPTSNAME	The name that the above program will be installed as, if
+		different from ${SCRIPTS}. These can be further specialized
+		by setting SCRIPTSNAME_<script>.
+
+FILES		See description of <bsd.files.mk>.
+
+SHLINKDIR	Target directory for shared linker.  See description of
+		<bsd.own.mk> for additional information about this variable.
+
+The include file <bsd.prog.mk> includes the file named "../Makefile.inc"
+if it exists, as well as the include file <bsd.man.mk>.
+
+Some simple examples:
+
+To build foo from foo.c with a manual page foo.1, use:
+
+	PROG=	foo
+
+	.include <bsd.prog.mk>
+
+To build foo from foo.c with a manual page foo.2, add the line:
+
+	MAN=	foo.2
+
+If foo does not have a manual page at all, add the line:
+
+	MKMAN=	no
+
+If foo has multiple source files, add the line:
+
+	SRCS=	a.c b.c c.c d.c
+
+
+=-=-=-=-=   bsd.rpc.mk   =-=-=-=-=
+
+The include file <bsd.rpc.mk> contains a makefile fragment used to
+construct source files built by rpcgen.
+
+The following macros may be defined in makefiles which include
+<bsd.rpc.mk> in order to control which files get built and how they
+are to be built:
+
+RPC_INCS:	construct .h file from .x file
+RPC_XDRFILES:	construct _xdr.c from .x file
+		(for marshalling/unmarshalling data types)
+RPC_SVCFILES:	construct _svc.c from .x file
+		(server-side stubs)
+RPC_SVCFLAGS:	Additional flags passed to builds of RPC_SVCFILES.
+
+RPC_XDIR:	Directory containing .x/.h files
+
+
+=-=-=-=-=   bsd.shlib.mk   =-=-=-=-=
+
+The include file <bsd.shlib.mk> computes parameters for shared library
+installation and use.  It defines no targets.  <bsd.own.mk> MUST be
+included before <bsd.shlib.mk>.
+
+<bsd.own.mk> sets the following variables, if they are not already defined
+(defaults are in brackets):
+
+SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is not "no", use ${SHLIBINSTALLDIR}
+		instead of ${LIBDIR} as the base path for shared library
+		installation.  [/lib]
+
+SHLIBDIR	The path to USE_SHLIBDIR shared libraries to use when building
+		a program.  [/lib for programs in /bin and /sbin, /usr/lib
+		for all others.]
+
+_LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is not "no",
+		otherwise set to ${LIBDIR}
+
+SHLINKINSTALLDIR Base path for shared linker.  [/libexec]
+
+SHLINKDIR	Path to use for shared linker when building a program.
+		[/libexec for programs in /bin and /sbin, /usr/libexec for
+		all others.]
+
+
+=-=-=-=-=   bsd.subdir.mk   =-=-=-=-=
+
+The include file <bsd.subdir.mk> contains the default targets for building
+subdirectories.  It has the same eight targets as <bsd.prog.mk>: all,
+clean, cleandir, depend, includes, install, lint, and tags.  It uses the
+following variables:
+
+NOSUBDIR	If this variable is defined, then the SUBDIR variable
+		will be ignored and subdirectories will not be processed.
+
+SUBDIR		For all of the directories listed in ${SUBDIR}, the
+		specified directory will be visited and the target made.
+
+		As a special case, the use of a token .WAIT as an
+		entry in SUBDIR acts as a synchronization barrier
+		when multiple make jobs are run; subdirs before the
+		.WAIT must complete before any subdirs after .WAIT are
+		started.  See make(1) for some caveats on use of .WAIT
+		and other special sources.
+
+
+=-=-=-=-=   bsd.sys.mk   =-=-=-=-=
+
+The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
+<bsd.lib.mk>.  It contains overrides that are used when building
+the NetBSD source tree.
+
+The following variables control how various files are compiled/built.
+(Note that these may be overridden in <bsd.own.mk> if USETOOLS == "yes"):
+
+AR		Create, modify, and extract from archives.  [ar]
+
+ARFLAGS		Options to ${AR}.  [rl]
+
+AS		Assembler.  [as]
+
+AFLAGS		Options to ${CC} when compiling or linking .s or .S
+		assembly source files.  []
+
+BUILDSEED	GCC uses random numbers when compiling C++ code.
+		If this option is present, seed the random number
+		generator based on the value, source file names and
+		the output file name to make builds more deterministic.
+		Additional information is available in the GCC
+		documentation of -frandom-seed.
+
+CC		C compiler.  [cc]
+
+CFLAGS		Options to ${CC}.  [Usually -O or -O2]
+
+CPP		C Pre-Processor.  [cpp]
+
+CPPFLAGS	Options to ${CPP}.  []
+
+CPUFLAGS	Optimization flags for ${CC}.  []
+
+CXX		C++ compiler.  [c++]
+
+CXXFLAGS	Options to ${CXX}.  [${CFLAGS}]
+
+ELF2ECOFF	Convert ELF-format executable to ECOFF.  [elf2ecoff]
+
+FC		Fortran compiler.  [f77]
+
+FFLAGS		Options to {$FC}.  [-O]
+
+HOST_SH		Shell.	This must be an absolute path, because it may be
+		substituted into "#!" lines in scripts.	 [/bin/sh]
+
+INSTALL		install(1) command.  [install]
+
+LEX		Lexical analyzer.  [lex]
+
+LFLAGS		Options to ${LEX}.  []
+
+LPREFIX		Symbol prefix for ${LEX} (see -P option in lex(1)) [yy]
+
+LD		Linker.  [ld]
+
+LDFLAGS		Options to ${CC} during the link process.  []
+
+LINT		C program verifier.  [lint]
+
+LINTFLAGS	Options to ${LINT}.  [-chapbxzFS]
+
+LORDER		List dependencies for object files.  [lorder]
+
+MAKE		make(1).  [make]
+
+MKDEP		Construct Makefile dependency list.  [mkdep]
+
+NM		List symbols from object files.  [nm]
+
+PC		Pascal compiler.  [pc]  (Not present)
+
+PFLAGS		Options to ${PC}.  []
+
+OBJC		Objective C compiler.  [${CC}]
+
+OBJCFLAGS	Options to ${OBJC}.  [${CFLAGS}]
+
+OBJCOPY		Copy and translate object files.  [objcopy]
+
+OBJCOPYLIBFLAGS	Flags to pass to objcopy when library objects are
+		being built. [${.TARGET} =~ "*.po" ? -X : -x]
+
+OBJDUMP		Display information from object files.  [objdump]
+
+RANLIB		Generate index to archive.  [ranlib]
+
+SIZE		List section sizes and total size.  [size]
+
+STRIP		Discard symbols from object files.  [strip]
+
+TSORT		Topological sort of a directed graph.  [tsort -q]
+
+YACC		LALR(1) parser generator.  [yacc]
+
+YFLAGS		Options to ${YACC}.  []
+
+YHEADER		If defined, add "-d" to YFLAGS, and add dependencies
+		from <file>.y to <file>.h and <file>.c, and add
+		<foo>.h to CLEANFILES.
+
+YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
+
+
+Other variables of note (incomplete list):
+
+NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
+		that cause warnings to be fatal, such as:
+			-Werror -Wa,--fatal-warnings
+		(The latter being for as(1).)
+
+NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
+		passed to it.
+
+WARNS		Crank up compiler warning options; the distinct levels are:
+			WARNS=1
+			WARNS=2
+			WARNS=3
+			WARNS=4
+			WARNS=5
+
+=-=-=-=-=   bsd.x11.mk   =-=-=-=-=
+
+The include file <bsd.x11.mk> contains parameters and targets for
+cross-building X11 from ${X11SRCDIR.xc} / ${X11MITSRCDIR.*}.
+It should be included after the general Makefile contents but before
+the include files such as <bsd.prog.mk> and <bsd.lib.mk>.
+
+It provides the following targets:
+	.man.1 .man.3 .man.4 .man.5 .man.7:
+		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
+		these rules convert from X11's manual page source
+		into an mdoc.old source file.
+
+It sets the following variables:
+
+BINDIR			Set to ${X11BINDIR}.
+			To override, define after including <bsd.x11.mk>
+
+LIBDIR			Set to ${X11USRLIBDIR}.
+			To override, define after including <bsd.x11.mk>
+
+MANDIR			Set to ${X11MANDIR}.
+			To override, define after including <bsd.x11.mk>
+
+CPPFLAGS		Appended with definitions to include from
+			${DESTDIR}${X11INCDIR}
+
+LDFLAGS			Appended with definitions to link from
+			${DESTDIR}${X11USRLIBDIR}
+
+X11FLAGS.CONNECTION	Equivalent to X11's CONNECTION_FLAGS.
+
+X11FLAGS.EXTENSION	Equivalent to X11's EXT_DEFINES.
+
+X11FLAGS.LOADABLE	Equivalent to X11's LOADABLE.
+
+X11FLAGS.OS_DEFINES	Equivalent to X11's OS_DEFINES.
+
+X11FLAGS.SERVER		Equivalent to X11's ServerDefines.
+
+X11FLAGS.THREADLIB	Equivalent to X11's THREADS_DEFINES for libraries.
+
+X11FLAGS.THREADS	Equivalent to X11's THREADS_DEFINES.
+
+X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
+
+X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
+
+X11TOOL_UNXCOMM		Commandline to convert `XCOMM' comments to `#'
+
+It uses the following variables:
+
+APPDEFS			List of app-default files to install.
+
+CPPSCRIPTS		List of files/scripts to run through cpp(1)
+			and then ${X11TOOL_UNXCOMM}.  The source files
+			have a `.cpp' suffix, the generated files do not.
+
+CPPSCRIPTFLAGS		Additional flags to cpp(1) when building CPPSCRIPTS.
+
+CPPSCRIPTFLAGS_<fn>	Additional flags to cpp(1) when building CPPSCRIPT <fn>.
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

@@ -27,20 +27,21 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: compat_sigsuspend13.S,v 1.1 2006/02/18 22:54:51 matt Exp $"
+RCSID("$NetBSD: compat_sigsuspend13.S,v 1.2 2011/01/25 02:38:16 matt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
-
-#include "SYS.h"
 
 WARN_REFERENCES(sigsuspend, \
     "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend, 0)
 	movl	*4(%ap),4(%ap)		# indirect to mask arg
-	chmk	$ SYS_compat_13_sigsuspend13
+	SYSTRAP(compat_13_sigsuspend13)
 	jcc	1f
 	jmp	CERROR+2
 1:	clrl	%r0			# shouldnt happen
 	ret
+END(sigsuspend)
