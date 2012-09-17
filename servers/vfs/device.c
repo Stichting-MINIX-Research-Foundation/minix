@@ -1119,8 +1119,8 @@ int maj;
 		if (r == OK)
 			return;
 
-		printf("VFS: file on dev %d/%d re-open failed: %d; "
-			"invalidated %d fd's.\n", major_dev, minor_dev, r, n);
+		printf("VFS: file on dev %d/%d re-open failed: %d\n",
+			major_dev, minor_dev, r);
 	}
 
 	/* File descriptor is to be closed when driver restarts. */
