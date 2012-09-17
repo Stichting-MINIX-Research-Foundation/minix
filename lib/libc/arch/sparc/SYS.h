@@ -33,7 +33,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.17 2007/10/08 13:06:00 uwe Exp $
+ *	$NetBSD: SYS.h,v 1.18 2011/03/28 11:19:12 martin Exp $
  */
 
 #include <machine/asm.h>
@@ -59,10 +59,10 @@
  */
 #ifdef PIC
 #define CALL(name)				\
-	PIC_PROLOGUE(%g1, %g2);			\
-	set	name, %g2;			\
-	ld	[%g1 + %g2], %g2;		\
-	jmp	%g2;				\
+	PIC_PROLOGUE(%g1, %g5);			\
+	set	name, %g5;			\
+	ld	[%g1 + %g5], %g5;		\
+	jmp	%g5;				\
 	 nop
 #else
 #define	CALL(name)				\
@@ -91,15 +91,15 @@ ENTRY(x);					\
 
 /*
  * RSYSCALL is used when the system call should just return.  Here we
- * use the SYSCALL_G2RFLAG to put the `success' return address in %g2
+ * use the SYSCALL_G5RFLAG to put the `success' return address in %g5
  * and avoid a branch.
  *
  * PSEUDO(x,y) is like RSYSCALL(y), except that the name is x.
  */
 #define	_RSYSCALL(x,y)					\
 ENTRY(x);						\
-	mov	(_CAT(SYS_,y)) | SYSCALL_G2RFLAG, %g1;	\
-	add	%o7, 8, %g2;				\
+	mov	(_CAT(SYS_,y)) | SYSCALL_G5RFLAG, %g1;	\
+	add	%o7, 8, %g5;				\
 	t	ST_SYSCALL;				\
 	ERROR()
 
@@ -141,8 +141,8 @@ ENTRY(x);					\
  */
 #define _RSYSCALL_NOERROR(x,y)				\
 ENTRY(x);						\
-	mov	(_CAT(SYS_,y)) | SYSCALL_G2RFLAG, %g1;	\
-	add	%o7, 8, %g2;				\
+	mov	(_CAT(SYS_,y)) | SYSCALL_G5RFLAG, %g1;	\
+	add	%o7, 8, %g5;				\
 	t	ST_SYSCALL
 
 #define RSYSCALL_NOERROR(x)	_RSYSCALL_NOERROR(x,x)

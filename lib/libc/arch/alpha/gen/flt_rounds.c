@@ -1,4 +1,4 @@
-/* $NetBSD: flt_rounds.c,v 1.8 2005/12/24 23:10:08 perry Exp $ */
+/* $NetBSD: flt_rounds.c,v 1.9 2011/06/12 05:44:36 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -36,29 +36,33 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.8 2005/12/24 23:10:08 perry Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.9 2011/06/12 05:44:36 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <machine/ieeefp.h>
 #include <machine/float.h>
 
-static const int map[] = {
-	0,	/* round to zero */
-	3,	/* round to negative infinity */
-	1,	/* round to nearest */
-	2	/* round to positive infinity */
-};
+/*
+ * These come from <float.h> defintion
+ */
+#define	FLT_ROUND_MAP \
+	( (0 << (FP_RZ*2))	/* round to zero */			\
+	| (1 << (FP_RN*2))	/* round to nearest */			\
+	| (3 << (FP_RM*2))	/* round to negative infinity */	\
+	| (2 << (FP_RP*2)))	/* round to positive infinity */
 
 int
-__flt_rounds()
+__flt_rounds(void)
 {
-	double fpcrval;
-	u_int64_t old;
+	union {
+		double d;
+		uint64_t u64;
+	} fpcrval;
+	uint64_t old;
 
-	__asm("trapb");
-	__asm("mf_fpcr %0" : "=f" (fpcrval));
-	__asm("trapb");
-	old = *(u_int64_t *)(void *)&fpcrval;
+	__asm("excb; mf_fpcr %0; excb" : "=f" (fpcrval.d));
+	old = (fpcrval.u64 >> 58) & 3;
 
-	return map[(old >> 58) & 0x3];
+	return (FLT_ROUND_MAP >> (old << 1)) & 3;
 }

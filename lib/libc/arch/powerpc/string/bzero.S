@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.10 2011/01/19 02:47:01 matt Exp $ */
+/*	$NetBSD: bzero.S,v 1.11 2011/01/29 02:21:20 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bzero.S,v 1.10 2011/01/19 02:47:01 matt Exp $")
+__RCSID("$NetBSD: bzero.S,v 1.11 2011/01/29 02:21:20 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifdef _KERNEL
@@ -60,10 +60,10 @@ ENTRY(bzero)
 END(bzero)
 
 ENTRY(memset)
-		cmplwi	cr1, %r5, 0
+		cmplwi	%cr1, %r5, 0
 		mr.	%r0, %r4
 		mr	%r8, %r3
-		beqlr-	cr1			/* Nothing to do */
+		beqlr-	%cr1			/* Nothing to do */
 
 		rlwimi	%r0, %r4, 8, 16, 23	/* word extend fill value */
 		rlwimi	%r0, %r0, 16, 0, 15
@@ -167,8 +167,8 @@ cb_memset:
 		lwz	%r30, R30_SAVE(%r1)
 #endif
 		addi	%r1, %r1, STKFRAME_SZ
-		lwz	%r0, 4(%r1)
-		mtlr	%r0
+		lwz	%r7, 4(%r1)
+		mtlr	%r7
 
 		cntlzw	%r6, %r9			/* compute shift value */
 		li	%r5, 31
@@ -213,10 +213,10 @@ cb_cacheline_known:
 #endif /* _KERNEL */
 		/* Back in memory filling business */
 		
-		cmplwi	cr1, r_len, 0		/* Nothing to do? */
+		cmplwi	%cr1, r_len, 0		/* Nothing to do? */
 		add	%r5, %r9, %r9
 		cmplw	r_len, %r5		/* <= 2*CL bytes to move? */
-		beqlr-	cr1			/* then do nothing */
+		beqlr-	%cr1			/* then do nothing */
 
 		blt+	simple_fill		/* a trivial fill routine */
 
@@ -277,9 +277,9 @@ cb_aligned_cb:	/* no need to check r_len, see above */
 		bdnz	1b
 
 cblocks_done:	/* still CL aligned, but less than CL bytes left */
-		cmplwi	cr1, r_len, 0
+		cmplwi	%cr1, r_len, 0
 		cmplwi	r_len, 8
-		beq-	cr1, sf_return
+		beq-	%cr1, sf_return
 
 		blt-	sf_bytewise		/* <8 remaining? */
 		b	sf_aligned_w
@@ -292,12 +292,12 @@ wbzero:		li	r_val, 0
 
 simple_fill:
 #if USE_STSWX
-		cmplwi	cr1, r_len, 12		/* < 12 bytes to move? */
+		cmplwi	%cr1, r_len, 12		/* < 12 bytes to move? */
 #else
-		cmplwi	cr1, r_len, 8		/* < 8 bytes to move? */
+		cmplwi	%cr1, r_len, 8		/* < 8 bytes to move? */
 #endif
 		andi.	%r5, r_dst, 0x03		/* bytes to fill to align4 */
-		blt	cr1, sf_bytewise	/* trivial byte mover */
+		blt	%cr1, sf_bytewise	/* trivial byte mover */
 
 		li	%r6, 4
 		subf	%r5, %r5, %r6

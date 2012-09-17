@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.4 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.6 2011/09/20 08:42:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.4 2008/04/28 20:22:55 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.6 2011/09/20 08:42:29 joerg Exp $");
 #endif
 
 #include <stddef.h>
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: makecontext.c,v 1.4 2008/04/28 20:22:55 martin Exp $");
 
 #include <stdarg.h>
 
+void __resumecontext(void) __dead;
+
 void
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
@@ -48,8 +50,6 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	int i;
 	unsigned long *sp;
 	va_list ap;
-
-	void __resumecontext(void);
 
 	/* Compute and align stack pointer. */
 	sp = (unsigned long *)

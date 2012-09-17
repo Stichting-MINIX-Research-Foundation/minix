@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.4 2011/01/25 02:38:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,10 @@
 #include <sys/errno.h>
 
 #include "SYS.h"
+
+#ifdef SYSLIBC_SCCS
+RCSID("$NetBSD: __clone.S,v 1.4 2011/01/25 02:38:15 matt Exp $")
+#endif
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(clone, __clone)
@@ -74,3 +78,4 @@ ENTRY(__clone, 0)
 
 9:	movl	$EINVAL,%r0
 	jmp	CERROR+2
+END(__clone)

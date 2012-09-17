@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetround.c,v 1.9 2005/12/24 23:10:08 perry Exp $ */
+/* $NetBSD: fpgetround.c,v 1.11 2012/03/21 20:07:52 he Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetround.c,v 1.9 2005/12/24 23:10:08 perry Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.11 2012/03/21 20:07:52 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -49,13 +49,14 @@ __weak_alias(fpgetround,_fpgetround)
 #endif
 
 fp_rnd
-fpgetround()
+fpgetround(void)
 {
-	double fpcrval;
-	u_int64_t old;
+	union {
+		double d;
+		uint64_t u64;
+	} fpcrval;
 
-	__asm("mf_fpcr %0" : "=f" (fpcrval));
-	old = *(u_int64_t *)(void *)&fpcrval;
+	__asm("excb; mf_fpcr %0; excb" : "=f" (fpcrval.d));
 
-	return ((old >> 58) & 0x3);
+	return ((fp_rnd)(fpcrval.u64 >> 58) & 0x3);
 }

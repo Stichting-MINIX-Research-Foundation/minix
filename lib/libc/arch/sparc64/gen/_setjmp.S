@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.6 2004/12/07 08:20:07 martin Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.7 2011/04/30 19:43:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,9 +40,12 @@
 #if 0
 	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.6 2004/12/07 08:20:07 martin Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.7 2011/04/30 19:43:17 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+	.register %g2,#ignore
+	.register %g3,#ignore
 
 /*
  * C library -- _setjmp, _longjmp
@@ -57,6 +60,15 @@
 ENTRY(_setjmp)
 	stx	%sp, [%o0+0]	/* store caller's stack pointer */
 	stx	%o7, [%o0+8]	/* and return pc */
+	stx	%g0, [%o0+0x18]	/* mark as non-sigmask jmpbuf */
+
+	/* store globals, offsets compatible with siglongjmp */
+	stx	%g1, [%o0+0x28]
+	stx	%g2, [%o0+0x30]		/* adjust asserts in longjmp.c */
+	stx	%g3, [%o0+0x48]		/* if you change any of these */
+	stx	%g6, [%o0+0x50]		/* offsets! */
+	stx	%g7, [%o0+0x58]
+
 	retl
 	 clr	%o0		! return 0
 
@@ -68,6 +80,11 @@ ENTRY(_longjmp)
 	 * a `restore' instruction which will reload the register
 	 * window from the stack.
 	 */
+	ldx	[%i0+0x28],%g1
+	ldx	[%i0+0x30],%g2
+	ldx	[%i0+0x48],%g3
+	ldx	[%i0+0x50],%g6
+	ldx	[%i0+0x58],%g7
 	ldx	[%i0+8], %i7
 	ldx	[%i0+0], %fp
 	mov	1, %i0

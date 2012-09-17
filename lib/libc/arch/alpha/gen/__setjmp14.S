@@ -1,4 +1,4 @@
-/* $NetBSD: __setjmp14.S,v 1.4 2004/03/21 18:04:27 matt Exp $ */
+/* $NetBSD: __setjmp14.S,v 1.5 2011/06/12 05:44:36 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -96,7 +96,9 @@ LEAF(__setjmp14, 1)
 	stt	fs5, (7*8 + SC_FPREGS)(a0)
 	stt	fs6, (8*8 + SC_FPREGS)(a0)
 	stt	fs7, (9*8 + SC_FPREGS)(a0)
+	excb					/* required 4.7.8.1 Alpha ARM */
 	mf_fpcr	ft0				/* get FP control reg */
+	excb					/* required 4.7.8.1 Alpha ARM */
 	stt	ft0, SC_FPCR(a0)		/* and store it in sc_fpcr */
 	stq	zero, SC_FP_CONTROL(a0)		/* FP software control XXX */
 	stq	zero, (SC_RESERVED + 0*8)(a0)	/* sc_reserved[0] */

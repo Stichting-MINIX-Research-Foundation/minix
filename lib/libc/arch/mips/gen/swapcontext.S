@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2009/12/14 01:07:42 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2012/09/12 02:00:52 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.4 2009/12/14 01:07:42 matt Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.5 2012/09/12 02:00:52 manu Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
@@ -57,7 +57,7 @@ NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	REG_S		v0, _OFFSETOF_UC_GREGS_SP(v1)
 	REG_EPILOGUE
 
-	SYSTRAP(setcontext)
+	PIC_TAILCALL(setcontext)
 	/* NOTREACHED */
 1:
 	PTR_ADDU	sp, sp, CALLFRAME_SIZ

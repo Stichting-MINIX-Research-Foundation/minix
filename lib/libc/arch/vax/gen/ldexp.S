@@ -27,11 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	/*.asciz "@(#)ldexp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ldexp.S,v 1.6 2003/08/07 16:42:31 agc Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 /*
  * double ldexp (value, exp)
  * double value;
@@ -46,15 +41,16 @@
  */
 
 #include "DEFS.h"
+#include "assym.h"
 
-/*
- * don't include errno.h, ANSI C says it defines errno.
- *
- * #include <errno.h>
- */
-#define	ERANGE	34
+#if defined(LIBC_SCCS) && !defined(lint)
+	/*.asciz "@(#)ldexp.s	8.1 (Berkeley) 6/4/93" */
+RCSID("$NetBSD: ldexp.S,v 1.7 2011/01/25 02:38:15 matt Exp $")
+#endif /* LIBC_SCCS and not lint */
 
+#ifndef _REENTRANT
 	.globl	_C_LABEL(errno)
+#endif
 
 ENTRY(ldexp, 0)
 	movd	4(%ap),%r0	/* fetch "value" */
@@ -72,7 +68,12 @@ ENTRY(ldexp, 0)
 	clrd	%r0
 	jbr	1f
 3:
-	movd	huge,%r0		/* largest possible floating magnitude */
+	/*
+	 * The largest number that can be represented in a long floating
+	 * number.  This is given in hex in order to avoid floating
+	 * conversions
+	 */
+	movq	$0x7fffffffffffffff,%r0	 /* largest possible floating magnitude */
 	jbc	$15,4(%ap),1f	/* jump if argument was positive */
 	mnegd	%r0,%r0		/* if arg < 0, make result negative */
 1:
@@ -85,9 +86,4 @@ ENTRY(ldexp, 0)
 	movl	$ ERANGE,_C_LABEL(errno)
 #endif
 	ret
-
-	.data
-huge:	.word	0x7fff		/* the largest number that can */
-	.word	0xffff		/*   be represented in a long floating */
-	.word	0xffff		/*   number.  This is given in hex in order */
-	.word	0xffff		/*   to avoid floating conversions */
+END(ldexp)

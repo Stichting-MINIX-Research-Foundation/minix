@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)pipe.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: pipe.S,v 1.4 2003/08/07 16:42:33 agc Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
-
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	/* .asciz "@(#)pipe.s	8.1 (Berkeley) 6/4/93" */
+RCSID("$NetBSD: pipe.S,v 1.5 2011/01/25 02:38:15 matt Exp $")
+#endif
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(pipe, _pipe)
@@ -44,3 +44,4 @@ _SYSCALL(_pipe,pipe)
 	movl	%r1,(%r2)
 	clrl	%r0
 	ret
+END(_pipe)

@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.9 2006/05/16 20:55:51 mrg Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.11 2011/07/07 07:14:57 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -84,12 +84,10 @@ Software IEC/IEEE floating-point rounding mode.
 -------------------------------------------------------------------------------
 */
 extern fp_rnd float_rounding_mode;
-enum {
-    float_round_nearest_even = FP_RN,
-    float_round_to_zero      = FP_RZ,
-    float_round_down         = FP_RM,
-    float_round_up           = FP_RP
-};
+#define float_round_nearest_even FP_RN
+#define float_round_to_zero      FP_RZ
+#define float_round_down         FP_RM
+#define float_round_up           FP_RP
 
 /*
 -------------------------------------------------------------------------------
@@ -119,13 +117,17 @@ void float_raise( fp_except );
 Software IEC/IEEE integer-to-floating-point conversion routines.
 -------------------------------------------------------------------------------
 */
-float32 int32_to_float32( int );
-float64 int32_to_float64( int );
+float32 int32_to_float32( int32 );
+float32 uint32_to_float32( uint32 );
+float64 int32_to_float64( int32 );
+float64 uint32_to_float64( uint32 );
 #ifdef FLOATX80
-floatx80 int32_to_floatx80( int );
+floatx80 int32_to_floatx80( int32 );
+floatx80 uint32_to_floatx80( uint32 );
 #endif
 #ifdef FLOAT128
-float128 int32_to_float128( int );
+float128 int32_to_float128( int32 );
+float128 uint32_to_float128( uint32 );
 #endif
 #ifndef SOFTFLOAT_FOR_GCC /* __floatdi?f is in libgcc2.c */
 float32 int64_to_float32( long long );

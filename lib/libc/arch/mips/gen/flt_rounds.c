@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.6 2010/09/03 17:22:51 matt Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.7 2012/06/24 15:26:02 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.6 2010/09/03 17:22:51 matt Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.7 2012/06/24 15:26:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <machine/float.h>
@@ -21,7 +21,7 @@ static const int map[] = {
 };
 
 int
-__flt_rounds()
+__flt_rounds(void)
 {
 #ifdef SOFTFLOAT_FOR_GCC
 	return map[fpgetround()];

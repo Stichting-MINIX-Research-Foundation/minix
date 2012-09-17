@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.4 2012/03/22 17:32:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:57 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.4 2012/03/22 17:32:22 christos Exp $");
 #endif
 
 #include <stddef.h>
@@ -69,11 +69,11 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	sp[1] = 0x20000000;		/* make this a CALLS frame */
 	sp[2] = 0;			/* saved argument pointer */
 	sp[3] = 0;			/* saved frame pointer */
-	sp[4] = (int)_resumecontext+2;	/* return via trampoline code */
+	sp[4] = (int)(uintptr_t)_resumecontext+2;/* return via trampoline code */
 
-	gr[_REG_AP] = (__greg_t)(sp + 5);
-	gr[_REG_SP] = (__greg_t)sp;
-	gr[_REG_FP] = (__greg_t)sp;
-	gr[_REG_PC] = (__greg_t)func+2;
+	gr[_REG_AP] = (__greg_t)(uintptr_t)(sp + 5);
+	gr[_REG_SP] = (__greg_t)(uintptr_t)sp;
+	gr[_REG_FP] = (__greg_t)(uintptr_t)sp;
+	gr[_REG_PC] = (__greg_t)(uintptr_t)func+2;
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.9 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.10 2011/07/10 21:18:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetround.c,v 1.9 2008/04/28 20:22:57 martin Exp $");
+__RCSID("$NetBSD: fpsetround.c,v 1.10 2011/07/10 21:18:47 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -49,13 +49,16 @@ __weak_alias(fpsetround,_fpsetround)
 fp_rnd
 fpsetround(fp_rnd rnd_dir)
 {
-	uint64_t fpscr;
+	union {
+		double u_d;
+		uint64_t u_fpscr;
+	} ud;
 	fp_rnd old;
 
-	__asm volatile("mffs %0" : "=f"(fpscr));
-	old = (uint32_t)fpscr & ROUNDBITS;
-	fpscr &= ~ROUNDBITS;
-	fpscr |= rnd_dir & ROUNDBITS;
-	__asm volatile("mtfsf 0xff,%0" :: "f"(fpscr));
+	__asm volatile("mffs %0" : "=f"(ud.u_d));
+	old = (uint32_t)ud.u_fpscr & ROUNDBITS;
+	ud.u_fpscr &= ~ROUNDBITS;
+	ud.u_fpscr |= rnd_dir & ROUNDBITS;
+	__asm volatile("mtfsf 0xff,%0" :: "f"(ud.u_d));
 	return (old);
 }

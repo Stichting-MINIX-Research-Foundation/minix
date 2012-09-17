@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigpending.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: compat_sigpending13.S,v 1.1 2006/02/18 22:54:51 matt Exp $"
+RCSID("$NetBSD: compat_sigpending13.S,v 1.2 2011/01/25 02:38:16 matt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
-
-#include "SYS.h"
 
 WARN_REFERENCES(sigpending, \
     "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
@@ -41,3 +41,4 @@ _SYSCALL(sigpending,compat_13_sigpending13)
 	movl	%r0,*4(%ap)		# store old mask
 	clrl	%r0
 	ret
+END(sigpending)

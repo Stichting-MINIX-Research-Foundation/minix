@@ -27,9 +27,11 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: _setjmp.S,v 1.9 2003/08/07 16:42:31 agc Exp $"
+RCSID("$NetBSD: _setjmp.S,v 1.10 2011/01/25 02:38:15 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,13 +48,10 @@
  * in order to be consistent.
  */
 
-#include "DEFS.h"
-
 ENTRY(_setjmp, R6)
 	movl	4(%ap),%r0
 	movl	12(%fp),12(%r0)		# save frame pointer of caller
 	movl	16(%fp),20(%r0)		# save pc of caller
-#ifdef __ELF__
 	movl	8(%fp),16(%r0)		# save ap of caller
 	clrl	%r1			# clear arg count
 	bbc	$13,6(%fp),1f		# was this a callg?
@@ -63,16 +62,15 @@ ENTRY(_setjmp, R6)
 	movq	%r6,44(%r0)		# save r6/r7
 	movq	%r8,52(%r0)		# save r8/r9
 	movq	%r10,60(%r0)		# save r10/r11
-#endif
 	clrl	%r0
 	ret
+END(_setjmp)
 
 ENTRY(_longjmp, 0)
 	movl	8(%ap),%r0		# return(v)
 	movl	4(%ap),%r1		# fetch buffer
 	tstl	12(%r1)			# is fp null
 	beql	botch
-#ifdef __ELF__
 	movq	44(%r1),%r6		# restore r6/r7
 	movq	52(%r1),%r8		# restore r8/r9
 	movq	60(%r1),%r10		# restore r10/r11
@@ -81,41 +79,8 @@ ENTRY(_longjmp, 0)
 	movl	12(%r1),%fp		# restore fp
 	movq	20(%r1),-(%sp)		# save pc/psl to new stack
 	rei				# and go back to saved pc/psl
-#else
-loop:
-	bitw	$1,6(%fp)		# %r0 saved?
-	beql	1f
-	movl	%r0,20(%fp)
-	bitw	$2,6(%fp)		# was %r1 saved?
-	beql	2f
-	movl	%r1,24(%fp)
-	brb	2f
-1:
-	bitw	$2,6(%fp)		# was %r1 saved?
-	beql	2f
-	movl	%r1,20(%fp)
-2:
-	cmpl	12(%r1),12(%fp)
-	beql	done
-	blssu	botch
-	movab	loop,16(%fp)
-	ret				# pop another frame
-
-done:
-	cmpb	*16(%fp),$2		# returning to an "rei"?
-	bneq	1f
-	movab	3f,16(%fp)		# do return w/ psl-pc pop
-	brw	2f
-1:
-	movab	4f,16(%fp)		# do standard return
-2:
-	ret				# unwind stack before signals enabled
-3:
-	addl2	$8,%sp			# compensate for PSL-PC push
-4:
-	jmp	*20(%r1)		# done, return....
-#endif /* !__ELF__ */
 
 botch:
 	calls	$0,_C_LABEL(longjmperror)
 	halt
+END(_longjmp)

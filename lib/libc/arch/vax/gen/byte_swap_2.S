@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)htons.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: byte_swap_2.S,v 1.3 2003/08/07 16:42:31 agc Exp $"
+RCSID("$NetBSD: byte_swap_2.S,v 1.4 2011/01/25 02:38:15 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#include "DEFS.h"
 
 ALTENTRY(ntohs)
 ALTENTRY(htons)
@@ -41,3 +41,4 @@ ENTRY(__bswap16, 0)
 	movb	5(%ap),%r0
 	movzwl	%r0,%r0
 	ret
+END(__bswap16)

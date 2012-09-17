@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.c,v 1.9 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: fpgetmask.c,v 1.10 2011/07/10 21:18:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetmask.c,v 1.9 2008/04/28 20:22:56 martin Exp $");
+__RCSID("$NetBSD: fpgetmask.c,v 1.10 2011/07/10 21:18:47 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,8 +50,11 @@ __weak_alias(fpgetmask,_fpgetmask)
 fp_except
 fpgetmask(void)
 {
-	uint64_t fpscr;
+	union {
+		double	u_d;
+		uint64_t u_fpscr;
+	} ud;
 
-	__asm volatile("mffs %0" : "=f"(fpscr));
-	return (((uint32_t)fpscr & MASKBITS) >> MASKSHFT);
+	__asm volatile("mffs %0" : "=f"(ud.u_d));
+	return (((uint32_t)ud.u_fpscr & MASKBITS) >> MASKSHFT);
 }
