@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.11 2007/10/08 13:06:00 uwe Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.12 2011/04/30 23:41:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.11 2007/10/08 13:06:00 uwe Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.12 2011/04/30 23:41:13 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,9 +78,11 @@ ENTRY(__setjmp14)
 	st	%fp, [%i0 + 8]	/* sc.sc_sp = (caller's) sp */
 	add	%i7, 8, %o0
 	st	%o0, [%i0 + 12]	/* sc.sc_pc = return_pc */
-	add	%i7, 12, %o0
-	st	%o0, [%i0 + 16]	/* sc.sc_npc = return_pc + 4 */
+	st	%g3, [%i0 + 16]	/* sc.sc_npc */
 	st	%g0, [%i0 + 20]	/* sc.sc_psr = (clean psr) */
+	st	%g2, [%i0 + 24]
+	st	%g4, [%i0 + 48]
+	st	%g7, [%i0 + 52]
 	ret			/* return 0 */
 	 restore	%g0, %g0, %o0
 

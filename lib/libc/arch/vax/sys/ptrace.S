@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)ptrace.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ptrace.S,v 1.7 2003/08/07 16:42:33 agc Exp $"
+RCSID("$NetBSD: ptrace.S,v 1.8 2011/01/25 02:38:15 matt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
-
-#include "SYS.h"
 
 ENTRY(ptrace, 0)
 #ifdef _REENTRANT
@@ -46,3 +46,4 @@ ENTRY(ptrace, 0)
 	ret
 err:
 	jmp	CERROR+2
+END(ptrace)

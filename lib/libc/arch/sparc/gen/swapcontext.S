@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.4 2012/09/12 02:00:53 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.3 2008/04/28 20:22:57 martin Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.4 2012/09/12 02:00:53 manu Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -49,8 +49,13 @@ ENTRY(swapcontext)
 	add	%o7, 8, %o1
 	st	%o1, [%o2 + 40 + 1 * 4]		! gr[_REG_PC] = retaddr
 
-	mov	%o3, %o0
-	mov	%o1, %g2			! optimize `return'
-	mov	SYS_setcontext|SYSCALL_G2RFLAG, %g1
-	t	ST_SYSCALL
-	ERROR()
+#ifdef PIC
+	PIC_PROLOGUE(%g1, %g2)			! %g1 = _GLOBAL_OFFSET_TABLE
+	set	_C_LABEL(setcontext), %g2
+	ld	[%g1 + %g2], %g1
+	jmp	%g1
+	 mov	%o3, %o0
+#else
+	jmp	_C_LABEL(setcontext)
+	 mov	%o3, %o0
+#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2008/04/28 20:22:57 martin Exp $
+#	$NetBSD: genassym.cf,v 1.5 2011/01/25 02:38:15 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 include <ucontext.h>
 include <signal.h>
+include <errno.h>
 
 define UC_LEN		sizeof(ucontext_t)
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
@@ -81,3 +82,5 @@ define	SC_MASK		offsetof(struct sigcontext, sc_mask)
 
 define	SIG_BLOCK	SIG_BLOCK
 define	SS_LEN		sizeof(sigset_t)
+
+define	ERANGE		ERANGE

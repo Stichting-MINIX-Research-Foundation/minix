@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1 2009/06/03 01:02:28 christos Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.3 2012/03/22 17:32:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.1 2009/06/03 01:02:28 christos Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.3 2012/03/22 17:32:22 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -68,12 +68,20 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	sp[1] = 0x20000000;		/* make this a CALLS frame */
 	sp[2] = 0;			/* saved argument pointer */
 	sp[3] = 0;			/* saved frame pointer */
-	sp[4] = (intptr_t)_lwp_exit + 2;/* return via _lwp_exit */
+	sp[4] = (int)(uintptr_t)_lwp_exit + 2;/* return via _lwp_exit */
 	sp[5] = 1;			/* argc */
-	sp[6] = (intptr_t)arg;		/* argv */
+	sp[6] = (int)(uintptr_t)arg;		/* argv */
 	
-	gr[_REG_AP] = (__greg_t)(sp + 5);
-	gr[_REG_SP] = (__greg_t)sp;
-	gr[_REG_FP] = (__greg_t)sp;
-	gr[_REG_PC] = (__greg_t)start + 2;
+	gr[_REG_AP] = (__greg_t)(uintptr_t)(sp + 5);
+	gr[_REG_SP] = (__greg_t)(uintptr_t)sp;
+	gr[_REG_FP] = (__greg_t)(uintptr_t)sp;
+	gr[_REG_PC] = (__greg_t)(uintptr_t)start + 2;
+
+	/*
+	 * Push the TLS pointer onto the new stack also.
+	 * The _UC_TLSBASE flag tells the kernel to pop it and use it.
+	 */
+	*--sp = (int)(intptr_t)private;
+	gr[_REG_SP] = (__greg_t)(uintptr_t)sp;
+	u->uc_flags |= _UC_TLSBASE;
 }

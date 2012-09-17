@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigtramp1.S,v 1.1 2005/10/16 04:41:34 christos Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.2 2011/07/12 07:51:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -57,6 +57,9 @@
 
 	.register	%g2,#ignore
 	.register	%g3,#ignore
+
+#define BLOCK_SIZE SPARC64_BLOCK_SIZE
+#define BLOCK_ALIGN SPARC64_BLOCK_ALIGN
 
 /*
  * When this code is run, the stack looks like:

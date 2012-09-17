@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.5 2009/01/25 16:44:41 skrll Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.6 2012/03/23 09:34:09 skrll Exp $	*/
 
 /*	$OpenBSD: fpsetmask.c,v 1.4 2004/01/05 06:06:16 otto Exp $	*/
 
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.5 2009/01/25 16:44:41 skrll Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.6 2012/03/23 09:34:09 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -21,7 +21,7 @@ fpsetmask(fp_except mask)
 	fp_except old;
 
 	__asm volatile("fstd %%fr0,0(%1)" : "=m"(fpsr) : "r"(&fpsr) : "memory");
-	old = (fpsr >> 32) & 0x1f;
+	old = (fp_except)(fpsr >> 32) & 0x1f;
 	fpsr = (fpsr & 0xffffffe000000000LL) | ((uint64_t)(mask & 0x1f) << 32);
 	__asm volatile("fldd 0(%0),%%fr0" : : "r"(&fpsr) : "memory");
 	return (old);

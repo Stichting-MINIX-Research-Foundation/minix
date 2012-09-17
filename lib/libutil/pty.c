@@ -77,6 +77,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	/* term may be NULL */
 	/* winp may be NULL */
 
+#ifndef __minix
 	if ((master = open("/dev/ptm", O_RDWR)) != -1) {
 		struct ptmget pt;
 		if (ioctl(master, TIOCPTMGET, &pt) != -1) {
@@ -88,6 +89,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 		}
 		(void)close(master);
 	}
+#endif
 
 	(void)getgrnam_r("tty", &grs, grbuf, sizeof(grbuf), &grp);
 	if (grp != NULL) {
@@ -115,9 +117,13 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 			linep = line;
 			if (chown(line, getuid(), ttygid) == 0 &&
 			    chmod(line, mode) == 0 &&
+#ifndef __minix
 			    revoke(line) == 0 &&
+#endif
 			    (slave = open(line, O_RDWR, 0)) != -1) {
+#ifndef __minix
 gotit:
+#endif
 				*amaster = master;
 				*aslave = slave;
 				if (name)

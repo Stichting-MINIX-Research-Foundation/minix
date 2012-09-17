@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sbrk.S,v 1.10 2003/08/07 16:42:33 agc Exp $"
+RCSID("$NetBSD: sbrk.S,v 1.11 2011/01/25 02:38:15 matt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
-
-#include "SYS.h"
 
 	.globl	_end
 	.globl	_C_LABEL(__minbrk)
@@ -61,3 +61,4 @@ ENTRY(_sbrk, 0)
 	ret
 err:
 	jmp	CERROR+2
+END(_sbrk)

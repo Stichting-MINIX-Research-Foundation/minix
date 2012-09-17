@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.4 2012/09/12 02:00:52 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$NetBSD: swapcontext.S,v 1.3 2008/04/28 20:22:57 martin Exp $"
+	.asciz "$NetBSD: swapcontext.S,v 1.4 2012/09/12 02:00:52 manu Exp $"
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -52,8 +52,8 @@ ENTRY(swapcontext)
 	std	%r0,mc_off+34*8(%r11)	# 	pc <- lr
 	la	%r0,16(%r1)
 	std	%r0,mc_off+1*8(%r11)		# adjust sp
-	ld	%r3,SF_PARAM+8(%r1)			# load ucp
-	bl	.setcontext			# setcontext(ucp)
+	ld	%r3,SF_PARAM+8(%r1)		# load ucp
+	bl	PIC_PLT(_C_LABEL(setcontext))	# setcontext(ucp)
 	nop
 1:
 	ld	%r0,SF_SZ+SF_LR(%r1)

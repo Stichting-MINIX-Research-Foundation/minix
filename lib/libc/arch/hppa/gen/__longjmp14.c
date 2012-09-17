@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.4 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.5 2012/03/22 12:31:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[18] = regs[18];
 
 	/* Preserve the current value of DP */
+	/* LINTED dp is r27, so is "initialized" */
 	uc.uc_mcontext.__gregs[27] = dp;
 
 	/* Set the desired return value. */

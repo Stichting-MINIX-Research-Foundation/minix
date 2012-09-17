@@ -5,6 +5,9 @@
 #endif
 
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/signal.h>
+
 
 #define NO_THREADS 4 
 #define MAX_THREAD_POOL 1024

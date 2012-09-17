@@ -32,12 +32,12 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)syscall.s	8.2 (Berkeley) 1/21/94" */
-	.asciz "$NetBSD: __syscall.S,v 1.3 2003/08/07 16:42:33 agc Exp $"
+RCSID("$NetBSD: __syscall.S,v 1.4 2011/01/25 02:38:15 matt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
-
-#include "SYS.h"
 
 ENTRY(__syscall, 0)
 	movl	4(%ap),%r0	# syscall number
@@ -48,3 +48,4 @@ ENTRY(__syscall, 0)
 	ret
 1:
 	jmp	CERROR+2
+END(__syscall)

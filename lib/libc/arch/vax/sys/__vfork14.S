@@ -27,17 +27,17 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __vfork14.S,v 1.5 2003/08/07 16:42:33 agc Exp $"
+RCSID("$NetBSD: __vfork14.S,v 1.7 2011/11/21 16:17:48 chs Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
  * @(#)vfork.s	4.1 (Berkeley) 12/21/80
  * C library -- vfork
  */
-
-#include "SYS.h"
 
 /*
  * pid = vfork();
@@ -51,10 +51,11 @@
  */
 
 ENTRY(__vfork14, 0)
-	movl	16(%fp),%r2	# save return address before we smash it
+	movl	16(%fp),%r0	# save return address before we smash it
 	movab	here,16(%fp)
 	ret
 here:
+	movl	%r0,%r2
 	chmk	$ SYS___vfork14
 	bcs	err		# if failed, set errno and return -1
 	/* this next trick is Chris Torek's fault */
@@ -74,3 +75,4 @@ err:
 	mnegl	$1,%r0
 	jmp	(%r2)
 #endif
+END(__vfork14)

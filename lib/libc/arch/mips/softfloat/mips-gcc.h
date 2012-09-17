@@ -1,4 +1,4 @@
-/* $NetBSD: mips-gcc.h,v 1.2 2009/12/14 01:07:42 matt Exp $ */
+/* $NetBSD: mips-gcc.h,v 1.5 2011/06/27 06:40:26 matt Exp $ */
 
 /*
 -------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ to be `static'.
 
 /*
 -------------------------------------------------------------------------------
-The ARM FPA is odd in that it stores doubles high-order word first, no matter
+The MIPS FPA is odd in that it stores doubles high-order word first, no matter
 what the endianness of the CPU.  VFP is sane.
 -------------------------------------------------------------------------------
 */

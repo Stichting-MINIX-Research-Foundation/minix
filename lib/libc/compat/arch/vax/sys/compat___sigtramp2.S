@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigtramp2.S,v 1.1 2006/02/18 22:54:51 matt Exp $	*/
+/*	$NetBSD: compat___sigtramp2.S,v 1.3 2011/01/29 22:58:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson, (ragge@NetBSD.org).
@@ -36,14 +36,20 @@
 
 #include "SYS.h"
 
+#ifdef SYSLIBC_SCCS
+RCSID("$NetBSD: compat___sigtramp2.S,v 1.3 2011/01/29 22:58:47 matt Exp $")
+#endif
+
 	.text
 	_ALIGN_TEXT
 
 	.globl	_C_LABEL(__sigtramp_sigcontext_2)
 _C_LABEL(__sigtramp_sigcontext_2):
+	nop; nop;
 	pushr $(R0|R1|R2|R3|R4|R5)	# save scratch registers
 	callg (%ap),(%fp)		# use global arg list
 	popr $(R0|R1|R2|R3|R4|R5)	# restore regs
 	movab 8(%ap),%ap		# arg is pointer to sigctx
 	SYSTRAP(compat_16___sigreturn14) # exit from here
 	halt				# illegal insn
+END(__sigtramp_sigcontext_2)

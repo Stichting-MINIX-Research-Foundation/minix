@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.3 2006/07/07 06:50:06 ross Exp $	*/
+/*	$NetBSD: brk.S,v 1.4 2011/10/29 16:03:33 christos Exp $	*/
 
 #include "SYS.h"
 
@@ -37,4 +37,5 @@ ENTRY(_brk)
 	blr				# return 0
 
 1:
-	b	.__cerror
+	b	PIC_PLT(_C_LABEL(__cerror))
+
