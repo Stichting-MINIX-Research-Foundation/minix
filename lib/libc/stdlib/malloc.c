@@ -15,6 +15,12 @@
 #ifdef __minix
 #define mmap minix_mmap
 #define munmap minix_munmap
+#ifdef _LIBSYS
+#include <minix/sysutil.h>
+#define MALLOC_NO_SYSCALLS
+#define wrtwarning(w) printf("libminc malloc warning: %s\n", w)
+#define wrterror(w) panic("libminc malloc error: %s\n", w)
+#endif
 #endif
 
 /*
@@ -309,6 +315,7 @@ static void *imalloc(size_t size);
 static void ifree(void *ptr);
 static void *irealloc(void *ptr, size_t size);
 
+#ifndef MALLOC_NO_SYSCALLS
 static void
 wrtmessage(const char *p1, const char *p2, const char *p3, const char *p4)
 {
@@ -341,6 +348,7 @@ wrtwarning(const char *p)
     if (malloc_abort || issetugid() || getuid() == 0 || getgid() == 0)
 	wrterror(p);
 }
+#endif
 
 /*
  * Allocate a number of pages from the OS
@@ -452,16 +460,20 @@ extend_pgdir(size_t idx)
 static void
 malloc_init(void)
 {
+    int save_errno = errno;
+#ifndef MALLOC_NO_SYSCALLS
     const char *p;
     char b[64];
     size_t i;
     ssize_t j;
-    int save_errno = errno;
 
     /*
      * Compute page-size related variables.
      */
     malloc_pagesize = (size_t)sysconf(_SC_PAGESIZE);
+#else
+    malloc_pagesize = PAGE_SIZE;
+#endif
     malloc_pagemask = malloc_pagesize - 1;
     for (malloc_pageshift = 0;
 	 (1UL << malloc_pageshift) != malloc_pagesize;
@@ -474,6 +486,7 @@ malloc_init(void)
     malloc_junk = 1;
 #endif /* MALLOC_EXTRA_SANITY */
 
+#ifndef MALLOC_NO_SYSCALLS
     for (i = 0; i < 3; i++) {
 	if (i == 0) {
 	    j = readlink("/etc/malloc.conf", b, sizeof b - 1);
@@ -519,6 +532,7 @@ malloc_init(void)
 	    }
 	}
     }
+#endif
 
     UTRACE(0, 0, 0);
 
