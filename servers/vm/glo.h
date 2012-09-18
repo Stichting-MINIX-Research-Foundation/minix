@@ -29,5 +29,3 @@ EXTERN long vm_sanitychecklevel;
 
 /* total number of memory pages */
 EXTERN int total_pages;
-
-EXTERN int meminit_done;

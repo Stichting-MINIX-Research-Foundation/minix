@@ -332,13 +332,12 @@ void init_vm(void)
 	/* region management initialization. */
 	map_region_init();
 
+	/* Initialize tables to all physical memory. */
+	mem_init(mem_chunks);
+
 	/* Architecture-dependent initialization. */
 	init_proc(VM_PROC_NR);
 	pt_init();
-
-	/* Initialize tables to all physical memory. */
-	mem_init(mem_chunks);
-	meminit_done = 1;
 
 	/* Give these processes their own page table. */
 	for (ip = &kernel_boot_info.boot_procs[0];

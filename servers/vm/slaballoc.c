@@ -18,7 +18,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <assert.h>
 #include <string.h>
 #include <env.h>
 
@@ -387,7 +386,7 @@ void *slaballoc(int bytes)
 /*===========================================================================*
  *				int objstats				     *
  *===========================================================================*/
-static int objstats(void *mem, int bytes,
+static inline int objstats(void *mem, int bytes,
 	struct slabheader **sp, struct slabdata **fp, int *ip)
 {
 #if SANITYCHECKS

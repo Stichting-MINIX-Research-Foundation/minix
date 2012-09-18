@@ -259,6 +259,8 @@ static void *vm_checkspares(void)
 	return NULL;
 }
 
+static int pt_init_done;
+
 /*===========================================================================*
  *				vm_allocpage		     		     *
  *===========================================================================*/
@@ -280,7 +282,7 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	assert(level >= 1);
 	assert(level <= 2);
 
-	if(level > 1 || !meminit_done) {
+	if((level > 1) || !pt_init_done) {
 		void *s;
 		s=vm_getsparepage(phys);
 		level--;
@@ -1020,6 +1022,8 @@ void pt_init(void)
 	/* Inform kernel vm has a newly built page table. */
 	assert(vmproc[VM_PROC_NR].vm_endpoint == VM_PROC_NR);
 	pt_bind(newpt, &vmproc[VM_PROC_NR]);
+
+	pt_init_done = 1;
 
         /* All OK. */
         return;

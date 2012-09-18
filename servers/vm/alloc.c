@@ -26,13 +26,16 @@
 #include "proto.h"
 #include "util.h"
 #include "glo.h"
-#include "pagerange.h"
-#include "addravl.h"
 #include "sanitycheck.h"
 #include "memlist.h"
 
-/* AVL tree of free pages. */
-addr_avl addravl;
+/* Number of physical pages in a 32-bit address space */
+#define NUMBER_PHYSICAL_PAGES (0x100000000ULL/VM_PAGE_SIZE)
+#define PAGE_BITMAP_CHUNKS BITMAP_CHUNKS(NUMBER_PHYSICAL_PAGES)
+static bitchunk_t free_pages_bitmap[PAGE_BITMAP_CHUNKS];
+#define PAGE_CACHE_MAX 10000
+static int free_page_cache[PAGE_CACHE_MAX];
+static int free_page_cache_size = 0;
 
 /* Used for sanity check. */
 static phys_bytes mem_low, mem_high;
@@ -46,6 +49,8 @@ static phys_bytes alloc_pages(int pages, int flags, phys_bytes *ret);
 #define CHUNKS BITMAP_CHUNKS(MAXPAGES)
 static bitchunk_t pagemap[CHUNKS];
 #endif
+
+#define page_isfree(i) GET_BIT(free_pages_bitmap, i)
 
 /*===========================================================================*
  *				alloc_mem				     *
@@ -125,9 +130,9 @@ struct memory *chunks;		/* list of free memory chunks */
  */
   int i, first = 0;
 
-  addr_init(&addravl);
-
   total_pages = 0;
+
+  memset(free_pages_bitmap, 0, sizeof(free_pages_bitmap));
 
   /* Use the chunks of physical memory to allocate holes. */
   for (i=NR_MEMS-1; i>=0; i--) {
@@ -146,40 +151,64 @@ struct memory *chunks;		/* list of free memory chunks */
 #if SANITYCHECKS
 void mem_sanitycheck(char *file, int line)
 {
-	pagerange_t *p, *prevp = NULL;
-	addr_iter iter;
-	addr_start_iter_least(&addravl, &iter);
-	while((p=addr_get_iter(&iter))) {
-		SLABSANE(p);
-		assert(p->size > 0);
-		if(prevp) {
-			assert(prevp->addr < p->addr);
-			assert(prevp->addr + prevp->size < p->addr);
-		}
-		usedpages_add(p->addr * VM_PAGE_SIZE, p->size * VM_PAGE_SIZE);
-		prevp = p;
-		addr_incr_iter(&iter);
+	int i;
+	for(i = 0; i < NUMBER_PHYSICAL_PAGES; i++) {
+		if(!page_isfree(i)) continue;
+		usedpages_add(i * VM_PAGE_SIZE, VM_PAGE_SIZE);
 	}
 }
 #endif
 
 void memstats(int *nodes, int *pages, int *largest)
 {
-	pagerange_t *p;
-	addr_iter iter;
-	addr_start_iter_least(&addravl, &iter);
+	int i;
 	*nodes = 0;
 	*pages = 0;
 	*largest = 0;
 
-	while((p=addr_get_iter(&iter))) {
-		SLABSANE(p);
+	for(i = 0; i < NUMBER_PHYSICAL_PAGES; i++) {
+		int size = 0;
+		while(i < NUMBER_PHYSICAL_PAGES && page_isfree(i)) {
+			size++;
+			i++;
+		}
+		if(size == 0) continue;
 		(*nodes)++;
-		(*pages)+= p->size;
-		if(p->size > *largest)
-			*largest = p->size;
-		addr_incr_iter(&iter);
+		(*pages)+= size;
+		if(size > *largest)
+			*largest = size;
 	}
+}
+
+static int findbit(int low, int startscan, int pages, int memflags, int *len)
+{
+	int run_length = 0, i, freerange_start;
+
+	for(i = startscan; i >= low; i--) {
+		if(!page_isfree(i)) {
+			int pi;
+			int chunk = i/BITCHUNK_BITS, moved = 0;
+			run_length = 0;
+			pi = i;
+			while(chunk > 0 &&
+			   !MAP_CHUNK(free_pages_bitmap, chunk*BITCHUNK_BITS)) {
+				chunk--;
+				moved = 1;
+			}
+			if(moved) { i = chunk * BITCHUNK_BITS + BITCHUNK_BITS; }
+			continue;
+		}
+		if(!run_length) { freerange_start = i; run_length = 1; }
+		else { freerange_start--; run_length++; }
+		assert(run_length <= pages);
+		if(run_length == pages || (memflags & PAF_FIRSTBLOCK)) {
+			/* good block found! */
+			*len = run_length;
+			return freerange_start;
+		}
+	}
+
+	return NO_MEM;
 }
 
 /*===========================================================================*
@@ -187,16 +216,12 @@ void memstats(int *nodes, int *pages, int *largest)
  *===========================================================================*/
 static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 {
-	addr_iter iter;
-	pagerange_t *pr;
-	int incr;
 	phys_bytes boundary16 = 16 * 1024 * 1024 / VM_PAGE_SIZE;
 	phys_bytes boundary1  =  1 * 1024 * 1024 / VM_PAGE_SIZE;
-	phys_bytes mem;
-#if SANITYCHECKS
-	int firstnodes, firstpages, wantnodes, wantpages;
-	int finalnodes, finalpages;
-	int largest;
+	phys_bytes mem = NO_MEM;
+	int maxpage = NUMBER_PHYSICAL_PAGES - 1, i;
+	static int lastscan = -1;
+	int startscan, run_length;
 
 #if NONCONTIGUOUS
 	/* If NONCONTIGUOUS is on, allocate physical pages single
@@ -209,84 +234,60 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 	}
 #endif
 
-	memstats(&firstnodes, &firstpages, &largest);
-	wantnodes = firstnodes;
-	wantpages = firstpages - pages;
-#endif
-
-	if(memflags & (PAF_LOWER16MB|PAF_LOWER1MB)) {
-		addr_start_iter_least(&addravl, &iter);
-		incr = 1;
-	} else {
-		addr_start_iter_greatest(&addravl, &iter);
-		incr = 0;
-	}
-
-	while((pr = addr_get_iter(&iter))) {
-		SLABSANE(pr);
-		assert(pr->size > 0);
-		if(pr->size >= pages || (memflags & PAF_FIRSTBLOCK)) {
-			if(memflags & PAF_LOWER16MB) {
-				if(pr->addr + pages > boundary16)
-					return NO_MEM;
+	if(memflags & PAF_LOWER16MB)
+		maxpage = boundary16 - 1;
+	else if(memflags & PAF_LOWER1MB)
+		maxpage = boundary1 - 1;
+	else {
+		/* no position restrictions: check page cache */
+		if((pages == 1 || (memflags & PAF_FIRSTBLOCK))) {
+			while(free_page_cache_size > 0) {
+				i = free_page_cache[free_page_cache_size-1];
+				if(page_isfree(i)) {
+					free_page_cache_size--;
+					mem = i;
+					assert(mem != NO_MEM);
+					run_length = 1;
+					break;
+				}
+				free_page_cache_size--;
 			}
-
-			if(memflags & PAF_LOWER1MB) {
-				if(pr->addr + pages > boundary1)
-					return NO_MEM;
-			}
-
-			/* good block found! */
-			break;
 		}
-		if(incr)
-			addr_incr_iter(&iter);
-		else
-			addr_decr_iter(&iter);
 	}
 
-	if(!pr) {
+	if(lastscan < maxpage && lastscan >= 0)
+		startscan = lastscan;
+	else	startscan = maxpage;
+
+	if(mem == NO_MEM)
+		mem = findbit(0, startscan, pages, memflags, &run_length);
+	if(mem == NO_MEM)
+		mem = findbit(0, maxpage, pages, memflags, &run_length);
+
+	if(mem == NO_MEM) {
 		if(len)
 			*len = 0;
-#if SANITYCHECKS
-		assert(largest < pages);
-#endif
-	   return NO_MEM;
+		return NO_MEM;
 	}
 
-	SLABSANE(pr);
+	/* remember for next time */
+	lastscan = mem;
 
 	if(memflags & PAF_FIRSTBLOCK) {
 		assert(len);
 		/* block doesn't have to as big as requested;
 		 * return its size though.
 		 */
-		if(pr->size < pages) {
-			pages = pr->size;
-#if SANITYCHECKS
-			wantpages = firstpages - pages;
-#endif
+		if(run_length < pages) {
+			pages = run_length;
 		}
 	}
 
 	if(len)
 		*len = pages;
 
-	/* Allocated chunk is off the end. */
-	mem = pr->addr + pr->size - pages;
-
-	assert(pr->size >= pages);
-	if(pr->size == pages) {
-		pagerange_t *prr;
-		prr = addr_remove(&addravl, pr->addr);
-		assert(prr);
-		assert(prr == pr);
-		SLABFREE(pr);
-#if SANITYCHECKS
-		wantnodes--;
-#endif
-	} else {
-		USE(pr, pr->size -= pages;);
+	for(i = mem; i < mem + pages; i++) {
+		UNSET_BIT(free_pages_bitmap, i);
 	}
 
 	if(memflags & PAF_CLEAR) {
@@ -296,13 +297,6 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 			panic("alloc_mem: sys_memset failed: %d", s);
 	}
 
-#if SANITYCHECKS
-	memstats(&finalnodes, &finalpages, &largest);
-
-	assert(finalnodes == wantnodes);
-	assert(finalpages == wantpages);
-#endif
-
 	return mem;
 }
 
@@ -311,19 +305,7 @@ static phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
  *===========================================================================*/
 static void free_pages(phys_bytes pageno, int npages)
 {
-	pagerange_t *pr, *p;
-	addr_iter iter;
-#if SANITYCHECKS
-	int firstnodes, firstpages, wantnodes, wantpages;
-	int finalnodes, finalpages, largest;
-
-	memstats(&firstnodes, &firstpages, &largest);
-
-	wantnodes = firstnodes;
-	wantpages = firstpages + npages;
-#endif
-
-	assert(!addr_search(&addravl, pageno, AVL_EQUAL));
+	int i, lim = pageno + npages - 1;
 
 #if JUNKFREE
        if(sys_memset(NONE, 0xa5a5a5a5, VM_PAGE_SIZE * pageno,
@@ -331,54 +313,12 @@ static void free_pages(phys_bytes pageno, int npages)
                        panic("free_pages: sys_memset failed");
 #endif
 
-	/* try to merge with higher neighbour */
-	if((pr=addr_search(&addravl, pageno+npages, AVL_EQUAL))) {
-		USE(pr, pr->addr -= npages;
-			pr->size += npages;);
-	} else {
-		if(!SLABALLOC(pr))
-			panic("alloc_pages: can't alloc");
-#if SANITYCHECKS
-		memstats(&firstnodes, &firstpages, &largest);
-
-		wantnodes = firstnodes;
-		wantpages = firstpages + npages;
-
-#endif
-		assert(npages > 0);
-		USE(pr, pr->addr = pageno;
-			 pr->size = npages;);
-		addr_insert(&addravl, pr);
-#if SANITYCHECKS
-		wantnodes++;
-#endif
-	}
-
-	addr_start_iter(&addravl, &iter, pr->addr, AVL_EQUAL);
-	p = addr_get_iter(&iter);
-	assert(p);
-	assert(p == pr);
-
-	addr_decr_iter(&iter);
-	if((p = addr_get_iter(&iter))) {
-		SLABSANE(p);
-		if(p->addr + p->size == pr->addr) {
-			USE(p, p->size += pr->size;);
-			addr_remove(&addravl, pr->addr);
-			SLABFREE(pr);
-#if SANITYCHECKS
-			wantnodes--;
-#endif
+	for(i = pageno; i <= lim; i++) {
+		SET_BIT(free_pages_bitmap, i);
+		if(free_page_cache_size < PAGE_CACHE_MAX) {
+			free_page_cache[free_page_cache_size++] = i;
 		}
 	}
-
-
-#if SANITYCHECKS
-	memstats(&finalnodes, &finalpages,  &largest);
-
-	assert(finalnodes == wantnodes);
-	assert(finalpages == wantpages);
-#endif
 }
 
 /*===========================================================================*
