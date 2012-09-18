@@ -72,55 +72,6 @@ struct memory *mem_chunks;                      /* store mem chunks here */
   }
 }  
 
-#if 0
-/*===========================================================================*
- *                              reserve_proc_mem                             *
- *===========================================================================*/
-void reserve_proc_mem(mem_chunks, map_ptr)
-struct memory *mem_chunks;                      /* store mem chunks here */
-struct mem_map *map_ptr;                        /* memory to remove */
-{
-/* Remove server memory from the free memory list.
- */
-  struct memory *memp;
-  for (memp = mem_chunks; memp < &mem_chunks[NR_MEMS]; memp++) {
-		if(memp->base <= map_ptr[T].mem_phys 
-			&& memp->base+memp->size >= map_ptr[T].mem_phys)
-		{
-			phys_bytes progsz = map_ptr[S].mem_phys
-			    - map_ptr[T].mem_phys;
-			phys_bytes progend = map_ptr[S].mem_phys;
-
-			if (memp->base == map_ptr[T].mem_phys) {
-				memp->base += progsz;
-				memp->size -= progsz;
-			} else {
-				struct memory *mempr;
-
-				/* have to split mem_chunks */
-				if(mem_chunks[NR_MEMS-1].size>0)
-					panic("reserve_proc_mem: can't find free mem_chunks to map: 0x%lx",
-						map_ptr[T].mem_phys);
-				for(mempr=&mem_chunks[NR_MEMS-1];mempr>memp;mempr--) {
-					*mempr=*(mempr-1);
-				}
-				assert(memp < &mem_chunks[NR_MEMS-1]);
-
-				(memp+1)->base = progend;
-				(memp+1)->size = memp->base + memp->size
-					- progend;
-				memp->size = map_ptr[T].mem_phys - memp->base;
-			}
-			break;
-		}
-  }
-  if (memp >= &mem_chunks[NR_MEMS]) {
-		panic("reserve_proc_mem: can't find map in mem_chunks: 0x%lx",
-			map_ptr[T].mem_phys);
-  }
-} 
-#endif
-
 /*===========================================================================*
  *                              vm_isokendpt                           	     *
  *===========================================================================*/

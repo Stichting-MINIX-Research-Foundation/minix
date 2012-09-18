@@ -35,8 +35,6 @@ void mem_init(struct memory *chunks);
 
 /* utility.c */
 void get_mem_chunks(struct memory *mem_chunks);
-void reserve_proc_mem(struct memory *mem_chunks, struct mem_map
-	*map_ptr);
 int vm_isokendpt(endpoint_t ep, int *proc);
 int get_stack_ptr(int proc_nr, vir_bytes *sp);
 int do_info(message *);
