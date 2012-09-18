@@ -269,7 +269,7 @@ void map_sanitycheck(char *file, int line)
 		if(pr->ph->refcount != pr->ph->seencount) {
 			map_printmap(vmp);
 			printf("ph in vr %p: 0x%lx-0x%lx  refcount %d "
-				"but seencount %lu\n", 
+				"but seencount %u\n", 
 				vr, pr->offset,
 				pr->offset + pr->ph->length,
 				pr->ph->refcount, pr->ph->seencount);

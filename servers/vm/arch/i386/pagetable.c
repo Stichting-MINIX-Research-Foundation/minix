@@ -54,7 +54,13 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
  * circular dependency on allocating memory and writing it into VM's
  * page table.
  */
+#if SANITYCHECKS
+#define SPAREPAGES 100
+#define STATIC_SPAREPAGES 90
+#else
 #define SPAREPAGES 15
+#define STATIC_SPAREPAGES 10
+#endif
 int missing_spares = SPAREPAGES;
 static struct {
 	void *page;
@@ -85,9 +91,8 @@ int kernmappings = 0;
 phys_bytes page_directories_phys;
 u32_t *page_directories = NULL;
 
-#define STATIC_SPAREPAGES 10
-
-static char static_sparepages[I386_PAGE_SIZE*STATIC_SPAREPAGES + I386_PAGE_SIZE] __aligned(I386_PAGE_SIZE);
+static char static_sparepages[I386_PAGE_SIZE*STATIC_SPAREPAGES] 
+	__aligned(I386_PAGE_SIZE);
 
 #if SANITYCHECKS
 /*===========================================================================*
@@ -1014,7 +1019,6 @@ void pt_init(void)
 
 	/* Inform kernel vm has a newly built page table. */
 	assert(vmproc[VM_PROC_NR].vm_endpoint == VM_PROC_NR);
-	pt_mapkernel(newpt);
 	pt_bind(newpt, &vmproc[VM_PROC_NR]);
 
         /* All OK. */
