@@ -205,12 +205,11 @@ static int checklist(char *file, int line,
 		MYASSERT(n->sdh.magic1 == MAGIC1);
 		MYASSERT(n->sdh.magic2 == MAGIC2);
 #endif
-		MYASSERT(n->sdh.list == l);
 		MYASSERT(usedpages_add(n->sdh.phys, VM_PAGE_SIZE) == OK);
 		if(n->sdh.prev)
 			MYASSERT(n->sdh.prev->sdh.next == n);
 		else
-			MYASSERT(s->list_head[l] == n);
+			MYASSERT(s->list_head == n);
 		if(n->sdh.next) MYASSERT(n->sdh.next->sdh.prev == n);
 		for(i = 0; i < USEELEMENTS*8; i++)
 			if(i >= ITEMSPERPAGE(bytes))
@@ -233,7 +232,6 @@ void slab_sanitycheck(char *file, int line)
 {
 	int s;
 	for(s = 0; s < SLABSIZES; s++) {
-		int l;
 		checklist(file, line, &slabs[s], s + MINSIZE);
 	}
 }
@@ -246,6 +244,8 @@ int slabsane_f(char *file, int line, void *mem, int bytes)
 	struct slabheader *s;
 	struct slabdata *f;
 	int i;
+
+	bytes = roundup(bytes, OBJALIGN);
 
 	return (objstats(mem, bytes, &s, &f, &i) == OK);
 }
@@ -508,7 +508,6 @@ void slabstats(void)
 	n++;
 	if(n%1000) return;
 	for(s = 0; s < SLABSIZES; s++) {
-		int l;
 		int b, t;
 		b = s + MINSIZE;
 		t = checklist(__FILE__, __LINE__, &slabs[s], b);

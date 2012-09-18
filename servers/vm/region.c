@@ -429,8 +429,11 @@ static vir_bytes region_find_slot_range(struct vmproc *vmp,
 		printf("VM: 1 minv: 0x%lx maxv: 0x%lx length: 0x%lx\n",
 			minv, maxv, length);
 	}
+
 	assert(minv < maxv);
-	assert(minv + length <= maxv);
+
+	if(minv + length > maxv)
+		return SLOT_FAIL;
 
 #define FREEVRANGE_TRY(rangestart, rangeend) {		\
 	vir_bytes frstart = (rangestart), frend = (rangeend);	\
@@ -642,11 +645,14 @@ static struct phys_region *reset_physr_iter(struct vir_region *region,
 /*===========================================================================*
  *				map_subfree				     *
  *===========================================================================*/
-static int map_subfree(struct vir_region *region, vir_bytes len)
+static int map_subfree(struct vir_region *region, 
+	vir_bytes start, vir_bytes len)
 {
 	struct phys_region *pr;
 	physr_iter iter;
+	vir_bytes end = start+len;
 
+	int full = 0;
 
 #if SANITYCHECKS
 	{
@@ -668,17 +674,24 @@ static int map_subfree(struct vir_region *region, vir_bytes len)
 	}
 #endif
 
-	physr_start_iter_least(region->phys, &iter);
+	if(start == 0 && len == region->length)
+		full = 1;
+
+	physr_start_iter(region->phys, &iter, start, AVL_GREATER_EQUAL);
 	while((pr = physr_get_iter(&iter))) {
 		physr_incr_iter(&iter);
-		if(pr->offset >= len)
+		if(pr->offset >= end)
 			break;
-		if(pr->offset + VM_PAGE_SIZE <= len) {
-			pb_unreferenced(region, pr);
-			physr_start_iter_least(region->phys, &iter);
-			SLABFREE(pr);
+		pb_unreferenced(region, pr, !full);
+		if(!full) {
+			physr_start_iter(region->phys, &iter,
+				pr->offset, AVL_GREATER_EQUAL);
 		}
+		SLABFREE(pr);
 	}
+
+	if(full)
+		physr_init(region->phys);
 
 	return OK;
 }
@@ -690,7 +703,7 @@ static int map_free(struct vir_region *region)
 {
 	int r;
 
-	if((r=map_subfree(region, region->length)) != OK) {
+	if((r=map_subfree(region, 0, region->length)) != OK) {
 		printf("%d\n", __LINE__);
 		return r;
 	}
@@ -985,7 +998,7 @@ int written;
 			if((physr = physr_search(region->phys, offset,
 				AVL_EQUAL))) {
 				assert(physr->ph->refcount == 1);
-				pb_unreferenced(region, physr);
+				pb_unreferenced(region, physr, 1);
 				SLABFREE(physr);
 			}
 			offset += VM_PAGE_SIZE;
@@ -1052,7 +1065,7 @@ physr_iter *iter;
 	SLABSANE(ph);
 	SLABSANE(ph->ph);
 	assert(ph->ph->refcount > 1);
-	pb_unreferenced(region, ph);
+	pb_unreferenced(region, ph, 1);
 	assert(ph->ph->refcount >= 1);
 	SLABFREE(ph);
 
@@ -1653,7 +1666,7 @@ u32_t map_region_get_tag(struct vir_region *vr)
  *				map_unmap_region	     	  	*
  *========================================================================*/
 int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
-	vir_bytes len)
+	vir_bytes offset, vir_bytes len)
 {
 /* Shrink the region by 'len' bytes, from the start. Unreference
  * memory it used to reference if any.
@@ -1662,7 +1675,7 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-	if(len > r->length || (len % VM_PAGE_SIZE)) {
+	if(offset+len > r->length || (len % VM_PAGE_SIZE)) {
 		printf("VM: bogus length 0x%lx\n", len);
 		return EINVAL;
 	}
@@ -1672,35 +1685,44 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 		return EINVAL;
 	}
 
-	regionstart = r->vaddr;
+	regionstart = r->vaddr + offset;
 
-	if(len == r->length) {
-		SANITYCHECK(SCL_DETAIL);
-		/* Whole region disappears. Unlink and free it. */
-		region_remove(&vmp->vm_regions_avl, r->vaddr);
-		map_free(r);
-	} else {
+	/* unreference its memory */
+	map_subfree(r, offset, len);
+
+	/* if unmap was at start/end of this region, it actually shrinks */
+	if(offset == 0) {
 		struct phys_region *pr;
 		physr_iter iter;
-		/* Region shrinks. First unreference its memory
-		 * and then shrink the region.
-		 */
-		SANITYCHECK(SCL_DETAIL);
-		map_subfree(r, len);
+
+		region_remove(&vmp->vm_regions_avl, r->vaddr);
+
 		USE(r,
 		r->vaddr += len;
 		r->length -= len;);
-		physr_start_iter_least(r->phys, &iter);
+
+		region_insert(&vmp->vm_regions_avl, r);
 
 		/* vaddr has increased; to make all the phys_regions
 		 * point to the same addresses, make them shrink by the
 		 * same amount.
 		 */
+        	physr_start_iter(r->phys, &iter, offset, AVL_GREATER_EQUAL);
+
 		while((pr = physr_get_iter(&iter))) {
-			assert(pr->offset >= len);
+			assert(pr->offset >= offset);
 			USE(pr, pr->offset -= len;);
 			physr_incr_iter(&iter);
 		}
+	} else if(offset + len == r->length) {
+		assert(len <= r->length);
+		r->length -= len;
+	}
+
+	if(r->length == 0) {
+		/* Whole region disappears. Unlink and free it. */
+		region_remove(&vmp->vm_regions_avl, r->vaddr);
+		map_free(r);
 	}
 
 	SANITYCHECK(SCL_DETAIL);
@@ -2104,7 +2126,7 @@ static void rm_phys_regions(struct vir_region *region,
 
         physr_start_iter(region->phys, &iter, begin, AVL_GREATER_EQUAL);
         while((pr = physr_get_iter(&iter)) && pr->offset < begin + length) {
-                pb_unreferenced(region, pr);
+                pb_unreferenced(region, pr, 1);
                 physr_start_iter(region->phys, &iter, begin,
                         AVL_GREATER_EQUAL);
                 SLABFREE(pr);

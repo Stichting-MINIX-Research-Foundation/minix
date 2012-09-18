@@ -132,7 +132,7 @@ int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes vir);
 int map_region_shrink(struct vir_region *vr, vir_bytes delta);
 int map_unmap_region(struct vmproc *vmp, struct vir_region *vr,
-	vir_bytes len);
+	vir_bytes offset, vir_bytes len);
 int map_free_proc(struct vmproc *vmp);
 int map_proc_copy(struct vmproc *dst, struct vmproc *src);
 int map_proc_copy_from(struct vmproc *dst, struct vmproc *src, struct
@@ -158,7 +158,6 @@ int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size, struct
 int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r);
 int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt);
 
-void pb_unreferenced(struct vir_region *region, struct phys_region *pr);
 void get_stats_info(struct vm_stats_info *vsi);
 void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui);
 int get_region_info(struct vmproc *vmp, struct vm_region_info *vri, int
@@ -189,4 +188,4 @@ void init_query_exit(void);
 struct phys_block *pb_new(phys_bytes phys);
 struct phys_region *pb_reference(struct phys_block *newpb,
 	vir_bytes offset, struct vir_region *region);
-void pb_unreferenced(struct vir_region *region, struct phys_region *pr);
+void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm);

@@ -18,6 +18,7 @@
 #include <minix/debug.h>
 
 #include <sys/mman.h>
+#include <sys/param.h>
 
 #include <errno.h>
 #include <assert.h>
@@ -234,7 +235,7 @@ int do_unmap_phys(message *m)
 		return EINVAL;
 	}
 
-	if(map_unmap_region(vmp, region, region->length) != OK) {
+	if(map_unmap_region(vmp, region, 0, region->length) != OK) {
 		return EINVAL;
 	}
 
@@ -345,7 +346,7 @@ int do_shared_unmap(message *m)
 		return EFAULT;
 	}
 
-	if(map_unmap_region(vmp, vr, vr->length) != OK)
+	if(map_unmap_region(vmp, vr, 0, vr->length) != OK)
 		panic("do_shared_unmap: map_unmap_region failed");
 
 	return OK;
@@ -408,38 +409,38 @@ int do_munmap(message *m)
 {
         int r, n;
         struct vmproc *vmp;
-        vir_bytes addr, len;
+        vir_bytes addr, len, offset;
 	struct vir_region *vr;
-        
+
         if((r=vm_isokendpt(m->m_source, &n)) != OK) {
                 panic("do_mmap: message from strange source: %d", m->m_source);
         }
  
         vmp = &vmproc[n];
 
-	if(m->m_type == VM_MUNMAP) {
-	        addr = (vir_bytes) (vir_bytes) m->VMUM_ADDR;
-	} else if(m->m_type == VM_MUNMAP_TEXT) {
-	        addr = (vir_bytes) (vir_bytes) m->VMUM_ADDR;
-	} else {
-		panic("do_munmap: strange type");
-	}
+	assert(m->m_type == VM_MUNMAP);
+        addr = (vir_bytes) (vir_bytes) m->VMUM_ADDR;
 
         if(!(vr = map_lookup(vmp, addr))) {
                 printf("VM: unmap: virtual address %p not found in %d\n",
                         m->VMUM_ADDR, vmp->vm_endpoint);
                 return EFAULT;
         }
+
+	if(addr % VM_PAGE_SIZE)
+		return EFAULT;
  
-	len = m->VMUM_LEN;
-	if (len % VM_PAGE_SIZE)
-		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
+	len = roundup(m->VMUM_LEN, VM_PAGE_SIZE);
 
-        if(addr != vr->vaddr || len > vr->length || len < VM_PAGE_SIZE) {
-                return EFAULT;
-        }       
+	offset = addr - vr->vaddr;
 
-	if(map_unmap_region(vmp, vr, len) != OK)
+	if(offset + len > vr->length) {
+		printf("munmap: addr 0x%lx len 0x%lx spills out of region\n",
+			addr, len);
+		return EFAULT;
+	}
+
+	if(map_unmap_region(vmp, vr, offset, len) != OK)
 		panic("do_munmap: map_unmap_region failed");
 
 	return OK;
@@ -480,18 +481,6 @@ int minix_munmap(void *addr, size_t len)
 	if(!unmap_ok)
 		return ENOSYS;
 	laddr = (vir_bytes) (vir_bytes) addr;
-	return munmap_lin(laddr, len);
-}
-
-/*===========================================================================*
- *                              munmap_text (override for VM)                *
- *===========================================================================*/
-int minix_munmap_text(void *addr, size_t len)
-{
-	vir_bytes laddr;
-	if(!unmap_ok)
-		return ENOSYS;
-	laddr = (vir_bytes) addr;
 	return munmap_lin(laddr, len);
 }
 

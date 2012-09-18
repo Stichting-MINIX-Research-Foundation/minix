@@ -923,7 +923,6 @@
 #define writev _writev
 #define minix_mmap _minix_mmap
 #define minix_munmap _minix_munmap
-#define minix_munmap_text _minix_munmap_text
 #define vfork __vfork14
 #endif /* __minix */
 
