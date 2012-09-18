@@ -23,6 +23,8 @@
 
 #include <memory.h>
 
+#include <sys/param.h>
+
 #include "glo.h"
 #include "proto.h"
 #include "util.h"
@@ -72,6 +74,8 @@
 #define SETBIT(f, b)   {OFF(f,b); SLABDATAUSE(f, BITEL(f,b)|= BITPAT(b); (f)->sdh.nused++;); }
 #define CLEARBIT(f, b) {ON(f, b); SLABDATAUSE(f, BITEL(f,b)&=~BITPAT(b); (f)->sdh.nused--; (f)->sdh.freeguess = (b);); }
 
+#define OBJALIGN	8
+
 #define MINSIZE 8
 #define MAXSIZE (SLABSIZES-1+MINSIZE)
 #define USEELEMENTS (1+(VM_PAGE_SIZE/MINSIZE/8))
@@ -97,8 +101,6 @@ struct sdh {
 #if SANITYCHECKS
 	u32_t magic1;
 #endif
-	u8_t list;
-	u16_t nused;	/* Number of data items used in this slab. */
 	int freeguess;
 	struct slabdata *next, *prev;
 	elements_t usebits;
@@ -107,6 +109,7 @@ struct sdh {
 	int writable;	/* data item number or WRITABLE_* */
 	u32_t magic2;
 #endif
+	u16_t nused;	/* Number of data items used in this slab. */
 };
 
 #define DATABYTES	(VM_PAGE_SIZE-sizeof(struct sdh))
@@ -116,17 +119,11 @@ struct sdh {
 #define JUNK  0xdeadbeef
 #define NOJUNK 0xc0ffee
 
-#define LIST_UNUSED	0
-#define LIST_FREE	1
-#define LIST_USED	2
-#define LIST_FULL	3
-#define LIST_NUMBER	4
-
 static struct slabheader {
 	struct slabdata {
-		struct	sdh sdh;
 		u8_t 	data[DATABYTES];
-	} *list_head[LIST_NUMBER];
+		struct	sdh sdh;
+	} *list_head;
 } slabs[SLABSIZES];
 
 static int objstats(void *, int, struct slabheader **, struct slabdata
@@ -141,32 +138,12 @@ static int objstats(void *, int, struct slabheader **, struct slabdata
 	s = &slabs[i];			\
 }
 
-#define LH(sl, l) (sl)->list_head[l]
-
-/* move head of list l1 to list of l2 in slabheader sl. */
-#define MOVEHEAD(sl, l1, l2) {		\
-	struct slabdata *t;		\
-	assert(LH(sl,l1));		\
-	REMOVEHEAD(sl, l1, t);		\
-	ADDHEAD(t, sl, l2);		\
-}
-
-/* remove head of list 'list' in sl, assign it unlinked to 'to'. */
-#define REMOVEHEAD(sl, list, to) {	\
-	struct slabdata *dat;		\
-	dat = (to) = LH(sl, list);	\
-	assert(dat);			\
-	LH(sl, list) = dat->sdh.next;	\
-	UNLINKNODE(dat);		\
-}
-
 /* move slabdata nw to slabheader sl under list number l. */
-#define ADDHEAD(nw, sl, l) {			\
+#define ADDHEAD(nw, sl) {			\
 	SLABDATAUSE(nw,				\
-		(nw)->sdh.next = LH(sl, l);	\
-		(nw)->sdh.prev = NULL;		\
-		(nw)->sdh.list = l;);		\
-	LH(sl, l) = (nw);			\
+		(nw)->sdh.next = sl->list_head;	\
+		(nw)->sdh.prev = NULL;);	\
+	sl->list_head = nw;			\
 	if((nw)->sdh.next) {			\
 		SLABDATAUSE((nw)->sdh.next, \
 			(nw)->sdh.next->sdh.prev = (nw););	\
@@ -181,7 +158,7 @@ static int objstats(void *, int, struct slabheader **, struct slabdata
 	if(next) { SLABDATAUSE(next, next->sdh.prev = prev;); }	\
 }
 
-struct slabdata *newslabdata(int list)
+static struct slabdata *newslabdata()
 {
 	struct slabdata *n;
 	phys_bytes p;
@@ -202,7 +179,6 @@ struct slabdata *newslabdata(int list)
 #endif
 	n->sdh.nused = 0;
 	n->sdh.freeguess = 0;
-	n->sdh.list = list;
 
 #if SANITYCHECKS
 	n->sdh.writable = WRITABLE_HEADER;
@@ -218,9 +194,9 @@ struct slabdata *newslabdata(int list)
  *				checklist				     *
  *===========================================================================*/
 static int checklist(char *file, int line,
-	struct slabheader *s, int l, int bytes)
+	struct slabheader *s, int bytes)
 {
-	struct slabdata *n = s->list_head[l];
+	struct slabdata *n = s->list_head;
 	int ch = 0;
 
 	while(n) {
@@ -258,9 +234,7 @@ void slab_sanitycheck(char *file, int line)
 	int s;
 	for(s = 0; s < SLABSIZES; s++) {
 		int l;
-		for(l = 0; l < LIST_NUMBER; l++) {
-			checklist(file, line, &slabs[s], l, s + MINSIZE);
-		}
+		checklist(file, line, &slabs[s], s + MINSIZE);
 	}
 }
 
@@ -289,7 +263,10 @@ void *slaballoc(int bytes)
 	int i;
 	int count = 0;
 	struct slabheader *s;
-	struct slabdata *firstused;
+	struct slabdata *newslab;
+	char *ret;
+
+	bytes = roundup(bytes, OBJALIGN);
 
 	SLABSANITYCHECK(SCL_FUNCTIONS);
 
@@ -297,90 +274,70 @@ void *slaballoc(int bytes)
 	GETSLAB(bytes, s);
 	assert(s);
 
-	/* To make the common case more common, make space in the 'used'
-	 * queue first.
-	 */
-	if(!LH(s, LIST_USED)) {
+	if(!(newslab = s->list_head)) {
 		/* Make sure there is something on the freelist. */
-	SLABSANITYCHECK(SCL_DETAIL);
-		if(!LH(s, LIST_FREE)) {
-			struct slabdata *nd = newslabdata(LIST_FREE);
-	SLABSANITYCHECK(SCL_DETAIL);
-			if(!nd) return NULL;
-			ADDHEAD(nd, s, LIST_FREE);
-	SLABSANITYCHECK(SCL_DETAIL);
-		}
-
+		newslab = newslabdata();
+		if(!newslab) return NULL;
+		ADDHEAD(newslab, s);
+		assert(newslab->sdh.nused == 0);
+	} else	assert(newslab->sdh.nused > 0);
+	assert(newslab->sdh.nused < ITEMSPERPAGE(bytes));
 
 	SLABSANITYCHECK(SCL_DETAIL);
-		MOVEHEAD(s, LIST_FREE, LIST_USED);
-	SLABSANITYCHECK(SCL_DETAIL);
 
-	}
-	SLABSANITYCHECK(SCL_DETAIL);
-
-	assert(s);
-	firstused = LH(s, LIST_USED);
-	assert(firstused);
 #if SANITYCHECKS
-	assert(firstused->sdh.magic1 == MAGIC1);
-	assert(firstused->sdh.magic2 == MAGIC2);
+	assert(newslab->sdh.magic1 == MAGIC1);
+	assert(newslab->sdh.magic2 == MAGIC2);
 #endif
-	assert(firstused->sdh.nused < ITEMSPERPAGE(bytes));
 
-	for(i = firstused->sdh.freeguess;
+	for(i = newslab->sdh.freeguess;
 		count < ITEMSPERPAGE(bytes); count++, i++) {
-	SLABSANITYCHECK(SCL_DETAIL);
 		i = i % ITEMSPERPAGE(bytes);
 
-		if(!GETBIT(firstused, i)) {
-			char *ret;
-			SETBIT(firstused, i);
-	SLABSANITYCHECK(SCL_DETAIL);
-			if(firstused->sdh.nused == ITEMSPERPAGE(bytes)) {
-	SLABSANITYCHECK(SCL_DETAIL);
-				MOVEHEAD(s, LIST_USED, LIST_FULL);
-	SLABSANITYCHECK(SCL_DETAIL);
-			}
-	SLABSANITYCHECK(SCL_DETAIL);
-			ret = ((char *) firstused->data) + i*bytes;
+		if(!GETBIT(newslab, i)) 
+			break;
+	}
+
+	SLABSANITYCHECK(SCL_FUNCTIONS);
+
+	assert(count < ITEMSPERPAGE(bytes));
+	assert(i >= 0 && i < ITEMSPERPAGE(bytes));
+
+	SETBIT(newslab, i);
+	if(newslab->sdh.nused == ITEMSPERPAGE(bytes)) {
+		UNLINKNODE(newslab);
+		s->list_head = newslab->sdh.next;
+	}
+
+	ret = ((char *) newslab) + i*bytes;
 
 #if SANITYCHECKS
 #if MEMPROTECT
-			nojunkwarning++;
-			slabunlock(ret, bytes);
-			nojunkwarning--;
-			assert(!nojunkwarning);
+	nojunkwarning++;
+	slabunlock(ret, bytes);
+	nojunkwarning--;
+	assert(!nojunkwarning);
 #endif
-			*(u32_t *) ret = NOJUNK;
+	*(u32_t *) ret = NOJUNK;
 #if MEMPROTECT
-			slablock(ret, bytes);
+	slablock(ret, bytes);
 #endif
 #endif
 
-			SLABSANITYCHECK(SCL_FUNCTIONS);
-			SLABDATAUSE(firstused, firstused->sdh.freeguess = i+1;);
+	SLABDATAUSE(newslab, newslab->sdh.freeguess = i+1;);
 
 #if SANITYCHECKS
 	if(bytes >= SLABSIZES+MINSIZE) {
 		printf("slaballoc: odd, bytes %d?\n", bytes);
 	}
-			if(!slabsane_f(__FILE__, __LINE__, ret, bytes))
-				panic("slaballoc: slabsane failed");
+
+	if(!slabsane_f(__FILE__, __LINE__, ret, bytes))
+		panic("slaballoc: slabsane failed");
 #endif
 
-			return ret;
-		}
+	assert(!((vir_bytes) ret % OBJALIGN));
 
-	SLABSANITYCHECK(SCL_DETAIL);
-
-	}
-	SLABSANITYCHECK(SCL_FUNCTIONS);
-
-	panic("slaballoc: no space in 'used' slabdata");
-
-	/* Not reached. */
-	return NULL;
+	return ret;
 }
 
 /*===========================================================================*
@@ -404,6 +361,8 @@ static inline int objstats(void *mem, int bytes,
 	struct slabdata *f;
 	int i;
 
+	assert(!(bytes % OBJALIGN));
+
 	OBJSTATSCHECK((char *) mem >= (char *) VM_PAGE_SIZE);
 
 #if SANITYCHECKS
@@ -422,7 +381,6 @@ static inline int objstats(void *mem, int bytes,
 	OBJSTATSCHECK(f->sdh.magic1 == MAGIC1);
 	OBJSTATSCHECK(f->sdh.magic2 == MAGIC2);
 #endif
-	OBJSTATSCHECK(f->sdh.list == LIST_USED || f->sdh.list == LIST_FULL);
 
 	/* Make sure it's in range. */
 	OBJSTATSCHECK((char *) mem >= (char *) f->data);
@@ -452,6 +410,8 @@ void slabfree(void *mem, int bytes)
 	int i;
 	struct slabheader *s;
 	struct slabdata *f;
+
+	bytes = roundup(bytes, OBJALIGN);
 
 	SLABSANITYCHECK(SCL_FUNCTIONS);
 
@@ -486,24 +446,12 @@ void slabfree(void *mem, int bytes)
 
 	/* Check if this slab changes lists. */
 	if(f->sdh.nused == 0) {
-		/* Now become FREE; must've been USED */
-		assert(f->sdh.list == LIST_USED);
 		UNLINKNODE(f);
-		if(f == LH(s, LIST_USED))
-			LH(s, LIST_USED) = f->sdh.next;
-		ADDHEAD(f, s, LIST_FREE);
+		if(f == s->list_head) s->list_head = f->sdh.next;
+		vm_freepages((vir_bytes) f, 1);
 		SLABSANITYCHECK(SCL_DETAIL);
 	} else if(f->sdh.nused == ITEMSPERPAGE(bytes)-1) {
-		/* Now become USED; must've been FULL */
-		assert(f->sdh.list == LIST_FULL);
-		UNLINKNODE(f);
-		if(f == LH(s, LIST_FULL))
-			LH(s, LIST_FULL) = f->sdh.next;
-		ADDHEAD(f, s, LIST_USED);
-		SLABSANITYCHECK(SCL_DETAIL);
-	} else {
-		/* Stay USED */
-		assert(f->sdh.list == LIST_USED);
+		ADDHEAD(f, s);
 	}
 
 	SLABSANITYCHECK(SCL_FUNCTIONS);
@@ -519,6 +467,8 @@ void slablock(void *mem, int bytes)
 	int i;
 	struct slabheader *s;
 	struct slabdata *f;
+
+	bytes = roundup(bytes, OBJALIGN);
 
 	if(objstats(mem, bytes, &s, &f, &i) != OK)
 		panic("slablock objstats failed");
@@ -536,6 +486,8 @@ void slabunlock(void *mem, int bytes)
 	int i;
 	struct slabheader *s;
 	struct slabdata *f;
+
+	bytes = roundup(bytes, OBJALIGN);
 
 	if(objstats(mem, bytes, &s, &f, &i) != OK)
 		panic("slabunlock objstats failed");
@@ -557,16 +509,14 @@ void slabstats(void)
 	if(n%1000) return;
 	for(s = 0; s < SLABSIZES; s++) {
 		int l;
-		for(l = 0; l < LIST_NUMBER; l++) {
-			int b, t;
-			b = s + MINSIZE;
-			t = checklist(__FILE__, __LINE__, &slabs[s], l, b);
+		int b, t;
+		b = s + MINSIZE;
+		t = checklist(__FILE__, __LINE__, &slabs[s], b);
 
-			if(t > 0) {
-				int bytes = t * b;
-				printf("VMSTATS: %2d slabs: %d (%dkB)\n", b, t, bytes/1024);
-				totalbytes += bytes;
-			}
+		if(t > 0) {
+			int bytes = t * b;
+			printf("VMSTATS: %2d slabs: %d (%dkB)\n", b, t, bytes/1024);
+			totalbytes += bytes;
 		}
 	}
 

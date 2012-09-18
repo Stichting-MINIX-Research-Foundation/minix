@@ -82,6 +82,7 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int
 
 /* $(ARCH)/pagetable.c */
 void pt_init();
+void vm_freepages(vir_bytes vir, int pages);
 void pt_init_mem(void);
 void pt_check(struct vmproc *vmp);
 int pt_new(pt_t *pt);
