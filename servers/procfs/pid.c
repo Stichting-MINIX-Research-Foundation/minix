@@ -107,15 +107,15 @@ static void pid_psinfo(int i)
 		ex64lo(proc[i].p_cycles)
 	);
 
+	memset(&vui, 0, sizeof(vui));
+
+	if (!is_zombie(i)) {
+		/* We don't care if this fails.  */
+		(void) vm_info_usage(proc[i].p_endpoint, &vui);
+	}
+
 	/* If the process is not a kernel task, we add some extra info. */
 	if (!task) {
-		memset(&vui, 0, sizeof(vui));
-
-		if (!is_zombie(i)) {
-			/* We don't care if this fails.  */
-			(void) vm_info_usage(proc[i].p_endpoint, &vui);
-		}
-
 		if (mproc[pi].mp_flags & PAUSED)
 			p_state = PSTATE_PAUSED;
 		else if (mproc[pi].mp_flags & WAITING)
@@ -164,6 +164,9 @@ static void pid_psinfo(int i)
 		ex64lo(proc[i].p_kipc_cycles),
 		ex64hi(proc[i].p_kcall_cycles),
 		ex64lo(proc[i].p_kcall_cycles));
+
+	/* add total memory for tasks at the end */
+	if(task) buf_printf(" %lu", vui.vui_total);
 
 	/* Newline at the end of the file. */
 	buf_printf("\n");

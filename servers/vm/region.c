@@ -11,6 +11,7 @@
 #include <minix/debug.h>
 #include <minix/bitmap.h>
 #include <minix/hash.h>
+#include <machine/multiboot.h>
 
 #include <sys/mman.h>
 
@@ -1879,6 +1880,19 @@ void get_stats_info(struct vm_stats_info *vsi)
 		vsi->vsi_cached++;
 }
 
+void get_usage_info_kernel(struct vm_usage_info *vui)
+{
+	memset(vui, 0, sizeof(*vui));
+	vui->vui_total = kernel_boot_info.kernel_allocated_bytes;
+}
+
+static void get_usage_info_vm(struct vm_usage_info *vui)
+{
+	memset(vui, 0, sizeof(*vui));
+	vui->vui_total = kernel_boot_info.vm_allocated_bytes +
+		get_vm_self_pages() * VM_PAGE_SIZE;
+}
+
 /*========================================================================*
  *				get_usage_info				  *
  *========================================================================*/
@@ -1891,6 +1905,16 @@ void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
 	region_start_iter_least(&vmp->vm_regions_avl, &v_iter);
 
 	memset(vui, 0, sizeof(*vui));
+
+	if(vmp->vm_endpoint == VM_PROC_NR) {
+		get_usage_info_vm(vui);
+		return;
+	}
+
+	if(vmp->vm_endpoint < 0) {
+		get_usage_info_kernel(vui);
+		return;
+	}
 
 	while((vr = region_get_iter(&v_iter))) {
 		physr_start_iter_least(vr->phys, &iter);

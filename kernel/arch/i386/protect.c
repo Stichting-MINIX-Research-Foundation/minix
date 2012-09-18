@@ -323,6 +323,8 @@ void prot_init()
   prot_init_done = 1;
 }
 
+static int alloc_for_vm = 0;
+
 void arch_post_init(void)
 {
   /* Let memory mapping code know what's going on at bootstrap time */
@@ -337,6 +339,7 @@ int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
         pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
   	pg_load();
         memset((char *) vaddr, 0, len);
+	alloc_for_vm += len;
         return OK;
 }
 
@@ -383,5 +386,8 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 
 		/* Free VM blob that was just copied into existence. */
 		cut_memmap(&kinfo, mod->mod_start, mod->mod_end);
+
+		/* Remember them */
+		kinfo.vm_allocated_bytes = alloc_for_vm;
 	}
 }

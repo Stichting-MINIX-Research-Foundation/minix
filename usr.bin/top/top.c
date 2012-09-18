@@ -173,6 +173,10 @@ void parse_file(pid_t pid)
 		}
 	}
 
+	if ((p->p_flags & IS_TASK)) {
+		fscanf(fp, " %lu ", &p->p_memory);
+	}
+
 	p->p_flags |= USED;
 
 	fclose(fp);
@@ -458,7 +462,6 @@ void print_procs(int maxlines,
 		}
 		if(p-NR_TASKS == KERNEL) {
 			kernelticks = uticks;
-			continue;
 		}
 		if(!(proc2[p].p_flags & IS_TASK)) {
 			if(proc2[p].p_flags & IS_SYSTEM)
@@ -508,7 +511,7 @@ void print_procs(int maxlines,
 
 		pr = tick_procs[p].p;
 
-		if(pr->p_flags & IS_TASK) {
+		if((pr->p_flags & IS_TASK) && pr->p_pid != KERNEL) {
 			/* skip old kernel tasks as they don't run anymore */
 			continue;
 		}

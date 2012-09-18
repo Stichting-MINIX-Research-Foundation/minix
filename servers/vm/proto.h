@@ -100,6 +100,7 @@ void pt_cycle(void);
 int pt_mapkernel(pt_t *pt);
 void vm_pagelock(void *vir, int lockflag);
 int vm_addrok(void *vir, int write);
+int get_vm_self_pages(void);
 
 #if SANITYCHECKS
 void pt_sanitycheck(pt_t *pt, char *file, int line);
@@ -159,6 +160,7 @@ int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt);
 
 void get_stats_info(struct vm_stats_info *vsi);
 void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui);
+void get_usage_info_kernel(struct vm_usage_info *vui);
 int get_region_info(struct vmproc *vmp, struct vm_region_info *vri, int
 	count, vir_bytes *nextp);
 int copy_abs2region(phys_bytes abs, struct vir_region *destregion,

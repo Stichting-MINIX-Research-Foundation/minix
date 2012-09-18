@@ -160,6 +160,11 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	cbi->user_sp &= 0xF0000000;
 	cbi->user_end = cbi->user_sp;
 
+	/* kernel bytes without bootstrap code/data that is currently
+	 * still needed but will be freed after bootstrapping.
+	 */
+	kinfo.kernel_allocated_bytes = (phys_bytes) &_kern_size;
+
 	assert(!(cbi->bootstrap_start % I386_PAGE_SIZE));
 	cbi->bootstrap_len = rounddown(cbi->bootstrap_len, I386_PAGE_SIZE);
 	assert(mbi->flags & MULTIBOOT_INFO_MODS);

@@ -122,10 +122,11 @@ int do_info(message *m)
 		break;
 
 	case VMIW_USAGE:
-		if (vm_isokendpt(m->VMI_EP, &pr) != OK)
+		if(m->VMI_EP < 0)
+			get_usage_info_kernel(&vui);
+		else if (vm_isokendpt(m->VMI_EP, &pr) != OK)
 			return EINVAL;
-
-		get_usage_info(&vmproc[pr], &vui);
+		else get_usage_info(&vmproc[pr], &vui);
 
 		addr = (vir_bytes) &vui;
 		size = sizeof(vui);

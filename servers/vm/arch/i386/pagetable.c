@@ -36,6 +36,8 @@
 
 #include "memory.h"
 
+static int vm_self_pages;
+
 /* PDE used to map in kernel, kernel physical address. */
 static int pagedir_pde = -1;
 static u32_t global_bit = 0, pagedir_pde_val;
@@ -66,6 +68,9 @@ static struct {
 	void *page;
 	phys_bytes phys;
 } sparepages[SPAREPAGES];
+
+extern char _end;	
+#define is_staticaddr(v) ((vir_bytes) (v) < (vir_bytes) &_end)
 
 #define MAX_KERNMAPPINGS 10
 static struct {
@@ -130,7 +135,6 @@ static u32_t findhole(void)
 	int pde = 0, try_restart;
 	static u32_t lastv = 0;
 	pt_t *pt = &vmprocess->vm_pt;
-	extern char _end;	
 	vir_bytes vmin, vmax;
 
 	vmin = (vir_bytes) (&_end) & I386_VM_ADDR_MASK; /* marks end of VM BSS */
@@ -188,9 +192,8 @@ static u32_t findhole(void)
 void vm_freepages(vir_bytes vir, int pages)
 {
 	assert(!(vir % I386_PAGE_SIZE)); 
-	extern char _end;	
 
-	if(vir < (vir_bytes) &_end) {
+	if(is_staticaddr(vir)) {
 		printf("VM: not freeing static page\n");
 		return;
 	}
@@ -199,6 +202,8 @@ void vm_freepages(vir_bytes vir, int pages)
 		MAP_NONE, pages*I386_PAGE_SIZE, 0,
 		WMF_OVERWRITE | WMF_FREE) != OK)
 		panic("vm_freepages: pt_writemap failed");
+
+	vm_self_pages--;
 
 #if SANITYCHECKS
 	/* If SANITYCHECKS are on, flush tlb so accessing freed pages is
@@ -288,6 +293,7 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 			util_stacktrace();
 			printf("VM: warning: out of spare pages\n");
 		}
+		if(!is_staticaddr(s)) vm_self_pages++;
 		return s;
 	}
 
@@ -330,6 +336,7 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	/* Return user-space-ready pointer to it. */
 	ret = (void *) loc;
 
+	vm_self_pages++;
 	return ret;
 }
 
@@ -1135,3 +1142,4 @@ void pt_cycle(void)
 	vm_checkspares();
 }
 
+int get_vm_self_pages(void) { return vm_self_pages; }
