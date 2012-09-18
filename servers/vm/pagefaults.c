@@ -70,7 +70,7 @@ void do_pagefaults(message *m)
 	assert(vmp->vm_flags & VMF_INUSE);
 
 	/* See if address is valid at all. */
-	if(!(region = map_lookup(vmp, addr))) {
+	if(!(region = map_lookup(vmp, addr, NULL))) {
 		if(PFERR_PROT(err))  {
 			printf("VM: pagefault: SIGSEGV %d protected addr 0x%x; %s\n",
 				ep, addr, pf_errstr(err));
@@ -177,7 +177,7 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 
 	while(len > 0) {
 		int r;
-		if(!(region = map_lookup(vmp, mem))) {
+		if(!(region = map_lookup(vmp, mem, NULL))) {
 #if VERBOSE
 			map_printmap(vmp);
 			printf("VM: do_memory: memory doesn't exist\n");

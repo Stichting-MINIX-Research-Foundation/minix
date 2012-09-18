@@ -297,8 +297,8 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	 */
 	if(!is_vm) {
 		struct vir_region *vr;
-		vr = map_lookup(dst_vmp, VM_STACKTOP);
-		if(vr && !map_lookup(src_vmp, VM_STACKTOP)) {
+		vr = map_lookup(dst_vmp, VM_STACKTOP, NULL);
+		if(vr && !map_lookup(src_vmp, VM_STACKTOP, NULL)) {
 #if LU_DEBUG
 			printf("VM: swap_proc_dyn_data: tranferring regions above the stack from %d to %d\n",
 				src_vmp->vm_endpoint, dst_vmp->vm_endpoint);

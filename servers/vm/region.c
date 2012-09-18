@@ -813,7 +813,7 @@ static phys_bytes freeyieldednode(yielded_t *node, int freemem)
 	/* Free associated memory if requested. */
 
 	if(freemem) {
-		free_mem(ABS2CLICK(node->addr), 1);
+		free_mem(ABS2CLICK(node->physaddr), node->pages);
 	}
 
 	/* Free node. */
@@ -875,9 +875,10 @@ struct vmproc *vmp;
 /*===========================================================================*
  *				map_lookup				     *
  *===========================================================================*/
-struct vir_region *map_lookup(vmp, offset)
+struct vir_region *map_lookup(vmp, offset, physr)
 struct vmproc *vmp;
 vir_bytes offset;
+struct phys_region **physr;
 {
 	struct vir_region *r;
 
@@ -889,8 +890,15 @@ vir_bytes offset;
 #endif
 
 	if((r = region_search(&vmp->vm_regions_avl, offset, AVL_LESS_EQUAL))) {
-		if(offset >= r->vaddr && offset < r->vaddr + r->length)
+		vir_bytes ph;
+		if(offset >= r->vaddr && offset < r->vaddr + r->length) {
+			ph = offset - r->vaddr;
+			if(physr) {
+				*physr = physr_search(r->phys, ph, AVL_EQUAL);
+				assert((*physr)->offset == ph);
+			}
 			return r;
+		}
 	}
 
 	SANITYCHECK(SCL_FUNCTIONS);
@@ -1811,7 +1819,7 @@ int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r)
 	struct phys_region *ph;
 	physr_iter iter;
 
-	if (!(vr = map_lookup(vmp, addr)) ||
+	if (!(vr = map_lookup(vmp, addr, NULL)) ||
 		(vr->vaddr != addr))
 		return EINVAL;
 
@@ -1838,7 +1846,7 @@ int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
 	struct phys_region *ph;
 	physr_iter iter;
 
-	if (!(vr = map_lookup(vmp, addr)) ||
+	if (!(vr = map_lookup(vmp, addr, NULL)) ||
 		(vr->vaddr != addr))
 		return EINVAL;
 
@@ -2082,7 +2090,7 @@ int unmap_memory(endpoint_t sour, endpoint_t dest,
 		panic("unmap_memory: bad endpoint: %d", dest);
 	vmd = &vmproc[p];
 
-	vrd = map_lookup(vmd, virt_d);
+	vrd = map_lookup(vmd, virt_d, NULL);
 	assert(vrd);
 
 	/* Search for the first phys region in the destination process. */
@@ -2155,9 +2163,9 @@ int map_memory(endpoint_t sour, endpoint_t dest,
 		panic("map_memory: bad endpoint: %d", dest);
 	vmd = &vmproc[p];
 
-	vrs = map_lookup(vms, virt_s);
+	vrs = map_lookup(vms, virt_s, NULL);
 	assert(vrs);
-	vrd = map_lookup(vmd, virt_d);
+	vrd = map_lookup(vmd, virt_d, NULL);
 	assert(vrd);
 
 	/* Linear address -> offset from start of vir region. */
@@ -2185,38 +2193,18 @@ static struct phys_region *
 get_clean_phys_region(struct vmproc *vmp, vir_bytes vaddr, struct vir_region **ret_region)
 {
 	struct vir_region *region;
-	vir_bytes regionoffset, mapaddr;
+	vir_bytes mapaddr;
 	struct phys_region *ph;
 
 	mapaddr = vaddr;
 
-        if(!(region = map_lookup(vmp, mapaddr))) {
+        if(!(region = map_lookup(vmp, mapaddr, &ph)) || !ph) {
 		printf("VM: get_clean_phys_region: 0x%lx not found\n", vaddr);
-		return NULL;
-	}
-
-	if(!(region->flags & VR_ANON)) {
-		printf("VM: get_clean_phys_region: non-anon 0x%lx\n", vaddr);
 		return NULL;
 	}
 
 	assert(mapaddr >= region->vaddr);
 	assert(mapaddr < region->vaddr + region->length);
-
-	regionoffset = mapaddr-region->vaddr;
-
-	/* For now, only support the yielding of blocks that are
-	 * exactly a mapped phys_region. Go get that phys_region.
-	 * (This can be improved without changing the interface.)
-	 */
-	if(!(ph = physr_search(region->phys, regionoffset,
-		AVL_EQUAL))) {
-		printf("VM: get_clean_phys_region: exact block not found\n");
-		return NULL;
-	}
-
-	/* Make sure this is what we asked for. */
-	assert(ph->offset == regionoffset);
 
 	/* If it's mapped more than once, make a copy. */
 	assert(ph->ph->refcount > 0);
@@ -2235,13 +2223,15 @@ get_clean_phys_region(struct vmproc *vmp, vir_bytes vaddr, struct vir_region **r
 	return ph;
 }
 
-static int getblock(struct vmproc *vmp, u64_t id, vir_bytes vaddr)
+static int getblock(struct vmproc *vmp, u64_t id, vir_bytes vaddr, int pages)
 {
 	yielded_t *yb;
 	struct phys_region *ph;
 	struct vir_region *region;
 	yielded_avl *avl;
 	block_id_t blockid;
+	phys_bytes phaddr;
+	int p;
 
 	/* Try to get the yielded block */
 	blockid.owner = vmp->vm_endpoint;
@@ -2251,26 +2241,39 @@ static int getblock(struct vmproc *vmp, u64_t id, vir_bytes vaddr)
 		return ESRCH;
 	}
 
-	/* Get the intended phys region, make sure refcount is 1. */
-	if(!(ph = get_clean_phys_region(vmp, vaddr, &region))) {
-		printf("VM: getblock: not found for %d\n", vmp->vm_endpoint);
-		return EINVAL;
+	if(yb->pages != pages) {
+		printf("VM: getblock: length mismatch (%d != %d)\n",
+			pages, yb->pages);
+		return EFAULT;
 	}
 
-	assert(ph->ph->refcount == 1);
+	phaddr = yb->physaddr;
 
-	/* Free the block that is currently there. */
-	free_mem(ABS2CLICK(ph->ph->phys), 1);
+	for(p = 0; p < pages; p++) {
+		/* Get the intended phys region, make sure refcount is 1. */
+		if(!(ph = get_clean_phys_region(vmp, vaddr, &region))) {
+			printf("VM: getblock: not found for %d\n", vmp->vm_endpoint);
+			return EINVAL;
+		}
 
-	/* Set the phys block to new addr and update pagetable. */
-	USE(ph->ph, ph->ph->phys = yb->addr;);
-	if(map_ph_writept(vmp, region, ph) != OK) {
-		/* Presumably it was mapped, so there is no reason
-		 * updating should fail.
-		 */
-		panic("do_get_block: couldn't write pt");
+		assert(ph->ph->refcount == 1);
+
+		/* Free the block that is currently there. */
+		free_mem(ABS2CLICK(ph->ph->phys), 1);
+
+		/* Set the phys block to new addr and update pagetable. */
+		USE(ph->ph, ph->ph->phys = phaddr;);
+		if(map_ph_writept(vmp, region, ph) != OK) {
+			/* Presumably it was mapped, so there is no reason
+			 * updating should fail.
+			 */
+			panic("do_get_block: couldn't write pt");
+		}
+		
+		vaddr += VM_PAGE_SIZE;
+		phaddr += VM_PAGE_SIZE;
 	}
-
+	
 	/* Forget about the yielded block and free the struct. */
 	freeyieldednode(yb, 0);
 
@@ -2278,12 +2281,12 @@ static int getblock(struct vmproc *vmp, u64_t id, vir_bytes vaddr)
 }
 
 static int yieldblock(struct vmproc *vmp, u64_t id,
-	vir_bytes vaddr, yielded_t **retyb)
+	vir_bytes vaddr, yielded_t **retyb, int pages)
 {
 	yielded_t *newyb;
-	vir_bytes mem_clicks, clicks;
+	vir_bytes mem_clicks, v, p, new_phaddr;
 	struct vir_region *region;
-	struct phys_region *ph;
+	struct phys_region *ph = NULL, *prev_ph = NULL, *first_ph = NULL;
 	yielded_avl *avl;
 	block_id_t blockid;
 
@@ -2298,12 +2301,33 @@ static int yieldblock(struct vmproc *vmp, u64_t id,
 		return EINVAL;
 	}
 
-	if(vaddr % VM_PAGE_SIZE) return EFAULT;
+	if((vaddr % VM_PAGE_SIZE) || pages < 1) return EFAULT;
 
-	if(!(ph = get_clean_phys_region(vmp, vaddr, &region))) {
-		printf("VM: do_yield_block: not found for %d\n",
-			vmp->vm_endpoint);
-		return EINVAL;
+	v = vaddr;
+	for(p = 0; p < pages; p++) {
+	        if(!(region = map_lookup(vmp, v, &ph)) || !ph) {
+			printf("VM: do_yield_block: not found for %d\n",
+				vmp->vm_endpoint);
+			return EINVAL;
+		}
+		if(!(region->flags & VR_ANON)) {
+			printf("VM: yieldblock: non-anon 0x%lx\n", v);
+			return EFAULT;
+		}
+		if(ph->ph->refcount != 1) {
+			printf("VM: do_yield_block: mapped not once for %d\n",
+				vmp->vm_endpoint);
+			return EFAULT;
+		}
+		if(prev_ph) {
+			if(ph->ph->phys != prev_ph->ph->phys + VM_PAGE_SIZE) {
+				printf("VM: physically discontiguous yield\n");
+				return EINVAL;
+			}
+		}
+		prev_ph = ph;
+		if(!first_ph) first_ph = ph;
+		v += VM_PAGE_SIZE;
 	}
 
 	/* Make a new block to record the yielding in. */
@@ -2313,8 +2337,7 @@ static int yieldblock(struct vmproc *vmp, u64_t id,
 
 	assert(!(ph->ph->phys % VM_PAGE_SIZE));
 
-	clicks = 1;
-	if((mem_clicks = alloc_mem(clicks, PAF_CLEAR)) == NO_MEM) {
+	if((mem_clicks = alloc_mem(pages, PAF_CLEAR)) == NO_MEM) {
 		SLABFREE(newyb);
 		return ENOMEM;
 	}
@@ -2322,17 +2345,28 @@ static int yieldblock(struct vmproc *vmp, u64_t id,
 	/* Update yielded block info. */
 	USE(newyb,
 		newyb->id = blockid;
-		newyb->addr = ph->ph->phys;
+		newyb->physaddr = first_ph->ph->phys;
+		newyb->pages = pages;
 		newyb->younger = NULL;);
 
+	new_phaddr = CLICK2ABS(mem_clicks);
+
 	/* Set new phys block to new addr and update pagetable. */
-	USE(ph->ph,
-		ph->ph->phys = CLICK2ABS(mem_clicks););
-	if(map_ph_writept(vmp, region, ph) != OK) {
-		/* Presumably it was mapped, so there is no reason
-		 * updating should fail.
-		 */
-		panic("yield_block: couldn't write pt");
+	v = vaddr;
+	for(p = 0; p < pages; p++) {
+	        region = map_lookup(vmp, v, &ph);
+		assert(region && ph);
+		assert(ph->ph->refcount == 1);
+		USE(ph->ph,
+			ph->ph->phys = new_phaddr;);
+		if(map_ph_writept(vmp, region, ph) != OK) {
+			/* Presumably it was mapped, so there is no reason
+			 * updating should fail.
+			 */
+			panic("yield_block: couldn't write pt");
+		}
+		v += VM_PAGE_SIZE;
+		new_phaddr += VM_PAGE_SIZE;
 	}
 
 	/* Remember yielded block. */
@@ -2425,6 +2459,7 @@ int do_yieldblockgetblock(message *m)
 	struct vmproc *vmp;
 	yielded_t *yb = NULL;
 	int r = ESRCH;
+	int pages;
 
 	if(vm_isokendpt(caller, &n) != OK)
 		panic("do_yieldblockgetblock: message from strange source: %d",
@@ -2432,13 +2467,15 @@ int do_yieldblockgetblock(message *m)
 
 	vmp = &vmproc[n];
 
-	if(m->VMYBGB_LEN != VM_PAGE_SIZE) {
-		static int printed = 0;
+	pages = m->VMYBGB_LEN / VM_PAGE_SIZE;
+
+	if((m->VMYBGB_LEN % VM_PAGE_SIZE) || pages < 1) {
+		static int printed;
 		if(!printed) {
 			printed = 1;
-			printf("vm: secondary cache for non-page-sized blocks temporarily disabled\n");
+			printf("vm: non-page-aligned or short block length\n");
 		}
-		return ENOSYS;
+		return EFAULT;
 	}
 
 	yieldid = make64(m->VMYBGB_YIELDIDLO, m->VMYBGB_YIELDIDHI);
@@ -2446,12 +2483,13 @@ int do_yieldblockgetblock(message *m)
 
 	if(cmp64(yieldid, VM_BLOCKID_NONE) != 0) {
 		/* A block was given to yield. */
-		yieldblock(vmp, yieldid, (vir_bytes) m->VMYBGB_VADDR, &yb);
+		yieldblock(vmp, yieldid, (vir_bytes) m->VMYBGB_VADDR, &yb,
+			pages);
 	}
 
 	if(cmp64(getid, VM_BLOCKID_NONE) != 0) {
 		/* A block was given to get. */
-		r = getblock(vmp, getid, (vir_bytes) m->VMYBGB_VADDR);
+		r = getblock(vmp, getid, (vir_bytes) m->VMYBGB_VADDR, pages);
 	}
 
 	return r;

@@ -14,7 +14,8 @@ typedef struct yielded {
 	 * uniquely identify a yielded block.
 	 */
 	block_id_t	id;
-	phys_bytes	addr;
+	phys_bytes	physaddr;
+	int		pages;
 
 	/* LRU fields */
 	struct yielded	*younger, *older;
