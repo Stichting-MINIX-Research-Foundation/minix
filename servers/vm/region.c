@@ -677,6 +677,7 @@ static int map_subfree(struct vir_region *region,
 	if(start == 0 && len == region->length)
 		full = 1;
 
+	physr_init_iter(&iter);
 	physr_start_iter(region->phys, &iter, start, AVL_GREATER_EQUAL);
 	while((pr = physr_get_iter(&iter))) {
 		physr_incr_iter(&iter);
@@ -981,7 +982,7 @@ int written;
 		if(!(newpb = pb_new(ml->phys)) ||
 		   !(newphysr = pb_reference(newpb, offset, region))) {
 			printf("map_new_physblock: no memory for the ph slabs\n");
-			if(newphysr) SLABFREE(newphysr);
+			assert(!newphysr);
 			if(newpb) SLABFREE(newpb);
 			r = ENOMEM;
 			break;
@@ -1715,6 +1716,7 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 		 * point to the same addresses, make them shrink by the
 		 * same amount.
 		 */
+		physr_init_iter(&iter);
         	physr_start_iter(r->phys, &iter, offset, AVL_GREATER_EQUAL);
 
 		while((pr = physr_get_iter(&iter))) {

@@ -95,6 +95,8 @@ void utrace(struct ut *, int);
 #   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
 #endif /* __FreeBSD__ */
 
+#include <assert.h>
+
 #include <sys/types.h>
 #if defined(__NetBSD__)
 #   define malloc_minsize               16U
@@ -1030,7 +1032,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
       pf->size > malloc_cache &&		/* ..and the cache is full, */
       pf->end == malloc_brk &&			/* ..and none behind us, */
       malloc_brk == sbrk((intptr_t)0)) {	/* ..and it's OK to do... */
-
+	int r;
 	/*
 	 * Keep the cache intact.  Notice that the '>' above guarantees that
 	 * the pf will always have at least one page afterwards.
@@ -1038,7 +1040,8 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
 	pf->end = (char *)pf->page + malloc_cache;
 	pf->size = malloc_cache;
 
-	brk(pf->end);
+	r = brk(pf->end);
+	assert(r >= 0);
 	malloc_brk = pf->end;
 
 	idx = ptr2idx(pf->end);
