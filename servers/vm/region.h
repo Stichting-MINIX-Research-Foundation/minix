@@ -23,7 +23,6 @@ struct phys_block {
 #if SANITYCHECKS
 	u32_t			seencount;
 #endif
-	vir_bytes		length;	/* no. of contiguous bytes */
 	phys_bytes		phys;	/* physical memory */
 	u8_t			refcount;	/* Refcount of these pages */
 #define PBSH_COW	1

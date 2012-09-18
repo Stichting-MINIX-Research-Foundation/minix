@@ -11,7 +11,7 @@
  * line are function arguments.
  */
 #define MYASSERT(c) do { if(!(c)) { \
-        printf("VM:%s:%d: %s failed\n", file, line, #c); \
+        printf("VM:%s:%d: %s failed (last sanity check %s:%d)\n", file, line, #c, sc_lastfile, sc_lastline); \
 	panic("sanity check failed"); } } while(0)
 
 #define SLABSANITYCHECK(l) if((l) <= vm_sanitychecklevel) { \
@@ -33,6 +33,7 @@
 	assert(incheck == 1);	\
 	incheck = 0;		\
 	/* printf("(%s:%d OK) ", __FILE__, __LINE__); */ \
+	sc_lastfile = __FILE__; sc_lastline = __LINE__; \
 	} 
 
 #define SLABSANE(ptr) { \

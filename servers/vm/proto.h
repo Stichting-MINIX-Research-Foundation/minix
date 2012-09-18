@@ -20,7 +20,7 @@ struct phys_region;
 /* alloc.c */
 void mem_sanitycheck(char *file, int line);
 phys_clicks alloc_mem(phys_clicks clicks, u32_t flags);
-struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags);
+struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags, phys_bytes known);
 void memstats(int *nodes, int *pages, int *largest);
 void printmemstats(void);
 void usedpages_reset(void);
@@ -145,7 +145,6 @@ int map_handle_memory(struct vmproc *vmp, struct vir_region *region,
 void map_printmap(struct vmproc *vmp);
 int map_writept(struct vmproc *vmp);
 void printregionstats(struct vmproc *vmp);
-phys_bytes map_lookup_phys(struct vmproc *vmp, u32_t tag);
 void map_setparent(struct vmproc *vmp);
 int yielded_block_cmp(struct block_id *, struct block_id *);
 

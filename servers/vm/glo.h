@@ -25,6 +25,8 @@ EXTERN kinfo_t kernel_boot_info;
 EXTERN int nocheck;
 EXTERN int incheck;
 EXTERN long vm_sanitychecklevel;
+EXTERN int sc_lastline;
+EXTERN char *sc_lastfile;
 #endif
 
 /* total number of memory pages */
