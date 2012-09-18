@@ -58,11 +58,6 @@ int do_fork(message *msg)
   vmc = &vmproc[childproc];	/* child */
   assert(vmc->vm_slot == childproc);
 
-  if(vmp->vm_flags & VMF_HAS_DMA) {
-	printf("VM: %d has DMA memory and may not fork\n", msg->VMF_ENDPOINT);
-	return EINVAL;
-  }
-
   /* The child is basically a copy of the parent. */
   origpt = vmc->vm_pt;
   *vmc = *vmp;
