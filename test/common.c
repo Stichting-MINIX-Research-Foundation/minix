@@ -80,14 +80,6 @@ int test_nr;
 {
   char buf[128];
 
-  /* "rm -rf dir" will not work unless all the subdirectories have suitable
-   * permissions.  Minix chmod is not recursive so it is not easy to change
-   * all the permissions.  I had to fix opendir() to stop the bash shell
-   * from hanging when it opendir()s fifos.
-   */
-  sprintf(buf, "chmod 777 DIR_%02d DIR_%02d/* DIR_%02d/*/* >/dev/null 2>&1",
-	  test_nr, test_nr, test_nr);
-  (void) system(buf);		/* usually fails */
   sprintf(buf, "rm -rf DIR_%02d >/dev/null 2>&1", test_nr);
   if (system(buf) != 0) printf("Warning: system(\"%s\") failed\n", buf);
 }
