@@ -377,11 +377,6 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags, phys_bytes know
 	assert(!(flags & PAF_CONTIG));
 
 	if(known != MAP_NONE) {
-		if(known == NO_MEM) {
-			printf("VM: odd mem for alloc_mem_in_list: 0x%lx\n",
-				known);
-			return NULL;
-		}
 		phys_count = known;
 	}
 
