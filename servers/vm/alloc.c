@@ -376,8 +376,14 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags, phys_bytes know
 
 	assert(!(flags & PAF_CONTIG));
 
-	if(known != MAP_NONE)
+	if(known != MAP_NONE) {
+		if(known == NO_MEM) {
+			printf("VM: odd mem for alloc_mem_in_list: 0x%lx\n",
+				known);
+			return NULL;
+		}
 		phys_count = known;
+	}
 
 	do {
 		struct memlist *ml;
@@ -425,19 +431,6 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags, phys_bytes know
 			head = ml;
 		rempages--;
 	} while(rempages > 0);
-
-    {
-	struct memlist *ml;
-	for(ml = head; ml; ml = ml->next) {
-		assert(ml->phys);
-#if NONCONTIGUOUS
-		if(!(flags & PAF_CONTIG)) {
-			if(ml->next)
-				assert(ml->phys + ml->length != ml->next->phys);
-		}
-#endif
-	}
-    }
 
 	return head;
 }
