@@ -392,14 +392,11 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags, phys_bytes know
 				if(mem == NO_MEM) {
 					freed = free_yielded(rempages * VM_PAGE_SIZE);
 				}
-				assert(mem != MAP_NONE);
 			} else {
 				mem = ABS2CLICK(phys_count);
 				phys_count += VM_PAGE_SIZE;
-				assert(mem != MAP_NONE);
 				assert(mem != NO_MEM);
 			}
-			assert(mem != MAP_NONE);
 		} while(mem == NO_MEM && freed > 0);
 
 		if(mem == NO_MEM) {
