@@ -174,7 +174,9 @@ void parse_file(pid_t pid)
 	}
 
 	if ((p->p_flags & IS_TASK)) {
-		fscanf(fp, " %lu ", &p->p_memory);
+		if(fscanf(fp, " %lu", &p->p_memory) != 1) {
+			p->p_memory = 0;
+		}
 	}
 
 	p->p_flags |= USED;
