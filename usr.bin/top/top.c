@@ -162,7 +162,7 @@ void parse_file(pid_t pid)
 		}
 
 		p->p_effuid = effuid;
-	}
+	} else p->p_effuid = 0;
 
 	for(i = 1; i < CPUTIMENAMES; i++) {
 		if(fscanf(fp, " %lu %lu",
