@@ -55,7 +55,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <a.out.h>
-#include <tools.h>
 #include <dirent.h>
 
 #include "exitvalues.h"

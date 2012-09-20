@@ -4,7 +4,6 @@
 #include <minix/param.h>
 #include <sys/stat.h>
 #include <a.out.h>
-#include <tools.h>
 
 #include "vm.h"
 #include "vmproc.h"

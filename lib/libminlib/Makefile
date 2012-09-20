@@ -34,8 +34,6 @@ SRCS+= 	getngid.c getnpid.c getnprocnr.c getnucred.c getnuid.c getprocnr.c \
 
 SRCS+= oneC_sum.c
 
-INCS+= tools.h
-
 .include "${MACHINE_ARCH}/Makefile.inc"
 
 .include <bsd.own.mk>
