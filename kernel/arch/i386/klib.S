@@ -316,49 +316,35 @@ ENTRY(__user_copy_msg_pointer_failure)
 /*				phys_memset				     */
 /*===========================================================================*/
 /*
- * PUBLIC void phys_memset(phys_bytes source, unsigned long pattern, 
+ * PUBLIC void phys_memset(phys_bytes dst, unsigned long pattern, 
  *	phys_bytes bytecount); 
  * Fill a block of physical memory with pattern. 
  */
 ENTRY(phys_memset)
 	push	%ebp
 	mov	%esp, %ebp
-	push	%esi
-	push	%ebx
+	push	%edi
+	cld
 
-	mov	8(%ebp), %esi
-	mov	16(%ebp), %eax
-	mov	12(%ebp), %ebx
-	shr	$2, %eax
-fill_start:
-	mov	%ebx, (%esi)
-	add	$4, %esi
-	dec	%eax
-	jne	fill_start
+	mov	8(%ebp), %edi
+	mov	16(%ebp), %ecx
+	mov	12(%ebp), %eax
+	shr	$2, %ecx
+	rep stosl
+
 /* Any remaining bytes? */
-	mov	16(%ebp), %eax
-	and	$3, %eax
-remain_fill:
-	cmp	$0, %eax
-	je	fill_done
-	movb	12(%ebp), %bl
-	movb	%bl, (%esi)
-	add	$1, %esi
-	inc	%ebp
-	dec	%eax
-	jmp	remain_fill
+	mov	16(%ebp), %ecx
+	and	$3, %ecx
+	rep stosb
 
-fill_done:
 LABEL(memset_fault)		/* kernel can send us here */
 	mov	$0, %eax		/* 0 means: no fault */
-	pop	%ebx
-	pop	%esi
+	pop	%edi
 	pop	%ebp
 	ret
 
 LABEL(memset_fault_in_kernel)		/* kernel can send us here */
-	pop	%ebx
-	pop	%esi
+	pop	%edi
 	pop	%ebp
 	mov	%cr2, %eax
 	ret
