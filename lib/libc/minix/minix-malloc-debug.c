@@ -129,7 +129,9 @@ static struct block *block_alloc(size_t size)
 #ifdef __NBSD_LIBC
 	tsc = 0;
 #else
-	read_tsc_64(&tsc);
+	tsc = 0;
+  /* LSC Broken for now... */
+  /* read_tsc_64(&tsc); */
 #endif
 	totalsize = block_get_totalsize(size);
 	page_index_max = (ptr_max - ptr_min - totalsize) / PAGE_SIZE;
