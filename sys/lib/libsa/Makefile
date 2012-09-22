@@ -89,9 +89,6 @@ SRCS+=	ustarfs.c
 SRCS+=	dosfs.c
 SRCS+=	ext2fs.c
 SRCS+=	minixfs3.c
-.ifndef __MINIX_w
-SRCS+=	fnmatch.c
-.endif
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
