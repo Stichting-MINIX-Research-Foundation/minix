@@ -226,6 +226,9 @@ void system_init(void)
   map(SYS_SAFECOPYTO, do_safecopy_to);	/* copy with pre-granted permission */
   map(SYS_VSAFECOPY, do_vsafecopy);	/* vectored safecopy */
 
+  /* safe memset */
+  map(SYS_SAFEMEMSET, do_safememset);	/* safememset */
+
   /* Mapping. */
   map(SYS_SAFEMAP, do_safemap);		/* map pages from other process */
   map(SYS_SAFEREVMAP, do_saferevmap);	/* grantor revokes the map grant */

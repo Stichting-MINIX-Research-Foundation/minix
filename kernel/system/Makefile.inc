@@ -25,6 +25,7 @@ SRCS+= 	\
 	do_setgrant.c \
 	do_privctl.c \
 	do_safecopy.c \
+	do_safememset.c \
 	do_safemap.c \
 	do_sysctl.c \
 	do_getksig.c \
