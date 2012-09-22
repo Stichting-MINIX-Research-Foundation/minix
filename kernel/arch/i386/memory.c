@@ -128,6 +128,21 @@ static phys_bytes createpde(
 	/* Return the linear address of the start of the new mapping. */
 	return I386_BIG_PAGE_SIZE*pde + offset;
 }
+
+
+/*===========================================================================*
+ *                           check_resumed_caller                            *
+ *===========================================================================*/
+static int check_resumed_caller(struct proc *caller)
+{
+	/* Returns the result from VM if caller was resumed, otherwise OK. */
+	if (caller && (caller->p_misc_flags & MF_KCALL_RESUME)) {
+		assert(caller->p_vmrequest.vmresult != VMSUSPEND);
+		return caller->p_vmrequest.vmresult;
+	}
+
+	return OK;
+}
   
 /*===========================================================================*
  *				lin_lin_copy				     *
@@ -557,50 +572,68 @@ static void vm_print(u32_t *root)
 }
 #endif
 
-int vm_memset(endpoint_t who, phys_bytes ph, const u8_t c, phys_bytes bytes)
+/*===========================================================================*
+ *                                 vmmemset                                  *
+ *===========================================================================*/
+int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
+	phys_bytes count)
 {
-	u32_t p;
+	u32_t pattern;
 	struct proc *whoptr = NULL;
-	
+	phys_bytes cur_ph = ph;
+	phys_bytes left = count;
+	phys_bytes ptr, chunk, pfa = 0;
+	int new_cr3, r = OK;
+
+	if ((r = check_resumed_caller(caller)) != OK)
+		return r;
+
 	/* NONE for physical, otherwise virtual */
-	if(who != NONE) {
-		int n;
-		if(!isokendpt(who, &n)) return ESRCH;
-		whoptr = proc_addr(n);
-	} 
-	
-	p = c | (c << 8) | (c << 16) | (c << 24);
+	if (who != NONE && !(whoptr = endpoint_lookup(who)))
+		return ESRCH;
+
+	c &= 0xFF;
+	pattern = c | (c << 8) | (c << 16) | (c << 24);
 
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
-
 	assert(!catch_pagefaults);
-	catch_pagefaults=1;
+	catch_pagefaults = 1;
 
-	/* With VM, we have to map in the memory (virtual or physical). 
-	 * We can do this 4MB at a time.
+	/* We can memset as many bytes as we have remaining,
+	 * or as many as remain in the 4MB chunk we mapped in.
 	 */
-	while(bytes > 0) {
-		int changed = 0;
-		phys_bytes chunk = bytes, ptr, pfa;
-		ptr = createpde(whoptr, ph, &chunk, 0, &changed);
-		if(changed)
-			reload_cr3(); 
+	while (left > 0) {
+		new_cr3 = 0;
+		chunk = left;
+		ptr = createpde(whoptr, cur_ph, &chunk, 0, &new_cr3);
 
-		/* We can memset as many bytes as we have remaining,
-		 * or as many as remain in the 4MB chunk we mapped in.
-		 */
-		if((pfa=phys_memset(ptr, p, chunk))) {
-			printf("kernel memset pagefault\n");
-			break;
+		if (new_cr3)
+			reload_cr3();
+
+		/* If a page fault happens, pfa is non-null */
+		if ((pfa = phys_memset(ptr, pattern, chunk))) {
+
+			/* If a process pagefaults, VM may help out */
+			if (whoptr) {
+				vm_suspend(caller, whoptr, ph, count,
+						   VMSTYPE_KERNELCALL);
+				assert(catch_pagefaults);
+				catch_pagefaults = 0;
+				return VMSUSPEND;
+			}
+
+			/* Pagefault when phys copying ?! */
+			panic("vm_memset: pf %lx addr=%lx len=%lu\n",
+						pfa , ptr, chunk);
 		}
-		bytes -= chunk;
-		ph += chunk;
+
+		cur_ph += chunk;
+		left -= chunk;
 	}
 
-	assert(catch_pagefaults);
-	catch_pagefaults=0;
-
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
+	assert(catch_pagefaults);
+	catch_pagefaults = 0;
 
 	return OK;
 }
@@ -647,12 +680,8 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	procs[i] = p;
   }
 
-  if(caller && (caller->p_misc_flags & MF_KCALL_RESUME)) {
-  	assert(caller->p_vmrequest.vmresult != VMSUSPEND);
-  	if(caller->p_vmrequest.vmresult != OK) {
-    		return caller->p_vmrequest.vmresult;
-  	}
-  }
+  if ((r = check_resumed_caller(caller)) != OK)
+	return r;
 
   if((r=lin_lin_copy(procs[_SRC_], vir_addr[_SRC_]->offset,
   	procs[_DST_], vir_addr[_DST_]->offset, bytes)) != OK) {
