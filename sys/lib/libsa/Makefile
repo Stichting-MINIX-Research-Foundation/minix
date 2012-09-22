@@ -80,18 +80,13 @@ SRCS+=	bootp.c rarp.c bootparam.c
 SRCS+=	nfs.c tftp.c
 .endif
 
-.ifndef __MINIX_w
 SRCS+=	ffsv1.c ffsv2.c
 SRCS+=	lfsv1.c lfsv2.c
-.endif
 SRCS+=	cd9660.c
 SRCS+=	ustarfs.c
 SRCS+=	dosfs.c
 SRCS+=	ext2fs.c
 SRCS+=	minixfs3.c
-.ifndef __MINIX_w
-SRCS+=	fnmatch.c
-.endif
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
