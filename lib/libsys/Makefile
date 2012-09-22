@@ -53,6 +53,7 @@ SRCS=  \
 	sys_runctl.c \
 	sys_safecopy.c \
 	sys_safemap.c \
+	sys_safememset.c \
 	sys_schedctl.c \
 	sys_schedule.c \
 	sys_setalarm.c \

@@ -147,6 +147,9 @@ int sys_safecopyto(endpoint_t dest, cp_grant_id_t grant, vir_bytes
 	grant_offset, vir_bytes my_address, size_t bytes);
 int sys_vsafecopy(struct vscp_vec *copyvec, int elements);
 
+int sys_safememset(endpoint_t source, cp_grant_id_t grant, vir_bytes
+	grant_offset, int pattern, size_t bytes);
+
 int sys_memset(endpoint_t who, unsigned long pattern,
 	phys_bytes base, phys_bytes bytes);
 

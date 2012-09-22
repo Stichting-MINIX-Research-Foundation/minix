@@ -560,15 +560,15 @@
 #define SCP_SEG_OBSOLETE m2_i2	/* my own segment */
 #define SCP_GID		m2_i3	/* grant id */
 #define SCP_OFFSET	m2_l1	/* offset within grant */
-#define	SCP_ADDRESS	m2_p1	/* my own address */
-#define	SCP_BYTES	m2_l2	/* bytes from offset */
+#define SCP_ADDRESS	m2_p1	/* my own address */
+#define SCP_BYTES	m2_l2	/* bytes from offset */
 
 /* SYS_SAFEMEMSET */
 #define SMS_DST		m2_i1	/* dst endpoint */
 #define SMS_GID		m2_i3	/* grant id */
 #define SMS_OFFSET	m2_l1	/* offset within grant */
-#define	SMS_BYTES	m2_l2	/* bytes from offset */
-#define SMS_PATTERN     m2_i2	/* memset() pattern */
+#define SMS_BYTES	m2_l2	/* bytes from offset */
+#define SMS_PATTERN	m2_i2	/* memset() pattern */
 
 /* Field names for SYS_VSAFECOPY* */
 #define VSCP_VEC_ADDR	m2_p1	/* start of vector */
