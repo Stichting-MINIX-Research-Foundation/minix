@@ -90,10 +90,6 @@ static struct blockdriver m_bdtab = {
   NULL			/* no threading support */
 };
 
-/* Buffer for the /dev/zero null byte feed. */
-#define ZERO_BUF_SIZE			1024
-static char dev_zero[ZERO_BUF_SIZE];
-
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
@@ -175,11 +171,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   m_geom[IMGRD_DEV].dv_size= cvul64(imgrd_size);
   m_vaddrs[IMGRD_DEV] = (vir_bytes) imgrd;
 
-  /* Initialize /dev/zero. Simply write zeros into the buffer. */
-  for (i=0; i<ZERO_BUF_SIZE; i++) {
-       dev_zero[i] = '\0';
-  }
-
   for(i = 0; i < NR_DEVS; i++)
 	openct[i] = 0;
 
@@ -237,7 +228,7 @@ static int m_transfer(
 )
 {
 /* Read or write one the driver's character devices. */
-  unsigned count, left, chunk;
+  unsigned count;
   vir_bytes vir_offset = 0;
   struct device *dv;
   unsigned long dv_size;
@@ -354,19 +345,10 @@ static int m_transfer(
 
 	/* Null byte stream generator. */
 	case ZERO_DEV:
-	    if (opcode == DEV_GATHER_S) {
-		size_t suboffset = 0;
-	        left = count;
-		while (left > 0) {
-		    chunk = (left > ZERO_BUF_SIZE) ? ZERO_BUF_SIZE : left;
-	             s=sys_safecopyto(endpt, grant,
-		       vir_offset+suboffset, (vir_bytes) dev_zero, chunk);
-		    if(s != OK)
-		        return s;
-		    left -= chunk;
-	            suboffset += chunk;
-		}
-	    }
+	    if (opcode == DEV_GATHER_S)
+	        if ((s = sys_safememset(endpt, grant, 0, '\0', count)) != OK)
+		    return s;
+
 	    break;
 
 	}
