@@ -1,5 +1,8 @@
 #	$NetBSD: Makefile,v 1.16 2011/06/21 13:25:45 joerg Exp $
 
+# LSC Until it compiles cleanly...
+NOGCCERROR:=yes
+
 USE_FORT?= no	# data-driven bugs?
 
 PROG=		gzip

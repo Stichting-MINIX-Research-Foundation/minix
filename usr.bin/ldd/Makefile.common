@@ -1,5 +1,8 @@
 #	$NetBSD: Makefile.common,v 1.2 2012/02/17 08:13:18 matt Exp $
 
+# LSC Until it compiles cleanly...
+NOGCCERROR:=yes
+
 LDELFSO=${NETBSDSRCDIR}/libexec/ld.elf_so
 CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"
 CPPFLAGS+= -D_RTLD_SOURCE

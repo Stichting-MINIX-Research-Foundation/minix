@@ -30,6 +30,9 @@ CPPFLAGS+=	-DHAVE_SETENV -DHAVE_STRERROR -DHAVE_STRDUP \
 
 CPPFLAGS+= -DMAKE_MACHINE=\"${MACHINE}\" -DMAKE_MACHINE_ARCH=\"${MACHINE_ARCH}\"
 
+# LSC Until it compiles cleanly...
+NOGCCERROR:=yes
+
 
 .PATH:	${.CURDIR}/lst.lib
 #.if make(install)

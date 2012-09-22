@@ -6,4 +6,7 @@ MAN=	mkdep.1
 PROG=	mkdep
 SRCS=	mkdep.c findcc.c
 
+# LSC Until it compiles cleanly...
+NOGCCERROR:=yes
+
 .include <bsd.prog.mk>

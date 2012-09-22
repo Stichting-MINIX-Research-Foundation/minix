@@ -24,4 +24,7 @@ tokenizer.o: parser.h
 
 CLEANFILES+=parser.c parser.h tokenizer.o
 
+# LSC Until it compiles cleanly...
+NOGCCERROR:=yes
+
 .include <bsd.prog.mk>
