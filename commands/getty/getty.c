@@ -6,7 +6,7 @@
  *		was taken from stty(1).c; which was written by
  *		Andrew S. Tanenbaum.
  *
- * Usage:	getty [-c filename] [-h] [-k] [-t] line [speed]
+ * Usage:	getty [speed]
  *
  * Version:	3.4	02/17/90
  *
@@ -27,6 +27,10 @@
  *
  *		Suspend/resume signals removed.
  *		2001-04-04	Kees J. Bot
+ *
+ *		Removed unused custom banner and returned speed option
+ *		functionality (by simply calling stty).
+ *		2012-09-24	T. Veerman
  */
 
 #include <sys/types.h>
@@ -38,6 +42,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/utsname.h>
+#include <stdio.h>
 
 char LOGIN[] =		"/usr/bin/login";
 char SHELL[] =		"/bin/sh";
@@ -88,8 +93,13 @@ void do_getty(char *name, size_t len, char **args, const char *ttyname)
   /* Clean up tty name. */
   if((t = strrchr(ttyname, '/'))) ttyname = t + 1;
 
-  /* Default banner? */
-  if (args[0] == NULL) args = def_banner;
+  if (args[0] != NULL) {
+	char cmd[5+6+1]; /* "stty " + "115200" + '\0' */
+	int speed;
+	speed = atoi(args[0]);
+	snprintf(cmd, sizeof(cmd), "stty %d\n", speed);
+	system(cmd);
+  }
 
   /* Display prompt. */
   ch = ' ';
@@ -99,7 +109,7 @@ void do_getty(char *name, size_t len, char **args, const char *ttyname)
 	uname(&utsname);
 
 	/* Print the banner. */
-	for (banner = args; *banner != NULL; banner++) {
+	for (banner = def_banner; *banner != NULL; banner++) {
 		std_out(banner == args ? "\n" : " ");
 		s0 = *banner;
 		for (s = *banner; *s != 0; s++) {
@@ -172,7 +182,6 @@ void do_login(char *name)
 
 int main(int argc, char **argv)
 {
-  register char *s;
   char name[30];
   struct sigaction sa;
 
