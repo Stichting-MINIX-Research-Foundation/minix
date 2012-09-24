@@ -258,8 +258,6 @@ int main(void)
 
 	/* If the device doesn't exist or is not configured return ENXIO. */
 	if (tp == NULL || ! tty_active(tp)) {
-		printf("Warning, TTY got illegal request %d from %d\n",
-			tty_mess.m_type, tty_mess.m_source);
 		if (tty_mess.m_source != LOG_PROC_NR)
 		{
 			tty_reply(TASK_REPLY, tty_mess.m_source,
