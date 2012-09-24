@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <sys/ioc_disk.h>
 #include <minix/partition.h>
-#include <minix/u64.h>
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -84,7 +83,7 @@ char *argv[];
 {
   struct partition entry;
   int fd, s, i, badprinted;
-  long b = 0, nblocks;
+  u64_t b = 0, nblocks;
   char *p;
   time_t starttime;
 
@@ -118,13 +117,13 @@ char *argv[];
   	perror("ioctl DIOCGETP");
   	return 1;
   }
-  nblocks = div64u(entry.size, BLOCK_SIZE);
+  nblocks = entry.size / BLOCK_SIZE;
 
   time(&starttime);
   /* Read the entire file. Try it in large chunks, but if an error
    * occurs, go to single reads for a while. */
   while (1) {
-	if(lseek64(fd, mul64u(BLOCK_SIZE, b), SEEK_SET, NULL) < 0) {
+	if(lseek64(fd, (BLOCK_SIZE * b), SEEK_SET, NULL) < 0) {
 		perror("lseek64");
 		return 1;
 	}
@@ -162,7 +161,7 @@ char *argv[];
 			output(b);
 			fprintf(stderr, "\n");
 		} else fprintf(stderr, "\r%*s\n", -WIDTH, "Done scanning.");
-		if (total) printf("%8ld\n", b);
+		if (total) printf("%8lld\n", b);
 		if ((errors == 0) || total) exit(0);
 		badprinted = 0;
 		if (normal) printf("Summary of bad blocks\n");

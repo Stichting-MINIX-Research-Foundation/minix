@@ -40,6 +40,7 @@
 #include <minix/procfs.h>
 
 #define TIMECYCLEKEY 't'
+#define ORDERKEY 'o'
 
 #define ORDER_CPU	0
 #define ORDER_MEMORY	1
@@ -169,7 +170,7 @@ void parse_file(pid_t pid)
 			&cycles_hi, &cycles_lo) == 2) {
 			p->p_cpucycles[i] = make64(cycles_lo, cycles_hi);
 		} else	{
-			p->p_cpucycles[i] = make64(0, 0);
+			p->p_cpucycles[i] = 0;
 		}
 	}
 
@@ -233,10 +234,10 @@ void get_procs(void)
 int print_memory(void)
 {
 	FILE *fp;
-	unsigned int pagesize; 
+	unsigned int pagesize;
 	unsigned long total, free, largest, cached;
 
-	if ((fp = fopen("meminfo", "r")) == NULL)	
+	if ((fp = fopen("meminfo", "r")) == NULL)
 		return 0;
 
 	if (fscanf(fp, "%u %lu %lu %lu %lu", &pagesize, &total, &free,
@@ -294,7 +295,6 @@ struct tp {
 
 int cmp_procs(const void *v1, const void *v2)
 {
-	int c;
 	struct tp *p1 = (struct tp *) v1, *p2 = (struct tp *) v2;
 	int p1blocked, p2blocked;
 
@@ -308,7 +308,7 @@ int cmp_procs(const void *v1, const void *v2)
 	p2blocked = !!(p2->p->p_flags & BLOCKED);
 
 	/* Primarily order by used number of cpu cycles.
-	 * 
+	 *
 	 * Exception: if in blockedverbose mode, a blocked
 	 * process is always printed after an unblocked
 	 * process, and used cpu cycles don't matter.
@@ -321,8 +321,9 @@ int cmp_procs(const void *v1, const void *v2)
 			return -1;
 		if(!p2blocked && p1blocked)
 			return 1;
-	} else if((c=cmp64(p1->ticks, p2->ticks)) != 0)
-		return -c;
+	} else if(p1->ticks != p2->ticks) {
+		return (p2->ticks - p1->ticks);
+	}
 
 	/* Process slot number is a tie breaker. */
 	return (int) (p1->p - p2->p);
@@ -342,24 +343,14 @@ struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
 	return NULL;
 }
 
-/*
- * since we don't have true div64(u64_t, u64_t) we scale the 64 bit counters to
- * 32. Since the samplig happens every ~1s and the counters count CPU cycles
- * during this period, unless we have extremely fast CPU, shifting the counters
- * by 12 make them 32bit counters which we can use for normal integer
- * arithmetics
- */
-#define SCALE	(1 << 12)
-
 double ktotal = 0;
 
-void print_proc(struct tp *tp, u32_t tcyc)
+void print_proc(struct tp *tp, u64_t total_ticks)
 {
 	int euid = 0;
 	static struct passwd *who = NULL;
 	static int last_who = -1;
 	char *name = "";
-	unsigned long pcyc;
 	int ticks;
 	struct proc *pr = tp->p;
 
@@ -385,9 +376,7 @@ void print_proc(struct tp *tp, u32_t tcyc)
 	ticks = pr->p_user_time;
 	printf(" %3u:%02u ", (ticks/system_hz/60), (ticks/system_hz)%60);
 
-	pcyc = div64u(tp->ticks, SCALE);
-
-	printf("%6.2f%% %s", 100.0*pcyc/tcyc, name);
+	printf("%6.2f%% %s", 100.0 * tp->ticks / total_ticks, name);
 }
 
 char *cputimemodename(int cputimemode)
@@ -396,7 +385,7 @@ char *cputimemodename(int cputimemode)
 	int i;
 
 	name[0] = '\0';
-	
+
 	for(i = 0; i < CPUTIMENAMES; i++) {
 		if(CPUTIME(cputimemode, i)) {
 			assert(strlen(name) +
@@ -412,32 +401,38 @@ char *cputimemodename(int cputimemode)
 u64_t cputicks(struct proc *p1, struct proc *p2, int timemode)
 {
 	int i;
-	u64_t t = make64(0, 0);
+	u64_t t = 0;
 	for(i = 0; i < CPUTIMENAMES; i++) {
-		if(!CPUTIME(timemode, i)) 
+		if(!CPUTIME(timemode, i))
 			continue;
 		if(p1->p_endpoint == p2->p_endpoint) {
-			t = add64(t, sub64(p2->p_cpucycles[i],
-				p1->p_cpucycles[i]));
+			t = t + p2->p_cpucycles[i] - p1->p_cpucycles[i];
 		} else {
-			t = add64(t, p2->p_cpucycles[i]);
+			t = t + p2->p_cpucycles[i];
 		}
 	}
 
 	return t;
 }
 
+char *ordername(int orderno)
+{
+	switch(orderno) {
+		case ORDER_CPU: return "cpu";
+		case ORDER_MEMORY: return "memory";
+	}
+	return "invalid order";
+}
+
 void print_procs(int maxlines,
 	struct proc *proc1, struct proc *proc2, int cputimemode)
 {
 	int p, nprocs;
-	u64_t idleticks = cvu64(0);
-	u64_t kernelticks = cvu64(0);
-	u64_t systemticks = cvu64(0);
-	u64_t userticks = cvu64(0);
-	u64_t total_ticks = cvu64(0);
-	unsigned long tcyc;
-	unsigned long tmp;
+	u64_t idleticks = 0;
+	u64_t kernelticks = 0;
+	u64_t systemticks = 0;
+	u64_t userticks = 0;
+	u64_t total_ticks = 0;
 	int blockedseen = 0;
 	static struct tp *tick_procs = NULL;
 
@@ -457,7 +452,7 @@ void print_procs(int maxlines,
 		tick_procs[nprocs].p = proc2 + p;
 		tick_procs[nprocs].ticks = cputicks(&proc1[p], &proc2[p], cputimemode);
 		uticks = cputicks(&proc1[p], &proc2[p], 1);
-		total_ticks = add64(total_ticks, uticks);
+		total_ticks = total_ticks + uticks;
 		if(p-NR_TASKS == IDLE) {
 			idleticks = uticks;
 			continue;
@@ -467,40 +462,30 @@ void print_procs(int maxlines,
 		}
 		if(!(proc2[p].p_flags & IS_TASK)) {
 			if(proc2[p].p_flags & IS_SYSTEM)
-				systemticks = add64(systemticks,
-					tick_procs[nprocs].ticks);
+				systemticks = systemticks + tick_procs[nprocs].ticks;
 			else
-				userticks = add64(userticks,
-					tick_procs[nprocs].ticks);
+				userticks = userticks + tick_procs[nprocs].ticks;
 		}
 
 		nprocs++;
 	}
 
-	if (!cmp64u(total_ticks, 0))
+	if (total_ticks == 0)
 		return;
 
 	qsort(tick_procs, nprocs, sizeof(tick_procs[0]), cmp_procs);
 
-	tcyc = div64u(total_ticks, SCALE);
+	printf("CPU states: %6.2f%% user, ", 100.0 * userticks / total_ticks);
+	printf("%6.2f%% system, ", 100.0 * systemticks / total_ticks);
+	printf("%6.2f%% kernel, ", 100.0 * kernelticks/ total_ticks);
+	printf("%6.2f%% idle", 100.0 * idleticks / total_ticks);
 
-	tmp = div64u(userticks, SCALE);
-	printf("CPU states: %6.2f%% user, ", 100.0*(tmp)/tcyc);
-
-	tmp = div64u(systemticks, SCALE);
-	printf("%6.2f%% system, ", 100.0*tmp/tcyc);
-
-	tmp = div64u(kernelticks, SCALE);
-	printf("%6.2f%% kernel, ", 100.0*tmp/tcyc);
-
-	tmp = div64u(idleticks, SCALE);
-	printf("%6.2f%% idle", 100.0*tmp/tcyc);
-
-#define NEWLINE do { printf("\n"); if(--maxlines <= 0) { return; } } while(0) 
+#define NEWLINE do { printf("\n"); if(--maxlines <= 0) { return; } } while(0)
 	NEWLINE;
 
-	printf("CPU time displayed (press '%c' to cycle): %s",
+	printf("CPU time displayed ('%c' to cycle): %s; ",
 		TIMECYCLEKEY, cputimemodename(cputimemode));
+	printf(" sort order ('%c' to cycle): %s", ORDERKEY, ordername(order));
 	NEWLINE;
 
 	NEWLINE;
@@ -528,7 +513,7 @@ void print_procs(int maxlines,
 			blockedseen = 1;
 		}
 
-		print_proc(&tick_procs[p], tcyc);
+		print_proc(&tick_procs[p], total_ticks);
 		NEWLINE;
 
 		if(!blockedverbose)
@@ -552,7 +537,7 @@ void print_procs(int maxlines,
 			tpdep = lookup(dep, tick_procs, nprocs);
 			pr = tpdep->p;
 			printf("%*s> ", level, "");
-			print_proc(tpdep, tcyc);
+			print_proc(tpdep, total_ticks);
 			NEWLINE;
 		}
 	}
@@ -675,7 +660,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if(s < 1) 
+	if(s < 1)
 		s = 2;
 
 	/* Catch window size changes so display is updated properly

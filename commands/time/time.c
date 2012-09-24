@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <minix/minlib.h>
-#include <minix/u64.h>
+// #include <minix/u64.h>
 #include <stdio.h>
 
 /* -DNEW prints time to 0.01 sec. */
@@ -89,7 +89,7 @@ char *argv[];
 	times(&pre_buf);
   } while (wait(&status) != pid);
   read_tsc_64(&end_tsc);
-  spent_tsc = sub64(end_tsc, start_tsc);
+  spent_tsc = end_tsc - start_tsc;
 #if _VMD_EXT
   (void) sysutime(UTIME_TIMEOFDAY, &end_time);
   real_time = (end_time.tv_sec - start_time.tv_sec) * CLOCKS_PER_SEC

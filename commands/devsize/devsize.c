@@ -7,7 +7,6 @@
 #include <sys/stat.h>
 #include <machine/partition.h>
 #include <minix/partition.h>
-#include <minix/u64.h>
 #include <sys/ioc_disk.h>
 #include <stdio.h>
 #include <errno.h>
@@ -48,6 +47,6 @@ char *device;
   	exit(1);
   }
   close(fd);
-  d = div64u(entry.size, 512);
+  d = entry.size / 512;
   return d;
 }
