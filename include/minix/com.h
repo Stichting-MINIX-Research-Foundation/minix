@@ -352,8 +352,10 @@
 #  define SYS_SCHEDCTL (KERNEL_CALL + 54)	/* sys_schedctl() */
 #  define SYS_STATECTL (KERNEL_CALL + 55)	/* sys_statectl() */
 
+#  define SYS_SAFEMEMSET (KERNEL_CALL + 56)	/* sys_safememset() */
+
 /* Total */
-#define NR_SYS_CALLS	56	/* number of kernel calls */
+#define NR_SYS_CALLS	57	/* number of kernel calls */
 
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
@@ -361,7 +363,7 @@
 #define SYS_BASIC_CALLS \
     SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
     SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, SYS_SAFEMAP, SYS_SAFEREVMAP, \
-    SYS_SAFEUNMAP, SYS_PROFBUF, SYS_SYSCTL, SYS_STATECTL
+    SYS_SAFEUNMAP, SYS_PROFBUF, SYS_SYSCTL, SYS_STATECTL, SYS_SAFEMEMSET
 
 /* Field names for SYS_MEMSET. */
 #define MEM_PTR		m2_p1	/* base */
@@ -560,6 +562,13 @@
 #define SCP_OFFSET	m2_l1	/* offset within grant */
 #define	SCP_ADDRESS	m2_p1	/* my own address */
 #define	SCP_BYTES	m2_l2	/* bytes from offset */
+
+/* SYS_SAFEMEMSET */
+#define SMS_DST		m2_i1	/* dst endpoint */
+#define SMS_GID		m2_i3	/* grant id */
+#define SMS_OFFSET	m2_l1	/* offset within grant */
+#define	SMS_BYTES	m2_l2	/* bytes from offset */
+#define SMS_PATTERN     m2_i2	/* memset() pattern */
 
 /* Field names for SYS_VSAFECOPY* */
 #define VSCP_VEC_ADDR	m2_p1	/* start of vector */

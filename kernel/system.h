@@ -178,6 +178,8 @@ int do_vmctl(struct proc * caller, message *m_ptr);
 int do_setgrant(struct proc * caller, message *m_ptr);
 int do_readbios(struct proc * caller, message *m_ptr);
 
+int do_safememset(struct proc * caller, message *m_ptr);
+
 int do_safemap(struct proc * caller, message *m_ptr);
 int do_saferevmap(struct proc * caller, message *m_ptr);
 int do_safeunmap(struct proc * caller, message *m_ptr);
