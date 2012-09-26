@@ -17,9 +17,8 @@
 int do_memset(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_memset(). This writes a pattern into the specified memory. */
-  unsigned char c = m_ptr->MEM_PATTERN;
-  vm_memset(m_ptr->MEM_PROCESS, (phys_bytes) m_ptr->MEM_PTR,
-  	c, (phys_bytes) m_ptr->MEM_COUNT);
+  vm_memset(caller, m_ptr->MEM_PROCESS, (phys_bytes) m_ptr->MEM_PTR,
+	m_ptr->MEM_PATTERN, (phys_bytes) m_ptr->MEM_COUNT);
   return(OK);
 }
 
