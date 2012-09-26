@@ -3,17 +3,23 @@
 # Look at /usr/pkg/bin first in case there is an old nm in /usr/bin
 PATH=/usr/pkg/bin:$PATH:/usr/gnu/bin
 
+# Does procfs give us some extra 'symbols'?
+IPCVECS=/proc/ipcvecs
+if [ -f $IPCVECS ]
+then	EXTRANM="cat $IPCVECS"
+fi
+
 # Check usage
 if [ $# -lt 1 ]
 then	echo "Usage: unstack <executable> [0x... [0x... ] ]"
-	echo "       datasizes <executable>"
 	exit 1
 fi
 
 # Check invocation mode
 case "`basename $0`" in
 	datasizes)
-		mode=data
+		echo "datasizes is obsolete; please use nm --size-sort instead."
+		exit 1
 		;;
 	unstack)
 		mode=stack
@@ -28,46 +34,31 @@ esac
 executable=$1
 shift
 
-# gnu nm can be gnm or nm
-if which gnm >/dev/null 2>&1
-then	GNM=gnm
-else	GNM=nm
+if ! which gawk >/dev/null 2>&1
+then	echo "Please install gawk."
+	exit 1
 fi
 
-# Invoke gnu nm or ack nm?
-if file $executable | grep NSYM >/dev/null 2>&1
-then	NM="$GNM --radix=d"
-elif file $executable | grep ELF >/dev/null 2>&1
-then	NM="$GNM --radix=d"
-else	NM="acknm -d"
+# Invoke binutils nm or ack nm?
+if file $executable | grep ELF >/dev/null 2>&1
+then	NM="nm"
+else	NM="acknm"
 fi
 
-# Invoked as unstack?
-if [ $mode = stack ]
-then
-	while [ $# -gt 0 ]
-	do	dec="`printf %d $1`"
-		$NM -n $executable | grep ' [Tt] [^.]' | awk '
-		  {  if($1 > '$dec') { printf "%s+0x%x\n", name, '$dec'-offset; exit }
-		     name=$3; offset=$1
-		  }'
-		shift
-	done
+SYMLIST=/tmp/unstack.$$
 
-	exit 0
-fi
+# store sorted, filtered nm output once
+( $NM $executable ; $EXTRANM ) | sed 's/^/0x/' | sort -x | grep ' [Tt] [^.]' >$SYMLIST
 
-# Invoked as datasizes?
-if [ $mode = data ]
-then
-	$NM -n $executable |
-		grep ' [bBdD] [^.]' | awk '{ if (lastpos) printf "%10ld kB  %s\n", ($1-lastpos)/1024, lastname; lastpos=$1; lastname=$3 }' | sort -n
+while [ $# -gt 0 ]
+do	 gawk <$SYMLIST --non-decimal-data -v symoffset=$1 '
+	  {  if($1 > symoffset) { printf "%s+0x%x\n", name, symoffset-prevoffset; exit }
+	     name=$3; prevoffset=$1;
+	  }'
+	shift
+done
 
-	exit 0
-fi
-
-# Can't happen.
-echo "Impossible invocation."
+rm -f $SYMLIST
 
 exit 1
 

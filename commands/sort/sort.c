@@ -96,6 +96,7 @@ typedef struct {
   BOOL fold_case;
   BOOL ascii;
   BOOL numeric;
+  BOOL hexmode;
 } FIELD;
 
 /* Field declarations. A total of FILEDS_LIMIT is allowed */
@@ -150,6 +151,7 @@ char *skip_fields(char *str, int nf);
 int compare(char *el1, char *el2);
 int cmp(unsigned char *el1, unsigned char *el2, FIELD * field);
 int digits(char *str1, char *str2, BOOL check_sign);
+int hexits(char *str1, char *str2);
 void files_merge(int file_cnt);
 void merge(int start_file, int limit_file);
 void put_line(char *line);
@@ -248,6 +250,10 @@ register FIELD *field;
 	break;
       case 'n':			/* Sort on numeric */
 	field->numeric = TRUE;
+	field->blanks = TRUE;
+	break;
+      case 'x':
+	field->hexmode = TRUE;
 	field->blanks = TRUE;
 	break;
       case 'r':			/* Reverse comparisons */
@@ -761,6 +767,8 @@ FIELD *field;
   }
   if (field->numeric)		/* Compare numeric */
 	return digits((char *) el1, (char *) el2, TRUE);
+  if (field->hexmode)		/* Compare hex */
+	return hexits((char *) el1, (char *) el2);
 
   for (;;) {
 	while (*el1 == *el2) {
@@ -809,6 +817,24 @@ FIELD *field;
   }
 
   /* NOTREACHED */
+}
+
+int hexits(char *str1, char *str2)
+{
+	unsigned long v1, v2;
+	int r1, r2;
+	r1 = sscanf(str1, "0x%lx", &v1);
+	r2 = sscanf(str2, "0x%lx", &v2);
+
+	/* ordering based on reasonable hex number */
+	if(r1 == 1 && r2 != 1) return HIGHER;
+	if(r1 != 1 && r2 == 1) return LOWER;
+	if(r1 != 1 && r2 != 1) return SAME;
+
+	if(v1 > v2) return HIGHER;
+	if(v1 < v2) return LOWER;
+
+	return SAME;
 }
 
 /*
