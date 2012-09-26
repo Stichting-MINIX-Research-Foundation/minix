@@ -12,6 +12,7 @@ static void root_kinfo(void);
 static void root_meminfo(void);
 static void root_pci(void);
 static void root_dmap(void);
+static void root_ipcvecs(void);
 
 struct file root_files[] = {
 	{ "hz",		REG_ALL_MODE,	(data_t) root_hz	},
@@ -22,6 +23,7 @@ struct file root_files[] = {
 	{ "pci",	REG_ALL_MODE,	(data_t) root_pci	},
 	{ "dmap",	REG_ALL_MODE,	(data_t) root_dmap	},
 	{ "cpuinfo",	REG_ALL_MODE,	(data_t) root_cpuinfo	},
+	{ "ipcvecs",	REG_ALL_MODE,	(data_t) root_ipcvecs	},
 	{ NULL,		0,		NULL			}
 };
 
@@ -163,3 +165,34 @@ static void root_dmap(void)
 			dmap[i].dmap_driver);
 	}
 }
+
+/*===========================================================================*
+ *				root_ipcvecs				     *
+ *===========================================================================*/
+static void root_ipcvecs(void)
+{
+	extern struct minix_kerninfo *_minix_kerninfo;
+	extern struct minix_ipcvecs _minix_ipcvecs;
+
+	/* only print this if the kernel provides the info; otherwise binaries
+	 * will be using their own in-libc vectors that are normal symbols in the
+	 * binary.
+	 */
+	if(!_minix_kerninfo || !(_minix_kerninfo->ki_flags & MINIX_KIF_IPCVECS))
+		return;
+
+	/* print the vectors with an descriptive name and the additional (k)
+	 * to distinguish them from regular symbols.
+	 */
+#define PRINT_ENTRYPOINT(name) \
+	buf_printf("%08lx T %s(k)\n", _minix_ipcvecs.name ## _ptr, #name)
+
+	PRINT_ENTRYPOINT(sendrec);
+	PRINT_ENTRYPOINT(send);
+	PRINT_ENTRYPOINT(notify);
+	PRINT_ENTRYPOINT(senda);
+	PRINT_ENTRYPOINT(sendnb);
+	PRINT_ENTRYPOINT(receive);
+	PRINT_ENTRYPOINT(do_kernel_call);
+}
+
