@@ -78,10 +78,6 @@ void write_elf_core_file(struct filp *f, int csig, char *exe_name);
 /* exec.c */
 int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len, vir_bytes frame,
 	size_t frame_len, vir_bytes *pc, vir_bytes *newsp, int flags);
-#define check_bsf_lock() do {						\
-	assert(mutex_trylock(&bsf_lock) == 0);				\
-	unlock_bsf();							\
-			} while(0)
 
 /* filedes.c */
 void *do_filp_gc(void *arg);
@@ -213,6 +209,7 @@ int do_read(void);
 int do_getdents(void);
 void lock_bsf(void);
 void unlock_bsf(void);
+void check_bsf_lock(void);
 int do_read_write(int rw_flag);
 int read_write(int rw_flag, struct filp *f, char *buffer, size_t nbytes,
 	endpoint_t for_e);
