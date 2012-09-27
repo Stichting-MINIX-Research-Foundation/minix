@@ -623,7 +623,8 @@ int ctty_opcl(
  * /dev/tty, the magic device that translates to the controlling tty.
  */
 
-  assert(!IS_BDEV_RQ(op));
+  if (IS_BDEV_RQ(op))
+	panic("ctty_opcl() called for block device request?");
 
   return(fp->fp_tty == 0 ? ENXIO : OK);
 }
