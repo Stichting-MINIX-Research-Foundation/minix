@@ -96,3 +96,17 @@ default_log(struct mmclog *driver,
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 }
+
+#ifdef hacks
+static void
+hexdump(unsigned char *d, unsigned int size)
+{
+	int s;
+	for (s = 0; s < size; s += 4) {
+		fprintf(stdout, "0x%04x 0x%02X%02X%02X%02X %c%c%c%c\n", s,
+		    (unsigned int) d[s], (unsigned int) d[s + 1],
+		    (unsigned int) d[s + 2], (unsigned int) d[s + 3], d[s],
+		    d[s + 1], d[s + 2], d[s + 3]);
+	}
+}
+#endif

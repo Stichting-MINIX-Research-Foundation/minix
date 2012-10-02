@@ -25,12 +25,24 @@
 /* used for logging */
 static struct mmclog log = {
 	.name = "mmc_block",
-	.log_level = LEVEL_TRACE,
+	.log_level = LEVEL_DEBUG,
 	.log_func = default_log
 };
 
 /* holding the current host controller */
 static struct mmc_host host;
+
+/*@TODO REMOVE THIS */
+void
+read_tsc_64(u64_t * t)
+{
+}
+
+u32_t
+tsc_64_to_micros(u64_t tsc)
+{
+	return 0;
+}
 
 /* When passing data over a grant one needs to pass
  * a buffer to sys_safecopy copybuff is used for that*/
@@ -51,8 +63,6 @@ static int block_ioctl(dev_t minor,
     unsigned int request, endpoint_t endpt, cp_grant_id_t grant);
 static struct device *block_part(dev_t minor);
 
-
-
 /* System even handling */
 static void sef_local_startup();
 static int block_system_event_cb(int type, sef_init_info_t * info);
@@ -62,7 +72,6 @@ static int apply_env();
 
 /* set the global logging level */
 static void set_log_level(int level);
-
 
 /* Entry points for the BLOCK driver. */
 static struct blockdriver mmc_driver = {
@@ -83,6 +92,9 @@ static struct blockdriver mmc_driver = {
 static int
 apply_env()
 {
+#if 0
+	/* @TODO: re-enable this function when __aeabi_idiv will be present
+	 * The following code(env_parse) uses strtol.c and needs __aeabi_idiv */
 	/* apply the env setting passed to this driver parameters accepted
 	 * log_level=[0-4] (NONE,WARNING,INFO,DEBUG,TRACE) instance=[0-3]
 	 * instance/bus number to use for this driver Passing these arguments
@@ -105,9 +117,9 @@ apply_env()
 		mmc_log_warn(&log, "Failed to set mmc instance to  %d\n", v);
 		return -1;	/* NOT OK */
 	}
+#endif
 	return OK;
 }
-
 
 ;
 
@@ -119,6 +131,11 @@ block_open(dev_t minor, int access)
 {
 	struct sd_slot *slot;
 	slot = get_slot(minor);
+	int i, j;
+	int part_count, sub_part_count;
+
+	i = j = part_count = sub_part_count = 0;
+
 	if (!slot) {
 		mmc_log_debug(&log,
 		    "Not handling open on non existing slot\n");
@@ -141,7 +158,7 @@ block_open(dev_t minor, int access)
 		return OK;
 	}
 
-	/* We did not have an sd-card inserted so we are going to probe for it
+	/* We did not have an sd-card inserted so we are going to probe for it 
 	 */
 	mmc_log_debug(&log, "First open on (%d)\n", minor);
 	if (!host.card_initialize(slot)) {
@@ -151,6 +168,29 @@ block_open(dev_t minor, int access)
 
 	partition(&mmc_driver, 0 /* first card on bus */ , P_PRIMARY,
 	    0 /* atapi device?? */ );
+
+	mmc_log_debug(&log, "descr \toffset(bytes)      size(bytes)\n", minor);
+
+	mmc_log_debug(&log, "disk %d\t0x%016llx 0x%016llx\n", i,
+	    slot->card.part[0].dv_base, slot->card.part[0].dv_size);
+	for (i = 1; i < 5; i++) {
+		if (slot->card.part[i].dv_size == 0)
+			continue;
+		part_count++;
+		mmc_log_debug(&log, "part %d\t0x%016llx 0x%016llx\n", i,
+		    slot->card.part[i].dv_base, slot->card.part[i].dv_size);
+		for (j = 0; j < 4; j++) {
+			if (slot->card.part[i * 4 + j].dv_size == 0)
+				continue;
+			sub_part_count++;
+			mmc_log_debug(&log,
+			    " sub %d/%d\t0x%016llx 0x%016llx\n", i, j,
+			    slot->card.part[i * 4 + j].dv_base,
+			    slot->card.part[i * 4 + j].dv_size);
+		}
+	}
+	mmc_log_info(&log, "Found %d partitions and %d sub partitions\n",
+	    part_count, sub_part_count);
 	slot->card.open_ct++;
 	assert(slot->card.open_ct == 1);
 	return OK;
@@ -248,8 +288,6 @@ block_transfer(dev_t minor,	/* minor device number */
 
 	int r, blk_size, i;
 
-	/* @TODO convert the partition address to an absolute address */
-
 	/* Get the current "device" geometry */
 	dev = block_part(minor);
 	if (dev == NULL) {
@@ -258,9 +296,10 @@ block_transfer(dev_t minor,	/* minor device number */
 		/* Unknown device */
 		return ENXIO;
 	}
+	mmc_log_trace(&log, "I/O %d %s 0x%llx\n", minor,
+	    (do_write) ? "Write" : "Read", position);
 
 	slot = get_slot(minor);
-
 	assert(slot);
 
 	if (slot->card.blk_size == 0) {
@@ -291,6 +330,7 @@ block_transfer(dev_t minor,	/* minor device number */
 
 	/* Are we trying to start reading past the end */
 	if (position >= dev->dv_size) {
+		mmc_log_warn(&log, "start reading past drive size\n");
 		return 0;
 	};
 
@@ -340,9 +380,9 @@ block_transfer(dev_t minor,	/* minor device number */
 				/* Read io_size bytes from i/o vector starting
 				 * at 0 and write it to out buffer at the
 				 * correct offset */
-				r = copyfrom(endpt,
-				    ciov->iov_addr, i * blk_size,
-				    (vir_bytes) copybuff, blk_size);
+				r = copyfrom(endpt, ciov->iov_addr,
+				    i * blk_size, (vir_bytes) copybuff,
+				    blk_size);
 				if (r != OK) {
 					mmc_log_warn(&log,
 					    "I/O write error: %s iov(base,size)=(%d,%d)"
@@ -351,6 +391,7 @@ block_transfer(dev_t minor,	/* minor device number */
 					    ciov->iov_size, io_offset);
 					return EINVAL;
 				}
+
 				/* write a single block */
 				slot->host->write(&slot->card,
 				    (dev->dv_base / blk_size) +
@@ -364,8 +405,7 @@ block_transfer(dev_t minor,	/* minor device number */
 				/* Read io_size bytes from our data at the
 				 * correct offset and write it to the output
 				 * buffer at 0 */
-				r = copyto(endpt,
-				    ciov->iov_addr, i * blk_size,
+				r = copyto(endpt, ciov->iov_addr, i * blk_size,
 				    (vir_bytes) copybuff, blk_size);
 				if (r != OK) {
 					mmc_log_warn(&log,
@@ -408,9 +448,11 @@ block_ioctl(dev_t minor,
 	case MMCIOC_GETCID:
 		mmc_log_trace(&log, "returning cid\n", minor);
 		return sys_safecopyto(endpt, grant, 0,
-		    (vir_bytes) slot->card.cid, sizeof(slot->card.cid));
+		    (vir_bytes) slot->card.regs.cid,
+		    sizeof(slot->card.regs.cid));
 	case MMCIOC_LOGLEVEL:
-		r = sys_safecopyfrom(endpt, grant, 0,(vir_bytes) &level, sizeof(int));
+		r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) & level,
+		    sizeof(int));
 		if (r != OK) {
 			mmc_log_warn(&log,
 			    "I/O error %d in ioclt:%s", r, strerror(_SIGN r));
@@ -446,7 +488,7 @@ block_ioctl(dev_t minor,
 static struct device *
 block_part(dev_t minor)
 {
-	/*
+	/* 
 	 * Reuse the existing MINIX major/minor partitioning scheme.
 	 * - 8 drives
 	 * - 5 devices per drive allowing direct access to the disk and up to 4
@@ -513,16 +555,14 @@ sef_local_startup()
 		exit(EXIT_FAILURE);
 	}
 	/* 
-	 * Register init callbacks. Use the same function for all event types
+	 * Register callbacks for fresh start, live update and restart.
+	 *  Use the same function for all event types
 	 */
-	sef_setcb_init_fresh(block_system_event_cb);	/* Callback on a fresh 
-							 * start */
-	sef_setcb_init_lu(block_system_event_cb);	/* Callback on a Live
-							 * Update */
-	sef_setcb_init_restart(block_system_event_cb);	/* Callback on a
-							 * restart */
+	sef_setcb_init_fresh(block_system_event_cb);
+	sef_setcb_init_lu(block_system_event_cb);
+	sef_setcb_init_restart(block_system_event_cb);
 
-	/* Register signal callbacks. */
+	/* Register a signal handler */
 	sef_setcb_signal_handler(block_signal_handler_cb);
 
 	/* SEF startup */
@@ -535,7 +575,7 @@ sef_local_startup()
 static int
 block_system_event_cb(int type, sef_init_info_t * info)
 {
-	/*
+	/* 
 	 * Callbacks for the System event framework as registered in 
 	 * sef_local_startup */
 	switch (type) {
@@ -573,7 +613,7 @@ block_signal_handler_cb(int signo)
 static struct sd_slot *
 get_slot(dev_t minor)
 {
-	/*
+	/* 
 	 * Get an sd_slot based on the minor number.
 	 *
 	 * This driver only supports a single card at at time. Also as
@@ -609,7 +649,6 @@ set_log_level(int level)
 		host.set_log_level(level);
 	}
 }
-
 
 int
 main(int argc, char **argv)

@@ -1,3 +1,4 @@
+
 #define SUBPARTITION_PER_PARTITION 4	/* 4 sub partitions per partition */
 #define PARTITONS_PER_DISK 4	/* 4 partitions per disk */
 #define MINOR_PER_DISK  1	/* one additional minor to point to */
@@ -36,21 +37,43 @@ struct mmc_host;
 #define SD_MODE_CARD_IDENTIFICATION 1
 #define SD_MODE_DATA_TRANSFER_MODE 2
 
+
+struct sd_card_regs
+{
+	uint32_t cid[4]; /* Card Identification */
+	uint32_t rca; /* Relative card address */
+	uint32_t dsr; /* Driver stage register */
+	uint32_t csd[4]; /* Card specific data */
+	uint32_t scr[2]; /* SD configuration */
+	uint32_t ocr; /* Operation conditions */
+	uint32_t ssr[5]; /* SD Status */
+	uint32_t csr; /* Card status */
+};
+
+/* struct representing an mmc command */
+struct mmc_command
+{
+	uint32_t cmd;
+	uint32_t args;
+	uint32_t resp_type;
+
+#define  RESP_LEN_48_CHK_BUSY (3<<0)
+#define  RESP_LEN_48		  (2<<0)
+#define  RESP_LEN_136		  (1<<0)
+#define  NO_RESPONSE		  (0<<0)
+
+	uint32_t resp[4];
+	unsigned char* data;
+	uint32_t data_len;
+};
+
 /* structure representing an SD card */
 struct sd_card
 {
 	/* pointer back to the SD slot for convenience */
 	struct sd_slot *slot;
 
-	/* Card registers */
-	uint8_t cid[16];	/* Card Identification 128 bits */
-	uint32_t rca;		/* Relative card address */
-	uint32_t dsr;		/* Driver stage register */
-	uint32_t csd[4];	/* Card specific data */
-	uint32_t scr[2];	/* SD configuration */
-	uint32_t ocr;		/* Operation conditions */
-	uint32_t ssr[5];	/* SD Status */
-	uint32_t csr;		/* Card status */
+	struct sd_card_regs regs;
 
 	/* some helpers (data comming from the csd) */
 	uint32_t blk_size;
@@ -123,5 +146,4 @@ struct mmc_command
 #endif
 
 /* Hack done for driver registration */
-void mmchs_host_initialize_host_structure(struct mmc_host *host);
-#define host_initialize_host_structure(x) mmchs_host_initialize_host_structure(x)
+void host_initialize_host_structure(struct mmc_host *host);
