@@ -27,10 +27,10 @@ do_one()
 		sleep 10
 	done
 	echo pid = $pid
-	./swifi -f $EXE $pid $1 $2 $3 >/tmp/out
+	swifi -f $EXE $pid $1 $2 $3 >/tmp/out
 	sleep 1
 	fault_blocks=`expr $fault_blocks + 1`
-	if kill -0 $pid 
+	if kill -0 $pid
 	then
 		if [ $dont_connect -eq 0 ]
 		then
@@ -114,7 +114,7 @@ text)		type_arg=0
 ;;
 nop)		type_arg=4
 ;;
-random)		
+random)
 ;;
 *)
 	usage

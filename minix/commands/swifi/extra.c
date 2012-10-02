@@ -19,45 +19,6 @@ char *victim_exe= NULL;
 static struct nlist *exe_nlist;
 static int exe_nlist_n;
 
-/* unsigned long __get_free_page(int type) { assert(0); } */
-/* void *kmalloc(size_t size, int type) { assert(0); } */
-void free_page(unsigned long page) { assert(0); }
-/* void kfree(void *mem) { assert(0); } */
-void vfree(void *mem) { assert(0); }
-
-size_t strncpy_from_user(char *addr, const char *user_name, size_t size)
-{ assert(0); return 0; }
-
-/* void lock_kernel(void) { assert(0); } */
-/* void unlock_kernel(void) { assert(0); } */
-/* void __asm__(char *str) { assert(0); } */
-
-extern void *__vmalloc(unsigned long size, int gfp_mask, pgprot_t prot)
-{ assert(0); return NULL; }
-
-#if 0
-void kallsyms_sections(void *infop,
-	int (*fp)(void *token, const char *modname, const char *secname,
-	      ElfW(Addr) secstart, ElfW(Addr) secend, ElfW(Word) secflags))
-{ assert(0); }
-#endif
-
-unsigned long __generic_copy_to_user(void *x, const void *y, unsigned long z)
-{ assert(0); return -1; }
-unsigned long __generic_copy_from_user(void *x, const void *y, unsigned long z)
-{ assert(0); return -1; }
-
-/* void read_lock(struct lock *lock) { assert(0); } */
-/* void read_unlock(struct lock *lock) { assert(0); } */
-void udelay(unsigned long usecs) { assert(0); }
-int copy_to_user(void * result_record, void *res, size_t size)
-{
-	memcpy(result_record, res, size);
-	return 0;
-}
-
-void panic(char *str) { assert(0); }
-
 void printk(char *fmt, ...)
 {
 	va_list ap;
@@ -96,16 +57,6 @@ int kallsyms_address_to_symbol(db_expr_t off,
 				above= &exe_nlist[i];
 		}
 	}
-#if 0
-	if (below)
-	{
-		printf("found '%s' at 0x%x\n", below->n_name, below->n_value);
-	}
-	if (above)
-	{
-		printf("found '%s' at 0x%x\n", above->n_name, above->n_value);
-	}
-#endif
 
 	btext |= TRAP_BIT;
 	etext |= TRAP_BIT;
@@ -128,10 +79,6 @@ int kallsyms_address_to_symbol(db_expr_t off,
 
 	return 1;
 }
-
-struct module *module_list;
-struct task_struct *task_list;
-struct lock tasklist_lock;
 
 unsigned long text_read_ul(void *addr)
 {

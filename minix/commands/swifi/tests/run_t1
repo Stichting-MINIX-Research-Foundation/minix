@@ -26,7 +26,7 @@ do_one()
 		sleep 10
 	done
 	echo pid = $pid
-	./swifi -f $EXE $pid $1 $2 $3 >/tmp/out
+	swifi -f $EXE $pid $1 $2 $3 >/tmp/out
 	sleep 1
 	kill -0 $pid &&
 		echo "driver failed to die, params: test $1, count $2, seed $3"
@@ -94,7 +94,7 @@ text)		type_arg=0
 ;;
 nop)		type_arg=4
 ;;
-random)		
+random)
 ;;
 *)
 	usage

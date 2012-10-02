@@ -27,7 +27,7 @@ do_one()
 		sleep 10
 	done
 	echo pid = $pid
-	./swifi -f $EXE $pid $1 $2 $3 >/tmp/out
+	swifi -f $EXE $pid $1 $2 $3 >/tmp/out
 	sleep 1
 	kill -0 $pid &&
 		echo "driver survived, params: test $1, count $2, seed $3" ||

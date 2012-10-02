@@ -6,8 +6,6 @@ Created:	Feb 2001 by Philip Homburg <philip@f-mnx.phicoh.com>
 Open a TCP connection
 */
 
-#define _POSIX_C_SOURCE 2
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -28,6 +26,7 @@ Open a TCP connection
 #include <net/gen/socket.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
+#include <arpa/inet.h>
 
 #define BUF_SIZE	10240
 
@@ -118,7 +117,7 @@ static void do_conn(char *hostname, char *portname)
 	nwio_tcpcl_t tcpcl;
 	nwio_tcpopt_t tcpopt;
 
-	if (!inet_aton(hostname, &addr))
+	if (!inet_aton(hostname, (struct in_addr *)&addr))
 	{
 		he= gethostbyname(hostname);
 		if (he == NULL)
@@ -159,7 +158,8 @@ static void do_conn(char *hostname, char *portname)
 	tcpcl.nwtcl_flags= 0;
 	if (ioctl(tcpfd, NWIOTCPCONN, &tcpcl) == -1)
 	{
-		fatal("unable to connect to %s:%u: %s", inet_ntoa(addr),
+		fatal("unable to connect to %s:%u: %s",
+			inet_ntoa(*(struct in_addr *)&addr),
 			ntohs(tcpconf.nwtc_remport), strerror(errno));
 	}
 
@@ -207,7 +207,7 @@ static void fullduplex(void)
 				fatal("error reading from TCP conn.: %s",
 					strerror(errno));
 			}
-			s= r; 
+			s= r;
 			for (o= 0; o<s; o += r)
 			{
 				r= write(1, buf+o, s-o);
@@ -246,7 +246,7 @@ static void fullduplex(void)
 			fatal("error reading from stdin: %s",
 				strerror(s_errno));
 		}
-		s= r; 
+		s= r;
 		for (o= 0; o<s; o += r)
 		{
 			r= write(tcpfd, buf+o, s-o);

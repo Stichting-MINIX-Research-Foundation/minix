@@ -4,8 +4,6 @@ rnd.c
 Generate random numbers
 */
 
-#define _POSIX_SOURCE
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

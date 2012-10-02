@@ -10,7 +10,7 @@ do_one()
 		sleep 1
 	done
 	echo pid = $pid
-	./swifi -f /usr/build/drivers/dp8390/dp8390 $pid $1 $2 $3 >/tmp/out
+	swifi -f /usr/build/drivers/dp8390/dp8390 $pid $1 $2 $3 >/tmp/out
 	sleep 5
 	kill -0 $pid &&
 		echo "driver failed to die, params: test $1, count $2, seed $3"

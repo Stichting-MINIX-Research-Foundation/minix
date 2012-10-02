@@ -6,7 +6,7 @@ if [ $# -ne 2 ]; then usage; fi
 type="$1"
 run="$2"
 
-count=1000
+count=10000
 
 # Rotate syslog
 LOGFILE=/var/log/messages
@@ -15,9 +15,9 @@ mv $LOGFILE $LOGFILE.prev
 kill -1 `ps ax | grep syslogd | grep -v grep |
 	sed 's,^[	 ]*,,;s,[	 ].*,,'`
 
-./run_t1 $count $type `expr $run \* 1000` 2>&1 | 
-	tee results/1.$type.$run.out
+./run_t2 $count $type `expr $run \* 1000` 2>&1 |
+	tee results/2.$type.$run.out
 
-cp $LOGFILE results/1.$type.$run.log
+cp $LOGFILE results/2.$type.$run.log
 
 
