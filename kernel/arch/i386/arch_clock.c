@@ -68,6 +68,10 @@ void stop_8253A_timer(void)
 	outb(TIMER0, 0);
 }
 
+void arch_timer_int_handler(void)
+{
+}
+
 static int calib_cpu_handler(irq_hook_t * UNUSED(hook))
 {
 	u64_t tsc;

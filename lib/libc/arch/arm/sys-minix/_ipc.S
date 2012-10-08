@@ -4,7 +4,7 @@
 /**========================================================================* */
 /*                           IPC assembly routines			  * */
 /**========================================================================* */
-ENTRY(_send)
+ENTRY(_send_orig)
 	push	{fp}
 	mov	fp, sp
 	mov	r2, r1       /* r2 = msg ptr */
@@ -15,7 +15,7 @@ ENTRY(_send)
 	pop	{fp}
 	bx	lr
 
-ENTRY(_receive)
+ENTRY(_receive_orig)
 	push	{fp}
 	mov	fp, sp
 	push	{r2}         /* save status ptr */
@@ -29,7 +29,7 @@ ENTRY(_receive)
 	pop	{fp}
 	bx	lr
 
-ENTRY(_sendrec)
+ENTRY(_sendrec_orig)
 	push	{fp}
 	mov	fp, sp
 	mov	r2, r1       /* r2 = msg ptr */
@@ -55,7 +55,7 @@ ENTRY(_minix_kernel_info_struct)
 	pop	{fp}
 	bx	lr
 
-ENTRY(_notify)
+ENTRY(_notify_orig)
 	push	{fp}
 	mov	fp, sp
 	mov	r1, r0       /* r1 = src_dest */
@@ -65,7 +65,7 @@ ENTRY(_notify)
 	pop	{fp}
 	bx	lr
 
-ENTRY(_sendnb)
+ENTRY(_sendnb_orig)
 	push	{fp}
 	mov	fp, sp
 	mov	r2, r1       /* r2 = msg ptr */
@@ -77,7 +77,7 @@ ENTRY(_sendnb)
 	bx	lr
 
 
-ENTRY(_do_kernel_call)
+ENTRY(_do_kernel_call_orig)
 	/* r0 already holds msg ptr */
 	mov	r3, #KERVEC /* r3 determines the SVC type */
 	svc	#0          /* trap to kernel */

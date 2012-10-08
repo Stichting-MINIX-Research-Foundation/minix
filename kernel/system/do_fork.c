@@ -71,7 +71,9 @@ int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
   rpc->p_sys_time = 0;
 
+#if defined(__i386__)
   rpc->p_reg.psw &= ~TRACEBIT;		/* clear trace bit */
+#endif
   rpc->p_misc_flags &=
 	~(MF_VIRT_TIMER | MF_PROF_TIMER | MF_SC_TRACE | MF_SPROF_SEEN);
   rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
@@ -116,8 +118,13 @@ int do_fork(struct proc * caller, message * m_ptr)
   RTS_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));
   (void) sigemptyset(&rpc->p_pending);
 
+#if defined(__i386__)
   rpc->p_seg.p_cr3 = 0;
   rpc->p_seg.p_cr3_v = NULL;
+#elif defined(__arm__)
+  rpc->p_seg.p_ttbr = 0;
+  rpc->p_seg.p_ttbr_v = NULL;
+#endif
 
   return OK;
 }

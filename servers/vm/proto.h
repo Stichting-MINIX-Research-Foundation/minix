@@ -96,6 +96,7 @@ int pt_writemap(struct vmproc * vmp, pt_t *pt, vir_bytes v, phys_bytes
 int pt_checkrange(pt_t *pt, vir_bytes v, size_t bytes, int write);
 int pt_bind(pt_t *pt, struct vmproc *who);
 void *vm_allocpage(phys_bytes *p, int cat);
+void *vm_allocpagedir(phys_bytes *p);
 void pt_cycle(void);
 int pt_mapkernel(pt_t *pt);
 void vm_pagelock(void *vir, int lockflag);

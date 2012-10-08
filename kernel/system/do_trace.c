@@ -87,7 +87,9 @@ int do_trace(struct proc * caller, message * m_ptr)
   switch (tr_request) {
   case T_STOP:			/* stop process */
 	RTS_SET(rp, RTS_P_STOP);
+#if defined(__i386__)
 	rp->p_reg.psw &= ~TRACEBIT;	/* clear trace bit */
+#endif
 	rp->p_misc_flags &= ~MF_SC_TRACE;	/* clear syscall trace flag */
 	return(OK);
 
@@ -148,11 +150,13 @@ int do_trace(struct proc * caller, message * m_ptr)
 	    i == (int) &((struct proc *) 0)->p_reg.ss)
 		return(EFAULT);
 #endif
+#if defined(__i386__)
 	if (i == (int) &((struct proc *) 0)->p_reg.psw)
 		/* only selected bits are changeable */
 		SETPSW(rp, tr_data);
 	else
 		*(reg_t *) ((char *) &rp->p_reg + i) = (reg_t) tr_data;
+#endif
 	m_ptr->CTL_DATA = 0;
 	break;
 
@@ -166,7 +170,9 @@ int do_trace(struct proc * caller, message * m_ptr)
 	break;
 
   case T_STEP:			/* set trace bit */
+#if defined(__i386__)
 	rp->p_reg.psw |= TRACEBIT;
+#endif
 	RTS_UNSET(rp, RTS_P_STOP);
 	m_ptr->CTL_DATA = 0;
 	break;

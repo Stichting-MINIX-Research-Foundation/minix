@@ -34,9 +34,11 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 	KERNEL, (vir_bytes) &sc, sizeof(struct sigcontext))) != OK)
 	return r;
 
+#if defined(__i386__)
   /* Restore user bits of psw from sc, maintain system bits from proc. */
   sc.sc_psw  =  (sc.sc_psw & X86_FLAGS_USER) |
                 (rp->p_reg.psw & ~X86_FLAGS_USER);
+#endif
 
 #if defined(__i386__)
   /* Don't panic kernel if user gave bad selectors. */

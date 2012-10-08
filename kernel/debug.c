@@ -251,12 +251,16 @@ void print_proc(struct proc *pp)
 	endpoint_t dep;
 
 	printf("%d: %s %d prio %d time %d/%d cycles 0x%x%08x cpu %2d "
-			"cr3 0x%lx rts %s misc %s sched %s ",
+			"pdbr 0x%lx rts %s misc %s sched %s ",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_user_time,
 		pp->p_sys_time, ex64hi(pp->p_cycles),
 		ex64lo(pp->p_cycles), pp->p_cpu,
+#if defined(__i386__)
 		pp->p_seg.p_cr3,
+#elif defined(__arm__)
+		pp->p_seg.p_ttbr,
+#endif
 		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags),
 		schedulerstr(pp->p_scheduler));
 

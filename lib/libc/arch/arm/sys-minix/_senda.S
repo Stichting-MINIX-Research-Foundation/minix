@@ -1,7 +1,7 @@
 #include <minix/ipcconst.h>
 #include <machine/asm.h>
 
-ENTRY(_senda)
+ENTRY(_senda_orig)
 	push	{fp}
 	mov	fp, sp
 	mov	r2, r0       /* r2 = table */

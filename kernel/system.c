@@ -209,8 +209,10 @@ void system_init(void)
 
   /* Device I/O. */
   map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */ 
+#if defined(__i386__)
   map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */ 
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
+#endif
 
   /* Memory management. */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
@@ -255,11 +257,11 @@ void system_init(void)
   map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
   map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
+#endif
 
   /* Machine state switching. */
   map(SYS_SETMCONTEXT, do_setmcontext); /* set machine context */
   map(SYS_GETMCONTEXT, do_getmcontext); /* get machine context */
-#endif
 
   /* Scheduling */
   map(SYS_SCHEDULE, do_schedule);	/* reschedule a process */

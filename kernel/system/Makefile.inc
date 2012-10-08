@@ -15,8 +15,6 @@ SRCS+= 	\
 	do_stime.c \
 	do_vtimer.c \
 	do_irqctl.c \
-	do_devio.c \
-	do_vdevio.c \
 	do_copy.c \
 	do_umap.c \
 	do_umap_remote.c \
@@ -41,4 +39,10 @@ SRCS+= 	\
 	do_schedule.c \
 	do_schedctl.c \
 	do_statectl.c
+
+.if ${MACHINE_ARCH} == "i386"
+SRCS+=  \
+	do_devio.c \
+	do_vdevio.c
+.endif
 

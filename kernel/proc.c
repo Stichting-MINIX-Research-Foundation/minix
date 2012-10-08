@@ -380,7 +380,11 @@ check_misc_flags:
 	 */
 	p->p_misc_flags &= ~MF_CONTEXT_SET;
 
+#if defined(__i386__)
   	assert(p->p_seg.p_cr3 != 0);
+#elif defined(__arm__)
+	assert(p->p_seg.p_ttbr != 0);
+#endif
 #ifdef CONFIG_SMP
 	if (p->p_misc_flags & MF_FLUSH_TLB) {
 		if (tlb_must_refresh)
