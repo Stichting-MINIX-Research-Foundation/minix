@@ -680,6 +680,11 @@ mmchs_card_initialize(struct sd_slot *slot)
 	memset(card, 0, sizeof(struct sd_card));
 	card->slot = slot;
 
+	if (card_goto_idle_state()) {
+		printf("Failed to go idle state\n");
+		return NULL;
+	}
+
 	if (card_identification()) {
 		printf("Failed to do card_identification\n");
 		return NULL;
