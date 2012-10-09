@@ -72,7 +72,7 @@ set_objlist()
 # (don't trust the shell builtin getopts to be in a known state on error)
 while [ $# -gt 0 ]; do
 	option="${1#-}"
-	[ "$option" = "$1" -o -z "$option" ] && break
+	[ "x$option" = "x$1" -o -z "$option" ] && break
 	while
 		optarg="${option#?}"
 		option="${option%$optarg}"
