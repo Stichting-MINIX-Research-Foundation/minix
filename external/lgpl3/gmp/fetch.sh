@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	tar -xf gmp-5.0.2.tar.bz2
+	bsdtar -oxf gmp-5.0.2.tar.bz2
 	mv gmp-5.0.2 dist
 fi
 

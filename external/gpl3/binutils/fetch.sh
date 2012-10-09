@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	tar -xf binutils-2.17a.tar.bz2 && \
+	bsdtar -oxf binutils-2.17a.tar.bz2 && \
 	mv binutils-2.17 dist && \
 	cd dist && \
 	cat ../../../../tools/binutils/patches/* | patch -p0

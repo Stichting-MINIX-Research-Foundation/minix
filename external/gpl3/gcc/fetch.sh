@@ -24,7 +24,7 @@ then
 		fi
 	fi
 
-	tar -xf gcc-4.4.3.tar.bz2 && \
+	bsdtar -oxf gcc-4.4.3.tar.bz2 && \
 	mv gcc-4.4.3 dist && \
 	cd dist && \
 	cat ../../../../tools/gcc/patches/* | patch -p0 && \
