@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	tar -xf mpfr-3.1.0.tar.bz2
+	bsdtar -oxf mpfr-3.1.0.tar.bz2
 	mv mpfr-3.1.0 dist
 fi
 
