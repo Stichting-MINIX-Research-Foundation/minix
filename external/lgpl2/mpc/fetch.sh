@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	tar -xf mpc-0.9.tar.gz
+	bsdtar -oxf mpc-0.9.tar.gz
 	mv mpc-0.9 dist
 fi
 
