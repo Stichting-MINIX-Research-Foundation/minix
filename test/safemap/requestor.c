@@ -48,14 +48,14 @@ int main(int argc, char **argv)
 
 	/* Test MAP. */
 	FIFO_WAIT(fid_get);
-	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, D, 1);
+	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, 1);
 	if(r != OK) {
 		printf("REQUESTOR: error in sys_safemap: %d\n", r);
 		return 1;
 	}
 	CHECK_TEST("REQUESTOR", buf[0], BUF_START_GRANTOR, "MAP");
 	buf[0] = BUF_START_REQUESTOR;
-	r = sys_safeunmap(D, (long)buf);
+	r = sys_safeunmap((long)buf);
 	if(r != OK) {
 		printf("REQUESTOR: error in sys_safeunmap: %d\n", r);
 		return 1;
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 	/* Test UNMAP. */
 	FIFO_WAIT(fid_get);
 	CHECK_TEST("REQUESTOR", buf[0], BUF_START_REQUESTOR, "UNMAP");
-	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, D, 1);
+	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, 1);
 	if(r != 0) {
 		printf("REQUESTOR: error in sys_safemap: %d\n", r);
 		return 1;
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 
 	/* Test SMAP_COW. */
 	FIFO_WAIT(fid_get);
-	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, D, 1);
+	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, 1);
 	if(r != OK) {
 		printf("REQUESTOR: error in sys_safemap: %d\n", r);
 		return 1;
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 	/* Test COW_SMAP. */
 	FIFO_WAIT(fid_get);
 	buf[0] = BUF_START_REQUESTOR;
-	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, D, 1);
+	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, 1);
 	if(r != OK) {
 		printf("REQUESTOR: error in sys_safemap: %d\n", r);
 		return 1;
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 		printf("REQUESTOR: error in sys_safecopyto: %d\n", r);
 		return 1;
 	}
-	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, D, 1);
+	r = sys_safemap(ep_granter, gid, 0, (long)buf, size, 1);
 	if(r != OK) {
 		printf("REQUESTOR: error in sys_safemap: %d\n", r);
 		return 1;
