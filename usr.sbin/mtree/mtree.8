@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.53 2010/01/20 14:00:48 wiz Exp $
+.\"	$NetBSD: mtree.8,v 1.63 2012/10/05 09:18:02 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd January 20, 2010
+.Dd October 4, 2012
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm
-.Op Fl CcDdeLlMPrSUuWx
+.Op Fl CcDdejLlMnPqrSUuWx
 .Op Fl i | Fl m
 .Op Fl E Ar tags
 .Op Fl f Ar spec
@@ -104,8 +104,8 @@ The full path name
 (beginning with
 .Dq \&./ )
 is always printed as the first field;
-.Fl k ,
 .Fl K ,
+.Fl k ,
 and
 .Fl R
 can be used to control which other keywords are printed;
@@ -113,6 +113,7 @@ can be used to control which other keywords are printed;
 and
 .Fl I
 can be used to control which files are printed;
+and the
 .Fl S
 option can be used to sort the output.
 .It Fl c
@@ -143,6 +144,17 @@ specification.
 Read the specification from
 .Ar file  ,
 instead of from the standard input.
+.Pp
+If this option is specified twice, the two specifications are compared
+to each other rather than to the file hierarchy.
+The specifications will be sorted like output generated using
+.Fl c .
+The output format in this case is somewhat reminiscent of
+.Xr comm 1 ,
+having "in first spec only", "in second spec only", and "different"
+columns, prefixed by zero, one and two TAB characters respectively.
+Each entry in the "different" column occupies two lines, one from each
+specification.
 .It Fl I Ar tags
 Add the comma separated tags to the
 .Dq inclusion
@@ -154,6 +166,20 @@ and
 If no inclusion list is provided, the default is to display all files.
 .It Fl i
 If specified, set the schg and/or sappnd flags.
+.It Fl j
+Indent the output 4 spaces each time a directory level is descended when
+creating a specification with the
+.Fl c
+option.
+This does not affect either the /set statements or the comment before each
+directory.
+It does however affect the comment before the close of each directory.
+This is the equivalent of the
+.Fl i
+option in the
+.Fx
+version of
+.Nm .
 .It Fl K Ar keywords
 Add the specified (whitespace or comma separated) keywords to the current
 set of keywords.
@@ -187,13 +213,13 @@ particular, if other bits like the sticky bit or suid/sgid bits are
 set either in the specification or the file, exact checking will be
 performed.
 This option may not be set at the same time as the
-.Fl u
-or
 .Fl U
+or
+.Fl u
 option.
 .It Fl M
 Permit merging of specification entries with different types,
-with the last entry take precedence.
+with the last entry taking precedence.
 .It Fl m
 If the schg and/or sappnd flags are specified, reset these flags.
 Note that this is only possible with securelevel less than 1 (i.e.,
@@ -202,6 +228,13 @@ mode).
 See
 .Xr init 8
 for information on security levels.
+.It Fl n
+Do not emit pathname comments when creating a specification.
+Normally
+a comment is emitted before each directory and before the close of that
+directory when using the
+.Fl c
+option.
 .It Fl N Ar dbdir
 Use the user database text file
 .Pa master.passwd
@@ -222,6 +255,12 @@ This is the default.
 Use the file hierarchy rooted in
 .Ar path  ,
 instead of the current directory.
+.It Fl q
+Quiet mode.
+Do not complain when a
+.Dq missing
+directory cannot be created because it already exists.
+This occurs when the directory is a symbolic link.
 .It Fl R Ar keywords
 Remove the specified (whitespace or comma separated) keywords from the current
 set of keywords.
@@ -287,9 +326,9 @@ Don't attempt to set various file attributes such as the
 ownership, mode, flags, or time
 when creating new directories or changing existing entries.
 This option will be most useful when used in conjunction with
-.Fl u
+.Fl U
 or
-.Fl U .
+.Fl u .
 .It Fl X Ar exclude-file
 The specified file contains
 .Xr fnmatch 3
@@ -329,7 +368,6 @@ or
 .Sy char
 file types.
 The argument must be one of the following forms:
-.Pp
 .Bl -tag -width 4n
 .It Ar format , Ns Ar major , Ns Ar minor
 A device with
@@ -411,9 +449,14 @@ The current file's permissions as a numeric (octal) or symbolic
 value.
 .It Sy nlink
 The number of hard links the file is expected to have.
+.It Sy nochange
+Make sure this file or directory exists but otherwise ignore all attributes.
 .It Sy optional
 The file is optional; don't complain about the file if it's
 not in the file hierarchy.
+.It Sy ripemd160digest
+Synonym for
+.Sy rmd160 .
 .It Sy rmd160
 The
 .Tn RMD-160
@@ -459,7 +502,10 @@ and
 These may be specified without leading or trailing commas, but will be
 stored internally with them.
 .It Sy time
-The last modification time of the file.
+The last modification time of the file,
+in second and nanoseconds.
+The value should include a period character and exactly nine digits after
+the period.
 .It Sy type
 The type of the file; may be set to any one of the following:
 .Pp
@@ -498,7 +544,6 @@ and
 .Sy uid .
 .Pp
 There are four types of lines in a specification:
-.Pp
 .Bl -enum
 .It
 Set global values for a keyword.
@@ -581,7 +626,7 @@ appropriately.
 Multiple entries for the same full path are permitted if the types
 are the same (unless
 .Fl M
-is given, and then the types may differ);
+is given, in which case the types may differ);
 in this case the settings for the last entry take precedence.
 .Pp
 A path name that does not contain a slash will be treated as a relative path.
@@ -631,10 +676,11 @@ can be used to detect which of the binaries have actually been modified.
 .Pp
 The
 .Fl d
-and
+option can be used in combination with
+.Fl U
+or
 .Fl u
-options can be used in combination to create directory hierarchies
-for distributions and other such things.
+to create directory hierarchies for, for example, distributions.
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chgrp 1 ,
@@ -681,8 +727,8 @@ keywords,
 .Fl D ,
 .Fl E ,
 .Fl I ,
-.Fl l ,
 .Fl L ,
+.Fl l ,
 .Fl N ,
 .Fl P ,
 .Fl R ,
