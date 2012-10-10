@@ -88,7 +88,7 @@ int main(void)
  } else {
 #ifdef __ia64__ 
   cp = (char *) shmat(shmid, ADDR_IA, 0);
-#elif defined(__ARM_ARCH_4T__) || defined(__minix)
+#elif defined(__ARM_ARCH_4T__)
   cp = (char *) shmat(shmid, (void *)NULL, 0);
 #else
   cp = (char *) shmat(shmid, ADDR, 0);
