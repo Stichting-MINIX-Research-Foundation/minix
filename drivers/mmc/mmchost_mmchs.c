@@ -25,6 +25,15 @@
 /* omap /hardware related */
 #include "omap_mmc.h"
 
+/*
+ * Define a structure to be used for logging
+ */
+static struct mmclog log = {
+	.name = "mmc_host_mmchs",
+	.log_level = LEVEL_INFO,
+	.log_func = default_log
+};
+
 #define REG(x)(*((volatile uint32_t *)(x)))
 #define BIT(x)(0x1 << x)
 
@@ -89,7 +98,8 @@ mmchs_init(uint32_t instance)
 
 	base_address = (unsigned long) base_address - 0x100;
 
-	/*  Soft reset of the controller. This section is documented in the TRM */
+	/* Soft reset of the controller. This section is documented in the TRM 
+	 */
 
 	/* Write 1 to sysconfig[0] to trigger a reset */
 	set32(base_address + MMCHS_SD_SYSCONFIG, MMCHS_SD_SYSCONFIG_SOFTRESET,
@@ -154,7 +164,7 @@ mmchs_init(uint32_t instance)
 	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_SDBP,
 	    MMCHS_SD_HCTL_SDBP_ON);
 
-	/* TODO: Add padconf stuff here as documented in the TRM*/
+	/* TODO: Add padconf stuff here as documented in the TRM */
 
 	while ((read32(base_address + MMCHS_SD_HCTL) & MMCHS_SD_HCTL_SDBP)
 	    != MMCHS_SD_HCTL_SDBP_ON) {
@@ -210,7 +220,8 @@ mmchs_init(uint32_t instance)
 	while ((read32(base_address + MMCHS_SD_STAT) & MMCHS_SD_STAT_CC)
 	    != MMCHS_SD_STAT_CC_RAISED) {
 		if (read32(base_address + MMCHS_SD_STAT) & 0x8000) {
-			printf("%s, error stat  %x\n", __FUNCTION__,
+			mmc_log_warn(&log, "%s, error stat  %x\n",
+			    __FUNCTION__,
 			    read32(base_address + MMCHS_SD_STAT));
 			return 1;
 		}
@@ -240,7 +251,7 @@ mmchs_send_cmd(uint32_t command, uint32_t arg)
 	/* Read current interrupt status and fail it an interrupt is already
 	 * asserted */
 	if ((read32(base_address + MMCHS_SD_STAT) & 0xffffu)) {
-		printf("%s, interrupt already raised stat  %08x\n",
+		mmc_log_warn(&log, "%s, interrupt already raised stat  %08x\n",
 		    __FUNCTION__, read32(base_address + MMCHS_SD_STAT));
 		write32(base_address + MMCHS_SD_STAT,
 		    MMCHS_SD_IE_CC_ENABLE_CLEAR);
@@ -258,7 +269,7 @@ mmchs_send_cmd(uint32_t command, uint32_t arg)
 	}
 
 	if (read32(base_address + MMCHS_SD_STAT) & 0x8000) {
-		printf("%s, error stat  %08x\n", __FUNCTION__,
+		mmc_log_warn(&log, "%s, error stat  %08x\n", __FUNCTION__,
 		    read32(base_address + MMCHS_SD_STAT));
 		set32(base_address + MMCHS_SD_STAT, MMCHS_SD_STAT_ERROR_MASK,
 		    0xffffffffu);
@@ -362,8 +373,8 @@ card_identification()
 
 	if (!(command.resp[0]
 		== (MMCHS_SD_ARG_CMD8_VHS | MMCHS_SD_ARG_CMD8_CHECK_PATTERN))) {
-		printf("%s, check pattern check failed  %08x\n", __FUNCTION__,
-		    command.resp[0]);
+		mmc_log_warn(&log, "%s, check pattern check failed  %08x\n",
+		    __FUNCTION__, command.resp[0]);
 		return 1;
 	}
 	return 0;
@@ -480,12 +491,12 @@ card_csd(struct sd_card_regs *card)
 	card->csd[3] = command.resp[3];
 
 	if (SD_CSD_CSDVER(card->csd) != SD_CSD_CSDVER_2_0) {
-		printf("Version 2.0 of CSD register expected\n");
+		mmc_log_warn(&log, "Version 2.0 of CSD register expected\n");
 		return 1;
 	}
 
 	/* sanity check */
-	// printf("size = %llu bytes\n", (long long
+	// mmc_log_warn(&log,"size = %llu bytes\n", (long long
 	// unsigned)SD_CSD_V2_CAPACITY( card->csd) * 512);
 	return 0;
 }
@@ -622,15 +633,6 @@ write_single_block(struct sd_card_regs *card,
 	return 0;
 }
 
-/*
- * Define a structure to be used for logging
- */
-static struct mmclog log = {
-	.name = "mmc_host_mmchs",
-	.log_level = LEVEL_INFO,
-	.log_func = default_log
-};
-
 int
 mmchs_host_init(struct mmc_host *host)
 {
@@ -681,38 +683,40 @@ mmchs_card_initialize(struct sd_slot *slot)
 	card->slot = slot;
 
 	if (card_goto_idle_state()) {
-		printf("Failed to go idle state\n");
+		mmc_log_warn(&log, "Failed to go idle state\n");
 		return NULL;
 	}
 
 	if (card_identification()) {
-		printf("Failed to do card_identification\n");
+		mmc_log_warn(&log, "Failed to do card_identification\n");
 		return NULL;
 	}
 
 	if (card_query_voltage_and_type(&slot->card.regs)) {
-		printf("Failed to do card_query_voltage_and_type\n");
+		mmc_log_warn(&log,
+		    "Failed to do card_query_voltage_and_type\n");
 		return NULL;
 	}
 	if (card_identify(&slot->card.regs)) {
-		printf("Failed to identify card\n");
+		mmc_log_warn(&log, "Failed to identify card\n");
 		return NULL;
 	}
 	/* We have now initialized the hardware identified the card */
 	if (card_csd(&slot->card.regs)) {
-		printf("failed to read csd (card specific data)\n");
+		mmc_log_warn(&log,
+		    "failed to read csd (card specific data)\n");
 		return NULL;
 	}
 
 	if (select_card(&slot->card.regs)) {
-		printf("Failed to select card\n");
+		mmc_log_warn(&log, "Failed to select card\n");
 		return NULL;
 	}
 
 	if (SD_CSD_READ_BL_LEN(slot->card.regs.csd) != 0x09) {
 		/* for CSD version 2.0 the value is fixed to 0x09 and means a
 		 * block size of 512 */
-		printf("Block size expect to be 512\n");
+		mmc_log_warn(&log, "Block size expect to be 512\n");
 		return NULL;
 	}
 
