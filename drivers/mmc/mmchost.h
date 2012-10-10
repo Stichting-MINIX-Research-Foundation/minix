@@ -37,17 +37,16 @@ struct mmc_host;
 #define SD_MODE_CARD_IDENTIFICATION 1
 #define SD_MODE_DATA_TRANSFER_MODE 2
 
-
 struct sd_card_regs
 {
-	uint32_t cid[4]; /* Card Identification */
-	uint32_t rca; /* Relative card address */
-	uint32_t dsr; /* Driver stage register */
-	uint32_t csd[4]; /* Card specific data */
-	uint32_t scr[2]; /* SD configuration */
-	uint32_t ocr; /* Operation conditions */
-	uint32_t ssr[5]; /* SD Status */
-	uint32_t csr; /* Card status */
+	uint32_t cid[4];	/* Card Identification */
+	uint32_t rca;		/* Relative card address */
+	uint32_t dsr;		/* Driver stage register */
+	uint32_t csd[4];	/* Card specific data */
+	uint32_t scr[2];	/* SD configuration */
+	uint32_t ocr;		/* Operation conditions */
+	uint32_t ssr[5];	/* SD Status */
+	uint32_t csr;		/* Card status */
 };
 
 /* struct representing an mmc command */
@@ -63,7 +62,7 @@ struct mmc_command
 #define  NO_RESPONSE		  (0<<0)
 
 	uint32_t resp[4];
-	unsigned char* data;
+	unsigned char *data;
 	uint32_t data_len;
 };
 
@@ -108,7 +107,7 @@ struct mmc_host
 	/* MMC host configuration */
 	int (*host_init) (struct mmc_host * host);
 	/* Set log level */
-	void(*set_log_level) (int level);
+	void (*set_log_level) (int level);
 	/* Host controller reset */
 	int (*host_reset) (struct mmc_host * host);
 	/* Card detection (binary yes/no) */

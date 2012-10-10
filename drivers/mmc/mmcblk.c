@@ -612,7 +612,7 @@ get_slot(dev_t minor)
 		/* we are talking about the first disk and that is all we
 		 * support */
 		return &host.slot[0];
-	} else if ( IS_MINIX_SUB_PARTITION_MINOR(minor) 
+	} else if (IS_MINIX_SUB_PARTITION_MINOR(minor)
 	    && (((minor - MINOR_d0p0s0) / SUB_PER_DRIVE) == 0)) {
 		/* a minor from the first disk */
 		return &host.slot[0];
