@@ -62,23 +62,136 @@ docommand(char *arg)
 }
 
 void
-bootmenu(void)
+prompt(int allowreturn)
 {
 	char input[80];
 
 	for (;;) {
 		char *c = input;
 
-		input[0] = '\0';
 		printf("> ");
-		gets(input);
+		editline(input, sizeof(input), NULL);
 
 		/*
 		 * Skip leading whitespace.
 		 */
 		while (*c == ' ')
 			c++;
+		if (allowreturn && !strcmp(c, "menu"))
+			break;
 		if (*c)
 			docommand(c);
 	}
+}
+
+void
+bootmenu(void)
+{
+	prompt(0);
+}
+
+/* Derived from libsa gets(). */
+void
+editline(char *buf, size_t size, char *input)
+{
+	int c, i, pos, len = 0;
+
+	/* If an initial input has been given, copy and print this first. */
+	if (input != NULL) {
+		while (*input && len < size - 1)
+			putchar(buf[len++] = *input++);
+	}
+	pos = len;
+
+	for (;;) {
+		c = getchar_ex();
+		switch (c & 0177) {
+		case '\0':
+			switch (c) {
+			case 0x4b00: /* Left arrow: move cursor to left. */
+				if (pos > 0) {
+					putchar('\b');
+					pos--;
+				}
+				break;
+			case 0x4d00: /* Right arrow: move cursor to right. */
+				if (pos < len) putchar(buf[pos++]);
+				break;
+			}
+			break;
+		case 'b' & 037: /* Ctrl+B: move cursor to left. */
+			if (pos > 0) {
+				putchar('\b');
+				pos--;
+			}
+			break;
+		case 'f' & 037: /* Ctrl+F: move cursor to right. */
+			if (pos < len) putchar(buf[pos++]);
+			break;
+		case 'a' & 037: /* Ctrl+A: move cursor to start of line. */
+			for ( ; pos > 0; pos--) putchar('\b');
+			break;
+		case 'e' & 037: /* Ctrl+E: move cursor to end of line. */
+			for ( ; pos < len; pos++) putchar(buf[pos]);
+			break;
+		case '\n': /* Enter: return line. */
+		case '\r':
+			for ( ; pos < len; pos++) putchar(buf[pos]);
+			buf[len] = '\0';
+			putchar('\n');
+			return;
+#if HASH_ERASE
+		case '#':
+#endif
+		case '\b': /* Backspace: erase character before cursor. */
+		case '\177':
+			if (pos > 0) {
+				pos--;
+				len--;
+				putchar('\b');
+				for (i = pos; i < len; i++)
+					putchar(buf[i] = buf[i + 1]);
+				putchar(' ');
+				for (i = pos; i < len; i++) putchar('\b');
+				putchar('\b');
+			}
+			break;
+		case 'r' & 037: /* Ctrl+R: reprint line. */
+			putchar('\n');
+			for (i = 0; i < len; i++) putchar(buf[i]);
+			for (i = len; i > pos; i--) putchar('\b');
+			break;
+#if AT_ERASE
+		case '@':
+#endif
+		case 'u' & 037: /* Ctrl+U: clear entire line. */
+		case 'w' & 037:
+			for ( ; pos > 0; pos--) putchar('\b');
+			for ( ; pos < len; pos++) putchar(' ');
+			for ( ; pos > 0; pos--) putchar('\b');
+			len = 0;
+			break;
+		case '\a': /* Ctrl+G: sound bell but do not store character. */
+			putchar(c);
+			break;
+		case '\t': /* Tab: convert to single space. */
+			c = ' ';
+			/*FALLTHROUGH*/
+		default: /* Insert character at cursor position. */
+			if (len < size - 1) {
+				for (i = len; i > pos; i--)
+					buf[i] = buf[i - 1];
+				buf[pos] = c;
+				pos++;
+				len++;
+				putchar(c);
+				for (i = pos; i < len; i++) putchar(buf[i]);
+				for (i = pos; i < len; i++) putchar('\b');
+			} else {
+				putchar('\a');
+			}
+			break;
+		}
+	}
+	/*NOTREACHED*/
 }

@@ -61,6 +61,7 @@ banner=Welcome to the MINIX 3 installation CD
 banner================================================================================
 banner=
 menu=Regular MINIX 3:multiboot /kernel bootcd=1 cdproberoot=1 rootdevname=ram disable=inet
+menu=Edit menu option:edit
 menu=Drop to boot prompt:prompt
 clear=1
 timeout=10
@@ -106,6 +107,7 @@ hdemu_root_changes()
 
 cat >$RELEASEMNTDIR/boot.cfg <<END_BOOT_CFG
 menu=Regular MINIX 3:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel bootcd=2 disable=inet bios_wini=yes bios_remap_first=1 ramimagedev=c0d7p0s0
+menu=Edit menu option:edit
 menu=Drop to boot prompt:prompt
 clear=1
 timeout=10
@@ -120,6 +122,7 @@ usb_root_changes()
 	echo \
 cat >$RELEASEMNTDIR/boot.cfg <<END_BOOT_CFG
 menu=Regular MINIX 3:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel bios_wini=yes bios_remap_first=1 rootdevname=c0d7p0s0
+menu=Edit menu option:edit
 menu=Drop to boot prompt:prompt
 clear=1
 timeout=10

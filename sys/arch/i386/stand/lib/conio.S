@@ -45,9 +45,30 @@ ENTRY(conputc)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+	cmp	$0x08, %al	# backspace?
+	jne	print_char
+
+	# Multiline backspace support.
+	push	%ax
+	movb	$0x3, %ah	# get cursor position
+	xorw	%bx, %bx
+	int	$0x10
+	pop	%ax
+	testb	%dl, %dl	# cursor on first column?
+	jnz	print_char
+	testb	%dh, %dh	# cursor not on first row?
+	jz	print_char
+	decb	%dh		# move up one row
+	movb	$0x4f, %dl	# move to last column
+	xorw	%bx, %bx
+	movb	$0x02, %ah	# set cursor position
+	jmp	do_int
+
+print_char:
 	movw	$1,%bx
-	movb	$0x0e,%ah
+	movb	$0x0e,%ah	# print character
 	movb	%al, %cl
+do_int:
 	int	$0x10
 
 	calll	_C_LABEL(real_to_prot) # back to protected mode
@@ -68,12 +89,12 @@ ENTRY(congetc)
 
 	movb	$0x0,%ah
 	int	$0x16
-	movb	%al,%bl
+	movw	%ax,%bx
 
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	movb	%bl, 28(%esp)
+	movw	%bx, 28(%esp)
 
 	popa
 	ret

@@ -297,11 +297,10 @@ getchoicefrominput(char *input, int def)
 	return choice;
 }
 
-void
-doboottypemenu(void)
+static void
+showmenu(void)
 {
 	int choice;
-	char input[80], *ic, *oc;
 
 	printf("\n");
 	/* Display menu */
@@ -317,19 +316,31 @@ doboottypemenu(void)
 			    choice + 1,
 			    bootconf.desc[choice]);
 	}
+}
+
+void
+doboottypemenu(void)
+{
+	int choice, editing;
+	char input[256], *ic, *oc;
+
+	showmenu();
 	choice = -1;
+	editing = 0;
 	for (;;) {
 		input[0] = '\0';
 
 		if (bootconf.timeout < 0) {
 			if (bootconf.menuformat == MENUFORMAT_LETTER)
-				printf("\nOption: [%c]:",
+				printf("\nOption%s: [%c]:",
+				    editing ? " (edit)" : "",
 				    bootconf.def + 'A');
 			else
-				printf("\nOption: [%d]:",
+				printf("\nOption%s: [%d]:",
+				    editing ? " (edit)" : "",
 				    bootconf.def + 1);
 
-			gets(input);
+			editline(input, sizeof(input), NULL);
 			choice = getchoicefrominput(input, bootconf.def);
 		} else if (bootconf.timeout == 0)
 			choice = bootconf.def;
@@ -351,27 +362,45 @@ doboottypemenu(void)
 		}
 		if (choice < 0)
 			continue;
-		if (!strcmp(bootconf.command[choice], "prompt") &&
+		ic = bootconf.command[choice];
+		if (editing) {
+			printf("> ");
+			editline(input, sizeof(input), ic);
+			ic = input;
+		}
+		if (!strcmp(ic, "edit") &&
 		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0 ||
 		    check_password((char *)boot_params.bp_password))) {
-			printf("type \"?\" or \"help\" for help.\n");
-			bootmenu(); /* does not return */
+			editing = 1;
+			bootconf.timeout = -1;
+		} else if (!strcmp(ic, "prompt") &&
+		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0 ||
+		    check_password((char *)boot_params.bp_password))) {
+			printf("type \"?\" or \"help\" for help, "
+			    "or \"menu\" to return to the menu.\n");
+			prompt(1);
+			showmenu();
+			editing = 0;
+			bootconf.timeout = -1;
 		} else {
-			ic = bootconf.command[choice];
 			/* Split command string at ; into separate commands */
 			do {
+				/*
+				 * This must support inline editing, since ic
+				 * may also point to input.
+				 */
 				oc = input;
 				/* Look for ; separator */
 				for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
 					*oc++ = *ic;
-				if (*input == '\0')
+				if (*ic == COMMAND_SEPARATOR)
+					ic++;
+				if (oc == input)
 					continue;
 				/* Strip out any trailing spaces */
 				oc--;
 				for (; *oc == ' ' && oc > input; oc--);
 				*++oc = '\0';
-				if (*ic == COMMAND_SEPARATOR)
-					ic++;
 				/* Stop silly command strings like ;;; */
 				if (*input != '\0')
 					docommand(input);

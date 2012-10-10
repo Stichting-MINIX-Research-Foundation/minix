@@ -259,7 +259,7 @@ putchar(int c)
 }
 
 int
-getchar(void)
+getchar_ex(void)
 {
 	int c;
 #ifdef SUPPORT_SERIAL
@@ -272,9 +272,9 @@ getchar(void)
 		c = congetc();
 #ifdef CONSOLE_KEYMAP
 		{
-			char *cp = strchr(CONSOLE_KEYMAP, c);
+			char *cp = strchr(CONSOLE_KEYMAP, c & 0xff);
 			if (cp != 0 && cp[1] != 0)
-				c = cp[1];
+				c = cp[1] | (c & 0xff00);
 		}
 #endif
 		return c;
@@ -300,6 +300,12 @@ getchar(void)
 		return c;
 	}
 #endif /* SUPPORT_SERIAL */
+}
+
+int
+getchar(void)
+{
+	return getchar_ex() & 0xff;
 }
 
 int
