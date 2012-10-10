@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.40 2012/03/25 16:07:04 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.43 2012/10/05 01:31:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.40 2012/03/25 16:07:04 christos Exp $");
+__RCSID("$NetBSD: verify.c,v 1.43 2012/10/05 01:31:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,11 +64,11 @@ static void	miss(NODE *, char *);
 static int	vwalk(void);
 
 int
-verify(void)
+verify(FILE *fi)
 {
 	int rval;
 
-	root = spec(stdin);
+	root = spec(fi);
 	rval = vwalk();
 	miss(root, path);
 	return (rval);
@@ -124,7 +124,8 @@ vwalk(void)
 			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME)) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;
-				if (compare(ep, p))
+				if ((ep->flags & F_NOCHANGE) == 0 &&
+				    compare(ep, p))
 					rval = MISMATCHEXIT;
 				if (!(ep->flags & F_IGN) &&
 				    ep->type == F_DIR &&
@@ -175,8 +176,17 @@ miss(NODE *p, char *tail)
 		if (p->type != F_DIR && (dflag || p->flags & F_VISIT))
 			continue;
 		strcpy(tail, p->name);
-		if (!(p->flags & F_VISIT))
-			printf("missing: %s", path);
+		if (!(p->flags & F_VISIT)) {
+			/* Don't print missing message if file exists as a 
+			   symbolic link and the -q flag is set. */
+			struct stat statbuf;
+
+			if (qflag && stat(path, &statbuf) == 0 &&
+			    S_ISDIR(statbuf.st_mode))
+				p->flags |= F_VISIT;
+			else
+				(void)printf("%s missing", path);
+		}
 		switch (p->type) {
 		case F_BLOCK:
 		case F_CHAR:
@@ -264,7 +274,6 @@ miss(NODE *p, char *tail)
 
 		if (!create || mtree_Wflag)
 			continue;
-#ifndef __minix
 		if ((p->flags & (F_UID | F_UNAME)) &&
 		    (p->flags & (F_GID | F_GNAME)) &&
 		    (lchown(path, p->st_uid, p->st_gid))) {
@@ -274,24 +283,12 @@ miss(NODE *p, char *tail)
 			    (p->flags & F_FLAGS) ? "and file flags " : "");
 			continue;
 		}
-#else
-		if ((p->flags & (F_UID | F_UNAME)) &&
-		    (p->flags & (F_GID | F_GNAME))) {
-			printf("Warning: unable to change user/group/mode due "
-			    "to lack of lchown(3) support");
-		}
-#endif
 		if (p->flags & F_MODE) {
-#ifndef __minix
 			if (lchmod(path, p->st_mode))
 				printf("%s: permissions not set: %s\n",
 				    path, strerror(errno));
-#else
-			printf("Warning: unable to set permissions due "
-			    "to lack of lchmod(3) support");
-#endif
 		}
-#if HAVE_STRUCT_STAT_ST_FLAGS && !defined(__minix)
+#if HAVE_STRUCT_STAT_ST_FLAGS
 		if ((p->flags & F_FLAGS) && p->st_flags) {
 			if (iflag)
 				flags = p->st_flags;

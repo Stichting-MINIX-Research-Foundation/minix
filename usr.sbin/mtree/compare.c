@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.52 2008/12/28 19:36:30 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.55 2012/10/05 00:59:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.52 2008/12/28 19:36:30 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.55 2012/10/05 00:59:35 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -82,6 +83,7 @@ do {									\
 #define	LABEL if (!label++) MARK
 
 #if HAVE_STRUCT_STAT_ST_FLAGS
+
 
 #define CHANGEFLAGS							\
 	if (flags != p->fts_statp->st_flags) {				\
@@ -123,6 +125,28 @@ do {									\
 	CHANGEFLAGS;							\
 } while (0)
 #endif	/* HAVE_STRUCT_STAT_ST_FLAGS */
+
+#ifdef __minix
+#if 0
+int
+lchmod(const char *path, mode_t flags)
+{
+	return -1;
+}
+
+int
+lchown(const char *path, uid_t owner, gid_t group)
+{
+	return -1;
+}
+#endif
+
+int
+utimes(const char *path, const struct timeval times[2])
+{
+	return -1;
+}
+#endif
 
 int
 compare(NODE *s, FTSENT *p)
@@ -174,7 +198,7 @@ typeerr:		LABEL;
 	}
 	if (mtree_Wflag)
 		goto afterpermwhack;
-#if HAVE_STRUCT_STAT_ST_FLAGS && !defined(__minix)
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	if (iflag && !uflag) {
 		if (s->flags & F_FLAGS)
 		    SETFLAGS(p->fts_statp->st_flags, SP_FLGS);
@@ -194,7 +218,6 @@ typeerr:		LABEL;
 		    tab, (long long)s->st_rdev,
 		    (long long)p->fts_statp->st_rdev);
 		if (uflag) {
-#ifndef __minix
 			if ((unlink(p->fts_accpath) == -1) ||
 			    (mknod(p->fts_accpath,
 			      s->st_mode | nodetoino(s->type),
@@ -205,7 +228,6 @@ typeerr:		LABEL;
 				    strerror(errno));
 			 else
 				printf(", modified)\n");
-#endif
 		} else
 			printf(")\n");
 		tab = "\t";
@@ -216,13 +238,11 @@ typeerr:		LABEL;
 		printf("%suser (%lu, %lu",
 		    tab, (u_long)s->st_uid, (u_long)p->fts_statp->st_uid);
 		if (uflag) {
-#ifndef __minix
 			if (lchown(p->fts_accpath, s->st_uid, -1))
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
 				printf(", modified)\n");
-#endif
 		} else
 			printf(")\n");
 		tab = "\t";
@@ -232,13 +252,11 @@ typeerr:		LABEL;
 		printf("%sgid (%lu, %lu",
 		    tab, (u_long)s->st_gid, (u_long)p->fts_statp->st_gid);
 		if (uflag) {
-#ifndef __minix
 			if (lchown(p->fts_accpath, -1, s->st_gid))
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
 				printf(", modified)\n");
-#endif
 		}
 		else
 			printf(")\n");
@@ -267,13 +285,11 @@ typeerr:		LABEL;
 		    tab, (u_long)s->st_mode,
 		    (u_long)p->fts_statp->st_mode & MBITS);
 		if (uflag) {
-#ifndef __minix		
 			if (lchmod(p->fts_accpath, s->st_mode))
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
 				printf(", modified)\n");
-#endif
 		}
 		else
 			printf(")\n");
@@ -328,20 +344,18 @@ typeerr:		LABEL;
 			    tab, ctime(&smtime));
 			printf("%.24s", ctime(&pmtime));
 			if (tflag) {
-#ifndef __minix
 				tv[1] = tv[0];
 				if (utimes(p->fts_accpath, tv))
 					printf(", not modified: %s)\n",
 					    strerror(errno));
 				else
 					printf(", modified)\n");
-#endif
 			} else
 				printf(")\n");
 			tab = "\t";
 		}
 	}
-#if HAVE_STRUCT_STAT_ST_FLAGS && !defined(__minix)
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	/*
 	 * XXX
 	 * since lchflags(2) will reset file times, the utimes() above
@@ -404,14 +418,14 @@ typeerr:		LABEL;
 	if (s->flags & F_MD5) {
 		if ((digestbuf = MD5File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%smd5: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, MD5KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->md5digest, digestbuf)) {
 				LABEL;
-				printf("%smd5 (0x%s, 0x%s)\n",
-				    tab, s->md5digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, MD5KEY, s->md5digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
@@ -422,14 +436,14 @@ typeerr:		LABEL;
 	if (s->flags & F_RMD160) {
 		if ((digestbuf = RMD160File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%srmd160: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, RMD160KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->rmd160digest, digestbuf)) {
 				LABEL;
-				printf("%srmd160 (0x%s, 0x%s)\n",
-				    tab, s->rmd160digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, RMD160KEY, s->rmd160digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
@@ -440,14 +454,14 @@ typeerr:		LABEL;
 	if (s->flags & F_SHA1) {
 		if ((digestbuf = SHA1File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha1: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA1KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha1digest, digestbuf)) {
 				LABEL;
-				printf("%ssha1 (0x%s, 0x%s)\n",
-				    tab, s->sha1digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA1KEY, s->sha1digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
@@ -458,46 +472,48 @@ typeerr:		LABEL;
 	if (s->flags & F_SHA256) {
 		if ((digestbuf = SHA256_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha256: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA256KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha256digest, digestbuf)) {
 				LABEL;
-				printf("%ssha256 (0x%s, 0x%s)\n",
-				    tab, s->sha256digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA256KEY, s->sha256digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
 		}
 	}
+#ifdef SHA384_BLOCK_LENGTH
 	if (s->flags & F_SHA384) {
 		if ((digestbuf = SHA384_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha384: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA384KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha384digest, digestbuf)) {
 				LABEL;
-				printf("%ssha384 (0x%s, 0x%s)\n",
-				    tab, s->sha384digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA384KEY, s->sha384digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
 		}
 	}
+#endif
 	if (s->flags & F_SHA512) {
 		if ((digestbuf = SHA512_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha512: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA512KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha512digest, digestbuf)) {
 				LABEL;
-				printf("%ssha512 (0x%s, 0x%s)\n",
-				    tab, s->sha512digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA512KEY, s->sha512digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);

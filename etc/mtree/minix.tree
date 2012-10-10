@@ -1,126 +1,129 @@
-755  root   operator /
-755  root   operator /bin
-755  root   operator /boot
-755  root   operator /boot/minix
-755  root   operator /boot/minix_default
-755  root   operator /dev
-/dev/mouse -> /dev/kbdaux
-755  root   operator /etc
-755  root   operator /etc/defaults
-755  root   operator /etc/devmand
-755  root   operator /etc/system.conf.d
-755  root   operator /home
-755  root   operator /lib
-755  root   operator /libexec
-555  root   operator /mnt
-555  root   operator /proc
-700  root   operator /root
-755  root   operator /sbin
-755  root   operator /sys
-1777 root   operator /tmp
-755  root   operator /usr
-755  root   operator /usr/adm
-755  root   operator /usr/adm/old
-755  ast    other    /usr/ast
-755  root   operator /usr/bin
-/usr/bin/cc -> /usr/pkg/bin/clang
-/usr/bin/strip -> /usr/pkg/bin/strip
-755  root   operator /usr/etc
-755  root   operator /usr/include
-755  root   operator /usr/include/arpa
-755  root   operator /usr/include/compat
-755  root   operator /usr/include/compat/machine
-755  root   operator /usr/include/ddekit
-755  root   operator /usr/include/ddekit/minix
-755  root   operator /usr/include/i386
-755  root   operator /usr/include/lzma
-755  root   operator /usr/include/minix
-755  root   operator /usr/include/net
-755  root   operator /usr/include/net/gen
-755  root   operator /usr/include/prop
-755  root   operator /usr/include/protocols
-755  root   operator /usr/include/rpcsvc
-755  root   operator /usr/include/ssp
-755  root   operator /usr/include/sys
-755  root   operator /usr/include/ufs
-755  root   operator /usr/include/ufs/chfs
-755  root   operator /usr/include/ufs/ext2fs
-755  root   operator /usr/include/ufs/ffs
-755  root   operator /usr/include/ufs/lfs
-755  root   operator /usr/include/ufs/mfs
-755  root   operator /usr/include/ufs/ufs
-755  root   operator /usr/lib
-755  root   operator /usr/lib/cawf
-755  root   operator /usr/lib/dict
-755  root   operator /usr/lib/flex
-755  root   operator /usr/lib/fonts
-755  root   operator /usr/lib/keymaps
-755  root   operator /usr/libexec
-755  root   operator /usr/log
-755  root   operator /usr/man
-755  root   operator /usr/man/man1
-755  root   operator /usr/man/man1x
-755  root   operator /usr/man/man2
-755  root   operator /usr/man/man3
-755  root   operator /usr/man/man4
-755  root   operator /usr/man/man5
-755  root   operator /usr/man/man6
-755  root   operator /usr/man/man7
-755  root   operator /usr/man/man8
-755  root   operator /usr/man/man9
-755  root   operator /usr/mdec
-755  root   operator /usr/obj
-755  root   operator /usr/pkg
-755  root   operator /usr/pkg/etc
-755  root   operator /usr/pkg/etc/rc.d
-700  root   operator /usr/preserve
-755  root   operator /usr/run
-755  root   operator /usr/sbin
-755  root   operator /usr/share
-755  root   operator /usr/share/doc
-755  root   operator /usr/share/doc/html
-755  root   operator /usr/share/doc/html/bzip2
-755  root   operator /usr/share/doc/psd
-755  root   operator /usr/share/doc/psd/19.curses
-755  root   operator /usr/share/misc
-755  root   operator /usr/share/mk
-755  root   operator /usr/share/terminfo
-755  root   operator /usr/share/zoneinfo
-755  root   operator /usr/share/zoneinfo/Africa
-755  root   operator /usr/share/zoneinfo/America
-755  root   operator /usr/share/zoneinfo/America/Argentina
-755  root   operator /usr/share/zoneinfo/America/Indiana
-755  root   operator /usr/share/zoneinfo/America/Kentucky
-755  root   operator /usr/share/zoneinfo/America/North_Dakota
-755  root   operator /usr/share/zoneinfo/Antarctica
-755  root   operator /usr/share/zoneinfo/Arctic
-755  root   operator /usr/share/zoneinfo/Asia
-755  root   operator /usr/share/zoneinfo/Atlantic
-755  root   operator /usr/share/zoneinfo/Australia
-755  root   operator /usr/share/zoneinfo/Brazil
-755  root   operator /usr/share/zoneinfo/Canada
-755  root   operator /usr/share/zoneinfo/Chile
-755  root   operator /usr/share/zoneinfo/Etc
-755  root   operator /usr/share/zoneinfo/Europe
-755  root   operator /usr/share/zoneinfo/Indian
-755  root   operator /usr/share/zoneinfo/Mexico
-755  root   operator /usr/share/zoneinfo/Mideast
-755  root   operator /usr/share/zoneinfo/Pacific
-755  root   operator /usr/share/zoneinfo/US
-755  root   operator /usr/spool
-711  root   operator /usr/spool/at
-711  root   operator /usr/spool/at/past
-700  root   operator /usr/spool/crontabs
-775  root   uucp     /usr/spool/locks
-700  daemon daemon   /usr/spool/lpd
-755  root   operator /usr/spool/mail
-755  root   operator /usr/src
-1777 root   operator /usr/tmp
-755  root   operator /usr/var
-755  root   operator /usr/var/db
-755  root   operator /usr/var/db/pkg
-755  root   operator /usr/var/run
-755  root   operator /var
-755  root   operator /var/run
-/var/log -> /usr/log
-/var/tmp -> /usr/tmp
+/set type=dir uid=0 gid=0 mode=0755
+. 
+./bin 
+./boot 
+./boot/minix 
+./boot/minix_default 
+./dev 
+./etc 
+./etc/defaults 
+./etc/devmand 
+./etc/system.conf.d 
+./home 
+./lib 
+./libexec 
+./mnt 
+./proc 
+./root 
+./sbin 
+./sys 
+./tmp 
+./usr 
+./usr/adm 
+./usr/adm/old 
+./usr/ast 
+./usr/bin 
+./usr/etc 
+./usr/include 
+./usr/include/arpa 
+./usr/include/compat 
+./usr/include/compat/machine 
+./usr/include/ddekit 
+./usr/include/ddekit/minix 
+./usr/include/i386 
+./usr/include/lzma 
+./usr/include/minix 
+./usr/include/net 
+./usr/include/net/gen 
+./usr/include/prop 
+./usr/include/protocols 
+./usr/include/rpcsvc 
+./usr/include/ssp 
+./usr/include/sys 
+./usr/include/ufs 
+./usr/include/ufs/chfs 
+./usr/include/ufs/ext2fs 
+./usr/include/ufs/ffs 
+./usr/include/ufs/lfs 
+./usr/include/ufs/mfs 
+./usr/include/ufs/ufs 
+./usr/lib 
+./usr/lib/cawf 
+./usr/lib/dict 
+./usr/lib/flex 
+./usr/lib/fonts 
+./usr/lib/keymaps 
+./usr/libexec 
+./usr/log 
+./usr/man 
+./usr/man/man1 
+./usr/man/man1x 
+./usr/man/man2 
+./usr/man/man3 
+./usr/man/man4 
+./usr/man/man5 
+./usr/man/man6 
+./usr/man/man7 
+./usr/man/man8 
+./usr/man/man9 
+./usr/mdec 
+./usr/pkg 
+./usr/pkg/etc 
+./usr/pkg/etc/rc.d 
+./usr/preserve 
+./usr/run 
+./usr/sbin 
+./usr/share 
+./usr/share/doc 
+./usr/share/doc/html 
+./usr/share/doc/html/bzip2 
+./usr/share/doc/psd 
+./usr/share/doc/psd/19.curses 
+./usr/share/misc 
+./usr/share/mk 
+./usr/share/terminfo 
+./usr/share/zoneinfo 
+./usr/share/zoneinfo/Africa 
+./usr/share/zoneinfo/America 
+./usr/share/zoneinfo/America/Argentina 
+./usr/share/zoneinfo/America/Indiana 
+./usr/share/zoneinfo/America/Kentucky 
+./usr/share/zoneinfo/America/North_Dakota 
+./usr/share/zoneinfo/Antarctica 
+./usr/share/zoneinfo/Arctic 
+./usr/share/zoneinfo/Asia 
+./usr/share/zoneinfo/Atlantic 
+./usr/share/zoneinfo/Australia 
+./usr/share/zoneinfo/Brazil 
+./usr/share/zoneinfo/Canada 
+./usr/share/zoneinfo/Chile 
+./usr/share/zoneinfo/Etc 
+./usr/share/zoneinfo/Europe 
+./usr/share/zoneinfo/Indian 
+./usr/share/zoneinfo/Mexico 
+./usr/share/zoneinfo/Mideast 
+./usr/share/zoneinfo/Pacific 
+./usr/share/zoneinfo/US 
+./usr/spool 
+./usr/spool/at 
+./usr/spool/at/past 
+./usr/spool/crontabs 
+./usr/spool/locks 
+./usr/spool/lpd 
+./usr/spool/mail 
+./usr/src 
+./usr/tmp 
+./usr/var 
+./usr/var/db 
+./usr/var/db/pkg 
+./usr/var/run 
+./var 
+./var/run 
+
+# Symlinks
+/set type=link uid=0 gid=0 mode=0777 
+./dev/mouse link=/dev/kbdaux
+./usr/bin/cc link=/usr/pkg/bin/clang
+./usr/bin/strip link=/usr/pkg/bin/strip
+./var/log link=/usr/log
+./var/tmp link=/usr/tmp
