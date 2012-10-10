@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.80 2012/03/15 02:02:24 joerg Exp $	*/
+/*	$NetBSD: spec.c,v 1.84 2012/10/07 18:40:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.80 2012/03/15 02:02:24 joerg Exp $");
+__RCSID("$NetBSD: spec.c,v 1.84 2012/10/07 18:40:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,23 +358,28 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 		if (MATCHFLAG(F_SIZE))
 			appendfield(pathlast, "size=%lld", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
-			appendfield(pathlast, "time=%lld.%ld",
+			appendfield(pathlast, "time=%lld.%09ld",
 			    (long long)cur->st_mtimespec.tv_sec,
 			    cur->st_mtimespec.tv_nsec);
 		if (MATCHFLAG(F_CKSUM))
 			appendfield(pathlast, "cksum=%lu", cur->cksum);
 		if (MATCHFLAG(F_MD5))
-			appendfield(pathlast, "md5=%s", cur->md5digest);
+			appendfield(pathlast, "%s=%s", MD5KEY, cur->md5digest);
 		if (MATCHFLAG(F_RMD160))
-			appendfield(pathlast, "rmd160=%s", cur->rmd160digest);
+			appendfield(pathlast, "%s=%s", RMD160KEY,
+			    cur->rmd160digest);
 		if (MATCHFLAG(F_SHA1))
-			appendfield(pathlast, "sha1=%s", cur->sha1digest);
+			appendfield(pathlast, "%s=%s", SHA1KEY,
+			    cur->sha1digest);
 		if (MATCHFLAG(F_SHA256))
-			appendfield(pathlast, "sha256=%s", cur->sha256digest);
+			appendfield(pathlast, "%s=%s", SHA256KEY,
+			    cur->sha256digest);
 		if (MATCHFLAG(F_SHA384))
-			appendfield(pathlast, "sha384=%s", cur->sha384digest);
+			appendfield(pathlast, "%s=%s", SHA384KEY,
+			    cur->sha384digest);
 		if (MATCHFLAG(F_SHA512))
-			appendfield(pathlast, "sha512=%s", cur->sha512digest);
+			appendfield(pathlast, "%s=%s", SHA512KEY,
+			    cur->sha512digest);
 		if (MATCHFLAG(F_FLAGS)) {
 			str = flags_to_string(cur->st_flags, "none");
 			appendfield(pathlast, "flags=%s", str);
@@ -410,7 +415,15 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 char *
 vispath(const char *path)
 {
-	const char extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
+	const char extra[] = { ' ', '\t', '\n', '\\', '#',
+#ifdef notyet
+	    /*
+	     * We don't encode the globbing characters yet, because they
+	     * get encoded as \c and strunvis fails to decode them
+	     */
+	    '*', '?', '[',
+#endif
+	    '\0' };
 	static char pathbuf[4*MAXPATHLEN + 1];
 
 	strsvis(pathbuf, path, VIS_CSTYLE, extra);

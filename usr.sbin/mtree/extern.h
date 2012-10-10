@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 2011/08/29 20:37:43 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 2012/10/05 01:26:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #else 
+#ifndef __minix
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
+#endif
 #endif
  
 #include <err.h> 
@@ -67,9 +69,10 @@ void	 parsetags(slist_t *, char *);
 u_int	 parsetype(const char *);
 void	 read_excludes_file(const char *);
 const char *rlink(const char *);
-int	 verify(void);
+int	 verify(FILE *);
 
-extern int	dflag, eflag, iflag, lflag, mflag, rflag, sflag, tflag, uflag;
+extern int	dflag, eflag, iflag, jflag, lflag, mflag,
+		nflag, qflag, rflag, sflag, tflag, uflag;
 extern int	mtree_Mflag, mtree_Sflag, mtree_Wflag;
 extern size_t	mtree_lineno;
 extern u_int32_t crc_total;
