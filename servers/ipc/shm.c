@@ -7,7 +7,7 @@ struct shm_struct {
 	int id;
 	struct shmid_ds shmid_ds;
 	vir_bytes page;
-	phys_bytes phys;
+	int vm_id;
 };
 static struct shm_struct shm_list[MAX_SHM_NR];
 static int shm_list_nr = 0;
@@ -73,12 +73,10 @@ int do_shmget(message *m)
 		shm = &shm_list[shm_list_nr];
 		memset(shm, 0, sizeof(struct shm_struct));
 		shm->page = (vir_bytes) minix_mmap(0, size,
-					PROT_READ|PROT_WRITE,
-					MAP_CONTIG|MAP_PREALLOC|MAP_ANON|MAP_IPC_SHARED,
-					-1, 0);
+					PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
 		if (shm->page == (vir_bytes) MAP_FAILED)
 			return ENOMEM;
-		shm->phys = vm_getphys(SELF_E, (void *) shm->page);
+		shm->vm_id = vm_getphys(SELF_E, (void *) shm->page);
 		memset((void *)shm->page, 0, size);
 
 		shm->shmid_ds.shm_perm.cuid =
@@ -185,16 +183,16 @@ void update_refcount_and_destroy(void)
 int do_shmdt(message *m)
 {
 	vir_bytes addr;
-	phys_bytes paddr;
+	phys_bytes vm_id;
 	int i;
 
 	addr = m->SHMDT_ADDR;
 
-	if ((paddr = vm_getphys(who_e, (void *) addr)) == 0)
+	if ((vm_id = vm_getphys(who_e, (void *) addr)) == 0)
 		return EINVAL;
 
 	for (i = 0; i < shm_list_nr; i++) {
-		if (shm_list[i].phys == paddr) {
+		if (shm_list[i].vm_id == vm_id) {
 			struct shm_struct *shm = &shm_list[i];
 
 			shm->shmid_ds.shm_atime = time(NULL);
@@ -206,7 +204,8 @@ int do_shmdt(message *m)
 		}
 	}
 	if (i == shm_list_nr)
-		fprintf(stderr, "IPC: do_shmdt impossible error!\n");
+		printf("IPC: do_shmdt impossible error! could not find id %lu to unmap\n",
+			vm_id);
 
 	update_refcount_and_destroy();
 

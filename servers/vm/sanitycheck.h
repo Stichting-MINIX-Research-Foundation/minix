@@ -47,6 +47,7 @@
 #define SANITYCHECK(l)
 #define SLABSANITYCHECK(l)
 #define SLABSANE(ptr)
+#define MYASSERT(c)
 #endif
 
 #if MEMPROTECT

@@ -231,8 +231,9 @@ static void boot_alloc(struct exec_info *execi, off_t vaddr,
 {
 	struct vmproc *vmp = ((struct vm_exec_info *) execi->opaque)->vmp;
 
-	if(!(map_page_region(vmp, vaddr, 0,
-		len, MAP_NONE, VR_ANON | VR_WRITABLE | VR_UNINITIALIZED, flags))) {
+	if(!(map_page_region(vmp, vaddr, 0, len,
+		VR_ANON | VR_WRITABLE | VR_UNINITIALIZED, flags,
+		&mem_type_anon))) {
 		panic("VM: exec: map_page_region for boot process failed");
 	}
 }
@@ -387,7 +388,7 @@ void init_vm(void)
 	CALLMAP(VM_MMAP, do_mmap);
 	CALLMAP(VM_MUNMAP, do_munmap);
 	CALLMAP(VM_MAP_PHYS, do_map_phys);
-	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys);
+	CALLMAP(VM_UNMAP_PHYS, do_munmap);
 
 	/* Calls from PM. */
 	CALLMAP(VM_EXIT, do_exit);
@@ -408,7 +409,7 @@ void init_vm(void)
 	CALLMAP(VM_REMAP, do_remap);
 	CALLMAP(VM_REMAP_RO, do_remap);
 	CALLMAP(VM_GETPHYS, do_get_phys);
-	CALLMAP(VM_SHM_UNMAP, do_shared_unmap);
+	CALLMAP(VM_SHM_UNMAP, do_munmap);
 	CALLMAP(VM_GETREF, do_get_refcount);
 	CALLMAP(VM_INFO, do_info);
 	CALLMAP(VM_QUERY_EXIT, do_query_exit);

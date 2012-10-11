@@ -20,15 +20,12 @@ struct phys_region;
 /* alloc.c */
 void mem_sanitycheck(char *file, int line);
 phys_clicks alloc_mem(phys_clicks clicks, u32_t flags);
-struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags, phys_bytes known);
 void memstats(int *nodes, int *pages, int *largest);
 void printmemstats(void);
 void usedpages_reset(void);
 int usedpages_add_f(phys_bytes phys, phys_bytes len, char *file, int
 	line);
 void free_mem(phys_clicks base, phys_clicks clicks);
-void free_mem_list(struct memlist *list, int all);
-void print_mem_list(struct memlist *ml);
 #define usedpages_add(a, l) usedpages_add_f(a, l, __FILE__, __LINE__)
 
 void mem_init(struct memory *chunks);
@@ -68,7 +65,6 @@ int do_map_phys(message *msg);
 int do_unmap_phys(message *msg);
 int do_remap(message *m);
 int do_get_phys(message *m);
-int do_shared_unmap(message *m);
 int do_get_refcount(message *m);
 
 /* pagefaults.c */
@@ -124,13 +120,12 @@ int slabsane_f(char *file, int line, void *mem, int bytes);
 /* region.c */
 void map_region_init(void);
 struct vir_region * map_page_region(struct vmproc *vmp, vir_bytes min,
-	vir_bytes max, vir_bytes length, vir_bytes what, u32_t flags, int
-	mapflags);
+	vir_bytes max, vir_bytes length, u32_t flags, int mapflags,
+	mem_type_t *memtype);
 struct vir_region * map_proc_kernel(struct vmproc *dst);
 int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 	vir_bytes delta);
 int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes vir);
-int map_region_shrink(struct vir_region *vr, vir_bytes delta);
 int map_unmap_region(struct vmproc *vmp, struct vir_region *vr,
 	vir_bytes offset, vir_bytes len);
 int map_free_proc(struct vmproc *vmp);
@@ -149,15 +144,18 @@ int map_writept(struct vmproc *vmp);
 void printregionstats(struct vmproc *vmp);
 void map_setparent(struct vmproc *vmp);
 int yielded_block_cmp(struct block_id *, struct block_id *);
+struct phys_region *map_clone_ph_block(struct vmproc *vmp,
+        struct vir_region *region, struct phys_region *ph, physr_iter *iter);
+u32_t vrallocflags(u32_t flags);
+int map_free(struct vir_region *region);
 
 struct vir_region * map_region_lookup_tag(struct vmproc *vmp, u32_t
 	tag);
 void map_region_set_tag(struct vir_region *vr, u32_t tag);
 u32_t map_region_get_tag(struct vir_region *vr);
-int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size, struct
-	vir_region *region, vir_bytes *r, int ro);
 int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r);
 int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt);
+int physregions(struct vir_region *vr);
 
 void get_stats_info(struct vm_stats_info *vsi);
 void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui);
@@ -188,6 +186,15 @@ void init_query_exit(void);
 
 /* pb.c */
 struct phys_block *pb_new(phys_bytes phys);
+void pb_free(struct phys_block *);
 struct phys_region *pb_reference(struct phys_block *newpb,
 	vir_bytes offset, struct vir_region *region);
 void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm);
+void pb_link(struct phys_region *newphysr, struct phys_block *newpb,
+        vir_bytes offset, struct vir_region *parent);
+
+/* mem_directphys.c */
+void phys_setphys(struct vir_region *vr, phys_bytes startaddr);
+
+/* mem_shared.c */
+void shared_setsource(struct vir_region *vr, endpoint_t ep, struct vir_region *src);

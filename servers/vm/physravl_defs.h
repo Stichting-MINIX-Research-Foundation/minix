@@ -1,3 +1,4 @@
+
 #include <minix/u64.h>
 
 #define AVL_UNIQUE(id) physr_ ## id
@@ -16,3 +17,4 @@
 #define AVL_COMPARE_KEY_NODE(k, h) AVL_COMPARE_KEY_KEY((k), (h)->offset)
 #define AVL_COMPARE_NODE_NODE(h1, h2) AVL_COMPARE_KEY_KEY((h1)->offset, (h2)->offset)
 #define AVL_INSIDE_STRUCT char pad[4];   
+

@@ -40,8 +40,8 @@ struct	phys_block *pb_new(phys_bytes phys)
 		return NULL;
 	}
 
-	assert(!(phys % VM_PAGE_SIZE));
-	assert(phys != MAP_NONE);
+	if(phys != MAP_NONE)
+		assert(!(phys % VM_PAGE_SIZE));
 	
 USE(newpb,
 	newpb->phys = phys;
@@ -52,7 +52,28 @@ USE(newpb,
 	return newpb;
 }
 
-struct	phys_region *pb_reference(struct phys_block *newpb, vir_bytes offset, struct vir_region *region)
+void pb_free(struct phys_block *pb)
+{
+	if(pb->phys != MAP_NONE)
+		free_mem(ABS2CLICK(pb->phys), 1);
+	SLABFREE(pb);
+}
+
+void pb_link(struct phys_region *newphysr, struct phys_block *newpb,
+	vir_bytes offset, struct vir_region *parent)
+{
+USE(newphysr,
+	newphysr->offset = offset;
+	newphysr->ph = newpb;
+	newphysr->parent = parent;
+	newphysr->next_ph_list = newpb->firstregion;
+	newphysr->memtype = parent->memtype;
+	newpb->firstregion = newphysr;);
+	newpb->refcount++;
+}
+
+struct	phys_region *pb_reference(struct phys_block *newpb,
+	vir_bytes offset, struct vir_region *region)
 {
 	struct phys_region *newphysr;
 
@@ -62,14 +83,8 @@ struct	phys_region *pb_reference(struct phys_block *newpb, vir_bytes offset, str
 	}
 
 	/* New physical region. */
-USE(newphysr,
-	newphysr->offset = offset;
-	newphysr->ph = newpb;
-	newphysr->parent = region;
-	newphysr->next_ph_list = newpb->firstregion;
-	newpb->firstregion = newphysr;);
+	pb_link(newphysr, newpb, offset, region);
 
-	newpb->refcount++;
 	physr_insert(region->phys, newphysr);
 
 	return newphysr;
@@ -106,15 +121,14 @@ void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm)
 
 	if(pb->refcount == 0) {
 		assert(!pb->firstregion);
-		if(region->flags & VR_ANON) {
-			free_mem(ABS2CLICK(pb->phys), 1);
-		} else if(region->flags & VR_DIRECT) {
-			; /* No action required. */
-		} else {
-			panic("strange phys flags");
-		}
+		int r;
+		if((r = region->memtype->ev_unreference(pr)) != OK)
+			panic("unref failed, %d", r);
+
 		SLABFREE(pb);
 	}
+
+	pr->ph = NULL;
 
 	if(rm) physr_remove(region->phys, pr->offset);
 }

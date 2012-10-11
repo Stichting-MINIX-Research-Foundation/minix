@@ -42,12 +42,11 @@ static void print_region(struct vm_region_info *vri, int *n)
   /* NULL indicates the end of a list of mappings, nothing else to do */
   if (!vri) return;
 
-  printf("  %08lx-%08lx %c%c%c %c (%lu kB)\n", vri->vri_addr,
+  printf("  %08lx-%08lx %c%c%c (%lu kB)\n", vri->vri_addr,
 	vri->vri_addr + vri->vri_length,
 	(vri->vri_prot & PROT_READ) ? 'r' : '-',
 	(vri->vri_prot & PROT_WRITE) ? 'w' : '-',
 	(vri->vri_prot & PROT_EXEC) ? 'x' : '-',
-	(vri->vri_flags & MAP_IPC_SHARED) ? 's' : 'p',
 	vri->vri_length / 1024L);
   (*n)++;
 }

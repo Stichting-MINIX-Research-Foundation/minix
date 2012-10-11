@@ -28,5 +28,11 @@ EXTERN int sc_lastline;
 EXTERN char *sc_lastfile;
 #endif
 
+/* mem types */
+EXTERN  mem_type_t mem_type_anon,       /* anonymous memory */
+        mem_type_directphys,		/* direct physical mapping memory */
+	mem_type_anon_contig,		/* physically contig anon memory */
+	mem_type_shared;		/* memory shared by multiple processes */
+
 /* total number of memory pages */
 EXTERN int total_pages;

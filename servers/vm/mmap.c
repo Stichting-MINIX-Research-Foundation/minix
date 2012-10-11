@@ -64,6 +64,7 @@ int do_mmap(message *m)
 	vmp = &vmproc[n];
 
 	if(m->VMM_FD == -1 || (m->VMM_FLAGS & MAP_ANON)) {
+		mem_type_t *mt;
 		u32_t vrflags = VR_ANON | VR_WRITABLE;
 		size_t len = (vir_bytes) m->VMM_LEN;
 
@@ -84,15 +85,10 @@ int do_mmap(message *m)
 			if(!execpriv) return EPERM;
 			vrflags |= VR_UNINITIALIZED;
 		}
-		if(m->VMM_FLAGS & MAP_IPC_SHARED) {
-			vrflags |= VR_SHARED;
-			/* Shared memory has to be preallocated. */
-			if((m->VMM_FLAGS & (MAP_PREALLOC|MAP_ANON)) !=
-				(MAP_PREALLOC|MAP_ANON)) {
-				return EINVAL;
-			}
-		}
-		if(m->VMM_FLAGS & MAP_CONTIG) vrflags |= VR_CONTIG;
+		if(m->VMM_FLAGS & MAP_CONTIG) {
+			vrflags |= VR_CONTIG;
+			mt = &mem_type_anon_contig;
+		} else	mt = &mem_type_anon;
 
 		if(len % VM_PAGE_SIZE)
 			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
@@ -101,15 +97,15 @@ int do_mmap(message *m)
 		if (m->VMM_ADDR || (m->VMM_FLAGS & MAP_FIXED)) {
 			/* An address is given, first try at that address. */
 			addr = m->VMM_ADDR;
-			vr = map_page_region(vmp, addr, 0, len, MAP_NONE,
-				vrflags, mfflags);
+			vr = map_page_region(vmp, addr, 0, len,
+				vrflags, mfflags, mt);
 			if(!vr && (m->VMM_FLAGS & MAP_FIXED))
 				return ENOMEM;
 		}
 		if (!vr) {
 			/* No address given or address already in use. */
 			vr = map_page_region(vmp, 0, VM_DATATOP, len,
-				MAP_NONE, vrflags, mfflags);
+				vrflags, mfflags, mt);
 		}
 		if (!vr) {
 			return ENOMEM;
@@ -198,46 +194,14 @@ int do_map_phys(message *m)
 	if(len % VM_PAGE_SIZE)
 		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
-	if(!(vr = map_page_region(vmp, 0, VM_DATATOP, len, startaddr,
-		VR_DIRECT | VR_NOPF | VR_WRITABLE, 0))) {
+	if(!(vr = map_page_region(vmp, 0, VM_DATATOP, len, 
+		VR_DIRECT | VR_WRITABLE, 0, &mem_type_directphys))) {
 		return ENOMEM;
 	}
 
+	phys_setphys(vr, startaddr);
+
 	m->VMMP_VADDR_REPLY = (void *) (vr->vaddr + offset);
-
-	return OK;
-}
-
-/*===========================================================================*
- *				do_unmap_phys		     		     *
- *===========================================================================*/
-int do_unmap_phys(message *m)
-{
-	int r, n;
-	struct vmproc *vmp;
-	endpoint_t target;
-	struct vir_region *region;
-
-	target = m->VMUP_EP;
-	if(target == SELF)
-		target = m->m_source;
-
-	if((r=vm_isokendpt(target, &n)) != OK)
-		return EINVAL;
-
-	vmp = &vmproc[n];
-
-	if(!(region = map_lookup(vmp, (vir_bytes) m->VMUM_ADDR, NULL))) {
-		return EINVAL;
-	}
-
-	if(!(region->flags & VR_DIRECT)) {
-		return EINVAL;
-	}
-
-	if(map_unmap_region(vmp, region, 0, region->length) != OK) {
-		return EINVAL;
-	}
 
 	return OK;
 }
@@ -248,9 +212,10 @@ int do_unmap_phys(message *m)
 int do_remap(message *m)
 {
 	int dn, sn;
-	vir_bytes da, sa, startv;
+	vir_bytes da, sa;
 	size_t size;
-	struct vir_region *region;
+	u32_t flags;
+	struct vir_region *src_region, *vr;
 	struct vmproc *dvmp, *svmp;
 	int r;
 	int readonly;
@@ -275,80 +240,41 @@ int do_remap(message *m)
 	dvmp = &vmproc[dn];
 	svmp = &vmproc[sn];
 
-	/* da is not translated by arch_vir2map(),
-	 * it's handled a little differently,
-	 * since in map_remap(), we have to know
-	 * about whether the user needs to bind to
-	 * THAT address or be chosen by the system.
-	 */
-	if (!(region = map_lookup(svmp, sa, NULL)))
+	if (!(src_region = map_lookup(svmp, sa, NULL)))
 		return EINVAL;
 
-	if(region->vaddr != sa) {
+	if(src_region->vaddr != sa) {
 		printf("VM: do_remap: not start of region.\n");
-		return EFAULT;
-	}
-
-	if(!(region->flags & VR_SHARED)) {
-		printf("VM: do_remap: not shared.\n");
 		return EFAULT;
 	}
 
 	if (size % VM_PAGE_SIZE)  
 		size += VM_PAGE_SIZE - size % VM_PAGE_SIZE;
 
-	if(size != region->length) {
+	if(size != src_region->length) {
 		printf("VM: do_remap: not size of region.\n");
 		return EFAULT;
 	}
 
-	if ((r = map_remap(dvmp, da, size, region, &startv, readonly)) != OK)
-		return r;
+	flags = VR_SHARED;
+	if(!readonly)
+		flags |= VR_WRITABLE;
 
-	m->VMRE_RETA = (char *) startv;
-	return OK;
-}
+	if(da)
+		vr = map_page_region(dvmp, da, 0, size, flags, 0,
+			&mem_type_shared);
+	else
+		vr = map_page_region(dvmp, 0, VM_DATATOP, size, flags, 0,
+			&mem_type_shared);
 
-/*===========================================================================*
- *				do_shared_unmap		     		     *
- *===========================================================================*/
-int do_shared_unmap(message *m)
-{
-	int r, n;
-	struct vmproc *vmp;
-	endpoint_t target;
-	struct vir_region *vr;
-	vir_bytes addr;
-
-	target = m->VMUN_ENDPT;
-	if (target == SELF)
-		target = m->m_source;
-
-	if ((r = vm_isokendpt(target, &n)) != OK)
-		return EINVAL;
-
-	vmp = &vmproc[n];
-
-	addr = m->VMUN_ADDR;
-
-	if(!(vr = map_lookup(vmp, addr, NULL))) {
-		printf("VM: addr 0x%lx not found.\n", m->VMUN_ADDR);
-		return EFAULT;
+	if(!vr) {
+		printf("VM: re-map of shared area failed\n");
+		return ENOMEM;
 	}
 
-	if(vr->vaddr != addr) {
-		printf("VM: wrong address for shared_unmap.\n");
-		return EFAULT;
-	}
+	shared_setsource(vr, svmp->vm_endpoint, src_region);
 
-	if(!(vr->flags & VR_SHARED)) {
-		printf("VM: address does not point to shared region.\n");
-		return EFAULT;
-	}
-
-	if(map_unmap_region(vmp, vr, 0, vr->length) != OK)
-		panic("do_shared_unmap: map_unmap_region failed");
-
+	m->VMRE_RETA = (char *) vr->vaddr;
 	return OK;
 }
 
@@ -411,15 +337,26 @@ int do_munmap(message *m)
         struct vmproc *vmp;
         vir_bytes addr, len, offset;
 	struct vir_region *vr;
+	endpoint_t target = SELF;
 
-        if((r=vm_isokendpt(m->m_source, &n)) != OK) {
+	if(m->m_type == VM_UNMAP_PHYS) {
+		target = m->VMUP_EP;
+	} else if(m->m_type == VM_SHM_UNMAP) {
+		target = m->VMUN_ENDPT;
+	}
+
+	if(target == SELF)
+		target = m->m_source;
+
+        if((r=vm_isokendpt(target, &n)) != OK) {
                 panic("do_mmap: message from strange source: %d", m->m_source);
         }
  
         vmp = &vmproc[n];
 
-	assert(m->m_type == VM_MUNMAP);
-        addr = (vir_bytes) (vir_bytes) m->VMUM_ADDR;
+	if(m->m_type == VM_SHM_UNMAP) {
+		addr = (vir_bytes) m->VMUN_ADDR;
+	} else	addr = (vir_bytes) m->VMUM_ADDR;
 
         if(!(vr = map_lookup(vmp, addr, NULL))) {
                 printf("VM: unmap: virtual address %p not found in %d\n",
@@ -430,7 +367,9 @@ int do_munmap(message *m)
 	if(addr % VM_PAGE_SIZE)
 		return EFAULT;
  
-	len = roundup(m->VMUM_LEN, VM_PAGE_SIZE);
+	if(m->m_type == VM_SHM_UNMAP) {
+		len = vr->length;
+	} else len = roundup(m->VMUM_LEN, VM_PAGE_SIZE);
 
 	offset = addr - vr->vaddr;
 

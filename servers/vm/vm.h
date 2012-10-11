@@ -1,4 +1,23 @@
 
+#ifndef _VM_H
+#define _VM_H 1
+
+#define _SYSTEM 1
+
+/* Compile in asserts and custom sanity checks at all? */
+#define SANITYCHECKS	0
+#define VMSTATS		0
+
+/* VM behaviour */
+#define MEMPROTECT	0	/* Slab objects not mapped. Access with USE() */
+#define JUNKFREE	0	/* Fill freed pages with junk */
+
+#include <sys/errno.h>
+#include <memory.h>
+
+#include "sanitycheck.h"
+#include "region.h"
+
 /* Memory flags to pt_allocmap() and alloc_mem(). */
 #define PAF_CLEAR	0x01	/* Clear physical memory. */
 #define PAF_CONTIG	0x02	/* Physically contiguous. */
@@ -11,14 +30,6 @@
 
 /* special value for v in pt_allocmap */
 #define AM_AUTO         ((u32_t) -1)
-
-/* Compile in asserts and custom sanity checks at all? */
-#define SANITYCHECKS	0
-#define VMSTATS		0
-
-/* VM behaviour */
-#define MEMPROTECT	0	/* Slab objects not mapped. Access with USE() */
-#define JUNKFREE	0	/* Fill freed pages with junk */
 
 /* How noisy are we supposed to be? */
 #define VERBOSE		0
@@ -49,4 +60,6 @@
 
 #define MAP_NONE	0xFFFFFFFE
 #define NO_MEM ((phys_clicks) MAP_NONE)  /* returned by alloc_mem() with mem is up */
+
+#endif
 

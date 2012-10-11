@@ -55,7 +55,6 @@ typedef	__off_t		off_t;		/* file offset */
 #define MAP_ALIGN64K	0x0040		/* physically aligned at 64kB */
 #define MAP_LOWER1M	0x0080		/* physically below 16MB */
 #define	MAP_ALIGNMENT_64KB	MAP_ALIGN64K
-#define	MAP_IPC_SHARED	0x0100		/* share changes */
 
 #define MAP_FIXED      0x0200  /* require mapping to happen at hint */
 #define MAP_THIRDPARTY	0x0400		/* perform on behalf of any process */

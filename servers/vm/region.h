@@ -18,6 +18,8 @@
 
 #include "phys_region.h"
 #include "physravl.h"
+#include "memtype.h"
+#include "vm.h"
 
 struct phys_block {
 #if SANITYCHECKS
@@ -29,6 +31,9 @@ struct phys_block {
 #define PBSH_SMAP	2
 	u8_t			share_flag;	/* PBSH_COW or PBSH_SMAP */
 
+	/* what kind of memory is it? */
+	mem_type_t		*memtype;
+
 	/* first in list of phys_regions that reference this block */
 	struct phys_region	*firstregion;	
 };
@@ -38,8 +43,19 @@ typedef struct vir_region {
 	vir_bytes	length;	/* length in bytes */
 	physr_avl	*phys;	/* avl tree of physical memory blocks */
 	u16_t		flags;
-	u32_t tag;		/* Opaque to mapping code. */
 	struct vmproc *parent;	/* Process that owns this vir_region. */
+	mem_type_t	*memtype; /* Default instantiated memory type. */
+	int		remaps;
+	u32_t		id;     /* unique id */
+
+	union {
+		phys_bytes phys;
+		struct {
+			endpoint_t ep;
+			vir_bytes vaddr;
+			int id;
+		} shared;
+	} param;
 
 	/* AVL fields */
 	struct vir_region *lower, *higher;
@@ -48,7 +64,6 @@ typedef struct vir_region {
 
 /* Mapping flags: */
 #define VR_WRITABLE	0x001	/* Process may write here. */
-#define VR_NOPF		0x002	/* May not generate page faults. */
 #define VR_PHYS64K	0x004	/* Physical memory must be 64k aligned. */
 #define VR_LOWER16MB	0x008
 #define VR_LOWER1MB	0x010
@@ -59,12 +74,6 @@ typedef struct vir_region {
 /* Mapping type: */
 #define VR_ANON		0x100	/* Memory to be cleared and allocated */
 #define VR_DIRECT	0x200	/* Mapped, but not managed by VM */
-
-/* Tag values: */
-#define VRT_NONE	0xBEEF0000
-#define VRT_HEAP	0xBEEF0001
-#define VRT_TEXT	0xBEEF0002
-#define VRT_STACK	0xBEEF0003
 
 /* map_page_region flags */
 #define MF_PREALLOC	0x01
