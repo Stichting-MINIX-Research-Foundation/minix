@@ -21,7 +21,8 @@ static int _tcp_setsockopt(int sock, int level, int option_name,
 	const void *option_value, socklen_t option_len);
 
 static int _udp_setsockopt(int sock, int level, int option_name,
-	const void *option_value, socklen_t option_len);
+	const void *option_value, socklen_t option_len,
+		nwio_udpopt_t *udpoptp);
 
 static int _uds_setsockopt(int sock, int level, int option_name,
 	const void *option_value, socklen_t option_len);
@@ -55,7 +56,7 @@ int setsockopt(int sock, int level, int option_name,
 			return -1;
 		}
 		return _udp_setsockopt(sock, level, option_name,
-			option_value, option_len);
+			option_value, option_len, &udpopt);
 	}
 
 	r= ioctl(sock, NWIOGUDSADDR, &uds_addr);
@@ -187,8 +188,26 @@ static int _tcp_setsockopt(int sock, int level, int option_name,
 }
 
 static int _udp_setsockopt(int sock, int level, int option_name,
-	const void *option_value, socklen_t option_len)
+	const void *option_value, socklen_t option_len,
+		nwio_udpopt_t *udpoptp)
 {
+	int i;
+	size_t size;
+
+	if (level == SOL_SOCKET && option_name == SO_BROADCAST)
+	{
+		if (option_len != sizeof(size))
+		{
+			errno= EINVAL;
+			return -1;
+		}
+		if (*(const int *)option_value)
+			udpoptp->nwuo_flags |= NWUO_EN_BROAD;
+		else
+			udpoptp->nwuo_flags |= NWUO_DI_BROAD;
+
+		return ioctl(sock, NWIOSUDPOPT, udpoptp);
+	}
 #if DEBUG
 	fprintf(stderr, "_udp_setsocketopt: level %d, name %d\n",
 		level, option_name);

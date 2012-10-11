@@ -137,6 +137,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_OVERFLOWED	0x1009		/* datagrams: return packets dropped */
 
+#define SO_BROADCAST	0x1010		/* enable broadcasting */
 
 /*
  * Level number for (get/set)sockopt() to apply to socket itself.
