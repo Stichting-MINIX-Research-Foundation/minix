@@ -302,6 +302,7 @@ static void udp_set_opt(struct socket * sock, message * m)
 	nwio_udpopt_t udpopt;
 	struct udp_pcb * pcb = (struct udp_pcb *) sock->pcb;
 	ip_addr_t loc_ip = ip_addr_any;
+	unsigned long flgs;
 
 	assert(pcb);
 
@@ -321,7 +322,14 @@ static void udp_set_opt(struct socket * sock, message * m)
 	debug_udp_print("udpopt.nwuo_locport = 0x%x",
 				ntohs(udpopt.nwuo_locport));
 
-	sock->usr_flags = udpopt.nwuo_flags;
+	flgs = udpopt.nwuo_flags;
+	sock->usr_flags |= flgs & ~(NWUO_LP_SET | NWUO_DI_BROAD);
+
+	/* Set/Reset broadcast if NWUO_EN_BROAD */
+	if (flgs & NWUO_EN_BROAD)
+		ip_set_option(pcb, SOF_BROADCAST);
+	else if (flgs & NWUO_DI_BROAD)
+		ip_reset_option(pcb, SOF_BROADCAST);
 
 	/*
 	 * We will only get data from userspace and the remote address
@@ -329,19 +337,19 @@ static void udp_set_opt(struct socket * sock, message * m)
 	 * know where to send data. Thus we should interpret this as
 	 * connect() call
 	 */
-	if (sock->usr_flags & NWUO_RWDATONLY &&
-			sock->usr_flags & NWUO_RP_SET &&
-			sock->usr_flags & NWUO_RA_SET)
+	if (flgs & NWUO_RWDATONLY &&
+			flgs & NWUO_RP_SET &&
+			flgs & NWUO_RA_SET)
 		udp_connect(pcb, (ip_addr_t *) &udpopt.nwuo_remaddr,
 						ntohs(udpopt.nwuo_remport));
 	/* Setting local address means binding */
-	if (sock->usr_flags & NWUO_LP_SET)
+	if (flgs & NWUO_LP_SET)
 		udp_bind(pcb, &loc_ip, ntohs(udpopt.nwuo_locport));
 	/* We can only bind to random local port */
-	if (sock->usr_flags & NWUO_LP_SEL)
+	if (flgs & NWUO_LP_SEL)
 		udp_bind(pcb, &loc_ip, 0);
 
-	
+
 	/* register a receive hook */
 	udp_recv((struct udp_pcb *) sock->pcb, udp_recv_callback, sock);
 
