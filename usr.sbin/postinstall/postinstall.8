@@ -1,0 +1,192 @@
+.\"	$NetBSD: postinstall.8,v 1.16 2012/08/15 16:21:41 apb Exp $
+.\"
+.\" Copyright (c) 2005-2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Thomas Klausner.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 15, 2012
+.Dt POSTINSTALL 8
+.Os
+.Sh NAME
+.Nm postinstall
+.Nd check and fix installation after system upgrades
+.Sh SYNOPSIS
+.Nm postinstall
+.Op Fl a Ar arch
+.Op Fl d Ar destdir
+.Op Fl m Ar machine
+.Op Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
+.Ar operation
+.Op Ar item Op ...
+.Sh DESCRIPTION
+The
+.Nm
+utility performs post-installation checks and/or fixes on a system's
+configuration files.
+It is especially useful after system upgrades, e.g. after updating
+from
+.Nx 1.6.2
+to
+.Nx 2.0 .
+The items to check or fix are divided in two groups: enabled by
+default and disabled by default.
+The latter are items that are dangerous for some reason, for example
+because they remove files which may be still in use.
+If no
+.Ar items
+are provided, the default checks or fixes are applied.
+Those which are disabled by default must be provided explicitly.
+.Pp
+Supported options:
+.Bl -tag -width XsXsrcdirXXX -offset indent
+.It Fl a Ar arch
+MACHINE_ARCH.
+Defaults to machine of the host operating system.
+.It Fl d Ar destdir
+Destination directory to check.
+Defaults to
+.Pa / .
+.It Fl m Ar machine
+MACHINE.
+Defaults to machine of the host operating system.
+.It Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
+The location of the reference files, or the
+.Nx
+source files used to create the reference files.
+This may be specified in one of three ways:
+.Bl -tag -width XXsXtgzfileXX
+.It Fl s Ar srcdir
+The top level directory of the
+.Nx
+source tree.
+By default this is
+.Pa /usr/src .
+.It Fl s Ar tgzdir
+A directory in which reference files have been
+extracted from a binary distribution of
+.Nx .
+The files that are distributed in the
+.Dq Pa etc.tgz
+set file must be present.
+The files that are distributed in the
+.Dq Pa xetc.tgz
+set file are optional.
+.It Fl s Ar tgzfile
+The location of a set file
+(or
+.Dq "tgz file" )
+such as
+.Dq Pa etc.tgz
+or
+.Dq Pa xetc.tgz
+from a binary distribution of
+.Nx .
+Each set file is a compressed archive containing reference files,
+which will be extracted to the
+.Pa temproot
+directory.
+Multiple
+.Fl s
+options may be used to specify multiple set files.
+The
+.Dq Pa etc.tgz
+set file must be specified.
+The
+.Dq Pa xetc.tgz
+set file is optional.
+.El
+.El
+.Pp
+The
+.Ar operation
+argument may be one of:
+.Bl -tag -width usageXX -offset indent
+.It Cm check
+Perform post-installation checks on items.
+.It Cm diff Op Xr diff 1 Li options
+Similar to
+.Cm check ,
+but also show the differences between the files.
+.It Cm fix
+Apply fixes that
+.Cm check
+determines need to be applied.
+Not all items can be automatically fixed by
+.Nm ,
+and in some cases an error will be reported,
+after which manual intervention will be required.
+.Pp
+Conflicts between existing files in the target file system
+and new files from the
+.Nx
+distribution are resolved by replacing the existing file
+with the new file; there is no attempt to merge the files.
+See
+.Xr etcupdate 8
+for an alternative update method that is able to merge files.
+.It Cm help
+Display a short help.
+.It Cm list
+List available
+.Ar items ,
+showing if they are enabled or disabled by default.
+.It Cm usage
+Same as
+.Cm help .
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success, and \*[Gt]0 if an error occurs
+or a problem was found.
+.Sh SEE ALSO
+.Xr etcupdate 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 1.6 .
+.Pp
+In
+.Nx 4.0 ,
+the
+.Fl s Ar tgzfile
+option was added.
+.Pp
+In
+.Nx 5.0 ,
+the ability to specify multiple colon-separated files with a single
+.Fl s
+option was deprecated.
+.Pp
+In
+.Nx 7.0 ,
+the ability to specify multiple colon-separated files with a single
+.Fl s
+option was removed.
+Multiple
+.Fl s
+options must be used instead.
