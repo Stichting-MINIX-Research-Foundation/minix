@@ -1,0 +1,427 @@
+#	$NetBSD: special,v 1.142 2012/06/28 16:34:07 kefren Exp $
+#	@(#)special	8.2 (Berkeley) 1/23/94
+#
+# This file may be overwritten on upgrades.
+# Put your custom specifications in /etc/mtree/special.local instead.
+# See security.conf(5) for details.
+
+#
+# /etc/security checks:
+#	- All of these are checked if $check_mtree is enabled.
+#	- Files with "nodiff" tags are highlighted if they change.
+#	- Files without "nodiff" or "exclude" tags are displayed
+#	  with diff(1)s if $check_changelist is enabled.
+#
+
+/set uname=root gname=wheel
+
+.				type=dir  mode=0755
+
+./boot.cfg			type=file mode=0644 optional
+
+./dev				type=dir  mode=0755
+./dev/drum			type=char mode=0640 gname=kmem
+./dev/fd			type=dir  mode=0755 ignore
+./dev/kmem			type=char mode=0640 gname=kmem
+./dev/mem			type=char mode=0640 gname=kmem
+
+./etc				type=dir  mode=0755
+./etc/Distfile			type=file mode=0644 optional
+./etc/amd			type=dir  mode=0755 optional
+./etc/apm			type=dir  mode=0755 optional
+./etc/bluetooth			type=dir  mode=0755
+./etc/bluetooth/btattach.conf	type=file mode=0644
+./etc/bluetooth/btdevctl.conf	type=file mode=0644
+./etc/bluetooth/hosts		type=file mode=0644
+./etc/bluetooth/protocols	type=file mode=0644
+./etc/bootparams		type=file mode=0644 optional
+./etc/bootptab			type=file mode=0644 optional
+./etc/ccd.conf			type=file mode=0644 optional
+./etc/cgd			type=dir  mode=0700 optional
+./etc/cgd/cgd.conf		type=file mode=0600 optional
+./etc/changelist		type=file mode=0644
+./etc/crontab			type=file mode=0644 optional
+./etc/csh.cshrc			type=file mode=0644
+./etc/csh.login			type=file mode=0644
+./etc/csh.logout		type=file mode=0644
+./etc/daily			type=file mode=0644
+./etc/daily.conf		type=file mode=0644
+./etc/daily.local		type=file mode=0644 optional
+./etc/defaultdomain		type=file mode=0644 optional
+./etc/defaults			type=dir  mode=0755
+./etc/defaults/daily.conf	type=file mode=0444
+./etc/defaults/monthly.conf	type=file mode=0444
+./etc/defaults/rc.conf		type=file mode=0444
+./etc/defaults/security.conf	type=file mode=0444
+./etc/defaults/weekly.conf	type=file mode=0444
+./etc/dhclient-enter-hooks	type=file mode=0644 optional
+./etc/dhclient-exit-hooks	type=file mode=0644 optional
+./etc/dhclient.conf		type=file mode=0644 optional
+./etc/dhcpcd.conf		type=file mode=0644
+./etc/dhcpcd.duid		type=file mode=0644 optional
+./etc/dhcpcd.hook		type=file mode=0644 optional
+./etc/dhcpd.conf		type=file mode=0644 optional
+./etc/disktab			type=file mode=0644
+./etc/dm.conf			type=file mode=0644
+./etc/dumpdates			type=file mode=0664 gname=operator optional tags=exclude
+./etc/envsys.conf		type=file mode=0644 optional
+./etc/ethers			type=file mode=0644 optional
+./etc/exports			type=file mode=0644 optional
+./etc/floppytab			type=file mode=0644
+./etc/fstab			type=file mode=0644
+./etc/ftpchroot			type=file mode=0644
+./etc/ftpd.conf			type=file mode=0644 optional
+./etc/ftpusers			type=file mode=0644
+./etc/ftpwelcome		type=file mode=0644 optional
+./etc/gateways			type=file mode=0644 optional
+./etc/gettytab			type=file mode=0644
+./etc/gpio.conf			type=file mode=644
+./etc/group			type=file mode=0644
+./etc/hesiod.conf		type=file mode=0644 optional
+./etc/hosts			type=file mode=0644
+./etc/hosts.allow		type=file mode=0644 optional
+./etc/hosts.deny		type=file mode=0644 optional
+./etc/hosts.equiv		type=file mode=0600 optional
+./etc/hosts.lpd			type=file mode=0644 optional
+./etc/ifaliases			type=file mode=0644 optional
+./etc/inetd.conf		type=file mode=0644
+./etc/ipf.conf			type=file mode=0644 optional
+./etc/ipf6.conf			type=file mode=0644 optional
+./etc/ipnat.conf		type=file mode=0644 optional
+./etc/ipsec.conf		type=file mode=0600 optional tags=nodiff
+./etc/iscsi			type=dir  mode=0755
+./etc/iscsi/auths		type=file mode=0600
+./etc/iscsi/targets		type=file mode=0644
+./etc/ld.so.conf		type=file mode=0644 optional
+./etc/localtime			type=link mode=0755
+./etc/locate.conf		type=file mode=0644 optional
+./etc/login.conf		type=file mode=0644 optional
+./etc/mail			type=dir  mode=0755
+./etc/mail/aliases		type=file mode=0644
+./etc/mail/aliases.db		type=file mode=0644 optional tags=exclude
+./etc/mail.rc			type=file mode=0644
+./etc/mailer.conf		type=file mode=0644
+./etc/man.conf			type=file mode=0644
+./etc/master.passwd		type=file mode=0600 tags=nodiff
+./etc/mk.conf			type=file mode=0644 optional
+./etc/moduli			type=file mode=0444
+./etc/monthly			type=file mode=0644
+./etc/monthly.conf		type=file mode=0644
+./etc/monthly.local		type=file mode=0644 optional
+./etc/mrouted.conf		type=file mode=0644
+./etc/mtree			type=dir  mode=0755
+./etc/mtree/special		type=file mode=0444
+./etc/mtree/special.local	type=file mode=0644 optional
+./etc/mygate			type=file mode=0644 optional
+./etc/mygate6			type=file mode=0644 optional
+./etc/myname			type=file mode=0644 optional
+./etc/named.conf		type=file mode=0644 optional
+./etc/namedb			type=dir  mode=0755
+./etc/netconfig			type=file mode=0644
+./etc/netgroup			type=file mode=0644 optional
+./etc/netstart.local		type=file mode=0644 optional
+./etc/networks			type=file mode=0644
+./etc/newsyslog.conf		type=file mode=0644
+./etc/nsswitch.conf		type=file mode=0644
+./etc/ntp.conf			type=file mode=0644 optional
+./etc/pam.conf			type=file mode=0644 optional
+./etc/pam.d			type=dir  mode=0755
+./etc/pam.d/display_manager	type=file mode=0644
+./etc/pam.d/ftpd		type=file mode=0644
+./etc/pam.d/gdm			type=file mode=0644
+./etc/pam.d/imap		type=file mode=0644
+./etc/pam.d/kde			type=file mode=0644
+./etc/pam.d/login		type=file mode=0644
+./etc/pam.d/other		type=file mode=0644
+./etc/pam.d/passwd		type=file mode=0644
+./etc/pam.d/pop3		type=file mode=0644
+./etc/pam.d/ppp			type=file mode=0644
+./etc/pam.d/rexecd		type=file mode=0644
+./etc/pam.d/rsh			type=file mode=0644
+./etc/pam.d/sshd		type=file mode=0644
+./etc/pam.d/su			type=file mode=0644
+./etc/pam.d/system		type=file mode=0644
+./etc/pam.d/telnetd		type=file mode=0644
+./etc/pam.d/xdm			type=file mode=0644
+./etc/pam.d/xserver		type=file mode=0644
+./etc/passwd			type=file mode=0644
+./etc/passwd.conf		type=file mode=0644 optional
+./etc/pf.conf			type=file mode=0644
+./etc/pf.os			type=file mode=0444
+./etc/phones			type=file mode=0644
+./etc/postfix			type=dir  mode=0755 optional
+./etc/postfix/main.cf		type=file mode=0644 optional
+./etc/postfix/master.cf		type=file mode=0644 optional
+./etc/powerd			type=dir  mode=0755 optional
+./etc/powerd/scripts		type=dir  mode=0755 optional
+./etc/powerd/scripts/acadapter	type=file mode=0555 optional
+./etc/powerd/scripts/hotkey_button	type=file mode=0555 optional
+./etc/powerd/scripts/lid_switch type=file mode=0555 optional
+./etc/powerd/scripts/power_button	type=file mode=0555 optional
+./etc/powerd/scripts/reset_button	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_battery	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_drive	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_fan		type=file mode=0555 optional
+./etc/powerd/scripts/sensor_indicator	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_power	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_resistance	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_temperature	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_voltage	type=file mode=0555 optional
+./etc/powerd/scripts/sleep_button	type=file mode=0555 optional
+./etc/ppp			type=dir  mode=0755 optional
+./etc/ppp/options		type=file mode=0644 optional
+./etc/printcap			type=file mode=0644
+./etc/profile			type=file mode=0644
+./etc/protocols			type=file mode=0644
+./etc/rbootd.conf		type=file mode=0644 optional
+./etc/rc			type=file mode=0644
+./etc/rc.conf			type=file mode=0644
+./etc/rc.d			type=dir  mode=0755
+./etc/rc.d/DAEMON		type=file mode=0555
+./etc/rc.d/DISKS		type=file mode=0555
+./etc/rc.d/LOGIN		type=file mode=0555
+./etc/rc.d/NETWORKING		type=file mode=0555
+./etc/rc.d/SERVERS		type=file mode=0555
+./etc/rc.d/accounting		type=file mode=0555
+./etc/rc.d/altqd		type=file mode=0555
+./etc/rc.d/amd			type=file mode=0555
+./etc/rc.d/apmd			type=file mode=0555
+./etc/rc.d/bluetooth		type=file mode=0555
+./etc/rc.d/bootconf.sh		type=file mode=0555
+./etc/rc.d/bootparams		type=file mode=0555
+./etc/rc.d/ccd			type=file mode=0555
+./etc/rc.d/cgd			type=file mode=0555
+./etc/rc.d/cleartmp		type=file mode=0555
+./etc/rc.d/cron			type=file mode=0555
+./etc/rc.d/dhclient		type=file mode=0555
+./etc/rc.d/dhcpd		type=file mode=0555
+./etc/rc.d/dhcrelay		type=file mode=0555
+./etc/rc.d/dmesg		type=file mode=0555
+./etc/rc.d/downinterfaces	type=file mode=0555
+./etc/rc.d/envsys		type=file mode=0555
+./etc/rc.d/fsck			type=file mode=0555
+./etc/rc.d/fsck_root		type=file mode=0555
+./etc/rc.d/ftp_proxy		type=file mode=0555
+./etc/rc.d/ftpd			type=file mode=0555
+./etc/rc.d/gpio			type=file mode=0555
+./etc/rc.d/hostapd		type=file mode=0555
+./etc/rc.d/httpd		type=file mode=0555
+./etc/rc.d/identd		type=file mode=0555
+./etc/rc.d/ifwatchd		type=file mode=0555
+./etc/rc.d/inetd		type=file mode=0555
+./etc/rc.d/ipfilter		type=file mode=0555
+./etc/rc.d/ipfs			type=file mode=0555
+./etc/rc.d/ipmon		type=file mode=0555
+./etc/rc.d/ipnat		type=file mode=0555
+./etc/rc.d/ipsec		type=file mode=0555
+./etc/rc.d/irdaattach		type=file mode=0555
+./etc/rc.d/iscsi_target		type=file mode=0555
+./etc/rc.d/isdnd		type=file mode=0555
+./etc/rc.d/isibootd		type=file mode=0555
+./etc/rc.d/kdc			type=file mode=0555
+./etc/rc.d/ldconfig		type=file mode=0555
+./etc/rc.d/ldpd			type=file mode=0555
+./etc/rc.d/local		type=file mode=0555
+./etc/rc.d/lpd			type=file mode=0555
+./etc/rc.d/lvm			type=file mode=0555
+./etc/rc.d/mixerctl		type=file mode=0555
+./etc/rc.d/mopd			type=file mode=0555
+./etc/rc.d/motd			type=file mode=0555
+./etc/rc.d/mountall		type=file mode=0555
+./etc/rc.d/mountcritlocal	type=file mode=0555
+./etc/rc.d/mountcritremote	type=file mode=0555
+./etc/rc.d/mountd		type=file mode=0555
+./etc/rc.d/moused		type=file mode=0555
+./etc/rc.d/mrouted		type=file mode=0555
+./etc/rc.d/named		type=file mode=0555
+./etc/rc.d/ndbootd		type=file mode=0555
+./etc/rc.d/network		type=file mode=0555
+./etc/rc.d/newsyslog		type=file mode=0555
+./etc/rc.d/nfsd			type=file mode=0555
+./etc/rc.d/nfslocking		type=file mode=0555
+./etc/rc.d/npf			type=file mode=0555
+./etc/rc.d/ntpd			type=file mode=0555
+./etc/rc.d/ntpdate		type=file mode=0555
+./etc/rc.d/perusertmp		type=file mode=0555
+./etc/rc.d/pf			type=file mode=0555
+./etc/rc.d/pf_boot		type=file mode=0555
+./etc/rc.d/pflogd		type=file mode=0555
+./etc/rc.d/postfix		type=file mode=0555
+./etc/rc.d/powerd		type=file mode=0555
+./etc/rc.d/ppp			type=file mode=0555
+./etc/rc.d/pwcheck		type=file mode=0555
+./etc/rc.d/quota		type=file mode=0555
+./etc/rc.d/racoon		type=file mode=0555
+./etc/rc.d/raidframe		type=file mode=0555
+./etc/rc.d/raidframeparity	type=file mode=0555
+./etc/rc.d/random_seed		type=file mode=0555
+./etc/rc.d/rarpd		type=file mode=0555
+./etc/rc.d/rbootd		type=file mode=0555
+./etc/rc.d/rndctl		type=file mode=0555
+./etc/rc.d/root			type=file mode=0555
+./etc/rc.d/route6d		type=file mode=0555
+./etc/rc.d/routed		type=file mode=0555
+./etc/rc.d/rpcbind		type=file mode=0555
+./etc/rc.d/rtadvd		type=file mode=0555
+./etc/rc.d/rtclocaltime		type=file mode=0555
+./etc/rc.d/rtsold		type=file mode=0555
+./etc/rc.d/rwho			type=file mode=0555
+./etc/rc.d/savecore		type=file mode=0555
+./etc/rc.d/screenblank		type=file mode=0555
+./etc/rc.d/securelevel		type=file mode=0555
+./etc/rc.d/sshd			type=file mode=0555
+./etc/rc.d/staticroute		type=file mode=0555
+./etc/rc.d/swap1		type=file mode=0555
+./etc/rc.d/swap2		type=file mode=0555
+./etc/rc.d/sysctl		type=file mode=0555
+./etc/rc.d/sysdb		type=file mode=0555
+./etc/rc.d/syslogd		type=file mode=0555
+./etc/rc.d/timed		type=file mode=0555
+./etc/rc.d/tpctl		type=file mode=0555
+./etc/rc.d/ttys			type=file mode=0555
+./etc/rc.d/veriexec		type=file mode=0555
+./etc/rc.d/virecover		type=file mode=0555
+./etc/rc.d/wdogctl		type=file mode=0555
+./etc/rc.d/wpa_supplicant	type=file mode=0555
+./etc/rc.d/wscons		type=file mode=0555
+./etc/rc.d/wsmoused		type=file mode=0555
+./etc/rc.d/xdm			type=file mode=0555 optional
+./etc/rc.d/xfs			type=file mode=0555 optional
+./etc/rc.d/ypbind		type=file mode=0555
+./etc/rc.d/yppasswdd		type=file mode=0555
+./etc/rc.d/ypserv		type=file mode=0555
+./etc/rc.local			type=file mode=0644 optional
+./etc/rc.shutdown		type=file mode=0644
+./etc/rc.shutdown.local		type=file mode=0644 optional
+./etc/rc.subr			type=file mode=0644
+./etc/remote			type=file mode=0644
+./etc/resolv.conf		type=file mode=0644 optional
+./etc/rpc			type=file mode=0644
+./etc/rtadvd.conf		type=file mode=0644 optional
+./etc/security			type=file mode=0644
+./etc/security.conf		type=file mode=0644
+./etc/security.local		type=file mode=0644 optional
+./etc/services			type=file mode=0644
+./etc/shells			type=file mode=0644
+./etc/shosts.equiv		type=file mode=0600 optional
+./etc/skel			type=dir  mode=0755 optional
+./etc/spwd.db			type=file mode=0600 tags=exclude
+./etc/ssh			type=dir  mode=0755 optional
+./etc/ssh/ssh_config		type=file mode=0644 optional
+./etc/ssh/ssh_host_dsa_key	type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_dsa_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_host_rsa_key	type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_rsa_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_known_hosts	type=file mode=0644 optional
+./etc/ssh/ssh_known_hosts2	type=file mode=0644 optional
+./etc/ssh/sshd_config		type=file mode=0644 optional
+./etc/sysctl.conf		type=file mode=0644
+./etc/syslog.conf		type=file mode=0644
+./etc/ttyaction			type=file mode=0644 optional
+./etc/ttys			type=file mode=0644
+./etc/usermgmt.conf		type=file mode=0644 optional
+./etc/weekly			type=file mode=0644
+./etc/weekly.conf		type=file mode=0644
+./etc/weekly.local		type=file mode=0644 optional
+./etc/wscons.conf		type=file mode=0644
+
+./etc/racoon			type=dir  mode=0755 optional
+./etc/racoon/racoon.conf	type=file mode=0644 optional
+./etc/racoon/psk.txt		type=file mode=0600 optional tags=nodiff
+
+./private			type=dir mode=0755 optional
+./private/tmp			type=dir mode=0111 optional ignore
+
+./root				type=dir  mode=0755
+./root/.cshrc			type=file mode=0644
+./root/.klogin			type=file mode=0600 optional
+./root/.login			type=file mode=0644
+./root/.profile			type=file mode=0644
+./root/.rhosts			type=file mode=0600 optional
+./root/.shosts			type=file mode=0600 optional
+./root/.ssh			type=dir  mode=0700 optional
+./root/.ssh/authorized_keys	type=file mode=0600 optional
+./root/.ssh/authorized_keys2	type=file mode=0600 optional
+./root/.ssh/config		type=file mode=0644 optional
+./root/.ssh/id_dsa		type=file mode=0600 optional tags=nodiff
+./root/.ssh/id_dsa.pub		type=file mode=0644 optional
+./root/.ssh/id_rsa		type=file mode=0600 optional tags=nodiff
+./root/.ssh/id_rsa.pub		type=file mode=0644 optional
+./root/.ssh/identity		type=file mode=0600 optional tags=nodiff
+./root/.ssh/identity.pub	type=file mode=0644 optional
+./root/.ssh/known_hosts		type=file mode=0644 optional
+./root/.ssh/known_hosts2	type=file mode=0644 optional
+
+./sbin				type=dir  mode=0755 ignore
+
+./usr				type=dir  mode=0755
+./usr/bin			type=dir  mode=0755 ignore
+./usr/games			type=dir  mode=0755 optional
+./usr/games/hide		type=dir  mode=0750 gname=games ignore optional
+./usr/include			type=dir  mode=0755 ignore
+./usr/lib			type=dir  mode=0755 ignore
+./usr/libdata			type=dir  mode=0755 ignore
+./usr/libexec			type=dir  mode=0755 ignore
+./usr/pkg			type=dir  mode=0755 ignore optional
+./usr/sbin			type=dir  mode=0755 ignore
+./usr/share			type=dir  mode=0755 ignore
+
+./var				type=dir  mode=0755
+./var/account			type=dir  mode=0755
+./var/account/acct		type=file mode=0644 optional tags=exclude
+./var/at			type=dir  mode=0755 ignore
+./var/backups			type=dir  mode=0755 ignore
+./var/chroot			type=dir  mode=0755
+./var/chroot/ftp-proxy		type=dir  mode=0755
+./var/chroot/named		type=dir  mode=0755
+./var/chroot/named/dev		type=dir  mode=0755
+./var/chroot/named/etc		type=dir  mode=0755
+./var/chroot/named/etc/namedb	type=dir  mode=0755
+./var/chroot/named/etc/namedb/cache	type=dir mode=0775 uname=named gname=named
+./var/chroot/named/etc/namedb/keys	type=dir mode=0775 uname=named gname=named
+./var/chroot/named/usr		type=dir  mode=0755
+./var/chroot/named/usr/libexec	type=dir  mode=0755
+./var/chroot/named/var		type=dir  mode=0755
+./var/chroot/named/var/run	type=dir  mode=0775 gname=named
+./var/chroot/named/var/tmp	type=dir  mode=01775 gname=named
+./var/chroot/ntpd		type=dir  mode=0755
+./var/chroot/ntpd/dev		type=dir  mode=0755
+./var/chroot/ntpd/var		type=dir  mode=0755
+./var/chroot/ntpd/var/db	type=dir  mode=0775 gname=ntpd
+./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
+./var/chroot/pflogd		type=dir  mode=0755
+./var/chroot/sshd		type=dir  mode=0755
+./var/chroot/tcpdump		type=dir  mode=0755
+./var/chroot/tftp-proxy		type=dir  mode=0755
+./var/cron			type=dir  mode=0755
+./var/cron/tabs			type=dir  mode=0700
+./var/cron/tabs/root		type=file mode=0600
+./var/db			type=dir  mode=0755
+./var/log			type=dir  mode=0755
+./var/log/authlog		type=file mode=0600 optional tags=exclude
+./var/log/lastlog		type=file mode=0664 gname=utmp tags=exclude
+./var/log/lastlogx		type=file mode=0664 gname=utmp tags=exclude
+./var/log/wtmp			type=file mode=0664 gname=utmp tags=exclude
+./var/log/wtmpx			type=file mode=0664 gname=utmp tags=exclude
+./var/mail			type=dir  mode=1777 ignore
+./var/preserve			type=dir  mode=0755 ignore
+./var/run			type=dir  mode=0755
+./var/run/mdnsd			type=dir  mode=0755 gname=_mdnsd uname=_mdnsd optional
+./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
+./var/run/utmpx			type=file mode=0664 gname=utmp tags=exclude
+./var/spool			type=dir  mode=0755
+./var/spool/ftp			type=dir  mode=0755 optional
+./var/spool/ftp/bin		type=dir  mode=0755 optional
+./var/spool/ftp/bin/ls		type=file mode=0555 optional
+./var/spool/ftp/etc		type=dir  mode=0755 optional
+./var/spool/ftp/etc/group		type=file mode=0644 optional
+./var/spool/ftp/etc/localtime		type=file mode=0644 optional
+./var/spool/ftp/etc/master.passwd	type=file mode=0600 optional
+./var/spool/ftp/etc/passwd		type=file mode=0644 optional
+./var/spool/ftp/hidden		type=dir  mode=0111 ignore optional
+./var/spool/ftp/pub		type=dir  mode=0775 ignore optional
+./var/spool/output		type=dir  mode=0755 ignore
+./var/yp			type=dir  mode=0755
+./var/yp/Makefile		type=file mode=0644 optional
