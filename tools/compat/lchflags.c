@@ -49,6 +49,10 @@ lchflags(const char *path, u_long flags)
 	if (S_ISLNK(psb.st_mode)) {
 		return 0;
 	}
+#ifdef __minix
+	return 0;
+#else
 	return (chflags(path, flags));
+#endif
 }
 #endif
