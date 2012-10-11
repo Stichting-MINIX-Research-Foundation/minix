@@ -68,7 +68,7 @@
 #define CHECKSUM_CHECK_TCP              	1
 
 #define TCP_MSS				(1460)
-#define TCP_SND_BUF			(256 * TCP_MSS)
+#define TCP_SND_BUF			(44 * TCP_MSS)
 #define TCP_SNDLOWAT			(256)
 #define TCP_SND_QUEUELEN		(512)
 #define TCP_WND				((1 << 16) - 1)	

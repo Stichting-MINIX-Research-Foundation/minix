@@ -4,6 +4,7 @@
 #include <sys/cdefs.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <minix/sysutil.h>
 #include <errno.h>
 #include <assert.h>
 
