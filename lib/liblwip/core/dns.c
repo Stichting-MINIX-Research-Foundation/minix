@@ -694,7 +694,7 @@ dns_check_entry(u8_t i)
 
     case DNS_STATE_DONE: {
       /* if the time to live is nul */
-      if (--pEntry->ttl == 0) {
+      if ((pEntry->ttl == 0) || (--pEntry->ttl == 0)) {
         LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entry: \"%s\": flush\n", pEntry->name));
         /* flush this entry */
         pEntry->state = DNS_STATE_UNUSED;
@@ -816,6 +816,13 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
             if (pEntry->found) {
               (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
             }
+            if (pEntry->ttl == 0) {
+              /* RFC 883, page 29: "Zero values are
+                 interpreted to mean that the RR can only be used for the
+                 transaction in progress, and should not be cached."
+                 -> flush this entry now */
+              goto flushentry;
+            }
             /* deallocate memory and return */
             goto memerr;
           } else {
@@ -838,6 +845,7 @@ responseerr:
   if (pEntry->found) {
     (*pEntry->found)(pEntry->name, NULL, pEntry->arg);
   }
+flushentry:
   /* flush this entry */
   pEntry->state = DNS_STATE_UNUSED;
   pEntry->found = NULL;
@@ -922,6 +930,7 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
  *   name is already in the local names table.
  * - ERR_INPROGRESS enqueue a request to be sent to the DNS server
  *   for resolution if no errors are present.
+ * - ERR_ARG: dns client not initialized or invalid hostname
  *
  * @param hostname the hostname that is to be queried
  * @param addr pointer to a ip_addr_t where to store the address if it is already
@@ -941,7 +950,7 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
   if ((dns_pcb == NULL) || (addr == NULL) ||
       (!hostname) || (!hostname[0]) ||
       (strlen(hostname) >= DNS_MAX_NAME_LENGTH)) {
-    return ERR_VAL;
+    return ERR_ARG;
   }
 
 #if LWIP_HAVE_LOOPIF

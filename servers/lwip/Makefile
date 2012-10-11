@@ -1,4 +1,6 @@
-# Makefile for inet.
+# Makefile for lwip server.
+.include <bsd.own.mk>
+
 PROG=	lwip
 SRCS=	lwip.c		\
 	driver.c	\
@@ -18,7 +20,7 @@ MAN=
 BINDIR?= /usr/sbin
 
 CPPFLAGS+=  -I${.CURDIR} -D_MINIX -D_SYSTEM
-CPPFLAGS+= -I${.CURDIR}/../../lib/liblwip/include
+CPPFLAGS+= -I${.CURDIR}/../../lib/liblwip/include -I${.CURDIR}/../../lib/liblwip/include/ipv4 -I${.CURDIR}/../../lib/liblwip/include/ipv6
 
 CFLAGS += -Wextra -std=c99
 

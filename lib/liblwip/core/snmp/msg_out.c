@@ -145,14 +145,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
 
     /* pass 1, size error, encode packet ino the pbuf(s) */
     ofs = snmp_resp_header_enc(m_stat, p);
-    if (m_stat->error_status == SNMP_ES_TOOBIG)
-    {
-      snmp_varbind_list_enc(&emptyvb, p, ofs);
-    }
-    else
-    {
-      snmp_varbind_list_enc(&m_stat->outvb, p, ofs);
-    }
+    snmp_varbind_list_enc(&m_stat->outvb, p, ofs);
 
     switch (m_stat->error_status)
     {
@@ -224,6 +217,7 @@ snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
   ip_addr_t dst_ip;
   struct pbuf *p;
   u16_t i,tot_len;
+  err_t err = ERR_OK;
 
   for (i=0, td = &trap_dst[0]; i<SNMP_TRAP_DESTINATIONS; i++, td++)
   {
@@ -233,55 +227,58 @@ snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
       ip_addr_copy(trap_msg.dip, td->dip);
       /* lookup current source address for this dst */
       dst_if = ip_route(&td->dip);
-      ip_addr_copy(dst_ip, dst_if->ip_addr);
-      /* @todo: what about IPv6? */
-      trap_msg.sip_raw[0] = ip4_addr1(&dst_ip);
-      trap_msg.sip_raw[1] = ip4_addr2(&dst_ip);
-      trap_msg.sip_raw[2] = ip4_addr3(&dst_ip);
-      trap_msg.sip_raw[3] = ip4_addr4(&dst_ip);
-      trap_msg.gen_trap = generic_trap;
-      trap_msg.spc_trap = specific_trap;
-      if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)
-      {
-        /* enterprise-Specific trap */
-        trap_msg.enterprise = eoid;
-      }
-      else
-      {
-        /* generic (MIB-II) trap */
-        snmp_get_snmpgrpid_ptr(&trap_msg.enterprise);
-      }
-      snmp_get_sysuptime(&trap_msg.ts);
+      if (dst_if != NULL) {
+        ip_addr_copy(dst_ip, dst_if->ip_addr);
+        /* @todo: what about IPv6? */
+        trap_msg.sip_raw[0] = ip4_addr1(&dst_ip);
+        trap_msg.sip_raw[1] = ip4_addr2(&dst_ip);
+        trap_msg.sip_raw[2] = ip4_addr3(&dst_ip);
+        trap_msg.sip_raw[3] = ip4_addr4(&dst_ip);
+        trap_msg.gen_trap = generic_trap;
+        trap_msg.spc_trap = specific_trap;
+        if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)
+        {
+          /* enterprise-Specific trap */
+          trap_msg.enterprise = eoid;
+        }
+        else
+        {
+          /* generic (MIB-II) trap */
+          snmp_get_snmpgrpid_ptr(&trap_msg.enterprise);
+        }
+        snmp_get_sysuptime(&trap_msg.ts);
 
-      /* pass 0, calculate length fields */
-      tot_len = snmp_varbind_list_sum(&trap_msg.outvb);
-      tot_len = snmp_trap_header_sum(&trap_msg, tot_len);
+        /* pass 0, calculate length fields */
+        tot_len = snmp_varbind_list_sum(&trap_msg.outvb);
+        tot_len = snmp_trap_header_sum(&trap_msg, tot_len);
 
-      /* allocate pbuf(s) */
-      p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_POOL);
-      if (p != NULL)
-      {
-        u16_t ofs;
+        /* allocate pbuf(s) */
+        p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_POOL);
+        if (p != NULL)
+        {
+          u16_t ofs;
 
-        /* pass 1, encode packet ino the pbuf(s) */
-        ofs = snmp_trap_header_enc(&trap_msg, p);
-        snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
+          /* pass 1, encode packet ino the pbuf(s) */
+          ofs = snmp_trap_header_enc(&trap_msg, p);
+          snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
 
-        snmp_inc_snmpouttraps();
-        snmp_inc_snmpoutpkts();
+          snmp_inc_snmpouttraps();
+          snmp_inc_snmpoutpkts();
 
-        /** send to the TRAP destination */
-        udp_sendto(trap_msg.pcb, p, &trap_msg.dip, SNMP_TRAP_PORT);
+          /** send to the TRAP destination */
+          udp_sendto(trap_msg.pcb, p, &trap_msg.dip, SNMP_TRAP_PORT);
 
-        pbuf_free(p);
-      }
-      else
-      {
-        return ERR_MEM;
+          pbuf_free(p);
+        } else {
+          err = ERR_MEM;
+        }
+      } else {
+        /* routing error */
+        err = ERR_RTE;
       }
     }
   }
-  return ERR_OK;
+  return err;
 }
 
 void

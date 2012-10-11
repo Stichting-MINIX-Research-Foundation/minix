@@ -47,7 +47,7 @@ LWIP_MEMPOOL(TCP_SEG,        MEMP_NUM_TCP_SEG,         sizeof(struct tcp_seg),  
 #if IP_REASSEMBLY
 LWIP_MEMPOOL(REASSDATA,      MEMP_NUM_REASSDATA,       sizeof(struct ip_reassdata),   "REASSDATA")
 #endif /* IP_REASSEMBLY */
-#if IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF
+#if (IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF) || LWIP_IPV6_FRAG
 LWIP_MEMPOOL(FRAG_PBUF,      MEMP_NUM_FRAG_PBUF,       sizeof(struct pbuf_custom_ref),"FRAG_PBUF")
 #endif /* IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF */
 
@@ -63,9 +63,9 @@ LWIP_MEMPOOL(TCPIP_MSG_INPKT,MEMP_NUM_TCPIP_MSG_INPKT, sizeof(struct tcpip_msg),
 #endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */
 #endif /* NO_SYS==0 */
 
-#if ARP_QUEUEING
+#if LWIP_ARP && ARP_QUEUEING
 LWIP_MEMPOOL(ARP_QUEUE,      MEMP_NUM_ARP_QUEUE,       sizeof(struct etharp_q_entry), "ARP_QUEUE")
-#endif /* ARP_QUEUEING */
+#endif /* LWIP_ARP && ARP_QUEUEING */
 
 #if LWIP_IGMP
 LWIP_MEMPOOL(IGMP_GROUP,     MEMP_NUM_IGMP_GROUP,      sizeof(struct igmp_group),     "IGMP_GROUP")
@@ -90,6 +90,19 @@ LWIP_MEMPOOL(LOCALHOSTLIST,  MEMP_NUM_LOCALHOSTLIST,   LOCALHOSTLIST_ELEM_SIZE, 
 #if PPP_SUPPORT && PPPOE_SUPPORT
 LWIP_MEMPOOL(PPPOE_IF,      MEMP_NUM_PPPOE_INTERFACES, sizeof(struct pppoe_softc),    "PPPOE_IF")
 #endif /* PPP_SUPPORT && PPPOE_SUPPORT */
+
+#if LWIP_IPV6 && LWIP_ND6_QUEUEING
+LWIP_MEMPOOL(ND6_QUEUE,      MEMP_NUM_ND6_QUEUE,       sizeof(struct nd6_q_entry), "ND6_QUEUE")
+#endif /* LWIP_IPV6 && LWIP_ND6_QUEUEING */
+
+#if LWIP_IPV6 && LWIP_IPV6_REASS
+LWIP_MEMPOOL(IP6_REASSDATA,      MEMP_NUM_REASSDATA,       sizeof(struct ip6_reassdata),   "IP6_REASSDATA")
+#endif /* LWIP_IPV6 && LWIP_IPV6_REASS */
+
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+LWIP_MEMPOOL(MLD6_GROUP,     MEMP_NUM_MLD6_GROUP,      sizeof(struct mld_group),     "MLD6_GROUP")
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+
 
 /*
  * A list of pools of pbuf's used by LWIP.

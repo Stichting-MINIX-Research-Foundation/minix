@@ -43,7 +43,11 @@ SUBDIR+= libcompat_minix libblockdriver libchardriver     \
        libexec libdevman libusb libasyn librmt \
        libddekit libminixfs libbdev libelf libminc libcrypt libterminfo \
        libutil libbz2 libprop \
-       libnetsock libpuffs libsffs
+       libpuffs libsffs
+
+.if (${MKLWIP} == "yes")
+SUBDIR += liblwip libnetsock
+.endif
 
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR += libvassert libhgfs libvboxfs libvirtio
