@@ -34,6 +34,8 @@ getifaddrs(struct ifaddrs **ifap)
 	addr.sin_addr.s_addr = 0;
 	netmask.sin_addr.s_addr = 0;
 
+	*ifap = NULL;
+
 	if(fd < 0) {
 		char *ipd;
 
