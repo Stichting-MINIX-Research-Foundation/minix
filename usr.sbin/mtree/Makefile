@@ -3,7 +3,6 @@
 
 .include <bsd.own.mk>
 
-CPPFLAGS+= -Dlchown=chown -Dlchmod=chmod 
 
 PROG=	mtree
 #CPPFLAGS+=-DDEBUG
@@ -12,6 +11,7 @@ MAN=	mtree.8
 SRCS=	compare.c crc.c create.c excludes.c misc.c mtree.c spec.c specspec.c \
 	verify.c getid.c pack_dev.c
 .if (${HOSTPROG:U} == "")
+CPPFLAGS+= -Dlchown=chown -Dlchmod=chmod 
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 .endif

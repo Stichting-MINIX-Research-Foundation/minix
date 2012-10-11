@@ -59,8 +59,9 @@ LINT_BITS= lint lint2
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT sed .WAIT \
 		genassym \
-		makewhatis mkdep \
-		mkfs.mfs m4 \
+		makewhatis mkdep mtree\
+		m4 \
+	.WAIT mkfs.mfs \
 	.WAIT yacc \
 	.WAIT awk \
 	.WAIT tic \

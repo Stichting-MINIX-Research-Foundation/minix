@@ -172,6 +172,7 @@ afterinstall: .PHONY .MAKE
 .if (${MKUNPRIVED} != "no" && ${MKINFO} != "no")
 	${MAKEDIRTARGET} gnu/usr.bin/texinfo/install-info infodir-meta
 .endif
+.endif # !defined(__MINIX)
 .if !defined(NOPOSTINSTALL)
 	${MAKEDIRTARGET} . postinstall-check
 .endif
@@ -199,7 +200,6 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 	@echo "   === Removing obsolete files ==="
 	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
 	@echo "   ==============================="
-.endif # !defined(__MINIX)
 
 
 #
@@ -317,7 +317,7 @@ HOST_UNAME_M!=	uname -m
 HOST_UNAME_M:= ${MACHINE}
 .endif
 
-installworld world: .PHONY .MAKE
+installworld: .PHONY .MAKE
 .if (!defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/")
 	@echo "Can't make ${.TARGET} to DESTDIR=/"
 	@false
@@ -444,11 +444,6 @@ do-distrib-dirs: .PHONY .MAKE
 .else
 	${MAKEDIRTARGET} etc distrib-dirs DESTDIR=${DESTDIR}
 .endif
-.if defined(__MINIX)
-# LSC GCC Related directories
-	${INSTALL_DIR} ${DESTDIR}/usr/include/g++
-	${INSTALL_DIR} ${DESTDIR}/usr/include/objc
-.endif # defined(__MINIX)
 
 .for targ in cleandir obj includes
 do-${targ}: .PHONY ${targ}

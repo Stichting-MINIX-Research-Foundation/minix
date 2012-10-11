@@ -35,12 +35,8 @@ NetBSD.dist.tmp::
 	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES} > \
 	    ${.TARGET}
 
-# LSC We do not have those in MINIX (later maybe?), and we do  not install mtree 
-# into the target filesystem
-.if ${__MINIX} != "yes"
 CONFIGFILES=	NetBSD.dist special
 FILESDIR=	/etc/mtree
-.endif
 
 # distrib-dirs --
 #	Populate $DESTDIR with directories needed by NetBSD
@@ -56,16 +52,9 @@ TOOL_MTREE.unpriv=	-W
 # the Makefile.
 #
 emit_dist_file:
-# LSC We do not have this file
-.if ${__MINIX} != "yes"
 	cat ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES}
-.endif
 
-.if ${__MINIX} != "yes"
 distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
-.else
-distrib-dirs: .PHONY check_DESTDIR
-.endif
 .if !defined(DISTRIBUTION_DONE)						# {
 # Create DESTDIR using HOST_INSTALL_DIR, not INSTALL_DIR, because
 # INSTALL_DIR would want to write to the metalog, and it can't do that
@@ -73,7 +62,6 @@ distrib-dirs: .PHONY check_DESTDIR
 	${HOST_INSTALL_DIR} -m 755 ${DESTDIR}
 # Invoke mtree to create the directories listed in NetBSD.dist;
 # then invoke mtree again to register those directories in the metalog.
-.if ${__MINIX} != "yes"
 	${TOOL_MTREE} -def ${.OBJDIR}/NetBSD.dist -N ${.CURDIR}/.. \
 	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
 .if ${MKUNPRIVED} != "no"						# {
@@ -81,10 +69,6 @@ distrib-dirs: .PHONY check_DESTDIR
 	    -p ${DESTDIR}/ -C -k all | \
 	    ${TOOL_AWK} '/ optional/ {next} // {print}' | ${METALOG.add}
 .endif	# MKUNPRIVED							# }
-.else
-		${.CURDIR}/mtree.sh ${.CURDIR}/minix.tree ${TOOL_AWK} ${TOOL_STAT} ${MKUNPRIVED} ${DESTDIR}/
-.endif
-
 .endif	# DISTRIBUTION_DONE						# }
 
 CLEANFILES+=	NetBSD.dist NetBSD.dist.tmp
