@@ -351,7 +351,7 @@ block_transfer(dev_t minor,	/* minor device number */
 			return EINVAL;
 		}
 
-		if (ciov->iov_size == 0 || ciov->iov_size < 0) {
+		if (ciov->iov_size <= 0) {
 			mmc_log_warn(&log,
 			    "Invalid iov size for iov %d of %d size\n",
 			    counter, nr_req, ciov->iov_size);
@@ -543,7 +543,6 @@ sef_local_startup()
 	 */
 	sef_setcb_init_fresh(block_system_event_cb);
 	sef_setcb_init_lu(block_system_event_cb);
-	sef_setcb_init_restart(block_system_event_cb);
 
 	/* Register a signal handler */
 	sef_setcb_signal_handler(block_signal_handler_cb);
@@ -575,6 +574,7 @@ block_system_event_cb(int type, sef_init_info_t * info)
 		mmc_log_info(&log, "System event framework post restart\n");
 		break;
 	}
+	blockdriver_announce(type);
 	return OK;
 }
 
