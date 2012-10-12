@@ -75,14 +75,20 @@ static int set_result(result_t *res, int type, ssize_t value)
 	return type;
 }
 
-static void accept_result(result_t *res, int type, ssize_t value)
+static int accept_result(result_t *res, int type, ssize_t value)
 {
 	/* If the result is of the given type and value, reset it to a success
-	 * result. This allows for a logical OR on error codes.
+	 * result. This allows for a logical OR on error codes. Return whether
+	 * the result was indeed reset.
 	 */
 
-	if (res->type == type && res->value == value)
+	if (res->type == type && res->value == value) {
 		set_result(res, RESULT_OK, 0);
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 static void got_result(result_t *res, char *desc)
@@ -226,7 +232,7 @@ static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 	return set_result(res, RESULT_OK, 0);
 }
 
-static int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
+static void raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	int write, ssize_t exp, result_t *res)
 {
 	/* Perform a transfer with a safecopy iovec already supplied.
@@ -257,24 +263,24 @@ static int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 		panic("unable to revoke grant");
 
 	if (r != RESULT_OK)
-		return r;
+		return;
 
 	if (m.BDEV_STATUS == exp)
-		return r;
+		return;
 
 	if (exp < 0)
-		return set_result(res, RESULT_BADSTATUS, m.BDEV_STATUS);
+		set_result(res, RESULT_BADSTATUS, m.BDEV_STATUS);
 	else
-		return set_result(res, RESULT_TRUNC, exp - m.BDEV_STATUS);
+		set_result(res, RESULT_TRUNC, exp - m.BDEV_STATUS);
 }
 
-static int vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
+static void vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
 	int write, ssize_t exp, result_t *res)
 {
 	/* Perform a transfer, creating and revoking grants for the I/O vector.
 	 */
 	iovec_s_t iov_s[NR_IOREQS];
-	int i, r;
+	int i;
 
 	assert(nr_req <= NR_IOREQS);
 
@@ -287,7 +293,7 @@ static int vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
 			panic("unable to allocate grant");
 	}
 
-	r = raw_xfer(minor, pos, iov_s, nr_req, write, exp, res);
+	raw_xfer(minor, pos, iov_s, nr_req, write, exp, res);
 
 	for (i = 0; i < nr_req; i++) {
 		iovec[i].iov_size = iov_s[i].iov_size;
@@ -295,11 +301,9 @@ static int vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
 		if (cpf_revoke(iov_s[i].iov_grant) != OK)
 			panic("unable to revoke grant");
 	}
-
-	return r;
 }
 
-static int simple_xfer(dev_t minor, u64_t pos, u8_t *buf, size_t size,
+static void simple_xfer(dev_t minor, u64_t pos, u8_t *buf, size_t size,
 	int write, ssize_t exp, result_t *res)
 {
 	/* Perform a transfer involving a single buffer.
@@ -309,7 +313,7 @@ static int simple_xfer(dev_t minor, u64_t pos, u8_t *buf, size_t size,
 	iov.iov_addr = (vir_bytes) buf;
 	iov.iov_size = size;
 
-	return vir_xfer(minor, pos, &iov, 1, write, exp, res);
+	vir_xfer(minor, pos, &iov, 1, write, exp, res);
 }
 
 static void alloc_buf_and_grant(u8_t **ptr, cp_grant_id_t *grant,
@@ -499,7 +503,7 @@ static void bad_read2(void)
 	 * size exceed the per-operation size (128KB ?). On the other hand, we
 	 * then need to start checking partition sizes, possibly.
 	 */
-	u8_t *buf_ptr, *buf2_ptr, *buf3_ptr;
+	u8_t *buf_ptr, *buf2_ptr, *buf3_ptr, c1, c2;
 	size_t buf_size, buf2_size, buf3_size;
 	cp_grant_id_t buf_grant, buf2_grant, buf3_grant, grant;
 	u32_t buf_sum, buf2_sum, buf3_sum;
@@ -598,12 +602,24 @@ static void bad_read2(void)
 	buf_sum = fill_rand(buf_ptr, buf_size);
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+	c1 = buf2_ptr[buf2_size - 1];
 
-	raw_xfer(driver_minor, cvu64(0), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, cvu64(0), iov, 3, FALSE, BUF_SIZE * 3 - 1,
+		&res);
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+	if (accept_result(&res, RESULT_BADSTATUS, EINVAL)) {
+		/* Do not test the first buffer, as it may contain a partial
+		 * result.
+		 */
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+	} else {
+		test_sum(buf_ptr, buf_size, buf_sum, FALSE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, FALSE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, FALSE, &res);
+		if (c1 != buf2_ptr[buf2_size - 1])
+			set_result(&res, RESULT_CORRUPT, 0);
+	}
 
 	got_result(&res, "word-unaligned size in iovec element");
 
@@ -611,13 +627,13 @@ static void bad_read2(void)
 	memcpy(iov, iovt, sizeof(iovt));
 	iov[1].iov_grant = GRANT_INVALID;
 
-	buf_sum = fill_rand(buf_ptr, buf_size);
+	fill_rand(buf_ptr, buf_size);
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
 	raw_xfer(driver_minor, cvu64(0), iov, 3, FALSE, EINVAL, &res);
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+	/* Do not test the first buffer, as it may contain a partial result. */
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
 	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
@@ -641,7 +657,7 @@ static void bad_read2(void)
 
 	accept_result(&res, RESULT_BADSTATUS, EPERM);
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+	/* Do not test the first buffer, as it may contain a partial result. */
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
 	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
@@ -663,7 +679,7 @@ static void bad_read2(void)
 
 	accept_result(&res, RESULT_BADSTATUS, EPERM);
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+	/* Do not test the first buffer, as it may contain a partial result. */
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
 	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
@@ -683,12 +699,25 @@ static void bad_read2(void)
 	buf_sum = fill_rand(buf_ptr, buf_size);
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+	c1 = buf2_ptr[0];
+	c2 = buf2_ptr[buf2_size - 1];
 
-	raw_xfer(driver_minor, cvu64(0), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, cvu64(0), iov, 3, FALSE, BUF_SIZE * 3 - 2,
+		&res);
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+	if (accept_result(&res, RESULT_BADSTATUS, EINVAL)) {
+		/* Do not test the first buffer, as it may contain a partial
+		 * result.
+		 */
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+	} else {
+		test_sum(buf_ptr, buf_size, buf_sum, FALSE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, FALSE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, FALSE, &res);
+		if (c1 != buf2_ptr[0] || c2 != buf2_ptr[buf2_size - 1])
+			set_result(&res, RESULT_CORRUPT, 0);
+	}
 
 	got_result(&res, "word-unaligned buffer in iovec element");
 
