@@ -145,12 +145,6 @@ int tcsetattr(int _filedes, int _opt_actions, const struct termios
 #define cfsetospeed(termios_p, speed)	((termios_p)->c_ospeed = (speed), 0)
 #endif
 
-#ifdef _MINIX
-/* Here are the local extensions to the POSIX standard for Minix. Posix
- * conforming programs are not able to access these, and therefore they are
- * only defined when a Minix program is compiled.
- */
-
 /* Extensions to the termios c_iflag bit map.  */
 #define IXANY		0x0800	/* allow any key to continue ouptut */
 #define SCANCODES	0x1000	/* send scancodes */
@@ -201,7 +195,6 @@ int tcsetattr(int _filedes, int _opt_actions, const struct termios
  * The ioctls TIOCGWINSZ and TIOCSWINSZ can be used to get and set this 
  * information.
  */
-#endif /* _MINIX */
 
 struct winsize
 {
