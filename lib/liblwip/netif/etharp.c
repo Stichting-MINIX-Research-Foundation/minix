@@ -1189,6 +1189,11 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
+  /* Do not send ARP if the source IP is not set. This may cause various
+   * problems, for instance, triggers an assert in qemu-kvm */
+  if (ipsrc_addr->addr == 0)
+	  return ERR_OK;
+
   /* allocate a pbuf for the outgoing ARP request packet */
   p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET, PBUF_RAM);
   /* could allocate a pbuf for an ARP request? */
