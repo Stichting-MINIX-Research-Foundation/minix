@@ -354,20 +354,22 @@ int do_munmap(message *m)
  
         vmp = &vmproc[n];
 
-	if(m->m_type == VM_SHM_UNMAP) {
+	if(m->m_type == VM_UNMAP_PHYS) {
+		addr = (vir_bytes) m->VMUP_VADDR;
+	} else if(m->m_type == VM_SHM_UNMAP) {
 		addr = (vir_bytes) m->VMUN_ADDR;
 	} else	addr = (vir_bytes) m->VMUM_ADDR;
 
         if(!(vr = map_lookup(vmp, addr, NULL))) {
-                printf("VM: unmap: virtual address %p not found in %d\n",
-                        m->VMUM_ADDR, vmp->vm_endpoint);
+                printf("VM: unmap: virtual address 0x%lx not found in %d\n",
+                        addr, target);
                 return EFAULT;
         }
 
 	if(addr % VM_PAGE_SIZE)
 		return EFAULT;
  
-	if(m->m_type == VM_SHM_UNMAP) {
+	if(m->m_type == VM_UNMAP_PHYS || m->m_type == VM_SHM_UNMAP) {
 		len = vr->length;
 	} else len = roundup(m->VMUM_LEN, VM_PAGE_SIZE);
 
