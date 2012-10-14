@@ -156,10 +156,12 @@ static void tcp_op_close(struct socket * sock, __unused message * m)
 		int err;
 
 		/* we are not able to handle any callback anymore */
-		tcp_arg((struct tcp_pcb *)sock->pcb, NULL);
-		tcp_err((struct tcp_pcb *)sock->pcb, NULL);
-		tcp_sent((struct tcp_pcb *)sock->pcb, NULL);
-		tcp_recv((struct tcp_pcb *)sock->pcb, NULL);
+		if (((struct tcp_pcb *)sock->pcb)->state != LISTEN) {
+			tcp_arg((struct tcp_pcb *)sock->pcb, NULL);
+			tcp_err((struct tcp_pcb *)sock->pcb, NULL);
+			tcp_sent((struct tcp_pcb *)sock->pcb, NULL);
+			tcp_recv((struct tcp_pcb *)sock->pcb, NULL);
+		}
 
 		err = tcp_close(sock->pcb);
 		assert(err == ERR_OK);
