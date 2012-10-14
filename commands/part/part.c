@@ -121,9 +121,9 @@ void init_tty(void)
 	tty_raw();
 }
 
-void putchr(int c)
+int putchr(int c)
 {
-	putchar(c);
+	return putchar(c);
 }
 
 void putstr(char *s)
@@ -852,7 +852,8 @@ void print(object_t *op)
 	case O_LSEC:
 				/* Partition's last sector. */
 		t= entry2last(pe);
-		sprintf(op->value, t == -1 ? "-1" : "%lu", t % sectors);
+		if (t == -1) strcpy(op->value, "-1");
+		else sprintf(op->value, "%lu", t % sectors);
 		if (!aligned(t + 1, sectors)) op->flags|= OF_ODD;
 		break;
 	case O_BASE:
@@ -896,7 +897,7 @@ void print(object_t *op)
 	} else {
 		memset(op->value + n, ' ', op->len - n);
 	}
-	op->value[op->len]= 0;
+	op->value[(int) op->len]= 0;
 
 	if ((op->flags & (OF_ODD | OF_BAD)) == (oldflags & (OF_ODD | OF_BAD))
 				&& strcmp(op->value, oldvalue) == 0) {
@@ -1581,44 +1582,16 @@ void installboot(unsigned char *bootblock, char *masterboot)
 ssize_t boot_readwrite(int rw)
 /* Read (0) or write (1) the boot sector. */
 {
-	u64_t off64 = mul64u(offset, SECTOR_SIZE);
-	int r;
+	int r = 0;
 
-#if __minix_vmd
-	/* Minix-vmd has a 64 bit seek. */
-	if (fcntl(device, F_SEEK, off64) < 0) return -1;
-#else
-	/* Minix has to gross things with the partition base. */
-	struct partition geom0, geom_seek;
-
-	if (offset >= (LONG_MAX / SECTOR_SIZE - 1)) {
-		/* Move partition base. */
-		if (ioctl(device, DIOCGETP, &geom0) < 0) return -1;
-		geom_seek.base = add64(geom0.base, off64);
-		geom_seek.size = cvu64(cmp64(add64u(off64, SECTOR_SIZE),
-			geom0.size) <= 0 ? _STATIC_BLOCK_SIZE : 0);
-		sync();
-		if (ioctl(device, DIOCSETP, &geom_seek) < 0) return -1;
-		if (lseek(device, (off_t) 0, SEEK_SET) == -1) return -1;
-	} else {
-		/* Can reach this point normally. */
-		if (lseek(device, (off_t) offset * SECTOR_SIZE, SEEK_SET) == -1)
-			return -1;
-	}
-#endif
+	if (lseek64(device, (u64_t) offset * SECTOR_SIZE, SEEK_SET, NULL) < 0)
+		return -1;
 
 	switch (rw) {
 	case 0:	r= read(device, bootblock, SECTOR_SIZE);	break;
 	case 1:	r= write(device, bootblock, SECTOR_SIZE);	break;
 	}
 
-#if !__minix_vmd
-	if (offset >= (LONG_MAX / SECTOR_SIZE - 1)) {
-		/* Restore partition base and size. */
-		sync();
-		if (ioctl(device, DIOCSETP, &geom0) < 0) return -1;
-	}
-#endif
 	return r;
 }
 
