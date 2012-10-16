@@ -310,15 +310,11 @@ Next make a file system for on-disk /home.  Leave it empty for now.
 Next make a file system for on-disk /usr and copy the floppy /usr on to it.
 .PP
 .XB "mkfs\0/dev/c0d0p1s2"
-.XB "readall\0\-b\0/dev/c0d0p1s2 | sh"
 .XB "mount\0/dev/c0d0p1s2\0/mnt"
 .XB "cpdir\0\-v\0/usr\0/mnt"
 .PP
 This will create a file system on /dev/c0d0p1s2, mount it on /mnt, and copy the
-contents of the \s-2USR\s+2 floppy onto it.  The call to
-.B readall
-marks bad blocks on the file system as unusable, you can omit this on a
-drive known to be spotless (\s-2IDE\s+2 or \s-2SCSI\s+2.)
+contents of the \s-2USR\s+2 floppy onto it.
 .PP
 You can now use the new /usr in place of the \s-2USR\s+2 floppy:
 .PP

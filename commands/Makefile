@@ -2,10 +2,8 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	add_route arp ash at \
-	backup badblocks banner basename \
-	btrace cal \
-	cawf cd  cdprobe checkhier cpp \
+SUBDIR=	add_route arp ash at backup banner basename btrace cal \
+	cawf cd cdprobe checkhier cpp \
 	chmod chown ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut \
 	dd decomp16 DESCRIBE dev2name devmand devsize df dhcpd \
@@ -22,7 +20,7 @@ SUBDIR=	add_route arp ash at \
 	nonamed od paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar pr_routes ps pwd pwdauth \
-	ramdisk rarpd rawspeed rcp rdate readall readclock \
+	ramdisk rarpd rawspeed rcp rdate readclock \
 	reboot remsync rev rget rlogin \
 	rotate rsh rshd service setup shar acksize \
 	sleep slip sort spell split sprofalyze sprofdiff srccrc \

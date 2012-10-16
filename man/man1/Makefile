@@ -13,7 +13,7 @@ MAN=	ash.1 at.1 banner.1 basename.1 \
 	mesg.1 mixer.1 mkfs.1 \
 	mkproto.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
 	paste.1 ping.1 playwave.1 pr.1 prep.1 \
-	profile.1 ps.1 pwd.1 rcp.1 readall.1 recwave.1 \
+	profile.1 ps.1 pwd.1 rcp.1 recwave.1 \
 	ref.1 remsync.1 rget.1 rlogin.1 rsh.1 rz.1 \
 	shar.1 acksize.1 sleep.1 sort.1   spell.1 \
 	split.1 stty.1 sum.1 svc.1 svrctl.1 \
