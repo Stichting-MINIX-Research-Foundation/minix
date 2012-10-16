@@ -898,7 +898,7 @@
 ./usr/include/termios.h					minix-sys
 ./usr/include/time.h					minix-sys
 ./usr/include/timers.h					minix-sys
-./usr/include/tools.h					minix-sys
+./usr/include/tools.h					minix-sys obsolete
 ./usr/include/ttyent.h					minix-sys
 ./usr/include/tzfile.h					minix-sys
 ./usr/include/ucontext.h					minix-sys

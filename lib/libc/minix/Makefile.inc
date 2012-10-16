@@ -1,8 +1,8 @@
 # MINIX Specifics sources
 .PATH: ${.CURDIR}/minix
 
-SRCS+= malloc.c calloc.c
-SRCS+= malloc-debug.c
+SRCS+= minix-malloc.c minix-calloc.c
+SRCS+= minix-malloc-debug.c
 
 LIBDPLIBS+= sys ${NETBSDSRCDIR}/lib/libsys
 
