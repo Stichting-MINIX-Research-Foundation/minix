@@ -154,7 +154,7 @@ vboxfs_setattr(char *path, struct sffs_attr *attr)
 	info.atime = (attr->a_mask & SFFS_ATTR_ATIME) ?
 	    set_time(&attr->a_atime) : 0;
 	info.mtime = (attr->a_mask & SFFS_ATTR_MTIME) ?
-	    set_time(&attr->a_ctime) : 0;
+	    set_time(&attr->a_mtime) : 0;
 	info.ctime = (attr->a_mask & SFFS_ATTR_CTIME) ?
 	    set_time(&attr->a_ctime) : 0;
 	info.crtime = (attr->a_mask & SFFS_ATTR_CRTIME) ?
