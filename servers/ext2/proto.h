@@ -1,6 +1,9 @@
 #ifndef EXT2_PROTO_H
 #define EXT2_PROTO_H
 
+#define get_block(d, n, t) lmfs_get_block(d, n, t)
+#define put_block(n, t) lmfs_put_block(n, t)
+
 /* Function prototypes. */
 
 /* Structs used in prototypes must be declared as such first. */
@@ -14,16 +17,6 @@ struct super_block;
 void discard_preallocated_blocks(struct inode *rip);
 block_t alloc_block(struct inode *rip, block_t goal);
 void free_block(struct super_block *sp, bit_t bit);
-
-/* cache.c */
-void buf_pool(int bufs);
-void flushall(dev_t dev);
-struct buf *get_block(dev_t dev, block_t block,int only_search);
-void invalidate(dev_t device);
-void put_block(struct buf *bp, int block_type);
-void set_blocksize(struct super_block *sp);
-void rw_scattered(dev_t dev, struct buf **bufq, int bufqsize, int
-	rw_flag);
 
 /* ialloc.c */
 struct inode *alloc_inode(struct inode *parent, mode_t bits);

@@ -58,7 +58,7 @@ int fs_readwrite(void)
   position = (off_t) fs_m_in.REQ_SEEK_POS_LO;
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
   
-  rdwt_err = OK;		/* set to EIO if disk error occurs */
+  lmfs_reset_rdwt_err();
 
   /* If this is file i/o, check we can write */
   if (rw_flag == WRITING && !block_spec) {
@@ -98,7 +98,7 @@ int fs_readwrite(void)
 	  	       nrbytes, rw_flag, gid, cum_io, block_size, &completed);
 
 	  if (r != OK) break;	/* EOF reached */
-	  if (rdwt_err < 0) break;
+	  if (lmfs_rdwt_err() < 0) break;
 
 	  /* Update counters and pointers. */
 	  nrbytes -= chunk;	/* bytes yet to be read */
@@ -118,8 +118,8 @@ int fs_readwrite(void)
 
   rip->i_seek = NO_SEEK;
 
-  if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
-  if (rdwt_err == END_OF_FILE) r = OK;
+  if (lmfs_rdwt_err() != OK) r = lmfs_rdwt_err();	/* check for disk error */
+  if (lmfs_rdwt_err() == END_OF_FILE) r = OK;
 
   /* even on a ROFS, writing to a device node on it is fine, 
    * just don't update the inode stats for it. And dito for reading.
@@ -172,7 +172,7 @@ int fs_breadwrite(void)
   rip.i_mode = I_BLOCK_SPECIAL;
   rip.i_size = 0;
 
-  rdwt_err = OK;		/* set to EIO if disk error occurs */
+  lmfs_reset_rdwt_err();
   
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
@@ -185,7 +185,7 @@ int fs_breadwrite(void)
 	  	       cum_io, block_size, &completed);
 
 	  if (r != OK) break;	/* EOF reached */
-	  if (rdwt_err < 0) break;
+	  if (lmfs_rdwt_err() < 0) break;
 
 	  /* Update counters and pointers. */
 	  nrbytes -= chunk;	        /* bytes yet to be read */
@@ -196,8 +196,8 @@ int fs_breadwrite(void)
   fs_m_out.RES_SEEK_POS_LO = ex64lo(position); 
   fs_m_out.RES_SEEK_POS_HI = ex64hi(position); 
   
-  if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
-  if (rdwt_err == END_OF_FILE) r = OK;
+  if (lmfs_rdwt_err() != OK) r = lmfs_rdwt_err();	/* check for disk error */
+  if (lmfs_rdwt_err() == END_OF_FILE) r = OK;
 
   fs_m_out.RES_NBYTES = cum_io;
   
@@ -279,15 +279,11 @@ int *completed;			/* number of bytes copied */
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			   (vir_bytes) (bp->b_data+off), (size_t) chunk);
-  } else if(!block_write_ok(bp)) {
-  	/* Let cache layer veto writing to this block */
-  	printf("MFS: block write not allowed\n");
-	r = EPERM;
+			   (vir_bytes) (b_data(bp)+off), (size_t) chunk);
   } else {
 	/* Copy a chunk from user space to the block buffer. */
 	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			     (vir_bytes) (bp->b_data+off), (size_t) chunk);
+			     (vir_bytes) (b_data(bp)+off), (size_t) chunk);
 	MARKDIRTY(bp);
   }
   
@@ -348,8 +344,8 @@ off_t position;			/* position in file whose blk wanted */
 	if ((unsigned int) index > rip->i_nindirs)
 		return(NO_BLOCK);	/* Can't go beyond double indirects */
 	bp = get_block(rip->i_dev, b, NORMAL);	/* get double indirect block */
-	ASSERT(bp->b_dev != NO_DEV);
-	ASSERT(bp->b_dev == rip->i_dev);
+	ASSERT(lmfs_dev(bp) != NO_DEV);
+	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	z = rd_indir(bp, index);		/* z= zone for single*/
 	put_block(bp, INDIRECT_BLOCK);		/* release double ind block */
 	excess = excess % nr_indirects;		/* index into single ind blk */
@@ -385,13 +381,13 @@ int index;			/* index into *bp */
   if(bp == NULL)
 	panic("rd_indir() on NULL");
 
-  sp = get_super(bp->b_dev);	/* need super block to find file sys type */
+  sp = get_super(lmfs_dev(bp));	/* need super block to find file sys type */
 
   /* read a zone from an indirect block */
   if (sp->s_version == V1)
-	zone = (zone_t) conv2(sp->s_native, (int)  bp->b_v1_ind[index]);
+	zone = (zone_t) conv2(sp->s_native, (int)  b_v1_ind(bp)[index]);
   else
-	zone = (zone_t) conv4(sp->s_native, (long) bp->b_v2_ind[index]);
+	zone = (zone_t) conv4(sp->s_native, (long) b_v2_ind(bp)[index]);
 
   if (zone != NO_ZONE &&
 		(zone < (zone_t) sp->s_firstdatazone || zone >= sp->s_zones)) {
@@ -420,6 +416,7 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
  * flag on all reads to allow this.
  */
 /* Minimum number of blocks to prefetch. */
+  int nr_bufs = lmfs_nr_bufs();
 # define BLOCKS_MINIMUM		(nr_bufs < 50 ? 18 : 32)
   int block_spec, scale, read_q_size;
   unsigned int blocks_ahead, fragment, block_size;
@@ -451,7 +448,7 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
   block = baseblock;
   bp = get_block(dev, block, PREFETCH);
   assert(bp != NULL);
-  if (bp->b_dev != NO_DEV) return(bp);
+  if (lmfs_dev(bp) != NO_DEV) return(bp);
 
   /* The best guess for the number of blocks to prefetch:  A lot.
    * It is impossible to tell what the device looks like, so we don't even
@@ -516,18 +513,18 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 	if (--blocks_ahead == 0) break;
 
 	/* Don't trash the cache, leave 4 free. */
-	if (bufs_in_use >= nr_bufs - 4) break;
+	if (lmfs_bufs_in_use() >= nr_bufs - 4) break;
 
 	block++;
 
 	bp = get_block(dev, block, PREFETCH);
-	if (bp->b_dev != NO_DEV) {
+	if (lmfs_dev(bp) != NO_DEV) {
 		/* Oops, block already in the cache, get out. */
 		put_block(bp, FULL_DATA_BLOCK);
 		break;
 	}
   }
-  rw_scattered(dev, read_q, read_q_size, READING);
+  lmfs_rw_scattered(dev, read_q, read_q_size, READING);
   return(get_block(dev, baseblock, NORMAL));
 }
 
@@ -588,10 +585,10 @@ int fs_getdents(void)
 
 	  /* Search a directory block. */
 	  if (block_pos < pos)
-		  dp = &bp->b_dir[off / DIR_ENTRY_SIZE];
+		  dp = &b_dir(bp)[off / DIR_ENTRY_SIZE];
 	  else
-		  dp = &bp->b_dir[0];
-	  for (; dp < &bp->b_dir[NR_DIR_ENTRIES(block_size)]; dp++) {
+		  dp = &b_dir(bp)[0];
+	  for (; dp < &b_dir(bp)[NR_DIR_ENTRIES(block_size)]; dp++) {
 		  if (dp->mfs_d_ino == 0) 
 			  continue;	/* Entry is not in use */
 
@@ -609,7 +606,7 @@ int fs_getdents(void)
 			  reclen += sizeof(long) - o;
 
 		  /* Need the position of this entry in the directory */
-		  ent_pos = block_pos + ((char *) dp - (bp->b_data));
+		  ent_pos = block_pos + ((char *) dp - (char *) bp->data);
 
 		if (userbuf_off + tmpbuf_off + reclen >= size) {
 			  /* The user has no space for one more record */

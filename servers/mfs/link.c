@@ -195,7 +195,7 @@ int fs_rdlink()
 	copylen = min( copylen, (unsigned) rip->i_size);
 	bp = get_block(rip->i_dev, b, NORMAL);
 	r = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-			   (vir_bytes) 0, (vir_bytes) bp->b_data,
+			   (vir_bytes) 0, (vir_bytes) b_data(bp),
 	  		   (size_t) copylen);
 	put_block(bp, DIRECTORY_BLOCK);
 	if (r == OK)
@@ -694,7 +694,7 @@ off_t len;
 	bytes = block_size - offset;
 	if (bytes > (size_t) len)
 		bytes = len;
-	memset(bp->b_data + offset, 0, bytes);
+	memset(b_data(bp) + offset, 0, bytes);
 	MARKDIRTY(bp);
 	put_block(bp, FULL_DATA_BLOCK);
 

@@ -107,7 +107,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /* Initialize the Minix file server. */
   int i;
 
-  may_use_vmcache = 1;
+  lmfs_may_use_vmcache(1);
 
   /* Init inode table */
   for (i = 0; i < NR_INODES; ++i) {
@@ -118,8 +118,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   init_inode_cache();
 
   SELF_E = getprocnr();
-  buf_pool(DEFAULT_NR_BUFS);
-  fs_block_size = _MIN_BLOCK_SIZE;
+  lmfs_buf_pool(DEFAULT_NR_BUFS);
 
   return(OK);
 }

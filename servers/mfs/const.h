@@ -39,9 +39,6 @@
 
 /* Miscellaneous constants */
 #define SU_UID 	 ((uid_t) 0)	/* super_user's uid_t */
-#define NORMAL	           0	/* forces get_block to do disk read */
-#define NO_READ            1	/* prevents get_block from doing disk read */
-#define PREFETCH           2	/* tells get_block not to read or mark dev */
 
 #define NO_BIT   ((bit_t) 0)	/* returned by alloc_bit() to signal failure */
 
@@ -56,8 +53,6 @@
 #define IGN_PERM	0
 #define CHK_PERM	1
 
-#define BP_CLEAN        0	/* on-disk block and memory copies identical */
-#define BP_DIRTY        1	/* on-disk block and memory copies differ */
 #define IN_CLEAN        0	/* in-block inode and memory copies identical */
 #define IN_DIRTY        1	/* in-block inode and memory copies differ */
 #define ATIME            002	/* set if atime field needs updating */

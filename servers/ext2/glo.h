@@ -42,14 +42,6 @@ EXTERN char fs_dev_label[16];    /* Name of the device driver that is handled
 EXTERN int unmountdone;
 EXTERN int exitsignaled;
 
-/* our block size. */
-EXTERN unsigned int fs_block_size;
-
-/* Buffer cache. */
-EXTERN struct buf *buf;
-EXTERN struct buf **buf_hash;   /* the buffer hash table */
-EXTERN unsigned int nr_bufs;
-EXTERN int may_use_vmcache;
 /* Little hack for syncing group descriptors. */
 EXTERN int group_descriptors_dirty;
 

@@ -128,3 +128,16 @@ int fs_statvfs()
 
   return(r);
 }
+
+/*===========================================================================*
+ *                              blockstats                                   *
+  *===========================================================================*/
+void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used)
+{
+        struct super_block *sp = get_super(fs_dev);
+
+	*blocks = sp->s_blocks_count;
+	*free = sp->s_free_blocks_count;
+	*used = *blocks - *free;
+}
+

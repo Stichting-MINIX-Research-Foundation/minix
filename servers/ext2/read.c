@@ -125,7 +125,7 @@ int fs_readwrite(void)
   if (r == OK) {
 	if (rw_flag == READING) rip->i_update |= ATIME;
 	if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
-	rip->i_dirt = DIRTY;          /* inode is thus now dirty */
+	rip->i_dirt = IN_DIRTY;          /* inode is thus now dirty */
   }
 
   fs_m_out.RES_NBYTES = cum_io;
@@ -270,12 +270,12 @@ int *completed;                 /* number of bytes copied */
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			   (vir_bytes) (bp->b_data+off), (size_t) chunk);
+			   (vir_bytes) (b_data(bp)+off), (size_t) chunk);
   } else {
 	/* Copy a chunk from user space to the block buffer. */
 	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			     (vir_bytes) (bp->b_data+off), (size_t) chunk);
-	bp->b_dirt = DIRTY;
+			     (vir_bytes) (b_data(bp)+off), (size_t) chunk);
+	lmfs_markdirty(bp);
   }
 
   n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
@@ -338,8 +338,8 @@ off_t position;                 /* position in file whose blk wanted */
 		b = rip->i_block[EXT2_TIND_BLOCK];
 		if (b == NO_BLOCK) return(NO_BLOCK);
 		bp = get_block(rip->i_dev, b, NORMAL); /* get triple ind block */
-		ASSERT(bp->b_dev != NO_DEV);
-		ASSERT(bp->b_dev == rip->i_dev);
+		ASSERT(lmfs_dev(bp) != NO_DEV);
+		ASSERT(lmfs_dev(bp) == rip->i_dev);
 		excess = block_pos - triple_ind_s;
 		index = excess / addr_in_block2;
 		b = rd_indir(bp, index);	/* num of double ind block */
@@ -348,8 +348,8 @@ off_t position;                 /* position in file whose blk wanted */
 	}
 	if (b == NO_BLOCK) return(NO_BLOCK);
 	bp = get_block(rip->i_dev, b, NORMAL);	/* get double indirect block */
-	ASSERT(bp->b_dev != NO_DEV);
-	ASSERT(bp->b_dev == rip->i_dev);
+	ASSERT(lmfs_dev(bp) != NO_DEV);
+	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	index = excess / addr_in_block;
 	b = rd_indir(bp, index);	/* num of single ind block */
 	put_block(bp, INDIRECT_BLOCK);	/* release double ind block */
@@ -357,8 +357,8 @@ off_t position;                 /* position in file whose blk wanted */
   }
   if (b == NO_BLOCK) return(NO_BLOCK);
   bp = get_block(rip->i_dev, b, NORMAL);
-  ASSERT(bp->b_dev != NO_DEV);
-  ASSERT(bp->b_dev == rip->i_dev);
+  ASSERT(lmfs_dev(bp) != NO_DEV);
+  ASSERT(lmfs_dev(bp) == rip->i_dev);
   b = rd_indir(bp, index);
   put_block(bp, INDIRECT_BLOCK);	/* release single ind block */
 
@@ -376,7 +376,7 @@ int index;                      /* index into *bp */
   if (bp == NULL)
 	panic("rd_indir() on NULL");
   /* TODO: use conv call */
-  return conv4(le_CPU, bp->b_ind[index]);
+  return conv4(le_CPU, b_ind(bp)[index]);
 }
 
 
@@ -424,6 +424,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
  */
 /* Minimum number of blocks to prefetch. */
 # define BLOCKS_MINIMUM		(nr_bufs < 50 ? 18 : 32)
+  int nr_bufs = lmfs_nr_bufs();
   int block_spec, read_q_size;
   unsigned int blocks_ahead, fragment, block_size;
   block_t block, blocks_left;
@@ -460,7 +461,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   block = baseblock;
   bp = get_block(dev, block, PREFETCH);
   assert(bp != NULL);
-  if (bp->b_dev != NO_DEV) return(bp);
+  if (lmfs_dev(bp) != NO_DEV) return(bp);
 
   /* The best guess for the number of blocks to prefetch:  A lot.
    * It is impossible to tell what the device looks like, so we don't even
@@ -523,18 +524,18 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 	if (--blocks_ahead == 0) break;
 
 	/* Don't trash the cache, leave 4 free. */
-	if (bufs_in_use >= nr_bufs - 4) break;
+	if (lmfs_bufs_in_use() >= nr_bufs - 4) break;
 
 	block++;
 
 	bp = get_block(dev, block, PREFETCH);
-	if (bp->b_dev != NO_DEV) {
+	if (lmfs_dev(bp) != NO_DEV) {
 		/* Oops, block already in the cache, get out. */
 		put_block(bp, FULL_DATA_BLOCK);
 		break;
 	}
   }
-  rw_scattered(dev, read_q, read_q_size, READING);
+  lmfs_rw_scattered(dev, read_q, read_q_size, READING);
   return(get_block(dev, baseblock, NORMAL));
 }
 
@@ -592,18 +593,18 @@ int fs_getdents(void)
 	assert(bp != NULL);
 
 	/* Search a directory block. */
-	d_desc = (struct ext2_disk_dir_desc*) &bp->b_data;
+	d_desc = (struct ext2_disk_dir_desc*) &b_data(bp);
 
 	/* we need to seek to entry at off bytes.
 	* when NEXT_DISC_DIR_POS == block_size it's last dentry.
 	*/
 	for (; temp_pos + conv2(le_CPU, d_desc->d_rec_len) <= pos
-	       && NEXT_DISC_DIR_POS(d_desc, &bp->b_data) < block_size;
+	       && NEXT_DISC_DIR_POS(d_desc, &b_data(bp)) < block_size;
 	       d_desc = NEXT_DISC_DIR_DESC(d_desc)) {
 		temp_pos += conv2(le_CPU, d_desc->d_rec_len);
 	}
 
-	for (; CUR_DISC_DIR_POS(d_desc, &bp->b_data) < block_size;
+	for (; CUR_DISC_DIR_POS(d_desc, &b_data(bp)) < block_size;
 	     d_desc = NEXT_DISC_DIR_DESC(d_desc)) {
 		if (d_desc->d_ino == 0)
 			continue; /* Entry is not in use */
@@ -622,7 +623,7 @@ int fs_getdents(void)
 			reclen += sizeof(long) - o;
 
 		/* Need the position of this entry in the directory */
-		ent_pos = block_pos + ((char *)d_desc - bp->b_data);
+		ent_pos = block_pos + ((char *)d_desc - b_data(bp));
 
 		if (userbuf_off + tmpbuf_off + reclen >= size) {
 			/* The user has no space for one more record */
@@ -680,7 +681,7 @@ int fs_getdents(void)
 	fs_m_out.RES_NBYTES = userbuf_off;
 	fs_m_out.RES_SEEK_POS_LO = new_pos;
 	rip->i_update |= ATIME;
-	rip->i_dirt = DIRTY;
+	rip->i_dirt = IN_DIRTY;
 	r = OK;
   }
 

@@ -246,12 +246,12 @@ void put_inode(
 		 */
 		(void) truncate_inode(rip, (off_t) 0);
 		/* free inode clears I_TYPE field, since it's used there */
-		rip->i_dirt = DIRTY;
+		rip->i_dirt = IN_DIRTY;
 		free_inode(rip);
 	}
 
 	rip->i_mountpoint = FALSE;
-	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
+	if (rip->i_dirt == IN_DIRTY) rw_inode(rip, WRITING);
 
 	discard_preallocated_blocks(rip); /* Return blocks to the filesystem */
 
@@ -335,20 +335,20 @@ void rw_inode(
   bp = get_block(rip->i_dev, b, NORMAL);
 
   offset &= (sp->s_block_size - 1);
-  dip = (d_inode*) (bp->b_data + offset);
+  dip = (d_inode*) (b_data(bp) + offset);
 
   /* Do the read or write. */
   if (rw_flag == WRITING) {
 	if (rip->i_update)
 		update_times(rip);    /* times need updating */
 	if (sp->s_rd_only == FALSE)
-		bp->b_dirt = DIRTY;
+		lmfs_markdirty(bp);
   }
 
   icopy(rip, dip, rw_flag, TRUE);
 
   put_block(bp, INODE_BLOCK);
-  rip->i_dirt = CLEAN;
+  rip->i_dirt = IN_CLEAN;
 }
 
 

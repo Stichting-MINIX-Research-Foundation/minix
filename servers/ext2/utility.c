@@ -107,9 +107,9 @@ void sanitycheck(char *file, int line)
 	MYASSERT(SELF_E > 0);
 	if(superblock->s_dev != NO_DEV) {
 		MYASSERT(superblock->s_dev == fs_dev);
-		MYASSERT(superblock->s_block_size == fs_block_size);
+		MYASSERT(superblock->s_block_size == lmfs_fs_block_size());
 	} else {
-		MYASSERT(_MIN_BLOCK_SIZE == fs_block_size);
+		MYASSERT(_MIN_BLOCK_SIZE == lmfs_fs_block_size());
 	}
 }
 

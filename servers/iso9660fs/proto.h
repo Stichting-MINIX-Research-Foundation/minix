@@ -4,14 +4,14 @@ struct dir_record;
 struct ext_attr_rec;
 struct iso9660_vd_pri;
 
+#include <minix/libminixfs.h>
+
+#define get_block(n) lmfs_get_block(fs_dev, n, NORMAL)
+#define put_block(n) lmfs_put_block(n, FULL_DATA_BLOCK)
 
 /* main.c */
 int main(void);
 void reply(int who, message *m_out);
-
-/* cache.c */
-struct buf *get_block(block_t block);
-void put_block(struct buf *bp);
 
 /* inode.c */
 int create_dir_record(struct dir_record *dir, char *buffer, u32_t

@@ -76,7 +76,7 @@ static int stat_inode(
   statbuf.st_atime = rip->i_atime;
   statbuf.st_mtime = rip->i_mtime;
   statbuf.st_ctime = rip->i_ctime;
-  statbuf.st_blksize = fs_block_size;
+  statbuf.st_blksize = lmfs_fs_block_size();
   statbuf.st_blocks = estimate_blocks(rip);
 
   /* Copy the struct to user space. */
@@ -122,7 +122,7 @@ int fs_statvfs()
 
   scale = sp->s_log_zone_size;
 
-  blockstats((u32_t *) &st.f_blocks, (u32_t *) &st.f_bfree, &used);
+  fs_blockstats((u32_t *) &st.f_blocks, (u32_t *) &st.f_bfree, &used);
   st.f_bavail = st.f_bfree;
 
   st.f_bsize =  sp->s_block_size << scale;

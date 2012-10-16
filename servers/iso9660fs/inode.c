@@ -244,7 +244,7 @@ u32_t address;
 	return(NULL);
 
   /* Fill the dir record with the data read from the device */
-  create_dir_record(dir,bp->b_data + offset, address);
+  create_dir_record(dir,b_data(bp) + offset, address);
 
   /* In case the file is composed of more file sections, load also the
    * next section into the structure */
@@ -253,7 +253,7 @@ u32_t address;
   new_address = address + dir->length;
   while (new_pos < block_size) {
 	dir_next = get_free_dir_record();
-	create_dir_record(dir_next, bp->b_data + new_pos, new_address);
+	create_dir_record(dir_next, b_data(bp) + new_pos, new_address);
 
 	if (dir_next->length > 0) {
 		strncpy(name,dir_next->file_id,dir_next->length_file_id);

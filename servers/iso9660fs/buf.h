@@ -1,10 +1,6 @@
 #include <dirent.h>
 
-struct buf {
-  char b_data[_MAX_BLOCK_SIZE];		     /* ordinary user data */
-  block_t b_blocknr;		/* block number of its (minor) device */
-  char b_count;			/* number of users of this buffer */
-} buf[NR_BUFS];
+#define b_data(bp) ((char *) (bp->data))
 
 /* A block is free if b_dev == NO_DEV. */
 

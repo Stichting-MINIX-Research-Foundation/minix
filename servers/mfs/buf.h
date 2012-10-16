@@ -38,29 +38,13 @@ union fsdata_u {
 
 
 /* These defs make it possible to use to bp->b_data instead of bp->b.b__data */
-#define b_data   bp->b__data
-#define b_dir    bp->b__dir
-#define b_v1_ind bp->b__v1_ind
-#define b_v2_ind bp->b__v2_ind
-#define b_v1_ino bp->b__v1_ino
-#define b_v2_ino bp->b__v2_ino
-#define b_bitmap bp->b__bitmap
-
-#define BUFHASH(b) ((b) % nr_bufs)
-
-EXTERN struct buf *front;	/* points to least recently used free block */
-EXTERN struct buf *rear;	/* points to most recently used free block */
-EXTERN unsigned int bufs_in_use;/* # bufs currently in use (not on free list)*/
-
-/* When a block is released, the type of usage is passed to put_block(). */
-#define ONE_SHOT      0200 /* set if block not likely to be needed soon */
-
-#define INODE_BLOCK        0				 /* inode block */
-#define DIRECTORY_BLOCK    1				 /* directory block */
-#define INDIRECT_BLOCK     2				 /* pointer block */
-#define MAP_BLOCK          3				 /* bit map */
-#define FULL_DATA_BLOCK    5		 	 	 /* data, fully used */
-#define PARTIAL_DATA_BLOCK 6 				 /* data, partly used*/
+#define b_data(b)   ((union fsdata_u *) b->data)->b__data
+#define b_dir(b)    ((union fsdata_u *) b->data)->b__dir
+#define b_v1_ind(b) ((union fsdata_u *) b->data)->b__v1_ind
+#define b_v2_ind(b) ((union fsdata_u *) b->data)->b__v2_ind
+#define b_v1_ino(b) ((union fsdata_u *) b->data)->b__v1_ino
+#define b_v2_ino(b) ((union fsdata_u *) b->data)->b__v2_ino
+#define b_bitmap(b) ((union fsdata_u *) b->data)->b__bitmap
 
 #endif
 

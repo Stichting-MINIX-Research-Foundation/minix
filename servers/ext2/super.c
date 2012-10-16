@@ -55,7 +55,7 @@ unsigned int get_block_size(dev_t dev)
 {
   if (dev == NO_DEV)
 	panic("request for block size of NO_DEV");
-  return(fs_block_size);
+  return(lmfs_fs_block_size());
 }
 
 static struct group_desc *ondisk_group_descs;
@@ -235,7 +235,7 @@ struct super_block *sp; /* pointer to a superblock */
   if (r != SUPER_SIZE_D)
 	printf("ext2: Warning, failed to write superblock to the disk!\n");
 
-  if (group_descriptors_dirty == DIRTY) {
+  if (group_descriptors_dirty) {
 	/* Locate the appropriate super_block. */
 	gd_size = sp->s_gdb_count * sp->s_block_size;
 
@@ -253,7 +253,7 @@ struct super_block *sp; /* pointer to a superblock */
 	if (r != (ssize_t) gd_size) {
 		printf("Can not write group descriptors\n");
 	}
-	group_descriptors_dirty = CLEAN;
+	group_descriptors_dirty = 0;
   }
 }
 

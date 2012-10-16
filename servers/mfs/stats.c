@@ -54,10 +54,10 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
   do {
     bp = get_block(sp->s_dev, start_block + block, NORMAL);
     assert(bp);
-    wlim = &bp->b_bitmap[FS_BITMAP_CHUNKS(sp->s_block_size)];
+    wlim = &b_bitmap(bp)[FS_BITMAP_CHUNKS(sp->s_block_size)];
 
     /* Iterate over the words in block. */
-    for (wptr = &bp->b_bitmap[word]; wptr < wlim; wptr++) {
+    for (wptr = &b_bitmap(bp)[word]; wptr < wlim; wptr++) {
 
       /* Does this word contain a free bit? */
       if (*wptr == (bitchunk_t) ~0) continue;
@@ -67,7 +67,7 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
       for (i = 0; i < 8*sizeof(k); ++i) {
         /* Bit number from the start of the bit map. */
         b = ((bit_t) block * FS_BITS_PER_BLOCK(sp->s_block_size))
-            + (wptr - &bp->b_bitmap[0]) * FS_BITCHUNK_BITS
+            + (wptr - &b_bitmap(bp)[0]) * FS_BITCHUNK_BITS
             + i;
 
         /* Don't count bits beyond the end of the map. */
@@ -92,7 +92,7 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
 /*===========================================================================*
  *				blockstats				     *
  *===========================================================================*/
-void blockstats(u32_t *blocks, u32_t *free, u32_t *used)
+void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used)
 {
   struct super_block *sp;
   int scale;

@@ -181,7 +181,7 @@ int fs_getdents(void) {
 
 	while (block_pos < block_size) {
 		dir_tmp = get_free_dir_record();
-		create_dir_record(dir_tmp,bp->b_data + block_pos,
+		create_dir_record(dir_tmp,b_data(bp) + block_pos,
 				  block*block_size + block_pos);
 		if (dir_tmp->length == 0) { /* EOF. I exit and return 0s */
 			block_pos = block_size;
@@ -241,7 +241,7 @@ int fs_getdents(void) {
 			/* The standard data structure is created using the
 			 * data in the buffer. */
 			dirp = (struct dirent *) &getdents_buf[tmpbuf_offset];
-			dirp->d_ino = (ino_t)(bp->b_data + block_pos);
+			dirp->d_ino = (ino_t)(b_data(bp) + block_pos);
 			dirp->d_off= cur_pos;
 			dirp->d_reclen= reclen;
 			memcpy(dirp->d_name, name, len);
@@ -328,7 +328,7 @@ int *completed;			/* number of bytes copied */
   }
   
   r = sys_safecopyto(VFS_PROC_NR, gid, buf_off,
-		     (vir_bytes) (bp->b_data+off), (phys_bytes) chunk);
+		     (vir_bytes) (b_data(bp)+off), (phys_bytes) chunk);
 
   put_block(bp);
 

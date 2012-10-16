@@ -198,13 +198,13 @@ zone_t zone;			/* zone to write */
   if(bp == NULL)
 	panic("wr_indir() on NULL");
 
-  sp = get_super(bp->b_dev);	/* need super block to find file sys type */
+  sp = get_super(lmfs_dev(bp));	/* need super block to find file sys type */
 
   /* write a zone into an indirect block */
   if (sp->s_version == V1)
-	bp->b_v1_ind[index] = (zone1_t) conv2(sp->s_native, (int)  zone);
+	b_v1_ind(bp)[index] = (zone1_t) conv2(sp->s_native, (int)  zone);
   else
-	bp->b_v2_ind[index] = (zone_t)  conv4(sp->s_native, (long) zone);
+	b_v2_ind(bp)[index] = (zone_t)  conv4(sp->s_native, (long) zone);
 }
 
 
@@ -220,7 +220,7 @@ struct super_block *sb;		/* superblock of device block resides on */
  */
   unsigned int i;
   for(i = 0; i < V2_INDIRECTS(sb->s_block_size); i++)
-	if( bp->b_v2_ind[i] != NO_ZONE)
+	if( b_v2_ind(bp)[i] != NO_ZONE)
 		return(0);
 
   return(1);
@@ -329,9 +329,9 @@ void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */
-  ASSERT(bp->b_bytes > 0);
-  ASSERT(bp->bp);
-  memset(bp->b_data, 0, (size_t) bp->b_bytes);
+  ASSERT(lmfs_bytes(bp) > 0);
+  ASSERT(bp->data);
+  memset(b_data(bp), 0, (size_t) lmfs_bytes(bp));
   MARKDIRTY(bp);
 }
 

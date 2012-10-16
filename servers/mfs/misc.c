@@ -16,19 +16,15 @@ int fs_sync()
  * the block cache.
  */
   struct inode *rip;
-  struct buf *bp;
 
-  assert(nr_bufs > 0);
-  assert(buf);
+  assert(lmfs_nr_bufs() > 0);
 
   /* Write all the dirty inodes to the disk. */
   for(rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
 	  if(rip->i_count > 0 && IN_ISDIRTY(rip)) rw_inode(rip, WRITING);
 
-  /* Write all the dirty blocks to the disk, one drive at a time. */
-  for(bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
-	  if(bp->b_dev != NO_DEV && ISDIRTY(bp)) 
-		  flushall(bp->b_dev);
+  /* Write all the dirty blocks to the disk. */
+  lmfs_flushall();
 
   return(OK);		/* sync() can't fail */
 }
@@ -45,8 +41,8 @@ int fs_flush()
   dev_t dev = (dev_t) fs_m_in.REQ_DEV;
   if(dev == fs_dev) return(EBUSY);
  
-  flushall(dev);
-  invalidate(dev);
+  lmfs_flushall();
+  lmfs_invalidate(dev);
 
   return(OK);
 }

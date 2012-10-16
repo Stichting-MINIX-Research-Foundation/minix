@@ -210,7 +210,7 @@ struct inode *rip;		/* used for preallocation */
 		/* we preallocate bytes only */
 		ASSERT(EXT2_PREALLOC_BLOCKS == sizeof(char)*CHAR_BIT);
 
-		bit = setbyte(bp->b_bitmap, sp->s_blocks_per_group);
+		bit = setbyte(b_bitmap(bp), sp->s_blocks_per_group);
 		if (bit != -1) {
 			block = bit + sp->s_first_data_block +
 					group * sp->s_blocks_per_group;
@@ -227,17 +227,17 @@ struct inode *rip;		/* used for preallocation */
 			rip->i_prealloc_index = 0;
 			rip->i_prealloc_count = EXT2_PREALLOC_BLOCKS - 1;
 
-			bp->b_dirt = DIRTY; /* by setbyte */
+			lmfs_markdirty(bp);
 			put_block(bp, MAP_BLOCK);
 
 			gd->free_blocks_count -= EXT2_PREALLOC_BLOCKS;
 			sp->s_free_blocks_count -= EXT2_PREALLOC_BLOCKS;
-			group_descriptors_dirty = DIRTY;
+			group_descriptors_dirty = 1;
 			return block;
 		}
 	}
 
-        bit = setbit(bp->b_bitmap, sp->s_blocks_per_group, word);
+        bit = setbit(b_bitmap(bp), sp->s_blocks_per_group, word);
 	if (bit == -1) {
 		if (word == 0) {
 			panic("ext2: allocator failed to allocate a bit in bitmap\
@@ -251,12 +251,12 @@ struct inode *rip;		/* used for preallocation */
 	block = sp->s_first_data_block + group * sp->s_blocks_per_group + bit;
 	check_block_number(block, sp, gd);
 
-        bp->b_dirt = DIRTY; /* Now it's safe to mark it as dirty */
+	lmfs_markdirty(bp);
 	put_block(bp, MAP_BLOCK);
 
 	gd->free_blocks_count--;
 	sp->s_free_blocks_count--;
-	group_descriptors_dirty = DIRTY;
+	group_descriptors_dirty = 1;
 
 	if (update_bsearch && block != -1 && block != NO_BLOCK) {
 		/* We searched from the beginning, update bsearch. */
@@ -313,16 +313,16 @@ void free_block(struct super_block *sp, bit_t bit_returned)
 
   bp = get_block(sp->s_dev, gd->block_bitmap, NORMAL);
 
-  if (unsetbit(bp->b_bitmap, bit))
+  if (unsetbit(b_bitmap(bp), bit))
 	panic("Tried to free unused block", bit_returned);
 
-  bp->b_dirt = DIRTY;
+  lmfs_markdirty(bp);
   put_block(bp, MAP_BLOCK);
 
   gd->free_blocks_count++;
   sp->s_free_blocks_count++;
 
-  group_descriptors_dirty = DIRTY;
+  group_descriptors_dirty = 1;
 
   if (bit_returned < sp->s_bsearch)
 	sp->s_bsearch = bit_returned;

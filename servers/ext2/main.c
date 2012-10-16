@@ -142,7 +142,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	if (!strcmp(env_argv[i], "-o"))
 		optset_parse(optset_table, env_argv[++i]);
 
-  may_use_vmcache = 1;
+  lmfs_may_use_vmcache(1);
 
   /* Init inode table */
   for (i = 0; i < NR_INODES; ++i) {
@@ -155,8 +155,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   SELF_E = getprocnr();
 
   /* just a small number before we find out the block size at mount time */
-  buf_pool(10);
-  fs_block_size = _MIN_BLOCK_SIZE;
+  lmfs_buf_pool(10);
 
   return(OK);
 }

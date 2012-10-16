@@ -160,7 +160,7 @@ int is_dir;			/* inode will be a directory if it is TRUE */
   ASSERT(gd->free_inodes_count);
 
   bp = get_block(sp->s_dev, gd->inode_bitmap, NORMAL);
-  bit = setbit(bp->b_bitmap, sp->s_inodes_per_group, 0);
+  bit = setbit(b_bitmap(bp), sp->s_inodes_per_group, 0);
   ASSERT(bit != -1); /* group definitly contains free inode */
 
   inumber = group * sp->s_inodes_per_group + bit + 1;
@@ -179,7 +179,7 @@ int is_dir;			/* inode will be a directory if it is TRUE */
 	panic("ext2: allocator tryed to use reserved inode.\n");
   }
 
-  bp->b_dirt = DIRTY;
+  lmfs_markdirty(bp);
   put_block(bp, MAP_BLOCK);
 
   gd->free_inodes_count--;
@@ -189,7 +189,7 @@ int is_dir;			/* inode will be a directory if it is TRUE */
 	sp->s_dirs_counter++;
   }
 
-  group_descriptors_dirty = DIRTY;
+  group_descriptors_dirty = 1;
 
   /* Almost the same as previous 'group' ASSERT */
   ASSERT(inumber != NO_BIT);
@@ -228,10 +228,10 @@ static void free_inode_bit(struct super_block *sp, bit_t bit_returned,
 
   bp = get_block(sp->s_dev, gd->inode_bitmap, NORMAL);
 
-  if (unsetbit(bp->b_bitmap, bit))
+  if (unsetbit(b_bitmap(bp), bit))
 	panic("Tried to free unused inode", bit_returned);
 
-  bp->b_dirt = DIRTY;
+  lmfs_markdirty(bp);
   put_block(bp, MAP_BLOCK);
 
   gd->free_inodes_count++;
@@ -242,7 +242,7 @@ static void free_inode_bit(struct super_block *sp, bit_t bit_returned,
 	sp->s_dirs_counter--;
   }
 
-  group_descriptors_dirty = DIRTY;
+  group_descriptors_dirty = 1;
 
   if (group < sp->s_igsearch)
 	sp->s_igsearch = group;
@@ -471,5 +471,5 @@ static void wipe_inode(
 	rip->i_block[i] = NO_BLOCK;
   rip->i_block[0] = NO_BLOCK;
 
-  rip->i_dirt = DIRTY;
+  rip->i_dirt = IN_DIRTY;
 }

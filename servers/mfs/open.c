@@ -205,12 +205,12 @@ int fs_slink()
   	else
   		r = sys_safecopyfrom(VFS_PROC_NR,
   				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
-				     (vir_bytes) 0, (vir_bytes) bp->b_data,
+				     (vir_bytes) 0, (vir_bytes) b_data(bp),
 				     (size_t) fs_m_in.REQ_MEM_SIZE);
 
 	if(bp != NULL && r == OK) {
-		bp->b_data[_MIN_BLOCK_SIZE-1] = '\0';
-		sip->i_size = (off_t) strlen(bp->b_data);
+		b_data(bp)[_MIN_BLOCK_SIZE-1] = '\0';
+		sip->i_size = (off_t) strlen(b_data(bp));
 		if(sip->i_size != fs_m_in.REQ_MEM_SIZE) {
 			/* This can happen if the user provides a buffer
 			 * with a \0 in it. This can cause a lot of trouble

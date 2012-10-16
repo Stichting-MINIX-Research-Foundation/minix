@@ -114,7 +114,7 @@ int fs_readsuper()
   }
 
 
-  set_blocksize(superblock);
+  lmfs_set_blocksize(superblock->s_block_size, major(fs_dev));
 
   /* Get the root inode of the mounted file system. */
   if ( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NULL)  {

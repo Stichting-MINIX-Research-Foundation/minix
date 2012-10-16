@@ -27,26 +27,8 @@ union fsdata_u {
 /* A block is free if b_dev == NO_DEV. */
 
 /* These defs make it possible to use to bp->b_data instead of bp->b.b__data */
-#define b_data   bp->b__data
-#define b_ind bp->b__ind
-#define b_ino bp->b__ino
-#define b_bitmap bp->b__bitmap
-
-#define BUFHASH(b) ((b) % nr_bufs)
-
-EXTERN struct buf *front;    /* points to least recently used free block */
-EXTERN struct buf *rear;    /* points to most recently used free block */
-EXTERN unsigned int bufs_in_use; /* # bufs currently in use (not on free list)*/
-
-/* When a block is released, the type of usage is passed to put_block(). */
-#define WRITE_IMMED   0100 /* block should be written to disk now */
-#define ONE_SHOT      0200 /* set if block not likely to be needed soon */
-
-#define INODE_BLOCK        0                 /* inode block */
-#define DIRECTORY_BLOCK    1                 /* directory block */
-#define INDIRECT_BLOCK     2                 /* pointer block */
-#define MAP_BLOCK          3                 /* bit map */
-#define FULL_DATA_BLOCK    5                 /* data, fully used */
-#define PARTIAL_DATA_BLOCK 6                 /* data, partly used*/
+#define b_data(bp)   ((union fsdata_u *) bp->data)->b__data
+#define b_ind(bp) ((union fsdata_u *) bp->data)->b__ind
+#define b_bitmap(bp) ((union fsdata_u *) bp->data)->b__bitmap
 
 #endif /* EXT2_BUF_H */

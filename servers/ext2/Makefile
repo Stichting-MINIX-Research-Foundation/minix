@@ -1,6 +1,6 @@
 # Makefile for ext2 filesystem
 PROG=	ext2
-SRCS=	balloc.c cache.c link.c \
+SRCS=	balloc.c link.c \
 	mount.c misc.c open.c protect.c read.c \
 	stadir.c table.c time.c utility.c \
 	write.c ialloc.c inode.c main.c path.c \

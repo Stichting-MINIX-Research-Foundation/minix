@@ -298,7 +298,7 @@ char *suffix;			/* current remaining path. Has to point in the
 
   bp = get_block(rip->i_dev, blink, NORMAL);
   llen = (size_t) rip->i_size;
-  sp = bp->b_data;
+  sp = b_data(bp);
   slen = strlen(suffix);
 
   /* The path we're parsing looks like this:
@@ -532,8 +532,8 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 	assert(bp != NULL);
 
 	/* Search a directory block. */
-	for (dp = &bp->b_dir[0];
-		dp < &bp->b_dir[NR_DIR_ENTRIES(ldir_ptr->i_sp->s_block_size)];
+	for (dp = &b_dir(bp)[0];
+		dp < &b_dir(bp)[NR_DIR_ENTRIES(ldir_ptr->i_sp->s_block_size)];
 		dp++) {
 		if (++new_slots > old_slots) { /* not found, but room left */
 			if (flag == ENTER) e_hit = TRUE;
@@ -607,7 +607,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 	if (new_slots == 0) return(EFBIG); /* dir size limited by slot count */
 	if ( (bp = new_block(ldir_ptr, ldir_ptr->i_size)) == NULL)
 		return(err_code);
-	dp = &bp->b_dir[0];
+	dp = &b_dir(bp)[0];
 	extended = 1;
   }
 

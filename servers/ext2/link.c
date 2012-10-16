@@ -103,7 +103,7 @@ int fs_link()
   if(r == OK) {
 	  rip->i_links_count++;
 	  rip->i_update |= CTIME;
-	  rip->i_dirt = DIRTY;
+	  rip->i_dirt = IN_DIRTY;
   }
 
   /* Done.  Release both inodes. */
@@ -201,7 +201,7 @@ int fs_rdlink()
 	} else {
 		bp = get_block(rip->i_dev, b, NORMAL);
 		if (bp != NULL) {
-			link_text = bp->b_data;
+			link_text = b_data(bp);
 			r = OK;
 		} else {
 			r = EIO;
@@ -294,7 +294,7 @@ char file_name[NAME_MAX + 1]; /* name of file to be removed */
   if (r == OK) {
 	rip->i_links_count--;	/* entry deleted from parent's dir */
 	rip->i_update |= CTIME;
-	rip->i_dirt = DIRTY;
+	rip->i_dirt = IN_DIRTY;
   }
 
   put_inode(rip);
@@ -502,7 +502,7 @@ int fs_rename()
 	if(search_dir(old_ip, dot2, &numb, ENTER, IGN_PERM, I_DIRECTORY) == OK) {
 		/* New link created. */
 		new_dirp->i_links_count++;
-		new_dirp->i_dirt = DIRTY;
+		new_dirp->i_dirt = IN_DIRTY;
 	}
   }
 
@@ -577,7 +577,7 @@ off_t newsize;			/* inode must become this size */
   /* Next correct the inode size. */
   rip->i_size = newsize;
   rip->i_update |= CTIME | MTIME;
-  rip->i_dirt = DIRTY;
+  rip->i_dirt = IN_DIRTY;
 
   return(OK);
 }
@@ -650,7 +650,7 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
   }
 
   rip->i_update |= CTIME | MTIME;
-  rip->i_dirt = DIRTY;
+  rip->i_dirt = IN_DIRTY;
 
   return(OK);
 }
@@ -726,7 +726,7 @@ off_t len;
   offset = pos % rip->i_sp->s_block_size;
   if (offset + len > rip->i_sp->s_block_size)
 	panic("zeroblock_range: len too long", len);
-  memset(bp->b_data + offset, 0, len);
-  bp->b_dirt = DIRTY;
+  memset(b_data(bp) + offset, 0, len);
+  lmfs_markdirty(bp);
   put_block(bp, FULL_DATA_BLOCK);
 }

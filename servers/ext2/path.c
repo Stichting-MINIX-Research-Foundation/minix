@@ -305,7 +305,7 @@ char *suffix;			/* current remaining path. Has to point in the
 	if ((blink = read_map(rip, (off_t) 0)) == NO_BLOCK)
 		return(EIO);
 	bp = get_block(rip->i_dev, blink, NORMAL);
-	sp = bp->b_data;
+	sp = b_data(bp);
   } else {
 	/* fast symlink, stored in inode */
 	sp = (const char*) rip->i_block;
@@ -561,8 +561,8 @@ int ftype;			 /* used when ENTER and
 	/* Search a directory block.
 	 * Note, we set prev_dp at the end of the loop.
 	 */
-	for (dp = (struct ext2_disk_dir_desc*) &bp->b_data;
-	     CUR_DISC_DIR_POS(dp, &bp->b_data) < ldir_ptr->i_sp->s_block_size;
+	for (dp = (struct ext2_disk_dir_desc*) &b_data(bp);
+	     CUR_DISC_DIR_POS(dp, &b_data(bp)) < ldir_ptr->i_sp->s_block_size;
 	     dp = NEXT_DISC_DIR_DESC(dp) ) {
 		/* Match occurs if string found. */
 		if (flag != ENTER && dp->d_ino != NO_ENTRY) {
@@ -588,7 +588,7 @@ int ftype;			 /* used when ENTER and
 					*((ino_t *) &dp->d_name[t]) = dp->d_ino;
 				}
 				dp->d_ino = NO_ENTRY;	/* erase entry */
-				bp->b_dirt = DIRTY;
+				lmfs_markdirty(bp);
 
 				/* If we don't support HTree (directory index),
 				 * which is fully compatible ext2 feature,
@@ -609,7 +609,7 @@ int ftype;			 /* used when ENTER and
 						conv2(le_CPU, dp->d_rec_len);
 				}
 				ldir_ptr->i_update |= CTIME | MTIME;
-				ldir_ptr->i_dirt = DIRTY;
+				ldir_ptr->i_dirt = IN_DIRTY;
 				/* Now we have cleared dentry, if it's not
 				 * the first one, merge it with previous one.
 				 * Since we assume, that existing dentry must be
@@ -652,7 +652,7 @@ int ftype;			 /* used when ENTER and
 			dp->d_rec_len = conv2(le_CPU, new_slot_size);
 			/* if we fail before writing real ino */
 			dp->d_ino = NO_ENTRY;
-			bp->b_dirt = DIRTY;
+			lmfs_markdirty(bp);
 			e_hit = TRUE;	/* we found a free slot */
 			break;
 		}
@@ -683,7 +683,7 @@ int ftype;			 /* used when ENTER and
 	new_slots++;		/* increase directory size by 1 entry */
 	if ( (bp = new_block(ldir_ptr, ldir_ptr->i_size)) == NULL)
 		return(err_code);
-	dp = (struct ext2_disk_dir_desc*) &bp->b_data;
+	dp = (struct ext2_disk_dir_desc*) &b_data(bp);
 	dp->d_rec_len = conv2(le_CPU, ldir_ptr->i_sp->s_block_size);
 	dp->d_name_len = DIR_ENTRY_MAX_NAME_LEN(dp); /* for failure */
 	extended = 1;
@@ -711,10 +711,10 @@ int ftype;			 /* used when ENTER and
 	else
 		dp->d_file_type = EXT2_FT_UNKNOWN;
   }
-  bp->b_dirt = DIRTY;
+  lmfs_markdirty(bp);
   put_block(bp, DIRECTORY_BLOCK);
   ldir_ptr->i_update |= CTIME | MTIME;	/* mark mtime for update later */
-  ldir_ptr->i_dirt = DIRTY;
+  ldir_ptr->i_dirt = IN_DIRTY;
 
   if (new_slots == 1) {
 	ldir_ptr->i_size += (off_t) conv2(le_CPU, dp->d_rec_len);

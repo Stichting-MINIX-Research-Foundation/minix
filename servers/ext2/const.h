@@ -43,8 +43,8 @@
 #define IGN_PERM            0
 #define CHK_PERM            1
 
-#define CLEAN              0    /* disk and memory copies identical */
-#define DIRTY              1    /* disk and memory copies differ */
+#define IN_CLEAN              0    /* inode disk and memory copies identical */
+#define IN_DIRTY              1    /* inode disk and memory copies differ */
 #define ATIME            002    /* set if atime field needs updating */
 #define CTIME            004    /* set if ctime field needs updating */
 #define MTIME            010    /* set if mtime field needs updating */

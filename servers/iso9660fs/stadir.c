@@ -138,3 +138,13 @@ int fs_statvfs()
   
   return(r);
 }
+
+/*===========================================================================*
+ *                              blockstats                                   *
+  *===========================================================================*/
+void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used)
+{
+        *used = *blocks = v_pri.volume_space_size_l;
+        *free = 0;
+}
+

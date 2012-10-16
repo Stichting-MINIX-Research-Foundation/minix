@@ -62,7 +62,7 @@ int op;				/* special actions */
   }
 
   block_pos = position / rip->i_sp->s_block_size; /* relative blk # in file */
-  rip->i_dirt = DIRTY;		/* inode will be changed */
+  rip->i_dirt = IN_DIRTY;		/* inode will be changed */
 
   /* Is 'position' to be found in the inode itself? */
   if (block_pos < EXT2_NDIR_BLOCKS) {
@@ -115,7 +115,7 @@ int op;				/* special actions */
 			bp_tindir = get_block(rip->i_dev, b3, (new_triple ? NO_READ : NORMAL));
 			if (new_triple) {
 				zero_block(bp_tindir);
-				bp_tindir->b_dirt = DIRTY;
+				lmfs_markdirty(bp_tindir);
 			}
 			excess = block_pos - triple_ind_s;
 			index3 = excess / addr_in_block2;
@@ -135,7 +135,7 @@ int op;				/* special actions */
 		}
 		if (triple) {
 			wr_indir(bp_tindir, index3, b2);  /* update triple indir */
-			bp_tindir->b_dirt = DIRTY;
+			lmfs_markdirty(bp_tindir);
 		} else {
 			rip->i_block[EXT2_DIND_BLOCK] = b2;
 		}
@@ -156,7 +156,7 @@ int op;				/* special actions */
 		bp_dindir = get_block(rip->i_dev, b2, (new_dbl ? NO_READ : NORMAL));
 		if (new_dbl) {
 			zero_block(bp_dindir);
-			bp_dindir->b_dirt = DIRTY;
+			lmfs_markdirty(bp_dindir);
 		}
 		index2 = excess / addr_in_block;
 		b1 = rd_indir(bp_dindir, index2);
@@ -181,7 +181,7 @@ int op;				/* special actions */
 		rip->i_block[EXT2_NDIR_BLOCKS] = b1; /* update inode single indirect */
 	} else {
 		wr_indir(bp_dindir, index2, b1);  /* update dbl indir */
-		bp_dindir->b_dirt = DIRTY;
+		lmfs_markdirty(bp_dindir);
 	}
 	rip->i_blocks += rip->i_sp->s_sectors_in_block;
 	new_ind = TRUE;
@@ -216,7 +216,7 @@ int op;				/* special actions */
 				rip->i_block[EXT2_NDIR_BLOCKS] = b1;
 			} else {
 				wr_indir(bp_dindir, index2, b1);
-				bp_dindir->b_dirt = DIRTY;
+				lmfs_markdirty(bp_dindir);
 			}
 		}
 	} else {
@@ -224,7 +224,10 @@ int op;				/* special actions */
 		rip->i_blocks += rip->i_sp->s_sectors_in_block;
 	}
 	/* b1 equals NO_BLOCK only when we are freeing up the indirect block. */
-	bp->b_dirt = (b1 == NO_BLOCK) ? CLEAN : DIRTY;;
+	if(b1 == NO_BLOCK)
+		lmfs_markclean(bp);
+	else
+		lmfs_markdirty(bp);
 	put_block(bp, INDIRECT_BLOCK);
   }
 
@@ -234,13 +237,13 @@ int op;				/* special actions */
    */
   if (b1 == NO_BLOCK && !single && b2 != NO_BLOCK &&
      empty_indir(bp_dindir, rip->i_sp)) {
-	bp_dindir->b_dirt = CLEAN;
+	lmfs_markclean(bp_dindir);
 	free_block(rip->i_sp, b2);
 	rip->i_blocks -= rip->i_sp->s_sectors_in_block;
 	b2 = NO_BLOCK;
 	if (triple) {
 		wr_indir(bp_tindir, index3, b2);  /* update triple indir */
-		bp_tindir->b_dirt = DIRTY;
+		lmfs_markdirty(bp_tindir);
 	} else {
 		rip->i_block[EXT2_DIND_BLOCK] = b2;
 	}
@@ -251,7 +254,7 @@ int op;				/* special actions */
    */
   if (b2 == NO_BLOCK && triple && b3 != NO_BLOCK &&
      empty_indir(bp_tindir, rip->i_sp)) {
-	bp_tindir->b_dirt = CLEAN;
+	lmfs_markclean(bp_tindir);
 	free_block(rip->i_sp, b3);
 	rip->i_blocks -= rip->i_sp->s_sectors_in_block;
 	rip->i_block[EXT2_TIND_BLOCK] = NO_BLOCK;
@@ -278,7 +281,7 @@ block_t block;			/* block to write */
 	panic("wr_indir() on NULL");
 
   /* write a block into an indirect block */
-  bp->b_ind[index] = conv4(le_CPU, block);
+  b_ind(bp)[index] = conv4(le_CPU, block);
 }
 
 
@@ -295,7 +298,7 @@ struct super_block *sb;		/* superblock of device block resides on */
   long addr_in_block = sb->s_block_size/4; /* 4 bytes per addr */
   int i;
   for(i = 0; i < addr_in_block; i++)
-	if(bp->b_ind[i] != NO_BLOCK)
+	if(b_ind(bp)[i] != NO_BLOCK)
 		return(0);
   return(1);
 }
@@ -368,8 +371,8 @@ void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */
-  ASSERT(bp->b_bytes > 0);
-  ASSERT(bp->bp);
-  memset(bp->b_data, 0, (size_t) bp->b_bytes);
-  bp->b_dirt = DIRTY;
+  ASSERT(lmfs_bytes(bp) > 0);
+  ASSERT(bp->data);
+  memset(b_data(bp), 0, (size_t) lmfs_bytes(bp));
+  lmfs_markdirty(bp);
 }

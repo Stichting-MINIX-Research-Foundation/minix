@@ -66,10 +66,10 @@ bit_t origin;			/* number of bit to start searching at */
   bcount = bit_blocks + 1;
   do {
 	bp = get_block(sp->s_dev, start_block + block, NORMAL);
-	wlim = &bp->b_bitmap[FS_BITMAP_CHUNKS(sp->s_block_size)];
+	wlim = &b_bitmap(bp)[FS_BITMAP_CHUNKS(sp->s_block_size)];
 
 	/* Iterate over the words in block. */
-	for (wptr = &bp->b_bitmap[word]; wptr < wlim; wptr++) {
+	for (wptr = &b_bitmap(bp)[word]; wptr < wlim; wptr++) {
 
 		/* Does this word contain a free bit? */
 		if (*wptr == (bitchunk_t) ~0) continue;
@@ -80,7 +80,7 @@ bit_t origin;			/* number of bit to start searching at */
 
 		/* Bit number from the start of the bit map. */
 		b = ((bit_t) block * FS_BITS_PER_BLOCK(sp->s_block_size))
-		    + (wptr - &bp->b_bitmap[0]) * FS_BITCHUNK_BITS
+		    + (wptr - &b_bitmap(bp)[0]) * FS_BITCHUNK_BITS
 		    + i;
 
 		/* Don't allocate bits beyond the end of the map. */
@@ -133,14 +133,14 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 
   bp = get_block(sp->s_dev, start_block + block, NORMAL);
 
-  k = (bitchunk_t) conv4(sp->s_native, (int) bp->b_bitmap[word]);
+  k = (bitchunk_t) conv4(sp->s_native, (int) b_bitmap(bp)[word]);
   if (!(k & mask)) {
   	if (map == IMAP) panic("tried to free unused inode");
   	else panic("tried to free unused block: %u", bit_returned);
   }
 
   k &= ~mask;
-  bp->b_bitmap[word] = (bitchunk_t) conv4(sp->s_native, (int) k);
+  b_bitmap(bp)[word] = (bitchunk_t) conv4(sp->s_native, (int) k);
   MARKDIRTY(bp);
 
   put_block(bp, MAP_BLOCK);
@@ -172,8 +172,7 @@ unsigned int get_block_size(dev_t dev)
   if (dev == NO_DEV)
   	panic("request for block size of NO_DEV");
 
-  return(fs_block_size);
-
+  return(lmfs_fs_block_size());
 }
 
 

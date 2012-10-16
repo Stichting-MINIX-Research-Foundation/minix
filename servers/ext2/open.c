@@ -166,7 +166,7 @@ int fs_mkdir()
 	  /* Normal case.  It was possible to enter . and .. in the new dir. */
 	  rip->i_links_count++;	/* this accounts for . */
 	  ldirp->i_links_count++;	/* this accounts for .. */
-	  ldirp->i_dirt = DIRTY;	/* mark parent's inode as dirty */
+	  ldirp->i_dirt = IN_DIRTY;	/* mark parent's inode as dirty */
   } else {
 	  /* It was not possible to enter . or .. probably disk was full -
 	   * links counts haven't been touched. */
@@ -174,7 +174,7 @@ int fs_mkdir()
 		  panic("Dir disappeared ", rip->i_num);
 	  rip->i_links_count--;	/* undo the increment done in new_node() */
   }
-  rip->i_dirt = DIRTY;		/* either way, i_links_count has changed */
+  rip->i_dirt = IN_DIRTY;		/* either way, i_links_count has changed */
 
   put_inode(ldirp);		/* return the inode of the parent dir */
   put_inode(rip);		/* return the inode of the newly made dir */
@@ -227,16 +227,16 @@ int fs_slink()
 				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
 				     (vir_bytes) 0, (vir_bytes) sip->i_block,
                                      (vir_bytes) fs_m_in.REQ_MEM_SIZE);
-		sip->i_dirt = DIRTY;
+		sip->i_dirt = IN_DIRTY;
 		link_target_buf = (char*) sip->i_block;
         } else {
 		if ((bp = new_block(sip, (off_t) 0)) != NULL) {
 			sys_safecopyfrom(VFS_PROC_NR,
 					 (cp_grant_id_t) fs_m_in.REQ_GRANT3,
-					 (vir_bytes) 0, (vir_bytes) bp->b_data,
+					 (vir_bytes) 0, (vir_bytes) b_data(bp),
 					 (vir_bytes) fs_m_in.REQ_MEM_SIZE);
-			bp->b_dirt = DIRTY;
-			link_target_buf = bp->b_data;
+			lmfs_markdirty(bp);
+			link_target_buf = b_data(bp);
 		} else {
 			r = err_code;
 		}
@@ -326,7 +326,7 @@ static struct inode *new_node(struct inode *ldirp,
 	if ((r=search_dir(ldirp, string, &rip->i_num, ENTER, IGN_PERM,
 			  rip->i_mode & I_TYPE)) != OK) {
 		rip->i_links_count--;	/* pity, have to free disk inode */
-		rip->i_dirt = DIRTY;	/* dirty inodes are written out */
+		rip->i_dirt = IN_DIRTY;	/* dirty inodes are written out */
 		put_inode(rip);	/* this call frees the inode */
 		err_code = r;
 		return(NULL);

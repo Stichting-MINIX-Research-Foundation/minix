@@ -125,7 +125,7 @@ int search_dir(ldir_ptr,string,numb)
       return EINVAL;
     }
 
-    if (create_dir_record(dir_tmp,bp->b_data + pos,
+    if (create_dir_record(dir_tmp,b_data(bp) + pos,
 			  ldir_ptr->loc_extent_l*v_pri.logical_block_size_l + pos) == EINVAL)
       return EINVAL;
 
@@ -160,7 +160,7 @@ int search_dir(ldir_ptr,string,numb)
 
       if (dir_tmp->ext_attr_rec_length != 0) {
 	dir_tmp->ext_attr = get_free_ext_attr();
-	create_ext_attr(dir_tmp->ext_attr,bp->b_data);
+	create_ext_attr(dir_tmp->ext_attr,b_data(bp));
       }
 
       *numb = ID_DIR_RECORD(dir_tmp);
