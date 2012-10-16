@@ -266,7 +266,7 @@ do
     filter)
 	# filter driver
 	$e mknod filter b 11 0
-	$e chmod 644 filter
+	$e chmod 600 filter
 	;;
     fbd)
 	# faulty block device driver
