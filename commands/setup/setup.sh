@@ -428,6 +428,14 @@ then
 
 	chroot /mnt update_bootcfg
 
+	sync
+
+	# Get sizes and space availability while the file systems are still
+	# mounted. Otherwise we have to mount them again just for this.
+	required_root_space=`df -k /dev/$root | awk '{print $4}' | tail -n 1`
+	free_root_space=`df -k /dev/$root | awk '{print $3}' | tail -n 1`
+	free_usr_space=`df -k /dev/$usr | awk '{print $3}' | tail -n 1`
+
 	umount /mnt/usr && umount /mnt || exit
 
 	# Check if enough space for new boot
@@ -438,9 +446,8 @@ then
 		echo "Root partition size will be reduced by up to 16Kb to fit new bootloader."
 		echo "This is not a problem."
 
-		free_space=`df /dev/$root | awk '{print $3}' | tail -n 1`
 		# round 16 => 20
-		if [ "$free_space" -le 20 ]
+		if [ "$free_root_space" -le 20 ]
 		then
 			echo ""
 			echo "Not enough space on /dev/$root, you need at least 20Kb to use new bootloader!"
@@ -449,14 +456,11 @@ then
 
 		ROOTSECTS=`expr \`devsize /dev/$root\` - $BOOTXXSECTS + $bootspace`
 
-		free_space=`df /dev/$usr | awk '{print $3}' | tail -n 1`
-		required_space=`df /dev/$root | awk '{print $4}' | tail -n 1`
-
-		if [ "$required_space" -gt "$free_space" ]
+		if [ "$required_root_space" -gt "$free_usr_space" ]
 		then
 			echo ""
 			echo "You don't have enough free space on /dev/$usr to backup /dev/$root!"
-			echo "${free_space}Kb available, ${required_space} required."
+			echo "${free_usr_space}Kb available, ${required_root_space} required."
 			exit 1
 		fi
 
