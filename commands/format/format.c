@@ -134,6 +134,9 @@ void format_track(int ffd, unsigned type, unsigned cyl, unsigned head)
 			cyl, head, strerror(errno));
 		exit(1);
 	}
+
+	/* Make sure the data is not just cached in a file system. */
+	fsync(ffd);
 }
 
 void verify_track(int vfd, unsigned type, unsigned cyl, unsigned head)
@@ -204,7 +207,7 @@ void format_device(unsigned drive, unsigned type, int verify)
 
 	fmt_dev= tmpnam(nil);
 
-	if (mknod(fmt_dev, S_IFCHR | 0700, fl_makedev(drive, type, 1)) < 0) {
+	if (mknod(fmt_dev, S_IFBLK | 0700, fl_makedev(drive, type, 1)) < 0) {
 		fprintf(stderr, "format: making format device failed: %s\n",
 			strerror(errno));
 		exit(1);
@@ -226,7 +229,7 @@ void format_device(unsigned drive, unsigned type, int verify)
 	if (verify) {
 		ver_dev= tmpnam(nil);
 
-		if (mknod(ver_dev, S_IFCHR | 0700, fl_makedev(drive, type, 0))
+		if (mknod(ver_dev, S_IFBLK | 0700, fl_makedev(drive, type, 0))
 									< 0) {
 			fprintf(stderr,
 				"format: making verify device failed: %s\n",
@@ -257,14 +260,12 @@ void format_device(unsigned drive, unsigned type, int verify)
 				printf(" Cyl. %2u, Head %u\r", cyl, head);
 				fflush(stdout);
 			}
-#if __minix_vmd
 			/* After formatting a track we are too late to format
 			 * the next track.  So we can sleep at most 1/6 sec to
 			 * allow the above printf to get displayed before we
 			 * lock Minix into the floppy driver again.
 			 */
-			usleep(50000);	/* 1/20 sec will do. */
-#endif
+			if (verbose) usleep(50000);	/* 1/20 sec will do. */
 			format_track(ffd, type, cyl, head);
 			if (verify) verify_track(vfd, type, cyl, head);
 		}
@@ -288,7 +289,6 @@ int main(int argc, char **argv)
 	unsigned drive_size;
 	int verify= 0;
 	struct stat st0, st;
-	FILE *mfp;
 	char special[PATH_MAX + 1], mounted_on[PATH_MAX + 1];
 	char version[10], rw_flag[10];
 
@@ -322,8 +322,7 @@ int main(int argc, char **argv)
 		fatal(device);
 	}
 
-	if ((!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
-						|| !isfloppy(st.st_rdev)) {
+	if (!S_ISBLK(st.st_mode) || !isfloppy(st.st_rdev)) {
 		fprintf(stderr, "format: %s: not a floppy device\n", device);
 		exit(1);
 	}
