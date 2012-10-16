@@ -2,19 +2,12 @@
 
 #include <errno.h>
 #include <sys/types.h>
-#include <limits.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <minix/config.h>
-#include <minix/const.h>
 #include <minix/minlib.h>
-#include <sys/svrctl.h>
 #include <stdio.h>
-#include "mfs/const.h"
 #include <fstab.h>
 
 #define MINIX_FS_TYPE "mfs"
