@@ -67,7 +67,6 @@ drwxrwxrwx	root	operator	/usr/tmp
 -rwsr-xr-x	root	?		/usr/bin/at
 -rwsr-xr-x	root	?		/usr/bin/chfn
 -rwsr-xr-x	root	?		/usr/bin/chsh
--rwsr-xr-x	root	?		/usr/bin/df
 -rwsr-xr-x	root	?		/usr/bin/elvprsv
 -rwsr-xr-x	root	?		/usr/bin/elvrec
 -rwsr-xr-x	root	?		/usr/bin/format
