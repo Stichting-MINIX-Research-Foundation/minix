@@ -12,7 +12,8 @@
 #define OMAP3_SSR 0x044 /* Supplementary status register */
 
 /* Line status register fields */
-#define OMAP3_LSR_TX_FIFO_E    (1 << 5) /* Transmit FIFO empty */
+#define OMAP3_LSR_TEMT    0x40 /* Transmitter empty */
+#define OMAP3_LSR_THRE    0x20 /* Transmit-hold-register empty */
 
 /* Supplementary status register fields */
 #define OMAP3_SSR_TX_FIFO_FULL (1 << 0) /* Transmit FIFO full */
