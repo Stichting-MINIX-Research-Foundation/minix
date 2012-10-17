@@ -57,6 +57,7 @@
  *   Jul 13, 2004   support for function key observers  (Jorrit N. Herder)  
  */
 
+#include <assert.h>
 #include <minix/drivers.h>
 #include <minix/driver.h>
 #include <termios.h>
@@ -80,7 +81,7 @@ unsigned long rs_irq_set = 0;
 
 /* Macros for magic tty types. */
 #define isconsole(tp)	((tp) < tty_addr(NR_CONS))
-#define ispty(tp)	((tp) >= tty_addr(NR_CONS+NR_RS_LINES))
+#define ispty(tp)	((tp) != NULL && (tp)->tty_minor >= TTYPX_MINOR)
 
 /* Macros for magic tty structure pointers. */
 #define FIRST_TTY	tty_addr(0)
@@ -120,6 +121,12 @@ static void dev_ioctl(tty_t *tp);
 static void setattr(tty_t *tp);
 static void tty_icancel(tty_t *tp);
 static void tty_init(void);
+static void do_new_kmess(void);
+static tty_t * line2tty(int line);
+static void set_console_line(char term[CONS_ARG]);
+static void set_kernel_color(char color[CONS_ARG]);
+static void set_color(tty_t *tp, int color);
+static void reset_color(tty_t *tp);
 
 /* Default attributes. */
 static struct termios termios_defaults = {
@@ -137,11 +144,15 @@ tty_t tty_table[NR_CONS+NR_RS_LINES+NR_PTYS];
 int ccurrent;			/* currently active console */
 struct machine machine;		/* kernel environment variables */
 u32_t system_hz;
+u32_t consoleline = CONS_MINOR;
+u32_t kernel_msg_color = 0;
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 static void sef_cb_signal_handler(int signo);
+
+extern struct minix_kerninfo *_minix_kerninfo;
 
 /*===========================================================================*
  *				tty_task				     *
@@ -158,7 +169,6 @@ int main(void)
 
   /* SEF local startup. */
   sef_local_startup();
-
   while (TRUE) {
 	/* Check for and handle any events on any of the ttys. */
 	for (tp = FIRST_TTY; tp < END_TTY; tp++) {
@@ -229,6 +239,14 @@ int main(void)
 		continue;
 	}
 	line = tty_mess.TTY_LINE;
+	if (line == CONS_MINOR || line == LOG_MINOR) {
+		/* /dev/log output goes to /dev/console */
+		if (consoleline != CONS_MINOR) {
+			/* Console output must redirected */
+			line = consoleline;
+			tty_mess.TTY_LINE = line;
+		}
+	}
 	if (line == KBD_MINOR) {
 		do_kbd(&tty_mess);
 		continue;
@@ -238,30 +256,26 @@ int main(void)
 	} else if (line == VIDEO_MINOR) {
 		do_video(&tty_mess);
 		continue;
-	} else if ((line - CONS_MINOR) < NR_CONS) {
-		tp = tty_addr(line - CONS_MINOR);
-	} else if (line == LOG_MINOR) {
-		tp = tty_addr(0);
-	} else if ((line - RS232_MINOR) < NR_RS_LINES) {
-		tp = tty_addr(line - RS232_MINOR + NR_CONS);
-	} else if ((line - TTYPX_MINOR) < NR_PTYS) {
-		tp = tty_addr(line - TTYPX_MINOR + NR_CONS + NR_RS_LINES);
-	} else if ((line - PTYPX_MINOR) < NR_PTYS) {
-		tp = tty_addr(line - PTYPX_MINOR + NR_CONS + NR_RS_LINES);
-		if (tty_mess.m_type != DEV_IOCTL_S) {
+	} else {
+		tp = line2tty(line);
+
+		/* Terminals and pseudo terminals belong together. We can only
+		 * make a distinction between the two based on position in the
+		 * tty_table and not on minor number (i.e., use ispty macro).
+		 * Hence this special case.
+		 */
+		if (line - PTYPX_MINOR < NR_PTYS &&
+						tty_mess.m_type != DEV_IOCTL_S){
 			do_pty(tp, &tty_mess);
 			continue;
 		}
-	} else {
-		tp = NULL;
 	}
 
 	/* If the device doesn't exist or is not configured return ENXIO. */
 	if (tp == NULL || ! tty_active(tp)) {
-		if (tty_mess.m_source != LOG_PROC_NR)
-		{
+		if (tty_mess.m_source != LOG_PROC_NR) {
 			tty_reply(TASK_REPLY, tty_mess.m_source,
-						tty_mess.USER_ENDPT, ENXIO);
+				  tty_mess.USER_ENDPT, ENXIO);
 		}
 		continue;
 	}
@@ -284,6 +298,61 @@ int main(void)
   }
 
   return 0;
+}
+
+static void
+set_color(tty_t *tp, int color)
+{
+	message msg;
+	char buf[8];
+
+	buf[0] = '\033';
+	snprintf(&buf[1], sizeof(buf) - 1, "[1;%dm", color);
+	msg.m_source = KERNEL;
+	msg.IO_GRANT = buf;
+	msg.COUNT = sizeof(buf);
+	do_write(tp, &msg);
+}
+
+static void
+reset_color(tty_t *tp)
+{
+	message msg;
+	char buf[8];
+
+#define SGR_COLOR_RESET	39
+	buf[0] = '\033';
+	snprintf(&buf[1], sizeof(buf) - 1, "[0;%dm", SGR_COLOR_RESET);
+	msg.m_source = KERNEL;
+	msg.IO_GRANT = buf;
+	msg.COUNT = sizeof(buf);
+	do_write(tp, &msg);
+}
+
+static tty_t *
+line2tty(int line)
+{
+/* Convert a terminal line to tty_table pointer */
+
+	tty_t* tp;
+
+	if (line == KBD_MINOR || line == KBDAUX_MINOR || line == VIDEO_MINOR) {
+		return(NULL);
+	} else if ((line - CONS_MINOR) < NR_CONS) {
+		tp = tty_addr(line - CONS_MINOR);
+	} else if (line == LOG_MINOR) {
+		tp = tty_addr(consoleline);
+	} else if ((line - RS232_MINOR) < NR_RS_LINES) {
+		tp = tty_addr(line - RS232_MINOR + NR_CONS);
+	} else if ((line - TTYPX_MINOR) < NR_PTYS) {
+		tp = tty_addr(line - TTYPX_MINOR + NR_CONS + NR_RS_LINES);
+	} else if ((line - PTYPX_MINOR) < NR_PTYS) {
+		tp = tty_addr(line - PTYPX_MINOR + NR_CONS + NR_RS_LINES);
+	} else {
+		tp = NULL;
+	}
+
+	return(tp);
 }
 
 /*===========================================================================*
@@ -311,10 +380,19 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the tty driver. */
   int r;
+  char val[CONS_ARG];
 
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
   if (OK != (r=sys_getmachine(&machine))) {
     panic("Couldn't obtain kernel environment: %d", r);
+  }
+
+  if (env_get_param("console", val, sizeof(val)) == OK) {
+	set_console_line(val);
+  }
+
+  if ((r = env_get_param("kernelclr", val, sizeof(val))) == OK) {
+	set_kernel_color(val);
   }
 
   /* Initialize the TTY driver. */
@@ -326,6 +404,115 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   return(OK);
 }
 
+static void
+set_console_line(char term[CONS_ARG])
+{
+/* Parse 'term' and redirect console output there. */
+	int i;
+
+	/* Console */
+	if (!strncmp(term, "console", CONS_ARG - 1)) {
+		consoleline = CONS_MINOR+0;
+	}
+
+	/* The other console terminals */
+	for (i = 1; i < NR_CONS; i++) {
+		char cons[6];
+		strlcpy(cons, "ttyc0", sizeof(cons));
+		cons[4] += i;
+		if (!strncmp(term, cons,
+		    CONS_ARG < sizeof(cons) ? CONS_ARG-1 : sizeof(cons) - 1))
+			consoleline = CONS_MINOR + i;
+	}
+
+	/* Serial lines */
+	for (i = 0; i < NR_RS_LINES; i++) {
+		char sercons[6];
+		strlcpy(sercons, "tty00", sizeof(sercons));
+		sercons[4] += i;
+		if (!strncmp(term, sercons,
+		    CONS_ARG < sizeof(sercons) ? CONS_ARG-1:sizeof(sercons)-1))
+			consoleline = RS232_MINOR + i;
+	}
+}
+
+static void
+set_kernel_color(char color[CONS_ARG])
+{
+	int def_color;
+
+#define SGR_COLOR_START	30
+#define SGR_COLOR_END	37
+
+	def_color = atoi(color);
+	if ((SGR_COLOR_START + def_color) >= SGR_COLOR_START &&
+	    (SGR_COLOR_START + def_color) <= SGR_COLOR_END) {
+		kernel_msg_color = def_color + SGR_COLOR_START;
+	}
+}
+
+static void
+do_new_kmess(void)
+{
+/* Kernel wants to print a new message */
+	struct kmessages *kmess_ptr;	/* kmessages structure */
+	char kernel_buf_copy[2*_KMESS_BUF_SIZE];
+	static int prev_next = 0;
+	int bytes, copy, restore = 0;
+	tty_t *tp, rtp;
+	message print_kmsg;
+
+	assert(_minix_kerninfo);
+	kmess_ptr = _minix_kerninfo->kmessages;
+
+	/* The kernel buffer is circular; print only the new part. Determine
+	 * how many new bytes there are with the help of current and
+	 * previous 'next' index. This works fine if less than _KMESS_BUF_SIZE
+	 * bytes is new data; else we miss % _KMESS_BUF_SIZE here.
+	 * Check for size being positive; the buffer might as well be emptied!
+	 */
+	if (kmess_ptr->km_size > 0) {
+		bytes = ((kmess_ptr->km_next + _KMESS_BUF_SIZE) - prev_next) %
+								_KMESS_BUF_SIZE;
+		/* Copy from current position to end of buffer */
+		copy = (prev_next + bytes) % _KMESS_BUF_SIZE;
+		memcpy(kernel_buf_copy, &kmess_ptr->km_buf[prev_next], copy);
+
+		/* Copy remainder from start of buffer */
+		if (copy < bytes) {
+			memcpy(&kernel_buf_copy[copy], &kmess_ptr->km_buf[0],
+				bytes - copy);
+		}
+
+		tp = line2tty(consoleline);
+		if (tp == NULL || !tty_active(tp))
+			panic("Don't know where to send kernel messages");
+		if (tp->tty_outleft > 0) {
+			/* Terminal is already printing */
+			rtp = *tp;	/* Make backup */
+			tp->tty_outleft = 0; /* So do_write is happy */
+			restore = 1;
+		}
+
+		if (kernel_msg_color != 0)
+			set_color(tp, kernel_msg_color);
+		print_kmsg.m_source = KERNEL;
+		print_kmsg.IO_GRANT = kernel_buf_copy;
+		print_kmsg.COUNT = bytes;
+		do_write(tp, &print_kmsg);
+		if (kernel_msg_color != 0)
+			reset_color(tp);
+		if (restore) {
+			*tp = rtp;
+		}
+	}
+
+	/* Store 'next' pointer so that we can determine what part of the
+	 * kernel messages buffer to print next time a notification arrives.
+	 */
+	prev_next = kmess_ptr->km_next;
+}
+
 /*===========================================================================*
  *		           sef_cb_signal_handler                             *
  *===========================================================================*/
@@ -335,7 +522,7 @@ static void sef_cb_signal_handler(int signo)
   switch(signo) {
       /* There is a pending message from the kernel. */
       case SIGKMESS:
-          do_new_kmess();
+	  do_new_kmess();
       break;
       /* Switch to primary console on termination. */
       case SIGTERM:
@@ -586,7 +773,6 @@ message *m_ptr;			/* pointer to message sent to task */
         size = sizeof(struct winsize);
         break;
 
-#if defined(__i386__)
     case KIOCSMAP:	/* load keymap (Minix extension) */
         size = sizeof(keymap_t);
         break;
@@ -595,7 +781,6 @@ message *m_ptr;			/* pointer to message sent to task */
         size = sizeof(u8_t [8192]);
         break;
 
-#endif
     case TCDRAIN:	/* Posix tcdrain function -- no parameter */
     default:		size = 0;
   }
@@ -679,7 +864,6 @@ message *m_ptr;			/* pointer to message sent to task */
 	sigchar(tp, SIGWINCH, 0);
 	break;
 
-#if defined(__i386__)
     case KIOCSMAP:
 	/* Load a new keymap (only /dev/console). */
 	if (isconsole(tp)) r = kbd_loadmap(m_ptr);
@@ -692,7 +876,6 @@ message *m_ptr;			/* pointer to message sent to task */
 	/* Load a font into an EGA or VGA card (hs@hck.hr) */
 	if (isconsole(tp)) r = con_loadfont(m_ptr);
 	break;
-#endif
 
 /* These Posix functions are allowed to fail if _POSIX_JOB_CONTROL is 
  * not defined.
@@ -729,6 +912,10 @@ message *m_ptr;			/* pointer to message sent to task */
 		r = 1;
 	}
 	tp->tty_openct++;
+	if (tp->tty_openct == 1) {
+		/* Tell the device that the tty is opened */
+		(*tp->tty_open)(tp, 0);
+	}
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
 }
@@ -1476,6 +1663,9 @@ int status;			/* reply code */
   tty_mess.REP_ENDPT = proc_nr;
   tty_mess.REP_STATUS = status;
 
+  /* Don't reply to KERNEL (kernel messages) */
+  if (replyee == KERNEL) return;
+
   /* TTY is not supposed to send a TTY_REVIVE message. The
    * REVIVE message is gone, TTY_REVIVE is only used as an internal
    * placeholder for something that is not supposed to be a message.
@@ -1555,10 +1745,11 @@ static void tty_init()
   system_hz = sys_hz();
 
   /* Initialize the terminal lines. */
+  memset(tty_table, '\0' , sizeof(tty_table));
+
   for (tp = FIRST_TTY,s=0; tp < END_TTY; tp++,s++) {
 
   	tp->tty_index = s;
-
   	init_timer(&tp->tty_tmr);
 
   	tp->tty_intail = tp->tty_inhead = tp->tty_inbuf;
@@ -1566,7 +1757,7 @@ static void tty_init()
 	tp->tty_ingrant = tp->tty_outgrant = tp->tty_iogrant = GRANT_INVALID;
   	tp->tty_termios = termios_defaults;
   	tp->tty_icancel = tp->tty_ocancel = tp->tty_ioctl = tp->tty_close =
-								tty_devnop;
+			  tp->tty_open = tty_devnop;
   	if (tp < tty_addr(NR_CONS)) {
 		scr_init(tp);
 

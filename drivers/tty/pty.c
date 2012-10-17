@@ -242,9 +242,16 @@ static int pty_write(tty_t *tp, int try)
 		break;
 
 	/* Copy from user space to the PTY output buffer. */
-	if ((s = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-		tp->tty_outoffset, (vir_bytes) pp->ohead, count))!=OK) {
-		break;
+	if (tp->tty_outcaller == KERNEL) {
+		/* We're trying to print on kernel's behalf */
+		memcpy(pp->ohead, (void *) tp->tty_outgrant + tp->tty_outoffset,
+			count);
+	} else {
+		if ((s = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
+				tp->tty_outoffset, (vir_bytes) pp->ohead,
+				count)) != OK) {
+			break;
+		}
 	}
 
 	/* Perform output processing on the output buffer. */

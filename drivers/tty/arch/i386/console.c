@@ -122,7 +122,6 @@ struct sequence {
 static int cons_write(struct tty *tp, int try);
 static void cons_echo(tty_t *tp, int c);
 static void out_char(console_t *cons, int c);
-static void cons_putk(int c);
 static void beep(void);
 static void do_escape(console_t *cons, int c);
 static void flush(console_t *cons);
@@ -172,9 +171,17 @@ int try;
    */
   do {
 	if (count > sizeof(buf)) count = sizeof(buf);
-	if ((result = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-		tp->tty_outoffset, (vir_bytes) buf, count)) != OK)
-		break;
+	if (tp->tty_outcaller == KERNEL) {
+		/* We're trying to print on kernel's behalf */
+		memcpy(buf, (void *) tp->tty_outgrant + tp->tty_outoffset,
+			count);
+	} else {
+		if ((result = sys_safecopyfrom(tp->tty_outcaller,
+				tp->tty_outgrant, tp->tty_outoffset,
+				(vir_bytes) buf, count)) != OK) {
+			break;
+		}
+	}
 	tp->tty_outoffset += count;
 	tbuf = buf;
 
@@ -1006,64 +1013,6 @@ tty_t *tp;
   }
   select_console(0);
   cons_ioctl(tp, 0);
-}
-
-extern struct minix_kerninfo *_minix_kerninfo;
-
-/*===========================================================================*
- *				do_new_kmess				     *
- *===========================================================================*/
-void do_new_kmess()
-{
-/* Notification for a new kernel message. */
-  struct kmessages *kmess_ptr;		/* kmessages structure */
-  static int prev_next = 0;			/* previous next seen */
-  int bytes;
-  int r;
-
-  assert(_minix_kerninfo);
-  kmess_ptr = _minix_kerninfo->kmessages;
-
-  /* Print only the new part. Determine how many new bytes there are with 
-   * help of the current and previous 'next' index. Note that the kernel
-   * buffer is circular. This works fine if less then _KMESS_BUF_SIZE bytes
-   * is new data; else we miss % _KMESS_BUF_SIZE here.  
-   * Check for size being positive, the buffer might as well be emptied!
-   */
-  if (kmess_ptr->km_size > 0) {
-      bytes = ((kmess_ptr->km_next + _KMESS_BUF_SIZE) - prev_next) % _KMESS_BUF_SIZE;
-      r=prev_next;				/* start at previous old */ 
-      while (bytes > 0) {			
-          cons_putk( kmess_ptr->km_buf[(r%_KMESS_BUF_SIZE)] );
-          bytes --;
-          r ++;
-      }
-      cons_putk(0);			/* terminate to flush output */
-  }
-
-  /* Almost done, store 'next' so that we can determine what part of the
-   * kernel messages buffer to print next time a notification arrives.
-   */
-  prev_next = kmess_ptr->km_next;
-}
-
-/*===========================================================================*
- *				cons_putk				     *
- *===========================================================================*/
-static void cons_putk(c)
-int c;				/* character to print */
-{
-/* This procedure is used to print a character on the console.
- */
-  if (c != 0) {
-	if (c == '\n') cons_putk('\r');
-	out_char(&cons_table[0], (int) c);
-#if 0
-	ser_putc(c);
-#endif
-  } else {
-	flush(&cons_table[0]);
-  }
 }
 
 /*===========================================================================*

@@ -17,6 +17,7 @@
 #define TTYPX_MINOR	 128
 #define PTYPX_MINOR	 192
 
+#define CONS_ARG	  30	/* console= boot param length (incl. nul) */
 #define LINEWRAP	   1	/* console.c - wrap lines at column 80 */
 
 #define TTY_IN_BYTES     256	/* tty input queue size */
@@ -91,6 +92,7 @@ typedef struct tty {
 
   /* Miscellaneous. */
   devfun_t tty_ioctl;		/* set line speed, etc. at the device level */
+  devfun_t tty_open;		/* tell the device that the tty is opened */ 
   devfun_t tty_close;		/* tell the device that the tty is closed */
   void *tty_priv;		/* pointer to per device private data */
   struct termios tty_termios;	/* terminal attributes */
@@ -154,11 +156,9 @@ int select_retry(struct tty *tp);
 void rs_init(struct tty *tp);
 void rs_interrupt(message *m);
 
-#if defined(__i386__)
 /* console.c */
 void kputc(int c);
 void cons_stop(void);
-void do_new_kmess(void);
 void scr_init(struct tty *tp);
 void toggle_scroll(void);
 int con_loadfont(message *m);
@@ -182,6 +182,4 @@ void do_pty(struct tty *tp, message *m_ptr);
 void pty_init(struct tty *tp);
 void select_retry_pty(struct tty *tp);
 int pty_status(message *m_ptr);
-
-#endif /* defined(__i386__) */
 

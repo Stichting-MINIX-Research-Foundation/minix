@@ -248,9 +248,14 @@ static int rs_write(register tty_t *tp, int try)
 	if (try) return 1;
 
 	/* Copy from user space to the RS232 output buffer. */
-	if ((r = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-		tp->tty_outoffset, (vir_bytes) rs->ohead, count)) != OK)
-		printf("TTY: sys_safecopyfrom() failed: %d", r);
+	if (tp->tty_outcaller == KERNEL) {
+		/* We're trying to print on kernel's behalf */
+		memcpy(rs->ohead, (void *) tp->tty_outgrant + tp->tty_outoffset, count);
+	} else {
+		if ((r = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
+			tp->tty_outoffset, (vir_bytes) rs->ohead, count)) != OK)
+				printf("TTY: sys_safecopyfrom() failed: %d", r);
+	}
 
 	/* Perform output processing on the output buffer. */
 	out_process(tp, rs->obuf, rs->ohead, bufend(rs->obuf), &count, &ocount);
@@ -754,8 +759,6 @@ static void in_int(register rs232_t *rs)
 	rs->tty->tty_events = 1;
 	force_timeout();
   }
-  else
-	printf("in_int: icount = %d\n", rs->icount);
 }
 
 /*===========================================================================*
