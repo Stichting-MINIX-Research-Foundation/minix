@@ -2,7 +2,11 @@
 
 .include "../Makefile.inc"
 
+.if defined(__MINIX)
+BINDIR=		/usr/bin
+.else
 BINDIR=		/bin
+.endif
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=	-static

@@ -4,7 +4,7 @@
 
 SUBDIR=
 
-.if ${MKBSDTAR} == "yes"
+.if ${MKBSDTAR} == "yes" || defined(__MINIX)
 SUBDIR+=	cpio tar
 .endif
 

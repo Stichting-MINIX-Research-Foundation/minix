@@ -2,6 +2,7 @@
 # Timestamp in UTC,minixpath,netbsdpath
 # minixpath:  path in Minix source tree (starting from /usr/src/)
 # netbsdpath: path in BSD source tree (starting from src/)
+2012/10/17 12:00:00,external/bsd/libarchive
 2012/10/17 12:00:00,lib/librmt
 2012/10/17 12:00:00,bin/pax
 2012/10/17 12:00:00,tools/mtree
@@ -10,7 +11,6 @@
 2012/10/17 12:00:00,usr.sbin/postinstall
 2012/10/10 16:16:12,sbin/mknod
 2012/10/10 16:16:12,usr.sbin/mtree
-2012/05/01 16:16:12,external/bsd/libarchive
 2012/02/10 16:16:12,usr.sbin/chroot
 2011/01/17 18:11:10,usr.bin/ldd
 2011/01/17 18:11:10,external/bsd/file
