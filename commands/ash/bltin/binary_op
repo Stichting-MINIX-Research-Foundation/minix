@@ -11,6 +11,7 @@ AND2	 &	2
 STREQ	 =	4    OP_STRING
 STRNE	 !=	4    OP_STRING
 NEWER	 -newer	4    OP_STRING
+NEWER	 -nt	4    OP_STRING
 OLDER	 -ot	4    OP_STRING
 EQ	 -eq	4    OP_INT
 NE	 -ne	4    OP_INT
