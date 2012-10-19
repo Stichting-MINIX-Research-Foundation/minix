@@ -1,6 +1,6 @@
 # Makefile for the mmc driver.
 PROG=	mmc
-SRCS=	mmcblk.c mmchost_mmchs.c mmclog.h sdhcreg.h sdmmcreg.h
+SRCS=	mmcblk.c mmchost_mmchs.c mmchost_dummy.c mmclog.h sdhcreg.h sdmmcreg.h
 
 DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}
 LDADD+=	-lblockdriver -lsys

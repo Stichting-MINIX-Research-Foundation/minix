@@ -145,4 +145,5 @@ struct mmc_command
 #endif
 
 /* Hack done for driver registration */
-void host_initialize_host_structure(struct mmc_host *host);
+void host_initialize_host_structure_mmchs(struct mmc_host *host);
+void host_initialize_host_structure_dummy(struct mmc_host *host);
