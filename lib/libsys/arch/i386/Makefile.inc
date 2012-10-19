@@ -10,7 +10,6 @@ SRCS+=  \
         profile.c \
         profile_extern.c \
         ser_putc.c \
-        spin.c \
         sys_eniop.c \
         sys_in.c \
         sys_int86.c \

@@ -54,8 +54,16 @@ int spin_check(spin_t *s)
 		break;
 
 	case STATE_BASE_TS:
+#if defined(__i386__)
 		s->s_state = STATE_TS;
 		read_tsc_64(&s->s_base_tsc);
+#elif defined(__arm__)
+		/* On ARM we do not have a reliable user accessible cycle counter 
+		 * and always use getuptime.
+		 */
+		getuptime(&s->s_base_uptime);
+		s->s_state = STATE_UPTIME;
+#endif
 		break;
 
 	case STATE_TS:
