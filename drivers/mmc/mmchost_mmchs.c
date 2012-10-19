@@ -773,7 +773,7 @@ mmchs_card_release(struct sd_card *card)
 }
 
 void
-host_initialize_host_structure(struct mmc_host *host)
+host_initialize_host_structure_mmchs(struct mmc_host *host)
 {
 	/* Initialize the basic data structures host slots and cards */
 	int i;

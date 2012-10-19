@@ -96,17 +96,29 @@ static struct blockdriver mmc_driver = {
 static int
 apply_env()
 {
-#if 0
-	/* @TODO: re-enable this function when __aeabi_idiv will be present
-	 * The following code(env_parse) uses strtol.c and needs __aeabi_idiv */
 	/* apply the env setting passed to this driver parameters accepted
 	 * log_level=[0-4] (NONE,WARNING,INFO,DEBUG,TRACE) instance=[0-3]
 	 * instance/bus number to use for this driver Passing these arguments
 	 * is done when starting the driver using the service command in the
-	 * following way service up /sbin/mmcblk -args "log_level=2
-	 * instance=1" */
+	 * following way service up /sbin/mmc -args "log_level=2 instance=1"
+	 * -dev /dev/c1d0 */
+	char driver[16];
+	memset(driver, '\0', 16);
+	(void) env_get_param("driver", driver, 16);
+	if (strlen(driver) == 0
+	    || strncmp(driver, "mmchs", strlen("mmchs") + 1) == 0) {
+		/* early init of host mmc host controller. This code should
+		 * depend on knowing the hardware that is running bellow. */
+		host_initialize_host_structure_mmchs(&host);
+	} else if (strncmp(driver, "dummy", strlen("dummy") + 1) == 0) {
+		host_initialize_host_structure_dummy(&host);
+	} else {
+		mmc_log_warn(&log, "Unknown driver %s\n", driver);
+	}
+#if 0
 	long v;
-
+	/* The following code(env_parse) uses strtol.c and needs __aeabi_idiv */
+	/* @TODO: re-enable this function when __aeabi_idiv will be present */
 	/* Initialize the verbosity level. */
 	v = 0;
 	if (env_parse("log_level", "d", 0, &v, LEVEL_NONE,
@@ -642,9 +654,6 @@ set_log_level(int level)
 int
 main(int argc, char **argv)
 {
-	/* early init of host mmc host controller. This code should depend on
-	 * knowing the hardware that is running bellow. */
-	host_initialize_host_structure(&host);
 
 	/* Set and apply the environment */
 	env_setargs(argc, argv);
