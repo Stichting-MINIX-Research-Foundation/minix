@@ -23,6 +23,7 @@
 #define MMCHS_SD_SYSCTL    0x22c /* SD System control (reset,clocks and timeout) */
 #define MMCHS_SD_STAT      0x230 /* SD Interrupt status */
 #define MMCHS_SD_IE        0x234 /* SD Interrupt Enable register */
+#define MMCHS_SD_ISE       0x238 /* SD Interrupt Signal Enable register */
 #define MMCHS_SD_CAPA      0x240 /* Capabilities of the host controller */
 #define MMCHS_SD_CUR_CAPA  0x248 /* Current capabilities of the host controller */
 
