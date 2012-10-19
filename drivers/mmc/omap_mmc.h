@@ -23,6 +23,7 @@
 #define MMCHS_SD_SYSCTL    0x22c /* SD System control (reset,clocks and timeout) */
 #define MMCHS_SD_STAT      0x230 /* SD Interrupt status */
 #define MMCHS_SD_IE        0x234 /* SD Interrupt Enable register */
+#define MMCHS_SD_ISE       0x238 /* SD Interrupt Signal Enable register */
 #define MMCHS_SD_CAPA      0x240 /* Capabilities of the host controller */
 #define MMCHS_SD_CUR_CAPA  0x248 /* Current capabilities of the host controller */
 
@@ -146,7 +147,7 @@
 #define MMCHS_SD_SYSCTL_DTO          (0xf << 16) /* Data timeout counter  */
 #define MMCHS_SD_SYSCTL_DTO_2POW13   (0x0 << 16) /* TCF x 2^13  */
 #define MMCHS_SD_SYSCTL_DTO_2POW14   (0x1 << 16) /* TCF x 2^14  */
-#define MMCHS_SD_SYSCTL_DTO_2POW27   (0x3 << 16) /* TCF x 2^27  */
+#define MMCHS_SD_SYSCTL_DTO_2POW27   (0xe << 16) /* TCF x 2^27  */
 
 #define MMCHS_SD_STAT_ERRI            (0x01 << 15) /* Error interrupt */
 #define MMCHS_SD_STAT_ERROR_MASK     (0xff << 15 | 0x3 << 24 | 0x03 << 28)

@@ -1,11 +1,13 @@
 /* kernel headers */
 #include <minix/blockdriver.h>
+#include <minix/minlib.h>
 
 /* usr headers */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <unistd.h>
 
 /* local headers */
 #include "mmclog.h"
@@ -17,14 +19,14 @@
  */
 static struct mmclog log = {
 	.name = "mmc_host_memory",
-	.log_level = LEVEL_TRACE,
+	.log_level = LEVEL_INFO,
 	.log_func = default_log
 };
 
 /* This is currently a dummy driver using an in-memory structure */
-#define DUMMY_SIZE_IN_BLOCKS 0xFFFu
+#define DUMMY_SIZE_IN_BLOCKS 0xFFFFFu
 #define DUMMY_BLOCK_SIZE 512
-static char dummy_data[DUMMY_BLOCK_SIZE * DUMMY_SIZE_IN_BLOCKS];
+static char *dummy_data = NULL;
 
 static struct sd_card *
 init_dummy_sdcard(struct sd_slot *slot)
@@ -35,6 +37,13 @@ init_dummy_sdcard(struct sd_slot *slot)
 	assert(slot != NULL);
 
 	mmc_log_info(&log, "Using a dummy card \n");
+	if (dummy_data == NULL) {
+		dummy_data = malloc(DUMMY_BLOCK_SIZE * DUMMY_SIZE_IN_BLOCKS);
+		if (dummy_data == NULL) {
+			panic
+			    ("Failed to allocate data for dummy mmc driver\n");
+		}
+	}
 
 	card = &slot->card;
 	memset(card, 0, sizeof(struct sd_card));
