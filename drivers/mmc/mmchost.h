@@ -117,6 +117,9 @@ struct mmc_host
 	/* Release the card */
 	int (*card_release) (struct sd_card * card);
 
+	/* Additional hardware interrupts */
+	void (*hw_intr) (unsigned int irqs);
+
 	/* read count blocks into existing buf */
 	int (*read) (struct sd_card * card,
 	    uint32_t blknr, uint32_t count, unsigned char *buf);

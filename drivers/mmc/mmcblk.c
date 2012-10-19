@@ -6,6 +6,8 @@
 #include <minix/driver.h>
 #include <minix/blockdriver.h>
 #include <minix/drvlib.h>
+#include <minix/minlib.h>
+
 
 /* system headers */
 #include <sys/ioc_disk.h>	/* disk IOCTL's */
@@ -24,24 +26,12 @@
 /* used for logging */
 static struct mmclog log = {
 	.name = "mmc_block",
-	.log_level = LEVEL_DEBUG,
+	.log_level = LEVEL_INFO,
 	.log_func = default_log
 };
 
 /* holding the current host controller */
 static struct mmc_host host;
-
-/*@TODO REMOVE THIS */
-void
-read_tsc_64(u64_t * t)
-{
-}
-
-u32_t
-tsc_64_to_micros(u64_t tsc)
-{
-	return 0;
-}
 
 #define SUB_PER_DRIVE           (NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS              (MAX_DRIVES * SUB_PER_DRIVE)
@@ -70,12 +60,18 @@ static void sef_local_startup();
 static int block_system_event_cb(int type, sef_init_info_t * info);
 static void block_signal_handler_cb(int signo);
 
-static int apply_env();
+void
+bdr_alarm(clock_t stamp)
+{
+	mmc_log_debug(&log, "alarm %d\n", stamp);
 
-#if 0
+}
+
+static int apply_env();
+static void hw_intr(unsigned int irqs);
+
 /* set the global logging level */
 static void set_log_level(int level);
-#endif
 
 /* Entry points for the BLOCK driver. */
 static struct blockdriver mmc_driver = {
@@ -87,20 +83,28 @@ static struct blockdriver mmc_driver = {
 	NULL,			/* no need to clean up (yet) */
 	block_part,		/* return partition information */
 	NULL,			/* no geometry */
-	NULL,			/* no interrupt processing */
-	NULL,			/* no alarm processing */
+	hw_intr,		/* left over interrupts */
+	bdr_alarm,		/* no alarm processing */
 	NULL,			/* no processing of other messages */
 	NULL			/* no threading support */
 };
 
+static void
+hw_intr(unsigned int irqs)
+{
+	mmc_log_debug(&log, "Hardware inter left over\n");
+	host.hw_intr(irqs);
+}
+
 static int
 apply_env()
 {
+	long v;
 	/* apply the env setting passed to this driver parameters accepted
-	 * log_level=[0-4] (NONE,WARNING,INFO,DEBUG,TRACE) instance=[0-3]
+	 * log_level=[0-4] (NONE,WARN,INFO,DEBUG,TRACE) instance=[0-3]
 	 * instance/bus number to use for this driver Passing these arguments
 	 * is done when starting the driver using the service command in the
-	 * following way service up /sbin/mmc -args "log_level=2 instance=1 
+	 * following way service up /sbin/mmc -args "log_level=2 instance=1
 	 * driver=dummy" -dev /dev/c2d0 */
 	char driver[16];
 	memset(driver, '\0', 16);
@@ -115,10 +119,6 @@ apply_env()
 	} else {
 		mmc_log_warn(&log, "Unknown driver %s\n", driver);
 	}
-#if 0
-	long v;
-	/* The following code(env_parse) uses strtol.c and needs __aeabi_idiv */
-	/* @TODO: re-enable this function when __aeabi_idiv will be present */
 	/* Initialize the verbosity level. */
 	v = 0;
 	if (env_parse("log_level", "d", 0, &v, LEVEL_NONE,
@@ -133,7 +133,6 @@ apply_env()
 		mmc_log_warn(&log, "Failed to set mmc instance to  %d\n", v);
 		return -1;	/* NOT OK */
 	}
-#endif
 	return OK;
 }
 
@@ -185,27 +184,27 @@ block_open(dev_t minor, int access)
 	partition(&mmc_driver, 0 /* first card on bus */ , P_PRIMARY,
 	    0 /* atapi device?? */ );
 
-	mmc_log_debug(&log, "descr \toffset(bytes)      size(bytes)\n", minor);
+	mmc_log_trace(&log, "descr \toffset(bytes)      size(bytes)\n", minor);
 
-	mmc_log_debug(&log, "disk %d\t0x%016llx 0x%016llx\n", i,
+	mmc_log_trace(&log, "disk %d\t0x%016llx 0x%016llx\n", i,
 	    slot->card.part[0].dv_base, slot->card.part[0].dv_size);
 	for (i = 1; i < 5; i++) {
 		if (slot->card.part[i].dv_size == 0)
 			continue;
 		part_count++;
-		mmc_log_debug(&log, "part %d\t0x%016llx 0x%016llx\n", i,
+		mmc_log_trace(&log, "part %d\t0x%016llx 0x%016llx\n", i,
 		    slot->card.part[i].dv_base, slot->card.part[i].dv_size);
 		for (j = 0; j < 4; j++) {
 			if (slot->card.subpart[(i - 1) * 4 + j].dv_size == 0)
 				continue;
 			sub_part_count++;
-			mmc_log_debug(&log,
+			mmc_log_trace(&log,
 			    " sub %d/%d\t0x%016llx 0x%016llx\n", i, j,
 			    slot->card.subpart[(i - 1) * 4 + j].dv_base,
 			    slot->card.subpart[(i - 1) * 4 + j].dv_size);
 		}
 	}
-	mmc_log_info(&log, "Found %d partitions and %d sub partitions\n",
+	mmc_log_debug(&log, "Found %d partitions and %d sub partitions\n",
 	    part_count, sub_part_count);
 	slot->card.open_ct++;
 	assert(slot->card.open_ct == 1);
@@ -312,7 +311,7 @@ block_transfer(dev_t minor,	/* minor device number */
 		/* Unknown device */
 		return ENXIO;
 	}
-	mmc_log_trace(&log, "I/O %d %s 0x%llx\n", minor,
+	mmc_log_trace(&log, "I/O on minor(%d) %s at 0x%016llx\n", minor,
 	    (do_write) ? "Write" : "Read", position);
 
 	slot = get_slot(minor);
@@ -636,20 +635,18 @@ get_slot(dev_t minor)
 	}
 }
 
-#if 0
 static void
 set_log_level(int level)
 {
 	if (level < 0 || level >= 4) {
 		return;
 	}
-	mmc_log_debug(&log, "Setting verbosity level to %d\n", level);
+	mmc_log_info(&log, "Setting verbosity level to %d\n", level);
 	log.log_level = level;
 	if (host.set_log_level) {
 		host.set_log_level(level);
 	}
 }
-#endif
 
 int
 main(int argc, char **argv)
@@ -657,7 +654,6 @@ main(int argc, char **argv)
 
 	/* Set and apply the environment */
 	env_setargs(argc, argv);
-
 	sef_local_startup();
 	blockdriver_task(&mmc_driver);
 	return EXIT_SUCCESS;
