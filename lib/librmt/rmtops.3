@@ -1,0 +1,182 @@
+.\"	$NetBSD: rmtops.3,v 1.14 2010/03/22 22:00:37 joerg Exp $
+.\"
+.Dd October 16, 2001
+.Dt RMTOPS 3
+.Os
+.Sh NAME
+.Nm rmtops
+.Nd access tape drives on remote machines
+.Sh LIBRARY
+Remote Magnetic Tape Library (librmt, -lrmt)
+.Sh SYNOPSIS
+.In rmt.h
+.In sys/stat.h
+.Ft int
+.Fn isrmt "int fd"
+.Ft int
+.Fn rmtaccess "char *file" "int mode"
+.Ft int
+.Fn rmtclose "int fd"
+.Ft int
+.Fn rmtcreat "char *file" "int mode"
+.Ft int
+.Fn rmtdup "int fd"
+.Ft int
+.Fn rmtfcntl "int fd" "int cmd" "int arg"
+.Ft int
+.Fn rmtfstat "int fd" "struct stat *buf"
+.Ft int
+.Fn rmtioctl "int fd" "int request" "char *argp"
+.Ft int
+.Fn rmtisatty "int fd"
+.Ft long
+.Fn rmtlseek "int fd" "long offset" "int whence"
+.Ft int
+.Fn rmtlstat "char *file" "struct stat *buf"
+.Ft int
+.Fn rmtopen "char *file" "int flags" "int mode"
+.Ft int
+.Fn rmtread "int fd" "char *buf" "int nbytes"
+.Ft int
+.Fn rmtstat "char *file" "struct stat *buf"
+.Ft int
+.Fn rmtwrite "int fd" "char *buf" "int nbytes"
+.Sh DESCRIPTION
+The
+.Nm
+library provides a simple means of transparently accessing tape drives
+on remote machines via
+.Xr rsh 1
+and
+.Xr rmt 8 .
+These routines are used like their corresponding system calls, but
+allow the user to open up a tape drive on a remote system on which he
+or she has an account and the appropriate remote permissions.
+.Pp
+A remote tape drive file name has the form
+.Dl [user@]hostname:/dev/???
+where
+.Em system
+is the remote system,
+.Em /dev/???
+is the particular drive on the remote system (raw, blocked, rewinding,
+non-rewinding, etc.), and the optional
+.Em user
+is the login name to be used on the remote system, if different from
+the current user's login name.
+.\" .Pp
+.\" The library source code may be optionally compiled to recognize the
+.\" old
+.\" .Bx 4.2 ,
+.\" remote syntax
+.\" .sp
+.\" 	hostname[.user]:/dev/???
+.\" .sp
+.\" By default, only the first form (introduced in
+.\" .Bx 4.3 )
+.\" is recognized.
+.Pp
+For transparency, the user should include the file
+.In rmt.h ,
+which has the following defines in it:
+.Bd -literal
+#define access	rmtaccess
+#define close	rmtclose
+#define creat	rmtcreat
+#define dup	rmtdup
+#define fcntl	rmtfcntl
+#define fstat	rmtfstat
+#define ioctl	rmtioctl
+#define isatty	rmtisatty
+#define lseek	rmtlseek
+#define lstat	rmtlstat
+#define open	rmtopen
+#define read	rmtread
+#define stat	rmtstat
+#define write	rmtwrite
+.Ed
+.Pp
+This allows the programmer to use
+.Xr open 2 ,
+.Xr close 2 ,
+.Xr read 2 ,
+.Xr write 2 ,
+etc. in their normal fashion, with the
+.Nm
+routines taking care of differentiating between local and remote files.
+This file should be included
+.Em before
+including the file
+.Pa \*[Lt]sys/stat.h\*[Gt] ,
+since it redefines the identifier ``stat'' which is used to declare
+objects of type
+.Em "struct stat" .
+.Pp
+The routines differentiate between local and remote file descriptors
+by adding a bias (currently 128) to the file descriptor of the pipe.
+The programmer, if he or she must know if a file is remote, should use
+.Fn isrmt .
+.Sh ENVIRONMENT
+The RCMD_CMD environment variable can be set to the name or pathname
+of a program to use, instead of
+.Pa /usr/bin/rsh ,
+and must have the same calling conventions as
+.Xr rsh 1 .
+.Sh FILES
+.Bl -tag -width /usr/lib/librmt.a -compact
+.It Pa /usr/lib/librmt.a
+remote tape library
+.El
+.Sh DIAGNOSTICS
+Several of these routines will return \-1 and set
+.Va errno
+to EOPNOTSUPP, if they are given a remote file name or a file descriptor
+on an open remote file (e.g.,
+.Fn rmtdup ) .
+.Sh SEE ALSO
+.Xr rcp 1 ,
+.Xr rsh 1 ,
+.Xr rmt 8
+.Pp
+And the appropriate system calls in section 2.
+.\" .Sh CONFIGURATION OPTIONS
+.\" The library may be compiled to allow the use of
+.\" .Bx 4.2 -style
+.\" remote file names.  This is not recommended.
+.\" .Pp
+.\" By default, the library opens two pipes to
+.\" .Xr rsh 1 .
+.\" It may optionally be compiled to use
+.\" .Xr rexec 3 ,
+.\" instead.  Doing so requires the use of a
+.\" .Em .netrc
+.\" file in the user's home directory, or that the application designer be
+.\" willing to have
+.\" .Xr rexec 3
+.\" prompt the user for a login name and password on the remote host.
+.Sh AUTHORS
+Jeff Lee wrote the original routines for accessing tape drives via
+.Xr rmt 8 .
+.Pp
+Fred Fish redid them into a general purpose library.
+.Pp
+Arnold Robbins added the ability to specify a user name on the remote
+system, the
+.Pa \*[Lt]rmt.h\*[Gt]
+include file, this man page, cleaned up the library a little, and made
+the appropriate changes for
+.Bx 4.3 .
+.Pp
+Dan Kegel contributed the code to use the
+.Xr rexec 3
+library routine.
+.Sh BUGS
+There is no way to use remote tape drives with
+.Xr stdio 3 ,
+short of recompiling it entirely to use these routines.
+.Pp
+The
+.Xr rmt 8
+protocol is not very capable.
+In particular, it relies on TCP/IP sockets for error
+free transmission, and does no data validation of its own.

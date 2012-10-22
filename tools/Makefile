@@ -15,6 +15,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	.WAIT awk \
 	.WAIT tic \
 	.WAIT lex \
+	.WAIT pax \
 	.WAIT gmake .WAIT gmp .WAIT mpfr .WAIT mpc .WAIT binutils .WAIT gcc \
 		cat file pwd_mkdb stat zic \
 

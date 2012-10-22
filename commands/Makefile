@@ -17,7 +17,7 @@ SUBDIR=	add_route arp ash at backup banner basename btrace cal \
 	lpd ls lspci mail MAKEDEV \
 	mesg mined mkfifo \
 	mkproto mount mt netconf nice acknm nohup \
-	nonamed od paste patch pax \
+	nonamed od paste patch \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readclock \
