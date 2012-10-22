@@ -1,0 +1,20 @@
+#	$NetBSD: README,v 1.2 1998/01/09 04:12:19 perry Exp $
+
+README
+
+This is the remote mag tape library. It allows a program that uses
+Unix system calls to transparently use a file (usually a tape drive) on
+another system via /etc/rmt, simply by including <rmt.h>.  It is
+particularly useful with tar and dd, and is supplied with GNU tar.
+
+This package has evolved somewhat over the years.  My thanks to the
+people who did most of the original work, and those who've contributed
+bug fixes; appropriate credit is in the man page and source files.
+
+Enjoy,
+
+Arnold Robbins
+Emory U. Computing Center
+arnold@emoryu1.cc.emory.edu
+gatech!emoryu1!arnold
++1 404 727 7636
