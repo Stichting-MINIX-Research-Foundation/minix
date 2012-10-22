@@ -100,8 +100,8 @@ apply_env()
 	 * log_level=[0-4] (NONE,WARNING,INFO,DEBUG,TRACE) instance=[0-3]
 	 * instance/bus number to use for this driver Passing these arguments
 	 * is done when starting the driver using the service command in the
-	 * following way service up /sbin/mmc -args "log_level=2 instance=1"
-	 * -dev /dev/c1d0 */
+	 * following way service up /sbin/mmc -args "log_level=2 instance=1 
+	 * driver=dummy" -dev /dev/c2d0 */
 	char driver[16];
 	memset(driver, '\0', 16);
 	(void) env_get_param("driver", driver, 16);
@@ -196,13 +196,13 @@ block_open(dev_t minor, int access)
 		mmc_log_debug(&log, "part %d\t0x%016llx 0x%016llx\n", i,
 		    slot->card.part[i].dv_base, slot->card.part[i].dv_size);
 		for (j = 0; j < 4; j++) {
-			if (slot->card.part[i * 4 + j].dv_size == 0)
+			if (slot->card.subpart[(i - 1) * 4 + j].dv_size == 0)
 				continue;
 			sub_part_count++;
 			mmc_log_debug(&log,
 			    " sub %d/%d\t0x%016llx 0x%016llx\n", i, j,
-			    slot->card.part[i * 4 + j].dv_base,
-			    slot->card.part[i * 4 + j].dv_size);
+			    slot->card.subpart[(i - 1) * 4 + j].dv_base,
+			    slot->card.subpart[(i - 1) * 4 + j].dv_size);
 		}
 	}
 	mmc_log_info(&log, "Found %d partitions and %d sub partitions\n",
@@ -515,7 +515,7 @@ block_part(dev_t minor)
 		mmc_log_trace(&log,
 		    "returning partition(%d) (base,size)=(0x%016llx,0x%016llx)\n",
 		    minor, dev->dv_base, dev->dv_size);
-	} else if (minor >= 128 && minor <= 128 + 16) {
+	} else if (minor >= 128 && minor < 128 + 16) {
 		/* sub partitions of the first disk we don't care about the
 		 * rest */
 		dev = &slot->card.subpart[minor - 128];
