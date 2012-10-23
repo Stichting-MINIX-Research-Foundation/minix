@@ -523,6 +523,7 @@ static void atl2_init(int devind)
 		panic("unable to allocate DMA buffers: %d", r);
 
 	state.irq = pci_attr_r8(devind, PCI_ILR);
+	state.hook_id = 0;
 
 	if ((r = sys_irqsetpolicy(state.irq, 0, &state.hook_id)) != OK)
 		panic("unable to register IRQ: %d", r);

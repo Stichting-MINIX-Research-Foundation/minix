@@ -213,7 +213,7 @@ static struct device *ahci_part(dev_t minor);
 static void ahci_alarm(clock_t stamp);
 static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
-static void ahci_intr(unsigned int irqs);
+static void ahci_intr(unsigned int mask);
 static int ahci_device(dev_t minor, device_id_t *id);
 static struct port_state *ahci_get_port(dev_t minor);
 
@@ -1998,6 +1998,7 @@ static void ahci_init(int devind)
 
 	/* Retrieve, allocate and enable the controller's IRQ. */
 	hba_state.irq = pci_attr_r8(devind, PCI_ILR);
+	hba_state.hook_id = 0;
 
 	if ((r = sys_irqsetpolicy(hba_state.irq, 0, &hba_state.hook_id)) != OK)
 		panic("unable to register IRQ: %d", r);
@@ -2090,7 +2091,7 @@ static void ahci_alarm(clock_t stamp)
 /*===========================================================================*
  *				ahci_intr				     *
  *===========================================================================*/
-static void ahci_intr(unsigned int UNUSED(irqs))
+static void ahci_intr(unsigned int UNUSED(mask))
 {
 	/* Process an interrupt.
 	 */

@@ -88,6 +88,7 @@ static int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	port = pci_attr_r32(devind, PCI_BAR) & PCI_BAR_IO_MASK;
 
 	irq = pci_attr_r8(devind, PCI_ILR);
+	hook_id = 0;
 
 	if ((r = sys_irqsetpolicy(irq, 0 /* IRQ_REENABLE */, &hook_id)) != OK)
 		panic("unable to register IRQ: %d", r);
