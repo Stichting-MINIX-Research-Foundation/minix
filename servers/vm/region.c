@@ -830,7 +830,7 @@ struct phys_region **physr;
 			ph = offset - r->vaddr;
 			if(physr) {
 				*physr = physr_search(r->phys, ph, AVL_EQUAL);
-				assert((*physr)->offset == ph);
+				if(*physr) assert((*physr)->offset == ph);
 			}
 			return r;
 		}
