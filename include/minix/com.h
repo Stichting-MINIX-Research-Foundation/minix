@@ -340,9 +340,6 @@
 
 #  define SYS_VTIMER     (KERNEL_CALL + 45)	/* sys_vtimer() */
 #  define SYS_RUNCTL     (KERNEL_CALL + 46)	/* sys_runctl() */
-#  define SYS_SAFEMAP	 (KERNEL_CALL + 47)	/* sys_safemap() */
-#  define SYS_SAFEREVMAP (KERNEL_CALL + 48)	/* sys_saferevmap() sys_saferevmap2() */
-#  define SYS_SAFEUNMAP	 (KERNEL_CALL + 49)	/* sys_safeunmap() */
 #  define SYS_GETMCONTEXT (KERNEL_CALL + 50)    /* sys_getmcontext() */
 #  define SYS_SETMCONTEXT (KERNEL_CALL + 51)    /* sys_setmcontext() */
 
@@ -362,8 +359,8 @@
 /* Basic kernel calls allowed to every system process. */
 #define SYS_BASIC_CALLS \
     SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
-    SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, SYS_SAFEMAP, SYS_SAFEREVMAP, \
-    SYS_SAFEUNMAP, SYS_PROFBUF, SYS_SYSCTL, SYS_STATECTL, SYS_SAFEMEMSET
+    SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, \
+    SYS_PROFBUF, SYS_SYSCTL, SYS_STATECTL, SYS_SAFEMEMSET
 
 /* Field names for SYS_MEMSET. */
 #define MEM_PTR		m2_p1	/* base */
@@ -573,14 +570,6 @@
 /* Field names for SYS_VSAFECOPY* */
 #define VSCP_VEC_ADDR	m2_p1	/* start of vector */
 #define VSCP_VEC_SIZE	m2_l2	/* elements in vector */
-
-/* Field names for SYS_SAFEMAPs */
-#define SMAP_EP		m2_i1
-#define SMAP_GID	m2_i2
-#define SMAP_OFFSET	m2_i3
-#define SMAP_ADDRESS	m2_l1
-#define SMAP_BYTES	m2_l2
-#define SMAP_FLAG	m2_s1
 
 #define SMAP_SEG_OBSOLETE	m2_p1
 

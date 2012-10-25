@@ -83,29 +83,6 @@ int ds_publish_mem(const char *ds_name, void *vaddr, size_t length, int flags)
 	return ds_publish_raw(ds_name, vaddr, length, flags | DSF_TYPE_MEM);
 }
 
-int ds_publish_map(const char *ds_name, void *vaddr, size_t length, int flags)
-{
-	cp_grant_id_t gid;
-	int r;
-
-	if(((vir_bytes)vaddr % CLICK_SIZE != 0) || (length % CLICK_SIZE != 0))
-		return EINVAL;
-
-	/* Grant for mapped memory range. */
-	gid = cpf_grant_direct(DS_PROC_NR, (vir_bytes)vaddr, length,
-			CPF_READ | CPF_MAP);
-	if(!GRANT_VALID(gid))
-		return errno;
-
-	m.DS_VAL = gid;
-	m.DS_VAL_LEN = length;
-	m.DS_FLAGS = DSF_TYPE_MAP | flags;
-
-	r = do_invoke_ds(DS_PUBLISH, ds_name);
-
-	return r;
-}
-
 int ds_snapshot_map(const char *ds_name, int *nr_snapshot)
 {
 	int r;
@@ -175,55 +152,6 @@ int ds_retrieve_mem(const char *ds_name, char *vaddr, size_t *length)
 	return ds_retrieve_raw(ds_name, vaddr, length, DSF_TYPE_MEM);
 }
 
-int ds_retrieve_map(const char *ds_name, char *vaddr, size_t *length,
-		int nr_snapshot, int flags)
-{
-	cp_grant_id_t gid;
-	int r;
-
-	/* Map a mapped memory range. */
-	if(flags & DSMF_MAP_MAPPED) {
-		/* Request DS to grant. */
-		m.DS_FLAGS = DSF_TYPE_MAP | DSMF_MAP_MAPPED;
-		r = do_invoke_ds(DS_RETRIEVE, ds_name);
-		if(r != OK)
-			return r;
-
-		/* Do the safemap. */
-		if(*length > (size_t) m.DS_VAL_LEN)
-			*length = (size_t) m.DS_VAL_LEN;
-		*length = (size_t) CLICK_FLOOR(*length);
-		r = sys_safemap(DS_PROC_NR, m.DS_VAL, 0,
-				(vir_bytes)vaddr, *length, 0);
-
-	/* Copy mapped memory range or a snapshot. */
-	} else if(flags & (DSMF_COPY_MAPPED|DSMF_COPY_SNAPSHOT)) {
-		/* Grant for memory range first. */
-		gid = cpf_grant_direct(DS_PROC_NR, (vir_bytes)vaddr,
-				*length, CPF_WRITE);
-		if(!GRANT_VALID(gid))
-			return errno;
-
-		m.DS_VAL = gid;
-		m.DS_VAL_LEN = *length;
-		if(flags & DSMF_COPY_MAPPED) {
-			m.DS_FLAGS = DSF_TYPE_MAP | DSMF_COPY_MAPPED;
-		}
-		else {
-			m.DS_NR_SNAPSHOT = nr_snapshot;
-			m.DS_FLAGS = DSF_TYPE_MAP | DSMF_COPY_SNAPSHOT;
-		}
-		r = do_invoke_ds(DS_RETRIEVE, ds_name);
-		*length = m.DS_VAL_LEN;
-		cpf_revoke(gid);
-	}
-	else {
-		return EINVAL;
-	}
-
-	return r;
-}
-
 int ds_delete_u32(const char *ds_name)
 {
 	m.DS_FLAGS = DSF_TYPE_U32;
@@ -239,12 +167,6 @@ int ds_delete_str(const char *ds_name)
 int ds_delete_mem(const char *ds_name)
 {
 	m.DS_FLAGS = DSF_TYPE_MEM;
-	return do_invoke_ds(DS_DELETE, ds_name);
-}
-
-int ds_delete_map(const char *ds_name)
-{
-	m.DS_FLAGS = DSF_TYPE_MAP;
 	return do_invoke_ds(DS_DELETE, ds_name);
 }
 

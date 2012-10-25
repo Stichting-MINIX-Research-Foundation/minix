@@ -167,21 +167,6 @@ static int get_key_name(const message *m_ptr, char *key_name)
 }
 
 /*===========================================================================*
- *			     check_snapshot_index			     *
- *===========================================================================*/
-static int check_snapshot_index(const struct data_store *dsp, int index)
-{
-/* See if the given snapshot index is valid. */
-  int min;
-
-  min = dsp->u.map.sindex < NR_DS_SNAPSHOT
-	? 0
-	: dsp->u.map.sindex - NR_DS_SNAPSHOT + 1;
-
-  return (index >= min && index <= dsp->u.map.sindex) ? 0 : 1;
-}
-
-/*===========================================================================*
  *				check_sub_match				     *
  *===========================================================================*/
 static int check_sub_match(const struct subscription *subp,
@@ -303,10 +288,6 @@ int do_publish(message *m_ptr)
   if((flags & DSF_TYPE_LABEL) && m_ptr->m_source != RS_PROC_NR)
 	  return EPERM;
 
-  /* MAP should not be overwritten. */
-  if((flags & DSF_TYPE_MAP) && (flags & DSF_OVERWRITE))
-	return EINVAL;
-
   /* Get key name. */
   if((r = get_key_name(m_ptr, key_name)) != OK)
 	return r;
@@ -365,25 +346,6 @@ int do_publish(message *m_ptr)
 		((char*)dsp->u.mem.data)[length-1] = '\0';
 	}
 	break;
-  case DSF_TYPE_MAP:
-  	/* Allocate buffer, the address should be aligned by CLICK_SIZE. */
-	length = m_ptr->DS_VAL_LEN;
-	if((dsp->u.map.realpointer = malloc(length + CLICK_SIZE)) == NULL)
-		return ENOMEM;
-	dsp->u.map.data = (void*) CLICK_CEIL(dsp->u.map.realpointer);
-
-	/* Map memory. */
-	r = sys_safemap(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL, 0,
-		(vir_bytes) dsp->u.map.data, length, 0);
-	if(r != OK) {
-		printf("DS: publish: memory map/copy failed from %d: %d\n",
-			m_ptr->m_source, r);
-		free(dsp->u.map.realpointer);
-		return r;
-	}
-	dsp->u.map.length = length;
-	dsp->u.map.sindex = -1;
-	break;
   default:
 	return EINVAL;
   }
@@ -409,8 +371,7 @@ int do_retrieve(message *m_ptr)
   int flags = m_ptr->DS_FLAGS;
   int type = flags & DSF_MASK_TYPE;
   size_t length;
-  void *data;
-  int index, r;
+  int r;
 
   /* Get key name. */
   if((r = get_key_name(m_ptr, key_name)) != OK)
@@ -439,49 +400,6 @@ int do_retrieve(message *m_ptr)
 		return r;
 	}
 	m_ptr->DS_VAL_LEN = length;
-	break;
-  case DSF_TYPE_MAP:
-	/* The caller requested to map a mapped memory range.
-	 * Create a MAP grant for the caller, the caller will do the
-	 * safemap itself later.
-	 */
-	if(flags & DSMF_MAP_MAPPED) {
-		cp_grant_id_t gid;
-		gid = cpf_grant_direct(m_ptr->m_source,
-				(vir_bytes)dsp->u.map.data,
-				dsp->u.map.length,
-				CPF_READ|CPF_WRITE|CPF_MAP);
-		if(!GRANT_VALID(gid))
-			return -1;
-		m_ptr->DS_VAL = gid;
-		m_ptr->DS_VAL_LEN = dsp->u.map.length;
-	}
-
-	/* The caller requested a copy of a mapped mem range or a snapshot. */
-	else if(flags & (DSMF_COPY_MAPPED|DSMF_COPY_SNAPSHOT)) {
-		if(flags & DSMF_COPY_MAPPED) {
-			data = dsp->u.map.data;
-		} else {
-			index = m_ptr->DS_NR_SNAPSHOT;
-			if(check_snapshot_index(dsp, index))
-				return EINVAL;
-			data = dsp->u.map.snapshots[index % NR_DS_SNAPSHOT];
-		}
-
-		length = MIN(m_ptr->DS_VAL_LEN, dsp->u.map.length);
-		r = sys_safecopyto(m_ptr->m_source,
-		        (cp_grant_id_t) m_ptr->DS_VAL, (vir_bytes) 0,
-			(vir_bytes) data, length);
-		if(r != OK) {
-			printf("DS: retrieve: copy failed to %d: %d\n",	
-				m_ptr->m_source, r);
-			return r;
-		}
-		m_ptr->DS_VAL_LEN = length;
-	}
-	else {
-		return EINVAL;
-	}
 	break;
   default:
 	return EINVAL;
@@ -647,7 +565,7 @@ int do_delete(message *m_ptr)
   char *source;
   char *label;
   int type = m_ptr->DS_FLAGS & DSF_MASK_TYPE;
-  int top, i, r;
+  int i, r;
 
   /* Lookup the source. */
   source = ds_getprocname(m_ptr->m_source);
@@ -694,25 +612,6 @@ int do_delete(message *m_ptr)
   case DSF_TYPE_MEM:
 	free(dsp->u.mem.data);
 	break;
-  case DSF_TYPE_MAP:
-	/* Unmap the mapped data. */
-	r = sys_safeunmap((vir_bytes)dsp->u.map.data);
-	if(r != OK)
-		printf("DS: sys_safeunmap failed. Grant already revoked?\n");
-
-	/* Revoke all the mapped grants. */
-	r = sys_saferevmap_addr((vir_bytes)dsp->u.map.data);
-	if(r != OK)
-		return r;
-
-	/* Free snapshots. */
-	top = MIN(NR_DS_SNAPSHOT - 1, dsp->u.map.sindex);
-	for(i = 0; i <= top; i++) {
-		free(dsp->u.map.snapshots[i]);
-	}
-
-	free(dsp->u.map.realpointer);
-	break;
   default:
 	return EINVAL;
   }
@@ -722,47 +621,6 @@ int do_delete(message *m_ptr)
 
   /* Clear the entry. */
   dsp->flags = 0;
-
-  return OK;
-}
-
-/*===========================================================================*
- *				do_snapshot				     *
- *===========================================================================*/
-int do_snapshot(message *m_ptr)
-{
-  struct data_store *dsp;
-  struct dsi_map *p;
-  char key_name[DS_MAX_KEYLEN];
-  int i, r;
-
-  /* Get key name. */
-  if((r = get_key_name(m_ptr, key_name)) != OK)
-	return r;
-
-  /* Lookup the entry. */
-  if((dsp = lookup_entry(key_name, DSF_TYPE_MAP)) == NULL)
-	return ESRCH;
-
-  if(!check_auth(dsp, m_ptr->m_source, DSF_PRIV_SNAPSHOT))
-	return EPERM;
-
-  /* Find a snapshot slot. */
-  p = &dsp->u.map;
-  p->sindex++;
-  i = p->sindex % DS_MAX_KEYLEN;
-  if(p->sindex < DS_MAX_KEYLEN) {
-	if((p->snapshots[i] = malloc(p->length)) == NULL) {
-		p->sindex--;
-		return ENOMEM;
-	}
-  }
-
-  /* Store the snapshot. */
-  memcpy(p->snapshots[i], p->data, p->length);
-
-  /* Copy the snapshot index. */
-  m_ptr->DS_NR_SNAPSHOT = p->sindex;
 
   return OK;
 }

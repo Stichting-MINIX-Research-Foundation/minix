@@ -298,48 +298,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	}
 
 	/* Do the regular copy. */
-#if PERF_USE_COW_SAFECOPY
-	if(v_offset % CLICK_SIZE != addr % CLICK_SIZE || bytes < CLICK_SIZE) {
-		/* Give up on COW immediately when offsets are not aligned
-		 * or we are copying less than a page.
-		 */
-		return virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
-	}
-
-	if((size = v_offset % CLICK_SIZE) != 0) {
-		/* Normal copy for everything before the first page boundary. */
-		size = CLICK_SIZE - size;
-		r = virtual_copy_vmcheck(caller, &v_src, &v_dst, size);
-		if(r != OK)
-			return r;
-		v_src.offset += size;
-		v_dst.offset += size;
-		bytes -= size;
-	}
-	if((size = bytes / CLICK_SIZE) != 0) {
-		/* Use COW optimization when copying entire pages. */
-		size *= CLICK_SIZE;
-		r = map_invoke_vm(VMPTYPE_COWMAP,
-			v_dst.proc_nr_e, v_dst.segment, v_dst.offset,
-			v_src.proc_nr_e, v_src.segment, v_src.offset,
-			size, 0);
-		if(r != OK)
-			return r;
-		v_src.offset += size;
-		v_dst.offset += size;
-		bytes -= size;
-	}
-	if(bytes != 0) {
-		/* Normal copy for everything after the last page boundary. */
-		r = virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
-		if(r != OK)
-			return r;
-	}
-
-	return OK;
-#else
 	return virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
-#endif
 }
 
 /*===========================================================================*

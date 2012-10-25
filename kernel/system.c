@@ -231,11 +231,6 @@ void system_init(void)
   /* safe memset */
   map(SYS_SAFEMEMSET, do_safememset);	/* safememset */
 
-  /* Mapping. */
-  map(SYS_SAFEMAP, do_safemap);		/* map pages from other process */
-  map(SYS_SAFEREVMAP, do_saferevmap);	/* grantor revokes the map grant */
-  map(SYS_SAFEUNMAP, do_safeunmap);	/* requestor unmaps the mapped pages */
-
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */
   map(SYS_SETALARM, do_setalarm);	/* schedule a synchronous alarm */

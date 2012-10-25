@@ -55,7 +55,6 @@ struct vscp_vec {
 /* Operations: any combination is ok. */
 #define CPF_READ	0x000001 /* Granted process may read. */
 #define CPF_WRITE	0x000002 /* Granted process may write. */
-#define CPF_MAP		0x000004 /* Granted process may map. */
 
 /* Internal flags. */
 #define CPF_USED	0x000100 /* Grant slot in use. */

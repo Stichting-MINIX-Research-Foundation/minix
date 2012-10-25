@@ -15,7 +15,6 @@
 #define DSF_TYPE_U32		0x010	/* u32 data type */
 #define DSF_TYPE_STR		0x020	/* string data type */
 #define DSF_TYPE_MEM		0x040	/* memory range data type */
-#define DSF_TYPE_MAP		0x080	/* mapped memory range data type */
 #define DSF_TYPE_LABEL		0x100	/* label data type */
 
 #define DSF_MASK_TYPE		0xFF0	/* mask for type flags. */
@@ -24,7 +23,6 @@
 #define DSF_OVERWRITE		0x01000	/* overwrite if entry exists */
 #define DSF_INITIAL		0x02000	/* check subscriptions immediately */
 
-#define DSMF_MAP_MAPPED		0x10000	/* map mapped memory range */
 #define DSMF_COPY_MAPPED	0x20000	/* copy mapped memory range */
 #define DSMF_COPY_SNAPSHOT	0x40000	/* copy snapshot */
 

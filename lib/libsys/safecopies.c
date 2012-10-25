@@ -16,7 +16,7 @@
 #include <string.h>
 
 #define ACCESS_CHECK(a) { 			\
-	if((a) & ~(CPF_READ|CPF_WRITE|CPF_MAP)) {	\
+	if((a) & ~(CPF_READ|CPF_WRITE)) {	\
 		errno = EINVAL;			\
 		return -1;			\
 	}					\
@@ -213,15 +213,7 @@ int
 cpf_revoke(cp_grant_id_t g)
 {
 /* Revoke previously granted access, identified by grant id. */
-	int r;
 	GID_CHECK_USED(g);
-
-	/* If this grant is for memory mapping, revoke the mapping first. */
-	if(grants[g].cp_flags & CPF_MAP) {
-		r = sys_saferevmap_gid(g);
-		if(r != 0)
-			return r;
-	}
 
 	/* Make grant invalid by setting flags to 0, clearing CPF_USED.
 	 * This invalidates the grant.
@@ -274,11 +266,6 @@ int access;
 	GID_CHECK(gid);
 	ACCESS_CHECK(access);
 
-	/* Check click alignment in case of memory mapping grant. */
-	if(access & CPF_MAP) {
-		CLICK_ALIGNMENT_CHECK(addr, bytes);
-	}
-
 	/* Fill in new slot data. */
 	grants[gid].cp_flags = access | CPF_DIRECT | CPF_USED | CPF_VALID;
 	grants[gid].cp_u.cp_direct.cp_who_to = who;
@@ -315,11 +302,6 @@ int access;
 {
 	GID_CHECK(gid);
 	ACCESS_CHECK(access);
-
-	/* Check click alignment in case of memory mapping grant. */
-	if(access & CPF_MAP) {
-		CLICK_ALIGNMENT_CHECK(addr, bytes);
-	}
 
 	/* Fill in new slot data. */
 	grants[gid].cp_flags = CPF_USED | CPF_MAGIC | CPF_VALID | access;

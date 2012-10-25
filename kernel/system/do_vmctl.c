@@ -59,26 +59,6 @@ int do_vmctl(struct proc * caller, message * m_ptr)
 			m_ptr->SVMCTL_MRG_REQUESTOR	=
 				(void *) rp->p_endpoint;
 			break;
-		case VMPTYPE_SMAP:
-		case VMPTYPE_SUNMAP:
-		case VMPTYPE_COWMAP:
-			assert(RTS_ISSET(target,RTS_VMREQTARGET));
-			RTS_UNSET(target, RTS_VMREQTARGET);
-			m_ptr->SVMCTL_MRG_TARGET	=
-				rp->p_vmrequest.target;
-			m_ptr->SVMCTL_MRG_ADDR		=
-				rp->p_vmrequest.params.map.vir_d;
-			m_ptr->SVMCTL_MRG_EP2		=
-				rp->p_vmrequest.params.map.ep_s;
-			m_ptr->SVMCTL_MRG_ADDR2		=
-				rp->p_vmrequest.params.map.vir_s;
-			m_ptr->SVMCTL_MRG_LENGTH	=
-				rp->p_vmrequest.params.map.length;
-			m_ptr->SVMCTL_MRG_FLAG		=
-				rp->p_vmrequest.params.map.writeflag;
-			m_ptr->SVMCTL_MRG_REQUESTOR	=
-				(void *) rp->p_endpoint;
-			break;
 		default:
 			panic("VMREQUEST wrong type");
 		}

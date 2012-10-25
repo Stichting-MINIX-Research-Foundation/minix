@@ -130,11 +130,6 @@ void hook_ipc_msgkresult(message *msg, struct proc *proc);
 void hook_ipc_clear(struct proc *proc);
 #endif
 
-/* system/do_safemap.c */
-int map_invoke_vm(struct proc * caller, int req_type, endpoint_t end_d,
-	vir_bytes off_d, endpoint_t end_s, vir_bytes
-	off_s, size_t size, int flag);
-
 /* system/do_safecopy.c */
 int verify_grant(endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes, int,
 	vir_bytes, vir_bytes *, endpoint_t *);

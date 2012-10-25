@@ -109,12 +109,6 @@ struct proc {
 			vir_bytes 	start, length;	/* memory range */
 			u8_t		writeflag;	/* nonzero for write access */
 		} check;
-		struct {
-			char		writeflag;
-			endpoint_t	ep_s;
-			vir_bytes	vir_s, vir_d;
-			vir_bytes	length;
-		} map;
 	} params;
 	/* VM result when available */
 	int		vmresult;

@@ -34,10 +34,6 @@ void data_store_dmp()
 	case DSF_TYPE_MEM:
 		printf("%-10s %12u\n", "MEM", p->u.mem.length);
 		break;
-	case DSF_TYPE_MAP:
-		printf("%-10s %9u/%3u\n", "MAP", p->u.map.length,
-			p->u.map.sindex);
-		break;
 	case DSF_TYPE_LABEL:
 		printf("%-10s %12u\n", "LABEL", p->u.u32);
 		break;

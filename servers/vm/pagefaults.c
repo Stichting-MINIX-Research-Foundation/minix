@@ -140,15 +140,6 @@ void do_memory(void)
 
 			r = handle_memory(vmp, mem, len, wrflag);
 			break;
-		case VMPTYPE_COWMAP:
-			r = map_memory(who_s, who, mem_s, mem, len, -1);
-			break;
-		case VMPTYPE_SMAP:
-			r = map_memory(who_s, who, mem_s, mem, len, wrflag);
-			break;
-		case VMPTYPE_SUNMAP:
-			r = unmap_memory(who_s, who, mem_s, mem, len, wrflag);
-			break;
 		default:
 			return;
 		}

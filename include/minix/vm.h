@@ -35,9 +35,6 @@ int vm_yield_block_get_block(u64_t yieldid, u64_t getid, void *mem,
 /* VM kernel request types. */
 #define VMPTYPE_NONE		0
 #define VMPTYPE_CHECK		1
-#define VMPTYPE_COWMAP		2
-#define VMPTYPE_SMAP		3
-#define VMPTYPE_SUNMAP		4
 
 struct vm_stats_info {
   unsigned int vsi_pagesize;	/* page size */
