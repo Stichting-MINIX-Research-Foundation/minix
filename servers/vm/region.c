@@ -1201,13 +1201,6 @@ int map_writept(struct vmproc *vmp)
 		while((ph = physr_get_iter(&ph_iter))) {
 			physr_incr_iter(&ph_iter);
 
-			/* If this phys block is shared as SMAP, then do
-			 * not update the page table. */
-			if(ph->ph->refcount > 1
-				&& ph->ph->share_flag == PBSH_SMAP) {
-				continue;
-			}
-
 			if((r=map_ph_writept(vmp, vr, ph)) != OK) {
 				printf("VM: map_writept: failed\n");
 				return r;
@@ -1279,15 +1272,6 @@ struct vir_region *start_src_vr;
 			assert(orig_ph != new_ph);
 			pb = orig_ph->ph;
 			assert(orig_ph->ph == new_ph->ph);
-
-			/* If the phys block has been shared as SMAP,
-			 * do the regular copy. */
-			if(pb->refcount > 2 && pb->share_flag == PBSH_SMAP) {
-				map_clone_ph_block(dst, newvr,new_ph,
-					&iter_new);
-			} else {
-				USE(pb, pb->share_flag = PBSH_COW;);
-			}
 
 			/* Get next new physregion */
 			physr_incr_iter(&iter_orig);
@@ -1503,8 +1487,7 @@ void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
 				vui->vui_common += VM_PAGE_SIZE;
 	
 				/* Any common, non-COW page is shared. */
-				if (vr->flags & VR_SHARED ||
-					ph->ph->share_flag == PBSH_SMAP)
+				if (vr->flags & VR_SHARED)
 					vui->vui_shared += VM_PAGE_SIZE;
 			}
 			physr_incr_iter(&iter);
@@ -1585,189 +1568,6 @@ void printregionstats(struct vmproc *vmp)
 	printf("%6lukB  %6lukB\n", used/1024, weighted/1024);
 
 	return;
-}
-
-/*===========================================================================*
- *                              do_map_memory                                *
- *===========================================================================*/
-static int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
-        struct vir_region *vrs, struct vir_region *vrd,
-        vir_bytes offset_s, vir_bytes offset_d,
-        vir_bytes length, int flag)
-{
-        struct phys_region *prs;
-        struct phys_region *newphysr;
-        struct phys_block *pb;
-        physr_iter iter;
-        u32_t pt_flag = PTF_PRESENT | PTF_USER;
-        vir_bytes end;
-
-	if(map_handle_memory(vms, vrs, offset_s, length, 0) != OK) {
-		printf("do_map_memory: source cleaning up didn't work\n");
-		return EFAULT;
-	}
-
-        /* Search for the first phys region in the source process. */
-        physr_start_iter(vrs->phys, &iter, offset_s, AVL_EQUAL);
-        prs = physr_get_iter(&iter);
-        if(!prs)
-                panic("do_map_memory: no aligned phys region");
-
-        /* flag: 0 -> read-only
-         *       1 -> writable
-         *      -1 -> share as COW, so read-only
-         */
-        if(flag > 0)
-                pt_flag |= PTF_WRITE;
-	else
-                pt_flag |= PTF_READ;
-
-        /* Map phys blocks in the source process to the destination process. */
-        end = offset_d + length;
-        while((prs = physr_get_iter(&iter)) && offset_d < end) {
-                /* If a SMAP share was requested but the phys block has already
-                 * been shared as COW, copy the block for the source phys region
-                 * first.
-                 */
-                pb = prs->ph;
-                if(flag >= 0 && pb->refcount > 1
-                        && pb->share_flag == PBSH_COW) {
-			if(!(prs = map_clone_ph_block(vms, vrs, prs, &iter)))
-				return ENOMEM;
-                        pb = prs->ph;
-                }
-
-                /* Allocate a new phys region. */
-                if(!(newphysr = pb_reference(pb, offset_d, vrd)))
-                        return ENOMEM;
-
-                /* If a COW share was requested but the phys block has already
-                 * been shared as SMAP, give up on COW and copy the block for
-                 * the destination phys region now.
-                 */
-                if(flag < 0 && pb->refcount > 1
-                        && pb->share_flag == PBSH_SMAP) {
-			if(!(newphysr = map_clone_ph_block(vmd, vrd,
-				newphysr, NULL))) {
-				return ENOMEM;
-			}
-                }
-                else {
-                        /* See if this is a COW share or SMAP share. */
-                        if(flag < 0) {                  /* COW share */
-                                pb->share_flag = PBSH_COW;
-                                /* Update the page table for the src process. */
-                                pt_writemap(vms, &vms->vm_pt, offset_s + vrs->vaddr,
-                                        pb->phys, VM_PAGE_SIZE,
-                                        pt_flag, WMF_OVERWRITE);
-                        }
-                        else {                          /* SMAP share */
-                                pb->share_flag = PBSH_SMAP;
-                        }
-                        /* Update the page table for the destination process. */
-                        pt_writemap(vmd, &vmd->vm_pt, offset_d + vrd->vaddr,
-                                pb->phys, VM_PAGE_SIZE, pt_flag, WMF_OVERWRITE);
-                }
-
-                physr_incr_iter(&iter);
-                offset_d += VM_PAGE_SIZE;
-                offset_s += VM_PAGE_SIZE;
-        }
-        return OK;
-}
-
-/*===========================================================================*
- *				unmap_memory				     *
- *===========================================================================*/
-int unmap_memory(endpoint_t sour, endpoint_t dest,
-	vir_bytes virt_s, vir_bytes virt_d, vir_bytes length, int flag)
-{
-	struct vmproc *vmd;
-	struct vir_region *vrd;
-	struct phys_region *pr;
-	struct phys_block *pb;
-	physr_iter iter;
-	vir_bytes off, end;
-	int p;
-
-	/* Use information on the destination process to unmap. */
-	if(vm_isokendpt(dest, &p) != OK)
-		panic("unmap_memory: bad endpoint: %d", dest);
-	vmd = &vmproc[p];
-
-	vrd = map_lookup(vmd, virt_d, NULL);
-	assert(vrd);
-
-	/* Search for the first phys region in the destination process. */
-	off = virt_d - vrd->vaddr;
-	physr_start_iter(vrd->phys, &iter, off, AVL_EQUAL);
-	pr = physr_get_iter(&iter);
-	if(!pr)
-		panic("unmap_memory: no aligned phys region");
-
-	/* Copy the phys block now rather than doing COW. */
-	end = off + length;
-	while((pr = physr_get_iter(&iter)) && off < end) {
-		pb = pr->ph;
-		assert(pb->refcount > 1);
-		assert(pb->share_flag == PBSH_SMAP);
-
-		if(!(pr = map_clone_ph_block(vmd, vrd, pr, &iter)))
-			return ENOMEM;
-
-		physr_incr_iter(&iter);
-		off += VM_PAGE_SIZE;
-	}
-
-	return OK;
-}
-
-/*===========================================================================*
- *				map_memory				     *
- *===========================================================================*/
-int map_memory(endpoint_t sour, endpoint_t dest,
-	vir_bytes virt_s, vir_bytes virt_d, vir_bytes length, int flag)
-{
-/* This is the entry point. This function will be called by handle_memory() when
- * VM recieves a map-memory request.
- */
-	struct vmproc *vms, *vmd;
-	struct vir_region *vrs, *vrd;
-	vir_bytes offset_s, offset_d;
-	int p;
-	int r;
-
-	if(vm_isokendpt(sour, &p) != OK)
-		panic("map_memory: bad endpoint: %d", sour);
-	vms = &vmproc[p];
-	if(vm_isokendpt(dest, &p) != OK)
-		panic("map_memory: bad endpoint: %d", dest);
-	vmd = &vmproc[p];
-
-	vrs = map_lookup(vms, virt_s, NULL);
-	assert(vrs);
-	vrd = map_lookup(vmd, virt_d, NULL);
-	assert(vrd);
-
-	/* Linear address -> offset from start of vir region. */
-	offset_s = virt_s - vrs->vaddr;
-	offset_d = virt_d - vrd->vaddr;
-
-	/* Make sure that the range in the source process has been mapped
-	 * to physical memory.
-	 */
-	map_handle_memory(vms, vrs, offset_s, length, 0);
-
-	/* Prepare work. */
-
-	if((r=map_subfree(vrd, offset_d, length)) != OK) {
-		return r;
-	}
-
-	/* Map memory. */
-	r = do_map_memory(vms, vmd, vrs, vrd, offset_s, offset_d, length, flag);
-
-	return r;
 }
 
 /*===========================================================================*

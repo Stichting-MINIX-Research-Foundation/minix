@@ -83,12 +83,6 @@ static int anon_pagefault(struct vmproc *vmp, struct vir_region *region,
 
         assert(region->flags & VR_WRITABLE);
 
-        if(ph->ph->share_flag != PBSH_COW) {
-                printf("VM: write RO mapped pages.\n");
-		free_mem(new_page_cl, 1);
-                return EFAULT;
-        }
-
 	if(sys_abscopy(ph->ph->phys, new_page, VM_PAGE_SIZE) != OK) {
 		panic("VM: abscopy failed\n");
 		return EFAULT;

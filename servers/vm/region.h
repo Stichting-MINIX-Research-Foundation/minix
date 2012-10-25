@@ -27,9 +27,6 @@ struct phys_block {
 #endif
 	phys_bytes		phys;	/* physical memory */
 	u8_t			refcount;	/* Refcount of these pages */
-#define PBSH_COW	1
-#define PBSH_SMAP	2
-	u8_t			share_flag;	/* PBSH_COW or PBSH_SMAP */
 
 	/* what kind of memory is it? */
 	mem_type_t		*memtype;

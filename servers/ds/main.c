@@ -69,9 +69,6 @@ int main(int argc, char **argv)
       case DS_CHECK:
 	  result = do_check(&m);
 	  break;
-      case DS_SNAPSHOT:
-	  result = do_snapshot(&m);
-	  break;
       case COMMON_GETSYSINFO:
 	  result = do_getsysinfo(&m);
 	  break;
