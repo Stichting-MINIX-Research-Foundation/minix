@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	tar -xf make-3.80.tar.bz2 && \
+	tar -xjf make-3.80.tar.bz2 && \
 	mv make-3.80 gmake
 fi
 

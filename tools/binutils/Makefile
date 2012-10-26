@@ -11,10 +11,7 @@ BRANDING?=	\
 	--with-bugurl="http://www.NetBSD.org/support/send-pr.html" \
 	--with-lib-path="=/usr/lib" --with-sysroot
 
-# LSC FIXME: We are now using the triple i386-elf-minix instead of
-#            elf32-i386-minix which is the correct one for us...
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
-		--target=${MACHINE_ARCH}-elf-minix \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
 		--disable-werror \
 		${BRANDING}

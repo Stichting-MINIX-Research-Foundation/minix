@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/10/22 10:41:50 tron Exp $
+#	$NetBSD: Makefile,v 1.10 2012/08/06 02:34:28 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -20,9 +20,12 @@ G_LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
 .endif
 
 SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
-		${G_LIB2ADD_HACK:T:S/.asm/.S/} ${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_ST} ${LIB1ASMFUNCS}
+		${G_LIB2ADD_HACK:T:S/.asm/.S/} ${G_LIB2ADD:T:S/.asm/.S/} \
+		${G_LIB2ADD_ST} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
-SRCS+=		${LIB2_EH}
+.if ${MACHINE_ARCH} != "earm" && ${MACHINE_ARCH} != "earmeb"
+SRCS+=		${LIB2_EH} ${LIB2_EHASM}
+.endif
 .else
 CPPFLAGS+=	-DPIC
 .endif

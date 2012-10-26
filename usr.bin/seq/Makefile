@@ -1,10 +1,9 @@
-#       $NetBSD: Makefile,v 1.3 2009/04/14 22:15:26 lukem Exp $
+#       $NetBSD: Makefile,v 1.4 2011/08/17 13:19:09 christos Exp $
 
 PROG=	seq
 DPADD=	${LIBMATH}
 LDADD=	-lm
 
-# LSC Until it compiles cleanly...
-NOGCCERROR:=yes
+COPTS.seq.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>

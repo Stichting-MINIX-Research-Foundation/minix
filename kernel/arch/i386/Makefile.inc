@@ -17,18 +17,18 @@ SYS_OBJS_UNPAGED=kprintf.o vprintf.o assert.o stacktrace.o
 #
 .for UNPAGED_OBJ in head.o pre_init.o direct_tty_utils.o io_outb.o \
 	io_inb.o pg_utils.o klib.o utility.o arch_reset.o \
-	$(MINLIB_OBJS_UNPAGED) $(MINC_OBJS_UNPAGED) $(SYS_OBJS_UNPAGED)
+	${MINLIB_OBJS_UNPAGED} ${MINC_OBJS_UNPAGED} ${SYS_OBJS_UNPAGED}
 unpaged_${UNPAGED_OBJ}: ${UNPAGED_OBJ}
-	objcopy --prefix-symbols=__k_unpaged_ ${UNPAGED_OBJ} unpaged_${UNPAGED_OBJ}
+	${OBJCOPY} --prefix-symbols=__k_unpaged_ ${UNPAGED_OBJ} unpaged_${UNPAGED_OBJ}
 UNPAGED_OBJS += unpaged_${UNPAGED_OBJ}
 ORIG_UNPAGED_OBJS += ${UNPAGED_OBJ}
 .endfor
 
 # we have to extract some object files from libminc.a and libminlib.a
-$(MINLIB_OBJS_UNPAGED) $(MINC_OBJS_UNPAGED) $(SYS_OBJS_UNPAGED): $(LIBMINLIB) $(LIBMINC) $(LIBSYS)
-	ar x $(LIBMINLIB) $(MINLIB_OBJS_UNPAGED)
-	ar x $(LIBMINC) $(MINC_OBJS_UNPAGED)
-	ar x $(LIBSYS) $(SYS_OBJS_UNPAGED)
+${MINLIB_OBJS_UNPAGED} ${MINC_OBJS_UNPAGED} ${SYS_OBJS_UNPAGED}: ${LIBMINLIB} ${LIBMINC} ${LIBSYS}
+	${AR} x ${LIBMINLIB} ${MINLIB_OBJS_UNPAGED}
+	${AR} x ${LIBMINC} ${MINC_OBJS_UNPAGED}
+	${AR} x ${LIBSYS} ${SYS_OBJS_UNPAGED}
 
 CLEANFILES+= $(ORIG_UNPAGED_OBJS)
 
@@ -70,9 +70,9 @@ TMP=procoffsets.h.tmp
 INCLS=../include/arch/i386/include/
 PROCOFFSETSCF=procoffsets.cf
 
-procoffsets.h: $(PROCOFFSETSCF) kernel.h proc.h $(INCLS)/stackframe.h $(INCLS)/archtypes.h
+procoffsets.h: ${PROCOFFSETSCF} kernel.h proc.h ${INCLS}/stackframe.h ${INCLS}/archtypes.h
 	${_MKTARGET_CREATE}
-	cat ${HERE}/$(PROCOFFSETSCF) | \
+	${TOOL_CAT} ${HERE}/${PROCOFFSETSCF} | \
 	  ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} >$TMP && \
 	  mv -f $TMP $@ 
 

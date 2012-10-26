@@ -59,7 +59,7 @@ ${tool}.c ${tool}.h: ${.OBJDIR}/mk${tool}
 init.c: ${.OBJDIR}/mkinit \
         alias.c eval.c exec.c input.c jobs.c options.c parser.c \
         redir.c trap.c var.c
-	${.OBJDIR}/mkinit ${.ALLSRC:S/^${.OBJDIR}/mkinit$//}
+	${.OBJDIR}/mkinit ${.ALLSRC:S,^${.OBJDIR}/mkinit$,,}
 
 # C. Generates C sources from shell scripts
 token.h:

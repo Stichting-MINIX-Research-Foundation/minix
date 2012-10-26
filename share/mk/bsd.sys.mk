@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.218 2012/09/05 22:40:30 riz Exp $
+#	$NetBSD: bsd.sys.mk,v 1.220 2012/09/23 19:20:44 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 

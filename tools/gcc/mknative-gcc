@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.67 2012/08/11 16:05:01 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.68 2012/09/25 06:55:10 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
-# platform build of src/gnu/dist/gcc.
+# platform build of gcc.
 #
 
 # initialise
@@ -548,6 +548,14 @@ get_libstdcxx_v3 () {
 
 ##### gnu/usr.bin/gcc3 #####
 
+get_gcc_bootstrap () {
+	_subdir="$1"
+	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
+	for f in auto-host tm config gthr-default; do
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
+	done
+}
+
 get_gcc () {
 	_subdir="$1"
 	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
@@ -697,6 +705,7 @@ libgcc45)
 	get_libgcc gcc
 	get_crtstuff crtstuff
 	get_libgcov gcc
+	get_gcc_bootstrap gcc
 	exit 0
 	;;
 

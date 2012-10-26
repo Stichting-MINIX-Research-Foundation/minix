@@ -14,10 +14,6 @@ MLINKS=	chpass.1 chfn.1 chpass.1 chsh.1
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib/libc/include
 
-.if defined(__MINIX)
-USE_YP=	no
-.endif
-
 .if (${USE_YP} != "no")
 SRCS+=	pw_yp.c
 CPPFLAGS+=-DYP

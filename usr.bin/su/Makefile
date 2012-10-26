@@ -3,9 +3,6 @@
 
 .include <bsd.own.mk>
 
-USE_PAM=no
-USE_KERBEROS=no
-
 USE_FORT?= yes	# setuid
 PROG=	su
 BINOWN=	root

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2010/06/07 13:52:29 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2012/01/22 18:36:16 christos Exp $
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys
 

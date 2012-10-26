@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.155 2011/11/03 07:42:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.157 2012/09/20 15:50:20 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -27,8 +27,6 @@ TOOLCHAIN_BITS+= gcc
 TOOLCHAIN_BITS+= gdb
 .  endif
 TOOLCHAIN_BITS+= .WAIT
-# XXX Eventually, we want to be able to build dbsym and mdsetimage
-# XXX if EXTERNAL_TOOLCHAIN is set.
 .endif
 .endif
 
@@ -38,9 +36,13 @@ TOOLCHAIN_BITS+= pcc
 .endif
 .endif
 
-.ifndef __MINIX
+.if !defined(__MINIX)
+.if ${TOOLCHAIN_MISSING} == "no"
+# XXX Eventually, we want to be able to build dbsym and mdsetimage
+# XXX if EXTERNAL_TOOLCHAIN is set.
 TOOLCHAIN_BITS+= dbsym mdsetimage
 .endif
+.endif # !defined(__MINIX)
 
 DTRACE_BITS=
 .if ${MKDTRACE} != "no"
@@ -59,7 +61,7 @@ LINT_BITS= lint lint2
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT sed .WAIT \
 		genassym \
-		makewhatis mkdep mtree\
+		makewhatis mkdep mtree .WAIT \
 		m4 \
 	.WAIT mkfs.mfs \
 	.WAIT yacc \
@@ -68,10 +70,11 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	.WAIT lex \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
-	cat cksum \
-	file \
-	.WAIT \
-	pwd_mkdb stat zic
+	${DTRACE_BITS} \
+		 cat cksum \
+		file \
+		.WAIT \
+		pwd_mkdb stat zic
 
 .if ${MKLLVM} != "no"
 # .WAIT between llvm-tblgen and llvm-clang-tblgen ensures install

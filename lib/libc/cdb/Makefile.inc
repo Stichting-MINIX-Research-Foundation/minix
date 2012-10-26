@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2010/04/25 00:54:46 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2012/03/17 17:59:58 christos Exp $
 
 # Constant database reader/writer
 
@@ -19,3 +19,6 @@ MLINKS+=	cdbw.3 cdbw_put_data.3
 MLINKS+=	cdbw.3 cdbw_put_key.3
 MLINKS+=	cdbw.3 cdbw_output.3
 MLINKS+=	cdbw.3 cdbw_close.3
+
+# XXX: Fix the code instead
+LINTFLAGS.cdbw.c += -X 132,259,298

@@ -10,13 +10,13 @@ SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 
 LINKERSCRIPT=${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 
-DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC} $(LINKERSCRIPT)
+DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC} ${LINKERSCRIPT}
 LDADD+=	-ltimers -lsys -lexec
 
 CFLAGS += -D__kernel__ 
 
 CPPFLAGS+= -fno-stack-protector -D_NETBSD_SOURCE -D_MINIX
-LDFLAGS+= -T $(LINKERSCRIPT)
+LDFLAGS+= -T ${LINKERSCRIPT}
 LDFLAGS+= -nostdlib -L${DESTDIR}/${LIBDIR}
 LDADD+= -lminlib
 DPADD+= ${LIBMINLIB}
@@ -77,15 +77,15 @@ CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h
 
 extracted-errno.h: extract-errno.sh ../include/errno.h
 	${_MKTARGET_CREATE}
-	cd ${.CURDIR} ; sh extract-errno.sh > ${.OBJDIR}/extracted-errno.h
+	cd ${.CURDIR} ; ${HOST_SH} extract-errno.sh > ${.OBJDIR}/extracted-errno.h
 
 extracted-mfield.h: extract-mfield.sh ../lib/libc/sys-minix/*.c ../lib/libsys/*.c
 	${_MKTARGET_CREATE}
-	cd ${.CURDIR} ; sh extract-mfield.sh > ${.OBJDIR}/extracted-mfield.h
+	cd ${.CURDIR} ; ${HOST_SH} extract-mfield.sh > ${.OBJDIR}/extracted-mfield.h
 
 extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
 	${_MKTARGET_CREATE}
-	cd ${.CURDIR} ; sh extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
+	cd ${.CURDIR} ; ${HOST_SH} extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
 
 clean:
 	rm -f extracted-errno.h extracted-mfield.h extracted-mtype.h
