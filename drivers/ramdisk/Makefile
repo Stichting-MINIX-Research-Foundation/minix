@@ -15,7 +15,7 @@ PROG_COMMANDS=cdprobe loadramdisk mount fsck.mfs sysenv sh \
 	service 
 PROG_SERVERS=mfs procfs
 PROG_USRSBIN=pwd_mkdb
-PROGRAMS=$(PROG_DRIVERS) $(PROG_COMMANDS) $(PROG_SERVERS) $(PROG_USRSBIN)
+PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} ${PROG_USRSBIN}
 EXTRA=system.conf master.passwd rs.single 
 PROTO_FILES=proto.common.etc proto.common.dynamic proto.sh proto.dev
 
@@ -32,11 +32,12 @@ PROG_DRIVERS+= acpi
 .endif
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
-CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
-CLEANFILES += $(LIBRARIES)
+CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${EXTRA} image image.c t proto.gen
+CLEANFILES += ${LIBRARIES}
 CLEANFILES += ${.OBJDIR}/etc/*
 
-image:	proto.gen $(EXTRA) mtab rc pwd.db spwd.db passwd
+image:	proto.gen ${EXTRA} mtab rc pwd.db spwd.db passwd
+	${_MKMSG_CREATE} "Generating ramdisk image"
 	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
 #	if fsck.mfs -s image | grep -q CLEAN;	\
 #	then	: ;	\
@@ -51,50 +52,50 @@ image:	proto.gen $(EXTRA) mtab rc pwd.db spwd.db passwd
 # I have to place .PHONY for the target to work as expected, but I cannot
 # execute the command during an in-tree build (= make xxx)
 .for file in rc mtab ${PROTO} ${PROTO_FILES}
-$(file): ${.CURDIR}/$(file) .PHONY
+${file}: ${.CURDIR}/${file} .PHONY
 	[ -e $@ ] || ${INSTALL} $> $@
 .endfor
 
-.for driver in $(PROG_DRIVERS)
-$(driver): ${PROGROOT}/drivers/$(driver)/$(driver)
+.for driver in ${PROG_DRIVERS}
+${driver}: ${PROGROOT}/drivers/${driver}/${driver}
 	${INSTALL} $> $@
 
-${PROGROOT}/drivers/$(driver)/$(driver):
-	$(MAKE) -C ${NETBSDSRCDIR}/drivers/$(driver) $(driver)
+${PROGROOT}/drivers/${driver}/${driver}:
+	${MAKE} -C ${NETBSDSRCDIR}/drivers/${driver} ${driver}
 .endfor
 
-.for cmd in $(PROG_COMMANDS)
-.if $(cmd) == sh
-dir.$(cmd)=ash
+.for cmd in ${PROG_COMMANDS}
+.if ${cmd} == sh
+dir.${cmd}=ash
 .else
-dir.$(cmd)=$(cmd)
+dir.${cmd}=${cmd}
 .endif
-$(cmd): ${PROGROOT}/commands/$(dir.$(cmd))/$(cmd)
+${cmd}: ${PROGROOT}/commands/${dir.${cmd}}/${cmd}
 	${INSTALL} $> $@
 
-${PROGROOT}/commands/$(dir.$(cmd))/$(cmd):
-	$(MAKE) -C ${NETBSDSRCDIR}/commands/$(dir.$(cmd)) $(cmd)
+${PROGROOT}/commands/$(dir.${cmd})/${cmd}:
+	${MAKE} -C ${NETBSDSRCDIR}/commands/${dir.${cmd}} ${cmd}
 .endfor
 
-.for etc in $(EXTRA)
-$(etc): ${NETBSDSRCDIR}/etc/$(etc)
+.for etc in ${EXTRA}
+${etc}: ${NETBSDSRCDIR}/etc/${etc}
 	${INSTALL} $> $@
 .endfor
 
-.for cmd in $(PROG_USRSBIN)
-$(cmd): ${PROGROOT}/usr.sbin/$(cmd)/$(cmd)
+.for cmd in ${PROG_USRSBIN}
+${cmd}: ${PROGROOT}/usr.sbin/${cmd}/${cmd}
 	${INSTALL} $> $@
 
-${PROGROOT}/usr.sbin/$(cmd)/$(cmd):
-	$(MAKE) -C ${NETBSDSRCDIR}/usr.sbin/$(cmd) $(cmd)
+${PROGROOT}/usr.sbin/${cmd}/${cmd}:
+	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin/${cmd} ${cmd}
 .endfor
 
-.for server in $(PROG_SERVERS)
-$(server): ${PROGROOT}/servers/$(server)/$(server)
+.for server in ${PROG_SERVERS}
+${server}: ${PROGROOT}/servers/${server}/${server}
 	${INSTALL} $> $@
 
-${PROGROOT}/servers/$(server)/$(server):
-	$(MAKE) -C ${NETBSDSRCDIR}/servers/$(server) $(server)
+${PROGROOT}/servers/${server}/${server}:
+	${MAKE} -C ${NETBSDSRCDIR}/servers/${server} ${server}
 .endfor
 
 etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
@@ -103,11 +104,13 @@ etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
 	${INSTALL} $> $@
 	${TOOL_PWD_MKDB} -V 0 -p -d . etc/master.passwd
 
+# LSC We use @F because some version of make still output a full path for @,
+#     even when the target is just a file name
 pwd.db spwd.db passwd: etc/master.passwd
-	${INSTALL} etc/${.TARGET} ${.TARGET}
+	${INSTALL} etc/${@F} ${@F}
 
 proto.gen: ${PROTO} ${PROTO_FILES} ${PROGRAMS}
-	strip $(PROGRAMS)
-	sh -e proto.sh ${PROTO} >${.OBJDIR}/${.TARGET}
+	${STRIP} ${PROGRAMS}
+	${HOST_SH} -e proto.sh ${PROTO} >${.OBJDIR}/${.TARGET}
 
 .include <minix.service.mk>

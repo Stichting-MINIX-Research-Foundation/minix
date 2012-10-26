@@ -1,5 +1,8 @@
 .include <bsd.own.mk>
+
 .PATH: 	${.CURDIR} ${.CURDIR}/${MACHINE_ARCH}
+.include "${MACHINE_ARCH}/Makefile.inc"
+
 INCSDIR= /usr/include
 LIB=	minlib
 
@@ -31,13 +34,9 @@ SRCS+= paramvalue.c
 SRCS+= 	getngid.c getnpid.c getnprocnr.c getnucred.c getnuid.c getprocnr.c \
 	mapdriver.c vm_memctl.c vm_set_priv.c vm_query_exit.c vm_update.c
 
-
 SRCS+= oneC_sum.c
 
-.include "${MACHINE_ARCH}/Makefile.inc"
-
-.include <bsd.own.mk>
 SUBDIR+= pkgconfig
-.include <bsd.subdir.mk>
 
 .include <bsd.lib.mk>
+.include <bsd.subdir.mk>

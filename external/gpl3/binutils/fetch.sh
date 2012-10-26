@@ -5,8 +5,8 @@ echo $0
 cd `dirname $0`
 
 # Configure fetch method
-URL="http://www.minix3.org/distfiles-minix/binutils-2.17a.tar.bz2"
-BACKUP_URL="http://ftp.gnu.org/gnu/binutils/binutils-2.17a.tar.bz2"
+URL="http://www.minix3.org/distfiles-minix/binutils-2.21.1.tar.bz2"
+BACKUP_URL="http://ftp.gnu.org/gnu/binutils/binutils-2.21.1.tar.bz2"
 FETCH=wget
 which curl >/dev/null
 if [ $? -eq 0 ]; then
@@ -16,16 +16,16 @@ fi
 # Fetch sources if not available
 if [ ! -d dist ];
 then
-	if [ ! -f binutils-2.17a.tar.bz2 ]; then
+	if [ ! -f binutils-2.21.1.tar.bz2 ]; then
 		$FETCH $URL
 		if [ $? -ne 0 ]; then
 			$FETCH $BACKUP_URL
 		fi
 	fi
 
-	bsdtar -oxf binutils-2.17a.tar.bz2 && \
-	mv binutils-2.17 dist && \
+	bsdtar -oxjf binutils-2.21.1.tar.bz2 && \
+	mv binutils-2.21.1 dist && \
 	cd dist && \
-	cat ../../../../tools/binutils/patches/* | patch -p0
+	cat ../patches/* | patch -p1
 fi
 

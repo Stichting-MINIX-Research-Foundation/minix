@@ -2379,12 +2379,12 @@
 ./usr/man/man3/hdestroy.3					minix-sys
 ./usr/man/man3/heapsort.3					minix-sys
 ./usr/man/man3/herror.3					minix-sys
-./usr/man/man3/hesiod.3					minix-sys
-./usr/man/man3/hesiod_end.3					minix-sys
-./usr/man/man3/hesiod_free_list.3					minix-sys
-./usr/man/man3/hesiod_init.3					minix-sys
-./usr/man/man3/hesiod_resolve.3					minix-sys
-./usr/man/man3/hesiod_to_bind.3					minix-sys
+./usr/man/man3/hesiod.3					minix-sys	obsolete
+./usr/man/man3/hesiod_end.3				minix-sys	obsolete
+./usr/man/man3/hesiod_free_list.3			minix-sys	obsolete
+./usr/man/man3/hesiod_init.3				minix-sys	obsolete
+./usr/man/man3/hesiod_resolve.3				minix-sys	obsolete
+./usr/man/man3/hesiod_to_bind.3				minix-sys	obsolete
 ./usr/man/man3/hline.3					minix-sys
 ./usr/man/man3/hostalias.3					minix-sys
 ./usr/man/man3/hsearch.3					minix-sys

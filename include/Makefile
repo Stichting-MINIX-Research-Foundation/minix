@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2010/07/31 21:47:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.139 2012/02/11 23:31:24 martin Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -38,12 +38,12 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	login_cap.h lwp.h malloc.h math.h md2.h \
 	memory.h mntopts.h monetary.h mpool.h mqueue.h \
 	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
-	paths.h pwd.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
+	paths.h pwd.h quota.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
 	resolv.h res_update.h rmt.h sched.h search.h semaphore.h setjmp.h \
-	sgtty.h signal.h stab.h stdbool.h stddef.h stdio.h stdlib.h string.h \
-	strings.h stringlist.h struct.h sysexits.h tar.h time.h \
+	string.h sgtty.h signal.h spawn.h stab.h stdbool.h stddef.h stdio.h \
+	stdlib.h strings.h stringlist.h struct.h sysexits.h tar.h time.h \
 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
-	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
+	utmpx.h uuid.h vis.h wchar.h wctype.h wordexp.h
 .endif
 INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/nameser_compat.h \
 	arpa/telnet.h arpa/tftp.h

@@ -1,0 +1,143 @@
+diff -r -x CVS -N -U 3 dist/ansi2knr.c dist.orig/ansi2knr.c
+--- dist/ansi2knr.c	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/ansi2knr.c	2011-06-20 07:54:33.000000000 +0200
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 1989, 2000 Aladdin Enterprises.  All rights reserved. */
+ 
+-/*$Id$*/
++/*$Id: ansi2knr.c,v 1.1.1.1 2011/06/20 05:54:33 mrg Exp $*/
+ /* Convert ANSI C function definitions to K&R ("traditional C") syntax */
+ 
+ /*
+diff -r -x CVS -N -U 3 dist/config.guess dist.orig/config.guess
+--- dist/config.guess	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/config.guess	2012-03-27 23:56:04.000000000 +0200
+@@ -833,8 +833,8 @@
+ 
+ # -------------------------------------------------------------------------
+ # Use an exact cpu, if possible
+-
+-if test -n "$exact_cpu"; then
++# Disabled for NetBSD cross builds
++if false && test -n "$exact_cpu"; then
+   echo "$exact_cpu$guess_rest"
+ else
+   echo "$guess_full"
+diff -r -x CVS -N -U 3 dist/configure.in dist.orig/configure.in
+--- dist/configure.in	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/configure.in	2011-06-20 07:54:31.000000000 +0200
+@@ -25,7 +25,7 @@
+ AC_COPYRIGHT(GMP_COPYRIGHT)
+ AH_TOP(/*GMP_COPYRIGHT*/)
+ 
+-AC_REVISION($Revision$)
++AC_REVISION($Revision: 1.1.1.1 $)
+ AC_PREREQ(2.59)
+ AC_INIT(GNU MP, GMP_VERSION, gmp-bugs@gmplib.org, gmp)
+ AC_CONFIG_SRCDIR(gmp-impl.h)
+diff -r -x CVS -N -U 3 dist/gmp-h.in dist.orig/gmp-h.in
+--- dist/gmp-h.in	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/gmp-h.in	2011-07-02 16:05:03.000000000 +0200
+@@ -1661,6 +1661,10 @@
+ #define mpn_zero __MPN(zero)
+ __GMP_DECLSPEC void mpn_zero __GMP_PROTO ((mp_ptr, mp_size_t));
+ 
++#define mpn_udiv_w_sdiv __MPN(udiv_w_sdiv)
++__GMP_DECLSPEC mp_limb_t mpn_udiv_w_sdiv __GMP_PROTO ((mp_limb_t *, mp_limb_t, mp_limb_t, mp_limb_t));
++
++
+ /**************** mpz inlines ****************/
+ 
+ /* The following are provided as inlines where possible, but always exist as
+diff -r -x CVS -N -U 3 dist/gmp-impl.h dist.orig/gmp-impl.h
+--- dist/gmp-impl.h	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/gmp-impl.h	2011-06-23 14:07:41.000000000 +0200
+@@ -162,7 +162,9 @@
+ #     if defined (_AIX) || defined (_IBMR2)
+  #pragma alloca
+ #     else
+-       char *alloca ();
++#      if !defined (__NetBSD__)
++        char *alloca ();
++#      endif
+ #     endif
+ #    endif
+ #   endif
+diff -r -x CVS -N -U 3 dist/Makefile.in dist.orig/Makefile.in
+--- dist/Makefile.in	2011-05-08 11:49:35.000000000 +0200
++++ dist.orig/Makefile.in	2011-07-02 15:26:39.000000000 +0200
+@@ -1242,7 +1242,8 @@
+ uninstall: uninstall-recursive
+ 
+ install-am: all-am
+-	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
++	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am
++	@$(MAKE) $(AM_MAKEFLAGS) install-data-am
+ 
+ installcheck: installcheck-recursive
+ install-strip:
+diff -r -x CVS -N -U 3 dist/mpn/arm/invert_limb.asm dist.orig/mpn/arm/invert_limb.asm
+--- dist/mpn/arm/invert_limb.asm	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/mpn/arm/invert_limb.asm	2011-07-09 17:00:08.000000000 +0200
+@@ -42,7 +42,10 @@
+ 	adds	r1, r3, r0
+ 	adc	r12, r12, r0
+ 	rsb	r0, r12, r2
+-	bx	lr
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ 
+ 	ALIGN(4)
+ L(4):	.word	approx_tab-8-512-L(2)
+diff -r -x CVS -N -U 3 dist/mpn/Makefile.in dist.orig/mpn/Makefile.in
+--- dist/mpn/Makefile.in	2011-05-08 11:49:34.000000000 +0200
++++ dist.orig/mpn/Makefile.in	2011-09-14 18:35:22.000000000 +0200
+@@ -994,7 +994,7 @@
+ 	$(CCAS) $(COMPILE_FLAGS) tmp-$*.s -o $@
+ 	$(RM_TMP) tmp-$*.s
+ .S.lo:
+-	$(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/mpn/cpp-ccas --cpp="$(CPP) $(PREPROCESS_FLAGS)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
++	$(LIBTOOL) --mode=compile --tag=CC $(SHELL) $(top_srcdir)/mpn/cpp-ccas --cpp="$(CPP) $(PREPROCESS_FLAGS)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
+ 
+ # .asm assembler, preprocessed with m4.
+ #
+@@ -1022,7 +1022,7 @@
+ 	$(CCAS) $(COMPILE_FLAGS) tmp-$*.s -o $@
+ 	$(RM_TMP) tmp-$*.s
+ .asm.lo:
+-	$(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/mpn/m4-ccas --m4="$(M4)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
++	$(LIBTOOL) --mode=compile --tag=CC $(SHELL) $(top_srcdir)/mpn/m4-ccas --m4="$(M4)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
+ 
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+diff -r -x CVS -N -U 3 dist/mpn/powerpc32/elf.m4 dist.orig/mpn/powerpc32/elf.m4
+--- dist/mpn/powerpc32/elf.m4	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/mpn/powerpc32/elf.m4	2011-07-03 05:30:19.000000000 +0200
+@@ -41,9 +41,11 @@
+ m4_assert_numargs(2)
+ `ifdef(`PIC',`
+ 	mflr	r0
+-	bl	_GLOBAL_OFFSET_TABLE_@local-4
+-	mflr	$1
++	bl	20,31,1f
++1:	mflr	$1
+ 	mtlr	r0
++	addis	$1,$1,_GLOBAL_OFFSET_TABLE_-1b@ha
++	addi	$1,$1,_GLOBAL_OFFSET_TABLE_-1b@l
+ 	lwz	$1, $2@got($1)
+ ',`
+ 	lis	$1, $2@ha
+diff -r -x CVS -N -U 3 dist/tests/rand/findlc.c dist.orig/tests/rand/findlc.c
+--- dist/tests/rand/findlc.c	2011-05-08 11:49:29.000000000 +0200
++++ dist.orig/tests/rand/findlc.c	2011-06-20 07:54:47.000000000 +0200
+@@ -27,7 +27,7 @@
+ #define RCSID(msg) \
+ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
+ 
+-RCSID("$Id$");
++RCSID("$Id: findlc.c,v 1.1.1.1 2011/06/20 05:54:47 mrg Exp $");
+ 
+ int g_debug = 0;
+ 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/10/22 23:14:11 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2011/08/09 13:03:36 joerg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 2/21/94
 #
 CPPFLAGS+=-D__DBINTERFACE_PRIVATE

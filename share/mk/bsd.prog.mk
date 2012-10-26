@@ -9,7 +9,6 @@
 #.include <minix.gcov.mk>
 .include <minix.gcc.mk>
 
-
 #
 # Definitions and targets shared among all programs built by a single
 # Makefile.

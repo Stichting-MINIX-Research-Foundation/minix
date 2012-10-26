@@ -1,14 +1,13 @@
-#	$NetBSD: Makefile,v 1.10 2007/05/28 12:06:24 tls Exp $
+#	$NetBSD: Makefile,v 1.12 2012/05/07 08:51:47 wiz Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 .if defined(__MINIX)
 MKDYNAMICROOT= no
 SMALLPROG= yes
-USE_FORT=no		# __SSP_FORTIFY_LEVEL=0
-.else
-USE_FORT?= yes	# data-driven bugs?
 .endif
+USE_FORT?= yes	# data-driven bugs?
+
 
 PROG=	   bzip2
 LDDIR!=	   cd ${NETBSDSRCDIR}/lib/libbz2 && ${PRINTOBJDIR}

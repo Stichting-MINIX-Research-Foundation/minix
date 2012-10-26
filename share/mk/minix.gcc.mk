@@ -1,9 +1,4 @@
-
-.if defined(MINIXDYNAMIC) && ${MINIXDYNAMIC} == "yes"
-LDFLAGS += -dynamic
-.else
-LDFLAGS += -static
-.endif
+LDSTATIC?=     -static
 
 AFLAGS+=-D__ASSEMBLY__
 CPPFLAGS+= -fno-builtin -Wall -Wno-sign-compare

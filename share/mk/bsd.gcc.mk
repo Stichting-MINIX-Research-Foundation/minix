@@ -3,7 +3,7 @@
 .if !defined(_BSD_GCC_MK_)
 _BSD_GCC_MK_=1
 
-.if defined(EXTERNAL_TOOLCHAIN)
+.if defined(EXTERNAL_TOOLCHAIN) && !defined(__MINIX)
 _GCC_CRTBEGIN!=		${CC} --print-file-name=crtbegin.o
 _GCC_CRTBEGINS!=	${CC} --print-file-name=crtbeginS.o
 _GCC_CRTEND!=		${CC} --print-file-name=crtend.o

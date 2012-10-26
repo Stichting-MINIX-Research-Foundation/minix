@@ -1,0 +1,65 @@
+$NetBSD: README,v 1.1 2010/04/01 14:13:25 reed Exp $
+
+The code within the src/external/gplv3 directories may have serious
+legal impacts if you are a company and redistributing or changing
+this code (as a company holding patents). We recommend you contact
+your lawyer before using it.
+
+Please do not import new GPLv3 projects without Board approval.
+
+--------------------------------------------------------------------
+
+Statement for The NetBSD Foundation's Position on the GPLv3
+
+NetBSD provides source code with the goal for anyone to be able
+to use it for whatever they want, as long as they follow the simple
+licensing terms. Historically, most of the original code used
+Berkeley-style licensing and NetBSD's own code uses a simple
+two-clause Berkeley-style license. To summarize: modifications are
+allowed, the source code may be redistributed and the binaries (or
+executables) may be distributed as long as the copyright and
+disclaimer is included.  NetBSD's code may be extended and sold
+without sharing back the source code changes.
+
+NetBSD also uses and redistributes source code and binaries from
+source code obtained from external third parties. This source code
+is segregated by placing it in the src/external and sys/src/external
+directories which are categorized per license. Examples of this
+include:  ISC BIND, Solaris ZFS, CVS, GNU Binutils, Postfix, X.org
+X Windowing System, and other software that are primarily maintained
+outside of NetBSD.
+
+In some cases, the third-party software is licensed under terms
+that conflict with NetBSD's own goals. For example, the GPLv2 is
+a "copyleft" license  -- it requires that anyone who distributes
+executable or object code based on the source code, also make the
+source code and modifications available to the public.  (NetBSD's
+own code doesn't require companies to share their changes.)
+
+The GPLv3 (GNU General Public License Version 3) includes clauses
+that may cause additional burdens to developers or companies who
+may modify the source code or ship products based on the source
+code. The following summarizes some of these issues:
+
+- The license allows the user to circumvent measures preventing
+software changes (#3).  This is known as the Tivoization clause.
+In addition, this same clause is an anti-DRM, anti-DMCA clause --
+as the developer allows the end-user to attempt to circumvent or
+break the technological protection measures. Also, any information
+or authorization keys required to install or run modified versions
+must also be provided (#6).
+
+- The patent clause (#11) says the copyright holders grant a
+non-exclusive, worldwide, royalty-free patent license.  You may be
+required to extend the royalty-free patent license(s) to all
+recipients or future users and developers who use the code.  In
+addition, you may not initiate litigation for a patent infringement
+(#10).
+
+We recommend companies redistributing GPLv3 licensed code to
+consult their lawyer before using it.
+
+It is the intent of the NetBSD project to use as little GPL licensed
+software as possible to provide maximum freedom for development
+and distribution of NetBSD derived products.
+

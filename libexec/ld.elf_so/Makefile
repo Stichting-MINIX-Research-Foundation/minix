@@ -9,7 +9,7 @@ WARNS?=4
 NOGCCERROR:=yes
 
 # This executable needs to be linked dynamically
-MINIXDYNAMIC=yes
+LDSTATIC=	-dynamic
 
 # And the minix gcc currently references /libexec/ld-elf.so.1
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld-elf.so.1

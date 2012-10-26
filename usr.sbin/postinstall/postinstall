@@ -2069,7 +2069,7 @@ main()
 			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
 			cat <<_Fix_me_
 To fix, run:
-    ${0} ${SRC_ARGLIST} -d ${DEST_DIR:-/}$m fix${items_failed}
+    ${HOST_SH} ${0} ${SRC_ARGLIST} -d ${DEST_DIR:-/}$m fix${items_failed}
 Note that this may overwrite local changes.
 _Fix_me_
 		    fi

@@ -93,7 +93,7 @@ hdboot:
 	${INSTALL} $$i $$newname;				\
 	done
 	@cp ${PROGROOT}/kernel/kernel ${DESTDIR}/boot/minix/.temp/
-	@if [ "${MKINSTALLBOOT}" != "no" ] ; then		\
+	@if [ "${MKINSTALLBOOT:Uno}" != "no" ] ; then		\
 	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
 	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
 	${HOST_SH} mkboot $@;					\

@@ -3,10 +3,6 @@
 
 .include <bsd.own.mk>
 
-.if defined(__MINIX)
-USE_KERBEROS= no
-.endif
-
 PROG=	newgrp
 SRCS=	newgrp.c grutil.c
 BINOWN=	root
@@ -14,7 +10,9 @@ BINMODE=4555
 
 CPPFLAGS+=-DGRUTIL_ACCEPT_GROUP_NUMBERS
 CPPFLAGS+=-DGRUTIL_ALLOW_GROUP_ERRORS	# for POSIX.1 compliance
-#CPPFLAGS+=-DLOGIN_CAP
+.if !defined(__MINIX)
+CPPFLAGS+=-DLOGIN_CAP
+.endif
 
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+= -lcrypt -lutil

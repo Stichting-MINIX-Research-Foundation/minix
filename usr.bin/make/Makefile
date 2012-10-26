@@ -24,7 +24,7 @@ COPTS.meta.c += -DHAVE_FILEMON_H -I${FILEMON_H:H}
 .endif
 .endif
 
-# For MINIX
+.if defined(__MINIX)
 CPPFLAGS+=	-DHAVE_SETENV -DHAVE_STRERROR -DHAVE_STRDUP \
 		-DHAVE_STRFTIME -DHAVE_VSNPRINTF -DUSE_SELECT
 
@@ -32,12 +32,14 @@ CPPFLAGS+= -DMAKE_MACHINE=\"${MACHINE}\" -DMAKE_MACHINE_ARCH=\"${MACHINE_ARCH}\"
 
 # LSC Until it compiles cleanly...
 NOGCCERROR:=yes
-
+.endif #defined(__MINIX)
 
 .PATH:	${.CURDIR}/lst.lib
-#.if make(install)
-#SUBDIR=	PSD.doc
-#.endif
+.if !defined(__MINIX)
+.if make(install)
+SUBDIR=	PSD.doc
+.endif
+.endif #!defined(__MINIX)
 .if make(obj) || make(clean)
 SUBDIR+= unit-tests
 .endif

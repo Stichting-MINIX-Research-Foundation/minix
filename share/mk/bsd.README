@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.300 2012/08/23 21:21:16 joerg Exp $
+#	$NetBSD: bsd.README,v 1.304 2012/10/02 04:53:11 jkoshy Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -131,7 +131,7 @@ MKCATPAGES	If "no", don't build or install the catman pages.
 		Default: no
 
 MKCOMPAT  	If "no", don't build or install the src/compat.
-		Default: yes on amd64/sparc64, no elsewhere.
+		Default: yes on amd64/mips64/sparc64, no elsewhere.
 
 MKCOMPLEX	If "no", don't build libm support for <complex.h>
 		Default: yes
@@ -156,6 +156,11 @@ MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
+
+MKDTRACE	If "no", do not build and install the kernel modules,
+		utilities and libraries used to implement the dtrace(1)
+		facility.
+		Default: no
 
 MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		don't install certain libraries in /lib, and don't
@@ -216,6 +221,9 @@ MKISCSI		If "no", don't build or install iSCSI library or applications
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
+		Default: yes
+
+MKKMOD		If "no", disables building of kernel modules.
 		Default: yes
 
 MKLDAP		If "no", disables building of LDAP infrastructure
@@ -283,7 +291,7 @@ MKPF		If "no", don't build or install the pf programs and LKM.
 
 MKPIC		If "no", don't build or install shared libraries, and
 		also acts as "MKPICLIB=no"
-		Default: yes (for MACHINE_ARCHs that support it) 
+		Default: yes (for MACHINE_ARCHs that support it)
 
 MKPICINSTALL	If "no", don't install the *_pic.a libraries.
 		Default: yes
@@ -357,8 +365,8 @@ MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
 		Default: yes
 
-MKZFS		If "no", do not build and install utilities and libraries 
-		used to manage ZFS file system. Do not build zfs and solaris 
+MKZFS		If "no", do not build and install utilities and libraries
+		used to manage ZFS file system. Do not build zfs and solaris
 		compatibility kernel modules.
 		Default: yes on i386/amd64, no elsewhere.
 
@@ -409,7 +417,7 @@ USE_SSP		If "no", disables GCC stack protection code, which
 USE_FORT 	If "yes" turns on substitute wrappers for commonly used
 		functions that do not do bounds checking regularly, but
 		they could in some cases by using the gcc
-		__builtin_object_size() function to determine the buffer 
+		__builtin_object_size() function to determine the buffer
 		size where it is known and detect buffer overflows.
 		These substitute functions are in /usr/include/ssp.
 		Default: depends on the part of the source tree
@@ -641,7 +649,7 @@ TOOLCHAIN_MISSING
 		If not "no", this indicates that the platform being built
 		does not have a working in-tree toolchain.  If the
 		${MACHINE_ARCH} in question falls into this category,
-		TOOLCHAIN_MISSING is conditionally assigned the value "yes". 
+		TOOLCHAIN_MISSING is conditionally assigned the value "yes".
 		Otherwise, the variable is unconditionally assigned the
 		value "no".
 		If not "no", ${MKBINUTILS}, ${MKGCC}, and ${MKGDB} are
@@ -935,7 +943,7 @@ BUILDSYMLINKS	List of two word items:
 
 UUDECODE_FILES	List of files which are stored as <file>.uue in the source
 		tree. Each one will be decoded with ${TOOL_UUDECODE}.
-		The source files have a `.uue' suffix, the generated files do 
+		The source files have a `.uue' suffix, the generated files do
 		not.
 
 UUDECODE_FILES_RENAME_<fn>
@@ -1132,7 +1140,7 @@ LIBDPLIBS	A list of the tuples:
 				    ${LIBDO.libname}/liblibname.a   added.
 
 		This variable may be used for individual libraries, as
-		well as in parent directories to cache common libraries 
+		well as in parent directories to cache common libraries
 		as a build-time optimization.
 
 The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
@@ -1274,7 +1282,7 @@ BUILDID		If set, the contents of this variable are appended
 
 The include file <bsd.prog.mk> handles building programs from one or
 more source files, along with their manual pages.  It has a limited number
-of suffixes, consistent with the current needs of the BSD tree. 
+of suffixes, consistent with the current needs of the BSD tree.
 <bsd.prog.mk> includes <bsd.shlib.mk> to get shared library parameters.
 
 It has eight targets:

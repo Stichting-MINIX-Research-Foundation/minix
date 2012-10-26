@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile,v 1.41 2007/05/28 12:06:29 tls Exp $
+#	$NetBSD: Makefile,v 1.42 2011/04/24 21:42:06 elric Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
 
 .if defined(__MINIX)
-USE_YP= no
-USE_KERBEROS= no
-USE_PAM= no
-
 # LSC Until it compiles cleanly...
 NOGCCERROR:=yes
 .endif
@@ -35,7 +31,7 @@ BINOWN=	root
 BINMODE=4555
 
 .if (${USE_KERBEROS} != "no")
-CPPFLAGS+= -DKERBEROS5 -I${DESTDIR}/usr/include/krb5
+CPPFLAGS+= -DKERBEROS5
 SRCS+=	krb5_passwd.c
 
 DPADD+=	${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}

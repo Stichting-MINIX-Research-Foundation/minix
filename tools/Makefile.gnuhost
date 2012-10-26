@@ -34,6 +34,7 @@ FIND_ARGS+=	\! \( -type d \( \
 			-name 'nbsd.mt' -o \
 			-name 'tests*' \
 		\) -prune \)
+
 _GNU_GET_SCRIPTS:= \
 	external/gpl3/gcc/fetch.sh \
 	external/gpl3/binutils/fetch.sh \
@@ -45,7 +46,7 @@ _GNU_GET_SCRIPTS:= \
 _gnu_get_src: ${_GNU_GET_SCRIPTS}
 .for name in ${_GNU_GET_SCRIPTS}
 ${name}:
-	${HOST_SH} ${.CURDIR}/../../${name}
+	@${HOST_SH} ${.CURDIR}/../../${name}
 .endfor
 
 # Do this "find" only if actually building something.

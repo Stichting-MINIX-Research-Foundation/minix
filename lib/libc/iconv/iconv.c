@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.12 2009/08/05 15:17:02 joerg Exp $	*/
+/*	$NetBSD: iconv.c,v 1.13 2012/01/20 16:31:29 joerg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.12 2009/08/05 15:17:02 joerg Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.13 2012/01/20 16:31:29 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,7 +45,6 @@ __weak_alias(iconv_open, _iconv_open)
 __weak_alias(iconv_close, _iconv_close)
 #endif
 
-#ifdef HAVE_CITRUS
 #include <sys/types.h>
 #include "citrus_types.h"
 #include "citrus_module.h"
@@ -150,39 +149,3 @@ __iconv_free_list(char **list, size_t sz)
 {
 	_citrus_esdb_free_list(list, sz);
 }
-
-#else
-iconv_t
-/*ARGSUSED*/
-iconv_open(const char *in, const char *out)
-{
-	errno = EINVAL;
-	return ((iconv_t)-1);
-}
-int
-/*ARGSUSED*/
-iconv_close(iconv_t handle)
-{
-	errno = EBADF;
-	return (-1);
-}
-size_t
-/*ARGSUSED*/
-iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
-{
-	errno = EBADF;
-	return ((size_t)-1);
-}
-int
-/*ARGSUSED*/
-__iconv_get_list(char ***rlist, size_t *rsz)
-{
-	errno = EINVAL;
-	return -1;
-}
-void
-/*ARGSUSED*/
-__iconv_free_list(char **list, size_t sz)
-{
-}
-#endif

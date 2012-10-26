@@ -1,0 +1,117 @@
+diff -r -x CVS -N -U 3 dist.orig/gcc/config.gcc dist/gcc/config.gcc
+--- dist.orig/gcc/config.gcc	2012-10-31 15:54:54.495969517 +0100
++++ dist/gcc/config.gcc	2012-10-31 16:05:31.749213764 +0100
+@@ -799,7 +799,7 @@
+ 	tmake_file="arm/t-arm arm/t-arm-elf"
+ 	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
+ 	;;
+-arm*-*-eabi* | arm*-*-symbianelf* )
++arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-minix*)
+ 	# The BPABI long long divmod functions return a 128-bit value in
+ 	# registers r0-r3.  Correctly modeling that requires the use of
+ 	# TImode.
+@@ -808,7 +808,7 @@
+ 	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/bpabi.h"
+ 	tmake_file="arm/t-arm arm/t-arm-elf"
+ 	case ${target} in
+-	arm*-*-eabi*)
++	arm*-*-eabi* | arm*-*-minix*)
+ 	  tm_file="$tm_file arm/eabi.h newlib-stdint.h"
+ 	  tmake_file="${tmake_file} arm/t-bpabi"
+ 	  extra_options="${extra_options} arm/eabi.opt"
+@@ -1148,6 +1148,14 @@
+ 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${fbsd_tm_file} i386/x86-64.h i386/freebsd.h i386/freebsd64.h"
+ 	tmake_file="${tmake_file} i386/t-crtstuff"
+ 	;;
++i[34567]86-*-minix)
++       tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h minix-spec.h minix.h i386/minix.h"
++#      tmake_file="t-slibgcc-elf-ver t-minix i386/t-minix"
++#      use_fixproto=yes
++       gas=yes
++       gnu_ld=yes
++       extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o"
++       ;;
+ i[34567]86-*-netbsdelf*)
+ 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd.h netbsd-elf.h i386/netbsd-elf.h"
+ 	tmake_file="${tmake_file} i386/t-crtstuff"
+diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
+--- dist.orig/gcc/gcov.c	2012-10-31 15:54:55.279319194 +0100
++++ dist/gcc/gcov.c	2012-10-31 15:56:07.347483995 +0100
+@@ -58,6 +58,10 @@
+ 
+ #define STRING_SIZE 200
+ 
++#ifdef _MINIX
++#define block_t gcc_block_t
++#endif
++
+ struct function_info;
+ struct block_info;
+ struct source_info;
+diff -r -x CVS -N -U 3 dist.orig/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.h
+--- dist.orig/gcc/ginclude/stddef.h	2012-10-31 15:54:54.629305630 +0100
++++ dist/gcc/ginclude/stddef.h	2012-10-31 15:57:32.195913746 +0100
+@@ -60,6 +60,9 @@
+ #if defined (__FreeBSD__) && (__FreeBSD__ >= 5)
+ #include <sys/_types.h>
+ #endif
++#if defined (__minix)
++#include <minix/types.h>
++#endif
+ 
+ /* In 4.3bsd-net2, machine/ansi.h defines these symbols, which are
+    defined if the corresponding type is *not* defined.
+diff -r -x CVS -N -U 3 dist.orig/gcc/libgcov.c dist/gcc/libgcov.c
+--- dist.orig/gcc/libgcov.c	2012-10-31 15:54:54.629305630 +0100
++++ dist/gcc/libgcov.c	2012-10-31 16:07:58.948939980 +0100
+@@ -40,6 +40,11 @@
+ #define GCOV_LINKAGE /* nothing */
+ #endif
+ #endif
++
++#ifndef L_gcov_merge_add
++#include "gcov-minix-fs-wrapper.h"
++#endif
++
+ #include "gcov-io.h"
+ 
+ #if defined(inhibit_libc)
+@@ -152,7 +157,7 @@
+    in two separate programs, and we must keep the two program
+    summaries separate.  */
+ 
+-static void
++void
+ gcov_exit (void)
+ {
+   struct gcov_info *gi_ptr;
+@@ -564,7 +569,7 @@
+       gcov_crc32 = crc32;
+ 
+       if (!gcov_list)
+-	atexit (gcov_exit);
++	atexit (gcov_exit_wrapper);
+ 
+       info->next = gcov_list;
+       gcov_list = info;
+diff -r -x CVS -N -U 3 dist.orig/libgcc/config.host dist/libgcc/config.host
+--- dist.orig/libgcc/config.host	2012-10-31 15:54:55.649326910 +0100
++++ dist/libgcc/config.host	2012-10-31 16:00:43.116548293 +0100
+@@ -203,6 +203,8 @@
+ 	;;
+ arm*-*-freebsd*)
+ 	;;
++arm*-*-minix*)
++	;;
+ arm*-*-netbsdelf*)
+ 	;;
+ arm*-*-netbsd*)
+@@ -280,6 +282,8 @@
+ 	;;
+ x86_64-*-elf*)
+ 	;;
++i[34567]86-*-minix*)
++	;;
+ i[34567]86-*-freebsd*)
+ 	;;
+ x86_64-*-freebsd*)

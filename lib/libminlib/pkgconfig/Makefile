@@ -1,6 +1,6 @@
-NOOBJ=  # defined
-
 .include <bsd.own.mk>
+
+NOOBJ=  # defined
 
 FILES=minlib.pc
 FILESDIR=/usr/lib

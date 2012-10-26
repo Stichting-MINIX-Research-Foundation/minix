@@ -1,7 +1,11 @@
 #	$NetBSD: Makefile,v 1.2 2011/08/14 09:06:12 christos Exp $
 #
 
+.if defined(__MINIX)
 USE_FORT?= no	# data driven bugs?
+.else
+USE_FORT?= yes	# data driven bugs?
+.endif
 
 .include <bsd.own.mk>
 

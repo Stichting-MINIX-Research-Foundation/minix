@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2011/09/25 13:34:16 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2012/08/29 03:12:08 msaitoh Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -72,6 +72,7 @@ LIB2FUNCS=	${LIB2FUNCS_SHORT:=.c}
 LIB2FUNCS_ST=	${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
+LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
 .if !empty(G_LIB1ASMFUNCS)
 LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 .endif
@@ -142,9 +143,11 @@ dp-bit.c: ${.CURDIR}/Makefile
 .include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
 
+.if ${MKGCC} != "no"
 # XXX figure out why Makefile.hacks doesn't work
 BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
 DPSRCS+=	unwind.h
+.endif
 
 # these aren't necessary but are #include'd
 FAKEHEADERS=options.h insn-flags.h insn-constants.h sysroot-suffix.h

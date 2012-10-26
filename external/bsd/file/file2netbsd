@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
+#	$NetBSD: file2netbsd,v 1.3 2012/02/22 17:47:25 christos Exp $
 #
 # Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,7 +47,7 @@ file_vers="$(awk -F', ' '/AC_INIT\(/ { print $2 }' "$FILE/configure.ac")"
 find "$FILE" -name .cvsignore -delete
 
 ### Remove the $'s around RCS tags
-cleantags $d
+cleantags "$FILE"
 
 ### Add NetBSD RCS Id
 find "$FILE" -type f -name '*.[chly]' -print | while read c; do
@@ -99,6 +99,6 @@ wq' | ed Makefile.in > /dev/null 2>&1
 echo done
 
 echo You can import now.  Use the following command:
-echo cvs import src/external/bsd/file/dist CHRISTOS FILE${file_vers%.*}_${file_vers#*.}
+echo cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/file/dist CHRISTOS FILE${file_vers%.*}_${file_vers#*.}
 
 exit 0

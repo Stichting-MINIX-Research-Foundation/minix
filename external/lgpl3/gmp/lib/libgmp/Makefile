@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/09/21 02:06:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2012/08/10 16:05:26 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -191,8 +191,6 @@ CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr gen-trialdivtab
 
 # Don't warn about functions which cannot be stack smash protected as
 # there are a lot of them.
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS += -Wno-stack-protector
-.endif
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare

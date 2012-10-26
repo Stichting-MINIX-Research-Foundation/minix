@@ -22,6 +22,10 @@ _uname_s!= uname -s
 MACHINE:= i386
 .endif
 
+.if defined(__MINIX)
+MACHINE_GNU_PLATFORM?=${MACHINE_ARCH}-elf32-minix
+.endif # defined(__MINIX)
+
 # LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
 SMP_FLAGS += -DCONFIG_SMP
@@ -547,7 +551,6 @@ BSDSRCDIR?=	/usr/src
 BSDOBJDIR?=	/usr/obj
 NETBSDSRCDIR?=	${BSDSRCDIR}
 
-#BINGRP?=	wheel
 BINGRP?=	operator
 BINOWN?=	root
 BINMODE?=	755
@@ -560,16 +563,13 @@ RUMPBINOWN?=	root
 RUMPBINMODE?=	555
 RUMPNONBINMODE?=444
 
-#MANDIR?=	/usr/share/man
 MANDIR?=	/usr/man
-#MANGRP?=	wheel
 MANGRP?=	operator
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
 MANINSTALL?=	${_MANINSTALL}
 
 INFODIR?=	/usr/share/info
-#INFOGRP?=	wheel
 INFOGRP?=	operator
 INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
@@ -583,7 +583,6 @@ LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=	/usr/share/doc
 HTMLDOCDIR?=	/usr/share/doc/html
-#DOCGRP?=	wheel
 DOCGRP?=	operator
 DOCOWN?=	root
 DOCMODE?=	${NONBINMODE}
@@ -706,15 +705,6 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 #
-.if defined(__MINIX)
-.if ${MACHINE_ARCH} == "arm"
-MACHINE_GNU_PLATFORM?=arm-none-eabi
-.elif ${MACHINE_ARCH} == "i386"
-MACHINE_GNU_PLATFORM?=elf32-${MACHINE_ARCH}-minix
-.endif
-# If not found, fallback on default NetBSD target
-.endif # defined(__MINIX)
-
 .if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-eabi
 .elif (${MACHINE_GNU_ARCH} == "arm" || \
@@ -856,8 +846,10 @@ MKLINT:=	no
 # LSC MINIX does not support these features ATM.
 USE_FORT:=	no
 MKYP:=		no
+MKPF:=		no
 MKNLS:=		no
 MKCOVERAGE?=	no
+MKHESIOD:=	no
 MKPOSTFIX:=	no
 MKKMOD:=	no
 MKATF:=	 	no
@@ -873,6 +865,7 @@ MKKERBEROS:=	no
 MKLDAP:=	no
 MKPAM:=		no
 MKIPFILTER:=	no
+MKINET6:=	no
 MKGROFF:=	no
 MKHTML:=	no
 MKBINUTILS:=	no

@@ -28,11 +28,12 @@ touch-genfiles:
 	${_MKTARGET_CREATE}
 	${OBJCOPY} -Ibinary -B${MACHINE_ARCH} -O${MACHINE_GNU_PLATFORM} $< $@
 
+CLEANFILES+=	../ramdisk/image
 ../ramdisk/image: .PHONY
 	${MAKE} -C ${RAMDISK_PATH} image
 
-imgrd.mfs: ../ramdisk/image
-	ln -fs ../ramdisk/image $@
 CLEANFILES+=	imgrd.mfs
+imgrd.mfs: ../ramdisk/image
+	${HOST_LN} -fs ../ramdisk/image $@
 
 .include <minix.bootprog.mk>
