@@ -198,7 +198,7 @@ if cmp -s x answer; then : ; else echo Error in strings test 1; fi
 #Test sum
 sum $f >x
 cat >answer <<END
-29904     1
+29904 1 $f
 END
 
 if cmp -s x answer; then : ; else echo Error in sum test 1; fi
