@@ -28,8 +28,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include <memory.h>
-
 #define _MAIN 1
 #include "glo.h"
 #include "proto.h"

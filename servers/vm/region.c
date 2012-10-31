@@ -17,7 +17,6 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
-#include <memory.h>
 #include <sys/param.h>
 
 #include "vm.h"

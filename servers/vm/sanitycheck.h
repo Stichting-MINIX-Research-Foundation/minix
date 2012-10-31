@@ -7,6 +7,8 @@
 
 #if SANITYCHECKS
 
+#define PT_SANE(p) { pt_sanitycheck((p), __FILE__, __LINE__); }
+
 /* This macro is used in the sanity check functions, where file and 
  * line are function arguments.
  */
@@ -48,6 +50,7 @@
 #define SLABSANITYCHECK(l)
 #define SLABSANE(ptr)
 #define MYASSERT(c)
+#define PT_SANE(p)
 #endif
 
 #if MEMPROTECT

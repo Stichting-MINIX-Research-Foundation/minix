@@ -7,23 +7,6 @@
 
 #include "vm.h"
 
-/* An i386 pagetable. */
-typedef struct {
-	/* Directory entries in VM addr space - root of page table.  */
-	u32_t *pt_dir;		/* page aligned (I386_VM_DIR_ENTRIES) */
-	u32_t pt_dir_phys;	/* physical address of pt_dir */
-
-	/* Pointers to page tables in VM address space. */
-	u32_t *pt_pt[I386_VM_DIR_ENTRIES];
-
-	/* When looking for a hole in virtual address space, start
-	 * looking here. This is in linear addresses, i.e.,
-	 * not as the process sees it but the position in the page
-	 * page table. This is just a hint.
-	 */
-	u32_t pt_virtop;
-} pt_t;
-
 /* Mapping flags. */
 #define PTF_WRITE	I386_VM_WRITE
 #define PTF_READ	I386_VM_READ
@@ -33,17 +16,29 @@ typedef struct {
 #define PTF_MAPALLOC	I386_VM_PTAVAIL1 /* Page allocated by pt code. */
 #define PTF_NOCACHE	(I386_VM_PWT | I386_VM_PCD)
 
+#define ARCH_VM_DIR_ENTRIES	I386_VM_DIR_ENTRIES
+#define ARCH_BIG_PAGE_SIZE	I386_BIG_PAGE_SIZE
+#define ARCH_VM_ADDR_MASK	I386_VM_ADDR_MASK
+#define ARCH_VM_PAGE_PRESENT    I386_VM_PRESENT
+#define ARCH_VM_PDE_MASK        I386_VM_PDE_MASK
+#define ARCH_VM_PDE_PRESENT     I386_VM_PRESENT
+#define ARCH_VM_PTE_PRESENT	I386_VM_PRESENT
+#define ARCH_VM_PTE_USER	I386_VM_USER
+#define ARCH_VM_PTE_RW		I386_VM_WRITE
+#define ARCH_PAGEDIR_SIZE	I386_PAGEDIR_SIZE
+#define ARCH_VM_BIGPAGE		I386_VM_BIGPAGE
+#define ARCH_VM_PT_ENTRIES      I386_VM_PT_ENTRIES
+
 /* For arch-specific PT routines to check if no bits outside
  * the regular flags are set.
  */
 #define PTF_ALLFLAGS   (PTF_READ|PTF_WRITE|PTF_PRESENT|PTF_USER|PTF_GLOBAL|PTF_NOCACHE)
 
-#if SANITYCHECKS
-#define PT_SANE(p) { pt_sanitycheck((p), __FILE__, __LINE__); }
-#else
-#define PT_SANE(p)
-#endif
+#define PFERR_NOPAGE(e)	(!((e) & I386_VM_PFE_P))
+#define PFERR_PROT(e)	(((e) & I386_VM_PFE_P))
+#define PFERR_WRITE(e)	((e) & I386_VM_PFE_W)
+#define PFERR_READ(e)	(!((e) & I386_VM_PFE_W))
+
+#define VM_PAGE_SIZE	I386_PAGE_SIZE
 
 #endif
-
-

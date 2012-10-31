@@ -34,20 +34,27 @@
 #include "vm.h"
 #include "sanitycheck.h"
 
-#include "memory.h"
-
 static int vm_self_pages;
 
 /* PDE used to map in kernel, kernel physical address. */
 static int pagedir_pde = -1;
+#if defined(__i386__)
 static u32_t global_bit = 0, pagedir_pde_val;
+#elif defined(__arm__)
+static u32_t pagedir_pde_val;
+#endif
 
 static multiboot_module_t *kern_mb_mod = NULL;
 static size_t kern_size = 0;
 static int kern_start_pde = -1;
 
+#if defined(__i386__)
 /* 4MB page size available in hardware? */
 static int bigpage_ok = 0;
+#elif defined(__arm__)
+/* 1MB page size available in hardware? */
+static int bigpage_ok = 1;
+#endif
 
 /* Our process table entry. */
 struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
@@ -56,12 +63,25 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
  * circular dependency on allocating memory and writing it into VM's
  * page table.
  */
+#if defined(__i386__)
 #if SANITYCHECKS
 #define SPAREPAGES 100
 #define STATIC_SPAREPAGES 90
 #else
 #define SPAREPAGES 15
 #define STATIC_SPAREPAGES 10
+#endif
+#elif defined(__arm__)
+#define SPAREPAGEDIRS 11
+#define STATIC_SPAREPAGEDIRS 10
+#define SPAREPAGES 250
+#define STATIC_SPAREPAGES 100
+int missing_sparedirs = SPAREPAGEDIRS;
+static struct {
+	void *pagedir;
+	phys_bytes phys;
+} sparepagedirs[SPAREPAGEDIRS];
+
 #endif
 int missing_spares = SPAREPAGES;
 static struct {
@@ -88,7 +108,7 @@ int kernmappings = 0;
  *    just one page
  * May as well require them to be equal then.
  */
-#if CLICK_SIZE != I386_PAGE_SIZE
+#if CLICK_SIZE != VM_PAGE_SIZE
 #error CLICK_SIZE must be page size.
 #endif
 
@@ -96,9 +116,17 @@ int kernmappings = 0;
 phys_bytes page_directories_phys;
 u32_t *page_directories = NULL;
 
-static char static_sparepages[I386_PAGE_SIZE*STATIC_SPAREPAGES] 
-	__aligned(I386_PAGE_SIZE);
+#if defined(__i386__)
+static char static_sparepages[VM_PAGE_SIZE*STATIC_SPAREPAGES] 
+	__aligned(VM_PAGE_SIZE);
+#elif defined(__arm__)
+static char static_sparepagedirs[ARCH_PAGEDIR_SIZE*STATIC_SPAREPAGEDIRS + ARCH_PAGEDIR_SIZE] __aligned(ARCH_PAGEDIR_SIZE);
+#endif
 
+#if defined(__arm__)
+static char static_sparepages[VM_PAGE_SIZE*STATIC_SPAREPAGES] __aligned(VM_PAGE_SIZE);
+
+#endif
 #if SANITYCHECKS
 /*===========================================================================*
  *				pt_sanitycheck		     		     *
@@ -121,14 +149,18 @@ void pt_sanitycheck(pt_t *pt, char *file, int line)
 		panic("pt_sanitycheck: passed pt not in any proc");
 	}
 
-	MYASSERT(usedpages_add(pt->pt_dir_phys, I386_PAGE_SIZE) == OK);
+	MYASSERT(usedpages_add(pt->pt_dir_phys, VM_PAGE_SIZE) == OK);
 }
 #endif
 
 /*===========================================================================*
  *				findhole		     		     *
  *===========================================================================*/
+#if defined(__i386__)
 static u32_t findhole(void)
+#elif defined(__arm__)
+static u32_t findhole(int pages)
+#endif
 {
 /* Find a space in the virtual address space of VM. */
 	u32_t curv;
@@ -136,19 +168,25 @@ static u32_t findhole(void)
 	static u32_t lastv = 0;
 	pt_t *pt = &vmprocess->vm_pt;
 	vir_bytes vmin, vmax;
+#if defined(__arm__)
+	u32_t holev;
+#endif
 
-	vmin = (vir_bytes) (&_end) & I386_VM_ADDR_MASK; /* marks end of VM BSS */
+	vmin = (vir_bytes) (&_end) & ARCH_VM_ADDR_MASK; /* marks end of VM BSS */
 	vmax = VM_STACKTOP;
 
 	/* Input sanity check. */
-	assert(vmin + I386_PAGE_SIZE >= vmin);
-	assert(vmax >= vmin + I386_PAGE_SIZE);
-	assert((vmin % I386_PAGE_SIZE) == 0);
-	assert((vmax % I386_PAGE_SIZE) == 0);
+	assert(vmin + VM_PAGE_SIZE >= vmin);
+	assert(vmax >= vmin + VM_PAGE_SIZE);
+	assert((vmin % VM_PAGE_SIZE) == 0);
+	assert((vmax % VM_PAGE_SIZE) == 0);
+#if defined(__arm__)
+	assert(pages > 0);
+#endif
 
 #if SANITYCHECKS
-	curv = ((u32_t) random()) % ((vmax - vmin)/I386_PAGE_SIZE);
-	curv *= I386_PAGE_SIZE;
+	curv = ((u32_t) random()) % ((vmax - vmin)/VM_PAGE_SIZE);
+	curv *= VM_PAGE_SIZE;
 	curv += vmin;
 #else
 	curv = lastv;
@@ -160,21 +198,61 @@ static u32_t findhole(void)
 	/* Start looking for a free page starting at vmin. */
 	while(curv < vmax) {
 		int pte;
+#if defined(__arm__)
+		int i, nohole;
+#endif
 
 		assert(curv >= vmin);
 		assert(curv < vmax);
 
+#if defined(__i386__)
 		pde = I386_VM_PDE(curv);
 		pte = I386_VM_PTE(curv);
+#elif defined(__arm__)
+		holev = curv; /* the candidate hole */
+		nohole = 0;
+		for (i = 0; i < pages && !nohole; ++i) {
+		    if(curv >= vmax) {
+			break;
+		    }
+#endif
 
-		if(!(pt->pt_dir[pde] & I386_VM_PRESENT) ||
-		   !(pt->pt_pt[pde][pte] & I386_VM_PRESENT)) {
-			lastv = curv;
-			return curv;
+#if defined(__i386__)
+		if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT) ||
+		   !(pt->pt_pt[pde][pte] & ARCH_VM_PAGE_PRESENT)) {
+#elif defined(__arm__)
+		    pde = ARM_VM_PDE(curv);
+		    pte = ARM_VM_PTE(curv);
+
+		    /* if page present, no hole */
+		    if((pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT) &&
+		       (pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT))
+			nohole = 1;
+
+		    /* if not contiguous, no hole */
+		    if (curv != holev + i * VM_PAGE_SIZE)
+			nohole = 1;
+
+		    curv+=VM_PAGE_SIZE;
 		}
 
-		curv+=I386_PAGE_SIZE;
+		/* there's a large enough hole */
+		if (!nohole && i == pages) {
+#endif
+			lastv = curv;
+#if defined(__i386__)
+			return curv;
+#elif defined(__arm__)
+			return holev;
+#endif
+		}
 
+#if defined(__i386__)
+		curv+=VM_PAGE_SIZE;
+
+#elif defined(__arm__)
+		/* Reset curv */
+#endif
 		if(curv >= vmax && try_restart) {
 			curv = vmin;
 			try_restart = 0;
@@ -191,7 +269,7 @@ static u32_t findhole(void)
  *===========================================================================*/
 void vm_freepages(vir_bytes vir, int pages)
 {
-	assert(!(vir % I386_PAGE_SIZE)); 
+	assert(!(vir % VM_PAGE_SIZE)); 
 
 	if(is_staticaddr(vir)) {
 		printf("VM: not freeing static page\n");
@@ -199,7 +277,7 @@ void vm_freepages(vir_bytes vir, int pages)
 	}
 
 	if(pt_writemap(vmprocess, &vmprocess->vm_pt, vir,
-		MAP_NONE, pages*I386_PAGE_SIZE, 0,
+		MAP_NONE, pages*VM_PAGE_SIZE, 0,
 		WMF_OVERWRITE | WMF_FREE) != OK)
 		panic("vm_freepages: pt_writemap failed");
 
@@ -236,6 +314,29 @@ static void *vm_getsparepage(phys_bytes *phys)
 	return NULL;
 }
 
+#if defined(__arm__)
+/*===========================================================================*
+ *				vm_getsparepagedir	      		     *
+ *===========================================================================*/
+static void *vm_getsparepagedir(phys_bytes *phys)
+{
+	int s;
+	assert(missing_sparedirs >= 0 && missing_sparedirs <= SPAREPAGEDIRS);
+	for(s = 0; s < SPAREPAGEDIRS; s++) {
+		if(sparepagedirs[s].pagedir) {
+			void *sp;
+			sp = sparepagedirs[s].pagedir;
+			*phys = sparepagedirs[s].phys;
+			sparepagedirs[s].pagedir = NULL;
+			missing_sparedirs++;
+			assert(missing_sparedirs >= 0 && missing_sparedirs <= SPAREPAGEDIRS);
+			return sp;
+		}
+	}
+	return NULL;
+}
+#endif
+
 /*===========================================================================*
  *				vm_checkspares		     		     *
  *===========================================================================*/
@@ -262,6 +363,34 @@ static void *vm_checkspares(void)
 	return NULL;
 }
 
+#if defined(__arm__)
+/*===========================================================================*
+ *				vm_checksparedirs	       		     *
+ *===========================================================================*/
+static void *vm_checksparedirs(void)
+{
+	int s, n = 0;
+	static int total = 0, worst = 0;
+	assert(missing_sparedirs >= 0 && missing_sparedirs <= SPAREPAGEDIRS);
+	for(s = 0; s < SPAREPAGEDIRS && missing_sparedirs > 0; s++)
+	    if(!sparepagedirs[s].pagedir) {
+		n++;
+		if((sparepagedirs[s].pagedir = vm_allocpage(&sparepagedirs[s].phys,
+			VMP_SPARE))) {
+			missing_sparedirs--;
+			assert(missing_sparedirs >= 0);
+			assert(missing_sparedirs <= SPAREPAGEDIRS);
+		} else {
+			printf("VM: warning: couldn't get new spare pagedir\n");
+		}
+	}
+	if(worst < n) worst = n;
+	total += n;
+
+	return NULL;
+}
+
+#endif
 static int pt_init_done;
 
 /*===========================================================================*
@@ -276,6 +405,9 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	int r;
 	static int level = 0;
 	void *ret;
+#if defined(__arm__)
+	u32_t mem_bytes, mem_clicks, mem_flags;
+#endif
 
 	pt = &vmprocess->vm_pt;
 	assert(reason >= 0 && reason < VMP_CATEGORIES);
@@ -285,9 +417,22 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	assert(level >= 1);
 	assert(level <= 2);
 
+#if defined(__i386__)
 	if((level > 1) || !pt_init_done) {
+#elif defined(__arm__)
+	if(level > 1 || !pt_init_done) {
+#endif
 		void *s;
+#if defined(__i386__)
 		s=vm_getsparepage(phys);
+#elif defined(__arm__)
+
+		if (reason == VMP_PAGEDIR)
+			s=vm_getsparepagedir(phys);
+		else
+			s=vm_getsparepage(phys);
+
+#endif
 		level--;
 		if(!s) {
 			util_stacktrace();
@@ -297,10 +442,25 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 		return s;
 	}
 
+#if defined(__arm__)
+	if (reason == VMP_PAGEDIR) {
+		mem_bytes = ARCH_PAGEDIR_SIZE;
+		mem_flags = PAF_ALIGN16K;
+	} else {
+		mem_bytes = VM_PAGE_SIZE;
+		mem_flags = 0;
+	}
+	mem_clicks = mem_bytes / VM_PAGE_SIZE * CLICKSPERPAGE;
+
+#endif
 	/* VM does have a pagetable, so get a page and map it in there.
 	 * Where in our virtual address space can we put it?
 	 */
+#if defined(__i386__)
 	loc = findhole();
+#elif defined(__arm__)
+	loc = findhole(mem_bytes / VM_PAGE_SIZE);
+#endif
 	if(loc == NO_MEM) {
 		level--;
 		printf("VM: vm_allocpage: findhole failed\n");
@@ -310,7 +470,11 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	/* Allocate page of memory for use by VM. As VM
 	 * is trusted, we don't have to pre-clear it.
 	 */
+#if defined(__i386__)
 	if((newpage = alloc_mem(CLICKSPERPAGE, 0)) == NO_MEM) {
+#elif defined(__arm__)
+	if((newpage = alloc_mem(mem_clicks, mem_flags)) == NO_MEM) {
+#endif
 		level--;
 		printf("VM: vm_allocpage: alloc_mem failed\n");
 		return NULL;
@@ -319,9 +483,16 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	*phys = CLICK2ABS(newpage);
 
 	/* Map this page into our address space. */
-	if((r=pt_writemap(vmprocess, pt, loc, *phys, I386_PAGE_SIZE,
-		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE, 0)) != OK) {
+#if defined(__i386__)
+	if((r=pt_writemap(vmprocess, pt, loc, *phys, VM_PAGE_SIZE,
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW, 0)) != OK) {
 		free_mem(newpage, CLICKSPERPAGE);
+#elif defined(__arm__)
+	if((r=pt_writemap(vmprocess, pt, loc, *phys, mem_bytes,
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW |
+		ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE, 0)) != OK) {
+		free_mem(newpage, mem_clicks);
+#endif
 		printf("vm_allocpage writemap failed\n");
 		level--;
 		return NULL;
@@ -348,18 +519,23 @@ void vm_pagelock(void *vir, int lockflag)
 /* Mark a page allocated by vm_allocpage() unwritable, i.e. only for VM. */
 	vir_bytes m = (vir_bytes) vir;
 	int r;
-	u32_t flags = I386_VM_PRESENT | I386_VM_USER;
+	u32_t flags = ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER;
 	pt_t *pt;
 
 	pt = &vmprocess->vm_pt;
 
-	assert(!(m % I386_PAGE_SIZE));
+	assert(!(m % VM_PAGE_SIZE));
 
 	if(!lockflag)
-		flags |= I386_VM_WRITE;
+		flags |= ARCH_VM_PTE_RW;
+#if defined(__arm__)
+	else
+		flags |= ARCH_VM_PTE_RO;
+	flags |= ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE;
+#endif
 
 	/* Update flags. */
-	if((r=pt_writemap(vmprocess, pt, m, 0, I386_PAGE_SIZE,
+	if((r=pt_writemap(vmprocess, pt, m, 0, VM_PAGE_SIZE,
 		flags, WMF_OVERWRITE | WMF_WRITEFLAGSONLY)) != OK) {
 		panic("vm_lockpage: pt_writemap failed");
 	}
@@ -380,29 +556,42 @@ int vm_addrok(void *vir, int writeflag)
 	int pde, pte;
 	vir_bytes v = (vir_bytes) vir;
 
+#if defined(__i386__)
 	pde = I386_VM_PDE(v);
 	pte = I386_VM_PTE(v);
+#elif defined(__arm__)
+	pde = ARM_VM_PDE(v);
+	pte = ARM_VM_PTE(v);
+#endif
 
-	if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
+	if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
 		printf("addr not ok: missing pde %d\n", pde);
 		return 0;
 	}
 
+#if defined(__i386__)
 	if(writeflag &&
-		!(pt->pt_dir[pde] & I386_VM_WRITE)) {
+		!(pt->pt_dir[pde] & ARCH_VM_PTE_RW)) {
 		printf("addr not ok: pde %d present but pde unwritable\n", pde);
 		return 0;
 	}
 
-	if(!(pt->pt_pt[pde][pte] & I386_VM_PRESENT)) {
+#endif
+	if(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT)) {
 		printf("addr not ok: missing pde %d / pte %d\n",
 			pde, pte);
 		return 0;
 	}
 
+#if defined(__i386__)
 	if(writeflag &&
-		!(pt->pt_pt[pde][pte] & I386_VM_WRITE)) {
+		!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_RW)) {
 		printf("addr not ok: pde %d / pte %d present but unwritable\n",
+#elif defined(__arm__)
+	if(!writeflag &&
+		!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_RO)) {
+		printf("addr not ok: pde %d / pte %d present but writable\n",
+#endif
 			pde, pte);
 		return 0;
 	}
@@ -420,28 +609,33 @@ static int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 	phys_bytes pt_phys;
 
 	/* Argument must make sense. */
-	assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
+	assert(pde >= 0 && pde < ARCH_VM_DIR_ENTRIES);
 	assert(!(flags & ~(PTF_ALLFLAGS)));
 
 	/* We don't expect to overwrite page directory entry, nor
 	 * storage for the page table.
 	 */
-	assert(!(pt->pt_dir[pde] & I386_VM_PRESENT));
+	assert(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT));
 	assert(!pt->pt_pt[pde]);
 
 	/* Get storage for the page table. */
         if(!(pt->pt_pt[pde] = vm_allocpage(&pt_phys, VMP_PAGETABLE)))
 		return ENOMEM;
 
-	for(i = 0; i < I386_VM_PT_ENTRIES; i++)
+	for(i = 0; i < ARCH_VM_PT_ENTRIES; i++)
 		pt->pt_pt[pde][i] = 0;	/* Empty entry. */
 
 	/* Make page directory entry.
 	 * The PDE is always 'present,' 'writable,' and 'user accessible,'
 	 * relying on the PTE for protection.
 	 */
-	pt->pt_dir[pde] = (pt_phys & I386_VM_ADDR_MASK) | flags
-		| I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
+#if defined(__i386__)
+	pt->pt_dir[pde] = (pt_phys & ARCH_VM_ADDR_MASK) | flags
+		| ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW;
+#elif defined(__arm__)
+	pt->pt_dir[pde] = (pt_phys & ARCH_VM_PDE_MASK)
+		| ARCH_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
+#endif
 
 	return OK;
 }
@@ -455,15 +649,20 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 /* Allocate all the page tables in the range specified. */
 	int pde, first_pde, last_pde;
 
+#if defined(__i386__)
 	first_pde = I386_VM_PDE(start);
 	last_pde = I386_VM_PDE(end-1);
+#elif defined(__arm__)
+	first_pde = ARM_VM_PDE(start);
+	last_pde = ARM_VM_PDE(end-1);
+#endif
 	assert(first_pde >= 0);
-	assert(last_pde < I386_VM_DIR_ENTRIES);
+	assert(last_pde < ARCH_VM_DIR_ENTRIES);
 
 	/* Scan all page-directory entries in the range. */
 	for(pde = first_pde; pde <= last_pde; pde++) {
-		assert(!(pt->pt_dir[pde] & I386_VM_BIGPAGE));
-		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
+		assert(!(pt->pt_dir[pde] & ARCH_VM_BIGPAGE));
+		if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
 			int r;
 			if(verify) {
 				printf("pt_ptalloc_in_range: no pde %d\n", pde);
@@ -482,7 +681,7 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 			}
 		}
 		assert(pt->pt_dir[pde]);
-		assert(pt->pt_dir[pde] & I386_VM_PRESENT);
+		assert(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT);
 	}
 
 	return OK;
@@ -495,12 +694,21 @@ static char *ptestr(u32_t pte)
 }
 
 	static char str[30];
-	if(!(pte & I386_VM_PRESENT)) {
+	if(!(pte & ARCH_VM_PTE_PRESENT)) {
 		return "not present";
 	}
 	str[0] = '\0';
-	FLAG(I386_VM_WRITE, "W");
-	FLAG(I386_VM_USER, "U");
+#if defined(__i386__)
+	FLAG(ARCH_VM_PTE_RW, "W");
+#elif defined(__arm__)
+	if(pte & ARCH_VM_PTE_RO) {
+	    strcat(str, "R ");
+	} else {
+	    strcat(str, "W ");
+	}
+#endif
+	FLAG(ARCH_VM_PTE_USER, "U");
+#if defined(__i386__)
 	FLAG(I386_VM_PWT, "PWT");
 	FLAG(I386_VM_PCD, "PCD");
 	FLAG(I386_VM_ACC, "ACC");
@@ -510,6 +718,12 @@ static char *ptestr(u32_t pte)
 	FLAG(I386_VM_PTAVAIL1, "AV1");
 	FLAG(I386_VM_PTAVAIL2, "AV2");
 	FLAG(I386_VM_PTAVAIL3, "AV3");
+#elif defined(__arm__)
+	FLAG(ARM_VM_PTE_SUPER, "S");
+	FLAG(ARM_VM_PTE_SHAREABLE, "SH");
+	FLAG(ARM_VM_PTE_WB, "WB");
+	FLAG(ARM_VM_PTE_WT, "WT");
+#endif
 
 	return str;
 }
@@ -531,28 +745,46 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	dst_pt = &dst_vmp->vm_pt;
 
 	end = end ? end : VM_DATATOP;
-	assert(start % I386_PAGE_SIZE == 0);
-	assert(end % I386_PAGE_SIZE == 0);
+	assert(start % VM_PAGE_SIZE == 0);
+	assert(end % VM_PAGE_SIZE == 0);
+#if defined(__i386__)
 	assert(start <= end);
-	assert(I386_VM_PDE(end) < I386_VM_DIR_ENTRIES);
+	assert(I386_VM_PDE(end) < ARCH_VM_DIR_ENTRIES);
+#elif defined(__arm__)
+	assert(ARM_VM_PDE(start) >= 0 && start <= end);
+	assert(ARM_VM_PDE(end) < ARCH_VM_DIR_ENTRIES);
+#endif
 
 #if LU_DEBUG
 	printf("VM: pt_map_in_range: src = %d, dst = %d\n",
 		src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
 	printf("VM: pt_map_in_range: transferring from 0x%08x (pde %d pte %d) to 0x%08x (pde %d pte %d)\n",
+#if defined(__i386__)
 		start, I386_VM_PDE(start), I386_VM_PTE(start),
 		end, I386_VM_PDE(end), I386_VM_PTE(end));
+#elif defined(__arm__)
+		start, ARM_VM_PDE(start), ARM_VM_PTE(start),
+		end, ARM_VM_PDE(end), ARM_VM_PTE(end));
+#endif
 #endif
 
 	/* Scan all page-table entries in the range. */
-	for(viraddr = start; viraddr <= end; viraddr += I386_PAGE_SIZE) {
+	for(viraddr = start; viraddr <= end; viraddr += VM_PAGE_SIZE) {
+#if defined(__i386__)
 		pde = I386_VM_PDE(viraddr);
-		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
+#elif defined(__arm__)
+		pde = ARM_VM_PDE(viraddr);
+#endif
+		if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
 			if(viraddr == VM_DATATOP) break;
 			continue;
 		}
+#if defined(__i386__)
 		pte = I386_VM_PTE(viraddr);
-		if(!(pt->pt_pt[pde][pte] & I386_VM_PRESENT)) {
+#elif defined(__arm__)
+		pte = ARM_VM_PTE(viraddr);
+#endif
+		if(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT)) {
 			if(viraddr == VM_DATATOP) break;
 			continue;
 		}
@@ -589,9 +821,15 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 
 	/* Transfer mapping to the page directory. */
 	viraddr = (vir_bytes) pt->pt_dir;
-	physaddr = pt->pt_dir_phys & I386_VM_ADDR_MASK;
-	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
-		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
+	physaddr = pt->pt_dir_phys & ARCH_VM_ADDR_MASK;
+#if defined(__i386__)
+	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, VM_PAGE_SIZE,
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW,
+#elif defined(__arm__)
+	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, ARCH_PAGEDIR_SIZE,
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW |
+		ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE,
+#endif
 		WMF_OVERWRITE)) != OK) {
 		return r;
 	}
@@ -601,16 +839,25 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #endif
 
 	/* Scan all non-reserved page-directory entries. */
-	for(pde=0; pde < I386_VM_DIR_ENTRIES; pde++) {
-		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
+	for(pde=0; pde < ARCH_VM_DIR_ENTRIES; pde++) {
+		if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
 			continue;
 		}
 
 		/* Transfer mapping to the page table. */
 		viraddr = (vir_bytes) pt->pt_pt[pde];
-		physaddr = pt->pt_dir[pde] & I386_VM_ADDR_MASK;
-		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
-			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
+#if defined(__i386__)
+		physaddr = pt->pt_dir[pde] & ARCH_VM_ADDR_MASK;
+#elif defined(__arm__)
+		physaddr = pt->pt_dir[pde] & ARCH_VM_PDE_MASK;
+#endif
+		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, VM_PAGE_SIZE,
+#if defined(__i386__)
+			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW,
+#elif defined(__arm__)
+			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW |
+			ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE,
+#endif
 			WMF_OVERWRITE)) != OK) {
 			return r;
 		}
@@ -663,23 +910,23 @@ int pt_writemap(struct vmproc * vmp,
 	if(writemapflags & WMF_VERIFY)
 		verify = 1;
 
-	assert(!(bytes % I386_PAGE_SIZE));
+	assert(!(bytes % VM_PAGE_SIZE));
 	assert(!(flags & ~(PTF_ALLFLAGS)));
 
-	pages = bytes / I386_PAGE_SIZE;
+	pages = bytes / VM_PAGE_SIZE;
 
 	/* MAP_NONE means to clear the mapping. It doesn't matter
-	 * what's actually written into the PTE if I386_VM_PRESENT
+	 * what's actually written into the PTE if PRESENT
 	 * isn't on, so we can just write MAP_NONE into it.
 	 */
-	assert(physaddr == MAP_NONE || (flags & I386_VM_PRESENT));
+	assert(physaddr == MAP_NONE || (flags & ARCH_VM_PTE_PRESENT));
 	assert(physaddr != MAP_NONE || !flags);
 
 	/* First make sure all the necessary page tables are allocated,
 	 * before we start writing in any of them, because it's a pain
 	 * to undo our work properly.
 	 */
-	ret = pt_ptalloc_in_range(pt, v, v + I386_PAGE_SIZE*pages, flags, verify);
+	ret = pt_ptalloc_in_range(pt, v, v + VM_PAGE_SIZE*pages, flags, verify);
 	if(ret != OK) {
 		printf("VM: writemap: pt_ptalloc_in_range failed\n");
 		goto resume_exit;
@@ -688,18 +935,23 @@ int pt_writemap(struct vmproc * vmp,
 	/* Now write in them. */
 	for(p = 0; p < pages; p++) {
 		u32_t entry;
+#if defined(__i386__)
 		int pde = I386_VM_PDE(v);
 		int pte = I386_VM_PTE(v);
+#elif defined(__arm__)
+		int pde = ARM_VM_PDE(v);
+		int pte = ARM_VM_PTE(v);
+#endif
 
-		assert(!(v % I386_PAGE_SIZE));
-		assert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
-		assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
+		assert(!(v % VM_PAGE_SIZE));
+		assert(pte >= 0 && pte < ARCH_VM_PT_ENTRIES);
+		assert(pde >= 0 && pde < ARCH_VM_DIR_ENTRIES);
 
 		/* Page table has to be there. */
-		assert(pt->pt_dir[pde] & I386_VM_PRESENT);
+		assert(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT);
 
 		/* We do not expect it to be a bigpage. */
-		assert(!(pt->pt_dir[pde] & I386_VM_BIGPAGE));
+		assert(!(pt->pt_dir[pde] & ARCH_VM_BIGPAGE));
 
 		/* Make sure page directory entry for this page table
 		 * is marked present and page table entry is available.
@@ -709,10 +961,14 @@ int pt_writemap(struct vmproc * vmp,
 #if SANITYCHECKS
 		/* We don't expect to overwrite a page. */
 		if(!(writemapflags & (WMF_OVERWRITE|WMF_VERIFY)))
-			assert(!(pt->pt_pt[pde][pte] & I386_VM_PRESENT));
+			assert(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT));
 #endif
 		if(writemapflags & (WMF_WRITEFLAGSONLY|WMF_FREE)) {
-			physaddr = pt->pt_pt[pde][pte] & I386_VM_ADDR_MASK;
+#if defined(__i386__)
+			physaddr = pt->pt_pt[pde][pte] & ARCH_VM_ADDR_MASK;
+#elif defined(__arm__)
+			physaddr = pt->pt_pt[pde][pte] & ARM_VM_PTE_MASK;
+#endif
 		}
 
 		if(writemapflags & WMF_FREE) {
@@ -720,21 +976,32 @@ int pt_writemap(struct vmproc * vmp,
 		}
 
 		/* Entry we will write. */
-		entry = (physaddr & I386_VM_ADDR_MASK) | flags;
+#if defined(__i386__)
+		entry = (physaddr & ARCH_VM_ADDR_MASK) | flags;
+#elif defined(__arm__)
+		entry = (physaddr & ARM_VM_PTE_MASK) | flags;
+#endif
 
 		if(verify) {
 			u32_t maskedentry;
 			maskedentry = pt->pt_pt[pde][pte];
+#if defined(__i386__)
 			maskedentry &= ~(I386_VM_ACC|I386_VM_DIRTY);
+#endif
 			/* Verify pagetable entry. */
-			if(entry & I386_VM_WRITE) {
+			if(entry & ARCH_VM_PTE_RW) {
 				/* If we expect a writable page, allow a readonly page. */
-				maskedentry |= I386_VM_WRITE;
+				maskedentry |= ARCH_VM_PTE_RW;
 			}
 			if(maskedentry != entry) {
 				printf("pt_writemap: mismatch: ");
-				if((entry & I386_VM_ADDR_MASK) !=
-					(maskedentry & I386_VM_ADDR_MASK)) {
+#if defined(__i386__)
+				if((entry & ARCH_VM_ADDR_MASK) !=
+					(maskedentry & ARCH_VM_ADDR_MASK)) {
+#elif defined(__arm__)
+				if((entry & ARM_VM_PTE_MASK) !=
+					(maskedentry & ARM_VM_PTE_MASK)) {
+#endif
 					printf("pt_writemap: physaddr mismatch (0x%lx, 0x%lx); ",
 						(long)entry, (long)maskedentry);
 				} else printf("phys ok; ");
@@ -751,8 +1018,8 @@ int pt_writemap(struct vmproc * vmp,
 			pt->pt_pt[pde][pte] = entry;
 		}
 
-		physaddr += I386_PAGE_SIZE;
-		v += I386_PAGE_SIZE;
+		physaddr += VM_PAGE_SIZE;
+		v += VM_PAGE_SIZE;
 	}
 
 resume_exit:
@@ -776,36 +1043,45 @@ int pt_checkrange(pt_t *pt, vir_bytes v,  size_t bytes,
 {
 	int p, pages;
 
-	assert(!(bytes % I386_PAGE_SIZE));
+	assert(!(bytes % VM_PAGE_SIZE));
 
-	pages = bytes / I386_PAGE_SIZE;
+	pages = bytes / VM_PAGE_SIZE;
 
 	for(p = 0; p < pages; p++) {
+#if defined(__i386__)
 		int pde = I386_VM_PDE(v);
 		int pte = I386_VM_PTE(v);
+#elif defined(__arm__)
+		int pde = ARM_VM_PDE(v);
+		int pte = ARM_VM_PTE(v);
+#endif
 
-		assert(!(v % I386_PAGE_SIZE));
-		assert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
-		assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
+		assert(!(v % VM_PAGE_SIZE));
+		assert(pte >= 0 && pte < ARCH_VM_PT_ENTRIES);
+		assert(pde >= 0 && pde < ARCH_VM_DIR_ENTRIES);
 
 		/* Page table has to be there. */
-		if(!(pt->pt_dir[pde] & I386_VM_PRESENT))
+		if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT))
 			return EFAULT;
 
 		/* Make sure page directory entry for this page table
 		 * is marked present and page table entry is available.
 		 */
-		assert((pt->pt_dir[pde] & I386_VM_PRESENT) && pt->pt_pt[pde]);
+		assert((pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT) && pt->pt_pt[pde]);
 
-		if(!(pt->pt_pt[pde][pte] & I386_VM_PRESENT)) {
+		if(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT)) {
 			return EFAULT;
 		}
 
-		if(write && !(pt->pt_pt[pde][pte] & I386_VM_WRITE)) {
+#if defined(__i386__)
+		if(write && !(pt->pt_pt[pde][pte] & ARCH_VM_PTE_RW)) {
+#elif defined(__arm__)
+		if(write && (pt->pt_pt[pde][pte] & ARCH_VM_PTE_RO)) {
+#endif
 			return EFAULT;
 		}
 
-		v += I386_PAGE_SIZE;
+		v += VM_PAGE_SIZE;
 	}
 
 	return OK;
@@ -816,7 +1092,7 @@ int pt_checkrange(pt_t *pt, vir_bytes v,  size_t bytes,
  *===========================================================================*/
 int pt_new(pt_t *pt)
 {
-/* Allocate a pagetable root. On i386, allocate a page-aligned page directory
+/* Allocate a pagetable root. Allocate a page-aligned page directory
  * and set them to 0 (indicating no page tables are allocated). Lookup
  * its physical address as we'll need that in the future. Verify it's
  * page-aligned.
@@ -833,9 +1109,12 @@ int pt_new(pt_t *pt)
           !(pt->pt_dir = vm_allocpage((phys_bytes *)&pt->pt_dir_phys, VMP_PAGEDIR))) {
 		return ENOMEM;
 	}
+#if defined(__arm__)
+	assert(!((u32_t)pt->pt_dir_phys % ARCH_PAGEDIR_SIZE));
+#endif
 
-	for(i = 0; i < I386_VM_DIR_ENTRIES; i++) {
-		pt->pt_dir[i] = 0; /* invalid entry (I386_VM_PRESENT bit = 0) */
+	for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
+		pt->pt_dir[i] = 0; /* invalid entry (PRESENT bit = 0) */
 		pt->pt_pt[i] = NULL;
 	}
 
@@ -852,7 +1131,7 @@ int pt_new(pt_t *pt)
 static int freepde(void)
 {
 	int p = kernel_boot_info.freepde_start++;
-	assert(kernel_boot_info.freepde_start < I386_VM_DIR_ENTRIES);
+	assert(kernel_boot_info.freepde_start < ARCH_VM_DIR_ENTRIES);
 	return p;
 }
 
@@ -863,11 +1142,20 @@ void pt_init(void)
 {
         pt_t *newpt;
         int s, r, p;
+#if defined(__i386__)
 	int global_bit_ok = 0;
+#endif
 	vir_bytes sparepages_mem;
-	static u32_t currentpagedir[I386_VM_DIR_ENTRIES];
+#if defined(__arm__)
+	vir_bytes sparepagedirs_mem;
+#endif
+	static u32_t currentpagedir[ARCH_VM_DIR_ENTRIES];
 	int m = kernel_boot_info.kern_mod;
+#if defined(__i386__)
 	u32_t mypdbr; /* Page Directory Base Register (cr3) value */
+#elif defined(__arm__)
+	u32_t myttbr;
+#endif
 
 	/* Find what the physical location of the kernel is. */
 	assert(m >= 0);
@@ -875,30 +1163,62 @@ void pt_init(void)
 	assert(kernel_boot_info.mods_with_kernel < MULTIBOOT_MAX_MODS);
 	kern_mb_mod = &kernel_boot_info.module_list[m];
 	kern_size = kern_mb_mod->mod_end - kern_mb_mod->mod_start;
-	assert(!(kern_mb_mod->mod_start % I386_BIG_PAGE_SIZE));
-	assert(!(kernel_boot_info.vir_kern_start % I386_BIG_PAGE_SIZE));
-	kern_start_pde = kernel_boot_info.vir_kern_start / I386_BIG_PAGE_SIZE;
+	assert(!(kern_mb_mod->mod_start % ARCH_BIG_PAGE_SIZE));
+	assert(!(kernel_boot_info.vir_kern_start % ARCH_BIG_PAGE_SIZE));
+	kern_start_pde = kernel_boot_info.vir_kern_start / ARCH_BIG_PAGE_SIZE;
 
         /* Get ourselves spare pages. */
         sparepages_mem = (vir_bytes) static_sparepages;
-	assert(!(sparepages_mem % I386_PAGE_SIZE));
+	assert(!(sparepages_mem % VM_PAGE_SIZE));
 
+#if defined(__arm__)
+        /* Get ourselves spare pagedirs. */
+	sparepagedirs_mem = (vir_bytes) static_sparepagedirs;
+	assert(!(sparepagedirs_mem % ARCH_PAGEDIR_SIZE));
+
+#endif
 	/* Spare pages are used to allocate memory before VM has its own page
 	 * table that things (i.e. arbitrary physical memory) can be mapped into.
 	 * We get it by pre-allocating it in our bss (allocated and mapped in by
 	 * the kernel) in static_sparepages. We also need the physical addresses
 	 * though; we look them up now so they are ready for use.
 	 */
+#if defined(__arm__)
+        missing_sparedirs = 0;
+        assert(STATIC_SPAREPAGEDIRS < SPAREPAGEDIRS);
+        for(s = 0; s < SPAREPAGEDIRS; s++) {
+		vir_bytes v = (sparepagedirs_mem + s*ARCH_PAGEDIR_SIZE);;
+		phys_bytes ph;
+        	if((r=sys_umap(SELF, VM_D, (vir_bytes) v,
+	                ARCH_PAGEDIR_SIZE, &ph)) != OK)
+				panic("pt_init: sys_umap failed: %d", r);
+        	if(s >= STATIC_SPAREPAGEDIRS) {
+        		sparepagedirs[s].pagedir = NULL;
+        		missing_sparedirs++;
+        		continue;
+        	}
+        	sparepagedirs[s].pagedir = (void *) v;
+        	sparepagedirs[s].phys = ph;
+        }
+#endif
 
         missing_spares = 0;
         assert(STATIC_SPAREPAGES < SPAREPAGES);
         for(s = 0; s < SPAREPAGES; s++) {
-		vir_bytes v = (sparepages_mem + s*I386_PAGE_SIZE);;
+		vir_bytes v = (sparepages_mem + s*VM_PAGE_SIZE);;
 		phys_bytes ph;
+#if defined(__i386__)
         	if((r=sys_umap(SELF, VM_D, (vir_bytes) v,
-	                I386_PAGE_SIZE*SPAREPAGES, &ph)) != OK)
+#elif defined(__arm__)
+		if((r=sys_umap(SELF, VM_D, (vir_bytes) v,
+#endif
+	                VM_PAGE_SIZE*SPAREPAGES, &ph)) != OK)
 				panic("pt_init: sys_umap failed: %d", r);
+#if defined(__i386__)
         	if(s >= STATIC_SPAREPAGES) {
+#elif defined(__arm__)
+		if(s >= STATIC_SPAREPAGES) {
+#endif
         		sparepages[s].page = NULL;
         		missing_spares++;
         		continue;
@@ -907,14 +1227,21 @@ void pt_init(void)
         	sparepages[s].phys = ph;
         }
 
+#if defined(__i386__)
 	/* global bit and 4MB pages available? */
 	global_bit_ok = _cpufeature(_CPUF_I386_PGE);
 	bigpage_ok = _cpufeature(_CPUF_I386_PSE);
+#elif defined(__arm__)
+	/* 1MB pages available? */
+	bigpage_ok = 1;
+#endif
 
+#if defined(__i386__)
 	/* Set bit for PTE's and PDE's if available. */
 	if(global_bit_ok)
 		global_bit = I386_VM_GLOBAL;
 
+#endif
 	/* Allocate us a page table in which to remember page directory
 	 * pointers.
 	 */
@@ -922,7 +1249,7 @@ void pt_init(void)
 		VMP_PAGETABLE)))
                 panic("no virt addr for vm mappings");
 
-	memset(page_directories, 0, I386_PAGE_SIZE);
+	memset(page_directories, 0, VM_PAGE_SIZE);
 
 	/* Now reserve another pde for kernel's own mappings. */
 	{
@@ -932,7 +1259,7 @@ void pt_init(void)
 		u32_t offset = 0;
 
 		kernmap_pde = freepde();
-		offset = kernmap_pde * I386_BIG_PAGE_SIZE;
+		offset = kernmap_pde * ARCH_BIG_PAGE_SIZE;
 
 		while(sys_vmctl_get_mapping(index, &addr, &len,
 			&flags) == OK)  {
@@ -942,20 +1269,40 @@ void pt_init(void)
 			kern_mappings[index].phys_addr = addr;
 			kern_mappings[index].len = len;
 			kern_mappings[index].flags = flags;
+#if defined(__i386__)
 			kern_mappings[index].vir_addr = offset;
+#elif defined(__arm__)
+			kern_mappings[index].vir_addr = addr;
+#endif
 			kern_mappings[index].flags =
-				I386_VM_PRESENT;
+				ARCH_VM_PTE_PRESENT;
 			if(flags & VMMF_UNCACHED)
+#if defined(__i386__)
 				kern_mappings[index].flags |= PTF_NOCACHE;
+#elif defined(__arm__)
+				kern_mappings[index].flags |= ARM_VM_PTE_DEVICE;
+			else
+				kern_mappings[index].flags |=
+				    ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE;
+#endif
 			if(flags & VMMF_USER)
-				kern_mappings[index].flags |= I386_VM_USER;
+				kern_mappings[index].flags |= ARCH_VM_PTE_USER;
+#if defined(__arm__)
+			else
+				kern_mappings[index].flags |= ARM_VM_PTE_SUPER;
+#endif
 			if(flags & VMMF_WRITE)
-				kern_mappings[index].flags |= I386_VM_WRITE;
+				kern_mappings[index].flags |= ARCH_VM_PTE_RW;
+#if defined(__i386__)
 			if(flags & VMMF_GLO)
 				kern_mappings[index].flags |= I386_VM_GLOBAL;
-			if(addr % I386_PAGE_SIZE)
+#elif defined(__arm__)
+			else
+				kern_mappings[index].flags |= ARCH_VM_PTE_RO;
+#endif
+			if(addr % VM_PAGE_SIZE)
                 		panic("VM: addr unaligned: %d", addr);
-			if(len % I386_PAGE_SIZE)
+			if(len % VM_PAGE_SIZE)
                 		panic("VM: len unaligned: %d", len);
 			vir = offset;
 			if(sys_vmctl_reply_mapping(index, vir) != OK)
@@ -970,8 +1317,13 @@ void pt_init(void)
 	 * page directories.
 	 */
 	pagedir_pde = freepde();
-	pagedir_pde_val = (page_directories_phys & I386_VM_ADDR_MASK) |
-			I386_VM_PRESENT | I386_VM_WRITE;
+#if defined(__i386__)
+	pagedir_pde_val = (page_directories_phys & ARCH_VM_ADDR_MASK) |
+			ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_RW;
+#elif defined(__arm__)
+	pagedir_pde_val = (page_directories_phys & ARCH_VM_PDE_MASK) |
+			ARCH_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
+#endif
 
 	/* Allright. Now. We have to make our own page directory and page tables,
 	 * that the kernel has already set up, accessible to us. It's easier to
@@ -986,37 +1338,55 @@ void pt_init(void)
 		panic("vm pt_new failed");
 
 	/* Get our current pagedir so we can see it. */
+#if defined(__i386__)
 	if(sys_vmctl_get_pdbr(SELF, &mypdbr) != OK)
+#elif defined(__arm__)
+	if(sys_vmctl_get_pdbr(SELF, &myttbr) != OK)
+#endif
 		panic("VM: sys_vmctl_get_pdbr failed");
+#if defined(__i386__)
 	if(sys_vircopy(NONE, mypdbr, SELF,
-		(vir_bytes) currentpagedir, I386_PAGE_SIZE) != OK)
+		(vir_bytes) currentpagedir, VM_PAGE_SIZE) != OK)
+#elif defined(__arm__)
+	if(sys_vircopy(NONE, myttbr, SELF,
+		(vir_bytes) currentpagedir, ARCH_PAGEDIR_SIZE) != OK)
+#endif
 		panic("VM: sys_vircopy failed");
 
 	/* We have mapped in kernel ourselves; now copy mappings for VM
 	 * that kernel made, including allocations for BSS. Skip identity
 	 * mapping bits; just map in VM.
 	 */
-	for(p = 0; p < I386_VM_DIR_ENTRIES; p++) {
+	for(p = 0; p < ARCH_VM_DIR_ENTRIES; p++) {
 		u32_t entry = currentpagedir[p];
 		phys_bytes ptaddr_kern, ptaddr_us;
 
 		/* BIGPAGEs are kernel mapping (do ourselves) or boot
 		 * identity mapping (don't want).
 		 */
-		if(!(entry & I386_VM_PRESENT)) continue;
-		if((entry & I386_VM_BIGPAGE)) continue;
+		if(!(entry & ARCH_VM_PDE_PRESENT)) continue;
+		if((entry & ARCH_VM_BIGPAGE)) continue;
 
 		if(pt_ptalloc(newpt, p, 0) != OK)
 			panic("pt_ptalloc failed");
-		assert(newpt->pt_dir[p] & I386_VM_PRESENT);
+		assert(newpt->pt_dir[p] & ARCH_VM_PDE_PRESENT);
 
-		ptaddr_kern = entry & I386_VM_ADDR_MASK;
-		ptaddr_us = newpt->pt_dir[p] & I386_VM_ADDR_MASK;
+#if defined(__i386__)
+		ptaddr_kern = entry & ARCH_VM_ADDR_MASK;
+		ptaddr_us = newpt->pt_dir[p] & ARCH_VM_ADDR_MASK;
+#elif defined(__arm__)
+		ptaddr_kern = entry & ARCH_VM_PDE_MASK;
+		ptaddr_us = newpt->pt_dir[p] & ARCH_VM_PDE_MASK;
+#endif
 
 		/* Copy kernel-initialized pagetable contents into our
 		 * normally accessible pagetable.
 		 */
-                if(sys_abscopy(ptaddr_kern, ptaddr_us, I386_PAGE_SIZE) != OK)
+#if defined(__i386__)
+                if(sys_abscopy(ptaddr_kern, ptaddr_us, VM_PAGE_SIZE) != OK)
+#elif defined(__arm__)
+                if(sys_abscopy(ptaddr_kern, ptaddr_us, ARM_PAGETABLE_SIZE) != OK)
+#endif
 			panic("pt_init: abscopy failed");
 	}
 
@@ -1038,6 +1408,10 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 	int slot;
 	u32_t phys;
 	void *pdes;
+#if defined(__arm__)
+	int i;
+	int pages_per_pagedir = ARCH_PAGEDIR_SIZE/VM_PAGE_SIZE;
+#endif
 
 	/* Basic sanity checks. */
 	assert(who);
@@ -1049,19 +1423,42 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 	slot = who->vm_slot;
 	assert(slot >= 0);
 	assert(slot < ELEMENTS(vmproc));
-	assert(slot < I386_VM_PT_ENTRIES);
+#if defined(__i386__)
+	assert(slot < ARCH_VM_PT_ENTRIES);
+#elif defined(__arm__)
+	assert(slot < ARCH_VM_PT_ENTRIES / pages_per_pagedir);
+#endif
 
-	phys = pt->pt_dir_phys & I386_VM_ADDR_MASK;
+#if defined(__i386__)
+	phys = pt->pt_dir_phys & ARCH_VM_ADDR_MASK;
+#elif defined(__arm__)
+	phys = pt->pt_dir_phys & ARM_VM_PTE_MASK;
+#endif
 	assert(pt->pt_dir_phys == phys);
+#if defined(__arm__)
+	assert(!(pt->pt_dir_phys % ARCH_PAGEDIR_SIZE));
+#endif
 
 	/* Update "page directory pagetable." */
-	page_directories[slot] = phys | I386_VM_PRESENT|I386_VM_WRITE;
+#if defined(__i386__)
+	page_directories[slot] = phys | ARCH_VM_PDE_PRESENT|ARCH_VM_PTE_RW;
+#elif defined(__arm__)
+	for (i = 0; i < pages_per_pagedir; i++)
+	    page_directories[slot*pages_per_pagedir+i] =
+		(phys+i*VM_PAGE_SIZE) |
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_RW |
+		ARCH_VM_PTE_USER;
+#endif
 
 	/* This is where the PDE's will be visible to the kernel
 	 * in its address space.
 	 */
-	pdes = (void *) (pagedir_pde*I386_BIG_PAGE_SIZE + 
-			slot * I386_PAGE_SIZE);
+	pdes = (void *) (pagedir_pde*ARCH_BIG_PAGE_SIZE + 
+#if defined(__i386__)
+			slot * VM_PAGE_SIZE);
+#elif defined(__arm__)
+			slot * ARCH_PAGEDIR_SIZE);
+#endif
 
 #if 0
 	printf("VM: slot %d endpoint %d has pde val 0x%lx at kernel address 0x%lx\n",
@@ -1079,7 +1476,7 @@ void pt_free(pt_t *pt)
 /* Free memory associated with this pagetable. */
 	int i;
 
-	for(i = 0; i < I386_VM_DIR_ENTRIES; i++)
+	for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++)
 		if(pt->pt_pt[i])
 			vm_freepages((vir_bytes) pt->pt_pt[i], 1);
 
@@ -1095,7 +1492,11 @@ int pt_mapkernel(pt_t *pt)
 	int kern_pde = kern_start_pde;
 	phys_bytes addr, mapped = 0;
 
+#if defined(__i386__)
         /* Any i386 page table needs to map in the kernel address space. */
+#elif defined(__arm__)
+        /* Any ARM page table needs to map in the kernel address space. */
+#endif
 	assert(bigpage_ok);
 	assert(pagedir_pde >= 0);
 	assert(kern_pde >= 0);
@@ -1105,11 +1506,18 @@ int pt_mapkernel(pt_t *pt)
 
 	/* Actually mapping in kernel */
 	while(mapped < kern_size) {
-		pt->pt_dir[kern_pde] = addr | I386_VM_PRESENT |
-			I386_VM_BIGPAGE | I386_VM_WRITE | global_bit;
+#if defined(__i386__)
+		pt->pt_dir[kern_pde] = addr | ARCH_VM_PDE_PRESENT |
+			ARCH_VM_BIGPAGE | ARCH_VM_PTE_RW | global_bit;
+#elif defined(__arm__)
+		pt->pt_dir[kern_pde] = (addr & ARCH_VM_PDE_MASK) |
+			ARM_VM_SECTION |
+			ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_WB |
+			ARM_VM_SECTION_SHAREABLE | ARM_VM_SECTION_SUPER;
+#endif
 		kern_pde++;
-		mapped += I386_BIG_PAGE_SIZE;
-		addr += I386_BIG_PAGE_SIZE;
+		mapped += ARCH_BIG_PAGE_SIZE;
+		addr += ARCH_BIG_PAGE_SIZE;
 	}
 
 	/* Kernel also wants to know about all page directories. */
@@ -1137,6 +1545,9 @@ int pt_mapkernel(pt_t *pt)
 void pt_cycle(void)
 {
 	vm_checkspares();
+#if defined(__arm__)
+	vm_checksparedirs();
+#endif
 }
 
 int get_vm_self_pages(void) { return vm_self_pages; }

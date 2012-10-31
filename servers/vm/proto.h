@@ -12,8 +12,8 @@ struct phys_region;
 #include <minix/vm.h>
 #include <timers.h>
 #include <stdio.h>
-#include <pagetable.h>
 
+#include "pt.h"
 #include "vm.h"
 #include "yielded.h"
 

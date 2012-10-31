@@ -27,7 +27,6 @@
 #include "util.h"
 #include "sanitycheck.h"
 #include "region.h"
-#include "memory.h"
 
 /*===========================================================================*
  *				do_fork					     *

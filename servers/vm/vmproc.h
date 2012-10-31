@@ -2,10 +2,10 @@
 #ifndef _VMPROC_H 
 #define _VMPROC_H 1
 
-#include <pagetable.h>
 #include <minix/bitmap.h>
 #include <machine/archtypes.h>
 
+#include "pt.h"
 #include "vm.h"
 #include "physravl.h"
 #include "yieldedavl.h"

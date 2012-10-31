@@ -21,7 +21,6 @@
 #include <env.h>
 #include <stdio.h>
 #include <assert.h>
-#include <memory.h>
 
 #include "glo.h"
 #include "proto.h"
