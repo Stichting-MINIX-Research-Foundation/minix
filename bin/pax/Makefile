@@ -54,8 +54,6 @@ DPADD+=	${LIBRMT}
 .if defined(__MINIX)
 CPPFLAGS+= -DHOSTPROG
 CPPFLAGS+= -Dlchown=chown -Dlchmod=chmod
-DPADD+= ${LIBUTIL}
-LDADD+= -lutil
 .endif
 
 .include <bsd.prog.mk>
