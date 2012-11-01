@@ -3,9 +3,6 @@
 
 .include <bsd.own.mk>
 
-# LSC Until it compiles cleanly...
-NOGCCERROR:=yes
-
 PROG=	xinstall
 SRCS=	xinstall.c getid.c
 MAN=	install.1

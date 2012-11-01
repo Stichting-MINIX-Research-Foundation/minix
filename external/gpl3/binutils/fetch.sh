@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	bsdtar -oxjf binutils-2.21.1.tar.bz2 && \
+	tar -oxjf binutils-2.21.1.tar.bz2 && \
 	mv binutils-2.21.1 dist && \
 	cd dist && \
 	cat ../patches/* | patch -p1

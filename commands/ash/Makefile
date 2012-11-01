@@ -89,6 +89,7 @@ expand.c: arith.h
 trap.c: signames.h
 cd.c complete.c eval.c exec.c expand.c jobs.c main.c options.c parser.c redir.c show.c trap.c var.c: nodes.h
 eval.c exec.c expand.c input.c input.h jobs.c mystring.c output.c parser.c trap.c var.c: syntax.h
+cd.c eval.c exec.c histedit.cjobs.c main.c miscbltin.c options.c trap.c var.c: builtins.h
 
 # LSC: Seems that this file is implicitly taken into account by NetBSD's make, 
 # still seems to be ignored / not found currently.

@@ -13,6 +13,7 @@ PROG=	passwd
 SRCS=	local_passwd.c passwd.c
 MAN=	passwd.1
 
+# LSC No LOGIN_CAP on Minix?
 CPPFLAGS+=-I${.CURDIR} #-DLOGIN_CAP
 
 .if (${USE_YP} != "no")

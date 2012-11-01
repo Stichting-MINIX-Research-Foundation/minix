@@ -1,18 +1,24 @@
 #	$NetBSD: sys.mk,v 1.110 2012/10/06 20:54:58 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
-unix?=		We run MINIX.
-
 # This variable should be used to differentiate Minix builds in Makefiles.
 __MINIX=	yes
+
+.if defined(__MINIX)
+.if ${MKSMALL:U} == "yes"
+DBG=	-Os
+CFLAGS+= -DNDEBUG
+.endif
+
+unix?=		We run MINIX.
 
 COMPILER_TYPE=gnu
 NBSD_LIBC=	yes
 
-.if defined(MKSMALL) && ${MKSMALL} == "yes"
-DBG=	-Os
-CFLAGS+= -DNDEBUG
-.endif
+DBG?=	-O
+CPP?=	/usr/lib/cpp
+.endif # defined(__MINIX)
+unix?=		We run NetBSD.
 
 .SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
 
@@ -30,8 +36,7 @@ _ASM_TRADITIONAL_CPP=	-x assembler-with-cpp
 COMPILE.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${_ASM_TRADITIONAL_CPP} -c
 LINK.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${LDFLAGS}
 
-CC?=		clang
-
+CC?=		cc
 .if ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 # -O2 is too -falign-* zealous for low-memory sh3 machines
 DBG?=	-Os -freorder-blocks
@@ -41,9 +46,7 @@ DBG?=	-Os
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .else
-#MINIX: use -O for now
-#DBG?=	-O2
-DBG?=	-O
+DBG?=	-O2
 .endif
 CFLAGS?=	${DBG}
 LDFLAGS?=
