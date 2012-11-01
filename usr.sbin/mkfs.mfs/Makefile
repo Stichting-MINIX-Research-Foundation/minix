@@ -8,7 +8,7 @@ CPPFLAGS+= -D_MINIX
 # LSC Adding this to activate the getline renaming macro
 CPPFLAGS+= -D__NBSD_LIBC
 
-.if ${HOST_OSTYPE:C/\-.*//} == "Minix" || !defined(HOSTPROGNAME)
+.if ${HOST_OSTYPE:C/\-.*//:U} == "Minix" || !defined(HOSTPROGNAME)
 LDADD+= -lminlib -lcompat_minix
 .endif
 

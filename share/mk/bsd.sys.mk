@@ -5,6 +5,10 @@
 .if !defined(_BSD_SYS_MK_)
 _BSD_SYS_MK_=1
 
+.if ${HOST_OSTYPE:C/\-.*//:U} == "Minix"
+HOST_CPP?=	/usr/lib/cpp
+.endif
+
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
@@ -33,7 +37,9 @@ CFLAGS+=	-Wno-sign-compare
 CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
-CFLAGS+=	-Wa,--fatal-warnings
+#CFLAGS+=	-Wa,--fatal-warnings
+# LSC Clang version 2.9 those not support this flag
+CFLAGS+=       ${${HAVE_LLVM:U} != "2.9":? -Wa,--fatal-warnings:}
 .endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
@@ -109,7 +115,11 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if ${HAS_SSP} == "yes"
 COPTS+=	-fstack-protector -Wstack-protector 
+.if defined(__MINIX)
 COPTS+=	${${ACTIVE_CC} == "clang":? -mllvm -stack-protector-buffer-size=1 :}
+.else
+COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
+.endif # defined(__MINIX)
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 .endif

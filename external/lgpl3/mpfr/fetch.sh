@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	bsdtar -oxjf mpfr-3.0.1.tar.bz2
+	tar -oxjf mpfr-3.0.1.tar.bz2
 	mv mpfr-3.0.1 dist && \
 	cd dist && \
 	cat ../patches/* |patch -p1

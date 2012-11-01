@@ -6,8 +6,7 @@
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
-#.include <minix.gcov.mk>
-.include <minix.gcc.mk>
+.include <minix.gcov.mk>
 
 #
 # Definitions and targets shared among all programs built by a single
@@ -119,9 +118,6 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
-
-#LSC Add minix base library, required for libc to work.
-LDADD+= -L=/usr/lib -lminlib
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")

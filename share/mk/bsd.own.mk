@@ -8,23 +8,31 @@
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
 
-# LSC SAVE SOME TIME...
-MKCLEANVERIFY:=		no
-
-.ifndef HOSTPROG
-# LSC Needed at a lot of places for MINIX
-CPPFLAGS+= -isystem ${DESTDIR}/usr/include
-MKDYNAMICROOT:=		no
-
-# Override MACHINE as the native host make will set it to i686
-_uname_s!= uname -s
-.if ${_uname_s} == "Minix" && ${MACHINE_ARCH} == "i386"
-MACHINE:= i386
-.endif
-
 .if defined(__MINIX)
+
+# LSC FIXME: Useless difference, Should use the mk.conf
+MAKECONF?=	/etc/make.conf
+
+# Some Minix deviations from NetBSD
+LDSTATIC?=	-static
+MKDYNAMICROOT?=	no
+
+BINMODE?=	755
+NONBINMODE?=	644
+MANDIR?=	/usr/man
+BINGRP?=	operator
+MANGRP?=	operator
+INFOGRP?=	operator
+DOCGRP?=	operator
+
 MACHINE_GNU_PLATFORM?=${MACHINE_ARCH}-elf32-minix
-.endif # defined(__MINIX)
+
+MKBINUTILS:=	no
+MKGDB:=		no
+MKGCC?=		no
+
+# LSC To check if works
+#DESTDIR?=	/usr/destdir.${MACHINE_ARCH}
 
 # LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
@@ -35,9 +43,26 @@ SMP_FLAGS += -DCONFIG_MAX_CPUS=${CONFIG_MAX_CPUS}
 .endif
 
 CPPFLAGS+= ${SMP_FLAGS}
-.endif
 
-MAKECONF?=	/etc/make.conf
+__uname_s!= uname -s
+.if ${__uname_s:Uunknown} == "Minix" 
+USETOOLS?=	never
+.  if ${USETOOLS:Uno} != "yes"
+#HAVE_LLVM?=2.9
+HAVE_LLVM?=3.1
+.  endif
+.  if !defined(HOSTPROG) && !defined(HOSTLIB)
+# LSC FIXME: Override MACHINE as the native minix host make command will set 
+#            it to i686.
+.    if ${MACHINE_ARCH} == "i386"
+MACHINE:= i386
+.    endif
+.  endif # !defined(HOSTPROG) && !defined(HOSTLIB)
+.endif # __uname_s == "Minix"
+
+.else
+MAKECONF?=	/etc/mk.conf
+.endif # defined(__MINIX)
 .-include "${MAKECONF}"
 
 #
@@ -551,10 +576,10 @@ BSDSRCDIR?=	/usr/src
 BSDOBJDIR?=	/usr/obj
 NETBSDSRCDIR?=	${BSDSRCDIR}
 
-BINGRP?=	operator
+BINGRP?=	wheel
 BINOWN?=	root
-BINMODE?=	755
-NONBINMODE?=	644
+BINMODE?=	555
+NONBINMODE?=	444
 
 # These are here mainly because we don't want suid root in case
 # a Makefile defines BINMODE.
@@ -563,14 +588,14 @@ RUMPBINOWN?=	root
 RUMPBINMODE?=	555
 RUMPNONBINMODE?=444
 
-MANDIR?=	/usr/man
-MANGRP?=	operator
+MANDIR?=	/usr/share/man
+MANGRP?=	wheel
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
 MANINSTALL?=	${_MANINSTALL}
 
 INFODIR?=	/usr/share/info
-INFOGRP?=	operator
+INFOGRP?=	wheel
 INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
@@ -583,7 +608,7 @@ LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=	/usr/share/doc
 HTMLDOCDIR?=	/usr/share/doc/html
-DOCGRP?=	operator
+DOCGRP?=	wheel
 DOCOWN?=	root
 DOCMODE?=	${NONBINMODE}
 
@@ -839,6 +864,7 @@ MKZFS?=		yes
 .endif
 
 # Some tough Minix defaults
+MKCOVERAGE?=	no
 MKPROFILE?=	no
 MKSTATICLIB:=	yes
 MKLINT:=	no
@@ -848,7 +874,6 @@ USE_FORT:=	no
 MKYP:=		no
 MKPF:=		no
 MKNLS:=		no
-MKCOVERAGE?=	no
 MKHESIOD:=	no
 MKPOSTFIX:=	no
 MKKMOD:=	no
@@ -868,8 +893,6 @@ MKIPFILTER:=	no
 MKINET6:=	no
 MKGROFF:=	no
 MKHTML:=	no
-MKBINUTILS:=	no
-MKGDB:=		no
 
 #
 # MK* options which default to "yes".
@@ -1033,12 +1056,12 @@ COPY?=		-c
 .if ${MKUPDATE} == "no"
 PRESERVE?=	
 .else
-#XXX: Not supported by MINIX install
+#LSC: Not supported by MINIX install
 PRESERVE?=	-p
 .endif
 #XXX: Not supported by MINIX install
 RENAME?=	-r
-.endif
+.endif # != "Minix"
 HRDLINK?=	-l h
 SYMLINK?=	-l s
 

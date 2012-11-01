@@ -6,6 +6,7 @@
 PROG=	sed
 SRCS=	compile.c main.c misc.c process.c
 
+# LSC FIXME Still required?
 SYMLINKS?=    ${BINDIR}/sed /bin/sed
 
 .include <bsd.prog.mk>

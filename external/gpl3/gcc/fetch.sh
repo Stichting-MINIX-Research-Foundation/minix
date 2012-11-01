@@ -32,7 +32,7 @@ then
 		fi
 	fi
 
-	bsdtar -oxjf gcc-4.5.3.tar.bz2 && \
+	tar -oxjf gcc-4.5.3.tar.bz2 && \
 	mv gcc-4.5.3 dist && \
 	cd dist && \
 	rm -rf $DELETEDIRS && \

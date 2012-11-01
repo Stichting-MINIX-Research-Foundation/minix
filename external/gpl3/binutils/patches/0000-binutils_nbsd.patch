@@ -1,6 +1,23 @@
-diff -r -x CVS -N -U 3 dist.orig/bfd/archive.c dist/bfd/archive.c
---- dist.orig/bfd/archive.c	2011-06-27 09:39:01.000000000 +0200
-+++ dist/bfd/archive.c	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/bfd/ChangeLog dist.nbsd/bfd/ChangeLog
+--- dist/bfd/ChangeLog	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/ChangeLog	Wed Nov  7 11:13:53 2012
+@@ -1,3 +1,13 @@
++2011-12-11  John Davis Anglin  <dave.anglin@nrc-cnrc.gc.ca>
++
++	PR binutils/13476
++	* elf32-hppa.c (final_link_relocate): Convert R_PARISC_TLS_GD21L,
++	R_PARISC_TLS_LDM21L and R_PARISC_TLS_IE21L relocations to
++	R_PARISC_DPREL21L when not doing a shared link.  Likewise convert
++	R_PARISC_TLS_GD14R, R_PARISC_TLS_LDM14R and R_PARISC_TLS_IE14R to
++	R_PARISC_DPREL14R.  Handle R_PARISC_TLS_GD21L, R_PARISC_TLS_LDM21L
++	and R_PARISC_TLS_IE21L with R_PARISC_DLTIND21L.
++
+ 2011-06-27  Tristan Gingold  <gingold@adacore.com>
+ 
+ 	* configure.in: Bump version to 2.21.1
+diff -rNU3 dist/bfd/archive.c dist.nbsd/bfd/archive.c
+--- dist/bfd/archive.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/archive.c	Wed Nov  7 11:13:53 2012
 @@ -156,6 +156,9 @@
  #define ar_maxnamelen(abfd) ((abfd)->xvec->ar_max_namelen)
  
@@ -63,9 +80,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/archive.c dist/bfd/archive.c
  	      current = current->archive_next;
  	    }
  	  while (current != map[count].u.abfd);
-diff -r -x CVS -N -U 3 dist.orig/bfd/bfd-in2.h dist/bfd/bfd-in2.h
---- dist.orig/bfd/bfd-in2.h	2011-06-27 09:39:01.000000000 +0200
-+++ dist/bfd/bfd-in2.h	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/bfd/bfd-in2.h dist.nbsd/bfd/bfd-in2.h
+--- dist/bfd/bfd-in2.h	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/bfd-in2.h	Wed Nov  7 11:13:53 2012
 @@ -5072,6 +5072,11 @@
    /* This BFD has been created by the linker and doesn't correspond
       to any input file.  */
@@ -78,26 +95,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/bfd-in2.h dist/bfd/bfd-in2.h
  
    /* This may be set before writing out a BFD to request that it
       be written using values for UIDs, GIDs, timestamps, etc. that
-diff -r -x CVS -N -U 3 dist.orig/bfd/ChangeLog dist/bfd/ChangeLog
---- dist.orig/bfd/ChangeLog	2011-06-27 10:57:12.000000000 +0200
-+++ dist/bfd/ChangeLog	2011-12-12 08:40:56.000000000 +0100
-@@ -1,3 +1,13 @@
-+2011-12-11  John Davis Anglin  <dave.anglin@nrc-cnrc.gc.ca>
-+
-+	PR binutils/13476
-+	* elf32-hppa.c (final_link_relocate): Convert R_PARISC_TLS_GD21L,
-+	R_PARISC_TLS_LDM21L and R_PARISC_TLS_IE21L relocations to
-+	R_PARISC_DPREL21L when not doing a shared link.  Likewise convert
-+	R_PARISC_TLS_GD14R, R_PARISC_TLS_LDM14R and R_PARISC_TLS_IE14R to
-+	R_PARISC_DPREL14R.  Handle R_PARISC_TLS_GD21L, R_PARISC_TLS_LDM21L
-+	and R_PARISC_TLS_IE21L with R_PARISC_DLTIND21L.
-+
- 2011-06-27  Tristan Gingold  <gingold@adacore.com>
- 
- 	* configure.in: Bump version to 2.21.1
-diff -r -x CVS -N -U 3 dist.orig/bfd/coff-alpha.c dist/bfd/coff-alpha.c
---- dist.orig/bfd/coff-alpha.c	2010-05-26 09:37:36.000000000 +0200
-+++ dist/bfd/coff-alpha.c	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/bfd/coff-alpha.c dist.nbsd/bfd/coff-alpha.c
+--- dist/bfd/coff-alpha.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/coff-alpha.c	Wed Nov  7 11:13:53 2012
 @@ -687,7 +687,9 @@
      case ALPHA_R_OP_STORE:
        /* The STORE reloc needs the size and offset fields.  We store
@@ -108,9 +108,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/coff-alpha.c dist/bfd/coff-alpha.c
        rptr->addend = (intern->r_offset << 8) + intern->r_size;
        break;
  
-diff -r -x CVS -N -U 3 dist.orig/bfd/config.bfd dist/bfd/config.bfd
---- dist.orig/bfd/config.bfd	2011-04-01 14:02:42.000000000 +0200
-+++ dist/bfd/config.bfd	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/bfd/config.bfd dist.nbsd/bfd/config.bfd
+--- dist/bfd/config.bfd	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/config.bfd	Wed Nov  7 11:13:53 2012
 @@ -218,15 +218,15 @@
  
    armeb-*-netbsdelf*)
@@ -192,20 +192,20 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/config.bfd dist/bfd/config.bfd
      targ_underscore=yes
      ;;
    sparc-*-openbsd[0-2].* | sparc-*-openbsd3.[0-1])
-@@ -1441,6 +1451,10 @@
+@@ -1440,6 +1450,10 @@
+     targ_defvec=bfd_elf64_sparc_vec
      targ_selvecs="bfd_elf32_sparc_vec sparclinux_vec sunos_big_vec"
      want64=true
-     ;;
++    ;;
 +  sparc64-*-netbsd*)
 +    targ_defvec=bfd_elf64_sparc_vec
 +    targ_selvecs="bfd_elf32_sparc_vec sparcnetbsd_vec sunos_big_vec"
-+    ;;
+     ;;
    sparc64-*-elf* | sparc64-*-rtems* )
      targ_defvec=bfd_elf64_sparc_vec
-     targ_selvecs=bfd_elf32_sparc_vec
-diff -r -x CVS -N -U 3 dist.orig/bfd/configure dist/bfd/configure
---- dist.orig/bfd/configure	2011-06-27 10:57:12.000000000 +0200
-+++ dist/bfd/configure	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/bfd/configure dist.nbsd/bfd/configure
+--- dist/bfd/configure	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/configure	Wed Nov  7 11:13:54 2012
 @@ -12109,10 +12109,10 @@
    withval=$with_pkgversion; case "$withval" in
        yes) as_fn_error "package version not specified" "$LINENO" 5 ;;
@@ -236,9 +236,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/configure dist/bfd/configure
  	COREFILE=netbsd-core.lo
  	;;
    mips-dec-*)
-diff -r -x CVS -N -U 3 dist.orig/bfd/configure.host dist/bfd/configure.host
---- dist.orig/bfd/configure.host	2010-02-15 20:25:47.000000000 +0100
-+++ dist/bfd/configure.host	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/bfd/configure.host dist.nbsd/bfd/configure.host
+--- dist/bfd/configure.host	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/configure.host	Wed Nov  7 11:13:53 2012
 @@ -56,6 +56,18 @@
  
  m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
@@ -258,9 +258,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/configure.host dist/bfd/configure.host
  # Some Solaris systems (osol0906 at least) have a libc that doesn't recognise
  # the "MS-ANSI" code page name, so we define an override for CP_ACP (sets the
  # default code page used by windres/windmc when not specified by a commandline
-diff -r -x CVS -N -U 3 dist.orig/bfd/configure.in dist/bfd/configure.in
---- dist.orig/bfd/configure.in	2011-06-27 10:57:10.000000000 +0200
-+++ dist/bfd/configure.in	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/bfd/configure.in dist.nbsd/bfd/configure.in
+--- dist/bfd/configure.in	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/configure.in	Wed Nov  7 11:13:53 2012
 @@ -242,6 +242,7 @@
  	COREFILE=netbsd-core.lo
  	;;
@@ -278,19 +278,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/configure.in dist/bfd/configure.in
  	COREFILE=netbsd-core.lo
  	;;
    mips-dec-*)
-diff -r -x CVS -N -U 3 dist.orig/bfd/doc/bfdver.texi dist/bfd/doc/bfdver.texi
---- dist.orig/bfd/doc/bfdver.texi	2011-06-27 11:08:43.000000000 +0200
-+++ dist/bfd/doc/bfdver.texi	2011-09-25 06:32:36.000000000 +0200
-@@ -1,4 +1,4 @@
- @set VERSION 2.21.1
--@set VERSION_PACKAGE (GNU Binutils) 
--@set UPDATED June 2011
-+@set VERSION_PACKAGE (GNU Binutils)\ 
-+@set UPDATED September 2011
- @set BUGURL @uref{http://www.sourceware.org/bugzilla/}
-diff -r -x CVS -N -U 3 dist.orig/bfd/doc/Makefile.in dist/bfd/doc/Makefile.in
---- dist.orig/bfd/doc/Makefile.in	2011-06-27 10:57:12.000000000 +0200
-+++ dist/bfd/doc/Makefile.in	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/bfd/doc/Makefile.in dist.nbsd/bfd/doc/Makefile.in
+--- dist/bfd/doc/Makefile.in	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/doc/Makefile.in	Wed Nov  7 11:13:53 2012
 @@ -417,7 +417,9 @@
  clean-libtool:
  	-rm -rf .libs _libs
@@ -302,9 +292,19 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/doc/Makefile.in dist/bfd/doc/Makefile.in
  	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
  	rm -rf $$backupdir && mkdir $$backupdir && \
  	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
-diff -r -x CVS -N -U 3 dist.orig/bfd/doc/reloc.texi dist/bfd/doc/reloc.texi
---- dist.orig/bfd/doc/reloc.texi	2011-06-27 11:08:43.000000000 +0200
-+++ dist/bfd/doc/reloc.texi	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/bfd/doc/bfdver.texi dist.nbsd/bfd/doc/bfdver.texi
+--- dist/bfd/doc/bfdver.texi	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/doc/bfdver.texi	Wed Nov  7 11:13:53 2012
+@@ -1,4 +1,4 @@
+ @set VERSION 2.21.1
+-@set VERSION_PACKAGE (GNU Binutils) 
+-@set UPDATED June 2011
++@set VERSION_PACKAGE (GNU Binutils)\ 
++@set UPDATED September 2011
+ @set BUGURL @uref{http://www.sourceware.org/bugzilla/}
+diff -rNU3 dist/bfd/doc/reloc.texi dist.nbsd/bfd/doc/reloc.texi
+--- dist/bfd/doc/reloc.texi	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/doc/reloc.texi	Wed Nov  7 11:13:53 2012
 @@ -570,6 +570,12 @@
  @deffnx {} BFD_RELOC_68K_TLS_LE8
  Relocations used by 68K ELF.
@@ -318,9 +318,36 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/doc/reloc.texi dist/bfd/doc/reloc.texi
  @deffn {} BFD_RELOC_32_BASEREL
  @deffnx {} BFD_RELOC_16_BASEREL
  @deffnx {} BFD_RELOC_LO16_BASEREL
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-arm.c dist/bfd/elf32-arm.c
---- dist.orig/bfd/elf32-arm.c	2011-05-11 09:29:12.000000000 +0200
-+++ dist/bfd/elf32-arm.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf.c dist.nbsd/bfd/elf.c
+--- dist/bfd/elf.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf.c	Wed Nov  7 11:13:53 2012
+@@ -8502,6 +8502,23 @@
+ 	  return TRUE;
+ 	}
+ 
++      /* On SuperH, PT_GETREGS == mach+3 and PT_GETFPREGS == mach+5.
++	 There's also old PT___GETREGS40 == mach + 1 for old reg
++	 structure which lacks GBR.  */
++
++    case bfd_arch_sh:
++      switch (note->type)
++	{
++	case NT_NETBSDCORE_FIRSTMACH+3:
++	  return elfcore_make_note_pseudosection (abfd, ".reg", note);
++
++	case NT_NETBSDCORE_FIRSTMACH+5:
++	  return elfcore_make_note_pseudosection (abfd, ".reg2", note);
++
++	default:
++	  return TRUE;
++	}
++
+       /* On all other arch's, PT_GETREGS == mach+1 and
+ 	 PT_GETFPREGS == mach+3.  */
+ 
+diff -rNU3 dist/bfd/elf32-arm.c dist.nbsd/bfd/elf32-arm.c
+--- dist/bfd/elf32-arm.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf32-arm.c	Wed Nov  7 11:13:53 2012
 @@ -11783,6 +11783,10 @@
  	{
  	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
@@ -332,9 +359,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-arm.c dist/bfd/elf32-arm.c
  	  info->flags |= DF_TEXTREL;
  
  	  /* Not an error, just cut short the traversal.  */
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-hppa.c dist/bfd/elf32-hppa.c
---- dist.orig/bfd/elf32-hppa.c	2010-10-25 17:54:14.000000000 +0200
-+++ dist/bfd/elf32-hppa.c	2011-12-12 08:40:56.000000000 +0100
+diff -rNU3 dist/bfd/elf32-hppa.c dist.nbsd/bfd/elf32-hppa.c
+--- dist/bfd/elf32-hppa.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf32-hppa.c	Wed Nov  7 11:13:53 2012
 @@ -2201,6 +2201,10 @@
  	{
  	  struct bfd_link_info *info = inf;
@@ -380,7 +407,8 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-hppa.c dist/bfd/elf32-hppa.c
 -	      && (r_type == R_PARISC_TLS_GD21L
 -		  || r_type == R_PARISC_TLS_LDM21L
 -		  || r_type == R_PARISC_TLS_IE21L)))
--	{
++      if (orig_r_type != r_type)
+ 	{
 -	  /* Convert addil instructions if the original reloc was a
 -	     DLTIND21L.  GCC sometimes uses a register other than r19 for
 -	     the operation, so we must convert any addil instruction
@@ -398,24 +426,6 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-hppa.c dist/bfd/elf32-hppa.c
 -	       (long) offset,
 -	       howto->name,
 -	       insn);
--	}
--      else if (orig_r_type == R_PARISC_DLTIND14F)
--	{
--	  /* This must be a format 1 load/store.  Change the base
--	     register to dp.  */
--	  insn = (insn & 0xfc1ffff) | (27 << 21);
--	}
--
--    /* For all the DP relative relocations, we need to examine the symbol's
--       section.  If it has no section or if it's a code section, then
--       "data pointer relative" makes no sense.  In that case we don't
--       adjust the "value", and for 21 bit addil instructions, we change the
--       source addend register from %dp to %r0.  This situation commonly
--       arises for undefined weak symbols and when a variable's "constness"
--       is declared differently from the way the variable is defined.  For
--       instance: "extern int foo" with foo defined as "const int foo".  */
-+      if (orig_r_type != r_type)
-+	{
 +	  if (r_type == R_PARISC_DPREL21L)
 +	    {
 +	      /* GCC sometimes uses a register other than r19 for the
@@ -441,8 +451,22 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-hppa.c dist/bfd/elf32-hppa.c
 +		 register to dp.  */
 +	      insn = (insn & 0xfc1ffff) | (27 << 21);
 +	    }
-+	}
-+
+ 	}
+-      else if (orig_r_type == R_PARISC_DLTIND14F)
+-	{
+-	  /* This must be a format 1 load/store.  Change the base
+-	     register to dp.  */
+-	  insn = (insn & 0xfc1ffff) | (27 << 21);
+-	}
+ 
+-    /* For all the DP relative relocations, we need to examine the symbol's
+-       section.  If it has no section or if it's a code section, then
+-       "data pointer relative" makes no sense.  In that case we don't
+-       adjust the "value", and for 21 bit addil instructions, we change the
+-       source addend register from %dp to %r0.  This situation commonly
+-       arises for undefined weak symbols and when a variable's "constness"
+-       is declared differently from the way the variable is defined.  For
+-       instance: "extern int foo" with foo defined as "const int foo".  */
 +      /* For all the DP relative relocations, we need to examine the symbol's
 +	 section.  If it has no section or if it's a code section, then
 +	 "data pointer relative" makes no sense.  In that case we don't
@@ -464,9 +488,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-hppa.c dist/bfd/elf32-hppa.c
      case R_PARISC_TLS_GD14R:
      case R_PARISC_TLS_LDM14R:
      case R_PARISC_TLS_IE14R:
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-i386.c dist/bfd/elf32-i386.c
---- dist.orig/bfd/elf32-i386.c	2011-06-27 09:39:04.000000000 +0200
-+++ dist/bfd/elf32-i386.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf32-i386.c dist.nbsd/bfd/elf32-i386.c
+--- dist/bfd/elf32-i386.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf32-i386.c	Wed Nov  7 11:13:53 2012
 @@ -515,7 +515,7 @@
  /* The name of the dynamic interpreter.  This is put in the .interp
     section.  */
@@ -488,9 +512,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-i386.c dist/bfd/elf32-i386.c
  	  info->flags |= DF_TEXTREL;
  
  	  /* Not an error, just cut short the traversal.  */
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-m68k.c dist/bfd/elf32-m68k.c
---- dist.orig/bfd/elf32-m68k.c	2010-10-25 17:54:14.000000000 +0200
-+++ dist/bfd/elf32-m68k.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf32-m68k.c dist.nbsd/bfd/elf32-m68k.c
+--- dist/bfd/elf32-m68k.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf32-m68k.c	Wed Nov  7 11:13:54 2012
 @@ -2567,7 +2567,7 @@
    if (ind->got_entry_key != 0)
      {
@@ -500,9 +524,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-m68k.c dist/bfd/elf32-m68k.c
        BFD_ASSERT (ind->glist == NULL);
  
        dir->got_entry_key = ind->got_entry_key;
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-ppc.c dist/bfd/elf32-ppc.c
---- dist.orig/bfd/elf32-ppc.c	2011-06-27 09:39:04.000000000 +0200
-+++ dist/bfd/elf32-ppc.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf32-ppc.c dist.nbsd/bfd/elf32-ppc.c
+--- dist/bfd/elf32-ppc.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf32-ppc.c	Wed Nov  7 11:13:53 2012
 @@ -3506,7 +3506,7 @@
  	    sec->has_tls_get_addr_call = 1;
  	}
@@ -521,9 +545,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-ppc.c dist/bfd/elf32-ppc.c
  	{
  	default:
  	  (*_bfd_error_handler)
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-sh.c dist/bfd/elf32-sh.c
---- dist.orig/bfd/elf32-sh.c	2010-10-25 17:54:14.000000000 +0200
-+++ dist/bfd/elf32-sh.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf32-sh.c dist.nbsd/bfd/elf32-sh.c
+--- dist/bfd/elf32-sh.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf32-sh.c	Wed Nov  7 11:13:53 2012
 @@ -3333,6 +3333,10 @@
  	{
  	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
@@ -535,9 +559,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-sh.c dist/bfd/elf32-sh.c
  	  info->flags |= DF_TEXTREL;
  
  	  /* Not an error, just cut short the traversal.  */
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-vax.c dist/bfd/elf32-vax.c
---- dist.orig/bfd/elf32-vax.c	2010-10-25 17:54:14.000000000 +0200
-+++ dist/bfd/elf32-vax.c	2012-08-27 18:50:14.000000000 +0200
+diff -rNU3 dist/bfd/elf32-vax.c dist.nbsd/bfd/elf32-vax.c
+--- dist/bfd/elf32-vax.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf32-vax.c	Wed Nov  7 11:13:54 2012
 @@ -52,7 +52,7 @@
  
  static bfd_boolean elf32_vax_set_private_flags (bfd *, flagword);
@@ -781,9 +805,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-vax.c dist/bfd/elf32-vax.c
  #define bfd_elf32_bfd_final_link	bfd_elf_gc_common_final_link
  
  #define elf_backend_check_relocs	elf_vax_check_relocs
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-alpha.c dist/bfd/elf64-alpha.c
---- dist.orig/bfd/elf64-alpha.c	2010-10-25 17:54:14.000000000 +0200
-+++ dist/bfd/elf64-alpha.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf64-alpha.c dist.nbsd/bfd/elf64-alpha.c
+--- dist/bfd/elf64-alpha.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf64-alpha.c	Wed Nov  7 11:13:53 2012
 @@ -99,6 +99,11 @@
  #define PLT_ENTRY_SIZE \
    (elf64_alpha_use_secureplt ? NEW_PLT_ENTRY_SIZE : OLD_PLT_ENTRY_SIZE)
@@ -796,10 +820,11 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-alpha.c dist/bfd/elf64-alpha.c
  #define MAX_GOT_SIZE		(64*1024)
  
  #define ELF_DYNAMIC_INTERPRETER "/usr/lib/ld.so"
-@@ -4727,6 +4732,32 @@
+@@ -4726,6 +4731,32 @@
+ 
  		plt_index = ((gotent->plt_offset - NEW_PLT_HEADER_SIZE)
  			     / NEW_PLT_ENTRY_SIZE);
- 	      }
++	      }
 +	    else if ((output_bfd->flags & BFD_TRADITIONAL_FORMAT) != 0)
 +	      {
 +	        long hi, lo;
@@ -825,13 +850,12 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-alpha.c dist/bfd/elf64-alpha.c
 +
 +		plt_index = ((gotent->plt_offset - OLD_PLT_HEADER_SIZE)
 +			     / OLD_PLT_ENTRY_SIZE);
-+	      }
+ 	      }
  	    else
  	      {
- 		disp = -(gotent->plt_offset + 4);
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-mips.c dist/bfd/elf64-mips.c
---- dist.orig/bfd/elf64-mips.c	2010-10-04 16:13:09.000000000 +0200
-+++ dist/bfd/elf64-mips.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf64-mips.c dist.nbsd/bfd/elf64-mips.c
+--- dist/bfd/elf64-mips.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf64-mips.c	Wed Nov  7 11:13:54 2012
 @@ -123,6 +123,8 @@
    (bfd *, asymbol *, bfd_boolean, char **, bfd_vma *);
  static bfd_boolean mips_elf64_object_p
@@ -872,9 +896,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-mips.c dist/bfd/elf64-mips.c
  #define bfd_elf64_find_nearest_line	_bfd_mips_elf_find_nearest_line
  #define bfd_elf64_find_inliner_info	_bfd_mips_elf_find_inliner_info
  #define bfd_elf64_new_section_hook	_bfd_mips_elf_new_section_hook
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-ppc.c dist/bfd/elf64-ppc.c
---- dist.orig/bfd/elf64-ppc.c	2011-06-27 09:39:05.000000000 +0200
-+++ dist/bfd/elf64-ppc.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf64-ppc.c dist.nbsd/bfd/elf64-ppc.c
+--- dist/bfd/elf64-ppc.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf64-ppc.c	Wed Nov  7 11:13:53 2012
 @@ -8877,6 +8877,10 @@
  	{
  	  struct bfd_link_info *info = inf;
@@ -886,9 +910,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-ppc.c dist/bfd/elf64-ppc.c
  	  info->flags |= DF_TEXTREL;
  
  	  /* Not an error, just cut short the traversal.  */
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-x86-64.c dist/bfd/elf64-x86-64.c
---- dist.orig/bfd/elf64-x86-64.c	2011-06-27 09:39:05.000000000 +0200
-+++ dist/bfd/elf64-x86-64.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elf64-x86-64.c dist.nbsd/bfd/elf64-x86-64.c
+--- dist/bfd/elf64-x86-64.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elf64-x86-64.c	Wed Nov  7 11:13:53 2012
 @@ -2196,6 +2196,10 @@
  	{
  	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
@@ -900,36 +924,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf64-x86-64.c dist/bfd/elf64-x86-64.c
  	  info->flags |= DF_TEXTREL;
  
  	  /* Not an error, just cut short the traversal.  */
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf.c dist/bfd/elf.c
---- dist.orig/bfd/elf.c	2011-06-27 09:39:04.000000000 +0200
-+++ dist/bfd/elf.c	2011-11-01 01:32:37.000000000 +0100
-@@ -8502,6 +8502,23 @@
- 	  return TRUE;
- 	}
- 
-+      /* On SuperH, PT_GETREGS == mach+3 and PT_GETFPREGS == mach+5.
-+	 There's also old PT___GETREGS40 == mach + 1 for old reg
-+	 structure which lacks GBR.  */
-+
-+    case bfd_arch_sh:
-+      switch (note->type)
-+	{
-+	case NT_NETBSDCORE_FIRSTMACH+3:
-+	  return elfcore_make_note_pseudosection (abfd, ".reg", note);
-+
-+	case NT_NETBSDCORE_FIRSTMACH+5:
-+	  return elfcore_make_note_pseudosection (abfd, ".reg2", note);
-+
-+	default:
-+	  return TRUE;
-+	}
-+
-       /* On all other arch's, PT_GETREGS == mach+1 and
- 	 PT_GETFPREGS == mach+3.  */
- 
-diff -r -x CVS -N -U 3 dist.orig/bfd/elflink.c dist/bfd/elflink.c
---- dist.orig/bfd/elflink.c	2011-06-27 09:39:06.000000000 +0200
-+++ dist/bfd/elflink.c	2012-03-04 18:09:32.000000000 +0100
+diff -rNU3 dist/bfd/elflink.c dist.nbsd/bfd/elflink.c
+--- dist/bfd/elflink.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elflink.c	Wed Nov  7 11:13:53 2012
 @@ -10047,7 +10047,14 @@
    if (bed->s->arch_size == 32)
      irel[0].r_info = ELF32_R_INFO (indx, howto->type);
@@ -946,9 +943,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elflink.c dist/bfd/elflink.c
  
    rel_hdr = reldata->hdr;
    erel = rel_hdr->contents;
-diff -r -x CVS -N -U 3 dist.orig/bfd/elfn32-mips.c dist/bfd/elfn32-mips.c
---- dist.orig/bfd/elfn32-mips.c	2010-08-25 16:53:45.000000000 +0200
-+++ dist/bfd/elfn32-mips.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/elfn32-mips.c dist.nbsd/bfd/elfn32-mips.c
+--- dist/bfd/elfn32-mips.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elfn32-mips.c	Wed Nov  7 11:13:53 2012
 @@ -81,6 +81,8 @@
    (bfd *, Elf_Internal_Note *);
  static bfd_boolean elf32_mips_grok_psinfo
@@ -985,9 +982,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elfn32-mips.c dist/bfd/elfn32-mips.c
  #define bfd_elf32_find_nearest_line	_bfd_mips_elf_find_nearest_line
  #define bfd_elf32_find_inliner_info	_bfd_mips_elf_find_inliner_info
  #define bfd_elf32_new_section_hook	_bfd_mips_elf_new_section_hook
-diff -r -x CVS -N -U 3 dist.orig/bfd/elfxx-mips.c dist/bfd/elfxx-mips.c
---- dist.orig/bfd/elfxx-mips.c	2011-06-27 09:39:07.000000000 +0200
-+++ dist/bfd/elfxx-mips.c	2012-03-02 17:37:16.000000000 +0100
+diff -rNU3 dist/bfd/elfxx-mips.c dist.nbsd/bfd/elfxx-mips.c
+--- dist/bfd/elfxx-mips.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elfxx-mips.c	Wed Nov  7 11:13:53 2012
 @@ -5138,7 +5138,10 @@
  			   || ((r_type == R_MIPS_26 || r_type == R_MIPS_JALR)
  			       && target_is_16_bit_code_p));
@@ -1029,9 +1026,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elfxx-mips.c dist/bfd/elfxx-mips.c
  		}
  	      else
  		{
-diff -r -x CVS -N -U 3 dist.orig/bfd/elfxx-sparc.c dist/bfd/elfxx-sparc.c
---- dist.orig/bfd/elfxx-sparc.c	2010-10-25 17:54:16.000000000 +0200
-+++ dist/bfd/elfxx-sparc.c	2011-10-08 01:24:14.000000000 +0200
+diff -rNU3 dist/bfd/elfxx-sparc.c dist.nbsd/bfd/elfxx-sparc.c
+--- dist/bfd/elfxx-sparc.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/elfxx-sparc.c	Wed Nov  7 11:13:53 2012
 @@ -2438,6 +2438,10 @@
  	{
  	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
@@ -1056,9 +1053,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elfxx-sparc.c dist/bfd/elfxx-sparc.c
  			   || !SYMBOLIC_BIND (info, h)
  			   || !h->def_regular))
  		{
-diff -r -x CVS -N -U 3 dist.orig/bfd/libbfd.h dist/bfd/libbfd.h
---- dist.orig/bfd/libbfd.h	2010-10-29 14:10:24.000000000 +0200
-+++ dist/bfd/libbfd.h	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/libbfd.h dist.nbsd/bfd/libbfd.h
+--- dist/bfd/libbfd.h	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/libbfd.h	Wed Nov  7 11:13:54 2012
 @@ -2150,6 +2150,7 @@
    "BFD_RELOC_XC16X_SEG",
    "BFD_RELOC_XC16X_SOF",
@@ -1067,9 +1064,9 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/libbfd.h dist/bfd/libbfd.h
    "BFD_RELOC_VAX_JMP_SLOT",
    "BFD_RELOC_VAX_RELATIVE",
    "BFD_RELOC_MT_PC16",
-diff -r -x CVS -N -U 3 dist.orig/bfd/reloc.c dist/bfd/reloc.c
---- dist.orig/bfd/reloc.c	2010-10-29 14:10:24.000000000 +0200
-+++ dist/bfd/reloc.c	2011-09-25 06:32:35.000000000 +0200
+diff -rNU3 dist/bfd/reloc.c dist.nbsd/bfd/reloc.c
+--- dist/bfd/reloc.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/bfd/reloc.c	Wed Nov  7 11:13:53 2012
 @@ -1775,6 +1775,17 @@
    Relocations used by 68K ELF.
  
@@ -1088,9 +1085,61 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/reloc.c dist/bfd/reloc.c
    BFD_RELOC_32_BASEREL
  ENUMX
    BFD_RELOC_16_BASEREL
-diff -r -x CVS -N -U 3 dist.orig/binutils/aclocal.m4 dist/binutils/aclocal.m4
---- dist.orig/binutils/aclocal.m4	2010-11-05 11:32:53.000000000 +0100
-+++ dist/binutils/aclocal.m4	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/binutils/Makefile.in dist.nbsd/binutils/Makefile.in
+--- dist/binutils/Makefile.in	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/Makefile.in	Wed Nov  7 11:13:54 2012
+@@ -1,4 +1,4 @@
+-# Makefile.in generated by automake 1.11.1 from Makefile.am.
++# Makefile.in generated by automake 1.11 from Makefile.am.
+ # @configure_input@
+ 
+ # Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+@@ -49,10 +49,12 @@
+ DIST_COMMON = NEWS README ChangeLog $(srcdir)/Makefile.in \
+ 	$(srcdir)/Makefile.am $(top_srcdir)/configure \
+ 	$(am__configure_deps) $(srcdir)/config.in \
+-	$(srcdir)/../mkinstalldirs $(top_srcdir)/po/Make-in arparse.h \
+-	arparse.c arlex.c defparse.h defparse.c deflex.c nlmheader.h \
+-	nlmheader.c arparse.h arparse.c arlex.c mcparse.h mcparse.c \
+-	rcparse.h rcparse.c $(srcdir)/../depcomp $(srcdir)/../ylwrap
++	$(srcdir)/../mkinstalldirs $(srcdir)/../mkinstalldirs \
++	$(top_srcdir)/po/Make-in arparse.h arparse.c arlex.c \
++	defparse.h defparse.c deflex.c nlmheader.h nlmheader.c \
++	arparse.h arparse.c arlex.c mcparse.h mcparse.c rcparse.h \
++	rcparse.c $(srcdir)/../depcomp $(srcdir)/../depcomp \
++	$(srcdir)/../ylwrap $(srcdir)/../ylwrap
+ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
+ 	$(top_srcdir)/../config/zlib.m4 \
+@@ -380,6 +382,7 @@
+ libexecdir = @libexecdir@
+ localedir = @localedir@
+ localstatedir = @localstatedir@
++lt_ECHO = @lt_ECHO@
+ mandir = @mandir@
+ mkdir_p = @mkdir_p@
+ oldincludedir = @oldincludedir@
+@@ -921,7 +924,7 @@
+ #     (which will cause the Makefiles to be regenerated when you run `make');
+ # (2) otherwise, pass the desired values on the `make' command line.
+ $(RECURSIVE_TARGETS):
+-	@fail= failcom='exit 1'; \
++	@failcom='exit 1'; \
+ 	for f in x $$MAKEFLAGS; do \
+ 	  case $$f in \
+ 	    *=* | --[!k]*);; \
+@@ -946,7 +949,7 @@
+ 	fi; test -z "$$fail"
+ 
+ $(RECURSIVE_CLEAN_TARGETS):
+-	@fail= failcom='exit 1'; \
++	@failcom='exit 1'; \
+ 	for f in x $$MAKEFLAGS; do \
+ 	  case $$f in \
+ 	    *=* | --[!k]*);; \
+diff -rNU3 dist/binutils/aclocal.m4 dist.nbsd/binutils/aclocal.m4
+--- dist/binutils/aclocal.m4	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/aclocal.m4	Wed Nov  7 11:13:54 2012
 @@ -1,4 +1,4 @@
 -# generated automatically by aclocal 1.11.1 -*- Autoconf -*-
 +# generated automatically by aclocal 1.11 -*- Autoconf -*-
@@ -1147,9 +1196,9 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/aclocal.m4 dist/binutils/aclocal.m4
  m4_ifndef([AC_AUTOCONF_VERSION],
    [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
  _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
-diff -r -x CVS -N -U 3 dist.orig/binutils/bucomm.c dist/binutils/bucomm.c
---- dist.orig/binutils/bucomm.c	2011-03-16 09:35:58.000000000 +0100
-+++ dist/binutils/bucomm.c	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/binutils/bucomm.c dist.nbsd/binutils/bucomm.c
+--- dist/binutils/bucomm.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/bucomm.c	Wed Nov  7 11:13:54 2012
 @@ -576,7 +576,14 @@
  		   file_name, strerror (errno));
      }  
@@ -1166,47 +1215,9 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/bucomm.c dist/binutils/bucomm.c
    else if (statbuf.st_size < 0)
      non_fatal (_("Warning: '%s' has negative size, probably it is too large"),
                 file_name);
-diff -r -x CVS -N -U 3 dist.orig/binutils/doc/elfedit.1 dist/binutils/doc/elfedit.1
---- dist.orig/binutils/doc/elfedit.1	2011-06-27 11:08:50.000000000 +0200
-+++ dist/binutils/doc/elfedit.1	2011-09-25 06:32:36.000000000 +0200
-@@ -1,15 +1,7 @@
--.\" Automatically generated by Pod::Man 2.16 (Pod::Simple 3.05)
-+.\" Automatically generated by Pod::Man 2.25 (Pod::Simple 3.16)
- .\"
- .\" Standard preamble:
- .\" ========================================================================
--.de Sh \" Subsection heading
--.br
--.if t .Sp
--.ne 5
--.PP
--\fB\\$1\fR
--.PP
--..
- .de Sp \" Vertical space (when we can't use .PP)
- .if t .sp .5v
- .if n .sp
-@@ -53,7 +45,7 @@
- .el       .ds Aq '
- .\"
- .\" If the F register is turned on, we'll generate index entries on stderr for
--.\" titles (.TH), headers (.SH), subsections (.Sh), items (.Ip), and index
-+.\" titles (.TH), headers (.SH), subsections (.SS), items (.Ip), and index
- .\" entries marked with X<> in POD.  Of course, you'll have to process the
- .\" output yourself in some meaningful fashion.
- .ie \nF \{\
-@@ -132,7 +124,7 @@
- .\" ========================================================================
- .\"
- .IX Title "ELFEDIT 1"
--.TH ELFEDIT 1 "2011-06-27" "binutils-2.21.1" "GNU Development Tools"
-+.TH ELFEDIT 1 "2011-09-24" "binutils-2.21.1" "GNU Development Tools"
- .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
- .\" way too many mistakes in technical documents.
- .if n .ad l
-diff -r -x CVS -N -U 3 dist.orig/binutils/doc/Makefile.am dist/binutils/doc/Makefile.am
---- dist.orig/binutils/doc/Makefile.am	2010-01-06 17:52:14.000000000 +0100
-+++ dist/binutils/doc/Makefile.am	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/binutils/doc/Makefile.am dist.nbsd/binutils/doc/Makefile.am
+--- dist/binutils/doc/Makefile.am	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/doc/Makefile.am	Wed Nov  7 11:13:54 2012
 @@ -42,6 +42,8 @@
  
  # Man page generation from texinfo
@@ -1342,9 +1353,9 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/doc/Makefile.am dist/binutils/doc/Make
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dcxxfilt < $(binutils_TEXI) > $(DEMANGLER_NAME).pod
  	-($(POD2MAN) $(DEMANGLER_NAME).pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-diff -r -x CVS -N -U 3 dist.orig/binutils/doc/Makefile.in dist/binutils/doc/Makefile.in
---- dist.orig/binutils/doc/Makefile.in	2010-11-05 11:32:54.000000000 +0100
-+++ dist/binutils/doc/Makefile.in	2011-10-07 22:22:59.000000000 +0200
+diff -rNU3 dist/binutils/doc/Makefile.in dist.nbsd/binutils/doc/Makefile.in
+--- dist/binutils/doc/Makefile.in	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/doc/Makefile.in	Wed Nov  7 11:13:54 2012
 @@ -1,4 +1,4 @@
 -# Makefile.in generated by automake 1.11.1 from Makefile.am.
 +# Makefile.in generated by automake 1.11 from Makefile.am.
@@ -1512,9 +1523,47 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/doc/Makefile.in dist/binutils/doc/Make
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dcxxfilt < $(binutils_TEXI) > $(DEMANGLER_NAME).pod
  	-($(POD2MAN) $(DEMANGLER_NAME).pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-diff -r -x CVS -N -U 3 dist.orig/binutils/doc/strings.1 dist/binutils/doc/strings.1
---- dist.orig/binutils/doc/strings.1	2011-06-27 11:08:49.000000000 +0200
-+++ dist/binutils/doc/strings.1	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/binutils/doc/elfedit.1 dist.nbsd/binutils/doc/elfedit.1
+--- dist/binutils/doc/elfedit.1	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/doc/elfedit.1	Wed Nov  7 11:13:54 2012
+@@ -1,15 +1,7 @@
+-.\" Automatically generated by Pod::Man 2.16 (Pod::Simple 3.05)
++.\" Automatically generated by Pod::Man 2.25 (Pod::Simple 3.16)
+ .\"
+ .\" Standard preamble:
+ .\" ========================================================================
+-.de Sh \" Subsection heading
+-.br
+-.if t .Sp
+-.ne 5
+-.PP
+-\fB\\$1\fR
+-.PP
+-..
+ .de Sp \" Vertical space (when we can't use .PP)
+ .if t .sp .5v
+ .if n .sp
+@@ -53,7 +45,7 @@
+ .el       .ds Aq '
+ .\"
+ .\" If the F register is turned on, we'll generate index entries on stderr for
+-.\" titles (.TH), headers (.SH), subsections (.Sh), items (.Ip), and index
++.\" titles (.TH), headers (.SH), subsections (.SS), items (.Ip), and index
+ .\" entries marked with X<> in POD.  Of course, you'll have to process the
+ .\" output yourself in some meaningful fashion.
+ .ie \nF \{\
+@@ -132,7 +124,7 @@
+ .\" ========================================================================
+ .\"
+ .IX Title "ELFEDIT 1"
+-.TH ELFEDIT 1 "2011-06-27" "binutils-2.21.1" "GNU Development Tools"
++.TH ELFEDIT 1 "2011-09-24" "binutils-2.21.1" "GNU Development Tools"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l
+diff -rNU3 dist/binutils/doc/strings.1 dist.nbsd/binutils/doc/strings.1
+--- dist/binutils/doc/strings.1	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/doc/strings.1	Wed Nov  7 11:13:54 2012
 @@ -216,7 +216,7 @@
  characters (\s-1ASCII\s0, \s-1ISO\s0 8859, etc., default), \fBS\fR =
  single\-8\-bit\-byte characters, \fBb\fR = 16\-bit bigendian, \fBl\fR =
@@ -1524,61 +1573,9 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/doc/strings.1 dist/binutils/doc/string
  and \fBb\fR apply to, for example, Unicode \s-1UTF\-16/UCS\-2\s0 encodings).
  .IP "\fB\-T\fR \fIbfdname\fR" 4
  .IX Item "-T bfdname"
-diff -r -x CVS -N -U 3 dist.orig/binutils/Makefile.in dist/binutils/Makefile.in
---- dist.orig/binutils/Makefile.in	2011-06-27 09:39:08.000000000 +0200
-+++ dist/binutils/Makefile.in	2011-09-25 06:32:36.000000000 +0200
-@@ -1,4 +1,4 @@
--# Makefile.in generated by automake 1.11.1 from Makefile.am.
-+# Makefile.in generated by automake 1.11 from Makefile.am.
- # @configure_input@
- 
- # Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-@@ -49,10 +49,12 @@
- DIST_COMMON = NEWS README ChangeLog $(srcdir)/Makefile.in \
- 	$(srcdir)/Makefile.am $(top_srcdir)/configure \
- 	$(am__configure_deps) $(srcdir)/config.in \
--	$(srcdir)/../mkinstalldirs $(top_srcdir)/po/Make-in arparse.h \
--	arparse.c arlex.c defparse.h defparse.c deflex.c nlmheader.h \
--	nlmheader.c arparse.h arparse.c arlex.c mcparse.h mcparse.c \
--	rcparse.h rcparse.c $(srcdir)/../depcomp $(srcdir)/../ylwrap
-+	$(srcdir)/../mkinstalldirs $(srcdir)/../mkinstalldirs \
-+	$(top_srcdir)/po/Make-in arparse.h arparse.c arlex.c \
-+	defparse.h defparse.c deflex.c nlmheader.h nlmheader.c \
-+	arparse.h arparse.c arlex.c mcparse.h mcparse.c rcparse.h \
-+	rcparse.c $(srcdir)/../depcomp $(srcdir)/../depcomp \
-+	$(srcdir)/../ylwrap $(srcdir)/../ylwrap
- ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
- am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
- 	$(top_srcdir)/../config/zlib.m4 \
-@@ -380,6 +382,7 @@
- libexecdir = @libexecdir@
- localedir = @localedir@
- localstatedir = @localstatedir@
-+lt_ECHO = @lt_ECHO@
- mandir = @mandir@
- mkdir_p = @mkdir_p@
- oldincludedir = @oldincludedir@
-@@ -921,7 +924,7 @@
- #     (which will cause the Makefiles to be regenerated when you run `make');
- # (2) otherwise, pass the desired values on the `make' command line.
- $(RECURSIVE_TARGETS):
--	@fail= failcom='exit 1'; \
-+	@failcom='exit 1'; \
- 	for f in x $$MAKEFLAGS; do \
- 	  case $$f in \
- 	    *=* | --[!k]*);; \
-@@ -946,7 +949,7 @@
- 	fi; test -z "$$fail"
- 
- $(RECURSIVE_CLEAN_TARGETS):
--	@fail= failcom='exit 1'; \
-+	@failcom='exit 1'; \
- 	for f in x $$MAKEFLAGS; do \
- 	  case $$f in \
- 	    *=* | --[!k]*);; \
-diff -r -x CVS -N -U 3 dist.orig/binutils/objcopy.c dist/binutils/objcopy.c
---- dist.orig/binutils/objcopy.c	2011-06-27 09:39:09.000000000 +0200
-+++ dist/binutils/objcopy.c	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/binutils/objcopy.c dist.nbsd/binutils/objcopy.c
+--- dist/binutils/objcopy.c	Wed Nov  7 11:43:32 2012
++++ dist.nbsd/binutils/objcopy.c	Wed Nov  7 11:13:54 2012
 @@ -31,6 +31,7 @@
  #include "fnmatch.h"
  #include "elf-bfd.h"
@@ -1587,9 +1584,9 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/objcopy.c dist/binutils/objcopy.c
  #include "libbfd.h"
  #include "coff/internal.h"
  #include "libcoff.h"
-diff -r -x CVS -N -U 3 dist.orig/binutils/readelf.c dist/binutils/readelf.c
---- dist.orig/binutils/readelf.c	2011-03-16 09:36:01.000000000 +0100
-+++ dist/binutils/readelf.c	2011-10-31 20:12:48.000000000 +0100
+diff -rNU3 dist/binutils/readelf.c dist.nbsd/binutils/readelf.c
+--- dist/binutils/readelf.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/binutils/readelf.c	Wed Nov  7 11:13:54 2012
 @@ -11933,6 +11933,23 @@
  	}
        break;
@@ -1614,9 +1611,9 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/readelf.c dist/binutils/readelf.c
      /* On all other arch's, PT_GETREGS == mach+1 and
         PT_GETFPREGS == mach+3.  */
      default:
-diff -r -x CVS -N -U 3 dist.orig/binutils/strings.c dist/binutils/strings.c
---- dist.orig/binutils/strings.c	2009-11-11 05:54:32.000000000 +0100
-+++ dist/binutils/strings.c	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/binutils/strings.c dist.nbsd/binutils/strings.c
+--- dist/binutils/strings.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/binutils/strings.c	Wed Nov  7 11:13:54 2012
 @@ -596,7 +596,7 @@
  	    else
  #elif !BFD_HOST_64BIT_LONG
@@ -1626,9 +1623,9 @@ diff -r -x CVS -N -U 3 dist.orig/binutils/strings.c dist/binutils/strings.c
  	    else
  #endif
  	      printf ("%7ld ", (long) start);
-diff -r -x CVS -N -U 3 dist.orig/config.guess dist/config.guess
---- dist.orig/config.guess	2010-06-01 19:53:40.000000000 +0200
-+++ dist/config.guess	2012-07-19 21:34:26.000000000 +0200
+diff -rNU3 dist/config.guess dist.nbsd/config.guess
+--- dist/config.guess	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/config.guess	Wed Nov  7 11:13:54 2012
 @@ -968,6 +968,9 @@
      sparc:Linux:*:* | sparc64:Linux:*:*)
  	echo ${UNAME_MACHINE}-unknown-linux-gnu
@@ -1639,9 +1636,9 @@ diff -r -x CVS -N -U 3 dist.orig/config.guess dist/config.guess
      vax:Linux:*:*)
  	echo ${UNAME_MACHINE}-dec-linux-gnu
  	exit ;;
-diff -r -x CVS -N -U 3 dist.orig/config.sub dist/config.sub
---- dist.orig/config.sub	2010-06-01 19:53:40.000000000 +0200
-+++ dist/config.sub	2012-08-05 06:03:03.000000000 +0200
+diff -rNU3 dist/config.sub dist.nbsd/config.sub
+--- dist/config.sub	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/config.sub	Wed Nov  7 11:13:54 2012
 @@ -4,7 +4,7 @@
  #   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
  #   Free Software Foundation, Inc.
@@ -1724,7 +1721,7 @@ diff -r -x CVS -N -U 3 dist.orig/config.sub dist/config.sub
  	c90)
  		basic_machine=c90-cray
  		os=-unicos
-@@ -1094,10 +1075,17 @@
+@@ -1094,11 +1075,18 @@
  		basic_machine=t90-cray
  		os=-unicos
  		;;
@@ -1735,7 +1732,7 @@ diff -r -x CVS -N -U 3 dist.orig/config.sub dist/config.sub
 +	tic54x | c54x*)
 +		basic_machine=tic54x-unknown
 +		os=-coff
-+		;;
+ 		;;
 +	tic55x | c55x*)
 +		basic_machine=tic55x-unknown
 +		os=-coff
@@ -1743,9 +1740,10 @@ diff -r -x CVS -N -U 3 dist.orig/config.sub dist/config.sub
 +	tic6x | c6x*)
 +		basic_machine=tic6x-unknown
 +		os=-coff
- 		;;
++		;;
  	tile*)
  		basic_machine=tile-unknown
+ 		os=-linux-gnu
 @@ -1308,8 +1296,7 @@
  	      | -udi* | -eabi* | -lites* | -ieee* | -go32* | -aux* \
  	      | -chorusos* | -chorusrdb* | -cegcc* \
@@ -1756,10 +1754,11 @@ diff -r -x CVS -N -U 3 dist.orig/config.sub dist/config.sub
  	      | -uxpv* | -beos* | -mpeix* | -udk* \
  	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
  	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
-@@ -1492,15 +1479,6 @@
+@@ -1491,15 +1478,6 @@
+ 		;;
          c4x-* | tic4x-*)
          	os=-coff
- 		;;
+-		;;
 -	tic54x-*)
 -		os=-coff
 -		;;
@@ -1768,13 +1767,12 @@ diff -r -x CVS -N -U 3 dist.orig/config.sub dist/config.sub
 -		;;
 -	tic6x-*)
 -		os=-coff
--		;;
+ 		;;
  	# This must come before the *-dec entry.
  	pdp10-*)
- 		os=-tops20
-diff -r -x CVS -N -U 3 dist.orig/configure dist/configure
---- dist.orig/configure	2011-06-27 09:39:00.000000000 +0200
-+++ dist/configure	2011-09-25 06:32:34.000000000 +0200
+diff -rNU3 dist/configure dist.nbsd/configure
+--- dist/configure	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/configure	Wed Nov  7 11:13:54 2012
 @@ -2670,7 +2670,7 @@
  # binutils, gas and ld appear in that order because it makes sense to run
  # "make check" in that particular order.
@@ -1784,9 +1782,9 @@ diff -r -x CVS -N -U 3 dist.orig/configure dist/configure
  
  # libgcj represents the runtime libraries only used by gcj.
  libgcj="target-libffi \
-diff -r -x CVS -N -U 3 dist.orig/gas/atof-generic.c dist/gas/atof-generic.c
---- dist.orig/gas/atof-generic.c	2009-09-02 09:24:19.000000000 +0200
-+++ dist/gas/atof-generic.c	2011-09-25 06:32:36.000000000 +0200
+diff -rNU3 dist/gas/atof-generic.c dist.nbsd/gas/atof-generic.c
+--- dist/gas/atof-generic.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/atof-generic.c	Wed Nov  7 11:13:45 2012
 @@ -121,6 +121,32 @@
  
    switch (first_digit[0])
@@ -1820,9 +1818,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/atof-generic.c dist/gas/atof-generic.c
      case 'n':
      case 'N':
        if (!strncasecmp ("nan", first_digit, 3))
-diff -r -x CVS -N -U 3 dist.orig/gas/config/atof-vax.c dist/gas/config/atof-vax.c
---- dist.orig/gas/config/atof-vax.c	2007-10-17 18:45:54.000000000 +0200
-+++ dist/gas/config/atof-vax.c	2010-05-16 13:20:01.000000000 +0200
+diff -rNU3 dist/gas/config/atof-vax.c dist.nbsd/gas/config/atof-vax.c
+--- dist/gas/config/atof-vax.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/config/atof-vax.c	Wed Nov  7 11:13:46 2012
 @@ -268,10 +268,27 @@
  	  int exponent_skippage;
  	  LITTLENUM_TYPE word1;
@@ -1853,9 +1851,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/config/atof-vax.c dist/gas/config/atof-vax.
  	      return return_value;
  	    }
  
-diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-arm.c dist/gas/config/tc-arm.c
---- dist.orig/gas/config/tc-arm.c	2011-06-27 09:39:11.000000000 +0200
-+++ dist/gas/config/tc-arm.c	2011-10-01 21:25:24.000000000 +0200
+diff -rNU3 dist/gas/config/tc-arm.c dist.nbsd/gas/config/tc-arm.c
+--- dist/gas/config/tc-arm.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/config/tc-arm.c	Wed Nov  7 11:13:46 2012
 @@ -16133,12 +16133,16 @@
    asection *sect;
  
@@ -1879,9 +1877,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-arm.c dist/gas/config/tc-arm.c
  #else
    if (now_it.state == MANUAL_IT_BLOCK)
      as_warn (_("file finished with an open IT block."));
-diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-mips.c dist/gas/config/tc-mips.c
---- dist.orig/gas/config/tc-mips.c	2011-03-16 09:36:16.000000000 +0100
-+++ dist/gas/config/tc-mips.c	2011-09-30 03:23:00.000000000 +0200
+diff -rNU3 dist/gas/config/tc-mips.c dist.nbsd/gas/config/tc-mips.c
+--- dist/gas/config/tc-mips.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/config/tc-mips.c	Wed Nov  7 11:13:46 2012
 @@ -763,6 +763,9 @@
    NUM_FIX_VR4120_CLASSES
  };
@@ -2137,9 +2135,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-mips.c dist/gas/config/tc-mips.c
  -mfix-vr4120		work around certain VR4120 errata\n\
  -mfix-vr4130		work around VR4130 mflo/mfhi errata\n\
  -mfix-24k		insert a nop after ERET and DERET instructions\n\
-diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-vax.c dist/gas/config/tc-vax.c
---- dist.orig/gas/config/tc-vax.c	2010-06-28 16:06:57.000000000 +0200
-+++ dist/gas/config/tc-vax.c	2012-07-17 22:29:44.000000000 +0200
+diff -rNU3 dist/gas/config/tc-vax.c dist.nbsd/gas/config/tc-vax.c
+--- dist/gas/config/tc-vax.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/config/tc-vax.c	Wed Nov  7 11:13:46 2012
 @@ -392,6 +392,9 @@
  	      && (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
  	      && fragP->fr_symbol != NULL
@@ -2330,9 +2328,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-vax.c dist/gas/config/tc-vax.c
  		      know (operandP->vop_reg >= 0);
  		      p[0] = operandP->vop_reg
  			| ((at | "?\12\14?\16"[length]) << 4);
-diff -r -x CVS -N -U 3 dist.orig/gas/config/vax-inst.h dist/gas/config/vax-inst.h
---- dist.orig/gas/config/vax-inst.h	2009-09-02 09:24:21.000000000 +0200
-+++ dist/gas/config/vax-inst.h	2011-09-25 06:32:37.000000000 +0200
+diff -rNU3 dist/gas/config/vax-inst.h dist.nbsd/gas/config/vax-inst.h
+--- dist/gas/config/vax-inst.h	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/config/vax-inst.h	Wed Nov  7 11:13:46 2012
 @@ -66,6 +66,8 @@
  #define VAX_WIDEN_WORD (0x20)	/* Add this to byte branch to get word br.  */
  #define VAX_WIDEN_LONG (0x6)	/* Add this to byte branch to get long jmp.*/
@@ -2342,61 +2340,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/config/vax-inst.h dist/gas/config/vax-inst.
  
  struct vit			/* vax instruction tree                    */
  {
-diff -r -x CVS -N -U 3 dist.orig/gas/doc/as.info dist/gas/doc/as.info
---- dist.orig/gas/doc/as.info	2011-06-27 11:08:45.000000000 +0200
-+++ dist/gas/doc/as.info	2011-09-25 06:32:37.000000000 +0200
-@@ -20185,8 +20185,8 @@
- * -G command line option, Alpha:         Alpha Options.       (line  53)
- * -g command line option, Alpha:         Alpha Options.       (line  47)
- * -G option (MIPS):                      MIPS Opts.           (line   8)
--* -H option, VAX/VMS:                    VAX-Opts.            (line  81)
- * -h option, VAX/VMS:                    VAX-Opts.            (line  45)
-+* -H option, VAX/VMS:                    VAX-Opts.            (line  81)
- * -I PATH:                               I.                   (line   6)
- * -ignore-parallel-conflicts option, M32RX: M32R-Opts.        (line  87)
- * -Ip option, M32RX:                     M32R-Opts.           (line  97)
-@@ -20552,8 +20552,8 @@
- * a.out symbol attributes:               a.out Symbols.       (line   6)
- * A_DIR environment variable, TIC54X:    TIC54X-Env.          (line   6)
- * ABI options, SH64:                     SH64 Options.        (line  29)
--* ABORT directive:                       ABORT (COFF).        (line   6)
- * abort directive:                       Abort.               (line   6)
-+* ABORT directive:                       ABORT (COFF).        (line   6)
- * absolute section:                      Ld Sections.         (line  29)
- * absolute-literals directive:           Absolute Literals Directive.
-                                                               (line   6)
-@@ -20722,8 +20722,8 @@
- * BSD syntax:                            PDP-11-Syntax.       (line   6)
- * bss directive, i960:                   Directives-i960.     (line   6)
- * bss directive, TIC54X:                 TIC54X-Directives.   (line  29)
--* bss section <1>:                       bss.                 (line   6)
--* bss section:                           Ld Sections.         (line  20)
-+* bss section <1>:                       Ld Sections.         (line  20)
-+* bss section:                           bss.                 (line   6)
- * bug criteria:                          Bug Criteria.        (line   6)
- * bug reports:                           Bug Reporting.       (line   6)
- * bugs in assembler:                     Reporting Bugs.      (line   6)
-diff -r -x CVS -N -U 3 dist.orig/gas/doc/c-mips.texi dist/gas/doc/c-mips.texi
---- dist.orig/gas/doc/c-mips.texi	2010-10-04 17:24:48.000000000 +0200
-+++ dist/gas/doc/c-mips.texi	2011-09-25 06:32:37.000000000 +0200
-@@ -196,6 +196,14 @@
- @itemx -mno-fix-vr4130
- Insert nops to work around the VR4130 @samp{mflo}/@samp{mfhi} errata.
- 
-+@item -mfix-loongson2f-btb
-+@itemx -mno-fix-loongson2f-btb
-+Clear the Branch Target Buffer before any jump through a register.  This
-+option is intended to be used on kernel code for the Loongson 2F processor
-+only; userland code compiled with this option will fault, and kernel code
-+compiled with this option run on another processor than Loongson 2F will
-+yield unpredictable results.
-+
- @item -mfix-24k
- @itemx -no-mfix-24k
- Insert nops to work around the 24K @samp{eret}/@samp{deret} errata.
-diff -r -x CVS -N -U 3 dist.orig/gas/doc/Makefile.am dist/gas/doc/Makefile.am
---- dist.orig/gas/doc/Makefile.am	2010-03-25 22:12:28.000000000 +0100
-+++ dist/gas/doc/Makefile.am	2011-09-25 06:32:37.000000000 +0200
+diff -rNU3 dist/gas/doc/Makefile.am dist.nbsd/gas/doc/Makefile.am
+--- dist/gas/doc/Makefile.am	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/doc/Makefile.am	Wed Nov  7 11:13:46 2012
 @@ -24,6 +24,8 @@
  		   -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
  
@@ -2415,9 +2361,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/doc/Makefile.am dist/gas/doc/Makefile.am
  	touch $@
  	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
  	-($(POD2MAN) as.pod | \
-diff -r -x CVS -N -U 3 dist.orig/gas/doc/Makefile.in dist/gas/doc/Makefile.in
---- dist.orig/gas/doc/Makefile.in	2010-11-05 11:33:35.000000000 +0100
-+++ dist/gas/doc/Makefile.in	2011-09-25 06:32:37.000000000 +0200
+diff -rNU3 dist/gas/doc/Makefile.in dist.nbsd/gas/doc/Makefile.in
+--- dist/gas/doc/Makefile.in	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/doc/Makefile.in	Wed Nov  7 11:13:46 2012
 @@ -366,6 +366,8 @@
  	-rm -rf .libs _libs
  
@@ -2445,9 +2391,28 @@ diff -r -x CVS -N -U 3 dist.orig/gas/doc/Makefile.in dist/gas/doc/Makefile.in
  	touch $@
  	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
  	-($(POD2MAN) as.pod | \
-diff -r -x CVS -N -U 3 dist.orig/gas/remap.c dist/gas/remap.c
---- dist.orig/gas/remap.c	2009-09-11 17:27:33.000000000 +0200
-+++ dist/gas/remap.c	2011-09-25 06:32:36.000000000 +0200
+Binary files dist/gas/doc/as.info and dist.nbsd/gas/doc/as.info differ
+diff -rNU3 dist/gas/doc/c-mips.texi dist.nbsd/gas/doc/c-mips.texi
+--- dist/gas/doc/c-mips.texi	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/doc/c-mips.texi	Wed Nov  7 11:13:46 2012
+@@ -196,6 +196,14 @@
+ @itemx -mno-fix-vr4130
+ Insert nops to work around the VR4130 @samp{mflo}/@samp{mfhi} errata.
+ 
++@item -mfix-loongson2f-btb
++@itemx -mno-fix-loongson2f-btb
++Clear the Branch Target Buffer before any jump through a register.  This
++option is intended to be used on kernel code for the Loongson 2F processor
++only; userland code compiled with this option will fault, and kernel code
++compiled with this option run on another processor than Loongson 2F will
++yield unpredictable results.
++
+ @item -mfix-24k
+ @itemx -no-mfix-24k
+ Insert nops to work around the 24K @samp{eret}/@samp{deret} errata.
+diff -rNU3 dist/gas/remap.c dist.nbsd/gas/remap.c
+--- dist/gas/remap.c	Wed Nov  7 11:43:31 2012
++++ dist.nbsd/gas/remap.c	Wed Nov  7 11:13:50 2012
 @@ -82,8 +82,8 @@
      return filename;
    name = filename + map->old_len;
@@ -2459,9 +2424,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/remap.c dist/gas/remap.c
 -  return xstrdup (s);
 +  return s;
  }
-diff -r -x CVS -N -U 3 dist.orig/gprof/corefile.c dist/gprof/corefile.c
---- dist.orig/gprof/corefile.c	2011-03-16 09:37:22.000000000 +0100
-+++ dist/gprof/corefile.c	2011-09-25 06:32:42.000000000 +0200
+diff -rNU3 dist/gprof/corefile.c dist.nbsd/gprof/corefile.c
+--- dist/gprof/corefile.c	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/gprof/corefile.c	Wed Nov  7 11:13:50 2012
 @@ -29,6 +29,8 @@
  #include "corefile.h"
  #include "safe-ctype.h"
@@ -2471,9 +2436,9 @@ diff -r -x CVS -N -U 3 dist.orig/gprof/corefile.c dist/gprof/corefile.c
  bfd *core_bfd;
  static int core_num_syms;
  static asymbol **core_syms;
-diff -r -x CVS -N -U 3 dist.orig/gprof/gprof.1 dist/gprof/gprof.1
---- dist.orig/gprof/gprof.1	2011-06-27 11:08:46.000000000 +0200
-+++ dist/gprof/gprof.1	2011-09-25 06:32:42.000000000 +0200
+diff -rNU3 dist/gprof/gprof.1 dist.nbsd/gprof/gprof.1
+--- dist/gprof/gprof.1	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/gprof/gprof.1	Wed Nov  7 11:13:50 2012
 @@ -1,15 +1,7 @@
 -.\" Automatically generated by Pod::Man 2.16 (Pod::Simple 3.05)
 +.\" Automatically generated by Pod::Man 2.25 (Pod::Simple 3.16)
@@ -2536,9 +2501,9 @@ diff -r -x CVS -N -U 3 dist.orig/gprof/gprof.1 dist/gprof/gprof.1
  .IX Subsection "Deprecated Options"
  These options have been replaced with newer versions that use symspecs.
  .ie n .IP """\-e \f(CIfunction_name\f(CW""" 4
-diff -r -x CVS -N -U 3 dist.orig/gprof/gprof.c dist/gprof/gprof.c
---- dist.orig/gprof/gprof.c	2009-06-12 17:33:30.000000000 +0200
-+++ dist/gprof/gprof.c	2011-09-25 06:32:42.000000000 +0200
+diff -rNU3 dist/gprof/gprof.c dist.nbsd/gprof/gprof.c
+--- dist/gprof/gprof.c	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/gprof/gprof.c	Wed Nov  7 11:13:50 2012
 @@ -47,6 +47,8 @@
  
  static void usage (FILE *, int) ATTRIBUTE_NORETURN;
@@ -2548,85 +2513,10 @@ diff -r -x CVS -N -U 3 dist.orig/gprof/gprof.c dist/gprof/gprof.c
  const char * whoami;
  const char * function_mapping_file;
  static const char * external_symbol_table;
-diff -r -x CVS -N -U 3 dist.orig/gprof/gprof.info dist/gprof/gprof.info
---- dist.orig/gprof/gprof.info	2011-06-27 11:08:46.000000000 +0200
-+++ dist/gprof/gprof.info	2011-09-25 06:32:42.000000000 +0200
-@@ -28,7 +28,7 @@
- time.  We assume that you know how to write, compile, and execute
- programs.  GNU `gprof' was written by Jay Fenlason.
- 
--   This manual is for `gprof' (GNU Binutils) version 2.21.1.
-+   This manual is for `gprof' (GNU Binutils)\ version 2.21.1.
- 
-    This document is distributed under the terms of the GNU Free
- Documentation License version 1.3.  A copy of the license is included
-@@ -2441,34 +2441,34 @@
- 
- Tag Table:
- Node: Top777
--Node: Introduction2102
--Node: Compiling4594
--Node: Executing8650
--Node: Invoking11438
--Node: Output Options12853
--Node: Analysis Options19942
--Node: Miscellaneous Options23640
--Node: Deprecated Options24895
--Node: Symspecs26964
--Node: Output28790
--Node: Flat Profile29830
--Node: Call Graph34783
--Node: Primary38015
--Node: Callers40603
--Node: Subroutines42720
--Node: Cycles44561
--Node: Line-by-line51338
--Node: Annotated Source55411
--Node: Inaccuracy58410
--Node: Sampling Error58668
--Node: Assumptions61572
--Node: How do I?63042
--Node: Incompatibilities64596
--Node: Details66090
--Node: Implementation66483
--Node: File Format72380
--Node: Internals76670
--Node: Debugging85165
--Node: GNU Free Documentation License86766
-+Node: Introduction2103
-+Node: Compiling4595
-+Node: Executing8651
-+Node: Invoking11439
-+Node: Output Options12854
-+Node: Analysis Options19943
-+Node: Miscellaneous Options23641
-+Node: Deprecated Options24896
-+Node: Symspecs26965
-+Node: Output28791
-+Node: Flat Profile29831
-+Node: Call Graph34784
-+Node: Primary38016
-+Node: Callers40604
-+Node: Subroutines42721
-+Node: Cycles44562
-+Node: Line-by-line51339
-+Node: Annotated Source55412
-+Node: Inaccuracy58411
-+Node: Sampling Error58669
-+Node: Assumptions61573
-+Node: How do I?63043
-+Node: Incompatibilities64597
-+Node: Details66091
-+Node: Implementation66484
-+Node: File Format72381
-+Node: Internals76671
-+Node: Debugging85166
-+Node: GNU Free Documentation License86767
- 
- End Tag Table
-diff -r -x CVS -N -U 3 dist.orig/include/bfdlink.h dist/include/bfdlink.h
---- dist.orig/include/bfdlink.h	2011-06-27 09:39:13.000000000 +0200
-+++ dist/include/bfdlink.h	2011-09-25 06:32:42.000000000 +0200
+Binary files dist/gprof/gprof.info and dist.nbsd/gprof/gprof.info differ
+diff -rNU3 dist/include/bfdlink.h dist.nbsd/include/bfdlink.h
+--- dist/include/bfdlink.h	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/include/bfdlink.h	Wed Nov  7 11:13:45 2012
 @@ -403,6 +403,10 @@
       option).  If this is NULL, no symbols are being wrapped.  */
    struct bfd_hash_table *wrap_hash;
@@ -2638,9 +2528,9 @@ diff -r -x CVS -N -U 3 dist.orig/include/bfdlink.h dist/include/bfdlink.h
    /* The output BFD.  */
    bfd *output_bfd;
  
-diff -r -x CVS -N -U 3 dist.orig/include/opcode/mips.h dist/include/opcode/mips.h
---- dist.orig/include/opcode/mips.h	2010-07-06 02:02:44.000000000 +0200
-+++ dist/include/opcode/mips.h	2011-09-25 06:32:42.000000000 +0200
+diff -rNU3 dist/include/opcode/mips.h dist.nbsd/include/opcode/mips.h
+--- dist/include/opcode/mips.h	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/include/opcode/mips.h	Wed Nov  7 11:13:45 2012
 @@ -768,7 +768,11 @@
    M_DSUB_I,
    M_DSUBU_I,
@@ -2653,9 +2543,152 @@ diff -r -x CVS -N -U 3 dist.orig/include/opcode/mips.h dist/include/opcode/mips.
    M_JAL_1,
    M_JAL_2,
    M_JAL_A,
-diff -r -x CVS -N -U 3 dist.orig/ld/configure.tgt dist/ld/configure.tgt
---- dist.orig/ld/configure.tgt	2011-04-01 14:03:54.000000000 +0200
-+++ dist/ld/configure.tgt	2012-08-05 06:03:03.000000000 +0200
+diff -rNU3 dist/ld/Makefile.am dist.nbsd/ld/Makefile.am
+--- dist/ld/Makefile.am	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/Makefile.am	Wed Nov  7 11:13:51 2012
+@@ -144,11 +144,13 @@
+ 	earmelf_linux.c \
+ 	earmelf_linux_eabi.c \
+ 	earmelf_nbsd.c \
++	earmelf_nbsd_eabi.c \
+ 	earmelf_vxworks.c \
+ 	earmelfb.c \
+ 	earmelfb_linux.c \
+ 	earmelfb_linux_eabi.c \
+ 	earmelfb_nbsd.c \
++	earmelfb_nbsd_eabi.c \
+ 	earmnbsd.c \
+ 	earmnto.c \
+ 	earmpe.c \
+@@ -684,6 +686,11 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
++earmelf_nbsd_abi.c: $(srcdir)/emulparams/armelf_nbsd_abi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelf_nbsd_abi "$(tdir_armelf_nbsd_abi)"
+ earmelf_vxworks.c: $(srcdir)/emulparams/armelf_vxworks.sh \
+   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/armelf.sh \
+   $(ELF_DEPS) $(srcdir)/emultempl/vxworks.em \
+@@ -711,6 +718,12 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelfb_nbsd "$(tdir_armelfb_nbsd)"
++earmelfb_nbsd_abi.c: $(srcdir)/emulparams/armelfb_nbsd_abi.sh \
++  $(srcdir)/emulparams/armelf_nbsd_abi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelfb_nbsd_abi "$(tdir_armelfb_nbsd_abi)"
+ earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
+   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"
+@@ -2009,6 +2022,8 @@
+ # because almost all configs use "gen" version of manual.
+ #  Set DOCVER above to change.
+ configdoc.texi:	${DOCVER}-doc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_configdoc.texi:
+ 	cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
+ 	chmod u+w ./configdoc.texi
+ 
+@@ -2016,6 +2031,8 @@
+ # The sed command removes the no-adjust Nroff command so that
+ # the man output looks standard.
+ ld.1: $(srcdir)/ld.texinfo configdoc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ld.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
+ 	-($(POD2MAN) ld.pod | \
+diff -rNU3 dist/ld/Makefile.in dist.nbsd/ld/Makefile.in
+--- dist/ld/Makefile.in	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/Makefile.in	Wed Nov  7 11:13:51 2012
+@@ -449,11 +449,13 @@
+ 	earmelf_linux.c \
+ 	earmelf_linux_eabi.c \
+ 	earmelf_nbsd.c \
++	earmelf_nbsd_eabi.c \
+ 	earmelf_vxworks.c \
+ 	earmelfb.c \
+ 	earmelfb_linux.c \
+ 	earmelfb_linux_eabi.c \
+ 	earmelfb_nbsd.c \
++	earmelfb_nbsd_eabi.c \
+ 	earmnbsd.c \
+ 	earmnto.c \
+ 	earmpe.c \
+@@ -1031,11 +1033,13 @@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_linux.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_linux_eabi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_nbsd.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_nbsd_abi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_vxworks.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_linux.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_linux_eabi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_nbsd.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_nbsd_eabi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmnbsd.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmnto.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmpe.Po@am__quote@
+@@ -1415,6 +1419,8 @@
+ 	-rm -f libtool config.lt
+ 
+ ld.info: ld.texinfo $(ld_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ld.info: ld.texinfo $(ld_TEXINFOS)
+ 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+ 	rm -rf $$backupdir && mkdir $$backupdir && \
+ 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+@@ -2119,6 +2125,11 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
++earmelf_nbsd_eabi.c: $(srcdir)/emulparams/armelf_nbsd_eabi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelf_nbsd_eabi "$(tdir_armelf_nbsd_eabi)"
+ earmelf_vxworks.c: $(srcdir)/emulparams/armelf_vxworks.sh \
+   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/armelf.sh \
+   $(ELF_DEPS) $(srcdir)/emultempl/vxworks.em \
+@@ -2146,6 +2157,12 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelfb_nbsd "$(tdir_armelfb_nbsd)"
++earmelfb_nbsd_eabi.c: $(srcdir)/emulparams/armelfb_nbsd_eabi.sh \
++  $(srcdir)/emulparams/armelf_nbsd_eabi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelfb_nbsd_eabi "$(tdir_armelfb_nbsd_eabi)"
+ earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
+   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"
+@@ -3387,6 +3404,8 @@
+ # because almost all configs use "gen" version of manual.
+ #  Set DOCVER above to change.
+ configdoc.texi:	${DOCVER}-doc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_configdoc.texi:
+ 	cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
+ 	chmod u+w ./configdoc.texi
+ 
+@@ -3394,6 +3413,8 @@
+ # The sed command removes the no-adjust Nroff command so that
+ # the man output looks standard.
+ ld.1: $(srcdir)/ld.texinfo configdoc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ld.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
+ 	-($(POD2MAN) ld.pod | \
+diff -rNU3 dist/ld/configure.tgt dist.nbsd/ld/configure.tgt
+--- dist/ld/configure.tgt	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/configure.tgt	Wed Nov  7 11:13:51 2012
 @@ -56,6 +56,11 @@
  arm-*-freebsd* | arm-*-kfreebsd*-gnu)
  	       		targ_emul=armelf_fbsd
@@ -2708,15 +2741,25 @@ diff -r -x CVS -N -U 3 dist.orig/ld/configure.tgt dist/ld/configure.tgt
  sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
  sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
  			targ_emul=elf32_sparc_sol2
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/armelfb_nbsd_eabi.sh dist/ld/emulparams/armelfb_nbsd_eabi.sh
---- dist.orig/ld/emulparams/armelfb_nbsd_eabi.sh	1970-01-01 01:00:00.000000000 +0100
-+++ dist/ld/emulparams/armelfb_nbsd_eabi.sh	2012-08-05 06:03:03.000000000 +0200
-@@ -0,0 +1,2 @@
-+. ${srcdir}/emulparams/armelf_nbsd_eabi.sh
-+OUTPUT_FORMAT="elf32-bigarm"
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/armelf_nbsd_eabi.sh dist/ld/emulparams/armelf_nbsd_eabi.sh
---- dist.orig/ld/emulparams/armelf_nbsd_eabi.sh	1970-01-01 01:00:00.000000000 +0100
-+++ dist/ld/emulparams/armelf_nbsd_eabi.sh	2012-08-13 04:52:34.000000000 +0200
+diff -rNU3 dist/ld/emulparams/armelf_nbsd.sh dist.nbsd/ld/emulparams/armelf_nbsd.sh
+--- dist/ld/emulparams/armelf_nbsd.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/armelf_nbsd.sh	Wed Nov  7 11:13:50 2012
+@@ -3,5 +3,12 @@
+ TEXT_START_ADDR=0x00008000
+ TARGET2_TYPE=got-rel
+ 
++unset DATA_START_SYMBOLS
+ unset STACK_ADDR
+ unset EMBEDDED
++
++case "$target" in
++  arm*-*-netbsdelf*-eabi*)
++    LIB_PATH='=/usr/lib/oabi'
++    ;;
++esac
+diff -rNU3 dist/ld/emulparams/armelf_nbsd_eabi.sh dist.nbsd/ld/emulparams/armelf_nbsd_eabi.sh
+--- dist/ld/emulparams/armelf_nbsd_eabi.sh	Thu Jan  1 00:00:00 1970
++++ dist.nbsd/ld/emulparams/armelf_nbsd_eabi.sh	Wed Nov  7 11:13:50 2012
 @@ -0,0 +1,18 @@
 +. ${srcdir}/emulparams/armelf_nbsd.sh
 +
@@ -2736,36 +2779,15 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/armelf_nbsd_eabi.sh dist/ld/emulp
 +    LIB_PATH='=/usr/lib/eabi'
 +    ;;
 +esac
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/armelf_nbsd.sh dist/ld/emulparams/armelf_nbsd.sh
---- dist.orig/ld/emulparams/armelf_nbsd.sh	2006-05-30 18:45:32.000000000 +0200
-+++ dist/ld/emulparams/armelf_nbsd.sh	2012-08-13 04:52:34.000000000 +0200
-@@ -3,5 +3,12 @@
- TEXT_START_ADDR=0x00008000
- TARGET2_TYPE=got-rel
- 
-+unset DATA_START_SYMBOLS
- unset STACK_ADDR
- unset EMBEDDED
-+
-+case "$target" in
-+  arm*-*-netbsdelf*-eabi*)
-+    LIB_PATH='=/usr/lib/oabi'
-+    ;;
-+esac
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf32bmipn32-defs.sh dist/ld/emulparams/elf32bmipn32-defs.sh
---- dist.orig/ld/emulparams/elf32bmipn32-defs.sh	2008-08-08 21:24:49.000000000 +0200
-+++ dist/ld/emulparams/elf32bmipn32-defs.sh	2009-11-15 11:25:17.000000000 +0100
-@@ -6,6 +6,7 @@
- 
- # Handle both big- and little-ended 32-bit MIPS objects.
- ARCH=mips
-+MACHINE=
- OUTPUT_FORMAT="elf32-bigmips"
- BIG_OUTPUT_FORMAT="elf32-bigmips"
- LITTLE_OUTPUT_FORMAT="elf32-littlemips"
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf32_sparc.sh dist/ld/emulparams/elf32_sparc.sh
---- dist.orig/ld/emulparams/elf32_sparc.sh	2010-09-20 20:41:15.000000000 +0200
-+++ dist/ld/emulparams/elf32_sparc.sh	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/emulparams/armelfb_nbsd_eabi.sh dist.nbsd/ld/emulparams/armelfb_nbsd_eabi.sh
+--- dist/ld/emulparams/armelfb_nbsd_eabi.sh	Thu Jan  1 00:00:00 1970
++++ dist.nbsd/ld/emulparams/armelfb_nbsd_eabi.sh	Wed Nov  7 11:13:50 2012
+@@ -0,0 +1,2 @@
++. ${srcdir}/emulparams/armelf_nbsd_eabi.sh
++OUTPUT_FORMAT="elf32-bigarm"
+diff -rNU3 dist/ld/emulparams/elf32_sparc.sh dist.nbsd/ld/emulparams/elf32_sparc.sh
+--- dist/ld/emulparams/elf32_sparc.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/elf32_sparc.sh	Wed Nov  7 11:13:50 2012
 @@ -13,6 +13,7 @@
  TEMPLATE_NAME=elf32
  DATA_PLT=
@@ -2774,9 +2796,20 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf32_sparc.sh dist/ld/emulparams
  GENERATE_PIE_SCRIPT=yes
  NOP=0x01000000
  NO_SMALL_DATA=yes
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf64alpha_nbsd.sh dist/ld/emulparams/elf64alpha_nbsd.sh
---- dist.orig/ld/emulparams/elf64alpha_nbsd.sh	2001-12-18 00:54:58.000000000 +0100
-+++ dist/ld/emulparams/elf64alpha_nbsd.sh	2009-08-19 09:19:31.000000000 +0200
+diff -rNU3 dist/ld/emulparams/elf32bmipn32-defs.sh dist.nbsd/ld/emulparams/elf32bmipn32-defs.sh
+--- dist/ld/emulparams/elf32bmipn32-defs.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/elf32bmipn32-defs.sh	Wed Nov  7 11:13:50 2012
+@@ -6,6 +6,7 @@
+ 
+ # Handle both big- and little-ended 32-bit MIPS objects.
+ ARCH=mips
++MACHINE=
+ OUTPUT_FORMAT="elf32-bigmips"
+ BIG_OUTPUT_FORMAT="elf32-bigmips"
+ LITTLE_OUTPUT_FORMAT="elf32-littlemips"
+diff -rNU3 dist/ld/emulparams/elf64alpha_nbsd.sh dist.nbsd/ld/emulparams/elf64alpha_nbsd.sh
+--- dist/ld/emulparams/elf64alpha_nbsd.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/elf64alpha_nbsd.sh	Wed Nov  7 11:13:50 2012
 @@ -1,2 +1,8 @@
  . ${srcdir}/emulparams/elf64alpha.sh
  ENTRY=__start
@@ -2786,9 +2819,9 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf64alpha_nbsd.sh dist/ld/emulpa
 +# Note that the number is always big-endian, thus we have to 
 +# reverse the digit string.
 +#NOP=0x0000fe2f1f04ff47		# unop; nop
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf_i386.sh dist/ld/emulparams/elf_i386.sh
---- dist.orig/ld/emulparams/elf_i386.sh	2009-07-29 16:59:23.000000000 +0200
-+++ dist/ld/emulparams/elf_i386.sh	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/emulparams/elf_i386.sh dist.nbsd/ld/emulparams/elf_i386.sh
+--- dist/ld/emulparams/elf_i386.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/elf_i386.sh	Wed Nov  7 11:13:50 2012
 @@ -9,7 +9,14 @@
  NOP=0x90909090
  TEMPLATE_NAME=elf32
@@ -2804,9 +2837,9 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf_i386.sh dist/ld/emulparams/el
 +    LIB_PATH='=/usr/lib/i386'
 +    ;;
 +esac
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/hppalinux.sh dist/ld/emulparams/hppalinux.sh
---- dist.orig/ld/emulparams/hppalinux.sh	2011-03-16 09:37:33.000000000 +0100
-+++ dist/ld/emulparams/hppalinux.sh	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/emulparams/hppalinux.sh dist.nbsd/ld/emulparams/hppalinux.sh
+--- dist/ld/emulparams/hppalinux.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/hppalinux.sh	Wed Nov  7 11:13:50 2012
 @@ -1,5 +1,5 @@
  # If you change this file, please also look at files which source this one:
 -# hppanbsd.sh
@@ -2814,27 +2847,18 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/hppalinux.sh dist/ld/emulparams/h
  
  SCRIPT_NAME=elf
  ELFSIZE=32
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/hppaobsd.sh dist/ld/emulparams/hppaobsd.sh
---- dist.orig/ld/emulparams/hppaobsd.sh	2006-05-30 18:45:32.000000000 +0200
-+++ dist/ld/emulparams/hppaobsd.sh	2009-08-19 09:19:31.000000000 +0200
+diff -rNU3 dist/ld/emulparams/hppaobsd.sh dist.nbsd/ld/emulparams/hppaobsd.sh
+--- dist/ld/emulparams/hppaobsd.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/hppaobsd.sh	Wed Nov  7 11:13:50 2012
 @@ -1,4 +1,4 @@
 -. ${srcdir}/emulparams/hppanbsd.sh
 +. ${srcdir}/emulparams/hppalinux.sh
  
  OUTPUT_FORMAT="elf32-hppa"
  TEXT_START_ADDR=0x1000
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/m68kelfnbsd.sh dist/ld/emulparams/m68kelfnbsd.sh
---- dist.orig/ld/emulparams/m68kelfnbsd.sh	2001-12-18 14:26:26.000000000 +0100
-+++ dist/ld/emulparams/m68kelfnbsd.sh	2009-08-19 09:19:31.000000000 +0200
-@@ -1,4 +1,4 @@
- . ${srcdir}/emulparams/m68kelf.sh
- TEXT_START_ADDR=0x2000
- TARGET_PAGE_SIZE=0x2000
--MACHINE=
-+NONPAGED_TEXT_START_ADDR=${TEXT_START_ADDR}
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/m68kelf.sh dist/ld/emulparams/m68kelf.sh
---- dist.orig/ld/emulparams/m68kelf.sh	2009-09-29 18:28:52.000000000 +0200
-+++ dist/ld/emulparams/m68kelf.sh	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/emulparams/m68kelf.sh dist.nbsd/ld/emulparams/m68kelf.sh
+--- dist/ld/emulparams/m68kelf.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/m68kelf.sh	Wed Nov  7 11:13:50 2012
 @@ -10,5 +10,6 @@
  TEMPLATE_NAME=elf32
  EXTRA_EM_FILE=m68kelf
@@ -2842,9 +2866,30 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/m68kelf.sh dist/ld/emulparams/m68
 +ELFSIZE=32
  GENERATE_PIE_SCRIPT=yes
  NO_SMALL_DATA=yes
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/shelf_nbsd.sh dist/ld/emulparams/shelf_nbsd.sh
---- dist.orig/ld/emulparams/shelf_nbsd.sh	2008-01-16 00:05:46.000000000 +0100
-+++ dist/ld/emulparams/shelf_nbsd.sh	2009-08-19 09:19:31.000000000 +0200
+diff -rNU3 dist/ld/emulparams/m68kelfnbsd.sh dist.nbsd/ld/emulparams/m68kelfnbsd.sh
+--- dist/ld/emulparams/m68kelfnbsd.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/m68kelfnbsd.sh	Wed Nov  7 11:13:50 2012
+@@ -1,4 +1,4 @@
+ . ${srcdir}/emulparams/m68kelf.sh
+ TEXT_START_ADDR=0x2000
+ TARGET_PAGE_SIZE=0x2000
+-MACHINE=
++NONPAGED_TEXT_START_ADDR=${TEXT_START_ADDR}
+diff -rNU3 dist/ld/emulparams/sh.sh dist.nbsd/ld/emulparams/sh.sh
+--- dist/ld/emulparams/sh.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/sh.sh	Wed Nov  7 11:13:50 2012
+@@ -3,6 +3,6 @@
+ 
+ SCRIPT_NAME=sh
+ OUTPUT_FORMAT="coff-sh"
+-TEXT_START_ADDR=0x8000
+-TARGET_PAGE_SIZE=128
++TEXT_START_ADDR=0x1000
++TARGET_PAGE_SIZE=0x1000
+ ARCH=sh
+diff -rNU3 dist/ld/emulparams/shelf_nbsd.sh dist.nbsd/ld/emulparams/shelf_nbsd.sh
+--- dist/ld/emulparams/shelf_nbsd.sh	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/emulparams/shelf_nbsd.sh	Wed Nov  7 11:13:50 2012
 @@ -9,7 +9,11 @@
  
  DATA_START_SYMBOLS='PROVIDE (__data_start = .);';
@@ -2858,21 +2903,9 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/shelf_nbsd.sh dist/ld/emulparams/
 +OTHER_READWRITE_SECTIONS='
 +  .note.ABI-tag : { *(.note.ABI-tag) }
 +'
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/sh.sh dist/ld/emulparams/sh.sh
---- dist.orig/ld/emulparams/sh.sh	2001-11-22 10:08:04.000000000 +0100
-+++ dist/ld/emulparams/sh.sh	2009-08-19 09:19:31.000000000 +0200
-@@ -3,6 +3,6 @@
- 
- SCRIPT_NAME=sh
- OUTPUT_FORMAT="coff-sh"
--TEXT_START_ADDR=0x8000
--TARGET_PAGE_SIZE=128
-+TEXT_START_ADDR=0x1000
-+TARGET_PAGE_SIZE=0x1000
- ARCH=sh
-diff -r -x CVS -N -U 3 dist.orig/ld/ldlex.c dist/ld/ldlex.c
---- dist.orig/ld/ldlex.c	2011-06-27 11:08:46.000000000 +0200
-+++ dist/ld/ldlex.c	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/ldlex.c dist.nbsd/ld/ldlex.c
+--- dist/ld/ldlex.c	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/ldlex.c	Wed Nov  7 11:13:50 2012
 @@ -16,6 +16,9 @@
  /* First, we deal with  platform-specific or compiler-specific issues. */
  
@@ -2892,7 +2925,7 @@ diff -r -x CVS -N -U 3 dist.orig/ld/ldlex.c dist/ld/ldlex.c
  /* flex integer type definitions */
  
  #ifndef FLEXINT_H
-@@ -152,12 +157,7 @@
+@@ -152,13 +157,8 @@
  typedef struct yy_buffer_state *YY_BUFFER_STATE;
  #endif
  
@@ -2900,12 +2933,13 @@ diff -r -x CVS -N -U 3 dist.orig/ld/ldlex.c dist/ld/ldlex.c
 -#define YY_TYPEDEF_YY_SIZE_T
 -typedef size_t yy_size_t;
 -#endif
--
--extern yy_size_t yyleng;
 +extern int yyleng;
  
+-extern yy_size_t yyleng;
+-
  extern FILE *yyin, *yyout;
  
+ #define EOB_ACT_CONTINUE_SCAN 0
 @@ -183,6 +183,11 @@
  
  #define unput(c) yyunput( c, (yytext_ptr)  )
@@ -4392,9 +4426,9 @@ diff -r -x CVS -N -U 3 dist.orig/ld/ldlex.c dist/ld/ldlex.c
  
  
  
-diff -r -x CVS -N -U 3 dist.orig/ld/ldlex.l dist/ld/ldlex.l
---- dist.orig/ld/ldlex.l	2011-06-27 09:39:13.000000000 +0200
-+++ dist/ld/ldlex.l	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/ldlex.l dist.nbsd/ld/ldlex.l
+--- dist/ld/ldlex.l	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/ldlex.l	Wed Nov  7 11:13:50 2012
 @@ -60,10 +60,6 @@
  #undef YY_INPUT
  #define YY_INPUT(buf,result,max_size) result = yy_input (buf, max_size)
@@ -4406,18 +4440,18 @@ diff -r -x CVS -N -U 3 dist.orig/ld/ldlex.l dist/ld/ldlex.l
  #define MAX_INCLUDE_DEPTH 10
  static YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
  static const char *file_name_stack[MAX_INCLUDE_DEPTH];
-@@ -93,6 +89,8 @@
+@@ -92,6 +88,8 @@
+ int yywrap (void) { return 1; }
  #endif
  %}
- 
-+%option nounput
 +
++%option nounput
+ 
  %a 4000
  %o 5000
- 
-diff -r -x CVS -N -U 3 dist.orig/ld/ldmain.c dist/ld/ldmain.c
---- dist.orig/ld/ldmain.c	2011-06-27 09:39:13.000000000 +0200
-+++ dist/ld/ldmain.c	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/ldmain.c dist.nbsd/ld/ldmain.c
+--- dist/ld/ldmain.c	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/ldmain.c	Wed Nov  7 11:13:50 2012
 @@ -694,6 +694,23 @@
      einfo (_("%P%F: bfd_hash_lookup failed: %E\n"));
  }
@@ -4476,9 +4510,9 @@ diff -r -x CVS -N -U 3 dist.orig/ld/ldmain.c dist/ld/ldmain.c
  	einfo (_("%F%P: bfd_hash_lookup failed: %E\n"));
      }
  
-diff -r -x CVS -N -U 3 dist.orig/ld/ldmain.h dist/ld/ldmain.h
---- dist.orig/ld/ldmain.h	2009-11-05 16:35:50.000000000 +0100
-+++ dist/ld/ldmain.h	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/ldmain.h dist.nbsd/ld/ldmain.h
+--- dist/ld/ldmain.h	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/ldmain.h	Wed Nov  7 11:13:51 2012
 @@ -44,6 +44,7 @@
  
  extern void add_ysym (const char *);
@@ -4487,9 +4521,9 @@ diff -r -x CVS -N -U 3 dist.orig/ld/ldmain.h dist/ld/ldmain.h
  extern void add_keepsyms_file (const char *);
  
  #endif
-diff -r -x CVS -N -U 3 dist.orig/ld/lexsup.c dist/ld/lexsup.c
---- dist.orig/ld/lexsup.c	2011-05-11 09:31:32.000000000 +0200
-+++ dist/ld/lexsup.c	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/lexsup.c dist.nbsd/ld/lexsup.c
+--- dist/ld/lexsup.c	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/lexsup.c	Wed Nov  7 11:13:50 2012
 @@ -175,6 +175,7 @@
    OPTION_PLUGIN_OPT,
  #endif /* ENABLE_PLUGINS */
@@ -4522,162 +4556,19 @@ diff -r -x CVS -N -U 3 dist.orig/ld/lexsup.c dist/ld/lexsup.c
  };
  
  #define OPTION_COUNT ARRAY_SIZE (ld_options)
-@@ -1453,6 +1460,9 @@
+@@ -1452,6 +1459,9 @@
+ 	  break;
  	case OPTION_WRAP:
  	  add_wrap (optarg);
- 	  break;
++	  break;
 +	case OPTION_IGNORE_UNRESOLVED_SYMBOL:
 +	  add_ignoresym (optarg);
-+	  break;
+ 	  break;
  	case OPTION_DISCARD_NONE:
  	  link_info.discard = discard_none;
- 	  break;
-diff -r -x CVS -N -U 3 dist.orig/ld/Makefile.am dist/ld/Makefile.am
---- dist.orig/ld/Makefile.am	2011-03-16 09:37:30.000000000 +0100
-+++ dist/ld/Makefile.am	2012-08-05 06:03:03.000000000 +0200
-@@ -144,11 +144,13 @@
- 	earmelf_linux.c \
- 	earmelf_linux_eabi.c \
- 	earmelf_nbsd.c \
-+	earmelf_nbsd_eabi.c \
- 	earmelf_vxworks.c \
- 	earmelfb.c \
- 	earmelfb_linux.c \
- 	earmelfb_linux_eabi.c \
- 	earmelfb_nbsd.c \
-+	earmelfb_nbsd_eabi.c \
- 	earmnbsd.c \
- 	earmnto.c \
- 	earmpe.c \
-@@ -684,6 +686,11 @@
-   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
- 	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
-+earmelf_nbsd_abi.c: $(srcdir)/emulparams/armelf_nbsd_abi.sh \
-+  $(srcdir)/emulparams/armelf.sh \
-+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} armelf_nbsd_abi "$(tdir_armelf_nbsd_abi)"
- earmelf_vxworks.c: $(srcdir)/emulparams/armelf_vxworks.sh \
-   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/armelf.sh \
-   $(ELF_DEPS) $(srcdir)/emultempl/vxworks.em \
-@@ -711,6 +718,12 @@
-   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
- 	${GENSCRIPTS} armelfb_nbsd "$(tdir_armelfb_nbsd)"
-+earmelfb_nbsd_abi.c: $(srcdir)/emulparams/armelfb_nbsd_abi.sh \
-+  $(srcdir)/emulparams/armelf_nbsd_abi.sh \
-+  $(srcdir)/emulparams/armelf.sh \
-+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} armelfb_nbsd_abi "$(tdir_armelfb_nbsd_abi)"
- earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
-   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
- 	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"
-@@ -2009,6 +2022,8 @@
- # because almost all configs use "gen" version of manual.
- #  Set DOCVER above to change.
- configdoc.texi:	${DOCVER}-doc.texi
-+	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_configdoc.texi:
- 	cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
- 	chmod u+w ./configdoc.texi
- 
-@@ -2016,6 +2031,8 @@
- # The sed command removes the no-adjust Nroff command so that
- # the man output looks standard.
- ld.1: $(srcdir)/ld.texinfo configdoc.texi
-+	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_ld.1:
- 	touch $@
- 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
- 	-($(POD2MAN) ld.pod | \
-diff -r -x CVS -N -U 3 dist.orig/ld/Makefile.in dist/ld/Makefile.in
---- dist.orig/ld/Makefile.in	2011-03-16 09:37:30.000000000 +0100
-+++ dist/ld/Makefile.in	2012-08-05 06:03:03.000000000 +0200
-@@ -449,11 +449,13 @@
- 	earmelf_linux.c \
- 	earmelf_linux_eabi.c \
- 	earmelf_nbsd.c \
-+	earmelf_nbsd_eabi.c \
- 	earmelf_vxworks.c \
- 	earmelfb.c \
- 	earmelfb_linux.c \
- 	earmelfb_linux_eabi.c \
- 	earmelfb_nbsd.c \
-+	earmelfb_nbsd_eabi.c \
- 	earmnbsd.c \
- 	earmnto.c \
- 	earmpe.c \
-@@ -1031,11 +1033,13 @@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_linux.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_linux_eabi.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_nbsd.Po@am__quote@
-+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_nbsd_abi.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_vxworks.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_linux.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_linux_eabi.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_nbsd.Po@am__quote@
-+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_nbsd_eabi.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmnbsd.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmnto.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmpe.Po@am__quote@
-@@ -1415,6 +1419,8 @@
- 	-rm -f libtool config.lt
- 
- ld.info: ld.texinfo $(ld_TEXINFOS)
-+	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_ld.info: ld.texinfo $(ld_TEXINFOS)
- 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
- 	rm -rf $$backupdir && mkdir $$backupdir && \
- 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
-@@ -2119,6 +2125,11 @@
-   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
- 	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
-+earmelf_nbsd_eabi.c: $(srcdir)/emulparams/armelf_nbsd_eabi.sh \
-+  $(srcdir)/emulparams/armelf.sh \
-+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} armelf_nbsd_eabi "$(tdir_armelf_nbsd_eabi)"
- earmelf_vxworks.c: $(srcdir)/emulparams/armelf_vxworks.sh \
-   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/armelf.sh \
-   $(ELF_DEPS) $(srcdir)/emultempl/vxworks.em \
-@@ -2146,6 +2157,12 @@
-   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
- 	${GENSCRIPTS} armelfb_nbsd "$(tdir_armelfb_nbsd)"
-+earmelfb_nbsd_eabi.c: $(srcdir)/emulparams/armelfb_nbsd_eabi.sh \
-+  $(srcdir)/emulparams/armelf_nbsd_eabi.sh \
-+  $(srcdir)/emulparams/armelf.sh \
-+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} armelfb_nbsd_eabi "$(tdir_armelfb_nbsd_eabi)"
- earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
-   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
- 	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"
-@@ -3387,6 +3404,8 @@
- # because almost all configs use "gen" version of manual.
- #  Set DOCVER above to change.
- configdoc.texi:	${DOCVER}-doc.texi
-+	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_configdoc.texi:
- 	cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
- 	chmod u+w ./configdoc.texi
- 
-@@ -3394,6 +3413,8 @@
- # The sed command removes the no-adjust Nroff command so that
- # the man output looks standard.
- ld.1: $(srcdir)/ld.texinfo configdoc.texi
-+	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_ld.1:
- 	touch $@
- 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
- 	-($(POD2MAN) ld.pod | \
-diff -r -x CVS -N -U 3 dist.orig/ld/scripttempl/elf.sc dist/ld/scripttempl/elf.sc
---- dist.orig/ld/scripttempl/elf.sc	2011-03-16 09:37:37.000000000 +0100
-+++ dist/ld/scripttempl/elf.sc	2011-09-25 06:32:43.000000000 +0200
+diff -rNU3 dist/ld/scripttempl/elf.sc dist.nbsd/ld/scripttempl/elf.sc
+--- dist/ld/scripttempl/elf.sc	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/scripttempl/elf.sc	Wed Nov  7 11:13:50 2012
 @@ -91,6 +91,8 @@
  #
  #  Each of these can also have corresponding .rel.* and .rela.* sections.
@@ -4687,29 +4578,30 @@ diff -r -x CVS -N -U 3 dist.orig/ld/scripttempl/elf.sc dist/ld/scripttempl/elf.s
  test -z "$RODATA_NAME" && RODATA_NAME=rodata
  test -z "$SDATA_NAME" && SDATA_NAME=sdata
  test -z "$SBSS_NAME" && SBSS_NAME=sbss
-diff -r -x CVS -N -U 3 dist.orig/ld/scripttempl/sh.sc dist/ld/scripttempl/sh.sc
---- dist.orig/ld/scripttempl/sh.sc	2002-09-25 19:06:09.000000000 +0200
-+++ dist/ld/scripttempl/sh.sc	2009-08-19 09:19:32.000000000 +0200
-@@ -6,16 +6,13 @@
+diff -rNU3 dist/ld/scripttempl/sh.sc dist.nbsd/ld/scripttempl/sh.sc
+--- dist/ld/scripttempl/sh.sc	Wed Nov  7 11:43:28 2012
++++ dist.nbsd/ld/scripttempl/sh.sc	Wed Nov  7 11:13:50 2012
+@@ -6,17 +6,14 @@
      ___dtors = . ;
      *(.dtors)
      ___dtors_end = . ;
 -  } > ram"
 +  }"
-+
  
++
  cat <<EOF
  OUTPUT_FORMAT("${OUTPUT_FORMAT}")
  OUTPUT_ARCH(${ARCH})
--
++${LIB_SEARCH_DIRS}
+ 
 -MEMORY
 -{
 -  ram : o = 0x1000, l = 512k
 -}
-+${LIB_SEARCH_DIRS}
- 
+-
  SECTIONS
  {
+   .text :
 @@ -24,9 +21,9 @@
      *(.text)
      *(.strings)
@@ -4747,9 +4639,9 @@ diff -r -x CVS -N -U 3 dist.orig/ld/scripttempl/sh.sc dist/ld/scripttempl/sh.sc
    .stab 0 ${RELOCATING+(NOLOAD)} :
    {
      *(.stab)
-diff -r -x CVS -N -U 3 dist.orig/libiberty/floatformat.c dist/libiberty/floatformat.c
---- dist.orig/libiberty/floatformat.c	2010-07-06 14:56:23.000000000 +0200
-+++ dist/libiberty/floatformat.c	2011-09-25 06:32:45.000000000 +0200
+diff -rNU3 dist/libiberty/floatformat.c dist.nbsd/libiberty/floatformat.c
+--- dist/libiberty/floatformat.c	Wed Nov  7 11:43:26 2012
++++ dist.nbsd/libiberty/floatformat.c	Wed Nov  7 11:13:54 2012
 @@ -489,7 +489,11 @@
        if (nan)
  	dto = NAN;
@@ -4762,9 +4654,9 @@ diff -r -x CVS -N -U 3 dist.orig/libiberty/floatformat.c dist/libiberty/floatfor
  
        if (get_field (ufrom, fmt->byteorder, fmt->totalsize, fmt->sign_start, 1))
  	dto = -dto;
-diff -r -x CVS -N -U 3 dist.orig/libiberty/strerror.c dist/libiberty/strerror.c
---- dist.orig/libiberty/strerror.c	2005-03-28 04:09:01.000000000 +0200
-+++ dist/libiberty/strerror.c	2009-08-19 09:19:32.000000000 +0200
+diff -rNU3 dist/libiberty/strerror.c dist.nbsd/libiberty/strerror.c
+--- dist/libiberty/strerror.c	Wed Nov  7 11:43:26 2012
++++ dist.nbsd/libiberty/strerror.c	Wed Nov  7 11:13:54 2012
 @@ -347,7 +347,7 @@
    ENTRY(EPROTOTYPE, "EPROTOTYPE", "Protocol wrong type for socket"),
  #endif
@@ -4774,9 +4666,9 @@ diff -r -x CVS -N -U 3 dist.orig/libiberty/strerror.c dist/libiberty/strerror.c
  #endif
  #if defined (EPROTONOSUPPORT)
    ENTRY(EPROTONOSUPPORT, "EPROTONOSUPPORT", "Protocol not supported"),
-diff -r -x CVS -N -U 3 dist.orig/opcodes/cgen.sh dist/opcodes/cgen.sh
---- dist.orig/opcodes/cgen.sh	2009-06-14 18:36:56.000000000 +0200
-+++ dist/opcodes/cgen.sh	2011-09-25 06:32:45.000000000 +0200
+diff -rNU3 dist/opcodes/cgen.sh dist.nbsd/opcodes/cgen.sh
+--- dist/opcodes/cgen.sh	Wed Nov  7 11:43:26 2012
++++ dist.nbsd/opcodes/cgen.sh	Wed Nov  7 11:13:50 2012
 @@ -61,6 +61,7 @@
  shift ; extrafiles=$9
  
@@ -4785,9 +4677,9 @@ diff -r -x CVS -N -U 3 dist.orig/opcodes/cgen.sh dist/opcodes/cgen.sh
  
  # $arch is $6, as passed on the command line.
  # $ARCH is the same argument but in all uppercase.
-diff -r -x CVS -N -U 3 dist.orig/opcodes/configure dist/opcodes/configure
---- dist.orig/opcodes/configure	2010-11-05 11:32:32.000000000 +0100
-+++ dist/opcodes/configure	2011-09-25 06:32:45.000000000 +0200
+diff -rNU3 dist/opcodes/configure dist.nbsd/opcodes/configure
+--- dist/opcodes/configure	Wed Nov  7 11:43:26 2012
++++ dist.nbsd/opcodes/configure	Wed Nov  7 11:13:50 2012
 @@ -12473,6 +12473,14 @@
  	  # specified, as in sh3-elf, sh3b-linux-gnu, etc.
  	  # Include it just for ELF targets, since the SH5 bfd:s are ELF only.
@@ -4803,9 +4695,9 @@ diff -r -x CVS -N -U 3 dist.orig/opcodes/configure dist/opcodes/configure
  	    case $t in
  	      all |  sh5*-* | sh64*-* | sh-*-*elf* | shl*-*-*elf* | \
  	      sh-*-linux* | shl-*-linux*)
-diff -r -x CVS -N -U 3 dist.orig/opcodes/configure.in dist/opcodes/configure.in
---- dist.orig/opcodes/configure.in	2010-06-29 06:17:33.000000000 +0200
-+++ dist/opcodes/configure.in	2011-09-25 06:32:45.000000000 +0200
+diff -rNU3 dist/opcodes/configure.in dist.nbsd/opcodes/configure.in
+--- dist/opcodes/configure.in	Wed Nov  7 11:43:26 2012
++++ dist.nbsd/opcodes/configure.in	Wed Nov  7 11:13:50 2012
 @@ -279,6 +279,14 @@
  	  # specified, as in sh3-elf, sh3b-linux-gnu, etc.
  	  # Include it just for ELF targets, since the SH5 bfd:s are ELF only.
@@ -4821,9 +4713,9 @@ diff -r -x CVS -N -U 3 dist.orig/opcodes/configure.in dist/opcodes/configure.in
  	    case $t in
  	      all |  sh5*-* | sh64*-* | sh-*-*elf* | shl*-*-*elf* | \
  	      sh-*-linux* | shl-*-linux*)
-diff -r -x CVS -N -U 3 dist.orig/opcodes/mips-opc.c dist/opcodes/mips-opc.c
---- dist.orig/opcodes/mips-opc.c	2010-10-28 15:49:51.000000000 +0200
-+++ dist/opcodes/mips-opc.c	2011-09-25 06:32:45.000000000 +0200
+diff -rNU3 dist/opcodes/mips-opc.c dist.nbsd/opcodes/mips-opc.c
+--- dist/opcodes/mips-opc.c	Wed Nov  7 11:43:26 2012
++++ dist.nbsd/opcodes/mips-opc.c	Wed Nov  7 11:13:50 2012
 @@ -709,10 +709,12 @@
  {"floor.w.s", "D,S",	0x4600000f, 0xffff003f, WR_D|RD_S|FP_S,		0,		I2	},
  {"hibernate","",        0x42000023, 0xffffffff,	0, 			0,		V1	},

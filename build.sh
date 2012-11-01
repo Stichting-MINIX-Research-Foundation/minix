@@ -763,6 +763,8 @@ nobomb_getmakevar()
 	"${make}" -m ${TOP}/share/mk -s -B -f- _x_ <<EOF || return 1
 _x_:
 	echo \${$1}
+# LSC FIXME: We are cross compiling, so overwrite default and build tools
+USETOOLS:=yes
 .include <bsd.prog.mk>
 .include <bsd.kernobj.mk>
 EOF
@@ -1693,10 +1695,9 @@ EOF
 		eval cat <<EOF
 MAKEWRAPPERMACHINE=${makewrappermachine:-${MACHINE}}; export MAKEWRAPPERMACHINE
 USETOOLS=yes; export USETOOLS
-MKGCC=yes; export MKGCC
-MKGDB=no; export MKGDB
 # LSC We are cross compiling, so do not install to root!
 MKINSTALLBOOT=no; export MKINSTALLBOOT
+MKGCC=yes; export MKGCC
 EOF
 	} | eval sort -u "${makewrapout}"
 	eval cat <<EOF "${makewrapout}"

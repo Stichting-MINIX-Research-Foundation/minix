@@ -510,9 +510,12 @@ _INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	# LSC MINIX: We do not have yet imported tsort nor lorder
-#	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+.if defined(__MINIX)
+	# LSC FIXME MINIX: We do not have yet imported tsort nor lorder
 	${AR} ${_ARFL} ${.TARGET} ${.ALLSRC:M*o}
+.else
+	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+.endif # defined(__MINIX)
 .endif
 
 .if !target(__archiveinstall)
@@ -566,7 +569,8 @@ DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .else
 LDLIBC ?= -nodefaultlibs
 .if ${LIB} == "c"
-LDADD+= -lgcc
+LDADD+= ${${ACTIVE_CC} == "gcc":?-lgcc:}
+LDADD+= ${${ACTIVE_CC} == "clang":?-L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic:}
 .endif
 .endif
 .endif
@@ -821,6 +825,5 @@ LINKSMODE?= ${LIBMODE}
 .include <bsd.dep.mk>
 .include <bsd.clang-analyze.mk>
 .include <bsd.clean.mk>
-.include <minix.gcc.mk>
 
 ${TARGETS}:	# ensure existence

@@ -1,0 +1,11 @@
+diff -rNU3 dist/binutils/dwarf.c dist.new/binutils/dwarf.c
+--- dist/binutils/dwarf.c	Wed Nov  7 17:24:51 2012
++++ dist.new/binutils/dwarf.c	Wed Nov  7 15:50:59 2012
+@@ -28,6 +28,7 @@
+ #include "elf/common.h"
+ #include "dwarf2.h"
+ #include "dwarf.h"
++#include "getopt.h"
+ 
+ static const char *regname (unsigned int regno, int row);
+ 

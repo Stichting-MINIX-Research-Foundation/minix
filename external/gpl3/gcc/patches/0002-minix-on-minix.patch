@@ -1,0 +1,12 @@
+diff -rNU3 gcc-4.5.3/configure dist/configure
+--- gcc-4.5.3/configure	Wed Nov  7 20:12:53 2012
++++ dist/configure	Wed Nov  7 19:25:20 2012
+@@ -5321,7 +5321,7 @@
+ 
+ 
+ # Check for GMP, MPFR and MPC
+-gmplibs="-lmpc -lmpfr -lgmp"
++gmplibs="-lmpc -lmpfr -lgmp -lm"
+ gmpinc=
+ have_gmp=no
+ 

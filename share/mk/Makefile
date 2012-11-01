@@ -16,8 +16,7 @@ FILES=	bsd.README bsd.clang-analyze.mk bsd.clean.mk bsd.dep.mk bsd.doc.mk \
 	bsd.subdir.mk bsd.sys.mk bsd.test.mk bsd.x11.mk sys.mk
 
 # MINIX-specific files
-FILES+= minix.bootprog.mk minix.service.mk \
-	minix.gcc.mk minix.gcov.mk pkgsrchooks.mk 
+FILES+= minix.bootprog.mk minix.service.mk minix.gcov.mk
 
 FILESDIR=/usr/share/mk
 .endif

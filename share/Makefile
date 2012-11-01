@@ -7,7 +7,8 @@
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
-SUBDIR= mk terminfo zoneinfo misc
+SUBDIR= misc mk \
+	terminfo zoneinfo
 .if ${MKNLS} != "no"
 SUBDIR+=i18n locale nls
 .endif

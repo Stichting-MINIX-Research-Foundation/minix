@@ -23,7 +23,7 @@ then
 		fi
 	fi
 
-	bsdtar -oxjf gmp-5.0.2.tar.bz2
+	tar -oxjf gmp-5.0.2.tar.bz2
 	mv gmp-5.0.2 dist && \
 	cd dist && \
 	cat ../patches/* |patch -p1
