@@ -8,7 +8,7 @@ install:
 all:
 
 PROG_DRIVERS=at_wini floppy pci
-PROG_COMMANDS=cdprobe dev2name loadramdisk mount fsck.mfs sysenv sh \
+PROG_COMMANDS=cdprobe loadramdisk mount fsck.mfs sysenv sh \
 	service 
 PROG_SERVERS=mfs procfs
 PROG_USRSBIN=pwd_mkdb

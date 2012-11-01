@@ -3,7 +3,6 @@ boot
 d--755 0 0
 	bin d--755 0 0
 		cdprobe ---755 0 0 cdprobe
-		dev2name ---755 0 0 dev2name
 		fsck.mfs ---755 0 0 fsck.mfs
 		mount ---755 0 0 mount
 		sh ---755 0 0 sh
