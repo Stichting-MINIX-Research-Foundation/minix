@@ -1,0 +1,117 @@
+$NetBSD: README,v 1.15 2012/06/14 04:14:36 riz Exp $
+
+Organization of Sources:
+
+This directory hierarchy is using an organization that separates
+source for programs that we have obtained from external third
+parties (where NetBSD is not the primary maintainer) from the
+system source.
+
+The hierarchy is grouped by license, and then package per license,
+and is organized as follows:
+
+	external/
+
+	    Makefile
+			Descend into the license sub-directories.
+
+	    <license>/
+			Per-license sub-directories.
+
+		Makefile
+			Descend into the package sub-directories.
+
+		<package>/
+			Per-package sub-directories.
+
+		    Makefile
+			Build the package.
+			
+		    dist/
+			The third-party source for a given package.
+
+		    bin/
+		    lib/
+		    sbin/
+			BSD makefiles "reach over" from these into
+			"../dist/".
+
+This arrangement allows for packages to be easily disabled or
+excised as necessary, either on a per-license or per-package basis.
+
+The licenses currently used are:
+
+	apache2		Apache 2.0 license.
+			http://www.opensource.org/licenses/apache2.0.php
+
+	atheros		Atheros License.
+
+	bsd		BSD (or equivalent) licensed software, possibly with
+			the "advertising clause".
+			http://www.opensource.org/licenses/bsd-license.php
+
+	cddl		Common Development and Distribution License (the sun
+			license which is based on the Mozilla Public License
+			version 1.1).
+			http://www.opensource.org/licenses/cddl1.php
+
+	gpl2		GNU Public License, version 2 (or earlier).
+			http://www.opensource.org/licenses/gpl-2.0.php
+
+	gpl3		GNU Public License, version 3.
+			http://www.opensource.org/licenses/gpl-3.0.html
+
+	historical	Lucent's old license:
+			http://www.opensource.org/licenses/historical.php
+			
+	ibm-public	IBM's public license:
+			http://www.opensource.org/licenses/ibmpl.php
+
+	intel-fw-eula	Intel firmware license with redistribution
+			restricted to OEM.
+
+	intel-fw-public	Intel firmware license permitting redistribution with
+			terms similar to BSD licensed software.
+
+	intel-public	Intel license permitting redistribution with
+			terms similar to BSD licensed software.
+
+	mit		MIT (X11) style license.
+			http://www.opensource.org/licenses/mit-license.php
+
+	public-domain	Non-license for code that has been explicitly put
+			into the Public Domain.
+
+	realtek		RealTek license.
+
+	zlib		Zlib (BSD-like) license.
+			http://www.zlib.net/zlib_license.html
+
+If a package has components covered by different licenses
+(for example, GPL2 and the LGPL), use the <license> subdirectory
+for the more restrictive license.
+
+If a package allows the choice of a license to use, we'll
+generally use the less restrictive license.
+
+If in doubt about where a package should be located, please
+contact <core@NetBSD.org> for advice.
+
+
+Migration Strategy:
+
+
+Eventually src/dist (and associated framework in other base source
+directories) and src/gnu will be migrated to this hierarchy.
+
+
+Maintenance Strategy:
+
+The sources under src/external/<license>/<package>/dist/ are
+generally a combination of a published distribution plus changes
+that we submit to the maintainers and that are not yet published
+by them.
+
+Make sure all changes made to the external sources are submitted
+to the appropriate maintainer, but only after coordinating with
+the NetBSD maintainers.
