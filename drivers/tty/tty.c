@@ -456,9 +456,9 @@ do_new_kmess(void)
 {
 /* Kernel wants to print a new message */
 	struct kmessages *kmess_ptr;	/* kmessages structure */
-	char kernel_buf_copy[2*_KMESS_BUF_SIZE];
+	char kernel_buf_copy[_KMESS_BUF_SIZE];
 	static int prev_next = 0;
-	int bytes, copy, restore = 0;
+	int next, bytes, copy, restore = 0;
 	tty_t *tp, rtp;
 	message print_kmsg;
 
@@ -468,14 +468,15 @@ do_new_kmess(void)
 	/* The kernel buffer is circular; print only the new part. Determine
 	 * how many new bytes there are with the help of current and
 	 * previous 'next' index. This works fine if less than _KMESS_BUF_SIZE
-	 * bytes is new data; else we miss % _KMESS_BUF_SIZE here.
+	 * bytes is new data; else we miss % _KMESS_BUF_SIZE here. Obtain
+	 * 'next' only once, since we are operating on shared memory here.
 	 * Check for size being positive; the buffer might as well be emptied!
 	 */
-	if (kmess_ptr->km_size > 0) {
-		bytes = ((kmess_ptr->km_next + _KMESS_BUF_SIZE) - prev_next) %
-								_KMESS_BUF_SIZE;
-		/* Copy from current position to end of buffer */
-		copy = (prev_next + bytes) % _KMESS_BUF_SIZE;
+	next = kmess_ptr->km_next;
+	bytes = ((next + _KMESS_BUF_SIZE) - prev_next) % _KMESS_BUF_SIZE;
+	if (bytes > 0) {
+		/* Copy from current position toward end of buffer */
+		copy = MIN(_KMESS_BUF_SIZE - prev_next, bytes);
 		memcpy(kernel_buf_copy, &kmess_ptr->km_buf[prev_next], copy);
 
 		/* Copy remainder from start of buffer */
@@ -510,7 +511,7 @@ do_new_kmess(void)
 	/* Store 'next' pointer so that we can determine what part of the
 	 * kernel messages buffer to print next time a notification arrives.
 	 */
-	prev_next = kmess_ptr->km_next;
+	prev_next = next;
 }
 
 /*===========================================================================*
