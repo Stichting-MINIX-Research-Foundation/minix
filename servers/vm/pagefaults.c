@@ -24,11 +24,8 @@
 #include <signal.h>
 #include <assert.h>
 
-#include <pagefaults.h>
-
 #include "glo.h"
 #include "proto.h"
-#include "memory.h"
 #include "util.h"
 #include "region.h"
 

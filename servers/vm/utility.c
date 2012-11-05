@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <env.h>
 #include <unistd.h>
-#include <memory.h>
 #include <assert.h>
 #include <sys/param.h>
 

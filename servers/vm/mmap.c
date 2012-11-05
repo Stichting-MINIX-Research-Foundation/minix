@@ -26,7 +26,6 @@
 #include <env.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <memory.h>
 
 #include "glo.h"
 #include "proto.h"

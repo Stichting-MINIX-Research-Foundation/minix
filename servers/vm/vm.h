@@ -13,7 +13,6 @@
 #define JUNKFREE	0	/* Fill freed pages with junk */
 
 #include <sys/errno.h>
-#include <memory.h>
 
 #include "sanitycheck.h"
 #include "region.h"
@@ -60,6 +59,10 @@
 
 #define MAP_NONE	0xFFFFFFFE
 #define NO_MEM ((phys_clicks) MAP_NONE)  /* returned by alloc_mem() with mem is up */
+
+/* And what is the highest addressable piece of memory? */
+#define VM_DATATOP      kernel_boot_info.user_end
+#define VM_STACKTOP     kernel_boot_info.user_sp
 
 #endif
 

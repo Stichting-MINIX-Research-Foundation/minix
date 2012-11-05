@@ -7,23 +7,6 @@
 
 #include "vm.h"
 
-/* An ARM pagetable. */
-typedef struct {
-	/* Directory entries in VM addr space - root of page table.  */
-	u32_t *pt_dir;		/* 16KB aligned (ARM_VM_DIR_ENTRIES) */
-	u32_t pt_dir_phys;	/* physical address of pt_dir */
-
-	/* Pointers to page tables in VM address space. */
-	u32_t *pt_pt[ARM_VM_DIR_ENTRIES];
-
-	/* When looking for a hole in virtual address space, start
-	 * looking here. This is in linear addresses, i.e.,
-	 * not as the process sees it but the position in the page
-	 * page table. This is just a hint.
-	 */
-	u32_t pt_virtop;
-} pt_t;
-
 /* Mapping flags. */
 #define PTF_WRITE	ARM_VM_PTE_RW
 #define PTF_READ	ARM_VM_PTE_RO
@@ -35,17 +18,31 @@ typedef struct {
 #define PTF_CACHEWT	ARM_VM_PTE_WT
 #define PTF_SHARE	ARM_VM_PTE_SHAREABLE
 
+#define ARCH_VM_DIR_ENTRIES     ARM_VM_DIR_ENTRIES
+#define ARCH_BIG_PAGE_SIZE      ARM_BIG_PAGE_SIZE
+#define ARCH_VM_ADDR_MASK       ARM_VM_ADDR_MASK
+#define ARCH_VM_PDE_MASK	ARM_VM_PDE_MASK
+#define ARCH_VM_PDE_PRESENT	ARM_VM_PDE_PRESENT
+#define ARCH_VM_PTE_PRESENT	ARM_VM_PTE_PRESENT
+#define ARCH_VM_PTE_USER	ARM_VM_PTE_USER
+#define ARCH_PAGEDIR_SIZE	ARM_PAGEDIR_SIZE
+#define ARCH_VM_PTE_RW		ARM_VM_PTE_RW
+#define ARCH_VM_BIGPAGE		ARM_VM_BIGPAGE
+#define ARCH_VM_PT_ENTRIES	ARM_VM_PT_ENTRIES
+#define ARCH_VM_PTE_RO		ARM_VM_PTE_RO
+
 /* For arch-specific PT routines to check if no bits outside
  * the regular flags are set.
  */
 #define PTF_ALLFLAGS	(PTF_READ|PTF_WRITE|PTF_PRESENT|PTF_SUPER|PTF_USER|PTF_NOCACHE|PTF_CACHEWB|PTF_CACHEWT|PTF_SHARE)
 
-#if SANITYCHECKS
-#define PT_SANE(p) { pt_sanitycheck((p), __FILE__, __LINE__); }
-#else
-#define PT_SANE(p)
-#endif
+#define PFERR_PROT(e)	((ARM_VM_PFE_FS(e) == ARM_VM_PFE_L1PERM) \
+			 || (ARM_VM_PFE_FS(e) == ARM_VM_PFE_L2PERM))
+#define PFERR_NOPAGE(e) (!PFERR_PROT(e))
+#define PFERR_WRITE(e)	((e) & ARM_VM_PFE_W)
+#define PFERR_READ(e)	(!((e) & ARM_VM_PFE_W))
+
+#define VM_PAGE_SIZE    ARM_PAGE_SIZE
 
 #endif
-
 
