@@ -419,7 +419,8 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		execi.clearproc = NULL;
 
 		/* parse VM ELF binary and alloc/map it into bootstrap pagetable */
-		libexec_load_elf(&execi);
+		if(libexec_load_elf(&execi) != OK)
+			panic("VM loading failed");
 
 	        /* Initialize the server stack pointer. Take it down three words
 		 * to give startup code something to use as "argc", "argv" and "envp".

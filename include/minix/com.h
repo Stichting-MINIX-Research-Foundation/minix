@@ -84,6 +84,7 @@
                                            computation in macros.*/
 #define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
                                                         -- goes multiuser */
+#define NR_BOOT_MODULES (INIT_PROC_NR+1)
 
 /* Root system process and root user process. */
 #define ROOT_SYS_PROC_NR  RS_PROC_NR
