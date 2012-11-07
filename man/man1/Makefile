@@ -10,7 +10,7 @@ MAN=	ash.1 at.1 banner.1 basename.1 \
 	install.1 isodir.1 isoinfo.1 isoread.1 join.1 kill.1 \
 	last.1 loadfont.1 loadkeys.1 logger.1 \
 	look.1 lp.1 ls.1 lspci.1 mail.1  \
-	mesg.1 mixer.1 mkfs.1 \
+	mesg.1 mixer.1 mkfs.mfs.1 \
 	mkproto.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
 	paste.1 ping.1 playwave.1 pr.1 prep.1 \
 	profile.1 ps.1 pwd.1 rcp.1 recwave.1 \
