@@ -479,6 +479,8 @@ void sizeup_dir()
 		sizeup_dir();
 	} else if (*p == 'b' || *p == 'c') {
 
+	} else if (*p == 's') {
+		zonecount++; /* Symlink contents is always stored a block */
 	} else {
 		if ((f = fopen(token[4], "r")) == NULL) {
 			fprintf(stderr, "%s: Can't open %s: %s\n",
@@ -690,6 +692,21 @@ ino_t inode;
   incr_link(inode);
 }
 
+void enter_symlink(ino_t inode, char *link)
+{
+  zone_t z;
+  char *buf;
+
+  buf = alloc_block();
+  z = alloc_zone();
+  strcpy(buf, link);
+  put_block((z << zone_shift), buf);
+
+  add_zone(inode, z, (size_t) strlen(link), current_time);
+
+  free(buf);
+}
+
 
 /*================================================================
  *	    eat_dir  -  recursively install directory
@@ -738,6 +755,8 @@ ino_t parent;
 		if (token[6]) size = atoi(token[6]);
 		size = block_size * size;
 		add_zone(n, (zone_t) (makedev(maj,min)), size, current_time);
+	} else if (*p == 's') {
+		enter_symlink(n, token[4]);
 	} else {
 		/* Regular file. Go read it. */
 		if ((f = open(token[4], O_RDONLY)) < 0) {
@@ -780,8 +799,6 @@ int f;
   close(f);
   free(buf);
 }
-
-
 
 /*================================================================
  *	    directory & inode management assist group
@@ -1151,6 +1168,7 @@ char *p;
   if (c1 == 'd') mode |= S_IFDIR;
   if (c1 == 'b') mode |= S_IFBLK;
   if (c1 == 'c') mode |= S_IFCHR;
+  if (c1 == 's') mode |= S_IFLNK;
   if (c1 == '-') mode |= S_IFREG;
   if (c2 == 'u') mode |= S_ISUID;
   if (c3 == 'g') mode |= S_ISGID;

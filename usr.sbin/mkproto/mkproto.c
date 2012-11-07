@@ -155,7 +155,7 @@ char *dirname;
 	count++;
 	strcpy(tempend, name);
 
-	if (stat(temp, &st) == -1) {
+	if (lstat(temp, &st) == -1) {
 		fprintf(stderr, "cant get status of '%s' \n", temp);
 		continue;
 	}
@@ -189,6 +189,16 @@ char *dirname;
 		fprintf(outfile, "\n");
 		continue;
 	}
+	if (mode == S_IFLNK) {
+		char linkcontent[PATH_MAX];
+		memset(linkcontent, 0, sizeof(linkcontent));
+		if(readlink(temp, linkcontent, sizeof(linkcontent)) < 0) {
+			perror("readlink");
+			exit(1);
+		}
+		fprintf(outfile, "%s%s\n", indentstr, linkcontent);
+		continue;
+	}
 	fprintf(outfile, " /dev/null");
 	fprintf(stderr,"File\n\t%s\n has an invalid mode, made empty.\n",temp);
   }
@@ -217,6 +227,7 @@ struct stat *st;
 	(st->st_mode & S_IFMT) == S_IFDIR ? 'd' :
 	(st->st_mode & S_IFMT) == S_IFCHR ? 'c' :
 	(st->st_mode & S_IFMT) == S_IFBLK ? 'b' :
+	(st->st_mode & S_IFMT) == S_IFLNK ? 's' :
 	'-',			/* file type */
 	(st->st_mode & S_ISUID) ? 'u' : '-',	/* set uid */
 	(st->st_mode & S_ISGID) ? 'g' : '-',	/* set gid */
