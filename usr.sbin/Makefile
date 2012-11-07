@@ -14,6 +14,7 @@ SUBDIR= \
 	zic
 
 # LSC MINIX Specific
-SUBDIR+= mkfs.mfs
+SUBDIR+= mkfs.mfs \
+	mkproto
 
 .include <bsd.subdir.mk>

@@ -92,6 +92,7 @@ block_t zone_map;		/* where is zone map? (depends on # inodes) */
 int inodes_per_block;
 int fs_version;
 size_t block_size;
+int extra_space_percent;
 
 FILE *proto;
 
@@ -178,7 +179,8 @@ char *argv[];
   fs_version = 3;
   inodes_per_block = 0;
   block_size = 0;
-  while ((ch = getopt(argc, argv, "12b:di:lotB:")) != EOF)
+  extra_space_percent = 0;
+  while ((ch = getopt(argc, argv, "12b:di:lotB:x:")) != EOF)
 	switch (ch) {
 	    case '1':
 		fs_version = 1;
@@ -201,10 +203,16 @@ char *argv[];
 	    case 'o':	override = 1;	break;
 	    case 't':	donttest = 1;	break;
 	    case 'B':	block_size = atoi(optarg);	break;
+	    case 'x':	extra_space_percent = atoi(optarg); break;
 	    default:	usage();
 	}
 
   if (argc == optind) usage();
+
+  /* Percentage of extra size must be nonnegative.
+   * It can legitimately be bigger than 100 but has to make some sort of sense.
+   */
+  if(extra_space_percent < 0 || extra_space_percent > 2000) usage();
 
   if(fs_version == 3) {
   	if(!block_size) block_size = _MAX_BLOCK_SIZE; /* V3 default block size */
@@ -283,10 +291,16 @@ char *argv[];
 	usrid = atoi(token[1]);
 	grpid = atoi(token[2]);
 
-	if(blocks == 0 && inodes == 0){
+	if(blocks <= 0 && inodes <= 0){
+  		block_t extrablocks = 0;
+  		ino_t extrainodes = 0;
+		if(blocks < 0) extrablocks = -blocks;
+		if(inodes < 0) extrainodes = -inodes;
 		detect_fs_size();
-		blocks = blockcount;
-		inodes = inocount;
+		blocks = blockcount + extrablocks;
+		inodes = inocount + extrainodes;
+		blocks += blocks*extra_space_percent/100;
+		inodes += inodes*extra_space_percent/100;
 		printf("dynamically sized filesystem: %d blocks, %d inodes\n", blocks, 
 			(unsigned int) inodes);
 	}		
@@ -699,7 +713,6 @@ ino_t parent;
 	mode = mode_con(p);
 	usrid = atoi(token[2]);
 	grpid = atoi(token[3]);
-	if (grpid & 0200) fprintf(stderr, "A.S.Tanenbaum\n");
 	n = alloc_inode(mode, usrid, grpid);
 
 	/* Enter name in directory and update directory's size. */
@@ -1487,7 +1500,8 @@ block_t n;
 void usage()
 {
   fprintf(stderr,
-	  "Usage: %s [-12dlot] [-b blocks] [-i inodes] [-B blocksize] special [proto]\n",
+	  "Usage: %s [-12dlot] [-b blocks] [-i inodes]\n"
+	  	"\t[-x extra] [-B blocksize] special [proto]\n",
 	  progname);
   exit(1);
 }
