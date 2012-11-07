@@ -421,7 +421,8 @@ void sizeup_dir()
 		dir_zones = (dir_entries / (NR_DIR_ENTRIES(block_size)));		
 		if(dir_entries % (NR_DIR_ENTRIES(block_size)))
 			dir_zones++;
-		/* Assumes directory fits in direct blocks */
+		if(dir_zones > nr_dzones)
+			dir_zones++;	/* Max single indir */
 		zonecount += dir_zones;
 		return;
 	}
@@ -796,6 +797,7 @@ char *name;
   unsigned int k;
   block_t b;
   zone_t z;
+  zone_t *indirblock = alloc_block();
   d2_inode *ino;
   d2_inode *inoblock = get_inoblock(parent, &b, &ino);
 
@@ -811,6 +813,26 @@ char *name;
 	if(dir_try_enter(z, child, name)) {
 		put_block(b, (char *) inoblock);
 		free(inoblock);
+		free(indirblock);
+		return;
+	}
+  }
+
+  /* no space in directory using just direct blocks; try indirect */
+  if (ino->d2_zone[V2_NR_DZONES] == 0)
+  	ino->d2_zone[V2_NR_DZONES] = alloc_zone();
+
+  get_block(ino->d2_zone[V2_NR_DZONES], (char *) indirblock);
+
+  for(k = 0; k < V2_INDIRECTS(block_size); k++) {
+  	z = indirblock[k];
+	if(!z) z = indirblock[k] = alloc_zone();
+
+	if(dir_try_enter(z, child, name)) {
+		put_block(b, (char *) inoblock);
+		put_block(ino->d2_zone[V2_NR_DZONES], (char *) indirblock);
+		free(inoblock);
+		free(indirblock);
 		return;
 	}
   }
