@@ -750,6 +750,40 @@ d2_inode *get_inoblock(ino_t i, block_t *blockno, d2_inode **ino)
 	return inoblock;
 }
 
+int dir_try_enter(zone_t z, ino_t child, char *name)
+{
+	char *p1, *p2;
+	struct direct *dir_entry = alloc_block();
+	int r = 0;
+	int i;
+
+	get_block(z, (char *) dir_entry);
+
+	for (i = 0; i < NR_DIR_ENTRIES(block_size); i++)
+		if (!dir_entry[i].mfs_d_ino)
+			break;
+
+	if(i < NR_DIR_ENTRIES(block_size)) {
+		int j;
+
+		r = 1;
+		dir_entry[i].mfs_d_ino = child;
+		p1 = name;
+		p2 = dir_entry[i].mfs_d_name;
+		j = sizeof(dir_entry[i].mfs_d_name);
+		assert(j == 60);
+		while (j--) {
+			*p2++ = *p1;
+			if (*p1 != 0) p1++;
+		}
+	}
+
+	put_block(z, (char *) dir_entry);
+	free(dir_entry);
+
+	return r;
+}
+
 /*================================================================
  *	    directory & inode management assist group
  *===============================================================*/
@@ -759,45 +793,25 @@ char *name;
 {
   /* Enter child in parent directory */
   /* Works for dir > 1 block and zone > block */
-  unsigned int i, j, k;
+  unsigned int k;
   block_t b;
   zone_t z;
-  char *p1, *p2;
-  struct direct *dir_entry = alloc_block();
   d2_inode *ino;
   d2_inode *inoblock = get_inoblock(parent, &b, &ino);
-  int nr_dzones;
 
   assert(!(block_size % sizeof(struct direct)));
 
-  nr_dzones = V2_NR_DZONES;
-  for (k = 0; k < nr_dzones; k++) {
+  for (k = 0; k < V2_NR_DZONES; k++) {
 	z = ino->d2_zone[k];
 	if (z == 0) {
 		z = alloc_zone();
 		ino->d2_zone[k] = z;
 	}
 
-	{
-		get_block(z, (char *) dir_entry);
-		for (i = 0; i < NR_DIR_ENTRIES(block_size); i++) {
-			if (dir_entry[i].mfs_d_ino == 0) {
-				dir_entry[i].mfs_d_ino = child;
-				p1 = name;
-				p2 = dir_entry[i].mfs_d_name;
-				j = sizeof(dir_entry[i].mfs_d_name);
-				j = 60;
-				while (j--) {
-					*p2++ = *p1;
-					if (*p1 != 0) p1++;
-				}
-				put_block(z, (char *) dir_entry);
-				put_block(b, (char *) inoblock);
-				free(dir_entry);
-				free(inoblock);
-				return;
-			}
-		}
+	if(dir_try_enter(z, child, name)) {
+		put_block(b, (char *) inoblock);
+		free(inoblock);
+		return;
 	}
   }
 
