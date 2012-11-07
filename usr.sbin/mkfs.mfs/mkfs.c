@@ -67,7 +67,7 @@ typedef uint32_t zone_t;
 extern char *optarg;
 extern int optind;
 
-int next_zone, next_inode, zone_size, zone_shift = 0, zoff;
+int next_zone, next_inode, zoff;
 block_t nrblocks;
 int inode_offset, lct = 0, disk, fd, print = 0, file = 0;
 unsigned int nrinodes;
@@ -208,9 +208,6 @@ char *argv[];
   		pexit("specified block size illegal");
   	}
   }
-
-  zone_shift = 0;		/* for future use */
-  zone_size = 1 << zone_shift;	/* nr of blocks per zone */
 
   if(!inodes_per_block)
   	inodes_per_block = V2_INODES_PER_BLOCK(block_size);
@@ -368,7 +365,7 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
 
 	put_block((block_t) 0, zero);	/* Write a null boot block. */
 
-  zones = nrblocks >> zone_shift;
+  zones = nrblocks;
 
   super(zones, inodes);
 
@@ -400,9 +397,8 @@ void detect_fs_size()
   initb += bitmapsize((uint32_t) zonecount, block_size);
   initb += START_BLOCK;
   initb += (inocount + inodes_per_block - 1) / inodes_per_block;
-  initb = (initb + (1 << zone_shift) - 1) >> zone_shift;
 
-  blockcount = initb+zonecount*zone_size;
+  blockcount = initb+zonecount;
   fseek(proto, point, SEEK_SET);
 }
 
@@ -422,8 +418,8 @@ void sizeup_dir()
 	getline(line, token);
 	p = token[0];
 	if (*p == '$') {
-		dir_zones = (dir_entries / (NR_DIR_ENTRIES(block_size) * zone_size));		
-		if(dir_entries % (NR_DIR_ENTRIES(block_size) * zone_size))
+		dir_zones = (dir_entries / (NR_DIR_ENTRIES(block_size)));		
+		if(dir_entries % (NR_DIR_ENTRIES(block_size)))
 			dir_zones++;
 		/* Assumes directory fits in direct blocks */
 		zonecount += dir_zones;
@@ -453,8 +449,8 @@ void sizeup_dir()
 			}
 			size = ftell(f);
 			fclose(f);
-			zone_t fzones= (size / (zone_size * block_size));
-			if (size % (zone_size * block_size))
+			zone_t fzones= (size / block_size);
+			if (size % block_size)
 				fzones++;
 			if (fzones > nr_dzones)
 				fzones++;	/* Assumes files fit within single indirect */
@@ -568,8 +564,7 @@ ino_t inodes;
   inode_offset = START_BLOCK + sup->s_imap_blocks + sup->s_zmap_blocks;
   inodeblks = (inodes + inodes_per_block - 1) / inodes_per_block;
   initblks = inode_offset + inodeblks;
-  sup->s_firstdatazone_old = nb =
-	(initblks + (1 << zone_shift) - 1) >> zone_shift;
+  sup->s_firstdatazone_old = nb = initblks;
   if(nb >= zones) pexit("bit maps too large");
   if(nb != sup->s_firstdatazone_old) {
 	/* The field is too small to store the value. Fortunately, the value
@@ -581,7 +576,7 @@ ino_t inodes;
   }
   sup->s_firstdatazone = nb;
   zoff = sup->s_firstdatazone - 1;
-  sup->s_log_zone_size = zone_shift;
+  sup->s_log_zone_size = 0;
   {
 	v2sq = (zone_t) V2_INDIRECTS(block_size) * V2_INDIRECTS(block_size);
 	zo = V2_NR_DZONES + (zone_t) V2_INDIRECTS(block_size) + v2sq;
@@ -646,7 +641,7 @@ void enter_symlink(ino_t inode, char *link)
   buf = alloc_block();
   z = alloc_zone();
   strcpy(buf, link);
-  put_block((z << zone_shift), buf);
+  put_block(z, buf);
 
   add_zone(inode, z, (size_t) strlen(link), current_time);
 
@@ -724,7 +719,7 @@ void eat_file(inode, f)
 ino_t inode;
 int f;
 {
-  int ct, i, j, k;
+  int ct, k;
   zone_t z;
   char *buf;
   uint32_t timeval;
@@ -732,15 +727,13 @@ int f;
   buf = alloc_block();
 
   do {
-	for (i = 0, j = 0; i < zone_size; i++, j += ct) {
-		for (k = 0; k < block_size; k++) buf[k] = 0;
-		if ((ct = read(f, buf, block_size)) > 0) {
-			if (i == 0) z = alloc_zone();
-			put_block((z << zone_shift) + i, buf);
-		}
+	for (k = 0; k < block_size; k++) buf[k] = 0;
+	if ((ct = read(f, buf, block_size)) > 0) {
+		z = alloc_zone();
+		put_block(z, buf);
 	}
 	timeval = (dflag ? current_time : file_time(f));
-	if (ct) add_zone(inode, z, (size_t) j, timeval);
+	if (ct) add_zone(inode, z, (size_t) ct, timeval);
   } while (ct == block_size);
   close(f);
   free(buf);
@@ -766,7 +759,7 @@ char *name;
 {
   /* Enter child in parent directory */
   /* Works for dir > 1 block and zone > block */
-  unsigned int i, j, k, l;
+  unsigned int i, j, k;
   block_t b;
   zone_t z;
   char *p1, *p2;
@@ -785,8 +778,8 @@ char *name;
 		ino->d2_zone[k] = z;
 	}
 
-	for (l = 0; l < zone_size; l++) {
-		get_block((z << zone_shift) + l, (char *) dir_entry);
+	{
+		get_block(z, (char *) dir_entry);
 		for (i = 0; i < NR_DIR_ENTRIES(block_size); i++) {
 			if (dir_entry[i].mfs_d_ino == 0) {
 				dir_entry[i].mfs_d_ino = child;
@@ -798,7 +791,7 @@ char *name;
 					*p2++ = *p1;
 					if (*p1 != 0) p1++;
 				}
-				put_block((z << zone_shift) + l, (char *) dir_entry);
+				put_block(z, (char *) dir_entry);
 				put_block(b, (char *) inoblock);
 				free(dir_entry);
 				free(inoblock);
@@ -851,7 +844,7 @@ void add_zone(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
   if (p->d2_zone[V2_NR_DZONES] == 0) p->d2_zone[V2_NR_DZONES] = alloc_zone();
   indir = p->d2_zone[V2_NR_DZONES];
   put_block(b, (char *) inode);
-  b = indir << zone_shift;
+  b = indir;
   get_block(b, (char *) blk);
   for (i = 0; i < V2_INDIRECTS(block_size); i++)
 	if (blk[i] == 0) {
@@ -960,15 +953,13 @@ static zone_t alloc_zone()
   /* Allocate a new zone */
   /* Works for zone > block */
   block_t b;
-  int i;
   zone_t z;
 
   z = next_zone++;
-  b = z << zone_shift;
-  if ((b + zone_size) > nrblocks)
+  b = z;
+  if ((b + 1) > nrblocks)
 	pexit("File system not big enough for all the files");
-  for (i = 0; i < zone_size; i++)
-	put_block(b + i, zero);	/* give an empty zone */
+  put_block(b, zero);	/* give an empty zone */
   /* DEBUG FIXME.  This assumes the bit is in the first zone map block. */
   insert_bit(zone_map, (int) (z - zoff));	/* lint, NOT OK because
 						 * z hasn't been broken
