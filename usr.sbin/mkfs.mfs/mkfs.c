@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -27,6 +28,7 @@
 #if defined(__minix)
 #include <minix/partition.h>
 #include <minix/u64.h>
+#include <minix/minlib.h>
 #include <sys/ioctl.h>
 #endif
 #include <dirent.h>
@@ -132,7 +134,7 @@ void mx_read(int blocknr, char *buf);
 void mx_write(int blocknr, char *buf);
 void dexit(char *s, int sectnum, int err);
 void usage(void);
-char *alloc_block(void);
+void *alloc_block(void);
 
 ino_t inocount;
 zone_t zonecount;
@@ -278,13 +280,9 @@ char *argv[];
 	grpid = atoi(token[2]);
 
 	if(blocks <= 0 && inodes <= 0){
-  		block_t extrablocks = 0;
-  		ino_t extrainodes = 0;
-		if(blocks < 0) extrablocks = -blocks;
-		if(inodes < 0) extrainodes = -inodes;
 		detect_fs_size();
-		blocks = blockcount + extrablocks;
-		inodes = inocount + extrainodes;
+		blocks = blockcount;
+		inodes = inocount;
 		blocks += blocks*extra_space_percent/100;
 		inodes += inodes*extra_space_percent/100;
 		printf("dynamically sized filesystem: %d blocks, %d inodes\n", blocks, 
@@ -766,6 +764,17 @@ int f;
   free(buf);
 }
 
+d2_inode *get_inoblock(ino_t i, block_t *blockno, d2_inode **ino)
+{
+	int off;
+	d2_inode *inoblock = alloc_block();
+	*blockno = ((i - 1) / inodes_per_block) + inode_offset;
+	off = (i - 1) % inodes_per_block;
+	get_block(*blockno, (char *) inoblock);
+	*ino = inoblock + off;
+	return inoblock;
+}
+
 /*================================================================
  *	    directory & inode management assist group
  *===============================================================*/
@@ -775,30 +784,23 @@ char *name;
 {
   /* Enter child in parent directory */
   /* Works for dir > 1 block and zone > block */
-  unsigned int i, j, k, l, off;
+  unsigned int i, j, k, l;
   block_t b;
   zone_t z;
   char *p1, *p2;
-  struct direct *dir_entry;
-  d2_inode *ino2;
+  struct direct *dir_entry = alloc_block();
+  d2_inode *ino;
+  d2_inode *inoblock = get_inoblock(parent, &b, &ino);
   int nr_dzones;
 
-  b = ((parent - 1) / inodes_per_block) + inode_offset;
-  off = (parent - 1) % inodes_per_block;
+  assert(!(block_size % sizeof(struct direct)));
 
-  if(!(dir_entry = malloc(NR_DIR_ENTRIES(block_size) * sizeof(*dir_entry))))
-  	pexit("couldn't allocate directory entry");
-
-  if(!(ino2 = malloc(V2_INODES_PER_BLOCK(block_size) * sizeof(*ino2))))
-  	pexit("couldn't allocate block of inodes entry");
-
-  get_block(b, (char *) ino2);
   nr_dzones = V2_NR_DZONES;
   for (k = 0; k < nr_dzones; k++) {
-	z = ino2[off].d2_zone[k];
+	z = ino->d2_zone[k];
 	if (z == 0) {
 		z = alloc_zone();
-		ino2[off].d2_zone[k] = z;
+		ino->d2_zone[k] = z;
 	}
 
 	for (l = 0; l < zone_size; l++) {
@@ -815,9 +817,9 @@ char *name;
 					if (*p1 != 0) p1++;
 				}
 				put_block((z << zone_shift) + l, (char *) dir_entry);
-				put_block(b, (char *) ino2);
+				put_block(b, (char *) inoblock);
 				free(dir_entry);
-				free(ino2);
+				free(inoblock);
 				return;
 			}
 		}
@@ -1277,7 +1279,7 @@ size_t count;
   while (count--) *to++ = *from++;
 }
 
-char *alloc_block()
+void *alloc_block()
 {
 	char *buf;
 
