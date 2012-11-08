@@ -153,7 +153,7 @@ struct buf *lmfs_get_block(
 
   int b;
   static struct buf *bp, *prev_ptr;
-  u64_t yieldid = VM_BLOCKID_NONE, getid = make64(dev, block);
+  u64_t yieldid = VM_BLOCKID_NONE /*, getid = make64(dev, block) */;
 
   assert(buf_hash);
   assert(buf);
@@ -263,10 +263,12 @@ struct buf *lmfs_get_block(
 		/* If we can satisfy the PREFETCH or NORMAL request 
 		 * from the vm cache, work is done.
 		 */
+#if 0
 		if(vm_yield_block_get_block(yieldid, getid,
 			bp->data, fs_block_size) == OK) {
 			return bp;
 		}
+#endif
 	}
   }
 
@@ -280,9 +282,11 @@ struct buf *lmfs_get_block(
 	 * will be overwritten. VM has to forget
 	 * about it.
 	 */
+#if 0
 	if(vmcache) {
 		vm_forgetblock(getid);
 	}
+#endif
   } else
 	panic("unexpected only_search value: %d", only_search);
 
@@ -393,7 +397,7 @@ void lmfs_invalidate(
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 	if (bp->lmfs_dev == device) bp->lmfs_dev = NO_DEV;
 
-  vm_forgetblocks();
+  /* vm_forgetblocks(); */
 }
 
 /*===========================================================================*
@@ -496,7 +500,7 @@ void lmfs_rw_scattered(
 			/* Transfer failed. */
 			if (i == 0) {
 				bp->lmfs_dev = NO_DEV;	/* Invalidate block */
-				vm_forgetblocks();
+				/* vm_forgetblocks(); */
 			}
 			break;
 		}
@@ -595,11 +599,13 @@ void lmfs_set_blocksize(int new_block_size, int major)
    *	- our main FS device isn't a memory device
    */
 
+#if 0
   vmcache = 0;
   if(vm_forgetblock(VM_BLOCKID_NONE) != ENOSYS &&
   	may_use_vmcache && major != MEMORY_MAJOR) {
 	vmcache = 1;
   }
+#endif
 }
 
 /*===========================================================================*
@@ -654,7 +660,7 @@ void lmfs_buf_pool(int new_nr_bufs)
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) bp->lmfs_hash = bp->lmfs_next;
   buf_hash[0] = front;
 
-  vm_forgetblocks();
+  /* vm_forgetblocks(); */
 }
 
 int lmfs_bufs_in_use(void)
