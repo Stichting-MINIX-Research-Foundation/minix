@@ -259,7 +259,7 @@ phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
 
   mem = alloc_pages(clicks, memflags);
   if(mem == NO_MEM) {
-    free_yielded(clicks * CLICK_SIZE);
+    /* free_yielded(clicks * CLICK_SIZE); */
     mem = alloc_pages(clicks, memflags);
   }
 
