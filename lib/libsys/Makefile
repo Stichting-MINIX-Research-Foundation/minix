@@ -85,7 +85,6 @@ SRCS+=  \
 	vm_map_phys.c \
 	vm_notify_sig.c \
 	vm_umap.c \
-	vm_yield_get_block.c \
 	vm_procctl.c \
 	vprintf.c
 
