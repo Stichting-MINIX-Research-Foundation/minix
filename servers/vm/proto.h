@@ -15,7 +15,6 @@ struct phys_region;
 
 #include "pt.h"
 #include "vm.h"
-#include "yielded.h"
 
 /* alloc.c */
 void *reservedqueue_new(int, int, int, int);
@@ -149,9 +148,6 @@ void map_printmap(struct vmproc *vmp);
 int map_writept(struct vmproc *vmp);
 void printregionstats(struct vmproc *vmp);
 void map_setparent(struct vmproc *vmp);
-int yielded_block_cmp(struct block_id *, struct block_id *);
-struct phys_region *map_clone_ph_block(struct vmproc *vmp,
-        struct vir_region *region, struct phys_region *ph);
 u32_t vrallocflags(u32_t flags);
 int map_free(struct vir_region *region);
 struct phys_region *physblock_get(struct vir_region *region, vir_bytes offset);
@@ -175,12 +171,7 @@ int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
 	phys_bytes offset, phys_bytes len);
 #if SANITYCHECKS
 void map_sanitycheck(char *file, int line);
-void blockstats(void);
 #endif
-int do_forgetblocks(message *m);
-int do_forgetblock(message *m);
-int do_yieldblockgetblock(message *m);
-vir_bytes free_yielded(vir_bytes bytes);
 
 /* rs.c */
 int do_rs_set_priv(message *m);
