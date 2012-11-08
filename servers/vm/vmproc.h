@@ -32,7 +32,6 @@ struct vmproc {
 	int vm_callback_type; /* expected message type */
 
 	int vm_slot;		/* process table slot */
-	int vm_yielded;		/* yielded regions */
 
 	union {
 		struct {
