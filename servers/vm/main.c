@@ -430,9 +430,6 @@ void init_vm(void)
 	CALLMAP(VM_INFO, do_info);
 	CALLMAP(VM_QUERY_EXIT, do_query_exit);
 	CALLMAP(VM_WATCH_EXIT, do_watch_exit);
-	CALLMAP(VM_FORGETBLOCKS, do_forgetblocks);
-	CALLMAP(VM_FORGETBLOCK, do_forgetblock);
-	CALLMAP(VM_YIELDBLOCKGETBLOCK, do_yieldblockgetblock);
 
 	/* Initialize the structures for queryexit */
 	init_query_exit();
