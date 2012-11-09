@@ -120,7 +120,8 @@ int do_procctl(message *msg)
 				&& msg->m_source != VFS_PROC_NR)
 				return EPERM;
 			free_proc(vmp);
-			pt_new(&vmp->vm_pt);
+			if(pt_new(&vmp->vm_pt) != OK)
+				panic("VMPPARAM_CLEAR: pt_new failed");
 			pt_bind(&vmp->vm_pt, vmp);
 			return OK;
 		default:

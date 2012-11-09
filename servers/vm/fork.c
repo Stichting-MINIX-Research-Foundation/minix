@@ -71,7 +71,6 @@ int do_fork(message *msg)
 #endif
 
   if(pt_new(&vmc->vm_pt) != OK) {
-	printf("VM: fork: pt_new failed\n");
 	return ENOMEM;
   }
 

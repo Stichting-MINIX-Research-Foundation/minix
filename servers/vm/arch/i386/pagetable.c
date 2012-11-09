@@ -478,7 +478,6 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 				 * and pt_ptalloc leaves the directory
 				 * and other data in a consistent state.
 				 */
-				printf("pt_ptalloc_in_range: pt_ptalloc failed\n");
 				return r;
 			}
 		}
@@ -692,9 +691,6 @@ int pt_writemap(struct vmproc * vmp,
 		int pde = I386_VM_PDE(v);
 		int pte = I386_VM_PTE(v);
 
-		if(!v) { printf("VM: warning: making zero page for %d\n",
-			vmp->vm_endpoint); }
-
 		assert(!(v % I386_PAGE_SIZE));
 		assert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
 		assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
@@ -825,7 +821,7 @@ int pt_new(pt_t *pt)
  * its physical address as we'll need that in the future. Verify it's
  * page-aligned.
  */
-	int i;
+	int i, r;
 
 	/* Don't ever re-allocate/re-move a certain process slot's
 	 * page directory once it's been created. This is a fraction
@@ -847,8 +843,8 @@ int pt_new(pt_t *pt)
 	pt->pt_virtop = 0;
 
         /* Map in kernel. */
-        if(pt_mapkernel(pt) != OK)
-                panic("pt_new: pt_mapkernel failed");
+        if((r=pt_mapkernel(pt)) != OK)
+		return r;
 
 	return OK;
 }
@@ -1122,12 +1118,13 @@ int pt_mapkernel(pt_t *pt)
 
 	/* Kernel also wants various mappings of its own. */
 	for(i = 0; i < kernmappings; i++) {
-		if(pt_writemap(NULL, pt,
+		int r;
+		if((r=pt_writemap(NULL, pt,
 			kern_mappings[i].vir_addr,
 			kern_mappings[i].phys_addr,
 			kern_mappings[i].len,
-			kern_mappings[i].flags, 0) != OK) {
-			panic("pt_mapkernel: pt_writemap failed");
+			kern_mappings[i].flags, 0)) != OK) {
+			return r;
 		}
 	}
 

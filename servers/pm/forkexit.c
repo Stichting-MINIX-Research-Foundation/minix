@@ -75,7 +75,6 @@ int do_fork()
 
   /* Memory part of the forking. */
   if((s=vm_fork(rmp->mp_endpoint, next_child, &child_ep)) != OK) {
-	printf("PM: vm_fork failed: %d\n", s);
 	return s;
   }
 
@@ -176,7 +175,6 @@ int do_srv_fork()
 	panic("do_fork finds wrong child slot: %d", next_child);
 
   if((s=vm_fork(rmp->mp_endpoint, next_child, &child_ep)) != OK) {
-	printf("PM: vm_fork failed: %d\n", s);
 	return s;
   }
 

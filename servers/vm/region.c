@@ -431,9 +431,6 @@ static vir_bytes region_find_slot_range(struct vmproc *vmp,
 	}
 
 	if(!foundflag) {
-		printf("VM: region_find_slot: no 0x%lx bytes found for %d between 0x%lx and 0x%lx\n",
-			length, vmp->vm_endpoint, minv, maxv);
-		util_stacktrace();
 		return SLOT_FAIL;
 	}
 
@@ -537,8 +534,12 @@ mem_type_t *memtype;
 	}
 
 	/* If a new event is specified, invoke it. */
-	if(newregion->memtype->ev_new)
-		newregion->memtype->ev_new(newregion);
+	if(newregion->memtype->ev_new) {
+		if(newregion->memtype->ev_new(newregion) != OK) {
+			/* ev_new will have freed and removed the region */
+			return NULL;
+		}
+	}
 
 	if(mapflags & MF_PREALLOC) {
 		if(map_handle_memory(vmp, newregion, 0, length, 1) != OK) {
