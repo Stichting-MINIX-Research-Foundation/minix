@@ -738,10 +738,10 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
 
   /* Ask the kernel to deliver the signal */
   r = sys_sigsend(rmp->mp_endpoint, &sigmsg);
- /* sys_sigsend can fail legitimately with EFAULT if
-  * the process memory can't accomodate the signal handler.
-  */
-  if(r == EFAULT) {
+  /* sys_sigsend can fail legitimately with EFAULT or ENOMEM if
+   * the process memory can't accomodate the signal handler.
+   */
+  if(r == EFAULT || r == ENOMEM) {
 	return(FALSE);
   }
   /* Other errors are unexpected pm/kernel discrepancies. */
