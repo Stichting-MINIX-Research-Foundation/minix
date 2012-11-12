@@ -156,29 +156,29 @@ struct buf *lmfs_get_block(
 
   ASSERT(fs_block_size > 0);
 
+  assert(dev != NO_DEV);
+
   /* Search the hash chain for (dev, block). Do_read() can use 
    * lmfs_get_block(NO_DEV ...) to get an unnamed block to fill with zeros when
    * someone wants to read from a hole in a file, in which case this search
    * is skipped
    */
-  if (dev != NO_DEV) {
-	b = BUFHASH(block);
-	bp = buf_hash[b];
-	while (bp != NULL) {
-		if (bp->lmfs_blocknr == block && bp->lmfs_dev == dev) {
-			/* Block needed has been found. */
-			if (bp->lmfs_count == 0) rm_lru(bp);
-			bp->lmfs_count++;	/* record that block is in use */
-			ASSERT(bp->lmfs_bytes == fs_block_size);
-			ASSERT(bp->lmfs_dev == dev);
-			ASSERT(bp->lmfs_dev != NO_DEV);
-			ASSERT(bp->data);
-			return(bp);
-		} else {
-			/* This block is not the one sought. */
-			bp = bp->lmfs_hash; /* move to next block on hash chain */
-		}
-	}
+  b = BUFHASH(block);
+  bp = buf_hash[b];
+  while (bp != NULL) {
+  	if (bp->lmfs_blocknr == block && bp->lmfs_dev == dev) {
+  		/* Block needed has been found. */
+  		if (bp->lmfs_count == 0) rm_lru(bp);
+  		bp->lmfs_count++;	/* record that block is in use */
+  		ASSERT(bp->lmfs_bytes == fs_block_size);
+  		ASSERT(bp->lmfs_dev == dev);
+  		ASSERT(bp->lmfs_dev != NO_DEV);
+  		ASSERT(bp->data);
+  		return(bp);
+  	} else {
+  		/* This block is not the one sought. */
+  		bp = bp->lmfs_hash; /* move to next block on hash chain */
+  	}
   }
 
   /* Desired block is not on available chain.  Take oldest block ('front'). */
@@ -247,13 +247,7 @@ struct buf *lmfs_get_block(
 
   buf_hash[b] = bp;		/* add to hash list */
 
-  if(dev == NO_DEV) {
-	if(vmcache && cmp64(yieldid, VM_BLOCKID_NONE) != 0) {
-		vm_yield_block_get_block(yieldid, VM_BLOCKID_NONE,
-			bp->data, fs_block_size);
-	}
-	return(bp);	/* If the caller wanted a NO_DEV block, work is done. */
-  }
+  assert(dev != NO_DEV);
 
   /* Go get the requested block unless searching or prefetching. */
   if(only_search == PREFETCH || only_search == NORMAL) {
@@ -354,29 +348,29 @@ register struct buf *bp;	/* buffer pointer */
  */
   int r, op_failed;
   u64_t pos;
-  dev_t dev;
+  dev_t dev = bp->lmfs_dev;
 
   op_failed = 0;
 
-  if ( (dev = bp->lmfs_dev) != NO_DEV) {
-	pos = mul64u(bp->lmfs_blocknr, fs_block_size);
-	r = bdev_read(dev, pos, bp->data, fs_block_size,
-		BDEV_NOFLAGS);
-	if (r < 0) {
-		printf("fs cache: I/O error on device %d/%d, block %u\n",
-		major(dev), minor(dev), bp->lmfs_blocknr);
-		op_failed = 1;
-	} else if (r != (ssize_t) fs_block_size) {
-		r = END_OF_FILE;
-		op_failed = 1;
-	}
+  assert(dev != NO_DEV);
 
-	if (op_failed) {
-		bp->lmfs_dev = NO_DEV;	/* invalidate block */
+  pos = mul64u(bp->lmfs_blocknr, fs_block_size);
+  r = bdev_read(dev, pos, bp->data, fs_block_size,
+  	BDEV_NOFLAGS);
+  if (r < 0) {
+  	printf("fs cache: I/O error on device %d/%d, block %u\n",
+  	major(dev), minor(dev), bp->lmfs_blocknr);
+  	op_failed = 1;
+  } else if (r != (ssize_t) fs_block_size) {
+  	r = END_OF_FILE;
+  	op_failed = 1;
+  }
 
-		/* Report read errors to interested parties. */
-		rdwt_err = r;
-	}
+  if (op_failed) {
+  	bp->lmfs_dev = NO_DEV;	/* invalidate block */
+
+  	/* Report read errors to interested parties. */
+  	rdwt_err = r;
   }
 }
 

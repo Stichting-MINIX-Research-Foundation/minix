@@ -246,8 +246,12 @@ int *completed;			/* number of bytes copied */
   if (!block_spec && b == NO_BLOCK) {
 	if (rw_flag == READING) {
 		/* Reading from a nonexistent block.  Must read as all zeros.*/
-		bp = get_block(NO_DEV, NO_BLOCK, NORMAL);    /* get a buffer */
-		zero_block(bp);
+		r = sys_safememset(VFS_PROC_NR, gid, (vir_bytes) buf_off,
+			   0, (size_t) chunk);
+		if(r != OK) {
+			printf("MFS: sys_safememset failed\n");
+		}
+		return r;
 	} else {
 		/* Writing to a nonexistent block. Create and enter in inode.*/
 		if ((bp = new_block(rip, (off_t) ex64lo(position))) == NULL)
