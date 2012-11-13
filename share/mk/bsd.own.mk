@@ -47,9 +47,8 @@ CPPFLAGS+= ${SMP_FLAGS}
 __uname_s!= uname -s
 .if ${__uname_s:Uunknown} == "Minix" 
 USETOOLS?=	never
-.  if ${USETOOLS:Uno} != "yes"
-#HAVE_LLVM?=2.9
-HAVE_LLVM?=3.1
+.  if ${USETOOLS:Uno} != "yes" && ${HAVE_LLVM:U} == ""
+HAVE_LLVM!= clang --version | grep version | cut -d' ' -f 3
 .  endif
 .  if !defined(HOSTPROG) && !defined(HOSTLIB)
 # LSC FIXME: Override MACHINE as the native minix host make command will set 
