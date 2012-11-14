@@ -929,7 +929,7 @@ static int init_buffers(sub_dev_t *sub_dev_ptr)
 
 	/* allocate dma buffer space */
 	size= sub_dev_ptr->DmaSize + 64 * 1024;
-	base= alloc_contig(size, AC_ALIGN4K, &ph);
+	base= alloc_contig(size, AC_ALIGN64K|AC_LOWER16M, &ph);
 	if (!base) {
 		printf("%s: failed to allocate dma buffer for a channel\n", 
 				drv.DriverName);
