@@ -299,13 +299,13 @@ int do_sync()
   int r = OK;
 
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
+	if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
+		break;
 	if (vmp->m_dev != NO_DEV && vmp->m_fs_e != NONE &&
 		 vmp->m_root_node != NULL) {
-		if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
-			break;
 		req_sync(vmp->m_fs_e);
-		unlock_vmnt(vmp);
 	}
+	unlock_vmnt(vmp);
   }
 
   return(r);
