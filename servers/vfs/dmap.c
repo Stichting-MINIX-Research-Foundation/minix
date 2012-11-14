@@ -79,6 +79,7 @@ int do_mapdriver()
   vir_bytes label_vir;
   size_t label_len;
   char label[LABEL_MAX];
+  struct fproc *rfp;
 
   /* Only RS can map drivers. */
   if (who_e != RS_PROC_NR) return(EPERM);
@@ -108,6 +109,10 @@ int do_mapdriver()
 	return(EINVAL);
   }
 
+  /* Process is a service */
+  rfp = &fproc[_ENDPOINT_P(endpoint)];
+  rfp->fp_flags |= FP_SRV_PROC;
+
   /* Try to update device mapping. */
   return map_driver(label, major, endpoint, style, flags);
 }
@@ -129,7 +134,6 @@ int flags;			/* device flags */
   int slot, s;
   size_t len;
   struct dmap *dp;
-  struct fproc *rfp;
 
   /* Get pointer to device entry in the dmap table. */
   if (major < 0 || major >= NR_DEVICES) return(ENODEV);
@@ -159,9 +163,6 @@ int flags;			/* device flags */
 	/* This is not a problem only when we force this driver mapping */
 	if (! (flags & DRV_FORCED))
 		return(EINVAL);
-  } else {
-	rfp = &fproc[slot];
-	rfp->fp_flags |= FP_SYS_PROC;	/* Process is a driver */
   }
 
   if (label != NULL) {
@@ -228,16 +229,21 @@ void dmap_unmap_by_endpt(endpoint_t proc_e)
 }
 
 /*===========================================================================*
- *		               map_service                                   *
+ *		               map_service				     *
  *===========================================================================*/
 int map_service(struct rprocpub *rpub)
 {
 /* Map a new service by storing its device driver properties. */
   int r;
   struct dmap *fdp, *sdp;
+  struct fproc *rfp;
+
+  /* Process is a service */
+  rfp = &fproc[_ENDPOINT_P(rpub->endpoint)];
+  rfp->fp_flags |= FP_SRV_PROC;
 
   /* Not a driver, nothing more to do. */
-  if(rpub->dev_nr == NO_DEV) return(OK);
+  if (rpub->dev_nr == NO_DEV) return(OK);
 
   /* Map driver. */
   r = map_driver(rpub->label, rpub->dev_nr, rpub->endpoint, rpub->dev_style,

@@ -42,6 +42,7 @@ EXTERN unsigned long calls_stats[NCALLS];
 /* Thread related prototypes */
 static void *do_async_dev_result(void *arg);
 static void *do_control_msgs(void *arg);
+static void *do_dev_event(void *arg);
 static void *do_fs_reply(struct job *job);
 static void *do_work(void *arg);
 static void *do_pm(void *arg);
@@ -110,7 +111,9 @@ int main(void)
 	} else if (is_notify(call_nr)) {
 		/* A task notify()ed us */
 		if (who_e == DS_PROC_NR)
-			worker_start(ds_event);
+			handle_work(ds_event);
+		else if (fp != NULL && (fp->fp_flags & FP_SRV_PROC))
+			handle_work(do_dev_event);
 		else
 			sys_worker_start(do_control_msgs);
 		continue;
@@ -170,37 +173,37 @@ static void handle_work(void *(*func)(void *arg))
 
   proc_e = m_in.m_source;
 
-  if (fp->fp_flags & FP_SYS_PROC) {
+  if (fp->fp_flags & FP_SRV_PROC) {
+	vmp = find_vmnt(proc_e);
+	if (vmp != NULL) {
+		/* A call back or dev result from an FS
+		 * endpoint. Set call back flag. Can do only
+		 * one call back at a time.
+		 */
+		if (vmp->m_flags & VMNT_CALLBACK) {
+			reply(proc_e, EAGAIN);
+			return;
+		}
+		vmp->m_flags |= VMNT_CALLBACK;
+		if (vmp->m_flags & VMNT_MOUNTING) {
+			vmp->m_flags |= VMNT_FORCEROOTBSF;
+		}
+	}
+
 	if (worker_available() == 0) {
 		if (!deadlock_resolving) {
-			if ((vmp = find_vmnt(proc_e)) != NULL) {
-				/* A call back or dev result from an FS
-				 * endpoint. Set call back flag. Can do only
-				 * one call back at a time.
-				 */
-				if (vmp->m_flags & VMNT_CALLBACK) {
-					reply(proc_e, EAGAIN);
-					return;
-				}
-				vmp->m_flags |= VMNT_CALLBACK;
-
-				/* When an FS endpoint has to make a call back
-				 * in order to mount, force its device to a
-				 * "none device" so block reads/writes will be
-				 * handled by ROOT_FS_E.
-				 */
-				if (vmp->m_flags & VMNT_MOUNTING)
-					vmp->m_flags |= VMNT_FORCEROOTBSF;
-			}
 			deadlock_resolving = 1;
 			dl_worker_start(func);
 			return;
 		}
-		/* Already trying to resolve a deadlock, can't
-		 * handle more, sorry */
 
-		reply(proc_e, EAGAIN);
-		return;
+		if (vmp != NULL) {
+			/* Already trying to resolve a deadlock, can't
+			 * handle more, sorry */
+
+			reply(proc_e, EAGAIN);
+			return;
+		}
 	}
   }
 
@@ -243,19 +246,7 @@ static void *do_async_dev_result(void *arg)
 	select_reply2(job_m_in.m_source, job_m_in.DEV_MINOR,
 		      job_m_in.DEV_SEL_OPS);
 
-  if (deadlock_resolving) {
-	if (fp != NULL && fp->fp_wtid == dl_worker.w_tid)
-		deadlock_resolving = 0;
-  }
-
-  if (fp != NULL && (fp->fp_flags & FP_SYS_PROC)) {
-	struct vmnt *vmp;
-
-	if ((vmp = find_vmnt(fp->fp_endpoint)) != NULL)
-		vmp->m_flags &= ~VMNT_CALLBACK;
-  }
-
-  thread_cleanup(NULL);
+  thread_cleanup(fp);
   return(NULL);
 }
 
@@ -273,12 +264,26 @@ static void *do_control_msgs(void *arg)
   if (job_m_in.m_source == CLOCK) {
 	/* Alarm timer expired. Used only for select(). Check it. */
 	expire_timers(job_m_in.NOTIFY_TIMESTAMP);
-  } else {
-	/* Device notifies us of an event. */
-	dev_status(job_m_in.m_source);
   }
 
   thread_cleanup(NULL);
+  return(NULL);
+}
+
+/*===========================================================================*
+ *			       do_dev_event				     *
+ *===========================================================================*/
+static void *do_dev_event(void *arg)
+{
+/* Device notifies us of an event. */
+  struct job my_job;
+
+  my_job = *((struct job *) arg);
+  fp = my_job.j_fp;
+
+  dev_status(job_m_in.m_source);
+
+  thread_cleanup(fp);
   return(NULL);
 }
 
@@ -384,8 +389,8 @@ static void *do_pending_pipe(void *arg)
 	reply(fp->fp_endpoint, r);
 
   unlock_filp(f);
-
   thread_cleanup(fp);
+  unlock_proc(fp);
   return(NULL);
 }
 
@@ -402,6 +407,7 @@ void *do_dummy(void *arg)
 
   if ((r = mutex_trylock(&fp->fp_lock)) == 0) {
 	thread_cleanup(fp);
+	unlock_proc(fp);
   } else {
 	/* Proc is busy, let that worker thread carry out the work */
 	thread_cleanup(NULL);
@@ -456,24 +462,10 @@ static void *do_work(void *arg)
   }
 
   /* Copy the results back to the user and send reply. */
-  if (error != SUSPEND) {
-
-	if ((fp->fp_flags & FP_SYS_PROC)) {
-		struct vmnt *vmp;
-
-		if ((vmp = find_vmnt(fp->fp_endpoint)) != NULL)
-			vmp->m_flags &= ~VMNT_CALLBACK;
-	}
-
-	if (deadlock_resolving) {
-		if (fp->fp_wtid == dl_worker.w_tid)
-			deadlock_resolving = 0;
-	}
-
-	reply(fp->fp_endpoint, error);
-  }
+  if (error != SUSPEND) reply(fp->fp_endpoint, error);
 
   thread_cleanup(fp);
+  unlock_proc(fp);
   return(NULL);
 }
 
@@ -635,6 +627,7 @@ static void *do_init_root(void *arg)
 
   unlock_pm();
   thread_cleanup(fp);
+  unlock_proc(fp);
   return(NULL);
 }
 
@@ -710,7 +703,18 @@ void thread_cleanup(struct fproc *rfp)
 
   if (rfp != NULL) {
 	rfp->fp_flags &= ~FP_DROP_WORK;
-	unlock_proc(rfp);
+	if (rfp->fp_flags & FP_SRV_PROC) {
+		struct vmnt *vmp;
+
+		if ((vmp = find_vmnt(rfp->fp_endpoint)) != NULL) {
+			vmp->m_flags &= ~VMNT_CALLBACK;
+		}
+	}
+  }
+
+  if (deadlock_resolving) {
+	if (self->w_tid == dl_worker.w_tid)
+		deadlock_resolving = 0;
   }
 }
 
