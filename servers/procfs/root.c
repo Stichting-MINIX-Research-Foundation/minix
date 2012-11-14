@@ -185,7 +185,7 @@ static void root_ipcvecs(void)
 	 * to distinguish them from regular symbols.
 	 */
 #define PRINT_ENTRYPOINT(name) \
-	buf_printf("%08lx T %s(k)\n", _minix_ipcvecs.name ## _ptr, #name)
+	buf_printf("%08lx T %s(k)\n", _minix_ipcvecs.name, #name)
 
 	PRINT_ENTRYPOINT(sendrec);
 	PRINT_ENTRYPOINT(send);
