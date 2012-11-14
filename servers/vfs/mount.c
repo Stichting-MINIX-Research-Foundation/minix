@@ -266,7 +266,7 @@ char mount_label[LABEL_MAX] )
 	return(EINVAL);
   }
   rfp = &fproc[slot];
-  rfp->fp_flags |= FP_SYS_PROC;	/* Process is an FS */
+  rfp->fp_flags |= FP_SRV_PROC;	/* File Servers are also services */
 
   /* Store some essential vmnt data first */
   new_vmp->m_fs_e = fs_e;
@@ -407,7 +407,6 @@ void mount_pfs(void)
   strlcpy(vmp->m_label, "pfs", LABEL_MAX);
 
   rfp = &fproc[_ENDPOINT_P(PFS_PROC_NR)];
-  rfp->fp_flags |= FP_SYS_PROC;	/* PFS is a driver and an FS */
 }
 
 /*===========================================================================*
