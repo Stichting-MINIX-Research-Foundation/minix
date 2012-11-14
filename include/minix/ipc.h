@@ -176,14 +176,39 @@ struct minix_ipcvecs {
 /* kernel-set IPC vectors retrieved by a constructor in libc/sys-minix/init.c */
 extern struct minix_ipcvecs _minix_ipcvecs;
 
-#define CHOOSETRAP(name) (_minix_ipcvecs. name ## _ptr)
+static inline int send(endpoint_t dest, message *m_ptr)
+{
+	return _minix_ipcvecs.send_ptr(dest, m_ptr);
+}
 
-#define send		CHOOSETRAP(send)
-#define receive		CHOOSETRAP(receive)
-#define sendrec		CHOOSETRAP(sendrec)
-#define sendnb		CHOOSETRAP(sendnb)
-#define notify		CHOOSETRAP(notify)
-#define do_kernel_call	CHOOSETRAP(do_kernel_call)
-#define senda		CHOOSETRAP(senda)
+static inline int receive(endpoint_t src, message *m_ptr, int *st)
+{
+	return _minix_ipcvecs.receive_ptr(src, m_ptr, st);
+}
+
+static inline int sendrec(endpoint_t src_dest, message *m_ptr)
+{
+	return _minix_ipcvecs.sendrec_ptr(src_dest, m_ptr);
+}
+
+static inline int sendnb(endpoint_t dest, message *m_ptr)
+{
+	return _minix_ipcvecs.send_ptr(dest, m_ptr);
+}
+
+static inline int notify(endpoint_t dest)
+{
+	return _minix_ipcvecs.notify_ptr(dest);
+}
+
+static inline int do_kernel_call(message *m_ptr)
+{
+	return _minix_ipcvecs.do_kernel_call_ptr(m_ptr);
+}
+
+static inline int senda(asynmsg_t *table, size_t count)
+{
+	return _minix_ipcvecs.senda_ptr(table, count);
+}
 
 #endif /* _IPC_H */
