@@ -533,7 +533,7 @@ int unmount(
 /*===========================================================================*
  *				unmount_all				     *
  *===========================================================================*/
-void unmount_all(void)
+void unmount_all(int force)
 {
 /* Unmount all filesystems.  File systems are mounted on other file systems,
  * so you have to pull off the loose bits repeatedly to get it all undone.
@@ -550,6 +550,8 @@ void unmount_all(void)
 			unmount(vmp->m_dev, NULL);
 	}
   }
+
+  if (!force) return;
 
   /* Verify nothing is locked anymore */
   check_vnode_locks();
