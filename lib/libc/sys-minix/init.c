@@ -8,13 +8,13 @@ struct minix_kerninfo *_minix_kerninfo = NULL;
 void    __minix_init(void) __attribute__((__constructor__, __used__));
 
 struct minix_ipcvecs _minix_ipcvecs = {
-	.sendrec_ptr = _sendrec_orig,
-	.send_ptr = _send_orig,
-	.notify_ptr = _notify_orig,
-	.senda_ptr = _senda_orig,
-	.sendnb_ptr = _sendnb_orig,
-	.receive_ptr = _receive_orig,
-	.do_kernel_call_ptr = _do_kernel_call_orig,
+	.sendrec	= _sendrec_orig,
+	.send		= _send_orig,
+	.notify		= _notify_orig,
+	.senda		= _senda_orig,
+	.sendnb		= _sendnb_orig,
+	.receive	= _receive_orig,
+	.do_kernel_call	= _do_kernel_call_orig,
 };
 
 void __minix_init(void)

@@ -942,13 +942,13 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		/* adjust the pointers of the functions and the struct
 		 * itself to the user-accessible mapping
 		 */
-		FIXPTR(minix_kerninfo.minix_ipcvecs->send_ptr);
-		FIXPTR(minix_kerninfo.minix_ipcvecs->receive_ptr);
-		FIXPTR(minix_kerninfo.minix_ipcvecs->sendrec_ptr);
-		FIXPTR(minix_kerninfo.minix_ipcvecs->senda_ptr);
-		FIXPTR(minix_kerninfo.minix_ipcvecs->sendnb_ptr);
-		FIXPTR(minix_kerninfo.minix_ipcvecs->notify_ptr);
-		FIXPTR(minix_kerninfo.minix_ipcvecs->do_kernel_call_ptr);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->send);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->receive);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->sendrec);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->senda);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->sendnb);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->notify);
+		FIXPTR(minix_kerninfo.minix_ipcvecs->do_kernel_call);
 		FIXPTR(minix_kerninfo.minix_ipcvecs);
 
 		minix_kerninfo.kerninfo_magic = KERNINFO_MAGIC;
