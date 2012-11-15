@@ -1,3 +1,23 @@
+20121115:
+	Before your first native build you need to update /usr/share/mk.
+	# rm /usr/share/mk/*
+	# cp /usr/src/share/mk/* /usr/share/mk
+	
+	With the update, it is now recommended to use the following make
+	targets :
+	- "build" (i.e., make build) instead of "world", which is now obsoleted.
+	
+	There is some differences between make build and make world. namely:
+	- make build is NOT automatically followed by make etcforce.
+	- make build is by default preceded by a make clean, to prevent that
+	  use the following command:
+	  # make build MKUPDATE=yes
+	
+	It is now possible to crosscompile minix on minix, if you have 
+	not already followed the previous steps, you will need to do the
+	following before using the build.sh script:
+	# make etcforce
+
 20120927:
 	Building a new boot image requires the current mkfs.mfs.
 	# make -C usr.sbin/mkfs.mfs clean all install
