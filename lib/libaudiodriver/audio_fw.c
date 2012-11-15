@@ -607,16 +607,13 @@ static void msg_hardware(void) {
 
 	u32_t     i;
 
-	/* while we have an interrupt  */
-	while ( drv_int_sum()) {
-		/* loop over all sub devices */
-		for ( i = 0; i < drv.NrOfSubDevices; i++) {
-			/* if interrupt from sub device and Dma transfer 
-			   was actually busy, take care of business */
-			if( drv_int(i) && sub_dev[i].DmaBusy ) {
-				if (sub_dev[i].DmaMode == DEV_WRITE_S) handle_int_write(i);
-				if (sub_dev[i].DmaMode == DEV_READ_S) handle_int_read(i);  
-			}
+	/* loop over all sub devices */
+	for ( i = 0; i < drv.NrOfSubDevices; i++) {
+		/* if interrupt from sub device and Dma transfer 
+		   was actually busy, take care of business */
+		if( drv_int(i) && sub_dev[i].DmaBusy ) {
+			if (sub_dev[i].DmaMode == DEV_WRITE_S) handle_int_write(i);
+			if (sub_dev[i].DmaMode == DEV_READ_S) handle_int_read(i);  
 		}
 	}
 
