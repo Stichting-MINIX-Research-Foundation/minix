@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.95 2009/10/02 07:41:08 wiz Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.101 2012/06/08 07:54:14 martin Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.95 2009/10/02 07:41:08 wiz Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.101 2012/06/08 07:54:14 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,6 +76,7 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.95 2009/10/02 07:41:08 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ifaddrs.h>
 
 #include <syslog.h>
 #include <stdarg.h>
@@ -208,6 +209,7 @@ static int get_portmatch(const struct addrinfo *, const char *,
 static int get_port(const struct addrinfo *, const char *, int,
     struct servent_data *);
 static const struct afd *find_afd(int);
+static int addrconfig(uint64_t *);
 #ifdef INET6
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
@@ -330,8 +332,8 @@ str2number(const char *p)
 	ep = NULL;
 	errno = 0;
 	v = strtoul(p, &ep, 10);
-	if (errno == 0 && ep && *ep == '\0' && v <= UINT_MAX)
-		return v;
+	if (errno == 0 && ep && *ep == '\0' && v <= INT_MAX)
+		return (int)v;
 	else
 		return -1;
 }
@@ -348,6 +350,7 @@ getaddrinfo(const char *hostname, const char *servname,
 	struct addrinfo *pai;
 	const struct explore *ex;
 	struct servent_data svd;
+	uint64_t mask = (uint64_t)~0ULL;
 
 	/* hostname is allowed to be NULL */
 	/* servname is allowed to be NULL */
@@ -409,6 +412,9 @@ getaddrinfo(const char *hostname, const char *servname,
 		}
 	}
 
+	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && addrconfig(&mask) == -1)
+		ERR(EAI_FAIL);
+
 	/*
 	 * check for special cases.  (1) numeric servname is disallowed if
 	 * socktype/protocol are left unspecified. (2) servname is disallowed
@@ -430,7 +436,7 @@ getaddrinfo(const char *hostname, const char *servname,
 		}
 		error = get_portmatch(pai, servname, &svd);
 		if (error)
-			ERR(error);
+			goto bad;
 
 		*pai = ai0;
 	}
@@ -440,6 +446,10 @@ getaddrinfo(const char *hostname, const char *servname,
 	/* NULL hostname, or numeric hostname */
 	for (ex = explore; ex->e_af >= 0; ex++) {
 		*pai = ai0;
+
+		/* ADDRCONFIG check */
+		if ((((uint64_t)1 << ex->e_af) & mask) == 0)
+			continue;
 
 		/* PF_UNSPEC entries are prepared for DNS queries only */
 		if (ex->e_af == PF_UNSPEC)
@@ -451,7 +461,6 @@ getaddrinfo(const char *hostname, const char *servname,
 			continue;
 		if (!MATCH(pai->ai_protocol, ex->e_protocol, WILD_PROTOCOL(ex)))
 			continue;
-
 		if (pai->ai_family == PF_UNSPEC)
 			pai->ai_family = ex->e_af;
 		if (pai->ai_socktype == ANY && ex->e_socktype != ANY)
@@ -493,6 +502,13 @@ getaddrinfo(const char *hostname, const char *servname,
 	 */
 	for (ex = explore; ex->e_af >= 0; ex++) {
 		*pai = ai0;
+
+
+		/* ADDRCONFIG check */
+		/* PF_UNSPEC entries are prepared for DNS queries only */
+		if (ex->e_af != PF_UNSPEC &&
+		    (((uint64_t)1 << ex->e_af) & mask) == 0)
+			continue;
 
 		/* require exact match for family field */
 		if (pai->ai_family != ex->e_af)
@@ -1011,6 +1027,30 @@ find_afd(int af)
 	return NULL;
 }
 
+/*
+ * AI_ADDRCONFIG check: Build a mask containing a bit set for each address
+ * family configured in the system.
+ *
+ */
+static int
+addrconfig(uint64_t *mask)
+{
+	struct ifaddrs *ifaddrs, *ifa;
+
+	if (getifaddrs(&ifaddrs) == -1)
+		return -1;
+
+	*mask = 0;
+	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next)
+		if (ifa->ifa_addr && (ifa->ifa_flags & IFF_UP)) {
+			_DIAGASSERT(ifa->ifa_addr->sa_family < 64);
+			*mask |= (uint64_t)1 << ifa->ifa_addr->sa_family;
+		}
+
+	freeifaddrs(ifaddrs);
+	return 0;
+}
+
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
 static int
@@ -1117,7 +1157,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		h_errno = NO_RECOVERY;
 		return (NULL);
 	}
-	n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
+	n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
 	if ((n < 0) || !(*name_ok)(bp)) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
@@ -1128,7 +1168,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		 * same as the one we sent; this just gets the expanded name
 		 * (i.e., with the succeeding search-domain tacked on).
 		 */
-		n = strlen(bp) + 1;		/* for the \0 */
+		n = (int)strlen(bp) + 1;		/* for the \0 */
 		if (n >= MAXHOSTNAMELEN) {
 			h_errno = NO_RECOVERY;
 			return (NULL);
@@ -1141,7 +1181,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	haveanswer = 0;
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
-		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
+		n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
 		if ((n < 0) || !(*name_ok)(bp)) {
 			had_error++;
 			continue;
@@ -1160,14 +1200,14 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		}
 		if ((qtype == T_A || qtype == T_AAAA || qtype == T_ANY) &&
 		    type == T_CNAME) {
-			n = dn_expand(answer->buf, eom, cp, tbuf, sizeof tbuf);
+			n = dn_expand(answer->buf, eom, cp, tbuf, (int)sizeof tbuf);
 			if ((n < 0) || !(*name_ok)(tbuf)) {
 				had_error++;
 				continue;
 			}
 			cp += n;
 			/* Get canonical name. */
-			n = strlen(tbuf) + 1;	/* for the \0 */
+			n = (int)strlen(tbuf) + 1;	/* for the \0 */
 			if (n > ep - bp || n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
@@ -1223,7 +1263,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				int nn;
 
 				canonname = bp;
-				nn = strlen(bp) + 1;	/* for the \0 */
+				nn = (int)strlen(bp) + 1;	/* for the \0 */
 				bp += nn;
 			}
 
@@ -1411,7 +1451,7 @@ _sethtent(FILE **hostf)
 {
 
 	if (!*hostf)
-		*hostf = fopen(_PATH_HOSTS, "r" );
+		*hostf = fopen(_PATH_HOSTS, "re");
 	else
 		rewind(*hostf);
 }
@@ -1439,10 +1479,10 @@ _gethtent(FILE **hostf, const char *name, const struct addrinfo *pai)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(pai != NULL);
 
-	if (!*hostf && !(*hostf = fopen(_PATH_HOSTS, "r" )))
+	if (!*hostf && !(*hostf = fopen(_PATH_HOSTS, "re")))
 		return (NULL);
  again:
-	if (!(p = fgets(hostbuf, sizeof hostbuf, *hostf)))
+	if (!(p = fgets(hostbuf, (int)sizeof hostbuf, *hostf)))
 		return (NULL);
 	if (*p == '#')
 		goto again;
@@ -1711,10 +1751,10 @@ res_queryN(const char *name, /* domain name */ struct res_target *target,
 #endif
 
 		n = res_nmkquery(res, QUERY, name, class, type, NULL, 0, NULL,
-		    buf, sizeof(buf));
+		    buf, (int)sizeof(buf));
 #ifdef RES_USE_EDNS0
 		if (n > 0 && (res->options & RES_USE_EDNS0) != 0)
-			n = res_nopt(res, n, buf, sizeof(buf), anslen);
+			n = res_nopt(res, n, buf, (int)sizeof(buf), anslen);
 #endif
 		if (n <= 0) {
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.20 2009/06/01 06:37:40 yamt Exp $	*/
+/*	$NetBSD: qsort.c,v 1.22 2012/05/26 21:47:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.20 2009/06/01 06:37:40 yamt Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.22 2012/05/26 21:47:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,9 +44,9 @@ __RCSID("$NetBSD: qsort.c,v 1.20 2009/06/01 06:37:40 yamt Exp $");
 #include <errno.h>
 #include <stdlib.h>
 
-static inline char	*med3 __P((char *, char *, char *,
-    int (*)(const void *, const void *)));
-static inline void	 swapfunc __P((char *, char *, size_t, int));
+static inline char	*med3(char *, char *, char *,
+    int (*)(const void *, const void *));
+static inline void	 swapfunc(char *, char *, size_t, int);
 
 #define min(a, b)	(a) < (b) ? a : b
 
@@ -89,7 +89,7 @@ swapfunc(char *a, char *b, size_t n, int swaptype)
 
 static inline char *
 med3(char *a, char *b, char *c,
-    int (*cmp) __P((const void *, const void *)))
+    int (*cmp)(const void *, const void *))
 {
 
 	return cmp(a, b) < 0 ?
@@ -99,13 +99,13 @@ med3(char *a, char *b, char *c,
 
 void
 qsort(void *a, size_t n, size_t es,
-    int (*cmp) __P((const void *, const void *)))
+    int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	size_t d, r;
 	int swaptype, cmp_result;
 
-	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(a != NULL || n == 0 || es == 0);
 	_DIAGASSERT(cmp != NULL);
 
 loop:	SWAPINIT(a, es);

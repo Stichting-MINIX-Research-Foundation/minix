@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.7 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.8 2012/03/13 21:13:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_pton.c,v 1.5 2005/07/28 06:51:47 marka Exp";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.7 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.8 2012/03/13 21:13:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: inet_pton.c,v 1.7 2009/04/12 17:07:17 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <stddef.h>
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
@@ -100,10 +101,10 @@ inet_pton4(const char *src, u_char *dst, int pton)
 {
 	u_int32_t val;
 	u_int digit, base;
-	int n;
+	ptrdiff_t n;
 	unsigned char c;
 	u_int parts[4];
-	register u_int *pp = parts;
+	u_int *pp = parts;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
@@ -248,7 +249,7 @@ inet_pton6(const char *src, u_char *dst)
 			pch = strchr((xdigits = xdigits_u), ch);
 		if (pch != NULL) {
 			val <<= 4;
-			val |= (pch - xdigits);
+			val |= (int)(pch - xdigits);
 			if (++seen_xdigits > 4)
 				return (0);
 			continue;
@@ -289,7 +290,7 @@ inet_pton6(const char *src, u_char *dst)
 		 * Since some memmove()'s erroneously fail to handle
 		 * overlapping regions, we'll do the shift by hand.
 		 */
-		const int n = tp - colonp;
+		const ptrdiff_t n = tp - colonp;
 		int i;
 
 		if (tp == endp)

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.40 2010/12/22 16:59:10 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.41 2012/03/27 15:05:42 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -45,6 +45,7 @@ MLINKS+=fread.3 fwrite.3
 MLINKS+=fseek.3 fgetpos.3 fseek.3 fseeko.3 fseek.3 fsetpos.3 fseek.3 ftell.3 \
 	fseek.3 ftello.3 fseek.3 rewind.3
 MLINKS+=funopen.3 fropen.3 funopen.3 fwopen.3
+MLINKS+=funopen.3 funopen2.3 funopen.3 fropen2.3 funopen.3 fwopen2.3
 MLINKS+=getc.3 fgetc.3 getc.3 getc_unlocked.3 getc.3 getchar.3 \
 	getc.3 getchar_unlocked.3 getc.3 getw.3
 MLINKS+=getdelim.3 getline.3

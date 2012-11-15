@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.5 2012/05/21 14:15:16 martin Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,6 +47,10 @@ The
 .Fa context
 argument specifies the initial execution context for the new LWP including
 signal mask, stack, and machine registers.
+If this context specifies invalid register values (for example priviledge
+escalation by setting machine dependend bits forbidden for user processes),
+or does not specify cpu register values (uc_flags does not have the
+_UC_CPU bit set), the call will fail and errno will be set to EINVAL.
 .Pp
 The following flags affect the creation of the new LWP:
 .Bl -tag -width LWP_SUSPENDED
@@ -70,7 +74,8 @@ The LWP ID of the new LWP is stored in the location pointed to by
 Upon successful completion,
 .Fn _lwp_create
 returns a value of 0.
-Otherwise, an error code is returned to indicate the error.
+Otherwise, a value of -1 is returned and errno is set to one of the values
+documented below.
 .Sh ERRORS
 .Fn _lwp_create
 will fail and no LWP will be created if:
@@ -87,6 +92,8 @@ The address pointed to by
 or
 .Fa new_lwp
 is outside the process's allocated address space.
+.It Bq Er EINVAL
+The ucontext_t passed is invalid.
 .El
 .Sh SEE ALSO
 .Xr _lwp_continue 2 ,

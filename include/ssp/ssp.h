@@ -1,7 +1,7 @@
-/*	$NetBSD: ssp.h,v 1.6 2011/01/20 02:58:17 christos Exp $	*/
+/*	$NetBSD: ssp.h,v 1.10 2012/08/08 20:23:32 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,39 +34,48 @@
 #include <sys/cdefs.h>
 
 #if !defined(__cplusplus)
-# if _FORTIFY_SOURCE > 0 && __OPTIMIZE__ > 0 && __GNUC_PREREQ__(4, 1)
+# if _FORTIFY_SOURCE > 0 && !defined(__lint__) && \
+     (__OPTIMIZE__ > 0 || defined(__clang__)) && __GNUC_PREREQ__(4, 1)
 #  if _FORTIFY_SOURCE > 1
 #   define __SSP_FORTIFY_LEVEL 2
 #  else
 #   define __SSP_FORTIFY_LEVEL 1
 #  endif
+# else
+#  define __SSP_FORTIFY_LEVEL 0
 # endif
+#else
+# define __SSP_FORTIFY_LEVEL 0
 #endif
 
-#ifdef _NAMESPACE_H_
-#define __ssp_weak_name(fun) _sys ## fun
+/* __ssp_real is used by the implementation in libc */
+#if __SSP_FORTIFY_LEVEL == 0
+#define __ssp_real_(fun)	fun
 #else
-#define __ssp_weak_name(fun) _sys_ ## fun
+#define __ssp_real_(fun)	__ssp_real_ ## fun
 #endif
+#define __ssp_real(fun)		__ssp_real_(fun)
 
 #define __ssp_inline static __inline __attribute__((__always_inline__))
 
 #define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
 #define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
 
-#define __ssp_redirect_raw(rtype, fun, args, call, bos) \
-rtype __ssp_weak_name(fun) args; \
-__ssp_inline rtype fun args; \
+#define __ssp_check(buf, len, bos) \
+	if (bos(buf) != (size_t)-1 && len > bos(buf)) \
+		__chk_fail()
+#define __ssp_redirect_raw(rtype, fun, symbol, args, call, bos) \
+rtype __ssp_real_(fun) args __RENAME(symbol); \
+__ssp_inline rtype fun args __RENAME(__ssp_protected_ ## fun); \
 __ssp_inline rtype fun args { \
-	if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
-		__chk_fail(); \
-	return __ssp_weak_name(fun) call; \
+	__ssp_check(__buf, __len, bos); \
+	return __ssp_real_(fun) call; \
 }
 
 #define __ssp_redirect(rtype, fun, args, call) \
-    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos)
+    __ssp_redirect_raw(rtype, fun, fun, args, call, __ssp_bos)
 #define __ssp_redirect0(rtype, fun, args, call) \
-    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos0)
+    __ssp_redirect_raw(rtype, fun, fun, args, call, __ssp_bos0)
 
 __BEGIN_DECLS
 void __stack_chk_fail(void) __dead;

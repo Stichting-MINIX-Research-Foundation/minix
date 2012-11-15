@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.37 2010/03/22 19:30:54 joerg Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.39 2012/09/26 23:13:00 christos Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getnameinfo.3,v 1.36 2004/12/21 09:48:20 jmc Exp $
 .\"
@@ -17,7 +17,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 21, 2005
+.Dd September 26, 2012
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -27,8 +27,8 @@
 .In netdb.h
 .Ft int
 .Fn getnameinfo "const struct sockaddr * restrict sa" "socklen_t salen" \
-    "char * restrict host" "size_t hostlen" "char * restrict serv" \
-    "size_t servlen" "int flags"
+    "char * restrict host" "socklen_t hostlen" "char * restrict serv" \
+    "socklen_t servlen" "int flags"
 .Sh DESCRIPTION
 The
 .Fn getnameinfo
@@ -47,11 +47,19 @@ The
 .Li sockaddr
 structure
 .Fa sa
-should point to either a
+should point to a
 .Li sockaddr_in
-or
+(for IPv4),
 .Li sockaddr_in6
-structure (for IPv4 or IPv6 respectively) that is
+(for IPv6),
+.Li sockaddr_atalk
+(for AppleTalk),
+.Li sockaddr_link
+(for link layer),
+or
+.Li sockaddr_local
+(for local/unix)
+structures that are
 .Fa salen
 bytes long.
 .Pp

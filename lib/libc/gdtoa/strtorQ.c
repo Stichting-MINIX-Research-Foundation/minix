@@ -1,4 +1,4 @@
-/* $NetBSD: strtorQ.c,v 1.3 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtorQ.c,v 1.4 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -53,9 +53,9 @@ THIS SOFTWARE.
 
  void
 #ifdef KR_headers
-ULtoQ(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
+ULtoQ(L, bits, expt, k) ULong *L; ULong *bits; Long expt; int k;
 #else
-ULtoQ(ULong *L, ULong *bits, Long exp, int k)
+ULtoQ(ULong *L, ULong *bits, Long expt, int k)
 #endif
 {
 	switch(k & STRTOG_Retmask) {
@@ -69,7 +69,7 @@ ULtoQ(ULong *L, ULong *bits, Long exp, int k)
 		L[_3] = bits[0];
 		L[_2] = bits[1];
 		L[_1] = bits[2];
-		L[_0] = (bits[3] & ~0x10000) | ((exp + 0x3fff + 112) << 16);
+		L[_0] = (bits[3] & ~0x10000) | ((expt + 0x3fff + 112) << 16);
 		break;
 
 	  case STRTOG_Denormal:
@@ -104,7 +104,7 @@ strtorQ(CONST char *s, char **sp, int rounding, void *L)
 	static FPI fpi0 = { 113, 1-16383-113+1, 32766-16383-113+1, 1, SI };
 	FPI *fpi, fpi1;
 	ULong bits[4];
-	Long exp;
+	Long expt;
 	int k;
 
 	fpi = &fpi0;
@@ -113,9 +113,9 @@ strtorQ(CONST char *s, char **sp, int rounding, void *L)
 		fpi1.rounding = rounding;
 		fpi = &fpi1;
 		}
-	k = strtodg(s, sp, fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory)
 		return k;
-	ULtoQ((ULong*)L, bits, exp, k);
+	ULtoQ((ULong*)L, bits, expt, k);
 	return k;
 	}

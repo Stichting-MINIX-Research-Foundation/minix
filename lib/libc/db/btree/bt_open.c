@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.26 2012/03/13 21:13:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.26 2012/03/13 21:13:32 christos Exp $");
 
 /*
  * Implementation of btree access method for 4.4BSD.
@@ -270,8 +270,7 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 				b.psize = MINIX_ST_BLKSIZE;
 			} else
 #endif
-				b.psize = sb.st_blksize;
-
+			b.psize = sb.st_blksize;
 			if (b.psize < MINPSIZE)
 				b.psize = MINPSIZE;
 			if (b.psize > MAX_PAGE_OFFSET + 1)
@@ -313,9 +312,11 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 	    (sizeof(indx_t) + NBLEAFDBT(0, 0));
 	_DBFIT(temp, indx_t);
 	t->bt_ovflsize = (indx_t)temp;
-	if (t->bt_ovflsize < NBLEAFDBT(NOVFLSIZE, NOVFLSIZE) + sizeof(indx_t))
-		t->bt_ovflsize =
-		    NBLEAFDBT(NOVFLSIZE, NOVFLSIZE) + sizeof(indx_t);
+	if (t->bt_ovflsize < NBLEAFDBT(NOVFLSIZE, NOVFLSIZE) + sizeof(indx_t)) {
+		size_t l = NBLEAFDBT(NOVFLSIZE, NOVFLSIZE) + sizeof(indx_t);
+		_DBFIT(l, indx_t);
+		t->bt_ovflsize = (indx_t)l;
+	}
 
 	/* Initialize the buffer pool. */
 	if ((t->bt_mp =
@@ -400,7 +401,7 @@ static int
 tmp(void)
 {
 	sigset_t set, oset;
-	size_t len;
+	int len;
 	int fd;
 	char *envtmp;
 	char path[PATH_MAX];
@@ -412,8 +413,10 @@ tmp(void)
 
 	len = snprintf(path,
 	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : _PATH_TMP);
-	if (len >= sizeof(path))
+	if (len < 0 || (size_t)len >= sizeof(path)) {
+		errno = ENAMETOOLONG;
 		return -1;
+	}
 	
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);

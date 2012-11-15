@@ -1,4 +1,4 @@
-.\"	$NetBSD: dup.2,v 1.21 2009/01/11 02:46:30 christos Exp $
+.\"	$NetBSD: dup.2,v 1.28 2012/01/25 00:28:35 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,12 +29,13 @@
 .\"
 .\"     @(#)dup.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 2, 2008
+.Dd January 23, 2012
 .Dt DUP 2
 .Os
 .Sh NAME
 .Nm dup ,
-.Nm dup2
+.Nm dup2 ,
+.Nm dup3
 .Nd duplicate an existing file descriptor
 .Sh LIBRARY
 .Lb libc
@@ -44,6 +45,8 @@
 .Fn dup "int oldd"
 .Ft int
 .Fn dup2 "int oldd" "int newd"
+.Ft int
+.Fn dup3 "int oldd" "int newd" "int flags"
 .Sh DESCRIPTION
 .Fn dup
 duplicates an existing object descriptor and returns its value to
@@ -100,16 +103,34 @@ If
 and
 .Fa oldd
 are the same, the call has no effect.
+.Pp
+.Fn dup3
+behaves exactly like
+.Fn dup2
+only it allows extra
+.Fa flags
+to be set on the returned file descriptor.
+The following flags are valid:
+.Bl -tag -width O_NONBLOCK -offset indent
+.It Dv O_CLOEXEC
+Set the
+.Dq close-on-exec
+property.
+.It Dv O_NONBLOCK
+Sets non-blocking I/O.
+.It Dv O_NOSIGPIPE
+Return
+.Er EPIPE
+instead of raising
+.Dv SIGPIPE .
+.El
 .Sh RETURN VALUES
 The value \-1 is returned if an error occurs in either call.
 The external variable
 .Va errno
 indicates the cause of the error.
 .Sh ERRORS
-.Fn dup
-and
-.Fn dup2
-fail if:
+All three functions may fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa oldd
@@ -117,8 +138,26 @@ is not a valid active descriptor
 or
 .Fa newd
 is not in the range of valid file descriptors.
+.El
+.Pp
+The
+.Fn dup
+function may also fail if:
+.Bl -tag -width Er
 .It Bq Er EMFILE
 Too many descriptors are active.
+.El
+.Pp
+The
+.Fn dup3
+function will also fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa flags
+is other than
+.Dv O_NONBLOCK
+or
+.Dv O_CLOEXEC .
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
@@ -136,3 +175,8 @@ and
 .Fn dup2
 functions conform to
 .St -p1003.1-90 .
+.Sh HISTORY
+The
+.Fn dup3
+function is inspired from Linux and appeared in
+.Nx 6.0 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuset.3,v 1.3 2008/09/12 13:39:04 rmind Exp $
+.\"	$NetBSD: cpuset.3,v 1.6 2011/11/02 20:25:20 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 12, 2008
+.Dd November 2, 2011
 .Dt CPUSET 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd dynamic CPU sets
 .Sh SYNOPSIS
 .In sched.h
-.Ft cpuset_t
+.Ft cpuset_t *
 .Fn cpuset_create "void"
 .Ft void
 .Fn cpuset_destroy "cpuset_t *set"
@@ -112,7 +112,8 @@ Returns the size in bytes of CPU-set specified by
 .Xr affinity 3 ,
 .Xr pset 3 ,
 .Xr sched 3 ,
-.Xr schedctl 8
+.Xr schedctl 8 ,
+.Xr kcpuset 9
 .Sh HISTORY
 The dynamic CPU sets appeared in
 .Nx 5.0 .

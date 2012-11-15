@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.7 2005/12/26 19:40:14 perry Exp $
+.\"	$NetBSD: arc4random.3,v 1.9 2011/02/05 00:24:08 wiz Exp $
 .\" $OpenBSD: arc4random.3,v 1.17 2000/12/21 14:07:41 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -31,11 +31,13 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd April 15, 1997
+.Dd February 4, 2011
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
 .Nm arc4random ,
+.Nm arc4random_buf ,
+.Nm arc4random_uniform ,
 .Nm arc4random_stir ,
 .Nm arc4random_addrandom
 .Nd arc4 random number generator
@@ -45,6 +47,10 @@
 .In stdlib.h
 .Ft uint32_t
 .Fn arc4random "void"
+.Ft void
+.Fn arc4random_buf "void *buffer" "size_t length"
+.Ft uint32_t
+.Fn arc4random_uniform "uint32_t upper_bound"
 .Ft void
 .Fn arc4random_stir "void"
 .Ft void
@@ -75,6 +81,20 @@ versus the fast but poor quality interfaces described in
 .Xr random 3 ,
 and
 .Xr drand48 3 .
+.Pp
+The
+.Fn arc4random_buf
+function fills the
+.Fa buffer
+with
+.Fa length
+bytes of ARC4-derived random data.
+.Pp
+The
+.Fn arc4random_uniform
+function returns a uniformly distributed random number less than
+.Fa upper_bound
+avoiding modulo bias when the upper bound is not a power of two.
 .Pp
 The
 .Fn arc4random_stir

@@ -1,4 +1,4 @@
-/*	$NetBSD: floatdisf.c,v 1.6 2003/08/07 16:43:16 agc Exp $	*/
+/*	$NetBSD: floatdisf.c,v 1.9 2012/08/05 04:28:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,9 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)floatdisf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatdisf.c,v 1.6 2003/08/07 16:43:16 agc Exp $");
+__RCSID("$NetBSD: floatdisf.c,v 1.9 2012/08/05 04:28:58 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef SOFTFLOAT
+#include "softfloat/softfloat-for-gcc.h"
+#endif
 
 #include "quad.h"
 
@@ -48,8 +52,7 @@ __RCSID("$NetBSD: floatdisf.c,v 1.6 2003/08/07 16:43:16 agc Exp $");
  * Convert (signed) quad to float.
  */
 float
-__floatdisf(x)
-	quad_t x;
+__floatdisf(quad_t x)
 {
 	float f;
 	union uu u;
@@ -72,7 +75,7 @@ __floatdisf(x)
 	 *
 	 * Using double here may be excessive paranoia.
 	 */
-	f = (double)u.ul[H] * (((int)1 << (INT_BITS - 2)) * 4.0);
+	f = (double)u.ul[H] * (((int)1 << (unsigned int)(INT_BITS - 2)) * 4.0);
 	f += u.ul[L];
 
 	return (neg ? -f : f);

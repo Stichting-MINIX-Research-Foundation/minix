@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.5 2010/11/17 13:25:53 tron Exp $ */
+/*	$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,11 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-static int inited = 0;
-
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.5 2010/11/17 13:25:53 tron Exp $");
+__RCSID("$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -97,6 +95,8 @@ __warn_references(__findenv,
 /* Our initialization function. */
 void __libc_env_init(void);
 
+char **environ;
+
 /*ARGSUSED*/
 static signed int
 env_tree_compare_nodes(void *ctx, const void *node_a, const void *node_b)
@@ -159,7 +159,6 @@ __freeenvvar(char *envvar)
 	env_node_t *node;
 
 	_DIAGASSERT(envvar != NULL);
-	assert(inited);
 	node = rb_tree_find_node(&env_tree, envvar);
 	if (node != NULL) {
 		rb_tree_remove_node(&env_tree, node);
@@ -176,7 +175,6 @@ __allocenvvar(size_t length)
 {
 	env_node_t *node;
 
-	assert(inited);
 	node = malloc(sizeof(*node) + length);
 	if (node != NULL) {
 		node->length = length;
@@ -198,8 +196,6 @@ __canoverwriteenvvar(char *envvar, size_t length)
 {
 	env_node_t *node;
 
-	assert(inited);
-
 	_DIAGASSERT(envvar != NULL);
 
 	node = rb_tree_find_node(&env_tree, envvar);
@@ -214,7 +210,6 @@ __scrubenv(void)
 	size_t num_entries;
 	env_node_t *node, *next;
 
-	assert(inited);
 	while (++marker == 0);
 
 	/* Mark all nodes which are currently used. */
@@ -408,7 +403,5 @@ __unlockenv(void)
 void
 __libc_env_init(void)
 {
-	assert(!inited);
 	rb_tree_init(&env_tree, &env_tree_ops);
-	inited = 1;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $ */
+/*	$NetBSD: ptree.c,v 1.10 2012/10/06 22:15:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.10 2012/10/06 22:15:09 matt Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.10 2012/10/06 22:15:09 matt Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
 #endif
 
 /*
- * This is an implementation of a radix / PATRICIA tree.  As in a traditional 
+ * This is an implementation of a radix / PATRICIA tree.  As in a traditional
  * patricia tree, all the data is at the leaves of the tree.  An N-value
  * tree would have N leaves, N-1 branching nodes, and a root pointer.  Each
  * branching node would have left(0) and right(1) pointers that either point
@@ -76,15 +76,15 @@ __RCSID("$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
  * have no need for pointers.
  *
  * However, allocation for these branching nodes is problematic since the
- * allocation could fail.  This would cause insertions to fail for reasons  
- * beyond the users control.  So to prevent this, in this implementation
+ * allocation could fail.  This would cause insertions to fail for reasons
+ * beyond the user's control.  So to prevent this, in this implementation
  * each node has two identities: its leaf identity and its branch identity.
  * Each is separate from the other.  Every branch is tagged as to whether
  * it points to a leaf or a branch.  This is not an attribute of the object
  * but of the pointer to the object.  The low bit of the pointer is used as
  * the tag to determine whether it points to a leaf or branch identity, with
  * branch identities having the low bit set.
- * 
+ *
  * A node's branch identity has one rule: when traversing the tree from the
  * root to the node's leaf identity, one of the branches traversed will be via
  * the node's branch identity.  Of course, that has an exception: since to
@@ -93,7 +93,7 @@ __RCSID("$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
  *
  * Branching nodes also has a bit offset and a bit length which determines
  * which branch slot is used.  The bit length can be zero resulting in a
- * one-way branch.  This is happens in two special cases: the root and
+ * one-way branch.  This happens in two special cases: the root and
  * interior mask nodes.
  *
  * To support longest match first lookups, when a mask node (one that only
@@ -124,8 +124,8 @@ ptree_matchnode(const pt_tree_t *pt, const pt_node_t *target,
 	pt_bitoff_t *bitoff_p, pt_slot_t *slots_p)
 {
 	return (*pt->pt_ops->ptto_matchnode)(NODETOKEY(pt, target),
-	    (ptn != NULL ? NODETOKEY(pt, ptn) : NULL), max_bitoff,
-	    bitoff_p, slots_p);
+	    (ptn != NULL ? NODETOKEY(pt, ptn) : NULL),
+	    max_bitoff, bitoff_p, slots_p, pt->pt_context);
 }
 
 static inline pt_slot_t
@@ -134,10 +134,9 @@ ptree_testnode(const pt_tree_t *pt, const pt_node_t *target,
 {
 	const pt_bitlen_t bitlen = PTN_BRANCH_BITLEN(ptn);
 	if (bitlen == 0)
-		return PT_SLOT_ROOT;
+		return PT_SLOT_ROOT;	/* mask or root, doesn't matter */
 	return (*pt->pt_ops->ptto_testnode)(NODETOKEY(pt, target),
-	     PTN_BRANCH_BITOFF(ptn),
-	     bitlen);
+	    PTN_BRANCH_BITOFF(ptn), bitlen, pt->pt_context);
 }
 
 static inline bool
@@ -145,15 +144,17 @@ ptree_matchkey(const pt_tree_t *pt, const void *key,
 	const pt_node_t *ptn, pt_bitoff_t bitoff, pt_bitlen_t bitlen)
 {
 	return (*pt->pt_ops->ptto_matchkey)(key, NODETOKEY(pt, ptn),
-	    bitoff, bitlen);
+	    bitoff, bitlen, pt->pt_context);
 }
 
 static inline pt_slot_t
 ptree_testkey(const pt_tree_t *pt, const void *key, const pt_node_t *ptn)
 {
-	return (*pt->pt_ops->ptto_testkey)(key,
-	    PTN_BRANCH_BITOFF(ptn),
-	    PTN_BRANCH_BITLEN(ptn));
+	const pt_bitlen_t bitlen = PTN_BRANCH_BITLEN(ptn);
+	if (bitlen == 0)
+		return PT_SLOT_ROOT;	/* mask or root, doesn't matter */
+	return (*pt->pt_ops->ptto_testkey)(key, PTN_BRANCH_BITOFF(ptn),
+	    PTN_BRANCH_BITLEN(ptn), pt->pt_context);
 }
 
 static inline void
@@ -166,12 +167,13 @@ ptree_set_position(uintptr_t node, pt_slot_t position)
 }
 
 void
-ptree_init(pt_tree_t *pt, const pt_tree_ops_t *ops, size_t node_offset,
-	size_t key_offset)
+ptree_init(pt_tree_t *pt, const pt_tree_ops_t *ops, void *context,
+	size_t node_offset, size_t key_offset)
 {
 	memset(pt, 0, sizeof(*pt));
 	pt->pt_node_offset = node_offset;
 	pt->pt_key_offset = key_offset;
+	pt->pt_context = context;
 	pt->pt_ops = ops;
 }
 
@@ -457,6 +459,12 @@ ptree_insert_node_common(pt_tree_t *pt, void *item)
 	pt_insertdata_t id;
 
 	/*
+	 * If this node already exists in the tree, return failure.
+	 */
+	if (target == PT_NODE(pt->pt_root))
+		return false;
+
+	/*
 	 * We need a leaf so we can match against.  Until we get a leaf
 	 * we having nothing to test against.
 	 */
@@ -476,6 +484,12 @@ ptree_insert_node_common(pt_tree_t *pt, void *item)
 		pt_bitoff_t branch_bitoff;
 		pt_node_t * const ptn = PT_NODE(*id.id_insertp);
 		id.id_node = *id.id_insertp;
+
+		/*
+		 * If this node already exists in the tree, return failure.
+		 */
+		if (target == ptn)
+			return false;
 
 		/*
 		 * If we hit a leaf, try to insert target at leaf.  We could
@@ -614,7 +628,7 @@ ptree_insert_mask_node(pt_tree_t *pt, void *item, pt_bitlen_t mask_len)
 #endif /* !PTNOMASH */
 
 void *
-ptree_find_filtered_node(pt_tree_t *pt, void *key, pt_filter_t filter,
+ptree_find_filtered_node(pt_tree_t *pt, const void *key, pt_filter_t filter,
 	void *filter_arg)
 {
 #ifndef PTNOMASK
@@ -1199,4 +1213,18 @@ ptree_check(const pt_tree_t *pt)
 		ok = ok && ptree_check_branch(pt, parent, ptn);
 #endif
 	return ok;
+}
+
+bool
+ptree_mask_node_p(pt_tree_t *pt, const void *item, pt_bitlen_t *lenp)
+{
+	const pt_node_t * const mask = ITEMTONODE(pt, item);
+
+	if (!PTN_ISMASK_P(mask))
+		return false;
+
+	if (lenp != NULL)
+		*lenp = PTN_MASK_BITLEN(mask);
+
+	return true;
 }

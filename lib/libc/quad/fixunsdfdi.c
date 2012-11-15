@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfdi.c,v 1.7 2003/08/07 16:43:16 agc Exp $	*/
+/*	$NetBSD: fixunsdfdi.c,v 1.10 2012/08/05 04:28:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,13 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)fixunsdfdi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fixunsdfdi.c,v 1.7 2003/08/07 16:43:16 agc Exp $");
+__RCSID("$NetBSD: fixunsdfdi.c,v 1.10 2012/08/05 04:28:58 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef SOFTFLOAT
+#include "softfloat/softfloat-for-gcc.h"
+#endif
+
 #include "quad.h"
 
-#define	ONE_FOURTH	((int)1 << (INT_BITS - 2))
+#define	ONE_FOURTH	((int)1 << (unsigned int)(INT_BITS - 2))
 #define	ONE_HALF	(ONE_FOURTH * 2.0)
 #define	ONE		(ONE_FOURTH * 4.0)
 
@@ -54,8 +58,7 @@ __RCSID("$NetBSD: fixunsdfdi.c,v 1.7 2003/08/07 16:43:16 agc Exp $");
  * of range becomes UQUAD_MAX.
  */
 u_quad_t
-__fixunsdfdi(x)
-	double x;
+__fixunsdfdi(double x)
 {
 	union uu t;
 	unsigned int tmp;

@@ -10,14 +10,14 @@
 #include "kernel/interrupt.h"
 #include <minix/u64.h>
 #include "glo.h"
-#include "profile.h"
+#include "kernel/profile.h"
 
 
 #ifdef USE_APIC
 #include "apic.h"
 #endif
 
-#include "spinlock.h"
+#include "kernel/spinlock.h"
 
 #ifdef CONFIG_SMP
 #include "kernel/smp.h"

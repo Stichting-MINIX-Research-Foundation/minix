@@ -16,4 +16,6 @@
 #define X86_FLAGS_USER (X86_FLAG_C | X86_FLAG_P | X86_FLAG_A | X86_FLAG_Z | \
 	X86_FLAG_S | X86_FLAG_D | X86_FLAG_O)
 
+#include <x86/cpu.h>
+
 #endif

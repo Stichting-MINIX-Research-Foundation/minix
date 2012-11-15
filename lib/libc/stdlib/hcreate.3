@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.8 2010/05/01 06:18:03 jruoho Exp $
+.\" 	$NetBSD: hcreate.3,v 1.10 2011/09/15 09:14:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,13 +27,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 1, 2010
+.Dd September 14, 2011
 .Dt HCREATE 3
 .Os
 .Sh NAME
 .Nm hcreate ,
+.Nm hcreate_r ,
 .Nm hdestroy ,
-.Nm hsearch
+.Nm hdestroy_r ,
+.Nm hsearch ,
+.Nm hsearch_r
 .Nd manage hash search table
 .Sh LIBRARY
 .Lb libc
@@ -41,16 +44,25 @@
 .In search.h
 .Ft int
 .Fn hcreate "size_t nel"
+.Ft int
+.Fn hcreate_r "size_t nel" "struct hsearch_data *table"
 .Ft void
 .Fn hdestroy "void"
+.Ft void
+.Fn hdestroy_r "struct hsearch_data *table"
 .Ft ENTRY *
 .Fn hsearch "ENTRY item" "ACTION action"
+.Ft int
+.Fn hsearch_r "ENTRY item" "ACTION action" "ENTRY ** itemp" "struct hsearch_data *table"
 .Sh DESCRIPTION
 The
 .Fn hcreate ,
-.Fn hdestroy
+.Fn hcreate_r ,
+.Fn hdestroy ,
+.Fn hdestroy_r
+.Fn hsearch ,
 and
-.Fn hsearch
+.Fn hsearch_r
 functions manage hash search tables.
 .Pp
 The
@@ -152,18 +164,46 @@ Typically the comparison
 .Fa key
 is allocated by using
 .Xr strdup 3 .
+.Pp
+The
+.Fn hcreate_r ,
+.Fn hdestroy_r ,
+and
+.Fn hsearch_r
+functions are re-entrant versions of the above functions that can
+operate on a table supplied by the user.
+The
+.Fn hsearch_r
+function returns
+.Dv 0
+if the action is
+.Dv ENTER
+and the element cannot be created,
+.Dv 1
+otherwise.
+If the element exists or can be created, it will be placed in
+.Fa itemp ,
+otherwise
+.Fa itemp
+will be set to
+.Dv NULL .
 .Sh RETURN VALUES
 If successful, the
 .Fn hcreate
-function returns a non-zero value.
-Otherwise, a value of 0 is returned and
+and
+.Fn hcreate_r
+functions return a non-zero value.
+Otherwise, a value of
+.Dv 0
+is returned and
 .Va errno
 is set to indicate the error.
 .Pp
 The
 .Fn hdestroy
-functions
-returns no value.
+and
+.Fn hdestroy_r
+functions return no value.
 .Pp
 If successful, the
 .Fn hsearch
@@ -182,15 +222,45 @@ If the action is
 .Dv ENTER
 and an entry already existed in the table matching the given
 key, the existing entry is returned and is not replaced.
+.Pp
+The
+.Fn hsearch_r
+function returns
+.Dv 1
+unless the table is full, when it returns
+.Dv 0 .
+If
+.Fn hsearch
+returns
+.Dv 0
+or the element is not found,
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 The
-.Fn hcreate
-and
+.Fn hcreate ,
+.Fn hcreate_r ,
 .Fn hsearch
+and
+.Fn hsearch_r
 functions will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 Insufficient memory is available.
+.El
+.Pp
+The
+.Fn hsearch
+and
+.Fn hsearch_r
+functions will also fail if the action is
+.Dv SEARCH
+and the element is not found:
+.Bl -tag -width Er
+.It Bq Er ESRCH
+The
+.Fa item
+given is not found.
 .El
 .Sh SEE ALSO
 .Xr bsearch 3 ,
@@ -213,11 +283,21 @@ and
 .Fn hsearch
 functions first appeared in
 .At V .
+The
+.Fn hcreate_r ,
+.Fn hdestroy_r
+and
+.Fn hsearch_r
+functions are
+.Tn GNU
+extensions.
 .Sh CAVEATS
 At least the following limitations can be mentioned:
 .Bl -bullet
 .It
-The interface permits the use of only one hash table at a time.
+The original,
+.Pf non- Tn GNU
+interface permits the use of only one hash table at a time.
 .It
 Individual hash table entries can be added, but not deleted.
 .It

@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.9 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,10 +27,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.9 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -41,65 +42,98 @@ __RCSID("$NetBSD: arc4random.c,v 1.9 2005/12/24 21:11:16 perry Exp $");
 
 #ifdef __weak_alias
 __weak_alias(arc4random,_arc4random)
+__weak_alias(arc4random_addrandom,_arc4random_addrandom)
+__weak_alias(arc4random_buf,_arc4random_buf)
+__weak_alias(arc4random_stir,_arc4random_stir)
+__weak_alias(arc4random_uniform,_arc4random_uniform)
 #endif
 
 struct arc4_stream {
-	u_int8_t i;
-	u_int8_t j;
-	u_int8_t s[256];
+	uint8_t stirred;
+	uint8_t pad;
+	uint8_t i;
+	uint8_t j;
+	uint8_t s[(uint8_t)~0u + 1u];	/* 256 to you and me */
+#ifdef _REENTRANT
+	mutex_t mtx;
+#endif
 };
 
-static int rs_initialized;
-static struct arc4_stream rs;
+#ifdef _REENTRANT
+#define LOCK(rs) { \
+		int isthreaded = __isthreaded; \
+		if (isthreaded)        \
+			mutex_lock(&(rs)->mtx);
+#define UNLOCK(rs) \
+		if (isthreaded)        \
+			mutex_unlock(&(rs)->mtx);      \
+	}
+#else
+#define LOCK(rs) 
+#define UNLOCK(rs)
+#endif
 
-static inline void arc4_init(struct arc4_stream *);
+#define S(n) (n)
+#define S4(n) S(n), S(n + 1), S(n + 2), S(n + 3)
+#define S16(n) S4(n), S4(n + 4), S4(n + 8), S4(n + 12)
+#define S64(n) S16(n), S16(n + 16), S16(n + 32), S16(n + 48)
+#define S256 S64(0), S64(64), S64(128), S64(192)
+
+static struct arc4_stream rs = { .i = 0xff, .j = 0, .s = { S256 },
+#ifdef _REENTRANT
+		.stirred = 0, .mtx = MUTEX_INITIALIZER };
+#else
+		.stirred = 0 };
+#endif
+
+#undef S
+#undef S4
+#undef S16
+#undef S64
+#undef S256
+
 static inline void arc4_addrandom(struct arc4_stream *, u_char *, int);
-static void arc4_stir(struct arc4_stream *);
-static inline u_int8_t arc4_getbyte(struct arc4_stream *);
-static inline u_int32_t arc4_getword(struct arc4_stream *);
+static __noinline void arc4_stir(struct arc4_stream *);
+static inline uint8_t arc4_getbyte(struct arc4_stream *);
+static inline uint32_t arc4_getword(struct arc4_stream *);
 
-static inline void
-arc4_init(as)
-	struct arc4_stream *as;
+static inline int
+arc4_check_init(struct arc4_stream *as)
 {
-	int     n;
+	if (__predict_true(rs.stirred))
+		return 0;
 
-	for (n = 0; n < 256; n++)
-		as->s[n] = n;
-	as->i = 0;
-	as->j = 0;
+	arc4_stir(as);
+	return 1;
 }
 
 static inline void
-arc4_addrandom(as, dat, datlen)
-	struct arc4_stream *as;
-	u_char *dat;
-	int     datlen;
+arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 {
-	int     n;
-	u_int8_t si;
+	uint8_t si;
+	size_t n;
 
-	as->i--;
-	for (n = 0; n < 256; n++) {
+	for (n = 0; n < __arraycount(as->s); n++) {
 		as->i = (as->i + 1);
 		si = as->s[as->i];
 		as->j = (as->j + si + dat[n % datlen]);
 		as->s[as->i] = as->s[as->j];
 		as->s[as->j] = si;
 	}
-	as->j = as->i;
 }
 
-static void
-arc4_stir(as)
-	struct arc4_stream *as;
+static __noinline void
+arc4_stir(struct arc4_stream *as)
 {
-	int     fd;
+#ifdef __minix
+	/* LSC: We do not have a compatibility layer for the 
+	 * KERN_URND call, so use the old way... */
+	int fd;
+	size_t j;
 	struct {
 		struct timeval tv;
 		u_int rnd[(128 - sizeof(struct timeval)) / sizeof(u_int)];
 	}       rdat;
-	int	n;
 
 	gettimeofday(&rdat.tv, NULL);
 	fd = open("/dev/urandom", O_RDONLY);
@@ -107,59 +141,68 @@ arc4_stir(as)
 		read(fd, rdat.rnd, sizeof(rdat.rnd));
 		close(fd);
 	}
-#ifdef KERN_URND
-	else {
-		int mib[2];
-		u_int i;
-		size_t len;
 
-		/* Device could not be opened, we might be chrooted, take
-		 * randomness from sysctl. */
-
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_URND;
-
-		for (i = 0; i < sizeof(rdat.rnd) / sizeof(u_int); i++) {
-			len = sizeof(u_int);
-			if (sysctl(mib, 2, &rdat.rnd[i], &len, NULL, 0) == -1)
-				break;
-		}
-	}
-#endif
 	/* fd < 0 or failed sysctl ?  Ah, what the heck. We'll just take
 	 * whatever was on the stack... */
+#else
+	int rdat[32];
+	int mib[] = { CTL_KERN, KERN_URND };
+	size_t len;
+	size_t i, j;
 
-	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
+	/*
+	 * This code once opened and read /dev/urandom on each
+	 * call.  That causes repeated rekeying of the kernel stream
+	 * generator, which is very wasteful.  Because of application
+	 * behavior, caching the fd doesn't really help.  So we just
+	 * fill up the tank from sysctl, which is a tiny bit slower
+	 * for us but much friendlier to other entropy consumers.
+	 */
+
+	for (i = 0; i < __arraycount(rdat); i++) {
+		len = sizeof(rdat[i]);
+		if (sysctl(mib, 2, &rdat[i], &len, NULL, 0) == -1)
+			abort();
+	}
+#endif
+
+	arc4_addrandom(as, (void *) &rdat, (int)sizeof(rdat));
 
 	/*
 	 * Throw away the first N words of output, as suggested in the
 	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	for (n = 0; n < 256 * 4; n++)
+	for (j = 0; j < __arraycount(as->s) * 4; j++)
 		arc4_getbyte(as);
+
+	as->stirred = 1;
 }
 
-static inline u_int8_t
-arc4_getbyte(as)
-	struct arc4_stream *as;
+static __always_inline uint8_t
+arc4_getbyte_ij(struct arc4_stream *as, uint8_t *i, uint8_t *j)
 {
-	u_int8_t si, sj;
+	uint8_t si, sj;
 
-	as->i = (as->i + 1);
-	si = as->s[as->i];
-	as->j = (as->j + si);
-	sj = as->s[as->j];
-	as->s[as->i] = sj;
-	as->s[as->j] = si;
+	*i = *i + 1;
+	si = as->s[*i];
+	*j = *j + si;
+	sj = as->s[*j];
+	as->s[*i] = sj;
+	as->s[*j] = si;
 	return (as->s[(si + sj) & 0xff]);
 }
 
-static inline u_int32_t
-arc4_getword(as)
-	struct arc4_stream *as;
+static inline uint8_t
+arc4_getbyte(struct arc4_stream *as)
 {
-	u_int32_t val;
+	return arc4_getbyte_ij(as, &as->i, &as->j);
+}
+
+static inline uint32_t
+arc4_getword(struct arc4_stream *as)
+{
+	uint32_t val;
 	val = arc4_getbyte(as) << 24;
 	val |= arc4_getbyte(as) << 16;
 	val |= arc4_getbyte(as) << 8;
@@ -168,50 +211,97 @@ arc4_getword(as)
 }
 
 void
-arc4random_stir()
+arc4random_stir(void)
 {
-	if (!rs_initialized) {
-		arc4_init(&rs);
-		rs_initialized = 1;
-	}
+	LOCK(&rs);
 	arc4_stir(&rs);
+	UNLOCK(&rs);
 }
 
 void
-arc4random_addrandom(dat, datlen)
-	u_char *dat;
-	int     datlen;
+arc4random_addrandom(u_char *dat, int datlen)
 {
-	if (!rs_initialized)
-		arc4random_stir();
+	LOCK(&rs);
+	arc4_check_init(&rs);
 	arc4_addrandom(&rs, dat, datlen);
+	UNLOCK(&rs);
 }
 
-u_int32_t
-arc4random()
+uint32_t
+arc4random(void)
 {
-	if (!rs_initialized)
-		arc4random_stir();
-	return arc4_getword(&rs);
+	uint32_t v;
+
+	LOCK(&rs);
+	arc4_check_init(&rs);
+	v = arc4_getword(&rs);
+	UNLOCK(&rs);
+	return v;
 }
 
-#if 0
-/*-------- Test code for i386 --------*/
-#include <stdio.h>
-#include <machine/pctr.h>
-int
-main(int argc, char **argv)
+void
+arc4random_buf(void *buf, size_t len)
 {
-	const int iter = 1000000;
-	int     i;
-	pctrval v;
+	uint8_t *bp = buf;
+	uint8_t *ep = bp + len;
+	uint8_t i, j;
 
-	v = rdtsc();
-	for (i = 0; i < iter; i++)
-		arc4random();
-	v = rdtsc() - v;
-	v /= iter;
+	LOCK(&rs);
+	arc4_check_init(&rs);
 
-	printf("%qd cycles\n", v);
+	/* cache i and j - compiler can't know 'buf' doesn't alias them */
+	i = rs.i;
+	j = rs.j;
+
+	while (bp < ep)
+		*bp++ = arc4_getbyte_ij(&rs, &i, &j);
+	rs.i = i;
+	rs.j = j;
+
+	UNLOCK(&rs);
 }
-#endif
+
+/*-
+ * Written by Damien Miller.
+ * With simplifications by Jinmei Tatuya.
+ */
+
+/*
+ * Calculate a uniformly distributed random number less than
+ * upper_bound avoiding "modulo bias".
+ *
+ * Uniformity is achieved by generating new random numbers
+ * until the one returned is outside the range
+ * [0, 2^32 % upper_bound[. This guarantees the selected
+ * random number will be inside the range
+ * [2^32 % upper_bound, 2^32[ which maps back to
+ * [0, upper_bound[ after reduction modulo upper_bound.
+ */
+uint32_t
+arc4random_uniform(uint32_t upper_bound)
+{
+	uint32_t r, min;
+
+	if (upper_bound < 2)
+		return 0;
+
+	/* calculate (2^32 % upper_bound) avoiding 64-bit math */
+	/* ((2^32 - x) % x) == (2^32 % x) when x <= 2^31 */
+	min = (0xFFFFFFFFU - upper_bound + 1) % upper_bound;
+
+	LOCK(&rs);
+	arc4_check_init(&rs);
+
+	/*
+	 * This could theoretically loop forever but each retry has
+	 * p > 0.5 (worst case, usually far better) of selecting a
+	 * number inside the range we need, so it should rarely need
+	 * to re-roll (at all).
+	 */
+	do
+		r = arc4_getword(&rs);
+	while (r < min);
+	UNLOCK(&rs);
+
+	return r % upper_bound;
+}

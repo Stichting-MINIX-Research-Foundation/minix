@@ -1,4 +1,4 @@
-.\"	$NetBSD: getitimer.2,v 1.24 2010/04/30 04:17:45 jruoho Exp $
+.\"	$NetBSD: getitimer.2,v 1.28 2011/10/27 16:10:37 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getitimer.2	8.3 (Berkeley) 5/16/95
 .\"
-.Dd April 30, 2010
+.Dd October 27, 2011
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -40,9 +40,6 @@
 .Lb libc
 .Sh SYNOPSIS
 .In sys/time.h
-.Fd #define ITIMER_REAL		0
-.Fd #define ITIMER_VIRTUAL	1
-.Fd #define ITIMER_PROF		2
 .Ft int
 .Fn getitimer "int which" "struct itimerval *value"
 .Ft int
@@ -60,10 +57,11 @@ in the structure at
 The
 .Fn setitimer
 call sets a timer to the specified
-.Fa value
-(returning the previous value of the timer if
+.Fa value ,
+returning the previous value of the timer if
 .Fa ovalue
-is non-nil).
+is not
+.Dv NULL .
 .Pp
 A timer value is defined by the
 .Fa itimerval
@@ -92,29 +90,28 @@ to 0 causes a timer to be disabled after its next expiration (assuming
 .Fa it_value
 is non-zero).
 .Pp
-Time values smaller than the resolution of the
-system clock are rounded up to this resolution
-(typically 10 milliseconds).
-.Pp
 The
-.Dv ITIMER_REAL
+.Fa which
+parameter specifies the type of the timer:
+.Bl -tag -width "ITIMER_MONOTONIC " -offset indent
+.It Dv ITIMER_REAL
 timer decrements in real time.
+This timer is affected by
+.Xr adjtime 2
+and
+.Xr settimeofday 2 .
 A
 .Dv SIGALRM
 signal is
 delivered when this timer expires.
-.Pp
-The
-.Dv ITIMER_VIRTUAL
+.It Dv ITIMER_VIRTUAL
 timer decrements in process virtual time.
 It runs only when the process is executing.
 A
 .Dv SIGVTALRM
 signal
 is delivered when it expires.
-.Pp
-The
-.Dv ITIMER_PROF
+.It Dv ITIMER_PROF
 timer decrements both in process virtual time and
 when the system is running on behalf of the process.
 It is designed to be used by interpreters in statistically profiling
@@ -128,58 +125,64 @@ delivered.
 Because this signal may interrupt in-progress
 system calls, programs using this timer must be prepared to
 restart interrupted system calls.
-.Sh NOTES
-Macros for manipulating time values are defined in the
-.In sys/time.h
-header;
-.Fn timerclear
-sets a time value to zero,
-.Fn timerisset
-tests if a time value is non-zero,
-.Fn timercmp
-compares two time values,
-.Fn timeradd
-adds a time value to another time value,
-.Fn timersub
-computes the time difference between two time values.
-For additional details, see
-.Xr timeradd 3 .
+.It Dv ITIMER_MONOTONIC
+timer decrements in monotonic time.
+This timer is not affected by
+.Xr adjtime 2
+and
+.Xr settimeofday 2 .
+A
+.Dv SIGALRM
+signal is
+delivered when this timer expires.
+.El
+Note that:
+.Bl -bullet -offset indent
+.It
+Time values smaller than the resolution of the
+system clock are rounded up to this resolution
+(typically 10 milliseconds).
+.It
+The interaction between
+.Fn setitimer
+and
+.Xr alarm 3
+or
+.Xr sleep 3
+is unspecified by the specification.
+.El
 .Sh RETURN VALUES
 If the calls succeed, a value of 0 is returned.
 If an error occurs, the value \-1 is returned, and a more precise error
 code is placed in the global variable
 .Va errno .
 .Sh ERRORS
-.Fn getitimer
-and
-.Fn setitimer
-will fail if:
+Both functions may fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
 The
 .Fa value
 parameter specified a bad address.
 .It Bq Er EINVAL
-A
+The
+.Fa which
+parameter was not a known timer type, or the
 .Fa value
 parameter specified a time that was too large
 to be handled.
 .El
 .Sh SEE ALSO
 .Xr gettimeofday 2 ,
-.Xr poll 2 ,
 .Xr select 2 ,
-.Xr sigaction 2
+.Xr sigaction 2 ,
+.Xr itimerval 3 ,
+.Xr timeradd 3
 .Sh STANDARDS
-The
-.Fn getitimer
-and
-.Fn setitimer
-functions conform to
+The functions conform to
 .St -p1003.1-2001 .
 The later
 .St -p1003.1-2008
-revision however marked both functions as obsolescent,
+revision however marked both as obsolescent,
 recommending the use of
 .Xr timer_gettime 2
 and
@@ -190,3 +193,7 @@ The
 .Fn getitimer
 function call appeared in
 .Bx 4.2 .
+The
+.Dv ITIMER_MONOTONIC
+functionality appeared in
+.Nx 6.0 .

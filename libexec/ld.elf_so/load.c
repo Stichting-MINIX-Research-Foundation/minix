@@ -202,22 +202,24 @@ static bool
 _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
     int flags)
 {
+#if !defined(__minix)
 	Library_Xform *x = _rtld_xforms;
 	Obj_Entry *o = NULL;
 	size_t j;
 	ssize_t i;
+#endif /* !defined(__minix) */
 	bool got = false;
+#if !defined(__minix)
 	union {
 		int i;
 		u_quad_t q;
 		char s[16];
 	} val;
+#endif /* !defined(__minix) */
 
+#if !defined(__minix)
 	dbg(("load by name %s %p", name, x));
 	for (; x; x = x->next) {
-#ifdef __minix
-		continue;
-#else
 		if (strcmp(x->name, name) != 0)
 			continue;
 
@@ -281,8 +283,8 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 				
 		}
 		
-#endif
 	}
+#endif /* !defined(__minix) */
 
 	if (got)
 		return true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.13 2003/08/07 16:43:30 agc Exp $	*/
+/*	$NetBSD: remove.c,v 1.14 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)remove.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: remove.c,v 1.13 2003/08/07 16:43:30 agc Exp $");
+__RCSID("$NetBSD: remove.c,v 1.14 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,22 +50,21 @@ __RCSID("$NetBSD: remove.c,v 1.13 2003/08/07 16:43:30 agc Exp $");
 #include <unistd.h>
 
 int
-remove(file)
-	const char *file;
+remove(const char *file)
 {
 	struct stat sb;
 
 	_DIAGASSERT(file != NULL);
 
 	if (lstat(file, &sb) < 0)
-		return (-1);
+		return -1;
 
 	/*
 	 * The file system may prohibit using unlink(2) on directories,
 	 * so always use rmdir(2) in that case.
 	 */
 	if (S_ISDIR(sb.st_mode))
-		return (rmdir(file));
+		return rmdir(file);
 	else
-		return (unlink(file));
+		return unlink(file);
 }

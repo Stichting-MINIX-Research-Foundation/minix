@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.41 2009/02/27 16:48:02 wiz Exp $
+.\"	$NetBSD: mmap.2,v 1.47 2012/01/05 15:19:52 reinoud Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd February 27, 2009
+.Dd December 20, 2011
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -77,7 +77,7 @@ argument by
 .Em OR Ns 'ing
 the following values:
 .Pp
-.Bl -tag -width PROT_WRITEXX
+.Bl -tag -width PROT_WRITEXX -offset indent
 .It Dv PROT_EXEC
 Pages may be executed.
 .It Dv PROT_READ
@@ -117,7 +117,7 @@ argument by
 .Em OR Ns 'ing
 the following values:
 .Pp
-.Bl -tag -width MAP_HASSEMAPHOREXX
+.Bl -tag -width MAP_HASSEMAPHOREXX -offset indent
 .It Dv MAP_ALIGNED(n)
 Request that the allocation be aligned to the given boundary.
 The parameter
@@ -287,3 +287,13 @@ would exceed the offset maximum established in its open file description.
 .Xr munmap 2 ,
 .Xr getpagesize 3 ,
 .Xr sysconf 3
+.Sh STANDARDS
+The
+.Fn mmap
+function conforms to
+.St -p1003.1b-93 .
+.Sh HISTORY
+The
+.Fn mmap
+interface was first designed in
+.Bx 4.2 .

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.14 2011/01/16 01:22:29 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.17 2011/09/26 01:52:22 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -84,14 +84,26 @@ END(_rtld_start)
  * bss-plt expects %r11 to be index of the rela entry.
  * So for bss-plt, we multiply the index by 12 to get the offset.
  */
-ENTRY_NOPROFILE(_rtld_bind_bssplt_start)
-	slwi	%r11,%r11,2
-	add	%r0,%r11,%r11
-	add	%r11,%r11,%r0
 ENTRY_NOPROFILE(_rtld_bind_secureplt_start)
+	stwu	%r1,-160(%r1)
+	stw	%r0,20(%r1)
+
+	/*
+	 * Instead of division which is costly we will use multiplicative
+	 * inverse.  a / n = ((a * inv(n)) >> 32)
+	 * where inv(n) = (0x100000000 + n - 1) / n
+	 */
+	mr	%r0,%r11
+	lis	%r11,0x15555556@h	# load multiplicative inverse of 12
+	ori	%r11,%r11,0x15555556@l
+	mulhwu	%r11,%r11,%r0		# get high half of multiplication
+
+	b	1f
+ENTRY_NOPROFILE(_rtld_bind_bssplt_start)
 	stwu	%r1,-160(%r1)
 
 	stw	%r0,20(%r1)
+1:
 	mflr	%r0
 	stw	%r0,16(%r1)		# save lr
 	mfcr	%r0
@@ -112,7 +124,7 @@ ENTRY_NOPROFILE(_rtld_bind_secureplt_start)
 
 	addi	%r1,%r1,160
 	bctr
-END(_rtld_bind_start)
+END(_rtld_bind_secureplt_start)
 
 	.globl	_rtld_powerpc_pltcall
 	.globl	_rtld_powerpc_pltresolve

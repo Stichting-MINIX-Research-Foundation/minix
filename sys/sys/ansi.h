@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.13 2010/03/27 22:14:10 tnozaki Exp $	*/
+/*	$NetBSD: ansi.h,v 1.14 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
 #include <machine/ansi.h>
 
 typedef char *		__caddr_t;	/* core address */
-typedef __uint32_t   	__gid_t;	/* group id */
+typedef __uint32_t	__gid_t;	/* group id */
 typedef __uint32_t	__in_addr_t;	/* IP(v4) address */
 typedef __uint16_t	__in_port_t;	/* "Internet" port number */
-typedef unsigned short	__mode_t;	/* file permissions */
-typedef long 		__off_t;	/* file offset */
-typedef int		__pid_t;	/* process id */
+typedef __uint16_t	__mode_t;	/* file permissions */
+typedef __int32_t	__off_t;	/* file offset */
+typedef __int32_t	__pid_t;	/* process id */
 typedef __uint8_t	__sa_family_t;	/* socket address family */
 typedef __int32_t	__socklen_t;	/* socket-related datum length */
-typedef __uint32_t   	__uid_t;	/* user id */
-typedef	unsigned long	__fsblkcnt_t;	/* fs block count (statvfs) */
-typedef	unsigned long	__fsfilcnt_t;	/* fs file count */
+typedef __uint32_t	__uid_t;	/* user id */
+typedef	__uint32_t	__fsblkcnt_t;	/* fs block count (statvfs) */
+typedef	__uint32_t	__fsfilcnt_t;	/* fs file count */
 
 struct __tag_wctrans_t;
 typedef struct __tag_wctrans_t *__wctrans_t;
@@ -65,5 +65,11 @@ typedef union {
 #define _BSD_WCTRANS_T_	__wctrans_t	/* wctrans_t */
 #define _BSD_WCTYPE_T_	__wctype_t	/* wctype_t */
 #define _BSD_MBSTATE_T_	__mbstate_t	/* mbstate_t */
+
+#ifdef __lint__
+typedef char *__va_list;
+#else
+typedef __builtin_va_list __va_list;
+#endif
 
 #endif	/* !_SYS_ANSI_H_ */

@@ -33,4 +33,5 @@ SECTIONS
 		__k_unpaged__kern_size = . - _kern_vir_base;
 		_kern_size = __k_unpaged__kern_size;
 	}
+	_end = .;
 }

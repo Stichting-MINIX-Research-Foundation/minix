@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.29 2010/06/07 13:52:29 tnozaki Exp $	*/
+/*	$NetBSD: limits.h,v 1.32 2012/03/28 17:04:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -59,9 +59,37 @@
 #define	_POSIX_STREAM_MAX	8
 #define	_POSIX_SYMLINK_MAX	255
 #define	_POSIX_SYMLOOP_MAX	8
+
+/*
+ * We have not implemented these yet
+ *
+ * _POSIX_THREAD_ATTR_STACKADDR
+ * _POSIX_THREAD_ATTR_STACKSIZE
+ * _POSIX_THREAD_CPUTIME
+ * _POSIX_THREAD_PRIORITY_SCHEDULING
+ * _POSIX_THREAD_PRIO_INHERIT
+ * _POSIX_THREAD_PRIO_PROTECT
+ * _POSIX_THREAD_PROCESS_SHARED
+ * _POSIX_THREAD_SAFE_FUNCTIONS
+ * _POSIX_THREAD_SPORADIC_SERVER
+ */
+
+/*
+ * The following 3 are not part of the standard
+ * but left here for compatibility
+ */
 #define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
-#define	_POSIX_THREAD_KEYS_MAX	128
+#define	_POSIX_THREAD_KEYS_MAX			256
 #define	_POSIX_THREAD_THREADS_MAX		64
+
+/*
+ * These are the correct names, defined in terms of the above
+ */
+#define	PTHREAD_DESTRUCTOR_ITERATIONS 	_POSIX_THREAD_DESTRUCTOR_ITERATIONS
+#define	PTHREAD_KEYS_MAX		_POSIX_THREAD_KEYS_MAX
+/* Not yet: PTHREAD_STACK_MIN */
+#define	PTHREAD_THREADS_MAX		_POSIX_THREAD_THREADS_MAX
+
 #define	_POSIX_TIMER_MAX	32
 #define	_POSIX_TTY_NAME_MAX	9
 #define	_POSIX_TZNAME_MAX	6
@@ -110,12 +138,44 @@
 
 #define MB_LEN_MAX		32	/* Allow ISO/IEC 2022 */
 
+/*
+ * X/Open Extended API set 2 (a.k.a. C063)
+ * This hides unimplemented functions from GNU configure until
+ * we are done implementing them.
+ */
+#if !defined(_INCOMPLETE_XOPEN_C063)
+#define __stub_linkat
+#define __stub_renameat
+#define __stub_mkfifoat
+#define __stub_mknodat
+#define __stub_mkdirat
+#define __stub_faccessat
+#define __stub_fchmodat
+#define __stub_fchownat
+#define __stub_fexecve
+#define __stub_fstatat
+#define __stub_utimensat
+#define __stub_openat
+#define __stub_readlinkat
+#define __stub_symlinkat
+#define __stub_unlinkat
+#endif
+
 #include <machine/limits.h>
-#include <sys/syslimits.h>
+
+#ifdef __CHAR_UNSIGNED__
+# define CHAR_MIN     0
+# define CHAR_MAX     UCHAR_MAX
+#else
+# define CHAR_MIN     SCHAR_MIN
+# define CHAR_MAX     SCHAR_MAX
+#endif
 
 #ifdef __minix
 #define SYMLOOP_MAX		16
 #define SYMLINK_MAX		1024
-#endif
+#endif /* __minix */
+
+#include <sys/syslimits.h>
 
 #endif /* !_LIMITS_H_ */

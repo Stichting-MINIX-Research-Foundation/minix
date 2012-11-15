@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $ */
+/* $NetBSD: crt0.S,v 1.2 2011/07/02 20:14:10 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Matt Thomas
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.2 2011/07/02 20:14:10 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -46,8 +46,4 @@ _ENTRY(__start)
 	pushl	%r9		/* ps_strings */
 	pushl	%r8		/* obj */
 	pushl	%r7		/* cleanup */
-	movl	(%r6),%r0	/* argc */
-	pushal	8(%r6)[%r0]	/* envp = &argv[argc + 1] */
-	pushal	4(%r6)		/* argv */
-	pushl	%r0		/* argc */
-	calls	$6,___start
+	calls	$3,___start

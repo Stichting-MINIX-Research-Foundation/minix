@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntoa.c,v 1.1 2004/05/20 23:13:02 christos Exp $	*/
+/*	$NetBSD: inet_ntoa.c,v 1.2 2012/03/13 21:13:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_ntoa.c,v 1.1 2004/05/20 23:13:02 christos Exp $");
+__RCSID("$NetBSD: inet_ntoa.c,v 1.2 2012/03/13 21:13:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,6 @@ inet_ntoa(struct in_addr in) {
 	static char ret[18];
 
 	strlcpy(ret, "[inet_ntoa error]", sizeof(ret));
-	(void) inet_ntop(AF_INET, &in, ret, sizeof ret);
-	return (ret);
+	(void) inet_ntop(AF_INET, &in, ret, (socklen_t)sizeof ret);
+	return ret;
 }

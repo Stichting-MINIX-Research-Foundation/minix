@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.14 2008/05/24 16:04:15 christos Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.16 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetpath.c,v 1.14 2008/05/24 16:04:15 christos Exp $");
+__RCSID("$NetBSD: getnetpath.c,v 1.16 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif
 
@@ -78,7 +78,7 @@ struct netpath_vars {
 #define NP_VALID	0xf00d
 #define NP_INVALID	0
 
-char *_get_next_token __P((char *, int));
+char *_get_next_token(char *, int);
 
 
 /*
@@ -93,7 +93,7 @@ char *_get_next_token __P((char *, int));
  */
 
 void *
-setnetpath()
+setnetpath(void)
 {
 	struct netpath_vars *np_sessionp;   /* this session's variables */
 	char *npp;				/* NETPATH env variable */
@@ -147,8 +147,7 @@ setnetpath()
  */
 
 struct netconfig *
-getnetpath(handlep)
-	void *handlep;
+getnetpath(void *handlep)
 {
 	struct netpath_vars *np_sessionp = (struct netpath_vars *)handlep;
 	struct netconfig *ncp = NULL;   /* temp. holds a netconfig session */
@@ -207,8 +206,7 @@ getnetpath(handlep)
  * (e.g. if setnetpath() was not called previously.
  */
 int
-endnetpath(handlep)
-	void *handlep;
+endnetpath(void *handlep)
 {
 	struct netpath_vars *np_sessionp = (struct netpath_vars *)handlep;
 	struct netpath_chain *chainp, *lastp;

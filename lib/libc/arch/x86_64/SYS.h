@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.10 2007/11/23 07:36:05 dsl Exp $
+ *	$NetBSD: SYS.h,v 1.11 2011/11/18 20:43:01 joerg Exp $
  */
 
 #include <machine/asm.h>
@@ -49,14 +49,8 @@
 	ENTRY(x);							\
 	SYSTRAP(y)
 
-#ifdef PIC
 #define _SYSCALL_ERR	 						\
-	mov PIC_GOT(CERROR), %rcx;					\
-	jmp *%rcx
-#else
-#define _SYSCALL_ERR							\
 	jmp CERROR
-#endif
 
 #define _SYSCALL(x,y)							\
 	.text; _ALIGN_TEXT;						\

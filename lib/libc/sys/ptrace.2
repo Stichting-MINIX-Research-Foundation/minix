@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.34 2010/04/14 08:57:21 jruoho Exp $
+.\"	$NetBSD: ptrace.2,v 1.35 2011/08/31 23:04:33 jmcneill Exp $
 .\"
 .\" This file is in the public domain.
-.Dd April 14, 2010
+.Dd August 31, 2011
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -301,6 +301,9 @@ argument should contain
 .Dq Li "sizeof(struct ptrace_lwpinfo)" .
 .It Dv PT_SYSCALL
 Stops a process before and after executing each system call.
+.It Dv PT_SYSCALLEMU
+Intercept and ignore a system call before it has been executed, for use with
+.Dv PT_SYSCALL .
 .El
 .Pp
 Additionally, the following requests exist but are

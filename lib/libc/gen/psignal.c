@@ -1,4 +1,4 @@
-/*	$NetBSD: psignal.c,v 1.22 2010/08/27 08:38:41 christos Exp $	*/
+/*	$NetBSD: psignal.c,v 1.23 2012/03/13 21:13:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: psignal.c,v 1.22 2010/08/27 08:38:41 christos Exp $");
+__RCSID("$NetBSD: psignal.c,v 1.23 2012/03/13 21:13:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ psignal(int sig, const char *s)
 	v++;
 	v->iov_base = __UNCONST("\n");
 	v->iov_len = 1;
-	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
+	(void)writev(STDERR_FILENO, iov, (int)((v - iov) + 1));
 }
 
 void

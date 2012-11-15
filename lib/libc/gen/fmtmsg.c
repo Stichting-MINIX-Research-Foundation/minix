@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtmsg.c,v 1.4 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: fmtmsg.c,v 1.5 2012/03/20 16:36:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtmsg.c,v 1.4 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: fmtmsg.c,v 1.5 2012/03/20 16:36:05 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <fmtmsg.h>
@@ -40,11 +40,11 @@ __RCSID("$NetBSD: fmtmsg.c,v 1.4 2008/04/28 20:22:59 martin Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-static unsigned int	msgverb __P((const char *));
-static const char *	severity2str __P((int));
-static int		writeit __P((FILE *, unsigned int, const char *,
+static unsigned int	msgverb(const char *);
+static const char *	severity2str(int);
+static int		writeit(FILE *, unsigned int, const char *,
 			    const char *, const char *, const char *,
-			    const char *));
+			    const char *);
 
 #define MM_VERBLABEL		0x01U
 #define MM_VERBSEVERITY		0x02U
@@ -74,8 +74,7 @@ static const size_t nkeywords = sizeof (keywords) / sizeof (keywords[0]);
  * keywords.
  */
 static unsigned int
-msgverb(str)
-	const char *str;
+msgverb(const char *str)
 {
 	u_int i;
 	unsigned int result;
@@ -107,7 +106,7 @@ msgverb(str)
 	return (result);
 }
 
-static const char * const severities[] = {
+static const char severities[][8] = {
 	"",		/* MM_NONE */
 	"HALT",
 	"ERROR",
@@ -122,8 +121,7 @@ static const size_t nseverities = sizeof (severities) / sizeof (severities[0]);
  * value, defaulting to NULL for an unknown value.
  */
 static const char *
-severity2str(severity)
-	int severity;
+severity2str(int severity)
 {
 	const char *result;
 
@@ -142,14 +140,9 @@ severity2str(severity)
  * written, or a negative value in case of an error.
  */
 static int
-writeit(stream, which, label, sevstr, text, action, tag)
-	FILE *stream;
-	unsigned int which;
-	const char *label;
-	const char *sevstr;
-	const char *text;
-	const char *action;
-	const char *tag;
+writeit(FILE *stream, unsigned int which, const char *label,
+	const char *sevstr, const char *text, const char *action,
+	const char *tag)
 {
 	int nwritten;
 
@@ -184,13 +177,8 @@ writeit(stream, which, label, sevstr, text, action, tag)
 }
 
 int
-fmtmsg(classification, label, severity, text, action, tag)
-	long classification;
-	const char *label;
-	int severity;
-	const char *text;
-	const char *action;
-	const char *tag;
+fmtmsg(long classification, const char *label, int severity,
+	const char *text, const char *action, const char *tag)
 {
 	FILE *console;
 	const char *p, *sevstr;

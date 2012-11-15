@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdtemp.c,v 1.10 2008/10/20 10:28:38 apb Exp $	*/
+/*	$NetBSD: mkdtemp.c,v 1.11 2012/03/15 18:22:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkdtemp.c,v 1.10 2008/10/20 10:28:38 apb Exp $");
+__RCSID("$NetBSD: mkdtemp.c,v 1.11 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,12 +58,11 @@ __RCSID("$NetBSD: mkdtemp.c,v 1.10 2008/10/20 10:28:38 apb Exp $");
 #endif
 
 char *
-mkdtemp(path)
-	char *path;
+mkdtemp(char *path)
 {
 	_DIAGASSERT(path != NULL);
 
-	return (GETTEMP(path, (int *)NULL, 1) ? path : (char *)NULL);
+	return GETTEMP(path, NULL, 1) ? path : NULL;
 }
 
 #endif /* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKDTEMP */

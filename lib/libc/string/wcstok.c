@@ -1,4 +1,4 @@
-/* $NetBSD: wcstok.c,v 1.3 2003/07/10 08:50:48 tshiozak Exp $ */
+/* $NetBSD: wcstok.c,v 1.4 2012/06/25 22:32:46 abs Exp $ */
 
 /*-
  * Copyright (c) 1998 Softweyr LLC.  All rights reserved.
@@ -43,17 +43,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstok.c,v 1.3 2003/07/10 08:50:48 tshiozak Exp $");
+__RCSID("$NetBSD: wcstok.c,v 1.4 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include <assert.h>
 #include <wchar.h>
 
 wchar_t *
-wcstok(s, delim, last)
-	wchar_t * __restrict s;
-	const wchar_t * __restrict delim;
-	wchar_t ** __restrict last;
+wcstok(wchar_t * __restrict s, const wchar_t * __restrict delim,
+    wchar_t ** __restrict last)
 {
 	const wchar_t *spanp;
 	wchar_t c, sc;

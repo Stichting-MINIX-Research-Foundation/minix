@@ -1,4 +1,4 @@
-/*	$NetBSD: l64a.c,v 1.13 2003/07/26 19:24:54 salo Exp $	*/
+/*	$NetBSD: l64a.c,v 1.14 2012/03/13 21:13:48 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.13 2003/07/26 19:24:54 salo Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.14 2012/03/13 21:13:48 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -22,20 +22,16 @@ __weak_alias(l64a_r,_l64a_r)
 #endif
 
 char *
-l64a (value)
-	long value;
+l64a(long value)
 {
 	static char buf[8];
 
-	(void)l64a_r(value, buf, sizeof (buf));
+	(void)l64a_r(value, buf, (int)sizeof (buf));
 	return buf;
 }
 
 int
-l64a_r (value, buffer, buflen)
-	long value;
-	char *buffer;
-	int buflen;
+l64a_r(long value, char *buffer, int buflen)
 {
 	char *s = buffer;
 	int digit;

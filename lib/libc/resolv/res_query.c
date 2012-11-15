@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.13 2009/10/24 21:37:57 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.14 2012/03/13 21:13:44 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_query.c,v 1.11 2008/11/14 02:36:51 marka Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.13 2009/10/24 21:37:57 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.14 2012/03/13 21:13:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -168,15 +168,15 @@ again:
 #endif
 
 	n = res_nmkquery(statp, QUERY, name, class, type, NULL, 0, NULL,
-			 buf, sizeof(buf));
+			 buf, (int)sizeof(buf));
 #ifdef RES_USE_EDNS0
 	if (n > 0 && (statp->_flags & RES_F_EDNS0ERR) == 0 &&
 	    (statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC|RES_NSID)) != 0U) {
-		n = res_nopt(statp, n, buf, sizeof(buf), anslen);
+		n = res_nopt(statp, n, buf, (int)sizeof(buf), anslen);
 		rdata = &buf[n];
 		if (n > 0 && (statp->options & RES_NSID) != 0U) {
-			n = res_nopt_rdata(statp, n, buf, sizeof(buf), rdata,
-					   NS_OPT_NSID, 0, NULL);
+			n = res_nopt_rdata(statp, n, buf, (int)sizeof(buf),
+			    rdata, NS_OPT_NSID, 0, NULL);
 		}
 	}
 #endif
@@ -402,7 +402,7 @@ res_nquerydomain(res_state statp,
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
-	int n, d;
+	size_t n, d;
 
 #ifdef DEBUG
 	if (statp->options & RES_DEBUG)
@@ -419,9 +419,8 @@ res_nquerydomain(res_state statp,
 			RES_SET_H_ERRNO(statp, NO_RECOVERY);
 			return (-1);
 		}
-		n--;
-		if (n >= 0 && name[n] == '.') {
-			strncpy(nbuf, name, (size_t)n);
+		if (n && name[--n] == '.') {
+			strncpy(nbuf, name, n);
 			nbuf[n] = '\0';
 		} else
 			longname = name;
@@ -455,7 +454,7 @@ res_hostalias(const res_state statp, const char *name, char *dst, size_t siz) {
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
 	buf[sizeof(buf) - 1] = '\0';
-	while (fgets(buf, sizeof(buf), fp)) {
+	while (fgets(buf, (int)sizeof(buf), fp)) {
 		for (cp1 = buf; *cp1 && !isspace((unsigned char)*cp1); ++cp1)
 			;
 		if (!*cp1)

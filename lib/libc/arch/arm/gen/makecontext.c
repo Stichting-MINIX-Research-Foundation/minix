@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.4 2012/03/21 14:03:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:55 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.4 2012/03/21 14:03:06 christos Exp $");
 #endif
 
 #include <stddef.h>
@@ -55,12 +55,12 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* Allocate necessary stack space for arguments exceeding r0-3. */
 	if (argc > 4)
 		sp -= argc - 4;
-	gr[_REG_SP] = (__greg_t)sp;
+	gr[_REG_SP] = (__greg_t)(uintptr_t)sp;
 	/* Wipe out frame pointer. */
 	gr[_REG_FP] = 0;
 	/* Arrange for return via the trampoline code. */
-	gr[_REG_LR] = (__greg_t)_resumecontext;
-	gr[_REG_PC] = (__greg_t)func;
+	gr[_REG_LR] = (__greg_t)(uintptr_t)_resumecontext;
+	gr[_REG_PC] = (__greg_t)(uintptr_t)func;
 
 	va_start(ap, argc);
 	/* Pass up to four arguments in r0-3. */

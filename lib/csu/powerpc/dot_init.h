@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.7 2008/05/10 15:31:04 martin Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.8 2011/07/02 07:28:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -40,18 +40,18 @@
 		".section "#sect",\"ax\",@progbits	\n" \
 		".global "#entry_pt"			\n" \
 		#entry_pt":				\n" \
-		"	stwu	%r1,-16(%r1)		\n" \
 		"	mflr	%r0			\n" \
-		"	stw	%r0,12(%r1)		\n" \
+		"	stw	%r0,4(%r1)		\n" \
+		"	stwu	%r1,-16(%r1)		\n" \
 		"	/* fall thru */			\n" \
 		".previous")
 
 #define MD_SECTION_EPILOGUE(sect)			    \
 		__asm (					    \
 		".section "#sect",\"ax\",@progbits	\n" \
-		"	lwz	%r0,12(%r1)		\n" \
+		"	addi	%r1,%r1,16		\n" \
+		"	lwz	%r0,4(%r1)		\n" \
 		"	mtlr	%r0			\n" \
-		"	la	%r1,16(%r1)		\n" \
 		"	blr				\n" \
 		".previous")
 

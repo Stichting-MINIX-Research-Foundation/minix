@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.125 2011/01/19 19:21:29 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.135 2012/07/14 15:06:26 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -259,8 +259,6 @@ __pure int
 	 getpagesize(void);		/* legacy */
 #ifndef __minix
 pid_t	 getpgid(pid_t);
-#endif /* !__minix */
-#ifndef __minix
 #if defined(_XOPEN_SOURCE)
 int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
 #else
@@ -284,7 +282,7 @@ void	 sync(void);
 useconds_t ualarm(useconds_t, useconds_t);
 int	 usleep(useconds_t);
 #ifndef __LIBC12_SOURCE__
-pid_t	 vfork(void) __RENAME(__vfork14);
+pid_t	 vfork(void) __RENAME(__vfork14) __returns_twice;
 #endif
 
 #ifndef __AUDIT__
@@ -299,6 +297,24 @@ char	*getwd(char *);				/* obsoleted by getcwd() */
 #if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 ssize_t	 pread(int, void *, size_t, off_t);
 ssize_t	 pwrite(int, const void *, size_t, off_t);
+#endif
+
+/*
+ * X/Open Extended API set 2 (a.k.a. C063)
+ */
+#if defined(_INCOMPLETE_XOPEN_C063)
+int	linkat(int, const char *, int, const char *, int);
+int	renameat(int, const char *, int, const char *);
+int	mkfifoat(int, const char *, mode_t);
+int	mknodat(int, const char *, mode_t, uint32_t);
+int	mkdirat(int, const char *, mode_t);
+int	faccessat(int, const char *, int, int);
+int	fchmodat(int, const char *, mode_t, int);
+int	fchownat(int, const char *, uid_t, gid_t, int);
+int	fexecve(int, char * const *, char * const *);
+int	readlinkat(int, const char *, char *, size_t);
+int	symlinkat(const char *, int, const char *);
+int	unlinkat(int, const char *, int);
 #endif
 
 
@@ -331,6 +347,7 @@ int	 acct(const char *);
 int	 closefrom(int);
 int	 des_cipher(const char *, char *, long, int);
 int	 des_setkey(const char *);
+int	 dup3(int, int, int);
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);
 int	 fchroot(int);
@@ -339,6 +356,20 @@ int	 getdomainname(char *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 int	 getgroupmembership(const char *, gid_t, gid_t *, int, int *);
 mode_t	 getmode(const void *, mode_t);
+char	*getpassfd(const char *, char *, size_t, int *, int, int);
+#define	GETPASS_NEED_TTY	0x001	/* Fail if we cannot set tty */
+#define	GETPASS_FAIL_EOF	0x002	/* Fail on EOF */
+#define	GETPASS_BUF_LIMIT	0x004	/* beep on buffer limit */
+#define	GETPASS_NO_SIGNAL	0x008	/* don't make ttychars send signals */
+#define	GETPASS_NO_BEEP		0x010	/* don't beep */
+#define	GETPASS_ECHO		0x020	/* echo characters as they are typed */
+#define	GETPASS_ECHO_STAR	0x040	/* echo '*' for each character */
+#define	GETPASS_7BIT		0x080	/* mask the high bit each char */
+#define	GETPASS_FORCE_LOWER	0x100	/* lowercase each char */
+#define	GETPASS_FORCE_UPPER	0x200	/* uppercase each char */
+#define	GETPASS_ECHO_NL		0x400	/* echo a newline if successful */
+
+char	*getpass_r(const char *, char *, size_t);
 int	 getpeereid(int, uid_t *, gid_t *);
 int	 getsubopt(char **, char * const *, char **);
 __aconst char *getusershell(void);
@@ -347,12 +378,13 @@ int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
 int	 nfssvc(int, void *);
 #ifndef __minix
+int	 pipe2(int *, int);
 int	 profil(char *, size_t, u_long, u_int);
 #endif /* !__minix */
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in signal.h */
-void	psignal(int, const char *);
+void	 psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
 #ifdef __minix
@@ -392,6 +424,7 @@ int	 undelete(const char *);
 int	 rcmd_af(char **, int, const char *,
 	    const char *, const char *, int *, int);
 int	 rresvport_af(int *, int);
+int	 rresvport_af_addr(int *, int, void *);
 int	 iruserok_sa(const void *, int, int, const char *, const char *);
 #endif
 

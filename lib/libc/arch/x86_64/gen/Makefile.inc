@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.15 2010/01/14 02:09:46 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2011/03/26 19:51:42 christos Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S byte_swap_8.S fabs.S \
 	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S \
-	fpsetmask.S fpsetround.S fpsetsticky.S 
+	fpsetmask.S fpsetround.S fpsetsticky.S fpgetprec.S \
+	fpsetprec.S
 
 SRCS+=	__setjmp14.S
 SRCS+=	_setjmp.S

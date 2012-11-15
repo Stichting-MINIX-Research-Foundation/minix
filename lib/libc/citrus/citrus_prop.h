@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.h,v 1.3 2006/11/23 13:59:03 tnozaki Exp $ */
+/* $NetBSD: citrus_prop.h,v 1.5 2011/05/23 14:52:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -45,7 +45,7 @@ typedef int (*_citrus_prop_##_func_##_cb_func_t) \
 typedef struct { \
 	_citrus_prop_##_func_##_cb_func_t func; \
 } _citrus_prop_##_func_##_cb_t;
-_CITRUS_PROP_CB0_T(bool, int)
+_CITRUS_PROP_CB0_T(boolean, int)
 _CITRUS_PROP_CB0_T(str, const char *)
 #undef _CITRUS_PROP_CB0_T
 
@@ -65,7 +65,7 @@ struct _citrus_prop_hint_t {
 #define _CITRUS_PROP_CB_T_OPS(_name_) \
 	_citrus_prop_##_name_##_cb_t _name_
 	union {
-		_CITRUS_PROP_CB_T_OPS(bool);
+		_CITRUS_PROP_CB_T_OPS(boolean);
 		_CITRUS_PROP_CB_T_OPS(str);
 		_CITRUS_PROP_CB_T_OPS(chr);
 		_CITRUS_PROP_CB_T_OPS(num);
@@ -73,7 +73,7 @@ struct _citrus_prop_hint_t {
 };
 
 #define _CITRUS_PROP_HINT_BOOL(name, cb) \
-	{ name, _CITRUS_PROP_BOOL, { .bool = { cb } } }
+	{ name, _CITRUS_PROP_BOOL, { .boolean = { cb } } }
 #define _CITRUS_PROP_HINT_STR(name, cb) \
 	{ name, _CITRUS_PROP_STR, { .str = { cb } } }
 #define _CITRUS_PROP_HINT_CHR(name, cb) \
@@ -81,7 +81,7 @@ struct _citrus_prop_hint_t {
 #define _CITRUS_PROP_HINT_NUM(name, cb) \
 	{ name, _CITRUS_PROP_NUM, { .num = { cb } } }
 #define _CITRUS_PROP_HINT_END \
-	{ NULL }
+	{ .name = NULL }
 
 __BEGIN_DECLS
 int _citrus_prop_parse_variable(const _citrus_prop_hint_t * __restrict,

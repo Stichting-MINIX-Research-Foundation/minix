@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.15 2003/08/07 16:43:22 agc Exp $	*/
+/*	$NetBSD: fflush.c,v 1.18 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.15 2003/08/07 16:43:22 agc Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.18 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <stddef.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -53,8 +54,7 @@ extern rwlock_t __sfp_lock;
 
 /* Flush a single file, or (if fp is NULL) all files.  */
 int
-fflush(fp)
-	FILE *fp;
+fflush(FILE *fp)
 {
 	int r;
 
@@ -77,22 +77,24 @@ fflush(fp)
 }
 
 int
-__sflush(fp)
-	FILE *fp;
+__sflush(FILE *fp)
 {
 	unsigned char *p;
-	int n, t;
+	size_t n;
+	ssize_t t;
 
 	_DIAGASSERT(fp != NULL);
 
 	t = fp->_flags;
 	if ((t & __SWR) == 0)
-		return (0);
+		return 0;
 
 	if ((p = fp->_bf._base) == NULL)
-		return (0);
+		return 0;
 
-	n = fp->_p - p;		/* write this much */
+	ptrdiff_t tp = fp->_p - p;
+	_DIAGASSERT(__type_fit(ssize_t, tp));
+	n = (ssize_t)tp;	/* write this much */
 
 	/*
 	 * Set these immediately to avoid problems with longjmp and to allow
@@ -105,8 +107,10 @@ __sflush(fp)
 		t = (*fp->_write)(fp->_cookie, (char *)p, n);
 		if (t <= 0) {
 			fp->_flags |= __SERR;
-			return (EOF);
+			return EOF;
 		}
 	}
-	return (0);
+	if (fp->_flush)
+		return (*fp->_flush)(fp->_cookie);
+	return 0;
 }

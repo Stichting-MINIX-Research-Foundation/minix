@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.27 2010/12/16 18:38:07 christos Exp $
+.\"	$NetBSD: strftime.3,v 1.29 2012/04/06 11:35:39 wiz Exp $
 .\"
-.Dd December 14, 2010
+.Dd April 14, 2011
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -190,7 +190,7 @@ is replaced by the year without century as a decimal number [00,99].
 .It Cm \&%Z
 is replaced by the time zone name.
 .It Cm \&%z
-is replaced by the offset from ITC in the ISO 8601 format
+is replaced by the offset from UTC in the ISO 8601 format
 .Dq Li [-]hhmm .
 .It Cm %%
 is replaced by
@@ -210,7 +210,8 @@ argument.
 .Xr printf 1 ,
 .Xr ctime 3 ,
 .Xr printf 3 ,
-.Xr strptime 3
+.Xr strptime 3 ,
+.Xr tm 3
 .Sh STANDARDS
 The
 .Fn strftime

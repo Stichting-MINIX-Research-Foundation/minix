@@ -36,9 +36,9 @@ __RCSID("$NetBSD: strncpy_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
 #include <ssp/ssp.h>
 #include <string.h>
 
-#undef strncpy
-
 #if __SSP_FORTIFY_LEVEL > 0
+
+#undef strncpy
 
 char *
 __strncpy_chk(char * __restrict dst, const char * __restrict src, size_t len,

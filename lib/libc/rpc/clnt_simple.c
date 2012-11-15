@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.30 2010/12/08 02:06:38 joerg Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.31 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_simple.c 1.49 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.30 2010/12/08 02:06:38 joerg Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.31 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -85,7 +85,7 @@ struct rpc_call_private {
 static struct rpc_call_private *rpc_call_private_main;
 
 #ifdef _REENTRANT
-static void rpc_call_destroy __P((void *));
+static void rpc_call_destroy(void *);
 
 static void
 rpc_call_destroy(void *vp)
@@ -118,15 +118,16 @@ rpc_call_setup(void)
  * The total time available is 25 seconds.
  */
 enum clnt_stat
-rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
-	const char *host;			/* host name */
-	rpcprog_t prognum;			/* program number */
-	rpcvers_t versnum;			/* version number */
-	rpcproc_t procnum;			/* procedure number */
-	xdrproc_t inproc, outproc;	/* in/out XDR procedures */
-	const char *in;
-	char  *out;			/* recv/send data */
-	const char *nettype;			/* nettype */
+rpc_call(
+	const char *	host,		/* host name */
+	rpcprog_t	prognum,	/* program number */
+	rpcvers_t	versnum,	/* version number */
+	rpcproc_t	procnum,	/* procedure number */
+	xdrproc_t	inproc,		/* in XDR procedures */
+	const char *	in,		/* recv data */
+	xdrproc_t	outproc,	/* out XDR procedures */
+	char *		out,		/* send data */
+	const char *	nettype)	/* nettype */
 {
 	struct rpc_call_private *rcp = (struct rpc_call_private *) 0;
 	enum clnt_stat clnt_stat;

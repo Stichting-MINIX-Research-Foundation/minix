@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rindex.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: rindex.3,v 1.12 2010/04/29 06:54:26 jruoho Exp $
+.\"	$NetBSD: rindex.3,v 1.14 2012/05/05 21:18:43 dholland Exp $
 .\"
-.Dd April 29, 2010
+.Dd May 5, 2012
 .Dt RINDEX 3
 .Os
 .Sh NAME
@@ -53,6 +53,11 @@ matching
 .Em char )
 in the nul-terminated string
 .Fa s .
+.Pp
+This function is obsolete.
+The equivalent function
+.Xr strrchr 3
+should be used instead.
 .Sh RETURN VALUES
 A pointer to the character is returned if it is found; otherwise
 .Dv NULL

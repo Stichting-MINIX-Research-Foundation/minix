@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.9 2009/02/05 23:52:55 lukem Exp $	 */
+/*	$NetBSD: utmp.c,v 1.10 2011/10/15 23:00:02 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmp.c,v 1.9 2009/02/05 23:52:55 lukem Exp $");
+__RCSID("$NetBSD: utmp.c,v 1.10 2011/10/15 23:00:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -61,7 +61,7 @@ getutent(void)
 	if (ut == NULL) {
 		struct stat st;
 		off_t numentries;
-		if ((ut = fopen(utfile, "r")) == NULL)
+		if ((ut = fopen(utfile, "re")) == NULL)
 			return NULL;
 		if (fstat(fileno(ut), &st) == -1)
 			goto out;

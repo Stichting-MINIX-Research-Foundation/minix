@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetwln.c,v 1.4 2010/01/11 20:39:29 joerg Exp $	*/
+/*	$NetBSD: fgetwln.c,v 1.5 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/fgetwln.c,v 1.2 2004/08/06 17:00:09 tjr Exp $");
 #else
-__RCSID("$NetBSD: fgetwln.c,v 1.4 2010/01/11 20:39:29 joerg Exp $");
+__RCSID("$NetBSD: fgetwln.c,v 1.5 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,12 +67,12 @@ __slbexpand(FILE *fp, size_t newsize)
 	_DIAGASSERT(fp != NULL);
 
 	if (_EXT(fp)->_fgetstr_len >= newsize)
-		return (0);
+		return 0;
 	if ((p = realloc(_EXT(fp)->_fgetstr_buf, newsize)) == NULL)
-		return (-1);
+		return -1;
 	_EXT(fp)->_fgetstr_buf = p;
 	_EXT(fp)->_fgetstr_len = newsize;
-	return (0);
+	return 0;
 }
 
 wchar_t *
@@ -99,10 +99,10 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 
 	FUNLOCKFILE(fp);
 	*lenp = len;
-	return ((wchar_t *)(void *)_EXT(fp)->_fgetstr_buf);
+	return (wchar_t *)(void *)_EXT(fp)->_fgetstr_buf;
 
 error:
 	FUNLOCKFILE(fp);
 	*lenp = 0;
-	return (NULL);
+	return NULL;
 }

@@ -419,11 +419,11 @@ int main(int argc, char **argv)
 	if (rflag) {
 		if (aflag) usage();
 		if ((argc - i) != 1) usage();
-		fprintf(stderr, "%s: -r is not yet implemented\n");
+		fprintf(stderr, "%s: -r is not yet implemented\n", __func__);
 		exit(1);
 	} else {
 		if ((argc - i) < 1) usage();
-		if (aflag) fprintf(stderr, "%s: -a is not yet implemented\n");
+		if (aflag) fprintf(stderr, "%s: -a is not yet implemented\n", __func__);
 
 		device= argv[i++];
 		geometry();

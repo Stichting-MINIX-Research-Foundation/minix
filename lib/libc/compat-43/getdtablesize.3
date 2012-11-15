@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getdtablesize.2	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: getdtablesize.3,v 1.13 2003/08/07 16:42:39 agc Exp $
+.\"	$NetBSD: getdtablesize.3,v 1.14 2012/01/05 07:05:59 yamt Exp $
 .\"
-.Dd June 4, 1993
+.Dd January 5, 2012
 .Dt GETDTABLESIZE 3
 .Os
 .Sh NAME
@@ -41,13 +41,12 @@
 .Ft int
 .Fn getdtablesize void
 .Sh DESCRIPTION
-Each process has a fixed size descriptor table,
-which is guaranteed to have at least 20 slots.
-The entries in
-the descriptor table are numbered with small integers starting at 0.
-The call
-.Fn getdtablesize
-returns the size of this table.
+The
+.Nm
+function is an equivalent of
+.Fn sysconf
+with
+.Dv _SC_OPEN_MAX .
 .Sh SEE ALSO
 .Xr close 2 ,
 .Xr dup 2 ,
@@ -60,3 +59,12 @@ The
 .Fn getdtablesize
 function call appeared in
 .Bx 4.2 .
+.Pp
+Historically, each process had a fixed size descriptor table,
+which is guaranteed to have at least 20 slots.
+The entries in
+the descriptor table are numbered with small integers starting at 0.
+The call
+.Fn getdtablesize
+used to return the size of this table.
+It doesn't make much sense these days because the size of the table is dynamic.

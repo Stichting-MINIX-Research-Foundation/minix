@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "installboot.h"
+
 #ifndef DFL_SECSIZE
 #define DFL_SECSIZE     512
 #endif

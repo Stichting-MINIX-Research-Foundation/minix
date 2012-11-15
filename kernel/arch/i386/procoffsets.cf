@@ -1,5 +1,5 @@
 
-include "kernel.h"
+include "kernel/kernel.h"
 
 struct proc
 member DIREG p_reg.di

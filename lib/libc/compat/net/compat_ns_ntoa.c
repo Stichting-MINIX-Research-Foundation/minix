@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_ns_ntoa.c,v 1.1 2006/08/26 16:07:01 matt Exp $	*/
+/*	$NetBSD: compat_ns_ntoa.c,v 1.2 2012/03/20 17:05:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_ns_ntoa.c,v 1.1 2006/08/26 16:07:01 matt Exp $");
+__RCSID("$NetBSD: compat_ns_ntoa.c,v 1.2 2012/03/20 17:05:59 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,19 +44,18 @@ __RCSID("$NetBSD: compat_ns_ntoa.c,v 1.1 2006/08/26 16:07:01 matt Exp $");
 #include <assert.h>
 #include <stdio.h>
 
-static char *spectHex __P((char *));
+static char *spectHex(char *);
 
 char *
-ns_ntoa(addr)
-	struct ns_addr addr;
+ns_ntoa(struct ns_addr addr)
 {
 	static char obuf[40];
-	union { union ns_net net_e; u_int32_t long_e; } net;
-	u_int16_t port = htons(addr.x_port);
+	union { union ns_net net_e; uint32_t long_e; } net;
+	uint16_t port = htons(addr.x_port);
 	char *cp;
 	char *cp2;
-	u_int8_t *up = addr.x_host.c_host;
-	u_int8_t *uplim = up + 6;
+	uint8_t *up = addr.x_host.c_host;
+	uint8_t *uplim = up + 6;
 
 	net.net_e = addr.x_net;
 	sprintf(obuf, "%x", ntohl(net.long_e));
@@ -85,8 +84,7 @@ ns_ntoa(addr)
 }
 
 static char *
-spectHex(p0)
-	char *p0;
+spectHex(char *p0)
 {
 	int ok = 0;
 	int nonzero = 0;

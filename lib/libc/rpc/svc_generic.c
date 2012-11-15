@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.10 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.12 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_generic.c,v 1.10 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: svc_generic.c,v 1.12 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: svc_generic.c,v 1.10 2008/04/25 17:44:44 christos Exp $");
 #include <rpc/nettype.h>
 #include <stdio.h>
 #include <errno.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
@@ -71,7 +71,7 @@ __weak_alias(svc_tp_create,_svc_tp_create)
 __weak_alias(svc_tli_create,_svc_tli_create)
 #endif
 
-extern int __svc_vc_setflag __P((SVCXPRT *, int));
+extern int __svc_vc_setflag(SVCXPRT *, int);
 
 /*
  * The highest level interface for server creation.
@@ -83,11 +83,11 @@ extern int __svc_vc_setflag __P((SVCXPRT *, int));
  * created earlier instead of creating a new handle every time.
  */
 int
-svc_create(dispatch, prognum, versnum, nettype)
-	void (*dispatch) __P((struct svc_req *, SVCXPRT *));
-	rpcprog_t prognum;		/* Program number */
-	rpcvers_t versnum;		/* Version number */
-	const char *nettype;		/* Networktype token */
+svc_create(
+	void (*dispatch)(struct svc_req *, SVCXPRT *),
+	rpcprog_t prognum,		/* Program number */
+	rpcvers_t versnum,		/* Version number */
+	const char *nettype)		/* Networktype token */
 {
 	struct xlist {
 		SVCXPRT *xprt;		/* Server handle */
@@ -157,11 +157,11 @@ svc_create(dispatch, prognum, versnum, nettype)
  * with the rpcbind. It calls svc_tli_create();
  */
 SVCXPRT *
-svc_tp_create(dispatch, prognum, versnum, nconf)
-	void (*dispatch) __P((struct svc_req *, SVCXPRT *));
-	rpcprog_t prognum;		/* Program number */
-	rpcvers_t versnum;		/* Version number */
-	const struct netconfig *nconf; /* Netconfig structure for the network */
+svc_tp_create(
+	void (*dispatch)(struct svc_req *, SVCXPRT *),
+	rpcprog_t prognum,		/* Program number */
+	rpcvers_t versnum,		/* Version number */
+	const struct netconfig *nconf) /* Netconfig structure for the network */
 {
 	SVCXPRT *xprt;
 
@@ -197,12 +197,12 @@ svc_tp_create(dispatch, prognum, versnum, nconf)
  * If sendsz or recvsz are zero, their default values are chosen.
  */
 SVCXPRT *
-svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
-	int fd;				/* Connection end point */
-	const struct netconfig *nconf;	/* Netconfig struct for nettoken */
-	const struct t_bind *bindaddr;	/* Local bind address */
-	u_int sendsz;			/* Max sendsize */
-	u_int recvsz;			/* Max recvsize */
+svc_tli_create(
+	int fd,				/* Connection end point */
+	const struct netconfig *nconf,	/* Netconfig struct for nettoken */
+	const struct t_bind *bindaddr,	/* Local bind address */
+	u_int sendsz,			/* Max sendsize */
+	u_int recvsz)			/* Max recvsize */
 {
 	SVCXPRT *xprt = NULL;		/* service handle */
 	bool_t madefd = FALSE;		/* whether fd opened here  */

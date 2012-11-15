@@ -3,7 +3,7 @@
 /* sections */
 
 #include <machine/vm.h>
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/com.h>

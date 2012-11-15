@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.24 2003/07/26 19:24:25 salo Exp $ */
+/* $NetBSD: crt0.c,v 1.27 2012/03/22 13:02:15 he Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -40,11 +40,8 @@ void __start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
 
 void
-__start(sp, cleanup, obj, ps_strings)
-	char **sp;
-	void (*cleanup) __P((void));		/* from shared loader */
-	const Obj_Entry *obj;			/* from shared loader */
-	struct ps_strings *ps_strings;
+__start(char **sp, void (*cleanup)(void), 
+	const Obj_Entry *obj, struct ps_strings *ps_strings)
 {
 	long argc;
 	char **argv, *namep;
@@ -65,9 +62,11 @@ __start(sp, cleanup, obj, ps_strings)
 		__ps_strings = ps_strings;
 
 #ifdef DYNAMIC
-	if (&_DYNAMIC != NULL)
+	if (&rtld_DYNAMIC != NULL)
 		_rtld_setup(cleanup, obj);
 #endif
+
+	_libc_init();
 
 #ifdef MCRT0
 	atexit(_mcleanup);
@@ -84,7 +83,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.24 2003/07/26 19:24:25 salo Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.27 2012/03/22 13:02:15 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

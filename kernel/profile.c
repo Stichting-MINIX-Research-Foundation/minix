@@ -17,7 +17,7 @@
 
 #include <minix/config.h>
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 #include <minix/profile.h>
 #include <minix/portio.h>

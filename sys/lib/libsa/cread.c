@@ -95,12 +95,8 @@ void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 #ifndef ETHER_CRC_POLY_LE
 #define ETHER_CRC_POLY_LE	0xedb88320
 #endif
-#ifndef __minix
 uint32_t
 crc32(uint32_t crc, const uint8_t *const buf, size_t len)
-#else
-uLong crc32(uLong crc, const Bytef *buf, uInt len)
-#endif
 {
 	uint32_t c, carry;
 	size_t i, j;

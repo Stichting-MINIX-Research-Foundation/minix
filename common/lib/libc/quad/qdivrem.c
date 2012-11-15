@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.2 2009/03/15 22:31:12 cegger Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.4 2012/03/20 16:21:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qdivrem.c,v 1.2 2009/03/15 22:31:12 cegger Exp $");
+__RCSID("$NetBSD: qdivrem.c,v 1.4 2012/03/20 16:21:41 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,10 +49,10 @@ __RCSID("$NetBSD: qdivrem.c,v 1.2 2009/03/15 22:31:12 cegger Exp $");
 
 #include "quad.h"
 
-#define	B	((int)1 << HALF_BITS)	/* digit base */
+#define	B	((int)1 << (unsigned int)HALF_BITS)	/* digit base */
 
 /* Combine two `digits' to make a single two-digit number. */
-#define	COMBINE(a, b) (((u_int)(a) << HALF_BITS) | (b))
+#define	COMBINE(a, b) (((u_int)(a) << (unsigned int)HALF_BITS) | (b))
 
 /* select a type for digits in base B: use unsigned short if they fit */
 #if UINT_MAX == 0xffffffffU && USHRT_MAX >= 0xffff
@@ -61,7 +61,7 @@ typedef unsigned short digit;
 typedef u_int digit;
 #endif
 
-static void shl __P((digit *p, int len, int sh));
+static void shl(digit *p, int len, int sh);
 
 /*
  * __qdivrem(u, v, rem) returns u/v and, optionally, sets *rem to u%v.
@@ -173,7 +173,7 @@ __qdivrem(u_quad_t uq, u_quad_t vq, u_quad_t *arq)
 	 * D1: choose multiplier 1 << d to ensure v[1] >= B/2.
 	 */
 	d = 0;
-	for (t = v[1]; t < B / 2; t <<= 1)
+	for (t = v[1]; t < B / 2; t <<= (unsigned int)1)
 		d++;
 	if (d > 0) {
 		shl(&u[0], m + n, d);		/* u <<= d */
@@ -254,7 +254,7 @@ __qdivrem(u_quad_t uq, u_quad_t vq, u_quad_t *arq)
 		if (d) {
 			for (i = m + n; i > m; --i)
 				u[i] = (digit)(((u_int)u[i] >> d) |
-				    LHALF((u_int)u[i - 1] << (HALF_BITS - d)));
+				    LHALF((u_int)u[i - 1] << (unsigned int)(HALF_BITS - d)));
 			u[i] = 0;
 		}
 		tmp.ul[H] = COMBINE(uspace[1], uspace[2]);

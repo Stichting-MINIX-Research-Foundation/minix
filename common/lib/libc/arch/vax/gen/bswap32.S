@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap32.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: bswap32.S,v 1.3 2011/01/25 04:45:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,18 +31,18 @@
 
 #include <machine/asm.h>
 
+RCSID("$NetBSD: bswap32.S,v 1.3 2011/01/25 04:45:28 matt Exp $")
+
 #if defined(_KERNEL) || defined(_STANDALONE)
-ENTRY(_C_LABEL(bswap32), 0)
+ALTENTRY(_C_LABEL(bswap32))
 #else
-#if BYTE_ORDER == LITTLE_ENDIAN
 ALTENTRY(_C_LABEL(ntohl))
 ALTENTRY(_C_LABEL(htonl))
 #endif
 ENTRY(_C_LABEL(__bswap32), 0)
-#endif
 	rotl    $-8, 4(%ap), %r0  
 	insv    %r0, $16, $8, %r0
 	rotl    $8, 4(%ap), %r1
 	movb    %r1, %r0
 	ret
-
+END(_C_LABEL(__bswap32))

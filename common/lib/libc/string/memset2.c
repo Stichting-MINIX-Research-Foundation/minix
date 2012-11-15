@@ -27,6 +27,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: memset2.c,v 1.5 2012/03/02 16:22:27 apb Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -49,17 +54,15 @@
 
 #ifdef _FORTIFY_SOURCE
 #undef bzero
-#undef memset
 #endif
-
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.2 2009/12/14 00:39:01 matt Exp $");    
-#endif /* LIBC_SCCS and not lint */
+#undef memset
 
 /*
  * Assume uregister_t is the widest non-synthetic unsigned type.
  */
 typedef uregister_t memword_t;
+
+__CTASSERT((~(memword_t)0U >> 1) != ~(memword_t)0U);
 
 #ifdef BZERO
 static inline
@@ -69,10 +72,6 @@ static inline
 #ifdef TEST
 static
 #define memset test_memset
-#endif
-
-#ifdef CTASSERT
-CTASSERT((~(memword_t)0U >> 1) != ~(memword_t)0U);
 #endif
 
 void *

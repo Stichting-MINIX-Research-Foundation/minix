@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.15 2010/02/25 18:37:12 joerg Exp $	*/
+/*	$NetBSD: err.h,v 1.16 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,32 +34,25 @@
 #ifndef _ERR_H_
 #define	_ERR_H_
 
-/*
- * Don't use va_list in the err/warn prototypes.   Va_list is typedef'd in two
- * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
- * of them here we may collide with the utility's includes.  It's unreasonable
- * for utilities to have to include one of them to include err.h, so we get
- * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
- */
-#include <machine/ansi.h>
 #include <sys/cdefs.h>
+#include <stdarg.h>
 
 __BEGIN_DECLS
 __dead void	err(int, const char *, ...)
 		     __printflike(2, 3) __dead;
-__dead void	verr(int, const char *, _BSD_VA_LIST_)
+__dead void	verr(int, const char *, va_list)
 		    __printflike(2, 0) __dead;
 __dead void	errx(int, const char *, ...)
 		     __printflike(2, 3) __dead;
-__dead void	verrx(int, const char *, _BSD_VA_LIST_)
+__dead void	verrx(int, const char *, va_list)
 		    __printflike(2, 0) __dead;
 void		warn(const char *, ...)
 		    __printflike(1, 2);
-void		vwarn(const char *, _BSD_VA_LIST_)
+void		vwarn(const char *, va_list)
 		    __printflike(1, 0);
 void		warnx(const char *, ...)
 		    __printflike(1, 2);
-void		vwarnx(const char *, _BSD_VA_LIST_)
+void		vwarnx(const char *, va_list)
 		    __printflike(1, 0);
 __END_DECLS
 

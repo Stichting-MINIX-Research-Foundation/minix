@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.53 2010/09/15 16:11:30 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.58 2012/05/05 22:07:57 christos Exp $	*/
 
 /*
  * ====================================================
@@ -88,10 +88,10 @@ extern const union __long_double_u __infinityl;
 #endif
 
 /* 7.12#4 INFINITY */
-#if __GNUC_PREREQ__(3, 3)
-#define	INFINITY	__builtin_inff()
-#elif defined(__INFINITY)
+#if defined(__INFINITY)
 #define	INFINITY	__INFINITY	/* float constant which overflows */
+#elif __GNUC_PREREQ__(3, 3)
+#define	INFINITY	__builtin_inff()
 #else
 #define	INFINITY	HUGE_VALF	/* positive infinity */
 #endif /* __INFINITY */
@@ -321,6 +321,8 @@ float	sqrtf(float);
 float	erff(float);
 float	erfcf(float);
 float	lgammaf(float);
+float	tgammaf(float);
+double	tgamma(double);
 
 /* 7.12.9 nearest integer */
 
@@ -348,6 +350,10 @@ long long int	llroundf(float);
 
 float	fmodf(float, float);
 float	remainderf(float, float);
+
+/* 7.12.10.3 The remquo functions */
+double	remquo(double, double, int *);
+float	remquof(float, float, int *);
 
 /* 7.12.11 manipulation */
 
@@ -493,6 +499,11 @@ int	__isinfl(long double);
 int	__isnanl(long double);
 int	__signbitl(long double);
 #endif
+
+int		ilogbl(long double);
+long double	logbl(long double);
+long double	scalbnl(long double, int);
+
 __END_DECLS
 
 #endif /* _MATH_H_ */

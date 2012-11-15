@@ -29,7 +29,7 @@
  */
 #define _TABLE
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include <minix/com.h>
 
 /* The system image table lists all programs that are part of the boot image. 

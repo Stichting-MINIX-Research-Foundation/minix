@@ -1,4 +1,4 @@
-/*	$NetBSD: tcgetattr.c,v 1.9 2003/08/07 16:44:13 agc Exp $	*/
+/*	$NetBSD: tcgetattr.c,v 1.10 2012/06/25 22:32:46 abs Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcgetattr.c,v 1.9 2003/08/07 16:44:13 agc Exp $");
+__RCSID("$NetBSD: tcgetattr.c,v 1.10 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,9 +51,7 @@ __weak_alias(tcgetattr,_tcgetattr)
 #endif
 
 int
-tcgetattr(fd, t)
-	int fd;
-	struct termios *t;
+tcgetattr(int fd, struct termios *t)
 {
 
 	_DIAGASSERT(t != NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.30 2010/11/14 18:11:42 tron Exp $	*/
+/*	$NetBSD: popen.c,v 1.32 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.30 2010/11/14 18:11:42 tron Exp $");
+__RCSID("$NetBSD: popen.c,v 1.32 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,9 +54,14 @@ __RCSID("$NetBSD: popen.c,v 1.30 2010/11/14 18:11:42 tron Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "env.h"
 #include "reentrant.h"
+
+#if defined(__minix) && !defined(O_CLOEXEC)
+#define O_CLOEXEC 0
+#endif
 
 #ifdef __weak_alias
 __weak_alias(popen,_popen)
@@ -84,22 +89,23 @@ popen(const char *command, const char *type)
 	const char * volatile xtype = type;
 	int pdes[2], pid, serrno;
 	volatile int twoway;
+	int flags;
 
 	_DIAGASSERT(command != NULL);
 	_DIAGASSERT(xtype != NULL);
 
+	flags = strchr(xtype, 'e') ? O_CLOEXEC : 0;
 	if (strchr(xtype, '+')) {
+		int stype = flags ? (SOCK_STREAM | SOCK_CLOEXEC) : SOCK_STREAM;
 		twoway = 1;
-		type = "r+";
-		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, pdes) < 0)
-			return (NULL);
+		xtype = "r+";
+		if (socketpair(AF_LOCAL, stype, 0, pdes) < 0)
+			return NULL;
 	} else  {
 		twoway = 0;
-		if ((*xtype != 'r' && *xtype != 'w') || xtype[1] ||
-		    (pipe(pdes) < 0)) {
-			errno = EINVAL;
-			return (NULL);
-		}
+		xtype = strrchr(xtype, 'r') ? "r" : "w";
+		if (pipe2(pdes, flags) == -1)
+			return NULL;
 	}
 
 	if ((cur = malloc(sizeof(struct pid))) == NULL) {
@@ -186,8 +192,7 @@ popen(const char *command, const char *type)
  *	if already `pclosed', or waitpid returns an error.
  */
 int
-pclose(iop)
-	FILE *iop;
+pclose(FILE *iop)
 {
 	struct pid *cur, *last;
 	int pstat;

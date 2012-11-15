@@ -1,7 +1,7 @@
-/*	$NetBSD: devname.c,v 1.21 2010/03/23 20:28:59 drochner Exp $	*/
+/*	$NetBSD: devname.c,v 1.22 2012/06/03 21:42:46 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,170 +29,139 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
- * Copyright (c) 1992 Keith Muller.
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Keith Muller of the University of California, San Diego.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
-#else
-__RCSID("$NetBSD: devname.c,v 1.21 2010/03/23 20:28:59 drochner Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: devname.c,v 1.22 2012/06/03 21:42:46 joerg Exp $");
 
 #include "namespace.h"
-#include <sys/types.h>
+#include "reentrant.h"
 #include <sys/stat.h>
-#include <sys/param.h>
 
-#include <db.h>
-#include <fcntl.h>
+#include <cdbr.h>
+#include <errno.h>
+#include <fts.h>
+#include <limits.h>
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <err.h>
 
-#define	DEV_SZ		317	/* show be prime for best results */
-#define	VALID		1	/* entry and devname are valid */
-#define	INVALID		2	/* entry valid, devname NOT valid */
+#ifdef __weak_alias
+__weak_alias(devname_r,_devname_r)
+#endif
 
-typedef struct devc {
-	int valid;		/* entry valid? */
-	dev_t dev;		/* cached device */
-	mode_t type;		/* cached file type */
-	char name[NAME_MAX];	/* device name */
-} DEVC;
+static once_t db_opened = ONCE_INITIALIZER;
+static struct cdbr *db;
+static devmajor_t pts;
+
+static void
+devname_dbopen(void)
+{
+	db = cdbr_open(_PATH_DEVCDB, CDBR_DEFAULT);
+	pts = getdevmajor("pts", S_IFCHR);
+}
+
+__CTASSERT(sizeof(dev_t) == 8);
+
+static int
+devname_dblookup(dev_t dev, mode_t type, char *path, size_t len)
+{
+	const void *data;
+	size_t datalen;
+	uint8_t key[10];
+
+	le64enc(key, dev);
+	le16enc(key + 8, type);
+	if (cdbr_find(db, key, sizeof(key), &data, &datalen) != 0)
+		return ENOENT;
+	if (datalen <= sizeof(key))
+		return ENOENT;
+	if (memcmp(key, data, sizeof(key)) != 0)
+		return ENOENT;
+	data = (const char *)data + sizeof(key);
+	datalen -= sizeof(key);
+	if (memchr(data, '\0', datalen) != (const char *)data + datalen - 1)
+		return ENOENT;
+	if (datalen > len)
+		return ERANGE;
+	memcpy(path, data, datalen);
+	return 0;
+}
+
+static int
+devname_ptslookup(dev_t dev, mode_t type, char *path, size_t len)
+{
+	int rv;
+
+	if (type != S_IFCHR || pts == NODEVMAJOR || major(dev) != pts)
+		return ENOENT;
+
+	rv = snprintf(path, len, "%s%d", _PATH_DEV_PTS + sizeof(_PATH_DEV) - 1,
+	    minor(dev));
+	if (rv < 0 || (size_t)rv >= len)
+		return ERANGE;
+	return 0;
+}
+
+static int
+devname_fts(dev_t dev, mode_t type, char *path, size_t len)
+{
+	FTS *ftsp;
+	FTSENT *fe;
+	static const char path_dev[] = _PATH_DEV;
+	static char * const dirs[2] = { __UNCONST(path_dev), NULL };
+	const size_t len_dev = strlen(path_dev);
+	int rv;
+
+	if ((ftsp = fts_open(dirs, FTS_NOCHDIR | FTS_PHYSICAL, NULL)) == NULL)
+		return ENOENT;
+
+	rv = ENOENT;
+	while ((fe = fts_read(ftsp)) != NULL) {
+		if (fe->fts_info != FTS_DEFAULT)
+			continue;
+		if (fe->fts_statp->st_rdev != dev)
+			continue;
+		if ((type & S_IFMT) != (fe->fts_statp->st_mode & S_IFMT))
+			continue;
+		if (strncmp(fe->fts_path, path_dev, len_dev))
+			continue;
+		if (strlcpy(path, fe->fts_path + len_dev, len) < len) {
+			rv = 0;
+			break;
+		}
+	}
+
+	fts_close(ftsp);
+	return rv;
+}
+
+int
+devname_r(dev_t dev, mode_t type, char *path, size_t len)
+{
+	int rv;
+
+	thr_once(&db_opened, devname_dbopen);
+
+	if (db != NULL) {
+		rv = devname_dblookup(dev, type, path, len);
+		if (rv == 0 || rv == ERANGE)
+			return rv;
+	}
+
+	rv = devname_ptslookup(dev, type, path, len);
+	if (rv == 0 || rv == ERANGE)
+		return rv;
+
+	if (db != NULL)
+		return ENOENT;
+	rv = devname_fts(dev, type, path, len);
+	return rv;
+}
 
 char *
-devname(dev, type)
-	dev_t dev;
-	mode_t type;
+devname(dev_t dev, mode_t type)
 {
-	struct {
-		mode_t type;
-		dev_t dev;
-	} bkey;
-	struct {
-		mode_t type;
-		int32_t dev;
-	} obkey;
-	static DB *db;
-	static int failure;
-	DBT data, key;
-	DEVC *ptr, **pptr;
-	static DEVC **devtb = NULL;
-	static devmajor_t pts;
-	static int pts_valid = 0;
+	static char path[PATH_MAX];
 
-	if (!db && !failure &&
-	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
-		warn("warning: %s", _PATH_DEVDB);
-		failure = 1;
-	}
-	/* initialise dev cache */
-	if (!failure && devtb == NULL) {
-		devtb = calloc(DEV_SZ, sizeof(DEVC *));
-		if (devtb == NULL)
-			failure= 1;
-	}
-	if (failure)
-		return (NULL);
-
-	/* see if we have this dev/type cached */
-	pptr = devtb + (size_t)((dev + type) % DEV_SZ);
-	ptr = *pptr;
-
-	if (ptr && ptr->valid > 0 && ptr->dev == dev && ptr->type == type) {
-		if (ptr->valid == VALID)
-			return (ptr->name);
-		return (NULL);
-	}
-
-	if (ptr == NULL)
-		*pptr = ptr = malloc(sizeof(DEVC));
-
-	/*
-	 * Keys are a mode_t followed by a dev_t.  The former is the type of
-	 * the file (mode & S_IFMT), the latter is the st_rdev field.  Be
-	 * sure to clear any padding that may be found in bkey.
-	 */
-	(void)memset(&bkey, 0, sizeof(bkey));
-	bkey.dev = dev;
-	bkey.type = type;
-	key.data = &bkey;
-	key.size = sizeof(bkey);
-	if ((db->get)(db, &key, &data, 0) == 0) {
-found_it:
-		if (ptr == NULL)
-			return (char *)data.data;
-		ptr->dev = dev;
-		ptr->type = type;
-		strncpy(ptr->name, (char *)data.data, NAME_MAX);
-		ptr->name[NAME_MAX - 1] = '\0';
-		ptr->valid = VALID;
-	} else {
-		/* Look for a 32 bit dev_t. */
-		(void)memset(&obkey, 0, sizeof(obkey));
-		obkey.dev = (int32_t)(uint32_t)dev;
-		obkey.type = type;
-		key.data = &obkey;
-		key.size = sizeof(obkey);
-		if ((db->get)(db, &key, &data, 0) == 0)
-			goto found_it;
-
-		if (ptr == NULL)
-			return (NULL);
-		ptr->valid = INVALID;
-		if (type == S_IFCHR) {
-			if (!pts_valid) {
-				pts = getdevmajor("pts", S_IFCHR);
-				pts_valid = 1;
-			}
-			if (pts != NODEVMAJOR && major(dev) == pts) {
-				(void)snprintf(ptr->name, sizeof(ptr->name),
-				    "%s%d", _PATH_DEV_PTS +
-				    sizeof(_PATH_DEV) - 1,
-				    minor(dev));
-				ptr->valid = VALID;
-			}
-		}
-		ptr->dev = dev;
-		ptr->type = type;
-	}
-	if (ptr->valid == VALID)
-		return (ptr->name);
-	else
-		return (NULL);
+	return devname_r(dev, type, path, sizeof(path)) == 0 ? path : NULL;
 }

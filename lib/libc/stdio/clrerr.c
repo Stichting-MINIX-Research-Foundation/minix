@@ -1,4 +1,4 @@
-/*	$NetBSD: clrerr.c,v 1.10 2003/08/07 16:43:21 agc Exp $	*/
+/*	$NetBSD: clrerr.c,v 1.11 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)clrerr.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: clrerr.c,v 1.10 2003/08/07 16:43:21 agc Exp $");
+__RCSID("$NetBSD: clrerr.c,v 1.11 2012/03/15 18:22:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -48,8 +48,7 @@ __RCSID("$NetBSD: clrerr.c,v 1.10 2003/08/07 16:43:21 agc Exp $");
 #undef	clearerr
 
 void
-clearerr(fp)
-	FILE *fp;
+clearerr(FILE *fp)
 {
 	_DIAGASSERT(fp != NULL);
 

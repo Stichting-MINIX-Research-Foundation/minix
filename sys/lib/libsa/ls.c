@@ -157,6 +157,7 @@ ls(const char *path, void (*funcp)(char* arg))
 		printf("no ls support for this file system\n");
 
 out:
+	/* LSC: MINIX Modification for correct glob support, beware! */
 	if (p != NULL)
 		dealloc(p, size + 1);
 	close(fd);

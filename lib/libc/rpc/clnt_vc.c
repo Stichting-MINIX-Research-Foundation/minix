@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.17 2010/12/08 02:06:38 joerg Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.18 2012/03/13 21:13:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.17 2010/12/08 02:06:38 joerg Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.18 2012/03/13 21:13:44 christos Exp $");
 #endif
 #endif
  
@@ -85,17 +85,17 @@ __weak_alias(clnt_vc_create,_clnt_vc_create)
 
 #define MCALL_MSG_SIZE 24
 
-static enum clnt_stat clnt_vc_call __P((CLIENT *, rpcproc_t, xdrproc_t,
-    const char *, xdrproc_t, caddr_t, struct timeval));
-static void clnt_vc_geterr __P((CLIENT *, struct rpc_err *));
-static bool_t clnt_vc_freeres __P((CLIENT *, xdrproc_t, caddr_t));
-static void clnt_vc_abort __P((CLIENT *));
-static bool_t clnt_vc_control __P((CLIENT *, u_int, char *));
-static void clnt_vc_destroy __P((CLIENT *));
-static struct clnt_ops *clnt_vc_ops __P((void));
-static bool_t time_not_ok __P((struct timeval *));
-static int read_vc __P((caddr_t, caddr_t, int));
-static int write_vc __P((caddr_t, caddr_t, int));
+static enum clnt_stat clnt_vc_call(CLIENT *, rpcproc_t, xdrproc_t,
+    const char *, xdrproc_t, caddr_t, struct timeval);
+static void clnt_vc_geterr(CLIENT *, struct rpc_err *);
+static bool_t clnt_vc_freeres(CLIENT *, xdrproc_t, caddr_t);
+static void clnt_vc_abort(CLIENT *);
+static bool_t clnt_vc_control(CLIENT *, u_int, char *);
+static void clnt_vc_destroy(CLIENT *);
+static struct clnt_ops *clnt_vc_ops(void);
+static bool_t time_not_ok(struct timeval *);
+static int read_vc(caddr_t, caddr_t, int);
+static int write_vc(caddr_t, caddr_t, int);
 
 struct ct_data {
 	int		ct_fd;
@@ -154,13 +154,14 @@ static cond_t   *vc_cv;
  * fd should be an open socket
  */
 CLIENT *
-clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
-	int fd;
-	const struct netbuf *raddr;
-	rpcprog_t prog;
-	rpcvers_t vers;
-	u_int sendsz;
-	u_int recvsz;
+clnt_vc_create(
+	int fd,
+	const struct netbuf *raddr,
+	rpcprog_t prog,
+	rpcvers_t vers,
+	u_int sendsz,
+	u_int recvsz
+)
 {
 	CLIENT *h;
 	struct ct_data *ct = NULL;
@@ -314,14 +315,15 @@ fooy:
 }
 
 static enum clnt_stat
-clnt_vc_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
-	CLIENT *h;
-	rpcproc_t proc;
-	xdrproc_t xdr_args;
-	const char *args_ptr;
-	xdrproc_t xdr_results;
-	caddr_t results_ptr;
-	struct timeval timeout;
+clnt_vc_call(
+	CLIENT *h,
+	rpcproc_t proc,
+	xdrproc_t xdr_args,
+	const char *args_ptr,
+	xdrproc_t xdr_results,
+	caddr_t results_ptr,
+	struct timeval timeout
+)
 {
 	struct ct_data *ct;
 	XDR *xdrs;
@@ -444,9 +446,10 @@ call_again:
 }
 
 static void
-clnt_vc_geterr(h, errp)
-	CLIENT *h;
-	struct rpc_err *errp;
+clnt_vc_geterr(
+	CLIENT *h,
+	struct rpc_err *errp
+)
 {
 	struct ct_data *ct;
 
@@ -458,10 +461,11 @@ clnt_vc_geterr(h, errp)
 }
 
 static bool_t
-clnt_vc_freeres(cl, xdr_res, res_ptr)
-	CLIENT *cl;
-	xdrproc_t xdr_res;
-	caddr_t res_ptr;
+clnt_vc_freeres(
+	CLIENT *cl,
+	xdrproc_t xdr_res,
+	caddr_t res_ptr
+)
 {
 	struct ct_data *ct;
 	XDR *xdrs;
@@ -495,16 +499,16 @@ clnt_vc_freeres(cl, xdr_res, res_ptr)
 
 /*ARGSUSED*/
 static void
-clnt_vc_abort(cl)
-	CLIENT *cl;
+clnt_vc_abort(CLIENT *cl)
 {
 }
 
 static bool_t
-clnt_vc_control(cl, request, info)
-	CLIENT *cl;
-	u_int request;
-	char *info;
+clnt_vc_control(
+	CLIENT *cl,
+	u_int request,
+	char *info
+)
 {
 	struct ct_data *ct;
 	void *infop = info;
@@ -631,8 +635,7 @@ clnt_vc_control(cl, request, info)
 
 
 static void
-clnt_vc_destroy(cl)
-	CLIENT *cl;
+clnt_vc_destroy(CLIENT *cl)
 {
 	struct ct_data *ct;
 #ifdef _REENTRANT
@@ -673,14 +676,12 @@ clnt_vc_destroy(cl)
  * around for the rpc level.
  */
 static int
-read_vc(ctp, buf, len)
-	caddr_t ctp;
-	caddr_t buf;
-	int len;
+read_vc(char *ctp, char *buf, int len)
 {
 	struct ct_data *ct = (struct ct_data *)(void *)ctp;
 	struct pollfd fd;
 	struct timespec ts;
+	ssize_t nread;
 
 	if (len == 0)
 		return (0);
@@ -703,7 +704,7 @@ read_vc(ctp, buf, len)
 		}
 		break;
 	}
-	switch (len = read(ct->ct_fd, buf, (size_t)len)) {
+	switch (nread = read(ct->ct_fd, buf, (size_t)len)) {
 
 	case 0:
 		/* premature eof */
@@ -717,30 +718,28 @@ read_vc(ctp, buf, len)
 		ct->ct_error.re_status = RPC_CANTRECV;
 		break;
 	}
-	return (len);
+	return (int)nread;
 }
 
 static int
-write_vc(ctp, buf, len)
-	caddr_t ctp;
-	caddr_t buf;
-	int len;
+write_vc(char *ctp, char *buf, int len)
 {
 	struct ct_data *ct = (struct ct_data *)(void *)ctp;
-	int i, cnt;
+	ssize_t i;
+	size_t cnt;
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
-		if ((i = write(ct->ct_fd, buf, (size_t)cnt)) == -1) {
+		if ((i = write(ct->ct_fd, buf, cnt)) == -1) {
 			ct->ct_error.re_errno = errno;
 			ct->ct_error.re_status = RPC_CANTSEND;
 			return (-1);
 		}
 	}
-	return (len);
+	return len;
 }
 
 static struct clnt_ops *
-clnt_vc_ops()
+clnt_vc_ops(void)
 {
 	static struct clnt_ops ops;
 #ifdef _REENTRANT
@@ -772,8 +771,7 @@ clnt_vc_ops()
  * Note this is different from time_not_ok in clnt_dg.c
  */
 static bool_t
-time_not_ok(t)
-	struct timeval *t;
+time_not_ok(struct timeval *t)
 {
 
 	_DIAGASSERT(t != NULL);

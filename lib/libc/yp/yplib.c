@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.43 2006/11/03 20:18:49 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.45 2012/03/20 16:30:26 matt Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.43 2006/11/03 20:18:49 christos Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.45 2012/03/20 16:30:26 matt Exp $");
 #endif
 
 #include "namespace.h"
@@ -67,11 +67,13 @@ struct timeval _yplib_timeout = { YPLIB_TIMEOUT, 0 };
 struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
 	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
 int _yplib_nerrs = 5;
+int _yplib_bindtries = 0;
 
 #ifdef __weak_alias
 __weak_alias(yp_bind, _yp_bind)
 __weak_alias(yp_unbind, _yp_unbind)
 __weak_alias(yp_get_default_domain, _yp_get_default_domain)
+__weak_alias(yp_setbindtries, _yp_setbindtries)
 #endif
 
 #ifdef _REENTRANT
@@ -84,9 +86,17 @@ static 	mutex_t			_ypmutex = MUTEX_INITIALIZER;
 #endif
 
 int
-_yp_dobind(dom, ypdb)
-	const char     *dom;
-	struct dom_binding **ypdb;
+yp_setbindtries(int ntries)
+{
+	int old_val = _yplib_bindtries;
+
+	if (ntries >= 0)
+		_yplib_bindtries = ntries;
+	return old_val;
+}
+
+int
+_yp_dobind(const char *dom, struct dom_binding **ypdb)
 {
 	static int      pid = -1;
 	char            path[MAXPATHLEN];
@@ -218,11 +228,17 @@ trynet:
 		    (xdrproc_t)xdr_ypdomain_wrap_string, &dom,
 		    (xdrproc_t)xdr_ypbind_resp, &ypbr, _yplib_timeout);
 		if (r != RPC_SUCCESS) {
-			if (new == 0 && ++nerrs == _yplib_nerrs) {
+			if (_yplib_bindtries <= 0 && new == 0 &&
+			    ++nerrs == _yplib_nerrs) {
 				nerrs = 0;
 				fprintf(stderr,
 		    "YP server for domain %s not responding, still trying\n",
 				    dom);
+			}
+			else if (_yplib_bindtries > 0 &&
+			         ++nerrs == _yplib_bindtries) {
+				free(ysd);
+				return YPERR_YPBIND;
 			}
 			clnt_destroy(client);
 			ysd->dom_vers = -1;
@@ -270,8 +286,7 @@ gotit:
 }
 
 void
-__yp_unbind(ypb)
-	struct dom_binding *ypb;
+__yp_unbind(struct dom_binding *ypb)
 {
 
 	_DIAGASSERT(ypb != NULL);
@@ -282,8 +297,7 @@ __yp_unbind(ypb)
 }
 
 int
-yp_bind(dom)
-	const char     *dom;
+yp_bind(const char *dom)
 {
 	if (_yp_invalid_domain(dom))
 		return YPERR_BADARGS;
@@ -292,8 +306,7 @@ yp_bind(dom)
 }
 
 void
-yp_unbind(dom)
-	const char     *dom;
+yp_unbind(const char *dom)
 {
 	struct dom_binding *ypb, *ypbp;
 
@@ -317,8 +330,7 @@ yp_unbind(dom)
 }
 
 int
-yp_get_default_domain(domp)
-	char          **domp;
+yp_get_default_domain(char **domp)
 {
 	if (domp == NULL)
 		return YPERR_BADARGS;
@@ -331,8 +343,7 @@ yp_get_default_domain(domp)
 }
 
 int
-_yp_check(dom)
-	char          **dom;
+_yp_check(char **dom)
 {
 	char           *unused;
 	int 		good;
@@ -358,8 +369,7 @@ done:
  * returns non-zero if invalid
  */
 int
-_yp_invalid_domain(dom)
-	const char *dom;
+_yp_invalid_domain(const char *dom)
 {
 	if (dom == NULL || *dom == '\0')
 		return 1;

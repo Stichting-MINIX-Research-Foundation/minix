@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.81 2010/12/25 22:30:52 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.100 2012/08/24 05:47:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -63,6 +63,21 @@
 #include <sys/cdefs_aout.h>
 #endif
 
+#ifdef __GNUC__
+#define	__strict_weak_alias(alias,sym)					\
+	__unused static __typeof__(alias) *__weak_alias_##alias = &sym;	\
+	__weak_alias(alias,sym)
+#else
+#define	__strict_weak_alias(alias,sym) __weak_alias(alias,sym)
+#endif
+
+/*
+ * Optional marker for size-optimised MD calling convention.
+ */
+#ifndef __compactcall
+#define	__compactcall
+#endif
+
 /*
  * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
  * with "#define OLD(foo) __CONCAT(old,foo)", OLD(foo) produces oldfoo.
@@ -124,6 +139,17 @@
 #else
 #define	__aconst
 #endif
+
+/*
+ * Compile Time Assertion.
+ */
+#ifdef __COUNTER__
+#define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __COUNTER__)
+#else
+#define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
+#endif
+#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
+#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1]
 
 /*
  * The following macro is used to remove const cast-away warnings
@@ -206,6 +232,24 @@
 #define	__noinline	/* nothing */
 #endif
 
+#if __GNUC_PREREQ__(3, 0)
+#define	__always_inline	__attribute__((__always_inline__))
+#else
+#define	__always_inline	/* nothing */
+#endif
+
+#if __GNUC_PREREQ__(4, 1)
+#define	__returns_twice	__attribute__((__returns_twice__))
+#else
+#define	__returns_twice	/* nothing */
+#endif
+
+#if __GNUC_PREREQ__(4, 5)
+#define	__noclone	__attribute__((__noclone__))
+#else
+#define	__noclone	/* nothing */
+#endif
+
 #if __GNUC_PREREQ__(2, 7)
 #define	__unused	__attribute__((__unused__))
 #else
@@ -216,6 +260,12 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+#if __GNUC_PREREQ__(3, 1)
+#define	__noprofile	__attribute__((__no_instrument_function__))
+#else
+#define	__noprofile	/* nothing */
 #endif
 
 #if defined(__cplusplus)
@@ -278,6 +328,8 @@
 #define	__packed	_Pragma("packed 1")
 #define	__aligned(x)   	_Pragma("aligned " __STRING(x))
 #define	__section(x)   	_Pragma("section " ## x)
+#elif defined(_MSC_VER)
+#define	__packed	/* ignore */
 #else
 #define	__packed	error: no __packed for this compiler
 #define	__aligned(x)	error: no __aligned for this compiler
@@ -292,7 +344,9 @@
 #define	__restrict	/* delete __restrict when not supported */
 #elif __STDC_VERSION__ >= 199901L
 #define	__restrict	restrict
-#elif !__GNUC_PREREQ__(2, 92)
+#elif __GNUC_PREREQ__(2, 92)
+#define	__restrict	__restrict__
+#else
 #define	__restrict	/* delete __restrict when not supported */
 #endif
 
@@ -320,12 +374,10 @@
 #if !defined(_STANDALONE) && !defined(_KERNEL)
 #if defined(__GNUC__) || defined(__PCC__)
 #define	__RENAME(x)	___RENAME(x)
-#else
-#ifdef __lint__
+#elif defined(__lint__)
 #define	__RENAME(x)	__symbolrename(x)
 #else
 #error "No function renaming possible"
-#endif /* __lint__ */
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
 #define	__RENAME(x)	no renaming in kernel or standalone environment
@@ -443,7 +495,7 @@
 #define	__link_set_foreach(pvar, set)					\
 	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
 
-#define	__link_set_entry(set, idx)	(__link_set_begin(set)[idx])
+#define	__link_set_entry(set, idx)	(__link_set_start(set)[idx])
 
 /*
  * Return the number of elements in a statically-allocated array,
@@ -482,8 +534,37 @@
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
 
-#ifdef _MINIX
-/* If compiling in Minix tree, Minix ANSI definitions are always useful. */
+#define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
+    (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
+
+#ifndef __ASSEMBLER__
+static __inline long long __zeroll(void) { return 0; }
+static __inline int __negative_p(double x) { return x < 0; }
+#else
+#define __zeroll() (0LL)
+#define __negative_p(x) ((x) < 0)
 #endif
+
+#define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_min_u(t) ((t)0ULL)
+#define __type_max_u(t) ((t)~0ULL)
+#define __type_is_signed(t) (/*LINTED*/__type_min_s(t) + (t)1 < (t)1)
+#define __type_min(t) (__type_is_signed(t) ? __type_min_s(t) : __type_min_u(t))
+#define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
+
+
+#define __type_fit_u(t, a) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
+    (((a) & __type_mask(t)) == 0) : !__negative_p(a))
+
+#define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
+    ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
+    ((intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
+
+/*
+ * return true if value 'a' fits in type 't'
+ */
+#define __type_fit(t, a) (__type_is_signed(t) ? \
+    __type_fit_s(t, a) : __type_fit_u(t, a))
 
 #endif /* !_SYS_CDEFS_H_ */

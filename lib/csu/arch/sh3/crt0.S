@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $ */
+/* $NetBSD: crt0.S,v 1.4 2012/01/31 20:17:57 uwe Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -37,11 +37,23 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.4 2012/01/31 20:17:57 uwe Exp $")
 
 STRONG_ALIAS(_start,__start)
 
+/*
+ * Kernel setregs() passes arguments for the 6-argument version of
+ * ___start (but with 5th and 6th in registers, to avoid copyout).
+ * Since we now use 3-argument version of ___start - that obtains
+ * argc, argv and environ from ps_strings - move its arguments to
+ * proper registers.
+ */
 _ENTRY(__start)
-	mov.l	r9,@-r15
-	bra ___start
-	mov.l	r8,@-r15
+	mov.l	.L___start, r0
+	mov	r7, r4		! void (*cleanup)(void)
+	mov	r8, r5		! const Obj_Entry *obj
+	jmp	@r0
+	 mov	r9, r6		! struct ps_strings *ps_strings
+
+	.p2align 2
+.L___start:	.long	_C_LABEL(___start)

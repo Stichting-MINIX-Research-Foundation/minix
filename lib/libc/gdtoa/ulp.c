@@ -1,4 +1,4 @@
-/* $NetBSD: ulp.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: ulp.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -36,13 +36,13 @@ THIS SOFTWARE.
  double
 ulp
 #ifdef KR_headers
-	(x) double x;
+	(x) U *x;
 #else
-	(double x)
+	(U *x)
 #endif
 {
 	Long L;
-	double a;
+	U a;
 
 	L = (word0(x) & Exp_mask) - (P-1)*Exp_msk1;
 #ifndef Sudden_Underflow
@@ -51,22 +51,22 @@ ulp
 #ifdef IBM
 		L |= Exp_msk1 >> 4;
 #endif
-		word0(a) = L;
-		word1(a) = 0;
+		word0(&a) = L;
+		word1(&a) = 0;
 #ifndef Sudden_Underflow
 		}
 	else {
 		L = (unsigned int)-L >> Exp_shift;
 		if (L < Exp_shift) {
-			word0(a) = 0x80000 >> L;
-			word1(a) = 0;
+			word0(&a) = 0x80000 >> L;
+			word1(&a) = 0;
 			}
 		else {
-			word0(a) = 0;
+			word0(&a) = 0;
 			L -= Exp_shift;
-			word1(a) = L >= 31 ? 1 : 1 << (31 - L);
+			word1(&a) = L >= 31 ? 1 : 1 << (31 - L);
 			}
 		}
 #endif
-	return a;
+	return dval(&a);
 	}

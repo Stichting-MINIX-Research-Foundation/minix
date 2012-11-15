@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.94 2010/12/22 19:47:56 jruoho Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.100 2012/06/21 21:13:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -144,7 +144,6 @@ size_t	 wcstombs(char * __restrict, const wchar_t * __restrict, size_t);
 int	 rand_r(unsigned int *);
 #endif
 
-
 /*
  * X/Open Portability Guide >= Issue 4
  */
@@ -160,7 +159,9 @@ unsigned short *
 	 seed48(unsigned short[3]);
 void	 srand48(long);
 
-int	 putenv(char *);
+#ifndef __LIBC12_SOURCE__
+int	 putenv(char *) __RENAME(__putenv50);
+#endif
 #endif
 
 
@@ -190,7 +191,7 @@ char	*mktemp(char *)
 
 int	 setkey(const char *);
 
-char	*realpath(const char *, char *);
+char	*realpath(const char * __restrict, char * __restrict);
 
 int	 ttyslot(void);
 
@@ -245,6 +246,7 @@ void	*alloca(int);     /* built-in for gcc */
 #elif defined(__PCC__) && !defined(__GNUC__)
 #define alloca(size) __builtin_alloca(size)
 #elif (__GNUC__ >= 2)
+/* LSC: MINIX Patch needed (2 following lines) */
 #define alloca(size) __builtin_alloca(size)
 #else
 void	*alloca(size_t);
@@ -252,6 +254,8 @@ void	*alloca(size_t);
 
 uint32_t arc4random(void);
 void	 arc4random_stir(void);
+void	 arc4random_buf(void *, size_t);
+uint32_t arc4random_uniform(uint32_t);
 void	 arc4random_addrandom(u_char *, int);
 char	*getbsize(int *, long *);
 char	*cgetcap(char *, const char *, int);
@@ -268,6 +272,7 @@ void	 csetexpandtc(int);
 
 int	 daemon(int, int);
 #ifndef __minix
+int	 devname_r(dev_t, mode_t, char *, size_t);
 #ifndef __LIBC12_SOURCE__
 __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
 #endif

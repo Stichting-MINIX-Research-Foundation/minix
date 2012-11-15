@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 /* This is the user-visible struct that has pointers to other bits of data. */
 struct minix_kerninfo minix_kerninfo;

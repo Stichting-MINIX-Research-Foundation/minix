@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.31 2005/10/01 20:08:01 christos Exp $	*/
+/*	$NetBSD: setmode.c,v 1.34 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.31 2005/10/01 20:08:01 christos Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.34 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,10 +77,10 @@ typedef struct bitcmd {
 #define	CMD2_OBITS	0x08
 #define	CMD2_UBITS	0x10
 
-static BITCMD	*addcmd __P((BITCMD *, mode_t, mode_t, mode_t, mode_t));
-static void	 compress_mode __P((BITCMD *));
+static BITCMD	*addcmd(BITCMD *, mode_t, mode_t, mode_t, mode_t);
+static void	 compress_mode(BITCMD *);
 #ifdef SETMODE_DEBUG
-static void	 dumpmode __P((BITCMD *));
+static void	 dumpmode(BITCMD *);
 #endif
 
 /*
@@ -411,8 +411,7 @@ addcmd(BITCMD *set, mode_t op, mode_t who, mode_t oparg, mode_t mask)
 
 #ifdef SETMODE_DEBUG
 static void
-dumpmode(set)
-	BITCMD *set;
+dumpmode(BITCMD *set)
 {
 
 	_DIAGASSERT(set != NULL);
@@ -435,8 +434,7 @@ dumpmode(set)
  * compacted, but it's not worth the effort.
  */
 static void
-compress_mode(set)
-	BITCMD *set;
+compress_mode(BITCMD *set)
 {
 	BITCMD *nset;
 	int setbits, clrbits, Xbits, op;

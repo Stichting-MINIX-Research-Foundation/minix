@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.15 2006/11/13 19:08:19 tnozaki Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.16 2012/02/12 13:51:29 wiz Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.15 2006/11/13 19:08:19 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.16 2012/02/12 13:51:29 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -418,7 +418,6 @@ _citrus_iconv_std_iconv_init_context(struct _citrus_iconv *cv)
 {
 	const struct _citrus_iconv_std_shared *is = cv->cv_shared->ci_closure;
 	struct _citrus_iconv_std_context *sc;
-	int ret;
 	size_t szpssrc, szpsdst, sz;
 	char *ptr;
 

@@ -69,6 +69,7 @@ prompt(int allowreturn)
 	for (;;) {
 		char *c = input;
 
+		input[0] = '\0';
 		printf("> ");
 		editline(input, sizeof(input), NULL);
 

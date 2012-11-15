@@ -1,4 +1,4 @@
-/* $NetBSD: strtof.c,v 1.3 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtof.c,v 1.5 2011/06/20 09:11:17 mrg Exp $ */
 
 /****************************************************************
 
@@ -45,13 +45,18 @@ strtof(s, sp) CONST char *s; char **sp;
 strtof(CONST char *s, char **sp)
 #endif
 {
-	static CONST FPI fpi = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	static CONST FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
 	ULong bits[1];
 	Long expt;
 	int k;
 	union { ULong L[1]; float f; } u;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi, &expt, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory) {
 		errno = ERANGE;
 		return HUGE_VALF;
@@ -77,6 +82,11 @@ strtof(CONST char *s, char **sp)
 
 	  case STRTOG_NaN:
 		u.L[0] = f_QNAN;
+		break;
+
+	  default:
+		u.L[0] = 0; /* for gcc warning */
+		break;
 	  }
 	if (k & STRTOG_Neg)
 		u.L[0] |= 0x80000000L;

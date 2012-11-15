@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: vis.h,v 1.2 2011/03/12 19:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,6 +37,7 @@
 __BEGIN_DECLS
 int	unvis(char *, int, int *, int);
 int	__unvis13(char *, int, int *, int);
+int	__unvis50(char *, int, int *, int);
 __END_DECLS
 
 #endif /* !_COMPAT_VIS_H_ */

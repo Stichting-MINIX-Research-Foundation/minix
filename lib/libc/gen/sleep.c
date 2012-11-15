@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.22 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: sleep.c,v 1.23 2012/06/25 22:32:44 abs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sleep.c,v 1.22 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.23 2012/06/25 22:32:44 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -43,8 +43,7 @@ __weak_alias(sleep,_sleep)
 #endif
 
 unsigned int
-sleep(seconds)
-	unsigned int seconds;
+sleep(unsigned int seconds)
 {
 	struct timespec rqt, rmt;
 

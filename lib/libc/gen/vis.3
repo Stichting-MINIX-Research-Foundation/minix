@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.23 2009/02/10 23:06:31 christos Exp $
+.\"	$NetBSD: vis.3,v 1.27 2011/05/17 07:10:39 joerg Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,16 +29,22 @@
 .\"
 .\"     @(#)vis.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd February 10, 2009
+.Dd March 12, 2011
 .Dt VIS 3
 .Os
 .Sh NAME
 .Nm vis ,
+.Nm nvis ,
 .Nm strvis ,
+.Nm strnvis ,
 .Nm strvisx ,
+.Nm strnvisx ,
 .Nm svis ,
+.Nm snvis ,
 .Nm strsvis ,
+.Nm strsnvis ,
 .Nm strsvisx
+.Nm strsnvisx
 .Nd visually encode characters
 .Sh LIBRARY
 .Lb libc
@@ -46,16 +52,28 @@
 .In vis.h
 .Ft char *
 .Fn vis "char *dst" "int c" "int flag" "int nextc"
+.Ft char *
+.Fn nvis "char *dst" "size_t dlen" "int c" "int flag" "int nextc"
 .Ft int
 .Fn strvis "char *dst" "const char *src" "int flag"
 .Ft int
+.Fn strnvis "char *dst" "size_t dlen" "const char *src" "int flag"
+.Ft int
 .Fn strvisx "char *dst" "const char *src" "size_t len" "int flag"
+.Ft int
+.Fn strnvisx "char *dst" "size_t dlen" "const char *src" "size_t len" "int flag"
 .Ft char *
 .Fn svis "char *dst" "int c" "int flag" "int nextc" "const char *extra"
+.Ft char *
+.Fn snvis "char *dst" "size_t dlen" "int c" "int flag" "int nextc" "const char *extra"
 .Ft int
 .Fn strsvis "char *dst" "const char *src" "int flag" "const char *extra"
 .Ft int
+.Fn strsnvis "char *dst" "size_t dlen" "const char *src" "int flag" "const char *extra"
+.Ft int
 .Fn strsvisx "char *dst" "const char *src" "size_t len" "int flag" "const char *extra"
+.Ft int
+.Fn strsnvisx "char *dst" "size_t dlen" "const char *src" "size_t len" "int flag" "const char *extra"
 .Sh DESCRIPTION
 The
 .Fn vis
@@ -86,9 +104,11 @@ is only used when selecting the
 encoding format (explained below).
 .Pp
 The
-.Fn strvis
+.Fn strvis ,
+.Fn strnvis ,
+.Fn strvisx ,
 and
-.Fn strvisx
+.Fn strnvisx
 functions copy into
 .Fa dst
 a visual representation of
@@ -96,14 +116,18 @@ the string
 .Fa src .
 The
 .Fn strvis
-function encodes characters from
+and
+.Fn strnvis
+functions encode characters from
 .Fa src
 up to the
 first
 .Dv NUL .
 The
 .Fn strvisx
-function encodes exactly
+and
+.Fn strnvisx
+functions encode exactly
 .Fa len
 characters from
 .Fa src
@@ -125,17 +149,40 @@ Both
 forms return the number of characters in dst (not including
 the trailing
 .Dv NUL ) .
+The
+.Dq n
+versions of the functions also take an additional argument
+.Fa dlen
+that indicates the length of the
+.Fa dst
+buffer.
+If
+.Fa dlen
+is not large enough to fix the converted string then the
+.Fn strnvis
+and
+.Fn strnvisx
+functions return \-1 and set
+.Va errno
+to
+.Dv ENOSPC .
 .Pp
 The functions
 .Fn svis ,
+.Fn snvis ,
 .Fn strsvis ,
+.Fn strsnvis ,
+.Fn strsvisx ,
 and
-.Fn strsvisx
+.Fn strsnvisx
 correspond to
 .Fn vis ,
+.Fn nvis ,
 .Fn strvis ,
+.Fn strnvis ,
+.Fn strvisx ,
 and
-.Fn strvisx
+.Fn strnvisx
 but have an additional argument
 .Fa extra ,
 pointing to a
@@ -149,17 +196,21 @@ of certain characters to shells.
 The encoding is a unique, invertible representation composed entirely of
 graphic characters; it can be decoded back into the original form using
 the
-.Xr unvis 3
-or
+.Xr unvis 3 ,
 .Xr strunvis 3
+or
+.Xr strnunvis 3
 functions.
 .Pp
 There are two parameters that can be controlled: the range of
 characters that are encoded (applies only to
 .Fn vis ,
+.Fn nvis ,
 .Fn strvis ,
+.Fn strnvis ,
+.Fn strvisx ,
 and
-.Fn strvisx ) ,
+.Fn strnvisx ) ,
 and the type of representation used.
 By default, all non-graphic characters,
 except space, tab, and newline are encoded.
@@ -191,9 +242,12 @@ return - in addition to all graphic characters - unencoded.
 .Pp
 (The above flags have no effect for
 .Fn svis ,
+.Fn snvis ,
 .Fn strsvis ,
+.Fn strsnvis ,
+.Fn strsvisx ,
 and
-.Fn strsvisx .
+.Fn strsnvisx .
 When using these functions, place all graphic characters to be
 encoded in an array pointed to by
 .Fa extra .
@@ -328,6 +382,29 @@ meta characters as
 .Ql M-C ) .
 With this flag set, the encoding is
 ambiguous and non-invertible.
+.Sh ERRORS
+The functions
+.Fn nvis
+and
+.Fn snvis
+will return
+.Dv NULL
+and the functions
+.Fn strnvis ,
+.Fn strnvisx ,
+.Fn strsnvis ,
+and
+.Fn strsnvisx ,
+will return \-1 when the
+.Fa dlen
+destination buffer length size is not enough to perform the conversion while
+setting
+.Va errno
+to:
+.Bl -tag -width Er
+.It Bq Er ENOSPC
+The destination buffer size is not large enough to perform the conversion.
+.El
 .Sh SEE ALSO
 .Xr unvis 1 ,
 .Xr vis 1 ,
@@ -339,16 +416,26 @@ ambiguous and non-invertible.
 .Re
 .Sh HISTORY
 The
-.Fa vis ,
-.Fa strvis ,
+.Fn vis ,
+.Fn strvis ,
 and
 .Fa strvisx
 functions first appeared in
 .Bx 4.4 .
 The
-.Fa svis ,
-.Fa strsvis ,
+.Fn svis ,
+.Fn strsvis ,
 and
-.Fa strsvisx
+.Fn strsvisx
 functions appeared in
 .Nx 1.5 .
+The buffer size limited versions of the functions
+.Po Fn nvis ,
+.Fn strnvis ,
+.Fn strnvisx ,
+.Fn snvis ,
+.Fn strsnvis ,
+and
+.Fn strsnvisx Pc
+appeared in
+.Nx 6.0 .

@@ -1,4 +1,4 @@
-/* $NetBSD: gmisc.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
+/* $NetBSD: gmisc.c,v 1.4 2012/03/13 21:13:34 christos Exp $ */
 
 /****************************************************************
 
@@ -62,7 +62,10 @@ rshift(Bigint *b, int k)
 			while(x < xe)
 				*x1++ = *x++;
 		}
-	if ((b->wds = x1 - b->x) == 0)
+
+	ptrdiff_t td = x1 - b->x;
+	_DIAGASSERT(__type_fit(int, td));
+	if ((b->wds = (int)td) == 0)
 		b->x[0] = 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.23 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: svc.h,v 1.24 2011/08/30 17:06:20 plunky Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -163,9 +163,9 @@ struct svc_req {
 	(*(xprt)->xp_ops->xp_stat)(xprt)
 
 #define SVC_GETARGS(xprt, xargs, argsp)			\
-	(*(xprt)->xp_ops->xp_getargs)((xprt), (xargs), (argsp))
+	(*(xprt)->xp_ops->xp_getargs)((xprt), ((xdrproc_t)(xargs)), (argsp))
 #define svc_getargs(xprt, xargs, argsp)			\
-	(*(xprt)->xp_ops->xp_getargs)((xprt), (xargs), (argsp))
+	(*(xprt)->xp_ops->xp_getargs)((xprt), ((xdrproc_t)(xargs)), (argsp))
 
 #define SVC_REPLY(xprt, msg)				\
 	(*(xprt)->xp_ops->xp_reply) ((xprt), (msg))
@@ -173,9 +173,9 @@ struct svc_req {
 	(*(xprt)->xp_ops->xp_reply) ((xprt), (msg))
 
 #define SVC_FREEARGS(xprt, xargs, argsp)		\
-	(*(xprt)->xp_ops->xp_freeargs)((xprt), (xargs), (argsp))
+	(*(xprt)->xp_ops->xp_freeargs)((xprt), ((xdrproc_t)(xargs)), (argsp))
 #define svc_freeargs(xprt, xargs, argsp)		\
-	(*(xprt)->xp_ops->xp_freeargs)((xprt), (xargs), (argsp))
+	(*(xprt)->xp_ops->xp_freeargs)((xprt), ((xdrproc_t)(xargs)), (argsp))
 
 #define SVC_DESTROY(xprt)				\
 	(*(xprt)->xp_ops->xp_destroy)(xprt)

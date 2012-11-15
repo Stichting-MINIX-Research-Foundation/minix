@@ -1,4 +1,4 @@
-/* $NetBSD: strtopxL.c,v 1.4 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtopxL.c,v 1.5 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -56,13 +56,18 @@ strtopxL(s, sp, V) CONST char *s; char **sp; void *V;
 strtopxL(CONST char *s, char **sp, void *V)
 #endif
 {
-	static CONST FPI fpi = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
+	static CONST FPI fpi0 = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
 	ULong bits[2];
 	Long expt;
 	int k;
 	ULong *L = (ULong*)V;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi, &expt, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory)
 		return k;
 	switch(k & STRTOG_Retmask) {
@@ -81,7 +86,8 @@ strtopxL(CONST char *s, char **sp, void *V)
 
 	  case STRTOG_Infinite:
 		L[_0] = 0x7fff << 16;
-		L[_1] = L[_2] = 0;
+		L[_1] = 0x80000000;
+		L[_2] = 0;
 		break;
 
 	  case STRTOG_NaN:

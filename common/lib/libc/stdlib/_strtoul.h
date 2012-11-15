@@ -1,4 +1,4 @@
-/* $NetBSD: _strtoul.h,v 1.1 2008/08/20 12:42:26 joerg Exp $ */
+/* $NetBSD: _strtoul.h,v 1.3 2012/03/22 15:57:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -91,8 +91,8 @@ _FUNCNAME(const char *nptr, char **endptr, int base)
 	/*
 	 * See strtol for comments as to the logic used.
 	 */
-	cutoff = __UINT_MAX / (__UINT)base;
-	cutlim = (int)(__UINT_MAX % (__UINT)base);
+	cutoff = ((__UINT)__UINT_MAX / (__UINT)base);
+	cutlim = (int)((__UINT)__UINT_MAX % (__UINT)base);
 	for (acc = 0, any = 0;; c = *s++) {
 		if (isdigit(c))
 			i = c - '0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.23 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.25 2012/03/13 21:13:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_page.c,v 1.23 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.25 2012/03/13 21:13:33 christos Exp $");
 
 /*
  * PACKAGE:  hashing
@@ -85,7 +85,7 @@ static int	 ugly_split(HTAB *, uint32_t, BUFHEAD *, BUFHEAD *, int, int);
 #define	PAGE_INIT(P) { \
 	((uint16_t *)(void *)(P))[0] = 0; \
 	temp = 3 * sizeof(uint16_t); \
-	_DIAGASSERT(hashp->BSIZE >= temp); \
+	_DIAGASSERT((size_t)hashp->BSIZE >= temp); \
 	((uint16_t *)(void *)(P))[1] = (uint16_t)(hashp->BSIZE - temp); \
 	((uint16_t *)(void *)(P))[2] = hashp->BSIZE; \
 }
@@ -869,15 +869,19 @@ open_temp(HTAB *hashp)
 	sigset_t set, oset;
 	char *envtmp;
 	char namestr[PATH_MAX];
+	int len;
 
 	if (issetugid())
 		envtmp = NULL;
 	else
 		envtmp = getenv("TMPDIR");
 
-	if (-1 == snprintf(namestr, sizeof(namestr), "%s/_hashXXXXXX",
-	    envtmp ? envtmp : _PATH_TMP))
+	len = snprintf(namestr, sizeof(namestr), "%s/_hashXXXXXX",
+	    envtmp ? envtmp : _PATH_TMP);
+	if (len < 0 || (size_t)len >= sizeof(namestr)) {
+		errno = ENAMETOOLONG;
 		return -1;
+	}
 
 	/* Block signals; make sure file goes away at process exit. */
 	(void)sigfillset(&set);

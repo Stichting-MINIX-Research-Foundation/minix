@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ttl.c,v 1.7 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: ns_ttl.c,v 1.8 2012/03/13 21:13:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_ttl.c,v 1.4 2005/07/28 06:51:49 marka Exp";
 #else
-__RCSID("$NetBSD: ns_ttl.c,v 1.7 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: ns_ttl.c,v 1.8 2012/03/13 21:13:39 christos Exp $");
 #endif
 #endif
 
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: ns_ttl.c,v 1.7 2009/04/12 17:07:17 christos Exp $");
 
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -61,11 +62,11 @@ ns_format_ttl(u_long src, char *dst, size_t dstlen) {
 	int secs, mins, hours, days, weeks, x;
 	char *p;
 
-	secs = src % 60;   src /= 60;
-	mins = src % 60;   src /= 60;
-	hours = src % 24;  src /= 24;
-	days = src % 7;    src /= 7;
-	weeks = src;       src = 0;
+	secs = (int)(src % 60);   src /= 60;
+	mins = (int)(src % 60);   src /= 60;
+	hours = (int)(src % 24);  src /= 24;
+	days = (int)(src % 7);    src /= 7;
+	weeks = (int)src;       src = 0;
 
 	x = 0;
 	if (weeks) {
@@ -97,7 +98,8 @@ ns_format_ttl(u_long src, char *dst, size_t dstlen) {
 				*p = tolower(ch);
 	}
 
-	return (dst - odst);
+	_DIAGASSERT(__type_fit(int, dst - odst));
+	return (int)(dst - odst);
 }
 
 #ifndef _LIBC

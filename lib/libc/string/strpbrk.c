@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.19 2008/09/24 16:58:53 christos Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.20 2011/11/22 00:37:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpbrk.c,v 1.19 2008/09/24 16:58:53 christos Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.20 2011/11/22 00:37:09 joerg Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
@@ -59,6 +59,11 @@ strpbrk(const char *s, const char *charset)
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(charset != NULL);
+
+	if (charset[0] == '\0')
+		return NULL;
+	if (charset[1] == '\0')
+		return strchr(s, charset[0]);
 
 	for (; *charset != '\0'; ++charset)
 		ADD_TO_SET(UC(*charset));

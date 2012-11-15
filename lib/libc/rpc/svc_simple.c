@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.30 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.31 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_simple.c,v 1.30 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.31 2012/03/20 17:14:50 matt Exp $");
 #endif
 
 #include "namespace.h"
@@ -68,10 +68,10 @@ __RCSID("$NetBSD: svc_simple.c,v 1.30 2008/04/25 17:44:44 christos Exp $");
 __weak_alias(rpc_reg,_rpc_reg)
 #endif
 
-static void universal __P((struct svc_req *, SVCXPRT *));
+static void universal(struct svc_req *, SVCXPRT *);
 
 static struct proglst {
-	char *(*p_progname) __P((char *));
+	char *(*p_progname)(char *);
 	rpcprog_t p_prognum;
 	rpcvers_t p_versnum;
 	rpcproc_t p_procnum;
@@ -102,13 +102,14 @@ static const char __no_mem_str[] = "out of memory";
  */
 
 int
-rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
-	rpcprog_t prognum;			/* program number */
-	rpcvers_t versnum;			/* version number */
-	rpcproc_t procnum;			/* procedure number */
-	char *(*progname) __P((char *)); /* Server routine */
-	xdrproc_t inproc, outproc;	/* in/out XDR procedures */
-	char *nettype;			/* nettype */
+rpc_reg(
+	rpcprog_t prognum,		/* program number */
+	rpcvers_t versnum,		/* version number */
+	rpcproc_t procnum,		/* procedure number */
+	char *(*progname)(char *),	/* Server routine */
+	xdrproc_t inproc,		/* in XDR procedure */
+	xdrproc_t outproc,		/* out XDR procedure */
+	char *nettype)			/* nettype */
 {
 	struct netconfig *nconf;
 	int done = FALSE;
@@ -251,9 +252,7 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
  */
 
 static void
-universal(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+universal(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	rpcprog_t prog;
 	rpcvers_t vers;

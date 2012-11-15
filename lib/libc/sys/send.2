@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.27 2008/05/09 15:52:50 christos Exp $
+.\"	$NetBSD: send.2,v 1.30 2012/06/22 22:54:26 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,13 +29,14 @@
 .\"
 .\"     @(#)send.2	8.2 (Berkeley) 2/21/94
 .\"
-.Dd May 9, 2008
+.Dd June 22, 2012
 .Dt SEND 2
 .Os
 .Sh NAME
 .Nm send ,
 .Nm sendto ,
-.Nm sendmsg
+.Nm sendmsg ,
+.Nm sendmmsg
 .Nd send a message from a socket
 .Sh LIBRARY
 .Lb libc
@@ -47,20 +48,54 @@
 .Fn sendto "int s" "const void *msg" "size_t len" "int flags" "const struct sockaddr *to" "socklen_t tolen"
 .Ft ssize_t
 .Fn sendmsg "int s" "const struct msghdr *msg" "int flags"
+.Ft int
+.Fn sendmmsg "int s" "struct mmsghdr *mmsg" "unsigned int vlen" "unsigned int flags"
 .Sh DESCRIPTION
 .Fn send ,
 .Fn sendto ,
+.Fn sendmsg ,
 and
-.Fn sendmsg
+.Fn sendmmsg
 are used to transmit a message to another socket.
 .Fn send
 may be used only when the socket is in a
 .Em connected
 state, while
-.Fn sendto
-and
+.Fn sendto ,
 .Fn sendmsg
+and
+.Fn sendmmsg
 may be used at any time.
+.Pp
+The
+.Fn sendmmsg
+call be used to send multiple messages in the same call using an array of
+.Fa mmsghdr
+elements with the following form, as defined in
+.Ao Pa sys/socket.h Ac :
+.Pp
+.Bd -literal
+struct mmsghdr {
+	struct msghdr	msg_hdr;	/* the message to be sent */
+	unsigned int	msg_len;	/* number of bytes transmitted */
+};
+.Ed
+.Pp
+The
+.Fa msg_len
+member contains the number of bytes sent for each
+.Fa msg_hdr
+member.
+The array has
+.Fa vlen
+elements, which is limited to
+.Dv 1024 .
+If there is an error, a number fewer than
+.Fa vlen
+may be returned, and the error may be retrieved using
+.Xr getsockopt 2
+with
+.Dv SO_ERROR .
 .Pp
 The address of the target is given by
 .Fa to
@@ -90,6 +125,9 @@ or
 .Xr poll 2
 call may be used to determine when it is possible to
 send more data.
+Unfortunately this does not work when the interface queue which is used to
+send the message is full, and the call returns
+.Er ENOBUFS .
 .Pp
 The
 .Fa flags
@@ -139,53 +177,63 @@ is used to prevent
 generation when writing a socket that
 may be closed.
 .Sh RETURN VALUES
-The call returns the number of characters sent, or \-1
-if an error occurred.
-.Sh ERRORS
+The
 .Fn send ,
 .Fn sendto ,
 and
 .Fn sendmsg
+calls return the number of characters sent, or \-1
+if an error occurred.
+The
+.Fn sendmmsg
+call returns the number of messages sent, or \-1
+if an error occured.
+.Sh ERRORS
+.Fn send ,
+.Fn sendto ,
+.Fn sendmsg ,
+and
+.Fn sendmmsg
 fail if:
 .Bl -tag -width Er
+.It Bq Er EACCES
+The SO_BROADCAST option is not set on the socket, and a broadcast address
+was given as the destination.
+.It Bq Er EAFNOSUPPORT
+Addresses in the specified address family cannot be used with this socket.
+.It Bq Er EAGAIN|EWOULDBLOCK
+The socket is marked non-blocking and the requested operation
+would block.
 .It Bq Er EBADF
 An invalid descriptor was specified.
+.It Bq Er EDSTADDRREQ
+In a non-connected socket a destination address has not been specified.
+.It Bq Er EFAULT
+An invalid user space address was specified for a parameter.
+.It Bq Er EHOSTDOWN
+The destination is a host on the local subnet and does not respond to
+.Xr arp 4 .
+.It Bq Er EHOSTUNREACH
+The destination for the message is unreachable.
+.It Bq Er EINVAL
+The total length of the I/O is more than can be expressed by the ssize_t
+return value.
+.It Bq Er EMSGSIZE
+The socket requires that message be sent atomically,
+and the size of the message to be sent made this impossible.
+.It Bq Er ENOBUFS
+The system was unable to allocate an internal buffer.
+The operation may succeed when buffers become available.
+.Pp
+An alternative reason: the output queue for a network interface was full.
+This generally indicates that the interface has stopped sending,
+but may be caused by transient congestion.
 .It Bq Er ENOTSOCK
 The argument
 .Fa s
 is not a socket.
-.It Bq Er EFAULT
-An invalid user space address was specified for a parameter.
-.It Bq Er EMSGSIZE
-The socket requires that message be sent atomically,
-and the size of the message to be sent made this impossible.
 .It Bq Er EPIPE
 In a connected socket the connection has been broken.
-.It Bq Er EDSTADDRREQ
-In a non-connected socket a destination address has not been specified.
-.It Bq Er EAGAIN|EWOULDBLOCK
-The socket is marked non-blocking and the requested operation
-would block.
-.It Bq Er ENOBUFS
-The system was unable to allocate an internal buffer.
-The operation may succeed when buffers become available.
-.It Bq Er ENOBUFS
-The output queue for a network interface was full.
-This generally indicates that the interface has stopped sending,
-but may be caused by transient congestion.
-.It Bq Er EACCES
-The SO_BROADCAST option is not set on the socket, and a broadcast address
-was given as the destination.
-.It Bq Er EHOSTUNREACH
-The destination for the message is unreachable.
-.It Bq Er EHOSTDOWN
-The destination is a host on the local subnet and does not respond to 
-.Xr arp 4 .
-.It Bq Er EINVAL
-The total length of the I/O is more than can be expressed by the ssize_t
-return value.
-.It Bq Er EAFNOSUPPORT
-Addresses in the specified address family cannot be used with this socket.
 .El
 .Pp
 .Fn sendto
@@ -196,6 +244,8 @@ A destination address was specified and the socket is already connected.
 .El
 .Pp
 .Fn sendmsg
+and
+.Fn sendmmsg
 will also fail if:
 .Bl -tag -width Er
 .It Bq Er EMSGSIZE
@@ -219,3 +269,9 @@ The
 .Fn send
 function call appeared in
 .Bx 4.2 .
+The
+.Fn sendmmsg
+function call appeared in
+.Tn Linux 3.0
+and
+.Nx 7.0 .

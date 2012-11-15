@@ -112,7 +112,6 @@ int diocntl(dev_t device, int request, struct partition *entry)
 {
 	char *name;
 	int r, f, err;
-	struct partition geometry;
 
 	name= finddev(device);
 	if ((f= open(name, O_RDONLY)) < 0) return -1;
@@ -164,7 +163,7 @@ int main(int argc, char **argv)
 	struct stat hdst;
 	struct partition whole, entry;
 	struct part_entry table[4], *pe;
-	int drive, par, device, incr;
+	int drive, par = 0, device, incr;
 	int partf;
 	char *table_file;
 	int hd_major, hd_minor;

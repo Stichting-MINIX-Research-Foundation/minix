@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2011/07/03 07:13:31 matt Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+RCSID("$NetBSD: ffs.S,v 1.2 2011/07/03 07:13:31 matt Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -44,7 +44,7 @@ RCSID("$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
  * This is the ffs algorithm devised by d.seal and posted to comp.sys.arm on
  * 16 Feb 1994.
  */
-
+WEAK_ALIAS(__ffssi2,ffs)
 ENTRY(ffs)
 #ifdef _ARM_ARCH_5
 	/* (X & -X) gives LSB or zero.  */

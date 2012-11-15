@@ -1,4 +1,4 @@
-/*	$NetBSD: catclose.c,v 1.13 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: catclose.c,v 1.14 2012/06/25 22:32:45 abs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catclose.c,v 1.13 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: catclose.c,v 1.14 2012/06/25 22:32:45 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -48,8 +48,7 @@ __weak_alias(catclose, _catclose)
 #endif
 
 int
-_catclose(catd)
-	nl_catd catd;
+_catclose(nl_catd catd)
 {
 	if (catd == (nl_catd) -1) {
 		errno = EBADF;

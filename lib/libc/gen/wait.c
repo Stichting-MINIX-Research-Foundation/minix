@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.c,v 1.8 2003/08/07 16:43:00 agc Exp $	*/
+/*	$NetBSD: wait.c,v 1.9 2012/03/20 16:36:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)wait.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wait.c,v 1.8 2003/08/07 16:43:00 agc Exp $");
+__RCSID("$NetBSD: wait.c,v 1.9 2012/03/20 16:36:05 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,7 @@ __weak_alias(wait,_wait)
 
 
 pid_t
-wait(istat)
-	int *istat;
+wait(int *istat)
 {
-	return (wait4(WAIT_ANY, istat, 0, (struct rusage *)0));
+	return (wait4(WAIT_ANY, istat, 0, (struct rusage *)NULL));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.34 2010/09/26 02:26:59 yamt Exp $	*/
+/*	$NetBSD: dirent.h,v 1.35 2012/07/30 23:11:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -58,7 +58,13 @@ typedef struct _dirdesc DIR;
 
 /* structure describing an open directory. */
 struct _dirdesc {
+	/*
+	 * dd_fd should be kept intact to preserve ABI compat.  see dirfd().
+	 */
 	int	dd_fd;		/* file descriptor associated with directory */
+	/*
+	 * the rest is hidden from user.
+	 */
 	long	dd_loc;		/* offset in current buffer */
 	long	dd_size;	/* amount of data returned by getdents */
 	char	*dd_buf;	/* data buffer */

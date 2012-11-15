@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.28 2006/08/12 23:49:54 christos Exp $	*/
+/*	$NetBSD: fstab.c,v 1.31 2012/03/13 21:13:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.28 2006/08/12 23:49:54 christos Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.31 2012/03/13 21:13:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,8 +62,6 @@ static FILE *_fs_fp;
 static size_t _fs_lineno = 0;
 static const char *_fs_file = _PATH_FSTAB;
 static struct fstab _fs_fstab;
-
-static int fstabscan __P((void));
 
 static char *nextfld(char **, const char *);
 static int fstabscan(void);
@@ -98,7 +96,7 @@ fstabscan(void)
 
 	(void)memset(&_fs_fstab, 0, sizeof(_fs_fstab));
 	for (;;) {
-		if (!(lp = fgets(line, sizeof(line), _fs_fp)))
+		if (!(lp = fgets(line, (int)sizeof(line), _fs_fp)))
 			return 0;
 		_fs_lineno++;
 /* OLD_STYLE_FSTAB */
@@ -216,7 +214,7 @@ setfsent(void)
 		rewind(_fs_fp);
 		return 1;
 	}
-	if ((_fs_fp = fopen(_PATH_FSTAB, "r")) == NULL) {
+	if ((_fs_fp = fopen(_PATH_FSTAB, "re")) == NULL) {
 		warn("Cannot open `%s'", _PATH_FSTAB);
 		return 0;
 	}

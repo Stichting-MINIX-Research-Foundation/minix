@@ -251,7 +251,8 @@ extern char *malloc();
 #endif
 
 /* everybody but Amiga wants lseek declared here */
-#if !AMIGA
+/* LSC: MINIX Does not want it either! */
+#if !AMIGA && !defined(__minix)
 extern long lseek();
 #endif
 

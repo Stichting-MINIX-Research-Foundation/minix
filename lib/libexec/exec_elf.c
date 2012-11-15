@@ -129,7 +129,7 @@ int libexec_load_elf(struct exec_info *execi)
 	Elf_Phdr *phdr = NULL;
 	int e, i = 0;
 	int first = 1;
-	vir_bytes startv, stacklow;
+	vir_bytes startv = 0, stacklow;
 
 	assert(execi != NULL);
 	assert(execi->hdr != NULL);

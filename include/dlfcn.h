@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.22 2010/12/24 12:41:42 skrll Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.24 2012/02/16 23:00:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@ typedef struct _dl_info {
  * User interface to the run-time linker.
  */
 __BEGIN_DECLS
+void *_dlauxinfo(void) __pure;
+
 void	*dlopen(const char *, int);
 int	dlclose(void *);
 void	*dlsym(void * __restrict, const char * __restrict);
@@ -55,6 +57,8 @@ void	*dlsym(void * __restrict, const char * __restrict);
 int	dladdr(const void * __restrict, Dl_info * __restrict);
 int	dlctl(void *, int, void *);
 int	dlinfo(void *, int, void *);
+void	*dlvsym(void * __restrict, const char * __restrict,
+	    const char * __restrict);
 #endif
 __aconst char *dlerror(void);
 __END_DECLS

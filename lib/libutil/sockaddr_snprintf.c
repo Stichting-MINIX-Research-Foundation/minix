@@ -54,14 +54,20 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
     const struct sockaddr * const sa)
 {
 	const void *a = NULL;
+#ifndef __minix
 	char abuf[1024], nbuf[1024], *addr = NULL, *w = NULL;
+#else
+	char abuf[1024], nbuf[1024], *addr = NULL;
+#endif
 	char Abuf[1024], pbuf[32], *name = NULL, *port = NULL;
 	char *ebuf = &sbuf[len - 1], *buf = sbuf;
 	const char *ptr, *s;
 	int p = -1;
-	const struct sockaddr_in *sin4 = NULL;
 #ifndef __minix
 	const struct sockaddr_at *sat = NULL;
+#endif
+	const struct sockaddr_in *sin4 = NULL;
+#ifndef __minix
 	const struct sockaddr_in6 *sin6 = NULL;
 	const struct sockaddr_un *sun = NULL;
 	const struct sockaddr_dl *sdl = NULL;

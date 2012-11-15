@@ -1,4 +1,4 @@
-/* $NetBSD: fmemopen.c,v 1.5 2010/09/27 17:08:29 tnozaki Exp $ */
+/* $NetBSD: fmemopen.c,v 1.8 2012/03/29 14:27:33 christos Exp $ */
 
 /*-
  * Copyright (c)2007, 2010 Takehiko NOZAKI,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmemopen.c,v 1.5 2010/09/27 17:08:29 tnozaki Exp $");
+__RCSID("$NetBSD: fmemopen.c,v 1.8 2012/03/29 14:27:33 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -46,11 +46,11 @@ struct fmemopen_cookie {
 	char *head, *tail, *cur, *eob;
 };
 
-static int
-fmemopen_read(void *cookie, char *buf, int nbytes)
+static ssize_t
+fmemopen_read(void *cookie, void *buf, size_t nbytes)
 {
 	struct fmemopen_cookie *p;
-	char *s;
+	char *s, *b = buf;
 
 	_DIAGASSERT(cookie != NULL);
 	_DIAGASSERT(buf != NULL && nbytes > 0);
@@ -60,17 +60,18 @@ fmemopen_read(void *cookie, char *buf, int nbytes)
 	do {
 		if (p->cur == p->tail)
 			break;
-		*buf++ = *p->cur++;
+		*b++ = *p->cur++;
 	} while (--nbytes > 0);
 
-	return (int)(p->cur - s);
+	return (ssize_t)(p->cur - s);
 }
 
-static int
-fmemopen_write(void *cookie, const char *buf, int nbytes)
+static ssize_t
+fmemopen_write(void *cookie, const void *buf, size_t nbytes)
 {
 	struct fmemopen_cookie *p;
 	char *s;
+	const char *b = buf;
 
 	_DIAGASSERT(cookie != NULL);
 	_DIAGASSERT(buf != NULL && nbytes > 0);
@@ -81,24 +82,40 @@ fmemopen_write(void *cookie, const char *buf, int nbytes)
 	s = p->cur;
 	do {
 		if (p->cur == p->tail - 1) {
-			if (*buf == '\0') {
+			if (*b == '\0') {
 				*p->cur++ = '\0';
 				goto ok;
 			}
 			break;
 		}
-		*p->cur++ = *buf++;
+		*p->cur++ = *b++;
 	} while (--nbytes > 0);
 	*p->cur = '\0';
 ok:
 	if (p->cur > p->eob)
 		p->eob = p->cur;
 
-	return (int)(p->cur - s);
+	return (ssize_t)(p->cur - s);
 }
 
-static fpos_t
-fmemopen_seek(void *cookie, fpos_t offset, int whence)
+#ifdef notyet
+static int
+fmemopen_flush(void *cookie)
+{
+	struct fmemopen_cookie *p;
+
+	_DIAGASSERT(cookie != NULL);
+
+	p = (struct fmemopen_cookie *)cookie;
+	if (p->cur >= p->tail)
+		return -1;
+	*p->cur = '\0';
+	return 0;
+}
+#endif
+
+static off_t
+fmemopen_seek(void *cookie, off_t offset, int whence)
 {
 	struct fmemopen_cookie *p;
  
@@ -118,12 +135,12 @@ fmemopen_seek(void *cookie, fpos_t offset, int whence)
 		errno = EINVAL;
 		goto error;
 	}
-	if (offset >= (fpos_t)0 && offset <= p->tail - p->head) {
+	if (offset >= (off_t)0 && offset <= p->tail - p->head) {
 		p->cur = p->head + (ptrdiff_t)offset;
-		return (fpos_t)(p->cur - p->head);
+		return (off_t)(p->cur - p->head);
 	}
 error:
-	return (fpos_t)-1;
+	return (off_t)-1;
 }
 
 static int
@@ -184,12 +201,12 @@ fmemopen(void * __restrict buf, size_t size, const char * __restrict mode)
 			goto release;
 		}
 		*cookie->head = '\0';
-		fp->_close = &fmemopen_close1;
+		fp->_close = fmemopen_close1;
 	} else {
 		cookie->head = (char *)buf;
 		if (oflags & O_TRUNC)
 			*cookie->head = '\0';
-		fp->_close = &fmemopen_close0;
+		fp->_close = fmemopen_close0;
 	}
 
 	cookie->tail = cookie->head + size;
@@ -203,9 +220,12 @@ fmemopen(void * __restrict buf, size_t size, const char * __restrict mode)
 	cookie->cur = (oflags & O_APPEND) ? cookie->eob : cookie->head;
 
 	fp->_flags  = flags;
-	fp->_write  = (flags & __SRD) ? NULL : &fmemopen_write;
-	fp->_read   = (flags & __SWR) ? NULL : &fmemopen_read;
-	fp->_seek   = &fmemopen_seek;
+	fp->_write  = (flags & __SRD) ? NULL : fmemopen_write;
+	fp->_read   = (flags & __SWR) ? NULL : fmemopen_read;
+	fp->_seek   = fmemopen_seek;
+#ifdef notyet
+	fp->_flush  = fmemopen_flush;
+#endif
 	fp->_cookie = (void *)cookie;
 
 	return fp;

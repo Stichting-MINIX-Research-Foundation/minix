@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.37 2010/03/22 19:30:54 joerg Exp $
+.\"	$NetBSD: sysconf.3,v 1.40 2011/08/23 17:28:34 jmcneill Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysconf.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd August 6, 2008
+.Dd August 23, 2011
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ The available values are as follows:
 The maximum bytes of argument to
 .Xr execve 2 .
 .It Li _SC_ATEXIT_MAX
-The maxmimum number of functions that may be registered with
+The maximum number of functions that may be registered with
 .Xr atexit 3 .
 .It Li _SC_BARRIERS
 The version of
@@ -86,7 +86,8 @@ The number of clock ticks per second.
 Return 1 if the File Synchronization Option is available on this system,
 otherwise \-1.
 .It Li _SC_HOST_NAME_MAX
-The maximum size of a hostname, including NULL.
+The maximum size of a hostname, including
+.Dv NULL .
 .It Li _SC_IOV_MAX
 The maximum number of
 .Va iovec
@@ -128,7 +129,8 @@ The maximum number of open files per process.
 .It Li _SC_PAGESIZE
 The size of a system page in bytes.
 .It Li _SC_PASS_MAX
-The maximum length of the password, not counting NULL.
+The maximum length of the password, not counting
+.Dv NULL .
 .It Li _SC_READER_WRITER_LOCKS
 The version of
 .St -p1003.1
@@ -307,6 +309,8 @@ The value of the
 argument is invalid.
 .El
 .Sh SEE ALSO
+.Xr getconf 1 ,
+.Xr limits 3 ,
 .Xr sysctl 3
 .Sh STANDARDS
 The

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.14 2007/11/23 12:39:15 uebayasi Exp $	*/
+/*	$NetBSD: mmap.c,v 1.15 2012/03/20 16:26:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: mmap.c,v 1.14 2007/11/23 12:39:15 uebayasi Exp $");
+__RCSID("$NetBSD: mmap.c,v 1.15 2012/03/20 16:26:12 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,13 +55,7 @@ void *__mmap(void *, size_t, int, int, int, int, off_t);
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 void *
-mmap(addr, len, prot, flags, fd, offset)
-	void   *addr;
-	size_t	len;
-	int	prot;
-	int	flags;
-	int	fd;
-	off_t	offset;
+mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
 
 	return __mmap(addr, len, prot, flags, fd, 0, offset);

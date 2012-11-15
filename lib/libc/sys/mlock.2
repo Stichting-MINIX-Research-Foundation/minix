@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlock.2,v 1.18 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: mlock.2,v 1.20 2011/02/28 07:17:02 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mlock.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd June 2, 1993
+.Dd February 28, 2011
 .Dt MLOCK 2
 .Os
 .Sh NAME
@@ -59,14 +59,7 @@ The
 call unlocks pages previously locked by one or more
 .Nm mlock
 calls.
-For both, the
-.Fa addr
-parameter should be aligned to a multiple of the page size.
-If the
-.Fa len
-parameter is not a multiple of the page size, it will be rounded up
-to be so.
-The entire range must be allocated.
+The entire range of memory must be allocated.
 .Pp
 After an
 .Nm mlock
@@ -99,6 +92,14 @@ a system-wide ``wired pages'' limit and
 the per-process
 .Li RLIMIT_MEMLOCK
 resource limit.
+.Pp
+Portable code should ensure that the
+.Fa addr
+and
+.Fa len
+parameters are aligned to a multiple of the page size, even though the
+.Nx
+implementation will round as necessary.
 .Sh RETURN VALUES
 A return value of 0 indicates that the call
 succeeded and all pages in the range have either been locked or unlocked.
@@ -111,11 +112,12 @@ is set to indicate the error.
 .Fn mlock
 will fail if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The address given is not page aligned or the length is negative.
 .It Bq Er EAGAIN
 Locking the indicated range would exceed either the system or per-process
 limit for locked memory.
+.It Bq Er EINVAL
+The length is negative; or the address or length given is not page
+aligned and the implementation does not round.
 .It Bq Er ENOMEM
 Some portion of the indicated address range is not allocated.
 There was an error faulting/mapping a page.
@@ -129,7 +131,8 @@ is not implemented.
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The address given is not page aligned or the length is negative.
+The length is negative; or the address or length given is not page
+aligned and the implementation does not round.
 .It Bq Er ENOMEM
 Some portion of the indicated address range is not allocated.
 Some portion of the indicated address range is not locked.

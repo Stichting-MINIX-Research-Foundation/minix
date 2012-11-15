@@ -87,7 +87,7 @@ int mountflags;
 		 */
 		rslabel = find_rslabel(args);
 		if (rslabel != NULL){
-			snprintf(label,16,rslabel);
+			snprintf(label,16,"%s",rslabel);
 			free(rslabel);
 		} else {
 			if (stat(name, &statbuf) < 0) return -1;
@@ -204,8 +204,7 @@ int flags;
   return r;
 }
 
-char *find_rslabel(args_line)
-char *args_line;
+char *find_rslabel(char *args_line)
 {
   /**
    * Find and return the rslabel as given as optional

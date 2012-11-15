@@ -16,6 +16,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#include "installboot.h"
+
 #define BOOTBLOCK	0	/* Of course */
 #define BOOT_BLOCK_SIZE 1024
 #define SIGNATURE	0xAA55	/* Boot block signature. */

@@ -91,9 +91,11 @@ struct bootblk_command {
 	void (*c_fn)(char *);
 };
 void bootmenu(void);
-void prompt(int);
 void docommand(char *);
+#if defined(__minix)
 void editline(char *, size_t, char *);
+void prompt(int);
+#endif
 
 /* in "user code": */
 void command_help(char *);
@@ -116,7 +118,9 @@ int coniskey(void);
 __compactcall void conputc(int);
 void conclr(void);
 
+#if defined(__minix)
 int getchar_ex(void);
+#endif
 
 int getextmem2(int *);
 __compactcall int getextmemps2(void *);

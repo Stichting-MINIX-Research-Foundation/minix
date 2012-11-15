@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.29 2009/10/14 17:24:03 joerg Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.31 2011/04/28 16:16:23 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004, 2005, 2008
 .\" The NetBSD Foundation, Inc.
@@ -479,7 +479,8 @@ All methods for all sources are invoked for this method name.
 should be set to a pointer to an internal static
 .Ft "struct group"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getgrent 3
 returns
@@ -521,7 +522,8 @@ otherwise.
 should be set to a pointer to an internal static
 .Ft "struct group"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getgrgid 3
 returns
@@ -564,7 +566,8 @@ otherwise.
 should be set to a pointer to an internal static
 .Ft "struct group"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getgrnam 3
 returns
@@ -703,7 +706,8 @@ should be set to 1 for a successful match and 0 otherwise.
 should be set to a pointer to an internal static
 .Ft "struct netent"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getnetbyaddr 3
 returns
@@ -722,7 +726,8 @@ otherwise.
 should be set to a pointer to an internal static
 .Ft "struct netent"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getnetbyname 3
 returns
@@ -749,7 +754,8 @@ All methods for all sources are invoked for this method name.
 should be set to a pointer to an internal static
 .Ft "struct passwd"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getpwent 3
 returns
@@ -791,7 +797,8 @@ otherwise.
 should be set to a pointer to an internal static
 .Ft "struct passwd"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getpwnam 3
 returns
@@ -834,7 +841,8 @@ otherwise.
 should be set to a pointer to an internal static
 .Ft "struct passwd"
 on success,
-.Dv NULL otherwise.
+.Dv NULL
+otherwise.
 .Pp
 .Xr getpwuid 3
 returns
@@ -858,7 +866,7 @@ should be set to an appropriate
 .Xr errno 2
 on failure.
 .Pp
-.Xr getpwuid_r
+.Xr getpwuid_r 3
 returns 0
 if
 .Fn nsdispatch

@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.35 2009/12/14 20:45:02 matt Exp $	*/
+/*	$NetBSD: strptime.c,v 1.36 2012/03/13 21:13:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.35 2009/12/14 20:45:02 matt Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.36 2012/03/13 21:13:48 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -554,7 +554,7 @@ find_string(const u_char *bp, int *tgt, const char * const *n1,
 		const char * const *n2, int c)
 {
 	int i;
-	unsigned int len;
+	size_t len;
 
 	/* check full name - then abbreviated ones */
 	for (; n1 != NULL; n1 = n2, n2 = NULL) {

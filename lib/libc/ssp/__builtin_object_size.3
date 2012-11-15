@@ -1,4 +1,4 @@
-.\"	$NetBSD: __builtin_object_size.3,v 1.8 2010/12/19 09:33:52 jruoho Exp $
+.\"	$NetBSD: __builtin_object_size.3,v 1.10 2012/07/19 06:44:12 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 19, 2010
+.Dd July 18, 2012
 .Dt __BUILTIN_OBJECT_SIZE 3
 .Os
 .Sh NAME
@@ -50,8 +50,8 @@ effects.
 If the size of the object is not known or it has side effects the
 .Fn __builtin_object_size
 function returns:
-.Bl -tag -width (size_t)-1 -offset indent
-.It Dv (size_t)-1
+.Bl -tag -width (size_t)\-1 -offset indent
+.It Dv (size_t)\-1
 for
 .Fa type
 .Dv 0
@@ -88,3 +88,14 @@ appeared in
 .Tn GCC 4.1 .
 .Sh CAVEATS
 This is a non-standard, compiler-specific extension.
+.Pp
+Note that currently the object size calculation pass is only done at -O1
+or above, meaning that this function always returns \-1 when the optimizer
+is off.
+.Pp
+There are some discussions about always doing the object size pass, but
+the issue is that without the optimization pass data sizes are not going
+to be correct.
+.Pp
+For that reason currently code fortification (size-checked replacement
+functions) is disabled when optimization is off.

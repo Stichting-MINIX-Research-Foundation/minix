@@ -1,4 +1,4 @@
-/* $NetBSD: strtopQ.c,v 1.4 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtopQ.c,v 1.5 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -58,13 +58,18 @@ strtopQ(s, sp, V) CONST char *s; char **sp; void *V;
 strtopQ(CONST char *s, char **sp, void *V)
 #endif
 {
-	static CONST FPI fpi = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, SI };
+	static CONST FPI fpi0 = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, SI };
 	ULong bits[4];
 	Long expt;
 	int k;
 	ULong *L = (ULong*)V;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi, &expt, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory)
 		return k;
 	switch(k & STRTOG_Retmask) {

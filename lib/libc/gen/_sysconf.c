@@ -1,4 +1,4 @@
-/*	$NetBSD: _sysconf.c,v 1.5 2009/10/21 01:07:45 snj Exp $	*/
+/*	$NetBSD: _sysconf.c,v 1.6 2012/03/20 16:36:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _sysconf.c,v 1.5 2009/10/21 01:07:45 snj Exp $");
+__RCSID("$NetBSD: _sysconf.c,v 1.6 2012/03/20 16:36:04 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__indr_reference)
@@ -34,11 +34,10 @@ __indr_reference(__sysconf, sysconf)
 #else
 
 #include <unistd.h>
-long	__sysconf __P((int));	/* XXX */
+long	__sysconf(int);	/* XXX */
 
 long
-sysconf(name)
-	int name;
+sysconf(int name)
 {
 
 	return __sysconf(name);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsid.2,v 1.10 2006/10/07 21:03:51 elad Exp $
+.\"	$NetBSD: getsid.2,v 1.11 2011/04/04 08:00:53 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getpgrp.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 7, 2006
+.Dd April 4, 2011
 .Dt GETSID 2
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Fn getsid "pid_t pid"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn getsid
 function returns the session ID of the process specified by
 .Ar pid .
 If
@@ -53,7 +53,7 @@ The session ID is defined as the process group ID of the
 process that is the session leader.
 .Sh ERRORS
 If an error occurs,
-.Nm
+.Fn getsid
 returns \-1 and the global variable
 .Va errno
 is set to indicate the error, as follows:

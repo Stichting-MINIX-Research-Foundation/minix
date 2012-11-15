@@ -1,4 +1,4 @@
-.\"	$NetBSD: membar_ops.3,v 1.2 2009/05/18 12:39:17 wiz Exp $
+.\"	$NetBSD: membar_ops.3,v 1.3 2011/04/28 11:56:26 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ relaxed load and store order.
 .Pp
 .Bl -tag -width "mem"
 .It Fn membar_enter
-Any store preceeding
+Any store preceding
 .Fn membar_enter
 will reach global visibility before all loads and stores following it.
 .Pp

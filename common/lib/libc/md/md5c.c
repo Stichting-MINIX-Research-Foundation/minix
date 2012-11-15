@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.4 2009/03/16 05:59:21 cegger Exp $	*/
+/*	$NetBSD: md5c.c,v 1.5 2012/03/20 16:21:41 matt Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md5c.c,v 1.4 2009/03/16 05:59:21 cegger Exp $");
+__RCSID("$NetBSD: md5c.c,v 1.5 2012/03/20 16:21:41 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include "namespace.h"
 #include <sys/types.h>
@@ -84,10 +84,10 @@ __weak_alias(MD5Final,_MD5Final)
 __weak_alias(MD5Transform,_MD5Transform)
 #endif
 
-static void MD5Transform __P((UINT4 [4], const unsigned char [64]));
+static void MD5Transform(UINT4 [4], const unsigned char [64]);
 
-static void Encode __P((unsigned char *, UINT4 *, unsigned int));
-static void Decode __P((UINT4 *, const unsigned char *, unsigned int));
+static void Encode(unsigned char *, UINT4 *, unsigned int);
+static void Decode(UINT4 *, const unsigned char *, unsigned int);
 
 /*
  * Encodes input (UINT4) into output (unsigned char).  Assumes len is

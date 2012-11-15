@@ -1,0 +1,355 @@
+.\"	$NetBSD: __quotactl.2,v 1.3 2012/02/13 19:50:15 dholland Exp $
+.\"
+.\" Copyright (c) 1983, 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Robert Elz at The University of Melbourne.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)quotactl.2	8.2 (Berkeley) 3/10/95
+.\"
+.Dd February 11, 2012
+.Dt __QUOTACTL 2
+.Os
+.Sh NAME
+.Nm __quotactl
+.Nd manipulate file system quotas
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/quota.h
+.In sys/quotactl.h
+.Ft int
+.Fn __quotactl "const char *path" "struct quotactl_args *args"
+.Sh DESCRIPTION
+The
+.Fn __quotactl
+call manipulates file system quotas.
+This is an internal interface and is documented for reference purposes
+only.
+All application and utility code should use the
+.Xr libquota 3
+interface.
+.Pp
+The
+.Fn __quotactl
+function performs one of several quota-related operations on the file
+system named by
+.Fa path .
+The operation and arguments to that operation are passed in the
+.Fa args
+argument.
+The operation is stored in the
+.Fa qc_op
+member of
+.Fa args .
+The arguments are placed in a union such that the first and second
+arguments of the operation
+.Dv QUOTACTL_EXAMPLE
+are found as the members
+.Fa u.example.qc_arg1
+and
+.Fa u.example.qc_arg2 .
+The descriptions below will refer to the operations as functions of
+the form
+.Fn QUOTACTL_EXAMPLE "int arg1" "int arg2"
+and elide the encoding of these arguments into the
+.Fa args
+structure.
+Explicit mention of the
+.Fa path
+argument is also omitted.
+.Pp
+There are fourteen quota control operations.
+These are:
+.Bl -tag -width abcdef
+.\" ************************************************************
+.It Fn QUOTACTL_STAT "struct quotastat *info"
+Information about the quota implementation on the selected volume is
+returned in
+.Fa info .
+The
+.Dv quotastat
+structure contains the following members:
+.Bl -tag -width qs_restrictions
+.It qs_implname
+A human-readable string describing the underlying implementation of
+quotas.
+This is suitable for display to users
+.Pq and system administrators
+but should not be interpreted by software.
+See
+.Xr quota_getimplname 3 .
+.It qs_numidtypes
+The number of ID types supported by this implementation.
+See
+.Xr quota_getnumidtypes 3 .
+.It qs_numobjtypes
+The number of object types supported by this implementation.
+See
+.Xr quota_getnumobjtypes 3 .
+.It qs_restrictions
+Flags identifying specific semantic limitations of the implementation.
+See
+.Xr quota_getrestrictions 3 .
+.El
+.\" ************************************************************
+.It Fn QUOTACTL_IDTYPESTAT "int idtype" "struct quotaidtypestat *info"
+Information about a particular ID type on the selected volume is
+returned in
+.Fa info .
+The
+.Dv quotaidtypestat
+structure contains the following members:
+.Bl -tag -width qs_restrictions
+.It qis_name
+The name of the ID type.
+See
+.Xr quota_idtype_getname 3 .
+.El
+.\" ************************************************************
+.It Fn QUOTACTL_OBJYPESTAT "int objtype" "struct quotaobjtypestat *info"
+Information about a particular object type on the selected volume is
+returned in
+.Fa info .
+The
+.Dv quotaobjtypestat
+structure contains the following members:
+.Bl -tag -width qs_restrictions
+.It qos_name
+The name of the object type.
+See
+.Xr quota_objtype_getname 3 .
+.It qos_isbytes
+A flag that is nonzero if the object type is something measured in
+bytes.
+See
+.Xr quota_objtype_isbytes 3 .
+.El
+.\" ************************************************************
+.It Fn QUOTACTL_GET "const struct quotakey *key" "struct quotaval *val"
+Return in
+.Fa val
+the quota information selected by
+.Fa key .
+See
+.Xr quota_get 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_PUT "const struct quotakey *key" "const struct quotaval *val"
+The quota information selected by
+.Fa key
+is updated to the values provided in
+.Fa val .
+Note that the current usage information, which is file system
+meta-data, cannot be updated via this interface.
+If the usage information is incorrect a tool such as
+.Xr fsck 8
+or
+.Xr quotacheck 8
+with file-system-specific knowledge must be used to repair the
+on-disk information.
+See
+.Xr quota_put 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_DELETE "const struct quotakey *key"
+The quota information selected by
+.Fa key
+is removed.
+See
+.Xr quota_delete 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_CURSOROPEN "struct quotakcursor *cursor"
+A cursor for iterating the quota information is created.
+The
+.Dv quotakcursor
+structure is a semi-opaque type holding the iteration state used by
+the quota implementation.
+The caller is responsible for allocating and maintaining storage for
+the cursor.
+Every cursor that is opened should be closed.
+It is not specified whether a cursor remains valid if
+.Xr memcpy 3
+is used to move it to a different location in user memory.
+It is not specified whether or how a cursor may be duplicated.
+Passing an uninitialized, corrupted, or closed cursor to operations
+other than
+.Fn QUOTACTL_CURSOROPEN
+will produce unspecified behavior.
+As per general standards for system calls such actions must not
+produce undefined or materially adverse behavior in the kernel;
+however, the effect on a user process may be arbitrary.
+The
+.Xr libquota 3
+interface wraps the system call level quota cursors in a friendlier
+interface.
+See
+.Xr quota_opencursor 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_CURSORCLOSE "struct quotakcursor *cursor"
+The cursor passed in is closed.
+See
+.Xr quotacursor_close 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_CURSORSKIPIDTYPE "struct quotakcursor *cursor" "int idtype"
+This operation provides a hint that iteration can skip over a
+particular ID type.
+The implementation is not obliged to honor the hint.
+See
+.Xr quotacursor_skipidtype 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_CURSORGET "struct quotakcursor *cursor" "struct quotakey *keys" "struct quotaval *vals" "unsigned maxnum" "unsigned *ret"
+This operation retrieves data at the current cursor position and
+advances it.
+Up to
+.Fa maxnum
+quota records are retrieved and stored into the arrays named by
+.Fa keys
+and
+.Fa vals .
+The number of records retrieved is stored into the variable pointed to
+by
+.Fa ret .
+See
+.Xr quotacursor_get 3
+and
+.Xr quotacursor_getn 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_CURSORATEND "struct quotakcursor *cursor" "int *ret"
+This operation generates a nonzero value if the cursor has reached the
+end of the available quota information and zero otherwise.
+The generated value is stored into the variable pointed to by
+.Fa ret .
+See
+.Xr quotacursor_atend 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_CURSORREWIND "struct quotakcursor *cursor"
+This operation updates the cursor state so that further calls to
+.Fn QUOTACTL_CURSORGET
+will begin again at the start of the iteration.
+See
+.Xr quotacursor_rewind 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_QUOTAON "int idtype" "const char *quotafile"
+This operation is accepted only by old-style
+.Pq Dq quota1
+quota implementations.
+Quotas for the ID type named by
+.Fa idtype
+are switched on, and the file
+.Fa quotafile
+is used to hold the quota information.
+This operation can also be used when quotas are already switched on
+to change the file used to hold the quota information.
+Note however that as the current usage information in the file must be
+consistent with the current state of the file system, in general it is
+not safe to call
+.Fn QUOTACTL_QUOTAON
+except in single-user mode.
+See
+.Xr quotaon 8
+for more information.
+Normally
+quotaon 8
+is run during the boot sequence after
+quotacheck 8 .
+Also see
+.Xr quota_quotaon 3 .
+.\" ************************************************************
+.It Fn QUOTACTL_QUOTAOFF "int idtype"
+This operation is accepted only by old-style
+.Pq Dq quota1
+quota implementations.
+Quotas for the ID type named by
+.Fa idtype
+are switched off.
+Once quotas are switched off the file system behaves as if no quotas
+are present.
+Normally
+quotaoff 8
+is run during the shutdown sequence.
+Also see
+.Xr quota_quotaoff 3 .
+.\" ************************************************************
+.El
+.Sh RETURN VALUES
+On success,
+.Fn __quotactl
+returns 0.
+Otherwise the value \-1 is returned and an error code reflecting the
+reason for the failure is placed in
+.Va errno .
+.Sh ERRORS
+.Fn __quotactl
+failures include:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+A pointer points outside the process's allocated address space.
+.It Bq Er EINVAL
+The operation code was out of range; or
+a requested ID or object type was out of range; or
+a corrupted or invalid cursor was passed in.
+.It Bq Er ENODEV
+The requested action was inappropriate for
+.Pq or not supported by
+the selected volume.
+.It Bq Er ENOENT
+No quota information exists for the requested key.
+.It Bq Er ENOMEM
+Memory could not be allocated within the kernel.
+.It Bq Er ENXIO
+The target file system type is capable of supporting quotas, but
+quotas are not enabled on the selected volume.
+.It Bq Er EOPNOTSUPP
+The target file system does not support quotas.
+.El
+.Sh SEE ALSO
+.Xr quota 1 ,
+.Xr libquota 3 ,
+.Xr fstab 5 ,
+.Xr edquota 8 ,
+.Xr quotacheck 8 ,
+.Xr quotaon 8 ,
+.Xr quotarestore 8 ,
+.Xr repquota 8
+.Sh HISTORY
+The original
+.Fn quotactl
+function call appeared in
+.Bx 4.3 Reno .
+The current
+.Fn __quotactl
+interface appeared in
+.Nx 6.0 .
+.Sh BUGS
+As of this writing the error returns that occur in practice are not
+always completely consistent with the intent documented above.
+.Pp
+There should be some way to integrate this call with the resource
+limit interface provided by
+.Xr setrlimit 2
+and
+.Xr getrlimit 2 .

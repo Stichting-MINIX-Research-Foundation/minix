@@ -1,7 +1,7 @@
 #ifndef __CLOCK_H__
 #define __CLOCK_H__
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "arch_clock.h"
 
 int boot_cpu_init_timer(unsigned freq);

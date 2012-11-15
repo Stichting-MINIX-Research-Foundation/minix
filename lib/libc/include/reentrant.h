@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.14 2009/01/11 02:46:28 christos Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.15 2012/06/03 21:27:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -254,7 +254,17 @@ __END_DECLS
 #define	thr_getspecific(k)
 #define	thr_keydelete(k)
 
-#define	thr_once(o, f)
+#if !defined(__minix)
+static inline int
+thr_once(once_t *once_control, void (*routine)(void))
+{
+	if (__predict_false(once_control->pto_done == 0)) {
+		(*routine)();
+		once_control->pto_done = 1;
+	}
+	return 0;
+}
+#endif /* defined(__minix) */
 #define	thr_sigsetmask(f, n, o)
 #define	thr_self()
 #define	thr_errno()

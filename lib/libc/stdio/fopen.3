@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.24 2010/04/05 21:34:47 joerg Exp $
+.\"	$NetBSD: fopen.3,v 1.28 2012/07/02 20:02:43 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fopen.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd July 18, 2011
 .Dt FOPEN 3
 .Os
 .Sh NAME
@@ -63,7 +63,13 @@ The argument
 .Fa mode
 points to a string beginning with one of the following
 sequences (Additional characters may follow these sequences.):
-.Bl -tag -width indent
+.Bl -tag -width 4n
+.It Dq Li a
+Append; open for writing.
+The file is created if it does not exist.
+.It Dq Li a+
+Append; open for reading and writing.
+The file is created if it does not exist.
 .It Dq Li r
 Open for reading.
 .It Dq Li r+
@@ -74,30 +80,44 @@ Truncate file to zero length or create file.
 .It Dq Li w+
 Open for reading and writing.
 Truncate file to zero length or create file.
-.It Dq Li a
-Append; open for writing.
-The file is created if it does not exist.
-.It Dq Li a+
-Append; open for reading and writing.
-The file is created if it does not exist.
 .El
 .Pp
-The
+Additionally, the
 .Fa mode
-string can also include the letter ``b'' either as a last character or
-as a character between the characters in any of the two-character strings
-described above.
+string can also include one of the following letters:
+.Bl -tag -width 4n
+.It Sq b
+The letter
+.Sq b
+may appear either as a last character or as a character between the
+characters in any of the two-character strings described above.
 This is strictly for compatibility with
 .St -ansiC
-and has no effect; the ``b'' is ignored.
-.Pp
-The letter ``f'' in the mode string restricts fopen to regular
-files; if the file opened is not a regular file,
+and has no effect; the
+.Sq b
+is ignored.
+.It Sq e
+The letter
+.Sq e
+in the mode string sets the close-on-exec flag in the file descriptors of
+the newly opened file files; if the operation fails,
 .Fn fopen
 will fail.
 This is a non
 .St -ansiC
 extension.
+.It Sq f
+The letter
+.Sq f
+in the mode string restricts
+.Fn fopen
+to regular files; if the file opened is not a regular file,
+.Fn fopen
+will fail.
+This is a non
+.St -ansiC
+extension.
+.El
 .Pp
 Any created files will have mode
 .Pf \*q Dv S_IRUSR
@@ -113,8 +133,8 @@ Any created files will have mode
 .Dv S_IWOTH Ns \*q
 .Pq Li 0666 ,
 as modified by the process'
-umask value (see
-.Xr umask 2 ) .
+.Xr umask 2
+value.
 .Pp
 Opening a file with append mode causes all subsequent writes to it
 to be forced to the then current end of file, regardless of intervening
@@ -185,19 +205,15 @@ is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
+The functions may fail if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The
-.Fa mode
-provided to
-.Fn fopen ,
-.Fn fdopen ,
-or
-.Fn freopen
-was invalid.
 .It Bq Er EFTYPE
 The file is not a regular file and the character ``f'' is specified
 in the mode.
+.It Bq Er EINVAL
+The specified
+.Fa mode
+was invalid.
 .El
 .Pp
 The
@@ -248,13 +264,10 @@ The
 .Fn fopen
 and
 .Fn freopen
-functions
-conform to
+functions conform to
 .St -ansiC .
-The
-.Fn fdopen
-function conforms to
-.St -p1003.1-90 .
+All three functions are specified in
+.St -p1003.1-2008 .
 .Sh CAVEATS
 Proper code using
 .Fn fdopen

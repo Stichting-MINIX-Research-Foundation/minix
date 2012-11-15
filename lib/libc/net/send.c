@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.9 2003/08/07 16:43:15 agc Exp $	*/
+/*	$NetBSD: send.c,v 1.10 2012/03/20 17:44:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: send.c,v 1.9 2003/08/07 16:43:15 agc Exp $");
+__RCSID("$NetBSD: send.c,v 1.10 2012/03/20 17:44:18 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,10 +55,8 @@ __weak_alias(send, _send)
 #endif /* !__minix */
 
 ssize_t
-send(s, msg, len, flags)
-	int s, flags;
-	size_t len;
-	const void *msg;
+send(int s, const void *msg, size_t len, int flags)
 {
+
 	return (sendto(s, msg, len, flags, NULL, 0));
 }

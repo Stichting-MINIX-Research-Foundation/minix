@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.10 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.11 2011/10/15 23:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.10 2010/04/25 00:54:46 joerg Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.11 2011/10/15 23:00:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ _servent_open(struct servent_data *sd)
 		return 0;
 	}
 		
-	sd->plainfile = fopen(_PATH_SERVICES, "r");
+	sd->plainfile = fopen(_PATH_SERVICES, "re");
 	if (sd->plainfile != NULL) {
 		sd->flags |= _SV_PLAINFILE;
 		return 0;

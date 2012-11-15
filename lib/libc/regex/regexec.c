@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.21 2009/02/12 05:06:54 lukem Exp $	*/
+/*	$NetBSD: regexec.c,v 1.22 2012/03/13 21:13:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.21 2009/02/12 05:06:54 lukem Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.22 2012/03/13 21:13:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -171,7 +171,7 @@ __weak_alias(regexec,_regexec)
 #define	STATETEARDOWN(m)	{ free((m)->space); m->space = NULL; }
 #define	SETUP(v)	((v) = &m->space[(size_t)(m->vn++ * m->g->nstates)])
 #define	onestate	int
-#define	INIT(o, n)	((o) = (n))
+#define	INIT(o, n)	((o) = (int)(n))
 #define	INC(o)	((o)++)
 #define	ISSTATEIN(v, o)	((v)[o])
 /* some abbreviations; note that some of these know variable names! */

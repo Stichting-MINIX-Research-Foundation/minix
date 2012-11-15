@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nameindex.c,v 1.6 2000/12/20 18:47:11 christos Exp $	*/
+/*	$NetBSD: if_nameindex.c,v 1.7 2012/03/13 21:13:41 christos Exp $	*/
 /*	$KAME: if_nameindex.c,v 1.8 2000/11/24 08:20:01 itojun Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_nameindex.c,v 1.6 2000/12/20 18:47:11 christos Exp $");
+__RCSID("$NetBSD: if_nameindex.c,v 1.7 2012/03/13 21:13:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -88,8 +88,7 @@ struct if_nameindex *
 if_nameindex(void)
 {
 	struct ifaddrs *ifaddrs, *ifa;
-	unsigned int ni;
-	int nbytes;
+	size_t nbytes, ni;
 	struct if_nameindex *ifni, *ifni2;
 	char *cp;
 

@@ -31,9 +31,9 @@
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  */
 
-#include "kernel.h"
-#include "system.h"
-#include "vm.h"
+#include "kernel/kernel.h"
+#include "kernel/system.h"
+#include "kernel/vm.h"
 #include "kernel/clock.h"
 #include <stdlib.h>
 #include <assert.h>

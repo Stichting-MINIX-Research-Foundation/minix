@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.39 2010/12/29 15:53:57 pooka Exp $	*/
+/*	$NetBSD: paths.h,v 1.41 2012/06/03 21:42:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,8 +61,10 @@
 #define	_PATH_CLOCKCTL	"/dev/clockctl"
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_CONSTTY	"/dev/constty"
+#define _PATH_CPUCTL	"/dev/cpuctl"
 #define	_PATH_CSMAPPER	"/usr/share/i18n/csmapper"
 #define	_PATH_DEFTAPE	"/dev/nrst0"
+#define	_PATH_DEVCDB	"/var/run/dev.cdb"
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"

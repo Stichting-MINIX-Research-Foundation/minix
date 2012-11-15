@@ -1,4 +1,4 @@
-.\"	$NetBSD: realpath.3,v 1.12 2005/08/13 19:53:53 elad Exp $
+.\"	$NetBSD: realpath.3,v 1.14 2012/06/21 21:35:25 wiz Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)realpath.3	8.2 (Berkeley) 2/16/94
 .\"
-.Dd August 13, 2005
+.Dd June 21, 2012
 .Dt REALPATH 3
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .In sys/param.h
 .In stdlib.h
 .Ft "char *"
-.Fn realpath "const char *pathname" "char resolvedname[MAXPATHLEN]"
+.Fn realpath "const char * restrict pathname" "char * restrict resolvedname"
 .Sh DESCRIPTION
 The
 .Fn realpath
@@ -73,6 +73,12 @@ function will resolve both absolute and relative paths
 and return the absolute pathname corresponding to
 .Fa pathname .
 .Sh RETURN VALUES
+If
+.Fa resolvednamed
+is
+.Dv NULL ,
+it will be allocated and the returned pointer can be deallocated using
+.Xr free 3 .
 The
 .Fn realpath
 function returns
@@ -84,7 +90,9 @@ returns
 .Dv NULL ,
 and
 .Fa resolvedname
-contains the pathname which caused the problem.
+was not allocated by
+.Nm ,
+it will contain the pathname which caused the problem.
 .Sh ERRORS
 The function
 .Fn realpath
@@ -95,17 +103,31 @@ for any of the errors specified for the library functions
 .Xr close 2 ,
 .Xr fchdir 2 ,
 .Xr lstat 2 ,
+.Xr malloc 3 ,
 .Xr open 2 ,
 .Xr readlink 2
 and
 .Xr getcwd 3 .
 .Sh SEE ALSO
 .Xr getcwd 3
+.Sh STANDARDS
+.Fn realpath
+first appeared in
+.St -xpg4.2
+and is part of
+.St -p1003.1-2001 .
 .Sh HISTORY
 The
 .Fn realpath
 function call first appeared in
 .Bx 4.4 .
+In
+.Nx 7.0
+the function was updated to accept a
+.Dv NULL
+pointer for the
+.Fa resolvedname
+argument.
 .Sh BUGS
 This implementation of
 .Fn realpath

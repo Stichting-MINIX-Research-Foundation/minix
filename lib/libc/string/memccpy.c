@@ -1,4 +1,4 @@
-/*	$NetBSD: memccpy.c,v 1.12 2003/08/07 16:43:48 agc Exp $	*/
+/*	$NetBSD: memccpy.c,v 1.13 2012/06/25 22:32:46 abs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)memccpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memccpy.c,v 1.12 2003/08/07 16:43:48 agc Exp $");
+__RCSID("$NetBSD: memccpy.c,v 1.13 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,11 +42,7 @@ __RCSID("$NetBSD: memccpy.c,v 1.12 2003/08/07 16:43:48 agc Exp $");
 #include <string.h>
 
 void *
-memccpy(t, f, c, n)
-	void *t;
-	const void *f;
-	int c;
-	size_t n;
+memccpy(void *t, const void *f, int c, size_t n)
 {
 
 	_DIAGASSERT(t != 0);

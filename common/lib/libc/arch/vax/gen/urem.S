@@ -30,12 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)urem.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: urem.S,v 1.2 2005/12/24 08:33:32 matt Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 #include <machine/asm.h>
+
+	/* .asciz "@(#)urem.s	8.1 (Berkeley) 6/4/93" */
+RCSID("$NetBSD: urem.S,v 1.3 2011/01/25 04:45:28 matt Exp $")
 
 /*
  * Unsigned modulus, PCC flavor.
@@ -46,11 +44,7 @@
 #define	DIVIDEND	4(%ap)
 #define	DIVISOR		8(%ap)
 
-#ifdef __ELF__
 ASENTRY(__urem,0)
-#else
-ASENTRY(urem,0)
-#endif
 	movl	DIVISOR,%r2
 	jlss	Leasy		# big divisor: settle by comparison
 	movl	DIVIDEND,%r0
@@ -69,12 +63,9 @@ Leasy:
 	movl	DIVIDEND,%r0	# if divisor is bigger, return dividend
 Ldifference:
 	ret
+END(__urem)
 
-#ifdef __ELF__
 ASENTRY(__aurem,0)
-#else
-ASENTRY(aurem,0)
-#endif
 	movl	DIVIDEND,%r3
 	movl	DIVISOR,%r2
 	jlss	La_easy		# big divisor: settle by comparison
@@ -98,3 +89,4 @@ La_easy:
 La_dividend:
 	movl	(%r3),%r0
 	ret
+END(__aurem)

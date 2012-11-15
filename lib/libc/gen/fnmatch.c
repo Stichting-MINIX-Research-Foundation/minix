@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.21 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.25 2012/03/25 16:31:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.21 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.25 2012/03/25 16:31:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,113 +59,19 @@ __weak_alias(fnmatch,_fnmatch)
 
 #define	EOS	'\0'
 
-static const char *rangematch __P((const char *, int, int));
-
 static inline int
 foldcase(int ch, int flags)
 {
 
 	if ((flags & FNM_CASEFOLD) != 0 && isupper(ch))
-		return (tolower(ch));
-	return (ch);
+		return tolower(ch);
+	return ch;
 }
 
 #define	FOLDCASE(ch, flags)	foldcase((unsigned char)(ch), (flags))
 
-int
-fnmatch(pattern, string, flags)
-	const char *pattern, *string;
-	int flags;
-{
-	const char *stringstart;
-	char c, test;
-
-	_DIAGASSERT(pattern != NULL);
-	_DIAGASSERT(string != NULL);
-
-	for (stringstart = string;;)
-		switch (c = FOLDCASE(*pattern++, flags)) {
-		case EOS:
-			if ((flags & FNM_LEADING_DIR) && *string == '/')
-				return (0);
-			return (*string == EOS ? 0 : FNM_NOMATCH);
-		case '?':
-			if (*string == EOS)
-				return (FNM_NOMATCH);
-			if (*string == '/' && (flags & FNM_PATHNAME))
-				return (FNM_NOMATCH);
-			if (*string == '.' && (flags & FNM_PERIOD) &&
-			    (string == stringstart ||
-			    ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
-				return (FNM_NOMATCH);
-			++string;
-			break;
-		case '*':
-			c = FOLDCASE(*pattern, flags);
-			/* Collapse multiple stars. */
-			while (c == '*')
-				c = FOLDCASE(*++pattern, flags);
-
-			if (*string == '.' && (flags & FNM_PERIOD) &&
-			    (string == stringstart ||
-			    ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
-				return (FNM_NOMATCH);
-
-			/* Optimize for pattern with * at end or before /. */
-			if (c == EOS) {
-				if (flags & FNM_PATHNAME)
-					return ((flags & FNM_LEADING_DIR) ||
-					    strchr(string, '/') == NULL ?
-					    0 : FNM_NOMATCH);
-				else
-					return (0);
-			} else if (c == '/' && flags & FNM_PATHNAME) {
-				if ((string = strchr(string, '/')) == NULL)
-					return (FNM_NOMATCH);
-				break;
-			}
-
-			/* General case, use recursion. */
-			while ((test = FOLDCASE(*string, flags)) != EOS) {
-				if (!fnmatch(pattern, string,
-					     flags & ~FNM_PERIOD))
-					return (0);
-				if (test == '/' && flags & FNM_PATHNAME)
-					break;
-				++string;
-			}
-			return (FNM_NOMATCH);
-		case '[':
-			if (*string == EOS)
-				return (FNM_NOMATCH);
-			if (*string == '/' && flags & FNM_PATHNAME)
-				return (FNM_NOMATCH);
-			if ((pattern =
-			    rangematch(pattern, FOLDCASE(*string, flags),
-				       flags)) == NULL)
-				return (FNM_NOMATCH);
-			++string;
-			break;
-		case '\\':
-			if (!(flags & FNM_NOESCAPE)) {
-				if ((c = FOLDCASE(*pattern++, flags)) == EOS) {
-					c = '\\';
-					--pattern;
-				}
-			}
-			/* FALLTHROUGH */
-		default:
-			if (c != FOLDCASE(*string++, flags))
-				return (FNM_NOMATCH);
-			break;
-		}
-	/* NOTREACHED */
-}
-
 static const char *
-rangematch(pattern, test, flags)
-	const char *pattern;
-	int test, flags;
+rangematch(const char *pattern, int test, int flags)
 {
 	int negate, ok;
 	char c, c2;
@@ -186,19 +92,122 @@ rangematch(pattern, test, flags)
 		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = FOLDCASE(*pattern++, flags);
 		if (c == EOS)
-			return (NULL);
+			return NULL;
 		if (*pattern == '-' 
-		    && (c2 = FOLDCASE(*(pattern+1), flags)) != EOS &&
+		    && (c2 = FOLDCASE(*(pattern + 1), flags)) != EOS &&
 		        c2 != ']') {
 			pattern += 2;
 			if (c2 == '\\' && !(flags & FNM_NOESCAPE))
 				c2 = FOLDCASE(*pattern++, flags);
 			if (c2 == EOS)
-				return (NULL);
+				return NULL;
 			if (c <= test && test <= c2)
 				ok = 1;
 		} else if (c == test)
 			ok = 1;
 	}
-	return (ok == negate ? NULL : pattern);
+	return ok == negate ? NULL : pattern;
+}
+
+
+static int
+fnmatchx(const char *pattern, const char *string, int flags, size_t recursion)
+{
+	const char *stringstart;
+	char c, test;
+
+	_DIAGASSERT(pattern != NULL);
+	_DIAGASSERT(string != NULL);
+
+	if (recursion-- == 0)
+		return FNM_NORES;
+
+	for (stringstart = string;;) {
+		switch (c = FOLDCASE(*pattern++, flags)) {
+		case EOS:
+			if ((flags & FNM_LEADING_DIR) && *string == '/')
+				return 0;
+			return *string == EOS ? 0 : FNM_NOMATCH;
+		case '?':
+			if (*string == EOS)
+				return FNM_NOMATCH;
+			if (*string == '/' && (flags & FNM_PATHNAME))
+				return FNM_NOMATCH;
+			if (*string == '.' && (flags & FNM_PERIOD) &&
+			    (string == stringstart ||
+			    ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+				return FNM_NOMATCH;
+			++string;
+			break;
+		case '*':
+			c = FOLDCASE(*pattern, flags);
+			/* Collapse multiple stars. */
+			while (c == '*')
+				c = FOLDCASE(*++pattern, flags);
+
+			if (*string == '.' && (flags & FNM_PERIOD) &&
+			    (string == stringstart ||
+			    ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+				return FNM_NOMATCH;
+
+			/* Optimize for pattern with * at end or before /. */
+			if (c == EOS) {
+				if (flags & FNM_PATHNAME)
+					return (flags & FNM_LEADING_DIR) ||
+					    strchr(string, '/') == NULL ?
+					    0 : FNM_NOMATCH;
+				else
+					return 0;
+			} else if (c == '/' && flags & FNM_PATHNAME) {
+				if ((string = strchr(string, '/')) == NULL)
+					return FNM_NOMATCH;
+				break;
+			}
+
+			/* General case, use recursion. */
+			while ((test = FOLDCASE(*string, flags)) != EOS) {
+				int e;
+				switch ((e = fnmatchx(pattern, string,
+				    flags & ~FNM_PERIOD, recursion))) {
+				case FNM_NOMATCH:
+					break;
+				default:
+					return e;
+				}
+				if (test == '/' && flags & FNM_PATHNAME)
+					break;
+				++string;
+			}
+			return FNM_NOMATCH;
+		case '[':
+			if (*string == EOS)
+				return FNM_NOMATCH;
+			if (*string == '/' && flags & FNM_PATHNAME)
+				return FNM_NOMATCH;
+			if ((pattern = rangematch(pattern,
+			    FOLDCASE(*string, flags), flags)) == NULL)
+				return FNM_NOMATCH;
+			++string;
+			break;
+		case '\\':
+			if (!(flags & FNM_NOESCAPE)) {
+				if ((c = FOLDCASE(*pattern++, flags)) == EOS) {
+					c = '\0';
+					--pattern;
+				}
+			}
+			/* FALLTHROUGH */
+		default:
+			if (c != FOLDCASE(*string++, flags))
+				return FNM_NOMATCH;
+			break;
+		}
+	}
+	/* NOTREACHED */
+}
+
+int
+fnmatch(const char *pattern, const char *string, int flags)
+{
+	return fnmatchx(pattern, string, flags, 64);
 }

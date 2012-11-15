@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.20 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.21 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -32,15 +32,8 @@
 #ifndef _NSSWITCH_H
 #define _NSSWITCH_H	1
 
-/*
- * Don't use va_list in prototypes.   va_list is typedef'd in two places
- * (<machine/varargs.h> and <machine/stdarg.h>), so if we include one of
- * them here we may collide with the utility's includes.  It's unreasonable
- * for utilities to have to include one of them to include nsswitch.h, so
- * we get _BSD_VA_LIST_ from <machine/ansi.h> and use it.
- */
-#include <machine/ansi.h>
 #include <sys/types.h>
+#include <stdarg.h>
 
 #define	NSS_MODULE_INTERFACE_VERSION	0
 
@@ -108,7 +101,7 @@
 /*
  * ns_dtab `callback' function signature.
  */
-typedef	int (*nss_method)(void *, void *, _BSD_VA_LIST_);
+typedef	int (*nss_method)(void *, void *, va_list);
 
 /*
  * ns_dtab - `nsswitch dispatch table'

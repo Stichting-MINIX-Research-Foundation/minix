@@ -1,4 +1,4 @@
-.\"	$NetBSD: devname.3,v 1.11 2003/08/07 16:42:46 agc Exp $
+.\"	$NetBSD: devname.3,v 1.12 2012/06/03 21:42:46 joerg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)devname.3	8.2 (Berkeley) 4/29/95
 .\"
-.Dd April 29, 1995
+.Dd June 3, 2012
 .Dt DEVNAME 3
 .Os
 .Sh NAME
@@ -53,11 +53,6 @@ with a device number of
 and a file type matching the one encoded in
 .Fa type
 which must be one of S_IFBLK or S_IFCHR.
-The device name is cached so that multiple calls with the same
-.Fa dev
-and
-.Fa type
-do not require additional queries of the device database file.
 If no device matches the specified values, or no information is
 available,
 .Dv NULL
@@ -67,8 +62,8 @@ The traditional display for applications when no device is
 found is the string
 .Dq ?? .
 .Sh FILES
-.Bl -tag -width /var/run/dev.db -compact
-.It Pa /var/run/dev.db
+.Bl -tag -width /var/run/dev.cdb -compact
+.It Pa /var/run/dev.cdb
 Device database file.
 .El
 .Sh SEE ALSO

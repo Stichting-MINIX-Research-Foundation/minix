@@ -1,3 +1,3 @@
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 DEFINE_CPULOCAL_VARS;

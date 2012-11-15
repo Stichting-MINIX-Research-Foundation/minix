@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.32 2008/10/31 16:12:18 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.35 2012/10/10 22:51:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -170,70 +170,67 @@ CODE facilitynames[] = {
 /* Used by reentrant functions */
 
 struct syslog_data {
+	int	log_version;
 	int	log_file;
-	int	connected;
-	int	opened;
+	int	log_connected;
+	int	log_opened;
 	int	log_stat;
 	const char 	*log_tag;
+	char	log_hostname[256];	/* MAXHOSTNAMELEN */
 	int 	log_fac;
 	int 	log_mask;
 };
 
 #define SYSLOG_DATA_INIT { \
+    .log_version = 1, \
     .log_file = -1, \
+    .log_connected = 0, \
+    .log_opened = 0, \
+    .log_stat = 0, \
+    .log_tag  = 0, \
+    .log_hostname = { '\0' }, \
     .log_fac = LOG_USER, \
     .log_mask = 0xff, \
 }
 
-/*
- * Don't use va_list in the vsyslog() prototype.   Va_list is typedef'd in two
- * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
- * of them here we may collide with the utility's includes.  It's unreasonable
- * for utilities to have to include one of them to include syslog.h, so we get
- * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
- */
-#include <machine/ansi.h>
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
+#include <sys/ansi.h>
 
 __BEGIN_DECLS
 void	closelog(void);
 void	openlog(const char *, int, int);
 int	setlogmask(int);
-void	syslog(int, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+void	syslog(int, const char *, ...) __printflike(2, 3);
 #if defined(_NETBSD_SOURCE)
-void	vsyslog(int, const char *, _BSD_VA_LIST_)
-    __attribute__((__format__(__printf__,2,0)));
-void	closelog_r(struct syslog_data *);
-void	openlog_r(const char *, int, int, struct syslog_data *);
-int	setlogmask_r(int, struct syslog_data *);
+void	vsyslog(int, const char *, __va_list) __printflike(2, 0);
+#ifndef __LIBC12_SOURCE__
+void	closelog_r(struct syslog_data *) __RENAME(__closelog_r60);
+void	openlog_r(const char *, int, int, struct syslog_data *)
+    __RENAME(__openlog_r60);
+int	setlogmask_r(int, struct syslog_data *) __RENAME(__setlogmask_r60);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
-    __attribute__((__format__(__printf__,3,4)));
-void	vsyslog_r(int, struct syslog_data *, const char *, _BSD_VA_LIST_)
-    __attribute__((__format__(__printf__,3,0)));
-void syslogp(int, const char *, const char *, const char *, ...)
-    __attribute__((__format__(__printf__,4,5)));
-void vsyslogp(int, const char *, const char *, const char *, _BSD_VA_LIST_)
-    __attribute__((__format__(__printf__,4,0)));
-void syslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, ...)
-    __attribute__((__format__(__printf__,5,6)));
-void vsyslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, _BSD_VA_LIST_)
-    __attribute__((__format__(__printf__,5,0)));
+    __RENAME(__syslog_r60) __printflike(3, 4);
+void	vsyslog_r(int, struct syslog_data *, const char *, __va_list)
+    __RENAME(__vsyslog_r60) __printflike(3, 0);
+void	syslogp_r(int, struct syslog_data *, const char *, const char *,
+    const char *, ...) __RENAME(__syslogp_r60) __printflike(5, 6);
+void	vsyslogp_r(int, struct syslog_data *, const char *, const char *,
+    const char *, __va_list) __RENAME(__vsyslogp_r60) __printflike(5, 0);
+#endif
+void	syslogp(int, const char *, const char *, const char *, ...)
+    __printflike(4, 5);
+void	vsyslogp(int, const char *, const char *, const char *, __va_list)
+    __printflike(4, 0);
 #endif
 __END_DECLS
 
 #else /* !_KERNEL */
 
 void	logpri(int);
-void	log(int, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
-void	vlog(int, const char *, _BSD_VA_LIST_)
-    __attribute__((__format__(__printf__,2,0)));
-void	addlog(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+void	log(int, const char *, ...) __printflike(2, 3);
+void	vlog(int, const char *, __va_list) __printflike(2, 0);
+void	addlog(const char *, ...) __printflike(1, 2);
 void	logwakeup(void);
 
 #endif /* !_KERNEL */

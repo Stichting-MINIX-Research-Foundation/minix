@@ -1,7 +1,8 @@
-/*	$NetBSD: wcspbrk.c,v 1.3 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: wcspbrk.c,v 1.5 2011/11/24 18:44:25 joerg Exp $	*/
 
 /*-
- * Copyright (c)1999 Citrus Project,
+ * Copyright (c) 1999 Citrus Project,
+ * Copyright (c) 2011 Joerg Sonnenberger,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,33 +30,41 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcspbrk.c,v 1.3 2005/11/29 03:12:00 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: wcspbrk.c,v 1.5 2011/11/24 18:44:25 joerg Exp $");
 
 #include <assert.h>
+#include <inttypes.h>
+#include <string.h>
 #include <wchar.h>
 
+#include "wcscspn_bloom.h"
+
 wchar_t *
-wcspbrk(s, set)
-	const wchar_t *s;
-	const wchar_t *set;
+wcspbrk(const wchar_t *s, const wchar_t *set)
 {
+	size_t bloom[BLOOM_ARRAY_SIZE];
 	const wchar_t *p;
 	const wchar_t *q;
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(set != NULL);
 
-	p = s;
-	while (*p) {
+	if (set[0] == '\0')
+		return NULL;
+	if (set[1] == '\0')
+		return wcschr(s, set[0]);
+
+	wcsspn_bloom_init(bloom, set);
+
+	for (p = s; *p; ++p) {
+		if (!wcsspn_in_bloom(bloom, *p))
+			continue;
+
 		q = set;
-		while (*q) {
+		do {
 			if (*p == *q)
 				return __UNCONST(p);
-			q++;
-		}
-		p++;
+		} while (*++q);
 	}
 	return NULL;
 }

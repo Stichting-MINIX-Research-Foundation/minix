@@ -14,7 +14,7 @@
  */
 
 #include "kernel/system.h"
-#include "watchdog.h"
+#include "kernel/watchdog.h"
 
 #if SPROFILE
 

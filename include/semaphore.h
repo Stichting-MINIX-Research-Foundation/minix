@@ -1,4 +1,4 @@
-/* $NetBSD: semaphore.h,v 1.3 2008/04/28 20:22:54 martin Exp $ */
+/* $NetBSD: semaphore.h,v 1.4 2012/03/08 21:59:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ typedef	struct _sem_st *sem_t;
 #define	SEM_FAILED	((sem_t *)0)
 #define	SEM_VALUE_MAX	(~0U)
 
-#include <sys/cdefs.h>
+#include <sys/time.h>
 
 __BEGIN_DECLS
 int	 sem_close(sem_t *);
@@ -48,6 +48,7 @@ int	 sem_destroy(sem_t *);
 int	 sem_getvalue(sem_t * __restrict, int * __restrict);
 int	 sem_init(sem_t *, int, unsigned int);
 int	 sem_post(sem_t *);
+int	 sem_timedwait(sem_t *, const struct timespec * __restrict);
 int	 sem_trywait(sem_t *);
 int	 sem_unlink(const char *);
 int	 sem_wait(sem_t *);

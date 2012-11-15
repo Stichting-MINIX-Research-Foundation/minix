@@ -1,4 +1,4 @@
-.\"	$NetBSD: socketpair.2,v 1.21 2009/12/20 02:16:40 wiz Exp $
+.\"	$NetBSD: socketpair.2,v 1.23 2011/06/27 08:21:08 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 20, 2009
+.Dd June 24, 2011
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -53,10 +53,17 @@ and using the optionally specified
 .Fa protocol .
 The descriptors used in referencing the new sockets
 are returned in
-.Fa sv Ns [0]
+.Fa sv[0]
 and
-.Fa sv Ns [1] .
+.Fa sv[1] .
 The two sockets are indistinguishable.
+.Pp
+The
+.Fa type
+and
+.Fa protocol
+argument values are described in
+.Xr socket 2 .
 .Sh RETURN VALUES
 A 0 is returned if the call succeeds, \-1 if it fails.
 .Sh ERRORS
@@ -81,6 +88,7 @@ The specified protocol is not supported on this machine.
 .Sh SEE ALSO
 .Xr pipe 2 ,
 .Xr read 2 ,
+.Xr socket 2 ,
 .Xr write 2
 .Sh HISTORY
 The

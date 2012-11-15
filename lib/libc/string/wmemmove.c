@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemmove.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
+/*	$NetBSD: wmemmove.c,v 1.3 2012/06/25 22:32:46 abs Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemmove.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
+__RCSID("$NetBSD: wmemmove.c,v 1.3 2012/06/25 22:32:46 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -38,10 +38,7 @@ __RCSID("$NetBSD: wmemmove.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
 #include <wchar.h>
 
 wchar_t *
-wmemmove(d, s, n)
-	wchar_t *d;
-	const wchar_t *s;
-	size_t n;
+wmemmove(wchar_t *d, const wchar_t *s, size_t n)
 {
 
 	_DIAGASSERT(d != NULL);

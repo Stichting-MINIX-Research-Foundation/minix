@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.18 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: catgets.c,v 1.19 2012/06/25 22:32:45 abs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catgets.c,v 1.18 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: catgets.c,v 1.19 2012/06/25 22:32:45 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -47,11 +47,7 @@ __weak_alias(catgets, _catgets)
 #endif
 
 char *
-_catgets(catd, set_id, msg_id, s)
-	nl_catd catd;
-	int set_id;
-	int msg_id;
-	const char *s;
+_catgets(nl_catd catd, int set_id, int msg_id, const char *s)
 {
 	struct _nls_cat_hdr *cat_hdr;
 	struct _nls_set_hdr *set_hdr;

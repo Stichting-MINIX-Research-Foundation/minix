@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_module.c,v 1.9 2009/01/11 02:46:24 christos Exp $	*/
+/*	$NetBSD: citrus_module.c,v 1.10 2012/10/15 22:22:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_module.c,v 1.9 2009/01/11 02:46:24 christos Exp $");
+__RCSID("$NetBSD: citrus_module.c,v 1.10 2012/10/15 22:22:01 msaitoh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -111,8 +111,8 @@ __RCSID("$NetBSD: citrus_module.c,v 1.9 2009/01/11 02:46:24 christos Exp $");
 
 #ifdef _I18N_DYNAMIC
 
-static int _getdewey(int [], char *);
-static int _cmpndewey(int [], int, int [], int);
+static unsigned int _getdewey(int [], char *);
+static int _cmpndewey(int [], unsigned int, int [], unsigned int);
 static const char *_findshlib(char *, int *, int *);
 
 static const char *_pathI18nModule = NULL;
@@ -122,10 +122,10 @@ static const char *_pathI18nModule = NULL;
 #undef minor
 #define MAXDEWEY	3	/*ELF*/
 
-static int
+static unsigned int
 _getdewey(int dewey[], char *cp)
 {
-	int	i, n;
+	unsigned int	i, n;
 
 	_DIAGASSERT(dewey != NULL);
 	_DIAGASSERT(cp != NULL);
@@ -151,9 +151,9 @@ _getdewey(int dewey[], char *cp)
  * Return  0 if equal.
  */
 static int
-_cmpndewey(int d1[], int n1, int d2[], int n2)
+_cmpndewey(int d1[], unsigned int n1, int d2[], unsigned int n2)
 {
-	register int	i;
+	register unsigned int	i;
 
 	_DIAGASSERT(d1 != NULL);
 	_DIAGASSERT(d2 != NULL);
@@ -182,7 +182,7 @@ static const char *
 _findshlib(char *name, int *majorp, int *minorp)
 {
 	int		dewey[MAXDEWEY];
-	int		ndewey;
+	unsigned int	ndewey;
 	int		tmp[MAXDEWEY];
 	int		i;
 	int		len;
@@ -215,7 +215,7 @@ _findshlib(char *name, int *majorp, int *minorp)
 			continue;
 
 		while ((dp = readdir(dd)) != NULL) {
-			int	n;
+			unsigned int	n;
 
 			if (dp->d_namlen < len + 4)
 				continue;

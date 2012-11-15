@@ -1,4 +1,4 @@
-/* $NetBSD: modf_ieee754.c,v 1.3 2010/01/27 14:10:41 drochner Exp $ */
+/* $NetBSD: modf_ieee754.c,v 1.4 2012/03/22 13:25:45 he Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -92,8 +92,8 @@ modf(double val, double *iptr)
 	frac = ((u_int64_t)v.dblu_dbl.dbl_frach << 32) + v.dblu_dbl.dbl_fracl;
 	frac >>= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
 	frac <<= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
-	v.dblu_dbl.dbl_fracl = frac & 0xffffffff;
-	v.dblu_dbl.dbl_frach = frac >> 32;
+	v.dblu_dbl.dbl_fracl = (u_int) (frac & 0xffffffffULL);
+	v.dblu_dbl.dbl_frach = (u_int) (frac >> 32);
 	*iptr = v.dblu_d;
 
 	u.dblu_d -= v.dblu_d;

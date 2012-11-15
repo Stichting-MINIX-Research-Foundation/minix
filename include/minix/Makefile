@@ -1,8 +1,6 @@
-NOOBJ=		# defined
-
 .include <bsd.own.mk>
 
-INCSDIR=	/usr/include/minix
+INCSDIR= /usr/include/minix
 
 INCS+=	dirent.h paths.h param.h
 INCS+=	acpi.h audio_fw.h bitmap.h \

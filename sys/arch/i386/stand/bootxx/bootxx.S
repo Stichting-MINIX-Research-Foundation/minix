@@ -90,7 +90,7 @@ boot_params:				/* space for patchable variables */
 	pop	%ecx
 	movl	$boot_params, %esi
 	orb	$X86_BP_FLAGS_LBA64VALID, 4(%esi)
-	lcall	$SECONDARY_LOAD_ADDRESS >> 4, $0
+	lcall	$SECONDARY_LOAD_ADDRESS/16, $0
 
 boot_fail:
 	push	%ax			/* error string from boot1 */

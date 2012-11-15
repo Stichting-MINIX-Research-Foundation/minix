@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.38 2010/09/30 09:11:18 skrll Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.40 2011/03/31 15:30:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,10 +62,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.38 2010/09/30 09:11:18 skrll Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.40 2011/03/31 15:30:31 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/tls.h>
 #include <string.h>
 
 #include "rtld.h"
@@ -259,6 +260,64 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				return -1;
 			}
 			rdbg(("COPY (avoid in main)"));
+			break;
+
+		case R_TYPE(TPREL64):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done &&
+			    _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			tmp = (Elf64_Addr)(def->st_value +
+			    sizeof(struct tls_tcb) + defobj->tlsoffset +
+			    rela->r_addend);
+
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+
+			rdbg(("TPREL64 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
+			break;
+
+		case R_TYPE(DTPMOD64):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf64_Addr)defobj->tlsindex;
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+
+			rdbg(("DTPMOD64 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
+			break;
+
+		case R_TYPE(DTPREL64):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf64_Addr)(def->st_value + rela->r_addend);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+
+			rdbg(("DTPREL64 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
 			break;
 
 		default:
@@ -483,9 +542,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Addr reloff)
 	Elf_Addr result = 0; /* XXX gcc */
 	int err;
 
+	_rtld_shared_enter();
 	err = _rtld_relocate_plt_object(obj, rela, &result);
 	if (err)
 		_rtld_die();
+	_rtld_shared_exit();
 
 	return (caddr_t)result;
 }

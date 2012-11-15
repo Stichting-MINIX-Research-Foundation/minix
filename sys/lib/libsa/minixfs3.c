@@ -1,4 +1,4 @@
-/*	$NetBSD$ */
+/*	$NetBSD: minixfs3.c,v 1.1 2012/01/16 18:44:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -180,40 +180,12 @@ struct entry_t {
 	char	e_name[1];
 };
 
-static int
-fn_match(const char *fname, const char *pattern)
-{
-	char fc, pc;
-
-	do {
-		fc = *fname++;
-		pc = *pattern++;
-		if (!fc && !pc)
-			return 1;
-		if (pc == '?' && fc)
-			pc = fc;
-	} while (fc == pc);
-
-	if (pc != '*')
-		return 0;
-	/*
-	 * Too hard (and unnecessary really) too check for "*?name" etc....
-	 * "**" will look for a '*' and "*?" a '?'
-	 */
-	pc = *pattern++;
-	if (!pc)
-		return 1;
-	while ((fname = strchr(fname, pc)))
-		if (fn_match(++fname, pattern))
-			return 1;
-	return 0;
-}
 #endif /* LIBSA_ENABLE_LS_OP */
 
 
 static int read_inode(ino32_t, struct open_file *);
 static int block_map(struct open_file *, block_t, block_t *);
-static int buf_read_file(struct open_file *, char **, size_t *);
+static int buf_read_file(struct open_file *, void *, size_t *);
 static int search_directory(const char *, int, struct open_file *, ino32_t *);
 static int read_sblock(struct open_file *, struct mfs_sblock *);
 
@@ -375,8 +347,9 @@ block_map(struct open_file *f, block_t file_block, block_t *disk_block_p)
  * Return the location in the buffer and the amount in the buffer.
  */
 static int
-buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
+buf_read_file(struct open_file *f, void *v, size_t *size_p)
 {
+	char **buf_p = v;
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct mfs_sblock *fs = fp->f_fs;
 	long off;
@@ -445,7 +418,7 @@ search_directory(const char *name, int length, struct open_file *f,
 	fp->f_seekp = 0;
 
 	while (fp->f_seekp < (off_t)fp->f_di.mdi_size) {
-		rc = buf_read_file(f, (char**)&dbuf, &buf_size);
+		rc = buf_read_file(f, (void *)&dbuf, &buf_size);
 		if (rc)
 			return rc;
 		if (buf_size == 0)
@@ -873,7 +846,7 @@ minixfs3_ls(struct open_file *f, const char *pattern,
 
 	fp->f_seekp = 0;
 	while (fp->f_seekp < (off_t)fp->f_di.mdi_size) {
-		int rc = buf_read_file(f, (char**)&dbuf, &buf_size);
+		int rc = buf_read_file(f, &dbuf, &buf_size);
 		if (rc)
 			goto out;
 
@@ -892,7 +865,7 @@ minixfs3_ls(struct open_file *f, const char *pattern,
 			if (fs2h32(dp->mfsd_ino) == 0)
 				continue;
 
-			if (pattern && !fn_match(dp->mfsd_name, pattern))
+			if (pattern && !fnmatch(dp->mfsd_name, pattern))
 				continue;
 
 			/* Compute the length of the name,

@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.16 2010/01/11 20:39:29 joerg Exp $	*/
+/*	$NetBSD: freopen.c,v 1.19 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.16 2010/01/11 20:39:29 joerg Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.19 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,9 +61,7 @@ __RCSID("$NetBSD: freopen.c,v 1.16 2010/01/11 20:39:29 joerg Exp $");
  * all possible, no matter what.
  */
 FILE *
-freopen(file, mode, fp)
-	const char *file, *mode;
-	FILE *fp;
+freopen(const char *file, const char *mode, FILE *fp)
 {
 	int f;
 	int flags, isopen, oflags, sverrno, wantfd;
@@ -74,7 +72,7 @@ freopen(file, mode, fp)
 
 	if ((flags = __sflags(mode, &oflags)) == 0) {
 		(void) fclose(fp);
-		return (NULL);
+		return NULL;
 	}
 
 	if (!__sdidinit)
@@ -95,7 +93,7 @@ freopen(file, mode, fp)
 	} else {
 		/* flush the stream; ANSI doesn't require this. */
 		if (fp->_flags & __SWR)
-			(void) __sflush(fp);
+			(void)__sflush(fp);
 		/* if close is NULL, closing is a no-op, hence pointless */
 		isopen = fp->_close != NULL;
 		if ((wantfd = __sfileno(fp)) == -1 && isopen) {
@@ -140,7 +138,7 @@ freopen(file, mode, fp)
 	if (f < 0) {			/* did not get it after all */
 		fp->_flags = 0;		/* set it free */
 		errno = sverrno;	/* restore in case _close clobbered */
-		return (NULL);
+		return NULL;
 	}
 
 	if (oflags & O_NONBLOCK) {
@@ -149,12 +147,12 @@ freopen(file, mode, fp)
 			sverrno = errno;
 			(void)close(f);
 			errno = sverrno;
-			return (NULL);
+			return NULL;
 		}
 		if (!S_ISREG(st.st_mode)) {
 			(void)close(f);
 			errno = EFTYPE;
-			return (NULL);
+			return NULL;
 		}
 	}
 
@@ -200,6 +198,6 @@ freopen(file, mode, fp)
 	 * fseek and ftell.)
 	 */
 	if (oflags & O_APPEND)
-		(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
-	return (fp);
+		(void) __sseek((void *)fp, (off_t)0, SEEK_END);
+	return fp;
 }

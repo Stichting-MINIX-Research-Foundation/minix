@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.20 2009/12/14 01:04:02 matt Exp $ */
+/* $NetBSD: crt0.c,v 1.22 2011/02/22 05:45:07 joerg Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -52,13 +52,13 @@
  *	as well as the usual registers (pc, sp, and t9 == pc for ABI).
  */
 
-void __start(u_long, void (*)(void), const Obj_Entry *,
+void __start(uintptr_t, void (*)(void), const Obj_Entry *,
 		struct ps_strings *);
 
 __asm(".text; .align 4;  .globl _start; _start:");
 
 void
-__start(u_long sp,
+__start(uintptr_t sp,
     void (*cleanup)(void),		/* from shared loader */
     const Obj_Entry *obj,		/* from shared loader */
     struct ps_strings *ps_strings)
@@ -118,7 +118,7 @@ __start(u_long sp,
 #endif
 
 
-	argc = *(int *)ksp;
+	argc = *(long *)ksp;
 	argv = ksp + 1;
 	environ = ksp + 2 + argc;	/* 2: argc + NULL ending argv */
 
@@ -142,14 +142,14 @@ __start(u_long sp,
 		 * XXX If we were loaded by that loader, just abort
 		 * XXX the rtld setup.
 		 */
-		if (&_DYNAMIC != NULL && cleanup != NULL && obj != NULL)
+		if (&rtld_DYNAMIC != NULL && cleanup != NULL && obj != NULL)
 			_rtld_setup(cleanup, obj);
 #endif
 	}
 
 #ifdef MCRT0
 	atexit(_mcleanup);
-	monstartup((u_long)&_eprol, (u_long)&_etext);
+	monstartup((uintptr_t)&_eprol, (uintptr_t)&_etext);
 #endif
 
 	atexit(_fini);
@@ -163,7 +163,7 @@ __start(u_long sp,
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.20 2009/12/14 01:04:02 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.22 2011/02/22 05:45:07 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

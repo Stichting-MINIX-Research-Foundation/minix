@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.21 2010/03/04 22:48:31 enami Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.28 2012/03/21 14:32:22 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.21 2010/03/04 22:48:31 enami Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.28 2012/03/21 14:32:22 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -319,20 +319,25 @@ __strerror_r(int e, char *s, size_t l)
 #define	SMALL_MAX_DEFAULT	(1 << SMALL_MAX_2POW_DEFAULT)
 
 /*
- * Maximum desired run header overhead.  Runs are sized as small as possible
- * such that this setting is still honored, without violating other constraints.
- * The goal is to make runs as small as possible without exceeding a per run
- * external fragmentation threshold.
+ * RUN_MAX_OVRHD indicates maximum desired run header overhead.  Runs are sized
+ * as small as possible such that this setting is still honored, without
+ * violating other constraints.  The goal is to make runs as small as possible
+ * without exceeding a per run external fragmentation threshold.
  *
- * Note that it is possible to set this low enough that it cannot be honored
- * for some/all object sizes, since there is one bit of header overhead per
- * object (plus a constant).  In such cases, this constraint is relaxed.
+ * We use binary fixed point math for overhead computations, where the binary
+ * point is implicitly RUN_BFP bits to the left.
  *
- * RUN_MAX_OVRHD_RELAX specifies the maximum number of bits per region of
- * overhead for which RUN_MAX_OVRHD is relaxed.
+ * Note that it is possible to set RUN_MAX_OVRHD low enough that it cannot be
+ * honored for some/all object sizes, since there is one bit of header overhead
+ * per object (plus a constant).  This constraint is relaxed (ignored) for runs
+ * that are so small that the per-region overhead is greater than:
+ *
+ *   (RUN_MAX_OVRHD / (reg_size << (3+RUN_BFP))
  */
-#define RUN_MAX_OVRHD		0.015
-#define RUN_MAX_OVRHD_RELAX	1.5
+#define RUN_BFP			12
+/*                              \/   Implicit binary fixed point. */
+#define RUN_MAX_OVRHD		0x0000003dU
+#define RUN_MAX_OVRHD_RELAX	0x00001800U
 
 /* Put a cap on small object run size.  This overrides RUN_MAX_OVRHD. */
 #define RUN_MAX_SMALL_2POW	15
@@ -811,7 +816,7 @@ static void	wrtmessage(const char *p1, const char *p2, const char *p3,
 #ifdef MALLOC_STATS
 static void	malloc_printf(const char *format, ...);
 #endif
-static char	*umax2s(uintmax_t x, char *s);
+static char	*size_t2s(size_t x, char *s);
 static bool	base_pages_alloc(size_t minsize);
 static void	*base_alloc(size_t size);
 static chunk_node_t *base_chunk_node_alloc(void);
@@ -973,19 +978,19 @@ malloc_printf(const char *format, ...)
 
 /*
  * We don't want to depend on vsnprintf() for production builds, since that can
- * cause unnecessary bloat for static binaries.  umax2s() provides minimal
+ * cause unnecessary bloat for static binaries.  size_t2s() provides minimal
  * integer printing functionality, so that malloc_printf() use can be limited to
  * MALLOC_STATS code.
  */
 #define UMAX2S_BUFSIZE	21
 static char *
-umax2s(uintmax_t x, char *s)
+size_t2s(size_t x, char *s)
 {
 	unsigned i;
 
 	/* Make sure UMAX2S_BUFSIZE is large enough. */
 	/* LINTED */
-	assert(sizeof(uintmax_t) <= 8);
+	assert(sizeof(size_t) <= 8);
 
 	i = UMAX2S_BUFSIZE - 1;
 	s[i] = '\0';
@@ -2143,7 +2148,6 @@ arena_bin_run_size_calc(arena_bin_t *bin, size_t min_run_size)
 	size_t try_run_size, good_run_size;
 	unsigned good_nregs, good_mask_nelms, good_reg0_offset;
 	unsigned try_nregs, try_mask_nelms, try_reg0_offset;
-	float max_ovrhd = RUN_MAX_OVRHD;
 
 	assert(min_run_size >= pagesize);
 	assert(min_run_size <= arena_maxclass);
@@ -2161,7 +2165,7 @@ arena_bin_run_size_calc(arena_bin_t *bin, size_t min_run_size)
 	 */
 	try_run_size = min_run_size;
 	try_nregs = (unsigned)(((try_run_size - sizeof(arena_run_t)) /
-	    bin->reg_size) + 1); /* Counter-act the first line of the loop. */
+	    bin->reg_size) + 1); /* Counter-act try_nregs-- in loop. */
 	do {
 		try_nregs--;
 		try_mask_nelms = (try_nregs >> (SIZEOF_INT_2POW + 3)) +
@@ -2195,9 +2199,8 @@ arena_bin_run_size_calc(arena_bin_t *bin, size_t min_run_size)
 		} while (sizeof(arena_run_t) + (sizeof(unsigned) *
 		    (try_mask_nelms - 1)) > try_reg0_offset);
 	} while (try_run_size <= arena_maxclass && try_run_size <= RUN_MAX_SMALL
-	    && max_ovrhd > RUN_MAX_OVRHD_RELAX / ((float)(bin->reg_size << 3))
-	    && ((float)(try_reg0_offset)) / ((float)(try_run_size)) >
-	    max_ovrhd);
+	    && RUN_MAX_OVRHD * (bin->reg_size << 3) > RUN_MAX_OVRHD_RELAX
+	    && (try_reg0_offset << RUN_BFP) > RUN_MAX_OVRHD * try_run_size);
 
 	assert(sizeof(arena_run_t) + (sizeof(unsigned) * (good_mask_nelms - 1))
 	    <= good_reg0_offset);
@@ -3215,16 +3218,17 @@ malloc_print_stats(void)
 		    opt_xmalloc ? "X" : "x",
 		    opt_zero ? "Z\n" : "z\n");
 
-		_malloc_message("CPUs: ", umax2s(ncpus, s), "\n", "");
-		_malloc_message("Max arenas: ", umax2s(narenas, s), "\n", "");
-		_malloc_message("Pointer size: ", umax2s(sizeof(void *), s),
+		_malloc_message("CPUs: ", size_t2s(ncpus, s), "\n", "");
+		_malloc_message("Max arenas: ", size_t2s(narenas, s), "\n", "");
+		_malloc_message("Pointer size: ", size_t2s(sizeof(void *), s),
 		    "\n", "");
-		_malloc_message("Quantum size: ", umax2s(quantum, s), "\n", "");
-		_malloc_message("Max small size: ", umax2s(small_max, s), "\n",
+		_malloc_message("Quantum size: ", size_t2s(quantum, s), "\n", "");
+		_malloc_message("Max small size: ", size_t2s(small_max, s), "\n",
 		    "");
 
-		_malloc_message("Chunk size: ", umax2s(chunksize, s), "", "");
-		_malloc_message(" (2^", umax2s(opt_chunk_2pow, s), ")\n", "");
+		_malloc_message("Chunk size: ", size_t2s(chunksize, s), "", "");
+		_malloc_message(" (2^", size_t2s((size_t)opt_chunk_2pow, s),
+		    ")\n", "");
 
 #ifdef MALLOC_STATS
 		{
@@ -3322,6 +3326,7 @@ malloc_init_hard(void)
 	ssize_t linklen;
 	char buf[PATH_MAX + 1];
 	const char *opts = "";
+	int serrno;
 
 	malloc_mutex_lock(&init_lock);
 	if (malloc_initialized) {
@@ -3333,6 +3338,7 @@ malloc_init_hard(void)
 		return (false);
 	}
 
+	serrno = errno;
 	/* Get number of CPUs. */
 	{
 		int mib[2];
@@ -3512,6 +3518,7 @@ malloc_init_hard(void)
 			}
 		}
 	}
+	errno = serrno;
 
 	/* Take care to call atexit() only once. */
 	if (opt_print_stats) {

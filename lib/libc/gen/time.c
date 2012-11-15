@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.11 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.12 2012/03/13 21:13:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.11 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.12 2012/03/13 21:13:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,8 +52,8 @@ time(time_t *t)
 	if (gettimeofday(&tt, NULL) == -1)
 		return (time_t)-1;
 	if (t != NULL)
-		*t = tt.tv_sec;
-	return tt.tv_sec;
+		*t = (time_t)tt.tv_sec;
+	return (time_t)tt.tv_sec;
 }
 
 #ifdef __minix

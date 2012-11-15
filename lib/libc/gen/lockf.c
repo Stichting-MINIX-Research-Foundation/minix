@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.c,v 1.3 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: lockf.c,v 1.4 2012/06/25 22:32:43 abs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: lockf.c,v 1.3 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: lockf.c,v 1.4 2012/06/25 22:32:43 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -45,10 +45,7 @@ __weak_alias(lockf,_lockf)
 
 
 int
-lockf(filedes, function, size)
-	int filedes;
-	int function;
-	off_t size;
+lockf(int filedes, int function, off_t size)
 {
 	struct flock fl;
 	int cmd;

@@ -68,8 +68,10 @@
 #define _GNU_SOURCE
 #endif
 
+#ifndef __minix
 /* Needed for gmtime_r on Interix */
 #define _REENTRANT
+#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"

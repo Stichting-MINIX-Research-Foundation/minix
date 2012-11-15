@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.24 2008/08/26 21:18:38 joerg Exp $	*/
+/*	$NetBSD: db.h,v 1.25 2012/03/13 21:14:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -214,8 +214,7 @@ DB *dbopen(const char *, int, mode_t, DBTYPE, const void *);
 
 #ifdef __DBINTERFACE_PRIVATE
 
-#define _DBMASK(a) (~((1ULL << (sizeof(a) * NBBY)) - 1))
-#define _DBFIT(a, t) _DIAGASSERT(((a) & _DBMASK(t)) == 0)
+#define _DBFIT(a, t) _DIAGASSERT(__type_fit(t, a))
 
 DB	*__bt_open(const char *, int, mode_t, const BTREEINFO *, int);
 DB	*__hash_open(const char *, int, mode_t, const HASHINFO *, int);

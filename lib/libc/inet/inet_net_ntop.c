@@ -20,7 +20,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.1.2.1 2002/08/02 02:17:21 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.2 2009/02/07 07:25:22 lukem Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.3 2012/03/20 17:08:13 matt Exp $");
 #endif
 #endif
 
@@ -49,10 +49,10 @@ __weak_alias(inet_net_ntop,_inet_net_ntop)
 # define SPRINTF(x) sprintf x
 #endif
 
-static char *	inet_net_ntop_ipv4 __P((const u_char *src, int bits,
-					char *dst, size_t size));
-static char *	inet_net_ntop_ipv6 __P((const u_char *src, int bits,
-					char *dst, size_t size));
+static char *	inet_net_ntop_ipv4(const u_char *src, int bits,
+					char *dst, size_t size);
+static char *	inet_net_ntop_ipv6(const u_char *src, int bits,
+					char *dst, size_t size);
 
 /*
  * char *
@@ -65,12 +65,7 @@ static char *	inet_net_ntop_ipv6 __P((const u_char *src, int bits,
  *	Paul Vixie (ISC), July 1996
  */
 char *
-inet_net_ntop(af, src, bits, dst, size)
-	int af;
-	const void *src;
-	int bits;
-	char *dst;
-	size_t size;
+inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af) {
 	case AF_INET:
@@ -97,11 +92,7 @@ inet_net_ntop(af, src, bits, dst, size)
  *	Paul Vixie (ISC), July 1996
  */
 static char *
-inet_net_ntop_ipv4(src, bits, dst, size)
-	const u_char *src;
-	int bits;
-	char *dst;
-	size_t size;
+inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
 	char *odst = dst;
 	char *t;
@@ -176,7 +167,8 @@ inet_net_ntop_ipv4(src, bits, dst, size)
  */
 
 static char *
-inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
+inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
+{
 	u_int	m;
 	int	b;
 	size_t	p;

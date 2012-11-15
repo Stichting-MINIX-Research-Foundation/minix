@@ -1,0 +1,67 @@
+Steps for adding TLS support for a new platform:
+
+(1) Declare TLS variant in machine/types.h by defining either
+__HAVE_TLS_VARIANT_I or __HAVE_TLS_VARIANT_II.
+
+(2) _lwp_makecontext has to set the reserved register or kernel transfer
+variable in uc_mcontext to the provided value of 'private'. See
+src/lib/libc/arch/$PLATFORM/gen/_lwp.c.
+
+This is not possible on the VAX as there is no free space in ucontext_t.
+This requires either a special version of _lwp_create or versioning
+everything using ucontext_t. Debug support depends on getting the data from
+ucontext_t, so the second option is possibly required.
+
+(3) _lwp_setprivate(2) has to update the same register as
+_lwp_makecontext uses for the private area pointer. Normally
+cpu_lwp_setprivate is provided by MD to reflect the kernel view and
+enabled by defining __HAVE_CPU_LWP_SETPRIVATE in machine/types.h.
+cpu_setmcontext is responsible for keeping the MI l_private field
+synchronised by calling lwp_setprivate as needed.
+
+cpu_switchto has to update the mapping.
+
+_lwp_setprivate is used for the initial thread, all other threads
+created by libpthread use _lwp_makecontext for this purpose.
+
+(4) Provide __tls_get_addr and possible other MD functions for dynamic
+TLS offset computation. If such alternative entry points exist (currently
+only i386), also add a weak reference to 0 in src/lib/libc/tls/tls.c.
+
+The generic implementation can be found in tls.c and is used with
+__HAVE_COMMON___TLS_GET_ADDR. It depends on ___lwp_getprivate_fast
+(see below).
+
+(5) Implement the necessary relocation records in mdreloc.c.  There are
+typically three relocation types found in dynamic binaries:
+
+(a) R_TYPE(TLS_DTPOFF): Offset inside the module.  The common TLS code
+ensures that the DTV vector points to offset 0 inside the module TLS block.
+This is normally def->st_value + rela->r_addend.
+
+(b) R_TYPE(TLS_DTPMOD): Module index.
+
+(c) R_TYPE(TLS_TPOFF): Static TLS offset.  The code has to check whether
+the static TLS offset for this module has been allocated
+(defobj->tls_done) and otherwise call _rtld_tls_offset_allocate().  This
+may fail if no static space is available and the object has been pulled
+in via dlopen(3).
+
+For TLS Variant I, this is typically:
+
+def->st_value + rela->r_addend + defobj->tlsoffset + sizeof(struct tls_tcb)
+
+e.g. the relocation doesn't include the fixed TCB.
+
+For TLS Variant II, this is typically:
+
+def->st_value - defobj->tlsoffset + rela->r_addend
+
+e.g. starting offset is counting down from the TCB.
+
+(6) Implement _lwp_getprivate_fast() in machine/mcontext.h and set
+__HAVE___LWP_GETPRIVATE_FAST in machine/types.h.
+
+(7) Test using src/tests/lib/libc/tls.  Make sure with "objdump -R" that
+t_tls_dynamic has two TPOFF relocations and h_tls_dlopen.so.1 and
+libh_tls_dynamic.so.1 have both two DTPMOD and DTPOFF relocations.

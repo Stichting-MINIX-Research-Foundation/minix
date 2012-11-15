@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.14 2010/09/10 10:29:23 drochner Exp $	*/
+/*	$NetBSD: refill.c,v 1.16 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refill.c,v 1.14 2010/09/10 10:29:23 drochner Exp $");
+__RCSID("$NetBSD: refill.c,v 1.16 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,18 +52,15 @@ __RCSID("$NetBSD: refill.c,v 1.14 2010/09/10 10:29:23 drochner Exp $");
 extern rwlock_t __sfp_lock;
 #endif
 
-static int lflush __P((FILE *));
-
 static int
-lflush(fp)
-	FILE *fp;
+lflush(FILE *fp)
 {
 
 	_DIAGASSERT(fp != NULL);
 
 	if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR))
-		return (__sflush(fp));
-	return (0);
+		return __sflush(fp);
+	return 0;
 }
 
 /*
@@ -71,8 +68,7 @@ lflush(fp)
  * Return EOF on eof or error, 0 otherwise.
  */
 int
-__srefill(fp)
-	FILE *fp;
+__srefill(FILE *fp)
 {
 
 	_DIAGASSERT(fp != NULL);
@@ -85,19 +81,19 @@ __srefill(fp)
 
 	/* SysV does not make this test; take it out for compatibility */
 	if (fp->_flags & __SEOF)
-		return (EOF);
+		return EOF;
 
 	/* if not already reading, have to be reading and writing */
 	if ((fp->_flags & __SRD) == 0) {
 		if ((fp->_flags & __SRW) == 0) {
 			errno = EBADF;
 			fp->_flags |= __SERR;
-			return (EOF);
+			return EOF;
 		}
 		/* switch to reading */
 		if (fp->_flags & __SWR) {
 			if (__sflush(fp))
-				return (EOF);
+				return EOF;
 			fp->_flags &= ~__SWR;
 			fp->_w = 0;
 			fp->_lbfsize = 0;
@@ -114,7 +110,7 @@ __srefill(fp)
 			FREEUB(fp);
 			if ((fp->_r = fp->_ur) != 0) {
 				fp->_p = fp->_up;
-				return (0);
+				return 0;
 			}
 		}
 	}
@@ -133,7 +129,8 @@ __srefill(fp)
 		rwlock_unlock(&__sfp_lock);
 	}
 	fp->_p = fp->_bf._base;
-	fp->_r = (*fp->_read)(fp->_cookie, (char *)fp->_p, fp->_bf._size);
+	fp->_r = (int)(*fp->_read)(fp->_cookie, (char *)fp->_p,
+	    (size_t)fp->_bf._size);
 	fp->_flags &= ~__SMOD;	/* buffer contents are again pristine */
 	if (fp->_r <= 0) {
 		if (fp->_r == 0)
@@ -142,7 +139,7 @@ __srefill(fp)
 			fp->_r = 0;
 			fp->_flags |= __SERR;
 		}
-		return (EOF);
+		return EOF;
 	}
-	return (0);
+	return 0;
 }

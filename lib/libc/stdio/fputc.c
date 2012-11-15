@@ -1,4 +1,4 @@
-/*	$NetBSD: fputc.c,v 1.12 2003/08/07 16:43:24 agc Exp $	*/
+/*	$NetBSD: fputc.c,v 1.13 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fputc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fputc.c,v 1.12 2003/08/07 16:43:24 agc Exp $");
+__RCSID("$NetBSD: fputc.c,v 1.13 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: fputc.c,v 1.12 2003/08/07 16:43:24 agc Exp $");
 #include "local.h"
 
 int
-fputc(c, fp)
-	int c;
-	FILE *fp;
+fputc(int c, FILE *fp)
 {
 	int r;
 

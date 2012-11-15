@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.25 2011/01/05 00:09:43 wiz Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.27 2012/03/20 17:44:18 matt Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -51,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.25 2011/01/05 00:09:43 wiz Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.27 2012/03/20 17:44:18 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -92,10 +92,10 @@ struct hesiod_p {
 
 #define	MAX_HESRESP	1024
 
-static int	  read_config_file __P((struct hesiod_p *, const char *));
-static char	**get_txt_records __P((int, const char *));
-static int	  init_context __P((void));
-static void	  translate_errors __P((void));
+static int	  read_config_file(struct hesiod_p *, const char *);
+static char	**get_txt_records(int, const char *);
+static int	  init_context(void);
+static void	  translate_errors(void);
 
 
 /*
@@ -103,8 +103,7 @@ static void	  translate_errors __P((void));
  *	initialize a hesiod_p.
  */
 int 
-hesiod_init(context)
-	void	**context;
+hesiod_init(void **context)
 {
 	struct hesiod_p	*ctx;
 	const char	*p, *configname;
@@ -168,8 +167,7 @@ hesiod_init(context)
  *	Deallocates the hesiod_p.
  */
 void 
-hesiod_end(context)
-	void	*context;
+hesiod_end(void *context)
 {
 	struct hesiod_p *ctx = (struct hesiod_p *) context;
 
@@ -265,10 +263,7 @@ hesiod_to_bind(void *context, const char *name, const char *type)
  *	by the resolver.
  */
 char **
-hesiod_resolve(context, name, type)
-	void		*context;
-	const char	*name;
-	const char	*type;
+hesiod_resolve(void *context, const char *name, const char *type)
 {
 	struct hesiod_p	*ctx = (struct hesiod_p *) context;
 	char		*bindname, **retvec;
@@ -291,9 +286,7 @@ hesiod_resolve(context, name, type)
 
 /*ARGSUSED*/
 void 
-hesiod_free_list(context, list)
-	void	 *context;
-	char	**list;
+hesiod_free_list(void *context, char **list)
 {
 	char  **p;
 
@@ -313,12 +306,9 @@ hesiod_free_list(context, list)
  *	or ctx->rhs which need to be freed by the caller.
  */
 static int 
-read_config_file(ctx, filename)
-	struct hesiod_p	*ctx;
-	const char	*filename;
+read_config_file(struct hesiod_p *ctx, const char *filename)
 {
-	char	*key, *data, *p, **which;
-	char	 buf[MAXDNAME + 7];
+	char	*buf, *key, *data, *p, **which;
 	int	 n;
 	FILE	*fp;
 
@@ -344,10 +334,9 @@ read_config_file(ctx, filename)
 	}
 	ctx->lhs = NULL;
 	ctx->rhs = NULL;
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
+	for (; (buf = fparseln(fp, NULL, NULL, NULL, FPARSELN_UNESCALL))
+	    != NULL; free(buf)) {
 		p = buf;
-		if (*p == '#' || *p == '\n' || *p == '\r')
-			continue;
 		while (*p == ' ' || *p == '\t')
 			p++;
 		key = p;
@@ -378,6 +367,7 @@ read_config_file(ctx, filename)
 			*which = strdup(data);
 			if (!*which) {
 				errno = ENOMEM;
+				free(buf);
 				(void)fclose(fp);
 				return -1;
 			}
@@ -419,9 +409,7 @@ read_config_file(ctx, filename)
  *	return a list of them.
  */
 static char **
-get_txt_records(qclass, name)
-	int		 qclass;
-	const char	*name;
+get_txt_records(int qclass, const char *name)
 {
 	HEADER		*hp;
 	unsigned char	 qbuf[PACKETSZ], abuf[MAX_HESRESP], *p, *eom, *eor;
@@ -551,16 +539,14 @@ static void	 *context;
 static int	  errval = HES_ER_UNINIT;
 
 int
-hes_init()
+hes_init(void)
 {
 	init_context();
 	return errval;
 }
 
 char *
-hes_to_bind(name, type)
-	const char	*name;
-	const char	*type;
+hes_to_bind(const char *name, const char *type)
 {
 	static	char	*bindname;
 
@@ -578,9 +564,7 @@ hes_to_bind(name, type)
 }
 
 char **
-hes_resolve(name, type)
-	const char	*name;
-	const char	*type;
+hes_resolve(const char *name, const char *type)
 {
 	static char	**list;
 
@@ -604,20 +588,19 @@ hes_resolve(name, type)
 }
 
 int
-hes_error()
+hes_error(void)
 {
 	return errval;
 }
 
 void
-hes_free(hp)
-	char **hp;
+hes_free(char **hp)
 {
 	hesiod_free_list(context, hp);
 }
 
 static int
-init_context()
+init_context(void)
 {
 	if (!inited) {
 		inited = 1;
@@ -631,7 +614,7 @@ init_context()
 }
 
 static void
-translate_errors()
+translate_errors(void)
 {
 	switch (errno) {
 	case ENOENT:

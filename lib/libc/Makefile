@@ -49,13 +49,12 @@ BUILDCOLD?= no
 SUBDIR=compat
 .include <bsd.subdir.mk>
 .else
-.if !defined(__MINIX)
 COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/compat/Makefile.inc"
-.else
+.if defined(__MINIX)
 SUBDIR+= pkgconfig
 .include <bsd.subdir.mk>
-.endif
+.endif # defined(__MINIX)
 .endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"

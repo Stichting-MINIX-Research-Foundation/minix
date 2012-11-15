@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.19 2011/01/15 12:31:57 martin Exp $	*/
+/*	$NetBSD: zdump.c,v 1.25 2012/08/09 12:38:26 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,13 +6,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.19 2011/01/15 12:31:57 martin Exp $");
-#endif /* !defined NOID */
+__RCSID("$NetBSD: zdump.c,v 1.25 2012/08/09 12:38:26 christos Exp $");
 #endif /* !defined lint */
 
-static char	elsieid[] = "@(#)zdump.c	8.9";
-
+#include "version.h"
 /*
 ** This code has been made independent of the rest of the time
 ** conversion package to increase confidence in the verification it provides.
@@ -138,7 +135,7 @@ static char	elsieid[] = "@(#)zdump.c	8.9";
 #if HAVE_GETTEXT
 #define _(msgid) gettext(msgid)
 #else /* !HAVE_GETTEXT */
-#define _(msgid) __UNCONST(msgid)
+#define _(msgid) msgid
 #endif /* !HAVE_GETTEXT */
 #endif /* !defined _ */
 
@@ -212,7 +209,7 @@ const char * const	abbrp;
 const char * const	zone;
 {
 	register const char *	cp;
-	register char *		wp;
+	register const char *	wp;
 
 	if (warned)
 		return;
@@ -244,14 +241,14 @@ const char * const	zone;
 	warned = TRUE;
 }
 
-static void
-usage(const char *xprogname, FILE *stream, int status)
+__dead static void
+usage(FILE *stream, int status)
 {
 	(void) fprintf(stream,
 _("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -c [loyear,]hiyear ] zonename ...\n\
 \n\
 Report bugs to tz@elsie.nci.nih.gov.\n"),
-		       xprogname, xprogname);
+		       progname, progname);
 	exit(status);
 }
 
@@ -289,10 +286,10 @@ char *	argv[];
 	progname = argv[0];
 	for (i = 1; i < argc; ++i)
 		if (strcmp(argv[i], "--version") == 0) {
-			(void) printf("%s\n", elsieid);
+			(void) printf("%s\n", TZVERSION);
 			exit(EXIT_SUCCESS);
 		} else if (strcmp(argv[i], "--help") == 0) {
-			usage(progname, stdout, EXIT_SUCCESS);
+			usage(stdout, EXIT_SUCCESS);
 		}
 	vflag = 0;
 	cutarg = NULL;
@@ -302,7 +299,7 @@ char *	argv[];
 		else	cutarg = optarg;
 	if ((c != EOF && c != -1) ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
-			usage(progname, stderr, EXIT_FAILURE);
+			usage(stderr, EXIT_FAILURE);
 	}
 	if (vflag) {
 		if (cutarg != NULL) {
@@ -410,6 +407,15 @@ char *	argv[];
 	return EXIT_FAILURE;
 }
 
+static time_t
+ovfl_check(time_t t)
+{
+	if (t < 0 && t - 1 >= 0)
+		return t;
+	else
+		return t - 1;
+}
+
 static void
 setabsolutes(void)
 {
@@ -443,9 +449,7 @@ _("%s: use of -v on system with floating time_t other than float or double\n"),
 
 		absolute_max_time = t;
 		t = -t;
-		absolute_min_time = t - 1;
-		if (t < absolute_min_time)
-			absolute_min_time = t;
+		absolute_min_time = ovfl_check(t);
 	} else {
 		/*
 		** time_t is unsigned.

@@ -1,13 +1,13 @@
-/*	$NetBSD: mdreloc.c,v 1.27 2010/08/06 16:33:19 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.28 2011/03/25 18:07:07 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.27 2010/08/06 16:33:19 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.28 2011/03/25 18:07:07 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.27 2010/08/06 16:33:19 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.28 2011/03/25 18:07:07 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -187,9 +187,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	result = 0;	/* XXX gcc */
 
+	_rtld_shared_enter();
 	err = _rtld_relocate_plt_object(obj, rela, &result);
 	if (err)
 		_rtld_die();
+	_rtld_shared_exit();
 
 	return (caddr_t)result;
 }

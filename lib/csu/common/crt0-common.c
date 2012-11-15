@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.1 2010/08/07 18:01:33 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.9 2012/08/13 02:15:35 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.1 2010/08/07 18:01:33 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.9 2012/08/13 02:15:35 matt Exp $");
 
 #include <sys/types.h>
+#include <sys/exec.h>
 #ifndef __minix
 #include <sys/syscall.h>
 #endif
@@ -50,8 +51,11 @@ __RCSID("$NetBSD: crt0-common.c,v 1.1 2010/08/07 18:01:33 joerg Exp $");
 
 extern int main(int, char **, char **);
 
+#ifndef HAVE_INITFINI_ARRAY
 extern void	_init(void);
 extern void	_fini(void);
+#endif
+extern void	_libc_init(void);
 
 /*
  * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
@@ -60,13 +64,7 @@ extern void	_fini(void);
  * shared libs present, things will still work.
  */
 
-#if __GNUC_PREREQ__(4,2)
-static int rtld_DYNAMIC __attribute__((__weakref__, __alias__("_DYNAMIC")));
-#define	DYNAMIC_SYM	rtld_DYNAMIC
-#else
-extern int _DYNAMIC __weak_reference(_DYNAMIC);
-#define	DYNAMIC_SYM	_DYNAMIC
-#endif
+__weakref_visible int rtld_DYNAMIC __weak_reference(_DYNAMIC);
 
 #ifdef MCRT0
 extern void	monstartup(u_long, u_long);
@@ -80,12 +78,15 @@ struct ps_strings *__ps_strings = 0;
 static char	 empty_string[] = "";
 char		*__progname = empty_string;
 
-void		___start(int, char **, char **, void (*)(void),
-    const Obj_Entry *, struct ps_strings *);
-
 #ifndef __minix
+__dead __dso_hidden void ___start(void (*)(void), const Obj_Entry *,
+			 struct ps_strings *);
+
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 #else
+__dead __dso_hidden void ___start(int, char **, char **, void (*)(void),
+			const Obj_Entry *, struct ps_strings *);
+
 #define	write(fd, s, n) /* NO write() from here on minix */
 #endif
 
@@ -95,18 +96,69 @@ do {						\
 	_exit(1);				\
 } while (0)
 
+#ifdef HAVE_INITFINI_ARRAY
+/*
+ * If we are using INIT_ARRAY/FINI_ARRAY and we are linked statically,
+ * we have to process these instead of relying on RTLD to do it for us.
+ *
+ * Since we don't need .init or .fini sections, just code them in C
+ * to make life easier.
+ */
+static const fptr_t init_array_start[] __weak_reference(__init_array_start);
+static const fptr_t init_array_end[] __weak_reference(__init_array_end);
+static const fptr_t fini_array_start[] __weak_reference(__fini_array_start);
+static const fptr_t fini_array_end[] __weak_reference(__fini_array_end);
+
+static inline void
+_init(void)
+{
+	for (const fptr_t *f = init_array_start; f < init_array_end; f++) {
+		(*f)();
+	}
+}
+
+static void
+_fini(void)
+{
+	for (const fptr_t *f = fini_array_start; f < fini_array_end; f++) {
+		(*f)();
+	}
+}
+#endif /* HAVE_INITFINI_ARRAY */
+
 void
+#ifdef __minix
 ___start(int argc, char **argv, char **envp,
-    void (*cleanup)(void),			/* from shared loader */
+    void (*cleanup)(void),                 /* from shared loader */
+#else
+___start(void (*cleanup)(void),			/* from shared loader */
+#endif /* __minix */
     const Obj_Entry *obj,			/* from shared loader */
     struct ps_strings *ps_strings)
 {
-	environ = envp;
+#ifdef __minix
+	/* LSC: We have not yet updated the way we pass arguments to 
+	        the userspace, so here some code to adapt this to the new 
+	        ways. */
+	struct ps_strings minix_ps_strings;
 
-	if (argv[0] != NULL) {
+	if (ps_strings == NULL) {
+		minix_ps_strings.ps_envstr = envp;
+		minix_ps_strings.ps_argvstr = argv;
+		minix_ps_strings.ps_nargvstr = argc;
+		ps_strings = &minix_ps_strings;
+	}
+#endif /* __minix */
+	if (ps_strings == NULL)
+		_FATAL("ps_strings missing\n");
+	__ps_strings = ps_strings;
+
+	environ = ps_strings->ps_envstr;
+
+	if (ps_strings->ps_argvstr[0] != NULL) {
 		char *c;
-		__progname = argv[0];
-		for (c = argv[0]; *c; ++c) {
+		__progname = ps_strings->ps_argvstr[0];
+		for (c = ps_strings->ps_argvstr[0]; *c; ++c) {
 			if (*c == '/')
 				__progname = c + 1;
 		}
@@ -114,16 +166,17 @@ ___start(int argc, char **argv, char **envp,
 		__progname = empty_string;
 	}
 
-	if (ps_strings != NULL)
-		__ps_strings = ps_strings;
-
-	if (&DYNAMIC_SYM != NULL) {
-		if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
+	if (&rtld_DYNAMIC != NULL) {
+		if (obj == NULL)
+			_FATAL("NULL Obj_Entry pointer in GOT\n");
+		if (obj->magic != RTLD_MAGIC)
 			_FATAL("Corrupt Obj_Entry pointer in GOT\n");
 		if (obj->version != RTLD_VERSION)
 			_FATAL("Dynamic linker version mismatch\n");
 		atexit(cleanup);
 	}
+
+	_libc_init();
 
 #ifdef MCRT0
 	atexit(_mcleanup);
@@ -133,5 +186,5 @@ ___start(int argc, char **argv, char **envp,
 	atexit(_fini);
 	_init();
 
-	exit(main(argc, argv, environ));
+	exit(main(ps_strings->ps_nargvstr, ps_strings->ps_argvstr, environ));
 }

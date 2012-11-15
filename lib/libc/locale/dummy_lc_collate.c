@@ -1,4 +1,4 @@
-/* $NetBSD: dummy_lc_collate.c,v 1.2 2009/01/11 02:46:28 christos Exp $ */
+/* $NetBSD: dummy_lc_collate.c,v 1.3 2012/03/04 21:14:56 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dummy_lc_collate.c,v 1.2 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: dummy_lc_collate.c,v 1.3 2012/03/04 21:14:56 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,4 +51,3 @@ __RCSID("$NetBSD: dummy_lc_collate.c,v 1.2 2009/01/11 02:46:28 christos Exp $");
 #define _CATEGORY_NAME		"LC_COLLATE"
 
 #include "dummy_lc_template.h"
-_LOCALE_CATEGORY_ENTRY(_dummy_LC_COLLATE_);

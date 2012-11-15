@@ -110,17 +110,11 @@
 #define	__link_set_add_data(set, sym)	__link_set_make_entry(set, sym, 25)
 #define	__link_set_add_bss(set, sym)	__link_set_make_entry(set, sym, 27)
 
-#ifdef __minix
-/* GNU binutils 2.x doesn't support a.out link sets. We need to workaround
- * this by explicitely creating the N_SETV structure. */
-#define __link_set_decl(set, ptype)
-#else
 #define	__link_set_decl(set, ptype)					\
 extern struct {								\
 	int	__ls_length;						\
 	ptype	*__ls_items[1];						\
 } __link_set_##set
-#endif /* !__minix */
 
 #define	__link_set_start(set)	(&(__link_set_##set).__ls_items[0])
 #define	__link_set_end(set)						\

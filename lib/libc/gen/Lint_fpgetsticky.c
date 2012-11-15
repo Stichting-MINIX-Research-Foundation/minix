@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_fpgetsticky.c,v 1.2 2000/06/14 06:49:05 cgd Exp $ */
+/* $NetBSD: Lint_fpgetsticky.c,v 1.3 2012/06/24 15:26:03 christos Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,7 +9,7 @@
 
 /*ARGSUSED*/
 fp_except
-fpgetsticky()
+fpgetsticky(void)
 {
 	fp_except rv = { 0 };
 

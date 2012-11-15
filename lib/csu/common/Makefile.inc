@@ -82,6 +82,5 @@ FILESDIR=${LIBDIR}
 CLEANFILES+=${OBJS}
 SYMLINKS+=	crtbegin.o ${LIBDIR}/crtbeginT.o
 SYMLINKS+=	crtend.o ${LIBDIR}/crtendS.o
-SYMLINKS+=	crt0.o ${LIBDIR}/crt1.o
 
 .include <bsd.prog.mk>

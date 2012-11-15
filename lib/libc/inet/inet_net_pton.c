@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 1.4.2.1 2002/08/02 02:17:21 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.1 2004/05/20 23:13:02 christos Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.4 2012/03/20 17:08:13 matt Exp $");
 #endif
 #endif
 
@@ -34,6 +34,7 @@ __RCSID("$NetBSD: inet_net_pton.c,v 1.1 2004/05/20 23:13:02 christos Exp $");
 #include <arpa/inet.h>
 
 #include <isc/assertions.h>
+#include <stddef.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -70,12 +71,15 @@ __weak_alias(inet_net_pton,_inet_net_pton)
  *	Paul Vixie (ISC), June 1996
  */
 static int
-inet_net_pton_ipv4( const char *src, u_char *dst, size_t size) {
+inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
+{
 	static const char xdigits[] = "0123456789abcdef";
 	static const char digits[] = "0123456789";
-	int n, ch, tmp = 0, dirty, bits;
+	int ch, dirty, bits;
+	ptrdiff_t n, tmp;
 	const u_char *odst = dst;
 
+	tmp = 0;
 	ch = *src++;
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
 	    && isascii((u_char)(src[1]))
@@ -144,13 +148,13 @@ inet_net_pton_ipv4( const char *src, u_char *dst, size_t size) {
 			n = strchr(digits, ch) - digits;
 			INSIST(n >= 0 && n <= 9);
 			bits *= 10;
-			bits += n;
+			bits += (int)n;
+			if (bits > 32)
+				goto emsgsize;
 		} while ((ch = *src++) != '\0' && isascii((u_char)ch)
 		    && isdigit((u_char)ch));
 		if (ch != '\0')
 			goto enoent;
-		if (bits > 32)
-			goto emsgsize;
 	}
 
 	/* Firey death and destruction unless we prefetched EOS. */
@@ -174,7 +178,7 @@ inet_net_pton_ipv4( const char *src, u_char *dst, size_t size) {
 			bits = 8;
 		/* If imputed mask is narrower than specified octets, widen. */
 		if (bits >= 8 && bits < ((dst - odst) * 8))
-			bits = (dst - odst) * 8;
+			bits = (int)(dst - odst) * 8;
 	}
 	/* Extend network to cover the actual mask. */
 	while (bits > ((dst - odst) * 8)) {
@@ -194,7 +198,8 @@ inet_net_pton_ipv4( const char *src, u_char *dst, size_t size) {
 }
 
 static int
-getbits(const char *src, int *bitsp) {
+getbits(const char *src, int *bitsp)
+{
 	static const char digits[] = "0123456789";
 	int n;
 	int val;
@@ -210,7 +215,7 @@ getbits(const char *src, int *bitsp) {
 			if (n++ != 0 && val == 0)	/* no leading zeros */
 				return (0);
 			val *= 10;
-			val += (pch - digits);
+			val += (int)(pch - digits);
 			if (val > 128)			/* range */
 				return (0);
 			continue;
@@ -224,7 +229,8 @@ getbits(const char *src, int *bitsp) {
 }
 
 static int
-getv4(const char *src, u_char *dst, int *bitsp) {
+getv4(const char *src, u_char *dst, int *bitsp)
+{
 	static const char digits[] = "0123456789";
 	u_char *odst = dst;
 	int n;
@@ -241,7 +247,7 @@ getv4(const char *src, u_char *dst, int *bitsp) {
 			if (n++ != 0 && val == 0)	/* no leading zeros */
 				return (0);
 			val *= 10;
-			val += (pch - digits);
+			val += (int)(pch - digits);
 			if (val > 255)			/* range */
 				return (0);
 			continue;
@@ -267,7 +273,8 @@ getv4(const char *src, u_char *dst, int *bitsp) {
 }
 
 static int
-inet_net_pton_ipv6(const char *src, u_char *dst, size_t size) {
+inet_net_pton_ipv6(const char *src, u_char *dst, size_t size)
+{
 	static const char xdigits_l[] = "0123456789abcdef",
 			  xdigits_u[] = "0123456789ABCDEF";
 	u_char tmp[NS_IN6ADDRSZ], *tp, *endp, *colonp;
@@ -300,7 +307,7 @@ inet_net_pton_ipv6(const char *src, u_char *dst, size_t size) {
 			pch = strchr((xdigits = xdigits_u), ch);
 		if (pch != NULL) {
 			val <<= 4;
-			val |= (pch - xdigits);
+			val |= (int)(pch - xdigits);
 			if (++digits > 4)
 				goto enoent;
 			saw_xdigit = 1;
@@ -356,7 +363,7 @@ inet_net_pton_ipv6(const char *src, u_char *dst, size_t size) {
 		 * Since some memmove()'s erroneously fail to handle
 		 * overlapping regions, we'll do the shift by hand.
 		 */
-		const int n = tp - colonp;
+		const ptrdiff_t n = tp - colonp;
 		int i;
 
 		if (tp == endp)
@@ -399,7 +406,8 @@ inet_net_pton_ipv6(const char *src, u_char *dst, size_t size) {
  *	Paul Vixie (ISC), June 1996
  */
 int
-inet_net_pton(int af, const char *src, void *dst, size_t size) {
+inet_net_pton(int af, const char *src, void *dst, size_t size)
+{
 	switch (af) {
 	case AF_INET:
 		return (inet_net_pton_ipv4(src, dst, size));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.10 2010/10/29 15:08:17 christos Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.11 2011/12/11 11:05:11 joerg Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -57,7 +57,7 @@ void xerr(int, const char *, ...)
 void xerrx(int, const char *, ...)
     __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
 
-void     xassert(const char *, int, const char *);
+void     xassert(const char *, int, const char *) __dead;
 const char *xstrerror(int);
 int	xunsetenv(const char *);
 

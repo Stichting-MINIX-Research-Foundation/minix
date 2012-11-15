@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuf.c,v 1.9 2003/08/07 16:43:31 agc Exp $	*/
+/*	$NetBSD: setbuf.c,v 1.10 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setbuf.c,v 1.9 2003/08/07 16:43:31 agc Exp $");
+__RCSID("$NetBSD: setbuf.c,v 1.10 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,13 +48,11 @@ __RCSID("$NetBSD: setbuf.c,v 1.9 2003/08/07 16:43:31 agc Exp $");
 #include "local.h"
 
 void
-setbuf(fp, buf)
-	FILE *fp;
-	char *buf;
+setbuf(FILE *fp, char *buf)
 {
 
 	_DIAGASSERT(fp != NULL);
 	/* buf may be NULL */
 
-	(void) setvbuf(fp, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
+	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }

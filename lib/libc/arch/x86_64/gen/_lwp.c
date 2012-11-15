@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.6 2009/07/02 09:57:09 joerg Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.7 2011/02/24 04:28:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.6 2009/07/02 09:57:09 joerg Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.7 2011/02/24 04:28:43 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -66,5 +66,6 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	/* LINTED uintptr_t is safe */
 	gr[_REG_URSP] = (uintptr_t) sp;
 
-	/* LINTED private is currently unused */
+	u->uc_mcontext._mc_tlsbase = (uintptr_t)private;
+	u->uc_flags |= _UC_TLSBASE;
 }

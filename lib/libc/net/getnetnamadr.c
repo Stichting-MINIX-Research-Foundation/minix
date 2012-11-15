@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.41 2008/05/18 22:36:15 lukem Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.42 2012/03/13 21:13:41 christos Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.41 2008/05/18 22:36:15 lukem Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.42 2012/03/13 21:13:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,7 +153,7 @@ parse_reversed_addr(const char *str, in_addr_t *result)
 				/* build result from octets in reverse */
 	for (octidx = 3; octidx >= 0; octidx--) {
 		*result <<= 8;
-		*result |= (octet[octidx] & 0xff);
+		*result |= (in_addr_t)(octet[octidx] & 0xff);
 	}
 	return 0;
 }
@@ -215,7 +215,7 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 	haveanswer = 0;
 	n_name[0] = '\0';
 	while (--ancount >= 0 && cp < eom) {
-		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
+		n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
 		if ((n < 0) || !res_dnok(bp))
 			break;
 		cp += n;
@@ -225,7 +225,7 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 		cp += INT32SZ;		/* TTL */
 		GETSHORT(n, cp);
 		if (class == C_IN && type == T_PTR) {
-			n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
+			n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
 			if ((n < 0) || !res_hnok(bp)) {
 				cp += n;
 				return NULL;
@@ -347,7 +347,8 @@ _dns_getnetbyaddr(void *cbrv, void *cbdata, va_list ap)
 		free(buf);
 		return NS_NOTFOUND;
 	}
-	anslen = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
+	anslen = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf,
+	    (int)sizeof(buf->buf));
 	if (anslen < 0) {
 		free(buf);
 #ifdef DEBUG
@@ -459,7 +460,7 @@ _dns_getnetbyname(void *cbrv, void *cbdata, va_list ap)
 		return NS_NOTFOUND;
 	}
 	anslen = res_nsearch(res, qbuf, C_IN, T_PTR, buf->buf,
-	    sizeof(buf->buf));
+	    (int)sizeof(buf->buf));
 	if (anslen < 0) {
 		free(buf);
 #ifdef DEBUG

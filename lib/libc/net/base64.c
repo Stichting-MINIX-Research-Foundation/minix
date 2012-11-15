@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.12 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 #if 0
 static const char rcsid[] = "Id: base64.c,v 1.4 2005/04/27 04:56:34 sra Exp";
 #else
-__RCSID("$NetBSD: base64.c,v 1.12 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -203,7 +203,8 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
 	if (datalength >= targsize)
 		return (-1);
 	target[datalength] = '\0';	/*%< Returned value doesn't count \\0. */
-	return (datalength);
+	_DIAGASSERT(__type_fit(int, datalength));
+	return (int)datalength;
 }
 
 /* skips all whitespace anywhere.
@@ -213,10 +214,7 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
  */
 
 int
-b64_pton(src, target, targsize)
-	char const *src;
-	u_char *target;
-	size_t targsize;
+b64_pton(char const *src, u_char *target, size_t targsize)
 {
 	size_t tarindex;
 	int state, ch;
@@ -244,7 +242,8 @@ b64_pton(src, target, targsize)
 			if (target) {
 				if ((size_t)tarindex >= targsize)
 					return (-1);
-				target[tarindex] = (pos - Base64) << 2;
+				target[tarindex] =
+				    (unsigned char)(pos - Base64) << 2;
 			}
 			state = 1;
 			break;
@@ -254,8 +253,9 @@ b64_pton(src, target, targsize)
 					return (-1);
 				target[tarindex] |= 
 				    (u_int32_t)(pos - Base64) >> 4;
-				target[tarindex+1]  = ((pos - Base64) & 0x0f)
-							<< 4 ;
+				target[tarindex+1]  = 
+				    (unsigned char)
+				    (((pos - Base64) & 0x0f) << 4);
 			}
 			tarindex++;
 			state = 2;
@@ -266,8 +266,9 @@ b64_pton(src, target, targsize)
 					return (-1);
 				target[tarindex] |= 
 					(u_int32_t)(pos - Base64) >> 2;
-				target[tarindex+1] = ((pos - Base64) & 0x03)
-							<< 6;
+				target[tarindex+1] =
+				    (unsigned char)
+				    (((pos - Base64) & 0x03) << 6);
 			}
 			tarindex++;
 			state = 3;
@@ -276,7 +277,8 @@ b64_pton(src, target, targsize)
 			if (target) {
 				if ((size_t)tarindex >= targsize)
 					return (-1);
-				target[tarindex] |= (pos - Base64);
+				target[tarindex] |=
+				    (unsigned char)(pos - Base64);
 			}
 			tarindex++;
 			state = 0;
@@ -337,7 +339,8 @@ b64_pton(src, target, targsize)
 			return (-1);
 	}
 
-	return (tarindex);
+	_DIAGASSERT(__type_fit(int, tarindex));
+	return (int)tarindex;
 }
 
 /*! \file */

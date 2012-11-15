@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.60 2010/09/24 15:20:52 matt Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.62 2011/03/25 18:07:05 joerg Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,11 +30,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.60 2010/09/24 15:20:52 matt Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.62 2011/03/25 18:07:05 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/endian.h>
+#include <sys/tls.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -375,6 +376,79 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 		}
 
+#if ELFSIZE == 64
+		case R_TYPE(TLS_DTPMOD64):
+#else
+		case R_TYPE(TLS_DTPMOD32): 
+#endif
+		{
+			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
+			Elf_Addr val = old;
+
+			def = _rtld_find_symdef(r_symndx, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			val += (Elf_Addr)defobj->tlsindex;
+
+			store_ptr(where, val, ELFSIZE / 8);
+			rdbg(("DTPMOD %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[r_symndx].st_name,
+			    obj->path, (void *)old, defobj->path));
+			break;
+		}
+
+#if ELFSIZE == 64
+		case R_TYPE(TLS_DTPREL64):
+#else
+		case R_TYPE(TLS_DTPREL32):
+#endif
+		{
+			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
+			Elf_Addr val = old;
+
+			def = _rtld_find_symdef(r_symndx, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			val += (Elf_Addr)def->st_value - TLS_DTV_OFFSET;
+			store_ptr(where, val, ELFSIZE / 8);
+
+			rdbg(("DTPREL %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[r_symndx].st_name,
+			    obj->path, (void *)old, defobj->path));
+			break;
+		}
+
+#if ELFSIZE == 64
+		case R_TYPE(TLS_TPREL64):
+#else
+		case R_TYPE(TLS_TPREL32):
+#endif
+		{
+			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
+			Elf_Addr val = old;
+
+			def = _rtld_find_symdef(r_symndx, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			val += (Elf_Addr)(def->st_value + defobj->tlsoffset
+			    - TLS_TP_OFFSET);
+			store_ptr(where, val, ELFSIZE / 8);
+
+			rdbg(("TPREL %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[r_symndx].st_name,
+			    obj->path, (void *)*where, defobj->path));
+			break;
+		}
+
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
@@ -431,9 +505,11 @@ _rtld_bind(Elf_Word a0, Elf_Addr a1, Elf_Addr a2, Elf_Addr a3)
 	Elf_Addr new_value = 0;	/* XXX gcc */
 	int err;
 
+	_rtld_shared_enter();
 	err = _rtld_relocate_plt_object(obj, a0, &new_value);
 	if (err)
 		_rtld_die();
+	_rtld_shared_exit();
 
 	return (caddr_t)new_value;
 }

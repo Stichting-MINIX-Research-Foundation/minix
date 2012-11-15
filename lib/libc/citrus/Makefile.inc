@@ -3,8 +3,10 @@
 # sources
 .PATH: ${ARCHDIR}/citrus ${.CURDIR}/citrus
 
-#MODULE_SHLIB_MAJOR!= . ${NETBSDSRCDIR}/lib/i18n_module/shlib_version ; echo $$major
-#CPPFLAGS.citrus_module.c+=-DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR}
+.if !defined(__MINIX)
+MODULE_SHLIB_MAJOR!= . ${NETBSDSRCDIR}/lib/i18n_module/shlib_version ; echo $$major
+CPPFLAGS.citrus_module.c+=-DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR}
+.endif # !defined(__MINIX)
 SRCS+=	citrus_bcs.c citrus_bcs_strtol.c citrus_bcs_strtoul.c \
 	citrus_csmapper.c citrus_ctype.c citrus_ctype_fallback.c \
 	citrus_db.c citrus_db_hash.c citrus_esdb.c citrus_hash.c \

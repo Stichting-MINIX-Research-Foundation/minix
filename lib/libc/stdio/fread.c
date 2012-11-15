@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.20 2009/10/25 20:44:13 christos Exp $	*/
+/*	$NetBSD: fread.c,v 1.22 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.20 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: fread.c,v 1.22 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,10 +49,7 @@ __RCSID("$NetBSD: fread.c,v 1.20 2009/10/25 20:44:13 christos Exp $");
 #include "local.h"
 
 size_t
-fread(buf, size, count, fp)
-	void *buf;
-	size_t size, count;
-	FILE *fp;
+fread(void *buf, size_t size, size_t count, FILE *fp)
 {
 	size_t resid;
 	char *p;
@@ -66,7 +63,7 @@ fread(buf, size, count, fp)
 	 * fwrite, the SUSv2 does.
 	 */
 	if ((resid = count * size) == 0)
-		return (0);
+		return 0;
 
 	_DIAGASSERT(buf != NULL);
 
@@ -84,12 +81,14 @@ fread(buf, size, count, fp)
 		if (__srefill(fp)) {
 			/* no more input: return partial result */
 			FUNLOCKFILE(fp);
-			return ((total - resid) / size);
+			return (total - resid) / size;
 		}
 	}
 	(void)memcpy(p, fp->_p, resid);
-	fp->_r -= resid;
+
+	_DIAGASSERT(__type_fit(int, fp->_r - resid));
+	fp->_r -= (int)resid;
 	fp->_p += resid;
 	FUNLOCKFILE(fp);
-	return (count);
+	return count;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.5 2010/12/07 20:10:53 joerg Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.5 2010/12/07 20:10:53 joerg Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -50,14 +50,14 @@ void xprintf(const char *fmt, ...);
 
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __fail(const char *) __attribute__((__noreturn__));
-void __stack_chk_fail_local(void);
+__dead void __stack_chk_fail_local(void);
 void __guard_setup(void);
 
 void
 __guard_setup(void)
 {
 #ifndef __minix
-	int mib[2];
+	static const int mib[2] = { CTL_KERN, KERN_ARND };
 	size_t len;
 #endif
 
@@ -65,12 +65,9 @@ __guard_setup(void)
 		return;
 
 #ifndef __minix
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_ARND;
-
 	len = sizeof(__stack_chk_guard);
-	if (__sysctl(mib, 2, __stack_chk_guard, &len, NULL, 0) == -1 ||
-	    len != sizeof(__stack_chk_guard)) {
+	if (__sysctl(mib, (u_int)__arraycount(mib), __stack_chk_guard, &len,
+	    NULL, 0) == -1 || len != sizeof(__stack_chk_guard)) {
 #endif
 		/* If sysctl was unsuccessful, use the "terminator canary". */
 		((unsigned char *)(void *)__stack_chk_guard)[0] = 0;
@@ -88,8 +85,8 @@ __fail(const char *msg)
 {
 #ifdef _LIBC
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
-#endif
 	struct sigaction sa;
+#endif
 	sigset_t mask;
 
 	/* Immediately block all signal handlers from running code */
@@ -104,12 +101,14 @@ __fail(const char *msg)
 	xprintf("%s: %s\n", getprogname(), msg);
 #endif
 
+#ifdef _LIBC
 	(void)memset(&sa, 0, sizeof(sa));
 	(void)sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_DFL;
 	(void)sigaction(SIGABRT, &sa, NULL);
 	(void)raise(SIGABRT);
+#endif
 	_exit(127);
 }
 

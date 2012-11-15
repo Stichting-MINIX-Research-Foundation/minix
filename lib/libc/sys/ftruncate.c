@@ -1,4 +1,4 @@
-/*	$NetBSD: ftruncate.c,v 1.13 2007/11/23 12:39:15 uebayasi Exp $	*/
+/*	$NetBSD: ftruncate.c,v 1.14 2012/03/20 16:26:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ftruncate.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: ftruncate.c,v 1.13 2007/11/23 12:39:15 uebayasi Exp $");
+__RCSID("$NetBSD: ftruncate.c,v 1.14 2012/03/20 16:26:12 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,9 +54,7 @@ int __ftruncate(int, int, off_t);
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 int
-ftruncate(fd, length)
-	int	fd;
-	off_t	length;
+ftruncate(int fd, off_t length)
 {
 
 	return __ftruncate(fd, 0, length);

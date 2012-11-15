@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.25 2009/12/31 22:49:16 mlelstv Exp $	*/
+/*	$NetBSD: private.h,v 1.26 2012/08/09 12:38:25 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -26,18 +26,6 @@
 ** Do NOT copy it to any system include directory.
 ** Thank you!
 */
-
-/*
-** ID
-*/
-
-#ifndef lint
-#ifndef NOID
-#if 0
-static char	privatehid[] = "@(#)private.h	8.6";
-#endif
-#endif /* !defined NOID */
-#endif /* !defined lint */
 
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 

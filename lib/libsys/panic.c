@@ -41,10 +41,8 @@ void panic(const char *fmt, ...)
   /* Try exit */
   _exit(1);
 
-#ifndef __NBSD_LIBC
   /* Try to signal ourself */
   abort();
-#endif
 
   /* If exiting nicely through PM fails for some reason, try to
    * commit suicide. E.g., message to PM might fail due to deadlock.

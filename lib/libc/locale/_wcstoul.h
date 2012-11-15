@@ -1,4 +1,4 @@
-/* $NetBSD: _wcstoul.h,v 1.3 2005/11/29 03:11:59 christos Exp $ */
+/* $NetBSD: _wcstoul.h,v 1.4 2012/06/25 22:32:44 abs Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -44,10 +44,7 @@
  */
 
 __UINT
-_FUNCNAME(nptr, endptr, base)
-	const wchar_t *nptr;
-	wchar_t **endptr;
-	int base;
+_FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
 {
 	const wchar_t *s;
 	__UINT acc, cutoff;

@@ -41,6 +41,8 @@ __RCSID("$NetBSD: uuid_create.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
 #ifdef __minix
 #include <paths.h>
 #include <fcntl.h>
+#include <unistd.h>
+
 /* Fake a uuidgen() syscall */
 int uuidgen(struct uuid *store, int count)
 {

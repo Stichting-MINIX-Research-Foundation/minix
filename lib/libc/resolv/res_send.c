@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.20 2009/10/24 17:24:01 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.25 2012/03/21 00:34:54 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.20 2009/10/24 17:24:01 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.25 2012/03/21 00:34:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -116,6 +116,7 @@ __RCSID("$NetBSD: res_send.c,v 1.20 2009/10/24 17:24:01 christos Exp $");
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <netdb.h>
 #include <resolv.h>
@@ -157,14 +158,12 @@ __weak_alias(res_nsend,__res_nsend)
 
 #ifndef USE_POLL
 static const int highestFD = FD_SETSIZE - 1;
-#else
-static int highestFD = 0;
 #endif
 
 /* Forward. */
 
-static int		get_salen __P((const struct sockaddr *));
-static struct sockaddr * get_nsaddr __P((res_state, size_t));
+static int		get_salen(const struct sockaddr *);
+static struct sockaddr * get_nsaddr(res_state, size_t);
 static int		send_vc(res_state, const u_char *, int,
 				u_char *, int, int *, int);
 static int		send_dg(res_state, const u_char *, int,
@@ -261,7 +260,7 @@ res_nameinquery(const char *name, int type, int class,
 		char tname[MAXDNAME+1];
 		int n, ttype, tclass;
 
-		n = dn_expand(buf, eom, cp, tname, sizeof tname);
+		n = dn_expand(buf, eom, cp, tname, (int)sizeof tname);
 		if (n < 0)
 			return (-1);
 		cp += n;
@@ -312,7 +311,7 @@ res_queriesmatch(const u_char *buf1, const u_char *eom1,
 		char tname[MAXDNAME+1];
 		int n, ttype, tclass;
 
-		n = dn_expand(buf1, eom1, cp, tname, sizeof tname);
+		n = dn_expand(buf1, eom1, cp, tname, (int)sizeof tname);
 		if (n < 0)
 			return (-1);
 		cp += n;
@@ -332,10 +331,6 @@ res_nsend(res_state statp,
 {
 	int gotsomewhere, terrno, tries, v_circuit, resplen, ns, n;
 	char abuf[NI_MAXHOST];
-
-#ifdef USE_POLL
-	highestFD = sysconf(_SC_OPEN_MAX) - 1;
-#endif
 
 	(void)res_check(statp, NULL);
 
@@ -484,8 +479,8 @@ res_nsend(res_state statp,
 		}
 
 		Dprint(((statp->options & RES_DEBUG) &&
-			getnameinfo(nsap, (socklen_t)nsaplen, abuf, sizeof(abuf),
-				    NULL, 0, niflags) == 0),
+			getnameinfo(nsap, (socklen_t)nsaplen, abuf,
+			    (socklen_t)sizeof(abuf), NULL, 0, niflags) == 0),
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
 
@@ -582,8 +577,7 @@ res_nsend(res_state statp,
 /* Private */
 
 static int
-get_salen(sa)
-	const struct sockaddr *sa;
+get_salen(const struct sockaddr *sa)
 {
 
 #ifdef HAVE_SA_LEN
@@ -604,9 +598,7 @@ get_salen(sa)
  * pick appropriate nsaddr_list for use.  see res_init() for initialization.
  */
 static struct sockaddr *
-get_nsaddr(statp, n)
-	res_state statp;
-	size_t n;
+get_nsaddr(res_state statp, size_t n)
 {
 
 	if (!statp->nsaddr_list[n].sin_family && EXT(statp).ext) {
@@ -635,7 +627,8 @@ send_vc(res_state statp,
 	HEADER *anhp = (HEADER *)(void *)ans;
 	struct sockaddr *nsap;
 	int nsaplen;
-	int truncating, connreset, resplen, n;
+	int truncating, connreset, resplen;
+	ssize_t n;
 	struct iovec iov[2];
 	u_short len;
 	u_char *cp;
@@ -669,10 +662,12 @@ send_vc(res_state statp,
 			res_nclose(statp);
 
 		statp->_vcsock = socket(nsap->sa_family, SOCK_STREAM, 0);
+#ifndef USE_POLL
 		if (statp->_vcsock > highestFD) {
 			res_nclose(statp);
 			errno = ENOTSOCK;
 		}
+#endif
 		if (statp->_vcsock < 0) {
 			switch (errno) {
 			case EPROTONOSUPPORT:
@@ -697,7 +692,7 @@ send_vc(res_state statp,
 		 * Push on even if setsockopt(SO_NOSIGPIPE) fails.
 		 */
 		(void)setsockopt(statp->_vcsock, SOL_SOCKET, SO_NOSIGPIPE, &on,
-				 sizeof(on));
+				 (unsigned int)sizeof(on));
 #endif
 		errno = 0;
 		if (connect(statp->_vcsock, nsap, (socklen_t)nsaplen) < 0) {
@@ -731,7 +726,7 @@ send_vc(res_state statp,
 	len = INT16SZ;
 	while ((n = read(statp->_vcsock, (char *)cp, (size_t)len)) > 0) {
 		cp += n;
-		if ((len -= n) == 0)
+		if ((len -= (u_short)n) == 0)
 			break;
 	}
 	if (n <= 0) {
@@ -777,7 +772,7 @@ send_vc(res_state statp,
 	cp = ans;
 	while (len != 0 && (n = read(statp->_vcsock, (char *)cp, (size_t)len)) > 0){
 		cp += n;
-		len -= n;
+		len -= (u_short)n;
 	}
 	if (n <= 0) {
 		*terrno = errno;
@@ -797,7 +792,7 @@ send_vc(res_state statp,
 			n = read(statp->_vcsock, junk,
 				 (len > sizeof junk) ? sizeof junk : len);
 			if (n > 0)
-				len -= n;
+				len -= (u_short)n;
 			else
 				break;
 		}
@@ -836,7 +831,8 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 	struct timespec now, timeout, finish;
 	struct sockaddr_storage from;
 	ISC_SOCKLEN_T fromlen;
-	int resplen, seconds, n, s;
+	ssize_t resplen;
+	int seconds, n, s;
 #ifdef USE_POLL
 	int     polltimeout;
 	struct pollfd   pollfd;
@@ -848,10 +844,12 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 	nsaplen = get_salen(nsap);
 	if (EXT(statp).nssocks[ns] == -1) {
 		EXT(statp).nssocks[ns] = socket(nsap->sa_family, SOCK_DGRAM, 0);
+#ifndef USE_POLL
 		if (EXT(statp).nssocks[ns] > highestFD) {
 			res_nclose(statp);
 			errno = ENOTSOCK;
 		}
+#endif
 		if (EXT(statp).nssocks[ns] < 0) {
 			switch (errno) {
 			case EPROTONOSUPPORT:
@@ -914,7 +912,7 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 	if (seconds <= 0)
 		seconds = 1;
 	now = evNowTime();
-	timeout = evConsTime((long)seconds, 0L);
+	timeout = evConsTime((time_t)seconds, 0L);
 	finish = evAddTime(now, timeout);
 	goto nonow;
  wait:
@@ -931,7 +929,7 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 #else
 	timeout = evSubTime(finish, now);
 	if (timeout.tv_sec < 0)
-		timeout = evConsTime(0L, 0L);
+		timeout = evConsTime((time_t)0, 0L);
 	polltimeout = 1000*(int)timeout.tv_sec +
 		(int)timeout.tv_nsec/1000000;
 	pollfd.fd = s;
@@ -970,7 +968,7 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 		 * Undersized message.
 		 */
 		Dprint(statp->options & RES_DEBUG,
-		       (stdout, ";; undersized: %d\n",
+		       (stdout, ";; undersized: %zd\n",
 			resplen));
 		*terrno = EMSGSIZE;
 		res_nclose(statp);
@@ -1028,7 +1026,7 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 		DprintQ((statp->options & RES_DEBUG) ||
 			(statp->pfcode & RES_PRF_REPLY),
 			(stdout, ";; wrong query name:\n"),
-			ans, (resplen > anssiz) ? anssiz : resplen);
+			ans, (int)(resplen > anssiz) ? anssiz : resplen);
 		goto wait;
 	}
 	if (anhp->rcode == SERVFAIL ||
@@ -1036,7 +1034,7 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 	    anhp->rcode == REFUSED) {
 		DprintQ(statp->options & RES_DEBUG,
 			(stdout, "server rejected query:\n"),
-			ans, (resplen > anssiz) ? anssiz : resplen);
+			ans, (int)(resplen > anssiz) ? anssiz : resplen);
 		res_nclose(statp);
 		/* don't retry if called from dig */
 		if (!statp->pfcode)
@@ -1057,7 +1055,8 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 	 * All is well, or the error is fatal.  Signal that the
 	 * next nameserver ought not be tried.
 	 */
-	return (resplen);
+	_DIAGASSERT(__type_fit(int, resplen));
+	return (int)resplen;
 }
 
 static void
@@ -1069,8 +1068,9 @@ Aerror(const res_state statp, FILE *file, const char *string, int error,
 	char sbuf[NI_MAXSERV];
 
 	if ((statp->options & RES_DEBUG) != 0U) {
-		if (getnameinfo(address, (socklen_t)alen, hbuf, sizeof(hbuf),
-		    sbuf, sizeof(sbuf), niflags)) {
+		if (getnameinfo(address, (socklen_t)alen, hbuf,
+		    (socklen_t)sizeof(hbuf), sbuf, (socklen_t)sizeof(sbuf),
+		    niflags)) {
 			strncpy(hbuf, "?", sizeof(hbuf) - 1);
 			hbuf[sizeof(hbuf) - 1] = '\0';
 			strncpy(sbuf, "?", sizeof(sbuf) - 1);

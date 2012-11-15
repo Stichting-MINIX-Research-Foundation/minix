@@ -1,4 +1,4 @@
-/*	$NetBSD: strxfrm.c,v 1.11 2003/08/07 16:43:53 agc Exp $	*/
+/*	$NetBSD: strxfrm.c,v 1.12 2012/06/25 22:32:46 abs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strxfrm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strxfrm.c,v 1.11 2003/08/07 16:43:53 agc Exp $");
+__RCSID("$NetBSD: strxfrm.c,v 1.12 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,10 +50,7 @@ __RCSID("$NetBSD: strxfrm.c,v 1.11 2003/08/07 16:43:53 agc Exp $");
  * on the original untransformed strings would return.
  */
 size_t
-strxfrm(dst, src, n)
-	char *dst;
-	const char *src;
-	size_t n;
+strxfrm(char *dst, const char *src, size_t n)
 {
 	size_t srclen, copysize;
 

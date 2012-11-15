@@ -1,5 +1,5 @@
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include <minix/minlib.h>
 #include <minix/const.h>
 #include <minix/cpufeature.h>

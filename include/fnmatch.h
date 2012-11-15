@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: fnmatch.h,v 1.13 2011/01/31 04:49:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
 
 #define	FNM_NOMATCH	1	/* Match failed. */
 #define	FNM_NOSYS	2	/* Function not implemented. */
+#define	FNM_NORES	3	/* Out of resources */
 
 #define	FNM_NOESCAPE	0x01	/* Disable backslash escaping. */
 #define	FNM_PATHNAME	0x02	/* Slash must be matched by slash. */

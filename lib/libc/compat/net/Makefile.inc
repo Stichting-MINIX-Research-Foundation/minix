@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2006/08/26 16:07:01 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2012/01/20 14:08:05 joerg Exp $
 
 .PATH: ${COMPATDIR}/net
-SRCS+=compat_ns_addr.c compat_ns_ntoa.c
+SRCS+=	__cmsg_alignbytes.c compat_ns_addr.c compat_ns_ntoa.c

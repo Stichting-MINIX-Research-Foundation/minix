@@ -1,4 +1,4 @@
-.\"	$NetBSD: abs.3,v 1.13 2008/08/04 21:29:27 matt Exp $
+.\"	$NetBSD: abs.3,v 1.14 2011/04/13 06:56:50 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,44 +33,41 @@
 .\"
 .\"     from: @(#)abs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 13, 2011
 .Dt ABS 3
 .Os
 .Sh NAME
-.Nm abs
-.Nd integer absolute value function
+.Nm abs ,
+.Nm labs ,
+.Nm llabs ,
+.Nm imaxabs
+.Nd functions for integer absolute value
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft int
-.Fn abs "int j"
+.Fn abs "int x"
+.Ft long int
+.Fn labs "long int x"
+.Ft long long int
+.Fn llabs "long long int x"
+.In inttypes.h
+.Ft intmax_t
+.Fn imaxabs "intmax_t x"
 .Sh DESCRIPTION
-The
-.Fn abs
-function
-computes
-the absolute value of the integer
-.Ar j .
-.Sh RETURN VALUES
-The
-.Fn abs
-function
-returns
-the absolute value.
+These functions return the absolute value of the integer
+.Fa x .
+The listed functions differ only with respect
+to the type of the return value and
+.Fa x .
 .Sh SEE ALSO
 .Xr cabs 3 ,
 .Xr fabs 3 ,
 .Xr floor 3 ,
-.Xr hypot 3 ,
-.Xr imaxabs 3 ,
-.Xr labs 3 ,
-.Xr llabs 3 ,
 .Xr math 3
 .Sh STANDARDS
-The
-.Fn abs
-function conforms to
-.St -ansiC .
+The described functions conform to
+.St -isoC-99 .
 .Sh BUGS
 The absolute value of the most negative integer remains negative.

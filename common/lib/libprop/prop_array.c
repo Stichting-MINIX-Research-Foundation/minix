@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.20 2008/08/11 05:54:21 christos Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.21 2012/07/27 09:10:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <prop/prop_array.h>
 #include "prop_object_impl.h"
+#include <prop/prop_array.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <errno.h>
@@ -340,7 +340,7 @@ static prop_object_t
 _prop_array_iterator_next_object(void *v)
 {
 	struct _prop_array_iterator *pai = v;
-	prop_array_t pa __unused = pai->pai_base.pi_obj;
+	prop_array_t pa _PROP_ARG_UNUSED = pai->pai_base.pi_obj;
 	prop_object_t po;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
@@ -367,7 +367,7 @@ static void
 _prop_array_iterator_reset(void *v)
 {
 	struct _prop_array_iterator *pai = v;
-	prop_array_t pa __unused = pai->pai_base.pi_obj;
+	prop_array_t pa _PROP_ARG_UNUSED = pai->pai_base.pi_obj;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
 

@@ -30,6 +30,10 @@ static void prev_stat2new_stat(struct stat *new, struct minix_prev_stat *prev)
   new->st_ctimespec.tv_sec = prev->st_ctime;
 }
 
+int _stat(const char *name, struct stat *buffer);
+int _lstat(const char *name, struct stat *buffer);
+int _fstat(int fd, struct stat *buffer);
+
 __weak_alias(_stat, __stat50);
 __weak_alias(_lstat, __lstat50);
 __weak_alias(_fstat, __fstat50);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: modctl.2,v 1.8 2010/12/14 16:23:59 jruoho Exp $
+.\"	$NetBSD: modctl.2,v 1.9 2012/08/07 01:19:05 jnemeth Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 14, 2010
+.Dd August 3, 2012
 .Dt MODCTL 2
 .Os
 .Sh NAME
@@ -44,8 +44,9 @@ The argument
 is one of
 .Dv MODCTL_LOAD ,
 .Dv MODCTL_UNLOAD ,
+.Dv MODCTL_STAT ,
 or
-.Dv MODCTL_STAT .
+.Dv MODCTL_EXISTS .
 The argument
 .Fa argp
 depends on the
@@ -84,6 +85,24 @@ member of the
 .Em iovec
 to reflect the size of the complete report, regardless of whether this
 is larger or smaller than the size passed in.
+.It Dv MODCTL_EXISTS
+Test to see if the kernel was compiled with
+.Dq options MODULAR
+and whether or
+not modules may be loaded at the moment.
+In this case,
+.Fa argp
+should be an integer.
+It should be
+.Dq 0
+to test if a user can load a module via
+.Dv MODCTL_LOAD ,
+or it should be
+.Dq 1
+to test if the system can autoload modules.
+Note that this
+test does not consider the sysctl
+.Li kern.module.autoload .
 .El
 .Ss Data Types
 The
@@ -98,7 +117,8 @@ The name/path of the module to load.
 Zero or more of the following flag values:
 .Bl -tag -compact -width "MODCTL_LOAD_FORCE"
 .It Dv MODCTL_NO_PROP
-Don't load \*[Lt]module\*[Gt].plist.
+Don't load
+.Ao module Ac Ns Pa .plist .
 .It Dv MODCTL_LOAD_FORCE
 Ignore kernel version mismatch.
 .El
@@ -271,6 +291,7 @@ information.
 .El
 .Sh SEE ALSO
 .Xr module 7 ,
+.Xr sysctl 7 ,
 .Xr module 9
 .Sh HISTORY
 The

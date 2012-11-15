@@ -1,20 +1,14 @@
-#	$NetBSD: Makefile,v 1.112 2012/08/04 15:17:16 matt Exp $
+#	$NetBSD: Makefile,v 1.114 2012/08/23 21:21:15 joerg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
 
 WARNS?=4
 
-#LSC MINIX until warnings get fixed...
-NOGCCERROR:=yes
-
-# This executable needs to be linked dynamically
-LDSTATIC=	-dynamic
-
-# And the minix gcc currently references /libexec/ld-elf.so.1
-SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld-elf.so.1
 # Minix Clang binaries references /libexec/ld.elf_so
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld.elf_so
+# And the minix gcc currently references /libexec/ld-elf.so.1
+SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld-elf.so.1
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -73,7 +67,8 @@ PROG=		ld.elf_so
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
 SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
-		map_object.c load.c search.c headers.c paths.c expand.c
+		map_object.c load.c search.c headers.c paths.c expand.c \
+		tls.c symver.c diagassert.c
 
 .if ${USE_FORT} == "yes"
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/misc
@@ -83,7 +78,7 @@ SRCS+=		stack_protector.c
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/stdlib
 SRCS+=		exit.c
 
-errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/include/sys/errno.h
+errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -v concat=1 -f ${.ALLSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
@@ -101,8 +96,8 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
-DBG=		-g
-#COPTS=		-O3 -fomit-frame-pointer
+#DBG=		-g
+COPTS=		-O3 -fomit-frame-pointer
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3

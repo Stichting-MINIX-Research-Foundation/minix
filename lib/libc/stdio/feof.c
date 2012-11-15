@@ -1,4 +1,4 @@
-/*	$NetBSD: feof.c,v 1.11 2003/08/07 16:43:22 agc Exp $	*/
+/*	$NetBSD: feof.c,v 1.12 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)feof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: feof.c,v 1.11 2003/08/07 16:43:22 agc Exp $");
+__RCSID("$NetBSD: feof.c,v 1.12 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,8 +52,7 @@ __RCSID("$NetBSD: feof.c,v 1.11 2003/08/07 16:43:22 agc Exp $");
 #undef feof
 
 int
-feof(fp)
-	FILE *fp;
+feof(FILE *fp)
 {
 	int r;
 

@@ -4,7 +4,7 @@
 #include <minix/type.h>
 #include <libexec.h>
 #include <assert.h>
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "arch_proto.h"
 #include <machine/cpu.h>
 

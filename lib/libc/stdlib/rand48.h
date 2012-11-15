@@ -1,4 +1,4 @@
-/*	$NetBSD: rand48.h,v 1.5 2006/03/22 20:52:16 drochner Exp $	*/
+/*	$NetBSD: rand48.h,v 1.6 2011/05/18 19:36:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 
-extern void		__dorand48 __P((unsigned short[3]));
+extern void		__dorand48(unsigned short[3]);
 extern unsigned short	__rand48_seed[3];
 extern unsigned short	__rand48_mult[3];
 extern unsigned short	__rand48_add;

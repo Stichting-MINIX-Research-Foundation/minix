@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.74 2011/12/25 06:09:08 tsutsui Exp $	*/
+/*	$NetBSD: stand.h,v 1.76 2012/05/21 21:34:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -321,6 +321,8 @@ off_t	olseek(int, off_t, int);
 #endif
 
 extern const char hexdigits[];
+
+int	fnmatch(const char *, const char *);
 
 /* XXX: These should be removed eventually. */
 void	bcopy(const void *, void *, size_t);

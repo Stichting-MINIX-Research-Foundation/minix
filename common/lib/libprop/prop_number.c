@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.23 2010/09/24 22:51:52 rmind Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.24 2012/07/27 09:10:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ _prop_number_compare_values(const struct _prop_number_value *pnv1,
 
 static int
 /*ARGSUSED*/
-_prop_number_rb_compare_nodes(void *ctx __unused,
+_prop_number_rb_compare_nodes(void *ctx _PROP_ARG_UNUSED,
 			      const void *n1, const void *n2)
 {
 	const struct _prop_number *pn1 = n1;
@@ -130,7 +130,8 @@ _prop_number_rb_compare_nodes(void *ctx __unused,
 
 static int
 /*ARGSUSED*/
-_prop_number_rb_compare_key(void *ctx __unused, const void *n, const void *v)
+_prop_number_rb_compare_key(void *ctx _PROP_ARG_UNUSED,
+			    const void *n, const void *v)
 {
 	const struct _prop_number *pn = n;
 	const struct _prop_number_value *pnv = v;

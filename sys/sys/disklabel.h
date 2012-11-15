@@ -41,6 +41,10 @@
 #include <sys/types.h>
 #endif
 
+#if defined(__minix) && !defined(_STANDALONE)
+#include <minix/partition.h>
+#endif
+
 /*
  * Each disk has a label which includes information about the hardware
  * disk geometry, filesystem partitions, and drive specific information.
@@ -180,6 +184,10 @@ struct disklabel {
 	uint16_t d_npartitions;	/* number of partitions in following */
 	uint32_t d_bbsize;		/* size of boot area at sn0, bytes */
 	uint32_t d_sbsize;		/* max size of fs superblock, bytes */
+#if defined(__minix) && !defined(_STANDALONE)
+	struct partition		/* the partition table */
+	d_partitions[MAXPARTITIONS];  /* actually may be more */
+#else
 	struct	partition {		/* the partition table */
 		uint32_t p_size;	/* number of sectors in partition */
 		uint32_t p_offset;	/* starting sector */
@@ -199,6 +207,7 @@ struct disklabel {
 #define	p_cpg	__partition_u1.cpg
 #define	p_sgs	__partition_u1.sgs
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
+#endif /* defined(__minix) */
 };
 
 #if defined(__HAVE_OLD_DISKLABEL) && !HAVE_NBTOOL_CONFIG_H

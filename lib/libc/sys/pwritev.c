@@ -1,4 +1,4 @@
-/*	$NetBSD: pwritev.c,v 1.6 2007/11/23 12:39:16 uebayasi Exp $	*/
+/*	$NetBSD: pwritev.c,v 1.7 2012/03/20 16:26:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pwritev.c,v 1.6 2007/11/23 12:39:16 uebayasi Exp $");
+__RCSID("$NetBSD: pwritev.c,v 1.7 2012/03/20 16:26:12 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,11 +46,7 @@ ssize_t __pwritev(int, const struct iovec *, int, int, off_t);
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 ssize_t
-pwritev(fd, iovp, iovcnt, offset)
-	int fd;
-	const struct iovec *iovp;
-	int iovcnt;
-	off_t offset;
+pwritev(int fd, const struct iovec *iovp, int iovcnt, off_t offset)
 {
 
 	return __pwritev(fd, iovp, iovcnt, 0, offset);

@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.39 2011/01/16 01:22:29 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.43 2012/08/15 03:46:06 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.39 2011/01/16 01:22:29 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.43 2012/08/15 03:46:06 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -136,6 +136,29 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			obj->strsize = dynp->d_un.d_val;
 			break;
 
+		case DT_VERNEED:
+			obj->verneed = (const Elf_Verneed *)
+			    (obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_VERNEEDNUM:
+			obj->verneednum = dynp->d_un.d_val;
+			break;
+
+		case DT_VERDEF:
+			obj->verdef = (const Elf_Verdef *)
+			    (obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_VERDEFNUM:
+			obj->verdefnum = dynp->d_un.d_val;
+			break;
+
+		case DT_VERSYM:
+			obj->versyms = (const Elf_Versym *)
+			    (obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
 		case DT_HASH:
 			{
 				const Elf_Symindx *hashtab = (const Elf_Symindx *)
@@ -204,9 +227,31 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			init = dynp->d_un.d_ptr;
 			break;
 
+#ifdef HAVE_INITFINI_ARRAY
+		case DT_INIT_ARRAY:
+			obj->init_array =
+			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_INIT_ARRAYSZ:
+			obj->init_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
+			break;
+#endif
+
 		case DT_FINI:
 			fini = dynp->d_un.d_ptr;
 			break;
+
+#ifdef HAVE_INITFINI_ARRAY
+		case DT_FINI_ARRAY:
+			obj->fini_array =
+			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_FINI_ARRAYSZ:
+			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t); 
+			break;
+#endif
 
 		/*
 		 * Don't process DT_DEBUG on MIPS as the dynamic section
@@ -333,7 +378,6 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		    obj->phsize, (long)obj->relocbase));
 		break;
 	}
-	assert(obj->phdr == phdr);
 	
 	for (ph = phdr; ph < phlimit; ++ph) {
 		vaddr = (Elf_Addr)(uintptr_t)(obj->relocbase + ph->p_vaddr);
@@ -360,6 +404,16 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		case PT_DYNAMIC:
 			obj->dynamic = (Elf_Dyn *)(uintptr_t)vaddr;
 			break;
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+		case PT_TLS:
+			obj->tlsindex = 1;
+			obj->tlssize = ph->p_memsz;
+			obj->tlsalign = ph->p_align;
+			obj->tlsinitsize = ph->p_filesz;
+			obj->tlsinit = (void *)(uintptr_t)ph->p_vaddr;
+			break;
+#endif
 		}
 	}
 	assert(nsegs == 2);

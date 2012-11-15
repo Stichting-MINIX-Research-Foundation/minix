@@ -25,25 +25,21 @@ BINMODE=	444
 .PATH:		${.CURDIR}/..
 
 LDFLAGS+=	-nostdlib -Wl,-e,start
-# MINIX LSC DO we need to remove the includes??
-CPPFLAGS+=	-I. -I${.CURDIR}/../../lib #-I${S}
+CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -I${S}
+.if defined(__MINIX)
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
+AFLAGS+=       -Wa,--divide
+.endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 .endif
 
-AFLAGS+= "-Wa,--divide"
+BUILDSYMLINKS+=	$S/arch/i386/include	machine \
+		$S/arch/x86/include	x86
 
-# NetBSD can be compiled from a foreign host, MINIX do not. So commented out.
-# Make sys/ a local thing for benefit of cross-compilers
-#S=		${.CURDIR}/../../../../..
-#CPPFLAGS+=	-I${S}
-# And same for machine/; need a bit more work because of symlink
-#BUILDSYMLINKS+=	$S/arch/i386/include	machine \
-#		$S/arch/x86/include	x86
-#DPSRCS+=	machine x86
+DPSRCS+=	machine x86
 
 CLEANFILES+=	${PROG}.tmp
 

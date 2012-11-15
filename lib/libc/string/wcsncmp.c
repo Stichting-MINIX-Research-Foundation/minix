@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsncmp.c,v 1.8 2009/01/11 02:46:30 christos Exp $	*/
+/*	$NetBSD: wcsncmp.c,v 1.9 2012/06/25 22:32:46 abs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strncmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wcsncmp.c,v 1.8 2009/01/11 02:46:30 christos Exp $");
+__RCSID("$NetBSD: wcsncmp.c,v 1.9 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,9 +43,7 @@ __RCSID("$NetBSD: wcsncmp.c,v 1.8 2009/01/11 02:46:30 christos Exp $");
 #include "runetype_local.h"
 
 int
-wcsncmp(s1, s2, n)
-	const wchar_t *s1, *s2;
-	size_t n;
+wcsncmp(const wchar_t *s1, const wchar_t *s2, size_t n)
 {
 
 	_DIAGASSERT(s1 != NULL);

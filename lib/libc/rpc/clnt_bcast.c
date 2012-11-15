@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.22 2010/03/07 23:49:14 dholland Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.24 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.22 2010/03/07 23:49:14 dholland Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.24 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -122,9 +122,9 @@ struct broadif {
 
 typedef TAILQ_HEAD(, broadif) broadlist_t;
 
-int __rpc_getbroadifs __P((int, int, int, broadlist_t *));
-void __rpc_freebroadifs __P((broadlist_t *));
-int __rpc_broadenable __P((int, int, struct broadif *));
+int __rpc_getbroadifs(int, int, int, broadlist_t *);
+void __rpc_freebroadifs(broadlist_t *);
+int __rpc_broadenable(int, int, struct broadif *);
 
 int __rpc_lowvers = 0;
 
@@ -234,7 +234,8 @@ __rpc_broadenable(int af, int s, struct broadif *bip)
 			return -1;
 	} else
 #endif
-		if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &o, sizeof o) < 0)
+		if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &o,
+		    (socklen_t)sizeof(o)) == -1)
 			return -1;
 
 	return 0;
@@ -242,19 +243,18 @@ __rpc_broadenable(int af, int s, struct broadif *bip)
 
 
 enum clnt_stat
-rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
-	eachresult, inittime, waittime, nettype)
-	rpcprog_t	prog;		/* program number */
-	rpcvers_t	vers;		/* version number */
-	rpcproc_t	proc;		/* procedure number */
-	xdrproc_t	xargs;		/* xdr routine for args */
-	const char *	argsp;		/* pointer to args */
-	xdrproc_t	xresults;	/* xdr routine for results */
-	caddr_t		resultsp;	/* pointer to results */
-	resultproc_t	eachresult;	/* call with each result obtained */
-	int 		inittime;	/* how long to wait initially */
-	int 		waittime;	/* maximum time to wait */
-	const char		*nettype;	/* transport type */
+rpc_broadcast_exp(
+	rpcprog_t	prog,		/* program number */
+	rpcvers_t	vers,		/* version number */
+	rpcproc_t	proc,		/* procedure number */
+	xdrproc_t	xargs,		/* xdr routine for args */
+	const char *	argsp,		/* pointer to args */
+	xdrproc_t	xresults,	/* xdr routine for results */
+	caddr_t		resultsp,	/* pointer to results */
+	resultproc_t	eachresult,	/* call with each result obtained */
+	int 		inittime,	/* how long to wait initially */
+	int 		waittime,	/* maximum time to wait */
+	const char *	nettype)	/* transport type */
 {
 	enum clnt_stat	stat = RPC_SUCCESS; /* Return status */
 	XDR 		xdr_stream; /* XDR stream */
@@ -282,7 +282,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 		broadlist_t nal;
 	} fdlist[MAXBCAST];
 	struct pollfd pfd[MAXBCAST];
-	size_t fdlistno = 0;
+	nfds_t fdlistno = 0;
 	struct r_rpcb_rmtcallargs barg;	/* Remote arguments */
 	struct r_rpcb_rmtcallres bres; /* Remote results */
 	size_t outlen;
@@ -469,7 +469,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				if (!__rpc_lowvers)
 					if ((size_t)sendto(fdlist[i].fd, outbuf,
 					    outlen, 0, (struct sockaddr*)addr,
-					    (size_t)fdlist[i].asize) !=
+					    (socklen_t)fdlist[i].asize) !=
 					    outlen) {
 						warn("clnt_bcast: cannot send"
 						      " broadcast packet");
@@ -491,7 +491,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				    fdlist[i].proto == IPPROTO_UDP) {
 					if ((size_t)sendto(fdlist[i].fd,
 					    outbuf_pmap, outlen_pmap, 0, addr,
-					    (size_t)fdlist[i].asize) !=
+					    (socklen_t)fdlist[i].asize) !=
 						outlen_pmap) {
 						warnx("clnt_bcast: "
 						    "Cannot send "
@@ -665,17 +665,16 @@ done_broad:
 
 
 enum clnt_stat
-rpc_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp,
-			eachresult, nettype)
-	rpcprog_t	prog;		/* program number */
-	rpcvers_t	vers;		/* version number */
-	rpcproc_t	proc;		/* procedure number */
-	xdrproc_t	xargs;		/* xdr routine for args */
-	const char *	argsp;		/* pointer to args */
-	xdrproc_t	xresults;	/* xdr routine for results */
-	caddr_t		resultsp;	/* pointer to results */
-	resultproc_t	eachresult;	/* call with each result obtained */
-	const char		*nettype;	/* transport type */
+rpc_broadcast(
+	rpcprog_t	prog,		/* program number */
+	rpcvers_t	vers,		/* version number */
+	rpcproc_t	proc,		/* procedure number */
+	xdrproc_t	xargs,		/* xdr routine for args */
+	const char *	argsp,		/* pointer to args */
+	xdrproc_t	xresults,	/* xdr routine for results */
+	caddr_t		resultsp,	/* pointer to results */
+	resultproc_t	eachresult,	/* call with each result obtained */
+	const char *	nettype)	/* transport type */
 {
 	enum clnt_stat	dummy;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.24 2010/12/08 02:06:38 joerg Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.24 2010/12/08 02:06:38 joerg Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -71,15 +71,15 @@ __weak_alias(clnt_dg_create,_clnt_dg_create)
 #define	RPC_MAX_BACKOFF		30 /* seconds */
 
 
-static struct clnt_ops *clnt_dg_ops __P((void));
-static bool_t time_not_ok __P((struct timeval *));
-static enum clnt_stat clnt_dg_call __P((CLIENT *, rpcproc_t, xdrproc_t,
-    const char *, xdrproc_t, caddr_t, struct timeval));
-static void clnt_dg_geterr __P((CLIENT *, struct rpc_err *));
-static bool_t clnt_dg_freeres __P((CLIENT *, xdrproc_t, caddr_t));
-static void clnt_dg_abort __P((CLIENT *));
-static bool_t clnt_dg_control __P((CLIENT *, u_int, char *));
-static void clnt_dg_destroy __P((CLIENT *));
+static struct clnt_ops *clnt_dg_ops(void);
+static bool_t time_not_ok(struct timeval *);
+static enum clnt_stat clnt_dg_call(CLIENT *, rpcproc_t, xdrproc_t,
+    const char *, xdrproc_t, caddr_t, struct timeval);
+static void clnt_dg_geterr(CLIENT *, struct rpc_err *);
+static bool_t clnt_dg_freeres(CLIENT *, xdrproc_t, caddr_t);
+static void clnt_dg_abort(CLIENT *);
+static bool_t clnt_dg_control(CLIENT *, u_int, char *);
+static void clnt_dg_destroy(CLIENT *);
 
 
 
@@ -153,13 +153,13 @@ struct cu_data {
  * If svcaddr is NULL, returns NULL.
  */
 CLIENT *
-clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
-	int fd;				/* open file descriptor */
-	const struct netbuf *svcaddr;	/* servers address */
-	rpcprog_t program;		/* program number */
-	rpcvers_t version;		/* version number */
-	u_int sendsz;			/* buffer recv size */
-	u_int recvsz;			/* buffer send size */
+clnt_dg_create(
+	int fd,				/* open file descriptor */
+	const struct netbuf *svcaddr,	/* servers address */
+	rpcprog_t program,		/* program number */
+	rpcvers_t version,		/* version number */
+	u_int sendsz,			/* buffer recv size */
+	u_int recvsz)			/* buffer send size */
 {
 	CLIENT *cl = NULL;		/* client handle */
 	struct cu_data *cu = NULL;	/* private data */
@@ -299,14 +299,14 @@ err2:
 }
 
 static enum clnt_stat
-clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
-	CLIENT	*cl;			/* client handle */
-	rpcproc_t	proc;		/* procedure number */
-	xdrproc_t	xargs;		/* xdr routine for args */
-	const char *	argsp;		/* pointer to args */
-	xdrproc_t	xresults;	/* xdr routine for results */
-	caddr_t		resultsp;	/* pointer to results */
-	struct timeval	utimeout;	/* seconds to wait before giving up */
+clnt_dg_call(
+	CLIENT *	cl,		/* client handle */
+	rpcproc_t	proc,		/* procedure number */
+	xdrproc_t	xargs,		/* xdr routine for args */
+	const char *	argsp,		/* pointer to args */
+	xdrproc_t	xresults,	/* xdr routine for results */
+	caddr_t		resultsp,	/* pointer to results */
+	struct timeval	utimeout)	/* seconds to wait before giving up */
 {
 	struct cu_data *cu;
 	XDR *xdrs;
@@ -415,12 +415,12 @@ send_again:
 				cu->cu_error.re_status = RPC_CANTRECV;
 				goto out;
 			}
-			if (recvlen >= (ssize_t)sizeof(uint32_t) &&
-			    (*((uint32_t *)(void *)(cu->cu_inbuf)) == 
-				*((uint32_t *)(void *)(cu->cu_outbuf)))) {
-				/* We now assume we have the proper reply. */
-				break;
-			}	       
+			if (recvlen >= (ssize_t)sizeof(uint32_t)) {
+				if (memcmp(cu->cu_inbuf, cu->cu_outbuf,
+				    sizeof(uint32_t)) == 0)
+					/* Assume we have the proper reply. */
+					break;
+			}
 		}
 		if (n == -1) {
 			cu->cu_error.re_errno = errno;
@@ -497,9 +497,7 @@ out:
 }
 
 static void
-clnt_dg_geterr(cl, errp)
-	CLIENT *cl;
-	struct rpc_err *errp;
+clnt_dg_geterr(CLIENT *cl, struct rpc_err *errp)
 {
 	struct cu_data *cu;
 
@@ -511,10 +509,7 @@ clnt_dg_geterr(cl, errp)
 }
 
 static bool_t
-clnt_dg_freeres(cl, xdr_res, res_ptr)
-	CLIENT *cl;
-	xdrproc_t xdr_res;
-	caddr_t res_ptr;
+clnt_dg_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 {
 	struct cu_data *cu;
 	XDR *xdrs;
@@ -543,16 +538,12 @@ clnt_dg_freeres(cl, xdr_res, res_ptr)
 
 /*ARGSUSED*/
 static void
-clnt_dg_abort(h)
-	CLIENT *h;
+clnt_dg_abort(CLIENT *h)
 {
 }
 
 static bool_t
-clnt_dg_control(cl, request, info)
-	CLIENT *cl;
-	u_int request;
-	char *info;
+clnt_dg_control(CLIENT *cl, u_int request, char *info)
 {
 	struct cu_data *cu;
 	struct netbuf *addr;
@@ -692,8 +683,7 @@ clnt_dg_control(cl, request, info)
 }
 
 static void
-clnt_dg_destroy(cl)
-	CLIENT *cl;
+clnt_dg_destroy(CLIENT *cl)
 {
 	struct cu_data *cu;
 	int cu_fd;
@@ -727,7 +717,7 @@ clnt_dg_destroy(cl)
 }
 
 static struct clnt_ops *
-clnt_dg_ops()
+clnt_dg_ops(void)
 {
 	static struct clnt_ops ops;
 #ifdef _REENTRANT
@@ -758,8 +748,7 @@ clnt_dg_ops()
  * Make sure that the time is not garbage.  -1 value is allowed.
  */
 static bool_t
-time_not_ok(t)
-	struct timeval *t;
+time_not_ok(struct timeval *t)
 {
 
 	_DIAGASSERT(t != NULL);

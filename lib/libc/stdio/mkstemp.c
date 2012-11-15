@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstemp.c,v 1.10 2008/10/20 10:28:38 apb Exp $	*/
+/*	$NetBSD: mkstemp.c,v 1.11 2012/03/15 18:22:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkstemp.c,v 1.10 2008/10/20 10:28:38 apb Exp $");
+__RCSID("$NetBSD: mkstemp.c,v 1.11 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,14 +64,13 @@ __weak_alias(mkstemp,_mkstemp)
 #endif
 
 int
-mkstemp(path)
-	char *path;
+mkstemp(char *path)
 {
 	int fd;
 
 	_DIAGASSERT(path != NULL);
 
-	return (GETTEMP(path, &fd, 0) ? fd : -1);
+	return GETTEMP(path, &fd, 0) ? fd : -1;
 }
 
 #endif /* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKSTEMP */

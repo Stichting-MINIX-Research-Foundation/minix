@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_ingest.c,v 1.3 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_ingest.c,v 1.4 2012/07/27 09:10:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <prop/proplib.h>
 #include "prop_object_impl.h"
+#include <prop/proplib.h>
 
 struct _prop_ingest_context {
 	prop_ingest_error_t	pic_error;

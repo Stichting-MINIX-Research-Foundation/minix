@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_utmpx.c,v 1.3 2009/01/11 02:46:25 christos Exp $	 */
+/*	$NetBSD: compat_utmpx.c,v 1.4 2011/07/01 01:08:59 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_utmpx.c,v 1.3 2009/01/11 02:46:25 christos Exp $");
+__RCSID("$NetBSD: compat_utmpx.c,v 1.4 2011/07/01 01:08:59 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -79,7 +79,7 @@ lastlogx50_to_lastlogx(const struct lastlogx50 *ll50, struct lastlogx *ll)
 {
 	(void)memcpy(ll->ll_line, ll50->ll_line, sizeof(ll->ll_line));
 	(void)memcpy(ll->ll_host, ll50->ll_host, sizeof(ll->ll_host));
-	(void)memcpy(&ll->ll_ss, &ll50->ll_ss, sizeof(&ll->ll_ss));
+	(void)memcpy(&ll->ll_ss, &ll50->ll_ss, sizeof(ll->ll_ss));
 	timeval50_to_timeval(&ll50->ll_tv, &ll->ll_tv);
 }
 
@@ -88,7 +88,7 @@ lastlogx_to_lastlogx50(const struct lastlogx *ll, struct lastlogx50 *ll50)
 {
 	(void)memcpy(ll50->ll_line, ll->ll_line, sizeof(ll50->ll_line));
 	(void)memcpy(ll50->ll_host, ll->ll_host, sizeof(ll50->ll_host));
-	(void)memcpy(&ll50->ll_ss, &ll->ll_ss, sizeof(&ll50->ll_ss));
+	(void)memcpy(&ll50->ll_ss, &ll->ll_ss, sizeof(ll50->ll_ss));
 	timeval_to_timeval50(&ll->ll_tv, &ll50->ll_tv);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.8 2010/12/05 00:56:07 joerg Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9 2011/12/11 22:07:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -47,6 +47,8 @@
 	movq	%rsp,%r12		# stack pointer arg to _rtld
 	pushq	%rbx			# save ps_strings
 
+	andq	$~15,%rsp		# align rsp, to be restored from r12
+
 	leaq	_GLOBAL_OFFSET_TABLE_(%rip),%rax
 	leaq	_DYNAMIC(%rip),%rdi	# &_DYNAMIC
 	movq	%rdi,%rbx
@@ -59,6 +61,7 @@
 	movq	%rbx,%rsi
 	call	_rtld			# _rtld(sp, relocbase)
 
+	leaq	-8(%r12),%rsp		# restore saved rsp, including %rbx
 	popq	%rbx			# %rbx = ps_strings
 	popq	%rdx			# %rdx = cleanup
 	popq	%rcx			# %rcx = obj_main

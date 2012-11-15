@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "arch_proto.h"
 
 struct minix_ipcvecs minix_ipcvecs_softint = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.12 2009/04/12 19:43:37 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.13 2012/03/13 21:13:43 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_mkquery.c,v 1.10 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.12 2009/04/12 19:43:37 christos Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.13 2012/03/13 21:13:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: res_mkquery.c,v 1.12 2009/04/12 19:43:37 christos Exp $");
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <assert.h>
 #include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
@@ -160,7 +161,7 @@ res_nmkquery(res_state statp,
 	case NS_NOTIFY_OP:
 		if (ep - cp < QFIXEDSZ)
 			return (-1);
-		if ((n = dn_comp(dname, cp, ep - cp - QFIXEDSZ, dnptrs,
+		if ((n = dn_comp(dname, cp, (int)(ep - cp - QFIXEDSZ), dnptrs,
 		    lastdnptr)) < 0)
 			return (-1);
 		cp += n;
@@ -176,7 +177,7 @@ res_nmkquery(res_state statp,
 		 */
 		if ((ep - cp) < RRFIXEDSZ)
 			return (-1);
-		n = dn_comp((const char *)data, cp, ep - cp - RRFIXEDSZ,
+		n = dn_comp((const char *)data, cp, (int)(ep - cp - RRFIXEDSZ),
 			    dnptrs, lastdnptr);
 		if (n < 0)
 			return (-1);
@@ -217,7 +218,8 @@ res_nmkquery(res_state statp,
 	default:
 		return (-1);
 	}
-	return (cp - buf);
+	_DIAGASSERT(__type_fit(int, cp - buf));
+	return (int)(cp - buf);
 }
 
 #ifdef RES_USE_EDNS0
@@ -269,7 +271,8 @@ res_nopt(res_state statp,
 
 	hp->arcount = htons(ntohs(hp->arcount) + 1);
 
-	return (cp - buf);
+	_DIAGASSERT(__type_fit(int, cp - buf));
+	return (int)(cp - buf);
 }
 
 /*
@@ -312,10 +315,12 @@ res_nopt_rdata(res_state statp,
 	memcpy(cp, data, (size_t)len);
 	cp += len;
 
-	len = cp - rdata;
+	_DIAGASSERT(__type_fit(u_short, cp - rdata));
+	len = (u_short)(cp - rdata);
 	ns_put16(len, rdata - 2);	/* Update RDLEN field */
 
-	return (cp - buf);
+	_DIAGASSERT(__type_fit(int, cp - buf));
+	return (int)(cp - buf);
 }
 #endif
 

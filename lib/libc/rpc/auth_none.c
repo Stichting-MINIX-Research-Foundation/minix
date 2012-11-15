@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.14 2001/01/16 15:46:52 lukem Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.15 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.14 2001/01/16 15:46:52 lukem Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.15 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -66,11 +66,11 @@ __weak_alias(authnone_create,_authnone_create)
  * Authenticator operations routines
  */
 
-static bool_t authnone_marshal __P((AUTH *, XDR *));
-static void authnone_verf __P((AUTH *));
-static bool_t authnone_validate __P((AUTH *, struct opaque_auth *));
-static bool_t authnone_refresh __P((AUTH *));
-static void authnone_destroy __P((AUTH *));
+static bool_t authnone_marshal(AUTH *, XDR *);
+static void authnone_verf(AUTH *);
+static bool_t authnone_validate(AUTH *, struct opaque_auth *);
+static bool_t authnone_refresh(AUTH *);
+static void authnone_destroy(AUTH *);
 
 static const struct auth_ops ops = {
 	authnone_verf,
@@ -87,7 +87,7 @@ static struct authnone_private {
 } *authnone_private;
 
 AUTH *
-authnone_create()
+authnone_create(void)
 {
 	struct authnone_private *ap = authnone_private;
 	XDR xdr_stream;
@@ -115,9 +115,7 @@ authnone_create()
 
 /*ARGSUSED*/
 static bool_t
-authnone_marshal(client, xdrs)
-	AUTH *client;
-	XDR *xdrs;
+authnone_marshal(AUTH *client, XDR *xdrs)
 {
 	struct authnone_private *ap = authnone_private;
 
@@ -131,16 +129,13 @@ authnone_marshal(client, xdrs)
 
 /*ARGSUSED*/
 static void 
-authnone_verf(client)
-	AUTH *client;
+authnone_verf(AUTH *client)
 {
 }
 
 /*ARGSUSED*/
 static bool_t
-authnone_validate(client, auth)
-	AUTH *client;
-	struct opaque_auth *auth;
+authnone_validate(AUTH *client, struct opaque_auth *auth)
 {
 
 	return (TRUE);
@@ -148,8 +143,7 @@ authnone_validate(client, auth)
 
 /*ARGSUSED*/
 static bool_t
-authnone_refresh(client)
-	AUTH *client;
+authnone_refresh(AUTH *client)
 {
 
 	return (FALSE);
@@ -157,7 +151,6 @@ authnone_refresh(client)
 
 /*ARGSUSED*/
 static void
-authnone_destroy(client)
-	AUTH *client;
+authnone_destroy(AUTH *client)
 {
 }

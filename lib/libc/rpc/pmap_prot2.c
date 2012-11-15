@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot2.c,v 1.15 2001/01/04 14:42:20 lukem Exp $	*/
+/*	$NetBSD: pmap_prot2.c,v 1.16 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_prot2.c 1.3 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_prot2.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_prot2.c,v 1.15 2001/01/04 14:42:20 lukem Exp $");
+__RCSID("$NetBSD: pmap_prot2.c,v 1.16 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -97,9 +97,7 @@ __weak_alias(xdr_pmaplist,_xdr_pmaplist)
  * this sounds like a job for xdr_reference!
  */
 bool_t
-xdr_pmaplist(xdrs, rp)
-	XDR *xdrs;
-	struct pmaplist **rp;
+xdr_pmaplist(XDR *xdrs, struct pmaplist **rp)
 {
 	/*
 	 * more_elements is pre-computed in case the direction is
@@ -141,9 +139,7 @@ xdr_pmaplist(xdrs, rp)
  * functionality to xdr_pmaplist().
  */
 bool_t
-xdr_pmaplist_ptr(xdrs, rp)
-	XDR *xdrs;
-	struct pmaplist *rp;
+xdr_pmaplist_ptr(XDR *xdrs, struct pmaplist *rp)
 {
 
 	_DIAGASSERT(xdrs != NULL);

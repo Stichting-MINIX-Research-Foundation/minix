@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_debug.c,v 1.15 2008/09/10 17:52:35 joerg Exp $	*/
+/*	$NetBSD: bt_debug.c,v 1.16 2011/07/17 20:47:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_debug.c,v 1.15 2008/09/10 17:52:35 joerg Exp $");
+__RCSID("$NetBSD: bt_debug.c,v 1.16 2011/07/17 20:47:39 christos Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -124,6 +124,22 @@ __bt_dmpage(PAGE *h)
 	}
 }
 
+static pgno_t
+__bt_pgno_t(const void *m)
+{
+	pgno_t r;
+	memcpy(&r, m, sizeof(r));
+	return r;
+}
+
+static uint32_t
+__bt_uint32_t(const void *m)
+{
+	uint32_t r;
+	memcpy(&r, m, sizeof(r));
+	return r;
+}
+
 /*
  * BT_DNPAGE -- Dump the page
  *
@@ -206,15 +222,16 @@ __bt_dpage(PAGE *h)
 			if (bl->flags & P_BIGKEY)
 				(void)fprintf(stderr,
 				    "big key page %lu size %u/",
-				    (unsigned long) *(pgno_t *)(void *)bl->bytes,
-				    *(uint32_t *)(void *)(bl->bytes + sizeof(pgno_t)));
+				    (unsigned long) __bt_pgno_t(bl->bytes),
+				    __bt_uint32_t(bl->bytes + sizeof(pgno_t)));
 			else if (bl->ksize)
 				(void)fprintf(stderr, "%s/", bl->bytes);
 			if (bl->flags & P_BIGDATA)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
-				    (unsigned long) *(pgno_t *)(void *)(bl->bytes + bl->ksize),
-				    *(uint32_t *)(void *)(bl->bytes + bl->ksize +
+				    (unsigned long)
+				    __bt_pgno_t(bl->bytes + bl->ksize),
+				    __bt_uint32_t(bl->bytes + bl->ksize +
 				    sizeof(pgno_t)));
 			else if (bl->dsize)
 				(void)fprintf(stderr, "%.*s",
@@ -225,8 +242,8 @@ __bt_dpage(PAGE *h)
 			if (rl->flags & P_BIGDATA)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
-				    (unsigned long) *(pgno_t *)(void *)rl->bytes,
-				    *(uint32_t *)(void *)(rl->bytes + sizeof(pgno_t)));
+				    (unsigned long) __bt_pgno_t(rl->bytes),
+				    __bt_uint32_t(rl->bytes + sizeof(pgno_t)));
 			else if (rl->dsize)
 				(void)fprintf(stderr,
 				    "%.*s", (int)rl->dsize, rl->bytes);

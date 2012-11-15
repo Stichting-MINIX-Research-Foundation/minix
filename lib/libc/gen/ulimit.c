@@ -44,9 +44,10 @@ ulimit(int cmd, ...)
 {
 	va_list ap;
 	struct rlimit rlimit;
-	long int result;
 #ifndef __minix
-	long int new_limit;
+	long int new_limit, result;
+#else
+	long int result;
 #endif
 
 	va_start(ap, cmd);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.25 2010/10/22 21:29:31 christos Exp $
+.\"	$NetBSD: fseek.3,v 1.27 2012/01/22 19:13:42 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fseek.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 22, 2010
+.Dd January 21, 2012
 .Dt FSEEK 3
 .Os
 .Sh NAME
@@ -127,26 +127,18 @@ except that the error indicator for the stream is also cleared
 (see
 .Xr clearerr 3 ) .
 .Pp
-In this implementation, the
-.Fn fgetpos
-and
-.Fn fsetpos
-functions
-are alternative interfaces equivalent to
-.Fn ftell ,
-.Fn ftello ,
-.Fn fseek ,
-and
-.Fn fseeko
-(with whence set to
-.Dv SEEK_SET ) ,
-setting and storing the current value of
-the file offset into or from the object referenced by
-.Fa pos .
-In others implementations, an
+In this implementations, an
 .Dq Fa fpos_t
-object may be a complex object
-and these routines may be the only way to portably reposition a text stream.
+object is a complex object that represents both the position and the parse
+state of the stream making these routines are the only way to portably
+reposition a text stream.
+The
+.Ar pos
+argument of
+.Fn fsetpos
+must always be initialized by
+a call to
+.Fn fgetpos .
 .Sh RETURN VALUES
 The
 .Fn rewind

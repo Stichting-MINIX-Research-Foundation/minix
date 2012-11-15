@@ -17,7 +17,7 @@ void eoi_8259_slave(void);
  * either
  */
 #if defined(USE_APIC)
-#include "arch/i386/apic.h"
+#include "kernel/arch/i386/apic.h"
 
 #define hw_intr_mask(irq)	ioapic_mask_irq(irq)
 #define hw_intr_unmask(irq)	ioapic_unmask_irq(irq)

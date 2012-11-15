@@ -3,7 +3,7 @@
  * functions and sanity checking of the scheduling queues.
  */
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 #include <minix/callnr.h>
 #include <minix/sysutil.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.2 2008/08/16 07:12:39 matt Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.3 2012/09/11 20:51:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,5 +50,17 @@
 #define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
 
 #endif /* _KERNEL */
+
+#ifdef __ARMEB__
+#define	HI	r0
+#define	LO	r1
+#define	NHI	r2
+#define	NLO	r3
+#else
+#define	LO	r0
+#define	HI	r1
+#define	NLO	r2
+#define	NHI	r3
+#endif
 
 #endif /* _ATOMIC_OP_ASM_H_ */

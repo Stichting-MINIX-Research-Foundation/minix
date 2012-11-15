@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
+/*	$NetBSD: fpgetround.S,v 1.4 2011/09/30 17:42:34 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 /*
- * XXX store only x87 state. If an application only uses the fp*
+ * XXX load only x87 state. If an application only uses the fp*
  * interface, this should be in sync with the SSE mxcsr register.
  */
 
@@ -19,7 +19,6 @@ ENTRY(_fpgetround)
 ENTRY(fpgetround)
 #endif
 	fnstcw -4(%rsp)
-	movl -4(%rsp),%eax
-	rorl $10,%eax
-	andl $3,%eax
+	movl -4(%rsp), %eax
+	andl $0x00000c00, %eax
 	ret

@@ -33,11 +33,13 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-# MINIX LSC seems to be still needed 
-#LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
-LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start -L${DESTDIR}/${LIBDIR}
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
+.if defined(__MINIX)
+CPPFLAGS+=-isystem ${DESTDIR}/usr/include
+CPPFLAGS+= -D_MINIX
+.endif # defined(__MINIX)
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
@@ -57,10 +59,6 @@ COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
-.if defined(__MINIX)
-CPPFLAGS+= -I${DESTDIR}/usr/include
-CPPFLAGS+= -I${.CURDIR}/../../../../../../
-.endif
 
 CPPFLAGS+= -DSUPPORT_PS2
 CPPFLAGS+= -DDIRECT_SERIAL
@@ -127,8 +125,8 @@ KERN_AS= library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN= ${KERNLIB}
 .else
-# MINIX
-LIBKERN= # use MINIX minc
+# use MINIX minc
+LIBKERN= ${DESTDIR}/usr/lib/libminc.a
 .endif
 
 ### find out what to use for libz
@@ -153,11 +151,10 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then
 # explicitly pull in the required objects before any other library code.
-# MINIX (LSC adding LDADD still needed?)
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
 	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
-	    ${OBJS} ${LIBLIST} ${LDADD} | ( \
+	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \
 			[ -z "$$file" ] && continue; \
 			[ "$$symbol" = real_to_prot ] && break; \
@@ -173,7 +170,7 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		done; \
 	) )"; \
 	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 \
-		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST} ${LDADD}
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
 
 .ifndef	__MINIX

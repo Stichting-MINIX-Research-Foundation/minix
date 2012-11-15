@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.19 2012/03/20 16:30:26 matt Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.19 2012/03/20 16:30:26 matt Exp $");
 #endif
 
 #include "namespace.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+extern int _yplib_bindtries;
 extern char _yp_domain[];
 
 #ifdef __weak_alias
@@ -64,17 +65,12 @@ static struct ypmatch_ent {
 	time_t          	 expire_t;
 } *ypmc;
 
-static bool_t ypmatch_add __P((const char *, const char *, int, char *, int));
-static bool_t ypmatch_find __P((const char *, const char *, int, const char **,
-    int *));
+static bool_t ypmatch_add(const char *, const char *, int, char *, int);
+static bool_t ypmatch_find(const char *, const char *, int, const char **,
+    int *);
 
 static bool_t
-ypmatch_add(map, key, keylen, val, vallen)
-	const char     *map;
-	const char     *key;
-	int             keylen;
-	char           *val;
-	int             vallen;
+ypmatch_add(const char *map, const char *key, int keylen, char *val, int vallen)
 {
 	struct ypmatch_ent *ep;
 	time_t t;
@@ -137,12 +133,8 @@ ypmatch_add(map, key, keylen, val, vallen)
 }
 
 static bool_t
-ypmatch_find(map, key, keylen, val, vallen)
-	const char     *map;
-	const char     *key;
-	int             keylen;
-	const char    **val;
-	int            *vallen;
+ypmatch_find(const char *map, const char *key, int keylen, const char **val,
+	int *vallen)
 {
 	struct ypmatch_ent *ep;
 	time_t          t;
@@ -175,13 +167,8 @@ ypmatch_find(map, key, keylen, val, vallen)
 #endif
 
 int
-yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
-	const char     *indomain;
-	const char     *inmap;
-	const char     *inkey;
-	int             inkeylen;
-	char          **outval;
-	int            *outvallen;
+yp_match(const char *indomain, const char *inmap, const char *inkey,
+	int inkeylen, char **outval, int *outvallen)
 {
 	struct dom_binding *ysd;
 	struct ypresp_val yprv;
@@ -229,9 +216,12 @@ again:
 		      (xdrproc_t)xdr_ypresp_val, &yprv, 
 		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		if (++nerrs == _yplib_nerrs) {
+		if (_yplib_bindtries <= 0 && ++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_match: clnt_call");
 			nerrs = 0;
+		}
+		else if (_yplib_bindtries > 0 && ++nerrs == _yplib_bindtries) {
+			return YPERR_YPSERV;
 		}
 		ysd->dom_vers = -1;
 		goto again;

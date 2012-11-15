@@ -1,4 +1,4 @@
-/*	$NetBSD: flockfile.c,v 1.10 2010/12/08 02:07:03 joerg Exp $	*/
+/*	$NetBSD: flockfile.c,v 1.11 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flockfile.c,v 1.10 2010/12/08 02:07:03 joerg Exp $");
+__RCSID("$NetBSD: flockfile.c,v 1.11 2012/03/15 18:22:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -168,7 +168,7 @@ ftrylockfile(FILE *fp)
 	/* LINTED deliberate lack of effect */
 	(void)fp;
 
-	return (0);
+	return 0;
 }
 
 void

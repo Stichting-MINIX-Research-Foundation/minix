@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.12 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.14 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.12 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.14 2012/03/20 17:14:50 matt Exp $");
 #endif
 
 #include "namespace.h"
@@ -78,16 +78,16 @@ __weak_alias(svc_dg_create,_svc_dg_create)
 #define	MAX(a, b)	(((a) > (b)) ? (a) : (b))
 #endif
 
-static void svc_dg_ops __P((SVCXPRT *));
-static enum xprt_stat svc_dg_stat __P((SVCXPRT *));
-static bool_t svc_dg_recv __P((SVCXPRT *, struct rpc_msg *));
-static bool_t svc_dg_reply __P((SVCXPRT *, struct rpc_msg *));
-static bool_t svc_dg_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
-static bool_t svc_dg_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
-static void svc_dg_destroy __P((SVCXPRT *));
-static bool_t svc_dg_control __P((SVCXPRT *, const u_int, void *));
-static int cache_get __P((SVCXPRT *, struct rpc_msg *, char **, size_t *));
-static void cache_set __P((SVCXPRT *, size_t));
+static void svc_dg_ops(SVCXPRT *);
+static enum xprt_stat svc_dg_stat(SVCXPRT *);
+static bool_t svc_dg_recv(SVCXPRT *, struct rpc_msg *);
+static bool_t svc_dg_reply(SVCXPRT *, struct rpc_msg *);
+static bool_t svc_dg_getargs(SVCXPRT *, xdrproc_t, caddr_t);
+static bool_t svc_dg_freeargs(SVCXPRT *, xdrproc_t, caddr_t);
+static void svc_dg_destroy(SVCXPRT *);
+static bool_t svc_dg_control(SVCXPRT *, const u_int, void *);
+static int cache_get(SVCXPRT *, struct rpc_msg *, char **, size_t *);
+static void cache_set(SVCXPRT *, size_t);
 
 /*
  * Usage:
@@ -104,10 +104,7 @@ static const char svc_dg_err2[] = " transport does not support data transfer";
 static const char __no_mem_str[] = "out of memory";
 
 SVCXPRT *
-svc_dg_create(fd, sendsize, recvsize)
-	int fd;
-	u_int sendsize;
-	u_int recvsize;
+svc_dg_create(int fd, u_int sendsize, u_int recvsize)
 {
 	SVCXPRT *xprt;
 	struct svc_dg_data *su = NULL;
@@ -140,7 +137,8 @@ svc_dg_create(fd, sendsize, recvsize)
 	su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
 	if ((rpc_buffer(xprt) = malloc(su->su_iosz)) == NULL)
 		goto freedata;
-	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz,
+	_DIAGASSERT(__type_fit(u_int, su->su_iosz));
+	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), (u_int)su->su_iosz,
 		XDR_DECODE);
 	su->su_cache = NULL;
 	xprt->xp_fd = fd;
@@ -171,16 +169,13 @@ freedata:
 
 /*ARGSUSED*/
 static enum xprt_stat
-svc_dg_stat(xprt)
-	SVCXPRT *xprt;
+svc_dg_stat(SVCXPRT *xprt)
 {
 	return (XPRT_IDLE);
 }
 
 static bool_t
-svc_dg_recv(xprt, msg)
-	SVCXPRT *xprt;
-	struct rpc_msg *msg;
+svc_dg_recv(SVCXPRT *xprt, struct rpc_msg *msg)
 {
 	struct svc_dg_data *su;
 	XDR *xdrs;
@@ -234,9 +229,7 @@ again:
 }
 
 static bool_t
-svc_dg_reply(xprt, msg)
-	SVCXPRT *xprt;
-	struct rpc_msg *msg;
+svc_dg_reply(SVCXPRT *xprt, struct rpc_msg *msg)
 {
 	struct svc_dg_data *su;
 	XDR *xdrs;
@@ -266,19 +259,13 @@ svc_dg_reply(xprt, msg)
 }
 
 static bool_t
-svc_dg_getargs(xprt, xdr_args, args_ptr)
-	SVCXPRT *xprt;
-	xdrproc_t xdr_args;
-	caddr_t args_ptr;
+svc_dg_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 {
 	return (*xdr_args)(&(su_data(xprt)->su_xdrs), args_ptr);
 }
 
 static bool_t
-svc_dg_freeargs(xprt, xdr_args, args_ptr)
-	SVCXPRT *xprt;
-	xdrproc_t xdr_args;
-	caddr_t args_ptr;
+svc_dg_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 {
 	XDR *xdrs;
 
@@ -290,8 +277,7 @@ svc_dg_freeargs(xprt, xdr_args, args_ptr)
 }
 
 static void
-svc_dg_destroy(xprt)
-	SVCXPRT *xprt;
+svc_dg_destroy(SVCXPRT *xprt)
 {
 	struct svc_dg_data *su;
 
@@ -316,17 +302,13 @@ svc_dg_destroy(xprt)
 
 static bool_t
 /*ARGSUSED*/
-svc_dg_control(xprt, rq, in)
-	SVCXPRT *xprt;
-	const u_int	rq;
-	void		*in;
+svc_dg_control(SVCXPRT *xprt, const u_int rq, void *in)
 {
 	return (FALSE);
 }
 
 static void
-svc_dg_ops(xprt)
-	SVCXPRT *xprt;
+svc_dg_ops(SVCXPRT *xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
@@ -433,9 +415,7 @@ static const char alloc_err[] = "could not allocate cache ";
 static const char enable_err[] = "cache already enabled";
 
 int
-svc_dg_enablecache(transp, size)
-	SVCXPRT *transp;
-	u_int size;
+svc_dg_enablecache(SVCXPRT *transp, u_int size)
 {
 	struct svc_dg_data *su;
 	struct cl_cache *uc;
@@ -494,9 +474,7 @@ static const char cache_set_err2[] = "victim alloc failed";
 static const char cache_set_err3[] = "could not allocate new rpc buffer";
 
 static void
-cache_set(xprt, replylen)
-	SVCXPRT *xprt;
-	size_t replylen;
+cache_set(SVCXPRT *xprt, size_t replylen)
 {
 	cache_ptr victim;
 	cache_ptr *vicp;
@@ -566,8 +544,9 @@ cache_set(xprt, replylen)
 	victim->cache_replylen = replylen;
 	victim->cache_reply = rpc_buffer(xprt);
 	rpc_buffer(xprt) = newbuf;
-	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt),
-			su->su_iosz, XDR_ENCODE);
+	_DIAGASSERT(__type_fit(u_int, su->su_iosz));
+	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), (u_int)su->su_iosz,
+	    XDR_ENCODE);
 	victim->cache_xid = su->su_xid;
 	victim->cache_proc = uc->uc_proc;
 	victim->cache_vers = uc->uc_vers;
@@ -589,11 +568,7 @@ cache_set(xprt, replylen)
  * return 1 if found, 0 if not found and set the stage for cache_set()
  */
 static int
-cache_get(xprt, msg, replyp, replylenp)
-	SVCXPRT *xprt;
-	struct rpc_msg *msg;
-	char **replyp;
-	size_t *replylenp;
+cache_get(SVCXPRT *xprt, struct rpc_msg *msg, char **replyp, size_t *replylenp)
 {
 	u_int loc;
 	cache_ptr ent;

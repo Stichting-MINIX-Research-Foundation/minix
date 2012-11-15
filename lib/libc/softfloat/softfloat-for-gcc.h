@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-for-gcc.h,v 1.8 2009/12/14 01:07:42 matt Exp $ */
+/* $NetBSD: softfloat-for-gcc.h,v 1.9 2012/08/05 04:27:42 matt Exp $ */
 
 /*
  * Move private identifiers with external linkage into implementation
@@ -167,3 +167,60 @@
 #define float128_le			__letf2
 #define float128_gt			__gttf2
 #endif
+
+#ifdef __ARM_EABI__
+#define __addsf3			__aeabi_fadd
+#define __adddf3			__aeabi_dadd
+
+#define __subsf3			__aeabi_fsub
+#define __subdf3			__aeabi_dsub
+
+#define __mulsf3			__aeabi_fmul
+#define __muldf3			__aeabi_dmul
+
+#define __divsf3			__aeabi_fdiv
+#define __divdf3			__aeabi_ddiv
+
+#define __floatsisf			__aeabi_i2f
+#define __floatsidf			__aeabi_i2d
+
+#define __floatdisf			__aeabi_l2f
+#define __floatdidf			__aeabi_l2d
+
+#define __floatunsisf			__aeabi_ui2f
+#define __floatunsidf			__aeabi_ui2d
+
+#define __floatundisf			__aeabi_ul2f
+#define __floatundidf			__aeabi_ul2d
+
+#define __fixsfsi			__aeabi_f2iz
+#define __fixdfsi			__aeabi_d2iz
+
+#define __fixsfdi			__aeabi_f2lz
+#define __fixdfdi			__aeabi_d2lz
+
+#define __fixunssfsi			__aeabi_f2uiz
+#define __fixunsdfsi			__aeabi_d2uiz
+
+#define __fixunssfdi			__aeabi_f2ulz
+#define __fixunsdfdi			__aeabi_d2ulz
+
+#define __extendsfdf2			__aeabi_f2d
+#define __truncdfsf2			__aeabi_d2f
+
+#define __eqsf2				__aeabi_fcmpeq
+#define __eqdf2				__aeabi_dcmpeq
+
+#define __ltsf2				__aeabi_fcmplt
+#define __ltdf2				__aeabi_dcmplt
+
+#define __lesf2				__aeabi_fcmple
+#define __ledf2				__aeabi_dcmple
+
+#define __gtsf2				__aeabi_fcmpgt
+#define __gtdf2				__aeabi_dcmpgt
+
+#define __gesf2				__aeabi_fcmpge
+#define __gedf2				__aeabi_dcmpge
+
+#endif /* __ARM_EABI__ */

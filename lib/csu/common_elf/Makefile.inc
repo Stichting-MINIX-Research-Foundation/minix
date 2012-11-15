@@ -6,11 +6,7 @@ ELFSIZE=32
 
 .include "../../Makefile.inc"
 
-.if defined(__MINIX) && ${MACHINE_ARCH} == "arm"
-CPPFLAGS+=	-DLIBC_SCCS -DPIC -DELFSIZE=${ELFSIZE}
-.else
 CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=${ELFSIZE}
-.endif
 CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so
 CPPFLAGS+=	-I${.CURDIR}/../common_elf
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/dlfcn

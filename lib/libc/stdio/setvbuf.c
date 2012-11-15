@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.17 2003/08/07 16:43:31 agc Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.19 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.17 2003/08/07 16:43:31 agc Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.19 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,11 +54,7 @@ __RCSID("$NetBSD: setvbuf.c,v 1.17 2003/08/07 16:43:31 agc Exp $");
  * a buffer.
  */
 int
-setvbuf(fp, buf, mode, size)
-	FILE *fp;
-	char *buf;
-	int mode;
-	size_t size;
+setvbuf(FILE *fp, char *buf, int mode, size_t size)
 {
 	int ret, flags;
 	size_t iosize;
@@ -74,7 +70,7 @@ setvbuf(fp, buf, mode, size)
 	 */
 	if (mode != _IONBF)
 		if ((mode != _IOFBF && mode != _IOLBF) || (int)size < 0)
-			return (-1);
+			return -1;
 
 	FLOCKFILE(fp);
 	/*
@@ -130,7 +126,7 @@ nbf:
 			fp->_bf._base = fp->_p = fp->_nbuf;
 			fp->_bf._size = 1;
 			FUNLOCKFILE(fp);
-			return (ret);
+			return ret;
 		}
 		flags |= __SMBF;
 	}
@@ -152,7 +148,8 @@ nbf:
 		flags |= __SLBF;
 	fp->_flags = flags;
 	fp->_bf._base = fp->_p = (unsigned char *)buf;
-	fp->_bf._size = size;
+	_DIAGASSERT(__type_fit(int, size));
+	fp->_bf._size = (int)size;
 	/* fp->_lbfsize is still 0 */
 	if (flags & __SWR) {
 		/*
@@ -162,8 +159,10 @@ nbf:
 		if (flags & __SLBF) {
 			fp->_w = 0;
 			fp->_lbfsize = -fp->_bf._size;
-		} else
-			fp->_w = size;
+		} else {
+			_DIAGASSERT(__type_fit(int, size));
+			fp->_w = (int)size;
+		}
 	} else {
 		/* begin/continue reading, or stay in intermediate state */
 		fp->_w = 0;
@@ -171,5 +170,5 @@ nbf:
 	__cleanup = _cleanup;
 
 	FUNLOCKFILE(fp);
-	return (ret);
+	return ret;
 }

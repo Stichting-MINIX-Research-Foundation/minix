@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.12 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.12 2012/03/27 15:05:42 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $");
 __weak_alias(fseeko, _fseeko)
 #endif
 
-#define	POS_ERR	(-(fpos_t)1)
+#define	POS_ERR	((off_t)-1)
 
 /*
  * Seek the given file to the given offset.
@@ -62,8 +62,8 @@ __weak_alias(fseeko, _fseeko)
 int
 fseeko(FILE *fp, off_t offset, int whence)
 {
-	fpos_t (*seekfn)(void *, fpos_t, int);
-	fpos_t target, curoff;
+	off_t (*seekfn)(void *, off_t, int);
+	off_t target, curoff;
 	size_t n;
 	struct stat st;
 	int havepos;
@@ -82,7 +82,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	if ((seekfn = fp->_seek) == NULL) {
 		errno = ESPIPE;			/* historic practice */
 		FUNLOCKFILE(fp);
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -97,14 +97,14 @@ fseeko(FILE *fp, off_t offset, int whence)
 		 * we have to first find the current stream offset a la
 		 * ftell (see ftell for details).
 		 */
-		__sflush(fp);	/* may adjust seek offset on append stream */
+		(void)__sflush(fp); /* may adjust seek offset on append stream */
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
-			curoff = (*seekfn)(fp->_cookie, (fpos_t)0, SEEK_CUR);
+			curoff = (*seekfn)(fp->_cookie, (off_t)0, SEEK_CUR);
 			if (curoff == POS_ERR) {
 				FUNLOCKFILE(fp);
-				return (-1);
+				return -1;
 			}
 		}
 		if (fp->_flags & __SRD) {
@@ -128,7 +128,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	default:
 		errno = EINVAL;
 		FUNLOCKFILE(fp);
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -179,7 +179,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
-			curoff = (*seekfn)(fp->_cookie, (fpos_t)0, SEEK_CUR);
+			curoff = (*seekfn)(fp->_cookie, (off_t)0, SEEK_CUR);
 			if (curoff == POS_ERR)
 				goto dumb;
 		}
@@ -212,16 +212,17 @@ fseeko(FILE *fp, off_t offset, int whence)
 	 * skip this; see fgetln.c.)
 	 */
 	if ((fp->_flags & __SMOD) == 0 &&
-	    target >= curoff && target < (fpos_t)(curoff + n)) {
+	    target >= curoff && target < curoff + (off_t)n) {
 		int o = (int)(target - curoff);
 
 		fp->_p = fp->_bf._base + o;
-		fp->_r = n - o;
+		_DIAGASSERT(__type_fit(int, n - o));
+		fp->_r = (int)(n - o);
 		if (HASUB(fp))
 			FREEUB(fp);
 		fp->_flags &= ~__SEOF;
 		FUNLOCKFILE(fp);
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -245,10 +246,11 @@ fseeko(FILE *fp, off_t offset, int whence)
 		if (__srefill(fp) || (size_t)fp->_r < n)
 			goto dumb;
 		fp->_p += n;
-		fp->_r -= n;
+		_DIAGASSERT(__type_fit(int, fp->_r - n));
+		fp->_r -= (int)n;
 	}
 	FUNLOCKFILE(fp);
-	return (0);
+	return 0;
 
 	/*
 	 * We get here if we cannot optimise the seek ... just
@@ -256,9 +258,9 @@ fseeko(FILE *fp, off_t offset, int whence)
 	 */
 dumb:
 	if (__sflush(fp) ||
-	    (*seekfn)(fp->_cookie, (fpos_t)offset, whence) == POS_ERR) {
+	    (*seekfn)(fp->_cookie, offset, whence) == POS_ERR) {
 		FUNLOCKFILE(fp);
-		return (-1);
+		return -1;
 	}
 	/* success: clear EOF indicator and discard ungetc() data */
 	if (HASUB(fp))
@@ -268,5 +270,5 @@ dumb:
 	/* fp->_w = 0; */	/* unnecessary (I think...) */
 	fp->_flags &= ~__SEOF;
 	FUNLOCKFILE(fp);
-	return (0);
+	return 0;
 }

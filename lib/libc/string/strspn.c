@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.17 2009/07/30 21:42:06 dsl Exp $	*/
+/*	$NetBSD: strspn.c,v 1.18 2012/03/21 00:35:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strspn.c,v 1.17 2009/07/30 21:42:06 dsl Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.18 2012/03/21 00:35:50 christos Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: strspn.c,v 1.17 2009/07/30 21:42:06 dsl Exp $");
 size_t
 strspn(const char *s, const char *charset)
 {
-	static const size_t idx[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
+	static const uint8_t idx[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
 	uint8_t set[32];
 	const char *t;
 #define UC(a) ((unsigned int)(unsigned char)(a))

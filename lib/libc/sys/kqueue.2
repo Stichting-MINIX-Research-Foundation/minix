@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.29 2010/04/13 10:45:46 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.32 2012/01/25 00:28:35 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,11 +32,12 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd April 13, 2010
+.Dd January 23, 2012
 .Dt KQUEUE 2
 .Os
 .Sh NAME
 .Nm kqueue ,
+.Nm kqueue1 ,
 .Nm kevent
 .Nd kernel event notification mechanism
 .Sh LIBRARY
@@ -46,6 +47,8 @@
 .In sys/time.h
 .Ft int
 .Fn kqueue "void"
+.Ft int
+.Fn kqueue1 "int flags"
 .Ft int
 .Fn kevent "int kq" "const struct kevent *changelist" "size_t nchanges" "struct kevent *eventlist" "size_t nevents" "const struct timespec *timeout"
 .Fn EV_SET "\*[Am]kev" ident filter flags fflags data udata
@@ -78,6 +81,23 @@ on a file descriptor will remove any kevents that reference the descriptor.
 .Pp
 .Fn kqueue
 creates a new kernel event queue and returns a descriptor.
+.Pp
+The
+.Fn kqueue1
+also allows to set the following
+.Fa flags
+on the returned file descriptor:
+.Bl -column O_NONBLOCK -offset indent
+.It Dv O_CLOEXEC
+Set the close on exec property.
+.It Dv O_NONBLOCK
+Sets non-blocking I/O.
+.It Dv O_NOSIGPIPE
+Return
+.Er EPIPE
+instead of raising
+.Dv SIGPIPE .
+.El
 The queue is not inherited by a child created with
 .Xr fork 2 .
 .\" However, if
@@ -508,8 +528,8 @@ main(int argc, char *argv[])
         EV_SET(\*[Am]ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
             NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
             NOTE_RENAME|NOTE_REVOKE, 0, 0);
-	if (kevent(kq, \*[Am]ch, 1, NULL, 0, \*[Am]tout) == -1)
-		err(1, "kevent");
+        if (kevent(kq, \*[Am]ev, 1, NULL, 0, \*[Am]tout) == -1)
+                err(1, "kevent");
         for (;;) {
                 nev = kevent(kq, NULL, 0, \*[Am]ev, 1, \*[Am]tout);
                 if (nev == -1)
@@ -617,3 +637,7 @@ functions first appeared in
 .Fx 4.1 ,
 and then in
 .Nx 2.0 .
+The
+.Fn kqueue1
+function first appeared in
+.Nx 6.0 .

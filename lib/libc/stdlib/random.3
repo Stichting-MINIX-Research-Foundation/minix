@@ -1,4 +1,4 @@
-.\"	$NetBSD: random.3,v 1.19 2008/02/28 16:16:35 christos Exp $
+.\"	$NetBSD: random.3,v 1.20 2011/10/15 21:35:49 rmind Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)random.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd February 28, 2008
+.Dd October 15, 2011
 .Dt RANDOM 3
 .Os
 .Sh NAME
@@ -171,6 +171,15 @@ messages are printed on the standard error output.
 .Xr srand 3 ,
 .Xr rnd 4 ,
 .Xr rnd 9
+.Sh STANDARDS
+The
+.Fn random ,
+.Fn srandom ,
+.Fn initstate
+and
+.Fn setstate
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 These
 functions appeared in

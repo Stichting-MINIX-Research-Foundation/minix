@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_resumecontext.c,v 1.2 2003/01/18 11:38:46 thorpej Exp $	*/
+/*	$NetBSD: Lint_resumecontext.c,v 1.3 2011/09/19 21:24:58 joerg Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -9,6 +9,6 @@
 
 /*ARGSUSED*/
 void
-_resumecontext()
+_resumecontext(void)
 {
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockatmark.c,v 1.2 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: sockatmark.c,v 1.3 2012/03/20 17:44:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockatmark.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: sockatmark.c,v 1.3 2012/03/20 17:44:18 matt Exp $");
 #endif
 
 #include "namespace.h"
@@ -42,8 +42,7 @@ __RCSID("$NetBSD: sockatmark.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
 #include <assert.h>
 
 int
-sockatmark(s)
-	int s;
+sockatmark(int s)
 {
 	int val;
 

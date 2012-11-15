@@ -48,7 +48,11 @@ static int
 __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	int (*ofn)(const char *, int, ...))
 {
+#ifndef __minix
 	int f, rawpart;
+#else
+	int f;
+#endif 
 
 	if (buf == NULL) {
 		errno = EFAULT;

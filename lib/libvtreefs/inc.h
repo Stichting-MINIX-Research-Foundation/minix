@@ -1,6 +1,4 @@
-#ifndef __NBSD_LIBC
 #define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
-#endif
 #define _MINIX             1	/* tell headers to include MINIX stuff */
 #define _SYSTEM            1	/* tell headers that this is the kernel */
 

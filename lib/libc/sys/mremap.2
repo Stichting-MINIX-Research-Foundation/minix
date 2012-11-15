@@ -1,4 +1,4 @@
-.\"	$NetBSD: mremap.2,v 1.3 2008/02/16 17:45:39 tnn Exp $
+.\"	$NetBSD: mremap.2,v 1.4 2011/04/28 12:00:55 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner and Joerg Sonnenberger
 .\" All rights reserved.
@@ -88,14 +88,6 @@ are used as hints for the position, factoring in the given alignment.
 returns the new address or
 .Dv MAP_FAILED ,
 if the remap failed.
-.Sh HISTORY
-The 
-.Fn mremap
-system call appeared in
-.Nx 5.0 .
-It was based on the code that supports
-.Fn mremap
-compatibility for Linux binaries.
 .Sh COMPATIBILITY
 The semantics of
 .Fn mremap
@@ -107,3 +99,11 @@ are implemented.
 .Sh SEE ALSO
 .Xr mmap 2 ,
 .Xr munmap 2
+.Sh HISTORY
+The
+.Fn mremap
+system call appeared in
+.Nx 5.0 .
+It was based on the code that supports
+.Fn mremap
+compatibility for Linux binaries.

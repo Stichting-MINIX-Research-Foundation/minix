@@ -280,7 +280,7 @@ static void update_semaphores(void)
 int do_semctl(message *m)
 {
 	int r, i;
-	long opt;
+	long opt = 0;
 	uid_t uid;
 	int id, num, cmd, val;
 	unsigned short *buf;

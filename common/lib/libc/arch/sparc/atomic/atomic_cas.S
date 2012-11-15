@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.10 2009/03/13 16:40:22 nakayama Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.11 2011/02/22 18:45:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,15 +63,29 @@
 #if defined(MULTIPROCESSOR)
 	.section .bss
 	.align	1024
+#ifdef PIC
+	.globl _C_LABEL(_atomic_cas_locktab)
+#endif
 OTYPE(_C_LABEL(_atomic_cas_locktab))
 _C_LABEL(_atomic_cas_locktab):
 	.space	1024
+
+#ifdef PIC
+/* o4 is not used for PSR in PIC cases, so we can use it here */
+#define GETLOCKTAB							\
+	PIC_PROLOGUE(%o3,%o4)						;\
+	set _C_LABEL(_atomic_cas_locktab), %o4				;\
+	ld [%o3 + %o4], %o3
+#else
+#define GETLOCKTAB							\
+	sethi	%hi(_C_LABEL(_atomic_cas_locktab)), %o3
+#endif
 
 #define	ACQUIRE_INTERLOCK						 \
 	DISABLE_INTERRUPTS						;\
 	srl	%o0, 3, %o5			/* get lock address */	;\
 	and	%o5, 1023, %o5						;\
-	sethi	%hi(_C_LABEL(_atomic_cas_locktab)), %o3			;\
+	GETLOCKTAB							;\
 	add	%o5, %o3, %o5						;\
 									;\
 	/* %o5 has interlock address */					;\

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpeername.2,v 1.19 2006/03/05 22:06:08 agc Exp $
+.\"	$NetBSD: getpeername.2,v 1.21 2011/06/03 08:07:48 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getpeername.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 5, 2006
+.Dd June 3, 2011
 .Dt GETPEERNAME 2
 .Os
 .Sh NAME
@@ -40,11 +40,12 @@
 .Sh SYNOPSIS
 .In sys/socket.h
 .Ft int
-.Fn getpeername "int s" "struct sockaddr * restrict name" "socklen_t * restrict namelen"
+.Fn getpeername \
+"int s" "struct sockaddr * restrict name" "socklen_t * restrict namelen"
 .Sh DESCRIPTION
+The
 .Fn getpeername
-returns the name of the peer connected to
-socket
+function returns the name of the peer connected to the socket
 .Fa s .
 One common use occurs when a process inherits an open socket, such as
 TCP servers forked from
@@ -53,13 +54,11 @@ In this scenario,
 .Fn getpeername
 is used to determine the connecting client's IP address.
 .Pp
-.Fn getpeername
-takes three parameters:
-.Pp
-.Fa s
+The function takes three parameters:
+.Bl -tag -width namelen -offset indent
+.It Fa s
 contains the file descriptor of the socket whose peer should be looked up.
-.Pp
-.Fa name
+.It Fa name
 points to a
 .Li sockaddr
 structure that will hold the address information for the connected peer.
@@ -77,11 +76,11 @@ should be used.
 is large enough to hold any of the other sockaddr_* variants.
 On return, it can be cast to the correct sockaddr type,
 based on the protocol family contained in its ss_family field.
-.Pp
-.Fa namelen
+.It Fa namelen
 indicates the amount of space pointed to by
 .Fa name ,
 in bytes.
+.El
 .Pp
 If address information for the local end of the socket is required, the
 .Xr getsockname 2
@@ -108,26 +107,29 @@ The call succeeds unless:
 The argument
 .Fa s
 is not a valid descriptor.
-.It Bq Er ENOTSOCK
-The argument
-.Fa s
-is a file, not a socket.
-.It Bq Er ENOTCONN
-The socket is not connected.
-.It Bq Er ENOBUFS
-Insufficient resources were available in the system
-to perform the operation.
 .It Bq Er EFAULT
 The
 .Fa name
 parameter points to memory not in a valid part of the
 process address space.
+.It Bq Er ENOBUFS
+Insufficient resources were available in the system
+to perform the operation.
+.It Bq Er ENOTCONN
+The socket is not connected.
+.It Bq Er ENOTSOCK
+The argument
+.Fa s
+is a file, not a socket.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
 .Xr bind 2 ,
 .Xr getsockname 2 ,
 .Xr socket 2
+.Sh STANDARDS
+The function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn getpeername

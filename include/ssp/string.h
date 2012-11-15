@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.4 2009/11/17 20:47:59 drochner Exp $	*/
+/*	$NetBSD: string.h,v 1.5 2012/07/22 21:05:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,6 +32,16 @@
 #define _SSP_STRING_H_
 
 #include <ssp/ssp.h>
+
+__BEGIN_DECLS
+void *__memcpy_chk(void *, const void *, size_t, size_t);
+void *__memmove_chk(void *, void *, size_t, size_t);
+void *__memset_chk(void *, int, size_t, size_t);
+char *__strcat_chk(char *, const char *, size_t);
+char *__strcpy_chk(char *, const char *, size_t);
+char *__strncat_chk(char *, const char *, size_t, size_t);
+char *__strncpy_chk(char *, const char *, size_t, size_t);
+__END_DECLS
 
 #if __SSP_FORTIFY_LEVEL > 0
 
@@ -74,13 +84,6 @@ __ssp_bos_icheck2_restrict(strcpy, char *, const char *)
 __ssp_bos_icheck2_restrict(strcat, char *, const char *)
 __ssp_bos_icheck3_restrict(strncpy, char *, const char *)
 __ssp_bos_icheck3_restrict(strncat, char *, const char *)
-void *__memcpy_chk(void *, const void *, size_t, size_t);
-void *__memmove_chk(void *, void *, size_t, size_t);
-void *__memset_chk(void *, int, size_t, size_t);
-char *__strcat_chk(char *, const char *, size_t);
-char *__strcpy_chk(char *, const char *, size_t);
-char *__strncat_chk(char *, const char *, size_t, size_t);
-char *__strncpy_chk(char *, const char *, size_t, size_t);
 __END_DECLS
 
 #define memcpy(dst, src, len) __ssp_bos_check3(memcpy, dst, src, len)

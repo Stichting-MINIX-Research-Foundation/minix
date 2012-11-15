@@ -1,4 +1,4 @@
-/*	$NetBSD: wsetup.c,v 1.11 2003/08/07 16:43:35 agc Exp $	*/
+/*	$NetBSD: wsetup.c,v 1.12 2012/03/15 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wsetup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wsetup.c,v 1.11 2003/08/07 16:43:35 agc Exp $");
+__RCSID("$NetBSD: wsetup.c,v 1.12 2012/03/15 18:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: wsetup.c,v 1.11 2003/08/07 16:43:35 agc Exp $");
  * _wsetup returns 0 if OK to write, nonzero otherwise.
  */
 int
-__swsetup(fp)
-	FILE *fp;
+__swsetup(FILE *fp)
 {
 
 	_DIAGASSERT(fp != NULL);
@@ -69,7 +68,7 @@ __swsetup(fp)
 	 */
 	if ((fp->_flags & __SWR) == 0) {
 		if ((fp->_flags & __SRW) == 0)
-			return (EOF);
+			return EOF;
 		if (fp->_flags & __SRD) {
 			/* clobber any ungetc data */
 			if (HASUB(fp))
@@ -96,5 +95,5 @@ __swsetup(fp)
 		fp->_lbfsize = -fp->_bf._size;
 	} else
 		fp->_w = fp->_flags & __SNBF ? 0 : fp->_bf._size;
-	return (0);
+	return 0;
 }

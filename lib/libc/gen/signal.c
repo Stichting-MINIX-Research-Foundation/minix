@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.12 2003/08/07 16:42:56 agc Exp $	*/
+/*	$NetBSD: signal.c,v 1.13 2012/06/25 22:32:44 abs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: signal.c,v 1.12 2003/08/07 16:42:56 agc Exp $");
+__RCSID("$NetBSD: signal.c,v 1.13 2012/06/25 22:32:44 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,9 +51,7 @@ __weak_alias(signal,_signal)
 sigset_t __sigintr;		/* shared with siginterrupt */
 
 sig_t
-signal(s, a)
-	int s;
-	sig_t a;
+signal(int s, sig_t a)
 {
 	struct sigaction sa, osa;
 
