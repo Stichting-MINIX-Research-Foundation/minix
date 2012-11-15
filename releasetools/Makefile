@@ -80,7 +80,9 @@ drivers: includes servers
 bootable:
 	exec su root mkboot bootable
 
-hdboot: 
+hdboot: services .WAIT do-hdboot
+
+do-hdboot: 
 	@rm -rf ${DESTDIR}/boot/minix/.temp/
 	${INSTALL_DIR} ${DESTDIR}/boot/minix/.temp
 # mod_0 is used to make alphabetical order equal to the boot order
@@ -96,7 +98,7 @@ hdboot:
 	@if [ "${MKINSTALLBOOT:Uno}" != "no" ] ; then		\
 	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
 	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
-	${HOST_SH} mkboot $@;					\
+	${HOST_SH} mkboot hdboot;					\
 	${HOST_SH} ../commands/update_bootcfg/update_bootcfg.sh;\
 	else							\
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
