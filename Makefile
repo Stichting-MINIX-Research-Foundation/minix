@@ -268,6 +268,18 @@ includes-gnu:	.PHONY includes-lib
 
 START_TIME!=	date
 
+.if defined(__MINIX)
+world: build .PHONY .MAKE
+	${MAKEDIRTARGET} . etcforce
+	@echo "WARNING: "
+	@echo "WARNING: The 'world' target is obsolete, please use 'build' instead."
+	@echo "WARNING: "
+
+etcforce: .PHONY .MAKE
+	${MAKEDIRTARGET} etc install-etc-files  DESTDIR=${DESTDIR:U/}
+
+.endif # defiend(__MINIX)
+
 build: .PHONY .MAKE
 .if defined(BUILD_DONE)
 	@echo "Build already installed into ${DESTDIR}"
@@ -295,7 +307,7 @@ distribution buildworld: .PHONY .MAKE
 	${MAKEDIRTARGET} . build NOPOSTINSTALL=1
 	${MAKEDIRTARGET} etc distribution INSTALL_DONE=1
 .if defined(__MINIX)
-	${MAKEDIRTARGET} releasetools hdboot
+	${MAKEDIRTARGET} releasetools do-hdboot
 .endif # defined(__MINIX)
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
