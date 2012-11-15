@@ -175,7 +175,7 @@ int req_create(
   res->fsize	= m.RES_FILE_SIZE_LO;
   res->uid	= m.RES_UID;
   res->gid	= m.RES_GID;
-  res->dev	= m.RES_DEV;
+  res->dev	= NO_DEV;
 
   return(OK);
 }
