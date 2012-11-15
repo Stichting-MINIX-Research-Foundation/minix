@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.204 2011/01/10 04:41:27 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.217 2012/10/02 01:46:40 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -75,58 +75,68 @@ SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S \
 	bind.S \
-	chdir.S chflags.S chmod.S chown.S chroot.S __clock_getres50.S \
-		__clock_gettime50.S \
-	dup.S dup2.S  \
+	chdir.S chflags.S chmod.S chown.S chroot.S clock_nanosleep.S \
+		__clock_getres50.S __clock_gettime50.S \
+	dup.S dup2.S dup3.S \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \
 		extattr_delete_link.S extattr_get_fd.S extattr_get_file.S \
 		extattr_get_link.S extattr_list_fd.S extattr_list_file.S \
 		extattr_list_link.S extattr_set_fd.S extattr_set_file.S \
 		extattr_set_link.S \
-	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
-		__fhopen40.S __fhstat50.S __fhstatvfs140.S fktrace.S \
-		flock.S fpathconf.S __fstat50.S fstatvfs1.S __futimes50.S \
+	setxattr.S getxattr.S listxattr.S removexattr.S \
+		lsetxattr.S lgetxattr.S llistxattr.S lremovexattr.S \
+		fsetxattr.S fgetxattr.S flistxattr.S fremovexattr.S \
+	faccessat.S fchdir.S fchflags.S fchmod.S fchmodat.S fchown.S \
+		fchownat.S fchroot.S fexecve.S __fhopen40.S __fhstat50.S \
+		__fhstatvfs140.S fktrace.S flock.S fpathconf.S __fstat50.S \
+		fstatvfs1.S fstatat.S  __futimes50.S futimens.S \
 	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S\
 		__getitimer50.S __getlogin.S getpeername.S getpgid.S getpgrp.S \
 		getpriority.S getrlimit.S __getrusage50.S getsid.S \
 		getsockname.S getsockopt.S __gettimeofday50.S \
 	ioctl.S \
-	kqueue.S ktrace.S \
+	kqueue.S kqueue1.S ktrace.S \
 		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
-		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
-		_ksem_open.S \
+		_ksem_post.S _ksem_timedwait.S _ksem_trywait.S _ksem_unlink.S \
+		_ksem_wait.S _ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
-		__lfs_segwait50.S link.S listen.S __lstat50.S __lutimes50.S \
-		_lwp_create.S _lwp_exit.S _lwp_kill.S ___lwp_park50.S \
-		_lwp_self.S _lwp_wait.S _lwp_unpark.S _lwp_unpark_all.S \
-		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
-		_lwp_setprivate.S \
+		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
+		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
+		___lwp_park50.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \
+		_lwp_unpark_all.S _lwp_suspend.S _lwp_continue.S \
+		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
-	madvise.S mincore.S minherit.S mkdir.S mkfifo.S __mknod50.S \
-		mlock.S mlockall.S modctl.S __mount50.S mprotect.S \
-		__msgctl50.S msgget.S munlock.S munlockall.S munmap.S \
+	madvise.S mincore.S minherit.S mkdir.S mkdirat.S mkfifo.S mkfifoat.S \
+		__mknod50.S mknodat.S mlock.S mlockall.S modctl.S __mount50.S \
+		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
+		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
-	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
-		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
-	quotactl.S \
-	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
-		rmdir.S \
-	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-		sa_preempt.S semconfig.S semget.S semop.S \
-		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
-		setgroups.S __setitimer50.S __setlogin.S setpgid.S \
+	openat.S \
+	paccept.S pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
+		__posix_chown.S __posix_fchown.S __posix_lchown.S \
+		__posix_rename.S profil.S \
+	__quotactl.S \
+	rasctl.S readlinkat.S reboot.S recvfrom.S recvmmsg.S recvmsg.S rename.S \
+		renameat.S revoke.S rmdir.S \
+	semconfig.S semget.S semop.S \
+		sendmmsg.S sendmsg.S sendto.S setegid.S seteuid.S \
+		setgid.S setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
 		setuid.S __shmctl50.S shmdt.S shmget.S shutdown.S \
 		sigqueueinfo.S \
 		__sigaltstack14.S __sigpending14.S __sigaction_sigtramp.S \
 		____sigtimedwait50.S __socket30.S socketpair.S __stat50.S \
-		statvfs1.S swapctl.S symlink.S __sysctl.S \
+		statvfs1.S swapctl.S symlink.S symlinkat.S __sysctl.S \
 	timer_create.S timer_delete.S __timer_gettime50.S timer_getoverrun.S \
 		____semctl50.S __timer_settime50.S \
-	umask.S undelete.S unlink.S unmount.S __utimes50.S utrace.S uuidgen.S \
-	vadvise.S
+	umask.S undelete.S unlink.S unlinkat.S unmount.S __utimes50.S \
+		utimensat.S utrace.S uuidgen.S vadvise.S
+
+# sa compat syscalls
+SAASM+=	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
+		sa_preempt.S
 
 # modules with potentially non default implementations
 ASM_MD=	_lwp_getprivate.S mremap.S 
@@ -146,11 +156,11 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S \
-	__select50.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	__wait450.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
-	issetugid.S sync.S __posix_fadvise50.S
+	issetugid.S posix_spawn.S sync.S __posix_fadvise50.S
 
 PSEUDONOERR=	_exit.S
 
@@ -173,6 +183,10 @@ ${ASM_GLUE}: ${ASMDEPS}
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nWSYSCALL(${.PREFIX},_sys_${.PREFIX})\nWEAK_ALIAS(_${.PREFIX},_sys_${.PREFIX})\n' >${.TARGET}
+
+${SAASM}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\n_SYSCALL(${.PREFIX:S/tmp_//},${.PREFIX:S/tmp_//:S/sa_/compat_60_sa_/})\n' >${.TARGET}
 
 ${NOERR}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
@@ -224,7 +238,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	mount.2 \
 	mprotect.2 mremap.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
-	pmc_control.2 poll.2 posix_fadvise.2 profil.2 ptrace.2 quotactl.2 \
+	pmc_control.2 poll.2 posix_fadvise.2 profil.2 ptrace.2 __quotactl.2 \
 	rasctl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 \
 	select.2 semctl.2 \
@@ -242,6 +256,7 @@ MLINKS+=_exit.2 _Exit.2
 MLINKS+=brk.2 sbrk.2
 MLINKS+=clone.2 __clone.2
 MLINKS+=dup.2 dup2.2
+MLINKS+=dup.2 dup3.2
 MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2 chflags.2 lchflags.2
 MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
@@ -278,6 +293,7 @@ MLINKS+=intro.2 errno.2
 MLINKS+=kqueue.2 kevent.2
 MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
+MLINKS+=link.2 linkat.2
 MLINKS+=_lwp_suspend.2 _lwp_continue.2
 MLINKS+=_lwp_getprivate.2 _lwp_setprivate.2
 MLINKS+=madvise.2 posix_madvise.2
@@ -289,9 +305,9 @@ MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=pmc_control.2 pmc_get_info.2
 MLINKS+=poll.2 pollts.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
-MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
+MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2 recv.2 recvmmsg.2
 MLINKS+=select.2 pselect.2
-MLINKS+=send.2 sendmsg.2 send.2 sendto.2
+MLINKS+=send.2 sendmsg.2 send.2 sendto.2 send.2 sendmmsg.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
@@ -306,5 +322,9 @@ MLINKS+=statvfs.2 fstatvfs1.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
+MLINKS+=utimes.2 futimens.2 utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
+MLINKS+=pipe.2 pipe2.2
+MLINKS+=accept.2 paccept.2
+MLINKS+=nanosleep.2 clock_nanosleep.2

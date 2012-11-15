@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.17 2010/10/24 17:44:32 tron Exp $	*/
+/*	$NetBSD: ftell.c,v 1.20 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: ftell.c,v 1.17 2010/10/24 17:44:32 tron Exp $");
+__RCSID("$NetBSD: ftell.c,v 1.20 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,10 +51,9 @@ __RCSID("$NetBSD: ftell.c,v 1.17 2010/10/24 17:44:32 tron Exp $");
  * ftell: return current offset.
  */
 long
-ftell(fp)
-	FILE *fp;
+ftell(FILE *fp)
 {
-	fpos_t pos;
+	off_t pos;
 
 
 	FLOCKFILE(fp);
@@ -69,14 +68,14 @@ ftell(fp)
 	 * Find offset of underlying I/O object, then
 	 * adjust for buffered bytes.
 	 */
-	__sflush(fp);		/* may adjust seek offset on append stream */
+	(void)__sflush(fp); /* may adjust seek offset on append stream */
 	if (fp->_flags & __SOFF)
 		pos = fp->_offset;
 	else {
-		pos = (*fp->_seek)(fp->_cookie, (fpos_t)0, SEEK_CUR);
+		pos = (*fp->_seek)(fp->_cookie, (off_t)0, SEEK_CUR);
 		if (pos == -1L) {
 			FUNLOCKFILE(fp);
-			return (long)(pos);
+			return (long)pos;
 		}
 	}
 	if (fp->_flags & __SRD) {
@@ -98,10 +97,10 @@ ftell(fp)
 	}
 	FUNLOCKFILE(fp);
 
-	if (__fpos_overflow(pos)) {
+	if (__long_overflow(pos)) {
 		errno = EOVERFLOW;
 		return -1L;
 	}
 		
-	return (long)(pos);
+	return (long)pos;
 }

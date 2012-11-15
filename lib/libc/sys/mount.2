@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.2,v 1.45 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: mount.2,v 1.49 2011/11/18 21:04:21 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.2	8.3 (Berkeley) 5/24/95
 .\"
-.Dd April 10, 2009
+.Dd November 18, 2011
 .Dt MOUNT 2
 .Os
 .Sh NAME
@@ -98,6 +98,10 @@ Do not interpret special files on the file system.
 Do not allow programs to dump core files on the file system.
 .It Dv MNT_NOATIME
 Never update access time in the file system.
+.It Dv MNT_RELATIME
+Update access time on write and change.
+This helps programs that verify that the file has been read after written
+to work.
 .It Dv MNT_NODEVMTIME
 Never update modification time of device files.
 .It Dv MNT_SYMPERM
@@ -119,6 +123,10 @@ causes a journal (or log) to be created in the
 filesystem, creating a record of meta-data writes to be
 performed, allowing the actual writes to be deferred.
 This improves performance in most cases.
+.It MNT_EXTATTR
+Enable extended attributes, if the filesystem supports them and
+does not enable them by default.
+Currently this is only the case for UFS1.
 .El
 .Pp
 The

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.25 2005/12/28 15:26:06 yamt Exp $	*/
+/*	$NetBSD: xdr.h,v 1.27 2011/08/30 17:09:51 plunky Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -130,10 +130,8 @@ typedef struct __rpc_xdr {
  * The opaque pointer generally points to a structure of the data type
  * to be decoded.  If this pointer is 0, then the type routines should
  * allocate dynamic storage of the appropriate size and return it.
- *
- * XXX can't actually prototype it, because some take three args!!!
  */
-typedef	bool_t (*xdrproc_t)(/* XDR *, void *, u_int */);
+typedef	bool_t (*xdrproc_t)(XDR *, const void *); 
 
 /*
  * Operations defined on a XDR handle
@@ -313,6 +311,7 @@ extern bool_t	xdr_hyper(XDR *, longlong_t *);
 extern bool_t	xdr_u_hyper(XDR *, u_longlong_t *);
 extern bool_t	xdr_longlong_t(XDR *, longlong_t *);
 extern bool_t	xdr_u_longlong_t(XDR *, u_longlong_t *);
+extern unsigned long xdr_sizeof(xdrproc_t, void *);
 __END_DECLS
 
 /*

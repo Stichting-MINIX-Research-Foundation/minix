@@ -11,6 +11,8 @@ LIB=		rmt
 SRCS=		rmtlib.c
 MAN=		rmtops.3
 
+.ifndef __MINIX
 CPPFLAGS+=	-D_REENTRANT
+.endif
 
 .include <bsd.lib.mk>

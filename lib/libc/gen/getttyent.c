@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.23 2006/04/17 23:29:21 salo Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.24 2011/10/15 23:00:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.23 2006/04/17 23:29:21 salo Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.24 2011/10/15 23:00:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

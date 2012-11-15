@@ -3,7 +3,7 @@
 set -e
 
 # grep message type and errno constants and make them into a .h file
-cat ../include/sys/errno.h | \
+cat ../sys/sys/errno.h | \
 tr -s ' \t' ' ' | \
 sed 's/^# /#/' | \
 egrep '^#define [A-Z_][A-Z0-9_]* \( ?_SIGN ?[0-9]+ ?\)' | \

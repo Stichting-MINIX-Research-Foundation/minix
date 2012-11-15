@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.9 2009/12/31 22:49:16 mlelstv Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.10 2012/08/09 12:38:25 christos Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -15,18 +15,6 @@
 ** Do NOT copy it to any system include directory.
 ** Thank you!
 */
-
-/*
-** ID
-*/
-
-#ifndef lint
-#ifndef NOID
-#if 0
-static char	tzfilehid[] = "@(#)tzfile.h	8.1";
-#endif
-#endif /* !defined NOID */
-#endif /* !defined lint */
 
 /*
 ** Information about time zone files.

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.2 2009/12/14 00:39:00 matt Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.3 2012/03/14 16:50:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,11 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_cas.S,v 1.2 2009/12/14 00:39:00 matt Exp $")
+RCSID("$NetBSD: atomic_cas.S,v 1.3 2012/03/14 16:50:34 christos Exp $")
 
 	.text
 	.set	noat

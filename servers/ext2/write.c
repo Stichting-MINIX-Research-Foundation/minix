@@ -37,7 +37,7 @@ int op;				/* special actions */
  * the double/triple indirect block.
  * It's the only function which should take care about rip->i_blocks counter.
  */
-  int index1, index2, index3; /* indexes in single..triple indirect blocks */
+  int index1 = 0, index2 = 0, index3 = 0; /* indexes in single..triple indirect blocks */
   long excess, block_pos;
   char new_ind = 0, new_dbl = 0, new_triple = 0;
   int single = 0, triple = 0;

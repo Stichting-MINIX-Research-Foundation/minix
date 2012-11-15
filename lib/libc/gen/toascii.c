@@ -1,4 +1,4 @@
-/*	$NetBSD: toascii.c,v 1.2 2003/08/07 16:42:58 agc Exp $	*/
+/*	$NetBSD: toascii.c,v 1.3 2012/06/25 22:32:44 abs Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,15 +38,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: toascii.c,v 1.2 2003/08/07 16:42:58 agc Exp $");
+__RCSID("$NetBSD: toascii.c,v 1.3 2012/06/25 22:32:44 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
 
 #undef toascii
 int
-toascii(c)
-	int c;
+toascii(int c)
 {
 	return ((c) & 0177);
 }

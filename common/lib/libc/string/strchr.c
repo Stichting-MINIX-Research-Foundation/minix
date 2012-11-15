@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.c,v 1.4 2009/07/17 19:37:57 dsl Exp $	*/
+/*	$NetBSD: strchr.c,v 1.5 2011/08/31 15:48:32 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)index.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strchr.c,v 1.4 2009/07/17 19:37:57 dsl Exp $");
+__RCSID("$NetBSD: strchr.c,v 1.5 2011/08/31 15:48:32 plunky Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ strchr(const char *p, int ch)
 			return(__UNCONST(p));
 		}
 		if (!*p)
-			return((char *)NULL);
+			return(NULL);
 	}
 	/* NOTREACHED */
 }

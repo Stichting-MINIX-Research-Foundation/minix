@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.16 2000/07/06 03:10:34 christos Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.17 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getmaps.c,v 1.16 2000/07/06 03:10:34 christos Exp $");
+__RCSID("$NetBSD: pmap_getmaps.c,v 1.17 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -77,8 +77,7 @@ __weak_alias(pmap_getmaps,_pmap_getmaps)
  * Calls the pmap service remotely to do get the maps.
  */
 struct pmaplist *
-pmap_getmaps(address)
-	 struct sockaddr_in *address;
+pmap_getmaps(struct sockaddr_in *address)
 {
 	struct pmaplist *head = NULL;
 	int sock = -1;

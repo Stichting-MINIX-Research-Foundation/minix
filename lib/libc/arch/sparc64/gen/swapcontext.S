@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.6 2012/09/12 02:00:53 manu Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.7 2012/09/13 11:47:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.6 2012/09/12 02:00:53 manu Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.7 2012/09/13 11:47:46 martin Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 
@@ -53,12 +53,12 @@ ENTRY(swapcontext)
 #ifdef	PIC
 	PIC_PROLOGUE(%g5,%o4)			/* %g5 = _GLOBAL_OFFSET_TABLE */
 #ifdef	BIGPIC
-	set	_C_LABEL(setcontext), %o6
-	ldx	[%g5+%o6], %o5
+	set	_C_LABEL(setcontext), %o5
+	ldx	[%g5+%o5], %o4
 #else
-	ldx	[%g5+_C_LABEL(setcontext)], %o5
+	ldx	[%g5+_C_LABEL(setcontext)], %o4
 #endif
-	jmp	%o5
+	jmp	%o4
 	 mov	%o3, %o0
 #else
 	ba,a	_C_LABEL(setcontext)

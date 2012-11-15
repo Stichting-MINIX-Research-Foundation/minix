@@ -1,4 +1,4 @@
-/*	$NetBSD: swprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
+/*	$NetBSD: swprintf.c,v 1.2 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/swprintf.c,v 1.1 2002/09/21 13:00:30 tjr Exp $");
 #else
-__RCSID("$NetBSD: swprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $");
+__RCSID("$NetBSD: swprintf.c,v 1.2 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,5 +49,5 @@ swprintf(wchar_t * __restrict s, size_t n, const wchar_t * __restrict fmt, ...)
 	ret = vswprintf(s, n, fmt, ap);
 	va_end(ap);
 
-	return (ret);
+	return ret;
 }

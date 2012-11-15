@@ -1,4 +1,4 @@
-.\"	$NetBSD: getrlimit.2,v 1.32 2009/07/01 11:25:50 wiz Exp $
+.\"	$NetBSD: getrlimit.2,v 1.36 2012/06/09 02:36:25 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getrlimit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 1, 2009
+.Dd June 8, 2012
 .Dt GETRLIMIT 2
 .Os
 .Sh NAME
@@ -83,6 +83,11 @@ function.
 The maximum number of open files for this process.
 .It Li RLIMIT_NPROC
 The maximum number of simultaneous processes for this user id.
+.It Li RLIMIT_NTHR
+The maximum number of simultaneous threads (Lightweight Processes) for this
+user id.
+Kernel threads and the first thread of each process are not counted against
+this limit.
 .It Li RLIMIT_RSS
 The maximum size (in bytes) to which a process's resident set size may
 grow.
@@ -183,9 +188,7 @@ is invalid.
 .It Bq Er EINVAL
 Specified
 .Fa resource
-was invalid.
-.It Bq Er EINVAL
-In the
+was invalid; or, in the
 .Fn setrlimit
 call, the specified
 .Fa rlim_cur
@@ -211,10 +214,10 @@ cannot be lowered, because current usage is already higher than the limit.
 .Xr csh 1 ,
 .Xr sh 1 ,
 .Xr mlock 2 ,
-.Xr quotactl 2 ,
 .Xr setsockopt 2 ,
 .Xr sigaction 2 ,
 .Xr sigaltstack 2 ,
+.Xr libquota 3 ,
 .Xr sysctl 3
 .\" Sh STANDARDS
 .\" With exception of
@@ -230,3 +233,9 @@ The
 .Fn getrlimit
 function call appeared in
 .Bx 4.2 .
+.Sh BUGS
+The resource limit
+.Dv RLIMIT_RSS
+is not implemented in
+.Xr uvm 9
+which means that process memory size limits are not enforced.

@@ -35,7 +35,7 @@
 #include <signal.h>
 #include <assert.h>
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "vm.h"
 #include "clock.h"
 #include "spinlock.h"

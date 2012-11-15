@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.29 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.30 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.29 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.30 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -85,22 +85,20 @@ static struct clntraw_private {
 	u_int	mcnt;
 } *clntraw_private;
 
-static enum clnt_stat clnt_raw_call __P((CLIENT *, rpcproc_t, xdrproc_t,
-    const char *, xdrproc_t, caddr_t, struct timeval));
-static void clnt_raw_geterr __P((CLIENT *, struct rpc_err *));
-static bool_t clnt_raw_freeres __P((CLIENT *, xdrproc_t, caddr_t));
-static void clnt_raw_abort __P((CLIENT *));
-static bool_t clnt_raw_control __P((CLIENT *, u_int, char *));
-static void clnt_raw_destroy __P((CLIENT *));
-static struct clnt_ops *clnt_raw_ops __P((void));
+static enum clnt_stat clnt_raw_call(CLIENT *, rpcproc_t, xdrproc_t,
+    const char *, xdrproc_t, caddr_t, struct timeval);
+static void clnt_raw_geterr(CLIENT *, struct rpc_err *);
+static bool_t clnt_raw_freeres(CLIENT *, xdrproc_t, caddr_t);
+static void clnt_raw_abort(CLIENT *);
+static bool_t clnt_raw_control(CLIENT *, u_int, char *);
+static void clnt_raw_destroy(CLIENT *);
+static struct clnt_ops *clnt_raw_ops(void);
 
 /*
  * Create a client handle for memory based rpc.
  */
 CLIENT *
-clnt_raw_create(prog, vers)
-	rpcprog_t prog;
-	rpcvers_t vers;
+clnt_raw_create(rpcprog_t prog, rpcvers_t vers)
 {
 	struct clntraw_private *clp = clntraw_private;
 	struct rpc_msg call_msg;
@@ -156,14 +154,8 @@ out:
 
 /* ARGSUSED */
 static enum clnt_stat 
-clnt_raw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
-	CLIENT *h;
-	rpcproc_t proc;
-	xdrproc_t xargs;
-	const char *argsp;
-	xdrproc_t xresults;
-	caddr_t resultsp;
-	struct timeval timeout;
+clnt_raw_call(CLIENT *h, rpcproc_t proc, xdrproc_t xargs, const char *argsp,
+	xdrproc_t xresults, caddr_t resultsp, struct timeval timeout)
 {
 	struct clntraw_private *clp = clntraw_private;
 	XDR *xdrs = &clp->xdr_stream;
@@ -254,19 +246,14 @@ call_again:
 
 /*ARGSUSED*/
 static void
-clnt_raw_geterr(cl, error)
-	CLIENT *cl;
-	struct rpc_err *error;
+clnt_raw_geterr(CLIENT *cl, struct rpc_err *error)
 {
 }
 
 
 /* ARGSUSED */
 static bool_t
-clnt_raw_freeres(cl, xdr_res, res_ptr)
-	CLIENT *cl;
-	xdrproc_t xdr_res;
-	caddr_t res_ptr;
+clnt_raw_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 {
 	struct clntraw_private *clp = clntraw_private;
 	XDR *xdrs = &clp->xdr_stream;
@@ -285,30 +272,25 @@ clnt_raw_freeres(cl, xdr_res, res_ptr)
 
 /*ARGSUSED*/
 static void
-clnt_raw_abort(cl)
-	CLIENT *cl;
+clnt_raw_abort(CLIENT *cl)
 {
 }
 
 /*ARGSUSED*/
 static bool_t
-clnt_raw_control(cl, ui, str)
-	CLIENT *cl;
-	u_int ui;
-	char *str;
+clnt_raw_control(CLIENT *cl, u_int ui, char *str)
 {
 	return (FALSE);
 }
 
 /*ARGSUSED*/
 static void
-clnt_raw_destroy(cl)
-	CLIENT *cl;
+clnt_raw_destroy(CLIENT *cl)
 {
 }
 
 static struct clnt_ops *
-clnt_raw_ops()
+clnt_raw_ops(void)
 {
 	static struct clnt_ops ops;
 #ifdef _REENTRANT

@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.10 2010/12/03 23:07:49 joerg Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.11 2011/05/25 14:41:46 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -61,6 +61,8 @@
  */
 
 #ifdef __minix
+/* Minix mmap can do this. */
+#define mmap minix_mmap
 #define munmap minix_munmap
 #endif
 
@@ -81,7 +83,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.10 2010/12/03 23:07:49 joerg Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.11 2011/05/25 14:41:46 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -152,6 +154,7 @@ static	union overhead *nextf[NBUCKETS];
 
 static	size_t pagesz;			/* page size */
 static	size_t pagebucket;		/* page size bucket */
+static	size_t pageshift;		/* page size shift */
 
 #ifdef MSTATS
 /*
@@ -207,6 +210,7 @@ imalloc(size_t nbytes)
 			bucket++;
 		}
 		pagebucket = bucket;
+		pageshift = ffs(pagesz) - 1;
 	}
 	/*
 	 * Convert amount of memory requested into closest block size
@@ -281,13 +285,13 @@ morecore(size_t bucket)
 #endif
 	if (sz < pagesz) {
 		amt = pagesz;
-  		nblks = amt / sz;
+		nblks = amt >> (bucket + 3);
 	} else {
 		amt = sz + pagesz;
 		nblks = 1;
 	}
 	if (amt > PAGEPOOL_SIZE)
-		if (morepages(amt/pagesz + NPOOLPAGES) == 0)
+		if (morepages((amt >> pageshift) + NPOOLPAGES) == 0)
 			return;
 	op = (union overhead *)pagepool_start;
 	pagepool_start += amt;
@@ -413,10 +417,6 @@ mstats(char *s)
 }
 #endif
 
-/* Minix mmap can do this. */
-#ifdef __minix
-#define mmap minix_mmap
-#endif
 
 static int
 morepages(int n)

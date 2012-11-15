@@ -1,7 +1,7 @@
-/*	$NetBSD: ungetc.c,v 1.16 2009/10/25 20:44:13 christos Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.17 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright c 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.16 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.17 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: ungetc.c,v 1.16 2009/10/25 20:44:13 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 
-static int __submore __P((FILE *));
 /*
  * Expand the ungetc buffer `in place'.  That is, adjust fp->_p when
  * the buffer moves, so that it points the same distance from the end,
@@ -57,8 +56,7 @@ static int __submore __P((FILE *));
  * are all at the end (stack-style).
  */
 static int
-__submore(fp)
-	FILE *fp;
+__submore(FILE *fp)
 {
 	int i;
 	unsigned char *p;
@@ -70,37 +68,35 @@ __submore(fp)
 		 * Get a new buffer (rather than expanding the old one).
 		 */
 		if ((p = malloc((size_t)BUFSIZ)) == NULL)
-			return (EOF);
+			return EOF;
 		_UB(fp)._base = p;
 		_UB(fp)._size = BUFSIZ;
 		p += BUFSIZ - sizeof(fp->_ubuf);
 		for (i = sizeof(fp->_ubuf); --i >= 0;)
 			p[i] = fp->_ubuf[i];
 		fp->_p = p;
-		return (0);
+		return 0;
 	}
 	i = _UB(fp)._size;
 	p = realloc(_UB(fp)._base, (size_t)(i << 1));
 	if (p == NULL)
-		return (EOF);
+		return EOF;
 	/* no overlap (hence can use memcpy) because we doubled the size */
 	(void)memcpy((p + i), p, (size_t)i);
 	fp->_p = p + i;
 	_UB(fp)._base = p;
 	_UB(fp)._size = i << 1;
-	return (0);
+	return 0;
 }
 
 int
-ungetc(c, fp)
-	int c;
-	FILE *fp;
+ungetc(int c, FILE *fp)
 {
 
 	_DIAGASSERT(fp != NULL);
 
 	if (c == EOF)
-		return (EOF);
+		return EOF;
 	if (!__sdidinit)
 		__sinit();
 	FLOCKFILE(fp);
@@ -112,12 +108,12 @@ ungetc(c, fp)
 		 */
 		if ((fp->_flags & __SRW) == 0) {
 			FUNLOCKFILE(fp);
-			return (EOF);
+			return EOF;
 		}
 		if (fp->_flags & __SWR) {
 			if (__sflush(fp)) {
 				FUNLOCKFILE(fp);
-				return (EOF);
+				return EOF;
 			}
 			fp->_flags &= ~__SWR;
 			fp->_w = 0;
@@ -134,12 +130,12 @@ ungetc(c, fp)
 	if (HASUB(fp)) {
 		if (fp->_r >= _UB(fp)._size && __submore(fp)) {
 			FUNLOCKFILE(fp);
-			return (EOF);
+			return EOF;
 		}
 		*--fp->_p = c;
 		fp->_r++;
 		FUNLOCKFILE(fp);
-		return (c);
+		return c;
 	}
 	fp->_flags &= ~__SEOF;
 
@@ -153,7 +149,7 @@ ungetc(c, fp)
 		fp->_p--;
 		fp->_r++;
 		FUNLOCKFILE(fp);
-		return (c);
+		return c;
 	}
 
 	/*
@@ -168,5 +164,5 @@ ungetc(c, fp)
 	fp->_p = &fp->_ubuf[sizeof(fp->_ubuf) - 1];
 	fp->_r = 1;
 	FUNLOCKFILE(fp);
-	return (c);
+	return c;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.9 2010/12/13 23:10:13 pooka Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.10 2012/03/13 21:13:37 christos Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.9 2010/12/13 23:10:13 pooka Exp $");
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.10 2012/03/13 21:13:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.9 2010/12/13 23:10:13 pooka Exp $");
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
@@ -131,7 +132,8 @@ relearnhead(void)
 {
 	struct sysctlnode *h, *i, *o, qnode;
 	size_t si, so;
-	int rc, name, nlen, olen, ni, oi;
+	int rc, name;
+	size_t nlen, olen, ni, oi;
 	uint32_t t;
 
 	/*
@@ -165,7 +167,7 @@ relearnhead(void)
 	 * order the new copy of the head
 	 */
 	nlen = so / sizeof(struct sysctlnode);
-	qsort(h, (size_t)nlen, sizeof(struct sysctlnode), compar);
+	qsort(h, nlen, sizeof(struct sysctlnode), compar);
 
 	/*
 	 * verify that everything is the same.  if it is, we don't
@@ -259,8 +261,9 @@ relearnhead(void)
 	/*
 	 * pop new head in
 	 */
-	sysctl_mibroot.sysctl_clen = nlen;
-	sysctl_mibroot.sysctl_csize = nlen;
+	_DIAGASSERT(__type_fit(uint32_t, nlen));
+	sysctl_mibroot.sysctl_csize =
+	    sysctl_mibroot.sysctl_clen = (uint32_t)nlen;
 	sysctl_mibroot.sysctl_child = h;
 	free(o);
 }
@@ -330,9 +333,9 @@ __learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 	/*
 	 * how many did we get?
 	 */
-	pnode->sysctl_clen = sz / sizeof(struct sysctlnode);
-	pnode->sysctl_csize = sz / sizeof(struct sysctlnode);
-	if (pnode->sysctl_clen * sizeof(struct sysctlnode) != sz) {
+	sz /= sizeof(struct sysctlnode);
+	pnode->sysctl_csize = pnode->sysctl_clen = (uint32_t)sz;
+	if (pnode->sysctl_clen != sz) {
 		free(pnode->sysctl_child);
 		pnode->sysctl_child = NULL;
 		errno = EINVAL;

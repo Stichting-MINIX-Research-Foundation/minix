@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.13 2009/12/31 22:49:16 mlelstv Exp $	*/
+/*	$NetBSD: asctime.c,v 1.15 2012/06/25 22:32:46 abs Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -14,9 +14,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char	elsieid[] = "@(#)asctime.c	8.2";
+static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.13 2009/12/31 22:49:16 mlelstv Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.15 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,9 +94,7 @@ static char	buf_asctime[MAX_ASCTIME_BUF_SIZE];
 #define	ASCTIME_BUFLEN	(3 * 2 + 5 * INT_STRLEN_MAXIMUM(int) + 3 + 2 + 1 + 1)
 
 char *
-asctime_r(timeptr, buf)
-register const struct tm *	timeptr;
-char *				buf;
+asctime_r(const struct tm * timeptr, char * buf)
 {
 	static const char	*wday_name[7] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -110,6 +108,10 @@ char *				buf;
 	char			year[INT_STRLEN_MAXIMUM(int) + 2];
 	char			result[MAX_ASCTIME_BUF_SIZE];
 
+	if (timeptr == NULL) {
+		errno = EINVAL;
+		return strcpy(buf, "??? ??? ?? ??:??:?? ????\n");
+	}
 	if (timeptr->tm_wday < 0 || timeptr->tm_wday >= DAYSPERWEEK)
 		wn = "???";
 	else	wn = wday_name[timeptr->tm_wday];
@@ -130,10 +132,9 @@ char *				buf;
 		timeptr->tm_mday, timeptr->tm_hour,
 		timeptr->tm_min, timeptr->tm_sec,
 		year);
-	if (strlen(result) < STD_ASCTIME_BUF_SIZE || buf == buf_asctime) {
-		(void) strcpy(buf, result);
-		return buf;
-	} else {
+	if (strlen(result) < STD_ASCTIME_BUF_SIZE || buf == buf_asctime)
+		return strcpy(buf, result);
+	else {
 #ifdef EOVERFLOW
 		errno = EOVERFLOW;
 #else /* !defined EOVERFLOW */
@@ -148,8 +149,7 @@ char *				buf;
 */
 
 char *
-asctime(timeptr)
-register const struct tm *	timeptr;
+asctime(const struct tm *timeptr)
 {
 	return asctime_r(timeptr, buf_asctime);
 }

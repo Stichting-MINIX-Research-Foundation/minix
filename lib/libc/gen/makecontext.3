@@ -1,4 +1,4 @@
-.\"	$NetBSD: makecontext.3,v 1.9 2010/04/29 06:07:35 jruoho Exp $
+.\"	$NetBSD: makecontext.3,v 1.10 2012/05/04 12:28:03 joerg Exp $
 .\"
 .\" Copyright (c) 2001, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 29, 2010
+.Dd May 4, 2012
 .Dt MAKECONTEXT 3
 .Os
 .Sh NAME
@@ -167,9 +167,3 @@ and
 .Fn swapcontext
 functions first appeared in
 .At V.4 .
-.Sh CAVEATS
-Due to limitations in the current pthread implementation,
-.Nm
-should not be used in programs which link against the
-.Xr pthread 3
-library (whether threads are used or not).

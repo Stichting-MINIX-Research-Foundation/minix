@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.22 2009/01/29 10:41:39 enami Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.23 2012/03/13 21:13:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.22 2009/01/29 10:41:39 enami Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.23 2012/03/13 21:13:36 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: pw_scan.c,v 1.22 2009/01/29 10:41:39 enami Exp $");
 #endif /* ! HAVE_NBTOOL_CONFIG_H */
 
 static int
-gettime(long long *res, const char *p, int *flags, int dowarn, int flag)
+gettime(time_t *res, const char *p, int *flags, int dowarn, int flag)
 {
 	long long l;
 	char *ep;
@@ -80,8 +80,8 @@ gettime(long long *res, const char *p, int *flags, int dowarn, int flag)
 		vp = strerror(errno);
 		goto done;
 	}
-
-	*res = l;
+	_DIAGASSERT(__type_fit(time_t, l));
+	*res = (time_t)l;
 	return 1;
 done:
 	if (dowarn) {
@@ -135,7 +135,7 @@ pw_scan( char *bp, struct passwd *pw, int *flags)
 #endif
 {
 	unsigned long id;
-	long long ti;
+	time_t ti;
 	int root, inflags;
 	int dowarn;
 	const char *p, *sh;

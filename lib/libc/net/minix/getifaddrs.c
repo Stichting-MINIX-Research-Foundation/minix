@@ -1,18 +1,22 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <net/if.h>
-#include <ifaddrs.h>
+#include <namespace.h>
+
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 
+#include <net/if.h>
 #include <net/gen/in.h>
 #include <net/gen/ip_io.h>
 #include <net/gen/tcp.h>
 #include <net/gen/udp.h>
+
+#include <netinet/in.h>
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ifaddrs.h>
 
 int
 getifaddrs(struct ifaddrs **ifap)

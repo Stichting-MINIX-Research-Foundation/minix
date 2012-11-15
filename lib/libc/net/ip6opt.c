@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.14 2012/03/20 17:44:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $");
+__RCSID("$NetBSD: ip6opt.c,v 1.14 2012/03/20 17:44:18 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $");
 #include <netinet/ip6.h>
 
 #include <assert.h>
+#include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -62,8 +63,8 @@ __weak_alias(inet6_opt_find, _inet6_opt_find)
 __weak_alias(inet6_opt_get_val, _inet6_opt_get_val)
 #endif
 
-static int ip6optlen(u_int8_t *opt, u_int8_t *lim);
-static void inet6_insert_padopt(u_char *p, size_t len);
+static int ip6optlen(uint8_t *opt, uint8_t *lim);
+static void inet6_insert_padopt(uint8_t *p, size_t len);
 
 /*
  * This function returns the number of bytes required to hold an option
@@ -75,11 +76,13 @@ static void inet6_insert_padopt(u_char *p, size_t len);
  * byte, the length byte, and the option data.
  */
 int
-inet6_option_space(nbytes)
-	int nbytes;
+inet6_option_space(int nbytes)
 {
+	size_t sp;
 	nbytes += 2;	/* we need space for nxt-hdr and length fields */
-	return(CMSG_SPACE((nbytes + 7) & ~7));
+	sp = CMSG_SPACE((nbytes + 7) & ~7);
+	_DIAGASSERT(__type_fit(int, sp));
+	return (int)sp;
 }
 
 /*
@@ -88,10 +91,7 @@ inet6_option_space(nbytes)
  * success or -1 on an error.
  */
 int
-inet6_option_init(bp, cmsgp, type)
-	void *bp;
-	struct cmsghdr **cmsgp;
-	int type;
+inet6_option_init(void *bp, struct cmsghdr **cmsgp, int type)
 {
 	register struct cmsghdr *ch;
 
@@ -123,20 +123,17 @@ inet6_option_init(bp, cmsgp, type)
  * earlier.  It must have a value between 0 and 7, inclusive.
  */
 int
-inet6_option_append(cmsg, typep, multx, plusy)
-	struct cmsghdr *cmsg;
-	const u_int8_t *typep;
-	int multx;
-	int plusy;
+inet6_option_append(struct cmsghdr *cmsg, const uint8_t *typep, int multx,
+	int plusy)
 {
 	size_t padlen, optlen, off;
-	register u_char *bp;
+	register uint8_t *bp;
 	struct ip6_ext *eh;
 
 	_DIAGASSERT(cmsg != NULL);
 	_DIAGASSERT(typep != NULL);
 
-	bp = (u_char *)(void *)cmsg + cmsg->cmsg_len;
+	bp = (uint8_t *)(void *)cmsg + cmsg->cmsg_len;
 	eh = (struct ip6_ext *)(void *)CMSG_DATA(cmsg);
 
 	/* argument validation */
@@ -150,20 +147,21 @@ inet6_option_append(cmsg, typep, multx, plusy)
 	 * first 2 bytes(for next header and length fields) of
 	 * the option header.
 	 */
-	if (bp == (u_char *)(void *)eh) {
+	if (bp == (uint8_t *)(void *)eh) {
 		bp += 2;
 		cmsg->cmsg_len += 2;
 	}
 
 	/* calculate pad length before the option. */
-	off = bp - (u_char *)(void *)eh;
+	off = bp - (uint8_t *)(void *)eh;
 	padlen = (((off % multx) + (multx - 1)) & ~(multx - 1)) -
 		(off % multx);
 	padlen += plusy;
 	padlen %= multx;	/* keep the pad as short as possible */
 	/* insert padding */
 	inet6_insert_padopt(bp, padlen);
-	cmsg->cmsg_len += padlen;
+	_DIAGASSERT(__type_fit(socklen_t, padlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)padlen;
 	bp += padlen;
 
 	/* copy the option */
@@ -173,18 +171,21 @@ inet6_option_append(cmsg, typep, multx, plusy)
 		optlen = typep[1] + 2;
 	memcpy(bp, typep, (size_t)optlen);
 	bp += optlen;
-	cmsg->cmsg_len += optlen;
+	_DIAGASSERT(__type_fit(socklen_t, optlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)optlen;
 
 	/* calculate pad length after the option and insert the padding */
-	off = bp - (u_char *)(void *)eh;
+	off = bp - (uint8_t *)(void *)eh;
 	padlen = ((off + 7) & ~7) - off;
 	inet6_insert_padopt(bp, padlen);
 	bp += padlen;
-	cmsg->cmsg_len += padlen;
+	_DIAGASSERT(__type_fit(socklen_t, padlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)padlen;
 
 	/* update the length field of the ip6 option header */
-	off = bp - (u_char *)(void *)eh;
-	eh->ip6e_len = (off >> 3) - 1;
+	off = bp - (uint8_t *)(void *)eh;
+	_DIAGASSERT(__type_fit(uint8_t, (off >> 3) - 1));
+	eh->ip6e_len = (uint8_t)((off >> 3) - 1);
 
 	return(0);
 }
@@ -202,21 +203,17 @@ inet6_option_append(cmsg, typep, multx, plusy)
  * then be built by the caller.
  * 
  */
-u_int8_t *
-inet6_option_alloc(cmsg, datalen, multx, plusy)
-	struct cmsghdr *cmsg;
-	int datalen;
-	int multx;
-	int plusy;
+uint8_t *
+inet6_option_alloc(struct cmsghdr *cmsg, int datalen, int multx, int plusy)
 {
 	size_t padlen, off;
-	register u_int8_t *bp;
-	u_int8_t *retval;
+	register uint8_t *bp;
+	uint8_t *retval;
 	struct ip6_ext *eh;
 
 	_DIAGASSERT(cmsg != NULL);
 
-	bp = (u_char *)(void *)cmsg + cmsg->cmsg_len;
+	bp = (uint8_t *)(void *)cmsg + cmsg->cmsg_len;
 	eh = (struct ip6_ext *)(void *)CMSG_DATA(cmsg);
 
 	/* argument validation */
@@ -230,20 +227,20 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	 * first 2 bytes(for next header and length fields) of
 	 * the option header.
 	 */
-	if (bp == (u_char *)(void *)eh) {
+	if (bp == (uint8_t *)(void *)eh) {
 		bp += 2;
 		cmsg->cmsg_len += 2;
 	}
 
 	/* calculate pad length before the option. */
-	off = bp - (u_char *)(void *)eh;
+	off = bp - (uint8_t *)(void *)eh;
 	padlen = (((off % multx) + (multx - 1)) & ~(multx - 1)) -
 		(off % multx);
 	padlen += plusy;
 	padlen %= multx;	/* keep the pad as short as possible */
 	/* insert padding */
 	inet6_insert_padopt(bp, padlen);
-	cmsg->cmsg_len += padlen;
+	cmsg->cmsg_len += (socklen_t)padlen;
 	bp += padlen;
 
 	/* keep space to store specified length of data */
@@ -252,15 +249,17 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	cmsg->cmsg_len += datalen;
 
 	/* calculate pad length after the option and insert the padding */
-	off = bp - (u_char *)(void *)eh;
+	off = bp - (uint8_t *)(void *)eh;
 	padlen = ((off + 7) & ~7) - off;
 	inet6_insert_padopt(bp, padlen);
 	bp += padlen;
-	cmsg->cmsg_len += padlen;
+	_DIAGASSERT(__type_fit(socklen_t, padlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)padlen;
 
 	/* update the length field of the ip6 option header */
-	off = bp - (u_char *)(void *)eh;
-	eh->ip6e_len = (off >> 3) - 1;
+	off = bp - (uint8_t *)(void *)eh;
+	_DIAGASSERT(__type_fit(uint8_t, (off >> 3) - 1));
+	eh->ip6e_len = (uint8_t)((off >> 3) - 1);
 
 	return(retval);
 }
@@ -276,13 +275,11 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
  * (RFC 2292, 6.3.5)
  */
 int
-inet6_option_next(cmsg, tptrp)
-	const struct cmsghdr *cmsg;
-	u_int8_t **tptrp;
+inet6_option_next(const struct cmsghdr *cmsg, uint8_t **tptrp)
 {
 	struct ip6_ext *ip6e;
 	int hdrlen, optlen;
-	u_int8_t *lim;
+	uint8_t *lim;
 
 	_DIAGASSERT(cmsg != NULL);
 	_DIAGASSERT(tptrp != NULL);
@@ -305,9 +302,9 @@ inet6_option_next(cmsg, tptrp)
 	 * simply return the 1st option.
 	 * Otherwise, search the option list for the next option.
 	 */
-	lim = (u_int8_t *)(void *)ip6e + hdrlen;
+	lim = (uint8_t *)(void *)ip6e + hdrlen;
 	if (*tptrp == NULL)
-		*tptrp = (u_int8_t *)(void *)(ip6e + 1);
+		*tptrp = (uint8_t *)(void *)(ip6e + 1);
 	else {
 		if ((optlen = ip6optlen(*tptrp, lim)) == 0)
 			return(-1);
@@ -333,18 +330,15 @@ inet6_option_next(cmsg, tptrp)
  * except this function lets the caller specify the option type to be
  * searched for, instead of always returning the next option in the
  * ancillary data object.
- * Note: RFC 2292 says the type of tptrp is u_int8_t *, but we think
- *       it's a typo. The variable should be type of u_int8_t **.
+ * Note: RFC 2292 says the type of tptrp is uint8_t *, but we think
+ *       it's a typo. The variable should be type of uint8_t **.
  */
 int
-inet6_option_find(cmsg, tptrp, type)
-	const struct cmsghdr *cmsg;
-	u_int8_t **tptrp;
-	int type;
+inet6_option_find(const struct cmsghdr *cmsg, uint8_t **tptrp, int type)
 {
 	struct ip6_ext *ip6e;
 	int hdrlen, optlen;
-	u_int8_t *optp, *lim;
+	uint8_t *optp, *lim;
 
 	_DIAGASSERT(cmsg != NULL);
 	_DIAGASSERT(tptrp != NULL);
@@ -367,9 +361,9 @@ inet6_option_find(cmsg, tptrp, type)
 	 * search from the beginning of the option list.
 	 * Otherwise, search from *the next option* of the specified point.
 	 */
-	lim = (u_int8_t *)(void *)ip6e + hdrlen;
+	lim = (uint8_t *)(void *)ip6e + hdrlen;
 	if (*tptrp == NULL)
-		*tptrp = (u_int8_t *)(void *)(ip6e + 1);
+		*tptrp = (uint8_t *)(void *)(ip6e + 1);
 	else {
 		if ((optlen = ip6optlen(*tptrp, lim)) == 0)
 			return(-1);
@@ -396,8 +390,7 @@ inet6_option_find(cmsg, tptrp, type)
  * calculated length and the limitation of the buffer.
  */
 static int
-ip6optlen(opt, lim)
-	u_int8_t *opt, *lim;
+ip6optlen(uint8_t *opt, uint8_t *lim)
 {
 	int optlen;
 
@@ -419,7 +412,7 @@ ip6optlen(opt, lim)
 }
 
 static void
-inet6_insert_padopt(u_char *p, size_t len)
+inet6_insert_padopt(uint8_t *p, size_t len)
 {
 
 	_DIAGASSERT(p != NULL);
@@ -432,7 +425,8 @@ inet6_insert_padopt(u_char *p, size_t len)
 		 return;
 	 default:
 		 p[0] = IP6OPT_PADN;
-		 p[1] = len - 2; 
+		 _DIAGASSERT(__type_fit(uint8_t, len - 2));
+		 p[1] = (uint8_t)(len - 2); 
 		 memset(&p[2], 0, len - 2);
 		 return;
 	}
@@ -461,8 +455,8 @@ inet6_opt_init(void *extbuf, socklen_t extlen)
 }
 
 int
-inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
-		 socklen_t len, u_int8_t align, void **databufp)
+inet6_opt_append(void *extbuf, socklen_t extlen, int offset, uint8_t type,
+		 socklen_t len, uint8_t align, void **databufp)
 {
 	int currentlen = offset;
 	size_t padlen = 0;
@@ -496,13 +490,14 @@ inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 		padlen = align - (currentlen % align);
 
 	/* The option must fit in the extension header buffer. */
-	currentlen += padlen;
+	_DIAGASSERT(__type_fit(int, currentlen + padlen));
+	currentlen += (int)padlen;
 	if (extlen &&		/* XXX: right? */
 	    (socklen_t)currentlen > extlen)
 		return (-1);
 
 	if (extbuf) {
-		u_int8_t *optp = (u_int8_t *)extbuf + offset;
+		uint8_t *optp = (uint8_t *)extbuf + offset;
 
 		if (padlen == 1) {
 			/* insert a Pad1 option */
@@ -511,7 +506,8 @@ inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 		} else if (padlen > 0) {
 			/* insert a PadN option for alignment */
 			*optp++ = IP6OPT_PADN;
-			*optp++ = padlen - 2;
+			_DIAGASSERT(__type_fit(uint8_t, padlen - 2));
+			*optp++ = (uint8_t)(padlen - 2);
 			memset(optp, 0, padlen - 2);
 			optp += (padlen - 2);
 		}
@@ -531,18 +527,18 @@ inet6_opt_finish(void *extbuf, socklen_t extlen, int offset)
 	int updatelen = offset > 0 ? (1 + ((offset - 1) | 7)) : 0;
 
 	if (extbuf) {
-		u_int8_t *padp;
+		uint8_t *padp;
 		size_t padlen = updatelen - offset;
 
-		if ((socklen_t)updatelen > extlen)
+		if ((socklen_t)updatelen > extlen || padlen >= 256 + 2)
 			return (-1);
 
-		padp = (u_int8_t *)extbuf + offset;
+		padp = (uint8_t *)extbuf + offset;
 		if (padlen == 1)
 			*padp = IP6OPT_PAD1;
 		else if (padlen > 0) {
 			*padp++ = IP6OPT_PADN;
-			*padp++ = (padlen - 2);
+			*padp++ = (uint8_t)(padlen - 2);
 			memset(padp, 0, padlen - 2);
 		}
 	}
@@ -554,21 +550,21 @@ int
 inet6_opt_set_val(void *databuf, int offset, void *val, socklen_t vallen)
 {
 
-	memcpy((u_int8_t *)databuf + offset, val, vallen);
+	memcpy((uint8_t *)databuf + offset, val, vallen);
 	return (offset + vallen);
 }
 
 int
-inet6_opt_next(void *extbuf, socklen_t extlen, int offset, u_int8_t *typep,
+inet6_opt_next(void *extbuf, socklen_t extlen, int offset, uint8_t *typep,
 	       socklen_t *lenp, void **databufp)
 {
-	u_int8_t *optp, *lim;
+	uint8_t *optp, *lim;
 	int optlen;
 
 	/* Validate extlen. XXX: is the variable really necessary?? */
 	if (extlen == 0 || (extlen % 8))
 		return (-1);
-	lim = (u_int8_t *)extbuf + extlen;
+	lim = (uint8_t *)extbuf + extlen;
 
 	/*
 	 * If this is the first time this function called for this options
@@ -576,12 +572,13 @@ inet6_opt_next(void *extbuf, socklen_t extlen, int offset, u_int8_t *typep,
 	 * Otherwise, search the option list for the next option.
 	 */
 	if (offset == 0)
-		optp = (u_int8_t *)(void *)((struct ip6_hbh *)extbuf + 1);
+		optp = (uint8_t *)(void *)((struct ip6_hbh *)extbuf + 1);
 	else
-		optp = (u_int8_t *)extbuf + offset;
+		optp = (uint8_t *)extbuf + offset;
 
 	/* Find the next option skipping any padding options. */
 	while (optp < lim) {
+		ptrdiff_t rv;
 		switch(*optp) {
 		case IP6OPT_PAD1:
 			optp++;
@@ -597,7 +594,9 @@ inet6_opt_next(void *extbuf, socklen_t extlen, int offset, u_int8_t *typep,
 			*typep = *optp;
 			*lenp = optlen - 2;
 			*databufp = optp + 2;
-			return (optp + optlen - (u_int8_t *)extbuf);
+			rv = optp + optlen - (uint8_t *)extbuf;
+			_DIAGASSERT(__type_fit(int, rv));
+			return (int)rv;
 		}
 	}
 
@@ -607,16 +606,16 @@ inet6_opt_next(void *extbuf, socklen_t extlen, int offset, u_int8_t *typep,
 }
 
 int
-inet6_opt_find(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
+inet6_opt_find(void *extbuf, socklen_t extlen, int offset, uint8_t type,
 	       socklen_t *lenp, void **databufp)
 {
-	u_int8_t *optp, *lim;
+	uint8_t *optp, *lim;
 	int optlen;
 
 	/* Validate extlen. XXX: is the variable really necessary?? */
 	if (extlen == 0 || (extlen % 8))
 		return (-1);
-	lim = (u_int8_t *)extbuf + extlen;
+	lim = (uint8_t *)extbuf + extlen;
 
 	/*
 	 * If this is the first time this function called for this options
@@ -624,9 +623,9 @@ inet6_opt_find(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 	 * Otherwise, search the option list for the next option.
 	 */
 	if (offset == 0)
-		optp = (u_int8_t *)(void *)((struct ip6_hbh *)extbuf + 1);
+		optp = (uint8_t *)(void *)((struct ip6_hbh *)extbuf + 1);
 	else
-		optp = (u_int8_t *)extbuf + offset;
+		optp = (uint8_t *)extbuf + offset;
 
 	/* Find the specified option */
 	while (optp < lim) {
@@ -634,9 +633,12 @@ inet6_opt_find(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 			goto optend;
 
 		if (*optp == type) { /* found */
+			ptrdiff_t td;
 			*lenp = optlen - 2;
 			*databufp = optp + 2;
-			return (optp + optlen - (u_int8_t *)extbuf);
+			td = optp + optlen - (uint8_t *)extbuf;
+			_DIAGASSERT(__type_fit(int, td));
+			return (int)td;
 		}
 
 		optp += optlen;
@@ -652,7 +654,7 @@ inet6_opt_get_val(void *databuf, int offset, void *val, socklen_t vallen)
 {
 
 	/* we can't assume alignment here */
-	memcpy(val, (u_int8_t *)databuf + offset, vallen);
+	memcpy(val, (uint8_t *)databuf + offset, vallen);
 
 	return (offset + vallen);
 }

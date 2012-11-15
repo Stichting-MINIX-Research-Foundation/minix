@@ -1,4 +1,4 @@
-/* $NetBSD: strtorxL.c,v 1.3 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtorxL.c,v 1.4 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -51,9 +51,9 @@ THIS SOFTWARE.
 
  void
 #ifdef KR_headers
-ULtoxL(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
+ULtoxL(L, bits, expt, k) ULong *L; ULong *bits; Long expt; int k;
 #else
-ULtoxL(ULong *L, ULong *bits, Long exp, int k)
+ULtoxL(ULong *L, ULong *bits, Long expt, int k)
 #endif
 {
 	switch(k & STRTOG_Retmask) {
@@ -65,14 +65,15 @@ ULtoxL(ULong *L, ULong *bits, Long exp, int k)
 	  case STRTOG_Normal:
 	  case STRTOG_Denormal:
 	  case STRTOG_NaNbits:
-		L[_0] = (exp + 0x3fff + 63) << 16;
+		L[_0] = (expt + 0x3fff + 63) << 16;
 		L[_1] = bits[1];
 		L[_2] = bits[0];
 		break;
 
 	  case STRTOG_Infinite:
 		L[_0] = 0x7fff << 16;
-		L[_1] = L[_2] = 0;
+		L[_1] = 0x80000000;
+		L[_2] = 0;
 		break;
 
 	  case STRTOG_NaN:
@@ -91,10 +92,11 @@ strtorxL(s, sp, rounding, L) CONST char *s; char **sp; int rounding; void *L;
 strtorxL(CONST char *s, char **sp, int rounding, void *L)
 #endif
 {
-	static FPI fpi0 = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
-	FPI *fpi, fpi1;
+	static CONST FPI fpi0 = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
+	CONST FPI *fpi;
+	FPI fpi1;
 	ULong bits[2];
-	Long exp;
+	Long expt;
 	int k;
 
 	fpi = &fpi0;
@@ -103,9 +105,9 @@ strtorxL(CONST char *s, char **sp, int rounding, void *L)
 		fpi1.rounding = rounding;
 		fpi = &fpi1;
 		}
-	k = strtodg(s, sp, fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory)
 		return k;
-	ULtoxL((ULong*)L, bits, exp, k);
+	ULtoxL((ULong*)L, bits, expt, k);
 	return k;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.24 2003/08/07 16:43:46 agc Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.25 2012/03/20 17:44:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.24 2003/08/07 16:43:46 agc Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.25 2012/03/20 17:44:18 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,10 +56,7 @@ __RCSID("$NetBSD: __strsignal.c,v 1.24 2003/08/07 16:43:46 agc Exp $");
 
 /* ARGSUSED */
 const char *
-__strsignal(num, buf, buflen)
-	int num;
-	char *buf;
-	size_t buflen;
+__strsignal(int num, char *buf, size_t buflen)
 {
 #define	UPREFIX	"Unknown signal: %u"
 #define RPREFIX "Real time signal %u"

@@ -1,4 +1,4 @@
-/*	$NetBSD: wbuf.c,v 1.13 2003/08/07 16:43:35 agc Exp $	*/
+/*	$NetBSD: wbuf.c,v 1.15 2012/03/15 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wbuf.c,v 1.13 2003/08/07 16:43:35 agc Exp $");
+__RCSID("$NetBSD: wbuf.c,v 1.15 2012/03/15 18:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: wbuf.c,v 1.13 2003/08/07 16:43:35 agc Exp $");
  * or if c=='\n' and the file is line buffered.
  */
 int
-__swbuf(c, fp)
-	int c;
-	FILE *fp;
+__swbuf(int c, FILE *fp)
 {
 	int n;
 
@@ -73,7 +71,7 @@ __swbuf(c, fp)
 	fp->_w = fp->_lbfsize;
 	if (cantwrite(fp)) {
 		errno = EBADF;
-		return (EOF);
+		return EOF;
 	}
 	c = (unsigned char)c;
 
@@ -86,16 +84,17 @@ __swbuf(c, fp)
 	 * guarantees that putc() will always call wbuf() by setting _w
 	 * to 0, so we need not do anything else.
 	 */
-	n = fp->_p - fp->_bf._base;
+	_DIAGASSERT(__type_fit(int, fp->_p - fp->_bf._base));
+	n = (int)(fp->_p - fp->_bf._base);
 	if (n >= fp->_bf._size) {
 		if (fflush(fp))
-			return (EOF);
+			return EOF;
 		n = 0;
 	}
 	fp->_w--;
 	*fp->_p++ = c;
 	if (++n == fp->_bf._size || (fp->_flags & __SLBF && c == '\n'))
 		if (fflush(fp))
-			return (EOF);
-	return (c);
+			return EOF;
+	return c;
 }

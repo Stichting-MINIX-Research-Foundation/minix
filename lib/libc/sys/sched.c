@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.2 2008/10/31 00:29:19 rmind Exp $	*/
+/*	$NetBSD: sched.c,v 1.4 2012/03/18 02:04:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.2 2008/10/31 00:29:19 rmind Exp $");
+__RCSID("$NetBSD: sched.c,v 1.4 2012/03/18 02:04:39 christos Exp $");
 
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sched.h>
+#include <signal.h>
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -104,7 +105,7 @@ sched_get_priority_max(int policy)
 		errno = EINVAL;
 		return -1;
 	}
-	return sysconf(_SC_SCHED_PRI_MAX);
+	return (int)sysconf(_SC_SCHED_PRI_MAX);
 }
 
 int
@@ -115,7 +116,7 @@ sched_get_priority_min(int policy)
 		errno = EINVAL;
 		return -1;
 	}
-	return sysconf(_SC_SCHED_PRI_MIN);
+	return (int)sysconf(_SC_SCHED_PRI_MIN);
 }
 
 int
@@ -123,6 +124,8 @@ int
 sched_rr_get_interval(pid_t pid, struct timespec *interval)
 {
 
+	if (pid && kill(pid, 0) == -1)
+		return -1;
 	interval->tv_sec = 0;
 	interval->tv_nsec = sysconf(_SC_SCHED_RT_TS) * 1000;
 	return 0;

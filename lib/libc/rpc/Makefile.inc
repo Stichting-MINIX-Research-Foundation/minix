@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2008/10/25 19:07:26 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2012/08/10 12:20:10 joerg Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -14,7 +14,7 @@ SRCS+=	auth_none.c auth_unix.c authunix_prot.c bindresvport.c \
 	svc.c svc_auth.c svc_dg.c svc_auth_unix.c svc_generic.c svc_raw.c \
 	svc_run.c svc_simple.c svc_vc.c \
 	xdr.c xdr_array.c xdr_float.c xdr_mem.c xdr_rec.c xdr_reference.c \
-	xdr_stdio.c __rpc_getxid.c
+	xdr_stdio.c xdr_sizeof.c __rpc_getxid.c
 
 CPPFLAGS+=	-DPORTMAP
 
@@ -157,6 +157,7 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		xdr.3 xdr_reference.3 \
 		xdr.3 xdr_setpos.3 \
 		xdr.3 xdr_short.3 \
+		xdr.3 xdr_sizeof.3 \
 		xdr.3 xdrstdio_create.3 \
 		xdr.3 xdr_string.3 \
 		xdr.3 xdr_u_char.3 \
@@ -166,3 +167,8 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		xdr.3 xdr_vector.3 \
 		xdr.3 xdr_void.3 \
 		xdr.3 xdr_wrapstring.3
+
+# XXX
+.if ${HAVE_GCC:U} == 45 || ${MACHINE} == "vax"
+COPTS.xdr_float.c+= -fno-strict-aliasing
+.endif

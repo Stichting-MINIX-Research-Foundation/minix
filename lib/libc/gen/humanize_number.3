@@ -1,4 +1,4 @@
-.\"	$NetBSD: humanize_number.3,v 1.9 2011/01/14 10:08:57 jruoho Exp $
+.\"	$NetBSD: humanize_number.3,v 1.11 2011/08/20 21:35:32 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,13 +33,13 @@
 .Sh NAME
 .Nm dehumanize_number ,
 .Nm humanize_number
-.Nd format a number into a human readable form and viceversa
+.Nd format a number into a human readable form and vice versa
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft int
 .Fn dehumanize_number "const char *str" "int64_t *result"
 .Ft int
-.Fn humanize_number "char *buf" "size_t len" "int64_t number" "const char *suffix" "int scale" "int flags"
+.Fn humanize_number "char *buffer" "size_t len" "int64_t number" "const char *suffix" "int scale" "int flags"
 .Sh DESCRIPTION
 The
 .Fn humanize_number

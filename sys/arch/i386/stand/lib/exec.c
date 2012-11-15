@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.49 2011/11/28 07:56:54 tls Exp $	 */
+/*	$NetBSD: exec.c,v 1.50 2012/05/21 21:34:16 dsl Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -297,11 +297,13 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 	close(fd);
 
-	/* Now we know the root fs type, load modules for it. */
+	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
 		module_add(fsmod);
+#if defined(__minix)
 	if (fsmod !=NULL && fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
 		module_add(fsmod2);
+#endif /* defined(__minix) */
 
 	/*
 	 * Gather some information for the kernel. Do this after the

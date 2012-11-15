@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.11 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.13 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -101,7 +101,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.11 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.13 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -116,6 +116,7 @@ __RCSID("$NetBSD: res_debug.c,v 1.11 2009/04/12 17:07:17 christos Exp $");
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
@@ -176,7 +177,7 @@ do_section(const res_state statp,
 	/*
 	 * Print answer records.
 	 */
-	sflag = (statp->pfcode & pflag);
+	sflag = (int)(statp->pfcode & pflag);
 	if (statp->pfcode && !sflag)
 		return;
 
@@ -207,11 +208,14 @@ do_section(const res_state statp,
 				p_type(ns_rr_type(rr)),
 				p_class(ns_rr_class(rr)));
 		else if (section == ns_s_ar && ns_rr_type(rr) == ns_t_opt) {
-			u_int16_t optcode, optlen, rdatalen = ns_rr_rdlen(rr);
-			u_int32_t ttl = ns_rr_ttl(rr);
+			size_t rdatalen, ttl;
+			uint16_t optcode, optlen;
+
+			rdatalen = ns_rr_rdlen(rr);
+			ttl = ns_rr_ttl(rr);
 
 			fprintf(file,
-				"; EDNS: version: %u, udp=%u, flags=%04x\n",
+				"; EDNS: version: %zu, udp=%u, flags=%04zx\n",
 				(ttl>>16)&0xff, ns_rr_class(rr), ttl&0xffff);
 
 			while (rdatalen >= 4) {
@@ -368,7 +372,7 @@ p_cdnname(const u_char *cp, const u_char *msg, int len, FILE *file) {
 	char name[MAXDNAME];
 	int n;
 
-	if ((n = dn_expand(msg, msg + len, cp, name, sizeof name)) < 0)
+	if ((n = dn_expand(msg, msg + len, cp, name, (int)sizeof name)) < 0)
 		return (NULL);
 	if (name[0] == '\0')
 		putc('.', file);
@@ -387,19 +391,17 @@ p_cdname(const u_char *cp, const u_char *msg, FILE *file) {
    length supplied).  */
 
 const u_char *
-p_fqnname(cp, msg, msglen, name, namelen)
-	const u_char *cp, *msg;
-	int msglen;
-	char *name;
-	int namelen;
+p_fqnname(const u_char *cp, const u_char *msg, int msglen, char *name,
+    int namelen)
 {
-	int n, newlen;
+	int n;
+	size_t newlen;
 
 	if ((n = dn_expand(msg, cp + msglen, cp, name, namelen)) < 0)
 		return (NULL);
 	newlen = strlen(name);
 	if (newlen == 0 || name[newlen - 1] != '.') {
-		if (newlen + 1 >= namelen)	/*%< Lack space for final dot */
+		if ((int)newlen + 1 >= namelen)	/*%< Lack space for final dot */
 			return (NULL);
 		else
 			strcpy(name + newlen, ".");
@@ -414,7 +416,7 @@ p_fqname(const u_char *cp, const u_char *msg, FILE *file) {
 	char name[MAXDNAME];
 	const u_char *n;
 
-	n = p_fqnname(cp, msg, MAXCDNAME, name, sizeof name);
+	n = p_fqnname(cp, msg, MAXCDNAME, name, (int)sizeof name);
 	if (n == NULL)
 		return (NULL);
 	fputs(name, file);
@@ -749,7 +751,7 @@ p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
 
 	switch (u.sin.sin_family) {
 	case AF_INET:
-		inet_ntop(AF_INET, &u.sin.sin_addr, ret, sizeof ret);
+		inet_ntop(AF_INET, &u.sin.sin_addr, ret, (socklen_t)sizeof ret);
 		break;
 #ifdef HAS_INET6_STRUCTS
 	case AF_INET6:
@@ -931,9 +933,7 @@ latlon2ul(const char **latlonstrptr, int *which) {
  * converts a zone file representation in a string to an RDATA on-the-wire
  * representation. */
 int
-loc_aton(ascii, binary)
-	const char *ascii;
-	u_char *binary;
+loc_aton(const char *ascii, u_char *binary)
 {
 	const char *cp, *maxcp;
 	u_char *bcp;
@@ -1042,9 +1042,7 @@ loc_aton(ascii, binary)
 
 /*% takes an on-the-wire LOC RR and formats it in a human readable format. */
 const char *
-loc_ntoa(binary, ascii)
-	const u_char *binary;
-	char *ascii;
+loc_ntoa(const u_char *binary, char *ascii)
 {
 	static const char *error = "?";
 	static char tmpbuf[sizeof
@@ -1153,7 +1151,7 @@ loc_ntoa(binary, ascii)
 /*% Return the number of DNS hierarchy levels in the name. */
 int
 dn_count_labels(const char *name) {
-	int i, len, count;
+	size_t len, i, count;
 
 	len = strlen(name);
 	for (i = 0, count = 0; i < len; i++) {
@@ -1172,7 +1170,8 @@ dn_count_labels(const char *name) {
 	/* count to include last label */
 	if (len > 0 && name[len-1] != '.')
 		count++;
-	return (count);
+	_DIAGASSERT(__type_fit(int, count));
+	return (int)count;
 }
 
 /*%

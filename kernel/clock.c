@@ -29,7 +29,7 @@
  * Instead, notify(), which always returns, should be used. 
  */
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include <minix/endpoint.h>
 #include <assert.h>
 

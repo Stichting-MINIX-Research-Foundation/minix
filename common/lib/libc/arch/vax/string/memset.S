@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2010/03/12 09:12:34 uwe Exp $	*/
+/*	$NetBSD: memset.S,v 1.2 2011/01/25 04:45:28 matt Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,13 +28,12 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)memset.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#include <machine/asm.h>
+
+/* .asciz "@(#)memset.s	8.1 (Berkeley) 6/4/93" */
+RCSID("$NetBSD: memset.S,v 1.2 2011/01/25 04:45:28 matt Exp $")
 
 /* void *memset(base, c, length) */
-
-#include <machine/asm.h>
 
 ENTRY(memset, 0)
 	movl	4(%ap),%r3
@@ -50,3 +49,4 @@ ENTRY(memset, 0)
 	subl2	%r0,12(%ap)
 	movc5	$0,(%r3),%r1,%r0,(%r3)
 	jbr	1b
+END(memset)

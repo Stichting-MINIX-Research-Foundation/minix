@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_monetary.c,v 1.4 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: citrus_lc_monetary.c,v 1.5 2012/03/04 21:14:55 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_monetary.c,v 1.4 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_lc_monetary.c,v 1.5 2012/03/04 21:14:55 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -217,4 +217,3 @@ fatal:
 #define _CATEGORY_MAGIC		_CITRUS_LC_MONETARY_MAGIC_1
 
 #include "citrus_lc_template.h"
-_LOCALE_CATEGORY_ENTRY(_citrus_LC_MONETARY_);

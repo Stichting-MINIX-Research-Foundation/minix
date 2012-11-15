@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockname.2,v 1.23 2003/08/07 16:43:59 agc Exp $
+.\"	$NetBSD: getsockname.2,v 1.24 2012/07/09 21:22:21 jdf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsockname.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 11, 2002
+.Dd July 9, 2012
 .Dt GETSOCKNAME 2
 .Os
 .Sh NAME
@@ -134,6 +134,8 @@ is a file, not a socket.
 The socket has been shut down.
 .It Bq Er ENOBUFS
 Insufficient resources were available in the system to perform the operation.
+.It Bq Er ENOTCONN
+The socket is not connected.
 .It Bq Er EFAULT
 The
 .Fa name

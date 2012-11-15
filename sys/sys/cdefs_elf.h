@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.34 2010/12/08 01:18:55 joerg Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.40 2012/03/04 16:14:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -65,21 +65,21 @@
     __asm(".weak " _C_LABEL_STRING(#sym));
 
 #if __GNUC_PREREQ__(4, 0)
-#define	__weak_reference(sym)	__attribute__((__weakref__))
+#define	__weak_reference(sym)	__attribute__((__weakref__(#sym)))
 #else
 #define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))
 #endif
 
-#if defined(__clang__)
-#define	__warn_references(sym,msg)					\
-    static __attribute__((__used__, __section__(".gnu.warning." #sym))) \
-    const char ___CONCAT(__warn_reference_##sym,__COUNTER__)[] = msg;
+#if __GNUC_PREREQ__(4, 2)
+#define	__weakref_visible	static
 #else
+#define	__weakref_visible	extern
+#endif
+
 #define	__warn_references(sym,msg)					\
     __asm(".pushsection .gnu.warning." #sym "\n"			\
 	  ".ascii \"" msg "\"\n"					\
 	  ".popsection");
-#endif
 
 #else /* !__STDC__ */
 
@@ -106,11 +106,7 @@
 
 #endif /* !__STDC__ */
 
-#if defined(__clang__)
-#define	__SECTIONSTRING(_sec, _str)					\
-	static __attribute__((__used__, __section__(#_sec))) const char \
-	___CONCAT(__sectstr,__COUNTER__)[] = _str
-#elif __STDC__
+#if __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
 	__asm(".pushsection " #_sec "\n"				\
 	      ".asciz \"" _str "\"\n"					\
@@ -157,8 +153,8 @@
 #define	__link_set_add_bss2(set, sym, n)    __link_set_make_entry2(set, sym, n)
 
 #define	__link_set_decl(set, ptype)					\
-	extern ptype * const __start_link_set_##set[];			\
-	extern ptype * const __stop_link_set_##set[]			\
+	extern ptype * const __start_link_set_##set[] __dso_hidden;	\
+	extern ptype * const __stop_link_set_##set[] __dso_hidden	\
 
 #define	__link_set_start(set)	(__start_link_set_##set)
 #define	__link_set_end(set)	(__stop_link_set_##set)
@@ -200,7 +196,7 @@
     __attribute__((__section__(".data.read_mostly")))
 
 #define	__cacheline_aligned					\
-    __attribute__((__aligned__(COHERENCY_UNIT)			\
+    __attribute__((__aligned__(COHERENCY_UNIT),			\
 		 __section__(".data.cacheline_aligned")))
 
 #endif /* _KERNEL */

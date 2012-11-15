@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2006/05/19 19:11:12 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2012/08/10 16:37:31 martin Exp $
 
-#Uncomment the next line to enable the new .init fallthru
 CPPFLAGS+=	-I${.CURDIR}/../sparc_elf
+CFLAGS+=	-fPIC
 
 ELFSIZE=64
 

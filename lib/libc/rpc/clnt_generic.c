@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.27 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.28 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.27 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.28 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -72,13 +72,13 @@ __weak_alias(clnt_tli_create,_clnt_tli_create)
  * if this can not be done.
  */
 CLIENT *
-clnt_create_vers(hostname, prog, vers_out, vers_low, vers_high, nettype)
-	const char *hostname;
-	rpcprog_t prog;
-	rpcvers_t *vers_out;
-	rpcvers_t vers_low;
-	rpcvers_t vers_high;
-	const char *nettype;
+clnt_create_vers(
+	const char *	hostname,
+	rpcprog_t	prog,
+	rpcvers_t *	vers_out,
+	rpcvers_t	vers_low,
+	rpcvers_t	vers_high,
+	const char *	nettype)
 {
 	CLIENT *clnt;
 	struct timeval to;
@@ -145,11 +145,11 @@ error:
  * It calls clnt_tp_create();
  */
 CLIENT *
-clnt_create(hostname, prog, vers, nettype)
-	const char *hostname;				/* server name */
-	rpcprog_t prog;				/* program number */
-	rpcvers_t vers;				/* version number */
-	const char *nettype;				/* net type */
+clnt_create(
+	const char *	hostname,			/* server name */
+	rpcprog_t	prog,				/* program number */
+	rpcvers_t	vers,				/* version number */
+	const char *	nettype)			/* net type */
 {
 	struct netconfig *nconf;
 	CLIENT *clnt = NULL;
@@ -218,11 +218,11 @@ clnt_create(hostname, prog, vers, nettype)
  * It finds out the server address from rpcbind and calls clnt_tli_create()
  */
 CLIENT *
-clnt_tp_create(hostname, prog, vers, nconf)
-	const char *hostname;			/* server name */
-	rpcprog_t prog;				/* program number */
-	rpcvers_t vers;				/* version number */
-	const struct netconfig *nconf;		/* net config struct */
+clnt_tp_create(
+	const char *		hostname,	/* server name */
+	rpcprog_t		prog,		/* program number */
+	rpcvers_t		vers,		/* version number */
+	const struct netconfig *nconf)		/* net config struct */
 {
 	struct netbuf *svcaddr;			/* servers address */
 	CLIENT *cl = NULL;			/* client handle */
@@ -284,14 +284,14 @@ out:
  * If sizes are 0; appropriate defaults will be chosen.
  */
 CLIENT *
-clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
-	int fd;				/* fd */
-	const struct netconfig *nconf;	/* netconfig structure */
-	const struct netbuf *svcaddr;	/* servers address */
-	rpcprog_t prog;			/* program number */
-	rpcvers_t vers;			/* version number */
-	u_int sendsz;			/* send size */
-	u_int recvsz;			/* recv size */
+clnt_tli_create(
+	int fd,				/* fd */
+	const struct netconfig *nconf,	/* netconfig structure */
+	const struct netbuf *svcaddr,	/* servers address */
+	rpcprog_t prog,			/* program number */
+	rpcvers_t vers,			/* version number */
+	u_int sendsz,			/* send size */
+	u_int recvsz)			/* recv size */
 {
 	CLIENT *cl;			/* client handle */
 	bool_t madefd = FALSE;		/* whether fd opened here */

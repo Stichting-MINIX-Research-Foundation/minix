@@ -1,4 +1,4 @@
-/* $NetBSD: arithchk.c,v 1.3 2010/01/17 23:06:31 wiz Exp $ */
+/* $NetBSD: arithchk.c,v 1.4 2012/06/24 15:26:03 christos Exp $ */
 
 /****************************************************************
 Copyright (C) 1997, 1998 Lucent Technologies
@@ -28,22 +28,22 @@ THIS SOFTWARE.
 
 #include <stdio.h>
 
- static int dalign;
- typedef struct
+static int dalign;
+typedef struct
 Akind {
 	char *name;
 	int   kind;
 	} Akind;
 
- static Akind
+static Akind
 IEEE_LITTLE_ENDIAN	= { "IEEE_LITTLE_ENDIAN", 1 },
 IEEE_BIG_ENDIAN		= { "IEEE_BIG_ENDIAN", 2 },
 IBM			= { "IBM", 3 },
 VAX			= { "VAX", 4 },
 CRAY			= { "CRAY", 5};
 
- static Akind *
-Lcheck()
+static Akind *
+Lcheck(void)
 {
 	union {
 		double d;
@@ -69,8 +69,8 @@ Lcheck()
 	return 0;
 	}
 
- static Akind *
-icheck()
+static Akind *
+icheck(void)
 {
 	union {
 		double d;
@@ -98,8 +98,8 @@ icheck()
 
 char *emptyfmt = "";	/* avoid possible warning message with printf("") */
 
- static Akind *
-ccheck()
+static Akind *
+ccheck(void)
 {
 	union {
 		double d;
@@ -119,8 +119,8 @@ ccheck()
 	return 0;
 	}
 
- static int
-fzcheck()
+static int
+fzcheck(void)
 {
 	double a, b;
 	int i;
@@ -138,8 +138,8 @@ fzcheck()
 	return b == 0.;
 	}
 
- int
-main()
+int
+main(void)
 {
 	Akind *a = 0;
 	int Ldef = 0;

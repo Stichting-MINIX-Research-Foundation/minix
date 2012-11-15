@@ -44,7 +44,7 @@
 #include <sys/featuretest.h>
 
 #include <sys/ctype_bits.h>
-
+/* LSC: cast to unsigned char in order to prevent char as indice errors. */
 #define	isdigit(c)	((int)((_ctype_ + 1)[(unsigned char)(c)] & _CTYPE_N))
 #define	islower(c)	((int)((_ctype_ + 1)[(unsigned char)(c)] & _CTYPE_L))
 #define	isspace(c)	((int)((_ctype_ + 1)[(unsigned char)(c)] & _CTYPE_S))

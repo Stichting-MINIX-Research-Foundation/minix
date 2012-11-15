@@ -1,4 +1,4 @@
-/*	$NetBSD: rget.c,v 1.12 2003/08/07 16:43:30 agc Exp $	*/
+/*	$NetBSD: rget.c,v 1.13 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rget.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rget.c,v 1.12 2003/08/07 16:43:30 agc Exp $");
+__RCSID("$NetBSD: rget.c,v 1.13 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: rget.c,v 1.12 2003/08/07 16:43:30 agc Exp $");
  * in the newly-filled buffer.
  */
 int
-__srget(fp)
-	FILE *fp;
+__srget(FILE *fp)
 {
 
 	_DIAGASSERT(fp != NULL);
@@ -62,7 +61,7 @@ __srget(fp)
 	_SET_ORIENTATION(fp, -1);
 	if (__srefill(fp) == 0) {
 		fp->_r--;
-		return (*fp->_p++);
+		return *fp->_p++;
 	}
-	return (EOF);
+	return EOF;
 }

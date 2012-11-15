@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.16 2005/08/05 10:39:05 wiz Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.17 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.16 2005/08/05 10:39:05 wiz Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.17 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif
 
@@ -72,13 +72,8 @@ __weak_alias(xdr_vector,_xdr_vector)
  * xdr procedure to call to handle each element of the array.
  */
 bool_t
-xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
-	XDR *xdrs;
-	caddr_t *addrp;		/* array pointer */
-	u_int *sizep;		/* number of elements */
-	u_int maxsize;		/* max numberof elements */
-	u_int elsize;		/* size in bytes of each element */
-	xdrproc_t elproc;	/* xdr routine to handle each element */
+xdr_array(XDR *xdrs, caddr_t *addrp, u_int *sizep, u_int maxsize, u_int elsize,
+    xdrproc_t elproc)
 {
 	u_int i;
 	caddr_t target = *addrp;
@@ -149,12 +144,8 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
  * > xdr_elem: routine to XDR each element
  */
 bool_t
-xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
-	XDR *xdrs;
-	char *basep;
-	u_int nelem;
-	u_int elemsize;
-	xdrproc_t xdr_elem;	
+xdr_vector(XDR *xdrs, char *basep, u_int nelem, u_int elemsize,
+    xdrproc_t xdr_elem)
 {
 	u_int i;
 	char *elptr;

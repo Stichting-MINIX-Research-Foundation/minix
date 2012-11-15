@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.c,v 1.16 2005/02/09 21:35:46 kleink Exp $	*/
+/*	$NetBSD: assert.c,v 1.17 2012/06/25 22:32:43 abs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: assert.c,v 1.16 2005/02/09 21:35:46 kleink Exp $");
+__RCSID("$NetBSD: assert.c,v 1.17 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,9 +47,8 @@ __RCSID("$NetBSD: assert.c,v 1.16 2005/02/09 21:35:46 kleink Exp $");
 #include <syslog.h>
 
 void
-__assert13(file, line, function, failedexpr)
-	const char *file, *function, *failedexpr;
-	int line;
+__assert13(const char *file, int line, const char *function,
+    const char *failedexpr)
 {
 
 	(void)fprintf(stderr,
@@ -63,9 +62,7 @@ __assert13(file, line, function, failedexpr)
 }
 
 void
-__assert(file, line, failedexpr)
-	const char *file, *failedexpr;
-	int line;
+__assert(const char *file, int line, const char *failedexpr)
 {
 
 	__assert13(file, line, NULL, failedexpr);
@@ -82,9 +79,8 @@ enum {
 static int	diagassert_flags = -1;
 
 void
-__diagassert13(file, line, function, failedexpr)
-	const char *file, *function, *failedexpr;
-	int line;
+__diagassert13(const char *file, int line, const char *function,
+    const char *failedexpr)
 {
 	char buf[1024];
 
@@ -132,9 +128,7 @@ __diagassert13(file, line, function, failedexpr)
 }
 
 void
-__diagassert(file, line, failedexpr)
-	const char *file, *failedexpr;
-	int line;
+__diagassert(const char *file, int line, const char *failedexpr)
 {
 
 	__diagassert13(file, line, NULL, failedexpr);

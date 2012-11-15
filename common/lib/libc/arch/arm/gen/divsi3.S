@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.3 2012/10/10 02:16:54 christos Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -21,22 +21,6 @@
  * which makes a C call
  */
 
-ENTRY(__umodsi3)
-	stmfd	sp!, {lr}
-	sub	sp, sp, #4	/* align stack */
-	bl	.L_udivide
-	add	sp, sp, #4	/* unalign stack */
-	mov	r0, r1
-	ldmfd	sp!, {pc}
-
-ENTRY(__modsi3)
-	stmfd	sp!, {lr}
-	sub	sp, sp, #4	/* align stack */
-	bl	.L_divide
-	add	sp, sp, #4	/* unalign stack */
-	mov	r0, r1
-	ldmfd	sp!, {pc}
-
 .L_overflow:
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 	mov	r0, #8			/* SIGFPE */
@@ -48,6 +32,8 @@ ENTRY(__modsi3)
 #endif
 	RET
 
+ENTRY_NP(__aeabi_uidivmod)
+ENTRY_NP(__aeabi_uidiv)
 ENTRY(__udivsi3)
 .L_udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	eor     r0, r1, r0 
@@ -70,6 +56,8 @@ ENTRY(__udivsi3)
 	mov	r1, #0
 	RET
 
+ENTRY_NP(__aeabi_idivmod)
+ENTRY_NP(__aeabi_idiv)
 ENTRY(__divsi3)
 .L_divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	eor     r0, r1, r0 

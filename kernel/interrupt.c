@@ -15,7 +15,7 @@
 
 #include <assert.h>
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "archconst.h"
 #include "hw_intr.h"
 

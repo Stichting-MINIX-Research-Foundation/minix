@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.18 2003/01/18 11:29:06 thorpej Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.20 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.18 2003/01/18 11:29:06 thorpej Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.20 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif
 
@@ -62,9 +62,7 @@ __RCSID("$NetBSD: svc_auth_unix.c,v 1.18 2003/01/18 11:29:06 thorpej Exp $");
  * Unix longhand authenticator
  */
 enum auth_stat
-_svcauth_unix(rqst, msg)
-	struct svc_req *rqst;
-	struct rpc_msg *msg;
+_svcauth_unix(struct svc_req *rqst, struct rpc_msg *msg)
 {
 	enum auth_stat stat;
 	XDR xdrs;
@@ -106,7 +104,8 @@ _svcauth_unix(rqst, msg)
 			stat = AUTH_BADCRED;
 			goto done;
 		}
-		aup->aup_len = gid_len;
+		_DIAGASSERT(__type_fit(u_int, gid_len));
+		aup->aup_len = (u_int)gid_len;
 		for (i = 0; i < gid_len; i++) {
 			aup->aup_gids[i] = (int)IXDR_GET_INT32(buf);
 		}
@@ -141,9 +140,7 @@ done:
  */
 /*ARGSUSED*/
 enum auth_stat 
-_svcauth_short(rqst, msg)
-	struct svc_req *rqst;
-	struct rpc_msg *msg;
+_svcauth_short(struct svc_req *rqst, struct rpc_msg *msg)
 {
 	return (AUTH_REJECTEDCRED);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: infinityl.c,v 1.2 2005/06/12 05:21:27 lukem Exp $	*/
+/*	$NetBSD: infinityl.c,v 1.4 2011/06/06 17:02:29 drochner Exp $	*/
 
 /*
  * IEEE-compatible infinityl.c for little-endian 80-bit format -- public domain.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: infinityl.c,v 1.2 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: infinityl.c,v 1.4 2011/06/06 17:02:29 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <math.h>

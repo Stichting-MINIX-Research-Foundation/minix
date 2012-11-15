@@ -1,4 +1,4 @@
-/* $NetBSD: sigwaitinfo.c,v 1.2 2008/04/28 20:23:00 martin Exp $ */
+/* $NetBSD: sigwaitinfo.c,v 1.3 2012/03/20 16:26:12 matt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sigwaitinfo.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: sigwaitinfo.c,v 1.3 2012/03/20 16:26:12 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,8 +44,7 @@ __RCSID("$NetBSD: sigwaitinfo.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
 __weak_alias(sigwaitinfo,_sigwaitinfo)
 #endif
 
-int	_sigwaitinfo __P((const sigset_t * __restrict,
-	    siginfo_t * __restrict info));
+int	_sigwaitinfo(const sigset_t * __restrict, siginfo_t * __restrict info);
 
 /*
  * This is wrapper around sigtimedwait(2), providing sigwaitinfo()

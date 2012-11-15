@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.27 2006/04/23 19:06:59 wiz Exp $
+.\"	$NetBSD: recv.2,v 1.35 2012/06/23 05:47:50 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,13 +29,14 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd April 23, 2006
+.Dd June 22, 2012
 .Dt RECV 2
 .Os
 .Sh NAME
 .Nm recv ,
 .Nm recvfrom ,
-.Nm recvmsg
+.Nm recvmsg ,
+.Nm recvmmsg
 .Nd receive a message from a socket
 .Sh LIBRARY
 .Lb libc
@@ -47,10 +48,13 @@
 .Fn recvfrom "int s" "void * restrict buf" "size_t len" "int flags" "struct sockaddr * restrict from" "socklen_t * restrict fromlen"
 .Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
+.Ft int
+.Fn recvmmsg "int s" "struct mmsghdr *mmsg" "unsigned int vlen" "unsigned int flags" "struct timespec *timeout"
 .Sh DESCRIPTION
-.Fn recvfrom
-and
+.Fn recvfrom ,
 .Fn recvmsg
+and
+.Fn recvmmsg
 are used to receive messages from a socket,
 and may be used to receive data on a socket whether or not
 it is connection-oriented.
@@ -67,6 +71,52 @@ and modified on return to indicate the actual size of the
 address stored there.
 .Pp
 The
+.Fn recvmmsg
+call be used to receive multiple messages in the same call using an array of
+.Fa mmsghdr
+elements with the following form, as defined in
+.Ao Pa sys/socket.h Ac :
+.Pp
+.Bd -literal
+struct mmsghdr {
+	struct msghdr	msg_hdr;	/* the message to be sent */
+	unsigned int	msg_len;	/* number of bytes received */
+};
+.Ed
+.Pp
+The
+.Fa msg_len
+member contains the number of bytes received for each
+.Fa msg_hdr
+member.
+The array has
+.Fa vlen
+elements, which is limited to
+.Dv 1024 .
+If there is an error, a number fewer than
+.Fa vlen
+may be returned, and the error may be retrieved using
+.Xr getsockopt 2
+with
+.Dv SO_ERROR .
+If the flag
+.Dv MSG_WAITFORONE
+is set in
+.Fa flags
+then the
+.Fn recvmmsg
+call will wait for one message, and set
+.Dv MSG_DONTWAIT
+for the rest.
+If the
+.Fa timeout
+parameter is not
+.Dv NULL ,
+then
+.Fn recvmmsg
+will return if that time is exceeded.
+.Pp
+The
 .Fn recv
 call is normally used only on a
 .Em connected
@@ -79,8 +129,14 @@ with a nil
 parameter.
 As it is redundant, it may not be supported in future releases.
 .Pp
-All three routines return the length of the message on successful
+.Fn recv ,
+.Fn recvfrom
+and
+.Fn recvmsg
+routines return the length of the message on successful
 completion.
+.Fn recvmmsg
+returns the number of messages received.
 If a message is too long to fit in the supplied buffer,
 excess bytes may be discarded depending on the type of socket
 the message is received from (see
@@ -95,6 +151,8 @@ in which case the value
 .Va errno
 set to
 .Er EAGAIN .
+If no data is available and the remote peer was shut down,
+0 is returned.
 The receive calls normally return any data available,
 up to the requested amount,
 rather than waiting for receipt of the full amount requested;
@@ -116,7 +174,8 @@ The
 argument to a recv call is formed by
 .Em or Ap ing
 one or more of the values:
-.Bl -column MSG_WAITALL -offset indent
+.Bl -column MSG_CMSG_CLOEXEC -offset indent
+.It Dv MSG_CMSG_CLOEXEC Ta set the close on exec property for passed file descriptors
 .It Dv MSG_OOB Ta process out-of-band data
 .It Dv MSG_PEEK Ta peek at incoming message
 .It Dv MSG_WAITALL Ta wait for full request or error
@@ -228,15 +287,40 @@ for ancillary data.
 .Dv MSG_OOB
 is returned to indicate that expedited or out-of-band data were received.
 .Sh RETURN VALUES
-These calls return the number of bytes received, or \-1
+The
+.Fn recv ,
+.Fn recvfrom
+and
+.Fn recvmsg
+calls return the number of bytes received, or \-1
+if an error occurred.
+For connected sockets whose remote peer was shut down,
+0 is returned when no more data is available.
+The
+.Fn recvmmsg
+calls return the number of messages received, or \-1
 if an error occurred.
 .Sh ERRORS
 The calls fail if:
 .Bl -tag -width Er
+.It Bq Er EAGAIN
+The socket is marked non-blocking, and the receive operation
+would block, or
+a receive timeout had been set,
+and the timeout expired before data were received.
 .It Bq Er EBADF
 The argument
 .Fa s
 is an invalid descriptor.
+.It Bq Er EFAULT
+The receive buffer pointer(s) point outside the process's
+address space.
+.It Bq Er EINTR
+The receive was interrupted by delivery of a signal before
+any data were available.
+.It Bq Er EINVAL
+The total length of the I/O is more than can be expressed by the ssize_t
+return value.
 .It Bq Er ENOTCONN
 The socket is associated with a connection-oriented protocol
 and has not been connected (see
@@ -247,20 +331,6 @@ and
 The argument
 .Fa s
 does not refer to a socket.
-.It Bq Er EAGAIN
-The socket is marked non-blocking, and the receive operation
-would block, or
-a receive timeout had been set,
-and the timeout expired before data were received.
-.It Bq Er EINTR
-The receive was interrupted by delivery of a signal before
-any data were available.
-.It Bq Er EFAULT
-The receive buffer pointer(s) point outside the process's
-address space.
-.It Bq Er EINVAL
-The total length of the I/O is more than can be expressed by the ssize_t
-return value.
 .El
 .Pp
 .Fn recvmsg
@@ -287,3 +357,9 @@ The
 .Fn recv
 function call appeared in
 .Bx 4.2 .
+The
+.Fn recvmmsg
+function call appeared in
+.Tn Linux 2.6.32
+and
+.Nx 7.0 .

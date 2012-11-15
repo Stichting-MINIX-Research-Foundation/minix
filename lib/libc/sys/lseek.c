@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $	*/
+/*	$NetBSD: lseek.c,v 1.11 2012/03/20 16:26:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lseek.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: lseek.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $");
+__RCSID("$NetBSD: lseek.c,v 1.11 2012/03/20 16:26:12 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,10 +54,7 @@ off_t __lseek(int, int, off_t, int);
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 off_t
-lseek(fd, offset, whence)
-	int	fd;
-	off_t	offset;
-	int	whence;
+lseek(int fd, off_t offset, int whence)
 {
 
 	return __lseek(fd, 0, offset, whence);

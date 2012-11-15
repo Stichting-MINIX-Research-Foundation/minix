@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_maplist.c,v 1.11 2003/12/10 12:06:25 agc Exp $	 */
+/*	$NetBSD: yp_maplist.c,v 1.13 2012/06/25 22:32:46 abs Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_maplist.c,v 1.11 2003/12/10 12:06:25 agc Exp $");
+__RCSID("$NetBSD: yp_maplist.c,v 1.13 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -40,15 +40,14 @@ __RCSID("$NetBSD: yp_maplist.c,v 1.11 2003/12/10 12:06:25 agc Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+extern int _yplib_bindtries;
 
 #ifdef __weak_alias
 __weak_alias(yp_maplist,_yp_maplist)
 #endif
 
 int
-yp_maplist(indomain, outmaplist)
-	const char     *indomain;
-	struct ypmaplist **outmaplist;
+yp_maplist( const char *indomain, struct ypmaplist **outmaplist)
 {
 	struct dom_binding *ysd;
 	struct ypresp_maplist ypml;
@@ -68,10 +67,11 @@ again:
 		   (xdrproc_t)xdr_ypdomain_wrap_string, &indomain,
 		   (xdrproc_t)xdr_ypresp_maplist, &ypml, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		if (++nerrs == _yplib_nerrs) {
+		if (_yplib_bindtries <= 0 && ++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
 			nerrs = 0;
-		}
+		} else if (_yplib_bindtries > 0 && ++nerrs == _yplib_bindtries)
+			return YPERR_YPSERV;
 		ysd->dom_vers = -1;
 		goto again;
 	}

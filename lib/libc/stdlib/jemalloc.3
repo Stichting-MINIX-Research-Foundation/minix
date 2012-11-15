@@ -34,9 +34,9 @@
 .\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
 .\" $FreeBSD: src/lib/libc/stdlib/malloc.3,v 1.73 2007/06/15 22:32:33 jasone Exp $
 .\"
-.Dd May 14, 2010
-.Os
+.Dd June 21, 2011
 .Dt JEMALLOC 3
+.Os
 .Sh NAME
 .Nm jemalloc
 .Nd the default system allocator
@@ -172,8 +172,11 @@ does not zero memory that was previously allocated.
 This is intended for debugging and will impact performance negatively.
 .El
 .Pp
+Extra care should be taken when enabling
+any of the options in production environments.
 The
-.Em J
+.Em A ,
+.Em J ,
 and
 .Em Z
 options are intended for testing and debugging.
@@ -291,6 +294,28 @@ the performance impact for storing such information would be prohibitive.
 There are a number of allocator implementations available on the Internet
 which focus on detecting and pinpointing problems by trading performance for
 extra sanity checks and detailed diagnostics.
+.Sh ENVIRONMENT
+The following environment variables affect the execution of the allocation
+functions:
+.Bl -tag -width ".Ev MALLOC_OPTIONS"
+.It Ev MALLOC_OPTIONS
+If the environment variable
+.Ev MALLOC_OPTIONS
+is set, the characters it contains will be interpreted as flags to the
+allocation functions.
+.El
+.Sh EXAMPLES
+To dump core whenever a problem occurs:
+.Pp
+.Bd -literal -offset indent
+ln -s 'A' /etc/malloc.conf
+.Ed
+.Pp
+To specify in the source that a program does no return value checking
+on calls to these functions:
+.Bd -literal -offset indent
+_malloc_options = "X";
+.Ed
 .Sh DIAGNOSTICS
 If any of the memory allocation/deallocation functions detect an error or
 warning condition, a message will be printed to file descriptor
@@ -316,28 +341,6 @@ this function is likely to result in a crash or deadlock.
 .Pp
 All messages are prefixed by
 .Dq Ao Ar progname Ac Ns Li \&: Pq malloc .
-.Sh ENVIRONMENT
-The following environment variables affect the execution of the allocation
-functions:
-.Bl -tag -width ".Ev MALLOC_OPTIONS"
-.It Ev MALLOC_OPTIONS
-If the environment variable
-.Ev MALLOC_OPTIONS
-is set, the characters it contains will be interpreted as flags to the
-allocation functions.
-.El
-.Sh EXAMPLES
-To dump core whenever a problem occurs:
-.Pp
-.Bd -literal -offset indent
-ln -s 'A' /etc/malloc.conf
-.Ed
-.Pp
-To specify in the source that a program does no return value checking
-on calls to these functions:
-.Bd -literal -offset indent
-_malloc_options = "X";
-.Ed
 .Sh SEE ALSO
 .Xr emalloc 3 ,
 .Xr malloc 3 ,

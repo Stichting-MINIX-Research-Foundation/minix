@@ -1,4 +1,4 @@
-/*	$NetBSD: puts.c,v 1.15 2006/03/17 02:25:23 chris Exp $	*/
+/*	$NetBSD: puts.c,v 1.16 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)puts.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: puts.c,v 1.15 2006/03/17 02:25:23 chris Exp $");
+__RCSID("$NetBSD: puts.c,v 1.16 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: puts.c,v 1.15 2006/03/17 02:25:23 chris Exp $");
  * Write the given string to stdout, appending a newline.
  */
 int
-puts(s)
-	char const *s;
+puts(char const *s)
 {
 	size_t c;
 	struct __suio uio;
@@ -78,5 +77,5 @@ puts(s)
 	FLOCKFILE(stdout);
 	r = __sfvwrite(stdout, &uio);
 	FUNLOCKFILE(stdout);
-	return (r ? EOF : '\n');
+	return r ? EOF : '\n';
 }

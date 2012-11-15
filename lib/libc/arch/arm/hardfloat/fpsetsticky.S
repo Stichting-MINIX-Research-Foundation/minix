@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.S,v 1.4 2004/08/21 11:21:00 rearnsha Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.5 2012/08/01 06:10:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,6 +45,9 @@ ENTRY(_fpsetsticky)
 #else
 ENTRY(fpsetsticky)
 #endif
+#ifdef __VFP_FP__
+#error _fpsetsticky VFP support missing
+#else
 	rfs	r1
 	bic	r1, r1, #0x1f
 	and	r0, r0, #0x1f
@@ -52,3 +55,4 @@ ENTRY(fpsetsticky)
 	wfs	r0
 	mov	r0, r1			/* Return old mask */
 	RET
+#endif

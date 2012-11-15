@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.52 2008/02/03 22:56:53 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -76,10 +76,8 @@
 #       define malloc_pageshift         12U
 #       define malloc_minsize           16U
 #   endif
-#ifndef __minix
 #   define HAS_UTRACE
 #   define UTRACE_LABEL
-#endif /* __minix */
 
 #include <sys/cdefs.h>
 void utrace(struct ut *, int);
@@ -102,8 +100,6 @@ void utrace(struct ut *, int);
 #undef minix_mmap
 #undef minix_munmap
 
-#include <assert.h>
-
 #include <sys/types.h>
 #if defined(__NetBSD__)
 #   define malloc_minsize               16U
@@ -112,7 +108,7 @@ void utrace(struct ut *, int);
 #include <sys/cdefs.h>
 #include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.52 2008/02/03 22:56:53 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 int utrace(const char *, void *, size_t);
 
@@ -469,12 +465,14 @@ extend_pgdir(size_t idx)
 static void
 malloc_init(void)
 {
-    int save_errno = errno;
 #ifndef MALLOC_NO_SYSCALLS
     const char *p;
     char b[64];
     size_t i;
     ssize_t j;
+#endif
+    int serrno = errno;
+#ifndef MALLOC_NO_SYSCALLS
 
     /*
      * Compute page-size related variables.
@@ -499,7 +497,7 @@ malloc_init(void)
     for (i = 0; i < 3; i++) {
 	if (i == 0) {
 	    j = readlink("/etc/malloc.conf", b, sizeof b - 1);
-	    if (j <= 0)
+	    if (j == -1)
 		continue;
 	    b[j] = '\0';
 	    p = b;
@@ -581,7 +579,7 @@ malloc_init(void)
      */
     px = imalloc(sizeof *px);
 
-    errno = save_errno;
+    errno = serrno;
 }
 
 /*
@@ -1039,7 +1037,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
       pf->size > malloc_cache &&		/* ..and the cache is full, */
       pf->end == malloc_brk &&			/* ..and none behind us, */
       malloc_brk == sbrk((intptr_t)0)) {	/* ..and it's OK to do... */
-	int r;
+
 	/*
 	 * Keep the cache intact.  Notice that the '>' above guarantees that
 	 * the pf will always have at least one page afterwards.
@@ -1047,8 +1045,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
 	pf->end = (char *)pf->page + malloc_cache;
 	pf->size = malloc_cache;
 
-	r = brk(pf->end);
-	assert(r >= 0);
+	brk(pf->end);
 	malloc_brk = pf->end;
 
 	idx = ptr2idx(pf->end);

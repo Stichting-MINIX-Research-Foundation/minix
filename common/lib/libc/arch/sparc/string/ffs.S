@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 2009/12/19 19:09:48 pooka Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 2011/07/04 11:18:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.2 2009/12/19 19:09:48 pooka Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.3 2011/07/04 11:18:23 mrg Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -58,6 +58,7 @@
  * one, we just return the table value plus 24.  This means
  * that ffstab[0] must be -24 so that ffs(0) will return 0.
  */
+WEAK_ALIAS(__ffssi2,ffs)
 ENTRY(ffs)
 #ifdef PIC
 	PICCY_SET(ffstab, %o2, %o3)

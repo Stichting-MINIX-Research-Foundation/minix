@@ -7,6 +7,10 @@ AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 NOMAN=		# defined
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+AFLAGS+=       -Wa,--divide
+.endif
+
 STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
@@ -40,8 +44,6 @@ BUILDSYMLINKS+=	$S/arch/i386/include	machine \
 		$S/arch/x86/include	x86
 
 DPSRCS+=	machine x86
-
-AFLAGS+=	-Wa,--divide
 
 CLEANFILES+=	${PROG}.tmp
 

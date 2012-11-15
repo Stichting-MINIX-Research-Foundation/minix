@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_private.h,v 1.21 2011/01/17 23:32:31 matt Exp $ */
+/* $NetBSD: nlist_private.h,v 1.22 2012/03/20 16:36:05 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -74,17 +74,17 @@
 struct nlist;
 
 #ifdef NLIST_AOUT
-int	__fdnlist_aout __P((int, struct nlist *));
+int	__fdnlist_aout(int, struct nlist *);
 #endif
 #ifdef NLIST_COFF
-int	__fdnlist_coff __P((int, struct nlist *));
+int	__fdnlist_coff(int, struct nlist *);
 #endif
 #ifdef NLIST_ECOFF
-int	__fdnlist_ecoff __P((int, struct nlist *));
+int	__fdnlist_ecoff(int, struct nlist *);
 #endif
 #ifdef NLIST_ELF32
-int	__fdnlist_elf32 __P((int, struct nlist *));
+int	__fdnlist_elf32(int, struct nlist *);
 #endif
 #ifdef NLIST_ELF64
-int	__fdnlist_elf64 __P((int, struct nlist *));
+int	__fdnlist_elf64(int, struct nlist *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_settime.c,v 1.11 2009/01/11 02:46:30 christos Exp $ */
+/*	$NetBSD: clock_settime.c,v 1.12 2011/10/15 23:00:02 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: clock_settime.c,v 1.11 2009/01/11 02:46:30 christos Exp $");
+__RCSID("$NetBSD: clock_settime.c,v 1.12 2011/10/15 23:00:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,6 +51,10 @@ __RCSID("$NetBSD: clock_settime.c,v 1.11 2009/01/11 02:46:30 christos Exp $");
 
 #include <sys/clockctl.h>
  
+#if defined(__minix) && !defined(O_CLOEXEC)
+#define O_CLOEXEC 0
+#endif
+
 extern int __clockctl_fd;
 
 int ____clock_settime50(clockid_t, const struct timespec *);
@@ -78,14 +82,12 @@ clock_settime(clockid_t clock_id, const struct timespec *tp)
 		 * If this fails, it means that we are not root
 		 * and we cannot open clockctl. This is a failure.
 		 */
-		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY, 0);
+		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY | O_CLOEXEC, 0);
 		if (__clockctl_fd == -1) {
 			/* original error was EPERM - don't leak open errors */
 			errno = EPERM;
 			return -1;
 		}
-
-		(void) fcntl(__clockctl_fd, F_SETFD, FD_CLOEXEC);
 	}
 
 	/* 

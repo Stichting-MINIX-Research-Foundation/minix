@@ -1,4 +1,4 @@
-/*	$NetBSD: cfgetispeed.c,v 1.7 2003/08/07 16:44:12 agc Exp $	*/
+/*	$NetBSD: cfgetispeed.c,v 1.8 2012/06/25 22:32:46 abs Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: cfgetispeed.c,v 1.7 2003/08/07 16:44:12 agc Exp $");
+__RCSID("$NetBSD: cfgetispeed.c,v 1.8 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,7 @@ __weak_alias(cfgetispeed,_cfgetispeed)
 #endif
 
 speed_t
-cfgetispeed(t)
-	const struct termios *t;
+cfgetispeed(const struct termios *t)
 {
 
 	_DIAGASSERT(t != NULL);

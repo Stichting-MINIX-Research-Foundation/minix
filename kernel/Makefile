@@ -1,6 +1,8 @@
 # Makefile for kernel
 .include <bsd.own.mk>
 
+BINDIR=	/usr/sbin
+MAN=
 PROG=	kernel
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
@@ -8,29 +10,28 @@ PROG=	kernel
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 	table.c utility.c usermapped_data.c
 
-LINKERSCRIPT=${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
+DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC} ${LIBMINLIB}
+LDADD+=	-ltimers -lsys -lexec -lminlib -L/usr/lib
 
-DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC} ${LINKERSCRIPT}
-LDADD+=	-ltimers -lsys -lexec
+LINKERSCRIPT= ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 
-CFLAGS += -D__kernel__ 
-
-CPPFLAGS+= -fno-stack-protector -D_NETBSD_SOURCE -D_MINIX
 LDFLAGS+= -T ${LINKERSCRIPT}
-LDFLAGS+= -nostdlib -L${DESTDIR}/${LIBDIR}
-LDADD+= -lminlib
-DPADD+= ${LIBMINLIB}
-.if !empty(CC:M*gcc)
-LDADD+=	-lgcc -lsys -lgcc -lminc
-.elif !empty(CC:M*clang)
-LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic -lminc
-DPADD+=	${LIBC}
-.endif
+LDFLAGS+= -nostdlib 
+CFLAGS += -fno-stack-protector
 
-CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH}/include -I${NETBSDSRCDIR}
+CPPFLAGS+= -D_NETBSD_SOURCE -D_MINIX -D__kernel__ 
 
-BINDIR=	/usr/sbin
-MAN=
+# kernel headers are always called through kernel/*.h
+CPPFLAGS+= -I${NETBSDSRCDIR}
+
+# kernel headers are always called through kernel/*.hi, this
+# time for generated headers, during cross compilation
+CPPFLAGS+= -I${.OBJDIR}/..
+
+# Machine-dependent headers, order is important! 
+CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}/include
+CPPFLAGS+= -I${NETBSDSRCDIR}/include/arch/${MACHINE_ARCH}/include
 
 .include "system/Makefile.inc"
 
@@ -69,11 +70,9 @@ CPPFLAGS+= -DUSE_STATECTL
 CPPFLAGS+= -DUSE_TRACE
 .endif
 
-.include <bsd.prog.mk>
+CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h
 
 debug.d: extracted-errno.h extracted-mfield.h extracted-mtype.h
-
-CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h
 
 extracted-errno.h: extract-errno.sh ../include/errno.h
 	${_MKTARGET_CREATE}
@@ -87,7 +86,4 @@ extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
 	${_MKTARGET_CREATE}
 	cd ${.CURDIR} ; ${HOST_SH} extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
 
-clean:
-	rm -f extracted-errno.h extracted-mfield.h extracted-mtype.h
-
-
+.include <minix.bootprog.mk>

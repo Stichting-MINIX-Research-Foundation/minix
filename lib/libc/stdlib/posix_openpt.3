@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_openpt.3,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\" $NetBSD: posix_openpt.3,v 1.6 2011/05/05 07:36:44 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,9 +41,11 @@
 .Ft int
 .Fn posix_openpt "int oflag"
 .Sh DESCRIPTION
+The
 .Fn posix_openpt
-Searches for an unused master pseudo-terminal device, opens it, and returns
-a file descriptor associated the now used pseudo-terminal device.
+function searches for an unused master pseudo-terminal device,
+opens it, and returns a file descriptor associated with the now
+used pseudo-terminal device.
 The
 .Fa oflag
 argument has the same meaning as in the

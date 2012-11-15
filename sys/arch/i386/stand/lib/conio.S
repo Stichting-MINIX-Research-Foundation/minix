@@ -45,6 +45,7 @@ ENTRY(conputc)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+#if defined(__minix)
 	cmp	$0x08, %al	# backspace?
 	jne	print_char
 
@@ -65,10 +66,13 @@ ENTRY(conputc)
 	jmp	do_int
 
 print_char:
+#endif /* defined(__minix) */
 	movw	$1,%bx
-	movb	$0x0e,%ah	# print character
+	movb	$0x0e,%ah
 	movb	%al, %cl
+#if defined(__minix)
 do_int:
+#endif /* defined(__minix) */
 	int	$0x10
 
 	calll	_C_LABEL(real_to_prot) # back to protected mode
@@ -89,12 +93,12 @@ ENTRY(congetc)
 
 	movb	$0x0,%ah
 	int	$0x16
-	movw	%ax,%bx
+	movb	%al,%bl
 
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	movw	%bx, 28(%esp)
+	movb	%bl, 28(%esp)
 
 	popa
 	ret

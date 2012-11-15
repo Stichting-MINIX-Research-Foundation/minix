@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.22 2007/10/26 19:48:14 christos Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.25 2012/03/15 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.22 2007/10/26 19:48:14 christos Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.25 2012/03/15 18:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,11 +59,7 @@ __weak_alias(vsnprintf,_vsnprintf)
 #endif
 
 int
-vsnprintf(str, n, fmt, ap)
-	char *str;
-	size_t n;
-	const char *fmt;
-	_BSD_VA_LIST_ ap;
+vsnprintf(char *str, size_t n, const char *fmt, va_list ap)
 {
 	int ret;
 	FILE f;
@@ -75,7 +71,7 @@ vsnprintf(str, n, fmt, ap)
 
 	if ((int)n < 0) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 
 	_FILEEXT_SETUP(&f, &fext);
@@ -86,9 +82,10 @@ vsnprintf(str, n, fmt, ap)
 		f._bf._size = f._w = 0;
 	} else {
 		f._bf._base = f._p = (unsigned char *)str;
-		f._bf._size = f._w = n - 1;
+		_DIAGASSERT(__type_fit(int, n - 1));
+		f._bf._size = f._w = (int)(n - 1);
 	}
 	ret = __vfprintf_unlocked(&f, fmt, ap);
 	*f._p = 0;
-	return (ret);
+	return ret;
 }

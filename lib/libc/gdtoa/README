@@ -1,5 +1,3 @@
-$NetBSD: README,v 1.1.1.1 2006/01/25 15:18:40 kleink Exp $
-
 This directory contains source for a library of binary -> decimal
 and decimal -> binary conversion routines, for single-, double-,
 and extended-precision IEEE binary floating-point arithmetic, and
@@ -58,7 +56,9 @@ two letters:
 		whose sum is the desired value
 
 For decimal -> binary conversions, there are three families of
-helper routines: one for round-nearest:
+helper routines: one for round-nearest (or the current rounding
+mode on IEEE-arithmetic systems that provide the C99 fegetround()
+function, if compiled with -DHonor_FLT_ROUNDS):
 
 	strtof
 	strtod
@@ -193,6 +193,9 @@ in the buffer, if the buffer was long enough, or 0.  Other forms of
 conversion are easily done with the help of gdtoa(), such as %e or %f
 style and conversions with direction of rounding specified (so that, if
 desired, the decimal value is either >= or <= the binary value).
+On IEEE-arithmetic systems that provide the C99 fegetround() function,
+if compiled with -DHonor_FLT_ROUNDS, these routines honor the current
+rounding mode.
 
 For an example of more general conversions based on dtoa(), see
 netlib's "printf.c from ampl/solvers".
@@ -333,6 +336,29 @@ and denormals; see gdtoa.h.
 Compiling g__fmt.c, strtod.c, and strtodg.c with -DUSE_LOCALE causes
 the decimal-point character to be taken from the current locale; otherwise
 it is '.'.
+
+Source files dtoa.c and strtod.c in this directory are derived from
+netlib's "dtoa.c from fp" and are meant to function equivalently.
+When compiled with Honor_FLT_ROUNDS #defined (on systems that provide
+FLT_ROUNDS and fegetround() as specified in the C99 standard), they
+honor the current rounding mode.  Because FLT_ROUNDS is buggy on some
+(Linux) systems -- not reflecting calls on fesetround(), as the C99
+standard says it should -- when Honor_FLT_ROUNDS is #defined, the
+current rounding mode is obtained from fegetround() rather than from
+FLT_ROUNDS, unless Trust_FLT_ROUNDS is also #defined.
+
+Compile with -DUSE_LOCALE to use the current locale; otherwise
+decimal points are assumed to be '.'.  With -DUSE_LOCALE, unless
+you also compile with -DNO_LOCALE_CACHE, the details about the
+current "decimal point" character string are cached and assumed not
+to change during the program's execution.
+
+On machines with a 64-bit long double and perhaps a 113-bit "quad"
+type, you can invoke "make Printf" to add Printf (and variants, such
+as Fprintf) to gdtoa.a.  These are analogs, declared in stdio1.h, of
+printf and fprintf, etc. in which %La, %Le, %Lf, and %Lg are for long
+double and (if appropriate) %Lqa, %Lqe, %Lqf, and %Lqg are for quad
+precision printing.
 
 Please send comments to	David M. Gay (dmg at acm dot org, with " at "
 changed at "@" and " dot " changed to ".").

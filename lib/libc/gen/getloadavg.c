@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.13 2003/08/07 16:42:50 agc Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.14 2012/03/13 21:13:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getloadavg.c,v 1.13 2003/08/07 16:42:50 agc Exp $");
+__RCSID("$NetBSD: getloadavg.c,v 1.14 2012/03/13 21:13:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,25 +60,22 @@ __weak_alias(getloadavg,_getloadavg)
  * Return number of samples retrieved, or -1 on error.
  */
 int
-getloadavg(loadavg, nelem)
-	double loadavg[];
-	int nelem;
+getloadavg(double loadavg[], int nelem)
 {
 	struct loadavg loadinfo;
-	int i, mib[2];
-	size_t size;
+	static const int mib[] = { CTL_VM, VM_LOADAVG };
+	size_t size, i;
 
 	_DIAGASSERT(loadavg != NULL);
 	_DIAGASSERT(nelem >= 0);
 
-	mib[0] = CTL_VM;
-	mib[1] = VM_LOADAVG;
 	size = sizeof(loadinfo);
-	if (sysctl(mib, 2, &loadinfo, &size, NULL, 0) < 0)
-		return (-1);
+	if (sysctl(mib, (u_int)__arraycount(mib), &loadinfo, &size, NULL, 0)
+	    == -1)
+		return -1;
 
-	nelem = MIN((size_t) nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
-	for (i = 0; i < nelem; i++)
+	size = MIN((size_t)nelem, __arraycount(loadinfo.ldavg));
+	for (i = 0; i < size; i++)
 		loadavg[i] = (double) loadinfo.ldavg[i] / loadinfo.fscale;
-	return (nelem);
+	return nelem;
 }

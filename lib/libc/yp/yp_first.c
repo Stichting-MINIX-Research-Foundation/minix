@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.14 2003/12/10 12:06:25 agc Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.16 2012/06/25 22:32:46 abs Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.14 2003/12/10 12:06:25 agc Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.16 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: yp_first.c,v 1.14 2003/12/10 12:06:25 agc Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+extern int _yplib_bindtries;
 
 #ifdef __weak_alias
 __weak_alias(yp_first,_yp_first)
@@ -48,13 +49,8 @@ __weak_alias(yp_next,_yp_next)
 #endif
 
 int
-yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
-	const char     *indomain;
-	const char     *inmap;
-	char          **outkey;
-	int            *outkeylen;
-	char          **outval;
-	int            *outvallen;
+yp_first(const char *indomain, const char *inmap, char **outkey,
+    int *outkeylen, char **outval, int *outvallen)
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_nokey yprnk;
@@ -84,10 +80,11 @@ again:
 	    (xdrproc_t)xdr_ypreq_nokey,
 	    &yprnk, (xdrproc_t)xdr_ypresp_key_val, &yprkv, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		if (++nerrs == _yplib_nerrs) {
+		if (_yplib_bindtries <= 0 && ++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_first: clnt_call");
 			nerrs = 0;
-		}
+		} else if (_yplib_bindtries > 0 && ++nerrs == _yplib_bindtries)
+			return YPERR_YPSERV;
 		ysd->dom_vers = -1;
 		goto again;
 	}
@@ -125,15 +122,8 @@ again:
 }
 
 int
-yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
-	const char     *indomain;
-	const char     *inmap;
-	const char     *inkey;
-	int             inkeylen;
-	char          **outkey;
-	int            *outkeylen;
-	char          **outval;
-	int            *outvallen;
+yp_next(const char *indomain, const char *inmap, const char *inkey,
+    int inkeylen, char **outkey, int *outkeylen, char **outval, int *outvallen)
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_key yprk;
@@ -167,10 +157,11 @@ again:
 	    (xdrproc_t)xdr_ypreq_key,
 	    &yprk, (xdrproc_t)xdr_ypresp_key_val, &yprkv, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		if (++nerrs == _yplib_nerrs) {
+		if (_yplib_bindtries <= 0 && ++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_next: clnt_call");
 			nerrs = 0;
-		}
+		} else if (_yplib_bindtries > 0 && ++nerrs == _yplib_bindtries)
+			return YPERR_YPSERV;
 		ysd->dom_vers = -1;
 		goto again;
 	}

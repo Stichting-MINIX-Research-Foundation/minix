@@ -8,10 +8,10 @@
 __weak_alias(stime, _stime)
 #endif
 
-int stime(long *top)
+int stime(time_t *top)
 {
   message m;
 
-  m.m2_l1 = *top;
+  m.m2_l1 = (long)*top;
   return(_syscall(PM_PROC_NR, STIME, &m));
 }

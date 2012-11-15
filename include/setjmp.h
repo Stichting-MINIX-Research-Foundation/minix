@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.25 2009/08/12 04:57:36 matt Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.26 2011/11/05 09:27:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -62,18 +62,18 @@ typedef _BSD_JBSLOT_T_ jmp_buf[_JBLEN] _JB_ATTRIBUTES;
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
-int	setjmp(jmp_buf)			 __RENAME(__setjmp14);
+int	setjmp(jmp_buf)			 __RENAME(__setjmp14) __returns_twice;
 void	longjmp(jmp_buf, int)		 __RENAME(__longjmp14) __dead;
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-int	sigsetjmp(sigjmp_buf, int)	__RENAME(__sigsetjmp14);
+int	sigsetjmp(sigjmp_buf, int)	__RENAME(__sigsetjmp14) __returns_twice;
 void	siglongjmp(sigjmp_buf, int)	 __RENAME(__siglongjmp14) __dead;
 #endif /* not ANSI */
 #endif /* __LIBC12_SOURCE__ */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-int	_setjmp(jmp_buf);
+int	_setjmp(jmp_buf) __returns_twice;
 void	_longjmp(jmp_buf, int) __dead;
 #endif
 

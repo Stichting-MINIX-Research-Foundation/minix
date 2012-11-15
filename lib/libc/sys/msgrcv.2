@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.19 2009/01/28 08:57:02 wiz Exp $
+.\"	$NetBSD: msgrcv.2,v 1.20 2012/05/15 11:37:01 reinoud Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -153,7 +153,7 @@ is decremented by 1.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn msgrcv
-returns the number of bytes received into the
+returns the number of bytes received and placed into the
 .Va mtext
 field of the structure pointed to by
 .Fa msgp .

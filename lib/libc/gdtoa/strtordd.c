@@ -1,4 +1,4 @@
-/* $NetBSD: strtordd.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtordd.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -35,9 +35,9 @@ THIS SOFTWARE.
 
  void
 #ifdef KR_headers
-ULtodd(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
+ULtodd(L, bits, expt, k) ULong *L; ULong *bits; Long expt; int k;
 #else
-ULtodd(ULong *L, ULong *bits, Long exp, int k)
+ULtodd(ULong *L, ULong *bits, Long expt, int k)
 #endif
 {
 	int i, j;
@@ -50,36 +50,36 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 
 	  case STRTOG_Normal:
 		L[_1] = (bits[1] >> 21 | bits[2] << 11) & (ULong)0xffffffffL;
-		L[_0] = bits[2] >> 21 | bits[3] << 11 & 0xfffff
-			  | exp + 0x3ff + 105 << 20;
-		exp += 0x3ff + 52;
+		L[_0] = (bits[2] >> 21) | (bits[3] << 11 & 0xfffff)
+			  | ((expt + 0x3ff + 105) << 20);
+		expt += 0x3ff + 52;
 		if (bits[1] &= 0x1fffff) {
 			i = hi0bits(bits[1]) - 11;
-			if (i >= exp) {
-				i = exp - 1;
-				exp = 0;
+			if (i >= expt) {
+				i = expt - 1;
+				expt = 0;
 				}
 			else
-				exp -= i;
+				expt -= i;
 			if (i > 0) {
-				bits[1] = bits[1] << i | bits[0] >> 32-i;
+				bits[1] = bits[1] << i | bits[0] >> (32-i);
 				bits[0] = bits[0] << i & (ULong)0xffffffffL;
 				}
 			}
 		else if (bits[0]) {
 			i = hi0bits(bits[0]) + 21;
-			if (i >= exp) {
-				i = exp - 1;
-				exp = 0;
+			if (i >= expt) {
+				i = expt - 1;
+				expt = 0;
 				}
 			else
-				exp -= i;
+				expt -= i;
 			if (i < 32) {
-				bits[1] = bits[0] >> 32 - i;
+				bits[1] = bits[0] >> (32 - i);
 				bits[0] = bits[0] << i & (ULong)0xffffffffL;
 				}
 			else {
-				bits[1] = bits[0] << i - 32;
+				bits[1] = bits[0] << (i - 32);
 				bits[0] = 0;
 				}
 			}
@@ -88,7 +88,7 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 			break;
 			}
 		L[2+_1] = bits[0];
-		L[2+_0] = bits[1] & 0xfffff | exp << 20;
+		L[2+_0] = (bits[1] & 0xfffff) | (expt << 20);
 		break;
 
 	  case STRTOG_Denormal:
@@ -107,10 +107,10 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 	  nearly_normal:
 		i = hi0bits(bits[3]) - 11;	/* i >= 12 */
 		j = 32 - i;
-		L[_0] = (bits[3] << i | bits[2] >> j) & 0xfffff
-			| 65 - i << 20;
+		L[_0] = ((bits[3] << i | bits[2] >> j) & 0xfffff)
+			| ((65 - i) << 20);
 		L[_1] = (bits[2] << i | bits[1] >> j) & 0xffffffffL;
-		L[2+_0] = bits[1] & ((ULong)1L << j) - 1;
+		L[2+_0] = bits[1] & (((ULong)1L << j) - 1);
 		L[2+_1] = bits[0];
 		break;
 
@@ -119,34 +119,34 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 		if (i < 0) {
 			j = -i;
 			i += 32;
-			L[_0] = bits[2] >> j & 0xfffff | (33 + j) << 20;
+			L[_0] = (bits[2] >> j & 0xfffff) | ((33 + j) << 20);
 			L[_1] = (bits[2] << i | bits[1] >> j) & 0xffffffffL;
-			L[2+_0] = bits[1] & ((ULong)1L << j) - 1;
+			L[2+_0] = bits[1] & (((ULong)1L << j) - 1);
 			L[2+_1] = bits[0];
 			break;
 			}
 		if (i == 0) {
-			L[_0] = bits[2] & 0xfffff | 33 << 20;
+			L[_0] = (bits[2] & 0xfffff) | (33 << 20);
 			L[_1] = bits[1];
 			L[2+_0] = 0;
 			L[2+_1] = bits[0];
 			break;
 			}
 		j = 32 - i;
-		L[_0] = (bits[2] << i | bits[1] >> j) & 0xfffff
-				| j + 1 << 20;
+		L[_0] = (((bits[2] << i) | (bits[1] >> j)) & 0xfffff)
+				| ((j + 1) << 20);
 		L[_1] = (bits[1] << i | bits[0] >> j) & 0xffffffffL;
 		L[2+_0] = 0;
-		L[2+_1] = bits[0] & (1L << j) - 1;
+		L[2+_1] = bits[0] & ((1L << j) - 1);
 		break;
 
 	  hardly_normal:
 		j = 11 - hi0bits(bits[1]);
 		i = 32 - j;
-		L[_0] = bits[1] >> j & 0xfffff | j + 1 << 20;
+		L[_0] = (bits[1] >> j & 0xfffff) | ((j + 1) << 20);
 		L[_1] = (bits[1] << i | bits[0] >> j) & 0xffffffffL;
 		L[2+_0] = 0;
-		L[2+_1] = bits[0] & ((ULong)1L << j) - 1;
+		L[2+_1] = bits[0] & (((ULong)1L << j) - 1);
 		break;
 
 	  case STRTOG_Infinite:
@@ -180,13 +180,14 @@ strtordd(CONST char *s, char **sp, int rounding, double *dd)
 #endif
 {
 #ifdef Sudden_Underflow
-	static FPI fpi0 = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
+	static CONST FPI fpi0 = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
 #else
-	static FPI fpi0 = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
+	static CONST FPI fpi0 = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
 #endif
-	FPI *fpi, fpi1;
+	CONST FPI *fpi;
+	FPI fpi1;
 	ULong bits[4];
-	Long exp;
+	Long expt;
 	int k;
 
 	fpi = &fpi0;
@@ -195,9 +196,9 @@ strtordd(CONST char *s, char **sp, int rounding, double *dd)
 		fpi1.rounding = rounding;
 		fpi = &fpi1;
 		}
-	k = strtodg(s, sp, fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory)
 		return k;
-	ULtodd((ULong*)dd, bits, exp, k);
+	ULtodd((ULong*)dd, bits, expt, k);
 	return k;
 	}

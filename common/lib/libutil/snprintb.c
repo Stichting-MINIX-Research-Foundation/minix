@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.5 2009/05/13 02:50:31 pgoyette Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.5 2009/05/13 02:50:31 pgoyette Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.5 2009/05/13 02:50:31 pgoyette Exp $");
 #  include <errno.h>
 # else
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.5 2009/05/13 02:50:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -137,7 +137,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 			STORE('<');					\
 		} else {						\
 			/* Remember separator location */		\
-			if ( l_max > 0 && sep != '<') {			\
+			if (l_max > 0 && sep != '<') {			\
 				s_len = l_len;				\
 				s_bp  = bp;				\
 				s_fmt = cur_fmt;			\
@@ -209,14 +209,13 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 				f_len = *bitfmt++;	/* field length */
 				field = (val >> bit) &
 					    (((uint64_t)1 << f_len) - 1);
+				PUTSEP;
+				if (restart == 0)
+					sep = ',';
 				if (ch == 'F')	/* just extract */
 					break;
-				PUTSEP;
 				if (restart == 0) {
-					sep = ',';
 					PUTS(bitfmt);
-				}
-				if (restart == 0) {
 					PUTCHR('=');
 				}
 				if (restart == 0) {

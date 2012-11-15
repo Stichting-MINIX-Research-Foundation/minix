@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.11 2003/08/07 16:43:29 agc Exp $	*/
+/*	$NetBSD: printf.c,v 1.12 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: printf.c,v 1.11 2003/08/07 16:43:29 agc Exp $");
+__RCSID("$NetBSD: printf.c,v 1.12 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,5 +55,5 @@ printf(char const *fmt, ...)
 	va_start(ap, fmt);
 	ret = vfprintf(stdout, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.28 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.29 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.28 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.29 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -69,11 +69,11 @@ __weak_alias(clnt_sperror,_clnt_sperror)
 static char *buf;
 static size_t buflen;
 
-static char *_buf __P((void));
-static char *auth_errmsg __P((enum auth_stat));
+static char *_buf(void);
+static char *auth_errmsg(enum auth_stat);
 
 static char *
-_buf()
+_buf(void)
 {
 
 	buflen = 256;
@@ -86,9 +86,7 @@ _buf()
  * Print reply error info
  */
 char *
-clnt_sperror(rpch, s)
-	CLIENT *rpch;
-	const char *s;
+clnt_sperror(CLIENT *rpch, const char *s)
 {
 	struct rpc_err e;
 	char *err;
@@ -179,9 +177,7 @@ clnt_sperror(rpch, s)
 }
 
 void
-clnt_perror(rpch, s)
-	CLIENT *rpch;
-	const char *s;
+clnt_perror(CLIENT *rpch, const char *s)
 {
 
 	_DIAGASSERT(rpch != NULL);
@@ -222,8 +218,7 @@ static const char *const rpc_errlist[] = {
  * This interface for use by clntrpc
  */
 char *
-clnt_sperrno(stat)
-	enum clnt_stat stat;
+clnt_sperrno(enum clnt_stat stat)
 {
 	unsigned int errnum = stat;
 	const char *msg;
@@ -239,16 +234,14 @@ clnt_sperrno(stat)
 }
 
 void
-clnt_perrno(num)
-	enum clnt_stat num;
+clnt_perrno(enum clnt_stat num)
 {
 	(void) fprintf(stderr, "%s\n", clnt_sperrno(num));
 }
 
 
 char *
-clnt_spcreateerror(s)
-	const char *s;
+clnt_spcreateerror(const char *s)
 {
 	char *str;
 	size_t len, i;
@@ -298,8 +291,7 @@ clnt_spcreateerror(s)
 }
 
 void
-clnt_pcreateerror(s)
-	const char *s;
+clnt_pcreateerror(const char *s)
 {
 
 	_DIAGASSERT(s != NULL);
@@ -319,12 +311,11 @@ static const char *const auth_errlist[] = {
 };
 
 static char *
-auth_errmsg(stat)
-	enum auth_stat stat;
+auth_errmsg(enum auth_stat stat)
 {
 	unsigned int errnum = stat;
 
-	if (errnum < (sizeof(auth_errlist)/sizeof(auth_errlist[0])))
+	if (errnum < __arraycount(auth_errlist))
 		return __UNCONST(auth_errlist[errnum]);
 
 	return(NULL);

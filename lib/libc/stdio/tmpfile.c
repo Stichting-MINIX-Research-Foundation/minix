@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfile.c,v 1.11 2003/08/07 16:43:33 agc Exp $	*/
+/*	$NetBSD: tmpfile.c,v 1.12 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tmpfile.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tmpfile.c,v 1.11 2003/08/07 16:43:33 agc Exp $");
+__RCSID("$NetBSD: tmpfile.c,v 1.12 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: tmpfile.c,v 1.11 2003/08/07 16:43:33 agc Exp $");
 #include <paths.h>
 
 FILE *
-tmpfile()
+tmpfile(void)
 {
 	sigset_t set, oset;
 	FILE *fp;
@@ -73,13 +73,13 @@ tmpfile()
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 
 	if (fd == -1)
-		return (NULL);
+		return NULL;
 
 	if ((fp = fdopen(fd, "w+")) == NULL) {
 		sverrno = errno;
 		(void)close(fd);
 		errno = sverrno;
-		return (NULL);
+		return NULL;
 	}
-	return (fp);
+	return fp;
 }

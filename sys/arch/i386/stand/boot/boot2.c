@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.57 2011/12/25 06:09:09 tsutsui Exp $	*/
+/*	$NetBSD: boot2.c,v 1.58 2012/08/04 03:51:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -122,7 +122,9 @@ void	command_dev(char *);
 void	command_consdev(char *);
 void	command_modules(char *);
 void	command_multiboot(char *);
+#ifdef __minix
 void	command_load_mods(char *);
+#endif
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -134,7 +136,9 @@ const struct bootblk_command commands[] = {
 	{ "consdev",	command_consdev },
 	{ "modules",	command_modules },
 	{ "load",	module_add },
+#ifdef __minix
 	{ "load_mods",  command_load_mods },
+#endif
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
@@ -405,7 +409,9 @@ command_help(char *arg)
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
+#ifdef __minix
 	       "load_mods {path_to_modules}, pattern might be used\n"
+#endif
 	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "userconf {command}\n"
 	       "rndseed {path_to_rndseed_file}\n"
@@ -419,10 +425,15 @@ command_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
+#ifndef __minix
+	ls(arg);
+#else
 	ls(arg, NULL);
+#endif
 	default_filename = save;
 }
 
+#ifdef __minix
 void
 command_load_mods(char *arg)
 {
@@ -432,6 +443,7 @@ command_load_mods(char *arg)
 	ls(arg, module_add);
 	default_filename = save;
 }
+#endif
 
 /* ARGSUSED */
 void
@@ -449,10 +461,21 @@ void
 command_boot(char *arg)
 {
 	char *filename;
-	int howto;
+	int howto, tell;
 
-	if (parseboot(arg, &filename, &howto))
-		bootit(filename, howto, (howto & AB_VERBOSE) != 0);
+	if (!parseboot(arg, &filename, &howto))
+		return;
+
+	tell = ((howto & AB_VERBOSE) != 0);
+	if (filename != NULL) {
+		bootit(filename, howto, tell);
+	} else {
+		int i;
+		for (i = 0; i < NUMNAMES; i++) {
+			bootit(names[i][0], howto, tell);
+			bootit(names[i][1], howto, tell);
+		}
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.3 2003/08/07 16:42:37 agc Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.4 2011/11/18 20:43:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __vfork14.S,v 1.3 2003/08/07 16:42:37 agc Exp $")
+	RCSID("$NetBSD: __vfork14.S,v 1.4 2011/11/18 20:43:01 joerg Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -57,9 +57,4 @@ ENTRY(__vfork14)
 	jmp	*%r9
 err:
 	pushq	%r9
-#ifdef PIC
-	movq	PIC_GOT(CERROR), %rcx
-	jmp	*%rcx
-#else
 	jmp	CERROR
-#endif

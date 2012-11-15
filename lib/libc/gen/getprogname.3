@@ -1,4 +1,4 @@
-.\" $NetBSD: getprogname.3,v 1.7 2008/03/29 16:51:40 dholland Exp $
+.\" $NetBSD: getprogname.3,v 1.8 2011/05/21 19:06:44 dholland Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 29, 2008
+.Dd May 21, 2011
 .Dt GETPROGNAME 3
 .Os
 .Sh NAME
@@ -87,18 +87,19 @@ Therefore, in
 .Nx ,
 calling
 .Fn setprogname
+explicitly has no effect.
+However, portable programs that wish to use
+.Fn getprogname
+should call
+.Fn setprogname
 from
-.Fn main
-has no effect.
-However, it does serve to increase the portability of the program:
-on other operating systems,
+.Fn main .
+On operating systems where
 .Fn getprogname
 and
 .Fn setprogname
-may be implemented by a portability library, and a call to
-.Fn setprogname
-allows that library to know the program name without
-modifications to that system's program start-up code.
+are implemented via a portability library, this call is needed to
+make the name available.
 .Sh SEE ALSO
 .Xr err 3 ,
 .Xr setproctitle 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.18 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.19 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_callmsg.c,v 1.18 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: rpc_callmsg.c,v 1.19 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -64,9 +64,7 @@ __weak_alias(xdr_callmsg,_xdr_callmsg)
  * XDR a call message
  */
 bool_t
-xdr_callmsg(xdrs, cmsg)
-	XDR *xdrs;
-	struct rpc_msg *cmsg;
+xdr_callmsg(XDR *xdrs, struct rpc_msg *cmsg)
 {
 	int32_t *buf;
 	struct opaque_auth *oa;

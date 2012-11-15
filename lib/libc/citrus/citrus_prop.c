@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.c,v 1.3 2006/11/22 23:47:21 tnozaki Exp $ */
+/* $NetBSD: citrus_prop.c,v 1.4 2011/03/30 08:22:01 jruoho Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,12 +29,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_prop.c,v 1.3 2006/11/22 23:47:21 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_prop.c,v 1.4 2011/03/30 08:22:01 jruoho Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
-#include <limits.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -51,7 +52,8 @@ typedef struct {
 	_citrus_prop_type_t type;
 	union {
 		const char *str;
-		int bool, chr;
+		int chr;
+		bool boolean;
 		uint64_t num;
 	} u;
 } _citrus_prop_object_t;
@@ -228,7 +230,7 @@ _citrus_prop_read_bool(struct _memstream * __restrict ms,
 		if (_bcs_tolower(_memstream_getc(ms)) == 'r' &&
 		    _bcs_tolower(_memstream_getc(ms)) == 'u' &&
 		    _bcs_tolower(_memstream_getc(ms)) == 'e') {
-			obj->u.bool = 1;
+			obj->u.boolean = true;
 			return 0;
 		}
 		break;
@@ -237,7 +239,7 @@ _citrus_prop_read_bool(struct _memstream * __restrict ms,
 		    _bcs_tolower(_memstream_getc(ms)) == 'l' &&
 		    _bcs_tolower(_memstream_getc(ms)) == 's' &&
 		    _bcs_tolower(_memstream_getc(ms)) == 'e') {
-			obj->u.bool = 0;
+			obj->u.boolean = false;
 			return 0;
 		}
 	}
@@ -406,11 +408,25 @@ do {							\
 	errnum = (*hint->cb._func_.func)(context,	\
 	    hint->name,	ostart.u._func_, oend.u._func_);\
 } while (/*CONSTCOND*/0)
+
 		switch (hint->type) {
-		case _CITRUS_PROP_BOOL: CALL0(bool); break;
-		case _CITRUS_PROP_STR : CALL0( str); break;
-		case _CITRUS_PROP_CHR : CALL1( chr); break;
-		case _CITRUS_PROP_NUM : CALL1( num); break;
+
+		case _CITRUS_PROP_BOOL:
+			CALL0(boolean);
+			break;
+
+		case _CITRUS_PROP_STR:
+			CALL0(str);
+			break;
+
+		case _CITRUS_PROP_CHR:
+			CALL1(chr);
+			break;
+
+		case _CITRUS_PROP_NUM:
+			CALL1(num);
+			break;
+
 		default:
 			abort();
 			/*NOTREACHED*/

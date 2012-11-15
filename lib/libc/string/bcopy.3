@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bcopy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bcopy.3,v 1.13 2010/04/29 07:27:30 wiz Exp $
+.\"	$NetBSD: bcopy.3,v 1.14 2012/05/05 21:24:19 dholland Exp $
 .\"
-.Dd April 29, 2010
+.Dd May 5, 2012
 .Dt BCOPY 3
 .Os
 .Sh NAME
@@ -57,6 +57,20 @@ The two strings may overlap.
 If
 .Fa len
 is zero, no bytes are copied.
+.Pp
+This function is obsolete.
+The functions
+.Xr memcpy 3
+and/or
+.Xr memmove 3
+should be used instead.
+Note that
+.Fn bcopy
+takes its
+.Fa src
+and
+.Fa dst
+arguments in the opposite order from these.
 .Sh SEE ALSO
 .Xr memccpy 3 ,
 .Xr memcpy 3 ,

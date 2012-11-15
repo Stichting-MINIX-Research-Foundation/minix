@@ -1,4 +1,4 @@
-/*	$NetBSD: fsetpos.c,v 1.10 2003/08/07 16:43:25 agc Exp $	*/
+/*	$NetBSD: fsetpos.c,v 1.11 2012/01/22 18:36:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fsetpos.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fsetpos.c,v 1.10 2003/08/07 16:43:25 agc Exp $");
+__RCSID("$NetBSD: fsetpos.c,v 1.11 2012/01/22 18:36:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,17 +45,26 @@ __RCSID("$NetBSD: fsetpos.c,v 1.10 2003/08/07 16:43:25 agc Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include "reentrant.h"
+#include "local.h"
 
 /*
  * fsetpos: like fseek.
  */
 int
-fsetpos(iop, pos)
-	FILE *iop;
-	const fpos_t *pos;
+fsetpos(FILE * __restrict fp, const fpos_t * __restrict pos)
 {
-	_DIAGASSERT(iop != NULL);
+	struct wchar_io_data *wcio;
+
+	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(pos != NULL);
 
-	return (fseeko(iop, (off_t)*pos, SEEK_SET));
+	wcio = WCIO_GET(fp);
+	if (wcio != NULL && wcio->wcio_mode > 0) {
+		if (fp->_write)
+			wcio->wcio_mbstate_in  = pos->_mbstate_in;
+		if (fp->_read)
+			wcio->wcio_mbstate_out = pos->_mbstate_out;
+	}
+	return fseeko(fp, pos->_pos, SEEK_SET) == (off_t)-1;
 }

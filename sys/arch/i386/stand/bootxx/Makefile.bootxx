@@ -38,7 +38,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,start -L${DESTDIR}/${LIBDIR}
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,start
 CPPFLAGS+= -DBOOTXX
 # CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/../../lib -I ${.OBJDIR}
@@ -50,16 +50,12 @@ CPPFLAGS+= -DXXfs_close=${FS}_close
 CPPFLAGS+= -DXXfs_read=${FS}_read
 CPPFLAGS+= -DXXfs_stat=${FS}_stat
 CPPFLAGS+= -DFS=${FS}
-# clang generates too big bootxx_xxx
-.if !empty(CC:M*clang)
-CPPFLAGS+= -Os
-.endif
 # CPPFLAGS+= -DBOOT_MSG_COM0
 
 # Make sure we override any optimization options specified by the user
-#.include "${.PARSEDIR}/../Makefile.inc"
-#COPTS=	${OPT_SIZE.${ACTIVE_CC}}
-#DBG=
+.include "${.PARSEDIR}/../Makefile.inc"
+COPTS=	${OPT_SIZE.${ACTIVE_CC}}
+DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
 
@@ -77,10 +73,6 @@ CPUFLAGS=  -march=i386 -mtune=i386
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
-.if defined(__MINIX)
-CPPFLAGS+= -I${DESTDIR}/usr/include
-CPPFLAGS+= -I${.CURDIR}/../../../../../../
-.endif
 
 CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 		-DLIBSA_NO_TWIDDLE \
@@ -123,6 +115,9 @@ SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .if defined(__MINIX)
 SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
+CPPFLAGS+= -isystem ${DESTDIR}/usr/include
+CPPFLAGS+= -D_MINIX
+AFLAGS+=       -Wa,--divide
 .endif
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
@@ -133,9 +128,10 @@ KERN_AS=        library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=        ${KERNLIB}
 .else
-# MINIX
-LIBKERN= # use MINIX minc
+# use MINIX minc
+LIBKERN= ${DESTDIR}/usr/lib/libminc.a
 .endif
+
 
 cleandir distclean: .WAIT cleanlibdir
 
@@ -149,7 +145,7 @@ CLEANFILES+= ${PROG}.sym ${PROG}.map
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
-		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST} ${LDADD}
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \

@@ -1,4 +1,4 @@
-.\"	$NetBSD: byteorder.3,v 1.14 2006/02/04 22:47:28 uwe Exp $
+.\"	$NetBSD: byteorder.3,v 1.15 2011/05/03 04:07:39 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)byteorder.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 10, 2004
+.Dd May 3, 2011
 .Dt BYTEORDER 3
 .Os
 .Sh NAME
@@ -64,23 +64,12 @@ addresses and ports as returned by
 and
 .Xr getservent 3 .
 .Sh SEE ALSO
+.Xr bswap 3 ,
 .Xr gethostbyname 3 ,
 .Xr getservent 3
 .Sh STANDARDS
-The
-.Fn htonl ,
-.Fn htons ,
-.Fn ntohl ,
-and
-.Fn ntohs
-functions conform to
+The described functions conform to
 .St -p1003.1-2001 .
-Their use of the fixed-width integer types
-.Fa uint16_t
-and
-.Fa uint32_t
-first appeared in
-.St -xns5 .
 .Sh HISTORY
 The
 .Nm byteorder

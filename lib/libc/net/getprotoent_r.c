@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent_r.c,v 1.5 2005/04/18 19:39:45 kleink Exp $	*/
+/*	$NetBSD: getprotoent_r.c,v 1.6 2011/10/15 23:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getprotoent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotoent_r.c,v 1.5 2005/04/18 19:39:45 kleink Exp $");
+__RCSID("$NetBSD: getprotoent_r.c,v 1.6 2011/10/15 23:00:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ void
 setprotoent_r(int f, struct protoent_data *pd)
 {
 	if (pd->fp == NULL)
-		pd->fp = fopen(_PATH_PROTOCOLS, "r");
+		pd->fp = fopen(_PATH_PROTOCOLS, "re");
 	else
 		rewind(pd->fp);
 	pd->stayopen |= f;
@@ -89,7 +89,7 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 	size_t i = 0;
 	int oerrno;
 
-	if (pd->fp == NULL && (pd->fp = fopen(_PATH_PROTOCOLS, "r")) == NULL)
+	if (pd->fp == NULL && (pd->fp = fopen(_PATH_PROTOCOLS, "re")) == NULL)
 		return NULL;
 
 	for (;;) {

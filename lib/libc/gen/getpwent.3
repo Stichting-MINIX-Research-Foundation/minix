@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.37 2010/03/22 19:30:53 joerg Exp $
+.\"	$NetBSD: getpwent.3,v 1.38 2011/04/28 16:35:05 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -236,9 +236,25 @@ on success or entry not found, and non-zero on failure, setting the global
 variable
 .Dv errno
 to indicate the nature of the failure.
+.Sh FILES
+.Bl -tag -width /etc/master.passwd -compact
+.It Pa /etc/pwd.db
+The insecure password database file
+.It Pa /etc/spwd.db
+The secure password database file
+.It Pa /etc/master.passwd
+The current password file
+.It Pa /etc/passwd
+A Version 7 format password file
+.El
+.Sh COMPATIBILITY
+The historic function
+.Fn setpwfile
+which allowed the specification of alternative password databases,
+has been deprecated and is no longer available.
 .Sh ERRORS
 The following error codes may be set in
-.Va errno 
+.Va errno
 for
 .Nm getpwent ,
 .Nm getpwent_r ,
@@ -249,10 +265,10 @@ for
 and
 .Nm setpassent :
 .Bl -tag -width Er
-.It Bq Er EIO
-An I/O error has occurred.
 .It Bq Er EINTR
 A signal was caught during the database search.
+.It Bq Er EIO
+An I/O error has occurred.
 .It Bq Er EMFILE
 The limit on open files for this process has been reached.
 .It Bq Er ENFILE
@@ -260,7 +276,7 @@ The system limit on open files has been reached.
 .El
 .Pp
 The following error code may be set in
-.Va errno 
+.Va errno
 for
 .Nm getpwent_r ,
 .Nm getpwnam_r ,
@@ -279,17 +295,6 @@ and
 Other
 .Dv errno
 values may be set depending on the specific database backends.
-.Sh FILES
-.Bl -tag -width /etc/master.passwd -compact
-.It Pa /etc/pwd.db
-The insecure password database file
-.It Pa /etc/spwd.db
-The secure password database file
-.It Pa /etc/master.passwd
-The current password file
-.It Pa /etc/passwd
-A Version 7 format password file
-.El
 .Sh SEE ALSO
 .Xr getlogin 2 ,
 .Xr getgrent 3 ,
@@ -363,8 +368,3 @@ avoided, if possible.
 makes no attempt to suppress duplicate information if multiple
 sources are specified in
 .Xr nsswitch.conf 5 .
-.Sh COMPATIBILITY
-The historic function
-.Fn setpwfile
-which allowed the specification of alternative password databases,
-has been deprecated and is no longer available.

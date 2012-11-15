@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.12 2008/06/14 16:01:07 tnozaki Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.13 2011/05/23 14:53:46 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.12 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.13 2011/05/23 14:53:46 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -393,7 +393,7 @@ _citrus_BIG5_wcrtomb_priv(_BIG5EncodingInfo * __restrict ei,
 			  size_t n, wchar_t wc, _BIG5State * __restrict psenc,
 			  size_t * __restrict nresult)
 {
-	int l, ret;
+	size_t l, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);

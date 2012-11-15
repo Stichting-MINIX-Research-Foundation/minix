@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.3 2011/03/24 17:05:39 bouyer Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.4 2012/07/27 09:10:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
  * exactly what we're doing here.
  */
 
-#include <prop/proplib.h>
 #include "prop_object_impl.h" /* hide kernel vs. not-kernel vs. standalone */
+#include <prop/proplib.h>
 
 bool
 prop_array_get_bool(prop_array_t array,

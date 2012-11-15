@@ -1,7 +1,7 @@
 #ifndef __WATCHDOG_H__
 #define __WATCHDOG_H__
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "arch_watchdog.h"
 
 extern int watchdog_enabled; /* if set to non-zero the watch dog is enabled */

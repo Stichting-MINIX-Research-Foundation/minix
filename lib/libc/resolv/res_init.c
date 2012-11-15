@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.22 2009/10/24 17:24:01 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.26 2012/09/09 18:04:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.22 2009/10/24 17:24:01 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.26 2012/09/09 18:04:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,12 +149,12 @@ __weak_alias(res_setservers,__res_setservers)
 #include <sys/systeminfo.h>
 #endif
 
-static void res_setoptions __P((res_state, const char *, const char *));
+static void res_setoptions(res_state, const char *, const char *);
 
 #ifdef RESOLVSORT
 static const char sort_mask[] = "/&";
 #define ISSORTMASK(ch) (strchr(sort_mask, ch) != NULL)
-static u_int32_t net_mask __P((struct in_addr));
+static uint32_t net_mask(struct in_addr);
 #endif
 
 #if !defined(isascii)	/*%< XXX - could be a function */
@@ -348,14 +348,14 @@ __res_vinit(res_state statp, int preinit) {
 	 line[sizeof(name) - 1] == '\t'))
 
 	nserv = 0;
-	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
+	if ((fp = fopen(_PATH_RESCONF, "re")) != NULL) {
 	    struct stat st;
 #ifndef __minix
 	    struct kevent kc;
 #endif /* !__minix */
 
 	    /* read the config file */
-	    while (fgets(buf, sizeof(buf), fp) != NULL) {
+	    while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
 		/* skip comments */
 		if (*buf == ';' || *buf == '#')
 			continue;
@@ -507,9 +507,7 @@ __res_vinit(res_state statp, int preinit) {
 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
 			st.st_mtimespec;
 #ifndef __minix
-	    statp->_u._ext.ext->kq = kqueue();
-	    (void)fcntl(statp->_u._ext.ext->kq, F_SETFD, FD_CLOEXEC);
-	    (void)fcntl(statp->_u._ext.ext->resfd, F_SETFD, FD_CLOEXEC);
+	    statp->_u._ext.ext->kq = kqueue1(O_CLOEXEC);
 	    EV_SET(&kc, statp->_u._ext.ext->resfd, EVFILT_VNODE,
 		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
 		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
@@ -615,6 +613,7 @@ res_setoptions(res_state statp, const char *options, const char *source)
 {
 	const char *cp = options;
 	int i;
+	size_t j;
 	struct __res_state_ext *ext = statp->_u._ext.ext;
 
 #ifdef DEBUG
@@ -694,6 +693,9 @@ res_setoptions(res_state statp, const char *options, const char *source)
 		} else if (!strncmp(cp, "no-check-names",
 				    sizeof("no-check-names") - 1)) {
 			statp->options |= RES_NOCHECKNAME;
+		} else if (!strncmp(cp, "check-names",
+				    sizeof("check-names") - 1)) {
+			statp->options &= ~RES_NOCHECKNAME;
 		}
 #ifdef RES_USE_EDNS0
 		else if (!strncmp(cp, "edns0", sizeof("edns0") - 1)) {
@@ -707,17 +709,17 @@ res_setoptions(res_state statp, const char *options, const char *source)
 			if (ext == NULL)
 				goto skip;
 			cp += sizeof("nibble:") - 1;
-			i = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix) - 1);
-			strncpy(ext->nsuffix, cp, (size_t)i);
-			ext->nsuffix[i] = '\0';
+			j = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix) - 1);
+			strncpy(ext->nsuffix, cp, j);
+			ext->nsuffix[j] = '\0';
 		}
 		else if (!strncmp(cp, "nibble2:", sizeof("nibble2:") - 1)) {
 			if (ext == NULL)
 				goto skip;
 			cp += sizeof("nibble2:") - 1;
-			i = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix2) - 1);
-			strncpy(ext->nsuffix2, cp, (size_t)i);
-			ext->nsuffix2[i] = '\0';
+			j = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix2) - 1);
+			strncpy(ext->nsuffix2, cp, j);
+			ext->nsuffix2[j] = '\0';
 		}
 		else if (!strncmp(cp, "v6revmode:", sizeof("v6revmode:") - 1)) {
 			cp += sizeof("v6revmode:") - 1;
@@ -741,11 +743,10 @@ res_setoptions(res_state statp, const char *options, const char *source)
 
 #ifdef RESOLVSORT
 /* XXX - should really support CIDR which means explicit masks always. */
-static u_int32_t
-net_mask(in)		/*!< XXX - should really use system's version of this  */
-	struct in_addr in;
+static uint32_t
+net_mask(struct in_addr in) /*!< XXX - should really use system's version of this  */
 {
-	register u_int32_t i = ntohl(in.s_addr);
+	register uint32_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return (htonl(IN_CLASSA_NET));
@@ -761,30 +762,31 @@ void
 res_rndinit(res_state statp)
 {
 	struct timeval now;
-	u_int32_t u32;
-	u_int16_t u16;
+	uint32_t u32;
+	uint16_t u16;
 	u_char *rnd = statp->_rnd == NULL ? srnd : statp->_rnd;
 
 	gettimeofday(&now, NULL);
-	u32 = (u_int32_t)now.tv_sec;
+	u32 = (uint32_t)now.tv_sec;
 	memcpy(rnd, &u32, 4);
 	u32 = now.tv_usec;
 	memcpy(rnd + 4, &u32, 4);
-	u32 += (u_int32_t)now.tv_sec;
+	u32 += (uint32_t)now.tv_sec;
 	memcpy(rnd + 8, &u32, 4);
 	u16 = getpid();
 	memcpy(rnd + 12, &u16, 2);
 }
 
 u_int
-res_nrandomid(res_state statp) {
+res_nrandomid(res_state statp)
+{
 	struct timeval now;
-	u_int16_t u16;
+	uint16_t u16;
 	MD5_CTX ctx;
 	u_char *rnd = statp->_rnd == NULL ? srnd : statp->_rnd;
 
 	gettimeofday(&now, NULL);
-	u16 = (u_int16_t) (now.tv_sec ^ now.tv_usec);
+	u16 = (uint16_t) (now.tv_sec ^ now.tv_usec);
 	memcpy(rnd + 14, &u16, 2);
 #ifndef HAVE_MD5
 	MD5_Init(&ctx);
@@ -807,7 +809,8 @@ res_nrandomid(res_state statp) {
  * This routine is not expected to be user visible.
  */
 void
-res_nclose(res_state statp) {
+res_nclose(res_state statp)
+{
 	int ns;
 
 	if (statp->_vcsock >= 0) { 
@@ -824,7 +827,8 @@ res_nclose(res_state statp) {
 }
 
 void
-res_ndestroy(res_state statp) {
+res_ndestroy(res_state statp)
+{
 	res_nclose(statp);
 	if (statp->_u._ext.ext != NULL) {
 		if (statp->_u._ext.ext->kq != -1)
@@ -842,21 +846,24 @@ res_ndestroy(res_state statp) {
 }
 
 const char *
-res_get_nibblesuffix(res_state statp) {
+res_get_nibblesuffix(res_state statp)
+{
 	if (statp->_u._ext.ext)
 		return (statp->_u._ext.ext->nsuffix);
 	return ("ip6.arpa");
 }
 
 const char *
-res_get_nibblesuffix2(res_state statp) {
+res_get_nibblesuffix2(res_state statp)
+{
 	if (statp->_u._ext.ext)
 		return (statp->_u._ext.ext->nsuffix2);
 	return ("ip6.int");
 }
 
 void
-res_setservers(res_state statp, const union res_sockaddr_union *set, int cnt) {
+res_setservers(res_state statp, const union res_sockaddr_union *set, int cnt)
+{
 	int i, nserv;
 	size_t size;
 
@@ -907,10 +914,11 @@ res_setservers(res_state statp, const union res_sockaddr_union *set, int cnt) {
 }
 
 int
-res_getservers(res_state statp, union res_sockaddr_union *set, int cnt) {
+res_getservers(res_state statp, union res_sockaddr_union *set, int cnt)
+{
 	int i;
 	size_t size;
-	u_int16_t family;
+	uint16_t family;
 
 	for (i = 0; i < statp->nscount && i < cnt; i++) {
 		if (statp->_u._ext.ext)

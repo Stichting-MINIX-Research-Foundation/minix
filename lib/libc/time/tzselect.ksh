@@ -1,8 +1,8 @@
 #! /bin/ksh
 #
-#	$NetBSD: tzselect.ksh,v 1.6 2009/12/31 22:49:16 mlelstv Exp $
+#	$NetBSD: tzselect.ksh,v 1.7 2012/08/09 12:38:26 christos Exp $
 #
-VERSION='@(#)tzselect.ksh	8.2'
+VERSION=see_Makefile
 
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
@@ -57,7 +57,7 @@ EOF
     exit 0
 elif [ "$1" = "--version" ]; then
     cat <<EOF
-tzselect $VERSION
+tzselect $TZVERSION
 EOF
     exit 0
 fi

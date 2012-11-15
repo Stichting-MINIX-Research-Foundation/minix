@@ -1,4 +1,4 @@
-/*	$NetBSD: labs.c,v 1.7 2003/08/07 16:43:41 agc Exp $	*/
+/*	$NetBSD: labs.c,v 1.8 2012/06/25 22:32:45 abs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,15 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)labs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: labs.c,v 1.7 2003/08/07 16:43:41 agc Exp $");
+__RCSID("$NetBSD: labs.c,v 1.8 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
 long
-labs(j)
-	long j;
+labs(long j)
 {
 	return(j < 0 ? -j : j);
 }

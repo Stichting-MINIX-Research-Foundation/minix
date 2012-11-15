@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet_net.3,v 1.2 2008/04/30 13:10:50 martin Exp $
+.\"	$NetBSD: inet_net.3,v 1.5 2012/07/20 20:48:59 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 8, 2001
+.Dd July 20, 2012
 .Dt INET_NET 3
 .Os
 .Sh NAME
@@ -48,14 +48,17 @@
 The
 .Fn inet_net_ntop
 function converts an Internet network number from network format (usually a
-.Ft struct in_addr
+.Vt struct in_addr
 or some other binary form, in network byte order) to CIDR presentation format
 (suitable for external display purposes).
+The
 .Fa bits
-is the number of bits in
+argument is the number of bits in
 .Fa src
 that are the network number.
-It returns NULL if a system error occurs (in which case,
+It returns
+.Dv NULL
+if an error occurs (in which case
 .Va errno
 will have been set), or it returns a pointer to the destination string.
 .Pp
@@ -63,16 +66,13 @@ The
 .Fn inet_net_pton
 function converts a presentation format Internet network number (that is,
 printable form as held in a character string) to network format (usually a
-.Ft struct in_addr
+.Vt struct in_addr
 or some other internal binary representation, in network byte order).
 It returns the number of bits (either computed based on the class, or
-specified with /CIDR), or -1 if a failure occurred
+specified with /CIDR), or \-1 if a failure occurred
 (in which case
 .Va errno
-will have been set.
-It will be set to
-.Er ENOENT
-if the Internet network number was not valid).
+will have been set).
 .Pp
 The currently supported values for
 .Fa af
@@ -80,8 +80,9 @@ are
 .Dv AF_INET
 and
 .Dv AF_INET6 .
+The
 .Fa size
-is the size of the result buffer
+argument is the size of the result buffer
 .Fa dst .
 .Sh NETWORK NUMBERS (IP VERSION 4)
 Internet network numbers may be specified in one of the following forms:
@@ -95,11 +96,11 @@ a
 .Pp
 When four parts are specified, each is interpreted
 as a byte of data and assigned, from left to right,
-to the four bytes of an Internet network number.  Note
-that when an Internet network number is viewed as a 32-bit
+to the four bytes of an Internet network number.
+Note that when an Internet network number is viewed as a 32-bit
 integer quantity on a system that uses little-endian
 byte order (such as the
-.Tn Intel 386, 486
+.Tn Intel 386 , 486 ,
 and
 .Tn Pentium
 processors) the bytes referred to above appear as
@@ -108,14 +109,14 @@ That is, little-endian bytes are ordered from right to left.
 .Pp
 When a three part number is specified, the last
 part is interpreted as a 16-bit quantity and placed
-in the right-most two bytes of the Internet network number.
+in the rightmost two bytes of the Internet network number.
 This makes the three part number format convenient
 for specifying Class B network numbers as
 .Dq Li 128.net.host .
 .Pp
 When a two part number is supplied, the last part
 is interpreted as a 24-bit quantity and placed in
-the right most three bytes of the Internet network number.
+the rightmost three bytes of the Internet network number.
 This makes the two part number format convenient
 for specifying Class A network numbers as
 .Dq Li net.host .
@@ -127,7 +128,7 @@ rearrangement.
 All numbers supplied as
 .Dq parts
 in a
-.Ql  \&.
+.Ql \&.
 notation
 may be decimal, octal, or hexadecimal, as specified
 in the C language (i.e., a leading 0x or 0X implies
@@ -137,15 +138,58 @@ otherwise, the number is interpreted as decimal).
 .\" .Sh NETWORK NUMBERS (IP VERSION 6)
 .\" XXX - document this!
 .\"
+.Sh ERRORS
+The
+.Fn inet_net_ntop
+and
+.Fn inet_net_pton
+functions may fail with
+.Bl -tag -width Er
+.It Bq Er EAFNOSUPPORT
+The value of
+.Fa af
+was not
+.Dv AF_INET
+or
+.Dv AF_INET6 .
+.It Bq Er EMSGSIZE
+The conversion of
+.Fa src
+overflows
+.Fa size
+of
+.Fa dst .
+.El
+.Pp
+The
+.Fn inet_net_ntop
+function may fail with
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa bits
+argument contains an invalid number of bits
+for the requested address family.
+.El
+.Pp
+The
+.Fn inet_net_pton
+function may fail with
+.Bl -tag -width Er
+.It Bq Er ENOENT
+The
+.Fa src
+was not a valid Internet network number.
+.El
 .Sh SEE ALSO
 .Xr byteorder 3 ,
 .Xr inet 3 ,
 .Xr networks 5
 .Sh HISTORY
 The
-.Nm inet_net_ntop
+.Fn inet_net_ntop
 and
-.Nm inet_net_pton
+.Fn inet_net_pton
 functions appeared in BIND 4.9.4 and thence
 .Nx 1.3 .
 Support for

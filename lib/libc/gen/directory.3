@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.36 2010/12/17 19:20:42 njoly Exp $
+.\"	$NetBSD: directory.3,v 1.38 2012/10/08 18:15:09 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 2010
+.Dd October 15, 2011
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@
 .Ft long
 .Fn telldir "DIR *dirp"
 .Ft void
-.Fn seekdir "DIR *dirp" "long  loc"
+.Fn seekdir "DIR *dirp" "long loc"
 .Ft void
 .Fn rewinddir "DIR *dirp"
 .Ft int
@@ -393,3 +393,7 @@ and
 .Fn dirfd
 functions appeared in
 .Bx 4.2 .
+The
+.Fn fdopendir
+function appeared in
+.Nx 6.0 .

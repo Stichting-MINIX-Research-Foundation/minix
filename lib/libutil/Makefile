@@ -8,8 +8,6 @@ USE_SHLIBDIR=	yes
 .include "${NETBSDSRCDIR}/common/lib/libutil/Makefile.inc"
 
 WARNS?=	5
-# LSC MINIX Does not compile with -Werror
-NOGCCERROR=yes
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
 LINTFLAGS+=-w
@@ -37,8 +35,8 @@ MAN=	efun.3 getbootfile.3 getfstypename.3 getlabelsector.3 \
 	ttymsg.3 util.3
 
 .else
-SRCS+=	efun.c getbootfile.c \
-	getmntopts.c  sockaddr_snprintf.c\
+SRCS+=	efun.c \
+	getmntopts.c sockaddr_snprintf.c\
 	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
 	logwtmp.c logwtmpx.c opendisk.c \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
@@ -46,7 +44,7 @@ SRCS+=	efun.c getbootfile.c \
 	secure_path.c stat_flags.c \
 	ttyaction.c \
 
-MAN=	efun.3 getbootfile.3 \
+MAN=	efun.3 \
 	getmntopts.3 \
 	login.3 login_cap.3 loginx.3 \
 	opendisk.3 openpty.3 pidfile.3 pidlock.3 \

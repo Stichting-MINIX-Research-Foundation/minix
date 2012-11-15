@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.50 2010/09/24 12:00:10 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.53 2012/07/22 09:21:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.50 2010/09/24 12:00:10 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.53 2012/07/22 09:21:03 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: mdreloc.c,v 1.50 2010/09/24 12:00:10 skrll Exp $");
 #define _RF_U		0x04000000		/* Unaligned */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	( (s) & 0xff)		/* right shift */
-static const int reloc_target_flags[] = {
+static const int reloc_target_flags[R_TYPE(TLS_TPOFF64)+1] = {
 	0,							/* NONE */
 	_RF_S|_RF_A|		_RF_SZ(8)  | _RF_RS(0),		/* RELOC_8 */
 	_RF_S|_RF_A|		_RF_SZ(16) | _RF_RS(0),		/* RELOC_16 */
@@ -125,6 +125,7 @@ static const int reloc_target_flags[] = {
 	_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),		/* REGISTER */
 	_RF_S|_RF_A|	_RF_U|	_RF_SZ(64) | _RF_RS(0),		/* UA64 */
 	_RF_S|_RF_A|	_RF_U|	_RF_SZ(16) | _RF_RS(0),		/* UA16 */
+/* TLS relocs not represented here! */
 };
 
 #ifdef RTLD_DEBUG_RELOC
@@ -139,7 +140,13 @@ static const char *reloc_names[] = {
 	"HM10", "LM22", "PC_HH22", "PC_HM10", "PC_LM22", 
 	"WDISP16", "WDISP19", "GLOB_JMP", "7", "5", "6",
 	"DISP64", "PLT64", "HIX22", "LOX10", "H44", "M44", 
-	"L44", "REGISTER", "UA64", "UA16"
+	"L44", "REGISTER", "UA64", "UA16",
+	"TLS_GD_HI22", "TLS_GD_LO10", "TLS_GD_ADD", "TLS_GD_CALL",
+	"TLS_LDM_HI22", "TLS_LDM_LO10", "TLS_LDM_ADD", "TLS_LDM_CALL",
+	"TLS_LDO_HIX22", "TLS_LDO_LOX10", "TLS_LDO_ADD", "TLS_IE_HI22", 
+	"TLS_IE_LO10", "TLS_IE_LD", "TLS_IE_LDX", "TLS_IE_ADD", "TLS_LE_HIX22", 
+	"TLS_LE_LOX10", "TLS_DTPMOD32", "TLS_DTPMOD64", "TLS_DTPOFF32", 
+	"TLS_DTPOFF64", "TLS_TPOFF32", "TLS_TPOFF64",
 };
 #endif
 
@@ -150,6 +157,7 @@ static const char *reloc_names[] = {
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
+#define RELOC_TLS(t)			(t >= R_TYPE(TLS_GD_HI22))
 
 static const long reloc_target_bitmask[] = {
 #define _BM(x)	(~(-(1ULL << (x))))
@@ -315,6 +323,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		if (type == R_TYPE(NONE))
 			continue;
 
+		/* OLO10 relocations have extra info */
+		if ((type & 0x00ff) == R_SPARC_OLO10)
+			type = R_SPARC_OLO10;
+
 		/* We do JMP_SLOTs in _rtld_bind() below */
 		if (type == R_TYPE(JMP_SLOT))
 			continue;
@@ -325,12 +337,74 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		/*
 		 * We use the fact that relocation types are an `enum'
-		 * Note: R_SPARC_UA16 is currently numerically largest.
+		 * Note: R_SPARC_TLS_TPOFF64 is currently numerically largest.
 		 */
-		if (type > R_TYPE(UA16))
-			return (-1);
+		if (type > R_TYPE(TLS_TPOFF64)) {
+			dbg(("unknown relocation type %x at %p", type, rela));
+			return -1;
+		}
 
 		value = rela->r_addend;
+
+		/*
+		 * Handle TLS relocations here, they are different.
+		 */
+		if (RELOC_TLS(type)) {
+			switch (type) {
+				case R_TYPE(TLS_DTPMOD64):
+					def = _rtld_find_symdef(symnum, obj,
+					    &defobj, false);
+					if (def == NULL)
+						return -1;
+
+					*where = (Elf64_Addr)defobj->tlsindex;
+
+					rdbg(("TLS_DTPMOD64 %s in %s --> %p",
+					    obj->strtab +
+					    obj->symtab[symnum].st_name,
+					    obj->path, (void *)*where));
+
+					break;
+
+				case R_TYPE(TLS_DTPOFF64):
+					def = _rtld_find_symdef(symnum, obj,
+					    &defobj, false);
+					if (def == NULL)
+						return -1;
+
+					*where = (Elf64_Addr)(def->st_value
+					    + rela->r_addend);
+
+					rdbg(("DTPOFF64 %s in %s --> %p",
+					    obj->strtab +
+					        obj->symtab[symnum].st_name,
+					    obj->path, (void *)*where));
+
+					break;
+
+				case R_TYPE(TLS_TPOFF64):
+					def = _rtld_find_symdef(symnum, obj,
+					    &defobj, false);
+					if (def == NULL)
+						return -1;
+
+					if (!defobj->tls_done &&
+						_rtld_tls_offset_allocate(obj))
+						     return -1;
+
+					*where = (Elf64_Addr)(def->st_value -
+			                            defobj->tlsoffset +
+						    rela->r_addend);
+
+		                        rdbg(("TLS_TPOFF64 %s in %s --> %p",
+		                            obj->strtab +
+					    obj->symtab[symnum].st_name,
+		                            obj->path, (void *)*where));
+
+	                		break;
+			}
+			continue;
+		}
 
 		/*
 		 * Handle relative relocs here, as an optimization.
@@ -352,6 +426,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			/* Add in the symbol's absolute address */
 			value += (Elf_Addr)(defobj->relocbase + def->st_value);
+		}
+
+		if (type == R_SPARC_OLO10) {
+			value = (value & 0x3ff)
+			    + (((Elf64_Xword)rela->r_info<<32)>>40);
 		}
 
 		if (RELOC_PC_RELATIVE(type)) {
@@ -471,9 +550,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		rela -= 4;
 	}
 
+	_rtld_shared_enter();
 	err = _rtld_relocate_plt_object(obj, rela, &result);
 	if (err)
 		_rtld_die();
+	_rtld_shared_exit();
 
 	return (caddr_t)result;
 }

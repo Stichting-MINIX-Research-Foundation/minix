@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.8 2010/06/30 13:38:10 jruoho Exp $
+.\"     $NetBSD: getdelim.3,v 1.9 2011/04/20 23:37:51 enami Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,6 +108,7 @@ standard output.
 char *line = NULL;
 size_t linesize = 0;
 ssize_t linelen;
+
 while ((linelen = getline(\*[Am]line, \*[Am]linesize, fp)) != -1)
 	fwrite(line, linelen, 1, stdout);
 
@@ -117,9 +118,9 @@ if (ferror(fp))
 .Sh ERRORS
 .Bl -tag -width [EOVERFLOW]
 .It Bq Er EINVAL
-.Fa *lineptr
+.Fa lineptr
 or
-.Fa *n
+.Fa n
 is a
 .Dv NULL
 pointer.

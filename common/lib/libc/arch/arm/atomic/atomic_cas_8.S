@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_8.S,v 1.1 2008/11/18 15:22:56 matt Exp $ */
+/* $NetBSD: atomic_cas_8.S,v 1.3 2012/08/31 23:41:52 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,37 +27,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <machine/asm.h>
 
-RCSID("$NetBSD: atomic_cas_8.S,v 1.1 2008/11/18 15:22:56 matt Exp $")
+#include "atomic_op_asm.h"
 
-ENTRY(atomic_cas_8)
-	XPUSH	{r4,r5}			/* we need some more registers */
-	and	r3, r0, #3		/* which byte do we replace? */
-#if __ARMEB__
-	eor	r3, r3, #3		/* bytes are reversed on BE */
-#endif
-	mov	r3, r3, lsl #3		/* multiply by 8 */
-	mov	r1, r1, lsl r3		/* mov old value to correct byte */
-	eor	r2, r1, r2, lsl r3	/* move new value to correct byte */
-/*	eor	r2, r2, r1 */		/* new value is now (old ^ new) */
-	mov	r5, #0xff		/* load mask */
-	mov	r5, r5, lsl r3		/* and move to correct byte */
-	mov	r3, r0			/* move pointer */
-
-1:	ldrex	r4, [r3]		/* load 32bit value */
-	and	r0, r4, r5		/* clear other bytes */
-	teq	r0, r1			/* equal old value? */
-	bne	2f			/*   nope, bail. */
-	eor	r4, r4, r2		/* new == old ^ (old ^ new) */
-	strex	ip, r4, [r3]		/* attempt to store it */
+#if defined(_ARM_ARCH_6)
+/*
+ * ARMv6 has load-exclusive/store-exclusive which works for both user
+ * and kernel.
+ */
+ENTRY_NP(_atomic_cas_8)
+	mov	r3, r0			/* we need r0 for return value */
+1:
+	ldrexb	r0, [r3]		/* load old value */
+	teq	r0, r1			/*   compare? */
+	RETc(ne)			/*     return if different */
+	strexb	ip, r2, [r3]		/* store new value */
 	cmp	ip, #0			/*   succeed? */
-	bne	1b			/* nope, try again. */
-
-2:	XPOP	{r4,r5}			/* don't need these anymore */
-	and	r1, r3, #3
-#if __ARMEB__
-	eor	r1, r1, #3
+	bne	1b			/*     nope, try again. */
+#ifdef _ARM_ARCH_7
+	dsb				/* data synchronization barrier */
+#else
+	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
 #endif
-	mov	r0, r0, lsr r1		/* shift it back to lsb byte */
-	RET
+	RET				/* return. */
+	END(_atomic_cas_8)
+
+ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
+STRONG_ALIAS(_atomic_cas_char,_atomic_cas_8)
+STRONG_ALIAS(_atomic_cas_uchar,_atomic_cas_8)
+
+#endif /* _ARCH_ARM_6 */

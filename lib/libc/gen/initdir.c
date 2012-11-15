@@ -1,4 +1,4 @@
-/*	$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $	*/
+/*	$NetBSD: initdir.c,v 1.3 2012/03/13 21:13:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $");
+__RCSID("$NetBSD: initdir.c,v 1.3 2012/03/13 21:13:36 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -41,6 +41,11 @@ __RCSID("$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $");
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/types.h>
+
+#if !defined(O_CLOEXEC)
+#define O_CLOEXEC 0
+#endif
+
 #endif
 
 #include "reentrant.h"
@@ -161,8 +166,7 @@ retry:
 		 */
 		if (flags & DTF_REWIND) {
 			(void) close(fd);
-			if ((fd = open(name, O_RDONLY)) == -1 ||
-			    fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+			if ((fd = open(name, O_RDONLY | O_CLOEXEC)) == -1) {
 				dirp->dd_buf = buf;
 				return errno;
 			}
@@ -247,7 +251,8 @@ retry:
 			}
 		}
 
-		dirp->dd_len = len;
+		_DIAGASSERT(__type_fit(int, len));
+		dirp->dd_len = (int)len;
 		dirp->dd_size = ddptr - dirp->dd_buf;
 	} else {
 		dirp->dd_len = incr;

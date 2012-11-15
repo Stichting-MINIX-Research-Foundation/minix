@@ -4,8 +4,7 @@
 /*===========================================================================*
  *                               tickdelay			    	     *
  *===========================================================================*/
-int tickdelay(ticks)
-long ticks;				/* number of ticks to wait */
+int tickdelay(clock_t ticks)
 {
 /* This function uses the synchronous alarm to delay for a while. This works
  * even if a previous synchronous alarm was scheduled, because the remaining

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.8 2009/04/12 19:43:37 christos Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.9 2012/03/13 21:13:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_parse.c,v 1.10 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_parse.c,v 1.8 2009/04/12 19:43:37 christos Exp $");
+__RCSID("$NetBSD: ns_parse.c,v 1.9 2012/03/13 21:13:39 christos Exp $");
 #endif
 #endif
 
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: ns_parse.c,v 1.8 2009/04/12 19:43:37 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <resolv.h>
 #include <string.h>
@@ -104,7 +105,8 @@ ns_skiprr(const u_char *ptr, const u_char *eom, ns_sect section, int count) {
 	}
 	if (ptr > eom)
 		RETERR(EMSGSIZE);
-	return (ptr - optr);
+	_DIAGASSERT(__type_fit(int, ptr - optr));
+	return (int)(ptr - optr);
 }
 
 int

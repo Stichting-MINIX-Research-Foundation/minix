@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bcmp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bcmp.3,v 1.13 2010/04/29 06:54:26 jruoho Exp $
+.\"	$NetBSD: bcmp.3,v 1.14 2012/05/05 21:24:19 dholland Exp $
 .\"
-.Dd April 29, 2010
+.Dd May 5, 2012
 .Dt BCMP 3
 .Os
 .Sh NAME
@@ -57,6 +57,11 @@ bytes long.
 Zero-length strings are always identical.
 .Pp
 The strings may overlap.
+.Pp
+This function is obsolete.
+The equivalent function
+.Xr memcmp 3
+should be used instead.
 .Sh SEE ALSO
 .Xr memcmp 3 ,
 .Xr strcasecmp 3 ,

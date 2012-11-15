@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getmntinfo.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_getmntinfo.c,v 1.2 2012/03/20 17:05:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_getmntinfo.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_getmntinfo.c,v 1.2 2012/03/20 17:05:59 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,9 +58,7 @@ __weak_alias(getmntinfo,_getmntinfo)
  * Return information about mounted filesystems.
  */
 int
-getmntinfo(mntbufp, flags)
-	struct statfs12 **mntbufp;
-	int flags;
+getmntinfo(struct statfs12 **mntbufp, int flags)
 {
 	static struct statfs12 *mntbuf;
 	static int mntsize;

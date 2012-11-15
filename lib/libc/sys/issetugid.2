@@ -1,4 +1,4 @@
-.\"	$NetBSD: issetugid.2,v 1.11 2003/08/07 16:44:00 agc Exp $
+.\"	$NetBSD: issetugid.2,v 1.12 2012/04/21 12:27:27 roy Exp $
 .\"	OpenBSD: issetugid.2,v 1.7 1997/02/18 00:16:09 deraadt Exp
 .\" FreeBSD: src/lib/libc/sys/issetugid.2,v 1.5.2.2 1999/09/18 16:18:59 phantom Exp
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" FreeBSD: src/lib/libc/sys/issetugid.2,v 1.5.2.2 1999/09/18 16:18:59 phantom Exp
 .\"
-.Dd April 22, 2000
+.Dd April 5, 2012
 .Dt ISSETUGID 2
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ system call which had either of the setuid or setgid bits set (and extra
 privileges were given as a result) or if it has changed any of its real,
 effective or saved user or group ID's since it began execution.
 .Pp
-This system call exists so that library routines (e.g., libc, libtermcap)
+This system call exists so that library routines (e.g., libc)
 can reliably determine if it is safe to use information
 that was obtained from the user, in particular the results from
 .Xr getenv 3

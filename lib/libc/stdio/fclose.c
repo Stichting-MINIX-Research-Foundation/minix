@@ -1,4 +1,4 @@
-/*	$NetBSD: fclose.c,v 1.17 2010/01/11 20:39:29 joerg Exp $	*/
+/*	$NetBSD: fclose.c,v 1.18 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fclose.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: fclose.c,v 1.17 2010/01/11 20:39:29 joerg Exp $");
+__RCSID("$NetBSD: fclose.c,v 1.18 2012/03/15 18:22:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: fclose.c,v 1.17 2010/01/11 20:39:29 joerg Exp $");
 #include "local.h"
 
 int
-fclose(fp)
-	FILE *fp;
+fclose(FILE *fp)
 {
 	int r;
 
@@ -58,7 +57,7 @@ fclose(fp)
 
 	if (fp->_flags == 0) {	/* not open! */
 		errno = EBADF;
-		return (EOF);
+		return EOF;
 	}
 	FLOCKFILE(fp);
 	WCIO_FREE(fp);
@@ -74,5 +73,5 @@ fclose(fp)
 	fp->_file = -1;
 	fp->_flags = 0;		/* Release this FILE for reuse. */
 	fp->_r = fp->_w = 0;	/* Mess up if reaccessed. */
-	return (r);
+	return r;
 }

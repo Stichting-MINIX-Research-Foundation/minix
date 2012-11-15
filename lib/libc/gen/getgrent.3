@@ -1,4 +1,4 @@
-.\"	$NetBSD: getgrent.3,v 1.30 2010/03/22 19:30:53 joerg Exp $
+.\"	$NetBSD: getgrent.3,v 1.31 2011/04/28 16:34:01 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -216,9 +216,19 @@ The
 and
 .Fn setgrent
 functions have no return value.
+.Sh FILES
+.Bl -tag -width /etc/group -compact
+.It Pa /etc/group
+group database file
+.El
+.Sh COMPATIBILITY
+The historic function
+.Fn setgrfile ,
+which allowed the specification of alternative group databases, has
+been deprecated and is no longer available.
 .Sh ERRORS
 The following error codes may be set in
-.Va errno 
+.Va errno
 for
 .Nm getgrent ,
 .Nm getgrent_r ,
@@ -229,10 +239,10 @@ for
 and
 .Nm setgroupent :
 .Bl -tag -width Er
-.It Bq Er EIO
-An I/O error has occurred.
 .It Bq Er EINTR
 A signal was caught during the database search.
+.It Bq Er EIO
+An I/O error has occurred.
 .It Bq Er EMFILE
 The limit on open files for this process has been reached.
 .It Bq Er ENFILE
@@ -240,7 +250,7 @@ The system limit on open files has been reached.
 .El
 .Pp
 The following error code may be set in
-.Va errno 
+.Va errno
 for
 .Nm getgrent_r ,
 .Nm getgrnam_r ,
@@ -259,11 +269,6 @@ and
 Other
 .Dv errno
 values may be set depending on the specific database backends.
-.Sh FILES
-.Bl -tag -width /etc/group -compact
-.It Pa /etc/group
-group database file
-.El
 .Sh SEE ALSO
 .Xr getpwent 3 ,
 .Xr group 5 ,
@@ -313,11 +318,6 @@ and
 .Fn getgrnam_r
 appeared in
 .Nx 3.0 .
-.Sh COMPATIBILITY
-The historic function
-.Fn setgrfile ,
-which allowed the specification of alternative group databases, has
-been deprecated and is no longer available.
 .Sh BUGS
 The functions
 .Fn getgrent ,

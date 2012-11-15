@@ -30,7 +30,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 int do_exec(struct proc * caller, message *m_ptr);
 #if ! USE_EXEC

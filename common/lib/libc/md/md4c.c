@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.4 2009/03/16 05:59:21 cegger Exp $	*/
+/*	$NetBSD: md4c.c,v 1.5 2012/03/20 16:21:41 matt Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -31,7 +31,7 @@
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md4c.c,v 1.4 2009/03/16 05:59:21 cegger Exp $");
+__RCSID("$NetBSD: md4c.c,v 1.5 2012/03/20 16:21:41 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,10 +76,10 @@ typedef uint32_t UINT4;
 #define S33 11
 #define S34 15
 
-static void MD4Transform __P((UINT4 [4], const unsigned char [64]));
+static void MD4Transform(UINT4 [4], const unsigned char [64]);
 
-static void Encode __P((unsigned char *, UINT4 *, unsigned int));
-static void Decode __P((UINT4 *, const unsigned char *, unsigned int));
+static void Encode(unsigned char *, UINT4 *, unsigned int);
+static void Decode(UINT4 *, const unsigned char *, unsigned int);
 
 static const unsigned char PADDING[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

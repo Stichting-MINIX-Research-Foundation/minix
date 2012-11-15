@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.10 2009/04/12 19:43:37 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.11 2012/03/13 21:13:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_print.c,v 1.12 2009/03/03 05:29:58 each Exp";
 #else
-__RCSID("$NetBSD: ns_print.c,v 1.10 2009/04/12 19:43:37 christos Exp $");
+__RCSID("$NetBSD: ns_print.c,v 1.11 2012/03/13 21:13:39 christos Exp $");
 #endif
 #endif
 
@@ -39,17 +39,19 @@ __RCSID("$NetBSD: ns_print.c,v 1.10 2009/04/12 19:43:37 christos Exp $");
 
 #include <isc/assertions.h>
 #include <isc/dst.h>
+#include <assert.h>
 #include <errno.h>
 #include <resolv.h>
+#include <stddef.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "port_after.h"
 
 #ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
+# define SPRINTF(x) ((int)strlen(sprintf/**/x))
 #else
-# define SPRINTF(x) ((size_t)sprintf x)
+# define SPRINTF(x) (sprintf x)
 #endif
 
 /* Forward. */
@@ -126,7 +128,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	if (name_ctx != NULL && ns_samename(name_ctx, name) == 1) {
 		T(addstr("\t\t\t", (size_t)3, &buf, &buflen));
 	} else {
-		len = prune_origin(name, origin);
+		len = (int)prune_origin(name, origin);
 		if (*name == '\0') {
 			goto root;
 		} else if (len == 0) {
@@ -161,7 +163,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_a:
 		if (rdlen != (size_t)NS_INADDRSZ)
 			goto formerr;
-		(void) inet_ntop(AF_INET, rdata, buf, buflen);
+		(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
 		addlen(strlen(buf), &buf, &buflen);
 		break;
 
@@ -331,7 +333,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_aaaa:
 		if (rdlen != (size_t)NS_IN6ADDRSZ)
 			goto formerr;
-		(void) inet_ntop(AF_INET6, rdata, buf, buflen);
+		(void) inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen);
 		addlen(strlen(buf), &buf, &buflen);
 		break;
 
@@ -422,7 +424,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			goto formerr;
 
 		/* Address. */
-		(void) inet_ntop(AF_INET, rdata, buf, buflen);
+		(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
 		addlen(strlen(buf), &buf, &buflen);
 		rdata += NS_INADDRSZ;
 
@@ -565,7 +567,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	    }
 
 	case ns_t_nxt: {
-		int n, c;
+		ptrdiff_t n, c;
 
 		/* Next domain name. */
 		T(addname(msg, msglen, &rdata, origin, &buf, &buflen));
@@ -574,7 +576,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		n = edata - rdata;
 		for (c = 0; c < n*8; c++)
 			if (NS_NXT_BIT_ISSET(c, rdata)) {
-				len = SPRINTF((tmp, " %s", p_type(c)));
+				len = SPRINTF((tmp, " %s", p_type((int)c)));
 				T(addstr(tmp, (size_t)len, &buf, &buflen));
 			}
 		break;
@@ -583,7 +585,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_cert: {
 		u_int c_type, key_tag, alg;
 		int n;
-		unsigned int siz;
+		size_t siz;
 		char base64_cert[8192], tmp1[40];
 		const char *leader;
 
@@ -689,7 +691,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			if (rdata + pbyte >= edata) goto formerr;
 			memset(&a, 0, sizeof(a));
 			memcpy(&a.s6_addr[pbyte], rdata, sizeof(a) - pbyte);
-			(void) inet_ntop(AF_INET6, &a, buf, buflen);
+			(void) inet_ntop(AF_INET6, &a, buf, (socklen_t)buflen);
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += sizeof(a) - pbyte;
 		}
@@ -885,7 +887,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		char base64_dhcid[8192];
 		const char *leader;
 
-		siz = (edata-rdata)*4/3 + 4; /* "+4" accounts for trailing \0 */
+		siz = (int)(edata-rdata)*4/3 + 4; /* "+4" accounts for trailing \0 */
 		if (siz > sizeof(base64_dhcid) * 3/4) {
 			const char *str = "record too long to print";
 			T(addstr(str, strlen(str), &buf, &buflen));
@@ -961,12 +963,12 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			T(addstr(".", 1, &buf, &buflen));
 			break;
 		case 1:
-			(void) inet_ntop(AF_INET, rdata, buf, buflen);
+			(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += 4;
 			break;
 		case 2:
-			(void) inet_ntop(AF_INET6, rdata, buf, buflen);
+			(void) inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen);
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += 16;
 			break;
@@ -978,7 +980,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		if (rdata >= edata)
 			break;
 
-		siz = (edata-rdata)*4/3 + 4; /* "+4" accounts for trailing \0 */
+		siz = (int)(edata-rdata)*4/3 + 4; /* "+4" accounts for trailing \0 */
 		if (siz > sizeof(base64_key) * 3/4) {
 			const char *str = "record too long to print";
 			T(addstr(str, strlen(str), &buf, &buflen));
@@ -1056,7 +1058,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		comment = "unknown RR type";
 		goto hexify;
 	}
-	return (buf - obuf);
+	_DIAGASSERT(__type_fit(int, buf - obuf));
+	return (int)(buf - obuf);
  formerr:
 	comment = "RR format error";
  hexify: {
@@ -1070,7 +1073,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		p = tmp;
 		p += SPRINTF((p, "\n\t"));
 		spaced = 0;
-		n = MIN(16, edata - rdata);
+		n = MIN(16, (int)(edata - rdata));
 		for (m = 0; m < n; m++)
 			p += SPRINTF((p, "%02x ", rdata[m]));
 		T(addstr(tmp, (size_t)(p - tmp), &buf, &buflen));
@@ -1087,7 +1090,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		T(addstr(tmp, (size_t)(p - tmp), &buf, &buflen));
 		rdata += n;
 	}
-	return (buf - obuf);
+	_DIAGASSERT(__type_fit(int, buf - obuf));
+	return (int)(buf - obuf);
     }
 }
 
@@ -1163,7 +1167,8 @@ charstr(const u_char *rdata, const u_char *edata, char **buf, size_t *buflen) {
 	}
 	if (addstr("\"", (size_t)1, buf, buflen) < 0)
 		goto enospc;
-	return (rdata - odata);
+	_DIAGASSERT(__type_fit(int, rdata - odata));
+	return (int)(rdata - odata);
  enospc:
 	errno = ENOSPC;
 	*buf = save_buf;
@@ -1207,7 +1212,8 @@ addname(const u_char *msg, size_t msglen,
 	*pp += n;
 	addlen(newlen, buf, buflen);
 	**buf = '\0';
-	return (newlen);
+	_DIAGASSERT(__type_fit(int, newlen));
+	return (int)newlen;
  enospc:
 	errno = ENOSPC;
 	*buf = save_buf;
@@ -1238,7 +1244,7 @@ static int
 addtab(size_t len, size_t target, int spaced, char **buf, size_t *buflen) {
 	size_t save_buflen = *buflen;
 	char *save_buf = *buf;
-	int t;
+	ptrdiff_t t;
 
 	if (spaced || len >= target - 1) {
 		T(addstr("  ", (size_t)2, buf, buflen));

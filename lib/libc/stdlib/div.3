@@ -1,4 +1,4 @@
-.\"	$NetBSD: div.3,v 1.12 2008/08/04 21:29:27 matt Exp $
+.\"	$NetBSD: div.3,v 1.14 2011/05/03 09:36:24 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,41 +31,57 @@
 .\"
 .\"     from: @(#)div.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 13, 2011
 .Dt DIV 3
 .Os
 .Sh NAME
-.Nm div
-.Nd return quotient and remainder from division
+.Nm div ,
+.Nm ldiv ,
+.Nm lldiv ,
+.Nm imaxdiv
+.Nd quotient and remainder from division
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft div_t
 .Fn div "int num" "int denom"
+.Ft ldiv_t
+.Fn ldiv "long int num" "long int denom"
+.Ft lldiv_t
+.Fn lldiv "long long int num" "long long int denom"
+.In inttypes.h
+.Ft imaxdiv_t
+.Fn imaxdiv "intmax_t num" "intmax_t denom"
 .Sh DESCRIPTION
-The
-.Fn div
-function
-computes the value
-.Fa num/denom
-and returns the quotient and remainder in a structure named
-.Fa div_t
-that contains two
-.Em int
-members named
-.Fa quot
+These functions compute the value of
+.Fa num / denom
+and return the quotient and remainder in a specific divison structure.
+The functions differ only with respect to the type of the return value and
+the parameters.
+.Pp
+The returned structure always contains two members named
+.Vt quot
 and
-.Fa rem .
+.Vt rem ,
+denoting the quotient and the remainder.
+The type of these correspond with the underlying type of the function.
+.Sh EXAMPLES
+The following example demonstrate the basic usage of the functions.
+.Bd -literal -offset indent
+div_t d;
+
+int a = 4321;
+int b = 1234;
+
+d = div(a, b);
+
+(void)printf("%d %d\en", d.quot, d.rem);
+.Ed
 .Sh SEE ALSO
-.Xr imaxdiv 3 ,
-.Xr ldiv 3 ,
-.Xr lldiv 3 ,
+.Xr fast_divide32 3 ,
 .Xr math 3 ,
 .Xr qdiv 3
 .Sh STANDARDS
-The
-.Fn div
-function
-conforms to
-.St -ansiC .
+All described functions conform to
+.St -isoC-99 .

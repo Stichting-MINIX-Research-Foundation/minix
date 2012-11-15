@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.56 2011/12/25 06:09:08 tsutsui Exp $	*/
+/*	$NetBSD: ufs.c,v 1.58 2012/05/21 21:34:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -208,35 +208,6 @@ static const char    *const typestr[] = {
 	0,
 	"WHT"
 };
-
-static int
-fn_match(const char *fname, const char *pattern)
-{
-	char fc, pc;
-
-	do {
-		fc = *fname++;
-		pc = *pattern++;
-		if (!fc && !pc)
-			return 1;
-		if (pc == '?' && fc)
-			pc = fc;
-	} while (fc == pc);
-
-	if (pc != '*')
-		return 0;
-	/*
-	 * Too hard (and unnecessary really) too check for "*?name" etc....
-	 * "**" will look for a '*' and "*?" a '?'
-	 */
-	pc = *pattern++;
-	if (!pc)
-		return 1;
-	while ((fname = strchr(fname, pc)))
-		if (fn_match(++fname, pattern))
-			return 1;
-	return 0;
-}
 #endif /* LIBSA_ENABLE_LS_OP */
 
 #ifdef LIBSA_LFS
@@ -955,7 +926,7 @@ ufs_ls(struct open_file *f, const char *pattern,
 				printf("bad dir entry\n");
 				goto out;
 			}
-			if (pattern && !fn_match(dp->d_name, pattern))
+			if (pattern && !fnmatch(dp->d_name, pattern))
 				continue;
 			n = alloc(sizeof *n + strlen(dp->d_name));
 			if (!n) {

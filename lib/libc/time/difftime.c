@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.10 2009/12/31 22:49:16 mlelstv Exp $	*/
+/*	$NetBSD: difftime.c,v 1.11 2012/03/20 16:39:08 matt Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	8.1";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.10 2009/12/31 22:49:16 mlelstv Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.11 2012/03/20 16:39:08 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -19,9 +19,7 @@ __RCSID("$NetBSD: difftime.c,v 1.10 2009/12/31 22:49:16 mlelstv Exp $");
 #include "private.h"	/* for time_t, TYPE_INTEGRAL, and TYPE_SIGNED */
 
 double
-difftime(time1, time0)
-const time_t	time1;
-const time_t	time0;
+difftime(const time_t time1, const time_t time0)
 {
 	/*
 	** If (sizeof (double) > sizeof (time_t)) simply convert and subtract

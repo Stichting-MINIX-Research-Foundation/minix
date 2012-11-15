@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_put.c,v 1.19 2009/02/12 06:40:14 lukem Exp $	*/
+/*	$NetBSD: bt_put.c,v 1.20 2011/06/26 22:20:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_put.c,v 1.19 2009/02/12 06:40:14 lukem Exp $");
+__RCSID("$NetBSD: bt_put.c,v 1.20 2011/06/26 22:20:31 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -127,7 +127,7 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 				return (RET_ERROR);
 			tkey.data = kb;
 			tkey.size = NOVFLSIZE;
-			memmove(kb, &pg, sizeof(pgno_t));
+			memmove(kb, &pg, sizeof(pg));
 			memmove(kb + sizeof(pgno_t),
 			    &key->size, sizeof(uint32_t));
 			dflags |= P_BIGKEY;
@@ -138,7 +138,7 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 				return (RET_ERROR);
 			tdata.data = db;
 			tdata.size = NOVFLSIZE;
-			memmove(db, &pg, sizeof(pgno_t));
+			memmove(db, &pg, sizeof(pg));
 			_DBFIT(data->size, uint32_t);
 			temp = (uint32_t)data->size;
 			(void)memmove(db + sizeof(pgno_t),

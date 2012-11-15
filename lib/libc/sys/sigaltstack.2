@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaltstack.2,v 1.22 2009/04/16 18:37:29 wiz Exp $
+.\"	$NetBSD: sigaltstack.2,v 1.23 2012/03/02 18:07:17 joerg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.2 (Berkeley) 5/1/95
 .\"
-.Dd April 16, 2009
+.Dd March 2, 2012
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -170,9 +170,3 @@ the
 .Fn sigstack
 system call, appeared in
 .Bx 4.2 .
-.Sh CAVEATS
-Due to limitations in the current pthread implementation,
-.Nm
-should not be used in programs which link against the
-.Xr pthread 3
-library (whether threads are used or not).

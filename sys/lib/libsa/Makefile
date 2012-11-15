@@ -21,9 +21,8 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 
 .include <bsd.own.mk>
 
-.ifndef __MINIX
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
-.else
+.ifdef __MINIX
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/md
 .endif
 
@@ -87,6 +86,7 @@ SRCS+=	ustarfs.c
 SRCS+=	dosfs.c
 SRCS+=	ext2fs.c
 SRCS+=	minixfs3.c
+SRCS+=	fnmatch.c
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 

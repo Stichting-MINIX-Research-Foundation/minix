@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.18 2005/07/06 15:47:15 drochner Exp $	*/
+/*	$NetBSD: search.h,v 1.19 2011/09/14 23:34:26 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -20,6 +20,15 @@ typedef struct entry {
 	char *key;
 	void *data;
 } ENTRY;
+
+#ifdef _NETBSD_SOURCE
+struct _ENTRY;
+struct hsearch_data {
+	struct _ENTRY *table;
+	size_t size;
+	size_t filled;
+};
+#endif
 
 typedef enum {
 	FIND, ENTER
@@ -46,9 +55,16 @@ __BEGIN_DECLS
 void	*bsearch(const void *, const void *, size_t, size_t,
 		      int (*)(const void *, const void *));
 #endif /* __BSEARCH_DECLARED */
+
 int	 hcreate(size_t);
 void	 hdestroy(void);
 ENTRY	*hsearch(ENTRY, ACTION);
+
+#ifdef _NETBSD_SOURCE
+int	 hcreate_r(size_t, struct hsearch_data *);
+void	 hdestroy_r(struct hsearch_data *);
+int	 hsearch_r(ENTRY, ACTION, ENTRY **, struct hsearch_data *);
+#endif /* _NETBSD_SOURCE */
 
 void	*lfind(const void *, const void *, size_t *, size_t,
 		      int (*)(const void *, const void *));

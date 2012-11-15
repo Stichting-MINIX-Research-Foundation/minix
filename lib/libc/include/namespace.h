@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.146 2010/12/16 18:38:06 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.156 2012/08/20 21:38:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #define catopen		_catopen
 #define daylight	_daylight
 #define difftime	_difftime
+#define devname_r	_devname_r
 #define err		_err
 #define errx		_errx
 #ifdef _REENTRANT
@@ -156,6 +157,10 @@
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define arc4random		_arc4random
+#define arc4random_addrandom	_arc4random_addrandom
+#define arc4random_buf		_arc4random_buf
+#define arc4random_stir		_arc4random_stir
+#define arc4random_uniform	_arc4random_uniform
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define atoll			_atoll
@@ -267,9 +272,11 @@
 #define fnmatch			_fnmatch
 #define fparseln		_fparseln
 #define fpgetmask		_fpgetmask
+#define fpgetprec		_fpgetprec
 #define fpgetround		_fpgetround
 #define fpgetsticky		_fpgetsticky
 #define fpsetmask		_fpsetmask
+#define fpsetprec		_fpsetprec
 #define fpsetround		_fpsetround
 #define fpsetsticky		_fpsetsticky
 #define freenetconfigent	_freenetconfigent
@@ -326,6 +333,8 @@
 #define getopt_long		_getopt_long
 #define getpagesize		_getpagesize
 #define getpass			_getpass
+#define getpassfd		_getpassfd
+#define getpass_r		_getpass_r
 #define getprogname		_getprogname
 #define getprotobyname		_getprotobyname
 #define getprotobyname_r	_getprotobyname_r
@@ -439,6 +448,7 @@
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define lseek			_lseek
+#define membar_producer		_membar_producer
 #define mergesort		_mergesort
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
@@ -453,6 +463,7 @@
 #define mq_timedreceive		_mq_timedreceive
 #define mq_timedsend		_mq_timedsend
 #define mrand48			_mrand48
+#define murmurhash2		_murmurhash2
 #define nc_perror		_nc_perror
 #define nc_sperror		_nc_sperror
 #define nanosleep		_nanosleep
@@ -598,11 +609,8 @@
 #define strsignal		_strsignal
 #define strsuftoll	 	_strsuftoll
 #define strsuftollx	 	_strsuftollx
-#define strsvis			_strsvis
-#define strsvisx		_strsvisx
 #define strtok_r		_strtok_r
-#define strunvis		_strunvis
-#define strvis			_strvis
+#define strnunvisx		_strnunvisx
 #define strvisx			_strvisx
 #define svc_auth_reg		_svc_auth_reg
 #define svc_create		_svc_create
@@ -635,7 +643,6 @@
 #define svcudp_bufcreate	_svcudp_bufcreate
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
-#define svis			_svis
 #define sysarch			_sys_sysarch
 #define sysctl			_sysctl
 #define sysctlbyname		_sysctlbyname
@@ -674,7 +681,6 @@
 #define ualarm			_ualarm
 #define uname			_uname
 #define unsetenv		_unsetenv
-#define unvis			_unvis
 #define user_from_uid		_user_from_uid
 #define usleep			_usleep
 #define utime			_utime
@@ -682,7 +688,6 @@
 #define uuid_is_nil		_uuid_is_nil
 #define valloc			_valloc
 #define vdprintf		_vdprintf
-#define vis			_vis
 #define	vdprintf		_vdprintf
 #ifndef vsnprintf
 #define vsnprintf		_vsnprintf
@@ -758,6 +763,7 @@
 #define xdr_rpcbs		_xdr_rpcbs
 #define xdr_rpcbs		_xdr_rpcbs
 #define xdr_short		_xdr_short
+#define xdr_sizeof		_xdr_sizeof
 #define xdr_string		_xdr_string
 #define xdr_u_char		_xdr_u_char
 #define	xdr_u_hyper		_xdr_u_hyper
@@ -810,6 +816,7 @@
 #define yp_unbind		_yp_unbind
 #define yperr_string		_yperr_string
 #define ypprot_err		_ypprot_err
+#define yp_setbindtries		_yp_setbindtries
 #define dlopen			__dlopen
 #define dlclose			__dlclose
 #define dlsym			__dlsym

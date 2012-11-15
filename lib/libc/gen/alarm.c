@@ -1,4 +1,4 @@
-/*	$NetBSD: alarm.c,v 1.10 2003/08/07 16:42:45 agc Exp $	*/
+/*	$NetBSD: alarm.c,v 1.11 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)alarm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: alarm.c,v 1.10 2003/08/07 16:42:45 agc Exp $");
+__RCSID("$NetBSD: alarm.c,v 1.11 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,7 @@ __weak_alias(alarm,_alarm)
 #endif
 
 unsigned int
-alarm(secs)
-	unsigned int secs;
+alarm(unsigned int secs)
 {
 	struct itimerval it, oitv;
 	struct itimerval *itp = &it;

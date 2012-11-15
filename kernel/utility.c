@@ -3,7 +3,7 @@
  *   kputc:          buffered putc used by kernel printf
  */
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "arch_proto.h"
 
 #include <minix/syslib.h>
@@ -89,3 +89,11 @@ int c;					/* character to append */
   return;
 }
 
+/*===========================================================================*
+ *				_exit				     	     *
+ *===========================================================================*/
+void _exit(e)
+int e;					/* error code */
+{
+  panic("_exit called from within the kernel, should not happen. (err %i)", e);
+}

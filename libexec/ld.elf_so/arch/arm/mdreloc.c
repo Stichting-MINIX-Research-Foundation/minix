@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.34 2010/08/06 16:33:17 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.37 2011/11/18 16:10:03 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.34 2010/08/06 16:33:17 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.37 2011/11/18 16:10:03 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -179,6 +179,59 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY (avoid in main)"));
 			break;
 
+		case R_TYPE(TLS_DTPOFF32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf_Addr)(def->st_value);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+
+			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)tmp));
+
+			break;
+		case R_TYPE(TLS_DTPMOD32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf_Addr)(defobj->tlsindex);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+
+			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)tmp));
+
+			break;
+
+		case R_TYPE(TLS_TPOFF32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done &&
+			    _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			tmp = (Elf_Addr)def->st_value + defobj->tlsoffset +
+			    sizeof(struct tls_tcb);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+			rdbg(("TLS_TPOFF32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)tmp));
+			break;
+
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
@@ -254,9 +307,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	Elf_Addr new_value = 0;	/* XXX gcc */
 	int err;
 
+	_rtld_shared_enter();
 	err = _rtld_relocate_plt_object(obj, rel, &new_value);
 	if (err)
 		_rtld_die();
+	_rtld_shared_exit();
 
 	return (caddr_t)new_value;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.7 2008/06/21 00:52:52 gmcgarry Exp $	*/
+/*	$NetBSD: crt0.c,v 1.10 2012/01/25 13:29:58 he Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -60,7 +60,7 @@ __asm("	.text			\n"
 "	add	r2, r2, #0x0004		\n"
 "\n"
 "	/* Ensure the stack is properly aligned before calling C code. */\n"
-"	bic	sp, sp, #" ___STRING(STACKALIGNBYTES) "	\n"
+"	bic	sp, sp, #" ___STRING(STACK_ALIGNBYTES) "\n"
 "	sub	sp, sp, #8	\n"
 "	str	r5, [sp, #4]	\n"
 "	str	r4, [sp, #0]	\n"
@@ -68,7 +68,7 @@ __asm("	.text			\n"
 "	b	" ___STRING(_C_LABEL(___start)) " ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.7 2008/06/21 00:52:52 gmcgarry Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.10 2012/01/25 13:29:58 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -89,9 +89,11 @@ ___start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
 
 #ifdef	DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
-	if (&_DYNAMIC)
+	if (&rtld_DYNAMIC)
                 _rtld_setup(cleanup, obj);
 #endif	/* DYNAMIC */
+
+	_libc_init();
 
 #ifdef MCRT0
 	atexit(_mcleanup);

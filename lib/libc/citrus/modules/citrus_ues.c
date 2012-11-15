@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_ues.c,v 1.2 2010/12/07 22:01:22 joerg Exp $ */
+/* $NetBSD: citrus_ues.c,v 1.3 2012/02/12 13:51:29 wiz Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ues.c,v 1.2 2010/12/07 22:01:22 joerg Exp $");
+__RCSID("$NetBSD: citrus_ues.c,v 1.3 2012/02/12 13:51:29 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -212,7 +212,7 @@ _citrus_UES_mbrtowc_priv(_UESEncodingInfo * __restrict ei,
 	_UESState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
-	int ch, head, tail, i, num;
+	int ch, head, tail, num;
 	wchar_t hi, wc;
 
 	_DIAGASSERT(ei != NULL);

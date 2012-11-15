@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.13 2003/12/10 12:06:25 agc Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.15 2012/06/25 22:32:46 abs Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_master.c,v 1.13 2003/12/10 12:06:25 agc Exp $");
+__RCSID("$NetBSD: yp_master.c,v 1.15 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -41,16 +41,14 @@ __RCSID("$NetBSD: yp_master.c,v 1.13 2003/12/10 12:06:25 agc Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+extern int _yplib_bindtries;
 
 #ifdef __weak_alias
 __weak_alias(yp_master,_yp_master)
 #endif
 
 int
-yp_master(indomain, inmap, outname)
-	const char     *indomain;
-	const char     *inmap;
-	char          **outname;
+yp_master(const char *indomain, const char *inmap, char **outname)
 {
 	struct dom_binding *ysd;
 	struct ypresp_master yprm;
@@ -80,10 +78,11 @@ again:
 		      (xdrproc_t)xdr_ypreq_nokey, &yprnk,
 		      (xdrproc_t)xdr_ypresp_master, &yprm, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		if (++nerrs == _yplib_nerrs) {
+		if (_yplib_bindtries <= 0 && ++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_master: clnt_call");
 			nerrs = 0;
-		}
+		} else if (_yplib_bindtries > 0 && ++nerrs == _yplib_bindtries)
+			return YPERR_YPSERV;
 		ysd->dom_vers = -1;
 		goto again;
 	}

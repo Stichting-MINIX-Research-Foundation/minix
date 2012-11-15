@@ -1,7 +1,7 @@
 
 #define UNPAGED 1	/* for proper kmain() prototype */
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <minix/minlib.h>

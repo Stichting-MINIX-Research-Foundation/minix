@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.c,v 1.9 2003/08/07 16:43:27 agc Exp $	*/
+/*	$NetBSD: getchar.c,v 1.10 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getchar.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getchar.c,v 1.9 2003/08/07 16:43:27 agc Exp $");
+__RCSID("$NetBSD: getchar.c,v 1.10 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: getchar.c,v 1.9 2003/08/07 16:43:27 agc Exp $");
 #undef getchar_unlocked
 
 int
-getchar()
+getchar(void)
 {
 	FILE *fp = stdin;
 	int r;
@@ -64,7 +64,7 @@ getchar()
 }
 
 int
-getchar_unlocked()
+getchar_unlocked(void)
 {
-	return (__sgetc(stdin));
+	return __sgetc(stdin);
 }

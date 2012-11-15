@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.15 2007/11/08 20:48:04 joerg Exp $	*/
+/*	$NetBSD: kvm.h,v 1.16 2011/09/12 21:14:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -82,6 +82,7 @@ kvm_t	 *kvm_open
 kvm_t	 *kvm_openfiles(const char *, const char *, const char *, int, char *);
 ssize_t	  kvm_read(kvm_t *, u_long, void *, size_t);
 ssize_t	  kvm_write(kvm_t *, u_long, const void *, size_t);
+const char *kvm_getkernelname(kvm_t *);
 
 __END_DECLS
 

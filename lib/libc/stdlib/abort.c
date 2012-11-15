@@ -1,4 +1,4 @@
-/*	$NetBSD: abort.c,v 1.13 2009/01/30 23:21:03 ad Exp $	*/
+/*	$NetBSD: abort.c,v 1.15 2012/06/08 11:15:26 abs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)abort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: abort.c,v 1.13 2009/01/30 23:21:03 ad Exp $");
+__RCSID("$NetBSD: abort.c,v 1.15 2012/06/08 11:15:26 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,11 +43,11 @@ __RCSID("$NetBSD: abort.c,v 1.13 2009/01/30 23:21:03 ad Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-extern void (*__cleanup) __P((void));
+extern void (*__cleanup)(void);
 static int aborting = 0;
 
 void
-abort()
+abort(void)
 {
 	sigset_t mask;
 

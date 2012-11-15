@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.34 2010/09/24 11:41:46 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.42 2012/01/06 10:38:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.34 2010/09/24 11:41:46 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.42 2012/01/06 10:38:57 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -82,6 +82,30 @@ store_ptr(void *where, Elf_Addr val)
 		(void)memcpy(where, &val, sizeof(val));
 }
 
+static __inline void
+fdc(void *addr)
+{
+	__asm volatile("fdc %%r0(%%sr0, %0)" : : "r" (addr));
+}
+
+static __inline void
+fic(void *addr)     
+{                   
+	__asm volatile("fic %%r0(%%sr0,%0)" : : "r" (addr));
+} 
+
+static __inline void
+sync(void)
+{
+	__asm volatile("sync" : : : "memory");
+}
+
+#define PLT_STUB_MAGIC1	0x00c0ffee
+#define PLT_STUB_MAGIC2	0xdeadbeef
+
+#define PLT_STUB_INSN1	0x0e801081	/* ldw	0(%r20), %r1 */
+#define PLT_STUB_INSN2	0xe820c000	/* bv	%r0(%r1) */
+
 /*
  * In the runtime architecture (ABI), PLABEL function pointers are
  * distinguished from normal function pointers by having the next-least-
@@ -114,7 +138,7 @@ static SLIST_HEAD(hppa_plabel_head, _hppa_plabel) hppa_plabel_list
  * Because I'm hesitant to use NEW while relocating self,
  * this is a small pool of preallocated PLABELs.
  */
-#define	HPPA_PLABEL_PRE	(14)
+#define	HPPA_PLABEL_PRE	(32)
 static hppa_plabel hppa_plabel_pre[HPPA_PLABEL_PRE];
 static int hppa_plabel_pre_next = 0;
 
@@ -177,7 +201,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		case DT_PLTGOT:
 			pltgot = (Elf_Addr *)
 			    (relocbase + dynp->d_un.d_ptr);
-                        break;
+			break;
 		}
 	}
 	relalim = (const Elf_Rela *)((const char *)relafirst + relasz);
@@ -230,11 +254,11 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		
 		plabel = &hppa_plabel_pre[hppa_plabel_pre_next++];
 
-        	plabel->hppa_plabel_pc = (Elf_Addr)
+		plabel->hppa_plabel_pc = (Elf_Addr)
 		    (relocbase + sym->st_value + rela->r_addend);
-        	plabel->hppa_plabel_sl = (Elf_Addr)pltgot;
+		plabel->hppa_plabel_sl = (Elf_Addr)pltgot;
 
-        	SLIST_INSERT_HEAD(&hppa_plabel_list, plabel, hppa_plabel_next);
+		SLIST_INSERT_HEAD(&hppa_plabel_list, plabel, hppa_plabel_next);
 		*((Elf_Addr *)where) = (Elf_Addr)(RTLD_MAKE_PLABEL(plabel));
 	}
 	
@@ -355,7 +379,34 @@ _rtld_function_descriptor_function(const void *addr)
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
-	__rtld_setup_hppa_pltgot(obj, obj->pltgot);
+	Elf_Word *got = obj->pltgot;
+
+	assert(got[-2] == PLT_STUB_MAGIC1);
+	assert(got[-1] == PLT_STUB_MAGIC2);
+	
+	__rtld_setup_hppa_pltgot(obj, got);
+
+	fdc(&got[-2]);
+	fdc(&got[-1]);
+	fdc(&got[1]);
+	sync();
+	fic(&got[-2]);
+	fic(&got[-1]);
+	fic(&got[1]);
+	sync();
+
+	/*
+	 * libc makes use of %t1 (%r22) to pass errno values to __cerror. Fixup
+	 * the PLT stub to not use %r22.
+	 */
+	got[-7] = PLT_STUB_INSN1;
+	got[-6] = PLT_STUB_INSN2;
+	fdc(&got[-7]);
+	fdc(&got[-6]);
+	sync();
+	fic(&got[-7]);
+	fic(&got[-6]);
+	sync();
 }
 
 int
@@ -471,6 +522,48 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				return -1;
 			}
 			rdbg(("COPY (avoid in main)"));
+			break;
+
+		case R_TYPE(TLS_TPREL32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			*where = (Elf_Addr)(defobj->tlsoffset + def->st_value +
+			    rela->r_addend + sizeof(struct tls_tcb));
+
+			rdbg(("TPREL32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
+			break;
+
+		case R_TYPE(TLS_DTPMOD32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where = (Elf_Addr)(defobj->tlsindex);
+
+			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
+			break;
+
+		case R_TYPE(TLS_DTPOFF32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where = (Elf_Addr)(def->st_value);
+
+			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
 			break;
 
 		default:
@@ -597,9 +690,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	
 	assert(ELF_R_SYM(rela->r_info) != 0);
 
+	_rtld_shared_enter();
 	err = _rtld_relocate_plt_object(obj, rela, &new_value); 
 	if (err)
 		_rtld_die();
+	_rtld_shared_exit();
 
 	return (caddr_t)new_value;
 }

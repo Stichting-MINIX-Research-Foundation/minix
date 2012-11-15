@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2010/09/30 19:32:40 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.12 2012/01/06 10:38:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ ENTRY($rtld_start,HPPA_FRAME_SIZE)
 	 * twice later: once to call _rtld, and again to transfer to the
 	 * program's entry point.
 	 */
-        stw     %arg0, HPPA_FRAME_ARG(0)(%r3)
+	stw     %arg0, HPPA_FRAME_ARG(0)(%r3)
 
 	/*
 	 * We can't move to C until we relocate at least the 
@@ -139,7 +139,7 @@ L$lpc2:	addil	L'_rtld_bind_start - ($PIC_pcrel$0 - 8), %arg0
 	stw	%arg0, -8(%arg1)
 	bv	%r0(%rp)
 	stw	%r19, -4(%arg1)
-EXIT(__rtld_hppa_setup_pltgot)
+EXIT(__rtld_setup_hppa_pltgot)
 
 /*
  * In order to support lazy binding, this implementation of _rtld_bind_start is
@@ -181,6 +181,7 @@ ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 	/* 0(%r3) is filled with the saved %r3 above */
 	stw	%ret0, 4(%r3)
 	stw	%ret1, 8(%r3)
+	stw	%t1, 12(%r3)		/* %r22 */
 
 	/*
 	 * The linker PLT stub loads %r20 with (GOT - 8) for the object that
@@ -220,6 +221,7 @@ ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
 	ldw	4(%r3), %ret0
 	ldw	8(%r3), %ret1
+	ldw	12(%r3), %t1		/* %r22 */
 
 	/* End stack calling convention. */
 	ldo	HPPA_FRAME_SIZE(%r3), %sp

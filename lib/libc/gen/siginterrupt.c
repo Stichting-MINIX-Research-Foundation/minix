@@ -1,4 +1,4 @@
-/*	$NetBSD: siginterrupt.c,v 1.12 2003/08/07 16:42:56 agc Exp $	*/
+/*	$NetBSD: siginterrupt.c,v 1.13 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)siginterrupt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: siginterrupt.c,v 1.12 2003/08/07 16:42:56 agc Exp $");
+__RCSID("$NetBSD: siginterrupt.c,v 1.13 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,7 @@ extern sigset_t __sigintr;
  * after an instance of the indicated signal.
  */
 int
-siginterrupt(sig, flag)
-	int sig, flag;
+siginterrupt(int sig, int flag)
 {
 	struct sigaction sa;
 	int ret;

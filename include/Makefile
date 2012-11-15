@@ -13,7 +13,7 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
 	inttypes.h iso646.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
-	login_cap.h malloc.h math.h md2.h \
+	login_cap.h lwp.h malloc.h math.h md2.h \
 	memory.h mntopts.h monetary.h mpool.h mqueue.h \
 	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
 	paths.h pwd.h randomid.h ranlib.h re_comp.h regex.h regexp.h \

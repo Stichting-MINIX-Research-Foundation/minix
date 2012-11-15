@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.8 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.9 2012/03/20 17:08:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_ntop.c,v 1.5 2005/11/03 22:59:52 marka Exp";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.8 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.9 2012/03/20 17:08:13 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,11 +66,7 @@ static const char *inet_ntop6(const u_char *src, char *dst, socklen_t size);
  *	Paul Vixie, 1996.
  */
 const char *
-inet_ntop(af, src, dst, size)
-	int af;
-	const void *src;
-	char *dst;
-	socklen_t size;
+inet_ntop(int af, const void *src, char *dst, socklen_t size)
 {
 
 	_DIAGASSERT(src != NULL);
@@ -100,10 +96,7 @@ inet_ntop(af, src, dst, size)
  *	Paul Vixie, 1996.
  */
 static const char *
-inet_ntop4(src, dst, size)
-	const u_char *src;
-	char *dst;
-	socklen_t size;
+inet_ntop4(const u_char *src, char *dst, socklen_t size)
 {
 	char tmp[sizeof "255.255.255.255"];
 	int l;
@@ -128,10 +121,7 @@ inet_ntop4(src, dst, size)
  *	Paul Vixie, 1996.
  */
 static const char *
-inet_ntop6(src, dst, size)
-	const u_char *src;
-	char *dst;
-	socklen_t size;
+inet_ntop6(const u_char *src, char *dst, socklen_t size)
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough

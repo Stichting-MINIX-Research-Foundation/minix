@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.35 2009/02/14 06:26:42 lukem Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.37 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.35 2009/02/14 06:26:42 lukem Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.37 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif
 
@@ -109,9 +109,7 @@ static struct sgl_limits {
 #endif /* vax */
 
 bool_t
-xdr_float(xdrs, fp)
-	XDR *xdrs;
-	float *fp;
+xdr_float(XDR *xdrs, float *fp)
 {
 #ifndef IEEEFP
 	struct ieee_single is;
@@ -125,7 +123,7 @@ xdr_float(xdrs, fp)
 #ifdef IEEEFP
 		return (XDR_PUTINT32(xdrs, (int32_t *)(void *)fp));
 #else
-		vs = *((struct vax_single *)fp);
+		vs = *((struct vax_single *)(void *)fp);
 		for (i = 0, lim = sgl_limits;
 			i < sizeof(sgl_limits)/sizeof(struct sgl_limits);
 			i++, lim++) {
@@ -147,7 +145,7 @@ xdr_float(xdrs, fp)
 #ifdef IEEEFP
 		return (XDR_GETINT32(xdrs, (int32_t *)(void *)fp));
 #else
-		vsp = (struct vax_single *)fp;
+		vsp = (struct vax_single *)(void *)fp;
 		if (!XDR_GETINT32(xdrs, (int32_t *)(void *)&is))
 			return (FALSE);
 		for (i = 0, lim = sgl_limits;
@@ -161,7 +159,7 @@ xdr_float(xdrs, fp)
 		}
 		vsp->exp = is.exp - IEEE_SNG_BIAS + VAX_SNG_BIAS;
 		vsp->mantissa2 = is.mantissa;
-		vsp->mantissa1 = (is.mantissa >> 16);
+		vsp->mantissa1 = ((unsigned int)is.mantissa >> 16);
 	doneit:
 		vsp->sign = is.sign;
 		return (TRUE);
@@ -211,9 +209,7 @@ static struct dbl_limits {
 
 
 bool_t
-xdr_double(xdrs, dp)
-	XDR *xdrs;
-	double *dp;
+xdr_double(XDR *xdrs, double *dp)
 {
 #ifdef IEEEFP
 	int32_t *i32p;
@@ -245,7 +241,7 @@ xdr_double(xdrs, dp)
 #endif
 		return (rv);
 #else
-		vd = *((struct vax_double *)dp);
+		vd = *((struct vax_double *)(void *)dp);
 		for (i = 0, lim = dbl_limits;
 			i < sizeof(dbl_limits)/sizeof(struct dbl_limits);
 			i++, lim++) {
@@ -259,10 +255,11 @@ xdr_double(xdrs, dp)
 			}
 		}
 		id.exp = vd.exp - VAX_DBL_BIAS + IEEE_DBL_BIAS;
-		id.mantissa1 = (vd.mantissa1 << 13) | (vd.mantissa2 >> 3);
+		id.mantissa1 = (vd.mantissa1 << 13) |
+			    ((unsigned int)vd.mantissa2 >> 3);
 		id.mantissa2 = ((vd.mantissa2 & MASK(3)) << 29) |
 				(vd.mantissa3 << 13) |
-				((vd.mantissa4 >> 3) & MASK(13));
+				(((unsigned int)vd.mantissa4 >> 3) & MASK(13));
 	shipit:
 		id.sign = vd.sign;
 		lp = (int32_t *)(void *)&id;
@@ -300,10 +297,10 @@ xdr_double(xdrs, dp)
 			}
 		}
 		vd.exp = id.exp - IEEE_DBL_BIAS + VAX_DBL_BIAS;
-		vd.mantissa1 = (id.mantissa1 >> 13);
+		vd.mantissa1 = ((unsigned int)id.mantissa1 >> 13);
 		vd.mantissa2 = ((id.mantissa1 & MASK(13)) << 3) |
-				(id.mantissa2 >> 29);
-		vd.mantissa3 = (id.mantissa2 >> 13);
+				((unsigned int)id.mantissa2 >> 29);
+		vd.mantissa3 = ((unsigned int)id.mantissa2 >> 13);
 		vd.mantissa4 = (id.mantissa2 << 3);
 	doneit:
 		vd.sign = id.sign;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.21 2009/10/29 01:52:01 wiz Exp $
+.\"	$NetBSD: flock.2,v 1.22 2011/10/15 21:35:50 rmind Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)flock.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 26, 2009
+.Dd October 15, 2011
 .Dt FLOCK 2
 .Os
 .Sh NAME
@@ -147,7 +147,9 @@ refers to an object other than a file.
 .Xr dup 2 ,
 .Xr execve 2 ,
 .Xr fork 2 ,
-.Xr open 2
+.Xr open 2 ,
+.Xr flockfile 3 ,
+.Xr lockf 3
 .Sh HISTORY
 The
 .Fn flock

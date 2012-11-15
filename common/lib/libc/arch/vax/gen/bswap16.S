@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap16.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: bswap16.S,v 1.3 2011/01/25 04:45:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,14 +31,17 @@
 
 #include <machine/asm.h>
 
+RCSID("$NetBSD: bswap16.S,v 1.3 2011/01/25 04:45:28 matt Exp $")
+
 #if defined(_KERNEL) || defined(_STANDALONE)
-ENTRY(_C_LABEL(bswap16), 0)
+ALTENTRY(_C_LABEL(bswap16))
 #else
 ALTENTRY(_C_LABEL(ntohs))
 ALTENTRY(_C_LABEL(htons))
-ENTRY(_C_LABEL(__bswap16), 0)
 #endif
+ENTRY(_C_LABEL(__bswap16), 0)
 	movl	4(%ap), %r1
 	extzv	$8, $8, %r1, %r0
 	insv	%r1, $8, $8, %r0
 	ret
+END(_C_LABEL(__bswap16))

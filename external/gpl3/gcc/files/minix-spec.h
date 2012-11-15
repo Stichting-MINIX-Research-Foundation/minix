@@ -48,9 +48,8 @@ Boston, MA 02110-1301, USA.  */
 #define MINIX_TARGET_OS_CPP_BUILTINS()					\
   do									\
     {									\
-		builtin_define ("__minix");			\
-		builtin_define ("__i386");			\
-		MINIX_TARGET_CPU_CPP_BUILTINS();  \
+		builtin_define ("__minix");				\
+		MINIX_TARGET_CPU_CPP_BUILTINS();			\
     }									\
   while (0)
 
@@ -72,10 +71,10 @@ Boston, MA 02110-1301, USA.  */
    
 #define MINIX_STARTFILE_SPEC \
   "%{!shared: \
-     %{pg:gcrt1.o%s} %{!pg:%{p:gcrt1.o%s} \
-		       %{!p:%{profile:gcrt1.o%s} \
-			 %{!profile:crt1.o%s}}}} \
-   crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
+     %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} \
+		       %{!p:%{profile:gcrt0%O%s} \
+			 %{!profile:crt0%O%s}}}} \
+   crti%O%s %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}"
 
 /* Provide a ENDFILE_SPEC appropriate for MINIX.  Here we tack on
    the magical crtend.o file (see crtstuff.c) which provides part of 

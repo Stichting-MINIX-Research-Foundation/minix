@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.1 2004/05/20 23:13:02 christos Exp $
+.\"	$NetBSD: inet.3,v 1.5 2012/07/25 14:51:15 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 30, 2003
+.Dd July 25, 2012
 .Dt INET 3
 .Os
 .Sh NAME
@@ -119,6 +119,11 @@ or some other binary form, in network byte order) to presentation format
 It returns NULL if a system error occurs (in which case,
 .Va errno
 will have been set), or it returns a pointer to the destination string.
+The
+.Ar size
+parameter is the size of the
+.Ar buf
+argument.
 .Pp
 The routine
 .Fn inet_ntoa
@@ -280,6 +285,33 @@ is returned by
 and
 .Fn inet_network
 for malformed requests.
+.Sh ERRORS
+The
+.Fn inet_ntop
+and
+.Fn inet_pton
+functions may fail with
+.Bl -tag -width Er
+.It Bq Er EAFNOSUPPORT
+The value of
+.Fa af
+was not
+.Dv AF_INET
+or
+.Dv AF_INET6 .
+.El
+.Pp
+The
+.Fn inet_ntop
+function may fail with
+.Bl -tag -width Er
+.It Bq Er ENOSPC
+The
+.Fa size
+indicated for
+.Fa dst
+was too small to store the presentation form of the network address.
+.El
 .Sh SEE ALSO
 .Xr byteorder 3 ,
 .Xr gethostbyname 3 ,
@@ -299,43 +331,44 @@ for malformed requests.
 .Re
 .Sh STANDARDS
 The
-.Nm inet_ntop
+.Fn inet_ntop
 and
-.Nm inet_pton
+.Fn inet_pton
 functions conform to
 .St -p1003.1-2001 .
 Note that
-.Nm inet_pton
-does not accept 1-, 2-, or 3-part  dotted addresses; all four parts
+.Fn inet_pton
+does not accept 1-, 2-, or 3-part dotted addresses; all four parts
 must be specified.
+Additionally all four parts of a dotted address must be decimal.
 This is a narrower input set than that accepted by
-.Nm inet_aton .
+.Fn inet_aton .
 .Sh HISTORY
 The
-.Nm inet_addr ,
-.Nm inet_network ,
-.Nm inet_makeaddr ,
-.Nm inet_lnaof
+.Fn inet_addr ,
+.Fn inet_network ,
+.Fn inet_makeaddr ,
+.Fn inet_lnaof
 and
-.Nm inet_netof
+.Fn inet_netof
 functions appeared in
 .Bx 4.2 .
 They were changed to use
-.Va in_addr_t
+.Vt in_addr_t
 in place of
-.Va unsigned long
+.Vt unsigned long
 in
 .Nx 2.0 .
 The
-.Nm inet_aton
+.Fn inet_aton
 and
-.Nm inet_ntoa
+.Fn inet_ntoa
 functions appeared in
 .Bx 4.3 .
 The
-.Nm inet_pton
+.Fn inet_pton
 and
-.Nm inet_ntop
+.Fn inet_ntop
 functions appeared in BIND 4.9.4 and thence
 .Nx 1.3 ;
 they were also in
@@ -357,6 +390,12 @@ The string returned by
 .Fn inet_ntoa
 resides in a static memory area.
 .Pp
+The function
 .Fn inet_addr
 should return a
-.Fa "struct in_addr" .
+.Vt struct in_addr .
+.Pp
+The function
+.Fn inet_network
+does not support byte rearrangement for one, two, and three
+part addresses.

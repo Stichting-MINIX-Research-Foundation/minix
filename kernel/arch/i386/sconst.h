@@ -1,13 +1,8 @@
 #ifndef __SCONST_H__
 #define __SCONST_H__
 
-/*
- * LSC Weirdness going on with the const.h header: FIXME
 #include "kernel/const.h"
 #include "kernel/procoffsets.h"
- */
-#include "const.h"
-#include "procoffsets.h"
 
 /*
  * offset to current process pointer right after trap, we assume we always have

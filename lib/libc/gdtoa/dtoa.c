@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.5 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: dtoa.c,v 1.10 2012/05/16 17:48:59 alnsn Exp $ */
 
 /****************************************************************
 
@@ -68,7 +68,6 @@ THIS SOFTWARE.
  */
 
 #ifdef Honor_FLT_ROUNDS
-#define Rounding rounding
 #undef Check_FLT_ROUNDS
 #define Check_FLT_ROUNDS
 #else
@@ -78,10 +77,10 @@ THIS SOFTWARE.
  char *
 dtoa
 #ifdef KR_headers
-	(d, mode, ndigits, decpt, sign, rve)
-	double d; int mode, ndigits, *decpt, *sign; char **rve;
+	(d0, mode, ndigits, decpt, sign, rve)
+	double d0; int mode, ndigits, *decpt, *sign; char **rve;
 #else
-	(double d, int mode, int ndigits, int *decpt, int *sign, char **rve)
+	(double d0, int mode, int ndigits, int *decpt, int *sign, char **rve)
 #endif
 {
  /*	Arguments ndigits, decpt, sign are similar to those
@@ -129,14 +128,25 @@ dtoa
 #endif
 	Bigint *b, *b1, *delta, *mhi, *S;
 	Bigint *mlo = NULL; /* pacify gcc */
-	double d2, ds, eps;
+	U d, d2, eps;
+	double ds;
 	char *s, *s0;
-#ifdef Honor_FLT_ROUNDS
-	int rounding;
-#endif
 #ifdef SET_INEXACT
 	int inexact, oldinexact;
 #endif
+#ifdef Honor_FLT_ROUNDS /*{*/
+	int Rounding;
+#ifdef Trust_FLT_ROUNDS /*{{ only define this if FLT_ROUNDS really works! */
+	Rounding = Flt_Rounds;
+#else /*}{*/
+	Rounding = 1;
+	switch(fegetround()) {
+	  case FE_TOWARDZERO:	Rounding = 0; break;
+	  case FE_UPWARD:	Rounding = 2; break;
+	  case FE_DOWNWARD:	Rounding = 3;
+	  }
+#endif /*}}*/
+#endif /*}*/
 
 #ifndef MULTIPLE_THREADS
 	if (dtoa_result) {
@@ -144,35 +154,35 @@ dtoa
 		dtoa_result = 0;
 		}
 #endif
-
-	if (word0(d) & Sign_bit) {
+	d.d = d0;
+	if (word0(&d) & Sign_bit) {
 		/* set sign for everything, including 0's and NaNs */
 		*sign = 1;
-		word0(d) &= ~Sign_bit;	/* clear sign bit */
+		word0(&d) &= ~Sign_bit;	/* clear sign bit */
 		}
 	else
 		*sign = 0;
 
 #if defined(IEEE_Arith) + defined(VAX)
 #ifdef IEEE_Arith
-	if ((word0(d) & Exp_mask) == Exp_mask)
+	if ((word0(&d) & Exp_mask) == Exp_mask)
 #else
-	if (word0(d)  == 0x8000)
+	if (word0(&d)  == 0x8000)
 #endif
 		{
 		/* Infinity or NaN */
 		*decpt = 9999;
 #ifdef IEEE_Arith
-		if (!word1(d) && !(word0(d) & 0xfffff))
+		if (!word1(&d) && !(word0(&d) & 0xfffff))
 			return nrv_alloc("Infinity", rve, 8);
 #endif
 		return nrv_alloc("NaN", rve, 3);
 		}
 #endif
 #ifdef IBM
-	dval(d) += 0; /* normalize */
+	dval(&d) += 0; /* normalize */
 #endif
-	if (!dval(d)) {
+	if (!dval(&d)) {
 		*decpt = 1;
 		return nrv_alloc("0", rve, 1);
 		}
@@ -182,37 +192,37 @@ dtoa
 	inexact = 1;
 #endif
 #ifdef Honor_FLT_ROUNDS
-	if ((rounding = Flt_Rounds) >= 2) {
+	if (Rounding >= 2) {
 		if (*sign)
-			rounding = rounding == 2 ? 0 : 2;
+			Rounding = Rounding == 2 ? 0 : 2;
 		else
-			if (rounding != 2)
-				rounding = 0;
+			if (Rounding != 2)
+				Rounding = 0;
 		}
 #endif
 
-	b = d2b(dval(d), &be, &bbits);
+	b = d2b(dval(&d), &be, &bbits);
 	if (b == NULL)
 		return NULL;
 #ifdef Sudden_Underflow
-	i = (int)(word0(d) >> Exp_shift1 & (Exp_mask>>Exp_shift1));
+	i = (int)(word0(&d) >> Exp_shift1 & (Exp_mask>>Exp_shift1));
 #else
-	if (( i = (int)(word0(d) >> Exp_shift1 & (Exp_mask>>Exp_shift1)) )!=0) {
+	if (( i = (int)(word0(&d) >> Exp_shift1 & (Exp_mask>>Exp_shift1)) )!=0) {
 #endif
-		dval(d2) = dval(d);
-		word0(d2) &= Frac_mask1;
-		word0(d2) |= Exp_11;
+		dval(&d2) = dval(&d);
+		word0(&d2) &= Frac_mask1;
+		word0(&d2) |= Exp_11;
 #ifdef IBM
-		if (( j = 11 - hi0bits(word0(d2) & Frac_mask) )!=0)
-			dval(d2) /= 1 << j;
+		if (( j = 11 - hi0bits(word0(&d2) & Frac_mask) )!=0)
+			dval(&d2) /= 1 << j;
 #endif
 
 		/* log(x)	~=~ log(1.5) + (x-1.5)/1.5
 		 * log10(x)	 =  log(x) / log(10)
 		 *		~=~ log(1.5)/log(10) + (x-1.5)/(1.5*log(10))
-		 * log10(d) = (i-Bias)*log(2)/log(10) + log10(d2)
+		 * log10(&d) = (i-Bias)*log(2)/log(10) + log10(&d2)
 		 *
-		 * This suggests computing an approximation k to log10(d) by
+		 * This suggests computing an approximation k to log10(&d) by
 		 *
 		 * k = (i - Bias)*0.301029995663981
 		 *	+ ( (d2-1.5)*0.289529654602168 + 0.176091259055681 );
@@ -241,21 +251,21 @@ dtoa
 		/* d is denormalized */
 
 		i = bbits + be + (Bias + (P-1) - 1);
-		x = i > 32  ? word0(d) << (64 - i) | word1(d) >> (i - 32)
-			    : word1(d) << (32 - i);
-		dval(d2) = x;
-		word0(d2) -= 31*Exp_msk1; /* adjust exponent */
+		x = i > 32  ? word0(&d) << (64 - i) | word1(&d) >> (i - 32)
+			    : word1(&d) << (32 - i);
+		dval(&d2) = x;
+		word0(&d2) -= 31*Exp_msk1; /* adjust exponent */
 		i -= (Bias + (P-1) - 1) + 1;
 		denorm = 1;
 		}
 #endif
-	ds = (dval(d2)-1.5)*0.289529654602168 + 0.1760912590558 + i*0.301029995663981;
+	ds = (dval(&d2)-1.5)*0.289529654602168 + 0.1760912590558 + i*0.301029995663981;
 	k = (int)ds;
 	if (ds < 0. && ds != k)
 		k--;	/* want k = floor(ds) */
 	k_check = 1;
 	if (k >= 0 && k <= Ten_pmax) {
-		if (dval(d) < tens[k])
+		if (dval(&d) < tens[k])
 			k--;
 		k_check = 0;
 		}
@@ -294,10 +304,11 @@ dtoa
 		try_quick = 0;
 		}
 	leftright = 1;
+	ilim = ilim1 = -1;	/* Values for cases 0 and 1; done here to */
+				/* silence erroneous "gcc -Wall" warning. */
 	switch(mode) {
 		case 0:
 		case 1:
-			ilim = ilim1 = -1;
 			i = 18;
 			ndigits = 0;
 			break;
@@ -324,7 +335,7 @@ dtoa
 		return NULL;
 
 #ifdef Honor_FLT_ROUNDS
-	if (mode > 1 && rounding != 1)
+	if (mode > 1 && Rounding != 1)
 		leftright = 0;
 #endif
 
@@ -333,7 +344,7 @@ dtoa
 		/* Try to get by with floating-point arithmetic. */
 
 		i = 0;
-		dval(d2) = dval(d);
+		dval(&d2) = dval(&d);
 		k0 = k;
 		ilim0 = ilim;
 		ieps = 2; /* conservative */
@@ -343,7 +354,7 @@ dtoa
 			if (j & Bletch) {
 				/* prevent overflows */
 				j &= Bletch - 1;
-				dval(d) /= bigtens[n_bigtens-1];
+				dval(&d) /= bigtens[n_bigtens-1];
 				ieps++;
 				}
 			for(; j; j = (unsigned int)j >> 1, i++)
@@ -351,32 +362,32 @@ dtoa
 					ieps++;
 					ds *= bigtens[i];
 					}
-			dval(d) /= ds;
+			dval(&d) /= ds;
 			}
 		else if (( jj1 = -k )!=0) {
-			dval(d) *= tens[jj1 & 0xf];
+			dval(&d) *= tens[jj1 & 0xf];
 			for(j = jj1 >> 4; j; j >>= 1, i++)
 				if (j & 1) {
 					ieps++;
-					dval(d) *= bigtens[i];
+					dval(&d) *= bigtens[i];
 					}
 			}
-		if (k_check && dval(d) < 1. && ilim > 0) {
+		if (k_check && dval(&d) < 1. && ilim > 0) {
 			if (ilim1 <= 0)
 				goto fast_failed;
 			ilim = ilim1;
 			k--;
-			dval(d) *= 10.;
+			dval(&d) *= 10.;
 			ieps++;
 			}
-		dval(eps) = ieps*dval(d) + 7.;
-		word0(eps) -= (P-1)*Exp_msk1;
+		dval(&eps) = ieps*dval(&d) + 7.;
+		word0(&eps) -= (P-1)*Exp_msk1;
 		if (ilim == 0) {
 			S = mhi = 0;
-			dval(d) -= 5.;
-			if (dval(d) > dval(eps))
+			dval(&d) -= 5.;
+			if (dval(&d) > dval(&eps))
 				goto one_digit;
-			if (dval(d) < -dval(eps))
+			if (dval(&d) < -dval(&eps))
 				goto no_digits;
 			goto fast_failed;
 			}
@@ -385,34 +396,34 @@ dtoa
 			/* Use Steele & White method of only
 			 * generating digits needed.
 			 */
-			dval(eps) = 0.5/tens[ilim-1] - dval(eps);
+			dval(&eps) = 0.5/tens[ilim-1] - dval(&eps);
 			for(i = 0;;) {
-				L = dval(d);
-				dval(d) -= L;
+				L = dval(&d);
+				dval(&d) -= L;
 				*s++ = '0' + (int)L;
-				if (dval(d) < dval(eps))
+				if (dval(&d) < dval(&eps))
 					goto ret1;
-				if (1. - dval(d) < dval(eps))
+				if (1. - dval(&d) < dval(&eps))
 					goto bump_up;
 				if (++i >= ilim)
 					break;
-				dval(eps) *= 10.;
-				dval(d) *= 10.;
+				dval(&eps) *= 10.;
+				dval(&d) *= 10.;
 				}
 			}
 		else {
 #endif
 			/* Generate ilim digits, then fix them up. */
-			dval(eps) *= tens[ilim-1];
-			for(i = 1;; i++, dval(d) *= 10.) {
-				L = (Long)(dval(d));
-				if (!(dval(d) -= L))
+			dval(&eps) *= tens[ilim-1];
+			for(i = 1;; i++, dval(&d) *= 10.) {
+				L = (Long)(dval(&d));
+				if (!(dval(&d) -= L))
 					ilim = i;
 				*s++ = '0' + (int)L;
 				if (i == ilim) {
-					if (dval(d) > 0.5 + dval(eps))
+					if (dval(&d) > 0.5 + dval(&eps))
 						goto bump_up;
-					else if (dval(d) < 0.5 - dval(eps)) {
+					else if (dval(&d) < 0.5 - dval(&eps)) {
 						while(*--s == '0');
 						s++;
 						goto ret1;
@@ -425,7 +436,7 @@ dtoa
 #endif
  fast_failed:
 		s = s0;
-		dval(d) = dval(d2);
+		dval(&d) = dval(&d2);
 		k = k0;
 		ilim = ilim0;
 		}
@@ -437,22 +448,22 @@ dtoa
 		ds = tens[k];
 		if (ndigits < 0 && ilim <= 0) {
 			S = mhi = 0;
-			if (ilim < 0 || dval(d) <= 5*ds)
+			if (ilim < 0 || dval(&d) <= 5*ds)
 				goto no_digits;
 			goto one_digit;
 			}
-		for(i = 1;; i++, dval(d) *= 10.) {
-			L = (Long)(dval(d) / ds);
-			dval(d) -= L*ds;
+		for(i = 1;; i++, dval(&d) *= 10.) {
+			L = (Long)(dval(&d) / ds);
+			dval(&d) -= L*ds;
 #ifdef Check_FLT_ROUNDS
 			/* If FLT_ROUNDS == 2, L will usually be high by 1 */
-			if (dval(d) < 0) {
+			if (dval(&d) < 0) {
 				L--;
-				dval(d) += ds;
+				dval(&d) += ds;
 				}
 #endif
 			*s++ = '0' + (int)L;
-			if (!dval(d)) {
+			if (!dval(&d)) {
 #ifdef SET_INEXACT
 				inexact = 0;
 #endif
@@ -461,13 +472,18 @@ dtoa
 			if (i == ilim) {
 #ifdef Honor_FLT_ROUNDS
 				if (mode > 1)
-				switch(rounding) {
+				switch(Rounding) {
 				  case 0: goto ret1;
 				  case 2: goto bump_up;
 				  }
 #endif
-				dval(d) += dval(d);
-				if (dval(d) > ds || (dval(d) == ds && L & 1)) {
+				dval(&d) += dval(&d);
+#ifdef ROUND_BIASED
+				if (dval(&d) >= ds)
+#else
+				if (dval(&d) > ds || (dval(&d) == ds && L & 1))
+#endif
+					{
  bump_up:
 					while(*--s == '9')
 						if (s == s0) {
@@ -520,15 +536,17 @@ dtoa
 				Bfree(b);
 				b = b1;
 				}
-			if (( j = b5 - m5 )!=0)
+			if (( j = b5 - m5 )!=0) {
 				b = pow5mult(b, j);
 				if (b == NULL)
 					return NULL;
+				}
 			}
-		else
+		else {
 			b = pow5mult(b, b5);
 			if (b == NULL)
 				return NULL;
+			}
 		}
 	S = i2b(1);
 	if (S == NULL)
@@ -537,19 +555,19 @@ dtoa
 		S = pow5mult(S, s5);
 		if (S == NULL)
 			return NULL;
-	}
+		}
 
 	/* Check for special case that d is a normalized power of 2. */
 
 	spec_case = 0;
 	if ((mode < 2 || leftright)
 #ifdef Honor_FLT_ROUNDS
-			&& rounding == 1
+			&& Rounding == 1
 #endif
 				) {
-		if (!word1(d) && !(word0(d) & Bndry_mask)
+		if (!word1(&d) && !(word0(&d) & Bndry_mask)
 #ifndef Sudden_Underflow
-		 && word0(d) & (Exp_mask & ~Exp_msk1)
+		 && word0(&d) & (Exp_mask & ~Exp_msk1)
 #endif
 				) {
 			/* The special case */
@@ -589,12 +607,12 @@ dtoa
 		b = lshift(b, b2);
 		if (b == NULL)
 			return NULL;
-	}
+		}
 	if (s2 > 0) {
 		S = lshift(S, s2);
 		if (S == NULL)
 			return NULL;
-	}
+		}
 	if (k_check) {
 		if (cmp(b,S) < 0) {
 			k--;
@@ -605,7 +623,7 @@ dtoa
 				mhi = multadd(mhi, 10, 0);
 				if (mhi == NULL)
 					return NULL;
-			}
+				}
 			ilim = ilim1;
 			}
 		}
@@ -626,7 +644,7 @@ dtoa
 			mhi = lshift(mhi, m2);
 			if (mhi == NULL)
 				return NULL;
-		}
+			}
 
 		/* Compute mlo -- check for special case
 		 * that d is a normalized power of 2.
@@ -655,9 +673,9 @@ dtoa
 			jj1 = delta->sign ? 1 : cmp(b, delta);
 			Bfree(delta);
 #ifndef ROUND_BIASED
-			if (jj1 == 0 && mode != 1 && !(word1(d) & 1)
+			if (jj1 == 0 && mode != 1 && !(word1(&d) & 1)
 #ifdef Honor_FLT_ROUNDS
-				&& rounding >= 1
+				&& Rounding >= 1
 #endif
 								   ) {
 				if (dig == '9')
@@ -674,7 +692,7 @@ dtoa
 #endif
 			if (j < 0 || (j == 0 && mode != 1
 #ifndef ROUND_BIASED
-							&& !(word1(d) & 1)
+							&& !(word1(&d) & 1)
 #endif
 					)) {
 				if (!b->x[0] && b->wds <= 1) {
@@ -685,7 +703,7 @@ dtoa
 					}
 #ifdef Honor_FLT_ROUNDS
 				if (mode > 1)
-				 switch(rounding) {
+				 switch(Rounding) {
 				  case 0: goto accept_dig;
 				  case 2: goto keep_dig;
 				  }
@@ -695,7 +713,11 @@ dtoa
 					if (b == NULL)
 						return NULL;
 					jj1 = cmp(b, S);
+#ifdef ROUND_BIASED
+					if (jj1 >= 0 /*)*/
+#else
 					if ((jj1 > 0 || (jj1 == 0 && dig & 1))
+#endif
 					&& dig++ == '9')
 						goto round_9_up;
 					}
@@ -705,7 +727,7 @@ dtoa
 				}
 			if (jj1 > 0) {
 #ifdef Honor_FLT_ROUNDS
-				if (!rounding)
+				if (!Rounding)
 					goto accept_dig;
 #endif
 				if (dig == '9') { /* possible if i == 1 */
@@ -759,14 +781,19 @@ dtoa
 	/* Round off last digit */
 
 #ifdef Honor_FLT_ROUNDS
-	switch(rounding) {
+	switch(Rounding) {
 	  case 0: goto trimzeros;
 	  case 2: goto roundoff;
 	  }
 #endif
 	b = lshift(b, 1);
 	j = cmp(b, S);
-	if (j > 0 || (j == 0 && dig & 1)) {
+#ifdef ROUND_BIASED
+	if (j >= 0)
+#else
+	if (j > 0 || (j == 0 && dig & 1))
+#endif
+		{
  roundoff:
 		while(*--s == '9')
 			if (s == s0) {
@@ -794,9 +821,9 @@ dtoa
 #ifdef SET_INEXACT
 	if (inexact) {
 		if (!oldinexact) {
-			word0(d) = Exp_1 + (70 << Exp_shift);
-			word1(d) = 0;
-			dval(d) += 1.;
+			word0(&d) = Exp_1 + (70 << Exp_shift);
+			word1(&d) = 0;
+			dval(&d) += 1.;
 			}
 		}
 	else if (!oldinexact)

@@ -1,4 +1,4 @@
-/* $NetBSD: fputwc.c,v 1.4 2005/06/12 05:21:27 lukem Exp $ */
+/* $NetBSD: fputwc.c,v 1.5 2012/03/15 18:22:30 christos Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fputwc.c,v 1.4 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: fputwc.c,v 1.5 2012/03/15 18:22:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -96,5 +96,5 @@ fputwc(wchar_t wc, FILE *fp)
 	r = __fputwc_unlock(wc, fp);
 	FUNLOCKFILE(fp);
 
-	return (r);
+	return r;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_msync.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_msync.c,v 1.2 2012/03/20 17:06:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_msync.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_msync.c,v 1.2 2012/03/20 17:06:00 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -46,9 +46,7 @@ __warn_references(msync,
     "warning: reference to compatibility msync(); include <sys/mman.h> for correct reference")
 
 int
-msync(addr, size)
-	void *addr;
-	size_t size;
+msync(void *addr, size_t size)
 {
 	return __msync13(addr, size, MS_SYNC|MS_INVALIDATE);
 }

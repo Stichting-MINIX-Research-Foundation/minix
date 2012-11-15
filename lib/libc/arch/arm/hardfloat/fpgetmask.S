@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.S,v 1.4 2004/08/21 11:21:00 rearnsha Exp $	*/
+/*	$NetBSD: fpgetmask.S,v 1.5 2012/08/01 06:10:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,7 +45,11 @@ ENTRY(_fpgetmask)
 #else
 ENTRY(fpgetmask)
 #endif
+#ifdef __VFP_FP__
+#error _fpgetmask VFP support missing
+#else
 	rfs	r0
 	mov	r0, r0, lsr #16
 	and	r0, r0, #0x1f
 	RET
+#endif

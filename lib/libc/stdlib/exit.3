@@ -1,4 +1,4 @@
-.\" $NetBSD: exit.3,v 1.14 2003/08/07 16:43:39 agc Exp $
+.\" $NetBSD: exit.3,v 1.15 2012/01/02 15:55:29 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)exit.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 11, 2002
+.Dd January 2, 2012
 .Dt EXIT 3
 .Os
 .Sh NAME
@@ -78,11 +78,19 @@ Following this,
 .Fn exit
 calls
 .Xr _exit 2 .
-Note that typically
-.Xr _exit 2
-only passes the lower 8 bits of
+.Sh RESTRICTIONS
+Standard C guarantees only that the values zero,
+.Dv EXIT_SUCCESS ,
+and
+.Dv EXIT_FAILURE
+produce meaningful results.
+POSIX extends this to guarantee that the
+least significant 8 bits of
 .Fa status
-on to the parent, thus negative values have less meaning.
+are preserved and returned to the parent via
+.Xr wait 2 .
+Values outside the supported range 0-255 are bitwise-truncated; therefore,
+negative values should not be used.
 .Sh RETURN VALUES
 The
 .Fn exit

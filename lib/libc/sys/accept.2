@@ -1,4 +1,4 @@
-.\"	$NetBSD: accept.2,v 1.25 2006/11/17 23:59:33 rillig Exp $
+.\"	$NetBSD: accept.2,v 1.29 2012/03/19 09:34:36 plunky Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 18, 2006
+.Dd March 19, 2012
 .Dt ACCEPT 2
 .Os
 .Sh NAME
-.Nm accept
+.Nm accept ,
+.Nm paccept
 .Nd accept a connection on a socket
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +42,8 @@
 .In sys/socket.h
 .Ft int
 .Fn accept "int s" "struct sockaddr * restrict addr" "socklen_t * restrict addrlen"
+.Ft int
+.Fn paccept "int s" "struct sockaddr * restrict addr" "socklen_t * restrict addrlen" "const sigset_t * restrict sigmask" "int flags"
 .Sh DESCRIPTION
 The argument
 .Fa s
@@ -131,10 +134,51 @@ by issuing a
 call with providing only the control information,
 or by calling
 .Xr setsockopt 2 .
+.Pp
+The
+.Fn paccept
+function behaves exactly like
+.Fn accept ,
+but it also allows to set the following
+.Fa flags
+on the returned file descriptor:
+.Bl -column SOCK_NONBLOCK -offset indent
+.It Dv SOCK_CLOEXEC
+Set the close on exec property.
+.It Dv SOCK_NONBLOCK
+Sets non-blocking I/O.
+.El
+.Pp
+It can also temporarily replace the signal mask of the calling thread if
+.Fa sigmask
+is a
+.Pf non- Dv NULL
+pointer, then the
+.Fn paccept
+function shall replace the signal mask of the caller by the set of
+signals pointed to by
+.Fa sigmask
+before waiting for a connection, and shall restore the signal mask
+of the calling thread before returning.
 .Sh RETURN VALUES
-The call returns \-1 on error.
-If it succeeds, it returns a non-negative
+The
+.Fn accept
+and
+.Fn paccept
+calls return \-1 on error.
+If they succeed, they return a non-negative
 integer that is a descriptor for the accepted socket.
+.Sh COMPATIBILITY
+The
+.Fn accept
+implementation makes the new file descriptor inherit file flags
+(like
+.Dv O_NONBLOCK )
+from the listening socket.
+It's a traditional behaviour for BSD derivative systems.
+On the other hand, there are implementations which don't do so.
+Linux is an example of such implementations.
+Portable programs should not rely on either of the behaviours.
 .Sh ERRORS
 The
 .Fn accept
@@ -183,3 +227,7 @@ The
 .Fn accept
 function appeared in
 .Bx 4.2 .
+The
+.Fn paccept
+function is inspired from Linux and appeared in
+.Nx 6.0 .

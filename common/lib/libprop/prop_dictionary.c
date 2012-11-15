@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.37 2011/04/20 19:40:00 martin Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.38 2012/07/27 09:10:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -29,10 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "prop_object_impl.h"
 #include <prop/prop_array.h>
 #include <prop/prop_dictionary.h>
 #include <prop/prop_string.h>
-#include "prop_object_impl.h"
 #include "prop_rb_impl.h"
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -173,7 +173,7 @@ struct _prop_dictionary_iterator {
 
 static int
 /*ARGSUSED*/
-_prop_dict_keysym_rb_compare_nodes(void *ctx __unused,
+_prop_dict_keysym_rb_compare_nodes(void *ctx _PROP_ARG_UNUSED,
 				   const void *n1, const void *n2)
 {
 	const struct _prop_dictionary_keysym *pdk1 = n1;
@@ -184,7 +184,7 @@ _prop_dict_keysym_rb_compare_nodes(void *ctx __unused,
 
 static int
 /*ARGSUSED*/
-_prop_dict_keysym_rb_compare_key(void *ctx __unused,
+_prop_dict_keysym_rb_compare_key(void *ctx _PROP_ARG_UNUSED,
 				 const void *n, const void *v)
 {
 	const struct _prop_dictionary_keysym *pdk = n;
@@ -628,7 +628,7 @@ static prop_object_t
 _prop_dictionary_iterator_next_object(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
-	prop_dictionary_t pd __unused = pdi->pdi_base.pi_obj;
+	prop_dictionary_t pd _PROP_ARG_UNUSED = pdi->pdi_base.pi_obj;
 	prop_dictionary_keysym_t pdk;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
@@ -655,7 +655,9 @@ static void
 _prop_dictionary_iterator_reset(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
-	prop_dictionary_t pd __unused = pdi->pdi_base.pi_obj;
+#ifdef _REENTRANT
+	prop_dictionary_t pd _PROP_ARG_UNUSED = pdi->pdi_base.pi_obj;
+#endif
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 	_prop_dictionary_iterator_reset_locked(pdi);
@@ -914,15 +916,19 @@ _prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
 	if (! prop_object_is_dictionary(pd))
 		return (NULL);
 
+#ifdef _REENTRANT
 	if (!locked)
 		_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+#endif
 	pde = _prop_dict_lookup(pd, key, NULL);
 	if (pde != NULL) {
 		_PROP_ASSERT(pde->pde_objref != NULL);
 		po = pde->pde_objref;
 	}
+#ifdef _REENTRANT
 	if (!locked)
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+#endif
 	return (po);
 }
 /*

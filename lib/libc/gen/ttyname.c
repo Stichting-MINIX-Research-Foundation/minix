@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.24 2008/06/25 11:47:29 ad Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.26 2012/06/12 18:17:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,96 +34,32 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.24 2008/06/25 11:47:29 ad Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.26 2012/06/12 18:17:04 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <sys/types.h>
-#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 
 #include <assert.h>
-#include <db.h>
-#include <dirent.h>
 #include <errno.h>
-#include <fcntl.h>
+#include <limits.h>
 #include <paths.h>
 #include <string.h>
+#include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 
 #ifdef __weak_alias
 __weak_alias(ttyname,_ttyname)
 __weak_alias(ttyname_r,_ttyname_r)
 #endif
 
-static int oldttyname(const struct stat *, char *, size_t);
-
-int
-ttyname_r(int fd, char *buf, size_t len)
-{
-	struct stat sb;
-	struct termios ttyb;
-	DB *db;
-	DBT data, key;
-	struct {
-		mode_t type;
-		dev_t dev;
-	} bkey;
-#ifndef __minix
-	struct ptmget ptm;
-#endif
-#define DEVSZ (sizeof(_PATH_DEV) - 1)
-
-	_DIAGASSERT(fd != -1);
-
-	if (len <= DEVSZ) {
-		return ERANGE;
-	}
-
-#ifndef __minix
-	/* If it is a pty, deal with it quickly */
-	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
-		if (strlcpy(buf, ptm.sn, len) >= len) {
-			return ERANGE;
-		}
-		return 0;
-	}
-#endif
-	/* Must be a terminal. */
-	if (tcgetattr(fd, &ttyb) == -1)
-		return errno;
-
-	/* Must be a character device. */
-	if (fstat(fd, &sb))
-		return errno;
-	if (!S_ISCHR(sb.st_mode))
-		return ENOTTY;
-
-	(void)memcpy(buf, _PATH_DEV, DEVSZ);
-	if ((db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)) != NULL) {
-		(void)memset(&bkey, 0, sizeof(bkey));
-		bkey.type = S_IFCHR;
-		bkey.dev = sb.st_rdev;
-		key.data = &bkey;
-		key.size = sizeof(bkey);
-		if (!(db->get)(db, &key, &data, 0)) {
-			if (len - DEVSZ <= data.size) {
-				return ERANGE;
-			}
-			(void)memcpy(buf + DEVSZ, data.data, data.size);
-			(void)(db->close)(db);
-			return 0;
-		}
-		(void)(db->close)(db);
-	}
-	if (oldttyname(&sb, buf, len) == -1)
-		return errno;
-	return 0;
-}
-
+#ifdef __minix
+/* LSC: We do not have devname functionality on Minix, so re-import for now
+ * old, manual way of doing it.*/
+#include <dirent.h>
 static int
 oldttyname(const struct stat *sb, char *buf, size_t len)
 {
@@ -138,13 +74,10 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 		return -1;
 
 	while ((dirp = readdir(dp)) != NULL) {
+#define DEVSZ (sizeof(_PATH_DEV) - 1)
 		if (dirp->d_fileno != sb->st_ino)
 			continue;
-#ifdef __minix
 		dlen = strlen(dirp->d_name);
-#else
-		dlen = dirp->d_namlen + 1;
-#endif
 		if (len - DEVSZ <= dlen) {
 			/*
 			 * XXX: we return an error if *any* entry does not
@@ -160,6 +93,7 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 			continue;
 		(void)closedir(dp);
 		return 0;
+#undef DEVSZ
 	}
 	(void)closedir(dp);
 	/*
@@ -170,10 +104,55 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 	return -1;
 }
 
+#endif
+
+int
+ttyname_r(int fd, char *buf, size_t len)
+{
+	struct stat sb;
+	struct termios ttyb;
+#ifndef __minix
+	struct ptmget ptm;
+#endif
+
+	_DIAGASSERT(fd != -1);
+
+#ifndef __minix
+	/* If it is a pty, deal with it quickly */
+	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
+		if (strlcpy(buf, ptm.sn, len) >= len) {
+			return ERANGE;
+		}
+		return 0;
+	}
+#endif
+
+	/* Must be a terminal. */
+	if (tcgetattr(fd, &ttyb) == -1)
+		return errno;
+
+	if (fstat(fd, &sb))
+		return errno;
+
+	if (strlcpy(buf, _PATH_DEV, len) >= len)
+		return ERANGE;
+
+#ifdef __minix
+	if (oldttyname(&sb, buf, len) == -1)
+		return errno;
+	return 0;
+#else
+	buf += strlen(_PATH_DEV);
+	len -= strlen(_PATH_DEV);
+	return devname_r(sb.st_rdev, sb.st_mode & S_IFMT, buf, len);
+#endif
+}
+
+
 char *
 ttyname(int fd)
 {
-	static char buf[MAXPATHLEN];
+	static char buf[PATH_MAX];
 	int rv;
 	
 	rv = ttyname_r(fd, buf, sizeof(buf));

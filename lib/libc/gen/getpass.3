@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpass.3,v 1.13 2010/05/06 11:09:39 jruoho Exp $
+.\"	$NetBSD: getpass.3,v 1.22 2012/04/14 10:34:29 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getpass.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 6, 2010
+.Dd April 13, 2012
 .Dt GETPASS 3
 .Os
 .Sh NAME
@@ -38,10 +38,13 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.In pwd.h
 .In unistd.h
 .Ft char *
 .Fn getpass "const char *prompt"
+.Ft char *
+.Fn getpass_r "const char *prompt" "char *buf" "size_t buflen"
+.Ft char *
+.Fn getpassfd "const char *prompt" "char *buf" "size_t buflen" "int *fd" "int flags" "int timeout"
 .Sh DESCRIPTION
 The
 .Fn getpass
@@ -52,16 +55,105 @@ If this file is not accessible,
 displays the prompt on the standard error output and reads from the standard
 input.
 .Pp
-The password may be up to _PASSWORD_LEN (currently 128)
+The password may be up to
+.Xr sysconf 3
+.Dv _SC_PASS_MAX
 characters in length.
 Any additional
 characters and the terminating newline character are discarded.
 .Pp
 .Fn getpass
 turns off character echoing while reading the password.
-.Sh RETURN VALUES
+.Pp
+.Fn getpass_r
+is similar to
 .Fn getpass
-returns a pointer to the null terminated password.
+only it puts its result in
+.Fa buf
+for up to
+.Fa buflen
+characters.
+If the
+.Fa buf
+argument is
+.Dv NULL ,
+then a buffer will be dynamically allocated.
+.Pp
+The
+.Fn getpassfd
+function allows one to specify the three file descriptors corresponding to
+.Dv stdin ,
+.Dv stdout ,
+and
+.Dv stderr
+in the
+.Fa fd
+argument, or if
+.Fa fd
+is
+.Dv NULL ,
+.Fn getpassfd
+first attempts to open
+.Pa /dev/tty
+and if that fails, defaults to
+.Dv STDIN_FILENO
+for input and
+.Dv STDERR_FILENO
+for output.
+.Pp
+The behavior of
+.Fn getpassfd
+is controlled by the
+.Fa flags
+argument:
+.Bl -tag -width GETPASS_FORCE_UPPER
+.It Dv GETPASS_NEED_TTY
+Fail if we are unable to set the tty modes like we want.
+.It Dv GETPASS_FAIL_EOF
+Fail if we get the end-of-file character instead of returning the result so far.
+.It Dv GETPASS_BUF_LIMIT
+Beep when the buffer limit is reached, instead of silently absorbing it.
+.It Dv GETPASS_NO_SIGNAL
+Don't make ttychars send signals.
+.It Dv GETPASS_NO_BEEP
+Don't beep if we erase past the beginning of the buffer or we try to enter past
+the end.
+.It Dv GETPASS_ECHO_STAR
+Echo a
+.Sq *
+for each character entered.
+.It Dv GETPASS_ECHO
+Echo characters as they are typed.
+.It Dv GETPASS_ECHO_NL
+Echoes a newline if successful.
+.It Dv GETPASS_7BIT
+Mask the high bit for each entered character.
+.It Dv GETPASS_FORCE_LOWER
+Lowercase each entered character.
+.It Dv GETPASS_FORCE_UPPER
+Uppercase each entered character.
+.El
+.Pp
+Finally if the
+.Fa timeout
+argument is non zero,
+.Fn getpassfd
+will wait for
+.Fa timeout
+seconds for input after each character before returning an error, instead of
+waiting forever.
+.Sh RETURN VALUES
+The
+.Fn getpass
+function returns a pointer to the NUL terminated password, or an empty
+string on error.
+The
+.Fn getpass_r
+and
+.Fn getpassfd
+functions return a pointer to the NUL terminated password, or
+.Dv NULL
+on error.
 .Sh FILES
 .Bl -tag -width /dev/tty -compact
 .It Pa /dev/tty
@@ -82,6 +174,12 @@ A
 .Fn getpass
 function appeared in
 .At v7 .
+The
+.Fn getpass_r
+and
+.Fn getpassfd
+functions appeared in
+.Nx 7.0 .
 .Sh BUGS
 The
 .Fn getpass
@@ -94,3 +192,9 @@ will modify the same object.
 The calling process should zero the password as soon as possible to
 avoid leaving the cleartext password visible in the process's address
 space.
+.Pp
+Historically
+.Nm
+accepted and returned a password if it could not modify the terminal
+settings to turn echo off (or if the input was not a terminal).
+In this implementation, only terminal input is accepted.

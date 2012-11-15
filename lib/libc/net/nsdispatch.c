@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.34 2009/02/05 13:21:11 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.37 2012/03/13 21:13:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.34 2009/02/05 13:21:11 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.37 2012/03/13 21:13:42 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -168,15 +168,17 @@ static LIST_HEAD(, _ns_drec) _ns_drec = LIST_HEAD_INITIALIZER(&_ns_drec);
 static mutex_t _ns_drec_lock = MUTEX_INITIALIZER;
 #endif /* _REENTRANT */
 
+
+/*
+ * Runtime determination of whether we are dynamically linked or not.
+ */
 #ifndef __ELF__
 #define	is_dynamic()		(0)	/* don't bother - switch to ELF! */
-#elif __GNUC_PREREQ__(4,2)
-static int rtld_DYNAMIC __attribute__((__weakref__, __alias__("_DYNAMIC")));
-#define	is_dynamic()		(&rtld_DYNAMIC != NULL)
 #else
-extern int _DYNAMIC __weak_reference(_DYNAMIC);
-#define	is_dynamic()		(&_DYNAMIC != NULL)
+__weakref_visible int rtld_DYNAMIC __weak_reference(_DYNAMIC);
+#define	is_dynamic()		(&rtld_DYNAMIC != NULL)
 #endif
+
 
 /*
  * size of dynamic array chunk for _nsmap and _nsmap[x].srclist (and other
@@ -388,8 +390,7 @@ _nsdbtaddsrc(ns_dbt *dbt, const ns_src *src)
 	/* dbt->srclistsize already incremented */
 
 	modkey.name = src->name;
-	mod = bsearch(&modkey, _nsmod, _nsmodsize, sizeof(*_nsmod),
-	    _nsmodcmp);
+	mod = bsearch(&modkey, _nsmod, _nsmodsize, sizeof(*_nsmod), _nsmodcmp);
 	if (mod == NULL)
 		return (_nsloadmod(src->name, NULL));
 

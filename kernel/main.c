@@ -8,7 +8,7 @@
  *   main:	    	MINIX main program
  *   prepare_shutdown:	prepare to take MINIX down
  */
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>

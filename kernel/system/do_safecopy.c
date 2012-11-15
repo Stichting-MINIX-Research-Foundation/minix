@@ -16,7 +16,7 @@
 #include <assert.h>
 
 #include "kernel/system.h"
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 #define MAX_INDIRECT_DEPTH 5	/* up to how many indirect grants to follow? */
 

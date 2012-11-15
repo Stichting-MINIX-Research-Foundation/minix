@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.32 2010/08/28 21:30:02 joerg Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.35 2012/03/21 02:18:14 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.32 2010/08/28 21:30:02 joerg Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.35 2012/03/21 02:18:14 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -73,33 +73,34 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.32 2010/08/28 21:30:02 joerg Exp $");
 #define	BADUNMAP		goto unmap
 
 int
-ELFNAMEEND(__fdnlist)(fd, list)
-	int fd;
-	struct nlist *list;
+ELFNAMEEND(__fdnlist)(int fd, struct nlist *list)
 {
 	struct stat st;
-	struct nlist *p;
-	char *mappedfile, *strtab;
-	size_t mappedsize;
-	Elf_Ehdr *ehdrp, ehdr;
-	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
-	Elf_Sym *symp;
-	Elf_Off shdr_off;
-	Elf_Word shdr_size;
+	Elf_Ehdr ehdr;
+#if _LP64 || ELFSIZE == 32
 #if (ELFSIZE == 32)
 	Elf32_Half nshdr;
 #elif (ELFSIZE == 64)
 	Elf64_Word nshdr;
 #endif
-	size_t i, nsyms;
-	int rv, nent;
+	/* Only support 64+32 mode on LP64; no support for 64 mode on ILP32 */
+	Elf_Ehdr *ehdrp;
+	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
+	Elf_Sym *symp;
+	Elf_Off shdr_off;
+	Elf_Word shdr_size;
+	struct nlist *p;
+	char *mappedfile, *strtab;
+	size_t mappedsize, nsyms;
+	int nent;
+#endif
+	int rv;
+	size_t i;
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(list != NULL);
 
 	rv = -1;
-
-	symshdrp = symstrshdrp = NULL;
 
 	/*
 	 * If we can't fstat() the file, something bad is going on.
@@ -136,7 +137,10 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	default:
 		BAD;
 	}
+#if _LP64 || ELFSIZE == 32
+	symshdrp = symstrshdrp = NULL;
 
+	/* Only support 64+32 mode on LP64; no support for 64 mode on ILP32 */
 	if (S_ISCHR(st.st_mode)) {
 		const char *nlistname;
 		struct ksyms_gsymbol kg;
@@ -157,11 +161,12 @@ ELFNAMEEND(__fdnlist)(fd, list)
 			kg.kg_name = nlistname;
 			kg.kg_sym = &sym;
 			if (ioctl(fd, KIOCGSYMBOL, &kg) == 0) {
-				p->n_value = sym.st_value;
+				p->n_value = (uintptr_t)sym.st_value;
 				switch (ELF_ST_TYPE(sym.st_info)) {
 				case STT_NOTYPE:
 					p->n_type = N_UNDF;
 					break;
+				case STT_COMMON:
 				case STT_OBJECT:
 					p->n_type = N_DATA;
 					break;
@@ -212,7 +217,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	if (check(shdr_off, shdr_size) ||
 	    (sizeof *shdrp != ehdrp->e_shentsize))
 		BADUNMAP;
-	shdrp = (Elf_Shdr *)(void *)&mappedfile[shdr_off];
+	shdrp = (void *)&mappedfile[(size_t)shdr_off];
 
 	for (i = 0; i < nshdr; i++) {
 		if (shdrp[i].sh_type == SHT_SYMTAB) {
@@ -231,9 +236,9 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	if (check(symstrshdrp->sh_offset, symstrshdrp->sh_size))
 		BADUNMAP;
 
-	symp = (Elf_Sym *)(void *)&mappedfile[symshdrp->sh_offset];
-	nsyms = symshdrp->sh_size / sizeof(*symp);
-	strtab = &mappedfile[symstrshdrp->sh_offset];
+	symp = (void *)&mappedfile[(size_t)symshdrp->sh_offset];
+	nsyms = (size_t)(symshdrp->sh_size / sizeof(*symp));
+	strtab = &mappedfile[(size_t)symstrshdrp->sh_offset];
 
 	/*
 	 * Clean out any left-over information for all valid entries.
@@ -268,12 +273,13 @@ ELFNAMEEND(__fdnlist)(fd, list)
 				/*
 				 * Translate (roughly) from ELF to nlist
 				 */
-				p->n_value = symp[i].st_value;
+				p->n_value = (uintptr_t)symp[i].st_value;
 				switch (ELF_ST_TYPE(symp[i].st_info)) {
 				case STT_NOTYPE:
 					p->n_type = N_UNDF;
 					break;
 				case STT_OBJECT:
+				case STT_COMMON:
 					p->n_type = N_DATA;
 					break;
 				case STT_FUNC:
@@ -302,6 +308,7 @@ done:
 	rv = nent;
 unmap:
 	munmap(mappedfile, mappedsize);
+#endif /* _LP64 || ELFSIZE == 32 */
 out:
 	return (rv);
 }

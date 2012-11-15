@@ -220,6 +220,7 @@ struct minix_prev_stat {
 #define MINIX_ST_BLKSIZE PAGE_SIZE
 #endif
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -240,4 +241,5 @@ int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 __END_DECLS
 
+#endif /* !_KERNEL && !_STANDALONE */
 #endif /* !_SYS_STAT_H_ */

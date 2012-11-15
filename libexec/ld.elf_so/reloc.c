@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.103 2010/12/24 12:41:43 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.106 2012/01/06 10:38:56 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.103 2010/12/24 12:41:43 skrll Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.106 2012/01/06 10:38:56 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -73,9 +73,12 @@ _rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 	const Elf_Sym  *srcsym = NULL;
 	Obj_Entry      *srcobj;
 
-	for (srcobj = dstobj->next; srcobj != NULL; srcobj = srcobj->next)
-		if ((srcsym = _rtld_symlook_obj(name, hash, srcobj, false)) != NULL)
+	for (srcobj = dstobj->next; srcobj != NULL; srcobj = srcobj->next) {
+		srcsym = _rtld_symlook_obj(name, hash, srcobj, 0,
+		    _rtld_fetch_ventry(dstobj, ELF_R_SYM(rela->r_info)));
+		if (srcsym != NULL)
 			break;
+	}
 
 	if (srcobj == NULL) {
 		_rtld_error("Undefined symbol \"%s\" referenced from COPY"
@@ -199,9 +202,6 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		dbg(("doing lazy PLT binding"));
 		if (_rtld_relocate_plt_lazy(obj) < 0)
 			ok = 0;
-#if defined(__hppa__)
-		bind_now = 1;
-#endif
 		if (obj->z_now || bind_now) {
 			dbg(("doing immediate PLT binding"));
 			if (_rtld_relocate_plt_objects(obj) < 0)
@@ -214,7 +214,11 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		obj->magic = RTLD_MAGIC;
 		obj->version = RTLD_VERSION;
 
-		/* Fill in the dynamic linker entry points. */
+		/*
+		 * Fill in the backwards compatibility dynamic linker entry points.
+		 *
+		 * DO NOT ADD TO THIS LIST
+		 */
 		obj->dlopen = dlopen;
 		obj->dlsym = dlsym;
 		obj->dlerror = dlerror;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsxfrm.c,v 1.2 2006/10/15 16:14:08 christos Exp $	*/
+/*	$NetBSD: wcsxfrm.c,v 1.3 2012/06/25 22:32:44 abs Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsxfrm.c,v 1.2 2006/10/15 16:14:08 christos Exp $");
+__RCSID("$NetBSD: wcsxfrm.c,v 1.3 2012/06/25 22:32:44 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -40,10 +40,7 @@ __RCSID("$NetBSD: wcsxfrm.c,v 1.2 2006/10/15 16:14:08 christos Exp $");
  * Compare strings with using collating information.
  */
 size_t
-wcsxfrm(s1, s2, n)
-	wchar_t *s1;
-	const wchar_t *s2;
-	size_t n;
+wcsxfrm(wchar_t *s1, const wchar_t *s2, size_t n)
 {
 	size_t len;
 

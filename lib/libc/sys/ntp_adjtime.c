@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_adjtime.c,v 1.11 2007/11/23 12:39:15 uebayasi Exp $ */
+/*	$NetBSD: ntp_adjtime.c,v 1.13 2012/03/20 16:26:12 matt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ntp_adjtime.c,v 1.11 2007/11/23 12:39:15 uebayasi Exp $");
+__RCSID("$NetBSD: ntp_adjtime.c,v 1.13 2012/03/20 16:26:12 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,13 +55,16 @@ __RCSID("$NetBSD: ntp_adjtime.c,v 1.11 2007/11/23 12:39:15 uebayasi Exp $");
 __weak_alias(ntp_adjtime,_ntp_adjtime)
 #endif
 
+#if defined(__minix) && !defined(O_CLOEXEC)
+#define O_CLOEXEC 0
+#endif
+
 extern int __clockctl_fd;
 
 int __ntp_adjtime(struct timex *);
 
 int
-ntp_adjtime(tp)
-	struct timex *tp;
+ntp_adjtime(struct timex *tp)
 {
 	struct clockctl_ntp_adjtime args;
 	int error;
@@ -87,14 +90,12 @@ ntp_adjtime(tp)
 		 * and we cannot open clockctl. This is a true
 		 * failure.
 		 */
-		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY, 0);
+		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY | O_CLOEXEC, 0);
 		if (__clockctl_fd == -1) {
 			/* original error was EPERM - don't leak open errors */
 			errno = EPERM;
 			return -1;
 		}
-
-		(void) fcntl(__clockctl_fd, F_SETFD, FD_CLOEXEC);
 	}
 
 	/*

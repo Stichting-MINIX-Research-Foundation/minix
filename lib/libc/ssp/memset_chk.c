@@ -36,9 +36,9 @@ __RCSID("$NetBSD: memset_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
 #include <ssp/ssp.h>
 #include <string.h>
 
-#undef memset
-
 #if __SSP_FORTIFY_LEVEL > 0
+
+#undef memset
 
 void *
 __memset_chk(void * __restrict dst, int val, size_t len, size_t slen)

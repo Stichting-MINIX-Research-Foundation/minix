@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf.c,v 1.15 2007/06/03 17:39:26 christos Exp $	*/
+/*	$NetBSD: sprintf.c,v 1.16 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sprintf.c,v 1.15 2007/06/03 17:39:26 christos Exp $");
+__RCSID("$NetBSD: sprintf.c,v 1.16 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,5 +74,5 @@ sprintf(char *str, char const *fmt, ...)
 	ret = __vfprintf_unlocked(&f, fmt, ap);
 	va_end(ap);
 	*f._p = 0;
-	return (ret);
+	return ret;
 }

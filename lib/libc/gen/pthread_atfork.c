@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.8 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.9 2012/03/20 16:36:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.8 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.9 2012/03/20 16:36:05 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,7 +47,7 @@ __weak_alias(pthread_atfork, _pthread_atfork)
 __weak_alias(fork, _fork)
 #endif /* __weak_alias */
 
-pid_t	__fork __P((void));	/* XXX */
+pid_t	__fork(void);	/* XXX */
 
 struct atfork_callback {
 	SIMPLEQ_ENTRY(atfork_callback) next;

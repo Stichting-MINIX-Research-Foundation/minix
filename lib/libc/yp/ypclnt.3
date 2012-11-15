@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.24 2010/03/22 19:30:55 joerg Exp $
+.\"	$NetBSD: ypclnt.3,v 1.26 2012/03/04 11:52:32 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 21, 1997
+.Dd March 2, 2012
 .Dt YPCLNT 3
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nm yp_unbind ,
 .Nm yperr_string ,
 .Nm ypprot_err
+.Nm yp_setbindtries
 .Nd Interface to the YP subsystem
 .Sh LIBRARY
 .Lb libc
@@ -72,6 +73,8 @@
 .Fn yperr_string "int incode"
 .Ft int
 .Fn ypprot_err "unsigned int incode"
+.Ft int
+.Fn yp_setbindtries "int ntries"
 .Sh DESCRIPTION
 The
 .Nm ypclnt
@@ -196,7 +199,7 @@ is returned and control given back to the user code.
 The
 .Nm ypclnt
 suite provides the following functionality:
-.Bl -tag -width yp_match()xx
+.Bl -tag -width yp_matchxxxx
 .It Fn yp_match
 Provides the value associated with the given key.
 .It Fn yp_first
@@ -348,6 +351,17 @@ protocol error code to a
 .Nm ypclnt
 error code suitable for
 .Fn yperr_string .
+.It Fn yp_setbindtries
+Set the number of tries to attempt to bind to the domain before returning
+an error.
+The default is
+.Dv 0
+which means wait forever if no ypserver is not found of if the RPC
+communication with the yp server fails.
+If the number passed is negative, the current number of tries is not modified.
+.Pp
+This function is an extention to the client library that allows application
+to catch communication problems with the ypserver without blocking forever.
 .El
 .Sh RETURN VALUES
 All functions in the

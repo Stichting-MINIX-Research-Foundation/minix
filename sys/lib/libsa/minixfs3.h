@@ -1,4 +1,4 @@
-/*	$NetBSD$ */
+/*	$NetBSD: minixfs3.h,v 1.1 2012/01/16 18:44:13 christos Exp $ */
 
 /*-
  * Copyright (c) 2012

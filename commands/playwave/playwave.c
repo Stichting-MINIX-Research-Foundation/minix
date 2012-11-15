@@ -70,7 +70,7 @@ void usage()
 int main ( int argc, char *argv[] )
 {
   int i, r, audio, file;
-  char *buffer, *file_name;
+  char *buffer, *file_name = NULL;
   unsigned int sign;
   unsigned int fragment_size;
   unsigned int channels;

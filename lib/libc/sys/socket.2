@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.36 2007/09/06 09:32:52 jnemeth Exp $
+.\"	$NetBSD: socket.2,v 1.39 2012/01/25 09:18:52 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd September 6, 2007
+.Dd January 23, 2012
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -77,6 +77,21 @@ SOCK_RAW
 SOCK_SEQPACKET
 SOCK_RDM
 .Ed
+.Pp
+The following flags can be or'ed to the type to condition the returned
+file descriptor:
+The following flags are valid:
+.Bl -column SOCK_NONBLOCK -offset indent
+.It Dv SOCK_CLOEXEC
+Set the close on exec property.
+.It Dv SOCK_NONBLOCK
+Sets non-blocking I/O.
+.It Dv SOCK_NOSIGPIPE
+Return
+.Er EPIPE
+instead of raising
+.Dv SIGPIPE .
+.El
 .Pp
 A
 .Dv SOCK_STREAM

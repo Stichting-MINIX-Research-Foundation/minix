@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.13 2003/08/07 16:42:08 agc Exp $	*/
+/*	$NetBSD: exect.S,v 1.14 2011/11/18 20:21:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: exect.S,v 1.13 2003/08/07 16:42:08 agc Exp $")
+	RCSID("$NetBSD: exect.S,v 1.14 2011/11/18 20:21:41 joerg Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -47,11 +47,4 @@ ENTRY(exect)
 	orb	$(PSL_T>>8),1(%esp)
 	popfl
 	SYSTRAP(execve)
-#ifdef PIC
-	PIC_PROLOGUE
-	mov	PIC_GOT(CERROR), %ecx
-	PIC_EPILOGUE
-	jmp	*%ecx
-#else
 	jmp	CERROR
-#endif

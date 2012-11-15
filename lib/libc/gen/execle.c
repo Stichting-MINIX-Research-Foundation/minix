@@ -1,4 +1,4 @@
-/*	$NetBSD: execle.c,v 1.11 2008/01/09 11:26:03 simonb Exp $	*/
+/*	$NetBSD: execle.c,v 1.12 2011/06/30 19:46:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execle.c,v 1.11 2008/01/09 11:26:03 simonb Exp $");
+__RCSID("$NetBSD: execle.c,v 1.12 2011/06/30 19:46:07 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,18 +50,6 @@ __weak_alias(execle,_execle)
 int
 execle(const char *name, const char *arg, ...)
 {
-#if (defined(__i386__) || defined(__m68k__)) && !defined(__minix)
-	va_list ap;
-	char **envp;
-
-	va_start(ap, arg);
-	while ((va_arg(ap, char *)) != NULL)
-		continue;
-	envp = va_arg(ap, char **);
-	va_end(ap);
-
-	return execve(name, __UNCONST(&arg), envp);
-#else
 	va_list ap;
 	char **argv, **envp;
 	int i;
@@ -81,5 +69,4 @@ execle(const char *name, const char *arg, ...)
 	va_end(ap);
 
 	return execve(name, argv, envp);
-#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
+/*	$NetBSD: fpsetround.S,v 1.4 2011/09/30 17:42:34 christos Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD.
@@ -21,28 +21,22 @@ ENTRY(_fpsetround)
 #else
 ENTRY(fpsetround)
 #endif
+
 	fnstcw	-4(%rsp)
-	stmxcsr	-8(%rsp)
-
-	andl	$3,%edi
-
-	movl	-4(%rsp),%edx
-	rorl	$10,%edx
-	movl	%edx,%eax
-	andl	$3,%eax
-
-	andl	$~3,%edx
-	orl	%edi,%edx
-	roll	$10,%edx
-	movl	%edx,-4(%rsp)
-
-	movl	-8(%rsp),%edx
-	rorl	$13,%edx
-	andl	$~3,%edx
-	orl	%edi,%edx
-	roll	$13,%edx
-	movl	%edx,-8(%rsp)
-
-	ldmxcsr	-8(%rsp)
+	movl	-4(%rsp), %edx
+	movl	%edx, %eax
+	andl	$0x00000c00, %eax	
+	andl	$0xfffff3ff, %edx
+	orl	%edi, %edx
+	movl	%edx, -4(%rsp)
 	fldcw	-4(%rsp)
+
+	stmxcsr	-4(%rsp)
+	movl	-4(%rsp), %edx
+	andl	$0xffff9fff, %edx
+	sall	$3, %edi
+	orl	%edi,%edx
+	movl	%edx,-4(%rsp)
+	ldmxcsr	-4(%rsp)
+
 	ret

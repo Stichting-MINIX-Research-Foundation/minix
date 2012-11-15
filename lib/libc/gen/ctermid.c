@@ -1,4 +1,4 @@
-/*	$NetBSD: ctermid.c,v 1.10 2003/08/07 16:42:46 agc Exp $	*/
+/*	$NetBSD: ctermid.c,v 1.11 2012/06/25 22:32:43 abs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctermid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ctermid.c,v 1.10 2003/08/07 16:42:46 agc Exp $");
+__RCSID("$NetBSD: ctermid.c,v 1.11 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,7 @@ __weak_alias(ctermid,_ctermid)
 #endif
 
 char *
-ctermid(s)
-	char *s;
+ctermid(char *s)
 {
 	static char def[] = _PATH_TTY;
 

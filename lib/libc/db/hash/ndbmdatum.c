@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbmdatum.c,v 1.4 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: ndbmdatum.c,v 1.5 2012/03/13 21:13:33 christos Exp $	*/
 /*	from: NetBSD: ndbm.c,v 1.18 2004/04/27 20:03:45 kleink Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ndbmdatum.c,v 1.4 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: ndbmdatum.c,v 1.5 2012/03/13 21:13:33 christos Exp $");
 
 /*
  * This package provides a dbm compatible interface to the new hashing
@@ -54,6 +54,9 @@ __RCSID("$NetBSD: ndbmdatum.c,v 1.4 2008/09/11 12:58:00 joerg Exp $");
 #include <ndbm.h>
 #include "hash.h"
 
+#ifndef datum_truncate
+#define datum_truncate(a) (a)
+#endif
 /*
  * Returns:
  *	DATUM on success
@@ -74,7 +77,7 @@ dbm_fetch(DBM *db, datum key)
 		dbtretdata.size = 0;
 	}
 	retdata.dptr = dbtretdata.data;
-	retdata.dsize = dbtretdata.size;
+	retdata.dsize = datum_truncate(dbtretdata.size);
 	return (retdata);
 }
 
@@ -94,7 +97,7 @@ dbm_firstkey(DBM *db)
 	if (status)
 		dbtretkey.data = NULL;
 	retkey.dptr = dbtretkey.data;
-	retkey.dsize = dbtretkey.size;
+	retkey.dsize = datum_truncate(dbtretkey.size);
 	return (retkey);
 }
 
@@ -114,7 +117,7 @@ dbm_nextkey(DBM *db)
 	if (status)
 		dbtretkey.data = NULL;
 	retkey.dptr = dbtretkey.data;
-	retkey.dsize = dbtretkey.size;
+	retkey.dsize = datum_truncate(dbtretkey.size);
 	return (retkey);
 }
 

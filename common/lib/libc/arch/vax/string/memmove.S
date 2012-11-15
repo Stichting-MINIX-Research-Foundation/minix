@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.2 2005/12/24 08:33:32 matt Exp $	*/
+/*	$NetBSD: memmove.S,v 1.3 2011/01/25 04:45:28 matt Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,9 +28,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)memmove.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#include <machine/asm.h>
+
+/* .asciz "@(#)memmove.s	8.1 (Berkeley) 6/4/93" */
+RCSID("$NetBSD: memmove.S,v 1.3 2011/01/25 04:45:28 matt Exp $")
 
 /*
  * void *memmove(dst, src, size)
@@ -39,8 +40,6 @@
  * This optimises the usual case (count < 65536) at the expense
  * of some extra memory references and branches when count >= 65536.
  */
-
-#include <machine/asm.h>
 
 ENTRY(memmove, 0)
 	movzwl	$65535,%r0	/* %r0 = 64K (needed below) */
@@ -88,3 +87,4 @@ ENTRY(memmove, 0)
 	subl2	%r0,%r1
 	subl2	%r0,%r3
 	brb	5b
+END(memmove)

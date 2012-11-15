@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.c,v 1.8 2009/09/05 06:44:27 dholland Exp $	*/
+/*	$NetBSD: citrus_iconv.c,v 1.10 2011/11/19 18:34:21 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,22 +28,25 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv.c,v 1.8 2009/09/05 06:44:27 dholland Exp $");
+__RCSID("$NetBSD: citrus_iconv.c,v 1.10 2011/11/19 18:34:21 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "reentrant.h"
+
+#include <sys/types.h>
+#include <sys/queue.h>
+
 #include <assert.h>
+#include <dirent.h>
+#include <errno.h>
+#include <limits.h>
+#include <paths.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <limits.h>
 #include <unistd.h>
-#include <paths.h>
-#include <dirent.h>
-#include <sys/types.h>
-#include <sys/queue.h>
 
 #include "citrus_namespace.h"
 #include "citrus_bcs.h"
@@ -65,7 +68,8 @@ __RCSID("$NetBSD: citrus_iconv.c,v 1.8 2009/09/05 06:44:27 dholland Exp $");
 #ifdef _REENTRANT
 static rwlock_t lock = RWLOCK_INITIALIZER;
 #endif
-static int isinit = 0;
+
+static bool isinit = false;
 static _CITRUS_HASH_HEAD(, _citrus_iconv_shared, CI_HASH_SIZE) shared_pool;
 static TAILQ_HEAD(, _citrus_iconv_shared) shared_unused;
 static int shared_num_unused, shared_max_reuse;
@@ -82,7 +86,7 @@ init_cache(void)
 			shared_max_reuse = atoi(getenv(CI_ENV_MAX_REUSE));
 		if (shared_max_reuse < 0)
 			shared_max_reuse = CI_INITIAL_MAX_REUSE;
-		isinit = 1;
+		isinit = true;
 	}
 	rwlock_unlock(&lock);
 }
@@ -218,8 +222,10 @@ open_shared(struct _citrus_iconv_shared * __restrict * __restrict rci,
 	    ci->ci_ops->io_uninit_shared == NULL ||
 	    ci->ci_ops->io_init_context == NULL ||
 	    ci->ci_ops->io_uninit_context == NULL ||
-	    ci->ci_ops->io_convert == NULL)
+	    ci->ci_ops->io_convert == NULL) {
+		ret = EINVAL;
 		goto err;
+	}
 
 	/* initialize the converter */
 	ret = (*ci->ci_ops->io_init_shared)(ci, basedir, src, dst,

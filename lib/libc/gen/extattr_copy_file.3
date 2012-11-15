@@ -1,0 +1,105 @@
+.\"	$NetBSD: extattr_copy_file.3,v 1.2 2011/12/16 15:21:13 manu Exp $
+.\"
+.\" Copyright (c) 2001 Dima Dorfman <dd@FreeBSD.org>
+.\" Copyright (c) 2011 Emmanuel Dreyfus <manu@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" FreeBSD: src/lib/libc/posix1e/extattr.3,v 1.5 2002/12/12 17:25:53 ru Exp
+.\"
+.Dd December 16, 2011
+.Dt EXTATTR_COPY_FILE 3
+.Os
+.Sh NAME
+.Nm extattr_copy_file ,
+.Nm extattr_copy_fd ,
+.Nm extattr_copy_link ,
+.Nm cpxattr ,
+.Nm fcpxattr ,
+.Nm lcpxattr
+.Nd copy extended attributes from a file to another one
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/extattr.h
+.Ft int
+.Fn extattr_copy_file "const char *from" "const char *to" "int namespace"
+.Ft int
+.Fn extattr_copy_fd "int from_fd" "int to_fd" "int namespace"
+.Ft int
+.Fn extattr_copy_link "const char *from" "const char *to" "int namespace"
+.Ft int
+.Fn cpxattr "const char *from" "const char *to"
+.Ft int
+.Fn fcpxattr "int from_fd" "int to_fd"
+.Ft int
+.Fn lcpxattr "const char *from" "const char *to"
+.Sh DESCRIPTION
+.Fn extattr_copy_file
+copies extended attributes of namespace
+.Ar namespace
+from a file to another one.
+.Fn extattr_copy_fd
+does the same using open file descriptors, and
+.Fn extattr_copy_link
+does the same as
+.Fn extattr_copy_file
+but operates on symbolic links themselves instead of their targets.
+.Pp
+.Fn cpxattr ,
+.Fn fcpxattr ,
+and
+.Fn lcpxattr
+respectively work the same was as
+.Fn extattr_copy_file ,
+.Fn extattr_copy_fd ,
+and
+.Fn extattr_copy_link ,
+but will copy extended attributes from all namespaces accessible to the user,
+silently skiping unaccessible namespaces.
+.Pp
+Please note that none of the extended attribute copying functions are atomic.
+.Sh RETURN VALUES
+If any of the calls are unsuccessful, the value \-1 is returned
+and the global variable
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+Extended attribute copying functions may raise errors produced by
+.Xr extattr_list_file 2
+and
+.Xr extattr_get_file 2 .
+.Sh SEE ALSO
+.Xr getextattr 1 ,
+.Xr extattr_get_file 2 ,
+.Xr extattr_namespace_to_string 3 ,
+.Xr extattr 9
+.Sh HISTORY
+Extended attribute support was developed as part of the
+.Tn TrustedBSD
+Project, and introduced in
+.Fx 5.0
+and
+.Nx 3.0 .
+It was developed to support security extensions requiring additional labels
+to be associated with each file or directory.

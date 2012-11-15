@@ -1,4 +1,4 @@
-/* $NetBSD: hexnan.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
+/* $NetBSD: hexnan.c,v 1.5 2011/03/21 04:52:09 christos Exp $ */
 
 /****************************************************************
 
@@ -73,7 +73,13 @@ hexnan( CONST char **sp, CONST FPI *fpi, ULong *x0)
 	x1 = xe = x;
 	havedig = hd0 = i = 0;
 	s = *sp;
-	while((c = *(CONST unsigned char*)++s) != 0) {
+	/* allow optional initial 0x or 0X */
+	while((c = *(CONST unsigned char*)(s+1)) && c <= ' ')
+		++s;
+	if (s[1] == '0' && (s[2] == 'x' || s[2] == 'X')
+	 && *(CONST unsigned char*)(s+3) > ' ')
+		s += 2;
+	while((c = *(CONST unsigned char*)++s) != '\0') {
 		if (!(h = hexdig[c])) {
 			if (c <= ' ') {
 				if (hd0 < havedig) {
@@ -88,12 +94,25 @@ hexnan( CONST char **sp, CONST FPI *fpi, ULong *x0)
 					x1 = x;
 					i = 0;
 					}
+				while(*(CONST unsigned char*)(s+1) <= ' ')
+					++s;
+				if (s[1] == '0' && (s[2] == 'x' || s[2] == 'X')
+				 && *(CONST unsigned char*)(s+3) > ' ')
+					s += 2;
 				continue;
 				}
 			if (/*(*/ c == ')' && havedig) {
 				*sp = s + 1;
 				break;
 				}
+#ifndef GDTOA_NON_PEDANTIC_NANCHECK
+			do {
+				if (/*(*/ c == ')') {
+					*sp = s + 1;
+					break;
+					}
+				} while((c = *++s) != '\0');
+#endif
 			return STRTOG_NaN;
 			}
 		havedig++;

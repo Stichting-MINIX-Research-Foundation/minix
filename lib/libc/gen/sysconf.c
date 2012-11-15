@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.33 2008/08/06 17:17:04 matt Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.34 2012/08/01 15:24:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.33 2008/08/06 17:17:04 matt Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.34 2012/08/01 15:24:22 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -346,6 +346,8 @@ sysconf(int name)
 		return _POSIX_REGEXP;
 	case _SC_SHELL:
 		return _POSIX_SHELL;
+	case _SC_SPAWN:
+		return _POSIX_SPAWN;
 	case _SC_SYMLOOP_MAX:
 		return MAXSYMLINKS;
 

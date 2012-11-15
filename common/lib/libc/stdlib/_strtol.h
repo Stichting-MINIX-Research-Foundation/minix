@@ -1,4 +1,4 @@
-/* $NetBSD: _strtol.h,v 1.2 2009/05/20 22:03:29 christos Exp $ */
+/* $NetBSD: _strtol.h,v 1.3 2012/03/09 15:41:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -109,7 +109,7 @@ _FUNCNAME(const char *nptr, char **endptr, int base)
 	 * Set any if any `digits' consumed; make it negative to indicate
 	 * overflow.
 	 */
-	cutoff = (neg ? __INT_MIN : __INT_MAX);
+	cutoff = (__INT)(neg ? __INT_MIN : __INT_MAX);
 	cutlim = (int)(cutoff % base);
 	cutoff /= base;
 	if (neg) {

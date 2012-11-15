@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.3 2007/11/02 21:05:06 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.4 2011/08/07 01:52:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ffs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ffs.c,v 1.3 2007/11/02 21:05:06 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.4 2011/08/07 01:52:47 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: ffs.c,v 1.3 2007/11/02 21:05:06 christos Exp $");
 /*
  * ffs -- vax ffs instruction
  */
+__weak_alias(__ffssi2,ffs)
 int
 ffs(int mask)
 {

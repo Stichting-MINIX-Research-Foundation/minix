@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.7 2009/12/14 00:39:00 matt Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.8 2012/02/28 20:41:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.7 2009/12/14 00:39:00 matt Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.8 2012/02/28 20:41:19 joerg Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -139,6 +139,10 @@ __libc_atomic_init(void)
 #undef atomic_cas_uint
 #undef atomic_cas_ulong
 #undef atomic_cas_ptr
+#undef atomic_cas_32_ni
+#undef atomic_cas_uint_ni
+#undef atomic_cas_ulong_ni
+#undef atomic_cas_ptr_ni
 
 atomic_op_alias(atomic_cas_32,_atomic_cas_32)
 atomic_op_alias(atomic_cas_uint,_atomic_cas_32)

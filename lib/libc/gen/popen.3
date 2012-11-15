@@ -1,4 +1,4 @@
-.\"	$NetBSD: popen.3,v 1.16 2007/08/02 23:45:10 wiz Exp $
+.\"	$NetBSD: popen.3,v 1.18 2011/06/27 08:21:07 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)popen.3	8.2 (Berkeley) 5/3/95
 .\"
-.Dd August 2, 2007
+.Dd June 24, 2011
 .Dt POPEN 3
 .Os
 .Sh NAME
@@ -76,6 +76,12 @@ for reading,
 for writing, or
 .Ql r+
 for reading and writing.
+In addition if the character
+.Ql e
+is present in the
+.Fa type
+string, the file descriptor used internally is set to be closed on
+.Xr exec 3 .
 .Pp
 The
 .Fa command

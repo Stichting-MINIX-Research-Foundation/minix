@@ -8,15 +8,9 @@
 /* vprintf() uses kputc() to print characters. */
 void kputc(int c);
 
-#ifdef __NBSD_LIBC
 #define count_kputc(c) do { charcount++; putf((c), farg); } while(0)
 
 int __fvprintf(void (*putf)(int, void *), const char *fmt, va_list argp, void *farg)
-#else /* !NBSD_LIBC */
-#define count_kputc(c) do { charcount++; kputc(c); } while(0)
-
-int vprintf(const char *fmt, va_list argp)
-#endif /* NBSD_LIBC */
 {
 	int c, charcount = 0;
 	enum { LEFT, RIGHT } adjust;
@@ -186,15 +180,11 @@ int vprintf(const char *fmt, va_list argp)
 	}
 
 	/* Mark the end with a null (should be something else, like -1). */
-#ifdef __NBDS_LIBC
-	putf(0, farg);
-#else
 	kputc(0);
-#endif
+
 	return charcount;
 }
 
-#ifdef __NBSD_LIBC
 #include <sys/cdefs.h>
 #include <assert.h>
 #include <unistd.h>
@@ -230,7 +220,6 @@ int _vfprintf(FILE *fp, const char *fmt, va_list argp)
 {
 	return	__fvprintf(__xfputc, fmt, argp, fp);
 }
-#endif
 
 /*
  * $PchId: kprintf.c,v 1.5 1996/04/11 06:59:05 philip Exp $

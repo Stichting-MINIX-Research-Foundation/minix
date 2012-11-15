@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.2 2011/11/05 09:27:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,11 +40,11 @@
 #define _COMPAT_SETJMP_H_
 
 __BEGIN_DECLS
-int	__setjmp14(jmp_buf);
-void	__longjmp14(jmp_buf, int) __attribute__((__noreturn__));
+int	__setjmp14(jmp_buf) __returns_twice;
+void	__longjmp14(jmp_buf, int) __dead;
 
-int	__sigsetjmp14(sigjmp_buf, int);
-void	__siglongjmp14(sigjmp_buf, int) __attribute__((__noreturn__));
+int	__sigsetjmp14(sigjmp_buf, int) __returns_twice;
+void	__siglongjmp14(sigjmp_buf, int) __dead;
 __END_DECLS
 
 #endif /* !_COMPAT_SETJMP_H_ */

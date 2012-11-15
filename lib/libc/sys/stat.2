@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.2,v 1.47 2010/11/25 20:53:23 dholland Exp $
+.\"	$NetBSD: stat.2,v 1.50 2012/01/04 10:53:39 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stat.2	8.4 (Berkeley) 5/1/95
 .\"
-.Dd November 25, 2010
+.Dd September 14, 2011
 .Dt STAT 2
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ The following standards-compliant fields are defined in the structure:
 .It Vt time_t Ta st_mtime Ta time of last data modification
 .It Vt time_t Ta st_ctime Ta  time of last file status change
 .It Vt blksize_t Ta st_blksize Ta preferred I/O block size (fs-specific)
-.It Vt blkcnt_t Ta st_block Ta blocks allocated for the file
+.It Vt blkcnt_t Ta st_blocks Ta blocks allocated for the file
 .El
 .Pp
 These are specified in the
@@ -108,7 +108,7 @@ The
 .Va st_ino
 and
 .Va st_dev
-fields taken together to uniquely identify the file within the system.
+fields taken together uniquely identify the file within the system.
 Most of the types are defined in
 .Xr types 3 .
 .Pp
@@ -292,7 +292,7 @@ will fail if:
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix.
 .It Bq Er EBADF
-A badly formed v-node was encountered.
+A badly formed vnode was encountered.
 This can happen if a file system information node is incorrect.
 .It Bq Er EFAULT
 .Fa sb

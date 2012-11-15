@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.21 2010/03/22 19:30:54 joerg Exp $
+.\"	$NetBSD: regex.3,v 1.22 2011/05/17 03:35:38 enami Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -394,11 +394,11 @@ and if the error code came from
 it should have been the result from the most recent
 .Fn regcomp
 using that
-.Fa regex_t . (
-.Fn regerror
+.Fa regex_t .
+.Po Fn regerror
 may be able to supply a more detailed message using information
 from the
-.Fa regex_t . )
+.Fa regex_t . Pc
 .Fn regerror
 places the NUL-terminated message into the buffer pointed to by
 .Fa errbuf ,

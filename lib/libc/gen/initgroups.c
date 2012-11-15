@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.21 2003/08/07 16:42:51 agc Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.22 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: initgroups.c,v 1.21 2003/08/07 16:42:51 agc Exp $");
+__RCSID("$NetBSD: initgroups.c,v 1.22 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,9 +52,7 @@ __weak_alias(initgroups,_initgroups)
 #endif
 
 int
-initgroups(uname, agroup)
-	const char *uname;
-	gid_t agroup;
+initgroups(const char *uname, gid_t agroup)
 {
 	gid_t groups_list[NGROUPS];
 	int ngroups;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypprot_err.c,v 1.5 2003/12/10 12:06:25 agc Exp $	 */
+/*	$NetBSD: ypprot_err.c,v 1.6 2012/06/25 22:32:46 abs Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ypprot_err.c,v 1.5 2003/12/10 12:06:25 agc Exp $");
+__RCSID("$NetBSD: ypprot_err.c,v 1.6 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -41,8 +41,7 @@ __weak_alias(ypprot_err,_ypprot_err)
 #endif
 
 int
-ypprot_err(incode)
-	unsigned int    incode;
+ypprot_err(unsigned int incode)
 {
 	switch (incode) {
 	case YP_TRUE:

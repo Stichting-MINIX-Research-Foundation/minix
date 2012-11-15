@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.28 2011/01/15 12:31:57 martin Exp $	*/
+/*	$NetBSD: zic.c,v 1.30 2012/08/09 12:38:26 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,11 +10,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.28 2011/01/15 12:31:57 martin Exp $");
+__RCSID("$NetBSD: zic.c,v 1.30 2012/08/09 12:38:26 christos Exp $");
 #endif /* !defined lint */
 
-static char	elsieid[] = "@(#)zic.c	8.20";
-
+#include "version.h"
 #include "private.h"
 #include "locale.h"
 #include "tzfile.h"
@@ -514,7 +513,7 @@ char *	argv[];
 	}
 	for (i = 1; i < argc; ++i)
 		if (strcmp(argv[i], "--version") == 0) {
-			(void) printf("%s\n", elsieid);
+			(void) printf("%s\n", TZVERSION);
 			exit(EXIT_SUCCESS);
 		} else if (strcmp(argv[i], "--help") == 0) {
 			usage(stdout, EXIT_SUCCESS);
@@ -1637,6 +1636,53 @@ const char * const	string;
 			if (thistimei == 0)
 				writetype[0] = TRUE;
 		}
+#ifndef LEAVE_SOME_PRE_2011_SYSTEMS_IN_THE_LURCH
+		/*
+		** For some pre-2011 systems: if the last-to-be-written
+		** standard (or daylight) type has an offset different from the
+		** most recently used offset,
+		** append an (unused) copy of the most recently used type
+		** (to help get global "altzone" and "timezone" variables
+		** set correctly).
+		*/
+		{
+			register int	mrudst, mrustd, hidst, histd, type;
+
+			hidst = histd = mrudst = mrustd = -1;
+			for (i = thistimei; i < thistimelim; ++i)
+				if (isdsts[types[i]])
+					mrudst = types[i];
+				else	mrustd = types[i];
+			for (i = 0; i < typecnt; ++i)
+				if (writetype[i]) {
+					if (isdsts[i])
+						hidst = i;
+					else	histd = i;
+				}
+			if (hidst >= 0 && mrudst >= 0 && hidst != mrudst &&
+				gmtoffs[hidst] != gmtoffs[mrudst]) {
+					isdsts[mrudst] = -1;
+					type = addtype(gmtoffs[mrudst],
+						&chars[abbrinds[mrudst]],
+						TRUE,
+						ttisstds[mrudst],
+						ttisgmts[mrudst]);
+					isdsts[mrudst] = TRUE;
+					writetype[type] = TRUE;
+			}
+			if (histd >= 0 && mrustd >= 0 && histd != mrustd &&
+				gmtoffs[histd] != gmtoffs[mrustd]) {
+					isdsts[mrustd] = -1;
+					type = addtype(gmtoffs[mrustd],
+						&chars[abbrinds[mrustd]],
+						FALSE,
+						ttisstds[mrustd],
+						ttisgmts[mrustd]);
+					isdsts[mrustd] = FALSE;
+					writetype[type] = TRUE;
+			}
+		}
+#endif /* !defined LEAVE_SOME_PRE_2011_SYSTEMS_IN_THE_LURCH */
 		thistypecnt = 0;
 		for (i = 0; i < typecnt; ++i)
 			typemap[i] = writetype[i] ?  thistypecnt++ : -1;
@@ -1852,16 +1898,16 @@ const long			gmtoff;
 		register int	week;
 
 		if (rp->r_dycode == DC_DOWGEQ) {
-			week = 1 + rp->r_dayofmonth / DAYSPERWEEK;
-			if ((week - 1) * DAYSPERWEEK + 1 != rp->r_dayofmonth)
+			if ((rp->r_dayofmonth % DAYSPERWEEK) != 1)
 				return -1;
+			week = 1 + rp->r_dayofmonth / DAYSPERWEEK;
 		} else if (rp->r_dycode == DC_DOWLEQ) {
 			if (rp->r_dayofmonth == len_months[1][rp->r_month])
 				week = 5;
 			else {
-				week = 1 + rp->r_dayofmonth / DAYSPERWEEK;
-				if (week * DAYSPERWEEK - 1 != rp->r_dayofmonth)
+				if ((rp->r_dayofmonth % DAYSPERWEEK) != 0)
 					return -1;
+				week = rp->r_dayofmonth / DAYSPERWEEK;
 			}
 		} else	return -1;	/* "cannot happen" */
 		(void) sprintf(result, "M%d.%d.%d",
@@ -1991,6 +2037,7 @@ const int			zonecount;
 	register char *			envvar;
 	register int			max_abbr_len;
 	register int			max_envvar_len;
+	register int			prodstic; /* all rules are min to max */
 
 	max_abbr_len = 2 + max_format_len + max_abbrvar_len;
 	max_envvar_len = 2 * max_abbr_len + 5 * 9;
@@ -2005,6 +2052,7 @@ const int			zonecount;
 	timecnt = 0;
 	typecnt = 0;
 	charcnt = 0;
+	prodstic = zonecount == 1;
 	/*
 	** Thanks to Earl Chew
 	** for noting the need to unconditionally initialize startttisstd.
@@ -2048,6 +2096,16 @@ wp = ecpyalloc(_("no POSIX environment variable for zone"));
 		if (max_year <= INT_MAX - YEARSPERREPEAT)
 			max_year += YEARSPERREPEAT;
 		else	max_year = INT_MAX;
+		/*
+		** Regardless of any of the above,
+		** for a "proDSTic" zone which specifies that its rules
+		** always have and always will be in effect,
+		** we only need one cycle to define the zone.
+		*/
+		if (prodstic) {
+			min_year = 1900;
+			max_year = min_year + YEARSPERREPEAT;
+		}
 	}
 	/*
 	** For the benefit of older systems,

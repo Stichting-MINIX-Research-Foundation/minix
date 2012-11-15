@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.28 2011/01/21 23:30:31 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.31 2011/10/30 21:53:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.28 2011/01/21 23:30:31 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.31 2011/10/30 21:53:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -180,8 +180,8 @@ static void	 qprintf(const char *, Char *);
 #endif
 
 int
-glob(const char *pattern, int flags, int (*errfunc)(const char *, int),
-    glob_t *pglob)
+glob(const char * __restrict pattern, int flags, int (*errfunc)(const char *,
+    int), glob_t * __restrict pglob)
 {
 	const u_char *patnext;
 	int c;
@@ -638,7 +638,6 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 				errno = 0;
 				*pathend++ = SEP;
 				*pathend = EOS;
-printf("stat limit\n");
 				return GLOB_NOSPACE;
 			}
 			if (((pglob->gl_flags & GLOB_MARK) &&
@@ -790,7 +789,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		readdirfunc = pglob->gl_readdir;
 	else
-		readdirfunc = (struct dirent *(*)__P((void *))) readdir;
+		readdirfunc = (struct dirent *(*)(void *)) readdir;
 	while ((dp = (*readdirfunc)(dirp)) != NULL) {
 		u_char *sc;
 		Char *dc;
@@ -800,7 +799,8 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 			errno = 0;
 			*pathend++ = SEP;
 			*pathend = EOS;
-			return GLOB_NOSPACE;
+			error = GLOB_NOSPACE;
+			break;
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: strcoll.c,v 1.9 2003/08/07 16:43:50 agc Exp $	*/
+/*	$NetBSD: strcoll.c,v 1.10 2012/06/25 22:32:46 abs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strcoll.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcoll.c,v 1.9 2003/08/07 16:43:50 agc Exp $");
+__RCSID("$NetBSD: strcoll.c,v 1.10 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,7 @@ __RCSID("$NetBSD: strcoll.c,v 1.9 2003/08/07 16:43:50 agc Exp $");
  * Compare strings according to LC_COLLATE category of current locale.
  */
 int
-strcoll(s1, s2)
-	const char *s1, *s2;
+strcoll(const char *s1, const char *s2)
 {
 
 	_DIAGASSERT(s1 != NULL);

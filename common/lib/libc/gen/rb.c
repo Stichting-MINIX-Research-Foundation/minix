@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.9 2010/11/17 13:19:32 tron Exp $	*/
+/*	$NetBSD: rb.c,v 1.11 2011/06/20 09:11:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,10 @@
 #else
 #define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
 #endif
+__RCSID("$NetBSD: rb.c,v 1.11 2011/06/20 09:11:16 mrg Exp $");
 #else
 #include <lib/libkern/libkern.h>
+__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.11 2011/06/20 09:11:16 mrg Exp $");
 #endif
 
 #ifdef _LIBC
@@ -89,7 +91,7 @@ rb_tree_init(struct rb_tree *rbt, const rb_tree_ops_t *ops)
 {
 
 	rbt->rbt_ops = ops;
-	*((const struct rb_node **)&rbt->rbt_root) = RB_SENTINEL_NODE;
+	rbt->rbt_root = RB_SENTINEL_NODE;
 	RB_TAILQ_INIT(&rbt->rbt_nodes);
 #ifndef RBSMALL
 	rbt->rbt_minmax[RB_DIR_LEFT] = rbt->rbt_root;	/* minimum node */

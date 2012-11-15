@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.13 2003/08/07 16:43:24 agc Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.14 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fpurge.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fpurge.c,v 1.13 2003/08/07 16:43:24 agc Exp $");
+__RCSID("$NetBSD: fpurge.c,v 1.14 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,15 +54,14 @@ __RCSID("$NetBSD: fpurge.c,v 1.13 2003/08/07 16:43:24 agc Exp $");
  * given FILE's buffer empty.
  */
 int
-fpurge(fp)
-	FILE *fp;
+fpurge(FILE *fp)
 {
 
 	_DIAGASSERT(fp != NULL);
 
 	if (fp->_flags == 0) {
 		errno = EBADF;
-		return (EOF);
+		return EOF;
 	}
 	FLOCKFILE(fp);
 	if (HASUB(fp))
@@ -72,5 +71,5 @@ fpurge(fp)
 	fp->_r = 0;
 	fp->_w = fp->_flags & (__SLBF|__SNBF) ? 0 : fp->_bf._size;
 	FUNLOCKFILE(fp);
-	return (0);
+	return 0;
 }

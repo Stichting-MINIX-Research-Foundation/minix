@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.6 2004/08/21 11:20:10 rearnsha Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.7 2012/08/01 06:02:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -53,6 +53,8 @@ ENTRY(_setjmp)
 	str	r1, [r0], #4
 #ifdef SOFTFLOAT
 	add	r0, r0, #52
+#elif defined(__VFP_FP__)
+#error _setjmp VFP support missing
 #else
 	/* Store fp registers */
 	sfm	f4, 4, [r0], #48
@@ -77,6 +79,8 @@ ENTRY(_longjmp)
 
 #ifdef SOFTFLOAT
 	add	r0, r0, #52
+#elif defined(__VFP_FP__)
+#error _longjmp VFP support missing
 #else
 	/* Restore fp registers */
 	lfm	f4, 4, [r0], #48

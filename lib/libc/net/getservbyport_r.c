@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyport_r.c,v 1.7 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: getservbyport_r.c,v 1.9 2012/03/13 21:13:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyport.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyport_r.c,v 1.7 2010/04/25 00:54:46 joerg Exp $");
+__RCSID("$NetBSD: getservbyport_r.c,v 1.9 2012/03/13 21:13:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,17 +67,17 @@ _servent_getbyport(struct servent_data *sd, struct servent *sp, int port,
 
 		port = be16toh(port);
 
-		if (proto != NULL && *proto == '\0')
-			return NULL;
-		if (proto != NULL)
+		if (proto != NULL) {
 			protolen = strlen(proto);
-		else
+			if (protolen == 0 || protolen > 255)
+				return NULL;
+		} else
 			protolen = 0;
 		if (port < 0 || port > 65536)
 			return NULL;
 
 		buf[0] = 0;
-		buf[1] = protolen;
+		buf[1] = (uint8_t)protolen;
 		be16enc(buf + 2, port);
 		memcpy(buf + 4, proto, protolen);
 

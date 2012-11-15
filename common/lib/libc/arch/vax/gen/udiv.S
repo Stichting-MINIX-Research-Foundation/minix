@@ -30,10 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#include <machine/asm.h>
+
 	/* .asciz "@(#)udiv.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: udiv.S,v 1.2 2005/12/24 08:33:32 matt Exp $"
-#endif /* LIBC_SCCS and not lint */
+RCSID("$NetBSD: udiv.S,v 1.3 2011/01/25 04:45:28 matt Exp $")
 
 /*
  * Unsigned division, PCC flavor.
@@ -41,16 +41,10 @@
  * audiv() takes a pointer to a dividend and an ordinary divisor.
  */
 
-#include <machine/asm.h>
-
 #define	DIVIDEND	4(%ap)
 #define	DIVISOR		8(%ap)
 
-#ifdef __ELF__
 ASENTRY(__udiv,0)
-#else
-ASENTRY(udiv,0)
-#endif
 	movl	DIVISOR,%r2
 	jlss	Leasy		# big divisor: settle by comparison
 	movl	DIVIDEND,%r0
@@ -69,12 +63,9 @@ Leasy:
 Lone:
 	movl	$1,%r0
 	ret
+END(__udiv)
 
-#ifdef __ELF__
 ASENTRY(__audiv,0)
-#else
-ASENTRY(audiv,0)
-#endif
 	movl	DIVIDEND,%r3
 	movl	DIVISOR,%r2
 	jlss	La_easy		# big divisor: settle by comparison
@@ -98,3 +89,4 @@ La_one:
 	movl	$1,%r0
 	movl	%r0,(%r3)
 	ret
+END(__audiv)

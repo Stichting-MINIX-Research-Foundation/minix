@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.2 2010/08/02 17:49:04 joerg Exp $	*/
+/*	$NetBSD: fenv.h,v 1.7 2012/03/22 03:06:06 dholland Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(__i386__) && !defined(__amd64__)
+#if !defined(__i386__) && !defined(__amd64__) && !defined(__sparc__)
 #error	"fenv.h is currently not supported for this architecture"
 #endif
 
@@ -55,7 +55,7 @@ int	feenableexcept(int mask);
 int	fedisableexcept(int mask);
 int	fegetexcept(void);
 
-#endif /* _NETBDS_SOURCE || _GNU_SOURCE */
+#endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.38 2009/10/24 17:23:34 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.39 2012/09/09 18:03:17 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -256,7 +256,7 @@ union res_sockaddr_union {
 #define RES_NO_NIBBLE2	0x80000000	/*%< disable alternate nibble lookup */
 
 #define RES_DEFAULT	(RES_RECURSE | RES_DEFNAMES | \
-			 RES_DNSRCH | RES_NO_NIBBLE2)
+			 RES_DNSRCH | RES_NO_NIBBLE2 | RES_NOCHECKNAME)
 
 /*%
  * Resolver "pfcode" values.  Used by dig.

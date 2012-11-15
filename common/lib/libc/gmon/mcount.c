@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.8 2009/01/05 18:06:57 pooka Exp $	*/
+/*	$NetBSD: mcount.c,v 1.10 2012/03/20 16:21:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.8 2009/01/05 18:06:57 pooka Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.10 2012/03/20 16:21:41 matt Exp $");
 #endif
 #endif
 
@@ -93,11 +93,13 @@ extern struct gmonparam _gmondummy;
 struct gmonparam *_m_gmon_alloc(void);
 #endif
 
-_MCOUNT_DECL __P((u_long, u_long))
+#ifndef __LINT__
+_MCOUNT_DECL(u_long, u_long)
 #ifdef _KERNEL
     __attribute__((__no_instrument_function__))
 #endif
     __used;
+#endif
 
 /* XXX: make these interfaces */
 #ifdef _RUMPKERNEL
@@ -124,8 +126,9 @@ _MCOUNT_DECL __P((u_long, u_long))
  * both frompcindex and frompc.  Any reasonable, modern compiler will
  * perform this optimization.
  */
-_MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
-	u_long frompc, selfpc;
+#ifndef __LINT__
+/* _mcount; may be static, inline, etc */
+_MCOUNT_DECL(u_long frompc, u_long selfpc)
 {
 	u_short *frompcindex;
 	struct tostruct *top, *prevtop;
@@ -258,6 +261,7 @@ overflow:
 #endif
 	return;
 }
+#endif
 
 #ifdef MCOUNT
 /*

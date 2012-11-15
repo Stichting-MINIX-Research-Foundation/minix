@@ -1,4 +1,4 @@
-.\"	$NetBSD: fread.3,v 1.14 2009/01/11 02:46:29 christos Exp $
+.\"	$NetBSD: fread.3,v 1.15 2011/09/11 04:55:48 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fread.3	8.2 (Berkeley) 3/8/94
 .\"
-.Dd December 19, 2008
+.Dd September 11, 2011
 .Dt FREAD 3
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ Mixing
 and
 .Fn fwrite
 calls without setting the file position explicitly using
-.Fn fsetpos
+.Xr fsetpos 3
 between read and write or write and read operations will lead to unexpected
 results because of buffering the file pointer not being set to the
 expected position after each operation completes.

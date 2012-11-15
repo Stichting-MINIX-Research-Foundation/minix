@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.16 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.17 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.16 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.17 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,10 +53,7 @@ __RCSID("$NetBSD: fwrite.c,v 1.16 2005/11/29 03:12:00 christos Exp $");
  * Return the number of whole objects written.
  */
 size_t
-fwrite(buf, size, count, fp)
-	const void *buf;
-	size_t size, count;
-	FILE *fp;
+fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 {
 	size_t n;
 	struct __suio uio;
@@ -67,7 +64,7 @@ fwrite(buf, size, count, fp)
 	 * SUSv2 requires a return value of 0 for a count or a size of 0.
 	 */
 	if ((n = count * size) == 0)
-		return (0);
+		return 0;
 	_DIAGASSERT(buf != NULL);
 
 	iov.iov_base = __UNCONST(buf);
@@ -84,5 +81,5 @@ fwrite(buf, size, count, fp)
 	if (__sfvwrite(fp, &uio) != 0)
 		count = ((n - uio.uio_resid) / size);
 	FUNLOCKFILE(fp);
-	return (count);
+	return count;
 }

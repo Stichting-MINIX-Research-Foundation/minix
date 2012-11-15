@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscoll.c,v 1.1 2003/03/02 22:18:16 tshiozak Exp $	*/
+/*	$NetBSD: wcscoll.c,v 1.2 2012/06/25 22:32:44 abs Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscoll.c,v 1.1 2003/03/02 22:18:16 tshiozak Exp $");
+__RCSID("$NetBSD: wcscoll.c,v 1.2 2012/06/25 22:32:44 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -40,8 +40,7 @@ __RCSID("$NetBSD: wcscoll.c,v 1.1 2003/03/02 22:18:16 tshiozak Exp $");
  * Compare strings with using collating information.
  */
 int
-wcscoll(s1, s2)
-	const wchar_t *s1, *s2;
+wcscoll(const wchar_t *s1, const wchar_t *s2)
 {
 	/* XXX: LC_COLLATE should be implemented. */
 	return (wcscmp(s1, s2));

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.22 2010/06/07 13:52:30 tnozaki Exp $	*/
+/*	$NetBSD: limits.h,v 1.23 2012/03/28 17:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,12 +38,9 @@
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 
+#define	UCHAR_MAX	0xff		/* max value for an unsigned char */
 #define	SCHAR_MAX	0x7f		/* max value for a signed char */
 #define SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
-
-#define	UCHAR_MAX	0xff		/* max value for an unsigned char */
-#define	CHAR_MAX	0x7f		/* max value for a char */
-#define	CHAR_MIN	(-0x7f-1)	/* min value for a char */
 
 #define	USHRT_MAX	0xffff		/* max value for an unsigned short */
 #define	SHRT_MAX	0x7fff		/* max value for a short */

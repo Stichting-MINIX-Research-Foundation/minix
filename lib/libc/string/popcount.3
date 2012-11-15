@@ -1,4 +1,4 @@
-.\"	$NetBSD: popcount.3,v 1.4 2009/07/22 07:07:27 wiz Exp $
+.\"	$NetBSD: popcount.3,v 1.5 2011/08/22 01:36:04 dholland Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 13, 2009
+.Dd August 22, 2011
 .Dt POPCOUNT 3
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Fn popcountl "unsigned long value"
 .Ft unsigned int
 .Fn popcountll "unsigned long long value"
+.In stdint.h
 .Ft unsigned int
 .Fn popcount32 "uint32_t value"
 .Ft unsigned int

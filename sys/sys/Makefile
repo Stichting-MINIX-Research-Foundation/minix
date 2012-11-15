@@ -36,7 +36,7 @@ INCS=	ansi.h atomic.h \
 	statvfs.h sysctl.h stdarg.h stdint.h \
 	syslimits.h syslog.h \
 	termios.h time.h times.h \
-	tree.h ttycom.h \
+	tls.h tree.h ttycom.h \
 	ttydefaults.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h utsname.h uuid.h \
 	\

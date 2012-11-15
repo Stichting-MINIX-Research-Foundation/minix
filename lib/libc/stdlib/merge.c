@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.12 2009/02/12 03:12:36 lukem Exp $	*/
+/*	$NetBSD: merge.c,v 1.14 2012/03/13 21:13:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.12 2009/02/12 03:12:36 lukem Exp $");
+__RCSID("$NetBSD: merge.c,v 1.14 2012/03/13 21:13:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,10 +67,10 @@ __RCSID("$NetBSD: merge.c,v 1.12 2009/02/12 03:12:36 lukem Exp $");
 __weak_alias(mergesort,_mergesort)
 #endif
 
-static void setup __P((u_char *, u_char *, size_t, size_t,
-    int (*)(const void *, const void *)));
-static void insertionsort __P((u_char *, size_t, size_t,
-    int (*)(const void *, const void *)));
+static void setup(u_char *, u_char *, size_t, size_t,
+    int (*)(const void *, const void *));
+static void insertionsort(u_char *, size_t, size_t,
+    int (*)(const void *, const void *));
 
 #define ISIZE sizeof(int)
 #define PSIZE sizeof(u_char *)
@@ -108,11 +108,8 @@ static void insertionsort __P((u_char *, size_t, size_t,
  * Arguments are as for qsort.
  */
 int
-mergesort(base, nmemb, size, cmp)
-	void *base;
-	size_t nmemb;
-	size_t size;
-	int (*cmp) __P((const void *, const void *));
+mergesort(void *base, size_t nmemb, size_t size,
+    int (*cmp)(const void *, const void *))
 {
 	size_t i;
 	int sense;
@@ -281,13 +278,12 @@ COPY:	    			b = t;
 
 /* XXX: shouldn't this function be static? - lukem 990810 */
 void
-setup(list1, list2, n, size, cmp)
-	size_t n, size;
-	int (*cmp) __P((const void *, const void *));
-	u_char *list1, *list2;
+setup(u_char *list1, u_char *list2, size_t n, size_t size,
+    int (*cmp)(const void *, const void *))
 {
-	int i, length, size2, tmp, sense;
+	int length, tmp, sense;
 	u_char *f1, *f2, *s, *l2, *last, *p2;
+	size_t size2, i;
 
 	_DIAGASSERT(cmp != NULL);
 	_DIAGASSERT(list1 != NULL);
@@ -304,7 +300,7 @@ setup(list1, list2, n, size, cmp)
 	 * for simplicity.
 	 */
 	i = 4 + (n & 1);
-	insertionsort(list1 + (n - i) * size, (size_t)i, size, cmp);
+	insertionsort(list1 + (n - i) * size, i, size, cmp);
 	last = list1 + size * (n - i);
 	*EVAL(list2 + (last - list1)) = list2 + n * size;
 
@@ -332,12 +328,12 @@ setup(list1, list2, n, size, cmp)
 				if ((cmp(f2-size, f2) > 0) != sense) {
 					p2 = *EVAL(p2) = f2 - list1 + list2;
 					if (sense > 0)
-						reverse(f1, f2-size);
+						reverse(f1, f2 - size);
 					f1 = f2;
 				}
 			}
 			if (sense > 0)
-				reverse (f1, f2-size);
+				reverse(f1, f2 - size);
 			f1 = f2;
 			if (f2 < last || cmp(f2 - size, f2) > 0)
 				p2 = *EVAL(p2) = f2 - list1 + list2;
@@ -359,13 +355,11 @@ setup(list1, list2, n, size, cmp)
  * last 4 elements.
  */
 static void
-insertionsort(a, n, size, cmp)
-	u_char *a;
-	size_t n, size;
-	int (*cmp) __P((const void *, const void *));
+insertionsort(u_char *a, size_t n, size_t size,
+    int (*cmp)(const void *, const void *))
 {
 	u_char *ai, *s, *t, *u, tmp;
-	int i;
+	size_t i;
 
 	_DIAGASSERT(a != NULL);
 	_DIAGASSERT(cmp != NULL);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getttyent.3,v 1.18 2006/04/23 16:46:32 wiz Exp $
+.\"	$NetBSD: getttyent.3,v 1.20 2012/04/22 10:14:18 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getttyent.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 18, 2006
+.Dd April 5, 2012
 .Dt GETTTYENT 3
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@ The command to execute for a window system associated with the line.
 Any trailing comment field, with any leading hash marks (``#'') or
 whitespace removed.
 .It Fa ty_class
-A key indexing into a termcap-style database (/etc/ttyclasses)
+A key indexing into a capfile style database (/etc/ttyclasses)
 of attributes for this class of tty.
 No attributes are currently defined or used,
 so there are currently no functions to retrieve them.
@@ -194,8 +194,8 @@ return 0 on failure and 1 on success.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr ttyslot 3 ,
+.Xr capfile 5 ,
 .Xr gettytab 5 ,
-.Xr termcap 5 ,
 .Xr ttys 5 ,
 .Xr getty 8 ,
 .Xr init 8 ,

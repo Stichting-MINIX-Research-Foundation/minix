@@ -1,4 +1,4 @@
-/* $NetBSD: runetype_misc.h,v 1.2 2010/12/14 02:28:57 joerg Exp $ */
+/* $NetBSD: runetype_misc.h,v 1.3 2012/01/18 14:22:27 joerg Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -76,54 +76,6 @@ _runetype_to_ctype(_RuneType bits)
 	if (bits & _RUNETYPE_B)
 		ret |= _CTYPE_B;
 #endif
-	return ret;
-}
-
-static __inline _RuneType
-_runetype_from_ctype(int bits, int ch)
-{
-        _RuneType ret;
-
-	/*
-	 * TWEAKS!
-	 * - old locale file declarations do not have proper _B
-	 *   in many cases.
-	 * - isprint() declaration in ctype.h incorrectly uses _B.
-	 *   _B means "isprint but !isgraph", not "isblank" with the
-	 *   declaration.
-	 * - _X and _RUNETYPE_X have negligible difference in meaning.
-	 * - we don't set digit value, fearing that it would be
-	 *   too much of hardcoding.  we may need to revisit it.
-	 */
-
-	ret = (_RuneType)0;
-	if (bits & _CTYPE_U)
-		ret |= _RUNETYPE_U;
-	if (bits & _CTYPE_L)
-		ret |= _RUNETYPE_L;
-	if (bits & _CTYPE_N)
-		ret |= _RUNETYPE_D;
-	if (bits & _CTYPE_S)
-		ret |= _RUNETYPE_S;
-	if (bits & _CTYPE_P)
-		ret |= _RUNETYPE_P;
-	if (bits & _CTYPE_C)
-		ret |= _RUNETYPE_C;
-	/* derived flag bits, duplicate of ctype.h */
-	if (bits & (_CTYPE_U|_CTYPE_L))
-		ret |= _RUNETYPE_A;
-	if (bits & (_CTYPE_N|_CTYPE_X))
-		ret |= _RUNETYPE_X;
-	if (bits & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N))
-		ret |= _RUNETYPE_G;
-	/* we don't really trust _B in the file.  see above. */
-	if (bits & _CTYPE_B)
-		ret |= _RUNETYPE_B;
-	if ((bits & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)) ||
-	    ch == ' ')
-		ret |= (_RUNETYPE_R | _RUNETYPE_SW1);
-	if (ch == ' ' || ch == '\t')
-		ret |= _RUNETYPE_B;
 	return ret;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: authunix_prot.c,v 1.13 2006/05/11 17:11:57 mrg Exp $	*/
+/*	$NetBSD: authunix_prot.c,v 1.15 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)authunix_prot.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)authunix_prot.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: authunix_prot.c,v 1.13 2006/05/11 17:11:57 mrg Exp $");
+__RCSID("$NetBSD: authunix_prot.c,v 1.15 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -63,9 +63,7 @@ __weak_alias(xdr_authunix_parms,_xdr_authunix_parms)
  * XDR for unix authentication parameters.
  */
 bool_t
-xdr_authunix_parms(xdrs, p)
-	XDR *xdrs;
-	struct authunix_parms *p;
+xdr_authunix_parms(XDR *xdrs, struct authunix_parms *p)
 {
 
 	_DIAGASSERT(xdrs != NULL);
@@ -76,7 +74,8 @@ xdr_authunix_parms(xdrs, p)
 	    && xdr_int(xdrs, &(p->aup_uid))
 	    && xdr_int(xdrs, &(p->aup_gid))
 	    && xdr_array(xdrs, (char **)(void *)&(p->aup_gids),
-		    &(p->aup_len), NGRPS, sizeof(int), (xdrproc_t)xdr_int) ) {
+		    &(p->aup_len), NGRPS, (unsigned int)sizeof(int),
+		    (xdrproc_t)xdr_int) ) {
 		return (TRUE);
 	}
 	return (FALSE);

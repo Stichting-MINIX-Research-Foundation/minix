@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.1 2002/05/21 23:51:07 bjh21 Exp $ */
+/* $NetBSD: softfloat.c,v 1.2 2012/03/21 14:17:54 christos Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -53,7 +53,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.1 2002/05/21 23:51:07 bjh21 Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.2 2012/03/21 14:17:54 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -237,7 +237,7 @@ static float32 roundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
             isTiny =
                    ( float_detect_tininess == float_tininess_before_rounding )
                 || ( zExp < -1 )
-                || ( zSig + roundIncrement < 0x80000000 );
+                || ( zSig + roundIncrement < (uint32)0x80000000 );
             shift32RightJamming( zSig, - zExp, &zSig );
             zExp = 0;
             roundBits = zSig & 0x7F;
@@ -281,7 +281,7 @@ floating-point value `a'.
 INLINE bits32 extractFloat64Frac1( float64 a )
 {
 
-    return FLOAT64_DEMANGLE(a) & LIT64( 0x00000000FFFFFFFF );
+    return (bits32)(FLOAT64_DEMANGLE(a) & LIT64(0x00000000FFFFFFFF));
 
 }
 
@@ -294,7 +294,7 @@ floating-point value `a'.
 INLINE bits32 extractFloat64Frac0( float64 a )
 {
 
-    return ( FLOAT64_DEMANGLE(a)>>32 ) & 0x000FFFFF;
+    return (bits32)((FLOAT64_DEMANGLE(a) >> 32) & 0x000FFFFF);
 
 }
 
@@ -306,7 +306,7 @@ Returns the exponent bits of the double-precision floating-point value `a'.
 INLINE int16 extractFloat64Exp( float64 a )
 {
 
-    return ( FLOAT64_DEMANGLE(a)>>52 ) & 0x7FF;
+    return (int16)((FLOAT64_DEMANGLE(a) >> 52) & 0x7FF);
 
 }
 
@@ -318,7 +318,7 @@ Returns the sign bit of the double-precision floating-point value `a'.
 INLINE flag extractFloat64Sign( float64 a )
 {
 
-    return FLOAT64_DEMANGLE(a)>>63;
+    return (flag)(FLOAT64_DEMANGLE(a) >> 63);
 
 }
 
@@ -535,7 +535,7 @@ float32 int32_to_float32( int32 a )
     if ( a == 0 ) return 0;
     if ( a == (sbits32) 0x80000000 ) return packFloat32( 1, 0x9E, 0 );
     zSign = ( a < 0 );
-    return normalizeRoundAndPackFloat32( zSign, 0x9C, zSign ? - a : a );
+    return normalizeRoundAndPackFloat32(zSign, 0x9C, (uint32)(zSign ? - a : a));
 
 }
 

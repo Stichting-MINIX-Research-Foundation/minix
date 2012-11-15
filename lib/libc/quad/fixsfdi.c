@@ -1,4 +1,4 @@
-/*	$NetBSD: fixsfdi.c,v 1.4 2003/08/07 16:43:16 agc Exp $	*/
+/*	$NetBSD: fixsfdi.c,v 1.5 2012/08/05 04:28:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 The Regents of the University of California.
@@ -38,9 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)fixsfdi.c	5.1 (Berkeley) 7/7/92";
 #else
-__RCSID("$NetBSD: fixsfdi.c,v 1.4 2003/08/07 16:43:16 agc Exp $");
+__RCSID("$NetBSD: fixsfdi.c,v 1.5 2012/08/05 04:28:58 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef SOFTFLOAT
+#include "softfloat/softfloat-for-gcc.h"
+#endif
 
 #include "quad.h"
 

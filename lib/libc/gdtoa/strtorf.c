@@ -1,4 +1,4 @@
-/* $NetBSD: strtorf.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtorf.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -35,9 +35,9 @@ THIS SOFTWARE.
 
  void
 #ifdef KR_headers
-ULtof(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
+ULtof(L, bits, expt, k) ULong *L; ULong *bits; Long expt; int k;
 #else
-ULtof(ULong *L, ULong *bits, Long exp, int k)
+ULtof(ULong *L, ULong *bits, Long expt, int k)
 #endif
 {
 	switch(k & STRTOG_Retmask) {
@@ -48,7 +48,7 @@ ULtof(ULong *L, ULong *bits, Long exp, int k)
 
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
-		L[0] = bits[0] & 0x7fffff | exp + 0x7f + 23 << 23;
+		L[0] = (bits[0] & 0x7fffff) | ((expt + 0x7f + 23) << 23);
 		break;
 
 	  case STRTOG_Denormal:
@@ -73,10 +73,11 @@ strtorf(s, sp, rounding, f) CONST char *s; char **sp; int rounding; float *f;
 strtorf(CONST char *s, char **sp, int rounding, float *f)
 #endif
 {
-	static FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
-	FPI *fpi, fpi1;
+	static CONST FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	CONST FPI *fpi;
+	FPI fpi1;
 	ULong bits[1];
-	Long exp;
+	Long expt;
 	int k;
 
 	fpi = &fpi0;
@@ -85,9 +86,9 @@ strtorf(CONST char *s, char **sp, int rounding, float *f)
 		fpi1.rounding = rounding;
 		fpi = &fpi1;
 		}
-	k = strtodg(s, sp, fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory)
 		return k;
-	ULtof((ULong*)f, bits, exp, k);
+	ULtof((ULong*)f, bits, expt, k);
 	return k;
 	}

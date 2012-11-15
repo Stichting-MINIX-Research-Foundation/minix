@@ -1,4 +1,4 @@
-/*	$NetBSD: vdprintf.c,v 1.1 2010/09/06 14:52:55 christos Exp $	*/
+/*	$NetBSD: vdprintf.c,v 1.2 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vdprintf.c,v 1.1 2010/09/06 14:52:55 christos Exp $");
+__RCSID("$NetBSD: vdprintf.c,v 1.2 2011/07/17 20:54:34 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,7 +55,7 @@ __weak_alias(vdprintf,_vdprintf)
 #endif
 
 int
-vdprintf(int fd, const char * __restrict fmt, _BSD_VA_LIST_ ap)
+vdprintf(int fd, const char * __restrict fmt, va_list ap)
 {
 	FILE f;
 	struct __sfileext fext;

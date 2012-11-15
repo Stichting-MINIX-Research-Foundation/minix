@@ -75,8 +75,10 @@ expand(char *buf, const char *execname, int what, size_t bl)
 {
 	const char *p, *ep;
 	char *bp = buf;
+#if !defined(__minix)
 	size_t len;
 	char name[32];
+#endif /* !defined(__minix) */
 
 	switch (what) {
 	case 0:	/* HWCAP XXX: Not yet */

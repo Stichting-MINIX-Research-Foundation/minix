@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_unvis.c,v 1.2 2007/03/10 01:13:14 hubertf Exp $	*/
+/*	$NetBSD: compat_unvis.c,v 1.3 2011/03/12 19:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_unvis.c,v 1.2 2007/03/10 01:13:14 hubertf Exp $");
+__RCSID("$NetBSD: compat_unvis.c,v 1.3 2011/03/12 19:52:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,10 +48,6 @@ __RCSID("$NetBSD: compat_unvis.c,v 1.2 2007/03/10 01:13:14 hubertf Exp $");
 #include <vis.h>
 #include <compat/include/vis.h>
 
-#ifdef __weak_alias
-__weak_alias(unvis,_unvis)
-#endif
-
 #ifdef __warn_references
 __warn_references(unvis,
     "warning: reference to compatibility unvis(); include <vis.h> for correct reference")
@@ -60,5 +56,6 @@ __warn_references(unvis,
 int
 unvis(char *cp, int c, int *astate, int flag)
 {
-	return __unvis13(cp, c, astate, flag);
+	flag = (flag & ~1) | ((flag & 1) ? UNVIS_END : 0);
+	return __unvis50(cp, c, astate, flag);
 }

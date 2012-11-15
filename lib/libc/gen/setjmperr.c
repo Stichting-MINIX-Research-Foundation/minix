@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmperr.c,v 1.7 2003/08/07 16:42:56 agc Exp $	*/
+/*	$NetBSD: setjmperr.c,v 1.8 2012/06/24 15:26:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setjmperr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setjmperr.c,v 1.7 2003/08/07 16:42:56 agc Exp $");
+__RCSID("$NetBSD: setjmperr.c,v 1.8 2012/06/24 15:26:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: setjmperr.c,v 1.7 2003/08/07 16:42:56 agc Exp $");
 #include <unistd.h>
 
 void
-longjmperror()
+longjmperror(void)
 {
 #define	ERRMSG	"longjmp botch.\n"
 	(void)write(STDERR_FILENO, ERRMSG, sizeof(ERRMSG) - 1);

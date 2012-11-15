@@ -1,4 +1,4 @@
-/*	$NetBSD: tcflush.c,v 1.9 2003/08/07 16:44:13 agc Exp $	*/
+/*	$NetBSD: tcflush.c,v 1.10 2012/06/25 22:32:46 abs Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcflush.c,v 1.9 2003/08/07 16:44:13 agc Exp $");
+__RCSID("$NetBSD: tcflush.c,v 1.10 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,7 @@ __weak_alias(tcflush,_tcflush)
 #endif
 
 int
-tcflush(fd, which)
-	int fd, which;
+tcflush(int fd, int which)
 {
 #ifdef __minix
 	_DIAGASSERT(fd != -1);

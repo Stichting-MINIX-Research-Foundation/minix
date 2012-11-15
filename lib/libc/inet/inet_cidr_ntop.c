@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_ntop.c,v 1.7 2009/04/12 17:07:16 christos Exp $	*/
+/*	$NetBSD: inet_cidr_ntop.c,v 1.8 2012/03/13 21:13:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_ntop.c,v 1.7 2006/10/11 02:18:18 marka Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.7 2009/04/12 17:07:16 christos Exp $");
+__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.8 2012/03/13 21:13:38 christos Exp $");
 #endif
 #endif
 
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: inet_cidr_ntop.c,v 1.7 2009/04/12 17:07:16 christos Exp $");
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -101,7 +102,8 @@ decoct(const u_char *src, size_t bytes, char *dst, size_t size) {
 		}
 		size -= (size_t)(dst - t);
 	}
-	return (dst - odst);
+	_DIAGASSERT(__type_fit(int, dst - odst));
+	return (int)(dst - odst);
 }
 
 /*%

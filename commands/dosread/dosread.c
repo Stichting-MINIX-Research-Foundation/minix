@@ -696,7 +696,7 @@ unsigned short mon_len[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 void fill_date(entry)
 DIRECTORY *entry;
 {
-  register long cur_time = time((long *) 0) - DOS_TIME;
+  register long cur_time = time(NULL) - DOS_TIME;
   unsigned short year = 0, month = 1, day, hour, minutes, seconds;
   int i;
   long tmp;

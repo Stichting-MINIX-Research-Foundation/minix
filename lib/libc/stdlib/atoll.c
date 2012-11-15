@@ -1,4 +1,4 @@
-/*	$NetBSD: atoll.c,v 1.5 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: atoll.c,v 1.6 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)atol.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atoll.c,v 1.5 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: atoll.c,v 1.6 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,8 +57,7 @@ __weak_alias(atoll, _atoll)
 #if !HAVE_ATOLL
 /* LONGLONG */
 long long int
-atoll(str)
-	const char *str;
+atoll(const char *str)
 {
 	return (strtoll(str, (char **)NULL, 10));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: twalk.c,v 1.2 1999/09/16 11:45:37 lukem Exp $	*/
+/*	$NetBSD: twalk.c,v 1.4 2012/03/20 16:38:45 matt Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -13,7 +13,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: twalk.c,v 1.2 1999/09/16 11:45:37 lukem Exp $");
+__RCSID("$NetBSD: twalk.c,v 1.4 2012/03/20 16:38:45 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -21,15 +21,12 @@ __RCSID("$NetBSD: twalk.c,v 1.2 1999/09/16 11:45:37 lukem Exp $");
 #include <search.h>
 #include <stdlib.h>
 
-static void trecurse __P((const node_t *,
-    void  (*action)(const void *, VISIT, int), int level));
+typedef void (*cmp_fn_t)(const void *, VISIT, int);
 
 /* Walk the nodes of a tree */
 static void
-trecurse(root, action, level)
-	const node_t *root;	/* Root of the tree to be walked */
-	void (*action) __P((const void *, VISIT, int));
-	int level;
+trecurse(const node_t *root,	/* Root of the tree to be walked */
+	cmp_fn_t action, int level)
 {
 	_DIAGASSERT(root != NULL);
 	_DIAGASSERT(action != NULL);
@@ -49,9 +46,7 @@ trecurse(root, action, level)
 
 /* Walk the nodes of a tree */
 void
-twalk(vroot, action)
-	const void *vroot;	/* Root of the tree to be walked */
-	void (*action) __P((const void *, VISIT, int));
+twalk(const void *vroot, cmp_fn_t action) /* Root of the tree to be walked */
 {
 	if (vroot != NULL && action != NULL)
 		trecurse(vroot, action, 0);

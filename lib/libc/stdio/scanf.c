@@ -1,4 +1,4 @@
-/*	$NetBSD: scanf.c,v 1.12 2003/08/07 16:43:31 agc Exp $	*/
+/*	$NetBSD: scanf.c,v 1.13 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)scanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: scanf.c,v 1.12 2003/08/07 16:43:31 agc Exp $");
+__RCSID("$NetBSD: scanf.c,v 1.13 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,5 +60,5 @@ scanf(char const *fmt, ...)
 	va_start(ap, fmt);
 	ret = __svfscanf(stdin, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }

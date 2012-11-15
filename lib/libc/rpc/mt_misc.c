@@ -1,4 +1,4 @@
-/*	$NetBSD: mt_misc.c,v 1.8 2010/12/08 02:06:38 joerg Exp $	*/
+/*	$NetBSD: mt_misc.c,v 1.9 2012/03/20 17:14:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: mt_misc.c,v 1.8 2010/12/08 02:06:38 joerg Exp $");
+__RCSID("$NetBSD: mt_misc.c,v 1.9 2012/03/20 17:14:50 matt Exp $");
 #endif
 
 #include	"namespace.h"
@@ -112,7 +112,7 @@ __rpc_createerr_setup(void)
 #endif /* _REENTRANT */
 
 struct rpc_createerr*
-__rpc_createerr()
+__rpc_createerr(void)
 {
 #ifdef _REENTRANT
 	struct rpc_createerr *rce_addr = 0;
@@ -134,4 +134,3 @@ __rpc_createerr()
 	return &rpc_createerr;
 #endif
 }
-

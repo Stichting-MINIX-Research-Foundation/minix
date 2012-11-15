@@ -12,14 +12,20 @@ COMPATDIR=${.CURDIR}
 
 .include "${.CURDIR}/Makefile.inc"
 
+.if !defined(__MINIX)
 .include "${.CURDIR}/db/Makefile.inc"
+.endif # !defined(__MINIX)
 .include "${.CURDIR}/gen/Makefile.inc"
+.if !defined(__MINIX)
 .include "${.CURDIR}/locale/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/rpc/Makefile.inc"
 .include "${.CURDIR}/stdio/Makefile.inc"
+.endif # !defined(__MINIX)
 .include "${.CURDIR}/stdlib/Makefile.inc"
+.if !defined(__MINIX)
 .include "${.CURDIR}/sys/Makefile.inc"
+.endif # !defined(__MINIX)
 
 COMPATARCHDIR=${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH: ${COMPATARCHDIR}/gen ${COMPATARCHDIR}/sys

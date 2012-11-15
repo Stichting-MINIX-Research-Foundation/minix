@@ -641,17 +641,17 @@ ino_t inode;
   incr_link(inode);
 }
 
-void enter_symlink(ino_t inode, char *link)
+void enter_symlink(ino_t inode, char *lnk)
 {
   zone_t z;
   char *buf;
 
   buf = alloc_block();
   z = alloc_zone();
-  strcpy(buf, link);
+  strcpy(buf, lnk);
   put_block(z, buf);
 
-  add_zone(inode, z, (size_t) strlen(link), current_time);
+  add_zone(inode, z, (size_t) strlen(lnk), current_time);
 
   free(buf);
 }
@@ -728,7 +728,7 @@ ino_t inode;
 int f;
 {
   int ct, k;
-  zone_t z;
+  zone_t z = 0;
   char *buf;
   uint32_t timeval;
 
@@ -842,7 +842,7 @@ void enter_dir(ino_t parent, char const *name, ino_t child)
 	}
   }
 
-  printf("Directory-inode %lu beyond direct blocks.  Could not enter %s\n",
+  printf("Directory-inode %u beyond direct blocks.  Could not enter %s\n",
          parent, name);
   pexit("Halt");
 }
@@ -1340,7 +1340,7 @@ void print_fs()
 		if (k > nrinodes) break;
 		{
 			if (inode2[i].d2_mode != 0) {
-				printf("Inode %2lu:  mode=", k);
+				printf("Inode %2u:  mode=", k);
 				printf("%06o", inode2[i].d2_mode);
 				printf("  uid=%2d  gid=%2d  size=",
 				inode2[i].d2_uid, inode2[i].d2_gid);

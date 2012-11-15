@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.41 2009/11/23 10:08:47 plunky Exp $	*/
+/*	$NetBSD: vis.c,v 1.44 2011/03/12 19:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.41 2009/11/23 10:08:47 plunky Exp $");
+__RCSID("$NetBSD: vis.c,v 1.44 2011/03/12 19:52:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -65,15 +65,11 @@ __RCSID("$NetBSD: vis.c,v 1.41 2009/11/23 10:08:47 plunky Exp $");
 
 #include <assert.h>
 #include <vis.h>
+#include <errno.h>
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(strsvis,_strsvis)
-__weak_alias(strsvisx,_strsvisx)
-__weak_alias(strvis,_strvis)
 __weak_alias(strvisx,_strvisx)
-__weak_alias(svis,_svis)
-__weak_alias(vis,_vis)
 #endif
 
 #if !HAVE_VIS || !HAVE_SVIS
@@ -82,7 +78,7 @@ __weak_alias(vis,_vis)
 #include <stdio.h>
 #include <string.h>
 
-static char *do_svis(char *, int, int, int, const char *);
+static char *do_svis(char *, size_t *, int, int, int, const char *);
 
 #undef BELL
 #define BELL '\a'
@@ -118,7 +114,7 @@ do {									      \
  * This is do_hvis, for HTTP style (RFC 1808)
  */
 static char *
-do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
+do_hvis(char *dst, size_t *dlen, int c, int flag, int nextc, const char *extra)
 {
 
 	if ((isascii(c) && isalnum(c))
@@ -127,8 +123,13 @@ do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
 	    /* extra */
 	    || c == '!' || c == '*' || c == '\'' || c == '(' || c == ')'
 	    || c == ',') {
-		dst = do_svis(dst, c, flag, nextc, extra);
+		dst = do_svis(dst, dlen, c, flag, nextc, extra);
 	} else {
+		if (dlen) {
+			if (*dlen < 3)
+				return NULL;
+			*dlen -= 3;
+		}
 		*dst++ = '%';
 		*dst++ = xtoa(((unsigned int)c >> 4) & 0xf);
 		*dst++ = xtoa((unsigned int)c & 0xf);
@@ -142,7 +143,7 @@ do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
  * NB: No handling of long lines or CRLF.
  */
 static char *
-do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
+do_mvis(char *dst, size_t *dlen, int c, int flag, int nextc, const char *extra)
 {
 	if ((c != '\n') &&
 	    /* Space at the end of the line */
@@ -151,11 +152,16 @@ do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
 	    (!isspace(c) && (c < 33 || (c > 60 && c < 62) || c > 126)) ||
 	    /* Specific char to be escaped */ 
 	    strchr("#$@[\\]^`{|}~", c) != NULL)) {
+		if (dlen) {
+			if (*dlen < 3)
+				return NULL;
+			*dlen -= 3;
+		}
 		*dst++ = '=';
 		*dst++ = XTOA(((unsigned int)c >> 4) & 0xf);
 		*dst++ = XTOA((unsigned int)c & 0xf);
 	} else {
-		dst = do_svis(dst, c, flag, nextc, extra);
+		dst = do_svis(dst, dlen, c, flag, nextc, extra);
 	}
 	return dst;
 }
@@ -170,16 +176,28 @@ do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
  *	      backslash-protected.
  */
 static char *
-do_svis(char *dst, int c, int flag, int nextc, const char *extra)
+do_svis(char *dst, size_t *dlen, int c, int flag, int nextc, const char *extra)
 {
 	int isextra;
+	size_t odlen = dlen ? *dlen : 0;
+
 	isextra = strchr(extra, c) != NULL;
+#define HAVE(x) \
+	do { \
+		if (dlen) { \
+			if (*dlen < (x)) \
+				goto out; \
+			*dlen -= (x); \
+		} \
+	} while (/*CONSTCOND*/0)
 	if (!isextra && isascii(c) && (isgraph(c) || iswhite(c) ||
 	    ((flag & VIS_SAFE) && issafe(c)))) {
+		HAVE(1);
 		*dst++ = c;
 		return dst;
 	}
 	if (flag & VIS_CSTYLE) {
+		HAVE(2);
 		switch (c) {
 		case '\n':
 			*dst++ = '\\'; *dst++ = 'n';
@@ -208,6 +226,7 @@ do_svis(char *dst, int c, int flag, int nextc, const char *extra)
 		case '\0':
 			*dst++ = '\\'; *dst++ = '0';
 			if (isoctal(nextc)) {
+				HAVE(2);
 				*dst++ = '0';
 				*dst++ = '0';
 			}
@@ -217,32 +236,46 @@ do_svis(char *dst, int c, int flag, int nextc, const char *extra)
 				*dst++ = '\\'; *dst++ = c;
 				return dst;
 			}
+			if (dlen)
+				*dlen = odlen;
 		}
 	}
 	if (isextra || ((c & 0177) == ' ') || (flag & VIS_OCTAL)) {
+		HAVE(4);
 		*dst++ = '\\';
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 6) & 03) + '0';
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 3) & 07) + '0';
 		*dst++ =			     (c	      & 07) + '0';
 	} else {
-		if ((flag & VIS_NOSLASH) == 0) *dst++ = '\\';
+		if ((flag & VIS_NOSLASH) == 0) {
+			HAVE(1);
+			*dst++ = '\\';
+		}
+
 		if (c & 0200) {
+			HAVE(1);
 			c &= 0177; *dst++ = 'M';
 		}
+
 		if (iscntrl(c)) {
+			HAVE(2);
 			*dst++ = '^';
 			if (c == 0177)
 				*dst++ = '?';
 			else
 				*dst++ = c + '@';
 		} else {
+			HAVE(2);
 			*dst++ = '-'; *dst++ = c;
 		}
 	}
 	return dst;
+out:
+	*dlen = odlen;
+	return NULL;
 }
 
-typedef char *(*visfun_t)(char *, int, int, int, const char *);
+typedef char *(*visfun_t)(char *, size_t *, int, int, int, const char *);
 
 /*
  * Return the appropriate encoding function depending on the flags given.
@@ -258,11 +291,11 @@ getvisfun(int flag)
 }
 
 /*
- * svis - visually encode characters, also encoding the characters
+ * isnvis - visually encode characters, also encoding the characters
  *	  pointed to by `extra'
  */
-char *
-svis(char *dst, int c, int flag, int nextc, const char *extra)
+static char *
+isnvis(char *dst, size_t *dlen, int c, int flag, int nextc, const char *extra)
 {
 	char *nextra = NULL;
 	visfun_t f;
@@ -271,14 +304,34 @@ svis(char *dst, int c, int flag, int nextc, const char *extra)
 	_DIAGASSERT(extra != NULL);
 	MAKEEXTRALIST(flag, nextra, extra);
 	if (!nextra) {
+		if (dlen && *dlen == 0) {
+			errno = ENOSPC;
+			return NULL;
+		}
 		*dst = '\0';		/* can't create nextra, return "" */
 		return dst;
 	}
 	f = getvisfun(flag);
-	dst = (*f)(dst, c, flag, nextc, nextra);
+	dst = (*f)(dst, dlen, c, flag, nextc, nextra);
 	free(nextra);
+	if (dst == NULL || (dlen && *dlen == 0)) {
+		errno = ENOSPC;
+		return NULL;
+	}
 	*dst = '\0';
 	return dst;
+}
+
+char *
+svis(char *dst, int c, int flag, int nextc, const char *extra)
+{
+	return isnvis(dst, NULL, c, flag, nextc, extra);
+}
+
+char *
+snvis(char *dst, size_t dlen, int c, int flag, int nextc, const char *extra)
+{
+	return isnvis(dst, &dlen, c, flag, nextc, extra);
 }
 
 
@@ -297,8 +350,8 @@ svis(char *dst, int c, int flag, int nextc, const char *extra)
  *	Strsvisx encodes exactly len bytes from src into dst.
  *	This is useful for encoding a block of data.
  */
-int
-strsvis(char *dst, const char *csrc, int flag, const char *extra)
+static int
+istrsnvis(char *dst, size_t *dlen, const char *csrc, int flag, const char *extra)
 {
 	int c;
 	char *start;
@@ -315,16 +368,37 @@ strsvis(char *dst, const char *csrc, int flag, const char *extra)
 		return 0;
 	}
 	f = getvisfun(flag);
-	for (start = dst; (c = *src++) != '\0'; /* empty */)
-		dst = (*f)(dst, c, flag, *src, nextra);
+	for (start = dst; (c = *src++) != '\0'; /* empty */) {
+		dst = (*f)(dst, dlen, c, flag, *src, nextra);
+		if (dst == NULL) {
+			errno = ENOSPC;
+			return -1;
+		}
+	}
 	free(nextra);
+	if (dlen && *dlen == 0) {
+		errno = ENOSPC;
+		return -1;
+	}
 	*dst = '\0';
 	return (int)(dst - start);
 }
 
+int
+strsvis(char *dst, const char *csrc, int flag, const char *extra)
+{
+	return istrsnvis(dst, NULL, csrc, flag, extra);
+}
 
 int
-strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
+strsnvis(char *dst, size_t dlen, const char *csrc, int flag, const char *extra)
+{
+	return istrsnvis(dst, &dlen, csrc, flag, extra);
+}
+
+static int
+istrsnvisx(char *dst, size_t *dlen, const char *csrc, size_t len, int flag,
+    const char *extra)
 {
 	unsigned char c;
 	char *start;
@@ -337,6 +411,10 @@ strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 	_DIAGASSERT(extra != NULL);
 	MAKEEXTRALIST(flag, nextra, extra);
 	if (! nextra) {
+		if (dlen && *dlen == 0) {
+			errno = ENOSPC;
+			return -1;
+		}
 		*dst = '\0';		/* can't create nextra, return "" */
 		return 0;
 	}
@@ -344,11 +422,32 @@ strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 	f = getvisfun(flag);
 	for (start = dst; len > 0; len--) {
 		c = *src++;
-		dst = (*f)(dst, c, flag, len > 1 ? *src : '\0', nextra);
+		dst = (*f)(dst, dlen, c, flag, len > 1 ? *src : '\0', nextra);
+		if (dst == NULL) {
+			errno = ENOSPC;
+			return -1;
+		}
 	}
 	free(nextra);
+	if (dlen && *dlen == 0) {
+		errno = ENOSPC;
+		return -1;
+	}
 	*dst = '\0';
 	return (int)(dst - start);
+}
+
+int
+strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
+{
+	return istrsnvisx(dst, NULL, csrc, len, flag, extra);
+}
+
+int
+strsnvisx(char *dst, size_t dlen, const char *csrc, size_t len, int flag,
+    const char *extra)
+{
+	return istrsnvisx(dst, &dlen, csrc, len, flag, extra);
 }
 #endif
 
@@ -356,8 +455,8 @@ strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 /*
  * vis - visually encode characters
  */
-char *
-vis(char *dst, int c, int flag, int nextc)
+static char *
+invis(char *dst, size_t *dlen, int c, int flag, int nextc)
 {
 	char *extra = NULL;
 	unsigned char uc = (unsigned char)c;
@@ -367,14 +466,34 @@ vis(char *dst, int c, int flag, int nextc)
 
 	MAKEEXTRALIST(flag, extra, "");
 	if (! extra) {
+		if (dlen && *dlen == 0) {
+			errno = ENOSPC;
+			return NULL;
+		}
 		*dst = '\0';		/* can't create extra, return "" */
 		return dst;
 	}
 	f = getvisfun(flag);
-	dst = (*f)(dst, uc, flag, nextc, extra);
+	dst = (*f)(dst, dlen, uc, flag, nextc, extra);
 	free(extra);
+	if (dst == NULL || (dlen && *dlen == 0)) {
+		errno = ENOSPC;
+		return NULL;
+	}
 	*dst = '\0';
 	return dst;
+}
+
+char *
+vis(char *dst, int c, int flag, int nextc)
+{
+	return invis(dst, NULL, c, flag, nextc);
+}
+
+char *
+nvis(char *dst, size_t dlen, int c, int flag, int nextc)
+{
+	return invis(dst, &dlen, c, flag, nextc);
 }
 
 
@@ -388,36 +507,68 @@ vis(char *dst, int c, int flag, int nextc)
  *	Strvisx encodes exactly len bytes from src into dst.
  *	This is useful for encoding a block of data.
  */
-int
-strvis(char *dst, const char *src, int flag)
+static int
+istrnvis(char *dst, size_t *dlen, const char *src, int flag)
 {
 	char *extra = NULL;
 	int rv;
 
 	MAKEEXTRALIST(flag, extra, "");
 	if (!extra) {
+		if (dlen && *dlen == 0) {
+			errno = ENOSPC;
+			return -1;
+		}
 		*dst = '\0';		/* can't create extra, return "" */
 		return 0;
 	}
-	rv = strsvis(dst, src, flag, extra);
+	rv = istrsnvis(dst, dlen, src, flag, extra);
 	free(extra);
 	return rv;
 }
 
+int
+strvis(char *dst, const char *src, int flag)
+{
+	return istrnvis(dst, NULL, src, flag);
+}
+
+int
+strnvis(char *dst, size_t dlen, const char *src, int flag)
+{
+	return istrnvis(dst, &dlen, src, flag);
+}
+
+static int
+istrnvisx(char *dst, size_t *dlen, const char *src, size_t len, int flag)
+{
+	char *extra = NULL;
+	int rv;
+
+	MAKEEXTRALIST(flag, extra, "");
+	if (!extra) {
+		if (dlen && *dlen == 0) {
+			errno = ENOSPC;
+			return -1;
+		}
+		*dst = '\0';		/* can't create extra, return "" */
+		return 0;
+	}
+	rv = istrsnvisx(dst, dlen, src, len, flag, extra);
+	free(extra);
+	return rv;
+}
 
 int
 strvisx(char *dst, const char *src, size_t len, int flag)
 {
-	char *extra = NULL;
-	int rv;
-
-	MAKEEXTRALIST(flag, extra, "");
-	if (!extra) {
-		*dst = '\0';		/* can't create extra, return "" */
-		return 0;
-	}
-	rv = strsvisx(dst, src, len, flag, extra);
-	free(extra);
-	return rv;
+	return istrnvisx(dst, NULL, src, len, flag);
 }
+
+int
+strnvisx(char *dst, size_t dlen, const char *src, size_t len, int flag)
+{
+	return istrnvisx(dst, &dlen, src, len, flag);
+}
+
 #endif

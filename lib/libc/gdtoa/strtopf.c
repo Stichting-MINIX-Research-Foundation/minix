@@ -1,4 +1,4 @@
-/* $NetBSD: strtopf.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtopf.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -40,12 +40,17 @@ strtopf(s, sp, f) CONST char *s; char **sp; float *f;
 strtopf(CONST char *s, char **sp, float *f)
 #endif
 {
-	static FPI fpi = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	static FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
 	ULong bits[1], *L;
-	Long exp;
+	Long expt;
 	int k;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &expt, bits);
 	if (k == STRTOG_NoMemory)
 		return k;
 	L = (ULong*)f;
@@ -57,7 +62,7 @@ strtopf(CONST char *s, char **sp, float *f)
 
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
-		L[0] = bits[0] & 0x7fffff | exp + 0x7f + 23 << 23;
+		L[0] = (bits[0] & 0x7fffff) | ((expt + 0x7f + 23) << 23);
 		break;
 
 	  case STRTOG_Denormal:

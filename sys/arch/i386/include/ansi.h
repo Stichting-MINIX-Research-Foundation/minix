@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.24 2010/03/27 22:14:09 tnozaki Exp $	*/
+/*	$NetBSD: ansi.h,v 1.25 2011/07/17 20:54:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,23 +49,15 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-
-#define _BSD_CLOCK_T_		long
-
-#define _BSD_PTRDIFF_T_ 	int
-
-#define _BSD_SIZE_T_		unsigned int
-#define	_BSD_SSIZE_T_		int
-#define	_BSD_TIME_T_		long		/* time() */
-#if __GNUC_PREREQ__(2, 96)
-#define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
-#else
-#define	_BSD_VA_LIST_		char *		/* va_list */
-#endif
+#define	_BSD_CLOCK_T_		int		/* clock() */
+#define _BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
+#define _BSD_SIZE_T_		unsigned int	/* sizeof() */
+#define	_BSD_SSIZE_T_		int		/* byte count or error */
+#define	_BSD_TIME_T_		int		/* time() */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
-#define	_BSD_SUSECONDS_T_	long		/* suseconds_t */
-#define	_BSD_USECONDS_T_	long		/* useconds_t */
+#define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
+#define	_BSD_USECONDS_T_	int		/* useconds_t */
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
 #define	_BSD_WINT_T_		int		/* wint_t */
 

@@ -37,16 +37,16 @@
 #include <minix/param.h>
 
 /* Important kernel header files. */
-#include "config.h"		/* configuration, MUST be first */
-#include "const.h"		/* constants, MUST be second */
-#include "type.h"		/* type definitions, MUST be third */
-#include "proto.h"		/* function prototypes */
-#include "glo.h"		/* global variables */
-#include "ipc.h"		/* IPC constants */
-#include "profile.h"		/* system profiling */
-#include "proc.h"		/* process table */
-#include "cpulocals.h"		/* CPU-local variables */
-#include "debug.h"		/* debugging, MUST be last kernel header */
+#include "kernel/config.h"		/* configuration, MUST be first */
+#include "kernel/const.h"		/* constants, MUST be second */
+#include "kernel/type.h"		/* type definitions, MUST be third */
+#include "kernel/proto.h"		/* function prototypes */
+#include "kernel/glo.h"		/* global variables */
+#include "kernel/ipc.h"		/* IPC constants */
+#include "kernel/profile.h"		/* system profiling */
+#include "kernel/proc.h"		/* process table */
+#include "kernel/cpulocals.h"		/* CPU-local variables */
+#include "kernel/debug.h"		/* debugging, MUST be last kernel header */
 
 #ifndef CONFIG_SMP
 /* We only support 1 cpu now */
@@ -57,7 +57,7 @@
 
 #else
 
-#include "smp.h"
+#include "kernel/smp.h"
 
 #endif
 

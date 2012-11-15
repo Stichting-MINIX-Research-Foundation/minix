@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc.c,v 1.4 2011/11/19 18:39:58 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_stdenc.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_stdenc.c,v 1.4 2011/11/19 18:39:58 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -128,8 +128,10 @@ _citrus_stdenc_open(struct _citrus_stdenc * __restrict * __restrict rce,
 	    ce->ce_ops->eo_cstomb == NULL ||
 	    ce->ce_ops->eo_mbtowc == NULL ||
 	    ce->ce_ops->eo_wctomb == NULL ||
-	    ce->ce_ops->eo_get_state_desc == NULL)
+	    ce->ce_ops->eo_get_state_desc == NULL) {
+		ret = EINVAL;
 		goto bad;
+	}
 
 	/* allocate traits */
 	ce->ce_traits = malloc(sizeof(*ce->ce_traits));

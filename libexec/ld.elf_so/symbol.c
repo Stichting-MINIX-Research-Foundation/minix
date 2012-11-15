@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.54 2010/10/16 10:27:07 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.61 2012/08/15 03:46:07 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.54 2010/10/16 10:27:07 skrll Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.61 2012/08/15 03:46:07 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -58,8 +58,6 @@ __RCSID("$NetBSD: symbol.c,v 1.54 2010/10/16 10:27:07 skrll Exp $");
 
 #include "debug.h"
 #include "rtld.h"
-
-typedef void (*fptr_t)(void);
 
 /*
  * If the given object is already in the donelist, return true.  Otherwise
@@ -89,10 +87,20 @@ _rtld_is_exported(const Elf_Sym *def)
 		(fptr_t)dlopen,
 		(fptr_t)dlclose,
 		(fptr_t)dlsym,
+		(fptr_t)dlvsym,
 		(fptr_t)dlerror,
 		(fptr_t)dladdr,
 		(fptr_t)dlinfo,
 		(fptr_t)dl_iterate_phdr,
+		(fptr_t)_dlauxinfo,
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+		(fptr_t)_rtld_tls_allocate,
+		(fptr_t)_rtld_tls_free,
+		(fptr_t)__tls_get_addr,
+#ifdef __i386__
+		(fptr_t)___tls_get_addr,
+#endif
+#endif
 		NULL
 	};
 	int i;
@@ -131,7 +139,8 @@ _rtld_elf_hash(const char *name)
 
 const Elf_Sym *
 _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
-    const Obj_Entry **defobj_out, bool in_plt, DoneList *dlp)
+    const Obj_Entry **defobj_out, u_int flags, const Ver_Entry *ventry,
+    DoneList *dlp)
 {
 	const Elf_Sym *symp;
 	const Elf_Sym *def;
@@ -145,8 +154,8 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 			continue;
 		rdbg(("search object %p (%s) for %s", elm->obj, elm->obj->path,
 		    name));
-		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
-		    != NULL) {
+		symp = _rtld_symlook_obj(name, hash, elm->obj, flags, ventry);
+		if (symp != NULL) {
 			if ((def == NULL) ||
 			    (ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 				def = symp;
@@ -168,8 +177,8 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
  */
 const Elf_Sym *
 _rtld_symlook_needed(const char *name, unsigned long hash,
-    const Needed_Entry *needed, const Obj_Entry **defobj_out, bool inplt,
-    DoneList *breadth, DoneList *depth)
+    const Needed_Entry *needed, const Obj_Entry **defobj_out, u_int flags,
+    const Ver_Entry *ventry, DoneList *breadth, DoneList *depth)
 {
 	const Elf_Sym *def, *def_w;
 	const Needed_Entry *n;
@@ -182,7 +191,8 @@ _rtld_symlook_needed(const char *name, unsigned long hash,
 			continue;
 		if (_rtld_donelist_check(breadth, obj))
 			continue;
-		if ((def = _rtld_symlook_obj(name, hash, obj, inplt)) == NULL)
+		def = _rtld_symlook_obj(name, hash, obj, flags, ventry);
+		if (def == NULL)
 			continue;
 		defobj = obj;
 		if (ELF_ST_BIND(def->st_info) != STB_WEAK) {
@@ -201,7 +211,7 @@ _rtld_symlook_needed(const char *name, unsigned long hash,
 		if (_rtld_donelist_check(depth, obj))
 			continue;
 		def_w = _rtld_symlook_needed(name, hash, obj->needed, &defobj1,
-		    inplt, breadth, depth);
+		    flags, ventry, breadth, depth);
 		if (def_w == NULL)
 			continue;
 		if (def == NULL || ELF_ST_BIND(def_w->st_info) != STB_WEAK) {
@@ -227,9 +237,12 @@ _rtld_symlook_needed(const char *name, unsigned long hash,
  */
 const Elf_Sym *
 _rtld_symlook_obj(const char *name, unsigned long hash,
-    const Obj_Entry *obj, bool in_plt)
+    const Obj_Entry *obj, u_int flags, const Ver_Entry *ventry)
 {
 	unsigned long symnum;
+	const Elf_Sym *vsymp = NULL;
+	Elf_Half verndx;
+	int vcount = 0;
 
 	for (symnum = obj->buckets[fast_remainder32(hash, obj->nbuckets,
 	     obj->nbuckets_m, obj->nbuckets_s1, obj->nbuckets_s2)];
@@ -241,30 +254,106 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 		assert(symnum < obj->nchains);
 		symp = obj->symtab + symnum;
 		strp = obj->strtab + symp->st_name;
-		rdbg(("check \"%s\" vs \"%s\" in %p", name, strp, obj));
-		if (name[1] == strp[1] && !strcmp(name, strp)) {
-			if (symp->st_shndx != SHN_UNDEF)
-				return symp;
-#ifndef __mips__
-			/*
-			 * XXX DANGER WILL ROBINSON!
-			 * If we have a function pointer in the executable's
-			 * data section, it points to the executable's PLT
-			 * slot, and there is NO relocation emitted.  To make
-			 * the function pointer comparable to function pointers
-			 * in shared libraries, we must resolve data references
-			 * in the libraries to point to PLT slots in the
-			 * executable, if they exist.
-			 */
-			else if (!in_plt && symp->st_value != 0 &&
-			     ELF_ST_TYPE(symp->st_info) == STT_FUNC)
-				return symp;
+		rdbg(("check \"%s\" vs \"%s\" in %s", name, strp, obj->path));
+		if (name[1] != strp[1] || strcmp(name, strp))
+			continue;
+#ifdef __mips__
+		if (symp->st_shndx == SHN_UNDEF)
+			continue;
+#else
+		/*
+		 * XXX DANGER WILL ROBINSON!
+		 * If we have a function pointer in the executable's
+		 * data section, it points to the executable's PLT
+		 * slot, and there is NO relocation emitted.  To make
+		 * the function pointer comparable to function pointers
+		 * in shared libraries, we must resolve data references
+		 * in the libraries to point to PLT slots in the
+		 * executable, if they exist.
+		 */
+		if (symp->st_shndx == SHN_UNDEF &&
+		    ((flags & SYMLOOK_IN_PLT) ||
+		    symp->st_value == 0 ||
+		    ELF_ST_TYPE(symp->st_info) != STT_FUNC))
+			continue;
 #endif
-			else
-				return NULL;
+
+		if (ventry == NULL) {
+			if (obj->versyms != NULL) {
+				verndx = VER_NDX(obj->versyms[symnum].vs_vers);
+				if (verndx > obj->vertabnum) {
+					_rtld_error("%s: symbol %s references "
+					    "wrong version %d", obj->path,
+					    &obj->strtab[symnum], verndx);
+					continue;
+				}
+
+				/*
+				 * If we are not called from dlsym (i.e. this
+				 * is a normal relocation from unversioned
+				 * binary), accept the symbol immediately
+				 * if it happens to have first version after
+				 * this shared object became versioned.
+				 * Otherwise, if symbol is versioned and not
+				 * hidden, remember it. If it is the only
+				 * symbol with this name exported by the shared
+				 * object, it will be returned as a match at the
+				 * end of the function. If symbol is global
+				 * (verndx < 2) accept it unconditionally.
+				 */
+				if (!(flags & SYMLOOK_DLSYM) &&
+				    verndx == VER_NDX_GIVEN) {
+					return symp;
+				} else if (verndx >= VER_NDX_GIVEN) {
+					if (!(obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN)) {
+						if (vsymp == NULL)
+							vsymp = symp;
+						vcount++;
+					}
+					continue;
+				}
+			}
+			return symp;
+		} else {
+			if (obj->versyms == NULL) {
+				if (_rtld_object_match_name(obj, ventry->name)){
+					_rtld_error("%s: object %s should "
+					    "provide version %s for symbol %s",
+					    _rtld_objself.path, obj->path,
+					    ventry->name, &obj->strtab[symnum]);
+					continue;
+				}
+			} else {
+				verndx = VER_NDX(obj->versyms[symnum].vs_vers);
+				if (verndx > obj->vertabnum) {
+					_rtld_error("%s: symbol %s references "
+					    "wrong version %d", obj->path,
+					    &obj->strtab[symnum], verndx);
+					continue;
+				}
+				if (obj->vertab[verndx].hash != ventry->hash ||
+				    strcmp(obj->vertab[verndx].name, ventry->name)) {
+					/*
+					* Version does not match. Look if this
+					* is a global symbol and if it is not
+					* hidden. If global symbol (verndx < 2)
+					* is available, use it. Do not return
+					* symbol if we are called by dlvsym,
+					* because dlvsym looks for a specific
+					* version and default one is not what
+					* dlvsym wants.
+					*/
+					if ((flags & SYMLOOK_DLSYM) ||
+					    (obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN) ||
+					    (verndx >= VER_NDX_GIVEN))
+						continue;
+				}
+			}
+			return symp;
 		}
 	}
-
+	if (vcount == 1)
+		return vsymp;
 	return NULL;
 }
 
@@ -291,7 +380,7 @@ _rtld_combreloc_reset(const Obj_Entry *obj)
  */
 const Elf_Sym *
 _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
-    const Obj_Entry **defobj_out, bool in_plt)
+    const Obj_Entry **defobj_out, u_int flags)
 {
 	const Elf_Sym  *ref;
 	const Elf_Sym  *def;
@@ -312,7 +401,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	static const Elf_Sym *last_def;
 
 	if (symnum == last_symnum && refobj == _rtld_last_refobj
-	    && in_plt == false) {
+	    && !(flags & SYMLOOK_IN_PLT)) {
 		*defobj_out = last_defobj;
 		return last_def;
 	}
@@ -334,7 +423,8 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 
 		hash = _rtld_elf_hash(name);
 		defobj = NULL;
-		def = _rtld_symlook_default(name, hash, refobj, &defobj, in_plt);
+		def = _rtld_symlook_default(name, hash, refobj, &defobj, flags,
+		    _rtld_fetch_ventry(refobj, symnum));
 	} else {
 		rdbg(("STB_LOCAL symbol %s in %s", name, refobj->path));
 		def = ref;
@@ -354,7 +444,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	if (def != NULL) {
 		*defobj_out = defobj;
 #ifdef COMBRELOC
-		if (in_plt == false) {
+		if (!(flags & SYMLOOK_IN_PLT)) {
 			/*
 			 * Cache the lookup arguments and results if this was
 			 * non-PLT lookup.
@@ -368,7 +458,8 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	} else {
 		rdbg(("lookup failed"));
 		_rtld_error("%s: Undefined %ssymbol \"%s\" (symnum = %ld)",
-		    refobj->path, in_plt ? "PLT " : "", name, symnum);
+		    refobj->path, (flags & SYMLOOK_IN_PLT) ? "PLT " : "",
+		    name, symnum);
 	}
 	return def;
 }
@@ -377,7 +468,8 @@ const Elf_Sym *
 _rtld_find_plt_symdef(unsigned long symnum, const Obj_Entry *obj,
     const Obj_Entry **defobj, bool imm)
 {
- 	const Elf_Sym  *def = _rtld_find_symdef(symnum, obj, defobj, true);
+ 	const Elf_Sym  *def = _rtld_find_symdef(symnum, obj, defobj,
+	    SYMLOOK_IN_PLT);
 	if (__predict_false(def == NULL))
  		return NULL;
 
@@ -404,7 +496,8 @@ _rtld_find_plt_symdef(unsigned long symnum, const Obj_Entry *obj,
  */
 const Elf_Sym *
 _rtld_symlook_default(const char *name, unsigned long hash,
-    const Obj_Entry *refobj, const Obj_Entry **defobj_out, bool in_plt)
+    const Obj_Entry *refobj, const Obj_Entry **defobj_out, u_int flags,
+    const Ver_Entry *ventry)
 {
 	const Elf_Sym *def;
 	const Elf_Sym *symp;
@@ -420,7 +513,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	/* Look first in the referencing object if linked symbolically. */
 	if (refobj->symbolic && !_rtld_donelist_check(&donelist, refobj)) {
 		rdbg(("search referencing object for %s", name));
-		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
+		symp = _rtld_symlook_obj(name, hash, refobj, flags, ventry);
 		if (symp != NULL) {
 			def = symp;
 			defobj = refobj;
@@ -431,7 +524,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		rdbg(("search _rtld_list_main for %s", name));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj,
-		    in_plt, &donelist);
+		    flags, ventry, &donelist);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -443,7 +536,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		rdbg(("search _rtld_list_global for %s", name));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_global,
-		    &obj, in_plt, &donelist);
+		    &obj, flags, ventry, &donelist);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -458,7 +551,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 		rdbg(("search DAG with root %p (%s) for %s", elm->obj,
 		    elm->obj->path, name));
 		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers,
-		    &obj, in_plt, &donelist);
+		    &obj, flags, ventry, &donelist);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -475,7 +568,8 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	 */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		rdbg(("Search the dynamic linker itself."));
-		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, in_plt);
+		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, flags,
+		    ventry);
 		if (symp != NULL && _rtld_is_exported(symp)) {
 			def = symp;
 			defobj = &_rtld_objself;

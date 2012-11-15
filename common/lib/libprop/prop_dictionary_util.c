@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary_util.c,v 1.4 2011/03/24 17:05:39 bouyer Exp $	*/
+/*	$NetBSD: prop_dictionary_util.c,v 1.5 2012/07/27 09:10:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
  * exactly what we're doing here.
  */
 
-#include <prop/proplib.h>
 #include "prop_object_impl.h"	/* only to hide kernel vs. not-kernel */
+#include <prop/proplib.h>
 
 bool
 prop_dictionary_get_dict(prop_dictionary_t dict, const char *key, prop_dictionary_t *dp)

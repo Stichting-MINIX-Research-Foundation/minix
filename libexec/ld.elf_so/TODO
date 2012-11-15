@@ -1,6 +1,10 @@
 rtld:
 * resolve MIPS binding lossage
 
+TLS:
+* implement proper allocator for static TLS and support for actively
+  freeing DTV entries.
+
 binutils/gcc:
 * alpha: why are there GLOB_DAT relocs in ld.elf_so?
 * alpha: bogus textrels in rtti info

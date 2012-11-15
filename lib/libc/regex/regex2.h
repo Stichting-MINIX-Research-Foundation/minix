@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.12 2009/02/12 05:06:54 lukem Exp $	*/
+/*	$NetBSD: regex2.h,v 1.13 2011/10/09 18:23:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -110,7 +110,7 @@
  * immediately *preceding* "execution" of that operator.
  */
 typedef u_int32_t sop;	/* strip operator */
-typedef int sopno;
+typedef size_t sopno;
 #define	OPRMASK	((u_int32_t)0xf8000000UL)
 #define	OPDMASK	((u_int32_t)0x07ffffffUL)
 #define	OPSHIFT	((unsigned)27)
@@ -179,8 +179,8 @@ struct re_guts {
 	int magic;
 #		define	MAGIC2	((('R'^0200)<<8)|'E')
 	sop *strip;		/* malloced area for strip */
-	int csetsize;		/* number of bits in a cset vector */
-	int ncsets;		/* number of csets in use */
+	size_t csetsize;	/* number of bits in a cset vector */
+	size_t ncsets;		/* number of csets in use */
 	cset *sets;		/* -> cset [ncsets] */
 	uch *setbits;		/* -> uch[csetsize][ncsets/CHAR_BIT] */
 	int cflags;		/* copy of regcomp() cflags argument */
@@ -191,12 +191,12 @@ struct re_guts {
 #		define	USEBOL	01	/* used ^ */
 #		define	USEEOL	02	/* used $ */
 #		define	BAD	04	/* something wrong */
-	int nbol;		/* number of ^ used */
-	int neol;		/* number of $ used */
-	int ncategories;	/* how many character categories */
+	size_t nbol;		/* number of ^ used */
+	size_t neol;		/* number of $ used */
+	size_t ncategories;	/* how many character categories */
 	cat_t *categories;	/* ->catspace[-CHAR_MIN] */
 	char *must;		/* match must contain this string */
-	int mlen;		/* length of must */
+	size_t mlen;		/* length of must */
 	size_t nsub;		/* copy of re_nsub */
 	int backrefs;		/* does it use back references? */
 	sopno nplus;		/* how deep does it nest +s? */

@@ -3,11 +3,10 @@
 COMMON_DIR:=${.PARSEDIR}
 .if defined(__MINIX)
 COMMON_CODEDIRS=atomic gen inet md net quad stdlib string 
-COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
 .else
 COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
-COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160 hash/murmurhash
 .endif
+COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160 hash/murmurhash
 
 .if defined(COMMON_MACHINE_ARCH) && !empty(COMMON_MACHINE_ARCH) && \
     exists(${COMMON_DIR}/arch/${COMMON_MACHINE_ARCH})

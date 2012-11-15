@@ -154,7 +154,7 @@ int try;
  */
 
   int count;
-  int result;
+  int result = OK;
   register char *tbuf;
   char buf[64];
   console_t *cons = tp->tty_priv;

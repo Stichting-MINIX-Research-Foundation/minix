@@ -1,6 +1,6 @@
 
-include "kernel.h"
-include "proc.h"
+include "kernel/kernel.h"
+include "kernel/proc.h"
 
 struct proc
 member REG0 p_reg.retreg

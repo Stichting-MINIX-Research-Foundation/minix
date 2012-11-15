@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.6 2008/03/21 23:13:48 christos Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.9 2011/07/04 11:46:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.6 2008/03/21 23:13:48 christos Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.9 2011/07/04 11:46:41 mrg Exp $");
 #endif
 
 #include <float.h>
@@ -161,8 +161,15 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 		*decpt = 1;
 		return (nrv_alloc("0", rve, 1));
 	case FP_SUBNORMAL:
+#ifdef __vax__
+		/* (DBL_MAX_EXP=127 / 2) + 2 = 65? */
+		u.dblu_d *= 0x1p65;
+		*decpt = u.dblu_dbl.dbl_exp - (65 + DBL_ADJ);
+#else
+		/* (DBL_MAX_EXP=1024 / 2) + 2 = 514? */
 		u.dblu_d *= 0x1p514;
 		*decpt = u.dblu_dbl.dbl_exp - (514 + DBL_ADJ);
+#endif
 		break;
 	case FP_INFINITE:
 		*decpt = INT_MAX;
@@ -254,6 +261,7 @@ hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 	char *s, *s0;
 	size_t bufsize;
 
+	memset(&u, 0, sizeof u);
 	u.extu_ld = e;
 	*sign = u.extu_ext.ext_sign;
 

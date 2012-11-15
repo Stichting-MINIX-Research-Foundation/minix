@@ -1,4 +1,4 @@
-/*	$NetBSD: tsearch.c,v 1.5 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: tsearch.c,v 1.7 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -13,7 +13,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: tsearch.c,v 1.5 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: tsearch.c,v 1.7 2012/06/25 22:32:45 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -23,10 +23,8 @@ __RCSID("$NetBSD: tsearch.c,v 1.5 2005/11/29 03:12:00 christos Exp $");
 
 /* find or insert datum into search tree */
 void *
-tsearch(vkey, vrootp, compar)
-	const void *vkey;		/* key to be located */
-	void **vrootp;			/* address of tree root */
-	int (*compar) __P((const void *, const void *));
+tsearch(const void *vkey, void **vrootp,
+    int (*compar)(const void *, const void *))
 {
 	node_t *q;
 	node_t **rootp = (node_t **)vrootp;

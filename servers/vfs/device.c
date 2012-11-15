@@ -899,7 +899,7 @@ int clone_opcl(
 		 */
 
 		/* Device number of the new device. */
-		dev = (dev & ~(BYTE << MINOR)) | (dev_mess.REP_STATUS << MINOR);
+		dev = makedev(major(dev), minor(dev_mess.REP_STATUS)); 
 
 		/* Issue request */
 		r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,

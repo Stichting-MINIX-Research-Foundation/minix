@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.28 2011/12/25 06:09:08 tsutsui Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.29 2012/07/23 00:49:20 mhitch Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -318,6 +318,7 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 			break;
 		bno = fp->off / ISO_DEFAULT_BLOCK_SIZE + fp->bno;
 		if (fp->off & (ISO_DEFAULT_BLOCK_SIZE - 1)
+		    || (fp->off + ISO_DEFAULT_BLOCK_SIZE) > fp->size
 		    || size < ISO_DEFAULT_BLOCK_SIZE)
 			dp = buf;
 		else
@@ -336,6 +337,8 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 			if (nread > off + size)
 				nread = off + size;
 			nread -= off;
+			if (nread > fp->size - fp->off)
+				nread = fp->size - fp->off;
 			memcpy(start, buf + off, nread);
 			start = (char *)start + nread;
 			fp->off += nread;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.41 2009/10/21 01:07:45 snj Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.42 2012/03/20 16:36:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.41 2009/10/21 01:07:45 snj Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.42 2012/03/20 16:36:05 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -142,8 +142,7 @@ getstring(char **pp, int del, char __aconst **str)
  * getnetgroup(): Parse a netgroup, and advance the pointer
  */
 static struct netgroup *
-getnetgroup(pp)
-	char	**pp;
+getnetgroup(char **pp)
 {
 	struct netgroup *ng;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_overflow.c,v 1.16 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: bt_overflow.c,v 1.18 2012/03/13 21:13:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_overflow.c,v 1.16 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: bt_overflow.c,v 1.18 2012/03/13 21:13:32 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -87,7 +87,7 @@ __ovfl_get(BTREE *t, void *p, size_t *ssz, void **buf, size_t *bufsz)
 	uint32_t sz, nb, plen;
 	size_t temp;
 
-	memmove(&pg, p, sizeof(pgno_t));
+	memmove(&pg, p, sizeof(pg));
 	memmove(&sz, (char *)p + sizeof(pgno_t), sizeof(uint32_t));
 	*ssz = sz;
 
@@ -97,7 +97,7 @@ __ovfl_get(BTREE *t, void *p, size_t *ssz, void **buf, size_t *bufsz)
 #endif
 	/* Make the buffer bigger as necessary. */
 	if (*bufsz < sz) {
-		*buf = (char *)(*buf == NULL ? malloc(sz) : realloc(*buf, sz));
+		*buf = (*buf == NULL ? malloc(sz) : realloc(*buf, sz));
 		if (*buf == NULL)
 			return (RET_ERROR);
 		*bufsz = sz;
@@ -155,7 +155,7 @@ __ovfl_put(BTREE *t, const DBT *dbt, pgno_t *pg)
 	p = dbt->data;
 	temp = dbt->size;
 	_DBFIT(temp, uint32_t);
-	sz = temp;
+	sz = (uint32_t)temp;
 	for (;; p = (char *)p + plen, last = h) {
 		if ((h = __bt_new(t, &npg)) == NULL)
 			return (RET_ERROR);
@@ -200,7 +200,7 @@ __ovfl_delete(BTREE *t, void *p)
 	uint32_t sz, plen;
 	size_t temp;
 
-	(void)memmove(&pg, p, sizeof(pgno_t));
+	(void)memmove(&pg, p, sizeof(pg));
 	(void)memmove(&sz, (char *)p + sizeof(pgno_t), sizeof(uint32_t));
 
 #ifdef DEBUG

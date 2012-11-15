@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.c,v 1.2 2009/03/15 22:31:12 cegger Exp $	*/
+/*	$NetBSD: ashrdi3.c,v 1.4 2012/08/06 02:31:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)ashrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ashrdi3.c,v 1.2 2009/03/15 22:31:12 cegger Exp $");
+__RCSID("$NetBSD: ashrdi3.c,v 1.4 2012/08/06 02:31:54 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
+
+ARM_EABI_ALIAS(__aeabi_lasr, __ashrdi3)	/* no semicolon */
 
 /*
  * Shift a (signed) quad value right (arithmetic shift right).
@@ -72,7 +74,7 @@ __ashrdi3(quad_t a, qshift_t shift)
 		aa.ul[H] = s;
 	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
-		    (aa.ul[H] << (INT_BITS - shift));
+		    (aa.ul[H] << (unsigned int)(INT_BITS - shift));
 		/* LINTED inherits machine dependency */
 		aa.sl[H] >>= shift;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.3 2009/12/14 00:39:00 matt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.4 2011/08/27 13:23:52 bouyer Exp $	*/
 
 /*
  * Mach Operating System
@@ -46,7 +46,7 @@
 #if 0
 	RCSID("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.3 2009/12/14 00:39:00 matt Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.4 2011/08/27 13:23:52 bouyer Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,8 +170,10 @@ LEAF(FUNCTION)
 	PTR_ADDU	DSTREG,1
 
 4:	# copydone
+	.set at		#-mfix-loongson2f-btb
 	j	ra
 	nop
+	.set noat
 
 	/*
 	 *	Copy from unaligned source to aligned dest.
@@ -264,8 +266,10 @@ LEAF(FUNCTION)
 	PTR_SUBU	DSTREG,1
 
 4:	# copydone
+	.set at		#-mfix-loongson2f-btb
 	j	ra
 	nop
+	.set noat
 
 	/*
 	 *	Copy from unaligned source to aligned dest.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.18 2010/11/27 19:44:54 christos Exp $	*/
+/*	$NetBSD: vis.h,v 1.19 2011/03/12 19:52:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,6 +61,7 @@
 #define	VIS_MIMESTYLE	0x100	/* mime-style escape = HEX HEX */
 #define	VIS_HTTP1866	0x200	/* http-style &#num; or &string; */
 #define	VIS_NOESCAPE	0x400	/* don't decode `\' */
+#define	_VIS_END	0x800	/* for unvis */
 
 /*
  * unvis return codes
@@ -74,21 +75,37 @@
 /*
  * unvis flags
  */
-#define	UNVIS_END	1	/* no more characters */
+#define	UNVIS_END	_VIS_END	/* no more characters */
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 char	*vis(char *, int, int, int);
+char	*nvis(char *, size_t, int, int, int);
+
 char	*svis(char *, int, int, int, const char *);
+char	*snvis(char *, size_t, int, int, int, const char *);
+
 int	strvis(char *, const char *, int);
+int	strnvis(char *, size_t, const char *, int);
+
 int	strsvis(char *, const char *, int, const char *);
+int	strsnvis(char *, size_t, const char *, int, const char *);
+
 int	strvisx(char *, const char *, size_t, int);
+int	strnvisx(char *, size_t, const char *, size_t, int);
+
 int	strsvisx(char *, const char *, size_t, int, const char *);
+int	strsnvisx(char *, size_t, const char *, size_t, int, const char *);
+
 int	strunvis(char *, const char *);
+int	strnunvis(char *, size_t, const char *);
+
 int	strunvisx(char *, const char *, int);
+int	strnunvisx(char *, size_t, const char *, int);
+
 #ifndef __LIBC12_SOURCE__
-int	unvis(char *, int, int *, int) __RENAME(__unvis13);
+int	unvis(char *, int, int *, int) __RENAME(__unvis50);
 #endif
 __END_DECLS
 

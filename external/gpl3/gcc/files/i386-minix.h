@@ -26,6 +26,7 @@ Boston, MA 02110-1301, USA.  */
 #define MINIX_TARGET_CPU_CPP_BUILTINS()          \
   do                                            \
     {                                           \
+		builtin_define ("__i386");	\
 		builtin_define_with_int_value ("_EM_WSIZE", 4);	\
 		builtin_define_with_int_value ("_EM_PSIZE", 4);	\
 		builtin_define_with_int_value ("_EM_SSIZE", 2);	\
@@ -73,29 +74,12 @@ Boston, MA 02110-1301, USA.  */
 #undef  SUBTARGET_EXTRA_SPECS	/* i386.h bogusly defines it.  */
 #define SUBTARGET_EXTRA_SPECS \
   { "minix_dynamic_linker", MINIX_DYNAMIC_LINKER }
-    
-/* Provide a STARTFILE_SPEC appropriate for MINIX.  Here we add
-   the magical crtbegin.o file (see crtstuff.c) which provides part 
-	of the support for getting C++ file-scope static object constructed 
-	before entering `main'.  */
-   
-#undef	STARTFILE_SPEC
-#define STARTFILE_SPEC \
-  "%{!shared: \
-     %{pg:gcrt1.o%s} %{!pg:%{p:gcrt1.o%s} \
-		       %{!p:%{profile:gcrt1.o%s} \
-			 %{!profile:crt1.o%s}}}} \
-   crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
 
-/* Provide a ENDFILE_SPEC appropriate for MINIX.  Here we tack on
-   the magical crtend.o file (see crtstuff.c) which provides part of 
-	the support for getting C++ file-scope static object constructed 
-	before entering `main', followed by a normal "finalizer" file, 
-	`crtn.o'.  */
+#undef	STARTFILE_SPEC
+#define STARTFILE_SPEC MINIX_STARTFILE_SPEC
 
 #undef	ENDFILE_SPEC
-#define ENDFILE_SPEC \
-  "%{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
+#define ENDFILE_SPEC MINIX_ENDFILE_SPEC
 
 /* Provide a LINK_SPEC appropriate for MINIX.  Here we provide support
    for the special GCC options -static and -shared, which allow us to

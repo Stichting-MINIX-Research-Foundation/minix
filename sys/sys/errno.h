@@ -17,8 +17,8 @@
  * file is included in an ordinary user program, EPERM has the value ( 1).
  */
 
-#ifndef _ERRNO_H		/* check if <errno.h> is already included */
-# define _ERRNO_H		/* it is not included; note that fact */
+#ifndef _SYS_ERRNO_H_
+#define _SYS_ERRNO_H_
 
 /* Now define _SIGN as "" or "-" depending on _SYSTEM. */
 #ifdef _SYSTEM
@@ -173,4 +173,4 @@
 #define EDEADEPT     (_SIGN 302 )  /* specified endpoint is not alive */
 #define EBADCPU	     (_SIGN 303 )  /* requested CPU does not work */
 
-#endif /* _ERRNO_H */
+#endif /* !_SYS_ERRNO_H_ */

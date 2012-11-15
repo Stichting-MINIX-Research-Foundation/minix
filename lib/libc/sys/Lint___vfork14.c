@@ -1,4 +1,4 @@
-/* $NetBSD: Lint___vfork14.c,v 1.2 2000/06/14 06:49:10 cgd Exp $ */
+/* $NetBSD: Lint___vfork14.c,v 1.3 2012/06/24 15:26:03 christos Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,7 +9,7 @@
 
 /*ARGSUSED*/
 pid_t
-__vfork14()
+__vfork14(void)
 {
 	return (0);
 }

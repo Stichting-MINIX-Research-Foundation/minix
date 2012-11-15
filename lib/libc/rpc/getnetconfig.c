@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.18 2010/12/08 02:06:38 joerg Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.20 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetconfig.c,v 1.18 2010/12/08 02:06:38 joerg Exp $");
+__RCSID("$NetBSD: getnetconfig.c,v 1.20 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -135,9 +135,9 @@ struct netconfig_vars {
 #define NC_INVALID	0
 
 
-static int *__nc_error __P((void));
-static int parse_ncp __P((char *, struct netconfig *));
-static struct netconfig *dup_ncp __P((struct netconfig *));
+static int *__nc_error(void);
+static int parse_ncp(char *, struct netconfig *);
+static struct netconfig *dup_ncp(struct netconfig *);
 
 
 static FILE *nc_file;		/* for netconfig db */
@@ -157,7 +157,7 @@ __nc_error_setup(void)
 #endif
 
 static int *
-__nc_error()
+__nc_error(void)
 {
 #ifdef _REENTRANT
 	int *nc_addr = NULL;
@@ -207,7 +207,7 @@ __nc_error()
  * the netconfig database is not present).
  */
 void *
-setnetconfig()
+setnetconfig(void)
 {
 	struct netconfig_vars *nc_vars;
 
@@ -220,7 +220,7 @@ setnetconfig()
 	 * handle without reopening the netconfig db.
 	 */
 	ni.ref++;
-	if ((nc_file != NULL) || (nc_file = fopen(NETCONFIG, "r")) != NULL) {
+	if ((nc_file != NULL) || (nc_file = fopen(NETCONFIG, "re")) != NULL) {
 		nc_vars->valid = NC_VALID;
 		nc_vars->flag = 0;
 		nc_vars->nc_configs = ni.head;
@@ -242,8 +242,7 @@ setnetconfig()
  */
 
 struct netconfig *
-getnetconfig(handlep)
-	void *handlep;
+getnetconfig(void *handlep)
 {
 	struct netconfig_vars *ncp = (struct netconfig_vars *)handlep;
 	char *stringp;		/* tmp string pointer */
@@ -361,8 +360,7 @@ getnetconfig(handlep)
  * previously).
  */
 int
-endnetconfig(handlep)
-	void *handlep;
+endnetconfig(void *handlep)
 {
 	struct netconfig_vars *nc_handlep = (struct netconfig_vars *)handlep;
 
@@ -421,8 +419,7 @@ endnetconfig(handlep)
  */
 
 struct netconfig *
-getnetconfigent(netid)
-	const char *netid;
+getnetconfigent(const char *netid)
 {
 	FILE *file;			/* NETCONFIG db's file pointer */
 	char *linep;			/* holds current netconfig line */
@@ -498,8 +495,7 @@ getnetconfigent(netid)
  */
 
 void
-freenetconfigent(netconfigp)
-	struct netconfig *netconfigp;
+freenetconfigent(struct netconfig *netconfigp)
 {
 	if (netconfigp != NULL) {
 				/* holds all netconfigp's strings */
@@ -523,9 +519,9 @@ freenetconfigent(netconfigp)
  */
 
 static int
-parse_ncp(stringp, ncp)
-	char *stringp;		/* string to parse */
-	struct netconfig *ncp;	/* where to put results */
+parse_ncp(
+	char *stringp,		/* string to parse */
+	struct netconfig *ncp)	/* where to put results */
 {
 	char    *tokenp;	/* for processing tokens */
 	char    *lasts;
@@ -609,7 +605,7 @@ parse_ncp(stringp, ncp)
  * Returns a string describing the reason for failure.
  */
 char *
-nc_sperror()
+nc_sperror(void)
 {
 	const char *message;
 
@@ -636,8 +632,7 @@ nc_sperror()
  * Prints a message onto standard error describing the reason for failure.
  */
 void
-nc_perror(s)
-	const char *s;
+nc_perror(const char *s)
 {
 
 	_DIAGASSERT(s != NULL);
@@ -649,8 +644,7 @@ nc_perror(s)
  * Duplicates the matched netconfig buffer.
  */
 static struct netconfig *
-	dup_ncp(ncp)
-	struct netconfig	*ncp;
+dup_ncp(struct netconfig *ncp)
 {
 	struct netconfig	*p;
 	char	*tmp;

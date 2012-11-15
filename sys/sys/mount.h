@@ -450,10 +450,15 @@ int	getfh(const char *, void *, size_t *)
 	__RENAME(__getfh30);
 #endif
 
+#if !defined(__minix)
 int	unmount(const char *, int);
+#endif /* !defined(__minix) */
 #if defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
+#if !defined(__minix)
+/* LSC FIXME: we should remove our definition, and make sure all the tools uses the new one*/
 int mount(const char *, const char *, int, void *, size_t) __RENAME(__mount50);
+#endif /* !defined(__minix) */
 int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
 int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat50);
 #endif

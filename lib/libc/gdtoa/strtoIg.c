@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIg.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtoIg.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -67,16 +67,20 @@ strtoIg(CONST char *s00, char **se, FPI *fpi, Long *exp, Bigint **B, int *rvp)
 	if (rv & STRTOG_Inexlo) {
 		swap = 0;
 		b1 = increment(b1);
-		if (fpi->sudden_underflow
-		 && (rv & STRTOG_Retmask) == STRTOG_Zero) {
-			b1->x[0] = 0;
-			b1->x[nw1] = 1L << nb11;
-			rv1 += STRTOG_Normal - STRTOG_Zero;
-			rv1 &= ~STRTOG_Underflow;
+		if ((rv & STRTOG_Retmask) == STRTOG_Zero) {
+			if (fpi->sudden_underflow) {
+				b1->x[0] = 0;
+				b1->x[nw1] = 1L << nb11;
+				rv1 += STRTOG_Normal - STRTOG_Zero;
+				rv1 &= ~STRTOG_Underflow;
+				goto swapcheck;
+				}
+			rv1 &= STRTOG_Inexlo | STRTOG_Underflow | STRTOG_Zero;
+			rv1 |= STRTOG_Inexhi | STRTOG_Denormal;
 			goto swapcheck;
 			}
 		if (b1->wds > nw
-		 || nb1 && b1->x[nw1] & 1L << nb1) {
+		 || (nb1 && b1->x[nw1] & 1L << nb1)) {
 			if (++e1 > fpi->emax)
 				rv1 = STRTOG_Infinite | STRTOG_Inexhi;
 			rshift(b1, 1);

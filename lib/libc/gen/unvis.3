@@ -1,4 +1,4 @@
-.\"	$NetBSD: unvis.3,v 1.20 2010/11/28 01:28:21 wiz Exp $
+.\"	$NetBSD: unvis.3,v 1.23 2011/03/17 14:06:29 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unvis.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 27, 2010
+.Dd March 12, 2011
 .Dt UNVIS 3
 .Os
 .Sh NAME
@@ -45,7 +45,11 @@
 .Ft int
 .Fn strunvis "char *dst" "const char *src"
 .Ft int
+.Fn strnunvis "char *dst" "size_t dlen" "const char *src"
+.Ft int
 .Fn strunvisx "char *dst" "const char *src" "int flag"
+.Ft int
+.Fn strnunvisx "char *dst" "size_t dlen" "const char *src" "int flag"
 .Sh DESCRIPTION
 The
 .Fn unvis ,
@@ -191,6 +195,32 @@ again:
 if (unvis(\*[Am]out, '\e0', \*[Am]state, UNVIS_END) == UNVIS_VALID)
 	(void)putchar(out);
 .Ed
+.Sh ERRORS
+The functions
+.Fn strunvis ,
+.Fn strnunvis ,
+.Fn strunvisx ,
+and
+.Fn strnunvisx
+will return \-1 on error and set
+.Va errno 
+to:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+An invalid escape sequence was detected, or the decoder is in an unknown state.
+.El
+.Pp
+In addition the functions
+.Fn strnunvis 
+and
+.Fn strnunvisx
+will can also set
+.Va errno
+on error to:
+.Bl -tag -width Er
+.It Bq Er ENOSPC
+Not enough space to perform the conversion.
+.El
 .Sh SEE ALSO
 .Xr unvis 1 ,
 .Xr vis 1 ,
@@ -206,3 +236,9 @@ The
 function
 first appeared in
 .Bx 4.4 .
+The
+.Fn strnunvis
+and
+.Fn strnunvisx
+functions appeared in
+.Nx 6.0 .

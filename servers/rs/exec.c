@@ -206,7 +206,7 @@ size_t seg_bytes           /* how much is to be transferred? */
   if (off+seg_bytes > execi->hdr_len) return ENOEXEC;
   if((r= sys_vircopy(SELF, ((vir_bytes)execi->hdr)+off,
   	execi->proc_e, seg_addr, seg_bytes)) != OK) {
-	printf("RS: exec read_seg: copy 0x%x bytes into %d at 0x%lx failed: %d\n",
+	printf("RS: exec read_seg: copy 0x%x bytes into %i at 0x%08x failed: %i\n",
 		seg_bytes, execi->proc_e, seg_addr, r);
   }
   return r;

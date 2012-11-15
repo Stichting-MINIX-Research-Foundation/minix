@@ -1,4 +1,4 @@
-/*	$NetBSD: strnlen.c,v 1.1 2009/05/01 17:27:01 perry Exp $	*/
+/*	$NetBSD: strnlen.c,v 1.1 2011/09/01 22:35:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009 David Schultz <das@FreeBSD.org>
@@ -28,11 +28,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strnlen.c,v 1.1 2009/05/01 17:27:01 perry Exp $");
+__RCSID("$NetBSD: strnlen.c,v 1.1 2011/09/01 22:35:18 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 /* FreeBSD: src/lib/libc/string/strnlen.c,v 1.1 2009/02/28 06:00:58 das Exp */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 size_t
 strnlen(const char *s, size_t maxlen)

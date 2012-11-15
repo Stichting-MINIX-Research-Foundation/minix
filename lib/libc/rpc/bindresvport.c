@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.21 2003/01/18 11:29:03 thorpej Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.23 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.21 2003/01/18 11:29:03 thorpej Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.23 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -65,9 +65,7 @@ __weak_alias(bindresvport_sa,_bindresvport_sa)
  * Bind a socket to a privileged IP port
  */
 int
-bindresvport(sd, brsin)
-	int sd;
-	struct sockaddr_in *brsin;
+bindresvport(int sd, struct sockaddr_in *brsin)
 {
 	return bindresvport_sa(sd, (struct sockaddr *)(void *)brsin);
 }
@@ -76,9 +74,7 @@ bindresvport(sd, brsin)
  * Bind a socket to a privileged IP port
  */
 int
-bindresvport_sa(sd, sa)
-	int sd;
-	struct sockaddr *sa;
+bindresvport_sa(int sd, struct sockaddr *sa)
 {
 	int error, old;
 	struct sockaddr_storage myaddr;
@@ -136,7 +132,7 @@ bindresvport_sa(sd, sa)
 		if (error < 0)
 			return (error);
 		error = setsockopt(sd, proto, portrange, &portlow,
-		    sizeof(portlow));
+		    (socklen_t)sizeof(portlow));
 		if (error < 0)
 			return (error);
 	}
@@ -148,7 +144,7 @@ bindresvport_sa(sd, sa)
 
 		if (error < 0) {
 			if (setsockopt(sd, proto, portrange, &old,
-			    sizeof(old)) < 0)
+			    (socklen_t)sizeof(old)) < 0)
 				errno = saved_errno;
 			return (error);
 		}

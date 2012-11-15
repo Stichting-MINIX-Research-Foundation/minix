@@ -2,7 +2,7 @@
 #include <minix/cpufeature.h>
 
 #include <assert.h>
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include <libexec.h>
 #include "arch_proto.h"
 

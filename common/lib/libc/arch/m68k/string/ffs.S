@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2011/07/09 14:57:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,11 +39,13 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.2 2011/07/09 14:57:29 mrg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
+
+WEAK_ALIAS(__ffssi2,ffs)
 
 #ifndef	__mc68010__
 

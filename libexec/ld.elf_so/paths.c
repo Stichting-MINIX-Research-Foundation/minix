@@ -61,13 +61,17 @@ __RCSID("$NetBSD: paths.c,v 1.40 2009/05/19 20:44:52 christos Exp $");
 static Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
 static Search_Path **_rtld_append_path(Search_Path **, Search_Path **,
     const char *, const char *, const char *);
+#if !defined(__minix)
 static void _rtld_process_mapping(Library_Xform **, const char *,
     const char *);
+#endif /* !defined(__minix) */
 static char *exstrdup(const char *, const char *);
+#if !defined(__minix)
 static const char *getstr(const char **, const char *, const char *);
 static const char *getcstr(const char **, const char *, const char *);
 static const char *getword(const char **, const char *, const char *);
 static int matchstr(const char *, const char *, const char *);
+#endif /* !defined(__minix) */
 
 static const char WS[] = " \t\n";
 
@@ -86,6 +90,7 @@ exstrdup(const char *bp, const char *ep)
 	return (cp);
 }
 
+#if !defined(__minix)
 /*
  * Like strsep(), but takes end of string and doesn't put any NUL.  To
  * detect empty string, compare `*p' and return value.
@@ -158,6 +163,7 @@ matchstr(const char *p, const char *bp, const char *ep)
 
 	return (*p == 0);
 }
+#endif /* !defined(__minix) */
 
 static Search_Path *
 _rtld_find_path(Search_Path *path, const char *pathstr, size_t pathlen)
@@ -228,6 +234,7 @@ _rtld_add_paths(const char *execname, Search_Path **path_p, const char *pathstr)
 	}
 }
 
+#if !defined(__minix)
 /*
  * Process library mappings of the form:
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
@@ -333,6 +340,7 @@ cleanup:
 		xfree(hwptr->name);
 	xfree(hwptr);
 }
+#endif /* !defined(__minix) */
 
 void
 _rtld_process_hints(const char *execname, Search_Path **path_p,
@@ -349,6 +357,7 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 	struct stat st;
 	ssize_t sz;
 	Search_Path **head_p = path_p;
+
 	if ((fd = open(fname, O_RDONLY)) == -1) {
 		/* Don't complain */
 		return;

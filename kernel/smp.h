@@ -5,7 +5,7 @@
 
 #ifndef __ASSEMBLY__
 
-#include "kernel.h"
+#include "kernel/kernel.h"
 #include "arch_smp.h"
 #include "spinlock.h"
 

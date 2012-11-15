@@ -1,4 +1,4 @@
-/* $NetBSD: strtodnrp.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtodnrp.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
 
 /****************************************************************
 
@@ -46,13 +46,13 @@ strtod(s, sp) CONST char *s; char **sp;
 strtod(CONST char *s, char **sp)
 #endif
 {
-	static FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	static const FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	ULong bits[2];
-	Long exp;
+	Long expt;
 	int k;
 	union { ULong L[2]; double d; } u;
 
-	k = strtodg(s, sp, &fpi, &exp, bits);
+	k = strtodg(s, sp, &fpi, &expt, bits);
 	if (k == STRTOG_NoMemory) {
 		errno = ERANGE;
 		u.L[0] = Big0;
@@ -67,7 +67,7 @@ strtod(CONST char *s, char **sp)
 
 	  case STRTOG_Normal:
 		u.L[_1] = bits[0];
-		u.L[_0] = (bits[1] & ~0x100000) | ((exp + 0x3ff + 52) << 20);
+		u.L[_0] = (bits[1] & ~0x100000) | ((expt + 0x3ff + 52) << 20);
 		break;
 
 	  case STRTOG_Denormal:

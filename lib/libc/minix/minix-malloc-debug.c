@@ -32,8 +32,6 @@ struct block {
 
 static u8_t *ptr_min, *ptr_max;
 
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-
 static unsigned long page_round_down(unsigned long x)
 {
 	return x - x % PAGE_SIZE;
