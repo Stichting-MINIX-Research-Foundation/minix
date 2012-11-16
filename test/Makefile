@@ -35,7 +35,7 @@ PROG+= t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b
 # Build them as dynamic executables by default if shared libraries
 # are available; so that the building and executing of dynamic
 # executables is tested
-LDSTATIC?=	-dynamic
+LDSTATIC=	-dynamic
 
 # Add test that must be linked dynamically, and its dynamically loaded
 # module
