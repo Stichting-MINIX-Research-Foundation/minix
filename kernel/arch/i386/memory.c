@@ -487,6 +487,7 @@ void delivermsg(struct proc *rp)
 				rp->p_delivermsg_vir,
 				rp->p_name,
 				rp->p_endpoint);
+		cause_sig(rp->p_nr, SIGSEGV);
 		r = EFAULT;
 	}
 
