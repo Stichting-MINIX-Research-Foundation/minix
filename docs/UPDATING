@@ -1,3 +1,8 @@
+20121116:
+	To make the build system less verbose:
+
+	# cp /usr/src/etc/make.conf /etc
+
 20121115:
 	Before your first native build you need to update /usr/share/mk.
 	# rm /usr/share/mk/*
