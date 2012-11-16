@@ -52,6 +52,8 @@ DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrtools
 # Note: At least mkisofs 2.0 should be used.
 #
+.if !defined(__MINIX)
+# LSC: We do not yet support iso creation anyway, then do not try to find it.
 .if !defined(MKISOFS)
 MKISOFS!=       (which mkisofs || echo true)
 .endif
@@ -65,6 +67,7 @@ MKISOFS_FLAGS+= -J -l -hide-joliet-trans-tbl -r -T \
 .if ${MKISOFS_FLAGS:N-v}
 MKISOFS_FLAGS+=	-quiet
 .endif
+.endif # !defined(__MINIX)
  
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
@@ -437,6 +440,8 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 .if !defined(__MINIX)
 OBSOLETE.files=		base comp etc games man misc text
+.else
+OBSOLETE.files=		minix
 .endif # defined(__MINIX)
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules
@@ -485,6 +490,7 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel '*.gz'
 
 
+.if !defined(__MINIX)
 # iso-image --
 #	Standalone target to create a CDROM image after the release
 #	was composed.  Should be run after "make release" in src and xsrc.
@@ -571,6 +577,7 @@ install-image: .PHONY check_DESTDIR check_RELEASEDIR
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib install_image \
 	    INSTIMG_RELEASEDIR=${INSTIMG_RELEASEDIR}
 	${MAKESUMS} -t ${INSTIMG_RELEASEDIR} '*.img.gz'
+.endif # !defined(__MINIX)
 
 # snap_pre --
 #	Create ${RELEASEDIR} and necessary subdirectories.
