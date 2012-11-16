@@ -43,6 +43,8 @@ int fs_readsuper() {
 	return(r);
   }
 
+  lmfs_set_blocksize(v_pri.logical_block_size_l, major(fs_dev));
+
   /* Return some root inode properties */
   fs_m_out.RES_INODE_NR = ID_DIR_RECORD(v_pri.dir_rec_root);
   fs_m_out.RES_MODE = v_pri.dir_rec_root->d_mode;

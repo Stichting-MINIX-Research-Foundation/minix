@@ -91,6 +91,8 @@ static void sef_local_startup()
 
   /* Let SEF perform startup. */
   sef_startup();
+
+  lmfs_buf_pool(10);
 }
 
 /*===========================================================================*
