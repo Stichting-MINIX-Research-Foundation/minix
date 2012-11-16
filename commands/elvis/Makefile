@@ -15,7 +15,8 @@ CPPFLAGS+= -w -DCRUNCH \
 	-DNO_MODELINE -DNO_OPTCOLS -DNO_DIGRAPH -DNO_EXTENSIONS \
 	-DNO_ERRLIST -DNO_FKEY -DNO_VISIBLE -DNO_COLOR -DNO_POPUP
 
-# LSC Force usage of local getline
+# LSC Force usage of local getline, this is required here as long as
+# we do not fix elvis.
 CPPFLAGS+= -D__NBSD_LIBC
 
 ###########################################################################
@@ -28,8 +29,16 @@ SRCS.elvis= blk.c cmd1.c cmd2.c ctype.c curses.c cut.c ex.c input.c \
    unix.c vars.c vcmd.c vi.c
 
 BINDIR= /usr/bin
+
+# Do not overwrite vi and ex if they already exist, only install the links
+# as a default fallback in their absence
+.if !exists(${DESTDIR}/${BINDIR}/vi)
 LINKS+= ${BINDIR}/elvis ${BINDIR}/vi
+.endif
+
+.if !exists(${DESTDIR}/${BINDIR}/ex)
 LINKS+= ${BINDIR}/elvis ${BINDIR}/ex
+.endif
 
 MAN.elvis=
 MAN.ctags=
