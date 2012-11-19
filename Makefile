@@ -244,7 +244,7 @@ BUILDTARGETS+=	do-lib
 .if !defined(__MINIX)
 # LSC Not used in MINIX3
 BUILDTARGETS+=	do-compat-lib
-.endif # !defiend(__MINIX)
+.endif # !defined(__MINIX)
 BUILDTARGETS+=	do-build
 .if ${MKX11} != "no"
 BUILDTARGETS+=	do-x11
@@ -270,15 +270,18 @@ START_TIME!=	date
 
 .if defined(__MINIX)
 world: build .PHONY .MAKE
-	${MAKEDIRTARGET} . etcforce
+	${MAKEDIRTARGET} . etcfiles
 	@echo "WARNING: "
 	@echo "WARNING: The 'world' target is obsolete, please use 'build' instead."
 	@echo "WARNING: "
 
+etcfiles: .PHONY .MAKE
+	${MAKEDIRTARGET} etc install-etc-files-safe  DESTDIR=${DESTDIR:U/}
+
 etcforce: .PHONY .MAKE
 	${MAKEDIRTARGET} etc install-etc-files  DESTDIR=${DESTDIR:U/}
 
-.endif # defiend(__MINIX)
+.endif # defined(__MINIX)
 
 build: .PHONY .MAKE
 .if defined(BUILD_DONE)

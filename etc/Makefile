@@ -317,13 +317,29 @@ CONFIGSYMLINKS+=	\
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
-# LSC Minix administrator group is operator, not wheel
 install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/master.passwd
 	${ETC_INSTALL_FILE} -o root -g operator -m 600 \
 	    master.passwd ${DESTDIR}/etc
 	${TOOL_PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
 	    ${DESTDIR}/etc/master.passwd
+.if defined(__MINIX)
+# LSC: We need a safe install target for etc files, as this is expected from
+# our current user base. This safe version only leaves out the master.passwd
+# file in order not to loose any user account created.
+#
+# LSC: To ensure minimal modifications, the logic is a bit contrived, i.e. the
+# NetBSD build system expect install-etc-files to be unsafe, so what was done
+# is to separate that step into two steps, with the unsafe version refering 
+# (not by dependency, to ensure correct order of actions) the safe step, and 
+# use the following mapping in the main Makefile:
+#  etcforce -> install-etc-files (default NetBSD target)
+#  etcfiles -> install-etc-files-safe (new -safe- target)
+	${MAKEDIRTARGET} . install-etc-files-safe
+
+install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
+# LSC Minix administrator group is operator, not wheel
+.endif # defined(__MINIX)
 .if ${MKUNPRIVED} != "no"
 	( \
 		for metaent in passwd pwd.db spwd.db; do \
