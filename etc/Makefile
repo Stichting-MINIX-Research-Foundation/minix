@@ -440,6 +440,8 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 .if !defined(__MINIX)
 OBSOLETE.files=		base comp etc games man misc text
+.else
+OBSOLETE.files=		minix
 .endif # defined(__MINIX)
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules

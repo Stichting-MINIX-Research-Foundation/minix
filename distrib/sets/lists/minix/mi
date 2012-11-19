@@ -4457,6 +4457,7 @@
 ./usr/var/run				minix-sys
 ./var/db				minix-sys
 ./var/db/obsolete			minix-sys
+./var/db/obsolete/minix			minix-sys
 ./var					minix-sys
 ./var/run				minix-sys
 ./boot/minix/.temp			minix-sys
