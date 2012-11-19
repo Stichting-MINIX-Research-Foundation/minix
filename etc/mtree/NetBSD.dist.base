@@ -30,7 +30,6 @@
 ./root
 ./sbin
 ./sys
-./tmp
 ./usr
 ./usr/adm
 ./usr/adm/old
@@ -126,7 +125,6 @@
 ./usr/spool/lpd
 ./usr/spool/mail
 ./usr/src
-./usr/tmp
 ./usr/var
 ./usr/var/db
 ./usr/var/db/pkg
@@ -135,6 +133,11 @@
 ./var/db
 ./var/db/obsolete
 ./var/run
+
+# Directories with special access rights
+/set type=dir uid=0 gid=0 mode=1777
+./tmp
+./usr/tmp
 
 # Symlinks
 /set type=link uid=0 gid=0 mode=0777
