@@ -264,7 +264,9 @@ struct fproc *rfp;
 	symlink.l_vmnt_lock = VMNT_READ;
 	sym_vp = advance(res_vp, &symlink, rfp);
 
-	if (sym_vp != NULL && S_ISLNK(sym_vp->v_mode)) {
+	if (sym_vp == NULL) break;
+
+	if (S_ISLNK(sym_vp->v_mode)) {
 		/* Last component is a symlink, but if we've been asked to not
 		 * resolve it, return now.
 		 */
@@ -309,6 +311,41 @@ struct fproc *rfp;
 			}
 
 			continue;
+		}
+	} else {
+		symloop = 0;	/* Not a symlink, so restart counting */
+
+		/* If we're crossing a mount point, return root node of mount
+		 * point on which the file resides. That's the 'real' last
+		 * dir that holds the file we're looking for.
+		 */
+		if (sym_vp->v_fs_e != res_vp->v_fs_e) {
+			assert(sym_vmp != NULL);
+
+			/* Unlock final file, it might have wrong lock types */
+			unlock_vnode(sym_vp);
+			unlock_vmnt(sym_vmp);
+			put_vnode(sym_vp);
+			sym_vp = NULL;
+
+			/* Also unlock and release erroneous result */
+			unlock_vnode(*resolve->l_vnode);
+			unlock_vmnt(*resolve->l_vmp);
+			put_vnode(res_vp);
+
+			/* Relock vmnt and vnode with correct lock types */
+			lock_vmnt(sym_vmp, resolve->l_vmnt_lock);
+			lock_vnode(sym_vmp->m_root_node, resolve->l_vnode_lock);
+			res_vp = sym_vmp->m_root_node;
+			dup_vnode(res_vp);
+			*resolve->l_vnode = res_vp;
+			*resolve->l_vmp = sym_vmp;
+
+			/* We've effectively resolved the final component, so
+			 * change it to current directory to prevent future
+			 * 'advances' of returning erroneous results.
+			 */
+			strlcpy(dir_entry, ".", NAME_MAX+1);
 		}
 	}
 	break;

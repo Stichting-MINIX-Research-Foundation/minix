@@ -444,9 +444,9 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 		else
 			err_code = r;
 
+		unlock_vmnt(dir_vmp);
 		unlock_vnode(dirp);
 		unlock_vnode(vp);
-		unlock_vmnt(dir_vmp);
 		put_vnode(dirp);
 		return(NULL);
 	}
