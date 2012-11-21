@@ -10,4 +10,4 @@ fi
 
 PATH=/usr/bin:$PATH
 
-exec shutdown -x off
+exec shutdown -p

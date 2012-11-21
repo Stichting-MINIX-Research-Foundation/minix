@@ -398,7 +398,7 @@ static void handle_vfs_reply()
 	 * the PM, will get a HARD_STOP notification. Await the
 	 * notification in the main loop.
 	 */
-	sys_abort(RBT_DEFAULT);
+	sys_abort(abort_flag);
 
 	return;
   }

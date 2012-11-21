@@ -148,6 +148,7 @@ char *argv[];
 	break;
       case 'h':
       case 'r':
+      case 'p':
       case 'x':
       case 'd':
 	reboot_flag = *opt;
@@ -273,10 +274,11 @@ char *argv[];
 
 void usage()
 {
-  fputs("Usage: shutdown [-hrRmkd] [-x code] [time [message]]\n", stderr);
+  fputs("Usage: shutdown [-hrRpmkd] [-x code] [time [message]]\n", stderr);
   fputs("       -h -> halt system after shutdown\n", stderr);
   fputs("       -r -> reboot system after shutdown\n", stderr);
   fputs("       -R -> reset system after shutdown\n", stderr);
+  fputs("       -p -> power system off after shutdown\n", stderr);
   fputs("       -x -> return to the monitor doing...\n", stderr);
   fputs("       -d -> default CTRL-ALT-DEL shutdown for current bootloader\n", stderr);
   fputs("       -m -> read a shutdown message from standard input\n", stderr);
