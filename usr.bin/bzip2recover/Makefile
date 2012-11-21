@@ -11,7 +11,7 @@ PROG=       bzip2recover
 LDSTATIC?= -static
 .endif
 
-DIST=	   ${NETBSDSRCDIR}/dist/bzip2
+DIST=	   ${NETBSDSRCDIR}/external/bsd/bzip2/dist
 .PATH:	   ${DIST}
 
 .include <bsd.prog.mk>

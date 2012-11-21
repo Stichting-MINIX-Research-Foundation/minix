@@ -2,6 +2,10 @@
 # Timestamp in UTC,minixpath,netbsdpath
 # minixpath:  path in Minix source tree (starting from /usr/src/)
 # netbsdpath: path in BSD source tree (starting from src/)
+2012/10/17 12:00:00,lib/libbz2
+2012/10/17 12:00:00,usr.bin/bzip2
+2012/10/17 12:00:00,usr.bin/bzip2recover
+2012/10/17 12:00:00,external/bsd/bzip2
 2012/10/17 12:00:00,bin/Makefile
 2012/10/17 12:00:00,bin/Makefile.inc
 2012/10/17 12:00:00,build.sh
@@ -106,7 +110,6 @@
 2011/01/06 11:29:40,lib/libcurses
 2010/12/22 09:12:28,lib/libutil
 2009/05/13 02:50:31,common/lib/libutil
-2008/08/29 00:02:22,lib/libbz2
 2011/01/21 23:36:49,include
 2008/07/20 00:52:40,bin/mkdir
 2011/08/29 14:48:46,bin/rm
@@ -133,10 +136,7 @@
 2011/01/04 10:30:21,usr.sbin/user
 2009/04/19 00:44:49,usr.sbin/vipw
 2009/04/22 15:23:10,usr.sbin/zic
-2007/05/28 12:06:24,usr.bin/bzip2
-2007/05/28 12:06:25,usr.bin/bzip2recover
 2009/04/02 21:39:33,libexec/makewhatis
-2010/05/14 16:43:34,dist/bzip2
 2012/01/16 18:47:57,sys/lib/libsa
 2011/10/30 00:28:57,sys/lib/libz
 2011/09/16 16:16:12,external/bsd/file

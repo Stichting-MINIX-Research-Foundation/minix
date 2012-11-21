@@ -21,7 +21,7 @@ LDSTATIC?= -static
 CPPFLAGS+=	-DSMALL
 .endif
 
-DIST=	   ${NETBSDSRCDIR}/dist/bzip2
+DIST=	   ${NETBSDSRCDIR}/external/bsd/bzip2/dist
 .PATH:	   ${DIST}
 
 MLINKS+=   bzip2.1 bunzip2.1\
@@ -31,8 +31,4 @@ MLINKS+=   bzip2.1 bunzip2.1\
 LINKS+=    ${BINDIR}/bzip2 ${BINDIR}/bunzip2
 LINKS+=    ${BINDIR}/bzip2 ${BINDIR}/bzcat
 
-test:
-	make -C dist/bzip2 test
-install-extra:
-	make -C dist/bzip2 install
 .include <bsd.prog.mk>
