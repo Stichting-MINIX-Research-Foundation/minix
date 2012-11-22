@@ -82,70 +82,23 @@ char *argv[];
 	return(EXIT_FAILURE);
   }
 
-  /* The mount has completed successfully. Tell the user. */
-  printf("%s is read-%s mounted on %s\n",
-	argv[1], mountflags & MS_RDONLY ? "only" : "write", argv[2]);
-  
-  /* Update /etc/mtab. */
-  update_mtab(argv[1], argv[2], type, mountflags);
+  printf("%s is mounted on %s\n", argv[1], argv[2]);
   return(EXIT_SUCCESS);
-}
-
-void
-update_mtab(char *dev, char *mountpoint, char *fstype, int mountflags)
-{
-	int n;
-	char *vs;
-	char special[PATH_MAX], mounted_on[PATH_MAX], version[10], rw_flag[10];
-
-	if (!write_mtab) return;
-	n = load_mtab("mount");
-	if (n < 0) exit(1);		/* something is wrong. */
-
-	/* Loop on all the /etc/mtab entries, copying each one to the output
-	 * buf. */
-	while (1) {
-		n = get_mtab_entry(special, mounted_on, version, rw_flag);
-		if (n < 0) break;
-		n = put_mtab_entry(special, mounted_on, version, rw_flag);
-		if (n < 0) {
-			std_err("mount: /etc/mtab has grown too large\n");
-			exit(1);
-		}
-	}
-	/* For MFS, use a version number. Otherwise, use the FS type name. */
-	if (!strcmp(fstype, MINIX_FS_TYPE)) {
-		vs = "MFSv3";
-	} else if (strlen(fstype) < sizeof(version)) {
-		vs = fstype;
-	} else {
-		vs = "-";
-	}
-	n = put_mtab_entry(dev, mountpoint, vs,
-			     (mountflags & MS_RDONLY ? "ro" : "rw") );
-	if (n < 0) {
-		std_err("mount: /etc/mtab has grown too large\n");
-		exit(1);
-	}
-
-	n = rewrite_mtab("mount");
 }
 
 void list()
 {
   int n;
-  char special[PATH_MAX], mounted_on[PATH_MAX], version[10], rw_flag[10];
+  char dev[PATH_MAX], mountpoint[PATH_MAX], type[MNTNAMELEN], flags[MNTFLAGLEN];
 
   /* Read and print /etc/mtab. */
   n = load_mtab("mount");
   if (n < 0) exit(1);
 
   while (1) {
-	n = get_mtab_entry(special, mounted_on, version, rw_flag);
+	n = get_mtab_entry(dev, mountpoint, type, flags);
 	if  (n < 0) break;
-	printf("%s is read-%s mounted on %s (type %s)\n",
-		special, strcmp(rw_flag, "rw") == 0 ? "write" : "only",
-		mounted_on, version);
+	printf("%s on %s type %s (%s)\n", dev, mountpoint, type, flags);
   }
   exit(0);
 }
@@ -200,10 +153,7 @@ mount_all()
 			device = NULL;
 
 		if (mount(device, mountpoint, mountflags, fs->fs_vfstype,
-			fs->fs_mntops) == 0) {
-			update_mtab(fs->fs_spec, fs->fs_file, fs->fs_vfstype,
-					mountflags);
-		} else {
+		    fs->fs_mntops) != 0) {
 			err = strerror(errno);
 			fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
 				fs->fs_spec, fs->fs_file, err);

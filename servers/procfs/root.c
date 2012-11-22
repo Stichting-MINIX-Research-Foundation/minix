@@ -4,6 +4,7 @@
 #include <machine/pci.h>
 #include <minix/dmap.h>
 #include "cpuinfo.h"
+#include "mounts.h"
 
 static void root_hz(void);
 static void root_uptime(void);
@@ -24,6 +25,7 @@ struct file root_files[] = {
 	{ "dmap",	REG_ALL_MODE,	(data_t) root_dmap	},
 	{ "cpuinfo",	REG_ALL_MODE,	(data_t) root_cpuinfo	},
 	{ "ipcvecs",	REG_ALL_MODE,	(data_t) root_ipcvecs	},
+	{ "mounts",	REG_ALL_MODE,	(data_t) root_mounts	},
 	{ NULL,		0,		NULL			}
 };
 

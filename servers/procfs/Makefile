@@ -4,7 +4,7 @@
 .include <bsd.own.mk>
 
 PROG=	procfs
-SRCS=	buf.c main.c pid.c root.c tree.c util.c cpuinfo.c
+SRCS=	buf.c main.c pid.c root.c tree.c util.c cpuinfo.c mounts.c
 
 CPPFLAGS+= -I${NETBSDSRCDIR} -I${NETBSDSRCDIR}/servers
 

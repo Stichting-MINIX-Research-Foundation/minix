@@ -100,7 +100,7 @@ int do_mount()
 /* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
   int r, slot, rdonly, nodev;
-  char fullpath[PATH_MAX];
+  char mount_path[PATH_MAX], mount_dev[PATH_MAX];
   char mount_label[LABEL_MAX];
   dev_t dev;
   int mflags;
@@ -145,21 +145,22 @@ int do_mount()
   nodev = (vname1_length == 0);
   if (!nodev) {
 	/* If 'name' is not for a block special file, return error. */
-	if (fetch_name(vname1, vname1_length, fullpath) != OK)
+	if (fetch_name(vname1, vname1_length, mount_dev) != OK)
 		return(err_code);
-	if ((dev = name_to_dev(FALSE /*allow_mountpt*/, fullpath)) == NO_DEV)
+	if ((dev = name_to_dev(FALSE /*allow_mountpt*/, mount_dev)) == NO_DEV)
 		return(err_code);
   } else {
 	/* Find a free pseudo-device as substitute for an actual device. */
 	if ((dev = find_free_nonedev()) == NO_DEV)
 		return(err_code);
+	strlcpy(mount_dev, "none", sizeof(mount_dev));
   }
 
   /* Fetch the name of the mountpoint */
-  if (fetch_name(vname2, vname2_length, fullpath) != OK) return(err_code);
+  if (fetch_name(vname2, vname2_length, mount_path) != OK) return(err_code);
 
   /* Do the actual job */
-  return mount_fs(dev, fullpath, fs_e, rdonly, mount_label);
+  return mount_fs(dev, mount_dev, mount_path, fs_e, rdonly, mount_label);
 }
 
 
@@ -168,7 +169,8 @@ int do_mount()
  *===========================================================================*/
 int mount_fs(
 dev_t dev,
-char mountpoint[PATH_MAX],
+char mount_dev[PATH_MAX],
+char mount_path[PATH_MAX],
 endpoint_t fs_e,
 int rdonly,
 char mount_label[LABEL_MAX] )
@@ -206,10 +208,11 @@ char mount_label[LABEL_MAX] )
   } else if ((new_vmp = get_free_vmnt()) == NULL) {
 	return(ENOMEM);
   }
-
   if ((r = lock_vmnt(new_vmp, VMNT_EXCL)) != OK) return(r);
 
-  isroot = (strcmp(mountpoint, "/") == 0);
+  strlcpy(new_vmp->m_mount_path, mount_path, PATH_MAX);
+  strlcpy(new_vmp->m_mount_dev, mount_dev, PATH_MAX);
+  isroot = (strcmp(mount_path, "/") == 0);
   mount_root = (isroot && have_root < 2); /* Root can be mounted twice:
 					   * 1: ramdisk
 					   * 2: boot disk (e.g., harddisk)
@@ -217,7 +220,7 @@ char mount_label[LABEL_MAX] )
 
   if (!mount_root) {
 	/* Get vnode of mountpoint */
-	lookup_init(&resolve, mountpoint, PATH_NOFLAGS, &parent_vmp, &vp);
+	lookup_init(&resolve, mount_path, PATH_NOFLAGS, &parent_vmp, &vp);
 	resolve.l_vmnt_lock = VMNT_EXCL;
 	resolve.l_vnode_lock = VNODE_WRITE;
 	if ((vp = eat_path(&resolve, fp)) == NULL)
@@ -405,6 +408,8 @@ void mount_pfs(void)
   vmp->m_dev = dev;
   vmp->m_fs_e = PFS_PROC_NR;
   strlcpy(vmp->m_label, "pfs", LABEL_MAX);
+  strlcpy(vmp->m_mount_path, "pipe", PATH_MAX);
+  strlcpy(vmp->m_mount_dev, "none", PATH_MAX);
 
   rfp = &fproc[_ENDPOINT_P(PFS_PROC_NR)];
 }

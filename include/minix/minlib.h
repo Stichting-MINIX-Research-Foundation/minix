@@ -1,6 +1,8 @@
 #ifndef _MINLIB
 #define _MINLIB
 
+#include <sys/mount.h>
+
 /* Miscellaneous BSD. */
 char *itoa(int _n);
 #ifndef __NBSD_LIBC
@@ -17,9 +19,8 @@ int fsversion(char *_dev, char *_prog);
 int getprocessor(void);
 void _cpuid(u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx);
 int load_mtab(char *_prog_name);
-int rewrite_mtab(char *_prog_name);
-int get_mtab_entry(char *_s1, char *_s2, char *_s3, char *_s4);
-int put_mtab_entry(char *_s1, char *_s2, char *_s3, char *_s4);
+int get_mtab_entry(char dev[PATH_MAX], char mount_point[PATH_MAX],
+			char type[MNTNAMELEN], char flags[MNTFLAGLEN]);
 
 /* read_tsc() and friends */
 void read_tsc(u32_t *hi, u32_t *lo);

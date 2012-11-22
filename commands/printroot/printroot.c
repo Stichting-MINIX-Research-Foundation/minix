@@ -2,10 +2,6 @@
 
 /* This program figures out what the root device is by doing a stat on it, and
  * then searching /dev until it finds an entry with the same device number.
- * A typical use (probably the only use) is in /etc/rc for initializing
- * /etc/mtab, as follows:
- *
- *	/usr/bin/printroot >/etc/mtab
  *
  *  9 Dec 1989	- clean up for 1.5 - full prototypes (BDE)
  * 15 Oct 1989	- avoid ACK cc bugs (BDE):

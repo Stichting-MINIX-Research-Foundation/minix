@@ -621,7 +621,8 @@ static void *do_init_root(void *arg)
   }
 
   receive_from = MFS_PROC_NR;
-  if ((r = mount_fs(DEV_IMGRD, "/", MFS_PROC_NR, 0, mount_label)) != OK)
+  r = mount_fs(DEV_IMGRD, "bootramdisk", "/", MFS_PROC_NR, 0, mount_label);
+  if (r != OK)
 	panic("Failed to initialize root");
   receive_from = ANY;
 

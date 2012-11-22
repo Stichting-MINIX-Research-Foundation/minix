@@ -22,22 +22,22 @@ int find_mtab_entry(char *name);
 void update_mtab(void);
 void usage(void);
 
-static char device[PATH_MAX+1], mountpoint[PATH_MAX+1], vs[10], rw[10];
+static char device[PATH_MAX], mount_point[PATH_MAX], type[MNTNAMELEN],
+		flags[MNTFLAGLEN];
 
 int main(argc, argv)
 int argc;
 char *argv[];
 {
   int found;
-  int flags = 0UL;
-  int i;
+  int umount_flags = 0UL;
   char c;
   char *name;
 
   while ((c = getopt (argc, argv, "e")) != -1)
   {
 	switch (c) {
-		case 'e': flags |= MS_EXISTING; break;
+		case 'e': umount_flags |= MS_EXISTING; break;
 		default: break;
 	}
   }
@@ -48,11 +48,9 @@ char *argv[];
 
   name = argv[optind];
  
-
   found = find_mtab_entry(name);
 
-
-  if (umount2(name, flags) < 0) {
+  if (umount2(name, umount_flags) < 0) {
 	if (errno == EINVAL)
 		std_err("umount: Device not mounted\n");
 	else if (errno == ENOTBLK)
@@ -62,10 +60,8 @@ char *argv[];
 	exit(1);
   }
   if (found) {
-	printf("%s unmounted from %s\n", device, mountpoint);
-	update_mtab();
+	printf("%s unmounted from %s\n", device, mount_point);
   }
-  else printf("%s unmounted (mtab not updated)\n", name);
   return(0);
 }
 
@@ -76,7 +72,8 @@ char *name;
  * and generate a new mtab file without this entry on the fly. Do not write
  * out the result yet. Return whether we found a matching entry.
  */
-  char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
+  char e_dev[PATH_MAX], e_mount_point[PATH_MAX], e_type[MNTNAMELEN],
+	e_flags[MNTFLAGLEN];
   struct stat nstat, mstat;
   int n, found;
 
@@ -86,42 +83,21 @@ char *name;
 
   found = 0;
   while (1) {
-	n = get_mtab_entry(special, mounted_on, version, rw_flag);
+	n = get_mtab_entry(e_dev, e_mount_point, e_type, e_flags);
 	if (n < 0) break;
-	if (strcmp(name, special) == 0 || (stat(mounted_on, &mstat) == 0 &&
+	if (strcmp(name, e_dev) == 0 || (stat(e_mount_point, &mstat) == 0 &&
 		mstat.st_dev == nstat.st_dev && mstat.st_ino == nstat.st_ino))
 	{
-		/* If we found an earlier match, keep that one. Mountpoints
-		 * may be stacked on top of each other, and unmounting should
-		 * take place in the reverse order of mounting.
-		 */
-		if (found) {
-			(void) put_mtab_entry(device, mountpoint, vs, rw);
-		}
-
-		strcpy(device, special);
-		strcpy(mountpoint, mounted_on);
-		strcpy(vs, version);
-		strcpy(rw, rw_flag);
+		strlcpy(device, e_dev, PATH_MAX);
+		strlcpy(mount_point, e_mount_point, PATH_MAX);
+		strlcpy(type, e_type, MNTNAMELEN);
+		strlcpy(flags, e_flags, MNTFLAGLEN);
 		found = 1;
-		continue;
+		break;
 	}
-	(void) put_mtab_entry(special, mounted_on, version, rw_flag);
   }
 
   return found;
-}
-
-void update_mtab()
-{
-/* Write out the new mtab file. */
-  int n;
-
-  n = rewrite_mtab("umount");
-  if (n < 0) {
-	std_err("/etc/mtab not updated.\n");
-	exit(1);
-  }
 }
 
 void usage()

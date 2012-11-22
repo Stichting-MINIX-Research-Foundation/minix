@@ -212,7 +212,7 @@ start)
 ;;
 stop|down)
     	# Save random data, if /usr is mounted rw.
-	if grep ' \/usr .*rw' /etc/mtab >/dev/null
+	if grep ' \/usr .*rw.*' /etc/mtab >/dev/null
 	then
 	  if dd if=/dev/random of=$RANDOM_FILE.new bs=1024 count=1 2>/dev/null
     	  then

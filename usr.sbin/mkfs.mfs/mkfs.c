@@ -94,9 +94,12 @@ int main(int argc, char **argv);
 block_t sizeup(char *device);
 void super(zone_t zones, ino_t inodes);
 void rootdir(ino_t inode);
+int dir_try_enter(zone_t z, ino_t child, char *name);
 void eat_dir(ino_t parent);
 void eat_file(ino_t inode, int f);
-void enter_dir(ino_t parent, char *name, ino_t child);
+void enter_dir(ino_t parent, char const *name, ino_t child);
+void enter_symlink(ino_t inode, char *link);
+d2_inode *get_inoblock(ino_t i, block_t *blockno, d2_inode **ino);
 void incr_size(ino_t n, size_t count);
 static ino_t alloc_inode(int mode, int usrid, int grpid);
 static zone_t alloc_zone(void);
@@ -109,7 +112,7 @@ int mode_con(char *p);
 void getline(char line[LINE_LEN], char *parse[MAX_TOKENS]);
 void check_mtab(char *devname);
 uint32_t file_time(int f);
-void pexit(char *s);
+__dead void pexit(char const *s);
 void copy(char *from, char *to, size_t count);
 void print_fs(void);
 int read_and_set(block_t n);
@@ -120,7 +123,7 @@ void put_block(block_t n, char *buf);
 void mx_read(int blocknr, char *buf);
 void mx_write(int blocknr, char *buf);
 void dexit(char *s, int sectnum, int err);
-void usage(void);
+__dead void usage(void);
 void *alloc_block(void);
 
 ino_t inocount;
@@ -511,14 +514,13 @@ char *device;
 /*
  * copied from fslib
  */
-static int bitmapsize(nr_bits, block_size)
-uint32_t nr_bits;
-size_t block_size;
+static int bitmapsize(uint32_t nr_bits, size_t blk_size)
 {
   block_t nr_blocks;
 
-  nr_blocks = (int) (nr_bits / FS_BITS_PER_BLOCK(block_size));
-  if (((uint32_t) nr_blocks * FS_BITS_PER_BLOCK(block_size)) < nr_bits) ++nr_blocks;
+  nr_blocks = (int) (nr_bits / FS_BITS_PER_BLOCK(blk_size));
+  if (((uint32_t) nr_blocks * FS_BITS_PER_BLOCK(blk_size)) < nr_bits)
+	++nr_blocks;
   return(nr_blocks);
 }
 
@@ -788,9 +790,7 @@ int dir_try_enter(zone_t z, ino_t child, char *name)
 /*================================================================
  *	    directory & inode management assist group
  *===============================================================*/
-void enter_dir(parent, name, child)
-ino_t parent, child;
-char *name;
+void enter_dir(ino_t parent, char const *name, ino_t child)
 {
   /* Enter child in parent directory */
   /* Works for dir > 1 block and zone > block */
@@ -810,7 +810,7 @@ char *name;
 		ino->d2_zone[k] = z;
 	}
 
-	if(dir_try_enter(z, child, name)) {
+	if(dir_try_enter(z, child, __UNCONST(name))) {
 		put_block(b, (char *) inoblock);
 		free(inoblock);
 		free(indirblock);
@@ -828,7 +828,7 @@ char *name;
   	z = indirblock[k];
 	if(!z) z = indirblock[k] = alloc_zone();
 
-	if(dir_try_enter(z, child, name)) {
+	if(dir_try_enter(z, child, __UNCONST(name))) {
 		put_block(b, (char *) inoblock);
 		put_block(ino->d2_zone[V2_NR_DZONES], (char *) indirblock);
 		free(inoblock);
@@ -908,10 +908,10 @@ ino_t n;
   off = (n - 1) % inodes_per_block;
   {
 	static d2_inode *inode2 = NULL;
-	int n;
+	int s;
 
-	n = sizeof(*inode2) * V2_INODES_PER_BLOCK(block_size);
-	if(!inode2 && !(inode2 = malloc(n)))
+	s = sizeof(*inode2) * V2_INODES_PER_BLOCK(block_size);
+	if(!inode2 && !(inode2 = malloc(s)))
 		pexit("couldn't allocate a block of inodes");
 
 	get_block(b, (char *) inode2);
@@ -1119,7 +1119,8 @@ char *device;			/* /dev/hd1 or whatever */
 #if defined(__minix)
   int n, r;
   struct stat sb;
-  char special[PATH_MAX + 1], mounted_on[PATH_MAX + 1], version[10], rw_flag[10];
+  char dev[PATH_MAX], mount_point[PATH_MAX],
+	type[MNTNAMELEN], flags[MNTFLAGLEN];
 
   r= stat(device, &sb);
   if (r == -1)
@@ -1136,14 +1137,14 @@ char *device;			/* /dev/hd1 or whatever */
 	return;
   }
 
-  if (load_mtab("mkfs") < 0) return;
+  if (load_mtab(__UNCONST("mkfs")) < 0) return;
   while (1) {
-	n = get_mtab_entry(special, mounted_on, version, rw_flag);
+	n = get_mtab_entry(dev, mount_point, type, flags);
 	if (n < 0) return;
-	if (strcmp(device, special) == 0) {
+	if (strcmp(device, dev) == 0) {
 		/* Can't mkfs on top of a mounted file system. */
 		fprintf(stderr, "%s: %s is mounted on %s\n",
-			progname, device, mounted_on);
+			progname, device, mount_point);
 		exit(1);
 	}
   }
@@ -1266,8 +1267,7 @@ int f;
 }
 
 
-void pexit(s)
-char *s;
+__dead void pexit(char const * s)
 {
   fprintf(stderr, "%s: %s\n", progname, s);
   if (lct != 0)
@@ -1379,7 +1379,7 @@ block_t n;
   return(r);
 }
 
-void usage()
+__dead void usage()
 {
   fprintf(stderr,
 	  "Usage: %s [-12dlot] [-b blocks] [-i inodes]\n"
