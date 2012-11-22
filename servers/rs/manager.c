@@ -1111,7 +1111,7 @@ static int run_script(struct rproc *rp)
 	case -1:
 		return kill_service(rp, "unable to fork script", errno);
 	case 0:
-		execle(_PATH_BSHELL, rp->r_script, rpub->label, reason,
+		execle(_PATH_BSHELL, "sh", rp->r_script, rpub->label, reason,
 			incarnation_str, (char*) NULL, envp);
 		printf("RS: run_script: execl '%s' failed: %s\n",
 			rp->r_script, strerror(errno));
