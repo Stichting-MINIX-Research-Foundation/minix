@@ -85,10 +85,7 @@
 2012/10/10 16:16:12,usr.sbin/mtree
 2012/02/10 16:16:12,usr.sbin/chroot
 2011/01/17 18:11:10,usr.bin/ldd
-2011/01/17 18:11:10,external/bsd/file
-2011/01/17 18:11:10,lib/csu
-2011/01/17 18:11:10,libexec/ld.elf_so
-2011/01/17 18:11:10,usr.bin/genassym
+2012/10/17 12:00:00,usr.bin/genassym
 2012/02/10 16:16:12,usr.bin/su
 2011/12/25 06:09:09,sys/arch/i386/stand
 2012/02/10 16:16:12,share/zoneinfo

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: genassym.sh,v 1.6 2009/11/28 20:30:01 dsl Exp $
+#	$NetBSD: genassym.sh,v 1.7 2011/07/05 05:19:02 matt Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.
@@ -79,7 +79,11 @@ trap "rm -rf $genassym_temp" 0 1 2 3 15
 
 $AWK '
 BEGIN {
+	printf("#if __GNUC__ >= 4\n");
+	printf("#define	offsetof(type, member) __builtin_offsetof(type, member)\n");
+	printf("#else\n");
 	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
+	printf("#endif\n");
 	defining = 0;
 	type = "long";
 	asmtype = "n";
