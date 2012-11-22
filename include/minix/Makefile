@@ -14,18 +14,14 @@ INCS+=	acpi.h audio_fw.h bitmap.h \
 	driver.h drivers.h drvlib.h ds.h \
 	endpoint.h fslib.h gcov.h hash.h \
 	hgfs.h ioctl.h input.h ipc.h ipcconst.h \
-	keymap.h limits.h mthread.h minlib.h \
+	keymap.h limits.h mount.h mthread.h minlib.h \
 	netdriver.h optset.h partition.h portio.h \
 	priv.h procfs.h profile.h queryparam.h \
 	rs.h safecopies.h sched.h sef.h sffs.h \
 	sound.h spin.h sys_config.h sysinfo.h \
-	syslib.h sysutil.h timers.h type.h \
+	syslib.h sysutil.h termios.h timers.h type.h \
 	tty.h u64.h usb.h usb_ch9.h vbox.h \
 	vboxfs.h vboxif.h vboxtype.h vm.h \
 	vfsif.h vtreefs.h libminixfs.h netsock.h
-
-# Necessary as the build system does not support multiple inclusion 
-# of bsd.kinc.mk in a single Makefile with different INCSDIR
-.include "${NETBSDSRCDIR}/common/include/sys/Makefile.mount.inc"
 
 .include <bsd.kinc.mk>

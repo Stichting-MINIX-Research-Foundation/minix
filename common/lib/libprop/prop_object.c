@@ -39,7 +39,9 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
+#if defined(__minix)
 #include <assert.h>
+#endif /* defined(__minix) */
 #endif
 #include <sys/atomic.h>
 
