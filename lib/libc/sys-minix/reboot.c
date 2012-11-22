@@ -11,17 +11,10 @@
 #include <sys/reboot.h>
 #include <stdarg.h>
 
-int reboot(int how, ...)
+int reboot(int how)
 {
   message m;
-  va_list ap;
 
-  va_start(ap, how);
-  if ((m.m1_i1 = how) == RBT_MONITOR) {
-	m.m1_p1 = va_arg(ap, char *);
-	m.m1_i2 = va_arg(ap, size_t);
-  }
-  va_end(ap);
-
+  m.m1_i1 = how;
   return _syscall(PM_PROC_NR, REBOOT, &m);
 }

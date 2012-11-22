@@ -18,7 +18,6 @@
 
   New Minix options:
    -C: crash check, i.e. is the last wtmp entry a shutdown entry?
-   -x: let the monitor execute the given code
    -R: reset the system
    -d: default CTRL-ALT-DEL shutdown for current bootloader
  */
@@ -63,7 +62,6 @@ long wait_time=0L;
 char message[1024];
 char info[80];
 int reboot_flag='h';			/* default is halt */
-char *reboot_code="";			/* optional monitor code */
 int info_min, info_hour;
 char *prog;
 
@@ -132,7 +130,7 @@ char *argv[];
   char *opt;
   int tty;
   static char HALT1[] = "-?";
-  static char *HALT[] = { "shutdown", HALT1, NULL, NULL };
+  static char *HALT[] = { "shutdown", HALT1, NULL };
 
   /* Parse options. */
   for (i = 1; i < argc && argv[i][0] == '-'; i++) {
@@ -149,23 +147,9 @@ char *argv[];
       case 'h':
       case 'r':
       case 'p':
-      case 'x':
       case 'd':
-	reboot_flag = *opt;
-	if (reboot_flag == 'x') {
-	  if (*++opt == 0) {
-	    if (++i == argc) {
-	      fprintf (stderr,"shutdown: option '-x' requires an argument\n");
-	      usage();
-	    }
-	    opt=argv[i];
-	  }
-	  reboot_code=opt;
-	  opt+=strlen(opt)-1;
-	}
-	break;
       case 'R':
-	reboot_flag = 'R';
+	reboot_flag = *opt;
 	break;
       case 'm':
 	want_message = 1;
@@ -256,7 +240,6 @@ char *argv[];
   unlink(NOLOGIN);
 
   HALT[1][1] = reboot_flag;
-  if (reboot_flag == 'x') HALT[2] = reboot_code;
 #if __minix_vmd
   execv("/usr/sbin/halt", HALT);
 #else
@@ -274,16 +257,14 @@ char *argv[];
 
 void usage()
 {
-  fputs("Usage: shutdown [-hrRpmkd] [-x code] [time [message]]\n", stderr);
+  fputs("Usage: shutdown [-hrRpmkd] [time [message]]\n", stderr);
   fputs("       -h -> halt system after shutdown\n", stderr);
   fputs("       -r -> reboot system after shutdown\n", stderr);
   fputs("       -R -> reset system after shutdown\n", stderr);
   fputs("       -p -> power system off after shutdown\n", stderr);
-  fputs("       -x -> return to the monitor doing...\n", stderr);
   fputs("       -d -> default CTRL-ALT-DEL shutdown for current bootloader\n", stderr);
   fputs("       -m -> read a shutdown message from standard input\n", stderr);
   fputs("       -k -> stop an already running shutdown\n", stderr);
-  fputs("       code -> boot monitor code to be executed\n", stderr);
   fputs("       time -> keyword ``now'', minutes before shutdown ``+5'',\n", stderr);
   fputs("               or absolute time specification ``11:20''\n", stderr);
   fputs("       message -> short shutdown message\n", stderr);

@@ -8,7 +8,7 @@ reboot \- close down the system or reboot
 
 #include <unistd.h>
 
-int reboot(int \fIhow\fP, ...)
+int reboot(int \fIhow\fP)
 .fi
 .ft P
 .SH DESCRIPTION
@@ -18,11 +18,12 @@ down depending on
 .IR how :
 .PP
 .TP 5
-.BI "reboot(RBT_HALT)"
-Halt the system and return to the monitor prompt.
+.BI "reboot(RBT_DEFAULT)"
+Default shut-down action, the same as used when CTRL+ALT+DEL is pressed
+on the keyboard.
 .TP
-.BI "reboot(RBT_REBOOT)"
-Reboot the system by letting the monitor execute the "boot" command.
+.BI "reboot(RBT_HALT)"
+Halt the system.
 .TP
 .BI "reboot(RBT_PANIC)"
 Cause a system panic.  This is not normally done from user mode, but by
@@ -30,16 +31,12 @@ servers using the
 .B sys_abort()
 kernel call.
 .TP
-.BI "reboot(RBT_MONITOR" ", code, length" ")"
-Halt the system and let the monitor execute the given code of the given
-length.
-.RI ( code
-is of type
-.B "char *"
-and
-.I length
-of type
-.BR size_t .)
+.BI "reboot(RBT_POWEROFF)"
+Power off the system if possible, reset otherwise.
+.TP
+.BI "reboot(RBT_REBOOT)"
+Reboot the system with a software reset (currently not supported, so
+a hardware reset is used).
 .TP
 .BI "reboot(RBT_RESET)"
 Reboot the system with a hardware reset.
@@ -55,8 +52,5 @@ the return value is -1 and an error is indicated by
 .BR reboot (8),
 .BR halt (8),
 .BR sync (2).
-.SH NOTES
-MINIX 3 can not return to the monitor if running in real mode.  This means
-that most of the reboot functions will change to a system reset.
 .SH AUTHOR
 Edvard Tuinder (v892231@si.hhs.NL)

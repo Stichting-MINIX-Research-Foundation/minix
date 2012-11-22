@@ -3,9 +3,7 @@
 shutdown \- graciously close the system down
 .SH SYNOPSIS
 .B shutdown
-.RB [ \-hrRmkd ]
-.RB [ \-x
-.IR code ]
+.RB [ \-hrRmkpd ]
 .RI [ time-specification
 .RI [ message ]]
 .SH DESCRIPTION
@@ -55,20 +53,16 @@ system can now be powered off.  This is the default.
 This flag indicates that the system should reboot after shutting down.
 .TP
 .B \-R
-Reboot the system by resetting it.  Normally the kernel will try to return
-to the Boot Monitor.  With
+Reboot the system by resetting it.  With
 .B \-R
 the system will receive a hardware reset.
 .TP
-.B \-d
-Default CTRL-ALT-DEL shutdown for current bootloader; drops to the boot 
-monitor is possible and resets otherwise.
+.B \-p
+Attempt to power off the machine after shutting down; reset if that 
+is not possible on the current hardware.
 .TP
-.BI \-x " code"
-Halt the system and let the Monitor execute the given code as if typed at
-the monitor prompt.  You can for instance use
-.B "\-x 'boot hd0'"
-as a very fast way to reboot "from the top."
+.B \-d
+Default CTRL-ALT-DEL shutdown.
 .TP
 .B \-m
 Allows the operator to type a shutdown message on standard input, that will

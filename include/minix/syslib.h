@@ -33,7 +33,7 @@ struct rs_pci;
 int _taskcall(endpoint_t who, int syscallnr, message *msgptr);
 int _kernel_call(int syscallnr, message *msgptr);
 
-int sys_abort(int how, ...);
+int sys_abort(int how);
 int sys_enable_iop(endpoint_t proc_ep);
 int sys_exec(endpoint_t proc_ep, char *ptr, char *aout, vir_bytes
 	initpc);

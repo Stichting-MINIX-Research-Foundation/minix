@@ -356,7 +356,7 @@ void	psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
 #ifdef __minix
-int	 reboot(int, ...);
+int	 reboot(int);
 #else
 int	 reboot(int, char *);
 #endif

@@ -349,7 +349,7 @@ void minix_shutdown(timer_t *tp)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
- * monitor), RBT_MONITOR (execute given code), RBT_RESET (hard reset). 
+ * monitor), RBT_RESET (hard reset). 
  */
 #ifdef CONFIG_SMP
   /* 

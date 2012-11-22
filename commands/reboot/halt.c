@@ -29,12 +29,11 @@ void usage( void );
 int main( int argc, char *argv[] );
 
 char *prog;
-char *reboot_code = "delay; boot";
 
 void
 usage()
 {
-  fprintf(stderr, "Usage: %s [-hrRfpd] [-x reboot-code]\n", prog);
+  fprintf(stderr, "Usage: %s [-hrRfpd]\n", prog);
   exit(1);
 }
 
@@ -47,7 +46,6 @@ char **argv;
   int fast = 0;			/* fast halt/reboot, don't bother being nice. */
   int i;
   struct stat dummy;
-  char *monitor_code = "";
   pid_t pid;
 
   if ((prog = strrchr(argv[0],'/')) == NULL) prog = argv[0]; else prog++;
@@ -68,15 +66,6 @@ char **argv;
       case 'd': flag = RBT_DEFAULT; 	break;
       case 'p': flag = RBT_POWEROFF; 	break;
       case 'f': fast = 1; break;
-      case 'x':
-	flag = RBT_MONITOR;
-	if (*opt == 0) {
-	  if (i == argc) usage();
-	  opt = argv[i++];
-	}
-	monitor_code = opt;
-	opt = "";
-	break;
       default:
 	usage();
     }
@@ -87,11 +76,6 @@ char **argv;
   if (flag == -1) {
     fprintf(stderr, "Don't know what to do when named '%s'\n", prog);
     exit(1);
-  }
-
-  if (flag == RBT_REBOOT) {
-	flag = RBT_MONITOR;		/* set monitor code for reboot */
-	monitor_code = reboot_code;
   }
 
   if (stat("/usr/bin", &dummy) < 0) {
@@ -135,7 +119,7 @@ char **argv;
 
   sync();
 
-  reboot(flag, monitor_code, strlen(monitor_code));
+  reboot(flag);
   fprintf(stderr, "%s: reboot(): %s\n", prog, strerror(errno));
   return 1;
 }

@@ -420,9 +420,6 @@
 
 /* Field names for SYS_ABORT. */
 #define ABRT_HOW	m1_i1	/* RBT_REBOOT, RBT_HALT, etc. */
-#define ABRT_MON_ENDPT  m1_i2	/* process where monitor params are */
-#define ABRT_MON_LEN	m1_i3	/* length of monitor params */
-#define ABRT_MON_ADDR   m1_p1	/* virtual address of monitor params */
 
 /* Field names for SYS_IOPENABLE. */
 #define IOP_ENDPT	m2_l1	/* target endpoint */

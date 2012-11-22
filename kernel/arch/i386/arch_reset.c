@@ -118,10 +118,6 @@ __dead void arch_shutdown(int how)
 		reset();
 	}
 
-	if (how == RBT_DEFAULT) {
-		how = RBT_RESET;
-	}
-
 	switch (how) {
 		case RBT_HALT:
 			/* Stop */
@@ -133,7 +129,8 @@ __dead void arch_shutdown(int how)
 			poweroff();
 			NOT_REACHABLE;
 
-		default:	
+		default:
+		case RBT_DEFAULT:	
 		case RBT_REBOOT:
 		case RBT_RESET:
 			/* Reset the system by forcing a processor shutdown. 
