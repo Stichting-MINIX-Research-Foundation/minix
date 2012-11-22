@@ -1,4 +1,4 @@
-/* <sys/mount.h>
+/* <minix/mount.h>
  * definitions for mount(2) 
  */
 
