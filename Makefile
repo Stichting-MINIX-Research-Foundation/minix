@@ -312,7 +312,7 @@ distribution buildworld: .PHONY .MAKE
 .if defined(__MINIX)
 	${MAKEDIRTARGET} releasetools do-hdboot
 .endif # defined(__MINIX)
-.if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
+.if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"  && ${CHECKFLIST:Uyes} == "yes"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
 	${MAKEDIRTARGET} distrib/sets checkflist
 .endif

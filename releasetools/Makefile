@@ -78,7 +78,7 @@ drivers: includes servers
 
 # make bootable and place system images
 bootable:
-	exec su root mkboot bootable
+	exec su root mkboot bootable ${DESTDIR}
 
 hdboot: services .WAIT do-hdboot
 
@@ -98,7 +98,7 @@ do-hdboot:
 	@if [ "${MKINSTALLBOOT:Uno}" != "no" ] ; then		\
 	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
 	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
-	${HOST_SH} mkboot hdboot;					\
+	${HOST_SH} mkboot hdboot ${DESTDIR};			\
 	${HOST_SH} ../commands/update_bootcfg/update_bootcfg.sh;\
 	else							\
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\

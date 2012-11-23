@@ -55,7 +55,7 @@ set -- $* $RELOPTS
 # SVN trunk repo
 TRUNK=https://gforge.cs.vu.nl/svn/minix/trunk
 
-RELEASEDIR=/usr/r-staging
+export RELEASEDIR=/usr/r-staging
 RELEASEMNTDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 
@@ -241,7 +241,7 @@ then
 	fi
 else
 	echo "Copying contents from current src dir."
-	( cd .. && make depend && make clean )
+	( cd .. && make cleandir )
 	srcdir=/usr/$SRC
 	( cd $srcdir && tar --exclude .svn -cf - .  ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
 	REVTAG=copy
@@ -261,12 +261,10 @@ chmod 755 $RELEASEDIR/usr/share/mk
 cp $RELEASEDIR/usr/src/share/mk/* $RELEASEDIR/usr/share/mk/
 chown -R root $RELEASEDIR/usr/share/mk
 rm -f $RELEASEDIR/usr/$SRC/releasetools/revision
-cp chrootmake.sh $RELEASEDIR/usr/$SRC/releasetools/chrootmake.sh
 mkdir -p $RELEASEDIR/etc
 cp $RELEASEDIR/usr/src/etc/group $RELEASEDIR/etc
 
 echo " * Make hierarchy"
-sh -c "$LD_LIB chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/releasetools/chrootmake.sh etcfiles\"" || exit 1
 
 for p in $PREINSTALLED_PACKAGES
 do	echo " * Pre-installing: $p from $PKG_ADD_URL"
@@ -279,8 +277,21 @@ fi
 
 echo " * Resetting timestamps"
 find $RELEASEDIR | xargs touch
-echo " * Chroot build"
-sh -c "$LD_LIB MAKEMAP=$MAKEMAP chroot $RELEASEDIR sh -c \"$BUILDENV sh -x /usr/$SRC/releasetools/chrootmake.sh\"" || exit 1
+echo " * Build"
+
+cd $RELEASEDIR/usr/src
+make distribution DESTDIR=$RELEASEDIR CHECKFLIST=no
+make -C releasetools do-hdboot DESTDIR=$RELEASEDIR MKINSTALLBOOT=yes
+cp $RELEASEDIR/usr/mdec/boot_monitor $RELEASEDIR
+cp $RELEASEDIR/boot/minix_latest/* $RELEASEDIR/boot/minix_default/
+
+if [ $MAKEMAP -ne 0 ]; then
+        find . -type f -perm 755 | xargs nm -n 2> /dev/null > symbols.txt
+fi
+make cleandir
+
+cd -
+
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN

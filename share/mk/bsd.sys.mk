@@ -7,6 +7,7 @@ _BSD_SYS_MK_=1
 
 .if ${HOST_OSTYPE:C/\-.*//:U} == "Minix"
 HOST_CPP?=	/usr/lib/cpp
+HOST_LDFLAGS?=	-static
 .endif
 
 .if ${MKREPRO:Uno} == "yes"

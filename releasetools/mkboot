@@ -4,7 +4,7 @@
 #							Author: Kees J. Bot
 
 usage() {
-	echo "Usage: $0 [bootable | hdboot]" >&2
+	echo "Usage: $0 [bootable | hdboot] [DESTDIR]" >&2
 	exit 1
 }
 
@@ -28,11 +28,16 @@ rotate_oldest() {
 trap 'e=$?; rm -f /tmp/mkb.$$; exit $e' 0 2
 
 mdec=/usr/mdec	# bootstraps
-
+# If no DESTDIR specified, then act on / or on the current chroot
+DESTDIR=
 # Check arguments.
 case "$#:$1" in
 1:bootable | 1:hdboot )
-	action=$1 dev=$2 size=$3
+	# LSC Broken, if $# == 1, then $2,$3 are not set...
+	action=$1 
+	;;
+2:bootable | 2:hdboot )
+	action=$1 DESTDIR=$2
 	;;
 *)	usage
 esac
@@ -100,15 +105,15 @@ hdboot)
 
 	target="${version}${rrevision}${gitrev}"
 
-	rotate_oldest "$rootdir/boot/minix"
+	rotate_oldest "$DESTDIR/boot/minix"
 
 	# rotate system processes. We assume latest ones are in
 	# /boot/modules/.temp and we maintain /boot/modules/ by ourselves.
-	[ -d /boot/minix/.temp ] || exit 1
-	rm -rf /boot/minix/"$target"/
-	mv /boot/minix/.temp /boot/minix/"$target"
-	rm -f /boot/minix_latest
-	ln -s minix/"$target" /boot/minix_latest 
+	[ -d $DESTDIR/boot/minix/.temp ] || exit 1
+	rm -rf $DESTDIR/boot/minix/"$target"/
+	mv $DESTDIR/boot/minix/.temp $DESTDIR/boot/minix/"$target"
+	rm -f $DESTDIR/boot/minix_latest
+	ln -s minix/"$target" $DESTDIR/boot/minix_latest 
 
 	# Save the revision number.
 	test "$revision" != "$oldrev" && echo $revision >revision
