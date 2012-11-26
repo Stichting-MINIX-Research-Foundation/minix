@@ -292,6 +292,9 @@ build: .PHONY .MAKE
 	${MAKEDIRTARGET} . ${tgt}
 .endfor
 	${MAKEDIRTARGET} etc install-etc-release
+.if defined(__MINIX)
+	${MAKEDIRTARGET} releasetools do-hdboot
+.endif # defined(__MINIX)
 	@echo   "Build started at:  ${START_TIME}"
 	@printf "Build finished at: " && date
 .endif
@@ -309,9 +312,6 @@ distribution buildworld: .PHONY .MAKE
 .endif
 	${MAKEDIRTARGET} . build NOPOSTINSTALL=1
 	${MAKEDIRTARGET} etc distribution INSTALL_DONE=1
-.if defined(__MINIX)
-	${MAKEDIRTARGET} releasetools do-hdboot
-.endif # defined(__MINIX)
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"  && ${CHECKFLIST:Uyes} == "yes"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
 	${MAKEDIRTARGET} distrib/sets checkflist
