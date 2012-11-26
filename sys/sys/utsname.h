@@ -1,8 +1,11 @@
-/*	$NetBSD: stdarg.h,v 1.3 2012/07/19 22:46:41 pooka Exp $	*/
+/*	$NetBSD: utsname.h,v 1.13 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Chuck Karish of Mindcraft, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,40 +31,54 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	@(#)utsname.h	8.1 (Berkeley) 1/4/94
  */
 
-#ifndef _SYS_STDARG_H_
-#define	_SYS_STDARG_H_
+#ifndef	_SYS_UTSNAME_H_
+#define	_SYS_UTSNAME_H_
 
-#include <sys/ansi.h>
 #include <sys/featuretest.h>
 
-#ifdef __lint__
-#define __builtin_next_arg(t)		((t) ? 0 : 0)
-#define	__builtin_va_start(a, l)	((a) = (va_list)(void *)&(l))
-#define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
-#define	__builtin_va_end(a)		/* nothing */
-#define	__builtin_va_copy(d, s)		((d) = (s))
-#elif !(__GNUC_PREREQ__(4, 5) || \
-    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
-#define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
+#define	_SYS_NMLN	256
+
+#if defined(_NETBSD_SOURCE)
+#define	SYS_NMLN	_SYS_NMLN
 #endif
 
-#ifndef __VA_LIST_DECLARED
-typedef __va_list va_list;
-#define __VA_LIST_DECLARED
+struct utsname {
+	char	sysname[_SYS_NMLN];	/* Name of this OS. */
+	char	nodename[_SYS_NMLN];	/* Name of this network node. */
+	char	release[_SYS_NMLN];	/* Release level. */
+	char	version[_SYS_NMLN];	/* Version level. */
+	char	machine[_SYS_NMLN];	/* Hardware type. */
+	char	arch[_SYS_NMLN];
+};
+
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+int	uname(struct utsname *);
+#ifdef __minix
+int 	sysuname(int _req, int _field, char *_value, size_t _len);
 #endif
+__END_DECLS
 
-#define	va_start(ap, last)	__builtin_va_start((ap), (last))
-#define	va_arg			__builtin_va_arg
-#define	va_end(ap)		__builtin_va_end(ap)
-#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+#ifdef __minix
+/* req: Get or set a string. */
+#define _UTS_GET	0
+#define _UTS_SET	1
 
-#if !defined(_ANSI_SOURCE) && \
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     defined(_NETBSD_SOURCE))
-#define	va_copy(dest, src)	__va_copy((dest), (src))
-#endif
+/* field: What field to get or set.  These values can't be changed lightly. */
+#define _UTS_ARCH	0
+#define _UTS_KERNEL	1
+#define _UTS_MACHINE	2
+#define _UTS_HOSTNAME	3
+#define _UTS_NODENAME	4
+#define _UTS_RELEASE	5
+#define _UTS_VERSION	6
+#define _UTS_SYSNAME	7
+#define _UTS_BUS	8
+#define _UTS_MAX	9	/* Number of strings. */
+#endif /* __minix */
 
-#endif /* !_SYS_STDARG_H_ */
+#endif	/* !_SYS_UTSNAME_H_ */

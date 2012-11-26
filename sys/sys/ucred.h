@@ -1,7 +1,7 @@
-/*	$NetBSD: stdarg.h,v 1.3 2012/07/19 22:46:41 pooka Exp $	*/
+/*	$NetBSD: ucred.h,v 1.36 2011/10/12 23:03:36 dholland Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,40 +28,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	@(#)ucred.h	8.4 (Berkeley) 1/9/95
  */
 
-#ifndef _SYS_STDARG_H_
-#define	_SYS_STDARG_H_
+#ifndef _SYS_UCRED_H_
+#define	_SYS_UCRED_H_
 
-#include <sys/ansi.h>
-#include <sys/featuretest.h>
-
-#ifdef __lint__
-#define __builtin_next_arg(t)		((t) ? 0 : 0)
-#define	__builtin_va_start(a, l)	((a) = (va_list)(void *)&(l))
-#define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
-#define	__builtin_va_end(a)		/* nothing */
-#define	__builtin_va_copy(d, s)		((d) = (s))
-#elif !(__GNUC_PREREQ__(4, 5) || \
-    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
-#define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
+#ifdef _KERNEL
+#include <sys/syslimits.h>
+#else
+#include <limits.h>
 #endif
 
-#ifndef __VA_LIST_DECLARED
-typedef __va_list va_list;
-#define __VA_LIST_DECLARED
-#endif
+/*
+ * Credentials.
+ */
+struct ucred
+{
+	pid_t   pid;
+	uid_t   uid;
+	gid_t   gid;
+};
 
-#define	va_start(ap, last)	__builtin_va_start((ap), (last))
-#define	va_arg			__builtin_va_arg
-#define	va_end(ap)		__builtin_va_end(ap)
-#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+/* Userland's view of credentials. This should not change */
+struct uucred {
+	unsigned short	cr_unused;		/* not used, compat */
+	uid_t		cr_uid;			/* effective user id */
+	gid_t		cr_gid;			/* effective group id */
+	short		cr_ngroups;		/* number of groups */
+	gid_t		cr_groups[NGROUPS_MAX];	/* groups */
+};
 
-#if !defined(_ANSI_SOURCE) && \
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     defined(_NETBSD_SOURCE))
-#define	va_copy(dest, src)	__va_copy((dest), (src))
-#endif
-
-#endif /* !_SYS_STDARG_H_ */
+#endif /* !_SYS_UCRED_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: stdarg.h,v 1.3 2012/07/19 22:46:41 pooka Exp $	*/
+/*	$NetBSD: uio.h,v 1.36 2011/07/27 13:20:07 uebayasi Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1982, 1986, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,40 +28,43 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	@(#)uio.h	8.5 (Berkeley) 2/22/94
  */
 
-#ifndef _SYS_STDARG_H_
-#define	_SYS_STDARG_H_
+#ifndef _SYS_UIO_H_
+#define	_SYS_UIO_H_
 
-#include <sys/ansi.h>
+#include <machine/ansi.h>
 #include <sys/featuretest.h>
 
-#ifdef __lint__
-#define __builtin_next_arg(t)		((t) ? 0 : 0)
-#define	__builtin_va_start(a, l)	((a) = (va_list)(void *)&(l))
-#define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
-#define	__builtin_va_end(a)		/* nothing */
-#define	__builtin_va_copy(d, s)		((d) = (s))
-#elif !(__GNUC_PREREQ__(4, 5) || \
-    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
-#define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
-#ifndef __VA_LIST_DECLARED
-typedef __va_list va_list;
-#define __VA_LIST_DECLARED
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
 #endif
 
-#define	va_start(ap, last)	__builtin_va_start((ap), (last))
-#define	va_arg			__builtin_va_arg
-#define	va_end(ap)		__builtin_va_end(ap)
-#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+struct iovec {
+	void	*iov_base;	/* Base address. */
+	size_t	 iov_len;	/* Length. */
+};
 
-#if !defined(_ANSI_SOURCE) && \
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     defined(_NETBSD_SOURCE))
-#define	va_copy(dest, src)	__va_copy((dest), (src))
-#endif
+#if defined(_NETBSD_SOURCE)
+/*
+ * Limits
+ */
+/* Deprecated: use IOV_MAX from <limits.h> instead. */
+#define UIO_MAXIOV	1024		/* max 1K of iov's */
+#endif /* _NETBSD_SOURCE */
 
-#endif /* !_SYS_STDARG_H_ */
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+ssize_t	readv(int, const struct iovec *, int);
+ssize_t	writev(int, const struct iovec *, int);
+__END_DECLS
+
+#endif /* !_SYS_UIO_H_ */

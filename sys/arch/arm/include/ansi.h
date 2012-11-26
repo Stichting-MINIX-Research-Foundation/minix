@@ -1,7 +1,7 @@
-/*	$NetBSD: stdarg.h,v 1.3 2012/07/19 22:46:41 pooka Exp $	*/
+/*	$NetBSD: ansi.h,v 1.13 2011/07/17 20:54:37 joerg Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,40 +28,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef _SYS_STDARG_H_
-#define	_SYS_STDARG_H_
+#ifndef	_ANSI_H_
+#define	_ANSI_H_
 
-#include <sys/ansi.h>
-#include <sys/featuretest.h>
+#include <sys/cdefs.h>
 
-#ifdef __lint__
-#define __builtin_next_arg(t)		((t) ? 0 : 0)
-#define	__builtin_va_start(a, l)	((a) = (va_list)(void *)&(l))
-#define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
-#define	__builtin_va_end(a)		/* nothing */
-#define	__builtin_va_copy(d, s)		((d) = (s))
-#elif !(__GNUC_PREREQ__(4, 5) || \
-    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
-#define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
-#endif
+#include <machine/int_types.h>
 
-#ifndef __VA_LIST_DECLARED
-typedef __va_list va_list;
-#define __VA_LIST_DECLARED
-#endif
+/*
+ * Types which are fundamental to the implementation and may appear in
+ * more than one standard header are defined here.  Standard headers
+ * then use:
+ *	#ifdef	_BSD_SIZE_T_
+ *	typedef	_BSD_SIZE_T_ size_t;
+ *	#undef	_BSD_SIZE_T_
+ *	#endif
+ */
+#define	_BSD_CLOCK_T_		long	/* clock() */
+#define	_BSD_PTRDIFF_T_		int	/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_		unsigned int /* sizeof() */
+#define	_BSD_SSIZE_T_		int	/* byte count or error */
+#define	_BSD_TIME_T_		long	/* time() */
+#define	_BSD_CLOCKID_T_		int		/* clockid_t */
+#define	_BSD_TIMER_T_		int		/* timer_t */
+#define	_BSD_SUSECONDS_T_	long		/* suseconds_t */
+#define	_BSD_USECONDS_T_	long		/* useconds_t */
+#define	_BSD_WCHAR_T_		int		/* wchar_t */
+#define	_BSD_WINT_T_		int		/* wint_t */
 
-#define	va_start(ap, last)	__builtin_va_start((ap), (last))
-#define	va_arg			__builtin_va_arg
-#define	va_end(ap)		__builtin_va_end(ap)
-#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
-
-#if !defined(_ANSI_SOURCE) && \
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     defined(_NETBSD_SOURCE))
-#define	va_copy(dest, src)	__va_copy((dest), (src))
-#endif
-
-#endif /* !_SYS_STDARG_H_ */
+#endif	/* _ANSI_H_ */

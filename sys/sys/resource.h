@@ -1,7 +1,7 @@
-/*	$NetBSD: stdarg.h,v 1.3 2012/07/19 22:46:41 pooka Exp $	*/
+/*	$NetBSD: resource.h,v 1.33 2012/06/09 02:31:15 christos Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,40 +28,57 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	@(#)resource.h	8.4 (Berkeley) 1/9/95
  */
 
-#ifndef _SYS_STDARG_H_
-#define	_SYS_STDARG_H_
+#ifndef _SYS_RESOURCE_H_
+#define	_SYS_RESOURCE_H_
 
-#include <sys/ansi.h>
 #include <sys/featuretest.h>
+#include <sys/time.h>
 
-#ifdef __lint__
-#define __builtin_next_arg(t)		((t) ? 0 : 0)
-#define	__builtin_va_start(a, l)	((a) = (va_list)(void *)&(l))
-#define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
-#define	__builtin_va_end(a)		/* nothing */
-#define	__builtin_va_copy(d, s)		((d) = (s))
-#elif !(__GNUC_PREREQ__(4, 5) || \
-    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
-#define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
+/*
+ * Process priority specifications to get/setpriority.
+ */
+#define	PRIO_MIN	-20
+#define	PRIO_MAX	20
+
+#define	PRIO_PROCESS	0
+#define	PRIO_PGRP	1
+#define	PRIO_USER	2
+
+/*
+ * Resource limits
+ */
+#define RLIMIT_CORE	1
+#define RLIMIT_CPU	2
+#define RLIMIT_DATA	3
+#define RLIMIT_FSIZE	4
+#define RLIMIT_NOFILE	5
+#define RLIMIT_STACK	6
+#define RLIMIT_AS	7
+#define	RLIMIT_VMEM	RLIMIT_AS	/* common alias */
+
+#if defined(_NETBSD_SOURCE)
+#define	RLIM_NLIMITS	8		/* number of resource limits */
 #endif
 
-#ifndef __VA_LIST_DECLARED
-typedef __va_list va_list;
-#define __VA_LIST_DECLARED
-#endif
+#define RLIM_INFINITY ((rlim_t) -1)
+#define RLIM_SAVED_CUR RLIM_INFINITY
+#define RLIM_SAVED_MAX RLIM_INFINITY
 
-#define	va_start(ap, last)	__builtin_va_start((ap), (last))
-#define	va_arg			__builtin_va_arg
-#define	va_end(ap)		__builtin_va_end(ap)
-#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+struct rlimit
+{
+	rlim_t rlim_cur;
+	rlim_t rlim_max;
+};
 
-#if !defined(_ANSI_SOURCE) && \
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     defined(_NETBSD_SOURCE))
-#define	va_copy(dest, src)	__va_copy((dest), (src))
-#endif
+#include <sys/cdefs.h>
 
-#endif /* !_SYS_STDARG_H_ */
+__BEGIN_DECLS
+int	getpriority(int, int);
+int	getrlimit(int, struct rlimit *);
+int	setpriority(int, int, int);
+__END_DECLS
+
+#endif	/* !_SYS_RESOURCE_H_ */
