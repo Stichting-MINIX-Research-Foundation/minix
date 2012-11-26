@@ -40,7 +40,7 @@ CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
 # Set assembler warnings to be fatal
 #CFLAGS+=	-Wa,--fatal-warnings
 # LSC Clang version 2.9 those not support this flag
-CFLAGS+=       ${${HAVE_LLVM:U} != "2.9":? -Wa,--fatal-warnings:}
+CFLAGS+=       ${${HAVE_LLVM:U"0.0"} != "2.9":? -Wa,--fatal-warnings:}
 .endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
