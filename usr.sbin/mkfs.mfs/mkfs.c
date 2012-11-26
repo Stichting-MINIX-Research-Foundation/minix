@@ -10,6 +10,11 @@
  * compatible with the original version 1 and 2 file system layout.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
