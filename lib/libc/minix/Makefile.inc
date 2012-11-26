@@ -4,5 +4,3 @@
 SRCS+= minix-malloc.c minix-calloc.c
 SRCS+= minix-malloc-debug.c
 
-LIBDPLIBS+= sys ${NETBSDSRCDIR}/lib/libsys
-
