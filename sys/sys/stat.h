@@ -1,3 +1,41 @@
+/*	$NetBSD: stat.h,v 1.63 2011/09/04 10:02:33 christos Exp $	*/
+
+/*-
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)stat.h	8.12 (Berkeley) 8/17/94
+ */
+
 #ifndef _SYS_STAT_H_
 #define	_SYS_STAT_H_
 
@@ -8,7 +46,6 @@
 #include <sys/time.h>
 #endif
 
-
 struct stat {
   big_dev_t     st_dev;               /* inode's device */
   big_mode_t    st_mode;              /* inode protection mode */
@@ -18,28 +55,32 @@ struct stat {
   big_gid_t     st_gid;               /* group ID of the file's group */
   big_dev_t     st_rdev;              /* device type */
 #if defined(_NETBSD_SOURCE)
-  struct    timespec st_atimespec;/* time of last access */
-  struct    timespec st_mtimespec;/* time of last data modification */
-  struct    timespec st_ctimespec;/* time of last file status change */
-  struct    timespec st_birthtimespec; /* time of creation */
+	struct	  timespec st_atimespec;/* time of last access */
+	struct	  timespec st_mtimespec;/* time of last data modification */
+	struct	  timespec st_ctimespec;/* time of last file status change */
+	struct 	  timespec st_birthtimespec; /* time of creation */
 #else
-  time_t    st_atime;             /* time of last access */
-  long      st_atimensec;         /* nsec of last access */
-  time_t    st_mtime;             /* time of last data modification */
-  long      st_mtimensec;         /* nsec of last data modification */
-  time_t    st_ctime;             /* time of last file status change */
-  long      st_ctimensec;         /* nsec of last file status change */
-  time_t    st_birthtime;         /* time of creation */
-  long      st_birthtimensec;     /* nsec of time of creation */
+	time_t	  st_atime;		/* time of last access */
+	long	  st_atimensec;		/* nsec of last access */
+	time_t	  st_mtime;		/* time of last data modification */
+	long	  st_mtimensec;		/* nsec of last data modification */
+	time_t	  st_ctime;		/* time of last file status change */
+	long	  st_ctimensec;		/* nsec of last file status change */
+	time_t	  st_birthtime;		/* time of creation */
+	long	  st_birthtimensec;	/* nsec of time of creation */
 #endif
+#ifdef ST_SIZE_OFF_T
+  off_t		st_size;	     	/* file size, in off_t bytes */
+  off_t		st_size_rest;
+#else
   big_off_t st_size;		/* file size, in bytes */
+#endif
   blkcnt_t  st_blocks;		/* blocks allocated for file */
   blksize_t st_blksize;		/* optimal blocksize for I/O */
   u32_t     st_flags;		/* user defined flags for file */
   u32_t     st_gen;		/* file generation number */
   u32_t     st_spare[2];
 };
-
 
 struct minix_prev_stat {
   short st_dev;			/* major/minor device number */
@@ -55,19 +96,16 @@ struct minix_prev_stat {
   time_t st_ctime;		/* time of last file status change */
 };
 
-
 #if defined(_NETBSD_SOURCE)
-/* XXX after updating stat struct we don't want to update all the code */
-#define st_atime		st_atimespec.tv_sec
-#define st_mtime		st_mtimespec.tv_sec
-#define st_ctime		st_ctimespec.tv_sec
-#define st_birthtime            st_birthtimespec.tv_sec
-#define st_atimensec            st_atimespec.tv_nsec
-#define st_mtimensec            st_mtimespec.tv_nsec
-#define st_ctimensec            st_ctimespec.tv_nsec
-#define st_birthtimensec        st_birthtimespec.tv_nsec
+#define	st_atime		st_atimespec.tv_sec
+#define	st_atimensec		st_atimespec.tv_nsec
+#define	st_mtime		st_mtimespec.tv_sec
+#define	st_mtimensec		st_mtimespec.tv_nsec
+#define	st_ctime		st_ctimespec.tv_sec
+#define	st_ctimensec		st_ctimespec.tv_nsec
+#define st_birthtime		st_birthtimespec.tv_sec
+#define st_birthtimensec	st_birthtimespec.tv_nsec
 #endif
-
 
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
@@ -103,8 +141,11 @@ struct minix_prev_stat {
 #define	_S_IFBLK  0060000		/* block special */
 #define	_S_IFREG  0100000		/* regular */
 #define	_S_IFLNK  0120000		/* symbolic link */
-#define	_S_IFSOCK 0140000		/* socket */
 #define	_S_ISVTX  0001000		/* save swapped text even after use */
+#define	_S_IFSOCK 0140000		/* socket */
+#define	_S_IFWHT  0160000		/* whiteout */
+#define	_S_ARCH1  0200000		/* Archive state 1, ls -l shows 'a' */
+#define	_S_ARCH2  0400000		/* Archive state 2, ls -l shows 'A' */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	S_IFMT	 _S_IFMT
@@ -119,6 +160,12 @@ struct minix_prev_stat {
 #if ((_XOPEN_SOURCE - 0) >= 600) || defined(_NETBSD_SOURCE)
 #define	S_IFSOCK _S_IFSOCK
 #endif
+#if defined(_NETBSD_SOURCE)
+#define	S_IFWHT  _S_IFWHT
+
+#define	S_ARCH1	_S_ARCH1
+#define	S_ARCH2	_S_ARCH2
+#endif
 
 #define	S_ISDIR(m)	(((m) & _S_IFMT) == _S_IFDIR)	/* directory */
 #define	S_ISCHR(m)	(((m) & _S_IFMT) == _S_IFCHR)	/* char special */
@@ -132,6 +179,9 @@ struct minix_prev_stat {
 #if ((_POSIX_C_SOURCE - 0) >= 200112L) || ((_XOPEN_SOURCE - 0) >= 600) || \
     defined(_NETBSD_SOURCE)
 #define	S_ISSOCK(m)	(((m) & _S_IFMT) == _S_IFSOCK)	/* socket */
+#endif
+#if defined(_NETBSD_SOURCE)
+#define	S_ISWHT(m)	(((m) & _S_IFMT) == _S_IFWHT)	/* whiteout */
 #endif
 
 #if defined(_NETBSD_SOURCE)
@@ -153,7 +203,7 @@ struct minix_prev_stat {
 #define	UF_IMMUTABLE	0x00000002	/* file may not be changed */
 #define	UF_APPEND	0x00000004	/* writes to file may only append */
 #define UF_OPAQUE	0x00000008	/* directory is opaque wrt. union */
-
+/*	UF_NOUNLINK	0x00000010	   [NOT IMPLEMENTED] */
 /*
  * Super-user changeable flags.
  */
@@ -171,8 +221,6 @@ struct minix_prev_stat {
 #endif
 
 #include <sys/cdefs.h>
-
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 
 __BEGIN_DECLS
 int	chmod(const char *, mode_t);
@@ -192,5 +240,4 @@ int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 __END_DECLS
 
-#endif /* !_KERNEL && !_STANDALONE */
 #endif /* !_SYS_STAT_H_ */

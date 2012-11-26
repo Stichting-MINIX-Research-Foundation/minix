@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.133 2011/03/04 22:25:32 joerg Exp $	*/
+/*	$NetBSD: exec.h,v 1.139 2012/08/05 01:43:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -214,6 +214,8 @@ struct exec_package {
 	struct vnode *ep_interp;        /* vnode of (elf) interpeter */
 	uint32_t ep_pax_flags;		/* pax flags */
 	char	*ep_path;		/* absolute path of executable */
+	void	(*ep_emul_arg_free)(void *);
+					/* free ep_emul_arg */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -268,6 +270,10 @@ int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
 
 int	coredump_write		(void *, enum uio_seg, const void *, size_t);
+
+void	exec_free_emul_arg	(struct exec_package *);
+
+
 /*
  * Machine dependent functions
  */
@@ -290,6 +296,14 @@ void	new_vmcmd(struct exec_vmcmd_set *,
 typedef	int (*execve_fetch_element_t)(char * const *, size_t, char **);
 int	execve1(struct lwp *, const char *, char * const *, char * const *,
     execve_fetch_element_t);
+
+struct posix_spawn_file_actions;
+struct posix_spawnattr;
+int	check_posix_spawn	(struct lwp *);
+void	posix_spawn_fa_free(struct posix_spawn_file_actions *, size_t);
+int	do_posix_spawn(struct lwp *, pid_t *, bool*, const char *,
+    struct posix_spawn_file_actions *, struct posix_spawnattr *,
+    char *const *argv, char *const *, execve_fetch_element_t);
 
 extern int	maxexec;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.80 2011/11/11 15:09:32 gdt Exp $	*/
+/*	$NetBSD: route.h,v 1.81 2012/02/18 23:47:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -426,7 +426,6 @@ rt_setkey(struct rtentry *rt, const struct sockaddr *key, int flags)
 		sockaddr_free(rt->_rt_key);
 	rt->_rt_key = sockaddr_dup(key, flags);
 out:
-	KASSERT(rt->_rt_key != NULL);
 	rt->rt_nodes->rn_key = (const char *)rt->_rt_key;
 	return rt->_rt_key;
 }
