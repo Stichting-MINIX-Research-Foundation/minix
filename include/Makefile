@@ -58,7 +58,7 @@ SUBDIR+=	../common/include/prop
 
 .if defined(__MINIX)
 SUBDIR+= 	arch sys minix
-SUBDIR+= 	net netinet netinet6
+SUBDIR+= 	net
 SUBDIR+= 	ddekit
 .else
 SUBDIR+=	../common/include/ppath

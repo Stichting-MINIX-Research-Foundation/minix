@@ -1,0 +1,127 @@
+#	$NetBSD: Makefile.booters,v 1.86 2012/08/10 12:18:14 joerg Exp $
+
+.include <bsd.own.mk>
+
+STRIPFLAG=
+BINMODE=444
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
+
+# Make sure we override any optimization options specified by the
+# user.
+.if ${MACHINE_ARCH} == "x86_64"
+CPUFLAGS= -m32
+.else
+CPUFLAGS=  -march=i386 -mtune=i386
+.endif
+COPTS=	${OPT_SIZE.${ACTIVE_CC}}
+
+I386_STAND_DIR?= $S/arch/i386/stand
+
+.PATH: ${I386_STAND_DIR}/lib
+
+ROMSTART= start_rom.o
+GENPROMDIR= ${I386_STAND_DIR}/genprom
+GENPROMOBJDIR!= cd ${GENPROMDIR} && ${PRINTOBJDIR}
+GENPROM= ${GENPROMOBJDIR}/genprom
+
+.PATH: ${I386_STAND_DIR}/lib/crt/dos
+DOSSTART= start_dos.o doscommain.o
+
+.PATH: ${I386_STAND_DIR}/lib/crt/pxe
+PXESTART= start_pxe.o
+
+CPPFLAGS+= -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
+CPPFLAGS+= -D_STANDALONE
+LDFLAGS+=  -nostdlib
+
+# XXX
+.if ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=-m32
+LDFLAGS+=-Wl,-m,elf_i386
+LIBKERN_ARCH=i386
+KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
+.endif
+
+CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
+SRCS+=	vers.c
+
+CLEANFILES+= machine x86
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	-rm -f machine && ln -s $S/arch/i386/include machine
+	-rm -f x86 && ln -s $S/arch/x86/include x86
+.ifdef LIBOBJ
+	-rm -f lib && ln -s ${LIBOBJ}/lib lib
+	mkdir -p ${LIBOBJ}/lib
+.endif
+.endif
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+### find out what to use for libi386
+I386DIR= ${I386_STAND_DIR}/lib
+.include "${I386DIR}/Makefile.inc"
+LIBI386=		${I386LIB}
+
+cleandir distclean: .WAIT cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
+
+LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
+
+LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
+
+vers.c: ${VERSIONFILE} ${SOURCES} ${S}/conf/newvers_stand.sh
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
+
+CLEANFILES+= ${BASE}.sym
+${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
+
+CLEANFILES+= ${BASE}.rom ${BASE}.rom.tmp
+${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
+	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.rom.tmp
+	${GENPROM} ${ROM_SIZE} < ${BASE}.rom.tmp > ${BASE}.rom || \
+	    ( rm -f ${BASE}.rom && false )
+	rm -f ${BASE}.rom.tmp
+
+CLEANFILES+= ${BASE}.com
+${BASE}.com: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
+	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.com
+
+CLEANFILES+= ${BASE}.bin
+${BASE}.bin: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} > ${BASE}.list
+	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
+
+.include <bsd.prog.mk>

@@ -32,9 +32,6 @@ I386MAKE= \
 	    I386MISCCPPFLAGS=${I386MISCCPPFLAGS:Q} \
 	    ${I386MISCMAKEFLAGS}
 
-# LSC Fro now
-NOGCCERROR:= yes
-
 ${I386LIB}:		.NOTMAIN __always_make_i386lib
 	@echo making sure the i386 library is up to date...
 	@${I386MAKE} libi386.a

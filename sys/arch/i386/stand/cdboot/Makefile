@@ -26,8 +26,7 @@ BINMODE=	444
 .PATH:		${.CURDIR}/..
 
 LDFLAGS+=	-nostdlib -Wl,-e,start
-#CPPFLAGS+=	-I. -I${.CURDIR}/../lib -I${S}
-CPPFLAGS+=	-I. -I${.CURDIR}/../lib
+CPPFLAGS+=	-I. -I${.CURDIR}/../lib -I${S}
 CPPFLAGS+=	-DPRIMARY_LOAD_ADDRESS=${PRIMARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_LOAD_ADDRESS=${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DDISABLE_KEYPRESS
@@ -37,16 +36,10 @@ LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 .endif
 
-.if defined(_NetBSD_)
-# NetBSD can be compiled from a foreign host, MINIX do not. So commented out.
-# Make sys/ a local thing for benefit of cross-compilers
-CPPFLAGS+=	-I${S}
-# And same for machine/; need a bit more work because of symlink
 BUILDSYMLINKS+=	$S/arch/i386/include	machine \
 		$S/arch/x86/include	x86
 
 DPSRCS+=	machine x86
-.endif
 
 AFLAGS+=	-Wa,--divide
 

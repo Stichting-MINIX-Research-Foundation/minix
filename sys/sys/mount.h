@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.201 2011/10/12 23:04:22 dholland Exp $	*/
+/*	$NetBSD: mount.h,v 1.207 2012/02/01 05:34:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -462,5 +462,7 @@ __END_DECLS
 
 #endif /* _KERNEL */
 #endif /* !_STANDALONE */
+#include <sys/statvfs.h>
+#include <minix/mount.h>
 
 #endif /* !_SYS_MOUNT_H_ */
