@@ -28,7 +28,7 @@ int vprintf(const char *fmt, va_list argp)
 	char *x2c;
 	char *p;
 	long long i;
-	unsigned long long u;
+	unsigned long long u = 0;
 	char temp[8 * sizeof(long long) / 3 + 2];
 
 	while ((c= *fmt++) != 0) {
