@@ -92,6 +92,7 @@ int do_getsysinfo()
 	break;
 #endif
     case SI_VMNT_TAB:
+	fetch_vmnt_paths();
 	src_addr = (vir_bytes) vmnt;
 	len = sizeof(struct vmnt) * NR_MNTS;
 	break;

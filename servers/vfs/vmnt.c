@@ -6,6 +6,7 @@
 #include "threads.h"
 #include "vmnt.h"
 #include <assert.h>
+#include <string.h>
 #include "fproc.h"
 
 static int is_vmnt_locked(struct vmnt *vmp);
@@ -213,4 +214,55 @@ void unlock_vmnt(struct vmnt *vmp)
   assert(!tll_locked_by_me(&vmp->m_lock));
 #endif
 
+}
+
+/*===========================================================================*
+ *                             fetch_vmnt_paths				     *
+ *===========================================================================*/
+void fetch_vmnt_paths(void)
+{
+  struct vmnt *vmp;
+  struct vnode *cur_wd;
+  char orig_path[PATH_MAX];
+
+  cur_wd = fp->fp_wd;
+
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
+	if (vmp->m_dev == NO_DEV)
+		continue;
+	if (vmp->m_fs_e == PFS_PROC_NR)
+		continue;
+
+	strlcpy(orig_path, vmp->m_mount_path, PATH_MAX);
+
+	/* Find canonical path */
+	if (canonical_path(vmp->m_mount_path, fp) != OK) {
+		/* We failed to find it (moved somewhere else?). Let's try
+		 * again by starting at the node on which we are mounted:
+		 * pretend that node is our working directory and look for the
+		 * canonical path of the relative path to the mount point
+		 * (which should be in our 'working directory').
+		 */
+		char *mp;
+		int len;
+
+		fp->fp_wd = vmp->m_mounted_on;	/* Change our working dir */
+
+		/* Isolate the mount point name of the full path */
+		len = strlen(vmp->m_mount_path);
+		if (vmp->m_mount_path[len - 1] == '/') {
+			vmp->m_mount_path[len - 1] = '\0';
+		}
+		mp = strrchr(vmp->m_mount_path, '/');
+		strlcpy(vmp->m_mount_path, mp+1, NAME_MAX+1);
+
+		if (canonical_path(vmp->m_mount_path, fp) != OK) {
+			/* Our second try failed too. Maybe an FS has crashed
+			 * and we're missing part of the tree. Revert path.
+			 */
+			strlcpy(vmp->m_mount_path, orig_path, PATH_MAX);
+		}
+		fp->fp_wd = cur_wd;		/* Revert working dir */
+	}
+  }
 }

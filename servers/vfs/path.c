@@ -656,7 +656,8 @@ struct fproc *rfp;
   char temp_path[PATH_MAX];
   struct lookup resolve;
 
-  dir_vp = NULL;
+  parent_dir = dir_vp = NULL;
+  parent_vmp = dir_vmp = NULL;
   strlcpy(temp_path, orig_path, PATH_MAX);
   temp_path[PATH_MAX - 1] = '\0';
 
@@ -677,6 +678,9 @@ struct fproc *rfp;
 	 * filename.
 	 */
 	strlcpy(orig_path, temp_path, NAME_MAX+1);	/* Store file name */
+
+	/* If we're just crossing a mount point, our name has changed to '.' */
+	if (!strcmp(orig_path, ".")) orig_path[0] = '\0';
 
 	/* check if the file is a symlink, if so resolve it */
 	r = rdlink_direct(orig_path, temp_path, rfp);
@@ -706,6 +710,10 @@ struct fproc *rfp;
 
 	/* check if we're at the root node of the file system */
 	if (dir_vp->v_vmnt->m_root_node == dir_vp) {
+		if (dir_vp->v_vmnt->m_mounted_on == NULL) {
+			/* Bail out, we can't go any higher */
+			break;
+		}
 		unlock_vnode(dir_vp);
 		unlock_vmnt(dir_vmp);
 		put_vnode(dir_vp);
@@ -769,17 +777,22 @@ struct fproc *rfp;
 	unlock_vmnt(dir_vmp);
 	put_vnode(dir_vp);
 	dir_vp = parent_dir;
+	dir_vmp = parent_vmp;
+	parent_vmp = NULL;
   }
 
+  unlock_vmnt(dir_vmp);
   unlock_vnode(dir_vp);
-  unlock_vmnt(parent_vmp);
-
   put_vnode(dir_vp);
 
   /* add the leading slash */
+  len = strlen(orig_path);
   if (strlen(orig_path) >= PATH_MAX) return(ENAMETOOLONG);
-  memmove(orig_path+1, orig_path, strlen(orig_path));
+  memmove(orig_path+1, orig_path, len);
   orig_path[0] = '/';
+
+  /* remove trailing slash if there is any */
+  if (len > 1 && orig_path[len] == '/') orig_path[len] = '\0';
 
   return(OK);
 }

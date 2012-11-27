@@ -315,6 +315,7 @@ void init_vmnts(void);
 int lock_vmnt(struct vmnt *vp, tll_access_t locktype);
 void unlock_vmnt(struct vmnt *vp);
 void vmnt_unmap_by_endpt(endpoint_t proc_e);
+void fetch_vmnt_paths(void);
 
 /* vnode.c */
 void check_vnode_locks(void);
