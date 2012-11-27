@@ -18,6 +18,7 @@
 
 void basic_test(void);
 void bomb(char const *msg);
+void skip(char const *msg);
 void create_partition(void);
 void verify_tools(void);
 
@@ -54,6 +55,14 @@ basic_test(void)
 	(void) close(fd);
 	system("umount " RAMDISK SILENT);
 	if (strncmp(file_buf, TESTSTRING, strlen(TESTSTRING))) e(3);
+}
+
+void
+skip(char const *msg)
+{
+	system("umount " RAMDISK SILENT);
+	printf("%s\n", msg);
+	quit();
 }
 
 void
@@ -100,12 +109,12 @@ verify_tools(void)
 	subtest = 1;
 	status = system("which mkntfs > /dev/null 2>&1");
 	if (WEXITSTATUS(status) != 0) {
-		bomb("mkntfs not found. Please install ntfsprogs (pkgin in "
+		skip("mkntfs not found. Please install ntfsprogs (pkgin in "
 			"ntfsprogs)");
 	}
 	status = system("which ntfs-3g > /dev/null 2>&1");
 	if (WEXITSTATUS(status) != 0) {
-		bomb("ntfs-3g not found. Please install fuse-ntfs-3g-1.1120 "
+		skip("ntfs-3g not found. Please install fuse-ntfs-3g-1.1120 "
 			"(pkgin in fuse-ntfs-3g-1.1120)");
 	}
 }
