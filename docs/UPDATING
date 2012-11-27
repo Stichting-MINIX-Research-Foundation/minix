@@ -1,3 +1,10 @@
+20121127:
+	/etc/mtab is now obsoleted by /proc/mounts. You need to create a
+	symlink:
+
+	# rm /etc/mtab
+	# ln -s /proc/mounts /etc/mtab
+
 20121116:
 	To make the build system less verbose:
 
