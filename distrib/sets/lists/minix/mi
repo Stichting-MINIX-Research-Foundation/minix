@@ -105,6 +105,7 @@
 ./etc/utmp				minix-sys
 ./home					minix-sys
 ./libexec/ld-elf.so.1			minix-sys
+./libexec/ld.elf_so			minix-sys
 ./libexec				minix-sys
 ./lib					minix-sys
 ./lib/cpp 				minix-sys
