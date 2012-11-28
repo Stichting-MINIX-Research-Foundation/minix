@@ -8,15 +8,9 @@ version_pretty="`sh tell_config OS_RELEASE . OS_VERSION | tr -dc 0-9.`"
 version="`echo $version_pretty | tr . _`"
 PACKAGEDIR=/usr/pkgsrc/packages/$version_pretty/`uname -m`
 
-XBIN=usr/xbin
-XLIB=xlib
 SRC=src
 REPO=git://git.minix3.org/minix
 GITBRANCH=master
-
-LD_LIB="LD_LIBRARY_PATH=/lib:/usr/lib:/$XLIB"
-BUILDPATH="PATH=/$XBIN:/usr/pkg/bin"
-BUILDENV="$BUILDPATH $LD_LIB"
 
 # List of packages included on installation media
 PACKAGELIST=packages.install
@@ -52,9 +46,6 @@ fi
 
 set -- $* $RELOPTS
 
-# SVN trunk repo
-TRUNK=https://gforge.cs.vu.nl/svn/minix/trunk
-
 export RELEASEDIR=/usr/r-staging
 RELEASEMNTDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
@@ -69,7 +60,6 @@ BS=4096
 HDEMU=0
 COPY=0
 JAILMODE=0
-SVNREV=""
 REVTAG=""
 PACKAGES=1
 MINIMAL=0
@@ -87,11 +77,11 @@ fi
 
 FILENAMEOUT=""
 
-while getopts "b:j:ls:pmMchu?r:f:L:e:" c
+while getopts "b:j:ls:pmMchu?f:L:e:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
+		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
 		exit 1
 	;;
 	b)
@@ -103,14 +93,11 @@ do
 		HDEMU=1
 		;;
 	c)
-		echo " * Copying, not SVN"
+		echo " * Copying, not using GIT"
 		COPY=1
 		;;
 	p)
 		PACKAGES=0
-		;;
-	r)	
-		SVNREV=-r$OPTARG
 		;;
 	j)
 		RELEASEDIR=$OPTARG
@@ -182,33 +169,11 @@ fi
 rm -rf $RELEASEDIR $RELEASEMNTDIR $IMG $ROOTIMAGE $CDFILES image* || true
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR $RELEASEMNTDIR 
-mkdir -m 755 $RELEASEDIR/usr
-mkdir -m 1777 $RELEASEDIR/tmp
-
-mkdir -p $RELEASEDIR/tmp
-mkdir -p $RELEASEDIR/usr/tmp
-mkdir -p $RELEASEDIR/$XBIN
-mkdir -p $RELEASEDIR/$XLIB
-mkdir -p $RELEASEDIR/libexec
-mkdir -p $RELEASEDIR/usr/bin
-mkdir -p $RELEASEDIR/bin
 mkdir -p $RELEASEPACKAGE
 
-echo " * Transfering bootstrap dirs to $RELEASEDIR"
-
-# Actual binaries
-cp -p /bin/* /usr/bin/* /usr/sbin/* /sbin/* $RELEASEDIR/$XBIN
-cp -rp /bin/cat /bin/sh /bin/echo /bin/rm /bin/date /bin/ls $RELEASEDIR/bin
-cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/install /usr/bin/m4 \
-	/usr/bin/grep /usr/bin/egrep /usr/bin/awk /usr/bin/sed $RELEASEDIR/usr/bin
-
-# For dynamically linked binaries: put interpreter there the
-# system's current crop of shared libraries so they'll run;
-# once they're rebuilt they can be thrown out in favour of the
-# new ones like $XBIN
-cp -p /libexec/ld.elf_so $RELEASEDIR/libexec/
-cp -p /lib/*.so* /usr/lib/*.so* $RELEASEDIR/$XLIB/
-
+##########################################################################
+echo " * Bootstrapping filesystem in $RELEASEDIR"
+##########################################################################
 CONFIGHEADER=$RELEASEDIR/usr/src/include/minix/sys_config.h
 
 copy_local_packages
@@ -253,18 +218,8 @@ fi
 if [ "$USB" -eq 0 ]
 then	date >$RELEASEDIR/CD
 fi
-echo " * Bootstrap /usr/share/mk files"
-# Need /usr/share/mk in the new system to invoke make. Real ownerships
-# and permissions will be set by its own src/share/mk/Makefile.
-mkdir -p $RELEASEDIR/usr/share/mk
-chmod 755 $RELEASEDIR/usr/share/mk
-cp $RELEASEDIR/usr/src/share/mk/* $RELEASEDIR/usr/share/mk/
-chown -R root $RELEASEDIR/usr/share/mk
-rm -f $RELEASEDIR/usr/$SRC/releasetools/revision
-mkdir -p $RELEASEDIR/etc
-cp $RELEASEDIR/usr/src/etc/group $RELEASEDIR/etc
 
-echo " * Make hierarchy"
+rm -f $RELEASEDIR/usr/$SRC/releasetools/revision
 
 for p in $PREINSTALLED_PACKAGES
 do	echo " * Pre-installing: $p from $PKG_ADD_URL"
@@ -277,7 +232,10 @@ fi
 
 echo " * Resetting timestamps"
 find $RELEASEDIR | xargs touch
+
+##########################################################################
 echo " * Build"
+##########################################################################
 
 cd $RELEASEDIR/usr/src
 make distribution DESTDIR=$RELEASEDIR CHECKFLIST=no
@@ -292,10 +250,11 @@ make cleandir
 
 cd -
 
-echo " * Chroot build done"
+echo " * build done"
+
+##########################################################################
 echo " * Removing bootstrap files"
-rm -rf $RELEASEDIR/$XBIN
-rm -rf $RELEASEDIR/$XLIB
+##########################################################################
 # The build process leaves some file in $SRC as bin.
 chown -R root $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
@@ -331,7 +290,9 @@ then	echo "Created new minix install in $RELEASEDIR."
 	exit 0
 fi
 
+##########################################################################
 echo " * Counting files"
+##########################################################################
 extrakb=`du -ks $RELEASEDIR/usr/install | awk '{ print $1 }'`
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -print -path $RELEASEDIR/usr -prune | wc -l >$RELEASEDIR/.rootfiles
@@ -354,7 +315,9 @@ usr=/dev/c0d7p0s2
 usr_roflag=\"-r\"" > $RELEASEDIR/etc/fstab
 fi
 
+##########################################################################
 echo " * Mounting $TMPDISKROOT as $RELEASEMNTDIR"
+##########################################################################
 fitfs $RELEASEDIR $TMPDISKROOT 64 256 "$ROOTMB"
 ROOTBLOCKS=$blocks
 ROOTSECTS="`expr $blocks \* \( $BS / 512 \)`"
@@ -367,7 +330,9 @@ USRSECTS="`expr $blocks \* \( $BS / 512 \)`"
 mkdir -m 755 $RELEASEMNTDIR/usr
 mount $TMPDISKUSR $RELEASEMNTDIR/usr || exit
 
+##########################################################################
 echo " * Copying files from staging to image"
+##########################################################################
 synctree -f $RELEASEDIR $RELEASEMNTDIR > /dev/null || true
 expr `df -k $TMPDISKUSR | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEMNTDIR/.usrkb
 
@@ -389,6 +354,9 @@ echo " * Unmounting $TMPDISKROOT from $RELEASEMNTDIR"
 umount $TMPDISKROOT || exit
 rm -r $RELEASEMNTDIR
 
+##########################################################################
+echo " * Generating image files"
+##########################################################################
 dd if=$TMPDISKROOT of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 cp release/cd/* $CDFILES || true
 echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.TXT
@@ -440,6 +408,8 @@ if [ "$FILENAMEOUT" ]
 then	echo "$IMG" >$FILENAMEOUT
 fi
 
+##########################################################################
 echo " * Freeing up memory used by ramdisks"
+##########################################################################
 ramdisk 1 $TMPDISKROOT
 ramdisk 1 $TMPDISKUSR
