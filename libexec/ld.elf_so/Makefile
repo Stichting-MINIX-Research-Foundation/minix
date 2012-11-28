@@ -13,6 +13,8 @@ LDSTATIC=	-dynamic
 
 # And the minix gcc currently references /libexec/ld-elf.so.1
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld-elf.so.1
+# Minix Clang binaries references /libexec/ld.elf_so
+SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld.elf_so
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
