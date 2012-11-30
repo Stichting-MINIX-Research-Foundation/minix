@@ -290,7 +290,7 @@ int main(int argc, char **argv)
 	int verify= 0;
 	struct stat st0, st;
 	char special[PATH_MAX + 1], mounted_on[PATH_MAX + 1];
-	char version[10], rw_flag[10];
+	char version[MNTNAMELEN], rw_flag[MNTFLAGLEN];
 
 	/* Option -v. */
 	while (argc > 1 && argv[1][0] == '-') {

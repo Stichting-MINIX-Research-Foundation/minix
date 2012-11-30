@@ -109,7 +109,8 @@ static void readmtab(const char *type)
 {
   struct mtab **amt= &mtab, *new;
   struct stat st;
-  char devname[128], mountpoint[128], version[10], rw_flag[10];
+  char devname[PATH_MAX], mountpoint[PATH_MAX], version[MNTNAMELEN],
+	rw_flag[MNTFLAGLEN];
 
   if (load_mtab("df") < 0) exit(1);
 
