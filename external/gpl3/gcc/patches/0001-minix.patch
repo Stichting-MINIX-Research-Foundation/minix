@@ -56,7 +56,7 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.
  #include <sys/_types.h>
  #endif
 +#if defined (__minix)
-+#include <minix/types.h>
++#include <sys/types.h>
 +#endif
  
  /* In 4.3bsd-net2, machine/ansi.h defines these symbols, which are

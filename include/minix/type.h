@@ -6,9 +6,7 @@
 #include <minix/sys_config.h>
 #endif
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/types.h>
 
 #include <stdint.h>
 

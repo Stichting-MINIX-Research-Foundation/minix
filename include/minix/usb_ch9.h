@@ -44,7 +44,7 @@
  * values.
  */
 
-#include <minix/types.h>
+#include <sys/types.h>
 
 typedef u8_t uByte;
 typedef u8_t uWord[2];

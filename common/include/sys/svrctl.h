@@ -7,9 +7,7 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 #ifndef _SYS__SVRCTL_H
 #define _SYS__SVRCTL_H
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/types.h>
 
 /* Server control commands have the same encoding as the commands for ioctls. */
 #include <minix/ioctl.h>

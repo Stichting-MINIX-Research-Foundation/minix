@@ -8,10 +8,7 @@
 #define _M_IOCTL_H
 
 #include <sys/cdefs.h>
-
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/types.h>
 
 /* Ioctls have the command encoded in the low-order word, and the size
  * of the parameter in the high-order word. The 3 high bits of the high-

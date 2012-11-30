@@ -1,4 +1,4 @@
-#include <minix/types.h>
+#include <sys/types.h>
 #include <minix/sysutil.h>
 #include <errno.h>
 

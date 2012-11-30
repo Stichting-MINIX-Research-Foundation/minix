@@ -10,7 +10,7 @@
 #define _DEVIO_H
 
 #include <minix/sys_config.h>     /* needed to include <minix/type.h> */
-#include <minix/types.h>        /* u8_t, u16_t, u32_t needed */
+#include <sys/types.h>        /* u8_t, u16_t, u32_t needed */
 
 typedef u16_t port_t;
 

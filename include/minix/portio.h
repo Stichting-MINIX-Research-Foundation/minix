@@ -7,9 +7,7 @@ Created:	Jan 15, 1992 by Philip Homburg
 #ifndef _PORTIO_H_
 #define _PORTIO_H_
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/types.h>
 
 unsigned inb(u16_t _port);
 unsigned inw(u16_t _port);

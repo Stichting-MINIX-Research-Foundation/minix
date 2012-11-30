@@ -3,7 +3,7 @@
 #define _MINIX_SAFECOPIES_H 1
 
 #include <minix/sys_config.h>
-#include <minix/types.h>
+#include <sys/types.h>
 #include <minix/vm.h>
 #include <stdint.h>
 

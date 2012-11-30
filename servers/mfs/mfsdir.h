@@ -4,7 +4,7 @@
 #ifdef __NBSD_LIBC
 #include <sys/cdefs.h>
 #endif
-#include <minix/types.h>
+#include <sys/types.h>
 
 /* Maximum Minix MFS on-disk directory filename.
  * MFS uses 'struct direct' to write and parse 
