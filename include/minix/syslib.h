@@ -3,19 +3,12 @@
 #ifndef _SYSLIB_H
 #define _SYSLIB_H
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/types.h>
+#include <sys/sigtypes.h>
 
-#ifndef _IPC_H
 #include <minix/ipc.h>
-#endif
-
 #include <minix/u64.h>
-
-#ifndef _DEVIO_H
 #include <minix/devio.h>
-#endif
 
 #include <minix/safecopies.h>
 #include <minix/sef.h>

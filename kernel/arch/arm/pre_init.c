@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <minix/minlib.h>
 #include <minix/const.h>
-#include <minix/types.h>
 #include <minix/type.h>
 #include <minix/com.h>
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include "string.h"

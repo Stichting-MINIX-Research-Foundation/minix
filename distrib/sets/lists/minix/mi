@@ -663,7 +663,7 @@
 ./usr/include/minix/timers.h					minix-sys
 ./usr/include/minix/tty.h					minix-sys
 ./usr/include/minix/type.h					minix-sys
-./usr/include/minix/types.h					minix-sys
+./usr/include/minix/types.h					minix-sys	obsolete
 ./usr/include/minix/u64.h					minix-sys
 ./usr/include/minix/usb_ch9.h					minix-sys
 ./usr/include/minix/usb.h					minix-sys

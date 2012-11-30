@@ -3,7 +3,7 @@
 #ifndef _MINIX_VM_H
 #define _MINIX_VM_H
 
-#include <minix/types.h>
+#include <sys/types.h>
 #include <minix/endpoint.h>
 
 int vm_exit(endpoint_t ep);

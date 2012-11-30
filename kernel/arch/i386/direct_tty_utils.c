@@ -3,9 +3,9 @@
 #include <minix/minlib.h>
 #include <minix/const.h>
 #include <minix/cpufeature.h>
-#include <minix/types.h>
 #include <minix/type.h>
 #include <minix/com.h>
+#include <sys/types.h>
 #include <sys/param.h>
 #include <machine/partition.h>
 #include <libexec.h>

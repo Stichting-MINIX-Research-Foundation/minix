@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <minix/types.h>
+#include <sys/types.h>
 #include <minix/btrace.h>
 #include <minix/u64.h>
 #include <sys/ioc_block.h>

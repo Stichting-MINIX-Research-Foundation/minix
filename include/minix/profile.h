@@ -2,6 +2,7 @@
 #define _PROFILE_H
 
 #include <minix/type.h>
+#include <sys/types.h>
 
 /*
  * Types relating to system profiling.  Types are supplied for both
@@ -33,8 +34,6 @@ struct sprof_proc {
 	endpoint_t	proc;
 	char		name[PROC_NAME_LEN];
 };
-
-#include <minix/types.h>
 
 #  define PROF_GET         2    /* get call profiling tables */
 #  define PROF_RESET       3    /* reset call profiling tables */

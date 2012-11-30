@@ -6,9 +6,7 @@
 #ifndef _MINIX__PARTITION_H
 #define _MINIX__PARTITION_H
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/types.h>
 
 #include <minix/u64.h>
 
