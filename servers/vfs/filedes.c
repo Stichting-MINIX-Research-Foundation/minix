@@ -325,6 +325,12 @@ tll_access_t locktype;
 	assert(filp->filp_softlock == NULL);
 	filp->filp_softlock = fp;
   } else {
+	/* We have to make an exception for vnodes belonging to pipes. Even
+	 * read(2) operations on pipes change the vnode and therefore require
+	 * exclusive access.
+	 */
+	if (S_ISFIFO(vp->v_mode) && locktype == VNODE_READ)
+		locktype = VNODE_WRITE;
 	lock_vnode(vp, locktype);
   }
 

@@ -304,7 +304,7 @@ int do_sync()
   int r = OK;
 
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
-	if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
+	if ((r = lock_vmnt(vmp, VMNT_READ)) != OK)
 		break;
 	if (vmp->m_dev != NO_DEV && vmp->m_fs_e != NONE &&
 		 vmp->m_root_node != NULL) {
@@ -331,19 +331,21 @@ int do_fsync()
 
   if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);
+
   dev = rfilp->filp_vno->v_dev;
+  unlock_filp(rfilp);
+
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
+	if (vmp->m_dev != dev) continue;
+	if ((r = lock_vmnt(vmp, VMNT_READ)) != OK)
+		break;
 	if (vmp->m_dev != NO_DEV && vmp->m_dev == dev &&
 		vmp->m_fs_e != NONE && vmp->m_root_node != NULL) {
 
-		if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
-			break;
 		req_sync(vmp->m_fs_e);
-		unlock_vmnt(vmp);
 	}
+	unlock_vmnt(vmp);
   }
-
-  unlock_filp(rfilp);
 
   return(r);
 }

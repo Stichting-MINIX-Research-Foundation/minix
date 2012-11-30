@@ -185,13 +185,15 @@ int tll_lock(tll_t *tllp, tll_access_t locktype)
    * request queued ("write bias") or when a read-serialized lock is trying to
    * upgrade to write-only. The current lock for this tll is either read or
    * read-serialized. */
-  if (tllp->t_write != NULL || (tllp->t_status & TLL_UPGR))
+  if (tllp->t_write != NULL || (tllp->t_status & TLL_UPGR)) {
+	assert(!(tllp->t_status & TLL_PEND));
 	return tll_append(tllp, locktype);
+  }
 
   /* If this lock is in read-serialized mode, we can allow read requests and
    * queue read-serialized requests */
   if (tllp->t_current == TLL_READSER) {
-	if (locktype == TLL_READ) {
+	if (locktype == TLL_READ && !(tllp->t_status & TLL_UPGR)) {
 		tllp->t_readonly++;
 		return(OK);
 	} else

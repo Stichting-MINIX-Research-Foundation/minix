@@ -172,6 +172,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			if (oflags & O_TRUNC) {
 				if ((r = forbidden(fp, vp, W_BIT)) != OK)
 					break;
+				upgrade_vnode_lock(vp);
 				truncate_vnode(vp, 0);
 			}
 			break;
@@ -243,7 +244,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 		   case S_IFIFO:
 			/* Create a mapped inode on PFS which handles reads
 			   and writes to this named pipe. */
-			tll_upgrade(&vp->v_lock);
+			upgrade_vnode_lock(vp);
 			r = map_vnode(vp, PFS_PROC_NR);
 			if (r == OK) {
 				if (vp->v_ref_count == 1) {
@@ -374,6 +375,7 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 	}
 
 	lock_vnode(vp, VNODE_OPCL);
+	upgrade_vmnt_lock(dir_vmp); /* Creating file, need exclusive access */
 
 	if ((r = forbidden(fp, dirp, W_BIT|X_BIT)) != OK ||
 	    (r = req_create(dirp->v_fs_e, dirp->v_inode_nr,bits, fp->fp_effuid,
@@ -381,8 +383,13 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 		/* Can't create inode either due to permissions or some other
 		 * problem. In case r is EEXIST, we might be dealing with a
 		 * dangling symlink.*/
+
+		/* Downgrade lock to prevent deadlock during symlink resolving*/
+		downgrade_vmnt_lock(dir_vmp);
+
 		if (r == EEXIST) {
 			struct vnode *slp, *old_wd;
+
 
 			/* Resolve path up to symlink */
 			findnode.l_flags = PATH_RET_SYMLINK;

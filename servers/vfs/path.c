@@ -398,6 +398,7 @@ struct fproc *rfp;
   struct vnode *dir_vp;
   struct vmnt *vmp, *vmpres;
   struct lookup_res res;
+  tll_access_t mnt_lock_type;
 
   assert(resolve->l_vmp);
   assert(resolve->l_vnode);
@@ -435,7 +436,12 @@ struct fproc *rfp;
   symloop = 0;	/* Number of symlinks seen so far */
 
   /* Lock vmnt */
-  if ((r = lock_vmnt(vmpres, resolve->l_vmnt_lock)) != OK) {
+  if (resolve->l_vmnt_lock == VMNT_READ)
+	mnt_lock_type = VMNT_WRITE;
+  else
+	mnt_lock_type = resolve->l_vmnt_lock;
+
+  if ((r = lock_vmnt(vmpres, mnt_lock_type)) != OK) {
 	if (r == EBUSY) /* vmnt already locked */
 		vmpres = NULL;
 	else
@@ -532,7 +538,7 @@ struct fproc *rfp;
 	if (vmpres) unlock_vmnt(vmpres);
 	vmpres = find_vmnt(fs_e);
 	if (vmpres == NULL) return(EIO);	/* mount point vanished? */
-	if ((r = lock_vmnt(vmpres, resolve->l_vmnt_lock)) != OK) {
+	if ((r = lock_vmnt(vmpres, mnt_lock_type)) != OK) {
 		if (r == EBUSY)
 			vmpres = NULL;	/* Already locked */
 		else
@@ -547,6 +553,11 @@ struct fproc *rfp;
 		*(resolve->l_vmp) = NULL;
 		return(r);
 	}
+  }
+
+  if (*(resolve->l_vmp) != NULL && resolve->l_vmnt_lock != mnt_lock_type) {
+	/* downgrade VMNT_WRITE to VMNT_READ */
+	downgrade_vmnt_lock(*(resolve->l_vmp));
   }
 
   /* Fill in response fields */

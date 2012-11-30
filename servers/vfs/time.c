@@ -41,7 +41,7 @@ int do_utime()
   if (len == 0) len = (size_t) job_m_in.utime_strlen;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
-  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
   /* Temporarily open the file */

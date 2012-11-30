@@ -316,6 +316,8 @@ int lock_vmnt(struct vmnt *vp, tll_access_t locktype);
 void unlock_vmnt(struct vmnt *vp);
 void vmnt_unmap_by_endpt(endpoint_t proc_e);
 void fetch_vmnt_paths(void);
+void upgrade_vmnt_lock(struct vmnt *vmp);
+void downgrade_vmnt_lock(struct vmnt *vmp);
 
 /* vnode.c */
 void check_vnode_locks(void);
@@ -329,6 +331,7 @@ void unlock_vnode(struct vnode *vp);
 void dup_vnode(struct vnode *vp);
 void put_vnode(struct vnode *vp);
 void vnode_clean_refs(struct vnode *vp);
+void upgrade_vnode_lock(struct vnode *vp);
 
 /* write.c */
 int do_write(void);

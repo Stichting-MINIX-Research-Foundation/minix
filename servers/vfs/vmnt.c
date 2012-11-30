@@ -164,7 +164,7 @@ int lock_vmnt(struct vmnt *vmp, tll_access_t locktype)
   if (r == EBUSY) return(r);
 
   if (initial_locktype != locktype) {
-	tll_upgrade(&vmp->m_lock);
+	upgrade_vmnt_lock(vmp);
   }
 
 #if LOCK_DEBUG
@@ -214,6 +214,31 @@ void unlock_vmnt(struct vmnt *vmp)
   assert(!tll_locked_by_me(&vmp->m_lock));
 #endif
 
+}
+
+/*===========================================================================*
+ *                             downgrade_vmnt_lock			     *
+ *===========================================================================*/
+void downgrade_vmnt_lock(struct vmnt *vmp)
+{
+  ASSERTVMP(vmp);
+  tll_downgrade(&vmp->m_lock);
+
+#if LOCK_DEBUG
+  /* If we're no longer the owner of a lock, we downgraded to VMNT_READ */
+  if (!tll_locked_by_me(&vmp->m_lock)) {
+	fp->fp_vmnt_rdlocks++;
+  }
+#endif
+}
+
+/*===========================================================================*
+ *                             upgrade_vmnt_lock			     *
+ *===========================================================================*/
+void upgrade_vmnt_lock(struct vmnt *vmp)
+{
+  ASSERTVMP(vmp);
+  tll_upgrade(&vmp->m_lock);
 }
 
 /*===========================================================================*

@@ -213,6 +213,15 @@ void unlock_vnode(struct vnode *vp)
 }
 
 /*===========================================================================*
+ *				vnode				     *
+ *===========================================================================*/
+void upgrade_vnode_lock(struct vnode *vp)
+{
+  ASSERTVP(vp);
+  tll_upgrade(&vp->v_lock);
+}
+
+/*===========================================================================*
  *				dup_vnode				     *
  *===========================================================================*/
 void dup_vnode(struct vnode *vp)
@@ -259,7 +268,7 @@ void put_vnode(struct vnode *vp)
 
   /* If we already had a lock, there is a consistency problem */
   assert(lock_vp != EBUSY);
-  tll_upgrade(&vp->v_lock);	/* Make sure nobody else accesses this vnode */
+  upgrade_vnode_lock(vp); /* Acquire exclusive access */
 
   /* A vnode that's not in use can't be put back. */
   if (vp->v_ref_count <= 0)

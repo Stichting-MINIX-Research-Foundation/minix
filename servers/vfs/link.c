@@ -165,7 +165,7 @@ int do_unlink()
   }
 
   assert(vmp != NULL);
-  tll_upgrade(&vmp->m_lock);
+  upgrade_vmnt_lock(vmp);
 
   if (job_call_nr == UNLINK)
 	  r = req_unlink(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
@@ -261,7 +261,7 @@ int do_rename()
       (r1 = forbidden(fp, new_dirp, W_BIT|X_BIT)) != OK) r = r1;
 
   if (r == OK) {
-	tll_upgrade(&oldvmp->m_lock); /* Upgrade to exclusive access */
+	upgrade_vmnt_lock(oldvmp); /* Upgrade to exclusive access */
 	r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
 		       new_dirp->v_inode_nr, fullpath);
   }

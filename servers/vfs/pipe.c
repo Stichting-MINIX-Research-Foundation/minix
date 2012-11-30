@@ -52,7 +52,7 @@ int do_pipe()
 
   /* Get a lock on PFS */
   if ((vmp = find_vmnt(PFS_PROC_NR)) == NULL) panic("PFS gone");
-  if ((r = lock_vmnt(vmp, VMNT_WRITE)) != OK) return(r);
+  if ((r = lock_vmnt(vmp, VMNT_READ)) != OK) return(r);
 
   /* See if a free vnode is available */
   if ((vp = get_free_vnode()) == NULL) {

@@ -267,7 +267,7 @@ size_t req_size;
   u64_t position, new_pos;
 
   /* Must make sure we're operating on locked filp and vnode */
-  assert(tll_islocked(&f->filp_vno->v_lock));
+  assert(tll_locked_by_me(&f->filp_vno->v_lock));
   assert(mutex_trylock(&f->filp_lock) == -EDEADLK);
 
   oflags = f->filp_flags;
