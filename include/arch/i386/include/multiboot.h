@@ -52,7 +52,7 @@
 
 #ifndef __ASSEMBLY__
 
-#include <minix/types.h>
+#include <sys/types.h>
 /* The symbol table for a.out. */
 struct multiboot_aout_symbol_table
 {

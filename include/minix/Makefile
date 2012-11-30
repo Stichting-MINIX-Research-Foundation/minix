@@ -4,7 +4,7 @@ NOOBJ=		# defined
 
 INCSDIR=	/usr/include/minix
 
-INCS+= dirent.h paths.h types.h param.h
+INCS+=	dirent.h paths.h param.h
 INCS+=	acpi.h audio_fw.h bitmap.h \
 	bdev.h blockdriver.h blockdriver_mt.h \
 	btrace.h \

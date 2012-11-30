@@ -5,9 +5,7 @@
 #ifndef _MINIX__U64_H
 #define _MINIX__U64_H
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/types.h>
 
 #include <limits.h>
 

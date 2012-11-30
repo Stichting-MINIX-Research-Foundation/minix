@@ -1,9 +1,9 @@
 #ifndef _MINIX_USB_H
 #define _MINIX_USB_H
 
+#include <sys/types.h>
 #include <minix/com.h>
 #include <minix/ipc.h>
-#include <minix/types.h>
 #include <stdio.h>
 
 #define USB_URBSIZE(data_size, iso_count) \

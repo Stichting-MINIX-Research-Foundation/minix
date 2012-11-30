@@ -3,7 +3,7 @@
 #ifndef _MINIX_DS_H
 #define _MINIX_DS_H
 
-#include <minix/types.h>
+#include <sys/types.h>
 #include <minix/endpoint.h>
 
 /* Flags. */

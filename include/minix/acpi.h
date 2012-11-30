@@ -1,4 +1,4 @@
-#include <minix/types.h>
+#include <sys/types.h>
 #include <minix/ipc.h>
 
 #define ACPI_REQ_GET_IRQ	1
