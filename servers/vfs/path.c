@@ -620,7 +620,7 @@ char ename[NAME_MAX + 1];
 		cur = (struct dirent *) (buf + consumed);
 		name_len = cur->d_reclen - offsetof(struct dirent, d_name) - 1;
 
-		if(cur->d_name + name_len+1 >= &buf[DIR_ENTRIES*DIR_ENTRY_SIZE])
+		if(cur->d_name + name_len+1 > &buf[sizeof(buf)])
 			return(EINVAL);	/* Rubbish in dir entry */
 		if (entry->v_inode_nr == cur->d_ino) {
 			/* found the entry we were looking for */
