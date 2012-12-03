@@ -111,15 +111,18 @@ install:
 # download and update NetBSD reference sources.
 nbsd_fetch:
 	export CVS_RSH=ssh; 							\
+	export OLDPWD=`pwd`;							\
 	echo "retrieving hierarchies from ${NBSD_CVSROOT}";			\
 	IFS=,;									\
-	cat nbsd_ports | grep -v '^#' | while read port ;			\
+	cd ..;									\
+	cat releasetools/nbsd_ports | grep -v '^#' | while read port ;		\
 	do	set $$port;							\
 		date=$$1; minixpath=$$2; origpath=$$3;				\
 		if [ $$# -lt 3 ]; then origpath=$$2; fi;			\
 		echo "retrieving $$origpath ..";				\
-		cd .. && cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
-	done
+		cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
+	done;									\
+	cd $${OLDPWD};
 
 nbsd_diff:
 	find .. -name minix-port.patch | xargs rm
