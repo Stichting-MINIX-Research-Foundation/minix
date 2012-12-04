@@ -97,6 +97,7 @@
 2012/10/17 12:00:00,usr.bin/genassym
 2012/02/10 16:16:12,usr.bin/su
 2011/12/25 06:09:09,sys/arch/i386/stand
+2012/10/17 12:00:00,share/terminfo
 2012/02/10 16:16:12,share/zoneinfo
 2012/02/10 16:16:12,share/misc
 2011/05/26 00:00:00,external/public-domain/xz
@@ -112,11 +113,10 @@
 2011/01/21 23:36:49,lib/libc
 2011/01/12 23:03:56,lib/libm
 2009/05/01 00:28:17,lib/libcrypt
-2010/10/12 12:57:51,lib/libterminfo
-2011/01/06 11:29:40,lib/libcurses
+2012/10/17 12:00:00,lib/libterminfo
+2012/10/17 12:00:00,lib/libcurses
 2010/12/22 09:12:28,lib/libutil
 2009/05/13 02:50:31,common/lib/libutil
-2011/01/21 23:36:49,include
 2008/07/20 00:52:40,bin/mkdir
 2011/08/29 14:48:46,bin/rm
 2011/08/29 14:49:38,bin/rmdir

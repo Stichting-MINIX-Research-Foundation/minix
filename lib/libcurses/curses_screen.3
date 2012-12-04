@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.14 2007/10/25 20:42:07 jdc Exp $
+.\"	$NetBSD: curses_screen.3,v 1.15 2012/04/21 12:27:28 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd October 24, 2007
+.Dd April 5, 2012
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -78,8 +78,8 @@ use by curses.
 The
 .Fa type
 argument points to a
-.Xr termcap 5
-capability name, or it may be
+.Xr terminfo 5
+entry, or it may be
 .Dv NULL
 in which case the TERM environment variable is used.
 The
@@ -120,7 +120,7 @@ call which may be called prior to
 The size of the curses screen is determined by checking the
 .Xr tty 4
 size and then the
-.Xr termcap 5
+.Xr terminfo 5
 entries for the terminal type.
 If the environment variables
 .Va LINES
@@ -168,7 +168,7 @@ information related to the named terminal.
 The
 .Fa name
 argument must be a valid name or alias in the
-.Xr termcap 5
+.Xr terminfo 5
 database for this function to succeed.
 .Sh RETURN VALUES
 Functions returning pointers will return
@@ -186,7 +186,7 @@ An error occurred in the function.
 .Sh SEE ALSO
 .Xr curses_window 3 ,
 .Xr tty 4 ,
-.Xr termcap 5 ,
+.Xr terminfo 5 ,
 .Xr signal 7
 .Sh STANDARDS
 The

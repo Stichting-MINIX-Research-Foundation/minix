@@ -9,6 +9,14 @@
 	Then do a "make build".
 
 20121205:
+	Following the terminfo update, some new tools are now used during 
+	the build. Execute the following to install them:
+	# make -C usr.bin/nbperf all install
+	# make -C usr.bin/lorder all install
+	# make -C usr.bin/join all install
+	# make -C usr.bin/tic all install
+
+20121205:
 	The tsort tool has been also upgraded and is now also used during
 	the build:
 	# make -C usr.bin/tsort all install

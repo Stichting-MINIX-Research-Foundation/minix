@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_print.3,v 1.6 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_print.3,v 1.7 2011/04/06 08:38:43 jruoho Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd August 12, 2002
+.Dd April 6, 2011
 .Dt CURSES_PRINT 3
 .Os
 .Sh NAME
@@ -64,8 +64,9 @@ The
 .Fn printw
 function formats and prints its arguments on
 .Dv stdscr .
-The behaviour is the same as that of
-.Fn printf .
+The behavior is deliberately similar to that of
+.Xr printf 3 ,
+but, notably, the return value differs.
 .Pp
 The
 .Fn wprintw
@@ -104,7 +105,7 @@ if an error is detected.
 The functions that return an int will return one of the following
 values:
 .Pp
-.Bl -tag -width ERR -compact
+.Bl -tag -width ERR -offset indent
 .It Er OK
 The function completed successfully.
 .It Er ERR

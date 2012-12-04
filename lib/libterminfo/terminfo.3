@@ -1,6 +1,6 @@
-.\"	$NetBSD: terminfo.3,v 1.4 2010/02/04 09:12:56 wiz Exp $
+.\"	$NetBSD: terminfo.3,v 1.8 2011/10/04 11:01:14 roy Exp $
 .\"
-.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,13 +27,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 7, 2009
+.Dd October 4, 2011
 .Dt TERMINFO 3
 .Os
 .Sh NAME
 .Nm setupterm ,
 .Nm set_curterm ,
 .Nm del_curterm ,
+.Nm termname ,
+.Nm longname ,
 .Nm tigetflag ,
 .Nm tigetnum ,
 .Nm tigetstr ,
@@ -51,9 +53,13 @@
 .Ft int
 .Fn setupterm "const char *name" "int fildes" "int *errret"
 .Ft TERMINAL *
-.Fn set_curterm "TERMINAL *term"
+.Fn set_curterm "TERMINAL *nterm"
 .Ft int
-.Fn del_curterm "TERMINAL *term"
+.Fn del_curterm "TERMINAL *oterm"
+.Ft char *
+.Fn termname "void"
+.Ft char *
+.Fn longname "void"
 .Ft int
 .Fn tigetnum "const char *id"
 .Ft int
@@ -75,11 +81,9 @@
 .Ft const char *
 .Fn ti_getstr "const TERMINAL *" "const char *id"
 .Ft char *
-.Fn t_parm "const TERMINAL *" "const char *cm" "long p1" "long p2" "long p3" "long p4" "long p5" "long p6" "long p7" "long p8" "long p9"
+.Fn tiparm "const char *cm" "..."
 .Ft char *
-.Fn t_parm "const char *cm" "..."
-.Ft char *
-.Fn t_vparm "TERMINAL *" "const char *cm" "..."
+.Fn ti_tiparm "TERMINAL *" "const char *cm" "..."
 .Ft int
 .Fn ti_puts "const TERMINAL *term" "const char *str" "int affcnt" "int (*outc)(int, void *)"
 .Ft int
@@ -144,6 +148,15 @@ function frees space pointed to by
 .Va oterm .
 .Pp
 The
+.Fn termname
+function returns the name of
+.Va cur_term .
+The
+.Fn longname
+function returns the description of
+.Va cur_term .
+.Pp
+The
 .Fn tigetflag
 function gets the boolean value of capability
 .Va id ,
@@ -198,9 +211,9 @@ The output from
 always goes to stdout.
 .Ss NetBSD Extensions To Terminfo
 The
-.Fn vtparm
+.Fn tiparm
 function allows variadic parameters instead of 9 fixed longs.
-Numeric parameters must be longs.
+Numeric parameters must be integers (int) instead of longs.
 String parameters can be used even if the platform cannot fit a
 .Vt char *
 into a

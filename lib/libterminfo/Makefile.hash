@@ -1,0 +1,32 @@
+#	$NetBSD: Makefile.hash,v 1.6 2012/08/20 15:44:02 joerg Exp $
+
+SCRIPT_ENV=	\
+	TOOL_AWK=${TOOL_AWK:Q} \
+	TOOL_NBPERF=${TOOL_NBPERF:Q} \
+	TOOL_SED=${TOOL_SED:Q} \
+	TOOL_SORT=${TOOL_SORT:Q} \
+	TOOL_TIC=${TOOL_TIC:Q} \
+	TERMINFO=${NETBSDSRCDIR}/share/terminfo/terminfo
+
+PARSEDIR:=${.PARSEDIR}
+# Generate our string and hash tables
+hash.c: genhash term.h
+		@echo "Generating terminfo hash"
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+termcap_hash.c: genthash termcap_map.c
+		@echo "Generating termcap hash"
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+# Allow terminfo descriptions to be compiled into libterminfo
+compiled_terms.c: genterms term.h ${NETBSDSRCDIR}/share/terminfo/terminfo
+		@echo "Generating compiled terminfo descriptions"
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+.if ${USETOOLS} == "yes"
+compiled_terms.c: ${TOOL_TIC}
+.endif
+
+DPSRCS+=	hash.c termcap_hash.c compiled_terms.c
+
+CLEANFILES+=	hash.c termcap_hash.c compiled_terms.c

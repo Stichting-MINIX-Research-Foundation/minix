@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.21 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.22 2012/02/19 19:38:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.21 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.22 2012/02/19 19:38:13 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -77,8 +77,8 @@ wclrtobot(WINDOW *win)
 		starty = win->cury;
 		startx = win->curx;
 	}
-	if (__using_color && win != curscr)
-		attr = win->battr & __COLOR;
+	if (win != curscr)
+		attr = win->battr & __ATTRIBUTES;
 	else
 		attr = 0;
 	for (y = starty; y < win->maxy; y++) {
@@ -89,12 +89,15 @@ wclrtobot(WINDOW *win)
 			if (sp->ch != win->bch || sp->attr != attr) {
 #else
 			if (sp->ch != (wchar_t)btowc((int) win->bch) ||
-			    (sp->attr & WA_ATTRIBUTES) != 0 || sp->nsp) {
+			    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp) {
 #endif /* HAVE_WCHAR */
 				maxx = sp;
 				if (minx == -1)
 					minx = (int)(sp - win->alines[y]->line);
-				sp->attr = attr;
+				if (sp->attr & __ALTCHARSET)
+					sp->attr = attr | __ALTCHARSET;
+				else
+					sp->attr = attr;
 #ifdef HAVE_WCHAR
 				sp->ch = ( wchar_t )btowc(( int ) win->bch);
 				if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)

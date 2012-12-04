@@ -1,4 +1,4 @@
-/*	$NetBSD: addchnstr.c,v 1.4 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: addchnstr.c,v 1.5 2012/09/28 06:00:39 blymn Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addchnstr.c,v 1.4 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: addchnstr.c,v 1.5 2012/09/28 06:00:39 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -122,8 +122,11 @@ mvwaddchnstr(WINDOW *win, int y, int x, const chtype *chstr, int n)
 /*
  * waddchnstr --
  *	Add a string (at most n characters) to the given window
- *	starting at (_cury, _curx).  If n is negative, add the
- *	entire string.
+ *	starting at (_cury, _curx) until the end of line is reached or
+ *      n characters have been added.  If n is negative, add as much
+ *	of the string that will fit on the current line.  SUSv2 says
+ *      that the addchnstr family does not wrap and strings are truncated
+ *      to the RHS of the window.
  */
 int
 waddchnstr(WINDOW *win, const chtype *chstr, int n)
@@ -143,6 +146,10 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 		for (chp = chstr, len = 0; n-- && *chp++; ++len);
 	else
 		for (chp = chstr, len = 0; *chp++; ++len);
+
+	/* check if string is too long for current location */
+	if (len > (win->maxx - win->curx))
+		len = win->maxx - win->curx;
 
 	if ((ocp = malloc(len + 1)) == NULL)
 		return ERR;
