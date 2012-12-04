@@ -20,7 +20,8 @@ SUBDIR= \
 	sed seq \
 	sort stat su \
 	tic \
-	uniq  \
+	tsort \
+	uniq \
 	xinstall 
 
 .if !defined(__MINIX)
