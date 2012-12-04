@@ -67,6 +67,7 @@
 2012/10/17 12:00:00,tools/nbperf
 2012/10/17 12:00:00,tools/sed
 2012/10/17 12:00:00,tools/tic
+2012/10/17 12:00:00,tools/tsort
 2012/10/17 12:00:00,usr.bin/gzip/Makefile
 2012/10/17 12:00:00,usr.bin/indent
 2012/10/17 12:00:00,usr.bin/join
@@ -76,6 +77,7 @@
 2012/10/17 12:00:00,usr.bin/nbperf
 2012/10/17 12:00:00,usr.bin/passwd/Makefile
 2012/10/17 12:00:00,usr.bin/sort
+2012/10/17 12:00:00,usr.bin/tsort
 2012/10/17 12:00:00,usr.bin/xinstall
 2012/10/17 12:00:00,usr.sbin/Makefile
 2012/10/17 12:00:00,usr.sbin/Makefile.inc
