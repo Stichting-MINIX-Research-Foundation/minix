@@ -276,6 +276,7 @@
 ./usr/bin/logger			minix-sys
 ./usr/bin/login				minix-sys
 ./usr/bin/look				minix-sys
+./usr/bin/lorder			minix-sys
 ./usr/bin/lpd				minix-sys
 ./usr/bin/lp				minix-sys
 ./usr/bin/lspci				minix-sys
@@ -1291,6 +1292,7 @@
 ./usr/man/man1/logger.1			minix-sys
 ./usr/man/man1/login.1			minix-sys
 ./usr/man/man1/look.1			minix-sys
+./usr/man/man1/lorder.1			minix-sys
 ./usr/man/man1/lp.1			minix-sys
 ./usr/man/man1/ls.1			minix-sys
 ./usr/man/man1/lspci.1			minix-sys
