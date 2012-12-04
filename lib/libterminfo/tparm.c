@@ -1,7 +1,7 @@
-/* $NetBSD: tparm.c,v 1.2 2010/09/22 06:10:51 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.2 2010/09/22 06:10:51 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $");
+#include <sys/param.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -43,18 +44,18 @@ __RCSID("$NetBSD: tparm.c,v 1.2 2010/09/22 06:10:51 roy Exp $");
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
 typedef struct {
-	long nums[20];
+	int nums[20];
 	char *strings[20];
 	size_t offset;
 } TPSTACK;
 
 typedef struct {
-	long num;
+	int num;
 	char *string;
 } TPVAR;
 
 static int
-push(long num, char *string, TPSTACK *stack)
+push(int num, char *string, TPSTACK *stack)
 {
 	if (stack->offset > sizeof(stack->nums)) {
 		errno = E2BIG;
@@ -67,9 +68,13 @@ push(long num, char *string, TPSTACK *stack)
 }
 
 static int
-pop(long *num, char **string, TPSTACK *stack)
+pop(int *num, char **string, TPSTACK *stack)
 {
 	if (stack->offset == 0) {
+		if (num)
+			*num = 0;
+		if (string)
+			*string = NULL;
 		errno = E2BIG;
 		return -1;
 	}
@@ -87,10 +92,10 @@ checkbuf(TERMINAL *term, size_t len)
 	char *buf;
 	
 	if (term->_bufpos + len >= term->_buflen) {
-		len = term->_buflen + BUFSIZ;
+		len = term->_buflen + MAX(len, BUFSIZ);
 		buf = realloc(term->_buf, len);
 		if (buf == NULL)
-			return 0;
+			return NULL;
 		term->_buf = buf;
 		term->_buflen = len;
 	}
@@ -110,7 +115,7 @@ ochar(TERMINAL *term, int c)
 }
 
 static size_t
-onum(TERMINAL *term, const char *fmt, long num, int len)
+onum(TERMINAL *term, const char *fmt, int num, int len)
 {
 	size_t l;
 
@@ -125,12 +130,12 @@ onum(TERMINAL *term, const char *fmt, long num, int len)
 }
 
 static char *
-_ti_vtparm(TERMINAL *term, const char *str, va_list parms)
+_ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 {
 	const char *sp;
 	char c, fmt[64], *fp, *ostr;
-	long val, val2;
-	long dnums[26]; /* dynamic variables a-z, not preserved */
+	int val, val2;
+	int dnums[26]; /* dynamic variables a-z, not preserved */
 	size_t l, max;
 	TPSTACK stack;
 	TPVAR params[9];
@@ -146,6 +151,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 	  still work with non thread safe functions (which sadly are still the
 	  norm and standard).
 	*/
+
 	if (term == NULL) {
 		if (dumbterm == NULL) {
 			dumbterm = malloc(sizeof(*dumbterm));
@@ -167,7 +173,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 
 	/*
 	  Make a first pass through the string so we can work out
-	  which parameters are longs and which are char *.
+	  which parameters are ints and which are char *.
 	  Basically we only use char * if %p[1-9] is followed by %l or %s.
 	*/
 	memset(&piss, 0, sizeof(piss));
@@ -184,7 +190,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		c = *sp++;
 		if (c < '1' || c > '9') {
 			errno = EINVAL;
-			return NULL;
+			continue;
 		}
 		l = c - '0';
 		if (l > max)
@@ -204,7 +210,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 	memset(&params, 0, sizeof(params));
 	for (l = 0; l < max; l++) {
 		if (piss[l] == 0)
-			params[l].num = va_arg(parms, long);
+			params[l].num = va_arg(parms, int);
 		else
 			params[l].string = va_arg(parms, char *);
 	}
@@ -288,14 +294,12 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		/* Handle commands */
 		switch (c) {
 		case 'c':
-			if (pop(&val, NULL, &stack))
-			    return NULL;
+			pop(&val, NULL, &stack);
 			if (ochar(term, (unsigned char)val) == 0)
 				return NULL;
 			break;
 		case 's':
-			if (pop(NULL, &ostr, &stack))
-				return NULL;
+			pop(NULL, &ostr, &stack);
 			if (ostr != NULL) {
 				l = strlen(ostr);
 				if (l < (size_t)olen)
@@ -308,44 +312,37 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 			}
 			break;
 		case 'l':
-			if (pop(NULL, &ostr, &stack))
-				return NULL;
+			pop(NULL, &ostr, &stack);
 			if (ostr == NULL)
 				l = 0;
 			else
 				l = strlen(ostr);
-			if (onum(term, "%d", (long)l, 0) == 0)
+			if (onum(term, "%d", (int)l, 0) == 0)
 				return NULL;
 			break;
 		case 'd': /* FALLTHROUGH */
 		case 'o': /* FALLTHROUGH */
 		case 'x': /* FALLTHROUGH */
 		case 'X':
-			if (pop(&val, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
 			if (onum(term, fmt, val, olen) == 0)
 				return NULL;
 			break;
 		case 'p':
-			if (*str < '1' || *str > '9') {
-				errno = EINVAL;
-				return NULL;
-			}
+			if (*str < '1' || *str > '9')
+				break;
 			l = *str++ - '1';
 			if (push(params[l].num, params[l].string, &stack))
 				return NULL;
 			break;
 		case 'P':
-			if (pop(&val, NULL, &stack))
-				return NULL;
-			str++;
+			pop(&val, NULL, &stack);
 			if (*str >= 'a' && *str <= 'z')
 				dnums[*str - 'a'] = val;
 			else if (*str >= 'A' && *str <= 'Z')
 				term->_snums[*str - 'A'] = val;
 			break;
 		case 'g':
-			str++;
 			if (*str >= 'a' && *str <= 'z') {
 				if (push(dnums[*str - 'a'], NULL, &stack))
 					return NULL;
@@ -362,7 +359,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 				params[1].num++;
 			break;
 		case '\'':
-			if (push((long)(unsigned char)*str++, NULL, &stack))
+			if (push((int)(unsigned char)*str++, NULL, &stack))
 				return NULL;
 			while (*str != '\0' && *str != '\'')
 				str++;
@@ -371,7 +368,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 			break;
 		case '{':
 			val = 0;
-			for (str++; isdigit((unsigned char)*str);  str++)
+			for (; isdigit((unsigned char)*str);  str++)
 				val = (val * 10) + (*str - '0');
 			if (push(val, NULL, &stack))
 				return NULL;
@@ -393,9 +390,8 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		case '=': /* FALLTHROUGH */
 		case '<': /* FALLTHROUGH */
 		case '>':
-			if (pop(&val, NULL, &stack) ||
-			    pop(&val2, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
+			pop(&val2, NULL, &stack);
 			switch (c) {
 			case '+':
 				val = val + val2;
@@ -442,8 +438,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 			break;
 		case '!':
 		case '~':
-			if (pop(&val, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
 			switch (*str) {
 			case '!':
 				val = !val;
@@ -458,8 +453,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		case '?': /* if */
 			break;
 		case 't': /* then */
-			if (pop(&val, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
 			if (val != 0) {
 				l = 0;
 				for (; *str != '\0'; str++) {
@@ -503,7 +497,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 }
 
 char *
-t_vparm(TERMINAL *term, const char *str, ...)
+ti_tiparm(TERMINAL *term, const char *str, ...)
 {
 	va_list va;
 	char *ret;
@@ -512,13 +506,13 @@ t_vparm(TERMINAL *term, const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-	ret = _ti_vtparm(term, str, va);
+	ret = _ti_tiparm(term, str, va);
 	va_end(va);
 	return ret;
 }
 
 char *
-vtparm(const char *str, ...)
+tiparm(const char *str, ...)
 {
 	va_list va;
 	char *ret;
@@ -526,28 +520,18 @@ vtparm(const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-        ret = _ti_vtparm(NULL, str, va);
+        ret = _ti_tiparm(NULL, str, va);
 	va_end(va);
 	return ret;
-}
-
-char *
-t_parm(TERMINAL *term, const char *str,
-    long p1, long p2, long p3, long p4, long p5,
-    long p6, long p7, long p8, long p9)
-{
-	
-	_DIAGASSERT(term != NULL);
-	_DIAGASSERT(str != NULL);
-	return t_vparm(term, str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }
 
 char *
 tparm(const char *str,
-    long p1, long p2, long p3, long p4, long p5,
-    long p6, long p7, long p8, long p9)
+    long lp1, long lp2, long lp3, long lp4, long lp5,
+    long lp6, long lp7, long lp8, long lp9)
 {
-	
-	_DIAGASSERT(str != NULL);
-	return t_vparm(NULL, str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+	int p1 = lp1, p2 = lp2, p3 = lp3, p4 = lp4, p5 = lp5;
+	int p6 = lp6, p7 = lp7, p8 = lp8, p9 = lp9;
+
+	return tiparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }

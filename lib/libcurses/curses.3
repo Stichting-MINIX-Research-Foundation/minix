@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.61 2010/12/09 13:26:27 njoly Exp $
+.\"	$NetBSD: curses.3,v 1.63 2012/04/21 12:27:27 roy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 6, 2009
+.Dd April 5, 2012
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -118,7 +118,6 @@ must be called before any of the other routines that deal with color are used.
 .It getbegx Ta Xr curses_cursor 3
 .It getbegy Ta Xr curses_cursor 3
 .It getbkgd Ta Xr curses_background 3
-.It getcap Ta Xr curses_termcap 3
 .It getch Ta Xr curses_input 3
 .It getcurx Ta Xr curses_cursor 3
 .It getcury Ta Xr curses_cursor 3
@@ -158,7 +157,6 @@ must be called before any of the other routines that deal with color are used.
 .It keypad Ta Xr curses_input 3
 .It killchar Ta Xr curses_tty 3
 .It leaveok Ta Xr curses_tty 3
-.It longname Ta Xr curses_termcap 3
 .It meta Ta Xr curses_tty 3
 .It move Ta Xr curses_cursor 3
 .It mvaddch Ta Xr curses_addch 3
@@ -321,7 +319,7 @@ The terminal type of the current terminal.
 .Xr ioctl 2 ,
 .Xr getenv 3 ,
 .Xr tty 4 ,
-.Xr termcap 5
+.Xr terminfo 5
 .Rs
 .%T Screen Updating and Cursor Movement Optimization: A Library Package
 .%A Ken Arnold

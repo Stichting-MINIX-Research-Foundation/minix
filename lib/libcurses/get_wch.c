@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.9 2010/12/16 17:42:28 wiz Exp $ */
+/*   $NetBSD: get_wch.c,v 1.10 2012/06/29 10:40:29 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.9 2010/12/16 17:42:28 wiz Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.10 2012/06/29 10:40:29 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -67,7 +67,7 @@ void
 __init_get_wch(SCREEN *screen)
 {
 	wstate = INKEY_NORM;
-	memset( &screen->cbuf, 0, MAX_CBUF_SIZE * sizeof( int ));
+	memset( &screen->cbuf, 0, sizeof(screen->cbuf));
 	screen->cbuf_head = screen->cbuf_tail = screen->cbuf_cur = 0;
 }
 #endif /* HAVE_WCHAR */

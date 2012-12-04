@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_window.3,v 1.13 2009/05/18 09:30:31 wiz Exp $
+.\"	$NetBSD: curses_window.3,v 1.15 2011/09/15 12:01:18 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd March 31, 2008
+.Dd September 15, 2011
 .Dt CURSES_WINDOW 3
 .Os
 .Sh NAME
@@ -155,18 +155,28 @@ positions are the new origin of the window on the screen.
 If the new position would cause the any part of the window to lie outside
 the screen, it is an error and the window is not moved.
 .Pp
-A subwindow can be moved relative to the parent window by calling the
+A mapping of a region relative to the parent window may be created by
+calling the
 .Fn mvderwin
 function, the
 .Fa y
 and
 .Fa x
 positions are relative to the origin of the parent window.
+The screen offset of
+.Fa win
+is not updated, the characters beginning at
+.Fa y ,
+.Fa x
+for the area the size of
+.Fa win
+will be displayed at the screen offset of
+.Fa win .
 If the given window in
 .Fa win
 is not a subwindow then an error will be returned.
 If the new position would cause the any part of the window to lie outside
-the parent window, it is an error and the window is not moved.
+the parent window, it is an error and the mapping is not updated.
 .Pp
 The
 .Fn newwin

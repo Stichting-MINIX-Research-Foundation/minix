@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2010/02/03 15:34:40 roy Exp $
+#	$NetBSD: Makefile,v 1.68 2012/04/21 14:39:35 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -69,6 +69,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_clear.3 clrtobot.3 curses_clear.3 clrtoeol.3 \
 	 curses_color.3 color_content.3 curses_attributes.3 color_set.3 \
 	 curses_window.3 copywin.3 curses_tty.3 curs_set.3 \
+	 curses_input.3 define_key.3 \
 	 curses_tty.3 delay_output.3  curses_tty.3 def_prog_mode.3 \
 	 curses_tty.3 def_shell_mode.3 curses_delch.3 delch.3 \
 	 curses_deleteln.3 deleteln.3 curses_screen.3 delscreen.3 \
@@ -80,7 +81,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_tty.3 flash.3 curses_tty.3 flushinp.3 \
 	 curses_refresh.3 flushok.3 \
 	 curses_termcap.3 fullname.3 curses_attributes.3 getattrs.3  \
-	 curses_background.3 getbkgd.3 curses_termcap.3 getcap.3 \
+	 curses_background.3 getbkgd.3 \
 	 curses_input.3 getch.3 curses_cursor.3 getcury.3 \
 	 curses_cursor.3 getcurx.3 curses_cursor.3 getbegy.3 \
 	 curses_cursor.3 getbegx.3 curses_cursor.3 getmaxx.3 \
@@ -103,7 +104,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_touch.3 is_wintouched.3 curses_screen.3 isendwin.3 \
 	 curses_keyname.3 keyname.3 \
 	 curses_input.3 keypad.3 curses_tty.3 killchar.3 \
-	 curses_refresh.3 leaveok.3 curses_termcap.3 longname.3 \
+	 curses_refresh.3 leaveok.3 \
 	 curses_tty.3 meta.3 curses_cursor.3 move.3 \
 	 curses_addch.3 mvaddch.3 curses_addchstr.3 mvaddchnstr.3 \
 	 curses_addchstr.3 mvaddchstr.3 curses_addstr.3 mvaddnstr.3 \

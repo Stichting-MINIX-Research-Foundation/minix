@@ -1,3 +1,11 @@
+20121205:
+	Following the terminfo update, some tools have are now used during 
+	the build. Execute the following to install them:
+	# make -C usr.bin/nbperf all install
+	# make -C usr.bin/lorder all install
+	# make -C usr.bin/join all install
+	# make -C usr.bin/tic all install
+
 20121127:
 	/etc/mtab is now obsoleted by /proc/mounts. You need to create a
 	symlink:

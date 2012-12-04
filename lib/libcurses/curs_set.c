@@ -1,4 +1,4 @@
-/*	$NetBSD: curs_set.c,v 1.9 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: curs_set.c,v 1.10 2011/03/30 09:47:02 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: curs_set.c,v 1.9 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: curs_set.c,v 1.10 2011/03/30 09:47:02 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -59,6 +59,7 @@ curs_set(int visibility)
 #endif
 				_cursesi_screen->old_mode = 0;
 				tputs(cursor_invisible, 0, __cputchar);
+				fflush(_cursesi_screen->outfd);
 				return old_one;
 			}
 			break;
@@ -70,6 +71,7 @@ curs_set(int visibility)
 #endif
 				_cursesi_screen->old_mode = 1;
 				tputs(cursor_normal, 0, __cputchar);
+				fflush(_cursesi_screen->outfd);
 				return old_one;
 			}
 			break;
@@ -82,6 +84,7 @@ curs_set(int visibility)
 #endif
 				_cursesi_screen->old_mode = 2;
 				tputs(cursor_visible, 0, __cputchar);
+				fflush(_cursesi_screen->outfd);
 				return old_one;
 			}
 			break;
