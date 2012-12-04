@@ -1,4 +1,10 @@
 20121205:
+	The tsort tool has been also upgraded and is now also used during
+	the build:
+	# make -C usr.bin/tic all install
+	# cp share/mk/* /usr/share/mk
+
+20121205:
 	Following the terminfo update, some tools have are now used during 
 	the build. Execute the following to install them:
 	# make -C usr.bin/nbperf all install
