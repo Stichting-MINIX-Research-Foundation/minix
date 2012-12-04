@@ -1,3 +1,8 @@
+20121205:
+	lorder requires a newer version of sort, so to ensure it is present
+	do the following:
+	# make -C usr.bin/sort clean all install
+
 20121127:
 	/etc/mtab is now obsoleted by /proc/mounts. You need to create a
 	symlink:
