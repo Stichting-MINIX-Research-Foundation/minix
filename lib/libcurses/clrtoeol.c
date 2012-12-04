@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.25 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.26 2012/02/19 19:38:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.25 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.26 2012/02/19 19:38:13 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -82,8 +82,8 @@ wclrtoeol(WINDOW *win)
 	end = &win->alines[y]->line[win->maxx];
 	minx = -1;
 	maxx = &win->alines[y]->line[x];
-	if (__using_color && win != curscr)
-		attr = win->battr & __COLOR;
+	if (win != curscr)
+		attr = win->battr & __ATTRIBUTES;
 	else
 		attr = 0;
 	for (sp = maxx; sp < end; sp++)
@@ -97,7 +97,7 @@ wclrtoeol(WINDOW *win)
 			maxx = sp;
 			if (minx == -1)
 				minx = (int) (sp - win->alines[y]->line);
-			sp->attr = attr;
+			sp->attr = attr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
 			sp->ch = ( wchar_t )btowc(( int ) win->bch);
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)

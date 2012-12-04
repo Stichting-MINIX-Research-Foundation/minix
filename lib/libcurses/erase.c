@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.24 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: erase.c,v 1.25 2011/07/10 12:11:49 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.24 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: erase.c,v 1.25 2011/07/10 12:11:49 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -72,8 +72,8 @@ werase(WINDOW *win)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "werase: (%p)\n", win);
 #endif
-	if (__using_color && win != curscr)
-		attr = win->battr & __COLOR;
+	if (win != curscr)
+		attr = win->battr & __ATTRIBUTES;
 	else
 		attr = 0;
 	for (y = 0; y < win->maxy; y++) {
@@ -86,7 +86,10 @@ werase(WINDOW *win)
 			if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
 			    (sp->attr & WA_ATTRIBUTES) != 0 || sp->nsp) {
 #endif /* HAVE_WCHAR */
-				sp->attr = attr;
+				if (sp->attr & __ALTCHARSET)
+					sp->attr = attr | __ALTCHARSET;
+				else
+					sp->attr = attr;
 #ifdef HAVE_WCHAR
 				sp->ch = ( wchar_t )btowc(( int ) win->bch);
 				if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)

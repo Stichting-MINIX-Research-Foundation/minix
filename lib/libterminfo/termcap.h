@@ -1,7 +1,7 @@
-/* $NetBSD: termcap.h,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: termcap.h,v 1.2 2011/04/11 21:13:09 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -34,7 +34,6 @@
 
 __BEGIN_DECLS
 
-#ifndef _TERM_H
 /* Output functions.
  * These are still valid for terminfo. */
 int		putp(const char *);
@@ -42,8 +41,6 @@ int		tputs(const char *, int, int (*)(int));
 
 extern short ospeed;
 extern char PC;
-#endif
-
 extern char *BC;
 extern char *UP;
 

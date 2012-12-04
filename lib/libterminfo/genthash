@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: genthash,v 1.4 2010/03/03 12:09:49 roy Exp $
+# $NetBSD: genthash,v 1.5 2011/11/02 12:09:25 roy Exp $
 
-# Copyright (c) 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 #
 # This code is derived from software contributed to The NetBSD Foundation
 # by Roy Marples.
@@ -36,12 +36,8 @@ set -e
 TERMCAPC=${1:-termcap_map.c}
 
 cat <<EOF
-/* \$NetBSD\$ */
 /* DO NOT EDIT
  * Automatically generated from termcap.c */
-
-#include <sys/cdefs.h>
-__RCSID("\$NetBSD: genthash,v 1.4 2010/03/03 12:09:49 roy Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -51,12 +47,12 @@ EOF
 
 $TOOL_SED -n -e "1,/_ti_cap_flagids/d" -e '/};/,$d' \
 	-e 's/.*"\([^"]*\)".*/\1/p' $TERMCAPC | \
-	$TOOL_NBPERF -s -n _t_flaghash
+	$TOOL_NBPERF -p -s -n _t_flaghash
 echo
 $TOOL_SED -n -e "1,/_ti_cap_numids/d" -e '/};/,$d' \
 	-e 's/.*"\([^"]*\)".*/\1/p' $TERMCAPC | \
-	$TOOL_NBPERF -s -n _t_numhash
+	$TOOL_NBPERF -p -s -n _t_numhash
 echo
 $TOOL_SED -n -e "1,/_ti_cap_strids/d" -e '/};/,$d' \
 	-e 's/.*"\([^"]*\)".*/\1/p' $TERMCAPC | \
-	$TOOL_NBPERF -s -n _t_strhash
+	$TOOL_NBPERF -p -s -n _t_strhash

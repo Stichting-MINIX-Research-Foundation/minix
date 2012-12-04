@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.10 2010/10/12 12:49:27 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.17 2011/11/13 15:24:04 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.10 2010/10/12 12:49:27 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.17 2011/11/13 15:24:04 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -74,13 +74,12 @@ tgetent(__unused char *bp, const char *name)
 }
 
 int
-tgetflag(const char *id)
+tgetflag(const char *id2)
 {
 	uint32_t ind;
 	size_t i;
 	TERMUSERDEF *ud;
-
-	_DIAGASSERT(id != NULL);
+	const char id[] = { id2[0], id2[0] ? id2[1] : '\0', '\0' };
 
 	if (cur_term == NULL)
 		return 0;
@@ -99,14 +98,13 @@ tgetflag(const char *id)
 }
 
 int
-tgetnum(const char *id)
+tgetnum(const char *id2)
 {
 	uint32_t ind;
 	size_t i;
 	TERMUSERDEF *ud;
 	const TENTRY *te;
-
-	_DIAGASSERT(id != NULL);
+	const char id[] = { id2[0], id2[0] ? id2[1] : '\0', '\0' };
 
 	if (cur_term == NULL)
 		return -1;
@@ -132,14 +130,13 @@ tgetnum(const char *id)
 }
 
 char *
-tgetstr(const char *id, char **area)
+tgetstr(const char *id2, char **area)
 {
 	uint32_t ind;
 	size_t i;
 	TERMUSERDEF *ud;
 	const char *str;
-
-	_DIAGASSERT(id != NULL);
+	const char id[] = { id2[0], id2[0] ? id2[1] : '\0', '\0' };
 
 	if (cur_term == NULL)
 		return NULL;
@@ -178,9 +175,8 @@ tgetstr(const char *id, char **area)
 char *
 tgoto(const char *cm, int destcol, int destline)
 {
-	
 	_DIAGASSERT(cm != NULL);
-	return vtparm(cm, destline, destcol);
+	return tiparm(cm, destline, destcol);
 }
 
 static const char *
@@ -223,14 +219,82 @@ strname(const char *key)
 	return key;
 }
 
-/* We don't currently map %> %B %D
- * That means no conversion for regent100, hz1500, act4, act5, mime terms. */
+/* Print a parameter if needed */
+static int
+printparam(char **dst, char p, int *nop)
+{
+	if (*nop != 0) {
+		*nop = 0;
+		return 0;
+	}
+
+	*(*dst)++ = '%';
+	*(*dst)++ = 'p';
+	*(*dst)++ = '0' + p;
+	return 3;
+}
+
+/* Convert a termcap character into terminfo equivalents */
+static int
+printchar(char **dst, const char **src)
+{
+	unsigned char v;
+	int l;
+
+	l = 4;
+	v = (unsigned char) *++(*src);
+	if (v == '\\') {
+		v = (unsigned char) *++(*src);
+		switch (v) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+			v = 0;
+			while (isdigit((unsigned char) **src))	
+				v = 8 * v + ((unsigned char) *(*src)++ - '0');
+			(*src)--;
+			break;
+		case '\0':
+			v = '\\';
+			break;
+		}
+	} else if (v == '^')
+		v = (unsigned char) (*++(*src) & 0x1f);
+	*(*dst)++ = '%';
+	if (isgraph(v) && v != ',' && v != '\'' && v != '\\' && v != ':') {
+		*(*dst)++ = '\'';
+		*(*dst)++ = v;
+		*(*dst)++ = '\'';
+	} else {
+		*(*dst)++ = '{';
+		if (v > 99) {
+			*(*dst)++ = '0'+ v / 100;
+			l++;
+		}
+		if (v > 9) {
+			*(*dst)++ = '0' + ((int) (v / 10)) % 10;
+			l++;
+		}
+		*(*dst)++ = '0' + v % 10;
+		*(*dst)++ = '}';
+	}
+	return l;
+}
+
+/* Convert termcap commands into terminfo commands */
+static const char fmtB[] = "%p0%{10}%/%{16}%*%p0%{10}%m%+";
+static const char fmtD[] = "%p0%p0%{2}%*%-";
+static const char fmtIf[] = "%p0%p0%?";
+static const char fmtThen[] = "%>%t";
+static const char fmtElse[] = "%+%;";
+
 static char *
 strval(const char *val)
 {
 	char *info, *ip, c;
 	const char *ps, *pe;
-	int p;
+	int p, nop;
 	size_t len, l;
 
 	len = 1024; /* no single string should be bigger */
@@ -254,7 +318,7 @@ strval(const char *val)
 	} else
 		ps = pe  = NULL;
 
-	l = 0;
+	l = nop = 0;
 	p = 1;
 	for (; *val != '\0'; val++) {
 		if (l + 2 > len)
@@ -270,27 +334,98 @@ strval(const char *val)
 			l++;
 			continue;
 		}
-		switch (c = *(++val)) {
+		switch (c = *++(val)) {
+		case 'B':
+			if (l + sizeof(fmtB) > len)
+				goto elen;
+			memcpy(ip, fmtB, sizeof(fmtB) - 1);
+			/* Replace the embedded parameters with real ones */
+			ip[2] += p;
+			ip[19] += p;
+			ip += sizeof(fmtB) - 1;
+			l += sizeof(fmtB) - 1;
+			nop = 1;
+			continue;
+		case 'D':
+			if (l + sizeof(fmtD) > len)
+				goto elen;
+			memcpy(ip, fmtD, sizeof(fmtD) - 1);
+			/* Replace the embedded parameters with real ones */
+			ip[2] += p;
+			ip[5] += p;
+			ip += sizeof(fmtD) - 1;
+			l += sizeof(fmtD) - 1;
+			nop = 1;
+			continue;
+		case 'r':
+			/* non op as switched below */
+			break;
+		case '2': /* FALLTHROUGH */
+		case '3': /* FALLTHROUGH */
 		case 'd':
+			if (l + 7 > len)
+				goto elen;
+			l += printparam(&ip, p, &nop);
+			*ip++ = '%';
+			if (c != 'd') {
+				*ip++ = c;
+				l++;
+			}
+			*ip++ = 'd';
+			l += 2;
+			break;
+		case '+':
+			if (l + 13 > len)
+				goto elen;
+			l += printparam(&ip, p, &nop);
+			l += printchar(&ip, &val);
+			*ip++ = '%';
+			*ip++ = c; 
+			*ip++ = '%';
+			*ip++ = 'c';
+			l += 7;
+			break;
+		case '>':
+			if (l + sizeof(fmtIf) + sizeof(fmtThen) +
+			    sizeof(fmtElse) + (6 * 2) > len)
+				goto elen;
+
+			memcpy(ip, fmtIf, sizeof(fmtIf) - 1);
+			/* Replace the embedded parameters with real ones */
+			ip[2] += p;
+			ip[5] += p;
+			ip += sizeof(fmtIf) - 1;
+			l += sizeof(fmtIf) - 1;
+			l += printchar(&ip, &val);
+			memcpy(ip, fmtThen, sizeof(fmtThen) - 1);
+			ip += sizeof(fmtThen) - 1;
+			l += sizeof(fmtThen) - 1;
+			l += printchar(&ip, &val);
+			memcpy(ip, fmtElse, sizeof(fmtElse) - 1);
+			ip += sizeof(fmtElse) - 1;
+			l += sizeof(fmtElse) - 1;
+			l += 16;
+			nop = 1;
+			continue;
+		case '.':
 			if (l + 6 > len)
 				goto elen;
+			l += printparam(&ip, p, &nop);
 			*ip++ = '%';
-			*ip++ = 'p';
-			*ip++ = '0' + p;
-			*ip++ = '%';
-			*ip++ = 'd';
-			l += 5;
-			/* FALLTHROUGH */
-		case 'r':
-			p = 3 - p;
+			*ip++ = 'c';
+			l += 2;
 			break;
 		default:
 			/* Hope it matches a terminfo command. */
 			*ip++ = '%';
 			*ip++ = c;
 			l += 2;
+			if (c == 'i')
+				continue;
 			break;
 		}
+		/* Swap p1 and p2 */
+		p = 3 - p;
 	}
 
 	/* \E\ is valid termcap.

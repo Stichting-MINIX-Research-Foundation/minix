@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.38 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: tstp.c,v 1.39 2011/08/29 11:07:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,13 +34,9 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.38 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.39 2011/08/29 11:07:38 christos Exp $");
 #endif
 #endif				/* not lint */
-
-#ifndef TCSASOFT
-#define TCSASOFT 0
-#endif
 
 #include <sys/ioctl.h>
 
@@ -59,6 +55,9 @@ static void (*otstpfn)
 __P((int)) = SIG_DFL;
 
 static struct sigaction	owsa;
+#ifndef TCSASOFT
+#define TCSASOFT 0
+#endif
 
 /*
  * stop_signal_handler --
@@ -247,9 +246,8 @@ __stopwin(void)
 
 	_cursesi_screen->endwin = 1;
 
-	return (tcsetattr(fileno(_cursesi_screen->infd),
-			  __tcaction ? TCSASOFT | TCSADRAIN : TCSADRAIN,
-			  &_cursesi_screen->orig_termios) ? ERR : OK);
+	return tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
+	    &_cursesi_screen->orig_termios) ? ERR : OK;
 }
 
 
@@ -303,9 +301,8 @@ __restartwin(void)
 			 &_cursesi_screen->orig_termios);
 
 	/* Reset the terminal state to the mode just before we stopped. */
-	(void) tcsetattr(fileno(_cursesi_screen->infd),
-			 __tcaction ? TCSASOFT | TCSADRAIN : TCSADRAIN,
-			 &_cursesi_screen->save_termios);
+	(void) tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
+	    &_cursesi_screen->save_termios);
 
 	/* Restore colours */
 	__restore_colors();
@@ -329,28 +326,27 @@ def_prog_mode(void)
 	if (_cursesi_screen->endwin)
 		return ERR;
 
-	return (tcgetattr(fileno(_cursesi_screen->infd),
-			  &_cursesi_screen->save_termios) ? ERR : OK);
+	return tcgetattr(fileno(_cursesi_screen->infd),
+	    &_cursesi_screen->save_termios) ? ERR : OK;
 }
 
 int
 reset_prog_mode(void)
 {
 
-	return tcsetattr(fileno(_cursesi_screen->infd),
-			 __tcaction ? TCSASOFT | TCSADRAIN : TCSADRAIN,
-			 &_cursesi_screen->save_termios) ? ERR : OK;
+	return tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
+	    &_cursesi_screen->save_termios) ? ERR : OK;
 }
 
 int
 def_shell_mode(void)
 {
-	return (tcgetattr(fileno(_cursesi_screen->infd),
-			  &_cursesi_screen->orig_termios) ? ERR : OK);
+	return tcgetattr(fileno(_cursesi_screen->infd),
+	    &_cursesi_screen->orig_termios) ? ERR : OK;
 }
 
 int
 reset_shell_mode(void)
 {
-	return (__stopwin());
+	return __stopwin();
 }

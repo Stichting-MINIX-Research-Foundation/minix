@@ -1337,7 +1337,7 @@ get_term()
  */
 static int costcount;
 
-typedef void (*tputfunc)(int);
+typedef int (*tputfunc)(int);
 
 /*ARGSUSED*/
 	static int

@@ -1,7 +1,7 @@
-/* $NetBSD: term.h,v 1.6 2010/09/22 06:10:51 roy Exp $ */
+/* $NetBSD: term.h,v 1.12 2012/05/29 00:27:59 dholland Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -1012,7 +1012,7 @@ enum TISTRS{
 #define t_set_bottom_margin_parm(t)	(t)->strs[TICODE_smgbp]
 #define t_set_clock(t)			(t)->strs[TICODE_sclk]
 #define t_set_color_band(t)		(t)->strs[TICODE_setcolor]
-#define t_set_color_paid(t)		(t)->strs[TICODE_scp]
+#define t_set_color_pair(t)		(t)->strs[TICODE_scp]
 #define t_set_foreground(t)		(t)->strs[TICODE_setf]
 #define t_set_left_margin(t)		(t)->strs[TICODE_smgl]
 #define t_set_left_margin_parm(t)	(t)->strs[TICODE_smglp]
@@ -1407,7 +1407,7 @@ enum TISTRS{
 #define set_bottom_margin_parm		 t_set_bottom_margin_parm(cur_term)
 #define set_clock			 t_set_clock(cur_term)
 #define set_color_band			 t_set_color_band(cur_term)
-#define set_color_paid			 t_set_color_paid(cur_term)
+#define set_color_pair			 t_set_color_pair(cur_term)
 #define set_foreground			 t_set_foreground(cur_term)
 #define set_left_margin			 t_set_left_margin(cur_term)
 #define set_left_margin_parm		 t_set_left_margin_parm(cur_term)
@@ -1460,18 +1460,18 @@ typedef struct {
 } TERMINAL;
 #endif
 
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 
 extern TERMINAL *cur_term;
-#ifndef _TERMCAP_H
-extern short ospeed;
-extern char PC;
-#endif
 
 /* setup functions */
 int		setupterm(const char *, int, int *);
 TERMINAL *	set_curterm(TERMINAL *);
 int		del_curterm(TERMINAL *);
+char *		termname(void);
+char *		longname(void);
 
 /* information functions */
 int		tigetflag(const char *);
@@ -1482,18 +1482,12 @@ char *		tigetstr(const char *);
 char *		tparm(const char *, long, long, long, long, long,
 		long, long, long, long);
 
-#ifndef _TERMCAP_H
-/* Output functions. */
-int		putp(const char *);
-int		tputs(const char *, int, int (*)(int));
-#endif
-
 /* Non standard functions, but provide a level of thread safety */
 int		ti_setupterm(TERMINAL **, const char *, int, int *);
 int		ti_getflag(const TERMINAL *, const char *);
 int		ti_getnum(const TERMINAL *, const char *);
 const char *	ti_getstr(const TERMINAL *, const char *);
-char *		t_parm(TERMINAL *, const char *,
+char *		ti_parm(TERMINAL *, const char *,
     long, long, long, long, long, long, long, long, long);
 
 /* These functions do not use PC or speed, but the terminal */
@@ -1502,19 +1496,23 @@ int		ti_puts(const TERMINAL *, const char *, int,
 int		ti_putp(const TERMINAL *, const char *);
 
 /* Using tparm can be kunkly, so provide a variadic function */
-char *		vtparm(const char *, ...);
+/* This is not standard, but ncurses also provides this */
+char *		tiparm(const char *, ...);
 /* And a thread safe version */
-char *		t_vparm(TERMINAL *, const char *, ...);
+char *		ti_tiparm(TERMINAL *, const char *, ...);
 
 /* Default to X/Open tparm, but allow it to be variadic also */
 #ifdef TPARM_VARARGS
-#  define tparm	vtparm
-#  define t_parm t_vtparm
+#  define tparm	tiparm
+#  define ti_parm ti_tiparm
 #endif
 
 /* Convert a termcap string into a terminfo string.
  * The passed string is destroyed and the return string needs to be freed. */
 char *		captoinfo(char *);
+
+/* POSIX says that term.h should also pull in our termcap definitions. */
+#include <termcap.h>
 
 __END_DECLS
 #endif
