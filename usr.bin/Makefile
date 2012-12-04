@@ -12,7 +12,7 @@ SUBDIR= \
 	genassym \
 	indent \
 	ldd \
-	login m4 \
+	login lorder m4 \
 	make man \
 	mkdep mktemp \
 	newgrp \
