@@ -60,7 +60,7 @@ LINT_BITS= lint lint2
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT sed .WAIT \
-		genassym \
+		genassym join \
 		lorder makewhatis mkdep mtree nbperf .WAIT \
 		m4 \
 	.WAIT mkfs.mfs \
