@@ -1,4 +1,10 @@
 20121205:
+	The tsort tool has been also upgraded and is now also used during
+	the build:
+	# make -C usr.bin/tsort all install
+	# cp share/mk/* /usr/share/mk
+
+20121205:
 	lorder requires a newer version of sort, so to ensure it is present
 	do the following:
 	# make -C usr.bin/sort clean all install
