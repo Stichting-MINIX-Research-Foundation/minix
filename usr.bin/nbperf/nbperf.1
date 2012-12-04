@@ -1,0 +1,143 @@
+.\"	$NetBSD: nbperf.1,v 1.5 2012/09/25 20:53:46 joerg Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Joerg Sonnenberger.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 25, 2012
+.Dt NBPERF 1
+.Os
+.Sh NAME
+.Nm nbperf
+.Nd compute a perfect hash function
+.Sh SYNOPSIS
+.Nm
+.Op Fl ps
+.Op Fl a Ar algorithm
+.Op Fl c Ar utilisation
+.Op Fl h Ar hash
+.Op Fl i Ar iterations
+.Op Fl m Ar map-file
+.Op Fl n Ar name
+.Op Fl o Ar output
+.Op Ar input
+.Sh DESCRIPTION
+.Nm
+reads a number of keys one per line from standard input or
+.Ar input .
+It computes a minimal perfect hash function and writes it to stdout or
+.Ar output .
+The default algorithm is
+.Qq Sy chm .
+.Pp
+The
+.Fl m
+argument instructs
+.Nm
+to write the resulting key mapping to
+.Ar map-file .
+Each line gives the result of the hash function for the corresponding input
+key.
+.Pp
+The parameter
+.Ar utilisation
+determines the space efficiency.
+.Pp
+Supported arguments for
+.Fl a :
+.Bl -tag -width "chm"
+.It Sy chm
+This results in an order preserving minimal perfect hash function.
+The
+.Ar utilisation
+must be at least 2, the default.
+The number of iterations needed grows if the utilisation is very near to 2.
+.It Sy chm3
+Similar to
+.Ar chm .
+The resulting hash function needs three instead of two table lookups when
+compared to
+.Ar chm .
+The
+.Ar utilisation
+must be at least 1.24, the default.
+This makes the output for
+.Ar chm3
+noticable smaller than the output for
+.Ar chm .
+.It Sy bdz
+This results in a non-order preserving minimal perfect hash function.
+Output size is approximately 2.79 bit per key for the default value of
+.Ar utilisation ,
+1.24.
+This is also the smallest supported value.
+.El
+.Pp
+Supported arguments for
+.Fl h :
+.Bl -tag -width "mi_vector_hash"
+.It Sy mi_vector_hash
+Platform-independent version of Jenkins parallel hash.
+See
+.Xr mi_vector_hash 3 .
+.El
+.Pp
+The number of iterations can be limited with
+.Fl i .
+.Nm
+outputs a function matching
+.Ft uint32_t
+.Fn hash "const void * restrict" "size_t"
+to stdout.
+The function expects the key length as second argument, for strings not
+including the terminating NUL.
+It is the responsibility of the caller to pass in only valid keys or compare
+the resulting index to the key.
+The function name can be changed using
+.Fl n Ar name .
+If the
+.Fl s
+flag is specified, it will be static.
+.Pp
+After each failing iteration, a dot is written to stderr.
+.Pp
+.Nm
+checks for duplicate keys on the first iteration that passed
+basic hash distribution tests.
+In that case, an error message is printed and the program terminates.
+.Pp
+If the
+.Fl p
+flag is specified, the hash function is seeded in a stable way.
+This may take longer than the normal random seed, but ensures
+that the output is the same for repeated invocations as long as
+the input is constant.
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr mi_vector_hash 3
+.Sh AUTHORS
+.An J\(:org Sonnenberger

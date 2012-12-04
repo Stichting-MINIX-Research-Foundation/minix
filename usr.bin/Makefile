@@ -15,7 +15,7 @@ SUBDIR= \
 	login lorder m4 \
 	make man \
 	mkdep mktemp \
-	newgrp \
+	nbperf newgrp \
 	passwd \
 	sed seq \
 	stat su \
