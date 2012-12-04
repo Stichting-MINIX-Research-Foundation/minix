@@ -298,6 +298,7 @@
 ./usr/bin/mktemp			minix-sys
 ./usr/bin/more				minix-sys
 ./usr/bin/mt				minix-sys
+./usr/bin/nbperf			minix-sys
 ./usr/bin/newgrp			minix-sys
 ./usr/bin/nice				minix-sys
 ./usr/bin/nohup				minix-sys
@@ -1316,6 +1317,7 @@
 ./usr/man/man1/mount.1			minix-sys
 ./usr/man/man1/mt.1			minix-sys
 ./usr/man/man1/mv.1			minix-sys
+./usr/man/man1/nbperf.1			minix-sys
 ./usr/man/man1/newgrp.1			minix-sys
 ./usr/man/man1/nice.1			minix-sys
 ./usr/man/man1/nm.1			minix-sys
