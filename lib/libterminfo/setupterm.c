@@ -1,7 +1,7 @@
-/* $NetBSD: setupterm.c,v 1.2 2010/02/11 00:27:09 roy Exp $ */
+/* $NetBSD: setupterm.c,v 1.3 2011/10/03 19:18:55 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: setupterm.c,v 1.2 2010/02/11 00:27:09 roy Exp $");
+__RCSID("$NetBSD: setupterm.c,v 1.3 2011/10/03 19:18:55 roy Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -82,7 +82,7 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 
 	error = _ti_getterm(*nterm, term, 0);
 	if (error != 1) {
-		free(*nterm);
+		del_curterm(*nterm);
 		*nterm = NULL;
 		switch (error) {
 		case -1:

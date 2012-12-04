@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.30 2010/02/12 10:06:15 roy Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.31 2011/10/03 12:32:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.30 2010/02/12 10:06:15 roy Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.31 2011/10/03 12:32:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -165,7 +165,7 @@ fgoto(in_refresh)
 		destline = outline;
 	
 	if (cursor_address &&
-	    (cgp = t_vparm(NULL, cursor_address, destline, destcol)))
+	    (cgp = tiparm(cursor_address, destline, destcol)))
 	{
 		/*
 		 * Need this condition due to inconsistent behavior

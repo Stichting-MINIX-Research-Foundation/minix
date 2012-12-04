@@ -1,7 +1,7 @@
-/* $NetBSD: curterm.c,v 1.4 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: curterm.c,v 1.8 2011/10/05 10:46:08 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,15 +28,28 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.4 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.8 2011/10/05 10:46:08 roy Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <term_private.h>
 #include <term.h>
 #include <termios.h>
 #include <stdio.h>
+
 TERMINAL *cur_term;
+
+/*
+ * There is no standard way of getting a list of aliases for the
+ * terminal. However, some applications such as telnet want to know this.
+ * ncurses dumps the terminfo header into an undefined variable ttytype
+ * and these applications then parse it to work out the aliases.
+ * We should do the same for now, until a standard mechanism for getting
+ * the information is available or the need for it goes away.
+ */
+#define NAMESIZE	256
+char ttytype[NAMESIZE];
 
 static const speed_t bauds[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 2400, 4800, 9600,
@@ -67,6 +80,8 @@ TERMINAL *
 set_curterm(TERMINAL *nterm)
 {
 	TERMINAL *oterm;
+	size_t l, n;
+	char *p;
 
 	oterm = cur_term;
 	cur_term = nterm;
@@ -81,6 +96,33 @@ set_curterm(TERMINAL *nterm)
 			PC = *pad_char;
 		_ti_setospeed(nterm);
 		ospeed = nterm->_ospeed;
+
+		p = ttytype;
+		l = sizeof(ttytype);
+		if ((n = strlcpy(p, nterm->name, l)) == strlen(p)) {
+			p += n;
+			l -= n;
+			*p++ = '|';
+			l--;
+			if (nterm->_alias  &&
+				(n = strlcpy(p, nterm->_alias, l)) == strlen(p))
+			{
+				p += n;
+				l -= n;
+				*p++ = '|';
+				l--;
+			}
+			if (nterm->desc  &&
+				(n = strlcpy(p, nterm->desc, l)) == strlen(p))
+			{
+				p += n;
+				l -= n;
+				*p++ = '|';
+				l--;
+			}
+			p--;
+		}
+		*p = '\0';
 	}
 
 	return oterm;
@@ -90,6 +132,33 @@ int
 del_curterm(TERMINAL *oterm)
 {
 
-	_ti_freeterm(oterm);
-	return 0;
+	if (oterm == NULL)
+		return ERR;
+	free(oterm->_area);
+	free(oterm->strs);
+	free(oterm->nums);
+	free(oterm->flags);
+	free(oterm->_userdefs);
+	free(oterm);
+	return OK;
+}
+
+char *
+termname(void)
+{
+
+        _DIAGASSERT(cur_term != NULL);
+	return __UNCONST(cur_term->name);
+}
+
+static const char * nullname = '\0';
+
+char *
+longname(void)
+{
+
+	_DIAGASSERT(cur_term != NULL);
+	if (cur_term->desc == NULL)
+		return __UNCONST(nullname);
+	return __UNCONST(cur_term->desc);
 }

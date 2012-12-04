@@ -1995,6 +1995,7 @@
 ./usr/man/man3/dbopen.3					minix-sys
 ./usr/man/man3/def_prog_mode.3					minix-sys
 ./usr/man/man3/def_shell_mode.3					minix-sys
+./usr/man/man3/define_key.3					minix-sys
 ./usr/man/man3/dehumanize_number.3					minix-sys
 ./usr/man/man3/delay_output.3					minix-sys
 ./usr/man/man3/delch.3					minix-sys
@@ -2280,7 +2281,7 @@
 ./usr/man/man3/getbootfile.3					minix-sys
 ./usr/man/man3/getbsize.3					minix-sys
 ./usr/man/man3/getc.3					minix-sys
-./usr/man/man3/getcap.3					minix-sys
+./usr/man/man3/getcap.3					minix-sys	obsolete
 ./usr/man/man3/getch.3					minix-sys
 ./usr/man/man3/getchar.3					minix-sys
 ./usr/man/man3/getchar_unlocked.3					minix-sys
@@ -3281,6 +3282,7 @@
 ./usr/man/man3/tempnam.3					minix-sys
 ./usr/man/man3/termcap.3					minix-sys
 ./usr/man/man3/terminfo.3					minix-sys
+./usr/man/man3/termname.3					minix-sys
 ./usr/man/man3/tfind.3					minix-sys
 ./usr/man/man3/tgetent.3					minix-sys
 ./usr/man/man3/tgetflag.3					minix-sys
@@ -3302,9 +3304,11 @@
 ./usr/man/man3/timeout.3					minix-sys
 ./usr/man/man3/times.3					minix-sys
 ./usr/man/man3/timezone.3					minix-sys
+./usr/man/man3/ti_tiparm.3					minix-sys
 ./usr/man/man3/ti_putp.3					minix-sys
 ./usr/man/man3/ti_puts.3					minix-sys
 ./usr/man/man3/ti_setupterm.3					minix-sys
+./usr/man/man3/tiparm.3					minix-sys
 ./usr/man/man3/tmpfile.3					minix-sys
 ./usr/man/man3/tmpnam.3					minix-sys
 ./usr/man/man3/toascii.3					minix-sys
@@ -3316,7 +3320,7 @@
 ./usr/man/man3/towctrans.3					minix-sys
 ./usr/man/man3/towlower.3					minix-sys
 ./usr/man/man3/towupper.3					minix-sys
-./usr/man/man3/t_parm.3					minix-sys
+./usr/man/man3/t_parm.3					minix-sys	obsolete
 ./usr/man/man3/tparm.3					minix-sys
 ./usr/man/man3/tputs.3					minix-sys
 ./usr/man/man3/trunc.3					minix-sys
@@ -3328,7 +3332,7 @@
 ./usr/man/man3/ttyname_r.3					minix-sys
 ./usr/man/man3/ttyslot.3					minix-sys
 ./usr/man/man3/ttyunlock.3					minix-sys
-./usr/man/man3/t_vparm.3					minix-sys
+./usr/man/man3/t_vparm.3					minix-sys	obsolete
 ./usr/man/man3/twalk.3					minix-sys
 ./usr/man/man3/tzalloc.3					minix-sys
 ./usr/man/man3/tzfree.3					minix-sys
@@ -3839,7 +3843,8 @@
 ./usr/share/mk/pkgsrchooks.mk		minix-sys	obsolete
 ./usr/share/mk/sys.mk			minix-sys
 ./usr/share/terminfo			minix-sys
-./usr/share/terminfo/terminfo.db	minix-sys
+./usr/share/terminfo/terminfo.cdb	minix-sys
+./usr/share/terminfo/terminfo.db	minix-sys	obsolete
 ./usr/share/terminfo/terminfo		minix-sys
 ./usr/share/zoneinfo/Africa/Abidjan	minix-sys
 ./usr/share/zoneinfo/Africa/Accra	minix-sys

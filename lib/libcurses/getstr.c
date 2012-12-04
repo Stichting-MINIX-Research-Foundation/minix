@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.20 2007/05/28 15:01:55 blymn Exp $	*/
+/*	$NetBSD: getstr.c,v 1.22 2012/01/27 15:37:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,10 +35,11 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.20 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.22 2012/01/27 15:37:09 christos Exp $");
 #endif
 #endif				/* not lint */
 
+#include <ctype.h>
 #include "curses.h"
 #include "curses_private.h"
 
@@ -161,12 +162,12 @@ int
 __wgetnstr(WINDOW *win, char *str, int n)
 {
 	char *ostr, ec, kc;
-	int c, oldx, remain;
+	int c, xpos, oldx, remain;
 
 	ostr = str;
 	ec = erasechar();
 	kc = killchar();
-	oldx = win->curx;
+	xpos = oldx = win->curx;
 	_DIAGASSERT(n == -1 || n > 1);
 	remain = n - 1;
 
@@ -182,17 +183,23 @@ __wgetnstr(WINDOW *win, char *str, int n)
 			*str = '\0';
 			if (str != ostr) {
 				if ((char) c == ec) {
-					mvwaddch(win, win->cury, win->curx,
-					    ' ');
-					wmove(win, win->cury, win->curx - 1);
+					mvwaddch(win, win->cury, xpos, ' ');
+					if (xpos > oldx)
+						mvwaddch(win, win->cury,
+						    xpos - 1, ' ');
+					if (win->curx > xpos - 1)
+						wmove(win, win->cury, xpos - 1);
+					xpos--;
 				}
 				if (c == KEY_BACKSPACE || c == KEY_LEFT) {
 					/* getch() displays the key sequence */
+					mvwaddch(win, win->cury, win->curx,
+					    ' ');
 					mvwaddch(win, win->cury, win->curx - 1,
 					    ' ');
-					mvwaddch(win, win->cury, win->curx - 2,
-					    ' ');
-					wmove(win, win->cury, win->curx - 1);
+					if (win->curx > xpos)
+						wmove(win, win->cury, xpos - 1);
+					xpos--;
 				}
 				str--;
 				if (n != -1) {
@@ -200,11 +207,12 @@ __wgetnstr(WINDOW *win, char *str, int n)
 					remain++;
 				}
 			} else {        /* str == ostr */
-				if (c == KEY_BACKSPACE || c == KEY_LEFT)
-					/* getch() displays the other keys */
+				/* getch() displays the other keys */
+				if (win->curx > oldx)
 					mvwaddch(win, win->cury, win->curx - 1,
 					    ' ');
 				wmove(win, win->cury, oldx);
+				xpos = oldx;
 			}
 		} else if (c == kc) {
 			*str = '\0';
@@ -229,16 +237,18 @@ __wgetnstr(WINDOW *win, char *str, int n)
 			wmove(win, win->cury, oldx);
 		} else if (c >= KEY_MIN && c <= KEY_MAX) {
 			/* getch() displays these characters */
-			mvwaddch(win, win->cury, win->curx - 1, ' ');
-			wmove(win, win->cury, win->curx - 1);
+			mvwaddch(win, win->cury, xpos, ' ');
+			wmove(win, win->cury, xpos);
 		} else {
 			if (remain) {
+				if (iscntrl((unsigned char)c))
+					mvwaddch(win, win->cury, xpos, ' ');
 				str++;
+				xpos++;
 				remain--;
-			} else {
-				mvwaddch(win, win->cury, win->curx - 1, ' ');
-				wmove(win, win->cury, win->curx - 1);
-			}
+			} else
+				mvwaddch(win, win->cury, xpos, ' ');
+			wmove(win, win->cury, xpos);
 		}
 	}
 

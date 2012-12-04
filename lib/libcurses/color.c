@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.37 2011/01/06 11:29:40 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.38 2011/10/03 12:32:15 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.37 2011/01/06 11:29:40 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.38 2011/10/03 12:32:15 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -536,12 +536,12 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 		    _cursesi_screen->colour_pairs[pair].back < 0)
 			__unset_color(curscr);
 		if (_cursesi_screen->colour_pairs[pair].fore >= 0)
-			tputs(vtparm(t_set_a_foreground(_cursesi_screen->term),
-			    _cursesi_screen->colour_pairs[pair].fore),
+			tputs(tiparm(t_set_a_foreground(_cursesi_screen->term),
+			    (int)_cursesi_screen->colour_pairs[pair].fore),
 			    0, __cputchar);
 		if (_cursesi_screen->colour_pairs[pair].back >= 0)
-			tputs(vtparm(t_set_a_background(_cursesi_screen->term),
-			    _cursesi_screen->colour_pairs[pair].back),
+			tputs(tiparm(t_set_a_background(_cursesi_screen->term),
+			    (int)_cursesi_screen->colour_pairs[pair].back),
 			    0, __cputchar);
 		break;
 	case COLOR_HP:
@@ -555,12 +555,12 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 		    _cursesi_screen->colour_pairs[pair].back < 0)
 			__unset_color(curscr);
 		if (_cursesi_screen->colour_pairs[pair].fore >= 0)
-			tputs(vtparm(t_set_foreground(_cursesi_screen->term),
-			    _cursesi_screen->colour_pairs[pair].fore),
+			tputs(tiparm(t_set_foreground(_cursesi_screen->term),
+			    (int)_cursesi_screen->colour_pairs[pair].fore),
 			    0, __cputchar);
 		if (_cursesi_screen->colour_pairs[pair].back >= 0)
-			tputs(vtparm(t_set_background(_cursesi_screen->term),
-			    _cursesi_screen->colour_pairs[pair].back),
+			tputs(tiparm(t_set_background(_cursesi_screen->term),
+			    (int)_cursesi_screen->colour_pairs[pair].back),
 			    0, __cputchar);
 		break;
 	}

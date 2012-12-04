@@ -1,7 +1,7 @@
-/* $NetBSD: compile.c,v 1.4 2010/03/02 14:11:11 roy Exp $ */
+/* $NetBSD: compile.c,v 1.8 2012/06/03 23:19:10 joerg Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.4 2010/03/02 14:11:11 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.8 2012/06/03 23:19:10 joerg Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: compile.c,v 1.4 2010/03/02 14:11:11 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
-static void __attribute__((__format__(__printf__, 2, 3)))
+static void __printflike(2, 3)
 dowarn(int flags, const char *fmt, ...)
 {
 	va_list va;
@@ -74,7 +74,7 @@ _ti_grow_tbuf(TBUF *tbuf, size_t len)
 
 	l = tbuf->bufpos + len;
 	if (l > tbuf->buflen) {
-		if (tbuf->bufpos == 0)
+		if (tbuf->buflen == 0)
 			buf = malloc(l);
 		else
 			buf = realloc(tbuf->buf, l);
@@ -239,12 +239,7 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		return -1;
 	
 	cap = *buf;
-	if (alen == 0 && dlen == 0 && tic->flags.bufpos == 0 &&
-	    tic->nums.bufpos == 0 && tic->strs.bufpos == 0 &&
-	    tic->extras.bufpos == 0)
-		*cap++ = 0; /* alias */
-	else
-		*cap++ = 2; /* version */
+	*cap++ = 1;
 	le16enc(cap, len);
 	cap += sizeof(uint16_t);
 	memcpy(cap, tic->name, len);
@@ -344,7 +339,7 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str,
 				if (ch == '?')
 					ch = '\177';
 				else if ((ch &= 037) == 0)
-					ch = 128;
+					ch = (char)128;
 			}
 			*p++ = ch;
 			last = ch;
@@ -452,7 +447,8 @@ _ti_compile(char *cap, int flags)
 {
 	char *token, *p, *e, *name, *desc, *alias;
 	signed char flag;
-	long num;
+	long cnum;
+	short num;
 	ssize_t ind;
 	size_t len;
 	TBUF buf;
@@ -564,17 +560,18 @@ _ti_compile(char *cap, int flags)
 			    _ti_find_cap(&tic->nums, 'n', ind) != NULL)
 				continue;
 
-			num = strtol(p, &e, 0);
+			cnum = strtol(p, &e, 0);
 			if (*e != '\0') {
 				dowarn(flags, "%s: %s: not a number",
 				    tic->name, token);
 				continue;
 			}
-			if (!VALID_NUMERIC(num)) {
+			if (!VALID_NUMERIC(cnum)) {
 				dowarn(flags, "%s: %s: number out of range",
 				    tic->name, token);
 				continue;
 			}
+			num = (short)cnum;
 			if (ind == -1)
 				_ti_store_extra(tic, 1, token, 'n', -1,
 				    num, NULL, 0, flags);
@@ -608,7 +605,7 @@ _ti_compile(char *cap, int flags)
 				le16enc(tic->nums.buf + tic->nums.bufpos, ind);
 				tic->nums.bufpos += sizeof(uint16_t);
 				le16enc(tic->nums.buf + tic->nums.bufpos,
-					CANCELLED_NUMERIC);
+					(uint16_t)CANCELLED_NUMERIC);
 				tic->nums.bufpos += sizeof(uint16_t);
 				tic->nums.entries++;
 				continue;
@@ -657,6 +654,7 @@ _ti_freetic(TIC *tic)
 		free(tic->name);
 		free(tic->alias);
 		free(tic->desc);
+		free(tic->extras.buf);
 		free(tic->flags.buf);
 		free(tic->nums.buf);
 		free(tic->strs.buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.57 2010/12/07 22:02:52 joerg Exp $	*/
+/*	$NetBSD: getch.c,v 1.59 2012/04/21 12:27:28 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.57 2010/12/07 22:02:52 joerg Exp $");
+__RCSID("$NetBSD: getch.c,v 1.59 2012/04/21 12:27:28 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -365,14 +365,11 @@ delete_key_sequence(keymap_t *current, int key_type)
 				_cursesi_free_keymap(key->value.next);
 		} else if ((key->type == KEYMAP_LEAF)
 			   && (key->value.symbol == key_type)) {
-			  /*
-			   * delete the mapping by negating the current
-			   * index - this "holds" the position in the
-			   * allocation just in case we later re-add
-			   * the key for that mapping.
-			   */
-			current->mapping[i] = - current->mapping[i];
-			current->count--;
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INPUT, "delete_key_sequence: found keysym %d, deleting\n",
+		    key_type);
+#endif
+			key->enable = FALSE;
 		}
 	}
 }
@@ -398,8 +395,8 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 
 	/*
 	 * OK - we really should never get a zero length string here, either
-	 * the termcap entry is there and it has a value or we are not called
-	 * at all.  Unfortunately, if someone assigns a termcap string to the
+	 * the terminfo entry is there and it has a value or we are not called
+	 * at all.  Unfortunately, if someone assigns a terminfo string to the
 	 * ^@ value we get passed a null string which messes up our length.
 	 * So, if we get a null string then just insert a leaf value in
 	 * the 0th char position of the root keymap.  Note that we are
@@ -474,7 +471,7 @@ __init_getch(SCREEN *screen)
 		limit -= l;
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INIT,
-			    "Processing termcap entry %d, sequence ",
+			    "Processing terminfo entry %d, sequence ",
 			    tc[i].code);
 			length = (int) strlen(entry);
 			for (k = 0; k <= length -1; k++)
@@ -783,9 +780,13 @@ define_key(char *sequence, int symbol)
 	if (symbol <= 0)
 		return ERR;
 
-	if (sequence == NULL)
+	if (sequence == NULL) {
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INPUT, "define_key: deleting keysym %d\n",
+		    symbol);
+#endif
 		delete_key_sequence(_cursesi_screen->base_keymap, symbol);
-	else
+	} else
 		add_key_sequence(_cursesi_screen, sequence, symbol);
 
 	return OK;

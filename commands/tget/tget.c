@@ -7,11 +7,6 @@
 #include <string.h>
 #include <termcap.h>
 
-void fputchar(int c)
-{
-	putchar(c);
-}
-
 void usage(void)
 {
 	fprintf(stderr,
@@ -70,7 +65,7 @@ int main(int argc, char **argv)
 				excode= 1;
 			} else {
 				excode= 0;
-				tputs(str, 0, fputchar);
+				tputs(str, 0, putchar);
 			}
 		} else
 		if (strcmp(option, "-goto") == 0) {
@@ -85,7 +80,7 @@ int main(int argc, char **argv)
 				excode= 1;
 			} else {
 				excode= 0;
-				tputs(tgoto(cm, col, line), 0, fputchar);
+				tputs(tgoto(cm, col, line), 0, putchar);
 			}
 		} else
 		if (strcmp(option, "-echo") == 0) {

@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.8 2010/09/22 06:10:51 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.10 2012/06/03 23:19:10 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -42,15 +42,22 @@
  * including the null terminator.
  * The largest capability block we can handle is 65535 bytes.
  * This means that we exceed the current terminfo defined limits.
- * The header is version (char), name.
- * version 0 is an alias, and the name refers to the real terminfo.
- * version 1 capabilities are defined as so:
+ *
+ * Version 1 capabilities are defined as:
+ * header byte (always 1)
+ * name
  * description,
  * cap length, num flags, index, char,
  * cap length, num numbers, index, number,
  * cap length, num strings, index, string,
- * cap lelngth, num undefined caps, name, type (char), flag, number, string
- * The database itself is created using ndbm(3) and the numbers are
+ * cap length, num undefined caps, name, type (char), flag, number, string
+ *
+ * Version 2 entries are aliases and defined as:
+ * header byte (always 2)
+ * 32bit id of the corresponding terminal in the file
+ * name
+ *
+ * The database itself is created using cdbw(3) and the numbers are
  * always stored as little endian.
  */
 
@@ -114,7 +121,6 @@ const char *	_ti_numid(ssize_t);
 const char *	_ti_strid(ssize_t);
 int		_ti_getterm(TERMINAL *, const char *, int);
 void		_ti_setospeed(TERMINAL *);
-void		_ti_freeterm(TERMINAL *);
 
 /* libterminfo can compile terminfo strings too */
 #define TIC_WARNING	(1 << 0)
