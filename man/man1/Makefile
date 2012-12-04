@@ -7,7 +7,7 @@ MAN=	ash.1 at.1 banner.1 basename.1 \
 	env.1 expand.1 expr.1 factor.1 \
 	finger.1 flexdoc.1 fmt.1 fold.1 format.1 fortune.1 \
 	fsck.mfs.1 head.1 host.1 hostaddr.1 ifdef.1 \
-	install.1 isodir.1 isoinfo.1 isoread.1 join.1 kill.1 \
+	install.1 isodir.1 isoinfo.1 isoread.1 kill.1 \
 	last.1 loadfont.1 loadkeys.1 logger.1 \
 	look.1 lp.1 ls.1 lspci.1 mail.1  \
 	mesg.1 mixer.1 mkfs.mfs.1 \
