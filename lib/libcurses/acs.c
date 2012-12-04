@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.19 2010/02/25 10:56:24 drochner Exp $	*/
+/*	$NetBSD: acs.c,v 1.20 2012/04/21 12:27:27 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.19 2010/02/25 10:56:24 drochner Exp $");
+__RCSID("$NetBSD: acs.c,v 1.20 2012/04/21 12:27:27 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -49,7 +49,7 @@ cchar_t _wacs_char[ NUM_ACS ];
 
 /*
  * __init_acs --
- *	Fill in the ACS characters.  The 'ac' termcap entry is a list of
+ *	Fill in the ACS characters.  The 'acs_chars' terminfo entry is a list of
  *	character pairs - ACS definition then terminal representation.
  */
 void
@@ -138,7 +138,7 @@ _cursesi_reset_acs(SCREEN *screen)
 #ifdef HAVE_WCHAR
 /*
  * __init_wacs --
- *	Fill in the ACS characters.  The 'ac' termcap entry is a list of
+ *	Fill in the ACS characters.  The 'acs_chars' terminfo entry is a list of
  *	character pairs - ACS definition then terminal representation.
  */
 void

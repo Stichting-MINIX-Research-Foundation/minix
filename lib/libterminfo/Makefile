@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile,v 1.12 2010/07/06 05:59:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2012/03/21 05:37:44 matt Exp $
+
+.include <bsd.own.mk>
 
 .if defined(__MINIX)
-.include "minix-config.inc"
+CPPFLAGS+= 	-D_NETBSD_SOURCE
+MKLINKLIB=	yes
 .endif
 USE_SHLIBDIR=	yes
 
-# LSC MINIX UNtil the library is fixed..
-NOGCCERROR=yes
 LIB=		terminfo
-WARNS=		4
+WARNS?=		5
 
 CPPFLAGS+=	-I${.CURDIR}
 
@@ -17,15 +18,18 @@ SRCS+=		compile.c hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
 
+COPTS.tparm.c = -Wno-format-nonliteral
+
 MAN=		terminfo.3 terminfo.5
 MLINKS=		terminfo.3 setupterm.3 \
 		terminfo.3 set_curterm.3 terminfo.3 del_curterm.3 \
+		terminfo.3 termname.3 terminfo.3 longname.3 \
 		terminfo.3 tigetnum.3 terminfo.3 tigetflag.3 \
 		terminfo.3 tigetstr.3 terminfo.3 tparm.3 terminfo.3 tputs.3 \
 		terminfo.3 putp.3 \
 		terminfo.3 ti_setupterm.3 terminfo.3 ti_getflag.3 \
 		terminfo.3 ti_getnum.3 terminfo.3 ti_getstr.3 \
-		terminfo.3 t_parm.3 terminfo.3 t_vparm.3 \
+		terminfo.3 tiparm.3 terminfo.3 ti_tiparm.3 \
 		terminfo.3 ti_puts.3 terminfo.3 ti_putp.3
 
 # Build in termcap emulation
@@ -35,30 +39,19 @@ MAN+=		termcap.3
 MLINKS+=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 		termcap.3 tgetstr.3 termcap.3 tgoto.3
 
-# Generate our string and hash tables
-hash:
-		@echo "Generating terminfo hash"
-		cd ${.CURDIR} && ${HOST_SH} ./genhash >hash.c
-		@echo "Generating termcap hash"
-		cd ${.CURDIR} && ${HOST_SH} ./genthash >termcap_hash.c
+CPPFLAGS+=	-I${.OBJDIR}
+
+.include <Makefile.hash>
 
 # Generate our man pages
-terminfo.5: terminfo.5.in term.h termcap_map.c
+terminfo.5: genman terminfo.5.in term.h termcap_map.c
 		@echo "Generating terminfo man pages"
-		cd ${.CURDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	terminfo.5
 
-# Allow terminfo descriptions to be compiled into libterminfo
-compiled_terms:
-		@echo "Generating compiled terminfo descriptions"
-		cd ${.CURDIR} && ${HOST_SH} ./genterms >compiled_terms.c
-
 man: terminfo.5
 
-gen: hash compiled_terms man
-
-.include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
 .if ${MKLINKLIB} != "no"

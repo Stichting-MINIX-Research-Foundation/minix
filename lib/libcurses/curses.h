@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.101 2010/12/16 17:42:28 wiz Exp $	*/
+/*	$NetBSD: curses.h,v 1.104 2012/04/21 12:27:27 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -46,6 +46,9 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+
+/* LSC FIXME: Temporary Hack until libs and headers have been updated. */
+#define __va_list _BSD_VA_LIST_
 
 /*
  * attr_t must be the same size as wchar_t (see <wchar.h>) to avoid padding
@@ -642,7 +645,6 @@ int	 flushok(WINDOW *, bool);
 char	*fullname(const char *, char *);
 chtype	 getattrs(WINDOW *);
 chtype	 getbkgd(WINDOW *);
-char	*getcap(char *);
 int	 getcury(WINDOW *);
 int	 getcurx(WINDOW *);
 int	 getbegy(WINDOW *);
@@ -672,7 +674,6 @@ int	 keypad(WINDOW *, bool);
 char	*keyname(int);
 char     killchar(void);
 int	 leaveok(WINDOW *, bool);
-char	*longname(void);
 int	 meta(WINDOW *, bool);
 int	 mvcur(int, int, int, int);
 int      mvderwin(WINDOW *, int, int);
@@ -735,10 +736,10 @@ int	 ungetch(int);
 int	 untouchwin(WINDOW *);
 int	 use_default_colors(void);
 int	 vline(chtype, int);
-int	 vw_printw(WINDOW *, const char *, _BSD_VA_LIST_) __printflike(2, 0);
-int	 vw_scanw(WINDOW *, const char *, _BSD_VA_LIST_) __scanflike(2, 0);
-int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_) __printflike(2, 0);
-int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_) __scanflike(2, 0);
+int	 vw_printw(WINDOW *, const char *, __va_list) __printflike(2, 0);
+int	 vw_scanw(WINDOW *, const char *, __va_list) __scanflike(2, 0);
+int	 vwprintw(WINDOW *, const char *, __va_list) __printflike(2, 0);
+int	 vwscanw(WINDOW *, const char *, __va_list) __scanflike(2, 0);
 int	 waddch(WINDOW *, chtype);
 int	 waddchnstr(WINDOW *, const chtype *, int);
 int	 waddchstr(WINDOW *, const chtype *);

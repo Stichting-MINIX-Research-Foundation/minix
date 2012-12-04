@@ -1,7 +1,7 @@
-/* $NetBSD: term.c,v 1.11 2010/02/26 00:09:00 roy Exp $ */
+/* $NetBSD: term.c,v 1.16 2012/06/06 13:36:58 joerg Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,16 +28,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.11 2010/02/26 00:09:00 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.16 2012/06/06 13:36:58 joerg Exp $");
 
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <cdbr.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <ndbm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,26 +66,26 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	TERMUSERDEF *ud;
 
 	ver = *cap++;
-	/* Only read version 1 and 2 structures */
-	if (ver != 1 && ver != 2) {
+	/* Only read version 1 structures */
+	if (ver != 1) {
 		errno = EINVAL;
 		return -1;
 	}
 
 	term->flags = calloc(TIFLAGMAX + 1, sizeof(char));
 	if (term->flags == NULL)
-		goto err;
+		return -1;
 	term->nums = malloc((TINUMMAX + 1) * sizeof(short));
 	if (term->nums == NULL)
-		goto err;
+		return -1;
 	memset(term->nums, (short)-1, (TINUMMAX + 1) * sizeof(short));
 	term->strs = calloc(TISTRMAX + 1, sizeof(char *));
 	if (term->strs == NULL)
-		goto err;
+		return -1;
 	term->_arealen = caplen;
 	term->_area = malloc(term->_arealen);
 	if (term->_area == NULL)
-		goto err;
+		return -1;
 	memcpy(term->_area, cap, term->_arealen);
 
 	cap = term->_area;
@@ -93,17 +93,13 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	cap += sizeof(uint16_t);
 	term->name = cap;
 	cap += len;
-	if (ver == 1)
+	len = le16dec(cap);
+	cap += sizeof(uint16_t);
+	if (len == 0)
 		term->_alias = NULL;
 	else {
-		len = le16dec(cap);
-		cap += sizeof(uint16_t);
-		if (len == 0)
-			term->_alias = NULL;
-		else {
-			term->_alias = cap;
-			cap += len;
-		}
+		term->_alias = cap;
+		cap += len;
 	}
 	len = le16dec(cap);
 	cap += sizeof(uint16_t);
@@ -209,55 +205,65 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 				break;
 			default:
 				errno = EINVAL;
-				goto err;
+				return -1;
 			}
 		}
 	}
 	return 1;
-	
-err:
-	_ti_freeterm(term);
-	return -1;
 }
 
 static int
 _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 {
-	DBM *db;
-	datum dt;
-	char *p;
+	struct cdbr *db;
+	const void *data;
+	char *db_name;
+	const uint8_t *data8;
+	size_t len, klen;
 	int r;
 
-	db = dbm_open(path, O_RDONLY, 0644);
+	if (asprintf(&db_name, "%s.cdb", path) < 0)
+		return -1;
+
+	db = cdbr_open(db_name, CDBR_DEFAULT);
+	free(db_name);
 	if (db == NULL)
 		return -1;
+
+	klen = strlen(name) + 1;
+	if (cdbr_find(db, name, klen, &data, &len) == -1)
+		goto fail;
+	data8 = data;
+	if (len == 0)
+		goto fail;
+	/* Check for alias first, fall through to processing normal entries. */
+	if (data8[0] == 2) {
+		if (klen + 7 > len || le16dec(data8 + 5) != klen)
+			goto fail;
+		if (memcmp(data8 + 7, name, klen))
+			goto fail;
+		if (cdbr_get(db, le32dec(data8 + 1), &data, &len))
+			goto fail;
+		data8 = data;
+		if (data8[0] != 1)
+			goto fail;
+	} else 	if (data8[0] != 1)
+		goto fail;
+	else if (klen + 3 >= len || le16dec(data8 + 1) != klen)
+		goto fail;
+	else if (memcmp(data8 + 3, name, klen))
+		goto fail;
+
 	strlcpy(database, path, sizeof(database));
 	_ti_database = database;
-	dt.dptr = (void *)__UNCONST(name);
-	dt.dsize = strlen(name);
-	dt = dbm_fetch(db, dt);
-	if (dt.dptr == NULL) {
-		dbm_close(db);
-		return 0;
-	}
 
-	for (;;) {
-		p = (char *)dt.dptr;
-		if (*p++ != 0) /* not alias */
-			break;
-		dt.dsize = le16dec(p) - 1;
-		p += sizeof(uint16_t);
-		dt.dptr = p;
-		dt = dbm_fetch(db, dt);
-		if (dt.dptr == NULL) {
-			dbm_close(db);
-			return 0;
-		}
-	}
-		
-	r = _ti_readterm(term, (char *)dt.dptr, dt.dsize, flags);
-	dbm_close(db);
+	r = _ti_readterm(term, data, len, flags);
+	cdbr_close(db);
 	return r;
+
+ fail:
+	cdbr_close(db);
+	return 0;
 }
 
 static int
@@ -305,7 +311,7 @@ ticcmp(const TIC *tic, const char *name)
 			l = strlen(alias);
 		else
 			l = s - alias;
-		if (len == l && strncmp(alias, name, l) == 0)
+		if (len == l && memcmp(alias, name, l) == 0)
 			return 0;
 		if (s == NULL)
 			break;
@@ -358,7 +364,8 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 		if (tic != NULL && ticcmp(tic, name) == 0) {
 			len = _ti_flatten(&f, tic);
 			if (len != -1) {
-				r = _ti_readterm(term, (char *)f, len, flags);
+				r = _ti_readterm(term, (char *)f, (size_t)len,
+				    flags);
 				free(f);
 			}
 		}
@@ -406,17 +413,4 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	}
 
 	return r;
-}
-	
-void
-_ti_freeterm(TERMINAL *term)
-{
-
-	if (term != NULL) {
-		free(term->_area);
-		free(term->strs);
-		free(term->nums);
-		free(term->flags);
-		free(term->_userdefs);
-	}
 }

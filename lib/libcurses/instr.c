@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.c,v 1.3 2009/07/22 16:57:15 roy Exp $	*/
+/*	$NetBSD: instr.c,v 1.4 2011/08/07 10:54:53 blymn Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: instr.c,v 1.3 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: instr.c,v 1.4 2011/08/07 10:54:53 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -137,11 +137,12 @@ int
 winnstr(WINDOW *win, char *str, int n)
 {
 	__LDATA	*end, *start;
-	int epos;
+	int epos, sn;
 
 	if (str == NULL)
 		return ERR;
 
+	sn = n;
 	start = &win->alines[win->cury]->line[win->curx];
 	/* (n - 1) to leave room for the trailing NUL */
 	if (n < 0 || (n - 1) > win->maxx - win->curx - 1) {
@@ -161,7 +162,7 @@ winnstr(WINDOW *win, char *str, int n)
 	}
 	*str = '\0';
 
-	if (n < 0)
+	if (sn < 0)
 		return OK;
 	else
 		return n;

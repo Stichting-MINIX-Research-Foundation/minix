@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.47 2010/02/11 11:45:47 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.49 2012/04/21 12:27:28 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.47 2010/02/11 11:45:47 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.49 2012/04/21 12:27:28 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	__CTRACE(__CTRACE_INIT, "setterm: tty = %s\n", type);
 #endif
 
-	/* Try TIOCGWINSZ, and, if it fails, the termcap entry. */
+	/* Try TIOCGWINSZ, and, if it fails, the terminfo entry. */
 	if (ioctl(fileno(screen->outfd), TIOCGWINSZ, &win) != -1 &&
 	    win.ws_row != 0 && win.ws_col != 0) {
 		screen->LINES = win.ws_row;
@@ -126,17 +126,6 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 */
 	screen->padchar = t_pad_char(screen->term) ?
 	    t_pad_char(screen->term)[0] : 0; 
-
-	/* Get full name of terminal */
-	if (unknown) {
-		strcpy(screen->ttytype, "dumb");
-		return ERR;
-	}
-	if (screen->term->desc == NULL)
-		screen->ttytype[0] = '\0';
-	else
-		strlcpy(screen->ttytype, screen->term->desc,
-		    sizeof(screen->ttytype));
 
 	/* If no scrolling commands, no quick change. */
 	screen->noqch =

@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.21 2010/08/06 04:03:26 dholland Exp $
+.\"	$NetBSD: curses_input.3,v 1.22 2012/04/21 12:27:28 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd July 25, 2006
+.Dd April 5, 2012
 .Dt CURSES_INPUT 3
 .Os
 .Sh NAME
@@ -161,7 +161,7 @@ be made by using the
 .Fn define_key
 function.
 Normally, these associations are made by the information in the
-.Xr termcap 5
+.Xr terminfo 5
 database but the
 .Fn define_key
 function gives the capability to remove or add more associations.
@@ -177,7 +177,7 @@ It is valid to have multiple character sequences map to the same key
 symbol and there are no constraints on the length of the sequence allowed.
 The assembly of custom sequences follow the same rules for inter-character
 timing and so forth as the
-.Xr termcap 5
+.Xr terminfo 5
 derived ones.
 If
 .Fn define_key
@@ -186,7 +186,7 @@ is passed a NULL in
 then all associations for the key symbol in
 .Fa key_symbol
 will be deleted, this includes any associations that were derived from
-.Xr termcap 5 .
+.Xr terminfo 5 .
 .Pp
 The
 .Fn mvgetch
@@ -544,7 +544,7 @@ has been called on a window, then it may return one of the following values:
 .El
 .Pp
 Note that not all terminals are capable of generating all the keycodes
-listed above nor are termcap entries normally configured with all the
+listed above nor are terminfo entries normally configured with all the
 above capabilities defined.
 .Pp
 Other functions that return an int will return one of the following
@@ -565,7 +565,7 @@ if an error is detected.
 .Xr curses_keyname 3 ,
 .Xr curses_refresh 3 ,
 .Xr curses_tty 3 ,
-.Xr termcap 5
+.Xr terminfo 5
 .Sh STANDARDS
 The
 .Nx

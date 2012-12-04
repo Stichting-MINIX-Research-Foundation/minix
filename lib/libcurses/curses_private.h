@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.46 2010/12/16 17:42:28 wiz Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.47 2011/10/04 11:01:13 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -239,7 +239,6 @@ struct __screen {
 	unsigned int len;
 	int meta_state;
 	char padchar;
-	char ttytype[128];
 	int endwin;
 	int notty;
 	int half_delay;
@@ -314,7 +313,6 @@ void	__cursesi_putnsp(nschar_t *, const int, const int);
 void	__cursesi_chtype_to_cchar(chtype, cchar_t *);
 #endif /* HAVE_WCHAR */
 int	 __unget(wint_t);
-char	*__longname(char *, char *);	/* Original BSD version */
 int	 __mvcur(int, int, int, int, int);
 WINDOW  *__newwin(SCREEN *, int, int, int, int, int);
 int	 __nodelay(void);

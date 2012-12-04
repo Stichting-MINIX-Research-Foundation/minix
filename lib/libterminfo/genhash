@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: genhash,v 1.7 2010/10/12 12:57:51 christos Exp $
+# $NetBSD: genhash,v 1.8 2011/11/02 12:09:25 roy Exp $
 
-# Copyright (c) 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 #
 # This code is derived from software contributed to The NetBSD Foundation
 # by Roy Marples.
@@ -57,7 +57,7 @@ genent()
 	echo
 	$TOOL_SED -e "1,/enum TI${NAME}/d" -e '/};/,$d' \
 	    -e 's/.*TICODE_\([^,]*\).*/\1/' $TERMH | \
-	    $TOOL_NBPERF -sn _ti_${name}hash;
+	    $TOOL_NBPERF -p -s -n _ti_${name}hash;
 
 	cat <<EOF
 
@@ -85,16 +85,12 @@ EOF
 }
 
 cat <<EOF
-/* \$NetBSD\$ */
 /* DO NOT EDIT
  * Automatically generated from term.h */
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-
-#include <sys/cdefs.h>
-__RCSID("\$NetBSD: genhash,v 1.7 2010/10/12 12:57:51 christos Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>

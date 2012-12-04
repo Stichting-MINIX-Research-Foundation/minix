@@ -1,4 +1,4 @@
-/*   $NetBSD: keymap.h,v 1.3 2010/02/03 15:34:40 roy Exp $ */
+/*   $NetBSD: keymap.h,v 1.4 2012/04/21 12:27:28 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keymap.h,v 1.3 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: keymap.h,v 1.4 2012/04/21 12:27:28 roy Exp $");
 #endif                          /* not lint */
 
 /* keymap related stuff */
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: keymap.h,v 1.3 2010/02/03 15:34:40 roy Exp $");
  * because it is needed by both getch() and get_wch()
  *
  * Keyboard input handler.  Do this by snarfing
- * all the info we can out of the termcap entry for TERM and putting it
+ * all the info we can out of the terminfo entry for TERM and putting it
  * into a set of keymaps.  A keymap is an array the size of all the possible
  * single characters we can get, the contents of the array is a structure
  * that contains the type of entry this character is (i.e. part/end of a
@@ -107,7 +107,7 @@ struct keymap {
 #define INKEY_WCASSEMBLING 4 /* assembling a wide char sequence */
 #endif /* HAVE_WCHAR */
 
-/* The termcap data we are interested in and the symbols they map to */
+/* The terminfo data we are interested in and the symbols they map to */
 struct tcdata {
 	int code;		/* code of the terminfo entry */
 	wchar_t	symbol;		/* the symbol associated with it */
