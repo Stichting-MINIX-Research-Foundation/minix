@@ -510,12 +510,7 @@ _INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-.if defined(__MINIX)
-	# LSC FIXME MINIX: We do not have yet imported tsort nor lorder
-	${AR} ${_ARFL} ${.TARGET} ${.ALLSRC:M*o}
-.else
 	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
-.endif # defined(__MINIX)
 .endif
 
 .if !target(__archiveinstall)
