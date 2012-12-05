@@ -12,7 +12,6 @@ CFLAGS+= -DNDEBUG
 
 unix?=		We run MINIX.
 
-COMPILER_TYPE=gnu
 NBSD_LIBC=	yes
 
 DBG?=	-O
