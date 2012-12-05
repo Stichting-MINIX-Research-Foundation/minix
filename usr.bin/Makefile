@@ -18,7 +18,7 @@ SUBDIR= \
 	newgrp \
 	passwd \
 	sed seq \
-	stat su \
+	sort stat su \
 	tic \
 	uniq  \
 	xinstall 
