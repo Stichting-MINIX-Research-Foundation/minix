@@ -10,6 +10,7 @@ cscope.*
 *.[1-9].gz
 *.o
 *.[psS]o
+*.pico
 lib*.so*
 *.a
 *.so.*
@@ -39,3 +40,4 @@ releasetools/kernel
 releasetools/revision
 share/zoneinfo/builddir
 lib/libc/compat__*
+.gdbinit
