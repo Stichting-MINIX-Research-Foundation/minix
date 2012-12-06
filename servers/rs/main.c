@@ -304,11 +304,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       rpub->dev_style = boot_image_dev->dev_style;    /* device style */
       rpub->dev_style2 = boot_image_dev->dev_style2;  /* device style 2 */
 
-      /* Get process name. */
-      strcpy(rpub->proc_name, ip->proc_name);
-
-      /* Build command settings. */
-      rp->r_cmd[0]= '\0';
+      /* Build command settings. This will also set the process name. */
+      strlcpy(rp->r_cmd, ip->proc_name, sizeof(rp->r_cmd));
       rp->r_script[0]= '\0';
       build_cmd_dep(rp);
 
