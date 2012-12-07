@@ -229,7 +229,7 @@ sort <x >x1
 if cmp -s y x1; then : ; else echo Error on sort test 2; fi
 sort -r <x1 >x2
 if cmp -s x2 z; then : ; else echo Error on sort test 3; fi
-sort +1 -n <x |head -1 >y
+sort -k 2n <x |head -1 >y
 echo "bibelot 3" >z
 if cmp -s y z; then : ; else echo Error on sort test 4; fi
 

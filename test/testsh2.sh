@@ -247,7 +247,7 @@ cat >answer <<END
 END
 
 prep x | sort | uniq -c >y1
-sort +1 <y1 >y
+sort <y1 >y
 if cmp -s y answer; then : ; else echo Error in pipeline test 1; fi
 
 cat $f $f $f | sort | uniq >x
