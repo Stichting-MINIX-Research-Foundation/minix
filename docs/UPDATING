@@ -1,3 +1,13 @@
+20121207:
+	The join and lorder tools have been upgraded. Build them first:
+
+	# make -C usr.bin/lorder clean all install
+	# make -C usr.bin/join clean all install
+	# make -C usr.bin/tic clean all install
+	# make -C usr.bin/nbperf clean all install
+
+	Then do a "make build".
+
 20121205:
 	The tsort tool has been also upgraded and is now also used during
 	the build:
