@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 #define ITERATIONS 10
-#define MAX_ERROR 3
+#define MAX_ERROR 0
 #define SIZE 64
 
 int subtest;
