@@ -106,7 +106,7 @@ int n;
   if (errct == 0) printf("\n");	/* finish header */
   printf("Subtest %d,  error %d,  errno %d: %s\n",
 	 subtest, n, errno, strerror(errno));
-  if (errct++ > MAX_ERROR) {
+  if (++errct > MAX_ERROR) {
 	printf("Too many errors; test aborted\n");
 	cleanup();
 	exit(1);
