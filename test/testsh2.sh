@@ -2,18 +2,32 @@
 
 # Shell script #2 used to test MINIX.
 
+# Helper function
+bomb() {
+    echo $*
+    cd ..
+    rm -rf $TESTDIR
+    exit 1
+}
+
 PATH=:/bin:/usr/bin:/usr/pkg/bin
 export PATH
+
+TESTDIR=DIR_SH2
+export TESTDIR
+
+OLDPWD=`pwd`
+export OLDPWD
 
 # CC="exec cc -wo -F"		# nonstandard flags for ACK :-(
 CC=clang
 
 ARCH=`arch`
 
-echo -n "Shell test  2 "
-rm -rf DIR_SH2
-mkdir DIR_SH2			# all files are created here
-cd DIR_SH2
+echo -n  "Shell test  2 "
+rm -rf $TESTDIR
+mkdir $TESTDIR			# all files are created here
+cd $TESTDIR
 
 cat >file <<END
 The time has come the walrus said to talk of many things
@@ -43,18 +57,18 @@ cat >answer <<END		# C program should produce these results
 END
 
 make
-if test -f a.out; then : ; else echo Compilation failed; fi
+if test -f a.out; then : ; else bomb "Compilation failed"; fi
 a.out >x
-if test -f x; then : ; else echo No compiler output; fi
-if cmp -s x answer; then : ; else echo Error in cc test 1; fi
+if test -f x; then : ; else bomb "No compiler output"; fi
+if cmp -s x answer; then : ; else bomb "Error in cc test 1"; fi
 
 #Test chmod
-echo Hi there folks >x
-if test -r x; then : ; else echo Error on chmod test 1; fi
+echo "Hi there folks" >x
+if test -r x; then : ; else bomb "Error on chmod test 1"; fi
 chmod 377 x
-if test -r x; then test -w / || echo Error on chmod test 2; fi
+if test -r x; then test -w / || bomb "Error on chmod test 2"; fi
 chmod 700 x
-if test -r x; then : ; else echo Error on chmod test 3; fi
+if test -r x; then : ; else bomb "Error on chmod test 3"; fi
 
 #Test cut
 cat >x <<END			# x is a test file with 3 columns
@@ -72,24 +86,24 @@ black
 END
 
 cut -c 3-7 x >y			# extract columns 3-7
-if cmp -s y answer; then : ; else echo Error in cut test 1; fi
+if cmp -s y answer; then : ; else bomb "Error in cut test 1"; fi
 
 #Test dd
 dd if=$f of=x bs=12 count=1 2>/dev/null		# x = bytes 0-11
 dd if=$f of=y bs=6 count=4 skip=2 2>/dev/null	# y = bytes 11-35
 cat x y >z					# z = bytes 0-35
 dd if=$f of=answer bs=9 count=4 2>/dev/null	# answer = bytes 0-35
-if cmp -s z answer; then : ; else echo Error in dd test 1; fi
+if cmp -s z answer; then : ; else bomb "Error in dd test 1"; fi
 
 #Test df			# hard to make a sensible Test here
 rm ?
 df >x
-if test -r x; then : ; else echo Error in df Test 1; fi
+if test -r x; then : ; else bomb "Error in df Test 1"; fi
 
 #Test du			# see df
 rm ?
 du >x
-if test -r x; then : ; else echo Error in du Test 1; fi
+if test -r x; then : ; else bomb "Error in du Test 1"; fi
 
 #Test od			
 head -1 $f |od >x		# see if od converts ascii to octal ok
@@ -112,7 +126,7 @@ cat >answer <<END
 END
 fi
 
-if cmp -s x answer; then : ; else echo Error in od test 1; fi
+if cmp -s x answer; then : ; else bomb "Error in od test 1"; fi
 
 head -1 $f |od -d >x		# see if od converts ascii to decimal ok
 if [ $ARCH = i86 -o $ARCH = i386 ]
@@ -134,7 +148,7 @@ cat >answer <<END
 END
 fi
 
-if cmp -s x answer; then : ; else echo Error in od test 2; fi
+if cmp -s x answer; then : ; else bomb "Error in od test 2"; fi
 
 #Test paste
 cat >x <<END
@@ -155,14 +169,14 @@ blue	blauw
 END
 
 paste x y >z
-if cmp -s z answer; then : ; else echo Error in paste test 1; fi
+if cmp -s z answer; then : ; else bomb "Error in paste test 1"; fi
 
 #Test prep
-echo >x <<END
+prep >x <<END
 "Hi," said Carol, laughing, "How's life?"
 END
 
-echo >answer <<END
+cat >answer <<END
 hi
 said
 carol
@@ -171,21 +185,21 @@ how's
 life
 END
 
-if cmp -s x answer; then : ; else echo Error in prep test 1; fi
+if cmp -s x answer; then : ; else bomb "Error in prep test 1"; fi
 
 #Test printenv
 printenv >x
-if grep HOME  x >/dev/null; then : ; else echo Error in printenv test 1; fi
-if grep PATH  x >/dev/null; then : ; else echo Error in printenv test 2; fi
-if grep SHELL x >/dev/null; then : ; else echo Error in printenv test 3; fi
-if grep USER  x >/dev/null; then : ; else echo Error in printenv test 4; fi
+if grep HOME  x >/dev/null; then : ; else bomb "Error in printenv test 1"; fi
+if grep PATH  x >/dev/null; then : ; else bomb "Error in printenv test 2"; fi
+if grep SHELL x >/dev/null; then : ; else bomb "Error in printenv test 3"; fi
+if grep USER  x >/dev/null; then : ; else bomb "Error in printenv test 4"; fi
 
 #Test pwd
 pwd >Pwd_file
 cd `pwd`
 pwd >x
-if test -s Pwd_file;  then : ; else echo Error in pwd test 1; fi
-if cmp -s Pwd_file x; then : ; else echo Error in pwd test 2; fi
+if test -s Pwd_file;  then : ; else bomb "Error in pwd test 1"; fi
+if cmp -s Pwd_file x; then : ; else bomb "Error in pwd test 2"; fi
 
 #Test strings
 strings a.out | grep "MS-DOS" >x
@@ -193,7 +207,7 @@ cat >answer <<END
 MS-DOS: Just say no
 END
 
-if cmp -s x answer; then : ; else echo Error in strings test 1; fi
+if cmp -s x answer; then : ; else bomb "Error in strings test 1"; fi
 
 #Test sum
 sum $f >x
@@ -201,14 +215,14 @@ cat >answer <<END
 29904 1 $f
 END
 
-if cmp -s x answer; then : ; else echo Error in sum test 1; fi
+if cmp -s x answer; then : ; else bomb "Error in sum test 1"; fi
 
 #Test tee
 cat $f | tee x >/dev/null
-if cmp -s x $f; then : ; else echo Error in tee test 1; fi
+if cmp -s x $f; then : ; else bomb "Error in tee test 1"; fi
 
 #Test true
-if true ; then : ; else echo Error in true test 1; fi
+if true ; then : ; else bomb "Error in true test 1"; fi
 
 #Test uniq
 cat >x <<END
@@ -225,7 +239,7 @@ cat >answer <<END
 END
 
 uniq <x >y
-if cmp -s y answer; then : ; else echo Error in uniq test 1; fi
+if cmp -s y answer; then : ; else bomb "Error in uniq test 1"; fi
 
 #Test pipelines
 cat >x <<END
@@ -248,13 +262,13 @@ END
 
 prep x | sort | uniq -c >y1
 sort <y1 >y
-if cmp -s y answer; then : ; else echo Error in pipeline test 1; fi
+if cmp -s y answer; then : ; else bomb "Error in pipeline test 1"; fi
 
 cat $f $f $f | sort | uniq >x
 sort <$f >y
-if cmp -s x y; then : ; else echo Error in pipeline test 2; fi
+if cmp -s x y; then : ; else bomb "Error in pipeline test 2"; fi
 
 cd ..
-rm -rf DIR_SH2
+rm -rf $TESTDIR
 
 echo ok
