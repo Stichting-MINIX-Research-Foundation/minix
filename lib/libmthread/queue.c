@@ -95,14 +95,55 @@ mthread_queue_t *queue;		/* Queue we want a thread from */
 {
 /* Get the first thread in this queue, if there is one. */
   mthread_thread_t thread;
-  mthread_tcb_t *tcb;
+  mthread_tcb_t *tcb, *random_tcb, *prev;
+  int count = 0, offset_id = 0, picked_random = 0;
 
-  /* Calculate thread id from queue head */
-  if (queue->mq_head == NULL) thread = NO_THREAD;
-  else if (queue->mq_head == &mainthread) thread = MAIN_THREAD;
-  else thread = (queue->mq_head->m_tid);
+  tcb = queue->mq_head;
 
-  if (thread != NO_THREAD) { /* i.e., this queue is not empty */
+  if (MTHREAD_RND_SCHED) {
+	/* Count items on queue */
+	random_tcb = queue->mq_head;
+	if (random_tcb != NULL) {
+		do {
+			count++;
+			random_tcb = random_tcb->m_next;
+		} while (random_tcb != NULL);
+	}
+
+	if (count > 1) {
+		picked_random = 1;
+
+		/* Get random offset */
+		offset_id = random() % count;
+
+		/* Find offset in queue */
+		random_tcb = queue->mq_head;
+		prev = random_tcb;
+		while (--offset_id > 0) {
+			prev = random_tcb;
+			random_tcb = random_tcb->m_next;
+		}
+
+		/* Stitch head and tail together */
+		prev->m_next = random_tcb->m_next;
+
+		/* Fix head and tail */
+		if (queue->mq_head == random_tcb)
+			queue->mq_head = random_tcb->m_next;
+		if (queue->mq_tail == random_tcb)
+			queue->mq_tail = prev;
+
+		tcb = random_tcb;
+	}
+  }
+
+  /* Retrieve thread id from tcb */
+  if (tcb == NULL) thread = NO_THREAD;
+  else if (tcb == &mainthread) thread = MAIN_THREAD;
+  else thread = (tcb->m_tid);
+
+  /* If we didn't pick a random thread and queue is not empty... */
+  if (!picked_random && thread != NO_THREAD) {
   	tcb = queue->mq_head;
 	if (queue->mq_head == queue->mq_tail) {
 		/* Queue holds only one thread */
@@ -111,9 +152,10 @@ mthread_queue_t *queue;		/* Queue we want a thread from */
 		/* Second thread in line is the new first */
 		queue->mq_head = queue->mq_head->m_next;
 	}
-
-	tcb->m_next = NULL; /* This thread is no longer part of a queue */
   }
+
+  if (tcb != NULL)
+	tcb->m_next = NULL; /* This thread is no longer part of a queue */
 
   return(thread);
 }

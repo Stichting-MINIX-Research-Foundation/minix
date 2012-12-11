@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/signal.h>
 
-
+#define MTHREAD_RND_SCHED	0	/* Enable/disable random scheduling */
 #define NO_THREADS 4 
 #define MAX_THREAD_POOL 1024
 #define STACKSZ 4096
