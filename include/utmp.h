@@ -75,7 +75,7 @@ struct utmp {
   char ut_host[UT_HOSTSIZE];		/* host name, when remote */
   short ut_pid;			/* process id */
   short int ut_type;		/* type of entry */
-  long ut_time;			/* login/logout time */
+  time_t ut_time;			/* login/logout time */
 };
 
 /* Definitions for ut_type. */
