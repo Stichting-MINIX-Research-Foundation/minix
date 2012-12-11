@@ -726,6 +726,12 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
   okendpt(proc_e, &slot);
   fp = &fproc[slot];
 
+  /* if a process is blocked, scratch(fp).file.fd_nr holds the fd it's blocked
+   * on. free it up for use by common_open().
+   */
+  if (fp_is_blocked(fp))
+          unpause(fp->fp_endpoint);
+
   /* open core file */
   snprintf(core_path, PATH_MAX, "%s.%d", CORE_NAME, fp->fp_pid);
   core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
