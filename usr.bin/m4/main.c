@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.39 2009/11/06 15:13:27 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2012/04/25 18:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.39 2009/11/06 15:13:27 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2012/04/25 18:23:58 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <err.h>
@@ -167,7 +167,22 @@ static void reallyputchar(int);
 
 static void enlarge_stack(void);
 
-int main(int, char *[]);
+__dead static void
+usage(void)
+{
+	fprintf(stderr, "usage: %s [-gPs] [-Dname[=value]] [-d flags] "
+			"[-I dirname] [-o filename]\n"
+			"\t[-t macro] [-Uname] [file ...]\n", getprogname());
+	exit(1);
+}
+
+__dead static void
+onintr(int signo)
+{
+	char intrmessage[] = "m4: interrupted.\n";
+	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
+	_exit(1);
+}
 
 int
 main(int argc, char *argv[])
@@ -479,7 +494,7 @@ macro(void)
 		default:
 			if (LOOK_AHEAD(t, scommt)) {
 				char *q;
-				for (q = scommt; *q; p++)
+				for (q = scommt; *q; q++)
 					chrsave(*q);
 				for(;;) {
 					t = gpbc();
@@ -572,7 +587,7 @@ inspect(int c, char *tp)
 		return NULL;
 	}
 
-	p = ohash_find(&macros, ohash_qlookupi(&macros, name, (const char **)&tp));
+	p = ohash_find(&macros, ohash_qlookupi(&macros, name, (void *)&tp));
 	if (p == NULL)
 		return NULL;
 	if (macro_getdef(p) == NULL)

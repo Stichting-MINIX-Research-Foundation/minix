@@ -1,5 +1,5 @@
 /*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: misc.c,v 1.20 2009/11/06 15:13:27 joerg Exp $	*/
+/*	$NetBSD: misc.c,v 1.23 2012/03/20 20:34:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.20 2009/11/06 15:13:27 joerg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2012/03/20 20:34:58 matt Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -160,7 +160,7 @@ pbunsigned(unsigned long n)
 }
 
 void 
-initspaces()
+initspaces(void)
 {
 	int i;
 
@@ -176,7 +176,7 @@ initspaces()
 }
 
 void 
-enlarge_strspace()
+enlarge_strspace(void)
 {
 	char *newstrspace;
 	int i;
@@ -197,7 +197,7 @@ enlarge_strspace()
 }
 
 void
-enlarge_bufspace()
+enlarge_bufspace(void)
 {
 	unsigned char *newbuf;
 	int i;
@@ -240,19 +240,11 @@ getdiv(int n)
 	outfile[n] = NULL;
 }
 
-void
-onintr(int signo)
-{
-#define intrmessage	"m4: interrupted.\n"
-	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
-	_exit(1);
-}
-
 /*
  * killdiv - get rid of the diversion files
  */
 void
-killdiv()
+killdiv(void)
 {
 	int n;
 
@@ -340,15 +332,6 @@ xstrdup(const char *s)
 	return p;
 }
 
-void
-usage(void)
-{
-	fprintf(stderr, "usage: %s [-gPs] [-Dname[=value]] [-d flags] "
-			"[-I dirname] [-o filename]\n"
-			"\t[-t macro] [-Uname] [file ...]\n", getprogname());
-	exit(1);
-}
-
 int 
 obtain_char(struct input_file *f)
 {
@@ -373,7 +356,7 @@ set_input(struct input_file *f, FILE *real, const char *name)
 }
 
 void
-do_emit_synchline()
+do_emit_synchline(void)
 {
 	fprintf(active, "#line %lu \"%s\"\n",
 	    infile[ilevel].lineno, infile[ilevel].name);
@@ -395,7 +378,7 @@ release_input(struct input_file *f)
 void
 doprintlineno(struct input_file *f)
 {
-	pbunsigned(f->lineno);
+	pbunsigned(TOKEN_LINE(f));
 }
 
 void
@@ -411,7 +394,7 @@ doprintfilename(struct input_file *f)
  * and later dump everything that was added since then to a file.
  */
 size_t
-buffer_mark()
+buffer_mark(void)
 {
 	return bp - buf;
 }

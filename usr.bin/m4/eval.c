@@ -1,5 +1,5 @@
 /*	$OpenBSD: eval.c,v 1.66 2008/08/21 21:01:47 espie Exp $	*/
-/*	$NetBSD: eval.c,v 1.20 2009/10/26 21:11:28 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.22 2011/08/21 23:38:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eval.c,v 1.20 2009/10/26 21:11:28 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.22 2011/08/21 23:38:43 dholland Exp $");
 
 #include <sys/types.h>
 #include <err.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: eval.c,v 1.20 2009/10/26 21:11:28 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <fcntl.h>
 #include "mdef.h"
@@ -429,8 +430,11 @@ expand_builtin(const char *argv[], int argc, int td)
 	 */
 		if (argc > 2) {
 			for (n = 2; n < argc; n++)
-				fprintf(stderr, "%s ", argv[n]);
-			fprintf(stderr, "\n");
+				fprintf(stderr, "%s%s",
+				    mimic_gnu && n == 2 ? "" : " ",
+				    argv[n]);
+			if (!mimic_gnu)
+				fprintf(stderr, "\n");
 		}
 		break;
 

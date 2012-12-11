@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.6 2009/10/26 21:11:28 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.8 2012/03/20 20:34:58 matt Exp $	*/
 /* $OpenBSD: trace.c,v 1.15 2006/03/24 08:03:44 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -28,7 +28,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.6 2009/10/26 21:11:28 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.8 2012/03/20 20:34:58 matt Exp $");
 
 #include <sys/types.h>
 #include <err.h>
@@ -125,7 +125,7 @@ set_trace_flags(const char *s)
 }
 
 static int
-frame_level()
+frame_level(void)
 {
 	int level;
 	int framep;
@@ -143,7 +143,7 @@ print_header(struct input_file *inp)
 	if (trace_flags & TRACE_FILENAME)
 		fprintf(traceout, "%s:", inp->name);
 	if (trace_flags & TRACE_LINENO)
-		fprintf(traceout, "%lu:", inp->lineno);
+		fprintf(traceout, "%lu:", TOKEN_LINE(inp));
 	fprintf(traceout, " -%d- ", frame_level());
 	if (trace_flags & TRACE_ID)
 		fprintf(traceout, "id %lu: ", expansion_id);
