@@ -82,6 +82,7 @@ EXTERN char **env_argv;
 #define PUFFS_MAX_ARGS 20
 
 int __real_main(int argc, char* argv[]);
+int __wrap_main(int argc, char* argv[]);
 
 int __wrap_main(int argc, char *argv[])
 {

@@ -125,6 +125,7 @@ static int tcpip_writeall( int fd, char *buf, unsigned siz );
 
 int
 main(c, v)
+	int c;
 	char **v;
 {
 	char *domain;
@@ -135,8 +136,8 @@ main(c, v)
 #endif
 	register struct hostent *hp;
 	register char *s, *p;
-	register inverse = 0;
-	register waitmode = 0;
+	register int inverse = 0;
+	register int waitmode = 0;
 	u8_t *oldcname;
 	int ncnames;
 	int isaddr;
@@ -496,7 +497,6 @@ getinfo(name, domain, type)
 	u8_t *eom, *bp, *cp;
 	querybuf_t buf, answer;
 	int n, n1, i, j, nmx, ancount, nscount, arcount, qdcount, buflen;
-	u_short pref, class;
 	char host[2*MAXDNAME+2];
 
 	if (domain == NULL)
@@ -532,8 +532,7 @@ printinfo(answer, eom, filter, isls)
 {
 	HEADER *hp;
 	u8_t *bp, *cp;
-	int n, n1, i, j, nmx, ancount, nscount, arcount, qdcount, buflen;
-	u_short pref, class;
+	int nmx, ancount, nscount, arcount, qdcount, buflen;
 
 	/*
 	 * find first satisfactory answer
@@ -702,8 +701,9 @@ pr_rr(cp, msg, file, filter)
 	  if (verbose)
 	    fprintf(file,"%s\t%d%s\t%s",
 		    name, ttl, pr_class(class), pr_type(type));
-	  else
+	  else {
 	    fprintf(file,"%s%s %s",name, pr_class(class), pr_type(type));
+	  }
 	if (verbose)
 	  punc = '\t';
 	else
@@ -760,12 +760,12 @@ pr_rr(cp, msg, file, filter)
 		break;
 
 	case T_HINFO:
-		if (n = *cp++) {
+		if ((n = *cp++)) {
 			if (doprint)
 			  fprintf(file,"%c%.*s", punc, n, cp);
 			cp += n;
 		}
-		if (n = *cp++) {
+		if ((n = *cp++)) {
 			if (doprint)
 			  fprintf(file,"%c%.*s", punc, n, cp);
 			cp += n;
@@ -780,28 +780,29 @@ pr_rr(cp, msg, file, filter)
 		if (doprint)
 		  fprintf(file," %s", name);
 		if (doprint)
-		  fprintf(file,"(\n\t\t\t%ld\t;serial (version)", _getlong(cp));
+		  fprintf(file,"(\n\t\t\t%d\t;serial (version)", _getlong(cp));
 		cp += sizeof(u_long);
 		if (doprint)
-		  fprintf(file,"\n\t\t\t%ld\t;refresh period", _getlong(cp));
+		  fprintf(file,"\n\t\t\t%d\t;refresh period", _getlong(cp));
 		cp += sizeof(u_long);
 		if (doprint)
-		  fprintf(file,"\n\t\t\t%ld\t;retry refresh this often", _getlong(cp));
+		  fprintf(file,"\n\t\t\t%d\t;retry refresh this often", _getlong(cp));
 		cp += sizeof(u_long);
 		if (doprint)
-		  fprintf(file,"\n\t\t\t%ld\t;expiration period", _getlong(cp));
+		  fprintf(file,"\n\t\t\t%d\t;expiration period", _getlong(cp));
 		cp += sizeof(u_long);
 		if (doprint)
-		  fprintf(file,"\n\t\t\t%ld\t;minimum TTL\n\t\t\t)", _getlong(cp));
+		  fprintf(file,"\n\t\t\t%d\t;minimum TTL\n\t\t\t)", _getlong(cp));
 		cp += sizeof(u_long);
 		break;
 
 	case T_MX:
-		if (doprint)
+		if (doprint) {
 		  if (verbose)
 		    fprintf(file,"\t%d ",_getshort(cp));
 		  else
 		    fprintf(file," (pri=%d) by ",_getshort(cp));
+		}
 		cp += sizeof(u_short);
 		cp = pr_cdname(cp, msg, name, sizeof(name));
 		if (doprint)
@@ -819,7 +820,7 @@ pr_rr(cp, msg, file, filter)
 
 		/* Roy start */
 	case T_TXT:
-		if (n = *cp++) {
+		if ((n = *cp++)) {
 			if (doprint)
 			  fprintf(file,"%c%.*s", punc, n, cp);
 			cp += n;

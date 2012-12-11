@@ -27,7 +27,9 @@
 #include <stdio.h>
 #include <paths.h>
 
+#if 0
 static char *Version = "@(#) WRITE 1.6 (10/24/92)";
+#endif
 
 int otty;			/* file desc of callee's terminal */
 short int cbreak = 0;		/* are we in CBREAK (-c) mode? */
@@ -129,7 +131,7 @@ void sayhello()
 {
   struct passwd *pw;
   char buff[128];
-  long now;
+  time_t now;
   char *sp;
 
   time(&now);

@@ -37,7 +37,9 @@
 #include <net/gen/inet.h>
 #include "telnetd.h"
 
+#if 0
 static char *Version = "@(#) telnetd 1.00 (07/26/92)";
+#endif
 
 int opt_d = 0;				/* debugging output flag	*/
 
@@ -105,7 +107,7 @@ char *hostname;
    lineno = 0;
    for (;;) {
 	if ((ttyp = getttyent()) == NULL) {
-		sprintf(buff, "Can't find %s in the tty table\r\n");
+		sprintf(buff, "Can't find the tty entry in the tty table\r\n");
 		(void) write(1, buff, strlen(buff));
 	}
 	if (strcmp(ttyp->ty_name, tty_name+5) == 0) break;

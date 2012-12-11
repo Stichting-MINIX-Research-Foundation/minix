@@ -223,7 +223,9 @@ static void
 stat_display(struct xferstat *xs, int force)
 {
 	struct timeval now;
+#if !defined(__minix)
 	int ctty_pgrp;
+#endif /* !defined(__minix) */
 	
 	/* Minix returns "Not a typewriter error" */
 #if defined(TIOCGPGRP) && !defined(__minix) 

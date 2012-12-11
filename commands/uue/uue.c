@@ -103,7 +103,7 @@ char *argv[];
   if (lenofname > FILE_NAME) ofname[FILE_NAME] = '\0';
   strcat(ofname, ".uue");
   lenofname = strlen(ofname);
-  if (!split && (filter || (argc > 2) && (argv[2][0] == '-'))) {
+  if (!split && (filter || ((argc > 2) && (argv[2][0] == '-')))) {
 	stdo = 1;
 	outp = stdout;
   } else {

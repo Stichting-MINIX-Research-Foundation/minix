@@ -37,8 +37,8 @@ int Crc32;		/* Display flag indicating 32 bit CRC being received */
 int Znulls;		/* Number of nulls to send at beginning of ZDATA hdr */
 char Attn[ZATTNLEN+1];	/* Attention string rx sends to tx on err */
 
-static lastsent;	/* Last char we sent */
-static Not8bit;		/* Seven bits seen on header */
+static int lastsent;	/* Last char we sent */
+static int Not8bit;	/* Seven bits seen on header */
 
 static char *frametypes[] = {
 	"Carrier Lost",		/* -3 */
@@ -87,7 +87,7 @@ register char *hdr;
 
 	xsendline(ZPAD); xsendline(ZDLE);
 
-	if (Crc32t=Txfcs32)
+	if ((Crc32t=Txfcs32))
 		zsbh32(hdr, type);
 	else {
 		xsendline(ZBIN); zsendline(type); crc = updcrc(type, 0);
@@ -240,7 +240,7 @@ crcfoo:
 			case GOTCRCG:
 			case GOTCRCQ:
 			case GOTCRCW:
-				crc = updcrc((d=c)&0377, crc);
+				crc = updcrc((((d=c))&0377), crc);
 				if ((c = zdlread()) & ~0377)
 					goto crcfoo;
 				crc = updcrc(c, crc);

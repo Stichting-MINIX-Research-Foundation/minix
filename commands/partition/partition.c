@@ -334,7 +334,7 @@ void distribute(void)
 {
 	struct part_entry *pe, *exp;
 	long count;
-	unsigned long base, size, oldbase;
+	unsigned long base, oldbase;
 
 	do {
 		exp= nil;

@@ -278,7 +278,9 @@
 #define	__static_cast(x,y)	(x)y
 #endif
 
-#if __GNUC_PREREQ__(4, 0)
+/* LSC: Clang/llvm also defines GNUC_PREREQ, but it actually does not
+ *      Support those pragma. Make sure it is not used then.*/
+#if __GNUC_PREREQ__(4, 0) && !defined(__clang__)
 #  define __dso_public	__attribute__((__visibility__("default")))
 #  define __dso_hidden	__attribute__((__visibility__("hidden")))
 #  define __BEGIN_PUBLIC_DECLS	\

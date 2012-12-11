@@ -275,7 +275,7 @@ void logmsg(int pri, char *msg, char *from, int flags)
 {
   struct filed *f;
   int fac, prilev;
-  int omask, msglen;
+  int /*omask,*/ msglen;
   char *timestamp;
 
   DEBUG(dprintf("logmsg: pri %o, flags %x, from %s, msg %s\n", pri, flags, from, msg);)
@@ -639,8 +639,6 @@ void printline(char *hname, char *msg)
 void printkline(char *hname, char *msg)
 {
   char line[MAXLINE + 1];
-  char *p = msg, *q = line;
-  int ch, pri = DEFUPRI;
 
   /* Copies message to local buffer, adding source program tag */
   snprintf(line, sizeof(line), "kernel: %s", msg);
@@ -656,7 +654,6 @@ void printkline(char *hname, char *msg)
 */
 void init(int sig)
 {
-  int i;
   FILE *cf;
   struct filed *fLog, *next, **nextp;
   char *p;
@@ -926,7 +923,7 @@ int main(int argc, char **argv)
 		linebuf[len] = '\n';
 		linebuf[len + 1] = '\0';
 		p = linebuf;
-		while(eol = strchr(p, '\n')) {
+		while((eol = strchr(p, '\n'))) {
 			*eol = '\0';
 			printkline(LocalHostName, p);
 			p = eol+1;

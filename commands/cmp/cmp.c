@@ -100,12 +100,12 @@ int fd1, fd2;
 	if (c1 != c2) {
 		if (!loud) {
 			if (!silent) {
-				printf("%s %s differ: char %ld, line %ld\n",
+				printf("%s %s differ: char %d, line %d\n",
 				       name1, name2, pos + i1, line);
 			}
 			return(1);
 		}
-		printf("%10ld %3o %3o\n", pos + i1, c1 & 0xFF, c2 & 0xFF);
+		printf("%10d %3o %3o\n", pos + i1, c1 & 0xFF, c2 & 0xFF);
 		differ = 1;
 	}
 	if (c1 == '\n') line++;

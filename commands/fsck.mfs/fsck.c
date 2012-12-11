@@ -227,7 +227,7 @@ void chkdev(char *f, char **clist, char **ilist, char **zlist);
 /* Initialize the variables used by this program. */
 void initvars()
 {
-  register level;
+  register int level;
 
   nregular = ndirectory = nblkspec = ncharspec =
   nbadinode = nsock = npipe = nsyml = 0;
@@ -338,7 +338,7 @@ unsigned nelem, elsize;
 void printname(s)
 char *s;
 {
-  register n = MFS_NAME_MAX;
+  register int n = MFS_NAME_MAX;
   int c;
 
   do {
@@ -510,7 +510,7 @@ char **getlist(argv, type)
 char ***argv, *type;
 {
   register char **list = *argv;
-  register empty = 1;
+  register int empty = 1;
 
   while (getnumber(**argv) != NO_BIT) {
 	(*argv)++;
@@ -534,7 +534,7 @@ void lsuper()
 	/* Most of the following atol's enrage lint, for good reason. */  
 	printf("ninodes       = %u", sb.s_ninodes);
 	if (input(buf, 80)) sb.s_ninodes = atol(buf);
-	printf("nzones        = %ld", sb.s_zones);
+	printf("nzones        = %d", sb.s_zones);
 	if (input(buf, 80)) sb.s_zones = atol(buf);
 	printf("imap_blocks   = %u", sb.s_imap_blocks);
 	if (input(buf, 80)) sb.s_imap_blocks = atol(buf);
@@ -544,9 +544,9 @@ void lsuper()
 	if (input(buf, 80)) sb.s_firstdatazone_old = atol(buf);
 	printf("log_zone_size = %u", sb.s_log_zone_size);
 	if (input(buf, 80)) sb.s_log_zone_size = atol(buf);
-	printf("maxsize       = %ld", sb.s_max_size);
+	printf("maxsize       = %d", sb.s_max_size);
 	if (input(buf, 80)) sb.s_max_size = atol(buf);
-	printf("block size    = %ld", sb.s_block_size);
+	printf("block size    = %d", sb.s_block_size);
 	if (input(buf, 80)) sb.s_block_size = atol(buf);
 	if (yes("ok now")) {
 		devwrite(0, OFFSET_SUPER_BLOCK, (char *) &sb, sizeof(sb));
@@ -594,7 +594,7 @@ void rw_super(int put)
 	fatal("first data zone too small");
   if (sb.s_log_zone_size < 0) fatal("zone size < block size");
   if (sb.s_max_size <= 0) {
-	printf("warning: invalid max file size %ld\n", sb.s_max_size);
+	printf("warning: invalid max file size %d\n", sb.s_max_size);
   	sb.s_max_size = LONG_MAX;
   }
 }
@@ -602,7 +602,7 @@ void rw_super(int put)
 /* Check the super block for reasonable contents. */
 void chksuper()
 {
-  register n;
+  register int n;
   register off_t maxsize;
 
   n = bitmapsize((bit_t) sb.s_ninodes + 1, block_size);
@@ -646,8 +646,8 @@ void chksuper()
   if(maxsize <= 0)
 	maxsize = LONG_MAX;
   if (sb.s_max_size != maxsize) {
-	printf("warning: expected max size to be %ld ", maxsize);
-	printf("instead of %ld\n", sb.s_max_size);
+	printf("warning: expected max size to be %d ", maxsize);
+	printf("instead of %d\n", sb.s_max_size);
   }
 
   if(sb.s_flags & MFSFLAG_MANDATORY_MASK) {
@@ -715,7 +715,7 @@ bitchunk_t *bitmap;
 block_nr bno;
 int nblk;
 {
-  register i;
+  register int i;
   register bitchunk_t *p;
 
   p = bitmap;
@@ -730,7 +730,7 @@ bitchunk_t *bitmap;
 block_nr bno;
 int nblk;
 {
-  register i;
+  register int i;
   register bitchunk_t *p = bitmap;
 
   for (i = 0; i < nblk; i++, bno++, p += WORDS_PER_BLOCK)
@@ -749,9 +749,9 @@ char **list;
   while ((bit = getnumber(*list++)) != NO_BIT)
 	if (bit < lwb || bit >= upb) {
 		if (bitmap == spec_imap)
-			printf("inode number %ld ", bit);
+			printf("inode number %d ", bit);
 		else
-			printf("zone number %ld ", bit);
+			printf("zone number %d ", bit);
 		printf("out of range (ignored)\n");
 	} else
 		setbit(bitmap, bit - lwb + 1);
@@ -798,11 +798,13 @@ bit_nr phys;
 	if ((w1 ^ w2) & 1 && ++(*n) % MAXPRINT == 0 && *report &&
 	    (!repair || automatic || yes("stop this listing")))
 		*report = 0;
-	else if (*report)
+	else {
+	    if (*report)
 		if ((w1 & 1) && !(w2 & 1))
-			printf("%s %ld is missing\n", type, bit);
+			printf("%s %d is missing\n", type, bit);
 		else if (!(w1 & 1) && (w2 & 1))
-			printf("%s %ld is not free\n", type, bit);
+			printf("%s %d is not free\n", type, bit);
+	}
 }
 
 /* Check if the given (correct) bitmap is identical with the one that is
@@ -960,7 +962,7 @@ void list(ino_t ino, d_inode *ip)
       case I_BLOCK_SPECIAL:
 	printf("  %2x,%2x ", major(ip->i_zone[0]), minor(ip->i_zone[0]));
 	break;
-      default:	printf("%7ld ", ip->i_size);
+      default:	printf("%7d ", ip->i_size);
   }
   printpath(0, 1);
 }
@@ -1038,7 +1040,7 @@ int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp)
 	}
   } else if (pos != (dp->mfs_d_name[1] ? DIR_ENTRY_SIZE : 0)) {
 	make_printable_name(printable_name, dp->mfs_d_name, sizeof(dp->mfs_d_name));
-	printf("warning: %s has offset %ld in ", printable_name, pos);
+	printf("warning: %s has offset %d in ", printable_name, pos);
 	printpath(1, 0);
 	printf("%s is linked to %u)\n", printable_name, dp->d_inum);
 	setbit(spec_imap, (bit_nr) ino);
@@ -1051,7 +1053,7 @@ int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp)
 /* Check the name in a directory entry. */
 int chkname(ino_t ino, dir_struct *dp)
 {
-  register n = MFS_NAME_MAX + 1;
+  register int n = MFS_NAME_MAX + 1;
   register char *p = dp->mfs_d_name;
 
   if (*p == '\0') {
@@ -1129,7 +1131,7 @@ int chkdirzone(ino_t ino, d_inode *ip, off_t pos, zone_nr zno)
 {
   dir_struct dirblk[CDIRECT];
   register dir_struct *dp;
-  register n, dirty;
+  register int n, dirty;
   long block= ztob(zno);
   register long offset = 0;
   register off_t size = 0;
@@ -1198,14 +1200,14 @@ off_t pos;
 {
   printf("%s zone in ", mess);
   printpath(1, 0);
-  printf("zno = %ld, type = ", zno);
+  printf("zno = %d, type = ", zno);
   switch (level) {
       case 0:	printf("DATA");	break;
       case 1:	printf("SINGLE INDIRECT");	break;
       case 2:	printf("DOUBLE INDIRECT");	break;
       default:	printf("VERY INDIRECT");
   }
-  printf(", pos = %ld)\n", pos);
+  printf(", pos = %d)\n", pos);
 }
 
 /* Found the given zone in the given inode.  Check it, and if ok, mark it
@@ -1240,7 +1242,7 @@ off_t pos;
 int chkindzone(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level)
 {
   zone_nr indirect[CINDIR];
-  register n = NR_INDIRECTS / CINDIR;
+  register int n = NR_INDIRECTS / CINDIR;
   long block= ztob(zno);
   register long offset = 0;
 
@@ -1288,7 +1290,7 @@ int zonechk(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level)
 int chkzones(ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist,
  int len, int level)
 {
-  register ok = 1, i;
+  register int ok = 1, i;
 
   /* The check on the position in the next loop is commented out, since FS
    * now requires valid zone numbers in each level that is necessary and FS
@@ -1308,7 +1310,7 @@ int chkzones(ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist,
 /* Check a file or a directory. */
 int chkfile(ino_t ino, d_inode *ip)
 {
-  register ok, i, level;
+  register int ok, i, level;
   off_t pos = 0;
 
   ok = chkzones(ino, ip, &pos, &ip->i_zone[0], NR_DZONE_NUM, 0);
@@ -1320,7 +1322,7 @@ int chkfile(ino_t ino, d_inode *ip)
 /* Check a directory by checking the contents.  Check if . and .. are present. */
 int chkdirectory(ino_t ino, d_inode *ip)
 {
-  register ok;
+  register int ok;
 
   setbit(dirmap, (bit_nr) ino);
   ok = chkfile(ino, ip);
@@ -1349,7 +1351,7 @@ int chklink(ino_t ino, d_inode *ip)
 	if (ip->i_size == 0)
 		printf("empty symbolic link ");
 	else
-		printf("symbolic link too large (size %ld) ", ip->i_size);
+		printf("symbolic link too large (size %d) ", ip->i_size);
 	printpath(2, 1);
 	ok = 0;
   }
@@ -1365,7 +1367,7 @@ int chkspecial(ino_t ino, d_inode *ip)
 
   ok = 1;
   if ((dev_t) ip->i_zone[0] == NO_DEV) {
-	printf("illegal device number %ld for special file ", ip->i_zone[0]);
+	printf("illegal device number %d for special file ", ip->i_zone[0]);
 	printpath(2, 1);
 	ok = 0;
   }
@@ -1375,7 +1377,7 @@ int chkspecial(ino_t ino, d_inode *ip)
    */
   for (i = 1; i < NR_ZONE_NUMS; i++)
 	if (ip->i_zone[i] != NO_ZONE) {
-		printf("nonzero zone number %ld for special file ",
+		printf("nonzero zone number %d for special file ",
 		       ip->i_zone[i]);
 		printpath(2, 1);
 		ok = 0;
@@ -1452,7 +1454,7 @@ dir_struct *dp;
 {
   d_inode inode;
   register ino_t ino = dp->d_inum;
-  register visited;
+  register int visited;
   struct stack stk;
 
   stk.st_dir = dp;
@@ -1500,7 +1502,7 @@ void chktree()
 void printtotal()
 {
   if(preen) {
-  	printf("%d files, %d directories, %d free inodes, %d free zones\n",
+  	printf("%d files, %d directories, %d free inodes, %ld free zones\n",
 	  	nregular, ndirectory, nfreeinode, nfreezone);
 	return;
   }
@@ -1616,7 +1618,7 @@ char **argv;
   register char **clist = 0, **ilist = 0, **zlist = 0;
   int badflag = 0;
 
-  register devgiven = 0;
+  register int devgiven = 0;
   register char *arg;
 
   if ((1 << BITSHIFT) != 8 * sizeof(bitchunk_t)) {

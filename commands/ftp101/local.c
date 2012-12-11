@@ -34,7 +34,6 @@ int DOlpwd()
 int DOlcd()
 {
 char *path;
-int s;
 
    path = cmdargv[1];
 
@@ -55,7 +54,6 @@ int s;
 int DOlmkdir()
 {
 char *path;
-int s;
 
    path = cmdargv[1];
 
@@ -76,7 +74,6 @@ int s;
 int DOlrmdir()
 {
 char *path;
-int s;
 
    path = cmdargv[1];
 

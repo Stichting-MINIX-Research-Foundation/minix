@@ -37,7 +37,7 @@ extern char *optarg;
 
 int main(int argc, char **argv);
 void descend(char *dirname);
-void display_attrib(char *name, struct stat *st);
+void display_attrib(const char *name, struct stat *st);
 void usage(char *binname);
 void open_outfile(void);
 
@@ -45,7 +45,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  char *dir;
+  char *dir = __UNCONST("");
   struct stat st;
   int op;
 
@@ -54,7 +54,7 @@ char *argv[];
   prot = DEF_PROT;
   blocks = DEF_BLOCKS;
   inodes = DEF_INODES;
-  indentstr = DEF_INDENTSTR;
+  indentstr = __UNCONST(DEF_INDENTSTR);
   inode_given = 0;
   block_given = 0;
   top = 0;
@@ -170,7 +170,7 @@ char *dirname;
 		fprintf(outfile, "\n");
 		descend(temp);
 		for (i = 0; i < tabs; i++) {
-			fprintf(outfile, indentstr);
+			fprintf(outfile, "%s", indentstr);
 		}
 		fprintf(outfile, "$\n");
 		continue;
@@ -209,7 +209,7 @@ char *dirname;
 
 
 void display_attrib(name, st)
-char *name;
+const char *name;
 struct stat *st;
 {
 /* Output the specification for a single file */
@@ -220,7 +220,7 @@ struct stat *st;
   if (same_gid) gid = st->st_gid;
   if (same_prot)
 	prot = st->st_mode & 0777;	/***** This one is a bit shady *****/
-  for (i = 0; i < tabs; i++) fprintf(outfile, indentstr);
+  for (i = 0; i < tabs; i++) fprintf(outfile, "%s", indentstr);
   fprintf(outfile, "%s%s%c%c%c%3o %d %d",
 	name,
 	*name == '\0' ? "" : indentstr,	/* stop the tab for a null name */

@@ -394,8 +394,8 @@ char *dir1, *cbuf2;
   }
 
   /* Both files are now open.  Do the copying. */
-  if (!rflag && strncmp((sp->namep + n - 2), ".Z", (size_t)2) ||
-		rflag && !strncmp((sp->namep + n - 2), ".Z", (size_t)2)) {
+  if ((!rflag && strncmp((sp->namep + n - 2), ".Z", (size_t)2)) ||
+		(rflag && !strncmp((sp->namep + n - 2), ".Z", (size_t)2))) {
 	if (zflag && (rflag || (n <= (NAME_SIZE - 2)))) {
 		close(fd1);
 		close(fd2);

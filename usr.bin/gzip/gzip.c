@@ -66,7 +66,7 @@ __RCSID("$NetBSD: gzip.c,v 1.105 2011/08/30 23:06:00 joerg Exp $");
 #include <time.h>
 
 #ifndef PRIdOFF
-#define PRIdOFF PRId64
+#define PRIdOFF PRId32
 #endif
 
 /* what type of file are we dealing with */

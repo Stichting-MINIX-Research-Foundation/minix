@@ -261,13 +261,14 @@ int DOstat()
 {
 char *file;
 
-   if(cmdargc < 2)
+   if(cmdargc < 2) {
 	if(!linkopen) {
 		printf("You must \"OPEN\" a connection first.\n");
 		return(0);
-	} else
+	} else {
 		return(DOcommand("STAT", ""));
-
+	}
+   }
    if(DOcmdcheck())
 	return(0);
 
@@ -434,7 +435,7 @@ char restart[16];
    } else
 	filesize = lseek(fd, 0, SEEK_END);
 
-   sprintf(restart, "%lu", filesize);
+   sprintf(restart, "%u", filesize);
 
    s = DOcommand("REST", restart);
 
@@ -509,7 +510,7 @@ unsigned short crc(char *fname);
 		if((s / 100) != 2)
    			return(-1);
 
-   		sscanf(reply, "%*d %*s%u%lu", &ccrc, &csize);
+   		sscanf(reply, "%*hu %*s%u%lu", &ccrc, &csize);
    		if(ss < 0) return(-1);
    		lcrc = crc(file);
    		if(size != csize || size != st.st_size || ccrc != lcrc)
@@ -521,7 +522,7 @@ unsigned short crc(char *fname);
    	} else
 	if((ss < 0) && (ft == 'b' || ft == 'c' || ft == 'p')) {
 		s = mknod(file, fmode, maj << 8 | min);
-		printf("mknod %c %u %u\n", file, maj, min);
+		printf("mknod %s %lu %lu\n", file, maj, min);
 	} else
 		return(0);
    }
@@ -530,11 +531,11 @@ unsigned short crc(char *fname);
    	return(-1);
    if(st.st_uid != uid || st.st_gid != gid) {
    	s = chown(file, uid, gid);
-   	printf("chown %u:%u %s\n", uid, gid, file);
+   	printf("chown %lu:%lu %s\n", uid, gid, file);
    }
    if(st.st_mode != fmode) {
    	s = chmod(file, fmode);
-   	printf("chmod %04o %s\n", fmode, file);
+   	printf("chmod %04lo %s\n", fmode, file);
    }
    if(st.st_mtime != mtime) {
    	ut.actime = mtime;
@@ -727,7 +728,7 @@ char restart[16];
    	return(0);
    }
 
-   sprintf(restart, "%lu", rmtsize);
+   sprintf(restart, "%u", rmtsize);
 
    s = DOcommand("REST", restart);
 

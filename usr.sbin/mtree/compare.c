@@ -141,7 +141,7 @@ lchown(const char *path, uid_t owner, gid_t group)
 }
 #endif
 
-int
+static int
 utimes(const char *path, const struct timeval times[2])
 {
 	return -1;
@@ -151,7 +151,11 @@ utimes(const char *path, const struct timeval times[2])
 int
 compare(NODE *s, FTSENT *p)
 {
+#if defined(__minix)
+	u_int32_t len, val;
+#else
 	u_int32_t len, val, flags;
+#endif /* defined(__minix) */
 	int fd, label;
 	const char *cp, *tab;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)

@@ -96,7 +96,7 @@ int len;
 	(void) write(fdout, buf, len);
 }
 
-int set_winsize(int fd, unsigned int cols, unsigned int rows)
+void set_winsize(int fd, unsigned int cols, unsigned int rows)
 {
 	struct winsize w;
 	memset(&w, 0, sizeof(w));
@@ -105,7 +105,7 @@ int set_winsize(int fd, unsigned int cols, unsigned int rows)
 	ioctl(fd, TIOCSWINSZ, (char *) &w);
 }
 
-int tel_in(fdout, telout, buffer, len)
+void tel_in(fdout, telout, buffer, len)
 int fdout;
 int telout;
 char *buffer;
@@ -227,7 +227,7 @@ int c;
    	write(fdout, buffer, size);
 }
 
-int tel_out(fdout, buf, size)
+void tel_out(fdout, buf, size)
 int fdout;
 char *buf;
 int size;

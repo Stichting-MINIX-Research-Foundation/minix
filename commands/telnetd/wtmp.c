@@ -107,6 +107,6 @@ char *label;
 {
   char message[128];
 
-  sprintf(message, "telnetd: %s: %s\r\n", strerror(errno));
+  sprintf(message, "telnetd: %i: %s\r\n", errno, strerror(errno));
   (void) write(1, message, strlen(message));
 }

@@ -20,8 +20,7 @@ __weak_alias(uname, _uname)
 		return -1; \
 	name->string[sizeof(name->string)-1]= 0;
 
-int uname(name)
-struct utsname *name;
+int uname(struct utsname *name)
 {
 	int hf, n, err;
 	char *nl;

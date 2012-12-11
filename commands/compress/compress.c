@@ -1405,11 +1405,12 @@ char *ifname, *ofname;
 		if (unlink(ifname))
 		    perror(ifname);
 */
-		if(!quiet)
+		if(!quiet) {
 		    if(do_decomp == 0)
 			fprintf(stderr, " -- compressed to %s", ofname);
 		    else
 			fprintf(stderr, " -- decompressed to %s", ofname);
+		}
 		return;		/* Successful return */
     }
 

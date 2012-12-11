@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     struct nwio_tcpopt tcpopt;
     char *tcp_device;
     struct servent *servent;
-    int tcp_fd, client_fd, count, r;
+    int tcp_fd, client_fd, r;
     int pfd[2];
     unsigned stall= 0;
     struct sigaction sa;

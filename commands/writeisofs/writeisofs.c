@@ -857,7 +857,7 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 			exit(1);
 		}
 
-		fprintf(stderr, " * appended sector info: 0x%lx len 0x%x\n",
+		fprintf(stderr, " * appended sector info: 0x%x len 0x%x\n",
 			bap[0].sector, bap[0].length);
 
 		addr = buf;

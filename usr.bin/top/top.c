@@ -84,7 +84,7 @@ struct proc {
 
 struct proc *proc = NULL, *prev_proc = NULL;
 
-void parse_file(pid_t pid)
+static void parse_file(pid_t pid)
 {
 	char path[PATH_MAX], name[256], type, state;
 	int version, endpt, effuid;
@@ -132,7 +132,7 @@ void parse_file(pid_t pid)
 	p->p_endpoint = endpt;
 	p->p_pid = pid;
 
-	if (fscanf(fp, " %255s %c %d %d %lu %*u %lu %lu",
+	if (fscanf(fp, " %255s %c %d %d %u %*u %lu %lu",
 		name, &state, &p->p_blocked, &p->p_priority,
 		&p->p_user_time, &cycles_hi, &cycles_lo) != 7) {
 
@@ -180,7 +180,7 @@ void parse_file(pid_t pid)
 	fclose(fp);
 }
 
-void parse_dir(void)
+static void parse_dir(void)
 {
 	DIR *p_dir;
 	struct dirent *p_ent;
@@ -202,7 +202,7 @@ void parse_dir(void)
 	closedir(p_dir);
 }
 
-void get_procs(void)
+static void get_procs(void)
 {
 	struct proc *p;
 	int i;
@@ -226,7 +226,7 @@ void get_procs(void)
 	parse_dir();
 }
 
-int print_memory(void)
+static int print_memory(void)
 {
 	FILE *fp;
 	unsigned int pagesize;
@@ -251,7 +251,7 @@ int print_memory(void)
 	return 1;
 }
 
-int print_load(double *loads, int nloads)
+static int print_load(double *loads, int nloads)
 {
 	int i;
 	printf("load averages: ");
@@ -261,7 +261,7 @@ int print_load(double *loads, int nloads)
 	return 1;
 }
 
-int print_proc_summary(struct proc *proc)
+static int print_proc_summary(struct proc *proc)
 {
 	int p, alive, running, sleeping;
 
@@ -288,7 +288,7 @@ struct tp {
 	u64_t ticks;
 };
 
-int cmp_procs(const void *v1, const void *v2)
+static int cmp_procs(const void *v1, const void *v2)
 {
 	struct tp *p1 = (struct tp *) v1, *p2 = (struct tp *) v2;
 	int p1blocked, p2blocked;
@@ -324,7 +324,7 @@ int cmp_procs(const void *v1, const void *v2)
 	return (int) (p1->p - p2->p);
 }
 
-struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
+static struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
 {
 	int t;
 
@@ -340,7 +340,7 @@ struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
 
 double ktotal = 0;
 
-void print_proc(struct tp *tp, u64_t total_ticks)
+static void print_proc(struct tp *tp, u64_t total_ticks)
 {
 	int euid = 0;
 	static struct passwd *who = NULL;
@@ -374,7 +374,7 @@ void print_proc(struct tp *tp, u64_t total_ticks)
 	printf("%6.2f%% %s", 100.0 * tp->ticks / total_ticks, name);
 }
 
-char *cputimemodename(int cputimemode)
+static char *cputimemodename(int cputimemode)
 {
 	static char name[100];
 	int i;
@@ -393,7 +393,7 @@ char *cputimemodename(int cputimemode)
 	return name;
 }
 
-u64_t cputicks(struct proc *p1, struct proc *p2, int timemode)
+static u64_t cputicks(struct proc *p1, struct proc *p2, int timemode)
 {
 	int i;
 	u64_t t = 0;
@@ -410,7 +410,7 @@ u64_t cputicks(struct proc *p1, struct proc *p2, int timemode)
 	return t;
 }
 
-char *ordername(int orderno)
+static char *ordername(int orderno)
 {
 	switch(orderno) {
 		case ORDER_CPU: return "cpu";
@@ -419,7 +419,7 @@ char *ordername(int orderno)
 	return "invalid order";
 }
 
-void print_procs(int maxlines,
+static void print_procs(int maxlines,
 	struct proc *proc1, struct proc *proc2, int cputimemode)
 {
 	int p, nprocs;
@@ -538,7 +538,7 @@ void print_procs(int maxlines,
 	}
 }
 
-void showtop(int cputimemode, int r)
+static void showtop(int cputimemode, int r)
 {
 #define NLOADS 3
 	double loads[NLOADS];
@@ -573,7 +573,7 @@ void showtop(int cputimemode, int r)
 	fflush(NULL);
 }
 
-void init(int *rows)
+static void init(int *rows)
 {
 	char  *term;
 	static char   buffer[TC_BUFFER], strings[TC_STRINGS];
@@ -602,9 +602,9 @@ void init(int *rows)
 	if(*rows < 1) *rows = 24;
 }
 
-void sigwinch(int sig) { }
+static void sigwinch(int sig) { }
 
-void getkinfo(void)
+static void getkinfo(void)
 {
 	FILE *fp;
 

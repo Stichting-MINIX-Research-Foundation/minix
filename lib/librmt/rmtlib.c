@@ -626,12 +626,13 @@ remdev(const char *path)
 int
 rmtopen(const char *path, int oflag, ...)
 {
-	mode_t mode;
+	/* LSC: MINIX  This works only for int mode flags, so use the expected type. */	
+	uint32_t mode;
 	int fd;
 	va_list ap;
 	va_start(ap, oflag);
 
-	mode = va_arg(ap, mode_t);
+	mode = va_arg(ap, uint32_t);
 	va_end(ap);
 
 	_DIAGASSERT(path != NULL);

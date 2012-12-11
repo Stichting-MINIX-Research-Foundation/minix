@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 	if (nbytes > 0) {
 		off_t kBpts;
 
-		fprintf(stderr, "%ld kB / %d.%d s = ",
+		fprintf(stderr, "%d kB / %ld.%ld s = ",
 			(nbytes + 512) / 1024,
 			tenthsec / 10, tenthsec % 10);
 		if (tenthsec < 5)
@@ -230,11 +230,11 @@ int main(int argc, char **argv)
 				seconds = (tenthsec + 5) / 10;
 				kBpts= (nbytes + 512L * seconds)
 							/ (1024L * seconds);
-				fprintf(stderr, "%ld kB/s\n", kBpts);
+				fprintf(stderr, "%d kB/s\n", kBpts);
 			} else {
 				kBpts= (100 * nbytes + 512L * tenthsec)
 							/ (1024L * tenthsec);
-				fprintf(stderr, "%ld.%ld kB/s\n",
+				fprintf(stderr, "%d.%d kB/s\n",
 					kBpts/10, kBpts%10);
 			}
 		}
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 		tenthms= (tenthsec * 1000 + nseeks/2) / nseeks;
 
 		fprintf(stderr,
-			"%ld seeks / %d.%d s = %ld seeks/s = %ld.%ld ms/seek\n",
+			"%d seeks / %ld.%ld s = %ld seeks/s = %d.%d ms/seek\n",
 			nseeks, tenthsec / 10, tenthsec % 10,
 			(nseeks * 10 + tenthsec/2) / tenthsec,
 			tenthms / 10, tenthms % 10);
@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 			} else {
 				fprintf(stderr, ", ");
 			}
-			fprintf(stderr, "%ld.%ld ms (%d rpm)",
+			fprintf(stderr, "%d.%d ms (%d rpm)",
 				(tenthms - rotms) / 10, (tenthms - rotms) % 10,
 				rpm);
 		}

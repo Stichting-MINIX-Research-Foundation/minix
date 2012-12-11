@@ -8,8 +8,7 @@
 __weak_alias(times, _times)
 #endif
 
-clock_t times(buf)
-struct tms *buf;
+clock_t times(struct tms *buf)
 {
   message m;
 

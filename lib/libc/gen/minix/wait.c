@@ -8,8 +8,7 @@
 __weak_alias(wait, _wait)
 #endif
 
-pid_t wait(status)
-int * status;
+pid_t wait(int * status)
 {
   message m;
 

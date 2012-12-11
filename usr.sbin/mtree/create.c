@@ -317,7 +317,9 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 	gid_t sgid;
 	uid_t suid;
 	mode_t smode;
+#if !defined(__minix)
 	u_long sflags = 0;
+#endif /* !defined(__minix) */
 	const char *name = NULL;
 	gid_t savegid;
 	uid_t saveuid;
