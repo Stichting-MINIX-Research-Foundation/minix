@@ -233,6 +233,9 @@ optval(int desc, int tcolflag)
 	case 'i': return I;
 	case 'l': return L;
 	case 'n': return N;
+#ifdef __minix
+	case 'x': return X;
+#endif
 	case 'r': return R;
 	default:  return 0;
 	}

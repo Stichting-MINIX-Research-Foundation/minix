@@ -82,6 +82,10 @@ static u_char *enterfield(u_char *, const u_char *, struct field *, int);
 static u_char *number(u_char *, const u_char *, u_char *, u_char *, int);
 static u_char *length(u_char *, const u_char *, u_char *, u_char *, int);
 
+#ifdef __minix
+static u_char *numhex(u_char *, const u_char *, u_char *, u_char *, int);
+#endif
+
 #define DECIMAL_POINT '.'
 
 /*
@@ -205,6 +209,10 @@ enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
 		return length(tablepos, endkey, start, end, flags);
 	if (flags & N)
 		return number(tablepos, endkey, start, end, flags);
+#ifdef __minix
+	if (flags & X)
+		return numhex(tablepos, endkey, start, end, flags);
+#endif
 
 	/* Bound check space - assuming nothing is skipped */
 	if (tablepos + (end - start) + 1 >= endkey)
@@ -375,3 +383,18 @@ length(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	l = snprintf((char *)buf, sizeof(buf), "%td", lineend - line);
 	return number(pos, bufend, buf, buf + l, flag);
 }
+
+#ifdef __minix
+static u_char *
+numhex(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
+    int flag)
+{
+	u_char buf[32];
+	int64_t n = 0;
+	int l;
+	SKIP_BLANKS(line);
+	sscanf((const char *) pos, "%lx", &n);
+	l = snprintf((char *)buf, sizeof(buf), "%lld", n);
+	return number(pos, bufend, buf, buf + l, flag);
+}
+#endif

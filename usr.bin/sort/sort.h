@@ -86,6 +86,9 @@
 #define	BI	0x20	/* ignore blanks in icol */
 #define	BT	0x40	/* ignore blanks in tcol */
 #define	L	0x80	/* Sort by field length */
+#ifdef __minix
+#define	X	0x100	/* Field is a hex number */
+#endif
 
 /* masks for delimiters: blanks, fields, and termination. */
 #define BLANK 1		/* ' ', '\t'; '\n' if -R is invoked */
