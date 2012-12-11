@@ -28,7 +28,7 @@ CFLAGS    += -g $(WFLAGS) $(VFLAGS) -DHAVE_CONFIG_H
 # Specify this if you want to hard-code the operating system to appear
 # in the lower-left hand corner of -mdoc manuals.
 # CFLAGS += -DOSNAME="\"OpenBSD 4.5\""
- CFLAGS += -DOSNAME="\"Minix\""
+CFLAGS += -UOSNAME -DOSNAME="\"Minix\""
 
 LINTFLAGS += $(VFLAGS)
 
