@@ -264,7 +264,7 @@ size_t req_size;
   int r, oflags, partial_pipe = 0;
   size_t size, cum_io, cum_io_incr;
   struct vnode *vp;
-  u64_t position, new_pos;
+  u64_t  position, new_pos;
 
   /* Must make sure we're operating on locked filp and vnode */
   assert(tll_locked_by_me(&f->filp_vno->v_lock));
@@ -272,12 +272,12 @@ size_t req_size;
 
   oflags = f->filp_flags;
   vp = f->filp_vno;
-  position = cvu64((rw_flag == READING) ? vp->v_pipe_rd_pos :
-							vp->v_pipe_wr_pos);
+  position = cvu64(0);	/* Not actually used */
+
   /* fp->fp_cum_io_partial is only nonzero when doing partial writes */
   cum_io = fp->fp_cum_io_partial;
 
-  r = pipe_check(vp, rw_flag, oflags, req_size, position, 0);
+  r = pipe_check(vp, rw_flag, oflags, req_size, 0);
   if (r <= 0) {
 	if (r == SUSPEND) pipe_suspend(f, buf, req_size);
 	return(r);
@@ -287,16 +287,8 @@ size_t req_size;
   if (size < req_size) partial_pipe = 1;
 
   /* Truncate read request at size. */
-  if((rw_flag == READING) &&
-	cmp64ul(add64ul(position, size), vp->v_size) > 0) {
-	/* Position always should fit in an off_t (LONG_MAX). */
-	off_t pos32;
-
-	assert(cmp64ul(position, LONG_MAX) <= 0);
-	pos32 = cv64ul(position);
-	assert(pos32 >= 0);
-	assert(pos32 <= LONG_MAX);
-	size = vp->v_size - pos32;
+  if (rw_flag == READING && size > vp->v_size) {
+	size = vp->v_size;
   }
 
   if (vp->v_mapfs_e == 0)
@@ -309,7 +301,6 @@ size_t req_size;
 	if (ex64hi(new_pos))
 		panic("rw_pipe: bad new pos");
 
-	position = new_pos;
 	cum_io += cum_io_incr;
 	buf += cum_io_incr;
 	req_size -= cum_io_incr;
@@ -317,26 +308,18 @@ size_t req_size;
 
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
-	if (cmp64ul(position, vp->v_size) > 0) {
-		if (ex64hi(position) != 0) {
+	if (cmp64ul(new_pos, vp->v_size) > 0) {
+		if (ex64hi(new_pos) != 0) {
 			panic("read_write: file size too big for v_size");
 		}
-		vp->v_size = ex64lo(position);
+		vp->v_size = ex64lo(new_pos);
 	}
   } else {
-	if (cmp64ul(position, vp->v_size) >= 0) {
-		/* Reset pipe pointers */
+	if (cmp64ul(new_pos, vp->v_size) >= 0) {
+		/* Pipe emtpy; reset size */
 		vp->v_size = 0;
-		vp->v_pipe_rd_pos= 0;
-		vp->v_pipe_wr_pos= 0;
-		position = cvu64(0);
 	}
   }
-
-  if (rw_flag == READING)
-	vp->v_pipe_rd_pos= cv64ul(position);
-  else
-	vp->v_pipe_wr_pos= cv64ul(position);
 
   if (r == OK) {
 	if (partial_pipe) {

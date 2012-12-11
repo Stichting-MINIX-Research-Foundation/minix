@@ -187,7 +187,7 @@ int do_pipe(void);
 int map_vnode(struct vnode *vp, endpoint_t fs_e);
 void unpause(endpoint_t proc_e);
 int pipe_check(struct vnode *vp, int rw_flag, int oflags, int bytes,
-	u64_t position, int notouch);
+	int notouch);
 void release(struct vnode *vp, int op, int count);
 void revive(endpoint_t proc_e, int returned);
 void suspend(int why);

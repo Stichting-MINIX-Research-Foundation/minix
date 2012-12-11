@@ -16,8 +16,6 @@ EXTERN struct vnode {
 #if 0
   int v_ref_check;		/* for consistency checks */
 #endif
-  off_t v_pipe_rd_pos;
-  off_t v_pipe_wr_pos;
   endpoint_t v_bfs_e;		/* endpoint number for the FS proces in case
 				   of a block special file */
   dev_t v_dev;                  /* device number on which the corresponding

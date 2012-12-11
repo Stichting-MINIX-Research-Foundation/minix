@@ -248,8 +248,6 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			r = map_vnode(vp, PFS_PROC_NR);
 			if (r == OK) {
 				if (vp->v_ref_count == 1) {
-					vp->v_pipe_rd_pos = 0;
-					vp->v_pipe_wr_pos = 0;
 					if (vp->v_size != 0)
 						r = truncate_vnode(vp, 0);
 				}

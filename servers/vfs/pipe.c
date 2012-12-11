@@ -108,8 +108,6 @@ int do_pipe()
   vp->v_inode_nr = res.inode_nr;
   vp->v_mapinode_nr = res.inode_nr;
   vp->v_mode = res.fmode;
-  vp->v_pipe_rd_pos= 0;
-  vp->v_pipe_wr_pos= 0;
   vp->v_fs_count = 1;
   vp->v_mapfs_count = 1;
   vp->v_ref_count = 1;
@@ -175,13 +173,13 @@ endpoint_t map_to_fs_e;
 /*===========================================================================*
  *				pipe_check				     *
  *===========================================================================*/
-int pipe_check(vp, rw_flag, oflags, bytes, position, notouch)
-register struct vnode *vp;	/* the inode of the pipe */
-int rw_flag;			/* READING or WRITING */
-int oflags;			/* flags set by open or fcntl */
-register int bytes;		/* bytes to be read or written (all chunks) */
-u64_t position;			/* current file position */
-int notouch;			/* check only */
+int pipe_check(
+struct vnode *vp,	/* the inode of the pipe */
+int rw_flag,		/* READING or WRITING */
+int oflags,		/* flags set by open or fcntl */
+int bytes,		/* bytes to be read or written (all chunks) */
+int notouch		/* check only */
+)
 {
 /* Pipes are a little different.  If a process reads from an empty pipe for
  * which a writer still exists, suspend the reader.  If the pipe is empty
@@ -191,13 +189,15 @@ int notouch;			/* check only */
   off_t pos;
   int r = OK;
 
-  if (ex64hi(position) != 0)
-	panic("pipe_check: position too large in pipe");
-  pos = ex64lo(position);
+  /* Reads start at the beginning; writes append to pipes */
+  if (rw_flag == READING)
+	pos = 0;
+  else
+	pos = vp->v_size;
 
   /* If reading, check for empty pipe. */
   if (rw_flag == READING) {
-	if (pos >= vp->v_size) {
+	if (vp->v_size == 0) {
 		/* Process is reading from an empty pipe. */
 		if (find_filp(vp, W_BIT) != NULL) {
 			/* Writer exists */
