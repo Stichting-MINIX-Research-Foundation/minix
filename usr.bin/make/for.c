@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.48 2010/12/25 04:57:07 dholland Exp $	*/
+/*	$NetBSD: for.c,v 1.49 2012/06/03 04:29:40 sjg Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.48 2010/12/25 04:57:07 dholland Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.49 2012/06/03 04:29:40 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.48 2010/12/25 04:57:07 dholland Exp $");
+__RCSID("$NetBSD: for.c,v 1.49 2012/06/03 04:29:40 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -151,6 +151,8 @@ For_Eval(char *line)
     int len;
     int escapes;
     unsigned char ch;
+    char **words, *word_buf;
+    int n, nwords;
 
     /* Skip the '.' and any following whitespace */
     for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
@@ -216,35 +218,56 @@ For_Eval(char *line)
      */
     sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
-    for (ptr = sub;; ptr += len) {
-	while (*ptr && isspace((unsigned char)*ptr))
-	    ptr++;
-	if (*ptr == 0)
-	    break;
-	escapes = 0;
-	for (len = 0; (ch = ptr[len]) != 0 && !isspace(ch); len++) {
-	    if (ch == ':' || ch == '$' || ch == '\\')
-		escapes |= FOR_SUB_ESCAPE_CHAR;
-	    else if (ch == ')')
-		escapes |= FOR_SUB_ESCAPE_PAREN;
-	    else if (ch == /*{*/ '}')
-		escapes |= FOR_SUB_ESCAPE_BRACE;
-	}
-	strlist_add_str(&new_for->items, make_str(ptr, len), escapes);
-    }
+    /*
+     * Split into words allowing for quoted strings.
+     */
+    words = brk_string(sub, &nwords, FALSE, &word_buf);
 
     free(sub);
+    
+    if (words != NULL) {
+	for (n = 0; n < nwords; n++) {
+	    ptr = words[n];
+	    if (!*ptr)
+		continue;
+	    escapes = 0;
+	    while ((ch = *ptr++)) {
+		switch(ch) {
+		case ':':
+		case '$':
+		case '\\':
+		    escapes |= FOR_SUB_ESCAPE_CHAR;
+		    break;
+		case ')':
+		    escapes |= FOR_SUB_ESCAPE_PAREN;
+		    break;
+		case /*{*/ '}':
+		    escapes |= FOR_SUB_ESCAPE_BRACE;
+		    break;
+		}
+	    }
+	    /*
+	     * We have to dup words[n] to maintain the semantics of
+	     * strlist.
+	     */
+	    strlist_add_str(&new_for->items, bmake_strdup(words[n]), escapes);
+	}
 
-    if (strlist_num(&new_for->items) % strlist_num(&new_for->vars)) {
-	Parse_Error(PARSE_FATAL,
-		"Wrong number of words (%d) in .for substitution list"
-		" with %d vars",
-		strlist_num(&new_for->items), strlist_num(&new_for->vars));
-	/*
-	 * Return 'success' so that the body of the .for loop is accumulated.
-	 * Remove all items so that the loop doesn't iterate.
-	 */
-	strlist_clean(&new_for->items);
+	free(words);
+	free(word_buf);
+
+	if ((len = strlist_num(&new_for->items)) > 0 &&
+	    len % (n = strlist_num(&new_for->vars))) {
+	    Parse_Error(PARSE_FATAL,
+			"Wrong number of words (%d) in .for substitution list"
+			" with %d vars", len, n);
+	    /*
+	     * Return 'success' so that the body of the .for loop is
+	     * accumulated.
+	     * Remove all items so that the loop doesn't iterate.
+	     */
+	    strlist_clean(&new_for->items);
+	}
     }
 
     Buf_Init(&new_for->buf, 0);

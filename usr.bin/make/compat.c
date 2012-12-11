@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.84 2011/09/16 15:38:03 joerg Exp $	*/
+/*	$NetBSD: compat.c,v 1.90 2012/10/07 19:17:31 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.84 2011/09/16 15:38:03 joerg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.90 2012/10/07 19:17:31 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.84 2011/09/16 15:38:03 joerg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.90 2012/10/07 19:17:31 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -121,7 +121,7 @@ static char 	    meta[256];
 
 static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
-static void CompatInterrupt(int) __dead;
+static void CompatInterrupt(int);
 
 static void
 Compat_Init(void)
@@ -180,7 +180,10 @@ CompatInterrupt(int signo)
 	}
 
     }
-    exit(signo);
+    if (signo == SIGQUIT)
+	_exit(signo);
+    bmake_signal(signo, SIG_DFL);
+    kill(myPid, signo);
 }
 
 /*-
@@ -241,7 +244,6 @@ CompatRunCommand(void *cmdp, void *gnp)
 
     if (*cmdStart == '\0') {
 	free(cmdStart);
-	Error("%s expands to empty string", cmd);
 	return(0);
     }
     cmd = cmdStart;
@@ -275,6 +277,12 @@ CompatRunCommand(void *cmdp, void *gnp)
 
     while (isspace((unsigned char)*cmd))
 	cmd++;
+
+    /*
+     * If we did not end up with a command, just skip it.
+     */
+    if (!*cmd)
+	return (0);
 
 #if !defined(MAKE_NATIVE)
     /*

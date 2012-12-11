@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -344,9 +344,9 @@ static const struct {
 
 static int ParseIsEscaped(const char *, const char *);
 static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
-     __attribute__((__format__(__printf__, 4, 5)));
+    MAKE_ATTR_PRINTFLIKE(4,5);
 static void ParseVErrorInternal(FILE *, const char *, size_t, int, const char *, va_list)
-     __attribute__((__format__(__printf__, 5, 0)));
+    MAKE_ATTR_PRINTFLIKE(5, 0);
 static int ParseFindKeyword(const char *);
 static int ParseLinkSrc(void *, void *);
 static int ParseDoOp(void *, void *);
@@ -430,6 +430,7 @@ loadedfile_nextbuf(void *x, size_t *len)
 	return lf->buf;
 }
 
+#ifndef __minix
 /*
  * Try to get the size of a file.
  */
@@ -462,6 +463,7 @@ load_getsize(int fd, size_t *ret)
 	*ret = (size_t) st.st_size;
 	return SUCCESS;
 }
+#endif /* ndef __minix */
 
 /*
  * Read in a file.
@@ -477,7 +479,9 @@ static struct loadedfile *
 loadfile(const char *path, int fd)
 {
 	struct loadedfile *lf;
+#ifndef __minix
 	long pagesize;
+#endif
 	ssize_t result;
 	size_t bufpos;
 
@@ -536,6 +540,7 @@ loadfile(const char *path, int fd)
 		}
 	}
 #endif
+
 	/* cannot mmap; load the traditional way */
 
 	lf->maplen = 0;
@@ -567,7 +572,9 @@ loadfile(const char *path, int fd)
 		lf->buf = bmake_realloc(lf->buf, lf->len);
 	}
 
+#ifndef __minix
 done:
+#endif /* !defined(__minix) */
 	if (path != NULL) {
 		close(fd);
 	}
@@ -2408,7 +2415,7 @@ ParseTraditionalInclude(char *line)
 }
 #endif
 
-#ifdef SYSVINCLUDE
+#ifdef GMAKEEXPORT
 /*-
  *---------------------------------------------------------------------
  * ParseGmakeExport  --
@@ -2430,7 +2437,7 @@ ParseGmakeExport(char *line)
     char	  *value;
 
     if (DEBUG(PARSE)) {
-	    fprintf(debug_file, "ParseTraditionalInclude: %s\n", variable);
+	    fprintf(debug_file, "ParseGmakeExport: %s\n", variable);
     }
 
     /*
@@ -2444,13 +2451,12 @@ ParseGmakeExport(char *line)
 
     if (*value != '=') {
 	Parse_Error(PARSE_FATAL,
-		     "Variable/Value missing from \"include\"");
+		     "Variable/Value missing from \"export\"");
 	return;
     }
 
     /*
-     * Substitute for any variables in the file name before trying to
-     * find the thing.
+     * Expand the value before putting it in the environment.
      */
     value = Var_Subst(NULL, value, VAR_CMD, FALSE);
     setenv(variable, value, 1);
@@ -2911,7 +2917,7 @@ Parse_File(const char *name, int fd)
 		isspace((unsigned char) line[6]) &&
 		strchr(line, ':') == NULL) {
 		/*
-		 * It's an Gmake"export".
+		 * It's a Gmake "export".
 		 */
 		ParseGmakeExport(line);
 		continue;

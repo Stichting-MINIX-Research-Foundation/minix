@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.24 2009/01/17 13:29:37 dsl Exp $	*/
+/*	$NetBSD: buf.c,v 1.25 2012/04/24 20:26:58 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.24 2009/01/17 13:29:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.25 2012/04/24 20:26:58 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.24 2009/01/17 13:29:37 dsl Exp $");
+__RCSID("$NetBSD: buf.c,v 1.25 2012/04/24 20:26:58 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -247,4 +247,45 @@ Buf_Destroy(Buffer *buf, Boolean freeData)
     buf->buffer = NULL;
 
     return data;
+}
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * Buf_DestroyCompact --
+ *	Nuke a buffer and return its data.
+ *
+ * Input:
+ *	buf		Buffer to destroy
+ *
+ * Results:
+ *	Data buffer
+ *
+ * Side Effects:
+ *	If the buffer size is much greater than its content,
+ *	a new buffer will be allocated and the old one freed.
+ *
+ *-----------------------------------------------------------------------
+ */
+#ifndef BUF_COMPACT_LIMIT
+# define BUF_COMPACT_LIMIT 128          /* worthwhile saving */
+#endif
+
+Byte *
+Buf_DestroyCompact(Buffer *buf)
+{
+#if BUF_COMPACT_LIMIT > 0
+    Byte *data;
+
+    if (buf->size - buf->count >= BUF_COMPACT_LIMIT) {
+	/* We trust realloc to be smart */
+	data = bmake_realloc(buf->buffer, buf->count + 1);
+	if (data) {
+	    data[buf->count] = 0;
+	    Buf_Destroy(buf, FALSE);
+	    return data;
+	}
+    }
+#endif
+    return Buf_Destroy(buf, FALSE);
 }
