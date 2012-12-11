@@ -271,11 +271,11 @@ finddisk(const char *name)
 	const char *p;
 	size_t len, dlen;
 	struct diskentry *d;
+#ifndef __minix
 	char buf[MAXPATHLEN];
 	struct dkwedge_info dkw;
 	int fd;
 
-#ifndef __minix
 	if ((fd = opendisk(name, O_RDONLY, buf, sizeof(buf), 0)) != -1) {
 		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) != -1)
 			name = dkw.dkw_parent;
