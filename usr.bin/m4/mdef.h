@@ -1,5 +1,5 @@
 /*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
-/*	$NetBSD: mdef.h,v 1.13 2009/10/26 21:11:28 christos Exp $	*/
+/*	$NetBSD: mdef.h,v 1.14 2011/03/05 16:37:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -166,6 +166,8 @@ struct input_file {
 
 #define CURRENT_NAME	(infile[ilevel].name)
 #define CURRENT_LINE	(infile[ilevel].lineno)
+#define	TOKEN_LINE(f)	(f->lineno - (f->c == '\n' ? 1 : 0))
+
 /*
  * macros for readibility and/or speed
  *

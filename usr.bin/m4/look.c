@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.11 2009/10/26 21:11:28 christos Exp $	*/
+/*	$NetBSD: look.c,v 1.12 2012/03/20 20:34:58 matt Exp $	*/
 /*	$OpenBSD: look.c,v 1.21 2009/10/14 17:23:17 sthen Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: look.c,v 1.11 2009/10/26 21:11:28 christos Exp $");
+__RCSID("$NetBSD: look.c,v 1.12 2012/03/20 20:34:58 matt Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -67,9 +67,7 @@ struct ohash macros;
 
 /* Support routines for hash tables.  */
 void *
-hash_alloc(s, u)
-	size_t s;
-	void *u 	UNUSED;
+hash_alloc(size_t s, void *u UNUSED)
 {
 	void *storage = xalloc(s, "hash alloc");
 	if (storage)
@@ -78,24 +76,19 @@ hash_alloc(s, u)
 }
 
 void
-hash_free(p, s, u)
-	void *p;
-	size_t s	UNUSED;
-	void *u 	UNUSED;
+hash_free(void *p, size_t s UNUSED, void *u UNUSED)
 {
 	free(p);
 }
 
 void *
-element_alloc(s, u)
-	size_t s;
-	void *u 	UNUSED;
+element_alloc(size_t s, void *u UNUSED)
 {
 	return xalloc(s, "element alloc");
 }
 
 void
-init_macros()
+init_macros(void)
 {
 	ohash_init(&macros, 10, &macro_info);
 }
