@@ -160,8 +160,23 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 		 * in the path until chk_path() finds that it cannot fix
 		 * anything further.  if that happens we just give up.
 		 */
+#ifdef __minix
+		{
+			/* For minix, generate the temporary filename
+			 * conservatively - just write Xes into the last component.
+			 * There is space because of the malloc().
+			 */
+			int cc;
+			char *last_slash;
+			strcpy(arcn->tmp_name, arcn->name);
+			if(!(last_slash = strrchr(arcn->tmp_name, '/')))
+				strcpy(arcn->tmp_name, "XXXXXX");
+			else	strcpy(last_slash+1, "XXXXXX");
+		}
+#else
 		(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX",
 		    arcn->name);
+#endif
 		fd = mkstemp(arcn->tmp_name);
 		if (fd >= 0)
 			break;
