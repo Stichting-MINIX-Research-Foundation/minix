@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2006/03/23 23:37:07 wiz Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -33,7 +33,7 @@
 
 #ifdef USE_PAM
 
-void	usage(void);
+__dead void	usage(void);
 
 #ifdef KERBEROS5
 void	pwkrb5_usage(const char *);

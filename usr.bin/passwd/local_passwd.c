@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.34 2010/03/02 16:19:13 gdt Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.36 2012/03/25 05:55:07 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.34 2010/03/02 16:19:13 gdt Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.36 2012/03/25 05:55:07 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,9 +191,7 @@ pwlocal_process(const char *username, int argc, char **argv)
 		login_close(lc);
 	}
 #endif
-#if 0
-	printf("AAA: pw_expiry = %x\n", pw_expiry);
-#endif
+
 	pw->pw_passwd = getnewpasswd(pw, min_pw_len);
 	old_change = pw->pw_change;
 	pw->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
@@ -219,7 +217,7 @@ pwlocal_process(const char *username, int argc, char **argv)
 	pw_copy(pfd, tfd, pw, &old_pw);
 
 	if (pw_mkdb(username, old_change == pw->pw_change) < 0)
-		pw_error((char *)NULL, 0, 1);
+		pw_error(NULL, 0, 1);
 
 	syslog(LOG_AUTH | LOG_INFO,
 	       "user %s (UID %lu) successfully changed "
@@ -232,8 +230,7 @@ pwlocal_process(const char *username, int argc, char **argv)
 static int force_local;
 
 int
-local_init(progname)
-	const char *progname;
+local_init(const char *progname)
 {
 	force_local = 0;
 	return (0);
@@ -253,7 +250,7 @@ local_arg(char ch, const char *arg)
 }
 
 int
-local_arg_end()
+local_arg_end(void)
 {
 	if (force_local)
 		return(PW_USE_FORCE);
@@ -261,14 +258,13 @@ local_arg_end()
 }
 
 void
-local_end()
+local_end(void)
 {
 	/* NOOP */
 }
 
 int
-local_chpw(uname)
-	const char *uname;
+local_chpw(const char *uname)
 {
 	struct passwd *pw;
 	struct passwd old_pw;
@@ -304,9 +300,7 @@ local_chpw(uname)
 		login_close(lc);
 	}
 #endif
-#if 0
-	printf("pw_expiry = %x, pw->pw_expire = %x\n", pw_expiry, pw->pw_expire);
-#endif
+
 	pw->pw_passwd = getnewpasswd(pw, min_pw_len);
 	old_change = pw->pw_change;
 	pw->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
@@ -332,7 +326,7 @@ local_chpw(uname)
 	pw_copy(pfd, tfd, pw, &old_pw);
 
 	if (pw_mkdb(uname, old_change == pw->pw_change) < 0)
-		pw_error((char *)NULL, 0, 1);
+		pw_error(NULL, 0, 1);
 
 	syslog(LOG_AUTH | LOG_INFO,
 	       "user %s (UID %lu) successfully changed "
