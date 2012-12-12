@@ -3,11 +3,6 @@
 
 .include <bsd.own.mk>
 
-.if defined(__MINIX)
-# LSC Until it compiles cleanly...
-NOGCCERROR:=yes
-.endif
-
 USE_FORT?= yes	# setuid
 PROG=	passwd
 SRCS=	local_passwd.c passwd.c
