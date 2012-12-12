@@ -200,13 +200,6 @@ void *alloc(size_t n)
 	return m;
 }
 
-#ifndef makedev		/* Missing in sys/types.h */
-#define minor(dev)	(((dev) >> MINOR) & BYTE)
-#define major(dev)	(((dev) >> MAJOR) & BYTE)
-#define makedev(major, minor)	\
-			((dev_t) (((major) << MAJOR) | ((minor) << MINOR)))
-#endif
-
 typedef enum parttype { DUNNO, SUBPART, PRIMARY, FLOPPY } parttype_t;
 
 typedef struct device {

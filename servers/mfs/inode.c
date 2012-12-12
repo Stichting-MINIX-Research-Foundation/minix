@@ -275,8 +275,8 @@ struct inode *alloc_inode(dev_t dev, mode_t bits)
   b = alloc_bit(sp, IMAP, sp->s_isearch);
   if (b == NO_BIT) {
 	err_code = ENOSPC;
-	major = (int) (sp->s_dev >> MAJOR) & BYTE;
-	minor = (int) (sp->s_dev >> MINOR) & BYTE;
+	major = major(sp->s_dev);
+	minor = minor(sp->s_dev);
 	printf("Out of i-nodes on device %d/%d\n", major, minor);
 	return(NULL);
   }

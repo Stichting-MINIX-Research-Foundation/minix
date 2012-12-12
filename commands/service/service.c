@@ -307,7 +307,7 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 				  print_usage(argv[ARG_NAME], "major already set");
 				  exit(EINVAL);
 			  }
-              req_major = (stat_buf.st_rdev >> MAJOR) & BYTE;
+              req_major = major(stat_buf.st_rdev);
               if(req_dev_style == STYLE_NDEV) {
                   req_dev_style = STYLE_DEV;
               }

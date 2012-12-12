@@ -958,8 +958,7 @@ void list(ino_t ino, d_inode *ip)
   switch (ip->i_mode & I_TYPE) {
       case I_CHAR_SPECIAL:
       case I_BLOCK_SPECIAL:
-	printf("  %2x,%2x ", (dev_t) ip->i_zone[0] >> MAJOR & 0xFF,
-	       (dev_t) ip->i_zone[0] >> MINOR & 0xFF);
+	printf("  %2x,%2x ", major(ip->i_zone[0]), minor(ip->i_zone[0]));
 	break;
       default:	printf("%7ld ", ip->i_size);
   }

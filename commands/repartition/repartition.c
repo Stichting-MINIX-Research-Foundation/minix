@@ -44,13 +44,6 @@ void fatal(const char *label)
 	exit(1);
 }
 
-#ifndef makedev
-#define minor(dev)	(((dev) >> MINOR) & BYTE)
-#define major(dev)	(((dev) >> MAJOR) & BYTE)
-#define makedev(major, minor)	\
-			((dev_t) (((major) << MAJOR) | ((minor) << MINOR)))
-#endif
-
 #define MINOR_d0p0s0	128
 
 void partsort(struct part_entry *pe)
