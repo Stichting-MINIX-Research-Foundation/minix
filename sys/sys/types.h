@@ -133,7 +133,6 @@ typedef uint32_t bitchunk_t; /* collection of bits in a bitmap */
  */
 
 typedef unsigned long  Ino_t;
-
 #endif /* __minix */
 
 #include <machine/endian.h>
@@ -301,13 +300,13 @@ typedef int32_t __devmajor_t, __devminor_t;
 #define devmajor_t __devmajor_t
 #define devminor_t __devminor_t
 #define NODEVMAJOR (-1)
-/* Major, minor numbers, dev_t's. */
-#define MAJOR              8    /* major device = (dev>>MAJOR) & 0377 */
-#define MINOR              0    /* minor device = (dev>>MINOR) & 0377 */
-#define minor(dev)      ((devminor_t)(((dev) >> MINOR) & 0xff))
-#define major(dev)      ((devmajor_t)(((dev) >> MAJOR) & 0xff))
-#define makedev(major, minor)   \
-                        ((dev_t) (((major) << MAJOR) | ((minor) << MINOR)))
+/* LSC Our major / minor numbering scheme is not the exactly the same, to be updated? */
+#define	major(x)	((devmajor_t)(((uint32_t)(x) & 0x0000ff00) >>  8))
+#define	minor(x)	((devminor_t)( \
+				   (((uint32_t)(x) & 0x000000ff) >>  0)))
+#define	makedev(x,y)	((dev_t)((((x) <<  8) & 0x0000ff00) | \
+				  \
+				 (((y) <<  0) & 0x000000ff)))
 #endif
 
 #ifdef	_BSD_CLOCK_T_

@@ -36,13 +36,6 @@ void fatal(const char *label)
 	exit(1);
 }
 
-#ifndef makedev
-#define minor(dev)	(((dev) >> MINOR) & BYTE)
-#define major(dev)	(((dev) >> MAJOR) & BYTE)
-#define makedev(major, minor)	\
-			((dev_t) (((major) << MAJOR) | ((minor) << MINOR)))
-#endif
-
 int aflag;			/* Add a new partition to the current table. */
 int mflag;			/* Minix rules, no need for alignment. */
 int rflag;			/* Report current partitions. */
