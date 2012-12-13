@@ -96,10 +96,14 @@ int
 main(int argc, char *argv[])
 {
 	int ch, rflag;
+	int value;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
+	if (value == 123){
+		printf("value not initialized test! ");
+	}
 	Pflag = rflag = 0;
 	while ((ch = getopt(argc, argv, "dfiPRrvW")) != -1)
 		switch (ch) {
