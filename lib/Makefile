@@ -46,7 +46,7 @@ SUBDIR+= libcompat_minix libblockdriver libchardriver     \
        libnetsock libpuffs libsffs
 
 .if (${MACHINE} == "i386")
-SUBDIR += libvassert libhgfs libvboxfs 
+SUBDIR += libvassert libhgfs libvboxfs libvirtio
 .endif
 
 .if (${MKRUMP} != "no")
