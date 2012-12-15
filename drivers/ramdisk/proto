@@ -14,6 +14,7 @@ d--755 0 0
 	sbin d--755 0 0
 		floppy ---755 0 0 floppy
 		ahci ---755 0 0 ahci
+		virtio_blk ---755 0 0 virtio_blk
 		at_wini ---755 0 0 at_wini
 #if RAMDISK_SMALL == 1
 		ext2 ---755 0 0 ext2

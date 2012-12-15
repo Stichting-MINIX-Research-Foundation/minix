@@ -44,6 +44,7 @@ PROG_USRSBIN+=	pwd_mkdb
 .if ${MKSMALL} != "yes"
 RAMDISK_SMALL=	1
 PROG_DRIVERS+=	ahci
+PROG_DRIVERS+=	virtio_blk
 PROG_SERVERS+=	ext2
 .endif
 
