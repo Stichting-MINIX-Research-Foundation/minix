@@ -183,7 +183,8 @@ void memstats(int *nodes, int *pages, int *largest)
 
 static int findbit(int low, int startscan, int pages, int memflags, int *len)
 {
-	int run_length = 0, i, freerange_start;
+	int run_length = 0, i;
+	int freerange_start = startscan;
 
 	for(i = startscan; i >= low; i--) {
 		if(!page_isfree(i)) {
