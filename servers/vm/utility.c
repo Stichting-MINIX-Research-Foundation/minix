@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/param.h>
+#include <sys/mman.h>
 
 #include "proto.h"
 #include "glo.h"
@@ -263,4 +264,56 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 
 	return OK;
 }
+
+void *minix_mmap(void *addr, size_t len, int f, int f2, int f3, off_t o)
+{
+	void *ret;
+	phys_bytes p;
+
+	assert(!addr);
+	assert(!(len % VM_PAGE_SIZE));
+
+	ret = vm_allocpages(&p, VMP_SLAB, len/VM_PAGE_SIZE);
+
+	if(!ret) return MAP_FAILED;
+	memset(ret, 0, len);
+	return ret;
+}
+
+int minix_munmap(void * addr, size_t len)
+{
+	vm_freepages((vir_bytes) addr, roundup(len, VM_PAGE_SIZE)/VM_PAGE_SIZE);
+	return 0;
+}
+
+int _brk(void *addr)
+{
+	vir_bytes target = roundup((vir_bytes)addr, VM_PAGE_SIZE), v;
+	extern char _end;
+	extern char *_brksize;
+	static vir_bytes prevbrk = (vir_bytes) &_end;
+	struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
+
+	for(v = roundup(prevbrk, VM_PAGE_SIZE); v < target;
+		v += VM_PAGE_SIZE) {
+		phys_bytes mem, newpage = alloc_mem(1, 0);
+		if(newpage == NO_MEM) return -1;
+		mem = CLICK2ABS(newpage);
+		if(pt_writemap(vmprocess, &vmprocess->vm_pt,
+	v, mem, VM_PAGE_SIZE,
+        ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW, 0) != OK) {
+			free_mem(newpage, 1);
+			return -1;
+		}
+		prevbrk = v + VM_PAGE_SIZE;
+	}
+
+        _brksize = (char *) addr;
+
+        if(sys_vmctl(SELF, VMCTL_FLUSHTLB, 0) != OK)
+        	panic("flushtlb failed");
+
+	return 0;
+}
+
 

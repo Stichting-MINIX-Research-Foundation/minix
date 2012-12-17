@@ -7,8 +7,6 @@
 
 #include "pt.h"
 #include "vm.h"
-#include "physravl.h"
-#include "yieldedavl.h"
 #include "regionavl.h"
 
 struct vmproc;

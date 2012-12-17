@@ -95,6 +95,13 @@ void utrace(struct ut *, int);
 #   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
 #endif /* __FreeBSD__ */
 
+/* #undef these things so that malloc uses the non-internal symbols.
+ * This is necessary for VM to be able to define its own versions, and
+ * use this malloc.
+ */
+#undef minix_mmap
+#undef minix_munmap
+
 #include <assert.h>
 
 #include <sys/types.h>

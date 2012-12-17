@@ -129,12 +129,11 @@ static int shared_pagefault(struct vmproc *vmp, struct vir_region *region,
 	assert(ph->ph->phys == MAP_NONE);
 	pb_free(ph->ph);
 
-	if(!(pr = physr_search(src_region->phys, ph->offset, AVL_EQUAL))) {
+	if(!(pr = physblock_get(src_region, ph->offset))) {
 		int r;
 		if((r=map_pf(src_vmp, src_region, ph->offset, write)) != OK)
 			return r;
-		if(!(pr = physr_search(src_region->phys, ph->offset,
-			AVL_EQUAL))) {
+		if(!(pr = physblock_get(src_region, ph->offset))) {
 			panic("missing region after pagefault handling");
 		}
 	}

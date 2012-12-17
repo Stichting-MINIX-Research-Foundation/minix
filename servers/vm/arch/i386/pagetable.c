@@ -54,25 +54,22 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
  * circular dependency on allocating memory and writing it into VM's
  * page table.
  */
-#if defined(__i386__)
 #if SANITYCHECKS
 #define SPAREPAGES 100
 #define STATIC_SPAREPAGES 90
 #else
-#define SPAREPAGES 15
-#define STATIC_SPAREPAGES 10
+#define SPAREPAGES 20
+#define STATIC_SPAREPAGES 15
 #endif
-#elif defined(__arm__)
+
 #define SPAREPAGEDIRS 11
 #define STATIC_SPAREPAGEDIRS 10
-#define SPAREPAGES 250
-#define STATIC_SPAREPAGES 100
+
 int missing_sparedirs = SPAREPAGEDIRS;
 static struct {
 	void *pagedir;
 	phys_bytes phys;
 } sparepagedirs[SPAREPAGEDIRS];
-#endif
 
 int missing_spares = SPAREPAGES;
 static struct {
@@ -143,11 +140,7 @@ void pt_sanitycheck(pt_t *pt, char *file, int line)
 /*===========================================================================*
  *				findhole		     		     *
  *===========================================================================*/
-#if defined(__i386__)
-static u32_t findhole(void)
-#elif defined(__arm__)
 static u32_t findhole(int pages)
-#endif
 {
 /* Find a space in the virtual address space of VM. */
 	u32_t curv;
@@ -159,7 +152,9 @@ static u32_t findhole(int pages)
 	u32_t holev;
 #endif
 
-	vmin = (vir_bytes) (&_end) & ARCH_VM_ADDR_MASK; /* marks end of VM BSS */
+	vmin = (vir_bytes) (&_end); /* marks end of VM BSS */
+	vmin += 1024*1024*1024;	/* reserve 1GB virtual address space for VM heap */
+	vmin &= ARCH_VM_ADDR_MASK; 
 	vmax = VM_STACKTOP;
 
 	/* Input sanity check. */
@@ -298,10 +293,10 @@ static void *vm_getsparepage(phys_bytes *phys)
 			return sp;
 		}
 	}
+	printf("no spare found, %d missing\n", missing_spares);
 	return NULL;
 }
 
-#if defined(__arm__)
 /*===========================================================================*
  *				vm_getsparepagedir	      		     *
  *===========================================================================*/
@@ -322,7 +317,6 @@ static void *vm_getsparepagedir(phys_bytes *phys)
 	}
 	return NULL;
 }
-#endif
 
 /*===========================================================================*
  *				vm_checkspares		     		     *
@@ -332,7 +326,7 @@ static void *vm_checkspares(void)
 	int s, n = 0;
 	static int total = 0, worst = 0;
 	assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
-	for(s = 0; s < SPAREPAGES && missing_spares > 0; s++)
+	for(s = 0; s < SPAREPAGES && missing_spares > 0; s++) {
 	    if(!sparepages[s].page) {
 		n++;
 		if((sparepages[s].page = vm_allocpage(&sparepages[s].phys, 
@@ -343,6 +337,7 @@ static void *vm_checkspares(void)
 		} else {
 			printf("VM: warning: couldn't get new spare page\n");
 		}
+	   }
 	}
 	if(worst < n) worst = n;
 	total += n;
@@ -376,14 +371,14 @@ static void *vm_checksparedirs(void)
 
 	return NULL;
 }
-
 #endif
+
 static int pt_init_done;
 
 /*===========================================================================*
  *				vm_allocpage		     		     *
  *===========================================================================*/
-void *vm_allocpage(phys_bytes *phys, int reason)
+void *vm_allocpages(phys_bytes *phys, int reason, int pages)
 {
 /* Allocate a page for use by VM itself. */
 	phys_bytes newpage;
@@ -392,12 +387,12 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	int r;
 	static int level = 0;
 	void *ret;
-#if defined(__arm__)
-	u32_t mem_bytes, mem_clicks, mem_flags;
-#endif
+	u32_t mem_flags = 0;
 
 	pt = &vmprocess->vm_pt;
 	assert(reason >= 0 && reason < VMP_CATEGORIES);
+
+	assert(pages > 0);
 
 	level++;
 
@@ -406,16 +401,13 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 
 	if((level > 1) || !pt_init_done) {
 		void *s;
-#if defined(__i386__)
+
 		s=vm_getsparepage(phys);
-#elif defined(__arm__)
 
-		if (reason == VMP_PAGEDIR)
-			s=vm_getsparepagedir(phys);
-		else
-			s=vm_getsparepage(phys);
+		if(pages == 1) s=vm_getsparepage(phys);
+		else if(pages == 4) s=vm_getsparepagedir(phys);
+		else panic("%d pages", pages);
 
-#endif
 		level--;
 		if(!s) {
 			util_stacktrace();
@@ -427,23 +419,14 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 
 #if defined(__arm__)
 	if (reason == VMP_PAGEDIR) {
-		mem_bytes = ARCH_PAGEDIR_SIZE;
-		mem_flags = PAF_ALIGN16K;
-	} else {
-		mem_bytes = VM_PAGE_SIZE;
-		mem_flags = 0;
+		mem_flags |= PAF_ALIGN16K;
 	}
-	mem_clicks = mem_bytes / VM_PAGE_SIZE * CLICKSPERPAGE;
-
 #endif
+
 	/* VM does have a pagetable, so get a page and map it in there.
 	 * Where in our virtual address space can we put it?
 	 */
-#if defined(__i386__)
-	loc = findhole();
-#elif defined(__arm__)
-	loc = findhole(mem_bytes / VM_PAGE_SIZE);
-#endif
+	loc = findhole(pages);
 	if(loc == NO_MEM) {
 		level--;
 		printf("VM: vm_allocpage: findhole failed\n");
@@ -453,11 +436,7 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	/* Allocate page of memory for use by VM. As VM
 	 * is trusted, we don't have to pre-clear it.
 	 */
-#if defined(__i386__)
-	if((newpage = alloc_mem(CLICKSPERPAGE, 0)) == NO_MEM) {
-#elif defined(__arm__)
-	if((newpage = alloc_mem(mem_clicks, mem_flags)) == NO_MEM) {
-#endif
+	if((newpage = alloc_mem(pages, mem_flags)) == NO_MEM) {
 		level--;
 		printf("VM: vm_allocpage: alloc_mem failed\n");
 		return NULL;
@@ -466,16 +445,13 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 	*phys = CLICK2ABS(newpage);
 
 	/* Map this page into our address space. */
-#if defined(__i386__)
-	if((r=pt_writemap(vmprocess, pt, loc, *phys, VM_PAGE_SIZE,
-		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW, 0)) != OK) {
-		free_mem(newpage, CLICKSPERPAGE);
-#elif defined(__arm__)
-	if((r=pt_writemap(vmprocess, pt, loc, *phys, mem_bytes,
-		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW |
-		ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE, 0)) != OK) {
-		free_mem(newpage, mem_clicks);
+	if((r=pt_writemap(vmprocess, pt, loc, *phys, VM_PAGE_SIZE*pages,
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
+#if defined(__arm__)
+		| ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE
 #endif
+		, 0)) != OK) {
+		free_mem(newpage, pages);
 		printf("vm_allocpage writemap failed\n");
 		level--;
 		return NULL;
@@ -492,6 +468,11 @@ void *vm_allocpage(phys_bytes *phys, int reason)
 
 	vm_self_pages++;
 	return ret;
+}
+
+void *vm_allocpage(phys_bytes *phys, int reason)
+{
+	return vm_allocpages(phys, reason, 1);
 }
 
 /*===========================================================================*
@@ -1089,12 +1070,12 @@ int pt_new(pt_t *pt)
 	 * the page directories (the page_directories data).
 	 */
         if(!pt->pt_dir &&
-          !(pt->pt_dir = vm_allocpage((phys_bytes *)&pt->pt_dir_phys, VMP_PAGEDIR))) {
+          !(pt->pt_dir = vm_allocpages((phys_bytes *)&pt->pt_dir_phys,
+	  	VMP_PAGEDIR, ARCH_PAGEDIR_SIZE/VM_PAGE_SIZE))) {
 		return ENOMEM;
 	}
-#if defined(__arm__)
+
 	assert(!((u32_t)pt->pt_dir_phys % ARCH_PAGEDIR_SIZE));
-#endif
 
 	for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
 		pt->pt_dir[i] = 0; /* invalid entry (PRESENT bit = 0) */
@@ -1359,6 +1340,8 @@ void pt_init(void)
 	pt_bind(newpt, &vmproc[VM_PROC_NR]);
 
 	pt_init_done = 1;
+
+	vm_checkspares();
 
         /* All OK. */
         return;

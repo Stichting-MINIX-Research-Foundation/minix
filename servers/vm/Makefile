@@ -4,7 +4,7 @@
 PROG=	vm
 SRCS=	main.c alloc.c utility.c exit.c fork.c break.c \
 	mmap.c slaballoc.c region.c pagefaults.c \
-	physravl.c rs.c queryexit.c yieldedavl.c regionavl.c pb.c \
+	rs.c queryexit.c yieldedavl.c regionavl.c pb.c \
 	mem_anon.c mem_directphys.c mem_anon_contig.c mem_shared.c
 
 DPADD+=	${LIBSYS}
