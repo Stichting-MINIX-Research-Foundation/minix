@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.17 2012/08/30 12:16:49 drochner Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.17 2012/08/30 12:16:49 drochner Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $");
 
 #define BCRYPT_VERSION '2'
 #define BCRYPT_MAXSALT 16	/* Precomputation is just so nice */
-#define BCRYPT_MAXSALTLEN 	(BCRYPT_MAXSALT * 4 / 3 + 1)
+#define BCRYPT_MAXSALTLEN 	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
 #define BCRYPT_MINROUNDS 16	/* we have log2(rounds) in salt */
 
@@ -77,7 +77,6 @@ static void decode_base64(u_int8_t *, u_int16_t, const u_int8_t *);
 char *__bcrypt(const char *, const char *);	/* XXX */
 
 static char    encrypted[_PASSWORD_LEN];
-static char    error[] = ":";
 
 static const u_int8_t Base64Code[] =
 "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -175,13 +174,10 @@ __gensalt_blowfish(char *salt, size_t saltlen, const char *option)
 	if (errno == ERANGE && nrounds == ULONG_MAX)
 		return -1;
 
-	if (nrounds > 255) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (nrounds < 4)
 		nrounds = 4;
+	else if (nrounds > 31)
+		nrounds = 31;
 
 	for (i = 0; i < BCRYPT_MAXSALT; i++) {
 		if (i % 4 == 0)
@@ -214,9 +210,7 @@ bcrypt_gensalt(u_int8_t log_rounds)
    i.e. $2$04$iwouldntknowwhattosayetKdJ6iFtacBqJdKe6aW7ou */
 
 char   *
-__bcrypt(key, salt)
-	const char   *key;
-	const char   *salt;
+__bcrypt(const char *key, const char *salt)
 {
 	blf_ctx state;
 	u_int32_t rounds, i, k;
@@ -225,26 +219,26 @@ __bcrypt(key, salt)
 	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
+	int n;
+	size_t len;
 
 	/* Discard "$" identifier */
 	salt++;
 
-	if (*salt > BCRYPT_VERSION) {
-		/* How do I handle errors ? Return ':' */
-		return error;
-	}
+	if (*salt > BCRYPT_VERSION)
+		return NULL;
 
 	/* Check for minor versions */
 	if (salt[1] != '$') {
-		 switch (salt[1]) {
-		 case 'a':
-			 /* 'ab' should not yield the same as 'abab' */
-			 minor = salt[1];
-			 salt++;
-			 break;
-		 default:
-			 return error;
-		 }
+		switch (salt[1]) {
+		case 'a':
+			/* 'ab' should not yield the same as 'abab' */
+			minor = salt[1];
+			salt++;
+			break;
+		default:
+			return NULL;
+		}
 	} else
 		 minor = 0;
 
@@ -253,22 +247,31 @@ __bcrypt(key, salt)
 
 	if (salt[2] != '$')
 		/* Out of sync with passwd entry */
-		return error;
+		return NULL;
 
 	/* Computer power doesn't increase linear, 2^x should be fine */
-	if ((rounds = (u_int32_t) 1 << (logr = atoi(salt))) < BCRYPT_MINROUNDS)
-		return error;
+	n = atoi(salt);
+	if (n > 31 || n < 0)
+		return NULL;
+	logr = (u_int8_t)n;
+	if ((rounds = (u_int32_t) 1 << logr) < BCRYPT_MINROUNDS)
+		return NULL;
 
 	/* Discard num rounds + "$" identifier */
 	salt += 3;
 
 	if (strlen(salt) * 3 / 4 < BCRYPT_MAXSALT)
-		return error;
+		return NULL;
 
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (const u_int8_t *)salt);
 	salt_len = BCRYPT_MAXSALT;
-	key_len = strlen(key) + (minor >= 'a' ? 1 : 0);
+	len = strlen(key);
+	if (len > 72)
+		key_len = 72;
+	else
+		key_len = (uint8_t)len;
+	key_len += minor >= 'a' ? 1 : 0;
 
 	/* Setting up S-Boxes and Subkeys */
 	Blowfish_initstate(&state);
@@ -311,6 +314,7 @@ __bcrypt(key, salt)
 	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS - 1);
+	__explicit_bzero(&state, sizeof(state));
 	return encrypted;
 }
 

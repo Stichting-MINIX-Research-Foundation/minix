@@ -1,8 +1,6 @@
 #	$NetBSD: Makefile,v 1.24 2012/08/10 04:30:47 joerg Exp $
 
 USE_SHLIBDIR=	yes
-#LSC MINIX Until the library gets updated
-NOGCCERROR=yes
 
 LIB=	crypt
 

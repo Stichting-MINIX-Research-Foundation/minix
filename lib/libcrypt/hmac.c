@@ -1,4 +1,4 @@
-/* $NetBSD: hmac.c,v 1.2 2009/01/18 12:15:27 lukem Exp $ */
+/* $NetBSD: hmac.c,v 1.3 2011/05/16 10:39:12 drochner Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -42,7 +42,7 @@
  */
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: hmac.c,v 1.2 2009/01/18 12:15:27 lukem Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.3 2011/05/16 10:39:12 drochner Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -70,9 +70,9 @@ HMAC_FUNC (const unsigned char *text, size_t text_len,
 {
     HASH_CTX context;
     /* Inner padding key XOR'd with ipad */
-    unsigned char k_ipad[HMAC_BLOCKSZ + 1];
+    unsigned char k_ipad[HMAC_BLOCKSZ];
     /* Outer padding key XOR'd with opad */
-    unsigned char k_opad[HMAC_BLOCKSZ + 1];
+    unsigned char k_opad[HMAC_BLOCKSZ];
     /* HASH(key) if needed */
     unsigned char tk[HASH_LENGTH];	
     size_t i;
