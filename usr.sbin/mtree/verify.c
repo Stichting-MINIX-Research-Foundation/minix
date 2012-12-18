@@ -168,7 +168,9 @@ miss(NODE *p, char *tail)
 	int create;
 	char *tp;
 	const char *type;
+#if !defined(__minix)
 	u_int32_t flags;
+#endif /* !defined(__minix) */
 
 	for (; p; p = p->next) {
 		if (p->flags & F_OPT && !(p->flags & F_VISIT))
