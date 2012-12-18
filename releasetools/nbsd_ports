@@ -16,6 +16,7 @@
 2011/08/29 14:48:46,bin/rm
 2011/08/29 14:49:38,bin/rmdir
 2012/10/17 12:00:00,build.sh
+2012/10/17 12:00:00,common/dist/zlib
 2012/10/17 12:00:00,common/include/prop
 2012/10/17 12:00:00,common/lib/libc
 2012/10/17 12:00:00,common/lib/libprop
