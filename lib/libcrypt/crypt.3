@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.20 2005/09/05 03:37:15 hubertf Exp $
+.\"	$NetBSD: crypt.3,v 1.27 2012/03/23 18:08:35 njoly Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)crypt.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd September 4, 2005
+.Dd January 1, 2012
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -43,8 +43,8 @@
 .Lb libcrypt
 .Sh SYNOPSIS
 .In unistd.h
-.Ft char
-.Fn *crypt "const char *key" "const char *setting"
+.Ft "char *"
+.Fn crypt "const char *key" "const char *setting"
 .Ft int
 .Fn encrypt "char *block" "int flag"
 .Ft int
@@ -137,7 +137,7 @@ of the
 followed by the encoded 64-bit encryption.
 .Pp
 For compatibility with historical versions of
-.Xr crypt 3 ,
+.Fn crypt ,
 the
 .Ar setting
 may consist of 2 bytes of salt, encoded as above, in which case an
@@ -244,7 +244,9 @@ for interpretation.
 .Ss "Blowfish" crypt
 The
 .Tn Blowfish
-version of crypt has 128 bits of
+version of
+.Fn crypt
+has 128 bits of
 .Fa salt
 in order to make building dictionaries of common passwords space consuming.
 The initial state of the
@@ -281,7 +283,49 @@ for interpretation.
 .Sh RETURN VALUES
 The function
 .Fn crypt
-returns a pointer to the encrypted value on success and NULL on failure.
+returns a pointer to the encrypted value on success.
+.Pp
+The behavior of
+.Fn crypt
+on errors isn't well standardized.
+Some implementations simply can't fail (unless the process dies, in which
+case they obviously can't return), others return
+.Dv NULL
+or a fixed string.
+Most implementations don't set
+.Va errno ,
+but some do.
+.St -susv2
+specifies
+only returning
+.Dv NULL
+and setting
+.Va errno
+as a valid behavior, and defines
+only one possible error
+.Er ( ENOSYS ,
+.Dq "The functionality is not supported on this implementation." )
+Unfortunately, most existing applications aren't prepared to handle
+.Dv NULL
+returns from
+.Fn crypt .
+The description below corresponds to this implementation of
+.Fn crypt
+only.
+The behavior may change to match standards, other implementations or existing
+applications.
+.Pp
+.Fn crypt
+may only fail (and return) when passed an invalid or unsupported
+.Fa setting ,
+in which case it returns a pointer to a magic string that is shorter than 13
+characters and is guaranteed to differ from
+.Fa setting .
+This behavior is safe for older applications which assume that
+.Fn crypt
+can't fail, when both setting new passwords and authenticating against
+existing password hashes.
+.Pp
 The functions
 .Fn setkey ,
 .Fn encrypt ,
@@ -352,3 +396,12 @@ a pointer to that object.
 Subsequent calls to
 .Fn crypt
 will modify the same object.
+.Pp
+Before
+.Nx 6.0
+.Fn crypt
+returned either
+.Dv NULL
+or
+.Dv \&:
+on error.
