@@ -431,6 +431,8 @@ static void vm_suspend(struct proc *caller, const struct proc *target,
 
 	RTS_SET(caller, RTS_VMREQUEST);
 
+	assert(caller->p_endpoint != VM_PROC_NR);
+
 	caller->p_vmrequest.req_type = VMPTYPE_CHECK;
 	caller->p_vmrequest.target = target->p_endpoint;
 	caller->p_vmrequest.params.check.start = linaddr;
