@@ -47,7 +47,7 @@ int do_chmod()
   new_mode = (mode_t) job_m_in.mode;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
-  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
   if (job_call_nr == CHMOD) {
@@ -123,7 +123,7 @@ int do_chown()
   gid = job_m_in.group;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
-  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
   if (job_call_nr == CHOWN) {

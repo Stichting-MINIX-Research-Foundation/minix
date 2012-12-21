@@ -547,7 +547,7 @@ int do_mknod()
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
-  resolve.l_vnode_lock = VNODE_READ;
+  resolve.l_vnode_lock = VNODE_WRITE;
 
   /* Only the super_user may make nodes other than fifos. */
   if (!super_user && (!S_ISFIFO(mode_bits) && !S_ISSOCK(mode_bits))) {
@@ -595,7 +595,7 @@ int do_mkdir()
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
-  resolve.l_vnode_lock = VNODE_READ;
+  resolve.l_vnode_lock = VNODE_WRITE;
 
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   bits = I_DIRECTORY | (dirmode & RWX_MODES & fp->fp_umask);

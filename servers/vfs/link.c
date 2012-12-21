@@ -56,7 +56,7 @@ int do_link()
   /* Does the final directory of 'name2' exist? */
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp2, &dirp);
   resolve.l_vmnt_lock = VMNT_READ;
-  resolve.l_vnode_lock = VNODE_READ;
+  resolve.l_vnode_lock = VNODE_WRITE;
   if (fetch_name(vname2, vname2_length, fullpath) != OK)
 	r = err_code;
   else if ((dirp = last_dir(&resolve, fp)) == NULL)
@@ -98,11 +98,11 @@ int do_unlink()
  * may be used by the superuser to do dangerous things; rmdir() may not.
  * The syscall might provide 'name' embedded in the message.
  */
-  struct vnode *dirp, *vp;
+  struct vnode *dirp, *dirp_l, *vp;
   struct vmnt *vmp, *vmp2;
   int r;
   char fullpath[PATH_MAX];
-  struct lookup resolve;
+  struct lookup resolve, stickycheck;
   vir_bytes vname;
   size_t vname_length;
 
@@ -114,13 +114,12 @@ int do_unlink()
 		return(err_code);
   }
 
-  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &dirp);
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &dirp_l);
   resolve.l_vmnt_lock = VMNT_WRITE;
-  resolve.l_vnode_lock = VNODE_READ;
+  resolve.l_vnode_lock = VNODE_WRITE;
 
   /* Get the last directory in the path. */
   if ((dirp = last_dir(&resolve, fp)) == NULL) return(err_code);
-  assert(vmp != NULL);	/* We must have locked the vmnt */
 
   /* Make sure that the object is a directory */
   if (!S_ISDIR(dirp->v_mode)) {
@@ -142,12 +141,10 @@ int do_unlink()
      user is allowed to unlink */
   if ((dirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
-	resolve.l_flags = PATH_RET_SYMLINK;
-	resolve.l_vmp = &vmp2;	/* Shouldn't actually get locked */
-	resolve.l_vmnt_lock = VMNT_READ;
-	resolve.l_vnode = &vp;
-	resolve.l_vnode_lock = VNODE_READ;
-	vp = advance(dirp, &resolve, fp);
+	lookup_init(&stickycheck, resolve.l_path, PATH_RET_SYMLINK, &vmp2, &vp);
+	stickycheck.l_vmnt_lock = VMNT_READ;
+	stickycheck.l_vnode_lock = VNODE_READ;
+	vp = advance(dirp, &stickycheck, fp);
 	assert(vmp2 == NULL);
 	if (vp != NULL) {
 		if (vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID)
@@ -164,7 +161,6 @@ int do_unlink()
 	}
   }
 
-  assert(vmp != NULL);
   upgrade_vmnt_lock(vmp);
 
   if (job_call_nr == UNLINK)
@@ -184,11 +180,11 @@ int do_rename()
 {
 /* Perform the rename(name1, name2) system call. */
   int r = OK, r1;
-  struct vnode *old_dirp, *new_dirp = NULL, *vp;
+  struct vnode *old_dirp, *new_dirp, *new_dirp_l, *vp;
   struct vmnt *oldvmp, *newvmp, *vmp2;
   char old_name[PATH_MAX];
   char fullpath[PATH_MAX];
-  struct lookup resolve;
+  struct lookup resolve, stickycheck;
   vir_bytes vname1, vname2;
   size_t vname1_length, vname2_length;
 
@@ -200,7 +196,7 @@ int do_rename()
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &oldvmp, &old_dirp);
   /* Do not yet request exclusive lock on vmnt to prevent deadlocks later on */
   resolve.l_vmnt_lock = VMNT_WRITE;
-  resolve.l_vnode_lock = VNODE_READ;
+  resolve.l_vnode_lock = VNODE_WRITE;
 
   /* See if 'name1' (existing file) exists.  Get dir and file inodes. */
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
@@ -210,10 +206,10 @@ int do_rename()
      user is allowed to rename */
   if ((old_dirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
-	lookup_init(&resolve, resolve.l_path, PATH_RET_SYMLINK, &vmp2, &vp);
-	resolve.l_vmnt_lock = VMNT_READ;
-	resolve.l_vnode_lock = VNODE_READ;
-	vp = advance(old_dirp, &resolve, fp);
+	lookup_init(&stickycheck, resolve.l_path, PATH_RET_SYMLINK, &vmp2, &vp);
+	stickycheck.l_vmnt_lock = VMNT_READ;
+	stickycheck.l_vnode_lock = VNODE_READ;
+	vp = advance(old_dirp, &stickycheck, fp);
 	assert(vmp2 == NULL);
 	if (vp != NULL) {
 		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID)
@@ -240,11 +236,18 @@ int do_rename()
   strlcpy(old_name, fullpath, PATH_MAX);
 
   /* See if 'name2' (new name) exists.  Get dir inode */
-  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &newvmp, &new_dirp);
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &newvmp, &new_dirp_l);
   resolve.l_vmnt_lock = VMNT_READ;
-  resolve.l_vnode_lock = VNODE_READ;
+  resolve.l_vnode_lock = VNODE_WRITE;
   if (fetch_name(vname2, vname2_length, fullpath) != OK) r = err_code;
   else if ((new_dirp = last_dir(&resolve, fp)) == NULL) r = err_code;
+
+  /* We used a separate vnode pointer to see whether we obtained a lock on the
+   * new_dirp vnode. If the new directory and old directory are the same, then
+   * the VNODE_WRITE lock on new_dirp will fail. In that case, new_dirp_l will
+   * be NULL, but new_dirp will not.
+   */
+  if (new_dirp == old_dirp) assert(new_dirp_l == NULL);
 
   if (r != OK) {
 	unlock_vnode(old_dirp);
@@ -265,9 +268,10 @@ int do_rename()
 	r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
 		       new_dirp->v_inode_nr, fullpath);
   }
+
   unlock_vnode(old_dirp);
-  unlock_vnode(new_dirp);
   unlock_vmnt(oldvmp);
+  if (new_dirp_l) unlock_vnode(new_dirp_l);
   if (newvmp) unlock_vmnt(newvmp);
 
   put_vnode(old_dirp);
@@ -299,7 +303,7 @@ int do_truncate()
   vname_length = job_m_in.m2_i1;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
-  resolve.l_vmnt_lock = VMNT_EXCL;
+  resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
   length = (off_t) job_m_in.flength;
@@ -404,7 +408,7 @@ int do_slink()
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
-  resolve.l_vnode_lock = VNODE_READ;
+  resolve.l_vnode_lock = VNODE_WRITE;
 
   vname1 = (vir_bytes) job_m_in.name1;
   vname1_length = job_m_in.name1_length;

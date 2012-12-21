@@ -168,7 +168,7 @@ struct fproc *rfp;
   size_t len;
   char *cp;
   char dir_entry[NAME_MAX+1];
-  struct vnode *start_dir, *res_vp, *sym_vp, *loop_start;
+  struct vnode *start_dir, *res_vp, *sym_vp, *sym_vp_l, *loop_start;
   struct vmnt *sym_vmp = NULL;
   int r, symloop = 0, ret_on_symlink = 0;
   struct lookup symlink;
@@ -256,12 +256,18 @@ struct fproc *rfp;
 	strlcpy(resolve->l_path, dir_entry, NAME_MAX + 1);
 
 	/* Look up the directory entry, but do not follow the symlink when it
-	 * is one.
+	 * is one. Note: depending on the previous advance, we might not be
+	 * able to lock the resulting vnode. For example, when we look up "./."
+	 * and request a VNODE_WRITE lock on the result, then the previous
+	 * advance has "./" locked. The next advance to "." will try to lock
+	 * the same vnode with a VNODE_READ lock, and fail. When that happens,
+	 * sym_vp_l will be NULL and we must not unlock the vnode. If we would
+	 * unlock, we actually unlock the vnode locked by the previous advance.
 	 */
 	lookup_init(&symlink, resolve->l_path,
-		    resolve->l_flags|PATH_RET_SYMLINK, &sym_vmp, &sym_vp);
-	symlink.l_vnode_lock = VNODE_READ;
+		    resolve->l_flags|PATH_RET_SYMLINK, &sym_vmp, &sym_vp_l);
 	symlink.l_vmnt_lock = VMNT_READ;
+	symlink.l_vnode_lock = VNODE_READ;
 	sym_vp = advance(res_vp, &symlink, rfp);
 
 	if (sym_vp == NULL) break;
@@ -291,7 +297,8 @@ struct fproc *rfp;
 		resolve->l_path[r] = '\0';
 
 		if (strrchr(resolve->l_path, '/') != NULL) {
-			unlock_vnode(sym_vp);
+			if (sym_vp_l != NULL)
+				unlock_vnode(sym_vp);
 			unlock_vmnt(*resolve->l_vmp);
 			if (sym_vmp != NULL)
 				unlock_vmnt(sym_vmp);
@@ -323,7 +330,8 @@ struct fproc *rfp;
 			assert(sym_vmp != NULL);
 
 			/* Unlock final file, it might have wrong lock types */
-			unlock_vnode(sym_vp);
+			if (sym_vp_l != NULL)
+				unlock_vnode(sym_vp);
 			unlock_vmnt(sym_vmp);
 			put_vnode(sym_vp);
 			sym_vp = NULL;
@@ -357,7 +365,9 @@ struct fproc *rfp;
   }
 
   if (sym_vp != NULL) {
-	unlock_vnode(sym_vp);
+	if (sym_vp_l != NULL) {
+		unlock_vnode(sym_vp);
+	}
 	if (sym_vmp != NULL) {
 		unlock_vmnt(sym_vmp);
 	}
