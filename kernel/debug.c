@@ -236,8 +236,9 @@ static void
 print_sigmgr(struct proc *pp)
 {
 	endpoint_t sig_mgr, bak_sig_mgr;
-	sig_mgr = priv(pp)->s_sig_mgr;
-	bak_sig_mgr = priv(pp)->s_bak_sig_mgr;
+	sig_mgr = priv(pp) ? priv(pp)->s_sig_mgr : NULL;
+	bak_sig_mgr = priv(pp) ? priv(pp)->s_bak_sig_mgr : NULL;
+	if(!sig_mgr) { printf("no sigmgr"); return; }
 	printf("sigmgr ");
 	print_endpoint(sig_mgr);
 	if(bak_sig_mgr != NONE) {
