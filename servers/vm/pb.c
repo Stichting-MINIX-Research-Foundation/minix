@@ -27,7 +27,6 @@
 #include "glo.h"
 #include "region.h"
 #include "sanitycheck.h"
-#include "physravl.h"
 #include "memlist.h"
 
 struct	phys_block *pb_new(phys_bytes phys)
@@ -84,7 +83,7 @@ struct	phys_region *pb_reference(struct phys_block *newpb,
 	/* New physical region. */
 	pb_link(newphysr, newpb, offset, region);
 
-	physr_insert(region->phys, newphysr);
+	physblock_set(region, offset, newphysr);
 
 	return newphysr;
 }
@@ -129,5 +128,5 @@ void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm)
 
 	pr->ph = NULL;
 
-	if(rm) physr_remove(region->phys, pr->offset);
+	if(rm) physblock_set(region, pr->offset, NULL);
 }

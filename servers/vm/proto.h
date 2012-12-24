@@ -92,6 +92,7 @@ int pt_writemap(struct vmproc * vmp, pt_t *pt, vir_bytes v, phys_bytes
 int pt_checkrange(pt_t *pt, vir_bytes v, size_t bytes, int write);
 int pt_bind(pt_t *pt, struct vmproc *who);
 void *vm_allocpage(phys_bytes *p, int cat);
+void *vm_allocpages(phys_bytes *p, int cat, int pages);
 void *vm_allocpagedir(phys_bytes *p);
 void pt_cycle(void);
 int pt_mapkernel(pt_t *pt);
@@ -145,9 +146,12 @@ void printregionstats(struct vmproc *vmp);
 void map_setparent(struct vmproc *vmp);
 int yielded_block_cmp(struct block_id *, struct block_id *);
 struct phys_region *map_clone_ph_block(struct vmproc *vmp,
-        struct vir_region *region, struct phys_region *ph, physr_iter *iter);
+        struct vir_region *region, struct phys_region *ph);
 u32_t vrallocflags(u32_t flags);
 int map_free(struct vir_region *region);
+struct phys_region *physblock_get(struct vir_region *region, vir_bytes offset);
+void physblock_set(struct vir_region *region, vir_bytes offset,
+	struct phys_region *newphysr);
 
 struct vir_region * map_region_lookup_tag(struct vmproc *vmp, u32_t
 	tag);

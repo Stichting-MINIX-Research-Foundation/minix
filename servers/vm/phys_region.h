@@ -17,10 +17,6 @@ typedef struct phys_region {
 
 	/* list of phys_regions that reference the same phys_block */
 	struct phys_region	*next_ph_list;	
-
-	/* AVL fields */
-	struct phys_region	*less, *greater;
-	int			factor;
 } phys_region_t;
 
 #endif

@@ -17,7 +17,6 @@
 #include <minix/const.h>
 
 #include "phys_region.h"
-#include "physravl.h"
 #include "memtype.h"
 #include "vm.h"
 
@@ -38,7 +37,7 @@ struct phys_block {
 typedef struct vir_region {
 	vir_bytes	vaddr;	/* virtual address, offset from pagetable */
 	vir_bytes	length;	/* length in bytes */
-	physr_avl	*phys;	/* avl tree of physical memory blocks */
+	struct phys_region	**physblocks;
 	u16_t		flags;
 	struct vmproc *parent;	/* Process that owns this vir_region. */
 	mem_type_t	*memtype; /* Default instantiated memory type. */

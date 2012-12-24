@@ -95,6 +95,9 @@ void utrace(struct ut *, int);
 #   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
 #endif /* __FreeBSD__ */
 
+#undef minix_mmap
+#undef minix_munmap
+
 #include <assert.h>
 
 #include <sys/types.h>

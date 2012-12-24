@@ -39,7 +39,6 @@ static int anon_contig_new(struct vir_region *region)
         u32_t allocflags;
 	phys_bytes new_pages, new_page_cl, cur_ph;
 	int p, pages;
-	physr_iter iter;
 
         allocflags = vrallocflags(region->flags);
 
@@ -68,19 +67,14 @@ static int anon_contig_new(struct vir_region *region)
 
 	cur_ph = new_pages = CLICK2ABS(new_page_cl);
 
-        physr_start_iter_least(region->phys, &iter);
-
 	for(p = 0; p < pages; p++) {
-		struct phys_region *pr = physr_get_iter(&iter);
+		struct phys_region *pr = physblock_get(region, p * VM_PAGE_SIZE);
 		assert(pr);
 		assert(pr->ph);
 		assert(pr->ph->phys == MAP_NONE);
 		assert(pr->offset == p * VM_PAGE_SIZE);
 		pr->ph->phys = cur_ph + pr->offset;
-		physr_incr_iter(&iter);
 	}
-
-	assert(!physr_get_iter(&iter));
 
 	return OK;
 }
