@@ -1,4 +1,4 @@
-MAN=	ash.1 at.1 banner.1 basename.1 \
+MAN=	ash.1 at.1 basename.1 \
 	bsfilt.1 cawf.1 chgrp.1 \
 	chmod.1 cmp.1 comm.1 compress.1 \
 	cp.1 crc.1 crontab.1 dd.1 \

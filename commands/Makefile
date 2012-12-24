@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	add_route arp ash at backup banner basename btrace \
+SUBDIR=	add_route arp ash at backup basename btrace \
 	cawf cd cdprobe cpp \
 	chmod chown ci cleantmp cmp co \
 	comm compress cp crc cron crontab cut \
