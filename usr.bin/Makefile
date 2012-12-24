@@ -4,7 +4,7 @@
 .include <bsd.own.mk>
 
 SUBDIR= \
-	\
+	banner \
 	bzip2 bzip2recover \
 	cal chpass cksum \
 	col ctags \

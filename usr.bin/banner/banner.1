@@ -1,0 +1,63 @@
+.\"	$NetBSD: banner.1,v 1.9 2012/02/29 08:54:55 wiz Exp $
+.\"
+.\"	@(#)Copyright (c) 1995, Simon J. Gerraty.
+.\"
+.\"	This is free software.	It comes with NO WARRANTY.
+.\"	Permission to use, modify and distribute this source code
+.\"	is granted subject to the following conditions.
+.\"	1/ that the above copyright notice and this notice
+.\"	are preserved in all copies and that due credit be given
+.\"	to the author.
+.\"	2/ that any changes to this code are clearly commented
+.\"	as such so that the author does not get blamed for bugs
+.\"	other than his own.
+.\"
+.\"	Please send copies of changes and bug-fixes to:
+.\"	sjg@zen.void.oz.au
+.\"
+.Dd February 26, 2012
+.Dt BANNER 1
+.Os
+.Sh NAME
+.Nm banner
+.Nd print strings in large letters
+.Sh SYNOPSIS
+.Nm
+.Op Fl l
+.Op Fl b Ar bg
+.Op Fl f Ar fg
+.Ar string ...
+.Sh DESCRIPTION
+.Nm
+prints up to 10 chars of each
+.Ar string
+in large letters on the standard output.
+.Pp
+The options are:
+.Bl -tag -width Ds
+.It Fl b Ar bg
+Use
+.Ar bg
+as the background color (character) rather than the default
+.Dq \  .
+.It Fl f Ar fg
+Use
+.Ar fg
+as the foreground color (character) rather than the default
+.Dq # .
+If
+.Ar fg
+is
+.Dq - ,
+then the actual letter being printed is used as the
+foreground color in the same way that LPD does it.
+The results are quite variable.
+.It Fl l
+Use the more attractive LPD font instead of the traditional
+.Nm
+font.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr banner 6
