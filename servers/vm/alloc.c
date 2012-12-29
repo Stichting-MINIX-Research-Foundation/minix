@@ -53,6 +53,189 @@ struct {
 
 #define page_isfree(i) GET_BIT(free_pages_bitmap, i)
 
+#define RESERVEDMAGIC		0x6e4c74d5
+#define MAXRESERVEDPAGES	100
+#define MAXRESERVEDQUEUES	 15
+
+static struct reserved_pages {
+	struct reserved_pages *next;	/* next in use */
+	int max_available;	/* queue depth use, 0 if not in use at all */
+	int npages;		/* number of consecutive pages */
+	int mappedin;		/* must reserved pages also be mapped? */
+	int n_available;	/* number of queue entries */
+	int allocflags;		/* allocflags for alloc_mem */
+	struct reserved_pageslot {
+		phys_bytes	phys;
+		void		*vir;
+	} slots[MAXRESERVEDPAGES];
+	u32_t magic;
+} reservedqueues[MAXRESERVEDQUEUES], *first_reserved_inuse = NULL;
+
+int missing_spares = 0;
+
+static void sanitycheck_queues(void)
+{
+	struct reserved_pages *mrq;
+	int m = 0;
+
+	for(mrq = first_reserved_inuse; mrq > 0; mrq = mrq->next) {
+		assert(mrq->max_available > 0);
+		assert(mrq->max_available >= mrq->n_available);
+		m += mrq->max_available - mrq->n_available;
+	}
+
+	assert(m == missing_spares);
+}
+
+static void sanitycheck_rq(struct reserved_pages *rq)
+{
+	assert(rq->magic == RESERVEDMAGIC);
+	assert(rq->n_available >= 0);
+	assert(rq->n_available <= MAXRESERVEDPAGES);
+	assert(rq->n_available <= rq->max_available);
+
+	sanitycheck_queues();
+}
+
+void *reservedqueue_new(int max_available, int npages, int mapped, int allocflags)
+{
+	int r;
+	struct reserved_pages *rq;
+
+	assert(max_available > 0);
+	assert(max_available < MAXRESERVEDPAGES);
+	assert(npages > 0);
+	assert(npages < 10);
+
+	for(r = 0; r < MAXRESERVEDQUEUES; r++)
+		if(!reservedqueues[r].max_available)
+			break;
+
+	if(r >= MAXRESERVEDQUEUES) {
+		printf("VM: %d reserved queues in use\n", MAXRESERVEDQUEUES);
+		return NULL;
+	}
+
+	rq = &reservedqueues[r];
+
+	memset(rq, 0, sizeof(*rq));
+	rq->next = first_reserved_inuse;
+	first_reserved_inuse = rq;
+
+	rq->max_available = max_available;
+	rq->npages = npages;
+	rq->mappedin = mapped;
+	rq->allocflags = allocflags;
+	rq->magic = RESERVEDMAGIC;
+
+	missing_spares += max_available;
+
+	return rq;
+}
+
+static void
+reservedqueue_fillslot(struct reserved_pages *rq,
+	struct reserved_pageslot *rps, phys_bytes ph, void *vir)
+{
+	rps->phys = ph;
+	rps->vir = vir;
+	assert(missing_spares > 0);
+	if(rq->mappedin) assert(vir);
+	missing_spares--;
+	rq->n_available++;
+}
+
+static int
+reservedqueue_addslot(struct reserved_pages *rq)
+{
+	phys_bytes cl, cl_addr;
+	void *vir;
+	struct reserved_pageslot *rps;
+
+	sanitycheck_rq(rq);
+
+	if((cl = alloc_mem(rq->npages, rq->allocflags)) == NO_MEM)
+		return ENOMEM;
+
+	cl_addr = CLICK2ABS(cl);
+
+	vir = NULL;
+
+	if(rq->mappedin) {
+		if(!(vir = vm_mappages(cl_addr, rq->npages))) {
+			free_mem(cl, rq->npages);
+			printf("reservedqueue_addslot: vm_mappages failed\n");
+			return ENOMEM;
+		}
+	}
+
+	rps = &rq->slots[rq->n_available];
+
+	reservedqueue_fillslot(rq, rps, cl_addr, vir);
+
+	return OK;
+}
+
+void reservedqueue_add(void *rq_v, void *vir, phys_bytes ph)
+{
+	struct reserved_pages *rq = rq_v;
+	struct reserved_pageslot *rps;
+
+	sanitycheck_rq(rq);
+
+	rps = &rq->slots[rq->n_available];
+
+	reservedqueue_fillslot(rq, rps, ph, vir);
+}
+
+int reservedqueue_fill(void *rq_v)
+{
+	struct reserved_pages *rq = rq_v;
+	int r;
+
+	sanitycheck_rq(rq);
+
+	while(rq->n_available < rq->max_available)
+		if((r=reservedqueue_addslot(rq)) != OK)
+			return r;
+
+	return OK;
+}
+
+int
+reservedqueue_alloc(void *rq_v, phys_bytes *ph, void **vir)
+{
+	struct reserved_pages *rq = rq_v;
+	struct reserved_pageslot *rps;
+
+	sanitycheck_rq(rq);
+
+	if(rq->n_available < 1) return ENOMEM;
+
+	rq->n_available--;
+	missing_spares++;
+	rps = &rq->slots[rq->n_available];
+
+	*ph = rps->phys;
+	*vir = rps->vir;
+
+	sanitycheck_rq(rq);
+
+	return OK;
+}
+
+void alloc_cycle(void)
+{
+	struct reserved_pages *rq;
+	sanitycheck_queues();
+	for(rq = first_reserved_inuse; rq && missing_spares > 0; rq = rq->next) {
+		sanitycheck_rq(rq);
+		reservedqueue_fill(rq);
+		sanitycheck_rq(rq);
+	}
+	sanitycheck_queues();
+}
+
 /*===========================================================================*
  *				alloc_mem				     *
  *===========================================================================*/

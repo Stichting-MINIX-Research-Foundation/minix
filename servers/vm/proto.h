@@ -18,6 +18,10 @@ struct phys_region;
 #include "yielded.h"
 
 /* alloc.c */
+void *reservedqueue_new(int, int, int, int);
+int reservedqueue_alloc(void *, phys_bytes *, void **);
+void reservedqueue_add(void *, void *, phys_bytes);
+void alloc_cycle(void);
 void mem_sanitycheck(char *file, int line);
 phys_clicks alloc_mem(phys_clicks clicks, u32_t flags);
 void memstats(int *nodes, int *pages, int *largest);
@@ -92,10 +96,10 @@ int pt_writemap(struct vmproc * vmp, pt_t *pt, vir_bytes v, phys_bytes
 	physaddr, size_t bytes, u32_t flags, u32_t writemapflags);
 int pt_checkrange(pt_t *pt, vir_bytes v, size_t bytes, int write);
 int pt_bind(pt_t *pt, struct vmproc *who);
+void *vm_mappages(phys_bytes p, int pages);
 void *vm_allocpage(phys_bytes *p, int cat);
 void *vm_allocpages(phys_bytes *p, int cat, int pages);
 void *vm_allocpagedir(phys_bytes *p);
-void pt_cycle(void);
 int pt_mapkernel(pt_t *pt);
 void vm_pagelock(void *vir, int lockflag);
 int vm_addrok(void *vir, int write);
