@@ -93,7 +93,7 @@ int main(void)
 
 	SANITYCHECK(SCL_TOP);
 	if(missing_spares > 0) {
-		pt_cycle();	/* pagetable code wants to be called */
+		alloc_cycle();	/* mem alloc code wants to be called */
 	}
 
   	if ((r=sef_receive_status(ANY, &msg, &rcv_sts)) != OK)
@@ -461,7 +461,7 @@ static void sef_cb_signal_handler(int signo)
 	 * though.
 	 */
 	if(missing_spares > 0) {
-		pt_cycle();	/* pagetable code wants to be called */
+		alloc_cycle();	/* pagetable code wants to be called */
 	}
 
 	pt_clearmapcache();
