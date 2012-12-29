@@ -103,7 +103,7 @@ int elf_has_interpreter(char *exec_hdr,		/* executable header */
   Elf_Phdr *phdr = NULL;
   int e, i;
 
-  if((e=elf_unpack(exec_hdr, hdr_len, &hdr, &phdr)) != OK) return e;
+  if((e=elf_unpack(exec_hdr, hdr_len, &hdr, &phdr)) != OK) return 0;
 
   for (i = 0; i < hdr->e_phnum; i++) {
       switch (phdr[i].p_type) {
