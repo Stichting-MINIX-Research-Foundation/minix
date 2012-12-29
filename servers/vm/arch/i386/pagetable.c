@@ -82,12 +82,6 @@ static struct {
 	phys_bytes phys;
 } sparepagedirs[SPAREPAGEDIRS];
 
-int missing_spares = SPAREPAGES;
-static struct {
-	void *page;
-	phys_bytes phys;
-} sparepages[SPAREPAGES];
-
 extern char _end;	
 #define is_staticaddr(v) ((vir_bytes) (v) < (vir_bytes) &_end)
 
@@ -111,6 +105,7 @@ int kernmappings = 0;
 #error CLICK_SIZE must be page size.
 #endif
 
+static void *spare_pagequeue;
 static char static_sparepages[VM_PAGE_SIZE*STATIC_SPAREPAGES] 
 	__aligned(VM_PAGE_SIZE);
 
@@ -282,21 +277,13 @@ void vm_freepages(vir_bytes vir, int pages)
  *===========================================================================*/
 static void *vm_getsparepage(phys_bytes *phys)
 {
-	int s;
-	assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
-	for(s = 0; s < SPAREPAGES; s++) {
-		if(sparepages[s].page) {
-			void *sp;
-			sp = sparepages[s].page;
-			*phys = sparepages[s].phys;
-			sparepages[s].page = NULL;
-			missing_spares++;
-			assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
-			return sp;
-		}
+	void *ptr;
+	if(reservedqueue_alloc(spare_pagequeue, phys, &ptr) != OK) {
+		printf("vm_getsparepage: no spare found\n");
+		return NULL;
 	}
-	printf("no spare found, %d missing\n", missing_spares);
-	return NULL;
+	assert(ptr);
+	return ptr;
 }
 
 /*===========================================================================*
@@ -320,31 +307,37 @@ static void *vm_getsparepagedir(phys_bytes *phys)
 	return NULL;
 }
 
-/*===========================================================================*
- *				vm_checkspares		     		     *
- *===========================================================================*/
-static void *vm_checkspares(void)
+void *vm_mappages(phys_bytes p, int pages)
 {
-	int s, n = 0;
-	static int total = 0, worst = 0;
-	assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
-	for(s = 0; s < SPAREPAGES && missing_spares > 0; s++) {
-	    if(!sparepages[s].page) {
-		n++;
-		if((sparepages[s].page = vm_allocpage(&sparepages[s].phys, 
-			VMP_SPARE))) {
-			missing_spares--;
-			assert(missing_spares >= 0);
-			assert(missing_spares <= SPAREPAGES);
-		} else {
-			printf("VM: warning: couldn't get new spare page\n");
-		}
-	   }
-	}
-	if(worst < n) worst = n;
-	total += n;
+	vir_bytes loc;
+	int r;
+	pt_t *pt = &vmprocess->vm_pt;
 
-	return NULL;
+	/* Where in our virtual address space can we put it? */
+	loc = findhole(pages);
+	if(loc == NO_MEM) {
+		printf("vm_mappages: findhole failed\n");
+		return NULL;
+	}
+
+	/* Map this page into our address space. */
+	if((r=pt_writemap(vmprocess, pt, loc, p, VM_PAGE_SIZE*pages,
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
+#if defined(__arm__)
+		| ARM_VM_PTE_WB
+#endif
+		, 0)) != OK) {
+		printf("vm_mappages writemap failed\n");
+		return NULL;
+	}
+
+	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
+		panic("VMCTL_FLUSHTLB failed: %d", r);
+	}
+
+	assert(loc);
+
+	return (void *) loc;
 }
 
 static int pt_init_done;
@@ -356,14 +349,10 @@ void *vm_allocpages(phys_bytes *phys, int reason, int pages)
 {
 /* Allocate a page for use by VM itself. */
 	phys_bytes newpage;
-	vir_bytes loc;
-	pt_t *pt;
-	int r;
 	static int level = 0;
 	void *ret;
 	u32_t mem_flags = 0;
 
-	pt = &vmprocess->vm_pt;
 	assert(reason >= 0 && reason < VMP_CATEGORIES);
 
 	assert(pages > 0);
@@ -395,16 +384,6 @@ void *vm_allocpages(phys_bytes *phys, int reason, int pages)
 	}
 #endif
 
-	/* VM does have a pagetable, so get a page and map it in there.
-	 * Where in our virtual address space can we put it?
-	 */
-	loc = findhole(pages);
-	if(loc == NO_MEM) {
-		level--;
-		printf("VM: vm_allocpage: findhole failed\n");
-		return NULL;
-	}
-
 	/* Allocate page of memory for use by VM. As VM
 	 * is trusted, we don't have to pre-clear it.
 	 */
@@ -416,29 +395,15 @@ void *vm_allocpages(phys_bytes *phys, int reason, int pages)
 
 	*phys = CLICK2ABS(newpage);
 
-	/* Map this page into our address space. */
-	if((r=pt_writemap(vmprocess, pt, loc, *phys, VM_PAGE_SIZE*pages,
-		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
-#if defined(__arm__)
-		| ARM_VM_PTE_WT
-#endif
-		, 0)) != OK) {
-		free_mem(newpage, pages);
-		printf("vm_allocpage writemap failed\n");
+	if(!(ret = vm_mappages(*phys, pages))) {
 		level--;
+		printf("VM: vm_allocpage: vm_mappages failed\n");
 		return NULL;
 	}
 
-	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
-		panic("VMCTL_FLUSHTLB failed: %d", r);
-	}
-
 	level--;
-
-	/* Return user-space-ready pointer to it. */
-	ret = (void *) loc;
-
 	vm_self_pages++;
+
 	return ret;
 }
 
@@ -1153,21 +1118,17 @@ void pt_init(void)
         }
 #endif
 
-        missing_spares = 0;
+	if(!(spare_pagequeue = reservedqueue_new(SPAREPAGES, 1, 1, 0)))
+		panic("reservedqueue_new for single pages failed");
+
         assert(STATIC_SPAREPAGES < SPAREPAGES);
-        for(s = 0; s < SPAREPAGES; s++) {
-		vir_bytes v = (sparepages_mem + s*VM_PAGE_SIZE);;
+        for(s = 0; s < STATIC_SPAREPAGES; s++) {
+		void *v = (void *) (sparepages_mem + s*VM_PAGE_SIZE);
 		phys_bytes ph;
 		if((r=sys_umap(SELF, VM_D, (vir_bytes) v,
 	                VM_PAGE_SIZE*SPAREPAGES, &ph)) != OK)
 				panic("pt_init: sys_umap failed: %d", r);
-        	if(s >= STATIC_SPAREPAGES) {
-        		sparepages[s].page = NULL;
-        		missing_spares++;
-        		continue;
-        	}
-        	sparepages[s].page = (void *) v;
-        	sparepages[s].phys = ph;
+		reservedqueue_add(spare_pagequeue, v, ph);
         }
 
 #if defined(__i386__)
@@ -1343,8 +1304,6 @@ void pt_init(void)
 
 	pt_init_done = 1;
 
-	vm_checkspares();
-
         /* All OK. */
         return;
 }
@@ -1506,14 +1465,6 @@ int pt_mapkernel(pt_t *pt)
 	}
 
 	return OK;
-}
-
-/*===========================================================================*
- *				pt_cycle		     		     *
- *===========================================================================*/
-void pt_cycle(void)
-{
-	vm_checkspares();
 }
 
 int get_vm_self_pages(void) { return vm_self_pages; }
