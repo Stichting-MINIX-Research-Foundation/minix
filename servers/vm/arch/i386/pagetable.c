@@ -402,8 +402,6 @@ void *vm_allocpages(phys_bytes *phys, int reason, int pages)
 	if((level > 1) || !pt_init_done) {
 		void *s;
 
-		s=vm_getsparepage(phys);
-
 		if(pages == 1) s=vm_getsparepage(phys);
 		else if(pages == 4) s=vm_getsparepagedir(phys);
 		else panic("%d pages", pages);
