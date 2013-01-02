@@ -211,9 +211,14 @@ void vm_enable_paging(void)
 	/* Set all Domains to Client */
 	write_dacr(0x55555555);
 
-	/* Enable MMU and access flag */
 	sctlr = read_sctlr();
+
+	/* Enable MMU */
 	sctlr |= (SCTLR_M);
+
+	/* Enable instruction and data cache */
+	sctlr |= SCTLR_C;
+	sctlr |= SCTLR_I;
 	write_sctlr(sctlr);
 }
 
