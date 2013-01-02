@@ -45,6 +45,8 @@ static int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
 void * k_stacks;
 
 static void ser_debug(int c);
+static void ser_dump_vfs(void);
+
 #ifdef CONFIG_SMP
 static void ser_dump_proc_cpu(void);
 #endif
@@ -391,6 +393,9 @@ static void ser_debug(const int c)
 		ser_dump_proc_cpu();
 		break;
 #endif
+	case '5':
+		ser_dump_vfs();
+		break;
 #if DEBUG_TRACE
 #define TOGGLECASE(ch, flag)				\
 	case ch: {					\
@@ -426,6 +431,14 @@ void ser_dump_proc()
 			continue;
 		print_proc_recursive(pp);
 	}
+}
+
+static void ser_dump_vfs()
+{
+	/* Notify VFS it has to generate stack traces. Kernel can't do that as
+	 * it's not aware of user space threads.
+	 */
+	mini_notify(proc_addr(KERNEL), VFS_PROC_NR);
 }
 
 #ifdef CONFIG_SMP
