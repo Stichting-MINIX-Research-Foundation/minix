@@ -395,7 +395,6 @@ void mount_pfs(void)
 
   dev_t dev;
   struct vmnt *vmp;
-  struct fproc *rfp;
 
   if ((dev = find_free_nonedev()) == NO_DEV)
 	panic("VFS: no nonedev to initialize PFS");
@@ -410,8 +409,6 @@ void mount_pfs(void)
   strlcpy(vmp->m_label, "pfs", LABEL_MAX);
   strlcpy(vmp->m_mount_path, "pipe", PATH_MAX);
   strlcpy(vmp->m_mount_dev, "none", PATH_MAX);
-
-  rfp = &fproc[_ENDPOINT_P(PFS_PROC_NR)];
 }
 
 /*===========================================================================*
