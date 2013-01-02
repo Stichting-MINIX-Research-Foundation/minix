@@ -112,6 +112,8 @@ int main(void)
 		/* A task notify()ed us */
 		if (who_e == DS_PROC_NR)
 			handle_work(ds_event);
+		else if (who_e == KERNEL)
+			mthread_stacktraces();
 		else if (fp != NULL && (fp->fp_flags & FP_SRV_PROC))
 			handle_work(do_dev_event);
 		else
