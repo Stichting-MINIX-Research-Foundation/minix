@@ -204,6 +204,8 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
  *===========================================================================*/
 static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc)
 {
+	printf("%-8.8s %6d 0x%lx \n",
+		whichproc->p_name, whichproc->p_endpoint, pc);
 }
 #endif
 
