@@ -48,7 +48,17 @@ fi
 SYMLIST=/tmp/unstack.$$
 
 # store sorted, filtered nm output once
-( $NM $executable ; $EXTRANM ) | sed 's/^/0x/' | sort -x | grep ' [Tt] [^.]' >$SYMLIST
+(
+$NM $executable | sed 's/^/0x/'
+$EXTRANM
+
+# Add shared libraries
+ldd -f"%p %x\n" $executable 2>/dev/null | while read lib addr
+do	echo >&2 "Adding $lib at $addr"
+	nm -n $lib | sed 's/^/0x/' | grep ' [Tt] ' | \
+gawk -v liboffset=$addr -v libname=$lib --non-decimal-data '{ printf "0x%lx %s %s[%s]\n", $1+liboffset, $2, $3, libname }'
+done
+) | sort -x | grep ' [Tt] [^.]' >$SYMLIST
 
 while [ $# -gt 0 ]
 do	 gawk <$SYMLIST --non-decimal-data -v symoffset=$1 '
