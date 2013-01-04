@@ -50,7 +50,7 @@ SYMLIST=/tmp/unstack.$$
 # store sorted, filtered nm output once
 (
 $NM $executable | sed 's/^/0x/'
-$EXTRANM
+$EXTRANM | sed 's/^/0x/'
 
 # Add shared libraries
 ldd -f"%p %x\n" $executable 2>/dev/null | while read lib addr
