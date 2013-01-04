@@ -312,8 +312,43 @@ static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc
  *===========================================================================*/
 void proc_stacktrace(struct proc *whichproc)
 {
+	u32_t use_bp;
+
+	if(whichproc->p_seg.p_kern_trap_style == KTS_NONE) {
+		printf("WARNING: stacktrace of running proecss\n");
+	}
+
+	switch(whichproc->p_seg.p_kern_trap_style) {
+		case KTS_SYSENTER:
+		case KTS_SYSCALL:
+		{
+			u32_t sp = whichproc->p_reg.sp;
+
+			/* Full context is not available in the p_reg
+			 * struct. Obtain it from the user's stack.
+			 * The use stack pointer is always available.
+			 * The fact that it's there, and the 16 byte offset,
+			 * is a dependency on the trap code in
+			 * kernel/arch/i386/usermapped_glo_ipc.S.
+			 */
+
+			if(data_copy(whichproc->p_endpoint, sp+16,
+			  KERNEL, (vir_bytes) &use_bp,
+				sizeof(use_bp)) != OK) {
+				printf("stacktrace: aborting, copy failed\n");
+				return;
+			}
+
+			break;
+		}
+		default:
+			/* Full context is available; use the stored ebp */
+			use_bp = whichproc->p_reg.fp;
+			break;
+	}
+
 #if USE_SYSDEBUG
-	proc_stacktrace_execute(whichproc, whichproc->p_reg.fp, whichproc->p_reg.pc);
+	proc_stacktrace_execute(whichproc, use_bp, whichproc->p_reg.pc);
 #endif /* USE_SYSDEBUG */
 }
 

@@ -29,6 +29,9 @@ ENTRY(usermapped_ ## name ## _sysenter)					;\
 	movl	%esp, %esi	/* kernel uses %esi for restored %esp */;\
 	movl	$0f, %edx	/* kernel uses %edx for restored %eip */;\
 	movl	$VEC, %edi	/* %edi to distinguish ipc/kerncall */	;\
+	/* !!! There is a dependency of proc_stacktrace()		;\
+	 * on this stack layout; it needs to find %ebp on it.		;\
+	 */								;\
 	SETARGS			/* call-specific register setup */	;\
 	sysenter		/* disappear into kernel */		;\
 0:									;\
@@ -50,6 +53,9 @@ ENTRY(usermapped_ ## name ## _syscall)					;\
 	push	%esi							;\
 	push	%edi							;\
 	movl	$VEC, %edi	/* %edi to distinguish ipc/kerncall */	;\
+	/* !!! There is a dependency of proc_stacktrace()		;\
+	 * on this stack layout; it needs to find %ebp on it.		;\
+	 */								;\
 	SETARGS			/* call-specific register setup */	;\
 	movl	%ecx, %edx	/* %ecx is clobbered by SYSCALL */	;\
 	syscall			/* disappear into kernel */		;\
