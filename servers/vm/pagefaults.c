@@ -75,6 +75,7 @@ void do_pagefaults(message *m)
 			assert(PFERR_NOPAGE(err));
 			printf("VM: pagefault: SIGSEGV %d bad addr 0x%x; %s\n",
 					ep, addr, pf_errstr(err));
+			sys_sysctl_stacktrace(ep);
 		}
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
