@@ -546,7 +546,11 @@ int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 		 * input message. Postpone the entire system call.
 		 */
 		caller_ptr->p_misc_flags &= ~MF_SC_TRACE;
+		assert(!(caller_ptr->p_misc_flags & MF_SC_DEFER));
 		caller_ptr->p_misc_flags |= MF_SC_DEFER;
+		caller_ptr->p_defer.r1 = r1;
+		caller_ptr->p_defer.r2 = r2;
+		caller_ptr->p_defer.r3 = r3;
 
 		/* Signal the "enter system call" event. Block the process. */
 		cause_sig(proc_nr(caller_ptr), SIGTRAP);

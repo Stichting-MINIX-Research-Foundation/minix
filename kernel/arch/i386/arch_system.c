@@ -491,8 +491,9 @@ void arch_do_syscall(struct proc *proc)
   /* do_ipc assumes that it's running because of the current process */
   assert(proc == get_cpulocal_var(proc_ptr));
   /* Make the system call, for real this time. */
+  assert(proc->p_misc_flags & MF_SC_DEFER);
   proc->p_reg.retreg =
-	  do_ipc(proc->p_reg.cx, proc->p_reg.retreg, proc->p_reg.bx);
+	  do_ipc(proc->p_defer.r1, proc->p_defer.r2, proc->p_defer.r3);
 }
 
 struct proc * arch_finish_switch_to_user(void)
