@@ -228,6 +228,26 @@ void exception_handler(int is_nested, struct exception_frame * frame)
 		frame->eip = (reg_t) __frstor_failure;
 		return;
 	}
+
+  	if(frame->vector == DEBUG_VECTOR
+		&& (saved_proc->p_reg.psw & TRACEBIT)
+		&& (saved_proc->p_seg.p_kern_trap_style == KTS_NONE)) {
+		/* Getting a debug trap in the kernel is legitimate
+		 * if a traced process entered the kernel using sysenter
+		 * or syscall; the trap flag is not cleared then.
+		 *
+		 * It triggers on the first kernel entry so the trap
+		 * style is still KTS_NONE.
+		 */
+
+		frame->eflags &= ~TRACEBIT;
+
+		return;
+
+		/* If control passes, this case is not recognized as legitimate
+		 * and we panic later on after all.
+		 */
+	}
   }
 
   if(frame->vector == PAGE_FAULT_VECTOR) {

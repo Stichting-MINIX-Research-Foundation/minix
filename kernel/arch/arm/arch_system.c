@@ -48,7 +48,8 @@ void arch_proc_reset(struct proc *pr)
         	pr->p_reg.psr = INIT_PSR;
 }
 
-void arch_proc_setcontext(struct proc *p, struct stackframe_s *state, int isuser)
+void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,
+	int isuser, int trapstyle)
 {
 }
 
