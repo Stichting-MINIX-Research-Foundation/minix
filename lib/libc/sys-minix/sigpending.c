@@ -13,3 +13,7 @@ sigset_t *set;
   *set = (sigset_t) m.m2_l1;
   return(m.m_type);
 }
+
+#ifdef __minix
+__weak_alias(sigpending, __sigpending14)
+#endif

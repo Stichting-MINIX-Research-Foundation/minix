@@ -40,3 +40,7 @@ int shmctl(int shmid, int cmd, struct shmid_ds *buf)
 		return m.SHMCTL_RET;
 	return r;
 }
+
+#ifdef __minix
+__weak_alias(shmctl, __shmctl50)
+#endif

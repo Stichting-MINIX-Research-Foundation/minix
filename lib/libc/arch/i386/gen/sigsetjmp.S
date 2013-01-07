@@ -111,3 +111,8 @@ ENTRY(__siglongjmp14)
 	incl	%eax
 3:	movl	%ecx,0(%esp)
 	ret
+
+#ifdef __minix
+.weak sigsetjmp; sigsetjmp = __sigsetjmp14
+.weak siglongjmp; siglongjmp = __siglongjmp14
+#endif

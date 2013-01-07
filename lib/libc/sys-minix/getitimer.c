@@ -18,3 +18,7 @@ int getitimer(int which, struct itimerval *value)
 
   return _syscall(PM_PROC_NR, ITIMER, &m);
 }
+
+#ifdef __minix
+__weak_alias(getitimer, __getitimer50)
+#endif

@@ -171,3 +171,7 @@ setlocale(int category, const char *locale)
 	__mb_len_max_runtime = MB_LEN_MAX;
 	return __setlocale(category, locale);
 }
+
+#ifdef __minix
+__weak_alias(setlocale, __setlocale50)
+#endif

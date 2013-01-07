@@ -994,3 +994,6 @@ multiply(u_quad_t n1, u_quad_t n2)
 
 	return (m);
 }
+
+__weak_alias(login_getpwclass, __login_getpwclass50)
+__weak_alias(setusercontext, __setusercontext50)

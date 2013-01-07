@@ -20,3 +20,7 @@ int select(int nfds,
   return (_syscall(VFS_PROC_NR, SELECT, &m));
 }
 
+
+#ifdef __minix
+__weak_alias(select, __select50)
+#endif

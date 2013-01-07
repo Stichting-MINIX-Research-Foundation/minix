@@ -57,3 +57,7 @@ alphasort(const void *d1, const void *d2)
 	return (strcmp((*(const struct dirent *const *)d1)->d_name,
 	    (*(const struct dirent *const *)d2)->d_name));
 }
+
+#ifdef __minix
+__weak_alias(alphasort, __alphasort30)
+#endif
