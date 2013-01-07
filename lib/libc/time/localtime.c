@@ -2207,3 +2207,21 @@ posix2time(time_t t)
 }
 
 #endif /* defined STD_INSPIRED */
+
+#ifdef __minix
+__weak_alias(gmtime, __gmtime50)
+__weak_alias(gmtime_r, __gmtime_r50)
+__weak_alias(offtime, __offtime50)
+__weak_alias(offtime_r, __offtime_r50)
+__weak_alias(time2posix, __time2posix50)
+__weak_alias(time2posix_z, __time2posix_z50)
+__weak_alias(timegm, __timegm50)
+__weak_alias(timelocal, __timelocal50)
+__weak_alias(timelocal_z, __timelocal_z50)
+__weak_alias(timeoff, __timeoff50)
+__weak_alias(tzalloc, __tzalloc50)
+__weak_alias(tzfree, __tzfree50)
+__weak_alias(tzgetname, __tzgetname50)
+__weak_alias(tzset, __tzset50)
+__weak_alias(tzsetwall, __tzsetwall50)
+#endif

@@ -24,3 +24,7 @@ int setitimer(int which, const struct itimerval *__restrict value,
 
   return _syscall(PM_PROC_NR, ITIMER, &m);
 }
+
+#ifdef __minix
+__weak_alias(setitimer, __setitimer50)
+#endif

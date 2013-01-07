@@ -22,3 +22,7 @@ int utime(const char *name, const struct utimbuf *timp)
   m.m2_p1 = (char *) __UNCONST(name);
   return(_syscall(VFS_PROC_NR, UTIME, &m));
 }
+
+#ifdef __minix
+__weak_alias(utime, __utime50)
+#endif

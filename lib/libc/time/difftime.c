@@ -72,3 +72,7 @@ const time_t	time0;
 	return -(double) ((unsigned long) time0 +
 		(unsigned long) (-(time1 + 1)) + 1);
 }
+
+#ifdef __minix
+__weak_alias(difftime, __difftime50)
+#endif

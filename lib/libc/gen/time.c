@@ -55,3 +55,7 @@ time(time_t *t)
 		*t = tt.tv_sec;
 	return tt.tv_sec;
 }
+
+#ifdef __minix
+__weak_alias(time, __time50)
+#endif

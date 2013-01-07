@@ -511,3 +511,15 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	(db->close)(db);
 	return error;
 }
+
+#ifdef __minix
+__weak_alias(getlastlogx, __getlastlogx50)
+__weak_alias(getutmp, __getutmp50)
+__weak_alias(getutmpx, __getutmpx50)
+__weak_alias(getutxent, __getutxent50)
+__weak_alias(getutxid, __getutxid50)
+__weak_alias(getutxline, __getutxline50)
+__weak_alias(pututxline, __pututxline50)
+__weak_alias(updlastlogx, __updlastlogx50)
+__weak_alias(updwtmpx, __updwtmpx50)
+#endif

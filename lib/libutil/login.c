@@ -68,3 +68,5 @@ login(const struct utmp *ut)
 		(void)close(fd);
 	}
 }
+
+__weak_alias(login, __login50)

@@ -149,3 +149,9 @@ readdir_r(dirp, entry, result)
 
 	return (0);
 }
+
+#ifdef __minix
+__weak_alias(readdir, __readdir30)
+__weak_alias(readdir_r, __readdir_r30)
+__weak_alias(readdir_unlocked, ___readdir_unlocked50)
+#endif

@@ -52,3 +52,5 @@ loginx(const struct utmpx *ut)
 	(void)pututxline(ut);
 	(void)updwtmpx(_PATH_WTMPX, ut);
 }
+
+__weak_alias(loginx, __loginx50)

@@ -90,3 +90,7 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	return r;
 }
 
+
+#ifdef __minix
+__weak_alias(nanosleep, __nanosleep50)
+#endif

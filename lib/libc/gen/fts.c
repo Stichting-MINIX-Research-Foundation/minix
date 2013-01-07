@@ -1225,3 +1225,11 @@ bail:
 	}
 	return ret;
 }
+
+#ifdef __minix
+__weak_alias(fts_children, __fts_children60)
+__weak_alias(fts_close, __fts_close60)
+__weak_alias(fts_open, __fts_open60)
+__weak_alias(fts_read, __fts_read60)
+__weak_alias(fts_set, __fts_set60)
+#endif

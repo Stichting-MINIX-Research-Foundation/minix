@@ -18,3 +18,7 @@ int mknod(const char *name, mode_t mode, dev_t dev)
   m.m1_p2 = (char *) ((int) 0);		/* obsolete size field */
   return(_syscall(VFS_PROC_NR, MKNOD, &m));
 }
+
+#ifdef __minix
+__weak_alias(mknod, __mknod50)
+#endif

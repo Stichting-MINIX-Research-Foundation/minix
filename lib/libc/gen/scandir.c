@@ -153,3 +153,7 @@ bad:
 	(void)closedir(dirp);
 	return -1;
 }
+
+#ifdef __minix
+__weak_alias(scandir, __scandir30)
+#endif

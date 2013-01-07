@@ -55,8 +55,6 @@ COMPATDIR=${.CURDIR}/compat
 .else
 SUBDIR+= pkgconfig
 .include <bsd.subdir.mk>
-COMPATDIR= ${.CURDIR}/compat-minix
-.include "${.CURDIR}/compat-minix/Makefile.inc"
 .endif
 .endif
 

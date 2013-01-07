@@ -1168,3 +1168,8 @@ qprintf(const char *str, Char *s)
 	(void)printf("\n");
 }
 #endif
+
+#ifdef __minix
+__weak_alias(glob, __glob30)
+__weak_alias(globfree, __globfree30)
+#endif

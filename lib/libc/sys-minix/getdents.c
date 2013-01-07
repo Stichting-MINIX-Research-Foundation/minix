@@ -13,3 +13,7 @@ ssize_t getdents(int fd, char *buffer, size_t nbytes)
   m.m1_p1 = (char *) buffer;
   return _syscall(VFS_PROC_NR, GETDENTS, &m);
 }
+
+#ifdef __minix
+__weak_alias(getdents, __getdents30)
+#endif

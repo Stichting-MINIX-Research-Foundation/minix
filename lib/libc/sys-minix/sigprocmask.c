@@ -22,3 +22,7 @@ sigset_t *oset;
   if (oset != (sigset_t *) NULL) *oset = (sigset_t) (m.m2_l1);
   return(m.m_type);
 }
+
+#ifdef __minix
+__weak_alias(sigprocmask, __sigprocmask14)
+#endif
