@@ -61,7 +61,6 @@ void e(int n, char *s) {
 
 void do_child(void) {
   struct timeval tv;
-  int retval;
  
   /* Open named pipe for writing. This will block until a reader arrives. */
   if((fd_np1 = open(NAMEDPIPE1, O_WRONLY)) == -1) {
@@ -79,19 +78,19 @@ void do_child(void) {
   select(0, NULL, NULL, NULL, &tv);
 
   /* Try to write. Doesn't matter how many bytes we actually send. */
-  retval = write(fd_np1, SENDSTRING, strlen(SENDSTRING));
+  (void) write(fd_np1, SENDSTRING, strlen(SENDSTRING));
 
   /* Wait for another second to allow the parent to process incoming data */
   tv.tv_sec = DO_HANDLEDATA;
   tv.tv_usec = 0;
-  retval = select(0,NULL, NULL, NULL, &tv);
+  (void) select(0,NULL, NULL, NULL, &tv);
 
   close(fd_np1);
 
   /* Wait for another second to allow the parent to process incoming data */
   tv.tv_sec = DO_HANDLEDATA;
   tv.tv_usec = 0;
-  retval = select(0,NULL, NULL, NULL, &tv);
+  (void) select(0,NULL, NULL, NULL, &tv);
 
   /* Open named pipe for reading. This will block until a writer arrives. */
   if((fd_np2 = open(NAMEDPIPE2, O_RDONLY)) == -1) {
@@ -106,7 +105,7 @@ void do_child(void) {
   /* Wait for another second to allow the parent to run some tests. */
   tv.tv_sec = DO_HANDLEDATA;
   tv.tv_usec = 0;
-  retval = select(0, NULL, NULL, NULL, &tv);
+  (void) select(0, NULL, NULL, NULL, &tv);
   
   close(fd_np2);
 
@@ -115,7 +114,7 @@ void do_child(void) {
   /* Let the parent do initial read and write tests from and to the pipe. */
   tv.tv_sec = DO_PAUSE;
   tv.tv_usec = 0;
-  retval = select(0, NULL, NULL, NULL, &tv);
+  (void) select(0, NULL, NULL, NULL, &tv);
   
   /* Unblock blocking read select by writing data */
   if(write(fd_ap[1], SENDSTRING, strlen(SENDSTRING)) < 0) {

@@ -75,9 +75,7 @@ void parent()
 void child(i)
 int i;
 {
-  int n;
-
-  n = getpid();
+  (void) getpid();
   exit(100+i);
 }
 

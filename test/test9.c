@@ -233,6 +233,9 @@ void level1()
   p = &buf[10];
   i = 200;
   p = &buf[20];
+  
+  srand(i);
+  srand((int)*p);
   longjmp(env, 2);
 }
 
