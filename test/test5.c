@@ -210,7 +210,7 @@ void test5e()
 /* When a signal knocks a processes out of WAIT or PAUSE, it is supposed to
  * get EINTR as error status.  Check that.
  */
-  int n, j;
+  int n;
 
   subtest = 5;
   if (signal(8, func8) == SIG_ERR) e(25);
@@ -222,7 +222,7 @@ void test5e()
 	if (wait(&n) < 0) e(27);
 	if (signal(8, SIG_DFL) == SIG_ERR) e(28);
   } else {
-	j = pause();
+	(void) pause();
 	if (errno != EINTR && -errno != EINTR) e(29);
 	exit(0);
   }
@@ -282,7 +282,7 @@ void test5h()
 /* When a signal knocks a processes out of PIPE, it is supposed to
  * get EINTR as error status.  Check that.
  */
-  int n, j, fd[2];
+  int n, fd[2];
 
   subtest = 8;
   unlink("XXX.test5");
@@ -301,7 +301,7 @@ void test5h()
 	if (close(fd[1]) != 0) e(6);
   } else {
 	if (creat("XXX.test5", 0777) < 0) e(7);
-	j = read(fd[0], (char *) &n, 1);
+	(void) read(fd[0], (char *) &n, 1);
 	if (errno != EINTR) e(8);
 	exit(0);
   }

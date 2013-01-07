@@ -72,12 +72,12 @@ int main()
 void spawn(n)
 int n;
 {
-  int pid, k;
+  int pid;
 
   if ((pid = fork()) != 0) {
 	wait(&n);		/* wait for some child (any one) */
   } else {
-	k = execl(name[n], name[n], (char *) 0);
+	execl(name[n], name[n], (char *) 0);
 	errct++;
 	printf("Child execl didn't take. file=%s errno=%d\n", name[n], errno);
 	rmfiles();

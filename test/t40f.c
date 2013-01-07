@@ -62,12 +62,11 @@ float compute_diff(struct timeval start, struct timeval end, float compare) {
 
 void do_child(void) {
   struct timeval tv;
-  int retval;
  
   /* Let the parent do initial read and write tests from and to the pipe. */
   tv.tv_sec = DO_PAUSE + DO_PAUSE + DO_PAUSE + 1;
   tv.tv_usec = 0;
-  retval = select(0, NULL, NULL, NULL, &tv);
+  (void) select(0, NULL, NULL, NULL, &tv);
 
   /* At this point the parent has a pending select with a DO_TIMEOUT timeout.
      We're going to interrupt by sending a signal */

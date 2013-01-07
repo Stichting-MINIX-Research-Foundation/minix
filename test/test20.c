@@ -41,11 +41,9 @@ char executable[1024];
 
 int main(int argc, char *argv[])
 {
-  int i, m = 0xFFFF;
+  int i;
 
   sync();
-  if (argc == 2) m = atoi(argv[1]);
-
   /* If we have to check things, call do_check(). */
   if (strcmp(argv[0], "DO CHECK") == 0) exit(do_check());
 

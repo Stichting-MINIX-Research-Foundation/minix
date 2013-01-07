@@ -471,10 +471,8 @@ void test_bind(void)
 	int sd;
 	int sd2;
 	int rc;
-	int on;
 
 	debug("entering test_bind()");
-	on = 1;
 	UNLINK(TEST_SUN_PATH);
 	memset(&addr, '\0', sizeof(struct sockaddr_un));
 	addr.sun_family = AF_UNIX;
@@ -980,9 +978,7 @@ void test_dup2(void)
  */
 void test_xfer_server(pid_t pid)
 {
-	socklen_t ucred_length;
 	int i;
-	int on;
 	struct timeval tv;
 	fd_set readfds;
 	int status;
@@ -994,11 +990,9 @@ void test_xfer_server(pid_t pid)
 	struct sockaddr_un addr;
 	struct sockaddr_un client_addr;
 
-	on = 1;
 	status = 0;
 	rc = 0;
 	sd = 0;
-	ucred_length = sizeof(struct ucred);
 	client_sd = 0;
 	client_addr_size = sizeof(struct sockaddr_un);
 
@@ -2481,9 +2475,6 @@ void test_permissions(void) {
 	pid_t pid;
 	int sd, rc, status;
 	struct sockaddr_un addr;
-	socklen_t client_addr_size;
-
-	client_addr_size = sizeof(struct sockaddr_un);
 
 	memset(&addr, '\0', sizeof(struct sockaddr_un));
 	addr.sun_family = AF_UNIX;

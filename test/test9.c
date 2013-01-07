@@ -233,6 +233,18 @@ void level1()
   p = &buf[10];
   i = 200;
   p = &buf[20];
+ 
+#ifdef __GNUC__
+	/*
+	 * to defeat the smartness of the GNU C optimizer we pretend we
+	 * use 'a'. Otherwise the optimizer will not detect the looping
+	 * effectuated by setjmp/longjmp, so that it thinks it can get
+	 * rid of the assignment to 'a'.
+	 */
+  srand(i);
+  srand((int)*p);
+#endif
+
   longjmp(env, 2);
 }
 

@@ -68,7 +68,6 @@ void open_terminal(int *child_fd, int *parent_fd) {
 }
 
 int do_child(int terminal) {
-  int retval;
   struct timeval tv;
 
   /* Going to sleep for two seconds to allow the parent proc to get ready */
@@ -77,12 +76,12 @@ int do_child(int terminal) {
   select(0, NULL, NULL, NULL, &tv);
 
   /* Try to write. Doesn't matter how many bytes we actually send. */
-  retval = write(terminal, SENDSTRING, strlen(SENDSTRING));
+  (void) write(terminal, SENDSTRING, strlen(SENDSTRING));
   close(terminal);
 
   /* Wait for another second to allow the parent to process incoming data */
   tv.tv_usec = 1000000;
-  retval = select(0,NULL, NULL, NULL, &tv);
+  (void) select(0,NULL, NULL, NULL, &tv);
   exit(0);
 }
 
