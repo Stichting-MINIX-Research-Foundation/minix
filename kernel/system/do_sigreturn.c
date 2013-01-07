@@ -51,7 +51,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 #endif
 
   /* Restore the registers. */
-  arch_proc_setcontext(rp, &sc.sc_regs, 1);
+  arch_proc_setcontext(rp, &sc.sc_regs, 1, sc.trap_style);
 #if defined(__i386__)
   if(sc.sc_flags & MF_FPU_INITIALIZED)
   {

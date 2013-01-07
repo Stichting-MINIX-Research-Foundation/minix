@@ -240,6 +240,11 @@ syscall_sysenter_common:
 	mov	%esi, SPREG(%ebp)	/* esi is return esp */
 	mov	%edx, PCREG(%ebp)	/* edx is return eip */
 
+	/* save PSW */
+	pushf
+	pop	%edx
+	mov	%edx, PSWREG(%ebp)
+
 	/* check for call type; do_ipc? */
 	cmp	$IPCVEC_UM, %edi
 	jz	ipc_entry_common
@@ -396,6 +401,7 @@ ENTRY(restore_user_context_sysenter)
 	mov	SPREG(%ebp), %ecx	/* sysexit restores ESP using ECX */
 	mov	AXREG(%ebp), %eax	/* trap return value */
 	mov	BXREG(%ebp), %ebx	/* secondary return value */
+	movl	PSWREG(%ebp), %edi	/* load desired PSW to EDI */
 	sti				/* enable interrupts */
 	sysexit				/* jump to EIP in user */
 
@@ -410,6 +416,7 @@ ENTRY(restore_user_context_syscall)
 	mov	SPREG(%ebp), %esp	/* restore ESP directly */
 	mov	AXREG(%ebp), %eax	/* trap return value */
 	mov	BXREG(%ebp), %ebx	/* secondary return value */
+	movl	PSWREG(%ebp), %edi	/* load desired PSW to EDI */
 	sysret				/* jump to EIP in user */
 
 ENTRY(restore_user_context_int)

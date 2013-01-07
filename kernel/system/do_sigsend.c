@@ -43,13 +43,21 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 
   /* Copy the registers to the sigcontext structure. */
   memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(sigregs));
-  #if defined(__i386__)
+
+#if defined(__i386__)
+  sc.trap_style = rp->p_seg.p_kern_trap_style;
+
+  if(sc.trap_style == KTS_NONE) {
+  	printf("do_sigsend: sigsend an unsaved process\n");
+	return EINVAL;
+  }
+
     if(proc_used_fpu(rp)) {
 	    /* save the FPU context before saving it to the sig context */
 	    save_fpu(rp);
 	    memcpy(&sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE);
     }
-  #endif
+#endif
 
   /* Finish the sigcontext initialization. */
   sc.sc_mask = smsg.sm_mask;

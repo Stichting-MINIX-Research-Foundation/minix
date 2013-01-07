@@ -182,7 +182,7 @@ void arch_proc_reset(struct proc *pr)
 	pr->p_reg.ds = USER_DS_SELECTOR;
 
 	/* set full context and make sure it gets restored */
-	arch_proc_setcontext(pr, &reg, 0);
+	arch_proc_setcontext(pr, &reg, 0, KTS_FULLCONTEXT);
 }
 
 void arch_set_secondary_ipc_return(struct proc *p, u32_t val)
@@ -511,14 +511,21 @@ struct proc * arch_finish_switch_to_user(void)
 	*((reg_t *)stk) = (reg_t) p;
 
 	/* make sure IF is on in FLAGS so that interrupts won't be disabled
-	 * once p's context is restored. this should not be possible.
+	 * once p's context is restored.
 	 */
-        assert(p->p_reg.psw & (1L << 9));
+        p->p_reg.psw |= IF_MASK;
+
+	/* Set TRACEBIT state properly. */
+	if(p->p_misc_flags & MF_STEP)
+        	p->p_reg.psw |= TRACEBIT;
+	else
+        	p->p_reg.psw &= ~TRACEBIT;
 
 	return p;
 }
 
-void arch_proc_setcontext(struct proc *p, struct stackframe_s *state, int isuser)
+void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,
+	int isuser, int trap_style)
 {
 	if(isuser) {
 		/* Restore user bits of psw from sc, maintain system bits
@@ -555,7 +562,7 @@ void arch_proc_setcontext(struct proc *p, struct stackframe_s *state, int isuser
 	}
 	if(p->p_seg.p_kern_trap_style == KTS_NONE)
 		printf("WARNINIG: setting full context of out-of-kernel process\n");
-	p->p_seg.p_kern_trap_style = KTS_FULLCONTEXT;
+	p->p_seg.p_kern_trap_style = trap_style;
 }
 
 void restore_user_context(struct proc *p)
@@ -666,4 +673,3 @@ static void ser_init(void)
 	outb(COM1_LCR, lcr);
 }
 #endif
-
