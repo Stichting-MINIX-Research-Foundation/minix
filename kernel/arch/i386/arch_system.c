@@ -564,8 +564,6 @@ void restore_user_context(struct proc *p)
 #define TYPES 10
 	static int restores[TYPES], n = 0;
 
-	p->p_seg.p_kern_trap_style = KTS_NONE;
-
 	if(trap_style >= 0 && trap_style < TYPES)
 		restores[trap_style]++;
 
@@ -577,6 +575,8 @@ void restore_user_context(struct proc *p)
 		printf("\n");
 	}
 #endif
+
+	p->p_seg.p_kern_trap_style = KTS_NONE;
 
 	if(trap_style == KTS_SYSENTER) {
 		restore_user_context_sysenter(p);
