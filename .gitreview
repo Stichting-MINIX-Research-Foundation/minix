@@ -1,0 +1,17 @@
+# MINIX 3 code review setup.
+# 
+# This gerrit code review configuration is meant for performing per commit 
+# internal code reviews. If you are an external contributor please read and 
+# apply http://wiki.minix3.org/en/HowToContribute
+#
+# Consider reading http://wiki.openstack.org/GerritWorkflow to learn how
+# to install git review on a Linux setup. On Minix you can use pkgin to 
+# install git-review.
+#
+[gerrit]
+# The git-minix host is to be configured in your .ssh/config
+#
+host=git-minix
+port=2222
+project=minix
+defaultbranch=master
