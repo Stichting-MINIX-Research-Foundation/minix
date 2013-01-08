@@ -8,6 +8,7 @@
 #include "omap_intr.h"
 
 static irq_hook_t omap3_timer_hook;		/* interrupt handler hook */
+static u64_t tsc;
 
 int omap3_register_timer_handler(const irq_handler_t handler)
 {
@@ -52,7 +53,6 @@ void omap3_timer_stop()
     mmio_clear(OMAP3_GPTIMER1_TCLR, OMAP3_TCLR_ST);
 }
 
-static u64_t tsc;
 void omap3_timer_int_handler()
 {
     /* Clear the interrupt */
@@ -60,6 +60,10 @@ void omap3_timer_int_handler()
     tsc++;
 }
 
+/* Don't use libminlib's read_tsc_64, but our own version instead. We emulate
+ * the ARM Cycle Counter (CCNT) with 1 cycle per ms. We can't rely on the
+ * actual counter hardware to be working (i.e., qemu doesn't emulate it at all)
+ */
 void read_tsc_64(u64_t *t)
 {
     *t = tsc;
