@@ -787,11 +787,10 @@ static void do_vm(config_t *cpe, struct rs_start *rs_start)
 		for (i = 0; vm_table[i].label != NULL; i++)
 			if (!strcmp(cpe->word, vm_table[i].label))
 				break;
-		if (vm_table[i].label == NULL)
-			fatal("do_vm: unknown call '%s' at %s:%d",
+		if (vm_table[i].label == NULL) {
+			warning("do_vm: ignoring unknown call '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
-
-		if(vm_table[i].call_nr) {
+		} else if(vm_table[i].call_nr) {
 			SET_BIT(rs_start->rss_vm,
 				vm_table[i].call_nr - VM_RQ_BASE);
 		}
@@ -881,10 +880,13 @@ static void do_system(config_t *cpe, struct rs_start *rs_start)
 		for (i = 0; system_tab[i].label != NULL; i++)
 			if (!strcmp(cpe->word, system_tab[i].label))
 				break;
-		if (system_tab[i].label == NULL)
-			fatal("do_system: unknown call '%s' at %s:%d",
+		if (system_tab[i].label == NULL) {
+		   warning("do_system: ignoring unknown call '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
-		SET_BIT(rs_start->rss_system, system_tab[i].call_nr - KERNEL_CALL);
+		} else {
+			SET_BIT(rs_start->rss_system,
+				system_tab[i].call_nr - KERNEL_CALL);
+		}
 		first = FALSE;
 	}
 }
