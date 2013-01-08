@@ -48,7 +48,6 @@ set -- $* $RELOPTS
 
 export RELEASEDIR=/usr/r-staging
 RELEASEMNTDIR=/usr/r
-RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 
 IMAGE=/usr/mdec/bootxx_cd9660
 ROOTIMAGE=rootimage
@@ -130,6 +129,8 @@ do
 	esac
 done
 
+RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
+
 if [ $GITMODE -ne 1 -a $COPY -ne 1 ]
 then	echo "Need git to retrieve latest minix! Copying src instead!"
 	COPY=1
@@ -205,10 +206,12 @@ then
 		IMG=${IMG_BASE}_${DATE}_${REVTAG}.iso
 	fi
 else
+	echo "First cleaning current sourcedir.."
+	( cd .. && make cleandir >/dev/null )
 	echo "Copying contents from current src dir."
-	( cd .. && make cleandir )
 	srcdir=/usr/$SRC
 	( cd $srcdir && tar --exclude .svn -cf - .  ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
+	echo "Copying done."
 	REVTAG=copy
 	REVISION=unknown
 	IMG=${IMG_BASE}_copy.iso
