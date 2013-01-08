@@ -23,23 +23,24 @@ int omap3_register_timer_handler(const irq_handler_t handler)
 
 void omap3_timer_init(unsigned freq)
 {
+    u32_t tisr;
+
     /* Stop timer */
     mmio_clear(OMAP3_GPTIMER1_TCLR, OMAP3_TCLR_ST);
 
     /* Use 32 KHz clock source for GPTIMER1 */
     mmio_clear(OMAP3_CM_CLKSEL_WKUP, OMAP3_CLKSEL_GPT1);
 
-    /* Use 1-ms tick mode for GPTIMER1 */
+    /* Use 1-ms tick mode for GPTIMER1 TRM 16.2.4.2.1 */
     mmio_write(OMAP3_GPTIMER1_TPIR, 232000);
     mmio_write(OMAP3_GPTIMER1_TNIR, -768000);
     mmio_write(OMAP3_GPTIMER1_TLDR, 0xffffffe0);
     mmio_write(OMAP3_GPTIMER1_TCRR, 0xffffffe0);
 
-    /* Set frequency */
-    mmio_write(OMAP3_GPTIMER1_TOWR, TIMER_COUNT(freq));
-
     /* Set up overflow interrupt */
-    mmio_write(OMAP3_GPTIMER1_TISR, ~0);
+    tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
+	   OMAP3_TISR_TCAR_IT_FLAG;
+    mmio_write(OMAP3_GPTIMER1_TISR, tisr); /* Clear interrupt status */
     mmio_write(OMAP3_GPTIMER1_TIER, OMAP3_TIER_OVF_IT_ENA);
     omap3_irq_unmask(OMAP3_GPT1_IRQ);
 
@@ -55,8 +56,12 @@ void omap3_timer_stop()
 
 void omap3_timer_int_handler()
 {
-    /* Clear the interrupt */
-    mmio_write(OMAP3_GPTIMER1_TISR, ~0);
+    /* Clear all interrupts */
+    u32_t tisr;
+
+    tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
+           OMAP3_TISR_TCAR_IT_FLAG;
+    mmio_write(OMAP3_GPTIMER1_TISR, tisr);
     tsc++;
 }
 
