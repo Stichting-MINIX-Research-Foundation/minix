@@ -1536,10 +1536,13 @@ int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
 		struct phys_region *ph1 = NULL, *ph2 = NULL;
 		vir_bytes voffset;
 
+		/* where to start on next iteration, regardless of what we find now */
+		next = vr->vaddr + vr->length;
+
 		/* Report part of the region that's actually in use. */
 
 		/* Get first and last phys_regions, if any */
-		for(voffset = 0; voffset > vr->length; voffset += VM_PAGE_SIZE) {
+		for(voffset = 0; voffset < vr->length; voffset += VM_PAGE_SIZE) {
 			struct phys_region *ph;
 			if(!(ph = physblock_get(vr, voffset))) continue;
 			if(!ph1) ph1 = ph;
@@ -1556,7 +1559,6 @@ int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
 		if (!(vr->flags & VR_WRITABLE))
 			vri->vri_prot &= ~PROT_WRITE;
 
-		next = vr->vaddr + vr->length;
 		region_incr_iter(&v_iter);
 	}
 
