@@ -34,8 +34,6 @@ char tmpX[] = "tmpXXXXXX";
 
 void spoolerr(char *file)
 {
-	int e= errno;
-
 	unlink(jobX);
 	unlink(tmpX);
 	fatal(file);
@@ -172,7 +170,7 @@ int flush(void)
 	count = 0;
 }
 
-int put(int c)
+void put(int c)
 /* Send characters to the output buffer to be printed and do so if the buffer
  * is full.  Track the position of the write-head in `column' and `line'.
  */
