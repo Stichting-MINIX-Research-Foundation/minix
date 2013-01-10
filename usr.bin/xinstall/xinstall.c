@@ -824,7 +824,9 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 {
 	ssize_t	nr, nw;
 	int	serrno;
+#ifndef __minix
 	u_char	*p;
+#endif
 	u_char	buf[MAXBSIZE];
 	MD5_CTX		ctxMD5;
 	RMD160_CTX	ctxRMD160;
