@@ -29,7 +29,15 @@ PROG_COMMANDS=cdprobe loadramdisk mount fsck.mfs sysenv sh \
 	service 
 PROG_SERVERS=mfs procfs
 PROG_USRSBIN=pwd_mkdb
-PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} ${PROG_USRSBIN}
+
+.if ${LDSTATIC} == "-dynamic"
+RAMDISK_DYNAMIC=1
+PROG_LIBEXEC+=ld.elf_so
+PROG_LIBS+=libc libminlib libcompat_minix libterminfo
+.endif
+
+PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} ${PROG_USRSBIN} ${PROG_LIBEXEC}
+
 EXTRA=system.conf master.passwd rs.single 
 PROTO_FILES=proto.common.etc proto.common.dynamic proto.dev
 
@@ -48,6 +56,7 @@ RAMDISK_INC_ACPI=1
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${EXTRA} image image.c t proto.gen
 CLEANFILES += ${LIBRARIES}
+CLEANFILES += ${PROG_LIBEXEC}
 CLEANFILES += ${.OBJDIR}/etc/*
 
 image:	proto.gen ${EXTRA} mtab rc pwd.db spwd.db passwd
@@ -75,8 +84,27 @@ ${driver}: ${PROGROOT}/drivers/${driver}/${driver}
 	${INSTALL} $> $@
 
 ${PROGROOT}/drivers/${driver}/${driver}:
-	${MAKE} -C ${NETBSDSRCDIR}/drivers/${driver} ${driver}
+	${MAKE} -C ${NETBSDSRCDIR}/drivers/${driver} all
 .endfor
+
+.for lib in ${PROG_LIBS}
+PROGRAMS+=${lib}.so.0
+CLEANFILES += ${lib}.so.0
+${lib}.so.0:${PROGROOT}/lib/${lib}/${lib}.so.0
+	${INSTALL} $> $@
+
+${PROGROOT}/lib/${lib}/${lib}.so.0:
+	${MAKE} -C ${NETBSDSRCDIR}/lib/${lib} all
+.endfor
+
+.for libexec in ${PROG_LIBEXEC}
+${libexec}:${PROGROOT}/libexec/${libexec}/${libexec}
+	${INSTALL} $> $@
+
+${PROGROOT}/libexec/${libexec}/${libexec}:
+	${MAKE} -C ${NETBSDSRCDIR}/libexec/${libexec} all
+.endfor
+
 
 .for cmd in ${PROG_COMMANDS}
 .if ${cmd} == sh
@@ -88,7 +116,7 @@ ${cmd}: ${PROGROOT}/commands/${dir.${cmd}}/${cmd}
 	${INSTALL} $> $@
 
 ${PROGROOT}/commands/$(dir.${cmd})/${cmd}:
-	${MAKE} -C ${NETBSDSRCDIR}/commands/${dir.${cmd}} ${cmd}
+	${MAKE} -C ${NETBSDSRCDIR}/commands/${dir.${cmd}} all
 .endfor
 
 .for etc in ${EXTRA}
@@ -101,7 +129,7 @@ ${cmd}: ${PROGROOT}/usr.sbin/${cmd}/${cmd}
 	${INSTALL} $> $@
 
 ${PROGROOT}/usr.sbin/${cmd}/${cmd}:
-	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin/${cmd} ${cmd}
+	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin/${cmd} all
 .endfor
 
 .for server in ${PROG_SERVERS}
@@ -109,7 +137,7 @@ ${server}: ${PROGROOT}/servers/${server}/${server}
 	${INSTALL} $> $@
 
 ${PROGROOT}/servers/${server}/${server}:
-	${MAKE} -C ${NETBSDSRCDIR}/servers/${server} ${server}
+	${MAKE} -C ${NETBSDSRCDIR}/servers/${server} all
 .endfor
 
 etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
