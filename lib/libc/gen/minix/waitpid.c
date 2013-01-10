@@ -8,10 +8,7 @@
 __weak_alias(waitpid, _waitpid)
 #endif
 
-pid_t waitpid(pid, status, options)
-pid_t pid;
-int *status;
-int options;
+pid_t waitpid(pid_t pid, int *status, int options)
 {
   message m;
 
