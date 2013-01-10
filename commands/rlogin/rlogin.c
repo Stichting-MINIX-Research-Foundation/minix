@@ -143,7 +143,7 @@ struct	winsize winsize;
 #define	get_window_size(fd, wp)	ioctl(fd, TIOCGWINSZ, wp)
 
 extern int main( int argc, char **argv );
-static void usage( void );
+static void usage( void ) __attribute__((noreturn));
 static u_char getescape( char *p );
 static char *speeds2str( speed_t speed );
 static void lostpeer( int sig );
@@ -201,7 +201,7 @@ int main(argc, argv)
 	one = 1;
 	host = user = NULL;
 
-	if (p = rindex(argv[0], '/'))
+	if ((p = rindex(argv[0], '/')))
 		++p;
 	else
 		p = argv[0];
@@ -582,7 +582,7 @@ catch_child(sig)
 		if (pid == 0)
 			return;
 		/* if the child (reader) dies, just quit */
-		if (pid < 0 || pid == child && !WIFSTOPPED(status))
+		if (pid < 0 || ((pid == child) && (!WIFSTOPPED(status))))
 			done(WTERMSIG(status) | WEXITSTATUS(status));
 	}
 	/* NOTREACHED */
@@ -778,7 +778,6 @@ char rcvbuf[8 * 1024];
 static int
 reader()
 {
-	int pid = -getpid();
 	int n, remaining;
 	char *bufp = rcvbuf;
 
