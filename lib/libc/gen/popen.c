@@ -59,10 +59,6 @@ __RCSID("$NetBSD: popen.c,v 1.32 2012/06/25 22:32:43 abs Exp $");
 #include "env.h"
 #include "reentrant.h"
 
-#if defined(__minix) && !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 #ifdef __weak_alias
 __weak_alias(popen,_popen)
 __weak_alias(pclose,_pclose)

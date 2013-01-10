@@ -51,10 +51,6 @@ __RCSID("$NetBSD: settimeofday.c,v 1.14 2011/10/15 23:00:02 christos Exp $");
 #include <time.h>
 #include <unistd.h>
  
-#if defined(__minix) && !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 int __clockctl_fd = -1;
 
 int ____settimeofday50(const struct timeval *, const void *);
