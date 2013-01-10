@@ -1,11 +1,11 @@
 	libexec d--755 0 0
-		ld.elf_so ---755 0 0 /usr/libexec/ld.elf_so
+		ld.elf_so ---755 0 0 ld.elf_so
 	$
 	usr d--755 0 0
 		lib d--755 0 0
-			libc.so.0 ---755 0 0 /usr/lib/libc.so.0
-			libminlib.so.0 ---755 0 0 /usr/lib/libminlib.so.0
-			libcompat_minix.so.0 ---755 0 0 /usr/lib/libcompat_minix.so.0
-			libterminfo.so.0 ---755 0 0 /usr/lib/libterminfo.so.0
+			libc.so.0 ---755 0 0 libc.so.0
+			libminlib.so.0 ---755 0 0 libminlib.so.0
+			libcompat_minix.so.0 ---755 0 0 libcompat_minix.so.0
+			libterminfo.so.0 ---755 0 0 libterminfo.so.0
 		$
 	$
