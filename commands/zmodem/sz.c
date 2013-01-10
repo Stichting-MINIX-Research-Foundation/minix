@@ -284,7 +284,7 @@ int argc;
 char *argv[];
 {
 	register char *cp;
-	register npats;
+	register int npats;
 	int dm;
 	char **patts;
 	static char xXbuf[BUFSIZ];
@@ -533,7 +533,7 @@ char *argp[];
 int wcs(oname)
 char *oname;
 {
-	register c;
+	register int c;
 	register char *p;
 	struct stat f;
 	char name[PATHLEN];
@@ -602,7 +602,7 @@ char *name;
 
 	if (Modem2) {
 		if ((in!=stdin) && *name && fstat(fileno(in), &f)!= -1) {
-			fprintf(stderr, "Sending %s, %ld blocks: ",
+			fprintf(stderr, "Sending %s, %lld blocks: ",
 			  name, f.st_size>>7);
 		}
 		fprintf(stderr, "Give your local XMODEM receive command now.\r\n");
@@ -637,7 +637,7 @@ char *name;
 	while (q < (txbuf + 1024))
 		*q++ = 0;
 	if (!Ascii && (in!=stdin) && *name && fstat(fileno(in), &f)!= -1)
-		sprintf(p, "%lu %lo %o 0 %d %ld", f.st_size, f.st_mtime,
+		sprintf(p, "%llu %o %o 0 %d %ld", f.st_size, f.st_mtime,
 		  f.st_mode, Filesleft, Totalleft);
 	Totalleft -= f.st_size;
 	if (--Filesleft <= 0)
@@ -661,7 +661,7 @@ char *name;
 
 int getnak()
 {
-	register firstch;
+	register int firstch;
 
 	Lastrx = 0;
 	for (;;) {
@@ -748,7 +748,7 @@ char *buf;
 int sectnum;
 int cseclen;	/* data length of this sector to send */
 {
-	register checksum, wcj;
+	register int checksum, wcj;
 	register char *cp;
 	unsigned oldcrc;
 	int firstch;
@@ -826,7 +826,7 @@ int filbuf(buf, count)
 register char *buf;
 int count;
 {
-	register c, m;
+	register int c, m;
 
 	if ( !Ascii) {
 		m = read(fileno(in), buf, count);
@@ -1133,7 +1133,7 @@ int usage()
  */
 int getzrxinit()
 {
-	register n;
+	register int n;
 	struct stat f;
 
 	for (n=10; --n>=0; ) {
@@ -1238,7 +1238,7 @@ int getzrxinit()
 /* Send send-init information */
 int sendzsinit()
 {
-	register c;
+	register int c;
 
 	if (Myattn[0] == '\0' && (!Zctlesc || (Rxflags & TESCCTL)))
 		return OK;
@@ -1270,7 +1270,7 @@ int zsendfile(buf, blen)
 char *buf;
 int blen;
 {
-	register c;
+	register int c;
 	register UNSL long crc;
 
 	for (;;) {
@@ -1328,7 +1328,7 @@ again:
 /* Send the data in the file */
 int zsendfdata()
 {
-	register c, e, n;
+	register int c, e, n;
 	register int newcnt;
 	register long tcount = 0;
 	int junkcount;		/* Counts garbage chars received by TX */
@@ -1611,7 +1611,7 @@ int zsendcmd(buf, blen)
 char *buf;
 int blen;
 {
-	register c;
+	register int c;
 	long cmdnum;
 
 	cmdnum = getpid();
@@ -1694,7 +1694,7 @@ void countem(argc, argv)
 int argc;
 register char **argv;
 {
-	register c;
+	register int c;
 	struct stat f;
 
 	for (Totalleft = 0, Filesleft = 0; --argc >=0; ++argv) {
@@ -1710,7 +1710,7 @@ register char **argv;
 			}
 		}
 		if (Verbose>2)
-			fprintf(stderr, " %ld", f.st_size);
+			fprintf(stderr, " %lld", f.st_size);
 	}
 	if (Verbose>2)
 		fprintf(stderr, "\ncountem: Total %d %ld\n",

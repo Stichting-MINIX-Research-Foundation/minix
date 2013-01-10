@@ -82,20 +82,20 @@ struct {
 	unsigned baudr;
 	int speedcode;
 } speeds[] = {
-	110,	B110,
-	300,	B300,
+	{110,	B110, },
+	{300,	B300, },
 #ifdef B600
-	600,	B600,
+	{600,	B600, },
 #endif
-	1200,	B1200,
-	2400,	B2400,
-	4800,	B4800,
-	9600,	B9600,
+	{1200,	B1200, },
+	{2400,	B2400, },
+	{4800,	B4800, },
+	{9600,	B9600, },
 #ifdef EXTA
-	19200,	EXTA,
-	38400,	EXTB,
+	{19200,	EXTA, },
+	{38400,	EXTB, },
 #endif
-	0,
+	{0},
 };
 
 int Twostop;		/* Use two stop bits */
@@ -141,7 +141,7 @@ static unsigned
 getspeed(code)
 int code;
 {
-	register n;
+	register int n;
 
 	for (n=0; speeds[n].baudr; ++n)
 		if (speeds[n].speedcode == code)
@@ -174,7 +174,7 @@ int iofd = 0;		/* File descriptor for ioctls & reads */
 int mode(n)
 int n;
 {
-	static did0 = FALSE;
+	static int did0 = FALSE;
 
 	vfile("mode:%d", n);
 	switch(n) {

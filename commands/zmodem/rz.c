@@ -258,7 +258,7 @@ int argc;
 char *argv[];
 {
 	register char *cp;
-	register npats;
+	register int npats;
 	char *virgin, **patts;
 	int exitcode = 0;
 
@@ -419,13 +419,13 @@ int wcreceive(argc, argp)
 int argc;
 char **argp;
 {
-	register c;
+	register int c;
 
 	if (Batch || argc==0) {
 		Crcflg=1;
 		if ( !Quiet)
 			fprintf(stderr, rbmsg, Progname, Nozmodem?"sb":"sz");
-		if (c=tryz()) {
+		if ((c=tryz())) {
 			if (c == ZCOMPL)
 				return OK;
 			if (c == ERROR)
@@ -483,7 +483,7 @@ fubar:
 int wcrxpn(rpn)
 char *rpn;	/* receive a pathname */
 {
-	register c;
+	register int c;
 
 #ifdef NFGVMIN
 	readline(1);
@@ -571,7 +571,7 @@ int wcgetsec(rxbuf, maxtime)
 char *rxbuf;
 int maxtime;
 {
-	register checksum, wcj, firstch;
+	register int checksum, wcj, firstch;
 	register unsigned short oldcrc;
 	register char *p;
 	int sectcurr;
@@ -671,7 +671,7 @@ humbug:
 int readline(timeout)
 int timeout;
 {
-	register n;
+	register int n;
 	static char *cdq;	/* pointer for removing chars from linbuf */
 
 	if (--Lleft >= 0) {
@@ -1133,8 +1133,8 @@ char *name;
  */
 int tryz()
 {
-	register c, n;
-	register cmdzack1flg;
+	register int c, n;
+	register int cmdzack1flg;
 
 	if (Nozmodem)		/* Check for "rb" program name */
 		return 0;
@@ -1229,7 +1229,7 @@ again:
  */
 int rzfiles()
 {
-	register c;
+	register int c;
 
 	for (;;) {
 		switch (c = rzfile()) {
@@ -1258,7 +1258,7 @@ int rzfiles()
  */
 int rzfile()
 {
-	register c, n;
+	register int c, n;
 	long rxbytes;
 
 	Eofseen=FALSE;
@@ -1439,7 +1439,7 @@ moredata:
 void zmputs(s)
 char *s;
 {
-	register c;
+	register int c;
 
 	while (*s) {
 		switch (c = *s++) {
@@ -1489,7 +1489,7 @@ int closeit()
  */
 void ackbibi()
 {
-	register n;
+	register int n;
 
 	vfile("ackbibi:");
 	Readnum = 1;
