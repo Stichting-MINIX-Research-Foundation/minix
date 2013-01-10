@@ -48,7 +48,9 @@ int main(int argc, char*argv[])
 	int fd, i, r;
 	char *query, *pval;
 	size_t len;
+#ifdef __minix_vmd
 	struct timeval uptime;
+#endif
 	clock_t now;
 	int fl;
 	int a_flag, n_flag, v_flag;
@@ -224,7 +226,7 @@ void print_conn(int i, clock_t now)
 	case TCS_CLOSED:	printf("CLOSED");
 				if (tcp_conn->tc_senddis >= now)
 				{
-					printf("(time wait %ld s)",
+					printf("(time wait %d s)",
 					(tcp_conn->tc_senddis-now)/system_hz);
 				}
 				no_verbose= 1;
@@ -250,7 +252,7 @@ void print_conn(int i, clock_t now)
 		tcp_conn->tc_state != TCS_LISTEN)
 	{
 		printf("\n\t");
-		printf("RQ: %lu, SQ: %lu, RWnd: %u, SWnd: %lu, SWThresh: %lu",
+		printf("RQ: %u, SQ: %u, RWnd: %u, SWnd: %u, SWThresh: %u",
 			tcp_conn->tc_RCV_NXT - tcp_conn->tc_RCV_LO,
 			tcp_conn->tc_SND_NXT - tcp_conn->tc_SND_UNA,
 			tcp_conn->tc_rcv_wnd,
