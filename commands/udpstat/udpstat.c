@@ -53,7 +53,9 @@ int main(int argc, char*argv[])
 	int fd, i, r;
 	size_t psize;
 	char *pval, *param;
+#ifdef __minix_vmd
 	struct timeval uptime;
+#endif
 	clock_t now;
 	int fl;
 	int a_flag, n_flag;
