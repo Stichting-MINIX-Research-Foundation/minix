@@ -1002,7 +1002,7 @@ void listfiles(struct file *flist, enum depth depth, enum state state)
 	sort(&flist);
 
 	if (depth == SUBMERGED && (field & (L_BLOCKS | L_LONG))) {
-		printf("total %ld\n", nblk2k(countblocks(flist)));
+		printf("total %d\n", nblk2k(countblocks(flist)));
 	}
 
 	if (state == SINKING || depth == SURFACE1) {
