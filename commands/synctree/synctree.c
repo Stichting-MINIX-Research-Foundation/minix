@@ -1355,7 +1355,7 @@ static void Usage()
 	exit(1);
 }
 
-main(argc, argv) int argc; char **argv;
+int main(argc, argv) int argc; char **argv;
 {
 	char *s_mach, *s_dir;
 	char *m_mach, *m_dir;
