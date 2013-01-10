@@ -84,18 +84,18 @@ int override= 0;
 
 int main(int argc, char *argv []);
 void getgeom(void);
-int getboot(char *buffer);
-int putboot(char *buffer);
+void getboot(char *buffer);
+void putboot(char *buffer);
 void load_from_file(void);
 void save_to_file(void);
-int dpl_partitions(int rawflag);
+void dpl_partitions(int rawflag);
 int chk_table(void);
-int sec_to_hst(long logsec, unsigned char *hd, unsigned char *sec,
+void sec_to_hst(long logsec, unsigned char *hd, unsigned char *sec,
 	unsigned char *cyl);
-int mark_partition(struct part_entry *pe);
+void mark_partition(struct part_entry *pe);
 void change_partition(struct part_entry *entry);
-int get_a_char(void);
-int print_menu(void);
+char get_a_char(void);
+void print_menu(void);
 void adj_base(struct part_entry *pe);
 void adj_size(struct part_entry *pe);
 struct part_entry *ask_partition(void);
@@ -140,9 +140,7 @@ char bootstrap[] = {
 0000,0000,
 };
 
-main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int argn;
   char *argp;
@@ -227,7 +225,7 @@ char *argv[];
 
 #ifdef UNIX
 
-void getgeom()
+void getgeom(void)
 {
   struct partition geom;
   int fd, r;
@@ -249,8 +247,7 @@ void getgeom()
 
 static int devfd;
 
-getboot(buffer)
-char *buffer;
+void getboot(char *buffer)
 {
   devfd = open(devname, 2);
   if (devfd < 0) {
@@ -275,8 +272,7 @@ char *buffer;
   }
 }
 
-putboot(buffer)
-char *buffer;
+void putboot(char *buffer)
 {
   if (lseek(devfd, 0L, 0) < 0) {
 	printf("Seek error during write\n");
@@ -292,7 +288,7 @@ char *buffer;
 #endif
 
 
-void load_from_file()
+void load_from_file(void)
 {
 /* Load buffer from file  */
 
@@ -315,7 +311,7 @@ void load_from_file()
 }
 
 
-void save_to_file()
+void save_to_file(void)
 {
 /* Save to file  */
 
@@ -343,8 +339,7 @@ void save_to_file()
 }
 
 
-dpl_partitions(rawflag)
-int rawflag;
+void dpl_partitions(int rawflag)
 {
 /* Display partition table */
 
@@ -418,9 +413,9 @@ int rawflag;
 	devnum = 1;
 	for (i1 = 1, pe1 = (struct part_entry *) &secbuf[PART_TABLE_OFF];
 	     i1 <= NR_PARTITIONS; ++i1, ++pe1)
-		if (pe1->lowsec == 0 && pe->lowsec == 0 && pe1 < pe ||
-		    pe1->lowsec != 0 &&
-		    (pe->lowsec == 0 || pe->lowsec > pe1->lowsec))
+		if ((pe1->lowsec == 0 && pe->lowsec == 0 && pe1 < pe) ||
+		    (pe1->lowsec != 0 &&
+		     (pe->lowsec == 0 || pe->lowsec > pe1->lowsec)))
 			++devnum;	/* pe1 contents < pe contents */
 	if (devnum != i) {
 		orderfootnote = '#';
@@ -448,7 +443,7 @@ int rawflag;
 }
 
 
-int chk_table()
+int chk_table(void)
 {
 /* Check partition table */
 
@@ -492,10 +487,10 @@ int chk_table()
 	if (pe->size == 0) continue;
 	seenpart = 1;
 	for (i1 = i + 1, pe1 = pe + 1; i1 <= NR_PARTITIONS; ++i1, ++pe1) {
-		if (pe->lowsec >= pe1->lowsec &&
-		    pe->lowsec < pe1->lowsec + pe1->size ||
-		    pe->lowsec + pe->size - 1 >= pe1->lowsec &&
-		    pe->lowsec + pe->size - 1 < pe1->lowsec + pe1->size)
+		if ((pe->lowsec >= pe1->lowsec &&
+		     pe->lowsec < pe1->lowsec + pe1->size) ||
+		    (pe->lowsec + pe->size - 1 >= pe1->lowsec &&
+		    pe->lowsec + pe->size - 1 < pe1->lowsec + pe1->size))
 		{
 			printf("Overlap between partitions %d and %d\n",
 				i, i1);
@@ -536,9 +531,8 @@ int chk_table()
   return(status);
 }
 
-sec_to_hst(logsec, hd, sec, cyl)
-long logsec;
-unsigned char *hd, *sec, *cyl;
+void sec_to_hst(long logsec, unsigned char *hd, unsigned char *sec, 
+	unsigned char *cyl)
 {
 /* Convert a logical sector number to  head / sector / cylinder */
 
@@ -550,8 +544,7 @@ unsigned char *hd, *sec, *cyl;
   *hd = (logsec % (nhead * nsec)) / nsec;
 }
 
-mark_partition(pe)
-struct part_entry *pe;
+void mark_partition(struct part_entry *pe)
 {
 /* Mark a partition as being of type MINIX. */
 
@@ -561,8 +554,7 @@ struct part_entry *pe;
   }
 }
 
-void change_partition(entry)
-struct part_entry *entry;
+void change_partition(struct part_entry *entry)
 {
 /* Get partition info : first & last cylinder */
 
@@ -656,18 +648,17 @@ struct part_entry *entry;
   }
 }
 
-get_a_char()
+char get_a_char(void)
 {
 /* Read 1 character and discard rest of line */
 
   char buf[80];
-  int ch;
 
   if (!mygets(buf, (int) sizeof buf)) return(0);
   return(*buf);
 }
 
-print_menu()
+void print_menu(void)
 {
   printf("Type a command letter, then a carriage return:\n");
   printf("   + - explain any footnotes (+, -, #)\n");
@@ -698,8 +689,7 @@ union REGS regs;
 struct SREGS sregs;
 int drivenum;
 
-getboot(buffer)
-char *buffer;
+void getboot(char *buffer)
 {
 /* Read boot sector  */
 
@@ -731,8 +721,7 @@ char *buffer;
 }
 
 
-putboot(buffer)
-char *buffer;
+void putboot(char *buffer)
 {
 /* Write boot sector  */
 
@@ -753,8 +742,7 @@ char *buffer;
 
 #endif
 
-void adj_base(pe)
-struct part_entry *pe;
+void adj_base(struct part_entry *pe)
 {
 /* Adjust base sector of partition, usually to make it even. */
 
@@ -767,10 +755,10 @@ struct part_entry *pe;
 		return;
 	if (pe->lowsec + adj < 1)
 		printf(
-    "\t\tThat would make the base %d and too small\n", pe->lowsec + adj);
+    "\t\tThat would make the base %lu and too small\n", pe->lowsec + adj);
 	else if (pe->size - adj < 1)
 		printf(
-    "\t\tThat would make the size %d and too small\n", pe->size - adj);
+    "\t\tThat would make the size %lu and too small\n", pe->size - adj);
 	else
 		break;
   }
@@ -781,8 +769,7 @@ struct part_entry *pe;
 	 pe->lowsec, pe->size);
 }
 
-void adj_size(pe)
-struct part_entry *pe;
+void adj_size(struct part_entry *pe)
 {
 /* Adjust size of partition by reducing high sector. */
 
@@ -793,7 +780,7 @@ struct part_entry *pe;
 	if (!get_an_int("\tEnter adjustment to size (an integer): ", &adj))
 		return;
 	if (pe->size + adj >= 1) break;
-	printf("\t\tThat would make the size %d and too small \n",
+	printf("\t\tThat would make the size %lu and too small \n",
 		pe->size + adj);
   }
   pe->size += adj;
@@ -819,7 +806,7 @@ struct part_entry *ask_partition()
   return((struct part_entry *) &secbuf[PART_TABLE_OFF] + (num - 1));
 }
 
-void footnotes()
+void footnotes(void)
 {
 /* Explain the footnotes. */
 
@@ -861,9 +848,7 @@ void footnotes()
   }
 }
 
-int get_an_int(prompt, intptr)
-char *prompt;
-int *intptr;
+int get_an_int(char *prompt, int *intptr)
 {
 /* Read an int from the start of line of stdin, discard rest of line. */
 
@@ -877,7 +862,7 @@ int *intptr;
   }
 }
 
-void list_part_types()
+void list_part_types(void)
 {
 /* Print all known partition types. */
 
@@ -898,8 +883,7 @@ void list_part_types()
   if (column != 0) putchar('\n');
 }
 
-void mark_npartition(pe)
-struct part_entry *pe;
+void mark_npartition(struct part_entry *pe)
 {
 /* Mark a partition with arbitrary type. */
 
@@ -923,9 +907,7 @@ struct part_entry *pe;
   printf("Partition type changed to 0x%02x (%s)\n", type, systype(type));
 }
 
-int mygets(buf, length)
-char *buf;
-int length;			/* as for fgets(), but must be >= 2 */
+int mygets(char *buf, int length)
 {
 /* Get a non-empty line of maximum length 'length'. */
 
@@ -942,8 +924,7 @@ int length;			/* as for fgets(), but must be >= 2 */
   }
 }
 
-char *systype(type)
-int type;
+char *systype(int type)
 {
 /* Convert system indicator into system name. */
 /* asw 01.03.95: added types based on info in kjb's part.c and output
@@ -989,8 +970,7 @@ int type;
   }
 }
 
-void toggle_active(pe)
-struct part_entry *pe;
+void toggle_active(struct part_entry *pe)
 {
 /* Toggle active flag of a partition. */
 
@@ -999,7 +979,7 @@ struct part_entry *pe;
   printf("Partition changed to %sactive\n", pe->bootind ? "" : "in");
 }
 
-void usage()
+void usage(void)
 {
 /* Print usage message and exit. */
 
