@@ -38,7 +38,9 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rsh.c	5.24 (Berkeley) 7/1/91";
+#endif
 #endif /* not lint */
 
 /*
@@ -126,7 +128,7 @@ main(argc, argv)
 	host = user = NULL;
 
 	/* if called as something other than "rsh", use it as the host name */
-	if (p = rindex(argv[0], '/'))
+	if ((p = rindex(argv[0], '/')))
 		++p;
 	else
 		p = argv[0];
@@ -359,7 +361,9 @@ talk(nflag, omask, pid, rem)
 {
 	register int cc, wc;
 	register char *bp;
+#if !_MINIX
 	int readfrom, ready, rembits;
+#endif
 	char buf[BUFSIZ];
 #if _MINIX
 	int pid1;
