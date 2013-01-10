@@ -9,7 +9,9 @@
 
 #define COOKIEJAR "/usr/lib/fortune.dat"
 
+#if 0
 static char *Copyright = "\0Copyright (c) 1990 Bert Reuling";
+#endif
 static unsigned long seed;
 
 int main(int argc, char **argv);
