@@ -49,10 +49,6 @@ __RCSID("$NetBSD: flags.c,v 1.16 2012/03/15 18:22:30 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 
-#if defined(__minix) && !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 /*
  * Return the (stdio) flags for a given mode.  Store the flags
  * to be passed to an open() syscall through *optr.

@@ -160,6 +160,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   filp->filp_count = 1;
   filp->filp_vno = vp;
   filp->filp_flags = oflags;
+  if (oflags & O_CLOEXEC)
+	FD_SET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
 
   /* Only do the normal open code if we didn't just create the file. */
   if (exist) {

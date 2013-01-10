@@ -55,10 +55,6 @@ __RCSID("$NetBSD: ntp_adjtime.c,v 1.13 2012/03/20 16:26:12 matt Exp $");
 __weak_alias(ntp_adjtime,_ntp_adjtime)
 #endif
 
-#if defined(__minix) && !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 extern int __clockctl_fd;
 
 int __ntp_adjtime(struct timex *);

@@ -51,10 +51,6 @@ __RCSID("$NetBSD: clock_settime.c,v 1.12 2011/10/15 23:00:02 christos Exp $");
 
 #include <sys/clockctl.h>
  
-#if defined(__minix) && !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 extern int __clockctl_fd;
 
 int ____clock_settime50(clockid_t, const struct timespec *);

@@ -45,10 +45,6 @@ __RCSID("$NetBSD: opendir.c,v 1.38 2011/10/15 23:00:01 christos Exp $");
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#if !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 #endif
 
 #include "extern.h"
@@ -94,12 +90,6 @@ __opendir2(const char *name, int flags)
 
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK | O_CLOEXEC)) == -1)
 		return NULL;
-#if defined(__minix)	
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {	
-	    close(fd);
-	    return NULL;
-	}
-#endif /* defined(__minix) */
 
 	return __opendir_common(fd, name, flags);
 }

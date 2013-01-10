@@ -46,10 +46,6 @@ __RCSID("$NetBSD: citrus_mmap.c,v 1.4 2011/10/15 23:00:01 christos Exp $");
 #include "citrus_region.h"
 #include "citrus_mmap.h"
 
-#if defined(__minix) && !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 int
 _citrus_map_file(struct _citrus_region * __restrict r,
     const char * __restrict path)

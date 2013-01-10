@@ -42,10 +42,6 @@ __RCSID("$NetBSD: initdir.c,v 1.3 2012/03/13 21:13:36 christos Exp $");
 #include <sys/featuretest.h>
 #include <sys/types.h>
 
-#if !defined(O_CLOEXEC)
-#define O_CLOEXEC 0
-#endif
-
 #endif
 
 #include "reentrant.h"
