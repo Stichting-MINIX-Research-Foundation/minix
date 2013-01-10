@@ -11,7 +11,9 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rcp.c 1.1 87/12/21 SMI"; /* from UCB 5.3 6/8/85"*/
+#endif
 #endif /* not lint */
 
 /*
@@ -84,7 +86,7 @@ struct buffer {
 
 #define	ga()	 	(void) write(rem, "", 1)
 
-main(argc, argv)
+int main(argc, argv)
 	int argc;
 	char **argv;
 {
@@ -462,7 +464,7 @@ notreg:
 			 * Make it compatible with possible future
 			 * versions expecting microseconds.
 			 */
-			(void) sprintf(buf, "T%ld 0 %ld 0\n",
+			(void) sprintf(buf, "T%d 0 %d 0\n",
 			    stb.st_mtime, stb.st_atime);
 			(void) write(rem, buf, strlen(buf));
 			if (response() < 0) {
@@ -470,7 +472,7 @@ notreg:
 				continue;
 			}
 		}
-		(void) sprintf(buf, "C%04o %ld %s\n",
+		(void) sprintf(buf, "C%04o %lld %s\n",
 		    stb.st_mode&07777, stb.st_size, last);
 		(void) write(rem, buf, strlen(buf));
 		if (response() < 0) {
@@ -521,7 +523,7 @@ rsource(name, statp)
 	else
 		last++;
 	if (pflag) {
-		(void) sprintf(buf, "T%ld 0 %ld 0\n",
+		(void) sprintf(buf, "T%d 0 %d 0\n",
 		    statp->st_mtime, statp->st_atime);
 		(void) write(rem, buf, strlen(buf));
 		if (response() < 0) {
@@ -535,7 +537,7 @@ rsource(name, statp)
 		closedir(d);
 		return;
 	}
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d))) {
 		if (dp->d_ino == 0)
 			continue;
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
