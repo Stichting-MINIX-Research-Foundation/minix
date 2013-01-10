@@ -103,7 +103,9 @@ STATIC pid_t initialpgrp;	/* pgrp of shell on invocation */
 int in_waitcmd = 0;		/* are we in waitcmd()? */
 int in_dowait = 0;		/* are we in dowait()? */
 volatile sig_atomic_t breakwaitcmd = 0;	/* should wait be terminated? */
+#if JOBS
 static int ttyfd = -1;
+#endif
 
 #ifndef WCOREDUMP
 #define WCOREDUMP(s)	((s) & 0x80)
@@ -328,7 +330,9 @@ showjob(struct job *jp, pid_t pid, int sformat, int lformat)
 {
 	char s[64];
 	struct procstat *ps;
+#if JOBS
 	struct job *j;
+#endif
 	int col, curr, i, jobno, prev, procno;
 	char c;
 

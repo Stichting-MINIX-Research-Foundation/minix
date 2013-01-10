@@ -70,7 +70,7 @@ static int lookup_op();
 
 
 
-exprcmd(argc, argv)  char **argv; {
+int exprcmd(argc, argv) int argc; char **argv; {
       char **ap;
       char *opname;
       char c;
@@ -178,7 +178,7 @@ overflow:		error("Expression too complex");
 			      if (valsp->type == INTEGER) {
 				    p = stalloc(32);
 #ifdef SHELL
-				    fmtstr(p, 32, "%d", valsp->u.num);
+				    fmtstr(p, 32, "%ld", valsp->u.num);
 #else
 				    sprintf(p, "%d", valsp->u.num);
 #endif
