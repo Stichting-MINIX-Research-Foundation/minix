@@ -11,7 +11,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  register seconds;
+  register int seconds;
   register char c;
 
   seconds = 0;
@@ -20,7 +20,7 @@ char *argv[];
 	std_err("Usage: sleep time\n");
 	exit(1);
   }
-  while (c = *(argv[1])++) {
+  while ((c = *(argv[1])++)) {
 	if (c < '0' || c > '9') {
 		std_err("sleep: bad arg\n");
 		exit(1);
