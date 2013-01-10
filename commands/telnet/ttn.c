@@ -52,7 +52,7 @@ static void usage(void);
 #endif
 
 static char *prog_name;
-static tcp_fd;
+static int tcp_fd;
 static char *term_env;
 static int esc_char= '~';
 static enum { LS_NORM, LS_BOL, LS_ESC } line_state= LS_BOL;
