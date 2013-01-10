@@ -72,6 +72,7 @@
 #define O_REOPEN      010000	/* automatically re-open device after driver
 				 * restart
 				 */
+#define O_CLOEXEC     020000	/* close on exec */
 
 
 #ifndef __minix  /* NOT SUPPORTED! */
