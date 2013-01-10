@@ -10,6 +10,20 @@ install:
 
 all:
 
+#
+# Add a few defines we are going to use during the image
+# creation to determine what features and binaries to include
+# in the final image
+# ACPI            do we have/include the acpi binary
+# RAMDISK_SMALL   is the script called with MKSMALL=yes
+# DYNAMIC         does the ramdisk contain dynamic binaries?
+RAMDISK_INC_ACPI=0
+RAMDISK_SMALL=0
+RAMDISK_DYNAMIC=0
+
+# the name of the proto file to use
+PROTO= proto
+
 PROG_DRIVERS=at_wini floppy pci
 PROG_COMMANDS=cdprobe loadramdisk mount fsck.mfs sysenv sh \
 	service 
@@ -17,18 +31,18 @@ PROG_SERVERS=mfs procfs
 PROG_USRSBIN=pwd_mkdb
 PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} ${PROG_USRSBIN}
 EXTRA=system.conf master.passwd rs.single 
-PROTO_FILES=proto.common.etc proto.common.dynamic proto.sh proto.dev
+PROTO_FILES=proto.common.etc proto.common.dynamic proto.dev
 
 .if ${MKSMALL} != "yes"
+RAMDISK_SMALL=1
 PROG_DRIVERS+= ahci
 PROG_SERVERS+= ext2
-PROTO= proto
-.else
-PROTO= proto.small
 .endif
+
 
 .if ${MKACPI} != "no"
 PROG_DRIVERS+= acpi
+RAMDISK_INC_ACPI=1
 .endif
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
@@ -109,8 +123,15 @@ etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
 pwd.db spwd.db passwd: etc/master.passwd
 	${INSTALL} etc/${@F} ${@F}
 
+
 proto.gen: ${PROTO} ${PROTO_FILES} ${PROGRAMS}
 	${STRIP} ${PROGRAMS}
-	${HOST_SH} -e proto.sh ${PROTO} >${.OBJDIR}/${.TARGET}
+	# We are using the c preprocessor to generate proto.gen
+	# used in the mkfs tool.
+	${TOOL_CAT} ${PROTO} | ${HOST_CC} \
+		-DRAMDISK_INC_ACPI=${RAMDISK_INC_ACPI} \
+		-DRAMDISK_SMALL=${RAMDISK_SMALL} \
+		-DRAMDISK_DYNAMIC=${RAMDISK_DYNAMIC} \
+		-traditional-cpp -E - | grep -v "^$$" | grep -v "#" >${.OBJDIR}/${.TARGET}
 
 .include <minix.service.mk>
