@@ -382,7 +382,7 @@ int pstat(struct pstat *ps, pid_t pid)
 	exit(1);
   }
 
-  if (fscanf(fp, " %c %d %255s %c %d %*d %lu %lu %*u %*u",
+  if (fscanf(fp, " %c %d %255s %c %d %*d %u %u %*u %*u",
 	&type, &ps->ps_endpt, name, &ps->ps_state,
 	&ps->ps_recv, &ps->ps_utime, &ps->ps_stime) != 7) {
 
