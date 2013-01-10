@@ -39,7 +39,7 @@ static int asciisend(fd, fdout)
 int fd;
 int fdout;
 {
-int s, len;
+int s;
 char c;
 char *p;
 char *op, *ope;
@@ -164,7 +164,7 @@ static int asciirecv(fd, fdin)
 int fd;
 int fdin;
 {
-int s, len;
+int s;
 int gotcr;
 char c;
 char *p;
@@ -235,7 +235,7 @@ unsigned short cnt;
    	return(0);
 }
 
-static binaryrecv(fd, fdin)
+static int binaryrecv(fd, fdin)
 int fd;
 int fdin;
 {
