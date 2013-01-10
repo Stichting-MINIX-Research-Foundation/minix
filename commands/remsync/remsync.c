@@ -801,7 +801,7 @@ entry_t *readstate(void)
 	static pathname_t path;
 	static size_t *trunc;
 	static size_t trunc_len;
-	static base_indent;
+	static int base_indent;
 	char *line;
 	char **argv;
 	size_t argc;
