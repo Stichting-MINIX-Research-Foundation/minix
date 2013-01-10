@@ -16,5 +16,5 @@ void term_init(void);
 void term_inout(int pty_fd);
 void tel_init(void);
 void telopt(int fdout, int what, int option);
-int tel_in(int fdout, int telout, char *buffer, int len);
-int tel_out(int fdout, char *buf, int size);
+void tel_in(int fdout, int telout, char *buffer, int len);
+void tel_out(int fdout, char *buf, int size);
