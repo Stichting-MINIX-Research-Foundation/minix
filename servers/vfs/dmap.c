@@ -74,7 +74,7 @@ int do_mapdriver()
  * etc), and its label. This label is registered with DS, and allows us to
  * retrieve the driver's endpoint.
  */
-  int r, flags, major, style;
+  int r, flags, major, style, slot;
   endpoint_t endpoint;
   vir_bytes label_vir;
   size_t label_len;
@@ -110,7 +110,11 @@ int do_mapdriver()
   }
 
   /* Process is a service */
-  rfp = &fproc[_ENDPOINT_P(endpoint)];
+  if (isokendpt(endpoint, &slot) != OK) {
+	printf("VFS: can't map driver to unknown endpoint %d\n", endpoint);
+	return(EINVAL);
+  }
+  rfp = &fproc[slot];
   rfp->fp_flags |= FP_SRV_PROC;
 
   /* Try to update device mapping. */
@@ -234,12 +238,17 @@ void dmap_unmap_by_endpt(endpoint_t proc_e)
 int map_service(struct rprocpub *rpub)
 {
 /* Map a new service by storing its device driver properties. */
-  int r;
+  int r, slot;
   struct dmap *fdp, *sdp;
   struct fproc *rfp;
 
   /* Process is a service */
-  rfp = &fproc[_ENDPOINT_P(rpub->endpoint)];
+  if (isokendpt(rpub->endpoint, &slot) != OK) {
+	printf("VFS: can't map service with unknown endpoint %d\n",
+		rpub->endpoint);
+	return(EINVAL);
+  }
+  rfp = &fproc[slot];
   rfp->fp_flags |= FP_SRV_PROC;
 
   /* Not a driver, nothing more to do. */
