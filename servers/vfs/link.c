@@ -180,7 +180,7 @@ int do_rename()
 {
 /* Perform the rename(name1, name2) system call. */
   int r = OK, r1;
-  struct vnode *old_dirp, *new_dirp, *new_dirp_l, *vp;
+  struct vnode *old_dirp = NULL, *new_dirp = NULL, *new_dirp_l = NULL, *vp;
   struct vmnt *oldvmp, *newvmp, *vmp2;
   char old_name[PATH_MAX];
   char fullpath[PATH_MAX];
