@@ -26,7 +26,7 @@ touch-genfiles:
 
 .mfs.o:
 	${_MKTARGET_CREATE}
-	${OBJCOPY} -Ibinary -B${MACHINE_ARCH} -O${MACHINE_GNU_PLATFORM} $< $@
+	${OBJCOPY} -Ibinary -B${MACHINE_CPU} -O${MACHINE_GNU_PLATFORM} $< $@
 
 CLEANFILES+=	../ramdisk/image
 ../ramdisk/image: .PHONY

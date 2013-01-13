@@ -2,6 +2,9 @@
 .include <bsd.own.mk>
 
 # LSC Static linking, order matters! 
+# We can't use --start-group/--end-group as they are not supported by our
+# version of clang.
+
 # 1. No default libs
 LDADD+= -nodefaultlibs 
 

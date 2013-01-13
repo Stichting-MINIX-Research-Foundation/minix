@@ -90,12 +90,39 @@ Boston, MA 02110-1301, USA.  */
    (similar to the default, except no -lg, and no -p).  */
 
 #define MINIX_LIB_SPEC "							\
-  %{pthread: %eThe -pthread option is only supported on FreeBSD when gcc \
+  %{pthread: %eThe -pthread option is only supported on MINIX when gcc \
 is built with the --enable-threads configure-time option.}		\
   %{!shared:								\
     %{!pg: -lc}								\
     %{pg:  -lc_p}							\
   }"
+
+/* Provide a LINK_SPEC appropriate for MINIX.  Here we provide support
+   for the special GCC options -static and -shared, which allow us to
+   link things in one of these three modes by applying the appropriate
+   combinations of options at link-time. We like to support here for
+   as many of the other GNU linker options as possible. But I don't
+   have the time to search for those flags. I am sure how to add
+   support for -soname shared_object_name. H.J.
+
+   I took out %{v:%{!V:-V}}. It is too much :-(. They can use
+   -Wl,-V.
+
+   When the -shared link option is used a final link is not being
+   done.  */
+
+#define MINIX_LINK_SPEC "							\
+  %{p:%nconsider using `-pg' instead of `-p' with gprof(1) }		\
+  %{v:-V}								\
+  %{assert*} %{R*} %{rpath*} %{defsym*}					\
+  %{shared:-Bshareable %{h*} %{soname*}}				\
+  %{!shared:								\
+    %{!static:								\
+      %{rdynamic:-export-dynamic}					\
+      %{!dynamic-linker:-dynamic-linker %(minix_dynamic_linker) }}	\
+    %{static:-Bstatic}}							\
+  %{symbolic:-Bsymbolic}"
+
 
 /* Under MINIX, just like on NetBSD, the normal location of the various 
  *    *crt*.o files is the /usr/lib directory.  */
@@ -106,3 +133,6 @@ is built with the --enable-threads configure-time option.}		\
 #define STANDARD_STARTFILE_PREFIX_1	"/usr/lib/"
 
 #define MINIX_DYNAMIC_LINKER "/libexec/ld-elf.so.1"
+
+#define MINIX_SUBTARGET_EXTRA_SPECS \
+  { "minix_dynamic_linker", MINIX_DYNAMIC_LINKER }
