@@ -19,6 +19,13 @@ int fs_read(void) {
   unsigned int off, cum_io;
   int completed;
   struct dir_record *dir;
+  int rw;
+
+  switch(fs_m_in.m_type) {
+  	case REQ_READ: rw = READING;
+	case REQ_PEEK: rw = PEEKING;
+	default: panic("odd m_type");
+  }
   
   r = OK;
   
@@ -48,7 +55,7 @@ int fs_read(void) {
       
 	/* Read or write 'chunk' bytes. */
 	r = read_chunk(dir, cvul64(position), off, chunk, (unsigned) nrbytes, 
-		       gid, cum_io, block_size, &completed);
+		       gid, cum_io, block_size, &completed, rw);
 
 	if (r != OK) break;	/* EOF reached */
 	if (rdwt_err < 0) break;
@@ -106,7 +113,7 @@ int fs_bread(void)
 
 	/* Read 'chunk' bytes. */
     r = read_chunk(dir, position, off, chunk, (unsigned) nrbytes, 
-		   gid, cum_io, block_size, &completed);
+		   gid, cum_io, block_size, &completed, READING);
     
     if (r != OK) break;	/* EOF reached */
     if (rdwt_err < 0) break;
@@ -280,7 +287,7 @@ int fs_getdents(void) {
 /*===========================================================================*
  *				read_chunk				     *
  *===========================================================================*/
-int read_chunk(dir, position, off, chunk, left, gid, buf_off, block_size, completed)
+int read_chunk(dir, position, off, chunk, left, gid, buf_off, block_size, completed, rw)
 register struct dir_record *dir;/* pointer to inode for file to be rd/wr */
 u64_t position;			/* position within file to read or write */
 unsigned off;			/* off within the current block */
@@ -290,6 +297,7 @@ cp_grant_id_t gid;		/* grant */
 unsigned buf_off;		/* offset in grant */
 int block_size;			/* block size of FS operating on */
 int *completed;			/* number of bytes copied */
+int rw;				/* READING or PEEKING */
 {
 
   register struct buf *bp;
@@ -325,8 +333,10 @@ int *completed;			/* number of bytes copied */
     panic("bp not valid in rw_chunk; this can't happen");
   }
   
-  r = sys_safecopyto(VFS_PROC_NR, gid, buf_off,
+  if(rw == READING) {
+ 	 r = sys_safecopyto(VFS_PROC_NR, gid, buf_off,
 		     (vir_bytes) (b_data(bp)+off), (phys_bytes) chunk);
+  }
 
   put_block(bp);
 

@@ -31,7 +31,8 @@
  *===========================================================================*/
 int do_read()
 {
-  return(do_read_write(READING));
+  return(do_read_write_peek(READING, job_m_in.fd,
+          job_m_in.buffer, (size_t) job_m_in.nbytes));
 }
 
 
@@ -82,24 +83,26 @@ void check_bsf_lock(void)
 }
 
 /*===========================================================================*
- *				do_read_write				     *
+ *				do_read_write_peek			     *
  *===========================================================================*/
-int do_read_write(rw_flag)
-int rw_flag;			/* READING or WRITING */
+int do_read_write_peek(int rw_flag, int io_fd, char *io_buf, size_t io_nbytes)
 {
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
   struct filp *f;
   tll_access_t locktype;
   int r;
+  int ro = 1;
 
-  scratch(fp).file.fd_nr = job_m_in.fd;
-  scratch(fp).io.io_buffer = job_m_in.buffer;
-  scratch(fp).io.io_nbytes = (size_t) job_m_in.nbytes;
+  if(rw_flag == WRITING) ro = 0;
 
-  locktype = (rw_flag == READING) ? VNODE_READ : VNODE_WRITE;
+  scratch(fp).file.fd_nr = io_fd;
+  scratch(fp).io.io_buffer = io_buf;
+  scratch(fp).io.io_nbytes = io_nbytes;
+
+  locktype = ro ? VNODE_READ : VNODE_WRITE;
   if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
 	return(err_code);
-  if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {
+  if (((f->filp_mode) & (ro ? R_BIT : W_BIT)) == 0) {
 	unlock_filp(f);
 	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
   }
@@ -131,6 +134,8 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   r = OK;
   cum_io = 0;
 
+  assert(rw_flag == READING || rw_flag == WRITING || rw_flag == PEEKING);
+
   if (size > SSIZE_MAX) return(EINVAL);
 
   op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
@@ -139,10 +144,14 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 	if (fp->fp_cum_io_partial != 0) {
 		panic("VFS: read_write: fp_cum_io_partial not clear");
 	}
+	if(rw_flag == PEEKING) return EINVAL;
 	r = rw_pipe(rw_flag, for_e, f, buf, size);
   } else if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
 	dev_t dev;
 	int suspend_reopen;
+	int op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
+
+	if(rw_flag == PEEKING) return EINVAL;
 
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access char dev NO_DEV");
@@ -160,6 +169,8 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access block dev NO_DEV");
+
+	if(rw_flag == PEEKING) return EINVAL;
 
 	lock_bsf();
 

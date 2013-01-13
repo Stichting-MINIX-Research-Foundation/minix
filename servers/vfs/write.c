@@ -7,6 +7,7 @@
 
 #include "fs.h"
 #include "file.h"
+#include "param.h"
 
 
 /*===========================================================================*
@@ -15,5 +16,6 @@
 int do_write()
 {
 /* Perform the write(fd, buffer, nbytes) system call. */
-  return(do_read_write(WRITING));
+  return(do_read_write_peek(WRITING, job_m_in.fd,
+  	job_m_in.buffer, (size_t) job_m_in.nbytes));
 }

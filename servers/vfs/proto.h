@@ -210,7 +210,7 @@ int do_getdents(void);
 void lock_bsf(void);
 void unlock_bsf(void);
 void check_bsf_lock(void);
-int do_read_write(int rw_flag);
+int do_read_write_peek(int rw_flag, int fd, char *buf, size_t bytes);
 int read_write(int rw_flag, struct filp *f, char *buffer, size_t nbytes,
 	endpoint_t for_e);
 int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,

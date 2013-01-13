@@ -762,19 +762,43 @@ u64_t *new_posp;
 unsigned int *cum_iop;
 {
   int r;
-  cp_grant_id_t grant_id;
+  cp_grant_id_t grant_id = -1;
   message m;
+  int type = -1;
+  int grantflag = -1;
+
+  /* rw_flag:
+   *  READING: do i/o from FS, copy into userspace
+   *  WRITING: do i/o from userspace, copy into FS
+   *  PEEKING: do i/o in FS, just get the blocks into the cache, no copy
+   */
 
   if (ex64hi(pos) != 0)
 	  panic("req_readwrite: pos too large");
 
-  grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
-			     (rw_flag==READING ? CPF_WRITE:CPF_READ));
-  if (grant_id == -1)
-	  panic("req_readwrite: cpf_grant_magic failed");
+  assert(rw_flag == READING || rw_flag == WRITING || rw_flag == PEEKING);
+
+  switch(rw_flag) {
+  	case READING:
+		type = REQ_READ;
+		grantflag = CPF_WRITE;
+		/* fallthrough */
+	case WRITING:
+		if(type < 0) { type = REQ_WRITE; grantflag = CPF_READ; }
+  		grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr,
+			num_of_bytes, grantflag);
+	  	if (grant_id == -1)
+	  		panic("req_readwrite: cpf_grant_magic failed");
+		break;
+	case PEEKING:
+		type = REQ_PEEK;
+		break;
+	default:
+		panic("odd rw_flag");
+  }
 
   /* Fill in request message */
-  m.m_type = rw_flag == READING ? REQ_READ : REQ_WRITE;
+  m.m_type = type;
   m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
