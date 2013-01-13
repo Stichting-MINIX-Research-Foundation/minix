@@ -542,7 +542,7 @@ initdefaults()
 
 	# Set MKARZERO to "yes"
 	#
-	setmakeenv MKARZERO "no"
+	setmakeenv MKARZERO "yes"
 
 }
 
