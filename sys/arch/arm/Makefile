@@ -2,7 +2,9 @@
 
 SUBDIR=	include .WAIT include/arm26 include/arm32
 
+.ifndef __MINIX
 # install footbridge headers.
 SUBDIR+= footbridge
+.endif
 
 .include <bsd.kinc.mk>

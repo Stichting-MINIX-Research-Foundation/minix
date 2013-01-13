@@ -1,0 +1,16 @@
+#!/bin/sh
+# LSC FIXME quick hack, we should retink the rc script so we do not
+# get two different script
+set -e
+
+
+exec >/dev/log
+exec 2>/dev/log
+exec </dev/null
+
+#XXX
+#/bin/service -c up /sbin/mmc  -dev /dev/c0d0 
+#/bin/fsck.mfs  -p /dev/c0d0p1
+#/bin/mount  /dev/c0d0p1 /mnt
+
+exit

@@ -4,7 +4,9 @@
 #
 G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   -I/usr/include/libelf
 G_LIB2ADD=${GNUHOSTDIST}/gcc/config/floatunsidf.c ${GNUHOSTDIST}/gcc/config/floatunsisf.c
+.if !defined(__MINIX)
 G_LIB2ADDEH=${GNUHOSTDIST}/gcc/unwind-dw2.c ${GNUHOSTDIST}/gcc/unwind-dw2-fde-glibc.c ${GNUHOSTDIST}/gcc/unwind-sjlj.c ${GNUHOSTDIST}/gcc/gthr-gnat.c ${GNUHOSTDIST}/gcc/unwind-c.c
+.endif
 G_LIB2ADD_ST=
 G_LIB1ASMFUNCS=_thumb1_case_sqi _thumb1_case_uqi _thumb1_case_shi _thumb1_case_uhi _thumb1_case_si _udivsi3 _divsi3 _umodsi3 _modsi3 _dvmd_tls _bb_init_func _call_via_rX _interwork_call_via_rX _arm_fixunsdfsi _arm_fixunssfsi _arm_floatdidf _arm_floatdisf _arm_floatundidf _arm_floatundisf _lshrdi3 _ashrdi3 _ashldi3 _clzsi2 _clzdi2 
 G_LIB1ASMSRC=arm/lib1funcs.asm

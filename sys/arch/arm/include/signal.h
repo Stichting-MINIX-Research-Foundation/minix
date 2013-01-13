@@ -24,6 +24,7 @@ struct sigframe {		/* stack frame created for signalled process */
 };
 
 struct sigcontext {
+  int trap_style;		/* how should context be restored? KTS_* */
   int sc_flags;			/* sigstack state to restore (including
 				 * MF_FPU_INITIALIZED)
 				 */

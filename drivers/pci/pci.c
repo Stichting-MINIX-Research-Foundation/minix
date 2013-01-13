@@ -1564,8 +1564,8 @@ static void complete_bars(void)
 			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE))
 				continue;
 			size= pcidev[i].pd_bar[j].pb_size;
-			if (size < I386_PAGE_SIZE)
-				size= I386_PAGE_SIZE;
+			if (size < PAGE_SIZE)
+				size= PAGE_SIZE;
 			base= memgap_high-size;
 			base &= ~(u32_t)(size-1);
 			if (base < memgap_low)

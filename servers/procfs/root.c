@@ -1,7 +1,10 @@
 /* ProcFS - root.c - by Alen Stojanov and David van Moolenbroek */
 
 #include "inc.h"
+
+#if defined (__i386__)
 #include <machine/pci.h>
+#endif
 #include <minix/dmap.h>
 #include "cpuinfo.h"
 #include "mounts.h"
@@ -11,7 +14,9 @@ static void root_uptime(void);
 static void root_loadavg(void);
 static void root_kinfo(void);
 static void root_meminfo(void);
+#if defined(__i386__)
 static void root_pci(void);
+#endif
 static void root_dmap(void);
 static void root_ipcvecs(void);
 
@@ -21,9 +26,13 @@ struct file root_files[] = {
 	{ "loadavg",	REG_ALL_MODE,	(data_t) root_loadavg	},
 	{ "kinfo",	REG_ALL_MODE,	(data_t) root_kinfo	},
 	{ "meminfo",	REG_ALL_MODE,	(data_t) root_meminfo	},
+#if defined(__i386__)
 	{ "pci",	REG_ALL_MODE,	(data_t) root_pci	},
+#endif
 	{ "dmap",	REG_ALL_MODE,	(data_t) root_dmap	},
+#if defined(__i386__)
 	{ "cpuinfo",	REG_ALL_MODE,	(data_t) root_cpuinfo	},
+#endif
 	{ "ipcvecs",	REG_ALL_MODE,	(data_t) root_ipcvecs	},
 	{ "mounts",	REG_ALL_MODE,	(data_t) root_mounts	},
 	{ NULL,		0,		NULL			}
@@ -113,6 +122,7 @@ static void root_meminfo(void)
 /*===========================================================================*
  *				root_pci				     *
  *===========================================================================*/
+#if defined(__i386__)
 static void root_pci(void)
 {
 	/* Print information about PCI devices present in the system.
@@ -147,6 +157,7 @@ static void root_pci(void)
 		r = pci_next_dev(&devind, &vid, &did);
 	}
 }
+#endif /* defined(__i386__) */
 
 /*===========================================================================*
  *				root_dmap				     *

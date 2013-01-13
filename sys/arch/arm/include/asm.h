@@ -88,6 +88,12 @@
 #define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
 #define	ASEND(y)	_END(_ASM_LABEL(y))
 
+#if defined(__minix)
+#define _LABEL(x) \
+	.globl x; x:
+#define	LABEL(y)	_LABEL(_C_LABEL(y))
+
+#endif /* defined(__minix) */
 #define	ASMSTR		.asciz
 
 #if defined(PIC)

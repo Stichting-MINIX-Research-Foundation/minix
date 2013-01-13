@@ -167,6 +167,25 @@
 #endif
 
 /*
+ * Round p (pointer or byte index) up to a correctly-aligned value for all
+ * data types (int, long, ...).   The result is u_int and must be cast to
+ * any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits).
+ *
+ */
+#define ALIGNBYTES	__ALIGNBYTES
+#ifndef ALIGN
+#define	ALIGN(p)		(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#endif
+#ifndef ALIGNED_POINTER
+#define	ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t) - 1)) == 0)
+#endif
+
+/*
  * Miscellaneous.
  */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */

@@ -2,93 +2,110 @@
 
 .include <bsd.own.mk>
 
-# Remove "drivers/ramdisk" component from path
-PROGROOT:= ${.OBJDIR:S,drivers/ramdisk,,}
-
-TOOL_PWD_MKDB?= ${NETBSDSRCDIR}/usr.sbin/pwd_mkdb/pwd_mkdb
 install:
 
 all:
 
-#
 # Add a few defines we are going to use during the image
 # creation to determine what features and binaries to include
 # in the final image
 # ACPI            do we have/include the acpi binary
 # RAMDISK_SMALL   is the script called with MKSMALL=yes
 # DYNAMIC         does the ramdisk contain dynamic binaries?
-RAMDISK_INC_ACPI=0
-RAMDISK_SMALL=0
-RAMDISK_DYNAMIC=0
+RAMDISK_INC_ACPI=	0
+RAMDISK_SMALL=		0
+RAMDISK_DYNAMIC=	0
 
-# the name of the proto file to use
-PROTO= proto
+RAMDISK_DEFINES= \
+	-DRAMDISK_INC_ACPI=${RAMDISK_INC_ACPI} \
+	-DRAMDISK_SMALL=${RAMDISK_SMALL} \
+	-DRAMDISK_DYNAMIC=${RAMDISK_DYNAMIC}
 
-PROG_DRIVERS=at_wini floppy pci
-PROG_COMMANDS=cdprobe loadramdisk mount fsck.mfs sysenv sh \
-	service 
-PROG_SERVERS=mfs procfs
-PROG_USRSBIN=pwd_mkdb
+# The name of the proto file to use
+PROTO=	proto
 
-.if ${LDSTATIC} == "-dynamic"
-RAMDISK_DYNAMIC=1
-PROG_LIBEXEC+=ld.elf_so
-PROG_LIBS+=libc libminlib libcompat_minix libterminfo
-.endif
+# Common to all architectures
+ETC=		system.conf master.passwd
+EXTRA=		rc mtab
+PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
+PROG_DRIVERS=
+PROG_COMMANDS=	mount fsck.mfs sh service
+PROG_SERVERS=	mfs
+PROG_USRSBIN=
+PROG_BIN=
 
-PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} ${PROG_USRSBIN} ${PROG_LIBEXEC}
-
-EXTRA=system.conf master.passwd rs.single 
-PROTO_FILES=proto.common.etc proto.common.dynamic proto.dev
+.if ${MACHINE_ARCH} == "i386"
+ETC+=		rs.single
+PROG_DRIVERS+=	at_wini floppy pci
+PROG_COMMANDS+=	cdprobe loadramdisk sysenv
+PROG_SERVERS+=	procfs
+PROG_USRSBIN+=	pwd_mkdb
 
 .if ${MKSMALL} != "yes"
-RAMDISK_SMALL=1
-PROG_DRIVERS+= ahci
-PROG_SERVERS+= ext2
+RAMDISK_SMALL=	1
+PROG_DRIVERS+=	ahci
+PROG_SERVERS+=	ext2
 .endif
-
 
 .if ${MKACPI} != "no"
-PROG_DRIVERS+= acpi
-RAMDISK_INC_ACPI=1
+RAMDISK_INC_ACPI= 1
+PROG_DRIVERS+=	acpi
+.endif
+.endif # ${MACHINE_ARCH} == "i386"
+
+.if ${MACHINE_ARCH} == "earm"
+EXTRA+=		mylogin.sh
+PROG_DRIVERS+=	mmc tty
+PROG_COMMANDS+=	cp dd getty ls time sync sleep stty umount
+PROG_BIN+=	cat rm
+PROTO=		proto.arm.small
+.endif # ${MACHINE_ARCH} == "earm"
+
+.if ${LDSTATIC} == "-dynamic"
+RAMDISK_DYNAMIC= 1
+PROG_LIBEXEC+=	ld.elf_so
+PROG_LIBS+=	libc libminlib libcompat_minix libterminfo
 .endif
 
+PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} \
+	 ${PROG_USRSBIN} ${PROG_BIN} ${PROG_LIBEXEC}
+
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
-CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${EXTRA} image image.c t proto.gen
+
+# LSC We have to take care of not erasing the source file, so never add EXTRA
+# to CLEANFILES
+CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${ETC} image image.c t proto.gen
 CLEANFILES += ${LIBRARIES}
 CLEANFILES += ${PROG_LIBEXEC}
 CLEANFILES += ${.OBJDIR}/etc/*
 
-image:	proto.gen ${EXTRA} mtab rc pwd.db spwd.db passwd
-	${_MKMSG_CREATE} "Generating ramdisk image"
-	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
-#	if fsck.mfs -s image | grep -q CLEAN;	\
-#	then	: ;	\
-#	else	echo "CLEAN sanity check of image failed."	;	\
-#		echo "(Perhaps install current mkfs and fsck.)" ;	\
-#		rm -f image; false;             \
-#	fi
+#############################################################
+# LSC Below this point the rules should not be modified
+#############################################################
 
-# LSC ramdisk rc file != /etc/rc
-# mtab not empty!, force execution of the rule to ensure installation
-# Conditionnally execute the command if the target file already exists
-# I have to place .PHONY for the target to work as expected, but I cannot
-# execute the command during an in-tree build (= make xxx)
-.for file in rc mtab ${PROTO} ${PROTO_FILES}
-${file}: ${.CURDIR}/${file} .PHONY
-	[ -e $@ ] || ${INSTALL} $> $@
-.endfor
+# Tool to bootstrap the password db
+TOOL_PWD_MKDB?= ${NETBSDSRCDIR}/usr.sbin/pwd_mkdb/pwd_mkdb
 
-.for driver in ${PROG_DRIVERS}
-${driver}: ${PROGROOT}/drivers/${driver}/${driver}
+# Remove "drivers/ramdisk" component from path
+PROGROOT:= ${.OBJDIR:S,drivers/ramdisk,,}
+
+# Generate dependencies rules for config files
+.for etc in ${ETC}
+${etc}: ${NETBSDSRCDIR}/etc/${etc}
 	${INSTALL} $> $@
-
-${PROGROOT}/drivers/${driver}/${driver}:
-	${MAKE} -C ${NETBSDSRCDIR}/drivers/${driver} all
 .endfor
 
+# LSC Force the regeneration of the proto file as it seems sometimes 
+# they are not copied over as needed.
+# LSC ramdisk rc file != /etc/rc && mtab not empty!
+.for file in ${EXTRA} ${PROTO} ${PROTO_FILES}
+${file}: ${NETBSDSRCDIR}/drivers/ramdisk/${file} .PHONY
+	${INSTALL} $> $@
+.endfor
+
+# Generate dependencies rules for dynamic libraries, if needed
 .for lib in ${PROG_LIBS}
-PROGRAMS+=${lib}.so.0
+PROGRAMS+= ${lib}.so.0
 CLEANFILES += ${lib}.so.0
 ${lib}.so.0:${PROGROOT}/lib/${lib}/${lib}.so.0
 	${INSTALL} $> $@
@@ -97,48 +114,37 @@ ${PROGROOT}/lib/${lib}/${lib}.so.0:
 	${MAKE} -C ${NETBSDSRCDIR}/lib/${lib} all
 .endfor
 
-.for libexec in ${PROG_LIBEXEC}
-${libexec}:${PROGROOT}/libexec/${libexec}/${libexec}
+# Generate dependencies rules for binaries
+dir.sh:= ash
+.for srcdir in bin commands drivers libexec servers
+.for prog in ${PROG_${srcdir:tu}}
+${prog}: ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}
 	${INSTALL} $> $@
 
-${PROGROOT}/libexec/${libexec}/${libexec}:
-	${MAKE} -C ${NETBSDSRCDIR}/libexec/${libexec} all
-.endfor
+${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}:
+	${MAKE} -C ${NETBSDSRCDIR}/${srcdir}/${dir.${prog}:U${prog}} all
+.endfor # prog
+.endfor # srcdir
 
-
-.for cmd in ${PROG_COMMANDS}
-.if ${cmd} == sh
-dir.${cmd}=ash
-.else
-dir.${cmd}=${cmd}
-.endif
-${cmd}: ${PROGROOT}/commands/${dir.${cmd}}/${cmd}
+# We have to do this as a separate loop, because USR.SBIN is not a valid 
+# make variable name.
+.for prog in ${PROG_USRSBIN}
+${prog}: ${PROGROOT}/usr.sbin/${dir.${prog}:U${prog}}/${prog}
 	${INSTALL} $> $@
 
-${PROGROOT}/commands/$(dir.${cmd})/${cmd}:
-	${MAKE} -C ${NETBSDSRCDIR}/commands/${dir.${cmd}} all
+${PROGROOT}/usr.sbin/${dir.${prog}:U${prog}}/${prog}:
+	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin/${dir.${prog}:U${prog}} all
 .endfor
 
-.for etc in ${EXTRA}
-${etc}: ${NETBSDSRCDIR}/etc/${etc}
-	${INSTALL} $> $@
-.endfor
-
-.for cmd in ${PROG_USRSBIN}
-${cmd}: ${PROGROOT}/usr.sbin/${cmd}/${cmd}
-	${INSTALL} $> $@
-
-${PROGROOT}/usr.sbin/${cmd}/${cmd}:
-	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin/${cmd} all
-.endfor
-
-.for server in ${PROG_SERVERS}
-${server}: ${PROGROOT}/servers/${server}/${server}
-	${INSTALL} $> $@
-
-${PROGROOT}/servers/${server}/${server}:
-	${MAKE} -C ${NETBSDSRCDIR}/servers/${server} all
-.endfor
+image:	proto.gen ${ETC} ${EXTRA} pwd.db spwd.db passwd
+	${_MKMSG_CREATE} "Generating ramdisk image"
+	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
+#	if fsck.mfs -s image | grep -q CLEAN;	\
+#	then	: ;	\
+#	else	echo "CLEAN sanity check of image failed."	;	\
+#		echo "(Perhaps install current mkfs and fsck.)" ;	\
+#		rm -f image; false;             \
+#	fi
 
 etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
 	rm -rf ${.OBJDIR}/etc/
@@ -151,15 +157,12 @@ etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
 pwd.db spwd.db passwd: etc/master.passwd
 	${INSTALL} etc/${@F} ${@F}
 
-
 proto.gen: ${PROTO} ${PROTO_FILES} ${PROGRAMS}
 	${STRIP} ${PROGRAMS}
 	# We are using the c preprocessor to generate proto.gen
 	# used in the mkfs tool.
 	${TOOL_CAT} ${PROTO} | ${HOST_CC} \
-		-DRAMDISK_INC_ACPI=${RAMDISK_INC_ACPI} \
-		-DRAMDISK_SMALL=${RAMDISK_SMALL} \
-		-DRAMDISK_DYNAMIC=${RAMDISK_DYNAMIC} \
+	    	${RAMDISK_DEFINES} \
 		-traditional-cpp -E - | grep -v "^$$" | grep -v "#" >${.OBJDIR}/${.TARGET}
 
 .include <minix.service.mk>

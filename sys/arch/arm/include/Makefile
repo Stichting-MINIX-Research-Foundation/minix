@@ -2,7 +2,7 @@
 
 INCSDIR= /usr/include/arm
 
-INCS=	ansi.h asm.h \
+INCS=	aeabi.h ansi.h asm.h \
 	bswap.h byte_swap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
@@ -13,9 +13,9 @@ INCS=	ansi.h asm.h \
 	\
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h profile.h \
+	param.h profile.h rwlock.h \
 	\
-	\
+	rwlock.h \
 	setjmp.h signal.h \
 	types.h \
 	\

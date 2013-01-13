@@ -49,13 +49,13 @@ CPPFLAGS.findfp.c+= -I ${NETBSDSRCDIR}/lib/libc/include
 # some object files we give a symbol prefix (or namespace) of __k_unpaged_
 # that must live in their own unique namespace.
 #
-.for UNPAGED_OBJ in head.o pre_init.o direct_tty_utils.o io_outb.o \
+.for unpaged_obj in head.o pre_init.o direct_tty_utils.o io_outb.o \
 	io_inb.o pg_utils.o klib.o utility.o arch_reset.o \
 	${MINLIB_OBJS_UNPAGED} ${MINC_OBJS_UNPAGED} ${SYS_OBJS_UNPAGED}
-unpaged_${UNPAGED_OBJ}: ${UNPAGED_OBJ}
-	${OBJCOPY} --prefix-symbols=__k_unpaged_ ${.OBJDIR}/${UNPAGED_OBJ} $@
-UNPAGED_OBJS += unpaged_${UNPAGED_OBJ}
-ORIG_UNPAGED_OBJS += ${UNPAGED_OBJ}
+unpaged_${unpaged_obj}: ${unpaged_obj}
+	${OBJCOPY} --prefix-symbols=__k_unpaged_ ${.OBJDIR}/${unpaged_obj} $@
+UNPAGED_OBJS += unpaged_${unpaged_obj}
+ORIG_UNPAGED_OBJS += ${unpaged_obj}
 .endfor
 
 CLEANFILES+= ${ORIG_UNPAGED_OBJS}
@@ -104,5 +104,5 @@ procoffsets.h: ${PROCOFFSETSCF} kernel.h proc.h stackframe.h archtypes.h
 	  mv -f $@.tmp $@ 
 
 sconst.h: procoffsets.h
-apic_asm.S head.S klib16.S klib.S mpx.S: sconst.h
+apic_asm.o head.o klib.o mpx.o: sconst.h
 

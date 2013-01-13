@@ -75,6 +75,7 @@ SRCS=  \
 	taskcall.c \
 	tickdelay.c \
 	timers.c \
+	tsc_util.c \
 	vm_brk.c \
 	vm_exit.c \
 	vm_fork.c \
@@ -108,7 +109,6 @@ SRCS+=  \
 	sys_voutl.c \
 	sys_voutw.c \
 	timing.c \
-	tsc_util.c \
 	vbox.c
 .endif
 

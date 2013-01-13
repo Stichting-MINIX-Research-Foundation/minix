@@ -179,6 +179,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY (avoid in main)"));
 			break;
 
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		case R_TYPE(TLS_DTPOFF32):
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
@@ -231,6 +232,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)tmp));
 			break;
+#endif
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "

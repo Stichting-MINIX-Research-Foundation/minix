@@ -12,6 +12,7 @@ LIBCSRCDIR=	${NETBSDSRCDIR}/lib/libc
 CPPFLAGS+=      -I${LIBCSRCDIR}/include -I${LIBCSRCDIR}
 CPPFLAGS+=	-D_LIBMINC
 
+ARCHDIR?=  ${LIBCSRCDIR}/arch/${MACHINE_CPU}
 #
 # Customized versions of libc functions.
 #
@@ -99,7 +100,7 @@ CLEANFILES+=	errlist.c
 	isfinitef_ieee754.c isfinited_ieee754.c \
 	signbitf_ieee754.c signbitd_ieee754.c \
 	nanf.c
-.PATH.c .PATH.S: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen/minix \
+.PATH.c .PATH.S: ${ARCHDIR}/gen ${LIBCSRCDIR}/gen/minix \
 	${LIBCSRCDIR}/gen ${LIBCSRCDIR}
 SRCS+= ${i}
 .endfor
@@ -117,7 +118,7 @@ SRCS+= ${i}
 # Import from string
 .for i in strcspn.c strerror.c strerror_r.c strtol.c \
 	bcopy.S bzero.S
-.PATH.S: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string
+.PATH.S: ${ARCHDIR}/string
 .PATH.c: ${LIBCSRCDIR}/string
 SRCS+= ${i}
 CPPFLAGS.${i}+= -D_LIBC
@@ -145,7 +146,7 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/locale
 	stime.c syscall.c _ucontext.c umask.c unlink.c waitpid.c \
 	brksize.S _ipc.S _senda.S ucontext.S mmap.c init.c
 .PATH.c: ${LIBCSRCDIR}/sys-minix
-.PATH.S: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/sys-minix
+.PATH.S: ${ARCHDIR}/sys-minix
 SRCS+= ${i}
 .endfor
 

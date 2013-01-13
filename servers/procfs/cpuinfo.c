@@ -90,6 +90,7 @@ static void print_cpu(struct cpu_info * cpu_info, unsigned id)
 {
 	buf_printf("%-16s: %d\n", "processor", id);
 
+#if defined(__i386__)
 	switch (cpu_info->vendor) {
 		case CPU_VENDOR_INTEL:
 			buf_printf("%-16s: %s\n", "vendor_id", "GenuineIntel");
@@ -109,8 +110,8 @@ static void print_cpu(struct cpu_info * cpu_info, unsigned id)
 	buf_printf("%-16s: %d\n", "cpu MHz", cpu_info->freq);
 	buf_printf("%-16s: ", "flags");
 	print_cpu_flags(cpu_info->flags);
-
 	buf_printf("\n");
+#endif
 }
 
 void root_cpuinfo(void)

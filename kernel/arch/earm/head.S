@@ -3,7 +3,7 @@
 /* sections */
 
 #include <machine/vm.h>
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/com.h>
@@ -41,7 +41,8 @@ multiboot_init:
 	mov	r1, #0
 	push	{r1}	/* Terminate stack */
 	/* r0 holds kinfo_t ptr */
-	bl	_C_LABEL(kmain)
+	ldr	r2, =_C_LABEL(kmain)
+	bx	r2
 
 	/* not reached */
 hang:

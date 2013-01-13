@@ -17,6 +17,7 @@ struct cpu_info {
 	u32_t	implementer;
 	u32_t	part;
 	u32_t	variant;
+	u32_t	freq;		/* in MHz */
 	u32_t	revision;
 };
 
