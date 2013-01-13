@@ -60,8 +60,13 @@ int fs_readwrite(void)
 	if (f_size < 0) f_size = MAX_FILE_POS;
   }
 
-  /* Get the values from the request message */
   rw_flag = (fs_m_in.m_type == REQ_READ ? READING : WRITING);
+  switch(fs_m_in.m_type) {
+       case REQ_READ: rw_flag = READING; break;
+       case REQ_WRITE: rw_flag = WRITING; break;
+       case REQ_PEEK: rw_flag = PEEKING; break;
+       default: panic("odd request");
+  }
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   position = (off_t) fs_m_in.REQ_SEEK_POS_LO;
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
@@ -206,7 +211,7 @@ u64_t position;                 /* position within file to read or write */
 unsigned off;                   /* off within the current block */
 unsigned int chunk;             /* number of bytes to read or write */
 unsigned left;                  /* max number of bytes wanted after position */
-int rw_flag;                    /* READING or WRITING */
+int rw_flag;                    /* READING, WRITING or PEEKING */
 cp_grant_id_t gid;              /* grant */
 unsigned buf_off;               /* offset in grant */
 unsigned int block_size;        /* block size of FS operating on */
@@ -214,11 +219,17 @@ int *completed;                 /* number of bytes copied */
 {
 /* Read or write (part of) a block. */
 
-  register struct buf *bp;
+  register struct buf *bp = NULL;
   register int r = OK;
   int n, block_spec;
   block_t b;
   dev_t dev;
+
+  /* rw_flag:
+   *   READING: read from FS, copy to user
+   *   WRITING: copy from user, write to FS
+   *   PEEKING: try to get all the blocks into the cache, no copying
+   */
 
   *completed = 0;
 
@@ -244,11 +255,13 @@ int *completed;                 /* number of bytes copied */
                }
                return r;
 	} else {
-		/* Writing to a nonexistent block. Create and enter in inode.*/
+               /* Writing to or peeking a nonexistent block.
+                * Create and enter in inode.
+                */
 		if ((bp = new_block(rip, (off_t) ex64lo(position))) == NULL)
 			return(err_code);
         }
-  } else if (rw_flag == READING) {
+  } else if (rw_flag == READING || rw_flag == PEEKING) {
 	/* Read and read ahead if convenient. */
 	bp = rahead(rip, b, position, left);
   } else {
@@ -275,7 +288,7 @@ int *completed;                 /* number of bytes copied */
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
 			   (vir_bytes) (b_data(bp)+off), (size_t) chunk);
-  } else {
+  } else if(rw_flag == WRITING) {
 	/* Copy a chunk from user space to the block buffer. */
 	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
 			     (vir_bytes) (b_data(bp)+off), (size_t) chunk);

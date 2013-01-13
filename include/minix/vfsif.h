@@ -114,8 +114,9 @@ typedef struct {
 #define REQ_RDLINK	(VFS_BASE + 30)
 #define REQ_GETDENTS	(VFS_BASE + 31)
 #define REQ_STATVFS	(VFS_BASE + 32)
+#define REQ_PEEK	(VFS_BASE + 33)
 
-#define NREQS			    33
+#define NREQS			    34
 
 #define IS_VFS_RQ(type) (((type) & ~0xff) == VFS_BASE)
 

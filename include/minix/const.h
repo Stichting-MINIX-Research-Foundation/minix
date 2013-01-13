@@ -72,6 +72,7 @@
 #define BYTE            0377	/* mask for 8 bits */
 #define READING            0	/* copy data to user */
 #define WRITING            1	/* copy data from user */
+#define PEEKING            2	/* retrieve FS data without copying */
 #define HAVE_SCATTERED_IO  1	/* scattered I/O is now standard */
 
 /* Memory is allocated in clicks. */

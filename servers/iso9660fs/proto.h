@@ -50,7 +50,7 @@ int fs_bread(void);
 int fs_getdents(void);
 int read_chunk(struct dir_record *rip, u64_t position, unsigned off, int
 	chunk, unsigned left, cp_grant_id_t gid, unsigned buf_off, int
-	block_size, int *completed);
+	block_size, int *completed, int rw);
 
 /* stadir.c */
 int fs_stat(void);
