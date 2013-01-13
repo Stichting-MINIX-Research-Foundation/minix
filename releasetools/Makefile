@@ -18,19 +18,20 @@ PROGROOT:= ${MAKEOBJDIR:S,releasetools,,}
 # Specify the programs that are part of the system image.
 KERNEL= ${PROGROOT}/kernel/kernel
 # PROGRAMS are in the order they should be loaded by boot
-PROGRAMS= \
-	${PROGROOT}/servers/ds/ds \
-	${PROGROOT}/servers/rs/rs \
-	${PROGROOT}/servers/pm/pm \
-	${PROGROOT}/servers/sched/sched \
-	${PROGROOT}/servers/vfs/vfs \
-	${PROGROOT}/drivers/memory/memory \
-	${PROGROOT}/drivers/log/log \
-	${PROGROOT}/drivers/tty/tty \
-	${PROGROOT}/servers/mfs/mfs \
-	${PROGROOT}/servers/vm/vm \
-	${PROGROOT}/servers/pfs/pfs \
-	${PROGROOT}/servers/init/init
+PROGRAMS+= ${PROGROOT}/servers/ds/ds
+PROGRAMS+= ${PROGROOT}/servers/rs/rs
+PROGRAMS+= ${PROGROOT}/servers/pm/pm
+PROGRAMS+= ${PROGROOT}/servers/sched/sched
+PROGRAMS+= ${PROGROOT}/servers/vfs/vfs
+PROGRAMS+= ${PROGROOT}/drivers/memory/memory
+.if ${MACHINE_ARCH} == "i386"
+PROGRAMS+= ${PROGROOT}/drivers/log/log
+.endif
+PROGRAMS+= ${PROGROOT}/drivers/tty/tty
+PROGRAMS+= ${PROGROOT}/servers/mfs/mfs
+PROGRAMS+= ${PROGROOT}/servers/vm/vm
+PROGRAMS+= ${PROGROOT}/servers/pfs/pfs
+PROGRAMS+= ${PROGROOT}/servers/init/init
 
 usage:	
 	@echo " " >&2

@@ -312,7 +312,7 @@ static char *p_rts_flags_str(int flags)
  *				proctab_dmp    				     *
  *===========================================================================*/
 #if defined(__i386__)
-void proctab_dmp()
+void proctab_dmp(void)
 {
 /* Proc table dump */
 
@@ -340,6 +340,13 @@ void proctab_dmp()
   }
 }
 #endif				/* defined(__i386__) */
+
+#if defined(__arm__)
+void proctab_dmp(void)
+{
+    /* LSC FIXME: Not implemented for arm */
+}
+#endif				/* defined(__arm__) */
 
 /*===========================================================================*
  *				procstack_dmp  				     *

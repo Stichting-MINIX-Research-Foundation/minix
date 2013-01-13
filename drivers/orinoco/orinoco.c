@@ -554,21 +554,21 @@ static void map_hw_buffer(t_or *orp)
 	char *buf, *abuf;	
 	hermes_t *hw = &(orp->hw);	
 
-	/* This way, the buffer will be at least I386_PAGE_SIZE big: see 
+	/* This way, the buffer will be at least PAGE_SIZE big: see
 	 * calculation with the offset */
-	size = 2 * I386_PAGE_SIZE;	
+	size = 2 * PAGE_SIZE;
 
 	buf = (char *)malloc(size);
 	if(buf == NULL) 
 		panic("map_hw_buffer: cannot malloc size: %d", size);
 
-	/* Let the mapped memory by I386_PAGE_SIZE aligned */
-	o = I386_PAGE_SIZE - ((vir_bytes)buf % I386_PAGE_SIZE);
+	/* Let the mapped memory by PAGE_SIZE aligned */
+	o = PAGE_SIZE - ((vir_bytes)buf % PAGE_SIZE);
 	abuf = buf + o;
 
 #if 0
 	r = sys_vm_map(SELF, 1, (vir_bytes)abuf, 
-			1 * I386_PAGE_SIZE, (phys_bytes)orp->or_base_port);
+			1 * PAGE_SIZE, (phys_bytes)orp->or_base_port);
 #else
 	r = ENOSYS;
 #endif

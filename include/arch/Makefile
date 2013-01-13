@@ -1,5 +1,5 @@
 .include <bsd.own.mk>
 
-SUBDIR=	${MACHINE}
+SUBDIR=	${MACHINE_ARCH}
 
 .include <bsd.subdir.mk>

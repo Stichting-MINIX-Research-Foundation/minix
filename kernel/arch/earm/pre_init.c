@@ -47,7 +47,7 @@ static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
 	/* Some variables we recognize */
 	if(!strcmp(name, SERVARNAME)) { cbi->do_serial_debug = 1; }
 	if(!strcmp(name, SERBAUDVARNAME)) { cbi->serial_debug_baud = atoi(value); }
-	
+
 	/* Delete the item if already exists */
 	while (*p) {
 		if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
@@ -95,6 +95,39 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 	return 0;
 }
 
+/* XXX: hard-coded stuff for modules */
+#define MB_MODS_NR 12
+#define MB_MODS_BASE  0x90000000
+#define MB_MODS_ALIGN 0x00800000 /*  8 MB */
+#define MB_MODS_SIZE  0x00004000 /* 16 KB */
+#define MB_MMAP_START MB_MODS_BASE
+#define MB_MMAP_SIZE  0x10000000 /* 256 MB */
+
+multiboot_module_t mb_modlist[MB_MODS_NR];
+multiboot_memory_map_t mb_memmap;
+
+void setup_mbi(multiboot_info_t *mbi)
+{
+	memset(mbi, 0, sizeof(*mbi));
+	mbi->flags = MULTIBOOT_INFO_MODS | MULTIBOOT_INFO_MEM_MAP;
+	mbi->mods_count = MB_MODS_NR;
+	mbi->mods_addr = (u32_t)&mb_modlist;
+
+	int i;
+	for (i = 0; i < MB_MODS_NR; ++i) {
+	    mb_modlist[i].mod_start = MB_MODS_BASE + i * MB_MODS_ALIGN;
+	    mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_ALIGN - 1;	    mb_modlist[i].cmdline = 0;
+	}
+
+	mbi->mmap_addr = (void*)&mb_memmap;
+	mbi->mmap_length = sizeof(mb_memmap);
+
+	mb_memmap.size = sizeof(multiboot_memory_map_t);
+	mb_memmap.addr = MB_MMAP_START;
+	mb_memmap.len  = MB_MMAP_SIZE;
+	mb_memmap.type = MULTIBOOT_MEMORY_AVAILABLE;
+}
+
 void get_parameters(u32_t ebx, kinfo_t *cbi) 
 {
 	multiboot_memory_map_t *mmap;
@@ -109,7 +142,8 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	static char cmdline[BUF];
 
 	/* get our own copy of the multiboot info struct and module list */
-	memcpy((void *) mbi, (void *) ebx, sizeof(*mbi));
+	//memcpy((void *) mbi, (void *) ebx, sizeof(*mbi));
+	setup_mbi(mbi);
 
 	/* Set various bits of info for the higher-level kernel. */
 	cbi->mem_high_phys = 0;
@@ -237,4 +271,3 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
 void minix_shutdown(timer_t *t) { arch_shutdown(RBT_PANIC); }
 void busy_delay_ms(int x) { }
-

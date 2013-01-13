@@ -348,13 +348,13 @@ static int do_add(message *m)
 		size, start, proc);
 #endif
 
-	if (start % I386_PAGE_SIZE)
+	if (start % PAGE_SIZE)
 	{
 		printf("amddev`do_add: bad start 0x%x from proc %d\n",
 			start, proc);
 		return EINVAL;
 	}
-	if (size % I386_PAGE_SIZE)
+	if (size % PAGE_SIZE)
 	{
 		printf("amddev`do_add: bad size 0x%x from proc %d\n",
 			size, proc);
@@ -393,13 +393,13 @@ static int do_add4pci(const message *m)
 "amddev`do_add4pci: got request for 0x%x@0x%lx from %d for pci dev %u.%u.%u\n",
 		size, start, proc, pci_bus, pci_dev, pci_func);
 
-	if (start % I386_PAGE_SIZE)
+	if (start % PAGE_SIZE)
 	{
 		printf("amddev`do_add4pci: bad start 0x%lx from proc %d\n",
 			start, proc);
 		return EINVAL;
 	}
-	if (size % I386_PAGE_SIZE)
+	if (size % PAGE_SIZE)
 	{
 		printf("amddev`do_add4pci: bad size 0x%x from proc %d\n",
 			size, proc);
@@ -442,9 +442,9 @@ static void add_range(phys_bytes busaddr, phys_bytes size)
 	printf("add_range: mapping 0x%x@0x%x\n", size, busaddr);
 #endif
 
-	for (o= 0; o<size; o += I386_PAGE_SIZE)
+	for (o= 0; o<size; o += PAGE_SIZE)
 	{
-		u32_t bit= (busaddr+o)/I386_PAGE_SIZE;
+		u32_t bit= (busaddr+o)/PAGE_SIZE;
 		table[bit/8] &= ~(1U << (bit % 8));
 	}
 }
@@ -458,9 +458,9 @@ static void del_range(phys_bytes busaddr, phys_bytes size)
 	printf("del_range: mapping 0x%x@0x%x\n", size, busaddr);
 #endif
 
-	for (o= 0; o<size; o += I386_PAGE_SIZE)
+	for (o= 0; o<size; o += PAGE_SIZE)
 	{
-		u32_t bit= (busaddr+o)/I386_PAGE_SIZE;
+		u32_t bit= (busaddr+o)/PAGE_SIZE;
 		table[bit/8] |= (1 << (bit % 8));
 	}
 }

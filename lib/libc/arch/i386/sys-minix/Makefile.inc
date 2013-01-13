@@ -1,14 +1,13 @@
 # rts sources
-HERE=${.CURDIR}/arch/${MACHINE_ARCH}/sys-minix
+HERE=${ARCHDIR}/sys-minix
 .PATH: ${HERE}
 
-ARCHINCLS=${NETBSDSRCDIR}/include/arch/${MACHINE_ARCH}/include/
 TMP=ucontextoffsets.h.tmp
-CF=ucontextoffsets.cf
+CF=${HERE}/ucontextoffsets.cf
 
 INCS+=ucontextoffsets.h
 
-ucontext.d: ucontextoffsets.h
+ucontext.o: ucontextoffsets.h
 
 SRCS+=   \
 	__sigreturn.S \
@@ -17,9 +16,12 @@ SRCS+=   \
 	brksize.S \
 	ucontext.S
 
-ucontextoffsets.h: ${CF} ${ARCHINCLS}/stackframe.h ${NETBSDSRCDIR}/sys/sys/ucontext.h
+ucontextoffsets.h: ${CF} 
+ucontextoffsets.h: ${NETBSDSRCDIR}/sys/sys/ucontext.h
+ucontextoffsets.h: ${NETBSDSRCDIR}/include/arch/${MACHINE_ARCH}/include/stackframe.h
+ucontextoffsets.h: 
 	${_MKTARGET_CREATE}
-	cat ${HERE}/$(CF) | \
+	cat ${CF} | \
 		${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} >$TMP && \
 	mv -f $TMP $@
 

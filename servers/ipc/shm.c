@@ -60,8 +60,8 @@ int do_shmget(message *m)
 		if (size <= 0)
 			return EINVAL;
 		/* round up to a multiple of PAGE_SIZE */
-		if (size % I386_PAGE_SIZE)
-			size += I386_PAGE_SIZE - size % I386_PAGE_SIZE;
+		if (size % PAGE_SIZE)
+			size += PAGE_SIZE - size % PAGE_SIZE;
 		if (size <= 0)
 			return EINVAL;
 
@@ -115,9 +115,9 @@ int do_shmat(message *m)
 	addr = (vir_bytes) m->SHMAT_ADDR;
 	flag = m->SHMAT_FLAG;
 
-	if (addr && (addr % I386_PAGE_SIZE)) {
+	if (addr && (addr % PAGE_SIZE)) {
 		if (flag & SHM_RND)
-			addr -= (addr % I386_PAGE_SIZE);
+			addr -= (addr % PAGE_SIZE);
 		else
 			return EINVAL;
 	}
@@ -169,8 +169,8 @@ void update_refcount_and_destroy(void)
 			j++;
 		} else {
 			int size = shm_list[i].shmid_ds.shm_segsz;
-			if (size % I386_PAGE_SIZE)
-				size += I386_PAGE_SIZE - size % I386_PAGE_SIZE;
+			if (size % PAGE_SIZE)
+				size += PAGE_SIZE - size % PAGE_SIZE;
 			minix_munmap((void *)shm_list[i].page, size);
 		}
 	}
@@ -297,7 +297,7 @@ int do_shmctl(message *m)
 		s_info.shm_tot = 0;
 		for (i = 0; i < shm_list_nr; i++)
 			s_info.shm_tot +=
-				shm_list[i].shmid_ds.shm_segsz/I386_PAGE_SIZE;
+				shm_list[i].shmid_ds.shm_segsz/PAGE_SIZE;
 		s_info.shm_rss = s_info.shm_tot;
 		s_info.shm_swp = 0;
 		s_info.swap_attempts = 0;

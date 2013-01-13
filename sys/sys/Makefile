@@ -11,7 +11,7 @@ INCS=	ansi.h atomic.h \
 	ctype_bits.h ctype_inline.h \
 	\
 	dirent.h \
-	disk.h disklabel.h disklabel_gpt.h \
+	disk.h disklabel.h disklabel_acorn.h disklabel_gpt.h \
 	dkbad.h dkio.h \
 	endian.h errno.h exec.h \
 	exec_elf.h extattr.h \

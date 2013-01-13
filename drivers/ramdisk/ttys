@@ -1,0 +1,44 @@
+#
+#	from: @(#)ttys	5.1 (Berkeley) 4/17/89
+#
+# name		getty		type	status		comments
+#
+console		"getty 115200"		minix	on secure
+#ttyc1		getty		minix	on secure
+#ttyc2		getty		minix	on secure
+#ttyc3		getty		minix	on secure
+tty00		""		unknown	off secure
+tty01		""		unknown off secure
+
+ttyp0		""		network	off 
+ttyp1		""		network	off
+ttyp2		""		network off
+ttyp3		""		network off
+ttyp4		""		network off
+ttyp5		""		network off
+ttyp6		""		network off
+ttyp7		""		network off
+ttyp8		""		network off
+ttyp9		""		network off
+ttypa		""		network off
+ttypb		""		network off
+ttypc		""		network off
+ttypd		""		network off
+ttype		""		network off
+ttypf		""		network off
+ttyq0		""		network off
+ttyq1		""		network off
+ttyq2		""		network off
+ttyq3		""		network off
+ttyq4		""		network off
+ttyq5		""		network off
+ttyq6		""		network off
+ttyq7		""		network off
+ttyq8		""		network off
+ttyq9		""		network off
+ttyqa		""		network off
+ttyqb		""		network off
+ttyqc		""		network off
+ttyqd		""		network off
+ttyqe		""		network off
+ttyqf		""		network off

@@ -164,7 +164,7 @@ static void hw_init(struct port *pp, int devind)
 	v32 &= PCI_BAR_MEM_MASK;	/* Clear low order bits in base */
 
 	pp->csr_ptr=
-		(struct csr *) vm_map_phys(SELF, (void *) v32, I386_PAGE_SIZE);
+		(struct csr *) vm_map_phys(SELF, (void *) v32, PAGE_SIZE);
 	if (pp->csr_ptr == MAP_FAILED)
 		panic("hw_init: vm_map_phys failed");
 

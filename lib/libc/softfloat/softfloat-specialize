@@ -80,7 +80,11 @@ void float_raise( fp_except flags )
 	    info.si_code = FPE_FLTINV;
 	else if (flags & float_flag_inexact)
 	    info.si_code = FPE_FLTRES;
+#if !defined(__minix)
+/* LSC FIXME: This kind of remove any interest to the function. We should
+               be using the minix equivalent, or do something appropriate. */
 	sigqueueinfo(getpid(), &info);
+#endif /* !defined(__minix) */
     }
 }
 #undef float_exception_mask

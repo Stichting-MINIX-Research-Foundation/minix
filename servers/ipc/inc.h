@@ -18,6 +18,7 @@
 #include <sys/sem.h>
 #include <sys/mman.h>
 #include <machine/vm.h>
+#include <machine/vmparam.h>
 #include <sys/vm.h>
 
 #include <time.h>

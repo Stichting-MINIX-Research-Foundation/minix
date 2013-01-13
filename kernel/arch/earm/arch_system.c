@@ -77,6 +77,7 @@ void cpu_identify(void)
 	cpu_info[cpu].arch = (midr >> 16) & 0xF;
 	cpu_info[cpu].part = (midr >> 4) & 0xFFF;
 	cpu_info[cpu].revision = midr & 0xF;
+	cpu_info[cpu].freq = 660; /* 660 Mhz hardcoded */
 }
 
 void arch_init(void)

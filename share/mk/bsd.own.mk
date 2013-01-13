@@ -25,8 +25,6 @@ MANGRP?=	operator
 INFOGRP?=	operator
 DOCGRP?=	operator
 
-MACHINE_GNU_PLATFORM?=${MACHINE_ARCH}-elf32-minix
-
 MKBINUTILS:=	no
 MKGDB:=		no
 MKGCC?=		no
@@ -747,6 +745,11 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 .endif
 
+.if defined(__MINIX)
+# We have a simpler toolchain naming scheme
+MACHINE_GNU_PLATFORM:=${MACHINE_GNU_ARCH}-elf32-minix
+.endif # defined(__MINIX)
+
 #
 # Determine if arch uses native kernel modules with rump
 #
@@ -960,7 +963,7 @@ _MKVARS.no= \
 #MINIX-specific vars
 _MKVARS.no+= \
 	MKIMAGEONLY MKSMALL
-.if (${MACHINE_ARCH} == "arm")
+.if (${MACHINE_ARCH} == "earm")
 _MKVARS.no+= \
 	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI
 .endif

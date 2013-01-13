@@ -27,10 +27,9 @@ _GCC_LIBGCCDIR?=	${DESTDIR}/usr/lib
 AFLAGS+=-D__ASSEMBLY__
 CPPFLAGS+= -fno-builtin -Wall -Wno-sign-compare
 
+#LSC FIXME: Needed by clang for now
 .if ${MACHINE_ARCH} == "i386"
 CPUFLAGS+= -march=i586
-.elif ${MACHINE_ARCH} == "arm"
-CPUFLAGS+= -march=armv7-a -mfloat-abi=softfp
 .endif
 
 # LSC In the current state there is too much to be done
