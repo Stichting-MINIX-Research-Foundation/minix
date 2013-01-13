@@ -713,10 +713,13 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # GNU sources and packages sometimes see architecture names differently.
 #
 GNU_ARCH.coldfire=m68k
+# MINIX/arm default
 GNU_ARCH.earm=arm
+GCC_CONFIG_ARCH.earm=armv7-a
 GNU_ARCH.earmeb=armeb
-GNU_ARCH.i386=i486
-GCC_CONFIG_ARCH.i386=i486
+# MINIX/intel default
+GNU_ARCH.i386=i586
+GCC_CONFIG_ARCH.i386=i586
 GCC_CONFIG_TUNE.i386=nocona
 GCC_CONFIG_TUNE.x86_64=nocona
 GNU_ARCH.m68000=m68010

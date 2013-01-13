@@ -52,6 +52,14 @@ Boston, MA 02110-1301, USA.  */
 #undef  LIB_SPEC
 #define LIB_SPEC MINIX_LIB_SPEC
 
+#undef	LINK_SPEC
+#define LINK_SPEC MINIX_LINK_SPEC
+
+#undef  SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS MINIX_SUBTARGET_EXTRA_SPECS
+
+#undef  SUBTARGET_CPP_SPEC
+#define SUBTARGET_CPP_SPEC MINIX_CPP_SPEC
 
 /************************[  Target stuff  ]***********************************/
 
@@ -69,3 +77,4 @@ Boston, MA 02110-1301, USA.  */
    This ensures the configuration knows our system correctly so we can link
    with libraries compiled with the native cc.  */
 #undef NO_DOLLAR_IN_LABEL
+

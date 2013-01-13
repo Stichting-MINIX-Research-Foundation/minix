@@ -168,7 +168,7 @@ diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/armelf_minix.sh dist/ld/emulparam
 @@ -0,0 +1,3 @@
 +. ${srcdir}/emulparams/armelf.sh
 +. ${srcdir}/emulparams/elf_minix.sh
-+OUTPUT_FORMAT="elf32-littlearm-minix"
++OUTPUT_FORMAT="elf32-littlearm"
 diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf_i386_minix.sh dist/ld/emulparams/elf_i386_minix.sh
 --- dist.orig/ld/emulparams/elf_i386_minix.sh	1970-01-01 01:00:00.000000000 +0100
 +++ dist/ld/emulparams/elf_i386_minix.sh	2012-10-31 17:47:37.869917589 +0100

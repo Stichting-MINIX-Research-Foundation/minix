@@ -36,7 +36,7 @@ Boston, MA 02110-1301, USA.  */
     }                                           \
   while (0)
 
-#define TARGET_VERSION fprintf (stderr, " (i386 MINIX/ELF)");
+#define TARGET_VERSION fprintf (stderr, " (MINIX/i586 ELF)");
 
 /* Override the default comment-starter of "/".  */
 #undef  ASM_COMMENT_START
@@ -71,43 +71,6 @@ Boston, MA 02110-1301, USA.  */
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE	(TARGET_64BIT ? 32 : BITS_PER_WORD)
 
-#undef  SUBTARGET_EXTRA_SPECS	/* i386.h bogusly defines it.  */
-#define SUBTARGET_EXTRA_SPECS \
-  { "minix_dynamic_linker", MINIX_DYNAMIC_LINKER }
-
-#undef	STARTFILE_SPEC
-#define STARTFILE_SPEC MINIX_STARTFILE_SPEC
-
-#undef	ENDFILE_SPEC
-#define ENDFILE_SPEC MINIX_ENDFILE_SPEC
-
-/* Provide a LINK_SPEC appropriate for MINIX.  Here we provide support
-   for the special GCC options -static and -shared, which allow us to
-   link things in one of these three modes by applying the appropriate
-   combinations of options at link-time. We like to support here for
-   as many of the other GNU linker options as possible. But I don't
-   have the time to search for those flags. I am sure how to add
-   support for -soname shared_object_name. H.J.
-
-   I took out %{v:%{!V:-V}}. It is too much :-(. They can use
-   -Wl,-V.
-
-   When the -shared link option is used a final link is not being
-   done.  */
-
-#undef	LINK_SPEC
-#define LINK_SPEC "\
-  %{p:%nconsider using `-pg' instead of `-p' with gprof(1)} \
-  %{v:-V} \
-  %{assert*} %{R*} %{rpath*} %{defsym*} \
-  %{shared:-Bshareable %{h*} %{soname*}} \
-    %{!shared: \
-      %{!static: \
-        %{rdynamic:-export-dynamic} \
-        %{!dynamic-linker:-dynamic-linker %(minix_dynamic_linker) }} \
-    %{static:-Bstatic}} \
-  %{symbolic:-Bsymbolic}"
-
 /* A C statement to output to the stdio stream FILE an assembler
    command to advance the location counter to a multiple of 1<<LOG
    bytes if it is within MAX_SKIP bytes.
@@ -130,3 +93,5 @@ Boston, MA 02110-1301, USA.  */
 
 #undef  DEFAULT_PCC_STRUCT_RETURN
 #define DEFAULT_PCC_STRUCT_RETURN 0
+
+#define SUBTARGET32_DEFAULT_CPU "i586"
