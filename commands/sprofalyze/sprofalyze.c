@@ -71,6 +71,8 @@ struct endpoint_info {
 	endpoint_t endpoint;
 	struct binary_info *binary;
 	struct endpoint_info *hashtab_next;
+	struct endpoint_info *next;
+	char seen;
 };
 
 union sprof_record {
@@ -82,6 +84,7 @@ union sprof_record {
 static struct binary_info *binaries;
 static struct binary_info *binary_hashtab[BINARY_HASHTAB_SIZE];
 static struct endpoint_info *endpoint_hashtab[ENDPOINT_HASHTAB_SIZE];
+static struct endpoint_info *endpoints;
 static double minimum_perc = 1.0;
 static struct sprof_info_s sprof_info;
 
@@ -176,7 +179,10 @@ int main(int argc, char **argv) {
 	/* load samples */
 	if (optind >= argc) usage(argv[0]);
 	for (; optind < argc; optind++) {
+		struct endpoint_info *e; 
 		load_trace(argv[optind]);
+		for(e = endpoints; e; e = e->next)
+			e->seen = 0;
 	}
 
 	/* print report */
@@ -477,6 +483,7 @@ static void load_trace(const char *path) {
 	FILE *file;
 	unsigned size_info, size_sample, size_proc;
 	int samples_read;
+	static struct sprof_info_s sprof_info_perfile;
 
 	/* open trace file */
 	file = fopen(path, "rb");
@@ -501,7 +508,7 @@ static void load_trace(const char *path) {
 			"MINIX version that created this file\n", path);
 		exit(1);
 	}
-	if (fread(&sprof_info, sizeof(sprof_info), 1, file) != 1) {
+	if (fread(&sprof_info_perfile, sizeof(sprof_info_perfile), 1, file) != 1) {
 		fprintf(stderr, "error: totals missing in file \"%s\"\n", path);
 		exit(1);
 	}
@@ -531,11 +538,17 @@ static void load_trace(const char *path) {
 			(const union sprof_record *) (buffer + bufindex),
 			bufsize - bufindex, &samples_read);
 	}
-	if (samples_read != sprof_info.system_samples) {
+	if (samples_read != sprof_info_perfile.system_samples) {
 		fprintf(stderr, "warning: number of system samples (%d) in "
 			"\"%s\" does not match number of records (%d)\n",
 			sprof_info.system_samples, path, samples_read);
 	}
+
+	sprof_info.system_samples += sprof_info_perfile.system_samples;
+	sprof_info.total_samples += sprof_info_perfile.total_samples;
+	sprof_info.idle_samples += sprof_info_perfile.idle_samples;
+	sprof_info.user_samples += sprof_info_perfile.user_samples;
+
 	fclose(file);
 }
 
@@ -658,6 +671,8 @@ static void print_report_per_binary(const struct binary_info *binary) {
 	unsigned index, symbol_count;
 	int sample_threshold;
 
+	assert(binary->samples >= 0);
+
 	/* count number of symbols to display */
 	sample_threshold = binary->samples * minimum_perc / 100;
 	symbol_count = count_symbols(binary, sample_threshold);
@@ -719,6 +734,7 @@ static void print_reports_per_binary(void) {
 		samples_shown += binaries_sorted[i]->samples;
 	}
 	print_separator();
+	printf("samples: %d shown: %d\n", sprof_info.system_samples, samples_shown);
 	printf("processes <%3.0f%% (not showing functions) %*.1f%% of system "
 		"process samples\n", minimum_perc, LINE_WIDTH - 67,
 		percent(sprof_info.system_samples - samples_shown, sprof_info.system_samples));
@@ -899,6 +915,11 @@ static size_t sample_process(const union sprof_record *data, size_t size,
 	/* do we know this endpoint? */
 	ptr = endpoint_hashtab_get_ptr(data->proc.proc);
 	if ((epinfo = *ptr)) {
+		if (!epinfo->seen) {
+			epinfo->seen = 1;
+			return sizeof(data->proc);
+		}
+
 		/* endpoint known, store sample */
 		if (size < sizeof(data->sample)) goto error;
 		sample_store(epinfo->binary, &data->sample);
@@ -910,6 +931,9 @@ static size_t sample_process(const union sprof_record *data, size_t size,
 	*ptr = epinfo = MALLOC_CHECKED(struct endpoint_info, 1);
 	memset(epinfo, 0, sizeof(struct endpoint_info));
 	epinfo->endpoint = data->proc.proc;
+	epinfo->seen = 1;
+	epinfo->next = endpoints;
+	endpoints = epinfo;
 
 	/* fetch binary based on process name in sample */
 	if (size < sizeof(data->proc)) goto error;
@@ -963,7 +987,9 @@ static void sample_store(struct binary_info *binary,
 	}
 
 	if (symbol) {
+		assert(symbol->samples >= 0);
 		symbol->samples++;
+		assert(symbol->samples >= 0);
 	} else if (!binary->no_more_warnings) {
 		fprintf(stderr, "warning: address 0x%lx not associated with a "
 			"symbol\n", (unsigned long) sample->pc);
