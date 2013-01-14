@@ -62,6 +62,10 @@ __RCSID("$NetBSD: file_subs.c,v 1.62 2009/04/07 19:52:35 perry Exp $");
 #include "extern.h"
 #include "options.h"
 
+#ifdef __minix
+#include <utime.h>
+#endif
+
 char *xtmp_name;
 
 static int
@@ -842,8 +846,15 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc, int slk)
 #endif
 	if (slk)
 		return;
-#ifndef __minix
-/* LSC: FIXME UGLY Hack */
+#ifdef __minix
+	{
+		struct utimbuf timp;
+		timp.actime = atime;
+		timp.modtime = mtime;
+		if (utime(fnm, &timp) < 0)
+			goto bad;
+	}
+#else
 	if (utimes(fnm, tv) == -1)
 		goto bad;
 #endif
