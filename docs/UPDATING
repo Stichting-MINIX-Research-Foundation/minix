@@ -1,3 +1,12 @@
+20130114:
+	The terminfo update is also linked to the databases functions,
+	which means the tool used to generate the termcap entries has to
+	be rebuild with the new libraries before creating a valid 
+        terminfo DB. To resolve this issue we have to do two (2) full 
+	build of the system. The simplest is to do the following:
+
+	# make build && make build && reboot 
+	
 20121207:
 	The join and lorder tools have been upgraded. Build them first:
 
