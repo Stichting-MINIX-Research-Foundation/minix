@@ -10,6 +10,10 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so -I${COMMON_DIR} -I.
 OBJS+=		crt0.o gcrt0.o crti.o crtn.o
 OBJS+=		crtbegin.o crtbeginS.o crtend.o
 
+# BJG - for backwards compatability with minix gcc
+# which links with crt1.o instead of crt0.o
+SYMLINKS+=     crt0.o ${LIBDIR}/crt1.o
+
 realall: ${OBJS}
 
 crtbegin.o: crtbegin.S
