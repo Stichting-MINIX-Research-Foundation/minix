@@ -2,14 +2,27 @@
 
 INCSDIR=/usr/include/x86
 
-INCS=	\
+INCS=	aout_machdep.h \
 	bootinfo.h \
+	cacheinfo.h \
 	cpu.h \
+	cpu_ucode.h \
+	cputypes.h \
+	cpuvar.h \
 	float.h \
 	ieee.h ieeefp.h \
-	math.h mutex.h \
+	intr.h intrdefs.h \
+	lock.h \
+	math.h mutex.h mtrr.h \
 	pio.h \
+	pmap.h \
+	pmap_pv.h \
+	psl.h \
+	pte.h \
 	rwlock.h \
-
+	specialreg.h \
+	sysarch.h \
+	trap.h \
+	via_padlock.h
 
 .include <bsd.kinc.mk>

@@ -79,6 +79,7 @@
 2012/10/17 12:00:00,share/terminfo
 2012/02/10 16:16:12,share/zoneinfo
 2011/12/25 06:09:09,sys/arch/i386/stand
+2012/10/17 12:00:00,sys/arch/x86/include
 2012/01/16 18:47:57,sys/lib/libsa
 2011/10/30 00:28:57,sys/lib/libz
 2012/10/17 12:00:00,sys/Makefile

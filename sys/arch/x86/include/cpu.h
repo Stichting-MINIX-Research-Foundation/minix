@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2011/12/30 17:57:49 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2012/07/15 15:17:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,6 +70,7 @@
 #ifdef XEN
 #include <xen/xen-public/xen.h>
 #include <xen/xen-public/event_channel.h>
+#include <sys/mutex.h>
 #endif /* XEN */
 
 struct intrsource;
@@ -104,7 +105,7 @@ struct cpu_info {
 	int	ci_fpsaving;		/* save in progress */
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
-	int	ci_cpumask;		/* (1 << CPU ID) */
+	int	_unused;
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
 
@@ -184,12 +185,14 @@ struct cpu_info {
 #if defined(XEN) && (defined(PAE) || defined(__x86_64__))
 	/* Currently active user PGD (can't use rcr3() with Xen) */
 	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
-	paddr_t		ci_kpm_pdirpa; /* per-cpu PMD (pa) */
+	paddr_t		ci_kpm_pdirpa;  /* per-cpu PMD (pa) */
+	kmutex_t	ci_kpm_mtx;
 #if defined(__x86_64__)
+	/* per-cpu version of normal_pdes */
+	pd_entry_t *	ci_normal_pdes[3]; /* Ok to hardcode. only for x86_64 && XEN */
 	paddr_t		ci_xen_current_user_pgd;
 #endif /* __x86_64__ */
 #endif /* XEN et.al */
-
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
@@ -316,11 +319,9 @@ lwp_t   *x86_curlwp(void);
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
-void cpu_load_pmap(struct pmap *);
+void cpu_load_pmap(struct pmap *, struct pmap *);
 void cpu_broadcast_halt(void);
 void cpu_kick(struct cpu_info *);
-
-extern uint32_t cpus_attached;
 
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
@@ -359,7 +360,7 @@ struct timeval;
 
 extern int biosbasemem;
 extern int biosextmem;
-extern int cpu;
+extern int cputype;
 extern int cpuid_level;
 extern int cpu_class;
 extern char cpu_brand_string[];
@@ -401,19 +402,17 @@ struct region_descriptor;
 void	lgdt(struct region_descriptor *);
 #ifdef XEN
 void	lgdt_finish(void);
-void	i386_switch_context(lwp_t *);
 #endif
 
 struct pcb;
 void	savectx(struct pcb *);
 void	lwp_trampoline(void);
-void	child_trampoline(void);
 #ifdef XEN
 void	startrtclock(void);
 void	xen_delay(unsigned int);
 void	xen_initclocks(void);
-void	xen_suspendclocks(void);
-void	xen_resumeclocks(void);
+void	xen_suspendclocks(struct cpu_info *);
+void	xen_resumeclocks(struct cpu_info *);
 #else
 /* clock.c */
 void	initrtclock(u_long);
