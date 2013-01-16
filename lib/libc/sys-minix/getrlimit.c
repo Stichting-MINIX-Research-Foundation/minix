@@ -21,10 +21,6 @@ int getrlimit(int resource, struct rlimit *rlp)
 	switch (resource)
 	{
 		case RLIMIT_CORE:
-			/* no core currently produced */
-			limit = 0;
-			break;
-
 		case RLIMIT_CPU:
 		case RLIMIT_DATA:
 		case RLIMIT_FSIZE:
