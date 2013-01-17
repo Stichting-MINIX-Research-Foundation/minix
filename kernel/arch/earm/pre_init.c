@@ -30,6 +30,8 @@ struct kmessages kmessages;
 /* pg_utils.c uses this; in this phase, there is a 1:1 mapping. */
 phys_bytes vir2phys(void *addr) { return (phys_bytes) addr; } 
 
+static void setup_mbi(multiboot_info_t *mbi);
+
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
 
@@ -98,6 +100,7 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 /* XXX: hard-coded stuff for modules */
 #define MB_MODS_NR 12
 #define MB_MODS_BASE  0x90000000
+#define MB_PARAM_MOD  0x96000000
 #define MB_MODS_ALIGN 0x00800000 /*  8 MB */
 #define MB_MODS_SIZE  0x00004000 /* 16 KB */
 #define MB_MMAP_START MB_MODS_BASE
@@ -109,7 +112,8 @@ multiboot_memory_map_t mb_memmap;
 void setup_mbi(multiboot_info_t *mbi)
 {
 	memset(mbi, 0, sizeof(*mbi));
-	mbi->flags = MULTIBOOT_INFO_MODS | MULTIBOOT_INFO_MEM_MAP;
+	mbi->flags = MULTIBOOT_INFO_MODS | MULTIBOOT_INFO_MEM_MAP |
+			MULTIBOOT_INFO_CMDLINE;
 	mbi->mods_count = MB_MODS_NR;
 	mbi->mods_addr = (u32_t)&mb_modlist;
 
@@ -118,6 +122,9 @@ void setup_mbi(multiboot_info_t *mbi)
 	    mb_modlist[i].mod_start = MB_MODS_BASE + i * MB_MODS_ALIGN;
 	    mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_ALIGN - 1;	    mb_modlist[i].cmdline = 0;
 	}
+
+	/* Final 'module' is actually a string holding the boot cmdline */
+	mbi->cmdline = MB_PARAM_MOD;
 
 	mbi->mmap_addr = (void*)&mb_memmap;
 	mbi->mmap_length = sizeof(mb_memmap);
