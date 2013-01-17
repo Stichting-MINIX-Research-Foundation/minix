@@ -32,6 +32,10 @@
 #endif
 #include "spinlock.h"
 
+/* Pointers to start and end of BSS */
+extern u32_t _edata;
+extern u32_t _end;
+
 /* dummy for linking */
 char *** _penviron;
 
@@ -121,6 +125,9 @@ void kmain(kinfo_t *local_cbi)
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register int i, j;
+
+  /* Clear BSS */
+  memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
 
   /* save a global copy of the boot parameters */
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
