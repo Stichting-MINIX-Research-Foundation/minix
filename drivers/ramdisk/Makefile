@@ -97,13 +97,18 @@ ${etc}: ${NETBSDSRCDIR}/etc/${etc}
 
 # LSC Force the regeneration of the proto file as it seems sometimes 
 # they are not copied over as needed.
-# LSC The test is needed; otherwise install complains about src and dst
-# being the same, during in-tree builds
 # LSC ramdisk rc file != /etc/rc && mtab not empty!
+# BJG if ${.CURDIR} == ${.OBJDIR}, we are building in-tree and install
+# shouldn't try to install the originals over the originals. Otherwise
+# we are building out-of-tree and the contents should be copied
+# unconditionally in case the contents have changed after the first copy.
+.if ${.CURDIR} != ${.OBJDIR}
+CLEANFILES += ${EXTRA} ${PROTO} ${PROTO_FILES}
 .for file in ${EXTRA} ${PROTO} ${PROTO_FILES}
 ${file}: ${NETBSDSRCDIR}/drivers/ramdisk/${file} .PHONY
-	[ -e $@ ] || ${INSTALL} $> $@
+	${INSTALL} $> $@
 .endfor
+.endif
 
 # Generate dependencies rules for dynamic libraries, if needed
 .for lib in ${PROG_LIBS}
