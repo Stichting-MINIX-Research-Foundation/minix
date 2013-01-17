@@ -56,6 +56,6 @@ time(time_t *t)
 	return (time_t)tt.tv_sec;
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(time, __time50)
 #endif

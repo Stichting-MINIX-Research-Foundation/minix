@@ -146,7 +146,7 @@ readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 	return (0);
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(readdir, __readdir30)
 __weak_alias(readdir_r, __readdir_r30)
 __weak_alias(readdir_unlocked, ___readdir_unlocked50)

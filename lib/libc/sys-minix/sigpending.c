@@ -14,6 +14,6 @@ sigset_t *set;
   return(m.m_type);
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(sigpending, __sigpending14)
 #endif

@@ -23,6 +23,6 @@ sigset_t *oset;
   return(m.m_type);
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(sigprocmask, __sigprocmask14)
 #endif

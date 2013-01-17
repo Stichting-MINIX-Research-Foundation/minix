@@ -21,6 +21,6 @@ int select(int nfds,
 }
 
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(select, __select50)
 #endif

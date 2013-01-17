@@ -105,6 +105,6 @@ utmpname(const char *fname)
 	return 1;
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(getutent, __getutent50)
 #endif

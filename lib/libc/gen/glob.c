@@ -1169,7 +1169,7 @@ qprintf(const char *str, Char *s)
 }
 #endif
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(glob, __glob30)
 __weak_alias(globfree, __globfree30)
 #endif

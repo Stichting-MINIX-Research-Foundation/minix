@@ -105,6 +105,6 @@ unsetenv(const char *name)
 	return 0;
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(unsetenv, __unsetenv13)
 #endif

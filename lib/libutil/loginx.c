@@ -53,4 +53,6 @@ loginx(const struct utmpx *ut)
 	(void)updwtmpx(_PATH_WTMPX, ut);
 }
 
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(loginx, __loginx50)
+#endif

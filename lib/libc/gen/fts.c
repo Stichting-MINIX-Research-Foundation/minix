@@ -1235,7 +1235,7 @@ bail:
 	return ret;
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(fts_children, __fts_children60)
 __weak_alias(fts_close, __fts_close60)
 __weak_alias(fts_open, __fts_open60)

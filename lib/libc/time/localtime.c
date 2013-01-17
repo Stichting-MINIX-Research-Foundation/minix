@@ -2261,7 +2261,7 @@ posix2time(time_t t)
 
 #endif /* defined STD_INSPIRED */
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(gmtime, __gmtime50)
 __weak_alias(gmtime_r, __gmtime_r50)
 __weak_alias(offtime, __offtime50)

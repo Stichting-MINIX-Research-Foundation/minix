@@ -19,6 +19,6 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
   return(_syscall(PM_PROC_NR, SIGACTION, &m));
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(sigaction, __sigaction14)
 #endif

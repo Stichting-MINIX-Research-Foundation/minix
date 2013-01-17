@@ -13,6 +13,6 @@ const sigset_t *set;
   return(_syscall(PM_PROC_NR, SIGSUSPEND, &m));
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(sigsuspend, __sigsuspend14)
 #endif

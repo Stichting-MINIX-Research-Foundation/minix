@@ -995,5 +995,7 @@ multiply(u_quad_t n1, u_quad_t n2)
 	return (m);
 }
 
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(login_getpwclass, __login_getpwclass50)
 __weak_alias(setusercontext, __setusercontext50)
+#endif

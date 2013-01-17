@@ -518,7 +518,7 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	return error;
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(getlastlogx, __getlastlogx50)
 __weak_alias(getutmp, __getutmp50)
 __weak_alias(getutmpx, __getutmpx50)

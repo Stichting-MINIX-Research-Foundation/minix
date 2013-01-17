@@ -19,6 +19,6 @@ int mknod(const char *name, mode_t mode, dev_t dev)
   return(_syscall(VFS_PROC_NR, MKNOD, &m));
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(mknod, __mknod50)
 #endif

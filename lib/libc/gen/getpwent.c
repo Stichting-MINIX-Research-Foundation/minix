@@ -2604,7 +2604,7 @@ setpwent(void)
 	mutex_unlock(&_pwmutex);
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(getpwent, __getpwent50)
 __weak_alias(getpwent_r, __getpwent_r50)
 __weak_alias(getpwnam, __getpwnam50)

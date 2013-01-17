@@ -71,6 +71,6 @@ difftime(const time_t time1, const time_t time0)
 		(unsigned long) (-(time1 + 1)) + 1);
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(difftime, __difftime50)
 #endif

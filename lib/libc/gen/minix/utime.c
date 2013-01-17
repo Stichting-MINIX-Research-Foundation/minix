@@ -23,6 +23,6 @@ int utime(const char *name, const struct utimbuf *timp)
   return(_syscall(VFS_PROC_NR, UTIME, &m));
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(utime, __utime50)
 #endif

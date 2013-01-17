@@ -662,6 +662,8 @@ pw_getpwconf(char *data, size_t max, const struct passwd *pwd,
 	}
 }
 
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(pw_copy, __pw_copy50)
 __weak_alias(pw_copyx, __pw_copyx50)
 __weak_alias(pw_getpwconf, __pw_getpwconf50)
+#endif

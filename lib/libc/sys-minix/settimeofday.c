@@ -14,6 +14,6 @@ int settimeofday(const struct timeval *tp, const void *tzp)
 	return stime(&sec);
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(settimeofday, __settimeofday50)
 #endif

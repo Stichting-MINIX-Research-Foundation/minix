@@ -109,6 +109,6 @@ setlocale(int category, const char *locale)
 	return __setlocale(category, locale);
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(setlocale, __setlocale50)
 #endif

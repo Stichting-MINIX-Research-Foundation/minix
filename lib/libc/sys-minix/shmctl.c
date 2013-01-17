@@ -41,6 +41,6 @@ int shmctl(int shmid, int cmd, struct shmid_ds *buf)
 	return r;
 }
 
-#ifdef __minix
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(shmctl, __shmctl50)
 #endif

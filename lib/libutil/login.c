@@ -69,4 +69,6 @@ login(const struct utmp *ut)
 	}
 }
 
+#if defined(__minix) && defined(__weak_alias)
 __weak_alias(login, __login50)
+#endif
