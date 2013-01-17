@@ -3,7 +3,9 @@
 
 LIB=		sys
 
-SRCS=  \
+.include "arch/${MACHINE_ARCH}/Makefile.inc"
+
+SRCS+=  \
 	alloc_util.c \
 	assert.c \
 	asynsend.c \
@@ -75,7 +77,6 @@ SRCS=  \
 	taskcall.c \
 	tickdelay.c \
 	timers.c \
-	tsc_util.c \
 	vm_brk.c \
 	vm_exit.c \
 	vm_fork.c \
@@ -86,31 +87,6 @@ SRCS=  \
 	vm_yield_get_block.c \
 	vm_procctl.c \
 	vprintf.c
-
-.if ${MACHINE_ARCH} == "i386"
-SRCS+=  \
-	get_randomness.c \
-	getidle.c \
-	profile.c \
-	profile_extern.c \
-	ser_putc.c \
-	spin.c \
-	sys_eniop.c \
-	sys_in.c \
-	sys_int86.c \
-	sys_out.c \
-	sys_readbios.c \
-	sys_sdevio.c \
-	sys_umap_remote.c \
-	sys_vinb.c \
-	sys_vinl.c \
-	sys_vinw.c \
-	sys_voutb.c \
-	sys_voutl.c \
-	sys_voutw.c \
-	timing.c \
-	vbox.c
-.endif
 
 .if ${MKPCI} != "no"
 SRCS+=	pci_attr_r16.c \
