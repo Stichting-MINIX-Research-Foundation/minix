@@ -7,6 +7,10 @@ SRCS=	main.c alloc.c utility.c exit.c fork.c break.c \
 	rs.c queryexit.c yieldedavl.c regionavl.c pb.c \
 	mem_anon.c mem_directphys.c mem_anon_contig.c mem_shared.c
 
+.if ${MACHINE_ARCH} == "earm"
+LDFLAGS+= -T ${.CURDIR}/arch/${MACHINE_ARCH}/vm.lds
+.endif
+
 DPADD+=	${LIBSYS}
 LDADD+=	-lsys -lexec
 
