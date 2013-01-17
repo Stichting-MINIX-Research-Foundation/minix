@@ -38,6 +38,9 @@ static void setup_mbi(multiboot_info_t *mbi);
 /* Kernel may use memory */
 int kernel_may_alloc = 1;
 
+extern u32_t _edata;
+extern u32_t _end;
+
 static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
 {
 	char *p = bigbuf;
@@ -256,6 +259,9 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 
 kinfo_t *pre_init(u32_t magic, u32_t ebx)
 {
+	/* Clear BSS */
+	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
+
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
