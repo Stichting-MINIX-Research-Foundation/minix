@@ -184,7 +184,6 @@
 ./usr/bin/cksum				minix-sys
 ./usr/bin/cleantmp			minix-sys
 ./usr/bin/clear				minix-sys
-./usr/bin/clr				minix-sys
 ./usr/bin/cmp				minix-sys
 ./usr/bin/colcrt			minix-sys
 ./usr/bin/co				minix-sys
@@ -381,6 +380,7 @@
 ./usr/bin/time				minix-sys
 ./usr/bin/top				minix-sys
 ./usr/bin/touch				minix-sys
+./usr/bin/tput				minix-sys
 ./usr/bin/tr				minix-sys
 ./usr/bin/truncate			minix-sys
 ./usr/bin/tsort				minix-sys
@@ -1339,6 +1339,7 @@
 ./usr/man/man1/tic.1			minix-sys
 ./usr/man/man1/time.1			minix-sys
 ./usr/man/man1/touch.1			minix-sys
+./usr/man/man1/tput.1			minix-sys
 ./usr/man/man1/tr.1			minix-sys
 ./usr/man/man1/trap.1			minix-sys
 ./usr/man/man1/true.1			minix-sys

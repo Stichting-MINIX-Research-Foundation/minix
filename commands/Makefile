@@ -4,7 +4,7 @@
 
 SUBDIR=	add_route arp ash at backup banner basename btrace cal \
 	cawf cd cdprobe cpp \
-	chmod chown ci cleantmp clear cmp co \
+	chmod chown ci cleantmp cmp co \
 	comm compress cp crc cron crontab cut \
 	dd decomp16 DESCRIBE devmand devsize df dhcpd \
 	dhrystone diff dirname diskctl dumpcore \

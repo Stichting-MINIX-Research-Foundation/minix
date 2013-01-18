@@ -25,7 +25,7 @@ SUBDIR= \
 	\
 	sed seq \
 	sort stat su \
-	tic \
+	tic tput \
 	tsort \
 	uniq \
 	\
