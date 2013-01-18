@@ -87,9 +87,9 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 	multiboot_module_t *cmp = &mod[cmp_mod];
 	int m;
 
-#define INRANGE(mod, v) ((v) >= mod->mod_start && (v) <= thismod->mod_end)
+#define INRANGE(mod, v) ((v) >= mod->mod_start && (v) < mod->mod_end)
 #define OVERLAP(mod1, mod2) (INRANGE(mod1, mod2->mod_start) || \
-			INRANGE(mod1, mod2->mod_end))
+			INRANGE(mod1, mod2->mod_end-1))
 	for(m = 0; m < n; m++) {
 		multiboot_module_t *thismod = &mod[m];
 		if(m == cmp_mod) continue;
