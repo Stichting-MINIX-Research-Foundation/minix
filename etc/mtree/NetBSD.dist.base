@@ -146,6 +146,10 @@
 ./tmp
 ./usr/tmp
 
+# this one is for term(1)
+/set type=dir uid=0 gid=5 mode=775
+./usr/spool/locks
+
 # Symlinks
 /set type=link uid=0 gid=0 mode=0777
 ./dev/mouse
