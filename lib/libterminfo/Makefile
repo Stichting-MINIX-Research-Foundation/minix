@@ -4,7 +4,6 @@
 
 .if defined(__MINIX)
 CPPFLAGS+= 	-D_NETBSD_SOURCE
-MKLINKLIB=	yes
 .endif
 USE_SHLIBDIR=	yes
 
