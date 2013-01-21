@@ -24,7 +24,21 @@ HOST_CFLAGS+=-O2 -no-cpp-precomp
 .endif
 MAKE_PROGRAM?=	${MAKE}
 
-GNUHOSTDIST?=	${.CURDIR}/../../external/gpl3/gcc/dist/
+GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
+
+# AL - MINIX /usr/src does not have the sources for the GNU utilities
+# in-tree (they are much bigger than Minix itself!) So to successfully
+# use them while cross-compiling, we have to fetch them. The success of
+# that operation is indicated by the presence of a .gitignore file in
+# the corresponding ${.CURDIR}, which also conveniently hides from git.
+.if exists(${GNUHOSTDIST:H}/fetch.sh)
+${GNUHOSTDIST:H}/.gitignore: ${GNUHOSTDIST:H}/fetch.sh
+	${HOST_SH} ${GNUHOSTDIST:H}/fetch.sh
+	@test -e ${GNUHOSTDIST}/configure
+	@echo "${MODULE:U${.CURDIR:T:C,^gcc[0-9]*$,gcc,}}-*.tar.*z*" > $@
+	@echo ${GNUHOSTDIST:T} >> $@
+_gnu_get_src=${GNUHOSTDIST:H}/.gitignore
+.endif # exists(GNUHOSTDIST:H/fetch.sh) on MINIX
 
 FIND_ARGS+=	\! \( -type d \( \
 			-name 'CVS' -o \
@@ -35,24 +49,11 @@ FIND_ARGS+=	\! \( -type d \( \
 			-name 'tests*' \
 		\) -prune \)
 
-_GNU_GET_SCRIPTS:= \
-	external/gpl3/gcc/fetch.sh \
-	external/gpl3/binutils/fetch.sh \
-	gnu/dist/fetch.sh \
-	external/lgpl2/mpc/fetch.sh \
-	external/lgpl3/gmp/fetch.sh \
-	external/lgpl3/mpfr/fetch.sh
-
-_gnu_get_src: ${_GNU_GET_SCRIPTS}
-.for name in ${_GNU_GET_SCRIPTS}
-${name}:
-	@${HOST_SH} ${.CURDIR}/../../${name}
-.endfor
-
 # Do this "find" only if actually building something.
+# AL - ... and on MINIX, if the source has already being fetched
 .if (${USETOOLS} == "yes") && empty(.MAKEFLAGS:M-V*) && \
     (make(all) || make(realall) || (!make(clean) && !make(cleandir) && !make(obj))) && \
-    !defined(_GNU_CFGSRC)
+    !defined(_GNU_CFGSRC) && exists(${GNUHOSTDIST}/configure)
 
 _GNU_CFGSRC!=	find ${GNUHOSTDIST} ${FIND_ARGS} \
 		-type f \( -name 'config*' -o -name '*.in' \) -print
@@ -121,7 +122,8 @@ configure_cleanup:
 configure_cleanup=configure_cleanup
 .endif
 
-.configure_done: _gnu_get_src .WAIT ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
+# AL For MINIX, fetch the source if not there
+.configure_done: ${_gnu_get_src} .WAIT ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
 	@mkdir build 2>/dev/null || true
 	@(cd build && ${CONFIGURE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
 	@echo ${BUILD_PLATFORM} > $@
@@ -149,5 +151,13 @@ realinstall: .install_done
 clean: clean.gnu
 clean.gnu:
 	-rm -r -f .*_done build
+
+# AL - Special target for MINIX, reset the source tree as pristine
+.if ${CLEANFETCHED:Uno} == "yes" && exists(${GNUHOSTDIST:H}/fetch.sh)
+cleandir: clean_gnu_src
+clean_gnu_src:
+	-rm -r -f ${GNUHOSTDIST} ${GNUHOSTDIST:H}/.gitignore
+# XXX CHECKME: could have used the content of .gitignore as well?
+.endif # CLEANFETCHED == yes
 
 .include <bsd.hostprog.mk>
