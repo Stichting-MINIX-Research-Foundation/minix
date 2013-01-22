@@ -77,7 +77,7 @@ SRCS+=	${i}
 .endfor
 
 # Import from stdlib
-.for i in abort.c atexit.c atoi.c exit.c getenv.c \
+.for i in atexit.c atoi.c exit.c getenv.c \
 	getopt.c ldiv.c malloc.c
 .PATH.c: ${LIBCSRCDIR}/stdlib
 SRCS+= ${i}
