@@ -26,7 +26,7 @@ PROTO=	proto
 
 # Common to all architectures
 ETC=		system.conf master.passwd
-EXTRA=		mtab
+EXTRA=		rc
 PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
 PROG_DRIVERS=
 PROG_COMMANDS=	mount fsck.mfs sh service
@@ -99,7 +99,7 @@ ${etc}: ${NETBSDSRCDIR}/etc/${etc}
 
 # LSC Force the regeneration of the proto file as it seems sometimes 
 # they are not copied over as needed.
-# LSC ramdisk rc file != /etc/rc && mtab not empty!
+# LSC ramdisk rc file != /etc/rc
 # BJG if ${.CURDIR} == ${.OBJDIR}, we are building in-tree and install
 # shouldn't try to install the originals over the originals. Otherwise
 # we are building out-of-tree and the contents should be copied
