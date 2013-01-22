@@ -1,0 +1,34 @@
+Changes since 1.81.5
+    * various compilation fixes
+    * support for newer DBs
+    * tcl support compiles again
+Changes since 1.81.4
+    * add Changes document
+    * the preserve command overwrote the edited file; the problem
+      is really in DB; a bandaid was added
+    * configure changes
+	- -rpath now on by default
+	- check for iconv
+    * handle incomplete/invalid input
+    * upgrade libtool and automake
+    * Motif front-end was getting out of sync; fixed
+    * ^T works in presence of wide chars
+    * fix use of OPT_GLOBAL (YAMAMOTO Takashi <takashi.yamamoto@bigfoot.com>)
+    * missing fallback function added
+    * fix use of both leftright and number
+	(problem reported by Dima Dorfman <dima@unixfreak.org>)
+    * install everything 1.79 installed
+    * fix count argument for commands
+	(problem reported by Arfst Ludwig <Arfst.Ludwig@LHSystems.COM>)
+    * perl changes
+	- map no longer assumes its argument is the name of a perl function
+	- EXISTS for marks
+    * documentation changes
+	- vi.ref converted to texinfo
+	- vsplit documented
+Changes since 1.81.3
+    * support for newer ncurses
+    * various other wide character related changes
+    * eliminate spurious cursor movements on split screens
+    * use of gtk-1.2 allowed again
+    * small fix to Motif front-end

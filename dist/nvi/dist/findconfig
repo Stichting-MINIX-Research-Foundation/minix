@@ -1,0 +1,14 @@
+#!/bin/sh
+# the next line restarts using tclsh \
+exec tclsh "$0" "$@"
+
+# A utility that searches for the 'tclConfig.sh' shell script
+# which contains platform-specific compiler/linker options for
+# building Tcl programs and shared libraries.
+
+foreach dir $tcl_pkgPath {
+    if [file exists $dir/tclConfig.sh] {
+        puts $dir/tclConfig.sh
+        exit
+    }
+}

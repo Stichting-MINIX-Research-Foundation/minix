@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188 2012/08/17 16:22:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.189 2012/09/16 13:47:41 rmind Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -38,7 +38,7 @@ SUBDIR+=	.WAIT
 #SUBDIR+=	i18n_module
 
 SUBDIR+= libcompat_minix libblockdriver libchardriver     \
-       libnetdriver libedit libm libtimers libutil \
+       libnetdriver libm libtimers libutil \
        libz libfetch libvtreefs libaudiodriver libmthread   \
        libexec libdevman libusb libasyn librmt \
        libddekit libminixfs libbdev libelf libminc libcrypt libterminfo \
@@ -107,7 +107,7 @@ SUBDIR+=	.WAIT
 
 SUBDIR+=	libcurses	# depends on libterminfo
 #SUBDIR+=	libdm		# depends on libprop
-#SUBDIR+=	libedit		# depends on libterminfo
+SUBDIR+=	libedit		# depends on libterminfo
 #SUBDIR+=	libexecinfo 	# depends on libelf
 #SUBDIR+=	libppath	# depends on libprop
 #SUBDIR+=	libperfuse	# depends on libpuffs
@@ -120,6 +120,7 @@ SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 
 .if (${MKNPF} != "no")
 SUBDIR+=	libnpf		# depends on libprop
+#SUBDIR+=	npf
 .endif
 
 .if (${MKCRYPTO} != "no")

@@ -214,9 +214,9 @@
 ./usr/bin/dumpcore			minix-sys
 ./usr/bin/egrep				minix-sys
 ./usr/bin/eject				minix-sys
-./usr/bin/elvis				minix-sys
-./usr/bin/elvprsv			minix-sys
-./usr/bin/elvrec			minix-sys
+./usr/bin/elvis				minix-sys	obsolete
+./usr/bin/elvprsv			minix-sys	obsolete
+./usr/bin/elvrec			minix-sys	obsolete
 ./usr/bin/env				minix-sys
 ./usr/bin/ex				minix-sys
 ./usr/bin/expand			minix-sys
@@ -230,7 +230,7 @@
 ./usr/bin/fix				minix-sys
 ./usr/bin/flex++			minix-sys
 ./usr/bin/flex				minix-sys
-./usr/bin/fmt				minix-sys
+./usr/bin/fmt				minix-sys	obsolete
 ./usr/bin/fold				minix-sys
 ./usr/bin/format			minix-sys
 ./usr/bin/fortune			minix-sys
@@ -333,7 +333,7 @@
 ./usr/bin/readall			minix-sys	obsolete
 ./usr/bin/readlink			minix-sys
 ./usr/bin/reboot			minix-sys
-./usr/bin/ref				minix-sys
+./usr/bin/ref				minix-sys	obsolete
 ./usr/bin/remsync			minix-sys
 ./usr/bin/restore			minix-sys
 ./usr/bin/rev				minix-sys
@@ -399,6 +399,7 @@
 ./usr/bin/uue				minix-sys
 ./usr/bin/uuencode			minix-sys
 ./usr/bin/version			minix-sys
+./usr/bin/view				minix-sys
 ./usr/bin/vi				minix-sys
 ./usr/bin/vol				minix-sys
 ./usr/bin/wc				minix-sys
@@ -504,6 +505,7 @@
 ./usr/include/g++			minix-sys
 ./usr/include/grp.h			minix-sys
 ./usr/include/hesiod.h			minix-sys
+./usr/include/histedit.h		minix-sys
 ./usr/include/iconv.h			minix-sys
 ./usr/include/ieeefp.h			minix-sys
 ./usr/include/ifaddrs.h			minix-sys
@@ -702,6 +704,9 @@
 ./usr/include/pwd.h			minix-sys
 ./usr/include/randomid.h		minix-sys
 ./usr/include/ranlib.h			minix-sys
+./usr/include/readline/history.h	minix-sys
+./usr/include/readline			minix-sys
+./usr/include/readline/readline.h	minix-sys
 ./usr/include/re_comp.h			minix-sys
 ./usr/include/regex.h			minix-sys
 ./usr/include/regexp.h			minix-sys
@@ -1016,6 +1021,9 @@
 ./usr/lib/libdevman_pic.a		minix-sys
 ./usr/lib/libedit.a			minix-sys
 ./usr/lib/libedit_pic.a			minix-sys
+./usr/lib/libedit.so.3.0		minix-sys
+./usr/lib/libedit.so.3			minix-sys
+./usr/lib/libedit.so			minix-sys
 ./usr/lib/libelf.a			minix-sys
 ./usr/lib/libelf_pic.a			minix-sys
 ./usr/lib/libelf.so.0			minix-sys
@@ -1172,8 +1180,8 @@
 ./usr/man/man1/ed.1			minix-sys
 ./usr/man/man1/egrep.1			minix-sys
 ./usr/man/man1/eject.1			minix-sys
-./usr/man/man1/elvis.1			minix-sys
-./usr/man/man1/elvrec.1			minix-sys
+./usr/man/man1/elvis.1			minix-sys	obsolete
+./usr/man/man1/elvrec.1			minix-sys	obsolete
 ./usr/man/man1/env.1			minix-sys
 ./usr/man/man1/eval.1			minix-sys
 ./usr/man/man1/ex.1			minix-sys
@@ -1190,7 +1198,7 @@
 ./usr/man/man1/finger.1			minix-sys
 ./usr/man/man1/flex.1			minix-sys
 ./usr/man/man1/flexdoc.1		minix-sys
-./usr/man/man1/fmt.1			minix-sys
+./usr/man/man1/fmt.1			minix-sys	obsolete
 ./usr/man/man1/fold.1			minix-sys
 ./usr/man/man1/for.1			minix-sys
 ./usr/man/man1/format.1			minix-sys
@@ -1288,7 +1296,7 @@
 ./usr/man/man1/readlink.1		minix-sys
 ./usr/man/man1/readonly.1		minix-sys
 ./usr/man/man1/recwave.1		minix-sys
-./usr/man/man1/ref.1			minix-sys
+./usr/man/man1/ref.1			minix-sys	obsolete
 ./usr/man/man1/remsync.1		minix-sys
 ./usr/man/man1/return.1			minix-sys
 ./usr/man/man1/rget.1			minix-sys
@@ -1346,6 +1354,8 @@
 ./usr/man/man1/unset.1			minix-sys
 ./usr/man/man1/uud.1			minix-sys
 ./usr/man/man1/uue.1			minix-sys
+./usr/man/man1/vi.1			minix-sys
+./usr/man/man1/view.1			minix-sys
 ./usr/man/man1/vol.1			minix-sys
 ./usr/man/man1/wait.1			minix-sys
 ./usr/man/man1/wc.1			minix-sys
@@ -1357,7 +1367,7 @@
 ./usr/man/man1/write.1			minix-sys
 ./usr/man/man1/xargs.1			minix-sys
 ./usr/man/man1x/awk.1x			minix-sys
-./usr/man/man1x/elvis.1x		minix-sys
+./usr/man/man1x/elvis.1x		minix-sys	obsolete
 ./usr/man/man1x/kermit.1x		minix-sys
 ./usr/man/man1x/macros.1x		minix-sys
 ./usr/man/man1x/mined.1x		minix-sys
@@ -1968,8 +1978,11 @@
 ./usr/man/man3/ecalloc.3					minix-sys
 ./usr/man/man3/echo.3					minix-sys
 ./usr/man/man3/echochar.3					minix-sys
+./usr/man/man3/editline.3		minix-sys
 ./usr/man/man3/efopen.3					minix-sys
 ./usr/man/man3/efun.3					minix-sys
+./usr/man/man3/el_deletestr.3		minix-sys
+./usr/man/man3/el_end.3			minix-sys
 ./usr/man/man3/elf32_checksum.3					minix-sys
 ./usr/man/man3/elf32_fsize.3					minix-sys
 ./usr/man/man3/elf32_getehdr.3					minix-sys
@@ -2029,6 +2042,18 @@
 ./usr/man/man3/elf_strptr.3					minix-sys
 ./usr/man/man3/elf_update.3					minix-sys
 ./usr/man/man3/elf_version.3					minix-sys
+./usr/man/man3/el_get.3			minix-sys
+./usr/man/man3/el_getc.3		minix-sys
+./usr/man/man3/el_gets.3		minix-sys
+./usr/man/man3/el_init.3		minix-sys
+./usr/man/man3/el_insertstr.3		minix-sys
+./usr/man/man3/el_line.3		minix-sys
+./usr/man/man3/el_parse.3		minix-sys
+./usr/man/man3/el_push.3		minix-sys
+./usr/man/man3/el_reset.3		minix-sys
+./usr/man/man3/el_resize.3		minix-sys
+./usr/man/man3/el_set.3			minix-sys
+./usr/man/man3/el_source.3		minix-sys
 ./usr/man/man3/emalloc.3					minix-sys
 ./usr/man/man3/encrypt.3					minix-sys
 ./usr/man/man3/endfsent.3					minix-sys
@@ -2354,6 +2379,9 @@
 ./usr/man/man3/hesiod_init.3				minix-sys	obsolete
 ./usr/man/man3/hesiod_resolve.3				minix-sys	obsolete
 ./usr/man/man3/hesiod_to_bind.3				minix-sys	obsolete
+./usr/man/man3/history.3		minix-sys
+./usr/man/man3/history_end.3		minix-sys
+./usr/man/man3/history_init.3		minix-sys
 ./usr/man/man3/hline.3					minix-sys
 ./usr/man/man3/hostalias.3					minix-sys
 ./usr/man/man3/hsearch.3					minix-sys
@@ -3319,6 +3347,11 @@
 ./usr/man/man3/tmpfile.3					minix-sys
 ./usr/man/man3/tmpnam.3					minix-sys
 ./usr/man/man3/toascii.3					minix-sys
+./usr/man/man3/tok_end.3		minix-sys
+./usr/man/man3/tok_init.3		minix-sys
+./usr/man/man3/tok_line.3		minix-sys
+./usr/man/man3/tok_reset.3		minix-sys
+./usr/man/man3/tok_str.3		minix-sys
 ./usr/man/man3/tolower.3					minix-sys
 ./usr/man/man3/touchline.3					minix-sys
 ./usr/man/man3/touchoverlap.3					minix-sys
@@ -3545,6 +3578,7 @@
 ./usr/man/man5/crontab.5					minix-sys
 ./usr/man/man5/dhcp.conf.5					minix-sys
 ./usr/man/man5/dir.5					minix-sys
+./usr/man/man5/editrc.5			minix-sys
 ./usr/man/man5/ethers.5					minix-sys
 ./usr/man/man5/fstab.5					minix-sys
 ./usr/man/man5/group.5					minix-sys
@@ -3604,7 +3638,7 @@
 ./usr/man/man8/cron.8				minix-sys
 ./usr/man/man8/dhcpd.8				minix-sys
 ./usr/man/man8/diskctl.8			minix-sys
-./usr/man/man8/elvprsv.8			minix-sys
+./usr/man/man8/elvprsv.8			minix-sys	obsolete
 ./usr/man/man8/fbdctl.8				minix-sys
 ./usr/man/man8/fdisk.8				minix-sys
 ./usr/man/man8/fingerd.8			minix-sys

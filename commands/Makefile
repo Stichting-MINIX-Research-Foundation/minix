@@ -8,7 +8,7 @@ SUBDIR=	add_route arp ash at backup banner basename btrace cal \
 	comm compress cp crc cron crontab cut \
 	dd decomp16 DESCRIBE devmand devsize df dhcpd \
 	dhrystone diff dirname diskctl dumpcore \
-	eject elvis env expand factor fbdctl \
+	eject env expand factor fbdctl \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	ftp101 gcore gcov-pull getty grep head hexdump host \
 	hostaddr id ifconfig ifdef \

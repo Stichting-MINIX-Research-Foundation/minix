@@ -1,0 +1,26 @@
+#!/bin/sh
+revision=${@:-HEAD}
+gitrev=`git describe $revision`
+dir=$gitrev
+version=`echo $gitrev | sed -e 's/nvi-//'`
+date=`date +%Y-%m-%d`
+(cd .. && git archive --format=tar --prefix=$dir/ $revision) | tar x $dir
+(cd $dir/dist
+    sh distrib --ignore-deps
+    rm export
+)
+(cd $dir/docs
+    mkdir html
+    for i in edit exref vi.man vi.ref vitut; do 
+	(cd $i; 
+	 make;
+	 rm -f core # grops sometimes dumps core on me
+        ); 
+    done
+)
+(cd $dir
+    perl -pi -e "s/version 1.80/version $version/" README
+    perl -pi -e "s(%H%)($date)" README
+)
+tar czf $dir.tar.gz $dir
+tar cjf $dir.tar.bz2 $dir

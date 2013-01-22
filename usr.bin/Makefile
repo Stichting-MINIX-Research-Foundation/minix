@@ -4,24 +4,33 @@
 .include <bsd.own.mk>
 
 SUBDIR= \
-	 \
+	\
 	bzip2 bzip2recover \
-	 chpass cksum \
-	 \
-	 du \
+	chpass cksum \
+	ctags \
+	du \
+	\
+	\
 	genassym \
 	indent join \
 	ldd \
 	login lorder m4 \
 	make man \
 	mkdep mktemp \
-	nbperf newgrp \
+	\
+	nbperf newgrp nvi \
 	passwd \
+	\
+	\
+	\
 	sed seq \
 	sort stat su \
 	tic \
 	tsort \
 	uniq \
+	\
+	\
+	\
 	xinstall 
 
 .if !defined(__MINIX)

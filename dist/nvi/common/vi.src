@@ -1,0 +1,37 @@
+PREFIX	vi
+
+INCLUDE #include <sys/types.h>
+INCLUDE #include <sys/queue.h>
+INCLUDE #include <sys/stat.h>
+INCLUDE #include <bitstring.h>
+INCLUDE #include <errno.h>
+INCLUDE #include <fcntl.h>
+INCLUDE #include <limits.h>
+INCLUDE #include <stdio.h>
+INCLUDE #include <stdlib.h>
+INCLUDE #include <string.h>
+INCLUDE #include "common.h"
+INCLUDE #include <db_int.h>
+INCLUDE #include "db_page.h"
+INCLUDE #include "db_am.h"
+INCLUDE #include "rep.h"
+INCLUDE #include "txn.h"
+
+BEGIN	marker		200
+ARG	opcode		u_int32_t	lu
+END
+
+BEGIN	cursor		201
+ARG	opcode		u_int32_t	lu
+ARG	lno		db_recno_t	lu
+ARG	cno		size_t		d
+END
+
+BEGIN	mark		202
+POINTER	lmp		LMARK *		%
+END
+
+BEGIN	change		203
+ARG	opcode		u_int32_t	lu
+ARG	lno		db_recno_t	lu
+END

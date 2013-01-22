@@ -50,6 +50,7 @@
 ./usr/include/net/gen
 ./usr/include/prop
 ./usr/include/protocols
+./usr/include/readline
 ./usr/include/rpcsvc
 ./usr/include/ssp
 ./usr/include/sys

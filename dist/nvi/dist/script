@@ -1,0 +1,41 @@
+# setup
+# setenv VERSION 1.79
+setenv VERSION tk
+setenv S /usr/src/nvi
+
+# Make sure everything's checked in.
+cd $S && allout
+
+# Increment the version numbers and dates.
+setenv X version.h
+cd $S/ex && sco $X && echo "go to $VERSION" | sccs delget $X
+setenv X README
+cd $S && sco $X && vi $X && echo "go to $VERSION" | sccs delget $X
+
+# Build the distribution.
+cd $S/dist && sh ./distrib
+cd $S/catalog && make clean all check && rm dump __ck1 __ck2 && \
+    chmod 444 english* *.check
+
+# Build a version.
+cd $S && rm -rf build.local && mkdir build.local && cd build.local && \
+    ~bostic/bin/viconf && (make |& tee mklog)
+what vi | gzip > ../ARCHIVE/history/$VERSION.gz
+chmod 444 ../ARCHIVE/history/$VERSION.gz
+
+# build the documents
+cd $S/build.local && make cleandocs docs
+
+# Clean up the tree.
+cd $S && mv -i {ARCHIVE,TODO,build.local} SCCS/
+find . \! -path '*SCCS*' -type d \! -perm 775
+find . \! -path '*SCCS*' \( -name '*.rej' -o -name '*.orig' \)
+find . \! -path '*SCCS*' -type f \( -perm -200 -o -perm -2 -o -perm -20 \)
+chown -R bin.wsrc .
+
+# Create the release.
+setenv T /var/spool/ftp/pub
+cd $S/.. && mv -i nvi nvi-$VERSION
+tar cFFf - nvi-$VERSION | gzip --best > $T/nvi-$VERSION.tar.gz
+chmod 444 $T/nvi-$VERSION.tar.gz && mv -i nvi-$VERSION nvi
+cd $S && mv -i SCCS/{ARCHIVE,TODO,build.local} .

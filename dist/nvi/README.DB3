@@ -1,0 +1,22 @@
+This version of vi requires DB3.1 or better, which can be found
+on http://www.sleepycat.com/ .
+
+Note that there is a small problem with DB 3.2 in that it will
+not let nvi read in a final line that doesn't end in a newline.
+This should be fixed in DB 3.3
+
+If your system library (such as glibc prior to version 2.2) uses a
+previous version of db (e.g. DB2) internally, you must configure with
+--enable-dynamic-loading to avoid symbols in the internally used db from
+being resolved against the newer db.
+
+If, on top of that, the vi binary is explicitly linked against that
+previous version of db (such as might happen if you enable the perl
+embedding), you should compile the 3.x version with all symbols internally
+resolved.  In case you use the Gnu linker (ld), this can be accomplished
+by passing it the -Bsymbolic option. You can do this by setting CC
+to e.g. "gcc -Wl,-Bsymbolic" prior to configuring db.
+See docs/ref/build_unix/flags.html in the db distribution for more
+information.
+
+skimo@kotnet.org

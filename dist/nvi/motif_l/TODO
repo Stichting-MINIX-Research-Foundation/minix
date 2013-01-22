@@ -1,0 +1,90 @@
+Top priority would be the mouse.  We need to get cut&paste working.
+(Including extend beyond the visible screen.  I believe I'm sending
+the correct mouse events for that, but I haven't tested it.)
+
+=-=-=-=
+Find a tool to convert the reference doc to html, and just point a
+browser at it for the help screen.  Have "novice", "fast lookup"
+and an "everything" version.
+
+=-=-=-=
+Disassociate scrollbar actions from the cursor, i.e. when you
+scroll the screen moves but the cursor doesn't.
+
+>> However, it seems to me that the cursor should disappear from
+>> the screen as soon as it's no longer positioned on a line that's
+>> on the screen.  Does that make sense?  And, if so, how do we
+>> make that happen?
+>
+> I'd add a message:
+>       IPO_DISPLAY_CARET( boolean )
+> since the caret is also used for the current drawing position, we
+> really can't move it 'off the screen'.
+
+=-=-=-=
+>> BTW, this may be a bug, I can't seem to erase characters in the 
+>> colon command line. 
+>  
+> It's a bug that I reported earlier.  Core is not (correctly) reading the
+> tty options for the terminal.  Since we have not bound magic 
+> characters (VI_BACKSPACE) to BackSpace and Delete keys, the 
+> editing here is counter-intuitive.  I'd guess that you use 
+> Delete for Tty Erase.  Try ^H in the colon line and see what happens.
+
+=-=-=-=
+Implement a "word search" button for the search dialog -- it's not
+trivial, the ex/ex_subst.c/re_compile() routine is going to have to
+allocate memory for the pattern which isn't going to make it happy.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/* TODO List:
+ *	scrollbars	Need protocol messages that tell us what to display
+ *			in the scrollbars.  Suggestion:
+ *				scrollbar( bottom, lines, home )
+ *				bottom is $
+ *				lines is lines shown in the window
+ *					(takes wrap into account)
+ *				home is the line number ot the top visible line
+ *
+ *			On the way back send scroll( top )
+ *
+ *			User should be able to enable/disable bar display
+ *
+ *			<yuch!> horizontal scrollbar
+ *
+ *	expose_func
+ *	insert/delete	When we have a partially obscured window, we only
+ *			refresh a single line after scrolling.  I believe this
+ *			is due to the exposure events all showing up after
+ *			the scrolling is completed (pipe_input_func does all
+ *			of the scrolling and then we get back to XtMainLoop)
+ *
+ *	split		Ought to be able to put a title on each pane
+ *			Need protocol messages to shift focus
+ *
+ *	bell		user settable visible bell
+ *
+ *	busy		don't understand the protocol
+ *
+ *	mouse		need to send IPO_MOVE_CARET( row, column )
+ *			(note that screen code does not know about tabs or
+ *			line wraps)
+ *			Connect to window manager cut buffer
+ *			need to send IPO_EXTEND_SELECT( r1, c1, r2, c1 )
+ *			otherwise core and screen duplicate selection logic
+ *			Need to determine correct screen for event.  Not
+ *			needed until split is implemented.
+ *
+ *	arrow keys	need to define a protocol.  I can easily send
+ *			the vt100 sequences (and currently do).
+ *			In general, we need to define what special keys
+ *			do (for example PageUp) and what happens when we
+ *			are in Insert mode.
+ *
+ *			Suggestion: IPO_COMMAND( string ).  vi core can
+ *			take it as a command even when in insert mode.
+ *
+ *	icon		Is currently B&W.  To get a color icon, would
+ *			require a lot of work or that bostic pick up
+ *			the xpm library.
+ */

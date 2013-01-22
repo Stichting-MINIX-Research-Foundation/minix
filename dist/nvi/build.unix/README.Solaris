@@ -1,0 +1,10 @@
+There are some known problems with Solaris curses.
+Please give ncurses a try when you encounter a screen output problem.
+
+Apparently, the more recent Solaris compilers invoke the incremental linker,
+`ild', when the "-g" option is used and one or more "xxx.o" files are
+specified on the command line during the link phase.  Unfortunately, the
+executable produced is up to 3-4 times as big as an executable generated
+by the standard linker `ld'.
+You can bypass this by adding "-xildoff" to LDFLAGS or by
+setting CFLAGS (to something that does not contain "-g").
