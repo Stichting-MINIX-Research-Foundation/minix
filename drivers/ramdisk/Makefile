@@ -171,6 +171,6 @@ proto.gen: ${PROTO} ${PROTO_FILES} ${PROGRAMS}
 	# used in the mkfs tool.
 	${TOOL_CAT} ${PROTO} | ${HOST_CC} \
 	    	${RAMDISK_DEFINES} \
-		-traditional-cpp -E - | grep -v "^$$" | grep -v "#" >${.OBJDIR}/${.TARGET}
+		-E - | grep -v "^$$" | grep -v "#" >${.OBJDIR}/${.TARGET}
 
 .include <minix.service.mk>
