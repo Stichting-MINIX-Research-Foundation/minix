@@ -1,7 +1,8 @@
 #include "fs.h"
 #include "buf.h"
-#include <minix/com.h>
 #include "inode.h"
+#include <minix/com.h>
+#include <string.h>
 
 
 /*===========================================================================*
@@ -53,10 +54,10 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
 		return(EFBIG);
 	}
   } else {
-	position = bp->b_bytes;
-	if (nrbytes > rip->i_size - position) {
+	position = 0;
+	if (nrbytes > rip->i_size) {
 		/* There aren't that many bytes to read */
-		nrbytes = rip->i_size - position;
+		nrbytes = rip->i_size;
 	}
   }
 
@@ -75,25 +76,18 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
 	cum_io += nrbytes;
   }
 
-  fs_m_out->RES_SEEK_POS_LO = position; /* It might change later and the VFS
-					   has to know this value */
-
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
-	  if (position > f_size) rip->i_size = position;
+	rip->i_size = position;
   } else {
-	if(position >= rip->i_size) {
-		/* All data in the pipe is read, so reset pipe pointers */
-		rip->i_size = 0;	/* no data left */
-		position = 0;		/* reset reader(s) */
-	}
+	memmove(bp->b_data, bp->b_data+nrbytes, rip->i_size - nrbytes);
+	rip->i_size -= nrbytes;
   }
 
-  if (rw_flag == READING)
-	bp->b_bytes = position;
   if (rw_flag == READING) rip->i_update |= ATIME;
   if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
   fs_m_out->RES_NBYTES = (size_t) cum_io;
+  fs_m_out->RES_SEEK_POS_LO = rip->i_size;
 
   put_inode(rip);
   put_block(rip->i_dev, rip->i_num);

@@ -297,46 +297,33 @@ size_t req_size;
   r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
 		    buf, size, &new_pos, &cum_io_incr);
 
-  if (r >= 0) {
-	if (ex64hi(new_pos))
-		panic("rw_pipe: bad new pos");
-
-	cum_io += cum_io_incr;
-	buf += cum_io_incr;
-	req_size -= cum_io_incr;
+  if (r != OK) {
+	return(r);
   }
 
-  /* On write, update file size and access time. */
-  if (rw_flag == WRITING) {
-	if (cmp64ul(new_pos, vp->v_size) > 0) {
-		if (ex64hi(new_pos) != 0) {
-			panic("read_write: file size too big for v_size");
-		}
-		vp->v_size = ex64lo(new_pos);
-	}
-  } else {
-	if (cmp64ul(new_pos, vp->v_size) >= 0) {
-		/* Pipe emtpy; reset size */
-		vp->v_size = 0;
+  if (ex64hi(new_pos))
+	panic("rw_pipe: bad new pos");
+
+  cum_io += cum_io_incr;
+  buf += cum_io_incr;
+  req_size -= cum_io_incr;
+
+  vp->v_size = ex64lo(new_pos);
+
+  if (partial_pipe) {
+	/* partial write on pipe with */
+	/* O_NONBLOCK, return write count */
+	if (!(oflags & O_NONBLOCK)) {
+		/* partial write on pipe with req_size > PIPE_SIZE,
+		 * non-atomic
+		 */
+		fp->fp_cum_io_partial = cum_io;
+		pipe_suspend(f, buf, req_size);
+		return(SUSPEND);
 	}
   }
 
-  if (r == OK) {
-	if (partial_pipe) {
-		/* partial write on pipe with */
-		/* O_NONBLOCK, return write count */
-		if (!(oflags & O_NONBLOCK)) {
-			/* partial write on pipe with req_size > PIPE_SIZE,
-			 * non-atomic
-			 */
-			fp->fp_cum_io_partial = cum_io;
-			pipe_suspend(f, buf, req_size);
-			return(SUSPEND);
-		}
-	}
-	fp->fp_cum_io_partial = 0;
-	return(cum_io);
-  }
+  fp->fp_cum_io_partial = 0;
 
-  return(r);
+  return(cum_io);
 }
