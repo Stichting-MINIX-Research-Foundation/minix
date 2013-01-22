@@ -452,7 +452,7 @@ static int select_request_pipe(struct filp *f, int *ops, int block)
 
   if ((*ops & (SEL_RD|SEL_ERR))) {
 	/* Check if we can read 1 byte */
-	err = pipe_check(f->filp_vno, READING, 0, 1, 1 /* Check only */);
+	err = pipe_check(f->filp_vno, READING, f->filp_flags, 1, 1 /* Check only */);
 
 	if (err != SUSPEND)
 		r |= SEL_RD;
@@ -468,7 +468,7 @@ static int select_request_pipe(struct filp *f, int *ops, int block)
 
   if ((*ops & (SEL_WR|SEL_ERR))) {
 	/* Check if we can write 1 byte */
-	err = pipe_check(f->filp_vno, WRITING, 0, 1, 1 /* Check only */);
+	err = pipe_check(f->filp_vno, WRITING, f->filp_flags, 1, 1 /* Check only */);
 
 	if (err != SUSPEND)
 		r |= SEL_WR;
