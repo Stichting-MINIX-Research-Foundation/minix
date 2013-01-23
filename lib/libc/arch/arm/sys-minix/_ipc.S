@@ -49,9 +49,8 @@ ENTRY(_minix_kernel_info_struct)
 	mov	r0, #MINIX_KERNINFO /* kerninfo() */
 	mov	r3, #IPCVEC  /* r3 determines the SVC type */
 	svc	#0           /* trap to kernel */
-	pop	{r0}	     /* r0 = return struct ptr */
-	ldr	r0, [r0]
-	mov	r0, r1
+	pop     {r2}         /* r2 = return struct ptr (was r0) */
+	str     r1, [r2]
 	pop	{fp}
 	bx	lr
 
