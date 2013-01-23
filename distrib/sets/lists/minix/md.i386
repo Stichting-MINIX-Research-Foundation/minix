@@ -94,6 +94,7 @@
 ./usr/include/i386/vmparam.h		minix-sys
 ./usr/include/i386/wchar_limits.h	minix-sys
 ./usr/include/minix/vassert.h		minix-sys
+./usr/include/minix/virtio.h		minix-sys
 ./usr/include/x86/aout_machdep.h	minix-sys
 ./usr/include/x86/bootinfo.h		minix-sys
 ./usr/include/x86/cacheinfo.h		minix-sys
