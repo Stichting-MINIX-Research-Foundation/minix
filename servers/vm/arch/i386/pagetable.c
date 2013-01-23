@@ -58,8 +58,13 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
 #define SPAREPAGES 100
 #define STATIC_SPAREPAGES 90
 #else
-#define SPAREPAGES 20
-#define STATIC_SPAREPAGES 15
+#ifdef __arm__
+# define SPAREPAGES 80
+# define STATIC_SPAREPAGES 75 
+#else
+# define SPAREPAGES 20
+# define STATIC_SPAREPAGES 15 
+#endif /* __arm__ */
 #endif
 
 #define SPAREPAGEDIRS 11
