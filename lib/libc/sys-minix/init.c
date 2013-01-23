@@ -19,6 +19,9 @@ struct minix_ipcvecs _minix_ipcvecs = {
 
 void __minix_init(void)
 {
+#ifdef __arm__
+	_minix_kerninfo = NULL;
+#else
 	if((_minix_kernel_info_struct(&_minix_kerninfo)) != 0
 	  || _minix_kerninfo->kerninfo_magic != KERNINFO_MAGIC) {
 		_minix_kerninfo = NULL;
@@ -26,5 +29,6 @@ void __minix_init(void)
          	_minix_kerninfo->minix_ipcvecs) {
 		_minix_ipcvecs = *_minix_kerninfo->minix_ipcvecs;
          }
+#endif /* __arm__ */
 }
 
