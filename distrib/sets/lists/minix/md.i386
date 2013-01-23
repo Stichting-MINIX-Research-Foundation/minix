@@ -160,7 +160,6 @@
 ./usr/sbin/fxp				minix-sys
 ./usr/sbin/hello			minix-sys
 ./usr/sbin/lance			minix-sys
-./usr/sbin/log				minix-sys
 ./usr/sbin/orinoco			minix-sys
 ./usr/sbin/pci				minix-sys
 ./usr/sbin/printer			minix-sys

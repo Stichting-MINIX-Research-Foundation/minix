@@ -3734,6 +3734,7 @@
 ./usr/sbin/installboot_nbsd		minix-sys
 ./usr/sbin/ipc				minix-sys
 ./usr/sbin/kernel			minix-sys
+./usr/sbin/log				minix-sys
 ./usr/sbin/memory			minix-sys
 ./usr/sbin					minix-sys
 ./usr/sbin/mkproto			minix-sys
