@@ -622,6 +622,7 @@
 ./usr/include/minix/vboxif.h		minix-sys
 ./usr/include/minix/vboxtype.h		minix-sys
 ./usr/include/minix/vfsif.h		minix-sys
+./usr/include/minix/virtio.h		minix-sys
 ./usr/include/minix/vm.h		minix-sys
 ./usr/include/minix/vtreefs.h		minix-sys
 ./usr/include/mntopts.h			minix-sys

@@ -11,6 +11,7 @@
 ./etc/system.conf.d/lance		minix-sys
 ./etc/system.conf.d/rtl8139		minix-sys
 ./etc/system.conf.d/rtl8169		minix-sys
+./etc/system.conf.d/virtio_net		minix-sys
 ./multiboot/mod07_log			minix-sys
 ./multiboot/mod08_tty			minix-sys
 ./multiboot/mod09_mfs			minix-sys
@@ -23,6 +24,7 @@
 ./sbin/hgfs				minix-sys
 ./sbin/readclock.drv			minix-sys
 ./sbin/vbfs				minix-sys
+./sbin/virtio_blk			minix-sys
 ./usr/bin/atnormalize			minix-sys
 ./usr/bin/autopart			minix-sys
 ./usr/bin/dosdir			minix-sys
@@ -94,7 +96,6 @@
 ./usr/include/i386/vmparam.h		minix-sys
 ./usr/include/i386/wchar_limits.h	minix-sys
 ./usr/include/minix/vassert.h		minix-sys
-./usr/include/minix/virtio.h		minix-sys
 ./usr/include/x86/aout_machdep.h	minix-sys
 ./usr/include/x86/bootinfo.h		minix-sys
 ./usr/include/x86/cacheinfo.h		minix-sys
@@ -132,6 +133,8 @@
 ./usr/lib/libvassert.a			minix-sys
 ./usr/lib/libvboxfs.a			minix-sys
 ./usr/lib/libvboxfs_pic.a		minix-sys
+./usr/lib/libvirtio.a			minix-sys
+./usr/lib/libvirtio_pic.a		minix-sys
 ./usr/mdec/boot_monitor			minix-sys
 ./usr/mdec/bootxx_cd9660		minix-sys
 ./usr/mdec/bootxx_ext2fs		minix-sys
@@ -167,3 +170,4 @@
 ./usr/sbin/sb16				minix-sys
 ./usr/sbin/ti1225			minix-sys
 ./usr/sbin/vbox				minix-sys
+./usr/sbin/virtio_net			minix-sys
