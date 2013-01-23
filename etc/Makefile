@@ -324,6 +324,13 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	    master.passwd ${DESTDIR}/etc
 	${TOOL_PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
 	    ${DESTDIR}/etc/master.passwd
+.if ${MKUNPRIVED} != "no"
+	( \
+		for metaent in passwd pwd.db spwd.db; do \
+	    		echo "./etc/$${metaent} type=file mode=0644 uname=root gname=operator tags=etc_pkg"; \
+		done; \
+	) | ${METALOG.add}
+.endif	# MKUNPRIVED != no
 .if defined(__MINIX)
 # LSC: We need a safe install target for etc files, as this is expected from
 # our current user base. This safe version only leaves out the master.passwd
@@ -341,13 +348,6 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 # LSC Minix administrator group is operator, not wheel
 .endif # defined(__MINIX)
-.if ${MKUNPRIVED} != "no"
-	( \
-		for metaent in passwd pwd.db spwd.db; do \
-	    		echo "./etc/$${metaent} type=file mode=0644 uname=root gname=operator tags=etc_pkg"; \
-		done; \
-	) | ${METALOG.add}
-.endif	# MKUNPRIVED != no
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 .if !defined(__MINIX)
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
