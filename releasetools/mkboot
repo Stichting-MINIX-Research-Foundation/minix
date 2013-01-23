@@ -25,8 +25,6 @@ rotate_oldest() {
 }
 
 
-trap 'e=$?; rm -f /tmp/mkb.$$; exit $e' 0 2
-
 mdec=/usr/mdec	# bootstraps
 # If no DESTDIR specified, then act on / or on the current chroot
 DESTDIR=
@@ -74,8 +72,7 @@ esac
 
 case $action in
 hdboot)
-	sh tell_config OS_RELEASE . OS_VERSION >/tmp/mkb.$$
-	version=`sed 's/[" 	]//g;/^$/d' </tmp/mkb.$$`
+	version=`sh ../sys/conf/osrelease.sh`
 
 	# Retrieve the git revision; this only succeeds
 	# if git is available, it's a git checkout, *and*
@@ -86,18 +83,13 @@ hdboot)
 
 	revision=`cat revision 2>/dev/null`
 
-	if [ -z "$revision" ]
-	then	rrevision=""
-		gitrev=""
-	else	rrevision=r$revision
-	fi
-
 	oldrev=$revision
 
 	if [ -z "$revision" ]
 	then
 		revision=0
 		rrevision=""
+		gitrev=""
 	else
 		revision=`expr $revision + 1`
 		rrevision=r$revision

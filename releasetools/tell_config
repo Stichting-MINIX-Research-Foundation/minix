@@ -3,11 +3,5 @@
 #	tellconfig - Tell the value of a <minix/config.h> parameter
 #						Author: Kees J. Bot
 
-echo "
-#include \"../include/minix/config.h\"
-$*
-" >/tmp/tell.$$
-exec </tmp/tell.$$
-rm /tmp/tell.$$
-
-exec clang -P -E -
+NETBSDSRCDIR=`dirname $0`/..
+exec sh $NETBSDSRCDIR/sys/conf/osrelease.sh

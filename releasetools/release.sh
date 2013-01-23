@@ -4,7 +4,7 @@ set -e
 
 . release.functions
 
-version_pretty="`sh tell_config OS_RELEASE . OS_VERSION | tr -dc 0-9.`"
+version_pretty="`sh ../sys/conf/osrelease.sh`"
 version="`echo $version_pretty | tr . _`"
 PACKAGEDIR=/usr/pkgsrc/packages/$version_pretty/`uname -m`
 
@@ -52,7 +52,6 @@ RELEASEMNTDIR=/usr/r
 IMAGE=/usr/mdec/bootxx_cd9660
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
-sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 IMG_BASE=minix${version}_ide
 BS=4096
 
