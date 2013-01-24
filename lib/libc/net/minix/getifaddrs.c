@@ -18,6 +18,11 @@
 #include <stdlib.h>
 #include <ifaddrs.h>
 
+#if defined(__weak_alias)
+__weak_alias(getifaddrs,_getifaddrs)
+__weak_alias(freeifaddrs,_freeifaddrs)
+#endif
+
 int
 getifaddrs(struct ifaddrs **ifap)
 {
