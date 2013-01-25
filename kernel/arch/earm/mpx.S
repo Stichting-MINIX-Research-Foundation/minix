@@ -61,15 +61,13 @@ IMPORT(svc_stack)
 
 /* Save the register context to the proc structure */
 .macro save_process_ctx
-	push	{lr}
-	ldr	lr, [sp, #12] /* proc ptr */
-	stm	lr, {r0-r14}^
-	ldr	r12, [sp, #8]
-	str	r12, [lr, #PSREG]
-	ldr	r12, [sp, #4]
-	str	r12, [lr, #PCREG]
-	pop	{lr}
-	add	sp, sp, #8
+	add	sp, sp, #8	/* srsdb pushed cpsr and pc on the stack */
+	ldr	lr, [sp]	/* lr = proc_ptr */
+	stm	lr, {r0-r14}^	/* proc_ptr->p_reg.r0-r14 = r0-r14 */
+	ldr	r12, [sp, #-8]	/* r12 = pc stored on the stack */
+	str	r12, [lr, #PCREG] /* proc_ptr->p_reg.pc = r12 */
+	ldr	r12, [sp, #-4]	/* r12 = cpsr stored on the stack */
+	str	r12, [lr, #PSREG] /* proc_ptr->p_reg.psr = r12 */
 .endm
 
 .macro exception_handler exc_name, exc_num, lr_offset
