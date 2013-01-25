@@ -190,10 +190,14 @@ int notouch		/* check only */
   int r = OK;
 
   /* Reads start at the beginning; writes append to pipes */
-  if (rw_flag == READING)
+  if (notouch) /* In this case we don't actually care whether data transfer
+		* would succeed. See POSIX 1003.1-2008 */
 	pos = 0;
-  else
+  else if (rw_flag == READING)
+	pos = 0;
+  else {
 	pos = vp->v_size;
+  }
 
   /* If reading, check for empty pipe. */
   if (rw_flag == READING) {
