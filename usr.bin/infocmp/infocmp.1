@@ -1,0 +1,131 @@
+.\"	$NetBSD: infocmp.1,v 1.5 2011/01/14 14:21:36 wiz Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Roy Marples.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 5, 2010
+.Dt INFOCMP 1
+.Os
+.Sh NAME
+.Nm infocmp
+.Nd compare or print compiled terminfo descriptions
+.Sh SYNOPSIS
+.Nm infocmp
+.Op Fl 1acnqux
+.Op Fl A Ar database
+.Op Fl B Ar database
+.Op Fl w Ar cols
+.Op Ar term ...
+.Sh DESCRIPTION
+The
+.Nm
+reconstructs the first available
+.Xr terminfo 5
+definition found for
+.Ar term
+and prints the result in a
+.Xr terminfo 5
+format.
+Capability types are grouped together and new types start new lines,
+first flags, then numbers, then strings.
+Capabilities are sorted by their name.
+If a second
+.Ar term
+is given then the capabilities are compared against each other.
+.Pp
+The following options are available:
+.Bl -tag -width Ev
+.It Fl 1
+Print one capability per line.
+.It Fl A Ar database
+Use this database to load the first terminal definition.
+.It Fl B Ar database
+Use this database to load subsequent terminal definitions.
+.It Fl a
+Include commented out capabilities.
+This only works if the database was compiled with the
+.Fl a
+flag passed to
+.Xr tic 1 .
+This also sets the
+.Fl x
+flag as
+.Nm
+retains commented out capabilities as non standard.
+.It Fl c
+Print capabilities common to each definition.
+.It Fl n
+Print capabilities that do not exist in either definition.
+.It Fl q
+Make the comparison listing shorter by omitting subheadings and using
+- for absent capabilities, @ for canceled capabilities rather than
+.Dv NULL .
+.It Fl u
+Build a new terminal description for the first terminal description,
+using subsequent terminal descriptions.
+This also sets the
+.Fl a
+flag.
+.It Fl w Ar cols
+Limit the width to
+.Ar cols .
+.It Fl x
+Include non-standard capabilities.
+More
+.Fl x
+only handles non-standard capabilities.
+This only works if the database was compiled with the
+.Fl x
+flag passed to
+.Xr tic 1 .
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width Ev
+.It Ev COLUMNS
+Override columns returned by the output terminal.
+.Fl w
+.Ar cols
+supersedes this.
+.It Ev TERM
+.Nm
+uses the contents of the
+.Ev TERM
+environment variable if no terminal name is given on the command line.
+.El
+.Sh EXIT STATUS
+.Ex -std infocmp
+.Sh SEE ALSO
+.Xr tic 1 ,
+.Xr terminfo 5
+.Sh STANDARDS
+The
+.Nm
+utility outputs information that conforms to the
+.St -xcurses4.2
+standard.
+.Sh AUTHORS
+.An Roy Marples Aq roy@NetBSD.org

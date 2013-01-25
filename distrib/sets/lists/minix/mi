@@ -253,6 +253,7 @@
 ./usr/bin/ifconfig			minix-sys
 ./usr/bin/ifdef				minix-sys
 ./usr/bin/indent			minix-sys
+./usr/bin/infocmp			minix-sys
 ./usr/bin/in.fingerd			minix-sys
 ./usr/bin/in.rshd			minix-sys
 ./usr/bin/install			minix-sys
@@ -1222,6 +1223,7 @@
 ./usr/man/man1/if.1			minix-sys
 ./usr/man/man1/ifdef.1			minix-sys
 ./usr/man/man1/indent.1			minix-sys
+./usr/man/man1/infocmp.1		minix-sys
 ./usr/man/man1/install.1		minix-sys
 ./usr/man/man1/isodir.1			minix-sys
 ./usr/man/man1/isoinfo.1		minix-sys

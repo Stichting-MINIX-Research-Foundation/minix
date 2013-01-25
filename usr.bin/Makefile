@@ -12,7 +12,7 @@ SUBDIR= \
 	\
 	\
 	genassym \
-	indent join \
+	indent infocmp join \
 	ldd \
 	login lorder m4 \
 	make man \
