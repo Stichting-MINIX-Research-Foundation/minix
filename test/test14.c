@@ -16,7 +16,6 @@ int subtest = 1;
 #include "common.c"
 
 int main(void);
-void e(int n);
 void quit(void);
 
 int main()

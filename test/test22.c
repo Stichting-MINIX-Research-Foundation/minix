@@ -21,7 +21,6 @@
 void test22a(void);
 int mode(char *filename);
 int umode(char *filename);
-void e(int number);
 void quit(void);
 
 int main(int argc, char *argv[])

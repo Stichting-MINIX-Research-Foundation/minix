@@ -12,9 +12,11 @@
 
 int common_test_nr = -1, errct = 0, subtest;
 
+#define e(errn) e_f(__FILE__, __LINE__, (errn))
+
 void cleanup(void);
 int does_fs_truncate(void);
-void e(int n);
+void e_f(char *file, int lineno, int n);
 int name_max(char *path);
 void quit(void);
 void rm_rf_dir(int test_nr);
@@ -98,14 +100,13 @@ int test_nr;
   if (system(buf) != 0) printf("Warning: system(\"%s\") failed\n", buf);
 }
 
-void e(n)
-int n;
+void e_f(char *file, int line, int n)
 {
   int err_number;
   err_number = errno;	/* Store before printf can clobber it */
   if (errct == 0) printf("\n");	/* finish header */
-  printf("Subtest %d,  error %d,  errno %d: %s\n",
-	 subtest, n, errno, strerror(errno));
+  printf("%s:%d: Subtest %d,  error %d,  errno %d: %s\n",
+	file, line, subtest, n, errno, strerror(errno));
   if (++errct > MAX_ERROR) {
 	printf("Too many errors; test aborted\n");
 	cleanup();
