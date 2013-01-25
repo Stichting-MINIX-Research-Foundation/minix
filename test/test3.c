@@ -25,7 +25,6 @@ void test3a(void);
 void test3c(void);
 void test3d(void);
 void test3e(void);
-void e(int n);
 
 int main(argc, argv)
 int argc;
