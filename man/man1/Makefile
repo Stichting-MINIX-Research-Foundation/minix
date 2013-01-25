@@ -11,11 +11,11 @@ MAN=	ash.1 at.1 basename.1 \
 	last.1 loadfont.1 loadkeys.1 logger.1 \
 	look.1 lp.1 lspci.1 mail.1  \
 	mesg.1 mixer.1 \
-	mkproto.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
+	mkproto.1 mount.1 mt.1 nice.1 nohup.1 od.1 \
 	paste.1 ping.1 playwave.1 pr.1 prep.1 \
 	profile.1 ps.1 rcp.1 recwave.1 \
 	remsync.1 rget.1 rlogin.1 rsh.1 rz.1 \
-	shar.1 acksize.1 sleep.1 spell.1 \
+	shar.1 sleep.1 spell.1 \
 	split.1 stty.1 svc.1 svrctl.1 \
 	synctree.1 sysenv.1 sz.1 tail.1 tee.1 telnet.1 template.1 \
 	term.1 termcap.1 tget.1 time.1 tr.1 true.1 \

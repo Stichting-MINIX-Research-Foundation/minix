@@ -16,13 +16,13 @@ SUBDIR=	add_route arp ash at backup basename btrace \
 	less loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	mesg mined mkfifo \
-	mount mt netconf nice acknm nohup \
+	mount mt netconf nice nohup \
 	nonamed od paste patch \
 	ping postinstall poweroff pr prep printroot \
 	profile progressbar pr_routes ps pwdauth \
 	ramdisk rarpd rawspeed rcp readclock \
 	reboot remsync rev rget rlogin \
-	rotate rsh rshd service setup shar acksize \
+	rotate rsh rshd service setup shar \
 	sleep slip spell split sprofalyze sprofdiff srccrc \
 	stty svclog svrctl swifi synctree sysenv \
 	syslogd tail tcpd tcpdp tcpstat tee telnet \
