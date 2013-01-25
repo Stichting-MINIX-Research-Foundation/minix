@@ -40,7 +40,7 @@ IMPORT(svc_stack)
  */
 .macro switch_to_svc lr_offset
 	sub	lr, lr, #\lr_offset
-	srsdb	#MODE_SVC!
+	srsdb	sp!, #MODE_SVC
 	cps	#MODE_SVC
 .endm
 
@@ -182,7 +182,7 @@ irq_entry_from_kernel:
  * supervisor call (SVC) kernel entry point
  */
 ENTRY(svc_entry)
-	srsdb	#MODE_SVC!
+	srsdb	sp!, #MODE_SVC
 	save_process_ctx
 
 	/* save the pointer to the current process */
