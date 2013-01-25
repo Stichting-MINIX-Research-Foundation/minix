@@ -26,7 +26,7 @@ PROTO=	proto
 
 # Common to all architectures
 ETC=		system.conf master.passwd
-EXTRA=		rc mtab
+EXTRA=		mtab
 PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
 PROG_DRIVERS=
 PROG_COMMANDS=	mount fsck.mfs sh service
@@ -36,6 +36,7 @@ PROG_BIN=
 
 .if ${MACHINE_ARCH} == "i386"
 ETC+=		rs.single
+EXTRA+=		rc
 PROG_DRIVERS+=	at_wini floppy pci
 PROG_COMMANDS+=	cdprobe loadramdisk sysenv
 PROG_SERVERS+=	procfs
@@ -55,7 +56,7 @@ PROG_DRIVERS+=	acpi
 .endif # ${MACHINE_ARCH} == "i386"
 
 .if ${MACHINE_ARCH} == "earm"
-EXTRA+=		mylogin.sh
+EXTRA+=		rc.arm mylogin.sh ttys
 PROG_DRIVERS+=	mmc tty
 PROG_COMMANDS+=	cp dd getty ls time sync sleep stty umount
 PROG_BIN+=	cat rm
@@ -169,7 +170,7 @@ proto.gen: ${PROTO} ${PROTO_FILES} ${PROGRAMS}
 	${STRIP} ${PROGRAMS}
 	# We are using the c preprocessor to generate proto.gen
 	# used in the mkfs tool.
-	${TOOL_CAT} ${PROTO} | ${HOST_CC} \
+	${TOOL_CAT} ${PROTO} | ${CC} \
 	    	${RAMDISK_DEFINES} \
 		-E - | grep -v "^$$" | grep -v "#" >${.OBJDIR}/${.TARGET}
 
