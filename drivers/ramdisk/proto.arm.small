@@ -31,4 +31,5 @@ d--755 0 0
 	dev d--755 0 0
 #include "proto.dev"
 	$
+#include "proto.common.etc"
 $
