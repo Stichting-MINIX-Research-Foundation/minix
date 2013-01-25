@@ -36,7 +36,7 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
   nrbytes = (unsigned) fs_m_in->REQ_NBYTES;
 
   /* We can't read beyond the max file position */
-  if (nrbytes > MAX_FILE_POS) return(EFBIG);
+  if (nrbytes > PIPE_BUF) return(EFBIG);
 
   /* Mark inode in use */
   if ((get_inode(rip->i_dev, rip->i_num)) == NULL) return(err_code);
@@ -48,7 +48,7 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
 	 * be beyond max signed value (i.e., MAX_FILE_POS).
 	 */
 	position = rip->i_size;
-	if (position > PIPE_BUF - (signed) nrbytes) {
+	if ((unsigned) position + nrbytes > PIPE_BUF) {
 		put_inode(rip);
 		put_block(rip->i_dev, rip->i_num);
 		return(EFBIG);
