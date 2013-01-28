@@ -20,9 +20,13 @@ d--755 0 0
 	sbin d--755 0 0
 		mmc ---755 0 0 mmc
 		mfs ---755 0 0 mfs
+		gpio ---755 0 0 gpio
+		
 	$
 	mnt d--755 0 0
 	$
+	gpio d--755 0 0
+	$	
 	usr d--755 0 0
 		bin d--755 0 0
 			login ---755 0 0 mylogin.sh
