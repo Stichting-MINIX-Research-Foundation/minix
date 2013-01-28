@@ -12,5 +12,7 @@ exec </dev/null
 #/bin/service -c up /sbin/mmc  -dev /dev/c0d0 
 #/bin/fsck.mfs  -p /dev/c0d0p1
 #/bin/mount  /dev/c0d0p1 /mnt
+#gpio
+#mount -t gpio none /gpio
 
 exit
