@@ -34,9 +34,15 @@ int _stat(const char *name, struct stat *buffer);
 int _lstat(const char *name, struct stat *buffer);
 int _fstat(int fd, struct stat *buffer);
 
+#ifdef __weak_alias
 __weak_alias(_stat, __stat50);
 __weak_alias(_lstat, __lstat50);
 __weak_alias(_fstat, __fstat50);
+
+__weak_alias(stat, __stat50);
+__weak_alias(lstat, __lstat50);
+__weak_alias(fstat, __fstat50);
+#endif
 
 int stat(const char *name, struct stat *buffer)
 {
