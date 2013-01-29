@@ -25,6 +25,7 @@ static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
 int init_local_timer(unsigned freq)
 {
 	omap3_timer_init(freq);
+	omap3_frclock_init();
 	/* always only 1 cpu in the system */
 	tsc_per_ms[0] = 1;
 

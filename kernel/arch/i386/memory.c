@@ -804,6 +804,7 @@ int arch_phys_map(const int index,
 			(u32_t) &usermapped_start;
 
 	if(first) {
+		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
 		video_mem_mapping_index = freeidx++;
 		if(glo_len > 0) {
 			usermapped_glo_index = freeidx++;
@@ -921,7 +922,6 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		extern u32_t usermapped_offset;
 		assert(addr > (u32_t) &usermapped_start);
 		usermapped_offset = addr - (u32_t) &usermapped_start;
-		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
 #define FIXEDPTR(ptr) (void *) ((u32_t)ptr + usermapped_offset)
 #define FIXPTR(ptr) ptr = FIXEDPTR(ptr)
 #define ASSIGN(minixstruct) minix_kerninfo.minixstruct = FIXEDPTR(&minixstruct)

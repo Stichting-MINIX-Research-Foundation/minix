@@ -168,7 +168,7 @@ struct minix_kerninfo {
 	u32_t kerninfo_magic;
 	u32_t minix_feature_flags;	/* features in minix kernel */
 	u32_t ki_flags;			/* what is present in this struct */
-	u32_t flags_unused2;
+	u32_t minix_frclock;
 	u32_t flags_unused3;
 	u32_t flags_unused4;
 	struct kinfo		*kinfo;

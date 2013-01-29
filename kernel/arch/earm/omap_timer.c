@@ -21,6 +21,42 @@ int omap3_register_timer_handler(const irq_handler_t handler)
 	return 0;
 }
 
+void omap3_frclock_init(void)
+{
+    u32_t tisr;
+
+    /* Stop timer */
+    mmio_clear(OMAP3_GPTIMER10_TCLR, OMAP3_TCLR_ST);
+
+    /* Use functional clock source for GPTIMER10 */
+    mmio_set(OMAP3_CM_CLKSEL_CORE, OMAP3_CLKSEL_GPT10);
+
+    /* Scale timer down to 13/8 = 1.625 Mhz to roughly get microsecond ticks */
+    /* The scale is computed as 2^(PTV+1). So if PTV == 2, we get 2^3 = 8.
+     */
+    mmio_set(OMAP3_GPTIMER10_TCLR, (2 << OMAP3_TCLR_PTV));
+
+    /* Start and auto-reload at 0 */
+    mmio_write(OMAP3_GPTIMER10_TLDR, 0x0);
+    mmio_write(OMAP3_GPTIMER10_TCRR, 0x0);
+
+    /* Set up overflow interrupt */
+    tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
+          OMAP3_TISR_TCAR_IT_FLAG;
+    mmio_write(OMAP3_GPTIMER10_TISR, tisr); /* Clear interrupt status */
+    mmio_write(OMAP3_GPTIMER10_TIER, OMAP3_TIER_OVF_IT_ENA);
+
+    /* Start timer */
+    mmio_set(OMAP3_GPTIMER10_TCLR,
+            OMAP3_TCLR_OVF_TRG|OMAP3_TCLR_AR|OMAP3_TCLR_ST|OMAP3_TCLR_PRE);
+}
+
+void omap3_frclock_stop()
+{
+    mmio_clear(OMAP3_GPTIMER10_TCLR, OMAP3_TCLR_ST);
+}
+
+
 void omap3_timer_init(unsigned freq)
 {
     u32_t tisr;
@@ -63,6 +99,7 @@ void omap3_timer_int_handler()
            OMAP3_TISR_TCAR_IT_FLAG;
     mmio_write(OMAP3_GPTIMER1_TISR, tisr);
     tsc++;
+
 }
 
 /* Don't use libminlib's read_tsc_64, but our own version instead. We emulate
