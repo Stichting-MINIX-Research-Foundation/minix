@@ -18,6 +18,7 @@
 #include "arch_proto.h"
 #include "kernel/proto.h"
 #include "kernel/debug.h"
+#include "omap_timer.h"
 
 phys_bytes device_mem_vaddr = 0;
 
@@ -667,6 +668,7 @@ void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp, char *name)
 }
 
 static int device_mem_mapping_index = -1,
+	frclock_index = -1,
 	usermapped_glo_index = -1,
 	usermapped_index = -1, first_um_idx = -1;
 
@@ -685,7 +687,9 @@ int arch_phys_map(const int index,
 			(u32_t) &usermapped_start;
 
 	if(first) {
+		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
 		device_mem_mapping_index = freeidx++;
+		frclock_index = freeidx++;
 		if(glo_len > 0) {
 			usermapped_glo_index = freeidx++;
 		}
@@ -717,6 +721,12 @@ int arch_phys_map(const int index,
 		*flags = VMMF_UNCACHED | VMMF_WRITE;
 		return OK;
 	}
+	else if (index == frclock_index) {
+		*addr = OMAP3_GPTIMER10_BASE;
+		*len = ARM_PAGE_SIZE;
+		*flags = VMMF_USER;
+		return OK;
+	}
 
 	return EINVAL;
 }
@@ -727,7 +737,6 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		u32_t usermapped_offset;
 		assert(addr > (u32_t) &usermapped_start);
 		usermapped_offset = addr - (u32_t) &usermapped_start;
-		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
 #define FIXEDPTR(ptr) (void *) ((u32_t)ptr + usermapped_offset)
 #define FIXPTR(ptr) ptr = FIXEDPTR(ptr)
 #define ASSIGN(minixstruct) minix_kerninfo.minixstruct = FIXEDPTR(&minixstruct)
@@ -746,10 +755,15 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 
-	if(index == usermapped_index) return OK;
-
-	if (index == device_mem_mapping_index) {
-		device_mem_vaddr =  addr;
+	if (index == usermapped_index) {
+		return OK;
+	}
+	else if (index == device_mem_mapping_index) {
+		device_mem_vaddr = addr;
+		return OK;
+	}
+	else if (index == frclock_index) {
+		minix_kerninfo.minix_frclock = addr;
 		return OK;
 	}
 
