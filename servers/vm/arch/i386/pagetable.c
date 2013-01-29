@@ -646,7 +646,9 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 				 */
 				return r;
 			}
+			assert(pt->pt_pt[pde]);
 		}
+		assert(pt->pt_pt[pde]);
 		assert(pt->pt_dir[pde]);
 		assert(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT);
 	}
@@ -1215,17 +1217,14 @@ void pt_init(void)
 
 		while(sys_vmctl_get_mapping(index, &addr, &len,
 			&flags) == OK)  {
+			int usedpde;
 			vir_bytes vir;
 			if(index >= MAX_KERNMAPPINGS)
                 		panic("VM: too many kernel mappings: %d", index);
 			kern_mappings[index].phys_addr = addr;
 			kern_mappings[index].len = len;
 			kern_mappings[index].flags = flags;
-#if defined(__i386__)
 			kern_mappings[index].vir_addr = offset;
-#elif defined(__arm__)
-			kern_mappings[index].vir_addr = addr;
-#endif
 			kern_mappings[index].flags =
 				ARCH_VM_PTE_PRESENT;
 			if(flags & VMMF_UNCACHED)
@@ -1262,6 +1261,17 @@ void pt_init(void)
 			offset += len;
 			index++;
 			kernmappings++;
+
+#if defined(__i386__)
+			usedpde = I386_VM_PDE(offset);
+#elif defined(__arm__)
+			usedpde = ARM_VM_PDE(offset);
+#endif
+			while(usedpde > kernmap_pde) {
+				int newpde = freepde();
+				assert(newpde == kernmap_pde+1);
+				kernmap_pde = newpde;
+			}
 		}
 	}
 
@@ -1474,6 +1484,18 @@ int pt_mapkernel(pt_t *pt)
 			kern_mappings[i].flags, 0)) != OK) {
 			return r;
 		}
+
+#if defined(__arm__)
+		if(kern_mappings[i].phys_addr == 0x48000000) {
+			if((r=pt_writemap(NULL, pt,
+				kern_mappings[i].phys_addr,
+				kern_mappings[i].phys_addr,
+				kern_mappings[i].len,
+				kern_mappings[i].flags, 0)) != OK) {
+				return r;
+			}
+		}
+#endif
 	}
 
 	return OK;
