@@ -137,6 +137,7 @@
 2012/10/17 12:00:00,usr.bin/nvi
 2010/05/14 17:28:23,usr.bin/newgrp
 2012/10/17 12:00:00,usr.bin/passwd
+2012/10/17 12:00:00,usr.bin/printf
 2010/02/19 16:35:27,usr.bin/sed
 2010/05/27 08:40:19,usr.bin/seq
 2012/10/17 12:00:00,usr.bin/sort
