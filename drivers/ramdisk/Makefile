@@ -36,7 +36,7 @@ PROG_BIN=
 
 .if ${MACHINE_ARCH} == "i386"
 ETC+=		rs.single
-EXTRA+=		rc
+EXTRA+=		
 PROG_DRIVERS+=	at_wini floppy pci
 PROG_COMMANDS+=	cdprobe loadramdisk sysenv
 PROG_SERVERS+=	procfs
