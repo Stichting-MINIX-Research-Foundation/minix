@@ -4,7 +4,7 @@ MAN=	ash.1 at.1 banner.1 basename.1 \
 	cp.1 crc.1 crontab.1 dd.1 \
 	df.1 dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
 	dumpcore.1 eject.1 \
-	env.1 expand.1 expr.1 factor.1 \
+	env.1 expand.1 factor.1 \
 	finger.1 flexdoc.1 fold.1 format.1 fortune.1 \
 	fsck.mfs.1 head.1 host.1 hostaddr.1 ifdef.1 \
 	isodir.1 isoinfo.1 isoread.1 kill.1 \
@@ -54,8 +54,6 @@ MLINKS += compress.1 uncompress.1
 MLINKS += cp.1 mv.1
 MLINKS += cp.1 ln.1
 MLINKS += cp.1 cpdir.1
-MLINKS += expr.1 test.1
-MLINKS += expr.1 [.1
 MLINKS += svc.1 ci.1
 MLINKS += svc.1 co.1
 
