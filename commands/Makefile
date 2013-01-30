@@ -12,7 +12,7 @@ SUBDIR=	add_route arp ash at backup banner basename btrace cal \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	ftp101 gcore gcov-pull getty grep head hexdump host \
 	hostaddr id ifconfig ifdef \
-	intr ipcrm ipcs irdpd isoread kill last \
+	intr ipcrm ipcs irdpd isoread last \
 	less loadkeys loadramdisk logger look lp \
 	lpd ls lspci mail MAKEDEV \
 	mesg mined mkfifo \
