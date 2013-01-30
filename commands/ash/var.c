@@ -66,7 +66,7 @@ __FBSDID("$FreeBSD: src/bin/sh/var.c,v 1.26.2.1 2004/09/30 04:41:55 des Exp $");
 #include "error.h"
 #include "mystring.h"
 #include "parser.h"
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 #include "myhistedit.h"
 #endif
 
@@ -102,7 +102,7 @@ struct var vvers;
 STATIC struct var voptind;
 
 STATIC const struct varinit varinit[] = {
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 	{ &vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE=",
 	  sethistsize },
 #endif

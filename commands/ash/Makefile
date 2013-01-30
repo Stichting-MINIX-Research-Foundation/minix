@@ -8,8 +8,6 @@ MAN=
 
 # Enable this line to disable command line editing
 #EDIT=-DNO_HISTORY
-# Enable this line to use the editline library instead of libedit
-EDIT=-DEDITLINE
 
 # Enable this line if your system does not have a <paths.h>
 #NO_PATHS_H=-DNO_PATHS_H
@@ -18,7 +16,7 @@ EDIT=-DEDITLINE
 NO_JOBS=-DJOBS=0
 MKB_NO_JOBS=-j
 
-SRCS=	alias.c arith.y arith_lex.l cd.c eval.c exec.c expand.c \
+SRCS=	alias.c arith.y arith_lex.l cd.c complete.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
 	mystring.c options.c output.c parser.c redir.c show.c \
 	trap.c var.c setmode.c

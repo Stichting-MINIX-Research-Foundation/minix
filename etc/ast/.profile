@@ -1,7 +1,7 @@
 # Login shell profile.
 
-# Erase character and erase line interrupt keys
-stty sane erase '^H' kill '^U'
+# Activate emacs keybindings and command line history support
+set -o emacs
 
 # Check terminal type.
 case $TERM in

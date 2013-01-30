@@ -47,8 +47,9 @@
 
 bltincmd	builtin
 commandcmd	command
-#alloccmd	alloc
+#if JOBS
 bgcmd -j	bg
+#endif
 breakcmd	break continue
 #catfcmd	catf
 cdcmd		cd chdir
@@ -62,15 +63,17 @@ exportcmd	export readonly
 exprcmd		expr test [
 falsecmd	false
 histcmd -h	fc
+#if JOBS
 fgcmd -j	fg
+#endif
 getoptscmd	getopts
 hashcmd		hash
 jobidcmd	jobid
 jobscmd		jobs
-#linecmd	line
 localcmd	local
-#nlechocmd	nlecho
+#ifndef SMALL
 #printfcmd	printf
+#endif
 pwdcmd		pwd
 readcmd		read
 returncmd	return
@@ -84,11 +87,7 @@ umaskcmd	umask
 unaliascmd	unalias
 unsetcmd	unset
 waitcmd		wait
-#foocmd		foo
 aliascmd	alias
 ulimitcmd	ulimit
 bindcmd		bind
 wordexpcmd	wordexp
-
-#
-# $PchId: builtins.def,v 1.5 2006/03/31 10:50:57 philip Exp $

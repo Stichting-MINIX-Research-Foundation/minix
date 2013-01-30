@@ -59,7 +59,7 @@ __FBSDID("$FreeBSD: src/bin/sh/options.c,v 1.21 2004/04/06 20:06:51 markm Exp $"
 #include "error.h"
 #include "mystring.h"
 #include "builtins.h"
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 #include "myhistedit.h"
 #endif
 
@@ -129,7 +129,7 @@ void
 optschanged(void)
 {
 	setinteractive(iflag);
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 	histedit();
 #endif
 	setjobctl(mflag);

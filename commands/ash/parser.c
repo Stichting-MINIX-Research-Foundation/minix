@@ -58,7 +58,7 @@ __FBSDID("$FreeBSD: src/bin/sh/parser.c,v 1.51.2.1 2005/03/03 03:43:20 obrien Ex
 #include "alias.h"
 #include "show.h"
 #include "eval.h"
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 #include "myhistedit.h"
 #endif
 
@@ -1556,11 +1556,7 @@ setprompt(int which)
 	whichprompt = which;
 
 #ifndef NO_HISTORY
-#ifdef EDITLINE
-	if (!editable)
-#else
 	if (!el)
-#endif /* EDITLINE */
 #endif /* !NO_HISTORY */
 		out2str(getprompt(NULL));
 }

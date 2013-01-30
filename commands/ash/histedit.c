@@ -58,7 +58,7 @@ __FBSDID("$FreeBSD: src/bin/sh/histedit.c,v 1.26 2004/04/06 20:06:51 markm Exp $
 #include "output.h"
 #include "mystring.h"
 #include "builtins.h"
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 #include "myhistedit.h"
 #include "complete.h"
 #include "error.h"
@@ -179,7 +179,7 @@ sethistsize(hs)
 		if (hs == NULL || *hs == '\0' ||
 		   (histsize = atoi(hs)) < 0)
 			histsize = 100;
-		history(hist, &he, H_EVENT, histsize);
+		history(hist, &he, H_SETSIZE, histsize);
 	}
 }
 
@@ -526,7 +526,7 @@ bindcmd(int argc, char **argv)
 	error("not compiled with line editing support");
 	return (0);
 }
-#endif /* !NO_HISTORY && !EDITLINE */
+#endif /* !NO_HISTORY */
 
 /*
  * $PchId: histedit.c,v 1.6 2006/04/10 14:52:58 philip Exp $

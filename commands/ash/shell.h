@@ -81,11 +81,6 @@ extern char nullstr[1];		/* null string */
 #define TRACE(param)
 #endif
 
-#if defined(__minix) && !defined(__NBSD_LIBC)
-typedef long quad_t;		/* XXX */
-typedef unsigned long u_quad_t;	/* XXX */
-#endif
-
 /*
  * $PchId: shell.h,v 1.7 2006/05/22 12:47:00 philip Exp $
  */
