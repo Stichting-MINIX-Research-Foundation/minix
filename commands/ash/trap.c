@@ -57,18 +57,10 @@ __FBSDID("$FreeBSD: src/bin/sh/trap.c,v 1.29 2004/04/06 20:06:51 markm Exp $");
 #include "error.h"
 #include "trap.h"
 #include "mystring.h"
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 #include "myhistedit.h"
 #endif
 #include "builtins.h"
-
-#if defined(__minix)
-#if !defined(__NBSD_LIBC)
-#define NO_SIGINTERRUPT
-#endif
-#define NO_SYS_SIGNAME
-#define NO_SYS_SIGLIST
-#endif
 
 typedef void (*sig_T)(int);
 
@@ -511,7 +503,7 @@ int flag;
 }
 #endif
 
-#ifdef NO_SYS_SIGNAME
+#ifdef __minix
 static char *strsigname(sig)
 int sig;
 {
@@ -524,11 +516,7 @@ int sig;
 	case SIGILL:	return "ill";		/*  4 */
 	case SIGTRAP:	return "trap";		/*  5 */
 	case SIGABRT:	return "abrt";		/*  6 */
-#ifdef __minix_vmd
-	case SIGEMT:	return "emt";		/*  7 */
-#else
 	case SIGBUS:	return "bus";		/*  7 */
-#endif
 	case SIGFPE:	return "fpe";		/*  8 */
 	case SIGKILL:	return "kill";		/*  9 */
 	case SIGUSR1:	return "usr1";		/* 10 */
@@ -537,11 +525,7 @@ int sig;
 	case SIGPIPE:	return "pipe";		/* 13 */
 	case SIGALRM:	return "alrm";		/* 14 */
 	case SIGTERM:	return "term";		/* 15 */
-#ifdef __minix_vmd
-	case 16:	return "Signal 16";	/* 16 */
-#else
 	case SIGEMT:	return "emt";		/* 16 */
-#endif
 	case SIGCHLD:	return "chld";		/* 17 */
 	case SIGCONT:	return "cont";		/* 18 */
 	case SIGSTOP:	return "stop";		/* 19 */
@@ -551,9 +535,6 @@ int sig;
 	case SIGWINCH:	return "winch";		/* 23 */
 	case SIGVTALRM:	return "vtalrm";	/* 24 */
 	case SIGPROF:	return "prof";		/* 25 */
-#ifdef __minix_vmd
-	case SIGFPEMU:	return "fpemu";		/* 30 */
-#endif
 	default:	return "Signal n";
 	}
 }
@@ -565,7 +546,7 @@ int sig;
 }
 #endif
 
-#ifdef NO_SYS_SIGLIST
+#ifdef __minix
 #include "signames.h"
 char *strsiglist(sig)
 int sig;

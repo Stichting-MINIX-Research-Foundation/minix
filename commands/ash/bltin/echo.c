@@ -41,17 +41,7 @@ __FBSDID("$FreeBSD: src/bin/sh/bltin/echo.c,v 1.14 2004/04/06 20:06:53 markm Exp
  * Echo command.
  */
 
-#ifdef __minix
-#define MINIX
-#endif
-
 #include "bltin.h"
-
-#ifndef MINIX
-/* #define eflag 1 */
-#else
-#undef eflag
-#endif
 
 int
 echocmd(argc, argv)
@@ -63,7 +53,7 @@ echocmd(argc, argv)
 	char c;
 	int count;
 	int nflag = 0;
-#ifndef eflag
+#ifdef __minix
 	int eflag = 0;
 #endif
 
@@ -71,7 +61,7 @@ echocmd(argc, argv)
 	if (argc)
 		ap++;
 	if ((p = *ap) != NULL) {
-#ifdef MINIX
+#ifdef __minix
 		if (equal(p, "--")) {
 			ap++;
 		}
@@ -80,7 +70,7 @@ echocmd(argc, argv)
 			nflag++;
 			ap++;
 		} else if (equal(p, "-e")) {
-#ifndef eflag
+#ifdef __minix
 			eflag++;
 #endif
 			ap++;

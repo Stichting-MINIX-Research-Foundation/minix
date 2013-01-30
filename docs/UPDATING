@@ -1,3 +1,12 @@
+20130130:
+	With the shell update, and following update of 'test', some
+	modifications are needed in .profile and .ashrc.
+	If you use the defaults, simply execute the following for all
+	of your users:
+
+	# cp etc/ast/.ashrc ~/
+	# cp etc/ast/.profile ~/
+
 20130114:
 	The terminfo update is also linked to the databases functions,
 	which means the tool used to generate the termcap entries has to

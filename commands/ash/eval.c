@@ -72,7 +72,7 @@ __FBSDID("$FreeBSD: src/bin/sh/eval.c,v 1.42 2004/04/06 20:06:51 markm Exp $");
 #include "error.h"
 #include "show.h"
 #include "mystring.h"
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 #include "myhistedit.h"
 #endif
 
@@ -194,7 +194,7 @@ evaltree(union node *n, int flags)
 		exitstatus = 0;
 		goto out;
 	}
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 	displayhist = 1;	/* show history substitutions done with fc */
 #endif
 	TRACE(("evaltree(0x%lx: %d) called\n", (long)n, n->type));

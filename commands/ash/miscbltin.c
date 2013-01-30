@@ -91,9 +91,7 @@ readcmd(int argc __unused, char **argv __unused)
 	struct timeval tv;
 	char *tvptr;
 #ifndef __minix
-#ifndef __minix_vmd
 	fd_set ifds;
-#endif
 	struct termios told, tnew;
 	int tsaved;
 #endif

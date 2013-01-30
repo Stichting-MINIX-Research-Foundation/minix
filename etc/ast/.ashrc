@@ -12,8 +12,9 @@ export PATH=$HOME/bin:/usr/local/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/pkg/bin:
 } # End of no-repeat.
 
 # Let cd display the current directory on the status line.
-if [ "$-" : '.*i.*' -a -t 0 -a -f /usr/bin/tget ] && tget -flag hs
+if [ -t 0 -a -f /usr/bin/tget ] && tget -flag hs
 then
+case $- in *i*)
 	hostname=$(expr $(uname -n) : '\([^.]*\)')
 	eval "cd()
 	{
@@ -24,4 +25,6 @@ then
 	}"
 	unset hostname
 	cd .
+	;;
+esac
 fi

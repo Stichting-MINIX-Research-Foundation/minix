@@ -63,16 +63,7 @@ __FBSDID("$FreeBSD: src/bin/sh/input.c,v 1.22 2004/04/06 20:06:51 markm Exp $");
 #include "error.h"
 #include "alias.h"
 #include "parser.h"
-#ifdef EDITLINE
-#ifdef __minix_vmd
-#include <readline/readline.h>
-#else
-/* What about other systems? */
-char *readline(char *prompt);
-#endif
-#else
 #include "myhistedit.h"
-#endif
 #include "redir.h"
 #include "trap.h"
 
@@ -118,9 +109,7 @@ STATIC struct parsefile *parsefile = &basepf;	/* current input file */
 int init_editline = 0;		/* editline library initialized? */
 int whichprompt;		/* -1 == PSE, 1 == PS1, 2 == PS2 */
 
-#ifndef EDITLINE
 EditLine *el;			/* cookie for editline package */
-#endif
 
 STATIC void pushfile(void);
 static int preadfd(void);
@@ -193,7 +182,7 @@ preadfd(void)
 	int nr;
 	parsenextc = parsefile->buf;
 
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 	if (el != NULL && gotwinch) {
 		gotwinch = 0;
 		el_resize(el);
@@ -201,37 +190,6 @@ preadfd(void)
 #endif
 retry:
 #ifndef NO_HISTORY
-#ifdef EDITLINE
-	if (parsefile->fd == 0 && editable) {
-		static const char *rl_cp= NULL;
-		static size_t rl_off= 0;
-
-		if (!rl_cp)
-		{
-			rl_cp = readline(getprompt(NULL));
-			if (rl_cp == NULL)
-				nr = 0;
-		}
-		if (rl_cp)
-		{
-			nr= strlen(rl_cp+rl_off);
-			if (nr >= BUFSIZ-1)
-			{
-				nr= BUFSIZ-1;
-				(void) memcpy(parsenextc, rl_cp+rl_off, nr);
-				rl_off += nr;
-			}
-			else
-			{
-				(void) memcpy(parsenextc, rl_cp+rl_off, nr);
-				parsenextc[nr++]= '\n';
-				free((void *)rl_cp);
-				rl_cp= NULL;
-				rl_off= 0;
-			}
-		}
-	} else
-#else /* !EDITLINE */
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
 
@@ -243,7 +201,6 @@ retry:
 			(void) strcpy(parsenextc, rl_cp);
 		}
 	} else
-#endif /* !EDITLINE */
 #endif
 		nr = read(parsefile->fd, parsenextc, BUFSIZ - 1);
 
@@ -343,7 +300,7 @@ check:
 	savec = *q;
 	*q = '\0';
 
-#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#if !defined(NO_HISTORY)
 	if (parsefile->fd == 0 && hist && something) {
 		HistEvent he;
 		INTOFF;

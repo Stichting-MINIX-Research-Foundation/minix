@@ -155,7 +155,7 @@ tryexec(char *cmd, char **argv, char **envp)
 	int e;
 
 	execve(cmd, argv, envp);
-#if !__minix_vmd
+
 	e = errno;
 	if (e == ENOEXEC) {
 		initshellproc();
@@ -166,7 +166,6 @@ tryexec(char *cmd, char **argv, char **envp)
 		/*NOTREACHED*/
 	}
 	errno = e;
-#endif
 }
 
 /*
