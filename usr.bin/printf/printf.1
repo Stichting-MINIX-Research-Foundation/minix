@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.22 2008/09/01 09:20:41 dholland Exp $
+.\"	$NetBSD: printf.1,v 1.24 2010/04/05 21:24:14 joerg Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -277,7 +277,7 @@ The
 .Ar argument
 is printed in the style
 .Sm off
-.Pf [\-]d Cm \&. No ddd Cm e No \\*(Pmdd
+.Pf [\-]d Cm \&. No ddd Cm e No \*(Pmdd
 .Sm on
 where there
 is one digit before the decimal point and the number after is equal to
@@ -299,7 +299,7 @@ whichever gives full precision in minimum space.
 Characters from the string
 .Ar argument
 are printed with backslash-escape sequences expanded.
-.br
+.Pp
 The following additional backslash-escape sequences are supported:
 .Bl -tag -width Ds
 .It Cm \ec

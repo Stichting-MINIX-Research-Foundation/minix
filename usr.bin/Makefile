@@ -20,7 +20,7 @@ SUBDIR= \
 	\
 	nbperf newgrp nvi \
 	passwd \
-	\
+	printf \
 	\
 	\
 	sed seq \

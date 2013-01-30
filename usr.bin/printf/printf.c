@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.33.8.1 2009/10/14 18:37:30 sborrill Exp $	*/
+/*	$NetBSD: printf.c,v 1.35 2011/03/15 23:11:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -30,6 +30,20 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+#if !defined(BUILTIN) && !defined(SHELL)
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
+#endif
+#endif
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
+#else
+__RCSID("$NetBSD: printf.c,v 1.35 2011/03/15 23:11:49 christos Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/types.h>
 
@@ -44,7 +58,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <inttypes.h>
 
 #ifdef __GNUC__
 #define ESCAPE '\e'
@@ -94,7 +107,6 @@ static char  **gargv;
 		error = printf(f, func); \
 }
 
-#if 0
 #define APF(cpp, f, func) { \
 	if (fieldwidth != -1) { \
 		if (precision != -1) \
@@ -106,7 +118,6 @@ static char  **gargv;
 	else \
 		error = asprintf(cpp, f, func); \
 }
-#endif
 
 #ifdef main
 int main(int, char *[]);
@@ -143,7 +154,7 @@ int main(int argc, char *argv[])
 	format = *argv;
 	gargv = ++argv;
 
-#define SKIP1	"#-+ 0"
+#define SKIP1	"#-+ 0'"
 #define SKIP2	"0123456789"
 	do {
 		/*
@@ -238,8 +249,7 @@ int main(int argc, char *argv[])
 				t[b_length] = 0;
 				/* Get printf to calculate the lengths */
 				*fmt = 's';
-				abort();
-/* APF(&a, start, t); */
+				APF(&a, start, t);
 				if (error == -1)
 					goto out;
 				b_fmt = a;
@@ -609,7 +619,7 @@ getintmax(void)
 		return *(cp+1);
 
 	errno = 0;
-	val = strtol(cp, &ep, 0);
+	val = strtoimax(cp, &ep, 0);
 	check_conversion(cp, ep);
 	return val;
 }
@@ -638,7 +648,7 @@ getuintmax(void)
 	}
 
 	errno = 0;
-	val = strtoul(cp, &ep, 0);
+	val = strtoumax(cp, &ep, 0);
 	check_conversion(cp, ep);
 	return val;
 }
