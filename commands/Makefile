@@ -19,7 +19,7 @@ SUBDIR=	add_route arp ash at backup banner basename btrace cal \
 	mount mt netconf nice acknm nohup \
 	nonamed od paste patch \
 	ping postinstall poweroff pr prep printroot \
-	profile progressbar pr_routes ps pwd pwdauth \
+	profile progressbar pr_routes ps pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readclock \
 	reboot remsync rev rget rlogin \
 	rotate rsh rshd service setup shar acksize \
