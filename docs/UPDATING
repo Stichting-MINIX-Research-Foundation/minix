@@ -1,3 +1,16 @@
+20130201:
+	Replace our native ln with NetBSD version.
+
+	As our native ln is a hard link to cp, simply overwriting ln with
+	the new version would cause mv, cp, etc to stop working.
+
+	Do this BEFORE a 'make build':
+
+	# rm /bin/ln
+	# cp /bin/cp /bin/ln
+
+	Then 'make build' as usual.
+
 20130130:
 	With the shell update, and following update of 'test', some
 	modifications are needed in .profile and .ashrc.
