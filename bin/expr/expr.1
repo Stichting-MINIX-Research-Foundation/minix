@@ -1,0 +1,267 @@
+.\"	$NetBSD: expr.1,v 1.33 2012/08/12 17:27:04 wiz Exp $
+.\"
+.\" Copyright (c) 2000,2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by J.T. Conklin <jtc@NetBSD.org> and Jaromir Dolecek <jdolecek@NetBSD.org>.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 20, 2004
+.Dt EXPR 1
+.Os
+.Sh NAME
+.Nm expr
+.Nd evaluate expression
+.Sh SYNOPSIS
+.Nm
+.Ar expression
+.Sh DESCRIPTION
+The
+.Nm
+utility evaluates
+.Ar expression
+and writes the result on standard output.
+.Pp
+All operators are separate arguments to the
+.Nm
+utility.
+Characters special to the command interpreter must be escaped.
+.Pp
+Operators are listed below in order of increasing precedence.
+Operators with equal precedence are grouped within { } symbols.
+.Bl -tag -width indent
+.It Ar expr1 Li \&| Ar expr2
+Returns the evaluation of
+.Ar expr1
+if it is neither an empty string nor zero;
+otherwise, returns the evaluation of
+.Ar expr2 .
+.It Ar expr1 Li \*[Am] Ar expr2
+Returns the evaluation of
+.Ar expr1
+if neither expression evaluates to an empty string or zero;
+otherwise, returns zero.
+.It Ar expr1 Li "{=, \*[Gt], \*[Ge], \*[Lt], \*[Le], !=}" Ar expr2
+Returns the results of integer comparison if both arguments are integers;
+otherwise, returns the results of string comparison using the locale-specific
+collation sequence.
+The result of each comparison is 1 if the specified relation is true,
+or 0 if the relation is false.
+.It Ar expr1 Li "{+, -}" Ar expr2
+Returns the results of addition or subtraction of integer-valued arguments.
+.It Ar expr1 Li "{*, /, %}" Ar expr2
+Returns the results of multiplication, integer division, or remainder of integer-valued arguments.
+.It Ar expr1 Li \&: Ar expr2
+The
+.Dq \&:
+operator matches
+.Ar expr1
+against
+.Ar expr2 ,
+which must be a regular expression.
+The regular expression is anchored
+to the beginning of the string with an implicit
+.Dq ^ .
+.Pp
+If the match succeeds and the pattern contains at least one regular
+expression subexpression
+.Dq "\e(...\e)" ,
+the string corresponding to
+.Dq "\e1"
+is returned;
+otherwise the matching operator returns the number of characters matched.
+If the match fails and the pattern contains a regular expression subexpression
+the null string is returned;
+otherwise 0.
+.It "( " Ar expr No " )"
+Parentheses are used for grouping in the usual manner.
+.El
+.Pp
+Additionally, the following keywords are recognized:
+.Bl -tag -width indent
+.It length Ar expr
+Returns the length of the specified string in bytes.
+.El
+.Pp
+Operator precedence (from highest to lowest):
+.Bl -enum -compact -offset indent
+.It
+parentheses
+.It
+length
+.It
+.Dq \&:
+.It
+.Dq "*" ,
+.Dq "/" ,
+and
+.Dq "%"
+.It
+.Dq "+"
+and
+.Dq "-"
+.It
+compare operators
+.It
+.Dq \*[Am]
+.It
+.Dq \&|
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values:
+.Bl -tag -width Ds -compact
+.It 0
+the expression is neither an empty string nor 0.
+.It 1
+the expression is an empty string or 0.
+.It 2
+the expression is invalid.
+.It \*[Gt]2
+an error occurred (such as memory allocation failure).
+.El
+.Sh EXAMPLES
+.Bl -enum
+.It
+The following example adds one to variable
+.Dq a :
+.Dl a=`expr $a + 1`
+.It
+The following example returns zero, due to subtraction having higher precedence
+than the
+.Dq \*[Am]
+operator:
+.Dl expr 1 '\*[Am]' 1 - 1
+.It
+The following example returns the filename portion of a pathname stored
+in variable
+.Dq a :
+.Dl expr "/$a" Li : '.*/\e(.*\e)'
+.It
+The following example returns the number of characters in variable
+.Dq a :
+.Dl expr $a Li : '.*'
+.El
+.Sh COMPATIBILITY
+This implementation of
+.Nm
+internally uses 64 bit representation of integers and checks for
+over- and underflows.
+It also treats
+.Dq /
+(the division mark) and option
+.Dq --
+correctly depending upon context.
+.Pp
+.Nm
+on other systems (including
+.Nx
+up to and including
+.Nx 1.5 )
+might not be so graceful.
+Arithmetic results might be arbitrarily
+limited on such systems, most commonly to 32 bit quantities.
+This means such
+.Nm
+can only process values between -2147483648 and +2147483647.
+.Pp
+On other systems,
+.Nm
+might also not work correctly for regular expressions where
+either side contains
+.Dq /
+(a single forward slash), like this:
+.Bd -literal -offset indent
+expr / : '.*/\e(.*\e)'
+.Ed
+.Pp
+If this is the case, you might use
+.Dq //
+(a double forward slash)
+to avoid confusion with the division operator:
+.Bd -literal -offset indent
+expr "//$a" : '.*/\e(.*\e)'
+.Ed
+.Pp
+According to
+.St -p1003.2 ,
+.Nm
+has to recognize special option
+.Dq -- ,
+treat it as a delimiter to mark the end of command
+line options, and ignore it.
+Some
+.Nm
+implementations don't recognize it at all; others
+might ignore it even in cases where doing so results in syntax
+error.
+There should be same result for both following examples,
+but it might not always be:
+.Bl -enum -compact -offset indent
+.It
+expr -- : .
+.It
+expr -- -- : .
+.El
+Although
+.Nx
+.Nm
+handles both cases correctly, you should not depend on this behavior
+for portability reasons and avoid passing a bare
+.Dq --
+as the first
+argument.
+.Sh STANDARDS
+The
+.Nm
+utility conforms to
+.St -p1003.2 .
+The
+.Ar length
+keyword is an extension for compatibility with GNU
+.Nm .
+.Sh AUTHORS
+Original implementation was written by
+.An J.T. Conklin
+.Aq jtc@NetBSD.org .
+It was rewritten for
+.Nx 1.6
+by
+.An Jaromir Dolecek
+.Aq jdolecek@NetBSD.org .
+.Sh NOTES
+The empty string
+.Do Dc
+cannot be matched with the intuitive:
+.Bd -literal -offset indent
+expr '' : '$'
+.Ed
+.Pp
+The reason is that the returned number of matched characters (zero)
+is indistinguishable from a failed match, so this returns failure.
+To match the empty string, use something like:
+.Bd -literal -offset indent
+expr x'' : 'x$'
+.Ed
