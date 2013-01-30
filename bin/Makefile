@@ -2,6 +2,6 @@
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 SUBDIR=	cat date ed \
-	mkdir pax rm rmdir
+	mkdir pax rm rmdir test
 
 .include <bsd.subdir.mk>
