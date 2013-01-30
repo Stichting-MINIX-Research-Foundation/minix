@@ -58,8 +58,8 @@ PROG_DRIVERS+=	acpi
 .if ${MACHINE_ARCH} == "earm"
 EXTRA+=		rc.arm mylogin.sh ttys
 PROG_DRIVERS+=	mmc tty gpio
-PROG_COMMANDS+=	cp dd getty ls time sync sleep stty umount
-PROG_BIN+=	cat rm
+PROG_COMMANDS+=	cp dd getty time sync sleep stty umount
+PROG_BIN+=	cat ls rm
 PROTO=		proto.arm.small
 .endif # ${MACHINE_ARCH} == "earm"
 
