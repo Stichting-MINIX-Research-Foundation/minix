@@ -16,6 +16,7 @@
 ./bin/getty				minix-sys
 ./bin/halt				minix-sys
 ./bin/intr				minix-sys
+./bin/kill				minix-sys
 ./bin/ln				minix-sys
 ./bin/loadkeys				minix-sys
 ./bin/ls				minix-sys
@@ -265,7 +266,7 @@
 ./usr/bin/isoinfo			minix-sys
 ./usr/bin/isoread			minix-sys
 ./usr/bin/join				minix-sys
-./usr/bin/kill				minix-sys
+./usr/bin/kill				minix-sys	obsolete
 ./usr/bin/last				minix-sys
 ./usr/bin/ldd				minix-sys
 ./usr/bin/lessecho			minix-sys
