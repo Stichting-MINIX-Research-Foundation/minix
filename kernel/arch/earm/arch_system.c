@@ -52,6 +52,19 @@ void arch_proc_reset(struct proc *pr)
 void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,
 	int isuser, int trapstyle)
 {
+        assert(sizeof(p->p_reg) == sizeof(*state));
+        memcpy(&p->p_reg, state, sizeof(*state));
+
+        /* further code is instructed to not touch the context
+         * any more
+         */
+        p->p_misc_flags |= MF_CONTEXT_SET;
+
+        if(!(p->p_rts_flags)) {
+                printf("WARNINIG: setting full context of runnable process\n");
+                print_proc(p);
+                util_stacktrace();
+        }
 }
 
 void arch_set_secondary_ipc_return(struct proc *p, u32_t val)

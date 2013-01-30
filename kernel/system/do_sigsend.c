@@ -81,6 +81,13 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   fr.sf_signo = smsg.sm_signo;
   fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
 
+#if defined(__arm__)
+  /* use the ARM link register to set the return address from the signal
+   * handler
+   */
+  rp->p_reg.lr = (reg_t) fr.sf_retadr;
+#endif
+
   /* Copy the sigframe structure to the user's stack. */
   if((r=data_copy_vmcheck(caller, KERNEL, (vir_bytes) &fr,
 	m_ptr->SIG_ENDPT, (vir_bytes) frp, 
