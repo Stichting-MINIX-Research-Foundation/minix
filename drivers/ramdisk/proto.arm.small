@@ -27,9 +27,11 @@ d--755 0 0
 	$
 	gpio d--755 0 0
 	$	
+	root d--755 0 0
+	$	
 	usr d--755 0 0
 		bin d--755 0 0
-			login ---755 0 0 mylogin.sh
+			login ---755 0 0 login
 		$
 	$
 	dev d--755 0 0

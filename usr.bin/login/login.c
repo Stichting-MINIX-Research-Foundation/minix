@@ -548,8 +548,12 @@ main(int argc, char *argv[])
 			    ctime(&pwd->pw_change));
 
 	}
+
 	/* Nothing else left to fail -- really log in. */
+#ifndef __arm__
+	/* update_db() crashes on arm minix */
 	update_db(quietlog, rootlogin, fflag);
+#endif
 
 	(void)chown(ttyn, pwd->pw_uid,
 	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);

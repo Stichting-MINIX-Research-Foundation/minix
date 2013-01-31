@@ -31,7 +31,8 @@ PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
 PROG_DRIVERS=
 PROG_COMMANDS=	mount fsck.mfs sh service
 PROG_SERVERS=	mfs
-PROG_USRSBIN=
+PROG_USRSBIN=	pwd_mkdb
+PROG_USRBIN=
 PROG_BIN=
 
 .if ${MACHINE_ARCH} == "i386"
@@ -40,7 +41,6 @@ EXTRA+=		rc
 PROG_DRIVERS+=	at_wini floppy pci
 PROG_COMMANDS+=	cdprobe loadramdisk sysenv
 PROG_SERVERS+=	procfs
-PROG_USRSBIN+=	pwd_mkdb
 
 .if ${MKSMALL} != "yes"
 RAMDISK_SMALL=	1
@@ -56,11 +56,12 @@ PROG_DRIVERS+=	acpi
 .endif # ${MACHINE_ARCH} == "i386"
 
 .if ${MACHINE_ARCH} == "earm"
-EXTRA+=		rc.arm mylogin.sh ttys
+EXTRA+=		rc.arm ttys
 PROG_DRIVERS+=	mmc tty gpio
 PROG_COMMANDS+=	cp dd getty ls time sync sleep stty umount
 PROG_BIN+=	cat rm
 PROTO=		proto.arm.small
+PROG_USRBIN+=	login
 .endif # ${MACHINE_ARCH} == "earm"
 
 .if ${LDSTATIC} == "-dynamic"
@@ -70,7 +71,7 @@ PROG_LIBS+=	libc libminlib libcompat_minix libterminfo
 .endif
 
 PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} \
-	 ${PROG_USRSBIN} ${PROG_BIN} ${PROG_LIBEXEC}
+	 ${PROG_USRSBIN} ${PROG_USRBIN} ${PROG_BIN} ${PROG_LIBEXEC}
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 
@@ -135,15 +136,18 @@ ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}:
 .endfor # prog
 .endfor # srcdir
 
-# We have to do this as a separate loop, because USR.SBIN is not a valid 
-# make variable name.
-.for prog in ${PROG_USRSBIN}
-${prog}: ${PROGROOT}/usr.sbin/${dir.${prog}:U${prog}}/${prog}
+# For /usr/bin/ and /usr/sbin/ programs:
+# We have to do this as a separate loop, because USR.SBIN/USR.BIN
+# are not valid make variable names.
+.for srcdir in bin sbin
+.for prog in ${PROG_USR${srcdir:tu}}
+${prog}: ${PROGROOT}/usr.${srcdir}/${dir.${prog}:U${prog}}/${prog}
 	${INSTALL} $> $@
 
-${PROGROOT}/usr.sbin/${dir.${prog}:U${prog}}/${prog}:
-	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin/${dir.${prog}:U${prog}} all
-.endfor
+${PROGROOT}/usr.${srcdir}/${dir.${prog}:U${prog}}/${prog}:
+	${MAKE} -C ${NETBSDSRCDIR}/usr.${srcdir}/${dir.${prog}:U${prog}} all
+.endfor # prog
+.endfor # srcdir
 
 image:	proto.gen ${ETC} ${EXTRA} pwd.db spwd.db passwd
 	${_MKMSG_CREATE} "Generating ramdisk image"
