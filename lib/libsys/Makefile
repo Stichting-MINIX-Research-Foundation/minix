@@ -125,8 +125,16 @@ CPPFLAGS+= -DUSE_SYSDEBUG
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
 
+# XXX Why only native versions of clang and gcc???
 .if (${CC} == "gcc") || (${CC} == "clang")
+. if ${MKPIC} == "no"
+# XXX Is it really needed? What for?
 LDADD+=	-lminc
+. else
+LDADD+=	-lminc_pic
+# Note: if libminc is made an independant shared object instead,
+#       replace with LIBDPLIBS+=	minc	${.CURDIR}/../libminc
+. endif
 .endif
 
 .include <bsd.lib.mk>
