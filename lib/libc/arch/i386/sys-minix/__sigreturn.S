@@ -5,5 +5,12 @@
 
 IMPORT(_sigreturn)
 ENTRY(__sigreturn)
+#ifndef PIC
 	addl	$16, %esp
 	jmp	_C_LABEL(_sigreturn)
+#else
+	addl	$16, %esp
+	PIC_PROLOGUE		/* push %ebx, but we do not care */
+	pop	%eax	/* special knowledge of how PIC works: discard pushed EBX */
+	jmp	PIC_PLT(_C_LABEL(_sigreturn))
+#endif /* PIC */
