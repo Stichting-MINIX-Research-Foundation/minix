@@ -38,6 +38,7 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define RANDOM_MAJOR		  16	/* 16 = /dev/random (random driver)   */
 #define HELLO_MAJOR		  17	/* 17 = /dev/hello  (hello driver)    */
 #define UDS_MAJOR		  18	/* 18 = /dev/uds    (pfs)             */
+#define FB_MAJOR		  19	/* 18 = /dev/fb0    (fb driver)       */
 
 
 /* Minor device numbers for memory driver. */

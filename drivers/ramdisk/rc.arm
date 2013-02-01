@@ -14,5 +14,5 @@ exec </dev/null
 #/bin/mount  /dev/c0d0p1 /mnt
 #gpio
 #mount -t gpio none /gpio
-
+#service up /sbin/fb -dev /dev/fb0 -period 2HZ
 exit
