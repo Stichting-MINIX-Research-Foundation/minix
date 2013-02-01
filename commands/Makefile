@@ -38,5 +38,4 @@ SUBDIR+=	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump
 .endif
-
 .include <bsd.subdir.mk>

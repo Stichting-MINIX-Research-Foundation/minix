@@ -23,13 +23,14 @@ case $#:$1 in
 	ttypa ttypb ttypc ttypd ttype ttypf \
 	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9 \
 	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf \
-	eth klog random uds filter fbd hello
+	eth klog random uds filter fbd hello fb0
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
 Usage:	$0 [-n] key ...
 Where key is one of the following:
   ram mem kmem null boot zero	  # One of these makes all these memory devices
+  fb0			  # Make /dev/fb0
   fd0 fd1 ...		  # Floppy devices for drive 0, 1, ...
   fd0p0 fd1p0 ...	  # Make floppy partitions fd0p[0-3], fd1p[0-3], ...
   c0d0 c0d1 ...		  # Make disks c0d0, c0d1, ...
@@ -254,7 +255,7 @@ do
 	;;
     uds)
 	# unix domain sockets device
-	$e mknod uds c 18 0;	$e chmod 644 random
+	$e mknod uds c 18 0;
 	$e chgrp operator uds
 	$e chmod 666 uds
 	;;
@@ -277,6 +278,11 @@ do
 	# hello driver
 	$e mknod hello c 17 0
 	$e chmod 644 hello
+	;;
+    fb0)
+	# framebuffer driver
+	$e mknod fb0 c 19 0
+	$e chmod 644 fb0
 	;;
     *)
 	echo "$0: don't know about $dev" >&2

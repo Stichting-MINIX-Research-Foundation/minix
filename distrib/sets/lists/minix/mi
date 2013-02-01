@@ -576,6 +576,7 @@
 ./usr/include/minix/drvlib.h		minix-sys
 ./usr/include/minix/ds.h		minix-sys
 ./usr/include/minix/endpoint.h		minix-sys
+./usr/include/minix/fb.h		minix-sys
 ./usr/include/minix/fslib.h		minix-sys
 ./usr/include/minix/gcov.h		minix-sys
 ./usr/include/minix/gpio.h		minix-sys
@@ -792,6 +793,7 @@
 ./usr/include/sys/ioc_block.h		minix-sys
 ./usr/include/sys/ioccom.h		minix-sys
 ./usr/include/sys/ioc_disk.h		minix-sys
+./usr/include/sys/ioc_fb.h		minix-sys
 ./usr/include/sys/ioc_fbd.h		minix-sys
 ./usr/include/sys/ioc_file.h		minix-sys
 ./usr/include/sys/ioc_memory.h		minix-sys
