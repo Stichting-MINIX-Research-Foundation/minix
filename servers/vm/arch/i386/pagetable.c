@@ -171,15 +171,10 @@ static u32_t findhole(int pages)
 	assert(pages > 0);
 #endif
 
-#if SANITYCHECKS
-	curv = ((u32_t) random()) % ((vmax - vmin)/VM_PAGE_SIZE);
-	curv *= VM_PAGE_SIZE;
-	curv += vmin;
-#else
 	curv = lastv;
 	if(curv < vmin || curv >= vmax)
 		curv = vmin;
-#endif
+
 	try_restart = 1;
 
 	/* Start looking for a free page starting at vmin. */
@@ -958,10 +953,17 @@ int pt_writemap(struct vmproc * vmp,
 			maskedentry &= ~(I386_VM_ACC|I386_VM_DIRTY);
 #endif
 			/* Verify pagetable entry. */
+#if defined(__i386__)
 			if(entry & ARCH_VM_PTE_RW) {
 				/* If we expect a writable page, allow a readonly page. */
 				maskedentry |= ARCH_VM_PTE_RW;
 			}
+#elif defined(__arm__)
+			if(!(entry & ARCH_VM_PTE_RO)) {
+				/* If we expect a writable page, allow a readonly page. */
+				maskedentry &= ~ARCH_VM_PTE_RO;
+			}
+#endif
 			if(maskedentry != entry) {
 				printf("pt_writemap: mismatch: ");
 #if defined(__i386__)
@@ -979,6 +981,8 @@ int pt_writemap(struct vmproc * vmp,
 				printf(" masked %s; ",
 					ptestr(maskedentry));
 				printf(" expected %s\n", ptestr(entry));
+				printf("found 0x%x, wanted 0x%x\n", 
+					pt->pt_pt[pde][pte], entry);
 				ret = EFAULT;
 				goto resume_exit;
 			}
