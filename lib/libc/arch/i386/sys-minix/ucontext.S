@@ -1,26 +1,11 @@
 #include <machine/asm.h>
 #include <ucontextoffsets.h>
 
-#ifdef __ACK__
-.text
-begtext:
-#ifdef __ACK__
-.rom
-#else
-.data
-#endif
-begrom:
-.data
-begdata:
-.bss
-begbss:
-#endif
-
-
 IMPORT(getuctx)
 IMPORT(setuctx)
 IMPORT(resumecontext)
 
+	.globl	_C_LABEL(__errno)
 
 /* MCF_MAGIC value from <mcontext.h> */
 #define MCF_MAGIC	0xc0ffee
@@ -52,7 +37,10 @@ ENTRY(getcontext)
 	/* Check null pointer */
 	cmp $0, %edx			/* edx == NULL? */
 	jne 3f				/* Not null, continue */
-	movl $EFAULT, (_C_LABEL(errno))
+	PIC_PROLOGUE
+	call	PIC_PLT(_C_LABEL(__errno))
+	PIC_EPILOGUE
+	movl $EFAULT, (%eax)
 	xor %eax, %eax
 	dec %eax			/* return -1 */
 	ret
@@ -70,11 +58,13 @@ ENTRY(getcontext)
 	jz 1f				/* Both are set, skip getuctx */
 
 0:
+	PIC_PROLOGUE
 	push %ecx			/* Save ecx */
 	push %edx		 
-	call _C_LABEL(getuctx)		/* getuctx(ucp) */
+	call	PIC_PLT(_C_LABEL(getuctx))	/* getuctx(ucp) */
 	pop %edx			/* clean up stack and restore edx */
 	pop %ecx			/* Restore ecx */
+	PIC_EPILOGUE
 
 1: 
 	/* Save the context */
@@ -115,7 +105,12 @@ ENTRY(setcontext)
 	/* Check null pointer */
 	cmp $0, %edx			/* edx == NULL? */
 	jnz 3f				/* Not null, continue */
-	movl $EFAULT, (_C_LABEL(errno))
+	movl $EFAULT, %edx
+9:
+	PIC_PROLOGUE
+	call	PIC_PLT(_C_LABEL(__errno))
+	PIC_EPILOGUE
+	movl %edx, (%eax)
 	xor %eax, %eax
 	dec %eax			/* return -1 */
 	ret
@@ -127,10 +122,8 @@ ENTRY(setcontext)
 	pop %ebx			/* restore ebx */
 	cmp $MCF_MAGIC, %ecx	/* is the magic value set (is context valid)?*/
 	jz 4f				/* is set, proceed */
-	movl $EINVAL, (_C_LABEL(errno)) /* not set, return error code */
-	xor %eax, %eax
-	dec %eax			/* return -1 */
-	ret	
+	movl $EINVAL, %edx		/* not set, return error code */
+	jmp 9b
 
 
 4:	push %ebx			/* save ebx */
@@ -143,11 +136,15 @@ ENTRY(setcontext)
 	jz 1f			/* Both are set, so don't bother restoring FPU
 				 * state and signal mask */
 
-0:	push %ecx			/* Save ecx */
+0:
+	PIC_PROLOGUE
+	push %ecx			/* Save ecx */
 	push %edx		 
-	call _C_LABEL(setuctx)		/* setuctx(ucp) */
-	pop %edx			/* Clean up stack and restore edx */
+	call PIC_PLT(_C_LABEL(setuctx))	/* setuctx(ucp) */
+	pop %edx			/* clean up stack and restore edx */
 	pop %ecx			/* Restore ecx */
+	PIC_EPILOGUE
+
 
 1:	/* Restore the registers */
 	mov 4(%esp), %edx		/* edx = ucp */
@@ -168,7 +165,8 @@ ENTRY(setcontext)
  *	to ucp on the stack. By setting ESP to ESI, we effectively 'remove' all
  *	arguments to `func' from the stack. Finally, a call to resumecontext
  *	will start the next context in the linked list (or exit the program if
- *	there is no context). */
+ *	there is no context).
+ */
 ENTRY(ctx_start)
 	/* 0(esp) -> func
 	 * 4(esp) -> arg1
@@ -176,11 +174,24 @@ ENTRY(ctx_start)
 	 * 4*n(esp) -> argn
 	 * 4*(n+1)(esp) -> ucp */
 
+#ifndef PIC
 	pop %eax			/* eax = func */
 	call *%eax			/* func(arg1, ..., argn) */
 	mov %esi, %esp			/* Clean up stack */
 	/* ucp is now at the top of the stack again */
 	call _C_LABEL(resumecontext)	/* resumecontext(ucp) */
 	ret			/* never reached */
-
+#else
+/*
+ * Since PIC needs the EBX register, which is pushed on the stack by PIC_PROLOGUE,
+ * we need an extra of salsa here.
+ */
+	pop %eax			/* eax = func */
+	call *%eax			/* func(arg1, ..., argn) */
+	PIC_PROLOGUE		/* push %ebx, but we do not care */
+	mov %esi, %esp		/* Clean up stack, keep value of %ebx */
+	/* ucp is now at the top of the stack again */
+	call PIC_PLT(_C_LABEL(resumecontext))	/* resumecontext(ucp) */
+	ret			/* never reached */
+#endif /* PIC */
 
