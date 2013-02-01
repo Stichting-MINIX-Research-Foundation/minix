@@ -14,6 +14,9 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "padconf.h"
+#include "clkconf.h"
+
 /* local headers */
 #include "log.h"
 #include "mmio.h"
@@ -26,36 +29,131 @@ static struct log log = {
 	.log_func = default_log
 };
 
+struct gpio_driver
+{
+	/* request access to a gpio */
+	int (*claim) (char *owner, int nr, struct gpio ** gpio);
+
+	/* Configure the GPIO for a certain purpose */
+	int (*pin_mode) (struct gpio * gpio, int mode);
+
+	/* Set the value for a GPIO */
+	int (*set) (struct gpio * gpio, int value);
+
+	/* Read the current value of the GPIO */
+	int (*read) (struct gpio * gpio, int *value);
+
+	/* Read and clear the value interrupt value of the GPIO */
+	int (*intr_read) (struct gpio * gpio, int *value);
+
+	/* Interrupt hook */
+	int (*message_hook) (message * m);
+};
+
+static struct gpio_driver drv;
+
 struct omap_gpio_bank
 {
 	const char *name;
 	uint32_t register_address;
+	uint32_t irq_nr;	/* irq number */
 	uint32_t base_address;
-	uint32_t disabled;
+	int32_t disabled;
+	int irq_id;		/* orignhal hook id??? */
+	int irq_hook_id;	/* hook id */
+	uint32_t inter_values;	/* values when the interrupt was called */
 };
 
+#define GPIO1_BASE (0x48310000)
+#define GPIO2_BASE (0x49050000)
+#define GPIO3_BASE (0x49052000)
+#define GPIO4_BASE (0x49054000)
+#define GPIO5_BASE (0x49056000)
+#define GPIO6_BASE (0x49058000)
+#define GPIO1_IRQ  29		/* GPIO module 1 */
+#define GPIO2_IRQ  30		/* GPIO module 2 */
+#define GPIO3_IRQ  31		/* GPIO module 3 */
+#define GPIO4_IRQ  32		/* GPIO module 4 */
+#define GPIO5_IRQ  33		/* GPIO module 5 */
+#define GPIO6_IRQ  34		/* GPIO module 6 */
+#define GPIO1_IRQ_HOOK_ID 0
+#define GPIO2_IRQ_HOOK_ID 1
+#define GPIO3_IRQ_HOOK_ID 2
+#define GPIO4_IRQ_HOOK_ID 3
+#define GPIO5_IRQ_HOOK_ID 4
+#define GPIO6_IRQ_HOOK_ID 5
+
+#define GPIO_IRQSTATUS1 (0x18)
+#define GPIO_IRQENABLE1 (0x01C)
+#define GPIO_DATAOUT (0x3c)
+#define GPIO_DATAIN (0x38)
+#define GPIO_OE    (0x34)	/* Output Data Enable */
+#define GPIO_RISINGDETECT1 (0x048)
+#define GPIO_FALLINGDETECT1 (0x04c)
+#define GPIO_CLEARDATAOUT (0x90)
+#define GPIO_SETDATAOUT (0x94)
+
 static struct omap_gpio_bank omap_gpio_banks[] = {
-	{"GPIO1", 0x48310000, 0, 0},
-	{"GPIO2", 0x49050000, 0, 0},
-	{"GPIO3", 0x49052000, 0, 0},
-	{"GPIO4", 0x49054000, 0, 0},
-	{"GPIO5", 0x49056000, 0, 0},
-	{"GPIO6", 0x49058000, 0, 0},
+	{
+		    .name = "GPIO1",
+		    .register_address = GPIO1_BASE,
+		    .irq_nr = GPIO1_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = GPIO1_IRQ_HOOK_ID,
+		    .irq_hook_id = GPIO1_IRQ_HOOK_ID,
+	    },
+	{
+		    .name = "GPIO2",
+		    .register_address = GPIO2_BASE,
+		    .irq_nr = GPIO2_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = GPIO2_IRQ_HOOK_ID,
+		    .irq_hook_id = GPIO2_IRQ_HOOK_ID,
+	    },
+	{
+		    .name = "GPIO3",
+		    .register_address = GPIO3_BASE,
+		    .irq_nr = GPIO3_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = GPIO3_IRQ_HOOK_ID,
+		    .irq_hook_id = GPIO3_IRQ_HOOK_ID,
+	    },
+	{
+		    .name = "GPIO4",
+		    .register_address = GPIO4_BASE,
+		    .irq_nr = GPIO4_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = GPIO4_IRQ_HOOK_ID,
+		    .irq_hook_id = GPIO4_IRQ_HOOK_ID,
+	    },
+	{
+		    .name = "GPIO5",
+		    .register_address = GPIO5_BASE,
+		    .irq_nr = GPIO5_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = GPIO5_IRQ_HOOK_ID,
+		    .irq_hook_id = GPIO5_IRQ_HOOK_ID,
+	    },
+	{
+		    .name = "GPIO6",
+		    .register_address = GPIO6_BASE,
+		    .irq_nr = GPIO6_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = GPIO6_IRQ_HOOK_ID,
+		    .irq_hook_id = GPIO6_IRQ_HOOK_ID,
+	    },
 	{NULL, 0, 0}
 };
 
 #define GPIO_REVISION 0x00
 #define GPIO_REVISION_MAJOR(X) ((X & 0xF0) >> 4)
 #define GPIO_REVISION_MINOR(X) (X & 0XF)
-
-#define GPIO_DATAOUT 0x3c
-#define GPIO_DATAIN 0x38
-#define GPIO_OE 0x34		/* Output Data Enable */
-#define GPIO_CLEARDATAOUT 0x90
-#define GPIO_SETDATAOUT 0x94
-
-#define LED_USR0 (1 << 21)
-#define LED_USR1 (1 << 22)
 
 struct omap_gpio_bank *
 omap_gpio_bank_get(int gpio_nr)
@@ -72,14 +170,14 @@ omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
 	log_trace(&log, "%s s claiming %d\n", owner, nr);
 
 	if (nr < 0 && nr >= 32 * 6) {
-		log_warn(&log, "%s is claiming unknown GPIO number %d\n", owner,
-		    nr);
+		log_warn(&log, "%s is claiming unknown GPIO number %d\n",
+		    owner, nr);
 		return EINVAL;
 	}
 
-	if ( omap_gpio_bank_get(nr)->disabled == 1) {
-		log_warn(&log, "%s is claiming GPIO %d from disabled bank\n", owner,
-		    nr);
+	if (omap_gpio_bank_get(nr)->disabled == 1) {
+		log_warn(&log, "%s is claiming GPIO %d from disabled bank\n",
+		    owner, nr);
 		return EINVAL;
 	}
 
@@ -107,6 +205,10 @@ omap_gpio_pin_mode(struct gpio *gpio, int mode)
 	if (mode == GPIO_MODE_OUTPUT) {
 		set32(bank->base_address + GPIO_OE, BIT(gpio->nr % 32), 0);
 	} else {
+		set32(bank->base_address + GPIO_FALLINGDETECT1,
+		    BIT(gpio->nr % 32), 0xffffffff);
+		set32(bank->base_address + GPIO_IRQENABLE1, BIT(gpio->nr % 32),
+		    0xffffffff);
 		set32(bank->base_address + GPIO_OE, BIT(gpio->nr % 32),
 		    0xffffffff);
 	}
@@ -157,6 +259,62 @@ omap_gpio_read(struct gpio *gpio, int *value)
 }
 
 int
+omap_gpio_intr_read(struct gpio *gpio, int *value)
+{
+	struct omap_gpio_bank *bank;
+	assert(gpio != NULL);
+	assert(gpio->nr >= 0 && gpio->nr <= 32 * 6);
+
+	bank = omap_gpio_bank_get(gpio->nr);
+	/* TODO: check if interrupt where enabled?? */
+
+	*value = (bank->inter_values >> (gpio->nr % 32)) & 0x1;
+	/* clear the data */
+	bank->inter_values &= ~(1 << (gpio->nr % 32));
+
+	return OK;
+}
+
+int
+omap_message_hook(message * m)
+{
+	unsigned long irq_set, i;
+	struct omap_gpio_bank *bank;
+
+	switch (_ENDPOINT_P(m->m_source)) {
+	case HARDWARE:
+		/* Hardware interrupt return a "set" if pending interrupts */
+		irq_set = m->NOTIFY_ARG;
+		log_debug(&log, "HW message 0X%08x\n", m->NOTIFY_ARG);
+		bank = &omap_gpio_banks[0];
+		for (i = 0; omap_gpio_banks[i].name != NULL; i++) {
+			bank = &omap_gpio_banks[i];
+
+			if (irq_set & (1 << (bank->irq_id))) {
+				log_trace(&log, "Interrupt for bank %s\n",
+				    bank->name);
+				bank->inter_values |=
+				    read32(bank->base_address +
+				    GPIO_IRQSTATUS1);
+				/* clear the interrupts */
+				write32(bank->base_address + GPIO_IRQSTATUS1,
+				    0xffffffff);
+				if (sys_irqenable(&bank->irq_hook_id) != OK) {
+					log_warn(&log,
+					    "Failed to enable irq for bank %s\n",
+					    bank->name);
+				}
+			}
+		}
+		return OK;
+	default:
+		log_warn(&log, "Unknown message\n");
+		break;
+	}
+	return OK;
+}
+
+int
 omap_gpio_init(struct gpio_driver *drv)
 {
 	u32_t revision;
@@ -197,40 +355,102 @@ omap_gpio_init(struct gpio_driver *drv)
 			bank->disabled = 1;
 		}
 		bank->disabled = 0;
-		log_trace(&log, "bank %s mapped on 0x%x\n", bank->name,
-		    bank->base_address);
-	}
 
-/* the following code need to move to a power management/clock service */
-#define CM_BASE 0x48004000
-#define CM_FCLKEN_WKUP 0xC00
-#define CM_ICLKEN_WKUP 0xC10
+		if (sys_irqsetpolicy(bank->irq_nr, 0,
+			&bank->irq_hook_id) != OK) {
+			log_warn(&log,
+			    "GPIO: couldn't set IRQ policy for bank %s\n",
+			    bank->name);
+			continue;
+		};
+		if (bank->irq_id != bank->irq_hook_id) {
+			log_info(&log, "requested id %d but got id %d\n",
+			    bank->irq_id, bank->irq_hook_id);
+		}
+		if (sys_irqenable(&bank->irq_hook_id) != OK) {
+			log_warn(&log,
+			    "GPIO: couldn't enable interrupt for %s\n",
+			    bank->name);
+		};
+		log_trace(&log, "bank %s mapped on 0x%x with irq hook id %d\n",
+		    bank->name, bank->base_address, bank->irq_hook_id);
 
-	u32_t base;
-	mr.mr_base = CM_BASE;
-	mr.mr_limit = CM_BASE + 0x1000;
+	};
 
-	if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != 0) {
-		log_warn(&log, "Unable to request permission to map memory\n");
-		return EPERM;
-	}
-
-	base = (uint32_t) vm_map_phys(SELF, (void *) CM_BASE, 0x1000);
-
-	if (base == (uint32_t) MAP_FAILED) {
-		log_warn(&log, "Unable to map GPIO memory\n");
-		return EPERM;
-	}
-
+	clkconf_init();
 	/* enable the interface and functional clock on GPIO bank 1 */
-	set32(base + CM_FCLKEN_WKUP, BIT(3), 0xffffffff);
-	set32(base + CM_ICLKEN_WKUP, BIT(3), 0xffffffff);
-/* end power management/clock service stuff */
+	clkconf_set(CM_FCLKEN_WKUP, BIT(3), 0xffffffff);
+	clkconf_set(CM_ICLKEN_WKUP, BIT(3), 0xffffffff);
+	clkconf_release();
 
+	padconf_init();
+	/* configure GPIO_144 to be exported */
+	padconf_set(CONTROL_PADCONF_UART2_CTS, 0xff,
+	    PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
+	    PADCONF_INPUT_ENABLE(1));
+	padconf_set(CONTROL_PADCONF_MMC2_DAT6, 0xff00,
+	    (PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
+		PADCONF_INPUT_ENABLE(1)) << 16);
+	padconf_release();
 
 	drv->claim = omap_gpio_claim;
 	drv->pin_mode = omap_gpio_pin_mode;
 	drv->set = omap_gpio_set;
 	drv->read = omap_gpio_read;
+	drv->intr_read = omap_gpio_intr_read;
+	drv->message_hook = omap_message_hook;
 	return 0;
+}
+
+int
+gpio_init()
+{
+	return omap_gpio_init(&drv);
+}
+
+/* request access to a gpio */
+int
+gpio_claim(char *owner, int nr, struct gpio **gpio)
+{
+	return drv.claim(owner, nr, gpio);
+}
+
+/* Configure the GPIO for a certain purpose */
+int
+gpio_pin_mode(struct gpio *gpio, int mode)
+{
+	return drv.pin_mode(gpio, mode);
+}
+
+/* Set the value for a GPIO */
+int
+gpio_set(struct gpio *gpio, int value)
+{
+	return drv.set(gpio, value);
+}
+
+/* Read the current value of the GPIO */
+int
+gpio_read(struct gpio *gpio, int *value)
+{
+	return drv.read(gpio, value);
+}
+
+/* Read and clear the value interrupt value of the GPIO */
+int
+gpio_intr_read(struct gpio *gpio, int *value)
+{
+	return drv.intr_read(gpio, value);
+}
+
+/* Interrupt hook */
+int
+gpio_intr_message(message * m)
+{
+	return drv.message_hook(m);
+}
+
+int
+gpio_release()
+{
 }

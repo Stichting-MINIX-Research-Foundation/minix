@@ -1,6 +1,6 @@
 # Makefile for the gpio driver.
 PROG=	gpio
-SRCS=	gpio.c gpio_omap.c
+SRCS=	gpio.c gpio_omap.c padconf.c  clkconf.c
 
 DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}
 LDADD+=	-lvtreefs -lsys

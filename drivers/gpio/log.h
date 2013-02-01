@@ -41,7 +41,10 @@ static const char *level_string[5] = {
  * requested log level is debug or trace the method , file and line number will
  * be printed to the steam.
  */
-struct log { const char *name; int log_level;
+struct log
+{
+	const char *name;
+	int log_level;
 
 	/* the logging function itself */
 	void (*log_func) (struct log * driver,

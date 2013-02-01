@@ -5,26 +5,30 @@ struct gpio
 {
 	int nr;			/* GPIO number */
 	int mode;		/* GPIO mode (input=0/output=1) */
-	void *data;		/* data pointer (not used in the omap driver) */
 };
 
 #define GPIO_MODE_INPUT 0
 #define GPIO_MODE_OUTPUT 1
 
-struct gpio_driver
-{
-	/* request access to a gpio */
-	int (*claim) (char *owner, int nr, struct gpio ** gpio);
+int gpio_init();
 
-	/* Configure the GPIO for a certain purpose */
-	int (*pin_mode) (struct gpio * gpio, int mode);
+/* request access to a gpio */
+int gpio_claim(char *owner, int nr, struct gpio **gpio);
 
-	/* Set the value for a GPIO */
-	int (*set) (struct gpio * gpio, int value);
+/* Configure the GPIO for a certain purpose */
+int gpio_pin_mode(struct gpio *gpio, int mode);
 
-	/* Read the value of the GPIO */
-	int (*read) (struct gpio * gpio, int *value);
-};
+/* Set the value for a GPIO */
+int gpio_set(struct gpio *gpio, int value);
 
-int omap_gpio_init(struct gpio_driver *gpio_driver);
+/* Read the current value of the GPIO */
+int gpio_read(struct gpio *gpio, int *value);
+
+/* Read and clear the value interrupt value of the GPIO */
+int gpio_intr_read(struct gpio *gpio, int *value);
+
+/* Interrupt hook */
+int gpio_intr_message(message * m);
+
+int gpio_release();
 #endif /* __INCLUDE_GPIO_H__ */
