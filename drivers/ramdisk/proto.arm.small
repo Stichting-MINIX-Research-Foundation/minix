@@ -16,8 +16,10 @@ d--755 0 0
 		cat ---755 0 0 cat
 		ls ---755 0 0 ls
 		fsck.mfs ---755 0 0 fsck.mfs
+		kill ---755 0 0 kill
 	$
 	sbin d--755 0 0
+		fb ---755 0 0 fb
 		mmc ---755 0 0 mmc
 		mfs ---755 0 0 mfs
 		gpio ---755 0 0 gpio
