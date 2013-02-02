@@ -48,7 +48,8 @@ int fkey_ctl(int req, int *fkeys, int *sfkeys);
 
 int printf(const char *fmt, ...);
 void kputc(int c);
-__dead void panic(const char *fmt, ...);
+__dead void panic(const char *fmt, ...)
+     __attribute__((__format__(__printf__,1,2)));
 int getuptime(clock_t *ticks);
 int getuptime2(clock_t *ticks, time_t *boottime);
 int tickdelay(clock_t ticks);
