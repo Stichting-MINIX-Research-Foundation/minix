@@ -11,7 +11,7 @@
 #include "local.h"
 
 #define CHECKOUTOFMEM(ptr) if(ptr == NULL) \
-                               panic("Out of memory! (%s, line %d)" \
+                               panic("Out of memory! (%s, line %d)", \
 							     __FILE__, __LINE__)
 
 

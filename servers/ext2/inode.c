@@ -234,7 +234,7 @@ void put_inode(
 	return;    /* checking here is easier than in caller */
 
   if (rip->i_count < 1)
-	panic("put_inode: i_count already below 1", rip->i_count);
+	panic("put_inode: i_count already below 1: %d", rip->i_count);
 
   if (--rip->i_count == 0) {    /* i_count == 0 means no one is using it now */
 	if (rip->i_links_count == NO_LINK) {

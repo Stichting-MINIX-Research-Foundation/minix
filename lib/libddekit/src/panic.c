@@ -15,7 +15,7 @@ void ddekit_panic(char *fmt, ...)
     va_start(va,fmt);
     r = vprintf(fmt, va);
     va_end(va);
-	panic("","",0);	
+	panic("panicced");	
 
 	while(1)
 		;

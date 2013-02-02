@@ -498,7 +498,7 @@ clear_indirect_table(struct virtio_device *dev, struct vring_desc *vd)
 	}
 
 	if (i >= dev->num_indirect)
-		panic("%s: Could not clear indirect descriptor table ");
+		panic("Could not clear indirect descriptor table ");
 }
 
 
@@ -538,7 +538,7 @@ set_indirect_descriptors(struct virtio_device *dev, struct virtio_queue *q,
 
 	/* Sanity check */
 	if (i >= dev->num_indirect)
-		panic("%s: No indirect descriptor tables left");
+		panic("No indirect descriptor tables left");
 
 	/* For indirect descriptor tables, only a single descriptor from
 	 * the main ring is used.

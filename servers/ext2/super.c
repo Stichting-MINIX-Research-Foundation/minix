@@ -42,7 +42,7 @@ struct super_block *get_super(
   if (dev == NO_DEV)
 	panic("request for super_block of NO_DEV");
   if (superblock->s_dev != dev)
-	panic("wrong superblock", (int) dev);
+	panic("wrong superblock: 0x%x", (int) dev);
 
   return(superblock);
 }

@@ -273,7 +273,7 @@ static void pio_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	if (inb_reg0(dep, DP_ISR) & ISR_RDC) break;
   }
   if (ix == 100) {
-	panic(RdmaErrMsg);
+	panic("%s", RdmaErrMsg);
   }
   return;
 }

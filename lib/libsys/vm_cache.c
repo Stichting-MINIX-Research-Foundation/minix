@@ -17,11 +17,11 @@ int vm_cachecall(message *m, int call, void *addr, u32_t dev, u64_t dev_offset,
 		blocksize, PAGE_SIZE);
 
     if(ino_offset % PAGE_SIZE)
-    	panic("inode offset %d should be a multiple of pagesize %d\n",
+    	panic("inode offset %lld should be a multiple of pagesize %d\n",
 		ino_offset, PAGE_SIZE);
 
     if(dev_offset % PAGE_SIZE)
-    	panic("dev offset offset %d should be a multiple of pagesize %d\n",
+    	panic("dev offset offset %lld should be a multiple of pagesize %d\n",
 		dev_offset, PAGE_SIZE);
 
     memset(m, 0, sizeof(*m));

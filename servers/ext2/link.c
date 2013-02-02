@@ -718,7 +718,7 @@ off_t len;
 	panic("zeroblock_range: no block");
   offset = pos % rip->i_sp->s_block_size;
   if (offset + len > rip->i_sp->s_block_size)
-	panic("zeroblock_range: len too long", len);
+	panic("zeroblock_range: len too long: %d", len);
   memset(b_data(bp) + offset, 0, len);
   lmfs_markdirty(bp);
   put_block(bp, FULL_DATA_BLOCK);

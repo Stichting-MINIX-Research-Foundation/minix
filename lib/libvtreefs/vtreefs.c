@@ -115,7 +115,7 @@ static int get_work(void)
 	int r;
 
 	if ((r = sef_receive(ANY, &fs_m_in)) != OK)
-		panic(__FILE__, "receive failed", r);
+		panic("receive failed: %d", r);
 
 	return fs_m_in.m_type;
 }
@@ -135,7 +135,7 @@ static void send_reply(int err, int transid)
 	}
 
 	if ((r = send(fs_m_in.m_source, &fs_m_out)) != OK)
-		panic(__FILE__, "unable to send reply", r);
+		panic("unable to send reply: %d", r);
 }
 
 /*===========================================================================*

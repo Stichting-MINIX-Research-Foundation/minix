@@ -289,7 +289,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 		phys = 0;
 	} else {
 		if(phys == 0)
-			panic("vm_lookup returned phys: %d",  phys);
+			panic("vm_lookup returned phys: 0x%lx",  phys);
 	}
 
 	if(phys == 0) {

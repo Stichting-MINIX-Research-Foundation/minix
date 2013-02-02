@@ -441,7 +441,7 @@ int lookup_hook(struct inode *parent, char *name,
 	 * Alternative: pull in only PM's table?
 	 */
 	if ((r = getticks(&now)) != OK)
-		panic(__FILE__, "unable to get uptime", r);
+		panic("unable to get uptime: %d", r);
 
 	if (last_update != now) {
 		update_tables();

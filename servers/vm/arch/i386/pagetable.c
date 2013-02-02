@@ -1147,9 +1147,9 @@ void pt_init(void)
 				kern_mappings[index].flags |= ARCH_VM_PTE_RO;
 #endif
 			if(addr % VM_PAGE_SIZE)
-                		panic("VM: addr unaligned: %d", addr);
+                		panic("VM: addr unaligned: %lu", addr);
 			if(len % VM_PAGE_SIZE)
-                		panic("VM: len unaligned: %d", len);
+                		panic("VM: len unaligned: %lu", len);
 			vir = offset;
 			if(sys_vmctl_reply_mapping(index, vir) != OK)
                 		panic("VM: reply failed");

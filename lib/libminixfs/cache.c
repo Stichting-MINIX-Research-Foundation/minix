@@ -472,7 +472,7 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 			printf("libminixfs: ENOSYS, disabling VM calls\n");
 			vmcache = 0;
 		} else {
-			panic("libminixfs: setblock of 0x%lx dev 0x%x off "
+			panic("libminixfs: setblock of %p dev 0x%x off "
 				"0x%llx failed\n", bp->data, dev, dev_off);
 		}
 	}

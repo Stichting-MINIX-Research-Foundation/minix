@@ -316,7 +316,7 @@ void free_block(struct super_block *sp, bit_t bit_returned)
   bp = get_block(sp->s_dev, gd->block_bitmap, NORMAL);
 
   if (unsetbit(b_bitmap(bp), bit))
-	panic("Tried to free unused block", bit_returned);
+	panic("Tried to free unused block %d", bit_returned);
 
   lmfs_markdirty(bp);
   put_block(bp, MAP_BLOCK);

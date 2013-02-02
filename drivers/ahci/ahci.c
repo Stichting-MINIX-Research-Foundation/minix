@@ -2087,7 +2087,7 @@ static void ahci_init(int devind)
 	 * the actual total number of ports to the size of the exposed area.
 	 */
 	if (size < AHCI_MEM_BASE_SIZE + AHCI_MEM_PORT_SIZE)
-		panic("HBA memory size too small: %lu", size);
+		panic("HBA memory size too small: %u", size);
 
 	size = MIN(size, AHCI_MEM_BASE_SIZE + AHCI_MEM_PORT_SIZE * NR_PORTS);
 

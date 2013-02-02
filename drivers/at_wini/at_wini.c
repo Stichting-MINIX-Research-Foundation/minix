@@ -1536,7 +1536,7 @@ static int setup_dma(
 		if (n > size)
 			n= size;
 		if (n == 0 || (n & 1))
-			panic("bad size in iov: %d", iov[i].iov_size);
+			panic("bad size in iov: 0x%lx", iov[i].iov_size);
 		if(proc_nr != SELF) {
 			r= sys_umap(proc_nr, VM_GRANT, iov[i].iov_addr, n,
 				&user_phys);
@@ -1609,7 +1609,7 @@ static int setup_dma(
 		panic("Bus master IDE active");
 
 	if (prdt_phys & 3)
-		panic("prdt not aligned: %d", prdt_phys);
+		panic("prdt not aligned: 0x%lx", prdt_phys);
 	r= sys_outl(wn->base_dma + DMA_PRDTP, prdt_phys);
 	if (r != 0) panic("setup_dma: sys_outl failed: %d", r);
 

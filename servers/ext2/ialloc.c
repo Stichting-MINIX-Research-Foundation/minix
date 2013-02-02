@@ -229,7 +229,7 @@ static void free_inode_bit(struct super_block *sp, bit_t bit_returned,
   bp = get_block(sp->s_dev, gd->inode_bitmap, NORMAL);
 
   if (unsetbit(b_bitmap(bp), bit))
-	panic("Tried to free unused inode", bit_returned);
+	panic("Tried to free unused inode %d", bit_returned);
 
   lmfs_markdirty(bp);
   put_block(bp, MAP_BLOCK);

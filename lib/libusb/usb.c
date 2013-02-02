@@ -59,7 +59,7 @@ int usb_send_urb(struct usb_urb* urb)
 	}
 
 	if (msg.USB_RESULT != 0) {
-		panic("usb_send_urb: hcd could not enqueue URB: %d", msg.USB_RESULT);
+		panic("usb_send_urb: hcd could not enqueue URB: %ld", msg.USB_RESULT);
 	}
 	
 	/* everything ok, add urb to pending_urbs */
@@ -145,7 +145,7 @@ int usb_init(char *name)
 	}
 
 	if (msg.USB_RESULT != 0 ) {
-		panic("usb_init: init failed: %d", msg.USB_RESULT);
+		panic("usb_init: init failed: %ld", msg.USB_RESULT);
 	}
 
 	return 0;

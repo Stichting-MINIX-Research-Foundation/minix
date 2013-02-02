@@ -128,7 +128,7 @@ int devman_add_device(struct devman_dev *dev)
 	}
 	
 	if (msg.DEVMAN_RESULT != 0) {
-		panic("devman_add_device: could add device: %d",
+		panic("devman_add_device: could add device: %ld",
 		    msg.DEVMAN_RESULT);
 	}
 
@@ -168,7 +168,7 @@ int devman_del_device(struct devman_dev *dev)
 	}
 	
 	if (msg.DEVMAN_RESULT != 0) {
-		panic("devman_del_device: could delete device: %d",
+		panic("devman_del_device: could delete device: %ld",
 		    msg.DEVMAN_RESULT);
 	}
 
