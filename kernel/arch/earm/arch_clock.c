@@ -52,13 +52,13 @@ void cycles_accounting_init(void)
 
 void context_stop(struct proc * p)
 {
-	u64_t tsc, tsc_delta;
+	u64_t tsc;
+	u32_t tsc_delta;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 
 	read_tsc_64(&tsc);
-	p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
-
-	tsc_delta = sub64(tsc, *__tsc_ctr_switch);
+	tsc_delta = tsc - *__tsc_ctr_switch;
+	p->p_cycles += tsc_delta;
 
 	if(kbill_ipc) {
 		kbill_ipc->p_kipc_cycles =
@@ -79,18 +79,11 @@ void context_stop(struct proc * p)
 	 */
 	if (p->p_endpoint >= 0) {
 #if DEBUG_RACE
-		make_zero64(p->p_cpu_time_left);
+		p->p_cpu_time_left = 0;
 #else
-		/* if (tsc_delta < p->p_cpu_time_left) in 64bit */
-		if (ex64hi(tsc_delta) < ex64hi(p->p_cpu_time_left) ||
-				(ex64hi(tsc_delta) == ex64hi(p->p_cpu_time_left) &&
-				 ex64lo(tsc_delta) < ex64lo(p->p_cpu_time_left)))
-		{
-			p->p_cpu_time_left = sub64(p->p_cpu_time_left, tsc_delta);
-		}
-		else {
-			make_zero64(p->p_cpu_time_left);
-		}
+		if (tsc_delta < p->p_cpu_time_left) {
+			p->p_cpu_time_left -= tsc_delta;
+		} else p->p_cpu_time_left = 0;
 #endif
 	}
 

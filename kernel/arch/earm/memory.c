@@ -29,6 +29,8 @@ static int freepdes[MAXFREEPDES];
 
 static u32_t phys_get32(phys_bytes v);
 
+extern vir_bytes omap3_gptimer10_base = OMAP3_GPTIMER10_BASE;
+
 void mem_clear_mapcache(void)
 {
 	int i;
@@ -763,7 +765,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 	else if (index == frclock_index) {
-		minix_kerninfo.minix_frclock = addr;
+		omap3_gptimer10_base = minix_kerninfo.minix_frclock = addr;
 		return OK;
 	}
 

@@ -8,7 +8,9 @@
 #include "omap_intr.h"
 
 static irq_hook_t omap3_timer_hook;		/* interrupt handler hook */
-static u64_t tsc;
+static u64_t high_frc;
+
+vir_bytes omap3_gptimer10_base;
 
 int omap3_register_timer_handler(const irq_handler_t handler)
 {
@@ -90,6 +92,23 @@ void omap3_timer_stop()
     mmio_clear(OMAP3_GPTIMER1_TCLR, OMAP3_TCLR_ST);
 }
 
+static u32_t read_frc(void)
+{
+	u32_t frc = *(u32_t *) ((char *) omap3_gptimer10_base + OMAP3_TCRR);
+	return frc;
+}
+
+static void frc_overflow_check(void)
+{
+	static int prev_frc_valid;
+	static u32_t prev_frc;
+	u32_t cur_frc = read_frc();
+	if(prev_frc_valid && prev_frc > cur_frc)
+		high_frc++;
+	prev_frc = cur_frc;
+	prev_frc_valid = 1;
+}
+
 void omap3_timer_int_handler()
 {
     /* Clear all interrupts */
@@ -98,15 +117,15 @@ void omap3_timer_int_handler()
     tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
            OMAP3_TISR_TCAR_IT_FLAG;
     mmio_write(OMAP3_GPTIMER1_TISR, tisr);
-    tsc++;
 
+   frc_overflow_check();
 }
 
-/* Don't use libminlib's read_tsc_64, but our own version instead. We emulate
- * the ARM Cycle Counter (CCNT) with 1 cycle per ms. We can't rely on the
- * actual counter hardware to be working (i.e., qemu doesn't emulate it at all)
- */
+/* Use the free running clock as TSC */
 void read_tsc_64(u64_t *t)
 {
-    *t = tsc;
+	u32_t now;
+   	frc_overflow_check();
+	now = read_frc();
+	*t = (u64_t) now + (high_frc << 32);
 }
