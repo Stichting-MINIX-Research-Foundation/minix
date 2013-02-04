@@ -86,6 +86,12 @@ int do_sigsend(struct proc * caller, message * m_ptr)
    * handler
    */
   rp->p_reg.lr = (reg_t) fr.sf_retadr;
+  if(rp->p_reg.lr & 1) { printf("sigsend: LSB LR makes no sense.\n"); }
+
+  /* pass signal handler parameters in registers */
+  rp->p_reg.retreg = (reg_t) fr.sf_signo;
+  rp->p_reg.r1 = (reg_t) fr.sf_code;
+  rp->p_reg.r2 = (reg_t) fr.sf_scp;
 #endif
 
   /* Copy the sigframe structure to the user's stack. */
