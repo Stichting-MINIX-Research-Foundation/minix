@@ -124,7 +124,7 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	execi.stack_size = DEFAULT_STACK_LIMIT;
 	execi.proc_e = proc_e;
 	execi.hdr = exec;
-	execi.hdr_len = exec_len;
+	execi.filesize = execi.hdr_len = exec_len;
 	strncpy(execi.progname, progname, PROC_NAME_LEN-1);
 	execi.progname[PROC_NAME_LEN-1] = '\0';
 	execi.frame_len = frame_len;

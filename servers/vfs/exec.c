@@ -312,6 +312,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 
   execi.args.proc_e = proc_e;
   execi.args.frame_len = frame_len;
+  execi.args.filesize = execi.vp->v_size;
 
   for (i = 0; exec_loaders[i].load_object != NULL; i++) {
       r = (*exec_loaders[i].load_object)(&execi.args);

@@ -407,7 +407,7 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		execi.stack_size = 16 * 1024;	/* not too crazy as it must be preallocated */
 		execi.proc_e = ip->endpoint;
 		execi.hdr = (char *) mod->mod_start; /* phys mem direct */
-		execi.hdr_len = mod->mod_end - mod->mod_start;
+		execi.filesize = execi.hdr_len = mod->mod_end - mod->mod_start;
 		strlcpy(execi.progname, ip->proc_name, sizeof(execi.progname));
 		execi.frame_len = 0;
 

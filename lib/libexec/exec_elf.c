@@ -156,6 +156,15 @@ int libexec_load_elf(struct exec_info *execi)
 	assert(execi->allocmem_prealloc);
 	assert(execi->allocmem_ondemand);
 
+	for (i = 0; i < hdr->e_phnum; i++) {
+		Elf_Phdr *ph = &phdr[i];
+		off_t file_limit = ph->p_offset + ph->p_filesz;
+		/* sanity check binary before wiping out the target process */
+		if(execi->filesize < file_limit) {
+			return ENOEXEC;
+		}
+	}
+
 	if(execi->clearproc) execi->clearproc(execi);
 
 	for (i = 0; i < hdr->e_phnum; i++) {
