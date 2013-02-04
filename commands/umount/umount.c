@@ -31,7 +31,7 @@ char *argv[];
 {
   int found;
   int umount_flags = 0UL;
-  char c;
+  int c;
   char *name;
 
   while ((c = getopt (argc, argv, "e")) != -1)
