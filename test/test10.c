@@ -77,7 +77,11 @@ int n;
   if ((pid = fork()) != 0) {
 	wait(&n);		/* wait for some child (any one) */
   } else {
-	execl(name[n], name[n], (char *) 0);
+	/* a successful exec or a successful detection of a broken executable
+	 * is ok
+	 */
+	if(execl(name[n], name[n], (char *) 0) < 0 && errno == ENOEXEC)
+		exit(0);
 	errct++;
 	printf("Child execl didn't take. file=%s errno=%d\n", name[n], errno);
 	rmfiles();
