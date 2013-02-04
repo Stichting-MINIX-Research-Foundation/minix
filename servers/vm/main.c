@@ -276,6 +276,7 @@ void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
         strlcpy(execi->progname, ip->proc_name, sizeof(execi->progname));
         execi->frame_len = 0;
 	execi->opaque = &vmexeci;
+	execi->filesize = ip->len;
 
 	vmexeci.ip = ip;
 	vmexeci.vmp = vmp;
