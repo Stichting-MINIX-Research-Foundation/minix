@@ -87,7 +87,11 @@ ENTRY(__longjmp14)
 	stmfd	sp!, {r0-r2, r14}
 	mov	r2, #0x00000000
 	add	r1, r0, #(_JB_SIGMASK * 4)
+#ifdef __minix
+	mov	r0, #2				/* SIG_SETMASK */
+#else
 	mov	r0, #3				/* SIG_SETMASK */
+#endif
 	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
 	ldmfd	sp!, {r0-r2, r14}
 
