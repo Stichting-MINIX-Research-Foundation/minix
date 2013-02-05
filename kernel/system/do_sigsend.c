@@ -92,6 +92,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   rp->p_reg.retreg = (reg_t) fr.sf_signo;
   rp->p_reg.r1 = (reg_t) fr.sf_code;
   rp->p_reg.r2 = (reg_t) fr.sf_scp;
+  rp->p_misc_flags |= MF_CONTEXT_SET;
 #endif
 
   /* Copy the sigframe structure to the user's stack. */
