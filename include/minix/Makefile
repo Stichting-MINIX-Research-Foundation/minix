@@ -10,10 +10,10 @@ INCS+=	acpi.h audio_fw.h bitmap.h \
 	config.h const.h cpufeature.h crtso.h \
 	debug.h devio.h devman.h dmap.h \
 	driver.h drivers.h drvlib.h ds.h \
-	endpoint.h fslib.h gcov.h hash.h \
+	endpoint.h fslib.h gpio.h gcov.h hash.h \
 	hgfs.h ioctl.h input.h ipc.h ipcconst.h \
-	keymap.h limits.h mount.h mthread.h minlib.h \
-	netdriver.h optset.h partition.h portio.h \
+	keymap.h limits.h log.h mmio.h mount.h mthread.h minlib.h \
+	netdriver.h optset.h padconf.h partition.h portio.h \
 	priv.h procfs.h profile.h queryparam.h \
 	rs.h safecopies.h sched.h sef.h sffs.h \
 	sound.h spin.h sys_config.h sysinfo.h \
