@@ -45,8 +45,12 @@ SUBDIR+= libcompat_minix libblockdriver libchardriver     \
        libutil libbz2 libprop \
        libnetsock libpuffs libsffs
 
-.if (${MACHINE} == "i386")
+.if (${MACHINE_ARCH} == "i386")
 SUBDIR += libvassert libhgfs libvboxfs libvirtio
+.endif
+
+.if (${MACHINE_ARCH} == "earm")
+SUBDIR += libgpio libpadconf
 .endif
 
 .if (${MKRUMP} != "no")

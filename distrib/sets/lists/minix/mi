@@ -577,6 +577,7 @@
 ./usr/include/minix/endpoint.h		minix-sys
 ./usr/include/minix/fslib.h		minix-sys
 ./usr/include/minix/gcov.h		minix-sys
+./usr/include/minix/gpio.h		minix-sys
 ./usr/include/minix/hash.h		minix-sys
 ./usr/include/minix/hgfs.h		minix-sys
 ./usr/include/minix/input.h		minix-sys
@@ -586,13 +587,16 @@
 ./usr/include/minix/keymap.h		minix-sys
 ./usr/include/minix/libminixfs.h	minix-sys
 ./usr/include/minix/limits.h		minix-sys
+./usr/include/minix/log.h		minix-sys
 ./usr/include/minix			minix-sys
 ./usr/include/minix/minlib.h		minix-sys
+./usr/include/minix/mmio.h		minix-sys
 ./usr/include/minix/mount.h		minix-sys
 ./usr/include/minix/mthread.h		minix-sys
 ./usr/include/minix/netdriver.h		minix-sys
 ./usr/include/minix/netsock.h		minix-sys
 ./usr/include/minix/optset.h		minix-sys
+./usr/include/minix/padconf.h		minix-sys
 ./usr/include/minix/param.h		minix-sys
 ./usr/include/minix/partition.h		minix-sys
 ./usr/include/minix/paths.h		minix-sys
