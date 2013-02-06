@@ -55,7 +55,7 @@ void test_exec(void);
 int do_check(void);
 void got_alarm(int sig);
 void busy_wait(int secs);
-void my_e(int n);
+#define my_e(n) do { printf("Timer %s, ", names[timer]); e(n); } while(0)
 
 static char *executable;
 static int signals;
@@ -222,7 +222,7 @@ void test_timer()
 
   if (signal(sigs[timer], got_alarm) == SIG_ERR) my_e(1);
 
-  FILLITIMER(it, 0, 1, 0, 1);
+  FILLITIMER(it, 0, 100000, 0, 100000);
 
   if (setitimer(timer, &it, NULL)) my_e(2);
 
@@ -385,10 +385,3 @@ int sig;
   signals++;
 }
 
-void my_e(n)
-int n;
-{
-
-  printf("Timer %s, ", names[timer]);
-  e(n);
-}
