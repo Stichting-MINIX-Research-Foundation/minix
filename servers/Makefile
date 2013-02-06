@@ -16,6 +16,10 @@ SUBDIR=	ds ext2 inet init ipc is iso9660fs \
 SUBDIR+= hgfs vbfs
 .endif
 
+.if ${MKLWIP} == "yes"
+SUBDIR += lwip
+.endif
+
 .endif
 
 .include <bsd.subdir.mk>
