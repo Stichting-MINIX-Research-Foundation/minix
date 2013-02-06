@@ -6,9 +6,15 @@
 #include <minix/driver.h>
 #include <minix/drvlib.h>
 #include <minix/vtreefs.h>
+#include <minix/syslib.h>
+#include <minix/log.h>
+#include <minix/mmio.h>
+#include <minix/gpio.h>
+#include <minix/padconf.h>
 
 /* system headers */
 #include <sys/stat.h>
+#include <sys/queue.h>
 #include <sys/queue.h>
 
 /* usr headers */
@@ -21,9 +27,6 @@
 #include <string.h>
 
 /* local headers */
-#include "log.h"
-#include "mmio.h"
-#include "gpio.h"
 
 /* used for logging */
 static struct log log = {
@@ -33,8 +36,9 @@ static struct log log = {
 };
 
 #define GPIO_CB_READ 0
-#define GPIO_CB_ON 1
-#define GPIO_CB_OFF 2
+#define GPIO_CB_INTR_READ 1
+#define GPIO_CB_ON 2
+#define GPIO_CB_OFF 3
 
 /* The vtreefs library provides callback data when calling
  * the read function of inode. gpio_cbdata is used here to
@@ -51,10 +55,10 @@ struct gpio_cbdata
 };
 
 /* list of inodes used in this driver */
+/* *INDENT-OFF* */
 TAILQ_HEAD(gpio_cbdata_head, gpio_cbdata)
     gpio_cbdata_list = TAILQ_HEAD_INITIALIZER(gpio_cbdata_list);
-
-static struct gpio_driver drv;
+/* *INDENT-ON* */
 
 /* Sane file stats for a directory */
 static struct inode_stat default_file_stat = {
@@ -75,13 +79,13 @@ add_gpio_inode(char *name, int nr, int mode)
 	struct gpio *gpio;
 
 	/* claim and configure the gpio */
-	if (drv.claim("gpiofs", nr, &gpio)) {
+	if (gpio_claim("gpiofs", nr, &gpio)) {
 		log_warn(&log, "Failed to claim GPIO %d\n", nr);
 		return EIO;
 	}
 	assert(gpio != NULL);
 
-	if (drv.pin_mode(gpio, mode)) {
+	if (gpio_pin_mode(gpio, mode)) {
 		log_warn(&log, "Failed to switch GPIO %d to mode %d\n", nr,
 		    mode);
 		return EIO;
@@ -115,7 +119,7 @@ add_gpio_inode(char *name, int nr, int mode)
 		cb->type = GPIO_CB_ON;
 		cb->gpio = gpio;
 
-		snprintf(tmpname, 200, "%son", name);
+		snprintf(tmpname, 200, "%sOn", name);
 		add_inode(get_root_inode(), tmpname, NO_INDEX,
 		    &default_file_stat, 0, (cbdata_t) cb);
 		TAILQ_INSERT_HEAD(&gpio_cbdata_list, cb, next);
@@ -130,7 +134,22 @@ add_gpio_inode(char *name, int nr, int mode)
 		cb->type = GPIO_CB_OFF;
 		cb->gpio = gpio;
 
-		snprintf(tmpname, 200, "%soff", name);
+		snprintf(tmpname, 200, "%sOff", name);
+		add_inode(get_root_inode(), tmpname, NO_INDEX,
+		    &default_file_stat, 0, (cbdata_t) cb);
+		TAILQ_INSERT_HEAD(&gpio_cbdata_list, cb, next);
+	} else {
+		/* read interrupt */
+		cb = malloc(sizeof(struct gpio_cbdata));
+		if (cb == NULL) {
+			return ENOMEM;
+		}
+		memset(cb, 0, sizeof(*cb));
+
+		cb->type = GPIO_CB_INTR_READ;
+		cb->gpio = gpio;
+
+		snprintf(tmpname, 200, "%sIntr", name);
 		add_inode(get_root_inode(), tmpname, NO_INDEX,
 		    &default_file_stat, 0, (cbdata_t) cb);
 		TAILQ_INSERT_HEAD(&gpio_cbdata_list, cb, next);
@@ -142,17 +161,30 @@ static void
 init_hook(void)
 {
 	/* This hook will be called once, after VTreeFS has initialized. */
-	if (omap_gpio_init(&drv)) {
+	if (gpio_init()) {
 		log_warn(&log, "Failed to init gpio driver\n");
 	}
+
 	add_gpio_inode("USR0", 149, GPIO_MODE_OUTPUT);
 	add_gpio_inode("USR1", 150, GPIO_MODE_OUTPUT);
 	add_gpio_inode("Button", 4, GPIO_MODE_INPUT);
 
-#if 0
-	add_gpio_inode("input1", 139, GPIO_MODE_INPUT);
-	add_gpio_inode("input2", 144, GPIO_MODE_INPUT);
-#endif
+	/* configure the padconf */
+	padconf_init();
+
+	/* configure GPIO_144 to be exported */
+	padconf_set(CONTROL_PADCONF_UART2_CTS, 0xff,
+	    PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
+	    PADCONF_INPUT_ENABLE(1));
+	padconf_set(CONTROL_PADCONF_MMC2_DAT6, 0xff00,
+	    (PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
+		PADCONF_INPUT_ENABLE(1)) << 16);
+
+	padconf_release();
+	/* Added for demo purposes */
+	add_gpio_inode("BigRedButton", 144, GPIO_MODE_INPUT);
+	add_gpio_inode("BigRedButtonLed", 139, GPIO_MODE_OUTPUT);
+
 }
 
 static int
@@ -167,17 +199,11 @@ static int
 	struct gpio_cbdata *gpio_cbdata = (struct gpio_cbdata *) cbdata;
 	assert(gpio_cbdata->gpio != NULL);
 
-	if (gpio_cbdata->type == GPIO_CB_ON) {
-		/* turn on */
-		if (drv.set(gpio_cbdata->gpio, 1)) {
-			*len = 0;
-			return EIO;
-		}
-		*len = 0;
-		return OK;
-	} else if (gpio_cbdata->type == GPIO_CB_OFF) {
-		/* turn off */
-		if (drv.set(gpio_cbdata->gpio, 0)) {
+	if (gpio_cbdata->type == GPIO_CB_ON
+	    || gpio_cbdata->type == GPIO_CB_OFF) {
+		/* turn on or of */
+		if (gpio_set(gpio_cbdata->gpio,
+			(gpio_cbdata->type == GPIO_CB_ON) ? 1 : 0)) {
 			*len = 0;
 			return EIO;
 		}
@@ -185,10 +211,18 @@ static int
 		return OK;
 	}
 
-	/* reading */
-	if (drv.read(gpio_cbdata->gpio, &value)) {
-		*len = 0;
-		return EIO;
+	if (gpio_cbdata->type == GPIO_CB_INTR_READ) {
+		/* reading interrupt */
+		if (gpio_intr_read(gpio_cbdata->gpio, &value)) {
+			*len = 0;
+			return EIO;
+		}
+	} else {
+		/* reading */
+		if (gpio_read(gpio_cbdata->gpio, &value)) {
+			*len = 0;
+			return EIO;
+		}
 	}
 	snprintf(data, 26, "%d\n", value);
 
@@ -211,6 +245,13 @@ static int
 	return OK;
 }
 
+static int
+message_hook(message * m)
+{
+	gpio_intr_message(m);
+	return OK;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -225,6 +266,7 @@ main(int argc, char **argv)
 	memset(&hooks, 0, sizeof(hooks));
 	hooks.init_hook = init_hook;
 	hooks.read_hook = read_hook;
+	hooks.message_hook = message_hook;
 
 	root_stat.mode = S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH;
 	root_stat.uid = 0;
@@ -233,7 +275,7 @@ main(int argc, char **argv)
 	root_stat.dev = NO_DEV;
 
 	/* limit the number of indexed entries */
-	start_vtreefs(&hooks, 10, &root_stat, 0);
+	start_vtreefs(&hooks, 30, &root_stat, 0);
 
 	return EXIT_SUCCESS;
 }

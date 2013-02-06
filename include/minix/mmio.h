@@ -1,3 +1,6 @@
+#ifndef __MMIO_H__
+#define __MMIO_H__
+
 #define REG(x)(*((volatile uint32_t *)(x)))
 #define BIT(x)(0x1 << x)
 
@@ -12,7 +15,6 @@ write32(uint32_t address, uint32_t value)
 static inline uint32_t
 read32(uint32_t address)
 {
-
 	return REG(address);
 }
 
@@ -28,3 +30,4 @@ set32(uint32_t address, uint32_t mask, uint32_t value)
 	val |= (value & mask);
 	write32(address, val);
 }
+#endif /* __MMIO_H__ */

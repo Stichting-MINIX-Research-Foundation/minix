@@ -90,5 +90,9 @@
 ./usr/include/evbarm/vmparam.h		minix-sys
 ./usr/include/evbarm/wchar_limits.h	minix-sys
 ./usr/include/i386			minix-sys	obsolete
-./usr/sbin/gpio				minix-sys
+./usr/lib/libgpio.a			minix-sys
+./usr/lib/libgpio_pic.a			minix-sys
+./usr/lib/libpadconf.a			minix-sys
+./usr/lib/libpadconf_pic.a		minix-sys
 ./usr/mdec				minix-sys
+./usr/sbin/gpio				minix-sys
