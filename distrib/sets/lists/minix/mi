@@ -1093,6 +1093,8 @@
 ./usr/lib/libfl.a			minix-sys
 ./usr/lib/libgcc.a			minix-sys
 ./usr/lib/libl.a			minix-sys
+./usr/lib/liblwip.a			minix-sys
+./usr/lib/liblwip_pic.a			minix-sys
 ./usr/lib/liblzma.a			minix-sys
 ./usr/lib/liblzma_pic.a			minix-sys
 ./usr/lib/liblzma.so.0.0		minix-sys
@@ -3801,6 +3803,7 @@
 ./usr/sbin/ipc				minix-sys
 ./usr/sbin/kernel			minix-sys
 ./usr/sbin/log				minix-sys
+./usr/sbin/lwip				minix-sys
 ./usr/sbin/memory			minix-sys
 ./usr/sbin					minix-sys
 ./usr/sbin/mkproto			minix-sys
