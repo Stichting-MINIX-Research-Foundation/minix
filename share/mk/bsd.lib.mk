@@ -640,7 +640,11 @@ libclean2: .PHONY .MADE __cleanuse LIBCLEANFILES2
 libclean3: .PHONY .MADE __cleanuse LIBCLEANFILES3
 libclean4: .PHONY .MADE __cleanuse LIBCLEANFILES4
 libclean5: .PHONY .MADE __cleanuse LIBCLEANFILES5
-CLEANFILES+= a.out [Ee]rrs mklog core *.core
+CLEANFILES+= a.out [Ee]rrs mklog *.core
+# core conflicts with core/ in lib/liblwip
+.if !defined(__MINIX)
+CLEANFILES+=core
+.endif
 LIBCLEANFILES1+= lib${LIB}.a   ${STOBJS} ${STOBJS:=.tmp}
 LIBCLEANFILES2+= lib${LIB}_p.a ${POBJS}  ${POBJS:=.tmp}
 LIBCLEANFILES3+= lib${LIB}_g.a ${GOBJS}  ${GOBJS:=.tmp}
