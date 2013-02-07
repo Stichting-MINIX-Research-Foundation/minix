@@ -105,8 +105,8 @@ ${etc}: ${NETBSDSRCDIR}/etc/${etc}
 # we are building out-of-tree and the contents should be copied
 # unconditionally in case the contents have changed after the first copy.
 .if ${.CURDIR} != ${.OBJDIR}
-CLEANFILES += ${EXTRA} ${PROTO} ${PROTO_FILES}
 .for file in ${EXTRA} ${PROTO} ${PROTO_FILES}
+CLEANFILES += ${.OBJDIR}/${file}
 ${file}: ${NETBSDSRCDIR}/drivers/ramdisk/${file} .PHONY
 	${INSTALL} $> $@
 .endfor
