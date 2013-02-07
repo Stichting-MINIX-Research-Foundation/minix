@@ -403,9 +403,11 @@ void driver_up(const char * label, endpoint_t ep)
 		debug_print("LWIP : driver '%s' / %d is up for /dev/%s\n",
 				label, ep, nic->name);
 		nic->drv_ep = ep;
-	} else
+	} else {
 		printf("LWIP : WARNING unexpected driver '%s' up event\n",
 								label);
+		return;
+	}
 
 	nic->state = DRV_IDLE;
 
