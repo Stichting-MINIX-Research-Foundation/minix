@@ -8,11 +8,6 @@ USE_FORT?= yes	# network client/server
 
 DIST=	${NETBSDSRCDIR}/dist/dhcp
 .PATH:	${DIST}/${DHCPSRCDIR}
-
-COBJDIR!=cd $(.CURDIR)/../common && ${PRINTOBJDIR}
-OMOBJDIR!=cd $(.CURDIR)/../omapip && ${PRINTOBJDIR}
-DSTOBJDIR!=cd $(.CURDIR)/../dst && ${PRINTOBJDIR}
-
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 COPTS+=	-fno-strict-aliasing
 .endif
@@ -28,12 +23,13 @@ CPPFLAGS+=  -D_NETBSD_SOURCE
 
 LDADD+= ${COBJDIR}/libdhcp.a
 LDADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
-LDADD+= ${NETBSDSRCDIR}/lib/libbindexport/dns/libdnsexport.a
-LDADD+= ${NETBSDSRCDIR}/lib/libbindexport/isc/libiscexport.a
-DPADD+= ${COBJDIR}/libdhcp.a
-DPADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
-DPADD+= ${NETBSDSRCDIR}/lib/libbindexport/dns/libdnsexport.a
-DPADD+= ${NETBSDSRCDIR}/lib/libbindexport/isc/libiscexport.a
+LDADD+= ${OBJDIR}/lib/libbindexport/dns/libdnsexport.a
+LDADD+= ${OBJDIR}/lib/libbindexport/isc/libiscexport.a
+DPADD+= ${OBJDIR}/usr.sbin/dhcp/common/libdhcp.a
+DPADD+= ${OBJDIR}/usr.sbin/dhcp/omapip/libomapi.a
+DPADD+= ${OBJDIR}/usr.sbin/dhcp/dst/libdst.a
+DPADD+= ${OBJDIR}/lib/libbindexport/dns/libdnsexport.a
+DPADD+= ${OBJDIR}/lib/libbindexport/isc/libiscexport.a
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
