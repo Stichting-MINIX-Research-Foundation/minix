@@ -430,6 +430,15 @@ void driver_up(const char * label, endpoint_t ep)
 	nic->tx_buffer = debug_malloc(2048);
 	if (nic->tx_buffer == NULL)
 		panic("Cannot allocate tx_buffer");
+	/* When driver restarts, the rx_pbuf is likely ready to receive data
+	 * from its previous instance. We free the buffer here, nobody depends
+	 * on it. A new one is allocated when we send a new read request to the
+	 * driver.
+	 */
+	if (nic->rx_pbuf) {
+		pbuf_free(nic->rx_pbuf);
+		nic->rx_pbuf = NULL;
+	}
 
 	/* prepare the RX grant once and forever */
 	if (cpf_setgrant_direct(nic->rx_iogrant,
