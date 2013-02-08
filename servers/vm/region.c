@@ -1462,7 +1462,8 @@ void get_stats_info(struct vm_stats_info *vsi)
 void get_usage_info_kernel(struct vm_usage_info *vui)
 {
 	memset(vui, 0, sizeof(*vui));
-	vui->vui_total = kernel_boot_info.kernel_allocated_bytes;
+	vui->vui_total = kernel_boot_info.kernel_allocated_bytes +
+		kernel_boot_info.kernel_allocated_bytes_dynamic;
 }
 
 static void get_usage_info_vm(struct vm_usage_info *vui)

@@ -151,7 +151,8 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		arch_proc_init(rp, execi.pc, kinfo.user_sp - 3*4, ip->proc_name);
 
 		/* Free VM blob that was just copied into existence. */
-		cut_memmap(&kinfo, mod->mod_start, mod->mod_end);
+		add_memmap(&kinfo, mod->mod_start, mod->mod_end-mod->mod_start);
+		mod->mod_end = mod->mod_start = 0;
 
 		/* Remember them */
 		kinfo.vm_allocated_bytes = alloc_for_vm;

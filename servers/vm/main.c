@@ -306,6 +306,8 @@ void init_vm(void)
 	static struct memory mem_chunks[NR_MEMS];
 	static struct boot_image *ip;
 	extern void __minix_init(void);
+	multiboot_module_t *mod;
+	vir_bytes kern_dyn, kern_static;
 
 #if SANITYCHECKS
 	incheck = nocheck = 0;
@@ -343,6 +345,21 @@ void init_vm(void)
 	/* Architecture-dependent initialization. */
 	init_proc(VM_PROC_NR);
 	pt_init();
+
+	/* The kernel's freelist does not include boot-time modules; let
+	 * the allocator know that the total memory is bigger.
+	 */
+	for (mod = &kernel_boot_info.module_list[0];
+		mod < &kernel_boot_info.module_list[kernel_boot_info.mods_with_kernel-1]; mod++) {
+		phys_bytes len = mod->mod_end-mod->mod_start+1;
+		len = roundup(len, VM_PAGE_SIZE);
+		mem_add_total_pages(len/VM_PAGE_SIZE);
+	}
+
+	kern_dyn = kernel_boot_info.kernel_allocated_bytes_dynamic;
+	kern_static = kernel_boot_info.kernel_allocated_bytes;
+	kern_static = roundup(kern_static, VM_PAGE_SIZE);
+	mem_add_total_pages((kern_dyn + kern_static)/VM_PAGE_SIZE);
 
 	/* Give these processes their own page table. */
 	for (ip = &kernel_boot_info.boot_procs[0];
