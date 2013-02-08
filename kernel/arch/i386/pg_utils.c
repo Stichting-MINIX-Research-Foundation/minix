@@ -81,6 +81,7 @@ phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len)
 	}
 	assert(lowest != EMPTY);
 	cut_memmap(cbi, lowest, len);
+	cbi->kernel_allocated_bytes_dynamic += len;
 	return lowest;
 }
 
@@ -151,6 +152,8 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 		assert(!(mmap->addr % I386_PAGE_SIZE));
 
 		mmap->len -= I386_PAGE_SIZE;
+
+                cbi->kernel_allocated_bytes_dynamic += I386_PAGE_SIZE;
 
 		return mmap->addr + mmap->len;
 	}

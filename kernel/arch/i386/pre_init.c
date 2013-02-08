@@ -164,6 +164,7 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	 * still needed but will be freed after bootstrapping.
 	 */
 	kinfo.kernel_allocated_bytes = (phys_bytes) &_kern_size;
+	kinfo.kernel_allocated_bytes -= cbi->bootstrap_len;
 
 	assert(!(cbi->bootstrap_start % I386_PAGE_SIZE));
 	cbi->bootstrap_len = rounddown(cbi->bootstrap_len, I386_PAGE_SIZE);

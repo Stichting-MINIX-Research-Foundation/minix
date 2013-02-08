@@ -97,6 +97,11 @@ phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
   return mem;
 }
 
+void mem_add_total_pages(int pages)
+{
+	total_pages += pages;
+}
+
 /*===========================================================================*
  *				free_mem				     *
  *===========================================================================*/

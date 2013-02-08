@@ -67,26 +67,6 @@ void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
         }
 }
 
-phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len)
-{
-	/* Allocate the lowest physical page we have. */
-	int m;
-#define EMPTY 0xffffffff
-	phys_bytes lowest = EMPTY;
-	assert(len > 0);
-	len = roundup(len, ARM_PAGE_SIZE);
-
-	assert(kernel_may_alloc);
-
-	for(m = 0; m < cbi->mmap_size; m++) {
-		if(cbi->memmap[m].len < len) continue;
-		if(cbi->memmap[m].addr < lowest) lowest = cbi->memmap[m].addr;
-	}
-	assert(lowest != EMPTY);
-	cut_memmap(cbi, lowest, len);
-	return lowest;
-}
-
 void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
 {
         int m;
@@ -156,6 +136,8 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 		u32_t addr = mmap->addr;
 		mmap->addr += ARM_PAGE_SIZE;
 		mmap->len  -= ARM_PAGE_SIZE;
+
+		cbi->kernel_allocated_bytes_dynamic += ARM_PAGE_SIZE;
 
 		return addr;
 	}
