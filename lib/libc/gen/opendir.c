@@ -71,6 +71,10 @@ static DIR	*__opendir_common(int, const char *, int);
 
 __weak_alias(fdopendir,_fdopendir)
 
+#ifdef __weak_alias
+__weak_alias(opendir,__opendir230)
+#endif
+
 /*
  * Open a directory.
  */
