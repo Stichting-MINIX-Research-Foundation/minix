@@ -106,8 +106,8 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 #define MB_PARAM_MOD  0x96000000
 #define MB_MODS_ALIGN 0x00800000 /*  8 MB */
 #define MB_MODS_SIZE  0x00004000 /* 16 KB */
-#define MB_MMAP_START MB_MODS_BASE
-#define MB_MMAP_SIZE  0x10000000 /* 256 MB */
+#define MB_MMAP_START 0x80000000
+#define MB_MMAP_SIZE  0x20000000 /* 512 MB */
 
 multiboot_module_t mb_modlist[MB_MODS_NR];
 multiboot_memory_map_t mb_memmap;
@@ -204,6 +204,7 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	 * still needed but will be freed after bootstrapping.
 	 */
 	kinfo.kernel_allocated_bytes = (phys_bytes) &_kern_size;
+	kinfo.kernel_allocated_bytes -= cbi->bootstrap_len;
 
 	assert(!(cbi->bootstrap_start % ARM_PAGE_SIZE));
 	cbi->bootstrap_len = rounddown(cbi->bootstrap_len, ARM_PAGE_SIZE);
