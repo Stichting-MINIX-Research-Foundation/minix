@@ -66,7 +66,9 @@ ENTRY(__aeabi_ldivmod)
 	 */
 	sub	sp, sp, #8
 	mov	r4, sp		/* pointer to remainder */
+	push	{r4}
 	bl	PLT_SYM(__qdivrem)
+	add	sp, sp, #4	/* forget pointer to remainder */
 
 	teq	NEG, #0		/* any signs to flip? */
 	/*

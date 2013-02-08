@@ -131,6 +131,10 @@ CPPFLAGS.strtol.c+=     -I${LIBCSRCDIR}/../../common/lib/libc/stdlib
 SRCS+= ${i}
 .endfor
 
+.if (${MACHINE_ARCH} == "earm")
+SRCS += __aeabi_ldivmod.S __aeabi_uldivmod.S
+.endif
+
 # Import from locale
 .for i in _def_time.c
 .PATH.c: ${LIBCSRCDIR}/locale

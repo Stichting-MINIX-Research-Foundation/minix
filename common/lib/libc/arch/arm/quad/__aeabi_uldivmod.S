@@ -41,7 +41,9 @@ ENTRY(__aeabi_uldivmod)
 	push	{r4,lr}
 	sub	sp, sp, #8
 	mov	r4, sp
+	push	{r4}
 	bl	PLT_SYM(__qdivrem)
+	add	sp, sp, #4
 	/*
 	 * The remainder is already on the stack just waiting to be popped
 	 * into r2/r3.
