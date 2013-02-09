@@ -22,7 +22,7 @@
  */
 
 .L_overflow:
-#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(__minix)
+#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(_LIBMINC)
 	mov	r0, #8			/* SIGFPE */
 	bl	PIC_SYM(_C_LABEL(raise), PLT)	/* raise it */
 	mov	r0, #0

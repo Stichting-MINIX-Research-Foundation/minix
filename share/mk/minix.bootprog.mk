@@ -10,7 +10,11 @@ LDADD+= -nodefaultlibs
 
 # 2. Compiler-specific libs
 .if !empty(CC:M*gcc)
+.if (${MACHINE_ARCH} == "earm")
+LDADD+= -lsys
+.else
 LDADD+= -lgcc -lsys -lgcc
+.endif
 .elif !empty(CC:M*clang)
 LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic
 .endif

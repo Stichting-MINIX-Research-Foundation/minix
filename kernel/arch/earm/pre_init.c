@@ -284,3 +284,4 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
 void minix_shutdown(timer_t *t) { arch_shutdown(RBT_PANIC); }
 void busy_delay_ms(int x) { }
+int raise(int n) { panic("raise(%d)\n", n); }

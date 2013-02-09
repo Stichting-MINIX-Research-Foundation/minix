@@ -67,3 +67,7 @@
 
 #undef TARGET_VERSION
 #define TARGET_VERSION fputs (" (MINIX/arm ELF EABI)", stderr);
+
+/* suppress -lgcc - don't include %G (-lgcc) in the libraries */
+#undef LINK_GCC_C_SEQUENCE_SPEC
+#define LINK_GCC_C_SEQUENCE_SPEC "%L"
