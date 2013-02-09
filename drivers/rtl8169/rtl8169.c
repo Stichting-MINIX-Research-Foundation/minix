@@ -31,9 +31,6 @@
 #include "kernel/config.h"
 #include "kernel/type.h"
 
-#define debug			1
-#define printW()		((void)0)
-
 #define VERBOSE		0		/* display message during init */
 
 #include "rtl8169.h"
@@ -619,7 +616,9 @@ int skip;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr;
+#if VERBOSE
 	char *dname;
+#endif
 
 	r = pci_first_dev(&devind, &vid, &did);
 	if (r == 0)
@@ -631,11 +630,13 @@ int skip;
 			return 0;
 	}
 
+#if VERBOSE
 	dname = pci_dev_name(vid, did);
 	if (!dname)
 		dname = "unknown device";
 	printf("%s: ", rep->re_name);
 	printf("%s (%x/%x) at %s\n", dname, vid, did, pci_slot_name(devind));
+#endif
 
 	pci_reserve(devind);
 	bar = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
@@ -646,10 +647,10 @@ int skip;
 
 	ilr = pci_attr_r8(devind, PCI_ILR);
 	rep->re_irq = ilr;
-	if (debug) {
-		printf("%s: using I/O address 0x%lx, IRQ %d\n",
-			rep->re_name, (unsigned long)bar, ilr);
-	}
+#if VERBOSE
+	printf("%s: using I/O address 0x%lx, IRQ %d\n",
+		rep->re_name, (unsigned long)bar, ilr);
+#endif
 
 	return TRUE;
 }
@@ -773,7 +774,10 @@ re_t *rep;
 static void rl_init_hw(rep)
 re_t *rep;
 {
-	int s, i;
+	int s;
+#if VERBOSE
+	int i;
+#endif
 
 	rep->re_flags = REF_EMPTY;
 	rep->re_flags |= REF_ENABLED;
@@ -792,17 +796,19 @@ re_t *rep;
 	if ((s = sys_irqenable(&rep->re_hook_id)) != OK)
 		printf("RTL8169: error, couldn't enable interrupts: %d\n", s);
 
+#if VERBOSE
 	printf("%s: model: %s mac: 0x%08x\n",
 		rep->re_name, rep->re_model, rep->re_mac);
+#endif
 
 	rl_confaddr(rep);
-	if (debug) {
-		printf("%s: Ethernet address ", rep->re_name);
-		for (i = 0; i < 6; i++) {
-			printf("%x%c", rep->re_address.ea_addr[i],
-				i < 5 ? ':' : '\n');
-		}
+#if VERBOSE
+	printf("%s: Ethernet address ", rep->re_name);
+	for (i = 0; i < 6; i++) {
+		printf("%x%c", rep->re_address.ea_addr[i],
+			i < 5 ? ':' : '\n');
 	}
+#endif
 }
 
 static void rtl8169s_phy_config(port_t port)
@@ -924,12 +930,8 @@ re_t *rep;
 	rl_outw(port, RL_IMR, 0x0000);
 
 	/* Reset the device */
-	printf("rl_reset_hw: (before reset) port = 0x%x, RL_CR = 0x%x\n",
-		port, rl_inb(port, RL_CR));
 	rl_outb(port, RL_CR, RL_CR_RST);
 	SPIN_UNTIL(!(rl_inb(port, RL_CR) & RL_CR_RST), 1000000);
-	printf("rl_reset_hw: (after reset) port = 0x%x, RL_CR = 0x%x\n",
-		port, rl_inb(port, RL_CR));
 	if (rl_inb(port, RL_CR) & RL_CR_RST)
 		printf("rtl8169: reset failed to complete");
 	rl_outw(port, RL_ISR, 0xFFFF);
@@ -941,17 +943,14 @@ re_t *rep;
 	case RL_TCR_HWVER_RTL8169:
 		rep->re_model = "RTL8169";
 
-		printf("Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
-		rl_outw(port, 0x82, 0x01);
+		rl_outw(port, RL_CCR_UNDOC, 0x01);
 		break;
 	case RL_TCR_HWVER_RTL8169S:
 		rep->re_model = "RTL8169S";
 
 		rtl8169s_phy_config(port);
 
-		printf("Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
-		rl_outw(port, 0x82, 0x01);
-		printf("Set PHY Reg 0x0bh = 0x00h\n");
+		rl_outw(port, RL_CCR_UNDOC, 0x01);
 		mdio_write(port, 0x0b, 0x0000);		/* w 0x0b 15 0 0 */
 		break;
 	case RL_TCR_HWVER_RTL8110S:
@@ -959,8 +958,7 @@ re_t *rep;
 
 		rtl8169s_phy_config(port);
 
-		printf("Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
-		rl_outw(port, 0x82, 0x01);
+		rl_outw(port, RL_CCR_UNDOC, 0x01);
 		break;
 	case RL_TCR_HWVER_RTL8169SB:
 		rep->re_model = "RTL8169SB";
@@ -969,16 +967,14 @@ re_t *rep;
 		mdio_write(port, 0x01, 0x90d0);
 		mdio_write(port, 0x1f, 0x00);
 
-		printf("Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
-		rl_outw(port, 0x82, 0x01);
+		rl_outw(port, RL_CCR_UNDOC, 0x01);
 		break;
 	case RL_TCR_HWVER_RTL8110SCd:
 		rep->re_model = "RTL8110SCd";
 
 		rtl8169scd_phy_config(port);
 
-		printf("Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
-		rl_outw(port, 0x82, 0x01);
+		rl_outw(port, RL_CCR_UNDOC, 0x01);
 		break;
 	case RL_TCR_HWVER_RTL8105E:
 		rep->re_model = "RTL8105E";
@@ -1018,8 +1014,7 @@ re_t *rep;
 	switch (rep->re_mac) {
 	case RL_TCR_HWVER_RTL8169S:
 	case RL_TCR_HWVER_RTL8110S:
-		printf("Set MAC Reg C+CR Offset 0xE0. "
-			"Bit-3 and bit-14 MUST be 1\n");
+		/* Bit-3 and bit-14 of the C+CR register MUST be 1. */
 		t = rl_inw(port, RL_CPLUSCMD);
 		rl_outw(port, RL_CPLUSCMD, t | RL_CPLUS_MULRW | (1 << 14));
 		break;
@@ -1197,7 +1192,9 @@ readvs_loop:
 		rep->re_stat.ets_CRCerr++;
 
 	if ((rxstat & (DESC_FS | DESC_LS)) != (DESC_FS | DESC_LS)) {
+#if VERBOSE
 		printf("rl_readv_s: packet is fragmented\n");
+#endif
 		/* Fix the fragmented packet */
 		if (index == N_RX_DESC - 1) {
 			desc->status =  DESC_EOR | DESC_OWN | (RX_BUFSIZE & DESC_RX_LENMASK);
@@ -1448,8 +1445,11 @@ re_t *rep;
 		rl_writev_s(&rep->re_tx_mess, TRUE /* from int */);
 	}
 
-	if (rep->re_report_link)
+	if (rep->re_report_link) {
+		rep->re_report_link = FALSE;
+
 		rl_report_link(rep);
+	}
 
 	if (rep->re_flags & (REF_PACK_SENT | REF_PACK_RECV))
 		reply(rep);
@@ -1461,10 +1461,10 @@ re_t *rep;
 static void rl_report_link(rep)
 re_t *rep;
 {
+#if VERBOSE
 	port_t port;
 	u8_t mii_status;
 
-	rep->re_report_link = FALSE;
 	port = rep->re_base_port;
 
 	mii_status = rl_inb(port, RL_PHYSTAT);
@@ -1490,6 +1490,7 @@ re_t *rep;
 	else
 		printf(", half duplex");
 	printf("\n");
+#endif
 
 	dump_phy(rep);
 }
@@ -1688,7 +1689,7 @@ static void dump_phy(const re_t *rep)
 	if (t & MII_STATUS_EXT_STAT)
 		printf(" Ext-stat");
 	if (t & MII_STATUS_RES)
-		printf(" res-0x%lx", t & MII_STATUS_RES);
+		printf(" res-0x%x", t & MII_STATUS_RES);
 	if (t & MII_STATUS_MFPS)
 		printf(" MFPS");
 	if (t & MII_STATUS_ANC)
@@ -1706,15 +1707,15 @@ static void dump_phy(const re_t *rep)
 	printf("\n");
 
 	t = mdio_read(port, MII_ANA);
-	printf("MII_ANA\t\t: 0x%04lx\n", t);
+	printf("MII_ANA\t\t: 0x%04x\n", t);
 
 	t = mdio_read(port, MII_ANLPA);
-	printf("MII_ANLPA\t: 0x%04lx\n", t);
+	printf("MII_ANLPA\t: 0x%04x\n", t);
 
 	t = mdio_read(port, MII_ANE);
 	printf("MII_ANE\t\t:");
 	if (t & MII_ANE_RES)
-		printf(" res-0x%lx", t & MII_ANE_RES);
+		printf(" res-0x%x", t & MII_ANE_RES);
 	if (t & MII_ANE_PDF)
 		printf(" Par-Detect-Fault");
 	if (t & MII_ANE_LPNPA)

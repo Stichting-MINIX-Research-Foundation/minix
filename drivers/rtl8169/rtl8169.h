@@ -261,6 +261,8 @@
 #define		RL_STAT_LINK	0x00000002 /* Link Status */
 #define		RL_STAT_FULLDUP	0x00000001 /* Full Duplex */
 
+#define RL_CCR_UNDOC	0x82	/* Undocumented C+ Command Register */
+
 #define RL_RMS		0xDA	/* Rx Maximum Size */
 #define RL_CPLUSCMD	0xE0	/* C+ Command Register */
 #define		RL_CPLUS_VLAN	0x00000040 /* Receive VLAN D-tagging Enable */
