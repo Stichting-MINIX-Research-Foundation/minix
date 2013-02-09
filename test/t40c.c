@@ -42,10 +42,11 @@ void open_terminal(int *child_fd, int *parent_fd) {
   char opentermw[5+OPEN_MAX+1];
   char opentermr[5+OPEN_MAX+1];
   char *term[] = {"f","e","d","c","b","a","9","8","7","6","5","4","3","2","1"};
+#define TERMS (sizeof(term)/sizeof(term[0]))
 
   if (!child_fd || !parent_fd) exit(EXIT_FAILURE);
 
-  for (i = 0; i < 16; i++) {
+  for (i = 0; i < TERMS; i++) {
 	snprintf(opentermw, 5+OPEN_MAX, "/dev/ttyp%s", term[i]);
 	snprintf(opentermr, 5+OPEN_MAX, "/dev/ptyp%s", term[i]);
 
