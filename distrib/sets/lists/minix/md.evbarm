@@ -96,3 +96,4 @@
 ./usr/lib/libpadconf_pic.a		minix-sys
 ./usr/mdec				minix-sys
 ./usr/sbin/gpio				minix-sys
+./usr/sbin/random			minix-sys
