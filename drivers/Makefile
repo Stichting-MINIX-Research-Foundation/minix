@@ -23,7 +23,7 @@ SUBDIR= ahci amddev atl2 at_wini audio dec21140A dp8390 dpeth \
 .endif
 
 .if ${MACHINE_ARCH} == "earm"
-SUBDIR=  gpio mmc log tty
+SUBDIR=  gpio mmc log tty random
 .endif
 
 .endif # ${MKIMAGEONLY} != "yes"
