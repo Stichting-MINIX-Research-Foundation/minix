@@ -245,13 +245,13 @@ main(int argc, char *argv[])
 		mode = O_RDWR;
 	}
 
-	if (minixfs3_is_minix_partition(params->filesystem)) {
+	if (minixfs3_is_minix_partition(params)) {
 		/* Old setups has just 1 sector for bootblock,
 		 * but bootxx_minixfs is ~8Kb, so we require new setups
 		 * to have 32 sectors before the first subpartition.
 		 * This prevents from overwriting FS on old setups.
 		 */
-		if (!minixfs3_has_bootblock_space(params->filesystem)) {
+		if (!minixfs3_has_bootblock_space(params)) {
 			err(1, "No space for bootxx, you should have 32 sectors"
 				" before the first subpartition on %s",
 				params->filesystem);
