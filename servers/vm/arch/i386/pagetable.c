@@ -37,8 +37,15 @@
 static int vm_self_pages;
 
 /* PDE used to map in kernel, kernel physical address. */
-static int pagedir_pde = -1;
-static u32_t global_bit = 0, pagedir_pde_val;
+#define MAX_PAGEDIR_PDES 5
+static struct pdm {
+	int		pdeno;
+	u32_t		val;
+	phys_bytes	phys;
+	u32_t		*page_directories;
+} pagedir_mappings[MAX_PAGEDIR_PDES];
+
+static u32_t global_bit = 0;
 
 static multiboot_module_t *kern_mb_mod = NULL;
 static size_t kern_size = 0;
@@ -59,16 +66,16 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
 #define STATIC_SPAREPAGES 90
 #else
 #ifdef __arm__
-# define SPAREPAGES 80
-# define STATIC_SPAREPAGES 75 
+# define SPAREPAGES 150
+# define STATIC_SPAREPAGES 140 
 #else
 # define SPAREPAGES 20
 # define STATIC_SPAREPAGES 15 
 #endif /* __arm__ */
 #endif
 
-#define SPAREPAGEDIRS 11
-#define STATIC_SPAREPAGEDIRS 10
+#define SPAREPAGEDIRS 1
+#define STATIC_SPAREPAGEDIRS 1
 
 int missing_sparedirs = SPAREPAGEDIRS;
 static struct {
@@ -104,10 +111,6 @@ int kernmappings = 0;
 #if CLICK_SIZE != VM_PAGE_SIZE
 #error CLICK_SIZE must be page size.
 #endif
-
-/* Page table that contains pointers to all page directories. */
-phys_bytes page_directories_phys;
-u32_t *page_directories = NULL;
 
 static char static_sparepages[VM_PAGE_SIZE*STATIC_SPAREPAGES] 
 	__aligned(VM_PAGE_SIZE);
@@ -344,34 +347,6 @@ static void *vm_checkspares(void)
 
 	return NULL;
 }
-
-#if defined(__arm__)
-/*===========================================================================*
- *				vm_checksparedirs	       		     *
- *===========================================================================*/
-static void *vm_checksparedirs(void)
-{
-	int s, n = 0;
-	static int total = 0, worst = 0;
-	assert(missing_sparedirs >= 0 && missing_sparedirs <= SPAREPAGEDIRS);
-	for(s = 0; s < SPAREPAGEDIRS && missing_sparedirs > 0; s++)
-	    if(!sparepagedirs[s].pagedir) {
-		n++;
-		if((sparepagedirs[s].pagedir = vm_allocpage(&sparepagedirs[s].phys,
-			VMP_SPARE))) {
-			missing_sparedirs--;
-			assert(missing_sparedirs >= 0);
-			assert(missing_sparedirs <= SPAREPAGEDIRS);
-		} else {
-			printf("VM: warning: couldn't get new spare pagedir\n");
-		}
-	}
-	if(worst < n) worst = n;
-	total += n;
-
-	return NULL;
-}
-#endif
 
 static int pt_init_done;
 
@@ -1115,7 +1090,6 @@ void pt_init(void)
 {
         pt_t *newpt;
         int s, r, p;
-	int global_bit_ok = 0;
 	vir_bytes sparepages_mem;
 #if defined(__arm__)
 	vir_bytes sparepagedirs_mem;
@@ -1123,6 +1097,7 @@ void pt_init(void)
 	static u32_t currentpagedir[ARCH_VM_DIR_ENTRIES];
 	int m = kernel_boot_info.kern_mod;
 #if defined(__i386__)
+	int global_bit_ok = 0;
 	u32_t mypdbr; /* Page Directory Base Register (cr3) value */
 #elif defined(__arm__)
 	u32_t myttbr;
@@ -1156,7 +1131,7 @@ void pt_init(void)
 	 */
 #if defined(__arm__)
         missing_sparedirs = 0;
-        assert(STATIC_SPAREPAGEDIRS < SPAREPAGEDIRS);
+        assert(STATIC_SPAREPAGEDIRS <= SPAREPAGEDIRS);
         for(s = 0; s < SPAREPAGEDIRS; s++) {
 		vir_bytes v = (sparepagedirs_mem + s*ARCH_PAGEDIR_SIZE);;
 		phys_bytes ph;
@@ -1199,15 +1174,6 @@ void pt_init(void)
 	if(global_bit_ok)
 		global_bit = I386_VM_GLOBAL;
 #endif
-
-	/* Allocate us a page table in which to remember page directory
-	 * pointers.
-	 */
-	if(!(page_directories = vm_allocpage(&page_directories_phys,
-		VMP_PAGETABLE)))
-                panic("no virt addr for vm mappings");
-
-	memset(page_directories, 0, VM_PAGE_SIZE);
 
 	/* Now reserve another pde for kernel's own mappings. */
 	{
@@ -1279,17 +1245,33 @@ void pt_init(void)
 		}
 	}
 
-	/* Find a PDE below processes available for mapping in the
-	 * page directories.
-	 */
-	pagedir_pde = freepde();
+	/* Reserve PDEs available for mapping in the page directories. */
+	{
+		int pd;
+		for(pd = 0; pd < MAX_PAGEDIR_PDES; pd++) {
+			struct pdm *pdm = &pagedir_mappings[pd];
+			pdm->pdeno = freepde();
+			phys_bytes ph;
+
+			/* Allocate us a page table in which to
+			 * remember page directory pointers.
+			 */
+			if(!(pdm->page_directories =
+				vm_allocpage(&ph, VMP_PAGETABLE))) {
+				panic("no virt addr for vm mappings");
+			}
+			memset(pdm->page_directories, 0, VM_PAGE_SIZE);
+			pdm->phys = ph;
+
 #if defined(__i386__)
-	pagedir_pde_val = (page_directories_phys & ARCH_VM_ADDR_MASK) |
-			ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_RW;
+			pdm->val = (ph & ARCH_VM_ADDR_MASK) |
+				ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_RW;
 #elif defined(__arm__)
-	pagedir_pde_val = (page_directories_phys & ARCH_VM_PDE_MASK) |
-			ARCH_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
+			pdm->val = (ph & ARCH_VM_PDE_MASK) |
+				ARCH_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
 #endif
+		}
+	}
 
 	/* Allright. Now. We have to make our own page directory and page tables,
 	 * that the kernel has already set up, accessible to us. It's easier to
@@ -1369,22 +1351,29 @@ void pt_init(void)
  *===========================================================================*/
 int pt_bind(pt_t *pt, struct vmproc *who)
 {
-	int slot;
+	int procslot, pdeslot;
 	u32_t phys;
 	void *pdes;
+	int pagedir_pde;
+	int slots_per_pde;
 	int pages_per_pagedir = ARCH_PAGEDIR_SIZE/VM_PAGE_SIZE;
+	struct pdm *pdm;
+
+	slots_per_pde = ARCH_VM_PT_ENTRIES / pages_per_pagedir;
 
 	/* Basic sanity checks. */
 	assert(who);
 	assert(who->vm_flags & VMF_INUSE);
 	assert(pt);
 
+	procslot = who->vm_slot;
+	pdm = &pagedir_mappings[procslot/slots_per_pde];
+	pdeslot = procslot%slots_per_pde;
+	pagedir_pde = pdm->pdeno;
+	assert(pdeslot >= 0);
+	assert(procslot < ELEMENTS(vmproc));
+	assert(pdeslot < ARCH_VM_PT_ENTRIES / pages_per_pagedir);
 	assert(pagedir_pde >= 0);
-
-	slot = who->vm_slot;
-	assert(slot >= 0);
-	assert(slot < ELEMENTS(vmproc));
-	assert(slot < ARCH_VM_PT_ENTRIES / pages_per_pagedir);
 
 #if defined(__i386__)
 	phys = pt->pt_dir_phys & ARCH_VM_ADDR_MASK;
@@ -1396,16 +1385,18 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 
 	/* Update "page directory pagetable." */
 #if defined(__i386__)
-	page_directories[slot] = phys | ARCH_VM_PDE_PRESENT|ARCH_VM_PTE_RW;
+	pdm->page_directories[pdeslot] =
+		phys | ARCH_VM_PDE_PRESENT|ARCH_VM_PTE_RW;
 #elif defined(__arm__)
-	{
+{
 	int i;
-	for (i = 0; i < pages_per_pagedir; i++)
-	    page_directories[slot*pages_per_pagedir+i] =
-		(phys+i*VM_PAGE_SIZE) |
-		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_RW |
-		ARCH_VM_PTE_USER;
+	for (i = 0; i < pages_per_pagedir; i++) {
+		pdm->page_directories[pdeslot*pages_per_pagedir+i] =
+			(phys+i*VM_PAGE_SIZE) |
+			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_RW |
+			ARCH_VM_PTE_USER;
 	}
+}
 #endif
 
 	/* This is where the PDE's will be visible to the kernel
@@ -1413,9 +1404,9 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 	 */
 	pdes = (void *) (pagedir_pde*ARCH_BIG_PAGE_SIZE + 
 #if defined(__i386__)
-			slot * VM_PAGE_SIZE);
+			pdeslot * VM_PAGE_SIZE);
 #elif defined(__arm__)
-			slot * ARCH_PAGEDIR_SIZE);
+			pdeslot * ARCH_PAGEDIR_SIZE);
 #endif
 
 #if 0
@@ -1452,7 +1443,6 @@ int pt_mapkernel(pt_t *pt)
 
         /* Any page table needs to map in the kernel address space. */
 	assert(bigpage_ok);
-	assert(pagedir_pde >= 0);
 	assert(kern_pde >= 0);
 
 	/* pt_init() has made sure this is ok. */
@@ -1475,8 +1465,16 @@ int pt_mapkernel(pt_t *pt)
 	}
 
 	/* Kernel also wants to know about all page directories. */
-	assert(pagedir_pde > kern_pde);
-	pt->pt_dir[pagedir_pde] = pagedir_pde_val;
+	{
+		int pd;
+		for(pd = 0; pd < MAX_PAGEDIR_PDES; pd++) {
+			struct pdm *pdm = &pagedir_mappings[pd];
+			
+			assert(pdm->pdeno > 0);
+			assert(pdm->pdeno > kern_pde);
+			pt->pt_dir[pdm->pdeno] = pdm->val;
+		}
+	}
 
 	/* Kernel also wants various mappings of its own. */
 	for(i = 0; i < kernmappings; i++) {
@@ -1511,9 +1509,6 @@ int pt_mapkernel(pt_t *pt)
 void pt_cycle(void)
 {
 	vm_checkspares();
-#if defined(__arm__)
-	vm_checksparedirs();
-#endif
 }
 
 int get_vm_self_pages(void) { return vm_self_pages; }

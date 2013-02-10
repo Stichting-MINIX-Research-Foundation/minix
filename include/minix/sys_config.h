@@ -5,12 +5,7 @@
  *		This section contains user-settable parameters		     *
  *===========================================================================*/
 
-#if defined(__arm__)
-/* FIXME: For now we only support 64 processes on ARM */
-#define _NR_PROCS	64
-#else
 #define _NR_PROCS	256
-#endif /* defined(__arm__) */
 #define _NR_SYS_PROCS	64
 
 /* Set the FP_FORMAT type based on the machine selected, either hw or sw    */
