@@ -6,7 +6,7 @@ DEFAULTCFG=/etc/boot.cfg.default
 LOCALCFG=/etc/boot.cfg.local
 TMP=/boot.cfg.temp
 DIRSBASE=/boot/minix
-INHERIT="ahci acpi no_apic"
+INHERIT="ahci acpi no_apic nobeep"
 
 filter_entries()
 {

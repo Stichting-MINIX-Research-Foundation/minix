@@ -49,6 +49,7 @@ static int vid_port;		/* I/O port for accessing 6845 */
 static int wrap;		/* hardware can wrap? */
 static int softscroll;		/* 1 = software scrolling, 0 = hardware */
 static int beeping;		/* speaker is beeping? */
+static long disable_beep = -1;	/* do not use speaker if set to 1 */
 static unsigned font_lines;	/* font lines per character */
 static unsigned scr_width;	/* # characters on a line */
 static unsigned scr_lines;	/* # lines on the screen */
@@ -762,6 +763,24 @@ unsigned *val;			/* 16-bit value to set it to */
 #endif
 
 /*===========================================================================*
+ *				beep_disabled				     *
+ *===========================================================================*/
+static long beep_disabled(void)
+{
+/* Return whether the user requested that beeps not be performed.
+ */
+
+  /* Perform first-time initialization if necessary. */
+  if (disable_beep < 0) {
+	disable_beep = 0;	/* the default is on */
+
+	(void) env_parse("nobeep", "d", 0, &disable_beep, 0, 1);
+  }
+
+  return disable_beep;
+}
+
+/*===========================================================================*
  *				beep					     *
  *===========================================================================*/
 static void beep()
@@ -774,6 +793,8 @@ static void beep()
   pvb_pair_t char_out[3];
   u32_t port_b_val;
   
+  if (beep_disabled()) return;
+
   /* Set timer in advance to prevent beeping delay. */
   set_timer(&tmr_stop_beep, B_TIME, stop_beep, 0);
 
@@ -880,6 +901,8 @@ clock_t dur;
   static timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
   u32_t port_b_val;
+
+  if (beep_disabled()) return;
   
   unsigned long ival= TIMER_FREQ / freq;
   if (ival == 0 || ival > 0xffff)
