@@ -60,12 +60,10 @@ static int elf_unpack(char *exec_hdr,
 {
   *hdr = (Elf_Ehdr *) exec_hdr;
   if(!elf_sane(*hdr)) {
-	printf("elf_unpack: elf_sane failed\n");
   	return ENOEXEC;
   }
   *phdr = (Elf_Phdr *)(exec_hdr + (*hdr)->e_phoff);
   if(!elf_ph_sane(*phdr)) {
-	printf("elf_unpack: elf_ph_sane failed\n");
   	return ENOEXEC;
   }
 #if 0
@@ -135,7 +133,6 @@ int libexec_load_elf(struct exec_info *execi)
 	assert(execi->hdr != NULL);
 
 	if((e=elf_unpack(execi->hdr, execi->hdr_len, &hdr, &phdr)) != OK) {
-		printf("libexec_load_elf: elf_unpack failed\n");
 		return e;
 	 }
 
