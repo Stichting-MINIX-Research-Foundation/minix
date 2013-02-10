@@ -204,7 +204,6 @@ void __switch_address_space(struct proc *p, struct proc **__ptproc)
 	if (new_ttbr == orig_ttbr)
 	    return;
 
-	refresh_tlb();
 	write_ttbr0(new_ttbr);
 
 	*__ptproc = p;

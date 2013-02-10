@@ -156,11 +156,12 @@ void pg_identity(kinfo_t *cbi)
 	assert(cbi->mem_high_phys);
 
         /* Set up an identity mapping page directory */
-        for(i = 0; i < ARM_VM_DIR_ENTRIES; i++) {
-		u32_t flags = ARM_VM_SECTION |
-		    ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_USER;
-                phys = i * ARM_BIG_PAGE_SIZE;
-                pagedir[i] =  phys | flags;
+	 for(i = 0; i < ARM_VM_DIR_ENTRIES; i++) {
+		u32_t flags = ARM_VM_SECTION
+			| ARM_VM_SECTION_USER
+			| ARM_VM_SECTION_DOMAIN;
+		phys = i * ARM_BIG_PAGE_SIZE;
+		pagedir[i] =  phys | flags;
         }
 }
 
@@ -169,14 +170,14 @@ int pg_mapkernel(void)
 	int pde;
 	u32_t mapped = 0, kern_phys = kern_phys_start;
 
-        assert(!(kern_vir_start % ARM_BIG_PAGE_SIZE));
-        assert(!(kern_phys_start % ARM_BIG_PAGE_SIZE));
-        pde = kern_vir_start / ARM_BIG_PAGE_SIZE; /* start pde */
+	assert(!(kern_vir_start % ARM_BIG_PAGE_SIZE));
+	assert(!(kern_phys_start % ARM_BIG_PAGE_SIZE));
+	pde = kern_vir_start / ARM_BIG_PAGE_SIZE; /* start pde */
 	while(mapped < kern_kernlen) {
-		pagedir[pde] = (kern_phys & ARM_VM_PDE_MASK) |
-			ARM_VM_SECTION |
-	    		ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_WB |
-	    		ARM_VM_SECTION_SHAREABLE | ARM_VM_SECTION_SUPER;
+		pagedir[pde] = (kern_phys & ARM_VM_PDE_MASK) | ARM_VM_SECTION
+			| ARM_VM_SECTION_SUPER
+			| ARM_VM_SECTION_DOMAIN
+			| ARM_VM_SECTION_WT;
 		mapped += ARM_BIG_PAGE_SIZE;
 		kern_phys += ARM_BIG_PAGE_SIZE;
 		pde++;
@@ -196,7 +197,10 @@ void vm_enable_paging(void)
 	sctlr = read_sctlr();
 
 	/* Enable MMU */
-	sctlr |= (SCTLR_M);
+	sctlr |= SCTLR_M;
+
+	/* AFE set to zero (default reset value): not using simplified model. */
+	/* TRE set to zero (default reset value): TEX[2:0] are used, plus C and B bits.*/
 
 	/* Enable instruction and data cache */
 	sctlr |= SCTLR_C;
@@ -207,7 +211,6 @@ void vm_enable_paging(void)
 phys_bytes pg_load()
 {
 	phys_bytes phpagedir = vir2phys(pagedir);
-	refresh_tlb();
         write_ttbr0(phpagedir);
 	return phpagedir;
 }
@@ -258,14 +261,15 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 			phys_bytes ph;
 			pt = alloc_pagetable(&ph);
 			pagedir[pde] = (ph & ARM_VM_PDE_MASK)
-			    | ARM_VM_PAGEDIR | ARM_VM_PDE_DOMAIN;
+					| ARM_VM_PAGEDIR
+					| ARM_VM_PDE_DOMAIN;
 			mapped_pde = pde;
 		}
 		assert(pt);
 		pt[pte] = (source & ARM_VM_PTE_MASK)
-			    | ARM_VM_PAGETABLE
-			    | ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE
-			    | ARM_VM_PTE_USER;
+			| ARM_VM_PAGETABLE
+			| ARM_VM_PTE_WT
+			| ARM_VM_PTE_USER;
 		vaddr += ARM_PAGE_SIZE;
 		if(phys != PG_ALLOCATEME)
 			phys += ARM_PAGE_SIZE;
