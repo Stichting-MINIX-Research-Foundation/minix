@@ -173,8 +173,9 @@ void pg_identity(kinfo_t *cbi)
 
         /* Set up an identity mapping page directory */
         for(i = 0; i < I386_VM_DIR_ENTRIES; i++) {
-		u32_t flags = I386_VM_PRESENT | I386_VM_BIGPAGE |
-			I386_VM_USER | I386_VM_WRITE;
+		u32_t flags = I386_VM_PRESENT | I386_VM_BIGPAGE
+			| I386_VM_USER
+			| I386_VM_WRITE;
                 phys = i * I386_BIG_PAGE_SIZE;
 		if((cbi->mem_high_phys & I386_VM_ADDR_MASK_4MB)
 			<= (phys & I386_VM_ADDR_MASK_4MB)) {

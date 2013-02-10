@@ -342,7 +342,7 @@ void blockstats(void)
 static int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	struct phys_region *pr)
 {
-	int rw;
+	int flags = PTF_PRESENT | PTF_USER;
 	struct phys_block *pb = pr->ph;
 
 	assert(vr);
@@ -354,12 +354,19 @@ static int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	assert(pb->refcount > 0);
 
 	if(pr_writable(vr, pr))
-		rw = PTF_WRITE;
+		flags |= PTF_WRITE;
 	else
-		rw = PTF_READ;
+		flags |= PTF_READ;
+
+#if  defined(__arm__)
+	if (pb->phys >= 0x80000000 && pb->phys < (0xc0000000 - VM_PAGE_SIZE)) {
+		// LSC Do this only for actual RAM
+		flags |= ARM_VM_PTE_WT;
+	}
+#endif
 
 	if(pt_writemap(vmp, &vmp->vm_pt, vr->vaddr + pr->offset,
-	  pb->phys, VM_PAGE_SIZE, PTF_PRESENT | PTF_USER | rw,
+			pb->phys, VM_PAGE_SIZE, flags,
 #if SANITYCHECKS
 	  	!pr->written ? 0 :
 #endif

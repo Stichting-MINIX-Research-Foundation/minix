@@ -421,7 +421,7 @@ void *vm_allocpages(phys_bytes *phys, int reason, int pages)
 	if((r=pt_writemap(vmprocess, pt, loc, *phys, VM_PAGE_SIZE*pages,
 		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
 #if defined(__arm__)
-		| ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE
+		| ARM_VM_PTE_WT
 #endif
 		, 0)) != OK) {
 		free_mem(newpage, pages);
@@ -468,7 +468,7 @@ void vm_pagelock(void *vir, int lockflag)
 #if defined(__arm__)
 	else
 		flags |= ARCH_VM_PTE_RO;
-	flags |= ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE;
+	flags |= ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE; // LSC FIXME
 #endif
 
 	/* Update flags. */
@@ -512,6 +512,12 @@ int vm_addrok(void *vir, int writeflag)
 		printf("addr not ok: pde %d present but pde unwritable\n", pde);
 		return 0;
 	}
+#elif defined(__arm__)
+	if(writeflag &&
+		 (pt->pt_dir[pde] & ARCH_VM_PTE_RO)) {
+		printf("addr not ok: pde %d present but pde unwritable\n", pde);
+		return 0;
+	}
 
 #endif
 	if(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT)) {
@@ -524,12 +530,13 @@ int vm_addrok(void *vir, int writeflag)
 	if(writeflag &&
 		!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_RW)) {
 		printf("addr not ok: pde %d / pte %d present but unwritable\n",
-#elif defined(__arm__)
-	if(!writeflag &&
-		!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_RO)) {
-		printf("addr not ok: pde %d / pte %d present but writable\n",
-#endif
 			pde, pte);
+#elif defined(__arm__)
+	if(writeflag &&
+		 (pt->pt_pt[pde][pte] & ARCH_VM_PTE_RO)) {
+		printf("addr not ok: pde %d / pte %d present but unwritable\n",
+			pde, pte);
+#endif
 		return 0;
 	}
 
@@ -571,7 +578,7 @@ static int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 		| ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW;
 #elif defined(__arm__)
 	pt->pt_dir[pde] = (pt_phys & ARCH_VM_PDE_MASK)
-		| ARCH_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
+		| ARCH_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN; //LSC FIXME
 #endif
 
 	return OK;
@@ -766,8 +773,8 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW,
 #elif defined(__arm__)
 	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, ARCH_PAGEDIR_SIZE,
-		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW |
-		ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE,
+		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER |
+		ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE, //LSC FIXME
 #endif
 		WMF_OVERWRITE)) != OK) {
 		return r;
@@ -793,8 +800,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, VM_PAGE_SIZE,
 			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
 #ifdef __arm__
-			| ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW |
-			ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE
+			| ARM_VM_PTE_WB
 #endif
 			,
 			WMF_OVERWRITE)) != OK) {
@@ -1202,9 +1208,6 @@ void pt_init(void)
 				kern_mappings[index].flags |= PTF_NOCACHE;
 #elif defined(__arm__)
 				kern_mappings[index].flags |= ARM_VM_PTE_DEVICE;
-			else
-				kern_mappings[index].flags |=
-				    ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE;
 #endif
 			if(flags & VMMF_USER)
 				kern_mappings[index].flags |= ARCH_VM_PTE_USER;
@@ -1267,8 +1270,9 @@ void pt_init(void)
 			pdm->val = (ph & ARCH_VM_ADDR_MASK) |
 				ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_RW;
 #elif defined(__arm__)
-			pdm->val = (ph & ARCH_VM_PDE_MASK) |
-				ARCH_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
+			pdm->val = (ph & ARCH_VM_PDE_MASK)
+				| ARCH_VM_PDE_PRESENT
+				| ARM_VM_PDE_DOMAIN; //LSC FIXME
 #endif
 		}
 	}
@@ -1392,9 +1396,10 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 	int i;
 	for (i = 0; i < pages_per_pagedir; i++) {
 		pdm->page_directories[pdeslot*pages_per_pagedir+i] =
-			(phys+i*VM_PAGE_SIZE) |
-			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_RW |
-			ARCH_VM_PTE_USER;
+			(phys+i*VM_PAGE_SIZE)
+			| ARCH_VM_PTE_PRESENT
+			| ARCH_VM_PTE_RW
+			| ARCH_VM_PTE_USER; //LSC FIXME
 	}
 }
 #endif
@@ -1454,10 +1459,11 @@ int pt_mapkernel(pt_t *pt)
 		pt->pt_dir[kern_pde] = addr | ARCH_VM_PDE_PRESENT |
 			ARCH_VM_BIGPAGE | ARCH_VM_PTE_RW | global_bit;
 #elif defined(__arm__)
-		pt->pt_dir[kern_pde] = (addr & ARCH_VM_PDE_MASK) |
-			ARM_VM_SECTION |
-			ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_WB |
-			ARM_VM_SECTION_SHAREABLE | ARM_VM_SECTION_SUPER;
+		pt->pt_dir[kern_pde] = (addr & ARCH_VM_PDE_MASK)
+			| ARM_VM_SECTION
+			| ARM_VM_SECTION_DOMAIN
+			| ARM_VM_SECTION_WB
+			| ARM_VM_SECTION_SUPER;
 #endif
 		kern_pde++;
 		mapped += ARCH_BIG_PAGE_SIZE;

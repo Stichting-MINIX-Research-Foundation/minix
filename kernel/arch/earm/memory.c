@@ -100,9 +100,11 @@ static phys_bytes createpde(
 		pdeval = pr->p_seg.p_ttbr_v[ARM_VM_PDE(linaddr)];
 	} else {
 		/* Requested address is physical. Make up the PDE entry. */
-		pdeval = (linaddr & ARM_VM_SECTION_MASK) |
-			ARM_VM_SECTION |
-			ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_USER;
+		pdeval = (linaddr & ARM_VM_SECTION_MASK)
+			| ARM_VM_SECTION
+			| ARM_VM_SECTION_DOMAIN
+			| ARM_VM_SECTION_WT
+			| ARM_VM_SECTION_USER;
 	}
 
 	/* Write the pde value that we need into a pde that the kernel
@@ -189,7 +191,6 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		dstptr = createpde(dstproc, dstlinaddr, &chunk, 1, &changed);
 		if(changed) {
 			reload_ttbr0();
-			refresh_tlb();
 		}
 		/* Copy pages. */
 		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
@@ -305,12 +306,13 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 		return EFAULT;
 	}
 
-	/* We don't expect to ever see this. */
+	/* We don't expect to ever see this. 
+	 * LSC Impossible with the previous test.
 	if(pde_v & ARM_VM_BIGPAGE) {
 		*physical = pde_v & ARM_VM_SECTION_MASK;
 		if(ptent) *ptent = pde_v;
 		*physical += virtual & ARM_VM_OFFSET_MASK_1MB;
-	} else {
+	} else */ {
 		/* Retrieve page table entry. */
 		pt = (u32_t *) (pde_v & ARM_VM_PDE_MASK);
 		assert(!((u32_t) pt % ARM_PAGETABLE_SIZE));
@@ -500,7 +502,6 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 
 		if (new_ttbr) {
 			reload_ttbr0();
-			refresh_tlb();
 		}
 		/* If a page fault happens, pfa is non-null */
 		if ((pfa = phys_memset(ptr, pattern, chunk))) {
@@ -787,5 +788,5 @@ int arch_enable_paging(struct proc * caller)
 void release_address_space(struct proc *pr)
 {
 	pr->p_seg.p_ttbr_v = NULL;
-	refresh_tlb();
+	barrier();
 }

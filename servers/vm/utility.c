@@ -300,8 +300,14 @@ int _brk(void *addr)
 		if(newpage == NO_MEM) return -1;
 		mem = CLICK2ABS(newpage);
 		if(pt_writemap(vmprocess, &vmprocess->vm_pt,
-	v, mem, VM_PAGE_SIZE,
-        ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW, 0) != OK) {
+			v, mem, VM_PAGE_SIZE,
+			  ARCH_VM_PTE_PRESENT
+			| ARCH_VM_PTE_USER
+			| ARCH_VM_PTE_RW
+#if defined(__arm__)
+			| ARM_VM_PTE_WB
+#endif
+			, 0) != OK) {
 			free_mem(newpage, 1);
 			return -1;
 		}
