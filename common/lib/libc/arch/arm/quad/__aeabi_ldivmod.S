@@ -80,9 +80,9 @@ ENTRY(__aeabi_ldivmod)
 
 	pop	{r2, r3}
 	tst	NEG, #2		/* does remainder need to be negative? */
-	bleq	.Lnegate_b
+	blne	.Lnegate_b
 	tst	NEG, #1		/* does quotient need to be negative? */
-	bleq	.Lnegate_a
+	blne	.Lnegate_a
 	pop	{r4-r5, sl, lr}
 	RET
 
