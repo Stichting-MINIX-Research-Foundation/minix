@@ -1193,6 +1193,21 @@ static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 }
 
 /*===========================================================================*
+ *				port_hardreset				     *
+ *===========================================================================*/
+static void port_hardreset(struct port_state *ps)
+{
+	/* Perform a port-level (hard) reset on the given port.
+	 */
+
+	port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_INIT);
+
+	micro_delay(COMRESET_DELAY * 1000);	/* COMRESET_DELAY is in ms */
+
+	port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_NONE);
+}
+
+/*===========================================================================*
  *				port_start				     *
  *===========================================================================*/
 static void port_start(struct port_state *ps)
@@ -1242,19 +1257,17 @@ static void port_restart(struct port_state *ps)
 
 		dprintf(V_ERR, ("%s: port reset\n", ahci_portname(ps)));
 
-		/* Trigger a port reset. */
-		port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_INIT);
-		micro_delay(SPINUP_DELAY * 1000);
-		port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_NONE);
-
 		/* To keep this driver simple, we do not transparently recover
 		 * ongoing requests. Instead, we mark the failing device as
-		 * disconnected, and assume that if the reset succeeds, the
+		 * disconnected, and reset it. If the reset succeeds, the
 		 * device (or, perhaps, eventually, another device) will come
 		 * back up. Any current and future requests to this port will
 		 * be failed until the port is fully closed and reopened.
 		 */
 		port_disconnect(ps);
+
+		/* Trigger a port reset. */
+		port_hardreset(ps);
 
 		return;
 	}
@@ -1907,13 +1920,14 @@ static void port_init(struct port_state *ps)
 	/* Just listen for device status change events for now. */
 	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
 
-	/* Perform a reset on the device. */
+	/* Enable device spin-up for HBAs that support staggered spin-up.
+	 * This is a no-op for HBAs that do not support it.
+	 */
 	cmd = port_read(ps, AHCI_PORT_CMD);
 	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_SUD);
 
-	port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_INIT);
-	micro_delay(SPINUP_DELAY * 1000);	/* SPINUP_DELAY is in ms */
-	port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_NONE);
+	/* Trigger a port reset. */
+	port_hardreset(ps);
 
 	set_timer(&ps->cmd_info[0].timer, ahci_spinup_timeout,
 		port_timeout, BUILD_ARG(ps - port_state, 0));

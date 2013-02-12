@@ -15,7 +15,7 @@
 #define FLUSH_TIMEOUT		60000	/* time to wait for flush cmd (ms) */
 
 /* Time values that are defined by the standards. */
-#define SPINUP_DELAY		1	/* time to assert spin-up flag (ms) */
+#define COMRESET_DELAY		1	/* time to assert port reset (ms) */
 #define RESET_DELAY		1000	/* maximum HBA reset time (ms) */
 #define PORTREG_DELAY		500	/* maximum port register update (ms) */
 
