@@ -181,13 +181,27 @@ static int ahci_instance;			/* driver instance number */
 
 static int ahci_verbose;			/* verbosity level (0..4) */
 
-/* Timeout values. These can be overridden with environment variables. */
-static long ahci_spinup_timeout = SPINUP_TIMEOUT;
-static long ahci_sig_timeout = SIG_TIMEOUT;
-static long ahci_sig_checks = NR_SIG_CHECKS;
-static long ahci_command_timeout = COMMAND_TIMEOUT;
-static long ahci_transfer_timeout = TRANSFER_TIMEOUT;
-static long ahci_flush_timeout = FLUSH_TIMEOUT;
+/* Timeout-related values. */
+static clock_t ahci_spinup_timeout;
+static clock_t ahci_sig_timeout;
+static clock_t ahci_sig_delay;
+static unsigned int ahci_sig_checks;
+static clock_t ahci_command_timeout;
+static clock_t ahci_transfer_timeout;
+static clock_t ahci_flush_timeout;
+
+/* Timeout environment variable names and default values. */
+static struct {
+	char *name;				/* environment variable name */
+	u32_t default_ms;			/* default in milliseconds */
+	clock_t *ptr;				/* clock ticks value pointer */
+} ahci_timevar[] = {
+	{ "ahci_init_timeout",	SPINUP_TIMEOUT,    &ahci_spinup_timeout   },
+	{ "ahci_sig_timeout",	SIG_TIMEOUT,       &ahci_sig_timeout      },
+	{ "ahci_cmd_timeout",	COMMAND_TIMEOUT,   &ahci_command_timeout  },
+	{ "ahci_io_timeout",	TRANSFER_TIMEOUT,  &ahci_transfer_timeout },
+	{ "ahci_flush_timeout",	FLUSH_TIMEOUT,	   &ahci_flush_timeout    }
+};
 
 static int ahci_map[MAX_DRIVES];		/* device-to-port mapping */
 
@@ -201,6 +215,9 @@ static int ahci_exiting = FALSE;		/* exit after last close? */
 	if (ahci_verbose >= (v))	\
 		printf s;		\
 } while (0)
+
+/* Convert milliseconds to clock ticks. Round up. */
+#define millis_to_hz(ms)	(((ms) * sys_hz() + 999) / 1000)
 
 static void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 	u8_t packet[ATAPI_PACKET_SIZE], prd_t *prdt, int nr_prds, int write);
@@ -1330,7 +1347,7 @@ static void port_sig_check(struct port_state *ps)
 		/* Try for a while before giving up. It may take seconds. */
 		if (ps->left > 0) {
 			ps->left--;
-			set_timer(&ps->cmd_info[0].timer, ahci_sig_timeout,
+			set_timer(&ps->cmd_info[0].timer, ahci_sig_delay,
 				port_timeout, BUILD_ARG(ps - port_state, 0));
 			return;
 		}
@@ -2143,23 +2160,6 @@ static void ahci_intr(unsigned int UNUSED(mask))
 }
 
 /*===========================================================================*
- *				ahci_get_var				     *
- *===========================================================================*/
-static void ahci_get_var(char *name, long *v, int timeout)
-{
-	/* Retrieve an environment variable, and optionall adjust it to the
-	 * scale that we are using internally.
-	 */
-
-	/* The value is supposed to be initialized to a default already. */
-	(void) env_parse(name, "d", 0, v, 1, LONG_MAX);
-
-	/* If this is a timeout, convert from milliseconds to ticks. */
-	if (timeout)
-		*v = (*v + 500) * sys_hz() / 1000;
-}
-
-/*===========================================================================*
  *				ahci_get_params				     *
  *===========================================================================*/
 static void ahci_get_params(void)
@@ -2168,6 +2168,7 @@ static void ahci_get_params(void)
 	 * device-to-port mapping, which has to be parsed later.
 	 */
 	long v;
+	int i;
 
 	/* Find out which driver instance we are. */
 	v = 0;
@@ -2180,12 +2181,18 @@ static void ahci_get_params(void)
 	ahci_verbose = (int) v;
 
 	/* Initialize timeout-related values. */
-	ahci_get_var("ahci_init_timeout", &ahci_spinup_timeout, TRUE);
-	ahci_get_var("ahci_sig_timeout", &ahci_sig_timeout, TRUE);
-	ahci_get_var("ahci_sig_checks", &ahci_sig_checks, FALSE);
-	ahci_get_var("ahci_cmd_timeout", &ahci_command_timeout, TRUE);
-	ahci_get_var("ahci_io_timeout", &ahci_transfer_timeout, TRUE);
-	ahci_get_var("ahci_flush_timeout", &ahci_flush_timeout, TRUE);
+	for (i = 0; i < sizeof(ahci_timevar) / sizeof(ahci_timevar[0]); i++) {
+		v = ahci_timevar[i].default_ms;
+
+		(void) env_parse(ahci_timevar[i].name, "d", 0, &v, 1,
+			LONG_MAX);
+
+		*ahci_timevar[i].ptr = millis_to_hz(v);
+	}
+
+	ahci_sig_delay = millis_to_hz(SIG_DELAY);
+	ahci_sig_checks =
+		(ahci_sig_timeout + ahci_sig_delay - 1) / ahci_sig_delay;
 }
 
 /*===========================================================================*

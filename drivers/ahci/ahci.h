@@ -8,8 +8,7 @@
 
 /* Time values that can be set with options. */
 #define SPINUP_TIMEOUT		5000	/* initial spin-up time (ms) */
-#define SIG_TIMEOUT		250	/* time between signature checks (ms) */
-#define NR_SIG_CHECKS		60	/* maximum number of times to check */
+#define SIG_TIMEOUT		15000	/* time to wait for signature (ms) */
 #define COMMAND_TIMEOUT		10000	/* time to wait for non-I/O cmd (ms) */
 #define TRANSFER_TIMEOUT	30000	/* time to wait for I/O cmd (ms) */
 #define FLUSH_TIMEOUT		60000	/* time to wait for flush cmd (ms) */
@@ -18,6 +17,9 @@
 #define COMRESET_DELAY		1	/* time to assert port reset (ms) */
 #define RESET_DELAY		1000	/* maximum HBA reset time (ms) */
 #define PORTREG_DELAY		500	/* maximum port register update (ms) */
+
+/* Other hardcoded time values. */
+#define SIG_DELAY		250	/* time between signature checks (ms) */
 
 /* Generic FIS layout. */
 #define ATA_FIS_TYPE			0	/* FIS Type */
