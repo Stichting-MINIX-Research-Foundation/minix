@@ -1202,10 +1202,6 @@ static void port_start(struct port_state *ps)
 	 */
 	u32_t cmd;
 
-	/* Enable FIS receive. */
-	cmd = port_read(ps, AHCI_PORT_CMD);
-	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_FRE);
-
 	/* Reset status registers. */
 	port_write(ps, AHCI_PORT_SERR, ~0);
 	port_write(ps, AHCI_PORT_IS, ~0);
@@ -1294,15 +1290,6 @@ static void port_stop(struct port_state *ps)
 			PORTREG_DELAY);
 
 		dprintf(V_INFO, ("%s: stopped\n", ahci_portname(ps)));
-
-		cmd = port_read(ps, AHCI_PORT_CMD);
-	}
-
-	if (cmd & (AHCI_PORT_CMD_FR | AHCI_PORT_CMD_FRE)) {
-		port_write(ps, AHCI_PORT_CMD, cmd & ~AHCI_PORT_CMD_FRE);
-
-		SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_FR),
-			PORTREG_DELAY);
 	}
 
 	/* Reset status registers. */
@@ -1794,15 +1781,16 @@ static int port_exec(struct port_state *ps, int cmd, clock_t timeout)
  *===========================================================================*/
 static void port_alloc(struct port_state *ps)
 {
-	/* Allocate memory for the given port. We try to cram everything into
-	 * one 4K-page in order to limit memory usage as much as possible.
-	 * More memory may be allocated on demand later, but allocation failure
-	 * should be fatal only here. Note that we do not allocate memory for
-	 * sector padding here, because we do not know the device's sector size
-	 * yet.
+	/* Allocate memory for the given port, and enable FIS receipt. We try
+	 * to cram everything into one 4K-page in order to limit memory usage
+	 * as much as possible. More memory may be allocated on demand later,
+	 * but allocation failure should be fatal only here. Note that we do
+	 * not allocate memory for sector padding here, because we do not know
+	 * the device's sector size yet.
 	 */
 	size_t fis_off, tmp_off, ct_off; int i;
 	size_t ct_offs[NR_CMDS];
+	u32_t cmd;
 
 	fis_off = AHCI_CL_SIZE + AHCI_FIS_SIZE - 1;
 	fis_off -= fis_off % AHCI_FIS_SIZE;
@@ -1850,6 +1838,10 @@ static void port_alloc(struct port_state *ps)
 	port_write(ps, AHCI_PORT_CLBU, 0);
 	port_write(ps, AHCI_PORT_CLB, ps->cl_phys);
 
+	/* Enable FIS receive. */
+	cmd = port_read(ps, AHCI_PORT_CMD);
+	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_FRE);
+
 	ps->pad_base = NULL;
 	ps->pad_size = 0;
 }
@@ -1859,9 +1851,21 @@ static void port_alloc(struct port_state *ps)
  *===========================================================================*/
 static void port_free(struct port_state *ps)
 {
-	/* Free previously allocated memory for the given port.
+	/* Disable FIS receipt for the given port, and free previously
+	 * allocated memory.
 	 */
+	u32_t cmd;
 	int i;
+
+	/* Disable FIS receive. */
+	cmd = port_read(ps, AHCI_PORT_CMD);
+
+	if (cmd & (AHCI_PORT_CMD_FR | AHCI_PORT_CMD_FRE)) {
+		port_write(ps, AHCI_PORT_CMD, cmd & ~AHCI_PORT_CMD_FRE);
+
+		SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_FR),
+			PORTREG_DELAY);
+	}
 
 	if (ps->pad_base != NULL)
 		free_contig(ps->pad_base, ps->pad_size);
@@ -1896,9 +1900,6 @@ static void port_init(struct port_state *ps)
 
 	ps->reg = (u32_t *) ((u8_t *) hba_state.base +
 		AHCI_MEM_BASE_SIZE + AHCI_MEM_PORT_SIZE * (ps - port_state));
-
-	/* Make sure the port is in a known state. */
-	port_stop(ps);
 
 	/* Allocate memory for the port. */
 	port_alloc(ps);
