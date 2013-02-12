@@ -124,6 +124,9 @@ static struct {
 	int hook_id;		/* IRQ hook ID */
 } hba_state;
 
+#define hba_read(r)		(hba_state.base[r])
+#define hba_write(r, v)		(hba_state.base[r] = (v))
+
 /* Port state. */
 static struct port_state {
 	int state;		/* port state */
@@ -170,6 +173,9 @@ static struct port_state {
 		int result;	/* success/failure result of the commands */
 	} cmd_info[NR_CMDS];
 } port_state[NR_PORTS];
+
+#define port_read(ps, r)	((ps)->reg[r])
+#define port_write(ps, r, v)	((ps)->reg[r] = (v))
 
 static int ahci_instance;			/* driver instance number */
 
@@ -918,9 +924,9 @@ static void port_check_cmds(struct port_state *ps)
 
 	/* See which commands have completed. */
 	if (ps->flags & FLAG_NCQ_MODE)
-		mask = ps->reg[AHCI_PORT_SACT];
+		mask = port_read(ps, AHCI_PORT_SACT);
 	else
-		mask = ps->reg[AHCI_PORT_CI];
+		mask = port_read(ps, AHCI_PORT_CI);
 
 	/* Wake up threads corresponding to completed commands. */
 	done = ps->pend_mask & ~mask;
@@ -1197,16 +1203,16 @@ static void port_start(struct port_state *ps)
 	u32_t cmd;
 
 	/* Enable FIS receive. */
-	cmd = ps->reg[AHCI_PORT_CMD];
-	ps->reg[AHCI_PORT_CMD] = cmd | AHCI_PORT_CMD_FRE;
+	cmd = port_read(ps, AHCI_PORT_CMD);
+	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_FRE);
 
 	/* Reset status registers. */
-	ps->reg[AHCI_PORT_SERR] = ~0;
-	ps->reg[AHCI_PORT_IS] = ~0;
+	port_write(ps, AHCI_PORT_SERR, ~0);
+	port_write(ps, AHCI_PORT_IS, ~0);
 
 	/* Start the port. */
-	cmd = ps->reg[AHCI_PORT_CMD];
-	ps->reg[AHCI_PORT_CMD] = cmd | AHCI_PORT_CMD_ST;
+	cmd = port_read(ps, AHCI_PORT_CMD);
+	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_ST);
 
 	dprintf(V_INFO, ("%s: started\n", ahci_portname(ps)));
 }
@@ -1224,26 +1230,26 @@ static void port_restart(struct port_state *ps)
 	port_fail_cmds(ps);
 
 	/* Stop the port. */
-	cmd = ps->reg[AHCI_PORT_CMD];
-	ps->reg[AHCI_PORT_CMD] = cmd & ~AHCI_PORT_CMD_ST;
+	cmd = port_read(ps, AHCI_PORT_CMD);
+	port_write(ps, AHCI_PORT_CMD, cmd & ~AHCI_PORT_CMD_ST);
 
-	SPIN_UNTIL(!(ps->reg[AHCI_PORT_CMD] & AHCI_PORT_CMD_CR),
+	SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_CR),
 		PORTREG_DELAY);
 
 	/* Reset status registers. */
-	ps->reg[AHCI_PORT_SERR] = ~0;
-	ps->reg[AHCI_PORT_IS] = ~0;
+	port_write(ps, AHCI_PORT_SERR, ~0);
+	port_write(ps, AHCI_PORT_IS, ~0);
 
 	/* If the BSY and/or DRQ flags are set, reset the port. */
-	if (ps->reg[AHCI_PORT_TFD] &
+	if (port_read(ps, AHCI_PORT_TFD) &
 		(AHCI_PORT_TFD_STS_BSY | AHCI_PORT_TFD_STS_DRQ)) {
 
 		dprintf(V_ERR, ("%s: port reset\n", ahci_portname(ps)));
 
 		/* Trigger a port reset. */
-		ps->reg[AHCI_PORT_SCTL] = AHCI_PORT_SCTL_DET_INIT;
+		port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_INIT);
 		micro_delay(SPINUP_DELAY * 1000);
-		ps->reg[AHCI_PORT_SCTL] = AHCI_PORT_SCTL_DET_NONE;
+		port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_NONE);
 
 		/* To keep this driver simple, we do not transparently recover
 		 * ongoing requests. Instead, we mark the failing device as
@@ -1258,8 +1264,8 @@ static void port_restart(struct port_state *ps)
 	}
 
 	/* Start the port. */
-	cmd = ps->reg[AHCI_PORT_CMD];
-	ps->reg[AHCI_PORT_CMD] = cmd | AHCI_PORT_CMD_ST;
+	cmd = port_read(ps, AHCI_PORT_CMD);
+	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_ST);
 
 	dprintf(V_INFO, ("%s: restarted\n", ahci_portname(ps)));
 }
@@ -1274,36 +1280,34 @@ static void port_stop(struct port_state *ps)
 	u32_t cmd;
 
 	/* Disable interrupts. */
-	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_NONE;
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_NONE);
 
 	/* Stop the port. */
-	cmd = ps->reg[AHCI_PORT_CMD];
+	cmd = port_read(ps, AHCI_PORT_CMD);
 
 	if (cmd & (AHCI_PORT_CMD_CR | AHCI_PORT_CMD_ST)) {
 		cmd &= ~(AHCI_PORT_CMD_CR | AHCI_PORT_CMD_ST);
 
-		ps->reg[AHCI_PORT_CMD] = cmd;
+		port_write(ps, AHCI_PORT_CMD, cmd);
 
-		SPIN_UNTIL(!(ps->reg[AHCI_PORT_CMD] & AHCI_PORT_CMD_CR),
+		SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_CR),
 			PORTREG_DELAY);
 
 		dprintf(V_INFO, ("%s: stopped\n", ahci_portname(ps)));
 
-		cmd = ps->reg[AHCI_PORT_CMD];
+		cmd = port_read(ps, AHCI_PORT_CMD);
 	}
 
 	if (cmd & (AHCI_PORT_CMD_FR | AHCI_PORT_CMD_FRE)) {
-		cmd &= ~(AHCI_PORT_CMD_FR | AHCI_PORT_CMD_FRE);
+		port_write(ps, AHCI_PORT_CMD, cmd & ~AHCI_PORT_CMD_FRE);
 
-		ps->reg[AHCI_PORT_CMD] = cmd;
-
-		SPIN_UNTIL(!(ps->reg[AHCI_PORT_CMD] & AHCI_PORT_CMD_FR),
+		SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_FR),
 			PORTREG_DELAY);
 	}
 
 	/* Reset status registers. */
-	ps->reg[AHCI_PORT_SERR] = ~0;
-	ps->reg[AHCI_PORT_IS] = ~0;
+	port_write(ps, AHCI_PORT_SERR, ~0);
+	port_write(ps, AHCI_PORT_IS, ~0);
 }
 
 /*===========================================================================*
@@ -1316,7 +1320,7 @@ static void port_sig_check(struct port_state *ps)
 	 */
 	u32_t tfd, sig;
 
-	tfd = ps->reg[AHCI_PORT_TFD];
+	tfd = port_read(ps, AHCI_PORT_TFD);
 
 	/* Wait for the BSY flag to be (set and then) cleared first. Note that
 	 * clearing it only happens when PxCMD.FRE is set, which is why we
@@ -1356,7 +1360,7 @@ static void port_sig_check(struct port_state *ps)
 	/* Check the port's signature. We only support the normal ATA and ATAPI
 	 * signatures. We ignore devices reporting anything else.
 	 */
-	sig = ps->reg[AHCI_PORT_SIG];
+	sig = port_read(ps, AHCI_PORT_SIG);
 
 	if (sig != ATA_SIG_ATA && sig != ATA_SIG_ATAPI) {
 		dprintf(V_ERR, ("%s: unsupported signature (%08x)\n",
@@ -1385,7 +1389,7 @@ static void port_sig_check(struct port_state *ps)
 	 * confusing the timer expiration procedure.
 	 */
 	ps->state = STATE_WAIT_ID;
-	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_MASK;
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_MASK);
 
 	(void) gen_identify(ps, FALSE /*blocking*/);
 }
@@ -1450,7 +1454,7 @@ static void port_id_check(struct port_state *ps, int success)
 		port_stop(ps);
 
 		ps->state = STATE_BAD_DEV;
-		ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_PRCE;
+		port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
 
 		return;
 	}
@@ -1499,7 +1503,7 @@ static void port_connect(struct port_state *ps)
 	ps->state = STATE_WAIT_SIG;
 	ps->left = ahci_sig_checks;
 
-	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_PRCE;
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
 
 	/* Do the first check immediately; who knows, we may get lucky. */
 	port_sig_check(ps);
@@ -1519,7 +1523,7 @@ static void port_disconnect(struct port_state *ps)
 		port_stop(ps);
 
 	ps->state = STATE_NO_DEV;
-	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_PRCE;
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
 	ps->flags &= ~FLAG_BUSY;
 
 	/* Fail any ongoing request. The caller may already have done this. */
@@ -1552,11 +1556,11 @@ static void port_intr(struct port_state *ps)
 		return;
 	}
 
-	smask = ps->reg[AHCI_PORT_IS];
-	emask = smask & ps->reg[AHCI_PORT_IE];
+	smask = port_read(ps, AHCI_PORT_IS);
+	emask = smask & port_read(ps, AHCI_PORT_IE);
 
 	/* Clear the interrupt flags that we saw were set. */
-	ps->reg[AHCI_PORT_IS] = smask;
+	port_write(ps, AHCI_PORT_IS, smask);
 
 	dprintf(V_REQ, ("%s: interrupt (%08x)\n", ahci_portname(ps), smask));
 
@@ -1565,11 +1569,10 @@ static void port_intr(struct port_state *ps)
 
 	if (emask & AHCI_PORT_IS_PRCS) {
 		/* Clear the N diagnostics bit to clear this interrupt. */
-		ps->reg[AHCI_PORT_SERR] = AHCI_PORT_SERR_DIAG_N;
+		port_write(ps, AHCI_PORT_SERR, AHCI_PORT_SERR_DIAG_N);
 
-		connected =
-			(ps->reg[AHCI_PORT_SSTS] & AHCI_PORT_SSTS_DET_MASK) ==
-			AHCI_PORT_SSTS_DET_PHY;
+		connected = (port_read(ps, AHCI_PORT_SSTS) &
+			AHCI_PORT_SSTS_DET_MASK) == AHCI_PORT_SSTS_DET_PHY;
 
 		switch (ps->state) {
 		case STATE_BAD_DEV:
@@ -1598,7 +1601,7 @@ static void port_intr(struct port_state *ps)
 		/* If we were waiting for ID verification, check now. */
 		if (ps->state == STATE_WAIT_ID) {
 			ps->flags &= ~FLAG_BUSY;
-			port_id_check(ps, !(ps->reg[AHCI_PORT_TFD] &
+			port_id_check(ps, !(port_read(ps, AHCI_PORT_TFD) &
 				(AHCI_PORT_TFD_STS_ERR |
 				AHCI_PORT_TFD_STS_DF)));
 		}
@@ -1608,7 +1611,7 @@ static void port_intr(struct port_state *ps)
 		 * FIS. In both cases, we just restart the port, failing all
 		 * commands in the process.
 		 */
-		if ((ps->reg[AHCI_PORT_TFD] &
+		if ((port_read(ps, AHCI_PORT_TFD) &
 			(AHCI_PORT_TFD_STS_ERR | AHCI_PORT_TFD_STS_DF)) ||
 			(smask & AHCI_PORT_IS_RESTART)) {
 				port_restart(ps);
@@ -1651,8 +1654,8 @@ static void port_timeout(struct timer *tp)
 		 * explicit check to see if a device is connected after all.
 		 * Later hot-(un)plug events will not be detected in this case.
 		 */
-		if ((ps->reg[AHCI_PORT_SSTS] & AHCI_PORT_SSTS_DET_MASK) ==
-						AHCI_PORT_SSTS_DET_PHY) {
+		if ((port_read(ps, AHCI_PORT_SSTS) &
+			AHCI_PORT_SSTS_DET_MASK) == AHCI_PORT_SSTS_DET_PHY) {
 			dprintf(V_INFO, ("%s: no device connection event\n",
 				ahci_portname(ps)));
 
@@ -1730,7 +1733,7 @@ static void port_issue(struct port_state *ps, int cmd, clock_t timeout)
 
 	/* Set the corresponding NCQ command bit, if applicable. */
 	if (ps->flags & FLAG_HAS_NCQ)
-		ps->reg[AHCI_PORT_SACT] = (1 << cmd);
+		port_write(ps, AHCI_PORT_SACT, 1 << cmd);
 
 	/* Make sure that the compiler does not delay any previous write
 	 * operations until after the write to the command issue register.
@@ -1738,7 +1741,7 @@ static void port_issue(struct port_state *ps, int cmd, clock_t timeout)
 	__insn_barrier();
 
 	/* Tell the controller that a new command is ready. */
-	ps->reg[AHCI_PORT_CI] = (1 << cmd);
+	port_write(ps, AHCI_PORT_CI, 1 << cmd);
 
 	/* Update pending commands. */
 	ps->pend_mask |= 1 << cmd;
@@ -1841,11 +1844,11 @@ static void port_alloc(struct port_state *ps)
 	}
 
 	/* Tell the controller about some of the physical addresses. */
-	ps->reg[AHCI_PORT_FBU] = 0;
-	ps->reg[AHCI_PORT_FB] = ps->fis_phys;
+	port_write(ps, AHCI_PORT_FBU, 0);
+	port_write(ps, AHCI_PORT_FB, ps->fis_phys);
 
-	ps->reg[AHCI_PORT_CLBU] = 0;
-	ps->reg[AHCI_PORT_CLB] = ps->cl_phys;
+	port_write(ps, AHCI_PORT_CLBU, 0);
+	port_write(ps, AHCI_PORT_CLB, ps->cl_phys);
 
 	ps->pad_base = NULL;
 	ps->pad_size = 0;
@@ -1901,15 +1904,15 @@ static void port_init(struct port_state *ps)
 	port_alloc(ps);
 
 	/* Just listen for device status change events for now. */
-	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_PRCE;
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
 
 	/* Perform a reset on the device. */
-	cmd = ps->reg[AHCI_PORT_CMD];
-	ps->reg[AHCI_PORT_CMD] = cmd | AHCI_PORT_CMD_SUD;
+	cmd = port_read(ps, AHCI_PORT_CMD);
+	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_SUD);
 
-	ps->reg[AHCI_PORT_SCTL] = AHCI_PORT_SCTL_DET_INIT;
+	port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_INIT);
 	micro_delay(SPINUP_DELAY * 1000);	/* SPINUP_DELAY is in ms */
-	ps->reg[AHCI_PORT_SCTL] = AHCI_PORT_SCTL_DET_NONE;
+	port_write(ps, AHCI_PORT_SCTL, AHCI_PORT_SCTL_DET_NONE);
 
 	set_timer(&ps->cmd_info[0].timer, ahci_spinup_timeout,
 		port_timeout, BUILD_ARG(ps - port_state, 0));
@@ -1951,16 +1954,15 @@ static void ahci_reset(void)
 	 */
 	u32_t ghc;
 
-	ghc = hba_state.base[AHCI_HBA_GHC];
+	ghc = hba_read(AHCI_HBA_GHC);
 
-	hba_state.base[AHCI_HBA_GHC] = ghc | AHCI_HBA_GHC_AE;
+	hba_write(AHCI_HBA_GHC, ghc | AHCI_HBA_GHC_AE);
 
-	hba_state.base[AHCI_HBA_GHC] = ghc | AHCI_HBA_GHC_AE | AHCI_HBA_GHC_HR;
+	hba_write(AHCI_HBA_GHC, ghc | AHCI_HBA_GHC_AE | AHCI_HBA_GHC_HR);
 
-	SPIN_UNTIL(!(hba_state.base[AHCI_HBA_GHC] & AHCI_HBA_GHC_HR),
-		RESET_DELAY);
+	SPIN_UNTIL(!(hba_read(AHCI_HBA_GHC) & AHCI_HBA_GHC_HR), RESET_DELAY);
 
-	if (hba_state.base[AHCI_HBA_GHC] & AHCI_HBA_GHC_HR)
+	if (hba_read(AHCI_HBA_GHC) & AHCI_HBA_GHC_HR)
 		panic("unable to reset HBA");
 }
 
@@ -2010,12 +2012,12 @@ static void ahci_init(int devind)
 	ahci_reset();
 
 	/* Enable AHCI and interrupts. */
-	ghc = hba_state.base[AHCI_HBA_GHC];
-	hba_state.base[AHCI_HBA_GHC] = ghc | AHCI_HBA_GHC_AE | AHCI_HBA_GHC_IE;
+	ghc = hba_read(AHCI_HBA_GHC);
+	hba_write(AHCI_HBA_GHC, ghc | AHCI_HBA_GHC_AE | AHCI_HBA_GHC_IE);
 
 	/* Limit the maximum number of commands to the controller's value. */
 	/* Note that we currently use only one command anyway. */
-	cap = hba_state.base[AHCI_HBA_CAP];
+	cap = hba_read(AHCI_HBA_CAP);
 	hba_state.has_ncq = !!(cap & AHCI_HBA_CAP_SNCQ);
 	hba_state.nr_cmds = MIN(NR_CMDS,
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1);
@@ -2023,19 +2025,19 @@ static void ahci_init(int devind)
 	dprintf(V_INFO, ("AHCI%u: HBA v%d.%d%d, %ld ports, %ld commands, "
 		"%s queuing, IRQ %d\n",
 		ahci_instance,
-		(int) (hba_state.base[AHCI_HBA_VS] >> 16),
-		(int) ((hba_state.base[AHCI_HBA_VS] >> 8) & 0xFF),
-		(int) (hba_state.base[AHCI_HBA_VS] & 0xFF),
+		(int) (hba_read(AHCI_HBA_VS) >> 16),
+		(int) ((hba_read(AHCI_HBA_VS) >> 8) & 0xFF),
+		(int) (hba_read(AHCI_HBA_VS) & 0xFF),
 		((cap >> AHCI_HBA_CAP_NP_SHIFT) & AHCI_HBA_CAP_NP_MASK) + 1,
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1,
 		hba_state.has_ncq ? "supports" : "no", hba_state.irq));
 
 	dprintf(V_INFO, ("AHCI%u: CAP %08x, CAP2 %08x, PI %08x\n",
-		ahci_instance, cap, hba_state.base[AHCI_HBA_CAP2],
-		hba_state.base[AHCI_HBA_PI]));
+		ahci_instance, cap, hba_read(AHCI_HBA_CAP2),
+		hba_read(AHCI_HBA_PI)));
 
 	/* Initialize each of the implemented ports. We ignore CAP.NP. */
-	mask = hba_state.base[AHCI_HBA_PI];
+	mask = hba_read(AHCI_HBA_PI);
 
 	for (port = 0; port < hba_state.nr_ports; port++) {
 		port_state[port].device = NO_DEVICE;
@@ -2100,7 +2102,7 @@ static void ahci_intr(unsigned int UNUSED(mask))
 	int r, port;
 
 	/* Handle an interrupt for each port that has the interrupt bit set. */
-	mask = hba_state.base[AHCI_HBA_IS];
+	mask = hba_read(AHCI_HBA_IS);
 
 	for (port = 0; port < hba_state.nr_ports; port++) {
 		if (mask & (1 << port)) {
@@ -2118,7 +2120,7 @@ static void ahci_intr(unsigned int UNUSED(mask))
 	}
 
 	/* Clear the bits that we processed. */
-	hba_state.base[AHCI_HBA_IS] = mask;
+	hba_write(AHCI_HBA_IS, mask);
 
 	/* Reenable the interrupt. */
 	if ((r = sys_irqenable(&hba_state.hook_id)) != OK)
