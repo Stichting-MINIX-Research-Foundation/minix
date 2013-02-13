@@ -121,6 +121,9 @@ procargs(int argc, char **argv)
 		shellparam.nparam++;
 		argptr++;
 	}
+#ifdef __minix
+	if(!Eflag && !Vflag) Eflag = 1;
+#endif
 	optschanged();
 }
 
