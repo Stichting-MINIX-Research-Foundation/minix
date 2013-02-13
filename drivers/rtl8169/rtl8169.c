@@ -980,6 +980,9 @@ re_t *rep;
 		printf("Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
 		rl_outw(port, 0x82, 0x01);
 		break;
+	case RL_TCR_HWVER_RTL8105E:
+		rep->re_model = "RTL8105E";
+		break;
 	default:
 		rep->re_model = "Unknown";
 		rep->re_mac = t;
@@ -1012,14 +1015,21 @@ re_t *rep;
 
 	rl_outw(port, RL_9346CR, RL_9346CR_EEM_CONFIG);	/* Unlock */
 
-	t = rl_inw(port, RL_CPLUSCMD);
-	if ((rep->re_mac == RL_TCR_HWVER_RTL8169S) ||
-	    (rep->re_mac == RL_TCR_HWVER_RTL8110S)) {
+	switch (rep->re_mac) {
+	case RL_TCR_HWVER_RTL8169S:
+	case RL_TCR_HWVER_RTL8110S:
 		printf("Set MAC Reg C+CR Offset 0xE0. "
 			"Bit-3 and bit-14 MUST be 1\n");
+		t = rl_inw(port, RL_CPLUSCMD);
 		rl_outw(port, RL_CPLUSCMD, t | RL_CPLUS_MULRW | (1 << 14));
-	} else
+		break;
+	case RL_TCR_HWVER_RTL8169:
+	case RL_TCR_HWVER_RTL8169SB:
+	case RL_TCR_HWVER_RTL8110SCd:
+		t = rl_inw(port, RL_CPLUSCMD);
 		rl_outw(port, RL_CPLUSCMD, t | RL_CPLUS_MULRW);
+		break;
+	}
 
 	rl_outw(port, RL_INTRMITIGATE, 0x00);
 

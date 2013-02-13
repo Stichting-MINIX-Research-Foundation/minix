@@ -92,6 +92,7 @@ struct pci_device pci_device_table[]=
 	{ 0x10DE, 0x0110, "nVidia GeForce2 MX [NV11]" },
 	{ 0x10EC, 0x8029, "Realtek RTL8029" },
 	{ 0x10EC, 0x8129, "Realtek RTL8129" },
+	{ 0x10EC, 0x8136, "Realtek RTL8101E Family" },
 	{ 0x10EC, 0x8139, "Realtek RTL8139" },
 	{ 0x10EC, 0x8167, "Realtek RTL8169/8110 Family Gigabit NIC" },
 	{ 0x10EC, 0x8169, "Realtek RTL8169" },
