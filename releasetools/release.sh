@@ -9,8 +9,8 @@ version="`echo $version_pretty | tr . _`"
 PACKAGEDIR=/usr/pkgsrc/packages/$version_pretty/`uname -m`
 
 SRC=src
-REPO=git://git.minix3.org/minix
-GITBRANCH=master
+: ${REPO:=git://git.minix3.org/minix}
+: ${GITBRANCH:=master}
 
 # List of packages included on installation media
 PACKAGELIST=packages.install
