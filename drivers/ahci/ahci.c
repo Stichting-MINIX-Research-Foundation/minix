@@ -31,7 +31,7 @@
  *        |             |      |            ^                         |
  *        v             v      |            |                         |
  *   +----------+     +----------+     +----------+     +----------+  |
- *   |  NO_DEV  | --> | WAIT_SIG | --> | WAIT_ID  | --> | GOOD_DEV |  |
+ *   |  NO_DEV  | --> | WAIT_DEV | --> | WAIT_ID  | --> | GOOD_DEV |  |
  *   +----------+     +----------+     +----------+     +----------+  |
  *        ^                |                |                |        |
  *        +----------------+----------------+----------------+--------+
@@ -60,6 +60,14 @@
  * closed and reopened. Removable media are not locked in the drive while
  * opened, because the driver author is uncomfortable with that concept.
  *
+ * Ports may leave the group of states where a device is connected (that is,
+ * WAIT_ID, GOOD_DEV, and BAD_DEV) in two ways: either due to a hot-unplug
+ * event, or due to a hard reset after a serious failure. For simplicity, we
+ * we perform a hard reset after a hot-unplug event as well, so that the link
+ * to the device is broken. Thus, in both cases, a transition to NO_DEV is
+ * made, after which the link to the device may or may not be reestablished.
+ * In both cases, ongoing requests are cancelled and the BARRIER flag is set.
+ *
  * The following table lists for each state, whether the port is started
  * (PxCMD.ST is set), whether a timer is running, what the PxIE mask is to be
  * set to, and what BDEV_OPEN calls on this port should return.
@@ -67,16 +75,16 @@
  *   State       Started     Timer       PxIE        BDEV_OPEN
  *   ---------   ---------   ---------   ---------   ---------
  *   NO_PORT     no          no          (none)      ENXIO
- *   SPIN_UP     no          yes         PRCE        (wait)
- *   NO_DEV      no          no          PRCE        ENXIO
- *   WAIT_SIG    yes         yes         PRCE        (wait)
- *   WAIT_ID     yes         yes         (all)       (wait)
+ *   SPIN_UP     no          yes         PCE         (wait)
+ *   NO_DEV      no          no          PCE         ENXIO
+ *   WAIT_DEV    no          yes         PCE         (wait)
  *   BAD_DEV     no          no          PRCE        ENXIO
- *   GOOD_DEV    yes         per-command (all)       OK
+ *   WAIT_ID     yes         yes         PRCE+       (wait)
+ *   GOOD_DEV    yes         per-command PRCE+       OK
  *
  * In order to continue deferred BDEV_OPEN calls, the BUSY flag must be unset
- * when changing from SPIN_UP to any state but WAIT_SIG, and when changing from
- * WAIT_SIG to any state but WAIT_ID, and when changing from WAIT_ID to any
+ * when changing from SPIN_UP to any state but WAIT_DEV, and when changing from
+ * WAIT_DEV to any state but WAIT_ID, and when changing from WAIT_ID to any
  * other state.
  */
 /*
@@ -183,9 +191,9 @@ static int ahci_verbose;			/* verbosity level (0..4) */
 
 /* Timeout-related values. */
 static clock_t ahci_spinup_timeout;
-static clock_t ahci_sig_timeout;
-static clock_t ahci_sig_delay;
-static unsigned int ahci_sig_checks;
+static clock_t ahci_device_timeout;
+static clock_t ahci_device_delay;
+static unsigned int ahci_device_checks;
 static clock_t ahci_command_timeout;
 static clock_t ahci_transfer_timeout;
 static clock_t ahci_flush_timeout;
@@ -196,11 +204,11 @@ static struct {
 	u32_t default_ms;			/* default in milliseconds */
 	clock_t *ptr;				/* clock ticks value pointer */
 } ahci_timevar[] = {
-	{ "ahci_init_timeout",	SPINUP_TIMEOUT,    &ahci_spinup_timeout   },
-	{ "ahci_sig_timeout",	SIG_TIMEOUT,       &ahci_sig_timeout      },
-	{ "ahci_cmd_timeout",	COMMAND_TIMEOUT,   &ahci_command_timeout  },
-	{ "ahci_io_timeout",	TRANSFER_TIMEOUT,  &ahci_transfer_timeout },
-	{ "ahci_flush_timeout",	FLUSH_TIMEOUT,	   &ahci_flush_timeout    }
+	{ "ahci_init_timeout",   SPINUP_TIMEOUT,    &ahci_spinup_timeout   },
+	{ "ahci_device_timeout", DEVICE_TIMEOUT,    &ahci_device_timeout   },
+	{ "ahci_cmd_timeout",    COMMAND_TIMEOUT,   &ahci_command_timeout  },
+	{ "ahci_io_timeout",     TRANSFER_TIMEOUT,  &ahci_transfer_timeout },
+	{ "ahci_flush_timeout",  FLUSH_TIMEOUT,     &ahci_flush_timeout    }
 };
 
 static int ahci_map[MAX_DRIVES];		/* device-to-port mapping */
@@ -1246,27 +1254,39 @@ static void port_start(struct port_state *ps)
 }
 
 /*===========================================================================*
+ *				port_stop				     *
+ *===========================================================================*/
+static void port_stop(struct port_state *ps)
+{
+	/* Stop the given port, if not already stopped.
+	 */
+	u32_t cmd;
+
+	cmd = port_read(ps, AHCI_PORT_CMD);
+
+	if (cmd & (AHCI_PORT_CMD_CR | AHCI_PORT_CMD_ST)) {
+		port_write(ps, AHCI_PORT_CMD, cmd & ~AHCI_PORT_CMD_ST);
+
+		SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_CR),
+			PORTREG_DELAY);
+
+		dprintf(V_INFO, ("%s: stopped\n", ahci_portname(ps)));
+	}
+}
+
+/*===========================================================================*
  *				port_restart				     *
  *===========================================================================*/
 static void port_restart(struct port_state *ps)
 {
 	/* Restart a port after a fatal error has occurred.
 	 */
-	u32_t cmd;
 
 	/* Fail all outstanding commands. */
 	port_fail_cmds(ps);
 
 	/* Stop the port. */
-	cmd = port_read(ps, AHCI_PORT_CMD);
-	port_write(ps, AHCI_PORT_CMD, cmd & ~AHCI_PORT_CMD_ST);
-
-	SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_CR),
-		PORTREG_DELAY);
-
-	/* Reset status registers. */
-	port_write(ps, AHCI_PORT_SERR, ~0);
-	port_write(ps, AHCI_PORT_IS, ~0);
+	port_stop(ps);
 
 	/* If the BSY and/or DRQ flags are set, reset the port. */
 	if (port_read(ps, AHCI_PORT_TFD) &
@@ -1290,125 +1310,7 @@ static void port_restart(struct port_state *ps)
 	}
 
 	/* Start the port. */
-	cmd = port_read(ps, AHCI_PORT_CMD);
-	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_ST);
-
-	dprintf(V_INFO, ("%s: restarted\n", ahci_portname(ps)));
-}
-
-/*===========================================================================*
- *				port_stop				     *
- *===========================================================================*/
-static void port_stop(struct port_state *ps)
-{
-	/* Stop the given port, if not already stopped.
-	 */
-	u32_t cmd;
-
-	/* Disable interrupts. */
-	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_NONE);
-
-	/* Stop the port. */
-	cmd = port_read(ps, AHCI_PORT_CMD);
-
-	if (cmd & (AHCI_PORT_CMD_CR | AHCI_PORT_CMD_ST)) {
-		cmd &= ~(AHCI_PORT_CMD_CR | AHCI_PORT_CMD_ST);
-
-		port_write(ps, AHCI_PORT_CMD, cmd);
-
-		SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_CR),
-			PORTREG_DELAY);
-
-		dprintf(V_INFO, ("%s: stopped\n", ahci_portname(ps)));
-	}
-
-	/* Reset status registers. */
-	port_write(ps, AHCI_PORT_SERR, ~0);
-	port_write(ps, AHCI_PORT_IS, ~0);
-}
-
-/*===========================================================================*
- *				port_sig_check				     *
- *===========================================================================*/
-static void port_sig_check(struct port_state *ps)
-{
-	/* Check whether the device's signature has become available yet, and
-	 * if so, start identifying the device.
-	 */
-	u32_t tfd, sig;
-
-	tfd = port_read(ps, AHCI_PORT_TFD);
-
-	/* Wait for the BSY flag to be (set and then) cleared first. Note that
-	 * clearing it only happens when PxCMD.FRE is set, which is why we
-	 * start the port before starting the signature wait cycle.
-	 */
-	if ((tfd & AHCI_PORT_TFD_STS_BSY) || tfd == AHCI_PORT_TFD_STS_INIT) {
-		/* Try for a while before giving up. It may take seconds. */
-		if (ps->left > 0) {
-			ps->left--;
-			set_timer(&ps->cmd_info[0].timer, ahci_sig_delay,
-				port_timeout, BUILD_ARG(ps - port_state, 0));
-			return;
-		}
-
-		/* If no device is actually attached, disable the port. This
-		 * value is also the initial value of the register, before the
-		 * BSY flag gets set, so only check this condition on timeout.
-		 */
-		if (tfd == AHCI_PORT_TFD_STS_INIT) {
-			dprintf(V_DEV, ("%s: no device at this port\n",
-				ahci_portname(ps)));
-
-			port_stop(ps);
-
-			ps->state = STATE_BAD_DEV;
-			ps->flags &= ~FLAG_BUSY;
-
-			return;
-		}
-
-		port_restart(ps);
-
-		dprintf(V_ERR, ("%s: timeout waiting for signature\n",
-			ahci_portname(ps)));
-	}
-
-	/* Check the port's signature. We only support the normal ATA and ATAPI
-	 * signatures. We ignore devices reporting anything else.
-	 */
-	sig = port_read(ps, AHCI_PORT_SIG);
-
-	if (sig != ATA_SIG_ATA && sig != ATA_SIG_ATAPI) {
-		dprintf(V_ERR, ("%s: unsupported signature (%08x)\n",
-			ahci_portname(ps), sig));
-
-		port_stop(ps);
-
-		ps->state = STATE_BAD_DEV;
-		ps->flags &= ~FLAG_BUSY;
-
-		return;
-	}
-
-	/* Clear all state flags except the busy flag, which may be relevant if
-	 * a BDEV_OPEN call is waiting for the device to become ready; the
-	 * barrier flag, which prevents access to the device until it is
-	 * completely closed and (re)opened; and, the thread suspension flag.
-	 */
-	ps->flags &= (FLAG_BUSY | FLAG_BARRIER | FLAG_SUSPENDED);
-
-	if (sig == ATA_SIG_ATAPI)
-		ps->flags |= FLAG_ATAPI;
-
-	/* Attempt to identify the device. Do this using continuation, because
-	 * we may already be called from port_wait() here, and could end up
-	 * confusing the timer expiration procedure.
-	 */
-	ps->state = STATE_WAIT_ID;
-	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_MASK);
-
-	(void) gen_identify(ps, FALSE /*blocking*/);
+	port_start(ps);
 }
 
 /*===========================================================================*
@@ -1444,8 +1346,8 @@ static void port_id_check(struct port_state *ps, int success)
 	u16_t *buf;
 
 	assert(ps->state == STATE_WAIT_ID);
-	assert(!(ps->flags & FLAG_BUSY));	/* unset by callers */
 
+	ps->flags &= ~FLAG_BUSY;
 	cancel_timer(&ps->cmd_info[0].timer);
 
 	if (!success)
@@ -1509,21 +1411,67 @@ static void port_connect(struct port_state *ps)
 	/* A device has been found to be attached to this port. Start the port,
 	 * and do timed polling for its signature to become available.
 	 */
+	u32_t status, sig;
 
 	dprintf(V_INFO, ("%s: device connected\n", ahci_portname(ps)));
 
-	if (ps->state == STATE_SPIN_UP)
-		cancel_timer(&ps->cmd_info[0].timer);
-
 	port_start(ps);
 
-	ps->state = STATE_WAIT_SIG;
-	ps->left = ahci_sig_checks;
+	/* The next check covers a purely hypothetical race condition, where
+	 * the device would disappear right before we try to start it. This is
+	 * possible because we have to clear PxSERR, and with that, the DIAG.N
+	 * bit. Double-check the port status, and if it is not as we expect,
+	 * infer a disconnection.
+	 */
+	status = port_read(ps, AHCI_PORT_SSTS) & AHCI_PORT_SSTS_DET_MASK;
 
-	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
+	if (status != AHCI_PORT_SSTS_DET_PHY) {
+		dprintf(V_ERR, ("%s: device vanished!\n", ahci_portname(ps)));
 
-	/* Do the first check immediately; who knows, we may get lucky. */
-	port_sig_check(ps);
+		port_stop(ps);
+
+		ps->state = STATE_NO_DEV;
+		ps->flags &= ~FLAG_BUSY;
+
+		return;
+	}
+
+	/* Check the port's signature. We only support the normal ATA and ATAPI
+	 * signatures. We ignore devices reporting anything else.
+	 */
+	sig = port_read(ps, AHCI_PORT_SIG);
+
+	if (sig != ATA_SIG_ATA && sig != ATA_SIG_ATAPI) {
+		dprintf(V_ERR, ("%s: unsupported signature (%08x)\n",
+			ahci_portname(ps), sig));
+
+		port_stop(ps);
+
+		ps->state = STATE_BAD_DEV;
+		port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
+		ps->flags &= ~FLAG_BUSY;
+
+		return;
+	}
+
+	/* Clear all state flags except the busy flag, which may be relevant if
+	 * a BDEV_OPEN call is waiting for the device to become ready; the
+	 * barrier flag, which prevents access to the device until it is
+	 * completely closed and (re)opened; and, the thread suspension flag.
+	 */
+	ps->flags &= (FLAG_BUSY | FLAG_BARRIER | FLAG_SUSPENDED);
+
+	if (sig == ATA_SIG_ATAPI)
+		ps->flags |= FLAG_ATAPI;
+
+	/* Attempt to identify the device. Do this using continuation, because
+	 * we may already be called from port_wait() here, and could end up
+	 * confusing the timer expiration procedure.
+	 */
+	ps->state = STATE_WAIT_ID;
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_MASK);
+
+	(void) gen_identify(ps, FALSE /*blocking*/);
 }
 
 /*===========================================================================*
@@ -1531,16 +1479,13 @@ static void port_connect(struct port_state *ps)
  *===========================================================================*/
 static void port_disconnect(struct port_state *ps)
 {
-	/* The device has detached from this port. Stop the port if necessary.
+	/* The device has detached from this port. It has already been stopped.
 	 */
 
 	dprintf(V_INFO, ("%s: device disconnected\n", ahci_portname(ps)));
 
-	if (ps->state != STATE_BAD_DEV)
-		port_stop(ps);
-
 	ps->state = STATE_NO_DEV;
-	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PCE);
 	ps->flags &= ~FLAG_BUSY;
 
 	/* Fail any ongoing request. The caller may already have done this. */
@@ -1557,6 +1502,66 @@ static void port_disconnect(struct port_state *ps)
 }
 
 /*===========================================================================*
+ *				port_dev_check				     *
+ *===========================================================================*/
+static void port_dev_check(struct port_state *ps)
+{
+	/* Perform device detection by means of polling.
+	 */
+	u32_t status, tfd;
+
+	assert(ps->state == STATE_WAIT_DEV);
+
+	status = port_read(ps, AHCI_PORT_SSTS) & AHCI_PORT_SSTS_DET_MASK;
+
+	dprintf(V_DEV, ("%s: polled status %u\n", ahci_portname(ps), status));
+
+	switch (status) {
+	case AHCI_PORT_SSTS_DET_PHY:
+		tfd = port_read(ps, AHCI_PORT_TFD);
+
+		/* If a Phy connection has been established, and the BSY and
+		 * DRQ flags are cleared, the device is ready.
+		 */
+		if (!(tfd & (AHCI_PORT_TFD_STS_BSY | AHCI_PORT_TFD_STS_DRQ))) {
+			port_connect(ps);
+
+			return;
+		}
+
+		/* fall-through */
+	case AHCI_PORT_SSTS_DET_DET:
+		/* A device has been detected, but it is not ready yet. Try for
+		 * a while before giving up. This may take seconds.
+		 */
+		if (ps->left > 0) {
+			ps->left--;
+			set_timer(&ps->cmd_info[0].timer, ahci_device_delay,
+				port_timeout, BUILD_ARG(ps - port_state, 0));
+			return;
+		}
+	}
+
+	dprintf(V_INFO, ("%s: device not ready\n", ahci_portname(ps)));
+
+	/* We get here on timeout, and if the HBA reports that there is no
+	 * device present at all. In all cases, we change to another state.
+	 */
+	if (status == AHCI_PORT_SSTS_DET_PHY) {
+		/* A device is present and initialized, but not ready. */
+		ps->state = STATE_BAD_DEV;
+		port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
+	} else {
+		/* A device may or may not be present, but it does not appear
+		 * to be ready in any case. Ignore it until the next device
+		 * initialization event.
+		 */
+		ps->state = STATE_NO_DEV;
+		ps->flags &= ~FLAG_BUSY;
+	}
+}
+
+/*===========================================================================*
  *				port_intr				     *
  *===========================================================================*/
 static void port_intr(struct port_state *ps)
@@ -1564,7 +1569,6 @@ static void port_intr(struct port_state *ps)
 	/* Process an interrupt on this port.
 	 */
 	u32_t smask, emask;
-	int connected;
 
 	if (ps->state == STATE_NO_PORT) {
 		dprintf(V_ERR, ("%s: interrupt for invalid port!\n",
@@ -1584,26 +1588,67 @@ static void port_intr(struct port_state *ps)
 	/* Check if any commands have completed. */
 	port_check_cmds(ps);
 
-	if (emask & AHCI_PORT_IS_PRCS) {
+	if (emask & AHCI_PORT_IS_PCS) {
+		/* Clear the X diagnostics bit to clear this interrupt. */
+		port_write(ps, AHCI_PORT_SERR, AHCI_PORT_SERR_DIAG_X);
+
+		dprintf(V_DEV, ("%s: device attached\n", ahci_portname(ps)));
+
+		switch (ps->state) {
+		case STATE_SPIN_UP:
+		case STATE_NO_DEV:
+			/* Reportedly, a device has shown up. Start polling its
+			 * status until it has become ready.
+			 */
+
+			if (ps->state == STATE_SPIN_UP)
+				cancel_timer(&ps->cmd_info[0].timer);
+
+			ps->state = STATE_WAIT_DEV;
+			ps->left = ahci_device_checks;
+
+			port_dev_check(ps);
+
+			break;
+
+		case STATE_WAIT_DEV:
+			/* Nothing else to do. */
+			break;
+
+		default:
+			/* Impossible. */
+			assert(0);
+		}
+	} else if (emask & AHCI_PORT_IS_PRCS) {
 		/* Clear the N diagnostics bit to clear this interrupt. */
 		port_write(ps, AHCI_PORT_SERR, AHCI_PORT_SERR_DIAG_N);
 
-		connected = (port_read(ps, AHCI_PORT_SSTS) &
-			AHCI_PORT_SSTS_DET_MASK) == AHCI_PORT_SSTS_DET_PHY;
+		dprintf(V_DEV, ("%s: device detached\n", ahci_portname(ps)));
 
 		switch (ps->state) {
-		case STATE_BAD_DEV:
-		case STATE_GOOD_DEV:
-		case STATE_WAIT_SIG:
 		case STATE_WAIT_ID:
-			port_disconnect(ps);
+		case STATE_GOOD_DEV:
+			/* The device is no longer ready. Stop the port, cancel
+			 * ongoing requests, and disconnect the device.
+			 */
+			port_stop(ps);
 
 			/* fall-through */
-		default:
-			if (!connected)
-				break;
+		case STATE_BAD_DEV:
+			port_disconnect(ps);
 
-			port_connect(ps);
+			/* The device has become unusable to us at this point.
+			 * Reset the port to make sure that once the device (or
+			 * another device) becomes usable again, we will get a
+			 * PCS interrupt as well.
+			 */
+			port_hardreset(ps);
+
+			break;
+
+		default:
+			/* Impossible. */
+			assert(0);
 		}
 	} else if (smask & AHCI_PORT_IS_MASK) {
 		/* We assume that any other interrupt indicates command
@@ -1617,7 +1662,6 @@ static void port_intr(struct port_state *ps)
 
 		/* If we were waiting for ID verification, check now. */
 		if (ps->state == STATE_WAIT_ID) {
-			ps->flags &= ~FLAG_BUSY;
 			port_id_check(ps, !(port_read(ps, AHCI_PORT_TFD) &
 				(AHCI_PORT_TFD_STS_ERR |
 				AHCI_PORT_TFD_STS_DF)));
@@ -1666,19 +1710,21 @@ static void port_timeout(struct timer *tp)
 	 * detection and only look for hot plug events from now on.
 	 */
 	if (ps->state == STATE_SPIN_UP) {
-		/* There is one exception: for braindead controllers that don't
-		 * generate the right interrupts (cough, VirtualBox), we do an
-		 * explicit check to see if a device is connected after all.
-		 * Later hot-(un)plug events will not be detected in this case.
+		/* One exception: if the PCS interrupt bit is set here, then we
+		 * are probably running on VirtualBox, which is currently not
+		 * always raising interrupts when setting interrupt bits (!).
 		 */
-		if ((port_read(ps, AHCI_PORT_SSTS) &
-			AHCI_PORT_SSTS_DET_MASK) == AHCI_PORT_SSTS_DET_PHY) {
-			dprintf(V_INFO, ("%s: no device connection event\n",
+		if (port_read(ps, AHCI_PORT_IS) & AHCI_PORT_IS_PCS) {
+			dprintf(V_INFO, ("%s: bad controller, no interrupt\n",
 				ahci_portname(ps)));
 
-			port_connect(ps);
-		}
-		else {
+			ps->state = STATE_WAIT_DEV;
+			ps->left = ahci_device_checks;
+
+			port_dev_check(ps);
+
+			return;
+		} else {
 			dprintf(V_INFO, ("%s: spin-up timeout\n",
 				ahci_portname(ps)));
 
@@ -1693,23 +1739,13 @@ static void port_timeout(struct timer *tp)
 		return;
 	}
 
-	/* If a device has been connected and we are waiting for its signature
-	 * to become available, check now.
+	/* If we are waiting for a device to become connected and initialized,
+	 * check now.
 	 */
-	if (ps->state == STATE_WAIT_SIG) {
-		port_sig_check(ps);
+	if (ps->state == STATE_WAIT_DEV) {
+		port_dev_check(ps);
 
 		return;
-	}
-
-	/* The only case where the busy flag will be set after this is for a
-	 * failed identify operation. During this operation, the port will be
-	 * in the WAIT_ID state. In that case, we clear the BUSY flag, fail the
-	 * command by setting its state, restart port and finish identify op.
-	 */
-	if (ps->flags & FLAG_BUSY) {
-		assert(ps->state == STATE_WAIT_ID);
-		ps->flags &= ~FLAG_BUSY;
 	}
 
 	dprintf(V_ERR, ("%s: timeout\n", ahci_portname(ps)));
@@ -1934,8 +1970,8 @@ static void port_init(struct port_state *ps)
 	/* Allocate memory for the port. */
 	port_alloc(ps);
 
-	/* Just listen for device status change events for now. */
-	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
+	/* Just listen for device connection events for now. */
+	port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PCE);
 
 	/* Enable device spin-up for HBAs that support staggered spin-up.
 	 * This is a no-op for HBAs that do not support it.
@@ -2190,9 +2226,9 @@ static void ahci_get_params(void)
 		*ahci_timevar[i].ptr = millis_to_hz(v);
 	}
 
-	ahci_sig_delay = millis_to_hz(SIG_DELAY);
-	ahci_sig_checks =
-		(ahci_sig_timeout + ahci_sig_delay - 1) / ahci_sig_delay;
+	ahci_device_delay = millis_to_hz(DEVICE_DELAY);
+	ahci_device_checks = (ahci_device_timeout + ahci_device_delay - 1) /
+		ahci_device_delay;
 }
 
 /*===========================================================================*

@@ -8,7 +8,7 @@
 
 /* Time values that can be set with options. */
 #define SPINUP_TIMEOUT		5000	/* initial spin-up time (ms) */
-#define SIG_TIMEOUT		15000	/* time to wait for signature (ms) */
+#define DEVICE_TIMEOUT		30000	/* time to wait for device (ms) */
 #define COMMAND_TIMEOUT		10000	/* time to wait for non-I/O cmd (ms) */
 #define TRANSFER_TIMEOUT	30000	/* time to wait for I/O cmd (ms) */
 #define FLUSH_TIMEOUT		60000	/* time to wait for flush cmd (ms) */
@@ -19,7 +19,7 @@
 #define PORTREG_DELAY		500	/* maximum port register update (ms) */
 
 /* Other hardcoded time values. */
-#define SIG_DELAY		250	/* time between signature checks (ms) */
+#define DEVICE_DELAY		100	/* time between device checks (ms) */
 
 /* Generic FIS layout. */
 #define ATA_FIS_TYPE			0	/* FIS Type */
@@ -174,15 +174,15 @@
 #define 	AHCI_PORT_IS_IFS	(1L << 27)	/* Interface Fatal */
 #define 	AHCI_PORT_IS_PRCS	(1L << 22)	/* PhyRdy Change */
 #define 	AHCI_PORT_IS_PCS	(1L <<  6)	/* Port Conn Change */
-#define 	AHCI_PORT_IS_SDBS	(1L <<  3)	/* Set Device Bits FIS */
+#define 	AHCI_PORT_IS_SDBS	(1L <<  3)	/* Set Dev Bits FIS */
 #define 	AHCI_PORT_IS_PSS	(1L <<  1)	/* PIO Setup FIS */
 #define 	AHCI_PORT_IS_DHRS	(1L <<  0)	/* D2H Register FIS */
 #define AHCI_PORT_IS_RESTART \
 	(AHCI_PORT_IS_TFES | AHCI_PORT_IS_HBFS | AHCI_PORT_IS_HBDS | \
 	 AHCI_PORT_IS_IFS)
 #define AHCI_PORT_IS_MASK \
-	(AHCI_PORT_IS_RESTART | AHCI_PORT_IS_PRCS | AHCI_PORT_IS_PCS | \
-	 AHCI_PORT_IS_DHRS | AHCI_PORT_IS_PSS | AHCI_PORT_IS_SDBS)
+	(AHCI_PORT_IS_RESTART | AHCI_PORT_IS_PRCS | AHCI_PORT_IS_DHRS | \
+	 AHCI_PORT_IS_PSS | AHCI_PORT_IS_SDBS)
 #define AHCI_PORT_IE	5		/* Interrupt Enable */
 #define 	AHCI_PORT_IE_MASK	AHCI_PORT_IS_MASK
 #define 	AHCI_PORT_IE_PRCE	AHCI_PORT_IS_PRCS
@@ -205,11 +205,13 @@
 #define 	ATA_SIG_ATAPI		0xEB140101L	/* ATAPI interface */
 #define AHCI_PORT_SSTS	10		/* Serial ATA Status */
 #define 	AHCI_PORT_SSTS_DET_MASK	0x00000007L	/* Detection Mask */
+#define 	AHCI_PORT_SSTS_DET_DET	0x00000001L	/* Device Detected */
 #define 	AHCI_PORT_SSTS_DET_PHY	0x00000003L	/* PHY Comm Establ */
 #define AHCI_PORT_SCTL	11		/* Serial ATA Control */
 #define 	AHCI_PORT_SCTL_DET_INIT	0x00000001L	/* Perform Init Seq */
 #define 	AHCI_PORT_SCTL_DET_NONE	0x00000000L	/* No Action Req'd */
 #define AHCI_PORT_SERR	12		/* Serial ATA Error */
+#define 	AHCI_PORT_SERR_DIAG_X	(1L << 26)	/* Exchanged */
 #define 	AHCI_PORT_SERR_DIAG_N	(1L << 16)	/* PhyRdy Change */
 #define AHCI_PORT_SACT	13		/* Serial ATA Active */
 #define AHCI_PORT_CI	14		/* Command Issue */
@@ -269,7 +271,7 @@ enum {
 	STATE_NO_PORT,		/* this port is not present */
 	STATE_SPIN_UP,		/* waiting for device or timeout after reset */
 	STATE_NO_DEV,		/* no device has been detected on this port */
-	STATE_WAIT_SIG,		/* waiting for device signature to appear */
+	STATE_WAIT_DEV,		/* waiting for functioning device to appear */
 	STATE_WAIT_ID,		/* waiting for device identification */
 	STATE_BAD_DEV,		/* an unusable device has been detected */
 	STATE_GOOD_DEV		/* a usable device has been detected */
