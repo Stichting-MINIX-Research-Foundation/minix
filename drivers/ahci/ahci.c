@@ -127,6 +127,7 @@ static struct {
 	int nr_ports;		/* addressable number of ports (1..NR_PORTS) */
 	int nr_cmds;		/* maximum number of commands per port */
 	int has_ncq;		/* NCQ support flag */
+	int has_clo;		/* CLO support flag */
 
 	int irq;		/* IRQ number */
 	int hook_id;		/* IRQ hook ID */
@@ -1233,6 +1234,25 @@ static void port_hardreset(struct port_state *ps)
 }
 
 /*===========================================================================*
+ *				port_override				     *
+ *===========================================================================*/
+static void port_override(struct port_state *ps)
+{
+	/* Override the port's BSY and/or DRQ flags. This may only be done
+	 * prior to starting the port.
+	 */
+	u32_t cmd;
+
+	cmd = port_read(ps, AHCI_PORT_CMD);
+	port_write(ps, AHCI_PORT_CMD, cmd | AHCI_PORT_CMD_CLO);
+
+	SPIN_UNTIL(!(port_read(ps, AHCI_PORT_CMD) & AHCI_PORT_CMD_CLO),
+		PORTREG_DELAY);
+
+	dprintf(V_INFO, ("%s: overridden\n", ahci_portname(ps)));
+}
+
+/*===========================================================================*
  *				port_start				     *
  *===========================================================================*/
 static void port_start(struct port_state *ps)
@@ -1350,9 +1370,21 @@ static void port_id_check(struct port_state *ps, int success)
 	ps->flags &= ~FLAG_BUSY;
 	cancel_timer(&ps->cmd_info[0].timer);
 
-	if (!success)
+	if (!success) {
+		if (!(ps->flags & FLAG_ATAPI) &&
+				port_read(ps, AHCI_PORT_SIG) != ATA_SIG_ATA) {
+			dprintf(V_INFO, ("%s: may not be ATA, trying ATAPI\n",
+				ahci_portname(ps)));
+
+			ps->flags |= FLAG_ATAPI;
+
+			(void) gen_identify(ps, FALSE /*blocking*/);
+			return;
+		}
+
 		dprintf(V_ERR,
 			("%s: unable to identify\n", ahci_portname(ps)));
+	}
 
 	/* If the identify command itself succeeded, check the results and
 	 * store some properties.
@@ -1436,30 +1468,18 @@ static void port_connect(struct port_state *ps)
 		return;
 	}
 
-	/* Check the port's signature. We only support the normal ATA and ATAPI
-	 * signatures. We ignore devices reporting anything else.
-	 */
-	sig = port_read(ps, AHCI_PORT_SIG);
-
-	if (sig != ATA_SIG_ATA && sig != ATA_SIG_ATAPI) {
-		dprintf(V_ERR, ("%s: unsupported signature (%08x)\n",
-			ahci_portname(ps), sig));
-
-		port_stop(ps);
-
-		ps->state = STATE_BAD_DEV;
-		port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
-		ps->flags &= ~FLAG_BUSY;
-
-		return;
-	}
-
 	/* Clear all state flags except the busy flag, which may be relevant if
 	 * a BDEV_OPEN call is waiting for the device to become ready; the
 	 * barrier flag, which prevents access to the device until it is
 	 * completely closed and (re)opened; and, the thread suspension flag.
 	 */
 	ps->flags &= (FLAG_BUSY | FLAG_BARRIER | FLAG_SUSPENDED);
+
+	/* Check the port's signature. We only use the signature to speed up
+	 * identification; we will try both ATA and ATAPI if the signature is
+	 * neither ATA nor ATAPI.
+	 */
+	sig = port_read(ps, AHCI_PORT_SIG);
 
 	if (sig == ATA_SIG_ATAPI)
 		ps->flags |= FLAG_ATAPI;
@@ -1548,6 +1568,18 @@ static void port_dev_check(struct port_state *ps)
 	 * device present at all. In all cases, we change to another state.
 	 */
 	if (status == AHCI_PORT_SSTS_DET_PHY) {
+		/* Some devices may not correctly clear BSY/DRQ. Upon timeout,
+		 * if we can override these flags, do so and start the
+		 * identification process anyway.
+		 */
+		if (hba_state.has_clo) {
+			port_override(ps);
+
+			port_connect(ps);
+
+			return;
+		}
+
 		/* A device is present and initialized, but not ready. */
 		ps->state = STATE_BAD_DEV;
 		port_write(ps, AHCI_PORT_IE, AHCI_PORT_IE_PRCE);
@@ -1569,6 +1601,7 @@ static void port_intr(struct port_state *ps)
 	/* Process an interrupt on this port.
 	 */
 	u32_t smask, emask;
+	int success;
 
 	if (ps->state == STATE_NO_PORT) {
 		dprintf(V_ERR, ("%s: interrupt for invalid port!\n",
@@ -1660,12 +1693,8 @@ static void port_intr(struct port_state *ps)
 		 * later by obtaining per-command status results from the HBA.
 		 */
 
-		/* If we were waiting for ID verification, check now. */
-		if (ps->state == STATE_WAIT_ID) {
-			port_id_check(ps, !(port_read(ps, AHCI_PORT_TFD) &
-				(AHCI_PORT_TFD_STS_ERR |
-				AHCI_PORT_TFD_STS_DF)));
-		}
+		success = !(port_read(ps, AHCI_PORT_TFD) &
+			(AHCI_PORT_TFD_STS_ERR | AHCI_PORT_TFD_STS_DF));
 
 		/* Check now for failure. There are fatal failures, and there
 		 * are failures that set the TFD.STS.ERR field using a D2H
@@ -1677,6 +1706,10 @@ static void port_intr(struct port_state *ps)
 			(smask & AHCI_PORT_IS_RESTART)) {
 				port_restart(ps);
 		}
+
+		/* If we were waiting for ID verification, check now. */
+		if (ps->state == STATE_WAIT_ID)
+			port_id_check(ps, success);
 	}
 }
 
@@ -2087,6 +2120,7 @@ static void ahci_init(int devind)
 	/* Note that we currently use only one command anyway. */
 	cap = hba_read(AHCI_HBA_CAP);
 	hba_state.has_ncq = !!(cap & AHCI_HBA_CAP_SNCQ);
+	hba_state.has_clo = !!(cap & AHCI_HBA_CAP_SCLO);
 	hba_state.nr_cmds = MIN(NR_CMDS,
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1);
 

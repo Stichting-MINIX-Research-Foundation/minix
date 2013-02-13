@@ -192,6 +192,7 @@
 #define 	AHCI_PORT_CMD_CR	(1L << 15)	/* Cmd List Running */
 #define 	AHCI_PORT_CMD_FR	(1L << 14)	/* FIS Recv Running */
 #define 	AHCI_PORT_CMD_FRE	(1L <<  4)	/* FIS Recv Enabled */
+#define 	AHCI_PORT_CMD_CLO	(1L <<  3)	/* Cmd List Override */
 #define 	AHCI_PORT_CMD_SUD	(1L <<  1)	/* Spin-Up Device */
 #define 	AHCI_PORT_CMD_ST	(1L <<  0)	/* Start */
 #define AHCI_PORT_TFD	8		/* Task File Data */
