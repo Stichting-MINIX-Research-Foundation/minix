@@ -8,7 +8,6 @@
 #include <minix/drvlib.h>
 #include <minix/minlib.h>
 
-
 /* system headers */
 #include <sys/ioc_disk.h>	/* disk IOCTL's */
 
@@ -595,12 +594,25 @@ block_system_event_cb(int type, sef_init_info_t * info)
 static void
 block_signal_handler_cb(int signo)
 {
+	struct sd_slot *slot;
+
 	mmc_log_debug(&log, "System event framework signal handler sig(%d)\n",
 	    signo);
 	/* Only check for termination signal, ignore anything else. */
 	if (signo != SIGTERM)
 		return;
-	// FIXME shutdown
+
+	/* we only have a single slot and need an open count idealy we should
+	 * iterate over the card to determine the open count */
+	slot = get_slot(0);
+	assert(slot);
+	if (slot->card.open_ct > 0) {
+		mmc_log_debug(&log, "Not responding to SIGTERM (open count=%d)\n",
+		    slot->card.open_ct);
+		return;
+	}
+
+	mmc_log_info(&log, "MMC driver exit");
 	exit(0);
 }
 
