@@ -316,6 +316,7 @@
 ./usr/bin/pax				minix-sys	obsolete
 ./usr/bin/ping				minix-sys
 ./usr/bin/pkgin_cd			minix-sys
+./usr/bin/pkgin_all			minix-sys
 ./usr/bin/postinstall			minix-sys
 ./usr/bin/poweroff			minix-sys
 ./usr/bin/prep				minix-sys
