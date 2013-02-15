@@ -700,7 +700,7 @@ message *mess_ptr;		/* pointer to message for task */
 /* All file system I/O ultimately comes down to I/O on major/minor device
  * pairs.  These lead to calls on the following routines via the dmap table.
  */
-  int r, status, proc_e = NONE, is_bdev, retry_count;
+  int r, status = OK, proc_e = NONE, is_bdev, retry_count;
   message mess_retry;
 
   is_bdev = IS_BDEV_RQ(mess_ptr->m_type);
@@ -722,7 +722,13 @@ message *mess_ptr;		/* pointer to message for task */
 			retry_count++;
 		}
 	}
-  } while (r == EDEADEPT && retry_count < 5);
+  } while (status == ERESTART && retry_count < 5);
+
+  /* If we failed to restart the request, return EIO */
+  if (status == ERESTART && retry_count >= 5) {
+	r = OK;
+	mess_ptr->m_type = EIO;
+  }
 
   if (r != OK) {
 	if (r == EDEADSRCDST || r == EDEADEPT) {
@@ -1103,6 +1109,7 @@ int maj;
   struct fproc *rfp;
 
   if (maj < 0 || maj >= NR_DEVICES) panic("VFS: out-of-bound major");
+
   for (rfilp = filp; rfilp < &filp[NR_FILPS]; rfilp++) {
 	if (rfilp->filp_count < 1 || !(vp = rfilp->filp_vno)) continue;
 	if (!(rfilp->filp_state & FS_NEEDS_REOPEN)) continue;
@@ -1141,7 +1148,6 @@ int maj;
 
   /* Nothing more to re-open. Restart suspended processes */
   driver_e = dmap[maj].dmap_driver;
-
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	if(rfp->fp_pid == PID_FREE) continue;
 	if(rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER &&
