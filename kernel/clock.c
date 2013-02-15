@@ -58,8 +58,8 @@ static clock_t next_timeout;	/* realtime that next timer expires */
 static clock_t realtime = 0;		      /* real time clock */
 
 /*
- * The boot processos timer interrupt handler. In addition to non-boot cpus it
- * keeps real time and notifies the clock task if need be
+ * The boot processor's timer interrupt handler. In addition to non-boot cpus
+ * it keeps real time and notifies the clock task if need be.
  */
 int timer_int_handler(void)
 {
