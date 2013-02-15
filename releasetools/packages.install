@@ -17,7 +17,6 @@ f2c-
 figlet-2
 flex-
 gawk-
-gcc44-
 gettext-lib-
 gettext-tools-
 gmake-
@@ -69,6 +68,4 @@ unzip-
 url2pkg-
 vim-7
 vim-share-
-x11-6
-x11-links-
 zip-
