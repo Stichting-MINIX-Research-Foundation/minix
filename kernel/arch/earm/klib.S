@@ -82,12 +82,14 @@ ENTRY(__user_copy_msg_pointer_failure)
 	mov	r0, #-1
 	bx	lr
 
+ENTRY(intr_enable)
 ENTRY(interrupts_enable)
 	dsb
-	cpsie i
+	cpsie if
 	bx lr
 
+ENTRY(intr_disable)
 ENTRY(interrupts_disable)
 	dsb
-	cpsid i
+	cpsid if
 	bx lr

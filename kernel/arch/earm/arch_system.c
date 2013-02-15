@@ -159,10 +159,8 @@ struct proc * arch_finish_switch_to_user(void)
 	p = get_cpulocal_var(proc_ptr);
 	*((reg_t *)stk) = (reg_t) p;
 
-	/* make sure I bit is clear in PSR so that interrupts won't be disabled
-	 * once p's context is restored. this should not be possible.
-	 */
-        assert(!(p->p_reg.psr & PSR_I));
+	/* turn interrupts on */
+        p->p_reg.psr &= ~(PSR_I|PSR_F);
 
 	return p;
 }

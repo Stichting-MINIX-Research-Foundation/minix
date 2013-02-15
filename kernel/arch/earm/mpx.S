@@ -53,6 +53,8 @@ IMPORT(svc_stack)
 .macro test_int_in_kernel, label
 	push	{r3}
 	ldr	r3, [sp, #8] /* spsr */
+	orr	r3, r3, #(PSR_F | PSR_I) /* mask interrupts on return */
+	str	r3, [sp, #8] /* spsr */
 	and	r3, r3, #PSR_MODE_MASK
 	cmp	r3, #MODE_USR
 	pop	{r3}
