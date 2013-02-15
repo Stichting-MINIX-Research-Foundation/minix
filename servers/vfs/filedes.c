@@ -86,6 +86,15 @@ void *do_filp_gc(void *UNUSED(arg))
 
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
 	if (!(f->filp_state & FS_INVALIDATED)) continue;
+
+	if (f->filp_mode == FILP_CLOSED || f->filp_vno == NULL) {
+		/* File was already closed before gc could kick in */
+		assert(f->filp_count <= 0);
+		f->filp_state &= ~FS_INVALIDATED;
+		f->filp_count = 0;
+		continue;
+	}
+
 	assert(f->filp_vno != NULL);
 	vp = f->filp_vno;
 
