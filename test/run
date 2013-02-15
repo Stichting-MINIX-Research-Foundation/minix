@@ -29,7 +29,7 @@ for i in `echo $tests`; do
 done
 
 # Print test welcome message
-clr
+clear
 echo "Running POSIX compliance test suite. There are $tests_no tests in total."
 echo " "
 
