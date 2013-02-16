@@ -796,6 +796,7 @@ sub preChecks {
     $ENV{'LANG'} = $language;
 
     # Check that the required files are in the proper places.
+   if (!$ENV{MINIX}) {
     system("make check");
     if ($? != 0) {
         system("make all");
@@ -803,6 +804,7 @@ sub preChecks {
             abortRun("\"make all\" failed");
         }
     }
+   }
 
     # Create a script to kill this run.
     system("echo \"kill -9 $$\" > \"${TMPDIR}/kill_run\"");

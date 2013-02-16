@@ -53,8 +53,6 @@ char SCCSid[] = "@(#) @(#)fstime.c:3.5 -- 5/15/91 19:30:19";
 
 #ifndef MINIX
 extern void sync(void);
-#else
-extern int sync(void);
 #endif
 
 int w_test(int timeSecs);
