@@ -161,20 +161,24 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
   char *hz, *buff;
   int req_nr;
   int c, i, j;
-  int c_flag, r_flag, n_flag, p_flag;
+  int b_flag, c_flag, r_flag, n_flag, p_flag;
   int label_required;
 
+  b_flag = 0;
   c_flag = 0;
   r_flag = 0;
   n_flag = 0;
   p_flag = 0;
-  while (c= getopt(argc, argv, "rcnp?"), c != -1)
+  while (c= getopt(argc, argv, "rbcnp?"), c != -1)
   {
 	switch(c)
 	{
 	case '?':
 		print_usage(argv[ARG_NAME], "wrong number of arguments");
 		exit(EINVAL);
+	case 'b':
+		b_flag = 1;
+		break;
 	case 'c':
 		c_flag = 1;
 		break;
@@ -235,6 +239,9 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 
       if(p_flag)
         *rss_flags |= RSS_REPLICA;
+
+      if(b_flag)
+	*rss_flags |= RSS_NO_BIN_EXP;
 
       req_path = argv[optind+ARG_PATH];
       if(req_nr == RS_UPDATE && !strcmp(req_path, SELF_BINARY)) {
