@@ -122,6 +122,7 @@ int do_trace(struct proc * caller, message * m_ptr)
 
   case T_SETINS:		/* set value in instruction space */
 	COPYTOPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	//asm volatile("isb"); needed on arm
 	m_ptr->CTL_DATA = 0;
 	break;
 
@@ -154,6 +155,13 @@ int do_trace(struct proc * caller, message * m_ptr)
 		SETPSW(rp, tr_data);
 	else
 		*(reg_t *) ((char *) &rp->p_reg + i) = (reg_t) tr_data;
+#else 
+	if (i == (int) &((struct proc *) 0)->p_reg.psr) {
+		/* only selected bits are changeable */
+		SET_USR_PSR(rp, tr_data);
+	} else {
+		*(reg_t *) ((char *) &rp->p_reg + i) = (reg_t) tr_data;
+	}
 #endif
 	m_ptr->CTL_DATA = 0;
 	break;
