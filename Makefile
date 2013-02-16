@@ -143,6 +143,10 @@ _SUBDIR+=	commands man
 _SUBDIR+=	common drivers kernel servers
 _SUBDIR+=	usr.sbin share rescue sys etc tests compat .WAIT distrib regress
 
+.if defined(__MINIX)
+_SUBDIR+=	benchmarks
+.endif
+
 .for dir in ${_SUBDIR}
 .if "${dir}" == ".WAIT" \
 	|| (${BUILD_${dir}:Uyes} != "no" && exists(${dir}/Makefile))

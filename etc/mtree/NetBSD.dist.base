@@ -36,6 +36,12 @@
 ./usr/ast
 ./usr/bin
 ./usr/etc
+./usr/benchmarks
+./usr/benchmarks/unixbench
+./usr/benchmarks/unixbench/pgms
+./usr/benchmarks/unixbench/tmp
+./usr/benchmarks/unixbench/testdir
+./usr/benchmarks/unixbench/results
 ./usr/include
 ./usr/include/arpa
 ./usr/include/compat

@@ -1,7 +1,5 @@
 # Makefile for the benchmarks.
 
-all::
-	chmod 755 run
+SUBDIR=unixbench-5.1.2
 
-all clean::
-	for b in *bench*; do cd $$b && $(MAKE) $@; done
+.include <bsd.subdir.mk>

@@ -62,6 +62,9 @@
 #ifdef HAS_POLL2
 #  include <linux/poll2.h>
 #endif
+#ifdef HAS_SELECT
+#  include <sys/select.h>
+#endif
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -80,6 +83,7 @@
 typedef int flag;
 
     
+#ifndef HAS_POLL
 /*
 static inline int find_first_set_bit (CONST void *array, int size)
 */
@@ -143,6 +147,7 @@ static int find_next_set_bit (CONST void *array, int size, int offset)
     index += ul_size - offset;
     return (find_first_set_bit (++ul_array, size - index) + index);
 }   /*  End Function find_next_set_bit  */
+#endif
 
 
 struct callback_struct
