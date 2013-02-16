@@ -1066,10 +1066,15 @@ void terminate_service(struct rproc *rp)
        * a binary exponential backoff.
        */
       if (rp->r_restarts > 0) {
-          rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-2));
-          rp->r_backoff = MIN(rp->r_backoff,MAX_BACKOFF); 
-          if ((rpub->sys_flags & SF_USE_COPY) && rp->r_backoff > 1)
-              rp->r_backoff= 1;
+          if (!(rpub->sys_flags & SF_NO_BIN_EXP)) {
+              rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-2));
+              rp->r_backoff = MIN(rp->r_backoff,MAX_BACKOFF); 
+              if ((rpub->sys_flags & SF_USE_COPY) && rp->r_backoff > 1)
+                  rp->r_backoff= 1;
+	  }
+	  else {
+              rp->r_backoff = 1;
+	  }
           return;
       }
 
@@ -1544,6 +1549,9 @@ endpoint_t source;
   }
   if (rs_start->rss_flags & RSS_REPLICA) {
       rpub->sys_flags |= SF_USE_REPL;
+  }
+  if (rs_start->rss_flags & RSS_NO_BIN_EXP) {
+      rpub->sys_flags |= SF_NO_BIN_EXP;
   }
 
   /* Update period. */

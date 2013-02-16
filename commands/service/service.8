@@ -3,7 +3,7 @@
 service \- Manage an operating system service.
 .SH SYNOPSIS
 .PP
-\fBservice [-c -r -n -p] (up|run|edit|update)\fR \fI<binary|self>\fR
+\fBservice [-b -c -n -p -r] (up|run|edit|update)\fR \fI<binary|self>\fR
 [\fB-args\fR \fI<args>\fR] [\fB-dev\fR \fI<special>\fR]
 [\fB-devstyle\fR \fI<style>\fR] [\fB-period\fR \fI<ticks>\fR]
 [\fB-script\fR \fI<path>\fR] [\fB-label\fR \fI<name>\fR]
@@ -63,6 +63,9 @@ it down allowing for graceful degradation of service. If a critical
 system service fails to restart, \fBRS\fR will immediately resort to
 a system-wide panic. The \fBup\fR action takes the following options:
 .TP
+.BI \-b "          "
+disable the usage of binary exponential restart time in \fBRS\fR.
+.TP
 .BI \-c "          "
 \fBRS\fR normally relies on the binary on the disk to restart a
 system service. The
@@ -71,10 +74,6 @@ option instructs \fBRS\fR to keep an in-memory copy of the binary and
 use the copy to restart the service upon termination. This is necessary
 when the location on the disk may change or if the service itself is
 required to read the binary from the disk (e.g. the disk driver).
-.TP
-.BI \-r "          "
-when saving an in-memory copy, instructs \fBRS\fR to reuse and share the copy
-of an existing service with the same program name, if available.
 .TP
 .BI \-n "          "
 by default, \fBRS\fR performs blocking startup of the system service. As
@@ -91,6 +90,10 @@ instructs \fBRS\fR to keep a replica of the system service in background
 and use the replica to restart the service upon termination. This is
 necessary when the service itself is required to create a working
 service instance (e.g. \fBPM\fR).
+.TP
+.BI \-r "          "
+when saving an in-memory copy, instructs \fBRS\fR to reuse and share the copy
+of an existing service with the same program name, if available.
 .TP
 .BI \-args " <args>"
 specifies the command line arguments to use to run the program

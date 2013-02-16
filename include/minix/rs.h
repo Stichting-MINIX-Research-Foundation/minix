@@ -28,6 +28,7 @@ Interface to the reincarnation server
 #define RSS_SELF_LU	0x20	/* perform self update */
 #define RSS_SYS_BASIC_CALLS	0x40	/* include basic kernel calls */
 #define RSS_VM_BASIC_CALLS	0x80	/* include basic vm calls */
+#define RSS_NO_BIN_EXP	0x100	/* suppress binary exponential offset */
 
 /* Common definitions. */
 #define RS_NR_CONTROL		 8
