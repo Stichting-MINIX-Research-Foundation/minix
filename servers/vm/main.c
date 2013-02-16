@@ -289,11 +289,13 @@ void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
         execi->allocmem_ondemand = libexec_alloc_vm_ondemand;
 
 	if(libexec_load_elf(execi) != OK)
-		panic("vm: boot process load of %d failed\n", vmp->vm_endpoint);
+		panic("vm: boot process load of process %s (ep=%d) failed\n", 
+			execi->progname,vmp->vm_endpoint);
 
         if(sys_exec(vmp->vm_endpoint, (char *) execi->stack_high - 12,
 		(char *) ip->proc_name, execi->pc) != OK)
-		panic("vm: boot process exec of %d failed\n", vmp->vm_endpoint);
+		panic("vm: boot process exec of process %s (ep=%d) failed\n", 
+			execi->progname,vmp->vm_endpoint);
 
 	/* make it runnable */
 	if(sys_vmctl(vmp->vm_endpoint, VMCTL_BOOTINHIBIT_CLEAR, 0) != OK)
