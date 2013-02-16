@@ -4,7 +4,7 @@ SRCS.service=service.c parse.c util.c
 SRCS.printconfig=print.c parse.c util.c
 
 BINDIR= /bin
-MAN.service=
+MAN.service=	service.8
 MAN.printconfig=
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}
