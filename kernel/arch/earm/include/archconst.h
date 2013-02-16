@@ -26,6 +26,15 @@
  */
 #define ARM_STACK_TOP_RESERVED	(2 * sizeof(reg_t))
 
+/* only selected bits are changeable by user e.g.[31:9] and skip the 
+ * mode bits. It is probably is a better idea to look at the current 
+ * status to determine if one is allowed to write these values. This 
+ * might allow debugging of privileged processes 
+ */
+#define SET_USR_PSR(rp, npsr) \
+	rp->p_reg.psr = ( rp->p_reg.psr & 0x1F) | ( npsr & ~0x1F)
+
+
 #define PG_ALLOCATEME ((phys_bytes)-1)
 
 #endif /* _ARM_ACONST_H */
