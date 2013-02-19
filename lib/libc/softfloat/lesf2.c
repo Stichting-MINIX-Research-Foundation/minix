@@ -19,6 +19,10 @@ flag
 __lesf2(float32 a, float32 b)
 {
 
+#if defined(__minix) && defined(__arm__)
+	return float32_le(a, b);
+#else
 	/* libgcc1.c says 1 - (a <= b) */
 	return 1 - float32_le(a, b);
+#endif
 }

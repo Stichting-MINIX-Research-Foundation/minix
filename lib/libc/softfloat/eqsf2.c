@@ -19,6 +19,10 @@ flag
 __eqsf2(float32 a, float32 b)
 {
 
+#if defined(__minix) && defined(__arm__)
+	return !!float32_eq(a, b);
+#else
 	/* libgcc1.c says !(a == b) */
 	return !float32_eq(a, b);
+#endif
 }
