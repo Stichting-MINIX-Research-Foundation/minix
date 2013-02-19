@@ -404,7 +404,7 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 
 		/* exec parameters */
 		execi.stack_high = kinfo.user_sp;
-		execi.stack_size = 16 * 1024;	/* not too crazy as it must be preallocated */
+		execi.stack_size = 64 * 1024;   /* not too crazy as it must be preallocated */
 		execi.proc_e = ip->endpoint;
 		execi.hdr = (char *) mod->mod_start; /* phys mem direct */
 		execi.filesize = execi.hdr_len = mod->mod_end - mod->mod_start;
