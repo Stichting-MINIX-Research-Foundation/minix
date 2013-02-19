@@ -192,7 +192,11 @@ ENTRY(svc_entry)
 	beq	kernel_call_entry
 	cmp	r3, #IPCVEC
 	beq	ipc_entry
-	b	invalid_svc
+
+	/* return -1 to the current process as an invalid SWI was called .*/
+	mov	r0, #-1
+	str	r0, [fp, #REG0]
+	b	_C_LABEL(switch_to_user)
 
 /*
  * kernel call is only from a process to kernel
@@ -244,7 +248,7 @@ ENTRY(ipc_entry)
 	b	_C_LABEL(switch_to_user)
 
 ENTRY(invalid_svc)
-	b .
+	b	.
 
 ENTRY(restore_user_context)
 	/* sp holds the proc ptr */
