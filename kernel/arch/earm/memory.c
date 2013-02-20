@@ -196,12 +196,19 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
 
 		if(addr) {
-			/* If addr is nonzero, a page fault was caught. */
+			/* If addr is nonzero, a page fault was caught.
+			 *
+			 * phys_copy does all memory accesses word-aligned (rounded
+			 * down), so pagefaults can occur at a lower address than
+			 * the specified offsets. compute the lower bounds for sanity
+			 * check use.
+			 */
+			vir_bytes src_aligned = srcptr & ~0x3, dst_aligned = dstptr & ~0x3;
 
-			if(addr >= srcptr && addr < (srcptr + chunk)) {
+			if(addr >= src_aligned && addr < (srcptr + chunk)) {
 				return EFAULT_SRC;
 			}
-			if(addr >= dstptr && addr < (dstptr + chunk)) {
+			if(addr >= dst_aligned && addr < (dstptr + chunk)) {
 				return EFAULT_DST;
 			}
 
