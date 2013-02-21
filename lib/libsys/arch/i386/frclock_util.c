@@ -9,7 +9,7 @@
 #include <minix/type.h>
 #include <sys/errno.h>
 #include <sys/types.h>
-#include <assert.h>
+
 
 static u64_t calib_hz = 1625000, Hz;
 #define MICROHZ         1000000ULL	/* number of micros per second */
@@ -23,7 +23,7 @@ micro_delay(u32_t micros)
 	Hz = sys_hz();
 
         /* Start of delay. */
-        read_frclock_64(&start);
+        start = read_frclock_64();
 	delta_end = (calib_hz * micros) / MICROHZ;
 
         /* If we have to wait for at least one HZ tick, use the regular
@@ -37,7 +37,7 @@ micro_delay(u32_t micros)
 
         /* Wait (the rest) of the delay time using busywait. */
 	do {
-                read_frclock_64(&delta);
+                delta = read_frclock_64();
 	} while (delta_frclock_64(start, delta) < delta_end);
 
 
@@ -46,18 +46,16 @@ micro_delay(u32_t micros)
 
 u32_t frclock_64_to_micros(u64_t tsc)
 {
-        return (u32_t) tsc / (calib_hz / MICROHZ);
+        return (u32_t) tsc / calib_hz;
 }
 
-void
-read_frclock(u32_t *frclk)
+u32_t
+read_frclock(void)
 {
 	extern struct minix_kerninfo *_minix_kerninfo;
 	volatile u32_t *frclock;
-
-	assert(frclk);
 	frclock = (u32_t *)((u8_t *) _minix_kerninfo->minix_frclock+OMAP3_TCRR);
-	*frclk = *frclock;
+	return (u64_t) *frclock;
 }
 
 u32_t
@@ -77,15 +75,15 @@ delta_frclock(u32_t base, u32_t cur)
 	return delta;
 }
 
-void
-read_frclock_64(u64_t *frclk)
+u64_t
+read_frclock_64(void)
 {
-	read_frclock((u32_t *) frclk);	
+	return (u64_t) read_frclock();
 }
 
 u64_t
 delta_frclock_64(u64_t base, u64_t cur)
 {
-	return (u64_t) delta_frclock((u32_t) base, (u32_t) cur);
+	return delta_frclock((u32_t) base, (u32_t) cur);
 }
 

@@ -55,11 +55,11 @@ int spin_check(spin_t *s)
 
 	case STATE_BASE_TS:
 		s->s_state = STATE_TS;
-		s->s_base_tsc = read_frclock_64();
+		read_frclock_64(&s->s_base_tsc);
 		break;
 
 	case STATE_TS:
-		cur_tsc = read_frclock_64();
+		read_frclock_64(&cur_tsc);
 		tsc_delta = delta_frclock_64(s->s_base_tsc, cur_tsc);
 		micro_delta = frclock_64_to_micros(tsc_delta);
 
