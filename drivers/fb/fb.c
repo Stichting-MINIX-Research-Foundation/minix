@@ -2,6 +2,7 @@
 #include <minix/chardriver.h>
 #include <minix/drivers.h>
 #include <minix/ds.h>
+#include <minix/sysutil.h>
 #include <minix/type.h>
 #include <minix/vm.h>
 #include <sys/ioc_fb.h>
@@ -35,6 +36,7 @@ static int do_get_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid);
 static int do_put_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid);
 static int do_get_fixscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid);
 static int do_pan_display(int minor, endpoint_t ep, cp_grant_id_t gid);
+static int keep_displaying_restarted(void);
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
@@ -60,6 +62,7 @@ static struct chardriver fb_tab =
 /** Represents the /dev/fb device. */
 static struct device fb_device[FB_DEV_NR];
 static int fb_minor, has_restarted = 0;
+static u64_t has_restarted_t1, has_restarted_t2;
 
 static int open_counter[FB_DEV_NR];		/* Open count */
 
@@ -74,8 +77,8 @@ fb_open(message *m)
 		open_counter[m->DEVICE]++;
 		if (!initialized) {
 			if (has_restarted) {
+				read_frclock_64(&has_restarted_t1);
 				paint_restartlogo(m->DEVICE);
-				has_restarted = 0;
 			} else {
 				paint_bootlogo(m->DEVICE);
 			}
@@ -211,6 +214,10 @@ do_put_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
 	int r;
 	struct fb_var_screeninfo fbvs_copy;
 
+	if (has_restarted && keep_displaying_restarted()) {
+		return EAGAIN;
+	}
+
 	if ((r = sys_safecopyfrom(ep, gid, 0, (vir_bytes) &fbvs_copy,
 	    sizeof(fbvs_copy))) != OK) {
 		return r;
@@ -224,6 +231,10 @@ do_pan_display(int minor, endpoint_t ep, cp_grant_id_t gid)
 {
 	int r;
         struct fb_var_screeninfo fbvs_copy;
+
+	if (has_restarted && keep_displaying_restarted()) {
+		return EAGAIN;
+	}
 
         if ((r = sys_safecopyfrom(ep, gid, 0, (vir_bytes) &fbvs_copy,
             sizeof(fbvs_copy))) != OK) {
@@ -266,6 +277,10 @@ fb_do_write(endpoint_t ep, iovec_t *iov, int minor, u64_t pos, size_t *io_bytes)
         if (*io_bytes <= 0) {
                 return OK;
         }
+
+	if (has_restarted && keep_displaying_restarted()) {
+		return EAGAIN;
+	}
 
 	return sys_safecopyfrom(ep, (cp_grant_id_t) iov->iov_addr, 0,
 				(vir_bytes) (dev.dv_base + ex64lo(pos)),
@@ -355,6 +370,25 @@ main(void)
 	return OK;
 }
 
+static int
+keep_displaying_restarted()
+{
+	u64_t delta;
+	u32_t micro_delta;
+
+	read_frclock_64(&has_restarted_t2);
+	delta = delta_frclock_64(has_restarted_t1, has_restarted_t2);
+	micro_delta = frclock_64_to_micros(delta);
+
+#define DISPLAY_1SEC 1000000	/* 1 second in microseconds */
+	if (micro_delta < DISPLAY_1SEC) {
+		return 1;
+	}
+
+	has_restarted = 0;
+	return 0;
+}
+
 static void
 paint_bootlogo(int minor)
 {
@@ -366,7 +400,6 @@ paint_restartlogo(int minor)
 {
 	paint_centered(minor, restartlogo_data, restartlogo_width,
 			restartlogo_height);
-	micro_delay(1 * 1000000);	/* 1 second */
 }
 
 static void
