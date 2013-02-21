@@ -62,11 +62,12 @@ u32_t tsc_to_micros(u32_t low, u32_t high);
 u32_t tsc_get_khz(void);
 u32_t micros_to_ticks(u32_t micros);
 #if defined(__arm__)
-u32_t read_frclock(void);
+void read_frclock(u32_t *frclk);
 u32_t delta_frclock(u32_t base, u32_t cur);
-u64_t read_frclock_64(void);
-u64_t delta_frclock_64(u64_t base, u64_t cur);
 #endif
+void read_frclock_64(u64_t *frclk);
+u64_t delta_frclock_64(u64_t base, u64_t cur);
+u32_t frclock_64_to_micros(u64_t tsc);
 void ser_putc(char c);
 void get_randomness(struct k_randomness *, int);
 u32_t sqrt_approx(u32_t);

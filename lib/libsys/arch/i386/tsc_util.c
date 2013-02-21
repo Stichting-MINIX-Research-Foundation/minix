@@ -107,3 +107,12 @@ u32_t tsc_get_khz(void)
 
 	return calib_mhz * 1000;
 }
+
+#define frclock_64_to_micros tsc_64_to_micros
+#define read_frclock_64 read_tsc_64
+
+u64_t delta_frclock_64(u64_t base, u64_t cur)
+{
+        return cur - base;
+}
+
