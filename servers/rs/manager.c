@@ -1002,10 +1002,21 @@ void terminate_service(struct rproc *rp)
 
   /* Deal with failures during initialization. */
   if(rp->r_flags & RS_INITIALIZING) {
-      if(rs_verbose)
-          printf("RS: service '%s' exited during initialization\n",
-              rpub->label);
-      rp->r_flags |= RS_EXITING; /* don't restart. */
+      if (rpub->sys_flags & SF_NO_BIN_EXP) {
+          /* If service was deliberately started with binary exponential offset
+	   * disabled, we're going to assume we want to refresh a service upon
+	   * failure.
+	   */
+          if(rs_verbose)
+              printf("RS: service '%s' exited during initialization; "
+		     "refreshing\n", rpub->label);
+          rp->r_flags |= RS_REFRESHING; /* restart initialization. */
+      } else {
+          if(rs_verbose)
+              printf("RS: service '%s' exited during initialization; "
+                     "not restarting\n", rpub->label);
+          rp->r_flags |= RS_EXITING; /* don't restart. */
+      }
 
       /* If updating, rollback. */
       if(rp->r_flags & RS_UPDATING) {
