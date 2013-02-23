@@ -16,6 +16,6 @@ MAN=
 BINDIR?= /usr/sbin
 
 debug=		0
-CPPFLAGS+=	-Ddebug=${debug} -w
+CPPFLAGS+=	-Ddebug=${debug}
 
 .include <minix.service.mk>
