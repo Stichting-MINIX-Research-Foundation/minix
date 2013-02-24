@@ -54,7 +54,7 @@ struct {
 #define page_isfree(i) GET_BIT(free_pages_bitmap, i)
 
 #define RESERVEDMAGIC		0x6e4c74d5
-#define MAXRESERVEDPAGES	100
+#define MAXRESERVEDPAGES	300
 #define MAXRESERVEDQUEUES	 15
 
 static struct reserved_pages {
