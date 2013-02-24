@@ -32,7 +32,7 @@
 function dirname(file) \
 {
 	# no need to worry about args that do not contain at least one "/"
-	gsub(/\/[^\/]*+/, "", file)
+	gsub(/\/[^\/]+$/, "", file)
 	return file
 }
 
