@@ -106,8 +106,8 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/sys-minix/Makefile.inc"
 .else
 .include "${.CURDIR}/tls/Makefile.inc"
-.include "${.CURDIR}/sys/Makefile.inc"
 .endif
+.include "${.CURDIR}/sys/Makefile.inc"
 .include "${.CURDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
 .include "${.CURDIR}/yp/Makefile.inc"

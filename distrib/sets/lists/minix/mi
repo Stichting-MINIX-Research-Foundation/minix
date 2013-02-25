@@ -1476,6 +1476,7 @@
 ./usr/man/man2/open.2			minix-sys
 ./usr/man/man2/pause.2			minix-sys
 ./usr/man/man2/pipe.2			minix-sys
+./usr/man/man2/pipe2.2			minix-sys
 ./usr/man/man2/ptrace.2			minix-sys
 ./usr/man/man2/read.2			minix-sys
 ./usr/man/man2/readlink.2		minix-sys
