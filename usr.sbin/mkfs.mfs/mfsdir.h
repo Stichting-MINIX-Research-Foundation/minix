@@ -12,10 +12,6 @@
 struct direct {
   uint32_t mfs_d_ino;
   char mfs_d_name[MFS_DIRSIZ];
-#ifdef __NBSD_LIBC 
 } __packed;
-#else
-};
-#endif
 
 #endif /* _MFSDIR_H */

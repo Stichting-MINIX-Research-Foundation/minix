@@ -53,11 +53,7 @@ typedef int ioreq_t;
 #include <net/gen/udp_io.h>
 
 #include <net/gen/arp_io.h>
-#ifdef __NBSD_LIBC
 #include <sys/ioc_net.h>
-#else
-#include <net/ioctl.h>
-#endif
 
 #include "const.h"
 #include "inet_config.h"

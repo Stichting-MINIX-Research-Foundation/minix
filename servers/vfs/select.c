@@ -547,11 +547,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
 	panic("select copy_fdsets: nfds wrong: %d", nfds);
 
   /* Only copy back as many bits as the user expects. */
-#ifdef __NBSD_LIBC
   fd_setsize = (size_t) (howmany(nfds, __NFDBITS) * sizeof(__fd_mask));
-#else
-  fd_setsize = (size_t) (_FDSETWORDS(nfds) * _FDSETBITSPERWORD/8);
-#endif
 
   /* Set source and destination endpoints */
   src_e = (direction == FROM_PROC) ? se->req_endpt : SELF;

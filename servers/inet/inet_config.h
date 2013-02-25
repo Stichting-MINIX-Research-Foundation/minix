@@ -79,22 +79,16 @@ extern struct ip_conf ip_conf[IP_PORT_MAX];
 extern struct tcp_conf tcp_conf[IP_PORT_MAX];
 extern struct udp_conf udp_conf[IP_PORT_MAX];
 void read_conf(void);
-#ifdef __NBSD_LIBC
 extern void *sbrk(int);
-#else
-extern char *sbrk(int);
-#endif
 void *alloc(size_t size);
 
 /* Options */
 extern int ip_forward_directed_bcast;
 
-#ifdef __NBSD_LIBC
 #undef HTONL
 #undef HTONS
 #define HTONL htonl
 #define HTONS htons
-#endif
 
 #endif /* INET__INET_CONFIG_H */
 

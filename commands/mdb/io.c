@@ -74,24 +74,9 @@ int Printf(const char *format, ...)
 {
 	va_list ap;
 	int retval;
-#ifndef __NBSD_LIBC
-	FILE tmp_stream;
-
-	va_start(ap, format);
-
-	tmp_stream._fd     = -1;
-	tmp_stream._flags  = _IOWRITE + _IONBF + _IOWRITING;
-	tmp_stream._buf    = (unsigned char *) outbuf;
-	tmp_stream._ptr    = (unsigned char *) outbuf;
-	tmp_stream._count  = 512;
-
-	retval = _doprnt(format, ap, &tmp_stream);
-	putc('\0',&tmp_stream);
-#else
 	va_start(ap, format);
 
 	retval = vsnprintf(outbuf, OUTBUFSIZE, format, ap);
-#endif
 	va_end(ap);
 
         outstr(outbuf);

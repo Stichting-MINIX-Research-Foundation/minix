@@ -6,13 +6,7 @@
 #define _LIB_H
 
 /* First come the defines. */
-#ifdef __NBSD_LIBC
 #include <sys/featuretest.h>	/* tell headers to include NetBSD stuff. */
-#else /* !__NBSD_LIBC */
-#define _POSIX_SOURCE	1	/* tell headers to include POSIX stuff */
-#endif
-
-#define _NETBSD_SOURCE	1	/* tell headers to include MINIX stuff */
 
 /* The following are so basic, all the lib files get them automatically. */
 #include <minix/config.h>	/* must be first */
@@ -26,7 +20,6 @@
 #include <minix/callnr.h>
 
 #include <minix/ipc.h>
-
 
 int __execve(const char *_path, char *const _argv[], char *const
 	_envp[], int _nargs, int _nenvps);

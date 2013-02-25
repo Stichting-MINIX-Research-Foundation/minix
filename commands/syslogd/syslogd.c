@@ -498,11 +498,7 @@ void cfline(char *line, struct filed * fLog)
 	while (strchr(", ;", *q)) q++;
 
 	/* Decode priority name */
-#ifdef __NBSD_LIBC
 	pri = decode(buf, prioritynames);
-#else
-	pri = decode(buf, PriNames);
-#endif
 	if (pri < 0) {
 		sprintf(xbuf, "unknown priority name \"%s\"", buf);
 		logerror(xbuf);
@@ -520,11 +516,7 @@ void cfline(char *line, struct filed * fLog)
 					fLog->f_pmask[ix] = pri;
 				}
 		} else {
-#ifdef __NBSD_LIBC
 			ix = decode(buf, facilitynames);
-#else
-			ix = decode(buf, FacNames);
-#endif
 			if (ix < 0) {
 				sprintf(xbuf, "unknown facility name \"%s\"", buf);
 				logerror(xbuf);

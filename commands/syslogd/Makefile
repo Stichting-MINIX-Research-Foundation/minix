@@ -6,7 +6,6 @@
 PROG=	syslogd
 PIDFILE= -DPIDFILE=\"/var/run/syslogd.pid\"
 CPPFLAGS+= -Ddebug=0 ${PIDFILE}
-CPPFLAGS+= -D__NBSD_LIBC
 BINMODE= 700
 MAN=
 

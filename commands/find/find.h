@@ -53,10 +53,6 @@ enum ntype {
 	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV, N_DELETE
 };
 
-#ifndef __NBSD_LIBC
-typedef unsigned int u_int32_t;
-#endif
-
 /* node definition */
 typedef struct _plandata {
 	struct _plandata *next;			/* next node */

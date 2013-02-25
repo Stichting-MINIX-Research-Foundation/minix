@@ -16,9 +16,7 @@ Created:	Jan 27, 1992 by Philip Homburg
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __NBSD_LIBC
 #include <netinet/in.h>
-#endif
 
 #include <net/netlib.h>
 #include <net/hton.h>

@@ -1,8 +1,6 @@
 #ifndef _IPC_H
 #define _IPC_H
 
-#ifdef __NBSD_LIBC
-#endif
 #include <minix/ipcconst.h>
 #include <minix/type.h>
 #include <minix/const.h>

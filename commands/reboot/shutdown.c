@@ -383,13 +383,8 @@ int crash_check()
   crashed = (lseek(fd, - (off_t) sizeof(last), SEEK_END) == -1
     || read(fd, (void *) &last, sizeof(last)) != sizeof(last)
     || last.ut_line[0] != '~'
-#ifdef __NBSD_LIBC
     || (strncmp(last.ut_name, "shutdown", sizeof(last.ut_name))
-     && strncmp(last.ut_name, "halt", sizeof(last.ut_name)))
-#else
-    || (strncmp(last.ut_user, "shutdown", sizeof(last.ut_user))
-     && strncmp(last.ut_user, "halt", sizeof(last.ut_user)))
-#endif
+    && strncmp(last.ut_name, "halt", sizeof(last.ut_name)))
     );
   close(fd);
   return crashed;
