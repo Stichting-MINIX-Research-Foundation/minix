@@ -4,10 +4,6 @@
 	Adapted to POSIX 1003.2 by Philip Homburg.
  */
 
-#ifdef __minix_vmd
-#define _MINIX_SOURCE
-#endif
-
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>

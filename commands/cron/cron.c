@@ -2,9 +2,6 @@
  *								7 Dec 1996
  */
 
-#define _MINIX_SOURCE
-#define _MINIX 1
-
 #define nil ((void*)0)
 #include <sys/types.h>
 #include <stdio.h>

@@ -7,7 +7,7 @@ Manipulate ARP table
 */
 
 #define _POSIX_C_SOURCE 2
-#define _MINIX_SOURCE
+#define _NETBSD_SOURCE 1
 
 #include <errno.h>
 #include <fcntl.h>
