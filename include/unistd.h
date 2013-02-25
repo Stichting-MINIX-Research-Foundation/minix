@@ -377,8 +377,8 @@ int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
 int	 nfssvc(int, void *);
-#ifndef __minix
 int	 pipe2(int *, int);
+#ifndef __minix
 int	 profil(char *, size_t, u_long, u_int);
 #endif /* !__minix */
 #ifndef __PSIGNAL_DECLARED
