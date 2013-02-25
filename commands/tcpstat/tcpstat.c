@@ -4,8 +4,8 @@ tcpstat.c
 Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 */
 
-#define _MINIX_SOURCE
 #define _POSIX_C_SOURCE 2
+#define _NETBSD_SOURCE 1
 
 #include <inet/inet.h>
 #undef printf

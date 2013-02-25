@@ -35,8 +35,6 @@ from DL_ETH:
 
 #include "inet.h"
 
-#define _MINIX_SOURCE 1
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/svrctl.h>
