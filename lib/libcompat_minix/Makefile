@@ -1,7 +1,6 @@
 .include <bsd.own.mk>
 
 LIB=	compat_minix
-CPPFLAGS+= -D_MINIX_COMPAT
 USE_SHLIBDIR= yes
 
 .PATH: 	${.CURDIR}
