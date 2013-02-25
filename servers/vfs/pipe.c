@@ -174,7 +174,7 @@ endpoint_t map_to_fs_e;
  *				pipe_check				     *
  *===========================================================================*/
 int pipe_check(
-struct vnode *vp,	/* the inode of the pipe */
+struct filp *filp,	/* the filp of the pipe */
 int rw_flag,		/* READING or WRITING */
 int oflags,		/* flags set by open or fcntl */
 int bytes,		/* bytes to be read or written (all chunks) */
@@ -186,8 +186,11 @@ int notouch		/* check only */
  * and there is no writer, return 0 bytes.  If a process is writing to a
  * pipe and no one is reading from it, give a broken pipe error.
  */
+  struct vnode *vp;
   off_t pos;
   int r = OK;
+
+  vp = filp->filp_vno;
 
   /* Reads start at the beginning; writes append to pipes */
   if (notouch) /* In this case we don't actually care whether data transfer
@@ -221,10 +224,6 @@ int notouch		/* check only */
 
   /* Process is writing to a pipe. */
   if (find_filp(vp, R_BIT) == NULL) {
-	/* Process is writing, but there is no reader. Tell kernel to generate
-	 * a SIGPIPE signal. */
-	if (!notouch) sys_kill(fp->fp_endpoint, SIGPIPE);
-
 	return(EPIPE);
   }
 
