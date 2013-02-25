@@ -9,8 +9,6 @@ Modified:	Apr 07, 2001 by Kees J. Bot
 Copyright 1995 Philip Homburg
 */
 
-#define _MINIX_SOURCE 1
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>

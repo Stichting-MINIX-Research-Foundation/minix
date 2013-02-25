@@ -1,7 +1,6 @@
 /*	execve() - basic program execution call		Author: Kees J. Bot
  *								21 Jan 1994
  */
-#define _MINIX_SOURCE
 
 #include <sys/cdefs.h>
 #include "namespace.h"
