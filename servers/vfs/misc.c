@@ -286,7 +286,16 @@ int do_fcntl()
 
 	break;
      }
-
+    case F_GETNOSIGPIPE:
+	/* POSIX: return value other than -1 is flag is set, else -1 */
+	r = -1;
+	if (f->filp_flags & O_NOSIGPIPE)
+		r = 0;
+	break;
+    case F_SETNOSIGPIPE:
+	fl = (O_NOSIGPIPE);
+	f->filp_flags = (f->filp_flags & ~fl) | (fcntl_argx & fl);
+	break;
     default:
 	r = EINVAL;
   }

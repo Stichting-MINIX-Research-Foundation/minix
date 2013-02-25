@@ -124,27 +124,23 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   register struct vnode *vp;
   u64_t position, res_pos, new_pos;
   unsigned int cum_io, cum_io_incr, res_cum_io;
-  int op, oflags, r;
+  int op, r;
 
   position = f->filp_pos;
-  oflags = f->filp_flags;
   vp = f->filp_vno;
   r = OK;
   cum_io = 0;
 
   if (size > SSIZE_MAX) return(EINVAL);
 
-  if (S_ISFIFO(vp->v_mode)) {
+  op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
+
+  if (S_ISFIFO(vp->v_mode)) {		/* Pipes */
 	if (fp->fp_cum_io_partial != 0) {
 		panic("VFS: read_write: fp_cum_io_partial not clear");
 	}
 	r = rw_pipe(rw_flag, for_e, f, buf, size);
-	return(r);
-  }
-
-  op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
-
-  if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
+  } else if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
 	dev_t dev;
 	int suspend_reopen;
 
@@ -154,7 +150,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 	suspend_reopen = (f->filp_state & FS_NEEDS_REOPEN);
 	dev = (dev_t) vp->v_sdev;
 
-	r = dev_io(op, dev, for_e, buf, position, size, oflags,
+	r = dev_io(op, dev, for_e, buf, position, size, f->filp_flags,
 		   suspend_reopen);
 	if (r >= 0) {
 		cum_io = r;
@@ -178,7 +174,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   } else {				/* Regular files */
 	if (rw_flag == WRITING) {
 		/* Check for O_APPEND flag. */
-		if (oflags & O_APPEND) position = cvul64(vp->v_size);
+		if (f->filp_flags & O_APPEND) position = cvul64(vp->v_size);
 	}
 
 	/* Issue request */
@@ -208,7 +204,18 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 
   f->filp_pos = position;
 
-  if (r == OK) return(cum_io);
+  if (r == EPIPE && rw_flag == WRITING) {
+	/* Process is writing, but there is no reader. Tell the kernel to
+	 * generate s SIGPIPE signal.
+	 */
+	if (!(f->filp_flags & O_NOSIGPIPE)) {
+		sys_kill(fp->fp_endpoint, SIGPIPE);
+	}
+  }
+
+  if (r == OK) {
+	return(cum_io);
+  }
   return(r);
 }
 
@@ -277,7 +284,7 @@ size_t req_size;
   /* fp->fp_cum_io_partial is only nonzero when doing partial writes */
   cum_io = fp->fp_cum_io_partial;
 
-  r = pipe_check(vp, rw_flag, oflags, req_size, 0);
+  r = pipe_check(f, rw_flag, oflags, req_size, 0);
   if (r <= 0) {
 	if (r == SUSPEND) pipe_suspend(f, buf, req_size);
 	return(r);

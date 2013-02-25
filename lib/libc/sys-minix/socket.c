@@ -18,12 +18,17 @@ __weak_alias(socket, _socket)
 
 #define DEBUG 0
 
-static int _tcp_socket(int protocol);
-static int _udp_socket(int protocol);
+static int _tcp_socket(int type, int protocol);
+static int _udp_socket(int type, int protocol);
 static int _uds_socket(int type, int protocol);
+static void _socket_flags(int type, int *result);
 
 int socket(int domain, int type, int protocol)
 {
+	int sock_type;
+
+	sock_type = type & ~SOCK_FLAGS_MASK;
+
 #if DEBUG
 	fprintf(stderr, "socket: domain %d, type %d, protocol %d\n",
 		domain, type, protocol);
@@ -37,15 +42,16 @@ int socket(int domain, int type, int protocol)
 		return -1;
 	}
 
-	if (domain == AF_UNIX && (type == SOCK_STREAM ||
-				type == SOCK_DGRAM || type == SOCK_SEQPACKET))
+	if (domain == AF_UNIX && (sock_type == SOCK_STREAM ||
+				  sock_type == SOCK_DGRAM ||
+				  sock_type == SOCK_SEQPACKET))
 		return _uds_socket(type, protocol);
 
-	if (domain == AF_INET && type == SOCK_STREAM)
-		return _tcp_socket(protocol);
+	if (domain == AF_INET && sock_type == SOCK_STREAM)
+		return _tcp_socket(type, protocol);
 
-	if (domain == AF_INET && type == SOCK_DGRAM)
-		return _udp_socket(protocol);
+	if (domain == AF_INET && sock_type == SOCK_DGRAM)
+		return _udp_socket(type, protocol);
 
 #if DEBUG
 	fprintf(stderr, "socket: nothing for domain %d, type %d, protocol %d\n",
@@ -55,9 +61,25 @@ int socket(int domain, int type, int protocol)
 	return -1;
 }
 
-static int _tcp_socket(int protocol)
+static void
+_socket_flags(int type, int *result)
 {
-	int fd;
+	/* Process socket flags */
+	if (type & SOCK_CLOEXEC) {
+		*result |= O_CLOEXEC;
+	}
+	if (type & SOCK_NONBLOCK) {
+		*result |= O_NONBLOCK;
+	}
+	if (type & SOCK_NOSIGPIPE) {
+		*result |= O_NOSIGPIPE;
+	}
+}
+
+static int _tcp_socket(int type, int protocol)
+{
+	int flags = O_RDWR;
+
 	if (protocol != 0 && protocol != IPPROTO_TCP)
 	{
 #if DEBUG
@@ -66,13 +88,15 @@ static int _tcp_socket(int protocol)
 		errno= EPROTONOSUPPORT;
 		return -1;
 	}
-	fd= open(TCP_DEVICE, O_RDWR);
-	return fd;
+
+	_socket_flags(type, &flags);
+
+	return open(TCP_DEVICE, flags);
 }
 
-static int _udp_socket(int protocol)
+static int _udp_socket(int type, int protocol)
 {
-	int r, fd, t_errno;
+	int r, fd, t_errno, flags = O_RDWR;
 	struct sockaddr_in sin;
 
 	if (protocol != 0 && protocol != IPPROTO_UDP)
@@ -83,7 +107,8 @@ static int _udp_socket(int protocol)
 		errno= EPROTONOSUPPORT;
 		return -1;
 	}
-	fd= open(UDP_DEVICE, O_RDWR);
+	_socket_flags(type, &flags);
+	fd= open(UDP_DEVICE, flags);
 	if (fd == -1)
 		return fd;
 
@@ -104,7 +129,7 @@ static int _udp_socket(int protocol)
 
 static int _uds_socket(int type, int protocol)
 {
-	int fd, r;
+	int fd, r, flags = O_RDWR, sock_type;
 	if (protocol != 0)
 	{
 #if DEBUG
@@ -114,7 +139,8 @@ static int _uds_socket(int type, int protocol)
 		return -1;
 	}
 
-	fd= open(UDS_DEVICE, O_RDWR);
+	_socket_flags(type, &flags);
+	fd= open(UDS_DEVICE, flags);
 	if (fd == -1) {
 		return fd;
 	}
@@ -122,7 +148,8 @@ static int _uds_socket(int type, int protocol)
 	/* set the type for the socket via ioctl (SOCK_DGRAM, 
 	 * SOCK_STREAM, SOCK_SEQPACKET, etc)
 	 */
-	r= ioctl(fd, NWIOSUDSTYPE, &type);
+	sock_type = type & ~SOCK_FLAGS_MASK;
+	r= ioctl(fd, NWIOSUDSTYPE, &sock_type);
 	if (r == -1) {
 		int ioctl_errno;
 
