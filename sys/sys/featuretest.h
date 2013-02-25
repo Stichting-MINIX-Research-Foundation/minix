@@ -69,6 +69,12 @@
 #define _NETBSD_SOURCE 1
 #endif
 
+/* Compatibility for older version of autotools. */
+#if defined(_MINIX)
+#undef _MINIX
+#define _NETBSD_SOURCE 1
+#endif
+
 /* Never define _REENTRANT on Minix */
 
 #ifndef __minix
