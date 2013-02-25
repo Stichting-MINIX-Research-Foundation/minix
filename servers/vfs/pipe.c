@@ -34,18 +34,55 @@
 #include "vnode.h"
 #include "vmnt.h"
 
+static int create_pipe(int fil_des[2], int flags);
 
 /*===========================================================================*
  *				do_pipe					     *
  *===========================================================================*/
 int do_pipe()
 {
-/* Perform the pipe(fil_des) system call. */
+/* Perform the pipe(fil_des[2]) system call. */
 
+  int r;
+  int fil_des[2];		/* reply goes here */
+
+  r = create_pipe(fil_des, 0 /* no flags */);
+  if (r == OK) {
+	m_out.reply_i1 = fil_des[0];
+	m_out.reply_i2 = fil_des[1];
+  }
+
+  return r;
+}
+
+/*===========================================================================*
+ *				do_pipe2				     *
+ *===========================================================================*/
+int do_pipe2()
+{
+/* Perform the pipe2(fil_des[2], flags) system call. */
+  int r, flags;
+  int fil_des[2];		/* reply goes here */
+
+  flags = job_m_in.pipe_flags;
+
+  r = create_pipe(fil_des, flags);
+  if (r == OK) {
+	m_out.reply_i1 = fil_des[0];
+	m_out.reply_i2 = fil_des[1];
+  }
+
+  return r;
+}
+
+/*===========================================================================*
+ *				create_pipe				     *
+ *===========================================================================*/
+static int create_pipe(int fil_des[2], int flags)
+{
   register struct fproc *rfp;
   int r;
   struct filp *fil_ptr0, *fil_ptr1;
-  int fil_des[2];		/* reply goes here */
   struct vnode *vp;
   struct vmnt *vmp;
   struct node_details res;
@@ -119,11 +156,12 @@ int do_pipe()
   fil_ptr0->filp_vno = vp;
   dup_vnode(vp);
   fil_ptr1->filp_vno = vp;
-  fil_ptr0->filp_flags = O_RDONLY;
-  fil_ptr1->filp_flags = O_WRONLY;
-
-  m_out.reply_i1 = fil_des[0];
-  m_out.reply_i2 = fil_des[1];
+  fil_ptr0->filp_flags = O_RDONLY | (flags & ~O_ACCMODE);
+  fil_ptr1->filp_flags = O_WRONLY | (flags & ~O_ACCMODE);
+  if (flags & O_CLOEXEC) {
+	FD_SET(fil_des[0], &rfp->fp_cloexec_set);
+	FD_SET(fil_des[1], &rfp->fp_cloexec_set);
+  }
 
   unlock_filps(fil_ptr0, fil_ptr1);
   unlock_vmnt(vmp);

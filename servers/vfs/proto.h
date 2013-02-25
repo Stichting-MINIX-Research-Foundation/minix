@@ -184,6 +184,7 @@ int do_check_perms(void);
 
 /* pipe.c */
 int do_pipe(void);
+int do_pipe2(void);
 int map_vnode(struct vnode *vp, endpoint_t fs_e);
 void unpause(endpoint_t proc_e);
 int pipe_check(struct filp *filp, int rw_flag, int oflags, int bytes,

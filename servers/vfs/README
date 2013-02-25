@@ -538,7 +538,7 @@ the filp, the vnode remains locked, the soft lock is removed, and the filp
 mutex is released. Note that this scheme does not violate the locking order;
 the vnode is (already) locked before the filp.
 
-A similar problem arises with do_pipe. In this case we obtain a new vnode
+A similar problem arises with create_pipe. In this case we obtain a new vnode
 object, lock it, and obtain two new, locked, filp objects. If everything works
 out and the filp objects are linked to the same vnode, we run into trouble
 when unlocking both filps. The first filp being unlocked would work; the
