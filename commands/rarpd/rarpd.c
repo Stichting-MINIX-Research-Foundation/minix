@@ -40,10 +40,8 @@ Changed:	Dec 11, 2000 by Kees J. Bot
 #define MAX_RARP_RETRIES	5
 #define RARP_TIMEOUT		5
 
-#ifdef __NBSD_LIBC
 #undef HTONS
 #define HTONS htons
-#endif
 
 typedef struct rarp46
 {

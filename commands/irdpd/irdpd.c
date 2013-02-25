@@ -229,11 +229,7 @@ void time_functions(void)
 		icmp_hdr= (icmp_hdr_t *) (ip_hdr + 1);
 
 		ip_hdr->ih_vers_ihl= 0x45;
-#ifdef __NBSD_LIBC
 		ip_hdr->ih_dst= htonl(0xFFFFFFFFL);
-#else
-		ip_hdr->ih_dst= HTONL(0xFFFFFFFFL);
-#endif
 		icmp_hdr->ih_type= ICMP_TYPE_ROUTE_SOL;
 		icmp_hdr->ih_code= 0;
 		icmp_hdr->ih_chksum= 0;
@@ -256,11 +252,7 @@ void time_functions(void)
 		 * broadcast them (to keep bad hosts up.)
 		 */
 
-#ifdef __NBSD_LIBC
 		advertize(bcast ? htonl(0xFFFFFFFFL) : htonl(0x7F000001L));
-#else
-		advertize(bcast ? HTONL(0xFFFFFFFFL) : HTONL(0x7F000001L));
-#endif
 		next_advert= now + MaxAdvertisementInterval;
 #if !__minix_vmd
 		/* Make sure we are listening to RIP now. */
@@ -577,11 +569,7 @@ int main(int argc, char **argv)
 	ipopt.nwio_ttl= 1;
 	ipopt.nwio_df= 0;
 	ipopt.nwio_hdropt.iho_opt_siz= 0;
-#ifdef __NBSD_LIBC
 	ipopt.nwio_rem= htonl(0xFFFFFFFFL);
-#else
-	ipopt.nwio_rem= HTONL(0xFFFFFFFFL);
-#endif
 	ipopt.nwio_proto= IPPROTO_ICMP;
 
 	if (ioctl(irdp_fd, NWIOSIPOPT, &ipopt) < 0)

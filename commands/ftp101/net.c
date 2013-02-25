@@ -104,11 +104,7 @@ struct servent *servent;
 
    /* This HACK allows the server to establish data connections correctly */
    /* when using the loopback device to talk to ourselves */
-#ifdef __NBSD_LIBC
    if((hostip & ntohl(0xFF000000)) == inet_addr("127.0.0.0"))
-#else
-   if((hostip & NTOHL(0xFF000000)) == inet_addr("127.0.0.0"))
-#endif
 	hostip = myip;
 
    if((tcp_device = getenv("TCP_DEVICE")) == NULL)
@@ -227,11 +223,7 @@ int wasopen;
 #endif
 
    ripaddr = hostip;
-#ifdef __NBSD_LIBC
    rport = htons(2);
-#else
-   rport = HTONS(20);
-#endif
 
    /* here we set up a connection to listen on if not passive mode */
    /* otherwise we use this to connect for passive mode */

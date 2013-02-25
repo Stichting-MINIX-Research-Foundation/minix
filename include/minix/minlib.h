@@ -5,12 +5,6 @@
 
 /* Miscellaneous BSD. */
 char *itoa(int _n);
-#ifndef __NBSD_LIBC
-char *getpass(const char *_prompt);
-#ifdef __ACK__
-void swab(char *_from, char *_to, int _count);
-#endif
-#endif /* !_NBSD_LIBC */
 
 /* Miscellaneous MINIX. */
 void std_err(const char *_s);

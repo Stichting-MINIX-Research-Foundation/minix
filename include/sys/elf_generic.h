@@ -50,18 +50,11 @@
 #error "Unknown byte order"
 #endif
 
-#ifdef __NBSD_LIBC
 #define CONCAT(x,y)	__CONCAT(x,y)
 #define	__elfN(x)	CONCAT(CONCAT(CONCAT(elf,__ELF_WORD_SIZE),_),x)
 #define	__ElfN(x)	CONCAT(CONCAT(CONCAT(Elf,__ELF_WORD_SIZE),_),x)
 #define	__ELFN(x)	CONCAT(CONCAT(CONCAT(ELF,__ELF_WORD_SIZE),_),x)
 #define	__ElfType(x)	typedef __ElfN(x) __CONCAT(Elf_,x)
-#else
-#define	__elfN(x)	__CONCAT(__CONCAT(__CONCAT(elf,__ELF_WORD_SIZE),_),x)
-#define	__ElfN(x)	__CONCAT(__CONCAT(__CONCAT(Elf,__ELF_WORD_SIZE),_),x)
-#define	__ELFN(x)	__CONCAT(__CONCAT(__CONCAT(ELF,__ELF_WORD_SIZE),_),x)
-#define	__ElfType(x)	typedef __ElfN(x) __CONCAT(Elf_,x)
-#endif
 
 __ElfType(Addr);
 __ElfType(Half);

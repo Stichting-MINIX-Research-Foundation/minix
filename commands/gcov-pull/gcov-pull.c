@@ -9,9 +9,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#ifndef __NBSD_LIBC
-#include <alloca.h>
-#endif
 #include <string.h>
 #include <assert.h>
 #include <minix/gcov.h>

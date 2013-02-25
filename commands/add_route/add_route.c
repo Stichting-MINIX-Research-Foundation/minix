@@ -179,49 +179,28 @@ int main(int argc, char *argv[])
 		if (!(high_byte & 0x80))	/* class A or 0 */
 		{
 			if (destination)
-#ifdef __NBSD_LIBC
 				defaultmask= htonl(0xff000000);
-#else
-				defaultmask= HTONL(0xff000000);
-#endif
 
 		}
 		else if (!(high_byte & 0x40))	/* class B */
 		{
-#ifdef __NBSD_LIBC
 			defaultmask= htonl(0xffff0000);
-#else
-			defaultmask= HTONL(0xffff0000);
-#endif
 
 		}
 		else if (!(high_byte & 0x20))	/* class C */
 		{
-#ifdef __NBSD_LIBC
 			defaultmask= htonl(0xffffff00);
-#else
-			defaultmask= HTONL(0xffffff00);
-
-#endif
 		}
 		else				/* class D is multicast ... */
 		{
 			fprintf(stderr, "%s: Warning: Martian address '%s'\n",
 				prog_name, inet_ntoa(destination));
-#ifdef __NBSD_LIBC
 			defaultmask= htonl(0xffffffff);
-#else
-			defaultmask= HTONL(0xffffffff);
-#endif
 		}
 		if (destination & ~defaultmask)
 		{
 			/* host route */
-#ifdef __NBSD_LIBC
 			defaultmask= htonl(0xffffffff);
-#else
-			defaultmask= HTONL(0xffffffff);
-#endif
 		}
 		if (!cidr)
 			netmask= defaultmask;

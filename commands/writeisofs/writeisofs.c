@@ -21,12 +21,6 @@
 extern char *optarg;
 extern int optind;
 
-#ifndef __NBSD_LIBC
-typedef unsigned char u_int8_t;
-typedef unsigned short int u_int16_t;
-typedef unsigned long int u_int32_t;
-#endif
-
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif

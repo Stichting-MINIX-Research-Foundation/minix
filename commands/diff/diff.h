@@ -31,9 +31,7 @@
  *	@(#)diff.h	8.1 (Berkeley) 6/6/93
  */
 
-#ifdef __NBSD_LIBC
 #include <minix/config.h>
-#endif
 #include <sys/types.h>
 #include <regex.h>
 

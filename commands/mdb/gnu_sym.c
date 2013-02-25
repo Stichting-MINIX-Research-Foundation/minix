@@ -13,11 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#ifdef __NBSD_LIBC
 #include <compat/a.out.h>
-#else
-#include <minix/a.out.h>
-#endif
 #include "proto.h"
 
 #define NN_UNDF 0

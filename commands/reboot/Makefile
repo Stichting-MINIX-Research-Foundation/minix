@@ -12,6 +12,4 @@ SYMLINKS+=	${BINDIR}/reboot /usr/bin/reboot
 MAN.shutdown=
 MAN.halt=
 
-CPPFLAGS+= -D__NBSD_LIBC
-
 .include <bsd.prog.mk>

@@ -100,22 +100,14 @@ int pencode(char *s)
   for (save = s; *s && *s != '.'; ++s);
   if (*s) {
 	*s = '\0';
-#ifdef __NBSD_LIBC
 	fac = decode(save, facilitynames);
-#else
-	fac = decode(save, FacNames);
-#endif
 	if (fac < 0) bailout("unknown facility name:", save);
 	*s++ = '.';
   } else {
 	fac = 0;
 	s = save;
   }
-#ifdef __NBSD_LIBC
   lev = decode(s, prioritynames);
-#else
-  lev = decode(s, PriNames);
-#endif
   if (lev < 0) bailout("unknown priority name:", save);
   return((lev & LOG_PRIMASK) | (fac & LOG_FACMASK));
 }

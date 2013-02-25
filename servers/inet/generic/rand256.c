@@ -6,11 +6,7 @@ Created:	Oct 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 Generate 256-bit random numbers 
 */
 
-#ifdef __NBSD_LIBC
 #include <sys/sha2.h>
-#else
-#include <minix/sha2.h>
-#endif
 #include "inet.h"
 #include "rand256.h"
 
