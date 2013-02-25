@@ -64,12 +64,7 @@ extern int h_errno;
 
 FILE *filePtr;
 
-#ifdef __NBSD_LIBC
 static struct __res_state orig;
-#else
-struct state orig;
-extern struct state _res;
-#endif
 static u8_t *cname = NULL;
 int getclass = C_IN;
 int gettype, getdeftype = T_A;
@@ -104,11 +99,7 @@ main(c, v)
 	char **v;
 {
 	char *domain;
-#ifdef __NBSD_LIBC
 	struct in_addr addr;
-#else
-	ipaddr_t addr;
-#endif
 	register struct hostent *hp;
 	register char *s, *p;
 	register int inverse = 0;
@@ -192,33 +183,17 @@ main(c, v)
 		    hperror(h_errno);
 		    exit(1);
 		  }
-#ifdef __NBSD_LIBC
 		  memcpy(&_res.nsaddr.sin_addr, hp->h_addr, NS_INADDRSZ);
-#else
-		  _res.nsaddr= *(ipaddr_t *)hp->h_addr;
-#endif
 		  printf("Using domain server:\n");
 		  printanswer(hp);
 		}
 		else {
-#ifdef __NBSD_LIBC
 		  _res.nsaddr.sin_family = AF_INET;
 		  _res.nsaddr.sin_addr = addr;
 		  _res.nsaddr.sin_port = htons(NAMESERVER_PORT);
 		  printf("Using domain server %s:\n",
 		         inet_ntoa(_res.nsaddr.sin_addr));
 
-#else
-		  _res.nsaddr_list[0]= addr;
-		  _res.nsport_list[0]= htons(NAMESERVER_PORT);
-		  printf("Using domain server %s",
-			 inet_ntoa(_res.nsaddr));
-		  if (p != NULL) {
-		    printf(" on port %d", atoi(p));
-		    _res.nsport_list[0]= htons(atoi(p));
-		  }
-		  printf(":\n");
-#endif
 		}
 	      }
 	domain = v[1];
@@ -350,21 +325,12 @@ printanswer(hp)
 	register struct hostent *hp;
 {
 	register char **cp;
-#ifdef __NBSD_LIBC
 	struct in_addr **hptr;
-#else
-	register ipaddr_t **hptr;
-#endif
 
 	printf("Name: %s\n", hp->h_name);
 	printf("Address:");
-#ifdef __NBSD_LIBC
 	for (hptr = (struct in_addr **)hp->h_addr_list; *hptr; hptr++)
 	  printf(" %s", inet_ntoa(**hptr));
-#else
-	for (hptr = (ipaddr_t **)hp->h_addr_list; *hptr; hptr++)
-	  printf(" %s", inet_ntoa(*(ipaddr_t *)*hptr));
-#endif
 	printf("\nAliases:");
 	for (cp = hp->h_aliases; cp && *cp && **cp; cp++)
 		printf(" %s", *cp);
@@ -519,37 +485,14 @@ printinfo(answer, eom, filter, isls)
 	arcount = ntohs(hp->dh_arcount);
 	if (_res.options & RES_DEBUG || (verbose && isls == 0))
 		printf("rcode = %d (%s), ancount=%d\n", 
-#ifdef __NBSD_LIBC
 		       hp->rcode,
 		       DecodeError(hp->rcode),
-#else
-		       hp->dh_flag2 & DHF_RCODE,
-		       DecodeError(hp->dh_flag2 & DHF_RCODE),
-#endif
 		       ancount);
-	if (
-#ifdef __NBSD_LIBC
-	    hp->rcode != NOERROR  ||
-#else
-	    hp->dh_flag2 & DHF_RCODE != NOERROR ||
-#endif
-	    (ancount+nscount+arcount) == 0) {
-		switch (
-#ifdef __NBSD_LIBC
-			hp->rcode
-#else
-			hp->dh_flag2 & DHF_RCODE
-#endif
-						) {
+	if (hp->rcode != NOERROR || (ancount+nscount+arcount) == 0) {
+		switch (hp->rcode) {
 			case NXDOMAIN:
 				/* Check if it's an authoritive answer */
-				if (
-#ifdef __NBSD_LIBC
-				    hp->aa
-#else
-				    hp->dh_flag1 & DHF_AA
-#endif
-							 ) {
+				if (hp->aa) {
 					h_errno = HOST_NOT_FOUND;
 					return(0);
 				} else {
@@ -592,13 +535,7 @@ printinfo(answer, eom, filter, isls)
 			cp += dn_skipname((u8_t *)cp,(u8_t *)eom) + QFIXEDSZ;
 	}
 	if (ancount) {
-	  if (!
-#ifdef __NBSD_LIBC
-		hp->aa
-#else
-		(hp->dh_flag1 & DHF_AA)
-#endif
-					)
+	  if (!hp->aa)
 	    if (verbose && isls == 0)
 	      printf("The following answer is not authoritative:\n");
 	  while (--ancount >= 0 && cp && cp < eom) {
@@ -642,11 +579,7 @@ pr_rr(cp, msg, file, filter)
         int filter;
 {
 	int type, class, dlen, n, c, proto, ttl;
-#ifdef __NBSD_LIBC
 	struct in_addr inaddr;
-#else
-	ipaddr_t inaddr;
-#endif
 	u8_t *cp1;
 	struct protoent *protop;
 	struct servent *servp;
@@ -802,22 +735,6 @@ pr_rr(cp, msg, file, filter)
 		}
 		break;
 		/* Roy end */
-#ifndef __NBSD_LIBC
-	case T_UINFO:
-		if (doprint)
-		  fprintf(file,"%c%s", punc, cp);
-		cp += dlen;
-		break;
-
-	case T_UID:
-	case T_GID:
-		if (dlen == 4) {
-			if (doprint)
-			  fprintf(file,"%c%ld", punc, _getlong(cp));
-			cp += sizeof(int);
-		}
-		break;
-#endif
 	case T_WKS:
 		if (dlen < sizeof(u_long) + 1)
 			break;
@@ -919,14 +836,6 @@ pr_type(type)
 		return("MAILA");
 	case T_ANY:		/* matches any type */
 		return("ANY");
-#ifndef __NBSD_LIBC
-	case T_UINFO:
-		return("UINFO");
-	case T_UID:
-		return("UID");
-	case T_GID:
-		return("GID");
-#endif
 	default:
 		return (sprintf(nbuf, "%d", type) == EOF ? NULL : nbuf);
 	}
@@ -1092,55 +1001,24 @@ ListHosts(namePtr, queryType)
 	}
 	if (_res.options & RES_DEBUG || verbose)
 		printf("rcode = %d (%s), ancount=%d\n", 
-#ifdef __NBSD_LIBC
 		       answer.qb1.rcode,
 		       DecodeError(answer.qb1.rcode),
-		       ntohs(answer.qb1.ancount)
-#else
-		       answer.qb1.dh_flag2 & DHF_RCODE,
-		       DecodeError(answer.qb1.dh_flag2 & DHF_RCODE),
-		       ntohs(answer.qb1.dh_ancount)
-#endif
-						   );
+		       ntohs(answer.qb1.ancount));
 
 /*
  * Analyze response to our NS lookup
  */
 
-#ifdef __NBSD_LIBC
 	nscount = ntohs(answer.qb1.ancount) +
 		  ntohs(answer.qb1.nscount) +
 		  ntohs(answer.qb1.arcount);
-#else
-	nscount = ntohs(answer.qb1.dh_ancount) + ntohs(answer.qb1.dh_nscount) +
-		  ntohs(answer.qb1.dh_arcount);
-#endif
 
 
-	if (
-#ifdef __NBSD_LIBC
-	    answer.qb1.rcode != NOERROR || nscount == 0
-#else
-	    answer.qb1.dh_flag2 & DHF_RCODE != NOERROR || nscount == 0
-#endif
-									) {
-		switch (
-#ifdef __NBSD_LIBC
-			answer.qb1.rcode
-#else
-			answer.qb1.dh_flag2 & DHF_RCODE
-#endif
-							) {
+	if (answer.qb1.rcode != NOERROR || nscount == 0) {
+	    switch (answer.qb1.rcode) {
 			case NXDOMAIN:
 				/* Check if it's an authoritive answer */
-				if (
-#ifdef __NBSD_LIBC
-				    answer.qb1.aa
-#else
-				    answer.qb1.dh_flag1 & DHF_AA
-#endif
-								) {
-
+				if (answer.qb1.aa) {
 					printf("No such domain\n");
 				} else {
 					printf("Unable to get information about domain -- try again later.\n");
@@ -1284,11 +1162,7 @@ again:
 		tcpconf.nwtc_flags= NWTC_EXCL | NWTC_LP_SEL | NWTC_SET_RA | 
 								NWTC_SET_RP;
 		tcpconf.nwtc_remaddr= *(ipaddr_t *)nsipaddr[thisns];
-#ifdef __NBSD_LIBC
 		tcpconf.nwtc_remport= _res.nsaddr.sin_port;
-#else
-		tcpconf.nwtc_remport= _res.nsport_list[0];
-#endif
 		result= ioctl(tcp_fd, NWIOSTCPCONF, &tcpconf);
 		if (result == -1)
 		{
@@ -1385,11 +1259,8 @@ again:
 		break;
 	    }
 
-#ifdef __NBSD_LIBC
 	    i = buf.qb1.rcode;
-#else
-	    i = buf.qb1.dh_flag2 & DHF_RCODE;
-#endif
+
 	    if (i != NOERROR || ntohs(buf.qb1.dh_ancount) == 0) {
 	      if ((thisns+1) < numnsaddr &&
 		  (i == SERVFAIL || i == NOTIMP || i == REFUSED)) {
@@ -1449,11 +1320,7 @@ again:
 		fprintf(stderr,"ListHosts: error receiving zone transfer:\n");
 		fprintf(stderr,
 	       "  result: %s, answers = %d, authority = %d, additional = %d\n", 
-#ifdef __NBSD_LIBC
 			resultcodes[headerPtr->rcode],
-#else
-		    	resultcodes[headerPtr->dh_flag2 & DHF_RCODE], 
-#endif
 		    	ntohs(headerPtr->dh_ancount), 
 			ntohs(headerPtr->dh_nscount), 
 			ntohs(headerPtr->dh_arcount));

@@ -2,9 +2,7 @@
 #include <minix/com.h>
 #include <minix/vfsif.h>
 #include <fcntl.h>
-#ifdef __NBSD_LIBC
 #include <stddef.h>
-#endif
 #include "buf.h"
 
 static char getdents_buf[GETDENTS_BUFSIZ];

@@ -3,9 +3,6 @@ SRCS=	mkfs.c
 BINDIR=	/sbin
 MAN=
 
-# LSC Adding this to activate the getline renaming macro
-CPPFLAGS+= -D__NBSD_LIBC
-
 .if ${HOST_OSTYPE:C/\-.*//:U} == "Minix" || !defined(HOSTPROGNAME)
 LDADD+= -lminlib -lcompat_minix
 .endif

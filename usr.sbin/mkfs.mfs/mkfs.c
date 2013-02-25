@@ -91,9 +91,7 @@ int extra_space_percent;
 
 FILE *proto;
 
-#if defined(__NBSD_LIBC) || !defined(__minix)
 #define getline _mkfs_getline
-#endif
 
 int main(int argc, char **argv);
 block_t sizeup(char *device);

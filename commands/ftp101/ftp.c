@@ -45,10 +45,8 @@ char *cmdargv[NUMARGS];
 int printreply = 1;
 char reply[1024];
 
-#ifdef __NBSD_LIBC
 /* Already declared in stdio.h */
 #define getline ftp_getline
-#endif
 
 static void makeargs(char *buff);
 int DOver(void);

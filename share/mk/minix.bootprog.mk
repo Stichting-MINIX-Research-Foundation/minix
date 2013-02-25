@@ -22,7 +22,4 @@ LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Gener
 # 3. Minimal C library
 LDADD+= -lminc
 
-# Some define still needed, hopefully will go away soon
-CPPFLAGS+=     -D__NBSD_LIBC
-
 .include <bsd.prog.mk>

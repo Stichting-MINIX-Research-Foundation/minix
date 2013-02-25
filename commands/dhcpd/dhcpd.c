@@ -39,11 +39,7 @@ static char *cachefile= PATH_DHCPCACHE;
 static int qflag;		/* True if printing cached DHCP data. */
 static int aflag, rflag;	/* True if adding or deleting pool addresses. */
 
-#ifdef __NBSD_LIBC
 #define BCAST_IP	htonl(0xFFFFFFFFUL)
-#else
-#define BCAST_IP	HTONL(0xFFFFFFFFUL)
-#endif
 
 /* We try to play with up to this many networks. */
 #define N_NETS		32
@@ -108,24 +104,13 @@ network_t *if2net(int n)
 static ipaddr_t defaultmask(ipaddr_t ip)
 {
     /* Compute netmask by the oldfashioned Class rules. */
-#ifdef __NBSD_LIBC
     if (B(&ip)[0] < 0x80) return htonl(0xFF000000UL);	/* Class A. */
     if (B(&ip)[0] < 0xC0) return htonl(0xFFFF0000UL);	/* Class B. */
     if (B(&ip)[0] < 0xE0) return htonl(0xFFFFFF00UL);	/* Class C. */
     return htonl(0xFFFFFFFFUL);  /* Multicast?  Shouldn't happen... */
-#else
-    if (B(&ip)[0] < 0x80) return HTONL(0xFF000000UL);	/* Class A. */
-    if (B(&ip)[0] < 0xC0) return HTONL(0xFFFF0000UL);	/* Class B. */
-    if (B(&ip)[0] < 0xE0) return HTONL(0xFFFFFF00UL);	/* Class C. */
-    return HTONL(0xFFFFFFFFUL);  /* Multicast?  Shouldn't happen... */
-#endif
 }
 
-#ifdef __NBSD_LIBC
 #define POOL_MAGIC	htonl(0x81F85D00UL)
-#else
-#define POOL_MAGIC	HTONL(0x81F85D00UL)
-#endif
 
 typedef struct pool {		/* Dynamic pool entry. */
 	u32_t		magic;		/* Pool file magic number. */

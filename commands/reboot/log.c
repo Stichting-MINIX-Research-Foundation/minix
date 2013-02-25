@@ -51,17 +51,9 @@ void write_log(char *wtmpfile)
   fd = open(wtmpfile,O_APPEND|O_WRONLY|O_CREAT,1);
   if (fd) {
     if (strcmp(prog,"reboot"))
-#ifdef __NBSD_LIBC
       strcpy (wtmp.ut_name, prog);
-#else
-      strcpy (wtmp.ut_user, prog);
-#endif
     else
-#ifdef __NBSD_LIBC
       strcpy (wtmp.ut_name, "shutdown"); /* last ... */
-#else
-      strcpy (wtmp.ut_user, "shutdown"); /* last ... */
-#endif
     strcpy (wtmp.ut_id, "~~");
     strcpy (wtmp.ut_line, "~");
     wtmp.ut_pid = 0;

@@ -1,5 +1,3 @@
-#ifdef __NBSD_LIBC
-#endif
 int env_parse(char *env, char *fmt, int field, long *param, long min,
 	long max);
 void env_panic(char *env);

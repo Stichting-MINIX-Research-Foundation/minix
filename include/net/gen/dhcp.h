@@ -32,11 +32,7 @@ typedef struct dhcp {
 #define DHCP_FLAGS_BCAST    0x8000U	/* Reply must be broadcast to client. */
 
 					/* "Magic" first four option bytes. */
-#ifdef __NBSD_LIBC
 #define DHCP_MAGIC	htonl(0x63825363UL)
-#else
-#define DHCP_MAGIC	HTONL(0x63825363UL)
-#endif
 
 /* DHCP common tags: */
 #define DHCP_TAG_NETMASK	 1	/* Netmask. */

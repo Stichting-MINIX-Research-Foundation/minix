@@ -4,12 +4,7 @@
 
 #define VERBOSE		0	/* display diagnostics */
 
-#ifdef __NBSD_LIBC
 #include <sys/ioc_net.h>
-#else
-#include <net/ioctl.h>
-#endif
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/select.h>
