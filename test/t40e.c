@@ -158,7 +158,7 @@ void do_child(int childno) {
 #endif
 
   /* Normally we'd zerofill sin_zero, but there is no such thing on Minix */
-#ifndef _MINIX
+#if !defined(__minix)
   memset(server.sin_zero, '\0', sizeof server.sin_zero);
 #endif
 
@@ -219,7 +219,7 @@ void do_child(int childno) {
 }
 
 void do_parent(void) {
-#ifndef _MINIX
+#if !defined(__minix)
   int yes = 1;
 #endif
   int fd_sock, fd_new, exitstatus;
@@ -242,12 +242,12 @@ void do_parent(void) {
   my_addr.sin_port = htons(MYPORT); /* Short, network byte order */
   my_addr.sin_addr.s_addr = INADDR_ANY;
   /* Normally we'd zerofill sin_zero, but there is no such thing on Minix */
-#ifndef _MINIX
+#if !defined(__minix)
   memset(my_addr.sin_zero, '\0', sizeof my_addr.sin_zero);
 #endif
   
   /* Reuse port number. Not implemented in Minix. */
-#ifndef _MINIX
+#if !defined(__minix)
   if(setsockopt(fd_sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0) {
     perror("Error setting port reuse option");
     exit(-1);

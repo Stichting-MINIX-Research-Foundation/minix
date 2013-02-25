@@ -1591,7 +1591,7 @@ void version()
 #ifdef vax
 	fprintf(stderr, "vax, ");
 #endif
-#ifdef _MINIX
+#ifdef __minix
 	fprintf(stderr, "MINIX, ");
 #endif
 #ifdef NO_UCHAR

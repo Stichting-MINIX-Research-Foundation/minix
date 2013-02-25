@@ -231,7 +231,7 @@ void test28b()
 	if (errno != ENOENT) e(38);	/* is gone */
   }
 #endif
-#ifdef _MINIX
+#if defined(__minix) && defined(_NETBSD_SOURCE)
   /* Some implementations might allow users to link directories. */
   if (!superuser) {
 	if (link("foo", "footoo") != -1) e(39);

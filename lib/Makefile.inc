@@ -1,5 +1,3 @@
-.if defined(NBSD_LIBC) && (${NBSD_LIBC} == "yes")
-CPPFLAGS+= -D_MINIX -D_NETBSD_SOURCE
-.else
-CPPFLAGS+= -D_MINIX -D_POSIX_SOURCE
-.endif
+#	$NetBSD: Makefile.inc,v 1.7 2012/03/21 05:39:21 matt Exp $
+
+#WARNS?=		5

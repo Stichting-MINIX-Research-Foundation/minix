@@ -16,30 +16,6 @@
  * that copyright notice.
  */
 
-#if _MINIX && !defined(__NBSD_LIBC)
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <net/hton.h>
-#include <net/netlib.h>
-#include <net/gen/in.h>
-#include <net/gen/inet.h>
-#include <net/gen/netdb.h>
-#include <net/gen/nameser.h>
-#include <net/gen/resolv.h>
-#include <net/gen/socket.h>
-#include <net/gen/tcp.h>
-#include <net/gen/tcp_io.h>
-
-#undef ERROR
-#else
 #include <stdio.h>
 #include <sys/types.h>
 #include <arpa/nameser.h>
@@ -60,7 +36,6 @@
 #include <net/gen/in.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
-#endif
 
 extern int h_errno;
 

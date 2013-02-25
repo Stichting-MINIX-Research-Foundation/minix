@@ -9,10 +9,10 @@
 #ifdef __NBSD_LIBC
 #include <sys/featuretest.h>	/* tell headers to include NetBSD stuff. */
 #else /* !__NBSD_LIBC */
-#define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
+#define _POSIX_SOURCE	1	/* tell headers to include POSIX stuff */
 #endif
 
-#define _MINIX             1	/* tell headers to include MINIX stuff */
+#define _NETBSD_SOURCE	1	/* tell headers to include MINIX stuff */
 
 /* The following are so basic, all the lib files get them automatically. */
 #include <minix/config.h>	/* must be first */

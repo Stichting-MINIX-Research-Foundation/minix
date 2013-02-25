@@ -2,10 +2,6 @@
 ttn.c
 */
 
-#ifndef _POSIX_SOURCE
-#define _POSIX_SOURCE 1
-#endif
-
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <assert.h>

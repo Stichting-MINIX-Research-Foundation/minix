@@ -166,7 +166,7 @@ int tcsetattr(int _filedes, int _opt_actions, const struct termios
 #define VDISCARD          13    /* cc_c[VDISCARD] (^O) */
 
 /* Extensions to baud rate settings. */
-#ifdef _MINIX
+#if defined(__minix) && defined(_NETBSD_SOURCE)
 #define B57600		0x0100	/* 57600 baud */
 #define B115200		0x0200	/* 115200 baud */
 #define B230400		0x0400	/* 230400 baud */
@@ -175,7 +175,7 @@ int tcsetattr(int _filedes, int _opt_actions, const struct termios
 #define B1843200	0x2000	/* 1843200 baud */
 #define B3000000	0x4000	/* 3000000 baud */
 #define B3686400	0x8000	/* 3686400 baud */
-#endif /* _MINIX */
+#endif /* defined(__minix) && defined(_NETBSD_SOURCE) */
 
 /* These are the default settings used by the kernel and by 'stty sane' */
 

@@ -1,5 +1,6 @@
-#define _SYSTEM
-#define _MINIX
+
+#define _SYSTEM		1
+
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>

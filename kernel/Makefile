@@ -19,7 +19,7 @@ LDFLAGS+= -T ${LINKERSCRIPT}
 LDFLAGS+= -nostdlib 
 CFLAGS += -fno-stack-protector
 
-CPPFLAGS+= -D_NETBSD_SOURCE -D_MINIX -D__kernel__ 
+CPPFLAGS+= -D__kernel__ 
 
 # kernel headers are always called through kernel/*.h
 CPPFLAGS+= -I${NETBSDSRCDIR}

@@ -3,10 +3,6 @@
  *	installboot 3.0 - Make a device bootable	Author: Kees J. Bot
  *								21 Dec 1991
  */
-
-#define _POSIX_SOURCE	1
-#define _MINIX		1
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

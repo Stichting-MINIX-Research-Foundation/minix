@@ -1,6 +1,6 @@
 # Makefile for libmthread
 
-CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE -Wall -Werror
+CPPFLAGS+= -O1 -Wall -Werror
 
 LIB=	mthread
 

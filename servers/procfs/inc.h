@@ -1,9 +1,7 @@
 #ifndef _PROCFS_INC_H
 #define _PROCFS_INC_H
 
-#define _POSIX_SOURCE      1
-#define _MINIX             1
-#define _SYSTEM            1
+#define _SYSTEM		1
 
 #include <minix/config.h>
 #include <limits.h>

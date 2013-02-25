@@ -118,7 +118,6 @@ __RCSID("$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 #include <sys/ioctl.h>
 
-#define _MINIX
 #include <err.h>
 #include <errno.h>
 #include <string.h>

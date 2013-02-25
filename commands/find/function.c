@@ -377,7 +377,7 @@ f_delete(PLAN *plan __unused, FTSENT *entry)
 		errx(1, "-delete: %s: relative path potentially not safe",
 			entry->fts_accpath);
 
-#ifndef _MINIX
+#if !defined(__minix)
 	/* Turn off user immutable bits if running as root */
 	if ((entry->fts_statp->st_flags & (UF_APPEND|UF_IMMUTABLE)) &&
 	    !(entry->fts_statp->st_flags & (SF_APPEND|SF_IMMUTABLE)) &&
@@ -857,7 +857,7 @@ c_false(char ***argvp, int isok)
 }
 
 
-#ifndef _MINIX
+#if !defined(__minix)
 /*
  * -flags [-]flags functions --
  */
@@ -955,7 +955,7 @@ c_fprint(char ***argvp, int isok)
  *
  *	True if the file is of a certain type.
  */
-#ifndef _MINIX
+#if !defined(__minix)
 int
 f_fstype(PLAN *plan, FTSENT *entry)
 {

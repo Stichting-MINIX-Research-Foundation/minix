@@ -115,7 +115,7 @@ typedef u32_t		big_nlink_t;
 typedef u32_t		big_uid_t;
 
 
-#ifdef _MINIX
+#ifdef _NETBSD_SOURCE
 /* some Minix specific types that do not conflict with posix */
 typedef uint32_t zone_t;      /* zone number */
 typedef uint32_t block_t;     /* block number */

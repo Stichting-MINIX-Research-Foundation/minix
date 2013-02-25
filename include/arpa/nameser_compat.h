@@ -133,13 +133,13 @@ typedef struct {
 	unsigned	arcount :16;	/*%< number of resource entries */
 } HEADER;
 
-#ifdef _MINIX
+#if defined(__minix) && defined(_NETBSD_SOURCE)
 #define dh_id id
 #define dh_qdcount qdcount
 #define dh_ancount ancount
 #define dh_nscount nscount
 #define dh_arcount arcount
-#endif
+#endif /* defined(__minix) && defined(_NETBSD_SOURCE) */
 
 #define PACKETSZ	NS_PACKETSZ
 #define MAXDNAME	NS_MAXDNAME

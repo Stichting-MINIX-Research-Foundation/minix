@@ -12,10 +12,10 @@ SRCS=	brac.c ch.c charset.c cmdbuf.c command.c decode.c edit.c \
 	linenum.c lsystem.c main.c mark.c optfunc.c option.c opttbl.c \
 	os.c output.c position.c prompt.c screen.c search.c signal.c \
 	tags.c ttyin.c version.c
-.if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
+
 LDADD+=	-ltermcap
 DPADD+=	${LIBTERM}
-.endif
+
 MLINKS=	less.1 more.1 less.1 page.1
 LINKS=	${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 
