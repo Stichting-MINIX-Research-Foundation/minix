@@ -55,6 +55,7 @@
 #define IOCTL		  54
 #define FCNTL		  55
 #define FS_READY	  57
+#define PIPE2		  58
 #define EXEC		  59
 #define UMASK		  60 
 #define CHROOT		  61 

@@ -31,6 +31,7 @@
 #define offset_high   m2_l2
 #define ctl_req       m4_l1
 #define mount_flags   m1_i3
+#define pipe_flags    m1_i3
 #define request       m1_i2
 #define sig	      m1_i2
 #define endpt1	      m1_i1

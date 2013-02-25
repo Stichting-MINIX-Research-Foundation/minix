@@ -57,6 +57,7 @@
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
 #define pipe		_pipe
+#define pipe2		_pipe2
 #define sbrk		_sbrk
 #define strerror_r	_strerror_r
 #define strlcat		_strlcat
