@@ -4,8 +4,6 @@ add_route.c
 Created August 7, 1991 by Philip Homburg
 */
 
-#define _POSIX_C_SOURCE	2
-
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <errno.h>

@@ -1,6 +1,6 @@
-#include <sys/cdefs.h>
 #define _SYSTEM	1
-#define _MINIX 1
+
+#include <sys/cdefs.h>
 
 #include <minix/callnr.h>
 #include <minix/com.h>

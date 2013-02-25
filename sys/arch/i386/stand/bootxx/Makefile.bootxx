@@ -116,7 +116,6 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .if defined(__MINIX)
 SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
 CPPFLAGS+= -isystem ${DESTDIR}/usr/include
-CPPFLAGS+= -D_MINIX
 AFLAGS+=       -Wa,--divide
 .endif
 .include "${S}/lib/libsa/Makefile.inc"

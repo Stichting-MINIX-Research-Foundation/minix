@@ -43,7 +43,7 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
  
  #define STRING_SIZE 200
  
-+#ifdef _MINIX
++#if defined(__minix)
 +#define block_t gcc_block_t
 +#endif
 +

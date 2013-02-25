@@ -1,5 +1,3 @@
-#define _MINIX
-#define _POSIX_SOURCE
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>

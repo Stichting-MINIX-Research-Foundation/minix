@@ -20,7 +20,6 @@ static char sccsid[] = "@(#)rcp.c 1.1 87/12/21 SMI"; /* from UCB 5.3 6/8/85"*/
  * rcp
  */
 
-#undef _MINIX
 #define NAMESERVER
 
 #include <ctype.h>

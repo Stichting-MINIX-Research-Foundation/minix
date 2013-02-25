@@ -1,8 +1,6 @@
 /* buf.c - by Alen Stojanov and David van Moolenbroek, taken from procfs */
-#define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
-#define _MINIX             1	/* tell headers to include MINIX stuff */
-#define _SYSTEM            1	/* tell headers that this is the kernel */
-#define DEVMAN_SERVER      1
+#define _SYSTEM		1	/* tell headers that this is the kernel */
+#define DEVMAN_SERVER	1
 
 #include <minix/config.h>
 #include <errno.h>

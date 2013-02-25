@@ -77,7 +77,7 @@
 #define SIGTTIN           22	/* background process wants to read */
 #define SIGTTOU           23	/* background process wants to write */
 
-#ifdef _MINIX
+#if defined(__minix) && defined(_NETBSD_SOURCE)
 #define SIGIOT             SIGABRT /* for people who speak PDP-11 */
 
 /* MINIX specific signals. These signals are not used by user proceses, 
@@ -110,7 +110,7 @@
     || (sig == SIGKILL || sig == SIGPIPE))
 #define SIGS_IS_STACKTRACE(sig) (SIGS_IS_LETHAL(sig) && sig != SIGABRT)
 
-#endif
+#endif /* defined(__minix) && deinfed(_NETBSD_SOURCE) */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>

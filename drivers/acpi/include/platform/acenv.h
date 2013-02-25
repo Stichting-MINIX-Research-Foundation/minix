@@ -190,7 +190,7 @@
  *
  *****************************************************************************/
 
-#if defined(_MINIX) || defined(__minix)
+#if defined(__minix)
 #include "acminix.h"
 
 #elif defined(_LINUX) || defined(__linux__)

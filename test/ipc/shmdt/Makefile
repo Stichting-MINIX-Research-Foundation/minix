@@ -1,7 +1,7 @@
 # Makefile for the tests
 
 CC = exec cc
-CFLAGS = -Wall -D_MINIX -D_POSIX_SOURCE -D_NETBSD_SOURCE=1 -I../lib/
+CFLAGS = -Wall -I../lib/
 
 PROG =	shmdt01 shmdt02
 

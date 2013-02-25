@@ -3,8 +3,6 @@ SRCS=	mkfs.c
 BINDIR=	/sbin
 MAN=
 
-CPPFLAGS+= -D_MINIX
-
 # LSC Adding this to activate the getline renaming macro
 CPPFLAGS+= -D__NBSD_LIBC
 

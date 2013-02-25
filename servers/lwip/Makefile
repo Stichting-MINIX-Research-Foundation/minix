@@ -17,7 +17,7 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS+=  -I${.CURDIR} -D_MINIX -D_SYSTEM
+CPPFLAGS+=  -I${.CURDIR} -D_SYSTEM
 CPPFLAGS+= -I${.CURDIR}/../../lib/liblwip/include
 
 CFLAGS += -Wextra -std=c99
