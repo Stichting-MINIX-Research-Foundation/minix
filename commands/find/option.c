@@ -70,7 +70,7 @@ static OPTION const options[] = {
 	{ "-false",	N_FALSE,	c_false,	0 },
 	{ "-follow",	N_FOLLOW,	c_follow,	0 },
 	{ "-fprint",	N_FPRINT,	c_fprint,	1 },
-#ifndef _MINIX
+#if !defined(__minix)
 	{ "-flags",	N_FLAGS,	c_flags,	1 },
 	{ "-fstype",	N_FSTYPE,	c_fstype,	1 },
 #endif

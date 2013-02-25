@@ -1,8 +1,8 @@
 
-#define _SYSTEM            1    /* get OK and negative error codes */
-#define _MINIX             1	/* tell headers to include MINIX stuff */
+#define _SYSTEM		1	/* get OK and negative error codes */
+#define _NETBSD_SOURCE	1	/* tell headers to include MINIX stuff */
 
-#define VERBOSE		   0	/* display diagnostics */
+#define VERBOSE		0	/* display diagnostics */
 
 #ifdef __NBSD_LIBC
 #include <sys/ioc_net.h>

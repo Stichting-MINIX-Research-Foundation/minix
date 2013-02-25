@@ -1,7 +1,7 @@
 # Makefile for the tests
 
 CC = exec cc
-CFLAGS = -Wall -D_MINIX -D_POSIX_SOURCE -D_NETBSD_SOURCE=1 -I../lib/
+CFLAGS = -Wall -I../lib/
 
 PROG =	semget01 semget02 semget03 semget05 semget06
 

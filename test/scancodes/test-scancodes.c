@@ -1,5 +1,3 @@
-#define _MINIX
-
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>

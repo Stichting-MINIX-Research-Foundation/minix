@@ -4,8 +4,7 @@
  *    Jul 13, 2004	by Jorrit N. Herder 
  */
 
-#define _SYSTEM            1    /* get OK and negative error codes */
-#define _MINIX             1	/* tell headers to include MINIX stuff */
+#define _SYSTEM		1	/* get OK and negative error codes */
 
 #include <sys/types.h>
 #include <limits.h>

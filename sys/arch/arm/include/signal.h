@@ -50,10 +50,10 @@ struct sigcontext {
 #define sc_pc sc_regs.pc
 #define sc_psr sc_regs.psr
 
-#ifdef _MINIX
+#if defined(__minix) && defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int sigreturn(struct sigcontext *_scp);
 __END_DECLS
-#endif /* _MINIX */
+#endif /* defined(__minix) && defined(_NETBSD_SOURCE) */
 
 #endif	/* !_ARM_SIGNAL_H_ */

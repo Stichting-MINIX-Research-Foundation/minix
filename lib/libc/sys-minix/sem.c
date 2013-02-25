@@ -1,6 +1,5 @@
 #define __USE_MISC
 #define _SYSTEM	1
-#define _MINIX 1
 
 #include <sys/cdefs.h>
 #include <lib.h>

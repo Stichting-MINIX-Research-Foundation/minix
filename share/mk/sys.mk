@@ -12,8 +12,6 @@ CFLAGS+= -DNDEBUG
 
 unix?=		We run MINIX.
 
-NBSD_LIBC=	yes
-
 DBG?=	-O
 CPP?=	/usr/lib/cpp
 .endif # defined(__MINIX)

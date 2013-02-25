@@ -323,7 +323,7 @@ int	unlinkat(int, const char *, int);
  */
 #ifdef __minix
 int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
-#if defined(_MINIX)
+#if defined(_NETBSD_SOURCE)
 #include <minix/type.h>
 
 int getprocnr(void);
@@ -337,7 +337,7 @@ gid_t getngid(endpoint_t proc_ep);
 int getnucred(endpoint_t proc_ep, struct ucred *ucred);
 ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
 ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
-#endif /* __MINIX */
+#endif /* defined(_NETBSD_SOURCE) */
 #endif /* __minix */
 
 #if defined(_NETBSD_SOURCE)

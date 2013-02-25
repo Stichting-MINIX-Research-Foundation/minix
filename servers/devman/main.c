@@ -1,6 +1,4 @@
-#define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
-#define _MINIX             1	/* tell headers to include MINIX stuff */
-#define _SYSTEM            1	/* tell headers that this is the kernel */
+#define _SYSTEM		1	/* tell headers that this is the kernel */
 
 #include <minix/config.h>
 #include <errno.h>

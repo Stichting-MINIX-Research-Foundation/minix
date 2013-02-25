@@ -1,5 +1,4 @@
-#define _MINIX 1
-#define _SYSTEM 1
+#define _SYSTEM		1
 
 #include <minix/config.h>
 #include <assert.h> 

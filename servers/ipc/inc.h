@@ -1,6 +1,4 @@
-#define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
-#define _MINIX             1	/* tell headers to include MINIX stuff */
-#define _SYSTEM            1    /* get OK and negative error codes */
+#define _SYSTEM		1	/* get OK and negative error codes */
 
 #include <minix/callnr.h>
 #include <minix/com.h>

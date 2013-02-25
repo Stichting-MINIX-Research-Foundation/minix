@@ -1,7 +1,5 @@
 
-#define _POSIX_SOURCE      1
-#define _MINIX             1
-#define _SYSTEM            1
+#define _SYSTEM		1
 
 #include <minix/callnr.h>
 #include <minix/com.h>

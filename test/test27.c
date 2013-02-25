@@ -123,7 +123,7 @@ void test27a()
   /* Check special file. */
   if (stat("/dev/tty", &st1) != 0) e(40);
   if (!S_ISCHR(st1.st_mode)) e(41);
-#ifdef _MINIX
+#if defined(__minix) && defined(_NETBSD_SOURCE)
   if (stat("/dev/ram", &st1) != 0) e(42);
   if (!S_ISBLK(st1.st_mode)) e(43);
 #endif

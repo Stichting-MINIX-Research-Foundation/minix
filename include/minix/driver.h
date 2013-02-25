@@ -3,9 +3,9 @@
 
 /* Types and constants shared between block and character drivers. */
 
-#define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
-#define _MINIX             1	/* tell headers to include MINIX stuff */
-#define _SYSTEM		   1	/* get negative error number in <errno.h> */
+#define _POSIX_SOURCE	1	/* tell headers to include POSIX stuff */
+#define _NETBSD_SOURCE	1	/* tell headers to include MINIX stuff */
+#define _SYSTEM		1	/* get negative error number in <errno.h> */
 
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* MUST be first */
@@ -28,8 +28,8 @@
 
 /* Base and size of a partition in bytes. */
 struct device {
-  u64_t dv_base;
-  u64_t dv_size;
+	u64_t dv_base;
+	u64_t dv_size;
 };
 
 /* Generic receive function for all drivers. */

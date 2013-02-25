@@ -1,9 +1,7 @@
 
 /* This file contains some utility routines for VM.  */
 
-#define _SYSTEM 1
-
-#define _MINIX 1	/* To get the brk() prototype (as _brk()). */
+#define _SYSTEM		1
 
 #include <minix/callnr.h>
 #include <minix/com.h>

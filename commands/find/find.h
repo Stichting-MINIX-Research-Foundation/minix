@@ -42,7 +42,7 @@ enum ntype {
 	N_AMIN, N_ANEWER, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CNEWER, N_CTIME,
 	N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXIT, N_EXPR, N_FALSE,
 	N_FOLLOW, N_FPRINT,
-#ifndef _MINIX
+#if !defined(__minix)
 	N_FSTYPE,
 	N_FLAGS,
 #endif

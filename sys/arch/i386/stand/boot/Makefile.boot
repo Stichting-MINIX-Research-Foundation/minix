@@ -38,7 +38,6 @@ CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 .if defined(__MINIX)
 CPPFLAGS+=-isystem ${DESTDIR}/usr/include
-CPPFLAGS+= -D_MINIX
 .endif # defined(__MINIX)
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os

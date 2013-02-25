@@ -1,7 +1,7 @@
 # Makefile for the tests
 
 CC = exec cc
-CFLAGS = -Wall -D_MINIX -D_POSIX_SOURCE
+CFLAGS = -Wall
 
 PROG =	speed test00 test01 test02 test03 test04_srv test04_cli test05_srv \
         test05_cli test06_srv test06_cli test07_srv test07_cli test08_srv \

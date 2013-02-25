@@ -10,7 +10,6 @@ Copyright 1995 Philip Homburg
 */
 
 #define _MINIX_SOURCE 1
-#define _POSIX_SOURCE 1
 
 #include <stdlib.h>
 #include <unistd.h>

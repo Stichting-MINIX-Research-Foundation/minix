@@ -1,5 +1,5 @@
 DBG=-O0 -g
-CFLAGS+= -Wall -Werror -D_NETBSD_SOURCE -fno-builtin -D_MINIX -D_POSIX_SOURCE
+CFLAGS+= -Wall -Werror -fno-builtin
 LDADD+= -lm -lcompat_minix
 
 # Tests have no manpages

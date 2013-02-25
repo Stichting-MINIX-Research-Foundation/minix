@@ -48,7 +48,7 @@ static char sccsid[] = "@(#)rsh.c	5.24 (Berkeley) 7/1/91";
  * $Header$
  */
 
-#if _MINIX
+#if defined(__minix)
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -118,7 +118,7 @@ main(argc, argv)
 	int argoff, asrsh, ch, dflag, nflag, one, pid, rem, uid;
 	register char *p;
 	char *args, *host, *user;
-#if !_MINIX
+#if !defined(__minix)
 	char *copyargs();
 	void sendsig();
 #endif
@@ -294,7 +294,7 @@ try_connect:
 		(void)fprintf(stderr, "rsh: can't establish stderr.\n");
 		exit(1);
 	}
-#if !_MINIX
+#if !defined(__minix)
 	if (dflag) {
 		if (setsockopt(rem, SOL_SOCKET, SO_DEBUG, &one,
 		    sizeof(one)) < 0)
@@ -308,7 +308,7 @@ try_connect:
 #endif
 
 	(void)setuid(uid);
-#if !_MINIX
+#if !defined(__minix)
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGTERM));
 #endif
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -333,7 +333,7 @@ try_connect:
 #endif
 #endif
 	{
-#if _MINIX
+#if defined(__minix)
 		;
 #else
 		(void)ioctl(rfd2, FIONBIO, &one);
@@ -361,11 +361,11 @@ talk(nflag, omask, pid, rem)
 {
 	register int cc, wc;
 	register char *bp;
-#if !_MINIX
+#if !defined(__minix)
 	int readfrom, ready, rembits;
 #endif
 	char buf[BUFSIZ];
-#if _MINIX
+#if defined(__minix)
 	int pid1;
 #endif
 
@@ -378,7 +378,7 @@ reread:		errno = 0;
 		bp = buf;
 
 rewrite:
-#if !_MINIX
+#if !defined(__minix)
 		rembits = 1 << rem;
 		if (select(16, 0, &rembits, 0, 0) < 0) {
 			if (errno != EINTR) {
@@ -400,7 +400,7 @@ rewrite:
 #endif
 			wc = write(rem, bp, cc);
 		if (wc < 0) {
-#if !_MINIX
+#if !defined(__minix)
 			if (errno == EWOULDBLOCK)
 				goto rewrite;
 #endif
@@ -412,7 +412,7 @@ rewrite:
 			goto reread;
 		goto rewrite;
 done:
-#if _MINIX
+#if defined(__minix)
 		ioctl(rem, NWIOTCPSHUTDOWN, NULL);
 #else
 		(void)shutdown(rem, 1);
@@ -420,7 +420,7 @@ done:
 		exit(0);
 	}
 
-#if _MINIX
+#if defined(__minix)
 	pid1= fork();
 	if (pid1 == -1)
 	{
@@ -533,7 +533,7 @@ copyargs(argv)
 	register int cc;
 	register char **ap, *p;
 	char *args;
-#if !_MINIX
+#if !defined(__minix)
 	char *malloc();
 #endif
 

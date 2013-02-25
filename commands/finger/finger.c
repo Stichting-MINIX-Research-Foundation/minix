@@ -120,7 +120,7 @@ int lf;					/* LASTLOG file descriptor */
 struct person *person1;			/* list of people */
 long tloc;				/* current time */
 
-#if !_MINIX
+#if !defined(__minix)
 char *strcpy();
 char *ctime();
 #endif
@@ -893,7 +893,7 @@ netfinger(name)
 	char *host;
 	struct hostent *hp;
 	int s, result;
-#if !_MINIX
+#if !defined(__minix)
 	char *rindex();
 #endif
 	register FILE *f;
@@ -1027,7 +1027,7 @@ char *name;
 	char *mbxdir = preamble; 	/* string with path preamble */
 	char *mbxpath;			/* space for entire pathname */
 
-#if !_MINIX
+#if !defined(__minix)
 	char *ctime();			/* convert longword time to ascii */
 #endif
 	char *timestr;
