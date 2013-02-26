@@ -60,7 +60,20 @@ m4_foreach([NAME], [SUPPORTED_CHECKS], [
 	    [Define to 1 if] NAME [integrity check is enabled.])
 ])
 
-if !:; then
+
+###########################
+# Assembler optimizations #
+###########################
+
+AM_CONDITIONAL(COND_ASM_X86, false)
+AM_CONDITIONAL(COND_ASM_X86_64, false)
+
+
+#####################
+# Size optimization #
+#####################
+
+if false; then
 	AC_DEFINE([HAVE_SMALL], [1], [Define to 1 if optimizing for size.])
 fi
 

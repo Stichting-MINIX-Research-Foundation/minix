@@ -82,10 +82,10 @@ SUBDIR+=	../external/bsd/flex/lib
 #SUBDIR+=	../external/bsd/liblzf/lib
 #SUBDIR+=	../external/bsd/libpcap/lib
 
-#SUBDIR+=	../external/mit/lua/lib
+SUBDIR+=	../external/mit/lua/lib
 #SUBDIR+=	../external/mit/expat/lib
 
-#SUBDIR+=	../external/public-domain/sqlite/lib
+SUBDIR+=	../external/public-domain/sqlite/lib
 SUBDIR+=	../external/public-domain/xz/lib
 
 #SUBDIR+=	../gnu/lib/libmalloc
@@ -160,8 +160,8 @@ SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
 . else
-#SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
-#SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
+SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
+SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 . endif
 .endif # (defined(__MINIX) && ${MKGCCCMDS} == "yes")
 .endif
@@ -169,9 +169,15 @@ SUBDIR+=	../gnu/lib/libsupc++4
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (defined(__MINIX) && ${MKGCCCMDS} == "yes")
 .if (${MKATF} != "no")
 SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
 .endif
+
+.if (${MKKYUA} != "no")
+SUBDIR+=	../external/bsd/lutok/lib	# depends on lua and libstdc++
+.endif
+.endif # (defined(__MINIX) && ${MKGCCCMDS} == "yes")
 
 #SUBDIR+=	libform		# depends on libcurses
 #SUBDIR+=	libmenu		# depends on libcurses

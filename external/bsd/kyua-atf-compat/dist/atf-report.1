@@ -1,0 +1,173 @@
+.\" Copyright 2012 Google Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" * Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" * Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" * Neither the name of Google Inc. nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd June 16, 2012
+.Dt ATF-REPORT 1
+.Os
+.Sh NAME
+.Nm atf-report
+.Nd Kyua-based implementation of the deprecated atf-report
+.Sh SYNOPSIS
+.Nm
+.Op Fl o Ar fmt1:path1 Op .. Fl o Ar fmtN:pathN
+.Sh DESCRIPTION
+.Em DISCLAIMER :
+This version of
+.Nm
+provides a reimplementation of ATF's reporting engine built on top of Kyua.
+This is a transitional script and should only be considered a helper to
+migrate away from ATF.
+Therefore, this version of
+.Nm
+mimics the
+.Em behavior
+of the original
+.Nm
+but
+.Em NOT
+the specific output of the command.
+The output of this implementation is significantly different as that of the
+original one.
+Please migrate to using
+.Sq kyua test
+as soon as feasible.
+See the
+.Sx Migration path
+section below for further details.
+.Pp
+.Nm
+reads the output of
+.Nm atf-run
+and transforms it to different formats.
+Some of these are user-friendly and others are machine-parseable, which
+opens a wide range of possibilities to analyze the results of a test
+suite's execution.
+See
+.Sx Output formats
+below for more details on which these formats are.
+.Pp
+In the first synopsis form,
+.Nm
+reads the output of
+.Nm atf-run
+through its standard input and, if no
+.Fl o
+option is given, prints a user-friendly report on its standard
+output using the
+.Sq ticker
+format.
+If the
+.Fl o
+option is provided, it specifies the output format to use and its
+destination.
+.Pp
+The following options are available:
+.Bl -tag -width XoXfmtXpathXX
+.It Fl o Ar fmt:path
+Adds a new output format.
+.Ar fmt
+is one of the formats described later on in
+.Sx Output formats .
+.Ar path
+specifies where the report will be written to.
+Depending on the chosen format, this may refer to a single file or to
+a directory.
+For those formats that write to a single file, specifying a
+.Sq -
+as the path will redirect the report to the standard output.
+.El
+.Ss Output formats
+The following output formats are allowed:
+.Bl -tag -width tickerXX
+.It ticker
+A user-friendly report that shows the progress of the test suite's
+execution as it operates.
+This type of report should always be redirected to a virtual terminal,
+not a file, as it may use control sequences that will make the output
+unreadable in regular files.
+.It html
+A multi-file HTML report.
+The specified output file will be a symlink into a directory containing
+all the other support files for the HTML report.
+.Pp
+This format was not originally supported by
+.Nm ,
+but is the right name for the compatibility
+.Sq xml
+support.
+.It xml
+A compatibility name for
+.Sq html .
+The original
+.Nm
+was only able to generate XML reports and relied on tools like
+.Xr xsltproc 1
+to convert them to HTML.
+The process was quite convoluted and inconvenient.
+Kyua, on the other hand, is only able to create HTML reports at the
+moment.
+.El
+.Pp
+.Ss Migration path
+Moving from
+.Nm
+to
+.Sq kyua report
+is rather simple.
+.Pp
+The most important thing to understand during the transition is that
+.Sq kyua test
+stores the output of the execution in a database and does not print a
+machine-parseable log to its stdout.
+Instead,
+.Sq kyua report
+is used as a second step to extract reports from the database for any
+previously executed test.
+.Pp
+The following examples show how to convert some common
+.Nm
+invocations to their corresponding
+.Sq kyua report
+ones.
+Because
+.Nm
+has always been tied to
+.Xr atf-run 1 ,
+these examples also mention the latter.
+.Bd -literal -offset indent
+### Run all tests, with a summary at the end.
+$ atf-run | atf-report
+$ kyua test && kyua report
+
+### Generate a HTML report.
+$ atf-run | atf-report -o xml:report.xml
+  ... plus some complex file manipulation and xsltproc magic ...
+$ kyua test && kyua report-html -o path/to/report/
+.Ed
+.Sh SEE ALSO
+.Xr kyua 1 ,
+.Xr atf-run 1

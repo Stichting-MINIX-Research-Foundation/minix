@@ -1,0 +1,63 @@
+.\" Copyright 2012 Google Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" * Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" * Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" * Neither the name of Google Inc. nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd September 9, 2012
+.Dt KYUA-PLAIN-INTERFACE 1
+.Os
+.Sh NAME
+.Nm plain-interface
+.Nd Description of the plain test program interface
+.Sh DESCRIPTION
+The
+.Em plain test interface
+is the interface of test programs that return their pass/fail status as an
+exit code.  While simple, this interface is what legacy test programs use
+and what test programs written with many other testing libraries use too.
+.Pp
+Kyua supports this interface for two main reasons: first, to simplify the
+incorporation of legacy test programs into a Kyua test suite; and, second,
+to ensure that the Kyua run-time engine does not become tied to a
+particular test interface.
+.Pp
+The results of a plain test are one of the following:
+.Bl -tag -width passedXX
+.It passed
+If the test program exits with a success exit code; i.e. 0.
+.It failed
+If the test program exits with a failure exit code; i.e. not 0.
+.It broken
+If the test program exits due to any other reason (e.g. it crashes) or
+if it fails to be executed.
+.El
+.Pp
+Plain test programs are executed with the same isolation features as
+ATF test programs; see
+.Xr kyua-atf-interface 7 .
+.Sh SEE ALSO
+.Xr kyua-test 1 ,
+.Xr kyuafile 5 ,
+.Xr kyua-atf-interface 7

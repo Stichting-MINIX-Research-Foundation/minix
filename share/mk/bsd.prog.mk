@@ -84,6 +84,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 #	NB:	If you are a library here, add it in bsd.README
 
 .for _lib in \
+	archive \
 	atf_c \
 	atf_cxx \
 	bz2 \
@@ -95,9 +96,13 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	edit \
 	expat \
 	l \
+	lua \
 	m \
 	magic \
+	objc \
 	rmt \
+	sqlite3 \
+	stdcxx \
 	terminfo \
 	util \
 	z 

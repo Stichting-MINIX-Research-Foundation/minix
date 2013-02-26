@@ -434,6 +434,9 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 .if (${MKATF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/atf/etc/atf configinstall
 .endif
+.if (${MKKYUA} != "no")
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/kyua-cli/etc/kyua configinstall
+.endif
 .else # LSC Minix Specific
 .for owner group mode sdir tdir files in \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ daily \

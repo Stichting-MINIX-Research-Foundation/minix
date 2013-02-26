@@ -87,6 +87,10 @@
     uncompressed with dictionary reset, and third is LZMA with new
     properties but without dictionary reset.
 
+    good-1-lzma2-5.xz has an empty LZMA2 stream with only the end of
+    payload marker. XZ Utils 5.0.1 and older incorrectly see this file
+    as corrupt.
+
     good-1-3delta-lzma2.xz has three Delta filters and LZMA2.
 
 

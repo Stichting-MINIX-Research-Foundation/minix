@@ -1,6 +1,70 @@
 
-XZ Utils User-Visible Changes
-=============================
+XZ Utils Release Notes
+======================
+
+5.0.3 (2011-05-21)
+
+    * liblzma fixes:
+
+        - A memory leak was fixed.
+
+        - lzma_stream_buffer_encode() no longer creates an empty .xz
+          Block if encoding an empty buffer. Such an empty Block with
+          LZMA2 data would trigger a bug in 5.0.1 and older (see the
+          first bullet point in 5.0.2 notes). When releasing 5.0.2,
+          I thought that no encoder creates this kind of files but
+          I was wrong.
+
+        - Validate function arguments better in a few functions. Most
+          importantly, specifying an unsupported integrity check to
+          lzma_stream_buffer_encode() no longer creates a corrupt .xz
+          file. Probably no application tries to do that, so this
+          shouldn't be a big problem in practice.
+
+        - Document that lzma_block_buffer_encode(),
+          lzma_easy_buffer_encode(), lzma_stream_encoder(), and
+          lzma_stream_buffer_encode() may return LZMA_UNSUPPORTED_CHECK.
+
+        - The return values of the _memusage() functions are now
+          documented better.
+
+    * Fix command name detection in xzgrep. xzegrep and xzfgrep now
+      correctly use egrep and fgrep instead of grep.
+
+    * French translation was added.
+
+
+5.0.2 (2011-04-01)
+
+    * LZMA2 decompressor now correctly accepts LZMA2 streams with no
+      uncompressed data. Previously it considered them corrupt. The
+      bug can affect applications that use raw LZMA2 streams. It is
+      very unlikely to affect .xz files because no compressor creates
+      .xz files with empty LZMA2 streams. (Empty .xz files are a
+      different thing than empty LZMA2 streams.)
+
+    * "xz --suffix=.foo filename.foo" now refuses to compress the
+      file due to it already having the suffix .foo. It was already
+      documented on the man page, but the code lacked the test.
+
+    * "xzgrep -l foo bar.xz" works now.
+
+    * Polish translation was added.
+
+
+5.0.1 (2011-01-29)
+
+    * xz --force now (de)compresses files that have setuid, setgid,
+      or sticky bit set and files that have multiple hard links.
+      The man page had it documented this way already, but the code
+      had a bug.
+
+    * gzip and bzip2 support in xzdiff was fixed.
+
+    * Portability fixes
+
+    * Minor fix to Czech translation
+
 
 5.0.0 (2010-10-23)
 

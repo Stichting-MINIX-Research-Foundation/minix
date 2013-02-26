@@ -1,0 +1,12 @@
+Changes in version 0.1
+======================
+
+Experimental version released on June 10th, 2012.
+
+This is the first public release of the kyua-atf-compat package.
+
+This first release is paired with the 0.16 release of ATF, which
+disables the build of atf-run and atf-report by default.  The goal
+of this package is, then, to provide compatibility utilities for
+these disabled tools but using Kyua as the backend for the execution
+of the tests.

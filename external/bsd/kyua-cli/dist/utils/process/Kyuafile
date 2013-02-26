@@ -1,0 +1,9 @@
+syntax(2)
+
+test_suite("kyua")
+
+atf_test_program{name="child_test"}
+atf_test_program{name="exceptions_test"}
+atf_test_program{name="fdstream_test"}
+atf_test_program{name="status_test"}
+atf_test_program{name="systembuf_test"}

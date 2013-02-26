@@ -1,0 +1,191 @@
+.\" Copyright 2012 Google Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" * Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" * Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" * Neither the name of Google Inc. nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd February 9, 2013
+.Dt KYUAFILE 5
+.Os
+.Sh NAME
+.Nm Kyuafile
+.Nd Test suite description files
+.Sh SYNOPSIS
+.Fn atf_test_program "string name" "[string test_suite]" "[string metadata]"
+.Fn include "string path"
+.Fn plain_test_program "string name" "[string test_suite]" "[string metadata]"
+.Fn syntax "int version"
+.Fn test_suite "string name"
+.Sh DESCRIPTION
+A test suite is a collection of test programs and is represented by a
+hierarchical layout of test binaries on the file system.  Any subtree of
+the file system can represent a test suite, provided that it includes one
+or more
+.Nm Ns s ,
+which are the test suite definition files.
+.Pp
+A
+.Nm
+is a Lua script whose purpose is to describe the structure of the test
+suite it belongs to.  To do so, the script has access to a collection of
+special functions provided by
+.Xr kyua 1 .
+.Pp
+A typical
+.Nm
+will look similar to this:
+.Bd -literal -offset indent
+syntax(2)
+
+test_suite('first')
+
+-- Declare the test programs that are in this directory.
+atf_test_program{name='foo_test'}
+atf_test_program{name='bar_test', test_suite='second'}
+plain_test_program{name='legacy_test'}
+plain_test_program{name='legacy2_test', allowed_architectures='amd64 i386',
+                   required_files='/bin/ls', timeout=30}
+
+-- Recurse into any subdirectories that may have other tests.
+include('dir1/Kyuafile')
+include('dir2/Kyuafile')
+.Ed
+.Ss File versioning
+Every
+.Nm
+file starts with a call to
+.Fn syntax "int version" .
+This call determines the specific schema used by the file so that future
+backwards-incompatible modifications to the file can be introduced.
+.Pp
+Any new
+.Nm
+file should set
+.Fa version
+to
+.Sq 2 .
+.Ss Test suite definition
+Every
+.Nm
+should define the name of the test suite it belongs to by calling the
+.Fn test_suite
+function at the very beginning.
+Individual test programs can override this value in their definition, but
+the most common style is to list a single test suite name for the whole
+file.
+.Pp
+The purpose of the test suite name definition is to tell
+.Xr kyua 1
+scoping for the run-time configuration variables that these programs
+accept.
+.Ss Test program registration
+A
+.Nm
+can register test programs by means of a variety of
+.Fn *_test_program
+functions, all of which take the name of a test program and a set of
+optional metadata properties that describe such test program.
+.Pp
+The test programs to be registered must live in the current directory; in
+other words, the various
+.Fn *_test_program
+calls cannot reference test programs in other directories.
+The rationale for this is to force all
+.Nm
+files to be self-contained, and to simplify their internal representation.
+.Pp
+ATF-based test programs (those that implement the
+.Xr kyua-atf-interface 7
+interface) can be registered with the
+.Fn atf_test_program
+table constructor.  This function takes the
+.Fa name
+of the test program, an optional
+.Fa test_suite
+name that overrides the global test suite name and a collection of optional
+metadata settings for all the test cases in the test program.  Any metadata
+properties defined by the test cases themselves override the metadata values
+defined here.
+.Pp
+Plain test programs (those that implement the
+.Xr kyua-plain-interface 7
+interface) can be registered with the
+.Fn plain_test_program
+table constructor.  This function takes the
+.Fa name
+of the test program an optional
+.Fa test_suite
+name that overrides the global test suite name and a collection of optional
+metadata settings for the test program.
+.Pp
+Please see
+.Xr kyua-tester-list 5
+for the list of metadata properties that can be given to test programs.
+All the properties that can be given to a test case can also be given to a test
+program.
+.Ss Recursion
+To reference test programs in another subdirectory, a different
+.Nm
+must be created in that directory and it must be included into the original
+.Nm
+by means of the
+.Fn include
+function.
+.Pp
+Note that each file is processed in its own Lua environment: there is no
+mechanism to pass state from one file to the other.  The reason for this is
+that there is no such thing as a
+.Dq top-level
+.Nm
+in a test suite: the user has to be able to run the test suite from any
+directory in a given hierarchy, and this execution must not depend on files
+that live in parent directories.
+.Ss Top-level Kyuafile
+Every system has a top directory into which test suites get installed.  The
+default is
+.Pa __TESTSDIR__ .
+Within this directory live test suites, each of which is in an independent
+subdirectory.  Each subdirectory can be provided separately by independent
+third-party packages.
+.Pp
+Kyua allows running all the installed test suites at once in order to
+provide comprehensive cross-component reports.  In order to do this, there
+is a special file in the top directory that knows how to inspect the
+subdirectories in search for other Kyuafiles and include them.
+.Pp
+The
+.Sx FILES
+section includes more details on where this file lives.
+.Sh FILES
+.Bl -tag -width XX
+.It Pa __TESTSDIR__/Kyuafile .
+Top-level
+.Nm
+for the current system.
+.It Pa __EGDIR__/Kyuafile.top .
+Sample file to serve as a top-level
+.Nm .
+.El
+.Sh SEE ALSO
+.Xr kyua 1

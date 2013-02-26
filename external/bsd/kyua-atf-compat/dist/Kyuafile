@@ -1,0 +1,7 @@
+syntax('kyuafile', 1)
+
+test_suite('kyua')
+
+atf_test_program{name='atf-run_test'}
+atf_test_program{name='atf-report_test'}
+atf_test_program{name='atf2kyua_test'}

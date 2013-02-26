@@ -53,7 +53,7 @@ static bool io_write_buf(file_pair *pair, const uint8_t *buf, size_t size);
 extern void
 io_init(void)
 {
-	// Make sure that stdin, stdout, and and stderr are connected to
+	// Make sure that stdin, stdout, and stderr are connected to
 	// a valid file descriptor. Exit immediately with exit code ERROR
 	// if we cannot make the file descriptors valid. Maybe we should
 	// print an error message, but our stderr could be screwed anyway.
@@ -457,15 +457,14 @@ io_open_src_real(file_pair *pair)
 		goto error;
 	}
 
-	if (reg_files_only) {
-		if (!S_ISREG(pair->src_st.st_mode)) {
-			message_warning(_("%s: Not a regular file, "
-					"skipping"), pair->src_name);
-			goto error;
-		}
+	if (reg_files_only && !S_ISREG(pair->src_st.st_mode)) {
+		message_warning(_("%s: Not a regular file, skipping"),
+				pair->src_name);
+		goto error;
+	}
 
-		// These are meaningless on Windows.
 #ifndef TUKLIB_DOSLIKE
+	if (reg_files_only && !opt_force) {
 		if (pair->src_st.st_mode & (S_ISUID | S_ISGID)) {
 			// gzip rejects setuid and setgid files even
 			// when --force was used. bzip2 doesn't check
@@ -495,8 +494,8 @@ io_open_src_real(file_pair *pair)
 					"skipping"), pair->src_name);
 			goto error;
 		}
-#endif
 	}
+#endif
 
 	return false;
 

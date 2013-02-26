@@ -1,0 +1,5 @@
+testersdir=__LIBEXECDIR__
+
+Name: kyua-testers
+Description: Kyua - Testers
+Version: __VERSION__
