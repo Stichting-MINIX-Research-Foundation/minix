@@ -4,7 +4,6 @@ HOSTPROGNAME=	${_TOOL_PREFIX}lex
 HOST_SRCDIR=	external/bsd/flex/bin
 
 .if ${HOST_OSTYPE:C/\-.*//} == "Minix"
-HOST_CPPFLAGS+=-D_NETBSD_SOURCE -D_POSIX_SOURCE -D_COMPAT_MINIX
 HOST_LDFLAGS+= -static
 .endif
 
