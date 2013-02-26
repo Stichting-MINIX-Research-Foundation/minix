@@ -1,5 +1,4 @@
 /* Tests for truncate(2) call family - by D.C. van Moolenbroek */
-#define _POSIX_SOURCE 1
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <unistd.h>

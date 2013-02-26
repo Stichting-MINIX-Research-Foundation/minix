@@ -1,4 +1,3 @@
-#define _POSIX_SOURCE 1
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

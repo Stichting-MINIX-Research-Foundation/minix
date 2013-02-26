@@ -1,5 +1,4 @@
 /* Tests for MINIX3 realpath(3) - by Erik van der Kouwe */
-#define _POSIX_SOURCE 1
 #include <assert.h>
 #include <dirent.h>
 #include <errno.h>

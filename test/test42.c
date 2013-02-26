@@ -1,5 +1,4 @@
 /* Tests for MINIX3 ptrace(2) - by D.C. van Moolenbroek */
-#define _POSIX_SOURCE 1
 #include <setjmp.h>
 #include <stdlib.h>
 #include <stdio.h>
