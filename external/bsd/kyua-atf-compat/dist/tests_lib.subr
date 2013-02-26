@@ -1,0 +1,98 @@
+# Copyright 2012 Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# * Neither the name of Google Inc. nor the names of its contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# \file tests_lib.subr
+# Common routines for test programs.
+
+
+# Creates an Atffile file.
+#
+# \param destfile The path to the file to be created.
+# \param ... The lines to append to the Atffile.
+create_atffile() {
+    local destfile="${1}"; shift
+
+    cat >"${destfile}" <<EOF
+Content-type: application/X-atf-atffile, version="1"
+
+EOF
+    for line in "${@}"; do
+        echo "${line}" >>"${destfile}"
+    done
+}
+
+
+# Creates an ATF configuration file.
+#
+# \param destfile The path to the file to be created.
+# \param ... The lines to append to the configuration file.
+create_config() {
+    local destfile="${1}"; shift
+
+    cat >"${destfile}" <<EOF
+Content-type: application/X-atf-config, version="1"
+
+# This is a comment that should be ignored.
+  # And this is another one.
+
+EOF
+    for line in "${@}"; do
+        echo "${line}" >>"${destfile}"
+    done
+}
+
+
+# Creates a fake test program.
+#
+# \param destfile The path to the test program to be created.
+# \param ... List of the test cases to include in the fake test program.
+create_test_program() {
+    local destfile="${1}"; shift
+
+    sed -e "s,@CONTROL_DIR@,$(pwd),g" \
+        -e "s,@ENABLED_TESTS@,${*},g" \
+        <"$(atf_get_srcdir)/helpers" >"${destfile}"
+    chmod +x "${destfile}"
+}
+
+
+# Strips timestamps from the output of 'kyua test' or 'kyua report'.
+#
+# The timestamps are all replaced with X.XXXs so that they can later be compared
+# against prerecorded golden output.
+#
+# \param file The file in which to replace the timestamps.  The replacement is
+#     performed in place.  The reason is that the calls to atf-run and
+#     atf-report should be validated on their own WITHOUT piping them through
+#     any manipulation function.
+strip_timestamps() {
+    local file="${1}"; shift
+
+    sed -e 's,[0-9][0-9]*\.[0-9][0-9]*s,X.XXXs,g' <"${file}" >"${file}.new"
+    mv "${file}.new" "${file}"
+}

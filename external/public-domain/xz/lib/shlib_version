@@ -1,2 +1,4 @@
+#	$NetBSD: shlib_version,v 1.2 2012/02/28 14:22:22 joerg Exp $
+#
 major=0
 minor=0

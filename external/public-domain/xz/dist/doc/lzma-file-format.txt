@@ -40,7 +40,7 @@ The .lzma File Format
 
 0.2. Changes
 
-        Last modified: 2009-05-01 11:15+0300
+        Last modified: 2011-04-12 11:55+0300
 
 
 1. File Format
@@ -161,6 +161,6 @@ The .lzma File Format
         XZ Utils - The next generation of LZMA Utils
         http://tukaani.org/xz/
 
-        The .xz file format - The successor of the the .lzma format
+        The .xz file format - The successor of the .lzma format
         http://tukaani.org/xz/xz-file-format.txt
 

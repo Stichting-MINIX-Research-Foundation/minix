@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.304 2012/10/02 04:53:11 jkoshy Exp $
+#	$NetBSD: bsd.README,v 1.318 2013/06/02 11:02:40 mbalmer Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -113,8 +113,11 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    3	Ignore the effect of the "@" prefix in make commands
 		    4	Trace shell commands using the shell's -x flag
 
-MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
-		with the Automated Testing Framework (ATF).
+MKATF		If "no", don't build the Automated Testing Framework (ATF),
+		which includes the libatf-c, libatf-c++ and libatf-sh libraries
+		and the various command line tools.  Also, because the build of
+		the libraries is disabled, don't build the NetBSD test suite
+		either.
 		Default: yes
 
 MKBFD		Obsolete, use MKBINUTILS
@@ -153,6 +156,13 @@ MKDEBUG		If "no", don't build and install separate debugging symbols
 MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 		with -DDEBUG.
 		Default: no
+
+MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
+		instead of inlining the contents of the .d files. Useful
+		when stale dependencies are present, to list the exact
+		files that need refreshing. It is off by default because
+		it is possibly slower.
+		Default "no"
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
@@ -226,8 +236,20 @@ MKKERBEROS	If "no", disables building of Kerberos v5
 MKKMOD		If "no", disables building of kernel modules.
 		Default: yes
 
+MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
+		Note that setting this to "no" does not disable the build of
+		the NetBSD test suite itself; the build of the tests is
+		controlled by the MKATF knob.
+		Default: no (until the import is done and validated)
+
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
+		Default: yes
+
+MKLIBCXX	If not "no", build and install libc++.
+		Default: no
+
+MKLIBSTDCXX	If not "no", build and install libstdc++.
 		Default: yes
 
 MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
@@ -330,6 +352,10 @@ MKSKEY		If "no", disables building of S/key authentication
 		infrastructure (libraries and support programs).
 		Default: yes
 
+MKSLJIT		If "no", disables buildin of sljit (stack-less platform
+		independent JIT compiler) private library and tests.
+		Default: yes on amd64, i386 and sparc, no elsewhere.
+
 MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 		generate output containing library calls for floating
 		point and possibly soft-float library support.
@@ -338,6 +364,10 @@ MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 MKSTATICLIB	If "no", don't build or install the normal static (*.a)
 		libraries.
 		Default: yes
+
+MKTPM		If "no" then don't build the Trusted Platform Module
+		infrastructure.
+		Default: no
 
 MKUNPRIVED	If not "no", don't set the owner/group/mode when installing
 		files or directories, and keep a metadata log of what
@@ -360,6 +390,12 @@ MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
 		install the X fonts.  The xfont set is still created but
 		will be empty.
 		Default: yes
+
+MKX11MOTIF:	If "yes" and ${X11FLAVOUR} is "Xorg", build the native X11
+		libGLw with Motif stubs.  If Motif is not installed in the
+		default location /usr/pkg, the location can be specified
+		using the X11MOTIFPATH variable.
+		Default: no
 
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
@@ -499,6 +535,28 @@ _SRC_TOP_	Top of the system source tree, as determined by <bsd.own.mk>
 		is "internal" to <bsd.own.mk>, although its value is only
 		determined once and then propagated to all sub-makes.
 
+_NETBSD_VERSION_DEPENDS
+		A list of files which contain information about
+		the version of the NetBSD being built.  This is
+		defined only if the current directory appears
+		to be inside a NetBSD source tree.  The list of
+		files includes ${NETBSDSRCDIR}/sys/sys/param.h
+		(which contains the kernel version number),
+		${NETBSDSRCDIR}/sys/conf/newvers.sh and
+		${NETBSDSRCDIR}/sys/conf/osrelease.sh (which
+		interpret the information in sys/sys/param.h), and
+		${_SRC_TOP_OBJ_}/params (which is an optional file,
+		created by "make build" in ${_SRC_TOP_}/Makefile,
+		containing all the variables that may influence the
+		build).
+
+		Targets that depend on the NetBSD version, or on
+		variables defined at build time, can declare a
+		dependency on ${_NETBSD_VERSION_DEPENDS}, like this:
+
+			version.c: ${_NETBSD_VERSION_DEPENDS}
+				commands to create version.c
+
 BSDSRCDIR	The real path to the system sources, so that 'make obj'
 		will work correctly.  [/usr/src]
 
@@ -597,6 +655,10 @@ COPY		The flag passed to the install program to cause the binary
 		building our own install script so that the entire system
 		can either be installed with copies, or with moves using
 		a single knob.  [-c]
+
+MAKEDIRTARGETENV
+		Environment variables passed to the child make process
+		invoked by MAKEDIRTARGET.
 
 MAKEDIRTARGET dir target [params]
 		Runs "cd $${dir} && ${MAKE} [params] $${target}",
@@ -763,6 +825,8 @@ TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
 
 TOOL_MKMAGIC		Create database for file(1).  [file]
 
+TOOL_MKNOD		Make device special file.  [mknod]
+
 TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
 
 TOOL_MSGC		Simple message list compiler.  [msgc]
@@ -878,6 +942,11 @@ or CLEANDIRFILES variables.  For example:
 
 	    .include <bsd.clean.mk>
 
+The files listed in CLEANFILES and CLEANDIRFILES must not be
+directories, because the potential risk from running "rm -rf" commands
+in bsd.clean.mk is considered too great.  If you want to recursively
+delete a directory as part of "make clean" or "make cleandir" then you
+need to provide your own target.
 
 =-=-=-=-=   bsd.dep.mk   =-=-=-=-=
 
@@ -1138,6 +1207,11 @@ LIBDPLIBS	A list of the tuples:
 		     *	LDADD gets  -L${LIBDO.libname} -llibname    added.
 		     *	DPADD gets  ${LIBDO.libname}/liblibname.so  or
 				    ${LIBDO.libname}/liblibname.a   added.
+
+		The special value "_external" for LIBDO.lib makes the
+		build system to assume the library comes from outside
+		of the NetBSD source tree and only causes -llibname
+		to be added to LDADD.
 
 		This variable may be used for individual libraries, as
 		well as in parent directories to cache common libraries
@@ -1423,6 +1497,8 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBEVENT_OPENSSL?=	${DESTDIR}/usr/lib/libevent_openssl.a
+		LIBEVENT_PTHREADS?=	${DESTDIR}/usr/lib/libevent_pthreads.a
 		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
@@ -1450,6 +1526,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
 		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
 		LIBLUA?=	${DESTDIR}/usr/lib/liblua.a
+		LIBLUTOK?=	${DESTDIR}/usr/lib/liblutok.a
 		LIBLWRES?=	${DESTDIR}/usr/lib/liblwres.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
 		LIBMAGIC?=	${DESTDIR}/usr/lib/libmagic.a
@@ -1513,6 +1590,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBICE?=	${DESTDIR}/usr/X11R7/lib/libICE.a
 		LIBSM?=		${DESTDIR}/usr/X11R7/lib/libSM.a
 		LIBX11?=	${DESTDIR}/usr/X11R7/lib/libX11.a
+		LIBX11_XCB?=	${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
 		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
 		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a

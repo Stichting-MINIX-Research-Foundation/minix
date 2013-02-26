@@ -69,9 +69,6 @@
 extern uint64_t
 tuklib_physmem(void)
 {
-#ifdef __minix
-	return 0;
-#else
 	uint64_t ret = 0;
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -196,5 +193,4 @@ tuklib_physmem(void)
 #endif
 
 	return ret;
-#endif
 }

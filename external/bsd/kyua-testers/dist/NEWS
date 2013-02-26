@@ -1,0 +1,16 @@
+Changes in version 0.1
+======================
+
+Experimental version released on February 19th, 2013.
+
+This is the first public release of the kyua-testers package.
+
+The goal of this first release is to adopt all the test case execution
+code of kyua-cli 0.5 and ship it as a collection of independent tester
+binaries.  The kyua-cli package will rely on these binaries to run the
+tests, which provides better modularity and simplicity to the
+architecture of Kyua.
+
+The code in this package is all C as opposed to the current C++ codebase
+of kyua-cli, which means that the overall build times of Kyua are now
+reduced.

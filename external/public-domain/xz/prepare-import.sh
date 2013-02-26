@@ -1,11 +1,11 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.1 2010/11/02 16:34:36 joerg Exp $
+# $NetBSD: prepare-import.sh,v 1.3 2012/05/28 17:28:53 jdc Exp $
 
 set -e
 
 rm -rf dist tmp
-tar xzf xz-5.0.0.tar.gz
-mv xz-5.0.0 dist
+tar xzf xz-5.0.3.tar.gz
+mv xz-5.0.3 dist
 
 cd dist
 # Binary files derived from distribution files
@@ -31,3 +31,12 @@ done
 # build-aux/* from autoconf
 # lib/*
 # m4/*
+
+# Changes to config.h
+echo Add build-time endian test to include/config.h:
+cat << EOE
+#include <sys/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
+#endif
+EOE

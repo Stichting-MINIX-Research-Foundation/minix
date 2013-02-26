@@ -1,0 +1,134 @@
+# Copyright 2012 Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# * Neither the name of Google Inc. nor the names of its contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# \file lib.subr
+# Common initialization and functions for shell scripts.
+
+
+set -e
+
+
+# Directory where the running script lives.
+Lib_DirName="$(dirname ${0})"
+
+
+# Base name of the running script.
+Lib_ProgName="${0##*/}"
+
+
+# Path to the temporary directory for this execution.
+Lib_TempDir=
+
+
+# List of cleanup functions to execute on exit.
+_Lib_Cleanup_Hooks=
+
+
+# Catch unexpected exits and perform the required cleanups.  In particular,
+# ensure that the temporary directory in Lib_TempDir, if any, is removed.
+trap 'lib_cleanup ; exit 2' HUP INT QUIT TERM
+
+
+# Prints an informational message.
+#
+# \param ... The message to print.  Can be provided as multiple words and, in
+#     that case, they are joined together by a single whitespace.
+lib_info() {
+    echo "${Lib_ProgName}: I: $*" 1>&2
+}
+
+
+# Prints a runtime error and exits.
+#
+# \param ... The message to print.  Can be provided as multiple words and, in
+#     that case, they are joined together by a single whitespace.
+lib_error() {
+    echo "${Lib_ProgName}: E: $*" 1>&2
+    exit 1
+}
+
+
+# Prints a runtime warning.
+#
+# \param ... The message to print.  Can be provided as multiple words and, in
+#     that case, they are joined together by a single whitespace.
+lib_warning() {
+    echo "${Lib_ProgName}: W: $*" 1>&2
+}
+
+
+# Prints an usage error and exits.
+#
+# \param ... The message to print.  Can be provided as multiple words and, in
+#     that case, they are joined together by a single whitespace.
+lib_usage_error() {
+    echo "${Lib_ProgName}: E: $*" 1>&2
+    usage "${Lib_ProgName}" 1>&2
+    exit 1
+}
+
+
+# Executes the registered cleanup hooks.
+lib_cleanup() {
+    local hook
+    for hook in ${_Lib_Cleanup_Hooks}; do
+        "${hook}"
+    done
+}
+
+
+# Installs a new cleanup hook.
+#
+# \param ... The names of the cleanup functions to register.
+lib_register_cleanup() {
+    _Lib_Cleanup_Hooks="${_Lib_Cleanup_Hooks} ${*}"
+}
+
+
+# Creates a temporary directory for this execution.
+#
+# The temporary directory is unique to this script and execution.  A cleanup
+# hook is installed to delete such directory whenever lib_cleanup is called or
+# when the program abruptly exits.
+#
+# \post Lib_TempDir is set to the path of the created temporary directory.
+lib_init_tempdir() {
+    Lib_TempDir=$(mktemp -d -t "${_Lib_ProgName}.XXXXXX")
+    lib_register_cleanup "lib_clean_tempdir"
+}
+
+
+# Cleanup hook to delete the temporary directory.
+#
+# This operation is idempotent.
+lib_clean_tempdir() {
+    if [ -n "${Lib_TempDir}" ]; then
+        rm -rf "${Lib_TempDir}"
+        Lib_TempDir=
+    fi
+}

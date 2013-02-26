@@ -1,40 +1,10 @@
-# $NetBSD: shl.mi,v 1.6 2011/06/25 05:45:14 nonaka Exp $
+# $NetBSD: shl.mi,v 1.7 2013/01/16 16:01:08 christos Exp $
 #
-./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dlopen.so.1.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dynamic.so.1.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dlopen.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dynamic.debug		tests-lib-debug		debug,atf
 ./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		atf
 ./usr/tests/lib/csu/libh_initfini3_dso.so	tests-obsolete		obsolete
 ./usr/tests/lib/csu/libh_initfini3_dso.so.1	tests-obsolete		obsolete
-./usr/tests/lib/libc/tls/h_tls_dlopen.so	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/h_tls_dlopen.so.1	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	-unknown-		atf,debuglib
 ./usr/tests/lib/libc/tls/libh_tls_dynamic.so	tests-lib-tests		atf
 ./usr/tests/lib/libc/tls/libh_tls_dynamic.so.1	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/t_tls_dlopen		tests-lib-tests		atf
-./usr/tests/lib/libc/tls/t_tls_dynamic		tests-lib-tests		atf
 ./usr/tests/util/id/libfake.so.0		tests-obsolete		obsolete
 ./usr/tests/util/id/libfake.so.0.0		tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,atf
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,atf
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,atf
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1.debug	tests-libexec-debug	debug,atf
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1.debug	tests-libexec-debug	debug,atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so.1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1	tests-libexec-tests	atf

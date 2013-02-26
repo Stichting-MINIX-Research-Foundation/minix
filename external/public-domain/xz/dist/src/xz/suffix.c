@@ -21,10 +21,28 @@
 static char *custom_suffix = NULL;
 
 
-struct suffix_pair {
-	const char *compressed;
-	const char *uncompressed;
-};
+/// \brief      Test if the char is a directory separator
+static bool
+is_dir_sep(char c)
+{
+#ifdef TUKLIB_DOSLIKE
+	return c == '/' || c == '\\' || c == ':';
+#else
+	return c == '/';
+#endif
+}
+
+
+/// \brief      Test if the string contains a directory separator
+static bool
+has_dir_sep(const char *str)
+{
+#ifdef TUKLIB_DOSLIKE
+	return strpbrk(str, "/\\:") != NULL;
+#else
+	return strchr(str, '/') != NULL;
+#endif
+}
 
 
 /// \brief      Checks if src_name has given compressed_suffix
@@ -44,7 +62,8 @@ test_suffix(const char *suffix, const char *src_name, size_t src_len)
 	// The filename must have at least one character in addition to
 	// the suffix. src_name may contain path to the filename, so we
 	// need to check for directory separator too.
-	if (src_len <= suffix_len || src_name[src_len - suffix_len - 1] == '/')
+	if (src_len <= suffix_len
+			|| is_dir_sep(src_name[src_len - suffix_len - 1]))
 		return 0;
 
 	if (strcmp(suffix, src_name + src_len - suffix_len) == 0)
@@ -61,7 +80,10 @@ test_suffix(const char *suffix, const char *src_name, size_t src_len)
 static char *
 uncompressed_name(const char *src_name, const size_t src_len)
 {
-	static const struct suffix_pair suffixes[] = {
+	static const struct {
+		const char *compressed;
+		const char *uncompressed;
+	} suffixes[] = {
 		{ ".xz",    "" },
 		{ ".txz",   ".tar" }, // .txz abbreviation for .txt.gz is rare.
 		{ ".lzma",  "" },
@@ -120,25 +142,25 @@ static char *
 compressed_name(const char *src_name, const size_t src_len)
 {
 	// The order of these must match the order in args.h.
-	static const struct suffix_pair all_suffixes[][3] = {
+	static const char *const all_suffixes[][3] = {
 		{
-			{ ".xz",    "" },
-			{ ".txz",   ".tar" },
-			{ NULL, NULL }
+			".xz",
+			".txz",
+			NULL
 		}, {
-			{ ".lzma",  "" },
-			{ ".tlz",   ".tar" },
-			{ NULL,     NULL }
+			".lzma",
+			".tlz",
+			NULL
 /*
 		}, {
-			{ ".gz",    "" },
-			{ ".tgz",   ".tar" },
-			{ NULL,     NULL }
+			".gz",
+			".tgz",
+			NULL
 */
 		}, {
 			// --format=raw requires specifying the suffix
 			// manually or using stdout.
-			{ NULL,     NULL }
+			NULL
 		}
 	};
 
@@ -146,14 +168,22 @@ compressed_name(const char *src_name, const size_t src_len)
 	assert(opt_format != FORMAT_AUTO);
 
 	const size_t format = opt_format - 1;
-	const struct suffix_pair *const suffixes = all_suffixes[format];
+	const char *const *suffixes = all_suffixes[format];
 
-	for (size_t i = 0; suffixes[i].compressed != NULL; ++i) {
-		if (test_suffix(suffixes[i].compressed, src_name, src_len)
-				!= 0) {
+	for (size_t i = 0; suffixes[i] != NULL; ++i) {
+		if (test_suffix(suffixes[i], src_name, src_len) != 0) {
 			message_warning(_("%s: File already has `%s' "
 					"suffix, skipping"), src_name,
-					suffixes[i].compressed);
+					suffixes[i]);
+			return NULL;
+		}
+	}
+
+	if (custom_suffix != NULL) {
+		if (test_suffix(custom_suffix, src_name, src_len) != 0) {
+			message_warning(_("%s: File already has `%s' "
+					"suffix, skipping"), src_name,
+					custom_suffix);
 			return NULL;
 		}
 	}
@@ -168,7 +198,7 @@ compressed_name(const char *src_name, const size_t src_len)
 	}
 
 	const char *suffix = custom_suffix != NULL
-			? custom_suffix : suffixes[0].compressed;
+			? custom_suffix : suffixes[0];
 	const size_t suffix_len = strlen(suffix);
 
 	char *dest_name = xmalloc(src_len + suffix_len + 1);
@@ -199,9 +229,9 @@ suffix_get_dest_name(const char *src_name)
 extern void
 suffix_set(const char *suffix)
 {
-	// Empty suffix and suffixes having a slash are rejected. Such
-	// suffixes would break things later.
-	if (suffix[0] == '\0' || strchr(suffix, '/') != NULL)
+	// Empty suffix and suffixes having a directory separator are
+	// rejected. Such suffixes would break things later.
+	if (suffix[0] == '\0' || has_dir_sep(suffix))
 		message_fatal(_("%s: Invalid filename suffix"), optarg);
 
 	// Replace the old custom_suffix (if any) with the new suffix.

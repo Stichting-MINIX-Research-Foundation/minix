@@ -9,9 +9,10 @@ XZ Utils Installation
             1.2.1. IRIX
             1.2.2. MINIX 3
             1.2.3. OpenVMS
-            1.2.4. Tru64
-            1.2.5. Windows
-            1.2.6. DOS
+            1.2.4. Solaris, OpenSolaris, and derivatives
+            1.2.5. Tru64
+            1.2.6. Windows
+            1.2.7. DOS
        1.3. Adding support for new platforms
     2. configure options
        2.1. Static vs. dynamic linking of liblzma
@@ -68,6 +69,10 @@ XZ Utils Installation
     the -O2 optimization flag ("make check" fails). Using -O1 should
     work.
 
+    A problem has been reported when using shared liblzma. Passing
+    --disable-shared to configure works around this. Alternatively,
+    putting "-64" to CFLAGS to build a 64-bit version might help too.
+
 
 1.2.2. MINIX 3
 
@@ -96,14 +101,24 @@ XZ Utils Installation
         http://nchrem.tnw.tudelft.nl/openvms/software2.html#xzutils
 
 
-1.2.4. Tru64
+1.2.4. Solaris, OpenSolaris, and derivatives
+
+    The following linker error has been reported on some x86 systems:
+
+        ld: fatal: relocation error: R_386_GOTOFF: ...
+
+    This can be worked around by passing gl_cv_cc_visibility=no
+    as an argument to the configure script.
+
+
+1.2.5. Tru64
 
     If you try to use the native C compiler on Tru64 (passing CC=cc to
     configure), you may need the workaround mention in section 4.1 in
     this file (pass also ac_cv_prog_cc_c99= to configure).
 
 
-1.2.5. Windows
+1.2.6. Windows
 
     Building XZ Utils on Windows is supported under MinGW + MSYS,
     MinGW-w64 + MSYS, and Cygwin. There is windows/build.bash to
@@ -123,7 +138,7 @@ XZ Utils Installation
     windows/README-Windows.txt for details.
 
 
-1.2.6. DOS
+1.2.7. DOS
 
     There is an experimental Makefile in the "dos" directory to build
     XZ Utils on DOS using DJGPP. Support for long file names (LFN) is

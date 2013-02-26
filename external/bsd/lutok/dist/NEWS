@@ -1,0 +1,19 @@
+Changes in version 0.2
+======================
+
+Released on 2012/05/30.
+
+* New global constants: globals_index.
+
+* New methods added to the state class: get_metafield, get_metatable,
+  insert, push_value, raw_get and raw_set.
+
+* Acknowledged that Lua 5.2 is currently not supported.
+
+
+Changes in version 0.1
+======================
+
+Released on 2012/01/29.
+
+* This is the first public release of the Lutok package.
