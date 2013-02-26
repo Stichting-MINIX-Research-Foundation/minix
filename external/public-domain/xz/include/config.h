@@ -90,7 +90,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `futimens' function. */
-#define HAVE_FUTIMENS 1
+/* #undef HAVE_FUTIMENS */
 
 /* Define to 1 if you have the `futimes' function. */
 #define HAVE_FUTIMES 1
@@ -186,7 +186,7 @@
 /* #undef HAVE_UTIME */
 
 /* Define to 1 if you have the `utimes' function. */
-#define HAVE_UTIMES 1
+/* #undef HAVE_UTIMES */
 
 /* Define to 1 if you have the `wcwidth' function. */
 #define HAVE_WCWIDTH 1
@@ -228,7 +228,7 @@
 
 /* Define to 1 if the number of available CPU cores can be detected with
    sysctl(). */
-#define TUKLIB_CPUCORES_SYSCTL 1
+/* #undef TUKLIB_CPUCORES_SYSCTL */
 
 /* Define to 1 if the system supports fast unaligned access to 16-bit and
    32-bit integers. */
@@ -256,7 +256,7 @@
 
 /* Define to 1 if the amount of physical memory can be detected with sysctl().
    */
-#define TUKLIB_PHYSMEM_SYSCTL 1
+/* #undef TUKLIB_PHYSMEM_SYSCTL */
 
 /* Define to 1 if the amount of physical memory can be detected with Linux
    sysinfo(). */
@@ -286,14 +286,9 @@
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
+#include <sys/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
 #  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */

@@ -1,0 +1,14 @@
+syntax(2)
+
+test_suite("kyua")
+
+-- This is broken in platforms where /bin/sh is not bash.  See Issue 24 for
+-- details.  We should fix this, but it does not seem to be Kyua's problem.
+--include("bootstrap/Kyuafile")
+
+include("cli/Kyuafile")
+include("engine/Kyuafile")
+include("examples/Kyuafile")
+include("integration/Kyuafile")
+include("store/Kyuafile")
+include("utils/Kyuafile")

@@ -1,0 +1,405 @@
+.\" Copyright 2012 Google Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" * Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" * Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" * Neither the name of Google Inc. nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd September 9, 2012
+.Dt KYUA-ATF-INTERFACE 1
+.Os
+.Sh NAME
+.Nm atf-interface
+.Nd Description of the ATF test program interface
+.Sh DESCRIPTION
+The interface of ATF test programs is the interface of the test
+programs linked to the
+.Nm atf-c ,
+.Nm atf-c++
+and
+.Nm atf-sh
+libraries provided by ATF.
+.Pp
+The ATF interface can be understood as the mechanisms used by test programs
+to communicate with the runtime engine as well as the assumptions that test
+programs and test cases can make while running.
+.Pp
+A test case is the most basic part of a test suite.  A test case is
+supposed to reproduce one, and only one, scenario.  For example: if the
+item under test was a function, the test case would provide a single set of
+input parameters to the function and check its output; If the item under
+test was a binary, the test case would provide a single set of arguments to
+the program and check its behavior.
+.Ss Test case parts
+Test cases have three parts:
+.Bl -tag -width cleanupXX
+.It Head
+Programmatically defines metadata properties.  The head must not perform
+any other thing than defining such properties.  In particular, no testing
+whatsoever can happen in the head.  (Ideally the definition of metadata
+properties would not happen programmatically.)
+.It Body
+The actual test case which performs any desired testing and reports a
+result.  The body is executed by the runtime engine in a deterministic way;
+see the isolation section below.
+.It Cleanup
+An optional cleanup routine.  Note that the runtime engine will attempt to
+clean up the work directory automatically, so this routine should only be
+provided in cases where the test modifies system-wide state not known by
+the runtime engine.  The cleanup part is executed in the same directory as
+the body.  However, the body and the cleanup parts
+.Em do not share the same process space ;
+the only way to pass data around from the body to the cleanup is by means
+of files in the work directory.
+.El
+.Ss Metadata properties
+The following test case metadata properties must be exported in the test
+case list for every test case:
+.Bl -tag -width XX
+.It Va ident
+Single-word string.  The name of the test case.  Must be unique within the
+test program.
+.El
+.Pp
+The following test case metadata properties may be exported in the
+test case list for every test case:
+.Bl -tag -width XX
+.It Va descr
+Multi-word string.  A textual description for the test case.  Usually,
+providing a descriptive identifier is better than providing a textual
+description.
+.It Va has.cleanup
+Boolean.  Whether the test case defines a cleanup routine or not.
+.It Va require.arch
+Whitespace separated list of the architectures required by the test case.
+If defined, the test case is skipped unless the host architecture matches
+any of the values defined in this property.
+.It Va require.config
+Whitespace separated list of configuration variable names.  The list of
+configuration variables that must be defined.  The test is skipped if any
+of these is missing.
+.It Va require.files
+Whitespace separated list of absolute paths to installed files.  If any of
+these files is not found, the test case is skipped.
+.It Va require.machine
+Whitespace separated list of the machine types required by the test case.
+If defined, the test case is skipped unless the host machine type matches
+any of the values defined in this property.
+.It Va require.progs
+Whitespace separated list of program names (either absolute names or base
+names).  If any of these programs is not found, the test case is skipped.
+.It Va require.user
+Either
+.Sq root
+or
+.Sq unprivileged .
+If
+.Sq root ,
+the test case must be run as the superuser or otherwise it is skipped.  If
+.Sq unprivileged ,
+the test case must be run as an unprivileged user or else it is skipped.
+.It Va timeout
+Integer.  The amount of seconds the test case can run for before it is
+killed by the runtime engine.
+.El
+.Ss Configuration properties
+The following properties may be defined by the runtime engine and are
+propagated to the test cases:
+.Bl -tag -width XX
+.It Va unprivileged-user
+String, optional.  Specifies the name of the user under which tests that
+set
+.Sq require.user=unprivileged
+are executed.
+.El
+.Ss Results
+A test case must always report a result by creating the results file
+specified through the
+.Fl r
+flag.  For convenience when running test cases without the runtime engine,
+this file may point to
+.Pa /dev/stdout
+or
+.Pa /dev/stderr
+in which case the file must not be created (because the creation will
+fail).
+.Pp
+Aside from creating the results file, the process in which the test case
+runs must terminate in particular ways for the test result to be considered
+valid.
+.Pp
+If the test case fails to create the test result, if the test result is
+created but contains an invalid syntax, or if the termination status of the
+process does not match the requirements of the test result, the runtime
+engine marks the test case as
+.Sq broken .
+Note that the
+.Sq broken
+state is decided by the runtime engine; a test case cannot report itself as
+.Sq broken .
+.Pp
+The general syntax for the results file is as follows:
+.Bd -literal -offset indent
+<status>[[(int)]: reason]
+.Ed
+.Pp
+The following results are allowed:
+.Bl -tag -width XX
+.It expected_death
+The process is expected to terminate either due to a clean call to
+.Xr exit 3
+or due to the reception of a signal.  The contents of the file are
+.Sq expected_death: <reason>\\n .
+Example:
+.Sq expected_death: Calling libdofoo breaks due to bug xyz .
+.It expected_exit
+The process is expected to terminate cleanly.  The contents of the file are
+.Sq expected_exit: <reason>
+if the exit code is irrelevant or
+.Sq expected_exit(<exitcode>): <reason>
+if the process must terminate with a given exit code.  Examples:
+.Sq expected_exit: Calling bar exits but it should not
+or
+.Sq expected_exit(123): Calling bar exits with an unexpected code .
+.It expected_failure
+The process must exit cleanly with an
+.Va EXIT_SUCCESS
+exit code.  The contents of the file are
+.Sq expected_failure: <reason>\\n
+Example:
+.Sq expected_failure: 2 + 2 = 3 .
+.It expected_signal
+The process is expected to terminate due to the reception of a signal.  The
+contents of the file are
+.Sq expected_signal: <reason>
+if the signal number is irrelevant or
+.Sq expected_signal(<signalno>): <reason>
+if the process must terminate due to a particular signal.  Examples:
+.Sq expected_signal: Calling bar crashes
+or
+.Sq expected_signal(1): Calling bar kills ourselves due to unhandled SIGHUP .
+.It expected_timeout
+The process is expected to hang for longer than its
+.Va timeout
+metadata property.  Only the runtime engine can control this situation
+because the runtime engine is the one implementing the timeout
+functionality.
+.It failed
+The process must exit cleanly with an
+.Va EXIT_FAILURE
+exit code.  The contents of the file are
+.Sq failed: <reason>\\n .
+Example:
+.Sq failed: Failed on purpose\\n .
+.It passed
+The process must exit cleanly with an
+.Va EXIT_SUCCESS
+exit code.  The contents of the file are
+.Sq passed\\n .
+.It skipped
+The process must exit cleanly with an
+.Va EXIT_SUCCESS
+exit code.  The contents of the file are
+.Sq skipped: <reason>\\n .
+Example:
+.Sq skipped: Skipped because the foo is not present\\n .
+.El
+.Ss Isolation
+The runtime engine attempts to isolate test cases from other test cases in
+the same test program and from the rest of the system by performing what is
+called
+.Em test case isolation .
+.Pp
+Whenever the user runs a test program binary by hand (i.e. not through
+.Xr kyua 1 ) ,
+the test program will print a warning message stating that test case
+isolation does not work and therefore the program may cause side-effects
+and/or report invalid values.
+.Pp
+The runtime engine must set the
+.Va __RUNNING_INSIDE_ATF_RUN
+environment variable to the magic value
+.Sq internal-yes-value
+to tell the test programs that they are being run with isolation enabled.
+.Pp
+The test case isolation performs the following:
+.Bl -tag -width XX
+.It Process space
+Each test case body and cleanup routines are executed in independent
+processes.  Corollary: the test case can do whatever it wants to the
+current process (such as modifying global variables) without having to undo
+such changes.
+.It Process group
+The test case body and cleanup are executed in their own process groups.
+Should they spawn any children, such children should maintain the same
+process group.  This is done to allow the runtime engine to kill the whole
+process subtree once the test case finishes (or if the test case hangs).
+.It Work directory
+The test case body and its cleanup (if any) are executed in a temporary
+directory automatically created by the runtime engine.  This temporary
+directory is shared among the body and cleanup parts of a single test case
+but is completely separate from the temporary directories of other tests.
+Corollary: the test case body and cleanup routines can write to their
+current directory without bothering to clean any files and/or directories
+they create.  The runtime engine takes care to recursively delete the
+temporary directories after the execution of a test case.  Any file systems
+mounted within the temporary directory will be unmounted if possible.
+.It Home directory
+The
+.Va HOME
+environment variable is set to the absolute path of the work directory.
+.It Umask
+The value of the umask is set to 0022.
+.It Environment
+The
+.Va LANG ,
+.Va LC_ALL ,
+.Va LC_COLLATE ,
+.Va LC_CTYPE ,
+.Va LC_MESSAGES ,
+.Va LC_MONETARY ,
+.Va LC_NUMERIC
+and
+.Va LC_TIME
+variables are unset.  The
+.Va TZ
+variable is set to
+.Sq UTC .
+.It Process limits
+The maximum soft core size limit is raised to its corresponding hard limit.
+This is a simple, best-effort attempt at allowing test cases to dump core
+for further diagnostic purposes.
+.El
+.Ss Test programs
+A test program is, simply put, a collection of related test cases.  The
+test program can be seen as a command-line dispatcher for the test cases.
+A test program must provide one or more test cases.  If it does not contain
+any test case, the runtime system will report it as invalid.
+.Pp
+Test programs expose their list of test cases in a machine parseable
+format.  The runtime engine obtains the list of test cases to know what
+tests to run and to know how to set up the environment of each test prior
+execution.  The test program must not do any test when asked to dump its
+test case list.
+.Pp
+The generic syntax to obtain the list of test cases included in a test
+program is:
+.Bd -literal -offset indent
+<test-program> -l
+.Ed
+.Pp
+The list of test cases follows the following format:
+.Bd -literal -offset indent
+LIST ::= HEADER NEWLINE TEST_CASES
+
+HEADER ::= 'Content-Type: application/X-atf-tp; version="1"'
+NEWLINE ::= '\\n'
+TEST_CASES ::= TEST_CASE | TEST_CASE NEWLINE TEST_CASES
+
+TEST_CASE ::= IDENT_PROPERTY PROPERTIES
+IDENT_PROPERTY ::= 'ident' DELIM STRING NEWLINE
+DELIM ::= ': '
+
+PROPERTIES ::= PROPERTY | PROPERTY PROPERTIES
+PROPERTY ::= PROPERTY_NAME DELIM STRING NEWLINE
+PROPERTY_NAME ::= (see below)
+.Ed
+.Pp
+An example:
+.Bd -literal -offset indent
+Content-Type: application/X-atf-tp; version="1"
+
+ident: addition
+descr: Tests that the addition function works
+
+ident: subtraction
+descr: Tests that the subtraction function works
+
+ident: remove
+descr: Tests removing files
+require.root: true
+timeout: 50
+has.cleanup: true
+.Ed
+.Pp
+The syntax to run a test case body part is:
+.Bd -literal -offset indent
+<test-program> [-r resfile] [-s srcdir] [-v var=value]* <test-case>[:body]
+.Ed
+.Pp
+This must run the test case body
+.Dq as is ,
+without any attempt of isolating it from the rest of the system.  It is the
+responsibility of the runtime engine to do such isolation.
+.Pp
+The runtime engine always passes the path of a nonexistent file to
+.Fl r ,
+which must be created by the test case; and always passes an absolute path
+to the
+.Fl s
+flag pointing to the directory containing the test program executable.
+.Pp
+The runtime engine shall pass any configuration variables it wants through
+the
+.Fl v
+flag, and these can be later inspected by the test case at will.
+.Pp
+A note to users: if you run the test case by hand (not through
+.Xr kyua 1 nor
+.Xr atf-run 1 )
+from the command line, none of the isolation features described in the
+isolation section apply.  This means that the test case can (and probably
+will) write to the current directory and leave garbage behind.  Also, given
+that the test case is executed without e.g. clearing the environment, the
+results of the test case may differ from those obtained when running the
+test case inside the runtime engine.
+.Em Only use this for debugging purposes
+(i.e. to run the test case code under GDB).
+.Pp
+The syntax to run a test case cleanup part is:
+.Bd -literal -offset indent
+<test-program> [-s srcdir] [-v var=value]* <test-case>:cleanup
+.Ed
+.Pp
+This can only be performed if and only if the test case sets the
+.Va has.cleanup
+property to true.  Otherwise the behavior of executing the cleanup part is
+undefined.
+.Pp
+The same rules for
+.Fl s
+and
+.Fl v
+apply as to when running the body.
+.Pp
+The cleanup part must be executed in the same directory as the body but in
+a separate process space.  The only way for test cases to transfer state
+(if any) from the body to the cleanup routine is by means of files in the
+current directory.
+.Pp
+The cleanup part does not have to worry about deleting temporary files
+created in the current directory.  The runtime engine does this
+automatically.
+.Sh SEE ALSO
+.Xr kyua-test 1 ,
+.Xr kyuafile 5

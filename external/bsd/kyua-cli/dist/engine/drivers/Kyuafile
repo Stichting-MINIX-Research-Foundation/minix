@@ -1,0 +1,8 @@
+syntax(2)
+
+test_suite("kyua")
+
+atf_test_program{name="debug_test_test"}
+atf_test_program{name="list_tests_test"}
+atf_test_program{name="run_tests_test"}
+atf_test_program{name="scan_action_test"}

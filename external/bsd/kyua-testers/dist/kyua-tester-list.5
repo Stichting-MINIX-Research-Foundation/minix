@@ -1,0 +1,103 @@
+.\" Copyright 2012 Google Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" * Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" * Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" * Neither the name of Google Inc. nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd December 26, 2012
+.Dt KYUA-TESTER-LIST 5
+.Os
+.Sh NAME
+.Nm kyua-tester-list
+.Nd The test cases list printed by the Kyua testers
+.Sh SYNOPSIS
+.Fn test_case properties_table
+.Sh DESCRIPTION
+The
+.Sq list
+subcommand of the various Kyua testers outputs the list of tests cases within a
+given test program.  The format of the list of test cases is a Lua script in
+which every line invokes the
+.Fn test_case
+function to define a test case.  The
+.Xr kyua 1
+runtime engine reads this list in order to determine what tests can be run.
+.Pp
+The
+.Fn test_case
+function takes a table as its only argument, and the table contains the
+definition of the metadata properties of the test case.  A typical invocation of
+this function looks like this:
+.Bd -literal -indent
+test_case{name='THE-NAME', ...}
+.Ed
+.Pp
+Where
+.Sq ...
+denote optional metadata values attached to the test case.  The supported
+metadata properties are the following:
+.Bl -tag -width allowedXarchitecturesXX
+.It allowed_architectures
+Whitespace-separated list of machine architecture names allowed by the test
+case.  If empty or not defined, the test case is allowed to run on any machine
+architecture.
+.It allowed_platforms
+Whitespace-separated list of machine platform names allowed by the test case.
+If empty or not defined, the test case is allowed to run on any machine
+platform.
+.It description
+Textual description of the test case.
+.It has_cleanup
+If
+.Sq true ,
+denotes that the test case has a cleanup routine.
+.It required_configs
+Whitespace-separated list of configuration variables that the test case requires
+to be defined before it can run.
+.It required_files
+Whitespace-separated list of paths that the test case requires to exist before
+it can run.
+.It required_memory
+Amount of physical memory that the test case needs to run successfully.
+.It required_programs
+Whitespace-separated list of basenames or absolute paths pointing to executable
+binaries that the test case requires to exist before it can run.
+.It required_user
+If empty, the test case has no restrictions on the calling user for it to run.
+If set to
+.Sq unprivileged ,
+the test case needs to not run as root.
+If set to
+.Sq root ,
+the test case must run as root.
+.It timeout
+Amount of seconds that the test case is allowed to execute before being killed.
+.It X-NAME
+Custom variable defined by the test case, where
+.Sq NAME
+denotes the name of the variable.
+.El
+.Sh SEE ALSO
+.Xr kyua-atf-tester 1 ,
+.Xr kyua-plain-tester 1

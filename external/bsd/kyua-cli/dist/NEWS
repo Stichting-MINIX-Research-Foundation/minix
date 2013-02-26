@@ -1,0 +1,255 @@
+Changes in version 0.6
+======================
+
+Experimental version released on February 22nd, 2013.
+
+* Issue 36: Changed 'kyua help' to not fail when the configuration file
+  is bogus.  Help should always work.
+
+* Issue 37: Simplified the syntax() calls in configuration and Kyuafile
+  files to only specify the requested version instead of also the format
+  name.  The format name is implied by the file being loaded, so there
+  is no use in the caller having to specify it.  The version number of
+  these file formats has been bumped to 2.
+
+* Issue 39: Added per-test-case metadata values to the HTML reports.
+
+* Issue 40: Rewrote the documentation as manual pages and removed the
+  previous GNU Info document.
+
+* Issue 47: Started using the independent testers in the kyua-testers
+  package to run the test cases.  Kyua does not implement the logic to
+  invoke test cases any more, which provides for better modularity,
+  extensibility and robustness.
+
+* Issue 57: Added support to specify arbitrary metadata properties for
+  test programs right from the Kyuafile.  This is to make plain test
+  programs more versatile, by allowing them to specify any of the
+  requirements (allowed architectures, required files, etc.) supported
+  by Kyua.
+
+* Reduced automatic screen line wrapping of messages to the 'help'
+  command and the output of tables by 'db-exec'.  Wrapping any other
+  messages (specially anything going to stderr) was very annoying
+  because it prevented natural copy/pasting of text.
+
+* Increased the granularity of the error codes returned by kyua(1) to
+  denote different error conditions.  This avoids the overload of '1' to
+  indicate both "expected" errors from specific subcommands and
+  unexpected errors caused by the internals of the code.  The manual now
+  correctly explain how the exit codes behave on a command basis.
+
+* Optimized the database schema to make report generation almost
+  instantaneous.
+
+* Bumped the database schema to 2.  The database now records the
+  metadata of both test programs and test cases generically, without
+  knowledge of their interface.
+
+* Added the 'db-migrate' command to provide a mechanism to upgrade a
+  database with an old schema to the current schema.
+
+* Removed the GDB build-time configuration variable.  This is now part
+  of the kyua-testers package.
+
+* Rewrote the Kyuafile parsing code in C++, which results in a much
+  simpler implementation.  As a side-effect, this gets rid of the
+  external Lua files required by 'kyua', which in turn make the tool
+  self-contained.
+
+* Added caching of various configure test results (particularly in those
+  tests that need to execute a test program) so that cross-compilers can
+  predefine the results of the tests without having to run the
+  executables.
+
+
+Changes in version 0.5
+======================
+
+Experimental version released on July 10th, 2012.
+
+* Issue 15: Added automatic stacktrace gathering of crashing test cases.
+  This relies on GDB and is a best-effort operation.
+
+* Issue 32: Added the '--build-root' option to the debug, list and test
+  commands.  This allows executing test programs from a different
+  directory than where the Kyuafile scripts live.  See the 'Build roots'
+  section in the manual for more details.
+
+* Issue 33: Removed the kyuaify.sh script.  This has been renamed to
+  atf2kyua and moved to the kyua-atf-compat module, where it ships as a
+  first-class utility (with a manual page and tests).
+
+* Issue 34: Changed the HTML reports to include the stdout and stderr of
+  every test case.
+
+* Fixed the build when using a "build directory" and a clean source tree
+  from the repository.
+
+
+Changes in version 0.4
+======================
+
+Experimental version released on June 6th, 2012.
+
+* Added the 'report-html' command to generate HTML reports of the
+  execution of any recorded action.
+
+* Changed the '--output' flag of the 'report' command to only take a
+  path to the target file, not its format.  Different formats are better
+  supported by implementing different subcommands, as the options they
+  may receive will vary from format to format.
+
+* Added a '--with-atf' flag to the configure script to control whether
+  the ATF tests get built or not.  May be useful for packaging systems
+  that do not have ATF in them yet.  Disabling ATF also cuts down the
+  build time of Kyua significantly, but with the obvious drawbacks.
+
+* Grouped 'kyua' subcommands by topic both in the output of 'help' and
+  in the documentation.  In general, the user needs to be aware of
+  commands that rely on a current project and those commands that rely
+  purely on the database to generate reports.
+
+* Made 'help' print the descriptions of options and commands properly
+  tabulated.
+
+* Changed most informational messages to automatically wrap on screen
+  boundaries.
+
+* Rewrote the configuration file parsing module for extensibility.  This
+  will allow future versions of Kyua to provide additional user-facing
+  options in the configuration file.
+
+  No syntax changes have been made, so existing configuration files
+  (version 1) will continue to be parsed without problems.  There is one
+  little exception though: all variables under the top-level
+  'test_suites' tree must be declared as strings.
+
+  Similarly, the '-v' and '--variable' flags to the command line must
+  now carry a 'test_suites.' prefix when referencing any variables under
+  such tree.
+
+
+Changes in version 0.3
+======================
+
+Experimental version released on February 24th, 2012.
+
+* Made the 'test' command record the results of the executed test
+  cases into a SQLite database.  As a side effect, 'test' now supports a
+  '--store' option to indicate where the database lives.
+
+* Added the 'report' command to generate plain-text reports of the
+  test results stored in the database.  The interface of this command is
+  certainly subject to change at this point.
+
+* Added the 'db-exec' command to directly interact with the store
+  database.
+
+* Issue 28: Added support for the 'require.memory' test case property
+  introduced in ATF 0.15.
+
+* Renamed the user-specific configuration file from ~/.kyuarc to
+  ~/.kyua/kyua.conf for consistency with other files stored in the
+  ~/.kyua/ subdirectory.
+
+* Switched to use Lutok instead of our own wrappers over the Lua C
+  library.  Lutok is just what used to be our own utils::lua module, but
+  is now distributed separately.
+
+* Removed the 'Atffile's from the source tree.  Kyua is stable enough
+  to generate trustworthy reports, and we do not want to give the
+  impression that atf-run / atf-report are still supported.
+
+* Enabled logging to stderr for our own test programs.  This makes it
+  slightly easier to debug problems in our own code when we get a
+  failing test.
+
+
+Changes in version 0.2
+======================
+
+Experimental version released on August 24th, 2011.
+
+The biggest change in this release is the ability for Kyua to run test
+programs implemented using different frameworks.  What this means is
+that, now, a Kyua test suite can include not only ATF-based test
+programs, but also "legacy" (aka plain) test programs that do not use
+any framework.  I.e. if you have tests that are simple programs that
+exit with 0 on success and 1 on failure, you can plug them in into a
+Kyua test suite.
+
+Other than this, there have been several user-visible changes.  The most
+important are the addition of the new 'config' and 'debug' subcommands
+to the 'kyua' binary.  The former can be used to inspect the runtime
+configuration of Kyua after parsing, and the latter is useful to
+interact with failing tests cases in order to get more data about the
+failure itself.
+
+Without further ado, here comes the itemized list of changes:
+
+* Generalized the run-time engine to support executing test programs
+  that implement different interfaces.  Test programs that use the ATF
+  libraries are just a special case of this.  (Issue 18.)
+
+* Added support to the engine to run "plain" test programs: i.e. test
+  programs that do not use any framework and report their pass/fail
+  status as an exit code.  This is to simplify the integration of legacy
+  test programs into a test suite, and also to demonstrate that the
+  run-time engine is generic enough to support different test
+  interfaces.  (Issue 18.)
+
+* Added the 'debug' subcommand.  This command allows end users to tweak
+  the execution of a specific test case and to poke into the behavior of
+  its execution.  At the moment, all this command allows is to view the
+  stdout and stderr of the command in real time (which the 'test'
+  command currently completely hides).
+
+* Added the 'config' subcommand.  This command allows the end user to
+  inspect the current configuration variables after evaluation, without
+  having to read through configuration files.  (Issue 11.)
+
+* Removed the test_suites_var function from configuration files.  This
+  was used to set the value of test-suite-sepecific variables, but it
+  was ugly-looking.  It is now possible to use the more natural syntax
+  'test_suites.<test-suite-name>.<variable> = <value>'.  (Issue 11.)
+
+* Added a mechanism to disable the loading of configuration files
+  altogether.  Needed for testing purposes and for scriptability.
+  Available by passing the '--config=none' flag.
+
+* Enabled detection of unused parameters and variables in the code and
+  fixed all warnings.  (Issue 23.)
+
+* Changed the behavior of "developer mode".  Compiler warnings are now
+  enabled unconditionally regardless of whether we are in developer mode
+  or not; developer mode is now only used to perform strict warning
+  checks and to enable assertions.  Additionally, developer mode is now
+  only automatically enabled when building from the repository, not for
+  formal releases.  (Issue 22.)
+
+* Fixed many build and portability problems to Debian sid with GCC 4.6.3
+  and Ubuntu 10.04.1 LTS.  (Issues 20, 21, 26.)
+
+
+Changes in version 0.1
+======================
+
+Experimental version released on June 23rd, 2011.
+
+This is the first public release of the kyua-cli package.
+
+The scope of this release is to provide functional replacement for the
+'atf-run' utility included in the atf package.  At this point, 'kyua'
+can reliably run the NetBSD 5.99.53 test suite delivering the same
+results as 'atf-run'.
+
+The reporting facilities of this release are quite limited.  There is
+no replacement for 'atf-report' yet, and there is no easy way of
+debugging failing test programs other than running them by hand.  These
+features will mark future milestones and therefore be part of other
+releases.
+
+Be aware that this release has suffered very limited field testing.
+The test suite for kyua-cli is quite comprehensive, but some bugs may
+be left in any place.

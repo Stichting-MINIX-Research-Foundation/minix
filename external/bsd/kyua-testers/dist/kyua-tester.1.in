@@ -1,0 +1,205 @@
+.\" Copyright 2012 Google Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" * Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" * Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" * Neither the name of Google Inc. nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd December 26, 2012
+.Dt KYUA-TESTER 1
+.Os
+.Sh NAME
+.Nm kyua-tester
+.Nd Scriptable interface to interact with test programs
+.Sh SYNOPSIS
+.Nm
+.Op Fl g Ar gid
+.Op Fl t Ar timeout
+.Op Fl u Ar uid
+.Ar list
+.Ar test_program
+.Nm
+.Op Fl g Ar gid
+.Op Fl t Ar timeout
+.Op Fl u Ar uid
+.Ar test
+.Op Fl v Ar var=value
+.Ar test_program
+.Ar test_case
+.Ar result_file
+.Sh DESCRIPTION
+This generic manual page does
+.Em not
+correspond to any specific binary.  It describes the generic command-line
+interface provided by all Kyua testers shipped by the
+.Sq __PACKAGE__
+package, which all have names of the form
+.Nm kyua-INTERFACE-NAME-tester .
+.Pp
+The main goal of a
+.Nm
+is to provide a scriptable interface to run
+.Em a single test case
+of
+.Em a single test program
+in a generic manner.  The specific implementation of how to do this is up to the
+tester, as each
+.Nm
+binary implements a specific test interface.  The following binaries are shipped
+with the
+.Sq __PACKAGE__
+package:
+.Bl -tag -width XXXX
+.It Xr kyua-atf-tester 1
+An implementation of
+.Nm
+that wraps tests that follow the
+.Xr kyua-atf-interface 7
+interface.
+.It Xr kyua-plain-tester 1
+An implementation of
+.Nm
+that wraps tests that follow the
+.Xr kyua-plain-interface 7
+interface.
+.El
+.Pp
+.Xr kyua 1
+uses the various
+.Nm
+binaries to execute tests that implement diverse interfaces, without having to
+know about any of its specifics.  It is possible for other packages to provide
+new testers that implement other interfaces as long as the tester's command line
+complies to what is described in this manual page.
+.Pp
+A
+.Nm
+implements a typical command-line interface based on subcommands.  The tool
+takes a set of generic options first, a subcommand name, a set of any options
+accepted by such subcommand, and a set of arguments to the subcommand.
+.Pp
+The following options apply to all subcommands:
+.Bl -tag -width XtXtimeoutXX
+.It Fl g Ar gid
+GID of the user to switch to before running the test case.  Defaults to the
+current GID.
+.It Fl t Ar timeout
+Seconds to allow the test program to run before killing it.  Defaults to 60.
+.It Fl u Ar uid
+UID of the user to switch to before running the test case.  Defaults to the
+current UID.
+.El
+.Pp
+Killing the tester should always be a safe operation, resulting in the
+subsequent termination of the test program being run and the cleanup of any used
+resources.
+.Ss Workflow
+The way
+.Xr kyua 1
+uses the testers to interact with individual test cases is the following:
+.Bl -enum
+.It
+For every test program listed in a
+.Xr kyuafile 5 ,
+execute the
+.Sq list
+subcommand of the
+.Nm
+that matches the interface name in the test program description.
+.It
+.Xr kyua 1
+collects the test cases returned in the previous step and checks if they are
+runnable according to their metadata.
+.It
+For every test case collected from the previous steps, execute the
+.Sq test
+subcommand of the same
+.Nm
+used in the test case listing.
+.It
+Reinterpret the generic test result and record it as necessary.
+.El
+.Ss The list subcommand
+The
+.Sq list
+subcommand extracts the list of test cases that are part of the given test
+program in a machine-parseable format.  The test program should be provided as
+an absolute pathname.
+.Pp
+The format of the output is described in
+.Xr kyua-tester-list 5 .
+.Ss The test subcommand
+The
+.Sq test
+subcommand executes a single test case of a test program in a controlled manner,
+which means that it is placed in its own subprocess and its own work directory
+so that side-effects during execution are minimized.
+.Pp
+If the test is executed successfully, the
+.Ar result_file
+is created following the format described in
+.Xr kyua-tester-result 5 .
+.Pp
+If the test crashes halfway through and dumps core,
+.Nm
+will attempt to gather a stacktrace and print it as part of the test's output.
+.Pp
+The following options are specific to the test command:
+.Bl -tag -width XvXvar=nameXX
+.It Fl v Ar var=name
+Passes a configuration variable to the test case.
+.El
+.Pp
+The following configuration variables have special meaning:
+.Bl -tag -width unprivilegedXuserXX
+.It unprivileged-user
+The name (not UID) of an unprivileged user that the test can use for its own
+purposes.
+.El
+.Sh ENVIRONMENT
+The following variables are recognized and can be freely tuned by the end user:
+.Bl -tag -width TMPDIRXX
+.It Va TMPDIR
+Path to the system-wide temporary directory.
+.Nm
+uses this location to place the work directory of test cases.
+.Pp
+The default value is
+.Pa __TMPDIR__ .
+.El
+.Sh EXIT STATUS
+.Nm
+returns the following exit codes:
+.Bl -tag -compact -width 0XX
+.It 0
+The tester ran correctly and the test passed.
+.It 1
+The tester ran correctly, but the test failed.
+.It 2
+The tester failed.  The result of the test itself is irrelevant.
+.It 3
+The user invoked the tester incorrectly.
+.El
+.Sh SEE ALSO
+.Xr kyua-atf-tester 1 ,
+.Xr kyua-plain-tester 1
