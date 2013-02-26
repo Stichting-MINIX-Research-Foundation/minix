@@ -35,6 +35,7 @@
 #include <minix/u64.h>
 #include <minix/minlib.h>
 #include <sys/ioctl.h>
+#include <strings.h>
 #endif
 #include <dirent.h>
 
@@ -64,10 +65,9 @@
 #endif
 #endif
 
-#if !defined(__minix)
 typedef uint32_t block_t;
 typedef uint32_t zone_t;
-#endif
+typedef uint32_t bitchunk_t;
 
 extern char *optarg;
 extern int optind;
@@ -1014,26 +1014,13 @@ int bit;
 {
   /* Insert 'count' bits in the bitmap */
   int w, s;
-#if defined(__minix)
   bitchunk_t *buf;
-#else
-  uint32_t *buf;
-#endif
 
-#if defined(__minix)
   buf = (bitchunk_t *) alloc_block();
-#else
-  buf = (uint32_t *) alloc_block();
-#endif
 
   get_block(block, (char *) buf);
-#if defined(__minix)
   w = bit / (8 * sizeof(bitchunk_t));
   s = bit % (8 * sizeof(bitchunk_t));
-#else
-  w = bit / (8 * sizeof(uint32_t));
-  s = bit % (8 * sizeof(uint32_t));
-#endif
   buf[w] |= (1 << s);
   put_block(block, (char *) buf);
 
