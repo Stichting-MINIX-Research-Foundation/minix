@@ -31,8 +31,10 @@ PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
 PROG_DRIVERS=
 PROG_COMMANDS=	mount fsck.mfs sh service
 PROG_SERVERS=	mfs
-PROG_USRSBIN=
 PROG_BIN=
+PROG_SBIN=
+PROG_USR.BIN=
+PROG_USR.SBIN=
 
 .if ${MACHINE_ARCH} == "i386"
 ETC+=		rs.single
@@ -40,7 +42,7 @@ EXTRA+=
 PROG_DRIVERS+=	at_wini floppy pci
 PROG_COMMANDS+=	cdprobe loadramdisk sysenv
 PROG_SERVERS+=	procfs
-PROG_USRSBIN+=	pwd_mkdb
+PROG_USR.SBIN+=	pwd_mkdb
 
 .if ${MKSMALL} != "yes"
 RAMDISK_SMALL=	1
@@ -69,8 +71,10 @@ PROG_LIBEXEC+=	ld.elf_so
 PROG_LIBS+=	libc libminlib libcompat_minix libterminfo
 .endif
 
-PROGRAMS=${PROG_DRIVERS} ${PROG_COMMANDS} ${PROG_SERVERS} \
-	 ${PROG_USRSBIN} ${PROG_BIN} ${PROG_LIBEXEC}
+PROGRAMS=${PROG_COMMANDS} \
+	 ${PROG_BIN} ${PROG_SBIN} ${PROG_USR.BIN} ${PROG_USR.SBIN} \
+	 ${PROG_DRIVERS} ${PROG_SERVERS} \
+	 ${PROG_LIBEXEC}
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 
@@ -125,7 +129,7 @@ ${PROGROOT}/lib/${lib}/${lib}.so.0:
 
 # Generate dependencies rules for binaries
 dir.sh:= ash
-.for srcdir in bin commands drivers libexec servers
+.for srcdir in bin sbin commands drivers libexec servers usr.bin usr.sbin
 .for prog in ${PROG_${srcdir:tu}}
 ${prog}: ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}
 	${INSTALL} $> $@
@@ -134,16 +138,6 @@ ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}:
 	${MAKE} -C ${NETBSDSRCDIR}/${srcdir}/${dir.${prog}:U${prog}} all
 .endfor # prog
 .endfor # srcdir
-
-# We have to do this as a separate loop, because USR.SBIN is not a valid 
-# make variable name.
-.for prog in ${PROG_USRSBIN}
-${prog}: ${PROGROOT}/usr.sbin/${dir.${prog}:U${prog}}/${prog}
-	${INSTALL} $> $@
-
-${PROGROOT}/usr.sbin/${dir.${prog}:U${prog}}/${prog}:
-	${MAKE} -C ${NETBSDSRCDIR}/usr.sbin/${dir.${prog}:U${prog}} all
-.endfor
 
 image:	proto.gen ${ETC} ${EXTRA} pwd.db spwd.db passwd
 	${_MKMSG_CREATE} "Generating ramdisk image"
