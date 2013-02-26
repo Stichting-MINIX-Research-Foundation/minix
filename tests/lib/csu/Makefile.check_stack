@@ -1,0 +1,10 @@
+# $NetBSD: Makefile.check_stack,v 1.1 2010/11/30 18:38:53 joerg Exp $
+
+.include <bsd.own.mk>
+
+CSU_ARCHDIR=	${.PARSEDIR}/arch/${MACHINE_ARCH}
+.PATH: ${CSU_ARCHDIR}
+.if exists(${CSU_ARCHDIR}/h_initfini_align.S)
+SRCS_CHECK_STACK=	h_initfini_align.S
+CPPFLAGS_CHECK_STACK+=	-DCHECK_STACK_ALIGNMENT
+.endif

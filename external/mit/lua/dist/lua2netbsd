@@ -1,0 +1,56 @@
+#! /bin/sh
+#
+#	$NetBSD: lua2netbsd,v 1.2 2011/10/08 19:28:40 christos Exp $
+#	adapted from dist/ipf/ipf2netbsd:
+#	NetBSD: ipf2netbsd,v 1.23 2010/04/17 22:05:53 darrenr Exp $
+#
+# Copyright (c) 1999 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# lua2netbsd:  prepare a Lua source tree for NeBSD.
+
+### Remove the $'s around various RCSIDs
+cleantags src doc
+
+### Add our NetBSD RCS Id
+find src -type f -name '*.[ch]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/lua2n$$
+echo "" >>/tmp/lua2n$$
+cat $c  >> /tmp/lua2n$$
+mv /tmp/lua2n$$ $c && echo added RCS tag to $c
+	)
+done
+
+find doc -type f -name '*.[0-9]' -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+echo ".\\\"	\$NetBSD\$" >/tmp/lua2m$$
+echo ".\\\"" >>/tmp/lua2m$$
+	cat $m >> /tmp/lua2m$$
+	mv /tmp/lua2m$$ $m && echo added RCS tag to $m
+	)
+done
+
+echo done
+exit 0

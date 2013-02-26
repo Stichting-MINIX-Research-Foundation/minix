@@ -1,0 +1,21 @@
+syntax("kyuafile", 1)
+
+test_suite("kyua")
+
+-- Tests for common modules.
+atf_test_program{name="cli_test"}
+atf_test_program{name="env_test"}
+atf_test_program{name="error_test"}
+atf_test_program{name="fs_test"}
+atf_test_program{name="result_test"}
+atf_test_program{name="run_test"}
+atf_test_program{name="stacktrace_test"}
+atf_test_program{name="text_test"}
+
+-- Tests for the atf_tester.
+atf_test_program{name="atf_list_test"}
+atf_test_program{name="atf_result_test"}
+atf_test_program{name="atf_inttest"}
+
+-- Tests for the plain_tester.
+atf_test_program{name="plain_inttest"}

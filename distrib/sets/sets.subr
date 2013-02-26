@@ -157,7 +157,7 @@ if [ "${MKPIC}" = "no" ]; then
 fi
 # LSC for Minix
 #nlists="base comp etc games man misc $modset $testset text"
-nlists="minix"
+nlists="minix $testset"
 xlists="xbase xcomp xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
@@ -220,6 +220,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	iscsi			${MKISCSI} != no
 #	kerberos		${MKKERBEROS} != no
 #	kmod			${MKKMOD} != no
+#	kyua			${MKKYUA} != no
 #	ldap			${MKLDAP} != no
 #	lint			${MKLINT} != no
 #	llvm			${MKLLVM} != no

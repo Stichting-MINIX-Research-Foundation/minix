@@ -1,0 +1,22 @@
+Kyua (pronounced Q.A.) is a testing framework for both developers and
+users.  Kyua is different from most other testing frameworks in that it
+puts the end user experience before anything else.  There are multiple
+reasons for users to run the tests themselves, and Kyua ensures that
+they can do so in the most convenient way.
+
+This module, kyua-atf-compat, provides tools to ease the transition from
+ATF to Kyua.  In particular, this includes a tool to convert Atffile
+files to Kyuafile files in an automated manner, and drop-in replacement
+wrappers for both atf-run and atf-report.
+
+For further information on the contents of this distribution file,
+please refer to the following other documents:
+
+* AUTHORS: List of authors and contributors to this project.
+* COPYING: License information.
+* INSTALL: Compilation and installation instructions.
+* NEWS: List of major changes between formal releases.
+
+For general project information, please visit:
+
+    http://code.google.com/p/kyua/

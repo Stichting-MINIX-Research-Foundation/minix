@@ -1,0 +1,21 @@
+Kyua (pronounced Q.A.) is a testing framework for both developers and
+users.  Kyua is different from most other testing frameworks in that it
+puts the end user experience before anything else.  There are multiple
+reasons for users to run the tests themselves, and Kyua ensures that
+they can do so in the most convenient way.
+
+This module, kyua-cli, provides the command-line interface to the Kyua
+runtime system.  The major purpose of this tool is to run test cases and
+generate unified reports for their results.
+
+For further information on the contents of this distribution file,
+please refer to the following other documents:
+
+* AUTHORS: List of authors and contributors to this project.
+* COPYING: License information.
+* INSTALL: Compilation and installation instructions.
+* NEWS: List of major changes between formal releases.
+
+For general project information, please visit:
+
+    http://code.google.com/p/kyua/

@@ -15,10 +15,15 @@ SRCS+=	tuklib_exit.c tuklib_cpucores.c tuklib_open_stdxxx.c \
 .include <bsd.init.mk>
 
 CPPFLAGS+=	-DPACKAGE=\"xz\"
+.if !defined(__MINIX)
 CPPFLAGS+=	-DENABLE_NLS -DLOCALEDIR=\"/usr/share/locale\"
 
 DPADD+=	${LIBLZMA} ${LIBINTL}
 LDADD+=	-llzma -lintl
+.else
+DPADD+= ${LIBLZMA}
+LDADD+= -llzma
+.endif # !defined(__MINIX)
 
 .PATH:	${XZSRCDIR}/src/common ${XZSRCDIR}/src/lzmainfo
 
