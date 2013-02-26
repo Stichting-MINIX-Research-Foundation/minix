@@ -6,7 +6,9 @@ NOLINT=		# defined
 .include <bsd.own.mk>
 
 LIB=		stdc++
+.if !defined(__MINIX)
 LDADD=		-lgcc_s
+.endif
 
 LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 
@@ -70,9 +72,11 @@ CPPFLAGS.future.cc = -std=gnu++0x
 
 CPPFLAGS.cp-demangle.cc += -DIN_GLIBCPP_V3
 CPPFLAGS.concept-inst.cc += -D_GLIBCXX_CONCEPT_CHECKS
+.if !defined(__MINIX)
 CPPFLAGS.parallel_list.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
+.endif
 .endif
 
 # XXX

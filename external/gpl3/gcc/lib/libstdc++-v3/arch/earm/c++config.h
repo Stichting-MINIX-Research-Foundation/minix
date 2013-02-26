@@ -542,7 +542,7 @@ _GLIBCXX_END_NAMESPACE
 
 /* Define if gthr-default.h exists (meaning that threading support is
    enabled). */
-#define _GLIBCXX_HAVE_GTHR_DEFAULT 1
+/* #undef _GLIBCXX_HAVE_GTHR_DEFAULT */
 
 /* Define to 1 if you have the `hypot' function. */
 /* #undef _GLIBCXX_HAVE_HYPOT */
@@ -734,7 +734,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_STRXFRM_L */
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
-#define _GLIBCXX_HAVE_SYS_FILIO_H 1
+/* #undef _GLIBCXX_HAVE_SYS_FILIO_H */
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define _GLIBCXX_HAVE_SYS_IOCTL_H 1
