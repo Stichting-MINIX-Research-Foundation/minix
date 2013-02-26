@@ -2,7 +2,7 @@
 
 # crtstuff is built out of elsewhere, or not at all
 .if defined(__MINIX)
-SUBDIR+= libgcc
+SUBDIR+= libgcc libstdc++-v3
 .else
 SUBDIR+= libgcc libiberty libobjc libsupc++ libstdc++-v3 libgomp
 SUBDIR+= libmudflap libmudflapth

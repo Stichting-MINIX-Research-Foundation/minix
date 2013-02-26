@@ -49,6 +49,14 @@
 ./usr/include/ddekit
 ./usr/include/ddekit/minix
 ./usr/include/g++
+./usr/include/g++/backward
+./usr/include/g++/ext
+./usr/include/g++/bits
+./usr/include/g++/debug
+./usr/include/g++/parallel
+./usr/include/g++/decimal
+./usr/include/g++/tr1
+./usr/include/g++/tr1_impl
 ./usr/include/i386
 ./usr/include/lzma
 ./usr/include/minix

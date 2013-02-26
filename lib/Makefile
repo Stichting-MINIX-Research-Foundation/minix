@@ -156,7 +156,7 @@ SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
 . else
-#SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
+SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
 #SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 . endif
 .endif

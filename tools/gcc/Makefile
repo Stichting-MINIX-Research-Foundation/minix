@@ -3,9 +3,7 @@
 .include <bsd.own.mk>
 
 .ifdef __MINIX
-HAVE_GCC= 45
-
-GCC_LANGUAGES=c
+GCC_LANGUAGES=c c++
 .else
 GCC_LANGUAGES=c c++ objc
 .endif
@@ -38,7 +36,7 @@ MULTILIB_ARGS= --disable-multilib
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 
-# LSC FIXME We are not using the correct target ATM, so overrides for now...
+# LSC FIXME Some flags have to be adapted in order to work for minix
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--disable-libssp \
 			--disable-threads \

@@ -4,11 +4,11 @@ SUBDIR+=	libgcc
 
 .include <bsd.own.mk>
 
-.if !defined(__MINIX)
 .if ${MKPIC} != "no"
 SUBDIR+=	libgcc_eh libgcc_s
 .endif
 
+.if !defined(__MINIX)
 SUBDIR+=	libgcov
 .endif # !defined(__MINIX)
 

@@ -29,6 +29,9 @@ MKGCC?=		no
 # LSC To check if works
 #DESTDIR?=	/usr/destdir.${MACHINE_ARCH}
 
+# For C++ programs
+CPPFLAGS+=      -I${DESTDIR}/usr/include/g++
+
 # LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
 SMP_FLAGS += -DCONFIG_SMP
