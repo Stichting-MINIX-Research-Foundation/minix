@@ -1,6 +1,6 @@
 # Makefile for libpadconf
 
-CPPFLAGS+= -O1 -Wall -Werror -D_SYSTEM
+CPPFLAGS+= -D_SYSTEM
 
 LIB=	padconf
 

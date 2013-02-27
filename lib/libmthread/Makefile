@@ -1,7 +1,5 @@
 # Makefile for libmthread
 
-CPPFLAGS+= -O1 -Wall -Werror
-
 LIB=	mthread
 
 SRCS=	\
