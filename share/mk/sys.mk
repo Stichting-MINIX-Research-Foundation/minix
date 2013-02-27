@@ -6,13 +6,12 @@ __MINIX=	yes
 
 .if defined(__MINIX)
 .if ${MKSMALL:U} == "yes"
+CPPFLAGS+= -DNDEBUG
 DBG=	-Os
-CFLAGS+= -DNDEBUG
 .endif
 
 unix?=		We run MINIX.
 
-DBG?=	-O
 CPP?=	/usr/lib/cpp
 .endif # defined(__MINIX)
 unix?=		We run NetBSD.

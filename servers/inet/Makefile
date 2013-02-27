@@ -21,6 +21,8 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS+=  -I${.CURDIR} -D'ARGS(a)=a' -Wall -Werror
+CPPFLAGS+=  -I${.CURDIR} -D'ARGS(a)=a'
+
+WARNS?=	5
 
 .include <minix.service.mk>

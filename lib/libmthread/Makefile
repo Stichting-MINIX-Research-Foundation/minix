@@ -1,7 +1,5 @@
 # Makefile for libmthread
 
-CPPFLAGS+= -O1 -Wall -Werror
-
 LIB=	mthread
 
 SRCS=	\
@@ -15,5 +13,7 @@ SRCS=	\
 	condition.c \
 	scheduler.c \
 	key.c
+
+WARNS?=	5
 
 .include <bsd.lib.mk>

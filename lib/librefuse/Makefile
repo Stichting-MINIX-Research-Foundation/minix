@@ -6,7 +6,7 @@ LIB=		refuse
 LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs
 
 .ifdef DEBUG
-FUSE_OPT_DEBUG_FLAGS=	-g -DFUSE_OPT_DEBUG
+FUSE_OPT_DEBUG_FLAGS= -DFUSE_OPT_DEBUG
 .endif
 
 CFLAGS+=	${FUSE_OPT_DEBUG_FLAGS}
@@ -15,5 +15,7 @@ MAN=		refuse.3
 WARNS=		4
 INCS=           fuse.h fuse_opt.h
 INCSDIR=        /usr/include
+
+WARNS?=	5
 
 .include <bsd.lib.mk>
