@@ -494,8 +494,9 @@ static void load_trace(const char *path) {
 	}
 
 	/* check file format and update totals */
-	if (fscanf(file, "stat\n%u %u %u\n",
-		&size_info, &size_sample, &size_proc) != 3) {
+	if (fscanf(file, "stat\n%u %u %u",
+		&size_info, &size_sample, &size_proc) != 3 ||
+		fgetc(file) != '\n') {
 		fprintf(stderr, "error: file \"%s\" does not contain an "
 			"sprofile trace\n", path);
 		exit(1);
