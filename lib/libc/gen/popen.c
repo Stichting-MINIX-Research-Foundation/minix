@@ -111,13 +111,21 @@ popen(const char *command, const char *type)
 		return (NULL);
 	}
 
+#if defined(__minix)
+	rwlock_rdlock(&pidlist_lock);
+#else
 	(void)rwlock_rdlock(&pidlist_lock);
+#endif
 	(void)__readlockenv();
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
 		serrno = errno;
 		(void)__unlockenv();
+#if defined(__minix)
+		rwlock_unlock(&pidlist_lock);
+#else
 		(void)rwlock_unlock(&pidlist_lock);
+#endif
 		free(cur);
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
@@ -177,7 +185,11 @@ popen(const char *command, const char *type)
 	cur->pid =  pid;
 	cur->next = pidlist;
 	pidlist = cur;
+#if defined(__minix)
+	rwlock_unlock(&pidlist_lock);
+#else
 	(void)rwlock_unlock(&pidlist_lock);
+#endif
 
 	return (iop);
 }
@@ -203,7 +215,11 @@ pclose(FILE *iop)
 		if (cur->fp == iop)
 			break;
 	if (cur == NULL) {
+#if defined(__minix)
+		rwlock_unlock(&pidlist_lock);
+#else
 		(void)rwlock_unlock(&pidlist_lock);
+#endif
 		return (-1);
 	}
 
@@ -215,7 +231,11 @@ pclose(FILE *iop)
 	else
 		last->next = cur->next;
 
+#if defined(__minix)
+	rwlock_unlock(&pidlist_lock);
+#else
 	(void)rwlock_unlock(&pidlist_lock);
+#endif
 
 	do {
 		pid = waitpid(cur->pid, &pstat, 0);
