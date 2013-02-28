@@ -225,7 +225,6 @@ EXTERN uds_fd_t uds_fd_table[NR_FDS];
  * Take message m and get the index in uds_fd_table.
  */
 #define uds_minor(m)		(minor((dev_t) m->DEVICE))
-#define uds_minor_old(m)	(minor((short) m->DEVICE))
 
 /*
  * Fill in a reply message.

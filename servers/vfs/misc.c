@@ -3,7 +3,6 @@
  * that are mostly performed by the Memory Manager.
  *
  * The entry points into this file are
- *   do_dup:	  perform the DUP system call
  *   do_fcntl:	  perform the FCNTL system call
  *   do_sync:	  perform the SYNC system call
  *   do_fsync:	  perform the FSYNC system call
@@ -104,59 +103,6 @@ int do_getsysinfo()
 	return(EINVAL);
 
   return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
-}
-
-/*===========================================================================*
- *				do_dup					     *
- *===========================================================================*/
-int do_dup()
-{
-/* Perform the dup(fd) or dup2(fd,fd2) system call. These system calls are
- * obsolete.  In fact, it is not even possible to invoke them using the
- * current library because the library routines call fcntl().  They are
- * provided to permit old binary programs to continue to run.
- */
-
-  int rfd, rfd2;
-  struct filp *f;
-  int r = OK;
-
-  scratch(fp).file.fd_nr = job_m_in.fd;
-  rfd2 = job_m_in.fd2;
-
-  /* Is the file descriptor valid? */
-  rfd = scratch(fp).file.fd_nr & ~DUP_MASK;	/* kill off dup2 bit, if on */
-  if ((f = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
-
-  /* Distinguish between dup and dup2. */
-  if (!(scratch(fp).file.fd_nr & DUP_MASK)) {		/* bit not on */
-	/* dup(fd) */
-	r = get_fd(0, 0, &rfd2, NULL);
-  } else {
-	/* dup2(old_fd, new_fd) */
-	if (rfd2 < 0 || rfd2 >= OPEN_MAX) {
-		r = EBADF;
-	} else if (rfd == rfd2) {	/* ignore the call: dup2(x, x) */
-		r = rfd2;
-	} else {
-		/* All is fine, close new_fd if necessary */
-		unlock_filp(f);		/* or it might deadlock on do_close */
-		(void) close_fd(fp, rfd2);	/* cannot fail */
-		f = get_filp(rfd, VNODE_READ); /* lock old_fd again */
-		if (f == NULL) return(err_code);
-	}
-  }
-
-  if (r == OK) {
-	/* Success. Set up new file descriptors. */
-	f->filp_count++;
-	fp->fp_filp[rfd2] = f;
-	FD_SET(rfd2, &fp->fp_filp_inuse);
-	r = rfd2;
-  }
-
-  unlock_filp(f);
-  return(r);
 }
 
 /*===========================================================================*
