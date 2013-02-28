@@ -86,7 +86,6 @@ __fail(const char *msg)
 #ifdef _LIBC
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	struct sigaction sa;
-#endif
 	sigset_t mask;
 
 	/* Immediately block all signal handlers from running code */
@@ -94,7 +93,6 @@ __fail(const char *msg)
 	(void)sigdelset(&mask, SIGABRT);
 	(void)sigprocmask(SIG_BLOCK, &mask, NULL);
 
-#ifdef _LIBC
 	/* This may fail on a chroot jail... */
 	syslog_ss(LOG_CRIT, &sdata, "%s", msg);
 #else

@@ -43,6 +43,7 @@ __RCSID("$NetBSD: abort.c,v 1.15 2012/06/08 11:15:26 abs Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#if defined(_LIBC)
 extern void (*__cleanup)(void);
 static int aborting = 0;
 
@@ -82,3 +83,10 @@ abort(void)
 	(void)raise(SIGABRT);
 	_exit(1);
 }
+#else
+void
+abort(void)
+{
+	exit(1);
+}
+#endif /* defined(_LIBC) */
