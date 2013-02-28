@@ -13,4 +13,4 @@ CPPFLAGS.main.c+=	-I${NETBSDSRCDIR}
 CPPFLAGS.schedule.c+=	-I${NETBSDSRCDIR}
 CPPFLAGS.utility.c+=	-I${NETBSDSRCDIR}
 
-.include <minix.bootprog.mk>
+.include <minix.service.mk>

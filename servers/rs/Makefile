@@ -17,4 +17,4 @@ BINDIR?= /usr/sbin
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}
 
-.include <minix.bootprog.mk>
+.include <minix.service.mk>

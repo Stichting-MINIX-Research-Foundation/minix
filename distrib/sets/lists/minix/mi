@@ -3893,7 +3893,7 @@
 ./usr/share/mk/bsd.sys.mk		minix-sys
 ./usr/share/mk/bsd.test.mk		minix-sys
 ./usr/share/mk/bsd.x11.mk		minix-sys
-./usr/share/mk/minix.bootprog.mk	minix-sys
+./usr/share/mk/minix.bootprog.mk	minix-sys	obsolete
 ./usr/share/mk/minix.gcc.mk		minix-sys	obsolete
 ./usr/share/mk/minix.gcov.mk		minix-sys
 ./usr/share/mk/minix.service.mk		minix-sys

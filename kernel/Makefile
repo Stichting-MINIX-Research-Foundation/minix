@@ -24,7 +24,7 @@ CPPFLAGS+= -D__kernel__
 # kernel headers are always called through kernel/*.h
 CPPFLAGS+= -I${NETBSDSRCDIR}
 
-# kernel headers are always called through kernel/*.hi, this
+# kernel headers are always called through kernel/*.h, this
 # time for generated headers, during cross compilation
 CPPFLAGS+= -I${.OBJDIR}/..
 
@@ -86,4 +86,4 @@ extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
 	${_MKTARGET_CREATE}
 	cd ${.CURDIR} ; ${HOST_SH} extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
 
-.include <minix.bootprog.mk>
+.include <minix.service.mk>

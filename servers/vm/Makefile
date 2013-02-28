@@ -22,4 +22,4 @@ CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-I${NETBSDSRCDIR}
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
-.include <minix.bootprog.mk>
+.include <minix.service.mk>

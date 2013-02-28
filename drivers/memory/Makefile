@@ -36,4 +36,4 @@ CLEANFILES+=	imgrd.mfs
 imgrd.mfs: ../ramdisk/image
 	${HOST_LN} -fs ../ramdisk/image $@
 
-.include <minix.bootprog.mk>
+.include <minix.service.mk>
