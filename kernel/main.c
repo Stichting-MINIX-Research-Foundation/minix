@@ -351,6 +351,8 @@ void minix_shutdown(timer_t *tp)
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
  * monitor), RBT_RESET (hard reset). 
  */
+  int how;
+
 #ifdef CONFIG_SMP
   /* 
    * FIXME
@@ -364,7 +366,27 @@ void minix_shutdown(timer_t *tp)
 #endif
   hw_intr_disable_all();
   stop_local_timer();
-  arch_shutdown(tp ? tmr_arg(tp)->ta_int : RBT_PANIC);
+
+  how = tp ? tmr_arg(tp)->ta_int : RBT_PANIC;
+
+  /* Show shutdown message */
+  direct_cls();
+  switch(how) {
+  case RBT_HALT:
+	direct_print("MINIX has halted. "
+		     "It is safe to turn off your computer.\n");
+	break;
+  case RBT_POWEROFF:
+	direct_print("MINIX has halted and will now power off.\n");
+	break;
+  case RBT_DEFAULT:
+  case RBT_REBOOT:
+  case RBT_RESET:
+  default:
+	direct_print("MINIX will now reset.\n");
+	break;
+  }
+  arch_shutdown(how);
 }
 
 /*===========================================================================*
