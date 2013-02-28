@@ -2,7 +2,6 @@
  * seeking on files.
  *
  * The entry points into this file are
- *   do_creat:	perform the CREAT system call
  *   do_open:	perform the OPEN system call
  *   do_mknod:	perform the MKNOD system call
  *   do_mkdir:	perform the MKDIR system call
@@ -37,34 +36,6 @@ char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 static struct vnode *new_node(struct lookup *resolve, int oflags,
 	mode_t bits);
 static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
-
-
-/*===========================================================================*
- *				do_creat				     *
- *===========================================================================*/
-int do_creat()
-{
-/* Perform the creat(name, mode) system call.
- * syscall might provide 'name' embedded in the message.
- */
-
-  char fullpath[PATH_MAX];
-  vir_bytes vname;
-  size_t vname_length;
-  mode_t open_mode;
-
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = (size_t) job_m_in.name_length;
-  open_mode = (mode_t) job_m_in.mode;
-
-  if (copy_name(vname_length, fullpath) != OK) {
-	/* Direct copy failed, try fetching from user space */
-	if (fetch_name(vname, vname_length, fullpath) != OK)
-		return(err_code);
-  }
-
-  return common_open(fullpath, O_WRONLY | O_CREAT | O_TRUNC, open_mode);
-}
 
 /*===========================================================================*
  *				do_open					     *
@@ -520,7 +491,6 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 	}
   } else if (susp_count > 0) { /* revive blocked processes */
 	release(vp, OPEN, susp_count);
-	release(vp, CREAT, susp_count);
   }
   return(OK);
 }

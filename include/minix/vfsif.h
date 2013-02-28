@@ -81,16 +81,6 @@ typedef struct {
 	gid_t vu_sgroups[NGROUPS_MAX];
 } vfs_ucred_t;
 
-#define NGROUPS_MAX_OLD 	8
-/* User credential structure before increasing
- * uid_t and gid_t u8_t */
-typedef struct {
-	short vu_uid;
-	char vu_gid;
-	int vu_ngroups;
-	char vu_sgroups[NGROUPS_MAX_OLD];
-} vfs_ucred_old_t;
-
 /* Request numbers */
 #define REQ_GETNODE	(VFS_BASE + 1)	/* Should be removed */
 #define REQ_PUTNODE	(VFS_BASE + 2)

@@ -164,7 +164,6 @@ int do_stat()
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  int old_stat = 0;
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
@@ -176,12 +175,9 @@ int do_stat()
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
-  if (job_call_nr == PREV_STAT)
-	old_stat = 1;
-
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, old_stat);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -197,20 +193,17 @@ int do_fstat()
 {
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
-  int r, old_stat = 0, rfd;
+  int r, rfd;
   vir_bytes statbuf;
 
   statbuf = (vir_bytes) job_m_in.buffer;
   rfd = job_m_in.fd;
 
-  if (job_call_nr == PREV_FSTAT)
-	old_stat = 1;
-
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
   r = req_stat(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
-	       who_e, statbuf, old_stat);
+	       who_e, statbuf);
 
   unlock_filp(rfilp);
 
@@ -306,7 +299,6 @@ int do_lstat()
   int r;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  int old_stat = 0;
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
@@ -318,11 +310,9 @@ int do_lstat()
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
-  if (job_call_nr == PREV_LSTAT)
-	old_stat = 1;
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf, old_stat);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);

@@ -18,41 +18,15 @@
  *===========================================================================*/
 int do_get()
 {
-/* Handle GETUID, GETGID, GETGROUPS, GETGROUPS_O, GETPID, GETPGRP, GETSID,
+/* Handle GETUID, GETGID, GETGROUPS, MINIX_GETPID, GETPGRP, GETSID,
    ISSETUGID.
  */
 
   register struct mproc *rmp = mp;
   int r, i;
   int ngroups;
-  char sgroups[NGROUPS_MAX];	/* XXX: Temp storage for GETGROUPS_O */
 
   switch(call_nr) {
-	case GETGROUPS_O:
-		ngroups = m_in.grp_no;
-		if (ngroups > NGROUPS_MAX || ngroups < 0)
-			return(EINVAL);
-
-		if (ngroups == 0) {
-			r = rmp->mp_ngroups;
-			break;
-		}
-
-		if (ngroups < rmp->mp_ngroups)
-			/* Asking for less groups than available */
-			return(EINVAL);
-	
-		for (i = 0; i < ngroups; i++)
-			sgroups[i] = (char) rmp->mp_sgroups[i];
-
-		r = sys_datacopy(SELF, (vir_bytes) &sgroups, who_e,
-			(vir_bytes) m_in.groupsp, ngroups * sizeof(char));
-
-		if (r != OK)
-			return(r);
-
-		r = rmp->mp_ngroups;
-		break;
 	case GETGROUPS:
 		ngroups = m_in.grp_no;
 		if (ngroups > NGROUPS_MAX || ngroups < 0)
@@ -120,15 +94,13 @@ int do_get()
  *===========================================================================*/
 int do_set()
 {
-/* Handle SETUID, SETEUID, SETGID, SETEGID, SETSID. These calls have in common
- * that, if successful, they will be forwarded to VFS as well.
+/* Handle SETUID, SETEUID, SETGID, SETGROUPS, SETEGID, and SETSID. These calls
+ * have in common that, if successful, they will be forwarded to VFS as well.
  */
   register struct mproc *rmp = mp;
   message m;
   int r, i;
   int ngroups;
-  char sgroups[NGROUPS_MAX];	/* XXX: Temp storage for SETGROUPS_O */
-
 
   switch(call_nr) {
 	case SETUID:
@@ -185,35 +157,6 @@ int do_set()
 		for (i = ngroups; i < NGROUPS_MAX; i++) {
 			rmp->mp_sgroups[i] = 0;
 		}
-		rmp->mp_ngroups = ngroups;
-
-		m.m_type = PM_SETGROUPS;
-		m.PM_PROC = rmp->mp_endpoint;
-		m.PM_GROUP_NO = rmp->mp_ngroups;
-		m.PM_GROUP_ADDR = (char *) rmp->mp_sgroups;
-
-		break;
-	case SETGROUPS_O:
-		if (rmp->mp_effuid != SUPER_USER)
-			return(EPERM);
-
-		ngroups = m_in.grp_no;
-
-		if (ngroups > NGROUPS_MAX || ngroups < 0)
-			return(EINVAL);
-
-		if (m_in.groupsp == NULL)
-			return(EFAULT);
-
-		r = sys_datacopy(who_e, (vir_bytes) m_in.groupsp, SELF,
-			     (vir_bytes) &sgroups, ngroups * sizeof(char));
-		if (r != OK)
-			return(r);
-
-		for (i = 0; i < ngroups; i++)
-			rmp->mp_sgroups[i] = (gid_t) sgroups[i];
-		for (i = ngroups; i < NGROUPS_MAX; i++)
-			rmp->mp_sgroups[i] = 0;
 		rmp->mp_ngroups = ngroups;
 
 		m.m_type = PM_SETGROUPS;

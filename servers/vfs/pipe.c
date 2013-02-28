@@ -397,7 +397,7 @@ void unsuspend_by_endpt(endpoint_t proc_e)
  *===========================================================================*/
 void release(vp, op, count)
 register struct vnode *vp;	/* inode of pipe */
-int op;				/* READ, WRITE, OPEN or CREAT */
+int op;				/* READ, WRITE, or OPEN */
 int count;			/* max number of processes to release */
 {
 /* Check to see if any process is hanging on vnode 'vp'. If one is, and it

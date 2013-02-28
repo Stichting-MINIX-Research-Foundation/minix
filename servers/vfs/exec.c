@@ -156,7 +156,7 @@ static int get_read_vp(struct vfs_exec_info *execi,
 		return r;
 	else
 		r = req_stat(execi->vp->v_fs_e, execi->vp->v_inode_nr,
-			VFS_PROC_NR, (vir_bytes) &(execi->sb), 0);
+			VFS_PROC_NR, (vir_bytes) &(execi->sb));
 
 	if (r != OK) return r;
 

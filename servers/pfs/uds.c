@@ -880,53 +880,6 @@ int do_shutdown(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
-int do_socketpair_old(message *dev_m_in, message *dev_m_out)
-{
-	int rc;
-	short minorin;
-	int minorx, minory;
-	struct sockaddr_un addr;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_socketpair() call_count=%d\n",
-				uds_minor(dev_m_in), ++call_count);
-#endif
-
-	/* first ioctl param is the first socket */
-	minorx = uds_minor_old(dev_m_in);
-
-	/* third ioctl param is the minor number of the second socket */
-	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-			(vir_bytes) 0, (vir_bytes) &minorin, sizeof(short));
-
-	if (rc != OK) {
-		return EIO;
-	}
-
-	minory = minor(minorin);
-
-#if DEBUG == 1
-	printf("socketpair() %d - %d\n", minorx, minory);
-#endif
-
-	/* security check - both sockets must have the same endpoint (owner) */
-	if (uds_fd_table[minorx].owner != uds_fd_table[minory].owner) {
-
-		/* we won't allow you to magically connect your socket to
-		 * someone elses socket
-		 */
-		return EPERM;
-	}
-
-	addr.sun_family = AF_UNIX;
-	addr.sun_path[0] = 'X';
-	addr.sun_path[1] = '\0';
-
-	uds_fd_table[minorx].syscall_done = 1;
-	return perform_connection(dev_m_in, dev_m_out, &addr, minorx, minory);
-}
-
 int do_socketpair(message *dev_m_in, message *dev_m_out)
 {
 	int rc;
@@ -1039,53 +992,6 @@ int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &cred, sizeof(struct ucred));
-
-	return rc ? EIO : OK;
-}
-
-int do_getsockopt_peercred_old(message *dev_m_in, message *dev_m_out)
-{
-	int minor;
-	int peer_minor;
-	int rc;
-	struct ucred cred;
-	struct ucred_old cred_old;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_getsockopt_peercred() call_count=%d\n",
-					uds_minor(dev_m_in), ++call_count);
-#endif
-
-	minor = uds_minor(dev_m_in);
-
-	if (uds_fd_table[minor].peer == -1) {
-
-		if (uds_fd_table[minor].err == ECONNRESET) {
-			uds_fd_table[minor].err = 0;
-
-			return ECONNRESET;
-		} else {
-			return ENOTCONN;
-		}
-	}
-
-	peer_minor = uds_fd_table[minor].peer;
-
-	/* obtain the peer's credentials */
-	rc = getnucred(uds_fd_table[peer_minor].owner, &cred);
-	if (rc == -1) {
-		/* likely error: invalid endpoint / proc doesn't exist */
-		return errno;
-	}
-
-	/* copy to old structure */
-	cred_old.pid = cred.pid;
-	cred_old.uid = (short) cred.uid;
-	cred_old.gid = (char) cred.gid;
-
-	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &cred_old, sizeof(struct ucred_old));
 
 	return rc ? EIO : OK;
 }

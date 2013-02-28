@@ -8,7 +8,6 @@
 #define OPEN		   5 
 #define CLOSE		   6 
 #define WAIT		   7
-#define CREAT		   8 
 #define LINK		   9 
 #define UNLINK		  10 
 #define WAITPID		  11
@@ -18,7 +17,6 @@
 #define CHMOD		  15 
 #define CHOWN		  16 
 #define BRK		  17
-#define PREV_STAT	  18
 #define LSEEK		  19
 #define MINIX_GETPID	  20
 #define MOUNT		  21 
@@ -28,7 +26,6 @@
 #define STIME		  25
 #define PTRACE		  26
 #define ALARM		  27
-#define PREV_FSTAT	  28
 #define PAUSE		  29
 #define UTIME		  30 
 #define GETEPINFO	  31
@@ -40,7 +37,6 @@
 #define RENAME		  38
 #define MKDIR		  39
 #define RMDIR		  40
-#define DUP		  41 
 #define PIPE		  42 
 #define TIMES		  43
 #define SYMLINK		  45
@@ -48,7 +44,6 @@
 #define GETGID		  47
 #define SIGNAL		  48
 #define RDLNK		  49
-#define PREV_LSTAT	  50
 #define STAT		  51
 #define FSTAT		  52
 #define LSTAT		  53
@@ -62,8 +57,6 @@
 #define SETSID		  62
 #define GETPGRP		  63
 #define ITIMER		  64
-#define GETGROUPS_O	  65
-#define SETGROUPS_O	  66
 #define GETMCONTEXT       67
 #define SETMCONTEXT       68
 

@@ -130,7 +130,6 @@ void thread_cleanup(struct fproc *rfp);
 void unlock_proc(struct fproc *rfp);
 
 /* misc.c */
-int do_dup(void);
 void pm_exit(int proc);
 int do_fcntl(void);
 void pm_fork(int pproc, int cproc, int cpid);
@@ -258,8 +257,7 @@ int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
 int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);
 int req_slink(endpoint_t fs_e, ino_t inode_nr, char *lastc, endpoint_t proc_e,
 	vir_bytes path_addr, size_t path_length, uid_t uid, gid_t gid);
-int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf,
-	int old_stat);
+int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf);
 int req_sync(endpoint_t fs_e);
 int req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc);
 int req_unmount(endpoint_t fs_e);

@@ -50,16 +50,6 @@ struct ucred
 	gid_t   gid;
 };
 
-#ifdef __minix
-/* LSC FIXME: Remove this! Compatibility thing, only used in pfs/uds.c */
-struct ucred_old
-{
-	pid_t	pid;
-	short	uid;
-	char	gid;
-};
-#endif /* def __minix */
-
 /* Userland's view of credentials. This should not change */
 struct uucred {
 	unsigned short	cr_unused;		/* not used, compat */
