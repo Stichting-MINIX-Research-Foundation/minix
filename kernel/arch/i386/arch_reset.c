@@ -84,13 +84,13 @@ void
 poweroff(void)
 {
 	const char *shutdown_str;
-	
+
 	/* Bochs/QEMU poweroff */
 	shutdown_str = "Shutdown";
         while (*shutdown_str) outb(0x8900, *(shutdown_str++));
-	
-	/* fallback option: reset */
-	reset();
+
+	/* fallback option: hang */
+	for (; ; ) halt_cpu();
 }
 
 __dead void arch_shutdown(int how)
@@ -120,12 +120,12 @@ __dead void arch_shutdown(int how)
 
 	switch (how) {
 		case RBT_HALT:
-			/* Stop */
+			/* Hang */
 			for (; ; ) halt_cpu();
 			NOT_REACHABLE;
 			
 		case RBT_POWEROFF:
-			/* Power off if possible, reset otherwise */
+			/* Power off if possible, hang otherwise */
 			poweroff();
 			NOT_REACHABLE;
 
