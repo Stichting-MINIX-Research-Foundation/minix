@@ -7,7 +7,7 @@ SUBDIR= \
 	\
 	bzip2 bzip2recover \
 	chpass cksum \
-	ctags \
+	col ctags \
 	du \
 	\
 	\
