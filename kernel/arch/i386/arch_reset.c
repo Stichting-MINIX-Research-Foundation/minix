@@ -84,7 +84,14 @@ reset(void)
 	}
 }
 
-void
+static __dead void
+halt(void)
+{
+	for ( ; ; )
+		halt_cpu();
+}
+
+static __dead void
 poweroff(void)
 {
 	const char *shutdown_str;
@@ -96,8 +103,11 @@ poweroff(void)
 	shutdown_str = "Shutdown";
         while (*shutdown_str) outb(0x8900, *(shutdown_str++));
 
+	/* VMware magic power off; likely to halt CPU */
+	poweroff_vmware_clihlt();
+
 	/* fallback option: hang */
-	for (; ; ) halt_cpu();
+	halt();
 }
 
 __dead void arch_shutdown(int how)
