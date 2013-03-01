@@ -81,9 +81,10 @@ struct exception_frame {
 
 void exception(struct exception_frame * frame);
 
-/* klib386.s */
+/* klib.S */
 __dead void monitor(void);
 __dead void reset(void);
+__dead void poweroff_vmware_clihlt(void);
 __dead void x86_triplefault(void);
 reg_t read_cr0(void);
 reg_t read_cr2(void);
