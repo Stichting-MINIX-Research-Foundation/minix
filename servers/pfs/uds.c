@@ -857,14 +857,12 @@ int do_shutdown(message *dev_m_in, message *dev_m_out)
 	switch (how) {
 		case SHUT_RD:
 			/* take away read permission */
-			uds_fd_table[minor].mode =
-				uds_fd_table[minor].mode ^ S_IRUSR;
+			uds_fd_table[minor].mode &= ~S_IRUSR;
 			break;
 
 		case SHUT_WR:
 			/* take away write permission */
-			uds_fd_table[minor].mode =
-				uds_fd_table[minor].mode ^ S_IWUSR;
+			uds_fd_table[minor].mode &= ~S_IWUSR;
 			break;
 
 		case SHUT_RDWR:

@@ -237,17 +237,16 @@ int uds_close(message *dev_m_in, message *dev_m_out)
 
 	/* if the socket is connected, disconnect it */
 	if (uds_fd_table[minor].peer != -1) {
+		int peer = uds_fd_table[minor].peer;
 
 		/* set peer of this peer to -1 */
-		uds_fd_table[uds_fd_table[minor].peer].peer = -1;
+		uds_fd_table[peer].peer = -1;
 
 		/* error to pass to peer */
-		uds_fd_table[uds_fd_table[minor].peer].err = ECONNRESET;
+		uds_fd_table[peer].err = ECONNRESET;
 
 		/* if peer was blocked on I/O revive peer */
-		if (uds_fd_table[uds_fd_table[minor].peer].suspended) {
-			int peer = uds_fd_table[minor].peer;
-
+		if (uds_fd_table[peer].suspended) {
 			uds_fd_table[peer].ready_to_revive = 1;
 			uds_unsuspend(dev_m_in->m_source, peer);
 		}
@@ -334,11 +333,14 @@ int uds_select(message *dev_m_in, message *dev_m_out)
 				break;
 			}
 		}
+	} else if (bytes != SUSPEND) {
+		uds_fd_table[minor].sel_ops_out |= SEL_RD;
 	}
 
 	/* check if we can write without blocking */
 	bytes = uds_perform_write(minor, dev_m_in->m_source, PIPE_BUF, 1);
-	if (bytes > 0) {
+	if (bytes != 0 && bytes != SUSPEND) {
+		/* There is room to write or there is an error condition */
 		uds_fd_table[minor].sel_ops_out |= SEL_WR;
 	}
 
@@ -352,7 +354,7 @@ int uds_select(message *dev_m_in, message *dev_m_out)
 static int uds_perform_read(int minor, endpoint_t m_source,
 	size_t size, int pretend)
 {
-	int rc;
+	int rc, peer;
 	message fs_m_in;
 	message fs_m_out;
 
@@ -362,7 +364,8 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 							++call_count);
 #endif
 
-	/* skip reads and writes of 0 (or less!) bytes */
+	peer = uds_fd_table[minor].peer;
+
 	if (size <= 0) {
 		return 0;
 	}
@@ -374,7 +377,29 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 		return EPIPE;
 	}
 
+	/* skip reads and writes of 0 (or less!) bytes */
 	if (uds_fd_table[minor].size == 0) {
+
+		if (peer == -1) {
+			/* We're not connected. That's only a problem when this
+			 * socket is connection oriented. */
+			if (uds_fd_table[minor].type == SOCK_STREAM ||
+			    uds_fd_table[minor].type == SOCK_SEQPACKET) {
+				if (uds_fd_table[minor].err == ECONNRESET) {
+					uds_fd_table[minor].err = 0;
+					return ECONNRESET;
+				} else {
+					return ENOTCONN;
+				}
+			}
+		}
+
+		/* Check if process is reading from a closed pipe */
+		if (peer != -1 && !(uds_fd_table[peer].mode & S_IWUSR) &&
+			uds_fd_table[minor].size == 0) {
+			return 0;
+		}
+
 
 		if (pretend) {
 			return SUSPEND;
@@ -383,10 +408,7 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 		/* maybe a process is blocked waiting to write? if
 		 * needed revive the writer
 		 */
-		if (uds_fd_table[minor].peer != -1 &&
-			uds_fd_table[uds_fd_table[minor].peer].suspended) {
-			int peer = uds_fd_table[minor].peer;
-
+		if (peer != -1 && uds_fd_table[peer].suspended) {
 			uds_fd_table[peer].ready_to_revive = 1;
 			uds_unsuspend(m_source, peer);
 		}
@@ -394,7 +416,6 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 #if DEBUG == 1
 		printf("(uds) [%d] suspending read request\n", minor);
 #endif
-
 		/* Process is reading from an empty pipe,
 		 * suspend it so some bytes can be written
 		 */
@@ -448,10 +469,7 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 	/* maybe a big write was waiting for us to read some data, if
 	 * needed revive the writer
 	 */
-	if (uds_fd_table[minor].peer != -1 &&
-			uds_fd_table[uds_fd_table[minor].peer].suspended) {
-		int peer = uds_fd_table[minor].peer;
-
+	if (peer != -1 && uds_fd_table[peer].suspended) {
 		uds_fd_table[peer].ready_to_revive = 1;
 		uds_unsuspend(m_source, peer);
 	}
@@ -459,18 +477,14 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 	/* see if peer is blocked on select() and a write is possible
 	 * (from peer to minor)
 	 */
-	if (uds_fd_table[minor].peer != -1 &&
-		uds_fd_table[uds_fd_table[minor].peer].selecting == 1 &&
-		(uds_fd_table[minor].size + uds_fd_table[minor].pos + 1
-		< PIPE_BUF)) {
-
-		int peer = uds_fd_table[minor].peer;
+	if (peer != -1 && uds_fd_table[peer].selecting == 1 &&
+	    (uds_fd_table[minor].size+uds_fd_table[minor].pos + 1 < PIPE_BUF)){
 
 		/* if the peer wants to know about write being possible
 		 * and it doesn't know about it already, then let the peer know.
 		 */
-		if ((uds_fd_table[peer].sel_ops_in & SEL_WR) &&
-				!(uds_fd_table[peer].sel_ops_out & SEL_WR)) {
+		if (peer != -1 && (uds_fd_table[peer].sel_ops_in & SEL_WR) &&
+		    !(uds_fd_table[peer].sel_ops_out & SEL_WR)) {
 
 			/* a write on peer is possible now */
 			uds_fd_table[peer].sel_ops_out |= SEL_WR;
@@ -558,6 +572,11 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 			return SUSPEND;
 
 		return ENOENT;
+	}
+
+	/* check if we write to a closed pipe */
+	if (!(uds_fd_table[peer].mode & S_IRUSR)) {
+		return EPIPE;
 	}
 
 	/* check if write would overrun buffer. check if message
@@ -718,7 +737,7 @@ int uds_write(message *dev_m_in, message *dev_m_out)
 
 	if (uds_fd_table[minor].state != UDS_INUSE) {
 
-		/* attempted to close a socket that hasn't been opened --
+		/* attempted to write to a socket that hasn't been opened --
 		 * something is very wrong :(
 		 */
 		uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
