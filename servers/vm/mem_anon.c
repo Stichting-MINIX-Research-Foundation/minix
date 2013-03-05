@@ -108,9 +108,11 @@ static int anon_sanitycheck(struct phys_region *pr, char *file, int line)
 static int anon_writable(struct phys_region *pr)
 {
 	assert(pr->ph->refcount > 0);
+	if(pr->ph->phys == MAP_NONE)
+		return 0;
 	if(pr->parent->remaps > 0)
 		return 1;
-	return pr->ph->phys != MAP_NONE && pr->ph->refcount == 1;
+	return pr->ph->refcount == 1;
 }
 
 static int anon_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l)

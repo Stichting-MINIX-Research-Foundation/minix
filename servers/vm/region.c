@@ -1032,9 +1032,11 @@ int write;
 
 		assert(ph);
 		assert(ph->ph);
+		assert(ph->ph->phys != MAP_NONE);
 	}
 
 	assert(ph->ph);
+	assert(ph->ph->phys != MAP_NONE);
 
 	if((r = map_ph_writept(vmp, region, ph)) != OK) {
 		printf("map_pf: writept failed\n");
