@@ -1,0 +1,1 @@
+console=tty02 rootdevname=c0d0p1s0

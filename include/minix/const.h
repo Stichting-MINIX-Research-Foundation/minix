@@ -145,6 +145,7 @@
 #define INVAL_GID	       ((gid_t) -1)	/* invalid gid value */
 
 #define SERVARNAME		"cttyline"
+#define ARCHVARNAME		"arch"
 #define SERBAUDVARNAME		"cttybaud"
 
 /* Bits for s_flags in the privilege structure. */

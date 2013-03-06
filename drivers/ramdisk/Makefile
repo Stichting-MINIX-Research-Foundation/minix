@@ -29,23 +29,25 @@ ETC=		system.conf master.passwd
 EXTRA=		rc
 PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
 PROG_DRIVERS=
-PROG_COMMANDS=	mount fsck.mfs sh service
-PROG_SERVERS=	mfs
+PROG_COMMANDS=	mount fsck.mfs sh service loadramdisk sysenv
+PROG_SERVERS=	mfs procfs
 PROG_BIN=
 PROG_SBIN=
 PROG_USR.BIN=
 PROG_USR.SBIN=
 
+.if ${MKSMALL} != "yes"
+RAMDISK_SMALL=	1
+.endif
+
 .if ${MACHINE_ARCH} == "i386"
 ETC+=		rs.single
 EXTRA+=		
 PROG_DRIVERS+=	at_wini floppy pci
-PROG_COMMANDS+=	cdprobe loadramdisk sysenv
-PROG_SERVERS+=	procfs
+PROG_COMMANDS+=	cdprobe 
 PROG_USR.SBIN+=	pwd_mkdb
 
 .if ${MKSMALL} != "yes"
-RAMDISK_SMALL=	1
 PROG_DRIVERS+=	ahci
 PROG_DRIVERS+=	virtio_blk
 PROG_SERVERS+=	ext2
@@ -58,11 +60,7 @@ PROG_DRIVERS+=	acpi
 .endif # ${MACHINE_ARCH} == "i386"
 
 .if ${MACHINE_ARCH} == "earm"
-EXTRA+=		rc.arm mylogin.sh ttys
-PROG_DRIVERS+=	fb mmc tty gpio
-PROG_COMMANDS+=	cp dd getty time sleep stty umount
-PROG_BIN+=	cat ls rm sync
-PROTO=		proto.arm.small
+PROG_DRIVERS+=	mmc
 .endif # ${MACHINE_ARCH} == "earm"
 
 .if ${LDSTATIC} == "-dynamic"

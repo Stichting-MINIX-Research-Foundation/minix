@@ -123,7 +123,16 @@ void setup_mbi(multiboot_info_t *mbi)
 	int i;
 	for (i = 0; i < MB_MODS_NR; ++i) {
 	    mb_modlist[i].mod_start = MB_MODS_BASE + i * MB_MODS_ALIGN;
-	    mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_ALIGN - 1;	    mb_modlist[i].cmdline = 0;
+	    mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_ALIGN - 1;
+	    mb_modlist[i].cmdline = 0;
+
+	    if (i == 5) {
+		/* LSC HACK: Special case for memory, it is actually loaded at the 
+		 * end, so that it can grow without having to change the 
+		 * alignment of everything. currently reserving 64MiB */
+		mb_modlist[i].mod_start = 0x96800000;
+		mb_modlist[i].mod_end = mb_modlist[i].mod_start + (0x04000000) - 1;
+            }
 	}
 
 	/* Final 'module' is actually a string holding the boot cmdline */
@@ -192,6 +201,9 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 			mb_set_param(cbi->param_buf, var, value, cbi);
 		}
 	}
+
+	/* let higher levels know what we are booting on */
+	mb_set_param(cbi->param_buf, ARCHVARNAME, "earm", cbi);
 
 	/* round user stack down to leave a gap to catch kernel
 	 * stack overflow; and to distinguish kernel and user addresses

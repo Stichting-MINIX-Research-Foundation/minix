@@ -11,6 +11,16 @@ PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/pkg/bin:/usr/pkg/sbin:/sbin
 RC_TZ=/etc/rc.timezone
 export TERM PATH
 
+ARCH="`sysenv arch`"
+
+if [ ! "$ARCH" ]
+then	# Older kernels do not provide an arch sysenv variable.
+	# We assume we are on x86 then, as existing systems with
+	# kernel and userland (i.e. this script) unsynchronized
+	# will be x86.
+	ARCH=i386
+fi
+
 usage()
 {
     echo >&2 "Usage: $0 [-saf] start|stop|down"
@@ -114,8 +124,17 @@ start)
     then . "$RC_TZ"
     fi
 
-    # Try to read the hardware real-time clock, otherwise do it manually.
-    readclock || intr date -q
+    if [ $ARCH = i386 ]
+    then
+	# Try to read the hardware real-time clock, otherwise do it manually.
+	readclock || intr date -q
+    fi
+
+    if [ $ARCH = earm ]
+    then
+	date 201301010000
+    fi
+  
 
     # Initialize files.
     >/etc/utmp				# /etc/utmp keeps track of logins
@@ -187,32 +206,39 @@ start)
 	cp /usr/lib/em* /usr/lib/cpp* /lib
     esac
 
-    echo -n "Starting hotplugging infrastructure... "
-    rm -f /var/run/devmand.pid
-    devmand -d /etc/devmand -d /usr/pkg/etc/devmand &
-    echo "done."
+    if [ $ARCH = i386 ]
+    then
+	echo -n "Starting hotplugging infrastructure... "
+	rm -f /var/run/devmand.pid
+	devmand -d /etc/devmand -d /usr/pkg/etc/devmand &
+	echo "done."
+    fi
 
     # Things should be alright now.
     ;;
 down|stop)
     sync
-    if [ -f /var/run/devmand.pid ]
+    if [ $ARCH = i386 ]
     then
-    	kill -INT `cat /var/run/devmand.pid`
-        # without this delay the following will 
-        # be printed in the console
-        # RS: devman not running?
-        sleep 1
+	if [ -f /var/run/devmand.pid ]
+	then
+	    	kill -INT `cat /var/run/devmand.pid`
+		# without this delay the following will 
+        	# be printed in the console
+        	# RS: devman not running?
+        	sleep 1
+    	fi
+	#
+	# usbd needs to be stopped exactly 
+	# at this stage(before stopping devman
+	# and after stopping the services
+	# stated by devmand)
+	if [ -x /usr/pkg/etc/rc.d/usbd ]
+	then 
+    		/usr/pkg/etc/rc.d/usbd stop
+	fi
     fi
-    #
-    # usbd needs to be stopped exactly 
-    # at this stage(before stopping devman
-    # and after stopping the services
-    # stated by devmand)
-    if [ -x /usr/pkg/etc/rc.d/usbd ]
-    then 
-    	/usr/pkg/etc/rc.d/usbd stop
-    fi
+
     # Tell RS server we're going down.
     service shutdown
     ;;

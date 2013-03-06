@@ -1,3 +1,10 @@
+20130306:
+	For people building ARM images, the procedure has changed
+	a bit. You need a full FS to boot now. In short, you need
+	to use the new in-tree script to make a full SD image. See
+	http://wiki.minix3.org/en/DevelopersGuide/MinixOnARM
+	for details.
+
 20130201:
 	Replace our native ln with NetBSD version.
 

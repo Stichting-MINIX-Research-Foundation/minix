@@ -3,6 +3,16 @@
 RANDOM_FILE=/usr/adm/random.dat
 LOCAL_FILE=/usr/etc/rc.local
 
+ARCH="`sysenv arch`"
+
+if [ ! "$ARCH" ]
+then    # Older kernels do not provide an arch sysenv variable.
+        # We assume we are on x86 then, as existing systems with
+        # kernel and userland (i.e. this script) unsynchronized
+        # will be x86.
+        ARCH=i386
+fi
+
 # Get $SERVICES_DIRS
 . /etc/rc.conf
 
@@ -139,12 +149,18 @@ start)
     else
     	up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
     fi
-    up -n printer -dev /dev/lp -period 10HZ
+
     up -n ipc
-    # start VirtualBox time sync driver if the device is there
-    if grep '^[^ ]* [^ ]* 80EE:CAFE ' /proc/pci >/dev/null; then
-      up -n vbox -period 10HZ
+
+    if [ $ARCH = i386 ]
+    then
+	up -n printer -dev /dev/lp -period 10HZ
+	# start VirtualBox time sync driver if the device is there
+	if grep '^[^ ]* [^ ]* 80EE:CAFE ' /proc/pci >/dev/null; then
+		up -n vbox -period 10HZ
+	fi
     fi
+
     echo .
 
     # Network initialization.
