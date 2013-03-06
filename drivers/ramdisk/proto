@@ -2,22 +2,29 @@ boot
 0 0
 d--755 0 0
 	bin d--755 0 0
+#ifdef __i386__
 		cdprobe ---755 0 0 cdprobe
+#endif
+		sysenv ---755 0 0 sysenv
 #if RAMDISK_SMALL == 1
 		fsck.mfs ---755 0 0 fsck.mfs
 #endif
 		mount ---755 0 0 mount
 		sh ---755 0 0 sh
 		service ---755 0 0 service
-		sysenv ---755 0 0 sysenv
 	$
 	sbin d--755 0 0
+#ifdef __i386__
 		floppy ---755 0 0 floppy
 		ahci ---755 0 0 ahci
 		virtio_blk ---755 0 0 virtio_blk
 		at_wini ---755 0 0 at_wini
 #if RAMDISK_SMALL == 1
 		ext2 ---755 0 0 ext2
+#endif
+#endif
+#ifdef __arm__
+		mmc ---755 0 0 mmc
 #endif
 		mfs ---755 0 0 mfs
 		procfs ---755 0 0 procfs
@@ -27,10 +34,12 @@ d--755 0 0
 			loadramdisk ---755 0 0 loadramdisk
 		$
 		sbin d--755 0 0
+#ifdef __i386__
 #if RAMDISK_INC_ACPI == 1
-		acpi ---755 0 0 acpi
+			acpi ---755 0 0 acpi
 #endif
 			pci ---755 0 0 pci
+#endif
 		$
 	$
 	dev d--755 0 0

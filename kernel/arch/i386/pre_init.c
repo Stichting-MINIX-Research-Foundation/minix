@@ -153,6 +153,9 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 		}
 	}
 
+        /* let higher levels know what we are booting on */
+        mb_set_param(cbi->param_buf, ARCHVARNAME, "i386", cbi);
+
 	/* round user stack down to leave a gap to catch kernel
 	 * stack overflow; and to distinguish kernel and user addresses
 	 * at a glance (0xf.. vs 0xe..) 
