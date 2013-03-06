@@ -42,6 +42,8 @@ CPPFLAGS+= -I. -I${.CURDIR}
 .for tool in init nodes signames syntax
 ${.OBJDIR}/mk${tool}: ${.CURDIR}/mk${tool}.c
 	${HOST_CC} ${.ALLSRC} -o ${.TARGET}
+
+CLEANFILES+= ${.OBJDIR}/mk${tool}
 .endfor
 
 # B. Generates C sources from C tools
