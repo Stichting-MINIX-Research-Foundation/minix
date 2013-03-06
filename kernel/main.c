@@ -21,6 +21,7 @@
 #include <minix/u64.h>
 #include <minix/type.h>
 #include "clock.h"
+#include "direct_utils.h"
 #include "hw_intr.h"
 #include "arch_proto.h"
 
