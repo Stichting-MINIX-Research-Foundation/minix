@@ -177,13 +177,8 @@ static u32_t findhole(int pages)
 		assert(curv >= vmin);
 		assert(curv < vmax);
 
-#if defined(__i386__)
-		pde = I386_VM_PDE(curv);
-		pte = I386_VM_PTE(curv);
-#elif defined(__arm__)
-		pde = ARM_VM_PDE(curv);
-		pte = ARM_VM_PTE(curv);
-#endif
+		pde = ARCH_VM_PDE(curv);
+		pte = ARCH_VM_PTE(curv);
 
 		if((pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT) &&
 		   (pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT)) {
@@ -439,13 +434,8 @@ int vm_addrok(void *vir, int writeflag)
 	int pde, pte;
 	vir_bytes v = (vir_bytes) vir;
 
-#if defined(__i386__)
-	pde = I386_VM_PDE(v);
-	pte = I386_VM_PTE(v);
-#elif defined(__arm__)
-	pde = ARM_VM_PDE(v);
-	pte = ARM_VM_PTE(v);
-#endif
+	pde = ARCH_VM_PDE(v);
+	pte = ARCH_VM_PTE(v);
 
 	if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
 		printf("addr not ok: missing pde %d\n", pde);
@@ -539,13 +529,9 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 /* Allocate all the page tables in the range specified. */
 	int pde, first_pde, last_pde;
 
-#if defined(__i386__)
-	first_pde = I386_VM_PDE(start);
-	last_pde = I386_VM_PDE(end-1);
-#elif defined(__arm__)
-	first_pde = ARM_VM_PDE(start);
-	last_pde = ARM_VM_PDE(end-1);
-#endif
+	first_pde = ARCH_VM_PDE(start);
+	last_pde = ARCH_VM_PDE(end-1);
+
 	assert(first_pde >= 0);
 	assert(last_pde < ARCH_VM_DIR_ENTRIES);
 
@@ -639,43 +625,26 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	end = end ? end : VM_DATATOP;
 	assert(start % VM_PAGE_SIZE == 0);
 	assert(end % VM_PAGE_SIZE == 0);
-#if defined(__i386__)
-	assert(start <= end);
-	assert(I386_VM_PDE(end) < ARCH_VM_DIR_ENTRIES);
-#elif defined(__arm__)
-	assert(ARM_VM_PDE(start) >= 0 && start <= end);
-	assert(ARM_VM_PDE(end) < ARCH_VM_DIR_ENTRIES);
-#endif
+
+	assert(ARCH_VM_PDE(start) >= 0 && start <= end);
+	assert(ARCH_VM_PDE(end) < ARCH_VM_DIR_ENTRIES);
 
 #if LU_DEBUG
 	printf("VM: pt_map_in_range: src = %d, dst = %d\n",
 		src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
 	printf("VM: pt_map_in_range: transferring from 0x%08x (pde %d pte %d) to 0x%08x (pde %d pte %d)\n",
-#if defined(__i386__)
-		start, I386_VM_PDE(start), I386_VM_PTE(start),
-		end, I386_VM_PDE(end), I386_VM_PTE(end));
-#elif defined(__arm__)
-		start, ARM_VM_PDE(start), ARM_VM_PTE(start),
-		end, ARM_VM_PDE(end), ARM_VM_PTE(end));
-#endif
+		start, ARCH_VM_PDE(start), ARCH_VM_PTE(start),
+		end, ARCH_VM_PDE(end), ARCH_VM_PTE(end));
 #endif
 
 	/* Scan all page-table entries in the range. */
 	for(viraddr = start; viraddr <= end; viraddr += VM_PAGE_SIZE) {
-#if defined(__i386__)
-		pde = I386_VM_PDE(viraddr);
-#elif defined(__arm__)
-		pde = ARM_VM_PDE(viraddr);
-#endif
+		pde = ARCH_VM_PDE(viraddr);
 		if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
 			if(viraddr == VM_DATATOP) break;
 			continue;
 		}
-#if defined(__i386__)
-		pte = I386_VM_PTE(viraddr);
-#elif defined(__arm__)
-		pte = ARM_VM_PTE(viraddr);
-#endif
+		pte = ARCH_VM_PTE(viraddr);
 		if(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT)) {
 			if(viraddr == VM_DATATOP) break;
 			continue;
@@ -772,13 +741,8 @@ int pt_writable(struct vmproc *vmp, vir_bytes v)
 	u32_t entry;
 	pt_t *pt = &vmp->vm_pt;
 	assert(!(v % VM_PAGE_SIZE));
-#if defined(__i386__)
-	int pde = I386_VM_PDE(v);
-	int pte = I386_VM_PTE(v);
-#elif defined(__arm__)
-	int pde = ARM_VM_PDE(v);
-	int pte = ARM_VM_PTE(v);
-#endif
+	int pde = ARCH_VM_PDE(v);
+	int pte = ARCH_VM_PTE(v);
 
 	assert(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT);
 	assert(pt->pt_pt[pde]);
@@ -851,13 +815,8 @@ int pt_writemap(struct vmproc * vmp,
 	/* Now write in them. */
 	for(p = 0; p < pages; p++) {
 		u32_t entry;
-#if defined(__i386__)
-		int pde = I386_VM_PDE(v);
-		int pte = I386_VM_PTE(v);
-#elif defined(__arm__)
-		int pde = ARM_VM_PDE(v);
-		int pte = ARM_VM_PTE(v);
-#endif
+		int pde = ARCH_VM_PDE(v);
+		int pte = ARCH_VM_PTE(v);
 
 		assert(!(v % VM_PAGE_SIZE));
 		assert(pte >= 0 && pte < ARCH_VM_PT_ENTRIES);
@@ -973,13 +932,8 @@ int pt_checkrange(pt_t *pt, vir_bytes v,  size_t bytes,
 	pages = bytes / VM_PAGE_SIZE;
 
 	for(p = 0; p < pages; p++) {
-#if defined(__i386__)
-		int pde = I386_VM_PDE(v);
-		int pte = I386_VM_PTE(v);
-#elif defined(__arm__)
-		int pde = ARM_VM_PDE(v);
-		int pte = ARM_VM_PTE(v);
-#endif
+		int pde = ARCH_VM_PDE(v);
+		int pte = ARCH_VM_PTE(v);
 
 		assert(!(v % VM_PAGE_SIZE));
 		assert(pte >= 0 && pte < ARCH_VM_PT_ENTRIES);
@@ -1202,11 +1156,7 @@ void pt_init(void)
 			index++;
 			kernmappings++;
 
-#if defined(__i386__)
-			usedpde = I386_VM_PDE(offset);
-#elif defined(__arm__)
-			usedpde = ARM_VM_PDE(offset);
-#endif
+			usedpde = ARCH_VM_PDE(offset);
 			while(usedpde > kernmap_pde) {
 				int newpde = freepde();
 				assert(newpde == kernmap_pde+1);

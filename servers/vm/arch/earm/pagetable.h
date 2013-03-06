@@ -44,5 +44,9 @@
 
 #define VM_PAGE_SIZE    ARM_PAGE_SIZE
 
+/* virtual address -> pde, pte macros */
+#define ARCH_VM_PTE(v) ARM_VM_PTE(v)
+#define ARCH_VM_PDE(v) ARM_VM_PDE(v)   
+
 #endif
 
