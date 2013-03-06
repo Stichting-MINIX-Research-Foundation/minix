@@ -55,10 +55,7 @@ DPADD+=	${LIBRMT}
 CPPFLAGS+= -DHOSTPROG
 CPPFLAGS+= -Dlchown=chown -Dlchmod=chmod
 
-MAN+= bsdtar.1
-
-bsdtar.1: tar.1
-	${INSTALL} ${.ALLSRC} ${.TARGET}
+MLINKS+= pax.1 bsdtar.1
 .endif # defined(__MINIX)
 
 .include <bsd.prog.mk>
