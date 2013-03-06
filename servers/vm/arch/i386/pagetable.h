@@ -40,4 +40,8 @@
 
 #define VM_PAGE_SIZE	I386_PAGE_SIZE
 
+/* virtual address -> pde, pte macros */
+#define ARCH_VM_PTE(v) I386_VM_PTE(v)
+#define ARCH_VM_PDE(v) I386_VM_PDE(v)
+
 #endif
