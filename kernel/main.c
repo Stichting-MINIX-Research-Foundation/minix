@@ -47,7 +47,7 @@ void bsp_finish_booting(void)
 #endif /* SPROFILE */
   cprof_procs_no = 0;  /* init nr of hash table slots used */
 
-  cpu_identify();
+  cpu_identify()
 
   vm_running = 0;
   krandom.random_sources = RANDOM_SOURCES;
