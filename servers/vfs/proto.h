@@ -162,6 +162,7 @@ void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
 int do_lseek(void);
+int do_lseek_321(void);
 int do_llseek(void);
 int do_mknod(void);
 int do_mkdir(void);
@@ -218,7 +219,7 @@ int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
 
 /* request.c */
 int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, u64_t pos,
-	unsigned int num_of_bytes, char *user_addr, int rw_flag,
+	unsigned int num_of_bytes, vir_bytes user_addr, int rw_flag,
 	u64_t *new_posp, unsigned int *cum_iop);
 int req_chmod(endpoint_t fs_e, ino_t inode_nr, mode_t rmode,
 	mode_t *new_modep);
@@ -231,7 +232,7 @@ int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
 int req_getdents(endpoint_t fs_e, ino_t inode_nr, u64_t pos, char *buf,
-	size_t size, u64_t *new_pos, int direct);
+	size_t size, u64_t *new_pos, int direct, int getdents_321);
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
 int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,
 	ino_t linked_file);
@@ -251,7 +252,7 @@ int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 int req_readsuper(struct vmnt *vmp, char *driver_name, dev_t dev, int readonly,
 	int isroot, struct node_details *res_nodep);
 int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int rw_flag,
-	endpoint_t user_e, char *user_addr, unsigned int num_of_bytes,
+	endpoint_t user_e, vir_bytes user_addr, unsigned int num_of_bytes,
 	u64_t *new_posp, unsigned int *cum_iop);
 int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
 	char *new_name);
