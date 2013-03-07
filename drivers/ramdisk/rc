@@ -7,23 +7,32 @@ exec </dev/null
 
 FSCK=/bin/fsck.mfs
 ACPI=/usr/sbin/acpi
-if [ -e $ACPI -a -n "`sysenv acpi`" ]
-then
-	/bin/service -c up $ACPI
+
+if [ X`/bin/sysenv arch` = Xi386 ]
+then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
+	then
+		/bin/service -c up $ACPI
+	fi
+	/bin/service -c up /usr/sbin/pci
+	/bin/service -cn up /sbin/floppy -dev /dev/fd0
+	if [ X`/bin/sysenv ahci` = Xyes ]
+	then
+		# this is here temporarily, for testing purposes
+		/bin/service -c up /sbin/ahci -dev /dev/c0d0 -label ahci_0 -args instance=0
+	elif [ X`/bin/sysenv virtio_blk` = Xyes ]
+	then
+		/bin/service -c up /sbin/virtio_blk -dev /dev/c0d0 -label virtio_blk_0 -args instance=0
+	else
+		/bin/service -c up /sbin/at_wini -dev /dev/c0d0 -label at_wini_0
+		/bin/service -cr up /sbin/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1
+	fi
 fi
-/bin/service -c up /usr/sbin/pci
-/bin/service -cn up /sbin/floppy -dev /dev/fd0
-if [ X`/bin/sysenv ahci` = Xyes ]
-then
-	# this is here temporarily, for testing purposes
-	/bin/service -c up /sbin/ahci -dev /dev/c0d0 -label ahci_0 -args instance=0
-elif [ X`/bin/sysenv virtio_blk` = Xyes ]
-then
-	/bin/service -c up /sbin/virtio_blk -dev /dev/c0d0 -label virtio_blk_0 -args instance=0
-else
-	/bin/service -c up /sbin/at_wini -dev /dev/c0d0 -label at_wini_0
-	/bin/service -cr up /sbin/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1
+
+if [ X`/bin/sysenv arch` = Xearm ]
+then	echo starting mmc driver
+	/bin/service -c up /sbin/mmc -dev /dev/c0d0
 fi
+
 /bin/service up /sbin/procfs || echo "WARNING: couldn't start procfs"
 
 if /bin/sysenv rootdevname >/dev/null

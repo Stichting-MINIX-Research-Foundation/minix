@@ -4,12 +4,8 @@
 		pwd.db ---644 0 0 pwd.db
 		spwd.db ---600 0 0 spwd.db
 		master.passwd ---600 0 0 master.passwd
-#if defined(__i386__)
 		rc ---755 0 0 rc
+#if defined(__i386__)
 		rs.single ---755 0 0 rs.single
-#endif
-#if defined(__arm__)
-		rc ---755 0 0 rc.arm
-		ttys ---644 0 0 ttys
 #endif
 	$
