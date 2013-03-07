@@ -8,15 +8,9 @@ G_LIB2ADD=${GNUHOSTDIST}/gcc/config/arm/bpabi-netbsd.c ${GNUHOSTDIST}/gcc/config
 G_LIB2ADDEH=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.c ${GNUHOSTDIST}/gcc/config/arm/libunwind.S ${GNUHOSTDIST}/gcc/config/arm/pr-support.c ${GNUHOSTDIST}/gcc/unwind-c.c
 .endif # !defined(__MINIX)
 G_LIB2ADD_ST=
-.if !defined(__MINIX)
 G_LIB1ASMFUNCS=_thumb1_case_sqi _thumb1_case_uqi _thumb1_case_shi _thumb1_case_uhi _thumb1_case_si _udivsi3 _divsi3 _umodsi3 _modsi3 _dvmd_tls _bb_init_func _call_via_rX _interwork_call_via_rX _lshrdi3 _ashrdi3 _ashldi3 _arm_negdf2 _arm_addsubdf3 _arm_muldivdf3 _arm_cmpdf2 _arm_unorddf2 _arm_fixdfsi _arm_fixunsdfsi _arm_truncdfsf2 _arm_negsf2 _arm_addsubsf3 _arm_muldivsf3 _arm_cmpsf2 _arm_unordsf2 _arm_fixsfsi _arm_fixunssfsi _arm_floatdidf _arm_floatdisf _arm_floatundidf _arm_floatundisf _clzsi2 _clzdi2  _aeabi_lcmp _aeabi_ulcmp _aeabi_ldivmod _aeabi_uldivmod _floatundisf
-.else
-G_LIB1ASMFUNCS=_thumb1_case_sqi _thumb1_case_uqi _thumb1_case_shi _thumb1_case_uhi _thumb1_case_si _umodsi3 _modsi3 _dvmd_tls _bb_init_func _call_via_rX _interwork_call_via_rX _lshrdi3 _ashrdi3 _ashldi3 _arm_negdf2 _arm_cmpdf2 _arm_unorddf2 _arm_fixunsdfsi _arm_negsf2 _arm_cmpsf2 _arm_unordsf2 _arm_fixunssfsi _arm_floatdidf _arm_floatdisf _arm_floatundidf _arm_floatundisf _clzsi2 _clzdi2  _aeabi_lcmp _aeabi_ulcmp _aeabi_ldivmod _aeabi_uldivmod _floatundisf
-.endif # !defined(__MINIX)
 G_LIB1ASMSRC=arm/lib1funcs.asm
-.if !defined(__MINIX)
 G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
-.endif # !defined(__MINIX)
 G_LIB2FUNCS_ST=_eprintf __gcc_bcmp
 G_LIB2FUNCS_EXTRA=${GNUHOSTDIST}/gcc/config/arm/bpabi-netbsd.c ${GNUHOSTDIST}/gcc/config/arm/unaligned-funcs.c
 G_LIBGCC2_CFLAGS=-O2   -DIN_GCC   -W -Wall -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include  -fno-inline -g -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED 
