@@ -51,7 +51,7 @@ int fs_mountpoint()
  */
   int r = OK;
   struct puffs_node *pn;
-  mode_t bits;
+  pmode_t bits;
 
   /*
    * XXX: we assume that lookup was done first, so pnode can be found with

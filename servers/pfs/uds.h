@@ -64,7 +64,7 @@ struct uds_fd {
 	 * uds_close(). Data is sent/written to a peer's PIPE.
 	 * Data is recv/read from this PIPE.
 	 */
-	ino_t inode_nr;
+	pino_t inode_nr;
 
 
 	/* position in the PIPE where the data starts */
@@ -78,7 +78,7 @@ struct uds_fd {
 	 * for read and write, read only, write only, or neither.
 	 * default is S_IRUSR|S_IWUSR.
 	 */
-	mode_t mode;
+	pmode_t mode;
 
 /* Socket Info */
 
