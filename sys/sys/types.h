@@ -106,15 +106,6 @@ typedef int16_t		i16_t;
 typedef int32_t		i32_t;
 typedef int64_t		i64_t;
 
-typedef uint64_t	big_ino_t;
-typedef int64_t		big_off_t;
-typedef u32_t		big_dev_t;
-typedef u32_t		big_gid_t;
-typedef u32_t		big_mode_t;
-typedef u32_t		big_nlink_t;
-typedef u32_t		big_uid_t;
-
-
 #ifdef _NETBSD_SOURCE
 /* some Minix specific types that do not conflict with posix */
 typedef uint32_t zone_t;      /* zone number */
@@ -204,7 +195,7 @@ typedef	__gid_t		gid_t;		/* group id */
 
 typedef	int		idtype_t;	/* type of the id */
 typedef	uint32_t	id_t;		/* group id, process id or user id */
-typedef	uint32_t	ino_t;		/* inode number */
+typedef	uint64_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 
 #ifndef	mode_t
@@ -212,7 +203,7 @@ typedef	__mode_t	mode_t;		/* permissions */
 #define	mode_t		__mode_t
 #endif
 
-typedef	int16_t	nlink_t;	/* link count */
+typedef	uint32_t	nlink_t;	/* link count */
 
 #ifndef	off_t
 typedef	__off_t		off_t;		/* file offset */

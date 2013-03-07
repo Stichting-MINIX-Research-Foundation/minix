@@ -500,7 +500,7 @@ char path[PATH_MAX];		/* path to script file */
 
   /* Issue request */
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
-		    VFS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
+		    VFS_PROC_NR, (vir_bytes) buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
   if (r != OK) return(r);
 
   n = vp->v_size;
@@ -625,7 +625,7 @@ static int read_seg(struct exec_info *execi, off_t off, off_t seg_addr, size_t s
   if ((unsigned long) vp->v_size < off+seg_bytes) return(EIO);
 
   if ((r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(off), READING,
-		 execi->proc_e, (char*)seg_addr, seg_bytes,
+		 execi->proc_e, (vir_bytes) seg_addr, seg_bytes,
 		 &new_pos, &cum_io)) != OK) {
     printf("VFS: read_seg: req_readwrite failed (data)\n");
     return(r);
@@ -671,7 +671,7 @@ static int map_header(struct vfs_exec_info *execi)
   execi->args.hdr = hdr;
 
   r = req_readwrite(execi->vp->v_fs_e, execi->vp->v_inode_nr,
-  	cvul64(pos), READING, VFS_PROC_NR, hdr,
+  	cvul64(pos), READING, VFS_PROC_NR, (vir_bytes) hdr,
 	execi->args.hdr_len, &new_pos, &cum_io);
   if (r != OK) {
 	printf("VFS: exec: map_header: req_readwrite failed\n");

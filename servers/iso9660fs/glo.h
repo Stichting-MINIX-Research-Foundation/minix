@@ -19,6 +19,7 @@ EXTERN int FS_STATE;
 EXTERN uid_t caller_uid;
 EXTERN gid_t caller_gid;
 
+EXTERN int proto_version;
 EXTERN int req_nr;		/* request number to the server */
 
 EXTERN int SELF_E;		/* process number */
