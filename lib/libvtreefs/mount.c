@@ -18,6 +18,13 @@ int fs_readsuper(void)
 	if (fs_m_in.REQ_FLAGS & REQ_ISROOT)
 		return EINVAL;
 
+	/* Get VFS-FS protocol version */
+	if (!(fs_m_in.REQ_FLAGS & REQ_HASPROTO)) {
+		proto_version = 0;
+	} else {
+		proto_version = VFS_FS_PROTO_VERSION(fs_m_in.REQ_PROTO);
+	}
+
 	/* Get the root inode and increase its reference count. */
 	root = get_root_inode();
 	ref_inode(root);

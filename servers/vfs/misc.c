@@ -177,23 +177,38 @@ int do_fcntl(message *UNUSED(m_out))
     case F_FREESP:
      {
 	/* Free a section of a file */
-	off_t start, end;
+	off_t start, end, offset;
 	struct flock flock_arg;
-	signed long offset;
 
 	/* Check if it's a regular file. */
 	if (!S_ISREG(f->filp_vno->v_mode)) r = EINVAL;
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
-	else
+	else {
 		/* Copy flock data from userspace. */
-		r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer,
-				 SELF, (vir_bytes) &flock_arg,
-				 sizeof(flock_arg));
+		if (job_call_nr == FCNTL_321) {
+			struct flock_321 fa_321;
+			r = sys_datacopy(who_e,
+				 (vir_bytes) scratch(fp).io.io_buffer, SELF,
+				 (vir_bytes) &fa_321, sizeof(fa_321));
+			/* Let's convert the values to the new structure */
+			if (r == OK) {
+				flock_arg.l_type   =         fa_321.l_type;
+				flock_arg.l_whence =         fa_321.l_whence;
+				flock_arg.l_start  = (off_t) fa_321.l_start;
+				flock_arg.l_len    = (off_t) fa_321.l_len;
+				flock_arg.l_pid    =         fa_321.l_pid;
+			}
+		} else {
+			r = sys_datacopy(who_e,
+				 (vir_bytes) scratch(fp).io.io_buffer, SELF,
+				 (vir_bytes) &flock_arg, sizeof(flock_arg));
+		}
+	}
 
 	if (r != OK) break;
 
 	/* Convert starting offset to signed. */
-	offset = (signed long) flock_arg.l_start;
+	offset = (off_t) flock_arg.l_start;
 
 	/* Figure out starting position base. */
 	switch(flock_arg.l_whence) {

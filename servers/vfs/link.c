@@ -16,6 +16,7 @@
 #include <string.h>
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <minix/config.h> /* Remove with version check in do_truncate */
 #include <minix/vfsif.h>
 #include <dirent.h>
 #include <assert.h>
@@ -306,8 +307,18 @@ int do_truncate(message *UNUSED(m_out))
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  length = (off_t) job_m_in.flength;
-  if (length < 0) return(EINVAL);
+  if (job_call_nr == TRUNCATE_321) {
+	length = (off_t) job_m_in.m2_l1;
+	if ((int) job_m_in.flength < 0) return(EINVAL);
+  } else {
+#if OS_VMAJOR == 2 && OS_VMINOR == 1
+	length = (off_t) make64(job_m_in.m2_l1, 0); /* Ignore higher bits */
+#else
+#error "Please remove this version check. Recompile dynamic packages first."
+	length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
+#endif
+	if (length < 0) return(EINVAL);
+  }
 
   /* Temporarily open file */
   if (fetch_name(vname, vname_length, fullpath) != OK) return(err_code);
@@ -343,9 +354,20 @@ int do_ftruncate(message *UNUSED(m_out))
   off_t length;
 
   scratch(fp).file.fd_nr = job_m_in.fd;
-  length = (off_t) job_m_in.flength;
 
-  if (length < 0) return(EINVAL);
+  if (job_call_nr == FTRUNCATE_321) {
+	length = (off_t) job_m_in.m2_l1;
+	if ((int) job_m_in.flength < 0) return(EINVAL);
+  } else {
+#if OS_VMAJOR == 2 && OS_VMINOR == 1
+	length = (off_t) make64(job_m_in.m2_l1, 0); /* Ignore higher bits */
+#else
+#error "Please remove this version check. Recompile dynamic packages first."
+	length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
+#endif
+	if (length < 0) return(EINVAL);
+  }
+
 
   /* File is already opened; get a vnode pointer from filp */
   if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_WRITE)) == NULL)

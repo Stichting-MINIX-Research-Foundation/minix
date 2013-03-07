@@ -194,8 +194,8 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	if(rw_flag == PEEKING) {
 		r = req_bpeek(vp->v_bfs_e, vp->v_sdev, position, size);
 	} else {
-		r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev,
-			position, size, buf, rw_flag, &res_pos, &res_cum_io);
+		r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev, position,
+		       size, (vir_bytes) buf, rw_flag, &res_pos, &res_cum_io);
 		if (r == OK) {
 			position = res_pos;
 			cum_io += res_cum_io;
@@ -215,7 +215,8 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	} else {
 		u64_t new_pos;
 		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position,
-			rw_flag, for_e, buf, size, &new_pos, &cum_io_incr);
+			rw_flag, for_e, (vir_bytes) buf, size, &new_pos,
+			&cum_io_incr);
 
 		if (r >= 0) {
 			if (ex64hi(new_pos))
@@ -262,10 +263,11 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 int do_getdents(message *UNUSED(m_out))
 {
 /* Perform the getdents(fd, buf, size) system call. */
-  int r = OK;
+  int r = OK, getdents_321 = 0;
   u64_t new_pos;
   register struct filp *rfilp;
 
+  if (job_call_nr == GETDENTS_321) getdents_321 = 1;
   scratch(fp).file.fd_nr = job_m_in.fd;
   scratch(fp).io.io_buffer = job_m_in.buffer;
   scratch(fp).io.io_nbytes = (size_t) job_m_in.nbytes;
@@ -285,7 +287,7 @@ int do_getdents(message *UNUSED(m_out))
 
 	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
 			 rfilp->filp_pos, scratch(fp).io.io_buffer,
-			 scratch(fp).io.io_nbytes, &new_pos,0);
+			 scratch(fp).io.io_nbytes, &new_pos, 0, getdents_321);
 
 	if (r > 0) rfilp->filp_pos = new_pos;
   }
@@ -341,7 +343,7 @@ size_t req_size;
 	panic("unmapped pipe");
 
   r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
-		    buf, size, &new_pos, &cum_io_incr);
+		    (vir_bytes) buf, size, &new_pos, &cum_io_incr);
 
   if (r != OK) {
 	return(r);

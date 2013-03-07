@@ -6,6 +6,7 @@
  */
 
 #include "fs.h"
+#include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <fcntl.h>
@@ -30,11 +31,26 @@ int req;			/* either F_SETLK or F_SETLKW */
   mode_t mo;
   off_t first, last;
   struct flock flock;
+  struct flock_321 fa_321;
   struct file_lock *flp, *flp2, *empty;
 
   /* Fetch the flock structure from user space. */
-  r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer, VFS_PROC_NR,
-		   (vir_bytes) &flock, sizeof(flock));
+  if (job_call_nr == FCNTL_321) {
+	r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer,
+			 VFS_PROC_NR, (vir_bytes) &fa_321, sizeof(fa_321));
+
+	/* Convert old values to new structure */
+	if (r == OK) {
+		flock.l_type   =         fa_321.l_type;
+		flock.l_whence =         fa_321.l_whence;
+		flock.l_start  = (off_t) fa_321.l_start;
+		flock.l_len    = (off_t) fa_321.l_len;
+		flock.l_pid    =         fa_321.l_pid;
+	}
+  } else {
+	r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer,
+			 VFS_PROC_NR, (vir_bytes) &flock, sizeof(flock));
+  }
   if (r != OK) return(EINVAL);
 
   /* Make some error checks. */
@@ -147,8 +163,23 @@ int req;			/* either F_SETLK or F_SETLKW */
 	}
 
 	/* Copy the flock structure back to the caller. */
-	r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock,
-		who_e, (vir_bytes) scratch(fp).io.io_buffer, sizeof(flock));
+	if (job_call_nr == FCNTL_321) {
+		/* Convert new values to old structure */
+		if (r == OK) {
+			fa_321.l_type   =         flock.l_type;
+			fa_321.l_whence =         flock.l_whence;
+			fa_321.l_start  = (i32_t) flock.l_start;
+			fa_321.l_len    = (i32_t) flock.l_len;
+			fa_321.l_pid    =         flock.l_pid;
+		}
+		r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &fa_321,
+			who_e, (vir_bytes) scratch(fp).io.io_buffer,
+			sizeof(fa_321));
+	} else {
+		r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock,
+			who_e, (vir_bytes) scratch(fp).io.io_buffer,
+			sizeof(flock));
+	}
 	return(r);
   }
 

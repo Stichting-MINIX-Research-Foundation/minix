@@ -611,6 +611,159 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 
 
 /*===========================================================================*
+ *				fs_getdents_321				     *
+ *===========================================================================*/
+static int fs_getdents_321(void)
+{
+#define GETDENTS_321_BUFSIZE (sizeof(struct dirent_321) + EXT2_NAME_MAX + 1)
+#define GETDENTS_321_ENTRIES	8
+  static char getdents_buf[GETDENTS_321_BUFSIZE * GETDENTS_321_ENTRIES];
+  struct inode *rip;
+  int o, r, done;
+  unsigned int block_size, len, reclen;
+  pino_t ino;
+  block_t b;
+  cp_grant_id_t gid;
+  size_t size, tmpbuf_off, userbuf_off;
+  off_t pos, off, block_pos, new_pos, ent_pos;
+  struct buf *bp;
+  struct ext2_disk_dir_desc *d_desc;
+  struct dirent *dep;
+
+  ino = (pino_t) fs_m_in.REQ_INODE_NR;
+  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
+  size = (size_t) fs_m_in.REQ_MEM_SIZE;
+  pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
+
+  /* Check whether the position is properly aligned */
+  if ((unsigned int) pos % DIR_ENTRY_ALIGN)
+	return(ENOENT);
+
+  if ((rip = get_inode(fs_dev, ino)) == NULL)
+	return(EINVAL);
+
+  block_size = rip->i_sp->s_block_size;
+  off = (pos % block_size);             /* Offset in block */
+  block_pos = pos - off;
+  done = FALSE;       /* Stop processing directory blocks when done is set */
+
+  memset(getdents_buf, '\0', sizeof(getdents_buf));  /* Avoid leaking any data */
+  tmpbuf_off = 0;       /* Offset in getdents_buf */
+  userbuf_off = 0;      /* Offset in the user's buffer */
+
+  /* The default position for the next request is EOF. If the user's buffer
+   * fills up before EOF, new_pos will be modified. */
+  new_pos = rip->i_size;
+
+  for (; block_pos < rip->i_size; block_pos += block_size) {
+	off_t temp_pos = block_pos;
+	b = read_map(rip, block_pos, 0); /* get block number */
+	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
+	bp = get_block(rip->i_dev, b, NORMAL);  /* get a dir block */
+	assert(bp != NULL);
+
+	/* Search a directory block. */
+	d_desc = (struct ext2_disk_dir_desc*) &b_data(bp);
+
+	/* we need to seek to entry at off bytes.
+	* when NEXT_DISC_DIR_POS == block_size it's last dentry.
+	*/
+	for (; temp_pos + conv2(le_CPU, d_desc->d_rec_len) <= pos
+	       && NEXT_DISC_DIR_POS(d_desc, &b_data(bp)) < block_size;
+	       d_desc = NEXT_DISC_DIR_DESC(d_desc)) {
+		temp_pos += conv2(le_CPU, d_desc->d_rec_len);
+	}
+
+	for (; CUR_DISC_DIR_POS(d_desc, &b_data(bp)) < block_size;
+	     d_desc = NEXT_DISC_DIR_DESC(d_desc)) {
+		if (d_desc->d_ino == 0)
+			continue; /* Entry is not in use */
+
+#if 0 /* d_nam_len is a uint8_t, so the test is always false. */
+		if (d_desc->d_name_len > NAME_MAX ||
+		    d_desc->d_name_len > EXT2_NAME_MAX) {
+			len = min(NAME_MAX, EXT2_NAME_MAX);
+		} else {
+			len = d_desc->d_name_len;
+		}
+#endif
+		len = d_desc->d_name_len;
+
+		/* Compute record length */
+		reclen = offsetof(struct dirent_321, d_name) + len + 1;
+		o = (reclen % sizeof(long));
+		if (o != 0)
+			reclen += sizeof(long) - o;
+
+		/* Need the position of this entry in the directory */
+		ent_pos = block_pos + ((char *)d_desc - b_data(bp));
+
+		if (userbuf_off + tmpbuf_off + reclen >= size) {
+			/* The user has no space for one more record */
+			done = TRUE;
+
+			/* Record the position of this entry, it is the
+			 * starting point of the next request (unless the
+			 * position is modified with lseek).
+			 */
+			new_pos = ent_pos;
+			break;
+		}
+
+		if (tmpbuf_off + reclen >=
+				GETDENTS_321_BUFSIZE * GETDENTS_321_ENTRIES) {
+			r = sys_safecopyto(VFS_PROC_NR, gid,
+					   (vir_bytes) userbuf_off,
+					   (vir_bytes) getdents_buf,
+					   (size_t) tmpbuf_off);
+			if (r != OK) {
+				put_inode(rip);
+				return(r);
+			}
+			userbuf_off += tmpbuf_off;
+			tmpbuf_off = 0;
+		}
+
+		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
+		dep->d_ino = (u32_t) conv4(le_CPU, d_desc->d_ino);
+		dep->d_off = (i32_t) ent_pos;
+		dep->d_reclen = (unsigned short) reclen;
+		memcpy(dep->d_name, d_desc->d_name, len);
+		dep->d_name[len] = '\0';
+		tmpbuf_off += reclen;
+	}
+
+	put_block(bp, DIRECTORY_BLOCK);
+	if (done)
+		break;
+  }
+
+  if (tmpbuf_off != 0) {
+	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) userbuf_off,
+			   (vir_bytes) getdents_buf, (size_t) tmpbuf_off);
+	if (r != OK) {
+		put_inode(rip);
+		return(r);
+	}
+
+	userbuf_off += tmpbuf_off;
+  }
+
+  if (done && userbuf_off == 0)
+	r = EINVAL;           /* The user's buffer is too small */
+  else {
+	fs_m_out.RES_NBYTES = userbuf_off;
+	fs_m_out.RES_SEEK_POS_LO = new_pos;
+	rip->i_update |= ATIME;
+	rip->i_dirt = IN_DIRTY;
+	r = OK;
+  }
+
+  put_inode(rip);               /* release the inode */
+  return(r);
+}
+
+/*===========================================================================*
  *				fs_getdents				     *
  *===========================================================================*/
 int fs_getdents(void)
@@ -628,6 +781,10 @@ int fs_getdents(void)
   struct buf *bp;
   struct ext2_disk_dir_desc *d_desc;
   struct dirent *dep;
+
+  if (proto_version == 0) {
+	return fs_getdents_321();
+  }
 
   ino = (pino_t) fs_m_in.REQ_INODE_NR;
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
@@ -729,8 +886,8 @@ int fs_getdents(void)
 		}
 
 		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		dep->d_ino = conv4(le_CPU, d_desc->d_ino);
-		dep->d_off = ent_pos;
+		dep->d_ino = (ino_t) conv4(le_CPU, d_desc->d_ino);
+		dep->d_off = (off_t) ent_pos;
 		dep->d_reclen = (unsigned short) reclen;
 		memcpy(dep->d_name, d_desc->d_name, len);
 		dep->d_name[len] = '\0';

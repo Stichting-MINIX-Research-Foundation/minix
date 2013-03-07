@@ -39,6 +39,12 @@ int fs_readsuper()
   readonly  = (fs_m_in.REQ_FLAGS & REQ_RDONLY) ? 1 : 0;
   isroot    = (fs_m_in.REQ_FLAGS & REQ_ISROOT) ? 1 : 0;
 
+  if (!(fs_m_in.REQ_FLAGS & REQ_HASPROTO)) {
+	proto_version = 0;
+  } else {
+	proto_version = VFS_FS_PROTO_VERSION(fs_m_in.REQ_PROTO);
+  }
+
   if (label_len > sizeof(fs_dev_label))
 	return(EINVAL);
 

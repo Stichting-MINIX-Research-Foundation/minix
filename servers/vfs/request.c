@@ -6,24 +6,28 @@
  */
 
 #include "fs.h"
-#include <string.h>
-#include <assert.h>
-#include <sys/stat.h>
-#include <sys/statfs.h>
-#include <sys/statvfs.h>
-#include <minix/vfsif.h>
 #include <minix/com.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <minix/u64.h>
+#include <minix/vfsif.h>
+#include <sys/dirent.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/statvfs.h>
+#include <assert.h>
+#include <stddef.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include "fproc.h"
+#include "param.h"
+#include "path.h"
 #include "vmnt.h"
 #include "vnode.h"
-#include "path.h"
-#include "param.h"
 
+
+static size_t translate_dents(char *src, size_t size, char *dst, int direction);
 
 /*===========================================================================*
  *			req_breadwrite					     *
@@ -34,7 +38,7 @@ int req_breadwrite(
   dev_t dev,
   u64_t pos,
   unsigned int num_of_bytes,
-  char *user_addr,
+  vir_bytes user_addr,
   int rw_flag,
   u64_t *new_posp,
   unsigned int *cum_iop
@@ -44,7 +48,7 @@ int req_breadwrite(
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
+  grant_id = cpf_grant_magic(fs_e, user_e, user_addr, num_of_bytes,
 			(rw_flag == READING ? CPF_WRITE : CPF_READ));
   if(grant_id == -1)
 	  panic("req_breadwrite: cpf_grant_magic failed");
@@ -300,19 +304,65 @@ int req_getdents(
   char *buf,
   size_t size,
   u64_t *new_pos,
-  int direct
+  int direct,
+  int getdents_321	/* Set to 1 if user land expects old format */
 )
 {
   int r;
+  int fs_getdents_321 = 0, do_translation = 0;
   message m;
   cp_grant_id_t grant_id;
+  struct vmnt *vmp;
+  char *indir_buf_src = NULL;
+  char *indir_buf_dst = NULL;
 
-  if (direct) {
-	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, size,
-								CPF_WRITE);
+  vmp = find_vmnt(fs_e);
+  assert(vmp != NULL);
+
+  if (VFS_FS_PROTO_VERSION(vmp->m_proto) == 0) {
+	fs_getdents_321 = 1;
+  }
+
+  /* When we have to translate new struct dirent to the old format or vice
+   * versa, we're going to have to ignore the user provided buffer and do only
+   * one entry at a time. We have to do the translation here and allocate
+   * space on the stack. This is a limited resource. Besides, we don't want to
+   * be dependent on crazy buffer sizes provided by user space (i.e., we'd have
+   * to allocate a similarly sized buffer here).
+   *
+   * We need to translate iff:
+   *  1. userland expects old format and FS provides new format
+   *  2. userland expects new format and FS provides old format
+   * We don't need to translate iff
+   *  3. userland expects old format and FS provides old format
+   *  4. userland expects new format and FS provides new format
+   *
+   * Note: VFS expects new format (when doing 'direct'), covered by case 2.
+   */
+  if (getdents_321 && !fs_getdents_321) {	/* case 1 */
+	do_translation = 1;
+  } else if (fs_getdents_321 && !getdents_321) {/* case 2 */
+	do_translation = 1;
+  }
+
+  if (do_translation) {
+	/* We're cutting down the buffer size in two so it's guaranteed we
+	 * have enough space for the translation (data structure has become
+	 * larger).
+	 */
+	size = size / 2;
+	indir_buf_src = malloc(size);
+	indir_buf_dst = malloc(size * 2); /* dst buffer keeps original size */
+	if (indir_buf_src == NULL || indir_buf_dst == NULL)
+		panic("Couldn't allocate temp buf space\n");
+
+	grant_id = cpf_grant_direct(fs_e, (vir_bytes) indir_buf_src, size,
+				CPF_WRITE);
+  } else if (direct) {
+	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, size, CPF_WRITE);
   } else {
 	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size,
-								CPF_WRITE);
+				   CPF_WRITE);
   }
 
   if (grant_id < 0)
@@ -329,12 +379,82 @@ int req_getdents(
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  if (do_translation) {
+	if (r == OK) {
+		m.RES_NBYTES = translate_dents(indir_buf_src, m.RES_NBYTES,
+						indir_buf_dst, getdents_321);
+		if (direct) {
+			memcpy(buf, indir_buf_dst, m.RES_NBYTES);
+		} else {
+			r = sys_vircopy(SELF, (vir_bytes) indir_buf_dst, who_e,
+					(vir_bytes) buf, m.RES_NBYTES);
+		}
+	}
+	free(indir_buf_src);
+	free(indir_buf_dst);
+  }
+
   if (r == OK) {
-	  *new_pos = ((u64_t)(m.RES_SEEK_POS_LO));
-	  r = m.RES_NBYTES;
+	*new_pos = ((u64_t)(m.RES_SEEK_POS_LO));
+	r = m.RES_NBYTES;
   }
 
   return(r);
+}
+
+/*===========================================================================*
+ *				translate_dents	  			     *
+ *===========================================================================*/
+static size_t
+translate_dents(char *src, size_t size, char *dst, int to_getdents_321)
+{
+/* Convert between 'struct dirent' and 'struct dirent_321' both ways and
+ * return the size of the new buffer.
+ */
+	int consumed = 0, newconsumed = 0;
+	struct dirent *dent;
+	struct dirent_321 *dent_321;
+#define DWORD_ALIGN(d) if((d) % sizeof(long)) (d)+=sizeof(long)-(d)%sizeof(long)
+
+	if (to_getdents_321) {
+		/* Provided format is struct dirent and has to be translated
+		 * to struct dirent_321 */
+		dent_321 = (struct dirent_321 *) dst;
+		dent     = (struct dirent *)     src;
+
+		while (consumed < size && dent->d_reclen > 0) {
+			dent_321->d_ino = (u32_t) dent->d_ino;
+			dent_321->d_off = (i32_t) dent->d_off;
+			dent_321->d_reclen = offsetof(struct dirent_321,d_name)+
+					     strlen(dent->d_name) + 1;
+			DWORD_ALIGN(dent_321->d_reclen);
+			strcpy(dent_321->d_name, dent->d_name);
+			consumed += dent->d_reclen;
+			newconsumed += dent_321->d_reclen;
+			dent     = (struct dirent *)     &src[consumed];
+			dent_321 = (struct dirent_321 *) &dst[newconsumed];
+		}
+	} else {
+		/* Provided format is struct dirent_321 and has to be
+		 * translated to struct dirent */
+		dent_321 = (struct dirent_321 *) src;
+		dent     = (struct dirent *)     dst;
+
+		while (consumed < size && dent_321->d_reclen > 0) {
+			dent->d_ino = (ino_t) dent_321->d_ino;
+			dent->d_off = (off_t) dent_321->d_off;
+			dent->d_reclen = offsetof(struct dirent, d_name) +
+					 strlen(dent_321->d_name) + 1;
+			DWORD_ALIGN(dent->d_reclen);
+			strcpy(dent->d_name, dent_321->d_name);
+			consumed += dent_321->d_reclen;
+			newconsumed += dent->d_reclen;
+			dent_321 = (struct dirent_321 *) &src[consumed];
+			dent     = (struct dirent *)     &dst[newconsumed];
+		}
+	}
+
+	return newconsumed;
 }
 
 /*===========================================================================*
@@ -762,8 +882,6 @@ int req_readsuper(
 	res_nodep->fs_e = m.m_source;
 	res_nodep->inode_nr = (ino_t) m.RES_INODE_NR;
 	vmp->m_proto = m.RES_PROTO;
-	printf("%d: proto = 0x%x, version=%d conreqs=%d\n", fs_e, vmp->m_proto,
-	VFS_FS_PROTO_VERSION(vmp->m_proto), VFS_FS_PROTO_CONREQS(vmp->m_proto));
 	res_nodep->fmode = (mode_t) m.RES_MODE;
 	res_nodep->fsize = m.RES_FILE_SIZE_LO;
 	res_nodep->uid = (uid_t) m.RES_UID;
@@ -784,7 +902,7 @@ ino_t inode_nr;
 u64_t pos;
 int rw_flag;
 endpoint_t user_e;
-char *user_addr;
+vir_bytes user_addr;
 unsigned int num_of_bytes;
 u64_t *new_posp;
 unsigned int *cum_iop;
@@ -796,7 +914,7 @@ unsigned int *cum_iop;
   if (ex64hi(pos) != 0)
 	  panic("req_readwrite: pos too large");
 
-  grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
+  grant_id = cpf_grant_magic(fs_e, user_e, user_addr, num_of_bytes,
 			     (rw_flag==READING ? CPF_WRITE:CPF_READ));
   if (grant_id == -1)
 	  panic("req_readwrite: cpf_grant_magic failed");

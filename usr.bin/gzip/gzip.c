@@ -66,7 +66,7 @@ __RCSID("$NetBSD: gzip.c,v 1.105 2011/08/30 23:06:00 joerg Exp $");
 #include <time.h>
 
 #ifndef PRIdOFF
-#define PRIdOFF PRId32
+#define PRIdOFF PRId64
 #endif
 
 /* what type of file are we dealing with */
@@ -1276,11 +1276,7 @@ file_compress(char *file, char *outfile, size_t outsize)
 	if (osb.st_size != size) {
 		maybe_warnx("output file: %s wrong size (%" PRIdOFF
 				" != %" PRIdOFF "), deleting",
-#ifndef __minix
 				outfile, osb.st_size, size);
-#else
-				outfile, osb.st_size, (big_off_t)size);
-#endif
 		goto bad_outfile;
 	}
 
@@ -1559,11 +1555,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	if (osb.st_size != size) {
 		maybe_warnx("stat gave different size: %" PRIdOFF
 				" != %" PRIdOFF " (leaving original)",
-#ifndef __minix
 				size, osb.st_size);
-#else
-				(big_off_t)size, osb.st_size);
-#endif
 		close(ofd);
 		unlink(outfile);
 		return -1;
