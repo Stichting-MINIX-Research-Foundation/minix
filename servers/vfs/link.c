@@ -306,8 +306,13 @@ int do_truncate()
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  length = (off_t) job_m_in.flength;
-  if (length < 0) return(EINVAL);
+  if (job_call_nr == TRUNCATE_321) {
+	length = (off_t) job_m_in.m2_l1;
+	if ((int) job_m_in.flength < 0) return(EINVAL);
+  } else {
+	length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
+	if (length < 0) return(EINVAL);
+  }
 
   /* Temporarily open file */
   if (fetch_name(vname, vname_length, fullpath) != OK) return(err_code);
@@ -343,9 +348,15 @@ int do_ftruncate()
   off_t length;
 
   scratch(fp).file.fd_nr = job_m_in.fd;
-  length = (off_t) job_m_in.flength;
 
-  if (length < 0) return(EINVAL);
+  if (job_call_nr == FTRUNCATE_321) {
+	length = (off_t) job_m_in.m2_l1;
+	if ((int) job_m_in.flength < 0) return(EINVAL);
+  } else {
+	length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
+	if (length < 0) return(EINVAL);
+  }
+
 
   /* File is already opened; get a vnode pointer from filp */
   if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_WRITE)) == NULL)
