@@ -5,8 +5,8 @@
 void init_inodes(unsigned int inodes, struct inode_stat *stat, index_t
 	nr_indexed_entries);
 void cleanup_inodes(void);
-struct inode *find_inode(ino_t num);
-struct inode *get_inode(ino_t num);
+struct inode *find_inode(pino_t num);
+struct inode *get_inode(pino_t num);
 void put_inode(struct inode *node);
 void ref_inode(struct inode *node);
 int get_inode_number(struct inode *node);

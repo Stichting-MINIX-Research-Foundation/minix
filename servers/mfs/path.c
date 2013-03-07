@@ -27,7 +27,7 @@ char dot2[3] = "..";	/* permissions for . and ..		    */
 
 static char *get_name(char *name, char string[MFS_NAME_MAX+1]);
 static int ltraverse(struct inode *rip, char *suffix);
-static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
 	inode **res_inop, size_t *offsetp, int *symlinkp);
 
 
@@ -40,14 +40,14 @@ int fs_lookup()
   int r, r1, flags, symlinks;
   unsigned int len;
   size_t offset = 0, path_size;
-  ino_t dir_ino, root_ino;
+  pino_t dir_ino, root_ino;
   struct inode *rip;
 
   grant		= (cp_grant_id_t) fs_m_in.REQ_GRANT;
   path_size	= (size_t) fs_m_in.REQ_PATH_SIZE; /* Size of the buffer */
   len		= (int) fs_m_in.REQ_PATH_LEN; /* including terminating nul */
-  dir_ino	= (ino_t) fs_m_in.REQ_DIR_INO;
-  root_ino	= (ino_t) fs_m_in.REQ_ROOT_INO;
+  dir_ino	= (pino_t) fs_m_in.REQ_DIR_INO;
+  root_ino	= (pino_t) fs_m_in.REQ_ROOT_INO;
   flags		= (int) fs_m_in.REQ_FLAGS;
 
   /* Check length. */
@@ -120,14 +120,14 @@ int fs_lookup()
 /*===========================================================================*
  *                             parse_path				     *
  *===========================================================================*/
-static int parse_path(dir_ino, root_ino, flags, res_inop, offsetp, symlinkp)
-ino_t dir_ino;
-ino_t root_ino;
-int flags;
-struct inode **res_inop;
-size_t *offsetp;
-int *symlinkp;
-{
+static int parse_path(
+pino_t dir_ino,
+pino_t root_ino,
+int flags,
+struct inode **res_inop,
+size_t *offsetp,
+int *symlinkp
+) {
   /* Parse the path in user_path, starting at dir_ino. If the path is the empty
    * string, just return dir_ino. It is upto the caller to treat an empty
    * path in a special way. Otherwise, if the path consists of just one or
@@ -355,7 +355,7 @@ int chk_perm;			/* check permissions when string is looked up*/
  * the directory, find the inode, open it, and return a pointer to its inode
  * slot.
  */
-  ino_t numb;
+  pino_t numb;
   struct inode *rip;
 
   /* If 'string' is empty, return an error. */
@@ -463,7 +463,7 @@ char string[MFS_NAME_MAX+1];	/* component extracted from 'old_name' */
 int search_dir(ldir_ptr, string, numb, flag, check_permissions)
 register struct inode *ldir_ptr; /* ptr to inode for dir to search */
 char string[MFS_NAME_MAX];		 /* component to search for */
-ino_t *numb;			 /* pointer to inode number */
+pino_t *numb;			 /* pointer to inode number */
 int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 {
@@ -479,7 +479,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   register struct direct *dp = NULL;
   register struct buf *bp = NULL;
   int i, r, e_hit, t, match;
-  mode_t bits;
+  pmode_t bits;
   off_t pos;
   unsigned new_slots, old_slots;
   struct super_block *sp;
@@ -558,8 +558,8 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 			if (flag == IS_EMPTY) r = ENOTEMPTY;
 			else if (flag == DELETE) {
 				/* Save d_ino for recovery. */
-				t = MFS_NAME_MAX - sizeof(ino_t);
-				*((ino_t *) &dp->mfs_d_name[t]) = dp->mfs_d_ino;
+				t = MFS_NAME_MAX - sizeof(pino_t);
+				*((pino_t *) &dp->mfs_d_name[t]) = dp->mfs_d_ino;
 				dp->mfs_d_ino = NO_ENTRY;	/* erase entry */
 				MARKDIRTY(bp);
 				ldir_ptr->i_update |= CTIME | MTIME;
@@ -568,7 +568,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 					ldir_ptr->i_last_dpos = pos;
 			} else {
 				sp = ldir_ptr->i_sp;	/* 'flag' is LOOK_UP */
-				*numb = (ino_t) conv4(sp->s_native,
+				*numb = (pino_t) conv4(sp->s_native,
 						      (int) dp->mfs_d_ino);
 			}
 			assert(lmfs_dev(bp) != NO_DEV);

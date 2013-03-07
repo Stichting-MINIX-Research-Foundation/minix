@@ -45,7 +45,7 @@ int fs_stat()
   register struct puffs_node *pn;  /* target pnode */
   struct vattr va;
   struct stat statbuf;
-  mode_t mo;
+  pmode_t mo;
   int s;
   PUFFS_MAKECRED(pcr, &global_kcred);
 

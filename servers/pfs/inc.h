@@ -25,6 +25,7 @@
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
+#include <minix/vfsif.h>
 
 #include <stdlib.h>
 #include <stdio.h>

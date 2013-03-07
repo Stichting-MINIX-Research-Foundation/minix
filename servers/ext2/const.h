@@ -55,7 +55,7 @@
 
 #define SUPER_BLOCK_BYTES       (1024)         /* bytes offset */
 
-#define ROOT_INODE      ((ino_t) 2)   /* inode number for root directory */
+#define ROOT_INODE      ((pino_t) 2)   /* inode number for root directory */
 #define BOOT_BLOCK      ((block_t) 0) /* block number of boot block */
 #define START_BLOCK     ((block_t) 2) /* first block of FS (not counting SB) */
 #define BLOCK_ADDRESS_BYTES	4     /* bytes per address */
