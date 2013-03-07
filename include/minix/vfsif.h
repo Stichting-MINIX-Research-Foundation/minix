@@ -75,7 +75,7 @@
 #define VFS_FS_PROTO_VERSION(b)	(((b) & RES_PROTO_V_MASK) >> RES_PROTO_V_SHIFT)
 #define VFS_FS_PROTO_PUT_VERSION(b,v) \
 	((b) |= (((v) << RES_PROTO_V_SHIFT) & RES_PROTO_V_MASK))
-#define VFS_FS_CURRENT_VERSION	0 /* Current version */
+#define VFS_FS_CURRENT_VERSION	1 /* Current version */
 
 /* VFS/FS flags */
 #define REQ_RDONLY		001

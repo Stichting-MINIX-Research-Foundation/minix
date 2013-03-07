@@ -21,6 +21,8 @@ extern char dot2[3];   /* meaning to search_dir: no access permission check. */
 
 extern int(*fs_call_vec[]) (void);
 
+EXTERN int proto_version;
+
 EXTERN message fs_m_in;
 EXTERN message fs_m_out;
 EXTERN vfs_ucred_t credentials;

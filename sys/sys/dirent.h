@@ -17,6 +17,13 @@ struct dirent {		/* Largest entry (8 slots) */
 	char		d_name[1];	/* Null terminated name */
 };
 
+struct dirent_321 {		/* Largest entry (8 slots) */
+	u32_t		d_ino;		/* I-node number */
+	i32_t 		d_off;		/* Offset in directory */
+	unsigned short	d_reclen;	/* Length of this record */
+	char		d_name[1];	/* Null terminated name */
+};
+
 #if defined(_NETBSD_SOURCE)
 #define MAXNAMLEN	511
 #define	d_fileno	d_ino

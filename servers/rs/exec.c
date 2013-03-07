@@ -7,7 +7,7 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	char *frame, int frame_len);
 static int exec_restart(int proc_e, int result, vir_bytes pc);
 static int read_seg(struct exec_info *execi, off_t off,
-        off_t seg_addr, size_t seg_bytes);
+        vir_bytes seg_addr, size_t seg_bytes);
 static int exec_restart(int proc_e, int result, vir_bytes pc);
 
 /* Array of loaders for different object formats */
@@ -191,7 +191,7 @@ static int exec_restart(int proc_e, int result, vir_bytes pc)
 static int read_seg(
 struct exec_info *execi,       /* various data needed for exec */
 off_t off,                     /* offset in file */
-off_t seg_addr,            /* address to load segment */
+vir_bytes seg_addr,            /* address to load segment */
 size_t seg_bytes           /* how much is to be transferred? */
 )
 {

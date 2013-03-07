@@ -605,6 +605,153 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 
 
 /*===========================================================================*
+ *				fs_getdents_321				     *
+ *===========================================================================*/
+int fs_getdents_321(void)
+{
+#define GETDENTS_321_BUFSIZE	(sizeof(struct dirent_321) + MFS_NAME_MAX + 1)
+#define GETDENTS_321_ENTRIES	8
+  static char getdents_buf[GETDENTS_321_BUFSIZE * GETDENTS_321_ENTRIES];
+  register struct inode *rip;
+  int o, r, done;
+  unsigned int block_size, len, reclen;
+  pino_t ino;
+  block_t b;
+  cp_grant_id_t gid;
+  size_t size, tmpbuf_off, userbuf_off;
+  off_t pos, off, block_pos, new_pos, ent_pos;
+  struct buf *bp;
+  struct direct *dp;
+  struct dirent_321 *dep;
+  char *cp;
+
+  ino = (pino_t) fs_m_in.REQ_INODE_NR;
+  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
+  size = (size_t) fs_m_in.REQ_MEM_SIZE;
+  pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
+
+  /* Check whether the position is properly aligned */
+  if ((unsigned int) pos % DIR_ENTRY_SIZE)
+	  return(ENOENT);
+
+  if ((rip = get_inode(fs_dev, ino)) == NULL)
+	  return(EINVAL);
+
+  block_size = rip->i_sp->s_block_size;
+  off = (pos % block_size);		/* Offset in block */
+  block_pos = pos - off;
+  done = FALSE;		/* Stop processing directory blocks when done is set */
+
+  tmpbuf_off = 0;	/* Offset in getdents_buf */
+  memset(getdents_buf, '\0', sizeof(getdents_buf));	/* Avoid leaking any data */
+  userbuf_off = 0;	/* Offset in the user's buffer */
+
+  /* The default position for the next request is EOF. If the user's buffer
+   * fills up before EOF, new_pos will be modified. */
+  new_pos = rip->i_size;
+
+  for(; block_pos < rip->i_size; block_pos += block_size) {
+	b = read_map(rip, block_pos, 0);	/* get block number */
+
+	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
+	bp = get_block(rip->i_dev, b, NORMAL);	/* get a dir block */
+
+	assert(bp != NULL);
+
+	  /* Search a directory block. */
+	  if (block_pos < pos)
+		  dp = &b_dir(bp)[off / DIR_ENTRY_SIZE];
+	  else
+		  dp = &b_dir(bp)[0];
+	  for (; dp < &b_dir(bp)[NR_DIR_ENTRIES(block_size)]; dp++) {
+		if (dp->mfs_d_ino == 0)
+			continue;	/* Entry is not in use */
+
+		/* Compute the length of the name */
+		cp = memchr(dp->mfs_d_name, '\0', sizeof(dp->mfs_d_name));
+		if (cp == NULL)
+			len = sizeof(dp->mfs_d_name);
+		else
+			len = cp - (dp->mfs_d_name);
+
+		/* Compute record length */
+		reclen = offsetof(struct dirent_321, d_name) + len + 1;
+		o = (reclen % sizeof(long));
+		if (o != 0)
+			reclen += sizeof(long) - o;
+
+		/* Need the position of this entry in the directory */
+		ent_pos = block_pos + ((char *) dp - (char *) bp->data);
+
+		if (userbuf_off + tmpbuf_off + reclen >= size) {
+			/* The user has no space for one more record */
+			done = TRUE;
+
+			/* Record the position of this entry, it is the
+			 * starting point of the next request (unless the
+			 * postion is modified with lseek).
+			 */
+			new_pos = ent_pos;
+			break;
+		}
+
+		if (tmpbuf_off + reclen >=
+				GETDENTS_321_BUFSIZE * GETDENTS_321_ENTRIES) {
+			  r = sys_safecopyto(VFS_PROC_NR, gid,
+					     (vir_bytes) userbuf_off,
+					     (vir_bytes) getdents_buf,
+					     (size_t) tmpbuf_off);
+			  if (r != OK) {
+				put_inode(rip);
+				return(r);
+			  }
+
+			  userbuf_off += tmpbuf_off;
+			  tmpbuf_off = 0;
+		}
+
+		dep = (struct dirent_321 *) &getdents_buf[tmpbuf_off];
+		dep->d_ino = (u32_t) dp->mfs_d_ino;
+		dep->d_off = (i32_t) ent_pos;
+		dep->d_reclen = (unsigned short) reclen;
+		memcpy(dep->d_name, dp->mfs_d_name, len);
+		dep->d_name[len] = '\0';
+		tmpbuf_off += reclen;
+	}
+
+	put_block(bp, DIRECTORY_BLOCK);
+	if (done)
+		break;
+  }
+
+  if (tmpbuf_off != 0) {
+	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) userbuf_off,
+			   (vir_bytes) getdents_buf, (size_t) tmpbuf_off);
+	if (r != OK) {
+		put_inode(rip);
+		return(r);
+	}
+
+	userbuf_off += tmpbuf_off;
+  }
+
+  if (done && userbuf_off == 0)
+	  r = EINVAL;		/* The user's buffer is too small */
+  else {
+	  fs_m_out.RES_NBYTES = userbuf_off;
+	  fs_m_out.RES_SEEK_POS_LO = new_pos;
+	  if(!rip->i_sp->s_rd_only) {
+		  rip->i_update |= ATIME;
+		  IN_MARKDIRTY(rip);
+	  }
+	  r = OK;
+  }
+
+  put_inode(rip);		/* release the inode */
+  return(r);
+}
+
+/*===========================================================================*
  *				fs_getdents				     *
  *===========================================================================*/
 int fs_getdents(void)
@@ -623,6 +770,12 @@ int fs_getdents(void)
   struct direct *dp;
   struct dirent *dep;
   char *cp;
+
+  if (proto_version == 0) {
+	/* VFS-FS protocol version 0 uses 32-bits ino_t and off_t. We need to
+	 * use the binary compatible version of this routine */
+	return fs_getdents_321();
+  }
 
   ino = (pino_t) fs_m_in.REQ_INODE_NR;
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
@@ -706,8 +859,8 @@ int fs_getdents(void)
 		}
 
 		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		dep->d_ino = dp->mfs_d_ino;
-		dep->d_off = ent_pos;
+		dep->d_ino = (ino_t) dp->mfs_d_ino;
+		dep->d_off = (off_t) ent_pos;
 		dep->d_reclen = (unsigned short) reclen;
 		memcpy(dep->d_name, dp->mfs_d_name, len);
 		dep->d_name[len] = '\0';

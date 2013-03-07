@@ -590,6 +590,9 @@ int do_mkdir(message *UNUSED(m_out))
   return(r);
 }
 
+/*===========================================================================*
+ *				actual_lseek				     *
+ *===========================================================================*/
 int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
@@ -614,19 +617,14 @@ int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  if (offset >= 0)
-	newpos = pos + offset;
-  else
-	newpos = sub64ul(pos, -offset);
-
-  /* Check for overflow. */
-  if (ex64hi(newpos) != 0) {
-	r = EOVERFLOW;
-  } else if ((off_t) ex64lo(newpos) < 0) { /* no negative file size */
+  if (offset < 0 && -offset > pos) { /* no negative file size */
 	r = EOVERFLOW;
   } else {
+	newpos = pos + offset;
+
 	/* insert the new position into the output message */
 	m_out->reply_l1 = ex64lo(newpos);
+	m_out->reply_l2 = ex64hi(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
 		rfilp->filp_pos = newpos;

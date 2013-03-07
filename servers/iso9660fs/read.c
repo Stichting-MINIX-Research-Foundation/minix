@@ -137,9 +137,9 @@ int fs_bread(void)
 
 
 /*===========================================================================*
- *				fs_getdents				     *
+ *				fs_getdents_321				     *
  *===========================================================================*/
-int fs_getdents(void) {
+int fs_getdents_321(void) {
   struct dir_record *dir;
   pino_t ino;
   cp_grant_id_t gid;
@@ -246,7 +246,158 @@ int fs_getdents(void) {
 			/* The standard data structure is created using the
 			 * data in the buffer. */
 			dirp = (struct dirent *) &getdents_buf[tmpbuf_offset];
-			dirp->d_ino = (pino_t)(b_data(bp) + block_pos);
+			dirp->d_ino = (u32_t) (b_data(bp) + block_pos);
+			dirp->d_off= (i32_t) cur_pos;
+			dirp->d_reclen= reclen;
+			memcpy(dirp->d_name, name, len);
+			dirp->d_name[len]= '\0';
+			tmpbuf_offset += reclen;
+	
+			cur_pos += dir_tmp->length;
+			release_dir_record(dir_tmp);
+		}
+
+		block_pos += dir_tmp->length;
+  	}
+    
+	put_block(bp);		/* release the block */
+	if (done == TRUE) break;
+    
+	cur_pos += block_size - cur_pos;
+	block++;			/* read the next one */
+  }
+
+  if (tmpbuf_offset != 0) {
+	r = sys_safecopyto(VFS_PROC_NR, gid, userbuf_off,
+			   (vir_bytes) getdents_buf, tmpbuf_offset);
+	if (r != OK)
+		panic("fs_getdents: sys_safecopyto failed: %d", r);
+ 
+	userbuf_off += tmpbuf_offset;
+  }
+  
+  fs_m_out.RES_NBYTES = userbuf_off;
+  fs_m_out.RES_SEEK_POS_LO = cur_pos;
+
+  release_dir_record(dir);		/* release the inode */
+  return(OK);
+}
+
+/*===========================================================================*
+ *				fs_getdents				     *
+ *===========================================================================*/
+int fs_getdents(void) {
+  struct dir_record *dir;
+  pino_t ino;
+  cp_grant_id_t gid;
+  size_t block_size;
+  off_t pos, block_pos, block, cur_pos, tmpbuf_offset, userbuf_off;
+  struct buf *bp;
+  struct dir_record *dir_tmp;
+  struct dirent *dirp;
+  int r,done,o,len,reclen;
+  char *cp;
+  char name[NAME_MAX + 1];
+  char name_old[NAME_MAX + 1];
+
+  if (proto_version == 0) {
+	return fs_getdents_321();
+  }
+
+  /* Initialize the tmp arrays */
+  memset(name,'\0',NAME_MAX);
+  memset(name_old,'\0',NAME_MAX);
+
+  /* Get input parameters */
+  ino = fs_m_in.REQ_INODE_NR;
+  gid = fs_m_in.REQ_GRANT;
+  pos = fs_m_in.REQ_SEEK_POS_LO;
+
+  block_size = v_pri.logical_block_size_l;
+  cur_pos = pos;		/* The current position */
+  tmpbuf_offset = 0;
+  userbuf_off = 0;
+  memset(getdents_buf, '\0', GETDENTS_BUFSIZ);	/* Avoid leaking any data */
+
+  if ((dir = get_dir_record(ino)) == NULL) return(EINVAL);
+
+  block = dir->loc_extent_l;	/* First block of the directory */
+  block += pos / block_size; 	/* Shift to the block where start to read */
+  done = FALSE;
+
+  while (cur_pos<dir->d_file_size) {
+	bp = get_block(block);	/* Get physical block */
+
+	if (bp == NULL) {
+		release_dir_record(dir);
+		return(EINVAL);
+	}
+    
+	block_pos = cur_pos % block_size; /* Position where to start read */
+
+	while (block_pos < block_size) {
+		dir_tmp = get_free_dir_record();
+		create_dir_record(dir_tmp,b_data(bp) + block_pos,
+				  block*block_size + block_pos);
+		if (dir_tmp->length == 0) { /* EOF. I exit and return 0s */
+			block_pos = block_size;
+			done = TRUE;
+			release_dir_record(dir_tmp);
+		} else { 	/* The dir record is valid. Copy data... */
+			if (dir_tmp->file_id[0] == 0)
+				strlcpy(name, ".", NAME_MAX + 1);
+			else if (dir_tmp->file_id[0] == 1)
+				strlcpy(name, "..", NAME_MAX + 1);
+			else {
+				/* Extract the name from the field file_id */
+				strncpy(name, dir_tmp->file_id,
+					dir_tmp->length_file_id);
+				name[dir_tmp->length_file_id] = 0;
+	  
+				/* Tidy up file name */
+				cp = memchr(name, ';', NAME_MAX); 
+				if (cp != NULL) name[cp - name] = 0;
+	  
+				/*If no file extension, then remove final '.'*/
+				if (name[strlen(name) - 1] == '.')
+					name[strlen(name) - 1] = '\0';
+			}
+
+			if (strcmp(name_old, name) == 0) {
+				cur_pos += dir_tmp->length;
+				release_dir_record(dir_tmp);
+				continue;
+			}
+
+			strlcpy(name_old, name, NAME_MAX + 1);
+
+			/* Compute the length of the name */
+			cp = memchr(name, '\0', NAME_MAX);
+			if (cp == NULL) len = NAME_MAX;
+			else len= cp - name;
+
+			/* Compute record length */
+			reclen = offsetof(struct dirent, d_name) + len + 1;
+			o = (reclen % sizeof(long));
+			if (o != 0)
+				reclen += sizeof(long) - o;
+
+			/* If the new record does not fit, then copy the buffer
+			 * and start from the beginning. */
+			if (tmpbuf_offset + reclen > GETDENTS_BUFSIZ) {
+				r = sys_safecopyto(VFS_PROC_NR, gid, userbuf_off, 
+				    (vir_bytes)getdents_buf, tmpbuf_offset);
+
+				if (r != OK)
+					panic("fs_getdents: sys_safecopyto failed: %d", r);
+				userbuf_off += tmpbuf_offset;
+				tmpbuf_offset= 0;
+			}
+	
+			/* The standard data structure is created using the
+			 * data in the buffer. */
+			dirp = (struct dirent *) &getdents_buf[tmpbuf_offset];
+			dirp->d_ino = (u32_t)(b_data(bp) + (size_t)block_pos);
 			dirp->d_off= cur_pos;
 			dirp->d_reclen= reclen;
 			memcpy(dirp->d_name, name, len);

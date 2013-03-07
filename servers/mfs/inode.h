@@ -32,7 +32,7 @@ EXTERN struct inode {
   
   /* The following items are not present on the disk. */
   dev_t i_dev;			/* which device is the inode on */
-  ino_t i_num;			/* inode number on its (minor) device */
+  pino_t i_num;			/* inode number on its (minor) device */
   int i_count;			/* # times inode used; 0 means slot is free */
   unsigned int i_ndzones;	/* # direct zones (Vx_NR_DZONES) */
   unsigned int i_nindirs;	/* # indirect zones per indirect block */
