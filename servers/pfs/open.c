@@ -11,13 +11,13 @@
 int fs_newnode(message *fs_m_in, message *fs_m_out)
 {
   register int r = OK;
-  mode_t bits;
+  pmode_t bits;
   struct inode *rip;
   dev_t dev;
 
   caller_uid = (uid_t) fs_m_in->REQ_UID;
   caller_gid = (gid_t) fs_m_in->REQ_GID;
-  bits = (mode_t) fs_m_in->REQ_MODE;
+  bits = (pmode_t) fs_m_in->REQ_MODE;
   dev = (dev_t) fs_m_in->REQ_DEV;
 
   /* Try to allocate the inode */

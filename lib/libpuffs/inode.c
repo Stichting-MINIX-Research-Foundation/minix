@@ -38,7 +38,7 @@ int fs_putnode(void)
  */
   struct puffs_node *pn;
   int count = fs_m_in.REQ_COUNT;
-  ino_t inum = fs_m_in.REQ_INODE_NR;
+  pino_t inum = fs_m_in.REQ_INODE_NR;
 
   if ((pn = puffs_pn_nodewalk(global_pu, 0, &inum)) == NULL) {
 	/* XXX Probably removed from the list, see puffs_pn_remove() */

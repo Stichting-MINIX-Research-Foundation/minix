@@ -24,7 +24,7 @@ static int stat_inode(
 /* Common code for stat and fstat system calls. */
 
   struct stat statbuf;
-  mode_t mo;
+  pmode_t mo;
   int r, s;
 
   /* Update the atime, ctime, and mtime fields in the inode, if need be. */
@@ -90,7 +90,7 @@ int fs_stat()
   register int r;              /* return value */
   register struct inode *rip;  /* target inode */
 
-  if ((rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	return(EINVAL);
 
   r = stat_inode(rip, fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT);
