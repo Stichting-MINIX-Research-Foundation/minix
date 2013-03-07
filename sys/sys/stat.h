@@ -47,13 +47,13 @@
 #endif
 
 struct stat {
-  big_dev_t     st_dev;               /* inode's device */
-  big_mode_t    st_mode;              /* inode protection mode */
-  big_ino_t	st_ino;		      /* inode's number */
-  big_nlink_t   st_nlink;             /* number of hard links */
-  big_uid_t     st_uid;               /* user ID of the file's owner */
-  big_gid_t     st_gid;               /* group ID of the file's group */
-  big_dev_t     st_rdev;              /* device type */
+  dev_t     st_dev;               /* inode's device */
+  mode_t    st_mode;              /* inode protection mode */
+  ino_t	    st_ino;		  /* inode's number */
+  nlink_t   st_nlink;             /* number of hard links */
+  uid_t     st_uid;               /* user ID of the file's owner */
+  gid_t     st_gid;               /* group ID of the file's group */
+  dev_t     st_rdev;              /* device type */
 #if defined(_NETBSD_SOURCE)
 	struct	  timespec st_atimespec;/* time of last access */
 	struct	  timespec st_mtimespec;/* time of last data modification */
@@ -73,7 +73,7 @@ struct stat {
   off_t		st_size;	     	/* file size, in off_t bytes */
   off_t		st_size_rest;
 #else
-  big_off_t st_size;		/* file size, in bytes */
+  off_t     st_size;		/* file size, in bytes */
 #endif
   blkcnt_t  st_blocks;		/* blocks allocated for file */
   blksize_t st_blksize;		/* optimal blocksize for I/O */

@@ -27,6 +27,7 @@ EXTERN uid_t caller_uid;
 EXTERN gid_t caller_gid;
 
 EXTERN int req_nr;
+EXTERN int proto_version;
 
 EXTERN endpoint_t SELF_E;
 

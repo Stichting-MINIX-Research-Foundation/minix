@@ -38,8 +38,8 @@ typedef char *		__caddr_t;	/* core address */
 typedef __uint32_t	__gid_t;	/* group id */
 typedef __uint32_t	__in_addr_t;	/* IP(v4) address */
 typedef __uint16_t	__in_port_t;	/* "Internet" port number */
-typedef __uint16_t	__mode_t;	/* file permissions */
-typedef __int32_t	__off_t;	/* file offset */
+typedef __uint32_t	__mode_t;	/* file permissions */
+typedef __int64_t	__off_t;	/* file offset */
 typedef __int32_t	__pid_t;	/* process id */
 typedef __uint8_t	__sa_family_t;	/* socket address family */
 typedef __int32_t	__socklen_t;	/* socket-related datum length */

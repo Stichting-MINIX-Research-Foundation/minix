@@ -22,14 +22,14 @@
  */
 
 EXTERN struct super_block {
-  pino_t s_ninodes;		/* # usable inodes on the minor device */
+  u32_t s_ninodes;		/* # usable inodes on the minor device */
   zone1_t  s_nzones;		/* total device size, including bit maps etc */
   short s_imap_blocks;		/* # of blocks used by inode bit map */
   short s_zmap_blocks;		/* # of blocks used by zone bit map */
   zone1_t s_firstdatazone_old;	/* number of first data zone (small) */
   short s_log_zone_size;	/* log2 of blocks/zone */
   unsigned short s_flags;	/* FS state flags */
-  off_t s_max_size;		/* maximum file size on this device */
+  i32_t s_max_size;		/* maximum file size on this device */
   zone_t s_zones;		/* number of zones (replaces s_nzones in V2) */
   short s_magic;		/* magic number to recognize super-blocks */
 

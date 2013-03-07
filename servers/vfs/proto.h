@@ -162,6 +162,7 @@ void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
 int do_lseek(void);
+int do_lseek_321(void);
 int do_llseek(void);
 int do_mknod(void);
 int do_mkdir(void);
@@ -231,7 +232,7 @@ int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
 int req_getdents(endpoint_t fs_e, ino_t inode_nr, u64_t pos, char *buf,
-	size_t size, u64_t *new_pos, int direct);
+	size_t size, u64_t *new_pos, int direct, int getdents_321);
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
 int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,
 	ino_t linked_file);

@@ -18,6 +18,12 @@ int fs_readsuper() {
   label_gid = fs_m_in.REQ_GRANT;
   label_len = fs_m_in.REQ_PATH_LEN;
 
+  if (!(fs_m_in.REQ_FLAGS & REQ_HASPROTO)) {
+	proto_version = 0;
+  } else {
+	proto_version = VFS_FS_PROTO_VERSION(fs_m_in.REQ_PROTO);
+  }
+
   if (label_len > sizeof(fs_dev_label)) 
 	return(EINVAL);
 

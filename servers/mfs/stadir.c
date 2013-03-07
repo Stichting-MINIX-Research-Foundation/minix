@@ -66,9 +66,9 @@ static int stat_inode(
   memset(&statbuf, 0, sizeof(struct stat));
 
   statbuf.st_dev = rip->i_dev;
-  statbuf.st_ino = rip->i_num;
-  statbuf.st_mode = rip->i_mode;
-  statbuf.st_nlink = rip->i_nlinks;
+  statbuf.st_ino = (ino_t) rip->i_num;
+  statbuf.st_mode = (mode_t) rip->i_mode;
+  statbuf.st_nlink = (nlink_t) rip->i_nlinks;
   statbuf.st_uid = rip->i_uid;
   statbuf.st_gid = rip->i_gid;
   statbuf.st_rdev = (s ? (dev_t) rip->i_zone[0] : NO_DEV);
