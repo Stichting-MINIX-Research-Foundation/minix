@@ -36,7 +36,7 @@ int fs_readwrite(void)
   cp_grant_id_t gid;
   off_t position, f_size, bytes_left;
   unsigned int off, cum_io, block_size, chunk;
-  mode_t mode_word;
+  pmode_t mode_word;
   int completed;
   struct inode *rip;
   size_t nrbytes;
@@ -44,7 +44,7 @@ int fs_readwrite(void)
   r = OK;
 
   /* Find the inode referred */
-  if ((rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
@@ -621,7 +621,7 @@ int fs_getdents(void)
   struct inode *rip;
   int o, r, done;
   unsigned int block_size, len, reclen;
-  ino_t ino;
+  pino_t ino;
   cp_grant_id_t gid;
   size_t size, tmpbuf_off, userbuf_off;
   off_t pos, off, block_pos, new_pos, ent_pos;
@@ -629,8 +629,8 @@ int fs_getdents(void)
   struct ext2_disk_dir_desc *d_desc;
   struct dirent *dep;
 
-  ino = (ino_t) fs_m_in.REQ_INODE_NR;
-  gid = (gid_t) fs_m_in.REQ_GRANT;
+  ino = (pino_t) fs_m_in.REQ_INODE_NR;
+  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   size = (size_t) fs_m_in.REQ_MEM_SIZE;
   pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
 

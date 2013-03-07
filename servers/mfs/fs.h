@@ -18,6 +18,7 @@
 #include <limits.h>
 #include <errno.h>
 
+#include <minix/vfsif.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 

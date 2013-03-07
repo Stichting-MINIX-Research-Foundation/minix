@@ -141,7 +141,7 @@ int fs_bread(void)
  *===========================================================================*/
 int fs_getdents(void) {
   struct dir_record *dir;
-  ino_t ino;
+  pino_t ino;
   cp_grant_id_t gid;
   size_t block_size;
   off_t pos, block_pos, block, cur_pos, tmpbuf_offset, userbuf_off;
@@ -246,7 +246,7 @@ int fs_getdents(void) {
 			/* The standard data structure is created using the
 			 * data in the buffer. */
 			dirp = (struct dirent *) &getdents_buf[tmpbuf_offset];
-			dirp->d_ino = (ino_t)(b_data(bp) + block_pos);
+			dirp->d_ino = (pino_t)(b_data(bp) + block_pos);
 			dirp->d_off= cur_pos;
 			dirp->d_reclen= reclen;
 			memcpy(dirp->d_name, name, len);

@@ -19,15 +19,15 @@ block_t alloc_block(struct inode *rip, block_t goal);
 void free_block(struct super_block *sp, bit_t bit);
 
 /* ialloc.c */
-struct inode *alloc_inode(struct inode *parent, mode_t bits);
+struct inode *alloc_inode(struct inode *parent, pmode_t bits);
 void free_inode(struct inode *rip);
 
 /* inode.c */
 void dup_inode(struct inode *ip);
-struct inode *find_inode(dev_t dev, ino_t numb);
+struct inode *find_inode(dev_t dev, pino_t numb);
 int fs_putnode(void);
 void init_inode_cache(void);
-struct inode *get_inode(dev_t dev, ino_t numb);
+struct inode *get_inode(dev_t dev, pino_t numb);
 void put_inode(struct inode *rip);
 void update_times(struct inode *rip);
 void rw_inode(struct inode *rip, int rw_flag);
@@ -62,14 +62,14 @@ int fs_slink(void);
 int fs_lookup(void);
 struct inode *advance(struct inode *dirp, char string[NAME_MAX + 1], int
 	chk_perm);
-int search_dir(struct inode *ldir_ptr, const char string [NAME_MAX + 1], ino_t
+int search_dir(struct inode *ldir_ptr, const char string [NAME_MAX + 1], pino_t
 	*numb, int flag, int check_permissions, int ftype);
 
 /* protect.c */
 int fs_chmod(void);
 int fs_chown(void);
 int fs_getdents(void);
-int forbidden(struct inode *rip, mode_t access_desired);
+int forbidden(struct inode *rip, pmode_t access_desired);
 int read_only(struct inode *ip);
 
 /* read.c */

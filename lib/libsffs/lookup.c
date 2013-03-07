@@ -51,7 +51,7 @@ int mask;			/* search access mask of the caller */
 /* Check whether the given inode may be accessed as directory.
  * Return OK or an appropriate error code.
  */
-  mode_t mode;
+  pmode_t mode;
 
   assert(attr->a_mask & SFFS_ATTR_MODE);
 
@@ -194,7 +194,7 @@ int do_lookup()
 {
 /* Resolve a path string to an inode.
  */
-  ino_t dir_ino_nr, root_ino_nr;
+  pino_t dir_ino_nr, root_ino_nr;
   struct inode *cur_ino, *root_ino;
   struct inode *next_ino = NULL;
   struct sffs_attr attr;
@@ -202,7 +202,7 @@ int do_lookup()
   char name[NAME_MAX+1];
   char *ptr, *last;
   vfs_ucred_t ucred;
-  mode_t mask;
+  pmode_t mask;
   size_t len;
   int r;
 

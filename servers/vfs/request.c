@@ -106,14 +106,14 @@ int req_chmod(
 
   /* Fill in request message */
   m.m_type = REQ_CHMOD;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_MODE = rmode;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.REQ_MODE = (pmode_t) rmode;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
 
   /* Copy back actual mode. */
-  *new_modep = m.RES_MODE;
+  *new_modep = (mode_t) m.RES_MODE;
 
   return(r);
 }
@@ -135,15 +135,15 @@ int req_chown(
 
   /* Fill in request message */
   m.m_type = REQ_CHOWN;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_UID = newuid;
-  m.REQ_GID = newgid;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.REQ_UID = (puid_t) newuid;
+  m.REQ_GID = (pgid_t) newgid;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
 
   /* Return new mode to caller. */
-  *new_modep = m.RES_MODE;
+  *new_modep = (mode_t) m.RES_MODE;
 
   return(r);
 }
@@ -176,12 +176,12 @@ int req_create(
 	panic("req_create: cpf_grant_direct failed");
 
   /* Fill in request message */
-  m.m_type	= REQ_CREATE;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_MODE = omode;
-  m.REQ_UID	= uid;
-  m.REQ_GID	= gid;
-  m.REQ_GRANT	= grant_id;
+  m.m_type = REQ_CREATE;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.REQ_MODE = (pmode_t) omode;
+  m.REQ_UID = (puid_t) uid;
+  m.REQ_GID = (pgid_t) gid;
+  m.REQ_GRANT = grant_id;
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
@@ -191,11 +191,11 @@ int req_create(
 
   /* Fill in response structure */
   res->fs_e	= m.m_source;
-  res->inode_nr	= m.RES_INODE_NR;
-  res->fmode = m.RES_MODE;
+  res->inode_nr	= (ino_t) m.RES_INODE_NR;
+  res->fmode	= (mode_t) m.RES_MODE;
   res->fsize	= m.RES_FILE_SIZE_LO;
-  res->uid	= m.RES_UID;
-  res->gid	= m.RES_GID;
+  res->uid	= (uid_t) m.RES_UID;
+  res->gid	= (gid_t) m.RES_GID;
   res->dev	= NO_DEV;
 
   return(OK);
@@ -279,7 +279,7 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 
   /* Fill in request message */
   m.m_type = REQ_FTRUNC;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_TRC_START_LO = start;
   m.REQ_TRC_START_HI = 0;	/* Not used for now, so clear it. */
   m.REQ_TRC_END_LO = end;
@@ -320,7 +320,7 @@ int req_getdents(
 								grant_id);
 
   m.m_type = REQ_GETDENTS;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_MEM_SIZE = size;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
@@ -346,7 +346,7 @@ int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
 
   /* Fill in request message */
   m.m_type = REQ_INHIBREAD;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
@@ -374,8 +374,8 @@ int req_link(
 
   /* Fill in request message */
   m.m_type = REQ_LINK;
-  m.REQ_INODE_NR = linked_file;
-  m.REQ_DIR_INO = link_parent;
+  m.REQ_INODE_NR = (pino_t) linked_file;
+  m.REQ_DIR_INO = (pino_t) link_parent;
   m.REQ_GRANT = grant_id;
   m.REQ_PATH_LEN = len;
 
@@ -420,8 +420,8 @@ int req_lookup(
   m.REQ_GRANT		= grant_id;
   m.REQ_PATH_LEN 	= len;
   m.REQ_PATH_SIZE 	= PATH_MAX + 1;
-  m.REQ_DIR_INO 	= dir_ino;
-  m.REQ_ROOT_INO 	= root_ino;
+  m.REQ_DIR_INO 	= (pino_t) dir_ino;
+  m.REQ_ROOT_INO 	= (pino_t) root_ino;
 
   if(rfp->fp_ngroups > 0) { /* Is the process member of multiple groups? */
 	/* In that case the FS has to copy the uid/gid credentials */
@@ -444,8 +444,8 @@ int req_lookup(
 	flags		|= PATH_GET_UCRED;
   } else {
 	/* When there's only one gid, we can send it directly */
-	m.REQ_UID	= uid;
-	m.REQ_GID	= gid;
+	m.REQ_UID	= (pgid_t) uid;
+	m.REQ_GID	= (pgid_t) gid;
 	flags		&= ~PATH_GET_UCRED;
   }
 
@@ -461,15 +461,15 @@ int req_lookup(
 
   switch (r) {
   case OK:
-	res->inode_nr = m.RES_INODE_NR;
-	res->fmode = m.RES_MODE;
+	res->inode_nr = (ino_t) m.RES_INODE_NR;
+	res->fmode = (mode_t) m.RES_MODE;
 	res->fsize = m.RES_FILE_SIZE_LO;
 	res->dev = m.RES_DEV;
-	res->uid= m.RES_UID;
-	res->gid= m.RES_GID;
+	res->uid = (uid_t) m.RES_UID;
+	res->gid = (gid_t) m.RES_GID;
 	break;
   case EENTERMOUNT:
-	res->inode_nr = m.RES_INODE_NR;
+	res->inode_nr = (ino_t) m.RES_INODE_NR;
 	res->char_processed = m.RES_OFFSET;
 	res->symloop = m.RES_SYMLOOP;
 	break;
@@ -513,10 +513,10 @@ int req_mkdir(
 
   /* Fill in request message */
   m.m_type = REQ_MKDIR;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_MODE = dmode;
-  m.REQ_UID = uid;
-  m.REQ_GID = gid;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.REQ_MODE = (pmode_t) dmode;
+  m.REQ_UID = (puid_t) uid;
+  m.REQ_GID = (pgid_t) gid;
   m.REQ_GRANT = grant_id;
   m.REQ_PATH_LEN = len;
 
@@ -553,11 +553,11 @@ int req_mknod(
 
   /* Fill in request message */
   m.m_type = REQ_MKNOD;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_MODE = dmode;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.REQ_MODE = (pmode_t) dmode;
   m.REQ_DEV = dev;
-  m.REQ_UID = uid;
-  m.REQ_GID = gid;
+  m.REQ_UID = (puid_t) uid;
+  m.REQ_GID = (pgid_t) gid;
   m.REQ_GRANT = grant_id;
   m.REQ_PATH_LEN = len;
 
@@ -578,7 +578,7 @@ int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 
   /* Fill in request message */
   m.m_type = REQ_MOUNTPOINT;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
@@ -602,21 +602,21 @@ int req_newnode(
 
   /* Fill in request message */
   m.m_type = REQ_NEWNODE;
-  m.REQ_MODE = dmode;
+  m.REQ_MODE = (pmode_t) dmode;
   m.REQ_DEV = dev;
-  m.REQ_UID = uid;
-  m.REQ_GID = gid;
+  m.REQ_UID = (puid_t) uid;
+  m.REQ_GID = (pgid_t) gid;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
 
   res->fs_e	= m.m_source;
-  res->inode_nr = m.RES_INODE_NR;
-  res->fmode = m.RES_MODE;
+  res->inode_nr = (ino_t) m.RES_INODE_NR;
+  res->fmode	= (mode_t) m.RES_MODE;
   res->fsize	= m.RES_FILE_SIZE_LO;
   res->dev	= m.RES_DEV;
-  res->uid	= m.RES_UID;
-  res->gid	= m.RES_GID;
+  res->uid	= (uid_t) m.RES_UID;
+  res->gid	= (gid_t) m.RES_GID;
 
   return(r);
 }
@@ -669,7 +669,7 @@ int count;
 
   /* Fill in request message */
   m.m_type = REQ_PUTNODE;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_COUNT = count;
 
   /* Send/rec request */
@@ -702,7 +702,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
 
   /* Fill in request message */
   m.m_type = REQ_RDLINK;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_MEM_SIZE = len;
 
@@ -760,14 +760,14 @@ int req_readsuper(
   if(r == OK) {
 	/* Fill in response structure */
 	res_nodep->fs_e = m.m_source;
-	res_nodep->inode_nr = m.RES_INODE_NR;
+	res_nodep->inode_nr = (ino_t) m.RES_INODE_NR;
 	vmp->m_proto = m.RES_PROTO;
 	printf("%d: proto = 0x%x, version=%d conreqs=%d\n", fs_e, vmp->m_proto,
 	VFS_FS_PROTO_VERSION(vmp->m_proto), VFS_FS_PROTO_CONREQS(vmp->m_proto));
-	res_nodep->fmode = m.RES_MODE;
+	res_nodep->fmode = (mode_t) m.RES_MODE;
 	res_nodep->fsize = m.RES_FILE_SIZE_LO;
-	res_nodep->uid = m.RES_UID;
-	res_nodep->gid = m.RES_GID;
+	res_nodep->uid = (uid_t) m.RES_UID;
+	res_nodep->gid = (gid_t) m.RES_GID;
   }
 
   return(r);
@@ -803,7 +803,7 @@ unsigned int *cum_iop;
 
   /* Fill in request message */
   m.m_type = rw_flag == READING ? REQ_READ : REQ_WRITE;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
   m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
@@ -873,8 +873,8 @@ char *new_name;
 
   /* Fill in request message */
   m.m_type = REQ_RENAME;
-  m.REQ_REN_OLD_DIR = old_dir;
-  m.REQ_REN_NEW_DIR = new_dir;
+  m.REQ_REN_OLD_DIR = (pino_t) old_dir;
+  m.REQ_REN_NEW_DIR = (pino_t) new_dir;
   m.REQ_REN_GRANT_OLD = gid_old;
   m.REQ_REN_LEN_OLD = len_old;
   m.REQ_REN_GRANT_NEW = gid_new;
@@ -909,7 +909,7 @@ char *lastc;
 
   /* Fill in request message */
   m.m_type = REQ_RMDIR;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_PATH_LEN = len;
 
@@ -953,9 +953,9 @@ int req_slink(
 
   /* Fill in request message */
   m.m_type = REQ_SLINK;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_UID = uid;
-  m.REQ_GID = gid;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.REQ_UID = (puid_t) uid;
+  m.REQ_GID = (pgid_t) gid;
   m.REQ_GRANT = gid_name;
   m.REQ_PATH_LEN = len;
   m.REQ_GRANT3 = gid_buf;
@@ -987,7 +987,7 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
 
   /* Fill in request message */
   m.m_type = REQ_STAT;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
 
   /* Send/rec request */
@@ -1034,7 +1034,7 @@ char *lastc;
 
   /* Fill in request message */
   m.m_type = REQ_UNLINK;
-  m.REQ_INODE_NR = inode_nr;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_PATH_LEN = len;
 
@@ -1075,6 +1075,7 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
 
   /* Fill in request message */
   m.m_type = REQ_UTIME;
+  m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_INODE_NR = inode_nr;
   m.REQ_ACTIME = actimespec->tv_sec;
   m.REQ_MODTIME = modtimespec->tv_sec;
