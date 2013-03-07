@@ -15,6 +15,7 @@
  */
 
 #include <sys/queue.h>
+#include <minix/vfsif.h>
 
 #include "super.h"
 

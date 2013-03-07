@@ -14,7 +14,7 @@ static int stat_inode(
 )
 {
 /* Common code for stat and fstat system calls. */
-  mode_t type;
+  pmode_t type;
   struct stat statbuf;
   u32_t blocks; /* The unit of this is 512 */
   int r, s;
