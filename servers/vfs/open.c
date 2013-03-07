@@ -590,17 +590,17 @@ int do_mkdir()
 /*===========================================================================*
  *				do_lseek				     *
  *===========================================================================*/
-int do_lseek()
+int do_lseek_321()
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
   int r = OK, seekfd, seekwhence;
-  off_t offset;
+  i32_t offset;
   u64_t pos, newpos;
 
   seekfd = job_m_in.ls_fd;
   seekwhence = job_m_in.whence;
-  offset = (off_t) job_m_in.offset_lo;
+  offset = (i32_t) job_m_in.offset_lo;
 
   /* Check to see if the file descriptor is valid. */
   if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
@@ -627,11 +627,65 @@ int do_lseek()
   /* Check for overflow. */
   if (ex64hi(newpos) != 0) {
 	r = EOVERFLOW;
-  } else if ((off_t) ex64lo(newpos) < 0) { /* no negative file size */
+  } else if ((i32_t) ex64lo(newpos) < 0) { /* no negative file size */
 	r = EOVERFLOW;
   } else {
 	/* insert the new position into the output message */
 	m_out.reply_l1 = ex64lo(newpos);
+
+	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+		rfilp->filp_pos = newpos;
+
+		/* Inhibit read ahead request */
+		r = req_inhibread(rfilp->filp_vno->v_fs_e,
+				  rfilp->filp_vno->v_inode_nr);
+	}
+  }
+
+  unlock_filp(rfilp);
+  return(r);
+}
+
+/*===========================================================================*
+ *				do_lseek				     *
+ *===========================================================================*/
+int do_lseek()
+{
+/* Perform the lseek(ls_fd, offset, whence) system call. */
+  register struct filp *rfilp;
+  int r = OK, seekfd, seekwhence;
+  off_t offset;
+  u64_t pos, newpos;
+
+  seekfd = job_m_in.ls_fd;
+  seekwhence = job_m_in.whence;
+  offset = (off_t) make64(job_m_in.offset_lo, job_m_in.offset_high);
+
+  /* Check to see if the file descriptor is valid. */
+  if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
+
+  /* No lseek on pipes. */
+  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
+	unlock_filp(rfilp);
+	return(ESPIPE);
+  }
+
+  /* The value of 'whence' determines the start position to use. */
+  switch(seekwhence) {
+    case SEEK_SET: pos = cvu64(0);	break;
+    case SEEK_CUR: pos = rfilp->filp_pos;	break;
+    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+    default: unlock_filp(rfilp); return(EINVAL);
+  }
+
+  if (offset < 0 && -offset > pos) { /* no negative file size */
+	r = EOVERFLOW;
+  } else {
+	newpos = pos + offset;
+
+	/* insert the new position into the output message */
+	m_out.reply_l1 = ex64lo(newpos);
+	m_out.reply_l2 = ex64hi(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
 		rfilp->filp_pos = newpos;
