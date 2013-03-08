@@ -132,6 +132,8 @@
 ./usr/spool/lpd
 ./usr/spool/mail
 ./usr/src
+./usr/tests
+./usr/tests/minix-posix
 ./usr/var
 ./usr/var/db
 ./usr/var/db/pkg
