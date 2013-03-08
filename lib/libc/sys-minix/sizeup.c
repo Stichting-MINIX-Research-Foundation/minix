@@ -29,7 +29,7 @@ char *device;
 u64_t *bytes;
 {
   int fd;
-  struct partition entry;
+  struct part_geom entry;
   struct stat st;
 
   if ((fd = open(device, O_RDONLY)) == -1) {

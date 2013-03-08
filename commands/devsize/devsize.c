@@ -35,7 +35,7 @@ unsigned long sizeup(device)
 char *device;
 {
   int fd;
-  struct partition entry;
+  struct part_geom entry;
   unsigned long d;
 
   if ((fd = open(device, O_RDONLY)) == -1) {

@@ -12,7 +12,7 @@
 
 int minix_sizeup(char *name, u64_t *bytes);
 
-struct partition {
+struct part_geom {
   u64_t base;		/* byte offset to the partition start */
   u64_t size;		/* number of bytes in the partition */
   unsigned cylinders;	/* disk geometry */

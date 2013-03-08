@@ -501,7 +501,7 @@ void geometry(void)
 {
 	struct stat dst;
 	int err= 0;
-	struct partition geometry;
+	struct part_geom geometry;
 
 	if (submerged) {
 		/* Geometry already known. */
@@ -2123,7 +2123,7 @@ scribble_region(region_t *reg, struct part_entry **pe, int *made_new)
 int
 sanitycheck_failed(char *dev, struct part_entry *pe)
 {
-	struct partition part;
+	struct part_geom part;
 	int fd;
 	unsigned long it_lowsec, it_secsize;
 

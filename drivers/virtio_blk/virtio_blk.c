@@ -86,7 +86,7 @@ static ssize_t virtio_blk_transfer(dev_t minor, int write, u64_t position,
 static int virtio_blk_ioctl(dev_t minor, unsigned int req, endpoint_t endpt,
 			    cp_grant_id_t grant);
 static struct device * virtio_blk_part(dev_t minor);
-static void virtio_blk_geometry(dev_t minor, struct partition *entry);
+static void virtio_blk_geometry(dev_t minor, struct part_geom *entry);
 static void virtio_blk_device_intr(void);
 static void virtio_blk_spurious_intr(void);
 static void virtio_blk_intr(unsigned int irqs);
@@ -422,7 +422,7 @@ virtio_blk_part(dev_t minor)
 }
 
 static void
-virtio_blk_geometry(dev_t minor, struct partition *entry)
+virtio_blk_geometry(dev_t minor, struct part_geom *entry)
 {
 	/* Only for the drive */
 	if (minor != 0)

@@ -23,7 +23,7 @@ struct blockdriver {
 	  cp_grant_id_t grant);
   void(*bdr_cleanup) (void);
   struct device *(*bdr_part)(dev_t minor);
-  void(*bdr_geometry) (dev_t minor, struct partition *part);
+  void(*bdr_geometry) (dev_t minor, struct part_geom *part);
   void(*bdr_intr) (unsigned int irqs);
   void(*bdr_alarm) (clock_t stamp);
   int(*bdr_other) (message *m_ptr);

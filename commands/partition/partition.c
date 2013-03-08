@@ -285,7 +285,7 @@ void geometry(void)
  */
 {
 	int fd;
-	struct partition geometry;
+	struct part_geom geometry;
 	struct stat sb;
 
 	if ((fd= open(device, O_RDONLY)) < 0) fatal(device);

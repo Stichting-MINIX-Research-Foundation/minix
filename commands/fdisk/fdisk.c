@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 
 void getgeom(void)
 {
-  struct partition geom;
+  struct part_geom geom;
   int fd, r;
 
   if (override) return;

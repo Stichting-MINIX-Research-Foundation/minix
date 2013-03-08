@@ -262,7 +262,7 @@ static int do_dioctl(struct blockdriver *bdp, dev_t minor,
 {
 /* Carry out a disk-specific I/O control request. */
   struct device *dv;
-  struct partition entry;
+  struct part_geom entry;
   int r = EINVAL;
 
   switch (request) {

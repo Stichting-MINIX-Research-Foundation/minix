@@ -100,7 +100,7 @@ char *finddev(dev_t device)
 #define DSETP	0
 #define DGETP	1
 
-int diocntl(dev_t device, int request, struct partition *entry)
+int diocntl(dev_t device, int request, struct part_geom *entry)
 /* Get or set the geometry of a device. */
 {
 	char *name;
@@ -115,7 +115,7 @@ int diocntl(dev_t device, int request, struct partition *entry)
 	return r;
 }
 
-struct partition geometry;	/* Geometry of the device. */
+struct part_geom geometry;	/* Geometry of the device. */
 
 void print_chs(unsigned long sector)
 {
@@ -154,7 +154,7 @@ void show_part(char *name, unsigned long base, unsigned long size)
 int main(int argc, char **argv)
 {
 	struct stat hdst;
-	struct partition whole, entry;
+	struct part_geom whole, entry;
 	struct part_entry table[4], *pe;
 	int drive, par = 0, device, incr;
 	int partf;

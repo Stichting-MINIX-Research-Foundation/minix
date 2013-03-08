@@ -166,7 +166,7 @@ static void w_intr_wait(void);
 static int at_intr_wait(void);
 static int w_waitfor(int mask, int value);
 static int w_waitfor_dma(int mask, int value);
-static void w_geometry(dev_t minor, struct partition *entry);
+static void w_geometry(dev_t minor, struct part_geom *entry);
 #if ENABLE_ATAPI
 static int atapi_sendpacket(u8_t *packet, unsigned cnt, int do_dma);
 static int atapi_intr_wait(int dma, size_t max);
@@ -1869,7 +1869,7 @@ int value;			/* required status */
 /*===========================================================================*
  *				w_geometry				     *
  *===========================================================================*/
-static void w_geometry(dev_t minor, struct partition *entry)
+static void w_geometry(dev_t minor, struct part_geom *entry)
 {
   struct wini *wn;
 

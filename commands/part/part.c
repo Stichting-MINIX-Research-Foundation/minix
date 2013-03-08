@@ -453,7 +453,7 @@ void geometry(void)
 {
 	struct stat dst;
 	int err= 0;
-	struct partition geometry;
+	struct part_geom geometry;
 
 	if (submerged) {
 		/* Geometry already known. */

@@ -39,7 +39,7 @@ static int max_size = 131072;		/* maximum total size of any req */
  * it to a value lower than the driver supports.
  */
 
-static struct partition part;		/* base and size of target partition */
+static struct part_geom part;		/* base and size of target partition */
 
 #define NR_OPENED 10			/* maximum number of opened devices */
 static dev_t opened[NR_OPENED];	/* list of currently opened devices */
@@ -1426,7 +1426,7 @@ static void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	/* Create virtual, temporary subpartitions through the DIOCSETP ioctl,
 	 * and perform tests on the resulting subpartitions.
 	 */
-	struct partition subpart, subpart2;
+	struct part_geom subpart, subpart2;
 	size_t sub_size;
 	result_t res;
 
@@ -1495,7 +1495,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	 */
 	u8_t *buf_ptr;
 	size_t buf_size, sub_size;
-	struct partition subpart;
+	struct part_geom subpart;
 	struct part_entry *entry;
 	result_t res;
 

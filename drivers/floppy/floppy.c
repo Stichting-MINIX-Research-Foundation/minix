@@ -261,7 +261,7 @@ static int read_id(void);
 static int f_do_open(dev_t minor, int access);
 static int f_do_close(dev_t minor);
 static int test_read(int density);
-static void f_geometry(dev_t minor, struct partition *entry);
+static void f_geometry(dev_t minor, struct part_geom *entry);
 
 /* Entry points to this driver. */
 static struct blockdriver f_dtab = {
@@ -1350,7 +1350,7 @@ static int test_read(int density)
 /*===========================================================================*
  *				f_geometry				     *
  *===========================================================================*/
-static void f_geometry(dev_t minor, struct partition *entry)
+static void f_geometry(dev_t minor, struct part_geom *entry)
 {
   if (f_prepare(minor) == NULL) return;
 

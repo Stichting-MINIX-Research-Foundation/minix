@@ -241,7 +241,7 @@ static int do_vrdwt(int flag_rw)
  *===========================================================================*/
 static int do_ioctl(message *m)
 {
-	struct partition sizepart;
+	struct part_geom sizepart;
 
 	switch(m->BDEV_REQUEST) {
 	case DIOCSETP:
@@ -260,7 +260,7 @@ static int do_ioctl(message *m)
 
 		if(sys_safecopyto(who_e, (vir_bytes) grant_id, 0,
 				(vir_bytes) &sizepart,
-				sizeof(struct partition)) != OK) {
+				sizeof(struct part_geom)) != OK) {
 			printf("Filter: DIOCGETP safecopyto failed\n");
 			return EIO;
 		}

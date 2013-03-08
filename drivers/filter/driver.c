@@ -24,7 +24,7 @@ static int driver_open(int which)
 	 */
 	message msg;
 	cp_grant_id_t gid;
-	struct partition part;
+	struct part_geom part;
 	sector_t sectors;
 	int r;
 
