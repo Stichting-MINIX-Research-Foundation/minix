@@ -580,7 +580,7 @@ void test_bind(void)
 		test_fail("bind() should have worked");
 	}
 	CLOSE(sd);
-	UNLINK(TEST_SUN_PATH);
+	UNLINK("foo");
 
 	debug("leaving test_bind()");
 }
