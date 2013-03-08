@@ -8,8 +8,8 @@
 
 #include <minix/ioctl.h>
 
-#define DIOCSETP	_IOW('d', 3, struct partition)
-#define DIOCGETP	_IOR('d', 4, struct partition)
+#define DIOCSETP	_IOW('d', 3, struct diskpart)
+#define DIOCGETP	_IOR('d', 4, struct diskpart)
 #define DIOCEJECT	_IO ('d', 5)
 #define DIOCTIMEOUT	_IORW('d', 6, int)
 #define DIOCOPENCT	_IOR('d', 7, int)

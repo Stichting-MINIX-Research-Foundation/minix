@@ -66,7 +66,7 @@ char *argv[];
   int volume = 1, fd, tty, i, init, autovolsize;
   char *p, *name;
   struct stat stb;
-  struct partition part;
+  struct diskpart part;
   char key;
 
   /* Fetch and verify the arguments. */
