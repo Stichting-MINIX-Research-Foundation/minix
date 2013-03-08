@@ -1,11 +1,18 @@
 #!/bin/bash
 set -e
 
+if [ `id -u` -ne 0 ]
+then
+	echo "This script should be running as root calling sudo"
+	sudo $0
+	exit 1
+fi
+
 MP_MINIX=/tmp/minix
 MP_BOOT=/tmp/minixboot
 
 : ${ARCH=evbearm-el}
-: ${OBJ=../obj.arm}
+: ${OBJ=../obj.${ARCH}}
 : ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
 : ${CROSS_PREFIX=${CROSS_TOOLS}/arm-elf32-minix-}
 : ${DESTDIR=${OBJ}/destdir.$ARCH}
@@ -13,7 +20,6 @@ MP_BOOT=/tmp/minixboot
 : ${LOOP=/dev/loop0}
 : ${EMPTYIMG=minix_arm_sd_empty.img}
 : ${IMG=minix_arm_sd.img}
-: ${QEMU=/opt/bin/qemu-system-arm}
 
 BUILDSH=build.sh
 
@@ -74,6 +80,10 @@ mount ${LOOP}p6 ${MP_MINIX}/home
 mount ${LOOP}p7 ${MP_MINIX}/usr
 
 cp releasetools/uEnv.txt releasetools/cmdline.txt $MP_BOOT
+#
+# also copy to the obj directory to allow tftp booting
+# using obj dir as root
+cp releasetools/uEnv.txt releasetools/cmdline.txt ${OBJ}
 
 ${CROSS_PREFIX}objcopy ${OBJ}/kernel/kernel -O binary ${OBJ}/kernel.bin
 cp ${OBJ}/kernel.bin $MP_BOOT
@@ -104,5 +114,3 @@ umount $MP_MINIX/usr
 umount $MP_MINIX
 umount $MP_BOOT
 losetup -d $LOOP
-
-$QEMU -M beaglexm -drive if=sd,cache=writeback,file=$IMG -clock unix -serial pty -vnc :1  $*
