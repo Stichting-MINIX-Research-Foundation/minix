@@ -760,14 +760,14 @@ struct fproc *rfp;
 	}
 
 	/* now we have to retrieve the name of the parent directory */
-	if (get_name(parent_dir, dir_vp, component) != OK) {
+	if ((r = get_name(parent_dir, dir_vp, component)) != OK) {
 		unlock_vnode(parent_dir);
 		unlock_vmnt(parent_vmp);
 		unlock_vnode(dir_vp);
 		unlock_vmnt(dir_vmp);
 		put_vnode(parent_dir);
 		put_vnode(dir_vp);
-		return(ENOENT);
+		return(r);
 	}
 
 	len += strlen(component) + 1;
@@ -809,7 +809,7 @@ struct fproc *rfp;
   /* add the leading slash */
   len = strlen(orig_path);
   if (strlen(orig_path) >= PATH_MAX) return(ENAMETOOLONG);
-  memmove(orig_path+1, orig_path, len);
+  memmove(orig_path+1, orig_path, len + 1 /* include terminating nul */);
   orig_path[0] = '/';
 
   /* remove trailing slash if there is any */
