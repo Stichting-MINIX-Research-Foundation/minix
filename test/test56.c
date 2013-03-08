@@ -567,6 +567,21 @@ void test_bind(void)
 	UNLINK(TEST_SYM_A);
 	UNLINK(TEST_SYM_B);
 
+	/* Test bind with garbage in sockaddr_un */
+	memset(&addr, '?', sizeof(struct sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	addr.sun_path[0] = 'f';
+	addr.sun_path[1] = 'o';
+	addr.sun_path[2] = 'o';
+	addr.sun_path[3] = '\0';
+	SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
+	rc = bind(sd, (struct sockaddr *) &addr, strlen(addr.sun_path) + 1);
+	if (rc == -1) {
+		test_fail("bind() should have worked");
+	}
+	CLOSE(sd);
+	UNLINK(TEST_SUN_PATH);
+
 	debug("leaving test_bind()");
 }
 
