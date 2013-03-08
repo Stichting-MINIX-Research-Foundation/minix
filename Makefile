@@ -141,7 +141,7 @@ _SUBDIR=	tools lib .WAIT include gnu external crypto/external bin games
 _SUBDIR+=	libexec sbin usr.bin
 _SUBDIR+=	commands man
 _SUBDIR+=	common drivers kernel servers
-_SUBDIR+=	usr.sbin share rescue sys etc tests compat .WAIT distrib regress
+_SUBDIR+=	usr.sbin share rescue sys etc test compat .WAIT distrib regress
 
 .if defined(__MINIX)
 _SUBDIR+=	benchmarks

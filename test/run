@@ -11,6 +11,9 @@ skipped=`expr 0`		# count number of tests that were skipped
 total=`expr 0`			# total number of tests tried
 badones=			# list of tests that failed
 
+# Tests which require setuid
+setuids="test11 test33 test43 test44 test46 test56 test60 test61 test65"
+
 tests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
          21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
          41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 \
@@ -20,6 +23,10 @@ tests_no=`expr 0`
 
 # Directory must be owned by bin
 [ "$USER" != root ] || chown bin .
+
+# If root, make sure the setuid tests have the correct permissions
+[ "$USER" = root ] && chown root ${setuids}
+[ "$USER" = root ] && chmod 4755 ${setuids}
 
 # Count tests
 for i in `echo $tests`; do
