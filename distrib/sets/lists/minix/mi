@@ -107,6 +107,14 @@
 ./etc/ttys				minix-sys
 ./etc/utmp				minix-sys
 ./home					minix-sys
+./home/ast				minix-sys
+./home/ast/.ashrc			minix-sys
+./home/ast/.exrc			minix-sys
+./home/ast/.profile			minix-sys
+./home/bin				minix-sys
+./home/bin/.ashrc			minix-sys
+./home/bin/.exrc			minix-sys
+./home/bin/.profile			minix-sys
 ./lib/cpp 				minix-sys
 ./libexec/ld-elf.so.1			minix-sys
 ./libexec/ld.elf_so			minix-sys

@@ -423,28 +423,28 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/atf/etc/atf configinstall
 .endif
 .else # LSC Minix Specific
-.for owner group mode sdir tdir file in \
+.for owner group mode sdir tdir files in \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ daily \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ dhcptags.conf \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ rc \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/usr/lib/ crontab \
 		${BINOWN} ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/ Makefile \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/devmand/scripts/ ${DESTDIR}/etc/devmand/scripts/ block  \
-		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/devmand/scripts/ ${DESTDIR}/etc/devmand/scripts/ singlechar
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/devmand/scripts/ ${DESTDIR}/etc/devmand/scripts/ singlechar \
+		${BINOWN} ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/usr/ast/ .[aepv]* \
+		${BINOWN} ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/root/ .[aepv]* \
+		ast	  ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/home/ast/ .[aepv]* \
+		bin	  ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/home/bin/ .[aepv]* \
+
 	${_MKMSG_INSTALL} ${DESTDIR}${_dir}${file}
 	if [ ! -e ${tdir} ]; then \
-		mkdir -p ${tdir}; \
+		${INSTALL_DIR} ${tdir}; \
 	fi; \
-	if [ ! -e ${tdir}${file} -o -s ${tdir}${file} ]; then \
-		${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
-    			${sdir}${file} ${tdir}${file}; \
-	else true; fi
+	${INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} ${sdir}${files} ${tdir};
 .endfor
 .for subdir in . defaults mtree
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
-	${_MKMSG_INSTALL} ${DESTDIR}/usr/ast and ${DESTDIR}/root
-	for u in ${DESTDIR}/usr/ast ${DESTDIR}/root; do  ${INSTALL_DIR} $$u; cp ${NETBSDSRCDIR}/etc/ast/.[aepv]* $$u; done
 	${_MKMSG_INSTALL} ${DESTDIR}/usr/lib/fonts
 	${INSTALL_DIR} ${DESTDIR}/usr/lib/fonts
 	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/etc/fonts/*.fnt ${DESTDIR}/usr/lib/fonts/

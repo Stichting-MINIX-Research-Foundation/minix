@@ -133,7 +133,6 @@
 ./usr/spool/mail
 ./usr/src
 ./usr/tests
-./usr/tests/minix-posix
 ./usr/var
 ./usr/var/db
 ./usr/var/db/pkg
@@ -147,6 +146,15 @@
 /set type=dir uid=0 gid=0 mode=1777
 ./tmp
 ./usr/tmp
+
+/set type=dir uid=8 gid=0 mode=755
+./home/ast
+
+/set type=dir uid=2 gid=0 mode=755
+./home/bin
+
+/set type=dir uid=2 gid=0 mode=755
+./usr/tests/minix-posix
 
 # this one is for term(1)
 /set type=dir uid=0 gid=5 mode=775
