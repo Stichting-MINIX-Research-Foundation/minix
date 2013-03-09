@@ -11,7 +11,7 @@ SUBDIR= \
 	du \
 	\
 	\
-	genassym \
+	genassym getopt \
 	indent infocmp join \
 	ldd \
 	login lorder m4 \

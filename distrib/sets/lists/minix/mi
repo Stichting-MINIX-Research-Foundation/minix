@@ -276,6 +276,7 @@
 ./usr/bin/gcore				minix-sys
 ./usr/bin/gcov-pull			minix-sys
 ./usr/bin/genassym			minix-sys
+./usr/bin/getopt			minix-sys
 ./usr/bin/grep				minix-sys
 ./usr/bin/groups			minix-sys
 ./usr/bin/gunzip			minix-sys
@@ -1253,6 +1254,7 @@
 ./usr/man/man1/fsck.mfs.1		minix-sys
 ./usr/man/man1/ftp.1			minix-sys
 ./usr/man/man1/genassym.1		minix-sys
+./usr/man/man1/getopt.1			minix-sys
 ./usr/man/man1/getopts.1		minix-sys
 ./usr/man/man1/grep.1			minix-sys
 ./usr/man/man1/groups.1			minix-sys
