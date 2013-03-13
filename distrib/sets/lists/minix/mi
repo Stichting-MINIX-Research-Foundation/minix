@@ -17,6 +17,7 @@
 ./bin/halt				minix-sys
 ./bin/intr				minix-sys
 ./bin/kill				minix-sys
+./bin/ksh				minix-sys
 ./bin/ln				minix-sys
 ./bin/loadkeys				minix-sys
 ./bin/ls				minix-sys
@@ -1287,6 +1288,7 @@
 ./usr/man/man1/jobs.1			minix-sys
 ./usr/man/man1/join.1			minix-sys
 ./usr/man/man1/kill.1			minix-sys
+./usr/man/man1/ksh.1			minix-sys
 ./usr/man/man1/last.1			minix-sys
 ./usr/man/man1/ldd.1			minix-sys
 ./usr/man/man1/ld.elf_so.1		minix-sys
