@@ -1,0 +1,46 @@
+#!/bin/sh
+
+: ${AWK:=awk}
+
+verbose=no
+
+if [ X"$1" = X-v ] ; then
+    verbose=yes
+    shift
+fi
+if [ $# != 2 ] ; then
+    echo "usage: $0 [-v] which-shell ksh.Man-file" 1>&2
+    exit 1;
+fi
+shell=$1
+man=$2
+
+case $shell in
+ sh) which=0;;
+ ksh) which=1;;
+ *)
+    echo "$0: bad shell option (must be sh or ksh)" 1>&2
+    exit 1
+    ;;
+esac
+if [ ! -r "$man" ] ; then
+    echo "$0: can't read $man file" 1>&2
+    exit 1;
+fi
+
+
+#
+# Now generate the appropriate man page...
+#
+[ $verbose = yes ] && echo "$0: Generating $which man page (0=sh,1=ksh)..." 1>&2
+
+${AWK} 'BEGIN { ksh = '$which'; pr = 1 }
+    /^\.sh\(/ { pr = ksh - 1; next }
+    /^\.sh\)/ { pr = 1; next }
+    /^\.ksh\(/ { pr = ksh; next }
+    /^\.ksh\)/ { pr = 1; next }
+    { if (pr) print $0 } ' < $man
+
+[ $verbose = yes ] && echo "$0: All done" 1>&2
+
+exit 0
