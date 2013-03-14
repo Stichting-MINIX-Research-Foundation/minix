@@ -4,6 +4,13 @@
 
 .ifdef __MINIX
 GCC_LANGUAGES=c c++
+
+# LSC FIXME Some flags have to be adapted in order to work for minix
+MINIX_CONFIGURE_ARGS= \
+			--disable-libssp \
+			--disable-threads \
+			--disable-visibility \
+			--disable-libunwind
 .else
 GCC_LANGUAGES=c c++ objc
 .endif
@@ -36,18 +43,14 @@ MULTILIB_ARGS= --disable-multilib
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 
-# LSC FIXME Some flags have to be adapted in order to work for minix
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
-			--disable-libssp \
-			--disable-threads \
-			--disable-visibility \
-			--disable-libunwind \
 			--enable-long-long \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD nb1 20120916" \
 			--with-system-zlib \
 			${VAX_CONFIGURE_ARGS} \
+			${MINIX_CONFIGURE_ARGS} \
 			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
