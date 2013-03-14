@@ -25,15 +25,26 @@ MANGRP?=	operator
 INFOGRP?=	operator
 DOCGRP?=	operator
 
-MKBINUTILS:=	no
-MKGDB:=		no
+MKBINUTILS?=	no
+MKGDB?=		no
 MKGCC?=		no
 
-# LSC To check if works
-#DESTDIR?=	/usr/destdir.${MACHINE_ARCH}
+# LSC In the current state there is too much to be done
+# # Some package have been identified by directly adding NOGCCERROR
+# # To their Makefiles
+NOGCCERROR?= yes 
+NOCLANGERROR?= yes 
+
+AFLAGS+=        -D__ASSEMBLY__
+CFLAGS+=        -fno-builtin
 
 # For C++ programs
 CPPFLAGS+=      -I${DESTDIR}/usr/include/g++
+
+#LSC FIXME: Needed by clang for now
+.if ${MACHINE_ARCH} == "i386"
+CPUFLAGS+= -march=i586
+.endif
 
 # LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
