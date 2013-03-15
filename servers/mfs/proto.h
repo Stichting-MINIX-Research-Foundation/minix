@@ -2,7 +2,7 @@
 #define __MFS_PROTO_H__
 
 /* Some shortcuts to functions in -lminixfs */
-#define get_block(d, b, t) lmfs_get_block(d, b, t)
+#define get_block_disk(d, b, t) lmfs_get_block(d, b, t)
 #define put_block(b, t) lmfs_put_block(b, t)
 
 /* Function prototypes. */
@@ -73,7 +73,8 @@ int read_only(struct inode *ip);
 int fs_breadwrite(void);
 int fs_readwrite(void);
 void read_ahead(void);
-block_t read_map(struct inode *rip, off_t pos);
+block_t read_map(struct inode *rip, off_t pos, int opportunistic);
+struct buf *get_block_map(register struct inode *rip, u64_t position);
 zone_t rd_indir(struct buf *bp, int index);
 
 /* stadir.c */

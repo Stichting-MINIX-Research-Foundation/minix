@@ -52,7 +52,7 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
   /* Iterate over all blocks plus one, because we start in the middle. */
   bcount = bit_blocks;
   do {
-    bp = get_block(sp->s_dev, start_block + block, NORMAL);
+    bp = get_block_disk(sp->s_dev, start_block + block, NORMAL);
     assert(bp);
     wlim = &b_bitmap(bp)[FS_BITMAP_CHUNKS(sp->s_block_size)];
 

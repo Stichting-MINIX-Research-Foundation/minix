@@ -65,8 +65,9 @@ int real_brk(vmp, v)
 struct vmproc *vmp;
 vir_bytes v;
 {
-	if(map_region_extend_upto_v(vmp, v) == OK)
+	if(map_region_extend_upto_v(vmp, v) == OK) {
 		return OK;
+	}
 
 	return(ENOMEM);
 }

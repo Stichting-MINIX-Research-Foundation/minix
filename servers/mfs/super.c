@@ -65,7 +65,7 @@ bit_t origin;			/* number of bit to start searching at */
   /* Iterate over all blocks plus one, because we start in the middle. */
   bcount = bit_blocks + 1;
   do {
-	bp = get_block(sp->s_dev, start_block + block, NORMAL);
+	bp = get_block_disk(sp->s_dev, start_block + block, NORMAL);
 	wlim = &b_bitmap(bp)[FS_BITMAP_CHUNKS(sp->s_block_size)];
 
 	/* Iterate over the words in block. */
@@ -131,7 +131,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   bit = bit_returned % FS_BITCHUNK_BITS;
   mask = 1 << bit;
 
-  bp = get_block(sp->s_dev, start_block + block, NORMAL);
+  bp = get_block_disk(sp->s_dev, start_block + block, NORMAL);
 
   k = (bitchunk_t) conv4(sp->s_native, (int) b_bitmap(bp)[word]);
   if (!(k & mask)) {

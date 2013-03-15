@@ -16,10 +16,10 @@
         printf("VM:%s:%d: %s failed (last sanity check %s:%d)\n", file, line, #c, sc_lastfile, sc_lastline); \
 	panic("sanity check failed"); } } while(0)
 
-#define SLABSANITYCHECK(l) if((l) <= vm_sanitychecklevel) { \
+#define SLABSANITYCHECK(l) if(_minix_kerninfo && 0) { \
 	slab_sanitycheck(__FILE__, __LINE__); }
 
-#define SANITYCHECK(l) if(!nocheck && ((l) <= vm_sanitychecklevel)) {  \
+#define SANITYCHECK(l) if(!nocheck && _minix_kerninfo && 0) {  \
 		struct vmproc *vmpr;	\
 		assert(incheck == 0);	\
 		incheck = 1;		\

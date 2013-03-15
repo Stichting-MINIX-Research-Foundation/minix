@@ -397,7 +397,7 @@ int rw_flag;			/* READING or WRITING */
   rip->i_sp = sp;		/* inode must contain super block pointer */
   offset = START_BLOCK + sp->s_imap_blocks + sp->s_zmap_blocks;
   b = (block_t) (rip->i_num - 1)/sp->s_inodes_per_block + offset;
-  bp = get_block(rip->i_dev, b, NORMAL);
+  bp = get_block_disk(rip->i_dev, b, NORMAL);
   dip  = b_v1_ino(bp) + (rip->i_num - 1) % V1_INODES_PER_BLOCK;
   dip2 = b_v2_ino(bp) + (rip->i_num - 1) %
   	 V2_INODES_PER_BLOCK(sp->s_block_size);
