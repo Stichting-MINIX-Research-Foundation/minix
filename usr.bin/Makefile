@@ -31,7 +31,7 @@ SUBDIR= \
 	\
 	\
 	who \
-	xinstall 
+	xinstall yes
 
 .if !defined(__MINIX)
 SUBDIR+= ../external/zlib/pigz/bin/pigz
