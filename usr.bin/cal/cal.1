@@ -1,0 +1,160 @@
+.\"	$NetBSD: cal.1,v 1.20 2007/12/24 13:56:00 wiz Exp $
+.\"
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Kim Letkeman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)cal.1	8.2 (Berkeley) 4/28/95
+.\"
+.Dd December 21, 2007
+.Dt CAL 1
+.Os
+.Sh NAME
+.Nm cal
+.Nd displays a calendar
+.Sh SYNOPSIS
+.Nm
+.Op Fl 3hjry
+.Op Fl A Ar after
+.Op Fl B Ar before
+.Op Fl d Ar day-of-week
+.Op Fl R Ar reform-spec
+.Op Oo Ar month Oc Ar year
+.Sh DESCRIPTION
+.Nm
+displays a simple calendar.
+If arguments are not specified,
+the current month is displayed.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl 3
+Same as
+.Dq Fl A Ar 1 Fl B Ar 1 .
+.It Fl A Ar after
+Display
+.Ar after
+months after the specified month.
+.It Fl B Ar before
+Display
+.Ar before
+months before the specified month.
+.It Fl d Ar day-of-week
+Specifies the day of the week on which the calendar should start.
+Valid values are 0 through 6, presenting Sunday through Saturday,
+inclusively.
+The default output starts on Sundays.
+.It Fl h
+Highlight the current day, if present in the displayed calendar.
+If output is to a terminal, then the appropriate terminal sequences
+are used, otherwise overstriking is used.
+If more than one
+.Fl h
+is used and output is to a terminal, the current date will be
+highlighted in inverse video instead of bold.
+.It Fl j
+Display Julian dates (days one-based, numbered from January 1).
+.It Fl R Ar reform-spec
+Selects an alternate Gregorian reform point from the default of
+September 3rd, 1752.
+The
+.Ar reform-spec
+can be selected by one of the built-in names (see
+.Sx NOTES
+for a list) or by a date of the form YYYY/MM/DD.
+The date and month may be omitted, provided that what is specified
+uniquely selects a given built-in reform point.
+If an exact date is specified, then that date is taken to be the first
+missing date of the Gregorian Reform to be applied.
+.It Fl r
+Display the month in which the Gregorian Reform adjustment was
+applied, if no other
+.Ar month
+or
+.Ar year
+information is given.
+If used in conjunction with
+.Fl y ,
+then the entire year is displayed.
+.It Fl y
+Display a calendar for the current year.
+.El
+.Pp
+If no parameters are specified, the current month's calendar is
+displayed.
+A single parameter specifies the year and optionally the month
+in ISO format:
+.Dq Li cal 2007-12
+Two parameters denote the month (1 - 12) and year.
+Note that the century must be included in the year.
+.Pp
+A year starts on Jan 1.
+.Sh NOTES
+In the USA and Great Britain the Gregorian Reformation occurred in 1752.
+By this time, most countries had recognized the reformation (although a
+few did not recognize it until the 1900's.)
+Eleven days following September 2, 1752 were eliminated by the reformation,
+so the calendar for that month is a bit unusual.
+.Pp
+In view of the chaotic way the Gregorian calendar was adopted throughout
+the world in the years between 1582 and 1928 make sure to take into account
+the date of the Gregorian Reformation in your region if you are checking a
+calendar for a very old date.
+.Pp
+.Nm
+has a decent built-in list of Gregorian Reform dates and the names of
+the countries where the reform was adopted:
+.Pp
+.Bd -literal
+	Italy		Oct.  5, 1582	Denmark		Feb. 19, 1700
+	Spain		Oct.  5, 1582	Great Britain	Sep.  3, 1752
+	Portugal	Oct.  5, 1582	Sweden		Feb. 18, 1753
+	Poland		Oct.  5, 1582	Finland		Feb. 18, 1753
+	France		Dec. 12, 1582	Japan		Dec. 20, 1872
+	Luxembourg	Dec. 22, 1582	China		Nov.  7, 1911
+	Netherlands	Dec. 22, 1582	Bulgaria	Apr.  1, 1916
+	Bavaria		Oct.  6, 1583	U.S.S.R.	Feb.  1, 1918
+	Austria		Jan.  7, 1584	Serbia		Jan. 19, 1919
+	Switzerland	Jan. 12, 1584	Romania		Jan. 19, 1919
+	Hungary		Oct. 22, 1587	Greece		Mar. 10, 1924
+	Germany		Feb. 19, 1700	Turkey		Dec. 19, 1925
+	Norway		Feb. 19, 1700	Egypt		Sep. 18, 1928
+.Ed
+.Pp
+The country known as
+.Em Great Britain
+can also be referred to as
+.Em England
+since that has less letters and no spaces in it.
+This is meant only as a measure of expediency, not as a possible
+slight to anyone involved.
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v6 .
