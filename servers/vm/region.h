@@ -25,14 +25,14 @@ struct phys_block {
 	u32_t			seencount;
 #endif
 	phys_bytes		phys;	/* physical memory */
-	u8_t			refcount;	/* Refcount of these pages */
-
-	/* what kind of memory is it? */
-	mem_type_t		*memtype;
 
 	/* first in list of phys_regions that reference this block */
 	struct phys_region	*firstregion;	
+	u8_t			refcount;	/* Refcount of these pages */
+	u8_t			flags;
 };
+
+#define PBF_INCACHE		0x01
 
 typedef struct vir_region {
 	vir_bytes	vaddr;	/* virtual address, offset from pagetable */
@@ -40,17 +40,26 @@ typedef struct vir_region {
 	struct phys_region	**physblocks;
 	u16_t		flags;
 	struct vmproc *parent;	/* Process that owns this vir_region. */
-	mem_type_t	*memtype; /* Default instantiated memory type. */
+	mem_type_t	*def_memtype; /* Default instantiated memory type. */
 	int		remaps;
 	u32_t		id;     /* unique id */
 
 	union {
-		phys_bytes phys;
+		phys_bytes phys;	/* VR_DIRECT */
 		struct {
 			endpoint_t ep;
 			vir_bytes vaddr;
 			int id;
 		} shared;
+		struct phys_block *pb_cache;
+		struct {
+			int	procfd;	/* cloned fd in proc for mmap */
+			dev_t	dev;
+			ino_t	ino;
+			u64_t	offset;
+			int	inited;
+			u16_t	clearend;
+		} file;
 	} param;
 
 	/* AVL fields */
@@ -63,7 +72,6 @@ typedef struct vir_region {
 #define VR_PHYS64K	0x004	/* Physical memory must be 64k aligned. */
 #define VR_LOWER16MB	0x008
 #define VR_LOWER1MB	0x010
-#define VR_CONTIG	0x020	/* Must be physically contiguous. */
 #define VR_SHARED	0x040
 #define VR_UNINITIALIZED 0x080	/* Do not clear after allocation  */
 

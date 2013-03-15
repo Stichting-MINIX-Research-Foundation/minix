@@ -13,10 +13,9 @@
  * pointers.
  */
 
-static int shared_reference(struct phys_region *pr);
 static int shared_unreference(struct phys_region *pr);
 static int shared_pagefault(struct vmproc *vmp, struct vir_region *region, 
-	struct phys_region *ph, int write);
+	struct phys_region *ph, int write, vfs_callback_t cb, void *, int);
 static int shared_sanitycheck(struct phys_region *pr, char *file, int line);
 static int shared_writable(struct phys_region *pr);
 static void shared_delete(struct vir_region *region);
@@ -26,7 +25,6 @@ static int shared_refcount(struct vir_region *vr);
 
 struct mem_type mem_type_shared = {
 	.name = "shared memory",
-	.ev_reference = shared_reference,
 	.ev_copy = shared_copy,
 	.ev_unreference = shared_unreference,
 	.ev_pagefault = shared_pagefault,
@@ -36,11 +34,6 @@ struct mem_type mem_type_shared = {
 	.refcount = shared_refcount,
 	.writable = shared_writable
 };
-
-static int shared_reference(struct phys_region *pr)
-{
-	return OK;
-}
 
 static int shared_unreference(struct phys_region *pr)
 {
@@ -52,9 +45,9 @@ static int getsrc(struct vir_region *region,
 {
 	int srcproc;
 
-	if(region->memtype != &mem_type_shared) {
+	if(region->def_memtype != &mem_type_shared) {
 		printf("shared region hasn't shared type but %s.\n",
-			region->memtype->name);
+			region->def_memtype->name);
 		return EINVAL;
 	}
 
@@ -78,9 +71,9 @@ static int getsrc(struct vir_region *region,
                 return EINVAL;
 	}
 
-	if((*r)->memtype != &mem_type_anon) {
+	if((*r)->def_memtype != &mem_type_anon) {
 		printf("source region hasn't anon type but %s.\n",
-			(*r)->memtype->name);
+			(*r)->def_memtype->name);
 		return EINVAL;
 	}
 
@@ -116,7 +109,8 @@ static void shared_delete(struct vir_region *region)
 }
 
 static int shared_pagefault(struct vmproc *vmp, struct vir_region *region,
-	struct phys_region *ph, int write)
+	struct phys_region *ph, int write, vfs_callback_t cb,
+	void *state, int statelen)
 {
 	struct vir_region *src_region;
 	struct vmproc *src_vmp;
@@ -131,7 +125,8 @@ static int shared_pagefault(struct vmproc *vmp, struct vir_region *region,
 
 	if(!(pr = physblock_get(src_region, ph->offset))) {
 		int r;
-		if((r=map_pf(src_vmp, src_region, ph->offset, write)) != OK)
+		if((r=map_pf(src_vmp, src_region, ph->offset, write,
+			NULL, NULL, 0)) != OK)
 			return r;
 		if(!(pr = physblock_get(src_region, ph->offset))) {
 			panic("missing region after pagefault handling");
@@ -162,7 +157,7 @@ void shared_setsource(struct vir_region *vr, endpoint_t ep,
 	int id = src_vr->id;
 	vir_bytes vaddr = src_vr->vaddr;
 
-	assert(vr->memtype == &mem_type_shared);
+	assert(vr->def_memtype == &mem_type_shared);
 
 	if(!ep || !vaddr || !id) {
 		printf("VM: shared_setsource: zero ep/vaddr/id - ignoring\n");
