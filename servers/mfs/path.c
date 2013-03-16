@@ -287,16 +287,13 @@ char *suffix;			/* current remaining path. Has to point in the
  * new pathname.
  */
   
-  block_t blink;	/* block containing link text */
   size_t llen;		/* length of link */
   size_t slen;		/* length of suffix */
   struct buf *bp;	/* buffer containing link text */
   char *sp;		/* start of link text */
 
-  if ((blink = read_map(rip, (off_t) 0)) == NO_BLOCK)
+  if(!(bp = get_block_map(rip, 0)))
 	return(EIO);
-
-  bp = get_block(rip->i_dev, blink, NORMAL);
   llen = (size_t) rip->i_size;
   sp = b_data(bp);
   slen = strlen(suffix);
@@ -485,7 +482,6 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   mode_t bits;
   off_t pos;
   unsigned new_slots, old_slots;
-  block_t b;
   struct super_block *sp;
   int extended = 0;
 
@@ -524,12 +520,14 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   }
 
   for (; pos < ldir_ptr->i_size; pos += ldir_ptr->i_sp->s_block_size) {
-	b = read_map(ldir_ptr, pos);	/* get block number */
+	assert(ldir_ptr->i_dev != NO_DEV);
 
 	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
-	bp = get_block(ldir_ptr->i_dev, b, NORMAL);	/* get a dir block */
+	bp = get_block_map(ldir_ptr, pos);
 
+	assert(ldir_ptr->i_dev != NO_DEV);
 	assert(bp != NULL);
+	assert(lmfs_dev(bp) != NO_DEV);
 
 	/* Search a directory block. */
 	for (dp = &b_dir(bp)[0];
@@ -573,6 +571,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 				*numb = (ino_t) conv4(sp->s_native,
 						      (int) dp->mfs_d_ino);
 			}
+			assert(lmfs_dev(bp) != NO_DEV);
 			put_block(bp, DIRECTORY_BLOCK);
 			return(r);
 		}
@@ -586,6 +585,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 
 	/* The whole block has been searched or ENTER has a free slot. */
 	if (e_hit) break;	/* e_hit set if ENTER can be performed now */
+	assert(lmfs_dev(bp) != NO_DEV);
 	put_block(bp, DIRECTORY_BLOCK);	/* otherwise, continue searching dir */
   }
 
