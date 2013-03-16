@@ -51,10 +51,6 @@ __RCSID("$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $");
 
 #ifdef __minix
 #define munmap minix_munmap
-#define mmap minix_mmap
-#ifndef MAP_SHARED
-#define MAP_SHARED MAP_PRIVATE /* minix: MAP_SHARED should be MAP_PRIVATE */
-#endif
 #endif
 
 #define MINIXVERBOSE 0
@@ -67,15 +63,22 @@ static int protflags(int);	/* Elf flags -> mmap protection */
 
 #define EA_UNDEF		(~(Elf_Addr)0)
 
-/*
- * Map a shared object into memory.  The argument is a file descriptor,
- * which must be open on the object and positioned at its beginning.
- *
- * The return value is a pointer to a newly-allocated Obj_Entry structure
- * for the shared object.  Returns NULL on failure.
- */
+static void Pread(void *addr, size_t size, int fd, off_t off)
+{
+	int s;
+	if((s=pread(fd,addr, size, off)) < 0) {
+		_rtld_error("pread failed");
+		exit(1);
+	}
+
+#if MINIXVERBOSE
+	fprintf(stderr, "read 0x%lx bytes from offset 0x%lx to addr 0x%lx\n", size, off, addr);
+#endif
+}
+
+/* minix-without-mmap version of _rtld_map_object() */
 Obj_Entry *
-_rtld_map_object(const char *path, int fd, const struct stat *sb)
+_rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 {
 	Obj_Entry	*obj;
 	Elf_Ehdr	*ehdr;
@@ -119,7 +122,6 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	caddr_t		 clear_addr;
 	size_t		 nclear;
 #endif
-	size_t		bsslen;
 
 	if (sb != NULL && sb->st_size < (off_t)sizeof (Elf_Ehdr)) {
 		_rtld_error("%s: not ELF file (too short)", path);
@@ -134,16 +136,21 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		obj->ino = sb->st_ino;
 	}
 
+#ifdef __minix
+	ehdr = minix_mmap(NULL, _rtld_pagesz, PROT_READ|PROT_WRITE,
+		MAP_PREALLOC|MAP_ANON, -1, (off_t)0);
+	Pread(ehdr, _rtld_pagesz, fd, 0);
+#if MINIXVERBOSE
+	fprintf(stderr, "minix mmap for header: 0x%lx\n", ehdr);
+#endif
+#else
 	ehdr = mmap(NULL, _rtld_pagesz, PROT_READ, MAP_FILE | MAP_SHARED, fd,
 	    (off_t)0);
+#endif
 	obj->ehdr = ehdr;
 	if (ehdr == MAP_FAILED) {
-#if defined(__minix) && defined(RTLD_LOADER)
-		return _rtld_map_object_fallback(path, fd, sb);
-#else
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
 		goto bad;
-#endif
 	}
 	/* Make sure the file is valid */
 	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0) {
@@ -333,8 +340,6 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 
 	/* Unmap header if it overlaps the first load section. */
 	if (base_offset < _rtld_pagesz) {
-		dbg(("error; base_offset = 0x%lx, pagesize 0x%lx\n",
-			base_offset, _rtld_pagesz));
 		munmap(ehdr, _rtld_pagesz);
 		obj->ehdr = MAP_FAILED;
 	}
@@ -359,9 +364,17 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 #endif
 	mapsize = base_vlimit - base_vaddr;
 
+#ifndef __minix
 	mapbase = mmap(base_addr, mapsize, text_flags,
 	    mapflags | MAP_FILE | MAP_PRIVATE, fd, base_offset);
-
+#else
+	mapbase = minix_mmap(base_addr, mapsize, PROT_READ|PROT_WRITE,
+	    MAP_ANON | MAP_PREALLOC, -1, 0);
+#if MINIXVERBOSE
+	fprintf(stderr, "minix mmap for whole block: 0x%lx-0x%lx\n", mapbase, mapbase+mapsize);
+#endif
+	Pread(mapbase, obj->textsize, fd, 0);
+#endif
 	if (mapbase == MAP_FAILED) {
 		_rtld_error("mmap of entire address space failed: %s",
 		    xstrerror(errno));
@@ -370,7 +383,9 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 
 	/* Overlay the data segment onto the proper region. */
 	data_addr = mapbase + (data_vaddr - base_vaddr);
-
+#ifdef __minix
+	Pread(data_addr, data_vlimit - data_vaddr, fd, data_offset);
+#else
 	if (mmap(data_addr, data_vlimit - data_vaddr, data_flags,
 	    MAP_FILE | MAP_PRIVATE | MAP_FIXED, fd, data_offset) ==
 	    MAP_FAILED) {
@@ -379,13 +394,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	}
 
 	/* Overlay the bss segment onto the proper region. */
-#ifdef __minix
-	bsslen = base_vlimit - data_vlimit;
-	if (bsslen > 0 &&
-		mmap(mapbase + data_vlimit - base_vaddr, bsslen,
-#else
 	if (mmap(mapbase + data_vlimit - base_vaddr, base_vlimit - data_vlimit,
-#endif
 	    data_flags, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) ==
 	    MAP_FAILED) {
 		_rtld_error("mmap of bss failed: %s", xstrerror(errno));
@@ -393,7 +402,6 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	}
 
 	/* Unmap the gap between the text and data. */
-#ifndef __minix
 	gap_addr = mapbase + round_up(text_vlimit - base_vaddr);
 	gap_size = data_addr - gap_addr;
 	if (gap_size != 0 && mprotect(gap_addr, gap_size, PROT_NONE) == -1) {
@@ -441,48 +449,6 @@ bad:
 	return NULL;
 }
 
-void
-_rtld_obj_free(Obj_Entry *obj)
-{
-	Objlist_Entry *elm;
-
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-	if (obj->tls_done)
-		_rtld_tls_offset_free(obj);
-#endif
-	xfree(obj->path);
-	while (obj->needed != NULL) {
-		Needed_Entry *needed = obj->needed;
-		obj->needed = needed->next;
-		xfree(needed);
-	}
-	while ((elm = SIMPLEQ_FIRST(&obj->dldags)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&obj->dldags, link);
-		xfree(elm);
-	}
-	while ((elm = SIMPLEQ_FIRST(&obj->dagmembers)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&obj->dagmembers, link);
-		xfree(elm);
-	}
-	if (!obj->phdr_loaded)
-		xfree((void *)(uintptr_t)obj->phdr);
-	xfree(obj);
-#ifdef COMBRELOC
-	_rtld_combreloc_reset(obj);
-#endif
-}
-
-Obj_Entry *
-_rtld_obj_new(void)
-{
-	Obj_Entry *obj;
-
-	obj = CNEW(Obj_Entry);
-	SIMPLEQ_INIT(&obj->dldags);
-	SIMPLEQ_INIT(&obj->dagmembers);
-	return obj;
-}
-
 /*
  * Given a set of ELF protection flags, return the corresponding protection
  * flags for MMAP.
@@ -500,11 +466,5 @@ protflags(int elfflags)
 #endif
 	if (elfflags & PF_X)
 		prot |= PROT_EXEC;
-#ifdef __minix
-	/* Minix has to map it writable so we can do relocations
-	 * as we don't have mprotect() yet.
-	 */
-	prot |= PROT_WRITE;
-#endif
 	return prot;
 }

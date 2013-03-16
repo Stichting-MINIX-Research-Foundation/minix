@@ -1,4 +1,3 @@
-#ifndef __minix
 /*	$OpenBSD: mmfile.c,v 1.11 2006/09/19 05:52:23 otto Exp $	*/
 
 /*-
@@ -39,6 +38,9 @@
 #include "grep.h"
 
 #define MAX_MAP_LEN 1048576
+
+#define munmap minix_munmap
+#define mmap minix_mmap
 
 mmf_t *
 mmopen(char *fn, char *mode)
@@ -87,7 +89,7 @@ mmclose(mmf_t *mmf)
 char *
 mmfgetln(mmf_t *mmf, size_t *l)
 {
-	static char *p;
+	static unsigned char *p;
 	char *start = mmf->ptr;          /* Remove speed bump */
 	char *end = mmf->end;            /* Remove speed bump */
 
@@ -101,4 +103,3 @@ mmfgetln(mmf_t *mmf, size_t *l)
 	++mmf->ptr;
 	return p;
 }
-#endif
