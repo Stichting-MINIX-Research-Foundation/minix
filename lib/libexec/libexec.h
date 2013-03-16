@@ -16,6 +16,10 @@ typedef int (*libexec_allocfunc_t)(struct exec_info *execi,
 
 typedef int (*libexec_procclearfunc_t)(struct exec_info *execi);
 
+typedef int (*libexec_mmap_t)(struct exec_info *execi,
+	vir_bytes vaddr, vir_bytes len, vir_bytes foffset, u16_t clearend,
+	int protflags);
+
 struct exec_info {
     /* Filled in by libexec caller */
     endpoint_t  proc_e;                 /* Process endpoint */
@@ -33,9 +37,11 @@ struct exec_info {
     /* Callback pointers for use by libexec */
     libexec_loadfunc_t copymem;		/* Copy callback */
     libexec_clearfunc_t clearmem;	/* Clear callback */
-    libexec_allocfunc_t allocmem_prealloc; /* Alloc callback */
+    libexec_allocfunc_t allocmem_prealloc_cleared; /* Alloc callback */
+    libexec_allocfunc_t allocmem_prealloc_junk; /* Alloc callback */
     libexec_allocfunc_t allocmem_ondemand; /* Alloc callback */
     libexec_procclearfunc_t clearproc;	/* Clear process callback */
+    libexec_mmap_t memmap;		/* mmap callback */
     void *opaque;			/* Callback data */
 
     /* Filled in by libexec load function */
@@ -55,7 +61,8 @@ int libexec_load_elf(struct exec_info *execi);
 
 int libexec_copy_memcpy(struct exec_info *execi, off_t offset, off_t vaddr, size_t len);
 int libexec_clear_memset(struct exec_info *execi, off_t vaddr, size_t len);
-int libexec_alloc_mmap_prealloc(struct exec_info *execi, off_t vaddr, size_t len);
+int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, off_t vaddr, size_t len);
+int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, off_t vaddr, size_t len);
 int libexec_alloc_mmap_ondemand(struct exec_info *execi, off_t vaddr, size_t len);
 int libexec_clearproc_vm_procctl(struct exec_info *execi);
 int libexec_clear_sys_memset(struct exec_info *execi, off_t vaddr, size_t len);
