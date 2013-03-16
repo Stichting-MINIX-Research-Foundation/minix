@@ -306,7 +306,8 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   execi.args.copymem = read_seg;
   execi.args.clearproc = libexec_clearproc_vm_procctl;
   execi.args.clearmem = libexec_clear_sys_memset;
-  execi.args.allocmem_prealloc = libexec_alloc_mmap_prealloc;
+  execi.args.allocmem_prealloc_cleared = libexec_alloc_mmap_prealloc_cleared;
+  execi.args.allocmem_prealloc_junk = libexec_alloc_mmap_prealloc_junk;
   execi.args.allocmem_ondemand = libexec_alloc_mmap_ondemand;
   execi.args.opaque = &execi;
 

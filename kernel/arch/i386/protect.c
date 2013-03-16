@@ -414,7 +414,8 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		/* callbacks for use in the kernel */
 		execi.copymem = libexec_copy_memcpy;
 		execi.clearmem = libexec_clear_memset;
-		execi.allocmem_prealloc = libexec_pg_alloc;
+		execi.allocmem_prealloc_junk = libexec_pg_alloc;
+		execi.allocmem_prealloc_cleared = libexec_pg_alloc;
 		execi.allocmem_ondemand = libexec_pg_alloc;
 		execi.clearproc = NULL;
 
