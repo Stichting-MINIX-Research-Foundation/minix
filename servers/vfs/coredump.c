@@ -116,7 +116,6 @@ static void fill_prog_header (Elf_Phdr *prog_header, Elf_Word p_type,
   prog_header->p_flags = p_flags;
   prog_header->p_filesz = p_filesz;
   prog_header->p_memsz = p_memsz;
-
 }
 
 #define PADBYTES    4
@@ -310,9 +309,9 @@ static void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
 			(phys_bytes) CLICK_SIZE);
 
 		if(r != OK) {
-			printf("VFS: vircopy failed for %d @ 0x%lx during coredump\n",
-				fp->fp_endpoint, p);
-			break;
+			/* memory didn't exist; write as zeroes */
+			memset(buf, 0, sizeof(buf));
+			continue;
 		}
 
 		write_buf(f, (char *) buf, (off + CLICK_SIZE <= (off_t) len) ?
