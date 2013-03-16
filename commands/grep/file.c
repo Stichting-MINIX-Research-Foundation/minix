@@ -42,9 +42,7 @@ static size_t	 lnbuflen;
 #endif
 
 #define FILE_STDIO	0
-#ifndef __minix
 #define FILE_MMAP	1
-#endif
 #define FILE_GZIP	2
 
 struct file {
