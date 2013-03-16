@@ -150,7 +150,8 @@ int libexec_load_elf(struct exec_info *execi)
 
 	assert(execi->copymem);
 	assert(execi->clearmem);
-	assert(execi->allocmem_prealloc);
+	assert(execi->allocmem_prealloc_cleared);
+	assert(execi->allocmem_prealloc_junk);
 	assert(execi->allocmem_ondemand);
 
 	for (i = 0; i < hdr->e_phnum; i++) {
@@ -167,51 +168,124 @@ int libexec_load_elf(struct exec_info *execi)
 	for (i = 0; i < hdr->e_phnum; i++) {
 		vir_bytes seg_membytes, page_offset, p_vaddr, vaddr;
 		vir_bytes chunk, vfileend, vmemend;
+		off_t foffset, fbytes;
 		Elf_Phdr *ph = &phdr[i];
+		int try_mmap = 1;
+		u16_t clearend = 0;
+		int pagechunk;
+		int mmap_prot = PROT_READ;
+
+		if(!(ph->p_flags & PF_R)) {
+			printf("libexec: warning: unreadable segment\n");
+		}
+
+		if(ph->p_flags & PF_W) {
+			mmap_prot |= PROT_WRITE;
+#if ELF_DEBUG
+			printf("libexec: adding PROT_WRITE\n");
+#endif
+		} else {
+#if ELF_DEBUG
+			printf("libexec: not adding PROT_WRITE\n");
+#endif
+		}
+
 		if (ph->p_type != PT_LOAD || ph->p_memsz == 0) continue;
+
+		if((ph->p_vaddr % PAGE_SIZE) != (ph->p_offset % PAGE_SIZE)) {
+			printf("libexec: unaligned ELF program?\n");
+			try_mmap = 0;
+		}
+
+		if(!execi->memmap) {
+			try_mmap = 0;
+		}
+
+		foffset = ph->p_offset;
+		fbytes = ph->p_filesz;
 		vaddr = p_vaddr = ph->p_vaddr + execi->load_offset;
 		seg_membytes = ph->p_memsz;
+
 		page_offset = vaddr % PAGE_SIZE;
 		vaddr -= page_offset;
+		foffset -= page_offset;
 		seg_membytes += page_offset;
+		fbytes += page_offset;
+		vfileend  = p_vaddr + ph->p_filesz;
+
+		/* if there's usable memory after the file end, we have
+		 * to tell VM to clear the memory part of the page when it's
+		 * mapped in
+		 */
+		if((pagechunk = (vfileend % PAGE_SIZE))
+			&& ph->p_filesz < ph->p_memsz) {
+			clearend = PAGE_SIZE - pagechunk;
+		}
+
 		seg_membytes = roundup(seg_membytes, PAGE_SIZE);
+		fbytes = roundup(fbytes, PAGE_SIZE);
+
 		if(first || startv > vaddr) startv = vaddr;
 		first = 0;
 
-		/* make us some memory */
-		if(execi->allocmem_prealloc(execi, vaddr, seg_membytes) != OK) {
-			if(execi->clearproc) execi->clearproc(execi);
-			return ENOMEM;
-		}
-
+		if(try_mmap && execi->memmap(execi, vaddr, fbytes, foffset, clearend, mmap_prot) == OK) {
 #if ELF_DEBUG
-		printf("mmapped 0x%lx-0x%lx\n", vaddr, vaddr+seg_membytes);
+			printf("libexec: mmap 0x%lx-0x%lx done, clearend 0x%x\n",
+				vaddr, vaddr+fbytes, clearend);
 #endif
 
-		/* Copy executable section into it */
-		if(execi->copymem(execi, ph->p_offset, p_vaddr, ph->p_filesz) != OK) {
-			if(execi->clearproc) execi->clearproc(execi);
-			return ENOMEM;
-		}
+			if(seg_membytes > fbytes) {
+				int rem_mem = seg_membytes - fbytes;;
+				vir_bytes remstart = vaddr + fbytes;
+				if(execi->allocmem_ondemand(execi,
+					remstart, rem_mem) != OK) {
+					printf("libexec: mmap extra mem failed\n");
+					return ENOMEM;
+				}
+#if ELF_DEBUG
+				else printf("libexec: allocated 0x%lx-0x%lx\n",
+
+					remstart, remstart+rem_mem);
+#endif
+			}
+		} else {
+			if(try_mmap) printf("libexec: mmap failed\n");
+
+			/* make us some memory */
+			if(execi->allocmem_prealloc_junk(execi, vaddr, seg_membytes) != OK) {
+				if(execi->clearproc) execi->clearproc(execi);
+				return ENOMEM;
+			}
 
 #if ELF_DEBUG
-		printf("copied 0x%lx-0x%lx\n", p_vaddr, p_vaddr+ph->p_filesz);
+			printf("mmapped 0x%lx-0x%lx\n", vaddr, vaddr+seg_membytes);
 #endif
 
-		/* Clear remaining bits */
-		vfileend  = p_vaddr + ph->p_filesz;
-		vmemend = vaddr + seg_membytes;
-		if((chunk = p_vaddr - vaddr) > 0) {
+			/* Copy executable section into it */
+			if(execi->copymem(execi, ph->p_offset, p_vaddr, ph->p_filesz) != OK) {
+				if(execi->clearproc) execi->clearproc(execi);
+				return ENOMEM;
+			}
+
 #if ELF_DEBUG
-			printf("start clearing 0x%lx-0x%lx\n", vaddr, vaddr+chunk);
+			printf("copied 0x%lx-0x%lx\n", p_vaddr, p_vaddr+ph->p_filesz);
 #endif
-			execi->clearmem(execi, vaddr, chunk);
-		}
-		if((chunk = vmemend - vfileend) > 0) {
+
+			/* Clear remaining bits */
+			vmemend = vaddr + seg_membytes;
+			if((chunk = p_vaddr - vaddr) > 0) {
 #if ELF_DEBUG
-			printf("end clearing 0x%lx-0x%lx\n", vfileend, vaddr+chunk);
+				printf("start clearing 0x%lx-0x%lx\n", vaddr, vaddr+chunk);
 #endif
-			execi->clearmem(execi, vfileend, chunk);
+				execi->clearmem(execi, vaddr, chunk);
+			}
+	
+			if((chunk = vmemend - vfileend) > 0) {
+#if ELF_DEBUG
+				printf("end clearing 0x%lx-0x%lx\n", vfileend, vaddr+chunk);
+#endif
+				execi->clearmem(execi, vfileend, chunk);
+			}
 		}
 	}
 
