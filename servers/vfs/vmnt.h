@@ -15,6 +15,7 @@ EXTERN struct vmnt {
   char m_label[LABEL_MAX];	/* label of the file system process */
   char m_mount_path[PATH_MAX];	/* path on which vmnt is mounted */
   char m_mount_dev[PATH_MAX];	/* path on which vmnt is mounted */
+  int m_haspeek;		/* supports REQ_PEEK, REQ_BPEEK */
 } vmnt[NR_MNTS];
 
 /* vmnt flags */
