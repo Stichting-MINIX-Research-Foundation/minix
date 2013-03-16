@@ -287,7 +287,8 @@ void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
         execi->copymem = libexec_copy_physcopy;
         execi->clearproc = NULL;
         execi->clearmem = libexec_clear_sys_memset;
-        execi->allocmem_prealloc = libexec_alloc_vm_prealloc;
+	execi->allocmem_prealloc_junk = libexec_alloc_vm_prealloc;
+	execi->allocmem_prealloc_cleared = libexec_alloc_vm_prealloc;
         execi->allocmem_ondemand = libexec_alloc_vm_ondemand;
 
 	if(libexec_load_elf(execi) != OK)
