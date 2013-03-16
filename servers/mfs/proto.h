@@ -41,6 +41,7 @@ int truncate_inode(struct inode *rip, off_t len);
 int fs_flush(void);
 int fs_sync(void);
 int fs_new_driver(void);
+int fs_bpeek(void);
 
 /* mount.c */
 int fs_mountpoint(void);

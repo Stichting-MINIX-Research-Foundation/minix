@@ -282,6 +282,13 @@ char mount_label[LABEL_MAX] )
   r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res, &con_reqs);
   new_vmp->m_flags &= ~VMNT_MOUNTING;
 
+  if(req_peek(fs_e, 1, 0, PAGE_SIZE) != OK ||
+     req_bpeek(fs_e, dev, 0, PAGE_SIZE) != OK) {
+  	new_vmp->m_haspeek = 0;
+  } else {
+  	new_vmp->m_haspeek = 1;
+  }
+
   if (r != OK) {
 	mark_vmnt_free(new_vmp);
 	unlock_vnode(root_node);

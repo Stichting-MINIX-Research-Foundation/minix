@@ -254,6 +254,8 @@ int req_readsuper(endpoint_t fs_e, char *driver_name, dev_t dev, int readonly,
 int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int rw_flag,
 	endpoint_t user_e, char *user_addr, unsigned int num_of_bytes,
 	u64_t *new_posp, unsigned int *cum_iop);
+int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes);
+int req_peek(endpoint_t fs_e, ino_t inode_nr, u64_t pos, unsigned int bytes);
 int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
 	char *new_name);
 int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);

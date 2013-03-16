@@ -69,6 +69,27 @@ int req_breadwrite(
   return(OK);
 }
 
+/*===========================================================================*
+ *			req_bpeek					     *
+ *===========================================================================*/
+int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes)
+{
+  message m;
+
+  memset(&m, 0, sizeof(m));
+
+  /* Fill in request message */
+  m.m_type = REQ_BPEEK;
+  m.REQ_DEV2 = dev;
+  m.REQ_SEEK_POS_LO = ex64lo(pos);
+  m.REQ_SEEK_POS_HI = ex64hi(pos);
+  m.REQ_NBYTES = num_of_bytes;
+
+  /* Send/rec request */
+  return fs_sendrec(fs_e, &m);
+
+  return(OK);
+}
 
 /*===========================================================================*
  *				req_chmod	      			     *
@@ -762,43 +783,19 @@ u64_t *new_posp;
 unsigned int *cum_iop;
 {
   int r;
-  cp_grant_id_t grant_id = -1;
+  cp_grant_id_t grant_id;
   message m;
-  int type = -1;
-  int grantflag = -1;
-
-  /* rw_flag:
-   *  READING: do i/o from FS, copy into userspace
-   *  WRITING: do i/o from userspace, copy into FS
-   *  PEEKING: do i/o in FS, just get the blocks into the cache, no copy
-   */
 
   if (ex64hi(pos) != 0)
 	  panic("req_readwrite: pos too large");
 
-  assert(rw_flag == READING || rw_flag == WRITING || rw_flag == PEEKING);
-
-  switch(rw_flag) {
-  	case READING:
-		type = REQ_READ;
-		grantflag = CPF_WRITE;
-		/* fallthrough */
-	case WRITING:
-		if(type < 0) { type = REQ_WRITE; grantflag = CPF_READ; }
-  		grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr,
-			num_of_bytes, grantflag);
-	  	if (grant_id == -1)
-	  		panic("req_readwrite: cpf_grant_magic failed");
-		break;
-	case PEEKING:
-		type = REQ_PEEK;
-		break;
-	default:
-		panic("odd rw_flag");
-  }
+  grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
+			     (rw_flag==READING ? CPF_WRITE:CPF_READ));
+  if (grant_id == -1)
+	  panic("req_readwrite: cpf_grant_magic failed");
 
   /* Fill in request message */
-  m.m_type = type;
+  m.m_type = rw_flag == READING ? REQ_READ : REQ_WRITE;
   m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
@@ -818,6 +815,29 @@ unsigned int *cum_iop;
   return(r);
 }
 
+/*===========================================================================*
+ *				req_peek				     *
+ *===========================================================================*/
+int req_peek(endpoint_t fs_e, ino_t inode_nr, u64_t pos, unsigned int bytes)
+{
+  message m;
+
+  memset(&m, 0, sizeof(m));
+
+  if (ex64hi(pos) != 0)
+	  panic("req_peek: pos too large");
+
+  /* Fill in request message */
+  m.m_type = REQ_PEEK;
+  m.REQ_INODE_NR = inode_nr;
+  m.REQ_GRANT = -1;
+  m.REQ_SEEK_POS_LO = ex64lo(pos);
+  m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
+  m.REQ_NBYTES = bytes;
+
+  /* Send/rec request */
+  return fs_sendrec(fs_e, &m);
+}
 
 /*===========================================================================*
  *				req_rename	     			     *

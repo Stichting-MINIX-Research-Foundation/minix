@@ -3,6 +3,8 @@
  * routines that perform them.
  */
 
+#include <minix/libminixfs.h>
+
 #define _TABLE
 
 #include "fs.h"
@@ -45,5 +47,6 @@ int (*fs_call_vec[])(void) = {
         fs_getdents,	    /* 31  */
         fs_statvfs,         /* 32  */
         fs_readwrite,       /* 33  */
+	fs_bpeek,           /* 34  */
 };
 
