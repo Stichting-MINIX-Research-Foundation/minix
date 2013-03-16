@@ -133,7 +133,8 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	execi.copymem = read_seg;
 	execi.clearproc = libexec_clearproc_vm_procctl;
 	execi.clearmem = libexec_clear_sys_memset;
-	execi.allocmem_prealloc = libexec_alloc_mmap_prealloc;
+	execi.allocmem_prealloc_cleared = libexec_alloc_mmap_prealloc_cleared;
+	execi.allocmem_prealloc_junk = libexec_alloc_mmap_prealloc_junk;
 	execi.allocmem_ondemand = libexec_alloc_mmap_ondemand;
 
 	for(i = 0; exec_loaders[i].load_object != NULL; i++) {
