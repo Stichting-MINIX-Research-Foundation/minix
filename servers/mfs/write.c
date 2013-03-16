@@ -11,6 +11,8 @@
 
 #include "fs.h"
 #include <string.h>
+#include <assert.h>
+#include <sys/param.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -99,7 +101,8 @@ int op;				/* special actions */
 		z1 = NO_ZONE;
 	} else {
 		b = (block_t) z << scale;
-		bp_dindir = get_block(rip->i_dev, b, (new_dbl?NO_READ:NORMAL));
+		bp_dindir = get_block(rip->i_dev, b,
+			(new_dbl?NO_READ:NORMAL));
 		if (new_dbl) zero_block(bp_dindir);
 		z1 = rd_indir(bp_dindir, ind_ex);
 	}
@@ -239,31 +242,12 @@ int flag;			/* 1 if called by new_block, 0 otherwise */
  * a byte in the first block to be zeroed.  Clearzone() is called from 
  * fs_readwrite(), truncate_inode(), and new_block().
  */
-
-  struct buf *bp;
-  block_t b, blo, bhi;
-  off_t next;
-  int scale, zone_size;
+  int scale;
 
   /* If the block size and zone size are the same, clear_zone() not needed. */
   scale = rip->i_sp->s_log_zone_size;
-  if (scale == 0) return;
-
-  zone_size = rip->i_sp->s_block_size << scale;
-  if (flag == 1) pos = (off_t) ((pos/zone_size) * zone_size);
-  next = pos + rip->i_sp->s_block_size - 1;
-
-  /* If 'pos' is in the last block of a zone, do not clear the zone. */
-  if (next/zone_size != pos/zone_size) return;
-  if ( (blo = read_map(rip, next)) == NO_BLOCK) return;
-  bhi = (block_t) (  ((blo>>scale)+1) << scale)   - 1;
-
-  /* Clear all the blocks between 'blo' and 'bhi'. */
-  for (b = blo; b <= bhi; b++) {
-	bp = get_block(rip->i_dev, b, NO_READ);
-	zero_block(bp);
-	put_block(bp, FULL_DATA_BLOCK);
-  }
+  assert(scale == 0);
+  return;
 }
 
 
@@ -286,7 +270,7 @@ off_t position;			/* file pointer */
   int scale, r;
 
   /* Is another block available in the current zone? */
-  if ( (b = read_map(rip, position)) == NO_BLOCK) {
+  if ( (b = read_map(rip, position, 0)) == NO_BLOCK) {
 	if (rip->i_zsearch == NO_ZONE) {
 		/* First search for this file. Start looking from
 		 * the file's first data zone to prevent fragmentation
@@ -316,7 +300,8 @@ off_t position;			/* file pointer */
 	b = base_block + (block_t)((position % zone_size)/rip->i_sp->s_block_size);
   }
 
-  bp = get_block(rip->i_dev, b, NO_READ);
+  bp = lmfs_get_block_ino(rip->i_dev, b, NO_READ, rip->i_num,
+  	rounddown(position, rip->i_sp->s_block_size));
   zero_block(bp);
   return(bp);
 }

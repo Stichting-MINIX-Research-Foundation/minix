@@ -6,6 +6,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <sys/param.h>
 
 #define SAME 1000
 
@@ -172,7 +173,6 @@ int fs_unlink()
  *===========================================================================*/
 int fs_rdlink()
 {
-  block_t b;                   /* block containing link text */
   struct buf *bp;              /* buffer containing link text */
   register struct inode *rip;  /* target inode */
   register int r;              /* return value */
@@ -186,14 +186,13 @@ int fs_rdlink()
 
   if(!S_ISLNK(rip->i_mode))
 	  r = EACCES;
-  else if ((b = read_map(rip, (off_t) 0)) == NO_BLOCK)
-	r = EIO;
   else {
+	if(!(bp = get_block_map(rip, 0)))
+		return EIO;
 	/* Passed all checks */
 	/* We can safely cast to unsigned, because copylen is guaranteed to be
 	   below max file size */
 	copylen = min( copylen, (unsigned) rip->i_size);
-	bp = get_block(rip->i_dev, b, NORMAL);
 	r = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
 			   (vir_bytes) 0, (vir_bytes) b_data(bp),
 	  		   (size_t) copylen);
@@ -677,7 +676,6 @@ off_t len;
 {
 /* Zero an arbitrary byte range in a zone, possibly spanning multiple blocks.
  */
-  block_t b;
   struct buf *bp;
   off_t offset;
   unsigned short block_size;
@@ -686,10 +684,10 @@ off_t len;
   block_size = rip->i_sp->s_block_size;
 
   if(!len) return; /* no zeroing to be done. */
-  if( (b = read_map(rip, pos)) == NO_BLOCK) return;
+
   while (len > 0) {
-	if( (bp = get_block(rip->i_dev, b, NORMAL)) == NULL)
-		panic("zerozone_range: no block");
+	if( (bp = get_block_map(rip, rounddown(pos, block_size))) == NULL)
+		return;
 	offset = pos % block_size;
 	bytes = block_size - offset;
 	if (bytes > (size_t) len)
@@ -700,7 +698,6 @@ off_t len;
 
 	pos += bytes;
 	len -= bytes;
-	b++;
   }
 }
 
