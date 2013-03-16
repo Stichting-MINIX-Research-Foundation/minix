@@ -68,6 +68,15 @@
  * SUCH DAMAGE.
  */
 
+
+#ifdef __minix
+#define mmap minix_mmap
+#define munmap minix_munmap
+#ifndef MAP_COPY
+#define MAP_COPY MAP_PRIVATE
+#endif
+#endif
+
 #ifndef MAKE_NATIVE
 static char rcsid[] = "$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $";
 #else
@@ -133,9 +142,6 @@ __RCSID("$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $");
 #include <stdarg.h>
 #include <stdio.h>
 
-#ifndef MAP_FILE
-#define MAP_FILE 0
-#endif
 #ifndef MAP_COPY
 #define MAP_COPY MAP_PRIVATE
 #endif
@@ -403,9 +409,7 @@ loadedfile_destroy(struct loadedfile *lf)
 {
 	if (lf->buf != NULL) {
 		if (lf->maplen > 0) {
-#ifndef __minix
 			munmap(lf->buf, lf->maplen);
-#endif
 		} else {
 			free(lf->buf);
 		}
@@ -430,7 +434,6 @@ loadedfile_nextbuf(void *x, size_t *len)
 	return lf->buf;
 }
 
-#ifndef __minix
 /*
  * Try to get the size of a file.
  */
@@ -463,7 +466,6 @@ load_getsize(int fd, size_t *ret)
 	*ret = (size_t) st.st_size;
 	return SUCCESS;
 }
-#endif /* ndef __minix */
 
 /*
  * Read in a file.
@@ -479,9 +481,7 @@ static struct loadedfile *
 loadfile(const char *path, int fd)
 {
 	struct loadedfile *lf;
-#ifndef __minix
 	long pagesize;
-#endif
 	ssize_t result;
 	size_t bufpos;
 
@@ -501,7 +501,6 @@ loadfile(const char *path, int fd)
 #endif
 	}
 
-#ifndef __minix
 	if (load_getsize(fd, &lf->len) == SUCCESS) {
 		/* found a size, try mmap */
 		pagesize = sysconf(_SC_PAGESIZE);
@@ -524,6 +523,7 @@ loadfile(const char *path, int fd)
 		 * FUTURE: remove PROT_WRITE when the parser no longer
 		 * needs to scribble on the input.
 		 */
+
 		lf->buf = mmap(NULL, lf->maplen, PROT_READ|PROT_WRITE,
 			       MAP_FILE|MAP_COPY, fd, 0);
 		if (lf->buf != MAP_FAILED) {
@@ -539,7 +539,6 @@ loadfile(const char *path, int fd)
 			goto done;
 		}
 	}
-#endif
 
 	/* cannot mmap; load the traditional way */
 
@@ -572,9 +571,7 @@ loadfile(const char *path, int fd)
 		lf->buf = bmake_realloc(lf->buf, lf->len);
 	}
 
-#ifndef __minix
 done:
-#endif /* !defined(__minix) */
 	if (path != NULL) {
 		close(fd);
 	}
