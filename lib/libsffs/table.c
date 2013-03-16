@@ -42,6 +42,7 @@ int (*call_vec[])(void) = {
 	do_getdents,	/* 31 getdents		*/
 	do_statvfs,	/* 32 statvfs		*/
 	no_sys,		/* 33 peek		*/
+	no_sys,		/* 33 bpeek		*/
 };
 
 /* This should not fail with "array size is negative": */
