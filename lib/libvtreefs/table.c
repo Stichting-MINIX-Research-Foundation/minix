@@ -38,6 +38,7 @@ int (*fs_call_vec[])(void) = {
 	fs_getdents,	/* 31	getdents	*/
 	fs_statvfs,	/* 32	statvfs		*/
 	no_sys,		/* 33   peek            */
+	no_sys,		/* 34   bpeek           */
 };
 
 /* This should not fail with "array size is negative": */

@@ -855,3 +855,33 @@ int lmfs_rdwt_err(void)
 	return rdwt_err;
 }
 
+int lmfs_do_bpeek(message *m)
+{
+	block_t startblock, b, limitblock;
+	dev_t dev = m->REQ_DEV2;
+	u64_t extra, pos = make64(m->REQ_SEEK_POS_LO, m->REQ_SEEK_POS_HI);
+	size_t len = m->REQ_NBYTES;
+	struct buf *bp;
+
+	assert(m->m_type == REQ_BPEEK);
+	assert(fs_block_size > 0);
+	assert(dev != NO_DEV);
+
+	if((extra=(pos % fs_block_size))) {
+		pos -= extra;
+		len += extra;
+	}
+
+	len = roundup(len, fs_block_size);
+
+	startblock = pos/fs_block_size;
+	limitblock = startblock + len/fs_block_size;
+
+	for(b = startblock; b < limitblock; b++) {
+		bp = lmfs_get_block(dev, b, NORMAL);
+		assert(bp);
+		lmfs_put_block(bp, FULL_DATA_BLOCK);
+	}
+
+	return OK;
+}
