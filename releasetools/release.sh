@@ -28,8 +28,8 @@ fi
 # Packages we have to pre-install, and url to use
 PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/$version_pretty/`uname -m`/All/
 PREINSTALLED_PACKAGES="
-	pkgin
 	pkg_install
+	pkgin
 	bmake
 	binutils
 	clang
