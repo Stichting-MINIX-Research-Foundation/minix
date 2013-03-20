@@ -2,6 +2,8 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 #include <lib.h>
+#include <minix/u64.h>
+#include <minix/vm.h>
 
 /* INCLUDES HERE */
 
@@ -21,7 +23,7 @@ __weak_alias(minix_munmap, _minix_munmap)
 #include <errno.h>
 
 void *minix_mmap_for(endpoint_t forwhom,
-	void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+	void *addr, size_t len, int prot, int flags, int fd, u64_t offset)
 {
 	message m;
 	int r;
@@ -31,11 +33,13 @@ void *minix_mmap_for(endpoint_t forwhom,
 	m.VMM_PROT = prot;
 	m.VMM_FLAGS = flags;
 	m.VMM_FD = fd;
-	m.VMM_OFFSET = offset;
-	m.VMM_FORWHOM = forwhom;
+	m.VMM_OFFSET_LO = ex64lo(offset);
 
 	if(forwhom != SELF) {
 		m.VMM_FLAGS |= MAP_THIRDPARTY;
+		m.VMM_FORWHOM = forwhom;
+	} else {
+		m.VMM_OFFSET_HI = ex64hi(offset);
 	}
 
 	r = _syscall(VM_PROC_NR, VM_MMAP, &m);

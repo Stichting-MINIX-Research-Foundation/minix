@@ -942,8 +942,9 @@
 #	define VMM_PROT			m5_s1
 #	define VMM_FLAGS		m5_s2
 #	define VMM_FD			m5_i1
-#	define VMM_OFFSET		m5_i2
+#	define VMM_OFFSET_LO		m5_i2
 #	define VMM_FORWHOM		m5_l3
+#	define VMM_OFFSET_HI		m5_l3
 #	define VMM_RETADDR		m5_l1	/* result */
 #define VM_UMAP			(VM_RQ_BASE+11)
 #	define VMU_SEG			m1_i1

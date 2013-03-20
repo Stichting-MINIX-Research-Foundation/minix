@@ -106,7 +106,8 @@ void *	mmap(void *, size_t, int, int, int, off_t);
 int	munmap(void *, size_t);
 #else
 void *	minix_mmap(void *, size_t, int, int, int, off_t);
-void *	minix_mmap_for(endpoint_t, void *, size_t, int, int, int, off_t);
+void *	minix_mmap64(void *, size_t, int, int, int, u64_t);
+void *	minix_mmap_for(endpoint_t, void *, size_t, int, int, int, u64_t);
 int	minix_munmap(void *, size_t);
 void *		vm_remap(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
 void *		vm_remap_ro(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
