@@ -56,8 +56,6 @@ static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
 	if(len % VM_PAGE_SIZE)
 		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
-#if 0
-	/* MAP_FIXED is restored in a later commit */
 	if (addr && (vmm_flags & MAP_FIXED)) {
 		int r = map_unmap_range(vmp, addr, len);
 		if(r != OK) {
@@ -65,7 +63,6 @@ static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
 			return NULL;
 		}
 	}
-#endif
 
 	if (addr || (vmm_flags & MAP_FIXED)) {
 		/* An address is given, first try at that address. */
@@ -359,8 +356,7 @@ int do_munmap(message *m)
 {
         int r, n;
         struct vmproc *vmp;
-        vir_bytes addr, len, offset;
-	struct vir_region *vr;
+        vir_bytes addr, len;
 	endpoint_t target = SELF;
 
 	if(m->m_type == VM_UNMAP_PHYS) {
@@ -384,30 +380,20 @@ int do_munmap(message *m)
 		addr = (vir_bytes) m->VMUN_ADDR;
 	} else	addr = (vir_bytes) m->VMUM_ADDR;
 
-        if(!(vr = map_lookup(vmp, addr, NULL))) {
-                printf("VM: unmap: virtual address 0x%lx not found in %d\n",
-                        addr, target);
-                return EFAULT;
-        }
-
 	if(addr % VM_PAGE_SIZE)
 		return EFAULT;
  
 	if(m->m_type == VM_UNMAP_PHYS || m->m_type == VM_SHM_UNMAP) {
+		struct vir_region *vr;
+	        if(!(vr = map_lookup(vmp, addr, NULL))) {
+			printf("VM: unmap: address 0x%lx not found in %d\n",
+	                       addr, target);
+			sys_sysctl_stacktrace(target);
+	                return EFAULT;
+		}
 		len = vr->length;
 	} else len = roundup(m->VMUM_LEN, VM_PAGE_SIZE);
 
-	offset = addr - vr->vaddr;
-
-	if(offset + len > vr->length) {
-		printf("munmap: addr 0x%lx len 0x%lx spills out of region\n",
-			addr, len);
-		return EFAULT;
-	}
-
-	if(map_unmap_region(vmp, vr, offset, len) != OK)
-		panic("do_munmap: map_unmap_region failed");
-
-	return OK;
+	return map_unmap_range(vmp, addr, len);
 }
 

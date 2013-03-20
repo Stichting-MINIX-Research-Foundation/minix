@@ -6,6 +6,7 @@
 
 /* Compile in asserts and custom sanity checks at all? */
 #define SANITYCHECKS	0
+#define CACHE_SANITY	0
 #define VMSTATS		0
 
 /* VM behaviour */
