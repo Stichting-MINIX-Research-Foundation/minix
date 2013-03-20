@@ -5,6 +5,7 @@
 #include <minix/chardriver.h>
 #include <minix/ds.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -12,6 +13,9 @@
 #include "testvm.h"
 #include "common.h"
 #include "testcache.h"
+
+#define MYMAJOR 40      /* doesn't really matter, shouldn't be NO_DEV though */
+#define MYDEV   makedev(MYMAJOR, 1)
 
 static char *pipefilename = NULL, *progname;
 int pipefd = -1;
@@ -23,20 +27,30 @@ static char *bdata = NULL;
 int dowriteblock(int b, int blocksize, u32_t seed, char *block)
 {
 	int r;
+	char *bdata;
+	int mustset = 0;
+	u64_t dev_off = (u64_t) b * blocksize;
 
-	r=vm_yield_block_get_block(VM_BLOCKID_NONE, b, bdata, blocksize);
-
-	if(r != OK && r != ESRCH) {
-		printf("dowriteblock: vm_yield_block_get_block get %d\n", r);
-		exit(1);
+	if((bdata = vm_map_cacheblock(MYDEV, dev_off,
+		VMC_NO_INODE, 0, NULL, blocksize)) == MAP_FAILED) {
+		if((bdata = minix_mmap(0, blocksize,
+		       PROT_READ|PROT_WRITE, MAP_ANON, -1, 0)) == MAP_FAILED) {
+			printf("minix_mmap failed\n");
+			exit(1);
+		}
+		mustset = 1;
 	}
 
 	memcpy(bdata, block, blocksize);
 
-	r=vm_yield_block_get_block(b, VM_BLOCKID_NONE, bdata, blocksize);
+	if(mustset && (r=vm_set_cacheblock(bdata, MYDEV, dev_off,
+		VMC_NO_INODE, 0, NULL, blocksize)) != OK) {
+		printf("dowriteblock: vm_set_cacheblock failed %d\n", r);
+		exit(1);
+	}
 
-	if(r != OK) {
-		printf("dowriteblock: vm_yield_block_get_block yield %d\n", r);
+	if(minix_munmap(bdata, blocksize) < 0) {
+		printf("dowriteblock: minix_munmap failed %d\n", r);
 		exit(1);
 	}
 
@@ -45,28 +59,25 @@ int dowriteblock(int b, int blocksize, u32_t seed, char *block)
 
 int readblock(int b, int blocksize, u32_t seed, char *block)
 {
-	int r;
+	char *bdata;
+	u64_t dev_off = (u64_t) b * blocksize;
 
-	r=vm_yield_block_get_block(VM_BLOCKID_NONE, b, bdata, blocksize);
-	if(r == ESRCH) {
+	if((bdata = vm_map_cacheblock(MYDEV, dev_off,
+		VMC_NO_INODE, 0, NULL, blocksize)) == MAP_FAILED) {
 		return OK_BLOCK_GONE;
-	}
-	if(r != OK) {
-		printf("readblock: vm_yield_block_get_block get %d\n", r);
-		exit(1);
 	}
 
 	memcpy(block, bdata, blocksize);
-	r=vm_yield_block_get_block(b, VM_BLOCKID_NONE, bdata, blocksize);
-	if(r != OK) {
-		printf("readblock: vm_yield_block_get_block yield %d\n", r);
+
+	if(minix_munmap(bdata, blocksize) < 0) {
+		printf("dowriteblock: minix_munmap failed\n");
 		exit(1);
 	}
 
 	return blocksize;
 }
 
-void testend(void) { vm_forgetblocks(); }
+void testend(void) { }
 
 static void
 writepipe(struct info *i)
