@@ -52,9 +52,9 @@ static int getsrc(struct vir_region *region,
 {
 	int srcproc;
 
-	if(region->memtype != &mem_type_shared) {
+	if(region->def_memtype != &mem_type_shared) {
 		printf("shared region hasn't shared type but %s.\n",
-			region->memtype->name);
+			region->def_memtype->name);
 		return EINVAL;
 	}
 
@@ -78,9 +78,9 @@ static int getsrc(struct vir_region *region,
                 return EINVAL;
 	}
 
-	if((*r)->memtype != &mem_type_anon) {
+	if((*r)->def_memtype != &mem_type_anon) {
 		printf("source region hasn't anon type but %s.\n",
-			(*r)->memtype->name);
+			(*r)->def_memtype->name);
 		return EINVAL;
 	}
 
@@ -162,7 +162,7 @@ void shared_setsource(struct vir_region *vr, endpoint_t ep,
 	int id = src_vr->id;
 	vir_bytes vaddr = src_vr->vaddr;
 
-	assert(vr->memtype == &mem_type_shared);
+	assert(vr->def_memtype == &mem_type_shared);
 
 	if(!ep || !vaddr || !id) {
 		printf("VM: shared_setsource: zero ep/vaddr/id - ignoring\n");

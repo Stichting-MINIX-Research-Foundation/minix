@@ -25,13 +25,11 @@ struct phys_block {
 	u32_t			seencount;
 #endif
 	phys_bytes		phys;	/* physical memory */
-	u8_t			refcount;	/* Refcount of these pages */
-
-	/* what kind of memory is it? */
-	mem_type_t		*memtype;
 
 	/* first in list of phys_regions that reference this block */
 	struct phys_region	*firstregion;	
+	u8_t			refcount;	/* Refcount of these pages */
+	u8_t			flags;
 };
 
 typedef struct vir_region {
@@ -40,7 +38,7 @@ typedef struct vir_region {
 	struct phys_region	**physblocks;
 	u16_t		flags;
 	struct vmproc *parent;	/* Process that owns this vir_region. */
-	mem_type_t	*memtype; /* Default instantiated memory type. */
+	mem_type_t	*def_memtype; /* Default instantiated memory type. */
 	int		remaps;
 	u32_t		id;     /* unique id */
 
