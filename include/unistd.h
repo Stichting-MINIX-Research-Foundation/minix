@@ -387,12 +387,8 @@ int	 profil(char *, size_t, u_long, u_int);
 void	 psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
-#ifdef __minix
-int	 reboot(int);
-#else
-int	 reboot(int, char *);
-#endif
 #ifndef __minix
+int	 reboot(int, char *);
 int	 revoke(const char *);
 #endif
 int	 rresvport(int *);
@@ -438,10 +434,5 @@ extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
 
 __END_DECLS
-
-#ifdef __minix
-/* Minix expects RBT_* flags to be included with <unistd.h> */
-#include <sys/reboot.h>
-#endif
 
 #endif /* !_UNISTD_H_ */

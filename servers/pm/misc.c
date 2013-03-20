@@ -19,6 +19,7 @@
 #include <sys/utsname.h>
 #include <minix/com.h>
 #include <minix/config.h>
+#include <minix/reboot.h>
 #include <minix/sysinfo.h>
 #include <minix/type.h>
 #include <minix/vm.h>

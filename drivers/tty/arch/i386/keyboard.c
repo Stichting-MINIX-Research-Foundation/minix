@@ -13,12 +13,12 @@
 #include <sys/select.h>
 #include <termios.h>
 #include <signal.h>
-#include <unistd.h>
 #include <machine/archtypes.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/input.h>
 #include <minix/keymap.h>
+#include <minix/reboot.h>
 #include "tty.h"
 #include "kernel/const.h"
 #include "kernel/config.h"

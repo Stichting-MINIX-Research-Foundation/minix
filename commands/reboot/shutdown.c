@@ -32,9 +32,11 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <utmp.h>
 #include <errno.h>
+#include <minix/reboot.h>
 
 #include "wtmp.h"
 

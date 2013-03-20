@@ -10,7 +10,7 @@
 #include <minix/com.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/reboot.h>
+#include <minix/reboot.h>
 #include "string.h"
 #include "arch_proto.h"
 #include "libexec.h"

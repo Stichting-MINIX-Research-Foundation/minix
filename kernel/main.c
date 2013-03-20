@@ -11,7 +11,6 @@
 #include "kernel/kernel.h"
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <assert.h>
 #include <libexec.h>
 #include <a.out.h>
@@ -20,6 +19,7 @@
 #include <machine/vmparam.h>
 #include <minix/u64.h>
 #include <minix/type.h>
+#include <minix/reboot.h>
 #include "clock.h"
 #include "direct_utils.h"
 #include "hw_intr.h"
