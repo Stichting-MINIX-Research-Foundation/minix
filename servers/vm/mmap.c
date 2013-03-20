@@ -32,6 +32,58 @@
 #include "util.h"
 #include "region.h"
 
+
+static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
+	u32_t vmm_flags, size_t len, u32_t vrflags,
+	mem_type_t *mt, int execpriv)
+{
+	u32_t mfflags = 0;
+	struct vir_region *vr = NULL;
+
+	if(vmm_flags & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
+	if(vmm_flags & MAP_LOWER1M)  vrflags |= VR_LOWER1MB;
+	if(vmm_flags & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
+	if(vmm_flags & MAP_PREALLOC) mfflags |= MF_PREALLOC;
+	if(vmm_flags & MAP_UNINITIALIZED) {
+		if(!execpriv) return NULL;
+		vrflags |= VR_UNINITIALIZED;
+	}
+
+	if(len <= 0) {
+		return NULL;
+	}
+
+	if(len % VM_PAGE_SIZE)
+		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
+
+#if 0
+	/* MAP_FIXED is restored in a later commit */
+	if (addr && (vmm_flags & MAP_FIXED)) {
+		int r = map_unmap_range(vmp, addr, len);
+		if(r != OK) {
+			printf("mmap_region: map_unmap_range failed (%d)\n", r);
+			return NULL;
+		}
+	}
+#endif
+
+	if (addr || (vmm_flags & MAP_FIXED)) {
+		/* An address is given, first try at that address. */
+		vr = map_page_region(vmp, addr, 0, len,
+			vrflags, mfflags, mt);
+		if(!vr && (vmm_flags & MAP_FIXED))
+			return NULL;
+	}
+
+	if (!vr) {
+		/* No address given or address already in use. */
+		vr = map_page_region(vmp, VM_PAGE_SIZE, VM_DATATOP, len,
+			vrflags, mfflags, mt);
+	}
+
+	return vr;
+}
+
 /*===========================================================================*
  *				do_mmap			     		     *
  *===========================================================================*/
@@ -39,10 +91,10 @@ int do_mmap(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
-	int mfflags = 0;
-	vir_bytes addr;
+	vir_bytes addr = m->VMM_ADDR;
 	struct vir_region *vr = NULL;
 	int execpriv = 0;
+	size_t len = (vir_bytes) m->VMM_LEN;
 
 	/* RS and VFS can do slightly more special mmap() things */
 	if(m->m_source == VFS_PROC_NR || m->m_source == RS_PROC_NR)
@@ -63,11 +115,11 @@ int do_mmap(message *m)
 	vmp = &vmproc[n];
 
 	if(m->VMM_FD == -1 || (m->VMM_FLAGS & MAP_ANON)) {
-		mem_type_t *mt;
-		u32_t vrflags = VR_ANON | VR_WRITABLE;
-		size_t len = (vir_bytes) m->VMM_LEN;
+		/* actual memory in some form */
+		mem_type_t *mt = NULL;
 
 		if(m->VMM_FD != -1 || len <= 0) {
+			printf("VM: mmap: fd %d, len 0x%x\n", m->VMM_FD, len);
 			return EINVAL;
 		}
 
@@ -76,47 +128,20 @@ int do_mmap(message *m)
 			return EINVAL;
 		}
 
-		if(m->VMM_FLAGS & MAP_PREALLOC) mfflags |= MF_PREALLOC;
-		if(m->VMM_FLAGS & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
-		if(m->VMM_FLAGS & MAP_LOWER1M)  vrflags |= VR_LOWER1MB;
-		if(m->VMM_FLAGS & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
-		if(m->VMM_FLAGS & MAP_UNINITIALIZED) {
-			if(!execpriv) return EPERM;
-			vrflags |= VR_UNINITIALIZED;
-		}
 		if(m->VMM_FLAGS & MAP_CONTIG) {
-			vrflags |= VR_CONTIG;
 			mt = &mem_type_anon_contig;
 		} else	mt = &mem_type_anon;
 
-		if(len % VM_PAGE_SIZE)
-			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
-
-		vr = NULL;
-		if (m->VMM_ADDR || (m->VMM_FLAGS & MAP_FIXED)) {
-			/* An address is given, first try at that address. */
-			addr = m->VMM_ADDR;
-			vr = map_page_region(vmp, addr, 0, len,
-				vrflags, mfflags, mt);
-			if(!vr && (m->VMM_FLAGS & MAP_FIXED))
-				return ENOMEM;
-		}
-		if (!vr) {
-			/* No address given or address already in use. */
-			vr = map_page_region(vmp, 0, VM_DATATOP, len,
-				vrflags, mfflags, mt);
-		}
-		if (!vr) {
+		if(!(vr = mmap_region(vmp, addr, m->VMM_FLAGS, len,
+			VR_WRITABLE | VR_ANON, mt, execpriv))) {
 			return ENOMEM;
 		}
 	} else {
-		return ENOSYS;
+		return ENXIO;
 	}
 
 	/* Return mapping, as seen from process. */
-	assert(vr);
 	m->VMM_RETADDR = vr->vaddr;
-
 
 	return OK;
 }
