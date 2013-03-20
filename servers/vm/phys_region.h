@@ -13,7 +13,8 @@ typedef struct phys_region {
 	int			written;	/* written to pagetable */
 #endif
 
-	mem_type_t		*memtype;
+	/* what kind of memory is it? */
+	mem_type_t              *memtype;
 
 	/* list of phys_regions that reference the same phys_block */
 	struct phys_region	*next_ph_list;	
