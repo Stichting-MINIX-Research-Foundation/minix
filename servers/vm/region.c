@@ -44,9 +44,9 @@ void map_printregion(struct vir_region *vr)
 {
 	int i;
 	struct phys_region *ph;
-	printf("map_printmap: map_name: %s\n", vr->memtype->name);
+	printf("map_printmap: map_name: %s\n", vr->def_memtype->name);
 	printf("\t%lx (len 0x%lx, %lukB), %p\n",
-		vr->vaddr, vr->length, vr->length/1024, vr->memtype->name);
+		vr->vaddr, vr->length, vr->length/1024, vr->def_memtype->name);
 	printf("\t\tphysblocks:\n");
 	for(i = 0; i < vr->length/VM_PAGE_SIZE; i++) {
 		if(!(ph=vr->physblocks[i])) continue;
@@ -122,8 +122,8 @@ static struct vir_region *getnextvr(struct vir_region *vr)
 
 int pr_writable(struct vir_region *vr, struct phys_region *pr)
 {
-	assert(vr->memtype->writable);
-	return ((vr->flags & VR_WRITABLE) && vr->memtype->writable(pr));
+	assert(vr->def_memtype->writable);
+	return ((vr->flags & VR_WRITABLE) && vr->def_memtype->writable(pr));
 }
 
 #if SANITYCHECKS
@@ -434,7 +434,7 @@ USE(newregion,
 	newregion->vaddr = startv;
 	newregion->length = length;
 	newregion->flags = flags;
-	newregion->memtype = memtype;
+	newregion->def_memtype = memtype;
 	newregion->remaps = 0;
 	newregion->id = id++;
 	newregion->lower = newregion->higher = NULL;
@@ -482,8 +482,8 @@ mem_type_t *memtype;
 	}
 
 	/* If a new event is specified, invoke it. */
-	if(newregion->memtype->ev_new) {
-		if(newregion->memtype->ev_new(newregion) != OK) {
+	if(newregion->def_memtype->ev_new) {
+		if(newregion->def_memtype->ev_new(newregion) != OK) {
 			/* ev_new will have freed and removed the region */
 			return NULL;
 		}
@@ -576,8 +576,8 @@ int map_free(struct vir_region *region)
 		return r;
 	}
 
-	if(region->memtype->ev_delete)
-		region->memtype->ev_delete(region);
+	if(region->def_memtype->ev_delete)
+		region->def_memtype->ev_delete(region);
 	free(region->physblocks);
 	region->physblocks = NULL;
 	SLABFREE(region);
@@ -711,13 +711,13 @@ int write;
 	 * writable, nothing to do.
 	 */
 
-	assert(region->memtype->writable);
+	assert(region->def_memtype->writable);
 
-	if(!write || !region->memtype->writable(ph)) {
-		assert(region->memtype->ev_pagefault);
+	if(!write || !region->def_memtype->writable(ph)) {
+		assert(region->def_memtype->ev_pagefault);
 		assert(ph->ph);
 
-		if((r = region->memtype->ev_pagefault(vmp,
+		if((r = region->def_memtype->ev_pagefault(vmp,
 			region, ph, write)) == SUSPEND) {
 			panic("map_pf: memtype->ev_pagefault returned SUSPEND\n");
 			return SUSPEND;
@@ -819,10 +819,10 @@ static struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region 
 #endif
 	vir_bytes p;
 
-	if(!(newvr = region_new(vr->parent, vr->vaddr, vr->length, vr->flags, vr->memtype)))
+	if(!(newvr = region_new(vr->parent, vr->vaddr, vr->length, vr->flags, vr->def_memtype)))
 		return NULL;
 
-	if(vr->memtype->ev_copy && (r=vr->memtype->ev_copy(vr, newvr)) != OK) {
+	if(vr->def_memtype->ev_copy && (r=vr->def_memtype->ev_copy(vr, newvr)) != OK) {
 		map_free(newvr);
 		printf("VM: memtype-specific copy failed (%d)\n", r);
 		return NULL;
@@ -1033,12 +1033,12 @@ int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes v)
 		return ENOMEM;
 	}
 
-	if(!vr->memtype->ev_resize) {
+	if(!vr->def_memtype->ev_resize) {
 		printf("VM: can't resize this type of memory\n");
 		return ENOMEM;
 	}
 
-	return vr->memtype->ev_resize(vmp, vr, offset - vr->vaddr);
+	return vr->def_memtype->ev_resize(vmp, vr, offset - vr->vaddr);
 }
 
 /*========================================================================*
@@ -1129,11 +1129,11 @@ int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r)
 		(vr->vaddr != addr))
 		return EINVAL;
 
-	if (!vr->memtype->regionid)
+	if (!vr->def_memtype->regionid)
 		return EINVAL;
 
 	if(r)
-		*r = vr->memtype->regionid(vr);
+		*r = vr->def_memtype->regionid(vr);
 
 	return OK;
 }
@@ -1146,11 +1146,11 @@ int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
 	struct vir_region *vr;
 
 	if (!(vr = map_lookup(vmp, addr, NULL)) ||
-		(vr->vaddr != addr) || !vr->memtype->refcount)
+		(vr->vaddr != addr) || !vr->def_memtype->refcount)
 		return EINVAL;
 
 	if (cnt)
-		*cnt = vr->memtype->refcount(vr);
+		*cnt = vr->def_memtype->refcount(vr);
 
 	return OK;
 }
