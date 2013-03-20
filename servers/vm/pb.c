@@ -65,7 +65,7 @@ USE(newphysr,
 	newphysr->ph = newpb;
 	newphysr->parent = parent;
 	newphysr->next_ph_list = newpb->firstregion;
-	newphysr->memtype = parent->memtype;
+	newphysr->memtype = parent->def_memtype;
 	newpb->firstregion = newphysr;);
 	newpb->refcount++;
 }
@@ -120,7 +120,7 @@ void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm)
 	if(pb->refcount == 0) {
 		assert(!pb->firstregion);
 		int r;
-		if((r = region->memtype->ev_unreference(pr)) != OK)
+		if((r = region->def_memtype->ev_unreference(pr)) != OK)
 			panic("unref failed, %d", r);
 
 		SLABFREE(pb);
