@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <minix/reboot.h>
 
 #include "wtmp.h"
 

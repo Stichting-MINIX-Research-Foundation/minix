@@ -654,6 +654,7 @@
 ./usr/include/minix/procfs.h		minix-sys
 ./usr/include/minix/profile.h		minix-sys
 ./usr/include/minix/queryparam.h	minix-sys
+./usr/include/minix/reboot.h		minix-sys
 ./usr/include/minix/rs.h		minix-sys
 ./usr/include/minix/safecopies.h	minix-sys
 ./usr/include/minix/sched.h		minix-sys

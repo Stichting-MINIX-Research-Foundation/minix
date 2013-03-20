@@ -29,7 +29,7 @@ char *when;			/* When is shutdown */
 char *extra;			/* If non-nil, why is the shutdown */
 {
   struct utmp utmp;
-  char utmptty[5 + sizeof(utmp.ut_line) + 1];
+  char utmptty[5 + sizeof(utmp.ut_line) + 2];
   char message[1024];
   struct passwd *pw;
   int utmpfd, ttyfd;

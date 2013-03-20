@@ -4,9 +4,7 @@ reboot \- close down the system or reboot
 .SH SYNTAX
 .ft B
 .nf
-#define _NETBSD_SOURCE 1
-
-#include <unistd.h>
+#include <minix/reboot.h>
 
 int reboot(int \fIhow\fP)
 .fi
@@ -26,10 +24,7 @@ on the keyboard.
 Halt the system.
 .TP
 .BI "reboot(RBT_PANIC)"
-Cause a system panic.  This is not normally done from user mode, but by
-servers using the
-.B sys_abort()
-kernel call.
+Cause a system panic.  This is not normally done from user mode.
 .TP
 .BI "reboot(RBT_POWEROFF)"
 Power off the system if possible, reset otherwise.

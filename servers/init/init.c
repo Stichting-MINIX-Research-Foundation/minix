@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <minix/reboot.h>
 
 /* Different ttyent structure. */
 struct ttyent TT_REBOOT = { "console", "shutdown -d now CTRL-ALT_DEL", "-"};

@@ -1,7 +1,6 @@
 
 #include "kernel/kernel.h"
 
-#include <unistd.h>
 #include <ctype.h>
 #include <string.h>
 #include <machine/cmos.h>
@@ -9,6 +8,7 @@
 #include <machine/cpu.h>
 #include <minix/portio.h>
 #include <minix/cpufeature.h>
+#include <minix/reboot.h>
 #include <assert.h>
 #include <signal.h>
 #include <machine/vm.h>
