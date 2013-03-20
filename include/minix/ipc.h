@@ -31,6 +31,30 @@ typedef struct {int m10i1, m10i2, m10i3, m10i4;
 	long m10l1, m10l2, m10l3; } mess_10;
 
 typedef struct {
+	void *block;
+	u32_t dev_offset_pages;
+	u32_t ino_offset_pages;
+	u32_t ino;
+	u32_t *flags_ptr;
+	u32_t dev;
+	u8_t pages;
+	u8_t flags;
+} mess_vmmcp __packed;
+
+typedef struct {
+	endpoint_t who;
+	u32_t offset;
+	u32_t dev;
+	u32_t ino;
+	u32_t vaddr;
+	u32_t len;
+	u16_t fd;
+	u16_t clearend_and_flags; /* low 12 bits are clearend, rest flags */
+} mess_vm_vfs_mmap __packed;
+
+typedef struct { u8_t flags; void *addr; } mess_vmmcp_reply __packed;
+
+typedef struct {
   endpoint_t m_source;		/* who sent the message */
   int m_type;			/* what kind of message is it */
   union {
@@ -44,6 +68,9 @@ typedef struct {
 	mess_6 m_m6;
 	mess_9 m_m9;
 	mess_10 m_m10;
+	mess_vmmcp m_vmmcp;
+	mess_vmmcp_reply m_vmmcp_reply;
+	mess_vm_vfs_mmap m_vm_vfs;
   } m_u;
 } message __aligned(16);
 
