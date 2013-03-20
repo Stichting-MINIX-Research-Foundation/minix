@@ -70,13 +70,14 @@ int do_unmap_phys(message *msg);
 int do_remap(message *m);
 int do_get_phys(message *m);
 int do_get_refcount(message *m);
+int do_vfs_mmap(message *m);
 
 /* pagefaults.c */
 void do_pagefaults(message *m);
 void do_memory(void);
 char *pf_errstr(u32_t err);
 int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int
-	wrflag);
+	wrflag, vfs_callback_t cb, void *state, int statelen);
 
 /* $(ARCH)/pagetable.c */
 void pt_init();
@@ -103,6 +104,7 @@ int pt_mapkernel(pt_t *pt);
 void vm_pagelock(void *vir, int lockflag);
 int vm_addrok(void *vir, int write);
 int get_vm_self_pages(void);
+int pt_writable(struct vmproc *vmp, vir_bytes v);
 
 #if SANITYCHECKS
 void pt_sanitycheck(pt_t *pt, char *file, int line);
@@ -133,6 +135,7 @@ int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 int map_region_extend_upto_v(struct vmproc *vmp, vir_bytes vir);
 int map_unmap_region(struct vmproc *vmp, struct vir_region *vr,
 	vir_bytes offset, vir_bytes len);
+int map_unmap_range(struct vmproc *vmp, vir_bytes, vir_bytes);
 int map_free_proc(struct vmproc *vmp);
 int map_proc_copy(struct vmproc *dst, struct vmproc *src);
 int map_proc_copy_from(struct vmproc *dst, struct vmproc *src, struct
@@ -140,10 +143,11 @@ int map_proc_copy_from(struct vmproc *dst, struct vmproc *src, struct
 struct vir_region *map_lookup(struct vmproc *vmp, vir_bytes addr,
 	struct phys_region **pr);
 int map_pf(struct vmproc *vmp, struct vir_region *region, vir_bytes
-	offset, int write);
+	offset, int write, vfs_callback_t pf_callback, void *state, int);
 int map_pin_memory(struct vmproc *vmp);
 int map_handle_memory(struct vmproc *vmp, struct vir_region *region,
-	vir_bytes offset, vir_bytes len, int write);
+	vir_bytes offset, vir_bytes len, int write, vfs_callback_t cb,
+		void *state, int statelen);
 void map_printmap(struct vmproc *vmp);
 int map_writept(struct vmproc *vmp);
 void printregionstats(struct vmproc *vmp);
@@ -153,6 +157,8 @@ int map_free(struct vir_region *region);
 struct phys_region *physblock_get(struct vir_region *region, vir_bytes offset);
 void physblock_set(struct vir_region *region, vir_bytes offset,
 	struct phys_region *newphysr);
+int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
+        struct phys_region *pr);
 
 struct vir_region * map_region_lookup_tag(struct vmproc *vmp, u32_t
 	tag);
@@ -162,7 +168,6 @@ int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r);
 int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt);
 int physregions(struct vir_region *vr);
 
-void get_stats_info(struct vm_stats_info *vsi);
 void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui);
 void get_usage_info_kernel(struct vm_usage_info *vui);
 int get_region_info(struct vmproc *vmp, struct vm_region_info *vri, int
@@ -188,13 +193,40 @@ void init_query_exit(void);
 struct phys_block *pb_new(phys_bytes phys);
 void pb_free(struct phys_block *);
 struct phys_region *pb_reference(struct phys_block *newpb,
-	vir_bytes offset, struct vir_region *region);
+	vir_bytes offset, struct vir_region *region, mem_type_t *);
 void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm);
 void pb_link(struct phys_region *newphysr, struct phys_block *newpb,
         vir_bytes offset, struct vir_region *parent);
+int mem_cow(struct vir_region *region,
+        struct phys_region *ph, phys_bytes new_page_cl, phys_bytes new_page);
 
 /* mem_directphys.c */
 void phys_setphys(struct vir_region *vr, phys_bytes startaddr);
 
 /* mem_shared.c */
 void shared_setsource(struct vir_region *vr, endpoint_t ep, struct vir_region *src);
+
+/* mem_cache.c */
+int do_mapcache(message *m);
+int do_setcache(message *m);
+
+/* cache.c */
+struct cached_page *find_cached_page_bydev(dev_t dev, u64_t dev_off,
+	ino_t ino, u64_t ino_off, int touchlru);
+struct cached_page *find_cached_page_byino(dev_t dev, ino_t ino, u64_t ino_off, int touchlru);
+int addcache(dev_t dev, u64_t def_off, ino_t ino, u64_t ino_off, struct phys_block *pb);
+void cache_sanitycheck_internal(void);
+int cache_freepages(int pages);
+void get_stats_info(struct vm_stats_info *vsi);
+void cache_lru_touch(struct cached_page *hb);
+void rmcache(struct cached_page *cp);
+
+/* vfs.c */
+int vfs_request(int reqno, int fd, struct vmproc *vmp, u64_t offset,
+	u32_t len, vfs_callback_t reply_callback, void *cbarg, void *state,
+	int statelen);
+int do_vfs_reply(message *m);
+
+/* mem_file.c */
+void mappedfile_setfile(struct vir_region *region, int fd, u64_t offset,
+	dev_t dev, ino_t ino, u16_t clearend, int prefill);

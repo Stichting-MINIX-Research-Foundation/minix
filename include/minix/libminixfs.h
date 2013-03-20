@@ -17,9 +17,16 @@ struct buf {
   struct buf *lmfs_hash;       /* used to link bufs on hash chains */
   block_t lmfs_blocknr;        /* block number of its (minor) device */
   dev_t lmfs_dev;              /* major | minor device where block resides */
-  char lmfs_dirt;              /* BP_CLEAN or BP_DIRTY */
   char lmfs_count;             /* number of users of this buffer */
+  char lmfs_needsetcache;      /* to be identified to VM */
   unsigned int lmfs_bytes;     /* Number of bytes allocated in bp */
+  u32_t lmfs_flags;            /* Flags shared between VM and FS */
+
+  /* If any, which inode & offset does this block correspond to?
+   * If none, VMC_NO_INODE
+   */
+  ino_t lmfs_inode;
+  u64_t lmfs_inode_offset;
 };
 
 int fs_lookup_credentials(vfs_ucred_t *credentials,
@@ -42,10 +49,13 @@ void lmfs_reset_rdwt_err(void);
 int lmfs_rdwt_err(void); 
 void lmfs_buf_pool(int new_nr_bufs);
 struct buf *lmfs_get_block(dev_t dev, block_t block,int only_search);
+struct buf *lmfs_get_block_ino(dev_t dev, block_t block,int only_search,
+	ino_t ino, u64_t off);
 void lmfs_invalidate(dev_t device);
 void lmfs_put_block(struct buf *bp, int block_type);
 void lmfs_rw_scattered(dev_t, struct buf **, int, int);
 void lmfs_setquiet(int q);
+int lmfs_do_bpeek(message *);
 
 /* calls that libminixfs does into fs */
 void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used);

@@ -993,12 +993,31 @@
 /* To VM: map in cache block by FS */
 #define VM_MAPCACHEPAGE		(VM_RQ_BASE+26)
 
+/* To VM: identify cache block in FS */
+#define VM_SETCACHEPAGE		(VM_RQ_BASE+27)
+
+/* To VFS: fields for request from VM. */
+#	define VFS_VMCALL_REQ		m10_i1
+#	define VFS_VMCALL_FD		m10_i2
+#	define VFS_VMCALL_REQID		m10_i3
+#	define VFS_VMCALL_ENDPOINT	m10_i4
+#	define VFS_VMCALL_OFFSET_LO	m10_l1
+#	define VFS_VMCALL_OFFSET_HI	m10_l2
+#	define VFS_VMCALL_LENGTH	m10_l3
+
+/* Request codes to from VM to VFS */
+#define VMVFSREQ_FDLOOKUP		101
+#define VMVFSREQ_FDCLOSE		102
+#define VMVFSREQ_FDIO			103
+
 /* Calls from VFS. */
-#	define VMV_ENDPOINT		m1_i1	/* for all VM_VFS_REPLY_* */
-#define VM_VFS_REPLY_OPEN	(VM_RQ_BASE+30)
-#	define VMVRO_FD			m1_i2
-#define VM_VFS_REPLY_MMAP	(VM_RQ_BASE+31)
-#define VM_VFS_REPLY_CLOSE	(VM_RQ_BASE+32)
+#define VM_VFS_REPLY		(VM_RQ_BASE+30)
+#	define VMV_ENDPOINT		m10_i1
+#	define VMV_RESULT		m10_i2
+#	define VMV_REQID		m10_i3
+#	define VMV_DEV			m10_i4
+#	define VMV_INO			m10_l1
+#	define VMV_FD			m10_l2
 
 #define VM_REMAP		(VM_RQ_BASE+33)
 #	define VMRE_D			m1_i1

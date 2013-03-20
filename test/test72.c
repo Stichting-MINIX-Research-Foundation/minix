@@ -114,29 +114,34 @@ static void allocate(int b)
 ssize_t
 bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 {
-	int i, block;
+	int i;
 	ssize_t tot = 0;
 	assert(dev == MYDEV);
 	assert(curblocksize > 0);
 	assert(!(pos % curblocksize));
-	block = pos / curblocksize;
 	for(i = 0; i < count; i++) {
-		int subblocks;
+		int subpages, block, block_off;
 		char *data = (char *) vec[i].iov_addr;
-		assert(vec[i].iov_size > 0);
-		assert(!(vec[i].iov_size % curblocksize));
-		subblocks = vec[i].iov_size / curblocksize;
-		while(subblocks > 0) {
-			assert(block > 0);
+		assert(!(pos % curblocksize));
+		block = pos / curblocksize;
+		block_off = pos % curblocksize;
+		assert(!(vec[i].iov_size % PAGE_SIZE));
+		subpages = vec[i].iov_size / PAGE_SIZE;
+		while(subpages > 0) {
+			assert(block >= 0);
 			assert(block < MAXBLOCKS);
+			assert(block_off >= 0);
+			assert(block_off < curblocksize);
 			if(!writtenblocks[block]) {
 				allocate(block);
 			}
-			memcpy(data, writtenblocks[block], curblocksize);
+			memcpy(data, writtenblocks[block] + block_off,
+				PAGE_SIZE);
 			block++;
-			subblocks--;
-			data += curblocksize;
-			tot += curblocksize;
+			subpages--;
+			data += PAGE_SIZE;
+			tot += PAGE_SIZE;
+			block_off += PAGE_SIZE;
 		}
 	}
 
@@ -156,7 +161,7 @@ bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 		int subblocks;
 		char *data = (char *) vec[i].iov_addr;
 		assert(vec[i].iov_size > 0);
-		assert(!(vec[i].iov_size % curblocksize));
+		assert(!(vec[i].iov_size % PAGE_SIZE));
 		subblocks = vec[i].iov_size / curblocksize;
 		while(subblocks > 0) {
 			assert(block >= 0);
@@ -261,6 +266,18 @@ int free_contig(void *addr, size_t len)
 u32_t sqrt_approx(u32_t v)
 {
 	return (u32_t) sqrt(v);
+}
+
+int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
+        u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
+{
+	return ENOSYS;
+}
+
+void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
+        u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
+{
+	return MAP_FAILED;
 }
 
 int

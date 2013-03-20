@@ -65,5 +65,20 @@ int vm_info_region(endpoint_t who, struct vm_region_info *vri, int
 	count, vir_bytes *next);
 int vm_procctl(endpoint_t ep, int param);
 
+int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
+        u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
+
+void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
+        u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
+
+/* flags for vm cache functions */
+#define VMMC_FLAGS_LOCKED	0x01	/* someone is updating the flags; don't read/write */
+#define VMMC_DIRTY		0x02	/* dirty buffer and it may not be evicted */
+#define VMMC_EVICTED		0x04	/* VM has evicted the buffer and it's invalid */
+#define VMMC_BLOCK_LOCKED	0x08	/* client is using it and it may not be evicted */
+
+/* special inode number for vm cache functions */
+#define VMC_NO_INODE		0	/* to reference a disk block, no associated file */
+
 #endif /* _MINIX_VM_H */
 

@@ -45,23 +45,34 @@ char *pf_errstr(u32_t err)
 	return buf;
 }
 
-/*===========================================================================*
- *				do_pagefaults	     		     *
- *===========================================================================*/
-void do_pagefaults(message *m)
-{
-	endpoint_t ep = m->m_source;
-	u32_t addr = m->VPF_ADDR;
-	u32_t err = m->VPF_FLAGS;
-	struct vmproc *vmp;
-	int s;
+struct pf_state {
+        endpoint_t ep;
+        vir_bytes vaddr;
+	u32_t err;
+};
 
+struct hm_state {
+	endpoint_t requestor;
+	struct vmproc *vmp;
+	vir_bytes mem;
+	vir_bytes len;
+	int wrflag;
+};
+
+static void pf_cont(struct vmproc *vmp, message *m, void *arg, void *statearg);
+
+static void hm_cont(struct vmproc *vmp, message *m, void *arg, void *statearg);
+
+static void handle_pagefault(endpoint_t ep, vir_bytes addr, u32_t err, int retry)
+{
+	struct vmproc *vmp;
+	int s, result;
 	struct vir_region *region;
 	vir_bytes offset;
 	int p, wr = PFERR_WRITE(err);
 
 	if(vm_isokendpt(ep, &p) != OK)
-		panic("do_pagefaults: endpoint wrong: %d", ep);
+		panic("handle_pagefault: endpoint wrong: %d", ep);
 
 	vmp = &vmproc[p];
 	assert(vmp->vm_flags & VMF_INUSE);
@@ -69,11 +80,11 @@ void do_pagefaults(message *m)
 	/* See if address is valid at all. */
 	if(!(region = map_lookup(vmp, addr, NULL))) {
 		if(PFERR_PROT(err))  {
-			printf("VM: pagefault: SIGSEGV %d protected addr 0x%x; %s\n",
+			printf("VM: pagefault: SIGSEGV %d protected addr 0x%lx; %s\n",
 				ep, addr, pf_errstr(err));
 		} else {
 			assert(PFERR_NOPAGE(err));
-			printf("VM: pagefault: SIGSEGV %d bad addr 0x%x; %s\n",
+			printf("VM: pagefault: SIGSEGV %d bad addr 0x%lx; %s\n",
 					ep, addr, pf_errstr(err));
 			sys_sysctl_stacktrace(ep);
 		}
@@ -86,7 +97,7 @@ void do_pagefaults(message *m)
 
 	/* If process was writing, see if it's writable. */
 	if(!(region->flags & VR_WRITABLE) && wr) {
-		printf("VM: pagefault: SIGSEGV %d ro map 0x%x %s\n",
+		printf("VM: pagefault: SIGSEGV %d ro map 0x%lx %s\n",
 				ep, addr, pf_errstr(err));
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
@@ -99,18 +110,73 @@ void do_pagefaults(message *m)
 	offset = addr - region->vaddr;
 
 	/* Access is allowed; handle it. */
-	if((map_pf(vmp, region, offset, wr)) != OK) {
+	if(retry) {
+		result = map_pf(vmp, region, offset, wr, NULL, NULL, 0);
+		assert(result != SUSPEND);
+	} else {
+		struct pf_state state;
+		state.ep = ep;
+		state.vaddr = addr;
+		state.err = err;
+		result = map_pf(vmp, region, offset, wr, pf_cont,
+			&state, sizeof(state));
+	}
+
+	if(result == SUSPEND) {
+		return;
+	}
+
+	if(result != OK) {
 		printf("VM: pagefault: SIGSEGV %d pagefault not handled\n", ep);
-		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
+		if((s=sys_kill(ep, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
 			panic("do_pagefaults: sys_vmctl failed: %d", ep);
 		return;
 	}
 
+        pt_clearmapcache();
+
 	/* Pagefault is handled, so now reactivate the process. */
 	if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
 		panic("do_pagefaults: sys_vmctl failed: %d", ep);
+}
+
+
+static void pf_cont(struct vmproc *vmp, message *m,
+        void *arg, void *statearg)
+{
+	struct pf_state *state = statearg;
+	handle_pagefault(state->ep, state->vaddr, state->err, 1);
+}
+
+static void hm_cont(struct vmproc *vmp, message *m,
+        void *arg, void *statearg)
+{
+	int r;
+	struct hm_state *state = statearg;
+	printf("hm_cont: result %d\n", m->VMV_RESULT);
+	r = handle_memory(vmp, state->mem, state->len, state->wrflag,
+		hm_cont, &state, sizeof(state));
+	if(r == SUSPEND) {
+		printf("VM: hm_cont: damnit: hm_cont: more SUSPEND\n");
+		return;
+	}
+
+	printf("VM: hm_cont: ok, result %d, requestor %d\n", r, state->requestor);
+
+	if(sys_vmctl(state->requestor, VMCTL_MEMREQ_REPLY, r) != OK)
+		panic("hm_cont: sys_vmctl failed: %d", r);
+
+	printf("MEMREQ_REPLY sent\n");
+}
+
+/*===========================================================================*
+ *				do_pagefaults	     		     *
+ *===========================================================================*/
+void do_pagefaults(message *m)
+{
+	handle_pagefault(m->m_source, m->VPF_ADDR, m->VPF_FLAGS, 0);
 }
 
 /*===========================================================================*
@@ -132,25 +198,43 @@ void do_memory(void)
 
 		switch(r) {
 		case VMPTYPE_CHECK:
+		{
+			struct hm_state state;
+
 			if(vm_isokendpt(who, &p) != OK)
 				panic("do_memory: bad endpoint: %d", who);
 			vmp = &vmproc[p];
 
-			r = handle_memory(vmp, mem, len, wrflag);
+
+			state.vmp = vmp;
+			state.mem = mem;
+			state.len = len;
+			state.wrflag = wrflag;
+			state.requestor = requestor;
+
+			r = handle_memory(vmp, mem, len,
+				wrflag, hm_cont, &state, sizeof(state));
+
 			break;
+		}
+
 		default:
 			return;
 		}
 
-		if(sys_vmctl(requestor, VMCTL_MEMREQ_REPLY, r) != OK)
+		if(r != SUSPEND) {
+		   if(sys_vmctl(requestor, VMCTL_MEMREQ_REPLY, r) != OK)
 			panic("do_memory: sys_vmctl failed: %d", r);
+		}
 	}
 }
 
-int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
+int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag,
+	vfs_callback_t callback, void *state, int statelen)
 {
 	struct vir_region *region;
 	vir_bytes o;
+	struct hm_state *hmstate = (struct hm_state *) state;
 
 	/* Page-align memory and length. */
 	o = mem % VM_PAGE_SIZE;
@@ -181,8 +265,14 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 			if(offset + sublen > region->length)
 				sublen = region->length - offset;
 	
-			r = map_handle_memory(vmp, region, offset,
-				sublen, wrflag);
+			if(hmstate && hmstate->requestor == VFS_PROC_NR
+			   && region->def_memtype == &mem_type_mappedfile) {
+				r = map_handle_memory(vmp, region, offset,
+				   sublen, wrflag, NULL, NULL, 0);
+			} else {
+				r = map_handle_memory(vmp, region, offset,
+				   sublen, wrflag, callback, state, sizeof(*state));
+			}
 
 			len -= sublen;
 			mem += sublen;
