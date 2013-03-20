@@ -32,6 +32,8 @@ struct phys_block {
 	u8_t			flags;
 };
 
+#define PBF_INCACHE		0x01
+
 typedef struct vir_region {
 	vir_bytes	vaddr;	/* virtual address, offset from pagetable */
 	vir_bytes	length;	/* length in bytes */
@@ -43,12 +45,21 @@ typedef struct vir_region {
 	u32_t		id;     /* unique id */
 
 	union {
-		phys_bytes phys;
+		phys_bytes phys;	/* VR_DIRECT */
 		struct {
 			endpoint_t ep;
 			vir_bytes vaddr;
 			int id;
 		} shared;
+		struct phys_block *pb_cache;
+		struct {
+			int	procfd;	/* cloned fd in proc for mmap */
+			dev_t	dev;
+			ino_t	ino;
+			u64_t	offset;
+			int	inited;
+			u16_t	clearend;
+		} file;
 	} param;
 
 	/* AVL fields */
@@ -61,7 +72,6 @@ typedef struct vir_region {
 #define VR_PHYS64K	0x004	/* Physical memory must be 64k aligned. */
 #define VR_LOWER16MB	0x008
 #define VR_LOWER1MB	0x010
-#define VR_CONTIG	0x020	/* Must be physically contiguous. */
 #define VR_SHARED	0x040
 #define VR_UNINITIALIZED 0x080	/* Do not clear after allocation  */
 

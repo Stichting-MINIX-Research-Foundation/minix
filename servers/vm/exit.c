@@ -29,21 +29,20 @@ void free_proc(struct vmproc *vmp)
 	map_free_proc(vmp);
 	pt_free(&vmp->vm_pt);
 	region_init(&vmp->vm_regions_avl);
-	vmp->vm_region_top = 0;
 #if VMSTATS
 	vmp->vm_bytecopies = 0;
 #endif
+	vmp->vm_region_top = 0;
 }
 
 void clear_proc(struct vmproc *vmp)
 {
 	region_init(&vmp->vm_regions_avl);
-	vmp->vm_region_top = 0;
-	vmp->vm_callback = NULL;	/* No pending vfs callback. */
 	vmp->vm_flags = 0;		/* Clear INUSE, so slot is free. */
 #if VMSTATS
 	vmp->vm_bytecopies = 0;
 #endif
+	vmp->vm_region_top = 0;
 }
 
 /*===========================================================================*
@@ -61,6 +60,7 @@ SANITYCHECK(SCL_FUNCTIONS);
 		return EINVAL;
 	}
 	vmp = &vmproc[proc];
+
 	if(!(vmp->vm_flags & VMF_EXITING)) {
 		printf("VM: unannounced VM_EXIT %d\n", msg->VME_ENDPOINT);
 		return EINVAL;
