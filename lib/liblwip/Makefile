@@ -9,4 +9,3 @@ CPPFLAGS += -I${.CURDIR}/include/ -I${.CURDIR}/include/ipv4 -I${.CURDIR}/include
 SRCS += sys_arch.c
 
 .include <bsd.lib.mk>
-.include <bsd.own.mk>
