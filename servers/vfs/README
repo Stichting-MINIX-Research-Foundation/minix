@@ -1,24 +1,33 @@
-Description of VFS                            Thomas Veerman 18-12-2012
+## Description of VFS                            Thomas Veerman 21-3-2013
+## This file is organized such that it can be read both in a Wiki and on
+## the MINIX terminal using e.g. vi or less. Please, keep the file in the
+## source tree as the canonical version and copy changes into the Wiki.
+#pragma section-numbers 2
 
-Table of contents
-1 ..... General description of responsibilities
-2 ..... General architecture
-3 ..... Worker threads
-4 ..... Locking
-4.1 .... Locking requirements
-4.2 .... Three-level Lock
-4.3 .... Data structures subject to locking
-4.4 .... Locking order
-4.5 .... Vmnt (file system) locking
-4.6 .... Vnode (open file) locking
-4.7 .... Filp (file position) locking
-4.8 .... Lock characteristics per request type
-5 ..... Recovery from driver crashes
-5.1 .... Recovery from block drivers crashes
-5.2 .... Recovery from character driver crashes
-5.3 .... Recovery from File Server crashes
+= VFS internals =
 
-1 General description of responsibilities
+<<TableOfContents(2)>>
+
+## Table of contents
+## 1 ..... General description of responsibilities
+## 2 ..... General architecture
+## 3 ..... Worker threads
+## 4 ..... Locking
+## 4.1 .... Locking requirements
+## 4.2 .... Three-level Lock
+## 4.3 .... Data structures subject to locking
+## 4.4 .... Locking order
+## 4.5 .... Vmnt (file system) locking
+## 4.6 .... Vnode (open file) locking
+## 4.7 .... Filp (file position) locking
+## 4.8 .... Lock characteristics per request type
+## 5 ..... Recovery from driver crashes
+## 5.1 .... Recovery from block drivers crashes
+## 5.2 .... Recovery from character driver crashes
+## 5.3 .... Recovery from File Server crashes
+
+== General description of responsibilities ==
+## 1 General description of responsibilities
 VFS implements the file system in cooperation with one or more File Servers
 (FS). The File Servers take care of the actual file system on a partition. That
 is, they interpret the data structure on disk, write and read data to/from
@@ -27,10 +36,12 @@ them. Looking inside VFS, we can identify several roles. First, a role of VFS
 is to handle most POSIX system calls that are supported by Minix. Additionally,
 it supports a few calls necessary for libc. The following system calls are
 handled by VFS:
+
 access, chdir, chmod, chown, chroot, close, creat, fchdir, fcntl, fstat,
 fstatfs, fstatvfs, fsync, ftruncate getdents, ioctl, link, llseek, lseek,
 lstat, mkdir, mknod, mount, open, pipe, read, readlink, rename, rmdir, select,
 stat, statvfs, symlink, sync, truncate, umask, umount, unlink, utime, write.
+
 Second, it maintains part of the state belonging to a process (process state is
 spread out over the kernel, VM, PM, and VFS). For example, it maintains state
 for select(2) calls, file descriptors and file positions. Also, it cooperates
@@ -41,7 +52,7 @@ block special files, although they are handled entirely different compared
 to other drivers.
 
 The following diagram depicts how a read() on a file in /home is being handled:
-
+{{{
       ----------------
       | user process |
       ----------------
@@ -60,6 +71,7 @@ The following diagram depicts how a read() on a file in /home is being handled:
   | MFS | |  MFS | |  MFS  |
   |  /  | | /usr | | /home |
   ------- -------- ---------
+}}}
 Diagram 1: handling of read(2) system call
 
 The user process executes the read system call which is delivered to VFS. VFS
@@ -69,7 +81,8 @@ reads the data, copies it directly to the user process, and replies to VFS
 it has executed the request. Subsequently, VFS replies to the user process
 the operation is done and the user process continues to run.
 
-2 General architecture
+== General architecture ==
+## 2 General architecture
 VFS works roughly identical to every other server and driver in Minix; it
 fetches a message (internally referred to as a job in some cases), executes
 the request embedded in the message, returns a reply, and fetches the next
@@ -88,7 +101,8 @@ but it is an accurate description of how it works. Luckily, driver writers
 can use the libchardriver and libblockdriver libraries and don't have to
 know the details of the protocol.
 
-3 Worker threads
+== Worker threads ==
+## 3 Worker threads
 Upon start up, VFS spawns a configurable amount of worker threads. The
 main thread fetches requests and replies, and hands them off to idle or
 reply-pending workers, respectively. If no worker threads are available,
@@ -107,7 +121,7 @@ As mentioned above, the main thread is responsible for retrieving new jobs and
 replies to current jobs and start or unblock the proper worker thread. Given
 how many sources for new jobs and replies there are, the work for the main
 thread is quite complicated. Consider Table 1.
-
+{{{
 ---------------------------------------------------------
 | From                 |  normal  | deadlock |  system  |
 ---------------------------------------------------------
@@ -133,6 +147,7 @@ thread is quite complicated. Consider Table 1.
 +----------------------+----------+----------+----------+
 | Async. driver reply  | resume/X |    X     |          |
 ---------------------------------------------------------
+}}}
 Table 1: VFS' message fetching main loop. X means 'start thread'.
 
 The reason why asynchronous driver replies get their own thread is for the
@@ -169,7 +184,8 @@ transaction IDs is isolated from valid system call numbers, VFS can use that
 ID to differentiate between replies from File Servers and actual new system
 calls from FSes. Using this mechanism VFS is able to support FUSE and ProcFS.
 
-4 Locking
+== Locking ==
+## 4 Locking
 To ensure correct execution of system calls, worker threads sometimes need
 certain objects within VFS to remain unchanged during thread suspension
 and resumption (i.e., when they need to communicate with a driver or File
@@ -179,7 +195,8 @@ and filp table. Other tables such as lock table, select table, and dmap table
 don't require protection by means of exclusive access. There it's required
 and enough to simply mark an entry in use.
 
-4.1 Locking requirements
+=== Locking requirements ===
+## 4.1 Locking requirements
 VFS implements the locking model described in [2]. For completeness of this
 document we'll describe it here, too. The requirements are based on a threading
 package that is non-preemptive. VFS must guarantee correct functioning with
@@ -187,47 +204,18 @@ several, semi-concurrently executing threads in any arbitrary order. The
 latter requirement follows from the fact that threads need service from
 other components like File Servers and drivers, and they may take any time
 to complete requests.
-1) Consistency of replicated values. Several system calls rely on VFS keeping
-a replicated representation of data in File Servers (e.g., file sizes,
-file modes, etc.).
-2) Isolation of system calls. Many system calls involve multiple requests to
-FSes. Concurrent requests from other processes must not lead to otherwise
-impossible results (e.g., a chmod operation on a file cannot fail halfway
-through because it's suddenly unlinked or moved).
-3) Integrity of objects. From the point of view of threads, obtaining mutual
-exclusion is a potentially blocking operation. The integrity of any objects
-used across blocking calls must be guaranteed (e.g., the file mode in a vnode
-must remain intact not only when talking to other components, but also when
-obtaining a lock on a filp).
-4) No deadlock. Not one call may cause another call to never complete. Deadlock
-situations are typically the result of two or more threads that each hold
-exclusive access to one resource and want exclusive access to the resource
-held by the other thread. These resources are a) data (global variables)
-and b) worker threads.
-4a) Conflicts between locking of different types of objects can be avoided by
-keeping a locking order: objects of different type must always be locked in
-the same order. If multiple objects of the same type are to be locked, then
-first a "common denominator" higher up in the locking order must be locked.
-4b) Some threads can only run to completion when another thread does work on
-their behalf. Examples of this are drivers and file servers that do system
-calls on their own (e.g., ProcFS, PFS/UNIX Domain Sockets, FUSE) or crashing
-components (e.g., a driver for a character special file that crashes during
-a request; a second thread is required to handle resource clean up or driver
-restart before the first thread can abort or retry the request).
-5) No starvation. VFS must guarantee that every system call completes in finite
-time (e.g., an infinite stream of reads must never completely block writes).
-Furthermore, we want to maximize parallelism to improve performance. This
-leads to:
-6) A request to one File Server must not block access to other FS
-processes. This means that most forms of locking cannot take place at a
-global level, and must at most take place on the file system level.
-7) No read-only operation on a regular file must block an independent read
-call to that file. In particular, (read-only) open and close operations may
-not block such reads, and multiple independent reads on the same file must
-be able to take place concurrently (i.e., reads that do not share a file
-position between their file descriptors).
+ 1. Consistency of replicated values. Several system calls rely on VFS keeping a replicated representation of data in File Servers (e.g., file sizes, file modes, etc.).
+ 1. Isolation of system calls. Many system calls involve multiple requests to FSes. Concurrent requests from other processes must not lead to otherwise impossible results (e.g., a chmod operation on a file cannot fail halfway through because it's suddenly unlinked or moved).
+ 1. Integrity of objects. From the point of view of threads, obtaining mutual exclusion is a potentially blocking operation. The integrity of any objects used across blocking calls must be guaranteed (e.g., the file mode in a vnode must remain intact not only when talking to other components, but also when obtaining a lock on a filp).
+ 1. No deadlock. Not one call may cause another call to never complete. Deadlock situations are typically the result of two or more threads that each hold exclusive access to one resource and want exclusive access to the resource held by the other thread. These resources are a) data (global variables) and b) worker threads.
+   a. Conflicts between locking of different types of objects can be avoided by keeping a locking order: objects of different type must always be locked in the same order. If multiple objects of the same type are to be locked, then first a "common denominator" higher up in the locking order must be locked. 
+   a. Some threads can only run to completion when another thread does work on their behalf. Examples of this are drivers and file servers that do system calls on their own (e.g., ProcFS, PFS/UNIX Domain Sockets, FUSE) or crashing components (e.g., a driver for a character special file that crashes during a request; a second thread is required to handle resource clean up or driver restart before the first thread can abort or retry the request).
+ 1. No starvation. VFS must guarantee that every system call completes in finite time (e.g., an infinite stream of reads must never completely block writes). Furthermore, we want to maximize parallelism to improve performance. This leads to:
+ 1. A request to one File Server must not block access to other FS processes. This means that most forms of locking cannot take place at a global level, and must at most take place on the file system level.
+ 1. No read-only operation on a regular file must block an independent read call to that file. In particular, (read-only) open and close operations may not block such reads, and multiple independent reads on the same file must be able to take place concurrently (i.e., reads that do not share a file position between their file descriptors).
 
-4.2 Three-level Lock
+=== Three-level Lock ===
+## 4.2 Three-level Lock
 From the requirements it follows that we need at least two locking types: read
 and write locks. Concurrent reads are allowed, but writes are exclusive both
 from reads and from each other. However, in a lot of cases it possible to use
@@ -248,9 +236,10 @@ leaves and new TLL_READ locks are blocked. Locks can be downgraded to a
 lower type. The three-level lock is implemented using two FIFO queues with
 write-bias. This guarantees no starvation.
 
-4.3 Data structures subject to locking
+=== Data structures subject to locking ===
+## 4.3 Data structures subject to locking
 VFS has a number of global data structures. See Table 2.
-
+{{{
 --------------------------------------------------------------------
 | Structure  | Object description                                  |
 +------------+-----------------------------------------------------|
@@ -268,6 +257,7 @@ VFS has a number of global data structures. See Table 2.
 +------------+-----------------------------------------------------|
 | dmap       | Mapping from major device number to a device driver |
 --------------------------------------------------------------------
+}}}
 Table 2: VFS object types.
 
 An fproc object is a process. An fproc object is created by fork(2)
@@ -309,7 +299,8 @@ A dmap object is a mapping from a device number to a device driver. A device
 driver can have multiple device numbers associated (e.g., TTY). Access to
 a driver is exclusive when it uses the synchronous driver protocol.
 
-4.4 Locking order
+=== Locking order ===
+## 4.4 Locking order
 Based on the description in the previous section, we need protection for
 fproc, vmnt, vnode, and filp objects. To prevent deadlocks as a result of
 object locking, we need to define a strict locking order. In VFS we use the
@@ -342,7 +333,8 @@ access to block special files must be mutually exclusive from concurrent
 mount(2)/umount(2) operations. However, when we're not accessing a block
 special file, we don't need this lock.
 
-4.5 Vmnt (file system) locking
+=== Vmnt (file system) locking ===
+## 4.5 Vmnt (file system) locking
 Vmnt locking cannot be seen completely separately from vnode locking. For
 example, umount(2) fails if there are still in-use vnodes, which means that
 FS requests [0] only involving in-use inodes do not have to acquire a vmnt
@@ -350,11 +342,11 @@ lock. On the other hand, all other request do need a vmnt lock. Extrapolating
 this to system calls this means that all system calls involving a file
 descriptor don't need a vmnt lock and all other system calls (that make FS
 requests) do need a vmnt lock.
-
+{{{
 -------------------------------------------------------------------------------
 | Category          | System calls                                            |
 +-------------------+---------------------------------------------------------+
-| System calls with | access, chdir, chmod, chown, chroot, creat, dumpcore*,  |
+| System calls with | access, chdir, chmod, chown, chroot, creat, dumpcore+,  |
 | a path name       | exec, link, lstat, mkdir, mknod, mount, open, readlink, |
 | argument          | rename, rmdir, stat, statvfs, symlink, truncate, umount,|
 |                   | unlink, utime                                           |
@@ -363,13 +355,14 @@ requests) do need a vmnt lock.
 | a file descriptor | getdents, ioctl, llseek, pipe, read, select, write      |
 | argument          |                                                         |
 +-------------------+---------------------------------------------------------+
-| System calls with | fsync**, sync, umask                                    |
+| System calls with | fsync++, sync, umask                                    |
 | other or no       |                                                         |
 | arguments         |                                                         |
 -------------------------------------------------------------------------------
-Table 3: System call categories
-* path name argument is implicit, the path name is "core.<pid>"
-** although fsync actually provides a file descriptor argument, it's only
+}}}
+Table 3: System call categories.
++ path name argument is implicit, the path name is "core.<pid>"
+++ although fsync actually provides a file descriptor argument, it's only
 used to find the vmnt and not to do any actual operations on
 
 Before we describe what kind of vmnt locks VFS applies to system calls with a
@@ -379,10 +372,10 @@ at any vmnt (based on root directory and working directory of the process doing
 the lookup) and visit any file system in arbitrary order, possibly visiting
 the same file system more than once. As such, VFS can never tell in advance
 at which File Server a lookup will end. This has the following consequences:
- - In the lookup procedure, only one vmnt must be locked at a time. When
+ * In the lookup procedure, only one vmnt must be locked at a time. When
  moving from one vmnt to another, the first vmnt has to be unlocked before
  acquiring the next lock to prevent deadlocks.
- - The lookup procedure must lock each visited file system with TLL_READSER
+ * The lookup procedure must lock each visited file system with TLL_READSER
  and downgrade or upgrade to the lock type desired by the caller for the
  destination file system (as VFS cannot know which file system is final). This
  is to prevent deadlocks when a thread acquires a TLL_READSER on a vmnt and
@@ -391,6 +384,7 @@ at which File Server a lookup will end. This has the following consequences:
  will be unable to upgrade a TLL_READSER lock to TLL_WRITE.
 
 We use the following mapping for vmnt locks onto three-level lock types:
+{{{
 -------------------------------------------------------------------------------
 | Lock type  |  Mapped to  | Used for                                         |
 +------------+-------------+--------------------------------------------------+
@@ -401,11 +395,13 @@ We use the following mapping for vmnt locks onto three-level lock types:
 +------------+-------------+--------------------------------------------------+
 | VMNT_EXCL  | TLL_WRITE   | Delete and dependent write operations            |
 -------------------------------------------------------------------------------
+}}}
 Table 4: vmnt to tll lock mapping
 
 The following table shows a sub-categorization of system calls without a
 file descriptor argument, together with their locking types and motivation
 as used by VFS.
+{{{
 -------------------------------------------------------------------------------
 | Group       | System calls | Lock type  | Motivation                        |
 +-------------+--------------+------------+-----------------------------------+
@@ -462,9 +458,11 @@ as used by VFS.
 |             |              |            | in VFS and  is atomic at the FS   |
 |             |              |            | level                             |
 -------------------------------------------------------------------------------
+}}}
 Table 5: System call without file descriptor argument sub-categorization
 
-4.6 Vnode (open file) locking
+=== Vnode (open file) locking ===
+## 4.6 Vnode (open file) locking
 Compared to vmnt locking, vnode locking is relatively straightforward. All
 read-only accesses to vnodes that merely read the vnode object's fields are
 allowed to be concurrent. Consequently, all accesses that change fields
@@ -477,6 +475,7 @@ by process B. Note that this also relies on the fact that a process can do
 only one system call at a time. Kernel threads would violate this assumption.
 
 We use the following mapping for vnode locks onto three-level lock types:
+{{{
 -------------------------------------------------------------------------------
 | Lock type  |  Mapped to  | Used for                                         |
 +------------+-------------+--------------------------------------------------+
@@ -487,6 +486,7 @@ We use the following mapping for vnode locks onto three-level lock types:
 +------------+-------------+--------------------------------------------------+
 | VNODE_WRITE| TLL_WRITE   | Write access to previously opened vnodes         |
 -------------------------------------------------------------------------------
+}}}
 Table 6: vnode to tll lock mapping
 
 When vnodes are destroyed, they are initially locked with VNODE_OPCL. After
@@ -496,7 +496,8 @@ always be immediately possible unless there is a consistency problem. See
 section 4.8 for an exhaustive listing of locking methods for all operations on
 vnodes.
 
-4.7 Filp (file position) locking
+=== Filp (file position) locking ===
+## 4.7 Filp (file position) locking
 The main fields of a filp object that are shared between various processes
 (and by extension threads), and that can change after object creation,
 are filp_count and filp_pos. Writes to and reads from filp object must be
@@ -514,12 +515,8 @@ a filp is unlocked, the corresponding vnode is also unlocked. A convenient
 consequence is that whenever a vnode is locked exclusively (VNODE_WRITE),
 all corresponding filps are implicitly locked. This is of particular use
 when multiple filps must be locked at the same time:
-  - When opening a named pipe, VFS must make sure that there is at most one
-  filp for the reader end and one filp for the writer end.
-  - Pipe readers and writers must be suspended in the absence of (respectively)
-  writers and readers.
-  - To prevent pipe file sizes to grow too large and wrap, the file size is
-  reset to zero when the pipe is empty. This can happen after a read(2).
+ * When opening a named pipe, VFS must make sure that there is at most one   filp for the reader end and one filp for the writer end.
+ * Pipe readers and writers must be suspended in the absence of (respectively)  writers and readers.
 Because both filps are linked to the same vnode object (they are for the same
 pipe), it suffices to exclusively lock that vnode instead of both filp objects.
 
@@ -546,13 +543,14 @@ second filp doesn't have an associated vnode that's locked anymore. Therefore
 we introduced a plural unlock_filps(filp1, filp2) that can unlock two filps
 that both point to the same vnode.
 
-4.8 Lock characteristics per request type
+=== Lock characteristics per request type ===
+## 4.8 Lock characteristics per request type
 For File Servers that support concurrent requests, it's useful to know which
 locking guarantees VFS provides for vmnts and vnodes, so it can take that
 into account when protecting internal data structures. READ = TLL_READ,
 READSER = TLL_READSER, WRITE = TLL_WRITE. The vnode locks applies to the
 REQ_INODE_NR field in requests, unless the notes say otherwise.
-
+{{{
 ------------------------------------------------------------------------------
 | request      | vmnt    | vnode   | notes                                   |
 +--------------+---------+---------+-----------------------------------------+
@@ -632,14 +630,17 @@ REQ_INODE_NR field in requests, unless the notes say otherwise.
 +--------------+---------+---------+-----------------------------------------+
 | REQ_WRITE    |         | WRITE   |                                         |
 -----------------------------------------------------------------------------+
+}}}
 Table 7: VFS-FS requests locking guarantees
 
-5 Recovery from driver crashes
+== Recovery from driver crashes ==
+## 5 Recovery from driver crashes
 VFS can recover from block special file and character special file driver
 crashes. It can recover to some degree from a crashed File Server (which we
 can regard as a driver).
 
-5.1 Recovery from block drivers crashes
+=== Recovery from block drivers crashes ===
+## 5.1 Recovery from block drivers crashes
 When reading or writing, VFS doesn't communicate with block drivers directly,
 but always through a File Server (the root File Server being default). If the
 block driver crashes, the File Server does most of the work of the recovery
@@ -651,7 +652,8 @@ files can cause the block driver to crash again. When that happens, VFS will
 stop the recovery. A driver can return ERESTART to VFS to tell it to retry
 a request. VFS does this with an arbitrary maximum of 5 attempts.
 
-5.2 Recovery from character driver crashes
+=== Recovery from character driver crashes ===
+## 5.2 Recovery from character driver crashes
 Character special files are treated differently. Once VFS has found out a
 driver has been restarted, it will stop the current request (if there is
 any). It makes no sense to retry requests due to the nature of character
@@ -662,7 +664,8 @@ the other hand, if a driver restart causes the driver to change endpoint
 number, all associated file descriptors are marked invalid and subsequent
 operations on them will always fail with a bad file descriptor error.
 
-5.3 Recovery from File Server crashes
+=== Recovery from File Server crashes ===
+## 5.3 Recovery from File Server crashes
 At the time of writing we cannot recover from crashed File Servers. When
 VFS detects it has to clean up the remnants of a File Server process (i.e.,
 through an exit(2)), it marks all associated file descriptors as invalid
@@ -670,5 +673,7 @@ and cancels ongoing and pending requests to that File Server. Resources that
 were in use by the File Server are cleaned up.
 
 [0] http://wiki.minix3.org/en/DevelopersGuide/VfsFsProtocol
+
 [1] http://www.cs.vu.nl/~dcvmoole/minix/blockchar.txt
+
 [2] http://www.minix3.org/theses/moolenbroek-multimedia-support.pdf
