@@ -280,6 +280,7 @@
 ./usr/bin/fold				minix-sys
 ./usr/bin/format			minix-sys
 ./usr/bin/fortune			minix-sys
+./usr/bin/from				minix-sys
 ./usr/bin/fstat				minix-sys
 ./usr/bin/ftp				minix-sys
 ./usr/bin/gcore				minix-sys
@@ -1262,6 +1263,7 @@
 ./usr/man/man1/for.1			minix-sys
 ./usr/man/man1/format.1			minix-sys
 ./usr/man/man1/fortune.1		minix-sys
+./usr/man/man1/from.1			minix-sys
 ./usr/man/man1/fsck.mfs.1		minix-sys
 ./usr/man/man1/ftp.1			minix-sys
 ./usr/man/man1/genassym.1		minix-sys
