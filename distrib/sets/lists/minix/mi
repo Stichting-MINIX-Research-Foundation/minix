@@ -453,6 +453,7 @@
 ./usr/bin/vi				minix-sys
 ./usr/bin/vol				minix-sys
 ./usr/bin/wc				minix-sys
+./usr/bin/whatis			minix-sys
 ./usr/bin/whereis			minix-sys
 ./usr/bin/which				minix-sys
 ./usr/bin/whoami			minix-sys
@@ -1421,6 +1422,7 @@
 ./usr/man/man1/vol.1			minix-sys
 ./usr/man/man1/wait.1			minix-sys
 ./usr/man/man1/wc.1			minix-sys
+./usr/man/man1/whatis.1			minix-sys
 ./usr/man/man1/whereis.1		minix-sys
 ./usr/man/man1/which.1			minix-sys
 ./usr/man/man1/who.1			minix-sys
@@ -3672,7 +3674,6 @@
 ./usr/man/man5/tzfile.5					minix-sys
 ./usr/man/man5/usermgmt.conf.5					minix-sys
 ./usr/man/man5/utmp.5					minix-sys
-./usr/man/man5/whatis.5					minix-sys
 ./usr/man/man6					minix-sys
 ./usr/man/man7/ascii.7					minix-sys
 ./usr/man/man7/environ.7					minix-sys
