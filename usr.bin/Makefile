@@ -30,7 +30,7 @@ SUBDIR= \
 	uniq \
 	\
 	\
-	who \
+	whatis who \
 	xinstall yes
 
 .if !defined(__MINIX)
