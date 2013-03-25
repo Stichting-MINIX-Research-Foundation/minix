@@ -609,7 +609,7 @@ void tcp_release_retrans(
 				rtt*1000/HZ));
 
 			DBLOCK(0x10, printf(
-	"tcp_release_retrans: artt= %i -> %i, drtt= %i -> %i\n",
+	"tcp_release_retrans: artt= %lu -> %lu, drtt= %lu -> %lu\n",
 				tcp_conn->tc_artt, artt,
 				tcp_conn->tc_drtt, drtt));
 

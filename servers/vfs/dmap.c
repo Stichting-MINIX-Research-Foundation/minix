@@ -11,8 +11,6 @@
 #include <unistd.h>
 #include <minix/com.h>
 #include <minix/ds.h>
-#include "fproc.h"
-#include "dmap.h"
 #include "param.h"
 
 /* The order of the entries in the table determines the mapping between major
@@ -24,9 +22,6 @@
 
 struct dmap dmap[NR_DEVICES];
 
-#define DT_EMPTY { no_dev, no_dev_io, NONE, "", 0, STYLE_NDEV, NULL, NONE, \
-		   0, NULL, 0}
-
 /*===========================================================================*
  *				lock_dmap		 		     *
  *===========================================================================*/
@@ -34,20 +29,17 @@ void lock_dmap(struct dmap *dp)
 {
 /* Lock a driver */
 	struct worker_thread *org_self;
-	struct fproc *org_fp;
 	int r;
 
 	assert(dp != NULL);
 	assert(dp->dmap_driver != NONE);
 
-	org_fp = fp;
-	org_self = self;
+	org_self = worker_suspend();
 
 	if ((r = mutex_lock(dp->dmap_lock_ref)) != 0)
 		panic("unable to get a lock on dmap: %d\n", r);
 
-	fp = org_fp;
-	self = org_self;
+	worker_resume(org_self);
 }
 
 /*===========================================================================*
@@ -182,10 +174,6 @@ int flags;			/* device flags */
 	dp->dmap_opcl = gen_opcl;
 	dp->dmap_io = gen_io;
 	break;
-    case STYLE_DEVA:
-	dp->dmap_opcl = gen_opcl;
-	dp->dmap_io = asyn_io;
-	break;
     case STYLE_TTY:
 	dp->dmap_opcl = tty_opcl;
 	dp->dmap_io = gen_io;
@@ -197,10 +185,6 @@ int flags;			/* device flags */
     case STYLE_CLONE:
 	dp->dmap_opcl = clone_opcl;
 	dp->dmap_io = gen_io;
-	break;
-    case STYLE_CLONE_A:
-	dp->dmap_opcl = clone_opcl;
-	dp->dmap_io = asyn_io;
 	break;
     default:
 	return(EINVAL);
@@ -289,10 +273,16 @@ void init_dmap()
 {
 /* Initialize the table with empty device <-> driver mappings. */
   int i;
-  struct dmap dmap_default = DT_EMPTY;
 
-  for (i = 0; i < NR_DEVICES; i++)
-	dmap[i] = dmap_default;
+  memset(dmap, 0, sizeof(dmap));
+
+  for (i = 0; i < NR_DEVICES; i++) {
+	dmap[i].dmap_opcl = no_dev;
+	dmap[i].dmap_io = no_dev_io;
+	dmap[i].dmap_driver = NONE;
+	dmap[i].dmap_style = STYLE_NDEV;
+	dmap[i].dmap_servicing = NONE;
+  }
 }
 
 /*===========================================================================*

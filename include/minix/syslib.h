@@ -30,8 +30,8 @@ int _sendcall(endpoint_t who, int type, message *msgptr);
 
 int sys_abort(int how);
 int sys_enable_iop(endpoint_t proc_ep);
-int sys_exec(endpoint_t proc_ep, char *ptr, char *aout, vir_bytes
-	initpc);
+int sys_exec(endpoint_t proc_ep, char *stack_ptr, char *progname,
+	vir_bytes pc, vir_bytes ps_str);
 int sys_fork(endpoint_t parent, endpoint_t child, endpoint_t *, 
 	u32_t vm, vir_bytes *);
 int sys_clear(endpoint_t proc_ep);
@@ -158,8 +158,6 @@ int sys_umap_data_fb(endpoint_t proc_ep, vir_bytes vir_addr, vir_bytes
 	bytes, phys_bytes *phys_addr);
 int sys_umap_remote(endpoint_t proc_ep, endpoint_t grantee, int seg,
 	vir_bytes vir_addr, vir_bytes bytes, phys_bytes *phys_addr);
-
-int send_taskreply(endpoint_t who, endpoint_t endpoint, int status);
 
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkinfo(dst)	sys_getinfo(GET_KINFO, dst, 0,0,0)

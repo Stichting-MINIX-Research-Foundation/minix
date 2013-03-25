@@ -182,7 +182,9 @@
 							 */
 
 #define BUSC_I2C_RESERVE	(BUSC_RQ_BASE + 64)	/* reserve i2c device */
+#define   BUSC_I2C_ADDR		m2_i1			/* slave address */
 #define BUSC_I2C_EXEC		(BUSC_RQ_BASE + 65)	/* perform i2c action */
+#define   BUSC_I2C_GRANT	m2_i1			/* grant for request */
 
 /*===========================================================================*
  *                Messages for CHARACTER device drivers			     *
@@ -196,7 +198,6 @@
 #define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
 #define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
-#define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
 #define DEV_REOPEN     	(DEV_RQ_BASE + 14) /* reopen a minor device */
 
 #define DEV_READ_S	(DEV_RQ_BASE + 20) /* (safecopy) read from minor */
@@ -208,8 +209,6 @@
 #define IS_DEV_RQ(type) (((type) & ~0xff) == DEV_RQ_BASE)
 
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
-#define DEV_IO_READY    (DEV_RS_BASE + 3) /* selected device ready */
-#define DEV_NO_STATUS   (DEV_RS_BASE + 4) /* empty status reply */
 #define DEV_REOPEN_REPL (DEV_RS_BASE + 5) /* reply to DEV_REOPEN */
 #define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
 #define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
@@ -240,12 +239,6 @@
 #define REP_STATUS	m2_i2	/* bytes transferred or error number */
 #define REP_IO_GRANT	m2_i3	/* DEV_REVIVE: grant by which I/O was done */
 #  define SUSPEND 	 -998 	/* status to suspend caller, reply later */
-
-/* Field names for messages to TTY driver. */
-#define TTY_LINE	DEVICE	/* message parameter: terminal line */
-#define TTY_REQUEST	COUNT	/* message parameter: ioctl request code */
-#define TTY_SPEK	POSITION/* message parameter: ioctl speed, erasing */
-#define TTY_PGRP 	m2_i3	/* message parameter: process group */	
 
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
@@ -549,6 +542,7 @@
 #define PR_STACK_PTR    m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
 #define PR_NAME_PTR     m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
+#define PR_PS_STR_PTR   m1_p4	/* pointer to ps_strings, expected by __start */
 #define PR_FORK_FLAGS	m1_i3	/* optional flags for fork operation */
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
 #define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
@@ -557,9 +551,7 @@
 #define PMEXEC_FLAGS	m1_i3	/* PMEF_* */
 
 #define PMEF_AUXVECTORS	20
-#define PMEF_EXECNAMELEN1 256
-#define PMEF_AUXVECTORSPACE 0x01 /* space for PMEF_AUXVECTORS on stack */
-#define PMEF_EXECNAMESPACE1 0x02 /* space for PMEF_EXECNAMELEN1 execname */
+#define PMEF_EXECNAMELEN1 PATH_MAX
 
 /* Flags for PR_FORK_FLAGS. */
 #define PFF_VMINHIBIT	0x01	/* Don't schedule until release by VM. */
@@ -811,11 +803,13 @@
 #  define PM_FRAME		m7_p2	/* arguments and environment */
 #  define PM_FRAME_LEN		m7_i3	/* size of frame */
 #  define PM_EXECFLAGS		m7_i4	/* PMEXEC_FLAGS */
+#  define PM_PS_STR		m7_i5	/* ps_strings pointer */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
 #  define PM_STATUS		m7_i2	/* OK or failure */
 #  define PM_PC			m7_p1	/* program counter */
 #  define PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
+#  define PM_NEWPS_STR		m7_i5	/* possibly-changed ps_strings ptr */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
 #  define PM_PPROC		m7_i2	/* parent process endpoint */
@@ -825,7 +819,6 @@
 
 /* Additional parameters for PM_DUMPCORE */
 #  define PM_TERM_SIG		m7_i2	/* process's termination signal */
-#  define PM_TRACED_PROC	m7_i3	/* required for T_DUMPCORE */
 
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */
@@ -848,6 +841,7 @@
 #define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
 #define EXC_RS_RESULT	m1_i2		/* result of the exec */
 #define EXC_RS_PC	m1_p1		/* program counter */
+#define EXC_RS_PS_STR	m1_p2		/* ps_strings pointer */
 
 /*===========================================================================*
  *                Messages used from VFS to file servers		     *
@@ -902,14 +896,43 @@
 #define SEL_ERRORFDS   m8_p3
 #define SEL_TIMEOUT    m8_p4
 
-/* Field names for the fstatvfs call */
-#define FSTATVFS_FD m1_i1
-#define FSTATVFS_BUF m1_p1
+/* Field names for the getvfsstat(2) call. */
+#define VFS_GETVFSSTAT_BUF	m1_p1
+#define VFS_GETVFSSTAT_SIZE	m1_i1
+#define VFS_GETVFSSTAT_FLAGS	m1_i2
 
-/* Field names for the statvfs call */
-#define STATVFS_LEN m1_i1
-#define STATVFS_NAME m1_p1
-#define STATVFS_BUF m1_p2
+/* Field names for the fstatvfs1(2) call. */
+#define VFS_FSTATVFS1_FD	m1_i1
+#define VFS_FSTATVFS1_BUF	m1_p1
+#define VFS_FSTATVFS1_FLAGS	m1_i2
+
+/* Field names for the statvfs1(2) call. */
+#define VFS_STATVFS1_LEN	m1_i1
+#define VFS_STATVFS1_NAME	m1_p1
+#define VFS_STATVFS1_BUF	m1_p2
+#define VFS_STATVFS1_FLAGS	m1_i2
+
+/* Field names for the mount(2) call. */
+#define VFS_MOUNT_FLAGS		m11_i1
+#define VFS_MOUNT_DEVLEN	m11_s1
+#define VFS_MOUNT_PATHLEN	m11_s2
+#define VFS_MOUNT_TYPELEN	m11_s3
+#define VFS_MOUNT_LABELLEN	m11_s4
+#define VFS_MOUNT_DEV		m11_p1
+#define VFS_MOUNT_PATH		m11_p2
+#define VFS_MOUNT_TYPE		m11_p3
+#define VFS_MOUNT_LABEL		m11_p4
+
+/* Field names for the umount(2) call. */
+#define VFS_UMOUNT_NAME		m1_p1
+#define VFS_UMOUNT_NAMELEN	m1_i1
+#define VFS_UMOUNT_LABEL	m1_p2
+#define VFS_UMOUNT_LABELLEN	m1_i2
+
+/* Field names for the ioctl(2) call. */
+#define VFS_IOCTL_FD		m2_i1
+#define VFS_IOCTL_REQ		m2_i3
+#define VFS_IOCTL_ARG		m2_p1
 
 /*===========================================================================*
  *                Messages for VM server				     *
@@ -1252,7 +1275,6 @@
 
 
 #define TTY_FKEY_CONTROL	(TTY_RQ_BASE + 1) /* control an F-key at TTY */
-#define OLD_FKEY_CONTROL	98  	/* previously used for TTY_FKEY_CONTROL */
 #  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
 #  define    FKEY_MAP		10	/* observe function key */
 #  define    FKEY_UNMAP		11	/* stop observing function key */
@@ -1298,13 +1320,18 @@
 #define BDEV_MINOR	m10_i1	/* minor device number */
 #define BDEV_STATUS	m10_i1	/* OK or error code */
 #define BDEV_ACCESS	m10_i2	/* access bits for open requests */
-#define BDEV_REQUEST	m10_i2	/* I/O control request */
 #define BDEV_COUNT	m10_i2	/* number of bytes or elements in transfer */
 #define BDEV_GRANT	m10_i3	/* grant ID of buffer or vector */
 #define BDEV_FLAGS	m10_i4	/* transfer flags */
+#define BDEV_USER	m10_i4	/* user endpoint requesting I/O control */
 #define BDEV_ID		m10_l1	/* opaque request ID */
+#define BDEV_REQUEST	m10_l2	/* I/O control request */
 #define BDEV_POS_LO	m10_l2	/* transfer position (low bits) */
 #define BDEV_POS_HI	m10_l3	/* transfer position (high bits) */
+
+/* Bits in 'BDEV_ACCESS' field of block device open requests. */
+#  define BDEV_R_BIT		0x01	/* open with read access */
+#  define BDEV_W_BIT		0x02	/* open with write access */
 
 /* Bits in 'BDEV_FLAGS' field of block device transfer requests. */
 #  define BDEV_NOFLAGS		0x00	/* no flags are set */

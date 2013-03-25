@@ -16,7 +16,7 @@ struct timer;
 /* clock.c */
 clock_t get_realtime(void);
 void set_realtime(clock_t);
-void set_adjtime_delta(clock_t);
+void set_adjtime_delta(int32_t);
 clock_t get_monotonic(void);
 void set_timer(struct timer *tp, clock_t t, tmr_func_t f);
 void reset_timer(struct timer *tp);
@@ -192,7 +192,7 @@ void do_ser_debug(void);
 int arch_get_params(char *parm, int max);
 void memory_init(void);
 void mem_clear_mapcache(void);
-void arch_proc_init(struct proc *pr, u32_t, u32_t, char *);
+void arch_proc_init(struct proc *pr, u32_t, u32_t, u32_t, char *);
 int arch_do_vmctl(message *m_ptr, struct proc *p);
 int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf,
 	size_t count);

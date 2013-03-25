@@ -24,8 +24,6 @@
 #include <dirent.h>
 #include <assert.h>
 #include "file.h"
-#include "fproc.h"
-#include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
@@ -99,47 +97,41 @@ int do_mount(message *UNUSED(m_out))
 {
 /* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
-  int r, slot, rdonly, nodev;
+  int r, slot, nodev;
   char mount_path[PATH_MAX], mount_dev[PATH_MAX];
-  char mount_label[LABEL_MAX];
+  char mount_label[LABEL_MAX], mount_type[FSTYPE_MAX];
   dev_t dev;
   int mflags;
-  vir_bytes label, vname1, vname2;
-  size_t vname1_length, vname2_length;
+  vir_bytes label, type, vname1, vname2;
+  size_t vname1_length, vname2_length, label_len, type_len;
 
-  mflags = job_m_in.mount_flags;
-  label = (vir_bytes) job_m_in.fs_label;
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  vname2 = (vir_bytes) job_m_in.name2;
-  vname2_length = (size_t) job_m_in.name2_length;
+  mflags = job_m_in.VFS_MOUNT_FLAGS;
+  label = (vir_bytes) job_m_in.VFS_MOUNT_LABEL;
+  label_len = (size_t) job_m_in.VFS_MOUNT_LABELLEN;
+  vname1 = (vir_bytes) job_m_in.VFS_MOUNT_DEV;
+  vname1_length = (size_t) job_m_in.VFS_MOUNT_DEVLEN;
+  vname2 = (vir_bytes) job_m_in.VFS_MOUNT_PATH;
+  vname2_length = (size_t) job_m_in.VFS_MOUNT_PATHLEN;
+  type = (vir_bytes) job_m_in.VFS_MOUNT_TYPE;
+  type_len = (size_t) job_m_in.VFS_MOUNT_TYPELEN;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
 
+  /* Get the label from the caller, and ask DS for the endpoint of the FS. */
+  if (label_len > sizeof(mount_label))
+	return EINVAL;
+  r = sys_datacopy(who_e, label, SELF, (vir_bytes) mount_label,
+	sizeof(mount_label));
+  if (r != OK) return(r);
 
-  /* FS process' endpoint number */
-  if (mflags & MS_LABEL16) {
-	/* Get the label from the caller, and ask DS for the endpoint. */
-	r = sys_datacopy(who_e, label, SELF, (vir_bytes) mount_label,
-			 sizeof(mount_label));
-	if (r != OK) return(r);
+  mount_label[sizeof(mount_label)-1] = 0;
 
-	mount_label[sizeof(mount_label)-1] = 0;
-
-	r = ds_retrieve_label_endpt(mount_label, &fs_e);
-	if (r != OK) return(r);
-  } else {
-	/* Legacy support: get the endpoint from the request itself. */
-	fs_e = (endpoint_t) label;
-	mount_label[0] = 0;
-  }
+  r = ds_retrieve_label_endpt(mount_label, &fs_e);
+  if (r != OK) return(r);
 
   /* Sanity check on process number. */
   if (isokendpt(fs_e, &slot) != OK) return(EINVAL);
-
-  /* Should the file system be mounted read-only? */
-  rdonly = (mflags & MS_RDONLY);
 
   /* A null string for block special device means don't use a device at all. */
   nodev = (vname1_length == 0);
@@ -159,8 +151,13 @@ int do_mount(message *UNUSED(m_out))
   /* Fetch the name of the mountpoint */
   if (fetch_name(vname2, vname2_length, mount_path) != OK) return(err_code);
 
+  /* Fetch the type of the file system. */
+  if (type_len > sizeof(mount_type)) return(ENAMETOOLONG);
+  if (fetch_name(type, type_len, mount_type) != OK) return(err_code);
+
   /* Do the actual job */
-  return mount_fs(dev, mount_dev, mount_path, fs_e, rdonly, mount_label);
+  return mount_fs(dev, mount_dev, mount_path, fs_e, mflags, mount_type,
+	mount_label);
 }
 
 
@@ -172,10 +169,11 @@ dev_t dev,
 char mount_dev[PATH_MAX],
 char mount_path[PATH_MAX],
 endpoint_t fs_e,
-int rdonly,
+int flags,
+char mount_type[FSTYPE_MAX],
 char mount_label[LABEL_MAX] )
 {
-  int i, r = OK, found, isroot, mount_root, con_reqs, slot;
+  int i, r = OK, found, isroot, mount_root, slot;
   struct fproc *tfp, *rfp;
   struct dmap *dp;
   struct vnode *root_node, *vp = NULL;
@@ -183,6 +181,8 @@ char mount_label[LABEL_MAX] )
   char *label;
   struct node_details res;
   struct lookup resolve;
+  struct statvfs statvfs_buf;
+  unsigned int fs_flags;
 
   /* Look up block device driver label when dev is not a pseudo-device */
   label = "";
@@ -212,6 +212,7 @@ char mount_label[LABEL_MAX] )
 
   strlcpy(new_vmp->m_mount_path, mount_path, PATH_MAX);
   strlcpy(new_vmp->m_mount_dev, mount_dev, PATH_MAX);
+  strlcpy(new_vmp->m_fstype, mount_type, sizeof(new_vmp->m_fstype));
   isroot = (strcmp(mount_path, "/") == 0);
   mount_root = (isroot && have_root < 2); /* Root can be mounted twice:
 					   * 1: ramdisk
@@ -274,20 +275,20 @@ char mount_label[LABEL_MAX] )
   /* Store some essential vmnt data first */
   new_vmp->m_fs_e = fs_e;
   new_vmp->m_dev = dev;
-  if (rdonly) new_vmp->m_flags |= VMNT_READONLY;
+  if (flags & MNT_RDONLY) new_vmp->m_flags |= VMNT_READONLY;
   else new_vmp->m_flags &= ~VMNT_READONLY;
 
   /* Tell FS which device to mount */
   new_vmp->m_flags |= VMNT_MOUNTING;
-  r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res, &con_reqs);
+  r = req_readsuper(new_vmp, label, dev, !!(flags & MNT_RDONLY), isroot, &res,
+	&fs_flags);
   new_vmp->m_flags &= ~VMNT_MOUNTING;
 
-  if(req_peek(fs_e, 1, 0, PAGE_SIZE) != OK ||
-     req_bpeek(fs_e, dev, 0, PAGE_SIZE) != OK) {
-  	new_vmp->m_haspeek = 0;
-  } else {
-  	new_vmp->m_haspeek = 1;
-  }
+  new_vmp->m_fs_flags = fs_flags;
+
+  /* Fill the statvfs cache with initial values. */
+  if (r == OK)
+	r = update_statvfs(new_vmp, &statvfs_buf);
 
   if (r != OK) {
 	mark_vmnt_free(new_vmp);
@@ -316,11 +317,14 @@ char mount_label[LABEL_MAX] )
   /* Root node is indeed on the partition */
   root_node->v_vmnt = new_vmp;
   root_node->v_dev = new_vmp->m_dev;
-  if (con_reqs == 0)
-	new_vmp->m_comm.c_max_reqs = 1;	/* Default if FS doesn't tell us */
+  if (!(new_vmp->m_fs_flags & RES_THREADED))
+	new_vmp->m_comm.c_max_reqs = 1;
   else
-	new_vmp->m_comm.c_max_reqs = con_reqs;
+	new_vmp->m_comm.c_max_reqs = NR_WTHREADS;
   new_vmp->m_comm.c_cur_reqs = 0;
+
+  /* No more blocking operations, so we can now report on this file system. */
+  new_vmp->m_flags |= VMNT_CANSTAT;
 
   if (mount_root) {
 	/* Superblock and root node already read.
@@ -413,6 +417,7 @@ void mount_pfs(void)
 
   vmp->m_dev = dev;
   vmp->m_fs_e = PFS_PROC_NR;
+  vmp->m_fs_flags = 0;
   strlcpy(vmp->m_label, "pfs", LABEL_MAX);
   strlcpy(vmp->m_mount_path, "pipe", PATH_MAX);
   strlcpy(vmp->m_mount_dev, "none", PATH_MAX);
@@ -421,30 +426,28 @@ void mount_pfs(void)
 /*===========================================================================*
  *                              do_umount                                    *
  *===========================================================================*/
-int do_umount(message *m_out)
+int do_umount(message *UNUSED(m_out))
 {
-/* Perform the umount(name) system call.
- * syscall might provide 'name' embedded in the message.
+/* Perform the umount(name) system call.  Return the label of the FS service.
  */
   char label[LABEL_MAX];
   dev_t dev;
   int r;
   char fullpath[PATH_MAX];
-  vir_bytes vname;
-  size_t vname_length;
+  vir_bytes vname, label_addr;
+  size_t vname_length, label_len;
 
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = (size_t) job_m_in.name_length;
+  vname = (vir_bytes) job_m_in.VFS_UMOUNT_NAME;
+  vname_length = (size_t) job_m_in.VFS_UMOUNT_NAMELEN;
+  label_addr = (vir_bytes) job_m_in.VFS_UMOUNT_LABEL;
+  label_len = (size_t) job_m_in.VFS_UMOUNT_LABELLEN;
 
   /* Only the super-user may do umount. */
   if (!super_user) return(EPERM);
 
   /* If 'name' is not for a block special file or mountpoint, return error. */
-  if (copy_name(vname_length, fullpath) != OK) {
-	/* Direct copy failed, try fetching from user space */
-	if (fetch_name(vname, vname_length, fullpath) != OK)
-		return(err_code);
-  }
+  if (fetch_name(vname, vname_length, fullpath) != OK)
+	return(err_code);
   if ((dev = name_to_dev(TRUE /*allow_mountpt*/, fullpath)) == NO_DEV)
 	return(err_code);
 
@@ -453,10 +456,10 @@ int do_umount(message *m_out)
   /* Return the label of the mounted file system, so that the caller
    * can shut down the corresponding server process.
    */
-  if (strlen(label) >= M3_LONG_STRING)	/* should never evaluate to true */
-	label[M3_LONG_STRING-1] = 0;
-  strlcpy(m_out->umount_label, label, M3_LONG_STRING);
-  return(OK);
+  if (strlen(label) >= label_len)
+	label[label_len-1] = 0;
+  return sys_datacopy(SELF, (vir_bytes) label, who_e, label_addr,
+	strlen(label) + 1);
 }
 
 
@@ -498,6 +501,9 @@ int unmount(
 	unlock_vmnt(vmp);
 	return(EBUSY);    /* can't umount a busy file system */
   }
+
+  /* This FS will now disappear, so stop listing it in statistics. */
+  vmp->m_flags &= ~VMNT_CANSTAT;
 
   /* Tell FS to drop all inode references for root inode except 1. */
   vnode_clean_refs(vmp->m_root_node);

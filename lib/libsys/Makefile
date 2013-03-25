@@ -76,7 +76,6 @@ SRCS+=  \
 	sys_vsafecopy.c \
 	sys_vtimer.c \
 	sys_vumap.c \
-	send_taskreply.c \
 	taskcall.c \
 	tickdelay.c \
 	timers.c \
@@ -127,9 +126,5 @@ CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
-
-.if (${CC} == "gcc") || (${CC} == "clang")
-LDADD+=	-lminc
-.endif
 
 .include <bsd.lib.mk>

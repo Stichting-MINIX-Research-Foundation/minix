@@ -7,7 +7,6 @@
 #endif
 #include <minix/dmap.h>
 #include "cpuinfo.h"
-#include "mounts.h"
 
 static void root_hz(void);
 static void root_uptime(void);
@@ -19,6 +18,7 @@ static void root_pci(void);
 #endif
 static void root_dmap(void);
 static void root_ipcvecs(void);
+static void root_mounts(void);
 
 struct file root_files[] = {
 	{ "hz",		REG_ALL_MODE,	(data_t) root_hz	},
@@ -209,3 +209,21 @@ static void root_ipcvecs(void)
 	PRINT_ENTRYPOINT(do_kernel_call);
 }
 
+/*===========================================================================*
+ *				root_mounts				     *
+ *===========================================================================*/
+static void
+root_mounts(void)
+{
+	struct statvfs buf[NR_MNTS];
+	int i, count;
+
+	if ((count = getvfsstat(buf, sizeof(buf), ST_NOWAIT)) < 0)
+		return;
+
+	for (i = 0; i < count; i++) {
+		buf_printf("%s on %s type %s (%s)\n", buf[i].f_mntfromname,
+			buf[i].f_mntonname, buf[i].f_fstypename,
+			(buf[i].f_flag & ST_RDONLY) ? "ro" : "rw");
+        }
+}

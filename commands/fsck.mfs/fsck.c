@@ -686,7 +686,7 @@ char **clist;
 		if (input(buf, 80)) ip->i_mode = atoo(buf);
 		printf("    nlinks = %6u", ip->i_nlinks);
 		if (input(buf, 80)) ip->i_nlinks = atol(buf);
-		printf("    size   = %6ld", ip->i_size);
+		printf("    size   = %6d", ip->i_size);
 		if (input(buf, 80)) ip->i_size = atol(buf);
 		if (yes("Write this back")) {
 			devwrite(inoblock(ino), inooff(ino), (char *) ip,

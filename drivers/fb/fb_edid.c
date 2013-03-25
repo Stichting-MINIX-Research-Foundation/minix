@@ -92,7 +92,7 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	/* Open Device - required for drivers using libblockdriver */
 	memset(&m, '\0', sizeof(message));
 	m.m_type = BDEV_OPEN;
-	m.BDEV_ACCESS = R_BIT;
+	m.BDEV_ACCESS = BDEV_R_BIT;
 	m.BDEV_ID = 0;
 	m.BDEV_MINOR = 0;
 

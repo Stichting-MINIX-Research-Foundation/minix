@@ -32,9 +32,7 @@
 #include <sys/svrctl.h>
 #include <sys/resource.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
-#include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
@@ -47,14 +45,7 @@
 unsigned long calls_stats[NCALLS];
 #endif
 
-static void free_proc(struct fproc *freed, int flags);
-/*
-static int dumpcore(int proc_e, struct mem_map *seg_ptr);
-static int write_bytes(struct inode *rip, off_t off, char *buf, size_t
-	bytes);
-static int write_seg(struct inode *rip, off_t off, int proc_e, int seg,
-	off_t seg_off, phys_bytes seg_bytes);
-*/
+static void free_proc(int flags);
 
 /*===========================================================================*
  *				do_getsysinfo				     *
@@ -91,11 +82,6 @@ int do_getsysinfo()
 	len = sizeof(calls_stats);
 	break;
 #endif
-    case SI_VMNT_TAB:
-	fetch_vmnt_paths();
-	src_addr = (vir_bytes) vmnt;
-	len = sizeof(struct vmnt) * NR_MNTS;
-	break;
     default:
 	return(EINVAL);
   }
@@ -177,32 +163,27 @@ int do_fcntl(message *UNUSED(m_out))
     case F_FREESP:
      {
 	/* Free a section of a file */
-	off_t start, end;
+	off_t start, end, offset;
 	struct flock flock_arg;
-	signed long offset;
 
 	/* Check if it's a regular file. */
 	if (!S_ISREG(f->filp_vno->v_mode)) r = EINVAL;
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
-	else
+	else {
 		/* Copy flock data from userspace. */
 		r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer,
-				 SELF, (vir_bytes) &flock_arg,
-				 sizeof(flock_arg));
+			SELF, (vir_bytes) &flock_arg, sizeof(flock_arg));
+	}
 
 	if (r != OK) break;
 
 	/* Convert starting offset to signed. */
-	offset = (signed long) flock_arg.l_start;
+	offset = (off_t) flock_arg.l_start;
 
 	/* Figure out starting position base. */
 	switch(flock_arg.l_whence) {
 	  case SEEK_SET: start = 0; break;
-	  case SEEK_CUR:
-		if (ex64hi(f->filp_pos) != 0)
-			panic("do_fcntl: position in file too high");
-		start = ex64lo(f->filp_pos);
-		break;
+	  case SEEK_CUR: start = f->filp_pos; break;
 	  case SEEK_END: start = f->filp_vno->v_size; break;
 	  default: r = EINVAL;
 	}
@@ -316,7 +297,7 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 {
 	int result, procfd;
 	struct filp *f = NULL;
-	struct fproc *vmf = &fproc[VM_PROC_NR];
+	struct fproc *vmf = fproc_addr(VM_PROC_NR);
 
 	*newfilp = NULL;
 
@@ -325,7 +306,7 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 		return EBADF;
 	}
 
-	if(!f->filp_vno->v_vmnt->m_haspeek) {
+	if(!(f->filp_vno->v_vmnt->m_fs_flags & RES_HASPEEK)) {
 		unlock_filp(f);
 		printf("VFS dupvm: no peek available\n");
 		return EINVAL;
@@ -335,8 +316,8 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 	assert(f->filp_vno->v_vmnt);
 
 	if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode)) {
-		printf("VFS: mmap regular/blockdev only; dev 0x%x ino %d has mode 0%o\n",
-			(int) f->filp_vno->v_dev, (int) f->filp_vno->v_inode_nr, (int) f->filp_vno->v_mode);
+		printf("VFS: mmap regular/blockdev only; dev 0x%x ino %llu has mode 0%o\n",
+			f->filp_vno->v_dev, f->filp_vno->v_inode_nr, f->filp_vno->v_mode);
 		unlock_filp(f);
 		return EINVAL;
 	}
@@ -391,7 +372,7 @@ int do_vm_call(message *m_out)
 	if(isokendpt(ep, &slot) != OK) rfp = NULL;
 	else rfp = &fproc[slot];
 
-	vmf = &fproc[VM_PROC_NR];
+	vmf = fproc_addr(VM_PROC_NR);
 	assert(fp == vmf);
 	assert(rfp != vmf);
 
@@ -487,9 +468,14 @@ reqdone:
  *===========================================================================*/
 void pm_reboot()
 {
-/* Perform the VFS side of the reboot call. */
-  int i;
-  struct fproc *rfp;
+/* Perform the VFS side of the reboot call. This call is performed from the PM
+ * process context.
+ */
+  message m_out;
+  int i, r;
+  struct fproc *rfp, *pmfp;
+
+  pmfp = fp;
 
   sync_fses();
 
@@ -499,15 +485,25 @@ void pm_reboot()
    * them the chance to unmount (which should be possible as all normal
    * processes have no open files anymore).
    */
+  /* This is the only place where we allow special modification of "fp". The
+   * reboot procedure should really be implemented as a PM message broadcasted
+   * to all processes, so that each process will be shut down cleanly by a
+   * thread operating on its behalf. Doing everything here is simpler, but it
+   * requires an exception to the strict model of having "fp" be the process
+   * that owns the current worker thread.
+   */
   for (i = 0; i < NR_PROCS; i++) {
 	rfp = &fproc[i];
 
 	/* Don't just free the proc right away, but let it finish what it was
 	 * doing first */
-	lock_proc(rfp, 0);
-	if (rfp->fp_endpoint != NONE && find_vmnt(rfp->fp_endpoint) == NULL)
-		free_proc(rfp, 0);
-	unlock_proc(rfp);
+	if (rfp != fp) lock_proc(rfp);
+	if (rfp->fp_endpoint != NONE && find_vmnt(rfp->fp_endpoint) == NULL) {
+		worker_set_proc(rfp);	/* temporarily fake process context */
+		free_proc(0);
+		worker_set_proc(pmfp);	/* restore original process context */
+	}
+	if (rfp != fp) unlock_proc(rfp);
   }
 
   sync_fses();
@@ -519,15 +515,25 @@ void pm_reboot()
 
 	/* Don't just free the proc right away, but let it finish what it was
 	 * doing first */
-	lock_proc(rfp, 0);
-	if (rfp->fp_endpoint != NONE)
-		free_proc(rfp, 0);
-	unlock_proc(rfp);
+	if (rfp != fp) lock_proc(rfp);
+	if (rfp->fp_endpoint != NONE) {
+		worker_set_proc(rfp);	/* temporarily fake process context */
+		free_proc(0);
+		worker_set_proc(pmfp);	/* restore original process context */
+	}
+	if (rfp != fp) unlock_proc(rfp);
   }
 
   sync_fses();
   unmount_all(1 /* Force */);
 
+  /* Reply to PM for synchronization */
+  memset(&m_out, 0, sizeof(m_out));
+
+  m_out.m_type = PM_REBOOT_REPLY;
+
+  if ((r = send(PM_PROC_NR, &m_out)) != OK)
+	panic("pm_reboot: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -597,7 +603,7 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
 /*===========================================================================*
  *				free_proc				     *
  *===========================================================================*/
-static void free_proc(struct fproc *exiter, int flags)
+static void free_proc(int flags)
 {
   int i;
   register struct fproc *rfp;
@@ -605,46 +611,43 @@ static void free_proc(struct fproc *exiter, int flags)
   register struct vnode *vp;
   dev_t dev;
 
-  if (exiter->fp_endpoint == NONE)
+  if (fp->fp_endpoint == NONE)
 	panic("free_proc: already free");
 
-  if (fp_is_blocked(exiter))
-	unpause(exiter->fp_endpoint);
+  if (fp_is_blocked(fp))
+	unpause();
 
   /* Loop on file descriptors, closing any that are open. */
   for (i = 0; i < OPEN_MAX; i++) {
-	(void) close_fd(exiter, i);
+	(void) close_fd(fp, i);
   }
 
   /* Release root and working directories. */
-  if (exiter->fp_rd) { put_vnode(exiter->fp_rd); exiter->fp_rd = NULL; }
-  if (exiter->fp_wd) { put_vnode(exiter->fp_wd); exiter->fp_wd = NULL; }
+  if (fp->fp_rd) { put_vnode(fp->fp_rd); fp->fp_rd = NULL; }
+  if (fp->fp_wd) { put_vnode(fp->fp_wd); fp->fp_wd = NULL; }
 
   /* The rest of these actions is only done when processes actually exit. */
   if (!(flags & FP_EXITING)) return;
 
-  exiter->fp_flags |= FP_EXITING;
+  fp->fp_flags |= FP_EXITING;
 
   /* Check if any process is SUSPENDed on this driver.
    * If a driver exits, unmap its entries in the dmap table.
    * (unmapping has to be done after the first step, because the
    * dmap table is used in the first step.)
    */
-  unsuspend_by_endpt(exiter->fp_endpoint);
-  dmap_unmap_by_endpt(exiter->fp_endpoint);
+  unsuspend_by_endpt(fp->fp_endpoint);
+  dmap_unmap_by_endpt(fp->fp_endpoint);
 
-  worker_stop_by_endpt(exiter->fp_endpoint); /* Unblock waiting threads */
-  vmnt_unmap_by_endpt(exiter->fp_endpoint); /* Invalidate open files if this
+  worker_stop_by_endpt(fp->fp_endpoint); /* Unblock waiting threads */
+  vmnt_unmap_by_endpt(fp->fp_endpoint); /* Invalidate open files if this
 					     * was an active FS */
-
-  /* Invalidate endpoint number for error and sanity checks. */
-  exiter->fp_endpoint = NONE;
 
   /* If a session leader exits and it has a controlling tty, then revoke
    * access to its controlling tty from all other processes using it.
    */
-  if ((exiter->fp_flags & FP_SESLDR) && exiter->fp_tty != 0) {
-      dev = exiter->fp_tty;
+  if ((fp->fp_flags & FP_SESLDR) && fp->fp_tty != 0) {
+      dev = fp->fp_tty;
       for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	  if(rfp->fp_pid == PID_FREE) continue;
           if (rfp->fp_tty == dev) rfp->fp_tty = 0;
@@ -666,25 +669,21 @@ static void free_proc(struct fproc *exiter, int flags)
   }
 
   /* Exit done. Mark slot as free. */
-  exiter->fp_pid = PID_FREE;
-  if (exiter->fp_flags & FP_PENDING)
-	pending--;	/* No longer pending job, not going to do it */
-  exiter->fp_flags = FP_NOFLAGS;
+  fp->fp_endpoint = NONE;
+  fp->fp_pid = PID_FREE;
+  fp->fp_flags = FP_NOFLAGS;
 }
 
 /*===========================================================================*
  *				pm_exit					     *
  *===========================================================================*/
-void pm_exit(proc)
-endpoint_t proc;
+void pm_exit(void)
 {
-/* Perform the file system portion of the exit(status) system call. */
-  int exitee_p;
+/* Perform the file system portion of the exit(status) system call.
+ * This function is called from the context of the exiting process.
+ */
 
-  /* Nevertheless, pretend that the call came from the user. */
-  okendpt(proc, &exitee_p);
-  fp = &fproc[exitee_p];
-  free_proc(fp, FP_EXITING);
+  free_proc(FP_EXITING);
 }
 
 /*===========================================================================*
@@ -850,21 +849,18 @@ int do_svrctl(message *UNUSED(m_out))
 /*===========================================================================*
  *				pm_dumpcore				     *
  *===========================================================================*/
-int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
+int pm_dumpcore(int csig, vir_bytes exe_name)
 {
-  int slot, r = OK, core_fd;
+  int r = OK, core_fd;
   struct filp *f;
   char core_path[PATH_MAX];
   char proc_name[PROC_NAME_LEN];
-
-  okendpt(proc_e, &slot);
-  fp = &fproc[slot];
 
   /* if a process is blocked, scratch(fp).file.fd_nr holds the fd it's blocked
    * on. free it up for use by common_open().
    */
   if (fp_is_blocked(fp))
-          unpause(fp->fp_endpoint);
+          unpause();
 
   /* open core file */
   snprintf(core_path, PATH_MAX, "%s.%d", CORE_NAME, fp->fp_pid);
@@ -884,15 +880,15 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
 
 core_exit:
   if(csig)
-	  free_proc(fp, FP_EXITING);
+	  free_proc(FP_EXITING);
   return(r);
 }
 
 /*===========================================================================*
  *				 ds_event				     *
  *===========================================================================*/
-void *
-ds_event(void *arg)
+void
+ds_event(void)
 {
   char key[DS_MAX_KEYLEN];
   char *blkdrv_prefix = "drv.blk.";
@@ -900,11 +896,6 @@ ds_event(void *arg)
   u32_t value;
   int type, r, is_blk;
   endpoint_t owner_endpoint;
-
-  struct job my_job;
-
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
 
   /* Get the event and the owner from DS. */
   while ((r = ds_check(key, &type, &owner_endpoint)) == OK) {
@@ -928,9 +919,6 @@ ds_event(void *arg)
   }
 
   if (r != ENOENT) printf("VFS: ds_event: ds_check failed: %d\n", r);
-
-  thread_cleanup(NULL);
-  return(NULL);
 }
 
 /* A function to be called on panic(). */

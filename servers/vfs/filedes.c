@@ -22,7 +22,6 @@
 #include <sys/stat.h>
 #include "fs.h"
 #include "file.h"
-#include "fproc.h"
 #include "vnode.h"
 
 
@@ -77,15 +76,21 @@ void check_filp_locks(void)
 }
 
 /*===========================================================================*
- *				do_filp_gc					     *
+ *				do_filp_gc				     *
  *===========================================================================*/
-void *do_filp_gc(void *UNUSED(arg))
+int do_filp_gc(void)
 {
+/* Perform filp garbage collection. Return whether at least one invalidated
+ * filp was found, in which case the entire procedure will be invoked again.
+ */
   struct filp *f;
   struct vnode *vp;
+  int found = FALSE;
 
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
 	if (!(f->filp_state & FS_INVALIDATED)) continue;
+
+	found = TRUE;
 
 	if (f->filp_mode == FILP_CLOSED || f->filp_vno == NULL) {
 		/* File was already closed before gc could kick in */
@@ -125,12 +130,11 @@ void *do_filp_gc(void *UNUSED(arg))
 	f->filp_state &= ~FS_INVALIDATED;
   }
 
-  thread_cleanup(NULL);
-  return(NULL);
+  return found;
 }
 
 /*===========================================================================*
- *				init_filps					     *
+ *				init_filps				     *
  *===========================================================================*/
 void init_filps(void)
 {
@@ -177,7 +181,7 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 	assert(f->filp_count >= 0);
 	if (f->filp_count == 0 && mutex_trylock(&f->filp_lock) == 0) {
 		f->filp_mode = bits;
-		f->filp_pos = ((u64_t)(0));
+		f->filp_pos = 0;
 		f->filp_selectors = 0;
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;
@@ -320,7 +324,6 @@ void lock_filp(filp, locktype)
 struct filp *filp;
 tll_access_t locktype;
 {
-  struct fproc *org_fp;
   struct worker_thread *org_self;
   struct vnode *vp;
 
@@ -350,14 +353,12 @@ tll_access_t locktype;
   if (mutex_trylock(&filp->filp_lock) != 0) {
 
 	/* Already in use, let's wait for our turn */
-	org_fp = fp;
-	org_self = self;
+	org_self = worker_suspend();
 
 	if (mutex_lock(&filp->filp_lock) != 0)
 		panic("unable to obtain lock on filp");
 
-	fp = org_fp;
-	self = org_self;
+	worker_resume(org_self);
   }
 }
 
@@ -673,8 +674,8 @@ struct filp *f;
 	f->filp_mode = FILP_CLOSED;
 	f->filp_count = 0;
   } else if (f->filp_count < 0) {
-	panic("VFS: invalid filp count: %d ino %d/%u",
-		(int) f->filp_count, (int) vp->v_dev, (unsigned int) vp->v_inode_nr);
+	panic("VFS: invalid filp count: %d ino %d/%llu", f->filp_count,
+	      vp->v_dev, vp->v_inode_nr);
   } else {
 	unlock_vnode(f->filp_vno);
   }

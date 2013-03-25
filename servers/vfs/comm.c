@@ -1,7 +1,4 @@
 #include "fs.h"
-#include "glo.h"
-#include "vmnt.h"
-#include "fproc.h"
 #include <minix/vfsif.h>
 #include <assert.h>
 

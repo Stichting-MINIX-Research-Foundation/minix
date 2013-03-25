@@ -10,6 +10,7 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/ucred.h>
 #include <limits.h>
 #include <errno.h>
 #include <signal.h>
@@ -25,6 +26,7 @@
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
+#include <minix/vfsif.h>
 
 #include <stdlib.h>
 #include <stdio.h>

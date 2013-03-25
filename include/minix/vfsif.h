@@ -40,7 +40,6 @@
 #define REQ_UCRED_SIZE		m9_s4 
 #define REQ_UID			m9_s4
 
-
 /* VFS/FS reply fields */
 #define RES_DEV			m9_l4
 #define RES_GID			m9_s1
@@ -54,11 +53,12 @@
 #define RES_SEEK_POS_LO		m9_l4
 #define RES_SYMLOOP		m9_s3
 #define RES_UID			m9_s4
-#define RES_CONREQS		m9_s3
+#define	RES_FLAGS		m9_s3
 
 /* VFS/FS flags */
-#define REQ_RDONLY		001
-#define REQ_ISROOT		002
+#define REQ_RDONLY		001	/* FS is mounted read-only */
+#define REQ_ISROOT		002	/* FS is root file system */
+
 #define PATH_NOFLAGS		000
 #define PATH_RET_SYMLINK	010	/* Return a symlink object (i.e.
 					 * do not continue with the contents
@@ -67,6 +67,11 @@
 #define PATH_GET_UCRED		020	/* Request provides a grant ID in m9_l1
 					 * and struct ucred size in m9_s4 (as
 					 * opposed to a REQ_UID). */
+
+#define RES_NOFLAGS		000
+#define RES_THREADED		001	/* FS supports multithreading */
+#define RES_HASPEEK		002	/* FS implements REQ_PEEK/REQ_BPEEK */
+#define RES_64BIT		004	/* FS can handle 64-bit file sizes */
 
 /* VFS/FS error messages */
 #define EENTERMOUNT              (-301)
@@ -83,6 +88,12 @@ typedef struct {
 	gid_t vu_sgroups[NGROUPS_MAX];
 } vfs_ucred_t;
 
+/* Some system types are larger than what the protocol and FSes use */
+typedef u16_t	puid_t;		/* Protocol version of uid_t */
+typedef u16_t	pgid_t;		/* Protocol version of gid_t */
+typedef u16_t	pmode_t;	/* Protocol version of mode_t */
+typedef u32_t	pino_t;		/* Protocol version of ino_t */
+
 /* Request numbers */
 #define REQ_GETNODE	(VFS_BASE + 1)	/* Should be removed */
 #define REQ_PUTNODE	(VFS_BASE + 2)
@@ -93,7 +104,7 @@ typedef struct {
 #define REQ_INHIBREAD	(VFS_BASE + 7)
 #define REQ_STAT	(VFS_BASE + 8)
 #define REQ_UTIME	(VFS_BASE + 9)
-#define REQ_FSTATFS	(VFS_BASE + 10)
+#define REQ_STATVFS	(VFS_BASE + 10)
 #define REQ_BREAD	(VFS_BASE + 11)
 #define REQ_BWRITE	(VFS_BASE + 12)
 #define REQ_UNLINK	(VFS_BASE + 13)
@@ -115,11 +126,10 @@ typedef struct {
 #define REQ_NEWNODE	(VFS_BASE + 29)
 #define REQ_RDLINK	(VFS_BASE + 30)
 #define REQ_GETDENTS	(VFS_BASE + 31)
-#define REQ_STATVFS	(VFS_BASE + 32)
-#define REQ_PEEK	(VFS_BASE + 33)
-#define REQ_BPEEK	(VFS_BASE + 34)
+#define REQ_PEEK	(VFS_BASE + 32)
+#define REQ_BPEEK	(VFS_BASE + 33)
 
-#define NREQS			    35
+#define NREQS			    34
 
 #define IS_VFS_RQ(type) (((type) & ~0xff) == VFS_BASE)
 

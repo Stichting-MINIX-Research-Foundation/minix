@@ -18,11 +18,9 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <dirent.h>
-#include "threads.h"
 #include "vmnt.h"
 #include "vnode.h"
 #include "path.h"
-#include "fproc.h"
 #include "param.h"
 
 /* Set to following define to 1 if you really want to use the POSIX definition
@@ -615,12 +613,12 @@ char ename[NAME_MAX + 1];
 {
 #define DIR_ENTRIES 8
 #define DIR_ENTRY_SIZE (sizeof(struct dirent) + NAME_MAX)
-  u64_t pos, new_pos;
+  off_t pos, new_pos;
   int r, consumed, totalbytes, name_len;
   char buf[DIR_ENTRY_SIZE * DIR_ENTRIES];
   struct dirent *cur;
 
-  pos = make64(0, 0);
+  pos = 0;
 
   if (!S_ISDIR(dirp->v_mode)) return(EBADF);
 

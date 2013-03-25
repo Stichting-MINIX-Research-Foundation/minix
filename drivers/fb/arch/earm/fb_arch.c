@@ -312,7 +312,7 @@ arch_pan_display(int minor, struct fb_var_screeninfo *fbvsp)
 }
 
 int
-arch_fb_init(int minor, struct device *dev, struct edid_info *info)
+arch_fb_init(int minor, struct edid_info *info)
 {
 	int r;
 	u32_t rdispc;
@@ -320,13 +320,9 @@ arch_fb_init(int minor, struct device *dev, struct edid_info *info)
 
 	const struct panel_config *panel_cfg = &omap_cfg[minor];
 
-	assert(dev != NULL);
 	if (minor != 0) return ENXIO;	/* We support only one minor */
 
-
 	if (initialized) {
-		dev->dv_base = fb_vir;
-		dev->dv_size = fb_size;
 		return OK;
 	} else if (info != NULL) {
 		log_debug(&log, "Configuring Settings based on EDID...\n");
@@ -403,8 +399,6 @@ arch_fb_init(int minor, struct device *dev, struct edid_info *info)
 	if (fb_vir == (vir_bytes) MAP_FAILED) {
 		panic("Unable to allocate contiguous memory\n");
 	} 
-	dev->dv_base = fb_vir;
-	dev->dv_size = fb_size;
 
 	/* Configure buffer settings and turn on LCD/Digital */
 	arch_configure_display(minor);

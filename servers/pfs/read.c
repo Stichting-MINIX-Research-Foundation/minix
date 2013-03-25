@@ -15,13 +15,13 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
   cp_grant_id_t gid;
   off_t position, f_size;
   unsigned int nrbytes, cum_io;
-  mode_t mode_word;
+  pmode_t mode_word;
   struct inode *rip;
-  ino_t inumb;
+  pino_t inumb;
 
   r = OK;
   cum_io = 0;
-  inumb = (ino_t) fs_m_in->REQ_INODE_NR;
+  inumb = (pino_t) fs_m_in->REQ_INODE_NR;
 
   /* Find the inode referred */
   if ((rip = find_inode(inumb)) == NULL) return(EINVAL);
@@ -63,11 +63,11 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
 
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
-	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) 0,
+	r = sys_safecopyto(fs_m_in->m_source, gid, (vir_bytes) 0,
 		(vir_bytes) (bp->b_data+position), (size_t) nrbytes);
   } else {
 	/* Copy a chunk from user space to the block buffer. */
-	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) 0,
+	r = sys_safecopyfrom(fs_m_in->m_source, gid, (vir_bytes) 0,
 		(vir_bytes) (bp->b_data+position), (size_t) nrbytes);
   }
 

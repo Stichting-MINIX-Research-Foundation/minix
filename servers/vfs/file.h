@@ -11,7 +11,7 @@ EXTERN struct filp {
   int filp_state;		/* state for crash recovery */
   int filp_count;		/* how many file descriptors share this slot?*/
   struct vnode *filp_vno;	/* vnode belonging to this file */
-  u64_t filp_pos;		/* file position */
+  off_t filp_pos;		/* file position */
   mutex_t filp_lock;		/* lock to gain exclusive access */
   struct fproc *filp_softlock;	/* if not NULL; this filp didn't lock the
 				 * vnode. Another filp already holds a lock
@@ -19,6 +19,7 @@ EXTERN struct filp {
 
   /* the following fields are for select() and are owned by the generic
    * select() code (i.e., fd-type-specific select() code can't touch these).
+   * These fields may be changed without holding the filp lock.
    */
   int filp_selectors;		/* select()ing processes blocking on this fd */
   int filp_select_ops;		/* interested in these SEL_* operations */

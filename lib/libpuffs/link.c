@@ -28,7 +28,7 @@ int fs_ftrunc(void)
   if (end == 0) {
 	struct vattr va;
 
-	if (pn->pn_va.va_size == start)
+	if (pn->pn_va.va_size == (u_quad_t) start)
 		return(OK);
 
 	if (global_pu->pu_ops.puffs_node_setattr == NULL)
@@ -160,8 +160,8 @@ int fs_rdlink()
   char path[PATH_MAX];
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  copylen = fs_m_in.REQ_MEM_SIZE < UMAX_FILE_POS ?
-		fs_m_in.REQ_MEM_SIZE : UMAX_FILE_POS;
+  copylen = (size_t) fs_m_in.REQ_MEM_SIZE < UMAX_FILE_POS ?
+	(size_t) fs_m_in.REQ_MEM_SIZE : UMAX_FILE_POS;
   
   assert(copylen <= PATH_MAX);
 

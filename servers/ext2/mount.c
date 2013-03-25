@@ -54,7 +54,8 @@ int fs_readsuper()
   bdev_driver(fs_dev, fs_dev_label);
 
   /* Open the device the file system lives on. */
-  if (bdev_open(fs_dev, readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {
+  if (bdev_open(fs_dev, readonly ? BDEV_R_BIT : (BDEV_R_BIT|BDEV_W_BIT)) !=
+		OK) {
         return(EINVAL);
   }
 
@@ -157,8 +158,7 @@ int fs_readsuper()
   fs_m_out.RES_FILE_SIZE_LO = root_ip->i_size;
   fs_m_out.RES_UID = root_ip->i_uid;
   fs_m_out.RES_GID = root_ip->i_gid;
-
-  fs_m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+  fs_m_out.RES_FLAGS = RES_HASPEEK;
 
   return(r);
 }
@@ -174,7 +174,7 @@ int fs_mountpoint()
  */
   register struct inode *rip;
   int r = OK;
-  mode_t bits;
+  pmode_t bits;
 
   /* Temporarily open the file. */
   if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)

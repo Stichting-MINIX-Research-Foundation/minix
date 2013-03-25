@@ -267,9 +267,9 @@ static int do_ioctl(message *m)
 		break;
 
 	default:
-		printf("Filter: unknown ioctl request: %d!\n",
+		printf("Filter: unknown ioctl request: %ld!\n",
 			m->BDEV_REQUEST);
-		return EINVAL;
+		return ENOTTY;
 	}
 
 	return OK;

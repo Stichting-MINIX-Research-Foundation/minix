@@ -31,15 +31,15 @@ void send_work(void);
 /* device.c */
 int dev_open(dev_t dev, endpoint_t proc_e, int flags);
 int dev_reopen(dev_t dev, int filp_no, int flags);
-void dev_reply(struct dmap *dp);
 int dev_close(dev_t dev, int filp_no);
+void cdev_reply(void);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
-int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, u64_t pos,
+void bdev_reply(struct dmap *dp);
+int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
 	size_t bytes, int flags, int suspend_reopen);
 int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
-int gen_io(endpoint_t driver_e, message *mess_ptr);
-int asyn_io(endpoint_t drv_e, message *mess_ptr);
+int gen_io(endpoint_t drv_e, message *mess_ptr);
 int no_dev(int op, dev_t dev, endpoint_t proc, int flags);
 int no_dev_io(endpoint_t, message *);
 int tty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
@@ -47,13 +47,11 @@ int ctty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int clone_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int ctty_io(endpoint_t task_nr, message *mess_ptr);
 int do_ioctl(message *m_out);
+int dev_select(dev_t dev, int ops);
+int dev_cancel(dev_t dev);
 void pm_setsid(endpoint_t proc_e);
-void dev_status(endpoint_t drv_e);
 void bdev_up(int major);
 void cdev_up(int major);
-endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g);
-void reopen_reply(void);
-void open_reply(void);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);
@@ -77,11 +75,11 @@ int map_service(struct rprocpub *rpub);
 void write_elf_core_file(struct filp *f, int csig, char *exe_name);
 
 /* exec.c */
-int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len, vir_bytes frame,
-	size_t frame_len, vir_bytes *pc, vir_bytes *newsp, int flags);
+int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
+	vir_bytes *pc, vir_bytes *newsp, vir_bytes *ps_str, int flags);
 
 /* filedes.c */
-void *do_filp_gc(void *arg);
+int do_filp_gc(void);
 void check_filp_locks(void);
 void check_filp_locks_by_me(void);
 void init_filps(void);
@@ -125,14 +123,15 @@ void lock_revive(void);
 
 /* main.c */
 int main(void);
-void lock_proc(struct fproc *rfp, int force_lock);
+void lock_proc(struct fproc *rfp);
+void unlock_proc(struct fproc *rfp);
 void reply(message *m_out, endpoint_t whom, int result);
 void replycode(endpoint_t whom, int result);
-void thread_cleanup(struct fproc *rfp);
-void unlock_proc(struct fproc *rfp);
+void service_pm_postponed(void);
+void thread_cleanup(void);
 
 /* misc.c */
-void pm_exit(endpoint_t proc);
+void pm_exit(void);
 int do_fcntl(message *m_out);
 void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid);
 void pm_setgid(endpoint_t proc_e, int egid, int rgid);
@@ -144,8 +143,8 @@ void pm_reboot(void);
 int do_svrctl(message *m_out);
 int do_getsysinfo(void);
 int do_vm_call(message *m_out);
-int pm_dumpcore(endpoint_t proc_e, int sig, vir_bytes exe_name);
-void * ds_event(void *arg);
+int pm_dumpcore(int sig, vir_bytes exe_name);
+void ds_event(void);
 int dupvm(struct fproc *fp, int pfd, int *vmfd, struct filp **f);
 int do_getrusage(message *m_out);
 
@@ -156,25 +155,23 @@ int do_umount(message *m_out);
 int is_nonedev(dev_t dev);
 void mount_pfs(void);
 int mount_fs(dev_t dev, char mount_dev[PATH_MAX], char mount_path[PATH_MAX],
-	endpoint_t fs_e, int rdonly, char mount_label[LABEL_MAX]);
+	endpoint_t fs_e, int rdonly, char mount_type[FSTYPE_MAX],
+	char mount_label[LABEL_MAX]);
 int unmount(dev_t dev, char label[LABEL_MAX]);
 void unmount_all(int force);
 
 /* open.c */
 int do_close(message *m_out);
 int close_fd(struct fproc *rfp, int fd_nr);
-void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
 int do_lseek(message *m_out);
-int do_llseek(message *m_out);
 int do_mknod(message *m_out);
 int do_mkdir(message *m_out);
 int do_open(message *m_out);
 int do_slink(message *m_out);
-int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset);
 int actual_llseek(struct fproc *rfp, message *m_out, int seekfd,
-	int seekwhence, u64_t offset);
+	int seekwhence, off_t offset);
 int do_vm_open(void);
 int do_vm_close(void);
 
@@ -193,7 +190,7 @@ int do_check_perms(message *m_out);
 int do_pipe(message *m_out);
 int do_pipe2(message *m_out);
 int map_vnode(struct vnode *vp, endpoint_t fs_e);
-void unpause(endpoint_t proc_e);
+void unpause(void);
 int pipe_check(struct filp *filp, int rw_flag, int oflags, int bytes,
 	int notouch);
 void release(struct vnode *vp, int op, int count);
@@ -227,20 +224,20 @@ int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
 	size_t req_size);
 
 /* request.c */
-int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, u64_t pos,
-	unsigned int num_of_bytes, char *user_addr, int rw_flag,
-	u64_t *new_posp, unsigned int *cum_iop);
-int req_chmod(int fs_e, ino_t inode_nr, mode_t rmode, mode_t *new_modep);
+int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,
+	unsigned int num_of_bytes, vir_bytes user_addr, int rw_flag,
+	off_t *new_posp, unsigned int *cum_iop);
+int req_chmod(endpoint_t fs_e, ino_t inode_nr, mode_t rmode,
+	mode_t *new_modep);
 int req_chown(endpoint_t fs_e, ino_t inode_nr, uid_t newuid, gid_t newgid,
 	mode_t *new_modep);
-int req_create(int fs_e, ino_t inode_nr, int omode, uid_t uid, gid_t gid,
-	char *path, node_details_t *res);
+int req_create(endpoint_t fs_e, ino_t inode_nr, int omode, uid_t uid,
+	gid_t gid, char *path, node_details_t *res);
 int req_flush(endpoint_t fs_e, dev_t dev);
-int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
-int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
+int req_statvfs(endpoint_t fs_e, struct statvfs *buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
-int req_getdents(endpoint_t fs_e, ino_t inode_nr, u64_t pos, char *buf,
-	size_t size, u64_t *new_pos, int direct);
+int req_getdents(endpoint_t fs_e, ino_t inode_nr, off_t pos, char *buf,
+	size_t size, off_t *new_pos, int direct);
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
 int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,
 	ino_t linked_file);
@@ -252,18 +249,18 @@ int req_mkdir(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
 int req_mknod(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
 	gid_t gid, mode_t dmode, dev_t dev);
 int req_mountpoint(endpoint_t fs_e, ino_t inode_nr);
-int req_newnode(endpoint_t fs_e, uid_t uid, gid_t gid, mode_t dmode, dev_t dev,
-	struct node_details *res);
+int req_newnode(endpoint_t fs_e, uid_t uid, gid_t gid, mode_t dmode,
+	dev_t dev, struct node_details *res);
 int req_putnode(int fs_e, ino_t inode_nr, int count);
 int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 	vir_bytes buf, size_t len, int direct);
-int req_readsuper(endpoint_t fs_e, char *driver_name, dev_t dev, int readonly,
-	int isroot, struct node_details *res_nodep, int *con_reqs);
-int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int rw_flag,
-	endpoint_t user_e, char *user_addr, unsigned int num_of_bytes,
-	u64_t *new_posp, unsigned int *cum_iop);
-int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes);
-int req_peek(endpoint_t fs_e, ino_t inode_nr, u64_t pos, unsigned int bytes);
+int req_readsuper(struct vmnt *vmp, char *driver_name, dev_t dev, int readonly,
+	int isroot, struct node_details *res_nodep, unsigned int *fs_flags);
+int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos, int rw_flag,
+	endpoint_t user_e, vir_bytes user_addr, unsigned int num_of_bytes,
+	off_t *new_posp, unsigned int *cum_iop);
+int req_bpeek(endpoint_t fs_e, dev_t dev, off_t pos, unsigned int num_of_bytes);
+int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes);
 int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
 	char *new_name);
 int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);
@@ -283,11 +280,12 @@ int do_fchdir(message *m_out);
 int do_chroot(message *m_out);
 int do_fstat(message *m_out);
 int do_stat(message *m_out);
-int do_fstatfs(message *m_out);
 int do_statvfs(message *m_out);
 int do_fstatvfs(message *m_out);
+int do_getvfsstat(message *m_out);
 int do_rdlink(message *m_out);
 int do_lstat(message *m_out);
+int update_statvfs(struct vmnt *vmp, struct statvfs *buf);
 
 /* time.c */
 int do_utime(message *);
@@ -359,22 +357,24 @@ int do_gcov_flush(void);
 int do_select(message *m_out);
 void init_select(void);
 void select_callback(struct filp *, int ops);
-void select_forget(endpoint_t proc_e);
+void select_forget(void);
 void select_reply1(endpoint_t driver_e, int minor, int status);
 void select_reply2(endpoint_t driver_e, int minor, int status);
 void select_timeout_check(timer_t *);
 void select_unsuspend_by_endpt(endpoint_t proc);
 
 /* worker.c */
+void worker_init(void);
 int worker_available(void);
 struct worker_thread *worker_get(thread_t worker_tid);
-struct job *worker_getjob(thread_t worker_tid);
-void worker_init(struct worker_thread *worker);
 void worker_signal(struct worker_thread *worker);
-void worker_start(void *(*func)(void *arg));
+int worker_can_start(struct fproc *rfp);
+void worker_start(struct fproc *rfp, void (*func)(void), message *m_ptr,
+	int use_spare);
 void worker_stop(struct worker_thread *worker);
 void worker_stop_by_endpt(endpoint_t proc_e);
 void worker_wait(void);
-void sys_worker_start(void *(*func)(void *arg));
-void dl_worker_start(void *(*func)(void *arg));
+struct worker_thread *worker_suspend(void);
+void worker_resume(struct worker_thread *org_self);
+void worker_set_proc(struct fproc *rfp);
 #endif

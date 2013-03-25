@@ -1,11 +1,10 @@
 /*	tty.h - Terminals	*/
 
+#include <minix/chardriver.h>
 #include <timers.h>
 
 #undef lock
 #undef unlock
-
-#define TTY_REVIVE	6767
 
 /* First minor numbers for the various classes of TTY devices. */
 #define CONS_MINOR	   0
@@ -36,7 +35,7 @@ typedef void(*devfunarg_t) (struct tty *tp, int c);
 typedef struct tty {
   int tty_events;		/* set when TTY should inspect this line */
   int tty_index;		/* index into TTY table */
-  int tty_minor;		/* device minor number */
+  devminor_t tty_minor;		/* device minor number */
 
   /* Input queue.  Typed characters are stored here until read by a program. */
   u16_t *tty_inhead;		/* pointer to place where next char goes */
@@ -63,27 +62,19 @@ typedef struct tty {
   char tty_openct;		/* count of number of opens of this tty */
 
   /* Information about incomplete I/O requests is stored here. */
-  int tty_inrepcode;		/* reply code, TASK_REPLY or REVIVE */
-  char tty_inrevived;		/* set to 1 if revive callback is pending */
-  endpoint_t tty_incaller;	/* process that made the call (usually VFS) */
-  endpoint_t tty_inproc;	/* process that wants to read from tty */
+  endpoint_t tty_incaller;	/* process that made the call, or NONE */
+  cdev_id_t tty_inid;		/* ID of suspended read request */
   cp_grant_id_t tty_ingrant;	/* grant where data is to go */
-  vir_bytes tty_inoffset;	/* offset into grant */
-  int tty_inleft;		/* how many chars are still needed */
-  int tty_incum;		/* # chars input so far */
-  int tty_outrepcode;		/* reply code, TASK_REPLY or REVIVE */
-  int tty_outrevived;		/* set to 1 if revive callback is pending */
-  endpoint_t tty_outcaller;	/* process that made the call (usually VFS) */
-  endpoint_t tty_outproc;	/* process that wants to write to tty */
+  size_t tty_inleft;		/* how many chars are still needed */
+  size_t tty_incum;		/* # chars input so far */
+  endpoint_t tty_outcaller;	/* process that made the call, or NONE */
+  cdev_id_t tty_outid;		/* ID of suspended write request */
   cp_grant_id_t tty_outgrant;	/* grant where data comes from */
-  vir_bytes tty_outoffset;	/* offset into grant */
-  int tty_outleft;		/* # chars yet to be output */
-  int tty_outcum;		/* # chars output so far */
-  endpoint_t tty_iocaller;	/* process that made the call (usually VFS) */
-  int tty_iorevived;		/* set to 1 if revive callback is pending */
-  endpoint_t tty_ioproc;	/* process that wants to do an ioctl */
-  int tty_iostatus;		/* result */
-  int tty_ioreq;		/* ioctl request code */
+  size_t tty_outleft;		/* # chars yet to be output */
+  size_t tty_outcum;		/* # chars output so far */
+  endpoint_t tty_iocaller;	/* process that made the call, or NONE */
+  cdev_id_t tty_ioid;		/* ID of suspended ioctl request */
+  unsigned int tty_ioreq;	/* ioctl request code */
   cp_grant_id_t tty_iogrant;	/* virtual address of ioctl buffer or grant */
 
   /* select() data */
@@ -142,13 +133,11 @@ extern struct kmessages kmess;
 void handle_events(struct tty *tp);
 void sigchar(struct tty *tp, int sig, int mayflush);
 void tty_task(void);
+tty_t *line2tty(devminor_t minor);
 int in_process(struct tty *tp, char *buf, int count, int scode);
 void out_process(struct tty *tp, char *bstart, char *bpos, char *bend,
 	int *icount, int *ocount);
 void tty_wakeup(clock_t now);
-#define tty_reply(c, r, p, s) tty_reply_f(__FILE__, __LINE__, (c), (r), (p), (s))
-void tty_reply_f(char *f, int l, int code, int replyee, int proc_nr, int
-	status);
 int select_try(struct tty *tp, int ops);
 int select_retry(struct tty *tp);
 
@@ -161,25 +150,21 @@ void kputc(int c);
 void cons_stop(void);
 void scr_init(struct tty *tp);
 void toggle_scroll(void);
-int con_loadfont(message *m);
+int con_loadfont(endpoint_t endpt, cp_grant_id_t grant);
 void select_console(int cons_line);
 void beep_x( unsigned freq, clock_t dur);
-void do_video(message *m);
+void do_video(message *m, int ipc_status);
 
 /* keyboard.c */
 void kb_init(struct tty *tp);
 void kb_init_once(void);
-int kbd_loadmap(message *m);
+int kbd_loadmap(endpoint_t endpt, cp_grant_id_t grant);
 void do_fkey_ctl(message *m);
 void kbd_interrupt(message *m);
-void do_kbd(message *m);
+void do_kbd(message *m, int ipc_status);
 void do_kb_inject(message *m);
-void do_kbdaux(message *m);
-int kbd_status(message *m_ptr);
 
 /* pty.c */
-void do_pty(struct tty *tp, message *m_ptr);
+void do_pty(message *m_ptr, int ipc_status);
 void pty_init(struct tty *tp);
 void select_retry_pty(struct tty *tp);
-int pty_status(message *m_ptr);
-

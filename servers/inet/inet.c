@@ -2,35 +2,6 @@
 	minix. Furthermore it contains the main loop of the network task.
 
 Copyright 1995 Philip Homburg
-
-The valid messages and their parameters are:
-
-from FS:
- __________________________________________________________________
-|		|           |         |       |          |         |
-| m_type	|   DEVICE  | PROC_NR |	COUNT |	POSITION | ADDRESS |
-|_______________|___________|_________|_______|__________|_________|
-|		|           |         |       |          |         |
-| DEV_OPEN 	| minor dev | proc nr | mode  |          |         |
-|_______________|___________|_________|_______|__________|_________|
-|		|           |         |       |          |         |
-| DEV_CLOSE 	| minor dev | proc nr |       |          |         |
-|_______________|___________|_________|_______|__________|_________|
-|		|           |         |       |          |         |
-| DEV_IOCTL_S	| minor dev | proc nr |       |	NWIO..	 | address |
-|_______________|___________|_________|_______|__________|_________|
-|		|           |         |       |          |         |
-| DEV_READ_S	| minor dev | proc nr |	count |          | address |
-|_______________|___________|_________|_______|__________|_________|
-|		|           |         |       |          |         |
-| DEV_WRITE_S	| minor dev | proc nr |	count |          | address |
-|_______________|___________|_________|_______|__________|_________|
-|		|           |         |       |          |         |
-| CANCEL	| minor dev | proc nr |       |          |         |
-|_______________|___________|_________|_______|__________|_________|
-
-from DL_ETH:
-  (not documented here)
 */
 
 #include "inet.h"
@@ -90,11 +61,9 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 int main(int argc, char *argv[])
 {
-	mq_t *mq;
+	message mess;
 	int ipc_status;
 	int r;
-	endpoint_t source;
-	int m_type;
 
 	/* SEF local startup. */
 	sef_local_startup();
@@ -124,59 +93,44 @@ int main(int argc, char *argv[])
 			clck_expire_timers();
 			continue;
 		}
-		mq= mq_get();
-		if (!mq)
-			ip_panic(("out of messages"));
 
-		r= sef_receive_status(ANY, &mq->mq_mess, &ipc_status);
+		r= sef_receive_status(ANY, &mess, &ipc_status);
 		if (r<0)
 		{
 			ip_panic(("unable to receive: %d", r));
 		}
 		reset_time();
-		source= mq->mq_mess.m_source;
-		m_type= mq->mq_mess.m_type;
-		if (source == VFS_PROC_NR)
+		if (mess.m_source == VFS_PROC_NR)
 		{
-			sr_rec(mq);
+			sr_rec(&mess, ipc_status);
 		}
 		else if (is_ipc_notify(ipc_status))
 		{
-			if (source == CLOCK)
+			if (mess.m_source == CLOCK)
 			{
-				clck_tick(&mq->mq_mess);
-				mq_free(mq);
+				clck_tick(&mess);
 			} 
-			else if (source == PM_PROC_NR)
-			{
-				/* signaled */ 
-				/* probably SIGTERM */
-				mq_free(mq);
-			} 
-			else if (source == DS_PROC_NR)
+			else if (mess.m_source == DS_PROC_NR)
 			{
 				/* DS notifies us of an event. */
 				ds_event();
-				mq_free(mq);
 			}
 			else
 			{
 				printf("inet: got unexpected notify from %d\n",
-					mq->mq_mess.m_source);
-				mq_free(mq);
+					mess.m_source);
 			}
 		}
-		else if (m_type == DL_CONF_REPLY || m_type == DL_TASK_REPLY ||
-			m_type == DL_STAT_REPLY)
+		else if (mess.m_type == DL_CONF_REPLY ||
+			mess.m_type == DL_TASK_REPLY ||
+			mess.m_type == DL_STAT_REPLY)
 		{
-			eth_rec(&mq->mq_mess);
-			mq_free(mq);
+			eth_rec(&mess);
 		}
 		else
 		{
 			printf("inet: got bad message type 0x%x from %d\n",
-				mq->mq_mess.m_type, mq->mq_mess.m_source);
-			mq_free(mq);
+				mess.m_type, mess.m_source);
 		}
 	}
 	ip_panic(("task is not allowed to terminate"));

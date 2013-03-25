@@ -667,7 +667,8 @@ void memory_init(void)
 /*===========================================================================*
  *				arch_proc_init				     *
  *===========================================================================*/
-void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp, char *name)
+void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp,
+	const u32_t ps_str, char *name)
 {
 	arch_proc_reset(pr);
 	strcpy(pr->p_name, name);
@@ -675,6 +676,7 @@ void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp, char *name)
 	/* set custom state we know */
 	pr->p_reg.pc = ip;
 	pr->p_reg.sp = sp;
+	pr->p_reg.retreg = ps_str; /* a.k.a r0*/
 }
 
 static int frclock_index = -1,

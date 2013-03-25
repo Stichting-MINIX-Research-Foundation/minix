@@ -47,7 +47,7 @@ int fs_link()
   NUL(string, len, sizeof(string));
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* Check to see if the file has maximum number of links already. */
@@ -67,7 +67,7 @@ int fs_link()
   }
 
   /* Temporarily open the last dir */
-  if( (ip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_DIR_INO)) == NULL) {
+  if( (ip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_DIR_INO)) == NULL) {
 	put_inode(rip);
 	return(EINVAL);
   }
@@ -129,7 +129,7 @@ int fs_unlink()
   NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
-  if( (rldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* The last directory exists.  Does the file also exist? */
@@ -181,7 +181,7 @@ int fs_rdlink()
   copylen = min( (size_t) fs_m_in.REQ_MEM_SIZE, UMAX_FILE_POS);
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   if(!S_ISLNK(rip->i_mode))
@@ -252,7 +252,7 @@ char file_name[MFS_NAME_MAX];	/* name of file to be removed */
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
-  ino_t numb;			/* inode number */
+  pino_t numb;			/* inode number */
   int	r;
 
   /* If rip is not NULL, it is used to get faster access to the inode. */
@@ -291,7 +291,7 @@ int fs_rename()
   int odir, ndir;			/* TRUE iff {old|new} file is dir */
   int same_pdir;			/* TRUE iff parent dirs are the same */
   char old_name[MFS_NAME_MAX], new_name[MFS_NAME_MAX];
-  ino_t numb;
+  pino_t numb;
   phys_bytes len;
   
   /* Copy the last component of the old name */
@@ -309,7 +309,7 @@ int fs_rename()
   NUL(new_name, len, sizeof(new_name));
 
   /* Get old dir inode */ 
-  if( (old_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_OLD_DIR)) == NULL) 
+  if ((old_dirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_REN_OLD_DIR)) == NULL)
 	return(err_code);
 
   old_ip = advance(old_dirp, old_name, IGN_PERM);
@@ -328,7 +328,7 @@ int fs_rename()
   }
 
   /* Get new dir inode */ 
-  if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL) {
+  if ((new_dirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL){
         put_inode(old_ip);
         put_inode(old_dirp);
         return(err_code);
@@ -492,7 +492,7 @@ int fs_ftrunc(void)
   off_t start, end;
   int r;
   
-  if( (rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   if(rip->i_sp->s_rd_only) {
@@ -527,7 +527,7 @@ off_t newsize;			/* inode must become this size */
  * writing is done.
  */
   int r;
-  mode_t file_type;
+  pmode_t file_type;
 
   file_type = rip->i_mode & I_TYPE;	/* check to see if file is special */
   if (file_type == I_CHAR_SPECIAL || file_type == I_BLOCK_SPECIAL)

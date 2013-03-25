@@ -16,7 +16,8 @@ extern ssize_t bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count,
 	int flags);
 extern ssize_t bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count,
 	int flags);
-extern int bdev_ioctl(dev_t dev, int request, void *buf);
+extern int bdev_ioctl(dev_t dev, int request, void *buf,
+	endpoint_t user_endpt);
 
 /* Asynchronous API. */
 typedef int bdev_id_t;
@@ -36,7 +37,7 @@ extern bdev_id_t bdev_gather_asyn(dev_t dev, u64_t pos, iovec_t *vec,
 extern bdev_id_t bdev_scatter_asyn(dev_t dev, u64_t pos, iovec_t *vec,
 	int count, int flags, bdev_callback_t callback, bdev_param_t param);
 extern bdev_id_t bdev_ioctl_asyn(dev_t dev, int request, void *buf,
-	bdev_callback_t callback, bdev_param_t param);
+	endpoint_t user_endpt, bdev_callback_t callback, bdev_param_t param);
 
 extern int bdev_wait_asyn(bdev_id_t id);
 

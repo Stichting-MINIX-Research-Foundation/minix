@@ -67,7 +67,7 @@ static clock_t realtime = 0;
 /* Number of ticks to adjust realtime by. A negative value implies slowing
  * down realtime, a positive value implies speeding it up.
  */
-static clock_t adjtime_delta = 0;
+static int32_t adjtime_delta = 0;
 
 /*
  * The boot processor's timer interrupt handler. In addition to non-boot cpus
@@ -195,7 +195,7 @@ void set_realtime(clock_t newrealtime)
 /*===========================================================================*
  *				set_adjtime_delta			     *
  *===========================================================================*/
-void set_adjtime_delta(clock_t ticks)
+void set_adjtime_delta(int32_t ticks)
 {
   adjtime_delta = ticks;
 }

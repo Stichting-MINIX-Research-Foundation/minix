@@ -53,7 +53,7 @@
 #define _MINIX_IOCTL_SIZE_BIG(i)	(((i) >> 8) & _IOCPARM_MASK_BIG)
 
 __BEGIN_DECLS
-int ioctl(int _fd, int _request, void *_data);
+int ioctl(int _fd, unsigned long _request, void *_data);
 __END_DECLS
 
 #endif /* _M_IOCTL_H */
