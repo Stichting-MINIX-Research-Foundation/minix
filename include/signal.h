@@ -62,29 +62,33 @@ int	kill(pid_t, int);
 int	__libc_sigaction14(int, const struct sigaction * __restrict,
 	    struct sigaction * __restrict);
 
-#ifndef __minix
 #if (_POSIX_C_SOURCE - 0L) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
 int	pthread_sigmask(int, const sigset_t * __restrict,
 	    sigset_t * __restrict);
+#ifndef __minix
 int	pthread_kill(pthread_t, int);
+#endif
 int	__libc_thr_sigsetmask(int, const sigset_t * __restrict,
 	    sigset_t * __restrict);
 #ifndef __LIBPTHREAD_SOURCE__
 #define	pthread_sigmask		__libc_thr_sigsetmask
 #endif /* __LIBPTHREAD_SOURCE__ */
 #endif
-#endif /* __minix */
 
 #ifndef __LIBC12_SOURCE__
 int	sigaction(int, const struct sigaction * __restrict,
     struct sigaction * __restrict) __RENAME(__sigaction14);
 #if defined(__minix) && defined(_SYSTEM)
-#define sigaddset(set, sig)	__sigaddset((set), (sig))
-#define sigdelset(set, sig)	__sigdelset((set), (sig))
-#define sigemptyset(set)	__sigemptyset((set))
-#define sigfillset(set)		__sigfillset((set))
-#define sigismember(set, sig)	__sigismember((set), (sig))
+/* In Minix system code, use alternate versions of the signal mask
+ * manipulation functions that do not check signal numbers vs. _NSIG.
+ * _NSIG can then represent the user-visible signal set.
+ */
+#define sigaddset(set, sig)    __sigaddset((set), (sig))
+#define sigdelset(set, sig)    __sigdelset((set), (sig))
+#define sigemptyset(set)       __sigemptyset((set))
+#define sigfillset(set)                __sigfillset((set))
+#define sigismember(set, sig)  __sigismember((set), (sig))
 #else
 int	sigaddset(sigset_t *, int) __RENAME(__sigaddset14);
 int	sigdelset(sigset_t *, int) __RENAME(__sigdelset14);
@@ -115,7 +119,7 @@ int *__errno(void);
 #define ___errno (*__errno())
 #endif
 
-#if !defined(__minix) || !defined(_SYSTEM)
+#if !(defined(__minix) && defined(_SYSTEM))
 __c99inline int
 sigaddset(sigset_t *set, int signo)
 {
@@ -161,7 +165,7 @@ sigfillset(sigset_t *set)
 	__sigfillset(set);
 	return (0);
 }
-#endif /* !defined(__minix) || !defined(_SYSTEM) */
+#endif
 #endif /* __c99inline */
 #endif /* !__LIBC12_SOURCE__ */
 
@@ -172,13 +176,11 @@ sigfillset(sigset_t *set)
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 int	killpg(pid_t, int);
 int	siginterrupt(int, int);
-#ifndef __minix
 int	sigstack(const struct sigstack *, struct sigstack *);
 #ifndef __LIBC12_SOURCE__
 int	sigaltstack(const stack_t * __restrict, stack_t * __restrict)
     __RENAME(__sigaltstack14);
 #endif
-#endif /* !__minix */
 int	sighold(int);
 int	sigignore(int);
 int	sigpause(int);
@@ -192,13 +194,10 @@ void	(*sigset (int, void (*)(int)))(int);
  */      
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
-#ifndef __minix 
 int	sigwait	(const sigset_t * __restrict, int * __restrict);
 int	sigwaitinfo(const sigset_t * __restrict, siginfo_t * __restrict);
-#endif /* !__minix */
 void	psiginfo(const siginfo_t *, const char *);
 
-#ifndef __minix
 #ifndef __LIBC12_SOURCE__
 struct timespec;
 int	sigtimedwait(const sigset_t * __restrict,
@@ -208,18 +207,15 @@ int	__sigtimedwait(const sigset_t * __restrict,
     siginfo_t * __restrict, struct timespec * __restrict)
     __RENAME(____sigtimedwait50);
 #endif
-#endif /* !__minix */
 #endif /* _POSIX_C_SOURCE >= 200112 || _XOPEN_SOURCE_EXTENDED || ... */
 
 
 #if defined(_NETBSD_SOURCE)
-#ifndef __minix
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in unistd.h */
 void	psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
-#endif /* !__minix */
 int	sigblock(int);
 int	sigsetmask(int);
 #endif /* _NETBSD_SOURCE */

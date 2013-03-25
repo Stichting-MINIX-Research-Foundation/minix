@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -12,8 +13,9 @@ ssize_t read(int fd, void *buffer, size_t nbytes)
 {
   message m;
 
-  m.m1_i1 = fd;
-  m.m1_i2 = nbytes;
-  m.m1_p1 = (char *) buffer;
-  return(_syscall(VFS_PROC_NR, READ, &m));
+  memset(&m, 0, sizeof(m));
+  m.VFS_READWRITE_FD = fd;
+  m.VFS_READWRITE_LEN = nbytes;
+  m.VFS_READWRITE_BUF = (char *) buffer;
+  return(_syscall(VFS_PROC_NR, VFS_READ, &m));
 }

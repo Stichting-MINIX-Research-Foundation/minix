@@ -5,7 +5,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <minix/drivers.h>
-#include <termios.h>
+#include <sys/termios.h>
 #include <signal.h>
 #include "tty.h"
 
@@ -29,6 +29,10 @@
 #define IS_IDBITS		6
 
 /* Line control bits. */
+#define LC_CS5               0x00	/* LSB0 and LSB1 encoding for CS5 */
+#define LC_CS6               0x01	/* LSB0 and LSB1 encoding for CS6 */
+#define LC_CS7               0x02	/* LSB0 and LSB1 encoding for CS7 */
+#define LC_CS8               0x03	/* LSB0 and LSB1 encoding for CS8 */
 #define LC_2STOP_BITS        0x04
 #define LC_PARITY            0x08
 #define LC_PAREVEN           0x10
@@ -191,7 +195,8 @@ static int rs_read(tty_t *tp, int try);
 static int rs_icancel(tty_t *tp, int try);
 static int rs_ocancel(tty_t *tp, int try);
 static void rs_ostart(rs232_t *rs);
-static int rs_break(tty_t *tp, int try);
+static int rs_break_on(tty_t *tp, int try);
+static int rs_break_off(tty_t *tp, int try);
 static int rs_close(tty_t *tp, int try);
 static void out_int(rs232_t *rs);
 static void rs232_handler(rs232_t *rs);
@@ -246,10 +251,11 @@ static int rs_write(register tty_t *tp, int try)
 	/* Copy from user space to the RS232 output buffer. */
 	if (tp->tty_outcaller == KERNEL) {
 		/* We're trying to print on kernel's behalf */
-		memcpy(rs->ohead, (void *) tp->tty_outgrant + tp->tty_outoffset, count);
+		memcpy(rs->ohead, (char *) tp->tty_outgrant + tp->tty_outcum,
+			count);
 	} else {
 		if ((r = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-			tp->tty_outoffset, (vir_bytes) rs->ohead, count)) != OK)
+			tp->tty_outcum, (vir_bytes) rs->ohead, count)) != OK)
 				printf("TTY: sys_safecopyfrom() failed: %d", r);
 	}
 
@@ -265,30 +271,20 @@ static int rs_write(register tty_t *tp, int try)
 	rs_ostart(rs);
 	if ((rs->ohead += ocount) >= bufend(rs->obuf))
 		rs->ohead -= buflen(rs->obuf);
-	tp->tty_outoffset += count;
 	tp->tty_outcum += count;
 	if ((tp->tty_outleft -= count) == 0) {
 		/* Output is finished, reply to the writer. */
-		if(tp->tty_outrepcode == TTY_REVIVE) {
-			notify(tp->tty_outcaller);
-			tp->tty_outrevived = 1;
-		} else {
-			tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-					tp->tty_outproc, tp->tty_outcum);
-			tp->tty_outcum = 0;
-		}
+		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+			tp->tty_outcum);
+		tp->tty_outcum = 0;
+		tp->tty_outcaller = NONE;
 	}
   }
   if (tp->tty_outleft > 0 && tp->tty_termios.c_ospeed == B0) {
 	/* Oops, the line has hung up. */
-	if(tp->tty_outrepcode == TTY_REVIVE) {
-		notify(tp->tty_outcaller);
-		tp->tty_outrevived = 1;
-	} else {
-		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-			tp->tty_outproc, EIO);
-		tp->tty_outleft = tp->tty_outcum = 0;
-	}
+	chardriver_reply_task(tp->tty_outcaller, tp->tty_outid, EIO);
+	tp->tty_outleft = tp->tty_outcum = 0;
+	tp->tty_outcaller = NONE;
   }
 
   return 1;
@@ -393,8 +389,19 @@ static void rs_config(rs232_t *rs)
 	line_controls |= LC_PARITY;
 	if (!(tp->tty_termios.c_cflag & PARODD)) line_controls |= LC_PAREVEN;
   }
+
   if (divisor >= (UART_FREQ / 110)) line_controls |= LC_2STOP_BITS;
-  line_controls |= (tp->tty_termios.c_cflag & CSIZE) >> 2;
+
+  /* which word size is configured? set the bits explicitly. */
+  if((tp->tty_termios.c_cflag & CSIZE) == CS5)
+	line_controls |= LC_CS5;
+  else if((tp->tty_termios.c_cflag & CSIZE) == CS6)
+	line_controls |= LC_CS6;
+  else if((tp->tty_termios.c_cflag & CSIZE) == CS7)
+	line_controls |= LC_CS7;
+  else if((tp->tty_termios.c_cflag & CSIZE) == CS8)
+	line_controls |= LC_CS8;
+  else printf("rs232: warning: no known word size set\n");
 
   /* Select the baud rate divisor registers and change the rate. */
   sys_outb(rs->line_ctl_port, LC_ADDRESS_DIVISOR);
@@ -509,7 +516,8 @@ void rs_init(tty_t *tp)
   tp->tty_icancel = rs_icancel;
   tp->tty_ocancel = rs_ocancel;
   tp->tty_ioctl = rs_ioctl;
-  tp->tty_break = rs_break;
+  tp->tty_break_on = rs_break_on;
+  tp->tty_break_off = rs_break_off;
   tp->tty_close = rs_close;
 
   /* Tell external device we are ready. */
@@ -526,7 +534,7 @@ void rs_interrupt(message *m)
 	int i;
 	rs232_t *rs;
 
-	irq_set= m->NOTIFY_ARG;
+	irq_set= m->NOTIFY_INTMASK;
 	for (i= 0, rs = rs_lines; i<NR_RS_LINES; i++, rs++)
 	{
 		if (irq_set & (1 << rs->irq))
@@ -597,7 +605,7 @@ static int rs_read(tty_t *tp, int try)
 	if (count > icount) count = icount;
 
 	/* Perform input processing on (part of) the input buffer. */
-	if ((count = in_process(tp, rs->itail, count, -1)) == 0) break;
+	if ((count = in_process(tp, rs->itail, count)) == 0) break;
 
 	rs->icount -= count;
 	if (!rs->idevready && rs->icount < RS_ILOWWATER) istart(rs);
@@ -619,11 +627,11 @@ static void rs_ostart(rs232_t *rs)
 }
 
 /*===========================================================================*
- *				rs_break				     *
+ *				rs_break_on				     *
  *===========================================================================*/
-static int rs_break(tty_t *tp, int UNUSED(dummy))
+static int rs_break_on(tty_t *tp, int UNUSED(dummy))
 {
-/* Generate a break condition by setting the BREAK bit for 0.4 sec. */
+/* Raise break condition. */
   rs232_t *rs = tp->tty_priv;
   u32_t line_controls;
   int s;
@@ -631,10 +639,22 @@ static int rs_break(tty_t *tp, int UNUSED(dummy))
   if ((s = sys_inb(rs->line_ctl_port, &line_controls)) != OK)
 	printf("TTY: sys_inb() failed: %d", s);
   sys_outb(rs->line_ctl_port, line_controls | LC_BREAK);
-  /* XXX */
-  /* milli_delay(400); */				/* ouch */
-  printf("RS232 break\n");
-  sys_outb(rs->line_ctl_port, line_controls);
+  return 0;	/* dummy */
+}
+
+/*===========================================================================*
+ *				rs_break_off				     *
+ *===========================================================================*/
+static int rs_break_off(tty_t *tp, int UNUSED(dummy))
+{
+/* Clear break condition. */
+  rs232_t *rs = tp->tty_priv;
+  u32_t line_controls;
+  int s;
+
+  if ((s = sys_inb(rs->line_ctl_port, &line_controls)) != OK)
+	printf("TTY: sys_inb() failed: %d", s);
+  sys_outb(rs->line_ctl_port, line_controls & ~LC_BREAK);
   return 0;	/* dummy */
 }
 

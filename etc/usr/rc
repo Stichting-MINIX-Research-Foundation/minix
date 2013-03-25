@@ -25,10 +25,13 @@ fi
 bootcd="`/bin/sysenv bootcd`"
 
 case "$#:$1" in
+1:autoboot)
+    action=start
+    ;;
 1:start|1:stop|1:down)
     action=$1
     ;;
-*)  echo >&2 "Usage: $0 start|stop|down"
+*)  echo >&2 "Usage: $0 autoboot|start|stop|down"
     exit 1
 esac
 
@@ -158,7 +161,7 @@ capemgr() {
 DAEMONS=/etc/rc.daemons
 
 case $action in
-start)
+start|autoboot)
     # Select console font.
     test -f /etc/font && loadfont /etc/font </dev/console
 
@@ -167,7 +170,7 @@ start)
 
     # Start servers and drivers set at the boot monitor.
     echo -n "Starting services:"
-    up -n random -dev /dev/random -devstyle STYLE_DEVA -period 3HZ
+    up -n random -dev /dev/random -period 3HZ
 
     # load random number generator
     if [ -f $RANDOM_FILE ]
@@ -188,12 +191,16 @@ start)
     done
     if [ X`/bin/sysenv lwip` = Xyes ]
     then
-    	up lwip -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE_A
+	up lwip -script /etc/rs.inet -dev /dev/ip
     else
-    	up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+	up inet -script /etc/rs.inet -dev /dev/ip
     fi
 
+    up uds -dev /dev/uds
+
     up -n ipc
+
+    up log -dev /dev/klog
 
     if [ $ARCH = i386 ]
     then

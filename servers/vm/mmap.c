@@ -7,7 +7,6 @@
 #include <minix/const.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
-#include <minix/keymap.h>
 #include <minix/minlib.h>
 #include <minix/type.h>
 #include <minix/ipc.h>
@@ -181,7 +180,7 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 
 	if(replymsg->VMV_RESULT != OK) {
 		printf("VM: VFS reply failed (%d)\n", replymsg->VMV_RESULT);
-		sys_sysctl_stacktrace(vmp->vm_endpoint);
+		sys_diagctl_stacktrace(vmp->vm_endpoint);
 		result = origmsg->VMV_RESULT;
 	} else {
 		/* Finish mmap */
@@ -198,8 +197,8 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 	mmap_reply.m_type = result;
 	mmap_reply.VMM_ADDR = v;
 
-	if(send(vmp->vm_endpoint, &mmap_reply) != OK)
-		panic("VM: mmap_file_cont: send() failed");
+	if(ipc_send(vmp->vm_endpoint, &mmap_reply) != OK)
+		panic("VM: mmap_file_cont: ipc_send() failed");
 }
 
 /*===========================================================================*
@@ -530,7 +529,7 @@ int do_munmap(message *m)
 	        if(!(vr = map_lookup(vmp, addr, NULL))) {
 			printf("VM: unmap: address 0x%lx not found in %d\n",
 	                       addr, target);
-			sys_sysctl_stacktrace(target);
+			sys_diagctl_stacktrace(target);
 	                return EFAULT;
 		}
 		len = vr->length;

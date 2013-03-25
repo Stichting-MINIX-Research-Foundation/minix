@@ -182,7 +182,7 @@ static void do_get_stat_s(message * mp)
         panic("%s %d", str_CopyErrMsg, rc);
 
   mp->m_type = DL_STAT_REPLY;
-  rc = send(mp->m_source, mp);
+  rc = ipc_send(mp->m_source, mp);
   if( rc != OK )
     panic("%s %d", str_StatErrMsg, rc);
   return;
@@ -251,7 +251,7 @@ static void do_conf(const message * mp)
     *(ether_addr_t *) reply_mess.DL_HWADDR = dep->de_address;
   }
   
-  if (send(mp->m_source, &reply_mess) != OK)
+  if (ipc_send(mp->m_source, &reply_mess) != OK)
     panic("%s %d", str_SendErrMsg, mp->m_source);
 
   return;
@@ -269,7 +269,7 @@ static void do_reply(dpeth_t * dep)
   reply.DL_FLAGS = flags;
   reply.DL_COUNT = dep->de_read_s;
 
-  r = send(dep->de_client, &reply);
+  r = ipc_send(dep->de_client, &reply);
 
   if(r < 0)
     panic("%s %d", str_SendErrMsg, r);

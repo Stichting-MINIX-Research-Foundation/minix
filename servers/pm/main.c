@@ -6,11 +6,10 @@
  *
  * The entry points into this file are:
  *   main:	starts PM running
- *   setreply:	set the reply to be sent to process making an PM system call
+ *   reply:	send a reply to a process making a PM system call
  */
 
 #include "pm.h"
-#include <minix/keymap.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/ds.h>
@@ -24,31 +23,25 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
-#include <string.h>
 #include <machine/archtypes.h>
 #include <env.h>
+#include <assert.h>
 #include "mproc.h"
-#include "param.h"
 
 #include "kernel/const.h"
 #include "kernel/config.h"
 #include "kernel/proc.h"
 
 #if ENABLE_SYSCALL_STATS
-EXTERN unsigned long calls_stats[NCALLS];
+EXTERN unsigned long calls_stats[NR_PM_CALLS];
 #endif
 
-static void sendreply(void);
 static int get_nice_value(int queue);
 static void handle_vfs_reply(void);
-
-#define click_to_round_k(n) \
-	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static int sef_cb_signal_manager(endpoint_t target, int signo);
 
 /*===========================================================================*
  *				main					     *
@@ -56,92 +49,59 @@ static int sef_cb_signal_manager(endpoint_t target, int signo);
 int main()
 {
 /* Main routine of the process manager. */
-  int result;
+  unsigned int call_index;
+  int ipc_status, result;
 
   /* SEF local startup. */
   sef_local_startup();
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {
-	  int ipc_status;
+	/* Wait for the next message. */
+	if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
+		panic("PM sef_receive_status error");
 
-	  /* Wait for the next message and extract useful information from it. */
-	  if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
-		  panic("PM sef_receive_status error");
-	  who_e = m_in.m_source;	/* who sent the message */
-	  if(pm_isokendpt(who_e, &who_p) != OK)
-		  panic("PM got message from invalid endpoint: %d", who_e);
-	  call_nr = m_in.m_type;	/* system call number */
+	/* Check for system notifications first. Special cases. */
+	if (is_ipc_notify(ipc_status)) {
+		if (_ENDPOINT_P(m_in.m_source) == CLOCK)
+			expire_timers(m_in.NOTIFY_TIMESTAMP);
 
-	  /* Process slot of caller. Misuse PM's own process slot if the kernel is
-	   * calling. This can happen in case of synchronous alarms (CLOCK) or or
-	   * event like pending kernel signals (SYSTEM).
-	   */
-	  mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
-	  if(who_p >= 0 && mp->mp_endpoint != who_e) {
-		  panic("PM endpoint number out of sync with source: %d",
-				  			mp->mp_endpoint);
-	  }
+		/* done, continue */
+		continue;
+	}
+
+	/* Extract useful information from the message. */
+	who_e = m_in.m_source;	/* who sent the message */
+	if (pm_isokendpt(who_e, &who_p) != OK)
+		panic("PM got message from invalid endpoint: %d", who_e);
+	mp = &mproc[who_p];	/* process slot of caller */
+	call_nr = m_in.m_type;	/* system call number */
 
 	/* Drop delayed calls from exiting processes. */
 	if (mp->mp_flags & EXITING)
 		continue;
 
-	/* Check for system notifications first. Special cases. */
-	if (is_ipc_notify(ipc_status)) {
-		if (who_p == CLOCK) {
-			expire_timers(m_in.NOTIFY_TIMESTAMP);
-		}
+	if (IS_VFS_PM_RS(call_nr) && who_e == VFS_PROC_NR) {
+		handle_vfs_reply();
 
-		/* done, send reply and continue */
-		sendreply();
-		continue;
-	}
+		result = SUSPEND;		/* don't reply */
+	} else if (IS_PM_CALL(call_nr)) {
+		/* If the system call number is valid, perform the call. */
+		call_index = (unsigned int) (call_nr - PM_BASE);
 
-	switch(call_nr)
-	{
-	case PM_SETUID_REPLY:
-	case PM_SETGID_REPLY:
-	case PM_SETSID_REPLY:
-	case PM_EXEC_REPLY:
-	case PM_EXIT_REPLY:
-	case PM_CORE_REPLY:
-	case PM_FORK_REPLY:
-	case PM_SRV_FORK_REPLY:
-	case PM_UNPAUSE_REPLY:
-	case PM_REBOOT_REPLY:
-	case PM_SETGROUPS_REPLY:
-		if (who_e == VFS_PROC_NR)
-		{
-			handle_vfs_reply();
-			result= SUSPEND;		/* don't reply */
-		}
-		else
-			result= ENOSYS;
-		break;
-	case COMMON_GETSYSINFO:
-		result = do_getsysinfo();
-		break;
-	default:
-		/* Else, if the system call number is valid, perform the
-		 * call.
-		 */
-		if ((unsigned) call_nr >= NCALLS) {
-			result = ENOSYS;
-		} else {
+		if (call_index < NR_PM_CALLS && call_vec[call_index] != NULL) {
 #if ENABLE_SYSCALL_STATS
-			calls_stats[call_nr]++;
+			calls_stats[call_index]++;
 #endif
 
-			result = (*call_vec[call_nr])();
-
-		}
-		break;
-	}
+			result = (*call_vec[call_index])();
+		} else
+			result = ENOSYS;
+	} else
+		result = ENOSYS;
 
 	/* Send reply. */
-	if (result != SUSPEND) setreply(who_p, result);
-	sendreply();
+	if (result != SUSPEND) reply(who_p, result);
   }
   return(OK);
 }
@@ -158,7 +118,7 @@ static void sef_local_startup()
   /* No live update support for now. */
 
   /* Register signal callbacks. */
-  sef_setcb_signal_manager(sef_cb_signal_manager);
+  sef_setcb_signal_manager(process_ksig);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -169,24 +129,13 @@ static void sef_local_startup()
  *===========================================================================*/
 static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
-/* Initialize the process manager. 
- * Memory use info is collected from the boot monitor, the kernel, and
- * all processes compiled into the system image. Initially this information
- * is put into an array mem_chunks. Elements of mem_chunks are struct memory,
- * and hold base, size pairs in units of clicks. This array is small, there
- * should be no more than 8 chunks. After the array of chunks has been built
- * the contents are used to initialize the hole list. Space for the hole list
- * is reserved as an array with twice as many elements as the maximum number
- * of processes allowed. It is managed as a linked list, and elements of the
- * array are struct hole, which, in addition to storage for a base and size in 
- * click units also contain space for a link, a pointer to another element.
-*/
+/* Initialize the process manager. */
   int s;
   static struct boot_image image[NR_BOOT_PROCS];
   register struct boot_image *ip;
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 				SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
-  static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
+  static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT, SIGINFO };
   static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE, 
 				SIGBUS, SIGSEGV };
   register struct mproc *rmp;
@@ -266,18 +215,21 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		rmp->mp_endpoint = ip->endpoint;
 
 		/* Tell VFS about this system process. */
-		mess.m_type = PM_INIT;
-		mess.PM_SLOT = ip->proc_nr;
-		mess.PM_PID = rmp->mp_pid;
-		mess.PM_PROC = rmp->mp_endpoint;
-  		if (OK != (s=send(VFS_PROC_NR, &mess)))
+		memset(&mess, 0, sizeof(mess));
+		mess.m_type = VFS_PM_INIT;
+		mess.VFS_PM_SLOT = ip->proc_nr;
+		mess.VFS_PM_PID = rmp->mp_pid;
+		mess.VFS_PM_ENDPT = rmp->mp_endpoint;
+  		if (OK != (s=ipc_send(VFS_PROC_NR, &mess)))
 			panic("can't sync up with VFS: %d", s);
   	}
   }
 
   /* Tell VFS that no more system processes follow and synchronize. */
-  mess.PR_ENDPT = NONE;
-  if (sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
+  memset(&mess, 0, sizeof(mess));
+  mess.m_type = VFS_PM_INIT;
+  mess.VFS_PM_ENDPT = NONE;
+  if (ipc_sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic("can't sync up with VFS");
 
 #if defined(__i386__)
@@ -296,67 +248,27 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 }
 
 /*===========================================================================*
- *		            sef_cb_signal_manager                            *
+ *				reply					     *
  *===========================================================================*/
-static int sef_cb_signal_manager(endpoint_t target, int signo)
-{
-/* Process signal on behalf of the kernel. */
-  int r;
-
-  r = process_ksig(target, signo);
-  sendreply();
-
-  return r;
-}
-
-/*===========================================================================*
- *				setreply				     *
- *===========================================================================*/
-void setreply(proc_nr, result)
+void reply(proc_nr, result)
 int proc_nr;			/* process to reply to */
 int result;			/* result of call (usually OK or error #) */
 {
-/* Fill in a reply message to be sent later to a user process.  System calls
- * may occasionally fill in other fields, this is only for the main return
- * value, and for setting the "must send reply" flag.
+/* Send a reply to a user process.  System calls may occasionally fill in other
+ * fields, this is only for the main return value and for sending the reply.
  */
-  register struct mproc *rmp = &mproc[proc_nr];
+  struct mproc *rmp;
+  int r;
 
   if(proc_nr < 0 || proc_nr >= NR_PROCS)
-      panic("setreply arg out of range: %d", proc_nr);
+      panic("reply arg out of range: %d", proc_nr);
 
-  rmp->mp_reply.reply_res = result;
-  rmp->mp_flags |= REPLY;	/* reply pending */
-}
+  rmp = &mproc[proc_nr];
+  rmp->mp_reply.m_type = result;
 
-/*===========================================================================*
- *				sendreply				     *
- *===========================================================================*/
-static void sendreply()
-{
-  int proc_nr;
-  int s;
-  struct mproc *rmp;
-
-  /* Send out all pending reply messages, including the answer to
-   * the call just made above.
-   */
-  for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-      /* In the meantime, the process may have been killed by a
-       * signal (e.g. if a lethal pending signal was unblocked)
-       * without the PM realizing it. If the slot is no longer in
-       * use or the process is exiting, don't try to reply.
-       */
-      if ((rmp->mp_flags & (REPLY | IN_USE | EXITING)) ==
-          (REPLY | IN_USE)) {
-          s=sendnb(rmp->mp_endpoint, &rmp->mp_reply);
-          if (s != OK) {
-              printf("PM can't reply to %d (%s): %d\n",
-                  rmp->mp_endpoint, rmp->mp_name, s);
-          }
-          rmp->mp_flags &= ~REPLY;
-      }
-  }
+  if ((r = ipc_sendnb(rmp->mp_endpoint, &rmp->mp_reply)) != OK)
+	printf("PM can't reply to %d (%s): %d\n", rmp->mp_endpoint,
+		rmp->mp_name, r);
 }
 
 /*===========================================================================*
@@ -383,12 +295,12 @@ static void handle_vfs_reply()
 {
   struct mproc *rmp;
   endpoint_t proc_e;
-  int r, proc_n;
+  int r, proc_n, new_parent;
 
-  /* PM_REBOOT is the only request not associated with a process.
+  /* VFS_PM_REBOOT is the only request not associated with a process.
    * Handle its reply first.
    */
-  if (call_nr == PM_REBOOT_REPLY) {
+  if (call_nr == VFS_PM_REBOOT_REPLY) {
 	/* Ask the kernel to abort. All system services, including
 	 * the PM, will get a HARD_STOP notification. Await the
 	 * notification in the main loop.
@@ -399,7 +311,7 @@ static void handle_vfs_reply()
   }
 
   /* Get the process associated with this call */
-  proc_e = m_in.PM_PROC;
+  proc_e = m_in.VFS_PM_ENDPT;
 
   if (pm_isokendpt(proc_e, &proc_n) != OK) {
 	panic("handle_vfs_reply: got bad endpoint from VFS: %d", proc_e);
@@ -411,88 +323,88 @@ static void handle_vfs_reply()
   if (!(rmp->mp_flags & VFS_CALL))
 	panic("handle_vfs_reply: reply without request: %d", call_nr);
 
-  rmp->mp_flags &= ~VFS_CALL;
+  new_parent = rmp->mp_flags & NEW_PARENT;
+  rmp->mp_flags &= ~(VFS_CALL | NEW_PARENT);
 
   if (rmp->mp_flags & UNPAUSED)
   	panic("handle_vfs_reply: UNPAUSED set on entry: %d", call_nr);
 
   /* Call-specific handler code */
   switch (call_nr) {
-  case PM_SETUID_REPLY:
-  case PM_SETGID_REPLY:
-  case PM_SETGROUPS_REPLY:
+  case VFS_PM_SETUID_REPLY:
+  case VFS_PM_SETGID_REPLY:
+  case VFS_PM_SETGROUPS_REPLY:
 	/* Wake up the original caller */
-	setreply(rmp-mproc, OK);
+	reply(rmp-mproc, OK);
 
 	break;
 
-  case PM_SETSID_REPLY:
+  case VFS_PM_SETSID_REPLY:
 	/* Wake up the original caller */
-	setreply(rmp-mproc, rmp->mp_procgrp);
+	reply(rmp-mproc, rmp->mp_procgrp);
 
 	break;
 
-  case PM_EXEC_REPLY:
-	exec_restart(rmp, m_in.PM_STATUS, (vir_bytes)m_in.PM_PC,
-		(vir_bytes)m_in.PM_NEWSP);
+  case VFS_PM_EXEC_REPLY:
+	exec_restart(rmp, m_in.VFS_PM_STATUS, (vir_bytes)m_in.VFS_PM_PC,
+		(vir_bytes)m_in.VFS_PM_NEWSP,
+		(vir_bytes)m_in.VFS_PM_NEWPS_STR);
 
 	break;
 
-  case PM_EXIT_REPLY:
+  case VFS_PM_EXIT_REPLY:
 	exit_restart(rmp, FALSE /*dump_core*/);
 
 	break;
 
-  case PM_CORE_REPLY:
-	if (m_in.PM_STATUS == OK)
+  case VFS_PM_CORE_REPLY:
+	if (m_in.VFS_PM_STATUS == OK)
 		rmp->mp_sigstatus |= DUMPED;
 
-	if (m_in.PM_PROC == m_in.PM_TRACED_PROC)
-		/* The reply is to a core dump request
-		 * for a killed process */
-		exit_restart(rmp, TRUE /*dump_core*/);
-	else
-		/* The reply is to a core dump request
-		 * for a traced process (T_DUMPCORE) */
-		/* Wake up the original caller */
-		setreply(rmp-mproc, rmp->mp_procgrp);
+	exit_restart(rmp, TRUE /*dump_core*/);
 
 	break;
 
-  case PM_FORK_REPLY:
+  case VFS_PM_FORK_REPLY:
 	/* Schedule the newly created process ... */
-	r = (OK);
+	r = OK;
 	if (rmp->mp_scheduler != KERNEL && rmp->mp_scheduler != NONE) {
 		r = sched_start_user(rmp->mp_scheduler, rmp);
 	}
 
 	/* If scheduling the process failed, we want to tear down the process
 	 * and fail the fork */
-	if (r != (OK)) {
+	if (r != OK) {
 		/* Tear down the newly created process */
 		rmp->mp_scheduler = NONE; /* don't try to stop scheduling */
 		exit_proc(rmp, -1, FALSE /*dump_core*/);
 
-		/* Wake up the parent with a failed fork */
-		setreply(rmp->mp_parent, -1);
-
+		/* Wake up the parent with a failed fork (unless dead) */
+		if (!new_parent)
+			reply(rmp->mp_parent, -1);
 	}
 	else {
 		/* Wake up the child */
-		setreply(proc_n, OK);
+		reply(proc_n, OK);
 
-		/* Wake up the parent */
-		setreply(rmp->mp_parent, rmp->mp_pid);
+		/* Wake up the parent, unless the parent is already dead */
+		if (!new_parent)
+			reply(rmp->mp_parent, rmp->mp_pid);
 	}
 
 	break;
 
-  case PM_SRV_FORK_REPLY:
+  case VFS_PM_SRV_FORK_REPLY:
 	/* Nothing to do */
 
 	break;
 
-  case PM_UNPAUSE_REPLY:
+  case VFS_PM_UNPAUSE_REPLY:
+	/* The target process must always be stopped while unpausing; otherwise
+	 * it could just end up pausing itself on a new call afterwards.
+	 */
+	assert(rmp->mp_flags & PROC_STOPPED);
+
 	/* Process is now unpaused */
 	rmp->mp_flags |= UNPAUSED;
 

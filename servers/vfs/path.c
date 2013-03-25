@@ -7,7 +7,6 @@
 #include <string.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
-#include <minix/keymap.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <stddef.h>
@@ -17,13 +16,10 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/un.h>
-#include <dirent.h>
-#include "threads.h"
+#include <sys/dirent.h>
 #include "vmnt.h"
 #include "vnode.h"
 #include "path.h"
-#include "fproc.h"
-#include "param.h"
 
 /* Set to following define to 1 if you really want to use the POSIX definition
  * (IEEE Std 1003.1, 2004) of pathname resolution. POSIX requires pathnames
@@ -440,8 +436,8 @@ struct fproc *rfp;
 	root_ino = 0;
 
   /* Set user and group ids according to the system call */
-  uid = (job_call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
-  gid = (job_call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
+  uid = (job_call_nr == VFS_ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
+  gid = (job_call_nr == VFS_ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
 
   symloop = 0;	/* Number of symlinks seen so far */
 
@@ -615,12 +611,12 @@ char ename[NAME_MAX + 1];
 {
 #define DIR_ENTRIES 8
 #define DIR_ENTRY_SIZE (sizeof(struct dirent) + NAME_MAX)
-  u64_t pos, new_pos;
+  off_t pos, new_pos;
   int r, consumed, totalbytes, name_len;
   char buf[DIR_ENTRY_SIZE * DIR_ENTRIES];
   struct dirent *cur;
 
-  pos = make64(0, 0);
+  pos = 0;
 
   if (!S_ISDIR(dirp->v_mode)) return(EBADF);
 
@@ -643,7 +639,7 @@ char ename[NAME_MAX + 1];
 
 		if(cur->d_name + name_len+1 > &buf[sizeof(buf)])
 			return(EINVAL);	/* Rubbish in dir entry */
-		if (entry->v_inode_nr == cur->d_ino) {
+		if (entry->v_inode_nr == cur->d_fileno) {
 			/* found the entry we were looking for */
 			int copylen = MIN(name_len + 1, NAME_MAX + 1);
 			if (strlcpy(ename, cur->d_name, copylen) >= copylen) {
@@ -837,8 +833,8 @@ size_t pathlen;
   if (pathlen < UNIX_PATH_MAX || pathlen >= PATH_MAX) return(EINVAL);
 
   rfp = &(fproc[slot]);
-  r = sys_safecopyfrom(PFS_PROC_NR, io_gr, (vir_bytes) 0,
-				(vir_bytes) canon_path, pathlen);
+  r = sys_safecopyfrom(who_e, io_gr, (vir_bytes) 0, (vir_bytes) canon_path,
+	pathlen);
   if (r != OK) return(r);
   canon_path[pathlen] = '\0';
 
@@ -846,9 +842,9 @@ size_t pathlen;
   if ((r = canonical_path(canon_path, rfp)) != OK) return(r);
   if (strlen(canon_path) >= pathlen) return(ENAMETOOLONG);
 
-  /* copy canon_path back to PFS */
-  r = sys_safecopyto(PFS_PROC_NR, (cp_grant_id_t) io_gr, (vir_bytes) 0,
-				(vir_bytes) canon_path, pathlen);
+  /* copy canon_path back to the caller */
+  r = sys_safecopyto(who_e, (cp_grant_id_t) io_gr, (vir_bytes) 0,
+	(vir_bytes) canon_path, pathlen);
   if (r != OK) return(r);
 
   /* Now do permissions checking */
@@ -868,10 +864,13 @@ size_t pathlen;
 }
 
 /*===========================================================================*
- *				do_check_perms				     *
+ *				do_checkperms				     *
  *===========================================================================*/
-int do_check_perms(message *UNUSED(m_out))
+int do_checkperms(void)
 {
-  return check_perms(job_m_in.USER_ENDPT, (cp_grant_id_t) job_m_in.IO_GRANT,
-		     (size_t) job_m_in.COUNT);
+  /* This should be replaced by an ACL check. */
+  if (!super_user) return EPERM;
+
+  return check_perms(job_m_in.VFS_CHECKPERMS_ENDPT,
+	job_m_in.VFS_CHECKPERMS_GRANT, (size_t) job_m_in.VFS_CHECKPERMS_COUNT);
 }

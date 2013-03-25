@@ -1,6 +1,7 @@
 #include "inc.h"
 #include <minix/com.h>
 #include <minix/vfsif.h>
+#include <minix/minlib.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include "buf.h"
@@ -139,9 +140,10 @@ int fs_bread(void)
 /*===========================================================================*
  *				fs_getdents				     *
  *===========================================================================*/
-int fs_getdents(void) {
+int fs_getdents(void)
+{
   struct dir_record *dir;
-  ino_t ino;
+  pino_t ino;
   cp_grant_id_t gid;
   size_t block_size;
   off_t pos, block_pos, block, cur_pos, tmpbuf_offset, userbuf_off;
@@ -246,9 +248,10 @@ int fs_getdents(void) {
 			/* The standard data structure is created using the
 			 * data in the buffer. */
 			dirp = (struct dirent *) &getdents_buf[tmpbuf_offset];
-			dirp->d_ino = (ino_t)(b_data(bp) + block_pos);
-			dirp->d_off= cur_pos;
+			dirp->d_fileno = (u32_t)(b_data(bp) + (size_t)block_pos);
 			dirp->d_reclen= reclen;
+			dirp->d_type = fs_mode_to_type(dir_tmp->d_mode);
+			dirp->d_namlen = len;
 			memcpy(dirp->d_name, name, len);
 			dirp->d_name[len]= '\0';
 			tmpbuf_offset += reclen;

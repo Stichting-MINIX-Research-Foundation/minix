@@ -7,8 +7,8 @@ set -e
 	cat ../include/minix/callnr.h | \
 	tr -s ' \t' ' ' | \
 	sed 's/^# /#/' | \
-	egrep '^#define [A-Z_][A-Z0-9_]* [0-9]+' | grep -v NCALLS 
-	
+	egrep '^#define [A-Z_][A-Z0-9_]* \((PM|VFS)_BASE \+ *[0-9]+\)'
+
 	cat ../include/minix/com.h | \
 	tr -s ' \t' ' ' | \
 	sed 's/^# /#/' | \

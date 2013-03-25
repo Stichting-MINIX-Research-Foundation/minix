@@ -412,9 +412,9 @@ then
 
 	# Get sizes and space availability while the file systems are still
 	# mounted. Otherwise we have to mount them again just for this.
-	required_root_space=`df -k /dev/$root | awk '{print $4}' | tail -n 1`
-	free_root_space=`df -k /dev/$root | awk '{print $3}' | tail -n 1`
-	free_usr_space=`df -k /dev/$usr | awk '{print $3}' | tail -n 1`
+	required_root_space=`df -kP /dev/$root | awk '{print $3}' | tail -n 1`
+	free_root_space=`df -kP /dev/$root | awk '{print $4}' | tail -n 1`
+	free_usr_space=`df -kP /dev/$usr | awk '{print $4}' | tail -n 1`
 
 	umount /mnt/usr && umount /mnt || exit
 

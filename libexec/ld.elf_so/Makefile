@@ -7,11 +7,6 @@ USE_BITCODE=no
 
 WARNS?=4
 
-# Minix Clang binaries references /libexec/ld.elf_so
-SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld.elf_so
-# And the minix gcc currently references /libexec/ld-elf.so.1
-SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /libexec/ld-elf.so.1
-
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
 .include <${BSD_MK_COMPAT_FILE}>
@@ -74,7 +69,7 @@ CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
 SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
 		map_object.c load.c search.c headers.c paths.c expand.c \
-		tls.c symver.c diagassert.c map_object_fallback.c 
+		tls.c symver.c diagassert.c map_object_fallback.c
 
 .if ${USE_FORT} == "yes"
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/misc

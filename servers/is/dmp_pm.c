@@ -9,7 +9,7 @@
 
 #include "inc.h"
 #include "../pm/mproc.h"
-#include <timers.h> 
+#include <minix/timers.h>
 #include <minix/config.h> 
 #include <minix/type.h> 
 
@@ -20,21 +20,19 @@ struct mproc mproc[NR_PROCS];
  *===========================================================================*/
 static char *flags_str(int flags)
 {
-	static char str[14];
+	static char str[12];
 	str[0] = (flags & WAITING) ? 'W' : '-';
 	str[1] = (flags & ZOMBIE)  ? 'Z' : '-';
-	str[2] = (flags & PAUSED)  ? 'P' : '-';
-	str[3] = (flags & ALARM_ON)  ? 'A' : '-';
-	str[4] = (flags & EXITING) ? 'E' : '-';
-	str[5] = (flags & STOPPED)  ? 'S' : '-';
-	str[6] = (flags & SIGSUSPENDED)  ? 'U' : '-';
-	str[7] = (flags & REPLY)  ? 'R' : '-';
-	str[8] = (flags & VFS_CALL) ? 'F' : '-';
-	str[9] = (flags & PM_SIG_PENDING) ? 's' : '-';
-	str[10] = (flags & PRIV_PROC)  ? 'p' : '-';
-	str[11] = (flags & PARTIAL_EXEC) ? 'x' : '-';
-	str[12] = (flags & DELAY_CALL) ? 'd' : '-';
-	str[13] = '\0';
+	str[2] = (flags & ALARM_ON)  ? 'A' : '-';
+	str[3] = (flags & EXITING) ? 'E' : '-';
+	str[4] = (flags & TRACE_STOPPED)  ? 'T' : '-';
+	str[5] = (flags & SIGSUSPENDED)  ? 'U' : '-';
+	str[6] = (flags & VFS_CALL) ? 'F' : '-';
+	str[7] = (flags & PROC_STOPPED) ? 's' : '-';
+	str[8] = (flags & PRIV_PROC)  ? 'p' : '-';
+	str[9] = (flags & PARTIAL_EXEC) ? 'x' : '-';
+	str[10] = (flags & DELAY_CALL) ? 'd' : '-';
+	str[11] = '\0';
 
 	return str;
 }
@@ -51,7 +49,7 @@ void mproc_dmp()
   }
 
   printf("Process manager (PM) process table dump\n");
-  printf("-process- -nr-pnr-tnr- --pid--ppid--pgrp- -uid--  -gid--  -nice- -flags-------\n");
+  printf("-process- -nr-pnr-tnr- --pid--ppid--pgrp- -uid--  -gid--  -nice- -flags-----\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	mp = &mproc[i];
   	if (mp->mp_pid == 0 && i != PM_PROC_NR) continue;
@@ -95,7 +93,7 @@ void sigaction_dmp()
   	printf(" %08lx %08lx %08lx ", 
   		mp->mp_ignore, mp->mp_catch, mp->mp_sigmask); 
   	printf("%08lx  ", mp->mp_sigpending);
-  	if (mp->mp_flags & ALARM_ON) printf("%8d", mp->mp_timer.tmr_exp_time-uptime);
+  	if (mp->mp_flags & ALARM_ON) printf("%8lu", mp->mp_timer.tmr_exp_time-uptime);
   	else printf("       -");
   	printf("\n");
   }

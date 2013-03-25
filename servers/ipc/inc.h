@@ -19,6 +19,7 @@
 #include <machine/vmparam.h>
 #include <sys/vm.h>
 
+#include <lib.h>
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,5 +44,3 @@ void sem_process_vm_notify(void);
 EXTERN int identifier;
 EXTERN endpoint_t who_e;
 EXTERN int call_type;
-EXTERN endpoint_t SELF_E;
-

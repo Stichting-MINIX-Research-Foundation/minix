@@ -4,5 +4,7 @@
 PROG=toproto
 MAN=
 
-.include <bsd.prog.mk>
+CPPFLAGS+=      -I${NETBSDSRCDIR}/sbin/mknod
+.PATH:          ${NETBSDSRCDIR}/sbin/mknod
 
+.include <bsd.prog.mk>

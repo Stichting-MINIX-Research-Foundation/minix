@@ -17,7 +17,7 @@
 #include <machine/vmparam.h>
 #include <minix/u64.h>
 #include <minix/type.h>
-#include <minix/reboot.h>
+#include <sys/reboot.h>
 #include "clock.h"
 #include "direct_utils.h"
 #include "hw_intr.h"
@@ -323,12 +323,12 @@ void kmain(kinfo_t *local_cbi)
 static void announce(void)
 {
   /* Display the MINIX startup banner. */
-  printf("\nMINIX %s.%s. "
+  printf("\nMINIX %s. "
 #ifdef _VCS_REVISION
 	"(" _VCS_REVISION ")\n"
 #endif
       "Copyright 2012, Vrije Universiteit, Amsterdam, The Netherlands\n",
-      OS_RELEASE, OS_VERSION);
+      OS_RELEASE);
   printf("MINIX is open source software, see http://www.minix3.org\n");
 }
 
@@ -338,7 +338,7 @@ static void announce(void)
 void prepare_shutdown(const int how)
 {
 /* This function prepares to shutdown MINIX. */
-  static timer_t shutdown_timer;
+  static minix_timer_t shutdown_timer;
 
   /* Continue after 1 second, to give processes a chance to get scheduled to 
    * do shutdown work.  Set a watchog timer to call shutdown(). The timer 
@@ -346,17 +346,16 @@ void prepare_shutdown(const int how)
    */
   printf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-  set_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown);
+  set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown);
 }
 
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/
-void minix_shutdown(timer_t *tp)
+void minix_shutdown(minix_timer_t *tp)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
- * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
- * monitor), RBT_RESET (hard reset). 
+ * down MINIX.
  */
   int how;
 
@@ -374,25 +373,17 @@ void minix_shutdown(timer_t *tp)
   hw_intr_disable_all();
   stop_local_timer();
 
-  how = tp ? tmr_arg(tp)->ta_int : RBT_PANIC;
+  how = tp ? tmr_arg(tp)->ta_int : 0;
 
   /* Show shutdown message */
   direct_cls();
-  switch(how) {
-  case RBT_HALT:
+  if((how & RB_POWERDOWN) == RB_POWERDOWN)
+	direct_print("MINIX has halted and will now power off.\n");
+  else if(how & RB_HALT)
 	direct_print("MINIX has halted. "
 		     "It is safe to turn off your computer.\n");
-	break;
-  case RBT_POWEROFF:
-	direct_print("MINIX has halted and will now power off.\n");
-	break;
-  case RBT_DEFAULT:
-  case RBT_REBOOT:
-  case RBT_RESET:
-  default:
+  else
 	direct_print("MINIX will now reset.\n");
-	break;
-  }
   arch_shutdown(how);
 }
 

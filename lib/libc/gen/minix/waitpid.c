@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <sys/wait.h>
 
 #ifdef __weak_alias
@@ -12,9 +13,10 @@ pid_t waitpid(pid_t pid, int *status, int options)
 {
   message m;
 
-  m.m1_i1 = pid;
-  m.m1_i2 = options;
-  if (_syscall(PM_PROC_NR, WAITPID, &m) < 0) return(-1);
-  if (status != 0) *status = m.m2_i1;
+  memset(&m, 0, sizeof(m));
+  m.PM_WAITPID_PID = pid;
+  m.PM_WAITPID_OPTIONS = options;
+  if (_syscall(PM_PROC_NR, PM_WAITPID, &m) < 0) return(-1);
+  if (status != 0) *status = m.PM_WAITPID_STATUS;
   return m.m_type;
 }

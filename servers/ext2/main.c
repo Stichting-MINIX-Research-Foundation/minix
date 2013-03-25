@@ -76,11 +76,11 @@ int main(int argc, char *argv[])
 	caller_gid = INVAL_GID;
 	req_nr = fs_m_in.m_type;
 
-	if (req_nr < VFS_BASE) {
-		fs_m_in.m_type += VFS_BASE;
+	if (req_nr < FS_BASE) {
+		fs_m_in.m_type += FS_BASE;
 		req_nr = fs_m_in.m_type;
 	}
-	ind = req_nr - VFS_BASE;
+	ind = req_nr - FS_BASE;
 
 	if (ind < 0 || ind >= NREQS) {
 		printf("mfs: bad request %d\n", req_nr);
@@ -152,8 +152,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
   init_inode_cache();
 
-  SELF_E = getprocnr();
-
   /* just a small number before we find out the block size at mount time */
   lmfs_buf_pool(10);
 
@@ -213,6 +211,6 @@ static void reply(
   message *m_out                       	/* report result */
 )
 {
-  if (OK != send(who, m_out))    /* send the message */
-	printf("ext2(%d) was unable to send reply\n", SELF_E);
+  if (OK != ipc_send(who, m_out))    /* send the message */
+	printf("ext2(%d) was unable to send reply\n", sef_self());
 }

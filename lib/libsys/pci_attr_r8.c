@@ -20,7 +20,7 @@ int port;
 	m.m2_i1= devind;
 	m.m2_i2= port;
 
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci_attr_r8: can't talk to PCI: %d", r);
 

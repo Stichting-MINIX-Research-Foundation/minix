@@ -45,7 +45,6 @@ int opt_d = 0;				/* debugging output flag	*/
 
 void usage(void);
 int main(int argc, char *argv[]);
-void wtmp(int type, int linenr, char *line, pid_t pid, char *host);
 
 void usage()
 {
@@ -144,13 +143,9 @@ char *hostname;
 	return(-1);
    }
 
-   wtmp(LOGIN_PROCESS, lineno, tty_name+5, pid, hostname);
-
    term_inout(pty_fd);
 
    (void) close(pty_fd);
-
-   wtmp(DEAD_PROCESS, lineno, tty_name+5, pid, hostname);
 
    chown(tty_name, 0, 0);
    chmod(tty_name, 0666);

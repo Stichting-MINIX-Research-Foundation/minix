@@ -21,7 +21,7 @@ void pci_init(void)
 		panic("pci_init: unable to obtain label for 'pci': %d", r);
 
 	m.m_type= BUSC_PCI_INIT;
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci_init: can't talk to PCI: %d", r);
 	if (m.m_type != 0)

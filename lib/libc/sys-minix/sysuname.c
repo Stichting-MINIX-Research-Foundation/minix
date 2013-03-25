@@ -5,22 +5,20 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 #include <lib.h>
+#include <string.h>
 #include <sys/utsname.h>
 
 int sysuname(int req, int field, char *value, size_t len)
 {
 	message m;
 
-	m.m1_i1 = req;
-	m.m1_i2 = field;
-	m.m1_i3 = len;
-	m.m1_p1 = value;
+	memset(&m, 0, sizeof(m));
+	m.PM_SYSUNAME_REQ = req;
+	m.PM_SYSUNAME_FIELD = field;
+	m.PM_SYSUNAME_LEN = len;
+	m.PM_SYSUNAME_VALUE = value;
 
-	/* Clear unused fields */
-	m.m1_p2 = NULL;
-	m.m1_p3 = NULL;
-
-	return _syscall(PM_PROC_NR, SYSUNAME, &m);
+	return _syscall(PM_PROC_NR, PM_SYSUNAME, &m);
 }
 
 /*

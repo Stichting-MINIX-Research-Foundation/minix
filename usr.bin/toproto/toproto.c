@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "pack_dev.h"
+
 #define MAX_ENTRIES 100000
 #define MAX_LINE_SIZE 0xfff
 
@@ -38,8 +40,8 @@ struct entry
 	char *size;
 	char *link;
 	/* Can't use devmajor_t/devminor_t on linux systems :( */
-	dev_t dev_major;
-	dev_t dev_minor;
+	int32_t dev_major;
+	int32_t dev_minor;
 
 	/* just internal variables used to create a tree */
 	int depth;
@@ -123,8 +125,8 @@ convert_to_entry(char *line, struct entry *entry)
 			} else if (strncmp(key, "device", 7) == 0) {
 				long int dev_id;
 				dev_id = strtoul(value, NULL, 16);
-				entry->dev_major = major(dev_id);
-				entry->dev_minor = minor(dev_id);
+				entry->dev_major = major_netbsd(dev_id);
+				entry->dev_minor = minor_netbsd(dev_id);
 			} else {
 				fprintf(stderr,
 				    "\tunknown attribute %s -> %s\n", key,

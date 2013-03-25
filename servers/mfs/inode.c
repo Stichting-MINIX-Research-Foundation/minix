@@ -21,13 +21,12 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <assert.h>
 
 static void addhash_inode(struct inode *node);
 
-static void free_inode(dev_t dev, ino_t numb);
+static void free_inode(dev_t dev, pino_t numb);
 static void new_icopy(struct inode *rip, d2_inode *dip, int direction,
-	int norm);
-static void old_icopy(struct inode *rip, d1_inode *dip, int direction,
 	int norm);
 static void unhash_inode(struct inode *node);
 static void wipe_inode(struct inode *rip);
@@ -43,11 +42,11 @@ int fs_putnode(void)
   struct inode *rip;
   int count;
   
-  rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR);
+  rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR);
 
   if(!rip) {
 	  printf("%s:%d put_inode: inode #%u dev: %d not found\n", __FILE__,
-		 __LINE__, (ino_t) fs_m_in.REQ_INODE_NR, fs_dev);
+		 __LINE__, (pino_t) fs_m_in.REQ_INODE_NR, fs_dev);
 	  panic("fs_putnode failed");
   }
 
@@ -124,7 +123,7 @@ static void unhash_inode(struct inode *node)
  *===========================================================================*/
 struct inode *get_inode(
   dev_t dev,			/* device on which inode resides */
-  ino_t numb			/* inode number */
+  pino_t numb			/* inode number */
 )
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
@@ -186,7 +185,7 @@ struct inode *get_inode(
  *===========================================================================*/
 struct inode *find_inode(
   dev_t dev,			/* device on which inode resides */
-  ino_t numb			/* inode number */
+  pino_t numb			/* inode number */
 )
 {
 /* Find the inode specified by the inode and device number.
@@ -256,7 +255,7 @@ register struct inode *rip;	/* pointer to inode to be released */
 /*===========================================================================*
  *				alloc_inode				     *
  *===========================================================================*/
-struct inode *alloc_inode(dev_t dev, mode_t bits)
+struct inode *alloc_inode(dev_t dev, pmode_t bits)
 {
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 
@@ -334,7 +333,7 @@ register struct inode *rip;	/* the inode to be erased */
  *===========================================================================*/
 static void free_inode(
   dev_t dev,			/* on which device is the inode? */
-  ino_t inumb			/* number of the inode to be freed */
+  pino_t inumb			/* number of the inode to be freed */
 )
 {
 /* Return an inode to the pool of unallocated inodes. */
@@ -388,7 +387,6 @@ int rw_flag;			/* READING or WRITING */
 
   register struct buf *bp;
   register struct super_block *sp;
-  d1_inode *dip;
   d2_inode *dip2;
   block_t b, offset;
 
@@ -398,7 +396,6 @@ int rw_flag;			/* READING or WRITING */
   offset = START_BLOCK + sp->s_imap_blocks + sp->s_zmap_blocks;
   b = (block_t) (rip->i_num - 1)/sp->s_inodes_per_block + offset;
   bp = get_block(rip->i_dev, b, NORMAL);
-  dip  = b_v1_ino(bp) + (rip->i_num - 1) % V1_INODES_PER_BLOCK;
   dip2 = b_v2_ino(bp) + (rip->i_num - 1) %
   	 V2_INODES_PER_BLOCK(sp->s_block_size);
 
@@ -411,61 +408,12 @@ int rw_flag;			/* READING or WRITING */
   /* Copy the inode from the disk block to the in-core table or vice versa.
    * If the fourth parameter below is FALSE, the bytes are swapped.
    */
-  if (sp->s_version == V1)
-	old_icopy(rip, dip,  rw_flag, sp->s_native);
-  else
-	new_icopy(rip, dip2, rw_flag, sp->s_native);
+  assert(sp->s_version == V3);
+  new_icopy(rip, dip2, rw_flag, sp->s_native);
   
   put_block(bp, INODE_BLOCK);
   IN_MARKCLEAN(rip);
 }
-
-
-/*===========================================================================*
- *				old_icopy				     *
- *===========================================================================*/
-static void old_icopy(rip, dip, direction, norm)
-register struct inode *rip;	/* pointer to the in-core inode struct */
-register d1_inode *dip;		/* pointer to the d1_inode inode struct */
-int direction;			/* READING (from disk) or WRITING (to disk) */
-int norm;			/* TRUE = do not swap bytes; FALSE = swap */
-{
-/* The V1.x IBM disk, the V1.x 68000 disk, and the V2 disk (same for IBM and
- * 68000) all have different inode layouts.  When an inode is read or written
- * this routine handles the conversions so that the information in the inode
- * table is independent of the disk structure from which the inode came.
- * The old_icopy routine copies to and from V1 disks.
- */
-
-  int i;
-
-  if (direction == READING) {
-	/* Copy V1.x inode to the in-core table, swapping bytes if need be. */
-	rip->i_mode    = (mode_t) conv2(norm, (int) dip->d1_mode);
-	rip->i_uid     = (uid_t)  conv2(norm, (int) dip->d1_uid );
-	rip->i_size    = (off_t)  conv4(norm,       dip->d1_size);
-	rip->i_mtime   = (time_t) conv4(norm,       dip->d1_mtime);
-	rip->i_atime   = (time_t) rip->i_mtime;
-	rip->i_ctime   = (time_t) rip->i_mtime;
-	rip->i_nlinks  = (nlink_t) dip->d1_nlinks;	/* 1 char */
-	rip->i_gid     = (gid_t) dip->d1_gid;		/* 1 char */
-	rip->i_ndzones = V1_NR_DZONES;
-	rip->i_nindirs = V1_INDIRECTS;
-	for (i = 0; i < V1_NR_TZONES; i++)
-		rip->i_zone[i] = (zone_t) conv2(norm, (int) dip->d1_zone[i]);
-  } else {
-	/* Copying V1.x inode to disk from the in-core table. */
-	dip->d1_mode   = (u16_t) conv2(norm, (int) rip->i_mode);
-	dip->d1_uid    = (i16_t) conv2(norm, (int) rip->i_uid );
-	dip->d1_size   = (i32_t) conv4(norm,       rip->i_size);
-	dip->d1_mtime  = (i32_t) conv4(norm,       rip->i_mtime);
-	dip->d1_nlinks = (u8_t) rip->i_nlinks;		/* 1 char */
-	dip->d1_gid    = (u8_t) rip->i_gid;		/* 1 char */
-	for (i = 0; i < V1_NR_TZONES; i++)
-		dip->d1_zone[i] = (u16_t) conv2(norm, (int) rip->i_zone[i]);
-  }
-}
-
 
 /*===========================================================================*
  *				new_icopy				     *
@@ -476,13 +424,11 @@ register d2_inode *dip;	/* pointer to the d2_inode struct */
 int direction;			/* READING (from disk) or WRITING (to disk) */
 int norm;			/* TRUE = do not swap bytes; FALSE = swap */
 {
-/* Same as old_icopy, but to/from V2 disk layout. */
-
   int i;
 
   if (direction == READING) {
 	/* Copy V2.x inode to the in-core table, swapping bytes if need be. */
-	rip->i_mode    = (mode_t) conv2(norm,dip->d2_mode);
+	rip->i_mode    = (pmode_t) conv2(norm,dip->d2_mode);
 	rip->i_uid     = (uid_t) conv2(norm,dip->d2_uid);
 	rip->i_nlinks  = (nlink_t) conv2(norm,dip->d2_nlinks);
 	rip->i_gid     = (gid_t) conv2(norm,dip->d2_gid);

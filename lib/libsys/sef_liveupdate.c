@@ -333,7 +333,7 @@ int sef_cb_lu_response_rs_reply(message *m_ptr)
   int r;
 
   /* Inform RS that we're ready with the given result. */
-  r = sendrec(RS_PROC_NR, m_ptr);
+  r = ipc_sendrec(RS_PROC_NR, m_ptr);
   if ( r != OK) {
       return r;
   }

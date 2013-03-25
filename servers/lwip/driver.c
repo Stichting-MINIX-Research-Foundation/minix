@@ -258,11 +258,11 @@ __unused static void print_pkt(unsigned char * pkt, int len)
 	printf("--- PKT END ---\n");
 }
 
-static int raw_receive(message * m,
+static int raw_receive(struct sock_req *req,
 			struct pbuf *pbuf)
 {
 	struct pbuf * p;
-	unsigned int rem_len = m->COUNT;
+	unsigned int rem_len = req->size;
 	unsigned int written = 0;
 	int err;
 
@@ -272,10 +272,8 @@ static int raw_receive(message * m,
 		size_t cp_len;
 
 		cp_len = (rem_len < p->len) ? rem_len : p->len;
-		err = copy_to_user(m->m_source,	p->payload, cp_len,
-				(cp_grant_id_t) m->IO_GRANT,
-				written);
-
+		err = copy_to_user(req->endpt, p->payload, cp_len,
+				   req->grant, written);
 		if (err != OK)
 			return err;
 
@@ -300,16 +298,13 @@ int raw_socket_input(struct pbuf * pbuf, struct nic * nic)
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		int ret;
 		/* we are resuming a suspended operation */
-		ret = raw_receive(&sock->mess, pbuf);
+		ret = raw_receive(&sock->req, pbuf);
 
-		if (ret > 0) {
-			sock_reply(sock, ret);
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
+		send_req_reply(&sock->req, ret);
+		sock->flags &= ~SOCK_FLG_OP_PENDING;
+
+		if (ret > 0)
 			return 0;
-		} else {
-			sock_reply(sock, ret);
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
-		}
 	}
 
 	/* Do not enqueue more data than allowed */
@@ -453,11 +448,11 @@ static void raw_recv_free(__unused void * data)
 	pbuf_free((struct pbuf *) data);
 }
 
-static void nic_op_close(struct socket * sock, __unused message * m)
+static int nic_op_close(struct socket * sock)
 {
 	struct nic * nic = (struct nic *)sock->data;
 
-	debug_drv_print("socket %d", get_sock_num(sock));
+	debug_drv_print("socket %ld", get_sock_num(sock));
 	
 	sock_dequeue_data_all(sock, raw_recv_free);
 	sock->ops = NULL;
@@ -467,20 +462,20 @@ static void nic_op_close(struct socket * sock, __unused message * m)
 		debug_drv_print("no active raw sock at %s", nic->name);
 	}
 
-	sock_reply_close(sock, OK);
+	return OK;
 }
 
-static void nic_ioctl_set_conf(__unused struct socket * sock,
+static int nic_ioctl_set_conf(__unused struct socket * sock,
 				struct nic * nic,
-				message * m)
+				endpoint_t endpt,
+				cp_grant_id_t grant)
 {
 	nwio_ipconf_t ipconf;
 	int err;
 
-	err = copy_from_user(m->m_source, &ipconf, sizeof(ipconf),
-				(cp_grant_id_t) m->IO_GRANT, 0);
+	err = copy_from_user(endpt, &ipconf, sizeof(ipconf), grant, 0);
 	if (err != OK)
-		send_reply(m, err);
+		return err;
 
 	if (ipconf.nwic_flags & NWIC_IPADDR_SET)
 		netif_set_ipaddr(&nic->netif,
@@ -492,51 +487,47 @@ static void nic_ioctl_set_conf(__unused struct socket * sock,
 	if (nic->flags & NWEO_EN_BROAD)
 		nic->netif.flags |= NETIF_FLAG_BROADCAST;
 	
-	send_reply(m, OK);
+
+	return OK;
 }
 
-static void nic_ioctl_get_conf(__unused struct socket * sock,
+static int nic_ioctl_get_conf(__unused struct socket * sock,
 				struct nic * nic,
-				message * m)
+				endpoint_t endpt,
+				cp_grant_id_t grant)
 {
 	nwio_ipconf_t ipconf;
-	int err;
 
 	ipconf.nwic_flags = nic->flags;
 	ipconf.nwic_ipaddr = nic->netif.ip_addr.addr;
 	ipconf.nwic_netmask = nic->netif.netmask.addr;
 	ipconf.nwic_mtu = nic->netif.mtu;
 	
-	err = copy_to_user(m->m_source, &ipconf, sizeof(ipconf),
-				(cp_grant_id_t) m->IO_GRANT, 0);
-	if (err != OK)
-		send_reply(m, err);
-
-	send_reply(m, OK);
+	return copy_to_user(endpt, &ipconf, sizeof(ipconf), grant, 0);
 }
 
-static void nic_ioctl_set_gateway(__unused struct socket * sock,
+static int nic_ioctl_set_gateway(__unused struct socket * sock,
 				struct nic * nic,
-				message * m)
+				endpoint_t endpt,
+				cp_grant_id_t grant)
 {
 	nwio_route_t route;
 	int err;
 
-	err = copy_from_user(m->m_source, &route, sizeof(route),
-				(cp_grant_id_t) m->IO_GRANT, 0);
+	err = copy_from_user(endpt, &route, sizeof(route), grant, 0);
 	if (err != OK)
-		send_reply(m, err);
+		return err;
 
 	netif_set_gw(&nic->netif, (ip_addr_t *)&route.nwr_gateway);
-	
-	send_reply(m, OK);
+
+	return OK;
 }
 
-static void nic_ioctl_get_ethstat(__unused struct socket * sock,
+static int nic_ioctl_get_ethstat(__unused struct socket * sock,
 				struct nic * nic,
-				message * m)
+				endpoint_t endpt,
+				cp_grant_id_t grant)
 {
-	int err;
 	nwio_ethstat_t ethstat;
 
 	debug_drv_print("device /dev/%s", nic->name);
@@ -548,34 +539,27 @@ static void nic_ioctl_get_ethstat(__unused struct socket * sock,
 			!(nic->netif.flags & (NETIF_FLAG_ETHERNET |
 				NETIF_FLAG_ETHARP))) {
 		printf("LWIP no such device FUCK\n");
-		send_reply(m, ENODEV);
-		return;
+		return ENODEV;
 	}
 
 	memset(&ethstat, 0, sizeof(ethstat));
 	memcpy(&ethstat.nwes_addr, nic->netif.hwaddr, 6);
 	
-	err = copy_to_user(m->m_source, &ethstat, sizeof(ethstat),
-				(cp_grant_id_t) m->IO_GRANT, 0);
-	if (err != OK)
-		send_reply(m, err);
-
-	send_reply(m, OK);
+	return copy_to_user(endpt, &ethstat, sizeof(ethstat), grant, 0);
 }
 
-static void nic_ioctl_set_ethopt(struct socket * sock,
+static int nic_ioctl_set_ethopt(struct socket * sock,
 				struct nic * nic,
-				message * m)
+				endpoint_t endpt,
+				cp_grant_id_t grant)
 {
 	int err;
 	nwio_ethopt_t ethopt;
 
 	assert(nic);
 
-	if (!sock) {
-		send_reply(m, EINVAL);
-		return;
-	}
+	if (!sock)
+		return EINVAL;
 
 	debug_drv_print("device /dev/%s", nic->name);
 	/*
@@ -585,83 +569,83 @@ static void nic_ioctl_set_ethopt(struct socket * sock,
 	if (!nic->netif.flags & NETIF_FLAG_UP ||
 			!(nic->netif.flags & (NETIF_FLAG_ETHERNET |
 				NETIF_FLAG_ETHARP))) {
-		send_reply(m, ENODEV);
-		return;
+		return ENODEV;
 	}
 
-	err = copy_from_user(m->m_source, &ethopt, sizeof(ethopt),
-				(cp_grant_id_t) m->IO_GRANT, 0);
+	err = copy_from_user(endpt, &ethopt, sizeof(ethopt), grant, 0);
 	if (err != OK)
-		send_reply(m, err);
+		return err;
 
 	/* we want to get data from this sock */
 	if (ethopt.nweo_flags & NWEO_COPY) {
-		if (nic->raw_socket) {
-			send_reply(m, EBUSY);
-			return;
-		}
+		if (nic->raw_socket)
+			return EBUSY;
 
 		nic->raw_socket = sock;
-		debug_drv_print("active raw sock %d at %s",
+		debug_drv_print("active raw sock %ld at %s",
 				get_sock_num(sock), nic->name);
 	}
 
-	send_reply(m, OK);
+	return OK;
 }
 
-static void nic_do_ioctl(struct socket * sock, struct nic * nic, message * m)
+static int nic_do_ioctl(struct socket * sock, struct nic * nic,
+	struct sock_req * req)
 {
-	debug_print("device /dev/%s req %c %d %d",
-			nic->name,
-			(m->REQUEST >> 8) & 0xff,
-			m->REQUEST & 0xff,
-			(m->REQUEST >> 16) & _IOCPARM_MASK);
-	
-	debug_drv_print("socket %d", sock ? get_sock_num(sock) : -1);
+	int r;
 
-	switch (m->REQUEST) {
+	debug_print("device /dev/%s req %c %ld %ld",
+			nic->name,
+			(unsigned char) (req->req >> 8),
+			req->req & 0xff,
+			(req->req >> 16) & _IOCPARM_MASK);
+	
+	debug_drv_print("socket %ld", sock ? get_sock_num(sock) : -1);
+
+	switch (req->req) {
 	case NWIOSIPCONF:
-		nic_ioctl_set_conf(sock, nic, m);
+		r = nic_ioctl_set_conf(sock, nic, req->endpt, req->grant);
 		break;
 	case NWIOGIPCONF:
-		nic_ioctl_get_conf(sock, nic, m);
+		r = nic_ioctl_get_conf(sock, nic, req->endpt, req->grant);
 		break;
 	case NWIOSIPOROUTE:
-		nic_ioctl_set_gateway(sock, nic, m);
+		r = nic_ioctl_set_gateway(sock, nic, req->endpt, req->grant);
 		break;
 	case NWIOGETHSTAT:
-		nic_ioctl_get_ethstat(sock, nic, m);
+		r = nic_ioctl_get_ethstat(sock, nic, req->endpt, req->grant);
 		break;
 	case NWIOSETHOPT:
-		nic_ioctl_set_ethopt(sock, nic, m);
+		r = nic_ioctl_set_ethopt(sock, nic, req->endpt, req->grant);
 		break;
 	default:
-		send_reply(m, EBADIOCTL);
-		return;
+		r = ENOTTY;
 	}
+
+	return r;
 }
 
-void nic_default_ioctl(message *m)
+int nic_default_ioctl(struct sock_req *req)
 {
 	struct nic * nic = lookup_nic_default();
 
 	if (nic == NULL) {
 		debug_print("No default nic, reporting error");
-		send_reply(m, EBADIOCTL);
-		return;
+		return ENOTTY;
 	}
 
-	nic_do_ioctl(NULL, nic, m);
+	return nic_do_ioctl(NULL, nic, req);
 }
 
-static void nic_op_ioctl(struct socket * sock, message * m, __unused int blk)
+static int nic_op_ioctl(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
-	nic_do_ioctl(sock, (struct nic *)sock->data, m);
+	return nic_do_ioctl(sock, (struct nic *)sock->data, req);
 }
 
-static void nic_op_read(struct socket * sock, message * m, int blk)
+static int nic_op_read(struct socket * sock, struct sock_req * req, int blk)
 {
-	debug_drv_print("sock num %d", get_sock_num(sock));
+	debug_drv_print("sock num %ld", get_sock_num(sock));
 
 	if (sock->recv_head) {
 		/* data available receive immeditely */
@@ -671,59 +655,56 @@ static void nic_op_read(struct socket * sock, message * m, int blk)
 
 		pbuf = sock->recv_head->data;
 
-		ret = raw_receive(m, pbuf);
+		ret = raw_receive(req, pbuf);
 
 		if (ret > 0) {
 			sock_dequeue_data(sock);
 			sock->recv_data_size -= pbuf->tot_len;
 			pbuf_free(pbuf);
 		}
-		sock_reply(sock, ret);
+		return ret;
 	} else if (!blk)
-		send_reply(m, EAGAIN);
+		return EAGAIN;
 	else {
-		/* store the message so we know how to reply */
-		sock->mess = *m;
+		/* store the request so we know how to reply */
+		sock->req = *req;
 		/* operation is being processes */
 		sock->flags |= SOCK_FLG_OP_PENDING;
 
 		debug_print("no data to read, suspending");
+		return EDONTREPLY;
 	}
 }
 
-static void nic_op_write(struct socket * sock, message * m, __unused int blk)
+static int nic_op_write(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
 	int ret;
 	struct pbuf * pbuf;
 	struct nic * nic = (struct nic *)sock->data;
 
 	assert(nic);
-	debug_print("device %s data size %d", nic->name,
-			get_sock_num(sock), m->COUNT);
+	debug_print("device %s data size %u", nic->name, req->size);
 
-	pbuf = pbuf_alloc(PBUF_RAW, m->COUNT, PBUF_RAM);
-	if (!pbuf) {
-		ret = ENOMEM;
-		goto write_err;
-	}
+	pbuf = pbuf_alloc(PBUF_RAW, req->size, PBUF_RAM);
+	if (!pbuf)
+		return ENOMEM;
 
-	if ((ret = copy_from_user(m->m_source, pbuf->payload, m->COUNT,
-				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
+	if ((ret = copy_from_user(req->endpt, pbuf->payload, req->size,
+			req->grant, 0)) != OK) {
 		pbuf_free(pbuf);
-		goto write_err;
+		return ret;
 	}
 
 	if ((ret = nic->netif.linkoutput(&nic->netif, pbuf) != ERR_OK)) {
 		debug_print("raw linkoutput failed %d", ret);
 		ret = EIO;
 	} else
-		ret = m->COUNT;
-	
+		ret = req->size;
 
 	pbuf_free(pbuf);
-	
-write_err:
-	sock_reply(sock, ret);
+
+	return ret;
 }
 
 static struct sock_ops nic_ops = {
@@ -735,34 +716,28 @@ static struct sock_ops nic_ops = {
 	.select_reply	= generic_op_select_reply
 };
 
-void nic_open(message *m)
+int nic_open(devminor_t minor)
 {
 	struct socket * sock;
 
-	debug_print("device %d", m->DEVICE);
+	debug_print("device %d", minor);
 
-	if (m->DEVICE > MAX_DEVS || devices[m->DEVICE].drv_ep == NONE) {
-		send_reply_open(m, ENODEV);
-		return;
-	}
+	if (minor > MAX_DEVS || devices[minor].drv_ep == NONE)
+		return ENODEV;
 
 	sock = get_unused_sock();
 
-	if (sock == NULL) {
-		send_reply(m, ENODEV);
-		return;
-	}
-	if (sock->ops != NULL) {
-		send_reply(m, EBUSY);
-		return;
-	}
+	if (sock == NULL)
+		return ENODEV;
+	if (sock->ops != NULL)
+		return EBUSY;
 
 	sock->ops = &nic_ops;
 	sock->select_ep = NONE;
 	sock->recv_data_size = 0;
-	sock->data = &devices[m->DEVICE];
+	sock->data = &devices[minor];
 
-	send_reply_open(m, get_sock_num(sock));
+	return get_sock_num(sock);
 }
 
 static int driver_pkt_enqueue(struct packet_q ** head,

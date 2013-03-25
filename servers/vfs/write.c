@@ -7,15 +7,14 @@
 
 #include "fs.h"
 #include "file.h"
-#include "param.h"
-
+#include <minix/callnr.h>
 
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-int do_write(message *UNUSED(m_out))
+int do_write(void)
 {
 /* Perform the write(fd, buffer, nbytes) system call. */
-  return(do_read_write_peek(WRITING, job_m_in.fd,
-  	job_m_in.buffer, (size_t) job_m_in.nbytes));
+  return(do_read_write_peek(WRITING, job_m_in.VFS_READWRITE_FD,
+	job_m_in.VFS_READWRITE_BUF, (size_t) job_m_in.VFS_READWRITE_LEN));
 }

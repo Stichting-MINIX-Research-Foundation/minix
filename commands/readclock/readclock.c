@@ -4,6 +4,7 @@
 #include <lib.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <time.h>
@@ -146,6 +147,7 @@ readclock(int type, struct tm *t, int flags)
 		exit(1);
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.RTCDEV_TM = (char *) t;
 	m.RTCDEV_FLAGS = flags;
 

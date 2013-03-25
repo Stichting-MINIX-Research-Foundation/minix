@@ -20,6 +20,7 @@
 #define USE_EXEC       	   1	/* update process after execute */
 #define USE_CLEAR	   1	/* clean up after process exit */
 #define USE_EXIT	   1	/* a system process wants to exit */
+#define USE_TRACE          1	/* process information and tracing */
 #define USE_GETKSIG    	   1	/* retrieve pending kernel signals */
 #define USE_ENDKSIG    	   1	/* finish pending kernel signals */
 #define USE_KILL       	   1 	/* send a signal to a process */
@@ -42,6 +43,8 @@
 #define USE_PHYSCOPY  	   1 	/* copy using physical addressing */
 #define USE_MEMSET  	   1	/* write char to a given memory area */
 #define USE_RUNCTL         1	/* control stop flags of a process */
+#define USE_STATECTL       1	/* let a process control its state */
+#define USE_MCONTEXT       1	/* enable getting/setting of machine context */
 
 #if defined(__arm__)
 #define USE_PADCONF        1	/* configure pinmux */

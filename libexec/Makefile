@@ -5,7 +5,8 @@
 
 SUBDIR= \
 	fingerd ftpd	\
-	ld.elf_so
+	ld.elf_so	\
+	getty
 
 .if defined(__MINIX)
 SUBDIR+= makewhatis

@@ -298,7 +298,7 @@ mount $TMPDISKUSR $RELEASEMNTDIR/usr || exit
 echo " * Copying files from staging to image"
 ##########################################################################
 synctree -f $RELEASEDIR $RELEASEMNTDIR > /dev/null || true
-expr `df -k $TMPDISKUSR | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEMNTDIR/.usrkb
+expr `df -kP $TMPDISKUSR | tail -1 | awk '{ print $3 }'` - $extrakb >$RELEASEMNTDIR/.usrkb
 
 echo " * Unmounting $TMPDISKUSR from $RELEASEMNTDIR/usr"
 umount $TMPDISKUSR || exit

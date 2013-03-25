@@ -677,9 +677,9 @@ ether_card_t *ec;
    reply.DL_FLAGS = flags;
    reply.DL_COUNT = ec->read_s;
 
-   r = send(ec->client, &reply);
+   r = ipc_send(ec->client, &reply);
    if (r < 0)
-      panic("send failed: %d", r);
+      panic("ipc_send failed: %d", r);
 
    ec->read_s = 0;
    ec->flags &= ~(ECF_PACK_SEND | ECF_PACK_RECV);
@@ -693,7 +693,7 @@ static void mess_reply(req, reply_mess)
 message *req;
 message *reply_mess;
 {
-   if (send(req->m_source, reply_mess) != OK)
+   if (ipc_send(req->m_source, reply_mess) != OK)
       panic("unable to mess_reply");
 }
 
@@ -1316,7 +1316,7 @@ message *mp;
 	panic("do_getstat_s: sys_safecopyto failed: %d", r);
 
    mp->m_type= DL_STAT_REPLY;
-   r= send(mp->m_source, mp);
+   r= ipc_send(mp->m_source, mp);
    if (r != OK)
       panic("do_getstat_s: send failed: %d", r);
 }

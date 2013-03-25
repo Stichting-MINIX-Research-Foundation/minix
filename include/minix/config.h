@@ -2,8 +2,10 @@
 #define _CONFIG_H
 
 /* Minix release and version numbers. */
-#define OS_RELEASE "3"
-#define OS_VERSION "2.1"
+#define OS_NAME "Minix"
+#define OS_RELEASE "3.3.0"
+#define OS_CONFIG "GENERIC"
+#define OS_VERSION OS_NAME " " OS_RELEASE " (" OS_CONFIG ")"
 
 /* This file sets configuration parameters for the MINIX kernel, FS, and PM.
  * It is divided up into two main sections.  The first section contains
@@ -34,17 +36,6 @@
 
 /* DMA_SECTORS may be increased to speed up DMA based drivers. */
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */
-
-/* Which processes should receive diagnostics from the kernel and system? 
- * Directly sending it to TTY only displays the output. Sending it to the
- * log driver will cause the diagnostics to be buffered and displayed.
- * Messages are sent by src/lib/sysutil/kputc.c to these processes, in
- * the order of this array, which must be terminated by NONE. This is used
- * by drivers and servers that printf().
- * The kernel does this for its own kprintf() in kernel/utility.c, also using
- * this array, but a slightly different mechanism.
- */
-#define OUTPUT_PROCS_ARRAY	{ TTY_PROC_NR, LOG_PROC_NR, NONE }
 
 /* NR_CONS, NR_RS_LINES, and NR_PTYS determine the number of terminals the
  * system can handle.

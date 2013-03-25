@@ -92,8 +92,8 @@
 #define _LABEL(x) \
 	.globl x; x:
 #define	LABEL(y)	_LABEL(_C_LABEL(y))
-
 #endif /* defined(__minix) */
+
 #define	ASMSTR		.asciz
 
 #if defined(PIC)

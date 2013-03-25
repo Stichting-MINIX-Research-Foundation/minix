@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <curses.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <termcap.h>
@@ -19,7 +19,7 @@
 #include <dirent.h>
 #include <assert.h>
 
-#include <sys/ioc_tty.h>
+#include <sys/ttycom.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/time.h>

@@ -1,6 +1,6 @@
-.\"	$NetBSD: stat.1,v 1.28 2010/04/05 21:25:01 joerg Exp $
+.\"	$NetBSD: stat.1,v 1.34 2011/09/22 20:23:55 apb Exp $
 .\"
-.\" Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 7, 2008
+.Dd September 22, 2011
 .Dt STAT 1
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Op Fl t Ar timefmt
 .Op Ar
 .Nm readlink
-.Op Fl fn
+.Op Fl fnqsv
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -165,11 +165,16 @@ epoch, etc.)
 Display information in
 .Dq shell output ,
 suitable for initializing variables.
+When run as
+.Nm readlink ,
+suppress error messages.
 .It Fl t Ar timefmt
 Display timestamps using the specified format.
 This format is
 passed directly to
 .Xr strftime 3 .
+.It Fl v
+Turn off quiet mode.
 .It Fl x
 Display information in a more verbose way as known from some Linux
 distributions.
@@ -197,9 +202,12 @@ examined for the following:
 Any of the following optional flags:
 .Bl -tag -width Ds
 .It Cm #
-Selects an alternate output form for octal and hexadecimal output.
-Non-zero octal output will have a leading zero, and non-zero
-hexadecimal output will have
+Selects an alternate output form for string, octal and hexadecimal output.
+String output will be encoded in
+.Xr vis 3
+style.
+Non-zero octal output will have a leading zero.
+Non-zero hexadecimal output will have
 .Dq 0x
 prepended to it.
 .It Cm +
@@ -430,7 +438,7 @@ is given.
 The target of a symbolic link.
 .It Cm Z
 Expands to
-.Dq major,minor
+.Dq Ar major , Ns Ar minor
 from the rdev field for character or block
 special devices and gives size output for all others.
 .El
@@ -466,6 +474,41 @@ If no options are specified, the default format is
 .Bd -literal -offset indent
 \*[Gt] stat /tmp/bar
 0 78852 -rw-r--r-- 1 root wheel 0 0 "Jul  8 10:26:03 2004" "Jul  8 10:26:03 2004" "Jul  8 10:28:13 2004" "Jan  1 09:00:00 1970" 16384 0 0 /tmp/bar
+.Ed
+.Pp
+This example produces output very similar to that from
+.Ic find ... -ls
+(except that
+.Xr find 1
+displays the time in a different format, and
+.Xr find 1
+sometimes adds one or more spaces after the comma in
+.Dq Ar major , Ns Ar minor
+for device nodes):
+.Bd -literal -offset indent
+\*[Gt] stat -f "%7i %6b %-11Sp %3l %-17Su %-17Sg %9Z %Sm %N%SY" /tmp/bar
+  78852      0 -rw-r--r--    1 root              wheel                     0 Jul  8 10:26:03 2004 /tmp/bar
+
+\*[Gt] find /tmp/bar -ls -exit
+  78852      0 -rw-r--r--    1 root              wheel                     0 Jul  8  2004 /tmp/bar
+.Ed
+.Pp
+This example produces output very similar to that from
+.Ic ls -lTd
+(except that
+.Xr ls 1
+adjusts the column spacing differently when listing multiple files,
+and
+.Xr ls 1
+adds at least one space after the comma in
+.Dq Ar major , Ns Ar minor
+for device nodes):
+.Bd -literal -offset indent
+\*[Gt] stat -f "%-11Sp %l %Su  %Sg  %Z %Sm %N%SY" /tmp/bar
+-rw-r--r--  1 root  wheel  0 Jul  8 10:26:03 2004 /tmp/bar
+
+\*[Gt] ls -lTd /tmp/bar
+-rw-r--r--  1 root  wheel  0 Jul  8 10:26:03 2004 /tmp/bar
 .Ed
 .Pp
 Given a symbolic link
@@ -541,6 +584,18 @@ you could use the following format:
 Apr 25 11:47:00 2002 /tmp/blah
 Apr 25 10:36:34 2002 /tmp/bar
 Apr 24 16:47:35 2002 /tmp/foo
+.Ed
+.Pp
+User names, group names, and file names that contain spaces
+or other special characters may be encoded in
+.Xr vis 3
+style, using the
+.Cm \&#
+modifier:
+.Bd -literal -offset indent
+\*[Gt] ln -s 'target with spaces' 'link with spaces'
+\*[Gt] stat -f "%#N%#SY" 'link with spaces'
+link\eswith\esspaces -\*[Gt] target\eswith\esspaces
 .Ed
 .Sh SEE ALSO
 .Xr basename 1 ,

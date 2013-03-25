@@ -1,6 +1,6 @@
-/*	$Vendor-Id: html.h,v 1.38 2011/01/06 11:55:39 kristaps Exp $ */
+/*	$Vendor-Id: html.h,v 1.47 2011/10/05 21:35:17 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -67,6 +67,7 @@ enum	htmlattr {
 	ATTR_ID,
 	ATTR_SUMMARY,
 	ATTR_ALIGN,
+	ATTR_COLSPAN,
 	ATTR_MAX
 };
 
@@ -103,30 +104,34 @@ struct	htmlpair {
 #define	PAIR_STYLE_INIT(p, h)	PAIR_INIT(p, ATTR_STYLE, (h)->buf)
 #define	PAIR_SUMMARY_INIT(p, v)	PAIR_INIT(p, ATTR_SUMMARY, v)
 
-enum	htmltype {
+enum	htmltype { 
 	HTML_HTML_4_01_STRICT,
 	HTML_XHTML_1_0_STRICT
 };
 
 struct	html {
 	int		  flags;
-#define	HTML_NOSPACE	 (1 << 0)
+#define	HTML_NOSPACE	 (1 << 0) /* suppress next space */
 #define	HTML_IGNDELIM	 (1 << 1)
 #define	HTML_KEEP	 (1 << 2)
 #define	HTML_PREKEEP	 (1 << 3)
-#define	HTML_NONOSPACE	 (1 << 4)
+#define	HTML_NONOSPACE	 (1 << 4) /* never add spaces */
+#define	HTML_LITERAL	 (1 << 5) /* literal (e.g., <PRE>) context */
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
-	void		 *symtab; /* character-escapes */
+	struct tag	 *tblt; /* current open table scope */
+	struct mchars	 *symtab; /* character-escapes */
 	char		 *base_man; /* base for manpage href */
 	char		 *base_includes; /* base for include href */
 	char		 *style; /* style-sheet URI */
 	char		  buf[BUFSIZ]; /* see bufcat and friends */
-	size_t		  buflen;
+	size_t		  buflen; 
 	struct tag	 *metaf; /* current open font scope */
 	enum htmlfont	  metal; /* last used font */
 	enum htmlfont	  metac; /* current font mode */
-	enum htmltype	  type;
+	enum htmltype	  type; /* output media type */
+	int		  oflags; /* output options */
+#define	HTML_FRAGMENT	 (1 << 0) /* don't emit HTML/HEAD/BODY */
 };
 
 void		  print_gen_decls(struct html *);
@@ -136,21 +141,23 @@ struct tag	 *print_otag(struct html *, enum htmltag,
 void		  print_tagq(struct html *, const struct tag *);
 void		  print_stagq(struct html *, const struct tag *);
 void		  print_text(struct html *, const char *);
+void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);
+void		  print_eqn(struct html *, const struct eqn *);
 
+void		  bufcat_fmt(struct html *, const char *, ...);
+void		  bufcat(struct html *, const char *);
+void		  bufcat_id(struct html *, const char *);
+void		  bufcat_style(struct html *, 
+			const char *, const char *);
 void		  bufcat_su(struct html *, const char *, 
 			const struct roffsu *);
+void		  bufinit(struct html *);
 void		  buffmt_man(struct html *, 
 			const char *, const char *);
 void		  buffmt_includes(struct html *, const char *);
-void		  buffmt(struct html *, const char *, ...);
-void		  bufcat(struct html *, const char *);
-void		  bufcat_style(struct html *, 
-			const char *, const char *);
-void		  bufncat(struct html *, const char *, size_t);
-void		  bufinit(struct html *);
 
-void		  html_idcat(char *, const char *, int);
+int		  html_strlen(const char *);
 
 __END_DECLS
 

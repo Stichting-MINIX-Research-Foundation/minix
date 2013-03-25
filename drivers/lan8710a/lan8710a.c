@@ -223,11 +223,11 @@ message *m;
 	}
 
 	/* Re-enable Rx interrupt. */
-	if(m->NOTIFY_ARG & (1 << RX_INT))
+	if(m->NOTIFY_INTMASK & (1 << RX_INT))
 		lan8710a_enable_interrupt(RX_INT);
 
 	/* Re-enable Tx interrupt. */
-	if(m->NOTIFY_ARG & (1 << TX_INT))
+	if(m->NOTIFY_INTMASK & (1 << TX_INT))
 		lan8710a_enable_interrupt(TX_INT);
 }
 
@@ -437,8 +437,8 @@ message *mp;
 			sizeof(stats));
 	mp->m_type  = DL_STAT_REPLY;
 
-	if ((r=send(mp->m_source, mp)) != OK) {
-		panic("lan8710a_getstat: send() failed: %d", r);
+	if ((r=ipc_send(mp->m_source, mp)) != OK) {
+		panic("lan8710a_getstat: ipc_send() failed: %d", r);
 	}
 }
 
@@ -1186,7 +1186,7 @@ static void
 mess_reply(req, reply)
 message *req;message *reply;
 {
-	if (send(req->m_source, reply) != OK) {
+	if (ipc_send(req->m_source, reply) != OK) {
 		panic("unable to send reply message");
 	}
 }
@@ -1232,8 +1232,8 @@ lan8710a_t *e;
 	}
 
 	/* Acknowledge to INET. */
-	if ((r = send(e->client, &msg) != OK)) {
-		panic("send() failed: %d", r);
+	if ((r = ipc_send(e->client, &msg) != OK)) {
+		panic("ipc_send() failed: %d", r);
 	}
 }
 #endif /* AM335X */

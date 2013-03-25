@@ -2,9 +2,9 @@
  *   m_type:	SYS_SIGSEND
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_ENDPT  	# process to call signal handler
- *     m2_p1:	SIG_CTXT_PTR 	# pointer to sigcontext structure
- *     m2_i3:	SIG_FLAGS    	# flags for S_SIGRETURN call	
+ *     m2_i1:	SYS_SIG_ENDPT  	# process to call signal handler
+ *     m2_p1:	SYS_SIG_CTXT_PTR 	# pointer to sigcontext structure
+ *     m2_i3:	SYS_SIG_FLAGS    	# flags for S_SIGRETURN call	
  *
  */
 
@@ -27,13 +27,13 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   struct sigframe fr, *frp;
   int proc_nr, r;
 
-  if (!isokendpt(m_ptr->SIG_ENDPT, &proc_nr)) return(EINVAL);
+  if (!isokendpt(m_ptr->SYS_SIG_ENDPT, &proc_nr)) return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
   rp = proc_addr(proc_nr);
 
   /* Get the sigmsg structure into our address space.  */
   if((r=data_copy_vmcheck(caller, caller->p_endpoint,
-		(vir_bytes) m_ptr->SIG_CTXT_PTR, KERNEL, (vir_bytes) &smsg,
+		(vir_bytes) m_ptr->SYS_SIG_CTXT_PTR, KERNEL, (vir_bytes) &smsg,
 		(phys_bytes) sizeof(struct sigmsg))) != OK)
 	return r;
 
@@ -64,7 +64,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   sc.sc_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
 
   /* Copy the sigcontext structure to the user's stack. */
-  if((r=data_copy_vmcheck(caller, KERNEL, (vir_bytes) &sc, m_ptr->SIG_ENDPT,
+  if((r=data_copy_vmcheck(caller, KERNEL, (vir_bytes) &sc, m_ptr->SYS_SIG_ENDPT,
 	(vir_bytes) scp, (vir_bytes) sizeof(struct sigcontext))) != OK)
       return r;
 
@@ -97,7 +97,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 
   /* Copy the sigframe structure to the user's stack. */
   if((r=data_copy_vmcheck(caller, KERNEL, (vir_bytes) &fr,
-	m_ptr->SIG_ENDPT, (vir_bytes) frp, 
+	m_ptr->SYS_SIG_ENDPT, (vir_bytes) frp, 
       (vir_bytes) sizeof(struct sigframe))) != OK)
       return r;
 

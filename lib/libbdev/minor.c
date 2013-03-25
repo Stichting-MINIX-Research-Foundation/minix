@@ -46,7 +46,7 @@ int bdev_minor_reopen(dev_t dev)
 		m.BDEV_ACCESS = open_dev[i].access;
 		m.BDEV_ID = NO_ID;
 
-		if ((r = sendrec(endpt, &m)) != OK) {
+		if ((r = ipc_sendrec(endpt, &m)) != OK) {
 			printf("bdev: IPC to driver (%d) failed (%d)\n",
 				endpt, r);
 			return r;
@@ -117,4 +117,20 @@ void bdev_minor_del(dev_t dev)
 		break;
 	}
   }
+}
+
+int bdev_minor_is_open(dev_t dev)
+{
+/* Return whether any minor is open for the major of the given device.
+ */
+  int i, major;
+
+  major = major(dev);
+
+  for (i = 0; i < NR_OPEN_DEVS; i++) {
+	if (major(open_dev[i].dev) == major)
+		return TRUE;
+  }
+
+  return FALSE;
 }

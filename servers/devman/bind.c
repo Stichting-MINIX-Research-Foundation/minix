@@ -29,7 +29,7 @@ int do_bind_device(message *m)
 			    dev->owner, m->DEVMAN_DEVICE_ID);
 #endif
 			
-			res = sendrec(dev->owner, m);
+			res = ipc_sendrec(dev->owner, m);
 			if (res != OK) {
 				printf("[W] devman.do_bind_device(): could not send "
 				       "message to device owner (%d)\n", res);
@@ -45,7 +45,7 @@ int do_bind_device(message *m)
 			m->DEVMAN_RESULT = ENODEV;
 		}
 		m->m_type = DEVMAN_REPLY;
-		send(RS_PROC_NR, m);
+		ipc_send(RS_PROC_NR, m);
 	}
 	return 0;
 }
@@ -77,7 +77,7 @@ int do_unbind_device(message *m)
 			printf("devman: unbind call to %d for dev %d\n",
 			    dev->owner, m->DEVMAN_DEVICE_ID);
 #endif
-			res = sendrec(dev->owner, m);
+			res = ipc_sendrec(dev->owner, m);
 			if (res != OK) {
 				printf("[W] devman.do_unbind_device(): could not send "
 				       "message to device owner (%d)\n", res);
@@ -99,7 +99,7 @@ int do_unbind_device(message *m)
 			m->DEVMAN_RESULT = ENODEV;
 		}
 		m->m_type = DEVMAN_REPLY;
-		send(RS_PROC_NR, m);
+		ipc_send(RS_PROC_NR, m);
 	}
 	return 0;
 }

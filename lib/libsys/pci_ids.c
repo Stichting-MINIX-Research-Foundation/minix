@@ -20,7 +20,7 @@ u16_t *didp;
 	m.m_type= BUSC_PCI_IDS;
 	m.m1_i1= devind;
 
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci_ids: can't talk to PCI: %d", r);
 

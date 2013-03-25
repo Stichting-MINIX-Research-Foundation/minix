@@ -7,7 +7,7 @@
 #include <sys/queue.h>
 
 EXTERN struct inode {
-  mode_t i_mode;		/* file type, protection, etc. */
+  pmode_t i_mode;		/* file type, protection, etc. */
   nlink_t i_nlinks;		/* how many links to this file */
   uid_t i_uid;			/* user id of the file's owner */
   gid_t i_gid;			/* group number */

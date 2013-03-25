@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
 	caller_gid = INVAL_GID;
 	req_nr = fs_m_in.m_type;
 
-	if (req_nr < VFS_BASE) {
-		fs_m_in.m_type += VFS_BASE;
+	if (req_nr < FS_BASE) {
+		fs_m_in.m_type += FS_BASE;
 		req_nr = fs_m_in.m_type;
 	}
-	ind = req_nr - VFS_BASE;
+	ind = req_nr - FS_BASE;
 
 	if (ind < 0 || ind >= NREQS) {
 		printf("MFS: bad request %d from %d\n", req_nr, src);
@@ -117,7 +117,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	
   init_inode_cache();
 
-  SELF_E = getprocnr();
   lmfs_buf_pool(DEFAULT_NR_BUFS);
 
   return(OK);
@@ -176,8 +175,8 @@ static void reply(
   message *m_out                       	/* report result */
 )
 {
-  if (OK != send(who, m_out))    /* send the message */
-	printf("MFS(%d) was unable to send reply\n", SELF_E);
+  if (OK != ipc_send(who, m_out))    /* send the message */
+	printf("MFS(%d) was unable to send reply\n", sef_self());
 }
 
 
@@ -194,7 +193,7 @@ static void cch_check(void)
 	    req_nr != REQ_PUTNODE && req_nr != REQ_READSUPER &&
 	    req_nr != REQ_MOUNTPOINT && req_nr != REQ_UNMOUNT &&
 	    req_nr != REQ_SYNC && req_nr != REQ_LOOKUP) {
-		printf("MFS(%d) inode(%lu) cc: %d req_nr: %d\n", SELF_E,
+		printf("MFS(%d) inode(%lu) cc: %d req_nr: %d\n", sef_self(),
 			inode[i].i_num, inode[i].i_count - cch[i], req_nr);
 	}
 	  

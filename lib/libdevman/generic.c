@@ -116,7 +116,7 @@ int devman_add_device(struct devman_dev *dev)
 	msg.DEVMAN_GRANT_SIZE = grant_size;
 		
 	/* send message */
-	res = sendrec(devman_ep, &msg);
+	res = ipc_sendrec(devman_ep, &msg);
 	
 	if (res != 0) {
 		panic("devman_add_device: could not talk to devman: %d", res);
@@ -156,7 +156,7 @@ int devman_del_device(struct devman_dev *dev)
 	msg.m_type            = DEVMAN_DEL_DEV;
 	msg.DEVMAN_DEVICE_ID   = dev->dev_id;
 
-	res = sendrec(devman_ep, &msg);
+	res = ipc_sendrec(devman_ep, &msg);
 
 	if (res != 0) {
 		panic("devman_del_device: could not talk to devman: %d", res);
@@ -221,14 +221,14 @@ static void do_bind(message *m)
 				res = dev->bind_cb(dev->data, m->DEVMAN_ENDPOINT);
 				m->m_type = DEVMAN_REPLY;
 				m->DEVMAN_RESULT = res;
-				send(devman_ep, m);
+				ipc_send(devman_ep, m);
 				return;
 			}
 		}
 	}
 	m->m_type = DEVMAN_REPLY;
 	m->DEVMAN_RESULT = ENODEV;
-	send(devman_ep, m);
+	ipc_send(devman_ep, m);
 	return;
 }
 
@@ -247,14 +247,14 @@ static void do_unbind(message *m)
 				res = dev->unbind_cb(dev->data, m->DEVMAN_ENDPOINT);
 				m->m_type = DEVMAN_REPLY;
 				m->DEVMAN_RESULT = res;
-				send(devman_ep, m);
+				ipc_send(devman_ep, m);
 				return;
 			}
 		}
 	}
 	m->m_type = DEVMAN_REPLY;
 	m->DEVMAN_RESULT = ENODEV;
-	send(devman_ep, m);
+	ipc_send(devman_ep, m);
 }
 
 /****************************************************************************

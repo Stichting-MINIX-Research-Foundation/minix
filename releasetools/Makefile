@@ -24,12 +24,11 @@ PROGRAMS+= ${PROGROOT}/servers/pm/pm
 PROGRAMS+= ${PROGROOT}/servers/sched/sched
 PROGRAMS+= ${PROGROOT}/servers/vfs/vfs
 PROGRAMS+= ${PROGROOT}/drivers/memory/memory
-PROGRAMS+= ${PROGROOT}/drivers/log/log
 PROGRAMS+= ${PROGROOT}/drivers/tty/tty
 PROGRAMS+= ${PROGROOT}/servers/mfs/mfs
 PROGRAMS+= ${PROGROOT}/servers/vm/vm
 PROGRAMS+= ${PROGROOT}/servers/pfs/pfs
-PROGRAMS+= ${PROGROOT}/servers/init/init
+PROGRAMS+= ${PROGROOT}/sbin/init/init
 
 usage:	
 	@echo " " >&2
@@ -69,10 +68,13 @@ kernel: libraries
 servers: libraries
 	${MAKE} -C ../servers all install
 
+sbin: libraries
+	${MAKE} -C ../sbin all install
+
 drivers: libraries servers
 	${MAKE} -C ../drivers all install
 
-services: kernel servers drivers
+services: kernel servers drivers sbin
 
 .gitignore: Makefile
 	echo ${GEN_FILES} | tr ' ' '\n' >.gitignore

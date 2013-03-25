@@ -5,29 +5,29 @@
  * debugging purposes, each protocol is assigned its own unique number range.
  * The following such message type ranges have been allocated:
  *
- *        1 -   0xFF	POSIX requests (see callnr.h)
+ *     0x00 -   0xFF	Process Manager (PM) requests (see callnr.h)
+ *    0x100 -  0x1FF	Virtual File System (VFS) requests (see callnr.h)
  *    0x200 -  0x2FF	Data link layer requests and responses
  *    0x300 -  0x3FF	Bus controller requests and responses
- *    0x400 -  0x4FF	Character device requests
- *    0x500 -  0x5FF	Character device responses
- *    0x600 -  0x6FF	Kernel calls to SYSTEM task
+ *    0x400 -  0x4FF	Character device requests and responses
+ *    0x500 -  0x5FF	Block device requests and responses
+ *    0x600 -  0x6FF	Kernel calls
  *    0x700 -  0x7FF	Reincarnation Server (RS) requests
  *    0x800 -  0x8FF	Data Store (DS) requests
  *    0x900 -  0x9FF	Requests from PM to VFS, and responses
  *    0xA00 -  0xAFF	Requests from VFS to file systems (see vfsif.h)
- *    0xB00 -  0xBFF	Requests from VM to VFS
+ *    0xB00 -  0xBFF	Transaction IDs from VFS to file systems (see vfsif.h)
  *    0xC00 -  0xCFF	Virtual Memory (VM) requests
  *    0xD00 -  0xDFF	IPC server requests
  *    0xE00 -  0xEFF	Common system messages (e.g. system signals)
- *    0xF00 -  0xFFF    Scheduling messages
+ *    0xF00 -  0xFFF	Scheduling messages
  *   0x1000 - 0x10FF	Notify messages
  *   0x1100 - 0x11FF	USB  
- *   0x1200 - 0x12FF    Devman
- *   0x1300 - 0x13FF    TTY Requests
- *   0x1400 - 0x14FF	VFS-FS transaction IDs
- *   0x1500 - 0x15FF	Block device requests and responses
+ *   0x1200 - 0x12FF	Devman
+ *   0x1300 - 0x13FF	TTY requests
+ *   0x1400 - 0x14FF	Real Time Clock requests and responses
+ *   0x1500 - 0x15FF	Input server messages
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
- *   0x1700 - 0x17FF	Real Time Clock requests and responses
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -74,14 +74,13 @@
 #define VFS_PROC_NR  ((endpoint_t) 1)	/* file system */
 #define RS_PROC_NR   ((endpoint_t) 2)  	/* reincarnation server */
 #define MEM_PROC_NR  ((endpoint_t) 3)  	/* memory driver (RAM disk, null, etc.) */
-#define LOG_PROC_NR  ((endpoint_t) 4)	/* log device driver */
+#define SCHED_PROC_NR ((endpoint_t) 4)	/* scheduler */
 #define TTY_PROC_NR  ((endpoint_t) 5)	/* terminal (TTY) driver */
 #define DS_PROC_NR   ((endpoint_t) 6)   /* data store server */
 #define MFS_PROC_NR  ((endpoint_t) 7)   /* minix root filesystem */
 #define VM_PROC_NR   ((endpoint_t) 8)   /* memory server */
 #define PFS_PROC_NR  ((endpoint_t) 9)  /* pipe filesystem */
-#define SCHED_PROC_NR ((endpoint_t) 10)	/* scheduler */
-#define LAST_SPECIAL_PROC_NR	11	/* An untyped version for
+#define LAST_SPECIAL_PROC_NR	10	/* An untyped version for
                                            computation in macros.*/
 #define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
                                                         -- goes multiuser */
@@ -109,8 +108,9 @@
     (is_ipc_notify(ipc_status) || IPC_STATUS_CALL(ipc_status) == SENDA)
 
 /* Shorthands for message parameters passed with notifications. */
-#define NOTIFY_ARG		m2_l1
-#define NOTIFY_TIMESTAMP	m2_l2
+#define NOTIFY_TIMESTAMP       m_u.m_notify.timestamp
+#define NOTIFY_INTMASK         m_u.m_notify.interrupts
+#define NOTIFY_SIGSET          m_u.m_notify.sigset
 
 /*===========================================================================*
  *                Messages for BUS controller drivers 			     *
@@ -182,70 +182,9 @@
 							 */
 
 #define BUSC_I2C_RESERVE	(BUSC_RQ_BASE + 64)	/* reserve i2c device */
+#define   BUSC_I2C_ADDR		m2_i1			/* slave address */
 #define BUSC_I2C_EXEC		(BUSC_RQ_BASE + 65)	/* perform i2c action */
-
-/*===========================================================================*
- *                Messages for CHARACTER device drivers			     *
- *===========================================================================*/
-
-/* Message types for character device drivers. */
-#define DEV_RQ_BASE   0x400	/* base for character device request types */
-#define DEV_RS_BASE   0x500	/* base for character device response types */
-
-#define CANCEL       	(DEV_RQ_BASE +  0) /* force a task to cancel */
-#define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
-#define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
-#define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
-#define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
-#define DEV_REOPEN     	(DEV_RQ_BASE + 14) /* reopen a minor device */
-
-#define DEV_READ_S	(DEV_RQ_BASE + 20) /* (safecopy) read from minor */
-#define DEV_WRITE_S   	(DEV_RQ_BASE + 21) /* (safecopy) write to minor */
-#define DEV_SCATTER_S  	(DEV_RQ_BASE + 22) /* (safecopy) write from a vector */
-#define DEV_GATHER_S   	(DEV_RQ_BASE + 23) /* (safecopy) read into a vector */
-#define DEV_IOCTL_S    	(DEV_RQ_BASE + 24) /* (safecopy) I/O control code */
-
-#define IS_DEV_RQ(type) (((type) & ~0xff) == DEV_RQ_BASE)
-
-#define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
-#define DEV_IO_READY    (DEV_RS_BASE + 3) /* selected device ready */
-#define DEV_NO_STATUS   (DEV_RS_BASE + 4) /* empty status reply */
-#define DEV_REOPEN_REPL (DEV_RS_BASE + 5) /* reply to DEV_REOPEN */
-#define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
-#define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
-#define DEV_SEL_REPL2	(DEV_RS_BASE + 8) /* (opt) second reply to DEV_SELECT */
-#define DEV_OPEN_REPL	(DEV_RS_BASE + 9) /* reply to DEV_OPEN */
-
-#define IS_DEV_RS(type) (((type) & ~0xff) == DEV_RS_BASE)
-
-/* Field names for messages to character device drivers. */
-#define DEVICE    	m2_i1	/* major-minor device */
-#define USER_ENDPT	m2_i2	/* which endpoint initiated this call? */
-#define COUNT   	m2_i3	/* how many bytes to transfer */
-#define REQUEST 	m2_i3 	/* ioctl request code */
-#define POSITION	m2_l1	/* file offset (low 4 bytes) */
-#define HIGHPOS		m2_l2	/* file offset (high 4 bytes) */
-#define ADDRESS 	m2_p1	/* core buffer address */
-#define IO_GRANT 	m2_p1	/* grant id (for DEV_*_S variants) */
-#define FLAGS		m2_s1   /* operation flags */
-
-#define FLG_OP_NONBLOCK	0x1 /* operation is non blocking */
-
-/* Field names for DEV_SELECT messages to character device drivers. */
-#define DEV_MINOR	m2_i1	/* minor device */
-#define DEV_SEL_OPS	m2_i2	/* which select operations are requested */
-
-/* Field names used in reply messages from tasks. */
-#define REP_ENDPT	m2_i1	/* # of proc on whose behalf I/O was done */
-#define REP_STATUS	m2_i2	/* bytes transferred or error number */
-#define REP_IO_GRANT	m2_i3	/* DEV_REVIVE: grant by which I/O was done */
-#  define SUSPEND 	 -998 	/* status to suspend caller, reply later */
-
-/* Field names for messages to TTY driver. */
-#define TTY_LINE	DEVICE	/* message parameter: terminal line */
-#define TTY_REQUEST	COUNT	/* message parameter: ioctl request code */
-#define TTY_SPEK	POSITION/* message parameter: ioctl speed, erasing */
-#define TTY_PGRP 	m2_i3	/* message parameter: process group */	
+#define   BUSC_I2C_GRANT	m2_i1			/* grant for request */
 
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
@@ -344,7 +283,8 @@
 #  define SYS_SETTIME    (KERNEL_CALL + 40)	/* sys_settime() */
 
 #  define SYS_VMCTL      (KERNEL_CALL + 43)	/* sys_vmctl() */
-#  define SYS_SYSCTL     (KERNEL_CALL + 44)	/* sys_sysctl() */
+
+#  define SYS_DIAGCTL    (KERNEL_CALL + 44)	/* sys_diagctl() */
 
 #  define SYS_VTIMER     (KERNEL_CALL + 45)	/* sys_vtimer() */
 #  define SYS_RUNCTL     (KERNEL_CALL + 46)	/* sys_runctl() */
@@ -370,7 +310,7 @@
 #define SYS_BASIC_CALLS \
     SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
     SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, \
-    SYS_PROFBUF, SYS_SYSCTL, SYS_STATECTL, SYS_SAFEMEMSET
+    SYS_PROFBUF, SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET
 
 /* Field names for SYS_MEMSET. */
 #define MEM_PTR		m2_p1	/* base */
@@ -536,11 +476,12 @@
 #define SG_SIZE		m2_i2	/* no. of entries */
 
 /* Field names for SYS_GETKSIG, _ENDKSIG, _KILL, _SIGSEND, _SIGRETURN. */
-#define SIG_ENDPT      m2_i1	/* process number for inform */
-#define SIG_NUMBER     m2_i2	/* signal number to send */
-#define SIG_FLAGS      m2_i3	/* signal flags field */
-#define SIG_MAP        m2_l1	/* used by kernel to pass signal bit map */
-#define SIG_CTXT_PTR   m2_p1	/* pointer to info to restore signal context */
+#define SYS_SIG_ENDPT      m_u.m_sigcalls.ep     /* process number for inform */
+#define SYS_SIG_NUMBER     m_u.m_sigcalls.sig    /* signal number to send */
+#define SYS_SIG_FLAGS      m_u.m_sigcalls.flags  /* signal flags field */
+#define SYS_SIG_MAP        m_u.m_sigcalls.sigs   /* used to pass signal bit map */
+#define SYS_SIG_CTXT_PTR   m_u.m_sigcalls.sigctx /* pointer to signal context */
+#define SYS_SIG_HOW        m_u.m_sigcalls.how   /* used to pass signal bit map */
 
 /* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */
@@ -549,17 +490,14 @@
 #define PR_STACK_PTR    m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
 #define PR_NAME_PTR     m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
+#define PR_PS_STR_PTR   m1_p4	/* pointer to ps_strings, expected by __start */
 #define PR_FORK_FLAGS	m1_i3	/* optional flags for fork operation */
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
 #define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
 
-/* Field names for EXEC sent from userland to PM. */
-#define PMEXEC_FLAGS	m1_i3	/* PMEF_* */
-
+/* Constants for exec. FIXME: these do not belong here. */
 #define PMEF_AUXVECTORS	20
-#define PMEF_EXECNAMELEN1 256
-#define PMEF_AUXVECTORSPACE 0x01 /* space for PMEF_AUXVECTORS on stack */
-#define PMEF_EXECNAMESPACE1 0x02 /* space for PMEF_EXECNAMELEN1 execname */
+#define PMEF_EXECNAMELEN1 PATH_MAX
 
 /* Flags for PR_FORK_FLAGS. */
 #define PFF_VMINHIBIT	0x01	/* Don't schedule until release by VM. */
@@ -644,12 +582,14 @@
 #define VMCTL_CLEARMAPCACHE	32
 #define VMCTL_BOOTINHIBIT_CLEAR	33
 
-/* Codes and field names for SYS_SYSCTL. */
-#define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */
-#define SYSCTL_ARG1		m1_p1
-#define SYSCTL_ARG2		m1_i2
-#define SYSCTL_CODE_DIAG	1	/* Print diagnostics. */
-#define SYSCTL_CODE_STACKTRACE	2	/* Print process stack. */
+/* Codes and field names for SYS_DIAGCTL. */
+#define DIAGCTL_CODE		m1_i1	/* DIAGCTL_CODE_* below */
+#define DIAGCTL_ARG1		m1_p1
+#define DIAGCTL_ARG2		m1_i2
+#define DIAGCTL_CODE_DIAG	1	/* Print diagnostics. */
+#define DIAGCTL_CODE_STACKTRACE	2	/* Print process stack. */
+#define DIAGCTL_CODE_REGISTER	3	/* Register for diagnostic signals */
+#define DIAGCTL_CODE_UNREGISTER	4	/* Unregister for diagnostic signals */
 #define DIAG_BUFSIZE	(80*25)
 
 /* Field names for SYS_VTIMER. */
@@ -708,6 +648,8 @@
 
 #define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
 
+#define RS_GETSYSINFO	(RS_RQ_BASE + 9)	/* get system information */
+
 #define RS_INIT 	(RS_RQ_BASE + 20)	/* service init message */
 #define RS_LU_PREPARE	(RS_RQ_BASE + 21)	/* prepare to update message */
 
@@ -743,6 +685,7 @@
 #define DS_DELETE	(DS_RQ_BASE + 4)	/* delete data */
 #define DS_SNAPSHOT	(DS_RQ_BASE + 5)	/* take a snapshot */
 #define DS_RETRIEVE_LABEL  (DS_RQ_BASE + 6)	/* retrieve label's name */
+#define DS_GETSYSINFO	(DS_RQ_BASE + 7)	/* get system information */
 
 /* DS field names */
 #  define DS_KEY_GRANT		m2_i1		/* key for the data */
@@ -758,102 +701,83 @@
  *                Messages used between PM and VFS			     *
  *===========================================================================*/
 
-#define PM_RQ_BASE	0x900
-#define PM_RS_BASE	0x980
+#define VFS_PM_RQ_BASE	0x900
+#define VFS_PM_RS_BASE	0x980
 
-/* Requests from PM to VFS */
-#define PM_INIT		(PM_RQ_BASE + 0)	/* Process table exchange */
-#define PM_SETUID	(PM_RQ_BASE + 1)	/* Set new user ID */
-#define PM_SETGID	(PM_RQ_BASE + 2)	/* Set group ID */
-#define PM_SETSID	(PM_RQ_BASE + 3)	/* Set session leader */
-#define PM_EXIT		(PM_RQ_BASE + 4)	/* Process exits */
-#define PM_DUMPCORE	(PM_RQ_BASE + 5)	/* Process is to dump core */
-#define PM_EXEC		(PM_RQ_BASE + 6)	/* Forwarded exec call */
-#define PM_FORK		(PM_RQ_BASE + 7)	/* Newly forked process */
-#define PM_SRV_FORK	(PM_RQ_BASE + 8)	/* fork for system services */
-#define PM_UNPAUSE	(PM_RQ_BASE + 9)	/* Interrupt process call */
-#define PM_REBOOT	(PM_RQ_BASE + 10)	/* System reboot */
-#define PM_SETGROUPS	(PM_RQ_BASE + 11)	/* Tell VFS about setgroups */
+#define IS_VFS_PM_RQ(type) (((type) & ~0x7f) == VFS_PM_RQ_BASE)
+#define IS_VFS_PM_RS(type) (((type) & ~0x7f) == VFS_PM_RS_BASE)
+
+/* Requests from PM to VFS. */
+#define VFS_PM_INIT	(VFS_PM_RQ_BASE + 0)	/* Process table exchange */
+#define VFS_PM_SETUID	(VFS_PM_RQ_BASE + 1)	/* Set new user ID */
+#define VFS_PM_SETGID	(VFS_PM_RQ_BASE + 2)	/* Set group ID */
+#define VFS_PM_SETSID	(VFS_PM_RQ_BASE + 3)	/* Set session leader */
+#define VFS_PM_EXIT	(VFS_PM_RQ_BASE + 4)	/* Process exits */
+#define VFS_PM_DUMPCORE	(VFS_PM_RQ_BASE + 5)	/* Process is to dump core */
+#define VFS_PM_EXEC	(VFS_PM_RQ_BASE + 6)	/* Forwarded exec call */
+#define VFS_PM_FORK	(VFS_PM_RQ_BASE + 7)	/* Newly forked process */
+#define VFS_PM_SRV_FORK	(VFS_PM_RQ_BASE + 8)	/* fork for system services */
+#define VFS_PM_UNPAUSE	(VFS_PM_RQ_BASE + 9)	/* Interrupt process call */
+#define VFS_PM_REBOOT	(VFS_PM_RQ_BASE + 10)	/* System reboot */
+#define VFS_PM_SETGROUPS	(VFS_PM_RQ_BASE + 11)	/* Set groups */
 
 /* Replies from VFS to PM */
-#define PM_SETUID_REPLY	(PM_RS_BASE + 1)
-#define PM_SETGID_REPLY	(PM_RS_BASE + 2)
-#define PM_SETSID_REPLY	(PM_RS_BASE + 3)
-#define PM_EXIT_REPLY	(PM_RS_BASE + 4)
-#define PM_CORE_REPLY	(PM_RS_BASE + 5)
-#define PM_EXEC_REPLY	(PM_RS_BASE + 6)
-#define PM_FORK_REPLY	(PM_RS_BASE + 7)
-#define PM_SRV_FORK_REPLY	(PM_RS_BASE + 8)
-#define PM_UNPAUSE_REPLY	(PM_RS_BASE + 9)
-#define PM_REBOOT_REPLY	(PM_RS_BASE + 10)
-#define PM_SETGROUPS_REPLY	(PM_RS_BASE + 11)
+#define VFS_PM_SETUID_REPLY	(VFS_PM_RS_BASE + 1)
+#define VFS_PM_SETGID_REPLY	(VFS_PM_RS_BASE + 2)
+#define VFS_PM_SETSID_REPLY	(VFS_PM_RS_BASE + 3)
+#define VFS_PM_EXIT_REPLY	(VFS_PM_RS_BASE + 4)
+#define VFS_PM_CORE_REPLY	(VFS_PM_RS_BASE + 5)
+#define VFS_PM_EXEC_REPLY	(VFS_PM_RS_BASE + 6)
+#define VFS_PM_FORK_REPLY	(VFS_PM_RS_BASE + 7)
+#define VFS_PM_SRV_FORK_REPLY	(VFS_PM_RS_BASE + 8)
+#define VFS_PM_UNPAUSE_REPLY	(VFS_PM_RS_BASE + 9)
+#define VFS_PM_REBOOT_REPLY	(VFS_PM_RS_BASE + 10)
+#define VFS_PM_SETGROUPS_REPLY	(VFS_PM_RS_BASE + 11)
 
 /* Standard parameters for all requests and replies, except PM_REBOOT */
-#  define PM_PROC		m7_i1	/* process endpoint */
+#  define VFS_PM_ENDPT		m7_i1	/* process endpoint */
 
 /* Additional parameters for PM_INIT */
-#  define PM_SLOT		m7_i2	/* process slot number */
-#  define PM_PID		m7_i3	/* process pid */
+#  define VFS_PM_SLOT		m7_i2	/* process slot number */
+#  define VFS_PM_PID		m7_i3	/* process pid */
 
 /* Additional parameters for PM_SETUID and PM_SETGID */
-#  define PM_EID		m7_i2	/* effective user/group id */
-#  define PM_RID		m7_i3	/* real user/group id */
+#  define VFS_PM_EID		m7_i2	/* effective user/group id */
+#  define VFS_PM_RID		m7_i3	/* real user/group id */
 
 /* Additional parameter for PM_SETGROUPS */
-#  define PM_GROUP_NO		m7_i2	/* number of groups */
-#  define PM_GROUP_ADDR		m7_p1	/* struct holding group data */
+#  define VFS_PM_GROUP_NO	m7_i2	/* number of groups */
+#  define VFS_PM_GROUP_ADDR	m7_p1	/* struct holding group data */
 
 /* Additional parameters for PM_EXEC */
-#  define PM_PATH		m7_p1	/* executable */
-#  define PM_PATH_LEN		m7_i2	/* length of path including
+#  define VFS_PM_PATH		m7_p1	/* executable */
+#  define VFS_PM_PATH_LEN	m7_i2	/* length of path including
 					 * terminating null character
 					 */
-#  define PM_FRAME		m7_p2	/* arguments and environment */
-#  define PM_FRAME_LEN		m7_i3	/* size of frame */
-#  define PM_EXECFLAGS		m7_i4	/* PMEXEC_FLAGS */
+#  define VFS_PM_FRAME		m7_p2	/* arguments and environment */
+#  define VFS_PM_FRAME_LEN	m7_i3	/* size of frame */
+#  define VFS_PM_PS_STR		m7_i5	/* ps_strings pointer */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
-#  define PM_STATUS		m7_i2	/* OK or failure */
-#  define PM_PC			m7_p1	/* program counter */
-#  define PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
+#  define VFS_PM_STATUS		m7_i2	/* OK or failure */
+#  define VFS_PM_PC		m7_p1	/* program counter */
+#  define VFS_PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
+#  define VFS_PM_NEWPS_STR	m7_i5	/* possibly-changed ps_strings ptr */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
-#  define PM_PPROC		m7_i2	/* parent process endpoint */
-#  define PM_CPID		m7_i3	/* child pid */
-#  define PM_REUID		m7_i4	/* real and effective uid */
-#  define PM_REGID		m7_i5	/* real and effective gid */
+#  define VFS_PM_PENDPT		m7_i2	/* parent process endpoint */
+#  define VFS_PM_CPID		m7_i3	/* child pid */
+#  define VFS_PM_REUID		m7_i4	/* real and effective uid */
+#  define VFS_PM_REGID		m7_i5	/* real and effective gid */
 
 /* Additional parameters for PM_DUMPCORE */
-#  define PM_TERM_SIG		m7_i2	/* process's termination signal */
-#  define PM_TRACED_PROC	m7_i3	/* required for T_DUMPCORE */
-
-/* Parameters for the EXEC_NEWMEM call */
-#define EXC_NM_PROC	m1_i1		/* process that needs new map */
-#define EXC_NM_PTR	m1_p1		/* parameters in struct exec_info */
-/* Results:
- * the status will be in m_type.
- * the top of the stack will be in m1_i1.
- * the following flags will be in m1_i2:
- */
-#define EXC_NM_RF_LOAD_TEXT	1	/* Load text segment (otherwise the
-					 * text segment is already present)
-					 */
-#define EXC_NM_RF_ALLOW_SETUID	2	/* Setuid execution is allowed (tells
-					 * FS to update its uid and gid 
-					 * fields.
-					 */
-#define EXC_NM_RF_FULLVM	4	
-
-/* Parameters for the EXEC_RESTART call */
-#define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
-#define EXC_RS_RESULT	m1_i2		/* result of the exec */
-#define EXC_RS_PC	m1_p1		/* program counter */
+#  define VFS_PM_TERM_SIG	m7_i2	/* process's termination signal */
 
 /*===========================================================================*
  *                Messages used from VFS to file servers		     *
  *===========================================================================*/
 
-#define VFS_BASE	0xA00		/* Requests sent by VFS to filesystem
+#define FS_BASE		0xA00		/* Requests sent by VFS to filesystem
 					 * implementations. See <minix/vfsif.h>
 					 */
 
@@ -874,43 +798,6 @@
 #	define GCOV_BUFF_P  m1_p1
 #	define GCOV_BUFF_SZ m1_i1
 
-/* Common request to several system servers: retrieve system information. */
-#define COMMON_GETSYSINFO	(COMMON_RQ_BASE+2)
-#	define SI_WHAT		m1_i1
-#	define SI_WHERE		m1_p1
-#	define SI_SIZE		m1_i2
-
-/* PM field names */
-/* BRK */
-#define PMBRK_ADDR				m1_p1
-
-/* TRACE */
-#define PMTRACE_ADDR				m2_l1
-
-#define PM_ENDPT				m1_i1
-#define PM_PENDPT				m1_i2
-
-#define PM_NUID					m2_i1
-#define PM_NGID					m2_i2
-
-#define PM_GETSID_PID				m1_i1
-
-/* Field names for SELECT (FS). */
-#define SEL_NFDS       m8_i1
-#define SEL_READFDS    m8_p1
-#define SEL_WRITEFDS   m8_p2
-#define SEL_ERRORFDS   m8_p3
-#define SEL_TIMEOUT    m8_p4
-
-/* Field names for the fstatvfs call */
-#define FSTATVFS_FD m1_i1
-#define FSTATVFS_BUF m1_p1
-
-/* Field names for the statvfs call */
-#define STATVFS_LEN m1_i1
-#define STATVFS_NAME m1_p1
-#define STATVFS_BUF m1_p2
-
 /*===========================================================================*
  *                Messages for VM server				     *
  *===========================================================================*/
@@ -924,9 +811,7 @@
 #	define VMF_SLOTNO		m1_i2
 #	define VMF_CHILD_ENDPOINT	m1_i3	/* result */
 #define VM_BRK			(VM_RQ_BASE+2)
-#	define VMB_ENDPOINT		m1_i1
 #	define VMB_ADDR			m1_p1
-#	define VMB_RETADDR		m1_p2	/* result */
 #define VM_EXEC_NEWMEM		(VM_RQ_BASE+3)
 #	define VMEN_ENDPOINT		m1_i1
 #	define VMEN_ARGSPTR		m1_p1
@@ -996,6 +881,9 @@
 
 /* To VM: identify cache block in FS */
 #define VM_SETCACHEPAGE		(VM_RQ_BASE+27)
+
+/* To VM: clear all cache blocks for a device */
+#define VM_CLEARCACHE		(VM_RQ_BASE+28)
 
 /* To VFS: fields for request from VM. */
 #	define VFS_VMCALL_REQ		m10_i1
@@ -1106,7 +994,8 @@
 
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
-    VM_MMAP, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, VM_INFO, VM_GETRUSAGE
+    VM_BRK, VM_MMAP, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, VM_INFO, \
+    VM_GETRUSAGE
 
 /*===========================================================================*
  *                Messages for IPC server				     *
@@ -1239,20 +1128,12 @@
 #   define DEVMAN_RESULT         m4_l1
 
 /*===========================================================================*
- *              TTY REQUESTS	                                             *
+ *			Messages for TTY				     *
  *===========================================================================*/
 
 #define TTY_RQ_BASE 0x1300
 
-#define INPUT_EVENT      (TTY_RQ_BASE + 0)
-
-#	define INPUT_TYPE        m4_l1
-#	define INPUT_CODE        m4_l2
-#	define INPUT_VALUE       m4_l3
-
-
 #define TTY_FKEY_CONTROL	(TTY_RQ_BASE + 1) /* control an F-key at TTY */
-#define OLD_FKEY_CONTROL	98  	/* previously used for TTY_FKEY_CONTROL */
 #  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
 #  define    FKEY_MAP		10	/* observe function key */
 #  define    FKEY_UNMAP		11	/* stop observing function key */
@@ -1260,24 +1141,110 @@
 #  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
 #  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
 
-#endif
+#define TTY_INPUT_UP		(TTY_RQ_BASE + 2) /* input server is up */
+/* This message uses no message fields. */
+
+#define TTY_INPUT_EVENT		(TTY_RQ_BASE + 3) /* relayed input event */
+/* This message shares its message fields with INPUT_EVENT. */
+
+/*===========================================================================*
+ *			Messages for input server and drivers		     *
+ *===========================================================================*/
+
+/* The input protocol has no real replies. All messages are one-way. */
+#define INPUT_RQ_BASE 0x1500	/* from TTY to server, or server to driver */
+#define INPUT_RS_BASE 0x1580	/* from input driver to input server */
+
+#define INPUT_CONF		(INPUT_RQ_BASE + 0)	/* configure driver */
+#  define INPUT_KBD_ID		m7_i1	/* keyboard device ID */
+#  define INPUT_MOUSE_ID	m7_i2	/* mouse device ID */
+#  define INPUT_RSVD1_ID	m7_i3	/* ID for as yet unallocated type */
+#  define INPUT_RSVD2_ID	m7_i4	/* ID for as yet unallocated type */
+
+#define INPUT_SETLEDS		(INPUT_RQ_BASE + 1)	/* set keyboard LEDs */
+#  define INPUT_LED_MASK	m7_i1	/* status mask of LEDs */
+
+#define INPUT_EVENT		(INPUT_RS_BASE + 0)	/* send input event */
+#  define INPUT_ID		m7_i1	/* device ID */
+#  define INPUT_PAGE		m7_i2	/* usage page */
+#  define INPUT_CODE		m7_i3	/* usage code */
+#  define INPUT_VALUE		m7_i4	/* event value */
+#  define INPUT_FLAGS		m7_i5	/* flags associated with value */
 
 /*===========================================================================*
  *			VFS-FS TRANSACTION IDs				     *
  *===========================================================================*/
 
-#define VFS_TRANSACTION_BASE 0x1400
+#define VFS_TRANSACTION_BASE 0xB00
 
 #define VFS_TRANSID	(VFS_TRANSACTION_BASE + 1)
 #define IS_VFS_FS_TRANSID(type) (((type) & ~0xff) == VFS_TRANSACTION_BASE)
+
+/*===========================================================================*
+ *			Messages for character devices			     *
+ *===========================================================================*/
+
+/* Base type for character device requests and responses. */
+#define CDEV_RQ_BASE	0x400
+#define CDEV_RS_BASE	0x480
+
+#define IS_CDEV_RQ(type) (((type) & ~0x7f) == CDEV_RQ_BASE)
+#define IS_CDEV_RS(type) (((type) & ~0x7f) == CDEV_RS_BASE)
+
+/* Message types for character device requests. */
+#define CDEV_OPEN	(CDEV_RQ_BASE + 0)	/* open a minor device */
+#define CDEV_CLOSE	(CDEV_RQ_BASE + 1)	/* close a minor device */
+#define CDEV_READ	(CDEV_RQ_BASE + 2)	/* read into a buffer */
+#define CDEV_WRITE	(CDEV_RQ_BASE + 3)	/* write from a buffer */
+#define CDEV_IOCTL	(CDEV_RQ_BASE + 4)	/* I/O control operation */
+#define CDEV_CANCEL	(CDEV_RQ_BASE + 5)	/* cancel suspended request */
+#define CDEV_SELECT	(CDEV_RQ_BASE + 6)	/* test for ready operations */
+
+/* Message types for character device responses. */
+#define CDEV_REPLY	(CDEV_RS_BASE + 0)	/* general reply code */
+#define CDEV_SEL1_REPLY	(CDEV_RS_BASE + 1)	/* immediate select reply */
+#define CDEV_SEL2_REPLY	(CDEV_RS_BASE + 2)	/* select notification reply */
+
+/* Field names for block device messages. */
+#define CDEV_MINOR	m10_i1	/* minor device number */
+#define CDEV_STATUS	m10_i2	/* OK, error code, minor device, operations */
+#define CDEV_ACCESS	m10_i2	/* access bits for open requests */
+#define CDEV_GRANT	m10_i2	/* grant ID of buffer */
+#define CDEV_OPS	m10_i2	/* requested select operations */
+#define CDEV_COUNT	m10_i3	/* number of bytes to transfer */
+#define CDEV_USER	m10_i3	/* endpoint of user process */
+#define CDEV_FLAGS	m10_i4	/* transfer flags */
+#define CDEV_ID		m10_l1	/* opaque request ID */
+#define CDEV_REQUEST	m10_l2	/* I/O control request */
+#define CDEV_POS_LO	m10_l2	/* transfer position (low bits) */
+#define CDEV_POS_HI	m10_l3	/* transfer position (high bits) */
+
+/* Bits in 'CDEV_ACCESS' field of block device open requests. */
+#  define CDEV_R_BIT		0x01	/* open with read access */
+#  define CDEV_W_BIT		0x02	/* open with write access */
+#  define CDEV_NOCTTY		0x04	/* not to become the controlling TTY */
+
+/* Bits in 'CDEV_FLAGS' field of block device transfer requests. */
+#  define CDEV_NOFLAGS		0x00	/* no flags are set */
+#  define CDEV_NONBLOCK		0x01	/* do not suspend I/O request */
+
+/* Bits in 'CDEV_OPS', 'CDEV_STATUS' fields of block device select messages. */
+#  define CDEV_OP_RD		0x01	/* selected for read operation */
+#  define CDEV_OP_WR		0x02	/* selected for write operation */
+#  define CDEV_OP_ERR		0x04	/* selected for error operation */
+#  define CDEV_NOTIFY		0x08	/* notification requested */
+
+/* Bits in 'CDEV_STATUS' field of block device open responses. */
+#  define CDEV_CLONED		0x20000000	/* device is cloned */
+#  define CDEV_CTTY		0x40000000	/* device is controlling TTY */
 
 /*===========================================================================*
  *			Messages for block devices			     *
  *===========================================================================*/
 
 /* Base type for block device requests and responses. */
-#define BDEV_RQ_BASE	0x1500
-#define BDEV_RS_BASE	0x1580
+#define BDEV_RQ_BASE	0x500
+#define BDEV_RS_BASE	0x580
 
 #define IS_BDEV_RQ(type) (((type) & ~0x7f) == BDEV_RQ_BASE)
 #define IS_BDEV_RS(type) (((type) & ~0x7f) == BDEV_RS_BASE)
@@ -1298,31 +1265,31 @@
 #define BDEV_MINOR	m10_i1	/* minor device number */
 #define BDEV_STATUS	m10_i1	/* OK or error code */
 #define BDEV_ACCESS	m10_i2	/* access bits for open requests */
-#define BDEV_REQUEST	m10_i2	/* I/O control request */
 #define BDEV_COUNT	m10_i2	/* number of bytes or elements in transfer */
 #define BDEV_GRANT	m10_i3	/* grant ID of buffer or vector */
 #define BDEV_FLAGS	m10_i4	/* transfer flags */
+#define BDEV_USER	m10_i4	/* user endpoint requesting I/O control */
 #define BDEV_ID		m10_l1	/* opaque request ID */
+#define BDEV_REQUEST	m10_l2	/* I/O control request */
 #define BDEV_POS_LO	m10_l2	/* transfer position (low bits) */
 #define BDEV_POS_HI	m10_l3	/* transfer position (high bits) */
+
+/* Bits in 'BDEV_ACCESS' field of block device open requests. */
+#  define BDEV_R_BIT		0x01	/* open with read access */
+#  define BDEV_W_BIT		0x02	/* open with write access */
 
 /* Bits in 'BDEV_FLAGS' field of block device transfer requests. */
 #  define BDEV_NOFLAGS		0x00	/* no flags are set */
 #  define BDEV_FORCEWRITE	0x01	/* force write to disk immediately */
 #  define BDEV_NOPAGE		0x02	/* eeprom: don't send page address */
 
-/* Field names for GETRUSAGE related calls */
-#define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
-#define RU_WHO		m1_i1	/* who argument in getrusage call */
-#define RU_RUSAGE_ADDR	m1_p1	/* pointer to struct rusage */
-
 /*===========================================================================*
  *			Messages for Real Time Clocks			     *
  *===========================================================================*/
 
 /* Base type for real time clock requests and responses. */
-#define RTCDEV_RQ_BASE	0x1700
-#define RTCDEV_RS_BASE	0x1780
+#define RTCDEV_RQ_BASE	0x1400
+#define RTCDEV_RS_BASE	0x1480
 
 #define IS_RTCDEV_RQ(type) (((type) & ~0x7f) == RTCDEV_RQ_BASE)
 #define IS_RTCDEV_RS(type) (((type) & ~0x7f) == RTCDEV_RS_BASE)
@@ -1350,4 +1317,28 @@
 #define RTCDEV_Y2KBUG	0x01	/* Interpret 1980 as 2000 for RTC w/Y2K bug */
 #define RTCDEV_CMOSREG	0x02	/* Also set the CMOS clock register bits. */
 
-/* _MINIX_COM_H */
+/*===========================================================================*
+ *		Field names shared across several call codes		     *
+ *===========================================================================*/
+
+/* Field names for the getsysinfo(2) call. */
+#define SI_WHAT			m1_i1	/* int */
+#define SI_WHERE		m1_p1	/* void */
+#define SI_SIZE			m1_i2	/* size_t */
+
+/* Field names for the svrctl(2) call. */
+#define SVRCTL_REQ		m2_i1	/* int */
+#define SVRCTL_ARG		m2_p1	/* void * */
+
+/* Field names for the getrusage(2) call. */
+#define RU_ENDPT		m1_i1	/* endpoint_t */
+#define RU_WHO			m1_i1	/* int */
+#define RU_RUSAGE_ADDR		m1_p1	/* struct rusage * */
+
+/*===========================================================================*
+ *		Internal codes used by several services			     *
+ *===========================================================================*/
+
+#define SUSPEND 	 -998 	/* status to suspend caller, reply later */
+
+#endif /* !_MINIX_COM_H */

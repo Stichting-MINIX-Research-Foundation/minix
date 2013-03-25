@@ -18,7 +18,7 @@
 #include <minix/ds.h>
 #include <minix/endpoint.h>
 
-#include <timers.h>
+#include <minix/timers.h>
 
 #define debug			0
 #define RAND_UPDATE		/**/
@@ -141,7 +141,7 @@ static int fxp_instance;
 
 static fxp_t *fxp_state;
 
-static timer_t fxp_watchdog;
+static minix_timer_t fxp_watchdog;
 
 static u32_t system_hz;
 
@@ -170,7 +170,7 @@ static void fxp_restart_ru(fxp_t *fp);
 static void fxp_getstat_s(message *mp);
 static void fxp_handler(fxp_t *fp);
 static void fxp_check_ints(fxp_t *fp);
-static void fxp_watchdog_f(timer_t *tp);
+static void fxp_watchdog_f(minix_timer_t *tp);
 static int fxp_link_changed(fxp_t *fp);
 static void fxp_report_link(fxp_t *fp);
 static void reply(fxp_t *fp);
@@ -1433,9 +1433,9 @@ static void fxp_getstat_s(message *mp)
 		panic("fxp_getstat_s: sys_safecopyto failed: %d", r);
 
 	mp->m_type= DL_STAT_REPLY;
-	r= send(mp->m_source, mp);
+	r= ipc_send(mp->m_source, mp);
 	if (r != OK)
-		panic("fxp_getstat_s: send failed: %d", r);
+		panic("fxp_getstat_s: ipc_send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1627,7 +1627,7 @@ static void fxp_check_ints(fxp_t *fp)
  *				fxp_watchdog_f				     *
  *===========================================================================*/
 static void fxp_watchdog_f(tp)
-timer_t *tp;
+minix_timer_t *tp;
 {
 	fxp_t *fp;
 
@@ -1939,10 +1939,10 @@ fxp_t *fp;
 	reply.DL_FLAGS = flags;
 	reply.DL_COUNT = fp->fxp_read_s;
 
-	r= send(fp->fxp_client, &reply);
+	r= ipc_send(fp->fxp_client, &reply);
 
 	if (r < 0)
-		panic("fxp: send failed: %d", r);
+		panic("fxp: ipc_send failed: %d", r);
 	
 	fp->fxp_read_s = 0;
 	fp->fxp_flags &= ~(FF_PACK_SENT | FF_PACK_RECV);
@@ -1955,7 +1955,7 @@ static void mess_reply(req, reply_mess)
 message *req;
 message *reply_mess;
 {
-	if (send(req->m_source, reply_mess) != OK)
+	if (ipc_send(req->m_source, reply_mess) != OK)
 		panic("fxp: unable to mess_reply");
 }
 
@@ -2183,10 +2183,10 @@ int pci_func;
 	m.m2_l1= buf;
 	m.m2_l2= size;
 
-	r= sendrec(dev_e, &m);
+	r= ipc_sendrec(dev_e, &m);
 	if (r != OK)
 	{
-		printf("fxp`tell_dev: sendrec to %d failed: %d\n",
+		printf("fxp`tell_dev: ipc_sendrec to %d failed: %d\n",
 			dev_e, r);
 		return;
 	}
