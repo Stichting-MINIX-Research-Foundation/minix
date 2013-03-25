@@ -35,7 +35,9 @@ int fs_readsuper(void)
 	fs_m_out.RES_GID = root->i_stat.gid;
 	fs_m_out.RES_DEV = NO_DEV;
 
-	fs_m_out.RES_CONREQS = 1;/* We can handle only 1 request at a time */
+	fs_m_out.RES_PROTO = 0;
+	VFS_FS_PROTO_PUT_VERSION(fs_m_out.RES_PROTO, VFS_FS_CURRENT_VERSION);
+	VFS_FS_PROTO_PUT_CONREQS(fs_m_out.RES_PROTO, 1);
 
 	fs_mounted = TRUE;
 
