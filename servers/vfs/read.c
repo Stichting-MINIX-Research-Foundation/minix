@@ -138,7 +138,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	char *buf, size_t size, endpoint_t for_e)
 {
   register struct vnode *vp;
-  u64_t position, res_pos;
+  off_t position, res_pos;
   unsigned int cum_io, cum_io_incr, res_cum_io;
   int op, r;
 
@@ -182,7 +182,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 		   suspend_reopen);
 	if (r >= 0) {
 		cum_io = r;
-		position += r;
+		position += cum_io;
 		r = OK;
 	}
   } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */
@@ -206,22 +206,19 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   } else {				/* Regular files */
 	if (rw_flag == WRITING) {
 		/* Check for O_APPEND flag. */
-		if (f->filp_flags & O_APPEND) position = ((u64_t)(vp->v_size));
+		if (f->filp_flags & O_APPEND) position = vp->v_size;
 	}
 
 	/* Issue request */
 	if(rw_flag == PEEKING) {
 		r = req_peek(vp->v_fs_e, vp->v_inode_nr, position, size);
 	} else {
-		u64_t new_pos;
+		off_t new_pos;
 		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position,
 			rw_flag, for_e, (vir_bytes) buf, size, &new_pos,
 			&cum_io_incr);
 
 		if (r >= 0) {
-			if (ex64hi(new_pos))
-				panic("read_write: bad new pos");
-
 			position = new_pos;
 			cum_io += cum_io_incr;
 		}
@@ -231,11 +228,8 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
 	if (S_ISREG(vp->v_mode) || S_ISDIR(vp->v_mode)) {
-		if (cmp64ul(position, vp->v_size) > 0) {
-			if (ex64hi(position) != 0) {
-				panic("read_write: file size too big ");
-			}
-			vp->v_size = ex64lo(position);
+		if (position > vp->v_size) {
+			vp->v_size = position;
 		}
 	}
   }
@@ -264,7 +258,7 @@ int do_getdents(message *UNUSED(m_out))
 {
 /* Perform the getdents(fd, buf, size) system call. */
   int r = OK, getdents_321 = 0;
-  u64_t new_pos;
+  off_t new_pos;
   register struct filp *rfilp;
 
   if (job_call_nr == GETDENTS_321) getdents_321 = 1;
@@ -282,9 +276,6 @@ int do_getdents(message *UNUSED(m_out))
 	r = EBADF;
 
   if (r == OK) {
-	if (ex64hi(rfilp->filp_pos) != 0)
-		panic("do_getdents: can't handle large offsets");
-
 	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
 			 rfilp->filp_pos, scratch(fp).io.io_buffer,
 			 scratch(fp).io.io_nbytes, &new_pos, 0, getdents_321);
@@ -310,7 +301,7 @@ size_t req_size;
   int r, oflags, partial_pipe = 0;
   size_t size, cum_io, cum_io_incr;
   struct vnode *vp;
-  u64_t  position, new_pos;
+  off_t  position, new_pos;
 
   /* Must make sure we're operating on locked filp and vnode */
   assert(tll_locked_by_me(&f->filp_vno->v_lock));
@@ -318,7 +309,7 @@ size_t req_size;
 
   oflags = f->filp_flags;
   vp = f->filp_vno;
-  position = ((u64_t)(0));	/* Not actually used */
+  position = 0;	/* Not actually used */
 
   assert(rw_flag == READING || rw_flag == WRITING);
 
@@ -349,14 +340,11 @@ size_t req_size;
 	return(r);
   }
 
-  if (ex64hi(new_pos))
-	panic("rw_pipe: bad new pos");
-
   cum_io += cum_io_incr;
   buf += cum_io_incr;
   req_size -= cum_io_incr;
 
-  vp->v_size = ex64lo(new_pos);
+  vp->v_size = new_pos;
 
   if (partial_pipe) {
 	/* partial write on pipe with */

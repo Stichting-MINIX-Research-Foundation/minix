@@ -213,11 +213,7 @@ int do_fcntl(message *UNUSED(m_out))
 	/* Figure out starting position base. */
 	switch(flock_arg.l_whence) {
 	  case SEEK_SET: start = 0; break;
-	  case SEEK_CUR:
-		if (ex64hi(f->filp_pos) != 0)
-			panic("do_fcntl: position in file too high");
-		start = ex64lo(f->filp_pos);
-		break;
+	  case SEEK_CUR: start = f->filp_pos; break;
 	  case SEEK_END: start = f->filp_vno->v_size; break;
 	  default: r = EINVAL;
 	}
@@ -352,8 +348,8 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 	assert(f->filp_vno->v_vmnt);
 
 	if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode)) {
-		printf("VFS: mmap regular/blockdev only; dev 0x%x ino %d has mode 0%o\n",
-			(int) f->filp_vno->v_dev, (int) f->filp_vno->v_inode_nr, (int) f->filp_vno->v_mode);
+		printf("VFS: mmap regular/blockdev only; dev 0x%x ino %llu has mode 0%o\n",
+			f->filp_vno->v_dev, f->filp_vno->v_inode_nr, f->filp_vno->v_mode);
 		unlock_filp(f);
 		return EINVAL;
 	}
