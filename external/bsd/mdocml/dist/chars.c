@@ -1,6 +1,7 @@
-/*	$Vendor-Id: chars.c,v 1.31 2011/01/02 10:10:57 kristaps Exp $ */
+/*	$Vendor-Id: chars.c,v 1.52 2011/11/08 00:15:23 kristaps Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,12 +20,12 @@
 #endif
 
 #include <assert.h>
-#include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "mandoc.h"
-#include "chars.h"
+#include "libmandoc.h"
 
 #define	PRINT_HI	 126
 #define	PRINT_LO	 32
@@ -34,52 +35,37 @@ struct	ln {
 	const char	 *code;
 	const char	 *ascii;
 	int		  unicode;
-	int		  type;
-#define	CHARS_CHAR	 (1 << 0)
-#define	CHARS_STRING	 (1 << 1)
-#define CHARS_BOTH	 (CHARS_CHAR | CHARS_STRING)
 };
 
-#define	LINES_MAX	  351
+#define	LINES_MAX	  328
 
 #define CHAR(in, ch, code) \
-	{ NULL, (in), (ch), (code), CHARS_CHAR },
-#define STRING(in, ch, code) \
-	{ NULL, (in), (ch), (code), CHARS_STRING },
-#define BOTH(in, ch, code) \
-	{ NULL, (in), (ch), (code), CHARS_BOTH },
+	{ NULL, (in), (ch), (code) },
 
 #define	CHAR_TBL_START	  static struct ln lines[LINES_MAX] = {
 #define	CHAR_TBL_END	  };
 
 #include "chars.in"
 
-struct	ctab {
-	enum chars	  type;
+struct	mchars {
 	struct ln	**htab;
 };
 
-static	inline int	  match(const struct ln *,
-				const char *, size_t, int);
-static	const struct ln	 *find(struct ctab *, const char *, size_t, int);
-
+static	const struct ln	 *find(const struct mchars *, 
+				const char *, size_t);
 
 void
-chars_free(void *arg)
+mchars_free(struct mchars *arg)
 {
-	struct ctab	*tab;
 
-	tab = (struct ctab *)arg;
-
-	free(tab->htab);
-	free(tab);
+	free(arg->htab);
+	free(arg);
 }
 
-
-void *
-chars_init(enum chars type)
+struct mchars *
+mchars_alloc(void)
 {
-	struct ctab	 *tab;
+	struct mchars	 *tab;
 	struct ln	**htab;
 	struct ln	 *pp;
 	int		  i, hash;
@@ -87,21 +73,11 @@ chars_init(enum chars type)
 	/*
 	 * Constructs a very basic chaining hashtable.  The hash routine
 	 * is simply the integral value of the first character.
-	 * Subsequent entries are chained in the order they're processed
-	 * (they're in-line re-ordered during lookup).
+	 * Subsequent entries are chained in the order they're processed.
 	 */
 
-	tab = malloc(sizeof(struct ctab));
-	if (NULL == tab) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
-
-	htab = calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
-	if (NULL == htab) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	tab = mandoc_malloc(sizeof(struct mchars));
+	htab = mandoc_calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
 
 	for (i = 0; i < LINES_MAX; i++) {
 		hash = (int)lines[i].code[0] - PRINT_LO;
@@ -117,127 +93,75 @@ chars_init(enum chars type)
 	}
 
 	tab->htab = htab;
-	tab->type = type;
 	return(tab);
 }
 
-
-/* 
- * Special character to Unicode codepoint.
- */
 int
-chars_spec2cp(void *arg, const char *p, size_t sz)
+mchars_spec2cp(const struct mchars *arg, const char *p, size_t sz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct ctab *)arg, p, sz, CHARS_CHAR);
+	ln = find(arg, p, sz);
 	if (NULL == ln)
 		return(-1);
 	return(ln->unicode);
 }
 
+char
+mchars_num2char(const char *p, size_t sz)
+{
+	int		  i;
 
-/* 
- * Reserved word to Unicode codepoint.
- */
+	if ((i = mandoc_strntoi(p, sz, 10)) < 0)
+		return('\0');
+	return(i > 0 && i < 256 && isprint(i) ? 
+			/* LINTED */ i : '\0');
+}
+
 int
-chars_res2cp(void *arg, const char *p, size_t sz)
+mchars_num2uc(const char *p, size_t sz)
 {
-	const struct ln	*ln;
+	int               i;
 
-	ln = find((struct ctab *)arg, p, sz, CHARS_STRING);
-	if (NULL == ln)
-		return(-1);
-	return(ln->unicode);
+	if ((i = mandoc_strntoi(p, sz, 16)) < 0)
+		return('\0');
+	/* FIXME: make sure we're not in a bogus range. */
+	return(i > 0x80 && i <= 0x10FFFF ? i : '\0');
 }
 
-
-/* 
- * Special character to string array.
- */
 const char *
-chars_spec2str(void *arg, const char *p, size_t sz, size_t *rsz)
+mchars_spec2str(const struct mchars *arg, 
+		const char *p, size_t sz, size_t *rsz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct ctab *)arg, p, sz, CHARS_CHAR);
-	if (NULL == ln)
+	ln = find(arg, p, sz);
+	if (NULL == ln) {
+		*rsz = 1;
 		return(NULL);
+	}
 
 	*rsz = strlen(ln->ascii);
 	return(ln->ascii);
 }
-
-
-/* 
- * Reserved word to string array.
- */
-const char *
-chars_res2str(void *arg, const char *p, size_t sz, size_t *rsz)
-{
-	const struct ln	*ln;
-
-	ln = find((struct ctab *)arg, p, sz, CHARS_STRING);
-	if (NULL == ln)
-		return(NULL);
-
-	*rsz = strlen(ln->ascii);
-	return(ln->ascii);
-}
-
 
 static const struct ln *
-find(struct ctab *tab, const char *p, size_t sz, int type)
+find(const struct mchars *tab, const char *p, size_t sz)
 {
-	struct ln	 *pp, *prev;
-	struct ln	**htab;
+	const struct ln	 *pp;
 	int		  hash;
 
 	assert(p);
-	if (0 == sz)
-		return(NULL);
 
-	if (p[0] < PRINT_LO || p[0] > PRINT_HI)
+	if (0 == sz || p[0] < PRINT_LO || p[0] > PRINT_HI)
 		return(NULL);
-
-	/*
-	 * Lookup the symbol in the symbol hash.  See ascii2htab for the
-	 * hashtable specs.  This dynamically re-orders the hash chain
-	 * to optimise for repeat hits.
-	 */
 
 	hash = (int)p[0] - PRINT_LO;
-	htab = tab->htab;
 
-	if (NULL == (pp = htab[hash]))
-		return(NULL);
-
-	for (prev = NULL; pp; pp = pp->next) {
-		if ( ! match(pp, p, sz, type)) {
-			prev = pp;
-			continue;
-		}
-
-		if (prev) {
-			prev->next = pp->next;
-			pp->next = htab[hash];
-			htab[hash] = pp;
-		}
-
-		return(pp);
-	}
+	for (pp = tab->htab[hash]; pp; pp = pp->next)
+		if (0 == strncmp(pp->code, p, sz) && 
+				'\0' == pp->code[(int)sz])
+			return(pp);
 
 	return(NULL);
-}
-
-
-static inline int
-match(const struct ln *ln, const char *p, size_t sz, int type)
-{
-
-	if ( ! (ln->type & type))
-		return(0);
-	if (strncmp(ln->code, p, sz))
-		return(0);
-	return('\0' == ln->code[(int)sz]);
 }

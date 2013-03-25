@@ -17,10 +17,9 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <minix/vfsif.h>
-#include <dirent.h>
+#include <sys/dirent.h>
 #include <assert.h>
 #include "file.h"
-#include "fproc.h"
 #include "path.h"
 #include "vnode.h"
 #include "param.h"
@@ -306,7 +305,7 @@ int do_truncate(message *UNUSED(m_out))
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  length = (off_t) job_m_in.flength;
+  length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
   if (length < 0) return(EINVAL);
 
   /* Temporarily open file */
@@ -343,8 +342,8 @@ int do_ftruncate(message *UNUSED(m_out))
   off_t length;
 
   scratch(fp).file.fd_nr = job_m_in.fd;
-  length = (off_t) job_m_in.flength;
 
+  length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
   if (length < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */

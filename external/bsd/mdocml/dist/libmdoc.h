@@ -1,6 +1,6 @@
-/*	$Vendor-Id: libmdoc.h,v 1.63 2010/11/30 13:04:14 kristaps Exp $ */
+/*	$Vendor-Id: libmdoc.h,v 1.78 2011/12/02 01:37:14 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,17 +17,14 @@
 #ifndef LIBMDOC_H
 #define LIBMDOC_H
 
-#include "mdoc.h"
-
 enum	mdoc_next {
 	MDOC_NEXT_SIBLING = 0,
 	MDOC_NEXT_CHILD
 };
 
 struct	mdoc {
-	void		 *data; /* private application data */
-	mandocmsg	  msg; /* message callback */
-	int		  flags;
+	struct mparse	 *parse; /* parse pointer */
+	int		  flags; /* parse flags */
 #define	MDOC_HALT	 (1 << 0) /* error in parse: halt */
 #define	MDOC_LITERAL	 (1 << 1) /* in a literal scope */
 #define	MDOC_PBODY	 (1 << 2) /* in the document body */
@@ -42,7 +39,7 @@ struct	mdoc {
 	struct mdoc_meta  meta; /* document meta-data */
 	enum mdoc_sec	  lastnamed;
 	enum mdoc_sec	  lastsec;
-	struct regset	 *regs; /* registers */
+	struct roff	 *roff;
 };
 
 #define	MACRO_PROT_ARGS	struct mdoc *m, \
@@ -65,27 +62,37 @@ struct	mdoc_macro {
 
 enum	margserr {
 	ARGS_ERROR,
-	ARGS_EOLN,
-	ARGS_WORD,
-	ARGS_PUNCT,
-	ARGS_QWORD,
-	ARGS_PHRASE,
-	ARGS_PPHRASE,
-	ARGS_PEND
+	ARGS_EOLN, /* end-of-line */
+	ARGS_WORD, /* normal word */
+	ARGS_PUNCT, /* series of punctuation */
+	ARGS_QWORD, /* quoted word */
+	ARGS_PHRASE, /* Ta'd phrase (-column) */
+	ARGS_PPHRASE, /* tabbed phrase (-column) */
+	ARGS_PEND /* last phrase (-column) */
 };
 
 enum	margverr {
 	ARGV_ERROR,
-	ARGV_EOLN,
-	ARGV_ARG,
-	ARGV_WORD
+	ARGV_EOLN, /* end of line */
+	ARGV_ARG, /* valid argument */
+	ARGV_WORD /* normal word (or bad argument---same thing) */
 };
 
+/*
+ * A punctuation delimiter is opening, closing, or "middle mark"
+ * punctuation.  These govern spacing.
+ * Opening punctuation (e.g., the opening parenthesis) suppresses the
+ * following space; closing punctuation (e.g., the closing parenthesis)
+ * suppresses the leading space; middle punctuation (e.g., the vertical
+ * bar) can do either.  The middle punctuation delimiter bends the rules
+ * depending on usage.
+ */
 enum	mdelim {
 	DELIM_NONE = 0,
 	DELIM_OPEN,
 	DELIM_MIDDLE,
-	DELIM_CLOSE
+	DELIM_CLOSE,
+	DELIM_MAX
 };
 
 extern	const struct mdoc_macro *const mdoc_macros;
@@ -93,11 +100,9 @@ extern	const struct mdoc_macro *const mdoc_macros;
 __BEGIN_DECLS
 
 #define		  mdoc_pmsg(m, l, p, t) \
-		  (*(m)->msg)((t), (m)->data, (l), (p), NULL)
+		  mandoc_msg((t), (m)->parse, (l), (p), NULL)
 #define		  mdoc_nmsg(m, n, t) \
-		  (*(m)->msg)((t), (m)->data, (n)->line, (n)->pos, NULL)
-int		  mdoc_vmsg(struct mdoc *, enum mandocerr, 
-			int, int, const char *, ...);
+		  mandoc_msg((t), (m)->parse, (n)->line, (n)->pos, NULL)
 int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *, 
 			int, int, const char *);
@@ -114,33 +119,22 @@ int		  mdoc_endbody_alloc(struct mdoc *m, int line, int pos,
 void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
 void		  mdoc_hash_init(void);
 enum mdoct	  mdoc_hash_find(const char *);
-enum mdelim	  mdoc_iscdelim(char);
-enum mdelim	  mdoc_isdelim(const char *);
-size_t		  mdoc_isescape(const char *);
-enum	mdoc_sec  mdoc_str2sec(const char *);
-time_t		  mdoc_atotime(const char *);
-size_t		  mdoc_macro2len(enum mdoct);
 const char	 *mdoc_a2att(const char *);
 const char	 *mdoc_a2lib(const char *);
 const char	 *mdoc_a2st(const char *);
 const char	 *mdoc_a2arch(const char *);
 const char	 *mdoc_a2vol(const char *);
-const char	 *mdoc_a2msec(const char *);
 int		  mdoc_valid_pre(struct mdoc *, struct mdoc_node *);
 int		  mdoc_valid_post(struct mdoc *);
 enum margverr	  mdoc_argv(struct mdoc *, int, enum mdoct,
 			struct mdoc_arg **, int *, char *);
 void		  mdoc_argv_free(struct mdoc_arg *);
-void		  mdoc_argn_free(struct mdoc_arg *, int);
 enum margserr	  mdoc_args(struct mdoc *, int,
 			int *, char *, enum mdoct, char **);
 enum margserr	  mdoc_zargs(struct mdoc *, int, 
-			int *, char *, int, char **);
-#define	ARGS_DELIM	(1 << 1)
-#define	ARGS_TABSEP	(1 << 2)
-#define	ARGS_NOWARN	(1 << 3)
-
+			int *, char *, char **);
 int		  mdoc_macroend(struct mdoc *);
+enum mdelim	  mdoc_isdelim(const char *);
 
 __END_DECLS
 

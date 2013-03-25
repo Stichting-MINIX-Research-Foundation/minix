@@ -76,7 +76,7 @@ int fs_readwrite(void)
 		return(EINVAL);
 
 	puffs_vattr_null(&va);
-	if ( (pos + bytes_left) > pn->pn_va.va_size)
+	if ((u_quad_t)(pos + bytes_left) > pn->pn_va.va_size)
 		va.va_size = bytes_left + pos;
 	va.va_ctime = va.va_mtime = clock_timespec();
 	va.va_atime = pn->pn_va.va_atime;
@@ -123,7 +123,7 @@ int fs_getdents(void)
 {
   int r;
   register struct puffs_node *pn;
-  ino_t ino;
+  pino_t ino;
   cp_grant_id_t gid;
   size_t size, buf_left;
   off_t pos;
@@ -132,8 +132,8 @@ int fs_getdents(void)
   size_t written;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  ino = (ino_t) fs_m_in.REQ_INODE_NR;
-  gid = (gid_t) fs_m_in.REQ_GRANT;
+  ino = (pino_t) fs_m_in.REQ_INODE_NR;
+  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   size = buf_left = (size_t) fs_m_in.REQ_MEM_SIZE;
   pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
 

@@ -4,13 +4,13 @@
  *				tmrs_clrtimer				     *
  *===========================================================================*/
 clock_t tmrs_clrtimer(tmrs, tp, next_time)
-timer_t **tmrs;				/* pointer to timers queue */
-timer_t *tp;				/* timer to be removed */
+minix_timer_t **tmrs;				/* pointer to timers queue */
+minix_timer_t *tp;				/* timer to be removed */
 clock_t *next_time;
 {
 /* Deactivate a timer and remove it from the timers queue. 
  */
-  timer_t **atp;
+  minix_timer_t **atp;
   clock_t prev_time;
 
   if(*tmrs)

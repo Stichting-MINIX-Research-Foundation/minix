@@ -24,7 +24,6 @@ PROGRAMS+= ${PROGROOT}/servers/pm/pm
 PROGRAMS+= ${PROGROOT}/servers/sched/sched
 PROGRAMS+= ${PROGROOT}/servers/vfs/vfs
 PROGRAMS+= ${PROGROOT}/drivers/memory/memory
-PROGRAMS+= ${PROGROOT}/drivers/log/log
 PROGRAMS+= ${PROGROOT}/drivers/tty/tty
 PROGRAMS+= ${PROGROOT}/servers/mfs/mfs
 PROGRAMS+= ${PROGROOT}/servers/vm/vm

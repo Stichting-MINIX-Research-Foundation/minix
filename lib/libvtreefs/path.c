@@ -10,7 +10,7 @@ static int access_as_dir(struct inode *node, vfs_ucred_t *ucred)
 	/* Check whether the given inode may be accessed as directory.
 	 * Return OK or an appropriate error code.
 	 */
-	mode_t mask;
+	pmode_t mask;
 	int i;
 
 	/* The inode must be a directory to begin with. */
@@ -149,7 +149,7 @@ int fs_lookup(void)
 {
 	/* Resolve a path string to an inode.
 	 */
-	ino_t dir_ino_nr, root_ino_nr;
+	pino_t dir_ino_nr, root_ino_nr;
 	struct inode *cur_ino, *next_ino, *root_ino;
 	char path[PATH_MAX], name[PNAME_MAX+1];
 	char *ptr, *last;

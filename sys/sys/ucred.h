@@ -43,12 +43,6 @@
 /*
  * Credentials.
  */
-struct ucred
-{
-	pid_t   pid;
-	uid_t   uid;
-	gid_t   gid;
-};
 
 /* Userland's view of credentials. This should not change */
 struct uucred {
@@ -59,9 +53,9 @@ struct uucred {
 	gid_t		cr_groups[NGROUPS_MAX];	/* groups */
 };
 
-#ifdef __minix
+#if defined(__minix)
 #include <minix/type.h>
-int getnucred(endpoint_t proc_ep, struct ucred *ucred);
-#endif
 
+int getnucred(endpoint_t proc_ep, struct uucred *ucred);
+#endif /* defined(__minix) */
 #endif /* !_SYS_UCRED_H_ */

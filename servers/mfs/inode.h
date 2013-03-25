@@ -7,14 +7,13 @@
  * such as to search a directory for a path name.
  * The first part of the struct holds fields that are present on the
  * disk; the second part holds fields not present on the disk.
- * The disk inode part is also declared in "type.h" as 'd1_inode' for V1
- * file systems and 'd2_inode' for V2 file systems.
  *
  * Updates:
  * 2007-01-06: jfdsmit@gmail.com added i_zsearch
  */
 
 #include <sys/queue.h>
+#include <minix/vfsif.h>
 
 #include "super.h"
 
@@ -31,7 +30,7 @@ EXTERN struct inode {
   
   /* The following items are not present on the disk. */
   dev_t i_dev;			/* which device is the inode on */
-  ino_t i_num;			/* inode number on its (minor) device */
+  pino_t i_num;			/* inode number on its (minor) device */
   int i_count;			/* # times inode used; 0 means slot is free */
   unsigned int i_ndzones;	/* # direct zones (Vx_NR_DZONES) */
   unsigned int i_nindirs;	/* # indirect zones per indirect block */

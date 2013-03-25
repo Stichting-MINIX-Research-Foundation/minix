@@ -14,8 +14,8 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <lib.h>
-#include <timers.h>
-#include <dirent.h>
+#include <minix/timers.h>
+#include <sys/dirent.h>
 
 #include <minix/callnr.h>
 #include <minix/type.h>
@@ -23,7 +23,6 @@
 #include <minix/com.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
-#include <minix/keymap.h>
 #include <minix/bitmap.h>
 #include <minix/vfsif.h>
 #include <minix/endpoint.h>

@@ -6,7 +6,7 @@
 #include "buf.h"
 
 static char *get_name(char *name, char string[NAME_MAX+1]);
-static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
 	dir_record **res_inop, size_t *offsetp);
 
 
@@ -17,16 +17,16 @@ int fs_lookup() {
   cp_grant_id_t grant;
   int r, len, flags;
   size_t offset;
-  ino_t dir_ino, root_ino;
+  pino_t dir_ino, root_ino;
   struct dir_record *dir;
 
   grant		= fs_m_in.REQ_GRANT;
   len		= fs_m_in.REQ_PATH_LEN;	/* including terminating nul */
-  dir_ino	= fs_m_in.REQ_DIR_INO;
-  root_ino	= fs_m_in.REQ_ROOT_INO;
+  dir_ino	= (pino_t) fs_m_in.REQ_DIR_INO;
+  root_ino	= (pino_t) fs_m_in.REQ_ROOT_INO;
   flags		= fs_m_in.REQ_FLAGS;
-  caller_uid	= fs_m_in.REQ_UID;
-  caller_gid	= fs_m_in.REQ_GID;
+  caller_uid	= (uid_t) fs_m_in.REQ_UID;
+  caller_gid	= (gid_t) fs_m_in.REQ_GID;
 
   /* Check length. */
   if(len > sizeof(user_path)) return(E2BIG);	/* too big for buffer */
@@ -80,11 +80,11 @@ int fs_lookup() {
 /*===========================================================================*
  *				search_dir				     *
  *===========================================================================*/
-int search_dir(ldir_ptr,string,numb)
-     register struct dir_record *ldir_ptr; /*  dir record parent */
-     char string[NAME_MAX];	      /* component to search for */
-     ino_t *numb;		      /* pointer to new dir record */
-{
+int search_dir(
+	register struct dir_record *ldir_ptr,	/* dir record parent */
+	char string[NAME_MAX],			/* component to search for */
+	pino_t *numb				/* pointer to new dir record */
+) {
   struct dir_record *dir_tmp;
   register struct buf *bp;
   int pos;
@@ -126,7 +126,7 @@ int search_dir(ldir_ptr,string,numb)
     }
 
     if (create_dir_record(dir_tmp,b_data(bp) + pos,
-			  ldir_ptr->loc_extent_l*v_pri.logical_block_size_l + pos) == EINVAL)
+	  ldir_ptr->loc_extent_l*v_pri.logical_block_size_l + pos) == EINVAL)
       return EINVAL;
 
     if (dir_tmp->length == 0) {
@@ -182,13 +182,13 @@ int search_dir(ldir_ptr,string,numb)
 /*===========================================================================*
  *                             parse_path				     *
  *===========================================================================*/
-static int parse_path(dir_ino, root_ino, flags, res_inop, offsetp)
-ino_t dir_ino;
-ino_t root_ino;
-int flags;
-struct dir_record **res_inop;
-size_t *offsetp;
-{
+static int parse_path(
+pino_t dir_ino,
+pino_t root_ino,
+int flags,
+struct dir_record **res_inop,
+size_t *offsetp
+) {
   int r;
   char string[NAME_MAX+1];
   char *cp, *ncp;
@@ -293,7 +293,7 @@ struct dir_record **resp;		/* resulting inode */
 
   register struct dir_record *rip = NULL;
   int r;
-  ino_t numb;
+  pino_t numb;
 
   /* If 'string' is empty, yield same inode straight away. */
   if (string[0] == '\0') {

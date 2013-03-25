@@ -17,7 +17,8 @@
  *===========================================================================*/
 int do_settime(struct proc * caller, message * m_ptr)
 {
-  clock_t newclock, ticks;
+  clock_t newclock;
+  int32_t ticks;
   time_t timediff;
   signed long long timediff_ticks;
 

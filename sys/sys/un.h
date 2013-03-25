@@ -16,6 +16,7 @@ typedef __sa_family_t	sa_family_t;
  * Definitions for UNIX IPC domain.
  */
 struct	sockaddr_un {
+	uint8_t		sun_len;
 	sa_family_t	sun_family;
 	char		sun_path[UNIX_PATH_MAX];
 };

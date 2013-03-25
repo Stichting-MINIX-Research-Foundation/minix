@@ -136,12 +136,12 @@ main(int argc, char *argv[])
 #ifndef __minix
 	struct disk_geom geo;
 	struct dkwedge_info dkw;
-	struct statvfs *mp;
-	char *s2;
-	int len, n;
 #else
 	u64_t minix_fssize;
 #endif
+	struct statvfs *mp;
+	char *s2;
+	int len, n;
 	struct stat sb;
 	int ch, fsi, fso, Fflag, Iflag, Zflag;
 	char *cp, *s1, *special;
@@ -280,7 +280,6 @@ main(int argc, char *argv[])
 		if (fsi < 0 || fstat(fsi, &sb) == -1)
 			err(EXIT_FAILURE, "%s: open for read", special);
 
-#ifndef __minix
 		if (!Nflag) {
 			fso = open(special, O_WRONLY, 0);
 			if (fso < 0)
@@ -312,6 +311,7 @@ main(int argc, char *argv[])
 			}
 		}
 
+#ifndef __minix
 		if (getdiskinfo(special, fsi, disktype, &geo, &dkw) == -1)
 			errx(EXIT_FAILURE, lmsg, special);
 
@@ -335,12 +335,6 @@ main(int argc, char *argv[])
 			}
 		}
 #else
-	 {
-		fso = open(special, O_WRONLY, 0);
-		if (fso < 0)
-			err(EXIT_FAILURE,
-			    "%s: open for write", special);
-
 		if(minix_sizeup(special, &minix_fssize) < 0)
 			errx(EXIT_FAILURE, "minix_sizeup failed");
 
@@ -349,7 +343,6 @@ main(int argc, char *argv[])
 
 		if (sectorsize == 0)
 			sectorsize = 512;
-	 }
 #endif
 	}
 

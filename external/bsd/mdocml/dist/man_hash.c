@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_hash.c,v 1.23 2010/07/31 23:52:58 schwarze Exp $ */
+/*	$Vendor-Id: man_hash.c,v 1.25 2011/07/24 18:15:14 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,13 +26,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "man.h"
 #include "mandoc.h"
 #include "libman.h"
 
 #define	HASH_DEPTH	 6
 
 #define	HASH_ROW(x) do { \
-		if (isupper((u_char)(x))) \
+		if (isupper((unsigned char)(x))) \
 			(x) -= 65; \
 		else \
 			(x) -= 97; \
@@ -46,7 +47,7 @@
  * macro (the integer value of the enum stored as a char to save a bit
  * of space).
  */
-static	u_char		 table[26 * HASH_DEPTH];
+static	unsigned char	 table[26 * HASH_DEPTH];
 
 /*
  * XXX - this hash has global scope, so if intended for use as a library
@@ -65,13 +66,13 @@ man_hash_init(void)
 	for (i = 0; i < (int)MAN_MAX; i++) {
 		x = man_macronames[i][0];
 
-		assert(isalpha((u_char)x));
+		assert(isalpha((unsigned char)x));
 
 		HASH_ROW(x);
 
 		for (j = 0; j < HASH_DEPTH; j++)
 			if (UCHAR_MAX == table[x + j]) {
-				table[x + j] = (u_char)i;
+				table[x + j] = (unsigned char)i;
 				break;
 			}
 
@@ -88,7 +89,7 @@ man_hash_find(const char *tmp)
 
 	if ('\0' == (x = tmp[0]))
 		return(MAN_MAX);
-	if ( ! (isalpha((u_char)x)))
+	if ( ! (isalpha((unsigned char)x)))
 		return(MAN_MAX);
 
 	HASH_ROW(x);
