@@ -13,9 +13,6 @@ EXTERN struct vnode {
   int v_ref_count;		/* # times vnode used; 0 means slot is free */
   int v_fs_count;		/* # reference at the underlying FS */
   int v_mapfs_count;		/* # reference at the underlying mapped FS */
-#if 0
-  int v_ref_check;		/* for consistency checks */
-#endif
   endpoint_t v_bfs_e;		/* endpoint number for the FS proces in case
 				   of a block special file */
   dev_t v_dev;                  /* device number on which the corresponding

@@ -487,9 +487,8 @@ char path[PATH_MAX];		/* path to script file */
  */
   enum { INSERT=FALSE, REPLACE=TRUE };
   int n, r;
-  off_t pos;
+  off_t pos, new_pos;
   char *sp, *interp = NULL;
-  u64_t new_pos;
   unsigned int cum_io;
   char buf[_MAX_BLOCK_SIZE];
 
@@ -499,7 +498,7 @@ char path[PATH_MAX];		/* path to script file */
   pos = 0;	/* Read from the start of the file */
 
   /* Issue request */
-  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
+  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, pos, READING,
 		    VFS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
   if (r != OK) return(r);
 
@@ -616,7 +615,7 @@ static int read_seg(struct exec_info *execi, off_t off, off_t seg_addr, size_t s
  * partially initialized.
  */
   int r;
-  u64_t new_pos;
+  off_t new_pos;
   unsigned int cum_io;
   struct vnode *vp = ((struct vfs_exec_info *) execi->opaque)->vp;
 
@@ -624,7 +623,7 @@ static int read_seg(struct exec_info *execi, off_t off, off_t seg_addr, size_t s
   if (off + seg_bytes > LONG_MAX) return(EIO);
   if ((unsigned long) vp->v_size < off+seg_bytes) return(EIO);
 
-  if ((r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(off), READING,
+  if ((r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, off, READING,
 		 execi->proc_e, (char*)seg_addr, seg_bytes,
 		 &new_pos, &cum_io)) != OK) {
     printf("VFS: read_seg: req_readwrite failed (data)\n");
@@ -659,9 +658,8 @@ static void clo_exec(struct fproc *rfp)
 static int map_header(struct vfs_exec_info *execi)
 {
   int r;
-  u64_t new_pos;
   unsigned int cum_io;
-  off_t pos;
+  off_t pos, new_pos;
   static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
 
   pos = 0;	/* Read from the start of the file */
@@ -671,7 +669,7 @@ static int map_header(struct vfs_exec_info *execi)
   execi->args.hdr = hdr;
 
   r = req_readwrite(execi->vp->v_fs_e, execi->vp->v_inode_nr,
-  	cvul64(pos), READING, VFS_PROC_NR, hdr,
+	pos, READING, VFS_PROC_NR, hdr,
 	execi->args.hdr_len, &new_pos, &cum_io);
   if (r != OK) {
 	printf("VFS: exec: map_header: req_readwrite failed\n");

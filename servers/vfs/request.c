@@ -35,11 +35,11 @@ int req_breadwrite(
   endpoint_t fs_e,
   endpoint_t user_e,
   dev_t dev,
-  u64_t pos,
+  off_t pos,
   unsigned int num_of_bytes,
   char *user_addr,
   int rw_flag,
-  u64_t *new_posp,
+  off_t *new_pos,
   unsigned int *cum_iop
 )
 {
@@ -66,7 +66,7 @@ int req_breadwrite(
   if (r != OK) return(r);
 
   /* Fill in response structure */
-  *new_posp = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
+  *new_pos = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
   *cum_iop = m.RES_NBYTES;
 
   return(OK);
@@ -148,9 +148,9 @@ int req_create(
   cp_grant_id_t grant_id;
   size_t len;
   message m;
+  struct vmnt *vmp;
 
-  if (path[0] == '/')
-	panic("req_create: filename starts with '/'");
+  vmp = find_vmnt(fs_e);
 
   len = strlen(path) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) path, len, CPF_READ);
@@ -175,7 +175,11 @@ int req_create(
   res->fs_e	= m.m_source;
   res->inode_nr	= (ino_t) m.RES_INODE_NR;
   res->fmode	= (mode_t) m.RES_MODE;
-  res->fsize	= m.RES_FILE_SIZE_LO;
+  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
+  } else {
+	res->fsize = m.RES_FILE_SIZE_LO;
+  }
   res->uid	= (uid_t) m.RES_UID;
   res->gid	= (gid_t) m.RES_GID;
   res->dev	= NO_DEV;
@@ -258,14 +262,33 @@ int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 {
   message m;
+  struct vmnt *vmp;
+
+  vmp = find_vmnt(fs_e);
 
   /* Fill in request message */
   m.m_type = REQ_FTRUNC;
   m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_TRC_START_LO = start;
-  m.REQ_TRC_START_HI = 0;	/* Not used for now, so clear it. */
-  m.REQ_TRC_END_LO = end;
-  m.REQ_TRC_END_HI = 0;		/* Not used for now, so clear it. */
+
+  m.REQ_TRC_START_LO = ex64lo(start);
+  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	m.REQ_TRC_START_HI = ex64hi(start);
+  } else if (start > INT_MAX) {
+	/* FS does not support 64-bit off_t and 32 bits is not enough */
+	return EINVAL;
+  } else {
+	m.REQ_TRC_START_HI = 0;
+  }
+
+  m.REQ_TRC_END_LO = ex64lo(end);
+  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	m.REQ_TRC_END_HI = ex64hi(end);
+  } else if (end > INT_MAX) {
+	/* FS does not support 64-bit off_t and 32 bits is not enough */
+	return EINVAL;
+  } else {
+	m.REQ_TRC_END_HI = 0;
+  }
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
@@ -278,10 +301,10 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 int req_getdents(
   endpoint_t fs_e,
   ino_t inode_nr,
-  u64_t pos,
+  off_t pos,
   char *buf,
   size_t size,
-  u64_t *new_pos,
+  off_t *new_pos,
   int direct,
   int getdents_321	/* Set to 1 if user land expects old format */
 )
@@ -352,7 +375,16 @@ int req_getdents(
   m.REQ_GRANT = grant_id;
   m.REQ_MEM_SIZE = size;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
-  m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
+  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	m.REQ_SEEK_POS_HI = ex64hi(pos);
+  } else if (pos > INT_MAX) {
+	/* FS does not support 64-bit off_t and 32 bits is not enough */
+	if (indir_buf_src != NULL) free(indir_buf_src);
+	if (indir_buf_dst != NULL) free(indir_buf_dst);
+	return EINVAL;
+  } else {
+	m.REQ_SEEK_POS_HI = 0;
+  }
 
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
@@ -373,7 +405,11 @@ int req_getdents(
   }
 
   if (r == OK) {
-	*new_pos = cvul64(m.RES_SEEK_POS_LO);
+	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+		*new_pos = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
+	} else {
+		*new_pos = m.RES_SEEK_POS_LO;
+	}
 	r = m.RES_NBYTES;
   }
 
@@ -499,12 +535,14 @@ int req_lookup(
   struct fproc *rfp
 )
 {
-  int r;
-  size_t len;
-  cp_grant_id_t grant_id=0, grant_id2=0;
   message m;
   vfs_ucred_t credentials;
-  int flags;
+  int r, flags;
+  size_t len;
+  struct vmnt *vmp;
+  cp_grant_id_t grant_id=0, grant_id2=0;
+
+  vmp = find_vmnt(fs_e);
 
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) resolve->l_path, PATH_MAX,
 			      CPF_READ | CPF_WRITE);
@@ -561,7 +599,11 @@ int req_lookup(
   case OK:
 	res->inode_nr = (ino_t) m.RES_INODE_NR;
 	res->fmode = (mode_t) m.RES_MODE;
-	res->fsize = m.RES_FILE_SIZE_LO;
+	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+		res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
+	} else {
+		res->fsize = m.RES_FILE_SIZE_LO;
+	}
 	res->dev = m.RES_DEV;
 	res->uid = (uid_t) m.RES_UID;
 	res->gid = (gid_t) m.RES_GID;
@@ -695,8 +737,11 @@ int req_newnode(
   struct node_details *res
 )
 {
+  struct vmnt *vmp;
   int r;
   message m;
+
+  vmp = find_vmnt(fs_e);
 
   /* Fill in request message */
   m.m_type = REQ_NEWNODE;
@@ -711,7 +756,11 @@ int req_newnode(
   res->fs_e	= m.m_source;
   res->inode_nr = (ino_t) m.RES_INODE_NR;
   res->fmode	= (mode_t) m.RES_MODE;
-  res->fsize	= m.RES_FILE_SIZE_LO;
+  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
+  } else {
+	res->fsize = m.RES_FILE_SIZE_LO;
+  }
   res->dev	= m.RES_DEV;
   res->uid	= (uid_t) m.RES_UID;
   res->gid	= (gid_t) m.RES_GID;
@@ -823,7 +872,7 @@ int req_readsuper(
   dev_t dev,
   int readonly,
   int isroot,
-  struct node_details *res_nodep
+  struct node_details *res
 )
 {
   int r;
@@ -857,13 +906,17 @@ int req_readsuper(
 
   if(r == OK) {
 	/* Fill in response structure */
-	res_nodep->fs_e = m.m_source;
-	res_nodep->inode_nr = (ino_t) m.RES_INODE_NR;
+	res->fs_e = m.m_source;
+	res->inode_nr = (ino_t) m.RES_INODE_NR;
 	vmp->m_proto = m.RES_PROTO;
-	res_nodep->fmode = (mode_t) m.RES_MODE;
-	res_nodep->fsize = m.RES_FILE_SIZE_LO;
-	res_nodep->uid = (uid_t) m.RES_UID;
-	res_nodep->gid = (gid_t) m.RES_GID;
+	res->fmode = (mode_t) m.RES_MODE;
+	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+		res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
+	} else {
+		res->fsize = m.RES_FILE_SIZE_LO;
+	}
+	res->uid = (uid_t) m.RES_UID;
+	res->gid = (gid_t) m.RES_GID;
   }
 
   return(r);
@@ -873,18 +926,18 @@ int req_readsuper(
 /*===========================================================================*
  *				req_readwrite				     *
  *===========================================================================*/
-int req_readwrite(fs_e, inode_nr, pos, rw_flag, user_e,
-	user_addr, num_of_bytes, new_posp, cum_iop)
-endpoint_t fs_e;
-ino_t inode_nr;
-u64_t pos;
-int rw_flag;
-endpoint_t user_e;
-char *user_addr;
-unsigned int num_of_bytes;
-u64_t *new_posp;
-unsigned int *cum_iop;
+int req_readwrite(
+endpoint_t fs_e,
+ino_t inode_nr,
+off_t pos,
+int rw_flag,
+endpoint_t user_e,
+char *user_addr,
+unsigned int num_of_bytes,
+off_t *new_posp,
+unsigned int *cum_iop)
 {
+  struct vmnt *vmp;
   int r;
   cp_grant_id_t grant_id = -1;
   message m;
@@ -897,9 +950,7 @@ unsigned int *cum_iop;
    *  PEEKING: do i/o in FS, just get the blocks into the cache, no copy
    */
 
-  if (ex64hi(pos) != 0)
-	  panic("req_readwrite: pos too large");
-
+  vmp = find_vmnt(fs_e);
   assert(rw_flag == READING || rw_flag == WRITING || rw_flag == PEEKING);
 
   switch(rw_flag) {
@@ -926,7 +977,13 @@ unsigned int *cum_iop;
   m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
-  m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
+  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	m.REQ_SEEK_POS_HI = ex64hi(pos);
+  } else if (pos > INT_MAX) {
+	return EINVAL;
+  } else {
+	m.REQ_SEEK_POS_HI = 0;
+  }
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
@@ -935,7 +992,11 @@ unsigned int *cum_iop;
 
   if (r == OK) {
 	/* Fill in response structure */
-	*new_posp = cvul64(m.RES_SEEK_POS_LO);
+	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+		*new_posp = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
+	} else {
+		*new_posp = m.RES_SEEK_POS_LO;
+	}
 	*cum_iop = m.RES_NBYTES;
   }
 
