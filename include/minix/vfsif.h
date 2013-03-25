@@ -58,12 +58,13 @@
 
 #define RES_PROTO		m9_s3
 /* RES_PROTO is defined as follows:
- *  |----------------|
- *           7V 4CR 0
- *  15              0
+ *  |--------------------------------|
+ *                   8O7 V   4  CR   0
+ *  15                               0
  * mentioned bits are inclusive
  * CR: bits 4-0 encode no. concurrent requests are supported by FS
  * V:  bits 7-5 encode version of protocol
+ * O:  bit 8 encodes support for 64-bit file offsets
  */
 #define RES_PROTO_CR_SHIFT	0
 #define RES_PROTO_CR_MASK	0x1F
@@ -76,6 +77,8 @@
 #define VFS_FS_PROTO_PUT_VERSION(b,v) \
 	((b) |= (((v) << RES_PROTO_V_SHIFT) & RES_PROTO_V_MASK))
 #define VFS_FS_CURRENT_VERSION	1 /* Current version */
+#define RES_PROTO_BIGOFFT_SHIFT 8
+#define VFS_FS_PROTO_BIGOFFT(b) (b & RES_PROTO_BIGOFFT_SHIFT)
 
 /* VFS/FS flags */
 #define REQ_RDONLY		001

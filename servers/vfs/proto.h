@@ -35,7 +35,7 @@ void dev_reply(struct dmap *dp);
 int dev_close(dev_t dev, int filp_no);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
-int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, u64_t pos,
+int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
 	size_t bytes, int flags, int suspend_reopen);
 int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
 int gen_io(endpoint_t driver_e, message *mess_ptr);
@@ -167,7 +167,7 @@ void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
 int do_lseek(message *m_out);
-int do_lseek321(message *m_out);
+int do_lseek_321(message *m_out);
 int do_llseek(message *m_out);
 int do_mknod(message *m_out);
 int do_mkdir(message *m_out);
@@ -175,7 +175,7 @@ int do_open(message *m_out);
 int do_slink(message *m_out);
 int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset);
 int actual_llseek(struct fproc *rfp, message *m_out, int seekfd,
-	int seekwhence, u64_t offset);
+	int seekwhence, off_t offset);
 int do_vm_open(void);
 int do_vm_close(void);
 
@@ -228,9 +228,9 @@ int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
 	size_t req_size);
 
 /* request.c */
-int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, u64_t pos,
+int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,
 	unsigned int num_of_bytes, vir_bytes user_addr, int rw_flag,
-	u64_t *new_posp, unsigned int *cum_iop);
+	off_t *new_posp, unsigned int *cum_iop);
 int req_chmod(endpoint_t fs_e, ino_t inode_nr, mode_t rmode,
 	mode_t *new_modep);
 int req_chown(endpoint_t fs_e, ino_t inode_nr, uid_t newuid, gid_t newgid,
@@ -241,8 +241,8 @@ int req_flush(endpoint_t fs_e, dev_t dev);
 int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
-int req_getdents(endpoint_t fs_e, ino_t inode_nr, u64_t pos, char *buf,
-	size_t size, u64_t *new_pos, int direct, int getdents_321);
+int req_getdents(endpoint_t fs_e, ino_t inode_nr, off_t pos, char *buf,
+	size_t size, off_t *new_pos, int direct, int getdents_321);
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
 int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,
 	ino_t linked_file);
@@ -261,11 +261,11 @@ int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 	vir_bytes buf, size_t len, int direct);
 int req_readsuper(struct vmnt *vmp, char *driver_name, dev_t dev, int readonly,
 	int isroot, struct node_details *res_nodep);
-int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int rw_flag,
+int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos, int rw_flag,
 	endpoint_t user_e, vir_bytes user_addr, unsigned int num_of_bytes,
-	u64_t *new_posp, unsigned int *cum_iop);
-int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes);
-int req_peek(endpoint_t fs_e, ino_t inode_nr, u64_t pos, unsigned int bytes);
+	off_t *new_posp, unsigned int *cum_iop);
+int req_bpeek(endpoint_t fs_e, dev_t dev, off_t pos, unsigned int num_of_bytes);
+int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes);
 int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
 	char *new_name);
 int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);

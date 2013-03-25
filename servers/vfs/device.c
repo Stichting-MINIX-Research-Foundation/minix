@@ -395,7 +395,7 @@ int dev_io(
   dev_t dev,			/* major-minor device number */
   endpoint_t proc_e,			/* in whose address space is buf? */
   void *buf,			/* virtual address of the buffer */
-  u64_t pos,			/* byte position */
+  off_t pos,			/* byte position */
   size_t bytes,			/* how many bytes to transfer */
   int flags,			/* special flags, like O_NONBLOCK */
   int suspend_reopen		/* Just suspend the process */
@@ -680,7 +680,7 @@ int do_ioctl(message *UNUSED(m_out))
 	if (S_ISBLK(vp->v_mode))
 		r = bdev_ioctl(dev, who_e, ioctlrequest, argx);
 	else
-		r = dev_io(VFS_DEV_IOCTL, dev, who_e, argx, ((u64_t)(0)),
+		r = dev_io(VFS_DEV_IOCTL, dev, who_e, argx, 0,
 			   ioctlrequest, f->filp_flags, suspend_reopen);
   }
 

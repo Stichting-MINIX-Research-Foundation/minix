@@ -591,74 +591,15 @@ int do_mkdir(message *UNUSED(m_out))
 }
 
 /*===========================================================================*
- *				actual_lseek				     *
- *===========================================================================*/
-int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
-{
-/* Perform the lseek(ls_fd, offset, whence) system call. */
-  register struct filp *rfilp;
-  int r = OK;
-  u64_t pos, newpos;
-
-  /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
-
-  /* No lseek on pipes. */
-  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
-	unlock_filp(rfilp);
-	return(ESPIPE);
-  }
-
-  /* The value of 'whence' determines the start position to use. */
-  switch(seekwhence) {
-    case SEEK_SET: pos = ((u64_t)(0));	break;
-    case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = ((u64_t)(rfilp->filp_vno->v_size));	break;
-    default: unlock_filp(rfilp); return(EINVAL);
-  }
-
-  if (offset < 0 && -offset > pos) { /* no negative file size */
-	r = EOVERFLOW;
-  } else {
-	newpos = pos + offset;
-
-	/* insert the new position into the output message */
-	m_out->reply_l1 = ex64lo(newpos);
-	m_out->reply_l2 = ex64hi(newpos);
-
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
-		rfilp->filp_pos = newpos;
-
-		/* Inhibit read ahead request */
-		r = req_inhibread(rfilp->filp_vno->v_fs_e,
-				  rfilp->filp_vno->v_inode_nr);
-	}
-  }
-
-  unlock_filp(rfilp);
-  return(r);
-}
-
-/*===========================================================================*
- *				do_lseek				     *
- *===========================================================================*/
-int do_lseek(message *m_out)
-{
-	return actual_lseek(m_out, job_m_in.ls_fd, job_m_in.whence,
-		(off_t) job_m_in.offset_lo);
-}
-
-/*===========================================================================*
  *				actual_llseek				     *
  *===========================================================================*/
 int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
-	u64_t offset)
+	off_t offset)
 {
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
-  u64_t pos, newpos;
   int r = OK;
-  long off_hi = ex64hi(offset);
+  off_t pos, newpos;
 
   /* Check to see if the file descriptor is valid. */
   if ( (rfilp = get_filp2(rfp, seekfd, VNODE_READ)) == NULL) {
@@ -673,25 +614,25 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
 
   /* The value of 'whence' determines the start position to use. */
   switch(seekwhence) {
-    case SEEK_SET: pos = ((u64_t)(0));	break;
-    case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = ((u64_t)(rfilp->filp_vno->v_size));	break;
+    case SEEK_SET: pos = 0; break;
+    case SEEK_CUR: pos = rfilp->filp_pos; break;
+    case SEEK_END: pos = rfilp->filp_vno->v_size; break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
   newpos = pos + offset;
 
   /* Check for overflow. */
-  if ((off_hi > 0) && cmp64(newpos, pos) < 0)
-      r = EINVAL;
-  else if ((off_hi < 0) && cmp64(newpos, pos) > 0)
-      r = EINVAL;
-  else {
+  if ((offset > 0) && (newpos <= pos)) {
+	r = EOVERFLOW;
+  } else if ((offset < 0) && (newpos >= pos)) {
+	r = EOVERFLOW;
+  } else {
 	/* insert the new position into the output message */
 	m_out->reply_l1 = ex64lo(newpos);
 	m_out->reply_l2 = ex64hi(newpos);
 
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+	if (newpos != rfilp->filp_pos) {
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
@@ -704,6 +645,36 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
   return(r);
 }
 
+/*===========================================================================*
+ *				do_lseek_321				     *
+ *===========================================================================*/
+int do_lseek_321(message *m_out)
+{
+	int r;
+
+	r = actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
+		make64(job_m_in.offset_lo, 0));
+	
+	/* check value is 32bit */
+	if (m_out->reply_l2 != 0) {
+		r = EOVERFLOW;
+	}
+
+	return r;
+}
+
+/*===========================================================================*
+ *				do_lseek				     *
+ *===========================================================================*/
+int do_lseek(message *m_out)
+{
+	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
+		make64(job_m_in.offset_lo, job_m_in.offset_high));
+}
+
+/*===========================================================================*
+ *				do_llseek				     *
+ *===========================================================================*/
 int do_llseek(message *m_out)
 {
 	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,

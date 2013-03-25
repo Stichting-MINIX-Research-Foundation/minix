@@ -177,7 +177,7 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 	assert(f->filp_count >= 0);
 	if (f->filp_count == 0 && mutex_trylock(&f->filp_lock) == 0) {
 		f->filp_mode = bits;
-		f->filp_pos = ((u64_t)(0));
+		f->filp_pos = 0;
 		f->filp_selectors = 0;
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;
@@ -673,8 +673,8 @@ struct filp *f;
 	f->filp_mode = FILP_CLOSED;
 	f->filp_count = 0;
   } else if (f->filp_count < 0) {
-	panic("VFS: invalid filp count: %d ino %d/%u",
-		(int) f->filp_count, (int) vp->v_dev, (unsigned int) vp->v_inode_nr);
+	panic("VFS: invalid filp count: %d ino %d/%llu", f->filp_count,
+	      vp->v_dev, vp->v_inode_nr);
   } else {
 	unlock_vnode(f->filp_vno);
   }
