@@ -62,7 +62,7 @@ int do_readsuper()
   m_out.RES_UID = sffs_params->p_uid;
   m_out.RES_GID = sffs_params->p_gid;
   m_out.RES_DEV = NO_DEV;
-  m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+  m_out.RES_FLAGS = RES_64BIT;
 
   state.s_mounted = TRUE;
 

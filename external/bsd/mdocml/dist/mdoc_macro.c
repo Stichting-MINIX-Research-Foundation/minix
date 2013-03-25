@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_macro.c,v 1.99 2010/12/15 23:39:40 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_macro.c,v 1.115 2012/01/05 00:43:51 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,6 +26,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
@@ -50,6 +51,8 @@ static	int	  	in_line(MACRO_PROT_ARGS);
 static	int	  	obsolete(MACRO_PROT_ARGS);
 static	int	  	phrase_ta(MACRO_PROT_ARGS);
 
+static	int		dword(struct mdoc *, int, int, 
+				const char *, enum mdelim);
 static	int	  	append_delims(struct mdoc *, 
 				int, int *, char *);
 static	enum mdoct	lookup(enum mdoct, const char *);
@@ -71,8 +74,8 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dd */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dt */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Os */
-	{ blk_full, 0 }, /* Sh */
-	{ blk_full, 0 }, /* Ss */ 
+	{ blk_full, MDOC_PARSED }, /* Sh */
+	{ blk_full, MDOC_PARSED }, /* Ss */ 
 	{ in_line_eoln, 0 }, /* Pp */ 
 	{ blk_part_imp, MDOC_PARSED }, /* D1 */
 	{ blk_part_imp, MDOC_PARSED }, /* Dl */
@@ -225,7 +228,6 @@ mdoc_macroend(struct mdoc *m)
 static enum mdoct
 lookup(enum mdoct from, const char *p)
 {
-	/* FIXME: make -diag lists be un-PARSED. */
 
 	if ( ! (MDOC_PARSED & mdoc_macros[from].flags))
 		return(MDOC_MAX);
@@ -252,17 +254,24 @@ lookup_raw(const char *p)
 static int
 rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 {
-	struct mdoc_node *n;
+	struct mdoc_node *n, *np;
 
 	assert(to);
 	mdoc->next = MDOC_NEXT_SIBLING;
 
 	/* LINTED */
 	while (mdoc->last != to) {
+		/*
+		 * Save the parent here, because we may delete the
+		 * m->last node in the post-validation phase and reset
+		 * it to m->last->parent, causing a step in the closing
+		 * out to be lost.
+		 */
+		np = mdoc->last->parent;
 		if ( ! mdoc_valid_post(mdoc))
 			return(0);
 		n = mdoc->last;
-		mdoc->last = mdoc->last->parent;
+		mdoc->last = np;
 		assert(mdoc->last);
 		mdoc->last->last = n;
 	}
@@ -506,9 +515,9 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 			taker->pending = broken->pending;
 		}
 		broken->pending = breaker;
-		mdoc_vmsg(m, MANDOCERR_SCOPENEST, line, ppos,
-		    "%s breaks %s", mdoc_macronames[tok],
-		    mdoc_macronames[broken->tok]);
+		mandoc_vmsg(MANDOCERR_SCOPENEST, m->parse, line, ppos,
+				"%s breaks %s", mdoc_macronames[tok],
+				mdoc_macronames[broken->tok]);
 		return(1);
 	}
 
@@ -534,9 +543,10 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 		case (REWIND_THIS):
 			break;
 		case (REWIND_FORCE):
-			mdoc_vmsg(m, MANDOCERR_SCOPEBROKEN, line, ppos,
-			    "%s breaks %s", mdoc_macronames[tok],
-			    mdoc_macronames[n->tok]);
+			mandoc_vmsg(MANDOCERR_SCOPEBROKEN, m->parse, 
+					line, ppos, "%s breaks %s", 
+					mdoc_macronames[tok],
+					mdoc_macronames[n->tok]);
 			/* FALLTHROUGH */
 		case (REWIND_MORE):
 			n = n->parent;
@@ -572,6 +582,40 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 	return(1);
 }
 
+/*
+ * Allocate a word and check whether it's punctuation or not.
+ * Punctuation consists of those tokens found in mdoc_isdelim().
+ */
+static int
+dword(struct mdoc *m, int line, 
+		int col, const char *p, enum mdelim d)
+{
+	
+	if (DELIM_MAX == d)
+		d = mdoc_isdelim(p);
+
+	if ( ! mdoc_word_alloc(m, line, col, p))
+		return(0);
+
+	if (DELIM_OPEN == d)
+		m->last->flags |= MDOC_DELIMO;
+
+	/*
+	 * Closing delimiters only suppress the preceding space
+	 * when they follow something, not when they start a new
+	 * block or element, and not when they follow `No'.
+	 *
+	 * XXX	Explicitly special-casing MDOC_No here feels
+	 *	like a layering violation.  Find a better way
+	 *	and solve this in the code related to `No'!
+	 */
+
+	else if (DELIM_CLOSE == d && m->last->prev &&
+			m->last->prev->tok != MDOC_No)
+		m->last->flags |= MDOC_DELIMC;
+
+	return(1);
+}
 
 static int
 append_delims(struct mdoc *m, int line, int *pos, char *buf)
@@ -585,27 +629,25 @@ append_delims(struct mdoc *m, int line, int *pos, char *buf)
 
 	for (;;) {
 		la = *pos;
-		ac = mdoc_zargs(m, line, pos, buf, ARGS_NOWARN, &p);
+		ac = mdoc_zargs(m, line, pos, buf, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
 		else if (ARGS_EOLN == ac)
 			break;
 
-		assert(DELIM_NONE != mdoc_isdelim(p));
-		if ( ! mdoc_word_alloc(m, line, la, p))
-			return(0);
+		dword(m, line, la, p, DELIM_MAX);
 
 		/*
 		 * If we encounter end-of-sentence symbols, then trigger
 		 * the double-space.
 		 *
-		 * XXX: it's easy to allow this to propogate outward to
+		 * XXX: it's easy to allow this to propagate outward to
 		 * the last symbol, such that `. )' will cause the
 		 * correct double-spacing.  However, (1) groff isn't
 		 * smart enough to do this and (2) it would require
 		 * knowing which symbols break this behaviour, for
-		 * example, `.  ;' shouldn't propogate the double-space.
+		 * example, `.  ;' shouldn't propagate the double-space.
 		 */
 		if (mandoc_eos(p, strlen(p), 0))
 			m->last->flags |= MDOC_EOS;
@@ -703,8 +745,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	if ( ! (MDOC_CALLABLE & mdoc_macros[tok].flags)) {
 		/* FIXME: do this in validate */
 		if (buf[*pos]) 
-			if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_ARGSLOST))
-				return(0);
+			mdoc_pmsg(m, line, ppos, MANDOCERR_ARGSLOST);
 
 		if ( ! rew_sub(MDOC_BODY, m, tok, line, ppos))
 			return(0);
@@ -739,7 +780,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
-			if ( ! mdoc_word_alloc(m, line, lastarg, p))
+			if ( ! dword(m, line, lastarg, p, DELIM_MAX))
 				return(0);
 			continue;
 		}
@@ -847,9 +888,9 @@ in_line(MACRO_PROT_ARGS)
 					return(0);
 			} else if ( ! nc && 0 == cnt) {
 				mdoc_argv_free(arg);
-				if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY))
-					return(0);
+				mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY);
 			}
+
 			if ( ! mdoc_macro(m, ntok, line, la, pos, buf))
 				return(0);
 			if ( ! nl)
@@ -898,7 +939,8 @@ in_line(MACRO_PROT_ARGS)
 
 		if (DELIM_NONE == d)
 			cnt++;
-		if ( ! mdoc_word_alloc(m, line, la, p))
+
+		if ( ! dword(m, line, la, p, d))
 			return(0);
 
 		/*
@@ -929,8 +971,7 @@ in_line(MACRO_PROT_ARGS)
 			return(0);
 	} else if ( ! nc && 0 == cnt) {
 		mdoc_argv_free(arg);
-		if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY))
-			return(0);
+		mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY);
 	}
 
 	if ( ! nl)
@@ -942,7 +983,7 @@ in_line(MACRO_PROT_ARGS)
 static int
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  la, nl;
+	int		  la, nl, nparsed;
 	struct mdoc_arg	 *arg;
 	struct mdoc_node *head; /* save of head macro */
 	struct mdoc_node *body; /* save of body macro */
@@ -965,7 +1006,7 @@ blk_full(MACRO_PROT_ARGS)
 	}
 
 	/*
-	 * This routine accomodates implicitly- and explicitly-scoped
+	 * This routine accommodates implicitly- and explicitly-scoped
 	 * macro openings.  Implicit ones first close out prior scope
 	 * (seen above).  Delay opening the head until necessary to
 	 * allow leading punctuation to print.  Special consideration
@@ -995,6 +1036,14 @@ blk_full(MACRO_PROT_ARGS)
 		return(0);
 
 	head = body = NULL;
+
+	/*
+	 * Exception: Heads of `It' macros in `-diag' lists are not
+	 * parsed, even though `It' macros in general are parsed.
+	 */
+	nparsed = MDOC_It == tok &&
+		MDOC_Bl == m->last->parent->tok &&
+		LIST_diag == m->last->parent->norm->Bl.type;
 
 	/*
 	 * The `Nd' macro has all arguments in its body: it's a hybrid
@@ -1055,7 +1104,7 @@ blk_full(MACRO_PROT_ARGS)
 				ARGS_PPHRASE != ac &&
 				ARGS_QWORD != ac &&
 				DELIM_OPEN == mdoc_isdelim(p)) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_OPEN))
 				return(0);
 			continue;
 		}
@@ -1104,10 +1153,11 @@ blk_full(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
+		ntok = nparsed || ARGS_QWORD == ac ? 
+			MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_MAX))
 				return(0);
 			continue;
 		}
@@ -1217,8 +1267,8 @@ blk_part_imp(MACRO_PROT_ARGS)
 			break;
 
 		if (NULL == body && ARGS_QWORD != ac &&
-		    DELIM_OPEN == mdoc_isdelim(p)) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+				DELIM_OPEN == mdoc_isdelim(p)) {
+			if ( ! dword(m, line, la, p, DELIM_OPEN))
 				return(0);
 			continue;
 		} 
@@ -1232,7 +1282,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_MAX))
 				return(0);
 			continue;
 		}
@@ -1262,7 +1312,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if (mandoc_eos(n->string, strlen(n->string), 1))
 			n->flags |= MDOC_EOS;
 
-	/* Up-propogate the end-of-space flag. */
+	/* Up-propagate the end-of-space flag. */
 
 	if (n && (MDOC_EOS & n->flags)) {
 		body->flags |= MDOC_EOS;
@@ -1292,9 +1342,9 @@ blk_part_imp(MACRO_PROT_ARGS)
 	 * is ugly behaviour nodding its head to OpenBSD's overwhelming
 	 * crufty use of `Op' breakage.
 	 */
-	if (n != body && ! mdoc_vmsg(m, MANDOCERR_SCOPENEST,
-	    line, ppos, "%s broken", mdoc_macronames[tok]))
-		return(0);
+	if (n != body)
+		mandoc_vmsg(MANDOCERR_SCOPENEST, m->parse, line, ppos, 
+				"%s broken", mdoc_macronames[tok]);
 
 	if (n && ! rew_sub(MDOC_BODY, m, tok, line, ppos))
 		return(0);
@@ -1348,9 +1398,9 @@ blk_part_exp(MACRO_PROT_ARGS)
 		/* Flush out leading punctuation. */
 
 		if (NULL == head && ARGS_QWORD != ac &&
-		    DELIM_OPEN == mdoc_isdelim(p)) {
+				DELIM_OPEN == mdoc_isdelim(p)) {
 			assert(NULL == body);
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_OPEN))
 				return(0);
 			continue;
 		} 
@@ -1371,7 +1421,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 			assert(head);
 			/* No check whether it's a macro! */
 			if (MDOC_Eo == tok)
-				if ( ! mdoc_word_alloc(m, line, la, p))
+				if ( ! dword(m, line, la, p, DELIM_MAX))
 					return(0);
 
 			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
@@ -1389,7 +1439,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_MAX))
 				return(0);
 			continue;
 		}
@@ -1401,18 +1451,15 @@ blk_part_exp(MACRO_PROT_ARGS)
 
 	/* Clean-up to leave in a consistent state. */
 
-	if (NULL == head) {
+	if (NULL == head)
 		if ( ! mdoc_head_alloc(m, line, ppos, tok))
 			return(0);
-		head = m->last;
-	}
 
 	if (NULL == body) {
 		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 			return(0);
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
-		body = m->last;
 	}
 
 	/* Standard appending of delimiters. */
@@ -1454,6 +1501,8 @@ in_line_argn(MACRO_PROT_ARGS)
 	case (MDOC_Ux):
 		maxargs = 0;
 		break;
+	case (MDOC_Bx):
+		/* FALLTHROUGH */
 	case (MDOC_Xr):
 		maxargs = 2;
 		break;
@@ -1492,9 +1541,9 @@ in_line_argn(MACRO_PROT_ARGS)
 			break;
 
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) && 
-				ARGS_QWORD != ac &&
-				0 == j && DELIM_OPEN == mdoc_isdelim(p)) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+				ARGS_QWORD != ac && 0 == j && 
+				DELIM_OPEN == mdoc_isdelim(p)) {
+			if ( ! dword(m, line, la, p, DELIM_OPEN))
 				return(0);
 			continue;
 		} else if (0 == j)
@@ -1528,23 +1577,7 @@ in_line_argn(MACRO_PROT_ARGS)
 			flushed = 1;
 		}
 
-		/* 
-		 * XXX: this is a hack to work around groff's ugliness
-		 * as regards `Xr' and extraneous arguments.  It should
-		 * ideally be deprecated behaviour, but because this is
-		 * code is no here, it's unlikely to be removed.
-		 */
-
-#ifdef __OpenBSD__
-		if (MDOC_Xr == tok && j == maxargs) {
-			if ( ! mdoc_elem_alloc(m, line, la, MDOC_Ns, NULL))
-				return(0);
-			if ( ! rew_elem(m, MDOC_Ns))
-				return(0);
-		}
-#endif
-
-		if ( ! mdoc_word_alloc(m, line, la, p))
+		if ( ! dword(m, line, la, p, DELIM_MAX))
 			return(0);
 		j++;
 	}
@@ -1615,7 +1648,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_MAX))
 				return(0);
 			continue;
 		}
@@ -1664,7 +1697,8 @@ static int
 obsolete(MACRO_PROT_ARGS)
 {
 
-	return(mdoc_pmsg(m, line, ppos, MANDOCERR_MACROOBS));
+	mdoc_pmsg(m, line, ppos, MANDOCERR_MACROOBS);
+	return(1);
 }
 
 
@@ -1684,7 +1718,7 @@ phrase(struct mdoc *m, int line, int ppos, char *buf)
 	for (pos = ppos; ; ) {
 		la = pos;
 
-		ac = mdoc_zargs(m, line, &pos, buf, 0, &p);
+		ac = mdoc_zargs(m, line, &pos, buf, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
@@ -1694,7 +1728,7 @@ phrase(struct mdoc *m, int line, int ppos, char *buf)
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup_raw(p);
 
 		if (MDOC_MAX == ntok) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_MAX))
 				return(0);
 			continue;
 		}
@@ -1729,7 +1763,7 @@ phrase_ta(MACRO_PROT_ARGS)
 
 	for (;;) {
 		la = *pos;
-		ac = mdoc_zargs(m, line, pos, buf, 0, &p);
+		ac = mdoc_zargs(m, line, pos, buf, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
@@ -1739,7 +1773,7 @@ phrase_ta(MACRO_PROT_ARGS)
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup_raw(p);
 
 		if (MDOC_MAX == ntok) {
-			if ( ! mdoc_word_alloc(m, line, la, p))
+			if ( ! dword(m, line, la, p, DELIM_MAX))
 				return(0);
 			continue;
 		}

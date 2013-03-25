@@ -21,11 +21,11 @@ int listen(int sock, int backlog)
 	int r;
 
 	r= ioctl(sock, NWIOTCPLISTENQ, &backlog);
-	if (r != -1 || errno != EBADIOCTL)
+	if (r != -1 || errno != ENOTTY)
 		return r;
 
 	r= ioctl(sock, NWIOSUDSBLOG, &backlog);
-	if (r != -1 || errno != EBADIOCTL)
+	if (r != -1 || errno != ENOTTY)
 		return r;
 
 #if DEBUG

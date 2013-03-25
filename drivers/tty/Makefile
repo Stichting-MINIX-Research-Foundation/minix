@@ -6,8 +6,8 @@ PROG=	tty
 
 SRCS +=	tty.c pty.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lchardriver -lsys -ltimers
 
 MAN=
 

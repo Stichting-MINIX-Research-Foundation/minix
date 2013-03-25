@@ -184,9 +184,7 @@ static void *worker_thread(void *param)
 		mthread_rwlock_wrlock(&dp->barrier);
 
 	/* Handle the request and send a reply. */
-	r = blockdriver_handle_request(bdtab, &m, tid);
-
-	blockdriver_reply(&m, ipc_status, r);
+	blockdriver_process_on_thread(bdtab, &m, ipc_status, tid);
 
 	/* Switch the thread back to running state, and unlock the barrier. */
 	wp->state = STATE_RUNNING;
@@ -274,13 +272,14 @@ static void master_handle_exits(void)
 }
 
 /*===========================================================================*
- *				master_handle_request			     *
+ *				master_handle_message			     *
  *===========================================================================*/
-static void master_handle_request(message *m_ptr, int ipc_status)
+static void master_handle_message(message *m_ptr, int ipc_status)
 {
 /* For real request messages, query the device ID, start a thread if none is
  * free and the maximum number of threads for that device has not yet been
- * reached, and enqueue the message in the devices's message queue.
+ * reached, and enqueue the message in the devices's message queue. All other
+ * messages are handled immediately from the main thread.
  */
   device_id_t id;
   worker_t *wp;
@@ -291,11 +290,9 @@ static void master_handle_request(message *m_ptr, int ipc_status)
    * associated with it, and thus we can not tell which thread should process
    * it either. In that case, the master thread has to handle it instead.
    */
-  if (!IS_BDEV_RQ(m_ptr->m_type)) {
+  if (is_ipc_notify(ipc_status) || !IS_BDEV_RQ(m_ptr->m_type)) {
 	/* Process as 'other' message. */
-	r = blockdriver_handle_request(bdtab, m_ptr, MAIN_THREAD);
-
-	blockdriver_reply(m_ptr, ipc_status, r);
+	blockdriver_process_on_thread(bdtab, m_ptr, ipc_status, MAIN_THREAD);
 
 	return;
   }
@@ -423,10 +420,7 @@ void blockdriver_mt_task(struct blockdriver *driver_tab)
 	blockdriver_mt_receive(&mess, &ipc_status);
 
 	/* Dispatch the message. */
-	if (is_ipc_notify(ipc_status))
-		blockdriver_handle_notify(bdtab, &mess);
-	else
-		master_handle_request(&mess, ipc_status);
+	master_handle_message(&mess, ipc_status);
 
 	/* Let other threads run. */
 	mthread_yield_all();

@@ -26,7 +26,7 @@ ssize_t recvmsg(int sock, struct msghdr *msg, int flags)
 	}
 
 	r= ioctl(sock, NWIOGUDSSOTYPE, &uds_sotype);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL)) {
+	if (r != -1 || errno != ENOTTY) {
 		if (r == -1) {
 			return r;
 		}

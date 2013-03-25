@@ -9,8 +9,9 @@ is the compressed mapping from keyboard scan codes to ASCII.
 It is made from a keymap source file consisting of MAP_COLS columns
 (MINIX assigns the value 6 to MAX_COLS, corresponding to key pressed,
 key+SHIFT, key+LEFT_ALT, key+RIGHT_ALT, key+ALT+SHIFT and key+CTRL) and 
-NR_SCAN_CODES rows (MINIX assigns the value 0x80 to NR_SCAN_CODES, 
-corresponding to the number of scan codes to be provided by the keyboard),
+NR_SCAN_CODES rows (MINIX assigns the value 0xE8 to NR_SCAN_CODES,
+corresponding to the range of defined USB HID key codes, which is the
+set of key codes that is to be provided by all keyboard drivers),
 and each element is 2 bytes in length (see u16_t in type definitions). 
 The low order byte corresponds to the character represented by the scan 
 code, and the high order byte corresponds to the special meaning (when 
@@ -25,7 +26,19 @@ utility.
 and
 .B u16_t
 types, corresponding to 8 and 16 bit values.
+.SS "Keys: <minix/input.h>"
+This header file contains the list of keys, prefixed by a
+.B INPUT_KEY_
+prefix. The
+.B K
+macro (see below) automatically adds the
+.B INPUT_KEY_
+prefix to the given key name. Input types from pages other than the key page
+are not supported by TTY.
 .SS "Macros: <minix/keymap.h>"
+.TP
+.BI "K(" k ") - Key"
+Maps to the entry for the key in the bitmap
 .TP
 .BI "C(" c ") - Control"
 Maps to control code
@@ -49,17 +62,22 @@ The
 .BI "L(" c ")"
 macro is used in column 0 to tell that the Caps Lock key is active for this
 key.  (Caps Lock should only have effect on letters.)
+Similarly, some keys in column 0 have a
+.B N
+prefix to indicate that they are affected by the Num Lock key.
 .SS "Definitions: <minix/keymap.h>"
 <minix/keymap.h> contains a large number of definitions for special keys,
 like function keys, and keys on the numeric keypad.  They are:
 .PP
-Escape key and modifiers:
-.BR EXT ,
-.BR CTRL ,
-.BR SHIFT ,
-.BR ALT .
+Modifier keys:
+.BR LCTRL ,
+.BR RCTRL ,
+.BR LSHIFT ,
+.BR RSHIFT ,
+.BR LALT ,
+.BR RALT .
 .PP
-Numeric keypad keys:
+Special keys:
 .BR HOME ,
 .BR END ,
 .BR UP ,
@@ -69,8 +87,16 @@ Numeric keypad keys:
 .BR PGUP ,
 .BR PGDN ,
 .BR MID " (numeric '5'),"
+.BR MIN " (only with " A " or " C " prefix),"
 .BR PLUS ,
-.BR INSRT .
+.BR INSRT ,
+.BR DEL .
+.PP
+Special keys affected by Num Lock:
+.BR NHOME ,
+.BR NEND ", ..."
+.BR NINSRT ,
+.BR NDEL .
 .PP
 ALT + numpad key:
 .BR AHOME ,
@@ -107,15 +133,6 @@ ALT - SHIFT - function key:
 .BR ASF1 ", ...,"
 .BR ASF12 .
 .PP
-There is one key definition that isn't a key at all:
-.BR EXTKEY .
-This keycode is sent by the keyboard as an indicator that the next keycode
-is special.  For instance both ALT keys have the same keycode, but the right
-ALT key is sent by the keyboard preceded by the EXTKEY keycode.  The same is
-true for the '/' key on the numeric pad versus the other '/' key on the US
-keyboard.  (On other keyboards this key may have a different symbol.)  The
-keyboard driver knows that a different key is presses if it is preceded by
-EXTKEY.
 .SS "Creating/changing keyboard mapping"
 You can create your own keyboard mapping by copying one of the existing
 keymap source files (Standard Minix:

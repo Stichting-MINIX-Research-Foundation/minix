@@ -1,7 +1,7 @@
 #include "syslib.h"
 #include <assert.h>
 #include <machine/archtypes.h>
-#include <timers.h>
+#include <minix/timers.h>
 
 #include "kernel/config.h"
 #include "kernel/const.h"

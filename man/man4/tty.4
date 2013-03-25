@@ -315,30 +315,6 @@ is set a break is input as a single '\e0', or if
 .B PARMRK
 is set as '\e377', '\e0', '\e0'.
 (Breaks are always ignored.)
-.TP
-.B SCANCODES
-Send input as keyboard scancodes rather than processed ASCII characters. This 
-flag only applies to consoles; to check whether the flag is supported use the
-.B tcgetattr
-function after setting it and test whether
-.B c_iflag
-still contains the
-.B SCANCODES
-flag. Scancodes are provided directly and without any processing. As a 
-consequence, the
-.B ISTRIP
-,
-.B IGNCR
-,
-.B ICRNL
-,
-.B INLCR
-,
-.B ICANON
-and
-.B IEXTEN
-flags no longer influence input if this flag is specified. However, they may
-still influence echoing if enabled.  (MINIX 3 specific.)
 .SS "Output Modes"
 The
 .B c_oflag

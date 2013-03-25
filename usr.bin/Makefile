@@ -28,7 +28,7 @@ SUBDIR= \
 	tee tic tput \
 	tr tsort unexpand \
 	toproto \
-	uniq units unzip users \
+	uniq uname units unzip users \
 	\
 	wc whatis who \
 	xargs xinstall yes

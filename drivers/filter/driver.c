@@ -31,7 +31,7 @@ static int driver_open(int which)
 	memset(&msg, 0, sizeof(msg));
 	msg.m_type = BDEV_OPEN;
 	msg.BDEV_MINOR = driver[which].minor;
-	msg.BDEV_ACCESS = R_BIT | W_BIT;
+	msg.BDEV_ACCESS = BDEV_R_BIT | BDEV_W_BIT;
 	msg.BDEV_ID = 0;
 	r = sendrec(driver[which].endpt, &msg);
 
@@ -60,6 +60,7 @@ static int driver_open(int which)
 	msg.BDEV_MINOR = driver[which].minor;
 	msg.BDEV_REQUEST = DIOCGETP;
 	msg.BDEV_GRANT = gid;
+	msg.BDEV_USER = NONE;
 	msg.BDEV_ID = 0;
 
 	r = sendrec(driver[which].endpt, &msg);
@@ -582,7 +583,7 @@ static int flt_receive(message *mess, int which)
 		}
 
 		if(mess->m_source == CLOCK && is_ipc_notify(ipc_status)) {
-			if (mess->NOTIFY_TIMESTAMP < flt_alarm(-1)) {
+			if (mess->NOTIFY_TIMESTAMP < flt_alarm((clock_t) -1)) {
 #if DEBUG
 				printf("Filter: SKIPPING old alarm "
 					"notification\n");

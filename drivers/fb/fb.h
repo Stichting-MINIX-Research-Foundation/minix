@@ -3,7 +3,7 @@
 
 #include <minix/fb.h>
 
-int arch_fb_init(int minor, struct device *dev, struct edid_info *info);
+int arch_fb_init(int minor, struct edid_info *info);
 int arch_get_device(int minor, struct device *dev);
 int arch_get_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp);
 int arch_put_varscreeninfo(int minor, struct fb_var_screeninfo *fbvs_copy);

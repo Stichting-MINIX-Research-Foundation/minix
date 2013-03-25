@@ -304,6 +304,25 @@ int cache_freepages(int pages)
 	return freed;
 }
 
+/*
+ * Remove all pages that are associated with the given device.
+ */
+void
+clear_cache_bydev(dev_t dev)
+{
+	struct cached_page *cp, *ncp;
+	int h;
+
+	for (h = 0; h < HASHSIZE; h++) {
+		for (cp = cache_hash_bydev[h]; cp != NULL; cp = ncp) {
+			ncp = cp->hash_next_dev;
+
+			if (cp->dev == dev)
+				rmcache(cp);
+		}
+	}
+}
+
 void get_stats_info(struct vm_stats_info *vsi)
 {
         vsi->vsi_cached = cached_pages;

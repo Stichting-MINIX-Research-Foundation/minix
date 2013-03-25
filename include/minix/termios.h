@@ -3,7 +3,7 @@
 #ifndef _TERMIOS_H
 #define _TERMIOS_H
 
-typedef unsigned short tcflag_t;
+typedef unsigned int tcflag_t;
 typedef unsigned char cc_t;
 typedef unsigned int speed_t;
 
@@ -16,9 +16,9 @@ struct termios {
   tcflag_t c_oflag;		/* output modes */
   tcflag_t c_cflag;		/* control modes */
   tcflag_t c_lflag;		/* local modes */
+  cc_t c_cc[NCCS];		/* control characters */
   speed_t  c_ispeed;		/* input speed */
   speed_t  c_ospeed;		/* output speed */
-  cc_t c_cc[NCCS];		/* control characters */
 };
 
 /* Values for termios c_iflag bit map.  POSIX Table 7-2. */
@@ -137,7 +137,6 @@ int tcsetattr(int _filedes, int _opt_actions, const struct termios
 
 /* Extensions to the termios c_iflag bit map.  */
 #define IXANY		0x0800	/* allow any key to continue ouptut */
-#define SCANCODES	0x1000	/* send scancodes */
 
 /* Extensions to the termios c_oflag bit map. They are only active iff
  * OPOST is enabled. */

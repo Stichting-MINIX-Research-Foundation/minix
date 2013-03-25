@@ -6,15 +6,22 @@
 #include <string.h>
 
 #ifdef __weak_alias
+__weak_alias(statvfs1, _statvfs1)
 __weak_alias(statvfs, _statvfs)
 #endif
 
-int statvfs(const char *name, struct statvfs *buffer)
+int statvfs1(const char *name, struct statvfs *buffer, int flags)
 {
   message m;
 
-  m.STATVFS_LEN = strlen(name) + 1;
-  m.STATVFS_NAME = (char *) __UNCONST(name);
-  m.STATVFS_BUF = (char *) buffer;
-  return(_syscall(VFS_PROC_NR, STATVFS, &m));
+  m.VFS_STATVFS1_LEN = strlen(name) + 1;
+  m.VFS_STATVFS1_NAME = (char *) __UNCONST(name);
+  m.VFS_STATVFS1_BUF = (char *) buffer;
+  m.VFS_STATVFS1_FLAGS = flags;
+  return(_syscall(VFS_PROC_NR, STATVFS1, &m));
+}
+
+int statvfs(const char *name, struct statvfs *buffer)
+{
+  return statvfs1(name, buffer, ST_WAIT);
 }

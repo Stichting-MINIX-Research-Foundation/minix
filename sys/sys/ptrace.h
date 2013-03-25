@@ -23,7 +23,6 @@
 #define T_SETOPT	13	/* set trace options */
 #define T_GETRANGE	14	/* get range of values */
 #define T_SETRANGE	15	/* set range of values */
-#define T_DUMPCORE      16      /* dumps the core for the process with the given pid */
 
 #define T_READB_INS	100	/* Read a byte from the text segment of an
 				 * untraced process (only for root)

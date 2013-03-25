@@ -28,8 +28,8 @@ void nic_init_all(void);
 void driver_request(message * m);
 void driver_up(const char * label, endpoint_t ep);
 /* opens a raw NIC socket */
-void nic_open(message *m);
-void nic_default_ioctl(message *m);
+int nic_open(devminor_t minor);
+int nic_default_ioctl(struct sock_req *req);
 
 /* inet_config.c */
 void inet_read_conf(void);

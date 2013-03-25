@@ -18,7 +18,7 @@
 #include <minix/type.h>
 #include <minix/sysutil.h>
 #include <minix/endpoint.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
@@ -223,7 +223,7 @@ static void check_int_events(void);
 static void do_hard_int(void);
 static void dump_phy(const re_t *rep);
 static void rl_handler(re_t *rep);
-static void rl_watchdog_f(timer_t *tp);
+static void rl_watchdog_f(minix_timer_t *tp);
 
 /*
  * The message used in the main loop is made global, so that rl_watchdog_f()
@@ -1888,7 +1888,7 @@ static void rl_handler(re_t *rep)
  *				rl_watchdog_f				     *
  *===========================================================================*/
 static void rl_watchdog_f(tp)
-timer_t *tp;
+minix_timer_t *tp;
 {
 	re_t *rep;
 	/* Use a synchronous alarm instead of a watchdog timer. */

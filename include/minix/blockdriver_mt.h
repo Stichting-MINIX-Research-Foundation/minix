@@ -4,6 +4,8 @@
 #define BLOCKDRIVER_MT_API 1	/* do not expose the singlethreaded API */
 #include <minix/blockdriver.h>
 
+#define BLOCKDRIVER_MAX_DEVICES		32
+
 void blockdriver_mt_task(struct blockdriver *driver_tab);
 void blockdriver_mt_sleep(void);
 void blockdriver_mt_wakeup(thread_id_t id);
