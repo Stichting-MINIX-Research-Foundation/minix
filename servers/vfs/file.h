@@ -11,7 +11,7 @@ EXTERN struct filp {
   int filp_state;		/* state for crash recovery */
   int filp_count;		/* how many file descriptors share this slot?*/
   struct vnode *filp_vno;	/* vnode belonging to this file */
-  u64_t filp_pos;		/* file position */
+  off_t filp_pos;		/* file position */
   mutex_t filp_lock;		/* lock to gain exclusive access */
   struct fproc *filp_softlock;	/* if not NULL; this filp didn't lock the
 				 * vnode. Another filp already holds a lock
