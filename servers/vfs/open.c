@@ -596,7 +596,7 @@ int do_lseek_321()
   register struct filp *rfilp;
   int r = OK, seekfd, seekwhence;
   i32_t offset;
-  u64_t pos, newpos;
+  off_t pos, newpos;
 
   seekfd = job_m_in.ls_fd;
   seekwhence = job_m_in.whence;
@@ -613,27 +613,24 @@ int do_lseek_321()
 
   /* The value of 'whence' determines the start position to use. */
   switch(seekwhence) {
-    case SEEK_SET: pos = cvu64(0);	break;
-    case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+    case SEEK_SET: pos = 0; break;
+    case SEEK_CUR: pos = rfilp->filp_pos; break;
+    case SEEK_END: pos = rfilp->filp_vno->v_size; break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  if (offset >= 0)
-	newpos = add64ul(pos, offset);
-  else
-	newpos = sub64ul(pos, -offset);
+  newpos = pos + offset;
 
   /* Check for overflow. */
-  if (ex64hi(newpos) != 0) {
+  if (newpos > INT_MAX) {	/* This is for backwards compatibility */
 	r = EOVERFLOW;
-  } else if ((i32_t) ex64lo(newpos) < 0) { /* no negative file size */
+  } else if (newpos < 0) {	/* no negative file size */
 	r = EOVERFLOW;
   } else {
 	/* insert the new position into the output message */
-	m_out.reply_l1 = ex64lo(newpos);
+	m_out.reply_l1 = (long) newpos;
 
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+	if (newpos != rfilp->filp_pos) {
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
@@ -655,7 +652,7 @@ int do_lseek()
   register struct filp *rfilp;
   int r = OK, seekfd, seekwhence;
   off_t offset;
-  u64_t pos, newpos;
+  off_t pos, newpos;
 
   seekfd = job_m_in.ls_fd;
   seekwhence = job_m_in.whence;
@@ -672,22 +669,23 @@ int do_lseek()
 
   /* The value of 'whence' determines the start position to use. */
   switch(seekwhence) {
-    case SEEK_SET: pos = cvu64(0);	break;
-    case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+    case SEEK_SET: pos = 0; break;
+    case SEEK_CUR: pos = rfilp->filp_pos; break;
+    case SEEK_END: pos = rfilp->filp_vno->v_size; break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  if (offset < 0 && -offset > pos) { /* no negative file size */
+  newpos = pos + offset;
+
+  if (newpos < 0) { /* no negative file size */
 	r = EOVERFLOW;
   } else {
-	newpos = pos + offset;
 
 	/* insert the new position into the output message */
 	m_out.reply_l1 = ex64lo(newpos);
 	m_out.reply_l2 = ex64hi(newpos);
 
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+	if (newpos != rfilp->filp_pos) {
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
@@ -700,63 +698,6 @@ int do_lseek()
   return(r);
 }
 
-/*===========================================================================*
- *				do_llseek				     *
- *===========================================================================*/
-int do_llseek()
-{
-/* Perform the llseek(ls_fd, offset, whence) system call. */
-  register struct filp *rfilp;
-  u64_t pos, newpos;
-  int r = OK, seekfd, seekwhence;
-  long off_hi, off_lo;
-
-  seekfd = job_m_in.ls_fd;
-  seekwhence = job_m_in.whence;
-  off_hi = job_m_in.offset_high;
-  off_lo = job_m_in.offset_lo;
-
-  /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
-
-  /* No lseek on pipes. */
-  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
-	unlock_filp(rfilp);
-	return(ESPIPE);
-  }
-
-  /* The value of 'whence' determines the start position to use. */
-  switch(seekwhence) {
-    case SEEK_SET: pos = cvu64(0);	break;
-    case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
-    default: unlock_filp(rfilp); return(EINVAL);
-  }
-
-  newpos = add64(pos, make64(off_lo, off_hi));
-
-  /* Check for overflow. */
-  if ((off_hi > 0) && cmp64(newpos, pos) < 0)
-      r = EINVAL;
-  else if ((off_hi < 0) && cmp64(newpos, pos) > 0)
-      r = EINVAL;
-  else {
-	/* insert the new position into the output message */
-	m_out.reply_l1 = ex64lo(newpos);
-	m_out.reply_l2 = ex64hi(newpos);
-
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
-		rfilp->filp_pos = newpos;
-
-		/* Inhibit read ahead request */
-		r = req_inhibread(rfilp->filp_vno->v_fs_e,
-				  rfilp->filp_vno->v_inode_nr);
-	}
-  }
-
-  unlock_filp(rfilp);
-  return(r);
-}
 
 /*===========================================================================*
  *				do_close				     *
