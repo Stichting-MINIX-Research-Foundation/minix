@@ -118,3 +118,19 @@ void bdev_minor_del(dev_t dev)
 	}
   }
 }
+
+int bdev_minor_is_open(dev_t dev)
+{
+/* Return whether any minor is open for the major of the given device.
+ */
+  int i, major;
+
+  major = major(dev);
+
+  for (i = 0; i < NR_OPEN_DEVS; i++) {
+	if (major(open_dev[i].dev) == major)
+		return TRUE;
+  }
+
+  return FALSE;
+}

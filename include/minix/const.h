@@ -93,22 +93,8 @@
 */
 #define NR_MEMS            16
 
-
-/* Click to byte conversions (and vice versa). */
-#define HCLICK_SHIFT       4	/* log2 of HCLICK_SIZE */
-#define HCLICK_SIZE       16	/* hardware segment conversion magic */
-#if CLICK_SIZE >= HCLICK_SIZE
-#define click_to_hclick(n) ((n) << (CLICK_SHIFT - HCLICK_SHIFT))
-#else
-#define click_to_hclick(n) ((n) >> (HCLICK_SHIFT - CLICK_SHIFT))
-#endif
-#define hclick_to_physb(n) ((phys_bytes) (n) << HCLICK_SHIFT)
-#define physb_to_hclick(n) ((n) >> HCLICK_SHIFT)
-
 #define CLICK2ABS(v) ((v) << CLICK_SHIFT)
 #define ABS2CLICK(a) ((a) >> CLICK_SHIFT)
-
-#define ABS             -999	/* this process means absolute memory */
 
 /* Flag bits for i_mode in the inode. */
 #define I_TYPE          0170000	/* this field gives inode type */
@@ -161,9 +147,6 @@
 #define VM_SYS_PROC     0x200   /* this is a vm system process instance */
 #define LU_SYS_PROC     0x400   /* this is a live updated sys proc instance */
 #define RST_SYS_PROC    0x800   /* this is a restarted sys proc instance */
-
-/* Bits for device driver flags managed by RS and VFS. */
-#define DRV_FORCED      0x01    /* driver is mapped even if not alive yet */
 
 /* Values for the "verbose" boot monitor variable */
 #define VERBOSEBOOT_QUIET 0

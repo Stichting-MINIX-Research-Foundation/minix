@@ -18,7 +18,7 @@ Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
 #include <minix/type.h>
 #include <minix/sysutil.h>
 #include <minix/endpoint.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>

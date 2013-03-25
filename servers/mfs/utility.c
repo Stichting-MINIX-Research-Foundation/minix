@@ -95,18 +95,3 @@ unsigned int maxlen)
 #define MYASSERT(c) if(!(c)) { printf("MFS:%s:%d: sanity check: %s failed\n", \
   file, line, #c); panic("sanity check " #c " failed: %d", __LINE__); }
 
-
-/*===========================================================================*
- *				sanity_check				     *
- *===========================================================================*/
-void sanitycheck(char *file, int line)
-{
-	MYASSERT(SELF_E > 0);
-	if(superblock.s_dev != NO_DEV) {
-		MYASSERT(superblock.s_dev == fs_dev);
-		MYASSERT(superblock.s_block_size == lmfs_fs_block_size());
-	} else {
-		MYASSERT(_MIN_BLOCK_SIZE == lmfs_fs_block_size());
-	}
-}
-

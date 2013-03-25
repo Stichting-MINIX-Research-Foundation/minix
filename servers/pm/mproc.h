@@ -5,7 +5,7 @@
  * of corresponding slots referring to the same process in all three.
  */
 #include <limits.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <signal.h>
 
 #include <sys/cdefs.h>
@@ -50,7 +50,7 @@ EXTERN struct mproc {
   char mp_padding[60];		/* align structure with new libc */
 #endif
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
-  struct timer mp_timer;	/* watchdog timer for alarm(2), setitimer(2) */
+  minix_timer_t mp_timer;	/* watchdog timer for alarm(2), setitimer(2) */
   clock_t mp_interval[NR_ITIMERS];	/* setitimer(2) repetition intervals */
 
   unsigned mp_flags;		/* flag bits */

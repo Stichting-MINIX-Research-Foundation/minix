@@ -79,8 +79,8 @@ ${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
 # make the different file system. this part is *also* hacky. We first convert
 # the METALOG.sanitised using mtree into a input METALOG containing uids and
 # gids.
-# After that we do some magic processing to add device nodes (also missing from METALOG)
-# and convert the METALOG into a proto file that can be used by mkfs.mfs
+# Afther that we do some processing to convert the METALOG into a proto file
+# that can be used by mkfs.mfs
 #
 echo "creating the file systems"
 
@@ -88,24 +88,13 @@ echo "creating the file systems"
 # read METALOG and use mtree to convert the user and group names into uid and gids
 # FIX put "input somewhere clean"
 #
-cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C > ${IMG_DIR}/input
+cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C -K device > ${IMG_DIR}/input
 
 # add fstab
 echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
 
 # fill root.img (skipping /usr entries while keeping the /usr directory)
-cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.in
-
-#
-# add device nodes somewhere in the middle of the proto file. Better would be to add the entries in the
-# original METALOG
-# grab the first part
-grep -B 10000 "^ dev"  ${IMG_DIR}/root.in >  ${IMG_DIR}/root.proto
-# add the device nodes from the ramdisk
-cat  ${OBJ}/drivers/ramdisk/proto.dev >> ${IMG_DIR}/root.proto
-# and add the rest of the file
-grep -A 10000 "^ dev"  ${IMG_DIR}/root.in | tail -n +2    >>  ${IMG_DIR}/root.proto
-rm ${IMG_DIR}/root.in
+cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.proto
 
 #
 # Create proto files for /usr and /home using toproto.
@@ -140,9 +129,7 @@ fi
 echo "Writing Minix filesystem images"
 
 # Do some math to determine the start addresses of the partitions.
-# Ensure the start of the partitions are always aligned, the end will 
-# always be as we assume the sizes are multiples of 4096 bytes, which
-# is always true as soon as you have an integer multiple of 1MB.
+# Don't leave holes so the 'partition' invocation later is easy.
 ROOT_START=$ISO_SIZE
 
 echo " - ROOT"
@@ -154,6 +141,10 @@ HOME_START=$(($USR_START + $USR_SIZE))
 echo " - HOME"
 HOME_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -d $HOMESIZEARG -I $(($HOME_START*512)) $IMG ${IMG_DIR}/home.proto`/512))
 
+#
+# Write the partition table using the natively compiled
+# minix partition utility
+#
 ${CROSS_TOOLS}/nbpartition -m ${IMG} 0 81:${ISO_SIZE} 81:${ROOT_SIZE} 81:${USR_SIZE} 81:${HOME_SIZE} 
 
 mods="`( cd $MODDIR; echo mod* | tr ' ' ',' )`"

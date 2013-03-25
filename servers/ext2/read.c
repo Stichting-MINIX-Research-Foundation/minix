@@ -12,6 +12,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <minix/minlib.h>
 #include <sys/param.h>
 #include <assert.h>
 #include <sys/param.h>
@@ -36,7 +37,7 @@ int fs_readwrite(void)
   cp_grant_id_t gid;
   off_t position, f_size, bytes_left;
   unsigned int off, cum_io, block_size, chunk;
-  mode_t mode_word;
+  pmode_t mode_word;
   int completed;
   struct inode *rip;
   size_t nrbytes;
@@ -44,7 +45,7 @@ int fs_readwrite(void)
   r = OK;
 
   /* Find the inode referred */
-  if ((rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
@@ -619,9 +620,9 @@ int fs_getdents(void)
 #define GETDENTS_ENTRIES	8
   static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
   struct inode *rip;
-  int o, r, done;
+  int r, done;
   unsigned int block_size, len, reclen;
-  ino_t ino;
+  pino_t ino;
   cp_grant_id_t gid;
   size_t size, tmpbuf_off, userbuf_off;
   off_t pos, off, block_pos, new_pos, ent_pos;
@@ -629,8 +630,8 @@ int fs_getdents(void)
   struct ext2_disk_dir_desc *d_desc;
   struct dirent *dep;
 
-  ino = (ino_t) fs_m_in.REQ_INODE_NR;
-  gid = (gid_t) fs_m_in.REQ_GRANT;
+  ino = (pino_t) fs_m_in.REQ_INODE_NR;
+  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   size = (size_t) fs_m_in.REQ_MEM_SIZE;
   pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
 
@@ -694,11 +695,8 @@ int fs_getdents(void)
 		assert(len <= NAME_MAX);
 		assert(len <= EXT2_NAME_MAX);
 
-		/* Compute record length */
-		reclen = offsetof(struct dirent, d_name) + len + 1;
-		o = (reclen % sizeof(long));
-		if (o != 0)
-			reclen += sizeof(long) - o;
+		/* Compute record length, incl alignment. */
+                reclen = _DIRENT_RECLEN(dep, len);
 
 		/* Need the position of this entry in the directory */
 		ent_pos = block_pos + ((char *)d_desc - b_data(bp));
@@ -729,11 +727,18 @@ int fs_getdents(void)
 		}
 
 		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		dep->d_ino = conv4(le_CPU, d_desc->d_ino);
-		dep->d_off = ent_pos;
+		dep->d_fileno = (ino_t) conv4(le_CPU, d_desc->d_ino);
 		dep->d_reclen = (unsigned short) reclen;
+		dep->d_namlen = len;
 		memcpy(dep->d_name, d_desc->d_name, len);
 		dep->d_name[len] = '\0';
+		{
+			struct inode *entrip;
+			if(!(entrip = get_inode(fs_dev, dep->d_fileno)))
+				panic("unexpected get_inode failure");
+			dep->d_type = fs_mode_to_type(entrip->i_mode);
+			put_inode(entrip);
+		}
 		tmpbuf_off += reclen;
 	}
 

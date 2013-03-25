@@ -41,7 +41,7 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	int uds_sotype = -1;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 			return r;
@@ -50,7 +50,7 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	}
 
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 			return r;
@@ -59,7 +59,7 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	}
 
 	r= ioctl(sock, NWIOGUDSSOTYPE, &uds_sotype);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1) {
 			return r;

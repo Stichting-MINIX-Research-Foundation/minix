@@ -284,6 +284,7 @@
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
 #define fstatvfs		_fstatvfs
+#define fstatvfs1		_fstatvfs1
 #define ftok			_ftok
 #define ftruncate		_ftruncate
 #define fts_children		_fts_children
@@ -366,6 +367,7 @@
 #define getttyent		_getttyent
 #define getttynam		_getttynam
 #define getusershell		_getusershell
+#define getvfsstat		_getvfsstat
 #define glob			_glob
 #define globfree		_globfree
 #define gmtime_r		_gmtime_r
@@ -599,6 +601,7 @@
 #define srand48			_srand48
 #define srandom			_srandom
 #define statvfs(a, b)		_statvfs(a, b)
+#define statvfs1		_statvfs1
 #define strcasecmp		_strcasecmp
 #define strdup			_strdup
 #define stresep			_stresep
@@ -920,7 +923,6 @@
 #define stime _stime
 #define umask _umask
 #define umount _umount
-#define umount2 _umount2
 #define unlink _unlink
 #define vm_remap _vm_remap
 #define vm_unmap _vm_unmap

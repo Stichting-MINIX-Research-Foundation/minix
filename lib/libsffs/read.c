@@ -87,7 +87,7 @@ int do_getdents()
   struct sffs_attr attr;
   size_t len, off, user_off, user_left;
   off_t pos;
-  int r;
+  int r, namelen;
   /* must be at least sizeof(struct dirent) + NAME_MAX */
   static char buf[BLOCK_SIZE];
 
@@ -171,7 +171,9 @@ int do_getdents()
 		}
 	}
 
-	len = DWORD_ALIGN(sizeof(struct dirent) + strlen(name));
+	/* record length incl. alignment. */
+	namelen = strlen(name);
+	len = _DIRENT_RECLEN(dent, namelen);
 
 	/* Is the user buffer too small to store another record?
 	 * Note that we will be rerequesting the same dentry upon a subsequent
@@ -206,8 +208,9 @@ int do_getdents()
 	/* Fill in the actual directory entry. */
 	dent = (struct dirent *) &buf[off];
 	dent->d_ino = INODE_NR(child);
-	dent->d_off = pos;
 	dent->d_reclen = len;
+	dent->d_namlen = namelen;
+	dent->d_type = IS_DIR(child) ? DT_DIR : DT_REG;
 	strcpy(dent->d_name, name);
 
 	off += len;

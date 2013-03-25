@@ -74,8 +74,8 @@ processvattr(const char *path, const struct vattr *va, int regular)
 			return errno;
 
 	/* sloppy */
-	if (va->va_atime.tv_sec != (unsigned)PUFFS_VNOVAL
-	    || va->va_mtime.tv_sec != (unsigned)PUFFS_VNOVAL) {
+	if (va->va_atime.tv_sec != PUFFS_VNOVAL
+	    || va->va_mtime.tv_sec != PUFFS_VNOVAL) {
 		/* FIXME: nsec too */
 		tbuf.actime = va->va_atime.tv_sec;
 		tbuf.modtime = va->va_mtime.tv_sec;
@@ -493,7 +493,7 @@ puffs_null_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
                 /* FIXME: DIRENT_SIZE macro? For now do calculations here */
 		int namelen;
 		char* cp;
-		int dirent_size;
+		size_t dirent_size;
 
                 entry = readdir(dp);
 

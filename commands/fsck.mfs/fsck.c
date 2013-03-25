@@ -686,7 +686,7 @@ char **clist;
 		if (input(buf, 80)) ip->i_mode = atoo(buf);
 		printf("    nlinks = %6u", ip->i_nlinks);
 		if (input(buf, 80)) ip->i_nlinks = atol(buf);
-		printf("    size   = %6ld", ip->i_size);
+		printf("    size   = %6d", ip->i_size);
 		if (input(buf, 80)) ip->i_size = atol(buf);
 		if (yes("Write this back")) {
 			devwrite(inoblock(ino), inooff(ino), (char *) ip,
@@ -1543,7 +1543,7 @@ char *f, **clist, **ilist, **zlist;
 
   rw_super(SUPER_GET);
 
-  if(block_size < _MIN_BLOCK_SIZE)
+  if(block_size < SUPER_BLOCK_BYTES)
   	fatal("funny block size");
 
   if(!(rwbuf = malloc(block_size))) fatal("couldn't allocate fs buf (1)");
@@ -1663,3 +1663,10 @@ char **argv;
   }
   return(0);
 }
+
+void panic(char *fmt, ...)
+{
+	fprintf(stderr, "%s\n", fmt);
+	exit(1);
+}
+

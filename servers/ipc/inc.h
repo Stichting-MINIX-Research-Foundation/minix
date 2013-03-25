@@ -19,6 +19,7 @@
 #include <machine/vmparam.h>
 #include <sys/vm.h>
 
+#include <lib.h>
 #include <time.h>
 #include <stdio.h>
 #include <string.h>

@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
-static const char configuration_arguments[] = "/usr/src/tools/gcc/../../external/gpl3/gcc/dist/configure --target=arm-elf32-minix --disable-libssp --disable-threads --disable-visibility --disable-libunwind --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20120916' --with-system-zlib --enable-__cxa_atexit --with-arch=armv7-a --with-mpc=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686 --with-mpfr=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686 --with-gmp=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686 --disable-nls --disable-multilib --program-transform-name=s,^,arm-elf32-minix-, --enable-languages=c --prefix=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686";
+static const char configuration_arguments[] = "/usr/src/tools/gcc/../../external/gpl3/gcc/dist/configure --target=arm-elf32-minix --disable-libssp --disable-threads --disable-visibility --disable-libunwind --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20120916' --with-system-zlib --enable-__cxa_atexit --with-arch=armv7-a --with-mpc=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686 --with-mpfr=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686 --with-gmp=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686 --disable-nls --disable-multilib --program-transform-name=s,^,arm-elf32-minix-, --enable-languages='c c++ objc' --prefix=/usr/objs/evbearm-el/tooldir.Minix-3.2.1-i686";
 static const char thread_model[] = "single";
 
 static const struct {

@@ -1,7 +1,7 @@
 /* Function prototypes. */
 
 struct schedproc;
-#include <timers.h>
+#include <minix/timers.h>
 
 /* main.c */
 int main(void);

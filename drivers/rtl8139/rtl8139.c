@@ -91,7 +91,7 @@ static void rtl8139_dump(message *m);
 static void dump_phy(re_t *rep);
 #endif
 static int rl_handler(re_t *rep);
-static void rl_watchdog_f(timer_t *tp);
+static void rl_watchdog_f(minix_timer_t *tp);
 static void tell_dev(vir_bytes start, size_t size, int pci_bus, int
 	pci_dev, int pci_func);
 
@@ -1969,7 +1969,7 @@ static int rl_handler(re_t *rep)
  *				rl_watchdog_f				     *
  *===========================================================================*/
 static void rl_watchdog_f(tp)
-timer_t *tp;
+minix_timer_t *tp;
 {
 	re_t *rep;
 	/* Use a synchronous alarm instead of a watchdog timer. */

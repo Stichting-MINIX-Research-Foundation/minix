@@ -3,7 +3,7 @@
 #include "inc.h"
 #include <sys/mman.h>
 #include <minix/vm.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include "kernel/proc.h"
 
 #define LINES 24

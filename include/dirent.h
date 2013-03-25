@@ -43,11 +43,9 @@
  */
 #include <sys/dirent.h>
 
-#ifndef __minix
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	d_ino		d_fileno	/* backward compatibility */
 #endif
-#endif /* !__minix */
 
 typedef struct _dirdesc DIR;
 
@@ -113,7 +111,7 @@ DIR *__opendir2(const char *, int) __RENAME(__opendir230);
 int scandir(const char *, struct dirent ***,
     int (*)(const struct dirent *), int (*)(const void *, const void *))
     __RENAME(__scandir30);
-ssize_t getdents(int, char *, size_t) __RENAME(__getdents30);
+int getdents(int, char *, size_t) __RENAME(__getdents30);
 int alphasort(const void *, const void *) __RENAME(__alphasort30);
 #endif
 #endif /* defined(_NETBSD_SOURCE) */

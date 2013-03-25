@@ -11,17 +11,17 @@
  */
 
 #include "fs.h"
-#include <fcntl.h>
-#include <unistd.h>
+#include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/u64.h>
-#include "file.h"
-#include "fproc.h"
-#include "scratchpad.h"
-#include "param.h"
-#include <dirent.h>
-#include <assert.h>
 #include <minix/vfsif.h>
+#include <assert.h>
+#include <sys/dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "file.h"
+#include "param.h"
+#include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
 
@@ -41,20 +41,17 @@ int do_read(message *UNUSED(m_out))
  *===========================================================================*/
 void lock_bsf(void)
 {
-  struct fproc *org_fp;
   struct worker_thread *org_self;
 
   if (mutex_trylock(&bsf_lock) == 0)
 	return;
 
-  org_fp = fp;
-  org_self = self;
+  org_self = worker_suspend();
 
   if (mutex_lock(&bsf_lock) != 0)
 	panic("unable to lock block special file lock");
 
-  fp = org_fp;
-  self = org_self;
+  worker_resume(org_self);
 }
 
 /*===========================================================================*
@@ -108,7 +105,7 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
 
   if (((f->filp_mode) & (ro ? R_BIT : W_BIT)) == 0) {
 	unlock_filp(f);
-	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
+	return(EBADF);
   }
   if (scratch(rfp).io.io_nbytes == 0) {
 	unlock_filp(f);
@@ -137,9 +134,10 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	char *buf, size_t size, endpoint_t for_e)
 {
   register struct vnode *vp;
-  u64_t position, res_pos;
+  off_t position, res_pos;
   unsigned int cum_io, cum_io_incr, res_cum_io;
   int op, r;
+  dev_t dev;
 
   position = f->filp_pos;
   vp = f->filp_vno;
@@ -150,7 +148,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 
   if (size > SSIZE_MAX) return(EINVAL);
 
-  op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
+  op = (rw_flag == READING ? CDEV_READ : CDEV_WRITE);
 
   if (S_ISFIFO(vp->v_mode)) {		/* Pipes */
 	if (rfp->fp_cum_io_partial != 0) {
@@ -162,10 +160,6 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	}
 	r = rw_pipe(rw_flag, for_e, f, buf, size);
   } else if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
-	dev_t dev;
-	int suspend_reopen;
-	int op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
-
 	if(rw_flag == PEEKING) {
 	  	printf("read_write: peek on char device makes no sense\n");
 		return EINVAL;
@@ -174,15 +168,35 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access char dev NO_DEV");
 
-	suspend_reopen = (f->filp_state & FS_NEEDS_REOPEN);
 	dev = (dev_t) vp->v_sdev;
 
-	r = dev_io(op, dev, for_e, buf, position, size, f->filp_flags,
-		   suspend_reopen);
+	r = cdev_io(op, dev, for_e, buf, position, size, f->filp_flags);
 	if (r >= 0) {
+		/* This should no longer happen: all calls are asynchronous. */
+		printf("VFS: I/O to device %x succeeded immediately!?\n", dev);
 		cum_io = r;
 		position += r;
 		r = OK;
+	} else if (r == SUSPEND) {
+		/* FIXME: multiple read/write operations on a single filp
+		 * should be serialized. They currently aren't; in order to
+		 * achieve a similar effect, we optimistically advance the file
+		 * position here. This works under the following assumptions:
+		 * - character drivers that use the seek position at all,
+		 *   expose a view of a statically-sized range of bytes, i.e.,
+		 *   they are basically byte-granular block devices;
+		 * - if short I/O or an error is returned, all subsequent calls
+		 *   will return (respectively) EOF and an error;
+		 * - the application never checks its own file seek position,
+		 *   or does not care that it may end up having seeked beyond
+		 *   the number of bytes it has actually read;
+		 * - communication to the character driver is FIFO (this one
+		 *   is actually true! whew).
+		 * Many improvements are possible here, but in the end,
+		 * anything short of queuing concurrent operations will be
+		 * suboptimal - so we settle for this hack for now.
+		 */
+		position += size;
 	}
   } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */
 	if (vp->v_sdev == NO_DEV)
@@ -193,8 +207,8 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	if(rw_flag == PEEKING) {
 		r = req_bpeek(vp->v_bfs_e, vp->v_sdev, position, size);
 	} else {
-		r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev,
-			position, size, buf, rw_flag, &res_pos, &res_cum_io);
+		r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev, position,
+		       size, (vir_bytes) buf, rw_flag, &res_pos, &res_cum_io);
 		if (r == OK) {
 			position = res_pos;
 			cum_io += res_cum_io;
@@ -205,21 +219,19 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   } else {				/* Regular files */
 	if (rw_flag == WRITING) {
 		/* Check for O_APPEND flag. */
-		if (f->filp_flags & O_APPEND) position = ((u64_t)(vp->v_size));
+		if (f->filp_flags & O_APPEND) position = vp->v_size;
 	}
 
 	/* Issue request */
 	if(rw_flag == PEEKING) {
 		r = req_peek(vp->v_fs_e, vp->v_inode_nr, position, size);
 	} else {
-		u64_t new_pos;
+		off_t new_pos;
 		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position,
-			rw_flag, for_e, buf, size, &new_pos, &cum_io_incr);
+			rw_flag, for_e, (vir_bytes) buf, size, &new_pos,
+			&cum_io_incr);
 
 		if (r >= 0) {
-			if (ex64hi(new_pos))
-				panic("read_write: bad new pos");
-
 			position = new_pos;
 			cum_io += cum_io_incr;
 		}
@@ -229,11 +241,8 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
 	if (S_ISREG(vp->v_mode) || S_ISDIR(vp->v_mode)) {
-		if (cmp64ul(position, vp->v_size) > 0) {
-			if (ex64hi(position) != 0) {
-				panic("read_write: file size too big ");
-			}
-			vp->v_size = ex64lo(position);
+		if (position > vp->v_size) {
+			vp->v_size = position;
 		}
 	}
   }
@@ -262,7 +271,7 @@ int do_getdents(message *UNUSED(m_out))
 {
 /* Perform the getdents(fd, buf, size) system call. */
   int r = OK;
-  u64_t new_pos;
+  off_t new_pos;
   register struct filp *rfilp;
 
   scratch(fp).file.fd_nr = job_m_in.fd;
@@ -279,12 +288,9 @@ int do_getdents(message *UNUSED(m_out))
 	r = EBADF;
 
   if (r == OK) {
-	if (ex64hi(rfilp->filp_pos) != 0)
-		panic("do_getdents: can't handle large offsets");
-
 	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
 			 rfilp->filp_pos, scratch(fp).io.io_buffer,
-			 scratch(fp).io.io_nbytes, &new_pos,0);
+			 scratch(fp).io.io_nbytes, &new_pos, 0);
 
 	if (r > 0) rfilp->filp_pos = new_pos;
   }
@@ -307,7 +313,7 @@ size_t req_size;
   int r, oflags, partial_pipe = 0;
   size_t size, cum_io, cum_io_incr;
   struct vnode *vp;
-  u64_t  position, new_pos;
+  off_t  position, new_pos;
 
   /* Must make sure we're operating on locked filp and vnode */
   assert(tll_locked_by_me(&f->filp_vno->v_lock));
@@ -315,7 +321,7 @@ size_t req_size;
 
   oflags = f->filp_flags;
   vp = f->filp_vno;
-  position = ((u64_t)(0));	/* Not actually used */
+  position = 0;	/* Not actually used */
 
   assert(rw_flag == READING || rw_flag == WRITING);
 
@@ -340,20 +346,17 @@ size_t req_size;
 	panic("unmapped pipe");
 
   r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
-		    buf, size, &new_pos, &cum_io_incr);
+		    (vir_bytes) buf, size, &new_pos, &cum_io_incr);
 
   if (r != OK) {
 	return(r);
   }
 
-  if (ex64hi(new_pos))
-	panic("rw_pipe: bad new pos");
-
   cum_io += cum_io_incr;
   buf += cum_io_incr;
   req_size -= cum_io_incr;
 
-  vp->v_size = ex64lo(new_pos);
+  vp->v_size = new_pos;
 
   if (partial_pipe) {
 	/* partial write on pipe with */

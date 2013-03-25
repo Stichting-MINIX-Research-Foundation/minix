@@ -30,8 +30,8 @@ int _sendcall(endpoint_t who, int type, message *msgptr);
 
 int sys_abort(int how);
 int sys_enable_iop(endpoint_t proc_ep);
-int sys_exec(endpoint_t proc_ep, char *ptr, char *aout, vir_bytes
-	initpc);
+int sys_exec(endpoint_t proc_ep, char *stack_ptr, char *progname,
+	vir_bytes pc, vir_bytes ps_str);
 int sys_fork(endpoint_t parent, endpoint_t child, endpoint_t *, 
 	u32_t vm, vir_bytes *);
 int sys_clear(endpoint_t proc_ep);
@@ -69,8 +69,6 @@ int sys_vmctl_enable_paging(void * data);
 int sys_readbios(phys_bytes address, void *buf, size_t size);
 int sys_settime(int now, clockid_t clk_id, time_t sec, long nsec);
 int sys_stime(time_t boottime);
-int sys_sysctl(int ctl, char *arg1, int arg2);
-int sys_sysctl_stacktrace(endpoint_t who);
 int sys_vmctl_get_mapping(int index, phys_bytes *addr, phys_bytes *len,
 	int *flags);
 int sys_vmctl_reply_mapping(int index, vir_bytes addr);
@@ -159,7 +157,16 @@ int sys_umap_data_fb(endpoint_t proc_ep, vir_bytes vir_addr, vir_bytes
 int sys_umap_remote(endpoint_t proc_ep, endpoint_t grantee, int seg,
 	vir_bytes vir_addr, vir_bytes bytes, phys_bytes *phys_addr);
 
-int send_taskreply(endpoint_t who, endpoint_t endpoint, int status);
+/* Shorthands for sys_diagctl() system call. */
+#define sys_diagctl_diag(buf,len) \
+	sys_diagctl(DIAGCTL_CODE_DIAG, buf, len)
+#define sys_diagctl_stacktrace(ep) \
+	sys_diagctl(DIAGCTL_CODE_STACKTRACE, NULL, ep)
+#define sys_diagctl_register()	\
+	sys_diagctl(DIAGCTL_CODE_REGISTER, NULL, 0)
+#define sys_diagctl_unregister() \
+	sys_diagctl(DIAGCTL_CODE_UNREGISTER, NULL, 0)
+int sys_diagctl(int ctl, char *arg1, int arg2);
 
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkinfo(dst)	sys_getinfo(GET_KINFO, dst, 0,0,0)
