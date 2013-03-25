@@ -84,7 +84,7 @@
 #define MINIX_SUBTARGET_EXTRA_ASM_SPEC ""
 #define MINIX_SUBTARGET_ASM_FLOAT_SPEC ""
 
-#define MINIX_DYNAMIC_LINKER "/libexec/ld-elf.so.1"
+#define MINIX_DYNAMIC_LINKER "/usr/libexec/ld.elf_so"
 
 /* Under MINIX, just like on NetBSD, the normal location of the various 
  *    *crt*.o files is the /usr/lib directory.  */

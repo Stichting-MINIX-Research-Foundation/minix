@@ -18,7 +18,7 @@
 #include <sys/mman.h>
 #include <machine/elf.h>
 
-int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
 		PROT_READ|PROT_WRITE|PROT_EXEC,
@@ -29,7 +29,7 @@ int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, off_t vaddr, size_
 	return OK;
 }
 
-int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
 		PROT_READ|PROT_WRITE|PROT_EXEC,
@@ -40,7 +40,7 @@ int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, off_t vaddr, si
 	return OK;
 }
 
-int libexec_alloc_mmap_ondemand(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_alloc_mmap_ondemand(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
 		PROT_READ|PROT_WRITE|PROT_EXEC,
@@ -56,50 +56,23 @@ int libexec_clearproc_vm_procctl(struct exec_info *execi)
 	return vm_procctl(execi->proc_e, VMPPARAM_CLEAR);
 }
 
-int libexec_clear_sys_memset(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_clear_sys_memset(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	return sys_memset(execi->proc_e, 0, vaddr, len);
 }
 
 int libexec_copy_memcpy(struct exec_info *execi,
-	off_t off, off_t vaddr, size_t len)
+	off_t off, vir_bytes vaddr, size_t len)
 {
 	assert(off + len <= execi->hdr_len);
 	memcpy((char *) vaddr, (char *) execi->hdr + off, len);
 	return OK;
 }
 
-int libexec_clear_memset(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_clear_memset(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	memset((char *) vaddr, 0, len);
 	return OK;
-}
-
-void libexec_patch_ptr(char stack[ARG_MAX], vir_bytes base)
-{
-/* When doing an exec(name, argv, envp) call, the user builds up a stack
- * image with arg and env pointers relative to the start of the stack.  Now
- * these pointers must be relocated, since the stack is not positioned at
- * address 0 in the user's address space.
- */
-
-  char **ap, flag;
-  vir_bytes v;
-
-  flag = 0;                     /* counts number of 0-pointers seen */
-  ap = (char **) stack;         /* points initially to 'nargs' */
-  ap++;                         /* now points to argv[0] */
-  while (flag < 2) {
-        if (ap >= (char **) &stack[ARG_MAX]) return;    /* too bad */
-        if (*ap != NULL) {
-                v = (vir_bytes) *ap;    /* v is relative pointer */
-                v += base;              /* relocate it */
-                *ap = (char *) v;       /* put it back */
-        } else {
-                flag++;
-        }
-        ap++;
-  }
 }
 
 int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *e)

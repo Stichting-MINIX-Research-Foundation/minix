@@ -18,7 +18,7 @@ int (*call_vec[])(void) = {
 	do_noop,	/*  7 inhibread		*/
 	do_stat,	/*  8 stat		*/
 	do_utime,	/*  9 utime		*/
-	do_fstatfs,	/* 10 fstatfs		*/
+	do_statvfs,	/* 10 statvfs		*/
 	no_sys,		/* 11 bread		*/
 	no_sys,		/* 12 bwrite		*/
 	do_unlink,	/* 13 unlink		*/
@@ -40,8 +40,7 @@ int (*call_vec[])(void) = {
 	no_sys,		/* 29 newnode		*/
 	no_sys,		/* 30 rdlink		*/
 	do_getdents,	/* 31 getdents		*/
-	do_statvfs,	/* 32 statvfs		*/
-	no_sys,		/* 33 peek		*/
+	no_sys,		/* 32 peek		*/
 	no_sys,		/* 33 bpeek		*/
 };
 

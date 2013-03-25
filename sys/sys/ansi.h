@@ -38,14 +38,14 @@ typedef char *		__caddr_t;	/* core address */
 typedef __uint32_t	__gid_t;	/* group id */
 typedef __uint32_t	__in_addr_t;	/* IP(v4) address */
 typedef __uint16_t	__in_port_t;	/* "Internet" port number */
-typedef __uint16_t	__mode_t;	/* file permissions */
-typedef __int32_t	__off_t;	/* file offset */
+typedef __uint32_t	__mode_t;	/* file permissions */
+typedef __int64_t	__off_t;	/* file offset */
 typedef __int32_t	__pid_t;	/* process id */
 typedef __uint8_t	__sa_family_t;	/* socket address family */
-typedef __int32_t	__socklen_t;	/* socket-related datum length */
+typedef unsigned int	__socklen_t;	/* socket-related datum length */
 typedef __uint32_t	__uid_t;	/* user id */
-typedef	__uint32_t	__fsblkcnt_t;	/* fs block count (statvfs) */
-typedef	__uint32_t	__fsfilcnt_t;	/* fs file count */
+typedef	__uint64_t	__fsblkcnt_t;	/* fs block count (statvfs) */
+typedef	__uint64_t	__fsfilcnt_t;	/* fs file count */
 
 struct __tag_wctrans_t;
 typedef struct __tag_wctrans_t *__wctrans_t;

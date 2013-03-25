@@ -8,7 +8,7 @@
  */
 
 #include "inc.h"
-#include <timers.h>
+#include <minix/timers.h>
 #include <minix/rs.h>
 #include "kernel/priv.h"
 #include "../rs/const.h"
@@ -42,10 +42,10 @@ void rproc_dmp()
   	rpub = &rprocpub[i];
   	if (! (rp->r_flags & RS_IN_USE)) continue;
   	if (++n > 22) break;
-  	printf("%13s %9d %5d %6s %3d/%1d %3ld %8d %5dx %s",
+	printf("%13s %9d %5d %6s %4d %4ld %8lu %5dx %s",
   		rpub->label, rpub->endpoint, rp->r_pid,
 		s_flags_str(rp->r_flags, rpub->sys_flags), rpub->dev_nr,
-		rpub->dev_style, rp->r_period, rp->r_alive_tm, rp->r_restarts,
+		rp->r_period, rp->r_alive_tm, rp->r_restarts,
 		rp->r_args
   	);
 	printf("\n");

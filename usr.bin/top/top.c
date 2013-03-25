@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <curses.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <termcap.h>

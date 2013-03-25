@@ -39,7 +39,7 @@ int getsockopt(int sock, int level, int option_name,
 	struct sockaddr_un uds_addr;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -51,7 +51,7 @@ int getsockopt(int sock, int level, int option_name,
 	}
 
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -63,7 +63,7 @@ int getsockopt(int sock, int level, int option_name,
 	}
 
 	r= ioctl(sock, NWIOGUDSADDR, &uds_addr);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -217,14 +217,14 @@ static int _uds_getsockopt(int sock, int level, int option_name,
 
 	if (level == SOL_SOCKET && option_name == SO_PEERCRED)
 	{
-		struct ucred cred;
+		struct uucred cred;
 
 		r= ioctl(sock, NWIOGUDSPEERCRED, &cred);
 		if (r == -1) {
 			return -1;
 		}
 
-		getsockopt_copy(&cred, sizeof(struct ucred), option_value,
+		getsockopt_copy(&cred, sizeof(struct uucred), option_value,
 							option_len);
 		return 0;
 	}

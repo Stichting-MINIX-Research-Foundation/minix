@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.41 2010/07/07 21:24:34 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,12 +40,13 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.41 2010/07/07 21:24:34 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/utsname.h>
 
 #include <ctype.h>
@@ -84,7 +85,8 @@ struct manstate {
 	char *pathsearch;	/* -S: path of man must contain this string */
 	char *sectionname;	/* -s: limit search to a given man section */
 	int where;		/* -w: just show paths of all matching files */
-
+	int getpath;	/* -p: print the path of directories containing man pages */
+		
 	/* important tags from the config file */
 	TAG *defaultpath;	/* _default: default MANPATH */
 	TAG *subdirs;		/* _subdir: default subdir search list */
@@ -118,6 +120,7 @@ static void	 onsig(int);
 static void	 usage(void) __attribute__((__noreturn__));
 static void	 addpath(struct manstate *, const char *, size_t, const char *);
 static const char *getclass(const char *);
+static void printmanpath(struct manstate *);
 
 /*
  * main function
@@ -137,7 +140,7 @@ main(int argc, char **argv)
 	/*
 	 * parse command line...
 	 */
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:s:S:w")) != -1)
+	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:ps:S:w")) != -1)
 		switch (ch) {
 		case 'a':
 			m.all = 1;
@@ -158,6 +161,9 @@ main(int argc, char **argv)
 		case 'M':
 		case 'P':	/* -P for backward compatibility */
 			m.manpath = strdup(optarg);
+			break;
+		case 'p':
+			m.getpath = 1;
 			break;
 		/*
 		 * The -f and -k options are backward compatible,
@@ -187,7 +193,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!argc)
+	if (!m.getpath && !argc)
 		usage();
 
 	/*
@@ -358,6 +364,9 @@ main(int argc, char **argv)
 
 	}
 
+	if (m.getpath) 
+		printmanpath(&m);
+		
 	/*
 	 * now m.mymanpath is complete!
 	 */
@@ -984,5 +993,55 @@ usage(void)
 	(void)fprintf(stderr, 
 	    "Usage: %s -k [-C cfg] [-M path] [-m path] keyword ...\n", 
 	    getprogname());
+	(void)fprintf(stderr, "Usage: %s -p\n", getprogname());
 	exit(EXIT_FAILURE);
+}
+
+/*
+ * printmanpath --
+ *	Prints a list of directories containing man pages.
+ */
+static void
+printmanpath(struct manstate *m)
+{
+	ENTRY *esubd;
+	char *defaultpath = NULL; /* _default tag value from man.conf. */
+	char *buf; /* for storing temporary values */
+	char **ap;
+	glob_t pg;
+	struct stat sb;
+	TAG *path = m->defaultpath;
+	TAG *subdirs = m->subdirs;
+	
+	/* the tail queue is empty if no _default tag is defined in * man.conf */
+	if (TAILQ_EMPTY(&path->entrylist))
+		errx(EXIT_FAILURE, "Empty manpath");
+		
+	defaultpath = TAILQ_LAST(&path->entrylist, tqh)->s;
+	
+	if (glob(defaultpath, GLOB_BRACE | GLOB_NOSORT, NULL, &pg) != 0)
+		err(EXIT_FAILURE, "glob failed");
+
+	if (pg.gl_matchc == 0) {
+		warnx("Default path in %s doesn't exist", _PATH_MANCONF);
+		globfree(&pg);
+		return;
+	}
+
+	TAILQ_FOREACH(esubd, &subdirs->entrylist, q) {
+		/* Drop cat page directory, only sources are relevant. */
+		if (strncmp(esubd->s, "man", 3))
+			continue;
+
+		for (ap = pg.gl_pathv; *ap != NULL; ++ap) {
+			if (asprintf(&buf, "%s%s", *ap, esubd->s) == -1) 
+				err(EXIT_FAILURE, "memory allocation error");
+			/* Skip non-directories. */
+			if (stat(buf, &sb) == 0 && S_ISDIR(sb.st_mode))
+				printf("%s\n", buf);
+
+			free(buf);
+		}
+	}
+	globfree(&pg);
 }

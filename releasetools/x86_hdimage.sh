@@ -42,12 +42,10 @@ sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} 
 # All sized are written in 512 byte blocks
 #
 # we create a disk image of about 2 gig's
-# for alignement reasons, prefer sizes which are multiples of 4096 bytes
-#
-: ${IMG_SIZE=$((   2*(2**30) / 512))}
-: ${ROOT_SIZE=$((  64*(2**20) / 512))}
-: ${HOME_SIZE=$(( 128*(2**20) / 512))}
-: ${USR_SIZE=$((1536*(2**20) / 512))}
+: ${IMG_SIZE=$((     2*(2**30) / 512))}
+: ${ROOT_SIZE=$((   64*(2**20) / 512))}
+: ${HOME_SIZE=$((  128*(2**20) / 512))}
+: ${USR_SIZE=$((  1536*(2**20) / 512))}
 
 #
 # create a fstab entry in /etc this is normally done during the
@@ -70,28 +68,31 @@ dd if=/dev/zero of=${IMG_DIR}/root.img bs=512 count=1 seek=$(($ROOT_SIZE -1)) 2>
 dd if=/dev/zero of=${IMG_DIR}/home.img bs=512 count=1 seek=$(($HOME_SIZE -1)) 2>/dev/null
 dd if=/dev/zero of=${IMG_DIR}/usr.img bs=512 count=1 seek=$(($USR_SIZE -1)) 2>/dev/null
 
+#
 # Create the empty image where we later will but the partitions in
+#
 dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
 
 #
 # Do some math to determine the start addresses of the partitions.
-# Ensure the start of the partitions are always aligned, the end will 
-# always be as we assume the sizes are multiples of 4096 bytes, which
-# is always true as soon as you have an integer multiple of 1MB.
+# Don't leave holes so the 'partition' invocation later is easy.
 #
 ROOT_START=8
 HOME_START=$(($ROOT_START + $ROOT_SIZE))
 USR_START=$(($HOME_START + $HOME_SIZE))
 
-set -x
+#
+# Write the partition table using the natively compiled
+# minix partition utility
+#
 ${CROSS_TOOLS}/nbpartition -m ${IMG} ${ROOT_START} 81:${ROOT_SIZE} 81:${HOME_SIZE} 81:${USR_SIZE}
-set +x
 
+#
 # make the different file system. this part is *also* hacky. We first convert
 # the METALOG.sanitised using mtree into a input METALOG containing uids and
 # gids.
-# Afther that we do some magic processing to add device nodes (also missing from METALOG)
-# and convert the METALOG into a proto file that can be used by mkfs.mfs
+# Afther that we do some processing to convert the METALOG into a proto file
+# that can be used by mkfs.mfs
 #
 echo "creating the file systems"
 
@@ -99,24 +100,13 @@ echo "creating the file systems"
 # read METALOG and use mtree to conver the user and group names into uid and gids
 # FIX put "input somwhere clean"
 #
-cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C > ${IMG_DIR}/input
+cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C -K device > ${IMG_DIR}/input
 
 # add fstab
 echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
 
 # fill root.img (skipping /usr entries while keeping the /usr directory)
-cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.in
-
-#
-# add device nodes somewhere in the middle of the proto file. Better would be to add the entries in the
-# original METALOG
-# grab the first part
-grep -B 10000 "^ dev"  ${IMG_DIR}/root.in >  ${IMG_DIR}/root.proto
-# add the device nodes from the ramdisk
-cat  ${OBJ}/drivers/ramdisk/proto.dev >> ${IMG_DIR}/root.proto
-# and add the rest of the file
-grep -A 10000 "^ dev"  ${IMG_DIR}/root.in | tail -n +2    >>  ${IMG_DIR}/root.proto
-rm ${IMG_DIR}/root.in
+cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.proto
 
 #
 # Create proto files for /usr and /home using toproto.

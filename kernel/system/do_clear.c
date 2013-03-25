@@ -48,7 +48,7 @@ int do_clear(struct proc * caller, message * m_ptr)
   clear_endpoint(rc);
 
   /* Turn off any alarm timers at the clock. */   
-  reset_timer(&priv(rc)->s_alarm_timer);
+  reset_kernel_timer(&priv(rc)->s_alarm_timer);
 
   /* Make sure that the exiting process is no longer scheduled,
    * and mark slot as FREE. Also mark saved fpu contents as not significant.

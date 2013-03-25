@@ -1,0 +1,22 @@
+builtin.sh is installed as a set of tools to stand in for specific
+filesystem call to builtin commands.
+
+for example if /bin/test is used, then builtin.sh will be loaded
+and simply call the builtin function of the same name.
+
+At this moment it is installed as the following commands:
+/bin/[
+/bin/command
+/bin/echo
+/bin/expr
+/bin/false
+/bin/getopts
+/bin/read
+/bin/test
+/bin/true
+/bin/umask
+/bin/wait
+
+If one of the following is replaced by the NetBSD equivalent, please
+update the list, and remove this completly when it is not anymore
+required.

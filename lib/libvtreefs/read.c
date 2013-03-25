@@ -189,8 +189,8 @@ int fs_getdents(void)
 
 		/* Fill in the actual directory entry. */
 		dent = (struct dirent *) &buf[off];
-		dent->d_ino = get_inode_number(child);
-		dent->d_off = pos;
+		dent->d_ino = (ino_t) get_inode_number(child);
+		dent->d_off = (off_t) pos;
 		dent->d_reclen = len;
 		strcpy(dent->d_name, name);
 

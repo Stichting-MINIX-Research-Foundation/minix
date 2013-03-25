@@ -14,6 +14,7 @@
 #include <minix/dmap.h>
 
 #include <minix/vfsif.h>
+#include <lib.h>
 #include <limits.h>
 #include <errno.h>
 #include <minix/syslib.h>

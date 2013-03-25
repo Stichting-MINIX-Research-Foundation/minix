@@ -58,7 +58,6 @@
 #endif
 
 struct stat {
-#  ifdef AVOID_USING_BIG_TYPES
 	dev_t	  st_dev;		/* inode's device */
 	mode_t	  st_mode;		/* inode protection mode */
 	ino_t	  st_ino;		/* inode's number */
@@ -66,16 +65,6 @@ struct stat {
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-#  else /* !AVOID_USING_BIG_TYPES */
-/* XXX For now MINIX is still using big_xxx_t types; just cut this when the day finally comes! */
-  big_dev_t     st_dev;               /* inode's device */
-  big_mode_t    st_mode;              /* inode protection mode */
-  big_ino_t	st_ino;		      /* inode's number */
-  big_nlink_t   st_nlink;             /* number of hard links */
-  big_uid_t     st_uid;               /* user ID of the file's owner */
-  big_gid_t     st_gid;               /* group ID of the file's group */
-  big_dev_t     st_rdev;              /* device type */
-#  endif /* AVOID_USING_BIG_TYPES */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
     defined(_NETBSD_SOURCE)
 	struct	  timespec st_atim;	/* time of last access */
@@ -96,11 +85,7 @@ struct stat {
   off_t		st_size;	     	/* file size, in off_t bytes */
   off_t		st_size_rest;
 #else
-#  ifdef AVOID_USING_BIG_TYPES
 	off_t	  st_size;		/* file size, in bytes */
-#  else /* !AVOID_USING_BIG_TYPES */ /* XXX also cut here */
-  big_off_t st_size;		/* file size, in bytes */
-#  endif /* AVOID_USING_BIG_TYPES */
 #endif
 	blkcnt_t  st_blocks;		/* blocks allocated for file */
 	blksize_t st_blksize;		/* optimal blocksize for I/O */

@@ -4,7 +4,7 @@
 #include "tty.h"
 
 void
-do_video(message *m)
+do_video(message *m, int ipc_status)
 {
 }
 
@@ -18,9 +18,13 @@ cons_stop(void)
 {
 }
 
+void
+beep_x(unsigned int freq, clock_t dur)
+{
+}
+
 int
-con_loadfont(message *m)
+con_loadfont(endpoint_t endpt, cp_grant_id_t grant)
 {
 	return 0;
 }
-

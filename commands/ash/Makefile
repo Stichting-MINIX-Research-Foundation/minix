@@ -41,7 +41,7 @@ CPPFLAGS+= -I. -I${.CURDIR}
 # A. Generate C tools used to build ash
 .for tool in init nodes signames syntax
 ${.OBJDIR}/mk${tool}: ${.CURDIR}/mk${tool}.c
-	${HOST_CC} ${.ALLSRC} -o ${.TARGET}
+	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${.ALLSRC} -o ${.TARGET}
 
 CLEANFILES+= ${.OBJDIR}/mk${tool}
 .endfor

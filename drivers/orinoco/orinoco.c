@@ -15,7 +15,7 @@
 #include	<minix/syslib.h>
 #include	<minix/type.h>
 #include	<minix/sysutil.h>
-#include	<timers.h>
+#include	<minix/timers.h>
 #include	<machine/pci.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
@@ -149,7 +149,7 @@ static void or_getstat_s(message * mp);
 static void print_linkstatus(t_or * orp, u16_t status);
 static int or_get_recvd_packet(t_or *orp, u16_t rxfid, u8_t *databuf);
 static void or_reset(void);
-static void or_watchdog_f(timer_t *tp);
+static void or_watchdog_f(minix_timer_t *tp);
 static void setup_wepkey(t_or *orp, char *wepkey0);
 static void do_hard_int(void);
 static void check_int_events(void);
@@ -1092,7 +1092,7 @@ next:
  * Will be called regularly to see whether the driver has crashed. If that   *
  * condition is detected, reset the driver and card                          *
  *****************************************************************************/
-static void or_watchdog_f(timer_t *tp)
+static void or_watchdog_f(minix_timer_t *tp)
 {
 	t_or *orp;
 	
