@@ -46,12 +46,4 @@ _ENTRY(__start)
 	pushl	%ebx
 	pushl	%ecx
 	pushl	%edx
-#ifdef __minix
-	movl    12(%esp),%eax
-	leal    16(%esp),%edx
-	leal    20(%esp,%eax,4),%ecx
-	pushl   %ecx
-	pushl   %edx
-	pushl   %eax
-#endif /* __minix */
 	call	___start

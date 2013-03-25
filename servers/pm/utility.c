@@ -22,7 +22,7 @@
 #include "param.h"
 
 #include <minix/config.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <string.h>
 #include <machine/archtypes.h>
 #include "kernel/const.h"

@@ -45,7 +45,7 @@ int bind(int sock, const struct sockaddr *address, socklen_t address_len)
 	struct sockaddr_un uds_addr;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 			return r;
@@ -63,7 +63,7 @@ int bind(int sock, const struct sockaddr *address, socklen_t address_len)
 	}
 
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 			return r;
@@ -71,7 +71,7 @@ int bind(int sock, const struct sockaddr *address, socklen_t address_len)
 	}
 
 	r= ioctl(sock, NWIOGUDSADDR, &uds_addr);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 			return r;

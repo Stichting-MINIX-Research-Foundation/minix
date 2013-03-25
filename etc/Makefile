@@ -194,10 +194,11 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
 .else
-MAKEDEV:
+MAKEDEV: .PHONY
 	if [ ${MKUNPRIVED} != "yes" ]; then \
-		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh null ;\
-		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh std  2>/dev/null ;\
+		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh -s; \
+	else \
+		sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh -m -s >> ${DESTDIR}/METALOG; \
 	fi
 .endif # !defined(__MINIX)
 
@@ -298,12 +299,8 @@ CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
 			/usr/sbin/rmt		/etc/rmt
 .else
 CONFIGSYMLINKS+=	\
-			/usr/lib/cpp		/lib/cpp \
 			/usr/log		/var/log \
 			/usr/tmp		/var/tmp \
-			/usr/pkg/bin/clang	/usr/bin/cc \
-			/usr/pkg/bin/strip	/usr/bin/strip \
-			/dev/kbdaux		/dev/mouse \
 			/proc/mounts		/etc/mtab
 
 .endif # !defined(__MINIX)

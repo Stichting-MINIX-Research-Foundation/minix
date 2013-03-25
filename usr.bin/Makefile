@@ -28,8 +28,9 @@ SUBDIR= asa \
 	tee tic tput \
 	tr tsort tty unexpand unifdef \
 	toproto \
-	uniq units unvis unzip users \
+	uname uniq units unvis unzip users \
 	uuidgen vis \
+	uniq uname units unzip users \
 	\
 	wc what whatis who whois \
 	write xargs xinstall xstr yes
