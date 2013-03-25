@@ -22,10 +22,7 @@ struct boot_image_sys {
 struct boot_image_dev {
   endpoint_t endpoint;         /* process endpoint number */
 
-  int flags;                   /* device flags */
   dev_t dev_nr;                /* major device number */
-  int dev_style;               /* device style */
-  int dev_style2;              /* device style for next major device number */
 };
 
 /* Definition of an entry of the system process table. */

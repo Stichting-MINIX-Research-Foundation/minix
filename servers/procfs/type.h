@@ -68,7 +68,7 @@ struct load {
  */
 struct file {
 	char *name;		/* file name, maximum length PNAME_MAX */
-	mode_t mode;		/* file mode, including file type */
+	pmode_t mode;		/* file mode, including file type */
 	data_t data;		/* custom data associated with this file */
 };
 

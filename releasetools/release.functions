@@ -73,12 +73,11 @@ load=/mod03_pm
 load=/mod04_sched
 load=/mod05_vfs
 load=/mod06_memory
-load=/mod07_log
-load=/mod08_tty
-load=/mod09_mfs
-load=/mod10_vm
-load=/mod11_pfs
-load=/mod12_init
+load=/mod07_tty
+load=/mod08_mfs
+load=/mod09_vm
+load=/mod10_pfs
+load=/mod11_init
 # This space intentionally left blank - leave to appease bootloader!
 # This space intentionally left blank - leave to appease bootloader!
 # This space intentionally left blank - leave to appease bootloader!

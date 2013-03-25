@@ -1,6 +1,6 @@
-/*	$Vendor-Id: term_ascii.c,v 1.11 2011/01/02 12:21:07 kristaps Exp $ */
+/*	$Vendor-Id: term_ascii.c,v 1.20 2011/12/04 23:10:52 schwarze Exp $ */
 /*
- * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,55 +21,109 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#ifdef USE_WCHAR
+# include <locale.h>
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef USE_WCHAR
+# include <wchar.h>
+#endif
 
 #include "mandoc.h"
 #include "out.h"
 #include "term.h"
 #include "main.h"
 
+/* 
+ * Sadly, this doesn't seem to be defined on systems even when they
+ * support it.  For the time being, remove it and let those compiling
+ * the software decide for themselves what to use.
+ */
+#if 0
+#if ! defined(__STDC_ISO_10646__)
+# undef USE_WCHAR
+#endif
+#endif
+
+static	struct termp	 *ascii_init(enum termenc, char *);
 static	double		  ascii_hspan(const struct termp *,
 				const struct roffsu *);
-static	size_t		  ascii_width(const struct termp *, char);
+static	size_t		  ascii_width(const struct termp *, int);
 static	void		  ascii_advance(struct termp *, size_t);
 static	void		  ascii_begin(struct termp *);
 static	void		  ascii_end(struct termp *);
 static	void		  ascii_endline(struct termp *);
-static	void		  ascii_letter(struct termp *, char);
+static	void		  ascii_letter(struct termp *, int);
 
+#ifdef	USE_WCHAR
+static	void		  locale_advance(struct termp *, size_t);
+static	void		  locale_endline(struct termp *);
+static	void		  locale_letter(struct termp *, int);
+static	size_t		  locale_width(const struct termp *, int);
+#endif
 
-void *
-ascii_alloc(char *outopts)
+static struct termp *
+ascii_init(enum termenc enc, char *outopts)
 {
-	struct termp	*p;
-	const char	*toks[2];
+	const char	*toks[4];
 	char		*v;
+	struct termp	*p;
 
-	if (NULL == (p = term_alloc(TERMENC_ASCII)))
-		return(NULL);
+	p = mandoc_calloc(1, sizeof(struct termp));
+	p->enc = enc;
 
 	p->tabwidth = 5;
 	p->defrmargin = 78;
 
-	p->advance = ascii_advance;
 	p->begin = ascii_begin;
 	p->end = ascii_end;
-	p->endline = ascii_endline;
 	p->hspan = ascii_hspan;
-	p->letter = ascii_letter;
 	p->type = TERMTYPE_CHAR;
+
+	p->enc = TERMENC_ASCII;
+	p->advance = ascii_advance;
+	p->endline = ascii_endline;
+	p->letter = ascii_letter;
 	p->width = ascii_width;
 
-	toks[0] = "width";
-	toks[1] = NULL;
+#ifdef	USE_WCHAR
+	if (TERMENC_ASCII != enc) {
+		v = TERMENC_LOCALE == enc ?
+			setlocale(LC_ALL, "") :
+			setlocale(LC_CTYPE, "UTF-8");
+		if (NULL != v && MB_CUR_MAX > 1) {
+			p->enc = enc;
+			p->advance = locale_advance;
+			p->endline = locale_endline;
+			p->letter = locale_letter;
+			p->width = locale_width;
+		}
+	}
+#endif
+
+	toks[0] = "indent";
+	toks[1] = "width";
+	toks[2] = "mdoc";
+	toks[3] = NULL;
 
 	while (outopts && *outopts)
 		switch (getsubopt(&outopts, UNCONST(toks), &v)) {
 		case (0):
+			p->defindent = (size_t)atoi(v);
+			break;
+		case (1):
 			p->defrmargin = (size_t)atoi(v);
+			break;
+		case (2):
+			/*
+			 * Temporary, undocumented mode
+			 * to imitate mdoc(7) output style.
+			 */
+			p->mdocstyle = 1;
+			p->defindent = 5;
 			break;
 		default:
 			break;
@@ -82,15 +136,35 @@ ascii_alloc(char *outopts)
 	return(p);
 }
 
+void *
+ascii_alloc(char *outopts)
+{
+
+	return(ascii_init(TERMENC_ASCII, outopts));
+}
+
+void *
+utf8_alloc(char *outopts)
+{
+
+	return(ascii_init(TERMENC_UTF8, outopts));
+}
+
+
+void *
+locale_alloc(char *outopts)
+{
+
+	return(ascii_init(TERMENC_LOCALE, outopts));
+}
 
 /* ARGSUSED */
 static size_t
-ascii_width(const struct termp *p, char c)
+ascii_width(const struct termp *p, int c)
 {
 
 	return(1);
 }
-
 
 void
 ascii_free(void *arg)
@@ -99,16 +173,13 @@ ascii_free(void *arg)
 	term_free((struct termp *)arg);
 }
 
-
 /* ARGSUSED */
 static void
-ascii_letter(struct termp *p, char c)
+ascii_letter(struct termp *p, int c)
 {
 	
-	/* LINTED */
 	putchar(c);
 }
-
 
 static void
 ascii_begin(struct termp *p)
@@ -117,14 +188,12 @@ ascii_begin(struct termp *p)
 	(*p->headf)(p, p->argf);
 }
 
-
 static void
 ascii_end(struct termp *p)
 {
 
 	(*p->footf)(p, p->argf);
 }
-
 
 /* ARGSUSED */
 static void
@@ -134,18 +203,15 @@ ascii_endline(struct termp *p)
 	putchar('\n');
 }
 
-
 /* ARGSUSED */
 static void
 ascii_advance(struct termp *p, size_t len)
 {
 	size_t	 	i;
 
-	/* Just print whitespace on the terminal. */
 	for (i = 0; i < len; i++)
 		putchar(' ');
 }
-
 
 /* ARGSUSED */
 static double
@@ -185,3 +251,39 @@ ascii_hspan(const struct termp *p, const struct roffsu *su)
 	return(r);
 }
 
+#ifdef USE_WCHAR
+/* ARGSUSED */
+static size_t
+locale_width(const struct termp *p, int c)
+{
+	int		rc;
+
+	return((rc = wcwidth(c)) < 0 ? 0 : rc);
+}
+
+/* ARGSUSED */
+static void
+locale_advance(struct termp *p, size_t len)
+{
+	size_t	 	i;
+
+	for (i = 0; i < len; i++)
+		putwchar(L' ');
+}
+
+/* ARGSUSED */
+static void
+locale_endline(struct termp *p)
+{
+
+	putwchar(L'\n');
+}
+
+/* ARGSUSED */
+static void
+locale_letter(struct termp *p, int c)
+{
+	
+	putwchar(c);
+}
+#endif

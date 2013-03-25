@@ -12,16 +12,16 @@
  */
 
 #include "syslib.h"
-#include <timers.h>
+#include <minix/timers.h>
 #include <minix/sysutil.h>
 
-static timer_t *timers = NULL;
+static minix_timer_t *timers = NULL;
 static int expiring = 0;
 
 /*===========================================================================*
  *                              init_timer                                   *
  *===========================================================================*/
-void init_timer(timer_t *tp)
+void init_timer(minix_timer_t *tp)
 {
         tmr_inittimer(tp);
 }
@@ -29,7 +29,7 @@ void init_timer(timer_t *tp)
 /*===========================================================================*
  *                              set_timer                                    *
  *===========================================================================*/
-void set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
+void set_timer(minix_timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 {
         int r;
         clock_t now, prev_time = 0, next_time;
@@ -51,7 +51,7 @@ void set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 /*===========================================================================*
  *                              cancel_timer                                 *
  *===========================================================================*/
-void cancel_timer(timer_t *tp)
+void cancel_timer(minix_timer_t *tp)
 {
         clock_t next_time, prev_time;
         prev_time = tmrs_clrtimer(&timers, tp, &next_time);

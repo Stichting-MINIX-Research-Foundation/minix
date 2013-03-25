@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <lib.h>
-#include <timers.h>
+#include <minix/timers.h>
 
 #include <minix/callnr.h>
 #include <minix/type.h>

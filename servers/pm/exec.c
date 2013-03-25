@@ -48,6 +48,7 @@ int do_exec()
 	m.PM_FRAME = m_in.frame_ptr;
 	m.PM_FRAME_LEN = m_in.msg_frame_len;
 	m.PM_EXECFLAGS = m_in.PMEXEC_FLAGS;
+	m.PM_PS_STR = (vir_bytes)m_in.m1_p4; /* ps_strings pointer into the frame. */
 
 	tell_vfs(mp, &m);
 
@@ -59,7 +60,7 @@ int do_exec()
 /*===========================================================================*
  *				do_newexec				     *
  *===========================================================================*/
-int do_newexec()
+int do_newexec(void)
 {
 	int proc_e, proc_n, allow_setuid;
 	char *ptr;
@@ -127,24 +128,25 @@ int do_newexec()
 /*===========================================================================*
  *				do_execrestart				     *
  *===========================================================================*/
-int do_execrestart()
+int do_execrestart(void)
 {
 	int proc_e, proc_n, result;
 	struct mproc *rmp;
-	vir_bytes pc;
+	vir_bytes pc, ps_str;
 
 	if (who_e != RS_PROC_NR)
 		return EPERM;
 
-	proc_e= m_in.EXC_RS_PROC;
+	proc_e = m_in.EXC_RS_PROC;
 	if (pm_isokendpt(proc_e, &proc_n) != OK) {
 		panic("do_execrestart: got bad endpoint: %d", proc_e);
 	}
-	rmp= &mproc[proc_n];
-	result= m_in.EXC_RS_RESULT;
-	pc= (vir_bytes)m_in.EXC_RS_PC;
+	rmp = &mproc[proc_n];
+	result = m_in.EXC_RS_RESULT;
+	pc = (vir_bytes)m_in.EXC_RS_PC;
+	ps_str = (vir_bytes)m_in.EXC_RS_PS_STR;
 
-	exec_restart(rmp, result, pc, rmp->mp_frame_addr);
+	exec_restart(rmp, result, pc, rmp->mp_frame_addr, ps_str);
 
 	return OK;
 }
@@ -153,11 +155,8 @@ int do_execrestart()
 /*===========================================================================*
  *				exec_restart				     *
  *===========================================================================*/
-void exec_restart(rmp, result, pc, vfs_newsp)
-struct mproc *rmp;
-int result;
-vir_bytes pc;
-vir_bytes vfs_newsp;
+void exec_restart(struct mproc *rmp, int result, vir_bytes pc, vir_bytes sp,
+       vir_bytes ps_str)
 {
 	int r, sn;
 
@@ -199,7 +198,7 @@ vir_bytes vfs_newsp;
 #endif /* USE_TRACE */
 
 	/* Call kernel to exec with SP and PC set by VFS. */
-	r= sys_exec(rmp->mp_endpoint, (char *) vfs_newsp, rmp->mp_name, pc);
+	r = sys_exec(rmp->mp_endpoint, (char *) sp, rmp->mp_name, pc, ps_str);
 	if (r != OK) panic("sys_exec failed: %d", r);
 }
 
