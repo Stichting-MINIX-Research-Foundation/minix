@@ -175,7 +175,7 @@ endpoint_t fs_e,
 int rdonly,
 char mount_label[LABEL_MAX] )
 {
-  int i, r = OK, found, isroot, mount_root, con_reqs, slot;
+  int i, r = OK, found, isroot, mount_root, slot;
   struct fproc *tfp, *rfp;
   struct dmap *dp;
   struct vnode *root_node, *vp = NULL;
@@ -279,7 +279,7 @@ char mount_label[LABEL_MAX] )
 
   /* Tell FS which device to mount */
   new_vmp->m_flags |= VMNT_MOUNTING;
-  r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res, &con_reqs);
+  r = req_readsuper(new_vmp, label, dev, rdonly, isroot, &res);
   new_vmp->m_flags &= ~VMNT_MOUNTING;
 
   if(req_peek(fs_e, 1, 0, PAGE_SIZE) != OK ||
@@ -316,10 +316,10 @@ char mount_label[LABEL_MAX] )
   /* Root node is indeed on the partition */
   root_node->v_vmnt = new_vmp;
   root_node->v_dev = new_vmp->m_dev;
-  if (con_reqs == 0)
+  if (VFS_FS_PROTO_CONREQS(new_vmp->m_proto) == 0)
 	new_vmp->m_comm.c_max_reqs = 1;	/* Default if FS doesn't tell us */
   else
-	new_vmp->m_comm.c_max_reqs = con_reqs;
+	new_vmp->m_comm.c_max_reqs = VFS_FS_PROTO_CONREQS(new_vmp->m_proto);
   new_vmp->m_comm.c_cur_reqs = 0;
 
   if (mount_root) {
@@ -413,6 +413,9 @@ void mount_pfs(void)
 
   vmp->m_dev = dev;
   vmp->m_fs_e = PFS_PROC_NR;
+  vmp->m_proto = 0;
+  VFS_FS_PROTO_PUT_CONREQS(vmp->m_proto, 1);
+  VFS_FS_PROTO_PUT_VERSION(vmp->m_proto, VFS_FS_CURRENT_VERSION);
   strlcpy(vmp->m_label, "pfs", LABEL_MAX);
   strlcpy(vmp->m_mount_path, "pipe", PATH_MAX);
   strlcpy(vmp->m_mount_dev, "none", PATH_MAX);

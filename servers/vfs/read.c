@@ -11,17 +11,18 @@
  */
 
 #include "fs.h"
-#include <fcntl.h>
-#include <unistd.h>
+#include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <minix/vfsif.h>
+#include <assert.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "file.h"
 #include "fproc.h"
-#include "scratchpad.h"
 #include "param.h"
-#include <dirent.h>
-#include <assert.h>
-#include <minix/vfsif.h>
+#include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
 

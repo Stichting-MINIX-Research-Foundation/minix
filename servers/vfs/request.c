@@ -95,7 +95,7 @@ int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes)
  *				req_chmod	      			     *
  *===========================================================================*/
 int req_chmod(
-  int fs_e,
+  endpoint_t fs_e,
   ino_t inode_nr,
   mode_t rmode,
   mode_t *new_modep
@@ -153,7 +153,7 @@ int req_chown(
  *				req_create				     *
  *===========================================================================*/
 int req_create(
-  int fs_e,
+  endpoint_t fs_e,
   ino_t inode_nr,
   int omode,
   uid_t uid,
@@ -178,7 +178,7 @@ int req_create(
   /* Fill in request message */
   m.m_type	= REQ_CREATE;
   m.REQ_INODE_NR = inode_nr;
-  m.REQ_MODE	= omode;
+  m.REQ_MODE = omode;
   m.REQ_UID	= uid;
   m.REQ_GID	= gid;
   m.REQ_GRANT	= grant_id;
@@ -192,7 +192,7 @@ int req_create(
   /* Fill in response structure */
   res->fs_e	= m.m_source;
   res->inode_nr	= m.RES_INODE_NR;
-  res->fmode	= m.RES_MODE;
+  res->fmode = m.RES_MODE;
   res->fsize	= m.RES_FILE_SIZE_LO;
   res->uid	= m.RES_UID;
   res->gid	= m.RES_GID;
@@ -461,28 +461,28 @@ int req_lookup(
 
   switch (r) {
   case OK:
-	  res->inode_nr = m.RES_INODE_NR;
-	  res->fmode = m.RES_MODE;
-	  res->fsize = m.RES_FILE_SIZE_LO;
-	  res->dev = m.RES_DEV;
-	  res->uid= m.RES_UID;
-	  res->gid= m.RES_GID;
-	  break;
+	res->inode_nr = m.RES_INODE_NR;
+	res->fmode = m.RES_MODE;
+	res->fsize = m.RES_FILE_SIZE_LO;
+	res->dev = m.RES_DEV;
+	res->uid= m.RES_UID;
+	res->gid= m.RES_GID;
+	break;
   case EENTERMOUNT:
-	  res->inode_nr = m.RES_INODE_NR;
-	  res->char_processed = m.RES_OFFSET;
-	  res->symloop = m.RES_SYMLOOP;
-	  break;
+	res->inode_nr = m.RES_INODE_NR;
+	res->char_processed = m.RES_OFFSET;
+	res->symloop = m.RES_SYMLOOP;
+	break;
   case ELEAVEMOUNT:
-	  res->char_processed = m.RES_OFFSET;
-	  res->symloop = m.RES_SYMLOOP;
-	  break;
+	res->char_processed = m.RES_OFFSET;
+	res->symloop = m.RES_SYMLOOP;
+	break;
   case ESYMLINK:
-	  res->char_processed = m.RES_OFFSET;
-	  res->symloop = m.RES_SYMLOOP;
-	  break;
+	res->char_processed = m.RES_OFFSET;
+	res->symloop = m.RES_SYMLOOP;
+	break;
   default:
-	  break;
+	break;
   }
 
   return(r);
@@ -612,7 +612,7 @@ int req_newnode(
 
   res->fs_e	= m.m_source;
   res->inode_nr = m.RES_INODE_NR;
-  res->fmode	= m.RES_MODE;
+  res->fmode = m.RES_MODE;
   res->fsize	= m.RES_FILE_SIZE_LO;
   res->dev	= m.RES_DEV;
   res->uid	= m.RES_UID;
@@ -720,19 +720,21 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
  *				req_readsuper	                  	     *
  *===========================================================================*/
 int req_readsuper(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   char *label,
   dev_t dev,
   int readonly,
   int isroot,
-  struct node_details *res_nodep,
-  int *con_reqs
+  struct node_details *res_nodep
 )
 {
   int r;
   cp_grant_id_t grant_id;
   size_t len;
   message m;
+  endpoint_t fs_e;
+
+  fs_e = vmp->m_fs_e;
 
   len = strlen(label)+1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) label, len, CPF_READ);
@@ -742,6 +744,9 @@ int req_readsuper(
   /* Fill in request message */
   m.m_type = REQ_READSUPER;
   m.REQ_FLAGS = 0;
+  m.REQ_PROTO = 0;
+  VFS_FS_PROTO_PUT_VERSION(m.REQ_PROTO, VFS_FS_CURRENT_VERSION);
+  m.REQ_FLAGS |= REQ_HASPROTO;
   if(readonly) m.REQ_FLAGS |= REQ_RDONLY;
   if(isroot)   m.REQ_FLAGS |= REQ_ISROOT;
   m.REQ_GRANT = grant_id;
@@ -756,11 +761,13 @@ int req_readsuper(
 	/* Fill in response structure */
 	res_nodep->fs_e = m.m_source;
 	res_nodep->inode_nr = m.RES_INODE_NR;
+	vmp->m_proto = m.RES_PROTO;
+	printf("%d: proto = 0x%x, version=%d conreqs=%d\n", fs_e, vmp->m_proto,
+	VFS_FS_PROTO_VERSION(vmp->m_proto), VFS_FS_PROTO_CONREQS(vmp->m_proto));
 	res_nodep->fmode = m.RES_MODE;
 	res_nodep->fsize = m.RES_FILE_SIZE_LO;
 	res_nodep->uid = m.RES_UID;
 	res_nodep->gid = m.RES_GID;
-	*con_reqs = m.RES_CONREQS;
   }
 
   return(r);

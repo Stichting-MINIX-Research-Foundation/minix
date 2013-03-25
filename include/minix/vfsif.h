@@ -39,6 +39,7 @@
 #define REQ_TRC_START_LO	m9_l3
 #define REQ_UCRED_SIZE		m9_s4 
 #define REQ_UID			m9_s4
+#define REQ_PROTO		m9_s4	/* For definition see RES_PROTO */
 
 
 /* VFS/FS reply fields */
@@ -54,11 +55,32 @@
 #define RES_SEEK_POS_LO		m9_l4
 #define RES_SYMLOOP		m9_s3
 #define RES_UID			m9_s4
-#define RES_CONREQS		m9_s3
+
+#define RES_PROTO		m9_s3
+/* RES_PROTO is defined as follows:
+ *  |----------------|
+ *           7V 4CR 0
+ *  15              0
+ * mentioned bits are inclusive
+ * CR: bits 4-0 encode no. concurrent requests are supported by FS
+ * V:  bits 7-5 encode version of protocol
+ */
+#define RES_PROTO_CR_SHIFT	0
+#define RES_PROTO_CR_MASK	0x1F
+#define VFS_FS_PROTO_CONREQS(b)	(((b) & RES_PROTO_CR_MASK)>>RES_PROTO_CR_SHIFT)
+#define VFS_FS_PROTO_PUT_CONREQS(b,v) \
+	((b) |= (((v) << RES_PROTO_CR_SHIFT) & RES_PROTO_CR_MASK))
+#define RES_PROTO_V_SHIFT	5
+#define RES_PROTO_V_MASK	0x70
+#define VFS_FS_PROTO_VERSION(b)	(((b) & RES_PROTO_V_MASK) >> RES_PROTO_V_SHIFT)
+#define VFS_FS_PROTO_PUT_VERSION(b,v) \
+	((b) |= (((v) << RES_PROTO_V_SHIFT) & RES_PROTO_V_MASK))
+#define VFS_FS_CURRENT_VERSION	0 /* Current version */
 
 /* VFS/FS flags */
 #define REQ_RDONLY		001
 #define REQ_ISROOT		002
+#define REQ_HASPROTO		004
 #define PATH_NOFLAGS		000
 #define PATH_RET_SYMLINK	010	/* Return a symlink object (i.e.
 					 * do not continue with the contents

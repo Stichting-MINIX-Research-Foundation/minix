@@ -230,11 +230,12 @@ int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
 int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, u64_t pos,
 	unsigned int num_of_bytes, char *user_addr, int rw_flag,
 	u64_t *new_posp, unsigned int *cum_iop);
-int req_chmod(int fs_e, ino_t inode_nr, mode_t rmode, mode_t *new_modep);
+int req_chmod(endpoint_t fs_e, ino_t inode_nr, mode_t rmode,
+	mode_t *new_modep);
 int req_chown(endpoint_t fs_e, ino_t inode_nr, uid_t newuid, gid_t newgid,
 	mode_t *new_modep);
-int req_create(int fs_e, ino_t inode_nr, int omode, uid_t uid, gid_t gid,
-	char *path, node_details_t *res);
+int req_create(endpoint_t fs_e, ino_t inode_nr, int omode, uid_t uid,
+	gid_t gid, char *path, node_details_t *res);
 int req_flush(endpoint_t fs_e, dev_t dev);
 int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
@@ -252,13 +253,13 @@ int req_mkdir(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
 int req_mknod(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
 	gid_t gid, mode_t dmode, dev_t dev);
 int req_mountpoint(endpoint_t fs_e, ino_t inode_nr);
-int req_newnode(endpoint_t fs_e, uid_t uid, gid_t gid, mode_t dmode, dev_t dev,
-	struct node_details *res);
+int req_newnode(endpoint_t fs_e, uid_t uid, gid_t gid, mode_t dmode,
+	dev_t dev, struct node_details *res);
 int req_putnode(int fs_e, ino_t inode_nr, int count);
 int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 	vir_bytes buf, size_t len, int direct);
-int req_readsuper(endpoint_t fs_e, char *driver_name, dev_t dev, int readonly,
-	int isroot, struct node_details *res_nodep, int *con_reqs);
+int req_readsuper(struct vmnt *vmp, char *driver_name, dev_t dev, int readonly,
+	int isroot, struct node_details *res_nodep);
 int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int rw_flag,
 	endpoint_t user_e, char *user_addr, unsigned int num_of_bytes,
 	u64_t *new_posp, unsigned int *cum_iop);
