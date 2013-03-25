@@ -51,8 +51,9 @@ int fs_readsuper() {
   fs_m_out.RES_FILE_SIZE_LO = v_pri.dir_rec_root->d_file_size;
   fs_m_out.RES_UID = SYS_UID; /* Always root */
   fs_m_out.RES_GID = SYS_GID; /* operator */
-
-  fs_m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+  fs_m_out.RES_PROTO = 0;
+  VFS_FS_PROTO_PUT_VERSION(fs_m_out.RES_PROTO, VFS_FS_CURRENT_VERSION);
+  VFS_FS_PROTO_PUT_CONREQS(fs_m_out.RES_PROTO, 1);
 
   return(r);
 }

@@ -105,8 +105,9 @@ int fs_readsuper()
   fs_m_out.RES_FILE_SIZE_LO = root_ip->i_size;
   fs_m_out.RES_UID = root_ip->i_uid;
   fs_m_out.RES_GID = root_ip->i_gid;
-
-  fs_m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+  fs_m_out.RES_PROTO = 0;
+  VFS_FS_PROTO_PUT_VERSION(fs_m_out.RES_PROTO, VFS_FS_CURRENT_VERSION);
+  VFS_FS_PROTO_PUT_CONREQS(fs_m_out.RES_PROTO, 1);
 
   /* Mark it dirty */
   if(!superblock.s_rd_only) {

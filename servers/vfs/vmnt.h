@@ -10,6 +10,7 @@ EXTERN struct vmnt {
   comm_t m_comm;
   dev_t m_dev;			/* device number */
   unsigned int m_flags;		/* mount flags */
+  unsigned int m_proto;		/* vfs-fs protocol info */
   struct vnode *m_mounted_on;	/* vnode on which the partition is mounted */
   struct vnode *m_root_node;	/* root vnode */
   char m_label[LABEL_MAX];	/* label of the file system process */
