@@ -424,7 +424,7 @@ ioreq_t req;
 		if (ip_port->ip_dl_type != IPDL_ETH)
 		{
 			return (*ip_fd->if_put_userdata)(ip_fd->if_srfd, 
-				EBADIOCTL, (acc_t *)0, TRUE);
+				ENOTTY, (acc_t *)0, TRUE);
 		}
 
 		if (!(ip_port->ip_flags & IPF_IPADDRSET))
@@ -445,8 +445,8 @@ ioreq_t req;
 	default:
 		break;
 	}
-	DBLOCK(1, printf("replying EBADIOCTL: 0x%x\n", req));
-	return (*ip_fd->if_put_userdata)(ip_fd->if_srfd, EBADIOCTL,
+	DBLOCK(1, printf("replying ENOTTY: 0x%lx\n", req));
+	return (*ip_fd->if_put_userdata)(ip_fd->if_srfd, ENOTTY,
 		(acc_t *)0, TRUE);
 }
 

@@ -239,11 +239,11 @@ rs_write(register tty_t *tp, int try)
 		if (tp->tty_outcaller == KERNEL) {
 			/* We're trying to print on kernel's behalf */
 			memcpy(rs->ohead,
-				(void *) tp->tty_outgrant + tp->tty_outoffset,
+				(char *) tp->tty_outgrant + tp->tty_outcum,
 				count);
 		} else {
 			if ((r = sys_safecopyfrom(tp->tty_outcaller,
-				tp->tty_outgrant, tp->tty_outoffset,
+				tp->tty_outgrant, tp->tty_outcum,
 				(vir_bytes) rs->ohead, count)) != OK) {
 				return 0;
 			}
@@ -264,31 +264,21 @@ rs_write(register tty_t *tp, int try)
 		rs_ostart(rs);
 		if ((rs->ohead += ocount) >= bufend(rs->obuf))
 			rs->ohead -= buflen(rs->obuf);
-		tp->tty_outoffset += count;
 		tp->tty_outcum += count;
 		if ((tp->tty_outleft -= count) == 0) {
 			/* Output is finished, reply to the writer. */
-			if(tp->tty_outrepcode == TTY_REVIVE) {
-				notify(tp->tty_outcaller);
-				tp->tty_outrevived = 1;
-			} else {
-				tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-					tp->tty_outproc, tp->tty_outcum);
-				tp->tty_outcum = 0;
-			}
+			chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+				tp->tty_outcum);
+			tp->tty_outcum = 0;
+			tp->tty_outcaller = NONE;
 		}
 
 	}
 	if (tp->tty_outleft > 0 && tp->tty_termios.c_ospeed == B0) {
 		/* Oops, the line has hung up. */
-		if(tp->tty_outrepcode == TTY_REVIVE) {
-			notify(tp->tty_outcaller);
-			tp->tty_outrevived = 1;
-		} else {
-			tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-				tp->tty_outproc, EIO);
-			tp->tty_outleft = tp->tty_outcum = 0;
-		}
+		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid, EIO);
+		tp->tty_outleft = tp->tty_outcum = 0;
+		tp->tty_outcaller = NONE;
 	}
 
 	return 1;
@@ -355,7 +345,6 @@ termios_baud_rate(struct termios *term)
 {
 	int baud;
 	switch(term->c_ospeed) {
-	case B0: term->c_ospeed = DFLT_BAUD; baud = termios_baud_rate(term);
 	case B300: baud = 300; break;
 	case B600: baud = 600; break;
 	case B1200: baud = 1200; break;
@@ -365,7 +354,14 @@ termios_baud_rate(struct termios *term)
 	case B38400: baud = 38400; break;
 	case B57600: baud = 57600; break;
 	case B115200: baud = 115200; break;
-	default: term->c_ospeed = DFLT_BAUD; baud = termios_baud_rate(term);
+	case B0:
+	default:
+		/* Reset the speed to the default speed, then call ourselves
+		 * to convert the default speed to a baudrate. This call will
+		 * always return a value without inducing another recursive
+		 * call. */
+		term->c_ospeed = DFLT_BAUD;
+		baud = termios_baud_rate(term);
 	}
 
 	return baud;
@@ -646,7 +642,7 @@ rs_read(tty_t *tp, int try)
 		if (count > icount) count = icount;
 
 		/* Perform input processing on (part of) the input buffer. */
-		if ((count = in_process(tp, rs->itail, count, -1)) == 0) break;
+		if ((count = in_process(tp, rs->itail, count)) == 0) break;
 		rs->icount -= count;
 		if (!rs->idevready && rs->icount < RS_ILOWWATER) istart(rs);
 		if ((rs->itail += count) == bufend(rs->ibuf))

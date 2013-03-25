@@ -88,7 +88,7 @@ void do_getty(char *name, size_t len, char **args, const char *ttyname)
   int ch;
   struct utsname utsname;
   char **banner, *t;
-  static char *def_banner[] = { "%s  Release %r Version %v  (%t)\n\n%n login: ", 0 };
+  static char *def_banner[] = { "%s/%p (%t)\n\n%n login: ", 0 };
 
   /* Clean up tty name. */
   if((t = strrchr(ttyname, '/'))) ttyname = t + 1;

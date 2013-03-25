@@ -86,7 +86,7 @@ struct dir_record *get_free_dir_record(void)
  *				get_dir_record				     *
  *===========================================================================*/
 struct dir_record *get_dir_record(id_dir_record)
-ino_t id_dir_record;
+pino_t id_dir_record;
 {
   struct dir_record *dir = NULL;
   u32_t address;
@@ -209,8 +209,8 @@ u32_t address;
 
   /* Set physical address of the dir record */
   dir->d_phy_addr = address;
-  dir->d_ino_nr = (ino_t) address; /* u32_t e ino_t are the same datatype so
-				   * the cast is safe */
+  dir->d_ino_nr = (pino_t) address; /* u32_t e ino_t are the same datatype so
+				     * the cast is safe */
   return(OK);
 }
 

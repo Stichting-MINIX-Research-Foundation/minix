@@ -101,14 +101,17 @@ EMUL_LIB_PATH.${f}=/usr/lib
 . endif
 
 # Binutils 2.22: the arguments have slightly changed.
-#ENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@ @enable_initfini_array@ @EMULATION_NAME@
+#ENSCRIPTS = LIB_PATH='${LIB_PATH}'
+#  $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}"
+#  @host@ @target@ @target_alias@
+#  "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@ @enable_initfini_array@ @EMULATION_NAME@
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
 	unset MACHINE || true; \
 	LIB_PATH=${EMUL_LIB_PATH.${f}} NATIVE=yes \
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} yes no ${f}
+		${G_EMUL} ${LIBDIR} yes yes ${f}
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"

@@ -12,10 +12,10 @@
 #define M1                 1
 #define M3                 3
 #define M4                 4
-#define M3_STRING         14	/* legacy m3_ca1 size (must not be changed) */
+#define M3_STRING         16	/* legacy m3_ca1 size (must not be changed) */
 #define M3_LONG_STRING    16	/* current m3_ca1 size (may be increased) */
 
-typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3;} mess_1;
+typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3, *m1p4;} mess_1;
 typedef struct {int m2i1, m2i2, m2i3; long m2l1, m2l2; char *m2p1; 
         short m2s1;} mess_2;
 typedef struct {int m3i1, m3i2; char *m3p1; char m3ca1[M3_LONG_STRING];} mess_3;
@@ -29,6 +29,8 @@ typedef struct {long m9l1, m9l2, m9l3, m9l4, m9l5;
 	short m9s1, m9s2, m9s3, m9s4; } mess_9;
 typedef struct {int m10i1, m10i2, m10i3, m10i4;
 	long m10l1, m10l2, m10l3; } mess_10;
+typedef struct {int m11i1; short m11s1, m11s2, m11s3, m11s4;
+	char *m11p1, *m11p2, *m11p3, *m11p4; } mess_11;
 
 typedef struct {
 	void *block;
@@ -68,6 +70,7 @@ typedef struct {
 	mess_6 m_m6;
 	mess_9 m_m9;
 	mess_10 m_m10;
+	mess_11 m_m11;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
 	mess_vm_vfs_mmap m_vm_vfs;
@@ -81,6 +84,7 @@ typedef struct {
 #define m1_p1  m_u.m_m1.m1p1
 #define m1_p2  m_u.m_m1.m1p2
 #define m1_p3  m_u.m_m1.m1p3
+#define m1_p4  m_u.m_m1.m1p4
 
 #define m2_i1  m_u.m_m2.m2i1
 #define m2_i2  m_u.m_m2.m2i2
@@ -153,6 +157,16 @@ typedef struct {
 #define m10_l1 m_u.m_m10.m10l1
 #define m10_l2 m_u.m_m10.m10l2
 #define m10_l3 m_u.m_m10.m10l3
+
+#define m11_i1 m_u.m_m11.m11i1
+#define m11_s1 m_u.m_m11.m11s1
+#define m11_s2 m_u.m_m11.m11s2
+#define m11_s3 m_u.m_m11.m11s3
+#define m11_s4 m_u.m_m11.m11s4
+#define m11_p1 m_u.m_m11.m11p1
+#define m11_p2 m_u.m_m11.m11p2
+#define m11_p3 m_u.m_m11.m11p3
+#define m11_p4 m_u.m_m11.m11p4
 
 /*==========================================================================* 
  * Minix run-time system (IPC). 					    *

@@ -25,7 +25,7 @@ Copyright 1995 Philip Homburg
 
 #define _NORETURN	/* Should be non empty for GCC */
 
-typedef int ioreq_t;
+typedef unsigned long ioreq_t;
 
 #include <minix/const.h>
 #include <minix/com.h>

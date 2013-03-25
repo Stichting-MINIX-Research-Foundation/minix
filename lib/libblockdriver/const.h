@@ -5,7 +5,7 @@
 #define STACK_SIZE	8192
 
 /* Maximum number of devices supported. */
-#define MAX_DEVICES	32
+#define MAX_DEVICES	BLOCKDRIVER_MAX_DEVICES
 
 /* The maximum number of worker threads per device. */
 #define MAX_WORKERS	32

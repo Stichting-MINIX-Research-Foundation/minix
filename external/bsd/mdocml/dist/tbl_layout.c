@@ -1,6 +1,6 @@
-/*	$Vendor-Id: tbl_layout.c,v 1.13 2011/01/09 05:38:23 joerg Exp $ */
+/*	$Vendor-Id: tbl_layout.c,v 1.22 2011/09/18 14:14:15 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -68,6 +72,23 @@ mods(struct tbl_node *tbl, struct tbl_cell *cp,
 	char		 buf[5];
 	int		 i;
 
+	/* Not all types accept modifiers. */
+
+	switch (cp->pos) {
+	case (TBL_CELL_DOWN):
+		/* FALLTHROUGH */
+	case (TBL_CELL_HORIZ):
+		/* FALLTHROUGH */
+	case (TBL_CELL_DHORIZ):
+		/* FALLTHROUGH */
+	case (TBL_CELL_VERT):
+		/* FALLTHROUGH */
+	case (TBL_CELL_DVERT):
+		return(1);
+	default:
+		break;
+	}
+
 mod:
 	/* 
 	 * XXX: since, at least for now, modifiers are non-conflicting
@@ -100,7 +121,8 @@ mod:
 			(*pos)++;
 			goto mod;
 		}
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, 
+				tbl->parse, ln, *pos, NULL);
 		return(0);
 	}
 
@@ -117,12 +139,13 @@ mod:
 		/* No greater than 4 digits. */
 
 		if (4 == i) {
-			TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+					ln, *pos, NULL);
 			return(0);
 		}
 
 		*pos += i;
-		cp->spacing = atoi(buf);
+		cp->spacing = (size_t)atoi(buf);
 
 		goto mod;
 		/* NOTREACHED */
@@ -150,28 +173,40 @@ mod:
 		goto mod;
 	case ('f'):
 		break;
+	case ('r'):
+		/* FALLTHROUGH */
 	case ('b'):
 		/* FALLTHROUGH */
 	case ('i'):
 		(*pos)--;
 		break;
 	default:
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+				ln, *pos - 1, NULL);
 		return(0);
 	}
 
 	switch (tolower((unsigned char)p[(*pos)++])) {
+	case ('3'):
+		/* FALLTHROUGH */
 	case ('b'):
 		cp->flags |= TBL_CELL_BOLD;
 		goto mod;
+	case ('2'):
+		/* FALLTHROUGH */
 	case ('i'):
 		cp->flags |= TBL_CELL_ITALIC;
+		goto mod;
+	case ('1'):
+		/* FALLTHROUGH */
+	case ('r'):
 		goto mod;
 	default:
 		break;
 	}
 
-	TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+	mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+			ln, *pos - 1, NULL);
 	return(0);
 }
 
@@ -189,7 +224,8 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 			break;
 
 	if (KEYS_MAX == i) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, 
+				ln, *pos, NULL);
 		return(0);
 	}
 
@@ -197,11 +233,38 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 
 	/*
 	 * If a span cell is found first, raise a warning and abort the
-	 * parse.  FIXME: recover from this somehow?
+	 * parse.  If a span cell is found and the last layout element
+	 * isn't a "normal" layout, bail.
+	 *
+	 * FIXME: recover from this somehow?
 	 */
 
-	if (NULL == rp->first && TBL_CELL_SPAN == c) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+	if (TBL_CELL_SPAN == c) {
+		if (NULL == rp->first) {
+			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+					ln, *pos, NULL);
+			return(0);
+		} else if (rp->last)
+			switch (rp->last->pos) {
+			case (TBL_CELL_VERT):
+			case (TBL_CELL_DVERT):
+			case (TBL_CELL_HORIZ):
+			case (TBL_CELL_DHORIZ):
+				mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+						ln, *pos, NULL);
+				return(0);
+			default:
+				break;
+			}
+	}
+
+	/*
+	 * If a vertical spanner is found, we may not be in the first
+	 * row.
+	 */
+
+	if (TBL_CELL_DOWN == c && rp == tbl->first_row) {
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, ln, *pos, NULL);
 		return(0);
 	}
 
@@ -219,7 +282,7 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 	if (rp->last && (TBL_CELL_VERT == c || TBL_CELL_DVERT == c) &&
 			(TBL_CELL_VERT == rp->last->pos || 
 			 TBL_CELL_DVERT == rp->last->pos)) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, ln, *pos - 1, NULL);
 		return(0);
 	}
 
@@ -260,7 +323,8 @@ cell:
 	if ('.' == p[*pos]) {
 		tbl->part = TBL_PART_DATA;
 		if (NULL == tbl->first_row) 
-			TBL_MSG(tbl, MANDOCERR_TBLNOLAYOUT, ln, *pos);
+			mandoc_msg(MANDOCERR_TBLNOLAYOUT, tbl->parse, 
+					ln, *pos, NULL);
 		(*pos)++;
 		return;
 	}
@@ -390,19 +454,19 @@ cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos)
 }
 
 static void
-head_adjust(const struct tbl_cell *cell, struct tbl_head *head)
+head_adjust(const struct tbl_cell *cellp, struct tbl_head *head)
 {
-	if (TBL_CELL_VERT != cell->pos &&
-			TBL_CELL_DVERT != cell->pos) {
+	if (TBL_CELL_VERT != cellp->pos &&
+			TBL_CELL_DVERT != cellp->pos) {
 		head->pos = TBL_HEAD_DATA;
 		return;
 	}
 
-	if (TBL_CELL_VERT == cell->pos)
+	if (TBL_CELL_VERT == cellp->pos)
 		if (TBL_HEAD_DVERT != head->pos)
 			head->pos = TBL_HEAD_VERT;
 
-	if (TBL_CELL_DVERT == cell->pos)
+	if (TBL_CELL_DVERT == cellp->pos)
 		head->pos = TBL_HEAD_DVERT;
 }
 
