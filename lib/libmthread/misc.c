@@ -33,7 +33,7 @@ void mthread_panic_f(const char *file, int line, const char *msg)
   exit(1);
 }
 #else
-void mthread_panic_s(void)
+__dead void mthread_panic_s(void)
 {
   /* Silent panic */
   volatile int *sf;
