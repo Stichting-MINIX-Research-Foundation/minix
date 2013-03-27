@@ -435,7 +435,7 @@ char restart[16];
    } else
 	filesize = lseek(fd, 0, SEEK_END);
 
-   sprintf(restart, "%u", filesize);
+   sprintf(restart, "%lld", filesize);
 
    s = DOcommand("REST", restart);
 
@@ -510,7 +510,7 @@ unsigned short crc(char *fname);
 		if((s / 100) != 2)
    			return(-1);
 
-   		sscanf(reply, "%*hu %*s%u%lu", &ccrc, &csize);
+   		sscanf(reply, "%*hu %*s%hu%lu", &ccrc, &csize);
    		if(ss < 0) return(-1);
    		lcrc = crc(file);
    		if(size != csize || size != st.st_size || ccrc != lcrc)
@@ -728,7 +728,7 @@ char restart[16];
    	return(0);
    }
 
-   sprintf(restart, "%u", rmtsize);
+   sprintf(restart, "%lld", rmtsize);
 
    s = DOcommand("REST", restart);
 
