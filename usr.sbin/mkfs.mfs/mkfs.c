@@ -840,7 +840,7 @@ void enter_dir(ino_t parent, char const *name, ino_t child)
 	}
   }
 
-  printf("Directory-inode %u beyond direct blocks.  Could not enter %s\n",
+  printf("Directory-inode %llu beyond direct blocks.  Could not enter %s\n",
          parent, name);
   pexit("Halt");
 }
@@ -1338,7 +1338,7 @@ void print_fs()
 		if (k > nrinodes) break;
 		{
 			if (inode2[i].d2_mode != 0) {
-				printf("Inode %2u:  mode=", k);
+				printf("Inode %2llu:  mode=", k);
 				printf("%06o", inode2[i].d2_mode);
 				printf("  uid=%2d  gid=%2d  size=",
 				inode2[i].d2_uid, inode2[i].d2_gid);

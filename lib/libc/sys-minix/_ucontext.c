@@ -245,7 +245,7 @@ int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 /*===========================================================================*
  *				resumecontext				     *
  *===========================================================================*/
-void resumecontext(ucontext_t *ucp)
+__dead void resumecontext(ucontext_t *ucp)
 {
   if (ucp->uc_link == NULL) exit(0);
 
