@@ -1105,11 +1105,11 @@
 ./usr/include/minix/chardriver.h	minix-sys
 ./usr/include/minix/clkconf.h		minix-sys
 ./usr/include/minix/com.h		minix-sys
-./usr/include/minix/compiler.h		minix-sys
+./usr/include/minix/compiler.h		minix-sys	obsolete
 ./usr/include/minix/config.h		minix-sys
 ./usr/include/minix/const.h		minix-sys
 ./usr/include/minix/cpufeature.h	minix-sys
-./usr/include/minix/crtso.h		minix-sys
+./usr/include/minix/crtso.h		minix-sys	obsolete
 ./usr/include/minix/debug.h		minix-sys
 ./usr/include/minix/devio.h		minix-sys
 ./usr/include/minix/devman.h		minix-sys
