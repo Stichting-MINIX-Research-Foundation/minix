@@ -315,7 +315,7 @@ void blockstats(void)
 	clock_t ticks;
 	int s;
 
-	s = getuptime(&ticks);
+	s = getticks(&ticks);
 
 	assert(s == OK);
 

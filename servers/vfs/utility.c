@@ -152,13 +152,14 @@ time_t clock_time()
 
   register int r;
   clock_t uptime;
+  clock_t realtime;
   time_t boottime;
 
-  r = getuptime2(&uptime, &boottime);
+  r = getuptime(&uptime, &realtime, &boottime);
   if (r != OK)
 	panic("clock_time err: %d", r);
 
-  return( (time_t) (boottime + (uptime/system_hz)));
+  return( (time_t) (boottime + (realtime/system_hz)));
 }
 
 /*===========================================================================*

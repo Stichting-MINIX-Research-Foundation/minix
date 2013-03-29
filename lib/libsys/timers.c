@@ -34,7 +34,7 @@ void set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
         int r;
         clock_t now, prev_time = 0, next_time;
 
-        if ((r = getuptime(&now)) != OK)
+        if ((r = getticks(&now)) != OK)
                 panic("set_timer: couldn't get uptime");
 
         /* Set timer argument and add timer to the list. */

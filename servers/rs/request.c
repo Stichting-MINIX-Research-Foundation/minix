@@ -431,7 +431,7 @@ int do_init_ready(message *m_ptr)
   /* Mark the slot as no longer initializing. */
   rp->r_flags &= ~RS_INITIALIZING;
   rp->r_check_tm = 0;
-  getuptime(&rp->r_alive_tm);
+  getticks(&rp->r_alive_tm);
 
   /* Reply and unblock the service before doing anything else. */
   m.m_type = OK;
@@ -597,7 +597,7 @@ int do_update(message *m_ptr)
   rp->r_flags |= RS_UPDATING;
   rp->r_new_rp->r_flags |= RS_UPDATING;
   rupdate.flags |= RS_UPDATING;
-  getuptime(&rupdate.prepare_tm);
+  getticks(&rupdate.prepare_tm);
   rupdate.prepare_maxtime = prepare_maxtime;
   rupdate.rp = rp;
 

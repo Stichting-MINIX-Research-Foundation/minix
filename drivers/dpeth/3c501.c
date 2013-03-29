@@ -169,7 +169,7 @@ static void el1_send(dpeth_t * dep, int from_int, int pktsize)
 
   if ((dep->de_flags & DEF_XMIT_BUSY)) {
 	if (from_int) panic("should not be sending ");
-	getuptime(&now);
+	getticks(&now);
 	if ((now - dep->de_xmit_start) > 4) {
 		/* Transmitter timed out */
 		DEBUG(printf("3c501: transmitter timed out ... \n"));
@@ -206,7 +206,7 @@ static void el1_send(dpeth_t * dep, int from_int, int pktsize)
 	outb_el1(dep, EL1_CSR, ECSR_RIDE | ECSR_XMIT);	/* There it goes... */
 	unlock();
 
-	getuptime(&dep->de_xmit_start);
+	getticks(&dep->de_xmit_start);
 	dep->de_flags &= NOT(DEF_SENDING);
   }
   return;

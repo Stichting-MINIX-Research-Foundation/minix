@@ -488,7 +488,8 @@
 #define T_USER_TIME	m4_l1	/* user time consumed by process */
 #define T_SYSTEM_TIME	m4_l2	/* system time consumed by process */
 #define T_BOOTTIME	m4_l3	/* Boottime in seconds (also for SYS_STIME) */
-#define T_BOOT_TICKS	m4_l5	/* number of clock ticks since boot time */
+#define T_REAL_TICKS	m4_l4	/* number of wall clock ticks since boottime */
+#define T_BOOT_TICKS	m4_l5	/* number of hard clock ticks since boottime */
 
 /* Field names for SYS_TRACE, SYS_PRIVCTL, SYS_STATECTL. */
 #define CTL_ENDPT      m2_i1	/* process number of the caller */

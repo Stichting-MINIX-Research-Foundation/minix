@@ -328,7 +328,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       rp->r_next_rp = NULL;                    /* no next replica yet */
       rp->r_uid = 0;                           /* root */
       rp->r_check_tm = 0;                      /* not checked yet */
-      getuptime(&rp->r_alive_tm);              /* currently alive */
+      getticks(&rp->r_alive_tm);               /* currently alive */
       rp->r_stop_tm = 0;                       /* not exiting yet */
       rp->r_restarts = 0;                      /* no restarts so far */
       rp->r_period = 0;                        /* no period yet */
@@ -669,7 +669,7 @@ endpoint_t endpoint;
   /* Mark the slot as no longer initializing. */
   rp->r_flags &= ~RS_INITIALIZING;
   rp->r_check_tm = 0;
-  getuptime(&rp->r_alive_tm);
+  getticks(&rp->r_alive_tm);
 }
 
 /*===========================================================================*

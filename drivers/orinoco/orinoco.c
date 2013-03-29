@@ -346,7 +346,7 @@ static void or_reset() {
 	t_or *orp;
 	int i, r;
 
-	if (OK != (r = getuptime(&now)))
+	if (OK != (r = getticks(&now)))
 		panic("orinoco: getuptime() failed: %d", r);
 
 	if(now - last_reset < system_hz * 10) {

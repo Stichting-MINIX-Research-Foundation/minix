@@ -81,7 +81,7 @@ static void root_uptime(void)
 	clock_t ticks;
 	ldiv_t division;
 
-	if (getuptime(&ticks) != OK)
+	if (getticks(&ticks) != OK)
 		return;
 	division = ldiv(100L * ticks / sys_hz(), 100L);
 

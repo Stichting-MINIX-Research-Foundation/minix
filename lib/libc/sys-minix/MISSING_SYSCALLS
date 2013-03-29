@@ -4,8 +4,6 @@ adjtime
 lchmod
 lchown
 clone
-clock_getres
-clock_gettime
 clock_settime
 extattr_*
 fhopen
