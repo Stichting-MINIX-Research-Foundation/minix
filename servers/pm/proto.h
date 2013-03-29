@@ -86,6 +86,8 @@ void vm_notify_sig_wrapper(endpoint_t ep);
 int do_stime(void);
 int do_time(void);
 int do_times(void);
+int do_getres(void);
+int do_gettime(void);
 
 /* trace.c */
 int do_trace(void);

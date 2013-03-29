@@ -15,9 +15,9 @@ SRCS+=  \
 	env_parse.c \
 	env_prefix.c \
 	fkey_ctl.c \
+	getticks.c \
 	getsysinfo.c \
 	getuptime.c \
-	getuptime2.c \
 	input.c \
 	kernel_call.c \
 	kprintf.c \

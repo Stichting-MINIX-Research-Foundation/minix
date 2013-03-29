@@ -83,7 +83,7 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 
 	assert(fbd_buf != NULL);
 
-	if ((r = getuptime(&uptime)) != OK)
+	if ((r = getticks(&uptime)) != OK)
 		panic("getuptime failed (%d)\n", r);
 
 	srand48(uptime);

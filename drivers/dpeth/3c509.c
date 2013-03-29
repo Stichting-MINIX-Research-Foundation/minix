@@ -238,7 +238,7 @@ static void el3_send(dpeth_t * dep, int from_int, int count)
   int ix;
   short int TxStatus;
 
-  getuptime(&now);
+  getticks(&now);
   if ((dep->de_flags & DEF_XMIT_BUSY) &&
       (now - dep->de_xmit_start) > 4) {
 
@@ -258,7 +258,7 @@ static void el3_send(dpeth_t * dep, int from_int, int count)
 	/* Writes packet */
 	el3_write_fifo(dep, count);
 
-	getuptime(&dep->de_xmit_start);
+	getticks(&dep->de_xmit_start);
 	dep->de_flags |= (DEF_XMIT_BUSY | DEF_ACK_SEND);
 	if (inw_el3(dep, REG_TxFree) > ETH_MAX_PACK_SIZE) {
 		/* Tx has enough room for a packet of maximum size */

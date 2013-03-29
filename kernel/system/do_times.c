@@ -36,6 +36,7 @@ int do_times(struct proc * caller, message * m_ptr)
       m_ptr->T_SYSTEM_TIME = rp->p_sys_time;
   }
   m_ptr->T_BOOT_TICKS = get_monotonic();  
+  m_ptr->T_REAL_TICKS = get_realtime();
   m_ptr->T_BOOTTIME = boottime;  
   return(OK);
 }

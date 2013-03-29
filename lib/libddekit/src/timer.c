@@ -76,7 +76,7 @@ static myclock_t get_current_clock()
 { 
 	/* returns the current clock tick */
 	myclock_t ret;
-	getuptime(&ret);
+	getticks(&ret);
 	return ret;
 }
 
