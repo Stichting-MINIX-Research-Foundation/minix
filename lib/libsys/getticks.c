@@ -1,11 +1,10 @@
 #include "sysutil.h"
 
 /*===========================================================================*
- *                               getuptime2			    	     *
+ *                               getuptime			    	     *
  *===========================================================================*/
-int getuptime2(ticks, boottime)
-clock_t *ticks;				/* uptime in ticks */
-time_t *boottime;
+int getticks(ticks)
+clock_t *ticks;				/* monotonic time in ticks */
 {
     message m;
     int s;
@@ -14,7 +13,6 @@ time_t *boottime;
     m.T_ENDPT = NONE;			/* ignore process times */
     s = _kernel_call(SYS_TIMES, &m);
     *ticks = m.T_BOOT_TICKS;
-    *boottime = m.T_BOOTTIME;
     return(s);
 }
 

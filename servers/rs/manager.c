@@ -496,7 +496,7 @@ struct rproc *rp;
   rpub->endpoint = child_proc_nr_e;		/* set child endpoint */
   rp->r_pid = child_pid;			/* set child pid */
   rp->r_check_tm = 0;				/* not checked yet */
-  getuptime(&rp->r_alive_tm); 			/* currently alive */
+  getticks(&rp->r_alive_tm); 			/* currently alive */
   rp->r_stop_tm = 0;				/* not exiting yet */
   rp->r_backoff = 0;				/* not to be restarted */
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
@@ -867,7 +867,7 @@ void stop_service(struct rproc *rp,int how)
 
   rp->r_flags |= how;				/* what to on exit? */
   sys_kill(rpub->endpoint, signo);		/* first try friendly */
-  getuptime(&rp->r_stop_tm); 			/* record current time */
+  getticks(&rp->r_stop_tm); 			/* record current time */
 }
 
 /*===========================================================================*

@@ -6,7 +6,7 @@ u32_t sys_jiffies(void)
 {
 	clock_t ticks;
 
-	if (getuptime(&ticks) == OK)
+	if (getticks(&ticks) == OK)
 		return  ticks;
 	else
 		panic("getuptime() failed\n");
@@ -20,6 +20,7 @@ u32_t sys_now(void)
 	if (!hz)
 		hz = sys_hz();
 
+	/* use ticks not realtime as sys_now() is used to calculate timers */
 	jiffs = sys_jiffies();
 
 	return jiffs * (1000 / hz);

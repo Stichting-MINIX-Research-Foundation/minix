@@ -46,12 +46,13 @@ time_t clock_time()
 
   register int k;
   clock_t uptime;
+  clock_t realtime;
   time_t boottime;
 
-  if ((k=getuptime2(&uptime, &boottime)) != OK)
+  if ((k=getuptime(&uptime, &realtime, &boottime)) != OK)
 	panic("clock_time: getuptme2 failed: %d", k);
 
-  return( (time_t) (boottime + (uptime/sys_hz())));
+  return( (time_t) (boottime + (realtime/sys_hz())));
 }
 
 

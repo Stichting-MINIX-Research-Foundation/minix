@@ -33,4 +33,3 @@ EXTERN int unmountdone;
 EXTERN dev_t fs_dev;    /* the device that is handled by this FS proc */
 EXTERN char fs_dev_label[16]; /* Name of the device driver that is handled */
 
-EXTERN int use_getuptime2; /* Should be removed togetherwith boottime */

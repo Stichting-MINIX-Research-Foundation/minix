@@ -283,7 +283,7 @@ struct itimerval *value;
 
   /* First determine remaining time, in ticks, of previous alarm, if set. */
   if (rmp->mp_flags & ALARM_ON) {
-  	if ( (s = getuptime(&uptime)) != OK)
+  	if ( (s = getticks(&uptime)) != OK)
   		panic("get_realtimer couldn't get uptime: %d", s);
   	exptime = *tmr_exp_time(&rmp->mp_timer);
 

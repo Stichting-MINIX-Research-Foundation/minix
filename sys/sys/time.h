@@ -248,11 +248,12 @@ struct	itimerspec {
 	struct	timespec it_value;
 };
 
-#ifndef __minix
 #define	CLOCK_REALTIME	0
+#define	CLOCK_MONOTONIC	3
+
+#ifndef __minix
 #define	CLOCK_VIRTUAL	1
 #define	CLOCK_PROF	2
-#define	CLOCK_MONOTONIC	3
 #endif
 
 #if defined(_NETBSD_SOURCE)

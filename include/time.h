@@ -158,11 +158,11 @@ struct sigevent;
 struct itimerspec;
 int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 #ifndef __LIBC12_SOURCE__
-#ifndef __minix
 int clock_getres(clockid_t, struct timespec *)
     __RENAME(__clock_getres50);
 int clock_gettime(clockid_t, struct timespec *)
     __RENAME(__clock_gettime50);
+#ifndef __minix
 int clock_settime(clockid_t, const struct timespec *)
     __RENAME(__clock_settime50);
 #endif /* !__minix */

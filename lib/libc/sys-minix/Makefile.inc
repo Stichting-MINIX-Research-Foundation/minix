@@ -2,6 +2,7 @@
 
 SRCS+= 	accept.c access.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 	chdir.c chmod.c fchmod.c chown.c fchown.c chroot.c close.c \
+	clock_getres.c clock_gettime.c \
 	connect.c dup.c dup2.c execve.c fcntl.c flock.c fpathconf.c fork.c \
 	fstatfs.c fstatvfs.c fsync.c ftruncate.c getdents.c getegid.c getgid.c \
 	getgroups.c getitimer.c setitimer.c __getlogin.c getpeername.c \

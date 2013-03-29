@@ -1,4 +1,4 @@
-#define NCALLS		 114	/* number of system calls allowed */
+#define NCALLS		 116	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -102,6 +102,8 @@
 #define GCOV_FLUSH	112	/* flush gcov data from server to gcov files */
 
 #define PM_GETSID	113	/* PM getsid() */
+#define CLOCK_GETRES	114	/* clock_getres() */
+#define CLOCK_GETTIME	115	/* clock_gettime() */
 
 #define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
 				 * really a standalone call.
