@@ -340,7 +340,7 @@ void prepare_shutdown(const int how)
    */
   printf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-  set_timer(&shutdown_timer, get_uptime() + system_hz, minix_shutdown);
+  set_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown);
 }
 
 /*===========================================================================*

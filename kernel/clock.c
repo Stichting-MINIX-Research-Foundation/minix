@@ -18,7 +18,8 @@
  * In addition to the main clock_task() entry point, which starts the main 
  * loop, there are several other minor entry points:
  *   clock_stop:	called just before MINIX shutdown
- *   get_uptime:	get realtime since boot in clock ticks
+ *   get_realtime:	get wall time since boot in clock ticks
+ *   get_monotonic:	get monotonic time since boot in clock ticks
  *   set_timer:		set a watchdog timer (+)
  *   reset_timer:	reset a watchdog timer (+)
  *   read_clock:	read the counter of channel 0 of the 8253A timer
@@ -51,11 +52,15 @@ static void load_update(void);
  * When a timer expires its watchdog function is run by the CLOCK task. 
  */
 static timer_t *clock_timers;	/* queue of CLOCK timers */
-static clock_t next_timeout;	/* realtime that next timer expires */
+static clock_t next_timeout;	/* monotonic time that next timer expires */
 
 /* The time is incremented by the interrupt handler on each clock tick.
  */
-static clock_t realtime = 0;		      /* real time clock */
+static clock_t monotonic = 0;
+
+/* Reflects the wall time and may be slowed/sped up by using adjclock()
+ */
+static clock_t realtime = 0;
 
 /*
  * The boot processor's timer interrupt handler. In addition to non-boot cpus
@@ -82,8 +87,10 @@ int timer_int_handler(void)
 	watchdog_local_timer_ticks++;
 #endif
 
-	if (cpu_is_bsp(cpuid))
+	if (cpu_is_bsp(cpuid)) {
+		monotonic++;
 		realtime++;
+	}
 
 	/* Update user and system accounting times. Charge the current process
 	 * for user time. If the current process is not billable, that is, if a
@@ -133,8 +140,8 @@ int timer_int_handler(void)
 
 	if (cpu_is_bsp(cpuid)) {
 		/* if a timer expired, notify the clock task */
-		if ((next_timeout <= realtime)) {
-			tmrs_exptimers(&clock_timers, realtime, NULL);
+		if ((next_timeout <= monotonic)) {
+			tmrs_exptimers(&clock_timers, monotonic, NULL);
 			next_timeout = (clock_timers == NULL) ?
 				TMR_NEVER : clock_timers->tmr_exp_time;
 		}
@@ -152,12 +159,22 @@ int timer_int_handler(void)
 }
 
 /*===========================================================================*
- *				get_uptime				     *
+ *				get_realtime				     *
  *===========================================================================*/
-clock_t get_uptime(void)
+clock_t get_realtime(void)
 {
-  /* Get and return the current clock uptime in ticks. */
+  /* Get and return the current wall time in ticks since boot. */
   return(realtime);
+}
+
+
+/*===========================================================================*
+ *				get_monotonic				     *
+ *===========================================================================*/
+clock_t get_monotonic(void)
+{
+  /* Get and return the number of ticks since boot. */
+  return(monotonic);
 }
 
 /*===========================================================================*
@@ -165,7 +182,7 @@ clock_t get_uptime(void)
  *===========================================================================*/
 void set_timer(tp, exp_time, watchdog)
 struct timer *tp;		/* pointer to timer structure */
-clock_t exp_time;		/* expiration realtime */
+clock_t exp_time;		/* expiration monotonic time */
 tmr_func_t watchdog;		/* watchdog to be called */
 {
 /* Insert the new timer in the active timers list. Always update the 
@@ -206,7 +223,7 @@ static void load_update(void)
 	 * be made of the load average over variable periods, in the
 	 * user library (see getloadavg(3)).
 	 */
-	slot = (realtime / system_hz / _LOAD_UNIT_SECS) % _LOAD_HISTORY;
+	slot = (monotonic / system_hz / _LOAD_UNIT_SECS) % _LOAD_HISTORY;
 	if(slot != kloadinfo.proc_last_slot) {
 		kloadinfo.proc_load_history[slot] = 0;
 		kloadinfo.proc_last_slot = slot;
@@ -223,7 +240,7 @@ static void load_update(void)
 	kloadinfo.proc_load_history[slot] += enqueued;
 
 	/* Up-to-dateness. */
-	kloadinfo.last_clock = realtime;
+	kloadinfo.last_clock = monotonic;
 }
 
 int boot_cpu_init_timer(unsigned freq)

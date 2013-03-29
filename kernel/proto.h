@@ -15,7 +15,8 @@ struct proc;
 struct timer;
 
 /* clock.c */
-clock_t get_uptime(void);
+clock_t get_realtime(void);
+clock_t get_monotonic(void);
 void set_timer(struct timer *tp, clock_t t, tmr_func_t f);
 void reset_timer(struct timer *tp);
 void ser_dump_proc(void);
