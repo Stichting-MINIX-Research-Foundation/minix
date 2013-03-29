@@ -99,7 +99,7 @@ static void set_idle_name(char * name, int n)
 
 #define BuildNotifyMessage(m_ptr, src, dst_ptr) \
 	(m_ptr)->m_type = NOTIFY_MESSAGE;				\
-	(m_ptr)->NOTIFY_TIMESTAMP = get_uptime();			\
+	(m_ptr)->NOTIFY_TIMESTAMP = get_monotonic();			\
 	switch (src) {							\
 	case HARDWARE:							\
 		(m_ptr)->NOTIFY_ARG = priv(dst_ptr)->s_int_pending;	\

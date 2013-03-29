@@ -456,7 +456,7 @@ static void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
 	messages[src][dst]++;
 
 	/* Print something? */
-	now = get_uptime();
+	now = get_monotonic();
 	dt = now - lastprint;
 	secs = dt/system_hz;
 	if(secs >= 30) {
