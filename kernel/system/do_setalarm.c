@@ -38,7 +38,7 @@ int do_setalarm(struct proc * caller, message * m_ptr)
   tp->tmr_func = cause_alarm; 
 
   /* Return the ticks left on the previous alarm. */
-  uptime = get_uptime(); 
+  uptime = get_monotonic(); 
   if ((tp->tmr_exp_time != TMR_NEVER) && (uptime < tp->tmr_exp_time) ) {
       m_ptr->ALRM_TIME_LEFT = (tp->tmr_exp_time - uptime);
   } else {
@@ -49,7 +49,7 @@ int do_setalarm(struct proc * caller, message * m_ptr)
   if (exp_time == 0) {
       reset_timer(tp);
   } else {
-      tp->tmr_exp_time = (use_abs_time) ? exp_time : exp_time + get_uptime();
+      tp->tmr_exp_time = (use_abs_time) ? exp_time : exp_time + get_monotonic();
       set_timer(tp, tp->tmr_exp_time, tp->tmr_func);
   }
   return(OK);
