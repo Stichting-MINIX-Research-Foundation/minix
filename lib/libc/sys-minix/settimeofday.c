@@ -7,11 +7,13 @@
 
 int settimeofday(const struct timeval *tp, const void *tzp)
 {
-	/* Use intermediate variable because stime param is not const */
-	time_t sec = tp->tv_sec;
+	struct timespec ts;
+
+	ts.tv_sec = tp->tv_sec;
+	ts.tv_nsec = tp->tv_usec * 1000;
 	
 	/* Ignore time zones */
-	return stime(&sec);
+	return clock_settime(CLOCK_REALTIME, &ts);
 }
 
 #if defined(__minix) && defined(__weak_alias)
