@@ -88,6 +88,7 @@ int do_time(void);
 int do_times(void);
 int do_getres(void);
 int do_gettime(void);
+int do_settime(void);
 
 /* trace.c */
 int do_trace(void);

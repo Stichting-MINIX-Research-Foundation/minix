@@ -162,10 +162,8 @@ int clock_getres(clockid_t, struct timespec *)
     __RENAME(__clock_getres50);
 int clock_gettime(clockid_t, struct timespec *)
     __RENAME(__clock_gettime50);
-#ifndef __minix
 int clock_settime(clockid_t, const struct timespec *)
     __RENAME(__clock_settime50);
-#endif /* !__minix */
 int nanosleep(const struct timespec *, struct timespec *)
     __RENAME(__nanosleep50);
 #ifndef __minix

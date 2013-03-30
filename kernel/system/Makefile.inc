@@ -13,6 +13,7 @@ SRCS+= 	\
 	do_times.c \
 	do_setalarm.c \
 	do_stime.c \
+	do_settime.c \
 	do_vtimer.c \
 	do_irqctl.c \
 	do_copy.c \

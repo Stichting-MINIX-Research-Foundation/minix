@@ -19,6 +19,7 @@
  * loop, there are several other minor entry points:
  *   clock_stop:	called just before MINIX shutdown
  *   get_realtime:	get wall time since boot in clock ticks
+ *   set_realtime:	set wall time since boot in clock ticks
  *   get_monotonic:	get monotonic time since boot in clock ticks
  *   set_timer:		set a watchdog timer (+)
  *   reset_timer:	reset a watchdog timer (+)
@@ -167,6 +168,13 @@ clock_t get_realtime(void)
   return(realtime);
 }
 
+/*===========================================================================*
+ *				set_realtime				     *
+ *===========================================================================*/
+void set_realtime(clock_t newrealtime)
+{
+  realtime = newrealtime;
+}
 
 /*===========================================================================*
  *				get_monotonic				     *
