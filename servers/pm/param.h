@@ -30,7 +30,9 @@
 #define svrctl_req	m2_i1
 #define svrctl_argp	m2_p1
 #define stime      	m2_l1
-#define clk_id		m2_l1
+#define clk_id		m2_i1
+#define time_sec	m2_l1
+#define time_nsec	m2_l2
 #define memsize      	m4_l1
 #define membase      	m4_l2
 #define sysuname_req	m1_i1

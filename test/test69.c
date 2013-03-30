@@ -20,6 +20,7 @@ int main(void);
 void quit(void);
 static void test_clock_getres();
 static void test_clock_gettime();
+static void test_clock_settime();
 static void show_timespec(char *msg, struct timespec *ts);
 
 static void test_clock_getres()
@@ -63,6 +64,37 @@ static void test_clock_gettime()
   if (clock_gettime(-1, &ts) == 0) e(31);
 }
 
+static void test_clock_settime(void)
+{
+  struct timespec ts;
+  struct timespec ts2;
+
+  /* shouldn't be able to set MONOTONIC */
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1) e(50);
+  if (clock_settime(CLOCK_MONOTONIC, &ts) == 0) e(51);
+  if (errno != EINVAL) e(52); /* reponse should be EINVAL */
+
+  /* set the time of REALTIME to that of MONOTONIC */
+  if (clock_settime(CLOCK_REALTIME, &ts) == -1) e(53);
+
+  ts.tv_sec += 600; /* time travel 10 minutes into the future */
+  if (clock_gettime(CLOCK_REALTIME, &ts2) == -1) e(54);
+  if (clock_settime(CLOCK_REALTIME, &ts) == -1) e(55);
+  if (clock_gettime(CLOCK_REALTIME, &ts) == -1) e(56);
+
+  /* get the value we set, if it's not about 10 minutes ahead, it failed */
+  if (ts.tv_sec - ts2.tv_sec < 500 ||
+	ts.tv_sec - ts2.tv_sec > 700) e(57);
+
+  /* back to current time - don't leave the system time 10 ahead */
+  if (clock_gettime(CLOCK_REALTIME, &ts) == -1) e(58);
+  ts.tv_sec -= 600;
+  if (clock_settime(CLOCK_REALTIME, &ts) == -1) e(59);
+
+  /* Test with an invalid clock */
+  if (clock_settime(-1, &ts) == 0) e(60);
+}
+
 static void show_timespec(char *msg, struct timespec *ts)
 {
 #if DEBUG == 1
@@ -80,6 +112,7 @@ int main()
 
   test_clock_getres();
   test_clock_gettime();
+  test_clock_settime();
 
   /* get test end time */
   if (clock_gettime(CLOCK_MONOTONIC, &endtime) == -1) e(2);

@@ -235,6 +235,7 @@ void system_init(void)
   map(SYS_TIMES, do_times);		/* get uptime and process times */
   map(SYS_SETALARM, do_setalarm);	/* schedule a synchronous alarm */
   map(SYS_STIME, do_stime);		/* set the boottime */
+  map(SYS_SETTIME, do_settime);		/* set the system time (realtime) */
   map(SYS_VTIMER, do_vtimer);		/* set or retrieve a virtual timer */
 
   /* System control. */

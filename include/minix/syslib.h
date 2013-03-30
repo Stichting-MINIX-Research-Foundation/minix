@@ -65,6 +65,7 @@ int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem, vir_bytes
 int sys_vmctl_enable_paging(void * data);
 
 int sys_readbios(phys_bytes address, void *buf, size_t size);
+int sys_settime(int now, clockid_t clk_id, time_t sec, long nsec);
 int sys_stime(time_t boottime);
 int sys_sysctl(int ctl, char *arg1, int arg2);
 int sys_sysctl_stacktrace(endpoint_t who);

@@ -12,7 +12,7 @@ int clock_gettime(clockid_t clock_id, struct timespec *res)
 {
   message m;
 
-  m.m2_l1 = (clockid_t) clock_id;
+  m.m2_i1 = (clockid_t) clock_id;
 
   if (_syscall(PM_PROC_NR, CLOCK_GETTIME, &m) < 0)
   	return -1;

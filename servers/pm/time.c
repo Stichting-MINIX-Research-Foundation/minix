@@ -3,6 +3,7 @@
  * The entry points into this file are
  *   do_getres:		perform the CLOCK_GETRES system call
  *   do_gettime:	perform the CLOCK_GETTIME system call
+ *   do_settime:	perform the CLOCK_SETTIME system call
  *   do_time:		perform the TIME system call
  *   do_stime:		perform the STIME system call
  *   do_times:		perform the TIMES system call
@@ -57,6 +58,27 @@ int do_getres()
 		mp->mp_reply.reply_time = (time_t) 0;
 		mp->mp_reply.reply_ntime = 1000000000 / system_hz;
 		return(OK);
+	default:
+		return EINVAL; /* invalid/unsupported clock_id */
+  }
+}
+
+/*===========================================================================*
+ *				do_settime				     *
+ *===========================================================================*/
+int do_settime()
+{
+  int s;
+
+  if (mp->mp_effuid != SUPER_USER) { 
+      return(EPERM);
+  }
+
+  switch (m_in.clk_id) {
+	case CLOCK_REALTIME:
+		s= sys_settime(1, m_in.clk_id, m_in.time_sec, m_in.time_nsec);
+		return(s);
+	case CLOCK_MONOTONIC: /* monotonic cannot be changed */
 	default:
 		return EINVAL; /* invalid/unsupported clock_id */
   }

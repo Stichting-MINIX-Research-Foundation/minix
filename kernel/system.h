@@ -164,6 +164,7 @@ int do_setalarm(struct proc * caller, message *m_ptr);
 #endif
 
 int do_stime(struct proc * caller, message *m_ptr);
+int do_settime(struct proc * caller, message *m_ptr);
 
 int do_vtimer(struct proc * caller, message *m_ptr);
 #if ! USE_VTIMER

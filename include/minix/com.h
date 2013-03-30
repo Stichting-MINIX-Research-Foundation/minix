@@ -335,6 +335,7 @@
 #  define SYS_PROFBUF    (KERNEL_CALL + 38)     /* sys_profbuf() */
 
 #  define SYS_STIME      (KERNEL_CALL + 39)	/* sys_stime() */
+#  define SYS_SETTIME    (KERNEL_CALL + 40)	/* sys_settime() */
 
 #  define SYS_VMCTL      (KERNEL_CALL + 43)	/* sys_vmctl() */
 #  define SYS_SYSCTL     (KERNEL_CALL + 44)	/* sys_sysctl() */
@@ -490,6 +491,12 @@
 #define T_BOOTTIME	m4_l3	/* Boottime in seconds (also for SYS_STIME) */
 #define T_REAL_TICKS	m4_l4	/* number of wall clock ticks since boottime */
 #define T_BOOT_TICKS	m4_l5	/* number of hard clock ticks since boottime */
+
+/* Field names for SYS_SETTIME. */
+#define T_SETTIME_NOW	m4_l2	/* non-zero for immediate, 0 for adjtime */
+#define T_CLOCK_ID	m4_l3	/* clock to adjust */
+#define T_TIME_SEC	m4_l4	/* time in seconds since 1970 */
+#define T_TIME_NSEC	m4_l5	/* number of nano seconds */
 
 /* Field names for SYS_TRACE, SYS_PRIVCTL, SYS_STATECTL. */
 #define CTL_ENDPT      m2_i1	/* process number of the caller */
