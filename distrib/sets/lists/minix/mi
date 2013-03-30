@@ -4616,6 +4616,7 @@
 ./usr/tests/minix-posix/test66		minix-sys
 ./usr/tests/minix-posix/test67		minix-sys
 ./usr/tests/minix-posix/test68		minix-sys
+./usr/tests/minix-posix/test69		minix-sys
 ./usr/tests/minix-posix/test7		minix-sys
 ./usr/tests/minix-posix/test8		minix-sys
 ./usr/tests/minix-posix/test9		minix-sys
