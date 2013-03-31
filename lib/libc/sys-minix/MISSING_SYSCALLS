@@ -1,6 +1,5 @@
 _lwp_*
 acct
-adjtime
 lchmod
 lchown
 clone

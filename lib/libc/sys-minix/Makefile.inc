@@ -1,6 +1,6 @@
 .PATH:	${.CURDIR}/sys-minix
 
-SRCS+= 	accept.c access.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
+SRCS+= 	accept.c access.c adjtime.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 	chdir.c chmod.c fchmod.c chown.c fchown.c chroot.c close.c \
 	clock_getres.c clock_gettime.c clock_settime.c \
 	connect.c dup.c dup2.c execve.c fcntl.c flock.c fpathconf.c fork.c \
