@@ -12,6 +12,7 @@ int clock_settime(clockid_t clock_id, const struct timespec *ts)
 {
   message m;
 
+  m.m2_i2 = 1; /* set time immediately. don't use adjtime() method. */
   m.m2_i1 = (clockid_t) clock_id;
   m.m2_l1 = (time_t) ts->tv_sec;
   m.m2_l2 = (long) ts->tv_nsec;

@@ -31,6 +31,7 @@
 #define svrctl_argp	m2_p1
 #define stime      	m2_l1
 #define clk_id		m2_i1
+#define settime_now	m2_i2
 #define time_sec	m2_l1
 #define time_nsec	m2_l2
 #define memsize      	m4_l1

@@ -20,6 +20,7 @@
  *   clock_stop:	called just before MINIX shutdown
  *   get_realtime:	get wall time since boot in clock ticks
  *   set_realtime:	set wall time since boot in clock ticks
+ *   set_adjtime_delta:	set the number of ticks to adjust realtime
  *   get_monotonic:	get monotonic time since boot in clock ticks
  *   set_timer:		set a watchdog timer (+)
  *   reset_timer:	reset a watchdog timer (+)
@@ -63,6 +64,11 @@ static clock_t monotonic = 0;
  */
 static clock_t realtime = 0;
 
+/* Number of ticks to adjust realtime by. A negative value implies slowing
+ * down realtime, a positive value implies speeding it up.
+ */
+static clock_t adjtime_delta = 0;
+
 /*
  * The boot processor's timer interrupt handler. In addition to non-boot cpus
  * it keeps real time and notifies the clock task if need be.
@@ -90,7 +96,17 @@ int timer_int_handler(void)
 
 	if (cpu_is_bsp(cpuid)) {
 		monotonic++;
-		realtime++;
+
+		/* if adjtime_delta has ticks remaining, apply one to realtime.
+		 * limit changes to every other interrupt.
+		 */
+		if (adjtime_delta != 0 && monotonic & 0x1) {
+			/* go forward or stay behind */
+			realtime += (adjtime_delta > 0) ? 2 : 0;
+			adjtime_delta += (adjtime_delta > 0) ? -1 : +1;
+		} else {
+			realtime++;
+		}
 	}
 
 	/* Update user and system accounting times. Charge the current process
@@ -174,6 +190,14 @@ clock_t get_realtime(void)
 void set_realtime(clock_t newrealtime)
 {
   realtime = newrealtime;
+}
+
+/*===========================================================================*
+ *				set_adjtime_delta			     *
+ *===========================================================================*/
+void set_adjtime_delta(clock_t ticks)
+{
+  adjtime_delta = ticks;
 }
 
 /*===========================================================================*

@@ -1,4 +1,8 @@
-/* Test 69. clock_getres(), clock_gettime(). */
+/* Test 69. clock_getres(), clock_gettime(), clock_settime(), adjtime().
+ *
+ * Note, any type of ntpd or software that calls adjtime() or settimeofday()
+ * should be disabled while running this test. This test takes ~40s to run.
+ */
 
 #include <time.h>
 #include <sys/types.h>
@@ -10,7 +14,9 @@
 
 #define TRIALS 100
 #define MAX_ERROR 4
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 int subtest = 1;
 
@@ -21,6 +27,7 @@ void quit(void);
 static void test_clock_getres();
 static void test_clock_gettime();
 static void test_clock_settime();
+static void test_adjtime();
 static void show_timespec(char *msg, struct timespec *ts);
 
 static void test_clock_getres()
@@ -60,7 +67,6 @@ static void test_clock_gettime()
   if (ts2.tv_sec < 0 || ts2.tv_nsec < 0) e(29);
   if (ts2.tv_sec <= ts.tv_sec) e(30);
 
-
   if (clock_gettime(-1, &ts) == 0) e(31);
 }
 
@@ -95,6 +101,45 @@ static void test_clock_settime(void)
   if (clock_settime(-1, &ts) == 0) e(60);
 }
 
+static void test_adjtime(void)
+{
+  struct timeval delta, olddelta;
+  struct timespec rt, mt;
+
+  /* set the realtime clock to the same value as the monotonic clock */
+  if (clock_gettime(CLOCK_MONOTONIC, &mt) == -1) e(65);
+  if (clock_settime(CLOCK_REALTIME, &mt) == -1) e(66);
+
+  delta.tv_sec = 7;
+  delta.tv_usec = 0;
+
+  if (adjtime(&delta, &olddelta) != 0) e(70);	/* adjust +7 seconds */
+  sleep(15);	/* should take 14 seconds to adjust the clock */
+
+  /* check that the 7 second adjustment puts us between 5 and 10 seconds
+   * ahead of the monotonic clock.
+   */
+  if (clock_gettime(CLOCK_MONOTONIC, &mt) == -1) e(71);
+  if (clock_gettime(CLOCK_REALTIME, &rt) == -1) e(72);
+  show_timespec("Monotonic", &mt);
+  show_timespec("Realtime (+7)", &rt);
+  if (rt.tv_sec - 5 < mt.tv_sec || rt.tv_sec - 10 > mt.tv_sec) e(73);
+
+  delta.tv_sec = -7;
+  if (adjtime(&delta, &olddelta) != 0) e(73);	/* adjust -7 seconds */
+  sleep(15);	/* should take 14 seconds to adjust the clock */
+
+  /* check that the 7 second adjustment puts us close to even with
+   * the monotonic clock.
+   */
+  if (clock_gettime(CLOCK_MONOTONIC, &mt) == -1) e(74);
+  if (clock_gettime(CLOCK_REALTIME, &rt) == -1) e(75);
+  show_timespec("Monotonic", &mt);
+  show_timespec("Realtime (-7)", &rt);
+  if (abs(rt.tv_sec - mt.tv_sec) > 5) e(76);
+
+}
+
 static void show_timespec(char *msg, struct timespec *ts)
 {
 #if DEBUG == 1
@@ -113,6 +158,7 @@ int main()
   test_clock_getres();
   test_clock_gettime();
   test_clock_settime();
+  test_adjtime();
 
   /* get test end time */
   if (clock_gettime(CLOCK_MONOTONIC, &endtime) == -1) e(2);

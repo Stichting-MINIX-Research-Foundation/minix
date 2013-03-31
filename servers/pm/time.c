@@ -76,7 +76,8 @@ int do_settime()
 
   switch (m_in.clk_id) {
 	case CLOCK_REALTIME:
-		s= sys_settime(1, m_in.clk_id, m_in.time_sec, m_in.time_nsec);
+		s= sys_settime(m_in.settime_now, m_in.clk_id, m_in.time_sec,
+							m_in.time_nsec);
 		return(s);
 	case CLOCK_MONOTONIC: /* monotonic cannot be changed */
 	default:
