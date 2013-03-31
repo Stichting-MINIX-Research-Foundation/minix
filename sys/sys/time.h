@@ -285,8 +285,8 @@ int	setitimer(int, const struct itimerval * __restrict,
 #endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE) || defined(HAVE_NBTOOL_CONFIG_H)
-#ifndef __minix
 int	adjtime(const struct timeval *, struct timeval *) __RENAME(__adjtime50);
+#ifndef __minix
 int	futimes(int, const struct timeval [2]) __RENAME(__futimes50);
 int	lutimes(const char *, const struct timeval [2]) __RENAME(__lutimes50);
 #endif /* !__minix */

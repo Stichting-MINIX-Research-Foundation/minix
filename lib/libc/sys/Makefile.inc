@@ -221,8 +221,8 @@ LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
 .endif # !defined(__MINIX)
 
 .if !defined(__MINIX)
-MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
-	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
+MAN+=	accept.2 access.2 acct.2 bind.2 brk.2 chdir.2 \
+	chflags.2 chmod.2 chown.2 chroot.2 clone.2 close.2 \
 	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
 	fcntl.2 fdatasync.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
@@ -244,7 +244,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	mprotect.2 mremap.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 
 .else
-MAN+=	pipe.2 
+MAN+=	adjtime.2 clock_settime.2 pipe.2 
 .endif # !defined(__MINIX)
 .if !defined(__MINIX)
 MAN+=	pmc_control.2 poll.2 posix_fadvise.2 profil.2 ptrace.2 __quotactl.2 \
@@ -271,8 +271,11 @@ MLINKS+=chflags.2 fchflags.2 chflags.2 lchflags.2
 MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
 MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=chroot.2 fchroot.2
+.else
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
+.endif # !defined(__MINIX)
+.if !defined(__MINIX)
 MLINKS+=extattr_get_file.2 extattr_set_file.2 \
 	extattr_get_file.2 extattr_delete_file.2 \
 	extattr_get_file.2 extattr_list_file.2 \

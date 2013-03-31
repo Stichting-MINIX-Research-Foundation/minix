@@ -1455,6 +1455,7 @@
 ./usr/man/man1/znew.1			minix-sys
 ./usr/man/man2/accept.2			minix-sys
 ./usr/man/man2/access.2			minix-sys
+./usr/man/man2/adjtime.2		minix-sys
 ./usr/man/man2/alarm.2			minix-sys
 ./usr/man/man2/bind.2			minix-sys
 ./usr/man/man2/brk.2			minix-sys
@@ -1463,6 +1464,9 @@
 ./usr/man/man2/chown.2			minix-sys
 ./usr/man/man2/chroot.2			minix-sys
 ./usr/man/man2/close.2			minix-sys
+./usr/man/man2/clock_getres.2		minix-sys
+./usr/man/man2/clock_gettime.2		minix-sys
+./usr/man/man2/clock_settime.2		minix-sys
 ./usr/man/man2/connect.2		minix-sys
 ./usr/man/man2/creat.2			minix-sys
 ./usr/man/man2/dup.2			minix-sys

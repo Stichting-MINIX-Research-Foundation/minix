@@ -17,11 +17,19 @@
  *===========================================================================*/
 int do_settime(struct proc * caller, message * m_ptr)
 {
-  clock_t newclock;
+  clock_t newclock, ticks;
   time_t timediff;
 
   if (m_ptr->T_CLOCK_ID != CLOCK_REALTIME) /* only realtime can change */
 	return EINVAL;
+
+  if (m_ptr->T_SETTIME_NOW == 0) { /* user just wants to adjtime() */
+	/* convert delta value from seconds and nseconds to ticks */
+	ticks = (m_ptr->T_TIME_SEC * system_hz) +
+				(m_ptr->T_TIME_NSEC/(1000000000/system_hz));
+	set_adjtime_delta(ticks);
+	return(OK);
+  } /* else user wants to set the time */
 
   /* prevent a negative value for realtime */
   if (m_ptr->T_TIME_SEC <= boottime) {
@@ -35,9 +43,7 @@ int do_settime(struct proc * caller, message * m_ptr)
   timediff = m_ptr->T_TIME_SEC - boottime;
   newclock = (timediff*system_hz) + (m_ptr->T_TIME_NSEC/(1000000000/system_hz));
 
-  if (m_ptr->T_SETTIME_NOW) {
-	set_realtime(newclock);
-  } /* else used adjtime() method (to be implemented) */
+  set_realtime(newclock);
 
   return(OK);
 }
