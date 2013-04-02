@@ -1,0 +1,116 @@
+1. Prerequisites
+----------------
+
+You will need an entropy (randomness) source.  If your OS has a /dev/random
+/dev/urandom or /dev/arandom then that is ideal.
+
+If you do not have a real random device, Lutz Jaenicke's PRNGd is recommended.
+http://www.aet.tu-cottbus.de/personen/jaenicke/postfix_tls/prngd.html
+
+Alternatively, EGD should also work (currently untested):
+http://www.lothar.com/tech/crypto/
+
+If you are not using the builtin arc4random code (see
+--with-builtin-arc4random below) then OpenSSL 0.9.6 or greater is required:
+http://www.openssl.org/
+
+
+2. Building / Installation
+--------------------------
+
+To install OpenNTPD with default options:
+
+./configure
+make
+make install
+
+This will install the OpenNTPD binary in /usr/local/sbin, configuration
+files in /usr/local/etc. To specify a different installation prefix,
+use the --prefix option to configure:
+
+./configure --prefix=/opt
+make
+make install
+
+Will install OpenNTPD in /opt/{etc,sbin}. You can also override
+specific paths, for example:
+
+./configure --prefix=/opt --sysconfdir=/etc/ntp
+make
+make install
+
+This will install the binaries in /opt/sbin, but will place the
+configuration files in /etc/ntp.
+
+OpenNTPD always uses Privilege Separation (ie the majority of the
+processing is done as a chroot'ed, unprivileged user).
+
+This requires that a user, group and directory to be created for it.
+The user should not be permitted to log in, and its home directory
+should be owned by root and be mode 755.
+
+If you do "make install", the Makefile will create the directory with
+the correct permissions and will prompt you for the rest if required.
+If, however, you need to perform all of these tasks yourself (eg if you
+are moving the built binaries to another system) then you will need to
+do something like the following (although the exact commands required
+for creating the user and group are system dependant):
+
+# groupadd _ntp
+# useradd -g _ntp -s /sbin/nologin -d /var/empty/ntp -c 'OpenNTP daemon' _ntp
+# mkdir -p /var/empty/ntp
+# chown 0 /var/empty/ntp
+# chgrp 0 /var/empty/ntp
+# chmod 0755 /var/empty/ntp
+
+There are a few options to the configure script in addition to the ones
+provided by autoconf itself:
+
+--with-privsep-user=[user]
+	Specify unprivileged user used for privilege separation.  The default
+	is "_ntp".
+
+--with-privsep-path=path
+	Normally ntpd will always use the home directory of the privsep user
+	to chroot to, however use of this option will cause ntpd to always
+	use the specified directory.
+
+--with-mantype=man|cat|doc
+	Set man page type.  The default is for configure to automatically
+	detect the supported format.
+
+--with-builtin-arc4random
+	Use builtin arc4random rather than OpenSSL's.  By default, OpenSSL
+	will be used if found.
+
+--with-ssl-dir=PATH
+	Specify path to OpenSSL installation to use if not using the
+	system's default or the builtin arc4random support.
+
+
+If you need to pass special options to the compiler or linker, you
+can specify these as environment variables before running ./configure.
+For example:
+
+CFLAGS="-O -m486" LDFLAGS="-s" LIBS="-lrubbish" LD="/usr/foo/ld" ./configure
+
+
+3. Configuration
+----------------
+
+The runtime configuration files are installed by in ${prefix}/etc or
+whatever you specified as your --sysconfdir (/usr/local/etc by default).
+
+If no configuration file exists, the default one is used.  The default
+configuration file uses a selection of publicly accessible "pool" servers
+(see http://twiki.ntp.org/bin/view/Servers/NTPPoolServers).
+
+
+4. Problems?
+------------
+
+If you experience problems compiling, installing or running OpenNTPD,
+please report the problem to the address in the README file.
+
+
+$Id: INSTALL,v 1.6 2006/01/19 06:41:50 dtucker Exp $

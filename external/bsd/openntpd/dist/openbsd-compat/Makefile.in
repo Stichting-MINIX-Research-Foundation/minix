@@ -1,0 +1,37 @@
+
+sysconfdir=@sysconfdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+
+all:	libopenbsd-compat.a
+
+OPENBSD=	asprintf.o daemon.o errx.o inet_pton.o strlcpy.o verrx.o
+COMPAT=		atomicio.o bsd-arc4random.o bsd-misc.o bsd-poll.o \
+		bsd-snprintf.o bsd-getifaddrs.o bsd-setresuid.o \
+		bsd-setresgid.o fake-rfc2553.o
+PORT=		port-qnx.o
+
+VPATH=@srcdir@
+CC=@CC@
+LD=@LD@
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
+CPPFLAGS=-I. -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@
+LIBS=@LIBS@
+AR=@AR@
+RANLIB=@RANLIB@
+INSTALL=@INSTALL@
+
+$(COMPAT):	../config.h
+$(OPENBSD):	../config.h
+$(PORT):	../config.h
+
+.c.o:
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
+
+libopenbsd-compat.a:	$(COMPAT) $(OPENBSD) $(PORT)
+	$(AR) rv $@ $(COMPAT) $(OPENBSD) $(PORT)
+	$(RANLIB) $@
+
+clean:
+	rm -f $(COMPAT) $(OPENBSD) $(PORT) libopenbsd-compat.a

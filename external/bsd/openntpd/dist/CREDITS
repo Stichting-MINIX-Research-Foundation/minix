@@ -1,0 +1,8 @@
+This is a port of OpenBSD's native ntpd, written by Henning Brauer and
+Alexander Guy.  The portability layer is based heavily on Portable OpenSSH.
+
+naddy at mips.inka.de:			FreeBSD build fixes.
+Jason Mader (jason at ncac gwu edu):	IRIX build fixes.
+Anthony O.Zabelin. (rza1 at mail ru):	QNX4 support.
+
+$Id: CREDITS,v 1.4 2005/05/28 05:16:34 dtucker Exp $

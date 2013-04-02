@@ -1,0 +1,13 @@
+Makefile
+configure
+config.h
+config.h.in
+config.log
+config.status
+autom4te.cache
+ntpd-vs-openbsd.diff
+ntpd
+ntpd.0
+ntpd.conf.0
+ntpd.8.out
+ntpd.conf.5.out

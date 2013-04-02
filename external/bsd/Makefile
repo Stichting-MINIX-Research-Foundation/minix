@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 SUBDIR= byacc file flex mdocml \
-	libarchive
+	libarchive openntpd
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif

@@ -1,0 +1,115 @@
+.\" $OpenBSD: ntpd.8,v 1.14 2005/06/21 19:55:18 deraadt Exp $
+.\"
+.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER IN
+.\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd July 9, 2004
+.Dt NTPD 8
+.Os
+.Sh NAME
+.Nm ntpd
+.Nd "Network Time Protocol daemon"
+.Sh SYNOPSIS
+.Nm ntpd
+.Bk -words
+.Op Fl dSs
+.Op Fl f Ar file
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+daemon synchronizes the local clock to one or more remote NTP servers,
+and can also act as an NTP server itself,
+redistributing the local time.
+It implements the Simple Network Time Protocol version 4,
+as described in RFC 2030,
+and the Network Time Protocol version 3,
+as described in RFC 1305.
+.Pp
+.Nm
+uses the
+.Xr adjtime 2
+system call to correct the local system time without causing time jumps.
+Adjustments larger than 128ms are logged using
+.Xr syslog 3 .
+The threshold value is chosen to avoid having local clock drift
+thrash the log files.
+Should
+.Nm
+be started with the
+.Fl d
+option, all calls to
+.Xr adjtime 2
+will be logged.
+.Pp
+When
+.Nm
+starts up, it reads settings from a configuration file,
+typically
+.Xr ntpd.conf 5 .
+.Pp
+The options are as follows:
+.Bl -tag -width "-f fileXXX"
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
+.It Fl f Ar file
+Use
+.Ar file
+as the configuration file,
+instead of the default
+.Pa /etc/ntpd.conf .
+.It Fl S
+Do not set the time immediately at startup.
+This is the default.
+.It Fl s
+Set the time immediately at startup if the local clock is off by more
+than 180 seconds.
+Allows for a large time correction,
+eliminating the need to run
+.Xr rdate 8
+before starting
+.Nm .
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ntpd.confXXX" -compact
+.It Pa /etc/ntpd.conf
+default
+.Nm
+configuration file
+.El
+.Sh SEE ALSO
+.Xr date 1 ,
+.Xr adjtime 2 ,
+.Xr ntpd.conf 5 ,
+.Xr rdate 8 ,
+.Xr timed 8
+.Rs
+.%R RFC 1305
+.%T "Network Time Protocol (Version 3)"
+.%D March 1992
+.Re
+.Rs
+.%R RFC 2030
+.%T "Simple Network Time Protocol (SNTP) Version 4"
+.%D October 1996
+.Re
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 3.6 .

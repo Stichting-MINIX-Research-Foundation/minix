@@ -1,0 +1,2 @@
+OPENNTPD_DISTDIR=	${NETBSDSRCDIR}/external/bsd/openntpd/dist
+.PATH:			${OPENNTPD_DISTDIR}

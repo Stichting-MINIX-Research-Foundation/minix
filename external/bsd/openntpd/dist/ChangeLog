@@ -1,0 +1,1120 @@
+20060513
+ - (dtucker) [configure.ac includes.h ntp_msg.c] Add UnixWare support.  Based
+   on patch from luke.bakken at gmail.com.
+ - (dtucker) [version.h] Release 3.9.
+ - (dtucker) [openbsd-compat/fake-rfc2553.c] Missing braces in initializer.
+
+20060423
+ - (dtucker) [configure.ac] Correctly fall back to builtin-arc4random when
+   OpenSSL is not present.
+
+20060116
+ - (dtucker) [INSTALL configure.ac ntp.c] Make configure --with-privsep-path
+   compile in the chroot directory.  Default behavior remains to chroot to
+   the ntpd user's home dir.  Based in part on a patch from OpenWall via
+   solar at openwall com.
+ - (dtucker) [Makefile.in] Make rebuild of y.tab.c parse conditional.
+ - (dtucker) [configure.ac defines.h] Enable replacement getifaddrs via
+   ioctl on Linux.
+ - (dtucker) [configure.ac openbsd-compat/fake-rfc2553.{c,h}] Add in6addr_any if
+   system libraries don't have it.
+ - (dtucker) [configure.ac openbsd-compat/bsd-misc.c] Add null implementation
+   of strsignal().
+ - (dtucker) [openbsd-compat/openbsd-compat.h] Template for strsignal.
+ - (dtucker) OpenBSD CVS Sync
+  - dtucker@cvs.openbsd.org 2005/07/06 19:54:24
+    [client.c]
+    add another non-fatal error for recvfrom; ok henning@
+    (ID sync only, already in portable)
+  - dtucker@cvs.openbsd.org 2005/07/11 18:04:28
+    [client.c]
+    Print actual error when in debug mode; ok henning@
+  - dtucker@cvs.openbsd.org 2005/07/11 18:05:34
+    [ntp.c]
+    Print privsep user and dir when in debug mode; ok henning@
+  - dtucker@cvs.openbsd.org 2005/07/11 18:08:06
+    [ntpd.c]
+    More descriptive error if a signal causes the child to exit; ok henning@
+  - henning@cvs.openbsd.org 2005/07/15 13:34:52
+    [ntp.c]
+    fix a function name in an error message why this was rotting in my
+    tree for so long, I dunno - and I dunno where it came from
+  - henning@cvs.openbsd.org 2005/07/15 13:36:10
+    [ntp.c]
+    remove recently added "using privsep user X" message, spams console
+    in -s mode, noticed by kettenis
+  - henning@cvs.openbsd.org 2005/07/15 13:37:15
+    [ntpd.h]
+    shrink read buffer size from 64k to 4k, this is not bgpd and we're
+    dealing with way less data
+  - dtucker@cvs.openbsd.org 2005/07/22 18:58:56
+    [server.c]
+    Skip invalid interfaces during 'listen on *'; ok henning@
+  - henning@cvs.openbsd.org 2005/08/09 00:42:32
+    [ntp.c]
+    with -s, do not wait if we don't have any peers at all.  From: Thomas
+    Jarosch <thomas.jarosch@intra2net.com>
+  - dtucker@cvs.openbsd.org 2005/08/10 23:48:36
+    [client.c ntp.c ntpd.h server.c]
+    Propogate server's leap indicator flags to clients; ok henning@
+  - henning@cvs.openbsd.org 2005/08/12 02:21:52
+    [buffer.c]
+    check for EINTR too after writev(), pt out by Alexander Farber
+  - henning@cvs.openbsd.org 2005/08/12 02:26:29
+    [buffer.c]
+    on writing, we actually can deal with ENOBUFS just as well as with
+    EAGAIN and EINTR, so do it, more or less from bgpd
+  - wvdputte@cvs.openbsd.org 2005/09/07 07:27:10
+    [ntpd.c]
+    when running ntpd with "-s" as it's argument from /etc/rc.conf, make
+    sure the output goes to syslog and not console by moving around log_init
+  - dtucker@cvs.openbsd.org 2005/09/24 10:32:03
+    [client.c ntp_msg.c ntpd.h server.c]
+    Log source address for 'malformed packet' errors.  ok henning@
+  - dtucker@cvs.openbsd.org 2006/01/19 17:40:16
+    [server.c]
+    Check SA_LEN(sa) after sa is checked for NULL.  Pointed out by solar
+    at openwall.com, ok henning@
+  - dtucker@cvs.openbsd.org 2006/01/19 22:20:23
+    [server.c]
+    Do not attempt to listen on interfaces with a wildcard address;
+    ok henning@
+
+20050729
+ - (dtucker) [configure.ac] Skip OpenSSL checks for cross-compilation.  Found
+   and tested by Scott Hays.
+
+20050707
+ - (dtucker) [openbsd-compat/bsd-setres[ug]id.c] Add code to use setre[ug]id
+   and some sanity checks.
+ - (dtucker) [configure.ac] Alphabetize $host case block.
+ - (dtucker) [configure.ac server.c openbsd-compat/Makefile.in
+   openbsd-compat/bsd-getifaddrs.{c,h} openbsd-compat/openbsd-compat.h]
+   Add getifaddrs() to compat layer.  Not enabled by default on any platform
+   now, enable with -DGETIFADDRS_VIA_SIOCGIFCONF at your own risk.
+ - (dtucker) [client.c] recvfrom on HP-UX will return EADDRNOTAVAIL instead
+   of ECONNREFUSED for a port-unreachable, so add to the non-fatal error
+   codes.
+ - (dtucker) OpenBSD CVS Sync
+  - dtucker@cvs.openbsd.org 2005/07/05 20:09:12
+    [client.c ntp.c ntpd.h server.c]
+    Save transmit time for each peer for later use as refid for SNTPv4
+    replies.  ok henning@
+
+20050703
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2005/03/23 11:42:04
+    [imsg.c ntpd.h]
+    wpos in struct buf_read and datalen in imsg_get should be size_t and
+    not ssize_t From: Alexander von Gernler <grunk@pestilenz.org>
+  - henning@cvs.openbsd.org 2005/03/23 12:36:35
+    [buffer.c]
+    remove now osolete comment, from a mail exchange with Alexander von
+    Gernler <grunk@pestilenz.org>
+  - henning@cvs.openbsd.org 2005/03/24 11:56:22
+    [ntpd.c]
+    fatal vs fatalx, Alexander von Gernler
+  - henning@cvs.openbsd.org 2005/03/24 15:50:07
+    [ntp.c]
+    one more fatal/fatalx, alexander
+  - henning@cvs.openbsd.org 2005/03/31 12:14:01
+    [log.c]
+    zap includes, Alexander von Gernler <grunk@pestilenz.org>
+  - henning@cvs.openbsd.org 2005/03/31 17:02:43
+    [ntpd.c]
+    zap includes, grunk
+  - henning@cvs.openbsd.org 2005/04/18 11:06:35
+    [client.c]
+    prevent replies with negative delay from being used, could happen with
+    -s From: Joerg Sonnenberger <joerg@britannica.bec.de> of dragonfly
+  - henning@cvs.openbsd.org 2005/04/18 11:07:55
+    [ntp.c]
+    after setting the clock hard correct the "next" and "deadline" timestamps
+    by the offset From: Joerg Sonnenberger <joerg@britannica.bec.de>
+  - henning@cvs.openbsd.org 2005/04/18 14:12:50
+    [ntp.c]
+    correctness: only account for offset after settime in next and deadline
+    when those timers are actually running. due to the way ntpd's logic
+    works this does not really make a difference, but correctness is good.
+    spotted by me, joerg agrees
+  - henning@cvs.openbsd.org 2005/04/18 20:46:02
+    [ntpd.c]
+    extra paranoia, from a discussion with joerg
+  - henning@cvs.openbsd.org 2005/04/19 11:08:41
+    [client.c]
+    move the "reply from ... " log msg in -d mdoe uop a bit so it actually
+    comes before the "adjusting local clock by..." one, joerg
+  - henning@cvs.openbsd.org 2005/04/26 15:18:22
+    [buffer.c imsg.c ntpd.h]
+    unify shared code a bit again to make future syncs easier From:
+    Alexander von Gernler <grunk@pestilenz.org>
+  - djm@cvs.openbsd.org 2005/05/03 05:44:35
+    [ntp.c]
+    setres[ug]id; ok deraadt@
+  - henning@cvs.openbsd.org 2005/05/11 15:12:35
+    [config.c]
+    don't touch *hn in failure case. no real change due to the way we use
+    it but more correct.  from  Michael Knudsen <e@molioner.dk>
+  - henning@cvs.openbsd.org 2005/05/24 08:46:43
+    [ntp.c]
+    no need for endpwent(0 here either
+  - henning@cvs.openbsd.org 2005/05/25 06:10:50
+    [server.c]
+    ifa->ifa_addr can be NULL in some cases, pt out by Kurt Roeckx
+    <kurt@roeckx.be> / bugs.debian.org/310586
+  - dtucker@cvs.openbsd.org 2005/05/26 19:13:06
+    [ntp.c ntpd.c]
+    Ensure previous adjust has completed before clearing alarm flag;
+    ok henning@
+  - henning@cvs.openbsd.org 2005/06/20 02:42:57
+    [client.c ntp.c ntpd.c ntpd.h parse.y]
+    use a little state engine to keep track of delayed dns lookups and such,
+    eases things tested by Jason Ackley <jason@ackley.net> Matthias Kilian
+    <kili@outback.escape.de> Stephen Marley <stephen@marley.org.uk> sturm@
+    theo ok
+  - henning@cvs.openbsd.org 2005/06/20 03:11:13
+    [ntpd.c ntpd.h]
+    use a #define for the time to wait on -s and clarify a log msg
+  - deraadt@cvs.openbsd.org 2005/06/22 05:55:18
+    [ntpd.8] (ID sync only; section is not in portable man page)
+    we do not do -s in /etc/rc anymore.  this is because, even if -s did
+    try to do it's job it would have to choose between two cases: 1. either
+    it would take a very long time to get the correct adjustment, thus,
+       if you are not currently on the net right, you wait a long time
+       (or must type ^C, which is ridiculous)
+    2. ntpd could be modified to "abort early", but then would not meet the
+       promise made by -s in the manual page (note: it does not say that it
+       "tries")
+    therefore, -s and -S must become user choices.  Sorry.  This same
+    choice is made in lots of other places
+ - (dtucker) [LICENCE configure.ac openbsd-compat/Makefile.in
+   openbsd-compat/bsd-setres[ug]id.c openbsd-compat/openbsd-compat.h
+   removed openbsd-compat/uidswap.c] Use setres[ug]id interface on all
+   platforms.  Currently only implements the case where ruid == euid == suid
+   which is all ntpd uses (may be extended later).
+ - (dtucker) [Makefile.in] Use example ntpd.conf from srcdir so "make install"
+   works for the srcdir != builddir.
+ - (dtucker) [openbsd-compat/{bsd-poll.c,bsd-setresgid.c,bsd-setresuid.c}]
+   Add CVS Ids
+
+20050629
+ - (dtucker) [configure.ac openbsd-compat/{Makefile.in,errx.c,verrx.c,
+    openbsd-compat.h}] Add errx(), in anticipation of it being used in ntpd.
+ - (dtucker) [INSTALL] Add a bit more detail on the privsep user and group.
+
+20050627
+ - (dtucker) [README] Make it clear that the footnote only applies to old
+   Solaris systems, based on feedback from oyvind at repvik.org.
+ - (dtucker) [INSTALL] Point out that --with-ssl-dir is only used if
+   we're not using the builtin arc4random.
+
+20050626
+ - (dtucker) [INSTALL] Add installation directions, lack thereof pointed out
+   by oyvind at repvik.org.
+ - (dtucker) [Makefile.in configure.ac] Have configure find a yacc that works.
+ - (dtucker) [Makefile.in] Make check for existing ntp user more specific.
+
+20050619
+ - (dtucker) [openbsd-compat/bsd-poll.c] Remove code left over from debugging.
+
+20050508
+ - (dtucker) [configure.ac] Check that required programs are found.  Pointed
+   out by jj at it.su.se.
+ - (dtucker) [contrib/redhat/openntpd.spec] If ntp user already exists,
+   set its homedir to the chroot dir.  From wijnand at nedbsd.nl.
+ - (dtucker) [contrib/redhat/openntpd.spec] Always create privsep dir
+   even if ntp user already exists.  Also from Wijnand.
+
+20050530
+ - (dtucker) [Makefile.in configure.ac mdoc2man.awk] Add support for other
+   man page formats (man and catman), based on OpenSSH's.
+ - (dtucker) [Makefile.in openbsd-compat/Makefile.in] Make out-of-tree
+   builds work.
+ - (dtucker) [Makefile.in openbsd-compat/Makefile.in] Minor cleanups.
+ - (dtucker) [LICENCE] Add Anil Madhavapeddy to atomicio bits.
+ - (dtucker) [version.h] Set version to -current.
+
+20050529
+ - (dtucker) [openbsd-compat/atomicio.c openbsd-compat/atomicio.h
+    openbsd-compat/bsd-arc4random.c] Sync OpenBSD ssize_t -> size_t atomicio
+    change by avsm@, update rnd code to new interface.
+
+20050528
+ - (dtucker) [openbsd-compat/bsd-poll.c] Portability and correctness fixes:
+  - Handle fd == -1 case.
+  - Handle fractional second timeouts correctly (not used in ntpd).
+  - Allow any negative timeout to mean INFTIM.
+ - (dtucker) [configure.ac] For AC_CHECK_HEADERS() and AC_CHECK_FUNCS() have
+   one entry per line to make it easier to merge changes.
+ - (dtucker) [defines.h includes.h openbsd-compat/bsd-poll.c] Copyright bump.
+ - (dtucker) [CREDITS Makefile.in includes.h version.h] Add CVS Id.
+ - (dtucker) [openbsd-compat/asprintf.c] char const -> const char, matches
+   OpenBSD 1.10 -> 1.11.
+
+20050523
+ - (dtucker) [configure.ac defines.h] Add flags to allow ntpd to build on
+   AIX, mostly from tomwilliams14 at comcast.net.
+ - (dtucker) [contrib/redhat/openntpd.spec] Specfile update from Bernhard
+   Weisshuhn (bkw at weisshuhn de):
+  - Use 'ntp' (not _ntp) with id 38 as privsep user
+  - Add openssl-devel to Build-Requires
+  - mkdir -p /var/empty/ntpd
+  - Added ChangeLog, README LICENCE and CREDITS as docfiles
+  - removed fluff, use %{_variables} where appropriate
+ - (dtucker) [configure.ac] Fall back to builtin arc4random if we don't find
+   a usable OpenSSL.
+ - (dtucker) [README] Update known-working platforms and misc info.
+ - (dtucker) [README] Add CVS Id.
+ - (dtucker) [configure.ac includes.h] Check for and include arpa/nameser.h,
+   fixes build on Solaris 2.5.1.
+ - (dtucker) [version.h contrib/redhat/openntpd.spec] Enter 3.7p1.
+
+20050313
+ - (dtucker) OpenBSD CVS Sync
+  - dtucker@cvs.openbsd.org 2005/01/27 15:44:00
+    [client.c ntp.c ntpd.h]
+    Scale query interval by the overall offset not per-peer offset, so we
+    don't query outliers more often than any other server.  ok henning@
+  - dtucker@cvs.openbsd.org 2005/01/28 13:01:32
+    [client.c server.c]
+    Make network unreachable errors non-fatal; ok henning@
+  - henning@cvs.openbsd.org 2005/01/28 13:32:24
+    [ntpd.c]
+    fatal() if daemon() fails, Alexander von Gernler <grunk@pestilenz.org>
+  - dtucker@cvs.openbsd.org 2005/01/28 13:37:20
+    [client.c ntp.c ntpd.h]
+    Simplify interval scaling and randomize query intervals; ok henning@
+  - henning@cvs.openbsd.org 2005/02/02 19:52:32
+    [ntpd.c]
+    usage() is __dead
+    pt out by Alexander v Gernler
+  - henning@cvs.openbsd.org 2005/02/02 19:57:09
+    [buffer.c ntpd.h]
+    buffer structs and API ssize_t -> size_t; from bgpd
+  - henning@cvs.openbsd.org 2005/02/02 20:03:52
+    [ntp.c]
+    KNF
+  - dtucker@cvs.openbsd.org 2005/02/03 11:53:33
+    [client.c ntpd.h]
+    Implement simple duplicate suppression of peer errors; ok henning@
+  - henning@cvs.openbsd.org 2005/02/21 18:58:43
+    [client.c]
+    fix an error message
+  - henning@cvs.openbsd.org 2005/02/22 13:03:24
+    [ntp.c]
+    when sending a query already returns a failure, we're not going to see
+    a reply to that query.
+    if we get errors for all queries and the initial settime() is still due
+    and thus the parent process still waits (not yet daemonized!), send an
+    IMSG_SETTIME with offset 0.
+    shortens the delay dramatically when you boot without network
+    idea from a discussion with theo
+  - henning@cvs.openbsd.org 2005/03/06 19:36:52
+    [imsg.c]
+    fix error message, Benedikt Steinbusch <bsteinb@hamazone.de>
+  - henning@cvs.openbsd.org 2005/03/08 13:31:40
+    [client.c]
+    let client_query return 0 if it requested dns resolution
+  - henning@cvs.openbsd.org 2005/03/08 15:28:55
+    [ntpd.c]
+    from the "shut the fuck up, ntpd" department:
+    move log_debug call to tell about skipping the settime due to lack of
+    answers down slightly below the 2nd (and final) log_init call so it becomes
+    a -d only thing. tested by dlg and me
+  - deraadt@cvs.openbsd.org 2005/03/08 15:37:16
+    [ntp.c]
+    missing break spotted by lint
+  - henning@cvs.openbsd.org 2005/03/08 15:59:36
+    [config.c]
+    from the "shut the fuck up, ntpd" department:
+    don't whine about temporary dns errors
+  - deraadt@cvs.openbsd.org 2005/03/08 17:27:14
+    [ntp.c]
+    knf
+  - henning@cvs.openbsd.org 2005/03/08 17:33:43
+    [ntp.c]
+    when trying short-circuit the wait for the first reply for -s, only
+    do so when
+    -we tried to send at least one query (that is the change)
+    -we could not send ou a single one without failure (this was already in
+     place but catched too much)
+    problem independently noticed by nick and danh, ok mickey danh, testing by
+    many
+  - henning@cvs.openbsd.org 2005/03/09 15:07:00
+    [imsg.c]
+    when, after processing all complete imsgs we found in the buffer,
+    there are some bytes left (less than an imsg header, or less than the
+    imsg header len field says) we copy it to the very beginning of the buffer.
+    use memmove instead of memcpy since it is not guaranteed that there's no
+    overlap. while memcpy on OpenBSD is safe, it might not elsewhere, and
+    we want our code to be correct anyways.
+    funny enough theo and I talked at length about that last week in dublin,
+    and I said I believe I had no memcpys with the chance of overlap in ntpd/
+    bgpd - well, here is one, and Alexander von Gernler <grunk@pestilenz.org>
+    pointed me to it.
+  - henning@cvs.openbsd.org 2005/03/09 21:31:11
+    [config.c ntpd.c]
+    nasty: host_dns used to run before forking and chrooting etc, so it was
+    guaranteed that its res_init() call was done once before fork etc...
+    that is no longer the case. call res_init() in main() early.
+  - dtucker@cvs.openbsd.org 2005/03/13 11:06:27
+    [ntpd.c]
+    Fixes in ntpd_settime (ie ntpd -s):
+    - Handle errors from syscalls better
+    - Prevent curtime.tv_usec from being negative for negative offsets.
+    - Don't claim to have done settimeofday if it fails.
+    ok henning@
+    (brought to my attention by holger at wizards.de)
+ - (dtucker) [defines.h] defined __dead if the system doesn't.
+
+20050211
+ - (dtucker) [defines.h] Fix SA_LEN macro for platforms that have different
+   sized sockaddr_in and sockaddr_in6 structs but don't define their own
+   SA_LEN.  Patch from Leonardo C. Filho <leonardo at fesppr br>.
+
+20050127
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/12/22 17:04:11
+    [ntpd.c]
+    d can be negative, take that into account when comparing to the logging
+    threshold. spotted by Constantine Murenin <mureninc@gmail.com>, mickey ok
+  - henning@cvs.openbsd.org 2004/12/23 17:10:10
+    [ntp.c]
+    KNF
+  - dtucker@cvs.openbsd.org 2005/01/27 11:32:29
+    [client.c ntp.c ntpd.h]
+    Delay before retrying a query on timeout; ok henning@
+
+20050109
+ - (dtucker) [LICENCE] Fix typos and omissions, tidy up formatting.
+ - (dtucker) [LICENCE] Add CVS Id.
+
+20050107
+ - (dtucker) [LICENCE] Add an OpenSSH-style licence summary.
+
+20041222
+ - (dtucker) OpenBSD CVS Sync
+  - moritz@cvs.openbsd.org 2004/12/20 16:10:05
+    [ntpd.c]
+    some typos in log messages.
+  - henning@cvs.openbsd.org 2004/12/22 06:34:52
+    [ntp.c]
+    if our first getpwnam(), testing for NTPD_USER, succeeded, but the second
+    returns NULL, we don't need loooong explanations, but at least some
+    indicator what went wrong, From: Michael Knudsen <e@molioner.dk>
+  - dtucker@cvs.openbsd.org 2004/12/22 06:36:11
+    [server.c]
+    Save original value returned by getifaddrs to free later; ok henning@
+ - (dtucker) [openbsd-compat/uidswap.c] Include includes.h 
+
+20041220
+ - (dtucker) [README] Queries and bug reports to me.
+ - (dtucker) [configure.ac defines.h] on QNX, socklen_t is really size_t.
+ - (dtucker) [configure.ac openbsd-compat/Makefile.in openbsd-compat/port-qnx.c]
+   Add an adjtime() function for QNX, written by Anthony O.Zabelin.
+
+20041219
+ - (dtucker) [includes.h openbsd-compat/Makefile.in openbsd-compat/atomicio.c
+   openbsd-compat/atomicio.h openbsd-compat/bsd-arc4random.c
+   openbsd-compat/openbsd-compat.h]:  Add atomicio from OpenSSH and use for
+   reading entropy sources to ensure complete reads.
+ - (dtucker) [defines.h] Remove some dead code.
+ - (dtucker) [openbsd-compat/bsd-arc4random.c] Use atomicio for write too.
+
+20041218
+ - (dtucker) [configure.ac ntp.c ntpd.c openbsd-compat/Makefile.in
+   openbsd-compat/bsd-poll.c openbsd-compat/bsd-poll.h
+   openbsd-compat/openbsd-compat.h] Add a poll() replacement built around
+   select() and enable for platforms that don't have poll (eg QNX4).  Poll
+   header file from OpenBSD, function written by me, tested on QNX4 by
+   Anthony O.Zabelin.
+ - (dtucker) [configure.ac] Alphabetize system-specific case block.
+ - (dtucker) [configure.ac bsd-misc.c] Add a dummy setgroups() function for
+   platforms that don't have it; from Anthony O.Zabelin.
+ - (dtucker) [configure.ac openbsd-compat/bsd-snprintf.c] Make "long long"
+   support optional.  From Anthony O.Zabelin.
+ - (dtucker) [configure.ac defines.h] Define __func__ macro as required,
+   stolen from OpenSSH.
+ - (dtucker) [configure.ac] Add configure-time settings for QNX4.  From
+   Anthony O.Zabelin.
+ - (dtucker) [config.c] Add includes.h
+ - (dtucker) [configure.ac includes.h] Check for sys/timers.h and include.
+ - (dtucker) [openbsd-compat/bsd-arc4random.c] Add support for using EGD/PRNGD
+   sockets directly when configured --with-builtin-arc4random.
+ - (dtucker) [openbsd-compat/bsd-arc4random.c] Remove debugging messages.
+ - (dtucker) OpenBSD CVS Sync
+  - dtucker@cvs.openbsd.org 2004/12/15 00:44:20
+    [client.c]
+    If polling a server results in an error, drop that server to the maximum
+    poll interval;  ok henning@
+  - dtucker@cvs.openbsd.org 2004/12/15 13:24:21
+    [client.c]
+    Factor out interval scaling code; ok henning@
+  - dtucker@cvs.openbsd.org 2004/12/15 13:29:25
+    [client.c]
+    Poll unsynchronized servers at the maximum interval and log a message about
+    them when in debug mode; ok henning@
+  - dtucker@cvs.openbsd.org 2004/12/16 01:38:59
+    [config.c ntpd.h]
+    Limit the number of addresses used by the 'servers' directive to 8;
+    ok henning@
+
+20041215
+ - (dtucker) [includes.h ntpd.c] Fix warnings for RCSID from picky compilers
+   and user RCSID for the release string.  Pointed out by Jason Mader.
+ - (dtucker) [includes.h] Undef sa_len macro if it's defined, to prevent
+   name collisions on IRIX.  With Jason Mader.
+ - (dtucker) [Makefile.in] Zap a GNUmake-ism, spotted by Jason Mader.
+ - (dtucker) [openbsd-compat/bsd-misc.c openbsd-compat/openbsd-compat.h]
+   Tweak again to prevent warnings.
+
+20041214
+ - (dtucker) [configure.ac] On IRIX, determine IOV_MAX from sysconf(8), based
+   on info from Jason Mader.
+ - (dtucker) [configure.ac] Move __need_IOV_MAX define into the Linux-specific
+   block, suggested by Jason Mader.
+ - (dtucker) [openbsd-compat/bsd-misc.c] Cast argv0 to char * to keep IRIX's
+   compiler happy.  From Jason Mader.
+ - (dtucker) [Makefile.in] Add rules to ensure openbsd-compat gets rebuilt
+   properly.
+ - (dtucker) OpenBSD CVS Sync
+  - jmc@cvs.openbsd.org 2004/12/07 11:06:12
+    [ntpd.8]
+    tweaks;
+  - mickey@cvs.openbsd.org 2004/12/08 16:47:38
+    [client.c ntp.h ntp_msg.c server.c util.c]
+    uniquely name members of s_fixedpt and l_fixedpt; henning@ ok
+  - mickey@cvs.openbsd.org 2004/12/08 18:35:16
+    [ntp_msg.c]
+    use two tiny macros for copying fields out to simplify reading; henning@ ok
+  - mickey@cvs.openbsd.org 2004/12/09 21:24:46
+    [client.c ntpd.h]
+    define TRUSTLEVEL_MAX for the trustedlevel value of 10; henning@ ok
+  - jaredy@cvs.openbsd.org 2004/12/10 04:54:18
+    [ntpd.8]
+    typos, then -> than, from Michael Knudsen
+  - dtucker@cvs.openbsd.org 2004/12/13 13:22:52
+    [client.c ntp.h]
+    Discard replies with alarm flag set or invalid stratum; ok henning@
+  - dtucker@cvs.openbsd.org 2004/12/13 13:36:02
+    [ntp.c]
+    Check for error status from poll() too; ok henning@
+  - dtucker@cvs.openbsd.org 2004/12/14 07:27:13
+    [ntp_msg.c]
+    sendto() takes socklen_t as an argument; ok henning@
+
+20041213
+ - (dtucker) [openbsd-compat/asprintf.c] unsigned char -> char, silences
+   warning from IRIX's compiler.  From Jason Mader (jason at ncac gwu edu).
+
+20041212
+ - (dtucker) [ntpd.8] Remove some OpenBSD-specific references from the man
+   page.  From Christian Gut (cycloon at is-root org).
+ - (dtucker) [configure.ac] Add defines needed for uid swapping functions
+   to work on IRIX.  From Jason Mader (jason at ncac gwu edu).
+
+20041209
+ - (dtucker) [contrib/redhat/ntpd contrib/redhat/openntpd.spec] Add RPM spec
+   file and startup scripts; from jason at devrandom.org.
+ - (dtucker) [version.h] Release 3.6.1p1.
+
+20041208
+ - (dtucker) [Makefile.in configure.ac] Add --with-privsep-path configure
+   option, based on patch from Andrew Stribblehill (ads at debian org).
+ - (dtucker) [Makefile.in configure.ac] Strip installed binaries by default,
+   add --disable-strip configure option, taken from OpenSSH.  Noticed by otto@
+
+20041207
+ - (dtucker) OpenBSD CVS Sync
+  - mickey@cvs.openbsd.org 2004/12/06 17:52:33
+    [ntpd.h]
+    ensure the most excellent alignment in the structs; henning@ ok
+  - mickey@cvs.openbsd.org 2004/12/06 21:57:17
+    [ntpd.8 ntpd.c ntpd.h]
+    do not log tiny local clock drifts; w/ help from Joerg Sonnenberger
+    <joerg@britannica.bec.de>; henning@ ok
+
+20041204
+ - (dtucker) OpenBSD CVS Sync
+  - jmc@cvs.openbsd.org 2004/11/07 22:42:33
+    [ntpd.conf.5]
+    document that keywords can be specified multiple times;
+    from otto and myself; prodded by henning;
+  - otto@cvs.openbsd.org 2004/11/08 20:09:19
+    [ntpd.conf.5]
+    Advice user to use multiple servers. Prodded by Daniel Polak, help and ok
+    jmc@ ok henning@
+  - henning@cvs.openbsd.org 2004/11/10 12:27:54
+    [ntpd.c ntpd.h parse.y]
+    const'ify conffile
+    From: Joerg Sonnenberger <joerg@britannica.bec.de>
+  - henning@cvs.openbsd.org 2004/11/10 12:47:28
+    [client.c ntp.c ntpd.h]
+    ntp_adjtime() -> priv_adjtime()
+    ntp_settime() -> priv_settime()
+    ntp_host_dns() -> priv_host_dns()
+  - henning@cvs.openbsd.org 2004/11/12 18:24:52
+    [ntp.c ntpd.h util.c]
+    some missing includes, from Joerg Sonnenberger <joerg@britannica.bec.de>
+  - henning@cvs.openbsd.org 2004/11/25 07:27:41
+    [parse.y]
+    fix "listen on hostname"
+    fallout from the deferred dns lookups
+    noticed by dhartmei@
+ - (dtucker) [y.tab.c] Regen.
+
+20041203
+ - (dtucker) [ntpd.c openbsd-compat/bsd-misc.c openbsd-compat/openbsd-compat.h]
+    Correctly initialise __progname on platforms that don't have it natively,
+    based on OpenSSH's ssh_get_progname().  Reported by ihsan at dogan.ch.
+
+20041106
+ - (dtucker) [client.c] Back out portable-specific SA_LEN bits.
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/11/05 15:28:29
+    [parse.y]
+    memleaks in error pathes, patrick latifi, Thanks!
+  - dtucker@cvs.openbsd.org 2004/11/06 00:39:46
+    [client.c]
+    Use SA_LEN() instead of ss.ss_len.  Evaluates to the same result but it's
+    easier on portable.  ok henning@
+
+20041105
+ - (dtucker) [configure.ac ntpd.c] Remove workaround for signal(SIGCHLD,
+   SIG_IGN) on Linux.
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/11/02 19:00:38
+    [ntpd.8]
+    superfluous comma, From: James Herbert <lists@artyzan.net>
+  - henning@cvs.openbsd.org 2004/11/05 00:04:22
+    [ntpd.c]
+    use SIG_DFL instead of SIG_IGN when we are not interested in SIG_CHILD
+    anymore, same thing for us and it makes darren's life easier for the
+    portable
+ - (dtucker) [configure.ac ntpd.h] Add a --with-privsep-user option to
+   configure.
+
+20041103
+ - (dtucker) [configure.ac] Check for snprintf too.
+ - (dtucker) [ntpd.8] Remove references to OpenBSD-specific startup files,
+   from Christian Gut (cycloon at is-root org).
+
+20041028
+ - (dtucker) [openbsd-compat/bsd-misc.c] Use precision from adjtimex for
+   clock_getres.
+
+20041027
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/10/27 10:55:27
+    [ntp.c]
+    use clock_getres(3) and calculate precision from that, and fill the
+    precision field when we reply in server mode accordingly. from phessler
+  - dtucker@cvs.openbsd.org 2004/10/27 14:19:12
+    [ntp.c]
+    Calculate Hz and round up; ok henning@
+ - (dtucker) [configure.ac openbsd-compat/bsd-misc.c
+   openbsd-compat/openbsd-compat.h] Add clock_getres compat function.
+
+20041026
+ - (dtucker) [configure.ac includes.h openbsd-compat/bsd-misc.c
+   openbsd-compat/openbsd-compat.h] Add vsyslog() to compat library.
+ - (dtucker) [configure.ac openbsd-compat/Makefile.in
+   openbsd-compat/bsd-snprintf.c] Import snprintf replacement from OpenSSH
+   Portable.
+ - (dtucker) [configure.ac defines.h] Add a few definitions needed to compile
+   on older Solaris version.
+ - (dtucker) [README] Update for Solaris.
+ - (dtucker) [configure.ac] Look for socklen_t in <sys/socket.h>
+ - (dtucker) [configure.ac includes.h] Include <ctype.h>, do better checking
+   for socklen_t.
+ - (dtucker) [openbsd-compat/openbsd-compat.h] Add prototypes for snprintf
+   and vsnprintf.
+ - (dtucker) [configure.ac defines.h] Use sockaddr_storage.__ss_family where
+   available.
+
+20041023
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/09/14 22:01:28
+    [client.c]
+    paranoia: reset query->fd to -1 after close, from canacar some time ago
+  - henning@cvs.openbsd.org 2004/09/15 00:05:29
+    [buffer.c]
+    remove buf_write(), not used in ntpd. found by theo
+  - henning@cvs.openbsd.org 2004/09/15 00:07:20
+    [ntp.c]
+    missing include, from theo
+  - henning@cvs.openbsd.org 2004/09/15 00:08:06
+    [ntp.c ntpd.c]
+    unused variables, theo
+  - henning@cvs.openbsd.org 2004/09/15 00:18:12
+    [ntpd.h parse.y]
+    remove the unused variable/macro code, ok theo
+  - henning@cvs.openbsd.org 2004/09/15 00:23:08
+    [parse.y]
+    kill another unused function and two debugging printfs
+  - henning@cvs.openbsd.org 2004/09/15 19:14:11
+    [ntp.c ntpd.c]
+    malloc the imsg buffers instead of having them statically, suggested by
+    micsky some time ago, ok otto
+  - henning@cvs.openbsd.org 2004/09/15 19:21:25
+    [imsg.c ntp.c ntpd.c ntpd.h]
+    imsg framework cleanup:
+    -kill the _pid flavors of imsg_create and imsg_compose, and just add pid as
+    argument to those
+    -use imsg_create in imsg_compose instead of duplicating code
+    -check for datalen overflow
+  - henning@cvs.openbsd.org 2004/09/15 19:22:55
+    [imsg.c]
+    need buf_free() to free buf, free() is not good enough
+  - henning@cvs.openbsd.org 2004/09/16 01:02:37
+    [imsg.c]
+    ewps...
+  - henning@cvs.openbsd.org 2004/09/16 01:06:51
+    [imsg.c]
+    use imsg_add instead of the lower level buf_add in imsg_create; it already
+    does the error checking for us.
+  - henning@cvs.openbsd.org 2004/09/16 01:10:05
+    [imsg.c]
+    in imsg_compose:
+    -don't buf_free() on imsg_add() errors, it already does that for us
+    -use imsg_close() instead of buf_close(), does error handling already
+  - henning@cvs.openbsd.org 2004/09/16 01:13:42
+    [imsg.c ntpd.h]
+    the "type" param to imsg_compose and imsg_create is really an
+    enum imsg_type and not an int
+  - henning@cvs.openbsd.org 2004/09/18 07:33:14
+    [ntp.c ntpd.h]
+    do not bother overallocating and shrinking the pfd and idx2peer arrays,
+    doesn't by us anything. discussed with ryan during dinner at original joe's
+  - henning@cvs.openbsd.org 2004/09/18 20:01:38
+    [client.c ntp.c ntpd.8 ntpd.c ntpd.h]
+    add a new -s option, that tells ntpd to set the time using settimeofday()
+    once at startup. ntpd delays daemonizing until it has done the intial
+    time setting (or ran into the timeout) in this mode to make sure stuff
+    started later in rc is not subject to time jumps.
+    this eleminates the need to run rdate -n beforehands.
+    with some input from & ok ryan and bob, march music from mickey
+  - henning@cvs.openbsd.org 2004/09/18 20:27:57
+    [ntpd.c ntpd.h]
+    don't call settimeofday() when the offset is smaller than 180 seconds,
+    adjtime() will fix that fast enough, from discussion in theo's living room
+    ok mcbride beck
+  - henning@cvs.openbsd.org 2004/09/18 20:31:46
+    [ntpd.8]
+    say when we run settimeofday() with -s and when not, help from bob
+  - henning@cvs.openbsd.org 2004/09/18 20:37:12
+    [ntpd.8 ntpd.c]
+    implement -S to override earlier -s, requested by theo
+  - henning@cvs.openbsd.org 2004/09/18 23:21:35
+    [ntpd.c]
+    jmc says S before s and not s before S, sssssssso we do.
+  - henning@cvs.openbsd.org 2004/09/18 23:22:13
+    [ntpd.8]
+    greatly improved by jmc with some tweaks by yours truly
+  - henning@cvs.openbsd.org 2004/09/23 01:53:07
+    [ntpd.c]
+    reset chld_pid to 0 when acting upon a SIGCHLD so we don't try to send it
+    a kill then - tiny possible race there
+    pointed out by Brian Poole <raj@cerias.purdue.edu>
+  - henning@cvs.openbsd.org 2004/09/24 14:51:16
+    [client.c ntp_msg.c]
+    connect() the client-side sockets. idea & test & ok camield@
+  - henning@cvs.openbsd.org 2004/09/30 10:19:43
+    [client.c]
+    now that we connect() the client sockets we need to handle ECONNREFUSED as
+    non-fatal too, from camield@
+  - henning@cvs.openbsd.org 2004/10/04 11:12:58
+    [ntp.c]
+    do not take the average offset from all peers when calculating the total
+    offset to correct the local clock, but use the median.
+    given a reasonable sized set of servers this makes us nearly immune against
+    outliers or flasetickers, without the need for a horribly complicated
+    outliers detection which does not yield to better results anyway.
+  - henning@cvs.openbsd.org 2004/10/05 11:23:28
+    [client.c]
+    in client_addr_init() and client_nextaddr(), do not set up the socket and
+    connect it, instead leave it at -1.
+    in client_query, set up and connect the socket if it is -1.
+    and, the real reason for this change: handle connect failures gracefully
+    ok otto
+  - henning@cvs.openbsd.org 2004/10/08 12:42:25
+    [client.c]
+    whitespace both in comment; from bernd
+  - henning@cvs.openbsd.org 2004/10/13 09:20:41
+    [ntp.c]
+    when we get back a IMSG_HOST_DNS message from the parent the peer ID within
+    might have become invalid (because the peer showed up, dns request sent to
+    parent, peer vanishes, and then the reply comes back), so do not fatal() in
+    that case but just log_warnx(). provoked by brad
+  - henning@cvs.openbsd.org 2004/10/13 12:22:39
+    [ntp.c server.c]
+    correctly set refid in replies with NTP protocol versions < 4.
+    code path for NTP4 remains unchanged, we already set refid correctly there.
+    NTP3 and older uses an IPv4 address as refid.
+    use the IP of the server we last synced to if it was a IPv4 one.
+    sometimes we use the average offset between two, in that case just pick
+    one for the IP.
+    this scheme naturally fails when we query IPv6 servers and have to reply
+    to IPv4 NTP3 (or even older NTP versions) clients - refid stays at 0 then.
+    this is a protocol limitation, nothing we can do about it.
+  - henning@cvs.openbsd.org 2004/10/13 12:37:47
+    [ntp_msg.c]
+    fall cleaning
+  - henning@cvs.openbsd.org 2004/10/13 13:19:44
+    [client.c]
+    thinko, htonl() -> ntohl(). as we don't use the value in question effect
+    zero
+  - henning@cvs.openbsd.org 2004/10/13 13:35:19
+    [client.c ntp.h ntp_msg.c]
+    in struct ntp_msg, rename "distance" to "rootdelay" to closer match RFCs
+    and such
+  - henning@cvs.openbsd.org 2004/10/13 14:02:50
+    [ntp.c server.c]
+    set rootdelay in replies.
+    inherit rootdelay from the delay from the last client update from the peer
+    that we picked last time to adjust the local clock.
+    in some cases we use the average offset between two peers' client updates,
+    then use the average delay between the two as well.
+  - dtucker@cvs.openbsd.org 2004/10/14 09:35:48
+    [client.c ntpd.h server.c]
+    Have ntpd use IPTOS_LOWDELAY; ok henning@
+  - dtucker@cvs.openbsd.org 2004/10/15 01:58:04
+    [client.c server.c]
+    Only set IPTOS_LOWDELAY on IPv4 interfaces; pointed out by phessler,
+    ok henning
+  - henning@cvs.openbsd.org 2004/10/22 21:17:37
+    [client.c ntp.c ntp_msg.c ntpd.h server.c]
+    in server mode reply with stratum from the peer that we currently prefer
+    plus one
+  - henning@cvs.openbsd.org 2004/10/22 21:24:20
+    [ntp_msg.c]
+    oups
+ - (dtucker) [client.c] Use SA_LEN instead of ss_len.
+ - (dtucker) [ntpd.c] Move seed_rng earlier.
+ - (dtucker) [includes.h ntpd.c version.h] Add a version identifier.
+ - (dtucker) [configure.ac ntp.c] Test for the presence of <paths.h>
+ - (dtucker) [defines.h] Define MAX() macro if not already defined.
+ - (dtucker) [ntpd.c] Add SCCS tag marker so 'what' works too.
+
+20041022
+ - (dtucker) Release 3.6p1.
+
+20041015
+ - (dtucker) [configure.ac openbsd-compat/inet_pton.c] Fix a couple of silly
+   errors that prevented it from working on OS X; from mouring@
+
+20041014
+ - (dtucker) configure.ac defines.h includes.h openbsd-compat/Makefile.in
+   openbsd-compat/fake-rfc2553.c openbsd-compat/fake-rfc2553.h
+   openbsd-compat/inet_pton.c openbsd-compat/openbsd-compat.h] Add support 
+   for platforms that do not have a native getaddrinfo interface, based on
+   OpenSSH's compatibility interface and OpenBSD's inet_pton.
+ - (dtucker) [openbsd-compat/openbsd-compat.h openbsd-compat/bsd-misc.c]
+   Compat functions for seteuid and setegid from OpenSSH. ntpd will now work
+   on HP-UX.
+ - (dtucker) [Makefile.in openbsd-compat/Makefile.in
+   openbsd-compat/openbsd-compat.h] Set CPPFLAGS so older make's work.
+ - (dtucker) [config.c configure.ac] Check for sin6_scope_id.
+ - (dtucker) [openbsd-compat/fake-rfc2553.h] remove sin6_scope_id to re-sync
+   with OpenSSH.
+ - (dtucker) [README] Update.
+
+20041003
+ - (dtucker) [openbsd-compat/asprintf.c] Ensure than string is freed if
+   vsnprintf fails.
+
+20041002
+ - (dtucker) [configure.ac] Look for res_9_init in libresolv too, needed on
+   Mac OS X.  From samh at granada-learning com.
+ - (dtucker) [configure.ac includes.h] Check for and include netdb.h, prevents
+   "redefinition of EAI_NODATA" errors.
+
+20040912
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/09/07 22:43:07
+    [server.c]
+    ignore ntp_sendmsg()s return value in server_dispatch. could result in
+    ntpd exiting on sendmsg() failures, which is not desired.
+  - henning@cvs.openbsd.org 2004/09/09 21:50:33
+    [ntp.c]
+    correctly track peer count. fixes a memory corruption.
+    with & ok otto millert claudio, ok deraadt canacar
+
+20040904
+ - (dtucker) [defines.h] FreeBSD 5.x does not have EAI_NODATA, so define to
+   EAI_NONAME.  From naddy at mips.inka.de.
+ - (dtucker) [configure.ac openbsd-compat/bsd-arc4random.c] Add support for
+   building without OpenSSL (./configure --with-builtin-arc4random), based
+   on arcfour routines from nanocrypt by Damien Miller.  Requires /dev/urandom
+   device.
+ - (dtucker) [configure.ac ntpd.c] Set SIGCHLD to SIG_DFL on Linux.
+
+20040901
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/08/24 15:23:19
+    [config.c ]
+    don't fatal() if getaddrinfo() returns EAI_NONAME
+  - deraadt@cvs.openbsd.org 2004/08/30 11:50:56
+    [ntp_msg.c]
+    ENOBUFS, EHOSTUNREACH, ENETDOWN and EHOSTDOWN are bad reasons to log;
+    ok otto henning
+  - deraadt@cvs.openbsd.org 2004/08/30 11:52:04
+    [config.c]
+    skip early DNS lookups -- they are deferred to later; ok otto ho henning
+  - henning@cvs.openbsd.org 2004/08/30 12:02:59
+    [config.c]
+    don't forget to set *hn... theo ok
+ - (dtucker) [README] Update platforms.
+ - (dtucker) [configure.ac] Add product name to AC_INIT
+
+20040825
+ - (dtucker) [ntpd.conf] Sync with OpenBSD, requested by henning@.
+
+20040820
+ - (dtucker) [defined.h] Newer FSF bisons will create a y.tab.c that has
+   conflicting definitions of YYSTYPE.  Defining YYSTYPE_IS_DECLARED keeps it
+   happy.  Noted by Q at ping.be.
+ - (dtucker) [removed ntpd.cat8 ntpd.conf.cat5] Remove catman pages.  Noted by
+   by Q at ping.be.
+ - (dtucker) [configure.ac ntpd.c] Prevent Linux kernel from whining about
+   signal(SIGCHLD, SIG_IGN) + wait().
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/08/10 12:41:15
+    [config.c ntpd.h parse.y ]
+    move memory allocation for new peers into a new function, makes ID
+    allocation easier
+  - henning@cvs.openbsd.org 2004/08/10 12:45:27
+    [parse.y ]
+    in the pool case ("servers somepool.somewhere"), we add new peers while
+    looping over the addresses returned by the dns lookup, as each address
+    is one new peer.
+    however, if the lookup fails with a temporary error, we will try to lookup
+    later again. for that, we obviously need to insert one peer with the
+    hostname in addr_head... change one for() loop into a do { } while() one
+  - henning@cvs.openbsd.org 2004/08/10 19:17:10
+    [ntp_msg.c ]
+    wrong sizeof; Brian Poole <raj@cerias.purdue.edu>
+  - henning@cvs.openbsd.org 2004/08/10 19:18:23
+    [buffer.c ]
+    order #includes, Brian Poole <raj@cerias.purdue.edu>
+  - henning@cvs.openbsd.org 2004/08/12 16:33:59
+    [client.c config.c ntp.c ntpd.c ntpd.h ]
+    do not try to getaddrinfo() in the unprivileged process, send an imsg
+    asking the privileged one to do it. sends back an imsg with the
+    resulting addresses in a bunch of struct sockaddr_storage in the data
+    part.
+    this should fix all remaining issues with dns (non-)availability at
+    ntpd startup, be it due to named on localhost or something else.
+    tested by marco@ and Chris Paul <chris.paul@sentinare.com>
+  - otto@cvs.openbsd.org 2004/08/13 12:26:13
+    [client.c ]
+    Reset deadline on failed transmit. Avoids a spinning process if
+    all sends fail. ok henning@
+  - otto@cvs.openbsd.org 2004/08/16 11:14:15
+    [client.c ]
+    Be more careful setting next and deadline, they should not both be != 0
+    at the same time.
+    ok henning@
+ - (dtucker) [configure.ac] libresolv now needed on some platforms (eg
+   Solaris).
+
+20040730
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/07/25 18:27:58
+    [config.c ntpd.h ]
+    remove unused function
+  - henning@cvs.openbsd.org 2004/07/28 16:38:43
+    [client.c config.c ntpd.h parse.y ]
+    when a dns lookup fails at parse time, do not abort but try again
+    to resolve the hostname every 60 seconds
+    fixes ntpd invocations before e. g. a dialup link is established and such.
+    as we want ntpd to be a "fire and forget" background daemon it should
+    cope with such situations.
+    tested by many
+  - henning@cvs.openbsd.org 2004/07/28 16:56:21
+    [parse.y ]
+    prevent unresolvable hostnames in "listen on" statements
+  - henning@cvs.openbsd.org 2004/07/29 11:01:48
+    [ntpd.h parse.y ]
+    keep an ID per server we talk to
+
+20040721
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/07/20 16:47:55
+    [client.c ntpd.h parse.y ]
+    wrap the heads for the linked list of addresses into a new ntp_addr_wrap
+    which, besides the head pointer for the list of course, stores the original
+    address as specified (i. e. as hostname instead of resolved IPs) and flags
+    and such.
+  - henning@cvs.openbsd.org 2004/07/21 09:40:55
+    [parse.y ]
+    no multiple free(); "John L. Scarfone" <j0@cox.net>
+ - (dtucker) [Makefile.in] rebuild y.tab.c during distprep too.
+
+20040720
+ - (dtucker) [Makefile.in] Set @CC@ too.
+
+20040719
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/07/18 12:59:41
+    [client.c ntp.c ntpd.h ]
+    query interval scaling, episode II
+    1) base the interval calculation on the offset from the last reply, not
+       from the last peer update.
+       Allows us to send more queries again faster when the local clock
+       diverges too much
+    2) every time we form a peer update (for which we need 8 replies)
+       check wether we have a ready peer update for all peers that are
+       currently trusted, and if so, calculate the total offset and call
+       adjtime().
+       that means that adjtime is no longer called in fixed intervals
+       but whenever we have enough data to reliably calculate the local
+       clock offset.
+       In practice, that means we call adjtime() less often, but with
+       probably better data.
+    3) invalidate peer updates after beeing used. no point in re-using them
+       - this resulted in calling adjtime() multiple times with the same
+       offset, which doesn't make sense
+    tested by many
+  - henning@cvs.openbsd.org 2004/07/18 13:26:53
+    [client.c server.c ]
+    there are a few recvfrom(2) errors we do not want to panic on
+ - (dtucker) [openbsd-compat/bsd-arc4random.c] Discard early keystream from
+   RC4, based on OpenSSH Portable's rev 1.9 by djm@.
+
+20040718
+ - (dtucker) [Makefile.in] Create privsep directory and warn if _ntp group/
+   user do not exist.
+ - (dtucker) [defines.h] Mac OS X needs IOV_MAX defined too.  From kinetik at
+   orcon.net.nz
+ - (dtucker) [configure.ac] Die screaming if we can't find getaddrinfo.
+ - (dtucker) [defines.h] Use "#if defined(..) not "#if (..)".
+ - (dtucker) [configure.ac] OS X has some broken uidswapping functions, from
+   OpenSSH's configure.ac.
+ - (dtucker) [configure.ac, added config.sub config.guess] Add
+   AC_CANONICAL_HOST and associated files, from kinetik at orcon.net.nz.
+
+20040717
+ - (dtucker) [configure.ac] Import --with-ssl-dir checks from OpenSSH
+   Portable, configure will now automatically find libcrypto in its default
+   location.
+ - (dtucker) [ntpd.conf] Make more like OpenBSD's, but select 3 servers from
+   pool.ntp.org by default rather than use the "servers" directive.
+
+20040716
+ - (dtucker) [Makefile.in configure.ac defines.h includes.h ntp.h ntpd.h
+   server.c openbsd-compat/Makefile.in, added openbsd-compat/asprintf.c
+   openbsd-compat/bsd-misc.c openbsd-compat/daemon.c] Support Solaris.  Needs
+   CFLAGS/LDFLAGS set to find libcrypto, eg
+   CFLAGS=-I/usr/local/ssl/include LDFLAGS=-L/usr/local/ssl/lib ./configure
+ - (dtucker) [configure.ac] Fix socketpair libnsl/libsocket test.
+ - (dtucker) [configure.ac defines.h includes.h
+   openbsd-compat/openbsd-compat.h] Fix lots of warnings.
+
+20040715
+ - (dtucker) [Makefile.in] Improve "make clean" targets.
+ - (dtucker) [configure.ac server.c] Check for getifaddrs and if not found,
+   compile without "listen on *" support.
+ - (dtucker) OpenBSD CVS Sync
+  - alexander@cvs.openbsd.org 2004/07/13 17:27:57
+    [server.c]
+    ignore obviously malformed queries; ok henning@
+  - alexander@cvs.openbsd.org 2004/07/13 19:41:26
+    [ntp.c ntpd.h server.c ]
+    Respond to client queries with better server statistics.  We now output
+    a close-to-reality stratum, a real reference time, and a leap indicator
+    that will indicate if the local clock isn't synchronized.
+  - jmc@cvs.openbsd.org 2004/07/13 19:51:38
+    [ntpd.8 ntpd.conf.5 ]
+    tweaks; ok henning@
+  - henning@cvs.openbsd.org 2004/07/14 20:16:31
+    [client.c ntp.c ntpd.h server.c ]
+    do not do the stratum guessing dance.
+    stratum is pretty much pointless anyway these days, and we certainly
+    do not want to send out illegal packets (stratum=0) until synced...
+
+20040714
+ - (dtucker) [Makefile.in buffer.c configure.ac defines.h includes.h ntpd.c
+   parse.y y.tab.c] Fix build warnings on Linux, based in part on a patch
+   from kinetik at orcon.net.nz.
+ - (dtucker) [Makefile.in] Make a distclean target too.
+
+20040713
+ - (dtucker) [Makefile.in buffer.c configure.ac defines.h includes.h
+   openbsd-compat/strlcpy.c] Define IOV_MAX for FreeBSD 4, from naddy at
+   mips.inka.de.  The C source files should include "includes.h" only.  Fix
+   out-of-tree builds too.
+ - (dtucker) [configure.ac defines.h includes.h openbsd-compat/openbsd-compat.h
+   openbsd-compat/uidswap.c] Add CVS Id's and copyright notices.
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/07/13 11:16:22
+    [ntpd.c]
+    like bgpd, use a socketpair(2) instead of a pipe(2)
+ - (dtucker) [configure.ac defines.h] Use memset if bzero is not available.
+ - (dtucker) [configure.ac] Check for setgid too.
+
+20040712
+ - (dtucker) OpenBSD CVS Sync
+  - dtucker@cvs.openbsd.org 2004/07/12 09:22:38
+    Replace errx with equivalent fprintf+exit to make porting easier;
+    ok henning@
+  - dtucker@cvs.openbsd.org 2004/07/12 09:38:57
+    Add missing newlines
+ - (dtucker) [configure.ac includes.h log.c ntp.c openbsd-compat/Makefile.in
+   openbsd-compat/openbsd-compat.h, added openbsd-compat/uidswap.c] Import
+   stripped-down uidswap.c from OpenSSH Portable for permanently_set_uid.
+ - (dtucker) [Makefile.in] Quieter install.
+ - (dtucker) [defines.h] Remove setreuid -> setresuid hack.
+ - (dtucker) [Makefile.in configure.ac] Move setting of CFLAGS into configure.
+ - (dtucker) [ntp.c openbsd-compat/uidswap.c] Set and check return code.
+ - (dtucker) [Makefile.in configure.ac includes.h openbsd-compat/Makefile.in
+   openbsd-compat/bsd-arc4random.c] Clean up makefiles, fix warnings.
+
+20040711
+ - (dtucker) FreeBSD (5.2) build fixes from naddy@: use sysconfdir
+   for ntpd.conf location, have configure check for strlcpy.
+ - (dtucker) OpenBSD CVS Sync
+  - henning@cvs.openbsd.org 2004/07/10 18:42:51
+    [client.c ntp.c ntpd.h]
+    scale query interval based on local clock offset. tested by many
+    not as efficient as I want it to be yet, but more is coming
+  - henning@cvs.openbsd.org 2004/07/10 18:47:49
+    [client.c]
+    oups
+  - henning@cvs.openbsd.org 2004/07/10 19:09:13
+    [client.c]
+    check wether we have enough data to form a peer update on receiption
+    of each packet, not only after each 8th (where we have enough for sure)
+  - henning@cvs.openbsd.org 2004/07/10 19:16:06
+    [client.c]
+    missing {}
+  - alexander@cvs.openbsd.org 2004/07/10 22:04:22
+    [ntp.h]
+    correct leap indicator mask; ok henning@
+  - alexander@cvs.openbsd.org 2004/07/10 22:24:20
+    [ntpd.h util.c]
+    short fixed point <-> double conversion routines; ok henning@
+  - alexander@ 2004/07/10 23:12:57
+    [ntpd.h]
+    KNF; ok henning@
+  - alexander@cvs.openbsd.org 2004/07/11 00:15:10
+    [client.c ntpd.h]
+    Start collecting the remote server state along with the calculated
+    offsets, in preparation for having correct server statistics in
+    responses to client queries.  ok henning@
+  - dtucker@ 2004/07/11 03:05:50
+    [log.c ntp_msg.c server.c]
+    Use SA_LEN(sa) instead of sa->sa_len; ok henning@  (CVSID sync only)
+ - (dtucker) [Makefile.in configure.ac, added install-sh]
+   Add "make install target", install-sh from OpenSSH portable.
+ - (dtucker) [openbsd-compat/bsd-arc4random.c] fatal() doesn't do varargs.
+ - (dtucker) [Makefile.in configure.ac] Only link with libcrypto if needed for
+   arc4random replacement.
+ - (dtucker) [Makefile.in] Install ntpd.conf man page, fix creation of install
+   dirs.  Pointed out by han at mijncomputer.nl.
+
+20040711
+ - (dtucker) Initial portablization of OpenBSD's native ntpd by henning@ and
+   alexander@.
+
+$Id: ChangeLog,v 1.332.2.1 2006/05/14 05:42:38 dtucker Exp $

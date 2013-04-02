@@ -1,0 +1,54 @@
+NTPD(8)                 OpenBSD System Manager's Manual                NTPD(8)
+
+NAME
+     ntpd - Network Time Protocol daemon
+
+SYNOPSIS
+     ntpd [-dSs] [-f file]
+
+DESCRIPTION
+     The ntpd daemon synchronizes the local clock to one or more remote NTP
+     servers, and can also act as an NTP server itself, redistributing the lo-
+     cal time.  It implements the Simple Network Time Protocol version 4, as
+     described in RFC 2030, and the Network Time Protocol version 3, as de-
+     scribed in RFC 1305.
+
+     ntpd uses the adjtime(2) system call to correct the local system time
+     without causing time jumps.  Adjustments larger than 128ms are logged us-
+     ing syslog(3).  The threshold value is chosen to avoid having local clock
+     drift thrash the log files.  Should ntpd be started with the -d option,
+     all calls to adjtime(2) will be logged.
+
+     When ntpd starts up, it reads settings from a configuration file, typi-
+     cally ntpd.conf(5).
+
+     The options are as follows:
+
+     -d          Do not daemonize.  If this option is specified, ntpd will run
+                 in the foreground and log to stderr.
+
+     -f file     Use file as the configuration file, instead of the default
+                 /etc/ntpd.conf.
+
+     -S          Do not set the time immediately at startup.  This is the de-
+                 fault.
+
+     -s          Set the time immediately at startup if the local clock is off
+                 by more than 180 seconds.  Allows for a large time correc-
+                 tion, eliminating the need to run rdate(8) before starting
+                 ntpd.
+
+FILES
+     /etc/ntpd.conf     default ntpd configuration file
+
+SEE ALSO
+     date(1), adjtime(2), ntpd.conf(5), rdate(8), timed(8)
+
+     Network Time Protocol (Version 3), RFC 1305, March 1992.
+
+     Simple Network Time Protocol (SNTP) Version 4, RFC 2030, October 1996.
+
+HISTORY
+     The ntpd program first appeared in OpenBSD 3.6.
+
+OpenBSD 3.9                      July 9, 2004                                1

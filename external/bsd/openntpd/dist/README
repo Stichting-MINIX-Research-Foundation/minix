@@ -1,0 +1,41 @@
+This is a port of OpenBSD's native ntpd to other Unix flavours adding
+autoconf support and the necessary compatibility layer.  It is strongly
+influenced by, and based in part on, the OpenSSH Portable project.
+
+OpenNTPD has a web site at http://www.openntpd.org/
+
+I occasionally put up pre-release snapshots and various experimental
+patches at http://www.zip.com.au/~dtucker/openntpd/
+
+Platform Requirements
+---------------------
+adjtime() and settimeofday() syscalls or equivalent.
+either poll() or select().
+either a self-seeding OpenSSL, a working /dev/*random device, or prngd/egd.
+
+At the time of writing the Portable version is known to build and work on:
+OpenBSD (3.5, 3.7)
+Linux (Redhat 9, Fedora Core 3, Debian Woody)
+FreeBSD (4.x, 5.x)
+Solaris (2.5.1[1], 8)
+Mac OS X
+NetBSD (2.0)
+HP-UX (11.00)
+QNX4
+IRIX
+AIX (4.3.3)
+
+It may work on others, but it's still a work in progress.  Reports
+(success or otherwise) and/or diffs welcome.
+
+[1] On Solaris 2.5.1 (and possibly other versions), socket() won't
+work in a chroot without some device special files in the chroot too.
+Solaris 8 and presumably newer don't require them.  To create them:
+# tar cfh - dev/tcp dev/udp dev/zero dev/ti* | (cd /var/empty; tar xfv -)
+
+Please direct any queries or bug report to me.
+
+	-Darren Tucker (dtucker at zip.com.au)
+	2005-05-23
+
+$Id: README,v 1.9 2005/06/27 05:00:40 dtucker Exp $

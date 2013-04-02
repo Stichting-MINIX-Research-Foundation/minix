@@ -1,0 +1,60 @@
+NTPD.CONF(5)              OpenBSD Programmer's Manual             NTPD.CONF(5)
+
+NAME
+     ntpd.conf - Network Time Protocol daemon configuration file
+
+DESCRIPTION
+     This manual page describes the format of the ntpd(8) configuration file.
+     It has the following format:
+
+     Empty lines and lines beginning with the `#' character are ignored.
+
+     Keywords may be specified multiple times within the configuration file.
+     They are as follows:
+
+     listen on address
+             Specify a local IP address or a hostname the ntpd(8) daemon
+             should listen on.  If it appears multiple times, ntpd(8) will
+             listen on each given address.  If `*' is given as an address,
+             ntpd(8) will listen on all local addresses.  ntpd(8) does not
+             listen on any address by default.  For example:
+
+                   listen on *
+                   listen on 127.0.0.1
+                   listen on ::1
+
+     server address
+             Specify the IP address or the hostname of an NTP server to syn-
+             chronize to.  If it appears multiple times, ntpd(8) will try to
+             synchronize to all of the servers specified.  If a hostname re-
+             solves to multiple IPv4 and/or IPv6 addresses, ntpd(8) uses the
+             first address.  If it does not get a reply, ntpd(8) retries with
+             the next address and continues to do so until a working address
+             is found.  For example:
+
+                   server 10.0.0.2
+                   server ntp.example.org
+
+             To provide redundancy, it is good practice to configure multiple
+             servers.  In general, best accuracy is obtained by using servers
+             that have a low network latency.
+
+     servers address
+             As with server, specify the IP address or hostname of an NTP
+             server to synchronize to.  If it appears multiple times, ntpd(8)
+             will try to synchronize to all of the servers specified.  Should
+             the hostname resolve to multiple IP addresses, ntpd(8) will try
+             to synchronize to all of them.  For example:
+
+                   servers pool.ntp.org
+
+FILES
+     /etc/ntpd.conf     default ntpd(8) configuration file
+
+SEE ALSO
+     ntpd(8)
+
+HISTORY
+     The ntpd.conf file format first appeared in OpenBSD 3.6.
+
+OpenBSD 3.9                      June 17, 2004                               1

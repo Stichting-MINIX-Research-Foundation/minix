@@ -1,0 +1,79 @@
+#! /bin/bash
+#
+# ntpd		Time synchronization daemon 
+#
+# chkconfig: 2345 90 60
+# description: ntpd is a time synchronization daemon
+# processname: ntpd
+# config: /etc/ntpd.conf
+# pidfile: /var/run/ntpd.pid
+
+# Source function library.
+. /etc/init.d/functions
+
+RETVAL=0
+
+# See how we were called.
+  
+prog="ntpd"
+
+start() {
+	echo -n $"Starting $prog: "
+	daemon ntpd
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/ntpd
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc ntpd 2>/dev/null
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/ntpd
+	return $RETVAL
+}	
+
+rhstatus() {
+	status ntpd
+}	
+
+restart() {
+  	stop
+	start
+}	
+
+reload() {
+	echo -n $"Reloading ntpd daemon configuration: "
+	killproc ntpd -HUP
+	retval=$?
+	echo
+	return $RETVAL
+}	
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart)
+  	restart
+	;;
+  reload)
+  	reload
+	;;
+  status)
+  	rhstatus
+	;;
+  condrestart)
+  	[ -f /var/lock/subsys/ntpd ] && restart || :
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|reload|restart|condrestart}"
+	exit 1
+esac
+
+exit $?
