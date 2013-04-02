@@ -92,17 +92,23 @@ BINOWN= root
 BINGRP= operator
 UTMPGRP= utmp
 .if defined(__MINIX)
-BIN1+=	\
-	boot.cfg.default \
-	group hostname.file inet.conf \
-	make.conf man.conf \
-	motd mtab \
+
+# System files we can always overwrite
+BIN1+=  boot.cfg.default \
+	man.conf motd \
 	profile protocols \
-	resolv.conf \
 	rc rc.conf rc.cd rc.subr \
 	rc.daemons.dist rs.inet rs.single \
-	services shells syslog.conf \
-	termcap utmp
+	services shells  \
+	termcap utmp system.conf mk.conf 
+
+# User-editable files we do not always overwrite
+.if !defined(SYSTEMONLY)
+BIN1+=	hostname.file group \
+	inet.conf resolv.conf \
+	syslog.conf 
+.endif
+
 .else
 BIN1+=	bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf envsys.conf floppytab ftpchroot \
@@ -427,7 +433,6 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ dhcptags.conf \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ rc \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/usr/lib/ crontab \
-		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ system.conf \
 		${BINOWN} ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/ Makefile \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/devmand/scripts/ ${DESTDIR}/etc/devmand/scripts/ block  \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/devmand/scripts/ ${DESTDIR}/etc/devmand/scripts/ singlechar \

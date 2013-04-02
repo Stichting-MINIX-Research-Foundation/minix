@@ -11,7 +11,7 @@ _BSD_OWN_MK_=1
 .if defined(__MINIX)
 
 # LSC FIXME: Useless difference, Should use the mk.conf
-MAKECONF?=	/etc/make.conf
+MAKECONF?=	/etc/mk.conf
 
 # Some Minix deviations from NetBSD
 LDSTATIC?=	-static

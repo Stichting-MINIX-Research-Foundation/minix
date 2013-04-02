@@ -296,6 +296,7 @@ build: .PHONY .MAKE
 	${MAKEDIRTARGET} . ${tgt}
 .endfor
 	${MAKEDIRTARGET} etc install-etc-release
+	${MAKEDIRTARGET} etc install-etc-files-safe  DESTDIR=${DESTDIR:U/} SYSTEMONLY=yes
 .if defined(__MINIX)
 	${MAKEDIRTARGET} releasetools do-hdboot
 .endif # defined(__MINIX)
