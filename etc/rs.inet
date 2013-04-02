@@ -60,6 +60,7 @@ service down "$1"
 kill_by_name dhcpd
 kill_by_name nonamed
 kill_by_name syslogd
+kill_by_name ntpd
 
 # Wait a moment to let daemons clean themselves up
 sleep 3
@@ -73,6 +74,7 @@ else
 fi
 daemonize nonamed -L
 daemonize syslogd
+test -f /etc/ntpd.conf && daemonize ntpd
 
 # Restart SSH daemon if installed and running
 if [ -f /usr/pkg/etc/rc.d/sshd ]
