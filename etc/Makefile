@@ -92,14 +92,9 @@ BINOWN= root
 BINGRP= operator
 UTMPGRP= utmp
 .if defined(__MINIX)
-BIN1+=	\
-	boot.cfg.default \
-	group hostname.file inet.conf \
-	make.conf man.conf \
-	motd mtab \
-	profile protocols \
-	resolv.conf \
-	rc rc.conf rc.cd rc.subr \
+BIN1+=	boot.cfg.default \
+	man.conf \
+	protocols rc rc.cd rc.subr \
 	rc.daemons.dist rs.inet rs.single \
 	services shells syslog.conf \
 	termcap utmp
@@ -331,9 +326,27 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
 .if defined(__MINIX)
+# BJG: Unsafe (i.e. user-editable) files for Minix
+.for owner group mode sdir tdir files in \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ group \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ hostname.file \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ inet.conf \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ mk.conf \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ resolv.conf \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ motd \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ rc.conf \
+		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ profile 
+	${_MKMSG_INSTALL} ${DESTDIR}${_dir}${file}
+	if [ ! -e ${tdir} ]; then \
+		${INSTALL_DIR} ${tdir}; \
+	fi; \
+	${INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} ${sdir}${files} ${tdir};
+.endfor
 # LSC: We need a safe install target for etc files, as this is expected from
 # our current user base. This safe version only leaves out the master.passwd
 # file in order not to loose any user account created.
+#
+# BJG: For Minix, the -safe target *is* performed by "make build"
 #
 # LSC: To ensure minimal modifications, the logic is a bit contrived, i.e. the
 # NetBSD build system expect install-etc-files to be unsafe, so what was done
