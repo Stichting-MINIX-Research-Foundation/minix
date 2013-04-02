@@ -10,9 +10,6 @@ _BSD_OWN_MK_=1
 
 .if defined(__MINIX)
 
-# LSC FIXME: Useless difference, Should use the mk.conf
-MAKECONF?=	/etc/make.conf
-
 # Some Minix deviations from NetBSD
 LDSTATIC?=	-static
 MKDYNAMICROOT?=	no
@@ -56,10 +53,9 @@ MACHINE:= i386
 .    endif
 .  endif # !defined(HOSTPROG) && !defined(HOSTLIB)
 .endif # __uname_s == "Minix"
-
-.else
-MAKECONF?=	/etc/mk.conf
 .endif # defined(__MINIX)
+
+MAKECONF?=	/etc/mk.conf
 .-include "${MAKECONF}"
 
 #
