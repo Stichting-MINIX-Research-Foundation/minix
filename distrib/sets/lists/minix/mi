@@ -75,7 +75,8 @@
 ./etc/group				minix-sys
 ./etc/hostname.file			minix-sys
 ./etc/inet.conf				minix-sys
-./etc/make.conf				minix-sys
+./etc/make.conf				minix-sys	obsolete
+./etc/mk.conf				minix-sys
 ./etc/man.conf				minix-sys
 ./etc/master.passwd			minix-sys
 ./etc					minix-sys
