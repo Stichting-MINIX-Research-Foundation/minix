@@ -1,3 +1,14 @@
+20130403:
+	With the addition of ntpd(8), an _ntp user and group must be added.
+	Run these commands to add the _ntp user and group:
+
+	# groupadd -g 123 _ntp
+	# useradd -g _ntp -s /bin/false -d / -u 123 _ntp
+
+	It is safe to ignore the warning about /bin/false not being listed
+	in /etc/shells. To run ntpd on start-up, create /etc/ntpd.conf
+	See `man ntpd` and `man ntpd.conf` for details.
+
 20130312:
 	/bin/ksh was imported and needs to be added to your /etc/shells.
 	Run this command to add it:

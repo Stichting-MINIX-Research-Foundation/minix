@@ -27,3 +27,4 @@ mail:*:43:
 sshd:*:44:
 nogroup:*:99:
 users:*:100:
+_ntp:*:123:
