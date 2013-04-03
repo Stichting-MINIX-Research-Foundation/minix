@@ -8,7 +8,6 @@
 EXTERN struct mproc *mp;	/* ptr to 'mproc' slot of current process */
 EXTERN int procs_in_use;	/* how many processes are marked as IN_USE */
 EXTERN char monitor_params[MULTIBOOT_PARAM_BUF_SIZE];
-EXTERN struct kinfo kinfo;	/* kernel information */
 
 /* Misc.c */
 extern struct utsname uts_val;	/* uname info */
