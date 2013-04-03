@@ -311,12 +311,7 @@ int do_truncate(message *UNUSED(m_out))
 	length = (off_t) job_m_in.m2_l1;
 	if ((int) job_m_in.flength < 0) return(EINVAL);
   } else {
-#if OS_VMAJOR == 2 && OS_VMINOR == 1
-	length = (off_t) make64(job_m_in.m2_l1, 0); /* Ignore higher bits */
-#else
-#error "Please remove this version check. Recompile dynamic packages first."
 	length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
-#endif
 	if (length < 0) return(EINVAL);
   }
 
@@ -359,12 +354,7 @@ int do_ftruncate(message *UNUSED(m_out))
 	length = (off_t) job_m_in.m2_l1;
 	if ((int) job_m_in.flength < 0) return(EINVAL);
   } else {
-#if OS_VMAJOR == 2 && OS_VMINOR == 1
-	length = (off_t) make64(job_m_in.m2_l1, 0); /* Ignore higher bits */
-#else
-#error "Please remove this version check. Recompile dynamic packages first."
 	length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
-#endif
 	if (length < 0) return(EINVAL);
   }
 

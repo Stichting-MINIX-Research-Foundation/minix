@@ -3,11 +3,8 @@
 
 /* Minix release and version numbers. */
 #define OS_RELEASE "3"
-#define OS_VERSION "2.1"
+#define OS_VERSION "3.0"
 
-/* Keep these in sync with os_version above for temp version check in VFS */
-#define OS_VMAJOR 2
-#define OS_VMINOR 1
 /* This file sets configuration parameters for the MINIX kernel, FS, and PM.
  * It is divided up into two main sections.  The first section contains
  * user-settable parameters.  In the second section, various internal system
