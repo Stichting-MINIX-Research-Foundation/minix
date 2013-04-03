@@ -40,20 +40,26 @@
 /*===========================================================================*
  *                              get_mem_chunks                               *
  *===========================================================================*/
-void get_mem_chunks(mem_chunks)
-struct memory *mem_chunks;                      /* store mem chunks here */ 
+void get_mem_chunks(
+struct memory *mem_chunks)                      /* store mem chunks here */ 
 {  
-/* Initialize the free memory list from the 'memory' boot variable.  Translate
+/* Initialize the free memory list from the kernel-provided memory map.  Translate
  * the byte offsets and sizes in this list to clicks, properly truncated.
  */
   phys_bytes base, size, limit;
   int i;
   struct memory *memp;
 
-  /* Obtain and parse memory from system environment. */
-  if(env_memory_parse(mem_chunks, NR_MEMS) != OK) 
-        panic("couldn't obtain memory chunks"); 
-        
+  /* Initialize everything to zero. */
+  memset(mem_chunks, 0, NR_MEMS*sizeof(*mem_chunks));
+
+  /* Obtain and parse memory from kernel environment. */
+  /* XXX Any memory chunk in excess of NR_MEMS is silently ignored. */
+  for(i = 0; i < MIN(MAXMEMMAP, NR_MEMS); i++) {
+  	mem_chunks[i].base = kernel_boot_info.memmap[i].addr;
+  	mem_chunks[i].size = kernel_boot_info.memmap[i].len;
+  }
+
   /* Round physical memory to clicks. Round start up, round end down. */
   for (i = 0; i < NR_MEMS; i++) {
         memp = &mem_chunks[i];          /* next mem chunk is stored here */

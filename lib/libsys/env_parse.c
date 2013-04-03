@@ -89,27 +89,3 @@ badenv:
   env_panic(env);
   return -1;
 }
-
-/*=========================================================================*
- *				env_memory_parse			   *
- *=========================================================================*/
-
-int env_memory_parse(mem_chunks, maxchunks)
-struct memory *mem_chunks;	/* where to store the memory bits */
-int maxchunks;			/* how many were found */
-{
-  static kinfo_t kinfo;
-  int mm, r;
-
-  if((r=sys_getkinfo(&kinfo)) != OK) return r;
-
-  /* Initialize everything to zero. */
-  memset(mem_chunks, 0, maxchunks*sizeof(*mem_chunks));
-
-  for(mm = 0; mm < MAXMEMMAP; mm++) {
-  	mem_chunks[mm].base = kinfo.memmap[mm].addr;
-  	mem_chunks[mm].size = kinfo.memmap[mm].len;
-  }
-
-  return OK;
-}
