@@ -213,14 +213,10 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   for (sig_ptr = noign_sigs; sig_ptr < noign_sigs+sizeof(noign_sigs); sig_ptr++)
 	sigaddset(&noign_sset, *sig_ptr);
 
-  /* Obtain a copy of the boot monitor parameters and the kernel info struct.  
-   * Parse the list of free memory chunks. This list is what the boot monitor 
-   * reported, but it must be corrected for the kernel and system processes.
+  /* Obtain a copy of the boot monitor parameters.
    */
   if ((s=sys_getmonparams(monitor_params, sizeof(monitor_params))) != OK)
       panic("get monitor params failed: %d", s);
-  if ((s=sys_getkinfo(&kinfo)) != OK)
-      panic("get kernel info failed: %d", s);
 
   /* Initialize PM's process table. Request a copy of the system image table 
    * that is defined at the kernel level to see which slots to fill in.
