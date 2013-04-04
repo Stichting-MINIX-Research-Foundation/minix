@@ -285,7 +285,7 @@ int libexec_load_elf(struct exec_info *execi)
 	
 			if((chunk = vmemend - vfileend) > 0) {
 #if ELF_DEBUG
-				printf("end clearing 0x%lx-0x%lx\n", vfileend, vaddr+chunk);
+				printf("end clearing 0x%lx-0x%lx\n", vfileend, vfileend+chunk);
 #endif
 				execi->clearmem(execi, vfileend, chunk);
 			}
