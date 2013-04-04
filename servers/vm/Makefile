@@ -12,7 +12,7 @@ SRCS=	main.c alloc.c utility.c exit.c fork.c break.c \
 LDFLAGS+= -T ${.CURDIR}/arch/${MACHINE_ARCH}/vm.lds
 .endif
 
-DPADD+=	${LIBSYS}
+DPADD+=	${LIBSYS} ${LIBEXEC}
 LDADD+=	-lsys -lexec
 
 MAN=
