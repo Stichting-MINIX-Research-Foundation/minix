@@ -14,7 +14,6 @@
 #include <machine/partition.h>
 #include "string.h"
 #include "arch_proto.h"
-#include "libexec.h"
 #include "direct_utils.h"
 #include "serial.h"
 #include "glo.h"

@@ -54,7 +54,6 @@
 #include <minix/fslib.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <a.out.h>
 #include <dirent.h>
 
 #include "exitvalues.h"

@@ -11,7 +11,6 @@
 #include <dirent.h>
 #include <assert.h>
 #include <ctype.h>
-#include <a.out.h>
 #include <machine/partition.h>
 
 #include <sys/stat.h>
@@ -164,7 +163,6 @@ int n_reserved_pathtableentries = 0, n_used_pathtableentries = 0;
 int bootmedia = BOOTMEDIA_UNSPECIFIED;
 unsigned long bootseg = 0;
 int system_type = 0;
-int bootimage_is_aout = 0;
 
 int get_system_type(int fd);
 
@@ -779,7 +777,6 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 	static unsigned char buf[1024*64], *addr;
 	ssize_t written = 0, rest;
 	int virtuals, rem;
-	struct exec hdr;
 	struct stat sb;
 	struct bap {
 		off_t sector;
@@ -794,26 +791,7 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 		exit(1);
 	}
 
-      if (bootimage_is_aout) {
-	Read(bootfd, &hdr, A_MINHDR);
-
-	if(hdr.a_magic[0] != A_MAGIC0) {
-		fprintf(stderr, "bad magic in a.out of boot image.\n");
-		exit(1);
-	}
-
-	if(hdr.a_hdrlen > sizeof(hdr)) {
-		fprintf(stderr, "surprisingly large header in boot image.\n");
-		exit(1);
-	}
-
-	/* read rest of a.out header. */
-	Read(bootfd, (char *) &hdr + A_MINHDR, hdr.a_hdrlen - A_MINHDR);
-
-	/* copy text+data */
-	rem = hdr.a_text + hdr.a_data;
-      } else
-		rem = sb.st_size;
+	rem = sb.st_size;
 
 	while(rem > 0) {
 		int want;
@@ -821,7 +799,7 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 		Read(bootfd, buf, want);
 		if (written == 0) {
 			/* check some properties at beginning. */
-			if (!bootimage_is_aout && buf[0] == 1 && buf[1] == 3) {
+			if (buf[0] == 1 && buf[1] == 3) {
 				fprintf(stderr, "boot image %s is an a.out executable\n",
 						bootimage);
 				exit(1);
@@ -981,9 +959,6 @@ main(int argc, char *argv[])
 			case 'R':
 				remove_after = 1;
 				break;
-			case 'b':
-				bootimage_is_aout= 1;
-				/*FALLTHROUGH*/
 			case 'B':
 				bootimage = optarg;
 				if((bootfd = open(bootimage, O_RDONLY)) < 0) {

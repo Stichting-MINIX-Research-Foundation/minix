@@ -8,10 +8,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <machine/partition.h>
-#include <libexec.h>
 #include "string.h"
 #include "arch_proto.h"
-#include "libexec.h"
 #include "direct_utils.h"
 #include "serial.h"
 #include "glo.h"

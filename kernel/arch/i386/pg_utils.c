@@ -3,11 +3,9 @@
 
 #include <assert.h>
 #include "kernel/kernel.h"
-#include <libexec.h>
 #include "arch_proto.h"
 
 #include <string.h>
-#include <libexec.h>
 
 /* These are set/computed in kernel.lds. */
 extern char _kern_vir_base, _kern_phys_base, _kern_size;

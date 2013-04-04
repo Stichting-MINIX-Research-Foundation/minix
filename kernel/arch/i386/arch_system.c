@@ -20,7 +20,6 @@
 #include "arch_proto.h"
 #include "serial.h"
 #include "oxpcie.h"
-#include "direct_utils.h"
 #include <machine/multiboot.h>
 
 #include "glo.h"
