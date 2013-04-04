@@ -59,10 +59,7 @@
 
 #ifndef	_AOUT_H_
 #define	_AOUT_H_
-
-#ifdef __minix
-#include <compat/a.out.h>
-#else /* !__minix */
+#ifndef __minix
 
 #include <sys/exec_aout.h>
 

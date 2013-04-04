@@ -1,20 +1,8 @@
 
 #include "kernel/kernel.h"
-#include <minix/minlib.h>
-#include <minix/const.h>
-#include <minix/cpufeature.h>
-#include <minix/type.h>
-#include <minix/com.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <libexec.h>
-#include "string.h"
-#include "arch_proto.h"
-#include "libexec.h"
 #include "direct_utils.h"
 #include "serial.h"
 #include "glo.h"
-#include <machine/multiboot.h>
 
 void direct_cls(void)
 {

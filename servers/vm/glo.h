@@ -3,7 +3,6 @@
 #include <minix/type.h>
 #include <minix/param.h>
 #include <sys/stat.h>
-#include <a.out.h>
 
 #include "vm.h"
 #include "vmproc.h"

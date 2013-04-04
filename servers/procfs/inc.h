@@ -15,7 +15,6 @@
 #include <fcntl.h>
 #include <lib.h>
 #include <timers.h>
-#include <a.out.h>
 #include <dirent.h>
 
 #include <minix/callnr.h>

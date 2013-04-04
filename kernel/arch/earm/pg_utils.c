@@ -2,14 +2,12 @@
 #include <minix/cpufeature.h>
 
 #include <minix/type.h>
-#include <libexec.h>
 #include <assert.h>
 #include "kernel/kernel.h"
 #include "arch_proto.h"
 #include <machine/cpu.h>
 
 #include <string.h>
-#include <libexec.h>
 #include <minix/type.h>
 
 /* These are set/computed in kernel.lds. */

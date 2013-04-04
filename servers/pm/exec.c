@@ -23,7 +23,6 @@
 #include <minix/endpoint.h>
 #include <minix/com.h>
 #include <minix/vm.h>
-#include <a.out.h>
 #include <signal.h>
 #include <string.h>
 #include <libexec.h>

@@ -1,5 +1,4 @@
 #include "inc.h"
-#include <a.out.h>
 #include <assert.h>
 #include <libexec.h>
 #include <machine/vmparam.h>

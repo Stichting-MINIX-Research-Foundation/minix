@@ -581,9 +581,9 @@
 ./usr/include/bzlib.h			minix-sys
 ./usr/include/cdbr.h			minix-sys
 ./usr/include/cdbw.h			minix-sys
-./usr/include/compat			minix-sys
-./usr/include/compat/a.out.h		minix-sys
+./usr/include/compat/a.out.h		minix-sys	obsolete
 ./usr/include/compat/machine		minix-sys
+./usr/include/compat			minix-sys
 ./usr/include/complex.h			minix-sys
 ./usr/include/configfile.h		minix-sys
 ./usr/include/cpio.h			minix-sys

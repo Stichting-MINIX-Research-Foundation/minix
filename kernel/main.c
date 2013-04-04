@@ -12,8 +12,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <libexec.h>
-#include <a.out.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include <machine/vmparam.h>
