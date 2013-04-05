@@ -24,9 +24,7 @@ PROGRAMS+= ${PROGROOT}/servers/pm/pm
 PROGRAMS+= ${PROGROOT}/servers/sched/sched
 PROGRAMS+= ${PROGROOT}/servers/vfs/vfs
 PROGRAMS+= ${PROGROOT}/drivers/memory/memory
-.if ${MACHINE_ARCH} == "i386"
 PROGRAMS+= ${PROGROOT}/drivers/log/log
-.endif
 PROGRAMS+= ${PROGROOT}/drivers/tty/tty
 PROGRAMS+= ${PROGROOT}/servers/mfs/mfs
 PROGRAMS+= ${PROGROOT}/servers/vm/vm
@@ -51,37 +49,39 @@ usage:
 	@echo " " >&2
 	@echo "To create a fresh MINIX configuration, try:" >&2
 	@echo "	make clean install      # new boot image" >&2
-	@echo "	make fresh install      # new everything" >&2
 	@echo " " >&2
 
 all: services
 
 # rebuild the program or system libraries
 includes:
-	$(MAKE) -C ../ includes
+	${MAKE} -C ../ includes
+
+libraries: includes
+	${MAKE} -C ../ do-lib
 
 depend: includes .gitignore
-	$(MAKE) -C ../ depend
+	${MAKE} -C ../ depend
+
+kernel: libraries
+	${MAKE} -C ../kernel 
+
+servers: libraries
+	${MAKE} -C ../servers all install
+
+drivers: libraries servers
+	${MAKE} -C ../drivers all install
+
+services: kernel servers drivers
 
 .gitignore: Makefile
-	echo $(GEN_FILES) | tr ' ' '\n' >.gitignore
-
-services: includes kernel servers .WAIT drivers
-
-kernel: includes
-	$(MAKE) -C ../kernel 
-
-servers: includes
-	$(MAKE) -C ../servers all install
-
-drivers: includes servers
-	$(MAKE) -C ../drivers all install
+	echo ${GEN_FILES} | tr ' ' '\n' >.gitignore
 
 # make bootable and place system images
 bootable:
 	exec su root mkboot bootable ${DESTDIR}
 
-hdboot: services .WAIT do-hdboot
+hdboot install: services .WAIT do-hdboot
 
 do-hdboot: 
 	@rm -rf ${DESTDIR}/boot/minix/.temp/
@@ -105,9 +105,6 @@ do-hdboot:
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
 	${INSTALL} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot;	\
 	fi
-
-install:
-	${MAKE} includes services hdboot
 
 # download and update NetBSD reference sources.
 nbsd_fetch:
@@ -135,12 +132,14 @@ nbsd_diff:
 
 # clean up compile results
 clean:
-	$(MAKE) -C ../kernel $@
-	$(MAKE) -C ../servers $@
-	$(MAKE) -C ../drivers $@
-	rm -rf $(GEN_FILES)
+	${MAKE} -C ../lib $@
+	${MAKE} -C ../kernel $@
+	${MAKE} -C ../servers $@
+	${MAKE} -C ../drivers $@
+	rm -rf ${GEN_FILES}
 
-cleandepend::
-	$(MAKE) -C ../kernel $@
-	$(MAKE) -C ../servers  $@
-	$(MAKE) -C ../drivers  $@
+cleandir:
+	${MAKE} -C ../lib $@
+	${MAKE} -C ../kernel $@
+	${MAKE} -C ../servers $@
+	${MAKE} -C ../drivers $@
