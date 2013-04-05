@@ -59,7 +59,7 @@ int nr_total;
 #define  TC_BUFFER  1024        /* Size of termcap(3) buffer    */
 #define  TC_STRINGS  200        /* Enough room for cm,cl,so,se  */
 
-char *Tclr_all;
+const char *Tclr_all;
 
 int blockedverbose = 0;
 
@@ -261,19 +261,19 @@ static int print_load(double *loads, int nloads)
 	return 1;
 }
 
-static int print_proc_summary(struct proc *proc)
+static int print_proc_summary(struct proc *pproc)
 {
 	int p, alive, running, sleeping;
 
 	alive = running = sleeping = 0;
 
 	for(p = 0; p < nr_total; p++) {
-		if (proc[p].p_endpoint == IDLE)
+		if (pproc[p].p_endpoint == IDLE)
 			continue;
-		if(!(proc[p].p_flags & USED))
+		if(!(pproc[p].p_flags & USED))
 			continue;
 		alive++;
-		if(proc[p].p_flags & BLOCKED)
+		if(pproc[p].p_flags & BLOCKED)
 			sleeping++;
 		else
 			running++;
@@ -317,7 +317,9 @@ static int cmp_procs(const void *v1, const void *v2)
 		if(!p2blocked && p1blocked)
 			return 1;
 	} else if(p1->ticks != p2->ticks) {
-		return (p2->ticks - p1->ticks);
+		if(p1->ticks > p2->ticks) return -1;
+		assert(p1->ticks < p2->ticks);
+		return 1;
 	}
 
 	/* Process slot number is a tie breaker. */
@@ -345,7 +347,7 @@ static void print_proc(struct tp *tp, u64_t total_ticks)
 	int euid = 0;
 	static struct passwd *who = NULL;
 	static int last_who = -1;
-	char *name = "";
+	const char *name = "";
 	int ticks;
 	struct proc *pr = tp->p;
 
@@ -410,7 +412,7 @@ static u64_t cputicks(struct proc *p1, struct proc *p2, int timemode)
 	return t;
 }
 
-static char *ordername(int orderno)
+static const char *ordername(int orderno)
 {
 	switch(orderno) {
 		case ORDER_CPU: return "cpu";
@@ -625,7 +627,7 @@ static void getkinfo(void)
 
 int main(int argc, char *argv[])
 {
-	int r, c, s = 0;
+	int r, optc, s = 0;
 	int cputimemode = 1;	/* bitmap. */
 
 	if (chdir(_PATH_PROC) != 0) {
@@ -639,8 +641,8 @@ int main(int argc, char *argv[])
 
 	init(&r);
 
-	while((c=getopt(argc, argv, "s:B")) != EOF) {
-		switch(c) {
+	while((optc=getopt(argc, argv, "s:B")) != EOF) {
+		switch(optc) {
 			case 's':
 				s = atoi(optarg);
 				break;
@@ -681,9 +683,9 @@ int main(int argc, char *argv[])
 		}
 
 		if(ns > 0 && FD_ISSET(STDIN_FILENO, &fds)) {
-			char c;
-			if(read(STDIN_FILENO, &c, 1) == 1) {
-				switch(c) {
+			char inc;
+			if(read(STDIN_FILENO, &inc, 1) == 1) {
+				switch(inc) {
 					case 'q':
 						putchar('\r');
 						return 0;
