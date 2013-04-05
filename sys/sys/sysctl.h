@@ -2,13 +2,6 @@
 #define _SYS_SYSCTL_H
 
 /*
- * sysctl() is not supported. Warn non-libc programs including this header.
- */
-#ifndef _LIBC
-#warning Including sysctl.h header. sysctl() is not supported in Minix.
-#endif /* !_LIBC */
-
-/*
  * Used by gmon.
  */
 struct clockinfo {
