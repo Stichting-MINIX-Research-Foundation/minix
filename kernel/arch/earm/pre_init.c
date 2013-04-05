@@ -125,14 +125,6 @@ void setup_mbi(multiboot_info_t *mbi)
 	    mb_modlist[i].mod_start = MB_MODS_BASE + i * MB_MODS_ALIGN;
 	    mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_ALIGN - 1;
 	    mb_modlist[i].cmdline = 0;
-
-	    if (i == 5) {
-		/* LSC HACK: Special case for memory, it is actually loaded at the 
-		 * end, so that it can grow without having to change the 
-		 * alignment of everything. currently reserving 64MiB */
-		mb_modlist[i].mod_start = 0x96800000;
-		mb_modlist[i].mod_end = mb_modlist[i].mod_start + (0x04000000) - 1;
-            }
 	}
 
 	/* Final 'module' is actually a string holding the boot cmdline */
