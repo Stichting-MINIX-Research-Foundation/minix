@@ -10,7 +10,7 @@ SUBDIR= \
 	col ctags \
 	du \
 	\
-	from \
+	from ftp \
 	genassym getopt head \
 	indent infocmp join \
 	ldd \
