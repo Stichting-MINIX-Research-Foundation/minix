@@ -36,9 +36,6 @@ BINMODE=444
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
-.if defined(__MINIX)
-CPPFLAGS+=-isystem ${DESTDIR}/usr/include
-.endif # defined(__MINIX)
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
@@ -172,8 +169,4 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
 
-.ifndef	__MINIX
 .include <bsd.prog.mk>
-.else
-.include <minix.service.mk>
-.endif

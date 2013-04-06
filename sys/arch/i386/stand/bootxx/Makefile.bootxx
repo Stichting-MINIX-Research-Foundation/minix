@@ -115,7 +115,6 @@ SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .if defined(__MINIX)
 SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
-CPPFLAGS+= -isystem ${DESTDIR}/usr/include
 AFLAGS+=       -Wa,--divide
 .endif
 .include "${S}/lib/libsa/Makefile.inc"
@@ -159,8 +158,4 @@ ${PROG}: ${OBJS} ${LIBLIST}
 		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
 	fi
 
-.ifndef __MINIX
 .include <bsd.prog.mk>
-.else
-.include <minix.service.mk>
-.endif

@@ -204,7 +204,9 @@ typedef	__uid_t		uid_t;		/* user id */
 #define	uid_t		__uid_t
 #endif
 
+#if defined(__minix) && !defined(_STANDALONE)
 #include <sys/ucred.h>
+#endif
 
 /*
  * Structure used by kernel to store most

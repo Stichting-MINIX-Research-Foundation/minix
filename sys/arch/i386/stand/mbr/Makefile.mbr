@@ -29,6 +29,12 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -I${S}
 .if defined(__MINIX)
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
 AFLAGS+=       -Wa,--divide
+
+BUILDSYMLINKS+= \
+	${NETBSDSRCDIR}/include/arch/i386/include/stackframe.h machine/stackframe.h \
+	${NETBSDSRCDIR}/include/arch/i386/include/fpu.h machine/fpu.h
+
+DPSRCS+= machine/stackframe.h  machine/fpu.h
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"

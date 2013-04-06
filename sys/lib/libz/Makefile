@@ -3,11 +3,7 @@
 LIB=	z
 LIBISPRIVATE=	yes
 
-.ifndef __MINIX
 ZDISTDIR:=${.PARSEDIR}/../../../common/dist/zlib
-.else
-ZDISTDIR:=${.PARSEDIR}/../../../lib/libz
-.endif
 
 CPPFLAGS+=	-I${ZDISTDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS}
 
