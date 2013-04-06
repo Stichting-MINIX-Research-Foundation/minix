@@ -336,7 +336,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ motd \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ rc.conf \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ profile 
-	${_MKMSG_INSTALL} ${DESTDIR}${_dir}${file}
+	${_MKMSG_INSTALL} ${DESTDIR}${tdir}${files:T}
 	if [ ! -e ${tdir} ]; then \
 		${INSTALL_DIR} ${tdir}; \
 	fi; \
@@ -449,7 +449,7 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 		ast	  users		${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/home/ast/ .[aepv]* \
 		bin	  ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/home/bin/ .[aepv]* \
 
-	${_MKMSG_INSTALL} ${DESTDIR}${_dir}${file}
+	${_MKMSG_INSTALL} ${DESTDIR}${tdir}${files:T}
 	if [ ! -e ${tdir} ]; then \
 		${INSTALL_DIR} ${tdir}; \
 	fi; \
