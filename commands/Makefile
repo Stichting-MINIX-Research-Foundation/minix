@@ -20,7 +20,7 @@ SUBDIR=	add_route arp ash at backup basename btrace \
 	nonamed od paste patch \
 	ping postinstall poweroff pr prep printroot \
 	profile progressbar pr_routes ps pwdauth \
-	ramdisk rarpd rawspeed rcp rdate readclock \
+	ramdisk rarpd rawspeed rcp readclock \
 	reboot remsync rev rget rlogin \
 	rotate rsh rshd service setup shar acksize \
 	sleep slip spell split sprofalyze sprofdiff srccrc \
