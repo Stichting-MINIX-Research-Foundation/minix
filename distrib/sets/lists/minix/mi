@@ -380,7 +380,7 @@
 ./usr/bin/rarpd				minix-sys
 ./usr/bin/rawspeed			minix-sys
 ./usr/bin/rcp				minix-sys
-./usr/bin/rdate				minix-sys
+./usr/bin/rdate				minix-sys	obsolete
 ./usr/bin/readall			minix-sys	obsolete
 ./usr/bin/readlink			minix-sys
 ./usr/bin/reboot			minix-sys
@@ -3818,6 +3818,7 @@
 ./usr/sbin/pm				minix-sys
 ./usr/sbin/postinstall			minix-sys
 ./usr/sbin/pwd_mkdb			minix-sys
+./usr/sbin/rdate			minix-sys
 ./usr/sbin/rs				minix-sys
 ./usr/sbin/sched			minix-sys
 ./usr/sbin/tty				minix-sys

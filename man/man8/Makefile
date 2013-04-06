@@ -6,7 +6,7 @@ MAN=	add_route.8 backup.8 boot.8 btrace.8 \
 	netconf.8 newroot.8 nonamed.8 \
 	ossdevlinks.8 part.8 partition.8 \
 	poweroff.8 printroot.8 pr_routes.8 pwdauth.8 rarpd.8 \
-	rdate.8 readclock.8 reboot.8 repartition.8 \
+	readclock.8 reboot.8 repartition.8 \
 	rshd.8  screendump.8 serial-ip.8 \
 	setup.8 shutdown.8 slip.8 srccrc.8 syslogd.8 tcpd.8 \
 	unix.8 update.8 usage.8 vbfs.8

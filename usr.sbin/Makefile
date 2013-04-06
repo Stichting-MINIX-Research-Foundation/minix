@@ -8,7 +8,7 @@ SUBDIR= \
 	installboot \
 	mtree \
 	pwd_mkdb postinstall \
-	user \
+	rdate user \
 	vipw \
 	zic
 
