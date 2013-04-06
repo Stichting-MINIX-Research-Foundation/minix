@@ -37,6 +37,11 @@
 #if defined(__minix)
 #define __MINIX_OPEN_MAX	255 /* a process may have 255 files open */
 #define __MINIX_PATH_MAX	1024/* a pathname may contain 1023 chars (+ '\0')*/
+
+#if defined(_STANDALONE)
+/* LSC: In NetBSD this gets pulled in through libkern.h */
+#include <sys/null.h>
+#endif /* defined(_STANDALONE) */
 #endif /* defined(__minix) */
 
 #include <sys/featuretest.h>

@@ -467,7 +467,10 @@ __END_DECLS
 
 #endif /* _KERNEL */
 #endif /* !_STANDALONE */
+
+#if defined(__minix) && !defined(_STANDALONE)
 #include <sys/statvfs.h>
 #include <minix/mount.h>
+#endif /*  defined(__minix) && !defined(_STANDALONE) */
 
 #endif /* !_SYS_MOUNT_H_ */

@@ -74,6 +74,7 @@
 2012/10/17 12:00:00,lib/libpuffs
 2012/10/17 12:00:00,lib/librmt
 2012/10/17 12:00:00,lib/libterminfo
+2012/10/17 12:00:00,lib/libz
 2012/10/17 12:00:00,lib/libutil
 2012/10/17 12:00:00,lib/Makefile
 2012/10/17 12:00:00,Makefile
@@ -92,7 +93,7 @@
 2011/12/25 06:09:09,sys/arch/i386/stand
 2012/10/17 12:00:00,sys/arch/x86/include
 2012/01/16 18:47:57,sys/lib/libsa
-2011/10/30 00:28:57,sys/lib/libz
+2012/10/17 12:00:00,sys/lib/libz
 2012/10/17 12:00:00,sys/Makefile
 2011/11/28 12:50:07,sys/ufs
 2012/10/17 12:00:00,tools/binutils

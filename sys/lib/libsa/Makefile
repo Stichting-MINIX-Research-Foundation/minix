@@ -22,9 +22,6 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 .include <bsd.own.mk>
 
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
-.ifdef __MINIX
-.PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/md
-.endif
 
 # stand routines
 SRCS+=	alloc.c errno.c exit.c files.c \
@@ -96,6 +93,7 @@ SRCS+=	xlat_mbr_fstype.c
 
 # NetBSD has it in libkern, MINIX has it in libc but not libminc...
 SRCS+=	md5c.c
+.PATH.c: ${.PARSEDIR}/../../../common/lib/libc/md
 .endif
 
 # only needed during build

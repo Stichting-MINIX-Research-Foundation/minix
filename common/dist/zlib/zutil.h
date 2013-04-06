@@ -24,6 +24,7 @@
 #  include <lib/libkern/libkern.h>
 
 #else
+#if defined(__minix) && !defined(_STANDALONE)
 #ifdef STDC
 #  ifndef _WIN32_WCE
 #    include <stddef.h>
@@ -46,6 +47,7 @@
 #    include <errno.h>
 #  endif
 #endif
+#endif /* defined(__minix) && !defined(_STANDALONE) */
 #endif /* __NetBSD__ && (_KERNEL || _STANDALONE) */
 
 #ifndef local
