@@ -4,6 +4,7 @@
 
 #include "fs.h"
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include "puffs.h"
@@ -35,35 +36,42 @@ void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
 
 
 /*===========================================================================*
- *				clock_time				     *
+ *				clock_timespec				     *
  *===========================================================================*/
-time_t clock_time()
+struct timespec clock_timespec()
 {
 /* This routine returns the time in seconds since 1.1.1970.  MINIX is an
  * astrophysically naive system that assumes the earth rotates at a constant
  * rate and that such things as leap seconds do not exist.
  */
+  static long system_hz = 0;
 
   register int k;
+  struct timespec tv;
   clock_t uptime;
   clock_t realtime;
   time_t boottime;
 
+  if (system_hz == 0) system_hz = sys_hz();
   if ((k=getuptime(&uptime, &realtime, &boottime)) != OK)
-	panic("clock_time: getuptme2 failed: %d", k);
+	panic("clock_timespec: getuptime failed: %d", k);
 
-  return( (time_t) (boottime + (realtime/sys_hz())));
+  tv.tv_sec = (time_t) (boottime + (realtime/system_hz));
+  /* We do not want to overflow, and system_hz can be as high as 50kHz */
+  assert(system_hz < LONG_MAX/40000);
+  tv.tv_nsec = (realtime%system_hz) * 40000 / system_hz * 25000;
+  return tv;
 }
 
 
 /*===========================================================================*
- *				update_times				     *
+ *				update_timens				     *
  *===========================================================================*/
-int update_times(struct puffs_node *pn, int flags, time_t t)
+int update_timens(struct puffs_node *pn, int flags, struct timespec *t)
 {
   int r;
   struct vattr va;
-  time_t new_time;
+  struct timespec new_time;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
   if (!flags)
@@ -72,28 +80,22 @@ int update_times(struct puffs_node *pn, int flags, time_t t)
   if (global_pu->pu_ops.puffs_node_setattr == NULL)
 	return EINVAL;
 
-  new_time = t != 0 ? t : clock_time();
+  new_time = t != NULL ? *t : clock_timespec();
   
   puffs_vattr_null(&va);
   /* librefuse modifies atime and mtime together,
    * so set old values to avoid setting either one
    * to PUFFS_VNOVAL (set by puffs_vattr_null).
    */
-  va.va_atime.tv_sec = pn->pn_va.va_atime.tv_sec;
-  va.va_mtime.tv_sec = pn->pn_va.va_mtime.tv_sec;
+  va.va_atime = pn->pn_va.va_atime;
+  va.va_mtime = pn->pn_va.va_mtime;
 
-  if (flags & ATIME) {
-	va.va_atime.tv_sec = new_time;
-	va.va_atime.tv_nsec = 0;
-  }
-  if (flags & MTIME) {
-	va.va_mtime.tv_sec = new_time;
-	va.va_mtime.tv_nsec = 0;
-  }
-  if (flags & CTIME) {
-	va.va_ctime.tv_sec = new_time;
-	va.va_ctime.tv_nsec = 0;
-  }
+  if (flags & ATIME)
+	va.va_atime = new_time;
+  if (flags & MTIME)
+	va.va_mtime = new_time;
+  if (flags & CTIME)
+	va.va_ctime = new_time;
 
   r = global_pu->pu_ops.puffs_node_setattr(global_pu, pn, &va, pcr);
 

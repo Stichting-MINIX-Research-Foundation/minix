@@ -81,9 +81,15 @@ int fs_stat()
   statbuf.st_gid = va.va_gid;
   statbuf.st_rdev = (s ? va.va_rdev : NO_DEV);
   statbuf.st_size = va.va_size;
-  statbuf.st_atime = va.va_atime.tv_sec;
-  statbuf.st_mtime = va.va_mtime.tv_sec;
-  statbuf.st_ctime = va.va_ctime.tv_sec;
+  statbuf.st_atimespec = va.va_atime;
+  statbuf.st_mtimespec = va.va_mtime;
+  statbuf.st_ctimespec = va.va_ctime;
+
+  statbuf.st_birthtimespec = va.va_birthtime;
+  statbuf.st_blksize = va.va_blocksize;
+  statbuf.st_blocks = va.va_bytes / va.va_blocksize;
+  statbuf.st_flags = va.va_flags;
+  statbuf.st_gen = va.va_gen;
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT,

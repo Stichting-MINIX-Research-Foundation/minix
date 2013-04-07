@@ -33,8 +33,7 @@ int fs_chmod()
   puffs_vattr_null(&va);
   /* Clear setgid bit if file is not in caller's grp */
   va.va_mode = (pn->pn_va.va_mode & ~ALL_MODES) | (mode & ALL_MODES);
-  va.va_ctime.tv_nsec = 0;
-  va.va_ctime.tv_sec = clock_time();
+  va.va_ctime = clock_timespec();
 
   if (global_pu->pu_ops.puffs_node_setattr(global_pu, pn, &va, pcr) != 0)
 	return(EINVAL);
@@ -64,8 +63,7 @@ int fs_chown()
 	va.va_uid = fs_m_in.REQ_UID;
 	va.va_gid = fs_m_in.REQ_GID;
 	va.va_mode = pn->pn_va.va_mode & ~(I_SET_UID_BIT | I_SET_GID_BIT);
-	va.va_ctime.tv_nsec = 0;
-	va.va_ctime.tv_sec = clock_time();
+	va.va_ctime = clock_timespec();
 
 	if (global_pu->pu_ops.puffs_node_setattr(global_pu, pn, &va, pcr) != 0)
 		return(EINVAL);

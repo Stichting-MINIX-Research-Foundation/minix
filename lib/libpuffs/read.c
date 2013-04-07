@@ -68,7 +68,7 @@ int fs_readwrite(void)
 	if (bytes_done) {
 		r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) 0,
 				   (vir_bytes) rw_buf, bytes_done);
-		update_times(pn, ATIME, 0);
+		update_timens(pn, ATIME, NULL);
 	}
   } else if (rw_flag == WRITING) {
 	/* At first try to change vattr */
@@ -78,8 +78,8 @@ int fs_readwrite(void)
 	puffs_vattr_null(&va);
 	if ( (pos + bytes_left) > pn->pn_va.va_size)
 		va.va_size = bytes_left + pos;
-	va.va_ctime.tv_sec = va.va_mtime.tv_sec = clock_time();
-	va.va_atime.tv_sec = pn->pn_va.va_atime.tv_sec;
+	va.va_ctime = va.va_mtime = clock_timespec();
+	va.va_atime = pn->pn_va.va_atime;
 
 	r = global_pu->pu_ops.puffs_node_setattr(global_pu, pn, &va, pcr);
 	if (r) return(EINVAL);
@@ -169,7 +169,7 @@ int fs_getdents(void)
 	if (r != OK) return(r);
   }
 
-  update_times(pn, ATIME, 0);
+  update_timens(pn, ATIME, NULL);
 
   fs_m_out.RES_NBYTES = written;
   fs_m_out.RES_SEEK_POS_LO = pos;
