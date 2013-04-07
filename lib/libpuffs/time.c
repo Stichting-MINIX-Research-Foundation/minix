@@ -30,9 +30,10 @@ int fs_utime()
         return(EINVAL);
   
   puffs_vattr_null(&va);
-  va.va_atime.tv_nsec = va.va_mtime.tv_nsec = 0;
   va.va_atime.tv_sec = fs_m_in.REQ_ACTIME;
+  va.va_atime.tv_nsec = fs_m_in.REQ_ACNSEC;
   va.va_mtime.tv_sec = fs_m_in.REQ_MODTIME;
+  va.va_mtime.tv_nsec = fs_m_in.REQ_MODNSEC;
   va.va_ctime = clock_timespec();
 
   if (global_pu->pu_ops.puffs_node_setattr(global_pu, pn, &va, pcr) != 0)
