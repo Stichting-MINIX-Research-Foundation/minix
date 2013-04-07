@@ -3,6 +3,7 @@
 
 struct puffs_usermount;
 struct puffs_node;
+struct timespec;
 
 /* Function prototypes. */
 
@@ -67,8 +68,8 @@ int fs_utime(void);
 int no_sys(void);
 void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
 	unsigned int maxlen);
-time_t clock_time(void);
-int update_times(struct puffs_node *pn, int fl, time_t t);
+struct timespec clock_timespec(void);
+int update_timens(struct puffs_node *pn, int fl, struct timespec *);
 void lpuffs_debug(const char *format, ...);
 
 #endif /* PUFFS_PROTO_H */

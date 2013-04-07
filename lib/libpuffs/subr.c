@@ -292,10 +292,9 @@ puffs_stat2vattr(struct vattr *va, const struct stat *sb)
 	va->va_fsid = sb->st_dev;
 	va->va_fileid = sb->st_ino;
 	va->va_size = sb->st_size;
-        va->va_atime.tv_nsec = va->va_mtime.tv_nsec = va->va_ctime.tv_nsec = 0;
-	va->va_atime.tv_sec = sb->st_atime;
-	va->va_ctime.tv_sec = sb->st_ctime;
-	va->va_mtime.tv_sec = sb->st_mtime;
+	va->va_atime = sb->st_atimespec;
+	va->va_ctime = sb->st_ctimespec;
+	va->va_mtime = sb->st_mtimespec;
 	va->va_blocksize = sb->st_blksize;
 	va->va_birthtime = sb->st_birthtimespec;
 	va->va_gen = sb->st_gen;

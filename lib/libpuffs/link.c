@@ -59,7 +59,7 @@ int fs_ftrunc(void)
 	if (r) return(EINVAL);
   }
 
-  update_times(pn, CTIME | MTIME, 0);
+  update_timens(pn, CTIME | MTIME, NULL);
 
   return(r);
 }
@@ -76,7 +76,7 @@ int fs_link()
   char string[NAME_MAX + 1];
   phys_bytes len;
   struct puffs_node *pn, *pn_dir, *new_pn;
-  time_t cur_time;
+  struct timespec cur_time;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
   struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
@@ -141,9 +141,9 @@ int fs_link()
   
   if (r != OK) return(EINVAL);
 
-  cur_time = clock_time();
-  update_times(pn, CTIME, cur_time);
-  update_times(pn_dir, MTIME | CTIME, cur_time);
+  cur_time = clock_timespec();
+  update_timens(pn, CTIME, &cur_time);
+  update_timens(pn_dir, MTIME | CTIME, &cur_time);
 
   return(OK);
 }
@@ -208,7 +208,7 @@ int fs_rename()
   int odir, ndir;                       /* TRUE iff {old|new} file is dir */
   int same_pdir;                        /* TRUE iff parent dirs are the same */
   phys_bytes len;
-  time_t cur_time;
+  struct timespec cur_time;
 
   if (global_pu->pu_ops.puffs_node_rename == NULL)
 	return(EINVAL);
@@ -373,9 +373,9 @@ int fs_rename()
   }
 
 rename_out: 
-  cur_time = clock_time();
-  update_times(old_dirp, MTIME | CTIME, cur_time);
-  update_times(new_dirp, MTIME | CTIME, cur_time);
+  cur_time = clock_timespec();
+  update_timens(old_dirp, MTIME | CTIME, &cur_time);
+  update_timens(new_dirp, MTIME | CTIME, &cur_time);
 
   /* XXX see release_node comment in fs_unlink */
   if (new_ip && new_ip->pn_count == 0) {
@@ -401,7 +401,7 @@ int fs_unlink()
  */
   int r;
   struct puffs_node *pn, *pn_dir;
-  time_t cur_time;
+  struct timespec cur_time;
   struct puffs_kcn pkcnp;
   struct puffs_cn pcn = {&pkcnp, 0, {0,0,0}};
   PUFFS_KCREDTOCRED(pcn.pcn_cred, &global_kcred);
@@ -447,9 +447,9 @@ int fs_unlink()
   }
 
   if (pn->pn_va.va_nlink != 0) {
-	cur_time = clock_time();
-	update_times(pn, CTIME, cur_time);
-	update_times(pn_dir, MTIME | CTIME, cur_time);
+	cur_time = clock_timespec();
+	update_timens(pn, CTIME, &cur_time);
+	update_timens(pn_dir, MTIME | CTIME, &cur_time);
   }
 
   /* XXX Ideally, we should check pn->pn_flags & PUFFS_NODE_REMOVED, but
