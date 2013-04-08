@@ -25,6 +25,16 @@ ALL_TARGET+=	all-gprof
 INSTALL_TARGET+=install-gprof
 .endif
 
+.if defined(__MINIX)
+CONFIGURE_ARGS+=	\
+	--with-ld=default \
+	--with-lto
+#LSC: FIXME Not yet gold, need to create
+# external/gpl3/binutils/usr.bin/gold directory & needed Makefiles
+#	--with-gold=yes
+#ALL_TARGET+=	all-gold
+#INSTALL_TARGET+=	install-gold
+.endif # defined(__MINIX)
 .include "${.CURDIR}/../Makefile.gnuhost"
 
 CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
