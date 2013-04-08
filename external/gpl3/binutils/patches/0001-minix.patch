@@ -1,6 +1,6 @@
-diff -r -x CVS -N -U 3 dist.orig/bfd/config.bfd dist/bfd/config.bfd
---- dist.orig/bfd/config.bfd	2012-10-31 17:08:07.757323090 +0100
-+++ dist/bfd/config.bfd	2012-10-31 17:47:37.039900295 +0100
+diff -rNU3 dist.nbsd/bfd/config.bfd dist/bfd/config.bfd
+--- dist.nbsd/bfd/config.bfd	2013-04-08 23:50:35.000000000 +0200
++++ dist/bfd/config.bfd	2013-04-09 00:31:05.000000000 +0200
 @@ -281,7 +281,7 @@
      ;;
    arm-*-elf | arm-*-freebsd* | arm*-*-linux-* | arm*-*-conix* | \
@@ -10,7 +10,7 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/config.bfd dist/bfd/config.bfd
      targ_defvec=bfd_elf32_littlearm_vec
      targ_selvecs=bfd_elf32_bigarm_vec
      ;;
-@@ -697,6 +697,9 @@
+@@ -663,6 +663,9 @@
    i[3-7]86-none-*)
      targ_defvec=i386coff_vec
      ;;
@@ -20,32 +20,32 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/config.bfd dist/bfd/config.bfd
    i[3-7]86-*-aout* | i[3-7]86*-*-vsta*)
      targ_defvec=i386aout_vec
      ;;
-diff -r -x CVS -N -U 3 dist.orig/bfd/configure dist/bfd/configure
---- dist.orig/bfd/configure	2012-10-31 17:08:07.763989894 +0100
-+++ dist/bfd/configure	2012-10-31 18:01:20.947045411 +0100
-@@ -15219,6 +15219,7 @@
+diff -rNU3 dist.nbsd/bfd/configure dist/bfd/configure
+--- dist.nbsd/bfd/configure	2013-04-08 23:52:18.000000000 +0200
++++ dist/bfd/configure	2013-04-09 00:31:05.000000000 +0200
+@@ -15210,6 +15210,7 @@
      bfd_elf32_i370_vec)		tb="$tb elf32-i370.lo elf32.lo $elf" ;;
      bfd_elf32_i386_sol2_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
      bfd_elf32_i386_freebsd_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
 +    bfd_elf32_i386_minix_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_dragonfly_vec) tb="$tb elf32-i386.lo elf-vxworks.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_nacl_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
      bfd_elf32_i386_vxworks_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-     bfd_elf32_i386_vec)		tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-     bfd_elf32_i860_little_vec)	tb="$tb elf32-i860.lo elf32.lo $elf" ;;
-diff -r -x CVS -N -U 3 dist.orig/bfd/configure.in dist/bfd/configure.in
---- dist.orig/bfd/configure.in	2012-10-31 17:08:07.743989476 +0100
-+++ dist/bfd/configure.in	2012-10-31 17:47:37.039900295 +0100
-@@ -710,6 +710,7 @@
+diff -rNU3 dist.nbsd/bfd/configure.in dist/bfd/configure.in
+--- dist.nbsd/bfd/configure.in	2013-04-08 23:50:41.000000000 +0200
++++ dist/bfd/configure.in	2013-04-09 00:31:05.000000000 +0200
+@@ -709,6 +709,7 @@
      bfd_elf32_i370_vec)		tb="$tb elf32-i370.lo elf32.lo $elf" ;;
      bfd_elf32_i386_sol2_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
      bfd_elf32_i386_freebsd_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
 +    bfd_elf32_i386_minix_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_nacl_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
      bfd_elf32_i386_vxworks_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
      bfd_elf32_i386_vec)		tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-     bfd_elf32_i860_little_vec)	tb="$tb elf32-i860.lo elf32.lo $elf" ;;
-diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-i386.c dist/bfd/elf32-i386.c
---- dist.orig/bfd/elf32-i386.c	2012-10-31 17:08:07.743989476 +0100
-+++ dist/bfd/elf32-i386.c	2012-10-31 17:47:37.039900295 +0100
-@@ -4761,6 +4761,18 @@
+diff -rNU3 dist.nbsd/bfd/elf32-i386.c dist/bfd/elf32-i386.c
+--- dist.nbsd/bfd/elf32-i386.c	2013-04-09 00:27:33.000000000 +0200
++++ dist/bfd/elf32-i386.c	2013-04-09 00:31:05.000000000 +0200
+@@ -4962,6 +4962,18 @@
  
  #include "elf32-target.h"
  
@@ -64,21 +64,21 @@ diff -r -x CVS -N -U 3 dist.orig/bfd/elf32-i386.c dist/bfd/elf32-i386.c
  /* FreeBSD support.  */
  
  #undef	TARGET_LITTLE_SYM
-diff -r -x CVS -N -U 3 dist.orig/bfd/targets.c dist/bfd/targets.c
---- dist.orig/bfd/targets.c	2012-10-31 17:08:07.767323296 +0100
-+++ dist/bfd/targets.c	2012-10-31 17:47:37.039900295 +0100
-@@ -605,6 +605,7 @@
+diff -rNU3 dist.nbsd/bfd/targets.c dist/bfd/targets.c
+--- dist.nbsd/bfd/targets.c	2013-04-08 23:50:47.000000000 +0200
++++ dist/bfd/targets.c	2013-04-09 00:31:05.000000000 +0200
+@@ -617,6 +617,7 @@
  extern const bfd_target bfd_elf32_hppa_vec;
  extern const bfd_target bfd_elf32_i370_vec;
  extern const bfd_target bfd_elf32_i386_freebsd_vec;
 +extern const bfd_target bfd_elf32_i386_minix_vec;
+ extern const bfd_target bfd_elf32_i386_nacl_vec;
  extern const bfd_target bfd_elf32_i386_sol2_vec;
  extern const bfd_target bfd_elf32_i386_vxworks_vec;
- extern const bfd_target bfd_elf32_i386_vec;
-diff -r -x CVS -N -U 3 dist.orig/config.guess dist/config.guess
---- dist.orig/config.guess	2012-10-31 17:08:07.770656699 +0100
-+++ dist/config.guess	2012-10-31 17:47:37.039900295 +0100
-@@ -855,8 +855,8 @@
+diff -rNU3 dist.nbsd/config.guess dist/config.guess
+--- dist.nbsd/config.guess	2013-04-08 23:50:48.000000000 +0200
++++ dist/config.guess	2013-04-09 00:31:05.000000000 +0200
+@@ -858,8 +858,8 @@
  	# other systems with GNU libc and userland
  	echo ${UNAME_MACHINE}-unknown-`echo ${UNAME_SYSTEM} | sed 's,^[^/]*/,,' | tr '[A-Z]' '[a-z]'``echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`-gnu
  	exit ;;
@@ -89,9 +89,9 @@ diff -r -x CVS -N -U 3 dist.orig/config.guess dist/config.guess
  	exit ;;
      alpha:Linux:*:*)
  	case `sed -n '/^cpu model/s/^.*: \(.*\)/\1/p' < /proc/cpuinfo` in
-diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-i386.h dist/gas/config/tc-i386.h
---- dist.orig/gas/config/tc-i386.h	2012-10-31 17:08:07.493984261 +0100
-+++ dist/gas/config/tc-i386.h	2012-10-31 17:47:37.086567936 +0100
+diff -rNU3 dist.nbsd/gas/config/tc-i386.h dist/gas/config/tc-i386.h
+--- dist.nbsd/gas/config/tc-i386.h	2013-04-08 23:50:49.000000000 +0200
++++ dist/gas/config/tc-i386.h	2013-04-09 00:31:05.000000000 +0200
 @@ -68,6 +68,10 @@
  #define ELF_TARGET_FORMAT64	"elf64-x86-64-sol2"
  #endif
@@ -103,9 +103,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/config/tc-i386.h dist/gas/config/tc-i386.h
  #ifndef ELF_TARGET_FORMAT
  #define ELF_TARGET_FORMAT	"elf32-i386"
  #endif
-diff -r -x CVS -N -U 3 dist.orig/gas/config/te-minix.h dist/gas/config/te-minix.h
---- dist.orig/gas/config/te-minix.h	1970-01-01 01:00:00.000000000 +0100
-+++ dist/gas/config/te-minix.h	2012-10-31 17:47:37.086567936 +0100
+diff -rNU3 dist.nbsd/gas/config/te-minix.h dist/gas/config/te-minix.h
+--- dist.nbsd/gas/config/te-minix.h	1970-01-01 01:00:00.000000000 +0100
++++ dist/gas/config/te-minix.h	2013-04-09 00:31:05.000000000 +0200
 @@ -0,0 +1,9 @@
 +#define TE_MINIX 1
 +
@@ -116,9 +116,9 @@ diff -r -x CVS -N -U 3 dist.orig/gas/config/te-minix.h dist/gas/config/te-minix.
 +#define LOCAL_LABELS_FB 1
 +
 +#include "obj-format.h"
-diff -r -x CVS -N -U 3 dist.orig/gas/configure dist/gas/configure
---- dist.orig/gas/configure	2012-10-31 17:08:07.507317870 +0100
-+++ dist/gas/configure	2012-10-31 17:47:37.089901339 +0100
+diff -rNU3 dist.nbsd/gas/configure dist/gas/configure
+--- dist.nbsd/gas/configure	2013-04-08 23:50:57.000000000 +0200
++++ dist/gas/configure	2013-04-09 00:31:05.000000000 +0200
 @@ -6127,6 +6127,10 @@
    fi
    ;;
@@ -130,10 +130,10 @@ diff -r -x CVS -N -U 3 dist.orig/gas/configure dist/gas/configure
  gnu*)
    lt_cv_deplibs_check_method=pass_all
    ;;
-diff -r -x CVS -N -U 3 dist.orig/gas/configure.tgt dist/gas/configure.tgt
---- dist.orig/gas/configure.tgt	2012-10-31 17:08:07.507317870 +0100
-+++ dist/gas/configure.tgt	2012-10-31 17:47:37.683247033 +0100
-@@ -428,6 +428,7 @@
+diff -rNU3 dist.nbsd/gas/configure.tgt dist/gas/configure.tgt
+--- dist.nbsd/gas/configure.tgt	2013-04-08 23:50:58.000000000 +0200
++++ dist/gas/configure.tgt	2013-04-09 00:31:05.000000000 +0200
+@@ -426,6 +426,7 @@
    *-*-elf | *-*-sysv4*)			fmt=elf ;;
    *-*-solaris*)				fmt=elf em=solaris ;;
    *-*-aros*)				fmt=elf em=linux ;;
@@ -141,58 +141,18 @@ diff -r -x CVS -N -U 3 dist.orig/gas/configure.tgt dist/gas/configure.tgt
    *-*-vxworks* | *-*-windiss)		fmt=elf em=vxworks ;;
    *-*-netware)				fmt=elf em=netware ;;
  esac
-diff -r -x CVS -N -U 3 dist.orig/ld/configure.tgt dist/ld/configure.tgt
---- dist.orig/ld/configure.tgt	2012-10-31 17:08:07.663987808 +0100
-+++ dist/ld/configure.tgt	2012-10-31 17:47:37.869917589 +0100
-@@ -73,6 +73,8 @@
- armeb-*-elf)		targ_emul=armelfb ;;
- arm-*-elf | arm*-*-eabi*)
- 	  		targ_emul=armelf ;;
-+arm*-*-minix*)	targ_emul=armelf_minix
-+			targ_extra_emuls="armelf" ;;
- arm*-*-symbianelf*)     targ_emul=armsymbian;;
- arm-*-kaos*)		targ_emul=armelf ;;
- arm9e-*-elf)		targ_emul=armelf ;;
-@@ -198,6 +200,8 @@
- i[3-7]86-*-bsd386)	targ_emul=i386bsd ;;
- i[3-7]86-*-bsdi*)	targ_emul=i386bsd ;;
- i[3-7]86-*-aout)	targ_emul=i386aout ;;
-+i[3-7]86-*-minix)	targ_emul=elf_i386_minix
-+			targ_extra_emuls="elf_i386" ;;
- i[3-7]86-*-linux*aout*)	targ_emul=i386linux
- 			targ_extra_emuls=elf_i386
- 			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/aout//'` ;;
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/armelf_minix.sh dist/ld/emulparams/armelf_minix.sh
---- dist.orig/ld/emulparams/armelf_minix.sh	1970-01-01 01:00:00.000000000 +0100
-+++ dist/ld/emulparams/armelf_minix.sh	2012-10-31 17:47:37.869917589 +0100
-@@ -0,0 +1,3 @@
-+. ${srcdir}/emulparams/armelf.sh
-+. ${srcdir}/emulparams/elf_minix.sh
-+OUTPUT_FORMAT="elf32-littlearm"
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf_i386_minix.sh dist/ld/emulparams/elf_i386_minix.sh
---- dist.orig/ld/emulparams/elf_i386_minix.sh	1970-01-01 01:00:00.000000000 +0100
-+++ dist/ld/emulparams/elf_i386_minix.sh	2012-10-31 17:47:37.869917589 +0100
-@@ -0,0 +1,3 @@
-+. ${srcdir}/emulparams/elf_i386.sh
-+. ${srcdir}/emulparams/elf_minix.sh
-+OUTPUT_FORMAT="elf32-i386-minix"
-diff -r -x CVS -N -U 3 dist.orig/ld/emulparams/elf_minix.sh dist/ld/emulparams/elf_minix.sh
---- dist.orig/ld/emulparams/elf_minix.sh	1970-01-01 01:00:00.000000000 +0100
-+++ dist/ld/emulparams/elf_minix.sh	2012-10-31 17:47:37.869917589 +0100
-@@ -0,0 +1 @@
-+ELF_INTERPRETER_NAME=\"/libexec/ld-elf.so.1\"
-diff -r -x CVS -N -U 3 dist.orig/ld/Makefile.in dist/ld/Makefile.in
---- dist.orig/ld/Makefile.in	2012-10-31 17:08:07.663987808 +0100
-+++ dist/ld/Makefile.in	2012-10-31 17:47:37.869917589 +0100
-@@ -448,6 +448,7 @@
+diff -rNU3 dist.nbsd/ld/Makefile.in dist/ld/Makefile.in
+--- dist.nbsd/ld/Makefile.in	2013-04-08 23:50:59.000000000 +0200
++++ dist/ld/Makefile.in	2013-04-09 00:31:05.000000000 +0200
+@@ -449,6 +449,7 @@
  	earmelf_fbsd.c \
  	earmelf_linux.c \
  	earmelf_linux_eabi.c \
 +	earmelf_minix.c \
  	earmelf_nbsd.c \
- 	earmelf_nbsd_eabi.c \
  	earmelf_vxworks.c \
-@@ -549,6 +550,7 @@
+ 	earmelfb.c \
+@@ -566,6 +567,7 @@
  	eelf_i386_chaos.c \
  	eelf_i386_fbsd.c \
  	eelf_i386_ldso.c \
@@ -200,7 +160,7 @@ diff -r -x CVS -N -U 3 dist.orig/ld/Makefile.in dist/ld/Makefile.in
  	eelf_i386_sol2.c \
  	eelf_i386_vxworks.c \
  	eelf_s390.c \
-@@ -2120,6 +2122,10 @@
+@@ -2156,6 +2158,10 @@
    $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
    $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} armelf_linux_eabi "$(tdir_armelf_linux_abi)"
@@ -211,7 +171,7 @@ diff -r -x CVS -N -U 3 dist.orig/ld/Makefile.in dist/ld/Makefile.in
  earmelf_nbsd.c: $(srcdir)/emulparams/armelf_nbsd.sh \
    $(srcdir)/emulparams/armelf.sh \
    $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
-@@ -2538,6 +2544,10 @@
+@@ -2640,6 +2646,10 @@
  eelf_i386_ldso.c: $(srcdir)/emulparams/elf_i386_ldso.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_i386_ldso "$(tdir_elf_i386_ldso)"
@@ -222,3 +182,55 @@ diff -r -x CVS -N -U 3 dist.orig/ld/Makefile.in dist/ld/Makefile.in
  eelf_i386_sol2.c: $(srcdir)/emulparams/elf_i386_sol2.sh \
    $(srcdir)/emulparams/solaris2.sh \
    $(srcdir)/emultempl/solaris2.em \
+diff -rNU3 dist.nbsd/ld/configure.tgt dist/ld/configure.tgt
+--- dist.nbsd/ld/configure.tgt	2013-04-08 23:51:00.000000000 +0200
++++ dist/ld/configure.tgt	2013-04-09 00:31:05.000000000 +0200
+@@ -68,6 +68,8 @@
+ armeb-*-elf)		targ_emul=armelfb ;;
+ arm-*-elf | arm*-*-eabi*)
+ 	  		targ_emul=armelf ;;
++arm*-*-minix*)	targ_emul=armelf_minix
++			targ_extra_emuls="armelf" ;;
+ arm*-*-symbianelf*)     targ_emul=armsymbian;;
+ arm-*-kaos*)		targ_emul=armelf ;;
+ arm9e-*-elf)		targ_emul=armelf ;;
+@@ -180,6 +182,8 @@
+ i[3-7]86-*-bsd386)	targ_emul=i386bsd ;;
+ i[3-7]86-*-bsdi*)	targ_emul=i386bsd ;;
+ i[3-7]86-*-aout)	targ_emul=i386aout ;;
++i[3-7]86-*-minix)	targ_emul=elf_i386_minix
++			targ_extra_emuls="elf_i386" ;;
+ i[3-7]86-*-linux*aout*)	targ_emul=i386linux
+ 			targ_extra_emuls=elf_i386
+ 			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/aout//'` ;;
+diff -rNU3 dist.nbsd/ld/emulparams/armelf_minix.sh dist/ld/emulparams/armelf_minix.sh
+--- dist.nbsd/ld/emulparams/armelf_minix.sh	1970-01-01 01:00:00.000000000 +0100
++++ dist/ld/emulparams/armelf_minix.sh	2013-04-09 00:31:05.000000000 +0200
+@@ -0,0 +1,15 @@
++. ${srcdir}/emulparams/armelf.sh
++. ${srcdir}/emulparams/elf_minix.sh
++OUTPUT_FORMAT="elf32-littlearm"
++MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
++COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
++
++DATA_START_SYMBOLS='PROVIDE (__data_start = .);';
++
++# Dynamic libraries support
++GENERATE_SHLIB_SCRIPT=yes
++TARGET2_TYPE=got-rel
++
++GENERATE_PIE_SCRIPT=yes
++
++unset EMBEDDED
+diff -rNU3 dist.nbsd/ld/emulparams/elf_i386_minix.sh dist/ld/emulparams/elf_i386_minix.sh
+--- dist.nbsd/ld/emulparams/elf_i386_minix.sh	1970-01-01 01:00:00.000000000 +0100
++++ dist/ld/emulparams/elf_i386_minix.sh	2013-04-09 00:31:05.000000000 +0200
+@@ -0,0 +1,3 @@
++. ${srcdir}/emulparams/elf_i386.sh
++. ${srcdir}/emulparams/elf_minix.sh
++OUTPUT_FORMAT="elf32-i386-minix"
+diff -rNU3 dist.nbsd/ld/emulparams/elf_minix.sh dist/ld/emulparams/elf_minix.sh
+--- dist.nbsd/ld/emulparams/elf_minix.sh	1970-01-01 01:00:00.000000000 +0100
++++ dist/ld/emulparams/elf_minix.sh	2013-04-09 00:31:05.000000000 +0200
+@@ -0,0 +1 @@
++ELF_INTERPRETER_NAME=\"/libexec/ld-elf.so.1\"

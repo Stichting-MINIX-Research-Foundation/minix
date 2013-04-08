@@ -3,7 +3,7 @@ OUTPUT_FORMAT("elf32-i386-minix", "elf32-i386-minix",
 	      "elf32-i386-minix")
 OUTPUT_ARCH(i386)
 ENTRY(_start)
-SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib");
+SEARCH_DIR("=/usr/lib");
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */

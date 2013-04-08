@@ -315,6 +315,7 @@
 ./usr/bin/ifconfig			minix-sys
 ./usr/bin/ifdef				minix-sys
 ./usr/bin/indent			minix-sys
+./usr/bin/in.fingerd			minix-sys	obsolete
 ./usr/bin/infocmp			minix-sys
 ./usr/bin/in.rshd			minix-sys
 ./usr/bin/install			minix-sys
