@@ -34,7 +34,11 @@
 #ifndef _SYS_SYSLIMITS_H_
 #define _SYS_SYSLIMITS_H_
 
-#include <minix/limits.h>
+#if defined(__minix)
+#define __MINIX_OPEN_MAX	255 /* a process may have 255 files open */
+#define __MINIX_PATH_MAX	1024/* a pathname may contain 1023 chars (+ '\0')*/
+#endif /* defined(__minix) */
+
 #include <sys/featuretest.h>
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \

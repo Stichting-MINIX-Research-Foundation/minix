@@ -638,7 +638,7 @@
 ./usr/include/minix/ipc.h		minix-sys
 ./usr/include/minix/keymap.h		minix-sys
 ./usr/include/minix/libminixfs.h	minix-sys
-./usr/include/minix/limits.h		minix-sys
+./usr/include/minix/limits.h		minix-sys	obsolete
 ./usr/include/minix/log.h		minix-sys
 ./usr/include/minix			minix-sys
 ./usr/include/minix/minlib.h		minix-sys
