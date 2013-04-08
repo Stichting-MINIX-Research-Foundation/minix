@@ -29,7 +29,7 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 fi
 
 if [ X`/bin/sysenv arch` = Xearm ]
-then	echo starting mmc driver
+then	echo Starting the mmc driver
 	/bin/service -c up /sbin/mmc -dev /dev/c0d0
 fi
 
