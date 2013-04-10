@@ -1,0 +1,74 @@
+% Id: txi-cs.tex,v 1.3 2004/04/11 17:56:45 karl Exp
+% Czech translation for texinfo.tex.
+%
+% Copyright (C) 1999, 2000 Free Software Foundation.
+% 
+% Authors:
+% Vladimir Michl <Vladimir.Michl@mujweb.cz>
+% Stepan Kasal <kasal@ucw.cz>
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+%
+\gdef\putwordAppendix{Pøílohy}
+\gdef\putwordChapter{Kapitola}
+\gdef\putwordfile{soubor}
+\gdef\putwordin{v~knize}
+\gdef\putwordIndexIsEmpty{(Rejstøík je prázdný.)}
+\gdef\putwordIndexNonexistent{(Rejstøík neexistuje.)}
+\gdef\putwordInfo{Info}
+\gdef\putwordInstanceVariableof{Promìnná pro instance tøídy}
+\gdef\putwordMethodon{Metoda tøídy}
+\gdef\putwordNoTitle{Bez nadpisu}
+\gdef\putwordof{tøídy}
+\global\let\putwordon\putwordof
+\gdef\putwordpage{stránka}
+\gdef\putwordsection{oddíl}
+\gdef\putwordSection{Oddíl}
+\gdef\putwordsee{viz}
+\gdef\putwordSee{Viz}
+\gdef\putwordShortTOC{Struèný obsah}
+\gdef\putwordTOC{Obsah}
+%
+\gdef\putwordMJan{ledna}
+\gdef\putwordMFeb{února}
+\gdef\putwordMMar{bøezna}
+\gdef\putwordMApr{dubna}
+\gdef\putwordMMai{kvìtna}
+\gdef\putwordMJun{èervna}
+\gdef\putwordMJul{èervence}
+\gdef\putwordMAug{srpna}
+\gdef\putwordMSep{záøí}
+\gdef\putwordMOct{øíjna}
+\gdef\putwordMNov{listopadu}
+\gdef\putwordMDec{prosince}
+%
+\gdef\putwordDefmac{Makro}
+\gdef\putwordDefspec{Speciální forma}
+\gdef\putwordDefvar{Promìnná}
+\gdef\putwordDefopt{Volby}
+\gdef\putwordDeffunc{Funkce}
+%
+% Redefine \today to produce Czech
+% preferred dates such as 28. januar 1999.
+%
+\gdef\today{%
+  \number\day.\nobreak\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMai\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \penalty3000\relax\space\number\year}
+%

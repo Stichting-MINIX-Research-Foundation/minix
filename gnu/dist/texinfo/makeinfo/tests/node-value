@@ -1,0 +1,12 @@
+#!/bin/sh
+# Test @value expansion in node names.
+
+unset TEXINFO_OUTPUT
+: ${srcdir=.}
+
+../makeinfo $srcdir/node-value.txi
+grep -v "No Value" node-value.info >/dev/null
+exit_status=$?
+
+rm -f node-value.info
+exit $exit_status
