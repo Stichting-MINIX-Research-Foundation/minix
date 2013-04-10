@@ -108,6 +108,7 @@ typedef struct rs232 {
 
   int irq;			/* irq for this line */
   int irq_hook_id;		/* interrupt hook */
+  int irq_hook_kernel_id;	/* id as returned from sys_irqsetpolicy */
 
   char ibuf[RS_IBUFSIZE];	/* input buffer */
   char obuf[RS_OBUFSIZE];	/* output buffer */
@@ -428,7 +429,7 @@ static void rs_config(rs232_t *rs)
 	 * avoid looping forever.
 	 */
 
-	if (sys_irqdisable(&rs->irq_hook_id) != OK)
+	if (sys_irqdisable(&rs->irq_hook_kernel_id) != OK)
 		panic("unable to disable interrupts");
 
 	/* Select the baud rate divisor registers and change the rate. */
@@ -456,7 +457,7 @@ static void rs_config(rs232_t *rs)
 	if ((tp->tty_termios.c_lflag & IXON) && rs->oxoff != _POSIX_VDISABLE)
 		rs->ostate &= ~ORAW;
 	(void) serial_in(rs, OMAP3_IIR);
-	if (sys_irqenable(&rs->irq_hook_id) != OK)
+	if (sys_irqenable(&rs->irq_hook_kernel_id) != OK)
 		panic("unable to enable interrupts");
 }
 
@@ -519,16 +520,27 @@ rs_init(tty_t *tp)
 
 	/* Configure IRQ */
 	rs->irq = this_omap3.irq;
-	rs->irq_hook_id = 1 << line;	/* call back with irq line number */
-	if (sys_irqsetpolicy(rs->irq, 0, &rs->irq_hook_id) != OK) {
+
+	/* callback with irq line number + 1 because using line number 0 
+	   fails eslewhere */
+	rs->irq_hook_kernel_id = rs->irq_hook_id = line + 1;	
+
+	/* sys_irqsetpolicy modifies irq_hook_kernel_id. this modified id
+	 * needs to be used in sys_irqenable and similar calls.
+	 */
+	if (sys_irqsetpolicy(rs->irq, 0, &rs->irq_hook_kernel_id) != OK) {
 		printf("RS232: Couldn't obtain hook for irq %d\n", rs->irq);
 	} else {
-		if (sys_irqenable(&rs->irq_hook_id) != OK)  {
+		if (sys_irqenable(&rs->irq_hook_kernel_id) != OK)  {
 			printf("RS232: Couldn't enable irq %d (hooked)\n",
 				rs->irq);
 		}
 	}
-	rs_irq_set |= (1 << (rs->irq_hook_id + 1));
+
+	/* When we get called back we get called back using the original 
+	 * hook_id bit set. e.g. if we register with hook_id 5 the callback
+	 * calls us with the 5 th bit set */
+	rs_irq_set |= (1 << (rs->irq_hook_id ));
 
 	/* Enable interrupts */
 	rs_reset(rs);
@@ -559,9 +571,9 @@ rs_interrupt(message *m)
 
 	irq_set = m->NOTIFY_ARG;
 	for (line = 0, rs = rs_lines; line < NR_RS_LINES; line++, rs++) {
-		if (irq_set & (1 << (rs->irq_hook_id+1))) {
+		if (irq_set & (1 << rs->irq_hook_id)) {
 			rs232_handler(rs);
-			if (sys_irqenable(&rs->irq_hook_id) != OK)
+			if (sys_irqenable(&rs->irq_hook_kernel_id) != OK)
 				panic("unable to enable interrupts");
 		}
 	}
