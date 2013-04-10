@@ -98,9 +98,4 @@
 /* Supplementary status register fields */
 #define OMAP3_SSR_TX_FIFO_FULL (1 << 0) /* Transmit FIFO full */
 
-#define OMAP3_UART3_THR (OMAP3_UART3_BASE + OMAP3_THR)
-#define OMAP3_UART3_IIR (OMAP3_UART3_BASE + OMAP3_IIR)
-#define OMAP3_UART3_LSR (OMAP3_UART3_BASE + OMAP3_LSR)
-#define OMAP3_UART3_SSR (OMAP3_UART3_BASE + OMAP3_SSR)
-
 #endif /* _OMAP_SERIAL_H */
