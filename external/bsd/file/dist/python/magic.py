@@ -109,13 +109,17 @@ class Magic(object):
         """
         _close(self._magic_t)
 
-    def file(self, file):
+    def file(self, filename):
         """
         Returns a textual description of the contents of the argument passed
         as a filename or None if an error occurred and the MAGIC_ERROR flag
         is set.  A call to errno() will return the numeric error code.
         """
-        return _file(self._magic_t, file)
+        try: # attempt python3 approach first
+            bi = bytes(filename, 'utf-8')
+            return str(_file(self._magic_t, bi), 'utf-8')
+        except:
+            return _file(self._magic_t, filename)
 
     def descriptor(self, fd):
         """
@@ -129,14 +133,20 @@ class Magic(object):
         as a buffer or None if an error occurred and the MAGIC_ERROR flag
         is set. A call to errno() will return the numeric error code.
         """
-        return _buffer(self._magic_t, buf, len(buf))
+        try: # attempt python3 approach first
+            return str(_buffer(self._magic_t, buf, len(buf)), 'utf-8')
+        except:
+            return _buffer(self._magic_t, buf, len(buf))
 
     def error(self):
         """
         Returns a textual explanation of the last error or None
         if there was no error.
         """
-        return _error(self._magic_t)
+        try: # attempt python3 approach first
+            return str(_error(self._magic_t), 'utf-8')
+        except:
+            return _error(self._magic_t)
   
     def setflags(self, flags):
         """
@@ -149,7 +159,7 @@ class Magic(object):
         """
         return _setflags(self._magic_t, flags)
 
-    def load(self, file=None):
+    def load(self, filename=None):
         """
         Must be called to load entries in the colon separated list of database files
         passed as argument or the default database file if no argument before
@@ -157,7 +167,7 @@ class Magic(object):
         
         Returns 0 on success and -1 on failure.
         """
-        return _load(self._magic_t, file)
+        return _load(self._magic_t, filename)
 
     def compile(self, dbs):
         """

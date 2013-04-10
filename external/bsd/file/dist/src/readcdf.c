@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.6 2011/09/28 13:50:09 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.7 2012/02/22 17:53:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -29,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readcdf.c,v 1.26 2011/08/26 13:38:28 christos Exp $")
+FILE_RCSID("@(#)$File: readcdf.c,v 1.29 2012/02/20 20:04:58 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.6 2011/09/28 13:50:09 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.7 2012/02/22 17:53:51 christos Exp $");
 #endif
 #endif
 
@@ -80,6 +80,16 @@ cdf_file_property_info(struct magic_set *ms, const cdf_property_info_t *info,
                 case CDF_UNSIGNED32:
                         if (NOTMIME(ms) && file_printf(ms, ", %s: %u", buf,
                             info[i].pi_u32) == -1)
+                                return -1;
+                        break;
+                case CDF_FLOAT:
+                        if (NOTMIME(ms) && file_printf(ms, ", %s: %g", buf,
+                            info[i].pi_f) == -1)
+                                return -1;
+                        break;
+                case CDF_DOUBLE:
+                        if (NOTMIME(ms) && file_printf(ms, ", %s: %g", buf,
+                            info[i].pi_d) == -1)
                                 return -1;
                         break;
                 case CDF_LENGTH32_STRING:
@@ -154,9 +164,8 @@ cdf_file_property_info(struct magic_set *ms, const cdf_property_info_t *info,
         if (!NOTMIME(ms)) {
 		if (str == NULL)
 			return 0;
-		if (file_printf(ms, "application/%s", str) == -1)
-			return -1;
-
+                if (file_printf(ms, "application/%s", str) == -1)
+                        return -1;
         }
         return 1;
 }
@@ -174,30 +183,31 @@ cdf_file_summary_info(struct magic_set *ms, const cdf_header_t *h,
                 return -1;
 
         if (NOTMIME(ms)) {
-                if (file_printf(ms, "Composite Document File V2 Document") == -1)
+                if (file_printf(ms, "Composite Document File V2 Document")
+		    == -1)
                         return -1;
 
                 if (file_printf(ms, ", %s Endian",
                     si.si_byte_order == 0xfffe ?  "Little" : "Big") == -1)
-                        return -1;
+                        return -2;
                 switch (si.si_os) {
                 case 2:
                         if (file_printf(ms, ", Os: Windows, Version %d.%d",
                             si.si_os_version & 0xff,
                             (uint32_t)si.si_os_version >> 8) == -1)
-                                return -1;
+                                return -2;
                         break;
                 case 1:
                         if (file_printf(ms, ", Os: MacOS, Version %d.%d",
                             (uint32_t)si.si_os_version >> 8,
                             si.si_os_version & 0xff) == -1)
-                                return -1;
+                                return -2;
                         break;
                 default:
                         if (file_printf(ms, ", Os %d, Version: %d.%d", si.si_os,
                             si.si_os_version & 0xff,
                             (uint32_t)si.si_os_version >> 8) == -1)
-                                return -1;
+                                return -2;
                         break;
                 }
         }
@@ -205,7 +215,7 @@ cdf_file_summary_info(struct magic_set *ms, const cdf_header_t *h,
         m = cdf_file_property_info(ms, info, count);
         free(info);
 
-        return m;
+        return m == -1 ? -2 : m;
 }
 
 protected int
@@ -274,7 +284,7 @@ file_trycdf(struct magic_set *ms, int fd, const unsigned char *buf,
 #ifdef CDF_DEBUG
         cdf_dump_summary_info(&h, &scn);
 #endif
-        if ((i = cdf_file_summary_info(ms, &h, &scn)) == -1)
+        if ((i = cdf_file_summary_info(ms, &h, &scn)) < 0)
                 expn = "Can't expand summary_info";
 	if (i == 0) {
 		const char *str = "vnd.ms-office";
@@ -305,8 +315,10 @@ out1:
         free(sat.sat_tab);
 out0:
         if (i != 1) {
-                if (file_printf(ms, "Composite Document File V2 Document") == -1)
-                        return -1;
+		if (i == -1)
+		    if (file_printf(ms, "Composite Document File V2 Document")
+			== -1)
+			    return -1;
                 if (*expn)
                         if (file_printf(ms, ", %s%s", corrupt, expn) == -1)
                                 return -1;
