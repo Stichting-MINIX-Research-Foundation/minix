@@ -977,6 +977,9 @@ EOF
     sparc:Linux:*:* | sparc64:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit ;;
+    tile*:Linux:*:*)
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
+	exit ;;
     vax:Linux:*:*)
 	echo ${UNAME_MACHINE}-dec-linux-gnu
 	exit ;;

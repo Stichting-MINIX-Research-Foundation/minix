@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.2 2011/05/12 20:46:56 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.3 2012/02/22 17:48:26 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.144 2011/05/10 17:08:14 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.145 2011/12/08 12:12:46 rrt Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.2 2011/05/12 20:46:56 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.3 2012/02/22 17:48:26 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -122,7 +122,7 @@ private const struct {
 	{ "soft",	MAGIC_NO_CHECK_SOFT },
 	{ "tar",	MAGIC_NO_CHECK_TAR },
 	{ "text",	MAGIC_NO_CHECK_TEXT },	/* synonym for ascii */
-	{ "tokens",	MAGIC_NO_CHECK_TOKENS },
+	{ "tokens",	MAGIC_NO_CHECK_TOKENS }, /* OBSOLETE: ignored for backwards compatibility */
 };
 
 private char *progname;		/* used throughout 		*/

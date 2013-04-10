@@ -12,8 +12,8 @@ MFILESDIR?=	/usr/share/misc
 MFILES?=	magic.mgc
 MAGIC?=		${MFILESDIR}/magic
 
-#LSC FIXME Is this still needed ? -DQUICK
-CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H  -DBUILTIN_ELF \
+#this is still required (will not compile without removing it): -DQUICK
+CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -DBUILTIN_ELF \
 		-DELFCORE
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/src
 

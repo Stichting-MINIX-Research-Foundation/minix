@@ -1,4 +1,4 @@
-/*	$NetBSD: encoding.c,v 1.1.1.2 2011/05/12 20:46:52 christos Exp $	*/
+/*	$NetBSD: encoding.c,v 1.1.1.3 2012/02/22 17:48:23 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: encoding.c,v 1.5 2010/07/21 16:47:17 christos Exp $")
+FILE_RCSID("@(#)$File: encoding.c,v 1.7 2012/01/24 19:02:02 christos Exp $")
 #else
-__RCSID("$NetBSD: encoding.c,v 1.1.1.2 2011/05/12 20:46:52 christos Exp $");
+__RCSID("$NetBSD: encoding.c,v 1.1.1.3 2012/02/22 17:48:23 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -77,6 +77,7 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 	int rv = 1, ucs_type;
 	unsigned char *nbuf = NULL;
 
+	*type = "text";
 	mlen = (nbytes + 1) * sizeof(nbuf[0]);
 	if ((nbuf = CAST(unsigned char *, calloc((size_t)1, mlen))) == NULL) {
 		file_oomem(ms, mlen);
@@ -88,7 +89,6 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 		goto done;
 	}
 
-	*type = "text";
 	if (looks_ascii(buf, nbytes, *ubuf, ulen)) {
 		DPRINTF(("ascii %" SIZE_T_FORMAT "u\n", *ulen));
 		*code = "ASCII";
@@ -139,8 +139,7 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 	}
 
  done:
-	if (nbuf)
-		free(nbuf);
+	free(nbuf);
 
 	return rv;
 }

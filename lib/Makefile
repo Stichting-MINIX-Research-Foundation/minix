@@ -135,7 +135,7 @@ SUBDIR+=	libnpf		# depends on libprop
 SUBDIR+=	../crypto/external/bsd/openssl/lib # depends on libcrypt
 .endif
 
-#SUBDIR+=	../external/bsd/file/lib	# depends on libz
+SUBDIR+=	../external/bsd/file/lib	# depends on libz
 
 .if (${MKISCSI} != "no")
 SUBDIR+=	../external/bsd/iscsi/lib	# depends on libpthread

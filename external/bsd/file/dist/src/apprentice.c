@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.5 2011/09/16 21:06:26 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.7 2012/04/07 17:30:55 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apprentice.c,v 1.170 2011/06/10 09:23:28 christos Exp $")
+FILE_RCSID("@(#)$File: apprentice.c,v 1.173 2011/12/08 12:38:24 rrt Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.5 2011/09/16 21:06:26 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.7 2012/04/07 17:30:55 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -218,7 +218,7 @@ static const struct type_tbl_s {
 	{ XX("ledouble"),	FILE_LEDOUBLE,		FILE_FMT_DOUBLE },
 	{ XX("leid3"),		FILE_LEID3,		FILE_FMT_NUM },
 	{ XX("beid3"),		FILE_BEID3,		FILE_FMT_NUM },
-	{ XX("indirect"),	FILE_INDIRECT,		FILE_FMT_NONE },
+	{ XX("indirect"),	FILE_INDIRECT,		FILE_FMT_NUM },
 	{ XX_NULL,		FILE_INVALID,		FILE_FMT_NONE },
 # undef XX
 # undef XX_NULL
@@ -475,6 +475,9 @@ apprentice_magic_strength(const struct magic *m)
 	case FILE_BEDOUBLE:
 	case FILE_LEDOUBLE:
 		val += 8 * MULT;
+		break;
+
+	case FILE_INDIRECT:
 		break;
 
 	default:
@@ -742,8 +745,7 @@ load_1(struct magic_set *ms, int action, const char *fn, int *errs,
 			break;
 		}
 	}
-	if (line)
-		free(line);
+	free(line);
 	(void)fclose(f);
 }
 
@@ -796,6 +798,7 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 				file_oomem(ms,
 				    strlen(fn) + strlen(d->d_name) + 2);
 				errs++;
+				closedir(dir);
 				goto out;
 			}
 			if (stat(mfn, &st) == -1 || !S_ISREG(st.st_mode)) {
@@ -810,6 +813,7 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 				    realloc(filearr, mlen))) == NULL) {
 					file_oomem(ms, mlen);
 					free(mfn);
+					closedir(dir);
 					errs++;
 					goto out;
 				}
@@ -2306,7 +2310,7 @@ private int
 apprentice_compile(struct magic_set *ms, struct magic **magicp,
     uint32_t *nmagicp, const char *fn)
 {
-	int fd;
+	int fd = -1;
 	char *dbname;
 	int rv = -1;
 
@@ -2337,7 +2341,8 @@ apprentice_compile(struct magic_set *ms, struct magic **magicp,
 		goto out;
 	}
 
-	(void)close(fd);
+	if (fd != -1)
+		(void)close(fd);
 	rv = 0;
 out:
 	free(dbname);

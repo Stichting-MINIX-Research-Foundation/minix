@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.3 2011/05/13 01:52:13 christos Exp $	*/
+/*	$NetBSD: cdf_time.c,v 1.4 2012/02/22 17:53:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.10 2011/02/10 17:03:16 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.11 2011/12/13 13:48:41 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.3 2011/05/13 01:52:13 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.4 2012/02/22 17:53:51 christos Exp $");
 #endif
 #endif
 
@@ -127,7 +127,7 @@ cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 	tm.tm_year = (int)(CDF_BASE_YEAR + (t / 365));
 
 	rdays = cdf_getdays(tm.tm_year);
-	t -= rdays;
+	t -= rdays - 1;
 	tm.tm_mday = cdf_getday(tm.tm_year, (int)t);
 	tm.tm_mon = cdf_getmonth(tm.tm_year, (int)t);
 	tm.tm_wday = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.3 2011/05/13 01:52:13 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.4 2012/02/22 17:53:51 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.57 2011/05/11 01:02:41 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.60 2011/12/08 12:38:24 rrt Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.3 2011/05/13 01:52:13 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.4 2012/02/22 17:53:51 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -235,7 +235,8 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 
 	/* try soft magic tests */
 	if ((ms->flags & MAGIC_NO_CHECK_SOFT) == 0)
-		if ((m = file_softmagic(ms, ubuf, nb, BINTEST)) != 0) {
+		if ((m = file_softmagic(ms, ubuf, nb, BINTEST,
+		    looks_text)) != 0) {
 			if ((ms->flags & MAGIC_DEBUG) != 0)
 				(void)fprintf(stderr, "softmagic %d\n", m);
 #ifdef BUILTIN_ELF
@@ -259,10 +260,10 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 			goto done;
 		}
 
-	/* try text properties (and possibly text tokens) */
+	/* try text properties */
 	if ((ms->flags & MAGIC_NO_CHECK_TEXT) == 0) {
 
-		if ((m = file_ascmagic(ms, ubuf, nb)) != 0) {
+		if ((m = file_ascmagic(ms, ubuf, nb, looks_text)) != 0) {
 			if ((ms->flags & MAGIC_DEBUG) != 0)
 				(void)fprintf(stderr, "ascmagic %d\n", m);
 			goto done;
@@ -272,7 +273,8 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		if ((ms->flags & MAGIC_NO_CHECK_ENCODING) == 0) {
 			if (looks_text == 0)
 				if ((m = file_ascmagic_with_encoding( ms, ubuf,
-				    nb, u8buf, ulen, code, type)) != 0) {
+				    nb, u8buf, ulen, code, type, looks_text))
+				    != 0) {
 					if ((ms->flags & MAGIC_DEBUG) != 0)
 						(void)fprintf(stderr,
 						    "ascmagic/enc %d\n", m);
@@ -295,8 +297,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		if (file_printf(ms, "%s", code_mime) == -1)
 			rv = -1;
 	}
-	if (u8buf)
-		free(u8buf);
+	free(u8buf);
 	if (rv)
 		return rv;
 

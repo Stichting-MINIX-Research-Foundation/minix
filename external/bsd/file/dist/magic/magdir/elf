@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: elf,v 1.53 2009/09/19 16:28:09 christos Exp $
+# $File: elf,v 1.54 2011/12/17 17:16:29 christos Exp $
 # elf:  file(1) magic for ELF executables
 #
 # We have to check the byte order flag to see what byte order all the
@@ -40,9 +40,10 @@
 >>18	leshort		2		SPARC - invalid byte order,
 >>18	leshort		3		Intel 80386,
 >>18	leshort		4		Motorola
->>>36	lelong		&0x01000000	68000 - invalid byte order,
->>>36	lelong		&0x00810000	CPU32 - invalid byte order,
->>>36	lelong		0		68020 - invalid byte order,
+>>>4	byte		1
+>>>>36	lelong		&0x01000000	68000 - invalid byte order,
+>>>>36	lelong		&0x00810000	CPU32 - invalid byte order,
+>>>>36	lelong		0		68020 - invalid byte order,
 >>18	leshort		5		Motorola 88000 - invalid byte order,
 >>18	leshort		6		Intel 80486,
 >>18	leshort		7		Intel 80860,
@@ -50,9 +51,11 @@
 # The second number (#10) will be deprecated later. For now, we still
 # say something if #10 is encountered, but only gory details for #8.
 >>18	leshort		8		MIPS,
->>>36	lelong		&0x20		N32
+>>>4	byte		1
+>>>>36	lelong		&0x20		N32
 >>18	leshort		10		MIPS,
->>>36	lelong		&0x20		N32
+>>>4	byte		1
+>>>>36	lelong		&0x20		N32
 >>18	leshort		8
 # only for 32-bit
 >>>4	byte		1
@@ -80,8 +83,14 @@
 >>18	leshort		10		MIPS (deprecated),
 >>18	leshort		11		RS6000 - invalid byte order,
 >>18	leshort		15		PA-RISC - invalid byte order,
->>>50	leshort		0x0214		2.0
->>>48	leshort		&0x0008		(LP64),
+# only for 32-bit
+>>>4	byte		1
+>>>>38	leshort		0x0214		2.0
+>>>>36	leshort		&0x0008		(LP64)
+# only for 64-bit
+>>>4	byte		2
+>>>>50	leshort		0x0214		2.0
+>>>>48	leshort		&0x0008		(LP64)
 >>18	leshort		16		nCUBE,
 >>18	leshort		17		Fujitsu VPP500,
 >>18	leshort		18		SPARC32PLUS - invalid byte order,
@@ -92,6 +101,9 @@
 >>18	leshort		38		TRW RH-32,
 >>18	leshort		39		Motorola RCE,
 >>18	leshort		40		ARM,
+>>>4	byte		1
+>>>>36  lelong&0xff000000	0x04000000	EABI4
+>>>>36  lelong&0xff000000	0x05000000	EABI5
 >>18	leshort		41		Alpha,
 >>18	leshort		0xa390		IBM S/390 (obsolete),
 >>18	leshort		42		Renesas SH,
@@ -149,12 +161,14 @@
 >>18	leshort		106		Analog Devices Blackfin,
 >>18	leshort		113		Altera Nios II,
 >>18	leshort		0xae		META,
+>>18	leshort		187		Tilera TILE64,
+>>18	leshort		188		Tilera TILEPro,
+>>18	leshort		191		Tilera TILE-Gx,
 >>18	leshort		0x3426		OpenRISC (obsolete),
 >>18	leshort		0x8472		OpenRISC (obsolete),
 >>18	leshort		0x9026		Alpha (unofficial),
 >>20	lelong		0		invalid version
 >>20	lelong		1		version 1
->>36	lelong		1		MathCoPro/FPU/MAU Required
 >5	byte		2		MSB
 >>16	beshort		0		no file type,
 !:mime	application/octet-stream
@@ -174,17 +188,20 @@
 >>18	beshort		2		SPARC,
 >>18	beshort		3		Intel 80386 - invalid byte order,
 >>18	beshort		4		Motorola
->>>36	belong		&0x01000000	68000,
->>>36	belong		&0x00810000	CPU32,
->>>36	belong		0		68020,
+>>>4	byte		1
+>>>>36	belong		&0x01000000	68000,
+>>>>36	belong		&0x00810000	CPU32,
+>>>>36	belong		0		68020,
 >>18	beshort		5		Motorola 88000,
 >>18	beshort		6		Intel 80486 - invalid byte order,
 >>18	beshort		7		Intel 80860,
 # only for MIPS - see comment in little-endian section above.
 >>18	beshort		8		MIPS,
->>>36	belong		&0x20		N32
+>>>4	byte		1
+>>>>36	belong		&0x20		N32
 >>18	beshort		10		MIPS,
->>>36	belong		&0x20		N32
+>>>4	byte		1
+>>>>36	belong		&0x20		N32
 >>18	beshort		8
 # only for 32-bit
 >>>4	byte		1
@@ -212,15 +229,23 @@
 >>18	beshort		10		MIPS (deprecated),
 >>18	beshort		11		RS6000,
 >>18	beshort		15		PA-RISC
->>>50	beshort		0x0214		2.0
->>>48	beshort		&0x0008		(LP64)
+# only for 32-bit
+>>>4	byte		1
+>>>>38	beshort		0x0214		2.0
+>>>>36	beshort		&0x0008		(LP64)
+# only for 64-bit
+>>>4	byte		2
+>>>>50	beshort		0x0214		2.0
+>>>>48	beshort		&0x0008		(LP64)
 >>18	beshort		16		nCUBE,
 >>18	beshort		17		Fujitsu VPP500,
 >>18	beshort		18		SPARC32PLUS,
->>>36	belong&0xffff00	0x000100	V8+ Required,
->>>36	belong&0xffff00	0x000200	Sun UltraSPARC1 Extensions Required,
->>>36	belong&0xffff00	0x000400	HaL R1 Extensions Required,
->>>36	belong&0xffff00	0x000800	Sun UltraSPARC3 Extensions Required,
+# only for 32-bit
+>>>4	byte		1
+>>>>36	belong&0xffff00	0x000100	V8+ Required,
+>>>>36	belong&0xffff00	0x000200	Sun UltraSPARC1 Extensions Required,
+>>>>36	belong&0xffff00	0x000400	HaL R1 Extensions Required,
+>>>>36	belong&0xffff00	0x000800	Sun UltraSPARC3 Extensions Required,
 >>18	beshort		20		PowerPC or cisco 4500,
 >>18	beshort		21		64-bit PowerPC or cisco 7500,
 >>18	beshort		22		IBM S/390,
@@ -232,15 +257,19 @@
 >>18	beshort		38		TRW RH-32,
 >>18	beshort		39		Motorola RCE,
 >>18	beshort		40		ARM,
+>>>4	byte		2
+>>>>36  belong&0xff000000	0x04000000	EABI4
+>>>>36  belong&0xff000000	0x05000000	EABI5
 >>18	beshort		41		Alpha,
 >>18	beshort		42		Renesas SH,
 >>18	beshort		43		SPARC V9,
->>>48	belong&0xffff00	0x000200	Sun UltraSPARC1 Extensions Required,
->>>48	belong&0xffff00	0x000400	HaL R1 Extensions Required,
->>>48	belong&0xffff00	0x000800	Sun UltraSPARC3 Extensions Required,
->>>48	belong&0x3	0		total store ordering,
->>>48	belong&0x3	1		partial store ordering,
->>>48	belong&0x3	2		relaxed memory ordering,
+>>>4	byte		2
+>>>>48	belong&0xffff00	0x000200	Sun UltraSPARC1 Extensions Required,
+>>>>48	belong&0xffff00	0x000400	HaL R1 Extensions Required,
+>>>>48	belong&0xffff00	0x000800	Sun UltraSPARC3 Extensions Required,
+>>>>48	belong&0x3	0		total store ordering,
+>>>>48	belong&0x3	1		partial store ordering,
+>>>>48	belong&0x3	2		relaxed memory ordering,
 >>18	beshort		44		Siemens Tricore Embedded Processor,
 >>18	beshort		45		Argonaut RISC Core, Argonaut Technologies Inc.,
 >>18	beshort		46		Renesas H8/300,
@@ -259,12 +288,16 @@
 >>18	leshort		0x8472		OpenRISC (obsolete),
 >>18	beshort		94		Tensilica Xtensa,
 >>18	beshort		97		NatSemi 32k,
+>>18	beshort		187		Tilera TILE64,
+>>18	beshort		188		Tilera TILEPro,
+>>18	beshort		191		Tilera TILE-Gx,
 >>18	beshort		0x18ad		AVR32 (unofficial),
 >>18	beshort		0x9026		Alpha (unofficial),
 >>18	beshort		0xa390		IBM S/390 (obsolete),
->>20	belong		0		invalid version
->>20	belong		1		version 1
->>36	belong		1		MathCoPro/FPU/MAU Required
+>>>20	belong		0		invalid version
+>>>20	belong		1		version 1
+>>>4	byte		1
+>>>>36	belong		1		MathCoPro/FPU/MAU Required
 # Up to now only 0, 1 and 2 are defined; I've seen a file with 0x83, it seemed
 # like proper ELF, but extracting the string had bad results.
 >4      byte            <0x80
