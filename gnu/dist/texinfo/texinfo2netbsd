@@ -1,0 +1,86 @@
+#! /bin/sh
+#
+#	$NetBSD: texinfo2netbsd,v 1.4 2008/04/30 13:10:50 martin Exp $
+#
+# Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# texinfo2netbsd:  convert an texinfo source tree into a
+# format suitable for commit.  Works on current dir.
+#
+
+# delete some superfluous files
+echo deleting some superfluous files
+rm -rf djgpp
+
+echo done
+
+### Remove the $'s around RCS tags
+find . -type f -print | xargs egrep -l '\$(Id|Created|Header|NetBSD|Revision)' | while read f; do
+	sed -e 's/\$\(Id.*\) \$/\1/' \
+	    -e 's/\$\(Created.*\) \$/\1/' \
+	    -e 's/\$\(Header.*\) \$/\1/' \
+	    -e 's/\$\(NetBSD.*\) \$/\1/' \
+	    -e 's/\$\(Revision.*\) \$/\1/' \
+	    $f > /tmp/texinfo2$$ && mv /tmp/texinfo2$$ $f && \
+	echo removed RCS tag from $f
+done
+
+### Add our NetBSD RCS Id
+find . -type f -name '*.[chly]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/texinfo3$$
+echo "" >>/tmp/texinfo3$$
+cat $c  >> /tmp/texinfo3$$
+mv /tmp/texinfo3$$ $c && echo added NetBSD RCS tag to $c
+	)
+done
+
+find . -type f -name '*.[0-9]' -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+echo ".\\\"	\$NetBSD\$" >/tmp/texinfo4$$
+echo ".\\\"" >>/tmp/texinfo4$$
+cat $m >> /tmp/texinfo4$$
+mv /tmp/texinfo4$$ $m && echo added NetBSD RCS tag to $m
+	)
+done
+
+find . -type f -name '*.texi' -print | while read t; do
+        sed "2 s/^/@c \$NetBSD\$\\
+/" < $t > /tmp/texinfo5$$
+	mv /tmp/texinfo5$$ $t && echo added NetBSD RCS tag to $t
+done
+
+echo done
+
+echo You can import now.
+
+echo Path: src/gnu/dist/texinfo
+echo Vendor: FSF
+echo Versiontag: texinfo-X-Y
+
+echo
+echo Do not forget to update src/gnu/usr.bin/texinfo/common/config.h
+echo and src/gnu/dist/texinfo/util/texinfo.cat!
+exit 0
