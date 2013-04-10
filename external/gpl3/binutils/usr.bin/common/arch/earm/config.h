@@ -15,13 +15,13 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-#define ENABLE_NLS 1
+/* #undef ENABLE_NLS */
 
 /* Suffix used for executables, if any. */
 #define EXECUTABLE_SUFFIX ""
 
 /* Define to 1 if you have `alloca', as a function or macro. */
-#define HAVE_ALLOCA 1
+/* #undef HAVE_ALLOCA */
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
@@ -145,10 +145,10 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `utimes' function. */
-#define HAVE_UTIMES 1
+/* #undef HAVE_UTIMES */
 
 /* Define to 1 if you have the <zlib.h> header file. */
-/* #undef HAVE_ZLIB_H */
+#define HAVE_ZLIB_H 1
 
 /* Define as const if the declaration of iconv() needs const. */
 #define ICONV_CONST const
@@ -190,7 +190,7 @@
 #define STDC_HEADERS 1
 
 /* Configured target name. */
-#define TARGET "arm--netbsdelf-eabi"
+#define TARGET "arm-elf32-minix"
 
 /* Define to 1 if user symbol names have a leading underscore, 0 if not. */
 #define TARGET_PREPENDS_UNDERSCORE 0
@@ -221,11 +221,11 @@
 
 
 /* Version number of package */
-#define VERSION "2.21.1"
+#define VERSION "2.22"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -234,11 +234,11 @@
 /* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
-/* #undef _MINIX */
+#define _MINIX 1
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
-/* #undef _POSIX_1_SOURCE */
+#define _POSIX_1_SOURCE 2
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
-/* #undef _POSIX_SOURCE */
+#define _POSIX_SOURCE 1

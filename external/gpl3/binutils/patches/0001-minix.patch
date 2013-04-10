@@ -133,11 +133,12 @@ diff -rNU3 dist.nbsd/gas/configure dist/gas/configure
 diff -rNU3 dist.nbsd/gas/configure.tgt dist/gas/configure.tgt
 --- dist.nbsd/gas/configure.tgt	2013-04-08 23:50:58.000000000 +0200
 +++ dist/gas/configure.tgt	2013-04-09 00:31:05.000000000 +0200
-@@ -426,6 +426,7 @@
+@@ -426,6 +426,8 @@
    *-*-elf | *-*-sysv4*)			fmt=elf ;;
    *-*-solaris*)				fmt=elf em=solaris ;;
    *-*-aros*)				fmt=elf em=linux ;;
-+  *-*-minix*)                       fmt=elf em=minix ;;
++  i*-*-minix*)                       fmt=elf em=minix ;;
++  arm*-*-minix*)                       fmt=elf em=armeabi ;;
    *-*-vxworks* | *-*-windiss)		fmt=elf em=vxworks ;;
    *-*-netware)				fmt=elf em=netware ;;
  esac

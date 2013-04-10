@@ -128,8 +128,6 @@
 ./lib					minix-sys
 ./lib/cpp 				minix-sys
 ./libexec				minix-sys
-./usr/libexec/fingerd			minix-sys
-./usr/libexec/ftpd			minix-sys
 ./libexec/ld.elf_so			minix-sys
 ./libexec/ld-elf.so.1			minix-sys
 ./mnt					minix-sys
@@ -210,10 +208,13 @@
 ./usr/bin				minix-sys
 ./usr/bin/acknm				minix-sys
 ./usr/bin/acksize			minix-sys
+./usr/bin/addr2line			minix-sys	binutils
 ./usr/bin/add_route			minix-sys
 ./usr/bin/apropos			minix-sys
+./usr/bin/ar				minix-sys	binutils
 ./usr/bin/arch				minix-sys
 ./usr/bin/arp				minix-sys
+./usr/bin/as				minix-sys	binutils
 ./usr/bin/at				minix-sys
 ./usr/bin/awk				minix-sys
 ./usr/bin/backup			minix-sys
@@ -232,6 +233,7 @@
 ./usr/bin/cawf				minix-sys
 ./usr/bin/cc				minix-sys
 ./usr/bin/cdprobe			minix-sys
+./usr/bin/c++filt			minix-sys	binutils
 ./usr/bin/checkhier			minix-sys	obsolete
 ./usr/bin/chfn				minix-sys
 ./usr/bin/chgrp				minix-sys
@@ -273,6 +275,7 @@
 ./usr/bin/dumpcore			minix-sys
 ./usr/bin/egrep				minix-sys
 ./usr/bin/eject				minix-sys
+./usr/bin/elfedit			minix-sys	binutils
 ./usr/bin/elvis				minix-sys	obsolete
 ./usr/bin/elvprsv			minix-sys	obsolete
 ./usr/bin/elvrec			minix-sys	obsolete
@@ -300,6 +303,7 @@
 ./usr/bin/gcov-pull			minix-sys
 ./usr/bin/genassym			minix-sys
 ./usr/bin/getopt			minix-sys
+./usr/bin/gprof				minix-sys	binutils
 ./usr/bin/grep				minix-sys
 ./usr/bin/groups			minix-sys
 ./usr/bin/gunzip			minix-sys
@@ -316,9 +320,12 @@
 ./usr/bin/ifdef				minix-sys
 ./usr/bin/indent			minix-sys
 ./usr/bin/in.fingerd			minix-sys	obsolete
+./usr/bin/info				minix-sys
 ./usr/bin/infocmp			minix-sys
+./usr/bin/infokey			minix-sys
 ./usr/bin/in.rshd			minix-sys
 ./usr/bin/install			minix-sys
+./usr/bin/install-info			minix-sys
 ./usr/bin/in.telnetd			minix-sys
 ./usr/bin/ipcrm				minix-sys
 ./usr/bin/ipcs				minix-sys
@@ -329,6 +336,7 @@
 ./usr/bin/join				minix-sys
 ./usr/bin/kill				minix-sys	obsolete
 ./usr/bin/last				minix-sys
+./usr/bin/ld				minix-sys	binutils
 ./usr/bin/ldd				minix-sys
 ./usr/bin/less				minix-sys
 ./usr/bin/lessecho			minix-sys
@@ -348,6 +356,7 @@
 ./usr/bin/mail				minix-sys
 ./usr/bin/make				minix-sys
 ./usr/bin/MAKEDEV			minix-sys
+./usr/bin/makeinfo			minix-sys
 ./usr/bin/man				minix-sys
 ./usr/bin/mandoc			minix-sys
 ./usr/bin/md2				minix-sys
@@ -366,9 +375,12 @@
 ./usr/bin/nbperf			minix-sys
 ./usr/bin/newgrp			minix-sys
 ./usr/bin/nice				minix-sys
+./usr/bin/nm				minix-sys	binutils
 ./usr/bin/nohup				minix-sys
 ./usr/bin/nonamed			minix-sys
 ./usr/bin/nroff				minix-sys
+./usr/bin/objcopy			minix-sys	binutils
+./usr/bin/objdump			minix-sys	binutils
 ./usr/bin/od				minix-sys
 ./usr/bin/page				minix-sys
 ./usr/bin/passwd			minix-sys
@@ -389,11 +401,13 @@
 ./usr/bin/pr_routes			minix-sys
 ./usr/bin/ps				minix-sys
 ./usr/bin/ramdisk			minix-sys
+./usr/bin/ranlib			minix-sys	binutils
 ./usr/bin/rarpd				minix-sys
 ./usr/bin/rawspeed			minix-sys
 ./usr/bin/rcp				minix-sys
 ./usr/bin/rdate				minix-sys	obsolete
 ./usr/bin/readall			minix-sys	obsolete
+./usr/bin/readelf			minix-sys	binutils
 ./usr/bin/readlink			minix-sys
 ./usr/bin/reboot			minix-sys
 ./usr/bin/ref				minix-sys	obsolete
@@ -413,6 +427,7 @@
 ./usr/bin/shar				minix-sys
 ./usr/bin/shuffle			minix-sys
 ./usr/bin/shutdown			minix-sys
+./usr/bin/size				minix-sys	binutils
 ./usr/bin/sleep				minix-sys
 ./usr/bin/slip				minix-sys
 ./usr/bin/sort				minix-sys
@@ -422,6 +437,7 @@
 ./usr/bin/sprofdiff			minix-sys
 ./usr/bin/srccrc			minix-sys
 ./usr/bin/stat				minix-sys
+./usr/bin/strings			minix-sys	binutils
 ./usr/bin/strip				minix-sys
 ./usr/bin/stty				minix-sys
 ./usr/bin/su				minix-sys
@@ -440,6 +456,8 @@
 ./usr/bin/tee				minix-sys
 ./usr/bin/term				minix-sys
 ./usr/bin/termcap			minix-sys
+./usr/bin/texi2dvi			minix-sys
+./usr/bin/texindex			minix-sys
 ./usr/bin/tget				minix-sys
 ./usr/bin/tic				minix-sys
 ./usr/bin/time				minix-sys
@@ -1058,6 +1076,8 @@
 ./usr/lib/libaudiodriver_pic.a		minix-sys
 ./usr/lib/libbdev.a			minix-sys
 ./usr/lib/libbdev_pic.a			minix-sys
+./usr/lib/libbfd.so.12.0		minix-sys	binutils
+./usr/lib/libbfd.so.12			minix-sys	binutils
 ./usr/lib/libblockdriver.a		minix-sys
 ./usr/lib/libblockdriver_pic.a		minix-sys
 ./usr/lib/libbz2.a			minix-sys
@@ -1143,6 +1163,8 @@
 ./usr/lib/libnetdriver_pic.a		minix-sys
 ./usr/lib/libnetsock.a			minix-sys
 ./usr/lib/libnetsock_pic.a		minix-sys
+./usr/lib/libopcodes.so.5.0		minix-sys	binutils
+./usr/lib/libopcodes.so.5		minix-sys	binutils
 ./usr/lib/libprop.a			minix-sys
 ./usr/lib/libprop_pic.a			minix-sys
 ./usr/lib/libprop.so.0.0		minix-sys
@@ -1200,6 +1222,8 @@
 ./usr/lib/minlib.pc			minix-sys
 ./usr/lib/pwdauth			minix-sys
 ./usr/libexec				minix-sys
+./usr/libexec/fingerd			minix-sys
+./usr/libexec/ftpd			minix-sys
 ./usr/libexec/ld.elf_so			minix-sys
 ./usr/libexec/makewhatis		minix-sys
 ./usr/log				minix-sys
@@ -1209,7 +1233,10 @@
 ./usr/man/man1/..1			minix-sys
 ./usr/man/man1/[.1			minix-sys
 ./usr/man/man1/acksize.1		minix-sys
+./usr/man/man1/addr2line.1		minix-sys	binutils
 ./usr/man/man1/apropos.1		minix-sys
+./usr/man/man1/ar.1			minix-sys	binutils
+./usr/man/man1/as.1			minix-sys	binutils
 ./usr/man/man1/ash.1			minix-sys
 ./usr/man/man1/at.1			minix-sys
 ./usr/man/man1/awk.1			minix-sys
@@ -1228,6 +1255,7 @@
 ./usr/man/man1/cat.1			minix-sys
 ./usr/man/man1/cawf.1			minix-sys
 ./usr/man/man1/cd.1			minix-sys
+./usr/man/man1/c++filt.1		minix-sys	binutils
 ./usr/man/man1/chfn.1			minix-sys
 ./usr/man/man1/chgrp.1			minix-sys
 ./usr/man/man1/chmod.1			minix-sys
@@ -1265,6 +1293,7 @@
 ./usr/man/man1/ed.1			minix-sys
 ./usr/man/man1/egrep.1			minix-sys
 ./usr/man/man1/eject.1			minix-sys
+./usr/man/man1/elfedit.1		minix-sys	binutils
 ./usr/man/man1/elvis.1			minix-sys	obsolete
 ./usr/man/man1/elvrec.1			minix-sys	obsolete
 ./usr/man/man1/env.1			minix-sys
@@ -1294,6 +1323,7 @@
 ./usr/man/man1/genassym.1		minix-sys
 ./usr/man/man1/getopt.1			minix-sys
 ./usr/man/man1/getopts.1		minix-sys
+./usr/man/man1/gprof.1			minix-sys	binutils
 ./usr/man/man1/grep.1			minix-sys
 ./usr/man/man1/groups.1			minix-sys
 ./usr/man/man1/gunzip.1			minix-sys
@@ -1309,8 +1339,11 @@
 ./usr/man/man1/if.1			minix-sys
 ./usr/man/man1/ifdef.1			minix-sys
 ./usr/man/man1/indent.1			minix-sys
+./usr/man/man1/info.1			minix-sys
 ./usr/man/man1/infocmp.1		minix-sys
+./usr/man/man1/infokey.1		minix-sys
 ./usr/man/man1/install.1		minix-sys
+./usr/man/man1/install-info.1		minix-sys
 ./usr/man/man1/isodir.1			minix-sys
 ./usr/man/man1/isoinfo.1		minix-sys
 ./usr/man/man1/isoread.1		minix-sys
@@ -1319,6 +1352,7 @@
 ./usr/man/man1/kill.1			minix-sys
 ./usr/man/man1/ksh.1			minix-sys
 ./usr/man/man1/last.1			minix-sys
+./usr/man/man1/ld.1			minix-sys	binutils
 ./usr/man/man1/ldd.1			minix-sys
 ./usr/man/man1/ld.elf_so.1		minix-sys
 ./usr/man/man1/less.1			minix-sys
@@ -1340,6 +1374,7 @@
 ./usr/man/man1/m4.1			minix-sys
 ./usr/man/man1/mail.1			minix-sys
 ./usr/man/man1/make.1			minix-sys
+./usr/man/man1/makeinfo.1		minix-sys
 ./usr/man/man1/man.1			minix-sys
 ./usr/man/man1/mandoc.1			minix-sys
 ./usr/man/man1/md2.1			minix-sys
@@ -1364,6 +1399,8 @@
 ./usr/man/man1/nice.1			minix-sys
 ./usr/man/man1/nm.1			minix-sys
 ./usr/man/man1/nohup.1			minix-sys
+./usr/man/man1/objcopy.1		minix-sys	binutils
+./usr/man/man1/objdump.1		minix-sys	binutils
 ./usr/man/man1/od.1			minix-sys
 ./usr/man/man1/page.1			minix-sys
 ./usr/man/man1/passwd.1			minix-sys
@@ -1379,9 +1416,11 @@
 ./usr/man/man1/profile.1		minix-sys
 ./usr/man/man1/ps.1			minix-sys
 ./usr/man/man1/pwd.1			minix-sys
+./usr/man/man1/ranlib.1			minix-sys	binutils
 ./usr/man/man1/rcp.1			minix-sys
 ./usr/man/man1/read.1			minix-sys
 ./usr/man/man1/readall.1		minix-sys	obsolete
+./usr/man/man1/readelf.1		minix-sys	binutils
 ./usr/man/man1/readlink.1		minix-sys
 ./usr/man/man1/readonly.1		minix-sys
 ./usr/man/man1/recwave.1		minix-sys
@@ -1404,11 +1443,14 @@
 ./usr/man/man1/shar.1			minix-sys
 ./usr/man/man1/shift.1			minix-sys
 ./usr/man/man1/shuffle.1		minix-sys
+./usr/man/man1/size.1			minix-sys	binutils
 ./usr/man/man1/sleep.1			minix-sys
 ./usr/man/man1/sort.1			minix-sys
 ./usr/man/man1/spell.1			minix-sys
 ./usr/man/man1/split.1			minix-sys
 ./usr/man/man1/stat.1			minix-sys
+./usr/man/man1/strings.1		minix-sys	binutils
+./usr/man/man1/strip.1			minix-sys	binutils
 ./usr/man/man1/stty.1			minix-sys
 ./usr/man/man1/su.1			minix-sys
 ./usr/man/man1/sum.1			minix-sys
@@ -1425,6 +1467,8 @@
 ./usr/man/man1/term.1			minix-sys
 ./usr/man/man1/termcap.1		minix-sys
 ./usr/man/man1/test.1			minix-sys
+./usr/man/man1/texi2dvi.1		minix-sys
+./usr/man/man1/texindex.1		minix-sys
 ./usr/man/man1/tget.1			minix-sys
 ./usr/man/man1/tic.1			minix-sys
 ./usr/man/man1/time.1			minix-sys
@@ -3684,11 +3728,11 @@
 ./usr/man/man5/ftpchroot.5				minix-sys
 ./usr/man/man5/ftpd.conf.5				minix-sys
 ./usr/man/man5/ftpusers.5				minix-sys
-./usr/man/man8/ftpd.8					minix-sys
 ./usr/man/man5/group.5					minix-sys
 ./usr/man/man5/hosts.5					minix-sys
 ./usr/man/man5/httpd.conf.5					minix-sys
 ./usr/man/man5/http_status.5					minix-sys
+./usr/man/man5/info.5			minix-sys
 ./usr/man/man5/keymap.5					minix-sys
 ./usr/man/man5/libarchive-formats.5					minix-sys
 ./usr/man/man5/magic.5					minix-sys
@@ -3707,6 +3751,7 @@
 ./usr/man/man5/tar.5					minix-sys
 ./usr/man/man5/termcap.5					minix-sys
 ./usr/man/man5/terminfo.5					minix-sys
+./usr/man/man5/texinfo.5		minix-sys
 ./usr/man/man5/ttytab.5					minix-sys
 ./usr/man/man5/TZ.5					minix-sys
 ./usr/man/man5/tzfile.5					minix-sys
@@ -3747,6 +3792,7 @@
 ./usr/man/man8/fingerd.8			minix-sys
 ./usr/man/man8/fsck.8				minix-sys
 ./usr/man/man8/fsck_ext2fs.8			minix-sys
+./usr/man/man8/ftpd.8					minix-sys
 ./usr/man/man8/getty.8				minix-sys
 ./usr/man/man8/group.8				minix-sys
 ./usr/man/man8/groupadd.8			minix-sys
@@ -3891,6 +3937,16 @@
 ./usr/share/doc/psd/19.curses/twinkle1.c	minix-sys
 ./usr/share/doc/psd/19.curses/twinkle2.c	minix-sys
 ./usr/share/doc/psd/19.curses/win_st.c	minix-sys
+./usr/share/info			minix-sys
+./usr/share/info/as.info		minix-sys	binutils
+./usr/share/info/bfd.info		minix-sys	binutils
+./usr/share/info/binutils.info		minix-sys	binutils
+./usr/share/info/dir			minix-sys
+./usr/share/info/gprof.info		minix-sys	binutils
+./usr/share/info/info.info		minix-sys
+./usr/share/info/info-stnd.info		minix-sys
+./usr/share/info/ld.info		minix-sys	binutils
+./usr/share/info/texinfo.info		minix-sys
 ./usr/share/misc			minix-sys
 ./usr/share/misc/acronyms		minix-sys
 ./usr/share/misc/acronyms.comp		minix-sys
@@ -3900,6 +3956,7 @@
 ./usr/share/misc/bsd-family-tree	minix-sys
 ./usr/share/misc/country		minix-sys
 ./usr/share/misc/domains		minix-sys
+./usr/share/misc/epsf.tex		minix-sys
 ./usr/share/misc/eqnchar		minix-sys
 ./usr/share/misc/flowers		minix-sys
 ./usr/share/misc/indent.pro		minix-sys
@@ -3913,6 +3970,10 @@
 ./usr/share/misc/NetBSD.el		minix-sys
 ./usr/share/misc/operator		minix-sys
 ./usr/share/misc/style			minix-sys
+./usr/share/misc/texinfo.cat		minix-sys
+./usr/share/misc/texinfo.dtd		minix-sys
+./usr/share/misc/texinfo.tex		minix-sys
+./usr/share/misc/texinfo.xsl		minix-sys
 ./usr/share/misc/zipcodes		minix-sys
 ./usr/share/mk				minix-sys
 ./usr/share/mk/bsd.clang-analyze.mk	minix-sys
@@ -4651,12 +4712,12 @@
 ./usr/tests/minix-posix/test68		minix-sys
 ./usr/tests/minix-posix/test69		minix-sys
 ./usr/tests/minix-posix/test70		minix-sys
+./usr/tests/minix-posix/test7		minix-sys
 ./usr/tests/minix-posix/test71		minix-sys
 ./usr/tests/minix-posix/test72		minix-sys
 ./usr/tests/minix-posix/test73		minix-sys
 ./usr/tests/minix-posix/test74		minix-sys
 ./usr/tests/minix-posix/test75		minix-sys
-./usr/tests/minix-posix/test7		minix-sys
 ./usr/tests/minix-posix/test8		minix-sys
 ./usr/tests/minix-posix/test9		minix-sys
 ./usr/tests/minix-posix/testinterp	minix-sys

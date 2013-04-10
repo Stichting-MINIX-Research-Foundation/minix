@@ -7,7 +7,7 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-#define ENABLE_NLS 1
+/* #undef ENABLE_NLS */
 
 /* Is the prototype for getopt in <unistd.h> in the expected format? */
 #define HAVE_DECL_GETOPT 1
@@ -99,7 +99,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.21.1"
+#define VERSION "2.22"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -108,11 +108,11 @@
 /* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
-/* #undef _MINIX */
+#define _MINIX 1
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
-/* #undef _POSIX_1_SOURCE */
+#define _POSIX_1_SOURCE 2
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
-/* #undef _POSIX_SOURCE */
+#define _POSIX_SOURCE 1

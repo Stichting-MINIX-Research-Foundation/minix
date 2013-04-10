@@ -7,7 +7,7 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-#define ENABLE_NLS 1
+/* #undef ENABLE_NLS */
 
 /* Additional extension a shared object might have. */
 /* #undef EXTRA_SHLIB_EXTENSION */
@@ -65,6 +65,9 @@
 
 /* Define to 1 if you have the `glob' function. */
 #define HAVE_GLOB 1
+
+/* Define .init_array/.fini_array sections are available and working. */
+#define HAVE_INITFINI_ARRAY 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -134,11 +137,11 @@
 /* Define to 1 if you have the `waitpid' function. */
 #define HAVE_WAITPID 1
 
-/* Define to 1 if you have the <Windows.h> header file. */
+/* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
 
 /* Define to 1 if you have the <zlib.h> header file. */
-/* #undef HAVE_ZLIB_H */
+#define HAVE_ZLIB_H 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -197,11 +200,11 @@
 
 
 /* Version number of package */
-#define VERSION "2.21.1"
+#define VERSION "2.22"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -210,11 +213,11 @@
 /* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
-/* #undef _MINIX */
+#define _MINIX 1
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
-/* #undef _POSIX_1_SOURCE */
+#define _POSIX_1_SOURCE 2
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
-/* #undef _POSIX_SOURCE */
+#define _POSIX_SOURCE 1

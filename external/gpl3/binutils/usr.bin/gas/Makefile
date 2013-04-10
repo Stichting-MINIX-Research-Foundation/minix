@@ -24,8 +24,10 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
 CPPFLAGS+=	-I${DIST}
 
+.if !defined(__MINIX)
 LDADD=		-lintl
 DPADD=		${LIBINTL}
+.endif # !defined(__MINIX)
 
 OPCODESOBJ!=	cd ${TOP}/${BFDSUBDIR}/libopcodes && ${PRINTOBJDIR}
 LDADD+=		-L${OPCODESOBJ} -lopcodes

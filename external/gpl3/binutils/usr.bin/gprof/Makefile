@@ -11,8 +11,10 @@ PROG=		gprof
 SRCS=		${G_gprof_OBJECTS:.o=.c}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 
+.if !defined(__MINIX)
 LDADD=		-lintl
 DPADD=		${LIBINTL}
+.endif # !defined(__MINIX)
 
 BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
