@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.1.1.2 2012/02/22 17:48:20 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -111,9 +111,9 @@ you use strange formats.
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: vasprintf.c,v 1.7 2009/02/03 20:27:52 christos Exp $")
+FILE_RCSID("@(#)$File: vasprintf.c,v 1.8 2011/12/08 12:38:24 rrt Exp $")
 #else
-__RCSID("$NetBSD: vasprintf.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.1.1.2 2012/02/22 17:48:20 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -614,8 +614,7 @@ static int core(xprintf_struct *s)
   return s->pseudo_len;
 
  free_EOF:
-  if (s->buffer_base != NULL)
-    free(s->buffer_base);
+  free(s->buffer_base);
   return EOF;
 }
 

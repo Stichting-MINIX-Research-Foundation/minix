@@ -13,6 +13,14 @@
 /* HAVE_DAYLIGHT */
 #define HAVE_DAYLIGHT 1
 
+/* Define to 1 if you have the declaration of `daylight', and to 0 if you
+   don't. */
+#define HAVE_DECL_DAYLIGHT 1
+
+/* Define to 1 if you have the declaration of `tzname', and to 0 if you don't.
+   */
+#define HAVE_DECL_TZNAME 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -22,8 +30,14 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
+/* Define to 1 if you have the `fork' function. */
+#define HAVE_FORK 1
+
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #define HAVE_FSEEKO 1
+
+/* Define to 1 if you have the `getline' function. */
+#define HAVE_GETLINE 1
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #define HAVE_GETOPT_H 1
@@ -65,7 +79,7 @@
 #define HAVE_MKSTEMP 1
 
 /* Define to 1 if you have the `mmap' function. */
-#undef HAVE_MMAP
+/* #undef HAVE_MMAP */
 
 /* Define to 1 if the system has the type `pid_t'. */
 #define HAVE_PID_T 1
@@ -112,10 +126,8 @@
 /* Define to 1 if `struct tm' is a member of `tm_zone'. */
 #define HAVE_STRUCT_TM_TM_ZONE 1
 
-#ifndef __minix
 /* Define to 1 if you have the <sys/mman.h> header file. */
-#define HAVE_SYS_MMAN_H 1
-#endif
+/* #undef HAVE_SYS_MMAN_H */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -159,10 +171,8 @@
 /* Define to 1 if you have the `utime' function. */
 #define HAVE_UTIME 1
 
-#ifndef __minix
 /* Define to 1 if you have the `utimes' function. */
-#define HAVE_UTIMES 1
-#endif
+/* #undef HAVE_UTIMES */
 
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
@@ -181,6 +191,10 @@
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #define HAVE_ZLIB_H 1
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
 
 /* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
    */
@@ -203,7 +217,7 @@
 #define PACKAGE_NAME "file"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "file 5.09"
+#define PACKAGE_STRING "file 5.11"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "file"
@@ -212,7 +226,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.09"
+#define PACKAGE_VERSION "5.11"
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
@@ -246,7 +260,7 @@
 
 
 /* Version number of package */
-#define VERSION "5.09"
+#define VERSION "5.11"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

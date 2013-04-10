@@ -1,4 +1,6 @@
-/*	$NetBSD: mygetopt.h,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: mygetopt.h,v 1.1.1.2 2012/02/22 17:48:20 christos Exp $	*/
+
+/*	NetBSD: getopt.h,v 1.8 2007/11/06 19:21:18 christos Exp 	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
