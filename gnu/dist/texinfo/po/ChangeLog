@@ -1,0 +1,14 @@
+2004-02-05  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.14.1.
+	* ORIG: New file, from gettext-0.14.1.
+	* Rules-quot: Upgrade to gettext-0.14.1.
+
+2003-12-20  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* ORIG: New file, from gettext-0.13.1.
+
+2003-12-13  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* ORIG: New file, from gettext-0.13.
+

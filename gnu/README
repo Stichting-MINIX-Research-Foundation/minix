@@ -1,0 +1,34 @@
+$NetBSD: README,v 1.5 2003/12/04 23:32:37 keihan Exp $
+
+Organization of Sources:
+
+This directory hierarchy is using a new organization that
+separates the GNU sources from the BSD-style infrastructure
+used to build the GNU sources.  The GNU sources are kept in
+the standard GNU source tree layout under:
+
+	dist/*
+
+The build infrastructure uses the normal BSD way under:
+
+	lib/*
+	usr.bin/*
+
+The makefiles in the above hierarchy will "reach over" into
+the GNU sources (src/gnu/dist) for everything they need.
+
+
+Maintenance Strategy:
+
+The sources under src/gnu/dist are generally a combination of
+some published distribution plus changes that we submit to the
+maintainers and that are not yet published by them.  There are
+a few files that are never expected to be submitted to the FSF,
+(i.e. BSD-style makefiles and such) and those generally should
+stay in src/gnu/lib or src/gnu/usr.bin (the BSD build areas).
+
+Make sure all changes made to the GNU sources are submitted to
+the appropriate maintainer, but only after coordinating with the
+NetBSD maintainers by sending your proposed submission to the
+<tech-toolchain@NetBSD.org> mailing list.  Only send the changes
+to the third-party maintainers after consensus has been reached.
