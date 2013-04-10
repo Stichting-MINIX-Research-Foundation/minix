@@ -313,9 +313,12 @@
 ./usr/bin/ifdef				minix-sys
 ./usr/bin/indent			minix-sys
 ./usr/bin/in.fingerd			minix-sys
+./usr/bin/info				minix-sys
 ./usr/bin/infocmp			minix-sys
+./usr/bin/infokey			minix-sys
 ./usr/bin/in.rshd			minix-sys
 ./usr/bin/install			minix-sys
+./usr/bin/install-info			minix-sys
 ./usr/bin/in.telnetd			minix-sys
 ./usr/bin/ipcrm				minix-sys
 ./usr/bin/ipcs				minix-sys
@@ -344,6 +347,7 @@
 ./usr/bin/mail				minix-sys
 ./usr/bin/make				minix-sys
 ./usr/bin/MAKEDEV			minix-sys
+./usr/bin/makeinfo			minix-sys
 ./usr/bin/man				minix-sys
 ./usr/bin/mandoc			minix-sys
 ./usr/bin/md2				minix-sys
@@ -435,6 +439,8 @@
 ./usr/bin/tee				minix-sys
 ./usr/bin/term				minix-sys
 ./usr/bin/termcap			minix-sys
+./usr/bin/texi2dvi			minix-sys
+./usr/bin/texindex			minix-sys
 ./usr/bin/tget				minix-sys
 ./usr/bin/tic				minix-sys
 ./usr/bin/time				minix-sys
@@ -1298,8 +1304,11 @@
 ./usr/man/man1/if.1			minix-sys
 ./usr/man/man1/ifdef.1			minix-sys
 ./usr/man/man1/indent.1			minix-sys
+./usr/man/man1/info.1			minix-sys
 ./usr/man/man1/infocmp.1		minix-sys
+./usr/man/man1/infokey.1		minix-sys
 ./usr/man/man1/install.1		minix-sys
+./usr/man/man1/install-info.1		minix-sys
 ./usr/man/man1/isodir.1			minix-sys
 ./usr/man/man1/isoinfo.1		minix-sys
 ./usr/man/man1/isoread.1		minix-sys
@@ -1328,6 +1337,7 @@
 ./usr/man/man1/m4.1			minix-sys
 ./usr/man/man1/mail.1			minix-sys
 ./usr/man/man1/make.1			minix-sys
+./usr/man/man1/makeinfo.1		minix-sys
 ./usr/man/man1/man.1			minix-sys
 ./usr/man/man1/mandoc.1			minix-sys
 ./usr/man/man1/md2.1			minix-sys
@@ -1412,6 +1422,8 @@
 ./usr/man/man1/term.1			minix-sys
 ./usr/man/man1/termcap.1		minix-sys
 ./usr/man/man1/test.1			minix-sys
+./usr/man/man1/texi2dvi.1		minix-sys
+./usr/man/man1/texindex.1		minix-sys
 ./usr/man/man1/tget.1			minix-sys
 ./usr/man/man1/tic.1			minix-sys
 ./usr/man/man1/time.1			minix-sys
@@ -3671,6 +3683,7 @@
 ./usr/man/man5/hosts.5					minix-sys
 ./usr/man/man5/httpd.conf.5					minix-sys
 ./usr/man/man5/http_status.5					minix-sys
+./usr/man/man5/info.5			minix-sys
 ./usr/man/man5/keymap.5					minix-sys
 ./usr/man/man5/libarchive-formats.5					minix-sys
 ./usr/man/man5/magic.5					minix-sys
@@ -3689,6 +3702,7 @@
 ./usr/man/man5/tar.5					minix-sys
 ./usr/man/man5/termcap.5					minix-sys
 ./usr/man/man5/terminfo.5					minix-sys
+./usr/man/man5/texinfo.5		minix-sys
 ./usr/man/man5/ttytab.5					minix-sys
 ./usr/man/man5/TZ.5					minix-sys
 ./usr/man/man5/tzfile.5					minix-sys
@@ -3872,6 +3886,11 @@
 ./usr/share/doc/psd/19.curses/twinkle1.c	minix-sys
 ./usr/share/doc/psd/19.curses/twinkle2.c	minix-sys
 ./usr/share/doc/psd/19.curses/win_st.c	minix-sys
+./usr/share/info			minix-sys
+./usr/share/info/dir			minix-sys
+./usr/share/info/info.info		minix-sys
+./usr/share/info/info-stnd.info		minix-sys
+./usr/share/info/texinfo.info		minix-sys
 ./usr/share/misc			minix-sys
 ./usr/share/misc/acronyms		minix-sys
 ./usr/share/misc/acronyms.comp		minix-sys
@@ -3881,6 +3900,7 @@
 ./usr/share/misc/bsd-family-tree	minix-sys
 ./usr/share/misc/country		minix-sys
 ./usr/share/misc/domains		minix-sys
+./usr/share/misc/epsf.tex		minix-sys
 ./usr/share/misc/eqnchar		minix-sys
 ./usr/share/misc/flowers		minix-sys
 ./usr/share/misc/indent.pro		minix-sys
@@ -3894,6 +3914,10 @@
 ./usr/share/misc/NetBSD.el		minix-sys
 ./usr/share/misc/operator		minix-sys
 ./usr/share/misc/style			minix-sys
+./usr/share/misc/texinfo.cat		minix-sys
+./usr/share/misc/texinfo.dtd		minix-sys
+./usr/share/misc/texinfo.tex		minix-sys
+./usr/share/misc/texinfo.xsl		minix-sys
 ./usr/share/misc/zipcodes		minix-sys
 ./usr/share/mk				minix-sys
 ./usr/share/mk/bsd.clang-analyze.mk	minix-sys
@@ -4624,6 +4648,7 @@
 ./usr/tests/minix-posix/test59		minix-sys
 ./usr/tests/minix-posix/test60		minix-sys
 ./usr/tests/minix-posix/test6		minix-sys
+./usr/tests/minix-posix/test6		minix-sys
 ./usr/tests/minix-posix/test61		minix-sys
 ./usr/tests/minix-posix/test64		minix-sys
 ./usr/tests/minix-posix/test65		minix-sys
@@ -4632,10 +4657,10 @@
 ./usr/tests/minix-posix/test68		minix-sys
 ./usr/tests/minix-posix/test69		minix-sys
 ./usr/tests/minix-posix/test70		minix-sys
+./usr/tests/minix-posix/test7		minix-sys
 ./usr/tests/minix-posix/test71		minix-sys
 ./usr/tests/minix-posix/test72		minix-sys
 ./usr/tests/minix-posix/test73		minix-sys
-./usr/tests/minix-posix/test7		minix-sys
 ./usr/tests/minix-posix/test8		minix-sys
 ./usr/tests/minix-posix/test9		minix-sys
 ./usr/tests/minix-posix/testinterp	minix-sys
