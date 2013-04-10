@@ -1,3 +1,13 @@
+20130711:
+	Texinfo needs itself to generate its manual pages. As it is not
+	yet installed on the system it fails to find the default makeinfo
+	tool. So we have to first compile it, then install it will specifying 
+	the full path to makeinfo (Both commands have to be run, in the given 
+	sequence):
+
+	# make -C gnu/usr.bin/texinfo all
+	# make -C gnu/usr.bin/texinfo all install TOOL_MAKEINFO=/usr/src/gnu/usr.bin/texinfo/makeinfo/makeinfo
+
 20130422:
 	The ARM build no longer requires you to build as root user you
 	therefore need to wipe (or chmod) your build generated files 

@@ -10,7 +10,7 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-#define ENABLE_NLS 1
+/* #undef ENABLE_NLS */
 
 /* Define to 1 if you have the <alloca.h> header file. */
 /* #undef HAVE_ALLOCA_H */
@@ -132,16 +132,16 @@
 /* #undef HAVE_LWPXSTATUS_T */
 
 /* Define to 1 if you have the `madvise' function. */
-#define HAVE_MADVISE 1
+/* #undef HAVE_MADVISE */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have a working `mmap' system call. */
-#define HAVE_MMAP 1
+/* #undef HAVE_MMAP */
 
 /* Define to 1 if you have the `mprotect' function. */
-#define HAVE_MPROTECT 1
+/* #undef HAVE_MPROTECT */
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
@@ -251,7 +251,7 @@
 /* #undef HAVE_WIN32_PSTATUS_T */
 
 /* Define to 1 if you have the <zlib.h> header file. */
-/* #undef HAVE_ZLIB_H */
+#define HAVE_ZLIB_H 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -291,7 +291,7 @@
 #define SIZEOF_LONG_LONG 8
 
 /* The size of `off_t', as computed by sizeof. */
-#define SIZEOF_OFF_T 8
+#define SIZEOF_OFF_T 4
 
 /* The size of `short', as computed by sizeof. */
 /* #undef SIZEOF_SHORT */
@@ -349,7 +349,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.21.1"
+#define VERSION "2.22"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -358,11 +358,11 @@
 /* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
-/* #undef _MINIX */
+#define _MINIX 1
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
-/* #undef _POSIX_1_SOURCE */
+#define _POSIX_1_SOURCE 2
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
-/* #undef _POSIX_SOURCE */
+#define _POSIX_SOURCE 1

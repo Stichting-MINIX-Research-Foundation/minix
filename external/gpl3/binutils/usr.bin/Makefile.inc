@@ -16,6 +16,11 @@ CPPFLAGS+=	${GNUCPPFLAGS:M-D*:N-DLOCALEDIR*} ${GNUCPPFLAGS:M-I*:N-I.*} \
 LDADD+=-lz
 DPADD+=${LIBZ}
 
+.if defined(__MINIX)
+LDADD+=         -lm
+DPADD+=         ${LIBM}
+.endif
+
 NOGCCERROR=	# defined
 
 .endif # __MAKEFILE_INC_INCLUDED__

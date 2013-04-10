@@ -172,11 +172,9 @@ afterinstall: .PHONY .MAKE
 	${MAKEDIRTARGET} man makedb
 .endif # !defined(__MINIX)
 .endif
-.if !defined(__MINIX)
 .if (${MKUNPRIVED} != "no" && ${MKINFO} != "no")
 	${MAKEDIRTARGET} gnu/usr.bin/texinfo/install-info infodir-meta
 .endif
-.endif # !defined(__MINIX)
 .if !defined(NOPOSTINSTALL)
 	${MAKEDIRTARGET} . postinstall-check
 .endif

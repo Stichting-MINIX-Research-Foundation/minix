@@ -58,6 +58,10 @@
 2012/10/17 12:00:00,external/Makefile
 2011/05/26 00:00:00,external/public-domain/xz
 2012/10/17 12:00:00,external/README
+2012/10/17 12:00:00,gnu/dist/texinfo
+2012/10/17 12:00:00,gnu/usr.bin/texinfo
+2012/10/17 12:00:00,gnu/Makefile
+2012/10/17 12:00:00,gnu/README
 2012/10/17 12:00:00,include
 2013/05/31 12:00:00,libexec/fingerd
 2012/10/17 12:00:00,libexec/ftpd
@@ -124,6 +128,7 @@
 2012/10/17 12:00:00,tools/mtree
 2012/10/17 12:00:00,tools/nbperf
 2012/10/17 12:00:00,tools/sed
+2012/10/17 12:00:00,tools/texinfo
 2012/10/17 12:00:00,tools/tic
 2012/10/17 12:00:00,tools/tsort
 2009/05/08 12:48:43,usr.bin/apropos

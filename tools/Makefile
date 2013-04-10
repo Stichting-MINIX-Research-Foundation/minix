@@ -63,6 +63,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		genassym join \
 		lorder makewhatis mkdep mtree nbperf .WAIT tsort \
 		m4 \
+	.WAIT texinfo \
 	.WAIT mkfs.mfs \
 	.WAIT toproto \
 	.WAIT yacc \

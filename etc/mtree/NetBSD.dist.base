@@ -100,6 +100,7 @@
 ./usr/share/doc/html/bzip2
 ./usr/share/doc/psd
 ./usr/share/doc/psd/19.curses
+./usr/share/info
 ./usr/share/misc
 ./usr/share/mk
 ./usr/share/terminfo
