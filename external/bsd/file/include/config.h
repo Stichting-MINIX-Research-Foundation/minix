@@ -159,10 +159,8 @@
 /* Define to 1 if you have the `utime' function. */
 #define HAVE_UTIME 1
 
-#ifndef __minix
 /* Define to 1 if you have the `utimes' function. */
 #define HAVE_UTIMES 1
-#endif
 
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1

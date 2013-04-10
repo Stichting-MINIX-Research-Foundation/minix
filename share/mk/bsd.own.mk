@@ -1053,16 +1053,12 @@ MKTRACE:=	no
 # install(1) parameters.
 #
 COPY?=		-c
-.if ${HOST_OSTYPE:C/\-.*//} != "Minix"
 .if ${MKUPDATE} == "no"
 PRESERVE?=	
 .else
-#LSC: Not supported by MINIX install
 PRESERVE?=	-p
 .endif
-#XXX: Not supported by MINIX install
 RENAME?=	-r
-.endif # != "Minix"
 HRDLINK?=	-l h
 SYMLINK?=	-l s
 

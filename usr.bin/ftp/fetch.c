@@ -64,10 +64,6 @@ __RCSID("$NetBSD: fetch.c,v 1.202 2013/02/23 13:47:36 christos Exp $");
 #include <unistd.h>
 #include <time.h>
 
-#ifdef __minix
-#include <utime.h>
-#endif
-
 #include "ssl.h"
 #include "ftp_var.h"
 #include "version.h"
@@ -1322,39 +1318,19 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	progressmeter(1);
 	(void)fflush(fout);
 	if (closefunc == fclose && mtime != -1) {
-#ifdef __minix
-		struct utimbuf utb;
-#endif /* __minix */
-
 		struct timeval tval[2];
 
 		(void)gettimeofday(&tval[0], NULL);
-
-#ifdef __minix
-		utb.actime = tval[0].tv_sec;
-		utb.modtime = mtime;
-#else /* !__minix */
 		tval[1].tv_sec = mtime;
 		tval[1].tv_usec = 0;
-#endif /* !__minix */
-
 		(*closefunc)(fout);
 		fout = NULL;
 
-#ifdef __minix
-		if (utime(savefile, &utb) == -1) {
-			fprintf(ttyout,
-			    "Can't change modification time to %s",
-			    rfc2822time(localtime(&mtime)));
-		}
-#else /* !__minix */
 		if (utimes(savefile, tval) == -1) {
 			fprintf(ttyout,
 			    "Can't change modification time to %s",
 			    rfc2822time(localtime(&mtime)));
 		}
-#endif /* !__minix */
-
 	}
 	if (bytes > 0)
 		ptransfer(0);
