@@ -846,18 +846,8 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc, int slk)
 #endif
 	if (slk)
 		return;
-#ifdef __minix
-	{
-		struct utimbuf timp;
-		timp.actime = atime;
-		timp.modtime = mtime;
-		if (utime(fnm, &timp) < 0)
-			goto bad;
-	}
-#else
 	if (utimes(fnm, tv) == -1)
 		goto bad;
-#endif
 	return;
 bad:
 	syswarn(1, errno, "Access/modification time set failed on: %s", fnm);

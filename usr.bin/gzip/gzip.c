@@ -1081,10 +1081,8 @@ copymodes(int fd, const struct stat *sbp, const char *file)
 
 	TIMESPEC_TO_TIMEVAL(&times[0], &sb.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&times[1], &sb.st_mtimespec);
-#ifndef __minix
 	if (futimes(fd, times) < 0)
 		maybe_warn("couldn't utimes: %s", file);
-#endif
 }
 #endif
 

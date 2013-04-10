@@ -251,9 +251,6 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			dopreserve = 1;
-#ifdef __minix
-			warn("Minix lacks support for futimes(3)/utimes(2)");
-#endif
 			break;
 		case 'r':
 			dorename = 1;
@@ -774,7 +771,6 @@ install(char *from_name, char *to_name, u_int flags)
 	/*
 	 * Preserve the date of the source file.
 	 */
-#ifndef __minix
 	if (dopreserve) {
 #if HAVE_FUTIMES
 		if (futimes(to_fd, tv) == -1)
@@ -784,7 +780,6 @@ install(char *from_name, char *to_name, u_int flags)
 			warn("%s: utimes", to_name);
 #endif
 	}
-#endif
 
 	(void)close(to_fd);
 

@@ -123,10 +123,6 @@ __RCSID("$NetBSD: ftp.c,v 1.164 2012/07/04 06:09:37 is Exp $");
 #include <unistd.h>
 #include <stdarg.h>
 
-#ifdef __minix
-#include <utime.h>
-#endif
-
 #include "ftp_var.h"
 
 volatile sig_atomic_t	abrtflag;
@@ -914,10 +910,6 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 	int oprogress;
 	int opreserve;
 
-#ifdef __minix
-	struct utimbuf utb;
-#endif
-
 	fout = NULL;
 	din = NULL;
 	hashbytes = mark;
@@ -1156,16 +1148,6 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 			mtime = remotemodtime(remote, 0);
 			if (mtime != -1) {
 				(void)gettimeofday(&tval[0], NULL);
-#ifdef __minix
-				utb.actime = tval[0].tv_sec;
-				utb.modtime = mtime;
-				if (utime(local, &utb) == -1) {
-					fprintf(ttyout,
-				"Can't change modification time on %s to %s",
-					    local,
-					    rfc2822time(localtime(&mtime)));
-				}
-#else
 				tval[1].tv_sec = mtime;
 				tval[1].tv_usec = 0;
 				if (utimes(local, tval) == -1) {
@@ -1174,7 +1156,6 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 					    local,
 					    rfc2822time(localtime(&mtime)));
 				}
-#endif
 			}
 		}
 	}
