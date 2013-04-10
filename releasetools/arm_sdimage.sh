@@ -55,12 +55,15 @@ rm -f ${DESTDIR}/SETS.*
 
 ${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
 
-umount ${MP_MINIX}/home || true
-umount ${MP_MINIX}/usr || true
-umount ${MP_MINIX} || true
-umount ${MP_BOOT} || true
-
-losetup -d ${LOOP} || true
+#
+# The output from the command bellows are redirected to prevent confusion.
+# they are supposed to fail unless the previous build was aborted.
+#
+umount ${MP_MINIX}/home 2>/dev/null || true
+umount ${MP_MINIX}/usr 2>/dev/null || true
+umount ${MP_MINIX} 2>/dev/null || true
+umount ${MP_BOOT} 2>/dev/null || true
+losetup -d ${LOOP} 2>/dev/null || true
 
 echo "Mounting disk image."
 losetup ${LOOP} $IMG
