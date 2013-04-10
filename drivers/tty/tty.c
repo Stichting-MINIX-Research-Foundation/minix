@@ -426,6 +426,7 @@ set_console_line(char term[CONS_ARG])
 	}
 
 	/* Serial lines */
+	assert(NR_RS_LINES <= 9);/* bellow assumes this is the case */
 	for (i = 0; i < NR_RS_LINES; i++) {
 		char sercons[6];
 		strlcpy(sercons, "tty00", sizeof(sercons));
