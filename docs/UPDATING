@@ -1,3 +1,13 @@
+20130411:
+	Texinfo needs itself to generate its manual pages. As it is not
+	yet installed on the system it fails to find the default makeinfo
+	tool. So we have to first compile it, then install it will specifying 
+	the full path to makeinfo (Both commands have to be run, in the given 
+	sequence):
+
+	# make -C gnu/usr.bin/texinfo all
+	# make -C gnu/usr.bin/texinfo all install TOOL_MAKEINFO=/usr/src/gnu/usr.bin/texinfo/makeinfo/makeinfo
+
 20130312:
 	/bin/ksh was imported and needs to be added to your /etc/shells.
 	Run this command to add it:

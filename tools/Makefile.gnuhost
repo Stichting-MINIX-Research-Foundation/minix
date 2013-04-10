@@ -35,7 +35,7 @@ GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
 ${GNUHOSTDIST:H}/.gitignore: ${GNUHOSTDIST:H}/fetch.sh
 	${HOST_SH} ${GNUHOSTDIST:H}/fetch.sh
 	@test -e ${GNUHOSTDIST}/configure
-	@echo "${MODULE:U${.CURDIR:T:C,^gcc[0-9]*$,gcc,}}-*.tar.*z*" > $@
+	@echo "${MODULE:U${.CURDIR:T}:C,gcc[0-9]*,gcc,}-*.tar.*z*" >> $@
 	@echo ${GNUHOSTDIST:T} >> $@
 _gnu_get_src=${GNUHOSTDIST:H}/.gitignore
 .endif # exists(GNUHOSTDIST:H/fetch.sh) on MINIX
