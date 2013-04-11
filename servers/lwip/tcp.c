@@ -29,10 +29,10 @@ static int do_tcp_debug;
 #endif
 
 struct wbuf {
-	unsigned	len;
-	unsigned	written;
-	unsigned	unacked;
-	unsigned	rem_len;
+	unsigned int	len;
+	unsigned int	written;
+	unsigned int	unacked;
+	unsigned int	rem_len;
 	struct wbuf	* next;
 	char 		data[];
 };
@@ -197,7 +197,7 @@ __unused static void print_tcp_payload(unsigned char * buf, int len)
 
 static int read_from_tcp(struct socket * sock, message * m)
 {
-	unsigned rem_buf, written = 0;
+	unsigned int rem_buf, written = 0;
 	struct pbuf * p;
 
 	assert(!(sock->flags & SOCK_FLG_OP_LISTENING) && sock->recv_head);
@@ -326,7 +326,7 @@ static void tcp_op_read(struct socket * sock, message * m, int blk)
 	}
 }
 
-static struct wbuf * wbuf_add(struct socket * sock, unsigned sz)
+static struct wbuf * wbuf_add(struct socket * sock, unsigned int sz)
 {
 	struct wbuf * wbuf;
 	struct wbuf_chain * wc = (struct wbuf_chain *)sock->buf;
@@ -354,7 +354,7 @@ static struct wbuf * wbuf_add(struct socket * sock, unsigned sz)
 	return wbuf;
 }
 
-static struct wbuf * wbuf_ack_sent(struct socket * sock, unsigned sz)
+static struct wbuf * wbuf_ack_sent(struct socket * sock, unsigned int sz)
 {
 	struct wbuf_chain * wc = (struct wbuf_chain *) sock->buf;
 	struct wbuf ** wb;
@@ -393,7 +393,7 @@ static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
 {
 	int ret;
 	struct wbuf * wbuf;
-	unsigned snd_buf_len, usr_buf_len;
+	unsigned int snd_buf_len, usr_buf_len;
 	u8_t flgs = 0;
 
 
@@ -570,7 +570,7 @@ static void tcp_get_conf(struct socket * sock, message * m)
 				(unsigned int) tconf.nwtc_locaddr);
 	debug_tcp_print("tconf.nwtc_locport = 0x%x", ntohs(tconf.nwtc_locport));
 
-	if ((unsigned) m->COUNT < sizeof(tconf)) {
+	if ((unsigned int) m->COUNT < sizeof(tconf)) {
 		sock_reply(sock, EINVAL);
 		return;
 	}
@@ -677,7 +677,7 @@ static err_t tcp_sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len)
 	struct socket * sock = (struct socket *) arg;
 	struct wbuf * wbuf;
 	struct wbuf_chain * wc = (struct wbuf_chain *) sock->buf;
-	unsigned snd_buf_len;
+	unsigned int snd_buf_len;
 	int ret;
 	
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
@@ -732,7 +732,7 @@ static err_t tcp_sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len)
 
 	wbuf = wc->unsent;
 	while (wbuf) {
-		unsigned towrite;
+		unsigned int towrite;
 		u8_t flgs = 0;
 
 		towrite = (snd_buf_len < wbuf->rem_len ?
@@ -834,7 +834,7 @@ static int tcp_do_accept(struct socket * listen_sock,
 			struct tcp_pcb * newpcb)
 {
 	struct socket * newsock;
-	unsigned sock_num;
+	unsigned int sock_num;
 	int ret;
 
 	debug_tcp_print("socket num %ld", get_sock_num(listen_sock));
@@ -981,7 +981,7 @@ static void tcp_op_shutdown_tx(struct socket * sock)
 static void tcp_op_get_cookie(struct socket * sock, message * m)
 {
 	tcp_cookie_t cookie;
-	unsigned sock_num;
+	unsigned int sock_num;
 
 	assert(sizeof(cookie) >= sizeof(sock));
 
@@ -1005,7 +1005,7 @@ static void tcp_get_opt(struct socket * sock, message * m)
 
 	assert(pcb);
 
-	if ((unsigned) m->COUNT < sizeof(tcpopt)) {
+	if ((unsigned int) m->COUNT < sizeof(tcpopt)) {
 		sock_reply(sock, EINVAL);
 		return;
 	}

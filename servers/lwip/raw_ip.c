@@ -69,8 +69,8 @@ static int raw_ip_do_receive(message * m,
 			struct pbuf *pbuf)
 {
 	struct pbuf * p;
-	unsigned rem_len = m->COUNT;
-	unsigned written = 0, hdr_sz = 0;
+	unsigned int rem_len = m->COUNT;
+	unsigned int written = 0, hdr_sz = 0;
 	int err;
 
 	debug_print("user buffer size : %d\n", rem_len);
@@ -319,7 +319,7 @@ static void raw_ip_get_opt(struct socket * sock, message * m)
 	ipopt.nwio_rem = pcb->remote_ip.addr;
 	ipopt.nwio_flags = sock->usr_flags;
 
-	if ((unsigned) m->COUNT < sizeof(ipopt)) {
+	if ((unsigned int) m->COUNT < sizeof(ipopt)) {
 		sock_reply(sock, EINVAL);
 		return;
 	}

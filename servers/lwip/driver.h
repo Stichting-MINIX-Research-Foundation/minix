@@ -13,7 +13,7 @@
 
 struct packet_q {
 	struct packet_q *	next;
-	unsigned		buf_len;
+	unsigned int		buf_len;
 	char			buf[];
 };
 
@@ -22,7 +22,7 @@ struct packet_q {
 #define DRV_RECEIVING	2
 
 struct nic {
-	unsigned		flags;
+	unsigned int		flags;
 	char			name[NIC_NAME_LEN];
 	char			drv_name[DRV_NAME_LEN];
 	endpoint_t		drv_ep;
@@ -37,8 +37,8 @@ struct nic {
 	struct packet_q	*	tx_tail;
 	void *			tx_buffer;
 	struct netif		netif;
-	unsigned		max_pkt_sz;
-	unsigned		min_pkt_sz;
+	unsigned int		max_pkt_sz;
+	unsigned int		min_pkt_sz;
 	struct socket		* raw_socket;
 };
 

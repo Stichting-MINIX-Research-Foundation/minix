@@ -66,7 +66,7 @@ static void check_mknod(char *device, mode_t mode, int minor)
 static int cfg_fd;
 static char word[16];
 static unsigned char line[256], *lineptr;
-static unsigned linenr;
+static unsigned int linenr;
 
 static __dead void error(void)
 {
@@ -164,7 +164,7 @@ void inet_read_conf(void)
 	while (nextline()) {
 		token(1);
 		char drv_name[128];
-		unsigned instance;
+		unsigned int instance;
 
 		if (strncmp(word, "eth", 3) == 0) {
 

@@ -59,7 +59,7 @@ static void tcp_swatchdog(__unused timer_t *tp)
 static int sef_cb_init_fresh(__unused int type, __unused sef_init_info_t *info)
 {
 	int err;
-	unsigned hz;
+	unsigned int hz;
 
 	char my_name[16];
 	int my_priv;

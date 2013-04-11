@@ -40,9 +40,9 @@ static ip_addr_t ip_addr_none = { IPADDR_NONE };
 extern endpoint_t lwip_ep;
 
 void nic_assign_driver(const char * dev_type,
-			unsigned dev_num,
+			unsigned int dev_num,
 			const char * driver_name,
-			unsigned instance,
+			unsigned int instance,
 			int is_default)
 {
 	struct nic * nic;
@@ -106,7 +106,7 @@ static struct nic * lookup_nic_default(void)
 void nic_init_all(void)
 {
 	int i;
-	unsigned g;
+	unsigned int g;
 
 	for (i = 0; i < MAX_DEVS; i++) {
 		devices[i].drv_ep = NONE;
@@ -176,7 +176,7 @@ static void nic_up(struct nic * nic, message * m)
 int driver_tx(struct nic * nic)
 {
 	struct packet_q * pkt;
-	unsigned len;
+	unsigned int len;
 	message m;
 
 	int err;
@@ -262,8 +262,8 @@ static int raw_receive(message * m,
 			struct pbuf *pbuf)
 {
 	struct pbuf * p;
-	unsigned rem_len = m->COUNT;
-	unsigned written = 0;
+	unsigned int rem_len = m->COUNT;
+	unsigned int written = 0;
 	int err;
 
 	debug_print("user buffer size : %d\n", rem_len);
@@ -343,7 +343,7 @@ int raw_socket_input(struct pbuf * pbuf, struct nic * nic)
 	return 0;
 }
 
-static void nic_pkt_received(struct nic * nic, unsigned size)
+static void nic_pkt_received(struct nic * nic, unsigned int size)
 {
 	assert(nic->netif.input);
 

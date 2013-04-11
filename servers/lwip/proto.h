@@ -20,9 +20,9 @@
 
 /* driver .c */
 void nic_assign_driver(const char * dev_type,
-			unsigned dev_num,
+			unsigned int dev_num,
 			const char * driver_name,
-			unsigned instance,
+			unsigned int instance,
 			int is_default);
 void nic_init_all(void);
 void driver_request(message * m);

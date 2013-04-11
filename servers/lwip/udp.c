@@ -83,8 +83,8 @@ static int udp_do_receive(struct socket * sock,
 			u16_t port)
 {
 	struct pbuf * p;
-	unsigned rem_len = m->COUNT;
-	unsigned written = 0, hdr_sz = 0;
+	unsigned int rem_len = m->COUNT;
+	unsigned int written = 0, hdr_sz = 0;
 	int err;
 
 	debug_udp_print("user buffer size : %d", rem_len);
@@ -372,7 +372,7 @@ static void udp_get_opt(struct socket * sock, message * m)
 	debug_udp_print("udpopt.nwuo_locport = 0x%x",
 				ntohs(udpopt.nwuo_locport));
 
-	if ((unsigned) m->COUNT < sizeof(udpopt)) {
+	if ((unsigned int) m->COUNT < sizeof(udpopt)) {
 		sock_reply(sock, EINVAL);
 		return;
 	}
