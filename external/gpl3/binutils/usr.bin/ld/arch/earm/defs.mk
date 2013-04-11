@@ -3,10 +3,10 @@
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
 G_DEFS=-DHAVE_CONFIG_H
-G_EMUL=armelf_nbsd_eabi
-G_EMULATION_OFILES=earmelf_nbsd_eabi.o earmelfb_nbsd_eabi.o earmelf.o earmnbsd.o
+G_EMUL=armelf_minix
+G_EMULATION_OFILES=earmelf_minix.o earmelf.o
 G_INCLUDES=
-G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o earmelf_nbsd_eabi.o earmelfb_nbsd_eabi.o earmelf.o earmnbsd.o 
+G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o earmelf_minix.o earmelf.o 
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texinfo
-G_target_alias=arm--netbsdelf-eabi
+G_target_alias=arm-elf32-minix
