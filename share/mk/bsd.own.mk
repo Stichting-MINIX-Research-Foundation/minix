@@ -22,7 +22,7 @@ MANGRP?=	operator
 INFOGRP?=	operator
 DOCGRP?=	operator
 
-MKBINUTILS:=	no
+MKBINUTILS?=	no
 MKGDB:=		no
 MKGCC?=		no
 

@@ -20,8 +20,10 @@ MAN=		${G_man_MANS:M${PROG}.1}
 
 CPPFLAGS+=	-I${.CURDIR}/../common/arch/${MACHINE_ARCH}
 
+.if !defined(__MINIX)
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
+.endif # !defined(__MINIX)
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
 OPCODESOBJ!=	cd ${TOP}/${BFDSUBDIR}/libopcodes && ${PRINTOBJDIR}
