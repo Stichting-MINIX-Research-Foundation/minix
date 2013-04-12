@@ -18,6 +18,7 @@
 #include "fs.h"
 #include <fcntl.h>
 #include <signal.h>
+#include <string.h>
 #include <assert.h>
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
@@ -39,7 +40,7 @@ static int create_pipe(int fil_des[2], int flags);
 /*===========================================================================*
  *				do_pipe					     *
  *===========================================================================*/
-int do_pipe()
+int do_pipe(message *m_out)
 {
 /* Perform the pipe(fil_des[2]) system call. */
 
@@ -48,8 +49,8 @@ int do_pipe()
 
   r = create_pipe(fil_des, 0 /* no flags */);
   if (r == OK) {
-	m_out.reply_i1 = fil_des[0];
-	m_out.reply_i2 = fil_des[1];
+	m_out->reply_i1 = fil_des[0];
+	m_out->reply_i2 = fil_des[1];
   }
 
   return r;
@@ -58,7 +59,7 @@ int do_pipe()
 /*===========================================================================*
  *				do_pipe2				     *
  *===========================================================================*/
-int do_pipe2()
+int do_pipe2(message *m_out)
 {
 /* Perform the pipe2(fil_des[2], flags) system call. */
   int r, flags;
@@ -68,8 +69,8 @@ int do_pipe2()
 
   r = create_pipe(fil_des, flags);
   if (r == OK) {
-	m_out.reply_i1 = fil_des[0];
-	m_out.reply_i2 = fil_des[1];
+	m_out->reply_i1 = fil_des[0];
+	m_out->reply_i2 = fil_des[1];
   }
 
   return r;
@@ -507,18 +508,18 @@ void revive(endpoint_t proc_e, int returned)
 		unlock_filp(fil_ptr);
 		put_vnode(fil_ptr->filp_vno);
 		fil_ptr->filp_vno = NULL;
-		reply(proc_e, returned);
+		replycode(proc_e, returned);
 	} else {
-		reply(proc_e, fd_nr);
+		replycode(proc_e, fd_nr);
 	}
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	scratch(rfp).file.fd_nr = 0;
 	if (blocked_on == FP_BLOCKED_ON_POPEN) {
 		/* process blocked in open or create */
-		reply(proc_e, fd_nr);
+		replycode(proc_e, fd_nr);
 	} else if (blocked_on == FP_BLOCKED_ON_SELECT) {
-		reply(proc_e, returned);
+		replycode(proc_e, returned);
 	} else {
 		/* Revive a process suspended on TTY or other device.
 		 * Pretend it wants only what there is.
@@ -534,7 +535,7 @@ void revive(endpoint_t proc_e, int returned)
 			}
 			rfp->fp_grant = GRANT_INVALID;
 		}
-		reply(proc_e, returned);/* unblock the process */
+		replycode(proc_e, returned);/* unblock the process */
 	}
   }
 }
@@ -641,6 +642,6 @@ void unpause(endpoint_t proc_e)
 	susp_count--;
   }
 
-  reply(proc_e, status);	/* signal interrupted call */
+  replycode(proc_e, status);	/* signal interrupted call */
 }
 

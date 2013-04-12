@@ -183,7 +183,7 @@ static void handle_work(void *(*func)(void *arg))
 		 * one call back at a time.
 		 */
 		if (vmp->m_flags & VMNT_CALLBACK) {
-			reply(proc_e, EAGAIN);
+			replycode(proc_e, EAGAIN);
 			return;
 		}
 		vmp->m_flags |= VMNT_CALLBACK;
@@ -203,7 +203,7 @@ static void handle_work(void *(*func)(void *arg))
 			/* Already trying to resolve a deadlock, can't
 			 * handle more, sorry */
 
-			reply(proc_e, EAGAIN);
+			replycode(proc_e, EAGAIN);
 			return;
 		}
 	}
@@ -388,7 +388,7 @@ static void *do_pending_pipe(void *arg)
   r = rw_pipe(op, who_e, f, scratch(fp).io.io_buffer, scratch(fp).io.io_nbytes);
 
   if (r != SUSPEND)  /* Do we have results to report? */
-	reply(fp->fp_endpoint, r);
+	replycode(fp->fp_endpoint, r);
 
   unlock_filp(f);
   thread_cleanup(fp);
@@ -424,6 +424,9 @@ static void *do_work(void *arg)
 {
   int error;
   struct job my_job;
+  message m_out;
+
+  memset(&m_out, 0, sizeof(m_out));
 
   my_job = *((struct job *) arg);
   fp = my_job.j_fp;
@@ -443,7 +446,7 @@ static void *do_work(void *arg)
 		error = ENOSYS;
 	} else {
 		job_call_nr -= PFS_BASE;
-		error = (*pfs_call_vec[job_call_nr])();
+		error = (*pfs_call_vec[job_call_nr])(&m_out);
 	}
   } else {
 	/* We're dealing with a POSIX system call from a normal
@@ -459,12 +462,12 @@ static void *do_work(void *arg)
 #if ENABLE_SYSCALL_STATS
 		calls_stats[job_call_nr]++;
 #endif
-		error = (*call_vec[job_call_nr])();
+		error = (*call_vec[job_call_nr])(&m_out);
 	}
   }
 
   /* Copy the results back to the user and send reply. */
-  if (error != SUSPEND) reply(fp->fp_endpoint, error);
+  if (error != SUSPEND) reply(&m_out, fp->fp_endpoint, error);
 
   thread_cleanup(fp);
   unlock_proc(fp);
@@ -791,10 +794,30 @@ static void get_work()
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-void reply(endpoint_t whom, int result)
+void reply(message *m_out, endpoint_t whom, int result)
 {
 /* Send a reply to a user process.  If the send fails, just ignore it. */
   int r;
+
+  m_out->reply_type = result;
+  r = sendnb(whom, m_out);
+  if (r != OK) {
+	printf("VFS: %d couldn't send reply %d to %d: %d\n", mthread_self(),
+		result, whom, r);
+	util_stacktrace();
+  }
+}
+
+/*===========================================================================*
+ *				replycode				     *
+ *===========================================================================*/
+void replycode(endpoint_t whom, int result)
+{
+/* Send a reply to a user process.  If the send fails, just ignore it. */
+  int r;
+  message m_out;
+
+  memset(&m_out, 0, sizeof(m_out));
 
   m_out.reply_type = result;
   r = sendnb(whom, &m_out);
@@ -812,6 +835,9 @@ static void service_pm_postponed(void)
 {
   int r;
   vir_bytes pc, newsp;
+  message m_out;
+
+  memset(&m_out, 0, sizeof(m_out));
 
   switch(job_call_nr) {
     case PM_EXEC:
@@ -893,6 +919,9 @@ static void service_pm_postponed(void)
 static void service_pm()
 {
   int r, slot;
+  message m_out;
+
+  memset(&m_out, 0, sizeof(m_out));
 
   switch (job_call_nr) {
     case PM_SETUID:

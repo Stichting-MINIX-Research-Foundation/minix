@@ -9,6 +9,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <time.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "file.h"
@@ -25,7 +26,7 @@
 /*===========================================================================*
  *				do_utime				     *
  *===========================================================================*/
-int do_utime(void)
+int do_utime(message *UNUSED(m_out))
 {
 /* Perform the utime(name, timep) system call. */
   int r;
@@ -83,7 +84,7 @@ int do_utime(void)
 /*===========================================================================*
  *				do_utimens				     *
  *===========================================================================*/
-int do_utimens(void)
+int do_utimens(message *UNUSED(m_out))
 {
 /* Perform the utimens(name, times, flag) system call, and its friends.
  * Implement a very large but not complete subset of the utimensat()
@@ -107,6 +108,8 @@ int do_utimens(void)
   struct lookup resolve;
   vir_bytes vname;
   size_t vname_length;
+
+  memset(&now, 0, sizeof(now));
 
   /* The case times==NULL is handled by the caller, replaced with UTIME_NOW */
   actim.tv_sec = job_m_in.utime_actime;

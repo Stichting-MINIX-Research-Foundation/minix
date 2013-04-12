@@ -86,7 +86,7 @@ static void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 /*===========================================================================*
  *                              do_fsready                                   *
  *===========================================================================*/
-int do_fsready()
+int do_fsready(message *UNUSED(m_out))
 {
   /* deprecated */
   return(SUSPEND);
@@ -95,7 +95,7 @@ int do_fsready()
 /*===========================================================================*
  *                              do_mount                                     *
  *===========================================================================*/
-int do_mount()
+int do_mount(message *UNUSED(m_out))
 {
 /* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
@@ -414,7 +414,7 @@ void mount_pfs(void)
 /*===========================================================================*
  *                              do_umount                                    *
  *===========================================================================*/
-int do_umount(void)
+int do_umount(message *m_out)
 {
 /* Perform the umount(name) system call.
  * syscall might provide 'name' embedded in the message.
@@ -448,7 +448,7 @@ int do_umount(void)
    */
   if (strlen(label) >= M3_LONG_STRING)	/* should never evaluate to true */
 	label[M3_LONG_STRING-1] = 0;
-  strlcpy(m_out.umount_label, label, M3_LONG_STRING);
+  strlcpy(m_out->umount_label, label, M3_LONG_STRING);
   return(OK);
 }
 

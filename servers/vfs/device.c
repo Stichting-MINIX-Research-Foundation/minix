@@ -652,7 +652,7 @@ void pm_setsid(endpoint_t proc_e)
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-int do_ioctl()
+int do_ioctl(message *UNUSED(m_out))
 {
 /* Perform the ioctl(ls_fd, request, argx) system call */
 
@@ -1107,6 +1107,8 @@ int maj;
   struct vnode *vp;
   struct filp *rfilp;
   struct fproc *rfp;
+  message m_out;
+  memset(&m_out, 0, sizeof(m_out));
 
   if (maj < 0 || maj >= NR_DEVICES) panic("VFS: out-of-bound major");
 
@@ -1154,7 +1156,7 @@ int maj;
 	   rfp->fp_task == driver_e && (rfp->fp_flags & FP_SUSP_REOPEN)) {
 		rfp->fp_flags &= ~FP_SUSP_REOPEN;
 		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-		reply(rfp->fp_endpoint, ERESTART);
+		reply(&m_out, rfp->fp_endpoint, ERESTART);
 	}
   }
 
@@ -1173,7 +1175,7 @@ int maj;
 		/* Open failed, and automatic reopen was not requested */
 		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
-		reply(rfp->fp_endpoint, EIO);
+		reply(&m_out, rfp->fp_endpoint, EIO);
 		continue;
 	}
 
@@ -1183,7 +1185,7 @@ int maj;
 	if (major(vp->v_sdev) != maj) continue;
 
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	reply(rfp->fp_endpoint, fd_nr);
+	reply(&m_out, rfp->fp_endpoint, fd_nr);
   }
 }
 

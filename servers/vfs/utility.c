@@ -97,7 +97,7 @@ int fetch_name(vir_bytes path, size_t len, char *dest)
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-int no_sys()
+int no_sys(message *UNUSED(m_out))
 {
 /* Somebody has used an illegal system call number */
   return(ENOSYS);

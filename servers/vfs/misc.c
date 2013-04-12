@@ -108,7 +108,7 @@ int do_getsysinfo()
 /*===========================================================================*
  *				do_fcntl				     *
  *===========================================================================*/
-int do_fcntl()
+int do_fcntl(message *UNUSED(m_out))
 {
 /* Perform the fcntl(fd, request, ...) system call. */
 
@@ -250,10 +250,8 @@ int do_fcntl()
   return(r);
 }
 
-/*===========================================================================*
- *				do_sync					     *
- *===========================================================================*/
-int do_sync()
+static int
+sync_fses(void)
 {
   struct vmnt *vmp;
   int r = OK;
@@ -272,9 +270,17 @@ int do_sync()
 }
 
 /*===========================================================================*
+ *				do_sync					     *
+ *===========================================================================*/
+int do_sync(message *UNUSED(m_out))
+{
+  return sync_fses();
+}
+
+/*===========================================================================*
  *				do_fsync				     *
  *===========================================================================*/
-int do_fsync()
+int do_fsync(message *UNUSED(m_out))
 {
 /* Perform the fsync() system call. */
   struct filp *rfilp;
@@ -314,7 +320,7 @@ void pm_reboot()
   int i;
   struct fproc *rfp;
 
-  do_sync();
+  sync_fses();
 
   /* Do exit processing for all leftover processes and servers, but don't
    * actually exit them (if they were really gone, PM will tell us about it).
@@ -333,7 +339,7 @@ void pm_reboot()
 	unlock_proc(rfp);
   }
 
-  do_sync();
+  sync_fses();
   unmount_all(0 /* Don't force */);
 
   /* Try to exit all processes again including File Servers */
@@ -348,7 +354,7 @@ void pm_reboot()
 	unlock_proc(rfp);
   }
 
-  do_sync();
+  sync_fses();
   unmount_all(1 /* Force */);
 
 }
@@ -573,7 +579,7 @@ int ruid;
 /*===========================================================================*
  *				do_svrctl				     *
  *===========================================================================*/
-int do_svrctl()
+int do_svrctl(message *UNUSED(m_out))
 {
   unsigned int svrctl;
   vir_bytes ptr;

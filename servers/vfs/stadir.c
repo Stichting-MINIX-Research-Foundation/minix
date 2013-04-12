@@ -32,7 +32,7 @@ static int change_into(struct vnode **iip, struct vnode *vp);
 /*===========================================================================*
  *				do_fchdir				     *
  *===========================================================================*/
-int do_fchdir()
+int do_fchdir(message *UNUSED(m_out))
 {
   /* Change directory on already-opened fd. */
   struct filp *rfilp;
@@ -50,7 +50,7 @@ int do_fchdir()
 /*===========================================================================*
  *				do_chdir				     *
  *===========================================================================*/
-int do_chdir()
+int do_chdir(message *UNUSED(m_out))
 {
 /* Perform the chdir(name) system call.
  * syscall might provide 'name' embedded in the message.
@@ -91,7 +91,7 @@ int do_chdir()
 /*===========================================================================*
  *				do_chroot				     *
  *===========================================================================*/
-int do_chroot()
+int do_chroot(message *UNUSED(m_out))
 {
 /* Perform the chroot(name) system call.
  * syscall might provide 'name' embedded in the message.
@@ -156,7 +156,7 @@ static int change_into(struct vnode **result, struct vnode *vp)
 /*===========================================================================*
  *				do_stat					     *
  *===========================================================================*/
-int do_stat()
+int do_stat(message *UNUSED(m_out))
 {
 /* Perform the stat(name, buf) system call. */
   int r;
@@ -189,7 +189,7 @@ int do_stat()
 /*===========================================================================*
  *				do_fstat				     *
  *===========================================================================*/
-int do_fstat()
+int do_fstat(message *UNUSED(m_out))
 {
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
@@ -213,7 +213,7 @@ int do_fstat()
 /*===========================================================================*
  *				do_fstatfs				     *
  *===========================================================================*/
-int do_fstatfs()
+int do_fstatfs(message *UNUSED(m_out))
 {
 /* Perform the fstatfs(fd, buf) system call. */
   struct filp *rfilp;
@@ -236,7 +236,7 @@ int do_fstatfs()
 /*===========================================================================*
  *				do_statvfs				     *
  *===========================================================================*/
-int do_statvfs()
+int do_statvfs(message *UNUSED(m_out))
 {
 /* Perform the stat(name, buf) system call. */
   int r;
@@ -269,7 +269,7 @@ int do_statvfs()
 /*===========================================================================*
  *				do_fstatvfs				     *
  *===========================================================================*/
-int do_fstatvfs()
+int do_fstatvfs(message *UNUSED(m_out))
 {
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
@@ -291,7 +291,7 @@ int do_fstatvfs()
 /*===========================================================================*
  *                             do_lstat					     *
  *===========================================================================*/
-int do_lstat()
+int do_lstat(message *UNUSED(m_out))
 {
 /* Perform the lstat(name, buf) system call. */
   struct vnode *vp;

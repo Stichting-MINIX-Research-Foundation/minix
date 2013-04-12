@@ -29,7 +29,7 @@
 /*===========================================================================*
  *				do_read					     *
  *===========================================================================*/
-int do_read()
+int do_read(message *UNUSED(m_out))
 {
   return(do_read_write_peek(READING, job_m_in.fd,
           job_m_in.buffer, (size_t) job_m_in.nbytes));
@@ -233,7 +233,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 /*===========================================================================*
  *				do_getdents				     *
  *===========================================================================*/
-int do_getdents()
+int do_getdents(message *UNUSED(m_out))
 {
 /* Perform the getdents(fd, buf, size) system call. */
   int r = OK;

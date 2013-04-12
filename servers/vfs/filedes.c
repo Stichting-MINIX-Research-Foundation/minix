@@ -443,7 +443,7 @@ int fd;
 /*===========================================================================*
  *                              do_verify_fd                                 *
  *===========================================================================*/
-int do_verify_fd(void)
+int do_verify_fd(message *m_out)
 {
   struct filp *rfilp;
   endpoint_t proc_e;
@@ -453,7 +453,7 @@ int do_verify_fd(void)
   fd = job_m_in.COUNT;
 
   rfilp = (struct filp *) verify_fd(proc_e, fd);
-  m_out.ADDRESS = (void *) rfilp;
+  m_out->ADDRESS = (void *) rfilp;
   if (rfilp != NULL) unlock_filp(rfilp);
   return (rfilp != NULL) ? OK : EINVAL;
 }
@@ -476,7 +476,7 @@ filp_id_t sfilp;
 /*===========================================================================*
  *                              do_set_filp                                  *
  *===========================================================================*/
-int do_set_filp(void)
+int do_set_filp(message *UNUSED(m_out))
 {
   filp_id_t f;
   f = (filp_id_t) job_m_in.ADDRESS;
@@ -517,7 +517,7 @@ filp_id_t cfilp;
 /*===========================================================================*
  *                              do_copy_filp                                 *
  *===========================================================================*/
-int do_copy_filp(void)
+int do_copy_filp(message *UNUSED(m_out))
 {
   endpoint_t proc_e;
   filp_id_t f;
@@ -546,7 +546,7 @@ filp_id_t pfilp;
 /*===========================================================================*
  *                              do_put_filp                                  *
  *===========================================================================*/
-int do_put_filp(void)
+int do_put_filp(message *UNUSED(m_out))
 {
   filp_id_t f;
   f = (filp_id_t) job_m_in.ADDRESS;
@@ -591,7 +591,7 @@ int fd;
 /*===========================================================================*
  *                              do_cancel_fd                                 *
  *===========================================================================*/
-int do_cancel_fd(void)
+int do_cancel_fd(message *UNUSED(m_out))
 {
   endpoint_t proc_e;
   int fd;

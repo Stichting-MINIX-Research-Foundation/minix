@@ -40,7 +40,7 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-int do_open()
+int do_open(message *UNUSED(m_out))
 {
 /* Perform the open(name, flags,...) system call.
  * syscall might provide 'name' embedded in message when not creating file */
@@ -499,7 +499,7 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 /*===========================================================================*
  *				do_mknod				     *
  *===========================================================================*/
-int do_mknod()
+int do_mknod(message *UNUSED(m_out))
 {
 /* Perform the mknod(name, mode, addr) system call. */
   register mode_t bits, mode_bits;
@@ -548,7 +548,7 @@ int do_mknod()
 /*===========================================================================*
  *				do_mkdir				     *
  *===========================================================================*/
-int do_mkdir()
+int do_mkdir(message *UNUSED(m_out))
 {
 /* Perform the mkdir(name, mode) system call. */
   mode_t bits;			/* mode bits for the new inode */
@@ -590,7 +590,7 @@ int do_mkdir()
 /*===========================================================================*
  *				do_lseek				     *
  *===========================================================================*/
-int do_lseek()
+int do_lseek(message *m_out)
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -631,7 +631,7 @@ int do_lseek()
 	r = EOVERFLOW;
   } else {
 	/* insert the new position into the output message */
-	m_out.reply_l1 = ex64lo(newpos);
+	m_out->reply_l1 = ex64lo(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
 		rfilp->filp_pos = newpos;
@@ -649,7 +649,7 @@ int do_lseek()
 /*===========================================================================*
  *				do_llseek				     *
  *===========================================================================*/
-int do_llseek()
+int do_llseek(message *m_out)
 {
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -688,8 +688,8 @@ int do_llseek()
       r = EINVAL;
   else {
 	/* insert the new position into the output message */
-	m_out.reply_l1 = ex64lo(newpos);
-	m_out.reply_l2 = ex64hi(newpos);
+	m_out->reply_l1 = ex64lo(newpos);
+	m_out->reply_l2 = ex64hi(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
 		rfilp->filp_pos = newpos;
@@ -707,7 +707,7 @@ int do_llseek()
 /*===========================================================================*
  *				do_close				     *
  *===========================================================================*/
-int do_close()
+int do_close(message *UNUSED(m_out))
 {
 /* Perform the close(fd) system call. */
 

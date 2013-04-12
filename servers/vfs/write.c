@@ -13,7 +13,7 @@
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-int do_write()
+int do_write(message *UNUSED(m_out))
 {
 /* Perform the write(fd, buffer, nbytes) system call. */
   return(do_read_write_peek(WRITING, job_m_in.fd,

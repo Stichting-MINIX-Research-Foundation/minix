@@ -84,7 +84,7 @@ static int select_majors[] = { /* List of majors that support selecting on */
 /*===========================================================================*
  *				do_select				     *
  *===========================================================================*/
-int do_select(void)
+int do_select(message *UNUSED(m_out))
 {
 /* Implement the select(nfds, readfds, writefds, errorfds, timeout) system
  * call. First we copy the arguments and verify their sanity. Then we check
