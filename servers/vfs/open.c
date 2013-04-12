@@ -590,7 +590,7 @@ int do_mkdir()
 /*===========================================================================*
  *				do_lseek				     *
  *===========================================================================*/
-int do_lseek()
+int do_lseek(message *m_out)
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -631,7 +631,7 @@ int do_lseek()
 	r = EOVERFLOW;
   } else {
 	/* insert the new position into the output message */
-	m_out.reply_l1 = ex64lo(newpos);
+	m_out->reply_l1 = ex64lo(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
 		rfilp->filp_pos = newpos;
@@ -649,7 +649,7 @@ int do_lseek()
 /*===========================================================================*
  *				do_llseek				     *
  *===========================================================================*/
-int do_llseek()
+int do_llseek(message *m_out)
 {
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -688,8 +688,8 @@ int do_llseek()
       r = EINVAL;
   else {
 	/* insert the new position into the output message */
-	m_out.reply_l1 = ex64lo(newpos);
-	m_out.reply_l2 = ex64hi(newpos);
+	m_out->reply_l1 = ex64lo(newpos);
+	m_out->reply_l2 = ex64hi(newpos);
 
 	if (cmp64(newpos, rfilp->filp_pos) != 0) {
 		rfilp->filp_pos = newpos;
