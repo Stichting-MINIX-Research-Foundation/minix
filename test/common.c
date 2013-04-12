@@ -14,6 +14,8 @@
 
 int common_test_nr = -1, errct = 0, subtest;
 
+int quietflag = 1;
+
 /* provide a default max_error symbol as Max_error with a value
  * of 5. The test program can override it wit its own max_error
  * symbol if it wants that this code will then use instead.
@@ -130,3 +132,49 @@ void quit()
 	exit(1);
   }
 }
+
+void
+printprogress(char *msg, int i, int max)
+{
+        int use_i = i + 1;
+        static time_t start_time, prev_time;
+        static int prev_i;
+        time_t now;
+
+	if(quietflag) return;
+
+        time(&now);
+        if(prev_i >= i) start_time = now;
+
+        if(now > start_time && prev_time < now) {
+                double i_per_sec = i / (now - start_time);
+                int remain_secs;
+
+                remain_secs = (int)((max-i) / i_per_sec);
+
+                fprintf(stderr, "%-35s  %7d/%7d  %3d%%  ETA %3ds\r", msg,
+                      use_i, (max), use_i*100/(max), remain_secs);
+                fflush(stderr);
+        }
+
+        if(use_i >= max) {
+                fprintf(stderr, "%-35s  done                                      \n", msg);
+        }
+
+        prev_i = i;
+        prev_time = now;
+}
+
+void getmem(u32_t *total, u32_t *free, u32_t *cached)
+{
+        u32_t pagesize, largest;
+        FILE *f = fopen("/proc/meminfo", "r");
+        if(!f) return;
+        if(fscanf(f, "%u %u %u %u %u", &pagesize, total, free,
+                &largest, cached) != 5) {
+		fprintf(stderr, "fscanf of meminfo failed\n");
+		exit(1);
+	}
+        fclose(f);
+}
+
