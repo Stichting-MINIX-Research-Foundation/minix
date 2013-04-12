@@ -43,6 +43,11 @@ static int fs_block_size = 1024;	/* raw i/o block size */
 
 static int rdwt_err;
 
+static int quiet = 0;
+
+void
+lmfs_setquiet(int q) { quiet = q; }
+
 u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree, 
          int blocksize, dev_t majordev)
 {
@@ -66,7 +71,7 @@ u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree,
    */
   if((vm_info_stats(&vsi) != OK)) {
 	bufs = 1024;
-	printf("fslib: heuristic info fail: default to %d bufs\n", bufs);
+	if(!quiet) printf("fslib: heuristic info fail: default to %d bufs\n", bufs);
 	return bufs;
   }
 

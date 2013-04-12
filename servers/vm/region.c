@@ -1876,7 +1876,7 @@ int do_yieldblockgetblock(message *m)
 	endpoint_t caller = m->m_source;
 	struct vmproc *vmp;
 	yielded_t *yb = NULL;
-	int r = ESRCH;
+	int r = OK;
 	int pages;
 
 	if(vm_isokendpt(caller, &n) != OK)
@@ -1901,11 +1901,11 @@ int do_yieldblockgetblock(message *m)
 
 	if(cmp64(yieldid, VM_BLOCKID_NONE) != 0) {
 		/* A block was given to yield. */
-		yieldblock(vmp, yieldid, (vir_bytes) m->VMYBGB_VADDR, &yb,
+		r = yieldblock(vmp, yieldid, (vir_bytes) m->VMYBGB_VADDR, &yb,
 			pages);
 	}
 
-	if(cmp64(getid, VM_BLOCKID_NONE) != 0) {
+	if(r == OK && cmp64(getid, VM_BLOCKID_NONE) != 0) {
 		/* A block was given to get. */
 		r = getblock(vmp, getid, (vir_bytes) m->VMYBGB_VADDR, pages);
 	}
