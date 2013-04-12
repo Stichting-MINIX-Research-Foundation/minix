@@ -194,10 +194,6 @@ static int rs_close(tty_t *tp, int try);
 static void out_int(rs232_t *rs);
 static void rs232_handler(rs232_t *rs);
 
-/* XXX */
-static void lock(void) {}
-static void unlock(void) {}
-
 static int my_inb(port_t port)
 {
 	int r;
@@ -221,10 +217,8 @@ static int rs_write(register tty_t *tp, int try)
 
   if (rs->inhibited != tp->tty_inhibited) {
 	/* Inhibition state has changed. */
-	lock();
 	rs->ostate |= OSWREADY;
 	if (tp->tty_inhibited) rs->ostate &= ~OSWREADY;
-	unlock();
 	rs->inhibited = tp->tty_inhibited;
   }
 
@@ -265,10 +259,8 @@ static int rs_write(register tty_t *tp, int try)
 	tp->tty_reprint = TRUE;
 
 	/* Bookkeeping. */
-	lock();			/* protect interrupt sensitive rs->ocount */
 	rs->ocount += ocount;
 	rs_ostart(rs);
-	unlock();
 	if ((rs->ohead += ocount) >= bufend(rs->obuf))
 		rs->ohead -= buflen(rs->obuf);
 	tp->tty_outoffset += count;
@@ -320,10 +312,8 @@ int c;				/* character to echo */
   out_process(tp, rs->obuf, rs->ohead, bufend(rs->obuf), &count, &ocount);
   if (count == 0) return;
 
-  lock();
   rs->ocount += ocount;
   rs_ostart(rs);
-  unlock();
   if ((rs->ohead += ocount) >= bufend(rs->obuf)) rs->ohead -= buflen(rs->obuf);
 }
 
@@ -404,13 +394,6 @@ static void rs_config(rs232_t *rs)
   if (divisor >= (UART_FREQ / 110)) line_controls |= LC_2STOP_BITS;
   line_controls |= (tp->tty_termios.c_cflag & CSIZE) >> 2;
 
-  /* Lock out interrupts while setting the speed. The receiver register is
-   * going to be hidden by the div_low register, but the input interrupt
-   * handler relies on reading it to clear the interrupt and avoid looping
-   * forever.
-   */
-  lock();
-
   /* Select the baud rate divisor registers and change the rate. */
   sys_outb(rs->line_ctl_port, LC_ADDRESS_DIVISOR);
   sys_outb(rs->div_low_port, divisor);
@@ -422,8 +405,6 @@ static void rs_config(rs232_t *rs)
   rs->ostate = devready(rs) | ORAW | OSWREADY;	/* reads modem_ctl_port */
   if ((tp->tty_termios.c_lflag & IXON) && rs->oxoff != _POSIX_VDISABLE)
 	rs->ostate &= ~ORAW;
-
-  unlock();
 }
 
 /*===========================================================================*
@@ -559,11 +540,9 @@ static int rs_icancel(tty_t *tp, int UNUSED(dummy))
 /* Cancel waiting input. */
   rs232_t *rs = tp->tty_priv;
 
-  lock();
   rs->icount = 0;
   rs->itail = rs->ihead;
   istart(rs);
-  unlock();
 
   return 0;	/* dummy */
 }
@@ -576,11 +555,9 @@ static int rs_ocancel(tty_t *tp, int UNUSED(dummy))
 /* Cancel pending output. */
   rs232_t *rs = tp->tty_priv;
 
-  lock();
   rs->ostate &= ~(ODONE | OQUEUED);
   rs->ocount = 0;
   rs->otail = rs->ohead;
-  unlock();
 
   return 0;	/* dummy */
 }
@@ -598,10 +575,8 @@ static int rs_read(tty_t *tp, int try)
   if (!(tp->tty_termios.c_cflag & CLOCAL)) {
   	if (try) return 1;
 	/* Send a SIGHUP if hangup detected. */
-	lock();
 	ostate = rs->ostate;
 	rs->ostate &= ~ODEVHUP;		/* save ostate, clear DEVHUP */
-	unlock();
 	if (ostate & ODEVHUP) {
 		sigchar(tp, SIGHUP, 1);
 		tp->tty_termios.c_ospeed = B0;	/* Disable further I/O. */
@@ -622,10 +597,8 @@ static int rs_read(tty_t *tp, int try)
 	/* Perform input processing on (part of) the input buffer. */
 	if ((count = in_process(tp, rs->itail, count, -1)) == 0) break;
 
-	lock();			/* protect interrupt sensitive variables */
 	rs->icount -= count;
 	if (!rs->idevready && rs->icount < RS_ILOWWATER) istart(rs);
-	unlock();
 	if ((rs->itail += count) == bufend(rs->ibuf)) rs->itail = rs->ibuf;
   }
 
