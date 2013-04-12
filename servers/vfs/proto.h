@@ -9,6 +9,10 @@
 #include "threads.h"
 #include <minix/rs.h>
 
+/* To declare an m_out argument that isn't used */
+#define UNUSED_M_OUT __attribute__((unused)) message *m_out
+#define M_OUT message *m_out
+
 /* Structs used in prototypes must be declared as such first. */
 struct filp;
 struct fproc;
@@ -46,7 +50,7 @@ int tty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int ctty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int clone_opcl(int op, dev_t dev, int proc, int flags);
 int ctty_io(int task_nr, message *mess_ptr);
-int do_ioctl(void);
+int do_ioctl(M_OUT);
 void pm_setsid(endpoint_t proc_e);
 void dev_status(endpoint_t drv_e);
 void bdev_up(int major);
@@ -96,26 +100,26 @@ void unlock_filps(struct filp *filp1, struct filp *filp2);
 int invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
 void invalidate_filp_by_char_major(int major);
-int do_verify_fd(void);
+int do_verify_fd(M_OUT);
 int set_filp(filp_id_t sfilp);
-int do_set_filp(void);
+int do_set_filp(M_OUT);
 int copy_filp(endpoint_t to_ep, filp_id_t cfilp);
-int do_copy_filp(void);
+int do_copy_filp(M_OUT);
 int put_filp(filp_id_t pfilp);
-int do_put_filp(void);
+int do_put_filp(M_OUT);
 int cancel_fd(endpoint_t ep, int fd);
-int do_cancel_fd(void);
+int do_cancel_fd(M_OUT);
 void close_filp(struct filp *fp);
 
 /* fscall.c */
 void nested_fs_call(message *m);
 
 /* link.c */
-int do_link(void);
-int do_unlink(void);
-int do_rename(void);
-int do_truncate(void);
-int do_ftruncate(void);
+int do_link(M_OUT);
+int do_unlink(M_OUT);
+int do_rename(M_OUT);
+int do_truncate(M_OUT);
+int do_ftruncate(M_OUT);
 int truncate_vnode(struct vnode *vp, off_t newsize);
 int rdlink_direct(char *orig_path, char *link_path, struct fproc *rfp);
 
@@ -126,29 +130,30 @@ void lock_revive(void);
 /* main.c */
 int main(void);
 void lock_proc(struct fproc *rfp, int force_lock);
-void reply(endpoint_t whom, int result);
+void reply(message *m_out, endpoint_t whom, int result);
+void replycode(endpoint_t whom, int result);
 void thread_cleanup(struct fproc *rfp);
 void unlock_proc(struct fproc *rfp);
 
 /* misc.c */
 void pm_exit(int proc);
-int do_fcntl(void);
+int do_fcntl(M_OUT);
 void pm_fork(int pproc, int cproc, int cpid);
 void pm_setgid(int proc_e, int egid, int rgid);
 void pm_setuid(int proc_e, int euid, int ruid);
 void pm_setgroups(int proc_e, int ngroups, gid_t *addr);
-int do_sync(void);
-int do_fsync(void);
+int do_sync(M_OUT);
+int do_fsync(M_OUT);
 void pm_reboot(void);
-int do_svrctl(void);
+int do_svrctl(M_OUT);
 int do_getsysinfo(void);
 int pm_dumpcore(endpoint_t proc_e, int sig, vir_bytes exe_name);
 void * ds_event(void *arg);
 
 /* mount.c */
-int do_fsready(void);
-int do_mount(void);
-int do_umount(void);
+int do_fsready(M_OUT);
+int do_mount(M_OUT);
+int do_umount(M_OUT);
 int is_nonedev(dev_t dev);
 void mount_pfs(void);
 int mount_fs(dev_t dev, char mount_dev[PATH_MAX], char mount_path[PATH_MAX],
@@ -157,17 +162,17 @@ int unmount(dev_t dev, char label[LABEL_MAX]);
 void unmount_all(int force);
 
 /* open.c */
-int do_close(void);
+int do_close(M_OUT);
 int close_fd(struct fproc *rfp, int fd_nr);
 void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
-int do_lseek(void);
-int do_llseek(void);
-int do_mknod(void);
-int do_mkdir(void);
-int do_open(void);
-int do_slink(void);
+int do_lseek(M_OUT);
+int do_llseek(M_OUT);
+int do_mknod(M_OUT);
+int do_mkdir(M_OUT);
+int do_open(M_OUT);
+int do_slink(M_OUT);
 int do_vm_open(void);
 int do_vm_close(void);
 
@@ -180,11 +185,11 @@ void lookup_init(struct lookup *resolve, char *path, int flags, struct
 	vmnt **vmp, struct vnode **vp);
 int get_name(struct vnode *dirp, struct vnode *entry, char *_name);
 int canonical_path(char *orig_path, struct fproc *rfp);
-int do_check_perms(void);
+int do_check_perms(M_OUT);
 
 /* pipe.c */
-int do_pipe(void);
-int do_pipe2(void);
+int do_pipe(M_OUT);
+int do_pipe2(M_OUT);
 int map_vnode(struct vnode *vp, endpoint_t fs_e);
 void unpause(endpoint_t proc_e);
 int pipe_check(struct filp *filp, int rw_flag, int oflags, int bytes,
@@ -197,17 +202,17 @@ void unsuspend_by_endpt(endpoint_t proc_e);
 void wait_for(endpoint_t proc_e);
 
 /* protect.c */
-int do_access(void);
-int do_chmod(void);
-int do_chown(void);
-int do_umask(void);
+int do_access(M_OUT);
+int do_chmod(M_OUT);
+int do_chown(M_OUT);
+int do_umask(M_OUT);
 int forbidden(struct fproc *rfp, struct vnode *vp, mode_t
 	access_desired);
 int read_only(struct vnode *vp);
 
 /* read.c */
-int do_read(void);
-int do_getdents(void);
+int do_read(M_OUT);
+int do_getdents(M_OUT);
 void lock_bsf(void);
 void unlock_bsf(void);
 void check_bsf_lock(void);
@@ -267,19 +272,19 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actv,
 int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
 
 /* stadir.c */
-int do_chdir(void);
-int do_fchdir(void);
-int do_chroot(void);
-int do_fstat(void);
-int do_stat(void);
-int do_fstatfs(void);
-int do_statvfs(void);
-int do_fstatvfs(void);
-int do_rdlink(void);
-int do_lstat(void);
+int do_chdir(M_OUT);
+int do_fchdir(M_OUT);
+int do_chroot(M_OUT);
+int do_fstat(M_OUT);
+int do_stat(M_OUT);
+int do_fstatfs(M_OUT);
+int do_statvfs(M_OUT);
+int do_fstatvfs(M_OUT);
+int do_rdlink(M_OUT);
+int do_lstat(M_OUT);
 
 /* time.c */
-int do_utime(void);
+int do_utime(M_OUT);
 
 /* tll.c */
 void tll_downgrade(tll_t *tllp);
@@ -298,7 +303,7 @@ unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
 int copy_name(size_t len, char *dest);
 int fetch_name(vir_bytes path, size_t len, char *dest);
-int no_sys(void);
+int no_sys(message *);
 int isokendpt_f(char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
 
@@ -335,7 +340,7 @@ void vnode_clean_refs(struct vnode *vp);
 void upgrade_vnode_lock(struct vnode *vp);
 
 /* write.c */
-int do_write(void);
+int do_write(M_OUT);
 
 /* gcov.c */
 int do_gcov_flush(void);
@@ -344,7 +349,7 @@ int do_gcov_flush(void);
 #endif
 
 /* select.c */
-int do_select(void);
+int do_select(M_OUT);
 void init_select(void);
 void select_callback(struct filp *, int ops);
 void select_forget(endpoint_t proc_e);

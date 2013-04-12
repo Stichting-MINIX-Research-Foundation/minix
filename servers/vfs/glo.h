@@ -24,7 +24,6 @@ EXTERN u32_t system_hz;		/* system clock frequency. */
 
 /* The parameters of the call are kept here. */
 EXTERN message m_in;		/* the input message itself */
-EXTERN message m_out;		/* the output message used for reply */
 # define who_p		((int) (fp - fproc))
 # define isokslot(p)	(p >= 0 && \
 			 p < (int)(sizeof(fproc) / sizeof(struct fproc)))
@@ -50,8 +49,8 @@ EXTERN char mount_label[LABEL_MAX];	/* label of file system to mount */
 EXTERN int err_code;		/* temporary storage for error number */
 
 /* Data initialized elsewhere. */
-extern int(*call_vec[]) (void);
-extern int(*pfs_call_vec[]) (void);
+extern int(*call_vec[]) (message *);
+extern int(*pfs_call_vec[]) (message *m_out);
 extern char mode_map[];	/* mapping from O_ACCMODE mask to R_BIT/W_BIT flags */
 
 EXTERN struct kinfo kinfo;     /* kernel information */

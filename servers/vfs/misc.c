@@ -250,10 +250,8 @@ int do_fcntl()
   return(r);
 }
 
-/*===========================================================================*
- *				do_sync					     *
- *===========================================================================*/
-int do_sync()
+static int
+sync_fses(void)
 {
   struct vmnt *vmp;
   int r = OK;
@@ -269,6 +267,14 @@ int do_sync()
   }
 
   return(r);
+}
+
+/*===========================================================================*
+ *				do_sync					     *
+ *===========================================================================*/
+int do_sync()
+{
+  return sync_fses();
 }
 
 /*===========================================================================*
@@ -314,7 +320,7 @@ void pm_reboot()
   int i;
   struct fproc *rfp;
 
-  do_sync();
+  sync_fses();
 
   /* Do exit processing for all leftover processes and servers, but don't
    * actually exit them (if they were really gone, PM will tell us about it).
@@ -333,7 +339,7 @@ void pm_reboot()
 	unlock_proc(rfp);
   }
 
-  do_sync();
+  sync_fses();
   unmount_all(0 /* Don't force */);
 
   /* Try to exit all processes again including File Servers */
@@ -348,7 +354,7 @@ void pm_reboot()
 	unlock_proc(rfp);
   }
 
-  do_sync();
+  sync_fses();
   unmount_all(1 /* Force */);
 
 }
