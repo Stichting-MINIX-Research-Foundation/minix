@@ -19,7 +19,7 @@ int (*fs_call_vec[])(message *fs_m_in, message *fs_m_out) = {
         no_sys,             /* 3   */
         fs_ftrunc,          /* 4   */
         no_sys,             /* 5   */
-	no_sys,             /* 6   */
+	fs_chmod,           /* 6   */
         no_sys,             /* 7   */
         fs_stat,            /* 8   */
         no_sys,             /* 9   */

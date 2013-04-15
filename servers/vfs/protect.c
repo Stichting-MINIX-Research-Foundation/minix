@@ -11,6 +11,7 @@
 #include "fs.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <assert.h>
 #include <minix/callnr.h>
 #include "file.h"
 #include "fproc.h"
@@ -62,8 +63,11 @@ int do_chmod(message *UNUSED(m_out))
 	/* File is already opened; get a pointer to vnode from filp. */
 	if ((flp = get_filp(rfd, VNODE_WRITE)) == NULL) return(err_code);
 	vp = flp->filp_vno;
+        assert(vp);
 	dup_vnode(vp);
   }
+
+  assert(vp);
 
   /* Only the owner or the super_user may change the mode of a file.
    * No one may change the mode of a file on a read-only file system.
@@ -304,5 +308,6 @@ struct vnode *vp;		/* ptr to inode whose file sys is to be cked */
 /* Check to see if the file system on which the inode 'ip' resides is mounted
  * read only.  If so, return EROFS, else return OK.
  */
-  return((vp->v_vmnt->m_flags & VMNT_READONLY) ? EROFS : OK);
+  assert(vp);
+  return(vp->v_vmnt && (vp->v_vmnt->m_flags & VMNT_READONLY) ? EROFS : OK);
 }
