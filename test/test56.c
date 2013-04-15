@@ -2852,6 +2852,39 @@ void test_select()
 
 }
 
+void test_fchmod()
+{
+	int socks[2];
+	struct stat st1, st2;
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, socks) < 0) {
+		test_fail("Can't open socket pair.");
+	}
+
+	if (fstat(socks[0], &st1) < 0 || fstat(socks[1], &st2) < 0) {
+		test_fail("fstat failed.");
+	}
+
+	if ((st1.st_mode & (S_IRUSR|S_IWUSR)) == S_IRUSR &&
+		(st2.st_mode & (S_IRUSR|S_IWUSR)) == S_IWUSR) {
+		test_fail("fstat failed.");
+	}
+
+	if (fchmod(socks[0], S_IRUSR) < 0 ||
+                    fstat(socks[0], &st1) < 0 ||
+                    (st1.st_mode & (S_IRUSR|S_IWUSR)) != S_IRUSR) {
+		test_fail("fchmod/fstat mode set/check failed (1).");
+	}
+
+	if (fchmod(socks[1], S_IWUSR) < 0 || fstat(socks[1], &st2) < 0 ||
+                    (st2.st_mode & (S_IRUSR|S_IWUSR)) != S_IWUSR) {
+		test_fail("fchmod/fstat mode set/check failed (2).");
+	}
+
+	close(socks[0]);
+	close(socks[1]);
+}
+
 int main(int argc, char *argv[])
 {
 	int i;
@@ -2892,6 +2925,7 @@ int main(int argc, char *argv[])
 	test_scm_credentials();
 	test_fd_passing();
 	test_select();
+	test_fchmod();
 	quit();
 
 	return -1;	/* we should never get here */

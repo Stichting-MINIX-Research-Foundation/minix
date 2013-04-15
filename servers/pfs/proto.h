@@ -38,6 +38,7 @@ void reply(endpoint_t who, message *m_out);
 
 /* misc.c */
 int fs_sync(message *fs_m_in, message *fs_m_out);
+int fs_chmod(message *fs_m_in, message *fs_m_out);
 
 /* mount.c */
 int fs_unmount(message *fs_m_in, message *fs_m_out);
