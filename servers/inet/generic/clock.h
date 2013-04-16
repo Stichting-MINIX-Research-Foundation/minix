@@ -23,7 +23,7 @@ typedef struct timer
 extern int clck_call_expire;	/* Call clck_expire_timer from the mainloop */
 
 void clck_init ARGS(( void ));
-void set_time ARGS(( time_t time ));
+void set_time ARGS(( clock_t time ));
 time_t get_time ARGS(( void ));
 void reset_time ARGS(( void ));
 /* set a timer to go off at the time specified by timeout */

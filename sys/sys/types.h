@@ -122,16 +122,6 @@ typedef uint32_t bit_t;       /* bit number in a bit map */
 typedef uint16_t zone1_t;     /* zone number for V1 file systems */
 typedef uint32_t bitchunk_t; /* collection of bits in a bitmap */
 #endif
-
-/* ANSI C makes writing down the promotion of unsigned types very messy.  When
- * sizeof(short) == sizeof(int), there is no promotion, so the type stays
- * unsigned.  When the compiler is not ANSI, there is usually no loss of
- * unsignedness, and there are usually no prototypes so the promoted type
- * doesn't matter.  The use of types like Ino_t is an attempt to use ints
- * (which are not promoted) while providing information to the reader.
- */
-
-typedef unsigned long  Ino_t;
 #endif /* __minix */
 
 #include <machine/endian.h>
@@ -166,7 +156,7 @@ typedef	int64_t		longlong_t;	/* for XDR */
 typedef	uint64_t	u_longlong_t;	/* for XDR */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
-typedef	uint32_t		blksize_t;	/* fs optimal block size */
+typedef	int32_t		blksize_t;	/* fs optimal block size */
 
 #ifndef	fsblkcnt_t
 typedef	__fsblkcnt_t	fsblkcnt_t;	/* fs block count (statvfs) */
@@ -223,7 +213,7 @@ typedef	__pid_t		pid_t;		/* process id */
 #define	pid_t		__pid_t
 #endif
 typedef int32_t		lwpid_t;	/* LWP id */
-typedef uint32_t	rlim_t;		/* resource limit */
+typedef uint64_t	rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 
@@ -335,6 +325,7 @@ typedef	_BSD_CLOCKID_T_		clockid_t;
 #endif
 
 #ifndef __minix
+/* LSC: timer_t is defined as a struct on minix. */
 #ifdef	_BSD_TIMER_T_
 typedef	_BSD_TIMER_T_		timer_t;
 #undef	_BSD_TIMER_T_

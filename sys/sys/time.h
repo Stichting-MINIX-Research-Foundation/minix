@@ -249,12 +249,11 @@ struct	itimerspec {
 };
 
 #define	CLOCK_REALTIME	0
-#define	CLOCK_MONOTONIC	3
-
 #ifndef __minix
 #define	CLOCK_VIRTUAL	1
 #define	CLOCK_PROF	2
 #endif
+#define	CLOCK_MONOTONIC	3
 
 #if defined(_NETBSD_SOURCE)
 #define	TIMER_RELTIME	0x0	/* relative timer */

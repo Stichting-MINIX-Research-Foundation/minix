@@ -576,9 +576,10 @@ void tcp_release_retrans(
 			artt= tcp_conn->tc_artt;
 			artt= ((TCP_RTT_SMOOTH-1)*artt+srtt)/TCP_RTT_SMOOTH;
 
-			srtt -= artt;
-			if (srtt < 0)
-				srtt= -srtt;
+			if (srtt < artt)
+				srtt = artt - srtt;
+			else
+				srtt -= artt;
 			drtt= tcp_conn->tc_drtt;
 			drtt= ((TCP_RTT_SMOOTH-1)*drtt+srtt)/TCP_RTT_SMOOTH;
 
@@ -603,13 +604,13 @@ void tcp_release_retrans(
 				rtt= TCP_RTT_MAX;
 			}
 			DBLOCK(0x10, printf(
-	"tcp_release_retrans, conn[%i]: retrans_time= %i ms, rtt = %i ms\n",
+	"tcp_release_retrans, conn[%i]: retrans_time= %lu ms, rtt = %lu ms\n",
 				tcp_conn-tcp_conn_table,
 				retrans_time*1000/HZ,
 				rtt*1000/HZ));
 
 			DBLOCK(0x10, printf(
-	"tcp_release_retrans: artt= %i -> %i, drtt= %i -> %i\n",
+	"tcp_release_retrans: artt= %lu -> %lu, drtt= %lu -> %lu\n",
 				tcp_conn->tc_artt, artt,
 				tcp_conn->tc_drtt, drtt));
 
@@ -864,7 +865,7 @@ struct timer *timer;
 			tcp_conn->tc_ka_snd= tcp_conn->tc_SND_NXT;
 			tcp_conn->tc_ka_rcv= tcp_conn->tc_RCV_NXT;
 			DBLOCK(0x20, printf(
-"tcp_send_timeout: conn[%i] setting keepalive timer (+%i ms)\n",
+"tcp_send_timeout: conn[%i] setting keepalive timer (+%lu ms)\n",
 				tcp_conn-tcp_conn_table,
 				tcp_conn->tc_ka_time*1000/HZ));
 			clck_timer(&tcp_conn->tc_transmit_timer,
@@ -919,7 +920,7 @@ struct timer *timer;
 		tcp_conn->tc_0wnd_to= 0;
 
 		DBLOCK(0x20, printf(
-	"tcp_send_timeout: conn[%i] setting timer to %i ms (+%i ms)\n",
+	"tcp_send_timeout: conn[%i] setting timer to %lu ms (+%lu ms)\n",
 			tcp_conn-tcp_conn_table,
 			(curr_time+rtt)*1000/HZ, rtt*1000/HZ));
 
@@ -954,7 +955,7 @@ struct timer *timer;
 		tcp_conn->tc_rt_seq= 0;
 
 		DBLOCK(0x10, printf(
-	"tcp_send_timeout: conn[%i] setting timer to %i ms (+%i ms)\n",
+	"tcp_send_timeout: conn[%i] setting timer to %lu ms (+%lu ms)\n",
 			tcp_conn-tcp_conn_table,
 			(curr_time+tcp_conn->tc_0wnd_to)*1000/HZ,
 			tcp_conn->tc_0wnd_to*1000/HZ));
@@ -974,7 +975,7 @@ struct timer *timer;
 	 * probe, which is almost the same.
 	 */
 
-	DBLOCK(0x20, printf("tcp_send_timeout: conn[%i] una= %lu, rtt= %ims\n",
+	DBLOCK(0x20, printf("tcp_send_timeout: conn[%i] una= %lu, rtt= %lu ms\n",
 		tcp_conn-tcp_conn_table,
 		(unsigned long)tcp_conn->tc_SND_UNA, rtt*1000/HZ));
 
@@ -1030,7 +1031,7 @@ struct timer *timer;
 	timeout += curr_time;
 
 	DBLOCK(0x20, printf(
-	"tcp_send_timeout: conn[%i] setting timer to %i ms (+%i ms)\n",
+	"tcp_send_timeout: conn[%i] setting timer to %lu ms (+%lu ms)\n",
 		tcp_conn-tcp_conn_table, timeout*1000/HZ,
 		(timeout-curr_time)*1000/HZ));
 
@@ -1285,7 +1286,7 @@ tcp_conn_t *tcp_conn;
 	rtt= tcp_conn->tc_rtt;
 
 	DBLOCK(0x20, printf(
-	"tcp_set_send_timer: conn[%i] setting timer to %i ms (+%i ms)\n",
+	"tcp_set_send_timer: conn[%i] setting timer to %lu ms (+%lu ms)\n",
 		tcp_conn-tcp_conn_table,
 		(curr_time+rtt)*1000/HZ, rtt*1000/HZ));
 

@@ -820,7 +820,7 @@ virtio_guest_supports(struct virtio_device *dev, int bit)
 /* Just some wrappers around sys_read */
 #define VIRTIO_READ_XX(xx, suff)					\
 u##xx##_t								\
-virtio_read##xx(struct virtio_device *dev, off_t off)			\
+virtio_read##xx(struct virtio_device *dev, i32_t off)			\
 {									\
 	int r;								\
 	u32_t ret;							\
@@ -840,7 +840,7 @@ VIRTIO_READ_XX(8, b)
 /* Just some wrappers around sys_write */
 #define VIRTIO_WRITE_XX(xx, suff)					\
 void									\
-virtio_write##xx(struct virtio_device *dev, off_t off, u##xx##_t val)	\
+virtio_write##xx(struct virtio_device *dev, i32_t off, u##xx##_t val)	\
 {									\
 	int r;								\
 	if ((r = sys_out##suff(dev->port + off, val)) != OK)		\
@@ -857,7 +857,7 @@ VIRTIO_WRITE_XX(8, b)
 /* Just some wrappers around sys_read */
 #define VIRTIO_SREAD_XX(xx, suff)					\
 u##xx##_t								\
-virtio_sread##xx(struct virtio_device *dev, off_t off)			\
+virtio_sread##xx(struct virtio_device *dev, i32_t off)			\
 {									\
 	int r;								\
 	u32_t ret;							\
@@ -882,7 +882,7 @@ VIRTIO_SREAD_XX(8, b)
 /* Just some wrappers around sys_write */
 #define VIRTIO_SWRITE_XX(xx, suff)					\
 void									\
-virtio_swrite##xx(struct virtio_device *dev, off_t off, u##xx##_t val)	\
+virtio_swrite##xx(struct virtio_device *dev, i32_t off, u##xx##_t val)	\
 {									\
 	int r;								\
 	off += VIRTIO_DEV_SPECIFIC_OFF; 				\

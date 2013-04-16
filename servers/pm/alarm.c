@@ -17,7 +17,7 @@
 #include "mproc.h"
 #include "param.h"
 
-#define US 1000000	/* shortcut for microseconds per second */
+#define US 1000000UL	/* shortcut for microseconds per second */
 
 static clock_t ticks_from_timeval(struct timeval *tv);
 static void timeval_from_ticks(struct timeval *tv, clock_t ticks);
@@ -53,15 +53,14 @@ struct timeval *tv;
 	
   /* In any case, the following conversion must always round up. */
 
-  ticks = (clock_t) (system_hz * (unsigned long) tv->tv_sec);
-  if ( (unsigned long) ticks / system_hz != (unsigned long) tv->tv_sec) {
+  ticks = system_hz * (unsigned long) tv->tv_sec;
+  if ( (ticks / system_hz) != (unsigned long)tv->tv_sec) {
 	ticks = LONG_MAX;
   } else {
-	ticks += (clock_t)
-		((system_hz * (unsigned long) tv->tv_usec + (US-1)) / US);
+	ticks += ((system_hz * (unsigned long)tv->tv_usec + (US-1)) / US);
   }
 
-  if (ticks < 0) ticks = LONG_MAX;
+  if (ticks > LONG_MAX) ticks = LONG_MAX;
 
   return(ticks);
 }
