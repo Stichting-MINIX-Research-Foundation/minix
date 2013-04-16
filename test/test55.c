@@ -8,11 +8,12 @@
 #define TRIALS 10
 #define SIZE   65536
 
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
+
 
 int subtest;
 char *filename = "statvfs_test_XXXXXX";
-#include "common.c"
 
 void create_file(void)
 {

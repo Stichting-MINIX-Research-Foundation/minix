@@ -11,13 +11,14 @@
 #include <string.h>
 
 #define ITERATIONS 2
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
+
 
 int subtest;
 int zero[1024];
 int sigmap[5] = {9, 10, 11};
 
-#include "common.c"
 
 int main(int argc, char *argv[]);
 void test5a(void);

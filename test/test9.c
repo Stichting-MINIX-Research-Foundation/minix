@@ -4,9 +4,10 @@
 #include <setjmp.h>
 #include <signal.h>
 
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
 
-#include "common.c"
+
 
 char *tmpa;
 

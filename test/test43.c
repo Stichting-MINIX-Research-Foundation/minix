@@ -10,12 +10,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
+
 
 int subtest;
 static const char *executable;
 
-#include "common.c"
 
 #define ERR (e(__LINE__))
 

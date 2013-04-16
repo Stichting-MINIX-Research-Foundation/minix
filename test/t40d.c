@@ -44,22 +44,14 @@
 #define DO_TIMEOUT 7
 #define MAX_ERROR 5
 
-int errct = 0, subtest = -1;
+#include "common.h"
+
 char errbuf[1000];
 int fd_ap[2]; /* Anonymous pipe; read from fd_ap[0], write to fd_ap[1] */
 int fd_np1; /* Named pipe */
 int fd_np2; /* Named pipe */
 
-void e(int n, char *s) {
-  printf("Subtest %d, error %d, %s\n", subtest, n, s);
-  
-  if (errct++ > MAX_ERROR) {
-    printf("Too many errors; test aborted\n");
-    exit(errct);
-  }
-}
-
-void do_child(void) {
+static void do_child(void) {
   struct timeval tv;
  
   /* Open named pipe for writing. This will block until a reader arrives. */
@@ -125,7 +117,8 @@ void do_child(void) {
   exit(0);
 }
 
-int count_fds(int nfds, fd_set *fds) {
+#if 0
+static int count_fds(int nfds, fd_set *fds) {
   /* Return number of bits set in fds */
   int i, result = 0;
   assert(fds != NULL && nfds > 0);
@@ -134,8 +127,9 @@ int count_fds(int nfds, fd_set *fds) {
   }
   return result;
 }
+#endif
 
-int empty_fds(int nfds, fd_set *fds) {
+static int empty_fds(int nfds, fd_set *fds) {
   /* Returns nonzero if the first bits up to nfds in fds are not set */
   int i;
   assert(fds != NULL && nfds > 0);
@@ -143,7 +137,7 @@ int empty_fds(int nfds, fd_set *fds) {
   return 1;
 }
 
-int compare_fds(int nfds, fd_set *lh, fd_set *rh) {
+static int compare_fds(int nfds, fd_set *lh, fd_set *rh) {
   /* Returns nonzero if lh equals rh up to nfds bits */
   int i;
   assert(lh != NULL && rh != NULL && nfds > 0);
@@ -156,7 +150,8 @@ int compare_fds(int nfds, fd_set *lh, fd_set *rh) {
   return 1;
 }
 
-void dump_fds(int nfds, fd_set *fds) {
+#if 0
+static void dump_fds(int nfds, fd_set *fds) {
   /* Print a graphical representation of bits in fds */
   int i;
   if(fds != NULL && nfds > 0) {
@@ -164,8 +159,9 @@ void dump_fds(int nfds, fd_set *fds) {
     printf("\n");
   }
 }
+#endif
 
-void do_parent(int child) {
+static void do_parent(int child) {
   fd_set fds_read, fds_write, fds_error;
   fd_set fds_compare_read, fds_compare_write;
   struct timeval tv;
@@ -205,16 +201,16 @@ void do_parent(int child) {
   if(retval <= 0) {
     snprintf(errbuf, sizeof(errbuf),
 	     "one fd should be set%s", (retval == 0 ? " (TIMEOUT)" : ""));
-    e(1, errbuf);
+    em(1, errbuf);
   }
 
-  if(!empty_fds(fd_np1+1,&fds_read)) e(2, "no read bits should be set");
+  if(!empty_fds(fd_np1+1,&fds_read)) em(2, "no read bits should be set");
 
 
   /* Make sure the write bit is set (and just 1 bit) */
   FD_ZERO(&fds_compare_write); FD_SET(fd_np1, &fds_compare_write);
   if(!compare_fds(fd_np1+1, &fds_compare_write, &fds_write))
-    e(3, "write should be set");
+    em(3, "write should be set");
 
   /* Clear sets and set up new bit masks */
   FD_ZERO(&fds_read); FD_ZERO(&fds_write);
@@ -231,14 +227,14 @@ void do_parent(int child) {
   if(retval != 1) {
     snprintf(errbuf, sizeof(errbuf),
 	     "one fd should be set%s", (retval == 0 ? " (TIMEOUT)" : ""));
-    e(4, errbuf);
+    em(4, errbuf);
   }
 
-  if(!FD_ISSET(fd_np1, &fds_read)) e(5, "read should be set");
+  if(!FD_ISSET(fd_np1, &fds_read)) em(5, "read should be set");
 
   /* Note that we left the write set empty. This should be equivalent to
    * setting this parameter to NULL. */
-  if(!empty_fds(fd_np1+1, &fds_write)) e(6, "write should NOT be set");
+  if(!empty_fds(fd_np1+1, &fds_write)) em(6, "write should NOT be set");
 
   /* In case something went wrong above, we might end up with a child process
    * blocking on a write call we close the file descriptor now. Synchronize on
@@ -284,21 +280,21 @@ void do_parent(int child) {
   if(retval <= 0) {
     snprintf(errbuf, sizeof(errbuf),
 	     "two fds should be set%s", (retval == 0 ? " (TIMEOUT)" : ""));
-    e(7, errbuf);
+    em(7, errbuf);
   }
 
   /* Make sure read bit is set (and just 1 bit) */
   FD_ZERO(&fds_compare_read); FD_SET(fd_np2, &fds_compare_read);
   if(!compare_fds(fd_np2+1, &fds_compare_read, &fds_read))
-    e(8, "read should be set");
+    em(8, "read should be set");
 
   /* Write bit should be set (and just 1 bit) */
   FD_ZERO(&fds_compare_write); FD_SET(fd_np2, &fds_compare_write);
   if(!compare_fds(fd_np2+1, &fds_compare_write, &fds_write))
-    e(9, "write should be set");
+    em(9, "write should be set");
 
   if(!empty_fds(fd_np2+1, &fds_error))
-    e(10, "Error should NOT be set");
+    em(10, "Error should NOT be set");
 
   FD_ZERO(&fds_read); FD_ZERO(&fds_write);
   FD_SET(fd_np2, &fds_write);
@@ -310,10 +306,10 @@ void do_parent(int child) {
   if(retval != 1) {
     snprintf(errbuf, sizeof(errbuf),
 	     "one fd should be set%s", (retval == 0 ? " (TIMEOUT)" : ""));
-    e(11, errbuf);
+    em(11, errbuf);
   }
 
-  if(!empty_fds(fd_np2+1, &fds_read)) e(12, "read should NOT be set");
+  if(!empty_fds(fd_np2+1, &fds_read)) em(12, "read should NOT be set");
   
   /*                             Anonymous pipe                              */
 
@@ -328,13 +324,13 @@ void do_parent(int child) {
   if(retval != 1) {
     snprintf(errbuf, sizeof(errbuf),
 	     "one fd should be set%s", (retval == 0 ? " (TIMEOUT)" : ""));
-    e(13, errbuf);
+    em(13, errbuf);
   }
 
   /* Make sure write bit is set (and just 1 bit) */
   FD_ZERO(&fds_compare_write); FD_SET(fd_ap[1], &fds_compare_write);
   if(!compare_fds(fd_ap[1]+1, &fds_compare_write, &fds_write))
-    e(14, "write should be set");
+    em(14, "write should be set");
 
   /* Intentionally test reading from pipe and letting it time out. */
   FD_SET(fd_ap[0], &fds_read);
@@ -345,14 +341,14 @@ void do_parent(int child) {
   end = time(NULL);
 
   /* Did we time out? */
-  if(retval != 0) e(15, "we should have timed out");
+  if(retval != 0) em(15, "we should have timed out");
 
   /* Did it take us approximately 1 second? */
   if((int) (end - start) != 1) {
     snprintf(errbuf, sizeof(errbuf),
 	     "time out is not 1 second (instead, it is %ld)",
 	     (long int) (end - start));
-    e(16, errbuf);    
+    em(16, errbuf);    
   }
 
   /* Do another read, but this time we expect incoming data from child. */
@@ -363,12 +359,12 @@ void do_parent(int child) {
   retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv);
 
   /* Correct amount of ready file descriptors? Just 1 read. */
-  if(retval != 1) e(17, "one fd should be set");
+  if(retval != 1) em(17, "one fd should be set");
 
   /* Is the read bit set? And just 1 bit. */
   FD_ZERO(&fds_compare_read); FD_SET(fd_ap[0], &fds_compare_read);
   if(!compare_fds(fd_ap[0]+1, &fds_compare_read, &fds_read))
-    e(18, "read should be set.");
+    em(18, "read should be set.");
   
   /* By convention fd_ap[0] is meant to be used for reading from the pipe and
    * fd_ap[1] is meant for writing, where fd_ap is a an anonymous pipe.

@@ -7,3 +7,4 @@
 #define MAGIC6 0x17D1FF
 
 long hellodriver(void);
+long modfunction(long, long *, long);

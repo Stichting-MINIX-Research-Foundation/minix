@@ -11,13 +11,14 @@
 #include <stdio.h>
 
 #define ITERATIONS 10
-#define MAX_ERROR 1
+int max_error = 1;
+#include "common.h"
+
 
 int errct, subtest;
 char *envp[3] = {"spring", "summer", 0};
 char *passwd_file = "/etc/passwd";
 
-#include "common.c"
 
 int main(int argc, char *argv[]);
 void test11a(void);

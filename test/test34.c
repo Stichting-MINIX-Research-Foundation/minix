@@ -19,11 +19,12 @@
 #include <time.h>
 #include <stdio.h>
 
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS      4
 #define N 100
 
-#include "common.c" 
 
 #define ALL_RWXB	(S_IRWXU | S_IRWXG | S_IRWXO)
 #define ALL_SETB	(S_ISUID | S_ISGID)

@@ -22,16 +22,7 @@
 
 #define MAX_ERROR 5
 
-int errct = 0, subtest = -1;
-
-void e(int n, char *s) {
-  printf("Subtest %d, error %d, %s\n", subtest, n, s);
-
-  if (errct++ > MAX_ERROR) {
-    printf("Too many errors; test aborted\n");
-    exit(errct);
-  }
-}
+#include "common.h"
 
 int main(int argc, char **argv) {
   fd_set fds;
@@ -50,7 +41,7 @@ int main(int argc, char **argv) {
   FD_ZERO(&fds);
   for(i = 0; i < OPEN_MAX; i++) {
     if(FD_ISSET(i, &fds)) {
-      e(1, "fd set should be completely empty");
+      em(1, "fd set should be completely empty");
       break;
     }
   }
@@ -59,7 +50,7 @@ int main(int argc, char **argv) {
   for(i = 0; i < OPEN_MAX; i++) FD_SET(i, &fds);
   for(i = 0; i < OPEN_MAX; i++) {
     if(!FD_ISSET(i, &fds)) {
-      e(2, "fd set should be completely filled");
+      em(2, "fd set should be completely filled");
       break;
     }  
   }  
@@ -68,7 +59,7 @@ int main(int argc, char **argv) {
   FD_ZERO(&fds);
   for(i = 0; i < OPEN_MAX; i++) {
     if(FD_ISSET(i, &fds)) {
-      e(3, "fd set should be completely empty");
+      em(3, "fd set should be completely empty");
       break;
     }
   }
@@ -77,7 +68,7 @@ int main(int argc, char **argv) {
   for(i = 0; i < OPEN_MAX; i += 2) FD_SET(i, &fds);
   for(i = 0; i < OPEN_MAX - 1; i+= 2 ) {
     if(!(FD_ISSET(i, &fds) && !FD_ISSET(i+1, &fds))) {
-      e(4, "bit pattern does not match");
+      em(4, "bit pattern does not match");
       break;
     }
   }
@@ -86,7 +77,7 @@ int main(int argc, char **argv) {
   FD_ZERO(&fds);
   for(i = 0; i < OPEN_MAX; i++) {
     if(FD_ISSET(i, &fds)) {
-      e(5,"fd set should be completely empty");
+      em(5,"fd set should be completely empty");
       break;
     }
   }
@@ -95,7 +86,7 @@ int main(int argc, char **argv) {
   for(i = 0; i < OPEN_MAX - 1; i += 2) FD_SET(i+1, &fds);
   for(i = 0; i < OPEN_MAX - 1; i+= 2 ) {
     if(!(FD_ISSET(i+1, &fds) && !FD_ISSET(i, &fds))) {
-      e(6, "bit pattern does not match");
+      em(6, "bit pattern does not match");
       break;
     }
   }
@@ -104,7 +95,7 @@ int main(int argc, char **argv) {
   FD_ZERO(&fds);
   for(i = 0; i < OPEN_MAX; i++) {
     if(FD_ISSET(i, &fds)) {
-      e(7, "fd set should be completely empty");
+      em(7, "fd set should be completely empty");
       break;
     }
   }
@@ -114,7 +105,7 @@ int main(int argc, char **argv) {
   for(i = 0; i < OPEN_MAX; i++) FD_CLR(i, &fds); /* Clear all bits */
   for(i = 0; i < OPEN_MAX; i++) {
     if(FD_ISSET(i, &fds)) {
-      e(8, "all bits in fd set should be cleared");
+      em(8, "all bits in fd set should be cleared");
       break;
     }
   }
@@ -123,7 +114,7 @@ int main(int argc, char **argv) {
   FD_ZERO(&fds);
   for(i = 0; i < OPEN_MAX; i++) {
     if(FD_ISSET(i, &fds)) {
-      e(9, "fd set should be completely empty");
+      em(9, "fd set should be completely empty");
       break;
     }
   }
@@ -132,7 +123,7 @@ int main(int argc, char **argv) {
   for(i = 0; i < OPEN_MAX; i += 2) FD_CLR(i, &fds); /* Clear all bits */
   for(i = 0; i < OPEN_MAX; i += 2) {
     if(FD_ISSET(i, &fds)) {
-      e(10, "all even bits in fd set should be cleared");
+      em(10, "all even bits in fd set should be cleared");
       break;
     }
   }

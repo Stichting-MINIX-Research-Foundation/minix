@@ -24,7 +24,9 @@
 #include <time.h>
 #include <stdio.h>
 
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS     10
 
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
@@ -34,7 +36,6 @@
 #define IS_CLOEXEC(fd)	((fcntl(fd, F_GETFD) & FD_CLOEXEC) == FD_CLOEXEC)
 #define SET_CLOEXEC(fd)	fcntl(fd, F_SETFD, FD_CLOEXEC)
 
-#include "common.c"
 
 int superuser;
 

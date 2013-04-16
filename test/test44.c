@@ -7,8 +7,9 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 
-#define MAX_ERROR 2
-#include "common.c"
+int max_error = 2;
+#include "common.h"
+
 
 int subtest = 0;
 

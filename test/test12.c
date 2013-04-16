@@ -10,9 +10,10 @@
 #include <stdio.h>
 
 #define NUM_TIMES	1000
-#define MAX_ERROR 2
+int max_error = 2;
+#include "common.h"
 
-#include "common.c"
+
 
 int main(void);
 

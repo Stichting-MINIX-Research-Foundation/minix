@@ -10,8 +10,9 @@
 
 #define ERR e(__LINE__)
 
-#define MAX_ERROR 4
-#include "common.c"
+int max_error = 4;
+#include "common.h"
+
 
 #define TEST_PRINTF(type, macro, value, result)				\
 {									\

@@ -8,7 +8,9 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
+
 #define NB 30L
 #define NBOUNDS 6
 
@@ -20,7 +22,6 @@ char b[4] = {0, 1, 2, 3}, c[4] = {10, 20, 30, 40}, d[4] = {6, 7, 8, 9};
 long bounds[NBOUNDS] = {7, 9, 50, 519, 520, 40000L};
 char buff[30000];
 
-#include "common.c"
 
 int main(int argc, char *argv[]);
 void test19a(void);

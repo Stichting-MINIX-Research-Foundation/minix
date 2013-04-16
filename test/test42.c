@@ -11,8 +11,9 @@
 #include <sys/ptrace.h>
 
 #define ITERATIONS 3
-#define MAX_ERROR 4
-#include "common.c"
+int max_error = 4;
+#include "common.h"
+
 
 #define _WIFSTOPPED(s) (WIFSTOPPED(s) && !WIFSIGNALED(s) && !WIFEXITED(s))
 #define _WIFSIGNALED(s) (!WIFSTOPPED(s) && WIFSIGNALED(s) && !WIFEXITED(s))

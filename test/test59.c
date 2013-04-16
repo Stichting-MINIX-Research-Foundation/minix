@@ -14,10 +14,10 @@
 #define event_t mthread_event_t
 #define rwlock_t mthread_rwlock_t
 
-#define MAX_ERROR 5
-#include "common.c"
+int max_error = 5;
+#include "common.h"
 
-int errct;
+
 static int count, condition_met;
 static int th_a, th_b, th_c, th_d, th_e, th_f, th_g, th_h;
 static int mutex_a_step, mutex_b_step, mutex_c_step;

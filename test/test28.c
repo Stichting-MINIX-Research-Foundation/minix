@@ -20,10 +20,11 @@
 #include <time.h>
 #include <stdio.h>
 
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS      2
 
-#include "common.c"
 
 #define DIRENT0		((struct dirent *) NULL)
 

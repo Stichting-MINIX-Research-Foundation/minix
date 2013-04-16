@@ -6,9 +6,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
+
 #define err() e(__LINE__)
-#include "common.c"
 
 static void printstr(const char *s)
 {
@@ -253,7 +254,7 @@ static void memsetl(void *s, unsigned long c, size_t n)
 		p[i] = c >> (8 * (i % sizeof(c)));
 }
 
-void test_getnameinfo(
+static void test_getnameinfo(
 	unsigned long ipaddr, 
 	unsigned short port,
 	const char *exp_node,

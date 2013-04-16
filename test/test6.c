@@ -10,12 +10,13 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
+
 
 int subtest = 1;
 int zilch[5000];
 
-#include "common.c"
 
 int main(int argc, char *argv []);
 void test6a(void);

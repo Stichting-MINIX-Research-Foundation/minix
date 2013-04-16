@@ -6,13 +6,14 @@
 #include <assert.h>
 
 #define ITERATIONS 1
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 
 #define TESTFILE "testfile"
 #define TESTSIZE 4096
 #define THRESHOLD 1048576
 
-#include "common.c"
 
 int main(int argc, char *argv[]);
 void prepare(void);

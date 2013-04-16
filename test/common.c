@@ -1,6 +1,6 @@
 /* Utility routines for Minix tests.
  * This is designed to be #includ'ed near the top of test programs.  It is
- * self-contained except for MAX_ERRORS.
+ * self-contained except for max_error.
  */
 
 #include <errno.h>
@@ -10,18 +10,17 @@
 #include <stdio.h>
 #include <sys/statvfs.h>
 
+#include "common.h"
+
 int common_test_nr = -1, errct = 0, subtest;
 
-#define e(errn) e_f(__FILE__, __LINE__, (errn))
-
-void cleanup(void);
-int does_fs_truncate(void);
-void e_f(char *file, int lineno, int n);
-int name_max(char *path);
-void quit(void);
-void rm_rf_dir(int test_nr);
-void rm_rf_ppdir(int test_nr);
-void start(int test_nr);
+/* provide a default max_error symbol as Max_error with a value
+ * of 5. The test program can override it wit its own max_error
+ * symbol if it wants that this code will then use instead.
+ */
+__weak_alias(max_error,Max_error);
+int Max_error = 5;
+extern int max_error;
 
 void start(test_nr)
 int test_nr;
@@ -107,7 +106,7 @@ void e_f(char *file, int line, int n)
   if (errct == 0) printf("\n");	/* finish header */
   printf("%s:%d: Subtest %d,  error %d,  errno %d: %s\n",
 	file, line, subtest, n, errno, strerror(errno));
-  if (++errct > MAX_ERROR) {
+  if (++errct > max_error) {
 	printf("Too many errors; test aborted\n");
 	cleanup();
 	exit(1);

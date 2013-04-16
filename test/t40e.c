@@ -62,6 +62,8 @@
 #include <assert.h>
 #include <netdb.h>
 
+#include "common.h"
+
 #define DO_HANDLEDATA 1
 #define DO_PAUSE 3
 #define DO_TIMEOUT 7
@@ -69,22 +71,13 @@
 #define NUMCHILDREN 5
 #define MAX_ERROR 10
 
-int errct = 0, subtest = -1;
 char errbuf[1000];
-
-void e(int n, char *s) {
-  printf("Subtest %d, error %d, %s\n", subtest, n, s);
-
-  if (errct++ > MAX_ERROR) {
-    printf("Too many errors; test aborted\n");
-    exit(errct);
-  }
-}
 
 /* All *_fds routines are helping routines. They intentionally use FD_* macros
    in order to prevent making assumptions on how the macros are implemented.*/
 
-int count_fds(int nfds, fd_set *fds) {
+#if 0
+static int count_fds(int nfds, fd_set *fds) {
   /* Return number of bits set in fds */
   int i, result = 0;
   assert(fds != NULL && nfds > 0);
@@ -93,8 +86,9 @@ int count_fds(int nfds, fd_set *fds) {
   }
   return result;
 }
+#endif
 
-int empty_fds(int nfds, fd_set *fds) {
+static int empty_fds(int nfds, fd_set *fds) {
   /* Returns nonzero if the first bits up to nfds in fds are not set */
   int i;
   assert(fds != NULL && nfds > 0);
@@ -102,7 +96,7 @@ int empty_fds(int nfds, fd_set *fds) {
   return 1;
 }
 
-int compare_fds(int nfds, fd_set *lh, fd_set *rh) {
+static int compare_fds(int nfds, fd_set *lh, fd_set *rh) {
   /* Returns nonzero if lh equals rh up to nfds bits */
   int i;
   assert(lh != NULL && rh != NULL && nfds > 0);
@@ -115,7 +109,8 @@ int compare_fds(int nfds, fd_set *lh, fd_set *rh) {
   return 1;
 }
 
-void dump_fds(int nfds, fd_set *fds) {
+#if 0
+static void dump_fds(int nfds, fd_set *fds) {
   /* Print a graphical representation of bits in fds */
   int i;
   if(fds != NULL && nfds > 0) {
@@ -123,8 +118,9 @@ void dump_fds(int nfds, fd_set *fds) {
     printf("\n");
   }
 }
+#endif
 
-void do_child(int childno) {
+static void do_child(int childno) {
   int fd_sock, port;
   int retval;
 
@@ -203,11 +199,11 @@ void do_child(int childno) {
     retval = select(fd_sock+1, NULL, &fds_write, NULL, &tv);
     
 
-    if(retval <= 0) e(6, "expected one fd to be ready");
+    if(retval <= 0) em(6, "expected one fd to be ready");
     
     FD_ZERO(&fds_compare_write); FD_SET(fd_sock, &fds_compare_write);
     if(!compare_fds(fd_sock+1, &fds_compare_write, &fds_compare_write))
-      e(7, "write should be set");
+      em(7, "write should be set");
   }
 
   if(close(fd_sock) < 0) {
@@ -218,7 +214,7 @@ void do_child(int childno) {
   exit(errct);
 }
 
-void do_parent(void) {
+static void do_parent(void) {
 #if !defined(__minix)
   int yes = 1;
 #endif
@@ -317,7 +313,7 @@ void do_parent(void) {
     if(retval <= 0) {
       snprintf(errbuf, sizeof(errbuf),
 	       "two fds should be set%s", (retval == 0 ? " (TIMEOUT)" : ""));
-      e(1, errbuf);
+      em(1, errbuf);
     }
 
     FD_ZERO(&fds_compare_read); FD_ZERO(&fds_compare_write);
@@ -327,10 +323,10 @@ void do_parent(void) {
        is not specified and the other side might have data ready for us to read
     */
     if(!compare_fds(sockets[childresults]+1, &fds_compare_write, &fds_write))
-      e(2, "write should be set");
+      em(2, "write should be set");
 
     if(!empty_fds(sockets[childresults]+1, &fds_error))
-      e(3, "no error should be set");
+      em(3, "no error should be set");
   }
 
 
@@ -356,13 +352,13 @@ void do_parent(void) {
   if(retval <= 0) {
     snprintf(errbuf, sizeof(errbuf),
 	     "one fd should be set%s", (retval == 0 ? " (TIMEOUT)" : ""));
-    e(4, errbuf);
+    em(4, errbuf);
   }
 
   /* Check read bit is set */
   FD_ZERO(&fds_compare_read); FD_SET(fd_sock, &fds_compare_read);
   if(!compare_fds(fd_sock+1, &fds_compare_read, &fds_read))
-    e(5, "read should be set");
+    em(5, "read should be set");
 
 
   /* Accept incoming connection to unblock child 5 */

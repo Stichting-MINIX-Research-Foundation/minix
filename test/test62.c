@@ -6,8 +6,9 @@
 #include <sys/wait.h>
 #include <machine/fpu.h>
 
-#define MAX_ERROR 1
-#include "common.c"
+int max_error = 1;
+#include "common.h"
+
 
 double state = 2.0;
 static int count;

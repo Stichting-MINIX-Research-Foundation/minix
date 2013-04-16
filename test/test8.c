@@ -12,13 +12,14 @@
 #include <time.h>
 #include <stdio.h>
 
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS     60
 
 #define Fstat(a,b)	if (fstat(a,b) != 0) printf("Can't fstat %d\n", a)
 #define Time(t)		if (time(t) == (time_t)-1) printf("Time error\n")
 
-#include "common.c"
 
 int subtest;
 

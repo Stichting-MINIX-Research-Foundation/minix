@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <minix/endpoint.h>
 #include <minix/sys_config.h>
-#define MAX_ERROR 1
-#include "common.c"
+int max_error = 1;
+#include "common.h"
+
 
 void test39a(void);
 

@@ -29,12 +29,13 @@ void just_exit(void);
 void test_brk(void);
 void verify_main_reenter(void);
 
-#define MAX_ERROR 5
+int max_error = 5;
+#include "common.h"
+
 #define SSIZE 32768
 #define ROUNDS 10
 #define SWAPS 10
 
-#include "common.c"
 
 int subtest;
 ucontext_t ctx[3];
@@ -130,7 +131,7 @@ void do_parent(void)
   /* Returning to main thread through uc_link */
 }
 
-void fail(void)
+static void fail(void)
 {
   /* Shouldn't get here */
   err(5, 1);

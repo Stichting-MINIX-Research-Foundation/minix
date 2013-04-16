@@ -8,12 +8,13 @@
 #include <stdio.h>
 
 #define TRIALS 100
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 
 char name[20] = {"TMP14."};
 int subtest = 1;
 
-#include "common.c"
 
 int main(void);
 void quit(void);

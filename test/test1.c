@@ -9,13 +9,13 @@
 #include <stdio.h>
 
 #define SIGNUM 10
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 #define ITERATIONS 10
 
 volatile int glov, gct;
-int errct;
 int subtest;
-#include "common.c"
 
 int main(int argc, char *argv []);
 void test1a(void);

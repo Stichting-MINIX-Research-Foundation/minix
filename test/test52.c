@@ -8,9 +8,10 @@
 
 #define ROUNDS 20
 #define SWAPS 40
-#define MAX_ERROR 5
+int max_error = 5;
+#include "common.h"
 
-#include "common.c"
+
 
 int pipefdc[2];
 int pipefdp[2];

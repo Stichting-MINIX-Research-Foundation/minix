@@ -19,6 +19,8 @@
 #include <string.h>
 #include <signal.h>
 
+#include "common.h"
+
 #define DO_HANDLEDATA 1
 #define DO_PAUSE 3
 #define DO_TIMEOUT 7
@@ -27,23 +29,14 @@
 #define DELTA(x,y)  (x.tv_sec - y.tv_sec) * CLOCKS_PER_SEC \
   + (x.tv_usec - y.tv_usec) * CLOCKS_PER_SEC / 1000000
 
-int errct = 0, subtest = -1, got_signal = 0;
+int got_signal = 0;
 int fd_ap[2];
 
-void catch_signal(int sig_no) {
+static void catch_signal(int sig_no) {
   got_signal = 1;
 }
 
-void e(int n, char *s) {
-  printf("Subtest %d, error %d, %s\n", subtest, n, s);
-
-  if (errct++ > MAX_ERROR) {
-    printf("Too many errors; test aborted\n");
-    exit(errct);
-  }
-}
-
-float compute_diff(struct timeval start, struct timeval end, float compare) {
+static float compute_diff(struct timeval start, struct timeval end, float compare) {
   /* Compute time difference. It is assumed that the value of start <= end. */
   clock_t delta;
   int seconds, hundreths;
@@ -60,7 +53,7 @@ float compute_diff(struct timeval start, struct timeval end, float compare) {
   return diff;
 }
 
-void do_child(void) {
+static void do_child(void) {
   struct timeval tv;
  
   /* Let the parent do initial read and write tests from and to the pipe. */
@@ -75,7 +68,7 @@ void do_child(void) {
   exit(0);
 }
 
-void do_parent(int child) {
+static void do_parent(int child) {
   fd_set fds_read;
   struct timeval tv, start_time, end_time;
   int retval;
@@ -96,13 +89,13 @@ void do_parent(int child) {
   (void) gettimeofday(&end_time, NULL);     /* Record ending time */
   
   /* Did we time out? */
-  if(retval != 0) e(1, "Should have timed out");
+  if(retval != 0) em(1, "Should have timed out");
   
   /* Approximately right? The standard does not specify how precise the timeout
      should be. Instead, the granularity is implementation-defined. In this
      test we assume that the difference should be no more than half a second.*/
   if(compute_diff(start_time, end_time, DO_PAUSE) > DO_DELTA)
-    e(2, "Time difference too large");
+    em(2, "Time difference too large");
   
   /* Let's wait for another DO_PAUSE seconds, expressed as microseconds */
   FD_ZERO(&fds_read);
@@ -114,9 +107,9 @@ void do_parent(int child) {
   retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv); 
   (void) gettimeofday(&end_time, NULL);     /* Record ending time */
   
-  if(retval != 0) e(3, "Should have timed out");
+  if(retval != 0) em(3, "Should have timed out");
   if(compute_diff(start_time, end_time, DO_PAUSE) > DO_DELTA)
-    e(4, "Time difference too large");
+    em(4, "Time difference too large");
   
   /* Let's wait for another DO_PAUSE seconds, expressed in seconds and micro
      seconds. */
@@ -129,9 +122,9 @@ void do_parent(int child) {
   retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv); 
   (void) gettimeofday(&end_time, NULL);     /* Record ending time */
   
-  if(retval != 0) e(5, "Should have timed out");
+  if(retval != 0) em(5, "Should have timed out");
   if(compute_diff(start_time, end_time, DO_PAUSE) > DO_DELTA)
-    e(6, "Time difference too large");
+    em(6, "Time difference too large");
 
   /* Finally, we test if our timeout is interrupted by a signal */
   FD_ZERO(&fds_read);
@@ -143,11 +136,11 @@ void do_parent(int child) {
   retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv); 
   (void) gettimeofday(&end_time, NULL);     /* Record ending time */
   
-  if(retval != -1) e(7, "Should have been interrupted");
+  if(retval != -1) em(7, "Should have been interrupted");
   if(compute_diff(start_time, end_time, DO_TIMEOUT) < DO_DELTA)
-    e(8, "Failed to get interrupted by a signal");
+    em(8, "Failed to get interrupted by a signal");
 
-  if(!got_signal) e(9, "Failed to get interrupted by a signal");
+  if(!got_signal) em(9, "Failed to get interrupted by a signal");
 
   waitpid(child, &retval, 0);
   exit(errct);

@@ -64,8 +64,9 @@
 #define DUP     "dup"
 #define UTIME   "utime"
 
-int errct;
-#define MAX_ERROR 2
+int max_error = 2;
+#include "common.h"
+
 
 /* "decl.c", created by Rene Montsma and Menno Wilcke */
 
@@ -78,7 +79,6 @@ char *fnames[8] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"},
 
 /* "test.c", created by Rene Montsma and Menno Wilcke */
 
-#include "common.c"
 
 int main(int argc, char **argv);
 void test(void);

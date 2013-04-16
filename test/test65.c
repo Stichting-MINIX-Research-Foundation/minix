@@ -6,8 +6,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define MAX_ERROR 0
-#include "common.c"
+int max_error = 0;
+#include "common.h"
+
 
 #define TESTMNT		"testmnt"
 #define TESTFILE	"test.txt"

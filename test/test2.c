@@ -11,13 +11,14 @@
 #include <stdio.h>
 
 #define ITERATIONS 5
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 
 int is, array[4], parsigs, parcum, sigct, cumsig, subtest;
 int iteration, kk = 0;
 char buf[2048];
 
-#include "common.c"
 
 int main(int argc, char *argv []);
 void test2a(void);
@@ -63,13 +64,13 @@ void test2a()
   subtest = 1;
   if (pipe(fd) < 0) {
 	printf("pipe error.  errno= %d\n", errno);
-	errct++;
+	e(10);
 	quit();
   }
   i = fork();
   if (i < 0) {
 	printf("fork failed\n");
-	errct++;
+	e(11);
 	quit();
   }
   if (i != 0) {
@@ -79,7 +80,7 @@ void test2a()
 	for (q = 0; q < 8; q++) {
 		if (write(fd[1], buf, 2048) < 0) {
 			printf("write pipe err.  errno=%d\n", errno);
-			errct++;
+			e(12);
 			quit();
 		}
 	}
@@ -87,7 +88,7 @@ void test2a()
 	wait(&q);
 	if (q != 256 * 58) {
 		printf("wrong exit code %d\n", q);
-		errct++;
+		e(13);
 		quit();
 	}
   } else {
@@ -97,7 +98,7 @@ void test2a()
 		n = read(fd[0], buf, 512);
 		if (n != 512) {
 			printf("read yielded %d bytes, not 512\n", n);
-			errct++;
+			e(14);
 			quit();
 		}
 		for (j = 0; j < n; j++)

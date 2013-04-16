@@ -17,14 +17,14 @@
 #define	STREQ(a, b)	(strcmp((a), (b)) == 0)
 
 char *it = "<UNSET>";		/* Routine name for message routines. */
-int errct;			/* count errors */
 int waserror = 0;		/* For exit status. */
 
 char uctest[] = "\004\203";	/* For testing signedness of chars. */
 int charsigned;			/* Result. */
 
-#define MAX_ERROR 2
-#include "common.c"
+int max_error = 2;
+#include "common.h"
+
 
 void check(int thing, int number);
 void equal(char *a, char *b, int number);

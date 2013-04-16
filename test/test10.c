@@ -15,8 +15,9 @@ char *name[] = {"t10a", "t10b", "t10c", "t10d", "t10e", "t10f", "t10g",
 long prog[PROGBUF_LONGS];
 int psize;
 
-#define MAX_ERROR 2
-#include "common.c"
+int max_error = 2;
+#include "common.h"
+
 
 int main(void);
 void spawn(int n);

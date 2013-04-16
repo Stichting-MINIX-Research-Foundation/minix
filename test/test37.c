@@ -12,9 +12,10 @@
 
 #define ITERATIONS 2
 #define SIGS 14
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
 
-#include "common.c"
+
 
 int iteration, cumsig, sig1, sig2;
 

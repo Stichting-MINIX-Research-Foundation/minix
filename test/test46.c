@@ -28,7 +28,9 @@ void group_test_4(void);
 void group_test_5(void);
 int dotest(void (*testfunc)(void));
 
-#define MAX_ERROR 5
+int max_error = 5;
+#include "common.h"
+
 #define IMAGINARY_GID 100
 #define IMAGINARY_GID_STR "100"
 #define IMAGINARY_UID 101
@@ -37,7 +39,6 @@ int dotest(void (*testfunc)(void));
 			  setgid((IMAGINARY_GID) + 1 ); \
 			  setuid(IMAGINARY_UID); \
 			} while(0)
-#include "common.c"
 
 int subtest = -1, errorct = 0;
 

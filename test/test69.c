@@ -13,14 +13,15 @@
 #include <stdio.h>
 
 #define TRIALS 100
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 #ifndef DEBUG
 #define DEBUG 0
 #endif
 
 int subtest = 1;
 
-#include "common.c"
 
 int main(void);
 void quit(void);

@@ -28,7 +28,7 @@ void check_context_loop(void);
 
 unsigned long newstate[REGS], origstate[REGS];
 
-void handler(int signal)
+static void handler(int signal)
 {
 	int st;
 	sigset_t set, oset;

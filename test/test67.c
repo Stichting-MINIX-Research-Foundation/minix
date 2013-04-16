@@ -10,10 +10,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define MAX_ERROR 5
+int max_error = 5;
+#include "common.h"
+
 #define CLOEXEC_PORT 3490
 #define FORK_PORT 3491
-#include "common.c"
 
 static int fd = 0;
 
