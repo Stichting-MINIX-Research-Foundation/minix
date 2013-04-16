@@ -12,7 +12,9 @@
 #include <time.h>
 #include <stdio.h>
 
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS     10
 
 #define System(cmd)   if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
@@ -20,7 +22,6 @@
 #define Stat(a,b)     if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 #define Mkfifo(f)     if (mkfifo(f,0777)!=0) printf("Can't make fifo %s\n", f)
 
-#include "common.c"
 
 void test26a(void);
 void test26b(void);

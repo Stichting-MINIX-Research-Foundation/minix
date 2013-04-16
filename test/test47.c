@@ -6,8 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_ERROR 4
-#include "common.c"
+int max_error = 4;
+#include "common.h"
+
 
 /* maximum allowed FP difference for our tests */ 
 #define EPSILON 0.00000000023283064365386962890625 /* 2^(-32) */

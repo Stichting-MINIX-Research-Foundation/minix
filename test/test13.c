@@ -17,8 +17,9 @@
 
 char buffer[BLOCK_SIZE];
 
-#define MAX_ERROR 2
-#include "common.c"
+int max_error = 2;
+#include "common.h"
+
 
 int main(void);
 void quit(void);

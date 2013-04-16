@@ -8,10 +8,11 @@
 #include <unistd.h>
 
 #define ERR err(__LINE__)
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 #define TIMED 0
 
-#include "common.c"
 
 static volatile int expect_SIGFPE;
 static u64_t i, j, k;
@@ -27,10 +28,7 @@ static void err(int line)
 		ex64hi(k), ex64lo(k));
 
 	/* quit after too many errors */
-	if (errct++ > MAX_ERROR) {
-		printf("Too many errors; test aborted\n");
-		quit();
-	}
+	e(7);
 }
 
 #define LENGTHOF(arr) (sizeof(arr) / sizeof(arr[0]))

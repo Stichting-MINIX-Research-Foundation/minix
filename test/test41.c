@@ -15,9 +15,10 @@
 #include <errno.h>
 
 #define ITERATIONS 3
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
 
-#include "common.c"
+
 
 /* we have to keep in mind the millisecond values are rounded up */
 #define UPPERUSEC(us) ((us)+(1000000/system_hz))

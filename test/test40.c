@@ -11,8 +11,9 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#define MAX_ERROR 5
-#include "common.c"
+int max_error = 5;
+#include "common.h"
+
 
 int main(int argc, char **argv) {
   char *tests[] = {"t40a", "t40b", "t40c", "t40d", "t40e", "t40f"};

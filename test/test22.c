@@ -9,14 +9,14 @@
 #include <sys/wait.h>
 #include <stdio.h>
 
-#define MAX_ERROR 4		/* Stop after ``MAX_ERROR'' errors. */
+#include "common.h"
+
 #define ITERATIONS 2
 
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 
-#include "common.c"
 
 void test22a(void);
 int mode(char *filename);

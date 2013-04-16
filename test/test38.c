@@ -18,7 +18,9 @@
 #include <signal.h>
 #include <stdio.h>
 
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS      3
 #define BUF_SIZE 1024
 
@@ -26,7 +28,6 @@
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 
-#include "common.c"
 
 int superuser;
 int signumber = 0;

@@ -16,9 +16,10 @@
 #include <stdio.h>
 
 #define ITERATIONS        1
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
 
-#include "common.c"
+
 
 int main(int argc, char *argv []);
 void test21a(void);

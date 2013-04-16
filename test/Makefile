@@ -70,6 +70,10 @@ LDSTATIC=	-dynamic
 PROGS+=		test63 mod
 .endif
 
+.for o in $(PROGS)
+OBJS.${o} += common.o
+.endfor
+
 # LSC Make sure there is not leftover after a failed testrun
 clean: .PHONY .MAKE
 	$(MAKE) -C select clean

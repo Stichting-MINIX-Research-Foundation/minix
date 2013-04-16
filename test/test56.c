@@ -57,10 +57,11 @@
 /* Maximum number of errors that we'll allow to occur before this test 
  * program gives us and quits.
  */
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 
 /* Use the common testing code instead of reinventing the wheel. */
-#include "common.c"
 
 /* path of the unix domain socket */
 #define TEST_SUN_PATH "test.sock"
@@ -131,12 +132,7 @@ void test_fail_fl(char *msg, char *file, int line)
 		free(timestamp);
 		timestamp = NULL;
 	}
-	errct++;
-	if (errct++ > MAX_ERROR) {
-		printf("Too many errors; test aborted\n");
-		quit();
-		exit(1);
-	}
+	e(7);
 }
 #define test_fail(msg)	test_fail_fl(msg, __FILE__, __LINE__)
 

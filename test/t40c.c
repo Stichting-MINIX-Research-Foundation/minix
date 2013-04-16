@@ -21,23 +21,14 @@
 #include <sys/wait.h>
 #include <string.h>
 
+#include "common.h"
+
 #define TERMINALW "/dev/ttypf"
 #define TERMINALR "/dev/ptypf"
 #define SENDSTRING "minixrocks"
 #define MAX_ERROR 5
 
-int errct = 0, subtest = -1;
-
-void e(int n, char *s) {
-  printf("Subtest %d, error %d, %s\n", subtest, n, s);
-
-  if (errct++ > MAX_ERROR) {
-    printf("Too many errors; test aborted\n");
-    exit(errct);
-  }
-}
-
-void open_terminal(int *child_fd, int *parent_fd) {
+static void open_terminal(int *child_fd, int *parent_fd) {
   int fd1, fd2, i;
   char opentermw[5+OPEN_MAX+1];
   char opentermr[5+OPEN_MAX+1];
@@ -68,7 +59,7 @@ void open_terminal(int *child_fd, int *parent_fd) {
   exit(EXIT_FAILURE);
 }
 
-int do_child(int terminal) {
+static int do_child(int terminal) {
   struct timeval tv;
 
   /* Going to sleep for two seconds to allow the parent proc to get ready */
@@ -86,7 +77,7 @@ int do_child(int terminal) {
   exit(0);
 }
 
-int do_parent(int child, int terminal) {
+static int do_parent(int child, int terminal) {
   fd_set fds_read, fds_write, fds_error;
   int retval;
 
@@ -103,21 +94,21 @@ int do_parent(int child, int terminal) {
    * sub-test as reading from fd is blocking at this point. */
   retval = select(terminal+1, &fds_read, &fds_write, &fds_error, NULL);
   
-  if(retval != 1) e(1, "incorrect amount of ready file descriptors");
+  if(retval != 1) em(1, "incorrect amount of ready file descriptors");
 
 
-  if(FD_ISSET(terminal, &fds_read)) e(2, "read should NOT be set");
-  if(!FD_ISSET(terminal, &fds_write)) e(3, "write should be set");
-  if(FD_ISSET(terminal, &fds_error)) e(4, "error should NOT be set");
+  if(FD_ISSET(terminal, &fds_read)) em(2, "read should NOT be set");
+  if(!FD_ISSET(terminal, &fds_write)) em(3, "write should be set");
+  if(FD_ISSET(terminal, &fds_error)) em(4, "error should NOT be set");
 
   /* Block until ready; until child wrote stuff */
   FD_ZERO(&fds_read); FD_ZERO(&fds_write); FD_ZERO(&fds_error);
   FD_SET(terminal, &fds_read);
   retval = select(terminal+1, &fds_read, NULL, &fds_error, NULL);
  
-  if(retval != 1) e(5, "incorrect amount of ready file descriptors");
-  if(!FD_ISSET(terminal, &fds_read)) e(6, "read should be set");
-  if(FD_ISSET(terminal, &fds_error)) e(7, "error should not be set");
+  if(retval != 1) em(5, "incorrect amount of ready file descriptors");
+  if(!FD_ISSET(terminal, &fds_read)) em(6, "read should be set");
+  if(FD_ISSET(terminal, &fds_error)) em(7, "error should not be set");
 
 
   FD_ZERO(&fds_read); FD_ZERO(&fds_error);
@@ -125,7 +116,7 @@ int do_parent(int child, int terminal) {
   retval = select(terminal+1, NULL, &fds_write, NULL, NULL);
   /* As it is impossible to write to a read only fd, this select should return
    * immediately with fd set in fds_write. */
-  if(retval != 1) e(8, "incorrect amount or ready file descriptors");
+  if(retval != 1) em(8, "incorrect amount or ready file descriptors");
 
   close(terminal);
   waitpid(child, &retval, 0);

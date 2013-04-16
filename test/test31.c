@@ -12,10 +12,11 @@
 #include <time.h>
 #include <stdio.h>
 
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS     10
 
-#include "common.c"
 
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)

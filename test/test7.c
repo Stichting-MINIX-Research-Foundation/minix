@@ -18,7 +18,9 @@
 #include <setjmp.h>
 
 #define ITERATIONS        4
-#define MAX_ERROR 3
+int max_error = 3;
+#include "common.h"
+
 #define ITEMS  32
 #define READ   10
 #define WRITE  20
@@ -28,7 +30,6 @@
 
 char buf[ITEMS] = {0,1,2,3,4,5,6,7,8,9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9};
 
-#include "common.c"
 
 int subtes, xfd;
 int whence = SEEK_SET, func_code = F_SETLK;

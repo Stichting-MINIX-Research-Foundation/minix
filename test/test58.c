@@ -22,11 +22,12 @@
 #include <sys/stat.h>
 
 int subtest = -1;
-#define MAX_ERROR 999	/* Effectively no limit. This is necessary as this
+int max_error = 999;	/* Effectively no limit. This is necessary as this
 			 * test tries to undo errors and should therefore not
 			 * preemptively exit, as that would leave the FS
 			 * in a corrupted state. */
-#include "common.c"
+
+#include "common.h"
 
 #define TEST_PATH "a/b/c"
 #define INTEGR_MSG "You might want to check fs integrity\n"

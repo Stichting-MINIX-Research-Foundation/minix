@@ -17,7 +17,9 @@
 
 #define NOCRASH 1		/* test11(), 2nd pipe */
 #define PDPNOHANG  1		/* test03(), write_standards() */
-#define MAX_ERROR 2
+int max_error = 2;
+#include "common.h"
+
 
 #define USER_ID   12
 #define GROUP_ID   1
@@ -61,7 +63,6 @@
 #define DUP     "dup"
 #define UTIME   "utime"
 
-int errct;
 
 /* "decl.c", created by Rene Montsma and Menno Wilcke */
 
@@ -76,7 +77,6 @@ char *mode_fnames[MODES] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rw
 
 /* "test.c", created by Rene Montsma and Menno Wilcke */
 
-#include "common.c"
 
 int main(int argc, char *argv []);
 void test(int mask);

@@ -12,9 +12,10 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define MAX_ERROR 10
+int max_error = 10;
+#include "common.h"
 
-#include "common.c"
+
 
 #define RESULTSNAME desired
 #define SUBRESULTS 131

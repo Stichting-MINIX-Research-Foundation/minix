@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define MAX_ERROR 5
-#include "common.c"
+int max_error = 5;
+#include "common.h"
+
 
 int subtest = -1;
 
@@ -97,7 +98,7 @@ void test_setuid(void)
 
 }
 
-void test_setugid(void)
+static void test_setugid(void)
 {
 /* Execve a new process that has setuid and setgid bits set */
   subtest = 5;
@@ -233,7 +234,7 @@ void test_self(void)
   }
 }
 
-void switch_to_su(void)
+static void switch_to_su(void)
 {
   subtest = 0;
   if (setuid(0) != 0) e(1);

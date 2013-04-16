@@ -5,8 +5,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define MAX_ERROR 5
-#include "common.c"
+int max_error = 5;
+#include "common.h"
+
 
 void dangling_slink(int sub_test, char const slink_to[PATH_MAX]);
 

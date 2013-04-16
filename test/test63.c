@@ -16,10 +16,11 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
-#define MAX_ERROR 2
+int max_error = 2;
+#include "common.h"
+
 
 #include "magic.h"
-#include "common.c"
 
 int main (int argc, char *argv[])
 {

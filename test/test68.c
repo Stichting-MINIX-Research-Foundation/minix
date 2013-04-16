@@ -7,8 +7,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define MAX_ERROR 5
-#include "common.c"
+int max_error = 5;
+#include "common.h"
+
 
 void copy_subtests(void);
 void test_pipe_cloexec(void);

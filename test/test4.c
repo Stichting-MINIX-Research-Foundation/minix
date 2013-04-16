@@ -15,9 +15,10 @@ int s, i, fd, nextb;
 char *tempfile = "test4.temp";
 char buf[1024];
 
-#define MAX_ERROR 2
+int max_error = 2;
+#include "common.h"
 
-#include "common.c"
+
 
 int main(void);
 void subr(void);

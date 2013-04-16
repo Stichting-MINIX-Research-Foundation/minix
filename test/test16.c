@@ -9,12 +9,13 @@
 #include <utime.h>
 #include <stdio.h>
 
-#define MAX_ERROR 4
+int max_error = 4;
+#include "common.h"
+
 
 int subtest, passes;
 int V1filesystem = 0;
 
-#include "common.c"
 
 int main(int argc, char *argv []);
 void test16init(void);

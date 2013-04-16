@@ -13,13 +13,14 @@
 #include <stdio.h>
 
 #define MODE_MASK	(S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS      2
 
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 
-#include "common.c"
 
 int superuser;
 char *MaxName;			/* Name of maximum length */

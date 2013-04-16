@@ -20,10 +20,11 @@ void test24c(void);
 void makelongnames(void);
 
 #define OVERFLOW_DIR_NR	(OPEN_MAX + 1)
-#define MAX_ERROR	4
+int max_error = 	4;
+#include "common.h"
+
 #define ITERATIONS 5
 
-#include "common.c"
 
 #define DIRENT0	((struct dirent *) NULL)
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)

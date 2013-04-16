@@ -32,11 +32,7 @@ static void GLUE(e, TYPE_FUNC)(int n, const char *s, TYPE result, int base)
 	/* watch out: don't overwrite the static buffer in make_string */
 	printf("Subtest %s, error %d, errno=%d, s=\"%s\", base=%d, ", TOSTRING(TYPE_FUNC), n, errno, s, base);
 	printf("result=%s\n", GLUE(make_string, TYPE_FUNC)(result, base));
-	if (errct++ > MAX_ERROR) 
-	{
-		printf("Too many errors; test aborted\n");
-		exit(1);
-	}
+	e(7);
 }
 
 static void GLUE(test_string, TYPE_FUNC)(const char *s, TYPE value, int base)

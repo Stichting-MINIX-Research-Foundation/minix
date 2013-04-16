@@ -6,12 +6,13 @@
 #include <err.h>
 #include <stdlib.h>
 
-#define MAX_ERROR 3
-#include "common.c"
+int max_error = 3;
+#include "common.h"
+
 
 int subtest = -1;
 
-void do_test(void)
+static void do_test(void)
 {
 	int fd;
 	char *wbuf, *rbuf;

@@ -12,13 +12,14 @@
 #include <stdio.h>
 
 #define ITERATIONS 10
-#define MAX_ERROR 0
+int max_error = 0;
+#include "common.h"
+
 #define SIZE 64
 
 int subtest;
 char el_weirdo[] = "\n\t\\\e@@!!##\e\e\n\n";
 
-#include "common.c"
 
 int main(int argc, char *argv []);
 void test3a(void);

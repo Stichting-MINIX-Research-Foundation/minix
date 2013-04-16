@@ -8,8 +8,9 @@
 #pragma clang diagnostic ignored "-Wtautological-compare"
 #endif
 
-#define MAX_ERROR 4
-#include "common.c"
+int max_error = 4;
+#include "common.h"
+
 
 /* test strtol */
 #define	TYPE        long

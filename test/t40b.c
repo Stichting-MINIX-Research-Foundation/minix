@@ -23,23 +23,15 @@
 #include <errno.h>
 #include <time.h>
 
+#include "common.h"
+
 #define FILE1 "selecttestb-1"
 #define FILES 2
 #define TIME 3
 
 #define MAX_ERROR 10
 
-int errct = 0, subtest = -1;
 char errorbuf[1000];
-
-void e(int n, char *s) {
-  printf("Subtest %d, error %d, %s\n", subtest, n, s);
-
-  if (errct++ > MAX_ERROR) {
-    printf("Too many errors; test aborted\n");
-    exit(errct);
-  }
-}
 
 int main(int argc, char **argv) {
   int fd1, fd2, retval;
@@ -64,7 +56,7 @@ int main(int argc, char **argv) {
   if((fd1 = open(FILE1, O_WRONLY|O_CREAT, 0644)) == -1) {
     snprintf(errorbuf, sizeof(errorbuf), "failed to open file %s for writing",
 	     FILE1);
-    e(1, errorbuf);
+    em(1, errorbuf);
     perror(NULL);
     exit(1);
   }
@@ -73,7 +65,7 @@ int main(int argc, char **argv) {
   if((fd2 = open(FILE1, O_RDONLY)) == -1) {
     snprintf(errorbuf, sizeof(errorbuf), "failed to open file %s for reading",
 	     FILE1);
-    e(2, errorbuf);
+    em(2, errorbuf);
     perror(NULL);
     exit(1);
   }
@@ -94,20 +86,20 @@ int main(int argc, char **argv) {
 
   /* Correct amount of ready file descriptors? 1 read + 1 write + 2 errors */
   if(retval != 4) {
-    e(3, "four fds should be set");
+    em(3, "four fds should be set");
   }
 
   /* Test resulting bit masks */
-  if(!FD_ISSET(fd1, &fds_write)) e(4, "write should be set");
-  if(!FD_ISSET(fd2, &fds_read)) e(5, "read should be set");
-  if(!FD_ISSET(fd1, &fds_error)) e(6, "error should be set");
-  if(!FD_ISSET(fd2, &fds_error)) e(7, "error should be set");
+  if(!FD_ISSET(fd1, &fds_write)) em(4, "write should be set");
+  if(!FD_ISSET(fd2, &fds_read)) em(5, "read should be set");
+  if(!FD_ISSET(fd1, &fds_error)) em(6, "error should be set");
+  if(!FD_ISSET(fd2, &fds_error)) em(7, "error should be set");
 
   /* Was it instantaneous? */
   if(end-start != TIME - TIME) {
     snprintf(errorbuf,sizeof(errorbuf),"time spent blocking is not %d, but %ld",
 	     TIME - TIME, (long int) (end-start));
-    e(8, errorbuf);
+    em(8, errorbuf);
   }
 
   /* Wait for read to become ready on O_WRONLY. This should fail immediately. */
@@ -120,10 +112,10 @@ int main(int argc, char **argv) {
   retval = select(fd2+1, &fds_read, NULL, &fds_error, &tv);
 
   /* Correct amount of ready file descriptors? 1 read + 2 error */
-  if(retval != 3) e(9, "incorrect amount of ready file descriptors");
-  if(!FD_ISSET(fd1, &fds_read)) e(10, "read should be set");
-  if(!FD_ISSET(fd1, &fds_error)) e(11, "error should be set");
-  if(!FD_ISSET(fd2, &fds_error)) e(12, "error should be set");
+  if(retval != 3) em(9, "incorrect amount of ready file descriptors");
+  if(!FD_ISSET(fd1, &fds_read)) em(10, "read should be set");
+  if(!FD_ISSET(fd1, &fds_error)) em(11, "error should be set");
+  if(!FD_ISSET(fd2, &fds_error)) em(12, "error should be set");
 
   /* Try again as above, bit this time with O_RDONLY in the write set */
   FD_ZERO(&fds_error);
@@ -135,10 +127,10 @@ int main(int argc, char **argv) {
   retval = select(fd2+1, NULL, &fds_write, &fds_error, &tv);
   
   /* Correct amount of ready file descriptors? 1 write + 2 errors */
-  if(retval != 3) e(13, "incorrect amount of ready file descriptors");
-  if(!FD_ISSET(fd2, &fds_write)) e(14, "write should be set");
-  if(!FD_ISSET(fd1, &fds_error)) e(15, "error should be set");
-  if(!FD_ISSET(fd2, &fds_error)) e(16, "error should be set");
+  if(retval != 3) em(13, "incorrect amount of ready file descriptors");
+  if(!FD_ISSET(fd2, &fds_write)) em(14, "write should be set");
+  if(!FD_ISSET(fd1, &fds_error)) em(15, "error should be set");
+  if(!FD_ISSET(fd2, &fds_error)) em(16, "error should be set");
   
   close(fd1);
   close(fd2);
