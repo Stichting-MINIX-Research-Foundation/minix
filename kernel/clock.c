@@ -131,14 +131,15 @@ int timer_int_handler(void)
 	 * well.  If any of the timers expire, do_clocktick() will send out
 	 * signals.
 	 */
-	if ((p->p_misc_flags & MF_VIRT_TIMER)){
+	if ((p->p_misc_flags & MF_VIRT_TIMER) && (p->p_virt_left > 0)) {
 		p->p_virt_left--;
 	}
-	if ((p->p_misc_flags & MF_PROF_TIMER)){
+	if ((p->p_misc_flags & MF_PROF_TIMER) && (p->p_prof_left > 0)) {
 		p->p_prof_left--;
 	}
 	if (! (priv(p)->s_flags & BILLABLE) &&
-			(billp->p_misc_flags & MF_PROF_TIMER)){
+			(billp->p_misc_flags & MF_PROF_TIMER) &&
+			(billp->p_prof_left > 0)) {
 		billp->p_prof_left--;
 	}
 

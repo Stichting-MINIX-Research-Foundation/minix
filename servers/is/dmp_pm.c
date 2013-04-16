@@ -95,7 +95,7 @@ void sigaction_dmp()
   	printf(" %08lx %08lx %08lx ", 
   		mp->mp_ignore, mp->mp_catch, mp->mp_sigmask); 
   	printf("%08lx  ", mp->mp_sigpending);
-  	if (mp->mp_flags & ALARM_ON) printf("%8d", mp->mp_timer.tmr_exp_time-uptime);
+  	if (mp->mp_flags & ALARM_ON) printf("%8lu", mp->mp_timer.tmr_exp_time-uptime);
   	else printf("       -");
   	printf("\n");
   }

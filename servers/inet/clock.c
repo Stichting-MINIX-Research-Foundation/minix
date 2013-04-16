@@ -14,8 +14,8 @@ THIS_FILE
 
 int clck_call_expire;
 
-static time_t curr_time;
-static time_t prev_time;
+static clock_t curr_time;
+static clock_t prev_time;
 static timer_t *timer_chain;
 static time_t next_timeout;
 
@@ -43,7 +43,7 @@ time_t get_time()
 }
 
 void set_time (tim)
-time_t tim;
+clock_t tim;
 {
 	if (!curr_time && tim >= prev_time)
 	{
@@ -54,7 +54,7 @@ time_t tim;
 	}
 	else if (!curr_time)
 	{
-		DBLOCK(0x20, printf("set_time: new time %i < prev_time %i\n",
+		DBLOCK(0x20, printf("set_time: new time %lu < prev_time %lu\n",
 			tim, prev_time));
 	}
 }

@@ -144,6 +144,7 @@ size_t	 wcstombs(char * __restrict, const wchar_t * __restrict, size_t);
 int	 rand_r(unsigned int *);
 #endif
 
+
 /*
  * X/Open Portability Guide >= Issue 4
  */

@@ -330,7 +330,7 @@ void proctab_dmp(void)
 
   PROCLOOP(rp, oldrp)
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %5u %5u %6u %6u ",
+	printf("%-8.8s %5u %5u %6lu %6lu ",
 	       rp->p_name,
 	       rp->p_priority,
 	       rp->p_quantum_size_ms,

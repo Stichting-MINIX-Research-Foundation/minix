@@ -434,5 +434,4 @@ extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
 
 __END_DECLS
-
 #endif /* !_UNISTD_H_ */
