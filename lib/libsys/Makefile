@@ -128,8 +128,4 @@ CPPFLAGS+= -DUSE_SYSDEBUG
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
 
-.if (${CC} == "gcc") || (${CC} == "clang")
-LDADD+=	-lminc
-.endif
-
 .include <bsd.lib.mk>
