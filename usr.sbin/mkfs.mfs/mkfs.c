@@ -129,12 +129,14 @@ void dexit(char *s, int sectnum, int err);
 __dead void usage(void);
 void *alloc_block(void);
 
-ino_t inocount;
-zone_t zonecount;
-block_t blockcount;
+struct fs_size {
+  ino_t inocount; /* amount of inodes */
+  zone_t zonecount; /* amount of zones */
+  block_t blockcount; /* amount of bloks */
+};
 
-void detect_fs_size(void);
-void sizeup_dir(void);
+void detect_fs_size(struct fs_size * fssize);
+void sizeup_dir(struct fs_size * fssize);
 void detect_size(void);
 void size_dir(void);
 static int bitmapsize(uint32_t nr_bits, size_t block_size);
@@ -154,6 +156,7 @@ char *argv[];
   zone_t zones;
   char *token[MAX_TOKENS], line[LINE_LEN];
   struct stat statbuf;
+  struct fs_size fssize;
 
   /* Get two times, the current time and the mod time of the binary of
    * mkfs itself.  When the -d flag is used, the later time is put into
@@ -270,9 +273,9 @@ char *argv[];
 	grpid = atoi(token[2]);
 
 	if(blocks <= 0 && inodes <= 0){
-		detect_fs_size();
-		blocks = blockcount;
-		inodes = inocount;
+		detect_fs_size(&fssize);
+		blocks = fssize.blockcount;
+		inodes = fssize.inocount;
 		blocks += blocks*extra_space_percent/100;
 		inodes += inodes*extra_space_percent/100;
 		printf("dynamically sized filesystem: %d blocks, %d inodes\n", blocks, 
@@ -388,27 +391,28 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
 /*================================================================
  *        detect_fs_size  -  determine image size dynamically
  *===============================================================*/
-void detect_fs_size()
+void detect_fs_size(struct fs_size * fssize)
 {
   uint32_t point = ftell(proto);
   
-  inocount = 1;	/* root directory node */
-  zonecount = 0;
-  blockcount = 0;
-  sizeup_dir();
+  fssize->inocount = 1;	/* root directory node */
+  fssize->zonecount = 0;
+  fssize->blockcount = 0;
+
+  sizeup_dir(fssize);
 	
   uint32_t initb;
 
-  initb = bitmapsize((uint32_t) (1 + inocount), block_size);
-  initb += bitmapsize((uint32_t) zonecount, block_size);
+  initb = bitmapsize((uint32_t) (1 + fssize->inocount), block_size);
+  initb += bitmapsize((uint32_t) fssize->zonecount, block_size);
   initb += START_BLOCK;
-  initb += (inocount + inodes_per_block - 1) / inodes_per_block;
+  initb += (fssize->inocount + inodes_per_block - 1) / inodes_per_block;
 
-  blockcount = initb+zonecount;
+  fssize->blockcount = initb+ fssize->zonecount;
   fseek(proto, point, SEEK_SET);
 }
 
-void sizeup_dir()
+void sizeup_dir(struct fs_size * fssize)
 {
   char *token[MAX_TOKENS], *p;
   char line[LINE_LEN]; 
@@ -429,20 +433,20 @@ void sizeup_dir()
 			dir_zones++;
 		if(dir_zones > nr_dzones)
 			dir_zones++;	/* Max single indir */
-		zonecount += dir_zones;
+		fssize->zonecount += dir_zones;
 		return;
 	}
 
 	p = token[1];
-	inocount++;
+	fssize->inocount++;
 	dir_entries++;
 
 	if (*p == 'd') {
-		sizeup_dir();
+		sizeup_dir(fssize);
 	} else if (*p == 'b' || *p == 'c') {
 
 	} else if (*p == 's') {
-		zonecount++; /* Symlink contents is always stored a block */
+		fssize->zonecount++; /* Symlink contents is always stored a block */
 	} else {
 		if ((f = fopen(token[4], "r")) == NULL) {
 			fprintf(stderr, "%s: Can't open %s: %s\n",
@@ -461,7 +465,7 @@ void sizeup_dir()
 				fzones++;
 			if (fzones > nr_dzones)
 				fzones++;	/* Assumes files fit within single indirect */
-			zonecount += fzones;
+			fssize->zonecount += fzones;
 		}
 	}
   }
