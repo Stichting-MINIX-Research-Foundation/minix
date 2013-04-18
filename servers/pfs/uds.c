@@ -960,7 +960,7 @@ int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 	int minor;
 	int peer_minor;
 	int rc;
-	struct ucred cred;
+	struct uucred cred;
 
 #if DEBUG == 1
 	static int call_count = 0;
@@ -991,7 +991,7 @@ int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 	}
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &cred, sizeof(struct ucred));
+		(vir_bytes) 0, (vir_bytes) &cred, sizeof(struct uucred));
 
 	return rc ? EIO : OK;
 }
@@ -1352,10 +1352,10 @@ static int recv_cred(int minor, struct ancillary *data,
 		cmsg = CMSG_NXTHDR(&msghdr, cmsg);
 	}
 
-	cmsg->cmsg_len = CMSG_LEN(sizeof(struct ucred));
+	cmsg->cmsg_len = CMSG_LEN(sizeof(struct uucred));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_CREDENTIALS;
-	memcpy(CMSG_DATA(cmsg), &(data->cred), sizeof(struct ucred));
+	memcpy(CMSG_DATA(cmsg), &(data->cred), sizeof(struct uucred));
 
 	return OK;
 }
@@ -1481,7 +1481,7 @@ int do_recvmsg(message *dev_m_in, message *dev_m_out)
 
 	/* if there is room we also include credentials */
 	controllen_desired = controllen_needed +
-				CMSG_LEN(sizeof(struct ucred));
+				CMSG_LEN(sizeof(struct uucred));
 
 	if (controllen_needed > controllen_avail) {
 		return EOVERFLOW;

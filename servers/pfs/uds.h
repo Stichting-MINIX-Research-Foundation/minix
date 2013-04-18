@@ -26,7 +26,7 @@ struct ancillary {
 	filp_id_t filps[OPEN_MAX];
 	int fds[OPEN_MAX];
 	int nfiledes;
-	struct ucred cred;
+	struct uucred cred;
 };
 
 /*

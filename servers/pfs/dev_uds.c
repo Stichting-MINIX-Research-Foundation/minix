@@ -40,7 +40,7 @@ static int uds_perform_write(int minor, endpoint_t m_source, size_t
 int uds_open(message *dev_m_in, message *dev_m_out)
 {
 	message fs_m_in, fs_m_out;
-	struct ucred ucred;
+	struct uucred ucred;
 	int rc, i;
 	int minor;
 
@@ -178,8 +178,8 @@ int uds_open(message *dev_m_in, message *dev_m_out)
 	fs_m_in.m_type = REQ_NEWNODE;
 	fs_m_in.REQ_MODE = I_NAMED_PIPE;
 	fs_m_in.REQ_DEV = NO_DEV;
-	fs_m_in.REQ_UID = ucred.uid;
-	fs_m_in.REQ_GID = ucred.gid;
+	fs_m_in.REQ_UID = ucred.cr_uid;
+	fs_m_in.REQ_GID = ucred.cr_gid;
 
 	/* Request a new inode on the pipe file system */
 
