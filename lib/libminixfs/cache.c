@@ -47,13 +47,14 @@ static int quiet = 0;
 void
 lmfs_setquiet(int q) { quiet = q; }
 
-u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree, 
+static u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u64_t bfree, 
          int blocksize, dev_t majordev)
 {
   struct vm_stats_info vsi;
   int bufs;
   u32_t kbytes_used_fs, kbytes_total_fs, kbcache, kb_fsmax;
-  u32_t kbytes_remain_mem, bused;
+  u32_t kbytes_remain_mem;
+  u64_t bused;
 
   bused = btotal-bfree;
 
@@ -805,7 +806,7 @@ static void cache_resize(unsigned int blocksize, unsigned int bufs)
 static void cache_heuristic_check(int major)
 {
   int bufs, d;
-  u32_t btotal, bfree, bused;
+  u64_t btotal, bfree, bused;
 
   fs_blockstats(&btotal, &bfree, &bused);
 

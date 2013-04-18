@@ -95,7 +95,7 @@ fs_sync(void)
 }
 
 void
-fs_blockstats(u32_t *total, u32_t *free, u32_t *used)
+fs_blockstats(u64_t *total, u64_t *free, u64_t *used)
 {
 	*total = *free = *used = 0;
 }
