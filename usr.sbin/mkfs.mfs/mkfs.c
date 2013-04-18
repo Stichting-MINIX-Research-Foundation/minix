@@ -562,11 +562,14 @@ ino_t inodes;
   
 #define BIGGERBLOCKS "Please try a larger block size for an FS of this size.\n"
   sup->s_imap_blocks = nb = bitmapsize((uint32_t) (1 + inodes), block_size);
+  /* Checks for an overflow nb is uint32_t while s_imap_blocks is of type 
+   * int16_t */
   if(sup->s_imap_blocks != nb) {
 	fprintf(stderr, "mkfs: too many inode bitmap blocks.\n" BIGGERBLOCKS);
 	exit(1);
   }
   sup->s_zmap_blocks = nb = bitmapsize((uint32_t) zones, block_size);
+  /* Idem here check for overflow */
   if(nb != sup->s_zmap_blocks) {
 	fprintf(stderr, "mkfs: too many block bitmap blocks.\n" BIGGERBLOCKS);
 	exit(1);
