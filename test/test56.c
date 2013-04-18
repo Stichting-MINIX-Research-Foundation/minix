@@ -385,7 +385,7 @@ void test_socketpair(void)
 
 void test_ucred(void)
 {
-	struct ucred credentials;
+	struct uucred credentials;
 	socklen_t ucred_length;
 	uid_t euid = geteuid();
 	gid_t egid = getegid();
@@ -394,7 +394,7 @@ void test_ucred(void)
 
 	debug("Test credentials passing");
 
-	ucred_length = sizeof(struct ucred);
+	ucred_length = sizeof(struct uucred);
 
 	rc = socketpair(PF_UNIX, SOCK_STREAM, 0, sv);
 	if (rc == -1) {
@@ -406,18 +406,18 @@ void test_ucred(void)
 							&ucred_length);
 	if (rc == -1) {
 		test_fail("getsockopt(SO_PEERCRED) failed");
-	} else if (credentials.pid != getpid() ||
-			credentials.uid != geteuid() ||
-			credentials.gid != getegid()) {
-		/* printf("%d=%d %d=%d %d=%d",credentials.pid, getpid(), 
-		 credentials.uid, geteuid(), credentials.gid, getegid()); */
+	} else if (credentials.cr_ngroups != 0 ||
+			credentials.cr_uid != geteuid() ||
+			credentials.cr_gid != getegid()) {
+		/* printf("%d=%d %d=%d %d=%d",credentials.cr_ngroups, 0,
+		 credentials.cr_uid, geteuid(), credentials.cr_gid, getegid()); */
 		test_fail("Credential passing gave us the wrong cred");
 	}
 
 	rc = getpeereid(sv[0], &euid, &egid);
 	if (rc == -1) {
 		test_fail("getpeereid(sv[0], &euid, &egid) failed");
-	} else if (credentials.uid != euid || credentials.gid != egid) {
+	} else if (credentials.cr_uid != euid || credentials.cr_gid != egid) {
 		test_fail("getpeereid() didn't give the correct euid/egid");
 	}
 
@@ -1195,7 +1195,7 @@ void test_xfer_sighdlr(int sig)
  */
 void test_xfer_client(void)
 {
-	struct ucred credentials;
+	struct uucred credentials;
 	socklen_t ucred_length;
 	struct timeval tv;
 	fd_set readfds;
@@ -1208,7 +1208,7 @@ void test_xfer_client(void)
 
 	debug("[client] entering test_xfer_client()");
 	errct = 0;	/* reset error count */
-	ucred_length = sizeof(struct ucred);
+	ucred_length = sizeof(struct uucred);
 	memset(&buf, '\0', sizeof(buf));
 
 	while (server_ready == 0) {
@@ -1296,10 +1296,10 @@ void test_xfer_client(void)
 
 	if (rc == -1) {
 		test_fail("[client] getsockopt() failed");
-	}  else if (credentials.uid != geteuid() ||
-					credentials.gid != getegid()) {
-		printf("%d=%d=%d %d=%d=%d\n", credentials.uid, getuid(),
-			geteuid(), credentials.gid, getgid(), getegid());
+	}  else if (credentials.cr_uid != geteuid() ||
+					credentials.cr_gid != getegid()) {
+		printf("%d=%d=%d %d=%d=%d\n", credentials.cr_uid, getuid(),
+			geteuid(), credentials.cr_gid, getgid(), getegid());
 		test_fail("[client] Credential passing gave us a bad UID/GID");
 	}
 
@@ -2106,7 +2106,7 @@ void test_scm_credentials(void)
 	int rc;
 	int src;
 	int dst;
-	struct ucred cred;
+	struct uucred cred;
 	struct cmsghdr *cmsg = NULL;
 	struct sockaddr_un addr;
 	struct iovec iov[3];
@@ -2233,20 +2233,20 @@ void test_scm_credentials(void)
 
 	debug("looking for credentials");
 
-	memset(&cred, '\0', sizeof(struct ucred));
+	memset(&cred, '\0', sizeof(struct uucred));
 	for (cmsg = CMSG_FIRSTHDR(&msg2); cmsg != NULL;
 					cmsg = CMSG_NXTHDR(&msg2, cmsg)) {
 
 		if (cmsg->cmsg_level == SOL_SOCKET &&
 				cmsg->cmsg_type == SCM_CREDENTIALS) {
 
-			memcpy(&cred, CMSG_DATA(cmsg), sizeof(struct ucred));
+			memcpy(&cred, CMSG_DATA(cmsg), sizeof(struct uucred));
 			break;
 		}
 	}
 
-	if (cred.pid != getpid() || cred.uid != geteuid() ||
-						cred.gid != getegid()) {
+	if (cred.cr_ngroups != 0 || cred.cr_uid != geteuid() ||
+						cred.cr_gid != getegid()) {
 
 		test_fail("did no receive the proper credentials");
 	}
