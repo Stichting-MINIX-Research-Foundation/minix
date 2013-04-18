@@ -1,16 +1,6 @@
 #ifndef __MFS_TYPE_H__
 #define __MFS_TYPE_H__
 
-/* Declaration of the V1 inode as it is on the disk (not in core). */
-typedef struct {		/* V1.x disk inode */
-  uint16_t d1_mode;		/* file type, protection, etc. */
-  int16_t d1_uid;		/* user id of the file's owner */
-  int32_t d1_size;		/* current file size in bytes */
-  int32_t d1_mtime;		/* when was file data last changed */
-  uint8_t d1_gid;		/* group number */
-  uint8_t d1_nlinks;		/* how many links to this file */
-  uint16_t d1_zone[V1_NR_TZONES];/* block nums for direct, ind, and dbl ind */
-} d1_inode;
 
 /* Declaration of the V2 inode as it is on the disk (not in core). */
 typedef struct {		/* V2.x disk inode */
