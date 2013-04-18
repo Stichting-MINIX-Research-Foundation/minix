@@ -984,8 +984,10 @@ int mode, usrid, grpid;
 	free(inode2);
   }
 
+  /* Code bellow assumes the bit is in the first inode map block. */
+  assert(num < block_size * 8);
+
   /* Set the bit in the bit map. */
-  /* DEBUG FIXME.  This assumes the bit is in the first inode map block. */
   insert_bit((block_t) INODE_MAP, (int) num);
   return(num);
 }
@@ -996,19 +998,25 @@ static zone_t alloc_zone()
   /* Allocate a new zone */
   /* Works for zone > block */
   block_t b;
-  zone_t z;
+  zone_t z,z_number;
+  unsigned int bits_per_block;
 
   z = next_zone++;
   b = z;
   if ((b + 1) > nrblocks)
 	pexit("File system not big enough for all the files");
   put_block(b, zero);	/* give an empty zone */
-  /* DEBUG FIXME.  This assumes the bit is in the first zone map block. */
-  insert_bit(zone_map, (int) (z - zoff));	/* lint, NOT OK because
+
+  
+  bits_per_block = block_size * 8;
+  /* translate to block number */
+  z_number = z - zoff;
+
+  insert_bit(zone_map  + ( z_number / bits_per_block ), (int) (z_number % bits_per_block ));	/* lint, NOT OK because
 						 * z hasn't been broken
 						 * up into block +
 						 * offset yet. */
-  return(z);
+  return z;
 }
 
 
@@ -1022,6 +1030,8 @@ int bit;
 
   buf = (bitchunk_t *) alloc_block();
 
+  assert(bit >=0);
+  assert(bit < block_size * 8);
   get_block(block, (char *) buf);
   w = bit / (8 * sizeof(bitchunk_t));
   s = bit % (8 * sizeof(bitchunk_t));
@@ -1363,6 +1373,8 @@ block_t n;
   int w, s, mask, r;
 
   w = n / 8;
+  
+  assert(n < nrblocks);
   if(w >= umap_array_elements) {
 	pexit("umap array too small - this can't happen");
   }
