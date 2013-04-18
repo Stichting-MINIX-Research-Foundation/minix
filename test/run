@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Are we running as root?
+unset ROOT
+if [ "`id -u`" = 0 ]
+then	ROOT=yes
+fi
+
 # Initialization
 PATH=:/bin:/usr/bin
 export PATH
@@ -15,7 +21,7 @@ badones=			# list of tests that failed
 setuids="test11 test33 test43 test44 test46 test56 test60 test61 test65 \
 	 test69"
 
-tests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
+alltests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
          21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
          41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 \
          61 62 63 64 65 66 67 68 69\
@@ -23,11 +29,27 @@ tests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
 tests_no=`expr 0`
 
 # Directory must be owned by bin
-[ "$USER" != root ] || chown bin .
+[ "$ROOT" ] || chown bin .
 
 # If root, make sure the setuid tests have the correct permissions
-[ "$USER" = root ] && chown root ${setuids}
-[ "$USER" = root ] && chmod 4755 ${setuids}
+[ "$ROOT" ] && chown root ${setuids}
+[ "$ROOT" ] && chmod 4755 ${setuids}
+
+tests=$alltests
+
+# Are we given any args? If so, we might have to give
+# or change our testlist
+while getopts 'lt:' opt
+do
+	case $opt in
+	l)	echo "$alltests"
+		exit 0
+		;;
+	t)      tests="$OPTARG"
+		;;
+	?)      echo "Usage: run [-l] [-t testlist]" >&2; exit 1
+	esac
+done
 
 # Count tests
 for i in `echo $tests`; do
@@ -36,10 +58,13 @@ for i in `echo $tests`; do
    fi
 done
 
-# Print test welcome message
-clear
-echo "Running POSIX compliance test suite. There are $tests_no tests in total."
-echo " "
+if [ "$tests" = "$alltests" ]
+then	# Print test welcome message
+	clear
+	echo -n "Running POSIX compliance test suite. "
+	echo "There are $tests_no tests in total."
+	echo " "
+fi
 
 # Provide an argument for test63
 ARGS_63=`pwd`/mod
@@ -54,7 +79,7 @@ do
       unset ARG
       testid="`echo $i | sed 's/\..*//'`"
       ARG=`eval echo "\\${ARGS_$testid}"`
-      if [ "$USER" = root ]
+      if [ "$ROOT" ]
          then su - bin -c "cd `pwd`; ./test$i $ARG" || FAIL=1
          else ./test$i $ARG || FAIL=1
       fi
@@ -69,12 +94,14 @@ do
 done
 
 # Print results of the tests.
-echo " "
-if test $total = $passed
-   then echo All $passed tests completed without error \($skipped skipped\).
-   else echo Testing completed. Score: $passed passed, $failed failed, \
-             skipped $skipped
-        echo The following tests failed: $badones
+if [ "$tests" = "$alltests" ]
+then	echo " "
+	if test $total = $passed
+	   then echo All $passed tests completed without error \($skipped skipped\).
+	   else echo Testing completed. Score: $passed passed, $failed failed, \
+	             skipped $skipped
+	        echo The following tests failed: $badones
+	fi
 fi
 
 # echo " "
