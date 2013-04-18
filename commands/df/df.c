@@ -171,7 +171,8 @@ struct mtab *searchtab(char *name)
 
 int df(const struct mtab *mt)
 {
-  long totblocks, busyblocks, totinodes, busyinodes;
+  fsblkcnt_t totblocks, busyblocks;
+  fsfilcnt_t totinodes, busyinodes;
   struct statvfs sv;
   int n;
 
