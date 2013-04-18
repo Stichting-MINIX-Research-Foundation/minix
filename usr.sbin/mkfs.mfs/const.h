@@ -2,8 +2,6 @@
 #define __MFS_CONST_H__
 
 /* Tables sizes */
-#define V1_NR_DZONES       7	/* # direct zone numbers in a V1 inode */
-#define V1_NR_TZONES       9	/* total # zone numbers in a V1 inode */
 #define V2_NR_DZONES       7	/* # direct zone numbers in a V2 inode */
 #define V2_NR_TZONES      10	/* total # zone numbers in a V2 inode */
 
@@ -81,16 +79,6 @@
 #define FS_BITMAP_CHUNKS(b) ((b)/usizeof (uint32_t))/* # map chunks/blk   */
 #define FS_BITCHUNK_BITS		(usizeof(uint32_t) * CHAR_BIT)
 #define FS_BITS_PER_BLOCK(b)	(FS_BITMAP_CHUNKS(b) * FS_BITCHUNK_BITS)
-
-/* Derived sizes pertaining to the V1 file system. */
-#define V1_ZONE_NUM_SIZE           usizeof (uint16_t)  /* # bytes in V1 zone  */
-#define V1_INODE_SIZE             usizeof (d1_inode)  /* bytes in V1 dsk ino */
-
-/* # zones/indir block */
-#define V1_INDIRECTS (_STATIC_BLOCK_SIZE/V1_ZONE_NUM_SIZE)  
-
-/* # V1 dsk inodes/blk */
-#define V1_INODES_PER_BLOCK (_STATIC_BLOCK_SIZE/V1_INODE_SIZE)
 
 /* Derived sizes pertaining to the V2 file system. */
 #define V2_ZONE_NUM_SIZE            usizeof (uint32_t)  /* # bytes in V2 zone  */
