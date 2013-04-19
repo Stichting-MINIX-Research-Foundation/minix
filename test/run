@@ -28,12 +28,13 @@ alltests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
 	 sh1.sh sh2.sh interp.sh"
 tests_no=`expr 0`
 
-# Directory must be owned by bin
-[ "$ROOT" ] || chown bin .
-
 # If root, make sure the setuid tests have the correct permissions
-[ "$ROOT" ] && chown root ${setuids}
-[ "$ROOT" ] && chmod 4755 ${setuids}
+# and make the dir bin-owned.
+if [ "$ROOT" ]
+then	chown bin .
+	chown root ${setuids}
+	chmod 4755 ${setuids}
+fi
 
 tests=$alltests
 
