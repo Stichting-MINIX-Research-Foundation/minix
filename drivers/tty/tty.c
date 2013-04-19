@@ -130,12 +130,12 @@ static void reset_color(tty_t *tp);
 
 /* Default attributes. */
 static struct termios termios_defaults = {
-  TINPUT_DEF, TOUTPUT_DEF, TCTRL_DEF, TLOCAL_DEF, TSPEED_DEF, TSPEED_DEF,
+  TINPUT_DEF, TOUTPUT_DEF, TCTRL_DEF, TLOCAL_DEF,
   {
 	TEOF_DEF, TEOL_DEF, TERASE_DEF, TINTR_DEF, TKILL_DEF, TMIN_DEF,
 	TQUIT_DEF, TTIME_DEF, TSUSP_DEF, TSTART_DEF, TSTOP_DEF,
 	TREPRINT_DEF, TLNEXT_DEF, TDISCARD_DEF,
-  },
+  }, TSPEED_DEF, TSPEED_DEF,
 };
 static struct winsize winsize_defaults;	/* = all zeroes */
 
