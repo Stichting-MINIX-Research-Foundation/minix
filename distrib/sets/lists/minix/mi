@@ -439,6 +439,7 @@
 ./usr/bin/tic				minix-sys
 ./usr/bin/time				minix-sys
 ./usr/bin/top				minix-sys
+./usr/bin/toproto			minix-sys
 ./usr/bin/touch				minix-sys
 ./usr/bin/tput				minix-sys
 ./usr/bin/tr				minix-sys

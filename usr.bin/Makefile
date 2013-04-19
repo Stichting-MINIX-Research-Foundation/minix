@@ -27,6 +27,7 @@ SUBDIR= \
 	sort stat su \
 	tic tput \
 	tsort \
+	toproto \
 	uniq \
 	\
 	\

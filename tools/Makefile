@@ -64,6 +64,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		lorder makewhatis mkdep mtree nbperf .WAIT tsort \
 		m4 \
 	.WAIT mkfs.mfs \
+	.WAIT toproto \
 	.WAIT yacc \
 	.WAIT awk \
 	.WAIT tic \
