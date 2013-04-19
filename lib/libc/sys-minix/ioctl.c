@@ -46,7 +46,7 @@ static void rewrite_i2c_minix_to_netbsd(i2c_ioctl_exec_t *out,
 
 int ioctl(fd, request, data)
 int fd;
-int request;
+unsigned long request;
 void *data;
 {
   int r, request_save;
