@@ -59,6 +59,13 @@ for i in `echo $tests`; do
    fi
 done
 
+# 
+if [  $tests_no -eq 0 ]
+then
+	echo "No test binaries found. did you compile?"
+	exit 1
+fi
+
 if [ "$tests" = "$alltests" ]
 then	# Print test welcome message
 	clear
@@ -103,6 +110,12 @@ then	echo " "
 	             skipped $skipped
 	        echo The following tests failed: $badones
 	fi
+fi
+
+# if any test failed return an error
+if [ $failed -gt 0 ] 
+then
+	exit 1
 fi
 
 # echo " "
