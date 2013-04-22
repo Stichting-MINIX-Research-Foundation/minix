@@ -116,7 +116,7 @@ int vm_unmap(endpoint_t endpt, void *addr)
 	return _syscall(VM_PROC_NR, VM_SHM_UNMAP, &m);
 }
 
-unsigned long vm_getphys(int endpt, void *addr)
+unsigned long vm_getphys(endpoint_t endpt, void *addr)
 {
 	message m;
 	int r;

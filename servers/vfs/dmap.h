@@ -14,8 +14,8 @@
  */
 
 extern struct dmap {
-  int(*dmap_opcl) (int, dev_t, int, int);
-  int(*dmap_io) (int, message *);
+  int(*dmap_opcl) (int, dev_t, endpoint_t, int);
+  int(*dmap_io) (endpoint_t, message *);
   endpoint_t dmap_driver;
   char dmap_label[LABEL_MAX];
   int dmap_flags;

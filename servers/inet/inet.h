@@ -90,7 +90,7 @@ void inet_panic(void) _NORETURN;
 	do { if (((level) & DEBUG) && (condition)) \
 		{ where(); code; } } while(0)
 
-extern int this_proc;
+extern endpoint_t this_proc;
 extern char version[];
 
 #ifndef HZ

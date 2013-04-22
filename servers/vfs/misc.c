@@ -505,7 +505,7 @@ static void free_proc(struct fproc *exiter, int flags)
  *				pm_exit					     *
  *===========================================================================*/
 void pm_exit(proc)
-int proc;
+endpoint_t proc;
 {
 /* Perform the file system portion of the exit(status) system call. */
   int exitee_p;
@@ -520,7 +520,7 @@ int proc;
  *				pm_setgid				     *
  *===========================================================================*/
 void pm_setgid(proc_e, egid, rgid)
-int proc_e;
+endpoint_t proc_e;
 int egid;
 int rgid;
 {
@@ -539,7 +539,7 @@ int rgid;
  *				pm_setgroups				     *
  *===========================================================================*/
 void pm_setgroups(proc_e, ngroups, groups)
-int proc_e;
+endpoint_t proc_e;
 int ngroups;
 gid_t *groups;
 {
@@ -562,7 +562,7 @@ gid_t *groups;
  *				pm_setuid				     *
  *===========================================================================*/
 void pm_setuid(proc_e, euid, ruid)
-int proc_e;
+endpoint_t proc_e;
 int euid;
 int ruid;
 {

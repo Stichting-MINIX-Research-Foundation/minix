@@ -393,7 +393,7 @@ static int cancel_nblock(struct dmap * dp,
 int dev_io(
   int op,			/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
   dev_t dev,			/* major-minor device number */
-  int proc_e,			/* in whose address space is buf? */
+  endpoint_t proc_e,			/* in whose address space is buf? */
   void *buf,			/* virtual address of the buffer */
   u64_t pos,			/* byte position */
   size_t bytes,			/* how many bytes to transfer */
@@ -827,7 +827,7 @@ int ctty_io(
 int no_dev(
   int UNUSED(op),		/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t UNUSED(dev),		/* device to open or close */
-  int UNUSED(proc),		/* process to open/close for */
+  endpoint_t UNUSED(proc),		/* process to open/close for */
   int UNUSED(flags)		/* mode bits and flags */
 )
 {
@@ -852,7 +852,7 @@ int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
 int clone_opcl(
   int op,			/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t dev,			/* device to open or close */
-  int proc_e,			/* process to open/close for */
+  endpoint_t proc_e,			/* process to open/close for */
   int flags			/* mode bits and flags */
 )
 {
