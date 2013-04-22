@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
-
-if [ `id -u` -ne 0 ]
-then	echo "This script should be running as root calling sudo"
-	sudo $0
-	exit 1
-fi
+#set -x
 
 : ${ARCH=evbearm-el}
 : ${OBJ=../obj.${ARCH}}
@@ -14,13 +9,13 @@ fi
 : ${JOBS=-j4}
 : ${DESTDIR=${OBJ}/destdir.$ARCH}
 : ${FSTAB=${DESTDIR}/etc/fstab}
-
-: ${MP_MINIX=/tmp/minix}
-: ${MP_BOOT=/tmp/minixboot}
-
-: ${LOOP=/dev/loop0}
-: ${EMPTYIMG=minix_arm_sd_empty.img}
+#
+# Directory where to store temporary file system images
+#
+: ${IMG_DIR=${OBJ}/img}
 : ${IMG=minix_arm_sd.img}
+: ${MLO=MLO}
+: ${UBOOT=u-boot.img}
 
 BUILDSH=build.sh
 
@@ -29,93 +24,205 @@ then	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
 	exit 1
 fi
 
-if [ ! -f ${EMPTYIMG}.bz2 ]
-then	echo Retrieving ${EMPTYIMG}
-	wget http://www.minix3.org/arm/${EMPTYIMG}.bz2
-fi
+for needed in sfdisk mcopy dd wget mkfs.vfat
+do
+	if ! which $needed 2>&1 > /dev/null
+	then
+		echo "**Skipping image creation: missing tool '$needed'"
+		exit 1
+	fi
+done
 
-if [ ! -f $IMG ]
-then	echo decompressing ${EMPTYIMG} onto ${IMG}
-	bzip2 -d -k ${EMPTYIMG}.bz2
-	mv ${EMPTYIMG} ${IMG}
-fi
+#
+# Artifacts from this script are stored in the IMG_DIR
+#
+mkdir -p $IMG_DIR
 
-# remove fstab and generated pw db
-rm -rf ${DESTDIR}/etc
+#
+# Download the stage 1 bootloader  and u-boot
+#
+for i in ${MLO} ${UBOOT} 
+do
+	if [ ! -f ${IMG_DIR}/${i} ]
+	then
+		if ! wget -O ${IMG_DIR}/$i http://www.minix3.org/arm/beagleboard-xm/$i
+		then
+			echo "Failed to download $i"
+			rm -f ${IMG_DIR}/$i
+			exit 1
+		fi
+		
+	fi
+done
 
-sh build.sh ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} -u distribution 
+#
+# Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
+#
+sh build.sh -V SLOPPY_FLIST=yes ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} -U -u distribution 
 
+#
+# This script creates a bootable image and should at some point in the future
+# be replaced by makefs.
+#
+# All sized are written in 512 byte blocks
+#
+# we create a disk image of about 2 gig's
+# 
+# The size of the extended partition where we store 
+# /root /home and /usr in separate sub partitions is
+# about 1 gig
+#
+IMG_SIZE=$((2**31 / 512))
+FAT_SIZE=$((20480))
+EXTENDED_SIZE=$((2**30 / 512))
+ROOT_SIZE=$((2**26 / 512))
+HOME_SIZE=$((2**27 / 512))
+USR_SIZE=$((2**28 / 512))
+
+#
+# create a fstab entry in /etc this is normally done during the
+# setup phase on x86
+#
 cat >${FSTAB} <<END_FSTAB
 /dev/c0d0p1s0   /       mfs     rw                      0       1
-/dev/c0d0p1s2   /usr    mfs     rw                      0       2
 /dev/c0d0p1s1   /home   mfs     rw                      0       2
+/dev/c0d0p1s2   /usr    mfs     rw                      0       2
 END_FSTAB
 
 rm -f ${DESTDIR}/SETS.*
 
 ${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
 
+
 #
-# The output from the command bellows are redirected to prevent confusion.
-# they are supposed to fail unless the previous build was aborted.
+# Now given the sizes above use DD to create separate files representing
+# the partitions we are going to use.
 #
-umount ${MP_MINIX}/home 2>/dev/null || true
-umount ${MP_MINIX}/usr 2>/dev/null || true
-umount ${MP_MINIX} 2>/dev/null || true
-umount ${MP_BOOT} 2>/dev/null || true
-losetup -d ${LOOP} 2>/dev/null || true
+dd if=/dev/zero of=${IMG_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1))
+dd if=/dev/zero of=${IMG_DIR}/root.img bs=512 count=1 seek=$(($ROOT_SIZE -1))
+dd if=/dev/zero of=${IMG_DIR}/home.img bs=512 count=1 seek=$(($HOME_SIZE -1))
+dd if=/dev/zero of=${IMG_DIR}/usr.img bs=512 count=1 seek=$(($USR_SIZE -1))
 
-echo "Mounting disk image."
-losetup ${LOOP} $IMG
+#
+# Create the empty image where we later will but the partitions in
+#
+dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
 
-${CROSS_TOOLS}/nbmkfs.mfs ${LOOP}p5
-${CROSS_TOOLS}/nbmkfs.mfs ${LOOP}p6
-${CROSS_TOOLS}/nbmkfs.mfs ${LOOP}p7
 
-mkdir -p ${MP_BOOT}
-mount ${LOOP}p1 ${MP_BOOT}
+#
+# Do some math to determine the start addresses of the partitions.
+#
+FAT_START=2048
+EXTENDED_START=$(($FAT_START + $FAT_SIZE))
+EXTENDED_SIZE=$(($ROOT_SIZE + $HOME_SIZE + $USR_SIZE + 3))
+ROOT_START=$(($EXTENDED_START + 1))
+HOME_START=$(($ROOT_START + $ROOT_SIZE + 1))
+USR_START=$(($HOME_START + $HOME_SIZE + 1))
 
-mkdir -p ${MP_MINIX}
-mount ${LOOP}p5 ${MP_MINIX}
+#
+# Generate the partitions using sfdisk to partition the
+#
+sfdisk --no-reread -q ${IMG} <<END_SFDISK
+# partition table of test.img
+unit: sectors
 
-mkdir -p ${MP_MINIX}/home
-mkdir -p ${MP_MINIX}/usr
-mount ${LOOP}p6 ${MP_MINIX}/home
-mount ${LOOP}p7 ${MP_MINIX}/usr
+test.img1 : start=     $FAT_START, size=    $FAT_SIZE, Id= c, bootable
+test.img2 : start=    $EXTENDED_START, size=  $EXTENDED_SIZE, Id= 5
+test.img3 : start=        0, size=        0, Id= 0
+test.img4 : start=        0, size=        0, Id= 0
+test.img5 : start=    $ROOT_START, size=   $ROOT_SIZE, Id=81
+test.img6 : start=   $HOME_START, size=   $HOME_SIZE, Id=81
+test.img7 : start=   $USR_START, size=   $USR_SIZE, Id=81
+END_SFDISK
 
-echo "Synchronizing filesystem with newly built binaries."
-rsync -a ${DESTDIR}/ ${MP_MINIX}/
+#
+# Format the fat partition and put the bootloaders
+# uEnv and the kernel command line in the FAT partition
+#
+mkfs.vfat ${IMG_DIR}/fat.img
 
-echo "Copying configuration and boot modules."
-cp releasetools/uEnv.txt releasetools/cmdline.txt ${MP_BOOT}
+echo "Copying configuration kernel and boot modules"
+mcopy -bsp -i ${IMG_DIR}/fat.img  ${IMG_DIR}/$MLO ::MLO
+mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/$UBOOT ::u-boot.img
+mcopy -bsp -i ${IMG_DIR}/fat.img releasetools/uEnv.txt ::uEnv.txt
+mcopy -bsp -i ${IMG_DIR}/fat.img releasetools/cmdline.txt ::cmdline.txt
 
-# also copy to the obj directory to allow tftp booting
-# using obj dir as root
-cp releasetools/uEnv.txt releasetools/cmdline.txt ${OBJ}
 
+#
+# Do some last processing of the kernel and servers before also putting
+# them on the FAT
+#
 ${CROSS_PREFIX}objcopy ${OBJ}/kernel/kernel -O binary ${OBJ}/kernel.bin
-cp ${OBJ}/kernel.bin ${MP_BOOT}
+
+mcopy -bsp -i ${IMG_DIR}/fat.img ${OBJ}/kernel.bin ::kernel.bin
 
 for f in vm rs pm sched vfs ds mfs pfs init
 do
     cp ${OBJ}/servers/${f}/${f} ${OBJ}/${f}.elf
     ${CROSS_PREFIX}strip -s ${OBJ}/${f}.elf
-    cp ${OBJ}/${f}.elf ${MP_BOOT}
+    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${f}.elf ::${f}.elf
 done
 
 for f in tty memory log
 do
     cp ${OBJ}/drivers/${f}/${f} ${OBJ}/${f}.elf
     ${CROSS_PREFIX}strip -s ${OBJ}/${f}.elf
-    cp ${OBJ}/${f}.elf ${MP_BOOT}
+    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${f}.elf ::${f}.elf
 done
 
-# Unmount disk image
-echo "Unmounting disk image"
-sync
 
-umount ${MP_MINIX}/home
-umount ${MP_MINIX}/usr
-umount ${MP_MINIX}
-umount ${MP_BOOT}
-losetup -d ${LOOP}
+#
+# make the different file system. this part is *also* hacky. We first convert
+# the METALOG.sanitised using mtree into a input METALOG containing uids and
+# gids.
+# Afther that we do some magic processing to add device nodes (also missing from METALOG)
+# and convert the METALOG into a proto file that can be used by mkfs.mfs
+#
+echo "creating the file systems"
+
+
+#
+# read METALOG and use mtree to conver the user and group names into uid and gids
+# FIX put "input somwhere clean"
+#
+cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C > ${IMG_DIR}/input
+
+# add fstab
+echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
+
+
+# fill root.img (skipping /usr entries while keeping the /usr directory)
+cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.in
+#
+# add device nodes somewhere in the middle of the proto file. Better would be to add the entries in the
+# original METALOG
+# grab the first part
+grep -B 10000 "^ dev"  ${IMG_DIR}/root.in >  ${IMG_DIR}/root.proto
+# add the device nodes from the ramdisk
+cat  ${OBJ}/drivers/ramdisk/proto.dev >> ${IMG_DIR}/root.proto
+# and add the rest of the file
+grep -A 10000 "^ dev"  ${IMG_DIR}/root.in | tail -n +2    >>  ${IMG_DIR}/root.proto
+rm ${IMG_DIR}/root.in
+
+#
+# Create proto files for /usr and /home using toproto.
+#
+cat ${IMG_DIR}/input  | grep  "^\./usr/\|^. "  | sed "s,\./usr,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/usr -o ${IMG_DIR}/usr.proto
+cat ${IMG_DIR}/input  | grep  "^\./home/\|^. "  | sed "s,\./home,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/home -o ${IMG_DIR}/home.proto
+
+# fill /root /usr and /home the numbers here need to be tweaked to match full partitions
+# This part needs fixing: no more magic numbers. It should be possible to call mkfs.mfs -b $((SIZE / 8))
+#
+#${CROSS_TOOLS}/nbmkfs.mfs  -b $((102400 / 8)) -x 20 ${IMG_DIR}/root.img ${IMG_DIR}/root.proto
+${CROSS_TOOLS}/nbmkfs.mfs -x 30 ${IMG_DIR}/root.img ${IMG_DIR}/root.proto
+${CROSS_TOOLS}/nbmkfs.mfs -x 30  ${IMG_DIR}/usr.img ${IMG_DIR}/usr.proto
+${CROSS_TOOLS}/nbmkfs.mfs -x 30  ${IMG_DIR}/home.img ${IMG_DIR}/home.proto
+
+#
+# Merge the partitions into a single image.
+#
+echo "Merging file systems"
+dd if=${IMG_DIR}/fat.img of=${IMG} seek=$FAT_START conv=notrunc
+dd if=${IMG_DIR}/root.img of=${IMG} seek=$ROOT_START conv=notrunc
+dd if=${IMG_DIR}/home.img of=${IMG} seek=$HOME_START conv=notrunc
+dd if=${IMG_DIR}/usr.img of=${IMG} seek=$USR_START conv=notrunc

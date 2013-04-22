@@ -1,3 +1,8 @@
+20130422:
+	The ARM build no longer requires you to build as root user you
+	therefore need to wipe (or chmod) your build generated files 
+	and start building using the -U option of build.sh. 
+
 20130312:
 	/bin/ksh was imported and needs to be added to your /etc/shells.
 	Run this command to add it:
