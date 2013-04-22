@@ -108,11 +108,11 @@ int	munmap(void *, size_t);
 void *	minix_mmap(void *, size_t, int, int, int, off_t);
 void *	minix_mmap_for(endpoint_t, void *, size_t, int, int, int, off_t);
 int	minix_munmap(void *, size_t);
-void *		vm_remap(int d, int s, void *da, void *sa, size_t si);
-void *		vm_remap_ro(int d, int s, void *da, void *sa, size_t si);
-int 		vm_unmap(int endpt, void *addr);
-unsigned long 	vm_getphys(int endpt, void *addr);
-u8_t 		vm_getrefcount(int endpt, void *addr);
+void *		vm_remap(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
+void *		vm_remap_ro(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
+int 		vm_unmap(endpoint_t endpt, void *addr);
+unsigned long 	vm_getphys(endpoint_t endpt, void *addr);
+u8_t 		vm_getrefcount(endpoint_t endpt, void *addr);
 #endif /* __minix */
 __END_DECLS
 
