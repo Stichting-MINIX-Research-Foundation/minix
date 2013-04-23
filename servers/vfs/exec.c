@@ -155,7 +155,7 @@ static int get_read_vp(struct vfs_exec_info *execi,
 	else if ((r = forbidden(fp, execi->vp, X_BIT)) != OK)
 		return r;
 	else
-		r = req_stat(execi->vp->v_fs_e, execi->vp->v_inode_nr,
+		r = req_stat(execi->vp->v_vmnt, execi->vp->v_inode_nr,
 			VFS_PROC_NR, (vir_bytes) &(execi->sb));
 
 	if (r != OK) return r;
@@ -499,7 +499,7 @@ char path[PATH_MAX];		/* path to script file */
   pos = 0;	/* Read from the start of the file */
 
   /* Issue request */
-  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
+  r = req_readwrite(vp->v_vmnt, vp->v_inode_nr, cvul64(pos), READING,
 		    VFS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
   if (r != OK) return(r);
 
@@ -624,11 +624,11 @@ static int read_seg(struct exec_info *execi, off_t off, off_t seg_addr, size_t s
   if (off + seg_bytes > LONG_MAX) return(EIO);
   if ((unsigned long) vp->v_size < off+seg_bytes) return(EIO);
 
-  if ((r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(off), READING,
+  if ((r = req_readwrite(vp->v_vmnt, vp->v_inode_nr, cvul64(off), READING,
 		 execi->proc_e, (char*)seg_addr, seg_bytes,
 		 &new_pos, &cum_io)) != OK) {
-    printf("VFS: read_seg: req_readwrite failed (data)\n");
-    return(r);
+	printf("VFS: read_seg: req_readwrite failed (data)\n");
+	return(r);
   }
 
   if (r == OK && cum_io != seg_bytes)
@@ -670,7 +670,7 @@ static int map_header(struct vfs_exec_info *execi)
   execi->args.hdr_len = MIN(execi->vp->v_size, sizeof(hdr));
   execi->args.hdr = hdr;
 
-  r = req_readwrite(execi->vp->v_fs_e, execi->vp->v_inode_nr,
+  r = req_readwrite(execi->vp->v_vmnt, execi->vp->v_inode_nr,
   	cvul64(pos), READING, VFS_PROC_NR, hdr,
 	execi->args.hdr_len, &new_pos, &cum_io);
   if (r != OK) {

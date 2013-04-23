@@ -24,7 +24,7 @@ typedef struct filp * filp_id_t;
 /* comm.c */
 int drv_sendrec(endpoint_t drv_e, message *reqm);
 void fs_cancel(struct vmnt *vmp);
-int fs_sendrec(endpoint_t fs_e, message *reqm);
+int fs_sendrec(struct vmnt *vmp, message *reqm);
 void fs_sendmore(struct vmnt *vmp);
 void send_work(void);
 
@@ -219,53 +219,54 @@ int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
 	size_t req_size);
 
 /* request.c */
-int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, u64_t pos,
+int req_breadwrite(struct vmnt *vmp, endpoint_t user_e, dev_t dev, u64_t pos,
 	unsigned int num_of_bytes, char *user_addr, int rw_flag,
 	u64_t *new_posp, unsigned int *cum_iop);
-int req_chmod(int fs_e, ino_t inode_nr, mode_t rmode, mode_t *new_modep);
-int req_chown(endpoint_t fs_e, ino_t inode_nr, uid_t newuid, gid_t newgid,
+int req_chmod(struct vmnt *vmp, ino_t inode_nr, mode_t rmode, mode_t *newmodep);
+int req_chown(struct vmnt *vmp, ino_t inode_nr, uid_t newuid, gid_t newgid,
 	mode_t *new_modep);
-int req_create(int fs_e, ino_t inode_nr, int omode, uid_t uid, gid_t gid,
-	char *path, node_details_t *res);
-int req_flush(endpoint_t fs_e, dev_t dev);
-int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
-int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
-int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
-int req_getdents(endpoint_t fs_e, ino_t inode_nr, u64_t pos, char *buf,
+int req_create(struct vmnt *vmp, ino_t inode_nr, int omode, uid_t uid,
+	gid_t gid, char *path, node_details_t *res);
+int req_flush(struct vmnt *vmp, dev_t dev);
+int req_fstatfs(struct vmnt *vmp, endpoint_t proc_e, vir_bytes buf);
+int req_statvfs(struct vmnt *vmp, endpoint_t proc_e, vir_bytes buf);
+int req_ftrunc(struct vmnt *vmp, ino_t inode_nr, off_t start, off_t end);
+int req_getdents(struct vmnt *vmp, ino_t inode_nr, u64_t pos, char *buf,
 	size_t size, u64_t *new_pos, int direct);
-int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
-int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,
+int req_inhibread(struct vmnt *vmp, ino_t inode_nr);
+int req_link(struct vmnt *vmp, ino_t link_parent, char *lastc,
 	ino_t linked_file);
-int req_lookup(endpoint_t fs_e, ino_t dir_ino, ino_t root_ino, uid_t uid,
+int req_lookup(struct vmnt *vmp, ino_t dir_ino, ino_t root_ino, uid_t uid,
 	gid_t gid, struct lookup *resolve, lookup_res_t *res,
 	struct fproc *rfp);
-int req_mkdir(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
+int req_mkdir(struct vmnt *vmp, ino_t inode_nr, char *lastc, uid_t uid,
 	gid_t gid, mode_t dmode);
-int req_mknod(endpoint_t fs_e, ino_t inode_nr, char *lastc, uid_t uid,
+int req_mknod(struct vmnt *vmp, ino_t inode_nr, char *lastc, uid_t uid,
 	gid_t gid, mode_t dmode, dev_t dev);
-int req_mountpoint(endpoint_t fs_e, ino_t inode_nr);
-int req_newnode(endpoint_t fs_e, uid_t uid, gid_t gid, mode_t dmode, dev_t dev,
+int req_mountpoint(struct vmnt *vmp, ino_t inode_nr);
+int req_newnode(struct vmnt *vmp, uid_t uid, gid_t gid, mode_t dmode, dev_t dev,
 	struct node_details *res);
-int req_putnode(int fs_e, ino_t inode_nr, int count);
-int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
+int req_putnode(struct vmnt *vmp, ino_t inode_nr, int count);
+int req_rdlink(struct vmnt *vmp, ino_t inode_nr, endpoint_t proc_e,
 	vir_bytes buf, size_t len, int direct);
-int req_readsuper(endpoint_t fs_e, char *driver_name, dev_t dev, int readonly,
+int req_readsuper(struct vmnt *vmp, char *driver_name, dev_t dev, int readonly,
 	int isroot, struct node_details *res_nodep, int *con_reqs);
-int req_readwrite(endpoint_t fs_e, ino_t inode_nr, u64_t pos, int rw_flag,
+int req_readwrite(struct vmnt *vmp, ino_t inode_nr, u64_t pos, int rw_flag,
 	endpoint_t user_e, char *user_addr, unsigned int num_of_bytes,
 	u64_t *new_posp, unsigned int *cum_iop);
-int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
+int req_rename(struct vmnt *vmp, ino_t old_dir, char *old_name, ino_t new_dir,
 	char *new_name);
-int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);
-int req_slink(endpoint_t fs_e, ino_t inode_nr, char *lastc, endpoint_t proc_e,
+int req_rmdir(struct vmnt *vmp, ino_t inode_nr, char *lastc);
+int req_slink(struct vmnt *vmp, ino_t inode_nr, char *lastc, endpoint_t proc_e,
 	vir_bytes path_addr, size_t path_length, uid_t uid, gid_t gid);
-int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf);
-int req_sync(endpoint_t fs_e);
-int req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc);
-int req_unmount(endpoint_t fs_e);
-int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actv,
+int req_stat(struct vmnt *vmp, ino_t inode_nr, endpoint_t proc_e,
+	vir_bytes buf);
+int req_sync(struct vmnt *vmp);
+int req_unlink(struct vmnt *vmp, ino_t inode_nr, char *lastc);
+int req_unmount(struct vmnt *vmp);
+int req_utime(struct vmnt *vmp, ino_t inode_nr, struct timespec * actv,
 	struct timespec * modtv);
-int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
+int req_newdriver(struct vmnt *vmp, dev_t dev, char *label);
 
 /* stadir.c */
 int do_chdir(message *m_out);

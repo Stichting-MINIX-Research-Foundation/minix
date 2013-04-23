@@ -83,7 +83,7 @@ int do_chmod(message *UNUSED(m_out))
 	if (fp->fp_effuid != SU_UID && vp->v_gid != fp->fp_effgid)
 		new_mode &= ~I_SET_GID_BIT;
 
-	r = req_chmod(vp->v_fs_e, vp->v_inode_nr, new_mode, &result_mode);
+	r = req_chmod(vp->v_vmnt, vp->v_inode_nr, new_mode, &result_mode);
 	if (r == OK)
 		vp->v_mode = result_mode;
   }
@@ -163,7 +163,7 @@ int do_chown(message *UNUSED(m_out))
 
 	if (new_uid > UID_MAX || new_gid > GID_MAX)
 		r = EINVAL;
-	else if ((r = req_chown(vp->v_fs_e, vp->v_inode_nr, new_uid, new_gid,
+	else if ((r = req_chown(vp->v_vmnt, vp->v_inode_nr, new_uid, new_gid,
 				&new_mode)) == OK) {
 		vp->v_uid = new_uid;
 		vp->v_gid = new_gid;

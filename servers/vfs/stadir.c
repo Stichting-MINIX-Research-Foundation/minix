@@ -177,7 +177,7 @@ int do_stat(message *UNUSED(m_out))
 
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf);
+  r = req_stat(vp->v_vmnt, vp->v_inode_nr, who_e, statbuf);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -202,7 +202,7 @@ int do_fstat(message *UNUSED(m_out))
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
-  r = req_stat(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
+  r = req_stat(rfilp->filp_vno->v_vmnt, rfilp->filp_vno->v_inode_nr,
 	       who_e, statbuf);
 
   unlock_filp(rfilp);
@@ -226,7 +226,7 @@ int do_fstatfs(message *UNUSED(m_out))
   /* Is the file descriptor valid? */
   if( (rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
-  r = req_fstatfs(rfilp->filp_vno->v_fs_e, who_e, statbuf);
+  r = req_fstatfs(rfilp->filp_vno->v_vmnt, who_e, statbuf);
 
   unlock_filp(rfilp);
 
@@ -257,7 +257,7 @@ int do_statvfs(message *UNUSED(m_out))
 
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_statvfs(vp->v_fs_e, who_e, statbuf);
+  r = req_statvfs(vp->v_vmnt, who_e, statbuf);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -281,7 +281,7 @@ int do_fstatvfs(message *UNUSED(m_out))
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
-  r = req_statvfs(rfilp->filp_vno->v_fs_e, who_e, statbuf);
+  r = req_statvfs(rfilp->filp_vno->v_vmnt, who_e, statbuf);
 
   unlock_filp(rfilp);
 
@@ -312,7 +312,7 @@ int do_lstat(message *UNUSED(m_out))
 
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, statbuf);
+  r = req_stat(vp->v_vmnt, vp->v_inode_nr, who_e, statbuf);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);

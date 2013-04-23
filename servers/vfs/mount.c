@@ -73,7 +73,7 @@ static void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 				continue;
 			}
 
-			if ((r = req_newdriver(fs_e, vp->v_sdev,
+			if ((r = req_newdriver(find_vmnt(fs_e), vp->v_sdev,
 					dp->dmap_label)) != OK) {
 				printf("VFS: Failed to send new driver label"
 				       " for moved block special file to %d\n",
@@ -210,8 +210,14 @@ char mount_label[LABEL_MAX] )
   }
   if ((r = lock_vmnt(new_vmp, VMNT_EXCL)) != OK) return(r);
 
+  /* Store some essential vmnt data first */
+  new_vmp->m_fs_e = fs_e;
+  new_vmp->m_dev = dev;
+  if (rdonly) new_vmp->m_flags |= VMNT_READONLY;
+  else new_vmp->m_flags &= ~VMNT_READONLY;
   strlcpy(new_vmp->m_mount_path, mount_path, PATH_MAX);
   strlcpy(new_vmp->m_mount_dev, mount_dev, PATH_MAX);
+
   isroot = (strcmp(mount_path, "/") == 0);
   mount_root = (isroot && have_root < 2); /* Root can be mounted twice:
 					   * 1: ramdisk
@@ -227,7 +233,7 @@ char mount_label[LABEL_MAX] )
 		r = err_code;
 	else if (vp->v_ref_count == 1) {
 		/*Tell FS on which vnode it is mounted (glue into mount tree)*/
-		r = req_mountpoint(vp->v_fs_e, vp->v_inode_nr);
+		r = req_mountpoint(vp->v_vmnt, vp->v_inode_nr);
 	} else
 		r = EBUSY;
 
@@ -271,15 +277,9 @@ char mount_label[LABEL_MAX] )
   rfp = &fproc[slot];
   rfp->fp_flags |= FP_SRV_PROC;	/* File Servers are also services */
 
-  /* Store some essential vmnt data first */
-  new_vmp->m_fs_e = fs_e;
-  new_vmp->m_dev = dev;
-  if (rdonly) new_vmp->m_flags |= VMNT_READONLY;
-  else new_vmp->m_flags &= ~VMNT_READONLY;
-
   /* Tell FS which device to mount */
   new_vmp->m_flags |= VMNT_MOUNTING;
-  r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res, &con_reqs);
+  r = req_readsuper(new_vmp, label, dev, rdonly, isroot, &res, &con_reqs);
   new_vmp->m_flags &= ~VMNT_MOUNTING;
 
   if (r != OK) {
@@ -505,7 +505,7 @@ int unmount(
 				 * unmount request */
 
   /* Tell FS to unmount */
-  if ((r = req_unmount(vmp->m_fs_e)) != OK)              /* Not recoverable. */
+  if ((r = req_unmount(vmp)) != OK)              /* Not recoverable. */
 	printf("VFS: ignoring failed umount attempt FS endpoint: %d (%d)\n",
 	       vmp->m_fs_e, r);
 

@@ -279,7 +279,7 @@ void put_vnode(struct vnode *vp)
 	panic("put_vnode failed: bad v_fs_count %d\n", vp->v_fs_count);
 
   /* Tell FS we don't need this inode to be open anymore. */
-  r = req_putnode(vp->v_fs_e, vp->v_inode_nr, vp->v_fs_count);
+  r = req_putnode(vp->v_vmnt, vp->v_inode_nr, vp->v_fs_count);
 
   if (r != OK) {
 	printf("VFS: putnode failed: %d\n", r);
@@ -289,7 +289,8 @@ void put_vnode(struct vnode *vp)
   /* This inode could've been mapped. If so, tell mapped FS to close it as
    * well. If mapped onto same FS, this putnode is not needed. */
   if (vp->v_mapfs_e != NONE && vp->v_mapfs_e != vp->v_fs_e)
-	req_putnode(vp->v_mapfs_e, vp->v_mapinode_nr, vp->v_mapfs_count);
+	req_putnode(find_vmnt(vp->v_mapfs_e), vp->v_mapinode_nr,
+		    vp->v_mapfs_count);
 
   vp->v_fs_count = 0;
   vp->v_ref_count = 0;
@@ -310,7 +311,7 @@ void vnode_clean_refs(struct vnode *vp)
   if (vp->v_fs_count <= 1) return;	/* Nothing to do */
 
   /* Drop all references except one */
-  req_putnode(vp->v_fs_e, vp->v_inode_nr, vp->v_fs_count - 1);
+  req_putnode(vp->v_vmnt, vp->v_inode_nr, vp->v_fs_count - 1);
   vp->v_fs_count = 1;
 }
 

@@ -123,7 +123,7 @@ static int create_pipe(int fil_des[2], int flags)
   fil_ptr1->filp_count = 1;
 
   /* Create a named pipe inode on PipeFS */
-  r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid, I_NAMED_PIPE,
+  r = req_newnode(vmp, fp->fp_effuid, fp->fp_effgid, I_NAMED_PIPE,
 		  NO_DEV, &res);
 
   if (r != OK) {
@@ -150,7 +150,8 @@ static int create_pipe(int fil_des[2], int flags)
   vp->v_mapfs_count = 1;
   vp->v_ref_count = 1;
   vp->v_size = 0;
-  vp->v_vmnt = NULL;
+  vp->v_vmnt = find_vmnt(res.fs_e);
+  assert(vp->v_vmnt == find_vmnt(PFS_PROC_NR));
   vp->v_dev = NO_DEV;
 
   /* Fill in filp objects */
@@ -178,7 +179,7 @@ int map_vnode(vp, map_to_fs_e)
 struct vnode *vp;
 endpoint_t map_to_fs_e;
 {
-  int r;
+  int r, do_unlock = 1;
   struct vmnt *vmp;
   struct node_details res;
 
@@ -188,7 +189,7 @@ endpoint_t map_to_fs_e;
 	panic("Can't map to unknown endpoint");
   if ((r = lock_vmnt(vmp, VMNT_WRITE)) != OK) {
 	if (r == EBUSY)
-		vmp = NULL;	/* Already locked, do not unlock */
+		do_unlock = 0;	/* Already locked, do not unlock */
 	else
 		return(r);
 
@@ -197,14 +198,14 @@ endpoint_t map_to_fs_e;
   /* Create a temporary mapping of this inode to another FS. Read and write
    * operations on data will be handled by that FS. The rest by the 'original'
    * FS that holds the inode. */
-  if ((r = req_newnode(map_to_fs_e, fp->fp_effuid, fp->fp_effgid, I_NAMED_PIPE,
+  if ((r = req_newnode(vmp, fp->fp_effuid, fp->fp_effgid, I_NAMED_PIPE,
 		       vp->v_dev, &res)) == OK) {
 	vp->v_mapfs_e = res.fs_e;
 	vp->v_mapinode_nr = res.inode_nr;
 	vp->v_mapfs_count = 1;
   }
 
-  if (vmp) unlock_vmnt(vmp);
+  if (do_unlock) unlock_vmnt(vmp);
 
   return(r);
 }

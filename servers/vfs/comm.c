@@ -121,15 +121,16 @@ int drv_sendrec(endpoint_t drv_e, message *reqmp)
 /*===========================================================================*
  *				fs_sendrec				     *
  *===========================================================================*/
-int fs_sendrec(endpoint_t fs_e, message *reqmp)
+int fs_sendrec(struct vmnt *vmp, message *reqmp)
 {
-  struct vmnt *vmp;
+  endpoint_t fs_e;
   int r;
 
-  if ((vmp = find_vmnt(fs_e)) == NULL) {
-	printf("Trying to talk to non-existent FS endpoint %d\n", fs_e);
+  if (vmp == NULL) {
+	printf("Trying to talk to non-existent FS\n");
 	return(EIO);
   }
+  fs_e = vmp->m_fs_e;
   if (fs_e == fp->fp_endpoint) return(EDEADLK);
 
   self->w_fs_sendrec = reqmp;	/* Where to store request and reply */

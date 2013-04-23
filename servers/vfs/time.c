@@ -70,7 +70,7 @@ int do_utime(message *UNUSED(m_out))
 		newactim = actim;
 		newmodtim = modtim;
 	}
-	r = req_utime(vp->v_fs_e, vp->v_inode_nr, &newactim, &newmodtim);
+	r = req_utime(vp->v_vmnt, vp->v_inode_nr, &newactim, &newmodtim);
   }
 
   unlock_vnode(vp);
@@ -201,7 +201,7 @@ int do_utimens(message *UNUSED(m_out))
 
   if (r == OK)
 	/* Issue request */
-	r = req_utime(vp->v_fs_e, vp->v_inode_nr, &newactim, &newmodtim);
+	r = req_utime(vp->v_vmnt, vp->v_inode_nr, &newactim, &newmodtim);
 
   if (kind == UTIMENS_STYLE) {
 	/* Close the temporary */

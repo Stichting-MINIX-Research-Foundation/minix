@@ -205,7 +205,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 				break;
 			}
 
-			if (req_newdriver(vp->v_bfs_e, vp->v_sdev,
+			if (req_newdriver(find_vmnt(vp->v_bfs_e), vp->v_sdev,
 					dp->dmap_label) != OK) {
 				printf("VFS: error sending driver label\n");
 				bdev_close(dev);
@@ -349,7 +349,7 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 	upgrade_vmnt_lock(dir_vmp); /* Creating file, need exclusive access */
 
 	if ((r = forbidden(fp, dirp, W_BIT|X_BIT)) != OK ||
-	    (r = req_create(dirp->v_fs_e, dirp->v_inode_nr,bits, fp->fp_effuid,
+	    (r = req_create(dirp->v_vmnt, dirp->v_inode_nr,bits, fp->fp_effuid,
 			    fp->fp_effgid, path, &res)) != OK ) {
 		/* Can't create inode either due to permissions or some other
 		 * problem. In case r is EEXIST, we might be dealing with a
@@ -371,7 +371,7 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 				if (S_ISLNK(slp->v_mode)) {
 					/* Get contents of link */
 
-					r = req_rdlink(slp->v_fs_e,
+					r = req_rdlink(slp->v_vmnt,
 						       slp->v_inode_nr,
 						       VFS_PROC_NR,
 						       (vir_bytes) path,
@@ -535,7 +535,7 @@ int do_mknod(message *UNUSED(m_out))
   if (!S_ISDIR(vp->v_mode)) {
 	r = ENOTDIR;
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
-	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
+	r = req_mknod(vp->v_vmnt, vp->v_inode_nr, fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits, dev);
   }
 
@@ -577,7 +577,7 @@ int do_mkdir(message *UNUSED(m_out))
   if (!S_ISDIR(vp->v_mode)) {
 	r = ENOTDIR;
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
-	r = req_mkdir(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
+	r = req_mkdir(vp->v_vmnt, vp->v_inode_nr, fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits);
   }
 
@@ -637,7 +637,7 @@ int do_lseek(message *m_out)
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
-		r = req_inhibread(rfilp->filp_vno->v_fs_e,
+		r = req_inhibread(rfilp->filp_vno->v_vmnt,
 				  rfilp->filp_vno->v_inode_nr);
 	}
   }
@@ -695,7 +695,7 @@ int do_llseek(message *m_out)
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
-		r = req_inhibread(rfilp->filp_vno->v_fs_e,
+		r = req_inhibread(rfilp->filp_vno->v_vmnt,
 				  rfilp->filp_vno->v_inode_nr);
 	}
   }

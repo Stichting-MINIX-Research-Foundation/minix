@@ -174,8 +174,8 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 
 	lock_bsf();
 
-	r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev, position, size,
-			   buf, rw_flag, &res_pos, &res_cum_io);
+	r = req_breadwrite(find_vmnt(vp->v_bfs_e), for_e, vp->v_sdev, position,
+			   size, buf, rw_flag, &res_pos, &res_cum_io);
 	if (r == OK) {
 		position = res_pos;
 		cum_io += res_cum_io;
@@ -189,7 +189,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 	}
 
 	/* Issue request */
-	r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position, rw_flag, for_e,
+	r = req_readwrite(vp->v_vmnt, vp->v_inode_nr, position, rw_flag, for_e,
 			  buf, size, &new_pos, &cum_io_incr);
 
 	if (r >= 0) {
@@ -257,7 +257,7 @@ int do_getdents(message *UNUSED(m_out))
 	if (ex64hi(rfilp->filp_pos) != 0)
 		panic("do_getdents: can't handle large offsets");
 
-	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
+	r = req_getdents(rfilp->filp_vno->v_vmnt, rfilp->filp_vno->v_inode_nr,
 			 rfilp->filp_pos, scratch(fp).io.io_buffer,
 			 scratch(fp).io.io_nbytes, &new_pos,0);
 
@@ -312,8 +312,8 @@ size_t req_size;
   if (vp->v_mapfs_e == 0)
 	panic("unmapped pipe");
 
-  r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
-		    buf, size, &new_pos, &cum_io_incr);
+  r = req_readwrite(find_vmnt(vp->v_mapfs_e), vp->v_mapinode_nr, position,
+		    rw_flag, usr_e, buf, size, &new_pos, &cum_io_incr);
 
   if (r != OK) {
 	return(r);

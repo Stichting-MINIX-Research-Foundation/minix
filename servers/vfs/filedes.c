@@ -631,7 +631,7 @@ struct filp *f;
 				 * mounted. Assume that the root filesystem's
 				 * is open only for fsck.
 				 */
-				req_flush(vp->v_bfs_e, dev);
+				req_flush(find_vmnt(vp->v_bfs_e), dev);
 			}
 			unlock_bsf();
 

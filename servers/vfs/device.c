@@ -908,8 +908,9 @@ int clone_opcl(
 		dev = makedev(major(dev), minor(dev_mess.REP_STATUS)); 
 
 		/* Issue request */
-		r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
-		    ALL_MODES | I_CHAR_SPECIAL, dev, &res);
+		r = req_newnode(find_vmnt(PFS_PROC_NR), fp->fp_effuid,
+				fp->fp_effgid, ALL_MODES | I_CHAR_SPECIAL, dev,
+				&res);
 		if (r != OK) {
 			(void) clone_opcl(DEV_CLOSE, dev, proc_e, 0);
 			return r;
@@ -925,9 +926,8 @@ int clone_opcl(
 		put_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
 
                 vp->v_fs_e = res.fs_e;
-                vp->v_vmnt = NULL;
+                vp->v_vmnt = find_vmnt(vp->v_fs_e);
                 vp->v_dev = NO_DEV;
-		vp->v_fs_e = res.fs_e;
                 vp->v_inode_nr = res.inode_nr;
                 vp->v_mode = res.fmode;
                 vp->v_sdev = dev;
@@ -985,7 +985,7 @@ void bdev_up(int maj)
 	if (major(vmp->m_dev) != maj) continue;
 
 	/* Send the driver label to the mounted file system. */
-	if (OK != req_newdriver(vmp->m_fs_e, vmp->m_dev, label))
+	if (OK != req_newdriver(vmp, vmp->m_dev, label))
 		printf("VFS dev_up: error sending new driver label to %d\n",
 		       vmp->m_fs_e);
   }
@@ -996,7 +996,7 @@ void bdev_up(int maj)
    * because it is more work to check for that case.
    */
   if (found) {
-	if (OK != req_newdriver(ROOT_FS_E, makedev(maj, 0), label))
+	if (OK != req_newdriver(find_vmnt(ROOT_FS_E), makedev(maj, 0), label))
 		printf("VFSdev_up: error sending new driver label to %d\n",
 			ROOT_FS_E);
   }

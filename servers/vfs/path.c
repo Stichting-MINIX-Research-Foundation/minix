@@ -280,7 +280,7 @@ struct fproc *rfp;
 			break;
 		}
 
-		r = req_rdlink(sym_vp->v_fs_e, sym_vp->v_inode_nr, NONE,
+		r = req_rdlink(sym_vp->v_vmnt, sym_vp->v_inode_nr, NONE,
 				(vir_bytes) resolve->l_path, PATH_MAX - 1, 1);
 
 		if (r < 0) {
@@ -406,7 +406,7 @@ struct fproc *rfp;
   uid_t uid;
   gid_t gid;
   struct vnode *dir_vp;
-  struct vmnt *vmp, *vmpres;
+  struct vmnt *vmp, *vmpres, *sendvmp;
   struct lookup_res res;
   tll_access_t mnt_lock_type;
 
@@ -428,7 +428,7 @@ struct fproc *rfp;
 
   fs_e = start_node->v_fs_e;
   dir_ino = start_node->v_inode_nr;
-  vmpres = find_vmnt(fs_e);
+  sendvmp = vmpres = find_vmnt(fs_e);
 
   if (vmpres == NULL) return(EIO);	/* mountpoint vanished? */
 
@@ -460,7 +460,7 @@ struct fproc *rfp;
   *(resolve->l_vmp) = vmpres;
 
   /* Issue the request */
-  r = req_lookup(fs_e, dir_ino, root_ino, uid, gid, resolve, &res, rfp);
+  r = req_lookup(sendvmp, dir_ino, root_ino, uid, gid, resolve, &res, rfp);
 
   if (r != OK && r != EENTERMOUNT && r != ELEAVEMOUNT && r != ESYMLINK) {
 	if (vmpres) unlock_vmnt(vmpres);
@@ -546,7 +546,7 @@ struct fproc *rfp;
 
 	/* Unlock a previously locked vmnt if locked and lock new vmnt */
 	if (vmpres) unlock_vmnt(vmpres);
-	vmpres = find_vmnt(fs_e);
+	sendvmp = vmpres = find_vmnt(fs_e);
 	if (vmpres == NULL) return(EIO);	/* mount point vanished? */
 	if ((r = lock_vmnt(vmpres, mnt_lock_type)) != OK) {
 		if (r == EBUSY)
@@ -556,7 +556,7 @@ struct fproc *rfp;
 	}
 	*(resolve->l_vmp) = vmpres;
 
-	r = req_lookup(fs_e, dir_ino, root_ino, uid, gid, resolve, &res, rfp);
+	r = req_lookup(sendvmp, dir_ino, root_ino, uid, gid, resolve, &res,rfp);
 
 	if (r != OK && r != EENTERMOUNT && r != ELEAVEMOUNT && r != ESYMLINK) {
 		if (vmpres) unlock_vmnt(vmpres);
@@ -625,7 +625,7 @@ char ename[NAME_MAX + 1];
   if (!S_ISDIR(dirp->v_mode)) return(EBADF);
 
   do {
-	r = req_getdents(dirp->v_fs_e, dirp->v_inode_nr, pos, buf, sizeof(buf),
+	r = req_getdents(dirp->v_vmnt, dirp->v_inode_nr, pos, buf, sizeof(buf),
 			 &new_pos, 1);
 
 	if (r == 0) {

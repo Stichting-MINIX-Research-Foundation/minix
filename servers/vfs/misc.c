@@ -225,7 +225,7 @@ int do_fcntl(message *UNUSED(m_out))
 	}
 	if (r != OK) break;
 
-	r = req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr,start,end);
+	r = req_ftrunc(f->filp_vno->v_vmnt, f->filp_vno->v_inode_nr,start,end);
 
 	if (r == OK && flock_arg.l_len == 0)
 		f->filp_vno->v_size = start;
@@ -261,7 +261,7 @@ sync_fses(void)
 		break;
 	if (vmp->m_dev != NO_DEV && vmp->m_fs_e != NONE &&
 		 vmp->m_root_node != NULL) {
-		req_sync(vmp->m_fs_e);
+		req_sync(vmp);
 	}
 	unlock_vmnt(vmp);
   }
@@ -303,7 +303,7 @@ int do_fsync(message *UNUSED(m_out))
 	if (vmp->m_dev != NO_DEV && vmp->m_dev == dev &&
 		vmp->m_fs_e != NONE && vmp->m_root_node != NULL) {
 
-		req_sync(vmp->m_fs_e);
+		req_sync(vmp);
 	}
 	unlock_vmnt(vmp);
   }

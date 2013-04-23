@@ -29,7 +29,7 @@
  *			req_breadwrite					     *
  *===========================================================================*/
 int req_breadwrite(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   endpoint_t user_e,
   dev_t dev,
   u64_t pos,
@@ -44,8 +44,8 @@ int req_breadwrite(
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
-			(rw_flag == READING ? CPF_WRITE : CPF_READ));
+  grant_id = cpf_grant_magic(vmp->m_fs_e, user_e, (vir_bytes) user_addr,
+		num_of_bytes, (rw_flag == READING ? CPF_WRITE : CPF_READ));
   if(grant_id == -1)
 	  panic("req_breadwrite: cpf_grant_magic failed");
 
@@ -58,7 +58,7 @@ int req_breadwrite(
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
   if (r != OK) return(r);
 
@@ -74,7 +74,7 @@ int req_breadwrite(
  *				req_chmod	      			     *
  *===========================================================================*/
 int req_chmod(
-  int fs_e,
+  struct vmnt *vmp,
   ino_t inode_nr,
   mode_t rmode,
   mode_t *new_modep
@@ -89,7 +89,7 @@ int req_chmod(
   m.REQ_MODE = rmode;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
 
   /* Copy back actual mode. */
   *new_modep = m.RES_MODE;
@@ -102,7 +102,7 @@ int req_chmod(
  *				req_chown          			     *
  *===========================================================================*/
 int req_chown(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   ino_t inode_nr,
   uid_t newuid,
   gid_t newgid,
@@ -119,7 +119,7 @@ int req_chown(
   m.REQ_GID = newgid;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
 
   /* Return new mode to caller. */
   *new_modep = m.RES_MODE;
@@ -132,7 +132,7 @@ int req_chown(
  *				req_create				     *
  *===========================================================================*/
 int req_create(
-  int fs_e,
+  struct vmnt *vmp,
   ino_t inode_nr,
   int omode,
   uid_t uid,
@@ -150,7 +150,7 @@ int req_create(
 	panic("req_create: filename starts with '/'");
 
   len = strlen(path) + 1;
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) path, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) path, len, CPF_READ);
   if (grant_id == -1)
 	panic("req_create: cpf_grant_direct failed");
 
@@ -164,7 +164,7 @@ int req_create(
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
   if (r != OK) return(r);
 
@@ -184,7 +184,7 @@ int req_create(
 /*===========================================================================*
  *				req_flush	      			     *
  *===========================================================================*/
-int req_flush(endpoint_t fs_e, dev_t dev)
+int req_flush(struct vmnt *vmp, dev_t dev)
 {
   message m;
 
@@ -193,20 +193,20 @@ int req_flush(endpoint_t fs_e, dev_t dev)
   m.REQ_DEV = dev;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
 
 
 /*===========================================================================*
  *				req_fstatfs	    			     *
  *===========================================================================*/
-int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
+int req_fstatfs(struct vmnt *vmp, endpoint_t proc_e, vir_bytes buf)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct statfs),
+  grant_id = cpf_grant_magic(vmp->m_fs_e, proc_e, buf, sizeof(struct statfs),
 			     CPF_WRITE);
   if (grant_id == GRANT_INVALID)
 	panic("req_fstatfs: cpf_grant_magic failed");
@@ -216,7 +216,7 @@ int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
   m.REQ_GRANT = grant_id;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -226,13 +226,13 @@ int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
 /*===========================================================================*
  *				req_statvfs	    			     *
  *===========================================================================*/
-int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
+int req_statvfs(struct vmnt *vmp, endpoint_t proc_e, vir_bytes buf)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct statvfs),
+  grant_id = cpf_grant_magic(vmp->m_fs_e, proc_e, buf, sizeof(struct statvfs),
 			CPF_WRITE);
   if(grant_id == GRANT_INVALID)
 	panic("req_statvfs: cpf_grant_magic failed");
@@ -242,7 +242,7 @@ int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
   m.REQ_GRANT = grant_id;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -252,7 +252,7 @@ int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
 /*===========================================================================*
  *				req_ftrunc	     			     *
  *===========================================================================*/
-int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
+int req_ftrunc(struct vmnt *vmp, ino_t inode_nr, off_t start, off_t end)
 {
   message m;
 
@@ -265,7 +265,7 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
   m.REQ_TRC_END_HI = 0;		/* Not used for now, so clear it. */
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
 
 
@@ -273,7 +273,7 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
  *				req_getdents	     			     *
  *===========================================================================*/
 int req_getdents(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   ino_t inode_nr,
   u64_t pos,
   char *buf,
@@ -287,10 +287,10 @@ int req_getdents(
   cp_grant_id_t grant_id;
 
   if (direct) {
-	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, size,
+	grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) buf, size,
 								CPF_WRITE);
   } else {
-	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size,
+	grant_id = cpf_grant_magic(vmp->m_fs_e, who_e, (vir_bytes) buf, size,
 								CPF_WRITE);
   }
 
@@ -305,7 +305,7 @@ int req_getdents(
   m.REQ_SEEK_POS_LO = ex64lo(pos);
   m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
 
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   if (r == OK) {
@@ -319,7 +319,7 @@ int req_getdents(
 /*===========================================================================*
  *				req_inhibread	  			     *
  *===========================================================================*/
-int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
+int req_inhibread(struct vmnt *vmp, ino_t inode_nr)
 {
   message m;
 
@@ -328,7 +328,7 @@ int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
   m.REQ_INODE_NR = inode_nr;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
 
 
@@ -336,7 +336,7 @@ int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
  *				req_link	       			     *
  *===========================================================================*/
 int req_link(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   ino_t link_parent,
   char *lastc,
   ino_t linked_file
@@ -347,7 +347,7 @@ int req_link(
   const size_t len = strlen(lastc) + 1;
   message m;
 
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
 	  panic("req_link: cpf_grant_direct failed");
 
@@ -359,7 +359,7 @@ int req_link(
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -370,7 +370,7 @@ int req_link(
  *				req_lookup	                   	     *
  *===========================================================================*/
 int req_lookup(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   ino_t dir_ino,
   ino_t root_ino,
   uid_t uid,
@@ -387,8 +387,8 @@ int req_lookup(
   vfs_ucred_t credentials;
   int flags;
 
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) resolve->l_path, PATH_MAX,
-			      CPF_READ | CPF_WRITE);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) resolve->l_path,
+				PATH_MAX, CPF_READ | CPF_WRITE);
   if(grant_id == -1)
 	  panic("req_lookup: cpf_grant_direct failed");
 
@@ -413,7 +413,7 @@ int req_lookup(
 	for (i = 0; i < rfp->fp_ngroups; i++)
 		credentials.vu_sgroups[i] = rfp->fp_sgroups[i];
 
-	grant_id2 = cpf_grant_direct(fs_e, (vir_bytes) &credentials,
+	grant_id2 = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) &credentials,
 				     sizeof(credentials), CPF_READ);
 	if(grant_id2 == -1)
 		panic("req_lookup: cpf_grant_direct failed");
@@ -431,7 +431,7 @@ int req_lookup(
   m.REQ_FLAGS		= flags;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
   if(rfp->fp_ngroups > 0) cpf_revoke(grant_id2);
 
@@ -472,7 +472,7 @@ int req_lookup(
  *				req_mkdir	      			     *
  *===========================================================================*/
 int req_mkdir(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   ino_t inode_nr,
   char *lastc,
   uid_t uid,
@@ -486,7 +486,7 @@ int req_mkdir(
   message m;
 
   len = strlen(lastc) + 1;
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
 	  panic("req_mkdir: cpf_grant_direct failed");
 
@@ -500,7 +500,7 @@ int req_mkdir(
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -511,7 +511,7 @@ int req_mkdir(
  *				req_mknod	      			     *
  *===========================================================================*/
 int req_mknod(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   ino_t inode_nr,
   char *lastc,
   uid_t uid,
@@ -526,7 +526,7 @@ int req_mknod(
   message m;
 
   len = strlen(lastc) + 1;
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
 	  panic("req_mknod: cpf_grant_direct failed");
 
@@ -541,7 +541,7 @@ int req_mknod(
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -551,7 +551,7 @@ int req_mknod(
 /*===========================================================================*
  *				req_mountpoint	                 	     *
  *===========================================================================*/
-int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
+int req_mountpoint(struct vmnt *vmp, ino_t inode_nr)
 {
   message m;
 
@@ -560,7 +560,7 @@ int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
   m.REQ_INODE_NR = inode_nr;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
 
 
@@ -568,7 +568,7 @@ int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
  *				req_newnode	      			     *
  *===========================================================================*/
 int req_newnode(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   uid_t uid,
   gid_t gid,
   mode_t dmode,
@@ -587,7 +587,7 @@ int req_newnode(
   m.REQ_GID = gid;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
 
   res->fs_e	= m.m_source;
   res->inode_nr = m.RES_INODE_NR;
@@ -605,7 +605,7 @@ int req_newnode(
  *				req_newdriver          			     *
  *===========================================================================*/
 int req_newdriver(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   dev_t dev,
   char *label
 )
@@ -617,7 +617,7 @@ int req_newdriver(
 
   /* Grant access to label */
   len = strlen(label) + 1;
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) label, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) label, len, CPF_READ);
   if (grant_id == -1)
 	panic("req_newdriver: cpf_grant_direct failed");
 
@@ -628,7 +628,7 @@ int req_newdriver(
   m.REQ_PATH_LEN = len;
 
   /* Issue request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
 
   cpf_revoke(grant_id);
 
@@ -639,10 +639,7 @@ int req_newdriver(
 /*===========================================================================*
  *				req_putnode				     *
  *===========================================================================*/
-int req_putnode(fs_e, inode_nr, count)
-int fs_e;
-ino_t inode_nr;
-int count;
+int req_putnode(struct vmnt *vmp, ino_t inode_nr, int count)
 {
   message m;
 
@@ -652,29 +649,29 @@ int count;
   m.REQ_COUNT = count;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
 
 
 /*===========================================================================*
  *				req_rdlink	     			     *
  *===========================================================================*/
-int req_rdlink(fs_e, inode_nr, proc_e, buf, len, direct)
-endpoint_t fs_e;
-ino_t inode_nr;
-endpoint_t proc_e;
-vir_bytes buf;
-size_t len;
-int direct; /* set to 1 to use direct grants instead of magic grants */
-{
+int req_rdlink(
+struct vmnt *vmp,
+ino_t inode_nr,
+endpoint_t proc_e,
+vir_bytes buf,
+size_t len,
+int direct /* set to 1 to use direct grants instead of magic grants */
+) {
   message m;
   int r;
   cp_grant_id_t grant_id;
 
   if (direct) {
-	grant_id = cpf_grant_direct(fs_e, buf, len, CPF_WRITE);
+	grant_id = cpf_grant_direct(vmp->m_fs_e, buf, len, CPF_WRITE);
   } else {
-	grant_id = cpf_grant_magic(fs_e, proc_e, buf, len, CPF_WRITE);
+	grant_id = cpf_grant_magic(vmp->m_fs_e, proc_e, buf, len, CPF_WRITE);
   }
   if (grant_id == -1)
 	  panic("req_rdlink: cpf_grant_magic failed");
@@ -686,7 +683,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   m.REQ_MEM_SIZE = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   if (r == OK) r = m.RES_NBYTES;
@@ -699,7 +696,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
  *				req_readsuper	                  	     *
  *===========================================================================*/
 int req_readsuper(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   char *label,
   dev_t dev,
   int readonly,
@@ -714,7 +711,7 @@ int req_readsuper(
   message m;
 
   len = strlen(label)+1;
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) label, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) label, len, CPF_READ);
   if (grant_id == -1)
 	  panic("req_readsuper: cpf_grant_direct failed");
 
@@ -728,7 +725,7 @@ int req_readsuper(
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   if(r == OK) {
@@ -749,18 +746,17 @@ int req_readsuper(
 /*===========================================================================*
  *				req_readwrite				     *
  *===========================================================================*/
-int req_readwrite(fs_e, inode_nr, pos, rw_flag, user_e,
-	user_addr, num_of_bytes, new_posp, cum_iop)
-endpoint_t fs_e;
-ino_t inode_nr;
-u64_t pos;
-int rw_flag;
-endpoint_t user_e;
-char *user_addr;
-unsigned int num_of_bytes;
-u64_t *new_posp;
-unsigned int *cum_iop;
-{
+int req_readwrite(
+struct vmnt *vmp,
+ino_t inode_nr,
+u64_t pos,
+int rw_flag,
+endpoint_t user_e,
+char *user_addr,
+unsigned int num_of_bytes,
+u64_t *new_posp,
+unsigned int *cum_iop
+) {
   int r;
   cp_grant_id_t grant_id = -1;
   message m;
@@ -785,8 +781,8 @@ unsigned int *cum_iop;
 		/* fallthrough */
 	case WRITING:
 		if(type < 0) { type = REQ_WRITE; grantflag = CPF_READ; }
-  		grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr,
-			num_of_bytes, grantflag);
+  		grant_id = cpf_grant_magic(vmp->m_fs_e, user_e,
+				(vir_bytes) user_addr, num_of_bytes, grantflag);
 	  	if (grant_id == -1)
 	  		panic("req_readwrite: cpf_grant_magic failed");
 		break;
@@ -806,7 +802,7 @@ unsigned int *cum_iop;
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   if (r == OK) {
@@ -822,25 +818,27 @@ unsigned int *cum_iop;
 /*===========================================================================*
  *				req_rename	     			     *
  *===========================================================================*/
-int req_rename(fs_e, old_dir, old_name, new_dir, new_name)
-endpoint_t fs_e;
-ino_t old_dir;
-char *old_name;
-ino_t new_dir;
-char *new_name;
-{
+int req_rename(
+struct vmnt *vmp,
+ino_t old_dir,
+char *old_name,
+ino_t new_dir,
+char *new_name
+) {
   int r;
   cp_grant_id_t gid_old, gid_new;
   size_t len_old, len_new;
   message m;
 
   len_old = strlen(old_name) + 1;
-  gid_old = cpf_grant_direct(fs_e, (vir_bytes) old_name, len_old, CPF_READ);
+  gid_old = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) old_name, len_old,
+				CPF_READ);
   if(gid_old == -1)
 	  panic("req_rename: cpf_grant_direct failed");
 
   len_new = strlen(new_name) + 1;
-  gid_new = cpf_grant_direct(fs_e, (vir_bytes) new_name, len_new, CPF_READ);
+  gid_new = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) new_name, len_new,
+				CPF_READ);
   if(gid_new == -1)
 	  panic("req_rename: cpf_grant_direct failed");
 
@@ -854,7 +852,7 @@ char *new_name;
   m.REQ_REN_LEN_NEW = len_new;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(gid_old);
   cpf_revoke(gid_new);
 
@@ -865,18 +863,18 @@ char *new_name;
 /*===========================================================================*
  *				req_rmdir	      			     *
  *===========================================================================*/
-int req_rmdir(fs_e, inode_nr, lastc)
-endpoint_t fs_e;
-ino_t inode_nr;
-char *lastc;
-{
+int req_rmdir(
+struct vmnt *vmp,
+ino_t inode_nr,
+char *lastc
+) {
   int r;
   cp_grant_id_t grant_id;
   size_t len;
   message m;
 
   len = strlen(lastc) + 1;
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) lastc, len, CPF_READ);
   if(grant_id == -1)
 	  panic("req_rmdir: cpf_grant_direct failed");
 
@@ -887,7 +885,7 @@ char *lastc;
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -898,7 +896,7 @@ char *lastc;
  *				req_slink	      			     *
  *===========================================================================*/
 int req_slink(
-  endpoint_t fs_e,
+  struct vmnt *vmp,
   ino_t inode_nr,
   char *lastc,
   endpoint_t proc_e,
@@ -914,11 +912,12 @@ int req_slink(
   message m;
 
   len = strlen(lastc) + 1;
-  gid_name = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
+  gid_name = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) lastc, len, CPF_READ);
   if (gid_name == GRANT_INVALID)
 	  panic("req_slink: cpf_grant_direct failed");
 
-  gid_buf = cpf_grant_magic(fs_e, proc_e, path_addr, path_length, CPF_READ);
+  gid_buf = cpf_grant_magic(vmp->m_fs_e, proc_e, path_addr, path_length,
+				CPF_READ);
   if (gid_buf == GRANT_INVALID) {
 	  cpf_revoke(gid_name);
 	  panic("req_slink: cpf_grant_magic failed");
@@ -935,7 +934,7 @@ int req_slink(
   m.REQ_MEM_SIZE = path_length;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(gid_name);
   cpf_revoke(gid_buf);
 
@@ -946,14 +945,15 @@ int req_slink(
 /*===========================================================================*
  *				req_stat	       			     *
  *===========================================================================*/
-int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
+int req_stat(struct vmnt *vmp, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
 {
   cp_grant_id_t grant_id;
   int r;
   message m;
 
   /* Grant FS access to copy straight into user provided buffer */
-  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct stat), CPF_WRITE);
+  grant_id = cpf_grant_magic(vmp->m_fs_e, proc_e, buf, sizeof(struct stat),
+				CPF_WRITE);
 
   if (grant_id < 0)
 	panic("req_stat: cpf_grant_* failed");
@@ -964,7 +964,7 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
   m.REQ_GRANT = grant_id;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -974,8 +974,7 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
 /*===========================================================================*
  *				req_sync	       			     *
  *===========================================================================*/
-int req_sync(fs_e)
-endpoint_t fs_e;
+int req_sync(struct vmnt *vmp)
 {
   message m;
 
@@ -983,17 +982,14 @@ endpoint_t fs_e;
   m.m_type = REQ_SYNC;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
 
 
 /*===========================================================================*
  *				req_unlink	     			     *
  *===========================================================================*/
-int req_unlink(fs_e, inode_nr, lastc)
-endpoint_t fs_e;
-ino_t inode_nr;
-char *lastc;
+int req_unlink(struct vmnt *vmp, ino_t inode_nr, char *lastc)
 {
   cp_grant_id_t grant_id;
   size_t len;
@@ -1001,7 +997,7 @@ char *lastc;
   message m;
 
   len = strlen(lastc) + 1;
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
+  grant_id = cpf_grant_direct(vmp->m_fs_e, (vir_bytes) lastc, len, CPF_READ);
   if(grant_id == -1)
 	  panic("req_unlink: cpf_grant_direct failed");
 
@@ -1012,7 +1008,7 @@ char *lastc;
   m.REQ_PATH_LEN = len;
 
   /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
+  r = fs_sendrec(vmp, &m);
   cpf_revoke(grant_id);
 
   return(r);
@@ -1022,8 +1018,7 @@ char *lastc;
 /*===========================================================================*
  *				req_unmount	    			     *
  *===========================================================================*/
-int req_unmount(fs_e)
-endpoint_t fs_e;
+int req_unmount(struct vmnt *vmp)
 {
   message m;
 
@@ -1031,14 +1026,14 @@ endpoint_t fs_e;
   m.m_type = REQ_UNMOUNT;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
 
 
 /*===========================================================================*
  *				req_utime	      			     *
  *===========================================================================*/
-int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
+int req_utime(struct vmnt *vmp, ino_t inode_nr, struct timespec * actimespec,
 	struct timespec * modtimespec)
 {
   message m;
@@ -1055,5 +1050,5 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
   m.REQ_MODNSEC = modtimespec->tv_nsec;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  return fs_sendrec(vmp, &m);
 }
