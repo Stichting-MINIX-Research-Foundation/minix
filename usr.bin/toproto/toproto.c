@@ -25,12 +25,13 @@
 enum entry_type
 { ENTRY_DIR, ENTRY_FILE, ENTRY_LINK };
 
+
 struct entry
 {
 	char *path;
 	char *filename;		/* point to last component in the path */
 	enum entry_type type;	/* entry type */
-	char *mode;		/* unix mode e.g. 0755 */
+	int mode;		/* unix mode e.g. 0755 */
 	char *uid;
 	char *gid;
 	char *time;		/* time 1365836670.000000000 */
@@ -101,7 +102,7 @@ convert_to_entry(char *line, struct entry *entry)
 					    value);
 				}
 			} else if (strncmp(key, "mode", 5) == 0) {
-				entry->mode = strndup(value, MAX_LINE_SIZE);
+				sscanf(value,"%o",&entry->mode);
 			} else if (strncmp(key, "uid", 4) == 0) {
 				entry->uid = strndup(value, MAX_LINE_SIZE);
 			} else if (strncmp(key, "gid", 4) == 0) {
@@ -275,6 +276,19 @@ create_entries(int handle)
 	return 0;
 }
 
+char * parse_mode(int mode){
+	/* Convert a 4 digit octal number int a proto  entry as described in
+   the mkfs.mfs man page e.g. [suid-char][guid-char]0777 mode */
+
+	static char m[6]; 
+	memset(m,0,6);
+	char suid,guid;
+	suid = (mode & 04000)?'u':'-';
+	guid = (mode & 02000)?'g':'-';
+	snprintf(m,6,"%c%c%3o",suid,guid,mode & 0777);
+	return m;
+}
+
 static int
 dump_entry(FILE * out, int index, char *base_dir)
 {
@@ -290,7 +304,7 @@ dump_entry(FILE * out, int index, char *base_dir)
 		if (entries[index].depth > 0) {
 			fprintf(out, "%s ", entry->filename);
 		}
-		fprintf(out, "d--%s", entry->mode);
+		fprintf(out, "d%s", parse_mode(entry->mode));
 		fprintf(out, " %s", (entry->uid) ? entry->uid : "0");
 		fprintf(out, " %s", (entry->gid) ? entry->gid : "0");
 		fprintf(out, "\n");
@@ -308,15 +322,15 @@ dump_entry(FILE * out, int index, char *base_dir)
 			fprintf(out, " ");
 		}
 		/* hack skipping the first . in the path */
-		fprintf(out, "%s ---%s %s %s %s%s\n", entry->filename,
-		    entry->mode, entry->uid, entry->gid, base_dir,
+		fprintf(out, "%s -%s %s %s %s%s\n", entry->filename,
+		    parse_mode(entry->mode), entry->uid, entry->gid, base_dir,
 		    &entry->path[1]);
 	} else if (entry->type == ENTRY_LINK) {
 		for (space = 0; space < entries[index].depth; space++) {
 			fprintf(out, " ");
 		}
 		/* hack skipping the first . in the path */
-		fprintf(out, "%s s--%s 0 0 %s\n", entry->filename, entry->mode,
+		fprintf(out, "%s s%s 0 0 %s\n", entry->filename, parse_mode(entry->mode),
 		    entry->link);
 	} else {
 		/* missing "b" and "c" for block and char device? */
