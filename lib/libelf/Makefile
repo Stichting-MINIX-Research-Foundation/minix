@@ -167,4 +167,4 @@ INCSDIR= /usr/include
 # Keep the .SUFFIXES line after the include of bsd.lib.mk
 .SUFFIXES:	.m4 .c
 .m4.c:
-	m4 -D SRCDIR=${.CURDIR} ${.IMPSRC} > ${.TARGET}
+	${TOOL_M4} -D SRCDIR=${.CURDIR} ${.IMPSRC} > ${.TARGET}
