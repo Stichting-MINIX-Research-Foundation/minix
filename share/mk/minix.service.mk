@@ -6,7 +6,7 @@
 # version of clang.
 
 # 1. No default libs
-LDADD+= -nodefaultlibs
+LDADD:= -nodefaultlibs ${LDADD}
 
 # 2. Compiler-specific libs
 .if !empty(CC:M*gcc)

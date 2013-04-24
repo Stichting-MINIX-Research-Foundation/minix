@@ -14,7 +14,7 @@ CLEANFILES+=	${FAKEHEADERS}
 # one here to help build libs before gcc itself is built.
 
 # XXX arm hack
-.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb"
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb" || ${MACHINE_ARCH} == "earm"
 ${OBJS}: insn-modes.h
 # XXX XXX
 ${__DPSRCS.d}: insn-modes.h

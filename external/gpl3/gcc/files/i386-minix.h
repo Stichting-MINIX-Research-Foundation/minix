@@ -4,23 +4,24 @@
    Modified for stabs-in-ELF by H.J. Lu.
    Adapted from GNU/Linux version by John Polstra.
    Continued development by David O'Brien <obrien@freebsd.org>
+   Adapted for MINIX by Lionel Sambuc <lionel@minix3.org>
 
-This file is part of GCC.
+   This file is part of GCC.
 
-GCC is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   GCC is free software; you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published
+   by the Free Software Foundation; either version 2, or (at your
+   option) any later version.
 
-GCC is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   GCC is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+   License for more details.
 
-You should have received a copy of the GNU General Public License
-along with GCC; see the file COPYING.  If not, write to
-the Free Software Foundation, 51 Franklin Street, Fifth Floor,
-Boston, MA 02110-1301, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with GCC; see the file COPYING.  If not, write to the 
+   Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 #undef  MINIX_TARGET_CPU_CPP_BUILTINS
 #define MINIX_TARGET_CPU_CPP_BUILTINS()          \
@@ -36,7 +37,17 @@ Boston, MA 02110-1301, USA.  */
     }                                           \
   while (0)
 
-#define TARGET_VERSION fprintf (stderr, " (MINIX/i586 ELF)");
+/* Define the actual types of some ANSI-mandated types.
+   Needs to agree with <machine/ansi.h>.  GCC defaults come from c-decl.c,
+   c-common.c, and config/<arch>/<arch>.h. */
+#undef  SIZE_TYPE
+#define SIZE_TYPE	(TARGET_64BIT ? "long unsigned int" : "unsigned int")
+ 
+#undef  PTRDIFF_TYPE
+#define PTRDIFF_TYPE	(TARGET_64BIT ? "long int" : "int")
+  
+#undef  WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE	(TARGET_64BIT ? 32 : BITS_PER_WORD)
 
 /* Override the default comment-starter of "/".  */
 #undef  ASM_COMMENT_START
@@ -56,27 +67,14 @@ Boston, MA 02110-1301, USA.  */
 #define NO_PROFILE_COUNTERS	1
 
 /* Tell final.c that we don't need a label passed to mcount.  */
-
 #undef  MCOUNT_NAME
 #define MCOUNT_NAME ".mcount"
-
-/* Make gcc agree with <machine/ansi.h>.  */
-
-#undef  SIZE_TYPE
-#define SIZE_TYPE	(TARGET_64BIT ? "long unsigned int" : "unsigned int")
- 
-#undef  PTRDIFF_TYPE
-#define PTRDIFF_TYPE	(TARGET_64BIT ? "long int" : "int")
-  
-#undef  WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE	(TARGET_64BIT ? 32 : BITS_PER_WORD)
 
 /* A C statement to output to the stdio stream FILE an assembler
    command to advance the location counter to a multiple of 1<<LOG
    bytes if it is within MAX_SKIP bytes.
 
    This is used to align code labels according to Intel recommendations.  */
-
 #ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
 #undef  ASM_OUTPUT_MAX_SKIP_ALIGN
 #define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE, LOG, MAX_SKIP)					\
@@ -86,12 +84,8 @@ Boston, MA 02110-1301, USA.  */
   }
 #endif
 
-/* Don't default to pcc-struct-return, we want to retain compatibility with
-   older gcc versions AND pcc-struct-return is nonreentrant.
-   (even though the SVR4 ABI for the i386 says that records and unions are
-   returned in memory).  */
-
-#undef  DEFAULT_PCC_STRUCT_RETURN
-#define DEFAULT_PCC_STRUCT_RETURN 0
-
+#undef SUBTARGET32_DEFAULT_CPU
 #define SUBTARGET32_DEFAULT_CPU "i586"
+
+#undef TARGET_VERSION
+#define TARGET_VERSION fprintf (stderr, " (MINIX/i586 ELF)");

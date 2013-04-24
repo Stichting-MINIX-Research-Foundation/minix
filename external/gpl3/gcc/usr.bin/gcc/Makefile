@@ -23,7 +23,9 @@ INFOFLAGS=      -I${DIST}/gcc/doc -I${DIST}/gcc/doc/include
 
 COPTS.builtins.c = -Wno-stack-protector
 
+.if !defined(__MINIX)
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
+.endif # !defined(__MINIX)
 
 gcc.info: gcc-vers.texi

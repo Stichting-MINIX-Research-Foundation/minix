@@ -91,6 +91,7 @@
 ./usr/include/evbarm/vm.h		minix-sys
 ./usr/include/evbarm/vmparam.h		minix-sys
 ./usr/include/evbarm/wchar_limits.h	minix-sys
+./usr/include/gcc-4.5/arm_neon.h	minix-sys	gcccmds
 ./usr/include/i386			minix-sys	obsolete
 ./usr/lib/libclkconf.a			minix-sys
 ./usr/lib/libclkconf_pic.a		minix-sys
@@ -102,3 +103,5 @@
 ./usr/sbin/fb				minix-sys
 ./usr/sbin/gpio				minix-sys
 ./usr/sbin/random			minix-sys
+./usr/tests/minix-posix/mod		minix-sys
+./usr/tests/minix-posix/test63		minix-sys

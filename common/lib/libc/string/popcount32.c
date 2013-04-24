@@ -76,3 +76,8 @@ __strong_alias(popcount, popcount32)
 #if ULONG_MAX == 0xffffffffU
 __strong_alias(popcountl, popcount32)
 #endif
+
+#if defined(__minix)
+__strong_alias(__popcountsi2, popcount32)
+__strong_alias(__popcountdi2, popcount32)
+#endif

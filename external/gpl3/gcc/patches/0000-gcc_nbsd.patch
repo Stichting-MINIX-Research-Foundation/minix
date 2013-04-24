@@ -6566,7 +6566,7 @@ diff -rNU3 -x *.info dist/gcc/config/arm/bpabi-netbsd.c dist.nbsd/gcc/config/arm
 diff -rNU3 -x *.info dist/gcc/config/arm/bpabi.h dist.nbsd/gcc/config/arm/bpabi.h
 --- dist/gcc/config/arm/bpabi.h	Wed Nov  7 13:40:05 2012
 +++ dist.nbsd/gcc/config/arm/bpabi.h	Wed Nov  7 11:47:25 2012
-@@ -20,13 +20,18 @@
+@@ -20,13 +20,16 @@
     <http://www.gnu.org/licenses/>.  */
  
  /* Use the AAPCS ABI by default.  */
@@ -6580,8 +6580,6 @@ diff -rNU3 -x *.info dist/gcc/config/arm/bpabi.h dist.nbsd/gcc/config/arm/bpabi.
  /* BPABI targets use EABI frame unwinding tables.  */
 +#undef MUST_USE_SJLJ_EXCEPTIONS
  #define TARGET_UNWIND_INFO 1
-+#undef ARM_EABI_UNWIND_TABLES
-+#define ARM_EABI_UNWIND_TABLES 1
  
  /* Section 4.1 of the AAPCS requires the use of VFP format.  */
  #undef  FPUTYPE_DEFAULT

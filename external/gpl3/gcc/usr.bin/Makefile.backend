@@ -1,7 +1,7 @@
 #	$NetBSD: Makefile.backend,v 1.2 2011/07/21 03:13:32 mrg Exp $
 
 NOMAN=		# defined
-BINDIR=		/usr/libexec
+BINDIR=		/usr/bin
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}

@@ -31,6 +31,11 @@ BINDIR.${_T}=	${TESTSDIR}
 LDADD.${_T}+=	-latf-c++ -latf-c
 DPADD.${_T}+=	${LIBATF_CXX} ${LIBATF_C}
 MAN.${_T}?=	# empty
+#.if defined(__MINIX) # LSC: Can't test as bsd.own.mk may not have been sourced
+# Somehow it resets / ignore the settings in bsd.prog.mk, so duplicate here
+LDADD.${_T}+= -lgcc_s
+DPADD.${_T}+= ${DESTDIR}/usr/lib/libgcc_s.a
+#.endif # defined(__MINIX)
 .  endfor
 .endif
 

@@ -1,3 +1,4 @@
+
 ./boot/minix/.temp/mod07_log		minix-sys
 ./boot/minix/.temp/mod08_tty		minix-sys
 ./boot/minix/.temp/mod09_mfs		minix-sys
@@ -38,6 +39,28 @@
 ./usr/bin/recwave			minix-sys
 ./usr/bin/repartition			minix-sys
 ./usr/bin/screendump			minix-sys
+./usr/include/gcc-4.5/abmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/ammintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/avxintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/bmmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/cpuid.h		minix-sys	gcccmds
+./usr/include/gcc-4.5/cross-stdarg.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/emmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/fma4intrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/ia32intrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/immintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/lwpintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/mm3dnow.h		minix-sys	gcccmds
+./usr/include/gcc-4.5/mm_malloc.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/nmmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/pmmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/popcntintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/smmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/tmmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/wmmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/x86intrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/xmmintrin.h	minix-sys	gcccmds
+./usr/include/gcc-4.5/xopintrin.h	minix-sys	gcccmds
 ./usr/include/i386			minix-sys
 ./usr/include/i386/ansi.h		minix-sys
 ./usr/include/i386/archconst.h		minix-sys

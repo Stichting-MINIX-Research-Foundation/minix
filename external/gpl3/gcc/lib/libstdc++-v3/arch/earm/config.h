@@ -163,7 +163,7 @@
 
 /* Define if gthr-default.h exists (meaning that threading support is
    enabled). */
-#define HAVE_GTHR_DEFAULT 1
+/* #undef HAVE_GTHR_DEFAULT */
 
 /* Define to 1 if you have the `hypot' function. */
 /* #undef HAVE_HYPOT */
@@ -697,7 +697,7 @@
 /* #undef _GLIBCXX_HAS_GTHREADS */
 
 /* Define to 1 if a full hosted library is built, or 0 if freestanding. */
-#define _GLIBCXX_HOSTED 1
+#define _GLIBCXX_HOSTED 0
 
 /* Define if compatibility should be provided for -mlong-double-64. */
 /* #undef _GLIBCXX_LONG_DOUBLE_COMPAT */

@@ -12,9 +12,9 @@ SRCDIR/gcc/config/i386/unix.h
 SRCDIR/gcc/config/i386/att.h
 SRCDIR/gcc/config/dbxelf.h
 SRCDIR/gcc/config/elfos.h
-SRCDIR/gcc/config/netbsd.h
-SRCDIR/gcc/config/netbsd-elf.h
-SRCDIR/gcc/config/i386/netbsd-elf.h
+SRCDIR/gcc/config/minix-spec.h
+SRCDIR/gcc/config/i386/minix.h
+SRCDIR/gcc/config/minix.h
 SRCDIR/gcc/defaults.h
 SRCDIR/gcc/../include/hashtab.h
 SRCDIR/gcc/../include/splay-tree.h

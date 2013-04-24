@@ -10,7 +10,7 @@ DIST=		${TOP}/external/gpl3/gcc/dist
 
 GCCARCH=	${.CURDIR}/../gcc/arch/${MACHINE_ARCH}
 
-CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\" -DNETBSD_NATIVE
+CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\"
 HOST_CPPFLAGS+=	-I${.CURDIR}/..
 
 # Link in the GMP/MPFR/MPC headers since we don't install them
@@ -93,5 +93,12 @@ CPPFLAGS+=	-DNO_SHARED_LIBGCC_MULTILIB
 CPPFLAGS+=	-std=gnu89
 
 NOCLANGERROR=	# defined
+
+.if defined(__MINIX)
+CPPFLAGS+= -DSTANDARD_EXEC_PREFIX=\"/usr/lib/gcc\"
+CPPFLAGS+= -DSTANDARD_LIBEXEC_PREFIX=\"/usr/bin\"
+CPPFLAGS+= -DSTANDARD_BINDIR_PREFIX=\"/usr/bin/\"
+CPPFLAGS+= -DTOOLDIR_BASE_PREFIX=\"../../../../\"
+.endif # defined(__MINIX)
 
 .endif

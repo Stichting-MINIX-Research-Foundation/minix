@@ -112,7 +112,7 @@
 #define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the `getrusage' function. */
-#define HAVE_GETRUSAGE 1
+/* #undef HAVE_GETRUSAGE */
 
 /* Define to 1 if you have the `getsysinfo' function. */
 /* #undef HAVE_GETSYSINFO */
@@ -169,7 +169,7 @@
 /* #undef HAVE_MKSTEMPS */
 
 /* Define to 1 if you have a working `mmap' system call. */
-#define HAVE_MMAP 1
+/* #undef HAVE_MMAP */
 
 /* Define to 1 if you have the `on_exit' function. */
 /* #undef HAVE_ON_EXIT */
@@ -205,7 +205,7 @@
 #define HAVE_SETENV 1
 
 /* Define to 1 if you have the `sigsetmask' function. */
-#define HAVE_SIGSETMASK 1
+/* #undef HAVE_SIGSETMASK */
 
 /* Define to 1 if you have the `snprintf' function. */
 #define HAVE_SNPRINTF 1
@@ -274,13 +274,13 @@
 #define HAVE_SYSCONF 1
 
 /* Define to 1 if you have the `sysctl' function. */
-#define HAVE_SYSCTL 1
+/* #undef HAVE_SYSCTL */
 
 /* Define to 1 if you have the `sysmp' function. */
 /* #undef HAVE_SYSMP */
 
 /* Define if you have the sys_errlist variable. */
-#define HAVE_SYS_ERRLIST 1
+/* #undef HAVE_SYS_ERRLIST */
 
 /* Define to 1 if you have the <sys/file.h> header file. */
 #define HAVE_SYS_FILE_H 1
@@ -289,7 +289,7 @@
 #define HAVE_SYS_MMAN_H 1
 
 /* Define if you have the sys_nerr variable. */
-#define HAVE_SYS_NERR 1
+/* #undef HAVE_SYS_NERR */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -301,7 +301,7 @@
 #define HAVE_SYS_RESOURCE_H 1
 
 /* Define if you have the sys_siglist variable. */
-#define HAVE_SYS_SIGLIST 1
+/* #undef HAVE_SYS_SIGLIST */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -370,10 +370,10 @@
 #define HAVE_VSPRINTF 1
 
 /* Define to 1 if you have the `wait3' function. */
-#define HAVE_WAIT3 1
+/* #undef HAVE_WAIT3 */
 
 /* Define to 1 if you have the `wait4' function. */
-#define HAVE_WAIT4 1
+/* #undef HAVE_WAIT4 */
 
 /* Define to 1 if you have the `waitpid' function. */
 #define HAVE_WAITPID 1
@@ -427,7 +427,7 @@
    it will be automatically deduced at run-time. STACK_DIRECTION > 0 => grows
    toward higher addresses STACK_DIRECTION < 0 => grows toward lower addresses
    STACK_DIRECTION = 0 => direction of growth unknown */
-#define STACK_DIRECTION 0
+#define STACK_DIRECTION -1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

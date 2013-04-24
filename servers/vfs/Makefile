@@ -14,7 +14,7 @@ SRCS+=  gcov.c
 CPPFLAGS+= -DUSE_COVERAGE
 .endif
 
-CFLAGS+= -Wall -Wextra -Werror
+CFLAGS+= -Wall -Wextra -Wno-sign-compare -Werror
 DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
 LDADD+=	-lsys -ltimers -lexec -lmthread
 

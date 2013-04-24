@@ -582,17 +582,33 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .endif
 .else
-.if ${LIB} != "c" && ${LIB:Mgcc*} == ""
+.if ${LIB} != "c" && ${LIB:Mgcc*} == "" \
+    && ${LIB} != "minlib" && ${LIB} != "sys" && ${LIB} != "minc" # Minix-specific libs
 .if !empty(LIBC_SO)
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .endif
 .else
 LDLIBC ?= -nodefaultlibs
-.if ${LIB} == "c"
+.if ${LIB} == "c" || ${LIB} == "minc"
 LDADD+= ${${ACTIVE_CC} == "gcc":?-lgcc:}
 LDADD+= ${${ACTIVE_CC} == "clang":?-L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic:}
 .endif
 .endif
+
+.if defined(__MINIX)
+
+.if ${LIB} == "m" || ${LIB} == "vtreefs"
+# LSC: gcc generate calls to its runtime library for some floating point
+#      operations and convertions, which are not included in libc.
+LDADD+= ${${ACTIVE_CC} == "gcc":?-lgcc:}
+.endif # ${LIB} == "m" || ${LIB} == "vtreefs"
+
+.if ${LIB} == "stdc++"
+# LSC we can't build this library without compiling gcc
+LDADD+= -lgcc_s
+DPADD+= ${DESTDIR}/usr/lib/libgcc_s.a
+.endif # ${LIB} == "stdc++"
+.endif #defined(__MINIX)
 .endif
 
 .if ${LIBISCXX} != "no"

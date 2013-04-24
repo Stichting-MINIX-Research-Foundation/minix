@@ -13,6 +13,8 @@ _BSD_OWN_MK_=1
 # Some Minix deviations from NetBSD
 LDSTATIC?=	-static
 MKDYNAMICROOT?=	no
+NO_LIBGOMP?=	yes
+MKKYUA?=	yes
 
 BINMODE?=	755
 NONBINMODE?=	644
@@ -25,6 +27,7 @@ DOCGRP?=	operator
 MKBINUTILS?=	no
 MKGDB:=		no
 MKGCC?=		no
+MKGCCCMDS?=	no
 
 # LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
@@ -81,6 +84,23 @@ LDS_DYNAMIC_BIN=	${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xc
 LDS_RELOC=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xr
 LDS_SHARED_LIB=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xsc
 LDS_N=			${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xbn
+
+# LSC In the current state there is too much to be done
+# Some package have been identified by directly adding NOGCCERROR
+# To their Makefiles
+NOGCCERROR?=	yes
+NOCLANGERROR?=	yes
+
+AFLAGS+=	-D__ASSEMBLY__
+CFLAGS+=	-fno-builtin
+
+# For C++ programs
+#CPPFLAGS+=	-I${DESTDIR}/usr/include/g++
+
+#LSC FIXME: Needed by clang for now
+.if ${MACHINE_ARCH} == "i386"
+CPUFLAGS+=	-march=i586
+.endif
 .endif # defined(__MINIX)
 
 MAKECONF?=	/etc/mk.conf

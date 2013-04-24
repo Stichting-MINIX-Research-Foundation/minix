@@ -83,3 +83,6 @@ __strong_alias(popcountl, popcount64)
 __strong_alias(popcountll, popcount64)
 #endif
 
+#if defined(__minix)
+__strong_alias(popcountti2, popcount64)
+#endif

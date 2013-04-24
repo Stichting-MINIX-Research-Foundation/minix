@@ -9,7 +9,7 @@
 #define HAVE_DLFCN_H 1
 
 /* Define if the compiler has a thread header that is non single. */
-#define HAVE_GTHR_DEFAULT 1
+/* #undef HAVE_GTHR_DEFAULT */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1

@@ -11,7 +11,11 @@ SRCS+= casin.c cacos.c catan.c casinh.c cacosh.c catanh.c
 SRCS+= csqrtf.c cexpf.c clogf.c cpowf.c
 SRCS+= cephes_subrf.c csinf.c ccosf.c ctanf.c csinhf.c ccoshf.c ctanhf.c
 SRCS+= casinf.c cacosf.c catanf.c casinhf.c cacoshf.c catanhf.c
+.if defined(__MINIX)
+SRCS+= cproj.c cprojf.c
+.else
 SRCS+= cproj.c cprojf.c cprojl.c
+.endif # defined(__MINIX)
 
 MAN+= cabs.3 cacos.3 cacosh.3 carg.3 casin.3 casinh.3 catan.3 catanh.3
 MAN+= ccos.3 ccosh.3 cexp.3 cimag.3 clog.3 conj.3 cpow.3 cproj.3 creal.3
