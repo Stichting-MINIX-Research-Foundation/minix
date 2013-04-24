@@ -16,5 +16,7 @@ LINKS+=		${BINDIR}/g++ ${BINDIR}/c++
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/cp
 
+.if !defined(__MINIX)
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
+.endif # !defined(__MINIX)

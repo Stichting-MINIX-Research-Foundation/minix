@@ -12,7 +12,7 @@ SUBDIR+=	host-libiberty .WAIT \
 		backend .WAIT \
 		frontend .WAIT \
 		libcpp libdecnumber gcov .WAIT \
-		cc1 cc1obj cc1plus cpp g++ gcc \
+		cc1 cc1plus cpp g++ gcc \
 		include
 
 .include <bsd.subdir.mk>

@@ -25,6 +25,7 @@ DOCGRP?=	operator
 MKBINUTILS?=	no
 MKGDB:=		no
 MKGCC?=		no
+MKGCCCMDS?=	no
 
 # LSC To check if works
 #DESTDIR?=	/usr/destdir.${MACHINE_ARCH}

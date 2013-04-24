@@ -49,6 +49,7 @@
 ./usr/include/ddekit
 ./usr/include/ddekit/minix
 ./usr/include/g++
+./usr/include/gcc-4.5
 ./usr/include/i386
 ./usr/include/lzma
 ./usr/include/minix

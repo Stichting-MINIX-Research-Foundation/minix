@@ -36,7 +36,9 @@ MLINKS+=	cpp.1 gcpp.1 cpp.1 cccp.1
 
 .include "../Makefile.frontend"
 
+.if !defined(__MINIX)
 LDADD+=		-lintl
+.endif # !defined(__MINIX)
 
 COPTS+=		-Wno-stack-protector
 
