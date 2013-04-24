@@ -10,6 +10,12 @@ EXTRA_DIST_FILES=	${.CURDIR}/NetBSD.dist.XFree86
 . endif
 .endif
 
+.if defined(__MINIX)
+.if ${MKGCCCMDS} == "yes"
+EXTRA_DIST_FILES+=	${.CURDIR}/Minix.gcccmds
+.endif
+.endif # defined(__MINIX)
+
 # XXX these are only used by compat currently, but they could be used
 # by something else; this may need to be fixed properly in the future.
 .if ${MKCOMPAT} != "no"

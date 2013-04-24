@@ -12,6 +12,11 @@ CPPFLAGS+=	-I${DIST}/libstdc++-v3/libsupc++
 CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} -I.
 CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
 
+.if defined(__MINIX)
+CPPFLAGS+=	-I${DESTDIR}/usr/include/g++
+CPPFLAGS+=	-I${DESTDIR}/usr/include/gcc-4.5
+.endif #defined(__MINIX)
+
 CPPFLAGS.cp-demangle.c=-DIN_GLIBCPP_V3
 #CPPFLAGS.dyn-string.c=-DIN_GLIBCPP_V3
 

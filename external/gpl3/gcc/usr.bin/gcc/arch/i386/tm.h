@@ -4,9 +4,6 @@
 
 #ifndef GCC_TM_H
 #define GCC_TM_H
-#ifndef NETBSD_ENABLE_PTHREADS
-# define NETBSD_ENABLE_PTHREADS
-#endif
 #ifdef IN_GCC
 # include "options.h"
 # include "config/vxworks-dummy.h"
@@ -15,9 +12,9 @@
 # include "config/i386/att.h"
 # include "config/dbxelf.h"
 # include "config/elfos.h"
-# include "config/netbsd.h"
-# include "config/netbsd-elf.h"
-# include "config/i386/netbsd-elf.h"
+# include "config/minix-spec.h"
+# include "config/i386/minix.h"
+# include "config/minix.h"
 # include "defaults.h"
 #endif
 #if defined IN_GCC && !defined GENERATOR_FILE && !defined USED_FOR_TARGET

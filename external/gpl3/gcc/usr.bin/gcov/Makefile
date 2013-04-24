@@ -13,7 +13,11 @@ MAN=		gcov.1
 
 .include <bsd.prog.mk>
 
+.if defined(__MINIX)
+LDADD=		-L${LIBIBERTYOBJ} -liberty
+.else
 LDADD=		-L${LIBIBERTYOBJ} -liberty -lintl
+.endif # defined(__MINIX)
 
 COPTS+=		-Wno-stack-protector
 

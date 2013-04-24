@@ -2,13 +2,7 @@
 
 .include <bsd.own.mk>
 
-.ifdef __MINIX
-HAVE_GCC= 45
-
-GCC_LANGUAGES=c
-.else
 GCC_LANGUAGES=c c++ objc
-.endif
 MODULE=			gcc4
 
 MKNATIVE_CONFIG_TARGET_LIBS= \
@@ -38,12 +32,7 @@ MULTILIB_ARGS= --disable-multilib
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 
-# LSC FIXME We are not using the correct target ATM, so overrides for now...
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
-			--disable-libssp \
-			--disable-threads \
-			--disable-visibility \
-			--disable-libunwind \
 			--enable-long-long \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
@@ -51,6 +40,18 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-system-zlib \
 			${VAX_CONFIGURE_ARGS} \
 			--enable-__cxa_atexit
+.if defined(__MINIX)
+COMMON_CONFIGURE_ARGS+=	\
+			--disable-libssp \
+			--disable-threads \
+			--disable-visibility \
+			--disable-libunwind
+
+.if ${HOST_OSTYPE:C/\-.*//} == "Minix"
+CONFIGURE_ENV+= LDFLAGS=-lm
+.endif #  ${HOST_OSTYPE:C/\-.*//} == "Minix"
+.endif # defined(__MINIX)
+
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 .endif
@@ -74,10 +75,6 @@ CONFIGURE_ARGS+= \
 
 GCC_CPPFLAGS=	-DNETBSD_TOOLS -DTARGET_SYSTEM_ROOT=0 \
 		-DTARGET_SYSTEM_ROOT_RELOCATABLE
-
-.if ${HOST_OSTYPE:C/\-.*//} == "Minix"
-CONFIGURE_ENV+= LDFLAGS=-lm
-.endif
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \

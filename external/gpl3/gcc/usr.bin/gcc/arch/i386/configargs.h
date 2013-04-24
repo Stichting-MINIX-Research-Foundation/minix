@@ -3,9 +3,9 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
-static const char configuration_arguments[] = "/usr/src/tools/gcc/../../external/gpl3/gcc/dist/configure --target=i486--netbsdelf --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20120916' --with-system-zlib --enable-__cxa_atexit --with-arch=i486 --with-tune=nocona --with-mpc=/var/obj/mknative/i386/usr/src/destdir.i386/usr --with-mpfr=/var/obj/mknative/i386/usr/src/destdir.i386/usr --with-gmp=/var/obj/mknative/i386/usr/src/destdir.i386/usr --enable-tls --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd5.99.56 --host=i486--netbsdelf";
-static const char thread_model[] = "posix";
+static const char configuration_arguments[] = "/usr/src/tools/gcc/../../external/gpl3/gcc/dist/configure --target=i586-elf32-minix --disable-libssp --disable-threads --disable-visibility --disable-libunwind --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20120916' --with-system-zlib --enable-__cxa_atexit --with-arch=i586 --with-tune=nocona --with-mpc=/usr/objs/i386/tooldir.Minix-3.2.1-i686 --with-mpfr=/usr/objs/i386/tooldir.Minix-3.2.1-i686 --with-gmp=/usr/objs/i386/tooldir.Minix-3.2.1-i686 --disable-nls --disable-multilib --program-transform-name='s,^,i586-elf32-minix-,' --enable-languages=c --prefix=/usr/objs/i386/tooldir.Minix-3.2.1-i686";
+static const char thread_model[] = "single";
 
 static const struct {
   const char *name, *value;
-} configure_default_options[] = { { "cpu", "i486" }, { "arch", "i486" }, { "tune", "nocona" } };
+} configure_default_options[] = { { "cpu", "pentium" }, { "arch", "i586" }, { "tune", "nocona" } };

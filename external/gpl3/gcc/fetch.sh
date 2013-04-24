@@ -38,6 +38,7 @@ then
 	rm -rf $DELETEDIRS && \
 	cat ../patches/* | patch -p1 && \
 	cp ../files/minix.h gcc/config/ && \
+	cp ../files/t-minix gcc/config/ && \
 	cp ../files/minix-spec.h gcc/config/ && \
 	cp ../files/arm-minix.h gcc/config/arm/minix.h && \
 	cp ../files/i386-minix.h gcc/config/i386/minix.h && \

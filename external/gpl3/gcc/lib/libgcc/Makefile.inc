@@ -158,7 +158,7 @@ DPSRCS+=	${FAKEHEADERS}
 CLEANFILES+=	${FAKEHEADERS}
 
 # XXX arm hack
-.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb"
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb" || ${MACHINE_ARCH} == "earm"
 ${SRCS}: insn-modes.h
 # XXX XXX
 ${__DPSRCS.d}: insn-modes.h

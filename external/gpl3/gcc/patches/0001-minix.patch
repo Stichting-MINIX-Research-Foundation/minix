@@ -1,6 +1,6 @@
 diff -r -x CVS -N -U 3 dist.orig/gcc/config.gcc dist/gcc/config.gcc
---- dist.orig/gcc/config.gcc	2012-10-31 15:54:54.495969517 +0100
-+++ dist/gcc/config.gcc	2012-10-31 16:05:31.749213764 +0100
+--- dist.orig/gcc/config.gcc	2013-07-10 19:52:43.574614401 +0200
++++ dist/gcc/config.gcc	2013-07-10 19:53:27.218820689 +0200
 @@ -799,7 +799,7 @@
  	tmake_file="arm/t-arm arm/t-arm-elf"
  	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
@@ -15,30 +15,31 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/config.gcc dist/gcc/config.gcc
  	  use_gcc_stdint=wrap
  	  ;;
 +	arm*-*-minix*)
-+	  tm_file="$tm_file arm/eabi.h newlib-stdint.h minix-spec.h minix.h arm/minix.h"
-+	  tmake_file="${tmake_file} arm/t-bpabi"
++	  tm_file="$tm_file arm/eabi.h newlib-stdint.h minix-spec.h arm/minix.h minix.h"
++	  tmake_file="${tmake_file} arm/t-bpabi t-minix"
 +	  extra_options="${extra_options} arm/eabi.opt"
 +	  use_gcc_stdint=wrap
 +	  ;;
  	arm*-*-symbianelf*)
  	  tm_file="${tm_file} arm/symbian.h"
  	  # We do not include t-bpabi for Symbian OS because the system
-@@ -1148,6 +1154,12 @@
+@@ -1148,6 +1154,13 @@
  	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${fbsd_tm_file} i386/x86-64.h i386/freebsd.h i386/freebsd64.h"
  	tmake_file="${tmake_file} i386/t-crtstuff"
  	;;
 +i[34567]86-*-minix)
-+       tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h minix-spec.h minix.h i386/minix.h"
-+       gas=yes
-+       gnu_ld=yes
-+       extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o"
-+       ;;
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h minix-spec.h i386/minix.h minix.h"
++	tmake_file="${tmake_file} t-minix"
++	gas=yes
++	gnu_ld=yes
++	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o"
++	;;
  i[34567]86-*-netbsdelf*)
  	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd.h netbsd-elf.h i386/netbsd-elf.h"
  	tmake_file="${tmake_file} i386/t-crtstuff"
 diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
---- dist.orig/gcc/gcov.c	2012-10-31 15:54:55.279319194 +0100
-+++ dist/gcc/gcov.c	2012-10-31 15:56:07.347483995 +0100
+--- dist.orig/gcc/gcov.c	2013-07-10 19:52:45.114645204 +0200
++++ dist/gcc/gcov.c	2013-07-10 19:53:27.218820689 +0200
 @@ -58,6 +58,10 @@
  
  #define STRING_SIZE 200
@@ -51,8 +52,8 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
  struct block_info;
  struct source_info;
 diff -r -x CVS -N -U 3 dist.orig/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.h
---- dist.orig/gcc/ginclude/stddef.h	2012-10-31 15:54:54.629305630 +0100
-+++ dist/gcc/ginclude/stddef.h	2012-10-31 15:57:32.195913746 +0100
+--- dist.orig/gcc/ginclude/stddef.h	2013-07-10 19:52:43.677949802 +0200
++++ dist/gcc/ginclude/stddef.h	2013-07-10 19:53:27.218820689 +0200
 @@ -60,6 +60,9 @@
  #if defined (__FreeBSD__) && (__FreeBSD__ >= 5)
  #include <sys/_types.h>
@@ -64,8 +65,8 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.
  /* In 4.3bsd-net2, machine/ansi.h defines these symbols, which are
     defined if the corresponding type is *not* defined.
 diff -r -x CVS -N -U 3 dist.orig/gcc/libgcov.c dist/gcc/libgcov.c
---- dist.orig/gcc/libgcov.c	2012-10-31 15:54:54.629305630 +0100
-+++ dist/gcc/libgcov.c	2012-10-31 16:07:58.948939980 +0100
+--- dist.orig/gcc/libgcov.c	2013-07-10 19:52:43.681283201 +0200
++++ dist/gcc/libgcov.c	2013-07-10 19:53:27.218820689 +0200
 @@ -40,6 +40,11 @@
  #define GCOV_LINKAGE /* nothing */
  #endif
@@ -96,9 +97,20 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/libgcov.c dist/gcc/libgcov.c
  
        info->next = gcov_list;
        gcov_list = info;
+diff -r -x CVS -N -U 3 dist.orig/libcpp/configure dist/libcpp/configure
+--- dist.orig/libcpp/configure	2013-07-10 19:52:46.844679808 +0200
++++ dist/libcpp/configure	2013-07-10 19:55:08.447512095 +0200
+@@ -6870,6 +6870,7 @@
+ case $target in
+ 	alpha*-*-* | \
+ 	arm*-*-*eabi* | \
++	arm*-*-minix* | \
+ 	arm*-*-symbianelf* | \
+ 	x86_64-*-* | \
+ 	ia64-*-* | \
 diff -r -x CVS -N -U 3 dist.orig/libgcc/config.host dist/libgcc/config.host
---- dist.orig/libgcc/config.host	2012-10-31 15:54:55.649326910 +0100
-+++ dist/libgcc/config.host	2012-10-31 16:00:43.116548293 +0100
+--- dist.orig/libgcc/config.host	2013-07-10 19:52:52.828132820 +0200
++++ dist/libgcc/config.host	2013-07-10 19:53:27.218820689 +0200
 @@ -203,6 +203,8 @@
  	;;
  arm*-*-freebsd*)

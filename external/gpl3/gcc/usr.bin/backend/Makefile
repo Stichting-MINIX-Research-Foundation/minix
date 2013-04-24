@@ -181,8 +181,8 @@ options.o: options.c coretypes.h opts.h intl.h
 #options.o: options.c ${G_CONFIG_H} ${G_SYSTEM_H} coretypes.h ${G_TM_H} opts.h intl.h
 
 # Yuck, we have to run configure to generate this one...
-CLEANFILES+=	auto-build.h
-auto-build.h: Makefile
+CLEANFILES+=	auto-host.h
+auto-host.h: Makefile
 	${_MKTARGET_CREATE}
 	rm -rf .ab && \
 	mkdir .ab && \
@@ -194,8 +194,7 @@ auto-build.h: Makefile
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
-			--target=${MACHINE_GNU_PLATFORM} && \
-		mv auto-host.h ../auto-build.h) && \
+			--target=${MACHINE_GNU_PLATFORM}) && \
 	rm -rf .ab
 
 #

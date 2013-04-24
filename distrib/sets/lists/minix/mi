@@ -229,9 +229,13 @@
 ./usr/bin/bzcat				minix-sys
 ./usr/bin/bzip2				minix-sys
 ./usr/bin/bzip2recover			minix-sys
+./usr/bin/c++				minix-sys	gcccmds
 ./usr/bin/cal				minix-sys
 ./usr/bin/cawf				minix-sys
 ./usr/bin/cc				minix-sys
+./usr/bin/cc1				minix-sys	gcccmds
+./usr/bin/cc1obj			minix-sys	gcccmds
+./usr/bin/cc1plus			minix-sys	gcccmds
 ./usr/bin/cdprobe			minix-sys
 ./usr/bin/c++filt			minix-sys	binutils
 ./usr/bin/checkhier			minix-sys	obsolete
@@ -252,6 +256,7 @@
 ./usr/bin/comm				minix-sys
 ./usr/bin/compress			minix-sys
 ./usr/bin/cpio				minix-sys
+./usr/bin/cpp				minix-sys	gcccmds
 ./usr/bin/cprofalyze			minix-sys
 ./usr/bin/crc				minix-sys
 ./usr/bin/cron				minix-sys
@@ -299,8 +304,12 @@
 ./usr/bin/from				minix-sys
 ./usr/bin/fstat				minix-sys
 ./usr/bin/ftp				minix-sys
+./usr/bin/g++				minix-sys	gcccmds
+./usr/bin/gcc				minix-sys	gcccmds
 ./usr/bin/gcore				minix-sys
+./usr/bin/gcov				minix-sys	gcccmds
 ./usr/bin/gcov-pull			minix-sys
+./usr/bin/gcpp				minix-sys	gcccmds
 ./usr/bin/genassym			minix-sys
 ./usr/bin/getopt			minix-sys
 ./usr/bin/gprof				minix-sys	binutils
@@ -587,8 +596,401 @@
 ./usr/include/ftw.h			minix-sys
 ./usr/include/fuse.h			minix-sys
 ./usr/include/fuse_opt.h		minix-sys
-./usr/include/g++			minix-sys
-./usr/include/g++/FlexLexer.h		minix-sys
+./usr/include/g++				minix-sys
+./usr/include/g++/algorithm			minix-sys	gcccmds
+./usr/include/g++/array				minix-sys	gcccmds
+./usr/include/g++/atomic			minix-sys	gcccmds
+./usr/include/g++/backward			minix-sys	gcccmds
+./usr/include/g++/backward/auto_ptr.h		minix-sys	gcccmds
+./usr/include/g++/backward/backward_warning.h	minix-sys	gcccmds
+./usr/include/g++/backward/binders.h		minix-sys	gcccmds
+./usr/include/g++/backward/hash_fun.h		minix-sys	gcccmds
+./usr/include/g++/backward/hash_map		minix-sys	gcccmds
+./usr/include/g++/backward/hash_set		minix-sys	gcccmds
+./usr/include/g++/backward/hashtable.h		minix-sys	gcccmds
+./usr/include/g++/backward/strstream		minix-sys	gcccmds
+./usr/include/g++/bits				minix-sys	gcccmds
+./usr/include/g++/bits/algorithmfwd.h		minix-sys	gcccmds
+./usr/include/g++/bits/allocator.h		minix-sys	gcccmds
+./usr/include/g++/bits/atomic_0.h		minix-sys	gcccmds
+./usr/include/g++/bits/atomic_2.h		minix-sys	gcccmds
+./usr/include/g++/bits/atomic_base.h		minix-sys	gcccmds
+./usr/include/g++/bits/atomicfwd_c.h		minix-sys	gcccmds
+./usr/include/g++/bits/atomicfwd_cxx.h		minix-sys	gcccmds
+./usr/include/g++/bits/atomic_word.h		minix-sys	gcccmds
+./usr/include/g++/bits/basic_file.h		minix-sys	gcccmds
+./usr/include/g++/bits/basic_ios.h		minix-sys	gcccmds
+./usr/include/g++/bits/basic_ios.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/basic_string.h		minix-sys	gcccmds
+./usr/include/g++/bits/basic_string.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/boost_concept_check.h	minix-sys	gcccmds
+./usr/include/g++/bits/c++0x_warning.h		minix-sys	gcccmds
+./usr/include/g++/bits/c++allocator.h		minix-sys	gcccmds
+./usr/include/g++/bits/c++config.h		minix-sys	gcccmds
+./usr/include/g++/bits/char_traits.h		minix-sys	gcccmds
+./usr/include/g++/bits/c++io.h			minix-sys	gcccmds
+./usr/include/g++/bits/c++locale.h		minix-sys	gcccmds
+./usr/include/g++/bits/cmath.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/codecvt.h		minix-sys	gcccmds
+./usr/include/g++/bits/concept_check.h		minix-sys	gcccmds
+./usr/include/g++/bits/cpp_type_traits.h	minix-sys	gcccmds
+./usr/include/g++/bits/cpu_defines.h		minix-sys	gcccmds
+./usr/include/g++/bits/ctype_base.h		minix-sys	gcccmds
+./usr/include/g++/bits/ctype_inline.h		minix-sys	gcccmds
+./usr/include/g++/bits/ctype_noninline.h	minix-sys	gcccmds
+./usr/include/g++/bits/cxxabi_tweaks.h		minix-sys	gcccmds
+./usr/include/g++/bits/deque.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/error_constants.h	minix-sys	gcccmds
+./usr/include/g++/bits/extc++.h			minix-sys	gcccmds
+./usr/include/g++/bits/forward_list.h		minix-sys	gcccmds
+./usr/include/g++/bits/forward_list.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/fstream.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/functexcept.h		minix-sys	gcccmds
+./usr/include/g++/bits/functional_hash.h	minix-sys	gcccmds
+./usr/include/g++/bits/gslice_array.h		minix-sys	gcccmds
+./usr/include/g++/bits/gslice.h			minix-sys	gcccmds
+./usr/include/g++/bits/gthr-default.h		minix-sys	gcccmds
+./usr/include/g++/bits/gthr.h			minix-sys	gcccmds
+./usr/include/g++/bits/gthr-posix.h		minix-sys	gcccmds
+./usr/include/g++/bits/gthr-single.h		minix-sys	gcccmds
+./usr/include/g++/bits/gthr-tpf.h		minix-sys	gcccmds
+./usr/include/g++/bits/hashtable.h		minix-sys	gcccmds
+./usr/include/g++/bits/hashtable_policy.h	minix-sys	gcccmds
+./usr/include/g++/bits/indirect_array.h		minix-sys	gcccmds
+./usr/include/g++/bits/ios_base.h		minix-sys	gcccmds
+./usr/include/g++/bits/istream.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/list.tcc			minix-sys	gcccmds
+./usr/include/g++/bits/locale_classes.h		minix-sys	gcccmds
+./usr/include/g++/bits/locale_classes.tcc	minix-sys	gcccmds
+./usr/include/g++/bits/locale_facets.h		minix-sys	gcccmds
+./usr/include/g++/bits/locale_facets_nonio.h	minix-sys	gcccmds
+./usr/include/g++/bits/locale_facets_nonio.tcc	minix-sys	gcccmds
+./usr/include/g++/bits/locale_facets.tcc	minix-sys	gcccmds
+./usr/include/g++/bits/localefwd.h		minix-sys	gcccmds
+./usr/include/g++/bits/mask_array.h		minix-sys	gcccmds
+./usr/include/g++/bits/messages_members.h	minix-sys	gcccmds
+./usr/include/g++/bits/move.h			minix-sys	gcccmds
+./usr/include/g++/bits/os_defines.h		minix-sys	gcccmds
+./usr/include/g++/bits/ostream_insert.h		minix-sys	gcccmds
+./usr/include/g++/bits/ostream.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/postypes.h		minix-sys	gcccmds
+./usr/include/g++/bits/random.h			minix-sys	gcccmds
+./usr/include/g++/bits/random.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/shared_ptr_base.h	minix-sys	gcccmds
+./usr/include/g++/bits/shared_ptr.h		minix-sys	gcccmds
+./usr/include/g++/bits/slice_array.h		minix-sys	gcccmds
+./usr/include/g++/bits/sstream.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/stdc++.h			minix-sys	gcccmds
+./usr/include/g++/bits/stdtr1c++.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_algobase.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_algo.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_bvector.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_construct.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_deque.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_function.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_heap.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_iterator_base_funcs.h	minix-sys	gcccmds
+./usr/include/g++/bits/stl_iterator_base_types.h	minix-sys	gcccmds
+./usr/include/g++/bits/stl_iterator.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_list.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_map.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_multimap.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_multiset.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_numeric.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_pair.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_queue.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_raw_storage_iter.h	minix-sys	gcccmds
+./usr/include/g++/bits/stl_relops.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_set.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_stack.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_tempbuf.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_tree.h		minix-sys	gcccmds
+./usr/include/g++/bits/stl_uninitialized.h	minix-sys	gcccmds
+./usr/include/g++/bits/stl_vector.h		minix-sys	gcccmds
+./usr/include/g++/bits/streambuf_iterator.h	minix-sys	gcccmds
+./usr/include/g++/bits/streambuf.tcc		minix-sys	gcccmds
+./usr/include/g++/bits/stream_iterator.h	minix-sys	gcccmds
+./usr/include/g++/bits/stringfwd.h		minix-sys	gcccmds
+./usr/include/g++/bits/time_members.h		minix-sys	gcccmds
+./usr/include/g++/bits/unique_ptr.h		minix-sys	gcccmds
+./usr/include/g++/bits/unordered_map.h		minix-sys	gcccmds
+./usr/include/g++/bits/unordered_set.h		minix-sys	gcccmds
+./usr/include/g++/bits/valarray_after.h		minix-sys	gcccmds
+./usr/include/g++/bits/valarray_array.h		minix-sys	gcccmds
+./usr/include/g++/bits/valarray_array.tcc	minix-sys	gcccmds
+./usr/include/g++/bits/valarray_before.h	minix-sys	gcccmds
+./usr/include/g++/bits/vector.tcc		minix-sys	gcccmds
+./usr/include/g++/bitset			minix-sys	gcccmds
+./usr/include/g++/cassert			minix-sys	gcccmds
+./usr/include/g++/ccomplex			minix-sys	gcccmds
+./usr/include/g++/cctype			minix-sys	gcccmds
+./usr/include/g++/cerrno			minix-sys	gcccmds
+./usr/include/g++/cfenv				minix-sys	gcccmds
+./usr/include/g++/cfloat			minix-sys	gcccmds
+./usr/include/g++/chrono			minix-sys	gcccmds
+./usr/include/g++/cinttypes			minix-sys	gcccmds
+./usr/include/g++/ciso646			minix-sys	gcccmds
+./usr/include/g++/climits			minix-sys	gcccmds
+./usr/include/g++/clocale			minix-sys	gcccmds
+./usr/include/g++/cmath				minix-sys	gcccmds
+./usr/include/g++/complex			minix-sys	gcccmds
+./usr/include/g++/complex.h			minix-sys	gcccmds
+./usr/include/g++/condition_variable		minix-sys	gcccmds
+./usr/include/g++/csetjmp			minix-sys	gcccmds
+./usr/include/g++/csignal			minix-sys	gcccmds
+./usr/include/g++/cstdarg			minix-sys	gcccmds
+./usr/include/g++/cstdbool			minix-sys	gcccmds
+./usr/include/g++/cstddef			minix-sys	gcccmds
+./usr/include/g++/cstdint			minix-sys	gcccmds
+./usr/include/g++/cstdio			minix-sys	gcccmds
+./usr/include/g++/cstdlib			minix-sys	gcccmds
+./usr/include/g++/cstring			minix-sys	gcccmds
+./usr/include/g++/ctgmath			minix-sys	gcccmds
+./usr/include/g++/ctime				minix-sys	gcccmds
+./usr/include/g++/cwchar			minix-sys	gcccmds
+./usr/include/g++/cwctype			minix-sys	gcccmds
+./usr/include/g++/cxxabi-forced.h		minix-sys	gcccmds
+./usr/include/g++/cxxabi.h			minix-sys	gcccmds
+./usr/include/g++/debug				minix-sys	gcccmds
+./usr/include/g++/debug/bitset			minix-sys	gcccmds
+./usr/include/g++/debug/debug.h			minix-sys	gcccmds
+./usr/include/g++/debug/deque			minix-sys	gcccmds
+./usr/include/g++/debug/formatter.h		minix-sys	gcccmds
+./usr/include/g++/debug/functions.h		minix-sys	gcccmds
+./usr/include/g++/debug/list			minix-sys	gcccmds
+./usr/include/g++/debug/macros.h		minix-sys	gcccmds
+./usr/include/g++/debug/map			minix-sys	gcccmds
+./usr/include/g++/debug/map.h			minix-sys	gcccmds
+./usr/include/g++/debug/multimap.h		minix-sys	gcccmds
+./usr/include/g++/debug/multiset.h		minix-sys	gcccmds
+./usr/include/g++/debug/safe_base.h		minix-sys	gcccmds
+./usr/include/g++/debug/safe_iterator.h		minix-sys	gcccmds
+./usr/include/g++/debug/safe_iterator.tcc	minix-sys	gcccmds
+./usr/include/g++/debug/safe_sequence.h		minix-sys	gcccmds
+./usr/include/g++/debug/set			minix-sys	gcccmds
+./usr/include/g++/debug/set.h			minix-sys	gcccmds
+./usr/include/g++/debug/string			minix-sys	gcccmds
+./usr/include/g++/debug/unordered_map		minix-sys	gcccmds
+./usr/include/g++/debug/unordered_set		minix-sys	gcccmds
+./usr/include/g++/debug/vector			minix-sys	gcccmds
+./usr/include/g++/decimal			minix-sys	gcccmds
+./usr/include/g++/decimal/decimal		minix-sys	gcccmds
+./usr/include/g++/decimal/decimal.h		minix-sys	gcccmds
+./usr/include/g++/deque				minix-sys	gcccmds
+./usr/include/g++/exception			minix-sys	gcccmds
+./usr/include/g++/exception_defines.h		minix-sys	gcccmds
+./usr/include/g++/exception_ptr.h		minix-sys	gcccmds
+./usr/include/g++/ext				minix-sys	gcccmds
+./usr/include/g++/ext/algorithm			minix-sys	gcccmds
+./usr/include/g++/ext/array_allocator.h		minix-sys	gcccmds
+./usr/include/g++/ext/atomicity.h		minix-sys	gcccmds
+./usr/include/g++/ext/bitmap_allocator.h	minix-sys	gcccmds
+./usr/include/g++/ext/cast.h			minix-sys	gcccmds
+./usr/include/g++/ext/codecvt_specializations.h	minix-sys	gcccmds
+./usr/include/g++/ext/concurrence.h		minix-sys	gcccmds
+./usr/include/g++/ext/debug_allocator.h		minix-sys	gcccmds
+./usr/include/g++/ext/enc_filebuf.h		minix-sys	gcccmds
+./usr/include/g++/ext/extptr_allocator.h	minix-sys	gcccmds
+./usr/include/g++/ext/functional		minix-sys	gcccmds
+./usr/include/g++/ext/hash_map			minix-sys	gcccmds
+./usr/include/g++/ext/hash_set			minix-sys	gcccmds
+./usr/include/g++/ext/iterator			minix-sys	gcccmds
+./usr/include/g++/ext/malloc_allocator.h	minix-sys	gcccmds
+./usr/include/g++/ext/memory			minix-sys	gcccmds
+./usr/include/g++/ext/mt_allocator.h		minix-sys	gcccmds
+./usr/include/g++/ext/new_allocator.h		minix-sys	gcccmds
+./usr/include/g++/ext/numeric			minix-sys	gcccmds
+./usr/include/g++/ext/numeric_traits.h		minix-sys	gcccmds
+./usr/include/g++/ext/pod_char_traits.h		minix-sys	gcccmds
+./usr/include/g++/ext/pointer.h			minix-sys	gcccmds
+./usr/include/g++/ext/pool_allocator.h		minix-sys	gcccmds
+./usr/include/g++/ext/rb_tree			minix-sys	gcccmds
+./usr/include/g++/ext/rc_string_base.h		minix-sys	gcccmds
+./usr/include/g++/ext/rope			minix-sys	gcccmds
+./usr/include/g++/ext/ropeimpl.h		minix-sys	gcccmds
+./usr/include/g++/ext/slist			minix-sys	gcccmds
+./usr/include/g++/ext/sso_string_base.h		minix-sys	gcccmds
+./usr/include/g++/ext/stdio_filebuf.h		minix-sys	gcccmds
+./usr/include/g++/ext/stdio_sync_filebuf.h	minix-sys	gcccmds
+./usr/include/g++/ext/string_conversions.h	minix-sys	gcccmds
+./usr/include/g++/ext/throw_allocator.h		minix-sys	gcccmds
+./usr/include/g++/ext/typelist.h		minix-sys	gcccmds
+./usr/include/g++/ext/type_traits.h		minix-sys	gcccmds
+./usr/include/g++/ext/vstring_fwd.h		minix-sys	gcccmds
+./usr/include/g++/ext/vstring.h			minix-sys	gcccmds
+./usr/include/g++/ext/vstring.tcc		minix-sys	gcccmds
+./usr/include/g++/ext/vstring_util.h		minix-sys	gcccmds
+./usr/include/g++/fenv.h			minix-sys	gcccmds
+./usr/include/g++/FlexLexer.h			minix-sys
+./usr/include/g++/forward_list			minix-sys	gcccmds
+./usr/include/g++/fstream			minix-sys	gcccmds
+./usr/include/g++/functional			minix-sys	gcccmds
+./usr/include/g++/future			minix-sys	gcccmds
+./usr/include/g++/initializer_list		minix-sys	gcccmds
+./usr/include/g++/iomanip			minix-sys	gcccmds
+./usr/include/g++/ios				minix-sys	gcccmds
+./usr/include/g++/iosfwd			minix-sys	gcccmds
+./usr/include/g++/iostream			minix-sys	gcccmds
+./usr/include/g++/istream			minix-sys	gcccmds
+./usr/include/g++/iterator			minix-sys	gcccmds
+./usr/include/g++/limits			minix-sys	gcccmds
+./usr/include/g++/list				minix-sys	gcccmds
+./usr/include/g++/locale			minix-sys	gcccmds
+./usr/include/g++/map				minix-sys	gcccmds
+./usr/include/g++/memory			minix-sys	gcccmds
+./usr/include/g++/mutex				minix-sys	gcccmds
+./usr/include/g++/nested_exception.h		minix-sys	gcccmds
+./usr/include/g++/new				minix-sys	gcccmds
+./usr/include/g++/numeric			minix-sys	gcccmds
+./usr/include/g++/ostream			minix-sys	gcccmds
+./usr/include/g++/parallel			minix-sys	gcccmds
+./usr/include/g++/parallel/algobase.h		minix-sys	gcccmds
+./usr/include/g++/parallel/algo.h		minix-sys	gcccmds
+./usr/include/g++/parallel/algorithm		minix-sys	gcccmds
+./usr/include/g++/parallel/algorithmfwd.h	minix-sys	gcccmds
+./usr/include/g++/parallel/balanced_quicksort.h	minix-sys	gcccmds
+./usr/include/g++/parallel/base.h		minix-sys	gcccmds
+./usr/include/g++/parallel/basic_iterator.h	minix-sys	gcccmds
+./usr/include/g++/parallel/checkers.h		minix-sys	gcccmds
+./usr/include/g++/parallel/compatibility.h	minix-sys	gcccmds
+./usr/include/g++/parallel/compiletime_settings.h	minix-sys	gcccmds
+./usr/include/g++/parallel/equally_split.h	minix-sys	gcccmds
+./usr/include/g++/parallel/features.h		minix-sys	gcccmds
+./usr/include/g++/parallel/find.h		minix-sys	gcccmds
+./usr/include/g++/parallel/find_selectors.h	minix-sys	gcccmds
+./usr/include/g++/parallel/for_each.h		minix-sys	gcccmds
+./usr/include/g++/parallel/for_each_selectors.h	minix-sys	gcccmds
+./usr/include/g++/parallel/iterator.h		minix-sys	gcccmds
+./usr/include/g++/parallel/list_partition.h	minix-sys	gcccmds
+./usr/include/g++/parallel/losertree.h		minix-sys	gcccmds
+./usr/include/g++/parallel/merge.h		minix-sys	gcccmds
+./usr/include/g++/parallel/multiseq_selection.h	minix-sys	gcccmds
+./usr/include/g++/parallel/multiway_merge.h	minix-sys	gcccmds
+./usr/include/g++/parallel/multiway_mergesort.h	minix-sys	gcccmds
+./usr/include/g++/parallel/numeric		minix-sys	gcccmds
+./usr/include/g++/parallel/numericfwd.h		minix-sys	gcccmds
+./usr/include/g++/parallel/omp_loop.h		minix-sys	gcccmds
+./usr/include/g++/parallel/omp_loop_static.h	minix-sys	gcccmds
+./usr/include/g++/parallel/parallel.h		minix-sys	gcccmds
+./usr/include/g++/parallel/par_loop.h		minix-sys	gcccmds
+./usr/include/g++/parallel/partial_sum.h	minix-sys	gcccmds
+./usr/include/g++/parallel/partition.h		minix-sys	gcccmds
+./usr/include/g++/parallel/queue.h		minix-sys	gcccmds
+./usr/include/g++/parallel/quicksort.h		minix-sys	gcccmds
+./usr/include/g++/parallel/random_number.h	minix-sys	gcccmds
+./usr/include/g++/parallel/random_shuffle.h	minix-sys	gcccmds
+./usr/include/g++/parallel/search.h		minix-sys	gcccmds
+./usr/include/g++/parallel/set_operations.h	minix-sys	gcccmds
+./usr/include/g++/parallel/settings.h		minix-sys	gcccmds
+./usr/include/g++/parallel/sort.h		minix-sys	gcccmds
+./usr/include/g++/parallel/tags.h		minix-sys	gcccmds
+./usr/include/g++/parallel/types.h		minix-sys	gcccmds
+./usr/include/g++/parallel/unique_copy.h	minix-sys	gcccmds
+./usr/include/g++/parallel/workstealing.h	minix-sys	gcccmds
+./usr/include/g++/queue				minix-sys	gcccmds
+./usr/include/g++/random			minix-sys	gcccmds
+./usr/include/g++/ratio				minix-sys	gcccmds
+./usr/include/g++/regex				minix-sys	gcccmds
+./usr/include/g++/set				minix-sys	gcccmds
+./usr/include/g++/sstream			minix-sys	gcccmds
+./usr/include/g++/stack				minix-sys	gcccmds
+./usr/include/g++/stdatomic.h			minix-sys	gcccmds
+./usr/include/g++/stdexcept			minix-sys	gcccmds
+./usr/include/g++/streambuf			minix-sys	gcccmds
+./usr/include/g++/string			minix-sys	gcccmds
+./usr/include/g++/system_error			minix-sys	gcccmds
+./usr/include/g++/tgmath.h			minix-sys	gcccmds
+./usr/include/g++/thread			minix-sys	gcccmds
+./usr/include/g++/tr1				minix-sys	gcccmds
+./usr/include/g++/tr1/array			minix-sys	gcccmds
+./usr/include/g++/tr1/bessel_function.tcc	minix-sys	gcccmds
+./usr/include/g++/tr1/beta_function.tcc		minix-sys	gcccmds
+./usr/include/g++/tr1/ccomplex			minix-sys	gcccmds
+./usr/include/g++/tr1/cctype			minix-sys	gcccmds
+./usr/include/g++/tr1/cfenv			minix-sys	gcccmds
+./usr/include/g++/tr1/cfloat			minix-sys	gcccmds
+./usr/include/g++/tr1/cinttypes			minix-sys	gcccmds
+./usr/include/g++/tr1/climits			minix-sys	gcccmds
+./usr/include/g++/tr1/cmath			minix-sys	gcccmds
+./usr/include/g++/tr1/complex			minix-sys	gcccmds
+./usr/include/g++/tr1/complex.h			minix-sys	gcccmds
+./usr/include/g++/tr1/cstdarg			minix-sys	gcccmds
+./usr/include/g++/tr1/cstdbool			minix-sys	gcccmds
+./usr/include/g++/tr1/cstdint			minix-sys	gcccmds
+./usr/include/g++/tr1/cstdio			minix-sys	gcccmds
+./usr/include/g++/tr1/cstdlib			minix-sys	gcccmds
+./usr/include/g++/tr1/ctgmath			minix-sys	gcccmds
+./usr/include/g++/tr1/ctime			minix-sys	gcccmds
+./usr/include/g++/tr1/ctype.h			minix-sys	gcccmds
+./usr/include/g++/tr1/cwchar			minix-sys	gcccmds
+./usr/include/g++/tr1/cwctype			minix-sys	gcccmds
+./usr/include/g++/tr1/ell_integral.tcc		minix-sys	gcccmds
+./usr/include/g++/tr1/exp_integral.tcc		minix-sys	gcccmds
+./usr/include/g++/tr1/fenv.h			minix-sys	gcccmds
+./usr/include/g++/tr1/float.h			minix-sys	gcccmds
+./usr/include/g++/tr1/functional		minix-sys	gcccmds
+./usr/include/g++/tr1/functional_hash.h		minix-sys	gcccmds
+./usr/include/g++/tr1/gamma.tcc			minix-sys	gcccmds
+./usr/include/g++/tr1/hashtable.h		minix-sys	gcccmds
+./usr/include/g++/tr1/hashtable_policy.h	minix-sys	gcccmds
+./usr/include/g++/tr1/hypergeometric.tcc	minix-sys	gcccmds
+./usr/include/g++/tr1/inttypes.h		minix-sys	gcccmds
+./usr/include/g++/tr1/legendre_function.tcc	minix-sys	gcccmds
+./usr/include/g++/tr1/limits.h			minix-sys	gcccmds
+./usr/include/g++/tr1/math.h			minix-sys	gcccmds
+./usr/include/g++/tr1/memory			minix-sys	gcccmds
+./usr/include/g++/tr1/modified_bessel_func.tcc	minix-sys	gcccmds
+./usr/include/g++/tr1/poly_hermite.tcc		minix-sys	gcccmds
+./usr/include/g++/tr1/poly_laguerre.tcc		minix-sys	gcccmds
+./usr/include/g++/tr1/random			minix-sys	gcccmds
+./usr/include/g++/tr1/random.h			minix-sys	gcccmds
+./usr/include/g++/tr1/random.tcc		minix-sys	gcccmds
+./usr/include/g++/tr1/regex			minix-sys	gcccmds
+./usr/include/g++/tr1/riemann_zeta.tcc		minix-sys	gcccmds
+./usr/include/g++/tr1/shared_ptr.h		minix-sys	gcccmds
+./usr/include/g++/tr1/special_function_util.h	minix-sys	gcccmds
+./usr/include/g++/tr1/stdarg.h			minix-sys	gcccmds
+./usr/include/g++/tr1/stdbool.h			minix-sys	gcccmds
+./usr/include/g++/tr1/stdint.h			minix-sys	gcccmds
+./usr/include/g++/tr1/stdio.h			minix-sys	gcccmds
+./usr/include/g++/tr1/stdlib.h			minix-sys	gcccmds
+./usr/include/g++/tr1/tgmath.h			minix-sys	gcccmds
+./usr/include/g++/tr1/tuple			minix-sys	gcccmds
+./usr/include/g++/tr1/type_traits		minix-sys	gcccmds
+./usr/include/g++/tr1/unordered_map		minix-sys	gcccmds
+./usr/include/g++/tr1/unordered_map.h		minix-sys	gcccmds
+./usr/include/g++/tr1/unordered_set		minix-sys	gcccmds
+./usr/include/g++/tr1/unordered_set.h		minix-sys	gcccmds
+./usr/include/g++/tr1/utility			minix-sys	gcccmds
+./usr/include/g++/tr1/wchar.h			minix-sys	gcccmds
+./usr/include/g++/tr1/wctype.h			minix-sys	gcccmds
+./usr/include/g++/tr1_impl			minix-sys	gcccmds
+./usr/include/g++/tr1_impl/array		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/boost_sp_counted_base.h	minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cctype		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cfenv		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cinttypes		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cmath		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/complex		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cstdint		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cstdio		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cstdlib		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cwchar		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/cwctype		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/regex		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/type_traits		minix-sys	gcccmds
+./usr/include/g++/tr1_impl/utility		minix-sys	gcccmds
+./usr/include/g++/tuple				minix-sys	gcccmds
+./usr/include/g++/typeinfo			minix-sys	gcccmds
+./usr/include/g++/type_traits			minix-sys	gcccmds
+./usr/include/g++/unordered_map			minix-sys	gcccmds
+./usr/include/g++/unordered_set			minix-sys	gcccmds
+./usr/include/g++/utility			minix-sys	gcccmds
+./usr/include/g++/valarray			minix-sys	gcccmds
+./usr/include/g++/vector			minix-sys	gcccmds
+./usr/include/gcc-4.5				minix-sys	gcccmds
+./usr/include/gcc-4.5/mmintrin.h		minix-sys	gcccmds
+./usr/include/gcc-4.5/tgmath.h			minix-sys	gcccmds
 ./usr/include/gelf.h			minix-sys
 ./usr/include/getopt.h			minix-sys
 ./usr/include/glob.h			minix-sys
@@ -774,7 +1176,19 @@
 ./usr/include/nlist.h			minix-sys
 ./usr/include/nl_types.h		minix-sys
 ./usr/include/nsswitch.h		minix-sys
-./usr/include/objc			minix-sys	obsolete
+./usr/include/objc			minix-sys	gcccmds
+./usr/include/objc/encoding.h		minix-sys	gcccmds
+./usr/include/objc/hash.h		minix-sys	gcccmds
+./usr/include/objc/NXConstStr.h		minix-sys	gcccmds
+./usr/include/objc/objc-api.h		minix-sys	gcccmds
+./usr/include/objc/objc-decls.h		minix-sys	gcccmds
+./usr/include/objc/objc.h		minix-sys	gcccmds
+./usr/include/objc/objc-list.h		minix-sys	gcccmds
+./usr/include/objc/Object.h		minix-sys	gcccmds
+./usr/include/objc/Protocol.h		minix-sys	gcccmds
+./usr/include/objc/sarray.h		minix-sys	gcccmds
+./usr/include/objc/thr.h		minix-sys	gcccmds
+./usr/include/objc/typedstream.h	minix-sys	gcccmds
 ./usr/include/paths.h			minix-sys
 ./usr/include/poll.h			minix-sys
 ./usr/include/prop			minix-sys
@@ -1129,7 +1543,12 @@
 ./usr/lib/libexec_pic.a			minix-sys
 ./usr/lib/libfetch.a			minix-sys
 ./usr/lib/libfl.a			minix-sys
-./usr/lib/libgcc.a			minix-sys
+./usr/lib/libgcc.a			minix-sys	gcc=45
+./usr/lib/libgcc_eh.a			minix-sys	gcccmds
+./usr/lib/libgcc_s.a			minix-sys	gcccmds
+./usr/lib/libgcc_s.so			minix-sys	gcccmds
+./usr/lib/libgcc_s.so.1.0		minix-sys	gcccmds
+./usr/lib/libgcc_s.so.1			minix-sys	gcccmds
 ./usr/lib/libl.a			minix-sys
 ./usr/lib/liblwip.a			minix-sys
 ./usr/lib/liblwip_pic.a			minix-sys
@@ -1163,6 +1582,11 @@
 ./usr/lib/libnetdriver_pic.a		minix-sys
 ./usr/lib/libnetsock.a			minix-sys
 ./usr/lib/libnetsock_pic.a		minix-sys
+./usr/lib/libobjc.a			minix-sys	gcccmds
+./usr/lib/libobjc_pic.a			minix-sys	gcccmds
+./usr/lib/libobjc.so			minix-sys	gcccmds
+./usr/lib/libobjc.so.3.0		minix-sys	gcccmds
+./usr/lib/libobjc.so.3			minix-sys	gcccmds
 ./usr/lib/libopcodes.so.5.0		minix-sys	binutils
 ./usr/lib/libopcodes.so.5		minix-sys	binutils
 ./usr/lib/libprop.a			minix-sys
@@ -1183,6 +1607,12 @@
 ./usr/lib/librmt.a			minix-sys
 ./usr/lib/libsffs.a			minix-sys
 ./usr/lib/libsffs_pic.a			minix-sys
+./usr/lib/libstdc++.a			minix-sys	gcccmds
+./usr/lib/libstdc++_pic.a		minix-sys	gcccmds
+./usr/lib/libstdc++.so			minix-sys	gcccmds
+./usr/lib/libstdc++.so.7		minix-sys	gcccmds
+./usr/lib/libstdc++.so.7.1		minix-sys	gcccmds
+./usr/lib/libsupc++.a			minix-sys	gcccmds
 ./usr/lib/libsys.a			minix-sys
 ./usr/lib/libsys_pic.a			minix-sys
 ./usr/lib/libsys.so.0.0			minix-sys
@@ -1228,7 +1658,7 @@
 ./usr/libexec/makewhatis		minix-sys
 ./usr/log				minix-sys
 ./usr/Makefile				minix-sys
-./usr/man					minix-sys
+./usr/man				minix-sys
 ./usr/man/man1				minix-sys
 ./usr/man/man1/..1			minix-sys
 ./usr/man/man1/[.1			minix-sys
@@ -1250,10 +1680,13 @@
 ./usr/man/man1/bzcat.1			minix-sys
 ./usr/man/man1/bzip2.1			minix-sys
 ./usr/man/man1/bzip2recover.1		minix-sys
+./usr/man/man1/c++.1			minix-sys	gcccmds
 ./usr/man/man1/cal.1			minix-sys
 ./usr/man/man1/case.1			minix-sys
 ./usr/man/man1/cat.1			minix-sys
 ./usr/man/man1/cawf.1			minix-sys
+./usr/man/man1/cc.1			minix-sys	gcccmds
+./usr/man/man1/cccp.1			minix-sys	gcccmds
 ./usr/man/man1/cd.1			minix-sys
 ./usr/man/man1/c++filt.1		minix-sys	binutils
 ./usr/man/man1/chfn.1			minix-sys
@@ -1274,6 +1707,7 @@
 ./usr/man/man1/cp.1			minix-sys
 ./usr/man/man1/cpdir.1			minix-sys
 ./usr/man/man1/cpio.1			minix-sys
+./usr/man/man1/cpp.1			minix-sys	gcccmds
 ./usr/man/man1/crc.1			minix-sys
 ./usr/man/man1/crontab.1		minix-sys
 ./usr/man/man1/ctags.1			minix-sys
@@ -1320,6 +1754,10 @@
 ./usr/man/man1/from.1			minix-sys
 ./usr/man/man1/fsck.mfs.1		minix-sys
 ./usr/man/man1/ftp.1			minix-sys
+./usr/man/man1/g++.1			minix-sys	gcccmds
+./usr/man/man1/gcc.1			minix-sys	gcccmds
+./usr/man/man1/gcov.1			minix-sys	gcccmds
+./usr/man/man1/gcpp.1			minix-sys	gcccmds
 ./usr/man/man1/genassym.1		minix-sys
 ./usr/man/man1/getopt.1			minix-sys
 ./usr/man/man1/getopts.1		minix-sys
@@ -3941,7 +4379,9 @@
 ./usr/share/info/as.info		minix-sys	binutils
 ./usr/share/info/bfd.info		minix-sys	binutils
 ./usr/share/info/binutils.info		minix-sys	binutils
+./usr/share/info/cpp.info		minix-sys	gcccmds
 ./usr/share/info/dir			minix-sys
+./usr/share/info/gcc.info		minix-sys	gcccmds
 ./usr/share/info/gprof.info		minix-sys	binutils
 ./usr/share/info/info.info		minix-sys
 ./usr/share/info/info-stnd.info		minix-sys

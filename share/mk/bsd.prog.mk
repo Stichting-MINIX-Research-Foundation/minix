@@ -84,35 +84,47 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 #	NB:	If you are a library here, add it in bsd.README
 
 .for _lib in \
-	audiodriver \
-	blockdriver \
-	chardriver \
-	netdriver \
+	atf_c \
+	atf_cxx \
+	bz2 \
 	c \
+	c_pic \
+	crt0 \
+	crypt \
 	curses \
 	edit \
 	expat \
-	end \
-	sys \
-	timers \
-	util \
-	bz2 \
 	l \
-	m  \
+	m \
+	magic \
+	rmt \
+	terminfo \
+	util \
+	z 
+
+.ifndef LIB${_lib:tu}
+LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
+.MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
+.endif
+.endfor
+
+# Minix libraries
+.for _lib in \
+	audiodriver \
+	bdev \
+	blockdriver \
+	chardriver \
+	elf \
 	exec \
 	ddekit \
 	devman \
-	usb \
-	elf \
-	bdev \
-	sffs \
-	hgfs \
-	vboxfs \
 	minc \
 	minlib \
-	min\
-	lib
-
+	netdriver \
+	sffs \
+	sys \
+	timers \
+	usb
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
@@ -229,6 +241,10 @@ _APPEND_SRCS=yes
 _CCLINKFLAGS=
 
 .if defined(PROG_CXX)
+#.if defined(__MINIX) # LSC: Can't test as bsd.own.mk may not have been sourced
+LDADD+=	-lgcc_s
+DPADD+=	${DESTDIR}/usr/lib/libgcc_s.a
+#.endif # defined(__MINIX)
 PROG=		${PROG_CXX}
 _CCLINK=	${CXX} ${_CCLINKFLAGS}
 .endif

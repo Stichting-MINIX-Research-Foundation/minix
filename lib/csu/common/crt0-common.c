@@ -143,6 +143,8 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 	struct ps_strings minix_ps_strings;
 
 	if (ps_strings == NULL) {
+		memset(&minix_ps_strings, 0, sizeof(minix_ps_strings));
+
 		minix_ps_strings.ps_envstr = envp;
 		minix_ps_strings.ps_argvstr = argv;
 		minix_ps_strings.ps_nargvstr = argc;
