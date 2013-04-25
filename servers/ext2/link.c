@@ -10,6 +10,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <sys/param.h>
 
 #define SAME 1000
 
@@ -181,7 +182,6 @@ int fs_unlink()
  *===========================================================================*/
 int fs_rdlink()
 {
-  block_t b;                   /* block containing link text */
   struct buf *bp = NULL;       /* buffer containing link text */
   char* link_text;             /* either bp->b_data or rip->i_block */
   register struct inode *rip;  /* target inode */
@@ -196,16 +196,11 @@ int fs_rdlink()
 
   if (rip->i_size >= MAX_FAST_SYMLINK_LENGTH) {
   /* normal symlink */
-	if ((b = read_map(rip, (off_t) 0)) == NO_BLOCK) {
+       	if(!(bp = get_block_map(rip, 0))) {
 		r = EIO;
 	} else {
-		bp = get_block(rip->i_dev, b, NORMAL);
-		if (bp != NULL) {
-			link_text = b_data(bp);
-			r = OK;
-		} else {
-			r = EIO;
-		}
+		link_text = b_data(bp);
+		r = OK;
 	}
   } else {
         /* fast symlink, stored in inode */
@@ -715,13 +710,11 @@ off_t len;
 /* Zero a range in a block.
  * This function is used to zero a segment of a block.
  */
-  block_t b;
   struct buf *bp;
   off_t offset;
 
   if (!len) return; /* no zeroing to be done. */
-  if ( (b = read_map(rip, pos)) == NO_BLOCK) return;
-  if ( (bp = get_block(rip->i_dev, b, NORMAL)) == NULL)
+  if (!(bp = get_block_map(rip, rounddown(pos, rip->i_sp->s_block_size))))
 	panic("zeroblock_range: no block");
   offset = pos % rip->i_sp->s_block_size;
   if (offset + len > rip->i_sp->s_block_size)

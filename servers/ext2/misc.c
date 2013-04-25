@@ -90,3 +90,9 @@ int fs_new_driver(void)
 
   return(OK);
 }
+
+int fs_bpeek(void)      
+{
+	return lmfs_do_bpeek(&fs_m_in);
+}
+

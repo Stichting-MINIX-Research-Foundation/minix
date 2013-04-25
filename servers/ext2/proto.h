@@ -44,6 +44,7 @@ int truncate_inode(struct inode *rip, off_t len);
 int fs_flush(void);
 int fs_sync(void);
 int fs_new_driver(void);
+int fs_bpeek(void);
 
 /* mount.c */
 int fs_mountpoint(void);
@@ -75,8 +76,9 @@ int read_only(struct inode *ip);
 int fs_breadwrite(void);
 int fs_readwrite(void);
 void read_ahead(void);
-block_t read_map(struct inode *rip, off_t pos);
 block_t rd_indir(struct buf *bp, int index);
+block_t read_map(struct inode *rip, off_t pos, int opportunistic);
+struct buf *get_block_map(register struct inode *rip, u64_t position);
 
 /* stadir.c */
 int fs_fstatfs(void);

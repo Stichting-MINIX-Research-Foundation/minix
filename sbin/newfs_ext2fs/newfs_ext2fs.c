@@ -82,9 +82,17 @@ static void usage(void) __dead;
  * L_DFL_*.
  */
 #define SMALL_FSSIZE	((4 * 1024 * 1024) / sectorsize)	/* 4MB */
+#ifdef __minix
+#define S_DFL_BSIZE	4096
+#else
 #define S_DFL_BSIZE	1024
+#endif
 #define MEDIUM_FSSIZE	((512 * 1024 * 1024) / sectorsize)	/* 512MB */
+#ifdef __minix
+#define M_DFL_BSIZE	4096
+#else
 #define M_DFL_BSIZE	1024
+#endif
 #define L_DFL_BSIZE	4096
 
 /*
