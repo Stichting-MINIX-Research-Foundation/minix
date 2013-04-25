@@ -16,6 +16,7 @@
 #include <string.h>
 #include <minix/endpoint.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include "buf.h"
 #include "inode.h"
@@ -292,7 +293,6 @@ char *suffix;			/* current remaining path. Has to point in the
  * new pathname.
  */
 
-  block_t blink;	/* block containing link text */
   size_t llen;		/* length of link */
   size_t slen;		/* length of suffix */
   struct buf *bp;	/* buffer containing link text */
@@ -302,9 +302,8 @@ char *suffix;			/* current remaining path. Has to point in the
 
   if (llen >= MAX_FAST_SYMLINK_LENGTH) {
 	/* normal symlink */
-	if ((blink = read_map(rip, (off_t) 0)) == NO_BLOCK)
+	if(!(bp = get_block_map(rip, 0)))
 		return(EIO);
-	bp = get_block(rip->i_dev, blink, NORMAL);
 	sp = b_data(bp);
   } else {
 	/* fast symlink, stored in inode */
@@ -507,7 +506,6 @@ int ftype;			 /* used when ENTER and
   mode_t bits;
   off_t pos;
   unsigned new_slots;
-  block_t b;
   int extended = 0;
   int required_space = 0;
   int string_len = 0;
@@ -548,15 +546,12 @@ int ftype;			 /* used when ENTER and
   }
 
   for (; pos < ldir_ptr->i_size; pos += ldir_ptr->i_sp->s_block_size) {
-	b = read_map(ldir_ptr, pos);	/* get block number */
-
 	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
-	bp = get_block(ldir_ptr->i_dev, b, NORMAL);	/* get a dir block */
-	prev_dp = NULL; /* New block - new first dentry, so no prev. */
-
-	if (bp == NO_BLOCK)
+	if(!(bp = get_block_map(ldir_ptr,
+	   rounddown(pos, ldir_ptr->i_sp->s_block_size))))
 		panic("get_block returned NO_BLOCK");
-	assert(bp != NULL);
+
+	prev_dp = NULL; /* New block - new first dentry, so no prev. */
 
 	/* Search a directory block.
 	 * Note, we set prev_dp at the end of the loop.
@@ -627,6 +622,7 @@ int ftype;			 /* used when ENTER and
 				/* 'flag' is LOOK_UP */
 				*numb = (ino_t) conv4(le_CPU, dp->d_ino);
 			}
+			assert(lmfs_dev(bp) != NO_DEV);
 			put_block(bp, DIRECTORY_BLOCK);
 			return(r);
 		}
@@ -661,6 +657,7 @@ int ftype;			 /* used when ENTER and
 	}
 
 	/* The whole block has been searched or ENTER has a free slot. */
+	assert(lmfs_dev(bp) != NO_DEV);
 	if (e_hit) break;	/* e_hit set if ENTER can be performed now */
 	put_block(bp, DIRECTORY_BLOCK); /* otherwise, continue searching dir */
   }

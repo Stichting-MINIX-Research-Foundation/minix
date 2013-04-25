@@ -12,6 +12,8 @@
 
 #include "fs.h"
 #include <string.h>
+#include <assert.h>
+#include <sys/param.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -316,7 +318,7 @@ off_t position;			/* file pointer */
   block_t b;
 
   /* Is another block available? */
-  if ( (b = read_map(rip, position)) == NO_BLOCK) {
+  if ( (b = read_map(rip, position, 0)) == NO_BLOCK) {
 	/* Check if this position follows last allocated
 	 * block.
 	 */
@@ -359,7 +361,8 @@ off_t position;			/* file pointer */
 	}
   }
 
-  bp = get_block(rip->i_dev, b, NO_READ);
+  bp = lmfs_get_block_ino(rip->i_dev, b, NO_READ, rip->i_num,
+  	rounddown(position, rip->i_sp->s_block_size));
   zero_block(bp);
   return(bp);
 }

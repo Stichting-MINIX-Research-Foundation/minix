@@ -12,6 +12,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <sys/param.h>
 #include <assert.h>
 #include <sys/param.h>
 
@@ -224,6 +225,8 @@ int *completed;                 /* number of bytes copied */
   int n, block_spec;
   block_t b;
   dev_t dev;
+  ino_t ino = VMC_NO_INODE;
+  u64_t ino_off = rounddown(position, block_size);
 
   /* rw_flag:
    *   READING: read from FS, copy to user
@@ -241,8 +244,10 @@ int *completed;                 /* number of bytes copied */
   } else {
 	if (ex64hi(position) != 0)
 		panic("rw_chunk: position too high");
-	b = read_map(rip, (off_t) ex64lo(position));
+	b = read_map(rip, (off_t) ex64lo(position), 0);
 	dev = rip->i_dev;
+	ino = rip->i_num;
+	assert(ino != VMC_NO_INODE);
   }
 
   if (!block_spec && b == NO_BLOCK) {
@@ -272,7 +277,14 @@ int *completed;                 /* number of bytes copied */
 	n = (chunk == block_size ? NO_READ : NORMAL);
 	if (!block_spec && off == 0 && (off_t) ex64lo(position) >= rip->i_size)
 		n = NO_READ;
-	bp = get_block(dev, b, n);
+	if(block_spec) {
+		assert(ino == VMC_NO_INODE);
+		bp = get_block(dev, b, n);
+	} else {
+		assert(ino != VMC_NO_INODE);
+		assert(!(ino_off % block_size));
+		bp = lmfs_get_block_ino(dev, b, n, ino, ino_off);
+	}
   }
 
   /* In all cases, bp now points to a valid buffer. */
@@ -305,9 +317,10 @@ int *completed;                 /* number of bytes copied */
 /*===========================================================================*
  *				read_map				     *
  *===========================================================================*/
-block_t read_map(rip, position)
+block_t read_map(rip, position, opportunistic)
 register struct inode *rip;     /* ptr to inode to map from */
 off_t position;                 /* position in file whose blk wanted */
+int opportunistic;
 {
 /* Given an inode and a position within the corresponding file, locate the
  * block number in which that position is to be found and return it.
@@ -323,6 +336,9 @@ off_t position;                 /* position in file whose blk wanted */
   static long doub_ind_s;
   static long triple_ind_s;
   static long out_range_s;
+  int iomode = NORMAL;
+ 
+  if(opportunistic) iomode = PREFETCH;
 
   if (first_time) {
 	addr_in_block = rip->i_sp->s_block_size / BLOCK_ADDRESS_BYTES;
@@ -364,7 +380,11 @@ off_t position;                 /* position in file whose blk wanted */
 		excess = excess % addr_in_block2;
 	}
 	if (b == NO_BLOCK) return(NO_BLOCK);
-	bp = get_block(rip->i_dev, b, NORMAL);	/* get double indirect block */
+	bp = get_block(rip->i_dev, b, iomode); /* get double indirect block */
+	if(opportunistic && lmfs_dev(bp) == NO_DEV) {
+		put_block(bp, INDIRECT_BLOCK);
+		return NO_BLOCK;
+	}
 	ASSERT(lmfs_dev(bp) != NO_DEV);
 	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	index = excess / addr_in_block;
@@ -373,7 +393,12 @@ off_t position;                 /* position in file whose blk wanted */
 	index = excess % addr_in_block;	/* index into single ind blk */
   }
   if (b == NO_BLOCK) return(NO_BLOCK);
-  bp = get_block(rip->i_dev, b, NORMAL);
+  bp = get_block(rip->i_dev, b, iomode);       /* get single indirect block */
+  if(opportunistic && lmfs_dev(bp) == NO_DEV) {
+       put_block(bp, INDIRECT_BLOCK);
+       return NO_BLOCK;
+  }
+
   ASSERT(lmfs_dev(bp) != NO_DEV);
   ASSERT(lmfs_dev(bp) == rip->i_dev);
   b = rd_indir(bp, index);
@@ -382,6 +407,16 @@ off_t position;                 /* position in file whose blk wanted */
   return(b);
 }
 
+struct buf *get_block_map(register struct inode *rip, u64_t position)
+{
+	block_t b = read_map(rip, position, 0);	/* get block number */
+	int block_size = get_block_size(rip->i_dev);
+	if(b == NO_BLOCK)
+		return NULL;
+	position = rounddown(position, block_size);
+	assert(rip->i_num != VMC_NO_INODE);
+	return lmfs_get_block_ino(rip->i_dev, b, NORMAL, rip->i_num, position);
+}
 
 /*===========================================================================*
  *				rd_indir				     *
@@ -414,7 +449,7 @@ void read_ahead()
   rip = rdahed_inode;           /* pointer to inode to read ahead from */
   block_size = get_block_size(rip->i_dev);
   rdahed_inode = NULL;     /* turn off read ahead */
-  if ( (b = read_map(rip, rdahedpos)) == NO_BLOCK) return;      /* at EOF */
+  if ( (b = read_map(rip, rdahedpos, 1)) == NO_BLOCK) return;      /* at EOF */
 
   assert(rdahedpos >= 0); /* So we can safely cast it to unsigned below */
 
@@ -450,6 +485,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   struct buf *bp = NULL;
   static unsigned int readqsize = 0;
   static struct buf **read_q = NULL;
+  u64_t position_running;
 
   if(readqsize != nr_bufs) {
 	if(readqsize > 0) {
@@ -473,10 +509,23 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   else
 	dev = rip->i_dev;
 
+  assert(dev != NO_DEV);
   block_size = get_block_size(dev);
 
   block = baseblock;
-  bp = get_block(dev, block, PREFETCH);
+
+  fragment = position % block_size;
+  position -= fragment;
+  position_running = position;
+  bytes_ahead += fragment;
+  blocks_ahead = (bytes_ahead + block_size - 1) / block_size;
+
+  if(block_spec)
+         bp = get_block(dev, block, PREFETCH);
+  else
+         bp = lmfs_get_block_ino(dev, block, PREFETCH, rip->i_num, position);
+
+
   assert(bp != NULL);
   if (lmfs_dev(bp) != NO_DEV) return(bp);
 
@@ -499,12 +548,6 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
    * better solution must look at the already available
    * indirect blocks (but don't call read_map!).
    */
-
-  fragment = rem64u(position, block_size);
-  position = sub64u(position, fragment);
-  bytes_ahead += fragment;
-
-  blocks_ahead = (bytes_ahead + block_size - 1) / block_size;
 
   if (block_spec && rip->i_size == 0) {
 	blocks_left = (block_t) NR_IOREQS;
@@ -536,6 +579,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 
   /* Acquire block buffers. */
   for (;;) {
+  	block_t thisblock;
 	read_q[read_q_size++] = bp;
 
 	if (--blocks_ahead == 0) break;
@@ -544,8 +588,14 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 	if (lmfs_bufs_in_use() >= nr_bufs - 4) break;
 
 	block++;
+	position_running += block_size;
 
-	bp = get_block(dev, block, PREFETCH);
+	if(!block_spec && 
+	  (thisblock = read_map(rip, (off_t) ex64lo(position_running), 1)) != NO_BLOCK) {
+	  	bp = lmfs_get_block_ino(dev, thisblock, PREFETCH, rip->i_num, position_running);
+	} else {
+		bp = get_block(dev, block, PREFETCH);
+	}
 	if (lmfs_dev(bp) != NO_DEV) {
 		/* Oops, block already in the cache, get out. */
 		put_block(bp, FULL_DATA_BLOCK);
@@ -553,7 +603,10 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 	}
   }
   lmfs_rw_scattered(dev, read_q, read_q_size, READING);
-  return(get_block(dev, baseblock, NORMAL));
+
+  if(block_spec)
+	  return get_block(dev, baseblock, NORMAL);
+  return(lmfs_get_block_ino(dev, baseblock, NORMAL, rip->i_num, position));
 }
 
 
@@ -569,7 +622,6 @@ int fs_getdents(void)
   int o, r, done;
   unsigned int block_size, len, reclen;
   ino_t ino;
-  block_t b;
   cp_grant_id_t gid;
   size_t size, tmpbuf_off, userbuf_off;
   off_t pos, off, block_pos, new_pos, ent_pos;
@@ -604,9 +656,9 @@ int fs_getdents(void)
 
   for (; block_pos < rip->i_size; block_pos += block_size) {
 	off_t temp_pos = block_pos;
-	b = read_map(rip, block_pos); /* get block number */
-	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
-	bp = get_block(rip->i_dev, b, NORMAL);  /* get a dir block */
+        /* Since directories don't have holes, 'bp' cannot be NULL. */
+        bp = get_block_map(rip, block_pos);     /* get a dir block */
+        assert(bp != NULL);
 	assert(bp != NULL);
 
 	/* Search a directory block. */
