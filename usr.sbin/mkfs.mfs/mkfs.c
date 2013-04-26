@@ -39,6 +39,8 @@
 #endif
 #include <dirent.h>
 
+
+
 #undef EXTERN
 #define EXTERN			/* get rid of EXTERN by making it null */
 #include "super.h"
@@ -56,6 +58,9 @@
 #define INODE_MAX       ((unsigned) 65535)
 #define SECTOR_SIZE	   512
 
+/* inode block indexes pointing to single and double indirect block */
+#define S_INDIRECT_IDX (V2_NR_DZONES)
+#define D_INDIRECT_IDX (V2_NR_DZONES+1)
 
 #if !defined(__minix)
 #define mul64u(a,b)	((a) * (b))
@@ -289,11 +294,7 @@ char *argv[];
 		if (blocks == 0) pexit("Can't open prototype file");
 	}
 	if (i == 0) {
-#if defined(__minix)
-		uint32_t kb = div64u(mul64u(blocks, block_size), 1024);
-#else
 		uint32_t kb = ((unsigned long long) blocks * block_size) / 1024;
-#endif
 		i = kb / 2;
 		if (kb >= 100000) i = kb / 4;
 
@@ -393,6 +394,7 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
  *===============================================================*/
 void detect_fs_size(struct fs_size * fssize)
 {
+  int prev_lct = lct;
   uint32_t point = ftell(proto);
   
   fssize->inocount = 1;	/* root directory node */
@@ -409,6 +411,7 @@ void detect_fs_size(struct fs_size * fssize)
   initb += (fssize->inocount + inodes_per_block - 1) / inodes_per_block;
 
   fssize->blockcount = initb+ fssize->zonecount;
+  lct = prev_lct;
   fseek(proto, point, SEEK_SET);
 }
 
@@ -420,9 +423,16 @@ void sizeup_dir(struct fs_size * fssize)
   size_t size;
   int dir_entries = 2;
   zone_t dir_zones = 0;
-  zone_t nr_dzones;
+  zone_t nr_dzones, nr_indirzones;
 
+  /* how many data blocks are addressed using a single indirect block? */
+  int indir_addressed = V2_INDIRECTS(block_size);
+
+  /* number of file zones we can address directly from the inode */
   nr_dzones = V2_NR_DZONES;
+
+  /* number of file zones we can address directly and with a single indirect */
+  nr_indirzones = V2_NR_DZONES + indir_addressed;
 
   while (1) {
 	getline(line, token);
@@ -453,6 +463,7 @@ void sizeup_dir(struct fs_size * fssize)
 				progname, token[4], strerror(errno));
 				pexit("dynamic size detection failed");
 		} else {
+			int indirects = 0;
 			if (fseek(f, 0, SEEK_END) < 0) {
 			fprintf(stderr, "%s: Can't seek to end of %s\n",
 				progname, token[4]);
@@ -460,12 +471,21 @@ void sizeup_dir(struct fs_size * fssize)
 			}
 			size = ftell(f);
 			fclose(f);
-			zone_t fzones= (size / block_size);
-			if (size % block_size)
-				fzones++;
+			zone_t fzones= roundup(size, block_size) / block_size;
 			if (fzones > nr_dzones)
-				fzones++;	/* Assumes files fit within single indirect */
-			fssize->zonecount += fzones;
+				indirects++; /* single indirect needed */
+			if (fzones > nr_indirzones) {
+				int dindirect = 0;
+				int dindirzones = fzones - nr_indirzones;
+
+				/* how many zones needed to point to data
+				 * blocks?
+				 */
+				dindirect = 1 + roundup(dindirzones,
+					indir_addressed) / indir_addressed;
+				indirects += dindirect;
+			}
+			fssize->zonecount += fzones + indirects;
 		}
 	}
   }
@@ -829,10 +849,10 @@ void enter_dir(ino_t parent, char const *name, ino_t child)
   }
 
   /* no space in directory using just direct blocks; try indirect */
-  if (ino->d2_zone[V2_NR_DZONES] == 0)
-  	ino->d2_zone[V2_NR_DZONES] = alloc_zone();
+  if (ino->d2_zone[S_INDIRECT_IDX] == 0)
+  	ino->d2_zone[S_INDIRECT_IDX] = alloc_zone();
 
-  get_block(ino->d2_zone[V2_NR_DZONES], (char *) indirblock);
+  get_block(ino->d2_zone[S_INDIRECT_IDX], (char *) indirblock);
 
   for(k = 0; k < V2_INDIRECTS(block_size); k++) {
   	z = indirblock[k];
@@ -840,7 +860,7 @@ void enter_dir(ino_t parent, char const *name, ino_t child)
 
 	if(dir_try_enter(z, child, __UNCONST(name))) {
 		put_block(b, (char *) inoblock);
-		put_block(ino->d2_zone[V2_NR_DZONES], (char *) indirblock);
+		put_block(ino->d2_zone[S_INDIRECT_IDX], (char *) indirblock);
 		free(inoblock);
 		free(indirblock);
 		return;
@@ -858,9 +878,9 @@ void add_zone(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
   /* Add zone z to inode n. The file has grown by 'bytes' bytes. */
 
   int off, i;
-  block_t b;
-  zone_t indir;
-  zone_t *blk;
+  block_t b, inodeblock;
+  zone_t dindir, indir;
+  zone_t *dinblk, *blk;
   d2_inode *p;
   d2_inode *inode;
 
@@ -870,7 +890,7 @@ void add_zone(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
   if(!(inode = malloc(V2_INODES_PER_BLOCK(block_size)*sizeof(*inode))))
   	pexit("Couldn't allocate block of inodes");
 
-  b = ((n - 1) / V2_INODES_PER_BLOCK(block_size)) + inode_offset;
+  inodeblock = b = ((n - 1) / V2_INODES_PER_BLOCK(block_size)) + inode_offset;
   off = (n - 1) % V2_INODES_PER_BLOCK(block_size);
   get_block(b, (char *) inode);
   p = &inode[off];
@@ -879,17 +899,18 @@ void add_zone(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
   for (i = 0; i < V2_NR_DZONES; i++)
 	if (p->d2_zone[i] == 0) {
 		p->d2_zone[i] = z;
-		put_block(b, (char *) inode);
+		put_block(inodeblock, (char *) inode);
   		free(blk);
   		free(inode);
 		return;
 	}
-  put_block(b, (char *) inode);
+  put_block(inodeblock, (char *) inode);
 
   /* File has grown beyond a small file. */
-  if (p->d2_zone[V2_NR_DZONES] == 0) p->d2_zone[V2_NR_DZONES] = alloc_zone();
-  indir = p->d2_zone[V2_NR_DZONES];
-  put_block(b, (char *) inode);
+  if (p->d2_zone[S_INDIRECT_IDX] == 0)
+	p->d2_zone[S_INDIRECT_IDX] = alloc_zone();
+  indir = p->d2_zone[S_INDIRECT_IDX];
+  put_block(inodeblock, (char *) inode);
   b = indir;
   get_block(b, (char *) blk);
   for (i = 0; i < V2_INDIRECTS(block_size); i++)
@@ -900,7 +921,38 @@ void add_zone(ino_t n, zone_t z, size_t bytes, uint32_t cur_time)
   		free(inode);
 		return;
 	}
-  pexit("File has grown beyond single indirect");
+  put_block(b, (char *) blk);
+
+  if(!(dinblk = malloc(block_size)))
+  	pexit("Couldn't allocate double indirect block");
+
+  /* We need a double indirect. */
+  if (!p->d2_zone[D_INDIRECT_IDX]) p->d2_zone[D_INDIRECT_IDX] = alloc_zone();
+  dindir = p->d2_zone[D_INDIRECT_IDX];
+  get_block(dindir, (char *) dinblk);
+  put_block(inodeblock, (char *) inode);
+
+  /* Iterate over pointers to the next indirect block */
+  for (i = 0; i < V2_INDIRECTS(block_size); i++) {
+	int j;
+	if (dinblk[i] == 0) dinblk[i] = alloc_zone();
+	indir = dinblk[i];
+	get_block(indir, (char *) blk);
+	for (j = 0; j < V2_INDIRECTS(block_size); j++) {
+		if (blk[j] == 0) {
+			blk[j] = z;
+			put_block(indir, (char *) blk);
+  			put_block(dindir, (char *) dinblk);
+  			free(blk);
+			free(dinblk);
+	  		free(inode);
+			return;
+		}
+	}
+	put_block(indir, (char *) blk);
+  }
+
+  pexit("File has grown beyond double indirect");
 }
 
 
