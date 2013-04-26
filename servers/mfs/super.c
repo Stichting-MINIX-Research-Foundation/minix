@@ -22,6 +22,7 @@
 #include "super.h"
 #include "const.h"
 
+static u32_t used_blocks = 0;
 
 /*===========================================================================*
  *				alloc_bit				     *
@@ -91,6 +92,10 @@ bit_t origin;			/* number of bit to start searching at */
 		*wptr = (bitchunk_t) conv4(sp->s_native, (int) k);
 		MARKDIRTY(bp);
 		put_block(bp, MAP_BLOCK);
+		if(map == ZMAP) {
+			used_blocks++;
+			lmfs_blockschange(sp->s_dev, 1);
+		}
 		return(b);
 	}
 	put_block(bp, MAP_BLOCK);
@@ -144,8 +149,12 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   MARKDIRTY(bp);
 
   put_block(bp, MAP_BLOCK);
-}
 
+  if(map == ZMAP) {
+	used_blocks--;
+	lmfs_blockschange(sp->s_dev, -1);
+  }
+}
 
 /*===========================================================================*
  *				get_super				     *
@@ -365,3 +374,14 @@ int write_super(struct super_block *sp)
   return rw_super(sp, 1);
 }
 
+static int blocks_known = 0;
+
+u32_t get_used_blocks(struct super_block *sp)
+{
+	if(!blocks_known)  {
+		/* how many blocks are in use? */
+		used_blocks = sp->s_zones - count_free_bits(sp, ZMAP);
+		blocks_known = 1;
+	}
+	return used_blocks;
+}

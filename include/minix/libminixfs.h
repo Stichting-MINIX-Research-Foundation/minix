@@ -56,6 +56,8 @@ void lmfs_put_block(struct buf *bp, int block_type);
 void lmfs_rw_scattered(dev_t, struct buf **, int, int);
 void lmfs_setquiet(int q);
 int lmfs_do_bpeek(message *);
+void lmfs_cache_reevaluate(dev_t dev);
+void lmfs_blockschange(dev_t dev, int delta);
 
 /* calls that libminixfs does into fs */
 void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used);

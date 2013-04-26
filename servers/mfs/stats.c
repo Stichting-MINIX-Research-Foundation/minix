@@ -95,17 +95,15 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
 void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used)
 {
   struct super_block *sp;
-  int scale;
 
   sp = get_super(fs_dev);
 
   assert(sp);
+  assert(!sp->s_log_zone_size);
 
-  scale = sp->s_log_zone_size;
-
-  *blocks = sp->s_zones << scale;
-  *free = count_free_bits(sp, ZMAP) << scale;
-  *used = *blocks - *free;
+  *blocks = sp->s_zones;
+  *used = get_used_blocks(sp);
+  *free = *blocks - *used;
 
   return;
 }

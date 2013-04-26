@@ -29,6 +29,7 @@ static void rm_lru(struct buf *bp);
 static void read_block(struct buf *);
 static void flushall(dev_t dev);
 static void freeblock(struct buf *bp);
+static void cache_heuristic_check(int major);
 
 static int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
 
@@ -60,13 +61,18 @@ u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree,
    * portion of the used FS, and at most a certain %age of remaining
    * memory
    */
-  if((vm_info_stats(&vsi) != OK)) {
+  if(vm_info_stats(&vsi) != OK) {
 	bufs = 1024;
-	if(!quiet) printf("fslib: heuristic info fail: default to %d bufs\n", bufs);
+	if(!quiet)
+	  printf("fslib: heuristic info fail: default to %d bufs\n", bufs);
 	return bufs;
   }
 
-  kbytes_remain_mem = div64u(mul64u(vsi.vsi_free, vsi.vsi_pagesize), 1024);
+  /* remaining free memory is unused memory plus memory in used for cache,
+   * as the cache can be evicted
+   */
+  kbytes_remain_mem = (u64_t)(vsi.vsi_free + vsi.vsi_cached) *
+	vsi.vsi_pagesize / 1024;
 
   /* check fs usage. */
   kbytes_used_fs = div64u(mul64u(bused, blocksize), 1024);
@@ -87,6 +93,23 @@ u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree,
 	bufs = minbufs;
 
   return bufs;
+}
+
+void lmfs_blockschange(dev_t dev, int delta)
+{
+        /* Change the number of allocated blocks by 'delta.'
+         * Also accumulate the delta since the last cache re-evaluation.
+         * If it is outside a certain band, ask the cache library to
+         * re-evaluate the cache size.
+         */
+        static int bitdelta = 0;
+        bitdelta += delta;
+#define BANDKB (10*1024)	/* recheck cache every 10MB change */
+        if(bitdelta*fs_block_size/1024 > BANDKB ||
+	   bitdelta*fs_block_size/1024 < -BANDKB) {
+                lmfs_cache_reevaluate(dev);
+                bitdelta = 0;
+        }
 }
 
 void
@@ -455,6 +478,15 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 	}
   }
   bp->lmfs_needsetcache = 0;
+
+}
+
+void lmfs_cache_reevaluate(dev_t dev)
+{
+  if(bufs_in_use == 0 && dev != NO_DEV) {
+	/* if the cache isn't in use any more, we could resize it. */
+	cache_heuristic_check(major(dev));
+  }
 }
 
 /*===========================================================================*
@@ -734,22 +766,33 @@ static void cache_resize(unsigned int blocksize, unsigned int bufs)
   fs_block_size = blocksize;
 }
 
+static void cache_heuristic_check(int major)
+{
+  int bufs, d;
+  u32_t btotal, bfree, bused;
+
+  fs_blockstats(&btotal, &bfree, &bused);
+
+  bufs = fs_bufs_heuristic(10, btotal, bfree,
+        fs_block_size, major);
+
+  /* set the cache to the new heuristic size if the new one
+   * is more than 10% off from the current one.
+   */
+  d = bufs-nr_bufs;
+  if(d < 0) d = -d;
+  if(d*100/nr_bufs > 10) {
+	cache_resize(fs_block_size, bufs);
+  }
+}
+
 /*===========================================================================*
  *			lmfs_set_blocksize				     *
  *===========================================================================*/
 void lmfs_set_blocksize(int new_block_size, int major)
 {
-  int bufs;
-  u32_t btotal, bfree, bused;
-
   cache_resize(new_block_size, MINBUFS);
-
-  fs_blockstats(&btotal, &bfree, &bused);
-
-  bufs = fs_bufs_heuristic(10, btotal, bfree,
-        new_block_size, major);
-
-  cache_resize(new_block_size, bufs);
+  cache_heuristic_check(major);
   
   /* Decide whether to use seconday cache or not.
    * Only do this if
