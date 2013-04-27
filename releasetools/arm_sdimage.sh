@@ -100,10 +100,10 @@ ${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
 # Now given the sizes above use DD to create separate files representing
 # the partitions we are going to use.
 #
-dd if=/dev/zero of=${IMG_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1))
-dd if=/dev/zero of=${IMG_DIR}/root.img bs=512 count=1 seek=$(($ROOT_SIZE -1))
-dd if=/dev/zero of=${IMG_DIR}/home.img bs=512 count=1 seek=$(($HOME_SIZE -1))
-dd if=/dev/zero of=${IMG_DIR}/usr.img bs=512 count=1 seek=$(($USR_SIZE -1))
+dd if=/dev/zero of=${IMG_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1)) 2>/dev/null
+dd if=/dev/zero of=${IMG_DIR}/root.img bs=512 count=1 seek=$(($ROOT_SIZE -1)) 2>/dev/null
+dd if=/dev/zero of=${IMG_DIR}/home.img bs=512 count=1 seek=$(($HOME_SIZE -1)) 2>/dev/null
+dd if=/dev/zero of=${IMG_DIR}/usr.img bs=512 count=1 seek=$(($USR_SIZE -1)) 2>/dev/null
 
 #
 # Create the empty image where we later will but the partitions in
@@ -124,7 +124,7 @@ USR_START=$(($HOME_START + $HOME_SIZE + 1))
 #
 # Generate the partitions using sfdisk to partition the
 #
-sfdisk --no-reread -q ${IMG} <<END_SFDISK
+sfdisk --no-reread -q ${IMG} 1>/dev/null <<END_SFDISK
 # partition table of test.img
 unit: sectors
 
