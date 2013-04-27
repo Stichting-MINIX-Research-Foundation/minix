@@ -1,0 +1,17 @@
+SRCS=	mkfs.c
+BINDIR?=	/usr/sbin
+MAN?=
+
+.include <bsd.own.mk>
+.include "${.PARSEDIR}/../Makefile.inc" 
+
+.PATH:		${.CURDIR}/..
+
+CPPFLAGS+=	-I${.CURDIR}
+
+.if ${HOST_OSTYPE:C/\-.*//:U} == "Minix" || !defined(HOSTPROGNAME)
+#DPADD
+LDADD+= -lminlib -lcompat_minix
+.endif
+
+.include <bsd.prog.mk>
