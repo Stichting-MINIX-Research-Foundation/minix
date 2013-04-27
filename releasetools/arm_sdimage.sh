@@ -149,6 +149,12 @@ mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/$UBOOT ::u-boot.img
 mcopy -bsp -i ${IMG_DIR}/fat.img releasetools/uEnv.txt ::uEnv.txt
 mcopy -bsp -i ${IMG_DIR}/fat.img releasetools/cmdline.txt ::cmdline.txt
 
+#
+# For tftp booting
+#
+cp releasetools/uEnv.txt ${OBJ}/
+cp releasetools/cmdline.txt ${OBJ}/
+
 
 #
 # Do some last processing of the kernel and servers before also putting
