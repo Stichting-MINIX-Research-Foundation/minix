@@ -10,7 +10,7 @@ MAN=	ash.1 at.1 basename.1 \
 	isodir.1 isoinfo.1 isoread.1 \
 	last.1 loadfont.1 loadkeys.1 logger.1 \
 	look.1 lp.1 lspci.1 mail.1  \
-	mesg.1 mixer.1 mkfs.mfs.1 \
+	mesg.1 mixer.1 \
 	mkproto.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
 	paste.1 ping.1 playwave.1 pr.1 prep.1 \
 	profile.1 ps.1 rcp.1 recwave.1 \
@@ -52,7 +52,6 @@ MLINKS += ash.1 unset.1
 MLINKS += ash.1 wait.1
 MLINKS += compress.1 uncompress.1
 MLINKS += cp.1 mv.1
-MLINKS += cp.1 ln.1
 MLINKS += cp.1 cpdir.1
 MLINKS += svc.1 ci.1
 MLINKS += svc.1 co.1

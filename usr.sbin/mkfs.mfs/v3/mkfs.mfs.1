@@ -1,60 +1,72 @@
-.TH MKFS 1
-.SH NAME
-mkfs \- make a file system
-.SH SYNOPSIS
-\fBmkfs \fR[\fB\-Ldot\fR] [\fB\-B \fIblocksize\fR] [\fB\-i \fIinodes\fR] [\fB\-b \fIblocks\fR] \fIspecial \fIprototype\fR
-.br
-.de FL
-.TP
-\\fB\\$1\\fR
-\\$2
-..
-.de EX
-.TP 20
-\\fB\\$1\\fR
-# \\$2
-..
-.SH OPTIONS
-.TP 5
-.B \-L
-# Make a listing on standard output
-.TP 5
-.B \-d
-# Use mod time of \fImkfs\fR binary for all files
-.TP 5
-.B \-o
-# Use a drive other than 0 or 1 (safety precaution)
-.TP 5
-.B \-t
-# Do not test if file system fits on the medium
-.TP 5
-.B \-1
-# Make a version 1 file system (for backward compatibility)
-.TP 5
-.B \-i
-# Number of i-nodes (files)
-.TP 5
-.B \-B
-# Filesystem block size (in bytes)
-.TP 5
-.B \-b
-# Filesystem size (in blocks)
-.TP 5
-.B \-x
-# Extra space after dynamic sizing (blocks and inodes)
-.SH EXAMPLES
-.TP 20
-.B mkfs /dev/fd1 proto
-# Make a file system on \fI/dev/fd1\fR
-.TP 20
-.B mkfs -b 360 /dev/fd1
-# Make empty 360 block file system
-.TP 20
-.B mkfs /dev/fd1 360
-# Alternate way to specify the size
-.SH DESCRIPTION
-.PP
-.I Mkfs
+.Dd April 28, 2013
+.Dt MKFS.MFS 1
+.Os MINIX 3
+.Sh NAME
+.Nm mkfs.mfs
+.Nd make a file system
+.Sh SYNOPSIS
+.Nm
+.Op Fl ldtv
+.Op Fl B Ar blocksize
+.Op Fl i Ar inodes
+.Op Fl b Ar blocks
+.Op Fl z Ar zone_shift
+.Op Fl x Ar extra_space
+.Ar special
+.Op Ar prototype
+.Sh OPTIONS
+The following options are available:
+.Bl -tag -width indent
+.It Fl l
+Make a listing on standard output
+.It Fl d
+Use mod time of
+.Nm
+binary for all files
+.It Fl t
+Do not test if file system fits on the medium
+.It Fl v
+Be verbose on standard error stream; more
+.It Fl v
+options add to verbosity
+.It Fl i Ar inodes
+Number of i-nodes (files)
+.It Fl B Ar blocksize
+Filesystem block size (in bytes)
+.It Fl b Ar blocks
+Filesystem size (in blocks)
+.It Fl x Ar extra_space
+Extra space after dynamic sizing (blocks and inodes)
+.It Fl z Ar zone_shift
+Logarithm of the size of a zone with respect to a zone.
+With the default value of 0 zones are of the same size as blocks;
+with 1, each zone is made of two blocks; etc.
+.El
+.Sh EXAMPLES
+.Bl -enum
+.It
+Make a file system on 
+.Pa /dev/ram1
+.Bd
+.Nm
+.Cm /dev/ram1 proto
+.Ed
+.It
+Make empty 300,000-block file system
+.Bd
+.Nm
+.Cm -b 300000 /dev/c0d0p0s0
+.Ed
+.It
+Alternate way to specify the size
+.Bd
+.Nm
+.Cm /dev/c0d0p0s0 300000
+.Ed
+.El
+.Sh DESCRIPTION
+The
+.Nm
 builds a file system and copies specified files to it.
 The prototype file tells which directories and files to copy to it.
 If the prototype file cannot be opened, and its name is just a string of
@@ -63,9 +75,7 @@ blocks.
 A sample prototype file follows.
 The text following the \fI#\fR sign in the example below is comment.
 In real prototype files, comments are not allowed.
-.PP
-.nf
-.ta 0.20i 0.70i 1.10i 3i 3.5i 4i
+.Bd -literal
 	boot			# boot block file (ignored)
 	360 63			# blocks and i-nodes
 	d--755 1 1		# root directory
@@ -83,31 +93,29 @@ In real prototype files, comments are not allowed.
 		$		# \fI/user/ast\fP is empty
 	   $			# end of \fI/user\fP
 	$			# end of root directory
-.PP
-.fi
+.Ed
+.Pp
 The first entry on each line (except the first 3 and the $ lines, which
 terminate directories) is the name the file or directory will get on the
 new file system.  
 Next comes its mode, with the first character being
-\fB\-dbcs\fR for regular files, directories, block special files and character 
-special files, symlinks, respectively.
+.Cm -dbcs
+for regular files, directories, block special files, character 
+special files, and symlinks, respectively.
 The next two characters are used to specify the SETUID and SETGID bits, as
 shown above.
 The last three characters of the mode are the 
-.I rwx
-protection bits.
-.PP
+.Cm rwx
+protection bits, in octal notation.
+.Pp
 Following the mode are the uid and gid.
 For special files, the major and minor devices are needed.
-.PP
-The maximum size of a file system is 1 Gb for a version 2 file system,
-and 64 Mb for a version 1 file system.  Alas the 8086
-.I fsck
-runs out of memory on a V2 file system larger than 128 Mb, so for the 8086
-version of
-\s-1MINIX 3\s-1
-you have to limit yourself to file systems of that size.
-.SH "SEE ALSO"
-.BR mkproto (1),
-.BR fsck (1),
-.BR mount (1).
+.Sh "SEE ALSO"
+.Xr mkproto 1 ,
+.Xr fsck.mfs 1 ,
+.Xr mount 1 .
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Andy Tanenbaum, Paul Ogilvie, Frans Meulenbroeks, Bruce Evans
