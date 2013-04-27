@@ -3820,6 +3820,7 @@
 ./usr/sbin/log				minix-sys
 ./usr/sbin/lwip				minix-sys
 ./usr/sbin/memory			minix-sys
+./usr/sbin/mkfs.mfs3			minix-sys
 ./usr/sbin/mkproto			minix-sys
 ./usr/sbin/mmc				minix-sys
 ./usr/sbin/mtree			minix-sys
