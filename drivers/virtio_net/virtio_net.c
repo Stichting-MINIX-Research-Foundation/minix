@@ -112,9 +112,9 @@ static void sef_cb_signal_handler(int signo);
 /* TODO: Features are pretty much ignored */
 struct virtio_feature netf[] = {
 	{ "partial csum",	VIRTIO_NET_F_CSUM,	0,	0	},
-	{ "given mac",		VIRTIO_NET_F_MAC,	0,	0	},
+	{ "given mac",		VIRTIO_NET_F_MAC,	0,	1	},
 	{ "status ",		VIRTIO_NET_F_STATUS,	0,	0	},
-	{ "control channel",	VIRTIO_NET_F_CTRL_VQ,	0,	0	},
+	{ "control channel",	VIRTIO_NET_F_CTRL_VQ,	0,	1	},
 	{ "control channel rx",	VIRTIO_NET_F_CTRL_RX,	0,	0	}
 };
 
