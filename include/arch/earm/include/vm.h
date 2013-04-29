@@ -6,7 +6,6 @@ arm/vm.h
 
 #define ARM_PAGE_SIZE		4096 /* small page on ARM  */
 #define ARM_SECTION_SIZE	(1024 * 1024) /* 1 MB section */
-#define ARM_BIG_PAGE_SIZE	(ARM_SECTION_SIZE)
 
 /* Page table specific flags. */
 #define ARM_VM_PAGETABLE	(1 << 1)  /* Page table */
@@ -47,7 +46,6 @@ arm/vm.h
 #define ARM_VM_SECTION_WT	((0x6 << 12) | ARM_VM_SECTION_CACHEABLE)
 /* shareable device */
 #define ARM_VM_SECTION_DEVICE	(ARM_VM_SECTION_BUFFERABLE)
-#define ARM_VM_BIGPAGE		(ARM_VM_SECTION)  /* 1MB section */
 
 /* Page directory specific flags. */
 #define ARM_VM_PAGEDIR		(1 << 0)  /* Page directory */

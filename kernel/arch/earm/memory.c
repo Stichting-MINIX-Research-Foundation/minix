@@ -123,10 +123,10 @@ static phys_bytes createpde(
 	 * if that is less than the requested range.
 	 */
 	offset = linaddr & ARM_VM_OFFSET_MASK_1MB; /* Offset in 1MB window. */
-	*bytes = MIN(*bytes, ARM_BIG_PAGE_SIZE - offset);
+	*bytes = MIN(*bytes, ARM_SECTION_SIZE - offset);
 
 	/* Return the linear address of the start of the new mapping. */
-	return ARM_BIG_PAGE_SIZE*pde + offset;
+	return ARM_SECTION_SIZE*pde + offset;
 }
 
 
@@ -315,7 +315,7 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 
 	/* We don't expect to ever see this. 
 	 * LSC Impossible with the previous test.
-	if(pde_v & ARM_VM_BIGPAGE) {
+	if(pde_v & ARM_VM_SECTION) {
 		*physical = pde_v & ARM_VM_SECTION_MASK;
 		if(ptent) *ptent = pde_v;
 		*physical += virtual & ARM_VM_OFFSET_MASK_1MB;

@@ -160,7 +160,7 @@ void pg_identity(kinfo_t *cbi)
 		u32_t flags = ARM_VM_SECTION
 			| ARM_VM_SECTION_USER
 			| ARM_VM_SECTION_DOMAIN;
-		phys = i * ARM_BIG_PAGE_SIZE;
+		phys = i * ARM_SECTION_SIZE;
 		pagedir[i] =  phys | flags;
         }
 }
@@ -170,16 +170,16 @@ int pg_mapkernel(void)
 	int pde;
 	u32_t mapped = 0, kern_phys = kern_phys_start;
 
-	assert(!(kern_vir_start % ARM_BIG_PAGE_SIZE));
-	assert(!(kern_phys_start % ARM_BIG_PAGE_SIZE));
-	pde = kern_vir_start / ARM_BIG_PAGE_SIZE; /* start pde */
+	assert(!(kern_vir_start % ARM_SECTION_SIZE));
+	assert(!(kern_phys_start % ARM_SECTION_SIZE));
+	pde = kern_vir_start / ARM_SECTION_SIZE; /* start pde */
 	while(mapped < kern_kernlen) {
 		pagedir[pde] = (kern_phys & ARM_VM_PDE_MASK) | ARM_VM_SECTION
 			| ARM_VM_SECTION_SUPER
 			| ARM_VM_SECTION_DOMAIN
 			| ARM_VM_SECTION_WT;
-		mapped += ARM_BIG_PAGE_SIZE;
-		kern_phys += ARM_BIG_PAGE_SIZE;
+		mapped += ARM_SECTION_SIZE;
+		kern_phys += ARM_SECTION_SIZE;
 		pde++;
 	}
 	return pde;	/* free pde */
