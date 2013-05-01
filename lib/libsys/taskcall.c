@@ -6,6 +6,13 @@
 #include <lib.h>
 #include <minix/syslib.h>
 
+int _sendcall(endpoint_t who, int type, message *msgptr)
+{
+  msgptr->m_type = type;
+  return send(who, msgptr);
+}
+
+
 int _taskcall(who, syscallnr, msgptr)
 endpoint_t who;
 int syscallnr;

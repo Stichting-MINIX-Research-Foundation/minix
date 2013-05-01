@@ -75,6 +75,7 @@ SRCS+=  \
 	sys_vsafecopy.c \
 	sys_vtimer.c \
 	sys_vumap.c \
+	send_taskreply.c \
 	taskcall.c \
 	tickdelay.c \
 	timers.c \

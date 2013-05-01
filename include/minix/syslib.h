@@ -25,6 +25,7 @@ struct rs_pci;
  *==========================================================================*/ 
 int _taskcall(endpoint_t who, int syscallnr, message *msgptr);
 int _kernel_call(int syscallnr, message *msgptr);
+int _sendcall(endpoint_t who, int type, message *msgptr);
 
 int sys_abort(int how);
 int sys_enable_iop(endpoint_t proc_ep);
@@ -156,6 +157,8 @@ int sys_umap_data_fb(endpoint_t proc_ep, vir_bytes vir_addr, vir_bytes
 	bytes, phys_bytes *phys_addr);
 int sys_umap_remote(endpoint_t proc_ep, endpoint_t grantee, int seg,
 	vir_bytes vir_addr, vir_bytes bytes, phys_bytes *phys_addr);
+
+int send_taskreply(endpoint_t who, endpoint_t endpoint, int status);
 
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkinfo(dst)	sys_getinfo(GET_KINFO, dst, 0,0,0)

@@ -313,25 +313,45 @@ void print_proc_recursive(struct proc *pp)
 }
 
 #if DEBUG_DUMPIPC
-static const char *mtypename(int mtype, int iscall)
+static const char *mtypename(int mtype, int *possible_callname)
 {
-	/* use generated file to recognize message types */
-	if (iscall) {
-		switch(mtype) {
-#define IDENT(x) case x: return #x;
+	char *callname = NULL, *errname = NULL;
+	/* use generated file to recognize message types
+	 *
+	 * we try to match both error numbers and call numbers, as the
+	 * reader can probably decide from context what's going on.
+	 *
+	 * whenever it might be a call number we tell the caller so the
+	 * call message fields can be decoded if known.
+	 */
+	switch(mtype) {
+#define IDENT(x) case x: callname = #x; *possible_callname = 1; break;
 #include "extracted-mtype.h"
 #undef IDENT
-		}
-	} else {
-		switch(mtype) {
-#define IDENT(x) case x: return #x;
+	}
+	switch(mtype) {
+#define IDENT(x) case x: errname = #x; break;
 #include "extracted-errno.h"
 #undef IDENT
-		}
 	}
 
 	/* no match */
-	return NULL;
+	if(!errname && !callname)
+		return NULL;
+
+	/* 2 matches */
+	if(errname && callname) {
+		static char typename[100];
+		strcpy(typename, errname);
+		strcat(typename, " / ");
+		strcat(typename, callname);
+		return typename;
+	}
+
+	if(errname) return errname;
+
+	assert(callname);
+	return callname;
 }
 
 static void printproc(struct proc *rp)
@@ -353,24 +373,51 @@ static void printparam(const char *name, const void *data, size_t size)
 	}
 }
 
+#ifdef DEBUG_DUMPIPC_NAMES
+static int namematch(char **names, int nnames, char *name)
+{
+	int i;
+	for(i = 0; i < nnames; i++)
+		if(!strcmp(names[i], name))
+			return 1;
+	return 0;
+}
+#endif
+
 static void printmsg(message *msg, struct proc *src, struct proc *dst, 
-	char operation, int iscall, int printparams)
+	char operation, int printparams)
 {
 	const char *name;
-	int mtype = msg->m_type;
+	int mtype = msg->m_type, mightbecall = 0;
+
+#ifdef DEBUG_DUMPIPC_NAMES
+  {
+	char *names[] = DEBUG_DUMPIPC_NAMES;
+	int nnames = sizeof(names)/sizeof(names[0]);
+
+	/* skip printing messages for messages neither to
+	 * or from DEBUG_DUMPIPC_EP if it is defined; either
+	 * can be NULL to indicate kernel
+	 */
+	if(!(src && namematch(names, nnames, src->p_name)) &&
+	   !(dst && namematch(names, nnames, dst->p_name))) {
+		return;
+	}
+  }
+#endif
 
 	/* source, destination and message type */
 	printf("%c", operation);
 	printproc(src);
 	printproc(dst);
-	name = mtypename(mtype, iscall);
+	name = mtypename(mtype, &mightbecall);
 	if (name) {
-		printf(" %s(%d)", name, mtype);
+		printf(" %s(%d/0x%x)", name, mtype, mtype);
 	} else {
-		printf(" %d", mtype);
+		printf(" %d/0x%x", mtype, mtype);
 	}
 
-	if (iscall && printparams) {
+	if (mightbecall && printparams) {
 #define IDENT(x, y) if (mtype == x) printparam(#y, &msg->y, sizeof(msg->y));
 #include "extracted-mfield.h"
 #undef IDENT
@@ -473,14 +520,14 @@ static void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
 void hook_ipc_msgkcall(message *msg, struct proc *proc)
 {
 #if DEBUG_DUMPIPC
-	printmsg(msg, proc, NULL, 'k', 1, 1);
+	printmsg(msg, proc, NULL, 'k', 1);
 #endif
 }
 
 void hook_ipc_msgkresult(message *msg, struct proc *proc)
 {
 #if DEBUG_DUMPIPC
-	printmsg(msg, NULL, proc, 'k', 0, 0);
+	printmsg(msg, NULL, proc, 'k', 0);
 #endif
 #if DEBUG_IPCSTATS
 	statmsg(msg, proc, NULL);
@@ -490,7 +537,7 @@ void hook_ipc_msgkresult(message *msg, struct proc *proc)
 void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst)
 {
 #if DEBUG_DUMPIPC
-	printmsg(msg, src, dst, 'r', src->p_misc_flags & MF_REPLY_PEND, 0);
+	printmsg(msg, src, dst, 'r', 0);
 #endif
 #if DEBUG_IPCSTATS
 	statmsg(msg, src, dst);
@@ -500,7 +547,7 @@ void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst)
 void hook_ipc_msgsend(message *msg, struct proc *src, struct proc *dst)
 {
 #if DEBUG_DUMPIPC
-	printmsg(msg, src, dst, 's', src->p_misc_flags & MF_REPLY_PEND, 1);
+	printmsg(msg, src, dst, 's', 1);
 #endif
 }
 

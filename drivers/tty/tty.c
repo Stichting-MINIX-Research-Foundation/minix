@@ -1660,25 +1660,12 @@ int proc_nr;			/* to whom should the reply go? */
 int status;			/* reply code */
 {
 /* Send a reply to a process that wanted to read or write data. */
-  message tty_mess;
-
-  tty_mess.m_type = code;
-  tty_mess.REP_ENDPT = proc_nr;
-  tty_mess.REP_STATUS = status;
+  assert(code == TASK_REPLY);
 
   /* Don't reply to KERNEL (kernel messages) */
   if (replyee == KERNEL) return;
 
-  /* TTY is not supposed to send a TTY_REVIVE message. The
-   * REVIVE message is gone, TTY_REVIVE is only used as an internal
-   * placeholder for something that is not supposed to be a message.
-   */
-  if(code == TTY_REVIVE) {
-	printf("%s:%d: ", file, line);
-	panic("tty_reply sending TTY_REVIVE");
-  }
-
-  status = send(replyee, &tty_mess);
+  status = send_taskreply(replyee, proc_nr, status);
   if (status != OK)
 	printf("tty`tty_reply: send to %d failed: %d\n", replyee, status);
 }
