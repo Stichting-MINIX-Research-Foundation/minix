@@ -77,7 +77,7 @@ message *m;					/* notification message */
   /* The notification message does not convey any information, other
    * than that some function keys have been pressed. Ask TTY for details.
    */
-  m->m_type = FKEY_CONTROL;
+  m->m_type = TTY_FKEY_CONTROL;
   m->FKEY_REQUEST = FKEY_EVENTS;
   if (OK != (s=sendrec(TTY_PROC_NR, m)))
       printf("IS: warning, sendrec to TTY failed: %d\n", s);

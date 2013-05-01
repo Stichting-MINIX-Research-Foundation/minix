@@ -398,7 +398,7 @@ static void or_dump (message *m)
 	if(orp->or_mode != OR_M_ENABLED)
 		return;
 
-	m->m_type = FKEY_CONTROL;
+	m->m_type = TTY_FKEY_CONTROL;
 	m->FKEY_REQUEST = FKEY_EVENTS;
 	if(OK!=(sendrec(TTY_PROC_NR,m)) )
 		printf("Contacting the TTY failed\n");

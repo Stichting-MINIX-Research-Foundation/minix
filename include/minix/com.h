@@ -23,7 +23,7 @@
  *   0x1000 - 0x10FF	Notify messages
  *   0x1100 - 0x11FF	USB  
  *   0x1200 - 0x12FF    Devman
- *   0x1300 - 0x13FF    TTY Input
+ *   0x1300 - 0x13FF    TTY Requests
  *   0x1400 - 0x14FF	VFS-FS transaction IDs
  *   0x1500 - 0x15FF	Block device requests and responses
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
@@ -741,19 +741,6 @@
 #  define DS_OWNER		m2_i3		/* owner */
 
 /*===========================================================================*
- *                Miscellaneous messages used by TTY			     *
- *===========================================================================*/
-
-/* Miscellaneous request types and field names, e.g. used by IS server. */
-#define FKEY_CONTROL 		98  	/* control a function key at the TTY */
-#  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
-#  define    FKEY_MAP		10	/* observe function key */
-#  define    FKEY_UNMAP		11	/* stop observing function key */
-#  define    FKEY_EVENTS	12	/* request open key presses */
-#  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
-#  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
-
-/*===========================================================================*
  *                Messages used between PM and VFS			     *
  *===========================================================================*/
 
@@ -1233,16 +1220,26 @@
 #   define DEVMAN_RESULT         m4_l1
 
 /*===========================================================================*
- *              TTY INPUT INJECTION                                          *
+ *              TTY REQUESTS	                                             *
  *===========================================================================*/
 
-#define INPUT_BASE 0x1300
+#define TTY_RQ_BASE 0x1300
 
-#define INPUT_EVENT      (INPUT_BASE + 0)
+#define INPUT_EVENT      (TTY_RQ_BASE + 0)
 
 #	define INPUT_TYPE        m4_l1
 #	define INPUT_CODE        m4_l2
 #	define INPUT_VALUE       m4_l3
+
+
+#define TTY_FKEY_CONTROL	(TTY_RQ_BASE + 1) /* control an F-key at TTY */
+#define OLD_FKEY_CONTROL	98  	/* previously used for TTY_FKEY_CONTROL */
+#  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
+#  define    FKEY_MAP		10	/* observe function key */
+#  define    FKEY_UNMAP		11	/* stop observing function key */
+#  define    FKEY_EVENTS	12	/* request open key presses */
+#  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
+#  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
 
 #endif
 

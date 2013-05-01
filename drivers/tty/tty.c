@@ -220,7 +220,8 @@ int main(void)
 	}
 
 	switch (tty_mess.m_type) { 
-	case FKEY_CONTROL:		/* (un)register a fkey observer */
+	case TTY_FKEY_CONTROL:		/* (un)register a fkey observer */
+	case OLD_FKEY_CONTROL:		/* old number */
 		do_fkey_ctl(&tty_mess);
 		continue;
 	case INPUT_EVENT:
