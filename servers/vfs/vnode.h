@@ -23,6 +23,7 @@ EXTERN struct vnode {
   dev_t v_sdev;                 /* device number for special files */
   struct vmnt *v_vmnt;          /* vmnt object of the partition */
   tll_t v_lock;			/* three-level-lock */
+  int v_mmapped;		/* inuse for mmap -> inform vm of shrinkage */
 } vnode[NR_VNODES];
 
 /* vnode lock types mapping */

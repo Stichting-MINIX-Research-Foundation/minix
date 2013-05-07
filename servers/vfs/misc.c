@@ -131,7 +131,7 @@ int do_fcntl(message *UNUSED(m_out))
     case F_DUPFD:
 	/* This replaces the old dup() system call. */
 	if (fcntl_argx < 0 || fcntl_argx >= OPEN_MAX) r = EINVAL;
-	else if ((r = get_fd(fcntl_argx, 0, &new_fd, NULL)) == OK) {
+	else if ((r = get_fd(fp, fcntl_argx, 0, &new_fd, NULL, 1)) == OK) {
 		f->filp_count++;
 		fp->fp_filp[new_fd] = f;
 		FD_SET(new_fd, &fp->fp_filp_inuse);
@@ -312,6 +312,145 @@ int do_fsync(message *UNUSED(m_out))
 }
 
 /*===========================================================================*
+ *				do_vm_call				     *
+ *===========================================================================*/
+int do_vm_call(message *m_out)
+{
+/* A call that VM does to VFS.
+ * We must reply with the fixed type VM_VFS_REPLY (and put our result info
+ * in the rest of the message) so VM can tell the difference between a
+ * request from VFS and a reply to this call.
+ */
+	int req = job_m_in.VFS_VMCALL_REQ;
+	int req_fd = job_m_in.VFS_VMCALL_FD;
+	u32_t req_id = job_m_in.VFS_VMCALL_REQID;
+	endpoint_t ep = job_m_in.VFS_VMCALL_ENDPOINT;
+	u64_t offset = make64(job_m_in.VFS_VMCALL_OFFSET_LO,
+		job_m_in.VFS_VMCALL_OFFSET_HI);
+	u32_t length = job_m_in.VFS_VMCALL_LENGTH;
+	int result = OK;
+	int slot;
+	struct fproc *rfp, *vmf;
+	struct filp *f = NULL;
+
+	if(job_m_in.m_source != VM_PROC_NR)
+		return ENOSYS;
+
+	okendpt(ep, &slot);
+
+	rfp = &fproc[slot];
+	vmf = &fproc[VM_PROC_NR];
+	assert(fp == vmf);
+	assert(rfp != vmf);
+
+	switch(req) {
+		case VMVFSREQ_FDLOOKUP:
+		{
+			int procfd;
+
+			/* Lookup fd in referenced process. */
+			if ((f = get_filp2(rfp, req_fd, VNODE_READ, 1)) == NULL) {
+				result = err_code;
+				goto reqdone;
+			}
+
+			assert(f->filp_vno);
+			assert(f->filp_vno->v_vmnt);
+
+			if(!f->filp_vno->v_vmnt->m_haspeek) {
+				result = EINVAL;
+				goto reqdone;
+			}
+
+			if (!S_ISREG(f->filp_vno->v_mode) &&
+				!S_ISBLK(f->filp_vno->v_mode)) {
+				printf("VFS: mmap regular/blockdev only; dev 0x%x ino %d has mode 0%o\n",
+					f->filp_vno->v_dev, f->filp_vno->v_inode_nr, f->filp_vno->v_mode);
+				result = EINVAL;
+				goto reqdone;
+			}
+
+			if((result=get_fd(rfp, SYSTEM_FDSTART, 0, &procfd,
+			  NULL, 0)) != OK)
+				goto reqdone;
+
+			if(S_ISBLK(f->filp_vno->v_mode)) {
+				assert(f->filp_vno->v_sdev != NO_DEV);
+				m_out->VMV_DEV = f->filp_vno->v_sdev;
+				m_out->VMV_INO = VMC_NO_INODE;
+				m_out->VMV_SIZE_PAGES = LONG_MAX;
+			} else {
+				f->filp_vno->v_mmapped = 1;
+				m_out->VMV_DEV = f->filp_vno->v_dev;
+				m_out->VMV_INO = f->filp_vno->v_inode_nr;
+				m_out->VMV_SIZE_PAGES =
+					roundup(f->filp_vno->v_size,
+						PAGE_SIZE)/PAGE_SIZE;
+			}
+
+			m_out->VMV_FD = procfd;
+
+			f->filp_count++;
+			assert(f->filp_count > 0);
+			rfp->fp_filp[procfd] = f;
+
+			/* mmap FD's are inuse and close-on-exec */
+			FD_SET(procfd, &rfp->fp_filp_inuse);
+			FD_SET(procfd, &rfp->fp_cloexec_set);
+
+			result = OK;
+
+#if 0
+			printf("VFS: FDLOOKUP: result %d dev 0x%x ino %ld; procfd %d for %d\n",
+				result, m_out->VMV_DEV, m_out->VMV_INO, procfd, rfp->fp_endpoint);
+#endif
+			break;
+		}
+		case VMVFSREQ_FDCLOSE:
+		{
+			result = close_fd(rfp, req_fd, 0);
+			if(result != OK) {
+				printf("VFS: VM fd close for fd %d, %d (%d)\n",
+					req_fd, rfp->fp_endpoint, result);
+			}
+			break;
+		}
+		case VMVFSREQ_FDIO:
+		{
+			message dummy_out;
+
+			result = actual_llseek(rfp, &dummy_out, req_fd,
+				SEEK_SET, offset, 0);
+
+			if(result != OK) {
+				printf("VFS: llseek for mmap i/o for %d, fd %d, (offset %llu) failed (%d)\n",
+					rfp->fp_endpoint, req_fd, offset, result);
+			} else {
+				result = actual_read_write_peek(rfp, PEEKING,
+					req_fd, NULL, length, 0);
+			}
+
+			break;
+		}
+		default:
+			panic("VFS: bad request code from VM\n");
+			break;
+	}
+
+reqdone:
+	if(f)
+		unlock_filp(f);
+
+	/* fp is VM still. */
+	assert(fp == vmf);
+	m_out->VMV_ENDPOINT = ep;
+	m_out->VMV_RESULT = result;
+	m_out->VMV_REQID = req_id;
+
+	return VM_VFS_REPLY;
+}
+
+/*===========================================================================*
  *				pm_reboot				     *
  *===========================================================================*/
 void pm_reboot()
@@ -397,7 +536,7 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
   cp = &fproc[childno];
   pp = &fproc[parentno];
 
-  for (i = 0; i < OPEN_MAX; i++)
+  for (i = 0; i < FDS_PER_PROCESS; i++)
 	if (cp->fp_filp[i] != NULL) cp->fp_filp[i]->filp_count++;
 
   /* Fill in new process and endpoint id. */
@@ -441,8 +580,8 @@ static void free_proc(struct fproc *exiter, int flags)
 	unpause(exiter->fp_endpoint);
 
   /* Loop on file descriptors, closing any that are open. */
-  for (i = 0; i < OPEN_MAX; i++) {
-	(void) close_fd(exiter, i);
+  for (i = 0; i < FDS_PER_PROCESS; i++) {
+	(void) close_fd(exiter, i, 0);
   }
 
   /* Release root and working directories. */
@@ -478,7 +617,7 @@ static void free_proc(struct fproc *exiter, int flags)
 	  if(rfp->fp_pid == PID_FREE) continue;
           if (rfp->fp_tty == dev) rfp->fp_tty = 0;
 
-          for (i = 0; i < OPEN_MAX; i++) {
+          for (i = 0; i < FDS_PER_PROCESS; i++) {
 		if ((rfilp = rfp->fp_filp[i]) == NULL) continue;
 		if (rfilp->filp_mode == FILP_CLOSED) continue;
 		vp = rfilp->filp_vno;
@@ -685,6 +824,8 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
   struct filp *f;
   char core_path[PATH_MAX];
   char proc_name[PROC_NAME_LEN];
+  static int seq = 0;
+  seq++;
 
   okendpt(proc_e, &slot);
   fp = &fproc[slot];
@@ -696,20 +837,25 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
           unpause(fp->fp_endpoint);
 
   /* open core file */
-  snprintf(core_path, PATH_MAX, "%s.%d", CORE_NAME, fp->fp_pid);
-  core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
+  snprintf(core_path, PATH_MAX, "%s.%d.%d", CORE_NAME, fp->fp_pid, seq);
+  core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE, 1);
   if (core_fd < 0) { r = core_fd; goto core_exit; }
 
   /* get process' name */
+#if 0
   r = sys_datacopy(PM_PROC_NR, exe_name, VFS_PROC_NR, (vir_bytes) proc_name,
 			PROC_NAME_LEN);
   if (r != OK) goto core_exit;
+#else
+  exe_name = 0;
+  strcpy(proc_name, "coreprog");
+#endif
   proc_name[PROC_NAME_LEN - 1] = '\0';
 
   if ((f = get_filp(core_fd, VNODE_WRITE)) == NULL) { r=EBADF; goto core_exit; }
   write_elf_core_file(f, csig, proc_name);
   unlock_filp(f);
-  (void) close_fd(fp, core_fd);	/* ignore failure, we're exiting anyway */
+  (void) close_fd(fp, core_fd, 0); /* ignore failure, we're exiting anyway */
 
 core_exit:
   if(csig)
@@ -768,3 +914,4 @@ void panic_hook(void)
   printf("VFS mthread stacktraces:\n");
   mthread_stacktraces(); 
 }         
+
