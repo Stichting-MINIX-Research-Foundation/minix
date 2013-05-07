@@ -6,6 +6,8 @@
 
 #define _SYSTEM		1	/* get OK and negative error codes */
 
+#include "../vfs/fdset.h"
+
 #include <sys/types.h>
 #include <limits.h>
 #include <errno.h>
