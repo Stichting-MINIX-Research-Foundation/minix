@@ -28,6 +28,11 @@ alltests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
 	 sh1.sh sh2.sh interp.sh"
 tests_no=`expr 0`
 
+# test mmap only if enabled in sysenv
+if sysenv filemap >/dev/null
+then	alltests="$alltests 74"
+fi
+
 # If root, make sure the setuid tests have the correct permissions
 # and make the dir bin-owned.
 if [ "$ROOT" ]

@@ -833,6 +833,8 @@ struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region *vr)
 	if(!(newvr = region_new(vr->parent, vr->vaddr, vr->length, vr->flags, vr->def_memtype)))
 		return NULL;
 
+	USE(newvr, newvr->parent = vmp;);
+
 	if(vr->def_memtype->ev_copy && (r=vr->def_memtype->ev_copy(vr, newvr)) != OK) {
 		map_free(newvr);
 		printf("VM: memtype-specific copy failed (%d)\n", r);
@@ -980,7 +982,6 @@ struct vir_region *start_src_vr;
 			map_free_proc(dst);
 			return ENOMEM;
 		}
-		USE(newvr, newvr->parent = dst;);
 		region_insert(&dst->vm_regions_avl, newvr);
 		assert(vr->length == newvr->length);
 

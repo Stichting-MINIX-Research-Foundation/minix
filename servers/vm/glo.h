@@ -18,6 +18,8 @@
 
 EXTERN struct vmproc vmproc[VMP_NR];
 
+long enable_filemap;
+
 EXTERN kinfo_t kernel_boot_info;
 
 #if SANITYCHECKS
