@@ -20,7 +20,7 @@ EXTERN struct fproc {
   struct vnode *fp_wd;		/* working directory; NULL during reboot */
   struct vnode *fp_rd;		/* root directory; NULL during reboot */
 
-  struct filp *fp_filp[OPEN_MAX];/* the file descriptor table */
+  struct filp *fp_filp[OPEN_MAX]; /* the file descriptor table */
   fd_set fp_filp_inuse;		/* which fd's are in use? */
   fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
 

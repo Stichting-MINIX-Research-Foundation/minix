@@ -1,4 +1,4 @@
-#define NCALLS		 117	/* number of system calls allowed */
+#define NCALLS		 118	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -106,6 +106,8 @@
 #define CLOCK_GETRES	114	/* clock_getres() */
 #define CLOCK_GETTIME	115	/* clock_gettime() */
 #define CLOCK_SETTIME	116	/* clock_settime() */
+
+#define VFS_VMCALL	117
 
 #define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
 				 * really a standalone call.

@@ -128,7 +128,7 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
   busy = 0;		/* Server is not 'busy' (i.e., inodes in use). */
 
   /* Init inode table */
-  for (i = 0; i < NR_INODES; ++i) {
+  for (i = 0; i < PFS_NR_INODES; ++i) {
 	inode[i].i_count = 0;
   }
 

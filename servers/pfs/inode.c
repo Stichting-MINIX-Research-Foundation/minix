@@ -81,7 +81,7 @@ void init_inode_cache()
       LIST_INIT(rlp);
 
   /* add free inodes to unused/free list */
-  for (rip = &inode[0]; rip < &inode[NR_INODES]; ++rip) {
+  for (rip = &inode[0]; rip < &inode[PFS_NR_INODES]; ++rip) {
       rip->i_num = NO_ENTRY;
       TAILQ_INSERT_HEAD(&unused_inodes, rip, i_unused);
   }
@@ -309,7 +309,7 @@ struct inode *rip;
 
   bit_t b;
 
-  if (rip->i_num <= (ino_t) 0 || rip->i_num >= (ino_t) NR_INODES) return;
+  if (rip->i_num <= (ino_t) 0 || rip->i_num >= (ino_t) PFS_NR_INODES) return;
   b = (bit_t) rip->i_num;
   free_bit(b);
 }
