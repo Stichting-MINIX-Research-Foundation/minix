@@ -83,28 +83,24 @@ bootable:
 
 hdboot install: services .WAIT do-hdboot
 
+TEMPDIR=${DESTDIR}/boot/minix/.temp/
+
 do-hdboot: 
-	@rm -rf ${DESTDIR}/boot/minix/.temp/
-	${INSTALL_DIR} ${DESTDIR}/boot/minix/.temp
-# mod_0 is used to make alphabetical order equal to the boot order
-	@n=0;							\
-	for i in ${PROGRAMS};					\
-	do							\
-	n=`expr $$n + 1`;					\
-	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
-	newname="${DESTDIR}/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
-	${INSTALL} $$i $$newname;				\
-	done
-	@cp ${PROGROOT}/kernel/kernel ${DESTDIR}/boot/minix/.temp/
+	@rm -rf ${TEMPDIR}
+	${INSTALL_DIR} ${TEMPDIR}
+	${HOST_SH} placeprograms.sh ${TEMPDIR} "${INSTALL}" \
+		"${STRIP} -s" ${PROGRAMS} ${KERNEL}
 	@if [ "${MKINSTALLBOOT:Uno}" != "no" ] ; then		\
-	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
-	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
 	${HOST_SH} mkboot hdboot ${DESTDIR};			\
 	${HOST_SH} ../commands/update_bootcfg/update_bootcfg.sh;\
 	else							\
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
-	${INSTALL} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot;	\
+	${INSTALL} ${TEMPDIR}/* ${DESTDIR}/multiboot;	\
 	fi
+
+replace: 
+	${HOST_SH} placeprograms.sh ${DESTDIR}/boot/minix_latest/./ "${INSTALL}" \
+		"${STRIP} -s" ${PROGRAMS} ${KERNEL}
 
 # download and update NetBSD reference sources.
 nbsd_fetch:
