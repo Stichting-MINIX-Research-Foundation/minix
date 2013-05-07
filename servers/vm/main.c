@@ -414,6 +414,10 @@ void init_vm(void)
 	CALLMAP(VM_WILLEXIT, do_willexit);
 	CALLMAP(VM_NOTIFY_SIG, do_notify_sig);
 
+	/* Calls from VFS. */
+	CALLMAP(VM_VFS_REPLY, do_vfs_reply);
+	CALLMAP(VM_VFS_MMAP, do_vfs_mmap);
+
 	/* Calls from RS */
 	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv);
 	CALLMAP(VM_RS_UPDATE, do_rs_update);
