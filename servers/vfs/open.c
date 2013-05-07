@@ -38,6 +38,37 @@ static struct vnode *new_node(struct lookup *resolve, int oflags,
 static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 
 /*===========================================================================*
+ *                              lock_close                                    *
+ *===========================================================================*/
+static void lock_close(void)
+{
+  struct fproc *org_fp;
+  struct worker_thread *org_self;
+
+  /* First try to get it right off the bat */
+  if (mutex_trylock(&closefd_lock) == 0)
+        return;
+
+  org_fp = fp;
+  org_self = self;
+
+  if (mutex_lock(&closefd_lock) != 0)
+        panic("Could not obtain lock on close");
+
+  fp = org_fp;
+  self = org_self;
+}
+
+/*===========================================================================*
+ *                              unlock_close                                  *
+ *===========================================================================*/
+static void unlock_close(void)
+{
+  if (mutex_unlock(&closefd_lock) != 0)
+        panic("Could not release lock on closefd_lock");
+}
+
+/*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
 int do_open(message *UNUSED(m_out))
@@ -96,7 +127,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   if (!bits) return(EINVAL);
 
   /* See if file descriptor and filp slots are available. */
-  if ((r = get_fd(0, bits, &(scratch(fp).file.fd_nr), &filp)) != OK) return(r);
+  if ((r = get_fd(fp->fp_fdscan, bits, &(scratch(fp).file.fd_nr), &filp)) != OK) return(r);
 
   lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
 
@@ -587,20 +618,12 @@ int do_mkdir(message *UNUSED(m_out))
   return(r);
 }
 
-/*===========================================================================*
- *				do_lseek				     *
- *===========================================================================*/
-int do_lseek(message *m_out)
+int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
-  int r = OK, seekfd, seekwhence;
-  off_t offset;
+  int r = OK;
   u64_t pos, newpos;
-
-  seekfd = job_m_in.ls_fd;
-  seekwhence = job_m_in.whence;
-  offset = (off_t) job_m_in.offset_lo;
 
   /* Check to see if the file descriptor is valid. */
   if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
@@ -647,20 +670,24 @@ int do_lseek(message *m_out)
 }
 
 /*===========================================================================*
- *				do_llseek				     *
+ *				do_lseek				     *
  *===========================================================================*/
-int do_llseek(message *m_out)
+int do_lseek(message *m_out)
+{
+	return actual_lseek(m_out, job_m_in.ls_fd, job_m_in.whence,
+		(off_t) job_m_in.offset_lo);
+}
+
+/*===========================================================================*
+ *				actual_llseek				     *
+ *===========================================================================*/
+int actual_llseek(message *m_out, int seekfd, int seekwhence, u64_t offset)
 {
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
   u64_t pos, newpos;
-  int r = OK, seekfd, seekwhence;
-  long off_hi, off_lo;
-
-  seekfd = job_m_in.ls_fd;
-  seekwhence = job_m_in.whence;
-  off_hi = job_m_in.offset_high;
-  off_lo = job_m_in.offset_lo;
+  int r = OK;
+  long off_hi = ex64hi(offset);
 
   /* Check to see if the file descriptor is valid. */
   if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
@@ -679,7 +706,7 @@ int do_llseek(message *m_out)
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  newpos = add64(pos, make64(off_lo, off_hi));
+  newpos = pos + offset;
 
   /* Check for overflow. */
   if ((off_hi > 0) && cmp64(newpos, pos) < 0)
@@ -704,24 +731,31 @@ int do_llseek(message *m_out)
   return(r);
 }
 
+int do_llseek(message *m_out)
+{
+	return actual_llseek(m_out, job_m_in.ls_fd, job_m_in.whence,
+		make64(job_m_in.offset_lo, job_m_in.offset_high));
+}
+
 /*===========================================================================*
  *				do_close				     *
  *===========================================================================*/
 int do_close(message *UNUSED(m_out))
 {
 /* Perform the close(fd) system call. */
-
-  scratch(fp).file.fd_nr = job_m_in.fd;
-  return close_fd(fp, scratch(fp).file.fd_nr);
+  int thefd = job_m_in.fd;
+  scratch(fp).file.fd_nr = thefd;
+  return close_fd(fp, scratch(fp).file.fd_nr, 1);
 }
 
 
 /*===========================================================================*
  *				close_fd				     *
  *===========================================================================*/
-int close_fd(rfp, fd_nr)
+int close_fd(rfp, fd_nr, user_request)
 struct fproc *rfp;
 int fd_nr;
+int user_request;
 {
 /* Perform the close(fd) system call. */
   register struct filp *rfilp;
@@ -729,8 +763,24 @@ int fd_nr;
   struct file_lock *flp;
   int lock_count;
 
+  lock_close();
+
+  if(user_request &&
+   fd_nr >= 0 && fd_nr < OPEN_MAX && FD_ISSET(fd_nr, &fp->fp_filp_system)) {
+#if 0
+        printf("VFS: close_fd: closing system FD %d from %d, not doing it\n",
+		fd_nr, rfp->fp_endpoint);
+#endif
+	unlock_close();
+        return EBADF;
+  }
+
   /* First locate the vnode that belongs to the file descriptor. */
-  if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_OPCL)) == NULL) return(err_code);
+  if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_OPCL)) == NULL) {
+	unlock_close();
+	return(err_code);
+  }
+
   vp = rfilp->filp_vno;
 
   close_filp(rfilp);
@@ -751,6 +801,8 @@ int fd_nr;
 	if (nr_locks < lock_count)
 		lock_revive();	/* one or more locks released */
   }
+
+  unlock_close();
 
   return(OK);
 }

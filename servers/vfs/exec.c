@@ -16,6 +16,7 @@
 
 #include "fs.h"
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
@@ -30,6 +31,7 @@
 #include "path.h"
 #include "param.h"
 #include "vnode.h"
+#include "file.h"
 #include <minix/vfsif.h>
 #include <machine/vmparam.h>
 #include <assert.h>
@@ -48,6 +50,8 @@ struct vfs_exec_info {
     int is_dyn;				/* Dynamically linked executable */
     int elf_main_fd;			/* Dyn: FD of main program execuatble */
     char execname[PATH_MAX];		/* Full executable invocation */
+    int procfd;
+    int procfd_used;
 };
 
 static void lock_exec(void);
@@ -185,6 +189,27 @@ static int get_read_vp(struct vfs_exec_info *execi,
 	r=get_read_vp(&e,f,p,s,rs,fp); if(r != OK) { FAILCHECK(r); }	\
 	} while(0)
 
+static int vfs_memmap(struct exec_info *execi,
+        vir_bytes vaddr, vir_bytes len, vir_bytes foffset, u16_t clearend,
+	int protflags)
+{
+	struct vfs_exec_info *vi = (struct vfs_exec_info *) execi->opaque;
+	struct vnode *vp = ((struct vfs_exec_info *) execi->opaque)->vp;
+	int r;
+	u16_t flags = 0;
+
+	if(protflags & PROT_WRITE)
+		flags |= MVM_WRITABLE;
+
+	r = minix_vfs_mmap(execi->proc_e, foffset, len,
+	        vp->v_dev, vp->v_inode_nr, vi->procfd, vaddr, clearend, flags);
+	if(r == OK) {
+		vi->procfd_used = 1;
+	}
+
+	return r;
+}
+
 /*===========================================================================*
  *				pm_exec					     *
  *===========================================================================*/
@@ -205,14 +230,18 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   int i;
   static char fullpath[PATH_MAX],
   	elf_interpreter[PATH_MAX],
+	firstexec[PATH_MAX],
 	finalexec[PATH_MAX];
   struct lookup resolve;
   stackhook_t makestack = NULL;
+  static int n;
+  n++;
 
   lock_exec();
 
   /* unset execi values are 0. */
   memset(&execi, 0, sizeof(execi));
+  execi.procfd = -1;
 
   /* passed from exec() libc code */
   execi.userflags = user_exec_flags;
@@ -223,6 +252,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   rfp = fp = &fproc[slot];
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
+
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
@@ -244,6 +274,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   /* Get the exec file name. */
   FAILCHECK(fetch_name(path, path_len, fullpath));
   strlcpy(finalexec, fullpath, PATH_MAX);
+  strlcpy(firstexec, fullpath, PATH_MAX);
 
   /* Get_read_vp will return an opened vn in execi.
    * if necessary it releases the existing vp so we can
@@ -264,6 +295,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	FAILCHECK(fetch_name(path, path_len, fullpath));
 	FAILCHECK(patch_stack(execi.vp, mbuf, &frame_len, fullpath));
 	strlcpy(finalexec, fullpath, PATH_MAX);
+  	strlcpy(firstexec, fullpath, PATH_MAX);
 	Get_read_vp(execi, fullpath, 1, 0, &resolve, fp);
   }
 
@@ -299,7 +331,26 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	 * be looked up
 	 */
 	strlcpy(fullpath, elf_interpreter, PATH_MAX);
+	strlcpy(firstexec, elf_interpreter, PATH_MAX);
 	Get_read_vp(execi, fullpath, 0, 0, &resolve, fp);
+  }
+
+  /* We also want an FD so VM can mmap() the process in if possible. */
+  {
+  	int openr;
+	fp->fp_fdscan = OPEN_MAX/2;
+	if((openr=execi.procfd=common_open(firstexec, O_RDONLY, 0)) < 0) {
+		printf("vfs: exec: open failed of %s (%d), can't mmap\n",
+			firstexec, openr);
+		execi.procfd = -1;
+	} else {
+		if(fp->fp_filp[openr]->filp_vno->v_vmnt->m_haspeek &&
+		  major(fp->fp_filp[openr]->filp_vno->v_dev) != MEMORY_MAJOR) {
+                        FD_SET(openr, &fp->fp_filp_system);	/* systemfd */
+			execi.args.memmap = vfs_memmap;
+		}
+	}
+	fp->fp_fdscan = 0;
   }
 
   /* callback functions and data */
@@ -358,7 +409,13 @@ pm_execfinal:
 	unlock_vnode(execi.vp);
 	put_vnode(execi.vp);
   }
+  if(execi.procfd >= 0 && !execi.procfd_used) {
+  	int r;
+  	r = close_fd(rfp, execi.procfd, 0);
+  }
+
   unlock_exec();
+
   return(r);
 }
 
@@ -651,7 +708,7 @@ static void clo_exec(struct fproc *rfp)
   /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
   for (i = 0; i < OPEN_MAX; i++)
 	if ( FD_ISSET(i, &rfp->fp_cloexec_set))
-		(void) close_fd(rfp, i);
+		(void) close_fd(rfp, i, 0);
 }
 
 /*===========================================================================*
