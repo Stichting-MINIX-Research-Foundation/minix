@@ -38,37 +38,6 @@ static struct vnode *new_node(struct lookup *resolve, int oflags,
 static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 
 /*===========================================================================*
- *                              lock_close                                    *
- *===========================================================================*/
-static void lock_close(void)
-{
-  struct fproc *org_fp;
-  struct worker_thread *org_self;
-
-  /* First try to get it right off the bat */
-  if (mutex_trylock(&closefd_lock) == 0)
-        return;
-
-  org_fp = fp;
-  org_self = self;
-
-  if (mutex_lock(&closefd_lock) != 0)
-        panic("Could not obtain lock on close");
-
-  fp = org_fp;
-  self = org_self;
-}
-
-/*===========================================================================*
- *                              unlock_close                                  *
- *===========================================================================*/
-static void unlock_close(void)
-{
-  if (mutex_unlock(&closefd_lock) != 0)
-        panic("Could not release lock on closefd_lock");
-}
-
-/*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
 int do_open(message *UNUSED(m_out))
@@ -744,8 +713,7 @@ int do_close(message *UNUSED(m_out))
 {
 /* Perform the close(fd) system call. */
   int thefd = job_m_in.fd;
-  scratch(fp).file.fd_nr = thefd;
-  return close_fd(fp, scratch(fp).file.fd_nr, 1);
+  return close_fd(fp, thefd, 1);
 }
 
 
@@ -763,28 +731,29 @@ int user_request;
   struct file_lock *flp;
   int lock_count;
 
-  lock_close();
-
   if(user_request &&
    fd_nr >= 0 && fd_nr < OPEN_MAX && FD_ISSET(fd_nr, &fp->fp_filp_system)) {
 #if 0
         printf("VFS: close_fd: closing system FD %d from %d, not doing it\n",
 		fd_nr, rfp->fp_endpoint);
 #endif
-	unlock_close();
         return EBADF;
   }
 
   /* First locate the vnode that belongs to the file descriptor. */
-  if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_OPCL)) == NULL) {
-	unlock_close();
+  if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_WRITE)) == NULL) {
 	return(err_code);
   }
 
   vp = rfilp->filp_vno;
 
-  close_filp(rfilp);
+  /* first, make all future get_filp2()'s fail; otherwise
+   * we might try to close the same fd in different threads
+   */
   rfp->fp_filp[fd_nr] = NULL;
+
+  close_filp(rfilp);
+
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
   FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
@@ -801,8 +770,6 @@ int user_request;
 	if (nr_locks < lock_count)
 		lock_revive();	/* one or more locks released */
   }
-
-  unlock_close();
 
   return(OK);
 }

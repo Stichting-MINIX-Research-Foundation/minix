@@ -421,12 +421,10 @@ int do_vm_call(message *m_out)
 		}
 		case VMVFSREQ_FDCLOSE:
 		{
-			int procfd = req_fd;
-			scratch(fp).file.fd_nr = procfd;
-			result = close_fd(fp, scratch(fp).file.fd_nr, 0);
+			result = close_fd(fp, req_fd, 0);
 			if(result != OK) {
 				printf("VFS: VM fd close for fd %d, %d (%d)\n",
-					procfd, fp->fp_endpoint, result);
+					req_fd, fp->fp_endpoint, result);
 			}
 			break;
 		}
