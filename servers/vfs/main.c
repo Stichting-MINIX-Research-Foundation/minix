@@ -758,8 +758,9 @@ static void get_work()
 	}
 
 	proc_p = _ENDPOINT_P(m_in.m_source);
-	if (proc_p < 0 || proc_p >= NR_PROCS) fp = NULL;
-	else fp = &fproc[proc_p];
+	if (proc_p < 0 || proc_p >= NR_PROCS) {
+		fp = NULL;
+	} else fp = &fproc[proc_p];
 
 	if (m_in.m_type == EDEADSRCDST) return;	/* Failed 'sendrec' */
 
