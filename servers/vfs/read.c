@@ -83,9 +83,10 @@ void check_bsf_lock(void)
 }
 
 /*===========================================================================*
- *				do_read_write_peek			     *
+ *				actual_read_write_peek			     *
  *===========================================================================*/
-int do_read_write_peek(int rw_flag, int io_fd, char *io_buf, size_t io_nbytes)
+int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
+	char *io_buf, size_t io_nbytes)
 {
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
   struct filp *f;
@@ -95,37 +96,48 @@ int do_read_write_peek(int rw_flag, int io_fd, char *io_buf, size_t io_nbytes)
 
   if(rw_flag == WRITING) ro = 0;
 
-  scratch(fp).file.fd_nr = io_fd;
-  scratch(fp).io.io_buffer = io_buf;
-  scratch(fp).io.io_nbytes = io_nbytes;
+  scratch(rfp).file.fd_nr = io_fd;
+  scratch(rfp).io.io_buffer = io_buf;
+  scratch(rfp).io.io_nbytes = io_nbytes;
 
-  locktype = ro ? VNODE_READ : VNODE_WRITE;
-  if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
+  locktype = rw_flag == WRITING ? VNODE_WRITE : VNODE_READ;
+  if ((f = get_filp2(rfp, scratch(rfp).file.fd_nr, locktype)) == NULL)
 	return(err_code);
+
+  assert(f->filp_count > 0);
+
   if (((f->filp_mode) & (ro ? R_BIT : W_BIT)) == 0) {
 	unlock_filp(f);
 	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
   }
-  if (scratch(fp).io.io_nbytes == 0) {
+  if (scratch(rfp).io.io_nbytes == 0) {
 	unlock_filp(f);
 	return(0);	/* so char special files need not check for 0*/
   }
 
-  r = read_write(rw_flag, f, scratch(fp).io.io_buffer, scratch(fp).io.io_nbytes,
-		 who_e);
+  r = read_write(rfp, rw_flag, f, scratch(rfp).io.io_buffer,
+	scratch(rfp).io.io_nbytes, who_e);
 
   unlock_filp(f);
   return(r);
 }
 
 /*===========================================================================*
+ *				do_read_write_peek			     *
+ *===========================================================================*/
+int do_read_write_peek(int rw_flag, int io_fd, char *io_buf, size_t io_nbytes)
+{
+	return actual_read_write_peek(fp, rw_flag, io_fd, io_buf, io_nbytes);
+}
+
+/*===========================================================================*
  *				read_write				     *
  *===========================================================================*/
-int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
-		      endpoint_t for_e)
+int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
+	char *buf, size_t size, endpoint_t for_e)
 {
   register struct vnode *vp;
-  u64_t position, res_pos, new_pos;
+  u64_t position, res_pos;
   unsigned int cum_io, cum_io_incr, res_cum_io;
   int op, r;
 
@@ -141,17 +153,23 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
 
   if (S_ISFIFO(vp->v_mode)) {		/* Pipes */
-	if (fp->fp_cum_io_partial != 0) {
+	if (rfp->fp_cum_io_partial != 0) {
 		panic("VFS: read_write: fp_cum_io_partial not clear");
 	}
-	if(rw_flag == PEEKING) return EINVAL;
+	if(rw_flag == PEEKING) {
+	  	printf("read_write: peek on pipe makes no sense\n");
+		return EINVAL;
+	}
 	r = rw_pipe(rw_flag, for_e, f, buf, size);
   } else if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
 	dev_t dev;
 	int suspend_reopen;
 	int op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
 
-	if(rw_flag == PEEKING) return EINVAL;
+	if(rw_flag == PEEKING) {
+	  	printf("read_write: peek on char device makes no sense\n");
+		return EINVAL;
+	}
 
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access char dev NO_DEV");
@@ -170,15 +188,17 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access block dev NO_DEV");
 
-	if(rw_flag == PEEKING) return EINVAL;
-
 	lock_bsf();
 
-	r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev, position, size,
-			   buf, rw_flag, &res_pos, &res_cum_io);
-	if (r == OK) {
-		position = res_pos;
-		cum_io += res_cum_io;
+	if(rw_flag == PEEKING) {
+		r = req_bpeek(vp->v_bfs_e, vp->v_sdev, position, size);
+	} else {
+		r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev,
+			position, size, buf, rw_flag, &res_pos, &res_cum_io);
+		if (r == OK) {
+			position = res_pos;
+			cum_io += res_cum_io;
+		}
 	}
 
 	unlock_bsf();
@@ -189,16 +209,21 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 	}
 
 	/* Issue request */
-	r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position, rw_flag, for_e,
-			  buf, size, &new_pos, &cum_io_incr);
+	if(rw_flag == PEEKING) {
+		r = req_peek(vp->v_fs_e, vp->v_inode_nr, position, size);
+	} else {
+		u64_t new_pos;
+		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position,
+			rw_flag, for_e, buf, size, &new_pos, &cum_io_incr);
 
-	if (r >= 0) {
-		if (ex64hi(new_pos))
-			panic("read_write: bad new pos");
+		if (r >= 0) {
+			if (ex64hi(new_pos))
+				panic("read_write: bad new pos");
 
-		position = new_pos;
-		cum_io += cum_io_incr;
-	}
+			position = new_pos;
+			cum_io += cum_io_incr;
+		}
+        }
   }
 
   /* On write, update file size and access time. */
@@ -220,7 +245,7 @@ int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
 	 * generate s SIGPIPE signal.
 	 */
 	if (!(f->filp_flags & O_NOSIGPIPE)) {
-		sys_kill(fp->fp_endpoint, SIGPIPE);
+		sys_kill(rfp->fp_endpoint, SIGPIPE);
 	}
   }
 
@@ -291,6 +316,8 @@ size_t req_size;
   oflags = f->filp_flags;
   vp = f->filp_vno;
   position = cvu64(0);	/* Not actually used */
+
+  assert(rw_flag == READING || rw_flag == WRITING);
 
   /* fp->fp_cum_io_partial is only nonzero when doing partial writes */
   cum_io = fp->fp_cum_io_partial;
