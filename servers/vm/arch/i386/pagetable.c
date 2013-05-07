@@ -1330,10 +1330,6 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 			pdeslot * ARCH_PAGEDIR_SIZE);
 #endif
 
-#if 0
-	printf("VM: slot %d endpoint %d has pde val 0x%lx at kernel address 0x%lx\n",
-		slot, who->vm_endpoint, page_directories[slot], pdes);
-#endif
 	/* Tell kernel about new page table root. */
 	return sys_vmctl_set_addrspace(who->vm_endpoint, pt->pt_dir_phys, pdes);
 }
