@@ -1,17 +1,8 @@
-/* Test 71 - full hierachy storage test.
- *
- * Black box test of storage: test consistent file contents
- * under various working sets and access patterns.
- *
- * Using varying working set sizes, exercise various cache
- * layers separately.
- *
- * There is a 'smoke test' mode, suitable for running interactively,
- * and a 'regression test' (big) mode, meant for batch invocation only
- * as it takes very long.
+/* Test 74 - mmap functionality test.
  */
 
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/ioc_memory.h>
 #include <stdio.h>
 #include <assert.h>
@@ -44,11 +35,38 @@ readblock(int b, int blocksize, u32_t seed, char *data)
 {
 	u64_t offset;
 	int fd;
+	char *mmapdata;
+	int pread_first = random() % 2;
 
 	get_fd_offset(b, blocksize, &offset, &fd);
 
-	if(pread(fd, data, blocksize, offset) < blocksize) {
-		perror("pread");
+	if(pread_first) {
+		if(pread(fd, data, blocksize, offset) < blocksize) {
+			perror("pread");
+			return -1;
+		}
+	}
+
+	if((mmapdata = minix_mmap(NULL, blocksize, PROT_READ, MAP_PRIVATE | MAP_FILE,
+		fd, offset)) == MAP_FAILED) {
+		perror("mmap");
+		return -1;
+	}
+
+	if(!pread_first) {
+		if(pread(fd, data, blocksize, offset) < blocksize) {
+			perror("pread");
+			return -1;
+		}
+	}
+
+	if(memcmp(mmapdata, data, blocksize)) {
+		fprintf(stderr, "readblock: mmap, pread mismatch\n");
+		return -1;
+	}
+
+	if(minix_munmap(mmapdata, blocksize) < 0) {
+		perror("munmap");
 		return -1;
 	}
 
@@ -62,12 +80,12 @@ main(int argc, char *argv[])
 {
 	int iter = 2;
 
-	start(71);
+	start(74);
+
+	makefiles(MAXFILES);
 
 	cachequiet(!bigflag);
 	if(bigflag) iter = 3;
-
-	makefiles(MAXFILES);
 
 	/* Try various combinations working set sizes
 	 * and block sizes in order to specifically 
