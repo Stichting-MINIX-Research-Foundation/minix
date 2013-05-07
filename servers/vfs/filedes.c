@@ -147,7 +147,7 @@ void init_filps(void)
 /*===========================================================================*
  *				get_fd					     *
  *===========================================================================*/
-int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
+int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 {
 /* Look for a free file descriptor and a free filp slot.  Fill in the mode word
  * in the latter, but don't claim either one yet, since the open() or creat()
@@ -159,7 +159,7 @@ int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 
   /* Search the fproc fp_filp table for a free file descriptor. */
   for (i = start; i < OPEN_MAX; i++) {
-	if (fp->fp_filp[i] == NULL && !FD_ISSET(i, &fp->fp_filp_inuse)) {
+	if (rfp->fp_filp[i] == NULL && !FD_ISSET(i, &rfp->fp_filp_inuse)) {
 		/* A file descriptor has been located. */
 		*k = i;
 		break;

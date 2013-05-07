@@ -131,7 +131,7 @@ int do_fcntl(message *UNUSED(m_out))
     case F_DUPFD:
 	/* This replaces the old dup() system call. */
 	if (fcntl_argx < 0 || fcntl_argx >= OPEN_MAX) r = EINVAL;
-	else if ((r = get_fd(fcntl_argx, 0, &new_fd, NULL)) == OK) {
+	else if ((r = get_fd(fp, fcntl_argx, 0, &new_fd, NULL)) == OK) {
 		f->filp_count++;
 		fp->fp_filp[new_fd] = f;
 		FD_SET(new_fd, &fp->fp_filp_inuse);
@@ -309,6 +309,166 @@ int do_fsync(message *UNUSED(m_out))
   }
 
   return(r);
+}
+
+int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
+{
+	int result, procfd;
+	struct filp *f = NULL;
+	struct fproc *vmf = &fproc[VM_PROC_NR];
+
+	*newfilp = NULL;
+
+	if ((f = get_filp2(rfp, pfd, VNODE_READ)) == NULL) {
+		printf("VFS dupvm: get_filp2 failed\n");
+		return EBADF;
+	}
+
+	if(!f->filp_vno->v_vmnt->m_haspeek) {
+		unlock_filp(f);
+		printf("VFS dupvm: no peek available\n");
+		return EINVAL;
+	}
+
+	assert(f->filp_vno);
+	assert(f->filp_vno->v_vmnt);
+
+	if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode)) {
+		printf("VFS: mmap regular/blockdev only; dev 0x%x ino %d has mode 0%o\n",
+			f->filp_vno->v_dev, f->filp_vno->v_inode_nr, f->filp_vno->v_mode);
+		unlock_filp(f);
+		return EINVAL;
+	}
+
+	/* get free FD in VM */
+	if((result=get_fd(vmf, 0, 0, &procfd, NULL)) != OK) {
+		unlock_filp(f);
+		printf("VFS dupvm: getfd failed\n");
+		return result;
+	}
+
+	*vmfd = procfd;
+
+	f->filp_count++;
+	assert(f->filp_count > 0);
+	vmf->fp_filp[procfd] = f;
+
+	/* mmap FD's are inuse */
+	FD_SET(procfd, &vmf->fp_filp_inuse);
+
+	*newfilp = f;
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				do_vm_call				     *
+ *===========================================================================*/
+int do_vm_call(message *m_out)
+{
+/* A call that VM does to VFS.
+ * We must reply with the fixed type VM_VFS_REPLY (and put our result info
+ * in the rest of the message) so VM can tell the difference between a
+ * request from VFS and a reply to this call.
+ */
+	int req = job_m_in.VFS_VMCALL_REQ;
+	int req_fd = job_m_in.VFS_VMCALL_FD;
+	u32_t req_id = job_m_in.VFS_VMCALL_REQID;
+	endpoint_t ep = job_m_in.VFS_VMCALL_ENDPOINT;
+	u64_t offset = make64(job_m_in.VFS_VMCALL_OFFSET_LO,
+		job_m_in.VFS_VMCALL_OFFSET_HI);
+	u32_t length = job_m_in.VFS_VMCALL_LENGTH;
+	int result = OK;
+	int slot;
+	struct fproc *rfp, *vmf;
+	struct filp *f = NULL;
+
+	if(job_m_in.m_source != VM_PROC_NR)
+		return ENOSYS;
+
+	if(isokendpt(ep, &slot) != OK) rfp = NULL;
+	else rfp = &fproc[slot];
+
+	vmf = &fproc[VM_PROC_NR];
+	assert(fp == vmf);
+	assert(rfp != vmf);
+
+	switch(req) {
+		case VMVFSREQ_FDLOOKUP:
+		{
+			int procfd;
+
+			/* Lookup fd in referenced process. */
+
+			if(!rfp) {
+				printf("VFS: why isn't ep %d here?!\n", ep);
+				result = ESRCH;
+				goto reqdone;
+			}
+
+			if((result = dupvm(rfp, req_fd, &procfd, &f)) != OK) {
+				printf("vfs: dupvm failed\n");
+				goto reqdone;
+			}
+
+			if(S_ISBLK(f->filp_vno->v_mode)) {
+				assert(f->filp_vno->v_sdev != NO_DEV);
+				m_out->VMV_DEV = f->filp_vno->v_sdev;
+				m_out->VMV_INO = VMC_NO_INODE;
+				m_out->VMV_SIZE_PAGES = LONG_MAX;
+			} else {
+				m_out->VMV_DEV = f->filp_vno->v_dev;
+				m_out->VMV_INO = f->filp_vno->v_inode_nr;
+				m_out->VMV_SIZE_PAGES =
+					roundup(f->filp_vno->v_size,
+						PAGE_SIZE)/PAGE_SIZE;
+			}
+
+			m_out->VMV_FD = procfd;
+
+			result = OK;
+
+			break;
+		}
+		case VMVFSREQ_FDCLOSE:
+		{
+			result = close_fd(fp, req_fd);
+			if(result != OK) {
+				printf("VFS: VM fd close for fd %d, %d (%d)\n",
+					req_fd, fp->fp_endpoint, result);
+			}
+			break;
+		}
+		case VMVFSREQ_FDIO:
+		{
+			message dummy_out;
+
+			result = actual_llseek(fp, &dummy_out, req_fd,
+				SEEK_SET, offset);
+
+			if(result == OK) {
+				result = actual_read_write_peek(fp, PEEKING,
+					req_fd, NULL, length);
+			}
+
+			break;
+		}
+		default:
+			panic("VFS: bad request code from VM\n");
+			break;
+	}
+
+reqdone:
+	if(f)
+		unlock_filp(f);
+
+	/* fp is VM still. */
+	assert(fp == vmf);
+	m_out->VMV_ENDPOINT = ep;
+	m_out->VMV_RESULT = result;
+	m_out->VMV_REQID = req_id;
+
+	return VM_VFS_REPLY;
 }
 
 /*===========================================================================*
@@ -709,7 +869,7 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
   if ((f = get_filp(core_fd, VNODE_WRITE)) == NULL) { r=EBADF; goto core_exit; }
   write_elf_core_file(f, csig, proc_name);
   unlock_filp(f);
-  (void) close_fd(fp, core_fd);	/* ignore failure, we're exiting anyway */
+  (void) close_fd(fp, core_fd);	        /* ignore failure, we're exiting anyway */
 
 core_exit:
   if(csig)
@@ -768,3 +928,4 @@ void panic_hook(void)
   printf("VFS mthread stacktraces:\n");
   mthread_stacktraces(); 
 }         
+
