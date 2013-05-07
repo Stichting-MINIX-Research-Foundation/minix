@@ -203,7 +203,6 @@ int fild;			/* file descriptor */
 tll_access_t locktype;
 {
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
-
   return get_filp2(fp, fild, locktype);
 }
 
@@ -227,8 +226,15 @@ tll_access_t locktype;
 			 */
   else if ((filp = rfp->fp_filp[fild]) == NULL)
 	err_code = EBADF;
-  else
+  else {
+  	if (FD_ISSET(fild, &fp->fp_filp_system)) {
+#if 0
+  		printf("VFS: warning: doing get_filp of system fd %d: %d\n",
+			fp->fp_endpoint, fild);
+#endif
+	}
 	lock_filp(filp, locktype);	/* All is fine */
+  }
 
   return(filp);	/* may also be NULL */
 }

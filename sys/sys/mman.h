@@ -92,6 +92,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define MAP_FIXED      0x0200  /* require mapping to happen at hint */
 #define MAP_THIRDPARTY	0x0400		/* perform on behalf of any process */
 #define MAP_UNINITIALIZED 0x0800	/* do not clear memory */
+#define MAP_FILE      0x1000  /* it's a file */
 
 /*
  * Error indicator returned by mmap(2)
