@@ -128,6 +128,7 @@ int (*call_vec[])(void) = {
 	do_getres,	/* 114 = clock_getres */
 	do_gettime,	/* 115 = clock_gettime */
 	do_settime,	/* 116 = clock_settime */
+	no_sys,		/* 117 = (vmcall) */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
