@@ -131,7 +131,7 @@ int do_fcntl(message *UNUSED(m_out))
     case F_DUPFD:
 	/* This replaces the old dup() system call. */
 	if (fcntl_argx < 0 || fcntl_argx >= OPEN_MAX) r = EINVAL;
-	else if ((r = get_fd(fcntl_argx, 0, &new_fd, NULL)) == OK) {
+	else if ((r = get_fd(fp, fcntl_argx, 0, &new_fd, NULL, 1)) == OK) {
 		f->filp_count++;
 		fp->fp_filp[new_fd] = f;
 		FD_SET(new_fd, &fp->fp_filp_inuse);
@@ -330,7 +330,7 @@ int do_vm_call(message *m_out)
 	u32_t length = job_m_in.VFS_VMCALL_LENGTH;
 	int result = OK;
 	int slot;
-	struct fproc *fdsrc, *vmf;
+	struct fproc *rfp, *vmf;
 	struct filp *f = NULL;
 
 	if(job_m_in.m_source != VM_PROC_NR)
@@ -338,16 +338,10 @@ int do_vm_call(message *m_out)
 
 	okendpt(ep, &slot);
 
-	fdsrc = &fproc[slot];
+	rfp = &fproc[slot];
 	vmf = &fproc[VM_PROC_NR];
 	assert(fp == vmf);
-
-	/* We do everything on behalf of the target process. */
-	fp = fdsrc;
-	
-	if(fp == vmf) {
-		printf("VFS: huh, performing request for VM?\n");
-	}
+	assert(rfp != vmf);
 
 	switch(req) {
 		case VMVFSREQ_FDLOOKUP:
@@ -355,7 +349,7 @@ int do_vm_call(message *m_out)
 			int procfd;
 
 			/* Lookup fd in referenced process. */
-			if ((f = get_filp(req_fd, VNODE_READ)) == NULL) {
+			if ((f = get_filp2(rfp, req_fd, VNODE_READ, 1)) == NULL) {
 				result = err_code;
 				goto reqdone;
 			}
@@ -376,7 +370,8 @@ int do_vm_call(message *m_out)
 				goto reqdone;
 			}
 
-			if((result=get_fd(OPEN_MAX/2, 0, &procfd, NULL)) != OK)
+			if((result=get_fd(rfp, SYSTEM_FDSTART, 0, &procfd,
+			  NULL, 0)) != OK)
 				goto reqdone;
 
 			if(S_ISBLK(f->filp_vno->v_mode)) {
@@ -392,57 +387,47 @@ int do_vm_call(message *m_out)
 					roundup(f->filp_vno->v_size,
 						PAGE_SIZE)/PAGE_SIZE;
 			}
-#if 1
+
 			m_out->VMV_FD = procfd;
 
 			f->filp_count++;
-			fp->fp_filp[procfd] = f;
+			assert(f->filp_count > 0);
+			rfp->fp_filp[procfd] = f;
 
-			/* mmap FD's are inuse, system-owned (user can't
-			 * close it), and close-on-exec
-			 */
-			FD_SET(procfd, &fp->fp_filp_inuse);
-			FD_SET(procfd, &fp->fp_filp_system);
-			FD_SET(procfd, &fp->fp_cloexec_set);
-#else
-			m_out->VMV_FD  = req_fd;
-#endif
+			/* mmap FD's are inuse and close-on-exec */
+			FD_SET(procfd, &rfp->fp_filp_inuse);
+			FD_SET(procfd, &rfp->fp_cloexec_set);
 
-#if 0
-			printf("%d: fd %d is system now\n", fp->fp_endpoint, procfd);
-#endif
 			result = OK;
 
 #if 0
-			printf("VFS: FDLOOKUP: result %d dev 0x%x ino %ld; procfd %d\n",
-				result, m_out->VMV_DEV, m_out->VMV_INO, procfd);
+			printf("VFS: FDLOOKUP: result %d dev 0x%x ino %ld; procfd %d for %d\n",
+				result, m_out->VMV_DEV, m_out->VMV_INO, procfd, rfp->fp_endpoint);
 #endif
 			break;
 		}
 		case VMVFSREQ_FDCLOSE:
 		{
-			int procfd = req_fd;
-			scratch(fp).file.fd_nr = procfd;
-			result = close_fd(fp, scratch(fp).file.fd_nr, 0);
+			result = close_fd(rfp, req_fd, 0);
 			if(result != OK) {
 				printf("VFS: VM fd close for fd %d, %d (%d)\n",
-					procfd, fp->fp_endpoint, result);
+					req_fd, rfp->fp_endpoint, result);
 			}
 			break;
 		}
 		case VMVFSREQ_FDIO:
 		{
 			message dummy_out;
-			result = actual_llseek(&dummy_out, req_fd, SEEK_SET,
-				offset);
+
+			result = actual_llseek(rfp, &dummy_out, req_fd,
+				SEEK_SET, offset, 0);
 
 			if(result != OK) {
-				printf("VFS: llseek for mmap i/o %d (%llu) failed (%d)\n",
-					fp->fp_endpoint, offset, result);
+				printf("VFS: llseek for mmap i/o for %d, fd %d, (offset %llu) failed (%d)\n",
+					rfp->fp_endpoint, req_fd, offset, result);
 			} else {
-				fp = fdsrc;
-				result = do_read_write_peek(PEEKING,
-					req_fd, NULL, length);
+				result = actual_read_write_peek(rfp, PEEKING,
+					req_fd, NULL, length, 0);
 			}
 
 			break;
@@ -456,8 +441,8 @@ reqdone:
 	if(f)
 		unlock_filp(f);
 
-	/* We're VM now. */
-	fp = vmf;
+	/* fp is VM still. */
+	assert(fp == vmf);
 	m_out->VMV_ENDPOINT = ep;
 	m_out->VMV_RESULT = result;
 	m_out->VMV_REQID = req_id;
@@ -551,7 +536,7 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
   cp = &fproc[childno];
   pp = &fproc[parentno];
 
-  for (i = 0; i < OPEN_MAX; i++)
+  for (i = 0; i < FDS_PER_PROCESS; i++)
 	if (cp->fp_filp[i] != NULL) cp->fp_filp[i]->filp_count++;
 
   /* Fill in new process and endpoint id. */
@@ -595,7 +580,7 @@ static void free_proc(struct fproc *exiter, int flags)
 	unpause(exiter->fp_endpoint);
 
   /* Loop on file descriptors, closing any that are open. */
-  for (i = 0; i < OPEN_MAX; i++) {
+  for (i = 0; i < FDS_PER_PROCESS; i++) {
 	(void) close_fd(exiter, i, 0);
   }
 
@@ -632,7 +617,7 @@ static void free_proc(struct fproc *exiter, int flags)
 	  if(rfp->fp_pid == PID_FREE) continue;
           if (rfp->fp_tty == dev) rfp->fp_tty = 0;
 
-          for (i = 0; i < OPEN_MAX; i++) {
+          for (i = 0; i < FDS_PER_PROCESS; i++) {
 		if ((rfilp = rfp->fp_filp[i]) == NULL) continue;
 		if (rfilp->filp_mode == FILP_CLOSED) continue;
 		vp = rfilp->filp_vno;
@@ -853,7 +838,7 @@ int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
 
   /* open core file */
   snprintf(core_path, PATH_MAX, "%s.%d.%d", CORE_NAME, fp->fp_pid, seq);
-  core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
+  core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE, 1);
   if (core_fd < 0) { r = core_fd; goto core_exit; }
 
   /* get process' name */
@@ -929,3 +914,4 @@ void panic_hook(void)
   printf("VFS mthread stacktraces:\n");
   mthread_stacktraces(); 
 }         
+

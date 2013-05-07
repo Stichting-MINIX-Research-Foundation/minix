@@ -312,7 +312,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	/* The interpreter (loader) needs an fd to the main program,
 	 * which is currently in finalexec
 	 */
-	if((r = execi.elf_main_fd = common_open(finalexec, O_RDONLY, 0)) < 0) {
+	if((r = execi.elf_main_fd = common_open(finalexec, O_RDONLY, 0, 1)) < 0) {
 		printf("VFS: exec: dynamic: open main exec failed %s (%d)\n",
 			fullpath, r);
 		FAILCHECK(r);
@@ -338,19 +338,16 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   /* We also want an FD so VM can mmap() the process in if possible. */
   {
   	int openr;
-	fp->fp_fdscan = OPEN_MAX/2;
-	if((openr=execi.procfd=common_open(firstexec, O_RDONLY, 0)) < 0) {
+	if((openr=execi.procfd=common_open(firstexec, O_RDONLY, 0, 0)) < 0) {
 		printf("vfs: exec: open failed of %s (%d), can't mmap\n",
 			firstexec, openr);
 		execi.procfd = -1;
 	} else {
 		if(fp->fp_filp[openr]->filp_vno->v_vmnt->m_haspeek &&
 		  major(fp->fp_filp[openr]->filp_vno->v_dev) != MEMORY_MAJOR) {
-                        FD_SET(openr, &fp->fp_filp_system);	/* systemfd */
 			execi.args.memmap = vfs_memmap;
 		}
 	}
-	fp->fp_fdscan = 0;
   }
 
   /* callback functions and data */
@@ -706,7 +703,7 @@ static void clo_exec(struct fproc *rfp)
   int i;
 
   /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
-  for (i = 0; i < OPEN_MAX; i++)
+  for (i = 0; i < FDS_PER_PROCESS; i++)
 	if ( FD_ISSET(i, &rfp->fp_cloexec_set))
 		(void) close_fd(rfp, i, 0);
 }
