@@ -1,11 +1,18 @@
 #ifndef __VFS_CONST_H__
 #define __VFS_CONST_H__
 
+/* How many FD's must be reserved per process? OPEN_MAX are
+ * user-visible, SYSTEM_FDS_MAX are system-usable.
+ */
+#define SYSTEM_FDSTART		OPEN_MAX	/* How many user FD's */
+#define SYSTEM_FDS_MAX		OPEN_MAX	/* How many system FD's */
+#define FDS_PER_PROCESS		(OPEN_MAX+SYSTEM_FDS_MAX) /* Total FD's */
+
 /* Tables sizes */
-#define NR_FILPS         512	/* # slots in filp table */
+#define NR_FILPS        1024	/* # slots in filp table */
 #define NR_LOCKS           8	/* # slots in the file locking table */
 #define NR_MNTS           16 	/* # slots in mount table */
-#define NR_VNODES        512	/* # slots in vnode table */
+#define NR_VNODES       1024	/* # slots in vnode table */
 #define NR_WTHREADS	   8	/* # slots in worker thread table */
 
 #define NR_NONEDEVS	NR_MNTS	/* # slots in nonedev bitmap */

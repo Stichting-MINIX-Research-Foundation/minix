@@ -1005,6 +1005,7 @@
 #	define VMV_DEV			m10_i4
 #	define VMV_INO			m10_l1
 #	define VMV_FD			m10_l2
+#	define VMV_SIZE_PAGES		m10_l3
 
 #define VM_REMAP		(VM_RQ_BASE+33)
 #	define VMRE_D			m1_i1
@@ -1075,8 +1076,10 @@
 
 #define VMPPARAM_CLEAR		1	/* values for VMPCTL_PARAM */
 
+#define VM_VFS_MMAP             (VM_RQ_BASE+46)
+
 /* Total. */
-#define NR_VM_CALLS				46
+#define NR_VM_CALLS				47
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */
@@ -1086,8 +1089,8 @@
 
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
-    VM_MMAP, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, \
-    VM_INFO, VM_MAPCACHEPAGE
+    VM_MMAP, VM_VFS_REPLY, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, \
+    VM_INFO
 
 /*===========================================================================*
  *                Messages for IPC server				     *
