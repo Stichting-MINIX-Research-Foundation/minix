@@ -13,8 +13,7 @@
 #include "common.h"
 
 int common_test_nr = -1, errct = 0, subtest;
-
-int quietflag = 1;
+int quietflag = 1, bigflag = 0;
 
 /* provide a default max_error symbol as Max_error with a value
  * of 5. The test program can override it wit its own max_error
@@ -29,6 +28,11 @@ int test_nr;
 {
   char buf[64];
   int i;
+
+  /* if this variable is set, specify to tests we are running
+   * in 'overnight' mode
+   */
+  bigflag = !!getenv(BIGVARNAME);
 
   common_test_nr = test_nr;
   printf("Test %2d ", test_nr);

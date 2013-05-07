@@ -323,6 +323,9 @@ void init_vm(void)
 		panic("couldn't get bootinfo: %d", s);
 	}
 
+	/* Turn file mmap on? */
+	env_parse("filemap", "d", 0, &enable_filemap, 0, 1);
+
 	/* Sanity check */
 	assert(kernel_boot_info.mmap_size > 0);
 	assert(kernel_boot_info.mods_with_kernel > 0);
@@ -413,6 +416,10 @@ void init_vm(void)
 	CALLMAP(VM_BRK, do_brk);
 	CALLMAP(VM_WILLEXIT, do_willexit);
 	CALLMAP(VM_NOTIFY_SIG, do_notify_sig);
+
+	/* Calls from VFS. */
+	CALLMAP(VM_VFS_REPLY, do_vfs_reply);
+	CALLMAP(VM_VFS_MMAP, do_vfs_mmap);
 
 	/* Calls from RS */
 	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv);
