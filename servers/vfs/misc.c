@@ -761,3 +761,10 @@ ds_event(void *arg)
   thread_cleanup(NULL);
   return(NULL);
 }
+
+/* A function to be called on panic(). */
+void panic_hook(void)   
+{               
+  printf("VFS mthread stacktraces:\n");
+  mthread_stacktraces(); 
+}         
