@@ -43,6 +43,7 @@ void clear_proc(struct vmproc *vmp)
 	vmp->vm_bytecopies = 0;
 #endif
 	vmp->vm_region_top = 0;
+	vmp->fdrefs = NULL;
 }
 
 /*===========================================================================*
@@ -118,10 +119,12 @@ int do_procctl(message *msg)
 			if(msg->m_source != RS_PROC_NR
 				&& msg->m_source != VFS_PROC_NR)
 				return EPERM;
+			vmp->vm_flags |= VMF_EXECING;
 			free_proc(vmp);
 			if(pt_new(&vmp->vm_pt) != OK)
 				panic("VMPPARAM_CLEAR: pt_new failed");
 			pt_bind(&vmp->vm_pt, vmp);
+			vmp->vm_flags &= ~VMF_EXECING;
 			return OK;
 		default:
 			return EINVAL;
