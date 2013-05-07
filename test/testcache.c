@@ -23,6 +23,8 @@
 
 extern int quietflag;
 
+int fds[MAXFILES];
+
 static void
 genblock(int b, char *blockdata, int blocksize, u32_t seed)
 {
@@ -208,6 +210,37 @@ dotest(int blocksize, int nblocks, int iterations)
 	testend();
 
 	return 0;
+}
+
+void
+get_fd_offset(int b, int blocksize, u64_t *file_offset, int *fd)
+{
+        u64_t offset = (u64_t) b * blocksize;
+        int filenumber;
+
+        filenumber = offset / MB / MBPERFILE;
+
+        assert(filenumber >= 0 && filenumber < MAXFILES);
+        assert(fds[filenumber] > 0);
+
+        *fd = fds[filenumber];
+        *file_offset = offset - (filenumber * MBPERFILE * MB);
+}
+
+void
+makefiles(int n)
+{
+	int f;
+        for(f = 0; f < n; f++) {
+                char tempfilename[] = "cachetest.XXXXXXXX";
+                fds[f] = mkstemp(tempfilename);
+                if(fds[f] < 0) {
+			perror("mkstemp");
+			fprintf(stderr, "mkstemp %d/%d failed\n", f, n);
+			exit(1);
+		}
+                assert(fds[f] > 0);
+        }
 }
 
 void cachequiet(int quiet)

@@ -81,6 +81,127 @@ static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
 	return vr;
 }
 
+static int mmap_file(struct vmproc *vmp,
+	int vmfd, u32_t off_lo, u32_t off_hi, int flags,
+	ino_t ino, dev_t dev, u64_t filesize, vir_bytes addr, vir_bytes len,
+	vir_bytes *retaddr, u16_t clearend, int writable, int mayclosefd)
+{
+/* VFS has replied to a VMVFSREQ_FDLOOKUP request. */
+	struct vir_region *vr;
+	u64_t file_offset, page_offset;
+	int result = OK;
+	u32_t vrflags = 0;
+
+	if(writable) vrflags |= VR_WRITABLE;
+
+	if(flags & MAP_THIRDPARTY) {
+		file_offset = off_lo;
+	} else {
+		file_offset = make64(off_lo, off_hi);
+		if(off_hi && !off_lo) {
+			/* XXX clang compatability hack */
+			off_hi = file_offset = 0;
+		}
+	}
+
+	/* Do some page alignments. */
+	if((page_offset = (file_offset % VM_PAGE_SIZE))) {
+		file_offset -= page_offset;
+		len += page_offset;
+	}
+
+	len = roundup(len, VM_PAGE_SIZE);
+
+	/* All numbers should be page-aligned now. */
+	assert(!(len % VM_PAGE_SIZE));
+	assert(!(filesize % VM_PAGE_SIZE));
+	assert(!(file_offset % VM_PAGE_SIZE));
+
+#if 0
+	/* XXX ld.so relies on longer-than-file mapping */
+	if((u64_t) len + file_offset > filesize) {
+		printf("VM: truncating mmap dev 0x%x ino %d beyond file size in %d; offset %llu, len %lu, size %llu; ",
+			dev, ino, vmp->vm_endpoint,
+			file_offset, len, filesize);
+		len = filesize - file_offset;
+		return EINVAL;
+	}
+#endif
+
+	if(!(vr = mmap_region(vmp, addr, flags, len,
+		vrflags, &mem_type_mappedfile, 0))) {
+		result = ENOMEM;
+	} else {
+		*retaddr = vr->vaddr + page_offset;
+		result = OK;
+
+		mappedfile_setfile(vmp, vr, vmfd,
+			file_offset, dev, ino, clearend, 1, mayclosefd);
+	}
+
+	return result;
+}
+
+int do_vfs_mmap(message *m)
+{
+	vir_bytes v;
+	struct vmproc *vmp;
+	int r, n;
+	u16_t clearend, flags = 0;
+
+	/* It might be disabled */
+	if(!enable_filemap) return ENXIO;
+
+	clearend = (m->m_u.m_vm_vfs.clearend_and_flags & MVM_LENMASK);
+	flags = (m->m_u.m_vm_vfs.clearend_and_flags & MVM_FLAGSMASK);
+
+	if((r=vm_isokendpt(m->m_u.m_vm_vfs.who, &n)) != OK)
+		panic("bad ep %d from vfs", m->m_u.m_vm_vfs.who);
+	vmp = &vmproc[n];
+
+	return mmap_file(vmp, m->m_u.m_vm_vfs.fd, m->m_u.m_vm_vfs.offset, 0,
+		MAP_PRIVATE | MAP_FIXED,
+		m->m_u.m_vm_vfs.ino, m->m_u.m_vm_vfs.dev,
+		(u64_t) LONG_MAX * VM_PAGE_SIZE,
+		m->m_u.m_vm_vfs.vaddr, m->m_u.m_vm_vfs.len, &v,
+		clearend, flags, 0);
+}
+
+static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
+	void *origmsg_v)
+{
+	message *origmsg = (message *) origmsg_v;
+	message mmap_reply;
+	int result;
+	int writable = 0;
+	vir_bytes v = (vir_bytes) MAP_FAILED;
+
+	if(origmsg->VMM_PROT & PROT_WRITE)
+		writable = 1;
+
+	if(replymsg->VMV_RESULT != OK) {
+		printf("VM: VFS reply failed (%d)\n", replymsg->VMV_RESULT);
+		sys_sysctl_stacktrace(vmp->vm_endpoint);
+		result = origmsg->VMV_RESULT;
+	} else {
+		/* Finish mmap */
+		result = mmap_file(vmp, replymsg->VMV_FD, origmsg->VMM_OFFSET_LO,
+			origmsg->VMM_OFFSET_HI, origmsg->VMM_FLAGS, 
+			replymsg->VMV_INO, replymsg->VMV_DEV,
+			(u64_t) replymsg->VMV_SIZE_PAGES*PAGE_SIZE,
+			origmsg->VMM_ADDR,
+			origmsg->VMM_LEN, &v, 0, writable, 1);
+	}
+
+	/* Unblock requesting process. */
+	memset(&mmap_reply, 0, sizeof(mmap_reply));
+	mmap_reply.m_type = result;
+	mmap_reply.VMM_ADDR = v;
+
+	if(send(vmp->vm_endpoint, &mmap_reply) != OK)
+		panic("VM: mmap_file_cont: send() failed");
+}
+
 /*===========================================================================*
  *				do_mmap			     		     *
  *===========================================================================*/
@@ -111,11 +232,16 @@ int do_mmap(message *m)
 
 	vmp = &vmproc[n];
 
+	/* "SUSv3 specifies that mmap() should fail if length is 0" */
+	if(len <= 0) {
+		return EINVAL;
+	}
+
 	if(m->VMM_FD == -1 || (m->VMM_FLAGS & MAP_ANON)) {
 		/* actual memory in some form */
 		mem_type_t *mt = NULL;
 
-		if(m->VMM_FD != -1 || len <= 0) {
+		if(m->VMM_FD != -1) {
 			printf("VM: mmap: fd %d, len 0x%x\n", m->VMM_FD, len);
 			return EINVAL;
 		}
@@ -134,7 +260,23 @@ int do_mmap(message *m)
 			return ENOMEM;
 		}
 	} else {
-		return ENXIO;
+		/* File mapping might be disabled */
+		if(!enable_filemap) return ENXIO;
+
+		/* files get private copies of pages on writes. */
+		if(!(m->VMM_FLAGS & MAP_PRIVATE)) {
+			printf("VM: mmap file must MAP_PRIVATE\n");
+			return ENXIO;
+		}
+
+		if(vfs_request(VMVFSREQ_FDLOOKUP, m->VMM_FD, vmp, 0, 0,
+			mmap_file_cont, NULL, m, sizeof(*m)) != OK) {
+			printf("VM: vfs_request for mmap failed\n");
+			return ENXIO;
+		}
+
+		/* request queued; don't reply. */
+		return SUSPEND;
 	}
 
 	/* Return mapping, as seen from process. */
