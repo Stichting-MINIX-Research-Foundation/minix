@@ -6,6 +6,15 @@
 
 #include "syslib.h"
 
+void panic_hook(void);
+
+__weak_alias(panic_hook, __panic_hook);
+
+void __panic_hook(void)
+{
+	;
+}
+
 /*===========================================================================*
  *				panic				     *
  *===========================================================================*/
@@ -37,6 +46,8 @@ void panic(const char *fmt, ...)
 
   printf("syslib:panic.c: stacktrace: ");
   util_stacktrace();
+
+  panic_hook();
 
   /* Try exit */
   _exit(1);
