@@ -101,7 +101,7 @@ static int create_pipe(int fil_des[2], int flags)
 
   /* Acquire two file descriptors. */
   rfp = fp;
-  if ((r = get_fd(0, R_BIT, &fil_des[0], &fil_ptr0)) != OK) {
+  if ((r = get_fd(fp, 0, R_BIT, &fil_des[0], &fil_ptr0)) != OK) {
 	unlock_vnode(vp);
 	unlock_vmnt(vmp);
 	return(r);
@@ -109,7 +109,7 @@ static int create_pipe(int fil_des[2], int flags)
   rfp->fp_filp[fil_des[0]] = fil_ptr0;
   FD_SET(fil_des[0], &rfp->fp_filp_inuse);
   fil_ptr0->filp_count = 1;		/* mark filp in use */
-  if ((r = get_fd(0, W_BIT, &fil_des[1], &fil_ptr1)) != OK) {
+  if ((r = get_fd(fp, 0, W_BIT, &fil_des[1], &fil_ptr1)) != OK) {
 	rfp->fp_filp[fil_des[0]] = NULL;
 	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;	/* mark filp free */

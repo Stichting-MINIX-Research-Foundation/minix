@@ -16,6 +16,7 @@
 
 #include "fs.h"
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
@@ -30,6 +31,7 @@
 #include "path.h"
 #include "param.h"
 #include "vnode.h"
+#include "file.h"
 #include <minix/vfsif.h>
 #include <machine/vmparam.h>
 #include <assert.h>
@@ -48,6 +50,8 @@ struct vfs_exec_info {
     int is_dyn;				/* Dynamically linked executable */
     int elf_main_fd;			/* Dyn: FD of main program execuatble */
     char execname[PATH_MAX];		/* Full executable invocation */
+    int vmfd;
+    int vmfd_used;
 };
 
 static void lock_exec(void);
@@ -185,6 +189,27 @@ static int get_read_vp(struct vfs_exec_info *execi,
 	r=get_read_vp(&e,f,p,s,rs,fp); if(r != OK) { FAILCHECK(r); }	\
 	} while(0)
 
+static int vfs_memmap(struct exec_info *execi,
+        vir_bytes vaddr, vir_bytes len, vir_bytes foffset, u16_t clearend,
+	int protflags)
+{
+	struct vfs_exec_info *vi = (struct vfs_exec_info *) execi->opaque;
+	struct vnode *vp = ((struct vfs_exec_info *) execi->opaque)->vp;
+	int r;
+	u16_t flags = 0;
+
+	if(protflags & PROT_WRITE)
+		flags |= MVM_WRITABLE;
+
+	r = minix_vfs_mmap(execi->proc_e, foffset, len,
+	        vp->v_dev, vp->v_inode_nr, vi->vmfd, vaddr, clearend, flags);
+	if(r == OK) {
+		vi->vmfd_used = 1;
+	}
+
+	return r;
+}
+
 /*===========================================================================*
  *				pm_exec					     *
  *===========================================================================*/
@@ -205,14 +230,21 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   int i;
   static char fullpath[PATH_MAX],
   	elf_interpreter[PATH_MAX],
+	firstexec[PATH_MAX],
 	finalexec[PATH_MAX];
   struct lookup resolve;
+  struct fproc *vmfp = &fproc[VM_PROC_NR];
   stackhook_t makestack = NULL;
+  static int n;
+  n++;
+  struct filp *newfilp = NULL;
 
   lock_exec();
+  lock_proc(vmfp, 0);
 
   /* unset execi values are 0. */
   memset(&execi, 0, sizeof(execi));
+  execi.vmfd = -1;
 
   /* passed from exec() libc code */
   execi.userflags = user_exec_flags;
@@ -223,6 +255,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   rfp = fp = &fproc[slot];
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
+
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
@@ -244,6 +277,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   /* Get the exec file name. */
   FAILCHECK(fetch_name(path, path_len, fullpath));
   strlcpy(finalexec, fullpath, PATH_MAX);
+  strlcpy(firstexec, fullpath, PATH_MAX);
 
   /* Get_read_vp will return an opened vn in execi.
    * if necessary it releases the existing vp so we can
@@ -264,6 +298,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	FAILCHECK(fetch_name(path, path_len, fullpath));
 	FAILCHECK(patch_stack(execi.vp, mbuf, &frame_len, fullpath));
 	strlcpy(finalexec, fullpath, PATH_MAX);
+  	strlcpy(firstexec, fullpath, PATH_MAX);
 	Get_read_vp(execi, fullpath, 1, 0, &resolve, fp);
   }
 
@@ -299,7 +334,29 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	 * be looked up
 	 */
 	strlcpy(fullpath, elf_interpreter, PATH_MAX);
+	strlcpy(firstexec, elf_interpreter, PATH_MAX);
 	Get_read_vp(execi, fullpath, 0, 0, &resolve, fp);
+  }
+
+  /* We also want an FD for VM to mmap() the process in if possible. */
+  {
+	struct vnode *vp = execi.vp;
+	assert(vp);
+	if(vp->v_vmnt->m_haspeek && major(vp->v_dev) != MEMORY_MAJOR) {
+		int newfd = -1;
+		if(get_fd(vmfp, 0, R_BIT, &newfd, &newfilp) == OK) {
+			assert(newfd >= 0 && newfd < OPEN_MAX);
+			assert(!vmfp->fp_filp[newfd]);
+			newfilp->filp_count = 1;
+			newfilp->filp_vno = vp;
+			newfilp->filp_flags = O_RDONLY;
+			FD_SET(newfd, &vmfp->fp_filp_inuse);
+			vmfp->fp_filp[newfd] = newfilp;
+			/* dup_vnode(vp); */
+			execi.vmfd = newfd;
+			execi.args.memmap = vfs_memmap;
+		}
+	}
   }
 
   /* callback functions and data */
@@ -354,11 +411,21 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   strlcpy(rfp->fp_name, execi.args.progname, PROC_NAME_LEN);
 
 pm_execfinal:
-  if (execi.vp != NULL) {
+  if(newfilp) unlock_filp(newfilp);
+  else if (execi.vp != NULL) {
 	unlock_vnode(execi.vp);
 	put_vnode(execi.vp);
   }
+
+  if(execi.vmfd >= 0 && !execi.vmfd_used) {
+  	if(OK != close_fd(vmfp, execi.vmfd)) {
+		printf("VFS: unexpected close fail of vm fd\n");
+	}
+  }
+
+  unlock_proc(vmfp);
   unlock_exec();
+
   return(r);
 }
 
