@@ -32,8 +32,8 @@ static struct selectentry {
   fd_set readfds, writefds, errorfds;
   fd_set ready_readfds, ready_writefds, ready_errorfds;
   fd_set *vir_readfds, *vir_writefds, *vir_errorfds;
-  struct filp *filps[OPEN_MAX];
-  int type[OPEN_MAX];
+  struct filp *filps[FDS_PER_PROCESS];
+  int type[FDS_PER_PROCESS];
   int nfds, nreadyfds;
   int error;
   char block;
@@ -103,7 +103,7 @@ int do_select(message *UNUSED(m_out))
   vtimeout = (vir_bytes) job_m_in.SEL_TIMEOUT;
 
   /* Sane amount of file descriptors? */
-  if (nfds < 0 || nfds > OPEN_MAX) return(EINVAL);
+  if (nfds < 0 || nfds > FDS_PER_PROCESS) return(EINVAL);
 
   /* Find a slot to store this select request */
   for (s = 0; s < MAXSELECTS; s++)
@@ -543,7 +543,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   endpoint_t src_e, dst_e;
   fd_set *src_fds, *dst_fds;
 
-  if (nfds < 0 || nfds > OPEN_MAX)
+  if (nfds < 0 || nfds > FDS_PER_PROCESS)
 	panic("select copy_fdsets: nfds wrong: %d", nfds);
 
   /* Only copy back as many bits as the user expects. */

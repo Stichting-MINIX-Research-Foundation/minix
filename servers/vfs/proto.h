@@ -86,10 +86,11 @@ void check_filp_locks(void);
 void check_filp_locks_by_me(void);
 void init_filps(void);
 struct filp *find_filp(struct vnode *vp, mode_t bits);
-int get_fd(int start, mode_t bits, int *k, struct filp **fpt);
+int get_fd(struct fproc *rfp, int start, mode_t bits, int *k,
+	struct filp **fpt, int user);
 struct filp *get_filp(int fild, tll_access_t locktype);
 struct filp *get_filp2(struct fproc *rfp, int fild, tll_access_t
-	locktype);
+	locktype, int userrequest);
 void lock_filp(struct filp *filp, tll_access_t locktype);
 void unlock_filp(struct filp *filp);
 void unlock_filps(struct filp *filp1, struct filp *filp2);
@@ -162,7 +163,7 @@ void unmount_all(int force);
 int do_close(message *m_out);
 int close_fd(struct fproc *rfp, int fd_nr, int flag);
 void close_reply(void);
-int common_open(char path[PATH_MAX], int oflags, mode_t omode);
+int common_open(char path[PATH_MAX], int oflags, mode_t omode, int userfd);
 int do_creat(void);
 int do_lseek(message *m_out);
 int do_llseek(message *m_out);
@@ -171,7 +172,8 @@ int do_mkdir(message *m_out);
 int do_open(message *m_out);
 int do_slink(message *m_out);
 int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset);
-int actual_llseek(message *m_out, int seekfd, int seekwhence, u64_t offset);
+int actual_llseek(struct fproc *rfp, message *m_out, int seekfd,
+	int seekwhence, u64_t offset, int userrequest);
 int do_vm_open(void);
 int do_vm_close(void);
 
@@ -216,8 +218,10 @@ void lock_bsf(void);
 void unlock_bsf(void);
 void check_bsf_lock(void);
 int do_read_write_peek(int rw_flag, int fd, char *buf, size_t bytes);
-int read_write(int rw_flag, struct filp *f, char *buffer, size_t nbytes,
-	endpoint_t for_e);
+int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd, char *buf,
+	size_t bytes, int userreq);
+int read_write(struct fproc *rfp, int rw_flag, struct filp *f, char *buffer,
+	size_t nbytes, endpoint_t for_e);
 int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
 	size_t req_size);
 

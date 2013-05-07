@@ -265,6 +265,7 @@ static void *do_control_msgs(void *arg)
   /* Check for special control messages. */
   if (job_m_in.m_source == CLOCK) {
 	/* Alarm timer expired. Used only for select(). Check it. */
+	printf("handling clock message.\n");
 	expire_timers(job_m_in.NOTIFY_TIMESTAMP);
   }
 

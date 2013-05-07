@@ -118,7 +118,6 @@ do_mapcache(message *msg)
 			printf("VM: map_pf failed\n");
 			return ENOMEM;
 		}
-
 		assert(!vr->param.pb_cache);
 	}
 
