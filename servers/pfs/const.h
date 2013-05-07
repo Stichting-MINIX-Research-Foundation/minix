@@ -1,7 +1,7 @@
 #ifndef __PFS_CONST_H__
 #define __PFS_CONST_H__
 
-#define NR_INODES        256 	/* # slots in "in core" inode table */
+#define PFS_NR_INODES        512 	/* # slots in "in core" inode table */
 
 /* Size of descriptor table for unix domain sockets. This should be
  * equal to the maximum number of minor devices (currently 256).

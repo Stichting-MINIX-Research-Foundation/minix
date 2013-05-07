@@ -7,7 +7,8 @@
 #define _SYSTEM		1	/* tell headers that this is the kernel */
 
 /* The following are so basic, all the *.c files get them automatically. */
-#include <minix/config.h>	/* MUST be first */
+#include <minix/config.h>
+
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>

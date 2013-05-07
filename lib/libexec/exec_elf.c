@@ -249,7 +249,11 @@ int libexec_load_elf(struct exec_info *execi)
 #endif
 			}
 		} else {
-			if(try_mmap) printf("libexec: mmap failed\n");
+			static int printed = 0;
+			if(try_mmap && !printed) {
+				printf("libexec: mmap failing\n");
+				printed = 1;
+			}
 
 			/* make us some memory */
 			if(execi->allocmem_prealloc_junk(execi, vaddr, seg_membytes) != OK) {

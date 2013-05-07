@@ -27,7 +27,7 @@ EXTERN struct inode {
   TAILQ_ENTRY(inode) i_unused;  /* free and unused list */
 
 
-} inode[NR_INODES];
+} inode[PFS_NR_INODES];
 
 /* list of unused/free inodes */
 EXTERN TAILQ_HEAD(unused_inodes_t, inode)  unused_inodes;
