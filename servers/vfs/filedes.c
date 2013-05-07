@@ -15,12 +15,13 @@
  *                  the receiver.
  */
 
+#include "fs.h"
+
 #include <sys/select.h>
 #include <minix/callnr.h>
 #include <minix/u64.h>
 #include <assert.h>
 #include <sys/stat.h>
-#include "fs.h"
 #include "file.h"
 #include "fproc.h"
 #include "vnode.h"
@@ -147,7 +148,8 @@ void init_filps(void)
 /*===========================================================================*
  *				get_fd					     *
  *===========================================================================*/
-int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
+int get_fd(struct fproc *rfp, int start, mode_t bits, int *k,
+	struct filp **fpt, int userfd)
 {
 /* Look for a free file descriptor and a free filp slot.  Fill in the mode word
  * in the latter, but don't claim either one yet, since the open() or creat()
@@ -156,10 +158,11 @@ int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 
   register struct filp *f;
   register int i;
+  int limit = userfd ? OPEN_MAX : FDS_PER_PROCESS;
 
   /* Search the fproc fp_filp table for a free file descriptor. */
-  for (i = start; i < OPEN_MAX; i++) {
-	if (fp->fp_filp[i] == NULL && !FD_ISSET(i, &fp->fp_filp_inuse)) {
+  for (i = start; i < limit; i++) {
+	if (rfp->fp_filp[i] == NULL && !FD_ISSET(i, &rfp->fp_filp_inuse)) {
 		/* A file descriptor has been located. */
 		*k = i;
 		break;
@@ -167,7 +170,7 @@ int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
   }
 
   /* Check to see if a file descriptor has been found. */
-  if (i >= OPEN_MAX) return(EMFILE);
+  if (i >= limit) return(EMFILE);
 
   /* If we don't care about a filp, return now */
   if (fpt == NULL) return(OK);
@@ -203,36 +206,33 @@ int fild;			/* file descriptor */
 tll_access_t locktype;
 {
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
-  return get_filp2(fp, fild, locktype);
+  return get_filp2(fp, fild, locktype, 1);
 }
 
 
 /*===========================================================================*
  *				get_filp2				     *
  *===========================================================================*/
-struct filp *get_filp2(rfp, fild, locktype)
+struct filp *get_filp2(rfp, fild, locktype, userrequest)
 register struct fproc *rfp;
 int fild;			/* file descriptor */
 tll_access_t locktype;
+int userrequest;
 {
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
   struct filp *filp;
+  int fdlimit = userrequest ? OPEN_MAX : FDS_PER_PROCESS;
 
   filp = NULL;
-  if (fild < 0 || fild >= OPEN_MAX)
+  if (fild < 0 || fild >= fdlimit) {
 	err_code = EBADF;
-  else if (rfp->fp_filp[fild] == NULL && FD_ISSET(fild, &rfp->fp_filp_inuse))
+  } else if (rfp->fp_filp[fild] == NULL && FD_ISSET(fild, &rfp->fp_filp_inuse))
 	err_code = EIO;	/* The filedes is not there, but is not closed either.
 			 */
-  else if ((filp = rfp->fp_filp[fild]) == NULL)
+  else if ((filp = rfp->fp_filp[fild]) == NULL) {
 	err_code = EBADF;
-  else {
-  	if (FD_ISSET(fild, &fp->fp_filp_system)) {
-#if 0
-  		printf("VFS: warning: doing get_filp of system fd %d: %d\n",
-			fp->fp_endpoint, fild);
-#endif
-	}
+  } else {
+	assert(filp->filp_count > 0);
 	lock_filp(filp, locktype);	/* All is fine */
   }
 
@@ -275,7 +275,7 @@ int invalidate_filp(struct filp *rfilp)
   int f, fd, n = 0;
   for (f = 0; f < NR_PROCS; f++) {
 	if (fproc[f].fp_pid == PID_FREE) continue;
-	for (fd = 0; fd < OPEN_MAX; fd++) {
+	for (fd = 0; fd < FDS_PER_PROCESS; fd++) {
 		if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == rfilp) {
 			fproc[f].fp_filp[fd] = NULL;
 			n++;
@@ -441,7 +441,7 @@ int fd;
   if (isokendpt(ep, &slot) != OK)
 	return(NULL);
 
-  rfilp = get_filp2(&fproc[slot], fd, VNODE_READ);
+  rfilp = get_filp2(&fproc[slot], fd, VNODE_READ, 1);
 
   return(rfilp);
 }
@@ -504,7 +504,7 @@ filp_id_t cfilp;
   rfp = &fproc[slot];
 
   /* Find an open slot in fp_filp */
-  for (fd = 0; fd < OPEN_MAX; fd++) {
+  for (fd = 0; fd < FDS_PER_PROCESS; fd++) {
 	if (rfp->fp_filp[fd] == NULL &&
 	    !FD_ISSET(fd, &rfp->fp_filp_inuse)) {
 

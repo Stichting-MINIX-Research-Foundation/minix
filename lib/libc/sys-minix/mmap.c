@@ -14,8 +14,6 @@ __weak_alias(vm_getphys, _vm_getphys)
 __weak_alias(vm_getrefcount, _vm_getrefcount)
 __weak_alias(minix_mmap, _minix_mmap)
 __weak_alias(minix_munmap, _minix_munmap)
-__weak_alias(mmap, _minix_mmap)
-__weak_alias(munmap, _minix_munmap)
 #endif
 
 

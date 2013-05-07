@@ -38,37 +38,6 @@ static struct vnode *new_node(struct lookup *resolve, int oflags,
 static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 
 /*===========================================================================*
- *                              lock_close                                    *
- *===========================================================================*/
-static void lock_close(void)
-{
-  struct fproc *org_fp;
-  struct worker_thread *org_self;
-
-  /* First try to get it right off the bat */
-  if (mutex_trylock(&closefd_lock) == 0)
-        return;
-
-  org_fp = fp;
-  org_self = self;
-
-  if (mutex_lock(&closefd_lock) != 0)
-        panic("Could not obtain lock on close");
-
-  fp = org_fp;
-  self = org_self;
-}
-
-/*===========================================================================*
- *                              unlock_close                                  *
- *===========================================================================*/
-static void unlock_close(void)
-{
-  if (mutex_unlock(&closefd_lock) != 0)
-        panic("Could not release lock on closefd_lock");
-}
-
-/*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
 int do_open(message *UNUSED(m_out))
@@ -103,14 +72,14 @@ int do_open(message *UNUSED(m_out))
   }
 
   if (r != OK) return(err_code); /* name was bad */
-  return common_open(fullpath, open_mode, create_mode);
+  return common_open(fullpath, open_mode, create_mode, 1);
 }
 
 
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-int common_open(char path[PATH_MAX], int oflags, mode_t omode)
+int common_open(char path[PATH_MAX], int oflags, mode_t omode, int userfd)
 {
 /* Common code from do_creat and do_open. */
   int b, r, exist = TRUE, major_dev;
@@ -121,13 +90,16 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   struct vmnt *vmp;
   struct dmap *dp;
   struct lookup resolve;
+  int start = userfd ? 0 : SYSTEM_FDSTART;
 
   /* Remap the bottom two bits of oflags. */
   bits = (mode_t) mode_map[oflags & O_ACCMODE];
   if (!bits) return(EINVAL);
 
   /* See if file descriptor and filp slots are available. */
-  if ((r = get_fd(fp->fp_fdscan, bits, &(scratch(fp).file.fd_nr), &filp)) != OK) return(r);
+  if ((r = get_fd(fp, start, bits, &(scratch(fp).file.fd_nr),
+     &filp, userfd)) != OK)
+	return(r);
 
   lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
 
@@ -681,7 +653,8 @@ int do_lseek(message *m_out)
 /*===========================================================================*
  *				actual_llseek				     *
  *===========================================================================*/
-int actual_llseek(message *m_out, int seekfd, int seekwhence, u64_t offset)
+int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
+	u64_t offset, int userreq)
 {
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -690,7 +663,11 @@ int actual_llseek(message *m_out, int seekfd, int seekwhence, u64_t offset)
   long off_hi = ex64hi(offset);
 
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
+  if ( (rfilp = get_filp2(rfp, seekfd, VNODE_READ, userreq)) == NULL) {
+	printf("actual_llseek: get_filp2 failed for fp %d fd %d userreq %d err %d\n",
+		rfp->fp_endpoint, seekfd, userreq, err_code);
+	return(err_code);
+  }
 
   /* No lseek on pipes. */
   if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
@@ -733,8 +710,8 @@ int actual_llseek(message *m_out, int seekfd, int seekwhence, u64_t offset)
 
 int do_llseek(message *m_out)
 {
-	return actual_llseek(m_out, job_m_in.ls_fd, job_m_in.whence,
-		make64(job_m_in.offset_lo, job_m_in.offset_high));
+	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
+		make64(job_m_in.offset_lo, job_m_in.offset_high), 1);
 }
 
 /*===========================================================================*
@@ -744,8 +721,7 @@ int do_close(message *UNUSED(m_out))
 {
 /* Perform the close(fd) system call. */
   int thefd = job_m_in.fd;
-  scratch(fp).file.fd_nr = thefd;
-  return close_fd(fp, scratch(fp).file.fd_nr, 1);
+  return close_fd(fp, thefd, 1);
 }
 
 
@@ -763,28 +739,20 @@ int user_request;
   struct file_lock *flp;
   int lock_count;
 
-  lock_close();
-
-  if(user_request &&
-   fd_nr >= 0 && fd_nr < OPEN_MAX && FD_ISSET(fd_nr, &fp->fp_filp_system)) {
-#if 0
-        printf("VFS: close_fd: closing system FD %d from %d, not doing it\n",
-		fd_nr, rfp->fp_endpoint);
-#endif
-	unlock_close();
-        return EBADF;
-  }
-
   /* First locate the vnode that belongs to the file descriptor. */
-  if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_OPCL)) == NULL) {
-	unlock_close();
+  if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_WRITE, user_request)) == NULL) {
 	return(err_code);
   }
 
   vp = rfilp->filp_vno;
 
-  close_filp(rfilp);
+  /* first, make all future get_filp2()'s fail; otherwise
+   * we might try to close the same fd in different threads
+   */
   rfp->fp_filp[fd_nr] = NULL;
+
+  close_filp(rfilp);
+
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
   FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
@@ -801,8 +769,6 @@ int user_request;
 	if (nr_locks < lock_count)
 		lock_revive();	/* one or more locks released */
   }
-
-  unlock_close();
 
   return(OK);
 }
