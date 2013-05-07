@@ -19,6 +19,7 @@
 #include "phys_region.h"
 #include "memtype.h"
 #include "vm.h"
+#include "fdref.h"
 
 struct phys_block {
 #if SANITYCHECKS
@@ -53,11 +54,9 @@ typedef struct vir_region {
 		} shared;
 		struct phys_block *pb_cache;
 		struct {
-			int	procfd;	/* cloned fd in proc for mmap */
-			dev_t	dev;
-			ino_t	ino;
-			u64_t	offset;
 			int	inited;
+			struct fdref	*fdref;
+			u64_t	offset;
 			u16_t	clearend;
 		} file;
 	} param;
