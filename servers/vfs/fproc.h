@@ -23,6 +23,7 @@ EXTERN struct fproc {
   struct filp *fp_filp[OPEN_MAX];/* the file descriptor table */
   fd_set fp_filp_inuse;		/* which fd's are in use? */
   fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
+  fd_set fp_filp_system;	/* system-reserved; user process can't touch it */
 
   dev_t fp_tty;			/* major/minor of controlling tty */
 
@@ -46,6 +47,7 @@ EXTERN struct fproc {
   struct job fp_job;		/* pending job */
   thread_t fp_wtid;		/* Thread ID of worker */
   char fp_name[PROC_NAME_LEN];	/* Last exec() */
+  int fp_fdscan;		/* Start scanning fd's here */
 #if LOCK_DEBUG
   int fp_vp_rdlocks;		/* number of read-only locks on vnodes */
   int fp_vmnt_rdlocks;		/* number of read-only locks on vmnts */

@@ -577,6 +577,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 	panic("VFS: couldn't initialize exec lock");
   if (mthread_mutex_init(&bsf_lock, NULL) != 0)
 	panic("VFS: couldn't initialize block special file lock");
+  if (mthread_mutex_init(&closefd_lock, NULL) != 0)
+	panic("VFS: couldn't initialize close fd lock");
 
   /* Initialize event resources for boot procs and locks for all procs */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {

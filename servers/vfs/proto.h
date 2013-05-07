@@ -143,6 +143,7 @@ int do_fsync(message *m_out);
 void pm_reboot(void);
 int do_svrctl(message *m_out);
 int do_getsysinfo(void);
+int do_vm_call(message *m_out);
 int pm_dumpcore(endpoint_t proc_e, int sig, vir_bytes exe_name);
 void * ds_event(void *arg);
 
@@ -159,7 +160,7 @@ void unmount_all(int force);
 
 /* open.c */
 int do_close(message *m_out);
-int close_fd(struct fproc *rfp, int fd_nr);
+int close_fd(struct fproc *rfp, int fd_nr, int flag);
 void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
@@ -169,6 +170,8 @@ int do_mknod(message *m_out);
 int do_mkdir(message *m_out);
 int do_open(message *m_out);
 int do_slink(message *m_out);
+int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset);
+int actual_llseek(message *m_out, int seekfd, int seekwhence, u64_t offset);
 int do_vm_open(void);
 int do_vm_close(void);
 

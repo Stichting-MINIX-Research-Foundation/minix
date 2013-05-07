@@ -38,6 +38,7 @@ EXTERN struct worker_thread *self;
 EXTERN int force_sync;		/* toggle forced synchronous communication */
 EXTERN int deadlock_resolving;
 EXTERN mutex_t exec_lock;
+EXTERN mutex_t closefd_lock;
 EXTERN mutex_t bsf_lock;/* Global lock for access to block special files */
 EXTERN struct worker_thread workers[NR_WTHREADS];
 EXTERN struct worker_thread sys_worker;

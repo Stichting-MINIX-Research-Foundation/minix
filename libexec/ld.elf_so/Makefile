@@ -3,6 +3,8 @@
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
 
+DBG=-g
+
 WARNS?=4
 
 # Minix Clang binaries references /libexec/ld.elf_so
@@ -96,8 +98,8 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
-#DBG=		-g
-COPTS=		-O3 -fomit-frame-pointer
+DBG=		-g
+#COPTS=		-O3 -fomit-frame-pointer
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
