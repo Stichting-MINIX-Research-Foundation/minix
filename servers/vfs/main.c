@@ -761,14 +761,15 @@ static void get_work()
 	if (proc_p < 0 || proc_p >= NR_PROCS) fp = NULL;
 	else fp = &fproc[proc_p];
 
-	if (m_in.m_type == EDEADSRCDST) return;	/* Failed 'sendrec' */
+	if (m_in.m_type == EDEADSRCDST) {
+		printf("VFS: failed sendrec\n");
+		return;	/* Failed 'sendrec' */
+	}
 
 	/* Negative who_p is never used to access the fproc array. Negative
 	 * numbers (kernel tasks) are treated in a special way.
 	 */
-	if (who_p >= (int)(sizeof(fproc) / sizeof(struct fproc)))
-		panic("receive process out of range: %d", who_p);
-	if (who_p >= 0 && fproc[who_p].fp_endpoint == NONE) {
+	if (fp && fp->fp_endpoint == NONE) {
 		printf("VFS: ignoring request from %d: NONE endpoint %d (%d)\n",
 			m_in.m_source, who_p, m_in.m_type);
 		continue;
@@ -777,14 +778,13 @@ static void get_work()
 	/* Internal consistency check; our mental image of process numbers and
 	 * endpoints must match with how the rest of the system thinks of them.
 	 */
-	if (who_p >= 0 && fproc[who_p].fp_endpoint != who_e) {
+	if (fp && fp->fp_endpoint != who_e) {
 		if (fproc[who_p].fp_endpoint == NONE)
 			printf("slot unknown even\n");
 
-		printf("VFS: receive endpoint inconsistent (source %d, who_p "
+		panic("VFS: receive endpoint inconsistent (source %d, who_p "
 			"%d, stored ep %d, who_e %d).\n", m_in.m_source, who_p,
 			fproc[who_p].fp_endpoint, who_e);
-		panic("VFS: inconsistent endpoint ");
 	}
 
 	return;
