@@ -24,6 +24,8 @@ then	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
 	exit 1
 fi
 
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
+
 for needed in sfdisk mcopy dd wget mkfs.vfat
 do
 	if ! which $needed 2>&1 > /dev/null
