@@ -1,4 +1,5 @@
 	etc d--755 0 0
+		mtab    s--555 2 1      /proc/mounts
 		system.conf ---644 0 0 system.conf
 		passwd ---644 0 0 passwd
 		pwd.db ---644 0 0 pwd.db

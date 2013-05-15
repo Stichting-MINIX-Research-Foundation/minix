@@ -14,18 +14,32 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 		/bin/service -c up $ACPI
 	fi
 	/bin/service -c up /usr/sbin/pci
+
+	# Start procfs so we can access /proc/pci
+	mount -t procfs none /proc >/dev/null
+
+	# Do we want to use the virtio block device?
+	# If not specified, default to yes if the device is found.
+	if /bin/sysenv virtio_blk >/dev/null
+	then	virtio_blk="`/bin/sysenv virtio_blk`"
+        elif	grep '^[^ ]* [^ ]* 1AF4:1001 ' /proc/pci >/dev/null
+	then	echo "virtio_blk not set, defaulting to using found virtio device."
+		virtio_blk=yes
+        fi
+
 	/bin/service -cn up /sbin/floppy -dev /dev/fd0
 	if [ X`/bin/sysenv ahci` = Xyes ]
 	then
 		# this is here temporarily, for testing purposes
 		/bin/service -c up /sbin/ahci -dev /dev/c0d0 -label ahci_0 -args instance=0
-	elif [ X`/bin/sysenv virtio_blk` = Xyes ]
+	elif [ X"$virtio_blk" = Xyes ]
 	then
 		/bin/service -c up /sbin/virtio_blk -dev /dev/c0d0 -label virtio_blk_0 -args instance=0
 	else
 		/bin/service -c up /sbin/at_wini -dev /dev/c0d0 -label at_wini_0
 		/bin/service -cr up /sbin/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1
 	fi
+	/bin/umount /proc >/dev/null
 fi
 
 if [ X`/bin/sysenv arch` = Xearm ]
