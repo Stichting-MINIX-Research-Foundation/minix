@@ -10,8 +10,6 @@ d--755 0 0
 		fsck.mfs ---755 0 0 fsck.mfs
 #endif
 		mount ---755 0 0 mount
-		umount ---755 0 0 umount
-		grep ---755 0 0 grep
 		sh ---755 0 0 sh
 		service ---755 0 0 service
 	$
@@ -43,8 +41,6 @@ d--755 0 0
 			pci ---755 0 0 pci
 #endif
 		$
-	$
-	proc d--755 0 0
 	$
 	dev d--755 0 0
 #include "proto.dev"
