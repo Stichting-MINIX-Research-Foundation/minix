@@ -270,7 +270,8 @@ int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 #if  defined(__arm__)
 	if (pb->phys >= 0x80000000 && pb->phys < (0xc0000000 - VM_PAGE_SIZE)) {
 		// LSC Do this only for actual RAM
-		flags |= ARM_VM_PTE_WT;
+		// KEJO:fishy will need to look into this 
+		flags |= ARM_VM_PTE_DEVICE;
 	}
 #endif
 
