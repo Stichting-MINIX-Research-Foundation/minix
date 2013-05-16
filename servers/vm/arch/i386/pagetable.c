@@ -409,7 +409,7 @@ void vm_pagelock(void *vir, int lockflag)
 #if defined(__arm__)
 	else
 		flags |= ARCH_VM_PTE_RO;
-	flags |= ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE; // LSC FIXME
+	flags |= ARM_VM_PTE_WB | ARM_VM_PTE_S ; // LSC FIXME
 #endif
 
 	/* Update flags. */
@@ -598,7 +598,7 @@ static char *ptestr(u32_t pte)
 	FLAG(I386_VM_PTAVAIL3, "AV3");
 #elif defined(__arm__)
 	FLAG(ARM_VM_PTE_SUPER, "S");
-	FLAG(ARM_VM_PTE_SHAREABLE, "SH");
+	FLAG(ARM_VM_PTE_S, "SH");
 	FLAG(ARM_VM_PTE_WB, "WB");
 	FLAG(ARM_VM_PTE_WT, "WT");
 #endif
@@ -689,7 +689,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #elif defined(__arm__)
 	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, ARCH_PAGEDIR_SIZE,
 		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER |
-		ARM_VM_PTE_WB | ARM_VM_PTE_SHAREABLE, //LSC FIXME
+		ARM_VM_PTE_WB | ARM_VM_PTE_S, //LSC FIXME
 #endif
 		WMF_OVERWRITE)) != OK) {
 		return r;

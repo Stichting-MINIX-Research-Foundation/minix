@@ -4,26 +4,52 @@
 arm/vm.h
 */
 
+
+/*
+ * We are using the following setup
+ * the system is configured to have the TRE (Tex remap enable bit) set to 0
+ * The TEX[2:0] B and C bits are used to determins memoryt attributes.
+ * These bits together with the S Bit (Shareability Bit) determins the 
+ * memory attributes.
+ *
+ * The S bit is ignored when the other attribute define the memory as 
+ * "device" or "strongly ordered"
+ * 
+ * We are setting the tex[2] bit to one to en up with the following 
+ * encoding
+ * 
+ * 00 00 Non cacheable 
+ * 01 01 Write back, Write allocate
+ * 10 10 Write trough, No write allocate
+ * 11 11 Write back , Write alloc
+ */
 #define ARM_PAGE_SIZE		4096 /* small page on ARM  */
 #define ARM_SECTION_SIZE	(1024 * 1024) /* 1 MB section */
 
-/* Page table specific flags. */
+/* Second level page table entries */
 #define ARM_VM_PAGETABLE	(1 << 1)  /* Page table */
 #define ARM_VM_PTE_PRESENT	(1 << 1)  /* Page is present */
-#define ARM_VM_PTE_BUFFERABLE	(1 << 2)  /* Bufferable */
-#define ARM_VM_PTE_CACHEABLE	(1 << 3)  /* Cacheable */
+#define ARM_VM_PTE_B		(1 << 2)  /* B bit  */
+#define ARM_VM_PTE_C		(1 << 3)  /* C bit */
 #define ARM_VM_PTE_SUPER	(0x1 << 4) /* Super access only AP[1:0] */
 #define ARM_VM_PTE_USER		(0x3 << 4) /* Super/User access AP[1:0] */
+#define ARM_VM_PTE_TEX0		(1 << 6) /* TEX[0] */
+#define ARM_VM_PTE_TEX1		(1 << 7) /* TEX[1] */
+#define ARM_VM_PTE_TEX2		(1 << 8) /* TEX[2] */
 #define ARM_VM_PTE_RO		(1 << 9)   /* Read only access AP[2] */
 #define ARM_VM_PTE_RW		(0 << 9)   /* Read-write access AP[2] */
-#define ARM_VM_PTE_SHAREABLE	(1 << 10) /* Shareable */
+
+#define ARM_VM_PTE_S		(1 << 10) /* "Shareable" */
+
+
 #define ARM_VM_PTE_NOTGLOBAL	(1 << 11) /* Not Global */
+
 /* inner and outer write-back, write-allocate */
-#define ARM_VM_PTE_WB		((0x5 << 6) | ARM_VM_PTE_BUFFERABLE)
+#define ARM_VM_PTE_WB		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX0 | ARM_VM_PTE_B)
 /* inner and outer write-through, no write-allocate */
-#define ARM_VM_PTE_WT		((0x6 << 6) | ARM_VM_PTE_CACHEABLE)
+#define ARM_VM_PTE_WT		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX1 | ARM_VM_PTE_C)
 /* shareable device */
-#define ARM_VM_PTE_DEVICE	(ARM_VM_PTE_BUFFERABLE)
+#define ARM_VM_PTE_DEVICE	(ARM_VM_PTE_B)
 
 #define ARM_VM_ADDR_MASK        0xFFFFF000 /* physical address */
 #define ARM_VM_ADDR_MASK_1MB    0xFFF00000 /* physical address */
@@ -32,20 +58,24 @@ arm/vm.h
 /* Big page (1MB section) specific flags. */
 #define ARM_VM_SECTION			(1 << 1)  /* 1MB section */
 #define ARM_VM_SECTION_PRESENT		(1 << 1)  /* Section is present */
-#define ARM_VM_SECTION_BUFFERABLE	(1 << 2)  /* Bufferable */
-#define ARM_VM_SECTION_CACHEABLE	(1 << 3)  /* Cacheable */
+#define ARM_VM_SECTION_B		(1 << 2)  /* B Bit */
+#define ARM_VM_SECTION_C		(1 << 3)  /* C Bit */
 #define ARM_VM_SECTION_DOMAIN		(0xF << 5) /* Domain Number */
-#define ARM_VM_SECTION_SUPER	(0x1 << 10) /* Super access only AP[1:0] */
-#define ARM_VM_SECTION_USER	(0x3 << 10) /* Super/User access AP[1:0] */
+#define ARM_VM_SECTION_SUPER		(0x1 << 10) /* Super access only AP[1:0] */
+#define ARM_VM_SECTION_USER		(0x3 << 10) /* Super/User access AP[1:0] */
+#define ARM_VM_SECTION_TEX0		(1 << 12) /* TEX[0] */
+#define ARM_VM_SECTION_TEX1		(1 << 13) /* TEX[1] */
+#define ARM_VM_SECTION_TEX2		(1 << 14) /* TEX[2] */
 #define ARM_VM_SECTION_RO		(1 << 15)   /* Read only access AP[2] */
 #define ARM_VM_SECTION_SHAREABLE	(1 << 16)  /* Shareable */
 #define ARM_VM_SECTION_NOTGLOBAL	(1 << 17)  /* Not Global */
+
 /* inner and outer write-back, write-allocate */
-#define ARM_VM_SECTION_WB	((0x5 << 12) | ARM_VM_SECTION_BUFFERABLE)
+#define ARM_VM_SECTION_WB	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX0 | ARM_VM_SECTION_B)
 /* inner and outer write-through, no write-allocate */
-#define ARM_VM_SECTION_WT	((0x6 << 12) | ARM_VM_SECTION_CACHEABLE)
+#define ARM_VM_SECTION_WT	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX1 | ARM_VM_SECTION_C)
 /* shareable device */
-#define ARM_VM_SECTION_DEVICE	(ARM_VM_SECTION_BUFFERABLE)
+#define ARM_VM_SECTION_DEVICE	(ARM_VM_SECTION_B)
 
 /* Page directory specific flags. */
 #define ARM_VM_PAGEDIR		(1 << 0)  /* Page directory */
@@ -60,7 +90,7 @@ arm/vm.h
 #define ARM_VM_PT_ENT_MASK	0xFF	/* Mask to get entry in page table */
 #define ARM_VM_PT_ENTRIES	256	/* Number of entries in a page table */
 
-/* ARM paging 'functions' */
+
 #define ARM_VM_PTE(v)	(((v) >> ARM_VM_PT_ENT_SHIFT) & ARM_VM_PT_ENT_MASK)
 #define ARM_VM_PDE(v)	( (v) >> ARM_VM_DIR_ENT_SHIFT)
 #define ARM_VM_PFA(e)	( (e) & ARM_VM_ADDR_MASK)
