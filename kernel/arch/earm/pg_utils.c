@@ -159,6 +159,7 @@ void pg_identity(kinfo_t *cbi)
 	 for(i = 0; i < ARM_VM_DIR_ENTRIES; i++) {
 		u32_t flags = ARM_VM_SECTION
 			| ARM_VM_SECTION_USER
+			| ARM_VM_SECTION_DEVICE
 			| ARM_VM_SECTION_DOMAIN;
 		phys = i * ARM_SECTION_SIZE;
 		pagedir[i] =  phys | flags;
@@ -201,6 +202,10 @@ void vm_enable_paging(void)
 
 	/* AFE set to zero (default reset value): not using simplified model. */
 	/* TRE set to zero (default reset value): TEX[2:0] are used, plus C and B bits.*/
+	sctlr &= ~SCTLR_TRE;
+
+	/* AFE set to zero (default reset value): not using simplified model. */
+	sctlr &= ~SCTLR_AFE;
 
 	/* Enable instruction and data cache */
 	sctlr |= SCTLR_C;
