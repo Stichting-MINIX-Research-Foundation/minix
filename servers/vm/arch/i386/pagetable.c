@@ -301,7 +301,7 @@ void *vm_mappages(phys_bytes p, int pages)
 	if((r=pt_writemap(vmprocess, pt, loc, p, VM_PAGE_SIZE*pages,
 		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
 #if defined(__arm__)
-		| ARM_VM_PTE_WB
+		| ARM_VM_PTE_WT
 #endif
 		, 0)) != OK) {
 		printf("vm_mappages writemap failed\n");
@@ -409,7 +409,7 @@ void vm_pagelock(void *vir, int lockflag)
 #if defined(__arm__)
 	else
 		flags |= ARCH_VM_PTE_RO;
-	flags |= ARM_VM_PTE_WB | ARM_VM_PTE_S ; // LSC FIXME
+	flags |= ARM_VM_PTE_WT ;
 #endif
 
 	/* Update flags. */
@@ -689,7 +689,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #elif defined(__arm__)
 	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, ARCH_PAGEDIR_SIZE,
 		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER |
-		ARM_VM_PTE_WB | ARM_VM_PTE_S, //LSC FIXME
+		ARM_VM_PTE_WT ,
 #endif
 		WMF_OVERWRITE)) != OK) {
 		return r;
@@ -715,7 +715,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, VM_PAGE_SIZE,
 			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
 #ifdef __arm__
-			| ARM_VM_PTE_WB
+			| ARM_VM_PTE_WT
 #endif
 			,
 			WMF_OVERWRITE)) != OK) {
@@ -874,6 +874,7 @@ int pt_writemap(struct vmproc * vmp,
 				/* If we expect a writable page, allow a readonly page. */
 				maskedentry &= ~ARCH_VM_PTE_RO;
 			}
+			maskedentry &= ~(ARM_VM_PTE_WB|ARM_VM_PTE_WT);
 #endif
 			if(maskedentry != entry) {
 				printf("pt_writemap: mismatch: ");
@@ -1377,7 +1378,7 @@ int pt_mapkernel(pt_t *pt)
 		pt->pt_dir[kern_pde] = (addr & ARCH_VM_PDE_MASK)
 			| ARM_VM_SECTION
 			| ARM_VM_SECTION_DOMAIN
-			| ARM_VM_SECTION_WB
+			| ARM_VM_SECTION_WT
 			| ARM_VM_SECTION_SUPER;
 #endif
 		kern_pde++;
@@ -1412,8 +1413,7 @@ int pt_mapkernel(pt_t *pt)
 				assert(!pt->pt_dir[map_pde]);
 				pt->pt_dir[map_pde] = addr |
 					ARM_VM_SECTION | ARM_VM_SECTION_DOMAIN |
-					ARM_VM_SECTION_WB |
-					ARM_VM_SECTION_SHAREABLE |
+					ARM_VM_SECTION_DEVICE |
 					ARM_VM_SECTION_SUPER;
 				addr += ARCH_BIG_PAGE_SIZE;
 			}

@@ -200,7 +200,6 @@ void vm_enable_paging(void)
 	/* Enable MMU */
 	sctlr |= SCTLR_M;
 
-	/* AFE set to zero (default reset value): not using simplified model. */
 	/* TRE set to zero (default reset value): TEX[2:0] are used, plus C and B bits.*/
 	sctlr &= ~SCTLR_TRE;
 

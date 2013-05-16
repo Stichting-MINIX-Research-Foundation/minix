@@ -103,7 +103,7 @@ static phys_bytes createpde(
 		pdeval = (linaddr & ARM_VM_SECTION_MASK)
 			| ARM_VM_SECTION
 			| ARM_VM_SECTION_DOMAIN
-			| ARM_VM_SECTION_WT
+			| ARM_VM_SECTION_DEVICE
 			| ARM_VM_SECTION_USER;
 	}
 
@@ -684,6 +684,7 @@ static int device_mem_mapping_index = -1,
 
 char *device_mem;
 
+/* defined in kernel.lds */
 extern char usermapped_start, usermapped_end, usermapped_nonglo_start;
 
 int arch_phys_map(const int index,
