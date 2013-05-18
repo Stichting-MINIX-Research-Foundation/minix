@@ -411,6 +411,18 @@ static int quirkmatch(struct quirk *table, u8_t bcr, u8_t scr, u8_t interface, u
 	return 0;
 }
 
+static void
+pci_busmaster(int devind)
+{
+	u16_t cr;
+
+	/* Enable busmastering if necessary. */
+	cr = pci_attr_r16(devind, PCI_CR);
+	if (!(cr & PCI_CR_MAST_EN)) {
+		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
+	}
+}
+
 /*===========================================================================*
  *				init_params_pci				     *
  *===========================================================================*/
@@ -475,6 +487,7 @@ static void init_params_pci(int skip)
 				w_instance, devind);
 			continue;
 		}
+		pci_busmaster(devind);
   		if (sys_irqsetpolicy(irq, 0, &irq_hook) != OK) {
 		  	printf("atapci: couldn't set IRQ policy %d\n", irq);
 		  	continue;
@@ -562,7 +575,7 @@ static void init_params_pci(int skip)
 		if(pci_reserve_ok(devind) != OK) {
 			printf("at_wini%ld (compat): pci_reserve %d failed!\n",
 				w_instance, devind);
-		}
+		} else pci_busmaster(devind);
 	}
   }
 }
