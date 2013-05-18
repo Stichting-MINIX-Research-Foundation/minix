@@ -428,6 +428,7 @@ static void init_params_pci(int skip)
   for(r = pci_first_dev(&devind, &vid, &did); r != 0;
 	r = pci_next_dev(&devind, &vid, &did)) {
 	int quirk = 0;
+	u16_t cr;
 
   	/* Except class 01h (mass storage), subclass be 01h (ATA).
 	 * Also check listed RAID controllers.
@@ -447,6 +448,13 @@ static void init_params_pci(int skip)
   	 * Programming interface register tells us more.
   	 */
   	irq = pci_attr_r8(devind, PCI_ILR);
+
+	/* Enable busmastering if necessary. */
+	cr = pci_attr_r16(devind, PCI_CR);
+	if (!(cr & PCI_CR_MAST_EN)) {
+		printf("at_wini%ld: enable busmaster\n", w_instance);
+		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
+	} else printf("at_wini%ld: busmaster is on\n", w_instance);
 
   	/* Any non-compat drives? */
   	if (quirk || (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2))) {
