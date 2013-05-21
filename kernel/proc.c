@@ -1894,3 +1894,15 @@ void release_fpu(struct proc * p) {
 	if (*fpu_owner_ptr == p)
 		*fpu_owner_ptr = NULL;
 }
+
+void ser_dump_proc()
+{
+        struct proc *pp;
+
+        for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
+        {
+                if (isemptyp(pp))
+                        continue;
+                print_proc_recursive(pp);
+        }
+}

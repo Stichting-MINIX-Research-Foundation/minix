@@ -37,21 +37,14 @@ static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc
 
 static void pagefault( struct proc *pr,
 			reg_t *saved_lr,
-			int is_nested)
+			int is_nested,
+			u32_t pagefault_addr,
+			u32_t pagefault_status)
 {
 	int in_physcopy = 0, in_memset = 0;
 
-	reg_t pagefault_addr, pagefault_status;
 	message m_pagefault;
 	int err;
-
-	pagefault_addr = read_dfar();
-	pagefault_status = read_dfsr();
-
-#if 0
-	printf("kernel: pagefault in pr %d, addr 0x%lx, his ttbr 0x%lx, actual ttbr 0x%lx\n",
-		pr->p_endpoint, pagefault_addr, pr->p_seg.p_ttbr, read_ttbr0());
-#endif
 
 	in_physcopy = (*saved_lr > (vir_bytes) phys_copy) &&
 	   (*saved_lr < (vir_bytes) phys_copy_fault);
@@ -61,9 +54,6 @@ static void pagefault( struct proc *pr,
 
 	if((is_nested || iskernelp(pr)) &&
 		catch_pagefaults && (in_physcopy || in_memset)) {
-#if 0
-		printf("pf caught! addr 0x%lx\n", pagefault_addr);
-#endif
 		if (is_nested) {
 			if(in_physcopy) {
 				assert(!in_memset);
@@ -153,6 +143,8 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
 
   ep = &ex_data[vector];
 
+  assert((vir_bytes) saved_lr >= kinfo.vir_kern_start);
+
   /*
    * handle special cases for nested problems as they might be tricky or filter
    * them out quickly if the traps are not nested
@@ -179,7 +171,22 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
   }
 
   if (vector == DATA_ABORT_VECTOR) {
-	pagefault(saved_proc, saved_lr, is_nested);
+	pagefault(saved_proc, saved_lr, is_nested, read_dfar(), read_dfsr());
+	return;
+  }
+
+  if (!is_nested && vector == PREFETCH_ABORT_VECTOR) {
+	reg_t ifar = read_ifar(), ifsr = read_ifsr();
+
+	/* The saved_lr is the instruction we're going to execute after
+	 * the fault is handled; IFAR is the address that pagefaulted
+	 * while fetching the instruction. As far as we know the two
+	 * should be the same, if not this assumption will lead to very
+	 * hard to debug problems (instruction executing being off by one)
+	 * and this assumption needs re-examining, hence the assert.
+	 */
+	assert(*saved_lr == ifar);
+	pagefault(saved_proc, saved_lr, is_nested, ifar, ifsr);
 	return;
   }
 

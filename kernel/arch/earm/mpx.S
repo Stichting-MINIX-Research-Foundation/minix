@@ -83,7 +83,7 @@ ENTRY(\exc_name\()_entry)
 	/* save the pointer to the current process */
 	ldr	fp, [sp]
 	/* save the exception pc (saved lr_user) */
-	ldr	r4, [fp, #PCREG]
+	add	r4, fp, #PCREG
 
 	/* stop user process cycles */
 	mov	r0, fp  /* first param: caller proc ptr */

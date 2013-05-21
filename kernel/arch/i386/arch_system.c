@@ -421,17 +421,6 @@ static void ser_debug(const int c)
 }
 
 #if DEBUG_SERIAL
-void ser_dump_proc()
-{
-	struct proc *pp;
-
-	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
-	{
-		if (isemptyp(pp))
-			continue;
-		print_proc_recursive(pp);
-	}
-}
 
 static void ser_dump_vfs()
 {
