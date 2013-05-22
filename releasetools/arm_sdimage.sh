@@ -16,6 +16,8 @@ set -e
 : ${IMG=minix_arm_sd.img}
 : ${MLO=MLO}
 : ${UBOOT=u-boot.img}
+: ${BASE_URL=http://www.minix3.org/arm/beagleboard-xm}
+#: ${BASE_URL=http://www.minix3.org/arm/beaglebone}
 
 BUILDSH=build.sh
 
@@ -47,7 +49,7 @@ for i in ${MLO} ${UBOOT}
 do
 	if [ ! -f ${IMG_DIR}/${i} ]
 	then
-		if ! wget -O ${IMG_DIR}/$i http://www.minix3.org/arm/beagleboard-xm/$i
+		if ! wget -O ${IMG_DIR}/$i ${BASE_URL}/$i
 		then
 			echo "Failed to download $i"
 			rm -f ${IMG_DIR}/$i
@@ -60,6 +62,7 @@ done
 #
 # Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
 #
+export CFLAGS=-DDM37XX
 sh build.sh -V SLOPPY_FLIST=yes ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} -U -u distribution 
 
 #
