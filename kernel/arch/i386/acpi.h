@@ -30,6 +30,70 @@ struct acpi_sdt_header {
 	u32_t	creator_revision;
 };
 
+struct acpi_generic_address {
+	u8_t address_space_id;
+	u8_t register_bit_width;
+	u8_t register_bit_offset;
+	u8_t access_size;
+	u64_t address;
+};
+
+struct acpi_fadt_header
+{
+	struct acpi_sdt_header hdr;
+	u32_t facs;
+	u32_t dsdt;
+	u8_t model;
+	u8_t preferred_pm_profile;
+	u16_t sci_int;
+	u32_t smi_cmd;
+	u8_t acpi_enable;
+	u8_t acpi_disable;
+	u8_t s4bios_req;
+	u8_t pstate_cnt;
+	u32_t pm1a_evt_blk;
+	u32_t pm1b_evt_blk;
+	u32_t pm1a_cnt_blk;
+	u32_t pm1b_cnt_blk;
+	u32_t pm2_cnt_blk;
+	u32_t pm_tmr_blk;
+	u32_t gpe0_blk;
+	u32_t gpe1_blk;
+	u8_t pm1_evt_len;
+	u8_t pm1_cnt_len;
+	u8_t pm2_cnt_len;
+	u8_t pm_tmr_len;
+	u8_t gpe0_blk_len;
+	u8_t gpe1_blk_len;
+	u8_t gpe1_base;
+	u8_t cst_cnt;
+	u16_t p_lvl2_lat;
+	u16_t p_lvl3_lat;
+	u16_t flush_size;
+	u16_t flush_stride;
+	u8_t duty_offset;
+	u8_t duty_width;
+	u8_t day_alrm;
+	u8_t mon_alrm;
+	u8_t century;
+	u16_t iapc_boot_arch;
+	u8_t reserved1;
+	u32_t flags;
+	struct acpi_generic_address reset_reg;
+	u8_t reset_value;
+	u8_t reserved2[3];
+	u64_t xfacs;
+	u64_t xdsdt;
+	struct acpi_generic_address xpm1a_evt_blk;
+	struct acpi_generic_address xpm1b_evt_blk;
+	struct acpi_generic_address xpm1a_cnt_blk;
+	struct acpi_generic_address xpm1b_cnt_blk;
+	struct acpi_generic_address xpm2_cnt_blk;
+	struct acpi_generic_address xpm_tmr_blk;
+	struct acpi_generic_address xgpe0_blk;
+	struct acpi_generic_address xgpe1_blk;
+};
+
 struct acpi_madt_hdr {
 	struct acpi_sdt_header	hdr;
 	u32_t			local_apic_address;
@@ -83,6 +147,8 @@ struct acpi_madt_nmi {
 };
 
 void acpi_init(void);
+
+void acpi_poweroff(void);
 
 /* 
  * Returns a pointer to the io acpi structure in the MADT table in ACPI. The
