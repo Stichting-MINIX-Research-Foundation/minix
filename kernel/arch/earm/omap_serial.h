@@ -2,9 +2,7 @@
 #define _OMAP_SERIAL_H
 
 /* UART register map */
-#define OMAP3_UART1_BASE 0x4806A000 /* UART1 physical address */
-#define OMAP3_UART2_BASE 0x4806C000 /* UART2 physical address */
-#define OMAP3_UART3_BASE 0x49020000 /* UART3 physical address */
+#define OMAP3_DEBUG_UART_BASE 0x49020000 /* UART3 physical address */
 
 /* UART registers */
 #define OMAP3_THR 0x000 /* Transmit holding register */
@@ -18,9 +16,9 @@
 /* Supplementary status register fields */
 #define OMAP3_SSR_TX_FIFO_FULL (1 << 0) /* Transmit FIFO full */
 
-#define OMAP3_UART3_THR (OMAP3_UART3_BASE + OMAP3_THR)
-#define OMAP3_UART3_LSR (OMAP3_UART3_BASE + OMAP3_LSR)
-#define OMAP3_UART3_SSR (OMAP3_UART3_BASE + OMAP3_SSR)
+#define OMAP3_DEBUG_UART_THR (OMAP3_DEBUG_UART_BASE + OMAP3_THR)
+#define OMAP3_DEBUG_UART_LSR (OMAP3_DEBUG_UART_BASE + OMAP3_LSR)
+#define OMAP3_DEBUG_UART_SSR (OMAP3_DEBUG_UART_BASE + OMAP3_SSR)
 
 #ifndef __ASSEMBLY__
 

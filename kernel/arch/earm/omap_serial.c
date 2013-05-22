@@ -9,14 +9,14 @@ void omap3_ser_putc(char c)
 
     /* Wait until FIFO's empty */
     for (i = 0; i < 100000; i++)
-	if (mmio_read(OMAP3_UART3_LSR) & OMAP3_LSR_THRE)
+	if (mmio_read(OMAP3_DEBUG_UART_LSR) & OMAP3_LSR_THRE)
 	    break;
 
     /* Write character */
-    mmio_write(OMAP3_UART3_THR, c);
+    mmio_write(OMAP3_DEBUG_UART_THR, c);
 
     /* And wait again until FIFO's empty to prevent TTY from overwriting */
     for (i = 0; i < 100000; i++)
-	if (mmio_read(OMAP3_UART3_LSR) & (OMAP3_LSR_THRE | OMAP3_LSR_TEMT))
+	if (mmio_read(OMAP3_DEBUG_UART_LSR) & (OMAP3_LSR_THRE | OMAP3_LSR_TEMT))
 	    break;
 }
