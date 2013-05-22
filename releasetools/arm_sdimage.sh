@@ -142,16 +142,17 @@ END_SFDISK
 #
 mkfs.vfat ${IMG_DIR}/fat.img
 
+./releasetools/gen_uEnv.txt.sh > ${IMG_DIR}/uEnv.txt
 echo "Copying configuration kernel and boot modules"
 mcopy -bsp -i ${IMG_DIR}/fat.img  ${IMG_DIR}/$MLO ::MLO
 mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/$UBOOT ::u-boot.img
-mcopy -bsp -i ${IMG_DIR}/fat.img releasetools/uEnv.txt ::uEnv.txt
+mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/uEnv.txt ::uEnv.txt
 mcopy -bsp -i ${IMG_DIR}/fat.img releasetools/cmdline.txt ::cmdline.txt
 
 #
 # For tftp booting
 #
-cp releasetools/uEnv.txt ${OBJ}/
+cp ${IMG_DIR}/uEnv.txt ${OBJ}/
 cp releasetools/cmdline.txt ${OBJ}/
 
 #
