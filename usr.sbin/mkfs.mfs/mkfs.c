@@ -141,7 +141,7 @@ int
 main(int argc, char *argv[])
 {
   int nread, mode, usrid, grpid, ch, extra_space_percent;
-  block_t blocks, maxblocks;
+  block_t blocks, maxblocks, bblocks;
   ino_t inodes, root_inum;
   char *token[MAX_TOKENS], line[LINE_LEN], *sfx;
   struct fs_size fssize;
@@ -151,6 +151,7 @@ main(int argc, char *argv[])
   /* Process switches. */
   blocks = 0;
   inodes = 0;
+  bblocks = 0;
 #ifndef MFS_STATIC_BLOCK_SIZE
   block_size = 0;
 #endif
@@ -179,7 +180,7 @@ main(int argc, char *argv[])
 		(void)sfx;	/* shut up warnings about unused variable...*/
 #endif
 	    case 'b':
-		blocks = strtoul(optarg, (char **) NULL, 0);
+		blocks = bblocks = strtoul(optarg, (char **) NULL, 0);
 		break;
 	    case 'd':
 		dflag = 1;
@@ -254,7 +255,11 @@ main(int argc, char *argv[])
 
   /* Determine the size of the device if not specified as -b or proto. */
   maxblocks = sizeup(argv[optind]);
-  if (argc - optind == 1 && blocks == 0) {
+  if (bblocks != 0 && bblocks > maxblocks){
+	errx(4, "Given size -b %d exeeds device capacity(%d)\n", bblocks, maxblocks);
+  }
+
+  if (argc - optind == 1 && bblocks == 0) {
   	blocks = maxblocks;
   	/* blocks == 0 is checked later, but leads to a funny way of
   	 * reporting a 0-sized device (displays usage).
@@ -285,7 +290,16 @@ main(int argc, char *argv[])
 
 	/* Read the line with the block and inode counts. */
 	get_line(line, token);
-	blocks = strtol(token[0], (char **) NULL, 10);
+	if (bblocks == 0){
+		blocks = strtol(token[0], (char **) NULL, 10);
+	} else {
+		if(bblocks < strtol(token[0], (char **) NULL, 10)) {
+ 			errx(1, "%s: number of blocks given as parameter(%d)"
+				" is too small for given proto file(%d).", 
+				argv[optind], bblocks, 
+				strtol(token[0], (char **) NULL, 10));
+		};
+	}
 	inodes = strtol(token[1], (char **) NULL, 10);
 
 	/* Process mode line for root directory. */
@@ -303,7 +317,7 @@ main(int argc, char *argv[])
 /* XXX is it OK to write on stdout? Use warn() instead? Also consider using verbose */
 		printf("dynamically sized filesystem: %u blocks, %u inodes\n",
 		    (unsigned int) blocks, (unsigned int) inodes);
-	}		
+	}
   } else {
 	lct = 0;
 	if (optind < argc) {
@@ -311,24 +325,6 @@ main(int argc, char *argv[])
 		blocks = strtoul(optarg, (char **) NULL, 0);
 		if (blocks == 0) errx(2, "Can't open prototype file");
 	}
-	if (inodes == 0) {
-		long long kb = ((unsigned long long)blocks*block_size) / 1024;
-
-		inodes = kb / 2;
-		if (kb >= 100000) inodes = kb / 4;
-		if (kb >= 1000000) inodes = kb / 6;
-		if (kb >= 10000000) inodes = kb / 8;
-		if (kb >= 100000000) inodes = kb / 10;
-		if (kb >= 1000000000) inodes = kb / 12;
-/* XXX check overflow: with very large number of blocks, this results in insanely large number of inodes */
-/* XXX check underflow (if/when ino_t is signed), else the message below will look strange */
-
-		/* round up to fill inode block */
-		inodes += inodes_per_block - 1;
-		inodes = inodes / inodes_per_block * inodes_per_block;
-	}
-	if (blocks < 5) errx(1, "Block count too small");
-	if (inodes < 1) errx(1, "Inode count too small");
 
 	/* Make simple file system of the given size, using defaults. */
 	mode = 040777;
@@ -336,6 +332,26 @@ main(int argc, char *argv[])
 	grpid = BINGRP;
 	simple = 1;
   }
+
+  if (inodes == 0) {
+	long long kb = ((unsigned long long)blocks*block_size) / 1024;
+
+	inodes = kb / 2;
+	if (kb >= 100000) inodes = kb / 4;
+	if (kb >= 1000000) inodes = kb / 6;
+	if (kb >= 10000000) inodes = kb / 8;
+	if (kb >= 100000000) inodes = kb / 10;
+	if (kb >= 1000000000) inodes = kb / 12;
+/* XXX check overflow: with very large number of blocks, this results in insanely large number of inodes */
+/* XXX check underflow (if/when ino_t is signed), else the message below will look strange */
+
+	/* round up to fill inode block */
+	inodes += inodes_per_block - 1;
+	inodes = inodes / inodes_per_block * inodes_per_block;
+  }
+
+  if (blocks < 5) errx(1, "Block count too small");
+  if (inodes < 1) errx(1, "Inode count too small");
 
   nrblocks = blocks;
   nrinodes = inodes;
