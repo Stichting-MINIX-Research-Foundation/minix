@@ -29,7 +29,6 @@ static int freepdes[MAXFREEPDES];
 
 static u32_t phys_get32(phys_bytes v);
 
-extern vir_bytes omap3_gptimer10_base = OMAP3_GPTIMER10_BASE;
 
 void mem_clear_mapcache(void)
 {
@@ -726,14 +725,28 @@ int arch_phys_map(const int index,
 		return OK;
 	}
 	else if (index == device_mem_mapping_index) {
+#ifdef DM37XX
 		/* map device memory */
 		*addr = 0x48000000;
 		*len =  0x02000000;
+#endif
+#ifdef AM335X
+		/* map device memory until 0x5700 SGX */
+		*addr = 0x44000000;
+		*len =  0x06000000;
+
+#endif
 		*flags = VMMF_UNCACHED | VMMF_WRITE;
 		return OK;
 	}
 	else if (index == frclock_index) {
+
+#ifdef DM37XX
 		*addr = OMAP3_GPTIMER10_BASE;
+#endif
+#ifdef AM335X
+		*addr = AM335X_DMTIMER7_BASE;
+#endif
 		*len = ARM_PAGE_SIZE;
 		*flags = VMMF_USER;
 		return OK;
@@ -774,7 +787,13 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 	else if (index == frclock_index) {
-		omap3_gptimer10_base = minix_kerninfo.minix_frclock = addr;
+#ifdef DM37XX
+		minix_kerninfo.minix_frclock = addr;
+#endif
+#ifdef AM335X
+		minix_kerninfo.minix_frclock = addr;
+#endif
+
 		return OK;
 	}
 

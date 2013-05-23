@@ -11,7 +11,15 @@
 #include <sys/types.h>
 #include <assert.h>
 
+#ifdef DM37XX
+//keesj:todo we don't want to hardcode these values here but ratter
+//get them using a system call. the same applies for the time offset
 static u64_t calib_hz = 1625000, Hz;
+#endif
+#ifdef AM335X
+static u64_t calib_hz = 1500000, Hz;
+#endif
+
 #define MICROHZ         1000000ULL	/* number of micros per second */
 #define MICROSPERTICK(h)	(MICROHZ/(h)) /* number of micros per HZ tick */
 
@@ -56,7 +64,12 @@ read_frclock(u32_t *frclk)
 	volatile u32_t *frclock;
 
 	assert(frclk);
-	frclock = (u32_t *)((u8_t *) _minix_kerninfo->minix_frclock+OMAP3_TCRR);
+#ifdef DM37XX
+	frclock = (u32_t *)((u8_t *) _minix_kerninfo->minix_frclock + OMAP3_TIMER_TCRR);
+#endif
+#ifdef AM335X
+	frclock = (u32_t *)((u8_t *) _minix_kerninfo->minix_frclock + AM335X_TIMER_TCRR);
+#endif
 	*frclk = *frclock;
 }
 
