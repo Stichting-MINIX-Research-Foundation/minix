@@ -136,19 +136,10 @@ irq_entry_from_user:
 	mov	fp, #0  /* for stack trace */
 	bl	_C_LABEL(context_stop)
 
-	/* get irq num */
-	ldr	r3, =OMAP3_INTR_SIR_IRQ
-	ldr	r0, [r3]
-	and	r0, r0, #OMAP3_INTR_ACTIVEIRQ_MASK /* irq */
 	/* call handler */
-	bl	_C_LABEL(irq_handle)	/* irq_handle(irq) */
+	bl	_C_LABEL(omap3_irq_handle)	/* omap3_irq_handle(void) */
 
 	pop	{fp}    /* caller proc ptr */
-
-	/* allow new interrupts */
-	mov	r1, #OMAP3_INTR_NEWIRQAGR
-	ldr	r3, =OMAP3_INTR_CONTROL
-	str	r1, [r3]
 
 	/* data synchronization barrier */
 	dsb
@@ -159,17 +150,8 @@ irq_entry_from_kernel:
 	push	{r0-r12, lr}
 	bl	_C_LABEL(context_stop_idle)
 
-	/* get irq num */
-	ldr	r3, =OMAP3_INTR_SIR_IRQ
-	ldr	r0, [r3]
-	and	r0, r0, #OMAP3_INTR_ACTIVEIRQ_MASK /* irq */
 	/* call handler */
-	bl	_C_LABEL(irq_handle)	/* irq_handle(irq) */
-
-	/* allow new interrupts */
-	mov	r1, #OMAP3_INTR_NEWIRQAGR
-	ldr	r3, =OMAP3_INTR_CONTROL
-	str	r1, [r3]
+	bl	_C_LABEL(omap3_irq_handle)	/* omap3_irq_handle(void) */
 
 	/* data synchronization barrier */
 	dsb
