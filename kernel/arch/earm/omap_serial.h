@@ -2,7 +2,8 @@
 #define _OMAP_SERIAL_H
 
 /* UART register map */
-#define OMAP3_DEBUG_UART_BASE 0x49020000 /* UART3 physical address */
+#define OMAP3_DM37XX_DEBUG_UART_BASE 0x49020000 /* UART3 physical address */
+#define OMAP3_AM335X_DEBUG_UART_BASE 0x44E09000 /* UART0? physical address */
 
 /* UART registers */
 #define OMAP3_THR 0x000 /* Transmit holding register */
