@@ -1,6 +1,8 @@
 #ifndef _OMAP_TIMER_REGISTERS_H
 #define _OMAP_TIMER_REGISTERS_H
 
+#ifdef DM37XX
+
 /* General-purpose timer register map */
 #define OMAP3_GPTIMER1_BASE  0x48318000 /* GPTIMER1 physical address */
 #define OMAP3_GPTIMER2_BASE  0x49032000 /* GPTIMER2 physical address */
@@ -14,27 +16,60 @@
 #define OMAP3_GPTIMER10_BASE 0x48086000 /* GPTIMER10 physical address */
 #define OMAP3_GPTIMER11_BASE 0x48088000 /* GPTIMER11 physical address */
 
+#endif /* DM37XX */
+
 /* General-purpose timer registers */
-#define OMAP3_TIDR      0x000 /* IP revision code */
-#define OMAP3_TIOCP_CFG 0x010 /* Controls params for GP timer L4 interface */
-#define OMAP3_TISTAT    0x014 /* Status (excl. interrupt status) */
-#define OMAP3_TISR      0x018 /* Pending interrupt status */
-#define OMAP3_TIER      0x01C /* Interrupt enable */
-#define OMAP3_TWER      0x020 /* Wakeup enable */
-#define OMAP3_TCLR      0x024 /* Controls optional features */
-#define OMAP3_TCRR      0x028 /* Internal counter value */
-#define OMAP3_TLDR      0x02C /* Timer load value */
-#define OMAP3_TTGR      0x030 /* Triggers counter reload */
-#define OMAP3_TWPS      0x034 /* Indicates if Write-Posted pending */
-#define OMAP3_TMAR      0x038 /* Value to be compared with counter */
-#define OMAP3_TCAR1     0x03C /* First captured value of counter register */
-#define OMAP3_TSICR     0x040 /* Control posted mode and functional SW reset */
-#define OMAP3_TCAR2     0x044 /* Second captured value of counter register */
-#define OMAP3_TPIR      0x048 /* Positive increment (1 ms tick) */
-#define OMAP3_TNIR      0x04C /* Negative increment (1 ms tick) */
-#define OMAP3_TCVR      0x050 /* Defines TCRR is sub/over-period (1 ms tick) */
-#define OMAP3_TOCR      0x054 /* Masks tick interrupt */
-#define OMAP3_TOWR      0x058 /* Number of masked overflow interrupts */
+#define OMAP3_TIMER_TIDR      0x000 /* IP revision code */
+#define OMAP3_TIMER_TIOCP_CFG 0x010 /* Controls params for GP timer L4 interface */
+#define OMAP3_TIMER_TISTAT    0x014 /* Status (excl. interrupt status) */
+#define OMAP3_TIMER_TISR      0x018 /* Pending interrupt status */
+#define OMAP3_TIMER_TIER      0x01C /* Interrupt enable */
+#define OMAP3_TIMER_TWER      0x020 /* Wakeup enable */
+#define OMAP3_TIMER_TCLR      0x024 /* Controls optional features */
+#define OMAP3_TIMER_TCRR      0x028 /* Internal counter value */
+#define OMAP3_TIMER_TLDR      0x02C /* Timer load value */
+#define OMAP3_TIMER_TTGR      0x030 /* Triggers counter reload */
+#define OMAP3_TIMER_TWPS      0x034 /* Indicates if Write-Posted pending */
+#define OMAP3_TIMER_TMAR      0x038 /* Value to be compared with counter */
+#define OMAP3_TIMER_TCAR1     0x03C /* First captured value of counter register */
+#define OMAP3_TIMER_TSICR     0x040 /* Control posted mode and functional SW reset */
+#define OMAP3_TIMER_TCAR2     0x044 /* Second captured value of counter register */
+#define OMAP3_TIMER_TPIR      0x048 /* Positive increment (1 ms tick) */
+#define OMAP3_TIMER_TNIR      0x04C /* Negative increment (1 ms tick) */
+#define OMAP3_TIMER_TCVR      0x050 /* Defines TCRR is sub/over-period (1 ms tick) */
+#define OMAP3_TIMER_TOCR      0x054 /* Masks tick interrupt */
+#define OMAP3_TIMER_TOWR      0x058 /* Number of masked overflow interrupts */
+
+#ifdef AM335X
+#define AM335X_DMTIMER0_BASE      0x44E05000  /* DMTimer0 Registers */
+#define AM335X_DMTIMER1_1MS_BASE  0x44E31000 /* DMTimer1 1ms Registers (Accurate 1ms timer) */
+#define AM335X_DMTIMER2_BASE      0x48040000 /*  DMTimer2 Registers */
+#define AM335X_DMTIMER3_BASE      0x48042000 /*  DMTimer3 Registers */
+#define AM335X_DMTIMER4_BASE      0x48044000 /* DMTimer4 Registers  */
+#define AM335X_DMTIMER5_BASE      0x48046000 /* DMTimer5 Registers  */
+#define AM335X_DMTIMER6_BASE      0x48048000 /*  DMTimer6 Registers */
+#define AM335X_DMTIMER7_BASE      0x4804A000 /*  DMTimer7 Registers */
+
+/* General-purpose timer registers  AM335x non 1MS timers have different offsets */
+#define AM335X_TIMER_TIDR             0x000 /* IP revision code */
+#define AM335X_TIMER_TIOCP_CFG        0x010 /* Controls params for GP timer L4 interface */
+#define AM335X_TIMER_IRQSTATUS_RAW    0x024 /* Timer IRQSTATUS Raw Register */
+#define AM335X_TIMER_IRQSTATUS        0x028 /* Timer IRQSTATUS Register */
+#define AM335X_TIMER_IRQENABLE_SET    0x02C /* Timer IRQENABLE Set Register */
+#define AM335X_TIMER_IRQENABLE_CLR    0x030 /* Timer IRQENABLE Clear Register */
+#define AM335X_TIMER_IRQWAKEEN        0x034 /* Timer IRQ Wakeup Enable Register */
+#define AM335X_TIMER_TCLR      0x038 /* Controls optional features */
+#define AM335X_TIMER_TCRR      0x03C /* Internal counter value */
+#define AM335X_TIMER_TLDR      0x040 /* Timer load value */
+#define AM335X_TIMER_TTGR      0x044 /* Triggers counter reload */
+#define AM335X_TIMER_TWPS      0x048 /* Indicates if Write-Posted pending */
+#define AM335X_TIMER_TMAR      0x04C /* Value to be compared with counter */
+#define AM335X_TIMER_TCAR1     0x050 /* First captured value of counter register */
+#define AM335X_TIMER_TSICR     0x054 /* Control posted mode and functional SW reset */
+#define AM335X_TIMER_TCAR2     0x058 /* Second captured value of counter register */
+
+#endif
+
 
 /* Interrupt status register fields */
 #define OMAP3_TISR_MAT_IT_FLAG  (1 << 0) /* Pending match interrupt status */
@@ -50,58 +85,68 @@
 #define OMAP3_TCLR_ST       (1 << 0)  /* Start/stop timer */
 #define OMAP3_TCLR_AR       (1 << 1)  /* Autoreload or one-shot mode */
 #define OMAP3_TCLR_PRE      (1 << 5)  /* Prescaler on */
-#define OMAP3_TCLR_PTV            2
+#define OMAP3_TCLR_PTV      2
 #define OMAP3_TCLR_OVF_TRG  (1 << 10) /* Overflow trigger */
 
-#define OMAP3_GPTIMER1_TIDR      (OMAP3_GPTIMER1_BASE + OMAP3_TIDR)
-#define OMAP3_GPTIMER1_TIOCP_CFG (OMAP3_GPTIMER1_BASE + OMAP3_TIOCP_CFG)
-#define OMAP3_GPTIMER1_TISTAT    (OMAP3_GPTIMER1_BASE + OMAP3_TISTAT)
-#define OMAP3_GPTIMER1_TISR      (OMAP3_GPTIMER1_BASE + OMAP3_TISR)
-#define OMAP3_GPTIMER1_TIER      (OMAP3_GPTIMER1_BASE + OMAP3_TIER)
-#define OMAP3_GPTIMER1_TWER      (OMAP3_GPTIMER1_BASE + OMAP3_TWER)
-#define OMAP3_GPTIMER1_TCLR      (OMAP3_GPTIMER1_BASE + OMAP3_TCLR)
-#define OMAP3_GPTIMER1_TCRR      (OMAP3_GPTIMER1_BASE + OMAP3_TCRR)
-#define OMAP3_GPTIMER1_TLDR      (OMAP3_GPTIMER1_BASE + OMAP3_TLDR)
-#define OMAP3_GPTIMER1_TTGR      (OMAP3_GPTIMER1_BASE + OMAP3_TTGR)
-#define OMAP3_GPTIMER1_TWPS      (OMAP3_GPTIMER1_BASE + OMAP3_TWPS)
-#define OMAP3_GPTIMER1_TMAR      (OMAP3_GPTIMER1_BASE + OMAP3_TMAR)
-#define OMAP3_GPTIMER1_TCAR1     (OMAP3_GPTIMER1_BASE + OMAP3_TCAR1)
-#define OMAP3_GPTIMER1_TSICR     (OMAP3_GPTIMER1_BASE + OMAP3_TSICR)
-#define OMAP3_GPTIMER1_TCAR2     (OMAP3_GPTIMER1_BASE + OMAP3_TCAR2)
-#define OMAP3_GPTIMER1_TPIR      (OMAP3_GPTIMER1_BASE + OMAP3_TPIR)
-#define OMAP3_GPTIMER1_TNIR      (OMAP3_GPTIMER1_BASE + OMAP3_TNIR)
-#define OMAP3_GPTIMER1_TCVR      (OMAP3_GPTIMER1_BASE + OMAP3_TCVR)
-#define OMAP3_GPTIMER1_TOCR      (OMAP3_GPTIMER1_BASE + OMAP3_TOCR)
-#define OMAP3_GPTIMER1_TOWR      (OMAP3_GPTIMER1_BASE + OMAP3_TOWR)
-
-#define OMAP3_GPTIMER10_TIDR      (OMAP3_GPTIMER10_BASE + OMAP3_TIDR)
-#define OMAP3_GPTIMER10_TIOCP_CFG (OMAP3_GPTIMER10_BASE + OMAP3_TIOCP_CFG)
-#define OMAP3_GPTIMER10_TISTAT    (OMAP3_GPTIMER10_BASE + OMAP3_TISTAT)
-#define OMAP3_GPTIMER10_TISR      (OMAP3_GPTIMER10_BASE + OMAP3_TISR)
-#define OMAP3_GPTIMER10_TIER      (OMAP3_GPTIMER10_BASE + OMAP3_TIER)
-#define OMAP3_GPTIMER10_TWER      (OMAP3_GPTIMER10_BASE + OMAP3_TWER)
-#define OMAP3_GPTIMER10_TCLR      (OMAP3_GPTIMER10_BASE + OMAP3_TCLR)
-#define OMAP3_GPTIMER10_TCRR      (OMAP3_GPTIMER10_BASE + OMAP3_TCRR)
-#define OMAP3_GPTIMER10_TLDR      (OMAP3_GPTIMER10_BASE + OMAP3_TLDR)
-#define OMAP3_GPTIMER10_TTGR      (OMAP3_GPTIMER10_BASE + OMAP3_TTGR)
-#define OMAP3_GPTIMER10_TWPS      (OMAP3_GPTIMER10_BASE + OMAP3_TWPS)
-#define OMAP3_GPTIMER10_TMAR      (OMAP3_GPTIMER10_BASE + OMAP3_TMAR)
-#define OMAP3_GPTIMER10_TCAR1     (OMAP3_GPTIMER10_BASE + OMAP3_TCAR1)
-#define OMAP3_GPTIMER10_TSICR     (OMAP3_GPTIMER10_BASE + OMAP3_TSICR)
-#define OMAP3_GPTIMER10_TCAR2     (OMAP3_GPTIMER10_BASE + OMAP3_TCAR2)
-#define OMAP3_GPTIMER10_TPIR      (OMAP3_GPTIMER10_BASE + OMAP3_TPIR)
-#define OMAP3_GPTIMER10_TNIR      (OMAP3_GPTIMER10_BASE + OMAP3_TNIR)
-#define OMAP3_GPTIMER10_TCVR      (OMAP3_GPTIMER10_BASE + OMAP3_TCVR)
-#define OMAP3_GPTIMER10_TOCR      (OMAP3_GPTIMER10_BASE + OMAP3_TOCR)
-#define OMAP3_GPTIMER10_TOWR      (OMAP3_GPTIMER10_BASE + OMAP3_TOWR)
+#ifdef DM37XX
 
 #define OMAP3_CM_CLKSEL_GFX		0x48004b40
 #define OMAP3_CM_CLKEN_PLL		0x48004d00
-#define OMAP3_CM_FCLKEN1_CORE		0x48004A00
-#define OMAP3_CM_CLKSEL_CORE		0x48004A40 /* GPT10 src clock sel. */
+#define OMAP3_CM_FCLKEN1_CORE	0x48004A00
+#define OMAP3_CM_CLKSEL_CORE	0x48004A40 /* GPT10 src clock sel. */
 #define OMAP3_CM_FCLKEN_PER		0x48005000
 #define OMAP3_CM_CLKSEL_PER		0x48005040
-#define OMAP3_CM_CLKSEL_WKUP 0x48004c40 /* GPT1 source clock selection */
+#define OMAP3_CM_CLKSEL_WKUP    0x48004c40 /* GPT1 source clock selection */
+
+#endif /* DM37XX */
+
+#ifdef AM335X
+
+#define CM_MODULEMODE_MASK (0x3 << 0)
+#define CM_MODULEMODE_ENABLE      (0x2 << 0)
+#define CM_MODULEMODE_DISABLED     (0x0 << 0)
+
+#define CM_CLKCTRL_IDLEST         (0x3 << 16)
+#define CM_CLKCTRL_IDLEST_FUNC    (0x0 << 16)
+#define CM_CLKCTRL_IDLEST_TRANS   (0x1 << 16)
+#define CM_CLKCTRL_IDLEST_IDLE    (0x2 << 16)
+#define CM_CLKCTRL_IDLEST_DISABLE (0x3 << 16)
+
+#define CM_WKUP_BASE 0x44E00400 /* Clock Module Wakeup Registers */
+
+#define CM_WKUP_TIMER1_CLKCTRL	(CM_WKUP_BASE + 0xC4) /* This register manages the TIMER1 clocks. [Memory Mapped] */
+
+
+#define CM_PER_BASE 0x44E00000 /* Clock Module Peripheral Registers */
+#define CM_PER_TIMER7_CLKCTRL	(CM_PER_BASE + 0x7C) /* This register manages the TIMER7 clocks. [Memory Mapped] */
+
+
+
+/* CM_DPLL registers */
+
+
+#define CM_DPLL_BASE 	0x44E00500 /* Clock Module PLL Registers */
+
+#define CLKSEL_TIMER1MS_CLK (CM_DPLL_BASE + 0x28)
+
+
+#define CLKSEL_TIMER1MS_CLK_SEL_MASK (0x7 << 0)
+#define CLKSEL_TIMER1MS_CLK_SEL_SEL1 (0x0 << 0) /* Select CLK_M_OSC clock */
+#define CLKSEL_TIMER1MS_CLK_SEL_SEL2 (0x1 << 0) /* Select CLK_32KHZ clock */
+#define CLKSEL_TIMER1MS_CLK_SEL_SEL3 (0x2 << 0) /* Select TCLKIN clock */
+#define CLKSEL_TIMER1MS_CLK_SEL_SEL4 (0x3 << 0) /* Select CLK_RC32K clock */
+#define CLKSEL_TIMER1MS_CLK_SEL_SEL5 (0x4 << 0) /* Selects the CLK_32768 from 32KHz Crystal Osc */
+
+#define CLKSEL_TIMER7_CLK   (CM_DPLL_BASE + 0x04)
+#define CLKSEL_TIMER7_CLK_SEL_MASK (0x3 << 0)
+#define CLKSEL_TIMER7_CLK_SEL_SEL1 (0x0 << 0) /* Select TCLKIN clock */
+#define CLKSEL_TIMER7_CLK_SEL_SEL2 (0x1 << 0) /* Select CLK_M_OSC clock */
+#define CLKSEL_TIMER7_CLK_SEL_SEL3 (0x2 << 0) /* Select CLK_32KHZ clock */
+#define CLKSEL_TIMER7_CLK_SEL_SEL4 (0x3 << 0) /* Reserved */
+
+
+
+#endif /* AM335X */
 
 #define OMAP3_CLKSEL_GPT1    (1 << 0)   /* Selects GPTIMER 1 source
 					 * clock:
