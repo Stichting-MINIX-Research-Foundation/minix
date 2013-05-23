@@ -26,8 +26,12 @@ int init_local_timer(unsigned freq)
 {
 	omap3_timer_init(freq);
 	omap3_frclock_init();
-	/* always only 1 cpu in the system */
-	tsc_per_ms[0] = 1;
+#ifdef DM37XX
+	tsc_per_ms[0] = 16250;
+#endif
+#ifdef AM335X
+	tsc_per_ms[0] = 15000;
+#endif
 
 	return 0;
 }
