@@ -6,9 +6,12 @@ set -e
 : ${OBJ=../obj.${ARCH}}
 : ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
 : ${CROSS_PREFIX=${CROSS_TOOLS}/arm-elf32-minix-}
-: ${JOBS=-j4}
+: ${JOBS=1}
 : ${DESTDIR=${OBJ}/destdir.$ARCH}
 : ${FSTAB=${DESTDIR}/etc/fstab}
+: ${BUILDVARS=}
+: ${BUILDSH=build.sh}
+
 #
 # Directory where to store temporary file system images
 #
@@ -16,8 +19,6 @@ set -e
 : ${IMG=minix_arm_sd.img}
 : ${MLO=MLO}
 : ${UBOOT=u-boot.img}
-
-BUILDSH=build.sh
 
 if [ ! -f ${BUILDSH} ]
 then	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
@@ -60,7 +61,7 @@ done
 #
 # Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
 #
-sh build.sh -V SLOPPY_FLIST=yes ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} -U -u distribution 
+sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
 #
 # This script creates a bootable image and should at some point in the future
@@ -74,12 +75,12 @@ sh build.sh -V SLOPPY_FLIST=yes ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} -U -u
 # /root /home and /usr in separate sub partitions is
 # about 1 gig
 #
-IMG_SIZE=$((2**31 / 512))
-FAT_SIZE=$((20480))
-EXTENDED_SIZE=$((2**30 / 512))
-ROOT_SIZE=$((2**26 / 512))
-HOME_SIZE=$((2**27 / 512))
-USR_SIZE=$((2**28 / 512))
+: ${IMG_SIZE=$((2**31 / 512))}
+: ${FAT_SIZE=$((20480))}
+: ${EXTENDED_SIZE=$((2**30 / 512))}
+: ${ROOT_SIZE=$((2**26 / 512))}
+: ${HOME_SIZE=$((2**27 / 512))}
+: ${USR_SIZE=$((2**29 / 512))}
 
 #
 # create a fstab entry in /etc this is normally done during the
@@ -95,7 +96,6 @@ rm -f ${DESTDIR}/SETS.*
 
 ${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
 
-
 #
 # Now given the sizes above use DD to create separate files representing
 # the partitions we are going to use.
@@ -109,7 +109,6 @@ dd if=/dev/zero of=${IMG_DIR}/usr.img bs=512 count=1 seek=$(($USR_SIZE -1)) 2>/d
 # Create the empty image where we later will but the partitions in
 #
 dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
-
 
 #
 # Do some math to determine the start addresses of the partitions.
@@ -155,7 +154,6 @@ mcopy -bsp -i ${IMG_DIR}/fat.img releasetools/cmdline.txt ::cmdline.txt
 cp releasetools/uEnv.txt ${OBJ}/
 cp releasetools/cmdline.txt ${OBJ}/
 
-
 #
 # Do some last processing of the kernel and servers before also putting
 # them on the FAT
@@ -178,7 +176,6 @@ do
     mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${f}.elf ::${f}.elf
 done
 
-
 #
 # make the different file system. this part is *also* hacky. We first convert
 # the METALOG.sanitised using mtree into a input METALOG containing uids and
@@ -187,7 +184,6 @@ done
 # and convert the METALOG into a proto file that can be used by mkfs.mfs
 #
 echo "creating the file systems"
-
 
 #
 # read METALOG and use mtree to conver the user and group names into uid and gids
@@ -198,9 +194,9 @@ cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C >
 # add fstab
 echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
 
-
 # fill root.img (skipping /usr entries while keeping the /usr directory)
 cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.in
+
 #
 # add device nodes somewhere in the middle of the proto file. Better would be to add the entries in the
 # original METALOG
@@ -218,13 +214,12 @@ rm ${IMG_DIR}/root.in
 cat ${IMG_DIR}/input  | grep  "^\./usr/\|^. "  | sed "s,\./usr,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/usr -o ${IMG_DIR}/usr.proto
 cat ${IMG_DIR}/input  | grep  "^\./home/\|^. "  | sed "s,\./home,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/home -o ${IMG_DIR}/home.proto
 
-# fill /root /usr and /home the numbers here need to be tweaked to match full partitions
-# This part needs fixing: no more magic numbers. It should be possible to call mkfs.mfs -b $((SIZE / 8))
 #
-#${CROSS_TOOLS}/nbmkfs.mfs  -b $((102400 / 8)) -x 20 ${IMG_DIR}/root.img ${IMG_DIR}/root.proto
-${CROSS_TOOLS}/nbmkfs.mfs -x 30 ${IMG_DIR}/root.img ${IMG_DIR}/root.proto
-${CROSS_TOOLS}/nbmkfs.mfs -x 30  ${IMG_DIR}/usr.img ${IMG_DIR}/usr.proto
-${CROSS_TOOLS}/nbmkfs.mfs -x 30  ${IMG_DIR}/home.img ${IMG_DIR}/home.proto
+# Generate /root, /usr and /home partition images.
+#
+${CROSS_TOOLS}/nbmkfs.mfs -b $((${ROOT_SIZE} / 8)) ${IMG_DIR}/root.img ${IMG_DIR}/root.proto
+${CROSS_TOOLS}/nbmkfs.mfs -b $((${USR_SIZE} / 8))  ${IMG_DIR}/usr.img  ${IMG_DIR}/usr.proto
+${CROSS_TOOLS}/nbmkfs.mfs -b $((${HOME_SIZE} / 8)) ${IMG_DIR}/home.img ${IMG_DIR}/home.proto
 
 #
 # Merge the partitions into a single image.
