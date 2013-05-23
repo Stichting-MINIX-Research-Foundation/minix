@@ -16,12 +16,9 @@
 /* Supplementary status register fields */
 #define OMAP3_SSR_TX_FIFO_FULL (1 << 0) /* Transmit FIFO full */
 
-#define OMAP3_DEBUG_UART_THR (OMAP3_DEBUG_UART_BASE + OMAP3_THR)
-#define OMAP3_DEBUG_UART_LSR (OMAP3_DEBUG_UART_BASE + OMAP3_LSR)
-#define OMAP3_DEBUG_UART_SSR (OMAP3_DEBUG_UART_BASE + OMAP3_SSR)
-
 #ifndef __ASSEMBLY__
 
+void omap3_ser_init();
 void omap3_ser_putc(char c);
 
 #endif /* __ASSEMBLY__ */

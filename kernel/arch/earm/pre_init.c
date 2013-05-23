@@ -130,7 +130,7 @@ void setup_mbi(multiboot_info_t *mbi)
 	/* Final 'module' is actually a string holding the boot cmdline */
 	mbi->cmdline = MB_PARAM_MOD;
 
-	mbi->mmap_addr = (void*)&mb_memmap;
+	mbi->mmap_addr =(u32_t)&mb_memmap;
 	mbi->mmap_length = sizeof(mb_memmap);
 
 	mb_memmap.size = sizeof(multiboot_memory_map_t);
@@ -267,6 +267,7 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 	/* Clear BSS */
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
 
+	omap3_ser_init();	
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
@@ -286,7 +287,13 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 	return &kinfo;
 }
 
+/* pre_init gets executed at the memory location where the kernel was loaded by the boot loader.
+ * at that stage we only have a minium set of functionality present (all symbols gets renamed to
+ * ensure this). The following methods are used in that context. Once we jump to kmain they are no
+ * longer used and the "real" implementations are visible
+ */
 int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
 void minix_shutdown(timer_t *t) { arch_shutdown(RBT_PANIC); }
 void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }
+
