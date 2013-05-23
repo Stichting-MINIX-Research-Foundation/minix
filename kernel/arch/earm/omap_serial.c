@@ -32,8 +32,10 @@ static struct omap_serial omap_serial = {
  */
 void omap3_ser_init(){
 #ifdef DM37XX
-	omap_serial.base = OMAP3_DEBUG_UART_BASE;
-	//map(OMAP3_DEBUG_UART_BASE,&callback);
+	omap_serial.base = OMAP3_DM37XX_DEBUG_UART_BASE;
+#endif
+#ifdef AM335X
+	omap_serial.base = OMAP3_AM335X_DEBUG_UART_BASE;
 #endif
     assert(omap_serial.base);
 }
