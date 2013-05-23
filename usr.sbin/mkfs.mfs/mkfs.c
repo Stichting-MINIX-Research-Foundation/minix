@@ -143,26 +143,10 @@ main(int argc, char *argv[])
   int nread, mode, usrid, grpid, ch, extra_space_percent;
   block_t blocks, maxblocks;
   ino_t inodes, root_inum;
-  time_t bin_time;
   char *token[MAX_TOKENS], line[LINE_LEN], *sfx;
-  struct stat statbuf;
   struct fs_size fssize;
 
   progname = argv[0];
-
-  /* Get two times, the current time and the mod time of the binary of
-   * mkfs itself.  When the -d flag is used, the later time is put into
-   * the i_mtimes of all the files.  This feature is useful when
-   * producing a set of file systems, and one wants all the times to be
-   * identical. First you set the time of the mkfs binary to what you
-   * want, then go.
-   */
-  current_time = time((time_t *) 0);	/* time mkfs is being run */
-  if (stat(progname, &statbuf)) {
-	perror("stat of itself");
-	bin_time = current_time;	/* provide some default value */
-  } else
-	bin_time = statbuf.st_mtime;	/* time when mkfs binary was last modified */
 
   /* Process switches. */
   blocks = 0;
@@ -199,7 +183,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'd':
 		dflag = 1;
-		current_time = bin_time;
 		break;
 	    case 'i':
 		inodes = strtoul(optarg, (char **) NULL, 0);
@@ -213,6 +196,21 @@ main(int argc, char *argv[])
 	}
 
   if (argc == optind) usage();
+
+  /* Get the current time, set it to the mod time of the binary of
+   * mkfs itself when the -d flag is used. The 'current' time is put into
+   * the i_mtimes of all the files.  This -d feature is useful when
+   * producing a set of file systems, and one wants all the times to be
+   * identical. First you set the time of the mkfs binary to what you
+   * want, then go.
+   */
+  current_time = time((time_t *) 0);	/* time mkfs is being run */
+  if(dflag) {
+	struct stat statbuf;
+	if (stat(progname, &statbuf)) {
+		perror("stat of itself");
+	} else	current_time = statbuf.st_mtime;
+  }
 
   /* Percentage of extra size must be nonnegative.
    * It can legitimately be bigger than 100 but has to make some sort of sense.
