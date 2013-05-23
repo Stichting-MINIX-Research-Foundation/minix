@@ -30,6 +30,65 @@
 #include "vm.h"
 #include "fdref.h"
 #include "vmproc.h"
+#include "glo.h"
+
+static struct fdref *fdrefs;
+
+void fdref_sanitycheck(void)
+{
+	struct vmproc *vmp;
+	region_iter v_iter;
+	struct fdref *fr;
+	static int prevopen = 0;
+	int openfd = 0;
+
+	for(fr = fdrefs; fr; fr = fr->next) {
+		struct fdref *fr2;
+		for(fr2 = fdrefs; fr2; fr2 = fr2->next) {
+			if(fr == fr2) continue;
+			if(fr->fd == fr2->fd) {
+				printf("equal fd omg\n");
+				util_stacktrace();
+			}
+			if(fr->ino == fr2->ino && fr->dev == fr2->dev) {
+				printf("equal metadata omg\n");
+				util_stacktrace();
+			}
+		}
+		openfd++;
+	}
+
+	for(fr = fdrefs; fr; fr = fr->next) {
+		fr->counting = 0;
+	}
+
+	for(vmp = vmproc; vmp < &vmproc[VMP_NR]; vmp++) {
+		struct vir_region *vr;
+                if(!(vmp->vm_flags & VMF_INUSE))
+			continue;
+		region_start_iter_least(&vmp->vm_regions_avl, &v_iter);
+		while((vr = region_get_iter(&v_iter))) {
+			if(vr->def_memtype == &mem_type_mappedfile && vr->param.file.inited) {
+				vr->param.file.fdref->counting++;
+			}
+			region_incr_iter(&v_iter);
+		}
+
+	}
+
+	for(fr = fdrefs; fr; fr = fr->next) {
+		if(fr->counting != fr->refcount) {
+			printf("counting %d != refcount %d\n",
+				fr->counting, fr->refcount);
+			util_stacktrace();
+		}
+	}
+
+	if(prevopen != openfd && openfd > 100) {
+		printf("%d open\n", openfd);
+		prevopen = openfd;
+	}
+}
 
 struct fdref *fdref_new(struct vmproc *owner, ino_t ino, dev_t dev, int fd)
 {
@@ -38,12 +97,11 @@ struct fdref *fdref_new(struct vmproc *owner, ino_t ino, dev_t dev, int fd)
 	if(!SLABALLOC(fdref)) return NULL;
 
 	fdref->fd = fd;
-	fdref->owner = owner;
 	fdref->refcount = 0;
 	fdref->dev = dev;
 	fdref->ino = ino;
-	fdref->next = owner->fdrefs;
-	owner->fdrefs = fdref;
+	fdref->next = fdrefs;
+	fdrefs = fdref;
 
 	return fdref;
 }
@@ -51,7 +109,6 @@ struct fdref *fdref_new(struct vmproc *owner, ino_t ino, dev_t dev, int fd)
 void fdref_ref(struct fdref *ref, struct vir_region *region)
 {
 	assert(ref);
-	assert(ref->owner == region->parent);
 	region->param.file.fdref = ref;
 	ref->refcount++;
 }
@@ -63,7 +120,6 @@ void fdref_deref(struct vir_region *region)
 
 	assert(ref);
 	assert(ref->refcount > 0);
-	assert(ref->owner == region->parent);
 
 	fd = ref->fd;
 	region->param.file.fdref = NULL;
@@ -71,10 +127,10 @@ void fdref_deref(struct vir_region *region)
 	assert(ref->refcount >= 0);
 	if(ref->refcount > 0) return;
 
-	if(region->parent->fdrefs == ref) region->parent->fdrefs = ref->next;
+	if(fdrefs == ref) fdrefs = ref->next;
 	else {
 		struct fdref *r;
-		for(r = region->parent->fdrefs; r->next != ref; r = r->next)
+		for(r = fdrefs; r->next != ref; r = r->next)
 			;
 		assert(r);
 		assert(r->next == ref);
@@ -83,11 +139,7 @@ void fdref_deref(struct vir_region *region)
 
 	SLABFREE(ref);
 	ref = NULL;
-
-	if(region->parent->vm_flags & (VMF_EXITING|VMF_EXECING)) {
-		return;
-	}
-
+	
 	/* If the last reference has disappeared, free the
 	 * ref object and asynchronously close the fd in VFS.
 	 *
@@ -95,34 +147,27 @@ void fdref_deref(struct vir_region *region)
 	 * unexpected, isn't a problem and can't be handled. VFS
 	 * will print a diagnostic.
 	 */
-#if 1
 	if(vfs_request(VMVFSREQ_FDCLOSE, fd, region->parent,
 		0, 0, NULL, NULL, NULL, 0) != OK) {
 		panic("fdref_deref: could not send close request");
 	}
-#endif
 }
 
 struct fdref *fdref_dedup_or_new(struct vmproc *owner,
-	ino_t ino, dev_t dev, int fd)
+	ino_t ino, dev_t dev, int fd, int mayclose)
 {
 	struct fdref *fr;
 
-	for(fr = owner->fdrefs; fr; fr = fr->next) {
-		assert(fr->owner == owner);
-		if(fr->fd == fd) {
-			assert(ino == fr->ino);
-			assert(dev == fr->dev);
-			return fr;
-		}
+	for(fr = fdrefs; fr; fr = fr->next) {
 		if(ino == fr->ino && dev == fr->dev) {
-			assert(fd != fr->fd);
-#if 1
+			if(fd == fr->fd) {
+				return fr;
+			}
+			if(!mayclose) continue;
 			if(vfs_request(VMVFSREQ_FDCLOSE, fd, owner,
 				0, 0, NULL, NULL, NULL, 0) != OK) {
 				printf("fdref_dedup_or_new: could not close\n");
 			}
-#endif
 			return fr;
 		}
 	}

@@ -86,7 +86,7 @@ void check_bsf_lock(void)
  *				actual_read_write_peek			     *
  *===========================================================================*/
 int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
-	char *io_buf, size_t io_nbytes, int userreq)
+	char *io_buf, size_t io_nbytes)
 {
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
   struct filp *f;
@@ -101,7 +101,7 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
   scratch(rfp).io.io_nbytes = io_nbytes;
 
   locktype = rw_flag == WRITING ? VNODE_WRITE : VNODE_READ;
-  if ((f = get_filp2(rfp, scratch(rfp).file.fd_nr, locktype, userreq)) == NULL)
+  if ((f = get_filp2(rfp, scratch(rfp).file.fd_nr, locktype)) == NULL)
 	return(err_code);
 
   assert(f->filp_count > 0);
@@ -127,7 +127,7 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
  *===========================================================================*/
 int do_read_write_peek(int rw_flag, int io_fd, char *io_buf, size_t io_nbytes)
 {
-	return actual_read_write_peek(fp, rw_flag, io_fd, io_buf, io_nbytes, 1);
+	return actual_read_write_peek(fp, rw_flag, io_fd, io_buf, io_nbytes);
 }
 
 /*===========================================================================*

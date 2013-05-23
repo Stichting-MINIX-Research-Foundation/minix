@@ -6,9 +6,6 @@
  */
 #define _SYSTEM		1	/* tell headers that this is the kernel */
 
-/* Get the right-sized fd_set */
-#include "fdset.h"
-
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>
 
@@ -27,6 +24,7 @@
 #include <minix/sysutil.h>
 #include <minix/timers.h>
 
+#include "const.h"
 #include "dmap.h"
 #include "proto.h"
 #include "threads.h"

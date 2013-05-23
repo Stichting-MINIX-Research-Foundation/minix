@@ -22,7 +22,6 @@ struct vmproc {
 	vir_bytes  vm_region_top;	/* highest vaddr last inserted */
 	bitchunk_t vm_call_mask[VM_CALL_MASK_SIZE];
 	int vm_slot;		/* process table slot */
-	struct fdref *fdrefs;
 #if VMSTATS
 	int vm_bytecopies;
 #endif
@@ -32,6 +31,5 @@ struct vmproc {
 #define VMF_INUSE	0x001	/* slot contains a process */
 #define VMF_EXITING	0x002	/* PM is cleaning up this process */
 #define VMF_WATCHEXIT	0x008	/* Store in queryexit table */
-#define VMF_EXECING	0x010	/* exec() in progress */
 
 #endif

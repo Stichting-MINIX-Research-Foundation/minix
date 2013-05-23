@@ -60,7 +60,6 @@ int do_fork(message *msg)
   /* The child is basically a copy of the parent. */
   origpt = vmc->vm_pt;
   *vmc = *vmp;
-  vmc->fdrefs = NULL;
   vmc->vm_slot = childproc;
   region_init(&vmc->vm_regions_avl);
   vmc->vm_endpoint = NONE;	/* In case someone tries to use it. */

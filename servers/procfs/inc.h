@@ -3,8 +3,6 @@
 
 #define _SYSTEM		1
 
-#include "vfs/fdset.h"
-
 #include <minix/config.h>
 #include <limits.h>
 #include <errno.h>

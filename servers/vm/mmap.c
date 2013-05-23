@@ -84,7 +84,7 @@ static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
 static int mmap_file(struct vmproc *vmp,
 	int vmfd, u32_t off_lo, u32_t off_hi, int flags,
 	ino_t ino, dev_t dev, u64_t filesize, vir_bytes addr, vir_bytes len,
-	vir_bytes *retaddr, u16_t clearend, int writable)
+	vir_bytes *retaddr, u16_t clearend, int writable, int mayclosefd)
 {
 /* VFS has replied to a VMVFSREQ_FDLOOKUP request. */
 	struct vir_region *vr;
@@ -136,7 +136,7 @@ static int mmap_file(struct vmproc *vmp,
 		result = OK;
 
 		mappedfile_setfile(vmp, vr, vmfd,
-			file_offset, dev, ino, clearend, 1);
+			file_offset, dev, ino, clearend, 1, mayclosefd);
 	}
 
 	return result;
@@ -161,7 +161,7 @@ int do_vfs_mmap(message *m)
 		m->m_u.m_vm_vfs.ino, m->m_u.m_vm_vfs.dev,
 		(u64_t) LONG_MAX * VM_PAGE_SIZE,
 		m->m_u.m_vm_vfs.vaddr, m->m_u.m_vm_vfs.len, &v,
-		clearend, flags);
+		clearend, flags, 0);
 }
 
 static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
@@ -177,7 +177,7 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 		writable = 1;
 
 	if(replymsg->VMV_RESULT != OK) {
-		printf("VM: VFS reply failed\n");
+		printf("VM: VFS reply failed (%d)\n", replymsg->VMV_RESULT);
 		sys_sysctl_stacktrace(vmp->vm_endpoint);
 		result = origmsg->VMV_RESULT;
 	} else {
@@ -187,7 +187,7 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 			replymsg->VMV_INO, replymsg->VMV_DEV,
 			(u64_t) replymsg->VMV_SIZE_PAGES*PAGE_SIZE,
 			origmsg->VMM_ADDR,
-			origmsg->VMM_LEN, &v, 0, writable);
+			origmsg->VMM_LEN, &v, 0, writable, 1);
 	}
 
 	/* Unblock requesting process. */

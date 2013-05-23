@@ -21,8 +21,8 @@ struct fdref {
 	int             refcount;
 	dev_t   dev;
 	ino_t   ino;
-	struct vmproc	*owner;
 	struct fdref	*next;
+	int counting;	/* sanity check */
 } *fdref;
 
 #endif

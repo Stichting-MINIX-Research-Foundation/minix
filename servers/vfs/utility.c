@@ -122,8 +122,6 @@ int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc,
 	failed = 1;
   } else if ((ke = fproc[*proc].fp_endpoint) != endpoint) {
 	if(ke == NONE) {
-		printf("VFS %s:%d: endpoint (%d) points to NONE slot (%d)\n",
-			file, line, endpoint, *proc);
 		assert(fproc[*proc].fp_pid == PID_FREE);
 	} else {
 		printf("VFS %s:%d: proc (%d) from endpoint (%d) doesn't match "

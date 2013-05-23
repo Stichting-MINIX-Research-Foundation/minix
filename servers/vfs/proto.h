@@ -87,10 +87,9 @@ void check_filp_locks_by_me(void);
 void init_filps(void);
 struct filp *find_filp(struct vnode *vp, mode_t bits);
 int get_fd(struct fproc *rfp, int start, mode_t bits, int *k,
-	struct filp **fpt, int user);
+	struct filp **fpt);
 struct filp *get_filp(int fild, tll_access_t locktype);
-struct filp *get_filp2(struct fproc *rfp, int fild, tll_access_t
-	locktype, int userrequest);
+struct filp *get_filp2(struct fproc *rfp, int fild, tll_access_t locktype);
 void lock_filp(struct filp *filp, tll_access_t locktype);
 void unlock_filp(struct filp *filp);
 void unlock_filps(struct filp *filp1, struct filp *filp2);
@@ -147,6 +146,7 @@ int do_getsysinfo(void);
 int do_vm_call(message *m_out);
 int pm_dumpcore(endpoint_t proc_e, int sig, vir_bytes exe_name);
 void * ds_event(void *arg);
+int dupvm(struct fproc *fp, int pfd, int *vmfd, struct filp **f);
 
 /* mount.c */
 int do_fsready(message *m_out);
@@ -161,9 +161,9 @@ void unmount_all(int force);
 
 /* open.c */
 int do_close(message *m_out);
-int close_fd(struct fproc *rfp, int fd_nr, int flag);
+int close_fd(struct fproc *rfp, int fd_nr);
 void close_reply(void);
-int common_open(char path[PATH_MAX], int oflags, mode_t omode, int userfd);
+int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
 int do_lseek(message *m_out);
 int do_llseek(message *m_out);
@@ -173,7 +173,7 @@ int do_open(message *m_out);
 int do_slink(message *m_out);
 int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset);
 int actual_llseek(struct fproc *rfp, message *m_out, int seekfd,
-	int seekwhence, u64_t offset, int userrequest);
+	int seekwhence, u64_t offset);
 int do_vm_open(void);
 int do_vm_close(void);
 
@@ -219,7 +219,7 @@ void unlock_bsf(void);
 void check_bsf_lock(void);
 int do_read_write_peek(int rw_flag, int fd, char *buf, size_t bytes);
 int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd, char *buf,
-	size_t bytes, int userreq);
+	size_t bytes);
 int read_write(struct fproc *rfp, int rw_flag, struct filp *f, char *buffer,
 	size_t nbytes, endpoint_t for_e);
 int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,

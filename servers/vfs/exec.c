@@ -50,8 +50,8 @@ struct vfs_exec_info {
     int is_dyn;				/* Dynamically linked executable */
     int elf_main_fd;			/* Dyn: FD of main program execuatble */
     char execname[PATH_MAX];		/* Full executable invocation */
-    int procfd;
-    int procfd_used;
+    int vmfd;
+    int vmfd_used;
 };
 
 static void lock_exec(void);
@@ -202,9 +202,9 @@ static int vfs_memmap(struct exec_info *execi,
 		flags |= MVM_WRITABLE;
 
 	r = minix_vfs_mmap(execi->proc_e, foffset, len,
-	        vp->v_dev, vp->v_inode_nr, vi->procfd, vaddr, clearend, flags);
+	        vp->v_dev, vp->v_inode_nr, vi->vmfd, vaddr, clearend, flags);
 	if(r == OK) {
-		vi->procfd_used = 1;
+		vi->vmfd_used = 1;
 	}
 
 	return r;
@@ -233,15 +233,18 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	firstexec[PATH_MAX],
 	finalexec[PATH_MAX];
   struct lookup resolve;
+  struct fproc *vmfp = &fproc[VM_PROC_NR];
   stackhook_t makestack = NULL;
   static int n;
   n++;
+  struct filp *newfilp = NULL;
 
   lock_exec();
+  lock_proc(vmfp, 0);
 
   /* unset execi values are 0. */
   memset(&execi, 0, sizeof(execi));
-  execi.procfd = -1;
+  execi.vmfd = -1;
 
   /* passed from exec() libc code */
   execi.userflags = user_exec_flags;
@@ -312,7 +315,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	/* The interpreter (loader) needs an fd to the main program,
 	 * which is currently in finalexec
 	 */
-	if((r = execi.elf_main_fd = common_open(finalexec, O_RDONLY, 0, 1)) < 0) {
+	if((r = execi.elf_main_fd = common_open(finalexec, O_RDONLY, 0)) < 0) {
 		printf("VFS: exec: dynamic: open main exec failed %s (%d)\n",
 			fullpath, r);
 		FAILCHECK(r);
@@ -335,16 +338,22 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	Get_read_vp(execi, fullpath, 0, 0, &resolve, fp);
   }
 
-  /* We also want an FD so VM can mmap() the process in if possible. */
+  /* We also want an FD for VM to mmap() the process in if possible. */
   {
-  	int openr;
-	if((openr=execi.procfd=common_open(firstexec, O_RDONLY, 0, 0)) < 0) {
-		printf("vfs: exec: open failed of %s (%d), can't mmap\n",
-			firstexec, openr);
-		execi.procfd = -1;
-	} else {
-		if(fp->fp_filp[openr]->filp_vno->v_vmnt->m_haspeek &&
-		  major(fp->fp_filp[openr]->filp_vno->v_dev) != MEMORY_MAJOR) {
+	struct vnode *vp = execi.vp;
+	assert(vp);
+	if(vp->v_vmnt->m_haspeek && major(vp->v_dev) != MEMORY_MAJOR) {
+		int newfd = -1;
+		if(get_fd(vmfp, 0, R_BIT, &newfd, &newfilp) == OK) {
+			assert(newfd >= 0 && newfd < OPEN_MAX);
+			assert(!vmfp->fp_filp[newfd]);
+			newfilp->filp_count = 1;
+			newfilp->filp_vno = vp;
+			newfilp->filp_flags = O_RDONLY;
+			FD_SET(newfd, &vmfp->fp_filp_inuse);
+			vmfp->fp_filp[newfd] = newfilp;
+			/* dup_vnode(vp); */
+			execi.vmfd = newfd;
 			execi.args.memmap = vfs_memmap;
 		}
 	}
@@ -402,15 +411,19 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   strlcpy(rfp->fp_name, execi.args.progname, PROC_NAME_LEN);
 
 pm_execfinal:
-  if (execi.vp != NULL) {
+  if(newfilp) unlock_filp(newfilp);
+  else if (execi.vp != NULL) {
 	unlock_vnode(execi.vp);
 	put_vnode(execi.vp);
   }
-  if(execi.procfd >= 0 && !execi.procfd_used) {
-  	int r;
-  	r = close_fd(rfp, execi.procfd, 0);
+
+  if(execi.vmfd >= 0 && !execi.vmfd_used) {
+  	if(OK != close_fd(vmfp, execi.vmfd)) {
+		printf("VFS: unexpected close fail of vm fd\n");
+	}
   }
 
+  unlock_proc(vmfp);
   unlock_exec();
 
   return(r);
@@ -703,9 +716,9 @@ static void clo_exec(struct fproc *rfp)
   int i;
 
   /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
-  for (i = 0; i < FDS_PER_PROCESS; i++)
+  for (i = 0; i < OPEN_MAX; i++)
 	if ( FD_ISSET(i, &rfp->fp_cloexec_set))
-		(void) close_fd(rfp, i, 0);
+		(void) close_fd(rfp, i);
 }
 
 /*===========================================================================*

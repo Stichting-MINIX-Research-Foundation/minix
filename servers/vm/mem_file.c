@@ -153,7 +153,7 @@ int mappedfile_copy(struct vir_region *vr, struct vir_region *newvr)
 	mappedfile_setfile(newvr->parent, newvr, vr->param.file.fdref->fd,
 		vr->param.file.offset,
 		vr->param.file.fdref->dev, vr->param.file.fdref->ino,
-		vr->param.file.clearend, 0);
+		vr->param.file.clearend, 0, 0);
 	assert(newvr->param.file.inited);
 
 	return OK;
@@ -161,10 +161,12 @@ int mappedfile_copy(struct vir_region *vr, struct vir_region *newvr)
 
 int mappedfile_setfile(struct vmproc *owner,
 	struct vir_region *region, int fd, u64_t offset,
-	dev_t dev, ino_t ino, u16_t clearend, int prefill)
+	dev_t dev, ino_t ino, u16_t clearend, int prefill, int mayclosefd)
 {
 	vir_bytes vaddr;
-	struct fdref *newref = fdref_dedup_or_new(owner, ino, dev, fd);
+	struct fdref *newref;
+
+	newref = fdref_dedup_or_new(owner, ino, dev, fd, mayclosefd);
 
 	assert(newref);
 	assert(!region->param.file.inited);
@@ -245,4 +247,5 @@ static void mappedfile_delete(struct vir_region *region)
 	assert(region->param.file.inited);
 	assert(region->param.file.fdref);
 	fdref_deref(region);
+	region->param.file.inited = 0;
 }
