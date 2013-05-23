@@ -102,12 +102,12 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 
 /* XXX: hard-coded stuff for modules */
 #define MB_MODS_NR 12
-#define MB_MODS_BASE  0x90000000
-#define MB_PARAM_MOD  0x96000000
-#define MB_MODS_ALIGN 0x00800000 /*  8 MB */
-#define MB_MODS_SIZE  0x00004000 /* 16 KB */
+#define MB_MODS_BASE  0x82000000
+#define MB_PARAM_MOD  0x88000000
+#define MB_MODS_ALIGN 0x00800000 /* 8 MB */
+#define MB_MODS_SIZE  0x00400000 /* 4 MB */
 #define MB_MMAP_START 0x80000000
-#define MB_MMAP_SIZE  0x20000000 /* 512 MB */
+#define MB_MMAP_SIZE  0x10000000 /* 256 MB */
 
 multiboot_module_t mb_modlist[MB_MODS_NR];
 multiboot_memory_map_t mb_memmap;
@@ -123,7 +123,7 @@ void setup_mbi(multiboot_info_t *mbi)
 	int i;
 	for (i = 0; i < MB_MODS_NR; ++i) {
 	    mb_modlist[i].mod_start = MB_MODS_BASE + i * MB_MODS_ALIGN;
-	    mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_ALIGN - 1;
+	    mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_SIZE ;
 	    mb_modlist[i].cmdline = 0;
 	}
 
