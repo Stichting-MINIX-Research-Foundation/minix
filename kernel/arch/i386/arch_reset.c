@@ -22,6 +22,10 @@
 #include "direct_utils.h"
 #include <machine/multiboot.h>
 
+#ifdef USE_ACPI
+#include "acpi.h"
+#endif
+
 #define     KBCMDP          4       /* kbd controller port (O) */
 #define      KBC_PULSE0     0xfe    /* pulse output bit 0 */
 #define      IO_KBD          0x060           /* 8042 Keyboard */
@@ -85,6 +89,9 @@ poweroff(void)
 {
 	const char *shutdown_str;
 
+#ifdef USE_ACPI
+	acpi_poweroff();
+#endif
 	/* Bochs/QEMU poweroff */
 	shutdown_str = "Shutdown";
         while (*shutdown_str) outb(0x8900, *(shutdown_str++));

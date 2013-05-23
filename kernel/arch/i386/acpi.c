@@ -12,6 +12,20 @@ struct acpi_rsdp acpi_rsdp;
 static acpi_read_t read_func;
 
 #define MAX_RSDT	35 /* ACPI defines 35 signatures */
+#define SLP_EN_CODE	(1 << 13) /* ACPI SLP_EN_CODE code */
+#define AMI_PACKAGE_OP_CODE (0x12)
+#define AMI_NAME_OP_CODE (0x8)
+#define AMI_BYTE_PREFIX_CODE (0xA)
+#define AMI_PACKAGE_LENGTH_ENCODING_BITS_MASK (0xC0)
+#define AMI_PACKAGE_LENGTH_ENCODING_BITS_SHIFT (6)
+#define AMI_MIN_PACKAGE_LENGTH (1)
+#define AMI_NUM_ELEMENTS_LENGTH (1)
+#define AMI_SLP_TYPA_SHIFT (10)
+#define AMI_SLP_TYPB_SHIFT (10)
+#define AMI_S5_NAME_OP_OFFSET_1 (-1)
+#define AMI_S5_NAME_OP_OFFSET_2 (-2)
+#define AMI_S5_PACKAGE_OP_OFFSET (4)
+#define AMI_S5_PACKET_LENGTH_OFFSET (5)
 
 static struct acpi_rsdt {
 	struct acpi_sdt_header	hdr;
@@ -24,6 +38,10 @@ static struct {
 } sdt_trans[MAX_RSDT];
 
 static int sdt_count;
+static u16_t pm1a_cnt_blk = 0;
+static u16_t pm1b_cnt_blk = 0;
+static u16_t slp_typa = 0;
+static u16_t slp_typb = 0;
 
 static int acpi_check_csum(struct acpi_sdt_header * tb, size_t size)
 {
@@ -210,6 +228,86 @@ static int get_acpi_rsdp(void)
 	return 0;
 }
 
+static void acpi_init_poweroff(void)
+{
+	u8_t *ptr = NULL;
+	u8_t *start = NULL;
+	u8_t *end = NULL;
+	struct acpi_fadt_header *fadt_header = NULL;
+	struct acpi_rsdt * dsdt_header = NULL;
+	char *msg = NULL;
+
+	/* Everything used here existed since ACPI spec 1.0 */
+	/* So we can safely use them */
+	fadt_header = (struct acpi_fadt_header *)
+		acpi_phys2vir(acpi_get_table_base("FACP"));
+	if (fadt_header == NULL) {
+		msg = "Could not load FACP";
+		goto exit;
+	}
+
+	dsdt_header = (struct acpi_rsdt *)
+		acpi_phys2vir((phys_bytes) fadt_header->dsdt);
+	if (dsdt_header == NULL) {
+		msg = "Could not load DSDT";
+		goto exit;
+	}
+
+	pm1a_cnt_blk = fadt_header->pm1a_cnt_blk;
+	pm1b_cnt_blk = fadt_header->pm1b_cnt_blk;
+
+	ptr = start = (u8_t *) dsdt_header->data;
+	end = start + dsdt_header->hdr.length - 4;
+
+	/* See http://forum.osdev.org/viewtopic.php?t=16990 */
+	/* for layout of \_S5 */
+	while (ptr < end && memcmp(ptr, "_S5_", 4) != 0)
+		ptr++;
+
+	msg = "Could not read S5 data. Use default SLP_TYPa and SLP_TYPb";
+	if (ptr >= end || ptr == start)
+		goto exit;
+
+	/* validate AML structure */
+	if (*(ptr + AMI_S5_PACKAGE_OP_OFFSET) != AMI_PACKAGE_OP_CODE)
+		goto exit;
+
+	if ((ptr < start + (-AMI_S5_NAME_OP_OFFSET_2) ||
+		(*(ptr + AMI_S5_NAME_OP_OFFSET_2) != AMI_NAME_OP_CODE ||
+		 *(ptr + AMI_S5_NAME_OP_OFFSET_2 + 1) != '\\')) &&
+		*(ptr + AMI_S5_NAME_OP_OFFSET_1) != AMI_NAME_OP_CODE)
+		goto exit;
+
+	ptr += AMI_S5_PACKET_LENGTH_OFFSET;
+	if (ptr >= end)
+		goto exit;
+
+	/* package length */
+	ptr += ((*ptr & AMI_PACKAGE_LENGTH_ENCODING_BITS_MASK) >>
+		AMI_PACKAGE_LENGTH_ENCODING_BITS_SHIFT) +
+		AMI_MIN_PACKAGE_LENGTH + AMI_NUM_ELEMENTS_LENGTH;
+	if (ptr >= end)
+		goto exit;
+
+	if (*ptr == AMI_BYTE_PREFIX_CODE)
+		ptr++; /* skip byte prefix */
+
+	slp_typa = (*ptr) << AMI_SLP_TYPA_SHIFT;
+
+	ptr++; /* move to SLP_TYPb */
+	if (*ptr == AMI_BYTE_PREFIX_CODE)
+		ptr++; /* skip byte prefix */
+
+	slp_typb = (*ptr) << AMI_SLP_TYPB_SHIFT;
+
+	msg = "poweroff initialized";
+
+exit:
+	if (msg) {
+		printf("acpi: %s\n", msg);
+	}
+}
+
 void acpi_init(void)
 {
 	int s, i;
@@ -239,6 +337,8 @@ void acpi_init(void)
 		sdt_trans[i].signature[ACPI_SDT_SIGNATURE_LEN] = '\0';
 		sdt_trans[i].length = hdr.length;
 	}
+
+	acpi_init_poweroff();
 }
 
 struct acpi_madt_ioapic * acpi_get_ioapic_next(void)
@@ -292,4 +392,20 @@ struct acpi_madt_lapic * acpi_get_lapic_next(void)
 	}
 
 	return ret;
+}
+
+void __k_unpaged_acpi_poweroff(void)
+{
+	/* NO OP poweroff symbol*/
+}
+
+void acpi_poweroff(void)
+{
+	if (pm1a_cnt_blk == 0) {
+		return;
+	}
+	outw(pm1a_cnt_blk, slp_typa | SLP_EN_CODE);
+	if (pm1b_cnt_blk != 0) {
+		outw(pm1b_cnt_blk, slp_typb | SLP_EN_CODE);
+	}
 }
