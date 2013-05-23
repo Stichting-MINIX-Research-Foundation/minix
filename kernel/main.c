@@ -127,6 +127,10 @@ void kmain(kinfo_t *local_cbi)
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
   memcpy(&kmess, kinfo.kmess, sizeof(kmess));
 
+#ifdef __arm__
+  /* We want to initialize serial before we do any output */
+  omap3_ser_init();
+#endif
   /* We can talk now */
   printf("MINIX booting\n");
 
