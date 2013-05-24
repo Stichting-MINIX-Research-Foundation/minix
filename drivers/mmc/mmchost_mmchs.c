@@ -32,7 +32,12 @@
 
 #ifdef USE_INTR
 static int hook_id = 1;
+#ifdef DM37XX
 #define OMAP3_MMC1_IRQ      83	/* MMC/SD module 1 */
+#endif
+#ifdef AM335X
+#define OMAP3_MMC1_IRQ     64 	/* MMC/SD module 1 */
+#endif
 #endif
 
 #define SANE_TIMEOUT 500000	/* 500 MS */
@@ -105,7 +110,9 @@ mmchs_init(uint32_t instance)
 	if (base_address == (uint32_t) MAP_FAILED)
 		panic("Unable to map MMC memory");
 
+#ifdef DM37XX
 	base_address = (unsigned long) base_address - 0x100;
+#endif
 
 	/* Soft reset of the controller. This section is documented in the TRM 
 	 */
