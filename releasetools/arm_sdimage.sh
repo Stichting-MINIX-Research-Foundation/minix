@@ -19,8 +19,18 @@ set -e
 : ${IMG=minix_arm_sd.img}
 : ${MLO=MLO}
 : ${UBOOT=u-boot.img}
+
+
+# beagleboard-xm
 : ${BASE_URL=http://www.minix3.org/arm/beagleboard-xm}
+: ${FLAG=-DDM37XX}
+: ${CONSOLE=tty02}
+
+
+#beaglebone (and black)
 #: ${BASE_URL=http://www.minix3.org/arm/beaglebone}
+#: ${FLAG=-DAM335X}
+#: ${CONSOLE=tty00}
 
 if [ ! -f ${BUILDSH} ]
 then	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
@@ -63,7 +73,7 @@ done
 #
 # Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
 #
-export CPPFLAGS=-DDM37XX
+export CPPFLAGS=${FLAG}
 sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
 #
@@ -152,11 +162,12 @@ mkfs.vfat ${IMG_DIR}/fat.img
 ./releasetools/gen_uEnv.txt.sh > ${IMG_DIR}/uEnv.txt
 
 #
-#
+# Generate the MINIX command line
+# 
 # options:
 # -c set console e.g. tty02 or tty00
-# -v set verbosidy e.g. 0 to 3
-./releasetools/gen_cmdline.txt.sh > ${IMG_DIR}/cmdline.txt
+# -v set verbosity e.g. 0 to 3
+./releasetools/gen_cmdline.txt.sh -c ${CONSOLE} > ${IMG_DIR}/cmdline.txt
 
 echo "Copying configuration kernel and boot modules"
 mcopy -bsp -i ${IMG_DIR}/fat.img  ${IMG_DIR}/$MLO ::MLO
