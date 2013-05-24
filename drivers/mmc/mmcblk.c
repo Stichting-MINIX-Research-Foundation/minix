@@ -112,7 +112,9 @@ apply_env()
 	    || strncmp(driver, "mmchs", strlen("mmchs") + 1) == 0) {
 		/* early init of host mmc host controller. This code should
 		 * depend on knowing the hardware that is running bellow. */
+#ifdef __arm__
 		host_initialize_host_structure_mmchs(&host);
+#endif
 	} else if (strncmp(driver, "dummy", strlen("dummy") + 1) == 0) {
 		host_initialize_host_structure_dummy(&host);
 	} else {
