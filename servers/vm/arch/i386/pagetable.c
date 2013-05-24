@@ -1402,7 +1402,15 @@ int pt_mapkernel(pt_t *pt)
 	for(i = 0; i < kernmappings; i++) {
 		int r;
 #if defined(__arm__)
-		if(kern_mappings[i].phys_addr == 0x48000000) {
+
+#ifdef DM37XX
+//FIXME this special case will be removed once we have non 1:1 mapping
+#define XXX 0x48000000
+#endif
+#ifdef AM335X
+#define XXX 0x44000000
+#endif
+		if(kern_mappings[i].phys_addr == XXX) {
 			addr = kern_mappings[i].phys_addr;
 			assert(!(kern_mappings[i].len % ARCH_BIG_PAGE_SIZE));
 			for(mapped = 0; mapped < kern_mappings[i].len; 
