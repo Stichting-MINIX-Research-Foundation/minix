@@ -121,6 +121,7 @@ typedef struct uart_port {
 	int irq;
 } uart_port_t;
 
+#ifdef DM37XX 
 /* OMAP3 UART base addresses. */
 static uart_port_t omap3[] = {
   { OMAP3_UART1_BASE, 72},	/* UART1 */
@@ -128,6 +129,17 @@ static uart_port_t omap3[] = {
   { OMAP3_UART3_BASE, 74},	/* UART3 */
   { 0, 0 }
 };
+#endif
+
+#ifdef AM335X
+static uart_port_t omap3[] = {
+  {  0x44E09000 , 72 },	/* UART0 */
+  { 0, 0 },
+  { 0, 0 },
+  { 0, 0 }
+};
+#endif
+
 
 static int rs_write(tty_t *tp, int try);
 static void rs_echo(tty_t *tp, int c);
