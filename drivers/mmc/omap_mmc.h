@@ -1,8 +1,13 @@
 ///* TODO: Rename to MMCH_0_REG_BASE and add the base address for the other items */
-//#define MMCHS1_REG_BASE 0x48060000
+#ifdef AM335X
+#define MMCHS1_REG_BASE 0x48060000
+#endif
 
 //#ifdef AM_DM37x_Multimedia_Device
+
+#ifdef DM37XX
 #define MMCHS1_REG_BASE 0x4809C000
+#endif
 //#define MMCHS2_REG_BASE 0x480B4000
 //#define MMCHS3_REG_BASE 0x480AD000
 //#endif
