@@ -246,7 +246,7 @@ void switch_to_user(void)
 	/*
 	 * if a process becomes not runnable while handling the misc flags, we
 	 * need to pick a new one here and start from scratch. Also if the
-	 * current process wasn' runnable, we pick a new one here
+	 * current process wasn't runnable, we pick a new one here
 	 */
 not_runnable_pick_new:
 	if (proc_is_preempted(p)) {
@@ -261,7 +261,7 @@ not_runnable_pick_new:
 
 	/*
 	 * if we have no process to run, set IDLE as the current process for
-	 * time accounting and put the cpu in and idle state. After the next
+	 * time accounting and put the cpu in an idle state. After the next
 	 * timer interrupt the execution resumes here and we can pick another
 	 * process. If there is still nothing runnable we "schedule" IDLE again
 	 */
@@ -1604,7 +1604,7 @@ static void enqueue_head(struct proc *rp)
 
   /*
    * the process was runnable without its quantum expired when dequeued. A
-   * process with no time left should vahe been handled else and differently
+   * process with no time left should have been handled else and differently
    */
   assert(!is_zero64(rp->p_cpu_time_left));
 

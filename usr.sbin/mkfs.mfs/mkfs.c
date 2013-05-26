@@ -72,7 +72,7 @@ typedef uint32_t bitchunk_t;	/* collection of bits in a bitmap */
 struct fs_size {
   ino_t inocount; /* amount of inodes */
   zone_t zonecount; /* amount of zones */
-  block_t blockcount; /* amount of bloks */
+  block_t blockcount; /* amount of blocks */
 };
 
 extern char *optarg;
