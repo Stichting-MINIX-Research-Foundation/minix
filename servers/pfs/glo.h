@@ -24,6 +24,6 @@ EXTERN int busy;
 EXTERN int unmountdone;
 
 /* Inode map. */
-EXTERN bitchunk_t inodemap[FS_BITMAP_CHUNKS(NR_INODES)];
+EXTERN bitchunk_t inodemap[FS_BITMAP_CHUNKS(PFS_NR_INODES)];
 
 #endif
