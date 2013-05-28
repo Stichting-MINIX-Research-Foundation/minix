@@ -24,7 +24,7 @@ bit_t alloc_bit(void)
   bit_t b;
   unsigned int i, bcount;
 
-  bcount = FS_BITMAP_CHUNKS(NR_INODES); /* Inode map has this many chunks. */
+  bcount = FS_BITMAP_CHUNKS(PFS_NR_INODES); /* Inode map has this many chunks. */
   wlim = &inodemap[bcount]; /* Point to last chunk in inodemap. */
 
   for (wptr = &inodemap[0]; wptr < wlim; wptr++) {
@@ -38,7 +38,7 @@ bit_t alloc_bit(void)
 	b = (bit_t) ((wptr - &inodemap[0]) * FS_BITCHUNK_BITS + i);
 
 	/* Don't allocate bits beyond end of map. */
-	if (b >= NR_INODES) break;
+	if (b >= PFS_NR_INODES) break;
 
 	/* Allocate and return bit number. */
 	*wptr |= 1 << i;
