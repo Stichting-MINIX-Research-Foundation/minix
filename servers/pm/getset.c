@@ -141,7 +141,7 @@ int do_set()
 		if (ngroups > NGROUPS_MAX || ngroups < 0) 
 			return(EINVAL);
 
-		if (m_in.groupsp == NULL) 
+		if (m_in.grp_no > 0 && m_in.groupsp == NULL)
 			return(EFAULT);
 
 		r = sys_datacopy(who_e, (vir_bytes) m_in.groupsp, SELF,
