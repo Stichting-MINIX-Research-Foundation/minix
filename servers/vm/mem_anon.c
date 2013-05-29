@@ -60,8 +60,10 @@ static int anon_pagefault(struct vmproc *vmp, struct vir_region *region,
 
 	assert(ph->ph->refcount > 0);
 
-	if((new_page_cl = alloc_mem(1, allocflags)) == NO_MEM)
+	if((new_page_cl = alloc_mem(1, allocflags)) == NO_MEM) {
+		printf("anon_pagefault: out of memory\n");
 		return ENOMEM;
+	}
 	new_page = CLICK2ABS(new_page_cl);
 
 	/* Totally new block? Create it. */
