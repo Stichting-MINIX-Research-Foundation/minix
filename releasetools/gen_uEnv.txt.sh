@@ -41,7 +41,7 @@ do
 	esac
 done
 
-function fill_cmd(){
+fill_cmd() {
 	#load == load method like fatload mmc 0:1
 	#prefix is an optional directory containing the ending /
 	load=$1
