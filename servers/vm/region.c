@@ -730,7 +730,7 @@ int len;
 		}
 
 		if(r != OK) {
-			printf("map_pf: memtype->ev_pagefault failed\n");
+			printf("map_pf: pagefault in %s failed\n", ph->memtype->name);
 			if(ph)
 				pb_unreferenced(region, ph, 1);
 			return r;
