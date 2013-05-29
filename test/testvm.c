@@ -150,32 +150,46 @@ main(int argc, char *argv[])
 
 	pipefilename=argv[1];
 
+	printf("%s:%d\n", __FILE__, __LINE__);
+
 	big = !!strstr(pipefilename, "big");
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	init();
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	info.result = time(NULL);
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	if(testinit() != OK) { printf("%s: testinit failed\n", progname); return 1; }
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	cachequiet(!big);
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	if(!(bdata = alloc_contig(PAGE_SIZE, 0, NULL))) {
 		printf("could not allocate block\n");
 		exit(1);
 	}
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	if(dotest(PAGE_SIZE,       10, 3)) { e(11); exit(1); } 
+	printf("%s:%d\n", __FILE__, __LINE__);
 	if(dotest(PAGE_SIZE,     1000, 3)) { e(11); exit(1); } 
+	printf("%s:%d\n", __FILE__, __LINE__);
 	if(dotest(PAGE_SIZE,    50000, 3)) { e(11); exit(1); } 
+	printf("%s:%d\n", __FILE__, __LINE__);
 	if(big) {
 		getmem(&totalmem, &freemem, &cachedmem);
 		if(dotest(PAGE_SIZE, totalmem*1.5, 3)) { e(11); exit(1); } 
 	}
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	info.result = 0;
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	writepipe(&info);
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	return 0;
 }

@@ -70,17 +70,22 @@ main(int argc, char *argv[])
 	if(system(cmdline) < 0) { e(10); exit(1); }
 
 	/* don't hang forever if the open or read block */
-	alarm(big ? 6000 : 600);
+	alarm(big ? 6000 : 800);
+
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	if((pipefd=open(pipefn, O_RDONLY)) < 0) { e(3); exit(1); }
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	if((r=read(pipefd, &i, sizeof(i))) != sizeof(i)) {
 		printf("read returned %d\n", r);
 		e(12);
 		exit(1);
 	}
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	if(i.result != 0) { e(i.result); }
+	printf("%s:%d\n", __FILE__, __LINE__);
 
 	quit();
 
