@@ -546,6 +546,9 @@
 ./usr/include/ddekit/timer.h		minix-sys
 ./usr/include/ddekit/types.h		minix-sys
 ./usr/include/ddekit/usb.h		minix-sys
+./usr/include/dev			minix-sys
+./usr/include/dev/i2c			minix-sys
+./usr/include/dev/i2c/i2c_io.h		minix-sys
 ./usr/include/dirent.h			minix-sys
 ./usr/include/disktab.h			minix-sys
 ./usr/include/dlfcn.h			minix-sys
