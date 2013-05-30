@@ -2,6 +2,15 @@
 set -e
 #set -x
 
+#
+# Source settings if present
+#
+if [ -e .settings ]
+then
+	echo "Sourcing settings frem .settings"
+ 	. .settings
+fi
+
 : ${ARCH=evbearm-el}
 : ${OBJ=../obj.${ARCH}}
 : ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
