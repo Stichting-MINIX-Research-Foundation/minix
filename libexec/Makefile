@@ -4,7 +4,7 @@
 .include <bsd.own.mk>
 
 SUBDIR= \
-	\
+	ftpd	\
 	ld.elf_so
 
 .if defined(__MINIX)
