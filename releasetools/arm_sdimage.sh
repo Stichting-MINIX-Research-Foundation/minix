@@ -2,6 +2,18 @@
 set -e
 #set -x
 
+#
+# Source settings if present
+#
+if [ -e .settings ]
+then
+	echo "Sourcing settings from .settings"
+	# Display the content (so we can check in the build logs
+	# what the settings contain.
+	cat .settings | sed "s,^,CONTENT ,g"
+ 	. .settings
+fi
+
 : ${ARCH=evbearm-el}
 : ${OBJ=../obj.${ARCH}}
 : ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
