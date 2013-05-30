@@ -40,7 +40,7 @@ static void report(const char *label)
 
 static void sigchld(int sig)
 {
-    while (waitpid(0, NULL, WNOHANG) > 0) {
+    while (waitpid(-1, NULL, WNOHANG) > 0) {
 	if (nchildren > 0) nchildren--;
     }
 }
