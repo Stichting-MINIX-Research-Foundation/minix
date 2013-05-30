@@ -228,6 +228,11 @@ int libexec_load_elf(struct exec_info *execi)
 		if(first || startv > vaddr) startv = vaddr;
 		first = 0;
 
+		if ((ph->p_flags & PF_X) != 0 && execi->text_size < seg_membytes)
+			execi->text_size = seg_membytes;
+		else
+			execi->data_size = seg_membytes;
+
 		if(try_mmap && execi->memmap(execi, vaddr, fbytes, foffset, clearend, mmap_prot) == OK) {
 #if ELF_DEBUG
 			printf("libexec: mmap 0x%lx-0x%lx done, clearend 0x%x\n",
