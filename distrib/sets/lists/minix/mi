@@ -128,6 +128,7 @@
 ./lib					minix-sys
 ./lib/cpp 				minix-sys
 ./libexec				minix-sys
+./usr/libexec/ftpd			minix-sys
 ./libexec/ld.elf_so			minix-sys
 ./libexec/ld-elf.so.1			minix-sys
 ./mnt					minix-sys
@@ -3667,6 +3668,10 @@
 ./usr/man/man5/editrc.5			minix-sys
 ./usr/man/man5/ethers.5					minix-sys
 ./usr/man/man5/fstab.5					minix-sys
+./usr/man/man5/ftpchroot.5				minix-sys
+./usr/man/man5/ftpd.conf.5				minix-sys
+./usr/man/man5/ftpusers.5				minix-sys
+./usr/man/man8/ftpd.8					minix-sys
 ./usr/man/man5/group.5					minix-sys
 ./usr/man/man5/hosts.5					minix-sys
 ./usr/man/man5/httpd.conf.5					minix-sys
