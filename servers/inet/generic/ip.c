@@ -482,6 +482,7 @@ static void ip_bufcheck()
 }
 #endif /* BUF_CONSISTENCY_CHECK */
 
+__dead
 static void ip_bad_callback(ip_port)
 struct ip_port *ip_port;
 {

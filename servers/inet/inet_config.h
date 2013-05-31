@@ -13,7 +13,7 @@ Copyright 1995 Philip Homburg
 #define INET__INET_CONFIG_H
 
 /* Inet configuration file. */
-#define PATH_INET_CONF	"/etc/inet.conf"
+#define PATH_INET_CONF	(char *) "/etc/inet.conf"
 
 #define IP_PORT_MAX	32	/* Up to this many network devices */
 extern int eth_conf_nr;		/* Number of ethernets */
@@ -62,7 +62,7 @@ struct udp_conf
 /* To compute the minor device number for a device on an interface. */
 #define if2minor(ifno, dev)	(1 + (ifno) * 8 + (dev))
 
-#define IPSTAT_DEV	"/dev/ipstat"
+#define IPSTAT_DEV	(char *) "/dev/ipstat"
 #define IPSTAT_MODE	0666	/* Is this right? What about just setuid apps */
 #define IPSTAT_MINOR	0	/* Minor number of /dev/ipstat */
 

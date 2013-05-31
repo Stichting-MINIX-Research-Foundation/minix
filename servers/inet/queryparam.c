@@ -73,7 +73,7 @@ int queryparam(int qgetc(void), void **poffset, size_t *psize)
 	epl= ep->list;
 
 	while (c != 0 && c != ',') {
-		prefix= "x";
+		prefix= (char *) "x";
 		n= 0;
 
 		for (;;) {

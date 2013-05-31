@@ -19,16 +19,16 @@ struct export_params {
 };
 
 #ifdef __STDC__
-#define qp_stringize(var)	#var
-#define qp_dotstringize(var)	"." #var
+#define qp_stringize(var)	(char *) #var
+#define qp_dotstringize(var)	"." (char *) #var
 #else
 #define qp_stringize(var)	"var"
 #define qp_dotstringize(var)	".var"
 #endif
 #define QP_VARIABLE(var)	{ qp_stringize(var), &(var), sizeof(var) }
-#define QP_ARRAY(var)		{ "[", 0, sizeof((var)[0]) }
+#define QP_ARRAY(var)		{ (char *) "[", 0, sizeof((var)[0]) }
 #define QP_VECTOR(var,ptr,len)	{ qp_stringize(var), &(ptr), -1 },\
-				{ "[", &(len), sizeof(*(ptr)) }
+				{ (char *) "[", &(len), sizeof(*(ptr)) }
 #define QP_FIELD(field, type)	{ qp_dotstringize(field), \
 					(void *)offsetof(type, field), \
 					sizeof(((type *)0)->field) }
