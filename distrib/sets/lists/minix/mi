@@ -335,6 +335,7 @@
 ./usr/bin/loadramdisk			minix-sys
 ./usr/bin/logger			minix-sys
 ./usr/bin/login				minix-sys
+./usr/bin/logname			minix-sys
 ./usr/bin/look				minix-sys
 ./usr/bin/lorder			minix-sys
 ./usr/bin/lp				minix-sys
@@ -1321,6 +1322,7 @@
 ./usr/man/man1/local.1			minix-sys
 ./usr/man/man1/logger.1			minix-sys
 ./usr/man/man1/login.1			minix-sys
+./usr/man/man1/logname.1		minix-sys
 ./usr/man/man1/look.1			minix-sys
 ./usr/man/man1/lorder.1			minix-sys
 ./usr/man/man1/lp.1			minix-sys

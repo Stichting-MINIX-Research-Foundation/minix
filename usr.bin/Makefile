@@ -14,7 +14,7 @@ SUBDIR= \
 	genassym getopt head \
 	indent infocmp join \
 	ldd \
-	login lorder m4 \
+	login logname lorder m4 \
 	make man \
 	mkdep mktemp \
 	\
