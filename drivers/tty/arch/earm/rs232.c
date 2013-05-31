@@ -739,7 +739,7 @@ read_chars(rs232_t *rs, unsigned int status)
 
 	lsr = status;
 
-	if (lsr & UART_LSR_DR) {
+	while (lsr & UART_LSR_DR) {
 		c = serial_in(rs, OMAP3_RHR);
 		if (!(rs->ostate & ORAW)) {
 			if (c == rs->oxoff) {
@@ -761,6 +761,8 @@ read_chars(rs232_t *rs, unsigned int status)
 		if (rs->icount == 1) {
 			rs->tty->tty_events = 1;
 		}
+		/* check the line status to know if there are more chars */
+		lsr = serial_in(rs, OMAP3_LSR);
 	}
 }
 
