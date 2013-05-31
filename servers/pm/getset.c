@@ -23,7 +23,7 @@ int do_get()
  */
 
   register struct mproc *rmp = mp;
-  int r, i;
+  int r;
   int ngroups;
 
   switch(call_nr) {

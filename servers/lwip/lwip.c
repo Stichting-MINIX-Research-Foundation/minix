@@ -34,7 +34,7 @@ extern struct sock_ops sock_udp_ops;
 extern struct sock_ops sock_tcp_ops;
 extern struct sock_ops sock_raw_ip_ops;
 
-void sys_init(void)
+static void sys_init(void)
 {
 }
 
@@ -91,7 +91,7 @@ static int sef_cb_init_fresh(__unused int type, __unused sef_init_info_t *info)
 	set_timer(&tcp_stmr, tcp_sticks, tcp_swatchdog, 0);
 	
 	netif_init();
-	netif_lo = netif_find("lo0");
+	netif_lo = netif_find((char *) "lo0");
 
 	/* Read configuration. */
 #if 0
@@ -160,12 +160,15 @@ static void sef_local_startup()
 static void ds_event(void)
 {
 	char key[DS_MAX_KEYLEN];
-	char *driver_prefix = "drv.net.";
+	const char *driver_prefix = "drv.net.";
 	char *label;
 	u32_t value;
 	int type;
 	endpoint_t owner_endpoint;
 	int r;
+        int prefix_len;
+
+        prefix_len = strlen(driver_prefix);
 
 	/* We may get one notification for multiple updates from DS. Get events
 	 * and owners from DS, until DS tells us that there are no more.
@@ -178,9 +181,10 @@ static void ds_event(void)
 		}
 
 		/* Only check for network driver up events. */
-		if(strncmp(key, driver_prefix, sizeof(driver_prefix))
-				|| value != DS_DRIVER_UP)
+		if(strncmp(key, driver_prefix, prefix_len)
+		  || value != DS_DRIVER_UP) {
 			return;
+		}
 
 		/* The driver label comes after the prefix. */
 		label = key + strlen(driver_prefix);

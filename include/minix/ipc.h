@@ -39,7 +39,7 @@ typedef struct {
 	u32_t dev;
 	u8_t pages;
 	u8_t flags;
-} mess_vmmcp __packed;
+} mess_vmmcp;
 
 typedef struct {
 	endpoint_t who;
@@ -50,9 +50,9 @@ typedef struct {
 	u32_t len;
 	u16_t fd;
 	u16_t clearend_and_flags; /* low 12 bits are clearend, rest flags */
-} mess_vm_vfs_mmap __packed;
+} mess_vm_vfs_mmap;
 
-typedef struct { u8_t flags; void *addr; } mess_vmmcp_reply __packed;
+typedef struct { u8_t flags; void *addr; } mess_vmmcp_reply;
 
 typedef struct {
   endpoint_t m_source;		/* who sent the message */

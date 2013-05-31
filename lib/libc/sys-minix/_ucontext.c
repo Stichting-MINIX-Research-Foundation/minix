@@ -2,6 +2,7 @@
 #include <namespace.h>
 #include <lib.h>
 #include <machine/stackframe.h>
+#include <sys/cdefs.h>
 #include <ucontext.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -245,6 +246,7 @@ int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 /*===========================================================================*
  *				resumecontext				     *
  *===========================================================================*/
+__dead
 void resumecontext(ucontext_t *ucp)
 {
   if (ucp->uc_link == NULL) exit(0);

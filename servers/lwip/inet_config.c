@@ -45,13 +45,14 @@ int ip_forward_directed_bcast= 0;	/* Default is off */
 
 static int ifdefault= -1;		/* Default network interface. */
 
-static void fatal(char *label)
+__dead
+static void fatal(const char *label)
 {
 	printf("init: %s: %s\n", label, strerror(errno));
 	exit(1);
 }
 
-static void check_mknod(char *device, mode_t mode, int minor)
+static void check_mknod(const char *device, mode_t mode, int minor)
 /* Check if a device exists with the proper device number. */
 {
 	dev_t dev;
