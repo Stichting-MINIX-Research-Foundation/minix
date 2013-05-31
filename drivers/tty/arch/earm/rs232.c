@@ -388,10 +388,11 @@ static void rs_config(rs232_t *rs)
 	serial_out(rs, OMAP3_LCR, UART_LCR_CONF_MODE_A);	/* 3  */
 	mcr = serial_in(rs, OMAP3_MCR);				/* 4a */
 	serial_out(rs, OMAP3_MCR, mcr | UART_MCR_TCRTLR);	/* 4b */
-	/* Set up FIFO for 1 byte */
+	/* Set up FIFO  */
 	rs->fcr = 0;
 	rs->fcr &= ~OMAP_UART_FCR_RX_FIFO_TRIG_MASK;
 	rs->fcr |= (0x1 << OMAP_UART_FCR_RX_FIFO_TRIG_SHIFT);
+	rs->fcr |= UART_FCR_ENABLE_FIFO;
 	serial_out(rs, OMAP3_FCR, rs->fcr);			/* 5  */
 	serial_out(rs, OMAP3_LCR, UART_LCR_CONF_MODE_B);	/* 6  */
 	/* DMA triggers, not supported by this driver */	/* 7  */
@@ -735,11 +736,10 @@ static void
 read_chars(rs232_t *rs, unsigned int status)
 {
 	unsigned char c;
-	unsigned int lsr;
 
-	lsr = status;
-
-	if (lsr & UART_LSR_DR) {
+	/* check the line status to know if there are more chars */
+	while (serial_in(rs, OMAP3_LSR) &  UART_LSR_DR) {
+		assert( (serial_in(rs,OMAP3_LSR) & OMAP3_LSR_RXOE) == 0);
 		c = serial_in(rs, OMAP3_RHR);
 		if (!(rs->ostate & ORAW)) {
 			if (c == rs->oxoff) {
@@ -755,9 +755,15 @@ read_chars(rs232_t *rs, unsigned int status)
 			return;
 		}
 
-		if (++rs->icount == RS_IHIGHWATER && rs->idevready) istop(rs);
+		if (++rs->icount == RS_IHIGHWATER && rs->idevready) {
+			 istop(rs);
+		}
+
 		*rs->ihead = c;
-		if (++rs->ihead == bufend(rs->ibuf)) rs->ihead = rs->ibuf;
+		if (++rs->ihead == bufend(rs->ibuf)) {
+			rs->ihead = rs->ibuf;
+		}
+
 		if (rs->icount == 1) {
 			rs->tty->tty_events = 1;
 		}

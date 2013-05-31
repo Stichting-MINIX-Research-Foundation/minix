@@ -27,7 +27,7 @@
 #define OMAP3_SYSS		0x16	/* System status register */
 
 /* Enhanced Features Register bits */
-#define UART_EFR_ECB		0x10	/* Enhanced control bit */
+#define UART_EFR_ECB		(1 << 4)/* Enhanced control bit */
 
 /* Interrupt Enable Register bits */
 #define UART_IER_MSI		0x08	/* Modem status interrupt */
@@ -94,6 +94,7 @@
 /* Line status register fields */
 #define OMAP3_LSR_TX_FIFO_E    (1 << 5) /* Transmit FIFO empty */
 #define OMAP3_LSR_RX_FIFO_E    (1 << 0) /* Receive FIFO empty */
+#define OMAP3_LSR_RXOE         (1 << 1) /* Overrun error.*/
 
 /* Supplementary status register fields */
 #define OMAP3_SSR_TX_FIFO_FULL (1 << 0) /* Transmit FIFO full */
