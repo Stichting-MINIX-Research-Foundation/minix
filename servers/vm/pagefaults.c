@@ -147,6 +147,8 @@ static void pf_cont(struct vmproc *vmp, message *m,
         void *arg, void *statearg)
 {
 	struct pf_state *state = statearg;
+	int p;
+	if(vm_isokendpt(state->ep, &p) != OK) return;	/* signal */
 	handle_pagefault(state->ep, state->vaddr, state->err, 1);
 }
 
