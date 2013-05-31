@@ -219,6 +219,7 @@
 ./usr/bin/badblocks			minix-sys	obsolete
 ./usr/bin/banner			minix-sys
 ./usr/bin/basename			minix-sys
+./usr/bin/bdes				minix-sys
 ./usr/bin/bsdtar			minix-sys
 ./usr/bin/bsfilt			minix-sys
 ./usr/bin/btrace			minix-sys
@@ -1207,6 +1208,7 @@
 ./usr/man/man1/awk.1			minix-sys
 ./usr/man/man1/banner.1			minix-sys
 ./usr/man/man1/basename.1		minix-sys
+./usr/man/man1/bdes.1			minix-sys
 ./usr/man/man1/break.1			minix-sys
 ./usr/man/man1/bsdtar.1			minix-sys
 ./usr/man/man1/bsfilt.1			minix-sys
