@@ -134,14 +134,14 @@ timer_t *timer;
 static void set_timer()
 {
 	time_t new_time;
-	time_t curr_time;
+	time_t now;
 
 	if (!timer_chain)
 		return;
 
-	curr_time= get_time();
+	now= get_time();
 	new_time= timer_chain->tim_time;
-	if (new_time <= curr_time)
+	if (new_time <= now)
 	{
 		clck_call_expire= 1;
 		return;
@@ -150,7 +150,7 @@ static void set_timer()
 	if (next_timeout == 0 || new_time < next_timeout)
 	{
 		next_timeout= new_time;
-		new_time -= curr_time;
+		new_time -= now;
 
 		if (sys_setalarm(new_time, 0) != OK)
   			ip_panic(("can't set timer"));
@@ -166,7 +166,7 @@ timer_t *timer;
 
 void clck_expire_timers()
 {
-	time_t curr_time;
+	time_t now;
 	timer_t *timer_index;
 
 	clck_call_expire= 0;
@@ -174,8 +174,8 @@ void clck_expire_timers()
 	if (timer_chain == NULL)
 		return;
 
-	curr_time= get_time();
-	while (timer_chain && timer_chain->tim_time<=curr_time)
+	now= get_time();
+	while (timer_chain && timer_chain->tim_time<=now)
 	{
 		assert(timer_chain->tim_active);
 		timer_chain->tim_active= 0;

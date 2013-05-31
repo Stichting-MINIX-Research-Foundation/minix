@@ -16,6 +16,7 @@ Copyright 1995 Philip Homburg
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/cdefs.h>
 #include <minix/type.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
@@ -42,7 +43,8 @@ int ip_forward_directed_bcast= 0;	/* Default is off */
 static u8_t iftype[IP_PORT_MAX];	/* Interface in use as? */
 static int ifdefault= -1;		/* Default network interface. */
 
-static void fatal(char *label)
+__dead
+static void fatal(char *label) 
 {
 	printf("init: %s: %s\n", label, strerror(errno));
 	exit(1);
@@ -108,11 +110,11 @@ static void check_dev(int type, int ifno)
 		mode_t	mode;
 		u8_t	minor_off;
 	} devlist[] = {
-		{	"/dev/eth",	0600,	ETH_DEV_OFF	},
-		{	"/dev/psip",	0600,	PSIP_DEV_OFF	},
-		{	"/dev/ip",	0600,	IP_DEV_OFF	},
-		{	"/dev/tcp",	0666,	TCP_DEV_OFF	},
-		{	"/dev/udp",	0666,	UDP_DEV_OFF	},
+		{	(char *) "/dev/eth",	0600,	ETH_DEV_OFF	},
+		{	(char *) "/dev/psip",	0600,	PSIP_DEV_OFF	},
+		{	(char *) "/dev/ip",	0600,	IP_DEV_OFF	},
+		{	(char *) "/dev/tcp",	0666,	TCP_DEV_OFF	},
+		{	(char *) "/dev/udp",	0666,	UDP_DEV_OFF	},
 	};
 	struct devlist *dvp;
 	int i;
@@ -147,6 +149,7 @@ static char word[16];
 static unsigned char line[256], *lineptr;
 static unsigned linenr;
 
+__dead
 static void error(void)
 {
 	printf("inet: error on line %u\n", linenr);
@@ -407,7 +410,7 @@ void read_conf(void)
 	/* See what the device number of /dev/ip is.  That's what we
 	 * used last time for the network devices, so we keep doing so.
 	 */
-	if (stat("/dev/ip", &st) < 0) fatal("/dev/ip");
+	if (stat("/dev/ip", &st) < 0) fatal((char *) "/dev/ip");
 	ip_dev= st.st_rdev;
 
 	for (i= 0; i < IP_PORT_MAX; i++) {

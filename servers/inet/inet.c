@@ -331,7 +331,7 @@ static void nw_init()
 static void ds_event()
 {
 	char key[DS_MAX_KEYLEN];
-	char *driver_prefix = "drv.net.";
+	char *driver_prefix = (char *) "drv.net.";
 	char *label;
 	u32_t value;
 	int type;
@@ -375,7 +375,8 @@ int line;
 	printf("panic at %s, %d: ", file, line);
 }
 
-void inet_panic()
+__dead
+void inet_panic(void)
 {
 	printf("\ninet stacktrace: ");
 	util_stacktrace();
@@ -384,6 +385,7 @@ void inet_panic()
 }
 
 #if !NDEBUG
+__dead
 void bad_assertion(file, line, what)
 char *file;
 int line;
@@ -391,10 +393,11 @@ char *what;
 {
 	panic0(file, line);
 	printf("assertion \"%s\" failed", what);
-	panic();
+	panic("help");
 }
 
 
+__dead
 void bad_compare(file, line, lhs, what, rhs)
 char *file;
 int line;
@@ -404,7 +407,7 @@ int rhs;
 {
 	panic0(file, line);
 	printf("compare (%d) %s (%d) failed", lhs, what, rhs);
-	panic();
+	panic("help");
 }
 #endif /* !NDEBUG */
 

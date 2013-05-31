@@ -63,14 +63,19 @@ typedef int ioreq_t;
 #define PRIVATE	static
 #define FORWARD	static
 
-#define THIS_FILE static char *this_file= __FILE__;
+#define THIS_FILE
+#define this_file __FILE__
 
 void panic0(char *file, int line);
 void inet_panic(void) _NORETURN;
 
+#if 0
 #define ip_panic(print_list)  \
-	(panic0(this_file, __LINE__), printf print_list, panic())
+       (panic0(this_file, __LINE__), printf print_list, panic())
 #define panic() inet_panic()
+#else
+#define ip_panic(print_list)  do { panic print_list; } while(0)
+#endif
 
 #if DEBUG
 #define ip_warning(print_list)  \
