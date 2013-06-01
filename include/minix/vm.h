@@ -24,8 +24,6 @@ int vm_query_exit(endpoint_t *endpt);
 int vm_watch_exit(endpoint_t ep);
 int vm_forgetblock(u64_t id);
 void vm_forgetblocks(void);
-int vm_yield_block_get_block(u64_t yieldid, u64_t getid, void *mem,
-	vir_bytes len);
 int minix_vfs_mmap(endpoint_t who, u32_t offset, u32_t len,
         u32_t dev, u32_t ino, u16_t fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);
@@ -34,11 +32,6 @@ int minix_vfs_mmap(endpoint_t who, u32_t offset, u32_t len,
 #define MVM_LENMASK	0x0FFF
 #define MVM_FLAGSMASK	0xF000
 #define MVM_WRITABLE	0x8000
-
-/* Invalid ID with special meaning for the vm_yield_block_get_block
- * interface.
- */
-#define VM_BLOCKID_NONE make64(ULONG_MAX, ULONG_MAX)
 
 /* VM kernel request types. */
 #define VMPTYPE_NONE		0

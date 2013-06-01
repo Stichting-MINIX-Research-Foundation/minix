@@ -229,12 +229,6 @@ int vm_forgetblock(u64_t id)
 	return ENOSYS;
 }
 
-int vm_yield_block_get_block(u64_t yieldid, u64_t getid, void *mem,
-        vir_bytes len)
-{
-	return ENOSYS;
-}
-
 void vm_forgetblocks(void)
 {
 	return;
