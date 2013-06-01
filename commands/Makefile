@@ -9,7 +9,7 @@ SUBDIR=	add_route arp ash at backup basename btrace \
 	dd decomp16 DESCRIBE devmand devsize df dhcpd \
 	dhrystone diff dirname diskctl dumpcore \
 	eject env expand factor fbdctl \
-	find finger fingerd fix fold format fortune fsck.mfs \
+	find fingerd fix fold format fortune fsck.mfs \
 	gcore gcov-pull getty grep hexdump host \
 	hostaddr id ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread last \
