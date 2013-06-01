@@ -128,6 +128,7 @@
 ./lib					minix-sys
 ./lib/cpp 				minix-sys
 ./libexec				minix-sys
+./usr/libexec/fingerd			minix-sys
 ./usr/libexec/ftpd			minix-sys
 ./libexec/ld.elf_so			minix-sys
 ./libexec/ld-elf.so.1			minix-sys
@@ -314,7 +315,6 @@
 ./usr/bin/ifconfig			minix-sys
 ./usr/bin/ifdef				minix-sys
 ./usr/bin/indent			minix-sys
-./usr/bin/in.fingerd			minix-sys
 ./usr/bin/infocmp			minix-sys
 ./usr/bin/in.rshd			minix-sys
 ./usr/bin/install			minix-sys
