@@ -162,6 +162,7 @@
 2012/10/17 12:00:00,usr.bin/printf
 2010/02/19 16:35:27,usr.bin/sed
 2010/05/27 08:40:19,usr.bin/seq
+2013/06/02 12:00:00,usr.bin/shuffle
 2012/10/17 12:00:00,usr.bin/sort
 2011/01/15 22:54:10,usr.bin/stat
 2012/02/10 16:16:12,usr.bin/su
