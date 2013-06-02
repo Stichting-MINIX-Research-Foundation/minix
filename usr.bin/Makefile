@@ -23,7 +23,7 @@ SUBDIR= \
 	printf \
 	\
 	\
-	sed seq \
+	shuffle sed seq \
 	sort stat su \
 	tic tput \
 	tsort \
