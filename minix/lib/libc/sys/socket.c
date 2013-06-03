@@ -11,7 +11,19 @@ __weak_alias(socket, __socket30)
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
+
 #include <sys/ioc_net.h>
+#include <net/hton.h>
+#include <net/gen/in.h>
+#include <net/gen/ether.h>
+#include <net/gen/eth_hdr.h>
+#include <net/gen/eth_io.h>
+#include <net/gen/ip_hdr.h>
+#include <net/gen/ip_io.h>
+#include <net/gen/udp.h>
+#include <net/gen/udp_hdr.h>
+#include <net/gen/udp_io.h>
+#include <net/gen/dhcp.h>
 
 #include <net/netlib.h>
 #include <netinet/in.h>
@@ -21,6 +33,7 @@ __weak_alias(socket, __socket30)
 static int _tcp_socket(int type, int protocol);
 static int _udp_socket(int type, int protocol);
 static int _uds_socket(int type, int protocol);
+static int _raw_socket(int type, int protocol);
 static void _socket_flags(int type, int *result);
 
 int socket(int domain, int type, int protocol)
@@ -52,6 +65,12 @@ int socket(int domain, int type, int protocol)
 
 	if (domain == AF_INET && sock_type == SOCK_DGRAM)
 		return _udp_socket(type, protocol);
+
+	if (domain == AF_INET && sock_type == SOCK_RAW && protocol == IPPROTO_ICMP)
+		return _raw_socket(type, protocol);
+
+	if (domain == AF_INET && sock_type == SOCK_RAW && protocol == IPPROTO_UDP)
+		return _raw_socket(type, protocol);
 
 #if DEBUG
 	fprintf(stderr, "socket: nothing for domain %d, type %d, protocol %d\n",
@@ -124,6 +143,50 @@ static int _udp_socket(int type, int protocol)
 		errno= t_errno;
 		return -1;
 	}
+	return fd;
+}
+
+static int _raw_socket(int type, int protocol)
+{
+	int r, fd, t_errno, flags = O_RDWR;
+	struct sockaddr_in sin;
+	nwio_ipopt_t ipopt;
+	int result;
+
+	if (protocol != IPPROTO_ICMP && protocol != IPPROTO_UDP && protocol != 0)
+	{
+#if DEBUG
+		fprintf(stderr, "socket(icmp): bad protocol %d\n", protocol);
+#endif
+		errno= EPROTONOSUPPORT;
+		return -1;
+	}
+	_socket_flags(type, &flags);
+	fd= open(IP_DEVICE, flags);
+	if (fd == -1)
+		return fd;
+
+	memset(&ipopt, 0, sizeof(ipopt));
+
+        ipopt.nwio_flags= NWIO_COPY;
+
+	if(protocol) {
+        	ipopt.nwio_flags |= NWIO_PROTOSPEC;
+	        ipopt.nwio_proto = protocol;
+	}
+
+        result = ioctl (fd, NWIOSIPOPT, &ipopt);
+        if (result<0) {
+		close(fd);
+		return -1;
+	}
+
+        result = ioctl (fd, NWIOGIPOPT, &ipopt);
+        if (result<0) {
+		close(fd);
+		return -1;
+	}
+
 	return fd;
 }
 
