@@ -580,7 +580,7 @@ static int can_use_network(void)
 	int status;
 
 	/* try to ping minix3.org */
-	status = system("ping www.minix3.org > /dev/null 2>&1");
+	status = system("ping -w 5 www.minix3.org > /dev/null 2>&1");
 	if (status == 127)
 	{
 		printf("cannot execute ping\n");
