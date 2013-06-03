@@ -20,6 +20,9 @@
 #include <net/gen/udp_hdr.h>
 #include <net/gen/udp_io.h>
 
+#include <net/gen/ip_hdr.h>
+#include <net/gen/icmp_hdr.h>
+
 #define DEBUG 0
 
 static ssize_t _tcp_recvfrom(int sock, void *__restrict buffer, size_t length,
@@ -84,6 +87,37 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 				&uds_addr);
 		}
 	}
+
+	{
+		ip_hdr_t *ip_hdr;
+       		int ihl, rd;
+		icmp_hdr_t *icmp_hdr;
+		struct sockaddr_in sin;
+
+		rd = read(sock, buffer, length);
+
+		if(rd < 0) return rd;
+
+		assert(rd >= sizeof(*ip_hdr));
+
+		ip_hdr= buffer;
+
+		if (address != NULL)
+		{
+			int len;
+			memset(&sin, 0, sizeof(sin));
+			sin.sin_family= AF_INET;
+			sin.sin_addr.s_addr= ip_hdr->ih_src;
+			sin.sin_len= sizeof(sin);
+			len= *address_len;
+			if (len > sizeof(sin))
+				len= sizeof(sin);
+			memcpy(address, &sin, len);
+			*address_len= sizeof(sin);
+		}
+
+		return rd;
+       }
 
 #if DEBUG
 	fprintf(stderr, "recvfrom: not implemented for fd %d\n", sock);

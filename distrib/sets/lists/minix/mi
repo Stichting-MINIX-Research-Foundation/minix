@@ -144,6 +144,7 @@
 ./sbin/mknod				minix-sys
 ./sbin/newfs_ext2fs			minix-sys
 ./sbin/nologin				minix-sys
+./sbin/ping				minix-sys
 ./sbin/poweroff				minix-sys
 ./sbin/reboot				minix-sys
 ./sbin/shutdown				minix-sys
@@ -435,7 +436,7 @@
 ./usr/bin/paste				minix-sys
 ./usr/bin/patch				minix-sys
 ./usr/bin/pathchk			minix-sys
-./usr/bin/ping				minix-sys
+./usr/bin/ping                          minix-sys	obsolete
 ./usr/bin/pkgin_all			minix-sys
 ./usr/bin/pkgin_cd			minix-sys
 ./usr/bin/pkgin_sets			minix-sys
@@ -1441,6 +1442,8 @@
 ./usr/include/net/if_ether.h		minix-sys
 ./usr/include/net/if.h			minix-sys
 ./usr/include/net/netlib.h		minix-sys
+./usr/include/net/radix.h		minix-sys
+./usr/include/net/route.h		minix-sys
 ./usr/include/netconfig.h		minix-sys
 ./usr/include/netdb.h			minix-sys
 ./usr/include/netgroup.h		minix-sys
@@ -1448,7 +1451,11 @@
 ./usr/include/netinet/in.h		minix-sys
 ./usr/include/netinet/in_systm.h	minix-sys
 ./usr/include/netinet/ip.h		minix-sys
+./usr/include/netinet/ip_icmp.h		minix-sys
+./usr/include/netinet/ip_var.h		minix-sys
 ./usr/include/netinet/tcp.h		minix-sys
+./usr/include/netinet/udp.h			minix-sys
+./usr/include/netinet/udp_var.h			minix-sys
 ./usr/include/netinet6			minix-sys
 ./usr/include/netinet6/in6.h		minix-sys
 ./usr/include/nlist.h			minix-sys
@@ -2429,7 +2436,7 @@
 ./usr/man/man1/patch.1			minix-sys
 ./usr/man/man1/pathchk.1		minix-sys
 ./usr/man/man1/pax.1			minix-sys
-./usr/man/man1/ping.1			minix-sys
+./usr/man/man1/ping.1                   minix-sys	obsolete
 ./usr/man/man1/pkg_view.1		minix-sys
 ./usr/man/man1/playwave.1		minix-sys
 ./usr/man/man1/pr.1			minix-sys
@@ -5083,6 +5090,7 @@
 ./usr/man/man8/ossdevlinks.8			minix-sys
 ./usr/man/man8/part.8				minix-sys
 ./usr/man/man8/partition.8			minix-sys
+./usr/man/man8/ping.8			minix-sys
 ./usr/man/man8/postinstall.8			minix-sys
 ./usr/man/man8/poweroff.8			minix-sys
 ./usr/man/man8/printroot.8			minix-sys
@@ -5107,6 +5115,7 @@
 ./usr/man/man8/sync.8				minix-sys
 ./usr/man/man8/syslogd.8			minix-sys
 ./usr/man/man8/tcpd.8				minix-sys
+./usr/man/man8/traceroute.8			minix-sys
 ./usr/man/man8/unix.8				minix-sys
 ./usr/man/man8/unlink.8				minix-sys
 ./usr/man/man8/unstr.8				minix-sys
@@ -5156,6 +5165,7 @@
 ./usr/sbin/postinstall			minix-sys
 ./usr/sbin/pwd_mkdb			minix-sys
 ./usr/sbin/rdate			minix-sys
+./usr/sbin/traceroute			minix-sys
 ./usr/sbin/unlink			minix-sys
 ./usr/sbin/user				minix-sys
 ./usr/sbin/useradd			minix-sys
