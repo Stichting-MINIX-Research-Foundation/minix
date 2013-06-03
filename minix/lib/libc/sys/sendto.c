@@ -14,6 +14,8 @@
 #include <netinet/in.h>
 
 #include <net/gen/in.h>
+#include <net/gen/ip_hdr.h>
+#include <net/gen/icmp_hdr.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
 #include <net/gen/udp.h>
@@ -74,6 +76,26 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 			return _uds_sendto_conn(sock, message,
 				length, flags, dest_addr, dest_len);
 		}
+	}
+
+	{
+		ip_hdr_t *ip_hdr;
+		int ihl;
+		icmp_hdr_t *icmp_hdr;
+		struct sockaddr_in *sinp;
+
+		sinp = (struct sockaddr_in *) __UNCONST(dest_addr);
+		if (sinp->sin_family != AF_INET)
+		{
+			errno= EAFNOSUPPORT;
+			return -1;
+		}
+
+		/* raw */
+		ip_hdr= (ip_hdr_t *)message;
+		ip_hdr->ih_dst= sinp->sin_addr.s_addr;
+
+		return write(sock, message, length);
 	}
 
 #if DEBUG
