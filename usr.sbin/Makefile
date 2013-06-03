@@ -24,7 +24,7 @@ SUBDIR= \
 	\
 	rdate \
 	\
-	\
+	traceroute \
 	\
 	\
 	unlink user \
