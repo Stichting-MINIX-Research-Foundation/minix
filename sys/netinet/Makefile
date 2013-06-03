@@ -7,8 +7,10 @@ INCS=	\
 	in_systm.h \
 	\
 	ip.h \
+	ip_icmp.h \
+	ip_var.h \
 	tcp.h \
-	\
+	udp.h udp_var.h \
 	
 
 .if !defined(__MINIX)

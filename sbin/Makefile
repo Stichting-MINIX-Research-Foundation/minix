@@ -10,9 +10,9 @@ SUBDIR= \
 	chown \
 	fsck init \
 	mknod nologin \
+	ping \
 	reboot \
 	shutdown \
-	
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs

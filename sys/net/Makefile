@@ -6,6 +6,8 @@ INCSDIR= /usr/include/net
 
 INCS=	ethertypes.h \
 	if_ether.h \
+	radix.h \
+	route.h \
 	\
 	\
 	\

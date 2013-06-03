@@ -1,0 +1,272 @@
+#!/usr/local/bin/perl
+#
+#	$NetBSD: trrt2netbsd,v 1.4 1999/06/16 20:47:57 is Exp $
+#
+#  Perl script to convert a standard distribution directory for traceroute into
+#	a NetBSD source tree.
+#
+#  This is done as a script so that as each distribution is released,
+#	only changes from the previous one need to be dealt with as
+#	modifications to this script and related files.  This should
+#	reduce the cost of updating from a new release of traceroute by an
+#	order of magnitude (or more?)
+#
+#  This script requires two environment variables set:
+#	SRCDIR - traceroute source directory
+#	TARGETDIR - name of the high level directory to make
+#
+#  Written by Christos Zoulas Oct 2nd, 1997 for traceroute-1.4a5
+#
+
+$version = "1.4a5";
+
+# definitions ...
+
+@subdirs = ("usr.sbin/traceroute");
+
+@trrtf = ("ifaddrlist.c", "savestr.c", "traceroute.c");
+
+@trrthf = ("gnuc.h", "ifaddrlist.h", "savestr.h");
+
+@trrtmf = ("traceroute.8");
+@trrtdf = ("CHANGES", "README");
+@trrtaf = ("mean.awk", "median.awk");
+
+
+# sed edit list: file, sed-program
+%sedlist = ();
+
+#
+# Utility Subroutines
+#
+
+sub makedir {
+    system("mkdir -p @_");
+}
+
+# &fixrcs (fromfile, tofile);
+sub fixrcs
+{
+    my ($f, $t) = @_;
+    my @keywords = ("Author", "Date", "Header", "Id", "Locker", "Log",
+		    "Name", "RCSfile", "Revision", "Source", "State");
+    my $state = 0;
+    my $hdr = 0;
+
+    open(IFILE, "<$f") || die "Cannot open $f";
+    open(OFILE, ">$t") || die "Cannot create $t";
+
+    if ($t =~ /.*\.[0-9]/) {
+	print OFILE '.\\" $', 'NetBSD',  '$', "\n.\\\"", "\n";
+    }
+    elsif ($t =~ /.*\.[ch]/) {
+	print OFILE "/*\t", '$', 'NetBSD', '$', "\t*/\n\n";
+    }
+    elsif ($t =~ /.*\.[yl]/) {
+	$hdr = 1;
+    }
+    else {
+	print OFILE '$', 'NetBSD', '$', "\n";
+    }
+    while (<IFILE>) {
+	if ($hdr == 1) {
+	    if (/%{/) {
+		print OFILE "%{\n/*\t", '$', 'NetBSD', '$', "\t*/\n\n";
+		$hdr = 0;
+		next;
+	    }
+	}
+	if ($state == 2) {
+	    if (/#endif/) {
+		print OFILE "#else\n__RCSID(", '"$', 'NetBSD', '$"',
+		    ");\n#endif\n";
+		$state = 0;
+	    }
+	}
+	if ($state == 1) {
+	    print OFILE "#if 0\n";
+	    $state = 2;
+	}
+	if (/#ifndef lint/) {
+	    print OFILE "#include <sys/cdefs.h>\n";
+	    $state = 1;
+	}
+	foreach $key (@keywords) {
+	    s/\$$key\$/$key/g;
+	    s/\$$key:(.*)\$/$key:$1/g;
+	}
+	print OFILE $_;
+    }
+    close(IFILE) || die "closing input file";
+    close(OFILE) || die "closing output file";
+}
+
+# &copyfiles (fromdir, todir, list of files);
+sub copyfiles {
+    local ($fdir, $tdir, @list) = @_;
+    local ($f);
+
+    foreach $f (@list) {
+	print "  $fdir/$f --> $tdir/$f\n";
+	&fixrcs("$fdir/$f", "$tdir/$f");
+    }
+}
+
+# &copyfile (fromfile, tofile);
+sub copyfile {
+    local ($f, $t) = @_;
+
+    print "  $f --> $t\n";
+    system ("cp $f $t");
+}
+
+sub uniq {
+    local (@inlist) = @_;
+    local (@outlist);
+
+    @outlist = ($inlist[0]);
+    for ( $i=1; $i < @inlist; $i++ ) {
+	if ($inlist[$i] ne $inlist[$i-1]) {
+	    push (@outlist, $inlist[$i]);
+	}
+    }
+
+    @outlist;
+}
+
+sub dumpsrcs {
+    local (@names) = @_;
+    local ($count);
+
+    $count = 0;
+    while ($f = pop(@names)) {
+        print ODATA "$f ";
+	if ($count == 5 && @names > 0) {
+	    print ODATA "\\\n";
+	    $count = 0;
+	} else {
+	    $count += 1;
+	}
+    }
+    if ($count != 0) {
+	print ODATA "\n";
+    }
+}
+
+#
+# Main program.
+# 
+
+$srcdir = $ENV{'SRCDIR'};
+$targetdir = $ENV{'TARGETDIR'};
+$incdirs = "-I. -I$srcdir/config -I$srcdir";
+
+if (!$srcdir | !targetdir) {
+    die "You must define the environment variables SRCDIR and TARGETDIR.\n"
+} 
+print "Making the NetBSD directory tree.\n";
+foreach $f (@subdirs) { 
+    print "   -->$f\n";
+    makedir ("$targetdir/$f");
+}
+
+print "Populating the usr.sbin/traceroute directory.\n";
+&copyfiles ("$srcdir", "$targetdir/usr.sbin/traceroute", @trrtf, @trrthf, @trrtdf,
+	    @trrtmf, @trrtaf);
+
+#
+# Build makefiles
+#
+
+$first = "True";
+while ($line = <DATA>) {
+    chop ($line);
+    if (substr($line,0,2) eq "%%") {
+	@cmd = split (/ /,$line);
+	if ($cmd[1] eq "file") {
+	    print "Building $targetdir/$cmd[2]\n";
+	    if ($first eq "") {
+		close (ODATA);
+	    } else {
+		$first = "";
+	    }
+	    open (ODATA, ">$targetdir/$cmd[2]") ||
+		die "Could not create $targetdir/$cmd[2]";
+	} elsif ($cmd[1] eq "awks") {
+	    print "  Defining AWKS\n";
+	    if ($first) {
+		die "Data file must start with a %% file!";
+	    }
+	    print ODATA "AWKS=\t";
+	    &dumpsrcs (@trrtaf);
+	} elsif ($cmd[1] eq "srcs") {
+	    print "  Defining SRCS\n";
+	    if ($first) {
+		die "Data file must start with a %% file!";
+	    }
+	    print ODATA "SRCS=\t";
+	    &dumpsrcs (@trrtf);
+	} elsif ($cmd[1] eq "man") {
+	    print "  Defining MAN\n";
+	    if ($first) {
+		die "Data file must start with a %% file!";
+	    }
+	    print ODATA "MAN=\t";
+	    &dumpsrcs (@trrtmf);
+	} elsif ($cmd[1] eq "version") {
+	    print "  Defining VERSION\n";
+	    print ODATA "char version[] = \"$version\";";
+	} elsif ($cmd[1] eq "NetBSD") {
+	    if ($first) {
+		die "Data section must start with a %% file!";
+	    }
+	    print ODATA "$cmd[2]	\$"."NetBSD".": \$	$cmd[3]\n";
+	}
+    } else {
+	if ($first) {
+	    die "Data file must start with a %% file!";
+	}
+	print ODATA "$line\n";
+    }
+}    
+close (ODATA);
+
+#
+# Sed transformations of files
+#
+foreach $n (keys(%sedlist)) {
+    print "Modifying $n\n";
+    system ("cd $targetdir; sed $sedlist{$n} $n > tmp;  mv -f tmp $n");
+}
+
+#
+# end of the script
+#
+
+# what follows is the data for makefiles and other special files
+# that need to be created.
+
+__END__
+%% file usr.sbin/traceroute/Makefile
+%% NetBSD #
+
+WARNS?=	1
+PROG=	traceroute
+%% man
+
+CPPFLAGS+=-DHAVE_MALLOC_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_SYS_SOCKIO_H=1
+CPPFLAGS+=-DHAVE_STRERROR=1 -DHAVE_SETLINEBUF=1 -DHAVE_SOCKADDR_SA_LEN=1 
+CPPFLAGS+=-DHAVE_RAW_OPTIONS=1
+
+BINOWN= root
+BINMODE=4555
+
+%% srcs
+SRCS+= version.c
+
+%% awks 
+
+.include <bsd.prog.mk>
+%% file usr.sbin/traceroute/version.c
+%% NetBSD /* */
+%% version
