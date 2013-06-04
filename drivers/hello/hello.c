@@ -24,16 +24,16 @@ static int lu_state_restore(void);
 /* Entry points to the hello driver. */
 static struct chardriver hello_tab =
 {
-    hello_open,
-    hello_close,
-    nop_ioctl,
-    hello_prepare,
-    hello_transfer,
-    nop_cleanup,
-    nop_alarm,
-    nop_cancel,
-    nop_select,
-    NULL
+    .cdr_open = hello_open,
+    .cdr_close = hello_close,
+    .cdr_ioctl = nop_ioctl,
+    .cdr_prepare = hello_prepare,
+    .cdr_transfer = hello_transfer,
+    .cdr_cleanup = nop_cleanup,
+    .cdr_alarm = nop_alarm,
+    .cdr_cancel = nop_cancel,
+    .cdr_select = nop_select,
+    .cdr_other = NULL
 };
 
 /** Represents the /dev/hello device. */
