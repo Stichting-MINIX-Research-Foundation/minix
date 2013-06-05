@@ -21,6 +21,14 @@ static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 static void sef_cb_signal_handler(int signo);
 
+/* IO event listener and variables */
+typedef struct {
+	int in_blocks;
+	int out_blocks;
+} ext2_io_event_listener_user_data;
+static void ext2_io_event_listener(int rw_flag, dev_t dev, block_t block, void *user_data);
+static ext2_io_event_listener_user_data io_event_count;
+
 EXTERN int env_argc;
 EXTERN char **env_argv;
 
@@ -61,6 +69,8 @@ int main(int argc, char *argv[])
 
 	/* Wait for request message. */
 	get_work(&fs_m_in);
+	io_event_count.in_blocks = 0;
+	io_event_count.out_blocks = 0;
 
 	transid = TRNS_GET_ID(fs_m_in.m_type);
 	fs_m_in.m_type = TRNS_DEL_ID(fs_m_in.m_type);
@@ -213,6 +223,32 @@ static void reply(
   message *m_out                       	/* report result */
 )
 {
+	switch (fs_m_in.m_type) {
+		case REQ_BREAD:
+		case REQ_READ:
+		case REQ_BPEEK:
+		case REQ_PEEK:
+		case REQ_BWRITE:
+		case REQ_WRITE:
+		case REQ_FLUSH:
+		case REQ_SYNC:
+			fs_m_out.RES_INPUT_BLOCKS = io_event_count.in_blocks;
+			fs_m_out.RES_OUTPUT_BLOCKS = io_event_count.out_blocks;
+			break;
+		default:
+			fs_m_out.RES_IO_BLOCKS = ENCODE_IO_BLOCKS(
+					io_event_count.in_blocks,
+					io_event_count.out_blocks);
+			break;
+	}
   if (OK != send(who, m_out))    /* send the message */
 	printf("ext2(%d) was unable to send reply\n", SELF_E);
+}
+
+void ext2_io_event_listener(int rw_flag, dev_t dev, block_t block, void *user_data)
+{
+	if (rw_flag == WRITING)
+		((ext2_io_event_listener_user_data *) user_data)->out_blocks++;
+	else
+		((ext2_io_event_listener_user_data *) user_data)->in_blocks++;
 }

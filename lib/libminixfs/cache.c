@@ -44,6 +44,9 @@ static int rdwt_err;
 
 static int quiet = 0;
 
+static lmfs_io_event_listener io_event_listener = NULL;
+static void *io_event_listener_user_data = NULL;
+
 void
 lmfs_setquiet(int q) { quiet = q; }
 
@@ -544,7 +547,8 @@ register struct buf *bp;	/* buffer pointer */
 
   	/* Report read errors to interested parties. */
   	rdwt_err = r;
-  }
+  } else if (io_event_listener)
+	  io_event_listener(READING, bp->lmfs_dev, bp->lmfs_blocknr, io_event_listener_user_data);
 
 }
 
@@ -703,6 +707,8 @@ void lmfs_rw_scattered(
 			MARKCLEAN(bp);
 		}
 		r -= fs_block_size;
+		if (io_event_listener)
+			io_event_listener(rw_flag, dev, bp->lmfs_blocknr, io_event_listener_user_data);
 	}
 	bufq += nblocks;
 	bufqsize -= nblocks;
@@ -927,4 +933,10 @@ int lmfs_do_bpeek(message *m)
 	}
 
 	return OK;
+}
+
+void lmfs_set_io_event_listener(lmfs_io_event_listener listener, void *user_data)
+{
+	io_event_listener = listener;
+	io_event_listener_user_data = user_data;
 }
