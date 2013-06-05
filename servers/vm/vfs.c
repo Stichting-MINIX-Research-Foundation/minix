@@ -135,8 +135,8 @@ int do_vfs_reply(message *m)
 
 	SLABFREE(orignode);
 
-	/* Send the next request message if any. */
-	if(first_queued)
+	/* Send the next request message if any and not re-activated. */
+	if(first_queued && !active)
 		activate();
 
 	return SUSPEND;	/* don't reply to the reply */
