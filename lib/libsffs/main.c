@@ -94,6 +94,23 @@ int transid;
  */
   int r;
 
+	switch (m_in.m_type) {
+		case REQ_BREAD:
+		case REQ_READ:
+		case REQ_BPEEK:
+		case REQ_PEEK:
+		case REQ_BWRITE:
+		case REQ_WRITE:
+		case REQ_FLUSH:
+		case REQ_SYNC:
+			m_out.RES_INPUT_BLOCKS = 0;
+			m_out.RES_OUTPUT_BLOCKS = 0;
+			break;
+		default:
+			m_out.RES_IO_BLOCKS = ENCODE_IO_BLOCKS(0, 0);
+			break;
+	}
+
   m_out.m_type = err;
   if (IS_VFS_FS_TRANSID(transid)) {
 	/* If a transaction ID was set, reset it */

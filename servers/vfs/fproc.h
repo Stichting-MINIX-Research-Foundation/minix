@@ -50,6 +50,11 @@ EXTERN struct fproc {
   int fp_vp_rdlocks;		/* number of read-only locks on vnodes */
   int fp_vmnt_rdlocks;		/* number of read-only locks on vmnts */
 #endif
+
+  vir_bytes text_size;		/* text segment size of current process */
+  vir_bytes data_size;		/* data segment size of current process */
+  u64_t in_blocks;		/* block input operations */
+  u64_t out_blocks;		/* block output operations */
 } fproc[NR_PROCS];
 
 /* fp_flags */

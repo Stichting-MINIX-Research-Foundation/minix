@@ -55,6 +55,49 @@
 #define RES_SYMLOOP		m9_s3
 #define RES_UID			m9_s4
 #define RES_CONREQS		m9_s3
+/* These fields are used when number of io blocks in one request could be large
+ * These requests use RES_INPUT_BLOCKS and RES_OUTPUT_BLOCKS
+ *   REQ_BREAD
+ *   REQ_READ
+ *   REQ_BPEEK
+ *   REQ_PEEK
+ *   REQ_BWRITE
+ *   REQ_WRITE
+ *   REQ_FLUSH
+ *   REQ_SYNC
+ */
+#define RES_INPUT_BLOCKS		m9_l1
+#define RES_OUTPUT_BLOCKS		m9_l2
+/* This field is used when both in and out blocks are required and small enough
+ * to be encoded into one field, HI stores in and LO stores out blocks.
+ * These requests use RES_INPUT_BLOCKS
+ *   REQ_CHMOD
+ *   REQ_CHOWN
+ *   REQ_CREATE
+ *   REQ_FSTATFS
+ *   REQ_STATVFS
+ *   REQ_FTRUNC
+ *   REQ_GETDENTS
+ *   REQ_INHIBREAD
+ *   REQ_LINK
+ *   REQ_LOOKUP
+ *   REQ_MKDIR
+ *   REQ_MKNOD
+ *   REQ_MOUNTPOINT
+ *   REQ_NEWNODE
+ *   REQ_NEW_DRIVER
+ *   REQ_PUTNODE
+ *   REQ_RDLINK
+ *   REQ_READSUPER
+ *   REQ_RENAME
+ *   REQ_RMDIR
+ *   REQ_SLINK
+ *   REQ_STAT
+ *   REQ_UNLINK
+ *   REQ_UNMOUNT
+ *   REQ_UTIME
+ */
+#define RES_IO_BLOCKS	m9_l2
 
 /* VFS/FS flags */
 #define REQ_RDONLY		001
@@ -126,6 +169,10 @@ typedef struct {
 #define TRNS_GET_ID(t)		((t) & 0xFFFF)
 #define TRNS_ADD_ID(t,id)	(((t) << 16) | ((id) & 0xFFFF))
 #define TRNS_DEL_ID(t)		((short)((t) >> 16))
+
+#define IO_IN_BLOCKS(blocks)		((short)(blocks >> 16))
+#define IO_OUT_BLOCKS(blocks)		((short)(blocks & 0xFFFF))
+#define ENCODE_IO_BLOCKS(in, out)	(in << 16 | (out & 0xFFFF))
 
 #define PFS_BASE		(VFS_BASE + 100)
 

@@ -63,6 +63,10 @@ void lmfs_blockschange(dev_t dev, int delta);
 void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used);
 int fs_sync(void);
 
+typedef void (*lmfs_io_event_listener)(int rw_flag, dev_t dev, block_t block, void *user_data);
+
+void lmfs_set_io_event_listener(lmfs_io_event_listener listener, void *user_data);
+
 /* get_block arguments */
 #define NORMAL             0    /* forces get_block to do disk read */
 #define NO_READ            1    /* prevents get_block from doing disk read */

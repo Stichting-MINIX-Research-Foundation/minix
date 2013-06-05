@@ -60,6 +60,10 @@ int req_breadwrite(
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+
+  fp->in_blocks += m.RES_INPUT_BLOCKS;
+  fp->out_blocks += m.RES_OUTPUT_BLOCKS;
+
   if (r != OK) return(r);
 
   /* Fill in response structure */
@@ -74,6 +78,7 @@ int req_breadwrite(
  *===========================================================================*/
 int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes)
 {
+  int r = OK;
   message m;
 
   memset(&m, 0, sizeof(m));
@@ -86,9 +91,12 @@ int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes)
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
 
-  return(OK);
+  fp->in_blocks += m.RES_INPUT_BLOCKS;
+  fp->out_blocks += m.RES_OUTPUT_BLOCKS;
+
+  return r;
 }
 
 /*===========================================================================*
@@ -114,6 +122,9 @@ int req_chmod(
 
   /* Copy back actual mode. */
   *new_modep = m.RES_MODE;
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
 
   return(r);
 }
@@ -144,6 +155,9 @@ int req_chown(
 
   /* Return new mode to caller. */
   *new_modep = m.RES_MODE;
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
 
   return(r);
 }
@@ -187,6 +201,10 @@ int req_create(
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   if (r != OK) return(r);
 
   /* Fill in response structure */
@@ -207,6 +225,7 @@ int req_create(
  *===========================================================================*/
 int req_flush(endpoint_t fs_e, dev_t dev)
 {
+  int r;
   message m;
 
   /* Fill in request message */
@@ -214,7 +233,12 @@ int req_flush(endpoint_t fs_e, dev_t dev)
   m.REQ_DEV = dev;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += m.RES_INPUT_BLOCKS;
+  fp->out_blocks += m.RES_OUTPUT_BLOCKS;
+
+  return r;
 }
 
 
@@ -239,6 +263,9 @@ int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
 
   return(r);
 }
@@ -266,6 +293,9 @@ int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -275,6 +305,7 @@ int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
  *===========================================================================*/
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 {
+  int r;
   message m;
 
   /* Fill in request message */
@@ -286,7 +317,12 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
   m.REQ_TRC_END_HI = 0;		/* Not used for now, so clear it. */
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
+  return r;
 }
 
 
@@ -329,6 +365,9 @@ int req_getdents(
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   if (r == OK) {
 	  *new_pos = cvul64(m.RES_SEEK_POS_LO);
 	  r = m.RES_NBYTES;
@@ -342,6 +381,7 @@ int req_getdents(
  *===========================================================================*/
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
 {
+  int r;
   message m;
 
   /* Fill in request message */
@@ -349,7 +389,12 @@ int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
   m.REQ_INODE_NR = inode_nr;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
+  return r;
 }
 
 
@@ -382,6 +427,9 @@ int req_link(
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
 
   return(r);
 }
@@ -459,6 +507,9 @@ int req_lookup(
   /* Fill in response according to the return value */
   res->fs_e = m.m_source;
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   switch (r) {
   case OK:
 	  res->inode_nr = m.RES_INODE_NR;
@@ -524,6 +575,9 @@ int req_mkdir(
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -565,6 +619,9 @@ int req_mknod(
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -574,6 +631,7 @@ int req_mknod(
  *===========================================================================*/
 int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 {
+  int r;
   message m;
 
   /* Fill in request message */
@@ -581,7 +639,12 @@ int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
   m.REQ_INODE_NR = inode_nr;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
+  return r;
 }
 
 
@@ -618,6 +681,9 @@ int req_newnode(
   res->uid	= m.RES_UID;
   res->gid	= m.RES_GID;
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -653,6 +719,9 @@ int req_newdriver(
 
   cpf_revoke(grant_id);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -665,6 +734,7 @@ int fs_e;
 ino_t inode_nr;
 int count;
 {
+  int r;
   message m;
 
   /* Fill in request message */
@@ -673,7 +743,12 @@ int count;
   m.REQ_COUNT = count;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
+  return r;
 }
 
 
@@ -709,6 +784,9 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
 
   if (r == OK) r = m.RES_NBYTES;
 
@@ -751,6 +829,9 @@ int req_readsuper(
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
 
   if(r == OK) {
 	/* Fill in response structure */
@@ -806,6 +887,9 @@ unsigned int *cum_iop;
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  fp->in_blocks += m.RES_INPUT_BLOCKS;
+  fp->out_blocks += m.RES_OUTPUT_BLOCKS;
+
   if (r == OK) {
 	/* Fill in response structure */
 	*new_posp = cvul64(m.RES_SEEK_POS_LO);
@@ -820,6 +904,7 @@ unsigned int *cum_iop;
  *===========================================================================*/
 int req_peek(endpoint_t fs_e, ino_t inode_nr, u64_t pos, unsigned int bytes)
 {
+  int r = OK;
   message m;
 
   memset(&m, 0, sizeof(m));
@@ -836,7 +921,12 @@ int req_peek(endpoint_t fs_e, ino_t inode_nr, u64_t pos, unsigned int bytes)
   m.REQ_NBYTES = bytes;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += m.RES_INPUT_BLOCKS;
+  fp->out_blocks += m.RES_OUTPUT_BLOCKS;
+
+  return r;
 }
 
 /*===========================================================================*
@@ -878,6 +968,9 @@ char *new_name;
   cpf_revoke(gid_old);
   cpf_revoke(gid_new);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -909,6 +1002,9 @@ char *lastc;
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
 
   return(r);
 }
@@ -959,6 +1055,9 @@ int req_slink(
   cpf_revoke(gid_name);
   cpf_revoke(gid_buf);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -987,6 +1086,9 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -997,13 +1099,19 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
 int req_sync(fs_e)
 endpoint_t fs_e;
 {
+  int r;
   message m;
 
   /* Fill in request message */
   m.m_type = REQ_SYNC;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += m.RES_INPUT_BLOCKS;
+  fp->out_blocks += m.RES_OUTPUT_BLOCKS;
+
+  return r;
 }
 
 
@@ -1035,6 +1143,9 @@ char *lastc;
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
   return(r);
 }
 
@@ -1045,13 +1156,19 @@ char *lastc;
 int req_unmount(fs_e)
 endpoint_t fs_e;
 {
+  int r;
   message m;
 
   /* Fill in request message */
   m.m_type = REQ_UNMOUNT;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
+  return r;
 }
 
 
@@ -1061,6 +1178,7 @@ endpoint_t fs_e;
 int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
 	struct timespec * modtimespec)
 {
+  int r;
   message m;
 
   assert(actimespec != NULL);
@@ -1075,5 +1193,10 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
   m.REQ_MODNSEC = modtimespec->tv_nsec;
 
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+
+  fp->in_blocks += IO_IN_BLOCKS(m.RES_IO_BLOCKS);
+  fp->out_blocks += IO_OUT_BLOCKS(m.RES_IO_BLOCKS);
+
+  return r;
 }
