@@ -373,6 +373,7 @@ int send_sig(endpoint_t ep, int sig_nr)
   priv = priv(rp);
   if(!priv) return ENOENT;
   sigaddset(&priv->s_sig_pending, sig_nr);
+  increase_proc_signals(rp);
   mini_notify(proc_addr(SYSTEM), rp->p_endpoint);
 
   return OK;
@@ -434,6 +435,7 @@ int sig_nr;			/* signal to be sent */
   /* Check if the signal is already pending. Process it otherwise. */
   if (! sigismember(&rp->p_pending, sig_nr)) {
       sigaddset(&rp->p_pending, sig_nr);
+	increase_proc_signals(rp);
       if (! (RTS_ISSET(rp, RTS_SIGNALED))) {		/* other pending */
 	  RTS_SET(rp, RTS_SIGNALED | RTS_SIG_PENDING);
           if(OK != send_sig(sig_mgr, SIGKSIG))
