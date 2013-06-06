@@ -61,6 +61,9 @@ static int try_one(struct proc *src_ptr, struct proc *dst_ptr);
 static struct proc * pick_proc(void);
 static void enqueue_head(struct proc *rp);
 
+static void increase_context_switch_count(struct proc *rp);
+static void increase_messages_count(struct proc *from, struct proc *to);
+
 /* all idles share the same idle_priv structure */
 static struct priv idle_priv;
 
@@ -129,6 +132,7 @@ void proc_init(void)
 		rp->p_scheduler = NULL;		/* no user space scheduler */
 		rp->p_priority = 0;		/* no priority */
 		rp->p_quantum_size_ms = 0;	/* no quantum size */
+		reset_proc_rusage(rp);
 
 		/* arch-specific initialization */
 		arch_proc_reset(rp);
@@ -807,6 +811,7 @@ int mini_send(
  * for this message, copy the message to it and unblock 'dst'. If 'dst' is
  * not waiting at all, or is waiting for another source, queue 'caller_ptr'.
  */
+  int res = OK;
   register struct proc *dst_ptr;
   register struct proc **xpp;
   int dst_p;
@@ -815,7 +820,8 @@ int mini_send(
 
   if (RTS_ISSET(dst_ptr, RTS_NO_ENDPOINT))
   {
-	return EDEADSRCDST;
+	res = EDEADSRCDST;
+	goto update_rusage_and_exit;
   }
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
@@ -827,8 +833,10 @@ int mini_send(
 	assert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
 
 	if (!(flags & FROM_KERNEL)) {
-		if(copy_msg_from_user(m_ptr, &dst_ptr->p_delivermsg))
-			return EFAULT;
+		if (copy_msg_from_user(m_ptr, &dst_ptr->p_delivermsg)) {
+			res = EFAULT;
+			goto update_rusage_and_exit;
+		}
 	} else {
 		dst_ptr->p_delivermsg = *m_ptr;
 		IPC_STATUS_ADD_FLAGS(dst_ptr, IPC_FLG_MSG_FROM_KERNEL);
@@ -851,19 +859,23 @@ int mini_send(
 	hook_ipc_msgrecv(&dst_ptr->p_delivermsg, caller_ptr, dst_ptr);
 #endif
   } else {
-	if(flags & NON_BLOCKING) {
-		return(ENOTREADY);
+	if (flags & NON_BLOCKING) {
+		res = ENOTREADY;
+		goto update_rusage_and_exit;
 	}
 
 	/* Check for a possible deadlock before actually blocking. */
 	if (deadlock(SEND, caller_ptr, dst_e)) {
-		return(ELOCKED);
+		res = ELOCKED;
+		goto update_rusage_and_exit;
 	}
 
 	/* Destination is not waiting.  Block and dequeue caller. */
 	if (!(flags & FROM_KERNEL)) {
-		if(copy_msg_from_user(m_ptr, &caller_ptr->p_sendmsg))
-			return EFAULT;
+		if (copy_msg_from_user(m_ptr, &caller_ptr->p_sendmsg)) {
+			res = EFAULT;
+			goto update_rusage_and_exit;
+		}
 	} else {
 		caller_ptr->p_sendmsg = *m_ptr;
 		/*
@@ -887,7 +899,15 @@ int mini_send(
 	hook_ipc_msgsend(&caller_ptr->p_sendmsg, caller_ptr, dst_ptr);
 #endif
   }
-  return(OK);
+
+update_rusage_and_exit:
+  /* When message is not actually delivered we set dst_ptr to
+   * NULL so it's rusage won't be updated*/
+  if (res != OK)
+	dst_ptr = NULL;
+
+  increase_messages_count(caller_ptr, dst_ptr);
+  return(res);
 }
 
 /*===========================================================================*
@@ -1057,6 +1077,7 @@ int mini_notify(
   }
 
   dst_ptr = proc_addr(dst_p);
+  increase_messages_count(caller_ptr, dst_ptr);
 
   /* Check to see if target is blocked waiting for this message. A process 
    * can be both sending and receiving during a SENDREC system call.
@@ -1210,6 +1231,9 @@ int try_deliver_senda(struct proc *caller_ptr,
 	if (r == OK && RTS_ISSET(dst_ptr, RTS_NO_ENDPOINT)) {
 		r = EDEADSRCDST;
 	}
+
+	if (r == OK)
+		increase_messages_count(caller_ptr, dst_ptr);
 
 	/* Check if 'dst' is blocked waiting for this message.
 	 * If AMF_NOREPLY is set, do not satisfy the receiving part of
@@ -1686,6 +1710,8 @@ void dequeue(struct proc *rp)
   /* Process accounting for scheduling */
   rp->p_accounting.dequeues++;
 
+  increase_context_switch_count(rp);
+
   /* this is not all that accurate on virtual machines, especially with
      IO bound processes that only spend a short amount of time in the queue
      at a time. */
@@ -1905,4 +1931,35 @@ void ser_dump_proc()
                         continue;
                 print_proc_recursive(pp);
         }
+}
+
+void reset_proc_rusage(struct proc *p)
+{
+	p->p_voluntary_context_switch = 0;
+	p->p_involuntary_context_switch = 0;
+	p->p_signal_received = 0;
+	p->p_message_sent = 0;
+	p->p_message_received = 0;
+}
+
+void increase_context_switch_count(struct proc *rp)
+{
+	assert(!proc_is_runnable(rp));
+	if (RTS_ISSET(rp, RTS_PREEMPTED) || RTS_ISSET(rp, RTS_NO_QUANTUM))
+		rp->p_involuntary_context_switch++;
+	else
+		rp->p_voluntary_context_switch++;
+}
+
+void increase_proc_signals(struct proc *p)
+{
+	p->p_signal_received++;
+}
+
+void increase_messages_count(struct proc *from, struct proc *to)
+{
+	if (from)
+		from->p_message_sent++;
+	if (to)
+		to->p_message_received++;
 }

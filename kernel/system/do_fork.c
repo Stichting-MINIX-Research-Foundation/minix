@@ -91,6 +91,8 @@ int do_fork(struct proc * caller, message * m_ptr)
   make_zero64(rpc->p_kcall_cycles);
   make_zero64(rpc->p_kipc_cycles);
 
+  reset_proc_rusage(rpc);
+
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.
    * The caller should explicitely set the new privileges before executing.
