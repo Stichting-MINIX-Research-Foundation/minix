@@ -70,6 +70,7 @@ static void handle_pagefault(endpoint_t ep, vir_bytes addr, u32_t err, int retry
 	struct vir_region *region;
 	vir_bytes offset;
 	int p, wr = PFERR_WRITE(err);
+	int io = 0;
 
 	if(vm_isokendpt(ep, &p) != OK)
 		panic("handle_pagefault: endpoint wrong: %d", ep);
@@ -111,7 +112,7 @@ static void handle_pagefault(endpoint_t ep, vir_bytes addr, u32_t err, int retry
 
 	/* Access is allowed; handle it. */
 	if(retry) {
-		result = map_pf(vmp, region, offset, wr, NULL, NULL, 0);
+		result = map_pf(vmp, region, offset, wr, NULL, NULL, 0, &io);
 		assert(result != SUSPEND);
 	} else {
 		struct pf_state state;
@@ -119,8 +120,12 @@ static void handle_pagefault(endpoint_t ep, vir_bytes addr, u32_t err, int retry
 		state.vaddr = addr;
 		state.err = err;
 		result = map_pf(vmp, region, offset, wr, pf_cont,
-			&state, sizeof(state));
+			&state, sizeof(state), &io);
 	}
+	if (io)
+		vmp->vm_major_page_fault++;
+	else
+		vmp->vm_minor_page_fault++;
 
 	if(result == SUSPEND) {
 		return;

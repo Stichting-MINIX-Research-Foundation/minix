@@ -15,7 +15,8 @@
 
 static int shared_unreference(struct phys_region *pr);
 static int shared_pagefault(struct vmproc *vmp, struct vir_region *region, 
-	struct phys_region *ph, int write, vfs_callback_t cb, void *, int);
+	struct phys_region *ph, int write, vfs_callback_t cb, void *state,
+	int len, int *io);
 static int shared_sanitycheck(struct phys_region *pr, char *file, int line);
 static int shared_writable(struct phys_region *pr);
 static void shared_delete(struct vir_region *region);
@@ -110,7 +111,7 @@ static void shared_delete(struct vir_region *region)
 
 static int shared_pagefault(struct vmproc *vmp, struct vir_region *region,
 	struct phys_region *ph, int write, vfs_callback_t cb,
-	void *state, int statelen)
+	void *state, int statelen, int *io)
 {
 	struct vir_region *src_region;
 	struct vmproc *src_vmp;
@@ -126,7 +127,7 @@ static int shared_pagefault(struct vmproc *vmp, struct vir_region *region,
 	if(!(pr = physblock_get(src_region, ph->offset))) {
 		int r;
 		if((r=map_pf(src_vmp, src_region, ph->offset, write,
-			NULL, NULL, 0)) != OK)
+			NULL, NULL, 0, io)) != OK)
 			return r;
 		if(!(pr = physblock_get(src_region, ph->offset))) {
 			panic("missing region after pagefault handling");
