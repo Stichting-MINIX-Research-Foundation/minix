@@ -18,7 +18,8 @@ static void mappedfile_split(struct vmproc *vmp, struct vir_region *vr,
 	struct vir_region *r1, struct vir_region *r2);
 static int mappedfile_unreference(struct phys_region *pr);
 static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region, 
-       struct phys_region *ph, int write, vfs_callback_t callback, void *, int);
+       struct phys_region *ph, int write, vfs_callback_t callback, void *state,
+       int len, int *io);
 static int mappedfile_sanitycheck(struct phys_region *pr, char *file, int line);
 static int mappedfile_writable(struct phys_region *pr);
 static int mappedfile_copy(struct vir_region *vr, struct vir_region *newvr);
@@ -72,7 +73,7 @@ static int cow_block(struct vmproc *vmp, struct vir_region *region,
 
 static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 	struct phys_region *ph, int write, vfs_callback_t cb,
-	void *state, int statelen)
+	void *state, int statelen, int *io)
 {
 	u32_t allocflags;
 	int procfd = region->param.file.fdref->fd;
@@ -123,7 +124,7 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 			printf("VM: mappedfile_pagefault: vfs_request failed\n");
 			return ENOMEM;
 		}
-
+		*io = 1;
 		return SUSPEND;
 	}
 

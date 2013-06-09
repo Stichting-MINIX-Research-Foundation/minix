@@ -24,6 +24,14 @@
 #include "util.h"
 #include "sanitycheck.h"
 
+static void reset_vm_rusage(struct vmproc *vmp)
+{
+	vmp->vm_total = 0;
+	vmp->vm_total_max = 0;
+	vmp->vm_minor_page_fault = 0;
+	vmp->vm_major_page_fault = 0;
+}
+
 void free_proc(struct vmproc *vmp)
 {
 	map_free_proc(vmp);
@@ -33,6 +41,7 @@ void free_proc(struct vmproc *vmp)
 	vmp->vm_bytecopies = 0;
 #endif
 	vmp->vm_region_top = 0;
+	reset_vm_rusage(vmp);
 }
 
 void clear_proc(struct vmproc *vmp)
@@ -43,6 +52,7 @@ void clear_proc(struct vmproc *vmp)
 	vmp->vm_bytecopies = 0;
 #endif
 	vmp->vm_region_top = 0;
+	reset_vm_rusage(vmp);
 }
 
 /*===========================================================================*

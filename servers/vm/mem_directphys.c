@@ -17,7 +17,8 @@
 static int phys_unreference(struct phys_region *pr);
 static int phys_writable(struct phys_region *pr);
 static int phys_pagefault(struct vmproc *vmp, struct vir_region *region,
-        struct phys_region *ph, int write, vfs_callback_t cb, void *, int);
+        struct phys_region *ph, int write, vfs_callback_t cb, void *state,
+	int len, int *io);
 static int phys_copy(struct vir_region *vr, struct vir_region *newvr);
 
 struct mem_type mem_type_directphys = {
@@ -34,7 +35,8 @@ static int phys_unreference(struct phys_region *pr)
 }
 
 static int phys_pagefault(struct vmproc *vmp, struct vir_region *region,
-    struct phys_region *ph, int write, vfs_callback_t cb, void *st, int len)
+    struct phys_region *ph, int write, vfs_callback_t cb, void *state,
+    int len, int *io)
 {
 	phys_bytes arg = region->param.phys, phmem;
 	assert(arg != MAP_NONE);

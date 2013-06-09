@@ -73,14 +73,21 @@ void physblock_set(struct vir_region *region, vir_bytes offset,
 	struct phys_region *newphysr)
 {
 	int i;
+	struct vmproc *proc;
 	assert(!(offset % VM_PAGE_SIZE));
 	assert(offset >= 0 && offset < region->length);
 	i = offset/VM_PAGE_SIZE;
+	proc = region->parent;
+	assert(proc);
 	if(newphysr) {
 		assert(!region->physblocks[i]);
 		assert(newphysr->offset == offset);
+		proc->vm_total += VM_PAGE_SIZE;
+		if (proc->vm_total > proc->vm_total_max)
+			proc->vm_total_max = proc->vm_total;
 	} else {
 		assert(region->physblocks[i]);
+		proc->vm_total -= VM_PAGE_SIZE;
 	}
 	region->physblocks[i] = newphysr;
 }
@@ -671,7 +678,7 @@ u32_t vrallocflags(u32_t flags)
 /*===========================================================================*
  *				map_pf			     *
  *===========================================================================*/
-int map_pf(vmp, region, offset, write, pf_callback, state, len)
+int map_pf(vmp, region, offset, write, pf_callback, state, len, io)
 struct vmproc *vmp;
 struct vir_region *region;
 vir_bytes offset;
@@ -679,6 +686,7 @@ int write;
 vfs_callback_t pf_callback;
 void *state;
 int len;
+int *io;
 {
 	struct phys_region *ph;
 	int r = OK;
@@ -725,7 +733,7 @@ int len;
 		assert(ph->ph);
 
 		if((r = ph->memtype->ev_pagefault(vmp,
-			region, ph, write, pf_callback, state, len)) == SUSPEND) {
+			region, ph, write, pf_callback, state, len, io)) == SUSPEND) {
 			return SUSPEND;
 		}
 
@@ -774,6 +782,7 @@ int statelen;
 {
 	vir_bytes offset, lim;
 	int r;
+	int io = 0;
 
 	assert(length > 0);
 	lim = start_offset + length;
@@ -781,7 +790,7 @@ int statelen;
 
 	for(offset = start_offset; offset < lim; offset += VM_PAGE_SIZE)
 		if((r = map_pf(vmp, region, offset, write,
-		   cb, state, statelen)) != OK)
+		   cb, state, statelen, &io)) != OK)
 			return r;
 
 	return OK;
