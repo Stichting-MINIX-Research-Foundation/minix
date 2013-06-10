@@ -579,14 +579,21 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 		return EPIPE;
 	}
 
+	/* we have to preserve the boundary for DGRAM. if there's
+	 * already a packet waiting, discard it silently and pretend
+	 * it was written.
+	 */
+	if(uds_fd_table[minor].type == SOCK_DGRAM &&
+		uds_fd_table[peer].size > 0) {
+		return size;
+	}
+
 	/* check if write would overrun buffer. check if message
-	 * boundry preserving types (SEQPACKET and DGRAM) wouldn't write
-	 * to an empty buffer. check if connectionless sockets have a
-	 * target to write to.
+	 * SEQPACKET wouldn't write to an empty buffer. check if
+	 * connectionless sockets have a target to write to.
 	 */
 	if ((uds_fd_table[peer].pos+uds_fd_table[peer].size+size > PIPE_BUF) ||
-		((uds_fd_table[minor].type == SOCK_SEQPACKET ||
-		uds_fd_table[minor].type == SOCK_DGRAM) &&
+		((uds_fd_table[minor].type == SOCK_SEQPACKET) &&
 		uds_fd_table[peer].size > 0)) {
 
 		if (pretend) {
