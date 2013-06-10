@@ -160,11 +160,11 @@ int main(int argc, char **argv)
 		len = strlen(*argv);
 		if (p + len < endp && p > buf) {
 			*--p = '\0';
-			syslog(pri, buf);
+			syslog(pri, "%s", buf);
 			p = buf;
 		}
 		if (len > sizeof(buf) - 1) {
-			syslog(pri, *argv++);
+			syslog(pri, "%s", *argv++);
 			if (!--argc) break;
 		} else {
 			memcpy(p, *argv++, len);
@@ -176,10 +176,10 @@ int main(int argc, char **argv)
 	}
 	if (p != buf) {
 		*p = '\0';
-		syslog(pri, buf);
+		syslog(pri, "%s", buf);
 	}
   } else			/* Main loop */
-	while (fgets(buf, sizeof(buf), stdin) != NULL) syslog(pri, buf);
+	while (fgets(buf, sizeof(buf), stdin) != NULL) syslog(pri, "%s", buf);
 
   return EXIT_SUCCESS;
 }
