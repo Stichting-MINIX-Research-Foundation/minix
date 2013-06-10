@@ -604,6 +604,11 @@ void unpause(endpoint_t proc_e)
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic("file descriptor out-of-range");
 		f = rfp->fp_filp[fild];
+		if(!f) {
+			sys_sysctl_stacktrace(rfp->fp_endpoint);
+			panic("process %d blocked on empty fd %d",
+				rfp->fp_endpoint, fild);
+		}
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
 		major_dev = major(dev);
 		minor_dev = minor(dev);

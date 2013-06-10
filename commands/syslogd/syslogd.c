@@ -94,6 +94,8 @@
 #include <time.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/wait.h>
 #include <net/netlib.h>
 #include <net/hton.h>
@@ -330,7 +332,7 @@ void logmsg(int pri, char *msg, char *from, int flags)
 		    !strcmp(from, f->f_prevhost)) {
 			strncpy(f->f_lasttime, timestamp, 15);
 			f->f_prevcount += 1;
-			DEBUG(dprintf("msg repeated %d times, %ld sec of %d\n",
+			DEBUG(dprintf("msg repeated %d times, %d sec of %d\n",
 				f->f_prevcount, now - f->f_time,
 				repeatinterval[f->f_repeatcount]);)
 			/* If domark would have logged this by now,
@@ -694,6 +696,7 @@ void init(int sig)
 DEBUG (
 	if (DbgOpt) {
 		for (fLog = Files; fLog; fLog = fLog->f_next) {
+			int i;
 			for (i = 0; i <= LOG_NFACILITIES; i += 1)
 				if (fLog->f_pmask[i] == INTERNAL_NOPRI)
 					printf("X ");
@@ -774,6 +777,34 @@ void daemonize(char *line)
   return;
 }
 
+int sockread(int *fd, char *buf, int maxlen)
+{
+	int len;
+
+	/* Read a message from application programs */
+	len = read(*fd, buf, maxlen);
+	if (len > 0) {		/* Got a message */
+		buf[len] = '\0';
+		dprintf("got a message (%d, %#x)\n", *fd, len);
+		printline(LocalHostName, buf);
+
+	} else if (len < 0) {	/* Got an error or signal while reading */
+		if (errno != EINTR)	/* */
+		{
+			logerror("Receive error from UDP channel");
+			close(*fd);
+			*fd= -1;
+		}
+
+	} else {	/* (len == 0) Channel has been closed */
+		logerror("network channel has closed");
+		close(*fd);
+		die(-1);
+	}
+
+	return len;
+}
+
 /*
 **  Name:	int main(int argc, char **argv);
 **  Function:	Syslog daemon entry point
@@ -782,6 +813,7 @@ int main(int argc, char **argv)
 {
   char *p, *udpdev, *eol;
   int nfd, kfd, len, fdmax;
+  int ufd;
   int ch, port = 0;
   fd_set fdset;
   struct nwio_udpopt udpopt;
@@ -863,7 +895,27 @@ int main(int argc, char **argv)
 	return EXIT_FAILURE;
   }
 
-  fdmax = max(nfd, kfd) + 1;
+  /* Open unix domain socket */
+
+  if((ufd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
+	perror("unix socket");
+  } else {
+	struct  sockaddr_un uaddr;
+  	memset(&uaddr, 0, sizeof(uaddr));
+	strncpy(uaddr.sun_path, _PATH_LOG, sizeof(uaddr.sun_path) - 1);
+	uaddr.sun_family = AF_UNIX;
+	if(bind(ufd, (struct sockaddr *) &uaddr, sizeof(uaddr)) < 0) {
+		perror("unix socket bind");
+		close(ufd);
+		ufd = -1;
+	}
+  }
+
+  if(ufd < 0) exit(1);
+
+  DEBUG(dprintf("unix domain socket = %d, at %s....\n", ufd, _PATH_LOG);)
+
+  fdmax = max(max(nfd, kfd), ufd) + 1;
 
   DEBUG(dprintf("off & running....\n");)
   
@@ -874,35 +926,26 @@ int main(int argc, char **argv)
 	FD_ZERO(&fdset);	/* Setup descriptors for select */
 	if(nfd >= 0) FD_SET(nfd, &fdset);
 	if(kfd >= 0) FD_SET(kfd, &fdset);
+	if(ufd >= 0) FD_SET(ufd, &fdset);
+
+	dprintf("select: nfd = %d, ufd = %d, fdmax = %d\n", nfd, ufd, fdmax);
 
 	if (select(fdmax, &fdset, NULL, NULL, NULL) <= 0) {
 		sleep(1);
 		continue;
 
 	}
+
 	if (nfd >= 0 && FD_ISSET(nfd, &fdset)) {
-
-		/* Read a message from application programs */
-		len = read(nfd, line, MAXLINE);
-		if (len > 0) {		/* Got a message */
-			line[len] = '\0';
-			dprintf("got a message (%d, %#x)\n", nfd, len);
-			printline(LocalHostName, line);
-
-		} else if (len < 0) {	/* Got an error or signal while reading */
-			if (errno != EINTR)	/* */
-			{
-				logerror("Receive error from UDP channel");
-				close(nfd);
-				nfd= -1;
-			}
-
-		} else {	/* (len == 0) Channel has been closed */
-			logerror("UDP channel has closed");
-			close(nfd);
-			die(-1);
-		}
+		dprintf("got nfd message (%d)\n", nfd);
+		len = sockread(&nfd, line, MAXLINE);
 	}
+
+	if (ufd >= 0 && FD_ISSET(ufd, &fdset)) {
+		dprintf("got ufd message (%d)\n", ufd);
+		len = sockread(&ufd, line, MAXLINE);
+	}
+
 	if (kfd >= 0 && FD_ISSET(kfd, &fdset)) {
 		static char linebuf[5*1024];
 
