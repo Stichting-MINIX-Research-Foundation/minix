@@ -263,6 +263,8 @@ void system_init(void)
   map(SYS_SCHEDULE, do_schedule);	/* reschedule a process */
   map(SYS_SCHEDCTL, do_schedctl);	/* change process scheduler */
 
+  /* getrusage */
+  map(SYS_GETRUSAGE, do_getrusage);	/* getrusage */
 }
 /*===========================================================================*
  *				get_priv				     *

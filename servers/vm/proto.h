@@ -240,3 +240,6 @@ struct fdref *fdref_dedup_or_new(struct vmproc *owner, ino_t ino, dev_t dev,
 void fdref_ref(struct fdref *ref, struct vir_region *region);
 void fdref_deref(struct vir_region *region);
 void fdref_sanitycheck(void);
+
+/* getrusage.c */
+int do_getrusage(message *m);

@@ -17,6 +17,7 @@
 /* Forward declaration */
 struct reg86u;
 struct rs_pci;
+struct rusage;
 
 #define SYSTASK SYSTEM
 
@@ -248,6 +249,9 @@ int sys_setmcontext(endpoint_t proc, mcontext_t *mcp);
 
 /* input */
 int tty_input_inject(int type, int code, int val);
+
+/* resource */
+int sys_getrusage(endpoint_t proc, struct rusage *r_usage);
 
 #endif /* _SYSLIB_H */
 

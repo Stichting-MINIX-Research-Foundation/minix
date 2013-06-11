@@ -208,5 +208,7 @@ int do_statectl(struct proc * caller, message *m_ptr);
 #define do_statectl NULL
 #endif
 
+int do_getrusage(struct proc * caller, message *m_ptr);
+
 #endif	/* SYSTEM_H */
 
