@@ -77,6 +77,10 @@ SCRIPTS+= run testinterp.sh testsh1.sh testsh2.sh
 # executables is tested
 LDSTATIC=	-dynamic
 
+# use the shared linkerscript for mod when using the gold linker
+GOLDLINKERSCRIPT.mod?= ${${HAVE_GOLD:Uno} != "no":? ${LDS_SHARED_LIB} :}
+GOLDLINKERSCRIPT=
+
 # Add test that must be linked dynamically, and its dynamically loaded
 # module
 PROGS+=		test63 mod

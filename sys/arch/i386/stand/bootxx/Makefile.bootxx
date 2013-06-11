@@ -126,6 +126,10 @@ KERN_AS=        library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=        ${KERNLIB}
 .else
+
+# When using gold linker, specify the linker script
+GOLDLINKERSCRIPT?= ${LDS_N}
+
 # use MINIX minc
 LIBKERN= ${DESTDIR}/usr/lib/libminc.a
 .endif

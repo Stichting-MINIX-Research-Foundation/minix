@@ -344,7 +344,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 #else
 	_rtld_relocate_plt_objects(&_rtld_objself);
 #endif
-#if !defined(__mips__) && !defined(__hppa__)
+#if !defined(__mips__) && !defined(__hppa__) && !defined(HAVE_GOLD)
 	assert(!_rtld_objself.pltgot);
 #endif
 #if !defined(__arm__) && !defined(__mips__) && !defined(__sh__)
