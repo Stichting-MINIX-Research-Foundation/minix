@@ -382,6 +382,7 @@ int do_vm_call(message *m_out)
 	int slot;
 	struct fproc *rfp, *vmf;
 	struct filp *f = NULL;
+	int r;
 
 	if(job_m_in.m_source != VM_PROC_NR)
 		return ENOSYS;
@@ -468,7 +469,16 @@ reqdone:
 	m_out->VMV_RESULT = result;
 	m_out->VMV_REQID = req_id;
 
-	return VM_VFS_REPLY;
+	/* reply asynchronously as VM may not be able to receive
+	 * a sendnb() message
+	 */
+
+	m_out->m_type = VM_VFS_REPLY;
+	r = asynsend3(VM_PROC_NR, m_out, 0);
+	if(r != OK) printf("VFS: couldn't asynsend3() to VM\n");
+
+	/* VFS does not reply any further */
+	return SUSPEND;
 }
 
 /*===========================================================================*

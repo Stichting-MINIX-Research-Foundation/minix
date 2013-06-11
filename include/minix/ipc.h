@@ -227,7 +227,7 @@ static inline int _sendrec(endpoint_t src_dest, message *m_ptr)
 
 static inline int _sendnb(endpoint_t dest, message *m_ptr)
 {
-	return _minix_ipcvecs.send(dest, m_ptr);
+	return _minix_ipcvecs.sendnb(dest, m_ptr);
 }
 
 static inline int _notify(endpoint_t dest)
