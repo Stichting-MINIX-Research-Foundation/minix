@@ -53,6 +53,44 @@ extern void * k_stacks;
 					+ 2 * ((cpu) + 1) * K_STACK_SIZE))
 
 
+/*
+ * Definition of a callback used when a memory map changes it's base address
+ */
+typedef int (*kern_phys_map_mapped)(vir_bytes id, vir_bytes new_addr );
+
+/*
+ * struct used internally by memory.c to keep a list of
+ * items to map. These should be staticaly allocated 
+ * in the individual files and passed as argument. 
+ * The data doesn't need to be initialized. See omap_serial for
+ * and example usage.
+ */
+typedef struct kern_phys_map{
+	phys_bytes addr; /* The physical address to map */
+	vir_bytes size;  /* The size of the mapping */
+	vir_bytes id;	 /* an id passed to the callback */
+	kern_phys_map_mapped cb; /* the callback itself */
+	phys_bytes vir; /* The virtual address once remapped */
+	int index; 	/* index */
+	struct kern_phys_map *next; /* pointer to the next */
+} kern_phys_map ; 
+
+
+/*
+ * Request a physical mapping.
+ */
+int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
+		   kern_phys_map * priv, kern_phys_map_mapped cb, 
+		   vir_bytes id);
+
+/*
+ * Request a physical mapping and put the result in the given prt
+ * Note that ptr will only be valid once the callback happend.
+ */
+int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
+	kern_phys_map * priv, vir_bytes ptr);
+
+
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"
 

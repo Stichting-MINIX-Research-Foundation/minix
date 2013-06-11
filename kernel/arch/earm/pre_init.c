@@ -296,4 +296,5 @@ int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
 void minix_shutdown(timer_t *t) { arch_shutdown(RBT_PANIC); }
 void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }
-
+int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
+	struct kern_phys_map * priv, vir_bytes ptr) {};
