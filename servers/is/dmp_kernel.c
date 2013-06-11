@@ -33,7 +33,7 @@ static int pagelines;
 	for (rp = oldrp; rp < END_PROC_ADDR; rp++) { \
 	  oldrp = BEG_PROC_ADDR; \
 	  if (isemptyp(rp)) continue; \
-	  if (++pagelines > LINES) { oldrp = rp; printf("--more--\n"); break; }\
+	  if (++pagelines >= LINES) { oldrp = rp; printf("--more--\n"); break; }\
 	  if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  \
 	  else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp)); 	\
 	  else 				printf(" %2d  ", proc_nr(rp));
@@ -369,6 +369,7 @@ void procstack_dmp()
 
   PROCLOOP(rp, oldrp)
 	PRINTRTS(rp);
+	printf("\n"); pagelines++;
 	sys_sysctl_stacktrace(rp->p_endpoint);
   }
 }
