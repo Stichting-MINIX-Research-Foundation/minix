@@ -2,20 +2,33 @@
 #include <machine/cpu.h>
 #include <minix/type.h>
 #include <io.h>
-#include "omap_intr.h"
 
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
+#include "kernel/vm.h"
+#include "kernel/proto.h"
+#include "arch_proto.h"
+
+#include "omap_intr.h"
 static struct omap_intr {
 	vir_bytes base;
+	int size;
 } omap_intr;
+
+
+static kern_phys_map intr_phys_map;
 
 int intr_init(const int auto_eoi)
 {
 #ifdef DM37XX
-	omap_intr.base = OMAP3_DM37XX_INTR_BASE;
+    omap_intr.base = OMAP3_DM37XX_INTR_BASE;
 #endif
 #ifdef AM335X
-	omap_intr.base = OMAP3_AM335X_INTR_BASE;
+    omap_intr.base = OMAP3_AM335X_INTR_BASE;
 #endif
+    omap_intr.size = 0x1000 ; /* 4K */
+
+    kern_phys_map_ptr(omap_intr.base,omap_intr.size,&intr_phys_map,&omap_intr.base);
     return 0;
 }
 

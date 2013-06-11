@@ -29,6 +29,8 @@ static int freepdes[MAXFREEPDES];
 
 static u32_t phys_get32(phys_bytes v);
 
+/* list of requested physical mapping */
+static kern_phys_map *kern_phys_map_head;
 
 void mem_clear_mapcache(void)
 {
@@ -260,7 +262,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 		phys = 0;
 	} else {
 		if(phys == 0)
-			panic("vm_lookup returned phys: %d",  phys);
+			panic("vm_lookup returned phys: 0x%lx",  phys);
 	}
 
 	if(phys == 0) {
@@ -692,6 +694,8 @@ int arch_phys_map(const int index,
 			int *flags)
 {
 	static int first = 1;
+	kern_phys_map *phys_maps;
+
 	int freeidx = 0;
 	u32_t glo_len = (u32_t) &usermapped_nonglo_start -
 			(u32_t) &usermapped_start;
@@ -709,6 +713,14 @@ int arch_phys_map(const int index,
 		if(usermapped_glo_index != -1)
 			first_um_idx = usermapped_glo_index;
 		first = 0;
+
+		/* list over the maps and index them */
+		phys_maps = kern_phys_map_head;
+		while(phys_maps != NULL){
+			phys_maps->index = freeidx++;
+			phys_maps = phys_maps->next;
+		}
+
 	}
 
 	if(index == usermapped_glo_index) {
@@ -750,6 +762,18 @@ int arch_phys_map(const int index,
 		*len = ARM_PAGE_SIZE;
 		*flags = VMMF_USER;
 		return OK;
+	} 
+	/* if this all fails loop over the maps */
+	/* list over the maps and index them */
+	phys_maps = kern_phys_map_head;
+	while(phys_maps != NULL){
+		if(phys_maps->index == index){
+			*addr = phys_maps->addr;
+			*len =  phys_maps->size;
+			*flags = VMMF_UNCACHED | VMMF_WRITE;
+			return OK;
+		}
+		phys_maps = phys_maps->next;
 	}
 
 	return EINVAL;
@@ -757,6 +781,8 @@ int arch_phys_map(const int index,
 
 int arch_phys_map_reply(const int index, const vir_bytes addr)
 {
+	kern_phys_map *phys_maps;
+
 	if(index == first_um_idx) {
 		u32_t usermapped_offset;
 		assert(addr > (u32_t) &usermapped_start);
@@ -797,15 +823,45 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 
+	/* if this all fails loop over the maps */
+	/* list over the maps and index them */
+	phys_maps = kern_phys_map_head;
+	while(phys_maps != NULL){
+		if(phys_maps->index == index){
+			assert(phys_maps->cb != NULL);
+			/* only update the vir addr we are
+			   going to call the callback in enable
+			   paging
+			*/
+			phys_maps->vir = addr;
+			return OK;
+		}
+		phys_maps = phys_maps->next;
+	}
+
 	return EINVAL;
 }
 
 int arch_enable_paging(struct proc * caller)
 {
+	kern_phys_map *phys_maps;
 	assert(caller->p_seg.p_ttbr);
+
 
 	/* load caller's page table */
 	switch_address_space(caller);
+
+	/* We have now switched address spaces and the mappings are
+	   valid. We can now remap previous mappings. This is not a 
+	   good time to do printf as the initial massing is gone and
+	   the new mapping is not in place */
+	phys_maps = kern_phys_map_head;
+	while(phys_maps != NULL){
+		assert(phys_maps->cb != NULL);
+		phys_maps->cb(phys_maps->id, phys_maps->vir);
+		phys_maps = phys_maps->next;
+	}
+
 
 	device_mem = (char *) device_mem_vaddr;
 
@@ -817,3 +873,64 @@ void release_address_space(struct proc *pr)
 	pr->p_seg.p_ttbr_v = NULL;
 	barrier();
 }
+
+
+
+/*
+ * Request a physical mapping
+ */
+int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
+		   kern_phys_map * priv, kern_phys_map_mapped cb, 
+		   vir_bytes id)
+{
+	/* Assign the values to the given struct and add priv
+	to the list */
+	assert(base_address != 0);
+	assert(io_size % ARM_PAGE_SIZE == 0);
+	assert(cb != NULL);
+
+	priv->addr  = base_address;
+	priv->size  = io_size;
+	priv->cb  = cb;
+	priv->id  = id;
+	priv->index = -1;
+	priv->next = NULL;
+	
+
+	if (kern_phys_map_head == NULL){
+		/* keep a list of items this is the first one */
+		kern_phys_map_head = priv;
+		kern_phys_map_head->next = NULL;
+	} else {
+		/* insert the item head but first keep track
+		   of the current by putting it in next */
+		priv->next = kern_phys_map_head;
+		/* replace the head */
+		kern_phys_map_head = priv;
+	}
+	return 0;
+}
+
+/*
+ * Callback implementation where the id given to the
+ * kern_phys_map is a pointer to the io map base address.
+ * this implementation will change that base address.
+ */
+int kern_phys_map_mapped_ptr(vir_bytes id, phys_bytes address){
+	*((vir_bytes*)id) = address;
+	return 0;
+}
+
+/*
+ * Request a physical mapping and put the result in the given prt
+ * Note that ptr will only be valid once the callback happend.
+ */
+int kern_phys_map_ptr(
+	phys_bytes base_address, 
+	vir_bytes io_size, 
+	kern_phys_map * priv,
+	vir_bytes ptr)
+{
+	return kern_req_phys_map(base_address,io_size,priv,kern_phys_map_mapped_ptr,ptr);
+}
+

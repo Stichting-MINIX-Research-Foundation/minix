@@ -3,15 +3,26 @@
 #include <machine/cpu.h>
 #include <minix/type.h>
 #include <io.h>
+
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
+#include "kernel/vm.h"
+#include "kernel/proto.h"
+#include "arch_proto.h"
+
 #include "omap_serial.h"
+
 
 struct omap_serial {
 	vir_bytes base;		
+	vir_bytes size;		
 };
 
 static struct omap_serial omap_serial = {
 	.base = 0,
 };
+
+static kern_phys_map serial_phys_map;
 
 /* 
  * In kernel serial for the omap. The serial driver like most other
@@ -37,6 +48,10 @@ void omap3_ser_init(){
 #ifdef AM335X
 	omap_serial.base = OMAP3_AM335X_DEBUG_UART_BASE;
 #endif
+    omap_serial.size = 0x1000 ; /* 4k */
+
+
+    kern_phys_map_ptr(omap_serial.base,omap_serial.size,&serial_phys_map,&omap_serial.base);
     assert(omap_serial.base);
 }
 

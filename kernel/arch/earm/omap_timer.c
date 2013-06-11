@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <machine/cpu.h>
 #include <minix/mmio.h>
+#include <assert.h>
 #include <io.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -141,10 +142,16 @@ int omap3_register_timer_handler(const irq_handler_t handler)
 	return 0;
 }
 
+
+/* meta data for remapping */
+static kern_phys_map timer_phys_map;
+static kern_phys_map fr_timer_phys_map;
+
 void omap3_frclock_init(void)
 {
     u32_t tisr;
 
+    kern_phys_map_ptr(fr_timer.base,ARM_PAGE_SIZE,&fr_timer_phys_map,&fr_timer.base);
     /* enable the clock */
 #ifdef AM335X
     /* Disable the module and wait for the module to be disabled */
@@ -202,6 +209,7 @@ void omap3_frclock_stop()
 void omap3_timer_init(unsigned freq)
 {
     u32_t tisr;
+    kern_phys_map_ptr(timer.base,ARM_PAGE_SIZE,&timer_phys_map,&timer.base);
 #ifdef AM335X
     /* disable the module and wait for the module to be disabled */
     set32(CM_WKUP_TIMER1_CLKCTRL, CM_MODULEMODE_MASK,CM_MODULEMODE_DISABLED);
