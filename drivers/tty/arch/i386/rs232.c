@@ -22,9 +22,11 @@
 
 /* Interrupt status bits. */
 #define IS_MODEM_STATUS_CHANGE  0
+#define IS_NOTPENDING		1
 #define IS_TRANSMITTER_READY    2
 #define IS_RECEIVER_READY       4
 #define IS_LINE_STATUS_CHANGE   6
+#define IS_IDBITS		6
 
 /* Line control bits. */
 #define LC_2STOP_BITS        0x04
@@ -659,8 +661,9 @@ static void rs232_handler(struct rs232 *rs)
 {
 /* Interrupt hander for RS232. */
   int s;
+  int trying = 1000;
 
-  while (TRUE) {
+  while (trying--) {
 	u32_t v;
 	/* Loop to pick up ALL pending interrupts for device.
 	 * This usually just wastes time unless the hardware has a buffer
@@ -668,8 +671,13 @@ static void rs232_handler(struct rs232 *rs)
 	 * Unfortunately, some serial cards lock up without this.
 	 */
 	if ((s = sys_inb(rs->int_id_port, &v)) != OK)
-		printf("TTY: sys_inb() failed: %d", s);
-	switch (v) {
+		panic("TTY: sys_inb() failed: %d", s);
+
+	/* do we have interrupt info? */
+	if(v & IS_NOTPENDING) return;
+
+	/* what kind of interrupt? */
+	switch (v & IS_IDBITS) {
 	case IS_RECEIVER_READY:
 		in_int(rs);
 		continue;
@@ -685,6 +693,8 @@ static void rs232_handler(struct rs232 *rs)
 	}
 	return;
   }
+
+  printf("tty rs232: enough!\n");
 }
 
 /*===========================================================================*
