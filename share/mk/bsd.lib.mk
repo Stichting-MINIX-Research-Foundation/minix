@@ -193,6 +193,9 @@ MKSHLIBOBJS= no
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,${_LIB_PREFIX}${LIB}.so.${SHLIB_SOVERSION}
 SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
+.if defined(__MINIX)
+SHLIB_SHFLAGS+=		${${HAVE_GOLD:Uno} != "no":? -Wl,--script,${LDS_SHARED_LIB}:}
+.endif # defined(__MINIX)
 SHLIB_LDSTARTFILE?=	${_GCC_CRTI} ${_GCC_CRTBEGINS}
 SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${_GCC_CRTN}
 

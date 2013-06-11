@@ -46,6 +46,17 @@
 	leal	_DYNAMIC-1b(%edx),%ecx	# &_DYNAMIC
 	movl	%ecx,%ebx
 	subl	_GLOBAL_OFFSET_TABLE_-1b(%edx),%ebx
+#ifdef HAVE_GOLD
+	/* Adjust the offset when using the gold linker, because it's off.
+	 * Using '_DYNAMIC' this way produces the warning
+	 * 'shared library text segment is not shareable', produced by '--warn-shared-textrel'
+	 * to avoid the warning, add a '_MY_DYNAMIC = .;' before the dynamic section in the
+	 * linkerscript that is used, and replace '_DYNAMIC' with '_MY_DYNAMIC' here.
+	 * However, this way, you end up with a custom linker script that you have to maintain.
+	 */
+	leal	_DYNAMIC,%eax
+	subl	%eax,%ebx
+#endif
 
 	pushl	%ebx			# relocbase
 	pushl	%ecx			# &_DYNAMIC

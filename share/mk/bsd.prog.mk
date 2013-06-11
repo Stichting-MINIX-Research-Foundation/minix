@@ -317,6 +317,20 @@ _CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 # Language-independent definitions.
 .for _P in ${PROGS} ${PROGS_CXX}					# {
 
+.if defined(__MINIX) && ${HAVE_GOLD:U} != ""
+.  if ${LD_STATIC:U} != "-static"
+GOLDLINKERSCRIPT?= ${LDS_DYNAMIC_BIN}
+.  else
+GOLDLINKERSCRIPT?= ${LDS_STATIC_BIN}
+.  endif
+
+GOLDLINKERSCRIPT.${_P}?= ${GOLDLINKERSCRIPT}
+
+.  if ${GOLDLINKERSCRIPT.${_P}:U} != ""
+LDFLAGS.${_P}:=-Wl,--script,${GOLDLINKERSCRIPT.${_P}} ${LDFLAGS.${_P}}
+.  endif
+.endif # defined(__MINIX) && ${HAVE_GOLD:U} == ""
+
 BINDIR.${_P}?=		${BINDIR}
 PROGNAME.${_P}?=	${_P}
 
