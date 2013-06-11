@@ -263,15 +263,16 @@ void startup(int linenr, struct ttyent *ttyp)
 
 	/* Construct argv for execute() */
 	ty_getty_argv = construct_argv(ttyp->ty_getty);
-	if (ty_getty_argv == NULL)
+	if (ty_getty_argv == NULL) {
 		report(2, "construct_argv");
-
-	/* Execute the getty process. */
-	execute(ty_getty_argv);
+	} else {
+		/* Execute the getty process. */
+		execute(ty_getty_argv);
+	}
 
 	/* Oops, disaster strikes. */
 	fcntl(2, F_SETFL, fcntl(2, F_GETFL) | O_NONBLOCK);
-	if (linenr != 0) report(2, ty_getty_argv[0]);
+	if (linenr != 0 && ty_getty_argv) report(2, ty_getty_argv[0]);
 	write(err[1], &errno, sizeof(errno));
 	_exit(1);
   }
