@@ -443,6 +443,9 @@ void init_vm(void)
 	CALLMAP(VM_MAPCACHEPAGE, do_mapcache);
 	CALLMAP(VM_SETCACHEPAGE, do_setcache);
 
+	/* getrusage */
+	CALLMAP(VM_GETRUSAGE, do_getrusage);
+
 	/* Initialize the structures for queryexit */
 	init_query_exit();
 

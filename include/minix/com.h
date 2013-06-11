@@ -352,9 +352,10 @@
 #  define SYS_STATECTL (KERNEL_CALL + 55)	/* sys_statectl() */
 
 #  define SYS_SAFEMEMSET (KERNEL_CALL + 56)	/* sys_safememset() */
+#  define SYS_GETRUSAGE (KERNEL_CALL + 57)	/* sys_getrusage() */
 
 /* Total */
-#define NR_SYS_CALLS	57	/* number of kernel calls */
+#define NR_SYS_CALLS	58	/* number of kernel calls */
 
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
@@ -1078,8 +1079,10 @@
 
 #define VM_VFS_MMAP             (VM_RQ_BASE+46)
 
+#define VM_GETRUSAGE		(VM_RQ_BASE+47)
+
 /* Total. */
-#define NR_VM_CALLS				47
+#define NR_VM_CALLS				48
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */
@@ -1293,5 +1296,10 @@
 /* Bits in 'BDEV_FLAGS' field of block device transfer requests. */
 #  define BDEV_NOFLAGS		0x00	/* no flags are set */
 #  define BDEV_FORCEWRITE	0x01	/* force write to disk immediately */
+
+/* Field names for GETRUSAGE related calls */
+#define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
+#define RU_WHO		m1_i1	/* who argument in getrusage call */
+#define RU_RUSAGE_ADDR	m1_p1	/* pointer to struct rusage */
 
 /* _MINIX_COM_H */

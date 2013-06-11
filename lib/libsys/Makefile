@@ -88,7 +88,8 @@ SRCS+=  \
 	vm_notify_sig.c \
 	vm_umap.c \
 	vm_procctl.c \
-	vprintf.c
+	vprintf.c \
+	sys_getrusage.c
 
 .if ${MKPCI} != "no"
 SRCS+=	pci_attr_r16.c \
