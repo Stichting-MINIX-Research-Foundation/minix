@@ -15,7 +15,13 @@ LDADD+=	-ltimers -lsys -lexec -lminlib -L/usr/lib
 
 LINKERSCRIPT= ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 
+.if ${HAVE_GOLD:U} != ""
+GOLDLINKERSCRIPT=${LINKERSCRIPT}
+LDFLAGS+= -Wl,--allow-multiple-definition
+CFLAGS += -fno-common
+.else
 LDFLAGS+= -T ${LINKERSCRIPT}
+.endif
 LDFLAGS+= -nostdlib 
 CFLAGS += -fno-stack-protector
 

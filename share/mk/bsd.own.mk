@@ -26,9 +26,6 @@ MKBINUTILS:=	no
 MKGDB:=		no
 MKGCC?=		no
 
-# LSC To check if works
-#DESTDIR?=	/usr/destdir.${MACHINE_ARCH}
-
 # LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
 SMP_FLAGS += -DCONFIG_SMP
@@ -42,17 +39,46 @@ CPPFLAGS+= ${SMP_FLAGS}
 __uname_s!= uname -s
 .if ${__uname_s:Uunknown} == "Minix" 
 USETOOLS?=	never
-.  if ${USETOOLS:Uno} != "yes" && ${HAVE_LLVM:U} == ""
-HAVE_LLVM!= clang --version | grep version | cut -d' ' -f 3
-.  endif
+.  if ${USETOOLS:Uno} != "yes"
+.    if ${_HAVE_LLVM:U} == ""
+       _HAVE_LLVM!= (exec 2>&1; clang --version || echo "")
+       _HAVE_LLVM:= ${_HAVE_LLVM:M[0-9]\.[0-9]}
+.      if ${_HAVE_LLVM} != ""
+         HAVE_LLVM?= ${_HAVE_LLVM}
+.      endif
+.    endif # ${_HAVE_LLVM:U} == ""
+
+.    if ${_HAVE_GOLD:U} == ""
+       _HAVE_GOLD!= (exec 2>&1; ld --version || echo "")
+       _GOLD_MATCH:=${_HAVE_GOLD:Mgold}
+       _HAVE_GOLD:= ${_HAVE_GOLD:M[0-9]\.[0-9][0-9]}
+.      if ${_GOLD_MATCH} != "" && ${_HAVE_GOLD} != ""
+          HAVE_GOLD?= ${_HAVE_GOLD}
+          CFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
+          AFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
+.      endif
+.    endif # ${_HAVE_GOLD:U} == ""
+.  endif # ${USETOOLS:Uno} != "yes"
+
 .  if !defined(HOSTPROG) && !defined(HOSTLIB)
 # LSC FIXME: Override MACHINE as the native minix host make command will set 
 #            it to i686.
 .    if ${MACHINE_ARCH} == "i386"
-MACHINE:= i386
+       MACHINE:= i386
 .    endif
 .  endif # !defined(HOSTPROG) && !defined(HOSTLIB)
 .endif # __uname_s == "Minix"
+
+#
+# linker script files that have to be specified explicitely for the gold linker
+#
+
+LDS_PATH=		${NETBSDSRCDIR}/external/gpl3/binutils/ldscripts
+LDS_STATIC_BIN=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xc
+LDS_DYNAMIC_BIN=	${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xc
+LDS_RELOC=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xr
+LDS_SHARED_LIB=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xsc
+LDS_N=			${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xbn
 .endif # defined(__MINIX)
 
 MAKECONF?=	/etc/mk.conf

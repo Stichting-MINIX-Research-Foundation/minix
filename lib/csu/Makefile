@@ -2,6 +2,8 @@
 
 .include <bsd.own.mk>
 
+LD+= ${${HAVE_GOLD:Uno} != "no":? --script ${LDS_RELOC}:}
+
 .if ${USE_COMPILERCRTSTUFF} != "yes"
 
 .if defined(CSU_MACHINE_ARCH)
