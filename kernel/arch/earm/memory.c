@@ -20,7 +20,6 @@
 #include "kernel/debug.h"
 #include "omap_timer.h"
 
-phys_bytes device_mem_vaddr = 0;
 
 #define HASPT(procptr) ((procptr)->p_seg.p_ttbr != 0)
 static int nfreepdes = 0;
@@ -678,12 +677,10 @@ void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp, char *name)
 	pr->p_reg.sp = sp;
 }
 
-static int device_mem_mapping_index = -1,
-	frclock_index = -1,
+static int frclock_index = -1,
 	usermapped_glo_index = -1,
 	usermapped_index = -1, first_um_idx = -1;
 
-char *device_mem;
 
 /* defined in kernel.lds */
 extern char usermapped_start, usermapped_end, usermapped_nonglo_start;
@@ -702,7 +699,6 @@ int arch_phys_map(const int index,
 
 	if(first) {
 		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
-		device_mem_mapping_index = freeidx++;
 		frclock_index = freeidx++;
 		if(glo_len > 0) {
 			usermapped_glo_index = freeidx++;
@@ -734,21 +730,6 @@ int arch_phys_map(const int index,
 		*len = (u32_t) &usermapped_end -
 			(u32_t) &usermapped_nonglo_start;
 		*flags = VMMF_USER;
-		return OK;
-	}
-	else if (index == device_mem_mapping_index) {
-#ifdef DM37XX
-		/* map device memory */
-		*addr = 0x48000000;
-		*len =  0x02000000;
-#endif
-#ifdef AM335X
-		/* map device memory until 0x5700 SGX */
-		*addr = 0x44000000;
-		*len =  0x06000000;
-
-#endif
-		*flags = VMMF_UNCACHED | VMMF_WRITE;
 		return OK;
 	}
 	else if (index == frclock_index) {
@@ -808,10 +789,6 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 	if (index == usermapped_index) {
 		return OK;
 	}
-	else if (index == device_mem_mapping_index) {
-		device_mem_vaddr = addr;
-		return OK;
-	}
 	else if (index == frclock_index) {
 #ifdef DM37XX
 		minix_kerninfo.minix_frclock = addr;
@@ -861,9 +838,6 @@ int arch_enable_paging(struct proc * caller)
 		phys_maps->cb(phys_maps->id, phys_maps->vir);
 		phys_maps = phys_maps->next;
 	}
-
-
-	device_mem = (char *) device_mem_vaddr;
 
 	return OK;
 }

@@ -1397,34 +1397,6 @@ int pt_mapkernel(pt_t *pt)
 	/* Kernel also wants various mappings of its own. */
 	for(i = 0; i < kernmappings; i++) {
 		int r;
-#if defined(__arm__)
-
-#ifdef DM37XX
-//FIXME this special case will be removed once we have non 1:1 mapping
-#define XXX 0x48000000
-#endif
-#ifdef AM335X
-#define XXX 0x44000000
-#endif
-		if(kern_mappings[i].phys_addr == XXX) {
-			addr = kern_mappings[i].phys_addr;
-			assert(!(kern_mappings[i].len % ARCH_BIG_PAGE_SIZE));
-			for(mapped = 0; mapped < kern_mappings[i].len; 
-				mapped += ARCH_BIG_PAGE_SIZE) {
-				int map_pde = addr / ARCH_BIG_PAGE_SIZE;
-				assert(!(addr % ARCH_BIG_PAGE_SIZE));
-				assert(addr == (addr & ARCH_VM_PDE_MASK));
-				assert(!pt->pt_dir[map_pde]);
-				pt->pt_dir[map_pde] = addr |
-					ARM_VM_SECTION | ARM_VM_SECTION_DOMAIN |
-					ARM_VM_SECTION_DEVICE |
-					ARM_VM_SECTION_SUPER;
-				addr += ARCH_BIG_PAGE_SIZE;
-			}
-			continue;
-		}
-#endif
-
 		if((r=pt_writemap(NULL, pt,
 			kern_mappings[i].vir_addr,
 			kern_mappings[i].phys_addr,
