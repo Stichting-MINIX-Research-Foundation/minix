@@ -640,13 +640,14 @@ void unpause(endpoint_t proc_e)
 		panic("VFS: unknown block reason: %d", blocked_on);
   }
 
-  rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-
   if ((blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_POPEN)&&
 	!wasreviving) {
 	susp_count--;
   }
 
-  replycode(proc_e, status);	/* signal interrupted call */
+  if(rfp->fp_blocked_on != FP_BLOCKED_ON_NONE) {
+	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
+	replycode(proc_e, status);	/* signal interrupted call */
+  }
 }
 
