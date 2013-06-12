@@ -4,7 +4,9 @@
 # Expects CPPFLAGS to have ELFSIZE set, and LIB to be set.
 
 SRCS=	ldd_elfxx.c
-SRCS+=	xmalloc.c debug.c expand.c map_object.c load.c search.c \
+SRCS+=	xmalloc.c debug.c expand.c map_object_fallback.c map_object.c load.c search.c \
 	headers.c paths.c
+
+CPPFLAGS+=	-DLDD
 
 .include "Makefile.common"

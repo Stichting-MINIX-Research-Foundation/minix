@@ -138,7 +138,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	    (off_t)0);
 	obj->ehdr = ehdr;
 	if (ehdr == MAP_FAILED) {
-#if defined(__minix) && defined(RTLD_LOADER)
+#if defined(__minix) && (defined(RTLD_LOADER) || defined(LDD))
 		return _rtld_map_object_fallback(path, fd, sb);
 #else
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
