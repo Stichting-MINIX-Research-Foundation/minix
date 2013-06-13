@@ -19,6 +19,7 @@
 #define OMAP3_MCR		4	/* Modem control register */
 #define OMAP3_LSR		5	/* Line status register */
 #define OMAP3_MSR		6	/* Modem status register */
+#define OMAP3_TCR		6
 #define OMAP3_MDR1		0x08	/* Mode definition register 1 */
 #define OMAP3_MDR2		0x09	/* Mode definition register 2 */
 #define OMAP3_SCR		0x10	/* Supplementary control register */
@@ -28,6 +29,8 @@
 
 /* Enhanced Features Register bits */
 #define UART_EFR_ECB		(1 << 4)/* Enhanced control bit */
+#define UART_EFR_AUTO_CTS	(1 << 6)/* auto cts enable */
+#define UART_EFR_AUTO_RTS	(1 << 7)/* auto rts enable */
 
 /* Interrupt Enable Register bits */
 #define UART_IER_MSI		0x08	/* Modem status interrupt */
@@ -38,6 +41,8 @@
 /* FIFO control register */
 #define OMAP_UART_FCR_RX_FIFO_TRIG_SHIFT	6
 #define OMAP_UART_FCR_RX_FIFO_TRIG_MASK		(0x3 << 6)
+#define OMAP_UART_FCR_TX_FIFO_TRIG_SHIFT	4
+#define OMAP_UART_FCR_RX_FIFO_TRIG_MASK		(0x3 << 4)
 #define UART_FCR_ENABLE_FIFO	0x01	/* Enable the fifo */
 #define UART_FCR_CLR_RCVR	0x02	/* Clear the RCVR FIFO */
 #define UART_FCR_CLR_XMIT	0x04	/* Clear the XMIT FIFO */

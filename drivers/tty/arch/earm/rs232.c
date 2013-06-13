@@ -18,8 +18,8 @@
 #endif
 
 
-#define RS_IBUFSIZE          1024	/* RS232 input buffer size */
-#define RS_OBUFSIZE          1024	/* RS232 output buffer size */
+#define RS_IBUFSIZE          40960	/* RS232 input buffer size */
+#define RS_OBUFSIZE          40960	/* RS232 output buffer size */
 
 /* Input buffer watermarks.
  * The external device is asked to stop sending when the buffer
@@ -101,10 +101,7 @@ typedef struct rs232 {
   unsigned int uartclk;		/* UART clock rate */
 
   unsigned char lstatus;	/* last line status */
-  unsigned framing_errors;	/* error counts (no reporting yet) */
-  unsigned overrun_errors;
-  unsigned parity_errors;
-  unsigned break_interrupts;
+  int rx_overrun_events;
 
   int irq;			/* irq for this line */
   int irq_hook_id;		/* interrupt hook */
@@ -390,8 +387,9 @@ static void rs_config(rs232_t *rs)
 	serial_out(rs, OMAP3_MCR, mcr | UART_MCR_TCRTLR);	/* 4b */
 	/* Set up FIFO  */
 	rs->fcr = 0;
-	rs->fcr &= ~OMAP_UART_FCR_RX_FIFO_TRIG_MASK;
-	rs->fcr |= (0x1 << OMAP_UART_FCR_RX_FIFO_TRIG_SHIFT);
+	/* Set FIFO interrupt trigger levels high */
+	rs->fcr |= (0x3 << OMAP_UART_FCR_RX_FIFO_TRIG_SHIFT);
+	rs->fcr |= (0x3 << OMAP_UART_FCR_TX_FIFO_TRIG_SHIFT);
 	rs->fcr |= UART_FCR_ENABLE_FIFO;
 	serial_out(rs, OMAP3_FCR, rs->fcr);			/* 5  */
 	serial_out(rs, OMAP3_LCR, UART_LCR_CONF_MODE_B);	/* 6  */
@@ -470,6 +468,7 @@ static void rs_config(rs232_t *rs)
 	if ((tp->tty_termios.c_lflag & IXON) && rs->oxoff != _POSIX_VDISABLE)
 		rs->ostate &= ~ORAW;
 	(void) serial_in(rs, OMAP3_IIR);
+
 	if (sys_irqenable(&rs->irq_hook_kernel_id) != OK)
 		panic("unable to enable interrupts");
 }
@@ -737,9 +736,12 @@ read_chars(rs232_t *rs, unsigned int status)
 {
 	unsigned char c;
 
+	if(serial_in(rs,OMAP3_LSR) & OMAP3_LSR_RXOE) {
+		rs->rx_overrun_events++;
+	}
+
 	/* check the line status to know if there are more chars */
 	while (serial_in(rs, OMAP3_LSR) &  UART_LSR_DR) {
-		assert( (serial_in(rs,OMAP3_LSR) & OMAP3_LSR_RXOE) == 0);
 		c = serial_in(rs, OMAP3_RHR);
 		if (!(rs->ostate & ORAW)) {
 			if (c == rs->oxoff) {
@@ -750,9 +752,8 @@ read_chars(rs232_t *rs, unsigned int status)
 		}
 
 		if (rs->icount == buflen(rs->ibuf)) {
-			printf("%s:%d buffer full, discarding byte\n",
-				__FUNCTION__, __LINE__);
-			return;
+			/* no buffer space? keep reading */
+			continue;
 		}
 
 		if (++rs->icount == RS_IHIGHWATER && rs->idevready) {
