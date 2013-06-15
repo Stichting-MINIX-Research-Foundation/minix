@@ -1,10 +1,19 @@
 #	$NetBSD: Makefile.inc,v 1.10 2011/07/04 02:53:15 mrg Exp $
 
 SOFTFLOAT_BITS?=64
+.if defined(__MINIX)
+.PATH:		${ARCHDIR}/softfloat \
+		${LIBCDIR}/softfloat/bits${SOFTFLOAT_BITS} ${LIBCDIR}/softfloat
+.else
 .PATH:		${ARCHDIR}/softfloat \
 		${.CURDIR}/softfloat/bits${SOFTFLOAT_BITS} ${.CURDIR}/softfloat
+.endif
 
+.if defined(__MINIX)
+CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${LIBCDIR}/softfloat
+.else
 CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat
+.endif
 CPPFLAGS+=	-DSOFTFLOAT_FOR_GCC
 
 SRCS.softfloat= softfloat.c

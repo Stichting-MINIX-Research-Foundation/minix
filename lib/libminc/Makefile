@@ -9,6 +9,7 @@ LIB=		minc
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
 
 LIBCSRCDIR=	${NETBSDSRCDIR}/lib/libc
+LIBCDIR=	${NETBSDSRCDIR}/lib/libc
 CPPFLAGS+=      -I${LIBCSRCDIR}/include -I${LIBCSRCDIR}
 CPPFLAGS+=	-D_LIBMINC
 
@@ -144,7 +145,7 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/locale
 
 # Import from sys-minix
 .for i in access.c brk.c close.c environ.c execve.c fork.c \
-	getgid.c getpid.c getuid.c gettimeofday.c loadname.c \
+	getgid.c getpid.c geteuid.c getuid.c gettimeofday.c loadname.c \
 	link.c _mcontext.c mknod.c mmap.c nanosleep.c open.c \
 	read.c sbrk.c select.c setuid.c sigprocmask.c stat.c \
 	stime.c syscall.c _ucontext.c umask.c unlink.c waitpid.c \
@@ -155,5 +156,10 @@ SRCS+= ${i}
 .endfor
 
 CPPFLAGS+= -D_LIBSYS
+
+.if exists (${ARCHDIR}/Makefile.inc)
+.PATH:  ${ARCHDIR}
+.include "${ARCHDIR}/Makefile.inc"
+.endif
 
 .include <bsd.lib.mk>
