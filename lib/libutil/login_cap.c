@@ -700,6 +700,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	}
 	errno = 0;
 
+#ifndef __minix
 	if (flags & LOGIN_SETLOGIN)
 		if (setlogin(pwd->pw_name) == -1) {
 			syslog(LOG_ERR, "setlogin(%s) failure: %m",
@@ -707,6 +708,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 			login_close(flc);
 			return (-1);
 		}
+#endif
 
 	if (flags & LOGIN_SETUSER)
 		if (setuid(uid) == -1) {

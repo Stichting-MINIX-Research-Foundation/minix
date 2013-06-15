@@ -21,4 +21,8 @@ SRCS+=	fixunsgen64_ieee754.c fixunsdfsi_ieee754.c
 SOFTFLOAT_BITS=32
 .endif
 
+.if defined(__MINIX)
+.include "${LIBCDIR}/softfloat/Makefile.inc"
+.else
 .include <softfloat/Makefile.inc>
+.endif

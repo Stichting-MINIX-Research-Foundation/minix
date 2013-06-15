@@ -8,11 +8,11 @@ LIB=		minc
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
 
-LIBCSRCDIR=	${NETBSDSRCDIR}/lib/libc
-CPPFLAGS+=      -I${LIBCSRCDIR}/include -I${LIBCSRCDIR}
+LIBCDIR=	${NETBSDSRCDIR}/lib/libc
+CPPFLAGS+=      -I${LIBCDIR}/include -I${LIBCDIR}
 CPPFLAGS+=	-D_LIBMINC
 
-ARCHDIR?=  ${LIBCSRCDIR}/arch/${MACHINE_CPU}
+ARCHDIR?=  ${LIBCDIR}/arch/${MACHINE_CPU}
 #
 # Customized versions of libc functions.
 #
@@ -63,7 +63,7 @@ CPPFLAGS.strlcpy.c+= -D_LIBC
 
 # Import from misc (_libc_init symbols)
 .for i in initfini.c stack_protector.c
-.PATH.c: ${LIBCSRCDIR}/misc
+.PATH.c: ${LIBCDIR}/misc
 SRCS+= ${i}
 CPPFLAGS.${i}+= -Dxprintf=printf
 .endfor
@@ -71,23 +71,23 @@ CPPFLAGS.${i}+= -Dxprintf=printf
 # Import from stdio
 .for i in findfp.c sprintf.c fprintf.c perror.c vsnprintf.c snprintf.c \
 	_rand48.c lrand48.c srand48.c
-.PATH.c: ${LIBCSRCDIR}/stdio
-CPPFLAGS.${i}= -I${LIBCSRCDIR}/stdio
+.PATH.c: ${LIBCDIR}/stdio
+CPPFLAGS.${i}= -I${LIBCDIR}/stdio
 SRCS+=	${i}
 .endfor
 
 # Import from stdlib
 .for i in abort.c atexit.c atoi.c exit.c getenv.c \
 	getopt.c ldiv.c malloc.c
-.PATH.c: ${LIBCSRCDIR}/stdlib
+.PATH.c: ${LIBCDIR}/stdlib
 SRCS+= ${i}
-CPPFLAGS.${i}+= -I${LIBCSRCDIR}/stdlib
+CPPFLAGS.${i}+= -I${LIBCDIR}/stdlib
 .endfor
 
 # Import from gen
-errlist.c: ${LIBCSRCDIR}/gen/errlist.awk \
+errlist.c: ${LIBCDIR}/gen/errlist.awk \
 	   ${NETBSDSRCDIR}/sys/sys/errno.h
-	${TOOL_CAT} ${NETBSDSRCDIR}/sys/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCSRCDIR}/gen/errlist.awk > ${.TARGET}
+	${TOOL_CAT} ${NETBSDSRCDIR}/sys/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCDIR}/gen/errlist.awk > ${.TARGET}
 CLEANFILES+=	errlist.c
 
 .for i in assert.c _errno.c errno.c _env.c errlist.c \
@@ -100,18 +100,18 @@ CLEANFILES+=	errlist.c
 	isfinitef_ieee754.c isfinited_ieee754.c \
 	signbitf_ieee754.c signbitd_ieee754.c \
 	nanf.c
-.PATH.c .PATH.S: ${ARCHDIR}/gen ${LIBCSRCDIR}/gen/minix \
-	${LIBCSRCDIR}/gen ${LIBCSRCDIR}
+.PATH.c .PATH.S: ${ARCHDIR}/gen ${LIBCDIR}/gen/minix \
+	${LIBCDIR}/gen ${LIBCDIR}
 SRCS+= ${i}
 .endfor
-CPPFLAGS.ctype_.c+= -I${LIBCSRCDIR}/locale
-CPPFLAGS.isctype.c+= -I${LIBCSRCDIR}/locale
-CPPFLAGS.tolower_.c+= -I${LIBCSRCDIR}/locale
-CPPFLAGS.toupper_.c+= -I${LIBCSRCDIR}/locale
+CPPFLAGS.ctype_.c+= -I${LIBCDIR}/locale
+CPPFLAGS.isctype.c+= -I${LIBCDIR}/locale
+CPPFLAGS.tolower_.c+= -I${LIBCDIR}/locale
+CPPFLAGS.toupper_.c+= -I${LIBCDIR}/locale
 
 # Import from regex
 .for i in regcomp.c regerror.c regexec.c regfree.c
-.PATH.c: ${LIBCSRCDIR}/regex
+.PATH.c: ${LIBCDIR}/regex
 SRCS+= ${i}
 .endfor
 
@@ -119,15 +119,15 @@ SRCS+= ${i}
 .for i in strcspn.c strerror.c strerror_r.c strtol.c \
 	bcopy.S bzero.S
 .PATH.S: ${ARCHDIR}/string
-.PATH.c: ${LIBCSRCDIR}/string
+.PATH.c: ${LIBCDIR}/string
 SRCS+= ${i}
 CPPFLAGS.${i}+= -D_LIBC
 .endfor
-CPPFLAGS.strtol.c+=     -I${LIBCSRCDIR}/../../common/lib/libc/stdlib
+CPPFLAGS.strtol.c+=     -I${LIBCDIR}/../../common/lib/libc/stdlib
 
 # Import from time
 .for i in asctime.c localtime.c strftime.c
-.PATH.c: ${LIBCSRCDIR}/time
+.PATH.c: ${LIBCDIR}/time
 SRCS+= ${i}
 .endfor
 
@@ -137,23 +137,28 @@ SRCS += __aeabi_ldivmod.S __aeabi_uldivmod.S
 
 # Import from locale
 .for i in _def_time.c
-.PATH.c: ${LIBCSRCDIR}/locale
+.PATH.c: ${LIBCDIR}/locale
 SRCS+= ${i}
-CPPFLAGS.${i}+= -I${LIBCSRCDIR}/locale
+CPPFLAGS.${i}+= -I${LIBCDIR}/locale
 .endfor
 
 # Import from sys-minix
 .for i in access.c brk.c close.c environ.c execve.c fork.c \
-	getgid.c getpid.c getuid.c gettimeofday.c loadname.c \
+	getgid.c getpid.c geteuid.c getuid.c gettimeofday.c loadname.c \
 	link.c _mcontext.c mknod.c mmap.c nanosleep.c open.c \
 	read.c sbrk.c select.c setuid.c sigprocmask.c stat.c \
 	stime.c syscall.c _ucontext.c umask.c unlink.c waitpid.c \
 	brksize.S _ipc.S _senda.S ucontext.S mmap.c init.c
-.PATH.c: ${LIBCSRCDIR}/sys-minix
+.PATH.c: ${LIBCDIR}/sys-minix
 .PATH.S: ${ARCHDIR}/sys-minix
 SRCS+= ${i}
 .endfor
 
 CPPFLAGS+= -D_LIBSYS
+
+.if exists (${ARCHDIR}/Makefile.inc)
+.PATH:  ${ARCHDIR}
+.include "${ARCHDIR}/Makefile.inc"
+.endif
 
 .include <bsd.lib.mk>
