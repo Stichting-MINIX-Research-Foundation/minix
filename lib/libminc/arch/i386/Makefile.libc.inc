@@ -4,12 +4,12 @@ SRCS+=  memchr.S memcmp.S memcpy.S memmove.S memset.S \
 	strncmp.S strrchr.S
 
 .for i in infinityl.c
-.PATH.c: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen
+.PATH.c: ${LIBCDIR}/arch/${MACHINE_ARCH}/gen
 SRCS+= ${i}
 .endfor
 # Import from string
 .for i in bcmp.S
-.PATH.S: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string
+.PATH.S: ${LIBCDIR}/arch/${MACHINE_ARCH}/string
 SRCS+= ${i}
 CPPFLAGS.${i}+= -D_LIBC
 .endfor
