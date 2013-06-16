@@ -45,7 +45,7 @@ tests=$alltests
 
 # Are we given any args? If so, we might have to give
 # or change our testlist
-while getopts 'lt:' opt
+while getopts 'lt:T' opt
 do
 	case $opt in
 	l)	echo "$alltests"
@@ -53,7 +53,14 @@ do
 		;;
 	t)      tests="$OPTARG"
 		;;
-	?)      echo "Usage: run [-l] [-t testlist]" >&2; exit 1
+	T)	tapmode=yes
+		diagprefix="# "
+		;;
+	?)      echo "Usage: run [-l] [-t testlist] [-T]" >&2
+		echo "	-l: list tests, exit" >&2
+		echo "	-t: execute given set of tests, default: all" >&2
+		echo "	-T: produce TAP-format output" >&2
+		exit 1
 	esac
 done
 
@@ -64,23 +71,39 @@ for i in `echo $tests`; do
    fi
 done
 
-# 
 if [  $tests_no -eq 0 ]
 then
 	echo "No test binaries found. did you compile?"
 	exit 1
 fi
 
+# Print tests list whenever user asks for TAP mode. It is up
+# to the caller to make sure it makes sense, i.e. he knows what it
+# represents.
+if [ "$tapmode" ]
+then	echo "1..$tests_no"
+fi
+
 if [ "$tests" = "$alltests" ]
 then	# Print test welcome message
-	clear
-	echo -n "Running POSIX compliance test suite. "
+	if [ ! "$tapmode" ]; then clear; fi
+	echo -n "${diagprefix}Running POSIX compliance test suite. "
 	echo "There are $tests_no tests in total."
-	echo " "
+	echo "${diagprefix}"
 fi
 
 # Provide an argument for test63
 ARGS_63=`pwd`/mod
+
+runtest() {
+	i=$1
+	ARG=$2
+	if [ "$ROOT" ]
+	then	su - bin -c "cd `pwd`; ./test$i $ARG" || return 1
+	else	./test$i $ARG || return 1
+	fi
+	return 0
+}
 
 # Run all the tests, keeping track of who failed.
 for i in `echo $tests`
@@ -92,14 +115,20 @@ do
       unset ARG
       testid="`echo $i | sed 's/\..*//'`"
       ARG=`eval echo "\\${ARGS_$testid}"`
-      if [ "$ROOT" ]
-         then su - bin -c "cd `pwd`; ./test$i $ARG" || FAIL=1
-         else ./test$i $ARG || FAIL=1
-      fi
+
+      runtest $i $ARG 2>&1 | sed "s/^/$diagprefix/"
+      FAIL=$?
+
       if [ $FAIL -eq 0 ]
-         then passed=`expr $passed + 1`
-         else failed=`expr $failed + 1`
-              badones=`echo $badones " " $i`
+         then	if [ "$tapmode" ]
+		then	echo "ok test $i"
+		fi
+		passed=`expr $passed + 1`
+         else	if [ "$tapmode" ]
+		then	echo "not ok test $i"
+		fi
+		failed=`expr $failed + 1`
+		badones=`echo $badones " " $i`
       fi
    else
       skipped=`expr $skipped + 1` 
@@ -108,12 +137,11 @@ done
 
 # Print results of the tests.
 if [ "$tests" = "$alltests" ]
-then	echo " "
+then	echo "${diagprefix}"
 	if test $total = $passed
-	   then echo All $passed tests completed without error \($skipped skipped\).
-	   else echo Testing completed. Score: $passed passed, $failed failed, \
-	             skipped $skipped
-	        echo The following tests failed: $badones
+	   then echo "${diagprefix}All $passed tests completed without error ($skipped skipped)."
+	   else echo "${diagprefix}Testing completed. Score: $passed passed, $failed failed, skipped $skipped"
+	        echo "${diagprefix}The following tests failed: $badones"
 	fi
 fi
 
