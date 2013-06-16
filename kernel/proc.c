@@ -1691,9 +1691,8 @@ void dequeue(struct proc *rp)
      at a time. */
   if (!is_zero64(rp->p_accounting.enter_queue)) {
 	read_tsc_64(&tsc);
-	tsc_delta = sub64(tsc, rp->p_accounting.enter_queue);
-	rp->p_accounting.time_in_queue = add64(rp->p_accounting.time_in_queue,
-		tsc_delta);
+	tsc_delta = ((u64_t)(tsc) - (rp->p_accounting.enter_queue));
+	rp->p_accounting.time_in_queue = ((u64_t)(rp->p_accounting.time_in_queue) + (tsc_delta));
 	make_zero64(rp->p_accounting.enter_queue);
   }
 

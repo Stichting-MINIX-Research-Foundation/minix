@@ -54,7 +54,7 @@ int fs_read(void) {
 	if (chunk > bytes_left) chunk = (int) bytes_left;
       
 	/* Read or write 'chunk' bytes. */
-	r = read_chunk(dir, cvul64(position), off, chunk, (unsigned) nrbytes, 
+	r = read_chunk(dir, ((u64_t)(position)), off, chunk, (unsigned) nrbytes, 
 		       gid, cum_io, block_size, &completed, rw);
 
 	if (r != OK) break;	/* EOF reached */
@@ -106,7 +106,7 @@ int fs_bread(void)
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes != 0) {
-    off = rem64u(position, block_size);	/* offset in blk*/
+    off = ((u64_t)(position) % (unsigned)(block_size));	/* offset in blk*/
     
     chunk = MIN(nrbytes, block_size - off);
     if (chunk < 0) chunk = block_size - off;
@@ -121,7 +121,7 @@ int fs_bread(void)
     /* Update counters and pointers. */
     nrbytes -= chunk;	        /* bytes yet to be read */
     cum_io += chunk;	        /* bytes read so far */
-    position= add64ul(position, chunk);	/* position within the file */
+    position= ((u64_t)(position) + (chunk));	/* position within the file */
   }
   
   fs_m_out.RES_SEEK_POS_LO = ex64lo(position); 
@@ -310,19 +310,19 @@ int rw;				/* READING or PEEKING */
   if ((ex64lo(position) <= dir->d_file_size) && 
   				(ex64lo(position) > dir->data_length_l)) {
     while ((dir->d_next != NULL) && (ex64lo(position) > dir->data_length_l)) {
-      position = sub64ul(position, dir->data_length_l);
+      position = ((u64_t)(position) - (dir->data_length_l));
       dir = dir->d_next;
     }
   }
 
   if (dir->inter_gap_size != 0) {
-    rel_block = div64u(position, block_size);
+    rel_block = ((u64_t)(position) / (unsigned)(block_size));
     file_unit = rel_block / dir->data_length_l;
     offset = rel_block % dir->file_unit_size;
     b = dir->loc_extent_l + (dir->file_unit_size +
     				 dir->inter_gap_size) * file_unit + offset;
   } else {
-    b = dir->loc_extent_l + div64u(position, block_size); /* Physical position
+    b = dir->loc_extent_l + ((u64_t)(position) / (unsigned)(block_size)); /* Physical position
 							    * to read. */
   }
 

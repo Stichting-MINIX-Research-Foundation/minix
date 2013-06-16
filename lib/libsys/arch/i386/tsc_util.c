@@ -63,7 +63,7 @@ micro_delay(u32_t micros)
 	CALIBRATE;
 
 	/* We have to know when to end the delay. */
-	end = add64(now, mul64u(micros, calib_mhz));
+	end = ((u64_t)(now) + (((u64_t)(micros) * (calib_mhz))));
 
 	/* If we have to wait for at least one HZ tick, use the regular
 	 * tickdelay first. Round downwards on purpose, so the average
@@ -87,7 +87,7 @@ u32_t tsc_64_to_micros(u64_t tsc)
 
 	CALIBRATE;
 
-	tmp = div64u64(tsc, calib_mhz);
+	tmp = ((u64_t)(tsc) / (unsigned)(calib_mhz));
 	if (ex64hi(tmp)) {
 		printf("tsc_64_to_micros: more than 2^32ms\n");
 		return ~0UL;

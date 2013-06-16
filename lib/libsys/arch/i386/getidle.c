@@ -67,8 +67,8 @@ double getidle(void)
 	if ((r = sys_getidletsc(&idle2)) != OK)
 		return -1.0;
 
-	idelta = sub64(idle2, idle);
-	tdelta = sub64(stop, start);
+	idelta = ((u64_t)(idle2) - (idle));
+	tdelta = ((u64_t)(stop) - (start));
 
 	if (cmp64(idelta, tdelta) >= 0)
 		return 100.0;

@@ -61,7 +61,7 @@ int do_read()
 
 	count -= chunk;
 	off += chunk;
-	pos = add64u(pos, chunk);
+	pos = ((u64_t)(pos) + (chunk));
   }
 
   if (r < 0)

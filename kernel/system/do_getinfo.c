@@ -29,8 +29,7 @@ static void update_idle_time(void)
 	idl->p_cycles = make64(0, 0);
 
 	for (i = 0; i < CONFIG_MAX_CPUS ; i++) {
-		idl->p_cycles = add64(idl->p_cycles,
-				get_cpu_var(i, idle_proc).p_cycles);
+		idl->p_cycles = ((u64_t)(idl->p_cycles) + (get_cpu_var(i, idle_proc).p_cycles));
 	}
 }
 

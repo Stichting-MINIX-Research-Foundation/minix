@@ -93,7 +93,7 @@ int fs_readwrite(void)
 	}
 
 	/* Read or write 'chunk' bytes. */
-	r = rw_chunk(rip, cvul64((unsigned long) position), off, chunk,
+	r = rw_chunk(rip, ((u64_t)((unsigned long)position)), off, chunk,
 		     nrbytes, rw_flag, gid, cum_io, block_size, &completed);
 
 	if (r != OK) break;   /* EOF reached */
@@ -174,7 +174,7 @@ int fs_breadwrite(void)
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes > 0) {
-	  off = rem64u(position, block_size);	/* offset in blk*/
+	  off = ((u64_t)(position) % (unsigned)(block_size));	/* offset in blk*/
 	  chunk = min(nrbytes, block_size - off);
 
 	  /* Read or write 'chunk' bytes. */
@@ -187,7 +187,7 @@ int fs_breadwrite(void)
 	  /* Update counters and pointers. */
 	  nrbytes -= chunk;	        /* bytes yet to be read */
 	  cum_io += chunk;	        /* bytes read so far */
-	  position = add64ul(position, chunk);	/* position within the file */
+	  position = ((u64_t)(position) + (chunk));	/* position within the file */
   }
 
   fs_m_out.RES_SEEK_POS_LO = ex64lo(position);
@@ -239,7 +239,7 @@ int *completed;                 /* number of bytes copied */
   block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
 
   if (block_spec) {
-	b = div64u(position, block_size);
+	b = ((u64_t)(position) / (unsigned)(block_size));
 	dev = (dev_t) rip->i_block[0];
   } else {
 	if (ex64hi(position) != 0)
@@ -453,7 +453,7 @@ void read_ahead()
 
   assert(rdahedpos >= 0); /* So we can safely cast it to unsigned below */
 
-  bp = rahead(rip, b, cvul64((unsigned long) rdahedpos), block_size);
+  bp = rahead(rip, b, ((u64_t)((unsigned long)rdahedpos)), block_size);
   put_block(bp, PARTIAL_DATA_BLOCK);
 }
 

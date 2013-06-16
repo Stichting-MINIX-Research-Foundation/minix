@@ -114,7 +114,7 @@ static void testmul(void)
 {
 	int kdone, kidx;
 	u32_t ilo = ex64lo(i), jlo = ex64lo(j);
-	u64_t prod = mul64(i, j);
+	u64_t prod = ((u64_t)(i) * (j));
 	int prodbits;
 		
 	/* compute maximum index of highest-order bit */
@@ -124,7 +124,7 @@ static void testmul(void)
 
 	/* compare to 32-bit multiplication if possible */	
 	if (ex64hi(i) == 0 && ex64hi(j) == 0) {
-		if (cmp64(prod, mul64u(ilo, jlo)) != 0) ERR;
+		if (prod != (u64_t) ilo * jlo) ERR;
 		
 		/* if there is no overflow we can check against pure 32-bit */
 		if (prodbits < 32 && cmp64u(prod, ilo * jlo) != 0) ERR;
@@ -140,16 +140,16 @@ static void testmul(void)
 	if (prodbits >= 0 && prodbits < 64 && cmp64u(prod, 0) == 0) ERR;
 
 	/* commutativity */
-	if (cmp64(prod, mul64(j, i)) != 0) ERR;
+	if (prod != (u64_t) j * i) ERR;
 
 	/* loop though all argument value combinations for third argument */
 	for (kdone = 0, kidx = 0; k = getargval(kidx, &kdone), !kdone; kidx++) {
 		/* associativity */
-		if (cmp64(mul64(mul64(i, j), k), mul64(i, mul64(j, k))) != 0) ERR;
+		if ((u64_t) (i * j) * k != (u64_t) i * (j * k)) ERR;
 
 		/* left and right distributivity */
-		if (cmp64(mul64(add64(i, j), k), add64(mul64(i, k), mul64(j, k))) != 0) ERR;
-		if (cmp64(mul64(i, add64(j, k)), add64(mul64(i, j), mul64(i, k))) != 0) ERR;
+		if (cmp64(((u64_t)(((u64_t)(i) + (j))) * (k)), ((u64_t)(((u64_t)(i) * (k))) + (((u64_t)(j) * (k))))) != 0) ERR;
+		if (cmp64(((u64_t)(i) * (((u64_t)(j) + (k)))), ((u64_t)(((u64_t)(i) * (j))) + (((u64_t)(i) * (k))))) != 0) ERR;
 	}
 }
 
@@ -165,11 +165,11 @@ static void testdiv0(void)
 		if (setjmp(jmpbuf_SIGFPE) == 0) {
 			/* divide by zero using various functions */
 			switch (funcidx) {
-				case 0: div64(i, j);		ERR; break;
-				case 1: div64u64(i, ex64lo(j));	ERR; break;
-				case 2: div64u(i, ex64lo(j));	ERR; break;
-				case 3: rem64(i, j);		ERR; break;
-				case 4: rem64u(i, ex64lo(j));	ERR; break;
+				case 0: ((u64_t)(i) / (unsigned)(j));		ERR; break;
+				case 1: ((u64_t)(i) / (unsigned)(ex64lo(j)));	ERR; break;
+				case 2: ((u64_t)(i) / (unsigned)(ex64lo(j)));	ERR; break;
+				case 3: ((u64_t)(i) % (j));		ERR; break;
+				case 4: ((u64_t)(i) % (unsigned)(ex64lo(j)));	ERR; break;
 				default: assert(0);		ERR; break;
 			}
 
@@ -206,8 +206,8 @@ static void testdiv(void)
 	}
 
 	/* perform division, store q in k to make ERR more informative */
-	q = div64(i, j);
-	r = rem64(i, j);
+	q = ((u64_t)(i) / (unsigned)(j));
+	r = ((u64_t)(i) % (j));
 	k = q;
 
 #if TIMED
@@ -227,11 +227,11 @@ static void testdiv(void)
 
 	/* compare to 64/32-bit division if possible */
 	if (!ex64hi(j)) {
-		if (cmp64(q, div64u64(i, ex64lo(j))) != 0) ERR;
+		if (cmp64(q, ((u64_t)(i) / (unsigned)(ex64lo(j)))) != 0) ERR;
 		if (!ex64hi(q)) {
-			if (cmp64u(q, div64u(i, ex64lo(j))) != 0) ERR;
+			if (cmp64u(q, ((u64_t)(i) / (unsigned)(ex64lo(j)))) != 0) ERR;
 		}
-		if (cmp64u(r, rem64u(i, ex64lo(j))) != 0) ERR;
+		if (cmp64u(r, ((u64_t)(i) % (unsigned)(ex64lo(j)))) != 0) ERR;
 
 		/* compare to 32-bit division if possible */
 		if (!ex64hi(i)) {
@@ -241,7 +241,7 @@ static void testdiv(void)
 	}
 
 	/* check results using i = q j + r and r < j */
-	if (cmp64(i, add64(mul64(q, j), r)) != 0) ERR;
+	if (cmp64(i, ((u64_t)(((u64_t)(q) * (j))) + (r))) != 0) ERR;
 	if (cmp64(r, j) >= 0) ERR;
 }
 

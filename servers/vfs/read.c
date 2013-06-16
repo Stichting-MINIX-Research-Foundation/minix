@@ -181,7 +181,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 		   suspend_reopen);
 	if (r >= 0) {
 		cum_io = r;
-		position = add64ul(position, r);
+		position = ((u64_t)(position) + (r));
 		r = OK;
 	}
   } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */
@@ -205,7 +205,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   } else {				/* Regular files */
 	if (rw_flag == WRITING) {
 		/* Check for O_APPEND flag. */
-		if (f->filp_flags & O_APPEND) position = cvul64(vp->v_size);
+		if (f->filp_flags & O_APPEND) position = ((u64_t)(vp->v_size));
 	}
 
 	/* Issue request */
@@ -315,7 +315,7 @@ size_t req_size;
 
   oflags = f->filp_flags;
   vp = f->filp_vno;
-  position = cvu64(0);	/* Not actually used */
+  position = ((u64_t)(0));	/* Not actually used */
 
   assert(rw_flag == READING || rw_flag == WRITING);
 

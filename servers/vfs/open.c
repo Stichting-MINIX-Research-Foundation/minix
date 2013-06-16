@@ -608,16 +608,16 @@ int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
 
   /* The value of 'whence' determines the start position to use. */
   switch(seekwhence) {
-    case SEEK_SET: pos = cvu64(0);	break;
+    case SEEK_SET: pos = ((u64_t)(0));	break;
     case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+    case SEEK_END: pos = ((u64_t)(rfilp->filp_vno->v_size));	break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
   if (offset >= 0)
-	newpos = add64ul(pos, offset);
+	newpos = ((u64_t)(pos) + (offset));
   else
-	newpos = sub64ul(pos, -offset);
+	newpos = ((u64_t)(pos) - (-offset));
 
   /* Check for overflow. */
   if (ex64hi(newpos) != 0) {
@@ -675,9 +675,9 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
 
   /* The value of 'whence' determines the start position to use. */
   switch(seekwhence) {
-    case SEEK_SET: pos = cvu64(0);	break;
+    case SEEK_SET: pos = ((u64_t)(0));	break;
     case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+    case SEEK_END: pos = ((u64_t)(rfilp->filp_vno->v_size));	break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 

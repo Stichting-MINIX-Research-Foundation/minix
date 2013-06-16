@@ -906,7 +906,7 @@ static int w_identify(void)
   w_testing = 0;
 
   /* Size of the whole drive */
-  wn->part[0].dv_size = mul64u(size, SECTOR_SIZE);
+  wn->part[0].dv_size = ((u64_t)(size) * (SECTOR_SIZE));
 
   /* Reset/calibrate (where necessary) */
   if (w_specify() != OK && w_specify() != OK) {
@@ -975,7 +975,7 @@ static int w_io_test(void)
 	w_testing = 1;
 
 	/* Try I/O on the actual drive (not any (sub)partition). */
-	r = w_transfer(w_drive * DEV_PER_DRIVE, FALSE /*do_write*/, cvu64(0),
+	r = w_transfer(w_drive * DEV_PER_DRIVE, FALSE /*do_write*/, ((u64_t)(0)),
 		SELF, &iov, 1, BDEV_NOFLAGS);
 
 	/* Switch back. */
@@ -1204,7 +1204,7 @@ static ssize_t w_transfer(
 #endif
 
   /* Check disk address. */
-  if (rem64u(position, SECTOR_SIZE) != 0) return(EINVAL);
+  if (((u64_t)(position) % (unsigned)(SECTOR_SIZE)) != 0) return(EINVAL);
 
   errors = 0;
 
@@ -1216,9 +1216,9 @@ static ssize_t w_transfer(
 
 	/* Which block on disk and how close to EOF? */
 	if (cmp64(position, dv_size) >= 0) return(total);	/* At EOF */
-	if (cmp64(add64ul(position, nbytes), dv_size) > 0)
+	if (cmp64(((u64_t)(position) + (nbytes)), dv_size) > 0)
 		nbytes = diff64(dv_size, position);
-	block = div64u(add64(w_dv->dv_base, position), SECTOR_SIZE);
+	block = ((u64_t)(((u64_t)(w_dv->dv_base) + (position))) / (unsigned)(SECTOR_SIZE));
 
 	do_dma= wn->dma;
 	
@@ -1296,7 +1296,7 @@ static ssize_t w_transfer(
 
 			/* Book the bytes successfully transferred. */
 			nbytes -= n;
-			position= add64ul(position, n);
+			position= ((u64_t)(position) + (n));
 			total += n;
 			addr_offset += n;
 			if ((iov->iov_size -= n) == 0) {
@@ -1368,7 +1368,7 @@ static ssize_t w_transfer(
 
 		/* Book the bytes successfully transferred. */
 		nbytes -= SECTOR_SIZE;
-		position= add64u(position, SECTOR_SIZE);
+		position= ((u64_t)(position) + (SECTOR_SIZE));
 		addr_offset += SECTOR_SIZE;
 		total += SECTOR_SIZE;
 		if ((iov->iov_size -= SECTOR_SIZE) == 0) {
@@ -1891,7 +1891,7 @@ static void w_geometry(dev_t minor, struct part_geom *entry)
   wn = w_wn;
 
   if (wn->state & ATAPI) {		/* Make up some numbers. */
-	entry->cylinders = div64u(wn->part[0].dv_size, SECTOR_SIZE) / (64*32);
+	entry->cylinders = ((u64_t)(wn->part[0].dv_size) / (unsigned)(SECTOR_SIZE)) / (64*32);
 	entry->heads = 64;
 	entry->sectors = 32;
   } else {				/* Return logical geometry. */
@@ -1911,7 +1911,7 @@ static int atapi_open(void)
  * size of the device to something big.  What is really needed is a generic
  * SCSI layer that does all this stuff for ATAPI and SCSI devices (kjb). (XXX)
  */
-  w_wn->part[0].dv_size = mul64u(800L*1024, 1024);
+  w_wn->part[0].dv_size = ((u64_t)(800L * 1024) * (1024));
   return(OK);
 }
 
@@ -1985,9 +1985,9 @@ static int atapi_transfer(
 	/* The Minix block size is smaller than the CD block size, so we
 	 * may have to read extra before or after the good data.
 	 */
-	pos = add64(w_dv->dv_base, position);
-	block = div64u(pos, CD_SECTOR_SIZE);
-	before = rem64u(pos, CD_SECTOR_SIZE);
+	pos = ((u64_t)(w_dv->dv_base) + (position));
+	block = ((u64_t)(pos) / (unsigned)(CD_SECTOR_SIZE));
+	before = ((u64_t)(pos) % (unsigned)(CD_SECTOR_SIZE));
 
 	if(before)
 		do_dma = 0;
@@ -2005,7 +2005,7 @@ static int atapi_transfer(
 
 	/* Which block on disk and how close to EOF? */
 	if (cmp64(position, dv_size) >= 0) return(total);	/* At EOF */
-	if (cmp64(add64ul(position, nbytes), dv_size) > 0)
+	if (cmp64(((u64_t)(position) + (nbytes)), dv_size) > 0)
 		nbytes = diff64(dv_size, position);
 
 	nblocks = (before + nbytes + CD_SECTOR_SIZE - 1) / CD_SECTOR_SIZE;
@@ -2060,7 +2060,7 @@ static int atapi_transfer(
 
 				if (chunk > iov->iov_size)
 					chunk = iov->iov_size;
-				position= add64ul(position, chunk);
+				position= ((u64_t)(position) + (chunk));
 				nbytes -= chunk;
 				total += chunk;
 				if ((iov->iov_size -= chunk) == 0) {
@@ -2103,7 +2103,7 @@ static int atapi_transfer(
 			}
 			if (s != OK)
 				panic("Call to sys_insw() failed: %d", s);
-			position= add64ul(position, chunk);
+			position= ((u64_t)(position) + (chunk));
 			nbytes -= chunk;
 			count -= chunk;
 			addr_offset += chunk;

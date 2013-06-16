@@ -75,8 +75,8 @@ u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree,
 	vsi.vsi_pagesize / 1024;
 
   /* check fs usage. */
-  kbytes_used_fs = div64u(mul64u(bused, blocksize), 1024);
-  kbytes_total_fs = div64u(mul64u(btotal, blocksize), 1024);
+  kbytes_used_fs = ((u64_t)(((u64_t)(bused) * (blocksize))) / (unsigned)(1024));
+  kbytes_total_fs = ((u64_t)(((u64_t)(btotal) * (blocksize))) / (unsigned)(1024));
 
   /* heuristic for a desired cache size based on FS usage;
    * but never bigger than half of the total filesystem
@@ -512,7 +512,7 @@ register struct buf *bp;	/* buffer pointer */
   ASSERT(fs_block_size > 0);
   ASSERT(!(fs_block_size % PAGE_SIZE));
 
-  pos = mul64u(bp->lmfs_blocknr, fs_block_size);
+  pos = ((u64_t)(bp->lmfs_blocknr) * (fs_block_size));
   if(fs_block_size > PAGE_SIZE) {
 #define MAXPAGES 20
 	vir_bytes vaddr = (vir_bytes) bp->data;
@@ -674,7 +674,7 @@ void lmfs_rw_scattered(
 	assert(nblocks > 0);
 	assert(niovecs > 0);
 
-	pos = mul64u(bufq[0]->lmfs_blocknr, fs_block_size);
+	pos = ((u64_t)(bufq[0]->lmfs_blocknr) * (fs_block_size));
 	if (rw_flag == READING)
 		r = bdev_gather(dev, pos, iovec, niovecs, BDEV_NOFLAGS);
 	else

@@ -214,10 +214,10 @@ static int rw_super(struct super_block *sp, int writing)
   if(writing) {
   	memset(sbbuf, 0, _MIN_BLOCK_SIZE);
   	memcpy(sbbuf, sp, ondisk_bytes);
-  	r = bdev_write(sp->s_dev, cvu64(SUPER_BLOCK_BYTES), sbbuf, _MIN_BLOCK_SIZE,
+  	r = bdev_write(sp->s_dev, ((u64_t)(SUPER_BLOCK_BYTES)), sbbuf, _MIN_BLOCK_SIZE,
 		BDEV_NOFLAGS);
   } else {
-  	r = bdev_read(sp->s_dev, cvu64(SUPER_BLOCK_BYTES), sbbuf, _MIN_BLOCK_SIZE,
+  	r = bdev_read(sp->s_dev, ((u64_t)(SUPER_BLOCK_BYTES)), sbbuf, _MIN_BLOCK_SIZE,
 		BDEV_NOFLAGS);
 	memset(sp, 0, sizeof(*sp));
   	memcpy(sp, sbbuf, ondisk_bytes);

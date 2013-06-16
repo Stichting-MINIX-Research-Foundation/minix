@@ -380,8 +380,7 @@ static int atapi_read_capacity(struct port_state *ps, int cmd)
 
 	/* Store the number of LBA blocks and sector size. */
 	buf = ps->tmp_base;
-	ps->lba_count = add64u(cvu64((buf[0] << 24) | (buf[1] << 16) |
-		(buf[2] << 8) | buf[3]), 1);
+	ps->lba_count = ((u64_t)(((u64_t)((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]))) + (1));
 	ps->sector_size =
 		(buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | buf[7];
 
@@ -395,8 +394,7 @@ static int atapi_read_capacity(struct port_state *ps, int cmd)
 	dprintf(V_INFO,
 		("%s: medium detected (%u byte sectors, %lu MB size)\n",
 		ahci_portname(ps), ps->sector_size,
-		div64u(mul64(ps->lba_count, cvu64(ps->sector_size)),
-		1024*1024)));
+		((u64_t)(((u64_t)(ps->lba_count) * (((u64_t)(ps->sector_size))))) / (unsigned)(1024 * 1024))));
 
 	return OK;
 }
@@ -1172,11 +1170,11 @@ static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 	 * extend beyond the end of the partition. The caller already
 	 * guarantees that the starting position lies within the partition.
 	 */
-	if (cmp64(add64ul(pos, size), eof) >= 0)
+	if (cmp64(((u64_t)(pos) + (size)), eof) >= 0)
 		size = (vir_bytes) diff64(eof, pos);
 
-	start_lba = div64(pos, cvu64(ps->sector_size));
-	lead = rem64u(pos, ps->sector_size);
+	start_lba = ((u64_t)(pos) / (unsigned)(((u64_t)(ps->sector_size))));
+	lead = ((u64_t)(pos) % (unsigned)(ps->sector_size));
 	count = (lead + size + ps->sector_size - 1) / ps->sector_size;
 
 	/* Position must be word-aligned for read requests, and sector-aligned
@@ -1428,8 +1426,7 @@ static void port_id_check(struct port_state *ps, int success)
 
 		if (ps->flags & FLAG_HAS_MEDIUM)
 			printf(", %u byte sectors, %lu MB size",
-				ps->sector_size, div64u(mul64(ps->lba_count,
-				cvu64(ps->sector_size)), 1024*1024));
+				ps->sector_size, ((u64_t)(((u64_t)(ps->lba_count) * (((u64_t)(ps->sector_size))))) / (unsigned)(1024 * 1024)));
 
 		printf("\n");
 	}
@@ -2522,7 +2519,7 @@ static int ahci_open(dev_t minor, int access)
 		memset(ps->subpart, 0, sizeof(ps->subpart));
 
 		ps->part[0].dv_size =
-			mul64(ps->lba_count, cvu64(ps->sector_size));
+			((u64_t)(ps->lba_count) * (((u64_t)(ps->sector_size))));
 
 		partition(&ahci_dtab, ps->device * DEV_PER_DRIVE, P_PRIMARY,
 			!!(ps->flags & FLAG_ATAPI));
@@ -2626,8 +2623,8 @@ static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 	if (cmp64(position, dv->dv_size) >= 0)
 		return OK;
 
-	pos = add64(dv->dv_base, position);
-	eof = add64(dv->dv_base, dv->dv_size);
+	pos = ((u64_t)(dv->dv_base) + (position));
+	eof = ((u64_t)(dv->dv_base) + (dv->dv_size));
 
 	return port_transfer(ps, pos, eof, endpt, (iovec_s_t *) iovec, count,
 		do_write, flags);

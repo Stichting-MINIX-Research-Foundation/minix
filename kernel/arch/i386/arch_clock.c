@@ -119,11 +119,11 @@ static void estimate_cpu_freq(void)
 	/* remove the probe */
 	rm_irq_handler(&calib_cpu);
 
-	tsc_delta = sub64(tsc1, tsc0);
+	tsc_delta = ((u64_t)(tsc1) - (tsc0));
 
-	cpu_freq = mul64(div64u64(tsc_delta, PROBE_TICKS - 1), make64(system_hz, 0));
+	cpu_freq = ((u64_t)(((u64_t)(tsc_delta) / (unsigned)(PROBE_TICKS - 1))) * (make64(system_hz, 0)));
 	cpu_set_freq(cpuid, cpu_freq);
-	cpu_info[cpuid].freq = div64u(cpu_freq, 1000000);
+	cpu_info[cpuid].freq = ((u64_t)(cpu_freq) / (unsigned)(1000000));
 	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 
@@ -223,9 +223,9 @@ void context_stop(struct proc * p)
 		u64_t tmp;
 
 		read_tsc_64(&tsc);
-		tmp = sub64(tsc, *__tsc_ctr_switch);
-		kernel_ticks[cpu] = add64(kernel_ticks[cpu], tmp);
-		p->p_cycles = add64(p->p_cycles, tmp);
+		tmp = ((u64_t)(tsc) - (*__tsc_ctr_switch));
+		kernel_ticks[cpu] = ((u64_t)(kernel_ticks[cpu]) + (tmp));
+		p->p_cycles = ((u64_t)(p->p_cycles) + (tmp));
 		must_bkl_unlock = 1;
 	} else {
 		u64_t bkl_tsc;
@@ -239,11 +239,11 @@ void context_stop(struct proc * p)
 		
 		read_tsc_64(&tsc);
 
-		bkl_ticks[cpu] = add64(bkl_ticks[cpu], sub64(tsc, bkl_tsc));
+		bkl_ticks[cpu] = ((u64_t)(bkl_ticks[cpu]) + (((u64_t)(tsc) - (bkl_tsc))));
 		bkl_tries[cpu]++;
 		bkl_succ[cpu] += !(!(succ == 0));
 
-		p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
+		p->p_cycles = ((u64_t)(p->p_cycles) + (((u64_t)(tsc) - (*__tsc_ctr_switch))));
 
 #ifdef CONFIG_SMP
 		/*
@@ -261,20 +261,20 @@ void context_stop(struct proc * p)
 	}
 #else
 	read_tsc_64(&tsc);
-	p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
+	p->p_cycles = ((u64_t)(p->p_cycles) + (((u64_t)(tsc) - (*__tsc_ctr_switch))));
 #endif
 	
-	tsc_delta = sub64(tsc, *__tsc_ctr_switch);
+	tsc_delta = ((u64_t)(tsc) - (*__tsc_ctr_switch));
 
 	if(kbill_ipc) {
 		kbill_ipc->p_kipc_cycles =
-			add64(kbill_ipc->p_kipc_cycles, tsc_delta);
+			((u64_t)(kbill_ipc->p_kipc_cycles) + (tsc_delta));
 		kbill_ipc = NULL;
 	}
 
 	if(kbill_kcall) {
 		kbill_kcall->p_kcall_cycles =
-			add64(kbill_kcall->p_kcall_cycles, tsc_delta);
+			((u64_t)(kbill_kcall->p_kcall_cycles) + (tsc_delta));
 		kbill_kcall = NULL;
 	}
 
@@ -291,7 +291,7 @@ void context_stop(struct proc * p)
 		if (ex64hi(tsc_delta) < ex64hi(p->p_cpu_time_left) ||
 				(ex64hi(tsc_delta) == ex64hi(p->p_cpu_time_left) &&
 				 ex64lo(tsc_delta) < ex64lo(p->p_cpu_time_left)))
-			p->p_cpu_time_left = sub64(p->p_cpu_time_left, tsc_delta);
+			p->p_cpu_time_left = ((u64_t)(p->p_cpu_time_left) - (tsc_delta));
 		else {
 			make_zero64(p->p_cpu_time_left);
 		}
@@ -329,12 +329,12 @@ void context_stop_idle(void)
 
 u64_t ms_2_cpu_time(unsigned ms)
 {
-	return mul64u(tsc_per_ms[cpuid], ms);
+	return ((u64_t)(tsc_per_ms[cpuid]) * (ms));
 }
 
 unsigned cpu_time_2_ms(u64_t cpu_time)
 {
-	return div64u(cpu_time, tsc_per_ms[cpuid]);
+	return ((u64_t)(cpu_time) / (unsigned)(tsc_per_ms[cpuid]));
 }
 
 short cpu_load(void)
@@ -358,12 +358,12 @@ short cpu_load(void)
 
 	/* calculate load since last cpu_load invocation */
 	if (!is_zero64(*last_tsc)) {
-		tsc_delta = sub64(current_tsc, *last_tsc);
-		idle_delta = sub64(*current_idle, *last_idle);
+		tsc_delta = ((u64_t)(current_tsc) - (*last_tsc));
+		idle_delta = ((u64_t)(*current_idle) - (*last_idle));
 
-		busy = sub64(tsc_delta, idle_delta);
-		busy = mul64(busy, make64(100, 0));
-		load = ex64lo(div64(busy, tsc_delta));
+		busy = ((u64_t)(tsc_delta) - (idle_delta));
+		busy = ((u64_t)(busy) * (make64(100, 0)));
+		load = ex64lo(((u64_t)(busy) / (unsigned)(tsc_delta)));
 
 		if (load > 100)
 			load = 100;

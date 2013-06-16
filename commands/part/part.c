@@ -477,8 +477,8 @@ void geometry(void)
 		if (ioctl(device, DIOCGETP, &geometry) < 0)
 			err= errno;
 		else {
-			table[0].lowsec= div64u(geometry.base, SECTOR_SIZE);
-			table[0].size= div64u(geometry.size, SECTOR_SIZE);
+			table[0].lowsec= ((u64_t)(geometry.base) / (unsigned)(SECTOR_SIZE));
+			table[0].size= ((u64_t)(geometry.size) / (unsigned)(SECTOR_SIZE));
 			cylinders= geometry.cylinders;
 			heads= geometry.heads;
 			sectors= geometry.sectors;
@@ -546,8 +546,8 @@ void geometry(void)
 	 * This makes sense for subpartitioning primary partitions.
 	 */
 	if (precise && ioctl(device, DIOCGETP, &geometry) >= 0) {
-		table[0].lowsec= div64u(geometry.base, SECTOR_SIZE);
-		table[0].size= div64u(geometry.size, SECTOR_SIZE);
+		table[0].lowsec= ((u64_t)(geometry.base) / (unsigned)(SECTOR_SIZE));
+		table[0].size= ((u64_t)(geometry.size) / (unsigned)(SECTOR_SIZE));
 	} else {
 		precise= 0;
 	}

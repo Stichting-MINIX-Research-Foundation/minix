@@ -139,7 +139,7 @@ static int do_rdwt(int flag_rw)
 	pos = make64(m_in.BDEV_POS_LO, m_in.BDEV_POS_HI);
 	size = m_in.BDEV_COUNT;
 
-	if (rem64u(pos, SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
+	if (((u64_t)(pos) % (unsigned)(SECTOR_SIZE)) != 0 || size % SECTOR_SIZE != 0) {
 		printf("Filter: unaligned request from caller!\n");
 
 		return EINVAL;
@@ -198,7 +198,7 @@ static int do_vrdwt(int flag_rw)
 	for(size = 0, i = 0; i < grants; i++)
 		size += iov_proc[i].iov_size;
 
-	if (rem64u(pos, SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
+	if (((u64_t)(pos) % (unsigned)(SECTOR_SIZE)) != 0 || size % SECTOR_SIZE != 0) {
 		printf("Filter: unaligned request from caller!\n");
 		return EINVAL;
 	}

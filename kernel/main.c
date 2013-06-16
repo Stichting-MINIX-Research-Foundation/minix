@@ -505,7 +505,7 @@ void cpu_print_freq(unsigned cpu)
         u64_t freq;
 
         freq = cpu_get_freq(cpu);
-        printf("CPU %d freq %lu MHz\n", cpu, div64u(freq, 1000000));
+        printf("CPU %d freq %lu MHz\n", cpu, ((u64_t)(freq) / (unsigned)(1000000)));
 }
 
 int is_fpu(void)

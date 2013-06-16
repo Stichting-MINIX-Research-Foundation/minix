@@ -64,7 +64,7 @@ cp_grant_id_t *grantp;
 
 	count -= r;
 	off += r;
-	pos = add64u(pos, r);
+	pos = ((u64_t)(pos) + (r));
   }
 
   if (r < 0)
@@ -151,7 +151,7 @@ int do_ftrunc()
 	/* Write zeroes to the file. We can't create holes. */
 	if (cmp64(end, start) <= 0) return EINVAL;
 
-	delta = sub64(end, start);
+	delta = ((u64_t)(end) - (start));
 
 	if (ex64hi(delta) != 0) return EINVAL;
 

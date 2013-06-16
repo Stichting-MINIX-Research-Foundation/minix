@@ -177,7 +177,7 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 	assert(f->filp_count >= 0);
 	if (f->filp_count == 0 && mutex_trylock(&f->filp_lock) == 0) {
 		f->filp_mode = bits;
-		f->filp_pos = cvu64(0);
+		f->filp_pos = ((u64_t)(0));
 		f->filp_selectors = 0;
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;

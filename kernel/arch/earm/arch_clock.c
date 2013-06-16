@@ -66,13 +66,13 @@ void context_stop(struct proc * p)
 
 	if(kbill_ipc) {
 		kbill_ipc->p_kipc_cycles =
-			add64(kbill_ipc->p_kipc_cycles, tsc_delta);
+			((u64_t)(kbill_ipc->p_kipc_cycles) + (tsc_delta));
 		kbill_ipc = NULL;
 	}
 
 	if(kbill_kcall) {
 		kbill_kcall->p_kcall_cycles =
-			add64(kbill_kcall->p_kcall_cycles, tsc_delta);
+			((u64_t)(kbill_kcall->p_kcall_cycles) + (tsc_delta));
 		kbill_kcall = NULL;
 	}
 
@@ -125,12 +125,12 @@ int register_local_timer_handler(const irq_handler_t handler)
 
 u64_t ms_2_cpu_time(unsigned ms)
 {
-	return mul64u(tsc_per_ms[cpuid], ms);
+	return ((u64_t)(tsc_per_ms[cpuid]) * (ms));
 }
 
 unsigned cpu_time_2_ms(u64_t cpu_time)
 {
-	return div64u(cpu_time, tsc_per_ms[cpuid]);
+	return ((u64_t)(cpu_time) / (unsigned)(tsc_per_ms[cpuid]));
 }
 
 short cpu_load(void)
