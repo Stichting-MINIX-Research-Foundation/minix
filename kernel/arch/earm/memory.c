@@ -790,11 +790,14 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 	else if (index == frclock_index) {
-#ifdef DM37XX
-		minix_kerninfo.minix_frclock = addr;
-#endif
-#ifdef AM335X
-		minix_kerninfo.minix_frclock = addr;
+#if defined(DM37XX)
+		minix_kerninfo.minix_frclock_tcrr = addr + OMAP3_TIMER_TCRR;
+		minix_kerninfo.minix_arm_frclock_hz = 1625000;
+#elif defined(AM335X) 
+		minix_kerninfo.minix_frclock_tcrr = addr + AM335X_TIMER_TCRR;
+		minix_kerninfo.minix_arm_frclock_hz = 1500000;
+#else
+#error ARM: plese define either AM335X or DM37XX.
 #endif
 
 		return OK;

@@ -11,17 +11,12 @@
 #include <sys/types.h>
 #include <assert.h>
 
-#ifdef DM37XX
-//keesj:todo we don't want to hardcode these values here but ratter
-//get them using a system call. the same applies for the time offset
-static u64_t calib_hz = 1625000, Hz;
-#endif
-#ifdef AM335X
-static u64_t calib_hz = 1500000, Hz;
-#endif
-
 #define MICROHZ         1000000ULL	/* number of micros per second */
 #define MICROSPERTICK(h)	(MICROHZ/(h)) /* number of micros per HZ tick */
+
+static u64_t Hz;
+
+extern struct minix_kerninfo *_minix_kerninfo;
 
 int
 micro_delay(u32_t micros)
@@ -32,7 +27,8 @@ micro_delay(u32_t micros)
 
         /* Start of delay. */
         read_frclock_64(&start);
-	delta_end = (calib_hz * micros) / MICROHZ;
+	assert(_minix_kerninfo->minix_arm_frclock_hz);
+	delta_end = (_minix_kerninfo->minix_arm_frclock_hz * micros) / MICROHZ;
 
         /* If we have to wait for at least one HZ tick, use the regular
          * tickdelay first. Round downwards on purpose, so the average
@@ -54,23 +50,16 @@ micro_delay(u32_t micros)
 
 u32_t frclock_64_to_micros(u64_t tsc)
 {
-        return (u32_t) tsc / (calib_hz / MICROHZ);
+        return (u32_t) tsc / (_minix_kerninfo->minix_arm_frclock_hz / MICROHZ);
 }
 
 void
 read_frclock(u32_t *frclk)
 {
-	extern struct minix_kerninfo *_minix_kerninfo;
-	volatile u32_t *frclock;
-
 	assert(frclk);
-#ifdef DM37XX
-	frclock = (u32_t *)((u8_t *) _minix_kerninfo->minix_frclock + OMAP3_TIMER_TCRR);
-#endif
-#ifdef AM335X
-	frclock = (u32_t *)((u8_t *) _minix_kerninfo->minix_frclock + AM335X_TIMER_TCRR);
-#endif
-	*frclk = *frclock;
+	assert(_minix_kerninfo->minix_frclock_tcrr);
+	assert(_minix_kerninfo->minix_arm_frclock_hz);
+	*frclk = *(volatile u32_t *)((u8_t *) _minix_kerninfo->minix_frclock_tcrr);
 }
 
 u32_t
