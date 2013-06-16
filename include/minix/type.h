@@ -168,7 +168,7 @@ struct minix_kerninfo {
 	u32_t kerninfo_magic;
 	u32_t minix_feature_flags;	/* features in minix kernel */
 	u32_t ki_flags;			/* what is present in this struct */
-	u32_t minix_frclock;
+	u32_t minix_frclock_tcrr;
 	u32_t flags_unused3;
 	u32_t flags_unused4;
 	struct kinfo		*kinfo;
@@ -176,6 +176,7 @@ struct minix_kerninfo {
 	struct kmessages	*kmessages;
 	struct loadinfo		*loadinfo;
 	struct minix_ipcvecs	*minix_ipcvecs;
+	u64_t minix_arm_frclock_hz;	/* minix_frclock_tcrr frequency */
 } __packed;
 
 #define MINIX_KIF_IPCVECS	(1L << 0)
