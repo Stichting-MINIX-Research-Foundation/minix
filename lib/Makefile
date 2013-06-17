@@ -54,7 +54,7 @@ SUBDIR += libvassert libhgfs libvboxfs libvirtio
 .endif
 
 .if (${MACHINE_ARCH} == "earm")
-SUBDIR += libgpio libpadconf
+SUBDIR += libclkconf libgpio libpadconf
 .endif
 
 .if (${MKRUMP} != "no")

@@ -4,6 +4,7 @@
 #include <minix/log.h>
 #include <minix/mmio.h>
 #include <minix/gpio.h>
+#include <minix/clkconf.h>
 
 /* system headers */
 #include <sys/mman.h>
@@ -16,8 +17,6 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-
-#include "clkconf.h"
 
 /* local headers */
 
