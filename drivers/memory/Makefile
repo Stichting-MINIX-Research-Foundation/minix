@@ -2,6 +2,8 @@
 
 .include <bsd.own.mk>
 
+USE_BITCODE:=no
+
 PROG=	memory
 SRCS=	memory.c imgrd.mfs
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}

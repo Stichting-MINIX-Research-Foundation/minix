@@ -81,7 +81,7 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nameser/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
-.if (${MACHINE_ARCH} != "alpha") && (${ARCHSUBDIR} != "sparc64")
+.if (${MACHINE_ARCH} != "alpha") && (${ARCHSUBDIR} != "sparc64") && ${USE_BITCODE:Uno} != "yes"
 .include "${.CURDIR}/quad/Makefile.inc"
 .endif
 .if (${USE_LIBTRE} == "yes")

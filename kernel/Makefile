@@ -1,6 +1,8 @@
 # Makefile for kernel
 .include <bsd.own.mk>
 
+USE_BITCODE:=no
+
 BINDIR=	/usr/sbin
 MAN=
 PROG=	kernel

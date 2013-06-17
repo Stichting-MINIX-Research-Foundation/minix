@@ -16,7 +16,7 @@ CPP?=	/usr/lib/cpp
 .endif # defined(__MINIX)
 unix?=		We run NetBSD.
 
-.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
+.SUFFIXES: .a .o .bc .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
 
 .LIBS:		.a
 
