@@ -13,6 +13,8 @@
 #		building.  See library's Makefile for more details about
 #		supported flags and their default values.
 
+USE_BITCODE=no
+
 # Default values:
 I386DST?=		${.OBJDIR}/lib/i386
 

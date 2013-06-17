@@ -3,6 +3,8 @@
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
 
+USE_BITCODE=no
+
 WARNS?=4
 
 # Minix Clang binaries references /libexec/ld.elf_so

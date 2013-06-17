@@ -2,6 +2,8 @@
 
 .include <bsd.own.mk>
 
+USE_BITCODE:=no
+
 install:
 
 all:
