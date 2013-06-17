@@ -116,7 +116,13 @@ do
       testid="`echo $i | sed 's/\..*//'`"
       ARG=`eval echo "\\${ARGS_$testid}"`
 
-      runtest $i $ARG 2>&1 | sed "s/^/$diagprefix/"
+      if [ "$tapmode" ]
+      then	out=out.$$
+		rm -f $out
+		runtest $i $ARG >$out 2>&1
+      else	runtest $i $ARG
+      fi	
+
       FAIL=$?
 
       if [ $FAIL -eq 0 ]
@@ -129,6 +135,11 @@ do
 		fi
 		failed=`expr $failed + 1`
 		badones=`echo $badones " " $i`
+      fi
+
+      if [ "$tapmode" ]
+      then	cat $out | sed "s/^/$diagprefix/"
+		rm -f $out
       fi
    else
       skipped=`expr $skipped + 1` 
