@@ -50,7 +50,7 @@ micro_delay(u32_t micros)
 
 u32_t frclock_64_to_micros(u64_t tsc)
 {
-        return (u32_t) tsc / (_minix_kerninfo->minix_arm_frclock_hz / MICROHZ);
+        return (u32_t) (tsc / (_minix_kerninfo->minix_arm_frclock_hz / MICROHZ));
 }
 
 void
