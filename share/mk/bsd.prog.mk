@@ -315,9 +315,15 @@ _CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 .endfor
 
 # Language-independent definitions.
+.if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
+CFLAGS+= -flto
+.endif
+
 .for _P in ${PROGS} ${PROGS_CXX}					# {
 
 .if defined(__MINIX) && ${HAVE_GOLD:U} != ""
+
+
 .  if ${LD_STATIC:U} != "-static"
 GOLDLINKERSCRIPT?= ${LDS_DYNAMIC_BIN}
 .  else
@@ -418,13 +424,57 @@ CLEANFILES+=	${_P}.d
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+.if defined(__MINIX)
+CLEANFILES+= ${_P}.opt.bcl ${_P}.bcl ${_P}.bcl.o
+.endif # defined(__MINIX)
+
 .if !commands(${_P})
+.if ${USE_BITCODE:Uno} == "yes"
+
+.if ${LLVM_PASS:UNO_PASS} != "NO_PASS"
+_LLVM_PASS_ARGS=	-load ${LLVM_PASS} ${LLVM_PASS_ARGS}
+_TARGET_BCL=	${_P}.opt.bcl
+.else
+_TARGET_BCL=	${_P}.bcl
+.endif # ${LLVM_PASS:UNO_PASS} != "NO_PASS"
+
+${_P}.bcl: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+	${_MKTARGET_LINK}
+	${_CCLINK.${_P}} \
+		-o ${.TARGET} \
+		-nostartfiles \
+		-L/usr/lib/bc \
+		${OBJS.${_P}} ${LLVM_LINK_ARGS} ${_LDADD.${_P}:N-shared} \
+		${_LDSTATIC.${_P}} \
+		-Wl,-r \
+		-Wl,-plugin=/usr/pkg/lib/bfd-plugins/LLVMgold.so,-plugin-opt=-disable-opt,-plugin-opt=-disable-inlining,-plugin-opt=emit-llvm
+
+${_P}.opt.bcl: ${_P}.bcl ${LLVM_PASS}
+	${_MKTARGET_LINK}
+	opt -disable-opt ${_LLVM_PASS_ARGS} -o ${.TARGET} ${_P}.bcl
+
+${_P}.bcl.o: ${_TARGET_BCL}
+	${_MKTARGET_LINK}
+	llc -O1 -filetype=obj -o ${.TARGET} ${.ALLSRC}
+
+${_P}: ${_P}.bcl.o
+	${_MKTARGET_LINK}
+	${_CCLINK.${_P}} \
+		-o ${.TARGET} \
+		-L/usr/lib/bc \
+		${.TARGET}.bcl.o ${_LDADD.${_P}} \
+		${_LDSTATIC.${_P}} \
+		-Wl,--script,${GOLDLINKERSCRIPT.${_P}} \
+		-Wl,-plugin=/usr/pkg/lib/bfd-plugins/LLVMgold.so,-plugin-opt=-disable-opt,-plugin-opt=-disable-inlining
+
+.else
+${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
 	    ${OBJS.${_P}} ${_LDADD.${_P}} \
 	    ${_PROGLDOPTS}
+.endif # ${USE_BITCODE:Uno} == "yes"
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
 .endif
@@ -434,6 +484,8 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
+.else
+${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 .endif	# !commands(${_P})
 .endif	# USE_COMBINE
 

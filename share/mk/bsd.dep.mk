@@ -30,6 +30,11 @@ __DPSRCS.all+=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
 __DPSRCS.d=	${__DPSRCS.all:O:u:M*.d}
 __DPSRCS.notd=	${__DPSRCS.all:O:u:N*.d}
 
+.if defined(__MINIX)
+__DPSRCS.bcd=	${"${USE_BITCODE:Uno}" == "yes":? ${SRCS:M*.c:O:u:.c=.bcd}:}
+__DPSRCS.d+=	${__DPSRCS.bcd}
+.endif # defined(__MINIX)
+
 .NOPATH: .depend ${__DPSRCS.d}
 
 .if !empty(__DPSRCS.d)							# {
@@ -41,7 +46,15 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 	rm -f .depend
 	${MKDEP} -d -f ${.TARGET} -s ${MKDEP_SUFFIXES:Q} ${__DPSRCS.d}
 
-.SUFFIXES: .d .s .S .c .C .cc .cpp .cxx .m
+.SUFFIXES: .bcd .d .s .S .c .C .cc .cpp .cxx .m
+
+.if ${USE_BITCODE:Uno} == "yes"
+.c.bcd:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -s .bc -- ${MKDEPFLAGS} \
+	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+.endif
 
 .c.d:
 	${_MKTARGET_CREATE}

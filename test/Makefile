@@ -39,7 +39,8 @@ LDADD.test72+=	-lminixfs
 
 PROGS += testvm
 OBJS.testvm+=	testcache.o
-LDADD.testvm+=	-lsys -ltimers -lminlib -static
+LDFLAGS.testvm+= -static
+LDADD.testvm+=	-lsys -ltimers -lminlib
 
 FILES += testvm.conf
 
@@ -79,7 +80,10 @@ LDSTATIC=	-dynamic
 
 # use the shared linkerscript for mod when using the gold linker
 GOLDLINKERSCRIPT.mod?= ${${HAVE_GOLD:Uno} != "no":? ${LDS_SHARED_LIB} :}
-GOLDLINKERSCRIPT=
+LDADD.mod+= ${${USE_BITCODE:Uno} != "no":? -shared:}
+# test57loop.S is not linked into the .bcl file.
+# This way, we can link it in when linking the final binary
+LDADD.test57+= ${${USE_BITCODE:Uno} != "no":? test57loop.o -Wl,-allow-multiple-definition:}
 
 # Add test that must be linked dynamically, and its dynamically loaded
 # module

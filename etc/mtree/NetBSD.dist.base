@@ -68,6 +68,7 @@
 ./usr/include/ufs/mfs
 ./usr/include/ufs/ufs
 ./usr/lib
+./usr/lib/bc
 ./usr/lib/cawf
 ./usr/lib/dict
 ./usr/lib/flex

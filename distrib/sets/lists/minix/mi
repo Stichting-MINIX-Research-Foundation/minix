@@ -987,6 +987,7 @@
 ./usr/include/zconf.h			minix-sys
 ./usr/include/zlib.h			minix-sys
 ./usr/lib				minix-sys
+./usr/lib/bc				minix-sys
 ./usr/lib/cawf				minix-sys
 ./usr/lib/cawf/common			minix-sys
 ./usr/lib/cawf/device.cf		minix-sys

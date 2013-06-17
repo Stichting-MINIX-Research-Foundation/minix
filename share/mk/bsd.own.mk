@@ -56,6 +56,8 @@ USETOOLS?=	never
           HAVE_GOLD?= ${_HAVE_GOLD}
           CFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
           AFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
+.      else
+          MKBITCODE:=no
 .      endif
 .    endif # ${_HAVE_GOLD:U} == ""
 .  endif # ${USETOOLS:Uno} != "yes"
@@ -984,7 +986,7 @@ _MKVARS.no= \
 
 #MINIX-specific vars
 _MKVARS.no+= \
-	MKIMAGEONLY MKSMALL
+	MKIMAGEONLY MKSMALL MKBITCODE
 .if (${MACHINE_ARCH} == "earm")
 _MKVARS.no+= \
 	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI
@@ -1141,7 +1143,7 @@ ${var}?= yes
 #MINIX-specific vars
 .for var in \
 	USE_WATCHDOG USE_ACPI USE_APIC USE_MCONTEXT USE_DEBUGREG USE_SYSDEBUG \
-	USE_LIVEUPDATE USE_STATECTL USE_TRACE USE_PCI
+	USE_LIVEUPDATE USE_STATECTL USE_TRACE USE_PCI USE_BITCODE
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else

@@ -210,6 +210,16 @@ CTFFLAGS+=	-g
 .endif
 .endif
 
+.if ${USE_BITCODE:Uno} == "yes"
+.S.bc: ${.TARGET:.bc=.o}
+	rm -f ${.TARGET}
+	ln ${.TARGET:.bc=.o} ${.TARGET}
+.c.bc:
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o - -Qunused-arguments -E -D"__weak_alias(X, Y)=__weak_alias2( __WEAK__ ## X, __WEAK__ ## Y)" \
+	| sed 's/__WEAK__//g' \
+	| ${COMPILE.c} -flto ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -x c - -o ${.TARGET} -D"STRINGIFY(a)=#a" -D"__weak_alias2(X, Y)=_Pragma(STRINGIFY(weak X = Y))"
+.endif # ${USE_BITCODE:Uno} == "yes"
 .c.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
@@ -491,6 +501,10 @@ SOBJS=
 
 _YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
+.if ${USE_BITCODE:Uno} == "yes"
+_LIBS+=lib${LIB}_bc.a
+.endif
+
 .NOPATH: ${ALLOBJS} ${_LIBS} ${_YLSRCS}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS} ${_LIB.debug}
@@ -531,6 +545,14 @@ DPSRCS+=	${_YLSRCS}
 CLEANFILES+=	${_YLSRCS}
 
 ${STOBJS} ${POBJS} ${GOBJS} ${SOBJS} ${LOBJS}: ${DPSRCS}
+
+.if ${USE_BITCODE:Uno} == "yes"
+BCOBJS+=${OBJS:.o=.bc}
+lib${LIB}_bc.a:: ${BCOBJS}
+	${_MKTARGET_BUILD}
+	rm -f ${.TARGET}
+	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*bc} | ${TSORT}`
+.endif
 
 lib${LIB}.a:: ${STOBJS} __archivebuild
 
@@ -588,7 +610,8 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${_LDFLAGS.lib${LIB}} \
 	    -o ${.TARGET} ${_LIBLDOPTS} \
-	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${_LDADD.lib${LIB}}
+	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${_LDADD.lib${LIB}} \
+		${${USE_BITCODE:Uno} == "yes":? -Wl,-plugin=/usr/pkg/lib/bfd-plugins/LLVMgold.so -Wl,-plugin-opt=-disable-opt:}
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
@@ -637,16 +660,18 @@ lint: ${LOBJS}
 # use it here mimics the way it's used by the clean target in
 # bsd.clean.mk.
 #
-clean: libclean1 libclean2 libclean3 libclean4 libclean5
+clean: libclean1 libclean2 libclean3 libclean4 libclean5 libclean6
 libclean1: .PHONY .MADE __cleanuse LIBCLEANFILES1
 libclean2: .PHONY .MADE __cleanuse LIBCLEANFILES2
 libclean3: .PHONY .MADE __cleanuse LIBCLEANFILES3
 libclean4: .PHONY .MADE __cleanuse LIBCLEANFILES4
 libclean5: .PHONY .MADE __cleanuse LIBCLEANFILES5
+libclean6: .PHONY .MADE __cleanuse LIBCLEANFILES6
 CLEANFILES+= a.out [Ee]rrs mklog *.core
 # core conflicts with core/ in lib/liblwip
 .if !defined(__MINIX)
 CLEANFILES+=core
+LIBCLEANFILES6+= lib${LIB}_bc.a ${BCOBJS} ${BCOBJS:=.tmp}
 .endif
 LIBCLEANFILES1+= lib${LIB}.a   ${STOBJS} ${STOBJS:=.tmp}
 LIBCLEANFILES2+= lib${LIB}_p.a ${POBJS}  ${POBJS:=.tmp}
@@ -658,6 +683,23 @@ LIBCLEANFILES5+= llib-l${LIB}.ln ${LOBJS}
 .if !target(libinstall)							# {
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
 libinstall::
+
+.if ${USE_BITCODE:Uno} == "yes"
+libinstall:: ${DESTDIR}${LIBDIR}/bc/lib${LIB}.a
+.PRECIOUS: ${DESTDIR}${LIBDIR}/bc/lib${LIB}.a
+
+.if ${MKUPDATE} == "no"
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}_bc.a)
+${DESTDIR}${LIBDIR}/bc/lib${LIB}.a! .MADE
+.endif
+${DESTDIR}${LIBDIR}/bc/lib${LIB}.a! lib${LIB}_bc.a __archiveinstall
+.else
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}_bc.a)
+${DESTDIR}${LIBDIR}/bc/lib${LIB}.a: .MADE
+.endif
+${DESTDIR}${LIBDIR}/bc/lib${LIB}.a: lib${LIB}_bc.a __archiveinstall
+.endif
+.endif # ${USE_BITCODE:Uno} == "yes"
 
 .if ${MKLINKLIB} != "no" && ${MKSTATICLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
