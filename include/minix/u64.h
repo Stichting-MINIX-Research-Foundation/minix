@@ -71,34 +71,6 @@ static inline int cmp64ul(u64_t i, unsigned long j)
 		return 0;
 }
 
-static inline unsigned cv64u(u64_t i)
-{
-/* return ULONG_MAX if really big */
-    if (i>>32)
-	return ULONG_MAX;
-
-    return (unsigned)i;
-}
-
-static inline unsigned long cv64ul(u64_t i)
-{
-/* return ULONG_MAX if really big */
-    if (i>>32)
-	return ULONG_MAX;
-
-    return (unsigned long)i;
-}
-
-static inline u64_t cvu64(unsigned i)
-{
-	return i;
-}
-
-static inline u64_t cvul64(unsigned long i)
-{
-	return i;
-}
-
 static inline unsigned diff64(u64_t i, u64_t j)
 {
 	return (unsigned)(i - j);

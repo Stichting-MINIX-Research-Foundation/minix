@@ -975,7 +975,7 @@ static int w_io_test(void)
 	w_testing = 1;
 
 	/* Try I/O on the actual drive (not any (sub)partition). */
-	r = w_transfer(w_drive * DEV_PER_DRIVE, FALSE /*do_write*/, cvu64(0),
+	r = w_transfer(w_drive * DEV_PER_DRIVE, FALSE /*do_write*/, ((u64_t)(0)),
 		SELF, &iov, 1, BDEV_NOFLAGS);
 
 	/* Switch back. */

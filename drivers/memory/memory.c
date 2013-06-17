@@ -167,16 +167,16 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 #endif
 
   /* Ramdisk image built into the memory driver */
-  m_geom[IMGRD_DEV].dv_base= cvul64(0);
-  m_geom[IMGRD_DEV].dv_size= cvul64(imgrd_size);
+  m_geom[IMGRD_DEV].dv_base= ((u64_t)(0));
+  m_geom[IMGRD_DEV].dv_size= ((u64_t)(imgrd_size));
   m_vaddrs[IMGRD_DEV] = (vir_bytes) imgrd;
 
   for(i = 0; i < NR_DEVS; i++)
 	openct[i] = 0;
 
   /* Set up memory range for /dev/mem. */
-  m_geom[MEM_DEV].dv_base = cvul64(0);
-  m_geom[MEM_DEV].dv_size = cvul64(0xffffffff);
+  m_geom[MEM_DEV].dv_base = ((u64_t)(0));
+  m_geom[MEM_DEV].dv_size = ((u64_t)(0xffffffff));
 
   m_vaddrs[MEM_DEV] = (vir_bytes) MAP_FAILED; /* we are not mapping this in. */
 
@@ -231,20 +231,20 @@ static int m_transfer(
   unsigned count;
   vir_bytes vir_offset = 0;
   struct device *dv;
-  unsigned long dv_size;
+  u64_t dv_size;
   int s, r;
-  off_t position;
+  u64_t position;
   cp_grant_id_t grant;
   vir_bytes dev_vaddr;
 
   /* ZERO_DEV and NULL_DEV are infinite in size. */
   if (m_device != ZERO_DEV && m_device != NULL_DEV && ex64hi(pos64) != 0)
 	return OK;	/* Beyond EOF */
-  position= cv64ul(pos64);
+  position= pos64;
 
   /* Get minor device number and check for /dev/null. */
   dv = &m_geom[m_device];
-  dv_size = cv64ul(dv->dv_size);
+  dv_size = dv->dv_size;
   dev_vaddr = m_vaddrs[m_device];
 
   while (nr_req > 0) {
@@ -435,21 +435,21 @@ static int m_block_transfer(
   unsigned count;
   vir_bytes vir_offset = 0;
   struct device *dv;
-  unsigned long dv_size;
+  u64_t dv_size;
   int r;
-  off_t position;
+  u64_t position;
   vir_bytes dev_vaddr;
   cp_grant_id_t grant;
   ssize_t total = 0;
 
   /* Get minor device information. */
   if ((dv = m_block_part(minor)) == NULL) return(ENXIO);
-  dv_size = cv64ul(dv->dv_size);
+  dv_size = dv->dv_size;
   dev_vaddr = m_vaddrs[minor];
 
   if (ex64hi(pos64) != 0)
 	return OK;	/* Beyond EOF */
-  position= cv64ul(pos64);
+  position= pos64;
 
   while (nr_req > 0) {
 
@@ -554,7 +554,7 @@ static int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	return s;
   if(is_imgrd)
   	ramdev_size = 0;
-  if(m_vaddrs[minor] && !cmp64(dv->dv_size, cvul64(ramdev_size))) {
+  if(m_vaddrs[minor] && !cmp64(dv->dv_size, ((u64_t)(ramdev_size)))) {
 	return(OK);
   }
   /* openct is 1 for the ioctl(). */
@@ -602,7 +602,7 @@ static int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 
   m_vaddrs[minor] = (vir_bytes) mem;
 
-  dv->dv_size = cvul64(ramdev_size);
+  dv->dv_size = ((u64_t)(ramdev_size));
 
   return(OK);
 }

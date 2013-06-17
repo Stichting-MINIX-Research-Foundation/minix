@@ -54,7 +54,7 @@ static size_t get_range(struct fbd_rule *rule, u64_t pos, size_t *size,
 		off = 0;
 	}
 	else {
-		if (skip != NULL) *skip = cvu64(0);
+		if (skip != NULL) *skip = ((u64_t)(0));
 
 		delta = sub64(rule->start, pos);
 

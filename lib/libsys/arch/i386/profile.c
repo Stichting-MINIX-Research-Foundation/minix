@@ -197,7 +197,7 @@ void procexit (char *UNUSED(name))
 		sub64(spent, cprof_stk[cprof_stk_top].spent_deeper));
 
   /* Clear spent_deeper for call level we're leaving. */
-  cprof_stk[cprof_stk_top].spent_deeper = cvu64(0);
+  cprof_stk[cprof_stk_top].spent_deeper = ((u64_t)(0));
 
   /* Adjust call path string and stack. */
   cpath_len = cprof_stk[cprof_stk_top].cpath_len;
@@ -242,9 +242,9 @@ static void cprof_init()
   for (i=0; i<CPROF_STACK_SIZE; i++) {
 	cprof_stk[i].cpath_len = 0;
 	cprof_stk[i].slot = 0;
-	cprof_stk[i].start_1 = cvu64(0);
-	cprof_stk[i].start_2 = cvu64(0);
-	cprof_stk[i].spent_deeper = cvu64(0);
+	cprof_stk[i].start_1 = ((u64_t)(0));
+	cprof_stk[i].start_2 = ((u64_t)(0));
+	cprof_stk[i].spent_deeper = ((u64_t)(0));
   }
 }
 

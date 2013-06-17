@@ -91,7 +91,7 @@ int read_vds(
   static char sbbuf[ISO9660_MIN_BLOCK_SIZE];
   int i = 0;
 
-  offset = cvul64(ISO9660_SUPER_BLOCK_POSITION);
+  offset = ((u64_t)(ISO9660_SUPER_BLOCK_POSITION));
   while (!vol_ok && i++<MAX_ATTEMPTS) {
 
     /* Read the sector of the super block. */
@@ -101,7 +101,7 @@ int read_vds(
       continue;
 
     if ((sbbuf[0] & BYTE) == VD_PRIMARY) {
-      create_v_pri(v_pri,sbbuf,cv64ul(offset)); /* copy the buffer in the data structure. */
+      create_v_pri(v_pri,sbbuf,offset); /* copy the buffer in the data structure. */
     }
 
     if ((sbbuf[0] & BYTE) == VD_SET_TERM)
