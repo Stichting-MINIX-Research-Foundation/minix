@@ -330,7 +330,7 @@ int req_getdents(
   cpf_revoke(grant_id);
 
   if (r == OK) {
-	  *new_pos = cvul64(m.RES_SEEK_POS_LO);
+	  *new_pos = ((u64_t)(m.RES_SEEK_POS_LO));
 	  r = m.RES_NBYTES;
   }
 
@@ -808,7 +808,7 @@ unsigned int *cum_iop;
 
   if (r == OK) {
 	/* Fill in response structure */
-	*new_posp = cvul64(m.RES_SEEK_POS_LO);
+	*new_posp = ((u64_t)(m.RES_SEEK_POS_LO));
 	*cum_iop = m.RES_NBYTES;
   }
 

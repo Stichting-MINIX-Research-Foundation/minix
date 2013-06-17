@@ -380,8 +380,7 @@ static int atapi_read_capacity(struct port_state *ps, int cmd)
 
 	/* Store the number of LBA blocks and sector size. */
 	buf = ps->tmp_base;
-	ps->lba_count = add64u(cvu64((buf[0] << 24) | (buf[1] << 16) |
-		(buf[2] << 8) | buf[3]), 1);
+	ps->lba_count = add64u(((u64_t)((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3])), 1);
 	ps->sector_size =
 		(buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | buf[7];
 
@@ -395,7 +394,7 @@ static int atapi_read_capacity(struct port_state *ps, int cmd)
 	dprintf(V_INFO,
 		("%s: medium detected (%u byte sectors, %lu MB size)\n",
 		ahci_portname(ps), ps->sector_size,
-		div64u(mul64(ps->lba_count, cvu64(ps->sector_size)),
+		div64u(mul64(ps->lba_count, ((u64_t)(ps->sector_size))),
 		1024*1024)));
 
 	return OK;
@@ -1175,7 +1174,7 @@ static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 	if (cmp64(add64ul(pos, size), eof) >= 0)
 		size = (vir_bytes) diff64(eof, pos);
 
-	start_lba = div64(pos, cvu64(ps->sector_size));
+	start_lba = div64(pos, ((u64_t)(ps->sector_size)));
 	lead = rem64u(pos, ps->sector_size);
 	count = (lead + size + ps->sector_size - 1) / ps->sector_size;
 
@@ -1429,7 +1428,7 @@ static void port_id_check(struct port_state *ps, int success)
 		if (ps->flags & FLAG_HAS_MEDIUM)
 			printf(", %u byte sectors, %lu MB size",
 				ps->sector_size, div64u(mul64(ps->lba_count,
-				cvu64(ps->sector_size)), 1024*1024));
+				((u64_t)(ps->sector_size))), 1024*1024));
 
 		printf("\n");
 	}
@@ -2522,7 +2521,7 @@ static int ahci_open(dev_t minor, int access)
 		memset(ps->subpart, 0, sizeof(ps->subpart));
 
 		ps->part[0].dv_size =
-			mul64(ps->lba_count, cvu64(ps->sector_size));
+			mul64(ps->lba_count, ((u64_t)(ps->sector_size)));
 
 		partition(&ahci_dtab, ps->device * DEV_PER_DRIVE, P_PRIMARY,
 			!!(ps->flags & FLAG_ATAPI));

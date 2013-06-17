@@ -296,8 +296,8 @@ void geometry(void)
 		/* Use the same fake geometry as part. */
 		if (fstat(fd, &sb) < 0)
 			fatal(device);
-		geometry.base= cvul64(0);
-		geometry.size= cvul64(sb.st_size);
+		geometry.base= ((u64_t)(0));
+		geometry.size= ((u64_t)(sb.st_size));
 		geometry.sectors= 32;
 		geometry.heads= 64;
 		geometry.cylinders= (sb.st_size-1)/SECTOR_SIZE/

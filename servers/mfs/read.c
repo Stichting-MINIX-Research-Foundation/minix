@@ -100,7 +100,7 @@ int fs_readwrite(void)
 	  }
 	  
 	  /* Read or write 'chunk' bytes. */
-	  r = rw_chunk(rip, cvul64((unsigned long) position), off, chunk,
+	  r = rw_chunk(rip, ((u64_t)((unsigned long)position)), off, chunk,
 	  	       nrbytes, rw_flag, gid, cum_io, block_size, &completed);
 
 	  if (r != OK) break;	/* EOF reached */

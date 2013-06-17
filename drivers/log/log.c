@@ -101,8 +101,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
   /* Initialize log devices. */
   for(i = 0; i < NR_DEVS; i++) {
-  	log_geom[i].dv_size = cvul64(LOG_SIZE);
- 	log_geom[i].dv_base = cvul64((long)logdevices[i].log_buffer);
+  	log_geom[i].dv_size = ((u64_t)(LOG_SIZE));
+ 	log_geom[i].dv_base = ((u64_t)((long)logdevices[i].log_buffer));
  	logdevices[i].log_size = logdevices[i].log_read =
 	 	logdevices[i].log_write =
 	 	logdevices[i].log_select_alerted =

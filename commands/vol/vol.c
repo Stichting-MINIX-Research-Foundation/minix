@@ -48,7 +48,7 @@
 char *buffer = NULL;
 size_t block_size = 0, mult_max = 0;
 size_t buffer_size;
-long volume_size;
+u64_t volume_size;
 char *str_vol_size;
 int rflag = 0, wflag = 0, oneflag = 0, variable = 0;
 
@@ -194,7 +194,7 @@ char *argv[];
 		if (ioctl(fd, DIOCGETP, &part) < 0) {
 			autovolsize = 0;
 		} else {
-			volume_size = cv64ul(part.size);
+			volume_size = part.size;
 		}
 	}
 

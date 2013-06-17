@@ -54,7 +54,7 @@ int fs_read(void) {
 	if (chunk > bytes_left) chunk = (int) bytes_left;
       
 	/* Read or write 'chunk' bytes. */
-	r = read_chunk(dir, cvul64(position), off, chunk, (unsigned) nrbytes, 
+	r = read_chunk(dir, ((u64_t)(position)), off, chunk, (unsigned) nrbytes, 
 		       gid, cum_io, block_size, &completed, rw);
 
 	if (r != OK) break;	/* EOF reached */

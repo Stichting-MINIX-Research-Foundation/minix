@@ -92,7 +92,7 @@ register struct super_block *sp; /* pointer to a superblock */
 	panic("can't allocate memory for super_block buffers");
 
   assert(_MIN_BLOCK_SIZE <= sizeof(*ondisk_superblock));
-  r = bdev_read(dev, cvu64(super_block_offset), (char*) ondisk_superblock,
+  r = bdev_read(dev, ((u64_t)(super_block_offset)), (char*) ondisk_superblock,
 	_MIN_BLOCK_SIZE, BDEV_NOFLAGS);
 
   if (r != _MIN_BLOCK_SIZE)
@@ -177,7 +177,7 @@ register struct super_block *sp; /* pointer to a superblock */
 	gdt_position = (opt.block_with_super + 1) * 1024;
   }
 
-  r = bdev_read(dev, cvu64(gdt_position), (char*) ondisk_group_descs,
+  r = bdev_read(dev, ((u64_t)(gdt_position)), (char*) ondisk_group_descs,
 	gd_size, BDEV_NOFLAGS);
   if (r != (ssize_t) gd_size) {
 	printf("Can not read group descriptors\n");
@@ -230,7 +230,7 @@ struct super_block *sp; /* pointer to a superblock */
 
   super_copy(ondisk_superblock, sp);
 
-  r = bdev_write(sp->s_dev, cvu64(super_block_offset), (char *) sp,
+  r = bdev_write(sp->s_dev, ((u64_t)(super_block_offset)), (char *) sp,
 	SUPER_SIZE_D, BDEV_NOFLAGS);
   if (r != SUPER_SIZE_D)
 	printf("ext2: Warning, failed to write superblock to the disk!\n");
@@ -248,7 +248,7 @@ struct super_block *sp; /* pointer to a superblock */
         copy_group_descriptors(ondisk_group_descs, sp->s_group_desc,
 			       sp->s_groups_count);
 
-	r = bdev_write(sp->s_dev, cvu64(gdt_position),
+	r = bdev_write(sp->s_dev, ((u64_t)(gdt_position)),
 		(char*) ondisk_group_descs, gd_size, BDEV_NOFLAGS);
 	if (r != (ssize_t) gd_size) {
 		printf("Can not write group descriptors\n");

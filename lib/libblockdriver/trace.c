@@ -195,7 +195,7 @@ void trace_start(thread_id_t id, message *m_ptr)
   switch (m_ptr->m_type) {
   case BDEV_OPEN:
   case BDEV_CLOSE:
-	pos = cvu64(0);
+	pos = ((u64_t)(0));
 	size = m_ptr->BDEV_ACCESS;
 	flags = 0;
 
@@ -212,7 +212,7 @@ void trace_start(thread_id_t id, message *m_ptr)
 	break;
 
   case BDEV_IOCTL:
-	pos = cvu64(0);
+	pos = ((u64_t)(0));
 	size = m_ptr->BDEV_REQUEST;
 	flags = 0;
 

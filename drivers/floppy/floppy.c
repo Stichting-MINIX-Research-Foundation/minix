@@ -461,7 +461,7 @@ static ssize_t f_transfer(
   iovec_t *iop, *iov_end = iov + nr_req;
   int s, r, errors, nr;
   unsigned block, nbytes, count, chunk, sector;
-  unsigned long dv_size;
+  u64_t dv_size;
   vir_bytes user_offset, iov_offset = 0, iop_offset;
   unsigned long position;
   signed long uoffsets[MAX_SECTORS], *up;
@@ -472,11 +472,11 @@ static ssize_t f_transfer(
   if (f_prepare(minor) == NULL) return(ENXIO);
 
   fp = f_fp;
-  dv_size = cv64ul(f_dv->dv_size);
+  dv_size = f_dv->dv_size;
 
   if (ex64hi(pos64) != 0)
 	return OK;	/* Way beyond EOF */
-  position= cv64ul(pos64);
+  position= pos64;
   total = 0;
 
   /* Record the direction of the last transfer performed. */
@@ -1338,7 +1338,7 @@ static int test_read(int density)
   position = (off_t) f_dp->test << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) floppy_buf;
   iovec1.iov_size = SECTOR_SIZE;
-  result = f_transfer(device, FALSE /*do_write*/, cvul64(position), SELF,
+  result = f_transfer(device, FALSE /*do_write*/, position, SELF,
 	&iovec1, 1, BDEV_NOFLAGS);
 
   if (result != SECTOR_SIZE) return(EIO);

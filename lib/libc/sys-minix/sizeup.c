@@ -41,9 +41,9 @@ u64_t *bytes;
         perror("sizeup ioctl");
         if(fstat(fd, &st) < 0) {
                 perror("fstat");
-                entry.size = cvu64(0);
+                entry.size = ((u64_t)(0));
         } else {
-                entry.size = cvu64(st.st_size);
+                entry.size = ((u64_t)(st.st_size));
         }
   }
   close(fd);
