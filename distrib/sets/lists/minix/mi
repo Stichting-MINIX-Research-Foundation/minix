@@ -625,6 +625,7 @@
 ./usr/include/minix/btrace.h		minix-sys
 ./usr/include/minix/callnr.h		minix-sys
 ./usr/include/minix/chardriver.h	minix-sys
+./usr/include/minix/clkconf.h		minix-sys
 ./usr/include/minix/com.h		minix-sys
 ./usr/include/minix/compiler.h		minix-sys
 ./usr/include/minix/config.h		minix-sys
