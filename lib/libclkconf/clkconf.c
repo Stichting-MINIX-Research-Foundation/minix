@@ -3,6 +3,7 @@
 #include <minix/drvlib.h>
 #include <minix/log.h>
 #include <minix/mmio.h>
+#include <minix/clkconf.h>
 
 /* system headers */
 #include <sys/mman.h>
@@ -15,9 +16,6 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-
-/* local headers */
-#include "clkconf.h"
 
 /* used for logging */
 static struct log log = {
