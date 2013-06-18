@@ -27,13 +27,8 @@ The SD protocol is well defined and the imported the netbsd sdhcreg and
 sdmmcreg headers will allow us to make the MMC interface more generic. We would
 like  mmchost_mmchs to be split in a generic part and a specific part. 
 
-* Using interrupts
-At time of writing the interrupt handlers on the ARM port are not implemented.
-Once that is done we will be able to rewrite the code to use proper interrupt
-handlers.
-
-* 4 and 8 bits access
-The driver currently only reads data over a single data line. Adding support
+* 8 bits access
+The driver currently only reads data over 1 or 4 bits address lines. Adding support
 for 4 or 8 bits(for movinands) mode is very welcome.
 
 * DMA.

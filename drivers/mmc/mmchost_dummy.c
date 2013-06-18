@@ -1,6 +1,7 @@
 /* kernel headers */
 #include <minix/blockdriver.h>
 #include <minix/minlib.h>
+#include <minix/log.h>
 
 /* usr headers */
 #include <stdio.h>
@@ -10,14 +11,13 @@
 #include <unistd.h>
 
 /* local headers */
-#include "mmclog.h"
 #include "mmchost.h"
 #include "sdmmcreg.h"
 
 /*
  * Define a structure to be used for logging
  */
-static struct mmclog log = {
+static struct log log = {
 	.name = "mmc_host_memory",
 	.log_level = LEVEL_INFO,
 	.log_func = default_log
@@ -36,7 +36,7 @@ init_dummy_sdcard(struct sd_slot *slot)
 
 	assert(slot != NULL);
 
-	mmc_log_info(&log, "Using a dummy card \n");
+	log_info(&log, "Using a dummy card \n");
 	if (dummy_data == NULL) {
 		dummy_data = malloc(DUMMY_BLOCK_SIZE * DUMMY_SIZE_IN_BLOCKS);
 		if (dummy_data == NULL) {
@@ -81,7 +81,7 @@ dummy_set_log_level(int level)
 int
 dummy_host_set_instance(struct mmc_host *host, int instance)
 {
-	mmc_log_info(&log, "Using instance number %d\n", instance);
+	log_info(&log, "Using instance number %d\n", instance);
 	if (instance != 0) {
 		return EIO;
 	}
