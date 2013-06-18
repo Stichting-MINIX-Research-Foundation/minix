@@ -41,7 +41,7 @@ static int hook_id = 1;
 #endif
 #endif
 
-#define SANE_TIMEOUT 500000	/* 500 MS */
+#define SANE_TIMEOUT 500000	/* 500 ms */
 
 /*
  * Define a structure to be used for logging
@@ -181,7 +181,6 @@ mmchs_init(uint32_t instance)
 	spin_init(&spin, SANE_TIMEOUT);
 	while ((read32(base_address + MMCHS_SD_SYSCTL) & MMCHS_SD_SYSCTL_ICS)
 	    != MMCHS_SD_SYSCTL_ICS_STABLE) {
-
 		if (spin_check(&spin) == FALSE) {
 			mmc_log_warn(&log, "clock not stable\n");
 			return 1;
@@ -202,7 +201,7 @@ mmchs_init(uint32_t instance)
 	/* enable error interrupts */
 	/* NOTE: We are currently skipping the BADA interrupt it does get
 	 * raised for unknown reasons */
-	set32(base_address + MMCHS_SD_IE, MMCHS_SD_IE_ERROR_MASK, 0x0fffffffu);
+	set32(base_address + MMCHS_SD_IE, MMCHS_SD_IE_ERROR_MASK, 0xffffffffu);
 
 	/* clear the error interrupts */
 	set32(base_address + MMCHS_SD_STAT, MMCHS_SD_STAT_ERROR_MASK,
@@ -261,10 +260,80 @@ mmchs_init(uint32_t instance)
 	return 0;
 }
 
+void
+intr_deassert(int mask)
+{
+	if (read32(base_address + MMCHS_SD_STAT) & 0x8000) {
+		mmc_log_warn(&log, "%s, error stat  %08x\n", __FUNCTION__,
+		    read32(base_address + MMCHS_SD_STAT));
+		set32(base_address + MMCHS_SD_STAT, MMCHS_SD_STAT_ERROR_MASK,
+		    0xffffffffu);
+	} else {
+		write32(base_address + MMCHS_SD_STAT, mask);
+	}
+}
+
+/* pointer to the data to transfer used in bwr and brr */
+unsigned char *io_data;
+int io_len;
+
+void
+handle_bwr()
+{
+	/* handle buffer write ready interrupts. These happen in a non
+	 * predictable way (eg. we send a request but don't know if we are
+	 * first doing to get a request completed before we are allowed to
+	 * send the data to the harware or not */
+	uint32_t value;
+	uint32_t count;
+	assert(read32(base_address +
+		MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BWE_EN);
+
+	for (count = 0; count < io_len; count += 4) {
+		while (!(read32(base_address +
+			    MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BWE_EN)) {
+			mmc_log_trace(&log,
+			    "Error expected Buffer to be write enabled(%d)\n",
+			    count);
+		}
+		*((char *) &value) = io_data[count];
+		*((char *) &value + 1) = io_data[count + 1];
+		*((char *) &value + 2) = io_data[count + 2];
+		*((char *) &value + 3) = io_data[count + 3];
+		write32(base_address + MMCHS_SD_DATA, value);
+	}
+	intr_deassert(MMCHS_SD_IE_BWR_ENABLE);
+	/* expect buffer to be write enabled */
+}
+
+void
+handle_brr()
+{
+	/* handle buffer read ready interrupts. genrally these happen afther
+	 * the data is read from the sd card. */
+
+	uint32_t value;
+	uint32_t count;
+
+	/* Problem BRE should be true */
+	assert(read32(base_address +
+		MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BRE_EN);
+	for (count = 0; count < io_len; count += 4) {
+		value = read32(base_address + MMCHS_SD_DATA);
+		io_data[count] = *((char *) &value);
+		io_data[count + 1] = *((char *) &value + 1);
+		io_data[count + 2] = *((char *) &value + 2);
+		io_data[count + 3] = *((char *) &value + 3);
+	}
+	/* clear bbr interrupt */
+	intr_deassert(MMCHS_SD_IE_BRR_ENABLE_ENABLE);
+}
+
 static void
 mmchs_hw_intr(unsigned int irqs)
 {
-	mmc_log_warn(&log, "Hardware interrupt left over\n");
+	mmc_log_warn(&log, "Hardware interrupt left over (0x%08lx)\n",
+	    read32(base_address + MMCHS_SD_STAT));
 
 #ifdef USE_INTR
 	if (sys_irqenable(&hook_id) != OK)
@@ -300,27 +369,46 @@ intr_wait(int mask)
 			switch (_ENDPOINT_P(m.m_source)) {
 			case CLOCK:
 				/* Timeout. */
-				// w_timeout(); /* a.o. set w_status */
 				mmc_log_warn(&log, "TIMEOUT\n");
 				return 1;
 				break;
 			case HARDWARE:
-				v = read32(base_address + MMCHS_SD_STAT);
-				if (v & mask) {
-					sys_setalarm(0, 0);
-					return 0;
-				} else if (v & (1 << 15)) {
-					return 1;	/* error */
-				} else {
-					mmc_log_debug(&log,
+				while ((v =
+					read32(base_address +
+					    MMCHS_SD_STAT)) != 0) {
+					if (v & MMCHS_SD_IE_BWR_ENABLE) {
+						handle_bwr();
+						continue;
+					}
+					if (v & MMCHS_SD_IE_BRR_ENABLE) {
+						handle_brr();
+						continue;
+					}
+
+					if (v & mask) {
+						/* this is the normal return
+						 * path, the mask given
+						 * matches the pending
+						 * interrupt. canel the alarm
+						 * and return */
+						sys_setalarm(0, 0);
+						return 0;
+					} else if (v & (1 << 15)) {
+						return 1;	/* error */
+					}
+
+					mmc_log_warn(&log,
 					    "unexpected HW interrupt 0x%08x mask 0X%08x\n",
 					    v, mask);
 					if (sys_irqenable(&hook_id) != OK)
 						printf
 						    ("Failed to re-enable irqenable irq\n");
-					continue;
-					// return 1;
 				}
+				/* if we end up here re-enable interrupts for the next round */
+				if (sys_irqenable(&hook_id) != OK)
+					printf
+					    ("Failed to re-enable irqenable irq\n");
+				break;
 			default:
 				/* 
 				 * unhandled message.  queue it and
@@ -353,6 +441,14 @@ intr_wait(int mask)
 			    counter, v, mask);
 			return 1;
 		}
+		if (v & MMCHS_SD_IE_BWR_ENABLE) {
+			handle_bwr();
+			continue;
+		}
+		if (v & MMCHS_SD_IE_BRR_ENABLE) {
+			handle_brr();
+			continue;
+		}
 		if (v & mask) {
 			return 0;
 		} else if (v & 0xFF00) {
@@ -366,18 +462,7 @@ intr_wait(int mask)
 #endif /* USE_INTR */
 }
 
-void
-intr_assert(int mask)
-{
-	if (read32(base_address + MMCHS_SD_STAT) & 0x8000) {
-		mmc_log_debug(&log, "%s, error stat  %08x\n", __FUNCTION__,
-		    read32(base_address + MMCHS_SD_STAT));
-		set32(base_address + MMCHS_SD_STAT, MMCHS_SD_STAT_ERROR_MASK,
-		    0xffffffffu);
-	} else {
-		write32(base_address + MMCHS_SD_STAT, mask);
-	}
-}
+static int bbw_passed;
 
 int
 mmchs_send_cmd(uint32_t command, uint32_t arg)
@@ -385,17 +470,20 @@ mmchs_send_cmd(uint32_t command, uint32_t arg)
 
 	/* Read current interrupt status and fail it an interrupt is already
 	 * asserted */
+	assert(read32(base_address + MMCHS_SD_STAT) == 0);
 
 	/* Set arguments */
 	write32(base_address + MMCHS_SD_ARG, arg);
 	/* Set command */
 	set32(base_address + MMCHS_SD_CMD, MMCHS_SD_CMD_MASK, command);
 
-	if (intr_wait(MMCHS_SD_STAT_CC | MMCHS_SD_IE_TC_ENABLE_CLEAR)) {
-		intr_assert(MMCHS_SD_STAT_CC);
-		mmc_log_warn(&log, "Failure waiting for interrupt\n");
+	if (intr_wait(MMCHS_SD_STAT_CC)) {
+		uint32_t v = read32(base_address + MMCHS_SD_STAT);
+		intr_deassert(MMCHS_SD_STAT_CC);
+		mmc_log_warn(&log, "Failure waiting for interrupt 0x%lx\n", v);
 		return 1;
 	}
+	intr_deassert(MMCHS_SD_STAT_CC);
 
 	if ((command & MMCHS_SD_CMD_RSP_TYPE) ==
 	    MMCHS_SD_CMD_RSP_TYPE_48B_BUSY) {
@@ -406,16 +494,8 @@ mmchs_send_cmd(uint32_t command, uint32_t arg)
 			& MMCHS_SD_IE_TC_ENABLE_ENABLE) == 0) {
 			mmc_log_warn(&log, "TC should be raised\n");
 		}
-		write32(base_address + MMCHS_SD_STAT,
-		    MMCHS_SD_IE_TC_ENABLE_CLEAR);
-
-		if (intr_wait(MMCHS_SD_STAT_CC | MMCHS_SD_IE_TC_ENABLE_CLEAR)) {
-			intr_assert(MMCHS_SD_STAT_CC);
-			mmc_log_warn(&log, "Failure waiting for clear\n");
-			return 1;
-		}
+		intr_deassert(MMCHS_SD_STAT_TC);
 	}
-	intr_assert(MMCHS_SD_STAT_CC);
 	return 0;
 }
 
@@ -449,7 +529,7 @@ mmc_send_cmd(struct mmc_command *c)
 	}
 
 	/* read single block */
-	if (c->cmd == MMC_READ_BLOCK_SINGLE) {
+	if ((c->cmd == MMC_READ_BLOCK_SINGLE) || (c->cmd == SD_APP_SEND_SCR)) {
 		cmd |= MMCHS_SD_CMD_DP_DATA;	/* Command with data transfer */
 		cmd |= MMCHS_SD_CMD_MSBS_SINGLE;	/* single block */
 		cmd |= MMCHS_SD_CMD_DDIR_READ;	/* read data from card */
@@ -478,16 +558,56 @@ mmc_send_cmd(struct mmc_command *c)
 			set32(base_address + MMCHS_SD_IE,
 			    MMCHS_SD_IE_BRR_ENABLE,
 			    MMCHS_SD_IE_BRR_ENABLE_ENABLE);
+			io_data = c->data;
+			io_len = c->data_len;
 		} else {
 			set32(base_address + MMCHS_SD_IE,
 			    MMCHS_SD_IE_BWR_ENABLE,
 			    MMCHS_SD_IE_BWR_ENABLE_ENABLE);
+			io_data = c->data;
+			io_len = c->data_len;
 		}
 	}
 
 	set32(base_address + MMCHS_SD_BLK, MMCHS_SD_BLK_BLEN, 512);
 
 	ret = mmchs_send_cmd(cmd, arg);
+
+	if (cmd & MMCHS_SD_CMD_DP_DATA) {
+		count = 0;
+		assert(c->data_len);
+		if (cmd & MMCHS_SD_CMD_DDIR_READ) {
+			/* Wait for TC */
+			if (intr_wait(MMCHS_SD_IE_TC_ENABLE_ENABLE)) {
+				intr_deassert(MMCHS_SD_IE_TC_ENABLE_ENABLE);
+				mmc_log_warn(&log,
+				    "(Read) Timeout waiting for interrupt\n");
+				return 1;
+			}
+
+			write32(base_address + MMCHS_SD_STAT,
+			    MMCHS_SD_IE_TC_ENABLE_CLEAR);
+
+			/* disable the bbr interrupt */
+			set32(base_address + MMCHS_SD_IE,
+			    MMCHS_SD_IE_BRR_ENABLE,
+			    MMCHS_SD_IE_BRR_ENABLE_DISABLE);
+		} else {
+			/* Wait for TC */
+			if (intr_wait(MMCHS_SD_IE_TC_ENABLE_ENABLE)) {
+				intr_deassert(MMCHS_SD_IE_TC_ENABLE_CLEAR);
+				mmc_log_warn(&log,
+				    "(Write) Timeout waiting for transfer complete\n");
+				return 1;
+			}
+			intr_deassert(MMCHS_SD_IE_TC_ENABLE_CLEAR);
+
+			set32(base_address + MMCHS_SD_IE,
+			    MMCHS_SD_IE_BWR_ENABLE,
+			    MMCHS_SD_IE_BWR_ENABLE_DISABLE);
+
+		}
+	}
 
 	/* copy response into cmd->resp */
 	switch (c->resp_type) {
@@ -507,98 +627,6 @@ mmc_send_cmd(struct mmc_command *c)
 		return 1;
 	}
 
-	if (cmd & MMCHS_SD_CMD_DP_DATA) {
-		count = 0;
-		assert(c->data_len);
-		if (cmd & MMCHS_SD_CMD_DDIR_READ) {
-			if (intr_wait(MMCHS_SD_IE_BRR_ENABLE_ENABLE)) {
-				intr_assert(MMCHS_SD_IE_BRR_ENABLE_ENABLE);
-				mmc_log_warn(&log,
-				    "Timeout waiting for interrupt\n");
-				return 1;
-			}
-
-			if (!(read32(base_address +
-				    MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BRE_EN))
-			{
-				mmc_log_warn(&log,
-				    "Problem BRE should be true\n");
-				return 1;	/* We are not allowed to read
-						 * data from the data buffer */
-			}
-
-			for (count = 0; count < c->data_len; count += 4) {
-				value = read32(base_address + MMCHS_SD_DATA);
-				c->data[count] = *((char *) &value);
-				c->data[count + 1] = *((char *) &value + 1);
-				c->data[count + 2] = *((char *) &value + 2);
-				c->data[count + 3] = *((char *) &value + 3);
-			}
-
-			/* Wait for TC */
-			if (intr_wait(MMCHS_SD_IE_TC_ENABLE_ENABLE)) {
-				intr_assert(MMCHS_SD_IE_TC_ENABLE_ENABLE);
-				mmc_log_warn(&log,
-				    "Timeout waiting for interrupt\n");
-				return 1;
-			}
-
-			write32(base_address + MMCHS_SD_STAT,
-			    MMCHS_SD_IE_TC_ENABLE_CLEAR);
-
-			/* clear and disable the bbr interrupt */
-			write32(base_address + MMCHS_SD_STAT,
-			    MMCHS_SD_IE_BRR_ENABLE_CLEAR);
-			set32(base_address + MMCHS_SD_IE,
-			    MMCHS_SD_IE_BRR_ENABLE,
-			    MMCHS_SD_IE_BRR_ENABLE_DISABLE);
-		} else {
-			/* Wait for the MMCHS_SD_IE_BWR_ENABLE interrupt */
-			if (intr_wait(MMCHS_SD_IE_BWR_ENABLE)) {
-				intr_assert(MMCHS_SD_IE_BWR_ENABLE);
-				mmc_log_warn(&log, "WFI failed\n");
-				return 1;
-			}
-			/* clear the interrupt directly */
-			intr_assert(MMCHS_SD_IE_BWR_ENABLE);
-
-			if (!(read32(base_address +
-				    MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BWE_EN))
-			{
-				mmc_log_warn(&log,
-				    "Error expected Buffer to be write enabled\n");
-				return 1;	/* not ready to write data */
-			}
-
-			for (count = 0; count < 512; count += 4) {
-				while (!(read32(base_address +
-					    MMCHS_SD_PSTATE) &
-					MMCHS_SD_PSTATE_BWE_EN)) {
-					mmc_log_trace(&log,
-					    "Error expected Buffer to be write enabled(%d)\n",
-					    count);
-				}
-				*((char *) &value) = c->data[count];
-				*((char *) &value + 1) = c->data[count + 1];
-				*((char *) &value + 2) = c->data[count + 2];
-				*((char *) &value + 3) = c->data[count + 3];
-				write32(base_address + MMCHS_SD_DATA, value);
-			}
-
-			/* Wait for TC */
-			if (intr_wait(MMCHS_SD_IE_TC_ENABLE_CLEAR)) {
-				intr_assert(MMCHS_SD_IE_TC_ENABLE_CLEAR);
-				mmc_log_warn(&log,
-				    "(Write) Timeout waiting for transfer complete\n");
-				return 1;
-			}
-			intr_assert(MMCHS_SD_IE_TC_ENABLE_CLEAR);
-			set32(base_address + MMCHS_SD_IE,
-			    MMCHS_SD_IE_BWR_ENABLE,
-			    MMCHS_SD_IE_BWR_ENABLE_DISABLE);
-
-		}
-	}
 	return ret;
 }
 

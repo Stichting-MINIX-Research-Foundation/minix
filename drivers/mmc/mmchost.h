@@ -43,7 +43,7 @@ struct sd_card_regs
 	uint32_t rca;		/* Relative card address */
 	uint32_t dsr;		/* Driver stage register */
 	uint32_t csd[4];	/* Card specific data */
-	uint32_t scr[2];	/* SD configuration */
+	uint32_t scr[512/4];	/* SD configuration */
 	uint32_t ocr;		/* Operation conditions */
 	uint32_t ssr[5];	/* SD Status */
 	uint32_t csr;		/* Card status */

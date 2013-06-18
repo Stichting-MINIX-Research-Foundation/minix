@@ -159,6 +159,9 @@
 #define MMCHS_SD_STAT_CC              (0x1 << 0) /* Command complete status */
 #define MMCHS_SD_STAT_CC_UNRAISED     (0x0 << 0) /* Command not completed */
 #define MMCHS_SD_STAT_CC_RAISED       (0x1 << 0) /* Command completed */
+#define MMCHS_SD_STAT_TC              (0x1 << 1) /* Transfer complete status */
+#define MMCHS_SD_STAT_TC_UNRAISED     (0x0 << 1) /* Transfer not completed */
+#define MMCHS_SD_STAT_TC_RAISED       (0x1 << 1) /* Transfer completed */
 
 #define MMCHS_SD_IE_ERROR_MASK     (0xff << 15 | 0x3 << 24 | 0x03 << 28)
 
