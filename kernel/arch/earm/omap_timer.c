@@ -198,6 +198,7 @@ void omap3_frclock_init(void)
     /* Start timer */
     mmio_set(fr_timer.base + fr_timer.regs->TCLR,
             OMAP3_TCLR_OVF_TRG|OMAP3_TCLR_AR|OMAP3_TCLR_ST|OMAP3_TCLR_PRE);
+    done = 1;
 }
 
 void omap3_frclock_stop()
