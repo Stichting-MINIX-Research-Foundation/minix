@@ -10,6 +10,8 @@
 #include "kernel/glo.h"
 #include "kernel/profile.h"
 
+#include <assert.h>
+
 
 #include "kernel/spinlock.h"
 
@@ -61,6 +63,7 @@ void context_stop(struct proc * p)
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 
 	read_tsc_64(&tsc);
+	assert(tsc >= *__tsc_ctr_switch);
 	tsc_delta = tsc - *__tsc_ctr_switch;
 	p->p_cycles += tsc_delta;
 
