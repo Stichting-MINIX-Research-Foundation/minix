@@ -42,22 +42,6 @@ padconf_init()
 		log_trace(&log, "Called %d times\n", use_count);
 		return OK;
 	}
-	mr.mr_base = PADCONF_REGISTERS_BASE;
-	mr.mr_limit = PADCONF_REGISTERS_BASE + 0x1000;
-
-	if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != 0) {
-		log_warn(&log, "Unable to request permission to map memory\n");
-		return EPERM;
-	}
-
-	base =
-	    (uint32_t) vm_map_phys(SELF, (void *) PADCONF_REGISTERS_BASE,
-	    0x1000);
-
-	if (base == (uint32_t) MAP_FAILED) {
-		log_warn(&log, "Unable to map GPIO memory\n");
-		return EPERM;
-	}
 
 	mr.mr_base = PADCONF_REGISTERS_BASE;
 	mr.mr_limit = PADCONF_REGISTERS_BASE + 0x1000;
