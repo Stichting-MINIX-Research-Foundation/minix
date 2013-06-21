@@ -810,6 +810,75 @@ select_card(struct sd_card_regs *card)
 	}
 	return 0;
 }
+
+int
+card_scr(struct sd_card_regs *card)
+{
+	uint8_t buffer[8];	/* 64 bits */
+	uint8_t *p;
+	int c;
+	/* the SD CARD configuration register. This is an additional register
+	 * next to the Card Specific register containing additional data we
+	 * need */
+	struct mmc_command command;
+
+	log_trace(&log, "Read card scr\n");
+	/* send_csd -> r2 response */
+	command.cmd = SD_APP_SEND_SCR;
+	command.resp_type = RESP_LEN_48;
+	command.args = 0xaaaaaaaa;
+	command.data = buffer;
+	command.data_len = 8;
+
+	if (mmc_send_app_cmd(card, &command)) {
+		return 1;
+	}
+
+	p = (uint8_t *) card->scr;
+
+	/* hussle */
+	for (c = 7; c >= 0; c--) {
+		*p++ = buffer[c];
+	}
+
+	if (!SCR_SD_BUS_WIDTHS(card->scr) & SCR_SD_BUS_WIDTHS_4BIT) {
+		/* it would be very weird not to support 4 bits access */
+		log_warn(&log, "4 bit access not supported\n");
+	}
+
+	log_trace(&log, "1 bit bus width %ssupported\n",
+	    (SCR_SD_BUS_WIDTHS(card->scr) & SCR_SD_BUS_WIDTHS_1BIT) ? "" :
+	    "un");
+	log_trace(&log, "4 bit bus width %ssupported\n",
+	    (SCR_SD_BUS_WIDTHS(card->scr) & SCR_SD_BUS_WIDTHS_4BIT) ? "" :
+	    "un");
+
+	return 0;
+}
+
+int
+enable_4bit_mode(struct sd_card_regs *card)
+{
+	struct mmc_command command;
+
+	if (SCR_SD_BUS_WIDTHS(card->scr) & SCR_SD_BUS_WIDTHS_4BIT) {
+		/* set transfer width */
+		command.cmd = SD_APP_SET_BUS_WIDTH;
+		command.resp_type = RESP_LEN_48;
+		command.args = 2;	/* 4 bits */
+
+		if (mmc_send_app_cmd(card, &command)) {
+			log_warn(&log,
+			    "SD-card does not support 4 bit transfer\n");
+			return 1;
+		}
+		/* now configure the controller to use 4 bit access */
+		set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_DTW,
+		    MMCHS_SD_HCTL_DTW_4BIT);
+	}
+	return 0;
+}
+
 int
 read_single_block(struct sd_card_regs *card,
     uint32_t blknr, unsigned char *buf)
@@ -929,6 +998,17 @@ mmchs_card_initialize(struct sd_slot *slot)
 		return NULL;
 	}
 
+	if (card_scr(&slot->card.regs)) {
+		log_warn(&log,
+		    "failed to read scr (card additional specific data)\n");
+		return NULL;
+	}
+
+	if (enable_4bit_mode(&slot->card.regs)) {
+		log_warn(&log, "failed to configure 4 bit access mode\n");
+		return NULL;
+	}
+
 	if (SD_CSD_READ_BL_LEN(slot->card.regs.csd) != 0x09) {
 		/* for CSD version 2.0 the value is fixed to 0x09 and means a
 		 * block size of 512 */
@@ -985,6 +1065,10 @@ mmchs_card_release(struct sd_card *card)
 	card->open_ct--;
 	card->state = SD_MODE_UNINITIALIZED;
 	/* TODO:Set card state */
+
+	/* now configure the controller to use 4 bit access */
+	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_DTW,
+	    MMCHS_SD_HCTL_DTW_1BIT);
 
 	return OK;
 }
