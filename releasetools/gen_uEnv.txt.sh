@@ -70,5 +70,5 @@ echo "serverip=192.168.12.10"
 echo "ipaddr=192.168.12.62"
 echo "usbnet_devaddr=e8:03:9a:24:f9:10"
 echo "usbethaddr=e8:03:9a:24:f9:11"
-echo "netbootcmd=echo starting from TFTP; usb start; mw.b 0x88000000 0 16384 $(fill_cmd "tftp" "$NETBOOT_PREFIX") ; dcache off ; icache off ; go 0x80200000"
+echo "netbootcmd=echo starting from TFTP; mw.b 0x88000000 0 16384 $(fill_cmd "tftp" "$NETBOOT_PREFIX") ; dcache off ; icache off ; go 0x80200000"
 exit 0
