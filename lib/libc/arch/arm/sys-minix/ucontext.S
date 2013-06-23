@@ -126,9 +126,6 @@ ENTRY(setcontext)
 	pop {r0, r3}
 
 1:	/* Restore the registers */
-	ldr r1,  [r0, #REG1]		/* Restore r1 */
-	ldr r2,  [r0, #REG2]		/* Restore r2 */
-	ldr r3,  [r0, #REG3]		/* Restore r3 */
 	ldr r4,  [r0, #REG4]		/* Restore r4 */
 	ldr r5,  [r0, #REG5]		/* Restore r5 */
 	ldr r6,  [r0, #REG6]		/* Restore r6 */
@@ -140,10 +137,10 @@ ENTRY(setcontext)
 	ldr fp,  [r0, #FPREG]		/* Restore fp */
 	ldr sp,  [r0, #SPREG]		/* Restore sp */
 	ldr lr,  [r0, #LRREG]		/* Restore lr */
-	mov r4, r0
-	ldr r0,  [r4, #REG0]		/* Restore r0 */
+	mov r3, r0
+	ldr r0,  [r3, #REG0]		/* Restore r0 */
 2:
-	ldr pc,  [r4, #PCREG]		/* Restore pc */
+	ldr pc,  [r3, #PCREG]		/* Restore pc */
 
 
 /* void ctx_start()

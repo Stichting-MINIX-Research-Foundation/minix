@@ -125,11 +125,13 @@ void tll_init(tll_t *tllp)
 
 int tll_islocked(tll_t *tllp)
 {
+  assert(tllp >= (tll_t *) PAGE_SIZE);
   return(tllp->t_current != TLL_NONE);
 }
 
 int tll_locked_by_me(tll_t *tllp)
 {
+  assert(tllp >= (tll_t *) PAGE_SIZE);
   assert(self != NULL);
   return(tllp->t_owner == self && !(tllp->t_status & TLL_PEND));
 }
@@ -139,7 +141,7 @@ int tll_lock(tll_t *tllp, tll_access_t locktype)
 /* Try to lock three-level-lock tll with type locktype */
 
   assert(self != NULL);
-  assert(tllp != NULL);
+  assert(tllp >= (tll_t *) PAGE_SIZE);
   assert(locktype != TLL_NONE);
 
   self->w_next = NULL;
