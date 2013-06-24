@@ -19,6 +19,7 @@ int do_settime(struct proc * caller, message * m_ptr)
 {
   clock_t newclock, ticks;
   time_t timediff;
+  signed long long timediff_ticks;
 
   if (m_ptr->T_CLOCK_ID != CLOCK_REALTIME) /* only realtime can change */
 	return EINVAL;
@@ -31,8 +32,12 @@ int do_settime(struct proc * caller, message * m_ptr)
 	return(OK);
   } /* else user wants to set the time */
 
+  timediff = m_ptr->T_TIME_SEC - boottime;
+  timediff_ticks = (signed long long) timediff * system_hz;
+
   /* prevent a negative value for realtime */
-  if (m_ptr->T_TIME_SEC <= boottime) {
+  if (m_ptr->T_TIME_SEC <= boottime ||
+      timediff_ticks < LONG_MIN/2 || timediff_ticks > LONG_MAX/2) {
   	/* boottime was likely wrong, try to correct it. */
 	boottime = m_ptr->T_TIME_SEC;
 	set_realtime(1);
@@ -40,8 +45,7 @@ int do_settime(struct proc * caller, message * m_ptr)
   }
 
   /* calculate the new value of realtime in ticks */
-  timediff = m_ptr->T_TIME_SEC - boottime;
-  newclock = (timediff*system_hz) + (m_ptr->T_TIME_NSEC/(1000000000/system_hz));
+  newclock = timediff_ticks + (m_ptr->T_TIME_NSEC/(1000000000/system_hz));
 
   set_realtime(newclock);
 
