@@ -130,6 +130,7 @@ irq_entry_from_user:
 	ldr	fp, [sp]
 
 	push	{fp}    /* save caller proc ptr */
+	sub	sp, sp, #4	/* maintain stack alignment */
 
 	/* stop user process cycles */
 	mov	r0, fp  /* first param: caller proc ptr */
@@ -139,6 +140,7 @@ irq_entry_from_user:
 	/* call handler */
 	bl	_C_LABEL(omap3_irq_handle)	/* omap3_irq_handle(void) */
 
+	add	sp, sp, #4
 	pop	{fp}    /* caller proc ptr */
 
 	/* data synchronization barrier */
