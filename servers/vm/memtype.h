@@ -16,7 +16,8 @@ typedef struct mem_type {
 	int (*ev_reference)(struct phys_region *pr, struct phys_region *newpr);
 	int (*ev_unreference)(struct phys_region *pr);
 	int (*ev_pagefault)(struct vmproc *vmp, struct vir_region *region,
-	 struct phys_region *ph, int write, vfs_callback_t cb, void *, int);
+	 struct phys_region *ph, int write, vfs_callback_t cb, void *state,
+	 int len, int *io);
 	int (*ev_resize)(struct vmproc *vmp, struct vir_region *vr, vir_bytes len);
 	void (*ev_split)(struct vmproc *vmp, struct vir_region *vr,
 		struct vir_region *r1, struct vir_region *r2);

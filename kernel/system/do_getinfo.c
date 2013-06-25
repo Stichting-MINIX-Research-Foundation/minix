@@ -17,6 +17,7 @@
 #if USE_GETINFO
 
 #include <minix/u64.h>
+#include <sys/resource.h>
 
 /*===========================================================================*
  *			        update_idle_time			     *
@@ -47,6 +48,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
   int nr_e, nr, r;
   int wipe_rnd_bin = -1;
   struct proc *p;
+  struct rusage r_usage;
 
   /* Set source address and length based on request type. */
   switch (m_ptr->I_REQUEST) {
@@ -179,6 +181,32 @@ int do_getinfo(struct proc * caller, message * m_ptr)
         length = sizeof(idl->p_cycles);
         src_vir = (vir_bytes) &idl->p_cycles;
         break;
+    }
+    case GET_RUSAGE: {
+	struct proc *target = NULL;
+	int target_slot = 0;
+	u64_t usec;
+        nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
+            caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
+
+	if (!isokendpt(nr_e, &target_slot))
+		return EINVAL;
+
+	target = proc_addr(target_slot);
+	if (isemptyp(target))
+		return EINVAL;
+
+	length = sizeof(r_usage);
+	memset(&r_usage, 0, sizeof(r_usage));
+	usec = target->p_user_time * 1000000 / system_hz;
+	r_usage.ru_utime.tv_sec = usec / 1000000;
+	r_usage.ru_utime.tv_usec = usec % 100000;
+	usec = target->p_sys_time * 1000000 / system_hz;
+	r_usage.ru_stime.tv_sec = usec / 1000000;
+	r_usage.ru_stime.tv_usec = usec % 100000;
+	r_usage.ru_nsignals = target->p_signal_received;
+	src_vir = (vir_bytes) &r_usage;
+	break;
     }
     default:
 	printf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);

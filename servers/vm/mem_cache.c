@@ -29,7 +29,8 @@ static int cache_sanitycheck(struct phys_region *pr, char *file, int line);
 static int cache_writable(struct phys_region *pr);
 static int cache_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static int cache_pagefault(struct vmproc *vmp, struct vir_region *region, 
-        struct phys_region *ph, int write, vfs_callback_t cb, void *, int);
+        struct phys_region *ph, int write, vfs_callback_t cb, void *state,
+	int len, int *io);
 
 struct mem_type mem_type_cache = {
 	.name = "cache memory",
@@ -81,6 +82,7 @@ do_mapcache(message *msg)
 	struct vir_region *vr;
 	struct vmproc *caller;
 	vir_bytes offset;
+	int io = 0;
 
 	if(vm_isokendpt(msg->m_source, &n) != OK) panic("bogus source");
 	caller = &vmproc[n];
@@ -113,7 +115,7 @@ do_mapcache(message *msg)
 		assert(vr->length == bytes);
 		assert(offset < vr->length);
 
-		if(map_pf(caller, vr, offset, 1, NULL, NULL, 0) != OK) {
+		if(map_pf(caller, vr, offset, 1, NULL, NULL, 0, &io) != OK) {
 			map_unmap_region(caller, vr, 0, bytes);
 			printf("VM: map_pf failed\n");
 			return ENOMEM;
@@ -136,7 +138,7 @@ do_mapcache(message *msg)
 
 static int cache_pagefault(struct vmproc *vmp, struct vir_region *region, 
         struct phys_region *ph, int write, vfs_callback_t cb,
-	void *state, int len)
+	void *state, int len, int *io)
 {
 	vir_bytes offset = ph->offset;
 	assert(ph->ph->phys == MAP_NONE);

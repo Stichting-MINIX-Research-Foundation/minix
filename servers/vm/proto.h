@@ -41,6 +41,7 @@ int get_stack_ptr(int proc_nr, vir_bytes *sp);
 int do_info(message *);
 int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp);
 int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp);
+int do_getrusage(message *m);
 
 /* exit.c */
 void clear_proc(struct vmproc *vmp);
@@ -143,7 +144,8 @@ int map_proc_copy_from(struct vmproc *dst, struct vmproc *src, struct
 struct vir_region *map_lookup(struct vmproc *vmp, vir_bytes addr,
 	struct phys_region **pr);
 int map_pf(struct vmproc *vmp, struct vir_region *region, vir_bytes
-	offset, int write, vfs_callback_t pf_callback, void *state, int);
+	offset, int write, vfs_callback_t pf_callback, void *state, int len,
+	int *io);
 int map_pin_memory(struct vmproc *vmp);
 int map_handle_memory(struct vmproc *vmp, struct vir_region *region,
 	vir_bytes offset, vir_bytes len, int write, vfs_callback_t cb,

@@ -22,7 +22,8 @@ static void anon_split(struct vmproc *vmp, struct vir_region *vr,
 static int anon_lowshrink(struct vir_region *vr, vir_bytes len);
 static int anon_unreference(struct phys_region *pr);
 static int anon_pagefault(struct vmproc *vmp, struct vir_region *region, 
-	struct phys_region *ph, int write, vfs_callback_t cb, void *, int);
+	struct phys_region *ph, int write, vfs_callback_t cb, void *state,
+	int len, int *io);
 static int anon_sanitycheck(struct phys_region *pr, char *file, int line);
 static int anon_writable(struct phys_region *pr);
 static int anon_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
@@ -51,7 +52,8 @@ static int anon_unreference(struct phys_region *pr)
 }
 
 static int anon_pagefault(struct vmproc *vmp, struct vir_region *region,
-	struct phys_region *ph, int write, vfs_callback_t cb, void *st, int l)
+	struct phys_region *ph, int write, vfs_callback_t cb, void *state,
+	int len, int *io)
 {
 	phys_bytes new_page, new_page_cl;
 	u32_t allocflags;
