@@ -14,6 +14,9 @@
 int max_error = 4;
 #include "common.h"
 
+#define my_e(n) { \
+	if (child) exit(n); printf("Attach type %d, ", attach); e(n); }
+
 
 #define _WIFSTOPPED(s) (WIFSTOPPED(s) && !WIFSIGNALED(s) && !WIFEXITED(s))
 #define _WIFSIGNALED(s) (!WIFSTOPPED(s) && WIFSIGNALED(s) && !WIFEXITED(s))
@@ -70,7 +73,6 @@ void test_noexec(void);
 void test_defexec(void);
 void test_reattach_child(void);
 void test_reattach(void);
-void my_e(int n);
 
 static char *executable;
 static int child = 0, attach;
@@ -118,7 +120,10 @@ int a;
 
   if (m & 00000001) timed_test(test_wait);
   if (m & 00000002) timed_test(test_exec);
+#if !defined(__arm__)
+  /* BJG: single-stepping isn't implemented on ARM */
   if (m & 00000004) timed_test(test_step);
+#endif
   if (m & 00000010) timed_test(test_sig);
   if (m & 00000020) timed_test(test_exit);
   if (m & 00000040) timed_test(test_term);
@@ -1496,15 +1501,5 @@ void test_reattach()
   if (!(count % 2)) my_e(21);
 
   traced_wait();
-}
-
-void my_e(n)
-int n;
-{
-
-  if (child) exit(n);
-
-  printf("Attach type %d, ", attach);
-  e(n);
 }
 
