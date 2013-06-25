@@ -1906,3 +1906,8 @@ void ser_dump_proc()
                 print_proc_recursive(pp);
         }
 }
+
+void increase_proc_signals(struct proc *p)
+{
+	p->p_signal_received++;
+}

@@ -25,6 +25,10 @@ struct vmproc {
 #if VMSTATS
 	int vm_bytecopies;
 #endif
+	vir_bytes	vm_total;
+	vir_bytes	vm_total_max;
+	u64_t		vm_minor_page_fault;
+	u64_t		vm_major_page_fault;
 };
 
 /* Bits for vm_flags */

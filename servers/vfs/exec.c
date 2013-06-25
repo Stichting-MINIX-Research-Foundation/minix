@@ -253,6 +253,8 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 
   okendpt(proc_e, &slot);
   rfp = fp = &fproc[slot];
+  rfp->text_size = 0;
+  rfp->data_size = 0;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
 
@@ -409,6 +411,8 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 
   /* Remember the new name of the process */
   strlcpy(rfp->fp_name, execi.args.progname, PROC_NAME_LEN);
+  rfp->text_size = execi.args.text_size;
+  rfp->data_size = execi.args.data_size;
 
 pm_execfinal:
   if(newfilp) unlock_filp(newfilp);

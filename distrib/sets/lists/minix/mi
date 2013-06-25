@@ -1508,6 +1508,7 @@
 ./usr/man/man2/getpeername.2		minix-sys
 ./usr/man/man2/getpid.2			minix-sys
 ./usr/man/man2/getpriority.2		minix-sys
+./usr/man/man2/getrusage.2		minix-sys
 ./usr/man/man2/getsockname.2		minix-sys
 ./usr/man/man2/getsockopt.2		minix-sys
 ./usr/man/man2/gettimeofday.2		minix-sys
@@ -4653,6 +4654,7 @@
 ./usr/tests/minix-posix/test72		minix-sys
 ./usr/tests/minix-posix/test73		minix-sys
 ./usr/tests/minix-posix/test74		minix-sys
+./usr/tests/minix-posix/test75		minix-sys
 ./usr/tests/minix-posix/test7		minix-sys
 ./usr/tests/minix-posix/test8		minix-sys
 ./usr/tests/minix-posix/test9		minix-sys

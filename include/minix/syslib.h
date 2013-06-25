@@ -17,6 +17,7 @@
 /* Forward declaration */
 struct reg86u;
 struct rs_pci;
+struct rusage;
 
 #define SYSTASK SYSTEM
 
@@ -178,6 +179,7 @@ int send_taskreply(endpoint_t who, endpoint_t endpoint, int status);
 #define sys_getpriv(dst, nr)	sys_getinfo(GET_PRIV, dst, 0,0, nr)
 #define sys_getidletsc(dst)	sys_getinfo(GET_IDLETSC, dst, 0,0,0)
 #define sys_getregs(dst,nr)	sys_getinfo(GET_REGS, dst, 0,0, nr)
+#define sys_getrusage(dst, nr)  sys_getinfo(GET_RUSAGE, dst, 0,0, nr)
 int sys_getinfo(int request, void *val_ptr, int val_len, void *val_ptr2,
 	int val_len2);
 int sys_whoami(endpoint_t *ep, char *name, int namelen, int

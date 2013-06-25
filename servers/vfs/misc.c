@@ -30,6 +30,7 @@
 #include <minix/u64.h>
 #include <sys/ptrace.h>
 #include <sys/svrctl.h>
+#include <sys/resource.h>
 #include "file.h"
 #include "fproc.h"
 #include "scratchpad.h"
@@ -939,3 +940,24 @@ void panic_hook(void)
   mthread_stacktraces(); 
 }         
 
+/*===========================================================================*
+ *				do_getrusage				     *
+ *===========================================================================*/
+int do_getrusage(message *UNUSED(m_out))
+{
+	int res;
+	struct rusage r_usage;
+
+	if ((res = sys_datacopy(who_e, (vir_bytes) m_in.RU_RUSAGE_ADDR, SELF,
+		(vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
+		return res;
+
+	r_usage.ru_inblock = 0;
+	r_usage.ru_oublock = 0;
+	r_usage.ru_ixrss = fp->text_size;
+	r_usage.ru_idrss = fp->data_size;
+	r_usage.ru_isrss = DEFAULT_STACK_LIMIT;
+
+	return sys_datacopy(SELF, (vir_bytes) &r_usage, who_e,
+		(vir_bytes) m_in.RU_RUSAGE_ADDR, (phys_bytes) sizeof(r_usage));
+}

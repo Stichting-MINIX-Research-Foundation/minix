@@ -133,6 +133,12 @@ int (*call_vec[])(message *m_out) = {
 	no_sys,		/* 115 = (clock_gettime) */
 	no_sys,		/* 116 = (clock_settime) */
 	do_vm_call,	/* 117 = call from vm */
+	no_sys,		/* 118 = unsused */
+	no_sys,		/* 119 = unsused */
+	no_sys,		/* 120 = unsused */
+	no_sys,		/* 121 = (task reply) */
+	no_sys,		/* 122 = (map driver ) */
+	do_getrusage,	/* 123 = getrusage */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

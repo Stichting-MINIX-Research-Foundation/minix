@@ -126,6 +126,8 @@ struct proc {
    */
   struct { reg_t r1, r2, r3; } p_defer;
 
+  u64_t p_signal_received;
+
 #if DEBUG_TRACE
   int p_schedules;
 #endif

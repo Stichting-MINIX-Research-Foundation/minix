@@ -32,6 +32,8 @@ struct exec_info {
     int allow_setuid;                   /* Allow set{u,g}id execution? */
     vir_bytes stack_size;		/* Desired stack size */
     vir_bytes load_offset;		/* Desired load offset */
+    vir_bytes text_size;		/* Text segment size */
+    vir_bytes data_size;		/* Data segment size */
     off_t filesize;			/* How big is the file */
 
     /* Callback pointers for use by libexec */

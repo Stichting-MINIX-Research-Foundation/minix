@@ -147,6 +147,7 @@ int do_vm_call(message *m_out);
 int pm_dumpcore(endpoint_t proc_e, int sig, vir_bytes exe_name);
 void * ds_event(void *arg);
 int dupvm(struct fproc *fp, int pfd, int *vmfd, struct filp **f);
+int do_getrusage(message *m_out);
 
 /* mount.c */
 int do_fsready(message *m_out);
