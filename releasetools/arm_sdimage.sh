@@ -95,17 +95,13 @@ sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} 
 # All sized are written in 512 byte blocks
 #
 # we create a disk image of about 2 gig's
-# 
-# The size of the extended partition where we store 
-# /root /home and /usr in separate sub partitions is
-# about 1 gig
+# for alignement reasons, prefer sizes which are multiples of 4096 bytes
 #
-: ${IMG_SIZE=$((2**31 / 512))}
-: ${FAT_SIZE=$((20480))}
-: ${EXTENDED_SIZE=$((2**30 / 512))}
-: ${ROOT_SIZE=$((2**26 / 512))}
-: ${HOME_SIZE=$((2**27 / 512))}
-: ${USR_SIZE=$((2**29 / 512))}
+: ${IMG_SIZE= $((   2*(2**30) / 512))}
+: ${FAT_SIZE= $((  10*(2**20) / 512))}
+: ${ROOT_SIZE=$((  64*(2**20) / 512))}
+: ${HOME_SIZE=$(( 128*(2**20) / 512))}
+: ${USR_SIZE= $((1536*(2**20) / 512))}
 
 #
 # create a fstab entry in /etc this is normally done during the
@@ -137,13 +133,20 @@ dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
 
 #
 # Do some math to determine the start addresses of the partitions.
+# Ensure the start of the partitions are always aligned, the end will 
+# always be as we assume the sizes are multiples of 4096 bytes, which
+# is always true as soon as you have an integer multiple of 1MB.
 #
 FAT_START=2048
 EXTENDED_START=$(($FAT_START + $FAT_SIZE))
-EXTENDED_SIZE=$(($ROOT_SIZE + $HOME_SIZE + $USR_SIZE + 3))
+EXTENDED_START=$(($EXTENDED_START + 8 - ($EXTENDED_START % 8)))
 ROOT_START=$(($EXTENDED_START + 1))
+ROOT_START=$(($ROOT_START + 8 - ($ROOT_START % 8)))
 HOME_START=$(($ROOT_START + $ROOT_SIZE + 1))
+HOME_START=$(($HOME_START + 8 - ($HOME_START % 8)))
 USR_START=$(($HOME_START + $HOME_SIZE + 1))
+USR_START=$(($USR_START + 8 - ($USR_START % 8)))
+EXTENDED_SIZE=$(($USR_START + $USR_SIZE - $EXTENDED_START))
 
 #
 # Generate the partitions using sfdisk to partition the
@@ -256,8 +259,11 @@ cat ${IMG_DIR}/input  | grep  "^\./home/\|^. "  | sed "s,\./home,\.,g" | ${CROSS
 #
 # Generate /root, /usr and /home partition images.
 #
+echo " - ROOT"
 ${CROSS_TOOLS}/nbmkfs.mfs -b $((${ROOT_SIZE} / 8)) ${IMG_DIR}/root.img ${IMG_DIR}/root.proto
+echo " - USR"
 ${CROSS_TOOLS}/nbmkfs.mfs -b $((${USR_SIZE} / 8))  ${IMG_DIR}/usr.img  ${IMG_DIR}/usr.proto
+echo " - HOME"
 ${CROSS_TOOLS}/nbmkfs.mfs -b $((${HOME_SIZE} / 8)) ${IMG_DIR}/home.img ${IMG_DIR}/home.proto
 
 #
