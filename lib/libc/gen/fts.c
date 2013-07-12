@@ -213,6 +213,9 @@ fts_open(char * const *argv, int options,
 	 * and ".." are all fairly nasty problems.  Note, if we can't get the
 	 * descriptor we run anyway, just more slowly.
 	 */
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
 	if (!ISSET(FTS_NOCHDIR)) {
 		if ((sp->fts_rfd = open(".", O_RDONLY | O_CLOEXEC, 0)) == -1)
 			SET(FTS_NOCHDIR);
