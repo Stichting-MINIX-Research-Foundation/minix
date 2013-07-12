@@ -11,6 +11,7 @@ PACKAGEDIR=/usr/pkgsrc/packages/$version_pretty/`uname -m`
 SRC=src
 : ${REPO:=git://git.minix3.org/minix}
 : ${GITBRANCH:=master}
+: ${BUILDOPTIONS:=}
 
 # List of packages included on installation media
 PACKAGELIST=packages.install
@@ -240,7 +241,7 @@ echo " * Build"
 ##########################################################################
 
 cd $RELEASEDIR/usr/src
-make distribution DESTDIR=$RELEASEDIR CHECKFLIST=no
+make distribution DESTDIR=$RELEASEDIR SLOPPY_FLIST=yes $BUILDOPTIONS
 make -C releasetools do-hdboot DESTDIR=$RELEASEDIR MKINSTALLBOOT=yes
 cp $RELEASEDIR/usr/mdec/boot_monitor $RELEASEDIR
 cp $RELEASEDIR/boot/minix_latest/* $RELEASEDIR/boot/minix_default/

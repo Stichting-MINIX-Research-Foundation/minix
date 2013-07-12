@@ -315,7 +315,7 @@ distribution buildworld: .PHONY .MAKE
 .endif
 	${MAKEDIRTARGET} . build NOPOSTINSTALL=1
 	${MAKEDIRTARGET} etc distribution INSTALL_DONE=1
-.if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"  && ${CHECKFLIST:Uyes} == "yes"
+.if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
 	${MAKEDIRTARGET} distrib/sets checkflist
 .endif
