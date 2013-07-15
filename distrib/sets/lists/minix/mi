@@ -1073,6 +1073,7 @@
 ./usr/include/minix/hash.h		minix-sys
 ./usr/include/minix/hgfs.h		minix-sys
 ./usr/include/minix/i2c.h		minix-sys
+./usr/include/minix/i2cdriver.h		minix-sys
 ./usr/include/minix/input.h		minix-sys
 ./usr/include/minix/ioctl.h		minix-sys
 ./usr/include/minix/ipcconst.h		minix-sys

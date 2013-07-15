@@ -97,6 +97,8 @@
 ./usr/lib/libclkconf_pic.a		minix-sys
 ./usr/lib/libgpio.a			minix-sys
 ./usr/lib/libgpio_pic.a			minix-sys
+./usr/lib/libi2cdriver.a		minix-sys
+./usr/lib/libi2cdriver_pic.a		minix-sys
 ./usr/lib/libpadconf.a			minix-sys
 ./usr/lib/libpadconf_pic.a		minix-sys
 ./usr/mdec				minix-sys

@@ -11,7 +11,7 @@ INCS+=	acpi.h audio_fw.h bitmap.h \
 	debug.h devio.h devman.h dmap.h \
 	driver.h drivers.h drvlib.h ds.h \
 	endpoint.h fb.h fslib.h gpio.h gcov.h hash.h \
-	hgfs.h i2c.h ioctl.h input.h ipc.h ipcconst.h \
+	hgfs.h i2c.h i2cdriver.h ioctl.h input.h ipc.h ipcconst.h \
 	keymap.h log.h mmio.h mount.h mthread.h minlib.h \
 	netdriver.h optset.h padconf.h partition.h portio.h \
 	priv.h procfs.h profile.h queryparam.h \
