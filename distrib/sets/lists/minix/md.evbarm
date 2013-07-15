@@ -102,6 +102,7 @@
 ./usr/lib/libpadconf.a			minix-sys
 ./usr/lib/libpadconf_pic.a		minix-sys
 ./usr/mdec				minix-sys
+./usr/sbin/cat24c256			minix-sys
 ./usr/sbin/fb				minix-sys
 ./usr/sbin/gpio				minix-sys
 ./usr/sbin/i2c				minix-sys

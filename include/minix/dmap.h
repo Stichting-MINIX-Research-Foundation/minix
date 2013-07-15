@@ -42,7 +42,30 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define I2C0_MAJOR		  20	/* 20 = /dev/i2c-1  (i2c-dev)         */
 #define I2C1_MAJOR		  21	/* 21 = /dev/i2c-2  (i2c-dev)         */
 #define I2C2_MAJOR		  22	/* 22 = /dev/i2c-3  (i2c-dev)         */
-
+#define EEPROMB1S50_MAJOR	  23	/* 23 = /dev/eepromb1s50 (cat24c256)  */
+#define EEPROMB1S51_MAJOR	  24	/* 24 = /dev/eepromb1s51 (cat24c256)  */
+#define EEPROMB1S52_MAJOR	  25	/* 25 = /dev/eepromb1s52 (cat24c256)  */
+#define EEPROMB1S53_MAJOR	  26	/* 26 = /dev/eepromb1s53 (cat24c256)  */
+#define EEPROMB1S54_MAJOR	  27	/* 27 = /dev/eepromb1s54 (cat24c256)  */
+#define EEPROMB1S55_MAJOR	  28	/* 28 = /dev/eepromb1s55 (cat24c256)  */
+#define EEPROMB1S56_MAJOR	  29	/* 29 = /dev/eepromb1s56 (cat24c256)  */
+#define EEPROMB1S57_MAJOR	  30	/* 30 = /dev/eepromb1s57 (cat24c256)  */
+#define EEPROMB2S50_MAJOR	  31	/* 31 = /dev/eepromb2s50 (cat24c256)  */
+#define EEPROMB2S51_MAJOR	  32	/* 32 = /dev/eepromb2s51 (cat24c256)  */
+#define EEPROMB2S52_MAJOR	  33	/* 33 = /dev/eepromb2s52 (cat24c256)  */
+#define EEPROMB2S53_MAJOR	  34	/* 34 = /dev/eepromb2s53 (cat24c256)  */
+#define EEPROMB2S54_MAJOR	  35	/* 35 = /dev/eepromb2s54 (cat24c256)  */
+#define EEPROMB2S55_MAJOR	  36	/* 36 = /dev/eepromb2s55 (cat24c256)  */
+#define EEPROMB2S56_MAJOR	  37	/* 37 = /dev/eepromb2s56 (cat24c256)  */
+#define EEPROMB2S57_MAJOR	  38	/* 38 = /dev/eepromb2s57 (cat24c256)  */
+#define EEPROMB3S50_MAJOR	  39	/* 39 = /dev/eepromb3s50 (cat24c256)  */
+#define EEPROMB3S51_MAJOR	  40	/* 40 = /dev/eepromb3s51 (cat24c256)  */
+#define EEPROMB3S52_MAJOR	  41	/* 41 = /dev/eepromb3s52 (cat24c256)  */
+#define EEPROMB3S53_MAJOR	  42	/* 42 = /dev/eepromb3s53 (cat24c256)  */
+#define EEPROMB3S54_MAJOR	  43	/* 43 = /dev/eepromb3s54 (cat24c256)  */
+#define EEPROMB3S55_MAJOR	  44	/* 44 = /dev/eepromb3s55 (cat24c256)  */
+#define EEPROMB3S56_MAJOR	  45	/* 45 = /dev/eepromb3s56 (cat24c256)  */
+#define EEPROMB3S57_MAJOR	  46	/* 46 = /dev/eepromb3s57 (cat24c256)  */
 
 /* Minor device numbers for memory driver. */
 #  define RAM_DEV_OLD  		   0	/* minor device for /dev/ram */

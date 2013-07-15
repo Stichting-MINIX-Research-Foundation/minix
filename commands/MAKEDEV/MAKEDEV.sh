@@ -24,7 +24,13 @@ case $#:$1 in
 	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9 \
 	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf \
 	eth klog random uds filter fbd hello fb0 \
-	i2c-1 i2c-2 i2c-3
+	i2c-1 i2c-2 i2c-3 \
+	eepromb1s50 eepromb1s51 eepromb1s52 eepromb1s53 \
+	eepromb1s54 eepromb1s55 eepromb1s56 eepromb1s57 \
+	eepromb2s50 eepromb2s51 eepromb2s52 eepromb2s53 \
+	eepromb2s54 eepromb2s55 eepromb2s56 eepromb2s57 \
+	eepromb3s50 eepromb3s51 eepromb3s52 eepromb3s53 \
+	eepromb3s54 eepromb3s55 eepromb3s56 eepromb3s57
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -292,6 +298,14 @@ do
 	m=`expr $dev : '....\\(.*\\)' - 1` # least significant digit of major
 	$e mknod i2c-${b} c 2${m} 0
 	$e chmod 600 i2c-${b}
+	;;
+    eepromb[1-3]s5[0-7])
+	# cat24c256 driver
+	b=`expr $dev : 'eepromb\\(.*\\)s'` # bus number
+	s=`expr $dev : 'eepromb.s5\\(.*\\)'` # configurable part of slave addr
+	m=`expr ${b} \* 8 + ${s} + 17`
+	$e mknod eepromb${b}s5${s} b ${m} 0
+	$e chmod 600 eepromb${b}s5${s}
 	;;
     *)
 	echo "$0: don't know about $dev" >&2
