@@ -38,4 +38,9 @@ SUBDIR+=	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump
 .endif
+
+.if ${MACHINE_ARCH} == "earm"
+SUBDIR+=	eepromread
+.endif
+
 .include <bsd.subdir.mk>

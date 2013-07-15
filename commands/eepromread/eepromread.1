@@ -1,0 +1,46 @@
+.TH EEPROMREAD 1
+.SH NAME
+eepromread \- read data from an EEPROM
+.SH SYNOPSIS
+\fBeepromread\fR [\fB\-i\fR] [\fB\-f\fR \fIdev\fR] [\fB\-a\fR \fIslave_addr\fR]
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS 
+.TP 5
+.B \-i
+# interpret the data on the EEPROM and display it as a set of fields.
+.TP 5
+.B \-f
+# Use \fIdevice\fR instead of \fI/dev/i2c-1\fR.
+.TP 5
+.B \-a
+# Use \fIslave_address\fR instead of \fI0x50\fR.
+.SH EXAMPLES
+.TP 20
+.B eepromread -i
+# display the contents of the EEPROM as a list of label:value pairs.
+.TP 20
+.B eepromread
+# display the first 256 bytes of the EEPROM in HEX and ASCII.
+.TP 20
+.B eepromread -f /dev/i2c-3 -a 0x54
+# display the first 256 bytes of the EEPROM on I2C bus 3, slave address 0x54.
+.SH DESCRIPTION
+.PP
+\fIeepromread\fR is a simple tool for viewing the contents of an EEPROM.
+For EEPROM data that is in a specific format that this program knows how to
+detect, \fIeepromread\fR can properly format each of the fields and display
+the information via the \fI-i\fR command line option.
+.SH NOTES
+If the \fIcat24c256\fR driver has claimed the EEPROM device that this
+program is attempting to read from, then this program will fail. Once
+a driver claims an I2C device, the driver has exclusive access.

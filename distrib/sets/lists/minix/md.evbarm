@@ -10,6 +10,7 @@
 ./multiboot/mod10_vm			minix-sys
 ./multiboot/mod11_pfs			minix-sys
 ./multiboot/mod12_init			minix-sys
+./usr/bin/eepromread			minix-sys
 ./usr/include/arm			minix-sys
 ./usr/include/arm/aeabi.h		minix-sys
 ./usr/include/arm/ansi.h		minix-sys
@@ -101,6 +102,7 @@
 ./usr/lib/libi2cdriver_pic.a		minix-sys
 ./usr/lib/libpadconf.a			minix-sys
 ./usr/lib/libpadconf_pic.a		minix-sys
+./usr/man/man1/eepromread.1		minix-sys
 ./usr/mdec				minix-sys
 ./usr/sbin/cat24c256			minix-sys
 ./usr/sbin/fb				minix-sys
