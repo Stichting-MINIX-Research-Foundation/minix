@@ -63,7 +63,7 @@ ORIG_UNPAGED_OBJS += ${unpaged_obj}
 CLEANFILES+= ${ORIG_UNPAGED_OBJS}
 
 SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c \
-	omap_serial.c omap_timer.c omap_intr.c exception.c \
+	omap_serial.c omap_timer.c omap_padconf.c omap_intr.c exception.c \
 	klib.S memory.c \
 	protect.c direct_tty_utils.c arch_reset.c \
 	pg_utils.c phys_copy.S phys_memset.S exc.S

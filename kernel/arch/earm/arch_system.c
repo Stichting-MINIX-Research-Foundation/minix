@@ -18,6 +18,7 @@
 #include "kernel/proc.h"
 #include "kernel/debug.h"
 #include "omap_ccnt.h"
+#include "omap_padconf.h"
 
 #include "glo.h"
 
@@ -124,6 +125,9 @@ void arch_init(void)
         /* enable cycle counter in user mode: ARM ARM B4.1.124 */
         value = OMAP_PMUSERENR_EN;
         asm volatile ("MCR p15, 0, %0, c9, c14, 0\t\n": : "r" (value));
+
+	/* configure i2c pinmux */
+	omap3_padconf_init();
 }
 
 /*===========================================================================*
