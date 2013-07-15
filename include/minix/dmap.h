@@ -39,6 +39,9 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define HELLO_MAJOR		  17	/* 17 = /dev/hello  (hello driver)    */
 #define UDS_MAJOR		  18	/* 18 = /dev/uds    (pfs)             */
 #define FB_MAJOR		  19	/* 18 = /dev/fb0    (fb driver)       */
+#define I2C0_MAJOR		  20	/* 20 = /dev/i2c-1  (i2c-dev)         */
+#define I2C1_MAJOR		  21	/* 21 = /dev/i2c-2  (i2c-dev)         */
+#define I2C2_MAJOR		  22	/* 22 = /dev/i2c-3  (i2c-dev)         */
 
 
 /* Minor device numbers for memory driver. */

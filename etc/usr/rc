@@ -183,6 +183,19 @@ start)
     daemonize syslogd
     echo .
 
+    # i2c only supported on ARM at the moment
+    if [ $ARCH = earm ]
+    then
+	echo -n "Starting i2c subsystem: "
+	for bus in 1 2 3
+	do
+		test -e /dev/i2c-${bus} || (cd /dev && MAKEDEV i2c-${bus})
+		up i2c -dev /dev/i2c-${bus} -label i2c.${bus} \
+			-args instance=${bus}
+	done
+	echo .
+    fi
+
     if [ "$net" ]
     then
 	if [ -f /etc/rc.net ]

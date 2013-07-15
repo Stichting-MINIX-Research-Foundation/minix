@@ -180,6 +180,8 @@
 							 * a segment of memory
 							 */
 
+#define BUSC_I2C_RESERVE	(BUSC_RQ_BASE + 64)	/* reserve i2c device */
+#define BUSC_I2C_EXEC		(BUSC_RQ_BASE + 65)	/* perform i2c action */
 
 /*===========================================================================*
  *                Messages for CHARACTER device drivers			     *

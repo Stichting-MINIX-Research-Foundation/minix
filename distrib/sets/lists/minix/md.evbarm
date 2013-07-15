@@ -102,6 +102,7 @@
 ./usr/mdec				minix-sys
 ./usr/sbin/fb				minix-sys
 ./usr/sbin/gpio				minix-sys
+./usr/sbin/i2c				minix-sys
 ./usr/sbin/random			minix-sys
 ./usr/tests/minix-posix/mod		minix-sys
 ./usr/tests/minix-posix/test63		minix-sys

@@ -65,7 +65,7 @@ padconf_init()
 int
 padconf_set(u32_t padconf, u32_t mask, u32_t value)
 {
-	assert(padconf <= CONTROL_PADCONF_ETK_D14);
+	assert(padconf <= CONTROL_CONF_USB1_DRVVBUS);
 	set32(base + padconf, mask, value);
 	return OK;
 }

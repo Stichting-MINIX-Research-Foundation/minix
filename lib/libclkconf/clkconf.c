@@ -24,7 +24,12 @@ static struct log log = {
 	.log_func = default_log
 };
 
+#ifdef DM37XX
 #define CM_BASE 0x48004000
+#elif AM335X
+#define CM_BASE 0x44E00000
+#endif
+
 static u32_t base = 0;
 static u32_t use_count = 0;
 
