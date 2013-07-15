@@ -183,6 +183,7 @@
 2012/10/17 12:00:00,usr.bin/xinstall
 2013/03/15 12:00:00,usr.bin/yes
 2012/02/10 16:16:12,usr.sbin/chroot
+2013/07/10 15:18:55,usr.sbin/i2cscan
 2011/11/03 20:46:41,usr.sbin/installboot
 2012/10/17 12:00:00,usr.sbin/Makefile
 2012/10/17 12:00:00,usr.sbin/Makefile.inc

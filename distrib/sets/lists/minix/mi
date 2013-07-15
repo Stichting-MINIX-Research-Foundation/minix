@@ -4241,6 +4241,7 @@
 ./usr/man/man8/halt.8				minix-sys
 ./usr/man/man8/hgfs.8				minix-sys
 ./usr/man/man8/httpd.8				minix-sys
+./usr/man/man8/i2cscan.8			minix-sys
 ./usr/man/man8/ifconfig.8			minix-sys
 ./usr/man/man8/inet.8				minix-sys
 ./usr/man/man8/in.httpd.8			minix-sys
@@ -4315,6 +4316,7 @@
 ./usr/sbin/groupdel			minix-sys
 ./usr/sbin/groupinfo			minix-sys
 ./usr/sbin/groupmod			minix-sys
+./usr/sbin/i2cscan			minix-sys
 ./usr/sbin/inet				minix-sys
 ./usr/sbin/init				minix-sys
 ./usr/sbin/installboot_nbsd		minix-sys
