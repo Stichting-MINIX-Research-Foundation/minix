@@ -906,7 +906,7 @@ static int w_identify(void)
   w_testing = 0;
 
   /* Size of the whole drive */
-  wn->part[0].dv_size = mul64u(size, SECTOR_SIZE);
+  wn->part[0].dv_size = (u64_t)size * SECTOR_SIZE;
 
   /* Reset/calibrate (where necessary) */
   if (w_specify() != OK && w_specify() != OK) {
@@ -1204,7 +1204,7 @@ static ssize_t w_transfer(
 #endif
 
   /* Check disk address. */
-  if (rem64u(position, SECTOR_SIZE) != 0) return(EINVAL);
+  if ((unsigned)(position % SECTOR_SIZE) != 0) return(EINVAL);
 
   errors = 0;
 
@@ -1215,10 +1215,10 @@ static ssize_t w_transfer(
 	if ((nbytes & SECTOR_MASK) != 0) return(EINVAL);
 
 	/* Which block on disk and how close to EOF? */
-	if (cmp64(position, dv_size) >= 0) return(total);	/* At EOF */
-	if (cmp64(add64ul(position, nbytes), dv_size) > 0)
-		nbytes = diff64(dv_size, position);
-	block = div64u(add64(w_dv->dv_base, position), SECTOR_SIZE);
+	if (position >= dv_size) return(total);	/* At EOF */
+	if (position + nbytes > dv_size)
+		nbytes = (unsigned)(dv_size - position);
+	block = (unsigned long)((w_dv->dv_base + position) / SECTOR_SIZE);
 
 	do_dma= wn->dma;
 	
@@ -1275,12 +1275,12 @@ static ssize_t w_transfer(
 		}
 
 		/* Wait for DMA_ST_INT to get set */
-		if(!wn->dma_intseen) {
+		if (!wn->dma_intseen) {
 			if(w_waitfor_dma(DMA_ST_INT, DMA_ST_INT))
 				wn->dma_intseen = 1;
 		} 
 
-		if(error_dma(wn)) {
+		if (error_dma(wn)) {
 			wn->dma = 0;
 			continue;
 		}
@@ -1296,7 +1296,7 @@ static ssize_t w_transfer(
 
 			/* Book the bytes successfully transferred. */
 			nbytes -= n;
-			position= add64ul(position, n);
+			position= position + n;
 			total += n;
 			addr_offset += n;
 			if ((iov->iov_size -= n) == 0) {
@@ -1368,7 +1368,7 @@ static ssize_t w_transfer(
 
 		/* Book the bytes successfully transferred. */
 		nbytes -= SECTOR_SIZE;
-		position= add64u(position, SECTOR_SIZE);
+		position = position + SECTOR_SIZE;
 		addr_offset += SECTOR_SIZE;
 		total += SECTOR_SIZE;
 		if ((iov->iov_size -= SECTOR_SIZE) == 0) {
@@ -1891,7 +1891,7 @@ static void w_geometry(dev_t minor, struct part_geom *entry)
   wn = w_wn;
 
   if (wn->state & ATAPI) {		/* Make up some numbers. */
-	entry->cylinders = div64u(wn->part[0].dv_size, SECTOR_SIZE) / (64*32);
+	entry->cylinders = (unsigned long)(wn->part[0].dv_size / SECTOR_SIZE) / (64*32);
 	entry->heads = 64;
 	entry->sectors = 32;
   } else {				/* Return logical geometry. */
@@ -1911,7 +1911,7 @@ static int atapi_open(void)
  * size of the device to something big.  What is really needed is a generic
  * SCSI layer that does all this stuff for ATAPI and SCSI devices (kjb). (XXX)
  */
-  w_wn->part[0].dv_size = mul64u(800L*1024, 1024);
+  w_wn->part[0].dv_size = (u64_t)(800L*1024) * 1024;
   return(OK);
 }
 
@@ -1985,18 +1985,18 @@ static int atapi_transfer(
 	/* The Minix block size is smaller than the CD block size, so we
 	 * may have to read extra before or after the good data.
 	 */
-	pos = add64(w_dv->dv_base, position);
-	block = div64u(pos, CD_SECTOR_SIZE);
-	before = rem64u(pos, CD_SECTOR_SIZE);
+	pos = w_dv->dv_base + position;
+	block = (unsigned long)(pos / CD_SECTOR_SIZE);
+	before = (unsigned)(pos % CD_SECTOR_SIZE);
 
-	if(before)
+	if (before)
 		do_dma = 0;
 
 	/* How many bytes to transfer? */
 	nbytes = 0;
 	for (iop = iov; iop < iov_end; iop++) {
 		nbytes += iop->iov_size;
-		if(iop->iov_size % CD_SECTOR_SIZE)
+		if (iop->iov_size % CD_SECTOR_SIZE)
 			do_dma = 0;
 	}
 
@@ -2004,9 +2004,9 @@ static int atapi_transfer(
 	if ((before | nbytes) & 1) return(EINVAL);
 
 	/* Which block on disk and how close to EOF? */
-	if (cmp64(position, dv_size) >= 0) return(total);	/* At EOF */
-	if (cmp64(add64ul(position, nbytes), dv_size) > 0)
-		nbytes = diff64(dv_size, position);
+	if (position >= dv_size) return(total);	/* At EOF */
+	if (position + nbytes > dv_size)
+		nbytes = (unsigned)(dv_size - position);
 
 	nblocks = (before + nbytes + CD_SECTOR_SIZE - 1) / CD_SECTOR_SIZE;
 
@@ -2060,7 +2060,7 @@ static int atapi_transfer(
 
 				if (chunk > iov->iov_size)
 					chunk = iov->iov_size;
-				position= add64ul(position, chunk);
+				position = position + chunk;
 				nbytes -= chunk;
 				total += chunk;
 				if ((iov->iov_size -= chunk) == 0) {
@@ -2103,7 +2103,7 @@ static int atapi_transfer(
 			}
 			if (s != OK)
 				panic("Call to sys_insw() failed: %d", s);
-			position= add64ul(position, chunk);
+			position = position + chunk;
 			nbytes -= chunk;
 			count -= chunk;
 			addr_offset += chunk;
