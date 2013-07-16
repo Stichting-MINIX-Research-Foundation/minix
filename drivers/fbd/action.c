@@ -46,17 +46,17 @@ static size_t get_range(struct fbd_rule *rule, u64_t pos, size_t *size,
 	size_t off;
 	int to_eof;
 
-	to_eof = cmp64(rule->start, rule->end) >= 0;
+	to_eof = rule->start >= rule->end;
 
-	if (cmp64(pos, rule->start) > 0) {
-		if (skip != NULL) *skip = sub64(pos, rule->start);
+	if (pos > rule->start) {
+		if (skip != NULL) *skip = pos - rule->start;
 
 		off = 0;
 	}
 	else {
 		if (skip != NULL) *skip = ((u64_t)(0));
 
-		delta = sub64(rule->start, pos);
+		delta = rule->start - pos;
 
 		assert(ex64hi(delta) == 0);
 
@@ -64,11 +64,11 @@ static size_t get_range(struct fbd_rule *rule, u64_t pos, size_t *size,
 	}
 
 	if (!to_eof) {
-		assert(cmp64(pos, rule->end) < 0);
+		assert(pos < rule->end);
 
-		delta = sub64(rule->end, pos);
+		delta = rule->end - pos;
 
-		if (cmp64u(delta, *size) < 0)
+		if (delta < *size)
 			*size = ex64lo(delta);
 	}
 
@@ -186,16 +186,16 @@ static void action_pre_misdir(struct fbd_rule *rule, iovec_t *UNUSED(iov),
 	 * here, because we have no idea about the actual disk size, and the
 	 * resulting address must of course be valid..
 	 */
-	range = div64u(add64u(sub64(rule->params.misdir.end,
-		rule->params.misdir.start), 1), rule->params.misdir.align);
-
+	range = ((rule->params.misdir.end - rule->params.misdir.start) + 1)
+		/ rule->params.misdir.align;
+	
 	if (range > 0)
 		choice = get_rand(range - 1);
 	else
 		choice = 0;
 
-	*pos = add64(rule->params.misdir.start,
-		mul64u(choice, rule->params.misdir.align));
+	*pos = rule->params.misdir.start +
+		((u64_t)choice * rule->params.misdir.align);
 }
 
 /*===========================================================================*
