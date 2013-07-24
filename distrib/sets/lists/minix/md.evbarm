@@ -4,6 +4,7 @@
 ./boot/minix/.temp/mod10_vm		minix-sys
 ./boot/minix/.temp/mod11_pfs		minix-sys
 ./boot/minix/.temp/mod12_init		minix-sys
+./etc/system.conf.d/lan8710a		minix-sys
 ./multiboot/mod07_log			minix-sys
 ./multiboot/mod08_tty			minix-sys
 ./multiboot/mod09_mfs			minix-sys
@@ -108,6 +109,7 @@
 ./usr/sbin/fb				minix-sys
 ./usr/sbin/gpio				minix-sys
 ./usr/sbin/i2c				minix-sys
+./usr/sbin/lan8710a			minix-sys
 ./usr/sbin/random			minix-sys
 ./usr/sbin/tda19988			minix-sys
 ./usr/tests/minix-posix/mod		minix-sys
