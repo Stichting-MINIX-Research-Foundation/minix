@@ -169,7 +169,7 @@ static void reopen_device(dev_t minor)
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_OPEN;
 	m.BDEV_MINOR = minor;
-	m.BDEV_ACCESS = (may_write) ? (R_BIT | W_BIT) : R_BIT;
+	m.BDEV_ACCESS = (may_write) ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
 	m.BDEV_ID = 0;
 
 	(void) sendrec(driver_endpt, &m);
@@ -1025,7 +1025,7 @@ static void open_device(dev_t minor)
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_OPEN;
 	m.BDEV_MINOR = minor;
-	m.BDEV_ACCESS = may_write ? (R_BIT | W_BIT) : R_BIT;
+	m.BDEV_ACCESS = may_write ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
 	m.BDEV_ID = lrand48();
 
 	sendrec_driver(&m, OK, &res);

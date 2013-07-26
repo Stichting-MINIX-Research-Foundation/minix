@@ -2497,7 +2497,7 @@ static int ahci_open(devminor_t minor, int access)
 		return ENXIO;
 
 	/* Some devices may only be opened in read-only mode. */
-	if ((ps->flags & FLAG_READONLY) && (access & W_BIT))
+	if ((ps->flags & FLAG_READONLY) && (access & BDEV_W_BIT))
 		return EACCES;
 
 	if (ps->open_count == 0) {

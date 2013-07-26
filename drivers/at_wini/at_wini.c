@@ -622,7 +622,7 @@ static int w_do_open(devminor_t minor, int access)
   }
 
 #if ENABLE_ATAPI
-   if ((wn->state & ATAPI) && (access & W_BIT))
+   if ((wn->state & ATAPI) && (access & BDEV_W_BIT))
 	return(EACCES);
 #endif
 

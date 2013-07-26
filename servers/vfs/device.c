@@ -386,7 +386,9 @@ int gen_opcl(
 	memset(&dev_mess, 0, sizeof(dev_mess));
 	dev_mess.m_type = op;
 	dev_mess.BDEV_MINOR = minor_dev;
-	dev_mess.BDEV_ACCESS = flags;
+	dev_mess.BDEV_ACCESS = 0;
+	if (flags & R_BIT) dev_mess.BDEV_ACCESS |= BDEV_R_BIT;
+	if (flags & W_BIT) dev_mess.BDEV_ACCESS |= BDEV_W_BIT;
 	dev_mess.BDEV_ID = 0;
 
 	/* Call the task. */
