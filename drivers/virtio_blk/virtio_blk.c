@@ -83,7 +83,7 @@ static ssize_t virtio_blk_transfer(devminor_t minor, int write, u64_t position,
 				   endpoint_t endpt, iovec_t *iovec,
 				   unsigned int cnt, int flags);
 static int virtio_blk_ioctl(devminor_t minor, unsigned int req,
-			    endpoint_t endpt, cp_grant_id_t grant);
+	endpoint_t endpt, cp_grant_id_t grant, endpoint_t user_endpt);
 static struct device * virtio_blk_part(devminor_t minor);
 static void virtio_blk_geometry(devminor_t minor, struct part_geom *entry);
 static void virtio_blk_device_intr(void);
@@ -376,7 +376,7 @@ virtio_blk_transfer(devminor_t minor, int write, u64_t position,
 
 static int
 virtio_blk_ioctl(devminor_t minor, unsigned int req, endpoint_t endpt,
-		 cp_grant_id_t grant)
+		 cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	switch (req) {
 

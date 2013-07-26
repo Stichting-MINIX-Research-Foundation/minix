@@ -185,6 +185,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
   dev_mess.BDEV_MINOR = minor_dev;
   dev_mess.BDEV_REQUEST = req;
   dev_mess.BDEV_GRANT = gid;
+  dev_mess.BDEV_USER = proc_e;
   dev_mess.BDEV_ID = 0;
 
   /* Call the task. */

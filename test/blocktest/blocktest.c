@@ -1090,10 +1090,9 @@ static int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_IOCTL;
 	m.BDEV_MINOR = minor;
-	m.BDEV_POS_LO = 0L;
-	m.BDEV_POS_HI = 0L;
 	m.BDEV_REQUEST = req;
 	m.BDEV_GRANT = grant;
+	m.BDEV_USER = NONE;
 	m.BDEV_ID = lrand48();
 
 	r = sendrec_driver(&m, exp, res);
