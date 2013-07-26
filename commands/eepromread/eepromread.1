@@ -3,6 +3,7 @@
 eepromread \- read data from an EEPROM
 .SH SYNOPSIS
 \fBeepromread\fR [\fB\-i\fR] [\fB\-f\fR \fIdev\fR] [\fB\-a\fR \fIslave_addr\fR]
+[\fB\-n\fR]
 .br
 .de FL
 .TP
@@ -24,6 +25,11 @@ eepromread \- read data from an EEPROM
 .TP 5
 .B \-a
 # Use \fIslave_address\fR instead of \fI0x50\fR.
+.TP 5
+.B \-n
+# Do not send the page number when addressing the memory on the EEPROM. Some
+smaller EEPROM chips aren't organized into pages and get confused if a page
+number is sent with the memory address. Use this when reading EDID.
 .SH EXAMPLES
 .TP 20
 .B eepromread -i
@@ -34,6 +40,9 @@ eepromread \- read data from an EEPROM
 .TP 20
 .B eepromread -f /dev/i2c-3 -a 0x54
 # display the first 256 bytes of the EEPROM on I2C bus 3, slave address 0x54.
+.TP 20
+.B eepromread -f /dev/i2c-3 -n
+# read the EDID info from the display on I2C bus 3 on the BeagleBoard-xM.
 .SH DESCRIPTION
 .PP
 \fIeepromread\fR is a simple tool for viewing the contents of an EEPROM.
