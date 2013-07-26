@@ -124,7 +124,8 @@ virtio_blk_open(devminor_t minor, int access)
 		return ENXIO;
 
 	/* Read only devices should only be mounted... read-only */
-	if ((access & W_BIT) && virtio_host_supports(blk_dev, VIRTIO_BLK_F_RO))
+	if ((access & BDEV_W_BIT) &&
+	    virtio_host_supports(blk_dev, VIRTIO_BLK_F_RO))
 		return EACCES;
 
 	/* Partition magic when opened the first time or re-opened after

@@ -44,7 +44,8 @@ int fs_readsuper()
   bdev_driver(fs_dev, fs_dev_label);
 
   /* Open the device the file system lives on. */
-  if (bdev_open(fs_dev, readonly ? R_BIT : (R_BIT|W_BIT) ) != OK) {
+  if (bdev_open(fs_dev, readonly ? BDEV_R_BIT : (BDEV_R_BIT|BDEV_W_BIT) ) !=
+		OK) {
         return(EINVAL);
   }
   
@@ -71,7 +72,7 @@ int fs_readsuper()
 		panic("couldn't bdev_close after found unclean FS");
 	readonly = 1;
 
-	if (bdev_open(fs_dev, R_BIT) != OK) {
+	if (bdev_open(fs_dev, BDEV_R_BIT) != OK) {
 		panic("couldn't bdev_open after found unclean FS");
 		return(EINVAL);
   	}

@@ -32,7 +32,7 @@ int fs_readsuper() {
   bdev_driver(fs_dev, fs_dev_label);
 
   /* Open the device the file system lives on in read only mode */
-  if (bdev_open(fs_dev, R_BIT) != OK) {
+  if (bdev_open(fs_dev, BDEV_R_BIT) != OK) {
         return(EINVAL);
   }
 

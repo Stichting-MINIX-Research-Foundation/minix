@@ -1329,6 +1329,10 @@
 #define BDEV_POS_LO	m10_l2	/* transfer position (low bits) */
 #define BDEV_POS_HI	m10_l3	/* transfer position (high bits) */
 
+/* Bits in 'BDEV_ACCESS' field of block device open requests. */
+#  define BDEV_R_BIT		0x01	/* open with read access */
+#  define BDEV_W_BIT		0x02	/* open with write access */
+
 /* Bits in 'BDEV_FLAGS' field of block device transfer requests. */
 #  define BDEV_NOFLAGS		0x00	/* no flags are set */
 #  define BDEV_FORCEWRITE	0x01	/* force write to disk immediately */
