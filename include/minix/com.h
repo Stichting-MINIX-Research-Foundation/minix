@@ -1325,6 +1325,7 @@
 #define BDEV_COUNT	m10_i2	/* number of bytes or elements in transfer */
 #define BDEV_GRANT	m10_i3	/* grant ID of buffer or vector */
 #define BDEV_FLAGS	m10_i4	/* transfer flags */
+#define BDEV_USER	m10_i4	/* user endpoint requesting I/O control */
 #define BDEV_ID		m10_l1	/* opaque request ID */
 #define BDEV_POS_LO	m10_l2	/* transfer position (low bits) */
 #define BDEV_POS_HI	m10_l3	/* transfer position (high bits) */

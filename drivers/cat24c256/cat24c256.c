@@ -34,7 +34,7 @@ static int cat24c256_blk_close(devminor_t minor);
 static ssize_t cat24c256_blk_transfer(devminor_t minor, int do_write,
     u64_t pos, endpoint_t endpt, iovec_t * iov, unsigned int count, int flags);
 static int cat24c256_blk_ioctl(devminor_t minor, unsigned int request,
-    endpoint_t endpt, cp_grant_id_t grant);
+    endpoint_t endpt, cp_grant_id_t grant, endpoint_t user_endpt);
 static struct device *cat24c256_blk_part(devminor_t minor);
 static void cat24c256_blk_other(message * m, int ipc_status);
 
@@ -210,7 +210,7 @@ cat24c256_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
 
 static int
 cat24c256_blk_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
-    cp_grant_id_t grant)
+    cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	log_trace(&log, "cat24c256_blk_ioctl(%d)\n", minor);
 	/* no supported ioctls for this device */

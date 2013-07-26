@@ -2,7 +2,7 @@
  *
  * Block drivers support the following requests. Message format m10 is used.
  * Field names are prefixed with BDEV_. Separate field names are used for the
- * "access" and "request" fields.
+ * "access", "request", and "user" fields.
  *
  *    m_type        MINOR     COUNT     GRANT   FLAGS    ID   POS_LO POS_HI
  * +--------------+--------+----------+-------+-------+------+------+------+
@@ -18,7 +18,7 @@
  * |--------------+--------+----------+-------+-------+------+------+------|
  * | BDEV_SCATTER | minor  | elements | grant | flags |  id  |  position   |
  * |--------------+--------+----------+-------+-------+------+------+------|
- * | BDEV_IOCTL   | minor  | request  | grant | flags |  id  |      |      |
+ * | BDEV_IOCTL   | minor  | request  | grant | user  |  id  |      |      |
  * -------------------------------------------------------------------------
  *
  * The following reply message is used for all requests.
@@ -320,11 +320,13 @@ static int do_ioctl(struct blockdriver *bdp, message *mp)
   dev_t minor;
   unsigned int request;
   cp_grant_id_t grant;
+  endpoint_t user_endpt;
   int r;
 
   minor = mp->BDEV_MINOR;
   request = mp->BDEV_REQUEST;
   grant = mp->BDEV_GRANT;
+  user_endpt = mp->BDEV_USER;
 
   switch (request) {
   case BIOCTRACEBUF:
@@ -348,7 +350,8 @@ static int do_ioctl(struct blockdriver *bdp, message *mp)
 	/* fall-through */
   default:
 	if (bdp->bdr_ioctl)
-		r = (*bdp->bdr_ioctl)(minor, request, mp->m_source, grant);
+		r = (*bdp->bdr_ioctl)(minor, request, mp->m_source, grant,
+			user_endpt);
 	else
 		r = ENOTTY;
   }

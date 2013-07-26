@@ -60,6 +60,7 @@ static int driver_open(int which)
 	msg.BDEV_MINOR = driver[which].minor;
 	msg.BDEV_REQUEST = DIOCGETP;
 	msg.BDEV_GRANT = gid;
+	msg.BDEV_USER = NONE;
 	msg.BDEV_ID = 0;
 
 	r = sendrec(driver[which].endpt, &msg);

@@ -305,7 +305,8 @@ ssize_t bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
   return bdev_vrdwt(BDEV_SCATTER, dev, pos, vec, count, flags);
 }
 
-static int bdev_ioctl_setup(dev_t dev, int request, void *buf, message *m)
+static int bdev_ioctl_setup(dev_t dev, int request, void *buf,
+  endpoint_t user_endpt, message *m)
 {
 /* Set up an I/O control request.
  */
@@ -339,6 +340,7 @@ static int bdev_ioctl_setup(dev_t dev, int request, void *buf, message *m)
   m->BDEV_MINOR = minor(dev);
   m->BDEV_REQUEST = request;
   m->BDEV_GRANT = grant;
+  m->BDEV_USER = user_endpt;
 
   return OK;
 }
@@ -351,7 +353,7 @@ static void bdev_ioctl_cleanup(const message *m)
   cpf_revoke(m->BDEV_GRANT);
 }
 
-int bdev_ioctl(dev_t dev, int request, void *buf)
+int bdev_ioctl(dev_t dev, int request, void *buf, endpoint_t user_endpt)
 {
 /* Perform a synchronous I/O control request.
  */
@@ -359,7 +361,7 @@ int bdev_ioctl(dev_t dev, int request, void *buf)
   int r, driver_tries = 0;
 
   do {
-	if ((r = bdev_ioctl_setup(dev, request, buf, &m)) != OK)
+	if ((r = bdev_ioctl_setup(dev, request, buf, user_endpt, &m)) != OK)
 		break;
 
 	r = bdev_sendrec(dev, &m);
@@ -496,7 +498,7 @@ bdev_id_t bdev_scatter_asyn(dev_t dev, u64_t pos, iovec_t *vec, int count,
 }
 
 bdev_id_t bdev_ioctl_asyn(dev_t dev, int request, void *buf,
-	bdev_callback_t callback, bdev_param_t param)
+	endpoint_t user_endpt, bdev_callback_t callback, bdev_param_t param)
 {
 /* Perform an asynchronous I/O control request.
  */
@@ -506,7 +508,8 @@ bdev_id_t bdev_ioctl_asyn(dev_t dev, int request, void *buf,
   if ((call = bdev_call_alloc(1)) == NULL)
 	return ENOMEM;
 
-  if ((r = bdev_ioctl_setup(dev, request, buf, &call->msg)) != OK) {
+  if ((r = bdev_ioctl_setup(dev, request, buf, user_endpt,
+		&call->msg)) != OK) {
 	bdev_call_free(call);
 
 	return r;
@@ -623,7 +626,8 @@ int bdev_restart_asyn(bdev_call_t *call)
 	bdev_ioctl_cleanup(&call->msg);
 
 	r = bdev_ioctl_setup(call->dev, call->msg.BDEV_REQUEST,
-		(char *) call->vec[0].iov_addr, &call->msg);
+		(char *) call->vec[0].iov_addr, call->msg.BDEV_USER,
+		&call->msg);
 
 	break;
 

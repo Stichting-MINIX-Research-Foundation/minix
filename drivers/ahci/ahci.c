@@ -243,7 +243,7 @@ static ssize_t ahci_transfer(devminor_t minor, int do_write, u64_t position,
 static struct device *ahci_part(devminor_t minor);
 static void ahci_alarm(clock_t stamp);
 static int ahci_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
-	cp_grant_id_t grant);
+	cp_grant_id_t grant, endpoint_t user_endpt);
 static void ahci_intr(unsigned int mask);
 static int ahci_device(devminor_t minor, device_id_t *id);
 static struct port_state *ahci_get_port(devminor_t minor);
@@ -2632,7 +2632,7 @@ static ssize_t ahci_transfer(devminor_t minor, int do_write, u64_t position,
  *				ahci_ioctl				     *
  *===========================================================================*/
 static int ahci_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
-	cp_grant_id_t grant)
+	cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	/* Process I/O control requests.
 	 */
