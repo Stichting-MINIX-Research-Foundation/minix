@@ -1,4 +1,5 @@
 #include <minix/blockdriver.h>
+#include <minix/com.h>
 #include <minix/drivers.h>
 #include <minix/ds.h>
 #include <minix/i2c.h>
@@ -53,10 +54,10 @@ struct blockdriver cat24c256_tab = {
 	.bdr_device = NULL	/* 1 insance per bus, threads not needed */
 };
 
-static int cat24c256_read32(uint16_t memaddr, void *buf, size_t buflen);
-static int cat24c256_read(uint16_t memaddr, void *buf, size_t buflen);
-static int cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen);
-static int cat24c256_write(uint16_t memaddr, void *buf, size_t buflen);
+static int cat24c256_read128(uint16_t memaddr, void *buf, size_t buflen, int flags);
+static int cat24c256_read(uint16_t memaddr, void *buf, size_t buflen, int flags);
+static int cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen, int flags);
+static int cat24c256_write(uint16_t memaddr, void *buf, size_t buflen, int flags);
 
 /* globals */
 
@@ -176,13 +177,13 @@ cat24c256_blk_transfer(dev_t minor, int do_write, u64_t pos64,
 				return EINVAL;
 			}
 
-			r = cat24c256_write(position, copybuf, count);
+			r = cat24c256_write(position, copybuf, count, flags);
 			if (r != OK) {
 				log_warn(&log, "write failed (r=%d)\n", r);
 				return r;
 			}
 		} else {
-			r = cat24c256_read(position, copybuf, count);
+			r = cat24c256_read(position, copybuf, count, flags);
 			if (r != OK) {
 				log_warn(&log, "read failed (r=%d)\n", r);
 				return r;
@@ -259,16 +260,16 @@ cat24c256_blk_other(message * m)
 	return r;
 }
 
-/* The lower level i2c interface can only read/write 32 bytes at a time.
+/* The lower level i2c interface can only read/write 128 bytes at a time.
  * One might want to do more I/O than that at once w/EEPROM, so there is
- * cat24c256_read() and cat24c256_read32(). cat24c256_read32() does the
- * actual reading in chunks up to 32 bytes. cat24c256_read() splits
- * the request up into chunks and repeatedly calls cat24c256_read32()
+ * cat24c256_read() and cat24c256_read128(). cat24c256_read128() does the
+ * actual reading in chunks up to 128 bytes. cat24c256_read() splits
+ * the request up into chunks and repeatedly calls cat24c256_read128()
  * until all of the requested EEPROM locations have been read.
  */
 
 static int
-cat24c256_read32(uint16_t memaddr, void *buf, size_t buflen)
+cat24c256_read128(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
 	minix_i2c_ioctl_exec_t ioctl_exec;
@@ -286,9 +287,15 @@ cat24c256_read32(uint16_t memaddr, void *buf, size_t buflen)
 	ioctl_exec.iie_addr = address;
 
 	/* set the memory address to read from */
-	ioctl_exec.iie_cmd[0] = ((memaddr >> 8) & 0xff);
-	ioctl_exec.iie_cmd[1] = (memaddr & 0xff);
-	ioctl_exec.iie_cmdlen = 2;
+	if ((BDEV_NOPAGE & flags) == BDEV_NOPAGE) {
+		/* reading within the current page */
+		ioctl_exec.iie_cmd[0] = (memaddr & 0xff);
+		ioctl_exec.iie_cmdlen = 1;
+	} else {
+		ioctl_exec.iie_cmd[0] = ((memaddr >> 8) & 0xff);
+		ioctl_exec.iie_cmd[1] = (memaddr & 0xff);
+		ioctl_exec.iie_cmdlen = 2;
+	}
 
 	ioctl_exec.iie_buflen = buflen;
 
@@ -307,7 +314,7 @@ cat24c256_read32(uint16_t memaddr, void *buf, size_t buflen)
 }
 
 int
-cat24c256_read(uint16_t memaddr, void *buf, size_t buflen)
+cat24c256_read(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
 	uint16_t i;
@@ -317,25 +324,26 @@ cat24c256_read(uint16_t memaddr, void *buf, size_t buflen)
 		return -1;
 	}
 
-	for (i = 0; i < buflen; i += 32) {
+	for (i = 0; i < buflen; i += 128) {
 
-		r = cat24c256_read32(memaddr + i, buf + i,
-		    ((buflen - i) < 32) ? (buflen - i) : 32);
+		r = cat24c256_read128(memaddr + i, buf + i,
+		    ((buflen - i) < 128) ? (buflen - i) : 128, flags);
 		if (r != OK) {
 			return r;
 		}
 
 		log_trace(&log, "read %d bytes starting at 0x%x\n",
-		    ((buflen - i) < 32) ? (buflen - i) : 32, memaddr + i);
+		    ((buflen - i) < 128) ? (buflen - i) : 128, memaddr + i);
 	}
 
 	return OK;
 }
 
 static int
-cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen)
+cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
+	int addrlen;
 	minix_i2c_ioctl_exec_t ioctl_exec;
 
 	if (buflen > (I2C_EXEC_MAX_BUFLEN - 2) || buf == NULL
@@ -352,11 +360,17 @@ cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen)
 	ioctl_exec.iie_cmdlen = 0;
 
 	/* set the memory address to write to */
-	ioctl_exec.iie_buf[0] = ((memaddr >> 8) & 0xff);
-	ioctl_exec.iie_buf[1] = (memaddr & 0xff);
-
-	memcpy(ioctl_exec.iie_buf + 2, buf, buflen);
-	ioctl_exec.iie_buflen = buflen + 2;
+	if ((BDEV_NOPAGE & flags) == BDEV_NOPAGE) {
+		/* writing within the current page */
+		ioctl_exec.iie_buf[0] = (memaddr & 0xff);	/* address */
+		addrlen = 1;
+	} else {
+		ioctl_exec.iie_buf[0] = ((memaddr >> 8) & 0xff);/* page */
+		ioctl_exec.iie_buf[1] = (memaddr & 0xff);	/* address */
+		addrlen = 2;
+	}
+	memcpy(ioctl_exec.iie_buf + addrlen, buf, buflen);
+	ioctl_exec.iie_buflen = buflen + addrlen;
 
 	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
 	if (r != OK) {
@@ -371,7 +385,7 @@ cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen)
 }
 
 int
-cat24c256_write(uint16_t memaddr, void *buf, size_t buflen)
+cat24c256_write(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
 	uint16_t i;
@@ -384,7 +398,7 @@ cat24c256_write(uint16_t memaddr, void *buf, size_t buflen)
 	for (i = 0; i < buflen; i += 16) {
 
 		r = cat24c256_write16(memaddr + i, buf + i,
-		    ((buflen - i) < 16) ? (buflen - i) : 16);
+		    ((buflen - i) < 16) ? (buflen - i) : 16, flags);
 		if (r != OK) {
 			return r;
 		}

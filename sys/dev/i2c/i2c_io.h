@@ -98,8 +98,8 @@ typedef struct i2c_ioctl_exec {
 	void *iie_buf;			/* pointer to data buffer */
 	size_t iie_buflen;		/* length of data buffer */
 } i2c_ioctl_exec_t;
-#define	I2C_EXEC_MAX_CMDLEN	32
-#define	I2C_EXEC_MAX_BUFLEN	32
+#define	I2C_EXEC_MAX_CMDLEN	128
+#define	I2C_EXEC_MAX_BUFLEN	128
 
 #define	I2C_IOCTL_EXEC		 _IOW('I', 0, i2c_ioctl_exec_t)
 

@@ -18,7 +18,7 @@
  * In the future, this could be expanded to support cape EEPROMs.
  */
 
-static int board_info_beaglebone(int fd, i2c_addr_t address);
+static int board_info_beaglebone(int fd, i2c_addr_t address, int flags);
 
 /* Memory Layout of the BeagleBone and BeagleBone Black EEPROM */
 typedef struct beaglebone_info
@@ -32,7 +32,7 @@ typedef struct beaglebone_info
 } beaglebone_info_t;
 
 static int
-board_info_beaglebone(int fd, i2c_addr_t address)
+board_info_beaglebone(int fd, i2c_addr_t address, int flags)
 {
 	int r;
 	int i, j;
@@ -40,7 +40,7 @@ board_info_beaglebone(int fd, i2c_addr_t address)
 	beaglebone_info_t boneinfo;
 
 	r = eeprom_read(fd, address, 0x0000, &boneinfo,
-	    sizeof(beaglebone_info_t));
+	    sizeof(beaglebone_info_t), flags);
 	if (r == -1) {
 		fprintf(stderr, "Failed to read BeagleBone info r=%d\n", r);
 		return -1;
@@ -65,12 +65,12 @@ board_info_beaglebone(int fd, i2c_addr_t address)
 }
 
 int
-board_info(int fd, i2c_addr_t address)
+board_info(int fd, i2c_addr_t address, int flags)
 {
 	int r;
 	uint8_t magic_number[4];
 
-	r = eeprom_read(fd, address, 0x0000, &magic_number, 4);
+	r = eeprom_read(fd, address, 0x0000, &magic_number, 4, flags);
 	if (r == -1) {
 		printf("%-16s: %s\n", "BOARD_NAME", "UNKNOWN");
 		return 0;
@@ -78,7 +78,7 @@ board_info(int fd, i2c_addr_t address)
 
 	if (magic_number[0] == 0xaa && magic_number[1] == 0x55 &&
 	    magic_number[2] == 0x33 && magic_number[3] == 0xee) {
-		board_info_beaglebone(fd, address);
+		board_info_beaglebone(fd, address, flags);
 	} else {
 		printf("%-16s: %s\n", "BOARD_NAME", "UNKNOWN");
 	}
