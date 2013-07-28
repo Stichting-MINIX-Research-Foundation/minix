@@ -60,9 +60,8 @@ static int terminating = 0;
 static int open_count = 0;
 
 /* Partition magic */
-#define VIRTIO_BLK_SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
 struct device part[DEV_PER_DRIVE];
-struct device subpart[VIRTIO_BLK_SUB_PER_DRIVE];
+struct device subpart[SUB_PER_DRIVE];
 
 /* Headers for requests */
 static struct virtio_blk_outhdr *hdrs_vir;
