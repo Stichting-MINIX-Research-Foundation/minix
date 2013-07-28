@@ -32,7 +32,6 @@ static struct log log = {
 /* holding the current host controller */
 static struct mmc_host host;
 
-#define SUB_PER_DRIVE           (NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS              (MAX_DRIVES * SUB_PER_DRIVE)
 
 /* When passing data over a grant one needs to pass
