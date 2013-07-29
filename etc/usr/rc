@@ -210,6 +210,10 @@ start)
 			test -e /dev/eepromb1s50 || (cd /dev && MAKEDEV eepromb1s50)
 			up cat24c256 -dev /dev/eepromb1s50 \
 				-label cat24c256.1.50 -args 'bus=1 address=0x50'
+
+			# Start TDA19988 driver for EDID reading.
+			up tda19988 -label tda19988.1.3470 -args \
+				'cec_bus=1 cec_address=0x34 hdmi_bus=1 hdmi_address=0x70'
 			;;
 		UNKNOWN)
 			echo "Unable to detect board -- assuming BeagleBoard-xM"
