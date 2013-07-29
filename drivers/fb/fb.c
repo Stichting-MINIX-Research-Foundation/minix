@@ -11,10 +11,15 @@
 #include <sys/mman.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidvar.h>
+#include <dev/videomode/edidreg.h>
+
 #include "logos.h"
+#include "fb_edid.h"
 #include "fb.h"
 
-#define FB_DEV_NR	1
 /*
  * Function prototypes for the fb driver.
  */
@@ -69,11 +74,19 @@ static int open_counter[FB_DEV_NR];		/* Open count */
 static int
 fb_open(message *m)
 {
+	int r;
 	static int initialized = 0;
+	static struct edid_info info;
+	static struct edid_info *infop = NULL;
 
 	if (m->DEVICE < 0 || m->DEVICE >= FB_DEV_NR) return ENXIO;
 
-	if (arch_fb_init(m->DEVICE, &fb_device[m->DEVICE]) == OK) {
+	if (!initialized) {
+		r = fb_edid_read(m->DEVICE, &info);
+		infop = (r == 0) ? &info : NULL;
+	}
+
+	if (arch_fb_init(m->DEVICE, &fb_device[m->DEVICE], infop) == OK) {
 		open_counter[m->DEVICE]++;
 		if (!initialized) {
 			if (has_restarted) {
@@ -363,8 +376,11 @@ sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 }
 
 int
-main(void)
+main(int argc, char *argv[])
 {
+	env_setargs(argc, argv);
+	fb_edid_args_parse();
+
 	sef_local_startup();
 	chardriver_task(&fb_tab, CHARDRIVER_SYNC);
 	return OK;

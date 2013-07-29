@@ -197,10 +197,14 @@ start)
 
 	BOARD_NAME=`eepromread -i | sed -n 's/^BOARD_NAME      : \(.*\)$/\1/p'`
 	case "${BOARD_NAME}" in
+
 		A335BONE)
 			echo "Detected BeagleBone"
 			echo -n "Starting i2c device drivers: "
-			test -e /dev/eepromb1s50 || (cd /dev && MAKEDEV eepromb1s50)
+
+			# start EEPROM driver for reading board info
+			test -e /dev/eepromb1s50 || \
+				(cd /dev && MAKEDEV eepromb1s50)
 			up cat24c256 -dev /dev/eepromb1s50 \
 				-label cat24c256.1.50 \
 				-args 'bus=1 address=0x50'
@@ -209,13 +213,35 @@ start)
 			up tps65217 -label tps65217.1.24 \
 			        -args 'bus=1 address=0x24'
 
+			# check for the presence of a display
+			eepromread -f /dev/i2c-2 -n > /dev/null 2>&1
+			RESULT=$?
+			if [ $RESULT -eq 0 ]
+			then
+				# start eeprom driver for reading EDID.
+				test -e /dev/eepromb2s50 || \
+					(cd /dev && MAKEDEV eepromb2s50)
+				up cat24c256 -dev /dev/eepromb2s50 \
+					-label cat24c256.2.50 \
+					-args 'bus=2 address=0x50'
+
+				# start frame buffer
+				#up fb -dev /dev/fb0 -args edid.0=cat24c256.2.50
+				# fb hasn't been ported to AM335X yet.
+			fi
+
 			;;
+
 		A335BNLT)
 			echo "Detected BeagleBone Black"
 			echo -n "Starting i2c device drivers: "
-			test -e /dev/eepromb1s50 || (cd /dev && MAKEDEV eepromb1s50)
+
+			# start EEPROM driver for reading board info
+			test -e /dev/eepromb1s50 || \
+				(cd /dev && MAKEDEV eepromb1s50)
 			up cat24c256 -dev /dev/eepromb1s50 \
-				-label cat24c256.1.50 -args 'bus=1 address=0x50'
+				-label cat24c256.1.50 \
+				-args 'bus=1 address=0x50'
 
 			# Start TPS65217 driver for power management.
 			up tps65217 -label tps65217.1.24 \
@@ -224,7 +250,13 @@ start)
 			# Start TDA19988 driver for reading EDID.
 			up tda19988 -label tda19988.1.3470 -args \
 				'cec_bus=1 cec_address=0x34 hdmi_bus=1 hdmi_address=0x70'
+
+			# start frame buffer
+			#up fb -dev /dev/fb0 -args edid.0=tda19988.1.3470
+			# fb hasn't been ported to AM335X yet.
+
 			;;
+
 		UNKNOWN)
 			echo "Unable to detect board -- assuming BeagleBoard-xM"
 			echo -n "Starting i2c device drivers: "
@@ -235,6 +267,22 @@ start)
 
 			# Set the system time to the time in the TPS65950's RTC
 			readclock
+
+			# check for the presence of a display
+			eepromread -f /dev/i2c-3 -n > /dev/null 2>&1
+			RESULT=$?
+			if [ $RESULT -eq 0 ]
+			then
+				# start eeprom driver for reading edid
+				test -e /dev/eepromb3s50 || \
+					(cd /dev && MAKEDEV eepromb3s50)
+				up cat24c256 -dev /dev/eepromb3s50 \
+					-label cat24c256.3.50 \
+					-args 'bus=3 address=0x50'
+
+				# start frame buffer
+				up fb -dev /dev/fb0 -args edid.0=cat24c256.3.50
+			fi
 
 			;;
 	esac
