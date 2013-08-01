@@ -239,8 +239,7 @@ static char *ahci_portname(struct port_state *ps);
 static int ahci_open(dev_t minor, int access);
 static int ahci_close(dev_t minor);
 static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
-	endpoint_t endpt, iovec_t *iovec, unsigned int count,
-	int flags);
+	endpoint_t endpt, iovec_t *iovec, unsigned int count, int flags);
 static struct device *ahci_part(dev_t minor);
 static void ahci_alarm(clock_t stamp);
 static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
@@ -380,7 +379,8 @@ static int atapi_read_capacity(struct port_state *ps, int cmd)
 
 	/* Store the number of LBA blocks and sector size. */
 	buf = ps->tmp_base;
-	ps->lba_count = add64u(((u64_t)((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3])), 1);
+	ps->lba_count = (u64_t) ((buf[0] << 24) | (buf[1] << 16) |
+		(buf[2] << 8) | buf[3]) + 1;
 	ps->sector_size =
 		(buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | buf[7];
 
@@ -392,10 +392,9 @@ static int atapi_read_capacity(struct port_state *ps, int cmd)
 	}
 
 	dprintf(V_INFO,
-		("%s: medium detected (%u byte sectors, %lu MB size)\n",
+		("%s: medium detected (%u byte sectors, %llu MB size)\n",
 		ahci_portname(ps), ps->sector_size,
-		div64u(mul64(ps->lba_count, ((u64_t)(ps->sector_size))),
-		1024*1024)));
+		ps->lba_count * ps->sector_size / (1024*1024)));
 
 	return OK;
 }
@@ -511,10 +510,10 @@ static int atapi_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 	/* Fill in a packet. */
 	memset(packet, 0, sizeof(packet));
 	packet[0] = write ? ATAPI_CMD_WRITE : ATAPI_CMD_READ;
-	packet[2] = (ex64lo(start_lba) >> 24) & 0xFF;
-	packet[3] = (ex64lo(start_lba) >> 16) & 0xFF;
-	packet[4] = (ex64lo(start_lba) >>  8) & 0xFF;
-	packet[5] = ex64lo(start_lba) & 0xFF;
+	packet[2] = (start_lba >> 24) & 0xFF;
+	packet[3] = (start_lba >> 16) & 0xFF;
+	packet[4] = (start_lba >>  8) & 0xFF;
+	packet[5] = start_lba & 0xFF;
 	packet[6] = (count >> 24) & 0xFF;
 	packet[7] = (count >> 16) & 0xFF;
 	packet[8] = (count >>  8) & 0xFF;
@@ -558,8 +557,9 @@ static int ata_id_check(struct port_state *ps, u16_t *buf)
 	}
 
 	/* Get number of LBA blocks, and sector size. */
-	ps->lba_count = make64((buf[ATA_ID_LBA1] << 16) | buf[ATA_ID_LBA0],
-			(buf[ATA_ID_LBA3] << 16) | buf[ATA_ID_LBA2]);
+	ps->lba_count = ((u64_t) buf[ATA_ID_LBA3] << 48) |
+			((u64_t) buf[ATA_ID_LBA2] << 32) |
+			(buf[ATA_ID_LBA1] << 16) | buf[ATA_ID_LBA0];
 
 	/* Determine the queue depth of the device. */
 	if (hba_state.has_ncq &&
@@ -641,8 +641,8 @@ static int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 			fis.cf_cmd = ATA_CMD_READ_DMA_EXT;
 		}
 	}
-	fis.cf_lba = ex64lo(start_lba) & 0x00FFFFFFL;
-	fis.cf_lba_exp = ex64lo(rshift64(start_lba, 24)) & 0x00FFFFFFL;
+	fis.cf_lba = start_lba & 0x00FFFFFFUL;
+	fis.cf_lba_exp = (start_lba >> 24) & 0x00FFFFFFUL;
 	fis.cf_sec = count & 0xFF;
 	fis.cf_sec_exp = (count >> 8) & 0xFF;
 
@@ -1153,9 +1153,8 @@ static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 	if ((r = sum_iovec(ps, endpt, iovec, nr_req, &size)) != OK)
 		return r;
 
-	dprintf(V_REQ, ("%s: %s for %lu bytes at pos %08lx%08lx\n",
-		ahci_portname(ps), write ? "write" : "read", size,
-		ex64hi(pos), ex64lo(pos)));
+	dprintf(V_REQ, ("%s: %s for %lu bytes at pos %llx\n",
+		ahci_portname(ps), write ? "write" : "read", size, pos));
 
 	assert(ps->state == STATE_GOOD_DEV);
 	assert(ps->flags & FLAG_HAS_MEDIUM);
@@ -1171,11 +1170,11 @@ static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 	 * extend beyond the end of the partition. The caller already
 	 * guarantees that the starting position lies within the partition.
 	 */
-	if (cmp64(add64ul(pos, size), eof) >= 0)
-		size = (vir_bytes) diff64(eof, pos);
+	if (pos + size > eof)
+		size = (vir_bytes) (eof - pos);
 
-	start_lba = div64(pos, ((u64_t)(ps->sector_size)));
-	lead = rem64u(pos, ps->sector_size);
+	start_lba = pos / ps->sector_size;
+	lead = (vir_bytes) (pos % ps->sector_size);
 	count = (lead + size + ps->sector_size - 1) / ps->sector_size;
 
 	/* Position must be word-aligned for read requests, and sector-aligned
@@ -1426,9 +1425,9 @@ static void port_id_check(struct port_state *ps, int success)
 		}
 
 		if (ps->flags & FLAG_HAS_MEDIUM)
-			printf(", %u byte sectors, %lu MB size",
-				ps->sector_size, div64u(mul64(ps->lba_count,
-				((u64_t)(ps->sector_size))), 1024*1024));
+			printf(", %u byte sectors, %llu MB size",
+				ps->sector_size,
+				ps->lba_count * ps->sector_size / (1024*1024));
 
 		printf("\n");
 	}
@@ -2237,7 +2236,7 @@ static void ahci_get_params(void)
 	 * device-to-port mapping, which has to be parsed later.
 	 */
 	long v;
-	int i;
+	unsigned int i;
 
 	/* Find out which driver instance we are. */
 	v = 0;
@@ -2520,8 +2519,7 @@ static int ahci_open(dev_t minor, int access)
 		memset(ps->part, 0, sizeof(ps->part));
 		memset(ps->subpart, 0, sizeof(ps->subpart));
 
-		ps->part[0].dv_size =
-			mul64(ps->lba_count, ((u64_t)(ps->sector_size)));
+		ps->part[0].dv_size = ps->lba_count * ps->sector_size;
 
 		partition(&ahci_dtab, ps->device * DEV_PER_DRIVE, P_PRIMARY,
 			!!(ps->flags & FLAG_ATAPI));
@@ -2622,11 +2620,11 @@ static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 	 * the request is outside the partition, return success immediately.
 	 * The size of the request is obtained, and possibly reduced, later.
 	 */
-	if (cmp64(position, dv->dv_size) >= 0)
+	if (position >= dv->dv_size)
 		return OK;
 
-	pos = add64(dv->dv_base, position);
-	eof = add64(dv->dv_base, dv->dv_size);
+	pos = dv->dv_base + position;
+	eof = dv->dv_base + dv->dv_size;
 
 	return port_transfer(ps, pos, eof, endpt, (iovec_s_t *) iovec, count,
 		do_write, flags);
