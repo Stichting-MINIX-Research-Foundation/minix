@@ -532,7 +532,7 @@ static void bad_read2(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE,
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE,
 		buf_size + buf2_size + buf3_size, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, FALSE, &res);
@@ -549,7 +549,7 @@ static void bad_read2(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, EINVAL, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -561,7 +561,7 @@ static void bad_read2(void)
 	memcpy(iov, iovt, sizeof(iovt));
 	iov[1].iov_size = (vir_bytes) LONG_MAX + 1;
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, EINVAL, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -574,7 +574,7 @@ static void bad_read2(void)
 	iov[0].iov_size = LONG_MAX / 2 - 1;
 	iov[1].iov_size = LONG_MAX / 2 - 1;
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, EINVAL, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -587,7 +587,7 @@ static void bad_read2(void)
 	iov[0].iov_size = LONG_MAX - 1;
 	iov[1].iov_size = LONG_MAX - 1;
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, EINVAL, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -604,7 +604,7 @@ static void bad_read2(void)
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 	c1 = buf2_ptr[buf2_size - 1];
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, BUF_SIZE * 3 - 1,
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, BUF_SIZE * 3 - 1,
 		&res);
 
 	if (accept_result(&res, RESULT_BADSTATUS, EINVAL)) {
@@ -631,7 +631,7 @@ static void bad_read2(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, EINVAL, &res);
 
 	/* Do not test the first buffer, as it may contain a partial result. */
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -653,7 +653,7 @@ static void bad_read2(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, EINVAL, &res);
 
 	accept_result(&res, RESULT_BADSTATUS, EPERM);
 
@@ -675,7 +675,7 @@ static void bad_read2(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, EINVAL, &res);
 
 	accept_result(&res, RESULT_BADSTATUS, EPERM);
 
@@ -702,8 +702,7 @@ static void bad_read2(void)
 	c1 = buf2_ptr[0];
 	c2 = buf2_ptr[buf2_size - 1];
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE, BUF_SIZE * 3 - 2,
-		&res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE, BUF_SIZE * 3 - 2, &res);
 
 	if (accept_result(&res, RESULT_BADSTATUS, EINVAL)) {
 		/* Do not test the first buffer, as it may contain a partial
@@ -730,7 +729,7 @@ static void bad_read2(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(1)), iov, 3, FALSE, EINVAL, &res);
+	raw_xfer(driver_minor, 1ULL, iov, 3, FALSE, EINVAL, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -745,7 +744,7 @@ static void bad_read2(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, FALSE,
+	raw_xfer(driver_minor, 0ULL, iov, 3, FALSE,
 		buf_size + buf2_size + buf3_size, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, FALSE, &res);
@@ -760,7 +759,7 @@ static void bad_read2(void)
 	free_buf_and_grant(buf_ptr, buf_grant, buf_size);
 }
 
-#define SECTOR_UNALIGN	2	/* word-aligned and sector-unaligned */
+#define SECTOR_UNALIGN	2ULL	/* word-aligned and sector-unaligned */
 
 static void bad_write(void)
 {
@@ -801,8 +800,7 @@ static void bad_write(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(SECTOR_UNALIGN)), iov, 3, TRUE, EINVAL,
-		&res);
+	raw_xfer(driver_minor, SECTOR_UNALIGN, iov, 3, TRUE, EINVAL, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -818,7 +816,7 @@ static void bad_write(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, TRUE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, TRUE, EINVAL, &res);
 
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
@@ -838,7 +836,7 @@ static void bad_write(void)
 	buf2_sum = fill_rand(buf2_ptr, buf2_size);
 	buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, ((u64_t)(0)), iov, 3, TRUE, EINVAL, &res);
+	raw_xfer(driver_minor, 0ULL, iov, 3, TRUE, EINVAL, &res);
 
 	accept_result(&res, RESULT_BADSTATUS, EPERM);
 
@@ -868,7 +866,7 @@ static void vector_and_large_sub(size_t small_size)
 	result_t res;
 	int i;
 
-	base_pos = ((u64_t)(sector_size));
+	base_pos = (u64_t)sector_size;
 
 	large_size = small_size * NR_IOREQS;
 
@@ -1121,7 +1119,7 @@ static void misc_ioctl(void)
 	got_result(&res, "ioctl to get partition");
 
 	/* The other tests do not check whether there is sufficient room. */
-	if (res.type == RESULT_OK && cmp64u(part.size, max_size * 2) < 0)
+	if (res.type == RESULT_OK && part.size < (u64_t)max_size * 2)
 		printf("WARNING: small partition, some tests may fail\n");
 
 	/* Test retrieving global driver open count. */
@@ -1185,7 +1183,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	/* Read one sector up to the partition limit. */
 	fill_rand(buf_ptr, buf_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size, buf_ptr,
 		sector_size, FALSE, sector_size, &res);
 
 	sum = get_sum(buf_ptr, sector_size);
@@ -1195,7 +1193,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	/* Read three sectors up to the partition limit. */
 	fill_rand(buf_ptr, buf_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - buf_size)), buf_ptr, buf_size,
+	simple_xfer(sub0_minor, (u64_t)sub_size - buf_size, buf_ptr, buf_size,
 		FALSE, buf_size, &res);
 
 	test_sum(buf_ptr + sector_size * 2, sector_size, sum, TRUE, &res);
@@ -1208,7 +1206,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	fill_rand(buf_ptr, buf_size);
 	sum3 = get_sum(buf_ptr + sector_size * 2, sector_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size * 2)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size * 2, buf_ptr,
 		buf_size, FALSE, sector_size * 2, &res);
 
 	test_sum(buf_ptr, sector_size * 2, sum2, TRUE, &res);
@@ -1220,7 +1218,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	fill_rand(buf_ptr, buf_size);
 	sum2 = get_sum(buf_ptr + sector_size, sector_size * 2);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size, buf_ptr,
 		buf_size, FALSE, sector_size, &res);
 
 	test_sum(buf_ptr, sector_size, sum, TRUE, &res);
@@ -1232,7 +1230,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	sum = fill_rand(buf_ptr, buf_size);
 	sum2 = get_sum(buf_ptr, sector_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size)), buf_ptr, sector_size, FALSE,
+	simple_xfer(sub0_minor, (u64_t)sub_size, buf_ptr, sector_size, FALSE,
 		0, &res);
 
 	test_sum(buf_ptr, sector_size, sum2, TRUE, &res);
@@ -1240,7 +1238,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	got_result(&res, "one sector read at partition end");
 
 	/* Read three sectors starting at the partition end. */
-	simple_xfer(sub0_minor, ((u64_t)(sub_size)), buf_ptr, buf_size, FALSE, 0,
+	simple_xfer(sub0_minor, (u64_t)sub_size, buf_ptr, buf_size, FALSE, 0,
 		&res);
 
 	test_sum(buf_ptr, buf_size, sum, TRUE, &res);
@@ -1248,7 +1246,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	got_result(&res, "multisector read at partition end");
 
 	/* Read one sector beyond the partition end. */
-	simple_xfer(sub0_minor, ((u64_t)(sub_size + sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size + sector_size, buf_ptr,
 		buf_size, FALSE, 0, &res);
 
 	test_sum(buf_ptr, sector_size, sum2, TRUE, &res);
@@ -1256,8 +1254,8 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	got_result(&res, "single sector read beyond partition end");
 
 	/* Read three sectors way beyond the partition end. */
-	simple_xfer(sub0_minor, make64(0L, 0x10000000L), buf_ptr,
-		buf_size, FALSE, 0, &res);
+	simple_xfer(sub0_minor, 0x1000000000000000ULL, buf_ptr, buf_size,
+		FALSE, 0, &res);
 
 	test_sum(buf_ptr, buf_size, sum, TRUE, &res);
 
@@ -1268,8 +1266,8 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	 * more or less a bad requests test, but we cannot do it without
 	 * setting up subpartitions first.
 	 */
-	simple_xfer(sub1_minor, make64(0xffffffffL - sector_size + 1,
-		0xffffffffL), buf_ptr, sector_size, FALSE, 0, &res);
+	simple_xfer(sub1_minor, 0xffffffffffffffffULL - sector_size + 1,
+		buf_ptr, sector_size, FALSE, 0, &res);
 
 	test_sum(buf_ptr, sector_size, sum2, TRUE, &res);
 
@@ -1307,15 +1305,14 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	 */
 	sub1_sum = fill_rand(buf_ptr, buf_size);
 
-	simple_xfer(sub1_minor, ((u64_t)(0)), buf_ptr, buf_size, TRUE, buf_size,
-		&res);
+	simple_xfer(sub1_minor, 0ULL, buf_ptr, buf_size, TRUE, buf_size, &res);
 
 	got_result(&res, "write to second subpartition");
 
 	/* Write one sector, up to the partition limit. */
 	sum = fill_rand(buf_ptr, sector_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size, buf_ptr,
 		sector_size, TRUE, sector_size, &res);
 
 	got_result(&res, "write up to partition end");
@@ -1323,7 +1320,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	/* Read back to make sure the results have persisted. */
 	fill_rand(buf_ptr, sector_size * 2);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size * 2)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size * 2, buf_ptr,
 		sector_size * 2, FALSE, sector_size * 2, &res);
 
 	test_sum(buf_ptr + sector_size, sector_size, sum, TRUE, &res);
@@ -1335,7 +1332,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	sum = get_sum(buf_ptr + sector_size, sector_size);
 	sum3 = get_sum(buf_ptr, sector_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size * 2)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size * 2, buf_ptr,
 		buf_size, TRUE, sector_size * 2, &res);
 
 	got_result(&res, "write somewhat across partition end");
@@ -1344,7 +1341,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	fill_rand(buf_ptr, buf_size);
 	sum2 = get_sum(buf_ptr + sector_size, sector_size * 2);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size, buf_ptr,
 		buf_size, FALSE, sector_size, &res);
 
 	test_sum(buf_ptr, sector_size, sum, TRUE, &res);
@@ -1356,7 +1353,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	fill_rand(buf_ptr, buf_size);
 	sum = get_sum(buf_ptr, sector_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size, buf_ptr,
 		buf_size, TRUE, sector_size, &res);
 
 	got_result(&res, "write mostly across partition end");
@@ -1364,7 +1361,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	fill_rand(buf_ptr, buf_size);
 	sum2 = get_sum(buf_ptr + sector_size * 2, sector_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size * 2)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size * 2, buf_ptr,
 		buf_size, FALSE, sector_size * 2, &res);
 
 	test_sum(buf_ptr, sector_size, sum3, TRUE, &res);
@@ -1376,13 +1373,13 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	/* Write one sector at the end of the partition. */
 	fill_rand(buf_ptr, sector_size);
 
-	simple_xfer(sub0_minor, ((u64_t)(sub_size)), buf_ptr, sector_size, TRUE, 0,
+	simple_xfer(sub0_minor, (u64_t)sub_size, buf_ptr, sector_size, TRUE, 0,
 		&res);
 
 	got_result(&res, "write at partition end");
 
 	/* Write one sector beyond the end of the partition. */
-	simple_xfer(sub0_minor, ((u64_t)(sub_size + sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size + sector_size, buf_ptr,
 		sector_size, TRUE, 0, &res);
 
 	got_result(&res, "write beyond partition end");
@@ -1392,7 +1389,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	 */
 	fill_rand(buf_ptr, buf_size);
 
-	simple_xfer(sub1_minor, ((u64_t)(0)), buf_ptr, buf_size, FALSE, buf_size,
+	simple_xfer(sub1_minor, 0ULL, buf_ptr, buf_size, FALSE, buf_size,
 		&res);
 
 	test_sum(buf_ptr, buf_size, sub1_sum, TRUE, &res);
@@ -1402,15 +1399,15 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	/* Test offset wrapping, but this time for writes. */
 	fill_rand(buf_ptr, sector_size);
 
-	simple_xfer(sub1_minor, make64(0xffffffffL - sector_size + 1,
-		0xffffffffL), buf_ptr, sector_size, TRUE, 0, &res);
+	simple_xfer(sub1_minor, 0xffffffffffffffffULL - sector_size + 1,
+		buf_ptr, sector_size, TRUE, 0, &res);
 
 	got_result(&res, "write with negative offset");
 
 	/* If the last request erroneously succeeded, it would have overwritten
 	 * the last sector of the first subpartition.
 	 */
-	simple_xfer(sub0_minor, ((u64_t)(sub_size - sector_size)), buf_ptr,
+	simple_xfer(sub0_minor, (u64_t)sub_size - sector_size, buf_ptr,
 		sector_size, FALSE, sector_size, &res);
 
 	test_sum(buf_ptr, sector_size, sum, TRUE, &res);
@@ -1443,7 +1440,7 @@ static void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	/* Set, and check, the size of the first subpartition. */
 	subpart = part;
-	subpart.size = ((u64_t)(sub_size));
+	subpart.size = (u64_t)sub_size;
 
 	vir_ioctl(sub0_minor, DIOCSETP, &subpart, OK, &res);
 
@@ -1451,8 +1448,8 @@ static void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	vir_ioctl(sub0_minor, DIOCGETP, &subpart2, OK, &res);
 
-	if (res.type == RESULT_OK && (cmp64(subpart.base, subpart2.base) ||
-			cmp64(subpart.size, subpart2.size))) {
+	if (res.type == RESULT_OK && (subpart.base != subpart2.base ||
+			subpart.size != subpart2.size)) {
 		res.type = RESULT_BADVALUE;
 		res.value = 0;
 	}
@@ -1461,8 +1458,8 @@ static void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	/* Set, and check, the base and size of the second subpartition. */
 	subpart = part;
-	subpart.base = add64u(subpart.base, sub_size);
-	subpart.size = ((u64_t)(sub_size));
+	subpart.base += sub_size;
+	subpart.size = (u64_t)sub_size;
 
 	vir_ioctl(sub1_minor, DIOCSETP, &subpart, OK, &res);
 
@@ -1470,8 +1467,8 @@ static void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	vir_ioctl(sub1_minor, DIOCGETP, &subpart2, OK, &res);
 
-	if (res.type == RESULT_OK && (cmp64(subpart.base, subpart2.base) ||
-			cmp64(subpart.size, subpart2.size))) {
+	if (res.type == RESULT_OK && (subpart.base != subpart2.base ||
+			subpart.size != subpart2.size)) {
 		res.type = RESULT_BADVALUE;
 		res.value = 0;
 	}
@@ -1520,7 +1517,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	memset(buf_ptr, 0, buf_size);
 
 	/* Write an invalid partition table. */
-	simple_xfer(driver_minor, ((u64_t)(0)), buf_ptr, buf_size, TRUE, buf_size,
+	simple_xfer(driver_minor, 0ULL, buf_ptr, buf_size, TRUE, buf_size,
 		&res);
 
 	got_result(&res, "write of invalid partition table");
@@ -1542,7 +1539,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	vir_ioctl(sub0_minor, DIOCGETP, &subpart, 0, &res);
 
-	if (res.type == RESULT_OK && cmp64u(subpart.size, 0)) {
+	if (res.type == RESULT_OK && subpart.size != 0) {
 		res.type = RESULT_BADVALUE;
 		res.value = ex64lo(subpart.size);
 	}
@@ -1551,7 +1548,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	vir_ioctl(sub1_minor, DIOCGETP, &subpart, 0, &res);
 
-	if (res.type == RESULT_OK && cmp64u(subpart.size, 0)) {
+	if (res.type == RESULT_OK && subpart.size != 0) {
 		res.type = RESULT_BADVALUE;
 		res.value = ex64lo(subpart.size);
 	}
@@ -1567,7 +1564,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	entry = (struct part_entry *) &buf_ptr[PART_TABLE_OFF];
 
 	entry[0].sysind = MINIX_PART;
-	entry[0].lowsec = div64u(part.base, sector_size) + 1;
+	entry[0].lowsec = part.base / sector_size + 1;
 	entry[0].size = part_secs;
 	entry[1].sysind = MINIX_PART;
 	entry[1].lowsec = entry[0].lowsec + entry[0].size;
@@ -1576,7 +1573,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	buf_ptr[510] = 0x55;
 	buf_ptr[511] = 0xAA;
 
-	simple_xfer(driver_minor, ((u64_t)(0)), buf_ptr, buf_size, TRUE, buf_size,
+	simple_xfer(driver_minor, 0ULL, buf_ptr, buf_size, TRUE, buf_size,
 		&res);
 
 	got_result(&res, "write of valid partition table");
@@ -1593,9 +1590,9 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	vir_ioctl(sub0_minor, DIOCGETP, &subpart, 0, &res);
 
-	if (res.type == RESULT_OK && (cmp64(subpart.base,
-		add64u(part.base, sector_size)) ||
-		cmp64u(subpart.size, part_secs * sector_size))) {
+	if (res.type == RESULT_OK &&
+		(subpart.base != part.base + sector_size ||
+		subpart.size != (u64_t)part_secs * sector_size)) {
 
 		res.type = RESULT_BADVALUE;
 		res.value = 0;
@@ -1605,9 +1602,9 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	vir_ioctl(sub1_minor, DIOCGETP, &subpart, 0, &res);
 
-	if (res.type == RESULT_OK && (cmp64(subpart.base,
-		add64u(part.base, (1 + part_secs) * sector_size)) ||
-		cmp64u(subpart.size, part_secs * sector_size))) {
+	if (res.type == RESULT_OK &&
+		(subpart.base != part.base + (1 + part_secs) * sector_size ||
+		subpart.size != (u64_t)part_secs * sector_size)) {
 
 		res.type = RESULT_BADVALUE;
 		res.value = 0;
@@ -1678,7 +1675,7 @@ static void unaligned_size_io(u64_t base_pos, u8_t *buf_ptr, size_t buf_size,
 	size_t total_size;
 	int i, nr_req;
 
-	base_pos = add64u(base_pos, sector_size);
+	base_pos += sector_size;
 	total_size = sector_size * sectors;
 
 	/* If the limit is two elements per sector, we cannot test three
@@ -1859,7 +1856,7 @@ static void unaligned_size(void)
 	 */
 	buf_size = sector_size * 5;
 
-	base_pos = ((u64_t)(sector_size * 2));
+	base_pos = (u64_t)sector_size * 2;
 
 	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
 		panic("unable to allocate memory");
@@ -1964,7 +1961,7 @@ static void unaligned_pos1(void)
 	 */
 	buf_size = buf2_size = sector_size * 3;
 
-	base_pos = ((u64_t)(sector_size * 3));
+	base_pos = (u64_t)sector_size * 3;
 
 	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
 		panic("unable to allocate memory");
@@ -1997,7 +1994,7 @@ static void unaligned_pos1(void)
 	fill_rand(buf2_ptr, sector_size);
 	sum = get_sum(buf2_ptr + min_read, sector_size - min_read);
 
-	simple_xfer(driver_minor, add64u(base_pos, sector_size - min_read),
+	simple_xfer(driver_minor, base_pos + sector_size - min_read,
 		buf2_ptr, min_read, FALSE, min_read, &res);
 
 	test_sum(buf2_ptr, min_read, get_sum(buf_ptr + sector_size - min_read,
@@ -2027,8 +2024,8 @@ static void unaligned_pos1(void)
 	sum = get_sum(buf2_ptr, min_read);
 	sum2 = get_sum(buf2_ptr + min_read * 2, sector_size - min_read * 2);
 
-	simple_xfer(driver_minor, add64u(base_pos, min_read),
-		buf2_ptr + min_read, min_read, FALSE, min_read, &res);
+	simple_xfer(driver_minor, base_pos + min_read, buf2_ptr + min_read,
+		min_read, FALSE, min_read, &res);
 
 	test_sum(buf2_ptr + min_read, min_read, get_sum(buf_ptr + min_read,
 		min_read), TRUE, &res);
@@ -2046,8 +2043,8 @@ static void unaligned_pos1(void)
 	fill_rand(buf2_ptr, buf2_size);
 	sum = get_sum(buf2_ptr + size, buf2_size - size);
 
-	simple_xfer(driver_minor, add64u(base_pos, sector_size - min_read),
-		buf2_ptr, size, FALSE, size, &res);
+	simple_xfer(driver_minor, base_pos + sector_size - min_read, buf2_ptr,
+		size, FALSE, size, &res);
 
 	test_sum(buf2_ptr, size, get_sum(buf_ptr + sector_size - min_read,
 		size), TRUE, &res);
@@ -2072,8 +2069,8 @@ static void unaligned_pos1(void)
 	fill_rand(buf2_ptr, buf2_size);
 	sum = get_sum(buf2_ptr + sector_size, buf2_size - sector_size);
 
-	simple_xfer(driver_minor, add64u(base_pos, min_read), buf2_ptr,
-		sector_size, FALSE, sector_size, &res);
+	simple_xfer(driver_minor, base_pos + min_read, buf2_ptr, sector_size,
+		FALSE, sector_size, &res);
 
 	test_sum(buf2_ptr, sector_size, get_sum(buf_ptr + min_read,
 		sector_size), TRUE, &res);
@@ -2112,7 +2109,7 @@ static void unaligned_pos2(void)
 
 	buf_size = buf2_size = max_size + sector_size;
 
-	base_pos = ((u64_t)(sector_size * 3));
+	base_pos = (u64_t)sector_size * 3;
 
 	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
 		panic("unable to allocate memory");
@@ -2133,7 +2130,7 @@ static void unaligned_pos2(void)
 
 		sum2 = fill_rand(buf_ptr + max_size, sector_size);
 
-		simple_xfer(driver_minor, add64u(base_pos, max_size),
+		simple_xfer(driver_minor, base_pos + max_size,
 			buf_ptr + max_size, sector_size, TRUE, sector_size,
 			&res);
 
@@ -2150,8 +2147,8 @@ static void unaligned_pos2(void)
 
 	got_result(&res, "large baseline read");
 
-	simple_xfer(driver_minor, add64u(base_pos, max_size), buf_ptr +
-		max_size, sector_size, FALSE, sector_size, &res);
+	simple_xfer(driver_minor, base_pos + max_size, buf_ptr + max_size,
+		sector_size, FALSE, sector_size, &res);
 
 	if (may_write)
 		test_sum(buf_ptr + max_size, sector_size, sum2, TRUE, &res);
@@ -2171,8 +2168,8 @@ static void unaligned_pos2(void)
 			sector_size - min_read);
 	}
 
-	vir_xfer(driver_minor, add64u(base_pos, min_read), iov, NR_IOREQS,
-		FALSE, min_read * NR_IOREQS, &res);
+	vir_xfer(driver_minor, base_pos + min_read, iov, NR_IOREQS, FALSE,
+		min_read * NR_IOREQS, &res);
 
 	for (i = 0; i < NR_IOREQS; i++) {
 		test_sum(buf2_ptr + i * sector_size + min_read,
@@ -2193,8 +2190,8 @@ static void unaligned_pos2(void)
 	 */
 	fill_rand(buf2_ptr, buf2_size);
 
-	simple_xfer(driver_minor, add64u(base_pos, min_read), buf2_ptr,
-		max_size, FALSE, max_size, &res);
+	simple_xfer(driver_minor, base_pos + min_read, buf2_ptr, max_size,
+		FALSE, max_size, &res);
 
 	test_sum(buf2_ptr, max_size, get_sum(buf_ptr + min_read, max_size),
 		TRUE, &res);
@@ -2218,8 +2215,8 @@ static void unaligned_pos2(void)
 		iov[i].iov_size = max_block;
 	}
 
-	vir_xfer(driver_minor, add64u(base_pos, min_read), iov, NR_IOREQS,
-		FALSE, max_block * NR_IOREQS, &res);
+	vir_xfer(driver_minor, base_pos + min_read, iov, NR_IOREQS, FALSE,
+		max_block * NR_IOREQS, &res);
 
 	test_sum(buf2_ptr, max_block * NR_IOREQS, get_sum(buf_ptr + min_read,
 		max_block * NR_IOREQS), TRUE, &res);
@@ -2280,9 +2277,8 @@ static void sweep_area(u64_t base_pos)
 	for (i = 0; i < 6; i++) {
 		fill_rand(buf_ptr, sector_size * 3);
 
-		simple_xfer(driver_minor, add64u(base_pos, sector_size * i),
-			buf_ptr, sector_size * 3, FALSE, sector_size * 3,
-			&res);
+		simple_xfer(driver_minor, base_pos + sector_size * i, buf_ptr,
+			sector_size * 3, FALSE, sector_size * 3, &res);
 
 		for (j = 0; j < 3; j++)
 			test_sum(buf_ptr + sector_size * j, sector_size,
@@ -2295,8 +2291,8 @@ static void sweep_area(u64_t base_pos)
 
 		fill_rand(buf_ptr, sector_size * 3);
 
-		simple_xfer(driver_minor, add64u(base_pos, sector_size * i),
-			buf_ptr, sector_size * 3, TRUE, sector_size * 3, &res);
+		simple_xfer(driver_minor, base_pos + sector_size * i, buf_ptr,
+			sector_size * 3, TRUE, sector_size * 3, &res);
 
 		for (j = 0; j < 3; j++)
 			ssum[i + j] = get_sum(buf_ptr + sector_size * j,
@@ -2344,7 +2340,7 @@ static void sweep_and_check(u64_t pos, int check_integ)
 		if (may_write) {
 			sum = fill_rand(buf_ptr, buf_size);
 
-			simple_xfer(driver_minor, ((u64_t)(0)), buf_ptr, buf_size,
+			simple_xfer(driver_minor, 0ULL, buf_ptr, buf_size,
 				TRUE, buf_size, &res);
 
 			got_result(&res, "write integrity zone");
@@ -2352,7 +2348,7 @@ static void sweep_and_check(u64_t pos, int check_integ)
 
 		fill_rand(buf_ptr, buf_size);
 
-		simple_xfer(driver_minor, ((u64_t)(0)), buf_ptr, buf_size, FALSE,
+		simple_xfer(driver_minor, 0ULL, buf_ptr, buf_size, FALSE,
 			buf_size, &res);
 
 		if (may_write)
@@ -2368,7 +2364,7 @@ static void sweep_and_check(u64_t pos, int check_integ)
 	if (check_integ) {
 		fill_rand(buf_ptr, buf_size);
 
-		simple_xfer(driver_minor, ((u64_t)(0)), buf_ptr, buf_size, FALSE,
+		simple_xfer(driver_minor, 0ULL, buf_ptr, buf_size, FALSE,
 			buf_size, &res);
 
 		test_sum(buf_ptr, buf_size, sum, TRUE, &res);
@@ -2386,7 +2382,7 @@ static void basic_sweep(void)
 
 	test_group("basic area sweep", TRUE);
 
-	sweep_area(((u64_t)(sector_size)));
+	sweep_area((u64_t)sector_size);
 }
 
 static void high_disk_pos(void)
@@ -2401,29 +2397,29 @@ static void high_disk_pos(void)
 	 */
 	u64_t base_pos;
 
-	base_pos = make64(sector_size * 4, 1L);
-	base_pos = sub64u(base_pos, rem64u(base_pos, sector_size));
+	base_pos = 0x100000000ULL | (sector_size * 4);
+	base_pos -= base_pos % sector_size;
 
 	/* The partition end must exceed 32 bits. */
-	if (cmp64(add64(part.base, part.size), base_pos) < 0) {
+	if (part.base + part.size < base_pos) {
 		test_group("high disk positions", FALSE);
 
 		return;
 	}
 
-	base_pos = sub64u(base_pos, sector_size * 8);
+	base_pos -= sector_size * 8;
 
 	/* The partition start must not. */
-	if (cmp64(base_pos, part.base) < 0) {
+	if (base_pos < part.base) {
 		test_group("high disk positions", FALSE);
 		return;
 	}
 
 	test_group("high disk positions", TRUE);
 
-	base_pos = sub64(base_pos, part.base);
+	base_pos -= part.base;
 
-	sweep_and_check(base_pos, !cmp64u(part.base, 0));
+	sweep_and_check(base_pos, part.base == 0ULL);
 }
 
 static void high_part_pos(void)
@@ -2438,15 +2434,15 @@ static void high_part_pos(void)
 	/* If the partition starts at the beginning of the disk, this test is
 	 * no different from the high disk position test.
 	 */
-	if (cmp64u(part.base, 0) == 0) {
+	if (part.base == 0ULL) {
 		/* don't complain: the test is simply superfluous now */
 		return;
 	}
 
-	base_pos = make64(sector_size * 4, 1L);
-	base_pos = sub64u(base_pos, rem64u(base_pos, sector_size));
+	base_pos = 0x100000000ULL | (sector_size * 4);
+	base_pos -= base_pos % sector_size;
 
-	if (cmp64(part.size, base_pos) < 0) {
+	if (part.size < base_pos) {
 		test_group("high partition positions", FALSE);
 
 		return;
@@ -2454,7 +2450,7 @@ static void high_part_pos(void)
 
 	test_group("high partition positions", TRUE);
 
-	base_pos = sub64u(base_pos, sector_size * 8);
+	base_pos -= sector_size * 8;
 
 	sweep_and_check(base_pos, TRUE);
 }
@@ -2471,19 +2467,19 @@ static void high_lba_pos1(void)
 	 */
 	u64_t base_pos;
 
-	base_pos = mul64u(1L << 24, sector_size);
+	base_pos = (1ULL << 24) * sector_size;
 
 	/* The partition end must exceed the 24-bit sector point. */
-	if (cmp64(add64(part.base, part.size), base_pos) < 0) {
+	if (part.base + part.size < base_pos) {
 		test_group("high LBA positions, part one", FALSE);
 
 		return;
 	}
 
-	base_pos = sub64u(base_pos, sector_size * 8);
+	base_pos -= sector_size * 8;
 
 	/* The partition start must not. */
-	if (cmp64(base_pos, part.base) < 0) {
+	if (base_pos < part.base) {
 		test_group("high LBA positions, part one", FALSE);
 
 		return;
@@ -2491,9 +2487,9 @@ static void high_lba_pos1(void)
 
 	test_group("high LBA positions, part one", TRUE);
 
-	base_pos = sub64(base_pos, part.base);
+	base_pos -= part.base;
 
-	sweep_and_check(base_pos, !cmp64u(part.base, 0));
+	sweep_and_check(base_pos, part.base == 0ULL);
 }
 
 static void high_lba_pos2(void)
@@ -2505,19 +2501,19 @@ static void high_lba_pos2(void)
 	 */
 	u64_t base_pos;
 
-	base_pos = mul64u(1L << 28, sector_size);
+	base_pos = (1ULL << 28) * sector_size;
 
 	/* The partition end must exceed the 28-bit sector point. */
-	if (cmp64(add64(part.base, part.size), base_pos) < 0) {
+	if (part.base + part.size < base_pos) {
 		test_group("high LBA positions, part two", FALSE);
 
 		return;
 	}
 
-	base_pos = sub64u(base_pos, sector_size * 8);
+	base_pos -= sector_size * 8;
 
 	/* The partition start must not. */
-	if (cmp64(base_pos, part.base) < 0) {
+	if (base_pos < part.base) {
 		test_group("high LBA positions, part two", FALSE);
 
 		return;
@@ -2525,9 +2521,9 @@ static void high_lba_pos2(void)
 
 	test_group("high LBA positions, part two", TRUE);
 
-	base_pos = sub64(base_pos, part.base);
+	base_pos -= part.base;
 
-	sweep_and_check(base_pos, !cmp64u(part.base, 0));
+	sweep_and_check(base_pos, part.base == 0ULL);
 }
 
 static void high_pos(void)
