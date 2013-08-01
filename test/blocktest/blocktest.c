@@ -33,6 +33,7 @@ static endpoint_t driver_endpt;	/* driver endpoint */
 static int may_write = FALSE;		/* may we write to the device? */
 static int sector_size = 512;		/* size of a single disk sector */
 static int min_read = 512;		/* minimum total size of read req */
+static int min_write = 0;		/* minimum total size of write req */
 static int element_size = 512;		/* minimum I/O vector element size */
 static int max_size = 131072;		/* maximum total size of any req */
 /* Note that we do not test exceeding the max_size limit, so it is safe to set
@@ -60,6 +61,7 @@ static struct optset optset_table[] = {
 	{ "sector",	OPT_INT,	&sector_size,	10		     },
 	{ "element",	OPT_INT,	&element_size,	10		     },
 	{ "min_read",	OPT_INT,	&min_read,	10		     },
+	{ "min_write",	OPT_INT,	&min_write,	10		     },
 	{ "max",	OPT_INT,	&max_size,	10		     },
 	{ NULL,		0,		NULL,		0		     }
 };
@@ -723,19 +725,28 @@ static void bad_read2(void)
 	cpf_revoke(grant);
 
 	/* Test word-unaligned position. */
-	memcpy(iov, iovt, sizeof(iovt));
+	/* Only perform this test if the minimum read size is not 1, in which
+	 * case it is safe to assume that the driver expects no position
+	 * alignment either. These tests are indeed not exhaustive yet. For now
+	 * we assume that if no alignment is required at all, the driver does
+	 * not implement special logic to achieve this, so we don't need to
+	 * test all possible positions and sizes either (yes, laziness..).
+	 */
+	if (min_read > 1) {
+		memcpy(iov, iovt, sizeof(iovt));
 
-	buf_sum = fill_rand(buf_ptr, buf_size);
-	buf2_sum = fill_rand(buf2_ptr, buf2_size);
-	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+		buf_sum = fill_rand(buf_ptr, buf_size);
+		buf2_sum = fill_rand(buf2_ptr, buf2_size);
+		buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, 1ULL, iov, 3, FALSE, EINVAL, &res);
+		raw_xfer(driver_minor, 1ULL, iov, 3, FALSE, EINVAL, &res);
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+		test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
-	got_result(&res, "word-unaligned position");
+		got_result(&res, "word-unaligned position");
+	}
 
 	/* Test normal vector request (final check). */
 	memcpy(iov, iovt, sizeof(iovt));
@@ -759,16 +770,14 @@ static void bad_read2(void)
 	free_buf_and_grant(buf_ptr, buf_grant, buf_size);
 }
 
-#define SECTOR_UNALIGN	2ULL	/* word-aligned and sector-unaligned */
-
 static void bad_write(void)
 {
 	/* Test various illegal write transfer requests, if writing is allowed.
 	 * If handled correctly, these requests will not actually write data.
-	 * However, the last test currently erroneously does end up writing.
+	 * This part of the test set is in need of further expansion.
 	 */
 	u8_t *buf_ptr, *buf2_ptr, *buf3_ptr;
-	size_t buf_size, buf2_size, buf3_size;
+	size_t buf_size, buf2_size, buf3_size, sector_unalign;
 	cp_grant_id_t buf_grant, buf2_grant, buf3_grant;
 	cp_grant_id_t grant;
 	u32_t buf_sum, buf2_sum, buf3_sum;
@@ -793,36 +802,49 @@ static void bad_write(void)
 	iovt[2].iov_grant = buf3_grant;
 	iovt[2].iov_size = buf3_size;
 
-	/* Test sector-unaligned write position. */
-	memcpy(iov, iovt, sizeof(iovt));
+	/* Only perform write alignment tests if writes require alignment. */
+	if (min_write == 0)
+		min_write = sector_size;
 
-	buf_sum = fill_rand(buf_ptr, buf_size);
-	buf2_sum = fill_rand(buf2_ptr, buf2_size);
-	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+	if (min_write > 1) {
+		/* If min_write is larger than 2, use 2 as sector-unaligned
+		 * size, as word-unaligned values (e.g., 1) may be filtered out
+		 * on another code path.
+		 */
+		sector_unalign = (min_write > 2) ? 2 : 1;
 
-	raw_xfer(driver_minor, SECTOR_UNALIGN, iov, 3, TRUE, EINVAL, &res);
+		/* Test sector-unaligned write position. */
+		memcpy(iov, iovt, sizeof(iovt));
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+		buf_sum = fill_rand(buf_ptr, buf_size);
+		buf2_sum = fill_rand(buf2_ptr, buf2_size);
+		buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	got_result(&res, "sector-unaligned write position");
+		raw_xfer(driver_minor, (u64_t)sector_unalign, iov, 3, TRUE,
+			EINVAL, &res);
 
-	/* Test sector-unaligned write size. */
-	memcpy(iov, iovt, sizeof(iovt));
-	iov[1].iov_size -= SECTOR_UNALIGN;
+		test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
-	buf_sum = fill_rand(buf_ptr, buf_size);
-	buf2_sum = fill_rand(buf2_ptr, buf2_size);
-	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+		got_result(&res, "sector-unaligned write position");
 
-	raw_xfer(driver_minor, 0ULL, iov, 3, TRUE, EINVAL, &res);
+		/* Test sector-unaligned write size. */
+		memcpy(iov, iovt, sizeof(iovt));
+		iov[1].iov_size -= sector_unalign;
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+		buf_sum = fill_rand(buf_ptr, buf_size);
+		buf2_sum = fill_rand(buf2_ptr, buf2_size);
+		buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	got_result(&res, "sector-unaligned write size");
+		raw_xfer(driver_minor, 0ULL, iov, 3, TRUE, EINVAL, &res);
+
+		test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+
+		got_result(&res, "sector-unaligned write size");
+	}
 
 	/* Test write-only grant in iovec element. */
 	memcpy(iov, iovt, sizeof(iovt));
@@ -1933,10 +1955,9 @@ static void unaligned_size(void)
 static void unaligned_pos1(void)
 {
 	/* Test sector-unaligned positions and total sizes for requests. This
-	 * is a read-only test as no driver currently supports sector-unaligned
-	 * writes. In this context, the term "lead" means an unwanted first
-	 * part of a sector, and "trail" means an unwanted last part of a
-	 * sector.
+	 * is a read-only test for now. Write support should be added later.
+	 * In the current context, the term "lead" means an unwanted first part
+	 * of a sector, and "trail" means an unwanted last part of a sector.
 	 */
 	u8_t *buf_ptr, *buf2_ptr;
 	size_t buf_size, buf2_size, size;
