@@ -23,7 +23,8 @@ SUBDIR= ahci amddev atl2 at_wini audio dec21140A dp8390 dpeth \
 .endif
 
 .if ${MACHINE_ARCH} == "earm"
-SUBDIR=  cat24c256 fb gpio i2c mmc log readclock tda19988 tty random lan8710a
+SUBDIR= cat24c256 fb gpio i2c mmc lan8710a log readclock \
+	tda19988 tps65217 tty random
 .endif
 
 .endif # ${MKIMAGEONLY} != "yes"

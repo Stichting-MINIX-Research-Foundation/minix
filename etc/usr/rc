@@ -202,7 +202,13 @@ start)
 			echo -n "Starting i2c device drivers: "
 			test -e /dev/eepromb1s50 || (cd /dev && MAKEDEV eepromb1s50)
 			up cat24c256 -dev /dev/eepromb1s50 \
-				-label cat24c256.1.50 -args 'bus=1 address=0x50'
+				-label cat24c256.1.50 \
+				-args 'bus=1 address=0x50'
+
+			# Start TPS65217 driver for power management.
+			up tps65217 -label tps65217.1.24 \
+			        -args 'bus=1 address=0x24'
+
 			;;
 		A335BNLT)
 			echo "Detected BeagleBone Black"
@@ -211,7 +217,11 @@ start)
 			up cat24c256 -dev /dev/eepromb1s50 \
 				-label cat24c256.1.50 -args 'bus=1 address=0x50'
 
-			# Start TDA19988 driver for EDID reading.
+			# Start TPS65217 driver for power management.
+			up tps65217 -label tps65217.1.24 \
+			        -args 'bus=1 address=0x24'
+
+			# Start TDA19988 driver for reading EDID.
 			up tda19988 -label tda19988.1.3470 -args \
 				'cec_bus=1 cec_address=0x34 hdmi_bus=1 hdmi_address=0x70'
 			;;
