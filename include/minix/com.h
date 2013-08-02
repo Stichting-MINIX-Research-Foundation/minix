@@ -27,6 +27,7 @@
  *   0x1400 - 0x14FF	VFS-FS transaction IDs
  *   0x1500 - 0x15FF	Block device requests and responses
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
+ *   0x1700 - 0x17FF	Real Time Clock requests and responses
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -1304,5 +1305,34 @@
 #define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
 #define RU_WHO		m1_i1	/* who argument in getrusage call */
 #define RU_RUSAGE_ADDR	m1_p1	/* pointer to struct rusage */
+
+/*===========================================================================*
+ *			Messages for Real Time Clocks			     *
+ *===========================================================================*/
+
+/* Base type for real time clock requests and responses. */
+#define RTCDEV_RQ_BASE	0x1700
+#define RTCDEV_RS_BASE	0x1780
+
+#define IS_RTCDEV_RQ(type) (((type) & ~0x7f) == RTCDEV_RQ_BASE)
+#define IS_RTCDEV_RS(type) (((type) & ~0x7f) == RTCDEV_RS_BASE)
+
+/* Message types for real time clock requests. */
+#define RTCDEV_GET_TIME	(RTCDEV_RQ_BASE + 0)	/* get time from hw clock */
+#define RTCDEV_SET_TIME	(RTCDEV_RQ_BASE + 1)	/* set time in hw clock */
+#define RTCDEV_PWR_OFF	(RTCDEV_RQ_BASE + 2)	/* set time to cut the power */
+
+/* Message types for real time clock responses. */
+#define RTCDEV_REPLY	(RTCDEV_RS_BASE + 0)	/* general reply code */
+
+/* Field names for real time clock messages */
+#define RTCDEV_TM	m2_p1	/* pointer to struct tm */
+#define RTCDEV_FLAGS	m2_s1	/* clock flags flags */
+#define RTCDEV_STATUS	m2_i2	/* OK or error code */
+
+/* Bits in 'RTCDEV_FLAGS' field of real time clock requests. */
+#define RTCDEV_NOFLAGS	0x00	/* no flags are set */
+#define RTCDEV_Y2KBUG	0x01	/* Interpret 1980 as 2000 for RTC w/Y2K bug */
+#define RTCDEV_CMOSREG	0x02	/* Also set the CMOS clock register bits. */
 
 /* _MINIX_COM_H */

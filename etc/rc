@@ -124,17 +124,9 @@ start)
     then . "$RC_TZ"
     fi
 
-    if [ $ARCH = i386 ]
-    then
-	# Try to read the hardware real-time clock, otherwise do it manually.
-	readclock || intr date -q
-    fi
-
-    if [ $ARCH = earm ]
-    then
-	date 201301010000
-    fi
-  
+    # Start real time clock driver & set system time, otherwise default date.
+    up readclock.drv
+    readclock || date 201301010000
 
     # Initialize files.
     >/etc/utmp				# /etc/utmp keeps track of logins

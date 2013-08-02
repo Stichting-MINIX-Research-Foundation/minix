@@ -23,7 +23,6 @@
 ./sbin/at_wini				minix-sys
 ./sbin/floppy				minix-sys
 ./sbin/hgfs				minix-sys
-./sbin/readclock.drv			minix-sys
 ./sbin/vbfs				minix-sys
 ./sbin/virtio_blk			minix-sys
 ./usr/bin/atnormalize			minix-sys

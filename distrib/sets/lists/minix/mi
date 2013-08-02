@@ -161,6 +161,7 @@
 ./sbin/newfs_ext2			minix-sys
 ./sbin/newfs_ext2fs			minix-sys
 ./sbin/procfs				minix-sys
+./sbin/readclock.drv			minix-sys
 ./sys					minix-sys
 ./tmp					minix-sys
 ./usr					minix-sys
