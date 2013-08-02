@@ -298,6 +298,15 @@ int do_reboot()
   abort_flag = (unsigned) m_in.reboot_flag;
   if (abort_flag >= RBT_INVALID) return(EINVAL); 
 
+  /* notify readclock (some arm systems power off via RTC alarms) */
+  if (abort_flag == RBT_POWEROFF) {
+	endpoint_t readclock_ep;
+	if (ds_retrieve_label_endpt("readclock.drv", &readclock_ep) == OK) {
+		message m; /* no params to set, nothing we can do if it fails */
+		_taskcall(readclock_ep, RTCDEV_PWR_OFF, &m);
+	}
+  }
+
   /* Order matters here. When VFS is told to reboot, it exits all its
    * processes, and then would be confused if they're exited again by
    * SIGKILL. So first kill, then reboot. 
