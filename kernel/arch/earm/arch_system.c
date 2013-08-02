@@ -128,6 +128,9 @@ void arch_init(void)
 
 	/* configure i2c pinmux */
 	omap3_padconf_init();
+
+	/* map memory for rtc */
+	omap3_rtc_init();
 }
 
 /*===========================================================================*
