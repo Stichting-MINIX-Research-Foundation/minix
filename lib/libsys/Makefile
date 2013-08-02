@@ -52,6 +52,7 @@ SRCS+=  \
 	sys_physcopy.c \
 	sys_privctl.c \
 	sys_profbuf.c \
+	sys_reboot.c \
 	sys_runctl.c \
 	sys_safecopy.c \
 	sys_safememset.c \
