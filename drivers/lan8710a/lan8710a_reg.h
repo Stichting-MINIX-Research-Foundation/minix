@@ -2,7 +2,7 @@
 #define LAN8710A_REG_H_
 
 /* How much memory we should map */
-#define MEMORY_LIMIT 		(0x5302000)
+#define MEMORY_LIMIT		(0x5302000)
 #define BEGINNING_DESC_MEM	(0x4A102000)
 #define DESC_MEMORY_LIMIT	(0x2000)
 #define BEGINNING_RX_DESC_MEM	(0x4A102000)
@@ -10,20 +10,20 @@
 
 /* MDIO Registers */
 #define MDIO_BASE_ADDR		(0x4A101000)
-#define MDIOVER   		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x00))
-#define MDIOCONTROL 		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x04))
-#define MDIOALIVE 		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x08))
-#define MDIOLINK 		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x0C))
-#define MDIOLINKINTRAW 		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x10))
-#define MDIOLINKINTMASKED 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x14))
-#define MDIOUSERINTRAW 		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x20))
-#define MDIOUSERINTMASKED 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x24))
-#define MDIOUSERINTMASKSET 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x28))
-#define MDIOUSERINTMASKCLR 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x2C))
-#define MDIOUSERACCESS0 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x80))
-#define MDIOUSERPHYSEL0 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x84))
-#define MDIOUSERACCESS1 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x88))
-#define MDIOUSERPHYSEL1 	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x8C))
+#define MDIOVER			((volatile u32_t *)( lan8710a_state.regs_mdio + 0x00))
+#define MDIOCONTROL		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x04))
+#define MDIOALIVE		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x08))
+#define MDIOLINK		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x0C))
+#define MDIOLINKINTRAW		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x10))
+#define MDIOLINKINTMASKED	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x14))
+#define MDIOUSERINTRAW		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x20))
+#define MDIOUSERINTMASKED	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x24))
+#define MDIOUSERINTMASKSET	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x28))
+#define MDIOUSERINTMASKCLR	((volatile u32_t *)( lan8710a_state.regs_mdio + 0x2C))
+#define MDIOUSERACCESS0		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x80))
+#define MDIOUSERPHYSEL0		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x84))
+#define MDIOUSERACCESS1		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x88))
+#define MDIOUSERPHYSEL1		((volatile u32_t *)( lan8710a_state.regs_mdio + 0x8C))
 
 #define MDIO_PREAMBLE		(1 << 20)
 #define MDCLK_DIVIDER		(0x255)
@@ -90,8 +90,8 @@
 
 /* CPSW_SL Registers */
 #define CPSW_SL_BASE_ADR	(0x4A100D80)
-#define CPSW_SL_MACCONTROL(x) 	((volatile u32_t *)( lan8710a_state.regs_cpsw_sl + ((x)-1)*64 + 0x04))
-#define CPSW_SL_SOFT_RESET(x) 	((volatile u32_t *)( lan8710a_state.regs_cpsw_sl + ((x)-1)*64 + 0x0C))
+#define CPSW_SL_MACCONTROL(x)	((volatile u32_t *)( lan8710a_state.regs_cpsw_sl + ((x)-1)*64 + 0x04))
+#define CPSW_SL_SOFT_RESET(x)	((volatile u32_t *)( lan8710a_state.regs_cpsw_sl + ((x)-1)*64 + 0x0C))
 #define CPSW_SL_RX_MAXLEN(x)	((volatile u32_t *)( lan8710a_state.regs_cpsw_sl + ((x)-1)*64 + 0x10))
 #define CPSW_SL_BOFFTEST(x)	((volatile u32_t *)( lan8710a_state.regs_cpsw_sl + ((x)-1)*64 + 0x14))
 #define CPSW_SL_EMCONTROL(x)	((volatile u32_t *)( lan8710a_state.regs_cpsw_sl + ((x)-1)*64 + 0x20))
@@ -104,16 +104,16 @@
 
 /* CPSW_STATS Registers */
 #define CPSW_STATS_BASE_ADR	(0x4A100900)
-#define CPSW_STATS_MEM_LIMIT 	(0x90)
+#define CPSW_STATS_MEM_LIMIT	(0x90)
 #define CPSW_STAT_RX_GOOD	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x00))
-#define CPSW_STAT_RX_CRC_ERR 	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x10))
-#define CPSW_STAT_RX_AGNCD_ERR 	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x14))
-#define CPSW_STAT_RX_OVERSIZE 	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x18))
+#define CPSW_STAT_RX_CRC_ERR	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x10))
+#define CPSW_STAT_RX_AGNCD_ERR	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x14))
+#define CPSW_STAT_RX_OVERSIZE	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x18))
 #define CPSW_STAT_TX_GOOD	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x34))
-#define CPSW_STAT_COLLISIONS 	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x48))
-#define CPSW_STAT_TX_UNDERRUN 	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x5C))
+#define CPSW_STAT_COLLISIONS	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x48))
+#define CPSW_STAT_TX_UNDERRUN	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x5C))
 #define CPSW_STAT_CARR_SENS_ERR	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x60))
-#define CPSW_STAT_RX_OVERRUN 	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x8C))
+#define CPSW_STAT_RX_OVERRUN	((volatile u32_t *)( lan8710a_state.regs_cpsw_stats + 0x8C))
 
 /* CPSW_CPDMA Registers */
 #define CPSW_CPDMA_BASE_ADR	(0x4A100800)
@@ -122,17 +122,17 @@
 #define CPDMA_RX_CONTROL	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x14))
 #define CPDMA_CONTROL		((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x20))
 #define CPDMA_STATUS		((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x24))
-#define CPDMA_RX_BUFFER_OFFSET 	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x28))
+#define CPDMA_RX_BUFFER_OFFSET	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x28))
 #define CPDMA_EMCONTROL		((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x2C))
-#define CPDMA_TX_INTMASK_SET 	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x88))
-#define CPDMA_TX_INTMASK_CLEAR 	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x8C))
+#define CPDMA_TX_INTMASK_SET	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x88))
+#define CPDMA_TX_INTMASK_CLEAR	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x8C))
 #define CPDMA_EOI_VECTOR	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0x94))
-#define CPDMA_RX_INTMASK_SET 	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0xA8))
-#define CPDMA_RX_INTMASK_CLEAR 	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0xAC))
+#define CPDMA_RX_INTMASK_SET	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0xA8))
+#define CPDMA_RX_INTMASK_CLEAR	((volatile u32_t *)( lan8710a_state.regs_cpsw_cpdma + 0xAC))
 
 #define CPDMA_IDLE		(1 << 31)
 #define CPDMA_TX_RLIM		(0xFF << 8)
-#define CPDMA_NO_OFFSET		(oxFFFF << 0)
+#define CPDMA_NO_OFFSET		(0xFFFF << 0)
 #define CPDMA_RX_CEF		(1 << 4)
 #define CPDMA_CMD_IDLE		(1 << 3)
 #define RX_OFFLEN_BLOCK		(1 << 2)
@@ -140,7 +140,7 @@
 #define TX_PTYPE		(1 << 0)
 #define CPDMA_TX_EN		(1 << 0)
 #define CPDMA_RX_EN		(1 << 0)
-#define CPDMA_FIRST_CHAN_INT (1 << 0)
+#define CPDMA_FIRST_CHAN_INT	(1 << 0)
 #define CPDMA_ALL_CHAN_INT	(0xFF << 0)
 #define CPDMA_TX_PTYPE		(1 << 0)
 #define CPDMA_ERROR		(0x00F7F700)
@@ -148,8 +148,8 @@
 /* CPSW_SS Registers */
 #define CPSW_SS_BASE_ADR	(0x4A100000)
 #define CPSW_SS_SOFT_RESET	((volatile u32_t *)( lan8710a_state.regs_cpsw_ss + 0x08))
-#define CPSW_SS_STAT_PORT_EN 	((volatile u32_t *)( lan8710a_state.regs_cpsw_ss + 0x0C))
-#define CPSW_SS_TX_START_WDS 	((volatile u32_t *)( lan8710a_state.regs_cpsw_ss + 0x20))
+#define CPSW_SS_STAT_PORT_EN	((volatile u32_t *)( lan8710a_state.regs_cpsw_ss + 0x0C))
+#define CPSW_SS_TX_START_WDS	((volatile u32_t *)( lan8710a_state.regs_cpsw_ss + 0x20))
 
 #define CPSW_P2_STAT_EN		(1 << 2)
 #define CPSW_P1_STAT_EN		(1 << 1)
@@ -165,15 +165,15 @@
 #define CPSW_WR_C0_TX_EN	((volatile u32_t *)( lan8710a_state.regs_cpsw_wr + 0x18))
 #define CPSW_WR_C0_TX_STAT	((volatile u32_t *)( lan8710a_state.regs_cpsw_wr + 0x48))
 
-#define CPSW_FIRST_CHAN_INT (1 << 0)
+#define CPSW_FIRST_CHAN_INT	(1 << 0)
 #define CPSW_ALL_CHAN_INT	(0xFF << 0)
 
 /* INTERRUPTION CONTROLLER Registers */
 #define INTC_BASE_ADR		(0x48200000)
-#define INTC_SYSCONFIG 		((volatile u32_t *)( lan8710a_state.regs_intc + 0x10))
-#define INTC_IDLE 	 	((volatile u32_t *)( lan8710a_state.regs_intc + 0x50))
+#define INTC_SYSCONFIG		((volatile u32_t *)( lan8710a_state.regs_intc + 0x10))
+#define INTC_IDLE		((volatile u32_t *)( lan8710a_state.regs_intc + 0x50))
 #define INTC_MIR_CLEAR1		((volatile u32_t *)( lan8710a_state.regs_intc + 0xA8))
-#define INTC_ILR(x)	 	((volatile u32_t *)( lan8710a_state.regs_intc + 0x100 + 4*(x)))
+#define INTC_ILR(x)		((volatile u32_t *)( lan8710a_state.regs_intc + 0x100 + 4*(x)))
 
 #define INTC_AUTOIDLE		(1 << 0)
 #define INTC_FUNCIDLE		(1 << 0)
@@ -183,21 +183,21 @@
 #define INTC_TX_MASK		(1 << 10)
 
 /* DMA STATERAM Registers */
-#define CPDMA_STATERAM_BASE_ADR		(0x4A100A00)
-#define CPDMA_STATERAM_TX_HDP(x)	((volatile u32_t *)( lan8710a_state.regs_cpdma_stateram + 4*(x)))
-#define CPDMA_STATERAM_RX_HDP(x)	((volatile u32_t *)( lan8710a_state.regs_cpdma_stateram + 0x20 + 4*(x)))
-#define CPDMA_STATERAM_TX_CP(x)		((volatile u32_t *)( lan8710a_state.regs_cpdma_stateram + 0x40 + 4*(x)))
-#define CPDMA_STATERAM_RX_CP(x)		((volatile u32_t *)( lan8710a_state.regs_cpdma_stateram + 0x60 + 4*(x)))
+#define CPDMA_STRAM_BASE_ADR	(0x4A100A00)
+#define CPDMA_STRAM_TX_HDP(x)	((volatile u32_t *)( lan8710a_state.regs_cpdma_stram + 4*(x)))
+#define CPDMA_STRAM_RX_HDP(x)	((volatile u32_t *)( lan8710a_state.regs_cpdma_stram + 0x20 + 4*(x)))
+#define CPDMA_STRAM_TX_CP(x)	((volatile u32_t *)( lan8710a_state.regs_cpdma_stram + 0x40 + 4*(x)))
+#define CPDMA_STRAM_RX_CP(x)	((volatile u32_t *)( lan8710a_state.regs_cpdma_stram + 0x60 + 4*(x)))
 
-#define ALL_BITS			(0xFFFFFFFF)
+#define ALL_BITS		(0xFFFFFFFF)
 
 /* LAN8710A Registers */
-#define PHY_REGISTERS			(31)
-#define LAN8710A_CTRL_REG		(0)
-#define LAN8710A_STATUS_REG		(1)
+#define PHY_REGISTERS		(31)
+#define LAN8710A_CTRL_REG	(0)
+#define LAN8710A_STATUS_REG	(1)
 
-#define LAN8710A_SOFT_RESET		(1 << 15)
-#define LAN8710A_AUTO_NEG		(1 << 12)
-#define LAN8710A_AUTO_NEG_COMPL		(1 << 5)
+#define LAN8710A_SOFT_RESET	(1 << 15)
+#define LAN8710A_AUTO_NEG	(1 << 12)
+#define LAN8710A_AUTO_NEG_COMPL	(1 << 5)
 
 #endif /* LAN8710A_REG_H_ */

@@ -22,12 +22,12 @@ Restart the system and the driver should work.
 --------------------------------------------------------------------------------
 Driver was tested using various tools, i. e.
 * fetch - downloading file from the Internet and also local server. Every file
-          downloaded well, but speed was about 50-200 kB/s.
+	  downloaded well, but speed was about 50-200 kB/s.
 * ftp - downloading and uploading 20 MB file completed.
-* ping - checking connection between BeagleBone and computer passed using standard
-         settings, when we set ping requests interval to 200 ms it also passed. But with
-         20 ms and 2 ms driver dropped some packets (20 ms - about 20% loss, 2 ms - 50%
-         loss).
+* ping - checking connection between BeagleBone and computer passed using stan -
+	 dard  settings,  when we set ping  requests interval  to 200 ms it also
+	 passed. But  with 20 ms  and 2 ms  driver dropped some packets (20 ms -
+	 about 20% loss, 2 ms - 50% loss).
 * udpstat, hostaddr, dhcpd, ifconfig, arp gave proper results.
 Tests passed, so driver meets the requirements of ethernet driver.
 
