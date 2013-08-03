@@ -34,7 +34,9 @@ halt_cpu(void)
 void
 reset(void)
 {
-    while (1);
+	omap3_reset();
+	direct_print("Reset not supported.");
+	while (1);
 }
 
 void
@@ -70,6 +72,10 @@ __dead void
 arch_shutdown(int how)
 {
 	switch (how) {
+	case RBT_HALT:
+		/* Hang */
+		for (; ; ) halt_cpu();
+		NOT_REACHABLE;
 
 	case RBT_POWEROFF:
 		/* Power off if possible, hang otherwise */
@@ -77,7 +83,12 @@ arch_shutdown(int how)
 		NOT_REACHABLE;
 
 	default:
-		break;
+	case RBT_DEFAULT:
+	case RBT_REBOOT:
+	case RBT_RESET:
+		/* Reset the system */
+		reset();
+		NOT_REACHABLE;
 	}
 	while (1);
 }

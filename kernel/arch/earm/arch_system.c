@@ -131,6 +131,9 @@ void arch_init(void)
 
 	/* map memory for rtc */
 	omap3_rtc_init();
+
+	/* map memory for reset control */
+	omap3_reset_init();
 }
 
 /*===========================================================================*
