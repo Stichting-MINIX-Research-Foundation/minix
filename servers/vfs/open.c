@@ -31,7 +31,7 @@
 #include "vmnt.h"
 #include "path.h"
 
-char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
+static char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 static struct vnode *new_node(struct lookup *resolve, int oflags,
 	mode_t bits);

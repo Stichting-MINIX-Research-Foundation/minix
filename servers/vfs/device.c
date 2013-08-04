@@ -968,7 +968,7 @@ void bdev_up(int maj)
 	if (!S_ISBLK(vp->v_mode)) continue;
 
 	/* Reopen the device on the driver, once per filp. */
-	bits = mode_map[rfilp->filp_mode & O_ACCMODE];
+	bits = rfilp->filp_mode & (R_BIT|W_BIT);
 	if ((r = bdev_open(vp->v_sdev, bits)) != OK) {
 		printf("VFS: mounted dev %d/%d re-open failed: %d.\n",
 			maj, minor(vp->v_sdev), r);
@@ -1124,7 +1124,7 @@ int maj;
 	if (rfilp->filp_flags & O_REOPEN) {
 		/* Try to reopen a file upon driver restart */
 		r = dev_reopen(vp->v_sdev, rfilp-filp,
-			vp->v_mode & (R_BIT|W_BIT));
+			rfilp->filp_mode & (R_BIT|W_BIT));
 
 		if (r == OK)
 			return;
