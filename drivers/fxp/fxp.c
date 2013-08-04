@@ -509,6 +509,9 @@ static int fxp_probe(fxp_t *fp, int skip)
 	case FXP_REV_82801DB:	str= "82801DB"; 		/* 0x81 */
 				fp->fxp_type= FT_82801;
 				break;
+	case FXP_REV_82550_4:	str= "82550(4)"; 		/* 0x83 */
+				fp->fxp_type= FT_82559;
+				break;
 	}
 
 #if VERBOSE

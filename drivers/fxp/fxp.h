@@ -29,6 +29,7 @@ Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
 #define FXP_REV_82551_2		0x10
 #define FXP_REV_82801CAM	0x42
 #define FXP_REV_82801DB		0x81
+#define FXP_REV_82550_4		0x83
 
 /* Control/Status Registers (CSR). The first 8 bytes are called
  * System Control Block (SCB)
