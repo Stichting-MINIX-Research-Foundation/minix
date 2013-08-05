@@ -1,0 +1,8 @@
+Verified+1: Jenkins
+Code-Review+1: Ben Gras <ben@minix3.org>
+Code-Review+2: Thomas Veerman <thomas@minix3.org>
+Submitted-by: Thomas Veerman <thomas@minix3.org>
+Submitted-at: Mon, 05 Aug 2013 14:12:55 +0200
+Reviewed-on: http://gerrit-minix.few.vu.nl/694
+Project: minix
+Branch: refs/heads/master
