@@ -1322,6 +1322,10 @@
 #define RTCDEV_SET_TIME	(RTCDEV_RQ_BASE + 1)	/* set time in hw clock */
 #define RTCDEV_PWR_OFF	(RTCDEV_RQ_BASE + 2)	/* set time to cut the power */
 
+/* Same as GET/SET above but using grants */
+#define RTCDEV_GET_TIME_G (RTCDEV_RQ_BASE + 3)	/* get time from hw clock */
+#define RTCDEV_SET_TIME_G (RTCDEV_RQ_BASE + 4)	/* set time in hw clock */
+
 /* Message types for real time clock responses. */
 #define RTCDEV_REPLY	(RTCDEV_RS_BASE + 0)	/* general reply code */
 
@@ -1329,6 +1333,7 @@
 #define RTCDEV_TM	m2_p1	/* pointer to struct tm */
 #define RTCDEV_FLAGS	m2_s1	/* clock flags flags */
 #define RTCDEV_STATUS	m2_i2	/* OK or error code */
+#define RTCDEV_GRANT	m2_p1	/* grant containing struct tm */
 
 /* Bits in 'RTCDEV_FLAGS' field of real time clock requests. */
 #define RTCDEV_NOFLAGS	0x00	/* no flags are set */
