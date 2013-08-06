@@ -34,6 +34,8 @@ int do_rs_set_priv(message *m)
 {
 	int r, n, nr;
 	struct vmproc *vmp;
+	char buf[NR_VM_CALLS+1];
+	int i;
 
 	nr = m->VM_RS_NR;
 
@@ -50,6 +52,11 @@ int do_rs_set_priv(message *m)
 				 sizeof(vmp->vm_call_mask));
 		if (r != OK)
 			return r;
+
+		for (i = 0; i < NR_VM_CALLS; i++)
+			buf[i] = !!GET_BIT(vmp->vm_call_mask, i) + '0';
+		buf[i] = 0;
+		printf("VM: calls for %u: %s\n", nr, buf);
 	}
 
 	return OK;
