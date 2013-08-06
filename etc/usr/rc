@@ -228,6 +228,11 @@ start)
 		UNKNOWN)
 			echo "Unable to detect board -- assuming BeagleBoard-xM"
 			echo -n "Starting i2c device drivers: "
+
+			# Start TPS65950 driver for power management.
+			up tps65950 -label tps65950.1.48 \
+				-args 'bus=1 address=0x48'
+
 			;;
 	esac
 
