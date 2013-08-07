@@ -1096,7 +1096,7 @@
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
     VM_MMAP, VM_VFS_REPLY, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, \
-    VM_INFO
+    VM_INFO, VM_GETRUSAGE
 
 /*===========================================================================*
  *                Messages for IPC server				     *
