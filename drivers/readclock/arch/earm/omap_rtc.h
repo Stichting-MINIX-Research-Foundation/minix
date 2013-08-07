@@ -85,4 +85,10 @@
 #define CLKTRCTRL ((0<<1)|(0<<0))
 #define CM_RTC_CLKSTCTRL_MASK (CLKACTIVITY_RTC_32KCLK|CLKACTIVITY_L4_RTC_GCLK|CLKTRCTRL)
 
+int omap_rtc_init(void);
+int omap_rtc_get_time(struct tm *t, int flags);
+int omap_rtc_set_time(struct tm *t, int flags);
+int omap_rtc_pwr_off(void);
+void omap_rtc_exit(void);
+
 #endif /* __OMAP_RTC_REGISTERS_H */
