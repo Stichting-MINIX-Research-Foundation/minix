@@ -3,7 +3,7 @@ PROG=	readclock.drv
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
-SRCS+=	readclock.c
+SRCS+=	readclock.c forward.c forward.h
 
 DPADD+= ${LIBSYS} ${LIBTIMERS}
 LDADD+= -lsys -ltimers

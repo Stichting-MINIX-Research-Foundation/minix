@@ -4,7 +4,7 @@
 HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 .PATH:  ${HERE}
 
-SRCS += arch_readclock.c omap_rtc.h
+SRCS += arch_readclock.c omap_rtc.c omap_rtc.h
 
 DPADD+= ${CLKCONF}
 LDADD+= -lclkconf 
