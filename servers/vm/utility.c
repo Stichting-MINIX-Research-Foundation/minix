@@ -348,6 +348,6 @@ int do_getrusage(message *m)
 	r_usage.ru_minflt = vmp->vm_minor_page_fault;
 	r_usage.ru_majflt = vmp->vm_major_page_fault;
 
-	return sys_datacopy(SELF, &r_usage, m->m_source,
+	return sys_datacopy(SELF, (vir_bytes) &r_usage, m->m_source,
 		(vir_bytes) m->RU_RUSAGE_ADDR, (vir_bytes) sizeof(r_usage));
 }

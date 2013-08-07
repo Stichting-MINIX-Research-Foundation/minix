@@ -242,6 +242,8 @@ int map_service(struct rprocpub *rpub)
   struct dmap *fdp, *sdp;
   struct fproc *rfp;
 
+  if (IS_RPUB_BOOT_USR(rpub)) return(OK);
+
   /* Process is a service */
   if (isokendpt(rpub->endpoint, &slot) != OK) {
 	printf("VFS: can't map service with unknown endpoint %d\n",

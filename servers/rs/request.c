@@ -291,7 +291,8 @@ int do_edit(message *m_ptr)
   }
 
   /* Update VM calls. */
-  if ((r = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0])) != OK) {
+  if ((r = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0],
+    !!(rp->r_priv.s_flags & SYS_PROC))) != OK) {
       printf("RS: do_edit: failed: %d\n", r);
       return r;
   }
