@@ -80,7 +80,23 @@ static struct log log = {
 static int read_register(int reg_addr);
 static int write_register(int reg_addr, int value);
 
+static int arch_init(void);
+static int arch_get_time(struct tm *t, int flags);
+static int arch_set_time(struct tm *t, int flags);
+static int arch_pwr_off(void);
+static void arch_exit(void);
+
 int
+arch_setup(struct rtc *r)
+{
+	r->init = arch_init;
+	r->get_time = arch_get_time;
+	r->set_time = arch_set_time;
+	r->pwr_off = arch_pwr_off;
+	r->exit = arch_exit;
+}
+
+static int
 arch_init(void)
 {
 	int s;
@@ -130,7 +146,7 @@ arch_init(void)
 /*                                                                     */
 /***********************************************************************/
 
-int
+static int
 arch_get_time(struct tm *t, int flags)
 {
 	int osec, n;
@@ -218,7 +234,7 @@ read_register(int reg_addr)
 /*                                                                     */
 /***********************************************************************/
 
-int
+static int
 arch_set_time(struct tm *t, int flags)
 {
 	int regA, regB;
@@ -287,36 +303,17 @@ write_register(int reg_addr, int value)
 	return OK;
 }
 
-int
+static int
 arch_pwr_off(void)
 {
 	/* Not Implemented */
 	return ENOSYS;
 }
 
-void
+static void
 arch_exit(void)
 {
 	/* Nothing to clean up here */
 	log_debug(&log, "Exiting...");
 }
 
-int
-arch_sef_cb_lu_state_save(int UNUSED(state))
-{
-	/* This arch doesn't have state to save */
-	return OK;
-}
-
-int
-arch_lu_state_restore(void)
-{
-	/* This arch doesn't have state to restore */
-	return OK;
-}
-
-void
-arch_announce(void)
-{
-	/* This arch doesn't need to do anything here. */
-}

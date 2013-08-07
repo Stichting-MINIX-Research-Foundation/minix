@@ -19,6 +19,8 @@
 
 #include "readclock.h"
 
+static struct rtc rtc;
+
 static struct log log = {
 	.name = "readclock",
 	.log_level = LEVEL_INFO,
@@ -62,12 +64,13 @@ main(int argc, char **argv)
 
 		caller = m.m_source;
 
-		log_debug(&log, "Got message 0x%x from 0x%x\n", m.m_type, caller);
+		log_debug(&log, "Got message 0x%x from 0x%x\n", m.m_type,
+		    caller);
 
 		switch (m.m_type) {
 		case RTCDEV_GET_TIME:
 			/* Any user can read the time */
-			reply_status = arch_get_time(&t, m.RTCDEV_FLAGS);
+			reply_status = rtc.get_time(&t, m.RTCDEV_FLAGS);
 			if (reply_status != OK) {
 				break;
 			}
@@ -89,7 +92,7 @@ main(int argc, char **argv)
 				}
 
 				reply_status =
-				    arch_set_time(&t, m.RTCDEV_FLAGS);
+				    rtc.set_time(&t, m.RTCDEV_FLAGS);
 			} else {
 				reply_status = EPERM;
 			}
@@ -98,7 +101,7 @@ main(int argc, char **argv)
 		case RTCDEV_PWR_OFF:
 			/* Only PM is allowed to set the power off time */
 			if (caller == PM_PROC_NR) {
-				reply_status = arch_pwr_off();
+				reply_status = rtc.pwr_off();
 			} else {
 				reply_status = EPERM;
 			}
@@ -123,7 +126,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	arch_exit();
+	rtc.exit();
 	return 0;
 }
 
@@ -132,19 +135,16 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
-	if (type == SEF_INIT_LU) {
-		/* Restore the state. */
-		arch_lu_state_restore();
-	}
-
-	r = arch_init();
+	r = arch_setup(&rtc);
 	if (r != OK) {
+		log_warn(&log, "Clock setup failed\n");
 		return r;
 	}
 
-	if (type != SEF_INIT_LU) {
-		/* Some RTCs need to do a driver announcement */
-		arch_announce();
+	r = rtc.init();
+	if (r != OK) {
+		log_warn(&log, "Clock initalization failed\n");
+		return r;
 	}
 
 	return OK;
@@ -167,8 +167,6 @@ sef_local_startup()
 	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
 	/* Support live update starting from any standard state. */
 	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-	/* Register a custom routine to save the state. */
-	sef_setcb_lu_state_save(arch_sef_cb_lu_state_save);
 
 	/* Let SEF perform startup. */
 	sef_startup();

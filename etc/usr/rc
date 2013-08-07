@@ -233,6 +233,9 @@ start)
 			up tps65950 -label tps65950.1.48 \
 				-args 'bus=1 address=0x48'
 
+			# Set the system time to the time in the TPS65950's RTC
+			readclock
+
 			;;
 	esac
 
