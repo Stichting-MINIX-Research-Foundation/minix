@@ -115,8 +115,6 @@ int do_vfs_reply(message *m)
 	void *cbarg;
 	int n;
 	struct vmproc *vmp;
-	if(m->m_source != VFS_PROC_NR)
-		return ENOSYS;
 
 	assert(active);
 	assert(active->req_id == m->VMV_REQID);
