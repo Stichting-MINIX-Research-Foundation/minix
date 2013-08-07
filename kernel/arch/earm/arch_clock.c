@@ -52,8 +52,8 @@ void cycles_accounting_init(void)
 {
 	read_tsc_64(get_cpu_var_ptr(cpu, tsc_ctr_switch));
 
-	make_zero64(get_cpu_var(cpu, cpu_last_tsc));
-	make_zero64(get_cpu_var(cpu, cpu_last_idle));
+	get_cpu_var(cpu, cpu_last_tsc) = 0;
+	get_cpu_var(cpu, cpu_last_idle) = 0;
 }
 
 void context_stop(struct proc * p)

@@ -252,7 +252,7 @@ not_runnable_pick_new:
 	if (proc_is_preempted(p)) {
 		p->p_rts_flags &= ~RTS_PREEMPTED;
 		if (proc_is_runnable(p)) {
-			if (!is_zero64(p->p_cpu_time_left))
+			if (p->p_cpu_time_left)
 				enqueue_head(p);
 			else
 				enqueue(p);
@@ -348,7 +348,7 @@ check_misc_flags:
 	 * as we are sure that a possible out-of-quantum message to the
 	 * scheduler will not collide with the regular ipc
 	 */
-	if (is_zero64(p->p_cpu_time_left))
+	if (!p->p_cpu_time_left)
 		proc_no_time(p);
 	/*
 	 * After handling the misc flags the selected process might not be
@@ -365,12 +365,12 @@ check_misc_flags:
 #endif
 
 	p = arch_finish_switch_to_user();
-	assert(!is_zero64(p->p_cpu_time_left));
+	assert(p->p_cpu_time_left);
 
 	context_stop(proc_addr(KERNEL));
 
 	/* If the process isn't the owner of FPU, enable the FPU exception */
-	if(get_cpulocal_var(fpu_owner) != p)
+	if (get_cpulocal_var(fpu_owner) != p)
 		enable_fpu_exception();
 	else
 		disable_fpu_exception();
@@ -1606,7 +1606,7 @@ static void enqueue_head(struct proc *rp)
    * the process was runnable without its quantum expired when dequeued. A
    * process with no time left should have been handled else and differently
    */
-  assert(!is_zero64(rp->p_cpu_time_left));
+  assert(rp->p_cpu_time_left);
 
   assert(q >= 0);
 
@@ -1689,12 +1689,12 @@ void dequeue(struct proc *rp)
   /* this is not all that accurate on virtual machines, especially with
      IO bound processes that only spend a short amount of time in the queue
      at a time. */
-  if (!is_zero64(rp->p_accounting.enter_queue)) {
+  if (rp->p_accounting.enter_queue) {
 	read_tsc_64(&tsc);
-	tsc_delta = sub64(tsc, rp->p_accounting.enter_queue);
-	rp->p_accounting.time_in_queue = add64(rp->p_accounting.time_in_queue,
-		tsc_delta);
-	make_zero64(rp->p_accounting.enter_queue);
+	tsc_delta = tsc - rp->p_accounting.enter_queue;
+	rp->p_accounting.time_in_queue = rp->p_accounting.time_in_queue +
+		tsc_delta;
+	rp->p_accounting.enter_queue = 0;
   }
 
 
@@ -1843,8 +1843,8 @@ void reset_proc_accounting(struct proc *p)
   p->p_accounting.ipc_sync  = 0;
   p->p_accounting.ipc_async = 0;
   p->p_accounting.dequeues  = 0;
-  make_zero64(p->p_accounting.time_in_queue);
-  make_zero64(p->p_accounting.enter_queue);
+  p->p_accounting.time_in_queue = 0;
+  p->p_accounting.enter_queue = 0;
 }
 	
 void copr_not_available_handler(void)

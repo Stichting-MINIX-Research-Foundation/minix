@@ -9,10 +9,6 @@
 
 #include <limits.h>
 
-#define is_zero64(i)	((i) == 0)
-#define make_zero64(i)  ((i) = 0)
-#define neg64(i)	((i) = -(i))
-
 static inline u64_t add64(u64_t i, u64_t j)
 {
 	return i + j;

@@ -161,7 +161,7 @@ void kmain(kinfo_t *local_cbi)
 	DEBUGEXTRA(("initializing %s... ", ip->proc_name));
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
-	make_zero64(rp->p_cpu_time_left);
+	rp->p_cpu_time_left = 0;
 	if(i < NR_TASKS)			/* name (tasks only) */
 		strlcpy(rp->p_name, ip->proc_name, sizeof(rp->p_name));
 

@@ -161,7 +161,7 @@ static void vbox_update_time(void)
 			sizeof(*req)) == VMMDEV_ERR_OK) {
 		time(&otime);				/* old time */
 
-		ntime = div64u(req->time, 1000);	/* new time */
+		ntime = (unsigned long)(req->time / 1000);	/* new time */
 
 		/* Make time go forward, if the difference exceeds the drift
 		 * threshold. Never make time go backward.
