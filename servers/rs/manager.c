@@ -563,7 +563,7 @@ struct rproc *rp;
   }
 
   /* Tell VM about allowed calls. */
-  if ((s = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0])) != OK) {
+  if ((s = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0], TRUE)) != OK) {
       printf("RS: vm_set_priv failed: %d\n", s);
       cleanup_service(rp);
       return s;
@@ -1138,6 +1138,11 @@ static int run_script(struct rproc *rp)
 		if ((r = sys_privctl(endpoint, SYS_PRIV_SET_USER, NULL))
 			!= OK) {
 			return kill_service(rp,"can't set script privileges",r);
+		}
+		/* Set the script's privileges on other servers. */
+		vm_set_priv(endpoint, NULL, FALSE);
+		if ((r = vm_set_priv(endpoint, NULL, FALSE)) != OK) {
+			return kill_service(rp,"can't set script VM privs",r);
 		}
 		/* Allow the script to run. */
 		if ((r = sys_privctl(endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {

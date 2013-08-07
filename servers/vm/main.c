@@ -57,7 +57,6 @@ struct {
 			((c) - VM_RQ_BASE) : -1)
 
 static int map_service(struct rprocpub *rpub);
-static int vm_acl_ok(endpoint_t caller, int call);
 static int do_rs_init(message *m);
 
 /* SEF functions and variables. */
@@ -131,7 +130,7 @@ int main(void)
 	} else if(c < 0 || !vm_calls[c].vmc_func) {
 		/* out of range or missing callnr */
 	} else {
-		if (vm_acl_ok(who_e, c) != OK) {
+		if (acl_check(&vmproc[caller_slot], c) != OK) {
 			printf("VM: unauthorized %s by %d\n",
 					vm_calls[c].vmc_name, who_e);
 		} else {
@@ -339,6 +338,9 @@ void init_vm(void)
 		vmproc[i].vm_slot = i;
 	}
 
+	/* Initialize ACL data structures. */
+	acl_init();
+
 	/* region management initialization. */
 	map_region_init();
 
@@ -492,27 +494,7 @@ struct rprocpub *rpub;
 	}
 
 	/* Copy the call mask. */
-	memcpy(&vmproc[proc_nr].vm_call_mask, &rpub->vm_call_mask,
-		sizeof(vmproc[proc_nr].vm_call_mask));
+	acl_set(&vmproc[proc_nr], rpub->vm_call_mask, !IS_RPUB_BOOT_USR(rpub));
 
 	return(OK);
 }
-
-/*===========================================================================*
- *				vm_acl_ok				     *
- *===========================================================================*/
-static int vm_acl_ok(endpoint_t caller, int call)
-{
-	int n, r;
-
-	if ((r = vm_isokendpt(caller, &n)) != OK)
-		panic("VM: from strange source: %d", caller);
-
-	/* See if the call is allowed. */
-	if (!GET_BIT(vmproc[n].vm_call_mask, call)) {
-		return EPERM;
-	}
-
-	return OK;
-}
-

@@ -47,6 +47,7 @@ void free_proc(struct vmproc *vmp)
 void clear_proc(struct vmproc *vmp)
 {
 	region_init(&vmp->vm_regions_avl);
+	acl_clear(vmp);
 	vmp->vm_flags = 0;		/* Clear INUSE, so slot is free. */
 #if VMSTATS
 	vmp->vm_bytecopies = 0;

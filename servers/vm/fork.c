@@ -84,8 +84,8 @@ int do_fork(message *msg)
   /* Only inherit these flags. */
   vmc->vm_flags &= VMF_INUSE;
 
-  /* inherit the priv call bitmaps */
-  memcpy(&vmc->vm_call_mask, &vmp->vm_call_mask, sizeof(vmc->vm_call_mask));
+  /* Deal with ACLs. */
+  acl_fork(vmc);
 
   /* Tell kernel about the (now successful) FORK. */
   if((r=sys_fork(vmp->vm_endpoint, childproc,

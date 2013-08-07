@@ -16,6 +16,13 @@ struct phys_region;
 #include "pt.h"
 #include "vm.h"
 
+/* acl.c */
+void acl_init(void);
+int acl_check(struct vmproc *vmp, int call);
+void acl_set(struct vmproc *vmp, bitchunk_t *mask, int sys_proc);
+void acl_fork(struct vmproc *vmp);
+void acl_clear(struct vmproc *vmp);
+
 /* alloc.c */
 void *reservedqueue_new(int, int, int, int);
 int reservedqueue_alloc(void *, phys_bytes *, void **);

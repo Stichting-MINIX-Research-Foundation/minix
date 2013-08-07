@@ -20,7 +20,7 @@ struct vmproc {
 	/* Regions in virtual address space. */
 	region_avl vm_regions_avl;
 	vir_bytes  vm_region_top;	/* highest vaddr last inserted */
-	bitchunk_t vm_call_mask[VM_CALL_MASK_SIZE];
+	int vm_acl;
 	int vm_slot;		/* process table slot */
 #if VMSTATS
 	int vm_bytecopies;

@@ -34,6 +34,7 @@ int do_rs_set_priv(message *m)
 {
 	int r, n, nr;
 	struct vmproc *vmp;
+	bitchunk_t call_mask[VM_CALL_MASK_SIZE], *call_mask_p;
 
 	nr = m->VM_RS_NR;
 
@@ -45,12 +46,20 @@ int do_rs_set_priv(message *m)
 	vmp = &vmproc[n];
 
 	if (m->VM_RS_BUF) {
-		r = sys_datacopy(m->m_source, (vir_bytes) m->VM_RS_BUF,
-				 SELF, (vir_bytes) vmp->vm_call_mask,
-				 sizeof(vmp->vm_call_mask));
+		r = sys_datacopy(m->m_source, (vir_bytes) m->VM_RS_BUF, SELF,
+			(vir_bytes) call_mask, sizeof(call_mask));
 		if (r != OK)
 			return r;
+		call_mask_p = call_mask;
+	} else {
+		if (m->VM_RS_SYS) {
+			printf("VM: do_rs_set_priv: sys procs don't share!\n");
+			return EINVAL;
+		}
+		call_mask_p = NULL;
 	}
+
+	acl_set(vmp, call_mask_p, m->VM_RS_SYS);
 
 	return OK;
 }
