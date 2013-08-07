@@ -1037,6 +1037,7 @@
 #define VM_RS_SET_PRIV		(VM_RQ_BASE+37)
 #	define VM_RS_NR			m2_i1
 #	define VM_RS_BUF		m2_l1
+#	define VM_RS_SYS		m2_i2
 
 #define VM_QUERY_EXIT		(VM_RQ_BASE+38)
 #	define VM_QUERY_RET_PT	m2_i1

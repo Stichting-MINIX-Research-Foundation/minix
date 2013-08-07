@@ -119,6 +119,11 @@ struct rprocpub {
   int devman_id;
 };
 
+/* Return whether the given boot process is a user process, as opposed to a
+ * system process. Only usable by core services during SEF initialization.
+ */
+#define IS_RPUB_BOOT_USR(rpub) ((rpub)->endpoint == INIT_PROC_NR)
+
 int minix_rs_lookup(const char *name, endpoint_t *value);
 
 #endif
