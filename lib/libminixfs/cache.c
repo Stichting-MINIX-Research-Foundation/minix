@@ -163,7 +163,6 @@ lmfs_alloc_block(struct buf *bp)
 {
   ASSERT(!bp->data);
   ASSERT(bp->lmfs_bytes == 0);
-  ASSERT(!(fs_block_size % PAGE_SIZE));
   if((bp->data = minix_mmap(0, fs_block_size,
      PROT_READ|PROT_WRITE, MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	free_unused_blocks();
@@ -510,7 +509,6 @@ register struct buf *bp;	/* buffer pointer */
 
   ASSERT(bp->lmfs_bytes == fs_block_size);
   ASSERT(fs_block_size > 0);
-  ASSERT(!(fs_block_size % PAGE_SIZE));
 
   pos = mul64u(bp->lmfs_blocknr, fs_block_size);
   if(fs_block_size > PAGE_SIZE) {
