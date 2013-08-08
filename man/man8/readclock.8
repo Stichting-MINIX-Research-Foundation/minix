@@ -1,11 +1,11 @@
 .TH READCLOCK 8
 .SH NAME
-readclock \- read the AT's real time clock
+readclock \- read or set a real time clock
 .SH SYNOPSIS
-\fBreadclock\fP [\fB\-nwW2\fP]
+\fBreadclock\fP [\fB\-nqwW2\fP]
 .SH DESCRIPTION
 .B Readclock
-reads the AT's real time clock and sets the machine's time.  It is usually
+reads the real time clock and sets the operating system time.  It is usually
 the second thing done in
 .BR /etc/rc ,
 the first thing is setting the time zone by sourcing
@@ -20,8 +20,11 @@ want to run the clock in GMT then you can put
 Play-act, don't set the time nor change the calibration data, just show what
 would be done.
 .TP
+.B \-q
+Quiet execution. Suppresses all output.
+.TP
 .B \-w
-Write the current time to the CMOS clock.  Dangerous, see
+Write the current time to the hardware clock.  Dangerous, see
 .BR BUGS .
 Don't forget to use
 .B "TZ=GMT"
