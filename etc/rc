@@ -126,7 +126,7 @@ start)
 
     # Start real time clock driver & set system time, otherwise default date.
     up readclock.drv
-    readclock || date 201301010000
+    readclock -q || date 201301010000
 
     # Initialize files.
     >/etc/utmp				# /etc/utmp keeps track of logins
