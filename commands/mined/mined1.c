@@ -425,7 +425,7 @@ int screenmax = SCREENMAX;
 /*
  * Print file status.
  */
-void FS()
+void FS(void)
 {
   fstatus(file_name[0] ? "" : "[buffer]", -1L);
 }
@@ -434,7 +434,7 @@ void FS()
  * Visit (edit) another file. If the file has been modified, ask the user if
  * he wants to save it.
  */
-void VI()
+void VI(void)
 {
   char new_file[LINE_LEN];	/* Buffer to hold new file name */
 
@@ -458,7 +458,7 @@ void VI()
 /*
  * Write file in core to disc.
  */
-int WT()
+int WT(void)
 {
   register LINE *line;
   register long count = 0L;	/* Nr of chars written */
@@ -516,7 +516,7 @@ int WT()
 }
 
 /* Call WT and discard value returned. */
-void XWT()
+void XWT(void)
 {
   (void) WT();
 }
@@ -526,7 +526,7 @@ void XWT()
 /*
  * Call an interactive shell.
  */
-void SH()
+void SH(void)
 {
   register int w;
   int pid, status;
@@ -572,9 +572,7 @@ void SH()
  * it returns the count'th line before `line'. When the next (previous)
  * line is the tail (header) indicating EOF (tof) it stops.
  */
-LINE *proceed(line, count)
-register LINE *line;
-register int count;
+LINE *proceed(register LINE *line, register int count)
 {
   if (count < 0)
   	while (count++ < 0 && line != header)
@@ -590,11 +588,7 @@ register int count;
  * If revfl is TRUE, turn on reverse video on both strings. Set stat_visible
  * only if bottom_line is visible.
  */
-int bottom_line(revfl, s1, s2, inbuf, statfl)
-FLAG revfl;
-char *s1, *s2;
-char *inbuf;
-FLAG statfl;
+int bottom_line(FLAG revfl, char *s1, char *s2, char *inbuf, FLAG statfl)
 {
   int ret = FINE;
   char buf[LINE_LEN];
@@ -602,10 +596,10 @@ FLAG statfl;
 
   *p++ = ' ';
   if (s1 != NULL)
-	while (*p = *s1++)
+	while ((*p = *s1++))
 		p++;
   if (s2 != NULL)
-	while (*p = *s2++)
+	while ((*p = *s2++))
 		p++;
   *p++ = ' ';
   *p++ = 0;
@@ -651,8 +645,7 @@ FLAG statfl;
  * Count_chars() count the number of chars that the line would occupy on the
  * screen. Counting starts at the real x-coordinate of the line.
  */
-int count_chars(line)
-LINE *line;
+int count_chars(LINE *line)
 {
   register int cnt = get_shift(line->shift_count) * -SHIFT_SIZE;
   register char *textp = line->text;
@@ -686,10 +679,7 @@ LINE *line;
  * If we're moving to the same x coordinate, try to move the the x-coordinate
  * used on the other previous call.
  */
-void move(new_x, new_address, new_y)
-register int new_x;
-int new_y;
-char *new_address;
+void move(register int new_x, char *new_address, int new_y)
 {
   register LINE *line = cur_line;	/* For building new cur_line */
   int shift = 0;			/* How many shifts to make */
@@ -752,9 +742,7 @@ char *new_address;
  * Find_x() returns the x coordinate belonging to address.
  * (Tabs are expanded).
  */
-int find_x(line, address)
-LINE *line;
-char *address;
+int find_x(LINE *line, char *address)
 {
   register char *textp = line->text;
   register int nx = get_shift(line->shift_count) * -SHIFT_SIZE;
@@ -772,10 +760,7 @@ char *address;
  * Find_address() returns the pointer in the line with offset x_coord.
  * (Tabs are expanded).
  */
-char *find_address(line, x_coord, old_x)
-LINE *line;
-int x_coord;
-int *old_x;
+char *find_address(LINE *line, int x_coord, int *old_x)
 {
   register char *textp = line->text;
   register int tx = get_shift(line->shift_count) * -SHIFT_SIZE;
@@ -800,8 +785,7 @@ int *old_x;
  * Length_of() returns the number of characters int the string `string'
  * excluding the '\0'.
  */
-int length_of(string)
-register char *string;
+int length_of(register char *string)
 {
   register int count = 0;
 
@@ -816,11 +800,9 @@ register char *string;
  * Copy_string() copies the string `from' into the string `to'. `To' must be
  * long enough to hold `from'.
  */
-void copy_string(to, from)
-register char *to;
-register char *from;
+void copy_string(register char *to, register char *from)
 {
-  while (*to++ = *from++)
+  while ((*to++ = *from++))
   	;
 }
 
@@ -829,9 +811,7 @@ register char *from;
  * which must be the first line of the screen, and an y-coordinate,
  * which will be the current y-coordinate (if it isn't larger than last_y)
  */
-void reset(head_line, screen_y)
-LINE *head_line;
-int screen_y;
+void reset(LINE *head_line, int screen_y)
 {
   register LINE *line;
 
@@ -852,8 +832,7 @@ int screen_y;
 /*
  * Set cursor at coordinates x, y.
  */
-void set_cursor(nx, ny)
-int nx, ny;
+void set_cursor(int nx, int ny)
 {
 #ifdef UNIX
   extern char *tgoto();
@@ -870,7 +849,7 @@ int nx, ny;
 /*
  * Routine to open terminal when mined is used in a pipeline.
  */
-void open_device()
+void open_device(void)
 {
   if ((input_fd = open("/dev/tty", 0)) < 0)
 	panic("Cannot open /dev/tty for read");
@@ -880,7 +859,7 @@ void open_device()
  * Getchar() reads one character from the terminal. The character must be
  * masked with 0377 to avoid sign extension.
  */
-int getchar()
+int getchar(void)
 {
 #ifdef UNIX
   return (_getchar() & 0377);
@@ -900,10 +879,7 @@ int getchar()
  * rest of the screen with blank_line's.
  * When count is negative, a backwards print from `line' will be done.
  */
-void display(x_coord, y_coord, line, count)
-int x_coord, y_coord;
-register LINE *line;
-register int count;
+void display(int x_coord, int y_coord, register LINE *line, register int count)
 {
   set_cursor(x_coord, y_coord);
 
@@ -935,9 +911,7 @@ register int count;
 /*
  * Write_char does a buffered output. 
  */
-int write_char(fd, c)
-int fd;
-char c;
+int write_char(int fd, int c)
 {
   screen [out_count++] = c;
   if (out_count == SCREEN_SIZE)		/* Flush on SCREEN_SIZE chars */
@@ -948,9 +922,7 @@ char c;
 /*
  * Writeline writes the given string on the given filedescriptor.
  */
-int writeline(fd, text)
-register int fd;
-register char *text;
+int writeline(register int fd, register char *text)
 {
   while(*text)
   	 if (write_char(fd, *text++) == ERRORS)
@@ -964,10 +936,7 @@ register char *text;
  * then (screen) line will be cleared when the end of the line has been
  * reached.
  */
-void put_line(line, offset, clear_line)
-LINE *line;				/* Line to print */
-int offset;				/* Offset to start */
-FLAG clear_line;			/* Clear to eoln if TRUE */
+void put_line(LINE *line, int offset, FLAG clear_line)
 {
   register char *textp = line->text;
   register int count = get_shift(line->shift_count) * -SHIFT_SIZE;
@@ -1028,8 +997,7 @@ FLAG clear_line;			/* Clear to eoln if TRUE */
 /*
  * Flush the I/O buffer on filedescriptor fd.
  */
-int flush_buffer(fd)
-int fd;
+int flush_buffer(int fd)
 {
   if (out_count <= 0)		/* There is nothing to flush */
   	return FINE;
@@ -1051,8 +1019,7 @@ int fd;
 /*
  * Bad_write() is called when a write failed. Notify the user.
  */
-void bad_write(fd)
-int fd;
+void bad_write(int fd)
 {
   if (fd == STD_OUT)		/* Cannot write to terminal? */
   	exit(1);
@@ -1067,8 +1034,7 @@ int fd;
 /*
  * Catch the SIGQUIT signal (^\) send to mined. It turns on the quitflag.
  */
-void catch(sig)
-int sig;
+void catch(int sig)
 {
 /* Reset the signal */
   signal(SIGQUIT, catch);
@@ -1078,7 +1044,7 @@ int sig;
 /*
  * Abort_mined() will leave mined. Confirmation is asked first.
  */
-void abort_mined()
+void abort_mined(void)
 {
   quit = FALSE;
 
@@ -1107,8 +1073,7 @@ void abort_mined()
  * Set and reset tty into CBREAK or old mode according to argument `state'. It
  * also sets all signal characters (except for ^\) to UNDEF. ^\ is caught.
  */
-void raw_mode(state)
-FLAG state;
+void raw_mode(FLAG state)
 {
   static struct termios old_tty;
   static struct termios new_tty;
@@ -1140,8 +1105,7 @@ FLAG state;
  * It writes the message to the terminal, resets the tty and exits.
  * Ask the user if he wants to save his file.
  */
-void panic(message)
-register char *message;
+void panic(register char *message)
 {
   extern char yank_file[];
 
@@ -1166,8 +1130,7 @@ register char *message;
 #endif /* UNIX */
 }
 
-char *alloc(bytes)
-int bytes;
+char *alloc(int bytes)
 {
   char *p;
 
@@ -1180,8 +1143,7 @@ int bytes;
   return(p);
 }
 
-void free_space(p)
-char *p;
+void free_space(char *p)
 {
   free(p);
 }
@@ -1257,7 +1219,7 @@ long chars_saved;			/* Nr of chars in buffer */
  * Initialize is called when a another file is edited. It free's the allocated
  * space and sets modified back to FALSE and fixes the header/tail pointer.
  */
-void initialize()
+void initialize(void)
 {
   register LINE *line, *next_line;
 
@@ -1277,8 +1239,7 @@ void initialize()
 /*
  * Basename() finds the absolute name of the file out of a given path_name.
  */
-char *basename(path)
-char *path;
+char *basename(char *path)
 {
   register char *ptr = path;
   register char *last = NULL;
@@ -1302,8 +1263,7 @@ char *path;
  * couldn't be opened, just some initializations are done, and a line consisting
  * of a `\n' is installed.
  */
-void load_file(file)
-char *file;
+void load_file(char *file)
 {
   register LINE *line = header;
   register int len;
@@ -1366,9 +1326,7 @@ char *file;
  * Get_line reads one line from filedescriptor fd. If EOF is reached on fd,
  * get_line() returns ERRORS, else it returns the length of the string.
  */
-int get_line(fd, buffer)
-int fd;
-register char *buffer;
+int get_line(int fd, register char *buffer)
 {
   static char *last = NULL;
   static char *current = NULL;
@@ -1408,9 +1366,7 @@ register char *buffer;
  * Install_line installs the buffer into a LINE structure It returns a pointer
  * to the allocated structure.
  */
-LINE *install_line(buffer, length)
-char *buffer;
-int length;
+LINE *install_line(char *buffer, int length)
 {
   register LINE *new_line = (LINE *) alloc(sizeof(LINE));
 
@@ -1421,9 +1377,7 @@ int length;
   return new_line;
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 /* mined is the Minix editor. */
 
@@ -1490,7 +1444,7 @@ char *argv[];
 /*
  * Redraw the screen
  */
-void RD()
+void RD(void)
 {
 /* Clear screen */
 #ifdef UNIX
@@ -1516,14 +1470,14 @@ void RD()
 /*
  * Ignore this keystroke.
  */
-void I()
+void I(void)
 {
 }
 
 /*
  * Leave editor. If the file has changed, ask if the user wants to save it.
  */
-void XT()
+void XT(void)
 {
   if (modified == TRUE && ask_save() == ERRORS)
   	return;
@@ -1536,8 +1490,7 @@ void XT()
   exit(0);
 }
 
-void (*escfunc(c))()
-int c;
+void (*escfunc(int c))(void)
 {
   if (c == '[') {
 	/* Start of ASCII escape sequence. */
@@ -1568,7 +1521,7 @@ int c;
  * command count times. If a ^\ is given during repeating, stop looping and
  * return to main loop.
  */
-void ESC()
+void ESC(void)
 {
   register int count = 0;
   register void (*func)();
@@ -1608,7 +1561,7 @@ void ESC()
 /*
  * Ask the user if he wants to save his file or not.
  */
-int ask_save()
+int ask_save(void)
 {
   register int c;
 
@@ -1635,7 +1588,7 @@ int ask_save()
 /*
  * Line_number() finds the line number we're on.
  */
-int line_number()
+int line_number(void)
 {
   register LINE *line = header->next;
   register int count = 1;
@@ -1652,12 +1605,8 @@ int line_number()
  * Display a line telling how many chars and lines the file contains. Also tell
  * whether the file is readonly and/or modified.
  */
-void file_status(message, count, file, lines, writefl, changed)
-char *message;
-register long count;		/* Contains number of characters in file */
-char *file;
-int lines;
-FLAG writefl, changed;
+void file_status(char *message, register long count, char *file, int lines,
+						FLAG writefl, FLAG changed)
 {
   register LINE *line;
   char msg[LINE_LEN + 40];/* Buffer to hold line */
@@ -1696,9 +1645,7 @@ FLAG writefl, changed;
 void build_string(char *buf, char *fmt, ...)
 {
 #else
-void build_string(buf, fmt, va_alist)
-char *buf, *fmt;
-va_dcl
+void build_string(char *buf, char *fmt, va_dcl va_alist)
 {
 #endif
   va_list argptr;
@@ -1726,7 +1673,7 @@ va_dcl
   		default :
   			scanp = "";
   		}
-  		while (*buf++ = *scanp++)
+  		while ((*buf++ = *scanp++))
   			;
   		buf--;
   	}
@@ -1741,8 +1688,7 @@ va_dcl
  * Output an (unsigned) long in a 10 digit field without leading zeros.
  * It returns a pointer to the first digit in the buffer.
  */
-char *num_out(number)
-long number;
+char *num_out(long number)
 {
   static char num_buf[11];		/* Buffer to build number */
   register long digit;			/* Next digit of number */
@@ -1771,9 +1717,7 @@ long number;
  * returned.  ERRORS is returned on a bad number. The resulting number is put
  * into the integer the arguments points to.
  */
-int get_number(message, result)
-char *message;
-int *result;
+int get_number(char *message, int *result)
 {
   register int index;
   register int count = 0;
@@ -1806,9 +1750,7 @@ int *result;
  * Input() reads a string from the terminal.  When the KILL character is typed,
  * it returns ERRORS.
  */
-int input(inbuf, clearfl)
-char *inbuf;
-FLAG clearfl;
+int input(char *inbuf, FLAG clearfl)
 {
   register char *ptr;
   register char c;			/* Character read */
@@ -1867,8 +1809,7 @@ FLAG clearfl;
  * Get_file() reads a filename from the terminal. Filenames longer than 
  * FILE_LENGHT chars are truncated.
  */
-int get_file(message, file)
-char *message, *file;
+int get_file(char *message, char *file)
 {
   char *ptr;
   int ret;
@@ -1887,7 +1828,7 @@ char *message, *file;
 #ifdef UNIX
 #undef putchar
 
-int _getchar()
+int _getchar(void)
 {
   char c;
 
@@ -1896,18 +1837,17 @@ int _getchar()
   return c & 0377;
 }
 
-void _flush()
+void _flush(void)
 {
   (void) fflush(stdout);
 }
 
-void _putchar(c)
-char c;
+void _putchar(char c)
 {
   (void) write_char(STD_OUT, c);
 }
 
-void get_term()
+void get_term(void)
 {
   static char termbuf[50];
   extern char *tgetstr(), *getenv();
