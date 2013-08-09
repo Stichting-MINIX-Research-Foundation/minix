@@ -12,7 +12,7 @@
 /*
  * Move one line up.
  */
-void UP()
+void UP(void)
 {
   if (y == 0) {		/* Top line of screen. Scroll one line */
   	(void) reverse_scroll();
@@ -25,7 +25,7 @@ void UP()
 /*
  * Move one line down.
  */
-void DN()
+void DN(void)
 {
   if (y == last_y) {	/* Last line of screen. Scroll one line */
 	if (bot_line->next == tail && bot_line->text[0] != '\n') {
@@ -45,7 +45,7 @@ void DN()
 /*
  * Move left one position.
  */
-void LF()
+void LF(void)
 {
   if (x == 0 && get_shift(cur_line->shift_count) == 0) {/* Begin of line */
 	if (cur_line->prev != header) {
@@ -60,7 +60,7 @@ void LF()
 /*
  * Move right one position.
  */
-void RT()
+void RT(void)
 {
   if (*cur_text == '\n') {
   	if (cur_line->next != tail) {		/* Last char of file */
@@ -75,7 +75,7 @@ void RT()
 /*
  * Move to coordinates [0, 0] on screen.
  */
-void HIGH()
+void HIGH(void)
 {
   move_to(0, 0);
 }
@@ -83,7 +83,7 @@ void HIGH()
 /*
  * Move to coordinates [0, YMAX] on screen.
  */
-void LOW()
+void LOW(void)
 {
   move_to(0, last_y);
 }
@@ -91,7 +91,7 @@ void LOW()
 /*
  * Move to begin of line.
  */
-void BL()
+void BL(void)
 {
   move_to(LINE_START, y);
 }
@@ -99,7 +99,7 @@ void BL()
 /*
  * Move to end of line.
  */
-void EL()
+void EL(void)
 {
   move_to(LINE_END, y);
 }
@@ -107,7 +107,7 @@ void EL()
 /*
  * GOTO() prompts for a linenumber and moves to that line.
  */
-void GOTO()
+void GOTO(void)
 {
   int number;
   LINE *line;
@@ -126,7 +126,7 @@ void GOTO()
  * top_line of display.) Try to leave the cursor on the same line. If this is
  * not possible, leave cursor on the line halfway the page.
  */
-void PD()
+void PD(void)
 {
   register int i;
 
@@ -146,7 +146,7 @@ void PD()
  * Try to leave the cursor on the same line. If this is not possible, leave
  * cursor on the line halfway the page.
  */
-void PU()
+void PU(void)
 {
   register int i;
 
@@ -168,7 +168,7 @@ void PU()
 /*
  * Go to top of file, scrolling if possible, else redrawing screen.
  */
-void HO()
+void HO(void)
 {
   if (proceed(top_line, -screenmax) == header)
   	PU();			/* It fits. Let PU do it */
@@ -182,7 +182,7 @@ void HO()
 /*
  * Go to last line of file, scrolling if possible, else redrawing screen
  */
-void EF()
+void EF(void)
 {
   if (tail->prev->text[0] != '\n')
 	dummy_line();
@@ -198,7 +198,7 @@ void EF()
 /*
  * Scroll one line up. Leave the cursor on the same line (if possible).
  */
-void SU()
+void SU(void)
 {
   if (top_line->prev == header)	/* Top of file. Can't scroll */
   	return;
@@ -216,7 +216,7 @@ void SU()
 /*
  * Scroll one line down. Leave the cursor on the same line (if possible).
  */
-void SD()
+void SD(void)
 {
   if (forward_scroll() != ERRORS) 
   	move_to(x, (y == 0) ? 0 : y - 1);
@@ -228,7 +228,7 @@ void SD()
  * Perform a forward scroll. It returns ERRORS if we're at the last line of the
  * file.
  */
-int forward_scroll()
+int forward_scroll(void)
 {
   if (bot_line->next == tail)		/* Last line of file. No dice */
   	return ERRORS;
@@ -245,7 +245,7 @@ int forward_scroll()
  * Perform a backwards scroll. It returns ERRORS if we're at the first line
  * of the file.
  */
-int reverse_scroll()
+int reverse_scroll(void)
 {
   if (top_line->prev == header)
   	return ERRORS;		/* Top of file. Can't scroll */
@@ -279,13 +279,12 @@ int reverse_scroll()
  * MP() moves to the start of the previous word. A word is defined as a
  * number of non-blank characters separated by tabs spaces or linefeeds.
  */
-void MP()
+void MP(void)
 {
   move_previous_word(NO_DELETE);
 }
 
-void move_previous_word(remove)
-FLAG remove;
+void move_previous_word(FLAG remove)
 {
   register char *begin_line;
   register char *textp;
@@ -329,13 +328,12 @@ FLAG remove;
  * non-blank characters separated by tabs spaces or linefeeds. Always keep in
  * mind that the pointer shouldn't pass the '\n'.
  */
-void MN()
+void MN(void)
 {
   move_next_word(NO_DELETE);
 }
 
-void move_next_word(remove)
-FLAG remove;
+void move_next_word(FLAG remove)
 {
   register char *textp = cur_text;
 
@@ -373,7 +371,7 @@ FLAG remove;
  * If this character is the only character of the line, the current line will
  * be deleted.
  */
-void DCC()
+void DCC(void)
 {
   if (*cur_text == '\n')
   	delete(cur_line,cur_text, cur_line->next,cur_line->next->text);
@@ -386,7 +384,7 @@ void DCC()
  * at the beginning of the line, the last character if the previous line is
  * deleted. 
  */
-void DPC()
+void DPC(void)
 {
   if (x == 0 && cur_line->prev == header)
   	return;			/* Top of file */
@@ -399,7 +397,7 @@ void DPC()
  * DLN deletes all characters until the end of the line. If the current
  * character is a '\n', then delete that char.
  */
-void DLN()
+void DLN(void)
 {
   if (*cur_text == '\n')
   	DCC();
@@ -410,7 +408,7 @@ void DLN()
 /*
  * DNW() deletes the next word (as described in MN())
  */
-void DNW()
+void DNW(void)
 {
   if (*cur_text == '\n')
   	DCC();
@@ -421,7 +419,7 @@ void DNW()
 /*
  * DPW() deletes the next word (as described in MP())
  */
-void DPW()
+void DPW(void)
 {
   if (cur_text == cur_line->text)
   	DPC();
@@ -432,8 +430,7 @@ void DPW()
 /*
  * Insert character `character' at current location.
  */
-void S(character)
-register char character;
+void S(int character)
 {
   static char buffer[2];
 
@@ -467,7 +464,7 @@ register char character;
  * CTL inserts a control-char at the current location. A message that this
  * function is called is displayed at the status line.
  */
-void CTL()
+void CTL(void)
 {
   register char ctrl;
 
@@ -484,7 +481,7 @@ void CTL()
  * LIB insert a line at the current position and moves back to the end of
  * the previous line.
  */
-void LIB()
+void LIB(void)
 {
   S('\n');	  		/* Insert the line */
   UP();				/* Move one line up */
@@ -495,10 +492,7 @@ void LIB()
  * Line_insert() inserts a new line with text pointed to by `string'.
  * It returns the address of the new line.
  */
-LINE *line_insert(line, string, len)
-register LINE *line;
-char *string;
-int len;
+LINE *line_insert(register LINE *line, char *string, int len)
 {
   register LINE *new_line;
 
@@ -520,9 +514,7 @@ int len;
 /*
  * Insert() insert the string `string' at the given line and location.
  */
-int insert(line, location, string)
-register LINE *line;
-char *location, *string;
+int insert(register LINE *line, char *location, char *string)
 {
   register char *bufp = text_buffer;	/* Buffer for building line */
   register char *textp = line->text;
@@ -560,8 +552,7 @@ char *location, *string;
  * Line_delete() deletes the argument line out of the line list. The pointer to
  * the next line is returned.
  */
-LINE *line_delete(line)
-register LINE *line;
+LINE *line_delete(register LINE *line)
 {
   register LINE *next_line = line->next;
 
@@ -584,10 +575,8 @@ register LINE *line;
  * startposition and endposition and fixes the screen accordingly. It
  * returns the number of lines deleted.
  */
-void delete(start_line, start_textp, end_line, end_textp)
-register LINE *start_line;
-LINE *end_line;
-char *start_textp, *end_textp;
+void delete(register LINE *start_line, char *start_textp, LINE *end_line,
+							char *end_textp)
 {
   register char *textp = start_line->text;
   register char *bufp = text_buffer;	/* Storage for new line->text */
@@ -676,7 +665,7 @@ int lines_saved;			/* Nr of lines in buffer */
 /*
  * PT() inserts the buffer at the current location.
  */
-void PT()
+void PT(void)
 {
   register int fd;		/* File descriptor for buffer */
 
@@ -692,7 +681,7 @@ void PT()
  * IF() prompt for a filename and inserts the file at the current location 
  * in the file.
  */
-void IF()
+void IF(void)
 {
   register int fd;		/* File descriptor of file */
   char name[LINE_LEN];		/* Buffer for file name */
@@ -713,9 +702,7 @@ void IF()
  * File_insert() inserts a an opened file (as given by filedescriptor fd)
  * at the current location.
  */
-void file_insert(fd, old_pos)
-int fd;
-FLAG old_pos;
+void file_insert(int fd, FLAG old_pos)
 {
   char line_buffer[MAX_CHARS];		/* Buffer for next line */
   register LINE *line = cur_line;
@@ -772,7 +759,7 @@ FLAG old_pos;
  * WB() writes the buffer (yank_file) into another file, which
  * is prompted for.
  */
-void WB()
+void WB(void)
 {
   register int new_fd;		/* Filedescriptor to copy file */
   int yank_fd;			/* Filedescriptor to buffer */
@@ -817,7 +804,7 @@ void WB()
 /*
  * MA sets mark_line (mark_text) to the current line (text pointer). 
  */
-void MA()
+void MA(void)
 {
   mark_line = cur_line;
   mark_text = cur_text;
@@ -828,7 +815,7 @@ void MA()
  * YA() puts the text between the marked position and the current
  * in the buffer.
  */
-void YA()
+void YA(void)
 {
   set_up(NO_DELETE);
 }
@@ -836,7 +823,7 @@ void YA()
 /*
  * DT() is essentially the same as YA(), but in DT() the text is deleted.
  */
-void DT()
+void DT(void)
 {
   set_up(DELETE);
 }
@@ -846,8 +833,7 @@ void DT()
  * if the marked position is still valid. If it is, yank is called with the
  * arguments in the right order.
  */
-void set_up(remove)
-FLAG remove;				/* DELETE if text should be deleted */
+void set_up(FLAG remove)
 {
   switch (checkmark()) {
   	case NOT_VALID :
@@ -874,7 +860,7 @@ FLAG remove;				/* DELETE if text should be deleted */
  * NOT_VALID is returned when mark_line and/or mark_text are no longer valid.
  * Legal() checks if mark_text is valid on the mark_line.
  */
-FLAG checkmark()
+FLAG checkmark(void)
 {
   register LINE *line;
   FLAG cur_seen = FALSE;
@@ -907,7 +893,7 @@ FLAG checkmark()
 /*
  * Legal() checks if mark_text is still a valid pointer.
  */
-int legal()
+int legal(void)
 {
   register char *textp = mark_line->text;
 
@@ -923,10 +909,8 @@ int legal()
  * The caller must check that the arguments to yank() are valid. (E.g. in
  * the right order)
  */
-void yank(start_line, start_textp, end_line, end_textp, remove)
-LINE *start_line, *end_line;
-char *start_textp, *end_textp;
-FLAG remove;				/* DELETE if text should be deleted */
+void yank(LINE *start_line, char *start_textp, LINE *end_line, char *end_textp,
+								FLAG remove)
 {
   register LINE *line = start_line;
   register char *textp = start_textp;
@@ -986,8 +970,7 @@ FLAG remove;				/* DELETE if text should be deleted */
 
 #define MAXTRAILS	26
 
-int scratch_file(mode)
-FLAG mode;				/* Can be READ or WRITE permission */
+int scratch_file(FLAG mode)
 {
   static int trials = 0;		/* Keep track of trails */
   register char *y_ptr, *n_ptr;
@@ -1049,7 +1032,7 @@ char typed_expression[LINE_LEN];	/* Holds previous expr. */
 /*
  * SF searches forward for an expression.
  */
-void SF()
+void SF(void)
 {
   search("Search forward:", FORWARD);
 }
@@ -1057,7 +1040,7 @@ void SF()
 /*
  * SF searches backwards for an expression.
  */
-void SR()
+void SR(void)
 {
   search("Search reverse:", REVERSE);
 }
@@ -1069,8 +1052,7 @@ void SR()
  * The save flag indicates whether the expression should be appended at the
  * message pointer.
  */
-REGEX *get_expression(message)
-char *message;
+REGEX *get_expression(char *message)
 {
   static REGEX program;			/* Program of expression */
   char exp_buf[LINE_LEN];			/* Buffer for new expr. */
@@ -1099,7 +1081,7 @@ char *message;
  * GR() a replaces all matches from the current position until the end
  * of the file.
  */
-void GR()
+void GR(void)
 {
   change("Global replace:", VALID);
 }
@@ -1107,7 +1089,7 @@ void GR()
 /*
  * LR() replaces all matches on the current line.
  */
-void LR()
+void LR(void)
 {
   change("Line replace:", NOT_VALID);
 }
@@ -1118,9 +1100,7 @@ void LR()
  * for expressions at the current line and continues until the end of the file
  * if the FLAG file is VALID.
  */
-void change(message, file)
-char *message;				/* Message to prompt for expression */
-FLAG file;
+void change(char *message, FLAG file)
 {
   char mess_buf[LINE_LEN];	/* Buffer to hold message */
   char replacement[LINE_LEN];	/* Buffer to hold subst. pattern */
@@ -1188,10 +1168,7 @@ FLAG file;
  * as indicated by the program. Every '&' in the replacement is replaced by 
  * the original match. A \ in the replacement escapes the next character.
  */
-char *substitute(line, program, replacement)
-LINE *line;
-REGEX *program;
-char *replacement;		/* Contains replacement pattern */
+char *substitute(LINE *line, REGEX *program, char *replacement)
 {
   register char *textp = text_buffer;
   register char *subp = replacement;
@@ -1246,9 +1223,7 @@ char *replacement;		/* Contains replacement pattern */
  * Find_x() and find_y() display the right page on the screen, and return
  * the right coordinates for x and y. These coordinates are passed to move_to()
  */
-void search(message, method)
-char *message;
-FLAG method;
+void search(char *message, FLAG method)
 {
   register REGEX *program;
   register LINE *match_line;
@@ -1277,8 +1252,7 @@ FLAG method;
  * returns the new y coordinate, else it displays the correct page with the
  * matched line in the middle and returns the new y value;
  */
-int find_y(match_line)
-LINE *match_line;
+int find_y(LINE *match_line)
 {
   register LINE *line;
   register int count = 0;
@@ -1341,9 +1315,7 @@ char *too_long = "Regular expression too long";
  * allocates space for the expression, and copies the expression buffer into
  * this field.
  */
-void finished(program, last_exp)
-register REGEX *program;
-int *last_exp;
+void finished(register REGEX *program, int *last_exp)
 {
   register int length = (last_exp - exp_buffer) * sizeof(int);
 
@@ -1360,9 +1332,7 @@ int *last_exp;
  * the union. If all went well the expression is saved and the expression
  * pointer is set to the saved (and compiled) expression.
  */
-void compile(pattern, program)
-register char *pattern;			/* Pointer to pattern */
-REGEX *program;
+void compile(register char *pattern, REGEX *program)
 {
   register int *expression = exp_buffer;
   int *prev_char;			/* Pointer to previous compiled atom */
@@ -1501,10 +1471,7 @@ REGEX *program;
  * Match() will look through the whole file until a match is found.
  * NULL is returned if no match could be found.
  */
-LINE *match(program, string, method)
-REGEX *program;
-char *string;
-register FLAG method;
+LINE *match(REGEX *program, char *string, register FLAG method)
 {
   register LINE *line = cur_line;
   char old_char;				/* For saving chars */
@@ -1548,10 +1515,7 @@ register FLAG method;
  * indicates FORWARD or REVERSE search. It scans through the whole string
  * until a match is found, or the end of the string is reached.
  */
-int line_check(program, string, method)
-register REGEX *program;
-char *string;
-FLAG method;
+int line_check(register REGEX *program, char *string, FLAG method)
 {
   register char *textp = string;
 
@@ -1596,10 +1560,7 @@ FLAG method;
  * (and expression). Check() return MATCH for a match, NO_MATCH is the string 
  * couldn't be matched or REG_ERROR for an illegal opcode in expression.
  */
-int check_string(program, string, expression)
-REGEX *program;
-register char *string;
-int *expression;
+int check_string(REGEX *program, register char *string, int *expression)
 {
   register int opcode;		/* Holds opcode of next expr. atom */
   char c;				/* Char that must be matched */
@@ -1614,7 +1575,7 @@ int *expression;
 					   *string != '\0' && *string != '\n') {
   	c = *expression & LOW_BYTE;	  /* Extract match char */
   	opcode = *expression & HIGH_BYTE; /* Extract opcode */
-  	if (star_fl = (opcode & STAR)) {  /* Check star occurrence */
+  	if ((star_fl = (opcode & STAR))) {  /* Check star occurrence */
   		opcode &= ~STAR;	  /* Strip opcode */
   		mark = string;		  /* Mark current position */
   	}
@@ -1672,11 +1633,8 @@ int *expression;
  * It searches backwards until the (in check_string()) marked position
  * is reached, or a match is found.
  */
-int star(program, end_position, string, expression)
-REGEX *program;
-register char *end_position;
-register char *string;
-int *expression;
+int star(REGEX *program, register char *end_position, register char *string,
+							int *expression)
 {
   do {
   	string--;
@@ -1692,11 +1650,7 @@ int *expression;
  * it returns MATCH. if it isn't it returns NO_MATCH. These returns values
  * are reversed when the NEGATE field in the opcode is present.
  */
-int in_list(list, c, list_length, opcode)
-register int *list;
-char c;
-register int list_length;
-int opcode;
+int in_list(int *list, int c, register int list_length, int opcode)
 {
   if (c == '\0' || c == '\n')	/* End of string, never matches */
   	return NO_MATCH;
@@ -1713,7 +1667,7 @@ int opcode;
  * useful in combination with the EF and DN command in combination with the
  * Yank command set.
  */
-void dummy_line()
+void dummy_line(void)
 {
 	(void) line_insert(tail->prev, "\n", 1);
 	tail->prev->shift_count = DUMMY;
