@@ -11,7 +11,7 @@ SUBDIR= \
 	du \
 	finger \
 	from ftp \
-	genassym getopt head \
+	genassym getopt head hexdump \
 	indent infocmp join \
 	ldd \
 	login logname lorder m4 \
