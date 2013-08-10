@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 		s= write(ramfd, buf, r);
 		if (s != r)
 		{
-			fprintf(stderr, "error writing to '%s': %s\n",
+			fprintf(stderr, "error writing to '%s': %s\n", RAM,
 				s >= 0 ? "short write" : strerror(errno));
 			exit(1);
 		}
