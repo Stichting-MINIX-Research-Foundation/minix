@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.13 2010/02/09 14:06:37 drochner Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.18 2012/07/06 09:06:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,101 +34,77 @@
 #endif
 
 #include <sys/cdefs.h>
-#if 0
 #if !defined(lint)
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
-static char sccsid[] = "@(#)conv.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: conv.c,v 1.13 2010/02/09 14:06:37 drochner Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.18 2012/07/06 09:06:43 wiz Exp $");
 #endif
 #endif /* not lint */
-#endif
 
 #include <sys/types.h>
 
+#include <errno.h>
+#include <locale.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <string.h>
 
 #include "hexdump.h"
 
-void
-conv_c(PR *pr, u_char *p)
-{
-	char buf[10];
-	char const *str;
+FS *fshead;				/* head of format strings */
+int blocksize;				/* data block size */
+int exitval;				/* final exit value */
+int length = -1;			/* max bytes to read */
+static int isod = 0;
 
-	switch(*p) {
-	case '\0':
-		str = "\\0";
-		goto strpr;
-	/* case '\a': */
-	case '\007':
-		if (odmode)		/* od doesn't know about \a */
-			break;
-		str = "\\a";
-		goto strpr;
-	case '\b':
-		str = "\\b";
-		goto strpr;
-	case '\f':
-		str = "\\f";
-		goto strpr;
-	case '\n':
-		str = "\\n";
-		goto strpr;
-	case '\r':
-		str = "\\r";
-		goto strpr;
-	case '\t':
-		str = "\\t";
-		goto strpr;
-	case '\v':
-		if (odmode)
-			break;
-		str = "\\v";
-		goto strpr;
-	default:
-		break;
+int
+main(int argc, char *argv[])
+{
+	FS *tfs;
+	char *p;
+
+	setlocale(LC_ALL, "");
+
+	isod = 0;
+	p = strrchr(argv[0], 'o');
+	if (p != NULL && strcmp(p, "od") == 0)
+		isod = 1;
+
+	if (isod)
+		odsyntax(argc, &argv);
+	else
+		hexsyntax(argc, &argv);
+
+	/* figure out the data block size */
+	for (blocksize = 0, tfs = fshead; tfs; tfs = tfs->nextfs) {
+		tfs->bcnt = size(tfs);
+		if (blocksize < tfs->bcnt)
+			blocksize = tfs->bcnt;
 	}
-	if (isprint(*p)) {
-		*pr->cchar = 'c';
-		(void)printf(pr->fmt, *p);
-	} else {
-		(void)sprintf(buf, "%03o", (int)*p);
-		str = buf;
-strpr:		*pr->cchar = 's';
-		(void)printf(pr->fmt, str);
-	}
+	/* rewrite the rules, do syntax checking */
+	for (tfs = fshead; tfs; tfs = tfs->nextfs)
+		rewrite(tfs);
+
+	(void)next(argv);
+	display();
+	exit(exitval);
 }
 
 void
-conv_u(PR *pr, u_char *p)
+usage(void)
 {
-	static const char *list[] = {
-		"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",
-		 "bs",  "ht",  "lf",  "vt",  "ff",  "cr",  "so",  "si",
-		"dle", "dcl", "dc2", "dc3", "dc4", "nak", "syn", "etb",
-		"can",  "em", "sub", "esc",  "fs",  "gs",  "rs",  "us",
-	};
+	const char *pname = getprogname();
 
-						/* od used nl, not lf */
-	if (*p <= 0x1f) {
-		*pr->cchar = 's';
-		if (odmode && *p == 0x0a)
-			(void)printf(pr->fmt, "nl");
-		else
-			(void)printf(pr->fmt, list[*p]);
-	} else if (*p == 0x7f) {
-		*pr->cchar = 's';
-		(void)printf(pr->fmt, "del");
-	} else if (odmode && *p == 0x20) {	/* od replaces space with sp */
-		*pr->cchar = 's';
-		(void)printf(pr->fmt, " sp");
-	} else if (isprint(*p)) {
-		*pr->cchar = 'c';
-		(void)printf(pr->fmt, *p);
-	} else {
-		*pr->cchar = 'x';
-		(void)printf(pr->fmt, (int)*p);
-	}
+	(void)fprintf(stderr, "usage: %s ", pname);
+	if (isod)
+		(void)fprintf(stderr, "[-aBbcDdeFfHhIiLlOovXx] [-A base] "
+		    "[-j skip] [-N length] [-t type_string] [[+]offset[.][Bb]] "
+		    "[file ...]\n");
+	else
+		(void)fprintf(stderr, "[-bCcdovx] [-e format_string] [-f format_file] "
+		    "[-n length] [-s skip] [file ...]\n");
+	exit(1);
 }

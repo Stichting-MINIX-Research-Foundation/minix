@@ -155,6 +155,7 @@
 2013/03/22 12:00:00,usr.bin/from
 2013/04/05 12:00:00,usr.bin/ftp
 2013/03/18 12:00:00,usr.bin/head
+2013/08/10 12:00:00,usr.bin/hexdump
 2012/10/17 12:00:00,usr.bin/genassym
 2013/03/09 12:00:00,usr.bin/getopt
 2012/10/17 12:00:00,usr.bin/gzip

@@ -34,7 +34,6 @@
 #endif
 
 #include <sys/cdefs.h>
-#if 0
 #if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
@@ -42,7 +41,6 @@ static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 __RCSID("$NetBSD: display.c,v 1.21 2009/01/18 21:34:32 apb Exp $");
 #endif
 #endif /* not lint */
-#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
