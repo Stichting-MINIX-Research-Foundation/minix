@@ -1333,7 +1333,7 @@
 #define RTCDEV_TM	m2_p1	/* pointer to struct tm */
 #define RTCDEV_FLAGS	m2_s1	/* clock flags flags */
 #define RTCDEV_STATUS	m2_i2	/* OK or error code */
-#define RTCDEV_GRANT	m2_p1	/* grant containing struct tm */
+#define RTCDEV_GRANT	m2_i3	/* grant containing struct tm */
 
 /* Bits in 'RTCDEV_FLAGS' field of real time clock requests. */
 #define RTCDEV_NOFLAGS	0x00	/* no flags are set */

@@ -94,6 +94,8 @@ arch_setup(struct rtc *r)
 	r->set_time = arch_set_time;
 	r->pwr_off = arch_pwr_off;
 	r->exit = arch_exit;
+
+	return OK;
 }
 
 static int

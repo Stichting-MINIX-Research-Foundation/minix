@@ -232,7 +232,6 @@ tda19988_blk_transfer(dev_t minor, int do_write, u64_t pos64,
 	struct device *dv;
 	u64_t dv_size;
 	int r;
-	u64_t position;
 	cp_grant_id_t grant;
 
 	log_trace(&log, "tda19988_blk_transfer()\n");
@@ -265,7 +264,7 @@ tda19988_blk_transfer(dev_t minor, int do_write, u64_t pos64,
 
 		/* don't go past the end of the device */
 		if (pos64 + count > dv_size) {
-			count = dv_size - position;
+			count = dv_size - pos64;
 		}
 
 		/* don't overflow copybuf */
