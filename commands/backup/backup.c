@@ -54,7 +54,10 @@
 #define NO_SAVINGS 512		/* compress can return code 2 */
 #define OUT_OF_SPACE 2
 
-struct dirent dir_ent[MAX_ENTRIES];
+struct dirent_full {
+	struct dirent de;
+	char d_name[MAXNAMLEN+1];
+} dir_ent[MAX_ENTRIES];
 int entries = 0;
 
 struct sorted {
@@ -138,8 +141,10 @@ char *argv[];
   	perror(dir1);
   	return 1;
   }
-  while(entries < MAX_ENTRIES && (e=readdir(DIR1)))
-  	memcpy(&dir_ent[entries++], e, sizeof(*e));
+  for(entries = 0; entries < MAX_ENTRIES && (e=readdir(DIR1)); entries++) {
+	memcpy(&dir_ent[entries].de, e, sizeof(*e));
+	snprintf(dir_ent[entries].d_name, MAXNAMLEN, "%s", e->d_name);
+  }
   closedir(DIR1);
   if (entries == MAX_ENTRIES)
 	error(FATAL, "directory ", dir1, " is too large");
@@ -222,15 +227,15 @@ int n;
 
   for (i = 0; i < n; i++) {
 	/* Mark "." and ".." as null entries, as well as unstatable ones. */
-	if (strcmp(dir_ent[i].d_name, ".") == 0) dir_ent[i].d_ino = 0;
-	if (strcmp(dir_ent[i].d_name, "..") == 0) dir_ent[i].d_ino = 0;
-	if (dir_ent[i].d_ino == 0) continue;
+	if (strcmp(dir_ent[i].d_name, ".") == 0) dir_ent[i].de.d_ino = 0;
+	if (strcmp(dir_ent[i].d_name, "..") == 0) dir_ent[i].de.d_ino = 0;
+	if (dir_ent[i].de.d_ino == 0) continue;
 
 	/* Stat the file. */
 	snprintf(cbuf, sizeof(cbuf), "%s/%s", dir1, dir_ent[i].d_name);
 	if (stat(cbuf, &s) < 0) {
 		error(NONFATAL, "cannot stat ", cbuf, "");
-		dir_ent[i].d_ino = 0;	/* mark as unusable */
+		dir_ent[i].de.d_ino = 0;	/* mark as unusable */
 		continue;
 	}
 	sorted[i].mode = s.st_mode;
@@ -243,7 +248,7 @@ int n;
   /* Squeeze out all the entries whose ino field is 0. */
   j = 0;
   for (i = 0; i < n; i++) {
-	if (dir_ent[i].d_ino != 0) {
+	if (dir_ent[i].de.d_ino != 0) {
 		sorted[j] = sorted[i];
 		j++;
 	}
