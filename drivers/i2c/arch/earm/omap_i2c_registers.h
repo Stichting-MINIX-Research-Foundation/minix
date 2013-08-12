@@ -115,7 +115,7 @@
 
 /* Masks */
 
-#define ADDRESS_MASK (0x3ff)	/* Highest 10 bit address -- 9..0 */
+#define MAX_I2C_SA_MASK (0x3ff)	/* Highest 10 bit address -- 9..0 */
 
 /* Bit Offsets within Registers (only those used are listed) */
 

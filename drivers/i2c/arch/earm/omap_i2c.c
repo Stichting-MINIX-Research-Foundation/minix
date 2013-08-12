@@ -12,6 +12,7 @@
 #include <minix/padconf.h>
 #include <minix/sysutil.h>
 #include <minix/type.h>
+#include <minix/spin.h>
 
 /* device headers */
 #include <minix/i2c.h>
@@ -29,8 +30,13 @@
 /* local headers */
 #include "omap_i2c.h"
 
-/* defines the set of register */
-
+/*
+ * defines the set of register
+ *
+ * Warning: always use the 16-bit variants of read/write/set from mmio.h
+ * to access these registers. The DM37XX TRM Section 17.6 warns that 32-bit
+ * accesses can corrupt the register contents.
+ */
 typedef struct omap_i2c_registers
 {
 	vir_bytes I2C_REVNB_LO;	/* AM335X Only */
@@ -75,7 +81,7 @@ typedef struct omap_i2c_registers
 typedef struct omap_i2c_bus
 {
 	enum bus_types
-	{ am335x, dm37xx } bus_type;
+	{ AM335X_I2C_BUS, DM37XX_I2C_BUS} bus_type;
 	phys_bytes mr_base;
 	phys_bytes mr_size;
 	vir_bytes mapped_addr;
@@ -154,15 +160,15 @@ static omap_i2c_regs_t dm37xx_i2c_regs = {
 /* Define the buses available on each chip */
 
 static omap_i2c_bus_t am335x_i2c_buses[] = {
-	{am335x, AM335X_I2C0_BASE, AM335X_I2C0_SIZE, 0, &am335x_i2c_regs,
+	{AM335X_I2C_BUS, AM335X_I2C0_BASE, AM335X_I2C0_SIZE, 0, &am335x_i2c_regs,
 		    AM335X_FUNCTIONAL_CLOCK, AM335X_MODULE_CLOCK,
 		    BUS_SPEED_400KHz, AM335X_REV_MAJOR, AM335X_REV_MINOR,
 	    AM335X_I2C0_IRQ, 1, 1},
-	{am335x, AM335X_I2C1_BASE, AM335X_I2C1_SIZE, 0, &am335x_i2c_regs,
+	{AM335X_I2C_BUS, AM335X_I2C1_BASE, AM335X_I2C1_SIZE, 0, &am335x_i2c_regs,
 		    AM335X_FUNCTIONAL_CLOCK, AM335X_MODULE_CLOCK,
 		    BUS_SPEED_100KHz, AM335X_REV_MAJOR, AM335X_REV_MINOR,
 	    AM335X_I2C1_IRQ, 2, 3},
-	{am335x, AM335X_I2C2_BASE, AM335X_I2C2_SIZE, 0, &am335x_i2c_regs,
+	{AM335X_I2C_BUS, AM335X_I2C2_BASE, AM335X_I2C2_SIZE, 0, &am335x_i2c_regs,
 		    AM335X_FUNCTIONAL_CLOCK, AM335X_MODULE_CLOCK,
 		    BUS_SPEED_100KHz, AM335X_REV_MAJOR, AM335X_REV_MINOR,
 	    AM335X_I2C2_IRQ, 3, 3}
@@ -171,15 +177,15 @@ static omap_i2c_bus_t am335x_i2c_buses[] = {
 #define AM335X_OMAP_NBUSES (sizeof(am335x_i2c_buses) / sizeof(omap_i2c_bus_t))
 
 static omap_i2c_bus_t dm37xx_i2c_buses[] = {
-	{dm37xx, DM37XX_I2C0_BASE, DM37XX_I2C0_SIZE, 0, &dm37xx_i2c_regs,
+	{DM37XX_I2C_BUS, DM37XX_I2C0_BASE, DM37XX_I2C0_SIZE, 0, &dm37xx_i2c_regs,
 		    DM37XX_FUNCTIONAL_CLOCK, DM37XX_MODULE_CLOCK,
 		    BUS_SPEED_100KHz, DM37XX_REV_MAJOR, DM37XX_REV_MINOR,
 	    DM37XX_I2C0_IRQ, 1, 1},
-	{dm37xx, DM37XX_I2C1_BASE, DM37XX_I2C1_SIZE, 0, &dm37xx_i2c_regs,
+	{DM37XX_I2C_BUS, DM37XX_I2C1_BASE, DM37XX_I2C1_SIZE, 0, &dm37xx_i2c_regs,
 		    DM37XX_FUNCTIONAL_CLOCK, DM37XX_MODULE_CLOCK,
 		    BUS_SPEED_100KHz, DM37XX_REV_MAJOR, DM37XX_REV_MINOR,
 	    DM37XX_I2C1_IRQ, 2, 2},
-	{dm37xx, DM37XX_I2C2_BASE, DM37XX_I2C2_SIZE, 0, &dm37xx_i2c_regs,
+	{DM37XX_I2C_BUS, DM37XX_I2C2_BASE, DM37XX_I2C2_SIZE, 0, &dm37xx_i2c_regs,
 		    DM37XX_FUNCTIONAL_CLOCK, DM37XX_MODULE_CLOCK,
 		    BUS_SPEED_100KHz, DM37XX_REV_MAJOR, DM37XX_REV_MINOR,
 	    DM37XX_I2C2_IRQ, 3, 3}
@@ -208,8 +214,7 @@ static int omap_i2c_process(minix_i2c_ioctl_exec_t * m);
 /* Bus Specific Code */
 static void omap_i2c_flush(void);
 static uint16_t omap_i2c_poll(uint16_t mask);
-static int omap_i2c_claim_bus(void);
-static int omap_i2c_release_bus(void);
+static int omap_i2c_bus_is_free(void);
 static int omap_i2c_soft_reset(void);
 static void omap_i2c_bus_init(void);
 #if 0
@@ -223,13 +228,6 @@ static int omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen,
     int dostop);
 static int omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen,
     int dostop);
-
-/* Helpers for register access */
-
-#define reg_read(a)    (*(volatile uint16_t *)(omap_i2c_bus->mapped_addr + a))
-#define reg_write(a,v) (*(volatile uint16_t *)(omap_i2c_bus->mapped_addr + a) = (v))
-#define reg_set_bit(a,v)   reg_write((a), reg_read((a)) | (1<<v))
-#define reg_clear_bit(a,v) reg_write((a), reg_read((a)) & ~(1<<v))
 
 /*
  * Performs the action in minix_i2c_ioctl_exec_t.
@@ -251,9 +249,9 @@ omap_i2c_process(minix_i2c_ioctl_exec_t * ioctl_exec)
 	omap_i2c_flush();	/* clear any garbage in the fifo */
 
 	/* Check bus busy flag before using the bus */
-	r = omap_i2c_claim_bus();
-	if (r == -1) {
-		log_warn(&log, "Can't Claim Bus\n");
+	r = omap_i2c_bus_is_free();
+	if (r == 0) {
+		log_warn(&log, "Bus is busy\n");
 		return EBUSY;
 	}
 
@@ -282,8 +280,6 @@ omap_i2c_process(minix_i2c_ioctl_exec_t * ioctl_exec)
 		return r;
 	}
 
-	omap_i2c_release_bus();
-
 	return OK;
 }
 
@@ -304,12 +300,10 @@ omap_i2c_flush(void)
 		if ((status & (1 << RRDY)) != 0) {	/* bytes available for reading */
 
 			/* consume the byte and throw it away */
-			(void) reg_read(omap_i2c_bus->regs->I2C_DATA);
+			(void) read16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_DATA);
 
 			/* clear the read ready flag */
 			omap_i2c_write_status(1 << RRDY);
-
-			micro_delay(250);
 
 		} else {
 			break;	/* buffer drained */
@@ -324,55 +318,44 @@ omap_i2c_flush(void)
 static uint16_t
 omap_i2c_poll(uint16_t mask)
 {
-	int tries;
+	spin_t spin;
 	uint16_t status;
 
-	for (tries = 0; tries < 1000; tries++) {
-
+	/* poll for up to 250 ms */
+	spin_init(&spin, 250000);
+	do {
 		status = omap_i2c_read_status();
 		if ((status & mask) != 0) {	/* any bits in mask set */
 			return status;
 		}
 
-		micro_delay(250);	/* else wait and try again */
-	}
+	} while (spin_check(&spin));
 
 	return status;		/* timeout reached, abort */
 }
 
 /*
- * Poll Bus Busy Flag until the bus becomes free (return 0) or the timeout
- * expires (return -1).
+ * Poll Bus Busy Flag until the bus becomes free (return 1) or the timeout
+ * expires (return 0).
  */
 static int
-omap_i2c_claim_bus(void)
+omap_i2c_bus_is_free(void)
 {
-	int tries;
+	spin_t spin;
 	uint16_t status;
 
-	for (tries = 0; tries < 1000; tries++) {
+	/* wait for up to 1 second for the bus to become free */
+	spin_init(&spin, 1000000);
+	do {
 
 		status = omap_i2c_read_status();
 		if ((status & (1 << BB)) == 0) {
-			return 0;	/* bus is free */
+			return 1;	/* bus is free */
 		}
 
-		micro_delay(1000);
-	}
+	} while (spin_check(&spin));
 
-	return -1;		/* timeout expired */
-}
-
-/*
- * Clean up after a transfer
- */
-static int
-omap_i2c_release_bus(void)
-{
-	omap_i2c_write_status(0x7fff);
-	micro_delay(50000);
-
-	return 0;
+	return 0;		/* timeout expired */
 }
 
 static void
@@ -380,14 +363,14 @@ omap_i2c_clkconf(int i2c_bus_id)
 {
 	clkconf_init();
 
-	if (omap_i2c_bus->bus_type == dm37xx) {
+	if (omap_i2c_bus->bus_type == DM37XX_I2C_BUS) {
 
 		clkconf_set(CM_ICLKEN1_CORE, BIT((15 + i2c_bus_id)),
 		    0xffffffff);
 		clkconf_set(CM_FCLKEN1_CORE, BIT((15 + i2c_bus_id)),
 		    0xffffffff);
 
-	} else if (omap_i2c_bus->bus_type == am335x) {
+	} else if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
 
 		switch (i2c_bus_id) {
 		case 0:
@@ -417,7 +400,7 @@ omap_i2c_padconf(int i2c_bus_id)
 
 	padconf_init();
 
-	if (omap_i2c_bus->bus_type == am335x) {
+	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
 
 		/* use the options suggested in starterware driver */
 		pinopts =
@@ -466,27 +449,27 @@ omap_i2c_padconf(int i2c_bus_id)
 static int
 omap_i2c_soft_reset(void)
 {
-	int tries;
+	spin_t spin;
 
 	/* Disable to do soft reset */
-	reg_write(omap_i2c_bus->regs->I2C_CON, 0);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CON, 0);
 	micro_delay(50000);
 
 	/* Do a soft reset */
-	reg_write(omap_i2c_bus->regs->I2C_SYSC, (1 << SRST));
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_SYSC, (1 << SRST));
 
 	/* Have to temporarily enable I2C to read RDONE */
-	reg_set_bit(omap_i2c_bus->regs->I2C_CON, I2C_EN);
+	set16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CON, (1<<I2C_EN), (1<<I2C_EN));
 	micro_delay(50000);
 
-	/* wait for reset to complete */
-	for (tries = 0; tries < 10000; tries++) {
-
-		if (reg_read(omap_i2c_bus->regs->I2C_SYSS) & (1 << RDONE)) {
+	/* wait up to 3 seconds for reset to complete */
+	spin_init(&spin, 3000000);
+	do {
+		if (read16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_SYSS) & (1 << RDONE)) {
 			return OK;
 		}
-		micro_delay(1000);
-	}
+
+	} while (spin_check(&spin));
 
 	log_warn(&log, "Tried soft reset, but bus never came back.\n");
 	return EIO;
@@ -532,10 +515,10 @@ omap_i2c_intr_enable(void)
 	intmask |= (1 << NACK);
 	intmask |= (1 << AL);
 
-	if (omap_i2c_bus->bus_type == am335x) {
-		reg_write(omap_i2c_bus->regs->I2C_IRQENABLE_SET, intmask);
-	} else if (omap_i2c_bus->bus_type == dm37xx) {
-		reg_write(omap_i2c_bus->regs->I2C_IE, intmask);
+	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
+		write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_IRQENABLE_SET, intmask);
+	} else if (omap_i2c_bus->bus_type == DM37XX_I2C_BUS) {
+		write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_IE, intmask);
 	} else {
 		log_warn(&log, "Don't know how to enable interrupts.\n");
 	}
@@ -546,39 +529,39 @@ omap_i2c_bus_init(void)
 {
 
 	/* Ensure i2c module is disabled before setting prescalar & bus speed */
-	reg_write(omap_i2c_bus->regs->I2C_CON, 0);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CON, 0);
 	micro_delay(50000);
 
 	/* Disable autoidle */
-	reg_clear_bit(omap_i2c_bus->regs->I2C_SYSC, AUTOIDLE);
+	set16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_SYSC, (1<<AUTOIDLE), (0<<AUTOIDLE));
 
 	/* Set prescalar to obtain 12 MHz i2c module clock */
-	reg_write(omap_i2c_bus->regs->I2C_PSC,
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_PSC,
 	    ((omap_i2c_bus->functional_clock / omap_i2c_bus->module_clock) -
 		1));
 
 	/* Set the bus speed */
-	reg_write(omap_i2c_bus->regs->I2C_SCLL,
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_SCLL,
 	    ((omap_i2c_bus->module_clock / (2 * omap_i2c_bus->bus_speed)) -
 		7));
-	reg_write(omap_i2c_bus->regs->I2C_SCLH,
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_SCLH,
 	    ((omap_i2c_bus->module_clock / (2 * omap_i2c_bus->bus_speed)) -
 		5));
 
 	/* Set own I2C address */
-	if (omap_i2c_bus->bus_type == am335x) {
-		reg_write(omap_i2c_bus->regs->I2C_OA, I2C_OWN_ADDRESS);
-	} else if (omap_i2c_bus->bus_type == dm37xx) {
-		reg_write(omap_i2c_bus->regs->I2C_OA0, I2C_OWN_ADDRESS);
+	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
+		write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_OA, I2C_OWN_ADDRESS);
+	} else if (omap_i2c_bus->bus_type == DM37XX_I2C_BUS) {
+		write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_OA0, I2C_OWN_ADDRESS);
 	} else {
 		log_warn(&log, "Don't know how to set own address.\n");
 	}
 
 	/* Set TX/RX Threshold to 1 and disable I2C DMA */
-	reg_write(omap_i2c_bus->regs->I2C_BUF, 0x0000);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_BUF, 0x0000);
 
 	/* Bring the i2c module out of reset */
-	reg_set_bit(omap_i2c_bus->regs->I2C_CON, I2C_EN);
+	set16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CON, (1<<I2C_EN), (1<<I2C_EN));
 	micro_delay(50000);
 
 	/*
@@ -592,11 +575,11 @@ omap_i2c_read_status(void)
 {
 	uint16_t status = 0x0000;
 
-	if (omap_i2c_bus->bus_type == am335x) {
+	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
 		/* TRM says to use RAW for polling for events */
-		status = reg_read(omap_i2c_bus->regs->I2C_IRQSTATUS_RAW);
-	} else if (omap_i2c_bus->bus_type == dm37xx) {
-		status = reg_read(omap_i2c_bus->regs->I2C_STAT);
+		status = read16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_IRQSTATUS_RAW);
+	} else if (omap_i2c_bus->bus_type == DM37XX_I2C_BUS) {
+		status = read16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_STAT);
 	} else {
 		log_warn(&log, "Don't know how to read i2c bus status.\n");
 	}
@@ -607,11 +590,11 @@ omap_i2c_read_status(void)
 static void
 omap_i2c_write_status(uint16_t mask)
 {
-	if (omap_i2c_bus->bus_type == am335x) {
+	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
 		/* write 1's to IRQSTATUS (not RAW) to clear the bits */
-		reg_write(omap_i2c_bus->regs->I2C_IRQSTATUS, mask);
-	} else if (omap_i2c_bus->bus_type == dm37xx) {
-		reg_write(omap_i2c_bus->regs->I2C_STAT, mask);
+		write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_IRQSTATUS, mask);
+	} else if (omap_i2c_bus->bus_type == DM37XX_I2C_BUS) {
+		write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_STAT, mask);
 	} else {
 		log_warn(&log, "Don't know how to clear i2c bus status.\n");
 	}
@@ -621,27 +604,30 @@ static int
 omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen, int dostop)
 {
 	int r, i;
-	uint16_t conopts = 0;
-	uint16_t pollmask = 0;
-	uint16_t errmask = 0;
+	uint16_t conopts;
+	uint16_t pollmask;
+	uint16_t errmask;
 
 	/* Set address of slave device */
-	addr &= ADDRESS_MASK;	/* sanitize address (10-bit max) */
+	conopts = 0;
+	addr &= MAX_I2C_SA_MASK;	/* sanitize address (10-bit max) */
 	if (addr > 0x7f) {
 		/* 10-bit extended address in use, need to set XSA */
 		conopts |= (1 << XSA);
 	}
 
+	errmask = 0;
 	errmask |= (1 << ROVR);
 	errmask |= (1 << AERR);
 	errmask |= (1 << NACK);
 	errmask |= (1 << AL);
 
+	pollmask = 0;
 	pollmask |= (1 << RRDY);
 
 	/* Set bytes to read and slave address */
-	reg_write(omap_i2c_bus->regs->I2C_CNT, buflen);
-	reg_write(omap_i2c_bus->regs->I2C_SA, addr);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CNT, buflen);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_SA, addr);
 
 	/* Set control register */
 	conopts |= (1 << I2C_EN);	/* enabled */
@@ -652,7 +638,7 @@ omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen, int dostop)
 		conopts |= (1 << STP);	/* stop condition */
 	}
 
-	reg_write(omap_i2c_bus->regs->I2C_CON, conopts);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CON, conopts);
 
 	for (i = 0; i < buflen; i++) {
 		/* Data to read? */
@@ -669,7 +655,7 @@ omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen, int dostop)
 		}
 
 		/* read a byte */
-		buf[i] = reg_read(omap_i2c_bus->regs->I2C_DATA) & 0xff;
+		buf[i] = read16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_DATA) & 0xff;
 
 		/* clear the read ready flag */
 		omap_i2c_write_status(pollmask);
@@ -681,8 +667,14 @@ omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen, int dostop)
 		return EIO;
 	}
 
+	/* Wait for operation to complete */
+	pollmask = (1<<ARDY); /* poll access ready bit */
+	r = omap_i2c_poll(pollmask);
+	if ((r & pollmask) == 0) {
+		log_warn(&log, "Read operation never finished.\n");
+		return EBUSY;
+	}
 	omap_i2c_write_status(0x7fff);
-	micro_delay(50000);
 
 	return 0;
 }
@@ -691,26 +683,29 @@ static int
 omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen, int dostop)
 {
 	int r, i;
-	uint16_t conopts = 0;
-	uint16_t pollmask = 0;
-	uint16_t errmask = 0;
+	uint16_t conopts;
+	uint16_t pollmask;
+	uint16_t errmask;
 
 	/* Set address of slave device */
-	addr &= ADDRESS_MASK;	/* sanitize address (10-bit max) */
+	conopts = 0;
+	addr &= MAX_I2C_SA_MASK;	/* sanitize address (10-bit max) */
 	if (addr > 0x7f) {
 		/* 10-bit extended address in use, need to set XSA */
 		conopts |= (1 << XSA);
 	}
 
+	pollmask = 0;
 	pollmask |= (1 << XRDY);
 
+	errmask = 0;
 	errmask |= (1 << ROVR);
 	errmask |= (1 << AERR);
 	errmask |= (1 << NACK);
 	errmask |= (1 << AL);
 
-	reg_write(omap_i2c_bus->regs->I2C_CNT, buflen);
-	reg_write(omap_i2c_bus->regs->I2C_SA, addr);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CNT, buflen);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_SA, addr);
 
 	/* Set control register */
 	conopts |= (1 << I2C_EN);	/* enabled */
@@ -723,7 +718,7 @@ omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen, int dostop)
 	}
 
 	omap_i2c_write_status(0x7fff);
-	reg_write(omap_i2c_bus->regs->I2C_CON, conopts);
+	write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_CON, conopts);
 
 	for (i = 0; i < buflen; i++) {
 
@@ -737,7 +732,7 @@ omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen, int dostop)
 			return EBUSY;
 		}
 
-		reg_write(omap_i2c_bus->regs->I2C_DATA, buf[i]);
+		write16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_DATA, buf[i]);
 
 		/* clear the write ready flag */
 		omap_i2c_write_status(pollmask);
@@ -745,11 +740,18 @@ omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen, int dostop)
 
 	r = omap_i2c_read_status();
 	if ((r & (1 << NACK)) != 0) {
+		log_warn(&log, "NACK\n");
 		return EIO;
 	}
 
+	/* Wait for operation to complete */
+	pollmask = (1<<ARDY); /* poll access ready bit */
+	r = omap_i2c_poll(pollmask);
+	if ((r & pollmask) == 0) {
+		log_warn(&log, "Write operation never finished.\n");
+		return EBUSY;
+	}
 	omap_i2c_write_status(0x7fff);
-	micro_delay(50000);
 
 	return 0;
 }
@@ -826,15 +828,15 @@ omap_interface_setup(int (**process) (minix_i2c_ioctl_exec_t * ioctl_exec),
 	omap_i2c_bus_init();
 
 	/* Get I2C Revision */
-	if (omap_i2c_bus->bus_type == am335x) {
+	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
 		/* I2C_REVLO revision: major (bits 10-8), minor (bits 5-0) */
-		i2c_rev = reg_read(omap_i2c_bus->regs->I2C_REVNB_LO);
+		i2c_rev = read16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_REVNB_LO);
 		major = (i2c_rev >> 8) & 0x07;
 		minor = i2c_rev & 0x3f;
 
-	} else if (omap_i2c_bus->bus_type == dm37xx) {
+	} else if (omap_i2c_bus->bus_type == DM37XX_I2C_BUS) {
 		/* I2C_REV revision: major (bits 7-4), minor (bits 3-0) */
-		i2c_rev = reg_read(omap_i2c_bus->regs->I2C_REV);
+		i2c_rev = read16(omap_i2c_bus->mapped_addr + omap_i2c_bus->regs->I2C_REV);
 		major = (i2c_rev >> 4) & 0x0f;
 		minor = i2c_rev & 0x0f;
 	} else {
