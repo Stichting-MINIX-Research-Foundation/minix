@@ -99,17 +99,18 @@ card()
 	printf "%2d. %s %s\n" "$card_number" "$card_mark" "$card_name"
 }
 
-first_pcicard=4
+first_pcicard=5
 
 cards()
 {
     # Run lspci once to a temp file for use in 'card' function
-    lspci >$LSPCI || exit
+    lspci >$LSPCI 2>/dev/null || true
 
     card 0 "No Ethernet card (no networking)"
     card 1 "3Com 501 or 3Com 509 based card"
     card 2 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
     card 3 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
+    card 4 "lan8710a (on BeagleBone, BeagleBone Black)"
     n=$first_pcicard
     for pcicard in $pci_list
     do	var=\$pci_descr$pcicard; descr="`eval echo $var`"
@@ -201,6 +202,7 @@ drv_params()
            test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
            test "$v" = 1 && echo " chose option 4, the defaults for emulation by Bochs have been set."
 		;;
+	4) driver=lan8710a;	;;
         $first_after_pci) driver="psip0"; ;;    
         *) warn "choose a number"
       esac
