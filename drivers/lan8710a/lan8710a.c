@@ -58,7 +58,6 @@ main(int argc, char *argv[])
 	message m;
 	int r;
 	int ipc_status;
-	static int rx_first_enabled = FALSE;
 
 	/* SEF local startup */
 	env_setargs(argc, argv);
@@ -90,18 +89,6 @@ main(int argc, char *argv[])
 				break;
 			case DL_GETSTAT_S:
 				lan8710a_getstat(&m);
-				/*
-				 * Workaround:
-				 * Re-enabling interrupts here is made to avoid
-				 * problem that Rx interrupt came when it can't
-				 * be handled. When this problem occurs next Rx
-				 * interrupts don't appear.
-				 */
-				 if(rx_first_enabled == FALSE) {
-					rx_first_enabled = TRUE;
-					lan8710a_enable_interrupt(RX_INT |
-								  TX_INT);
-				}
 				break;
 			default:
 				panic("Illegal message: %d", m.m_type);
@@ -796,6 +783,9 @@ lan8710a_init_hw(void)
 
 	/* GMII RX and TX release from reset. */
 	lan8710a_reg_set(CPSW_SL_MACCONTROL(1), CPSW_SL_GMII_EN);
+	
+	/* Enable interrupts. */
+	lan8710a_enable_interrupt(RX_INT | TX_INT);
 
 	return TRUE;
 }
