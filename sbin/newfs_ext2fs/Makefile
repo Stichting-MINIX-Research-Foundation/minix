@@ -1,6 +1,10 @@
 #	$NetBSD: Makefile,v 1.4 2012/03/24 08:22:24 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
+.if defined(__MINIX)
+WARNS=3
+.endif
+
 WARNS?=	4
 
 CWARNFLAGS+=	-Wno-sign-compare

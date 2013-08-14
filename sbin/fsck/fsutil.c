@@ -265,8 +265,13 @@ print_mtime(time_t t)
 }
 
 
+#ifdef __minix
+__dead void
+catch(int n)
+#else
 void
 catch(int n)
+#endif
 {
 	if (ckfinish) (*ckfinish)(0);
 	_exit(FSCK_EXIT_SIGNALLED);

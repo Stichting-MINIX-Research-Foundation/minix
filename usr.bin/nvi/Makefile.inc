@@ -2,5 +2,10 @@
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+NOCLANGERROR=yes
+NOGCCERROR=yes
+.endif
+
 DIST= ${NETBSDSRCDIR}/dist/nvi
 .PATH: ${DIST}
