@@ -47,7 +47,7 @@ u32_t system_hz;
 /* name of cpu cycle types, in the order they appear in /psinfo. */
 const char *cputimenames[] = { "user", "ipc", "kernelcall" };
 
-#define CPUTIMENAMES (sizeof(cputimenames)/sizeof(cputimenames[0]))
+#define CPUTIMENAMES ((int) (sizeof(cputimenames)/sizeof(cputimenames[0])))
 
 #define CPUTIME(m, i) (m & (1L << (i)))
 

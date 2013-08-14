@@ -1,6 +1,10 @@
 #	$NetBSD: Makefile,v 1.55 2012/04/24 16:52:26 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
+.if defined(__MINIX)
+WARNS=2
+.endif
+
 WARNS?=	5
 
 .include <bsd.own.mk>
