@@ -967,7 +967,7 @@
 
 
 /* Define if your assembler and linker support .hidden. */
-/* #undef HAVE_GAS_HIDDEN */
+#define HAVE_GAS_HIDDEN 1
 
 /* Define if your assembler supports .lcomm with an alignment field. */
 #ifndef USED_FOR_TARGET
