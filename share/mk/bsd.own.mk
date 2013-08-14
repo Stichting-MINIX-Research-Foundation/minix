@@ -85,12 +85,6 @@ LDS_RELOC=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xr
 LDS_SHARED_LIB=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xsc
 LDS_N=			${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xbn
 
-# LSC In the current state there is too much to be done
-# Some package have been identified by directly adding NOGCCERROR
-# To their Makefiles
-NOGCCERROR?=	yes
-NOCLANGERROR?=	yes
-
 AFLAGS+=	-D__ASSEMBLY__
 CFLAGS+=	-fno-builtin
 
