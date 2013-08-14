@@ -19,7 +19,7 @@ typedef enum {
  * 'os_val' is then a base passed to strtol().
  */
 struct optset {
-  char *os_name;
+  const char *os_name;
   optset_type os_type;
   void *os_ptr;
   int os_val;

@@ -42,6 +42,8 @@ __RCSID("$NetBSD: crt0-common.c,v 1.9 2012/08/13 02:15:35 matt Exp $");
 #include <sys/exec.h>
 #ifndef __minix
 #include <sys/syscall.h>
+#else
+#include <string.h>
 #endif
 #include <machine/profile.h>
 #include <stdlib.h>

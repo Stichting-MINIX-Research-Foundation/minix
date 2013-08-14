@@ -483,7 +483,7 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
  *===========================================================================*/
 int search_dir(ldir_ptr, string, numb, flag, check_permissions, ftype)
 register struct inode *ldir_ptr; /* ptr to inode for dir to search */
-char string[NAME_MAX + 1];	 /* component to search for */
+const char string[NAME_MAX + 1];	 /* component to search for */
 ino_t *numb;			 /* pointer to inode number */
 int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 int check_permissions;		 /* check permissions when flag is !IS_EMPTY */

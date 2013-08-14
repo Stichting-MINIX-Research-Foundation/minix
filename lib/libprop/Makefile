@@ -2,6 +2,10 @@
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+WARNS=3
+.endif
+
 WARNS?=5
 USE_SHLIBDIR=	yes
 

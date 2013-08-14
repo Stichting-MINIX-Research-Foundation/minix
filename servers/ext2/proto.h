@@ -62,7 +62,7 @@ int fs_slink(void);
 int fs_lookup(void);
 struct inode *advance(struct inode *dirp, char string[NAME_MAX + 1], int
 	chk_perm);
-int search_dir(struct inode *ldir_ptr, char string [NAME_MAX + 1], ino_t
+int search_dir(struct inode *ldir_ptr, const char string [NAME_MAX + 1], ino_t
 	*numb, int flag, int check_permissions, int ftype);
 
 /* protect.c */
@@ -99,7 +99,7 @@ int fs_utime(void);
 time_t clock_time(void);
 unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
-void mfs_nul_f(char *file, int line, char *str, unsigned int len,
+void mfs_nul_f(const char *file, int line, const char *str, unsigned int len,
 	unsigned int maxlen);
 int min(unsigned int l, unsigned int r);
 int no_sys(void);

@@ -761,7 +761,7 @@ ioreq_t req;
 	tcp_fd_t *tcp_fd;
 	tcp_port_t *tcp_port;
 	tcp_conn_t *tcp_conn;
-	nwio_tcpconf_t *tcp_conf;
+	nwio_tcpconf_t *io_tcp_conf;
 	nwio_tcpopt_t *tcp_opt;
 	tcp_cookie_t *cookiep;
 	acc_t *acc, *conf_acc, *opt_acc;
@@ -797,19 +797,19 @@ ioreq_t req;
 		result= tcp_setconf(tcp_fd);
 		break;
 	case NWIOGTCPCONF:
-		conf_acc= bf_memreq(sizeof(*tcp_conf));
-assert (conf_acc->acc_length == sizeof(*tcp_conf));
-		tcp_conf= (nwio_tcpconf_t *)ptr2acc_data(conf_acc);
+		conf_acc= bf_memreq(sizeof(*io_tcp_conf));
+assert (conf_acc->acc_length == sizeof(*io_tcp_conf));
+		io_tcp_conf= (nwio_tcpconf_t *)ptr2acc_data(conf_acc);
 
-		*tcp_conf= tcp_fd->tf_tcpconf;
+		*io_tcp_conf= tcp_fd->tf_tcpconf;
 		if (tcp_fd->tf_flags & TFF_CONNECTED)
 		{
 			tcp_conn= tcp_fd->tf_conn;
-			tcp_conf->nwtc_locport= tcp_conn->tc_locport;
-			tcp_conf->nwtc_remaddr= tcp_conn->tc_remaddr;
-			tcp_conf->nwtc_remport= tcp_conn->tc_remport;
+			io_tcp_conf->nwtc_locport= tcp_conn->tc_locport;
+			io_tcp_conf->nwtc_remaddr= tcp_conn->tc_remaddr;
+			io_tcp_conf->nwtc_remport= tcp_conn->tc_remport;
 		}
-		tcp_conf->nwtc_locaddr= tcp_fd->tf_port->tp_ipaddr;
+		io_tcp_conf->nwtc_locaddr= tcp_fd->tf_port->tp_ipaddr;
 		result= (*tcp_fd->tf_put_userdata)(tcp_fd->tf_srfd,
 			0, conf_acc, TRUE);
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
