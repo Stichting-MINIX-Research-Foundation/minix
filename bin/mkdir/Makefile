@@ -3,6 +3,7 @@
 
 PROG=	mkdir
 .ifdef __MINIX
+WARNS=3
 SYMLINKS=	$(BINDIR)/$(PROG) /usr/bin/$(PROG)
 .endif
 

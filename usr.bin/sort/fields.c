@@ -393,7 +393,7 @@ numhex(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	int64_t n = 0;
 	int l;
 	SKIP_BLANKS(line);
-	sscanf((const char *) pos, "%lx", &n);
+	sscanf((const char *) pos, "%llx", &n);
 	l = snprintf((char *)buf, sizeof(buf), "%lld", n);
 	return number(pos, bufend, buf, buf + l, flag);
 }

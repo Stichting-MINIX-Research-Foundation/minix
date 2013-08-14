@@ -170,7 +170,6 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 			 * conservatively - just write Xes into the last component.
 			 * There is space because of the malloc().
 			 */
-			int cc;
 			char *last_slash;
 			strcpy(arcn->tmp_name, arcn->name);
 			if(!(last_slash = strrchr(arcn->tmp_name, '/')))
