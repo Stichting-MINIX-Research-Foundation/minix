@@ -15,7 +15,7 @@ int max_error = 3;
 int subtest;
 char *filename = "statvfs_test_XXXXXX";
 
-void create_file(void)
+static void create_file(void)
 {
 	char buf[SIZE]={0};
 	char *p;

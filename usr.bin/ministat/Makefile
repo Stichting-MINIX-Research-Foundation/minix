@@ -3,6 +3,9 @@ PROG=	ministat
 DPADD=	${LIBM}
 LDADD=	-lm
 
+# BJG
+WARNS=3
+
 .include <bsd.prog.mk>
 
 test:	${PROG}

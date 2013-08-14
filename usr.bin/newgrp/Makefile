@@ -8,6 +8,11 @@ SRCS=	newgrp.c grutil.c
 BINOWN=	root
 BINMODE=4555
 
+.if defined(__MINIX)
+# Too many warnings for our clang otherwise
+WARNS=3
+.endif
+
 CPPFLAGS+=-DGRUTIL_ACCEPT_GROUP_NUMBERS
 CPPFLAGS+=-DGRUTIL_ALLOW_GROUP_ERRORS	# for POSIX.1 compliance
 .if !defined(__MINIX)
