@@ -19,6 +19,7 @@ COPTS.test51.c=	-mhard-float
 COPTS.test52.c=	-mhard-float
 .endif
 
+WARNS=
 COPTS.test9.c=	-O0
 COPTS.test37.c=	-O0
 COPTS.test53.c=	-O0
