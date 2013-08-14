@@ -23,6 +23,10 @@ USE_JEMALLOC=no
 USE_MINIXMALLOC=yes
 USE_FORT=no
 USE_LIBTRE=no
+
+# BJG too many warnings
+NOGCCERROR?=    yes
+NOCLANGERROR?=  yes
 .endif # defined(__MINIX)
 
 USE_FORT?=	yes

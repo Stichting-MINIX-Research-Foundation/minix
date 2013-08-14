@@ -51,6 +51,10 @@
 
 /* @(#) Id */
 
+#if defined(__minix) && defined(_STANDALONE)
+#include <lib/libkern/libkern.h>
+#endif
+
 #include "deflate.h"
 
 const char deflate_copyright[] =

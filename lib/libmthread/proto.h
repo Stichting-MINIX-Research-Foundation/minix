@@ -28,7 +28,7 @@ void mthread_panic_f(const char *file, int line, const char *msg);
 #define mthread_debug(m) mthread_debug_f(__FILE__, __LINE__, (m))
 void mthread_debug_f(const char *file, int line, const char *msg);
 #else
-void mthread_panic_s(void);
+__dead void mthread_panic_s(void);
 # define mthread_panic(m) mthread_panic_s()
 # define mthread_debug(m)
 #endif

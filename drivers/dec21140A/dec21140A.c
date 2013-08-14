@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	case DL_GETSTAT_S: do_get_stat_s(&m);      break;
 
 	default:  
-		printf("message 0x%lx; %d from %d\n",
+		printf("message 0x%x; %d from %d\n",
 			m.m_type, m.m_type-DL_RQ_BASE, m.m_source);
 		panic("illegal message: %d", m.m_type);
 	}
@@ -179,12 +179,12 @@ static void do_get_stat_s(message * mp)
   if ((rc = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0UL,
 			(vir_bytes)&dep->de_stat,
 			sizeof(dep->de_stat))) != OK)
-        panic(str_CopyErrMsg, rc);
+        panic("%s %d", str_CopyErrMsg, rc);
 
   mp->m_type = DL_STAT_REPLY;
   rc = send(mp->m_source, mp);
   if( rc != OK )
-    panic(str_StatErrMsg, rc);
+    panic("%s %d", str_StatErrMsg, rc);
   return;
 }
 
@@ -252,7 +252,7 @@ static void do_conf(const message * mp)
   }
   
   if (send(mp->m_source, &reply_mess) != OK)
-    panic(str_SendErrMsg, mp->m_source);
+    panic("%s %d", str_SendErrMsg, mp->m_source);
 
   return;
 }
@@ -272,7 +272,7 @@ static void do_reply(dpeth_t * dep)
   r = send(dep->de_client, &reply);
 
   if(r < 0)
-    panic(str_SendErrMsg, r);
+    panic("%s %d", str_SendErrMsg, r);
 
   dep->de_read_s = 0;
   dep->de_flags &= NOT(DEF_ACK_SEND | DEF_ACK_RECV);
@@ -475,7 +475,7 @@ static void do_vread_s(const message * mp, int from_int)
     dep->de_read_iovec.iod_iovec_offset = 0;
     size = de_calc_iov_size(&dep->de_read_iovec);
     if (size < ETH_MAX_PACK_SIZE) 
-      panic(str_SizeErrMsg, size);
+      panic("%s %d", str_SizeErrMsg, size);
 
     /* Copy buffer to user area  and clear ownage */
     size = (descr->descr->des[DES0]&DES0_FL)>>DES0_FL_SHIFT;
@@ -513,7 +513,7 @@ static void do_vread_s(const message * mp, int from_int)
       r= sys_safecopyto(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 0,
 			(vir_bytes)buffer, bytes);
       if (r != OK)
-	panic(str_CopyErrMsg, r);
+	panic("%s %d", str_CopyErrMsg, r);
       buffer += bytes;
       
       if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
@@ -580,7 +580,7 @@ static void de_first_init(dpeth_t *dep)
   vir_bytes descr_vir = (vir_bytes)dep->sendrecv_descr_buf;
   vir_bytes buffer_vir = (vir_bytes)dep->sendrecv_buf;
   de_loc_descr_t *loc_descr;
-  u32_t temp;
+  phys_bytes temp;
 
 
   for(i=0;i<2;i++){
@@ -608,7 +608,7 @@ static void de_first_init(dpeth_t *dep)
     for(j=0; j < (i==DESCR_RECV ? DE_NB_RECV_DESCR : DE_NB_SEND_DESCR); j++){
       /* translate buffers physical address */
       r = sys_umap(SELF, VM_D, (vir_bytes)loc_descr->buf1, temp, 
-		   &(loc_descr->descr->des[DES_BUF1]));
+		   (phys_bytes *) &(loc_descr->descr->des[DES_BUF1]));
       if(r != OK) panic("umap failed: %d", r);      
       loc_descr->descr->des[DES_BUF2] = 0;
       memset(&loc_descr->descr->des[DES0],0,sizeof(u32_t));
@@ -624,11 +624,11 @@ static void de_first_init(dpeth_t *dep)
   /* record physical location of two first descriptor */
   r = sys_umap(SELF, VM_D, (vir_bytes)dep->descr[DESCR_RECV][0].descr, 
 	       sizeof(de_descr_t), &dep->sendrecv_descr_phys_addr[DESCR_RECV]);
-  if(r != OK) panic(str_UmapErrMsg, r);
+  if(r != OK) panic("%s %d", str_UmapErrMsg, r);
 
   r = sys_umap(SELF, VM_D, (vir_bytes)dep->descr[DESCR_TRAN][0].descr,
 	       sizeof(de_descr_t), &dep->sendrecv_descr_phys_addr[DESCR_TRAN]);
-  if(r != OK) panic(str_UmapErrMsg, r);
+  if(r != OK) panic("%s %d", str_UmapErrMsg, r);
 
   DEBUG(printf("Descr: head tran=[%08X] head recv=[%08X]\n",
 	       dep->sendrecv_descr_phys_addr[DESCR_TRAN],
@@ -641,12 +641,12 @@ static void de_first_init(dpeth_t *dep)
       r = sys_umap(SELF, VM_D, (vir_bytes)&(loc_descr->descr),
 			sizeof(de_descr_t), &temp);
       if(r != OK)
-	panic(str_UmapErrMsg, r);
+	panic("%s %d", str_UmapErrMsg, r);
 
       if( ((loc_descr->descr->des[DES_BUF1] & 0x3) != 0) ||
 	  ((loc_descr->descr->des[DES_BUF2] & 0x3) != 0) ||
 	  ((temp&0x3)!=0) )
-	panic(str_AlignErrMsg, temp);
+	panic("%s 0x%lx", str_AlignErrMsg, temp);
 
       loc_descr++;
     }
@@ -778,7 +778,7 @@ static void de_get_userdata_s(int user_proc, cp_grant_id_t grant,
   len = (count > IOVEC_NR ? IOVEC_NR : count) * sizeof(iovec_t);
   rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len);
   if (rc != OK)
-    panic(str_CopyErrMsg, rc);
+    panic("%s %d", str_CopyErrMsg, rc);
   return;
 }
 
@@ -806,7 +806,7 @@ static void do_vwrite_s(const message * mp, int from_int){
   if (dep->de_mode == DEM_ENABLED) {
     
     if (!from_int && (dep->de_flags & DEF_SENDING))
-      panic(str_BusyErrMsg);
+      panic("%s", str_BusyErrMsg);
 
     descr = &dep->descr[DESCR_TRAN][dep->cur_descr[DESCR_TRAN]];
 
@@ -828,7 +828,7 @@ static void do_vwrite_s(const message * mp, int from_int){
     iovp->iod_iovec_offset = 0;
     totalsize = size = de_calc_iov_size(iovp);
     if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)
-      panic(str_SizeErrMsg, size);
+      panic("%s %d", str_SizeErrMsg, size);
 
     dep->bytes_tx += size;
     dep->de_stat.ets_packetT++;
@@ -842,7 +842,7 @@ static void do_vwrite_s(const message * mp, int from_int){
       r= sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant,
 			  0, (vir_bytes)buffer, bytes);
       if (r != OK)
-	panic(str_CopyErrMsg, r);
+	panic("%s %d", str_CopyErrMsg, r);
       buffer += bytes;
 
       if (++ix >= IOVEC_NR) {	

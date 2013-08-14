@@ -23,6 +23,7 @@
 #include <minix/sysinfo.h>
 #include <minix/type.h>
 #include <minix/vm.h>
+#include <minix/ds.h>
 #include <string.h>
 #include <machine/archtypes.h>
 #include <lib.h>
@@ -526,6 +527,6 @@ int do_getrusage()
 		r_usage.ru_stime.tv_usec = usec % 1000000;
 	}
 
-	return sys_datacopy(SELF, &r_usage, who_e,
+	return sys_datacopy(SELF, (vir_bytes) &r_usage, who_e,
 		(vir_bytes) m_in.RU_RUSAGE_ADDR, (vir_bytes) sizeof(r_usage));
 }

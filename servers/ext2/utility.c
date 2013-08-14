@@ -87,7 +87,7 @@ int min(unsigned int l, unsigned int r)
 /*===========================================================================*
  *				mfs_nul					     *
  *===========================================================================*/
-void mfs_nul_f(char *file, int line, char *str, unsigned int len,
+void mfs_nul_f(const char *file, int line, const char *str, unsigned int len,
 		      unsigned int maxlen)
 {
   if(len < maxlen && str[len-1] != '\0') {

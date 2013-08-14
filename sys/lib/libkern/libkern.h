@@ -337,9 +337,7 @@ int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
 		   void *);
-#ifndef __minix
 uint32_t crc32(uint32_t, const uint8_t *, size_t);
-#endif
 unsigned int	popcount(unsigned int) __constfunc;
 unsigned int	popcountl(unsigned long) __constfunc;
 unsigned int	popcountll(unsigned long long) __constfunc;

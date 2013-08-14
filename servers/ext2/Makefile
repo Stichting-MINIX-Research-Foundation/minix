@@ -8,6 +8,8 @@ SRCS=	balloc.c link.c \
 DPADD+=	${LIBMINIXFS} ${LIBBDEV} ${LIBSYS}
 LDADD+= -lminixfs -lbdev -lsys
 
+WARNS=3
+
 MAN=
 
 BINDIR?= /sbin
