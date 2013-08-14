@@ -276,7 +276,7 @@ create_entries(int handle)
 	return 0;
 }
 
-char * parse_mode(int mode){
+static char * parse_mode(int mode){
 	/* Convert a 4 digit octal number int a proto  entry as described in
    the mkfs.mfs man page e.g. [suid-char][guid-char]0777 mode */
 
@@ -290,7 +290,7 @@ char * parse_mode(int mode){
 }
 
 static int
-dump_entry(FILE * out, int index, char *base_dir)
+dump_entry(FILE * out, int index, const char *base_dir)
 {
 
 	int space;
@@ -346,7 +346,7 @@ dump_entry(FILE * out, int index, char *base_dir)
 }
 
 static int
-dump_proto(FILE * out, char *base_dir)
+dump_proto(FILE * out, const char *base_dir)
 {
 	int i;
 	fprintf(out, "boot\n0 0");
@@ -377,7 +377,7 @@ main(int argc, char **argv)
 {
 	int ch, fh_in;
 	FILE *out;
-	char *base_path;
+	const char *base_path;
 	char *input_file, *output_file;
 
 	input_file = NULL;

@@ -3,6 +3,10 @@
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+WARNS=3
+.endif
+
 USE_FORT?= yes	# setuid
 PROG=	passwd
 SRCS=	local_passwd.c passwd.c

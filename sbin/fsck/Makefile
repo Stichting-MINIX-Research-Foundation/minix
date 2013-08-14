@@ -12,5 +12,6 @@ DPADD+=${LIBPROP}
 
 # LSC Does not compile without any warnings...
 NOGCCERROR:=yes
+NOCLANGERROR:=yes
 
 .include <bsd.prog.mk>
