@@ -173,7 +173,7 @@ int pg_mapkernel(void)
 	assert(!(kern_phys_start % ARM_SECTION_SIZE));
 	pde = kern_vir_start / ARM_SECTION_SIZE; /* start pde */
 	while(mapped < kern_kernlen) {
-		pagedir[pde] = (kern_phys & ARM_VM_PDE_MASK) | ARM_VM_SECTION
+		pagedir[pde] = (kern_phys & ARM_VM_SECTION_MASK) | ARM_VM_SECTION
 			| ARM_VM_SECTION_SUPER
 			| ARM_VM_SECTION_DOMAIN
 			| ARM_VM_SECTION_WT;
