@@ -59,6 +59,11 @@ int *status_ptr;
 		return r;
 	}
 
+	/* Let non-datalink requests through regardless. */
+	if (!IS_DL_RQ(m_ptr->m_type)) {
+		return r;
+	}
+
 	/* See if only DL_CONF is to be expected. */
 	if(conf_expected) {
 		if(m_ptr->m_type == DL_CONF) {

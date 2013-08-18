@@ -255,6 +255,9 @@
 #define DL_RQ_BASE	0x200		
 #define DL_RS_BASE	0x280		
 
+#define IS_DL_RQ(type) (((type) & ~0x7f) == DL_RQ_BASE)
+#define IS_DL_RS(type) (((type) & ~0x7f) == DL_RS_BASE)
+
 /* Message types for data link layer requests. */
 #define DL_CONF		(DL_RQ_BASE + 0)
 #define DL_GETSTAT_S	(DL_RQ_BASE + 1)
