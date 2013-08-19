@@ -18,6 +18,7 @@
 ./bin/cpio				minix-sys
 ./bin/date				minix-sys
 ./bin/dev2name				minix-sys	obsolete
+./bin/df				minix-sys
 ./bin/echo				minix-sys
 ./bin/ed				minix-sys
 ./bin/expr				minix-sys
@@ -288,7 +289,7 @@
 ./usr/bin/DESCRIBE			minix-sys
 ./usr/bin/devmand			minix-sys
 ./usr/bin/devsize			minix-sys
-./usr/bin/df				minix-sys
+./usr/bin/df				minix-sys	obsolete
 ./usr/bin/dhcpd				minix-sys
 ./usr/bin/dhrystone			minix-sys
 ./usr/bin/diff				minix-sys
@@ -4228,6 +4229,7 @@
 ./usr/man/man3/strnvis.3			minix-sys
 ./usr/man/man3/strnvisx.3			minix-sys
 ./usr/man/man3/strpbrk.3					minix-sys
+./usr/man/man3/strpct.3				minix-sys
 ./usr/man/man3/strptime.3					minix-sys
 ./usr/man/man3/strrchr.3					minix-sys
 ./usr/man/man3/strsep.3					minix-sys

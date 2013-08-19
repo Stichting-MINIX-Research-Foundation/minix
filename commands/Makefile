@@ -6,7 +6,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	cawf cd cdprobe cpp \
 	chmod chown ci cleantmp cmp co \
 	compress cp crc cron crontab \
-	dd decomp16 DESCRIBE devmand devsize df dhcpd \
+	dd decomp16 DESCRIBE devmand devsize dhcpd \
 	dhrystone diff diskctl dumpcore \
 	eject factor fbdctl \
 	find fix format fortune fsck.mfs \
