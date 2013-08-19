@@ -7,8 +7,8 @@
  *   do_lstat:  perform the LSTAT system call
  *   do_stat:	perform the STAT system call
  *   do_fstat:	perform the FSTAT system call
- *   do_statvfs: perform the STATVFS system call
- *   do_fstatvfs: perform the FSTATVFS system call
+ *   do_statvfs:    perform the STATVFS1 system call
+ *   do_fstatvfs:   perform the FSTATVFS1 system call
  *   do_getvfsstat: perform the GETVFSSTAT system call
  */
 
@@ -310,8 +310,8 @@ static int fill_statvfs(struct vmnt *vmp, endpoint_t endpt, vir_bytes buf_addr,
  *===========================================================================*/
 int do_statvfs(message *UNUSED(m_out))
 {
-/* Perform the statvfs(name, buf) system call. */
-  int r;
+/* Perform the statvfs1(name, buf, flags) system call. */
+  int r, flags;
   struct vnode *vp;
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
@@ -319,9 +319,10 @@ int do_statvfs(message *UNUSED(m_out))
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  statbuf = (vir_bytes) job_m_in.name2;
+  vname1 = (vir_bytes) job_m_in.VFS_STATVFS1_NAME;
+  vname1_length = (size_t) job_m_in.VFS_STATVFS1_LEN;
+  statbuf = (vir_bytes) job_m_in.VFS_STATVFS1_BUF;
+  flags = job_m_in.VFS_STATVFS1_FLAGS;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
@@ -329,7 +330,7 @@ int do_statvfs(message *UNUSED(m_out))
 
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = fill_statvfs(vp->v_vmnt, who_e, statbuf, ST_WAIT);
+  r = fill_statvfs(vp->v_vmnt, who_e, statbuf, flags);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -343,17 +344,18 @@ int do_statvfs(message *UNUSED(m_out))
  *===========================================================================*/
 int do_fstatvfs(message *UNUSED(m_out))
 {
-/* Perform the fstatvfs(fd, buf) system call. */
+/* Perform the fstatvfs1(fd, buf, flags) system call. */
   register struct filp *rfilp;
-  int r, rfd;
+  int r, rfd, flags;
   vir_bytes statbuf;
 
-  rfd = job_m_in.fd;
-  statbuf = (vir_bytes) job_m_in.name2;
+  rfd = job_m_in.VFS_FSTATVFS1_FD;
+  statbuf = (vir_bytes) job_m_in.VFS_FSTATVFS1_BUF;
+  flags = job_m_in.VFS_FSTATVFS1_FLAGS;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
-  r = fill_statvfs(rfilp->filp_vno->v_vmnt, who_e, statbuf, ST_WAIT);
+  r = fill_statvfs(rfilp->filp_vno->v_vmnt, who_e, statbuf, flags);
 
   unlock_filp(rfilp);
 

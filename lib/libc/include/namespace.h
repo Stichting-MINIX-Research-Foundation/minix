@@ -284,6 +284,7 @@
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
 #define fstatvfs		_fstatvfs
+#define fstatvfs1		_fstatvfs1
 #define ftok			_ftok
 #define ftruncate		_ftruncate
 #define fts_children		_fts_children
@@ -600,6 +601,7 @@
 #define srand48			_srand48
 #define srandom			_srandom
 #define statvfs(a, b)		_statvfs(a, b)
+#define statvfs1		_statvfs1
 #define strcasecmp		_strcasecmp
 #define strdup			_strdup
 #define stresep			_stresep
