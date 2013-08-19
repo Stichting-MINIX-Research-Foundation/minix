@@ -74,6 +74,7 @@
 #define SYSUNAME	  78
 #define GETDENTS_321	  80	/* to VFS */
 #define LLSEEK		  81	/* to VFS */
+#define GETVFSSTAT	  82	/* to VFS */
 #define STATVFS 	  83	/* to VFS */
 #define FSTATVFS 	  84	/* to VFS */
 #define SELECT            85	/* to VFS */

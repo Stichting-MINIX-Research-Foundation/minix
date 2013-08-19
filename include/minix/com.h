@@ -902,6 +902,11 @@
 #define SEL_ERRORFDS   m8_p3
 #define SEL_TIMEOUT    m8_p4
 
+/* Field names for the getvfsstat(2) call. */
+#define VFS_GETVFSSTAT_BUF	m1_p1
+#define VFS_GETVFSSTAT_SIZE	m1_i1
+#define VFS_GETVFSSTAT_FLAGS	m1_i2
+
 /* Field names for the fstatvfs call */
 #define FSTATVFS_FD m1_i1
 #define FSTATVFS_BUF m1_p1

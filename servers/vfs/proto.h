@@ -287,8 +287,10 @@ int do_fstat(message *m_out);
 int do_stat(message *m_out);
 int do_statvfs(message *m_out);
 int do_fstatvfs(message *m_out);
+int do_getvfsstat(message *m_out);
 int do_rdlink(message *m_out);
 int do_lstat(message *m_out);
+int update_statvfs(struct vmnt *vmp, struct statvfs *buf);
 
 /* time.c */
 int do_utime(message *);

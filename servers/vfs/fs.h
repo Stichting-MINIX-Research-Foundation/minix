@@ -28,7 +28,7 @@
 #include "proto.h"
 #include "threads.h"
 #include "glo.h"
-#include "comm.h"
+#include "type.h"
 #include "vmnt.h"
 
 #endif
