@@ -5,7 +5,6 @@
 #include "fs.h"
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <sys/statvfs.h>
 #include "inode.h"
 #include "super.h"
@@ -55,28 +54,6 @@ static int stat_inode(
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,
 		     (size_t) sizeof(statbuf));
-
-  return(r);
-}
-
-
-/*===========================================================================*
- *				fs_fstatfs				     *
- *===========================================================================*/
-int fs_fstatfs()
-{
-  struct statfs st;
-  struct inode *rip;
-  int r;
-
-  if((rip = find_inode(fs_dev, ROOT_INODE)) == NULL)
-	  return(EINVAL);
-
-  st.f_bsize = rip->i_sp->s_block_size;
-
-  /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-		     (vir_bytes) 0, (vir_bytes) &st, (size_t) sizeof(st));
 
   return(r);
 }

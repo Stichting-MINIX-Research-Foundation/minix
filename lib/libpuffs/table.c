@@ -20,7 +20,7 @@ int (*fs_call_vec[])(void) = {
     fs_inhibread,       /* 7   */
     fs_stat,            /* 8   */
     fs_utime,           /* 9   */
-    fs_fstatfs,         /* 10  */
+    fs_statvfs,		/* 10  */
     fs_breadwrite,      /* 11  */
     fs_breadwrite,      /* 12  */
     fs_unlink,          /* 13  */
@@ -42,7 +42,6 @@ int (*fs_call_vec[])(void) = {
     no_sys,		/* 29  */	/* Was: fs_newnode */
     fs_rdlink,          /* 30  */
     fs_getdents,        /* 31  */
-    fs_statvfs,		/* 32  */
-    no_sys,		/* 33 peek */
-    no_sys,		/* 34 bpeek */
+    no_sys,		/* 32 peek */
+    no_sys,		/* 33 bpeek */
 };

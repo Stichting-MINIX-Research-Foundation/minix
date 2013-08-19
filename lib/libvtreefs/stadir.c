@@ -3,7 +3,6 @@
 #include "inc.h"
 
 #include <time.h>
-#include <sys/statfs.h>
 #include <sys/statvfs.h>
 #include <string.h>
 
@@ -56,23 +55,7 @@ int fs_stat(void)
 }
 
 /*===========================================================================*
- *				fs_fstatfs				     *
- *===========================================================================*/
-int fs_fstatfs(void)
-{
-	/* Retrieve file system statistics.
-	 */
-	struct statfs statfs;
-
-	memset(&statfs, 0, sizeof(statfs));
-
-	/* Copy the struct to user space. */
-	return sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		(vir_bytes) &statfs, (phys_bytes) sizeof(statfs));
-}
-
-/*===========================================================================*
- *				fs_fstatfs				     *
+ *				fs_statvfs				     *
  *===========================================================================*/
 int fs_statvfs(void)
 {

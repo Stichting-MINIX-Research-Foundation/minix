@@ -7,14 +7,12 @@
  *   do_lstat:  perform the LSTAT system call
  *   do_stat:	perform the STAT system call
  *   do_fstat:	perform the FSTAT system call
- *   do_fstatfs: perform the FSTATFS system call
  *   do_statvfs: perform the STATVFS system call
  *   do_fstatvfs: perform the FSTATVFS system call
  */
 
 #include "fs.h"
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <string.h>
@@ -204,29 +202,6 @@ int do_fstat(message *UNUSED(m_out))
 
   r = req_stat(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
 	       who_e, statbuf);
-
-  unlock_filp(rfilp);
-
-  return(r);
-}
-
-/*===========================================================================*
- *				do_fstatfs				     *
- *===========================================================================*/
-int do_fstatfs(message *UNUSED(m_out))
-{
-/* Perform the fstatfs(fd, buf) system call. */
-  struct filp *rfilp;
-  int r, rfd;
-  vir_bytes statbuf;
-
-  rfd = job_m_in.fd;
-  statbuf = (vir_bytes) job_m_in.buffer;
-
-  /* Is the file descriptor valid? */
-  if( (rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
-
-  r = req_fstatfs(rfilp->filp_vno->v_fs_e, who_e, statbuf);
 
   unlock_filp(rfilp);
 

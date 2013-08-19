@@ -4,36 +4,11 @@
 
 #include "fs.h"
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <sys/statvfs.h>
 #include <minix/vfsif.h>
 
 #include "puffs.h"
 #include "puffs_priv.h"
-
-
-/*===========================================================================*
- *				fs_fstatfs				     *
- *===========================================================================*/
-int fs_fstatfs()
-{
-  int r;
-  struct statvfs st_vfs;
-  struct statfs st;
-
-  if (global_pu->pu_ops.puffs_fs_statvfs(global_pu, &st_vfs) != 0) {
-	lpuffs_debug("statfs failed\n");
-	return(EINVAL);
-  }
-
-  st.f_bsize = st_vfs.f_bsize;
-
-  /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-		     (vir_bytes) 0, (vir_bytes) &st, (size_t) sizeof(st));
-
-  return(r);
-}
 
 
 /*===========================================================================*
