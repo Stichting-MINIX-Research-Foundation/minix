@@ -209,11 +209,42 @@ int do_fstat(message *UNUSED(m_out))
 }
 
 /*===========================================================================*
+ *				fill_statvfs				     *
+ *===========================================================================*/
+static int fill_statvfs(struct vnode *vp, endpoint_t endpt, vir_bytes buf_addr)
+{
+/* Fill a statvfs structure in a userspace process.  First let the target file
+ * server (as identified by the given vnode) fill in most fields.  Then fill in
+ * some remaining fields with local information.  Finally, copy the result to
+ * user space.
+ */
+  struct statvfs buf;
+  struct vmnt *vmp;
+  int r;
+
+  vmp = vp->v_vmnt;
+
+  if ((r = req_statvfs(vp->v_fs_e, &buf)) != OK)
+	return r;
+
+  if (vmp->m_flags & VMNT_READONLY)
+	buf.f_flag |= ST_RDONLY;
+
+  buf.f_fsid = vmp->m_dev;
+
+  strlcpy(buf.f_fstypename, "", sizeof(buf.f_fstypename)); /* FIXME */
+  strlcpy(buf.f_mntonname, vmp->m_mount_path, sizeof(buf.f_mntonname));
+  strlcpy(buf.f_mntfromname, vmp->m_mount_dev, sizeof(buf.f_mntfromname));
+
+  return sys_datacopy(SELF, (vir_bytes) &buf, endpt, buf_addr, sizeof(buf));
+}
+
+/*===========================================================================*
  *				do_statvfs				     *
  *===========================================================================*/
 int do_statvfs(message *UNUSED(m_out))
 {
-/* Perform the stat(name, buf) system call. */
+/* Perform the statvfs(name, buf) system call. */
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
@@ -232,7 +263,7 @@ int do_statvfs(message *UNUSED(m_out))
 
   if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  r = req_statvfs(vp->v_fs_e, who_e, statbuf);
+  r = fill_statvfs(vp, who_e, statbuf);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -246,7 +277,7 @@ int do_statvfs(message *UNUSED(m_out))
  *===========================================================================*/
 int do_fstatvfs(message *UNUSED(m_out))
 {
-/* Perform the fstat(fd, buf) system call. */
+/* Perform the fstatvfs(fd, buf) system call. */
   register struct filp *rfilp;
   int r, rfd;
   vir_bytes statbuf;
@@ -256,7 +287,7 @@ int do_fstatvfs(message *UNUSED(m_out))
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
-  r = req_statvfs(rfilp->filp_vno->v_fs_e, who_e, statbuf);
+  r = fill_statvfs(rfilp->filp_vno, who_e, statbuf);
 
   unlock_filp(rfilp);
 

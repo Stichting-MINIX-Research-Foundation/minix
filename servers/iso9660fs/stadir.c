@@ -100,17 +100,12 @@ int fs_statvfs()
   struct statvfs st;
   int r;
 
+  memset(&st, 0, sizeof(st));
 
   st.f_bsize =  v_pri.logical_block_size_l;
   st.f_frsize = st.f_bsize;
+  st.f_iosize = st.f_bsize;
   st.f_blocks = v_pri.volume_space_size_l;
-  st.f_bfree = 0;
-  st.f_bavail = 0;
-  st.f_files = 0;
-  st.f_ffree = 0;
-  st.f_favail = 0;
-  st.f_fsid = fs_dev;
-  st.f_flag = ST_RDONLY;
   st.f_namemax = NAME_MAX;
 
   /* Copy the struct to user space. */
