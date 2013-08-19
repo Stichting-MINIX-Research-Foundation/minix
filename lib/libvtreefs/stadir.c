@@ -65,8 +65,7 @@ int fs_statvfs(void)
 
 	memset(&statvfs, 0, sizeof(statvfs));
 
-	statvfs.f_fsid = fs_dev;
-	statvfs.f_flag = ST_RDONLY | ST_NOTRUNC;
+	statvfs.f_flag = ST_NOTRUNC;
 	statvfs.f_namemax = PNAME_MAX;
 
 	return sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,

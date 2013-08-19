@@ -37,6 +37,7 @@
 #include <sys/stdint.h>
 #include <machine/ansi.h>
 #include <sys/ansi.h>
+#include <sys/fstypes.h>
 
 #define	_VFS_NAMELEN	32
 #define	_VFS_MNAMELEN	1024
@@ -63,28 +64,51 @@ typedef	_BSD_SIZE_T_		size_t;
 #endif
 
 struct statvfs {
-	unsigned long f_bsize;  /* File system block size. */
-	unsigned long f_frsize; /* Fundamental file system block size. */
-	fsblkcnt_t    f_blocks; /* Total number of blocks on file system */
-				/* in units of f_frsize. */
-	fsblkcnt_t    f_bfree;  /* Total number of free blocks. */
-	fsblkcnt_t    f_bavail; /* Number of free blocks available to */
-	                        /* non-privileged process. */
-	fsfilcnt_t    f_files;  /* Total number of file serial numbers. */
-	fsfilcnt_t    f_ffree;  /* Total number of free file serial numbers. */
-	fsfilcnt_t    f_favail; /* Number of file serial numbers available */
-	                             /* to non-privileged process. */
-	unsigned long f_fsid;        /* File system ID. */
-	unsigned long f_flag;        /* Bit mask of f_flag values. */
-	unsigned long f_namemax;     /* Maximum filename length. */
-	unsigned char __padding[32]; /* Padding for future compatibility */
+	unsigned long	f_flag;		/* copy of mount exported flags */
+	unsigned long	f_bsize;	/* file system block size */
+	unsigned long	f_frsize;	/* fundamental file system block size */
+	unsigned long	f_iosize;	/* optimal file system block size */
+
+	/* The following are in units of f_frsize */
+	fsblkcnt_t	f_blocks;	/* number of blocks in file system, */
+	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
+	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
+	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
+
+	fsfilcnt_t	f_files;	/* total file nodes in file system */
+	fsfilcnt_t	f_ffree;	/* free file nodes in file system */
+	fsfilcnt_t	f_favail;	/* free file nodes avail to non-root */
+	fsfilcnt_t	f_fresvd;	/* file nodes reserved for root */
+
+	uint64_t  	f_syncreads;	/* count of sync reads since mount */
+	uint64_t  	f_syncwrites;	/* count of sync writes since mount */
+
+	uint64_t  	f_asyncreads;	/* count of async reads since mount */
+	uint64_t  	f_asyncwrites;	/* count of async writes since mount */
+
+	fsid_t		f_fsidx;	/* NetBSD compatible fsid */
+	unsigned long	f_fsid;		/* Posix compatible fsid */
+	unsigned long	f_namemax;	/* maximum filename length */
+	uid_t		f_owner;	/* user that mounted the file system */
+
+	uint32_t	f_spare[4];	/* spare space */
+
+	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
+	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
+	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
+
 };
 
-/* Possible values for statvfs->f_flag */
-#define ST_RDONLY 0x1
-#define ST_NOSUID 0x2
+#if defined(_NETBSD_SOURCE) && !defined(_POSIX_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+#define	VFS_NAMELEN	_VFS_NAMELEN
+#define	VFS_MNAMELEN	_VFS_MNAMELEN
+#endif
+
+#define	ST_RDONLY	MNT_RDONLY
+#define	ST_NOSUID	MNT_NOSUID
 #ifdef __minix
-#define ST_NOTRUNC 0x4
+#define	ST_NOTRUNC	__MNT_UNUSED1
 #endif /* !__minix*/
 
 __BEGIN_DECLS
@@ -92,4 +116,4 @@ int	statvfs(const char *__restrict, struct statvfs *__restrict);
 int	fstatvfs(int, struct statvfs *);
 __END_DECLS
 
-#endif /* _SYS_STATVFS_H_ */
+#endif /* !_SYS_STATVFS_H_ */

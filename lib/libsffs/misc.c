@@ -43,17 +43,13 @@ int do_statvfs()
   /* Returning zero for unknown values seems to be the convention. However, we
    * do have to use a nonzero block size, even though it is entirely arbitrary.
    */
+  statvfs.f_flag = ST_NOTRUNC;
   statvfs.f_bsize = BLOCK_SIZE;
   statvfs.f_frsize = BLOCK_SIZE;
+  statvfs.f_iosize = BLOCK_SIZE;
   statvfs.f_blocks = div64u(total, BLOCK_SIZE);
   statvfs.f_bfree = div64u(free, BLOCK_SIZE);
   statvfs.f_bavail = statvfs.f_bfree;
-  statvfs.f_files = 0;
-  statvfs.f_ffree = 0;
-  statvfs.f_favail = 0;
-  statvfs.f_fsid = state.s_dev;
-  statvfs.f_flag = state.s_read_only ? ST_RDONLY : 0;
-  statvfs.f_flag |= ST_NOTRUNC;
   statvfs.f_namemax = NAME_MAX;
 
   return sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, 0,
