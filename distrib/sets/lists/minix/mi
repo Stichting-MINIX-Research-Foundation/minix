@@ -2228,6 +2228,7 @@
 ./usr/man/man2/getsockopt.2		minix-sys
 ./usr/man/man2/gettimeofday.2		minix-sys
 ./usr/man/man2/getuid.2			minix-sys
+./usr/man/man2/getvfsstat.2		minix-sys
 ./usr/man/man2/intro.2			minix-sys
 ./usr/man/man2/ioctl.2			minix-sys
 ./usr/man/man2/kill.2			minix-sys

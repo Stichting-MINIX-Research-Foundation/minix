@@ -2,7 +2,7 @@
 #define __VFS_VMNT_H__
 
 #include "tll.h"
-#include "comm.h"
+#include "type.h"
 
 EXTERN struct vmnt {
   int m_fs_e;			/* FS process' kernel endpoint */
@@ -18,6 +18,7 @@ EXTERN struct vmnt {
   char m_mount_dev[PATH_MAX];	/* device from which vmnt is mounted */
   char m_fstype[FSTYPE_MAX];	/* file system type */
   int m_haspeek;		/* supports REQ_PEEK, REQ_BPEEK */
+  struct statvfs_cache m_stats;	/* cached file system statistics */
 } vmnt[NR_MNTS];
 
 /* vmnt flags */
@@ -25,6 +26,7 @@ EXTERN struct vmnt {
 #define VMNT_CALLBACK		02	/* FS did back call */
 #define VMNT_MOUNTING		04	/* Device is being mounted */
 #define VMNT_FORCEROOTBSF	010	/* Force usage of none-device */
+#define VMNT_CANSTAT		020	/* Include FS in getvfsstat output */
 
 /* vmnt lock types mapping */
 #define VMNT_READ TLL_READ

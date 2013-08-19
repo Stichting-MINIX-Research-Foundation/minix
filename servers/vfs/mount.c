@@ -183,6 +183,7 @@ char mount_label[LABEL_MAX] )
   char *label;
   struct node_details res;
   struct lookup resolve;
+  struct statvfs statvfs_buf;
 
   /* Look up block device driver label when dev is not a pseudo-device */
   label = "";
@@ -290,6 +291,10 @@ char mount_label[LABEL_MAX] )
   	new_vmp->m_haspeek = 1;
   }
 
+  /* Fill the statvfs cache with initial values. */
+  if (r == OK)
+	r = update_statvfs(new_vmp, &statvfs_buf);
+
   if (r != OK) {
 	mark_vmnt_free(new_vmp);
 	unlock_vnode(root_node);
@@ -322,6 +327,9 @@ char mount_label[LABEL_MAX] )
   else
 	new_vmp->m_comm.c_max_reqs = VFS_FS_PROTO_CONREQS(new_vmp->m_proto);
   new_vmp->m_comm.c_cur_reqs = 0;
+
+  /* No more blocking operations, so we can now report on this file system. */
+  new_vmp->m_flags |= VMNT_CANSTAT;
 
   if (mount_root) {
 	/* Superblock and root node already read.
@@ -500,6 +508,9 @@ int unmount(
 	unlock_vmnt(vmp);
 	return(EBUSY);    /* can't umount a busy file system */
   }
+
+  /* This FS will now disappear, so stop listing it in statistics. */
+  vmp->m_flags &= ~VMNT_CANSTAT;
 
   /* Tell FS to drop all inode references for root inode except 1. */
   vnode_clean_refs(vmp->m_root_node);
