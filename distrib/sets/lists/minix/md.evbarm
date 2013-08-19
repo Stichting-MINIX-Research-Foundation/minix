@@ -111,6 +111,7 @@
 ./usr/sbin/i2c				minix-sys
 ./usr/sbin/lan8710a			minix-sys
 ./usr/sbin/random			minix-sys
+./usr/sbin/sht21			minix-sys
 ./usr/sbin/tda19988			minix-sys
 ./usr/sbin/tps65217			minix-sys
 ./usr/sbin/tps65950			minix-sys
