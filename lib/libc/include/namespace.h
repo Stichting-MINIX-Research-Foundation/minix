@@ -920,7 +920,6 @@
 #define stime _stime
 #define umask _umask
 #define umount _umount
-#define umount2 _umount2
 #define unlink _unlink
 #define vm_remap _vm_remap
 #define vm_unmap _vm_unmap

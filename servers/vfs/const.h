@@ -42,6 +42,7 @@
 				 * not be smaller than 16 or bigger than
 				 * M3_LONG_STRING.
 				 */
+#define FSTYPE_MAX	VFS_NAMELEN	/* maximum file system type size */
 
 /* Args to dev_io */
 #define VFS_DEV_READ	2001
