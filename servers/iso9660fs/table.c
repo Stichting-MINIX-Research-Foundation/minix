@@ -18,7 +18,7 @@ int (*fs_call_vec[])(void) = {
   do_noop,			/* 7 */
   fs_stat,			/* 8 */
   no_sys,			/* 9: not used */
-  fs_fstatfs,			/* 10 */
+  fs_statvfs,			/* 10 */
   fs_bread,			/* 11 */
   no_sys,			/* 12: not used */
   no_sys,			/* 13: not used */
@@ -40,12 +40,11 @@ int (*fs_call_vec[])(void) = {
   no_sys,			/* 29: not used */
   no_sys,			/* 30: not used */
   fs_getdents,			/* 31 */
-  fs_statvfs,			/* 32 */
 #if 0
-  fs_read,			/* 33 */
-  no_sys,
+  fs_read,			/* 32 */
+  no_sys,			/* 33 */
 #else
-  no_sys,
-  no_sys,
+  no_sys,			/* 32 */
+  no_sys,			/* 33 */
 #endif
 };
