@@ -111,9 +111,13 @@ struct statvfs {
 #define	ST_NOTRUNC	__MNT_UNUSED1
 #endif /* !__minix*/
 
+#define	ST_WAIT		MNT_WAIT
+#define	ST_NOWAIT	MNT_NOWAIT
+
 __BEGIN_DECLS
 int	statvfs(const char *__restrict, struct statvfs *__restrict);
 int	fstatvfs(int, struct statvfs *);
+int	getvfsstat(struct statvfs *, size_t, int);
 __END_DECLS
 
 #endif /* !_SYS_STATVFS_H_ */
