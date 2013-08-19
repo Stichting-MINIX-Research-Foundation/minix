@@ -80,7 +80,6 @@ struct buf *get_block_map(register struct inode *rip, u64_t position);
 zone_t rd_indir(struct buf *bp, int index);
 
 /* stadir.c */
-int fs_fstatfs(void);
 int fs_stat(void);
 int fs_statvfs(void);
 

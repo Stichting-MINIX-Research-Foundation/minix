@@ -13,7 +13,6 @@
 #include <minix/vfsif.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <sys/statvfs.h>
 #include <assert.h>
 #include <stddef.h>
@@ -221,32 +220,6 @@ int req_flush(endpoint_t fs_e, dev_t dev)
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_fstatfs	    			     *
- *===========================================================================*/
-int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
-{
-  int r;
-  cp_grant_id_t grant_id;
-  message m;
-
-  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct statfs),
-			     CPF_WRITE);
-  if (grant_id == GRANT_INVALID)
-	panic("req_fstatfs: cpf_grant_magic failed");
-
-  /* Fill in request message */
-  m.m_type = REQ_FSTATFS;
-  m.REQ_GRANT = grant_id;
-
-  /* Send/rec request */
-  r = fs_sendrec(fs_e, &m);
-  cpf_revoke(grant_id);
-
-  return(r);
 }
 
 

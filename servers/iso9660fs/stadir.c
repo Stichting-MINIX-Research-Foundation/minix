@@ -1,7 +1,6 @@
 #include "inc.h"
 #include <assert.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <sys/statvfs.h>
 #include <minix/com.h>
 #include <string.h>
@@ -89,24 +88,6 @@ int fs_stat()
 	release_dir_record(dir);
   } 
 
-  return(r);
-}
-
-
-/*===========================================================================*
- *				fs_fstatfs				     *
- *===========================================================================*/
-int fs_fstatfs()
-{
-  struct statfs st;
-  int r;
-
-  st.f_bsize = v_pri.logical_block_size_l;
-  
-  /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		     (vir_bytes) &st, (phys_bytes) sizeof(st));
-  
   return(r);
 }
 

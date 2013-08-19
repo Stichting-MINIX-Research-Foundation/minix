@@ -238,7 +238,6 @@ int req_chown(endpoint_t fs_e, ino_t inode_nr, uid_t newuid, gid_t newgid,
 int req_create(endpoint_t fs_e, ino_t inode_nr, int omode, uid_t uid,
 	gid_t gid, char *path, node_details_t *res);
 int req_flush(endpoint_t fs_e, dev_t dev);
-int req_fstatfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
 int req_getdents(endpoint_t fs_e, ino_t inode_nr, off_t pos, char *buf,
@@ -285,7 +284,6 @@ int do_fchdir(message *m_out);
 int do_chroot(message *m_out);
 int do_fstat(message *m_out);
 int do_stat(message *m_out);
-int do_fstatfs(message *m_out);
 int do_statvfs(message *m_out);
 int do_fstatvfs(message *m_out);
 int do_rdlink(message *m_out);

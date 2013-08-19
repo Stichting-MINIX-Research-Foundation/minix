@@ -38,7 +38,7 @@ it supports a few calls necessary for libc. The following system calls are
 handled by VFS:
 
 access, chdir, chmod, chown, chroot, close, creat, fchdir, fcntl, fstat,
-fstatfs, fstatvfs, fsync, ftruncate getdents, ioctl, link, llseek, lseek,
+fstatvfs, fsync, ftruncate getdents, ioctl, link, llseek, lseek,
 lstat, mkdir, mknod, mount, open, pipe, read, readlink, rename, rmdir, select,
 stat, statvfs, symlink, sync, truncate, umask, umount, unlink, utime, write.
 
@@ -571,8 +571,6 @@ REQ_INODE_NR field in requests, unless the notes say otherwise.
 +--------------+---------+---------+-----------------------------------------+
 | REQ_FLUSH    |         |         | Mutually exclusive to REQ_BREAD and     |
 |              |         |         | REQ_BWRITE                              |
-+--------------+---------+---------+-----------------------------------------+
-| REQ_FSTATFS  |         |         |                                         |
 +--------------+---------+---------+-----------------------------------------+
 | REQ_FTRUNC   | READ    | WRITE   | vmnt is only locked if file is not      |
 |              |         |         | already opened                          |
