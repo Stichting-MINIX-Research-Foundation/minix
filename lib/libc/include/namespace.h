@@ -366,6 +366,7 @@
 #define getttyent		_getttyent
 #define getttynam		_getttynam
 #define getusershell		_getusershell
+#define getvfsstat		_getvfsstat
 #define glob			_glob
 #define globfree		_globfree
 #define gmtime_r		_gmtime_r

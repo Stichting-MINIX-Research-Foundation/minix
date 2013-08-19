@@ -38,7 +38,7 @@ it supports a few calls necessary for libc. The following system calls are
 handled by VFS:
 
 access, chdir, chmod, chown, chroot, close, creat, fchdir, fcntl, fstat,
-fstatvfs, fsync, ftruncate getdents, ioctl, link, llseek, lseek,
+fstatvfs, fsync, ftruncate, getdents, getvfsstat, ioctl, link, llseek, lseek,
 lstat, mkdir, mknod, mount, open, pipe, read, readlink, rename, rmdir, select,
 stat, statvfs, symlink, sync, truncate, umask, umount, unlink, utime, write.
 
@@ -355,7 +355,7 @@ requests) do need a vmnt lock.
 | a file descriptor | getdents, ioctl, llseek, pipe, read, select, write      |
 | argument          |                                                         |
 +-------------------+---------------------------------------------------------+
-| System calls with | fsync++, sync, umask                                    |
+| System calls with | fsync++, getvfsstat, sync, umask                        |
 | other or no       |                                                         |
 | arguments         |                                                         |
 -------------------------------------------------------------------------------
@@ -452,11 +452,12 @@ as used by VFS.
 | File rename | rename       | VMNT_EXCL  | Identical to file unlink          |
 | ops.        |              |            | operations                        |
 +-------------+--------------+------------+-----------------------------------+
-| Non-file    | sync, umask  | VMNT_READ  | umask does not involve the file   |
-| ops.        |              | or none    | system, so it does not need       |
+| Non-file    | sync, umask, | VMNT_READ  | umask does not involve the file   |
+| ops.        | getvfsstat   | or none    | system, so it does not need       |
 |             |              |            | locks. sync does not alter state  |
 |             |              |            | in VFS and  is atomic at the FS   |
-|             |              |            | level                             |
+|             |              |            | level. getvfsstat caches stats    |
+|             |              |            | only and requires no exclusion.   |
 -------------------------------------------------------------------------------
 }}}
 Table 5: System call without file descriptor argument sub-categorization

@@ -91,11 +91,6 @@ int do_getsysinfo()
 	len = sizeof(calls_stats);
 	break;
 #endif
-    case SI_VMNT_TAB:
-	fetch_vmnt_paths();
-	src_addr = (vir_bytes) vmnt;
-	len = sizeof(struct vmnt) * NR_MNTS;
-	break;
     default:
 	return(EINVAL);
   }
