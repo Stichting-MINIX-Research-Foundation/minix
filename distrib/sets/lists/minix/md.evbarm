@@ -114,5 +114,6 @@
 ./usr/sbin/tda19988			minix-sys
 ./usr/sbin/tps65217			minix-sys
 ./usr/sbin/tps65950			minix-sys
+./usr/sbin/tsl2550			minix-sys
 ./usr/tests/minix-posix/mod		minix-sys
 ./usr/tests/minix-posix/test63		minix-sys
