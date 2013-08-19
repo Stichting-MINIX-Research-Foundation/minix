@@ -907,14 +907,16 @@
 #define VFS_GETVFSSTAT_SIZE	m1_i1
 #define VFS_GETVFSSTAT_FLAGS	m1_i2
 
-/* Field names for the fstatvfs call */
-#define FSTATVFS_FD m1_i1
-#define FSTATVFS_BUF m1_p1
+/* Field names for the fstatvfs1(2) call. */
+#define VFS_FSTATVFS1_FD	m1_i1
+#define VFS_FSTATVFS1_BUF	m1_p1
+#define VFS_FSTATVFS1_FLAGS	m1_i2
 
-/* Field names for the statvfs call */
-#define STATVFS_LEN m1_i1
-#define STATVFS_NAME m1_p1
-#define STATVFS_BUF m1_p2
+/* Field names for the statvfs1(2) call. */
+#define VFS_STATVFS1_LEN	m1_i1
+#define VFS_STATVFS1_NAME	m1_p1
+#define VFS_STATVFS1_BUF	m1_p2
+#define VFS_STATVFS1_FLAGS	m1_i2
 
 /* Field names for the mount(2) call. */
 #define VFS_MOUNT_FLAGS		m11_i1

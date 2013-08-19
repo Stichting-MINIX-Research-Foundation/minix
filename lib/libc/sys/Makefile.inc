@@ -272,6 +272,7 @@ MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
 MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=chroot.2 fchroot.2
 .else
+MAN+=	statvfs.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
 .endif # !defined(__MINIX)
@@ -339,6 +340,9 @@ MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 .else
 MLINKS+=pipe.2 pipe2.2
+MLINKS+=statvfs.2 fstatvfs.2
+MLINKS+=statvfs.2 statvfs1.2
+MLINKS+=statvfs.2 fstatvfs1.2
 .endif # !defined(__MINIX)
 .if !defined(__MINIX)
 MLINKS+=accept.2 paccept.2

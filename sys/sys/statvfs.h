@@ -118,6 +118,9 @@ __BEGIN_DECLS
 int	statvfs(const char *__restrict, struct statvfs *__restrict);
 int	fstatvfs(int, struct statvfs *);
 int	getvfsstat(struct statvfs *, size_t, int);
+
+int	statvfs1(const char *__restrict, struct statvfs *__restrict, int);
+int	fstatvfs1(int, struct statvfs *, int);
 __END_DECLS
 
 #endif /* !_SYS_STATVFS_H_ */
