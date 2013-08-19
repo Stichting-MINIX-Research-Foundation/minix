@@ -99,47 +99,41 @@ int do_mount(message *UNUSED(m_out))
 {
 /* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
-  int r, slot, rdonly, nodev;
+  int r, slot, nodev;
   char mount_path[PATH_MAX], mount_dev[PATH_MAX];
-  char mount_label[LABEL_MAX];
+  char mount_label[LABEL_MAX], mount_type[FSTYPE_MAX];
   dev_t dev;
   int mflags;
-  vir_bytes label, vname1, vname2;
-  size_t vname1_length, vname2_length;
+  vir_bytes label, type, vname1, vname2;
+  size_t vname1_length, vname2_length, label_len, type_len;
 
-  mflags = job_m_in.mount_flags;
-  label = (vir_bytes) job_m_in.fs_label;
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  vname2 = (vir_bytes) job_m_in.name2;
-  vname2_length = (size_t) job_m_in.name2_length;
+  mflags = job_m_in.VFS_MOUNT_FLAGS;
+  label = (vir_bytes) job_m_in.VFS_MOUNT_LABEL;
+  label_len = (size_t) job_m_in.VFS_MOUNT_LABELLEN;
+  vname1 = (vir_bytes) job_m_in.VFS_MOUNT_DEV;
+  vname1_length = (size_t) job_m_in.VFS_MOUNT_DEVLEN;
+  vname2 = (vir_bytes) job_m_in.VFS_MOUNT_PATH;
+  vname2_length = (size_t) job_m_in.VFS_MOUNT_PATHLEN;
+  type = (vir_bytes) job_m_in.VFS_MOUNT_TYPE;
+  type_len = (size_t) job_m_in.VFS_MOUNT_TYPELEN;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
 
+  /* Get the label from the caller, and ask DS for the endpoint of the FS. */
+  if (label_len > sizeof(mount_label))
+	return EINVAL;
+  r = sys_datacopy(who_e, label, SELF, (vir_bytes) mount_label,
+	sizeof(mount_label));
+  if (r != OK) return(r);
 
-  /* FS process' endpoint number */
-  if (mflags & MS_LABEL16) {
-	/* Get the label from the caller, and ask DS for the endpoint. */
-	r = sys_datacopy(who_e, label, SELF, (vir_bytes) mount_label,
-			 sizeof(mount_label));
-	if (r != OK) return(r);
+  mount_label[sizeof(mount_label)-1] = 0;
 
-	mount_label[sizeof(mount_label)-1] = 0;
-
-	r = ds_retrieve_label_endpt(mount_label, &fs_e);
-	if (r != OK) return(r);
-  } else {
-	/* Legacy support: get the endpoint from the request itself. */
-	fs_e = (endpoint_t) label;
-	mount_label[0] = 0;
-  }
+  r = ds_retrieve_label_endpt(mount_label, &fs_e);
+  if (r != OK) return(r);
 
   /* Sanity check on process number. */
   if (isokendpt(fs_e, &slot) != OK) return(EINVAL);
-
-  /* Should the file system be mounted read-only? */
-  rdonly = (mflags & MS_RDONLY);
 
   /* A null string for block special device means don't use a device at all. */
   nodev = (vname1_length == 0);
@@ -159,8 +153,13 @@ int do_mount(message *UNUSED(m_out))
   /* Fetch the name of the mountpoint */
   if (fetch_name(vname2, vname2_length, mount_path) != OK) return(err_code);
 
+  /* Fetch the type of the file system. */
+  if (type_len > sizeof(mount_type)) return(ENAMETOOLONG);
+  if (fetch_name(type, type_len, mount_type) != OK) return(err_code);
+
   /* Do the actual job */
-  return mount_fs(dev, mount_dev, mount_path, fs_e, rdonly, mount_label);
+  return mount_fs(dev, mount_dev, mount_path, fs_e, mflags, mount_type,
+	mount_label);
 }
 
 
@@ -172,7 +171,8 @@ dev_t dev,
 char mount_dev[PATH_MAX],
 char mount_path[PATH_MAX],
 endpoint_t fs_e,
-int rdonly,
+int flags,
+char mount_type[FSTYPE_MAX],
 char mount_label[LABEL_MAX] )
 {
   int i, r = OK, found, isroot, mount_root, slot;
@@ -212,6 +212,7 @@ char mount_label[LABEL_MAX] )
 
   strlcpy(new_vmp->m_mount_path, mount_path, PATH_MAX);
   strlcpy(new_vmp->m_mount_dev, mount_dev, PATH_MAX);
+  strlcpy(new_vmp->m_fstype, mount_type, sizeof(new_vmp->m_fstype));
   isroot = (strcmp(mount_path, "/") == 0);
   mount_root = (isroot && have_root < 2); /* Root can be mounted twice:
 					   * 1: ramdisk
@@ -274,12 +275,12 @@ char mount_label[LABEL_MAX] )
   /* Store some essential vmnt data first */
   new_vmp->m_fs_e = fs_e;
   new_vmp->m_dev = dev;
-  if (rdonly) new_vmp->m_flags |= VMNT_READONLY;
+  if (flags & MNT_RDONLY) new_vmp->m_flags |= VMNT_READONLY;
   else new_vmp->m_flags &= ~VMNT_READONLY;
 
   /* Tell FS which device to mount */
   new_vmp->m_flags |= VMNT_MOUNTING;
-  r = req_readsuper(new_vmp, label, dev, rdonly, isroot, &res);
+  r = req_readsuper(new_vmp, label, dev, !!(flags & MNT_RDONLY), isroot, &res);
   new_vmp->m_flags &= ~VMNT_MOUNTING;
 
   if(req_peek(fs_e, 1, 0, PAGE_SIZE) != OK ||
@@ -424,30 +425,28 @@ void mount_pfs(void)
 /*===========================================================================*
  *                              do_umount                                    *
  *===========================================================================*/
-int do_umount(message *m_out)
+int do_umount(message *UNUSED(m_out))
 {
-/* Perform the umount(name) system call.
- * syscall might provide 'name' embedded in the message.
+/* Perform the umount(name) system call.  Return the label of the FS service.
  */
   char label[LABEL_MAX];
   dev_t dev;
   int r;
   char fullpath[PATH_MAX];
-  vir_bytes vname;
-  size_t vname_length;
+  vir_bytes vname, label_addr;
+  size_t vname_length, label_len;
 
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = (size_t) job_m_in.name_length;
+  vname = (vir_bytes) job_m_in.VFS_UMOUNT_NAME;
+  vname_length = (size_t) job_m_in.VFS_UMOUNT_NAMELEN;
+  label_addr = (vir_bytes) job_m_in.VFS_UMOUNT_LABEL;
+  label_len = (size_t) job_m_in.VFS_UMOUNT_LABELLEN;
 
   /* Only the super-user may do umount. */
   if (!super_user) return(EPERM);
 
   /* If 'name' is not for a block special file or mountpoint, return error. */
-  if (copy_name(vname_length, fullpath) != OK) {
-	/* Direct copy failed, try fetching from user space */
-	if (fetch_name(vname, vname_length, fullpath) != OK)
-		return(err_code);
-  }
+  if (fetch_name(vname, vname_length, fullpath) != OK)
+	return(err_code);
   if ((dev = name_to_dev(TRUE /*allow_mountpt*/, fullpath)) == NO_DEV)
 	return(err_code);
 
@@ -456,10 +455,10 @@ int do_umount(message *m_out)
   /* Return the label of the mounted file system, so that the caller
    * can shut down the corresponding server process.
    */
-  if (strlen(label) >= M3_LONG_STRING)	/* should never evaluate to true */
-	label[M3_LONG_STRING-1] = 0;
-  strlcpy(m_out->umount_label, label, M3_LONG_STRING);
-  return(OK);
+  if (strlen(label) >= label_len)
+	label[label_len-1] = 0;
+  return sys_datacopy(SELF, (vir_bytes) label, who_e, label_addr,
+	strlen(label) + 1);
 }
 
 

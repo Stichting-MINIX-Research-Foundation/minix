@@ -15,7 +15,8 @@ EXTERN struct vmnt {
   struct vnode *m_root_node;	/* root vnode */
   char m_label[LABEL_MAX];	/* label of the file system process */
   char m_mount_path[PATH_MAX];	/* path on which vmnt is mounted */
-  char m_mount_dev[PATH_MAX];	/* path on which vmnt is mounted */
+  char m_mount_dev[PATH_MAX];	/* device from which vmnt is mounted */
+  char m_fstype[FSTYPE_MAX];	/* file system type */
   int m_haspeek;		/* supports REQ_PEEK, REQ_BPEEK */
 } vmnt[NR_MNTS];
 

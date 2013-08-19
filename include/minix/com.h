@@ -911,6 +911,23 @@
 #define STATVFS_NAME m1_p1
 #define STATVFS_BUF m1_p2
 
+/* Field names for the mount(2) call. */
+#define VFS_MOUNT_FLAGS		m11_i1
+#define VFS_MOUNT_DEVLEN	m11_s1
+#define VFS_MOUNT_PATHLEN	m11_s2
+#define VFS_MOUNT_TYPELEN	m11_s3
+#define VFS_MOUNT_LABELLEN	m11_s4
+#define VFS_MOUNT_DEV		m11_p1
+#define VFS_MOUNT_PATH		m11_p2
+#define VFS_MOUNT_TYPE		m11_p3
+#define VFS_MOUNT_LABEL		m11_p4
+
+/* Field names for the umount(2) call. */
+#define VFS_UMOUNT_NAME		m1_p1
+#define VFS_UMOUNT_NAMELEN	m1_i1
+#define VFS_UMOUNT_LABEL	m1_p2
+#define VFS_UMOUNT_LABELLEN	m1_i2
+
 /*===========================================================================*
  *                Messages for VM server				     *
  *===========================================================================*/
