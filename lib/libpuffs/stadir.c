@@ -83,6 +83,8 @@ int fs_statvfs()
   int r;
   struct statvfs st;
 
+  memset(&st, 0, sizeof(st));
+
   if (global_pu->pu_ops.puffs_fs_statvfs(global_pu, &st) != 0) {
 	lpuffs_debug("statvfs failed\n");
 	return(EINVAL);

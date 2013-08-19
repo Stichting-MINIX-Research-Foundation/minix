@@ -99,16 +99,17 @@ int fs_statvfs()
 
   scale = sp->s_log_zone_size;
 
+  memset(&st, 0, sizeof(st));
+
   fs_blockstats(&st.f_blocks, &st.f_bfree, &used);
   st.f_bavail = st.f_bfree;
 
   st.f_bsize =  sp->s_block_size << scale;
   st.f_frsize = sp->s_block_size;
+  st.f_iosize = st.f_frsize;
   st.f_files = sp->s_ninodes;
   st.f_ffree = count_free_bits(sp, IMAP);
   st.f_favail = st.f_ffree;
-  st.f_fsid = fs_dev;
-  st.f_flag = (sp->s_rd_only == 1 ? ST_RDONLY : 0);
   st.f_namemax = MFS_DIRSIZ;
 
   /* Copy the struct to user space. */

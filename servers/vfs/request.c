@@ -226,16 +226,16 @@ int req_flush(endpoint_t fs_e, dev_t dev)
 /*===========================================================================*
  *				req_statvfs	    			     *
  *===========================================================================*/
-int req_statvfs(endpoint_t fs_e, endpoint_t proc_e, vir_bytes buf)
+int req_statvfs(endpoint_t fs_e, struct statvfs *buf)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct statvfs),
+  grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, sizeof(struct statvfs),
 			CPF_WRITE);
   if(grant_id == GRANT_INVALID)
-	panic("req_statvfs: cpf_grant_magic failed");
+	panic("req_statvfs: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_STATVFS;
