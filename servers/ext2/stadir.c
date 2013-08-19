@@ -84,19 +84,20 @@ int fs_statvfs()
   struct super_block *sp;
   int r;
 
+  memset(&st, 0, sizeof(st));
+
   sp = get_super(fs_dev);
 
+  st.f_flag = ST_NOTRUNC;
   st.f_bsize =  sp->s_block_size;
   st.f_frsize = sp->s_block_size;
+  st.f_iosize = sp->s_block_size;
   st.f_blocks = sp->s_blocks_count;
   st.f_bfree = sp->s_free_blocks_count;
   st.f_bavail = sp->s_free_blocks_count - sp->s_r_blocks_count;
   st.f_files = sp->s_inodes_count;
   st.f_ffree = sp->s_free_inodes_count;
   st.f_favail = sp->s_free_inodes_count;
-  st.f_fsid = fs_dev;
-  st.f_flag = (sp->s_rd_only == 1 ? ST_RDONLY : 0);
-  st.f_flag |= ST_NOTRUNC;
   st.f_namemax = NAME_MAX;
 
   /* Copy the struct to user space. */
