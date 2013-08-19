@@ -609,6 +609,7 @@ static void *do_init_root(void *arg)
   struct fproc *rfp;
   struct job my_job;
   int r;
+  char *mount_type = "mfs"; /* FIXME: use boot image process name instead */
   char *mount_label = "fs_imgrd"; /* FIXME: obtain this from RS */
 
   my_job = *((struct job *) arg);
@@ -626,7 +627,8 @@ static void *do_init_root(void *arg)
   }
 
   receive_from = MFS_PROC_NR;
-  r = mount_fs(DEV_IMGRD, "bootramdisk", "/", MFS_PROC_NR, 0, mount_label);
+  r = mount_fs(DEV_IMGRD, "bootramdisk", "/", MFS_PROC_NR, 0, mount_type,
+	mount_label);
   if (r != OK)
 	panic("Failed to initialize root");
   receive_from = ANY;

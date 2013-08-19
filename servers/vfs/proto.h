@@ -156,7 +156,8 @@ int do_umount(message *m_out);
 int is_nonedev(dev_t dev);
 void mount_pfs(void);
 int mount_fs(dev_t dev, char mount_dev[PATH_MAX], char mount_path[PATH_MAX],
-	endpoint_t fs_e, int rdonly, char mount_label[LABEL_MAX]);
+	endpoint_t fs_e, int rdonly, char mount_type[FSTYPE_MAX],
+	char mount_label[LABEL_MAX]);
 int unmount(dev_t dev, char label[LABEL_MAX]);
 void unmount_all(int force);
 

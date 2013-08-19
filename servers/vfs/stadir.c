@@ -231,8 +231,10 @@ static int fill_statvfs(struct vnode *vp, endpoint_t endpt, vir_bytes buf_addr)
 	buf.f_flag |= ST_RDONLY;
 
   buf.f_fsid = vmp->m_dev;
+  buf.f_fsidx.__fsid_val[0] = 0;
+  buf.f_fsidx.__fsid_val[1] = vmp->m_dev;
 
-  strlcpy(buf.f_fstypename, "", sizeof(buf.f_fstypename)); /* FIXME */
+  strlcpy(buf.f_fstypename, vmp->m_fstype, sizeof(buf.f_fstypename));
   strlcpy(buf.f_mntonname, vmp->m_mount_path, sizeof(buf.f_mntonname));
   strlcpy(buf.f_mntfromname, vmp->m_mount_dev, sizeof(buf.f_mntfromname));
 
