@@ -9,7 +9,7 @@
 
 .if defined(__MINIX)
 # Unsupported by Minix.
-# 	closefrom.c confstr.c extattr.c getdevmajor.c getmntinfo.c \
+# 	closefrom.c confstr.c extattr.c getdevmajor.c \
 #	pthread_atfork.c setdomainname.c sethostname.c setproctitle.c \
 #	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
 #	devname.c wait3.c
@@ -32,7 +32,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
 	getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
-	getloadavg.c getlogin.c \
+	getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c \
 	getpass.c getprogname.c getpwent.c getttyent.c \
 	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
