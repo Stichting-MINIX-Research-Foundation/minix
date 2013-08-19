@@ -8,6 +8,7 @@
 # netbsdpath: path in BSD source tree (starting from src/)
 2012/10/17 12:00:00,bin/cat
 2011/08/27 12:55:09,bin/date
+2013/08/19 12:00:00,bin/df
 2012/10/17 12:00:00,bin/echo
 2012/01/16 18:47:57,bin/ed
 2012/10/17 12:00:00,bin/expr
