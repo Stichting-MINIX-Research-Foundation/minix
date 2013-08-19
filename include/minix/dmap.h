@@ -66,6 +66,10 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define EEPROMB3S55_MAJOR	  44	/* 44 = /dev/eepromb3s55 (cat24c256)  */
 #define EEPROMB3S56_MAJOR	  45	/* 45 = /dev/eepromb3s56 (cat24c256)  */
 #define EEPROMB3S57_MAJOR	  46	/* 46 = /dev/eepromb3s57 (cat24c256)  */
+#define TSL2550B1S39_MAJOR	  47	/* 47 = /dev/tsl2550b1s39 (tsl2550)   */
+#define TSL2550B2S39_MAJOR	  48	/* 48 = /dev/tsl2550b2s39 (tsl2550)   */
+#define TSL2550B3S39_MAJOR	  49	/* 49 = /dev/tsl2550b3s39 (tsl2550)   */
+
 
 /* Minor device numbers for memory driver. */
 #  define RAM_DEV_OLD  		   0	/* minor device for /dev/ram */

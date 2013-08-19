@@ -30,7 +30,8 @@ case $#:$1 in
 	eepromb2s50 eepromb2s51 eepromb2s52 eepromb2s53 \
 	eepromb2s54 eepromb2s55 eepromb2s56 eepromb2s57 \
 	eepromb3s50 eepromb3s51 eepromb3s52 eepromb3s53 \
-	eepromb3s54 eepromb3s55 eepromb3s56 eepromb3s57
+	eepromb3s54 eepromb3s55 eepromb3s56 eepromb3s57 \
+	tsl2550b1s39 tsl2550b2s39 tsl2550b3s39
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -39,6 +40,7 @@ Where key is one of the following:
   ram mem kmem null boot zero	  # One of these makes all these memory devices
   fb0			  # Make /dev/fb0
   i2c-1 i2c-2 i2c-3       # Make /dev/i2c-[1-3]
+  tsl2550b{1,3}s39	  # TSL2550 Ambient Light Sensors
   fd0 fd1 ...		  # Floppy devices for drive 0, 1, ...
   fd0p0 fd1p0 ...	  # Make floppy partitions fd0p[0-3], fd1p[0-3], ...
   c0d0 c0d1 ...		  # Make disks c0d0, c0d1, ...
@@ -306,6 +308,12 @@ do
 	m=`expr ${b} \* 8 + ${s} + 17`
 	$e mknod eepromb${b}s5${s} b ${m} 0
 	$e chmod 600 eepromb${b}s5${s}
+	;;
+    tsl2550b[1-3]s39)
+	b=`expr $dev : 'tsl2550b\\(.*\\)s39'` #bus number
+	m=`expr ${b} + 46`
+	$e mknod tsl2550b${b}s39 c ${m} 0
+	$e chmod 444 tsl2550b${b}s39
 	;;
     *)
 	echo "$0: don't know about $dev" >&2
