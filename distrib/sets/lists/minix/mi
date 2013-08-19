@@ -2216,6 +2216,7 @@
 ./usr/man/man2/FD_SET.2			minix-sys
 ./usr/man/man2/fork.2			minix-sys
 ./usr/man/man2/fstatvfs.2		minix-sys
+./usr/man/man2/fstatvfs1.2		minix-sys
 ./usr/man/man2/getgid.2			minix-sys
 ./usr/man/man2/getitimer.2		minix-sys
 ./usr/man/man2/getnucred.2		minix-sys
@@ -2268,6 +2269,7 @@
 ./usr/man/man2/socket.2			minix-sys
 ./usr/man/man2/socketpair.2		minix-sys
 ./usr/man/man2/statvfs.2		minix-sys
+./usr/man/man2/statvfs1.2		minix-sys
 ./usr/man/man2/svrctl.2			minix-sys
 ./usr/man/man2/symlink.2		minix-sys
 ./usr/man/man2/sync.2			minix-sys
