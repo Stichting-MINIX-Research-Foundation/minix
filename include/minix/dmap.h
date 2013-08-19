@@ -69,6 +69,9 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define TSL2550B1S39_MAJOR	  47	/* 47 = /dev/tsl2550b1s39 (tsl2550)   */
 #define TSL2550B2S39_MAJOR	  48	/* 48 = /dev/tsl2550b2s39 (tsl2550)   */
 #define TSL2550B3S39_MAJOR	  49	/* 49 = /dev/tsl2550b3s39 (tsl2550)   */
+#define SHT21B1S40_MAJOR	  50	/* 50 = /dev/sht21b1s40 (sht21)       */
+#define SHT21B2S40_MAJOR	  51	/* 51 = /dev/sht21b2s40 (sht21)       */
+#define SHT21B3S40_MAJOR	  52	/* 52 = /dev/sht21b3s40 (sht21)       */
 
 
 /* Minor device numbers for memory driver. */
