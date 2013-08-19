@@ -53,7 +53,6 @@ int read_chunk(struct dir_record *rip, u64_t position, unsigned off, int
 
 /* stadir.c */
 int fs_stat(void);
-int fs_fstatfs(void);
 int fs_statvfs(void);
 
 /* super.c */
