@@ -88,7 +88,7 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int
 	wrflag, vfs_callback_t cb, void *state, int statelen);
 
 /* $(ARCH)/pagetable.c */
-void pt_init();
+void pt_init(void);
 void vm_freepages(vir_bytes vir, int pages);
 void pt_init_mem(void);
 void pt_check(struct vmproc *vmp);
@@ -175,7 +175,7 @@ void map_region_set_tag(struct vir_region *vr, u32_t tag);
 u32_t map_region_get_tag(struct vir_region *vr);
 int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r);
 int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt);
-int physregions(struct vir_region *vr);
+unsigned int physregions(struct vir_region *vr);
 
 void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui);
 void get_usage_info_kernel(struct vm_usage_info *vui);

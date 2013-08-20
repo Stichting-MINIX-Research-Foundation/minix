@@ -37,9 +37,9 @@ void map_region_init(void)
 {
 }
 
-void map_printregion(struct vir_region *vr)
+static void map_printregion(struct vir_region *vr)
 {
-	int i;
+	unsigned int i;
 	struct phys_region *ph;
 	printf("map_printmap: map_name: %s\n", vr->def_memtype->name);
 	printf("\t%lx (len 0x%lx, %lukB), %p, %s\n",
@@ -62,7 +62,7 @@ struct phys_region *physblock_get(struct vir_region *region, vir_bytes offset)
 	int i;
 	struct phys_region *foundregion;
 	assert(!(offset % VM_PAGE_SIZE));
-	assert(offset >= 0 && offset < region->length);
+	assert( /* offset >= 0 && */ offset < region->length);
 	i = offset/VM_PAGE_SIZE;
 	if((foundregion =  region->physblocks[i]))
 		assert(foundregion->offset == offset);
@@ -75,7 +75,7 @@ void physblock_set(struct vir_region *region, vir_bytes offset,
 	int i;
 	struct vmproc *proc;
 	assert(!(offset % VM_PAGE_SIZE));
-	assert(offset >= 0 && offset < region->length);
+	assert( /* offset >= 0 && */ offset < region->length);
 	i = offset/VM_PAGE_SIZE;
 	proc = region->parent;
 	assert(proc);
@@ -95,8 +95,7 @@ void physblock_set(struct vir_region *region, vir_bytes offset,
 /*===========================================================================*
  *				map_printmap				     *
  *===========================================================================*/
-void map_printmap(vmp)
-struct vmproc *vmp;
+void map_printmap(struct vmproc *vmp)
 {
 	struct vir_region *vr;
 	region_iter iter;
@@ -128,7 +127,7 @@ static struct vir_region *getnextvr(struct vir_region *vr)
 	return nextvr;
 }
 
-int pr_writable(struct vir_region *vr, struct phys_region *pr)
+static int pr_writable(struct vir_region *vr, struct phys_region *pr)
 {
 	assert(pr->memtype->writable);
 	return ((vr->flags & VR_WRITABLE) && pr->memtype->writable(pr));
@@ -420,17 +419,17 @@ static vir_bytes region_find_slot(struct vmproc *vmp,
 	return region_find_slot_range(vmp, minv, maxv, length);
 }
 
-static int phys_slot(vir_bytes len)
+static unsigned int phys_slot(vir_bytes len)
 {
 	assert(!(len % VM_PAGE_SIZE));
 	return len / VM_PAGE_SIZE;
 }
 
-struct vir_region *region_new(struct vmproc *vmp, vir_bytes startv, vir_bytes length,
+static struct vir_region *region_new(struct vmproc *vmp, vir_bytes startv, vir_bytes length,
 	int flags, mem_type_t *memtype)
 {
 	struct vir_region *newregion;
-	struct phys_region **physregions;
+	struct phys_region **newphysregions;
 	static u32_t id;
 	int slots = phys_slot(length);
 
@@ -451,13 +450,13 @@ USE(newregion,
 	newregion->lower = newregion->higher = NULL;
 	newregion->parent = vmp;);
 
-	if(!(physregions = calloc(slots, sizeof(struct phys_region *)))) {
+	if(!(newphysregions = calloc(slots, sizeof(struct phys_region *)))) {
 		printf("VM: region_new: allocating phys blocks failed\n");
 		SLABFREE(newregion);
 		return NULL;
 	}
 
-	USE(newregion, newregion->physblocks = physregions;);
+	USE(newregion, newregion->physblocks = newphysregions;);
 
 	return newregion;
 }
@@ -465,15 +464,9 @@ USE(newregion,
 /*===========================================================================*
  *				map_page_region				     *
  *===========================================================================*/
-struct vir_region *map_page_region(vmp, minv, maxv, length,
-	flags, mapflags, memtype)
-struct vmproc *vmp;
-vir_bytes minv;
-vir_bytes maxv;
-vir_bytes length;
-u32_t flags;
-int mapflags;
-mem_type_t *memtype;
+struct vir_region *map_page_region(struct vmproc *vmp, vir_bytes minv,
+	vir_bytes maxv, vir_bytes length, u32_t flags, int mapflags,
+	mem_type_t *memtype)
 {
 	struct vir_region *newregion;
 	vir_bytes startv;
@@ -600,8 +593,7 @@ int map_free(struct vir_region *region)
 /*========================================================================*
  *				map_free_proc				  *
  *========================================================================*/
-int map_free_proc(vmp)
-struct vmproc *vmp;
+int map_free_proc(struct vmproc *vmp)
 {
 	struct vir_region *r;
 
@@ -628,10 +620,8 @@ struct vmproc *vmp;
 /*===========================================================================*
  *				map_lookup				     *
  *===========================================================================*/
-struct vir_region *map_lookup(vmp, offset, physr)
-struct vmproc *vmp;
-vir_bytes offset;
-struct phys_region **physr;
+struct vir_region *map_lookup(struct vmproc *vmp,
+	vir_bytes offset, struct phys_region **physr)
 {
 	struct vir_region *r;
 
@@ -678,22 +668,21 @@ u32_t vrallocflags(u32_t flags)
 /*===========================================================================*
  *				map_pf			     *
  *===========================================================================*/
-int map_pf(vmp, region, offset, write, pf_callback, state, len, io)
-struct vmproc *vmp;
-struct vir_region *region;
-vir_bytes offset;
-int write;
-vfs_callback_t pf_callback;
-void *state;
-int len;
-int *io;
+int map_pf(struct vmproc *vmp,
+	struct vir_region *region,
+	vir_bytes offset,
+	int write,
+	vfs_callback_t pf_callback,
+	void *state,
+	int len,
+	int *io)
 {
 	struct phys_region *ph;
 	int r = OK;
 
 	offset -= offset % VM_PAGE_SIZE;
 
-	assert(offset >= 0);
+/*	assert(offset >= 0); */ /* always true */
 	assert(offset < region->length);
 
 	assert(!(region->vaddr % VM_PAGE_SIZE));
@@ -769,16 +758,9 @@ int *io;
 	return r;
 }
 
-int map_handle_memory(vmp, region, start_offset, length, write,
-	cb, state, statelen)
-struct vmproc *vmp;
-struct vir_region *region;
-vir_bytes start_offset;
-vir_bytes length;
-int write;
-vfs_callback_t cb;
-void *state;
-int statelen;
+int map_handle_memory(struct vmproc *vmp,
+	struct vir_region *region, vir_bytes start_offset, vir_bytes length,
+	int write, vfs_callback_t cb, void *state, int statelen)
 {
 	vir_bytes offset, lim;
 	int r;
@@ -878,7 +860,7 @@ struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region *vr)
 /*===========================================================================*
  *				copy_abs2region			     	*
  *===========================================================================*/
-int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
+int copy_abs2region(phys_bytes absaddr, struct vir_region *destregion,
 	phys_bytes offset, phys_bytes len)
 
 {
@@ -909,11 +891,11 @@ int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
 			return EFAULT;
 		}
 
-		if(sys_abscopy(abs, ph->ph->phys + suboffset, sublen) != OK) {
+		if(sys_abscopy(absaddr, ph->ph->phys + suboffset, sublen) != OK) {
 			printf("VM: copy_abs2region: abscopy failed.\n");
 			return EFAULT;
 		}
-		abs += sublen;
+		absaddr += sublen;
 		offset += sublen;
 		len -= sublen;
 	}
@@ -951,9 +933,7 @@ int map_writept(struct vmproc *vmp)
 /*========================================================================*
  *			       map_proc_copy			     	  *
  *========================================================================*/
-int map_proc_copy(dst, src)
-struct vmproc *dst;
-struct vmproc *src;
+int map_proc_copy(struct vmproc *dst, struct vmproc *src)
 {
 /* Copy all the memory regions from the src process to the dst process. */
 	region_init(&dst->vm_regions_avl);
@@ -964,10 +944,8 @@ struct vmproc *src;
 /*========================================================================*
  *			     map_proc_copy_from			     	  *
  *========================================================================*/
-int map_proc_copy_from(dst, src, start_src_vr)
-struct vmproc *dst;
-struct vmproc *src;
-struct vir_region *start_src_vr;
+int map_proc_copy_from(struct vmproc *dst, struct vmproc *src,
+	struct vir_region *start_src_vr)
 {
 	struct vir_region *vr;
 	region_iter v_iter;
@@ -1166,7 +1144,7 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 	return OK;
 }
 
-int split_region(struct vmproc *vmp, struct vir_region *vr,
+static int split_region(struct vmproc *vmp, struct vir_region *vr,
 	struct vir_region **vr1, struct vir_region **vr2, vir_bytes split_len)
 {
 	struct vir_region *r1 = NULL, *r2 = NULL;
@@ -1279,7 +1257,6 @@ int map_unmap_range(struct vmproc *vmp, vir_bytes unmap_start, vir_bytes length)
 		if(this_unmap_start >= this_unmap_limit) continue;
 
 		if(this_unmap_start > vr->vaddr && this_unmap_limit < thislimit) {
-			int r;
 			struct vir_region *vr1, *vr2;
 			vir_bytes split_len = this_unmap_limit - vr->vaddr;
 			assert(split_len > 0);
@@ -1504,9 +1481,9 @@ void map_setparent(struct vmproc *vmp)
         }
 }
 
-int physregions(struct vir_region *vr)
+unsigned int physregions(struct vir_region *vr)
 {
-	int n =  0;
+	unsigned int n =  0;
 	vir_bytes voffset;
 	for(voffset = 0; voffset < vr->length; voffset += VM_PAGE_SIZE) {
 		if(physblock_get(vr, voffset))

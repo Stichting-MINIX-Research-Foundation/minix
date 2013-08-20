@@ -45,7 +45,7 @@ extern int missing_spares;
 /* Table of calls and a macro to test for being in range. */
 struct {
 	int (*vmc_func)(message *);	/* Call handles message. */
-	char *vmc_name;			/* Human-readable string. */
+	const char *vmc_name;			/* Human-readable string. */
 } vm_calls[NR_VM_CALLS];
 
 /* Macro to verify call range and map 'high' range to 'base' range
@@ -88,7 +88,7 @@ int main(void)
   /* This is VM's main loop. */
   while (TRUE) {
 	int r, c;
-	u32_t type, param;
+	int type, param;
 
 	SANITYCHECK(SCL_TOP);
 	if(missing_spares > 0) {
@@ -181,7 +181,7 @@ static int do_rs_init(message *m)
 	return(SUSPEND);
 }
 
-struct vmproc *init_proc(endpoint_t ep_nr)
+static struct vmproc *init_proc(endpoint_t ep_nr)
 {
 	static struct boot_image *ip;
 
@@ -250,7 +250,7 @@ static int libexec_alloc_vm_ondemand(struct exec_info *execi,
 	return OK;
 }
 
-void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
+static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 {
 	struct vm_exec_info vmexeci;
 	struct exec_info *execi = &vmexeci.execi;
@@ -392,12 +392,12 @@ void init_vm(void)
 	}
 
 	/* Set up table of calls. */
-#define CALLMAP(code, func) { int i;		      \
-	i=CALLNUMBER(code);				\
-	assert(i >= 0);					\
-	assert(i < NR_VM_CALLS);			\
-	vm_calls[i].vmc_func = (func); 				      \
-	vm_calls[i].vmc_name = #code; 				      \
+#define CALLMAP(code, func) { int _cmi;		      \
+	_cmi=CALLNUMBER(code);				\
+	assert(_cmi >= 0);					\
+	assert(_cmi < NR_VM_CALLS);		\
+	vm_calls[_cmi].vmc_func = (func); 	      \
+	vm_calls[_cmi].vmc_name = #code;	      \
 }
 
 	/* Set call table to 0. This invalidates all calls (clear
@@ -483,8 +483,7 @@ static void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *		               map_service                                   *
  *===========================================================================*/
-static int map_service(rpub)
-struct rprocpub *rpub;
+static int map_service(struct rprocpub *rpub)
 {
 /* Map a new service by initializing its call mask. */
 	int r, proc_nr;

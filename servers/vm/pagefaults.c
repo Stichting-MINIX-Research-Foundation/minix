@@ -278,7 +278,7 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag,
 				   sublen, wrflag, NULL, NULL, 0);
 			} else {
 				r = map_handle_memory(vmp, region, offset,
-				   sublen, wrflag, callback, state, sizeof(*state));
+				   sublen, wrflag, callback, state, sizeof(state));
 			}
 
 			len -= sublen;

@@ -30,7 +30,7 @@
 #include "memlist.h"
 
 /* Number of physical pages in a 32-bit address space */
-#define NUMBER_PHYSICAL_PAGES (0x100000000ULL/VM_PAGE_SIZE)
+#define NUMBER_PHYSICAL_PAGES (int)(0x100000000ULL/VM_PAGE_SIZE)
 #define PAGE_BITMAP_CHUNKS BITMAP_CHUNKS(NUMBER_PHYSICAL_PAGES)
 static bitchunk_t free_pages_bitmap[PAGE_BITMAP_CHUNKS];
 #define PAGE_CACHE_MAX 10000
@@ -78,7 +78,7 @@ static void sanitycheck_queues(void)
 	struct reserved_pages *mrq;
 	int m = 0;
 
-	for(mrq = first_reserved_inuse; mrq > 0; mrq = mrq->next) {
+	for(mrq = first_reserved_inuse; mrq; mrq = mrq->next) {
 		assert(mrq->max_available > 0);
 		assert(mrq->max_available >= mrq->n_available);
 		m += mrq->max_available - mrq->n_available;
@@ -188,7 +188,7 @@ void reservedqueue_add(void *rq_v, void *vir, phys_bytes ph)
 	reservedqueue_fillslot(rq, rps, ph, vir);
 }
 
-int reservedqueue_fill(void *rq_v)
+static int reservedqueue_fill(void *rq_v)
 {
 	struct reserved_pages *rq = rq_v;
 	int r;
@@ -303,8 +303,7 @@ void free_mem(phys_clicks base, phys_clicks clicks)
 /*===========================================================================*
  *				mem_init				     *
  *===========================================================================*/
-void mem_init(chunks)
-struct memory *chunks;		/* list of free memory chunks */
+void mem_init(struct memory *chunks)
 {
 /* Initialize hole lists.  There are two lists: 'hole_head' points to a linked
  * list of all the holes (unused memory) in the system; 'free_slots' points to
@@ -406,8 +405,8 @@ static phys_bytes alloc_pages(int pages, int memflags)
 {
 	phys_bytes boundary16 = 16 * 1024 * 1024 / VM_PAGE_SIZE;
 	phys_bytes boundary1  =  1 * 1024 * 1024 / VM_PAGE_SIZE;
-	phys_bytes mem = NO_MEM;
-	int maxpage = NUMBER_PHYSICAL_PAGES - 1, i;
+	phys_bytes mem = NO_MEM, i;	/* page number */
+	int maxpage = NUMBER_PHYSICAL_PAGES - 1;
 	static int lastscan = -1;
 	int startscan, run_length;
 

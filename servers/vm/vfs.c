@@ -36,7 +36,7 @@ static struct vfs_request_node {
 	char			reqstate[STATELEN];
 	void			*opaque;
 	endpoint_t		who;
-	u32_t			req_id;
+	int			req_id;
 	vfs_callback_t		callback;
 	struct vfs_request_node	*next;
 } *first_queued, *active;
@@ -53,6 +53,8 @@ static void activate(void)
 		panic("VM: asynsend to VFS failed");
 }
 
+#define ID_MAX LONG_MAX
+
 /*===========================================================================*
  *                              vfs_request                                 *
  *===========================================================================*/
@@ -65,7 +67,7 @@ int vfs_request(int reqno, int fd, struct vmproc *vmp, u64_t offset, u32_t len,
  * and then handle the reply as it if were a VM_VFS_REPLY request.
  */
  	message *m;
-	static u32_t reqid = 0;
+	static int reqid = 0;
 	struct vfs_request_node *reqnode;
 
 	reqid++;
