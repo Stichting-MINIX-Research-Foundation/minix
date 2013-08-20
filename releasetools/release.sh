@@ -207,7 +207,7 @@ then
 	fi
 else
 	echo "First cleaning current sourcedir.."
-	( cd .. && make cleandir >/dev/null )
+	# ( cd .. && make cleandir >/dev/null )
 	echo "Copying contents from current src dir."
 	srcdir=/usr/$SRC
 	( cd $srcdir && tar --exclude .svn -cf - .  ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
@@ -337,6 +337,11 @@ mount $TMPDISKUSR $RELEASEMNTDIR/usr || exit
 echo " * Copying files from staging to image"
 ##########################################################################
 synctree -f $RELEASEDIR $RELEASEMNTDIR > /dev/null || true
+echo "target $TMPDISKUSR"
+which df
+df -kP $TMPDISKUSR
+echo "output `df -kP $TMPDISKUSR | tail -1 | awk '{print $3}'`"
+echo "extrakb $extrakb"
 expr `df -kP $TMPDISKUSR | tail -1 | awk '{ print $3 }'` - $extrakb >$RELEASEMNTDIR/.usrkb
 
 echo " * Unmounting $TMPDISKUSR from $RELEASEMNTDIR/usr"
