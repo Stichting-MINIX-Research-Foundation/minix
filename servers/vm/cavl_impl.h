@@ -192,7 +192,7 @@ L__SC int L__(is_empty)(L__(avl) *L__tree)
 
 /* Balances subtree, returns handle of root node of subtree after balancing.
 */
-L__SC AVL_HANDLE L__(balance)(L__BALANCE_PARAM_DECL_PREFIX AVL_HANDLE bal_h)
+static L__SC AVL_HANDLE L__(balance)(L__BALANCE_PARAM_DECL_PREFIX AVL_HANDLE bal_h)
   {
     AVL_HANDLE deep_h;
 

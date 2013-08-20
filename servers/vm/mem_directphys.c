@@ -8,6 +8,7 @@
  */
 
 #include "vm.h"
+#include "proto.h"
 
 /* These functions are static so as to not pollute the
  * global namespace, and are accessed through their function
