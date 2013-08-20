@@ -43,7 +43,7 @@ typedef struct vir_region {
 	struct vmproc *parent;	/* Process that owns this vir_region. */
 	mem_type_t	*def_memtype; /* Default instantiated memory type. */
 	int		remaps;
-	u32_t		id;     /* unique id */
+	int		id;     /* unique id */
 
 	union {
 		phys_bytes phys;	/* VR_DIRECT */

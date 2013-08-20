@@ -15,6 +15,8 @@ LDFLAGS+= -T ${.CURDIR}/arch/${MACHINE_ARCH}/vm.lds
 DPADD+=	${LIBSYS} ${LIBEXEC}
 LDADD+=	-lsys -lexec
 
+WARNS=5
+
 MAN=
 
 BINDIR?= /usr/sbin

@@ -61,9 +61,7 @@ int do_brk(message *msg)
 /*===========================================================================*
  *				real_brk				     *
  *===========================================================================*/
-int real_brk(vmp, v)
-struct vmproc *vmp;
-vir_bytes v;
+int real_brk(struct vmproc *vmp, vir_bytes v)
 {
 	if(map_region_extend_upto_v(vmp, v) == OK) {
 		return OK;

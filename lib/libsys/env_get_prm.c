@@ -20,10 +20,7 @@ char *arg_v[];
 /*===========================================================================*
  *				env_get_param				     *
  *===========================================================================*/
-int env_get_param(key, value, max_len)
-char *key;				/* which key to look up */
-char *value;				/* where to store value */
-int max_len;				/* maximum length of value */
+int env_get_param(const char *key, char *value, int max_len)
 {
   message m;
   static char mon_params[MULTIBOOT_PARAM_BUF_SIZE]; /* copy parameters here */

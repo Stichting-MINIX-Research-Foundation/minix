@@ -3,6 +3,8 @@
 
 #define _SYSTEM		1
 
+#define brk _brk	/* get rid of no previous prototype warning */
+
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>
@@ -80,14 +82,14 @@ struct memory *mem_chunks)                      /* store mem chunks here */
 /*===========================================================================*
  *                              vm_isokendpt                           	     *
  *===========================================================================*/
-int vm_isokendpt(endpoint_t endpoint, int *proc)
+int vm_isokendpt(endpoint_t endpoint, int *procn)
 {
-        *proc = _ENDPOINT_P(endpoint);
-        if(*proc < 0 || *proc >= NR_PROCS)
+        *procn = _ENDPOINT_P(endpoint);
+        if(*procn < 0 || *procn >= NR_PROCS)
 		return EINVAL;
-        if(*proc >= 0 && endpoint != vmproc[*proc].vm_endpoint)
+        if(*procn >= 0 && endpoint != vmproc[*procn].vm_endpoint)
                 return EDEADEPT;
-        if(*proc >= 0 && !(vmproc[*proc].vm_flags & VMF_INUSE))
+        if(*procn >= 0 && !(vmproc[*procn].vm_flags & VMF_INUSE))
                 return EDEADEPT;
         return OK;
 }
@@ -291,7 +293,7 @@ int minix_munmap(void * addr, size_t len)
 	return 0;
 }
 
-int _brk(void *addr)
+int brk(void *addr)
 {
 	vir_bytes target = roundup((vir_bytes)addr, VM_PAGE_SIZE), v;
 	extern char _end;

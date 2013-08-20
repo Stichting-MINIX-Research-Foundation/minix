@@ -100,7 +100,7 @@ void pb_unreferenced(struct vir_region *region, struct phys_region *pr, int rm)
 	pb = pr->ph;
 	assert(pb->refcount > 0);
 	USE(pb, pb->refcount--;);
-	assert(pb->refcount >= 0);
+/*	assert(pb->refcount >= 0); */ /* always true */
 
 	if(pb->firstregion == pr) {
 		USE(pb, pb->firstregion = pr->next_ph_list;);

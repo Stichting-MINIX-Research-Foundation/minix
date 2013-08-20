@@ -40,7 +40,7 @@ static int anon_contig_new(struct vir_region *region)
 {
         u32_t allocflags;
 	phys_bytes new_pages, new_page_cl, cur_ph;
-	int p, pages;
+	phys_bytes p, pages;
 
         allocflags = vrallocflags(region->flags);
 

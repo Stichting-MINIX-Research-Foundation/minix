@@ -92,18 +92,18 @@ void fdref_sanitycheck(void)
 
 struct fdref *fdref_new(struct vmproc *owner, ino_t ino, dev_t dev, int fd)
 {
-	struct fdref *fdref;
+	struct fdref *nfdref;
 
-	if(!SLABALLOC(fdref)) return NULL;
+	if(!SLABALLOC(nfdref)) return NULL;
 
-	fdref->fd = fd;
-	fdref->refcount = 0;
-	fdref->dev = dev;
-	fdref->ino = ino;
-	fdref->next = fdrefs;
-	fdrefs = fdref;
+	nfdref->fd = fd;
+	nfdref->refcount = 0;
+	nfdref->dev = dev;
+	nfdref->ino = ino;
+	nfdref->next = fdrefs;
+	fdrefs = nfdref;
 
-	return fdref;
+	return nfdref;
 }
 
 void fdref_ref(struct fdref *ref, struct vir_region *region)

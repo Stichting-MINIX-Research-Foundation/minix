@@ -5,7 +5,7 @@
 #include "vm.h"
 #include "glo.h"
 
-#define ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
+#define ELEMENTS(a) (int)(sizeof(a)/sizeof((a)[0]))
 
 #endif
 

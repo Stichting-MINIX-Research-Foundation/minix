@@ -565,7 +565,7 @@ int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 	return OK;
 }
 
-static char *ptestr(u32_t pte)
+static const char *ptestr(u32_t pte)
 {
 #define FLAG(constant, name) {						\
 	if(pte & (constant)) { strcat(str, name); strcat(str, " "); }	\
@@ -626,7 +626,7 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	assert(start % VM_PAGE_SIZE == 0);
 	assert(end % VM_PAGE_SIZE == 0);
 
-	assert(ARCH_VM_PDE(start) >= 0 && start <= end);
+	assert( /* ARCH_VM_PDE(start) >= 0 && */ start <= end);
 	assert(ARCH_VM_PDE(end) < ARCH_VM_DIR_ENTRIES);
 
 #if LU_DEBUG
@@ -1107,54 +1107,54 @@ void pt_init(void)
 	{
 		int kernmap_pde;
 		phys_bytes addr, len;
-		int flags, index = 0;
+		int flags, pindex = 0;
 		u32_t offset = 0;
 
 		kernmap_pde = freepde();
 		offset = kernmap_pde * ARCH_BIG_PAGE_SIZE;
 
-		while(sys_vmctl_get_mapping(index, &addr, &len,
+		while(sys_vmctl_get_mapping(pindex, &addr, &len,
 			&flags) == OK)  {
 			int usedpde;
 			vir_bytes vir;
-			if(index >= MAX_KERNMAPPINGS)
-                		panic("VM: too many kernel mappings: %d", index);
-			kern_mappings[index].phys_addr = addr;
-			kern_mappings[index].len = len;
-			kern_mappings[index].flags = flags;
-			kern_mappings[index].vir_addr = offset;
-			kern_mappings[index].flags =
+			if(pindex >= MAX_KERNMAPPINGS)
+                		panic("VM: too many kernel mappings: %d", pindex);
+			kern_mappings[pindex].phys_addr = addr;
+			kern_mappings[pindex].len = len;
+			kern_mappings[pindex].flags = flags;
+			kern_mappings[pindex].vir_addr = offset;
+			kern_mappings[pindex].flags =
 				ARCH_VM_PTE_PRESENT;
 			if(flags & VMMF_UNCACHED)
 #if defined(__i386__)
-				kern_mappings[index].flags |= PTF_NOCACHE;
+				kern_mappings[pindex].flags |= PTF_NOCACHE;
 #elif defined(__arm__)
-				kern_mappings[index].flags |= ARM_VM_PTE_DEVICE;
+				kern_mappings[pindex].flags |= ARM_VM_PTE_DEVICE;
 #endif
 			if(flags & VMMF_USER)
-				kern_mappings[index].flags |= ARCH_VM_PTE_USER;
+				kern_mappings[pindex].flags |= ARCH_VM_PTE_USER;
 #if defined(__arm__)
 			else
-				kern_mappings[index].flags |= ARM_VM_PTE_SUPER;
+				kern_mappings[pindex].flags |= ARM_VM_PTE_SUPER;
 #endif
 			if(flags & VMMF_WRITE)
-				kern_mappings[index].flags |= ARCH_VM_PTE_RW;
+				kern_mappings[pindex].flags |= ARCH_VM_PTE_RW;
 #if defined(__i386__)
 			if(flags & VMMF_GLO)
-				kern_mappings[index].flags |= I386_VM_GLOBAL;
+				kern_mappings[pindex].flags |= I386_VM_GLOBAL;
 #elif defined(__arm__)
 			else
-				kern_mappings[index].flags |= ARCH_VM_PTE_RO;
+				kern_mappings[pindex].flags |= ARCH_VM_PTE_RO;
 #endif
 			if(addr % VM_PAGE_SIZE)
                 		panic("VM: addr unaligned: %lu", addr);
 			if(len % VM_PAGE_SIZE)
                 		panic("VM: len unaligned: %lu", len);
 			vir = offset;
-			if(sys_vmctl_reply_mapping(index, vir) != OK)
+			if(sys_vmctl_reply_mapping(pindex, vir) != OK)
                 		panic("VM: reply failed");
 			offset += len;
-			index++;
+			pindex++;
 			kernmappings++;
 
 			usedpde = ARCH_VM_PDE(offset);

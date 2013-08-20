@@ -78,7 +78,7 @@ do_mapcache(message *msg)
 	u64_t dev_off = (u64_t) msg->m_u.m_vmmcp.dev_offset_pages * VM_PAGE_SIZE;
 	u64_t ino_off = (u64_t) msg->m_u.m_vmmcp.ino_offset_pages * VM_PAGE_SIZE;
 	int n;
-	int bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
+	phys_bytes bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
 	struct vir_region *vr;
 	struct vmproc *caller;
 	vir_bytes offset;
@@ -159,8 +159,8 @@ do_setcache(message *msg)
 	u64_t ino_off = (u64_t) msg->m_u.m_vmmcp.ino_offset_pages * VM_PAGE_SIZE;
 	int n;
 	struct vmproc *caller;
-	vir_bytes offset;
-	int bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
+	phys_bytes offset;
+	phys_bytes bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
 
 	if(bytes < VM_PAGE_SIZE) return EINVAL;
 
