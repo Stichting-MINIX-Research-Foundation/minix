@@ -151,7 +151,7 @@ EXTENDED_SIZE=$(($USR_START + $USR_SIZE - $EXTENDED_START))
 #
 # Generate the partitions using sfdisk to partition the
 #
-sfdisk --no-reread -q ${IMG} 1>/dev/null <<END_SFDISK
+sfdisk -L --force --no-reread -q ${IMG} 1>/dev/null <<END_SFDISK
 # partition table of test.img
 unit: sectors
 
