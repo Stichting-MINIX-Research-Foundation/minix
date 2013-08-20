@@ -141,17 +141,17 @@ void arch_init(void)
 /*===========================================================================*
  *				do_ser_debug				     * 
  *===========================================================================*/
-void do_ser_debug()
+void do_ser_debug(void)
 {
 }
 
-void arch_do_syscall(struct proc *proc)
+void arch_do_syscall(struct proc *whichproc)
 {
   /* do_ipc assumes that it's running because of the current process */
-  assert(proc == get_cpulocal_var(proc_ptr));
+  assert(whichproc == get_cpulocal_var(proc_ptr));
   /* Make the system call, for real this time. */
-  proc->p_reg.retreg =
-	  do_ipc(proc->p_reg.retreg, proc->p_reg.r1, proc->p_reg.r2);
+  whichproc->p_reg.retreg =
+	  do_ipc(whichproc->p_reg.retreg, whichproc->p_reg.r1, whichproc->p_reg.r2);
 }
 
 reg_t svc_stack;

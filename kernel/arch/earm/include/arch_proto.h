@@ -45,6 +45,8 @@ phys_bytes pg_load(void);
 void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end, kinfo_t *cbi);
 int pg_mapkernel(void);
 void pg_mapproc(struct proc *p, struct boot_image *ip, kinfo_t *cbi);
+void omap3_irq_handle(void);
+void exception_handler(int is_nested, reg_t *saved_lr, int vector);
 
 EXTERN void * k_stacks_start;
 extern void * k_stacks;

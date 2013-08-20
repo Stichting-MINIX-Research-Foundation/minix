@@ -248,11 +248,10 @@ static u32_t phys_get32(phys_bytes addr)
 /*===========================================================================*
  *                              umap_virtual                                 *
  *===========================================================================*/
-phys_bytes umap_virtual(rp, seg, vir_addr, bytes)
-register struct proc *rp;       /* pointer to proc table entry for process */
-int seg;                        /* T, D, or S segment */
-vir_bytes vir_addr;             /* virtual address in bytes within the seg */
-vir_bytes bytes;                /* # of bytes to be copied */
+phys_bytes umap_virtual(register struct proc *rp,	/* process */
+int seg,                        /* T, D, or S segment */
+vir_bytes vir_addr,             /* virtual address in bytes within the seg */
+vir_bytes bytes)                /* # of bytes to be copied */
 {
 	phys_bytes phys = 0;
 
@@ -290,20 +289,20 @@ vir_bytes bytes;                /* # of bytes to be copied */
 /*===========================================================================*
  *                              vm_lookup                                    *
  *===========================================================================*/
-int vm_lookup(const struct proc *proc, const vir_bytes virtual,
+int vm_lookup(const struct proc *whichproc, const vir_bytes virtual,
  phys_bytes *physical, u32_t *ptent)
 {
 	u32_t *root, *pt;
 	int pde, pte;
 	u32_t pde_v, pte_v;
 
-	assert(proc);
+	assert(whichproc);
 	assert(physical);
-	assert(!isemptyp(proc));
-	assert(HASPT(proc));
+	assert(!isemptyp(whichproc));
+	assert(HASPT(whichproc));
 
 	/* Retrieve page directory entry. */
-	root = (u32_t *) proc->p_seg.p_ttbr;
+	root = (u32_t *) whichproc->p_seg.p_ttbr;
 	assert(!((u32_t) root % ARM_PAGEDIR_SIZE));
 	pde = ARM_VM_PDE(virtual);
 	assert(pde >= 0 && pde < ARM_VM_DIR_ENTRIES);
@@ -343,11 +342,12 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 /*===========================================================================*
  *				vm_lookup_range				     *
  *===========================================================================*/
-size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
+size_t vm_lookup_range(const struct proc *whichproc, vir_bytes vir_addr,
 	phys_bytes *phys_addr, size_t bytes)
 {
 	/* Look up the physical address corresponding to linear virtual address
-	 * 'vir_addr' for process 'proc'. Return the size of the range covered
+	 * 'vir_addr' for process 'whichproc'.
+	 * Return the size of the range covered
 	 * by contiguous physical memory starting from that address; this may
 	 * be anywhere between 0 and 'bytes' inclusive. If the return value is
 	 * nonzero, and 'phys_addr' is non-NULL, 'phys_addr' will be set to the
@@ -358,12 +358,12 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 	phys_bytes phys, next_phys;
 	size_t len;
 
-	assert(proc);
+	assert(whichproc);
 	assert(bytes > 0);
-	assert(HASPT(proc));
+	assert(HASPT(whichproc));
 
 	/* Look up the first page. */
-	if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
+	if (vm_lookup(whichproc, vir_addr, &phys, NULL) != OK)
 		return 0;
 
 	if (phys_addr != NULL)
@@ -375,7 +375,7 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 
 	/* Look up any next pages and test physical contiguity. */
 	while (len < bytes) {
-		if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
+		if (vm_lookup(whichproc, vir_addr, &phys, NULL) != OK)
 			break;
 
 		if (next_phys != phys)
@@ -541,12 +541,12 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 /*===========================================================================*
  *				virtual_copy_f				     *
  *===========================================================================*/
-int virtual_copy_f(caller, src_addr, dst_addr, bytes, vmcheck)
-struct proc * caller;
-struct vir_addr *src_addr;	/* source virtual address */
-struct vir_addr *dst_addr;	/* destination virtual address */
-vir_bytes bytes;		/* # of bytes to copy  */
-int vmcheck;			/* if nonzero, can return VMSUSPEND */
+int virtual_copy_f(
+struct proc * caller,
+struct vir_addr *src_addr,	/* source virtual address */
+struct vir_addr *dst_addr,	/* destination virtual address */
+vir_bytes bytes,		/* # of bytes to copy  */
+int vmcheck)			/* if nonzero, can return VMSUSPEND */
 {
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */
@@ -685,7 +685,7 @@ static int frclock_index = -1,
 /* defined in kernel.lds */
 extern char usermapped_start, usermapped_end, usermapped_nonglo_start;
 
-int arch_phys_map(const int index,
+int arch_phys_map(const int mindex,
 			phys_bytes *addr,
 			phys_bytes *len,
 			int *flags)
@@ -719,20 +719,20 @@ int arch_phys_map(const int index,
 
 	}
 
-	if(index == usermapped_glo_index) {
+	if(mindex == usermapped_glo_index) {
 		*addr = vir2phys(&usermapped_start);
 		*len = glo_len;
 		*flags = VMMF_USER | VMMF_GLO;
 		return OK;
 	}
-	else if(index == usermapped_index) {
+	else if(mindex == usermapped_index) {
 		*addr = vir2phys(&usermapped_nonglo_start);
 		*len = (u32_t) &usermapped_end -
 			(u32_t) &usermapped_nonglo_start;
 		*flags = VMMF_USER;
 		return OK;
 	}
-	else if (index == frclock_index) {
+	else if (mindex == frclock_index) {
 
 #ifdef DM37XX
 		*addr = OMAP3_GPTIMER10_BASE;
@@ -748,7 +748,7 @@ int arch_phys_map(const int index,
 	/* list over the maps and index them */
 	phys_maps = kern_phys_map_head;
 	while(phys_maps != NULL){
-		if(phys_maps->index == index){
+		if(phys_maps->index == mindex){
 			*addr = phys_maps->addr;
 			*len =  phys_maps->size;
 			*flags = VMMF_UNCACHED | VMMF_WRITE;
@@ -760,11 +760,11 @@ int arch_phys_map(const int index,
 	return EINVAL;
 }
 
-int arch_phys_map_reply(const int index, const vir_bytes addr)
+int arch_phys_map_reply(const int mindex, const vir_bytes addr)
 {
 	kern_phys_map *phys_maps;
 
-	if(index == first_um_idx) {
+	if(mindex == first_um_idx) {
 		u32_t usermapped_offset;
 		assert(addr > (u32_t) &usermapped_start);
 		usermapped_offset = addr - (u32_t) &usermapped_start;
@@ -786,10 +786,10 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 
-	if (index == usermapped_index) {
+	if (mindex == usermapped_index) {
 		return OK;
 	}
-	else if (index == frclock_index) {
+	else if (mindex == frclock_index) {
 #if defined(DM37XX)
 		minix_kerninfo.minix_frclock_tcrr = addr + OMAP3_TIMER_TCRR;
 		minix_kerninfo.minix_arm_frclock_hz = 1625000;
@@ -807,7 +807,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 	/* list over the maps and index them */
 	phys_maps = kern_phys_map_head;
 	while(phys_maps != NULL){
-		if(phys_maps->index == index){
+		if(phys_maps->index == mindex){
 			assert(phys_maps->cb != NULL);
 			/* only update the vir addr we are
 			   going to call the callback in enable
@@ -857,7 +857,7 @@ void release_address_space(struct proc *pr)
  * Request a physical mapping
  */
 int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
-		   kern_phys_map * priv, kern_phys_map_mapped cb, 
+		   kern_phys_map * prv, kern_phys_map_mapped cb, 
 		   vir_bytes id)
 {
 	/* Assign the values to the given struct and add priv
@@ -866,24 +866,24 @@ int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
 	assert(io_size % ARM_PAGE_SIZE == 0);
 	assert(cb != NULL);
 
-	priv->addr  = base_address;
-	priv->size  = io_size;
-	priv->cb  = cb;
-	priv->id  = id;
-	priv->index = -1;
-	priv->next = NULL;
+	prv->addr  = base_address;
+	prv->size  = io_size;
+	prv->cb  = cb;
+	prv->id  = id;
+	prv->index = -1;
+	prv->next = NULL;
 	
 
 	if (kern_phys_map_head == NULL){
 		/* keep a list of items this is the first one */
-		kern_phys_map_head = priv;
+		kern_phys_map_head = prv;
 		kern_phys_map_head->next = NULL;
 	} else {
 		/* insert the item head but first keep track
 		   of the current by putting it in next */
-		priv->next = kern_phys_map_head;
+		prv->next = kern_phys_map_head;
 		/* replace the head */
-		kern_phys_map_head = priv;
+		kern_phys_map_head = prv;
 	}
 	return 0;
 }
@@ -893,7 +893,7 @@ int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
  * kern_phys_map is a pointer to the io map base address.
  * this implementation will change that base address.
  */
-int kern_phys_map_mapped_ptr(vir_bytes id, phys_bytes address){
+static int kern_phys_map_mapped_ptr(vir_bytes id, phys_bytes address){
 	*((vir_bytes*)id) = address;
 	return 0;
 }
@@ -905,9 +905,9 @@ int kern_phys_map_mapped_ptr(vir_bytes id, phys_bytes address){
 int kern_phys_map_ptr(
 	phys_bytes base_address, 
 	vir_bytes io_size, 
-	kern_phys_map * priv,
+	kern_phys_map * prv,
 	vir_bytes ptr)
 {
-	return kern_req_phys_map(base_address,io_size,priv,kern_phys_map_mapped_ptr,ptr);
+	return kern_req_phys_map(base_address,io_size,prv,kern_phys_map_mapped_ptr,ptr);
 }
 

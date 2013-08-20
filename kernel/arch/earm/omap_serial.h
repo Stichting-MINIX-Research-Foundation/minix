@@ -19,7 +19,7 @@
 
 #ifndef __ASSEMBLY__
 
-void omap3_ser_init();
+void omap3_ser_init(void);
 void omap3_ser_putc(char c);
 
 #endif /* __ASSEMBLY__ */

@@ -22,8 +22,8 @@ int do_devio(struct proc * caller, message * m_ptr)
     struct priv *privp;
     port_t port;
     struct io_range *iorp;
-    int i, size, nr_io_range;
-    int io_type, io_dir;
+    unsigned int i, size, nr_io_range;
+    unsigned int io_type, io_dir;
 
     io_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
     io_dir  = m_ptr->DIO_REQUEST & _DIO_DIRMASK;

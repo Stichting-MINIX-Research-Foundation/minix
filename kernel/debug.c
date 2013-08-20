@@ -14,7 +14,7 @@
 
 #define MAX_LOOP (NR_PROCS + NR_TASKS)
 
-int runqueues_ok_cpu(unsigned cpu)
+static int runqueues_ok_cpu(unsigned cpu)
 {
   int q, l = 0;
   register struct proc *xp;
@@ -134,7 +134,7 @@ int runqueues_ok(void)
 
 #endif
 
-char *
+const char *
 rtsflagstr(const u32_t flags)
 {
 	static char str[100];
@@ -161,7 +161,7 @@ rtsflagstr(const u32_t flags)
 	return str;
 }
 
-char *
+const char *
 miscflagstr(const u32_t flags)
 {
 	static char str[100];
@@ -174,7 +174,7 @@ miscflagstr(const u32_t flags)
 	return str;
 }
 
-char *
+const char *
 schedulerstr(struct proc *scheduler)
 {
 	if (scheduler != NULL)

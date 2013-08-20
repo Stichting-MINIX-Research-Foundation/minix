@@ -13,7 +13,7 @@
 #include <machine/vm.h>
 
 struct ex_s {
-	char *msg;
+	const char *msg;
 	int signum;
 };
 

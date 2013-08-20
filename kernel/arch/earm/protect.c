@@ -47,7 +47,7 @@ int tss_init(unsigned cpu, void * kernel_stack)
 	return 0;
 }
 
-multiboot_module_t *bootmod(int pnr)
+static multiboot_module_t *bootmod(int pnr)
 {
 	int i;
 
@@ -58,7 +58,7 @@ multiboot_module_t *bootmod(int pnr)
 	 * to a module, however, so we don't search those.
 	 */
 	for(i = NR_TASKS; i < NR_BOOT_PROCS; i++) {
-		int p;
+		unsigned int p;
 		p = i - NR_TASKS;
 		if(image[i].proc_nr == pnr) {
 			assert(p < MULTIBOOT_MAX_MODS);
@@ -72,7 +72,7 @@ multiboot_module_t *bootmod(int pnr)
 
 int booting_cpu = 0;
 
-void prot_init()
+void prot_init(void)
 {
   write_vbar((reg_t)&exc_vector_table);
 
@@ -100,7 +100,7 @@ void arch_post_init(void)
   pg_info(&vm->p_seg.p_ttbr, &vm->p_seg.p_ttbr_v);
 }
 
-int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
+static int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
 {
         pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
   	pg_load();

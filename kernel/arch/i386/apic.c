@@ -157,10 +157,12 @@ static	u32_t lapic_tctr0, lapic_tctr1;
 static unsigned apic_imcrp;
 static const unsigned nlints = 0;
 
-void arch_eoi(void)
+#if 0
+static void arch_eoi(void)
 {
 	apic_eoi();
 }
+#endif
 
 /*
  * FIXME this should be a cpulocal variable but there are some problems with
@@ -187,7 +189,7 @@ static void ioapic_write(u32_t ioa_base, u8_t reg, u32_t val)
 }
 
 void lapic_microsec_sleep(unsigned count);
-void apic_idt_init(const int reset);
+void apic_idt_init(const int resetv);
 
 static void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
 {
@@ -297,10 +299,12 @@ void ioapic_eoi(int irq)
 		irq_8259_eoi(irq);
 }
  
-void ioapic_set_id(u32_t addr, unsigned int id)
+#if 0
+static void ioapic_set_id(u32_t addr, unsigned int id)
 {
 	ioapic_write(addr, IOAPIC_ID, id << 24);
 }
+#endif
 
 int ioapic_enable_all(void)
 {
@@ -405,7 +409,7 @@ void ioapic_mask_irq(unsigned irq)
 		irq_8259_mask(irq);
 }
 
-unsigned int apicid(void)
+static int apicid(void)
 {
 	return lapic_read(LAPIC_ID) >> 24;
 }
@@ -868,7 +872,7 @@ static void lapic_set_dummy_handlers(void)
 #endif
 
 /* Build descriptors for interrupt gates in IDT. */
-void apic_idt_init(const int reset)
+void apic_idt_init(const int resetv)
 {
 	u32_t val;
 
@@ -876,7 +880,7 @@ void apic_idt_init(const int reset)
 	 */
 	int is_bsp;
 
-	if (reset) {
+	if (resetv) {
 		idt_copy_vectors_pic();
 		idt_copy_vectors(gate_table_common);
 		return;
@@ -1173,7 +1177,7 @@ static eoi_method_t set_eoi_method(unsigned irq)
 		return ioapic_eoi_level;
 }
 
-void set_irq_redir_low(unsigned irq, u32_t * low)
+static void set_irq_redir_low(unsigned irq, u32_t * low)
 {
 	u32_t val = 0;
 

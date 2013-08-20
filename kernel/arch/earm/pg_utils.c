@@ -21,6 +21,7 @@ static phys_bytes kern_kernlen = (phys_bytes) &_kern_size;
 /* page directory we can use to map things */
 static u32_t pagedir[4096]  __aligned(16384);
 
+#if 0
 void print_memmap(kinfo_t *cbi)
 {
         int m;
@@ -31,6 +32,7 @@ void print_memmap(kinfo_t *cbi)
         }
         printf("\nsize %08lx\n", cbi->mmap_size);
 }
+#endif
 
 void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
 {
@@ -102,7 +104,7 @@ void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
         panic("no available memmap slot");
 }
 
-u32_t *alloc_pagetable(phys_bytes *ph)
+static u32_t *alloc_pagetable(phys_bytes *ph)
 {
 	u32_t *ret;
 #define PG_PAGETABLES 24
@@ -117,7 +119,7 @@ u32_t *alloc_pagetable(phys_bytes *ph)
 
 #define PAGE_KB (ARM_PAGE_SIZE / 1024)
 
-phys_bytes pg_alloc_page(kinfo_t *cbi)
+static phys_bytes pg_alloc_page(kinfo_t *cbi)
 {
 	int m;
 	multiboot_memory_map_t *mmap;
@@ -210,7 +212,7 @@ void vm_enable_paging(void)
 	write_sctlr(sctlr);
 }
 
-phys_bytes pg_load()
+phys_bytes pg_load(void)
 {
 	phys_bytes phpagedir = vir2phys(pagedir);
         write_ttbr0(phpagedir);
@@ -222,7 +224,7 @@ void pg_clear(void)
 	memset(pagedir, 0, sizeof(pagedir));
 }
 
-phys_bytes pg_rounddown(phys_bytes b)
+static phys_bytes pg_rounddown(phys_bytes b)
 {
 	phys_bytes o;
 	if(!(o = b % ARM_PAGE_SIZE))

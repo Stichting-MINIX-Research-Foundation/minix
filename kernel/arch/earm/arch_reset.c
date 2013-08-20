@@ -40,7 +40,7 @@ reset(void)
 	while (1);
 }
 
-void
+static void
 poweroff(void)
 {
 

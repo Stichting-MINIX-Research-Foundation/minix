@@ -104,7 +104,7 @@ void arch_watchdog_stop(void)
 {
 }
 
-void arch_watchdog_lockup(const struct nmi_frame * frame)
+__dead void arch_watchdog_lockup(const struct nmi_frame * frame)
 {
 	printf("KERNEL LOCK UP\n"
 			"eax    0x%08x\n"
@@ -177,9 +177,10 @@ static int intel_arch_watchdog_profile_init(const unsigned freq)
 }
 
 static struct arch_watchdog intel_arch_watchdog = {
-	/*.init = */		intel_arch_watchdog_init,
-	/*.reinit = */		intel_arch_watchdog_reinit,
-	/*.profile_init = */	intel_arch_watchdog_profile_init
+	.init =		intel_arch_watchdog_init,
+	.reinit = 	intel_arch_watchdog_reinit,
+	.profile_init = intel_arch_watchdog_profile_init,
+	.resetval =	0
 };
 
 #define AMD_MSR_EVENT_SEL0		0xc0010000
@@ -231,7 +232,8 @@ static int amd_watchdog_profile_init(const unsigned freq)
 }
 
 static struct arch_watchdog amd_watchdog = {
-	/*.init = */		amd_watchdog_init,
-	/*.reinit = */		amd_watchdog_reinit,
-	/*.profile_init = */	amd_watchdog_profile_init
+	.init =		amd_watchdog_init,
+	.reinit =	amd_watchdog_reinit,
+	.profile_init =	amd_watchdog_profile_init,
+	.resetval =	0
 };

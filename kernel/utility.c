@@ -14,7 +14,7 @@
 
 #include <minix/sys_config.h>
 
-#define ARE_PANICING 0xDEADC0FF
+#define ARE_PANICING (int) 0x0DEADC0F
 
 /*===========================================================================*
  *			panic                                          *
@@ -51,8 +51,7 @@ void panic(const char *fmt, ...)
 /*===========================================================================*
  *				kputc				     	     *
  *===========================================================================*/
-void kputc(c)
-int c;					/* character to append */
+void kputc(int c)		/* character to append */
 {
 /* Accumulate a single character for a kernel message. Send a notification
  * to the output driver if an END_OF_KMESS is encountered. 
@@ -92,8 +91,7 @@ int c;					/* character to append */
 /*===========================================================================*
  *				_exit				     	     *
  *===========================================================================*/
-void _exit(e)
-int e;					/* error code */
+void _exit(int e)
 {
   panic("_exit called from within the kernel, should not happen. (err %i)", e);
 }

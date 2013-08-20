@@ -55,7 +55,7 @@ void enable_iop(struct proc *pp)
 /*===========================================================================*
  *				sdesc					     *
  *===========================================================================*/
- void sdesc(struct segdesc_s *segdp, phys_bytes base, vir_bytes size)
+static void sdesc(struct segdesc_s *segdp, phys_bytes base, vir_bytes size)
 {
 /* Fill in the size fields (base, limit and granularity) of a descriptor. */
   segdp->base_low = base;
@@ -77,7 +77,7 @@ void enable_iop(struct proc *pp)
 /*===========================================================================*
  *				init_dataseg				     *
  *===========================================================================*/
-void init_param_dataseg(register struct segdesc_s *segdp,
+static void init_param_dataseg(register struct segdesc_s *segdp,
 	phys_bytes base, vir_bytes size, const int privilege)
 {
 	/* Build descriptor for a data segment. */
@@ -87,19 +87,19 @@ void init_param_dataseg(register struct segdesc_s *segdp,
 		/* EXECUTABLE = 0, EXPAND_DOWN = 0, ACCESSED = 0 */
 }
 
-void init_dataseg(int index, const int privilege)
+static void init_dataseg(int dindex, const int privilege)
 {
-	init_param_dataseg(&gdt[index], 0, 0xFFFFFFFF, privilege);
+	init_param_dataseg(&gdt[dindex], 0, 0xFFFFFFFF, privilege);
 }
 
 /*===========================================================================*
  *				init_codeseg				     *
  *===========================================================================*/
-static void init_codeseg(int index, int privilege)
+static void init_codeseg(int cindex, int privilege)
 {
 	/* Build descriptor for a code segment. */
-	sdesc(&gdt[index], 0, 0xFFFFFFFF);
-	gdt[index].access = (privilege << DPL_SHIFT)
+	sdesc(&gdt[cindex], 0, 0xFFFFFFFF);
+	gdt[cindex].access = (privilege << DPL_SHIFT)
 	        | (PRESENT | SEGMENT | EXECUTABLE | READABLE);
 		/* CONFORMING = 0, ACCESSED = 0 */
 }
@@ -154,10 +154,10 @@ static struct gate_table_s gate_table_exceptions[] = {
 int tss_init(unsigned cpu, void * kernel_stack)
 {
 	struct tss_s * t = &tss[cpu];
-	int index = TSS_INDEX(cpu);
+	int tindex = TSS_INDEX(cpu);
 	struct segdesc_s *tssgdt;
 
-	tssgdt = &gdt[index];
+	tssgdt = &gdt[tindex];
   
 	init_param_dataseg(tssgdt, (phys_bytes) t,
 			sizeof(struct tss_s), INTR_PRIVILEGE);
@@ -212,10 +212,11 @@ int tss_init(unsigned cpu, void * kernel_stack)
 		assert(CONFIG_MAX_CPUS <= 8);
   	}
 
-	return SEG_SELECTOR(index);
+	return SEG_SELECTOR(tindex);
 }
 
-phys_bytes init_segdesc(int gdt_index, void *base, int size)
+#if 0
+static phys_bytes init_segdesc(int gdt_index, void *base, int size)
 {
 	struct desctableptr_s *dtp = (struct desctableptr_s *) &gdt[gdt_index];
 	dtp->limit = size - 1;
@@ -223,8 +224,9 @@ phys_bytes init_segdesc(int gdt_index, void *base, int size)
 
 	return (phys_bytes) dtp;
 }
+#endif
 
-void int_gate(struct gatedesc_s *tab,
+static void int_gate(struct gatedesc_s *tab,
 	unsigned vec_nr, vir_bytes offset, unsigned dpl_type)
 {
 /* Build descriptor for an interrupt gate. */
@@ -257,7 +259,7 @@ void idt_copy_vectors_pic(void)
 	idt_copy_vectors(gate_table_pic);
 }
 
-void idt_init(void)
+static void idt_init(void)
 {
 	idt_copy_vectors_pic();
 	idt_copy_vectors(gate_table_exceptions);
@@ -270,7 +272,7 @@ void idt_reload(void)
 	x86_lidt(&idt_desc);
 }
 
-multiboot_module_t *bootmod(int pnr)
+static multiboot_module_t *bootmod(int pnr)
 {
 	int i;
 
@@ -284,8 +286,8 @@ multiboot_module_t *bootmod(int pnr)
 		int p;
 		p = i - NR_TASKS;
 		if(image[i].proc_nr == pnr) {
-			assert(p < MULTIBOOT_MAX_MODS);
-			assert(p < kinfo.mbi.mods_count);
+			assert(p < (int) MULTIBOOT_MAX_MODS);
+			assert(p < (int) kinfo.mbi.mods_count);
 			return &kinfo.module_list[p];
 		}
 	}
@@ -295,7 +297,7 @@ multiboot_module_t *bootmod(int pnr)
 
 int booting_cpu = 0;
 
-void prot_load_selectors(void)
+static void prot_load_selectors(void)
 {
   /* this function is called by both prot_init by the BSP and
    * the early AP booting code in mpx.S by secondary CPU's.
@@ -318,7 +320,7 @@ void prot_load_selectors(void)
 /*===========================================================================*
  *				prot_init				     *
  *===========================================================================*/
-void prot_init()
+void prot_init(void)
 {
   extern char k_boot_stktop;
 
@@ -376,7 +378,7 @@ void arch_post_init(void)
   pg_info(&vm->p_seg.p_cr3, &vm->p_seg.p_cr3_v);
 }
 
-int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
+static int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
 {
         pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
   	pg_load();

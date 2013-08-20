@@ -31,15 +31,10 @@ static int safecopy(struct proc *, endpoint_t, endpoint_t,
 /*===========================================================================*
  *				verify_grant				     *
  *===========================================================================*/
-int verify_grant(granter, grantee, grant, bytes, access,
-	offset_in, offset_result, e_granter)
-endpoint_t granter, grantee;	/* copyee, copyer */
-cp_grant_id_t grant;		/* grant id */
-vir_bytes bytes;		/* copy size */
-int access;			/* direction (read/write) */
-vir_bytes offset_in;		/* copy offset within grant */
-vir_bytes *offset_result;	/* copy offset within virtual address space */
-endpoint_t *e_granter;		/* new granter (magic grants) */
+int verify_grant(endpoint_t granter, endpoint_t grantee,
+	cp_grant_id_t grant, vir_bytes bytes,
+	int access, vir_bytes offset_in,
+	vir_bytes *offset_result, endpoint_t *e_granter)
 {
 	static cp_grant_t g;
 	static int proc_nr;
@@ -225,16 +220,9 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 /*===========================================================================*
  *				safecopy				     *
  *===========================================================================*/
-static int safecopy(caller, granter, grantee, grantid, bytes,
-	g_offset, addr, access)
-struct proc * caller;
-endpoint_t granter, grantee;
-cp_grant_id_t grantid;
-size_t bytes;
-vir_bytes g_offset, addr;
-int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
-				 * for a copy from grantee to granter.
-				 */
+static int safecopy(struct proc * caller, endpoint_t granter,
+	endpoint_t grantee, cp_grant_id_t grantid, size_t bytes,
+	vir_bytes g_offset, vir_bytes addr, int access)
 {
 	static struct vir_addr v_src, v_dst;
 	static vir_bytes v_offset;

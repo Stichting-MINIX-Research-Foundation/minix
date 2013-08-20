@@ -43,7 +43,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 /* Request system information to be copied to caller's address space. This
  * call simply copies entire data structures to the caller.
  */
-  size_t length;
+  int length;
   vir_bytes src_vir; 
   int nr_e, nr, r;
   int wipe_rnd_bin = -1;

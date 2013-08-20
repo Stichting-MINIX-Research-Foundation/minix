@@ -203,7 +203,7 @@ void omap3_frclock_init(void)
     done = 1;
 }
 
-void omap3_frclock_stop()
+void omap3_frclock_stop(void)
 {
     mmio_clear(fr_timer.base + fr_timer.regs->TCLR, OMAP3_TCLR_ST);
 }
@@ -254,7 +254,7 @@ void omap3_timer_init(unsigned freq)
 	     OMAP3_TCLR_OVF_TRG|OMAP3_TCLR_AR|OMAP3_TCLR_ST);
 }
 
-void omap3_timer_stop()
+void omap3_timer_stop(void)
 {
     mmio_clear(timer.base + timer.regs->TCLR, OMAP3_TCLR_ST);
 }
@@ -277,7 +277,7 @@ static void frc_overflow_check(void)
 	prev_frc_valid = 1;
 }
 
-void omap3_timer_int_handler()
+void omap3_timer_int_handler(void)
 {
     /* Clear all interrupts */
     u32_t tisr;

@@ -80,6 +80,7 @@ struct exception_frame {
 };
 
 void exception(struct exception_frame * frame);
+void exception_handler(int is_nested, struct exception_frame * frame);
 
 /* klib.S */
 __dead void monitor(void);
@@ -260,6 +261,9 @@ int platform_tbl_ptr(phys_bytes start, phys_bytes end, unsigned
 	increment, void * buff, unsigned size, phys_bytes * phys_addr, int ((*
 	cmp_f)(void *)));
 
+/* pre_init.c */
+kinfo_t *pre_init(u32_t magic, u32_t ebx);
+
 /* breakpoints.c */
 int breakpoint_set(phys_bytes linaddr, int bp, const int flags);
 #define BREAKPOINT_COUNT		4
@@ -275,6 +279,10 @@ int breakpoint_set(phys_bytes linaddr, int bp, const int flags);
 #define BREAKPOINT_FLAG_MODE_OFF	(0 << 4)
 #define BREAKPOINT_FLAG_MODE_LOCAL	(1 << 4)
 #define BREAKPOINT_FLAG_MODE_GLOBAL	(2 << 4)
+
+/* apic.c */
+void apic_spurios_intr_handler(void);
+void apic_error_intr_handler(void);
 
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"

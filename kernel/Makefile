@@ -3,6 +3,8 @@
 
 USE_BITCODE:=no
 
+WARNS=5
+
 BINDIR=	/usr/sbin
 MAN=
 PROG=	kernel

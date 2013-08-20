@@ -10,7 +10,7 @@ void kputc(int c);
 
 #define count_kputc(c) do { charcount++; putf((c), farg); } while(0)
 
-int __fvprintf(void (*putf)(int, void *), const char *fmt, va_list argp, void *farg)
+static int __fvprintf(void (*putf)(int, void *), const char *fmt, va_list argp, void *farg)
 {
 	int c, charcount = 0;
 	enum { LEFT, RIGHT } adjust;
@@ -19,8 +19,8 @@ int __fvprintf(void (*putf)(int, void *), const char *fmt, va_list argp, void *f
 	int width, max, len, base;
 	static char X2C_tab[]= "0123456789ABCDEF";
 	static char x2c_tab[]= "0123456789abcdef";
-	char *x2c;
-	char *p;
+	char *x2c, *pp;
+	const char *p;
 	long long i;
 	unsigned long long u = 0;
 	char temp[8 * sizeof(long long) / 3 + 2];
@@ -131,25 +131,27 @@ int __fvprintf(void (*putf)(int, void *), const char *fmt, va_list argp, void *f
 			case INT: u= va_arg(argp, unsigned int); break;
 			}
 		int2ascii:
-			p= temp + sizeof(temp)-1;
-			*p= 0;
+			pp= temp + sizeof(temp)-1;
+			*pp= 0;
 			do {
-				*--p= x2c[(ptrdiff_t) (u % base)];
+				*--pp= x2c[(ptrdiff_t) (u % base)];
 			} while ((u /= base) > 0);
+			p = pp;
 			goto string_length;
 
 			/* A character. */
 		case 'c':
-			p= temp;
-			*p= va_arg(argp, int);
+			p = pp= temp;
+			*pp= va_arg(argp, int);
 			len= 1;
 			goto string_print;
 
 			/* Simply a percent. */
 		case '%':
-			p= temp;
-			*p= '%';
+			pp = temp;
+			*pp= '%';
 			len= 1;
+			p = pp;
 			goto string_print;
 
 			/* A string.  The other cases will join in here. */
@@ -185,6 +187,9 @@ int __fvprintf(void (*putf)(int, void *), const char *fmt, va_list argp, void *f
 	return charcount;
 }
 
+#define vprintf _vprintf
+#define vfprintf _vfprintf
+
 #include <sys/cdefs.h>
 #include <assert.h>
 #include <unistd.h>
@@ -211,12 +216,12 @@ __xfputc(int c, void *arg)
 	kputc(c);
 }
 
-int _vprintf(const char *fmt, va_list argp)
+int vprintf(const char *fmt, va_list argp)
 {
 	return __fvprintf(__xfputc, fmt, argp, stdout);
 }
 
-int _vfprintf(FILE *fp, const char *fmt, va_list argp)
+int vfprintf(FILE *fp, const char *fmt, va_list argp)
 {
 	return	__fvprintf(__xfputc, fmt, argp, fp);
 }

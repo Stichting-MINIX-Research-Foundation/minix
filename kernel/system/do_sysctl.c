@@ -16,7 +16,8 @@ int do_sysctl(struct proc * caller, message * m_ptr)
 {
   vir_bytes len, buf;
   static char mybuf[DIAG_BUFSIZE];
-  int s, i, proc_nr;
+  int s, proc_nr;
+  unsigned int i;
 
   switch (m_ptr->SYSCTL_CODE) {
     case SYSCTL_CODE_DIAG:
