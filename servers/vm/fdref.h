@@ -23,7 +23,7 @@ struct fdref {
 	ino_t   ino;
 	struct fdref	*next;
 	int counting;	/* sanity check */
-} *fdref;
+};
 
 #endif
 

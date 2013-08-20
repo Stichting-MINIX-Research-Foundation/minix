@@ -167,7 +167,7 @@ typedef struct
     L__BIT_ARR_DEFN(branch)
 
     /* Zero-based depth of path into tree. */
-    unsigned depth;
+    int depth;
 
     /* Handles of nodes in path from root to current node (returned by *). */
     AVL_HANDLE path_h[(AVL_MAX_DEPTH) - 1];

@@ -8,12 +8,8 @@
 /*=========================================================================*
  *				env_parse				   *
  *=========================================================================*/
-int env_parse(env, fmt, field, param, min, max)
-char *env;		/* environment variable to inspect */
-char *fmt;		/* template to parse it with */
-int field;		/* field number of value to return */
-long *param;		/* address of parameter to get */
-long min, max;		/* minimum and maximum values for the parameter */
+int env_parse(const char *env, const char *fmt,
+	int field, long *param, long min, long max)
 {
 /* Parse an environment variable setting, something like "DPETH0=300:3".
  * Panic if the parsing fails.  Return EP_UNSET if the environment variable

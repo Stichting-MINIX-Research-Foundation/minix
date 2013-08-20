@@ -288,7 +288,7 @@ int do_mmap(message *m)
 /*===========================================================================*
  *				map_perm_check		     		     *
  *===========================================================================*/
-int map_perm_check(endpoint_t caller, endpoint_t target,
+static int map_perm_check(endpoint_t caller, endpoint_t target,
 	phys_bytes physaddr, phys_bytes len)
 {
 	int r;
