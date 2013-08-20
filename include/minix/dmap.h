@@ -72,6 +72,9 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define SHT21B1S40_MAJOR	  50	/* 50 = /dev/sht21b1s40 (sht21)       */
 #define SHT21B2S40_MAJOR	  51	/* 51 = /dev/sht21b2s40 (sht21)       */
 #define SHT21B3S40_MAJOR	  52	/* 52 = /dev/sht21b3s40 (sht21)       */
+#define BMP085B1S77_MAJOR	  53	/* 53 = /dev/bmp085b1s77 (bmp085)     */
+#define BMP085B2S77_MAJOR	  54	/* 54 = /dev/bmp085b2s77 (bmp085)     */
+#define BMP085B3S77_MAJOR	  55	/* 55 = /dev/bmp085b3s77 (bmp085)     */
 
 
 /* Minor device numbers for memory driver. */

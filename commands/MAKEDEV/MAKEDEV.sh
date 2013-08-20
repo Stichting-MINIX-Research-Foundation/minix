@@ -32,7 +32,8 @@ case $#:$1 in
 	eepromb3s50 eepromb3s51 eepromb3s52 eepromb3s53 \
 	eepromb3s54 eepromb3s55 eepromb3s56 eepromb3s57 \
 	tsl2550b1s39 tsl2550b2s39 tsl2550b3s39 \
-	sht21b1s40 sht21b2s40 sht21b3s40
+	sht21b1s40 sht21b2s40 sht21b3s40 \
+	bmp085b1s77 bmp085b2s77 bmp085b3s77
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -43,6 +44,7 @@ Where key is one of the following:
   i2c-1 i2c-2 i2c-3       # Make /dev/i2c-[1-3]
   tsl2550b{1,3}s39	  # TSL2550 Ambient Light Sensors
   sht21b{1,3}s40	  # SHT21 Relative Humidity and Temperature Sensors
+  bmp085b{1,3}s77	  # BMP085 Pressure and Temperature Sensors
   fd0 fd1 ...		  # Floppy devices for drive 0, 1, ...
   fd0p0 fd1p0 ...	  # Make floppy partitions fd0p[0-3], fd1p[0-3], ...
   c0d0 c0d1 ...		  # Make disks c0d0, c0d1, ...
@@ -323,7 +325,12 @@ do
 	$e mknod sht21b${b}s40 c ${m} 0
 	$e chmod 444 sht21b${b}s40
 	;;
-
+    bmp085b[1-3]s77)
+	b=`expr $dev : 'bmp085b\\(.*\\)s77'` #bus number
+	m=`expr ${b} + 52`
+	$e mknod bmp085b${b}s77 c ${m} 0
+	$e chmod 444 bmp085b${b}s77
+	;;
     *)
 	echo "$0: don't know about $dev" >&2
 	ex=1

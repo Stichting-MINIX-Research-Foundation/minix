@@ -105,6 +105,7 @@
 ./usr/lib/libpadconf_pic.a		minix-sys
 ./usr/man/man1/eepromread.1		minix-sys
 ./usr/mdec				minix-sys
+./usr/sbin/bmp085			minix-sys
 ./usr/sbin/cat24c256			minix-sys
 ./usr/sbin/fb				minix-sys
 ./usr/sbin/gpio				minix-sys
