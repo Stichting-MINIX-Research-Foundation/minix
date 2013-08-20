@@ -1,0 +1,8 @@
+Verified+1: Jenkins
+Code-Review+1: Lionel Sambuc <lionel.sambuc@gmail.com>
+Code-Review+2: David van Moolenbroek <david@minix3.org>
+Submitted-by: David van Moolenbroek <david@minix3.org>
+Submitted-at: Wed, 21 Aug 2013 01:18:34 +0200
+Reviewed-on: http://gerrit-minix.few.vu.nl/752
+Project: minix
+Branch: refs/heads/master
