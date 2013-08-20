@@ -44,24 +44,24 @@
 
 struct boot_image image[NR_BOOT_PROCS] = {
 /* process nr, flags, stack size, name */
-{ASYNCM,        "asyncm"},
-{IDLE,          "idle"  },
-{CLOCK,         "clock" },
-{SYSTEM,        "system"},
-{HARDWARE,      "kernel"},
+{ASYNCM,        "asyncm", 0, 0, 0},
+{IDLE,          "idle"  , 0, 0, 0},
+{CLOCK,         "clock" , 0, 0, 0},
+{SYSTEM,        "system", 0, 0, 0},
+{HARDWARE,      "kernel", 0, 0, 0},
                       
-{DS_PROC_NR,    "ds"    },
-{RS_PROC_NR,    "rs"    },
+{DS_PROC_NR,    "ds"    , 0, 0, 0},
+{RS_PROC_NR,    "rs"    , 0, 0, 0},
                       
-{PM_PROC_NR,    "pm"    },
-{SCHED_PROC_NR, "sched" },
-{VFS_PROC_NR,   "vfs"   },
-{MEM_PROC_NR,   "memory"},
-{LOG_PROC_NR,   "log"   },
-{TTY_PROC_NR,   "tty"   },
-{MFS_PROC_NR,   "mfs"   },
-{VM_PROC_NR,    "vm"    },
-{PFS_PROC_NR,   "pfs"   },
-{INIT_PROC_NR,  "init"  },
+{PM_PROC_NR,    "pm"    , 0, 0, 0},
+{SCHED_PROC_NR, "sched" , 0, 0, 0},
+{VFS_PROC_NR,   "vfs"   , 0, 0, 0},
+{MEM_PROC_NR,   "memory", 0, 0, 0},
+{LOG_PROC_NR,   "log"   , 0, 0, 0},
+{TTY_PROC_NR,   "tty"   , 0, 0, 0},
+{MFS_PROC_NR,   "mfs"   , 0, 0, 0},
+{VM_PROC_NR,    "vm"    , 0, 0, 0},
+{PFS_PROC_NR,   "pfs"   , 0, 0, 0},
+{INIT_PROC_NR,  "init"  , 0, 0, 0},
 };
 

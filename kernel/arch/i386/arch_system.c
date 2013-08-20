@@ -286,7 +286,7 @@ void arch_init(void)
 /*===========================================================================*
  *				do_ser_debug				     * 
  *===========================================================================*/
-void do_ser_debug()
+void do_ser_debug(void)
 {
 	u8_t c, lsr;
 
@@ -421,7 +421,7 @@ static void ser_debug(const int c)
 
 #if DEBUG_SERIAL
 
-static void ser_dump_vfs()
+static void ser_dump_vfs(void)
 {
 	/* Notify VFS it has to generate stack traces. Kernel can't do that as
 	 * it's not aware of user space threads.
@@ -487,14 +487,15 @@ void arch_ack_profile_clock(void)
 
 #endif
 
-void arch_do_syscall(struct proc *proc)
+void arch_do_syscall(struct proc *whichproc)
 {
   /* do_ipc assumes that it's running because of the current process */
-  assert(proc == get_cpulocal_var(proc_ptr));
+  assert(whichproc == get_cpulocal_var(proc_ptr));
   /* Make the system call, for real this time. */
-  assert(proc->p_misc_flags & MF_SC_DEFER);
-  proc->p_reg.retreg =
-	  do_ipc(proc->p_defer.r1, proc->p_defer.r2, proc->p_defer.r3);
+  assert(whichproc->p_misc_flags & MF_SC_DEFER);
+  whichproc->p_reg.retreg =
+	  do_ipc(whichproc->p_defer.r1, whichproc->p_defer.r2,
+		whichproc->p_defer.r3);
 }
 
 struct proc * arch_finish_switch_to_user(void)
@@ -566,7 +567,7 @@ void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,
 	p->p_seg.p_kern_trap_style = trap_style;
 }
 
-void restore_user_context(struct proc *p)
+__dead void restore_user_context(struct proc *p)
 {
 	int trap_style = p->p_seg.p_kern_trap_style;
 #if 0

@@ -11,7 +11,7 @@
 #include <machine/vm.h>
 
 struct ex_s {
-	char *msg;
+	const char *msg;
 	int signum;
 	int minprocessor;
 };
@@ -129,7 +129,7 @@ static void pagefault( struct proc *pr,
 	return;
 }
 
-static void inkernel_disaster(struct proc *saved_proc,
+__dead static void inkernel_disaster(struct proc *saved_proc,
 	struct exception_frame * frame, struct ex_s *ep,
 	int is_nested)
 {

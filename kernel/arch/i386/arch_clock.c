@@ -376,10 +376,10 @@ short cpu_load(void)
 
 void busy_delay_ms(int ms)
 {
-	u64_t cycles = ms_2_cpu_time(ms), tsc0, tsc, tsc1;
-	read_tsc_64(&tsc0);
-	tsc1 = tsc0 + cycles;
-	do { read_tsc_64(&tsc); } while(tsc < tsc1);
+	u64_t cycles = ms_2_cpu_time(ms), ctsc0, ctsc, ctsc1;
+	read_tsc_64(&ctsc0);
+	ctsc1 = ctsc0 + cycles;
+	do { read_tsc_64(&ctsc); } while(ctsc < ctsc1);
 	return;
 }
 

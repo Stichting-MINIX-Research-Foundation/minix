@@ -17,6 +17,7 @@ int do_readbios(struct proc * caller, message * m_ptr)
 {
   struct vir_addr src, dst;
   vir_bytes len = m_ptr->RDB_SIZE, limit;
+  phys_bytes biosbegin = BIOS_MEM_BEGIN;
 
   src.offset = m_ptr->RDB_ADDR;
   dst.offset = (vir_bytes) m_ptr->RDB_BUF;
@@ -29,7 +30,7 @@ int do_readbios(struct proc * caller, message * m_ptr)
 #define SUBRANGE(a,b,c,d) (VINRANGE((a), (c), (d)) && VINRANGE((b),(c),(d)))
 #define USERRANGE(a, b) SUBRANGE(src.offset, limit, (a), (b))
 
-  if(!USERRANGE(BIOS_MEM_BEGIN, BIOS_MEM_END) &&
+  if(!USERRANGE(biosbegin, BIOS_MEM_END) &&
      !USERRANGE(BASE_MEM_TOP, UPPER_MEM_END))
   	return EPERM;
 

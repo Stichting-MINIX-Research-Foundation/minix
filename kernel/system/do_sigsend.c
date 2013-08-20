@@ -71,7 +71,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   /* Initialize the sigframe structure. */
   frp = (struct sigframe *) scp - 1;
   fr.sf_scpcopy = scp;
-  fr.sf_retadr2= (void (*)()) rp->p_reg.pc;
+  fr.sf_retadr2= (void (*)(void)) rp->p_reg.pc;
   fr.sf_fp = rp->p_reg.fp;
   rp->p_reg.fp = (reg_t) &frp->sf_fp;
   fr.sf_scp = scp;
@@ -79,7 +79,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   fpu_sigcontext(rp, &fr, &sc);
 
   fr.sf_signo = smsg.sm_signo;
-  fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
+  fr.sf_retadr = (void (*)(void)) smsg.sm_sigreturn;
 
 #if defined(__arm__)
   /* use the ARM link register to set the return address from the signal

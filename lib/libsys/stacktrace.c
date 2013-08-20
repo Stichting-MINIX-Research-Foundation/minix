@@ -6,6 +6,7 @@ Created:	Jan 19, 1993 by Philip Homburg
 Copyright 1995 Philip Homburg
 */
 
+#include <minix/sysutil.h>
 #include <stdio.h>
 #include <string.h>
 

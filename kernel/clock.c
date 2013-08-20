@@ -212,23 +212,21 @@ clock_t get_monotonic(void)
 /*===========================================================================*
  *				set_timer				     *
  *===========================================================================*/
-void set_timer(tp, exp_time, watchdog)
-struct timer *tp;		/* pointer to timer structure */
-clock_t exp_time;		/* expiration monotonic time */
-tmr_func_t watchdog;		/* watchdog to be called */
+void set_timer(struct timer *tp,	/* pointer to timer structure */
+	clock_t exp_time,		/* expiration monotonic time */
+	tmr_func_t watchdog_func)		/* watchdog to be called */
 {
 /* Insert the new timer in the active timers list. Always update the 
  * next timeout time by setting it to the front of the active list.
  */
-  tmrs_settimer(&clock_timers, tp, exp_time, watchdog, NULL);
+  tmrs_settimer(&clock_timers, tp, exp_time, watchdog_func, NULL);
   next_timeout = clock_timers->tmr_exp_time;
 }
 
 /*===========================================================================*
  *				reset_timer				     *
  *===========================================================================*/
-void reset_timer(tp)
-struct timer *tp;		/* pointer to timer structure */
+void reset_timer(struct timer *tp)		/* pointer to timer structure */
 {
 /* The timer pointed to by 'tp' is no longer needed. Remove it from both the
  * active and expired lists. Always update the next timeout time by setting

@@ -24,7 +24,7 @@ extern char *video_mem;
 #define VIDOFFSET(line, col) ((line) * MULTIBOOT_CONSOLE_COLS * 2 + (col) * 2)
 #define VIDSIZE VIDOFFSET(MULTIBOOT_CONSOLE_LINES-1,MULTIBOOT_CONSOLE_COLS-1)
 
-void direct_put_char(char c, int line, int col) 
+static void direct_put_char(char c, int line, int col) 
 {
 	int offset = VIDOFFSET(line, col);
 	video_mem[offset] = c;

@@ -1,8 +1,10 @@
 
 #define UNPAGED 1	/* for proper kmain() prototype */
 
+#include "acpi.h"
 #include "kernel/kernel.h"
 #include <assert.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <minix/minlib.h>
 #include <minix/const.h>
@@ -39,7 +41,7 @@ char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 /* Kernel may use memory */
 int kernel_may_alloc = 1;
 
-static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi) 
+static int mb_set_param(char *bigbuf, const char *name, const char *value, kinfo_t *cbi) 
 {
 	char *p = bigbuf;
 	char *bufend = bigbuf + MULTIBOOT_PARAM_BUF_SIZE;
@@ -81,7 +83,7 @@ static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
 	return 0;
 }
 
-int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
+static int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 {
 	multiboot_module_t *cmp = &mod[cmp_mod];
 	int m;
@@ -98,7 +100,7 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 	return 0;
 }
 
-void get_parameters(u32_t ebx, kinfo_t *cbi) 
+static void get_parameters(u32_t ebx, kinfo_t *cbi) 
 {
 	multiboot_memory_map_t *mmap;
 	multiboot_info_t *mbi = &cbi->mbi;
@@ -247,3 +249,4 @@ int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
 void minix_shutdown(timer_t *t) { arch_shutdown(RBT_PANIC); }
 void busy_delay_ms(int x) { }
 int raise(int sig) { panic("raise(%d)\n", sig); }
+__dead void acpi_poweroff(void) { while(1) ; }

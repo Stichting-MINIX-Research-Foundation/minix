@@ -276,11 +276,10 @@ static char *cr4_str(u32_t e)
 /*===========================================================================*
  *                              umap_virtual                                 *
  *===========================================================================*/
-phys_bytes umap_virtual(rp, seg, vir_addr, bytes)
-register struct proc *rp;       /* pointer to proc table entry for process */
-int seg;                        /* T, D, or S segment */
-vir_bytes vir_addr;             /* virtual address in bytes within the seg */
-vir_bytes bytes;                /* # of bytes to be copied */
+phys_bytes umap_virtual(register struct proc *rp, /* pointer to process */
+	int seg,                        /* T, D, or S segment */
+	vir_bytes vir_addr,             /* virtual address in bytes within the seg */
+	vir_bytes bytes)                /* # of bytes to be copied */
 {
 	phys_bytes phys = 0;
 
@@ -318,20 +317,20 @@ vir_bytes bytes;                /* # of bytes to be copied */
 /*===========================================================================*
  *                              vm_lookup                                    *
  *===========================================================================*/
-int vm_lookup(const struct proc *proc, const vir_bytes virtual,
+int vm_lookup(const struct proc *whichproc, const vir_bytes virtual,
  phys_bytes *physical, u32_t *ptent)
 {
 	u32_t *root, *pt;
 	int pde, pte;
 	u32_t pde_v, pte_v;
 
-	assert(proc);
+	assert(whichproc);
 	assert(physical);
-	assert(!isemptyp(proc));
-	assert(HASPT(proc));
+	assert(!isemptyp(whichproc));
+	assert(HASPT(whichproc));
 
 	/* Retrieve page directory entry. */
-	root = (u32_t *) proc->p_seg.p_cr3;
+	root = (u32_t *) whichproc->p_seg.p_cr3;
 	assert(!((u32_t) root % I386_PAGE_SIZE));
 	pde = I386_VM_PDE(virtual);
 	assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
@@ -370,7 +369,7 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 /*===========================================================================*
  *				vm_lookup_range				     *
  *===========================================================================*/
-size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
+size_t vm_lookup_range(const struct proc *whichproc, vir_bytes vir_addr,
 	phys_bytes *phys_addr, size_t bytes)
 {
 	/* Look up the physical address corresponding to linear virtual address
@@ -385,12 +384,12 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 	phys_bytes phys, next_phys;
 	size_t len;
 
-	assert(proc);
+	assert(whichproc);
 	assert(bytes > 0);
 	assert(HASPT(proc));
 
 	/* Look up the first page. */
-	if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
+	if (vm_lookup(whichproc, vir_addr, &phys, NULL) != OK)
 		return 0;
 
 	if (phys_addr != NULL)
@@ -402,7 +401,7 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 
 	/* Look up any next pages and test physical contiguity. */
 	while (len < bytes) {
-		if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
+		if (vm_lookup(whichproc, vir_addr, &phys, NULL) != OK)
 			break;
 
 		if (next_phys != phys)
@@ -644,12 +643,11 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 /*===========================================================================*
  *				virtual_copy_f				     *
  *===========================================================================*/
-int virtual_copy_f(caller, src_addr, dst_addr, bytes, vmcheck)
-struct proc * caller;
-struct vir_addr *src_addr;	/* source virtual address */
-struct vir_addr *dst_addr;	/* destination virtual address */
-vir_bytes bytes;		/* # of bytes to copy  */
-int vmcheck;			/* if nonzero, can return VMSUSPEND */
+int virtual_copy_f(struct proc * caller,
+	struct vir_addr *src_addr,	/* source virtual address */
+	struct vir_addr *dst_addr,	/* destination virtual address */
+	vir_bytes bytes,		/* # of bytes to copy  */
+	int vmcheck)			/* if nonzero, can return VMSUSPEND */
 {
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */
@@ -792,14 +790,14 @@ extern char *video_mem;
 
 extern char usermapped_start, usermapped_end, usermapped_nonglo_start;
 
-int arch_phys_map(const int index,
+int arch_phys_map(const int mindex,
 			phys_bytes *addr,
 			phys_bytes *len,
 			int *flags)
 {
 	static int first = 1;
 	int freeidx = 0;
-	static char *ser_var = NULL;
+	static const char *ser_var = NULL;
 	u32_t glo_len = (u32_t) &usermapped_nonglo_start -
 			(u32_t) &usermapped_start;
 
@@ -840,20 +838,20 @@ int arch_phys_map(const int index,
 		first = 0;
 	}
 
-	if(index == usermapped_glo_index) {
+	if(mindex == usermapped_glo_index) {
 		*addr = vir2phys(&usermapped_start);
 		*len = glo_len;
 		*flags = VMMF_USER | VMMF_GLO;
 		return OK;
 	}
-	else if(index == usermapped_index) {
+	else if(mindex == usermapped_index) {
 		*addr = vir2phys(&usermapped_nonglo_start);
 		*len = (u32_t) &usermapped_end -
 			(u32_t) &usermapped_nonglo_start;
 		*flags = VMMF_USER;
 		return OK;
 	}
-	else if (index == video_mem_mapping_index) {
+	else if (mindex == video_mem_mapping_index) {
 		/* map video memory in so we can print panic messages */
 		*addr = MULTIBOOT_VIDEO_BUFFER;
 		*len = I386_PAGE_SIZE;
@@ -861,7 +859,7 @@ int arch_phys_map(const int index,
 		return OK;
 	}
 #ifdef USE_APIC
-	else if (index == lapic_mapping_index) {
+	else if (mindex == lapic_mapping_index) {
 		/* map the local APIC if enabled */
 		if (!lapic_addr)
 			return EINVAL;
@@ -870,8 +868,8 @@ int arch_phys_map(const int index,
 		*flags = VMMF_UNCACHED | VMMF_WRITE;
 		return OK;
 	}
-	else if (ioapic_enabled && index >= ioapic_first_index && index <= ioapic_last_index) {
-		int ioapic_idx = index - ioapic_first_index;
+	else if (ioapic_enabled && mindex >= ioapic_first_index && mindex <= ioapic_last_index) {
+		int ioapic_idx = mindex - ioapic_first_index;
 		*addr = io_apic[ioapic_idx].paddr;
 		assert(*addr);
 		*len = 4 << 10 /* 4kB */;
@@ -882,7 +880,7 @@ int arch_phys_map(const int index,
 #endif
 
 #if CONFIG_OXPCIE
-	if(index == oxpcie_mapping_index) {
+	if(mindex == oxpcie_mapping_index) {
 		*addr = strtoul(ser_var+2, NULL, 16);
 		*len = 0x4000;
 		*flags = VMMF_UNCACHED | VMMF_WRITE;
@@ -893,29 +891,29 @@ int arch_phys_map(const int index,
 	return EINVAL;
 }
 
-int arch_phys_map_reply(const int index, const vir_bytes addr)
+int arch_phys_map_reply(const int mindex, const vir_bytes addr)
 {
 #ifdef USE_APIC
 	/* if local APIC is enabled */
-	if (index == lapic_mapping_index && lapic_addr) {
+	if (mindex == lapic_mapping_index && lapic_addr) {
 		lapic_addr_vaddr = addr;
 		return OK;
 	}
-	else if (ioapic_enabled && index >= ioapic_first_index &&
-		index <= ioapic_last_index) {
-		int i = index - ioapic_first_index;
+	else if (ioapic_enabled && mindex >= ioapic_first_index &&
+		mindex <= ioapic_last_index) {
+		int i = mindex - ioapic_first_index;
 		io_apic[i].vaddr = addr;
 		return OK;
 	}
 #endif
 
 #if CONFIG_OXPCIE
-	if (index == oxpcie_mapping_index) {
+	if (mindex == oxpcie_mapping_index) {
 		oxpcie_set_vaddr((unsigned char *) addr);
 		return OK;
 	}
 #endif
-	if(index == first_um_idx) {
+	if(mindex == first_um_idx) {
 		extern struct minix_ipcvecs minix_ipcvecs_sysenter,
 			minix_ipcvecs_syscall,
 			minix_ipcvecs_softint;
@@ -971,9 +969,9 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 
-	if(index == usermapped_index) return OK;
+	if(mindex == usermapped_index) return OK;
 
-	if (index == video_mem_mapping_index) {
+	if (mindex == video_mem_mapping_index) {
 		video_mem_vaddr =  addr;
 		return OK;
 	}
@@ -1000,7 +998,7 @@ int arch_enable_paging(struct proc * caller)
 	}
 	/* if IO apics are enabled */
 	if (ioapic_enabled) {
-		int i;
+		unsigned int i;
 
 		for (i = 0; i < nioapics; i++) {
 			io_apic[i].addr = io_apic[i].vaddr;

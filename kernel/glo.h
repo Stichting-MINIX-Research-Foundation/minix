@@ -35,7 +35,7 @@ vir_bytes minix_kerninfo_user;
 /* Process scheduling information and the kernel reentry count. */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
-EXTERN char *ipc_call_names[IPCNO_HIGHEST+1]; /* human-readable call names */
+EXTERN const char *ipc_call_names[IPCNO_HIGHEST+1]; /* human call names */
 EXTERN struct proc *kbill_kcall; /* process that made kernel call */
 EXTERN struct proc *kbill_ipc; /* process that invoked ipc */
 
