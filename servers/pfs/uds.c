@@ -398,7 +398,7 @@ int do_accept(message *dev_m_in, message *dev_m_out)
 
 int do_connect(message *dev_m_in, message *dev_m_out)
 {
-	int minor;
+	int minor, child;
 	struct sockaddr_un addr;
 	int rc, i, j;
 
@@ -446,26 +446,28 @@ int do_connect(message *dev_m_in, message *dev_m_out)
 			!strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
 			UNIX_PATH_MAX)) {
 
-			if (uds_fd_table[i].child != -1) {
+			if ((child = uds_fd_table[i].child) != -1) {
 
 				/* the server is blocked on accept(2) --
 				 * perform connection to the child
 				 */
 
 				rc = perform_connection(dev_m_in, dev_m_out,
-					&addr, minor, uds_fd_table[i].child);
+					&addr, minor, child);
 
 				if (rc == OK) {
 
 					uds_fd_table[i].child = -1;
 
 #if DEBUG == 1
-			printf("(uds) [%d] {do_connect} revive %d\n", minor, i);
+		printf("(uds) [%d] {do_connect} revive %d\n", minor, child);
 #endif
 
 					/* wake the parent (server) */
-					uds_fd_table[i].ready_to_revive = 1;
-					uds_unsuspend(dev_m_in->m_source, i);
+					uds_fd_table[child].ready_to_revive =
+						1;
+					uds_unsuspend(dev_m_in->m_source,
+						child);
 				}
 
 				return rc;
