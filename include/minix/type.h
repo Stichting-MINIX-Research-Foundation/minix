@@ -135,7 +135,7 @@ struct memory {
 /* The kernel outputs diagnostic messages in a circular buffer. */
 struct kmessages {
   int km_next;                          /* next index to write */
-  int km_size;                          /* current size in buffer */
+  unsigned int km_size;                 /* current size in buffer */
   char km_buf[_KMESS_BUF_SIZE];          /* buffer for messages */
   char kmess_buf[80*25];           /* printable copy of message buffer */
   int blpos;				/* kmess_buf position */

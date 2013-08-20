@@ -31,11 +31,11 @@ int do_vdevio(struct proc * caller, message * m_ptr)
  * that I/O batch from being interrrupted.
  * This is the counterpart of do_devio, which performs a single device I/O. 
  */ 
-  int vec_size;               /* size of vector */
+  unsigned int vec_size;               /* size of vector */
   int io_in;                  /* true if input */
   size_t bytes;               /* # bytes to be copied */
   port_t port;
-  int i, j, io_size, nr_io_range;
+  unsigned int i, j, io_size, nr_io_range;
   int io_dir, io_type;
   struct priv *privp;
   struct io_range *iorp;

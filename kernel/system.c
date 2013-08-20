@@ -267,9 +267,7 @@ void system_init(void)
 /*===========================================================================*
  *				get_priv				     *
  *===========================================================================*/
-int get_priv(rc, priv_id)
-register struct proc *rc;		/* new (child) process pointer */
-int priv_id;				/* privilege id */
+int get_priv(register struct proc *rc, int priv_id)
 {
 /* Allocate a new privilege structure for a system process. Privilege ids
  * can be assigned either statically or dynamically.
@@ -363,16 +361,16 @@ int send_sig(endpoint_t ep, int sig_nr)
  * send a notification with source SYSTEM.
  */ 
   register struct proc *rp;
-  struct priv *priv;
+  struct priv *privs;
   int proc_nr;
 
   if(!isokendpt(ep, &proc_nr) || isemptyn(proc_nr))
 	return EINVAL;
 
   rp = proc_addr(proc_nr);
-  priv = priv(rp);
-  if(!priv) return ENOENT;
-  sigaddset(&priv->s_sig_pending, sig_nr);
+  privs = priv(rp);
+  if(!privs) return ENOENT;
+  sigaddset(&privs->s_sig_pending, sig_nr);
   increase_proc_signals(rp);
   mini_notify(proc_addr(SYSTEM), rp->p_endpoint);
 
@@ -382,9 +380,7 @@ int send_sig(endpoint_t ep, int sig_nr)
 /*===========================================================================*
  *				cause_sig				     *
  *===========================================================================*/
-void cause_sig(proc_nr, sig_nr)
-proc_nr_t proc_nr;		/* process to be signalled */
-int sig_nr;			/* signal to be sent */
+void cause_sig(proc_nr_t proc_nr, int sig_nr)
 {
 /* A system process wants to send a signal to a process.  Examples are:
  *  - HARDWARE wanting to cause a SIGSEGV after a CPU exception
@@ -493,8 +489,7 @@ static void clear_ipc(
 /*===========================================================================*
  *			         clear_endpoint				     *
  *===========================================================================*/
-void clear_endpoint(rc)
-register struct proc *rc;		/* slot of process to clean up */
+void clear_endpoint(struct proc *rc)
 {
   if(isemptyp(rc)) panic("clear_proc: empty process: %d",  rc->p_endpoint);
 
@@ -526,9 +521,7 @@ register struct proc *rc;		/* slot of process to clean up */
 /*===========================================================================*
  *			       clear_ipc_refs				     *
  *===========================================================================*/
-void clear_ipc_refs(rc, caller_ret)
-register struct proc *rc;		/* slot of process to clean up */
-int caller_ret;				/* code to return on callers */
+void clear_ipc_refs(register struct proc *rc, int caller_ret)
 {
 /* Clear IPC references for a given process slot. */
   struct proc *rp;			/* iterate over process table */

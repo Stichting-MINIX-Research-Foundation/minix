@@ -37,7 +37,7 @@ char *** _penviron;
 /* Prototype declarations for PRIVATE functions. */
 static void announce(void);
 
-void bsp_finish_booting(void)
+__dead void bsp_finish_booting(void)
 {
   int i;
 #if SPROFILE
@@ -114,12 +114,12 @@ void bsp_finish_booting(void)
 /*===========================================================================*
  *			kmain 	                             		*
  *===========================================================================*/
-void kmain(kinfo_t *local_cbi)
+__dead void kmain(kinfo_t *local_cbi)
 {
 /* Start the ball rolling. */
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
-  register int i, j;
+  unsigned int i, j;
 
   /* save a global copy of the boot parameters */
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
@@ -395,12 +395,12 @@ void minix_shutdown(timer_t *tp)
 /*===========================================================================*
  *				cstart					     *
  *===========================================================================*/
-void cstart()
+void cstart(void)
 {
 /* Perform system initializations prior to calling main(). Most settings are
  * determined with help of the environment strings passed by MINIX' loader.
  */
-  register char *value;				/* value in key=value pair */
+  register const char *value;			/* value in key=value pair */
   int h;
 
   /* low-level initialization */
@@ -469,7 +469,7 @@ void cstart()
  *				get_value				     *
  *===========================================================================*/
 
-char *get_value(
+static const char *get_value(
   const char *params,			/* boot monitor parameters */
   const char *name			/* key to look up */
 )
@@ -478,9 +478,9 @@ char *get_value(
  * usual environment array.
  */
   register const char *namep;
-  register char *envp;
+  register const char *envp;
 
-  for (envp = (char *) params; *envp != 0;) {
+  for (envp = params; *envp != 0;) {
 	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
 		;
 	if (*namep == '\0' && *envp == '=') return(envp + 1);
@@ -493,7 +493,7 @@ char *get_value(
 /*===========================================================================*
  *				env_get				     	*
  *===========================================================================*/
-char *env_get(const char *name)
+const char *env_get(const char *name)
 {
 	return get_value(kinfo.param_buf, name);
 }

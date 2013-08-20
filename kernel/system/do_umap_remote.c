@@ -29,7 +29,7 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
   int seg_type = m_ptr->UMAP_SEG & SEGMENT_TYPE;
   int seg_index = m_ptr->UMAP_SEG & SEGMENT_INDEX;
   vir_bytes offset = m_ptr->CP_SRC_ADDR;
-  int count = m_ptr->CP_NR_BYTES;
+  size_t count = m_ptr->CP_NR_BYTES;
   int endpt = (int) m_ptr->CP_SRC_ENDPT;
   endpoint_t grantee = (endpoint_t) m_ptr->CP_DST_ENDPT;
   int proc_nr, proc_nr_grantee;

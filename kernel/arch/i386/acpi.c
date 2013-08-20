@@ -43,7 +43,7 @@ static u16_t pm1b_cnt_blk = 0;
 static u16_t slp_typa = 0;
 static u16_t slp_typb = 0;
 
-static int acpi_check_csum(struct acpi_sdt_header * tb, size_t size)
+static int acpi_check_csum(struct acpi_sdt_header * tb, int size)
 {
 	u8_t total = 0;
 	int i;
@@ -120,7 +120,7 @@ static int acpi_read_sdt_at(phys_bytes addr,
 	return tb->length;
 }
 
-phys_bytes acpi_get_table_base(const char * name)
+static phys_bytes acpi_get_table_base(const char * name)
 {
 	int i;
 
@@ -133,7 +133,8 @@ phys_bytes acpi_get_table_base(const char * name)
 	return (phys_bytes) NULL;
 }
 
-size_t acpi_get_table_length(const char * name)
+#if 0
+static size_t acpi_get_table_length(const char * name)
 {
 	int i;
 
@@ -145,13 +146,14 @@ size_t acpi_get_table_length(const char * name)
 
 	return 0;
 }
+#endif
 
 static void * acpi_madt_get_typed_item(struct acpi_madt_hdr * hdr,
 					unsigned char type,
 					unsigned idx)
 {
 	u8_t * t, * end;
-	int i;
+	unsigned int i;
 
 	t = (u8_t *) hdr + sizeof(struct acpi_madt_hdr);
 	end = (u8_t *) hdr + hdr->hdr.length;
@@ -235,7 +237,7 @@ static void acpi_init_poweroff(void)
 	u8_t *end = NULL;
 	struct acpi_fadt_header *fadt_header = NULL;
 	struct acpi_rsdt * dsdt_header = NULL;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	/* Everything used here existed since ACPI spec 1.0 */
 	/* So we can safely use them */
@@ -392,11 +394,6 @@ struct acpi_madt_lapic * acpi_get_lapic_next(void)
 	}
 
 	return ret;
-}
-
-void __k_unpaged_acpi_poweroff(void)
-{
-	/* NO OP poweroff symbol*/
 }
 
 void acpi_poweroff(void)

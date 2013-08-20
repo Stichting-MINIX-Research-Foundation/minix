@@ -28,9 +28,10 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   int proc_nr;
   endpoint_t proc_nr_e = m_ptr->DIO_VEC_ENDPT;
   vir_bytes count = m_ptr->DIO_VEC_SIZE;
-  long port = m_ptr->DIO_PORT;
+  port_t port = m_ptr->DIO_PORT;
   phys_bytes vir_buf;
-  int i, req_type, req_dir, size, nr_io_range;
+  int i, req_type, req_dir, nr_io_range;
+  unsigned int size;
   struct priv *privp;
   struct io_range *iorp;
   struct proc *destproc;

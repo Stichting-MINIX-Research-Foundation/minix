@@ -47,6 +47,7 @@ void kmain(kinfo_t *cbi);
 void prepare_shutdown(int how);
 __dead void minix_shutdown(struct timer *tp);
 void bsp_finish_booting(void);
+void cstart(void);
 
 /* proc.c */
 
@@ -79,10 +80,11 @@ void increase_proc_signals(struct proc *p);
 void flag_account(struct proc *p, int flag);
 int try_deliver_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
 	size);
+void copr_not_available_handler(void);
 
 /* start.c */
-void cstart();
-char *env_get(const char *key);
+void cstart(void);
+const char *env_get(const char *key);
 
 /* system.c */
 int get_priv(register struct proc *rc, int proc_type);
@@ -119,9 +121,9 @@ int runqueues_ok(void);
 #define runqueues_ok_local() runqueues_ok_cpu(cpuid)
 int runqueues_ok_cpu(unsigned cpu);
 #endif
-char *rtsflagstr(u32_t flags);
-char *miscflagstr(u32_t flags);
-char *schedulerstr(struct proc *scheduler);
+const char *rtsflagstr(u32_t flags);
+const char *miscflagstr(u32_t flags);
+const char *schedulerstr(struct proc *scheduler);
 /* prints process information */
 void print_proc(struct proc *pp);
 /* prints the given process and recursively all processes it depends on */
@@ -148,8 +150,8 @@ void stop_profile_clock(void);
 #endif
 
 /* functions defined in architecture-dependent files. */
-void prot_init();
-void arch_post_init();
+void prot_init(void);
+void arch_post_init(void);
 void arch_set_secondary_ipc_return(struct proc *, u32_t val);
 phys_bytes phys_copy(phys_bytes source, phys_bytes dest, phys_bytes
 	count);
