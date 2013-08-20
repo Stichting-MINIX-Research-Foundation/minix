@@ -35,11 +35,11 @@ extern int env_argc;
 extern char **env_argv;
 
 void env_setargs(int argc, char *argv[]);
-int env_get_param(char *key, char *value, int max_size);
+int env_get_param(const char *key, char *value, int max_size);
 int env_prefix(char *env, char *prefix);
-void env_panic(char *key);
-int env_parse(char *env, char *fmt, int field, long *param, long min,
-	long max);
+void env_panic(const char *key);
+int env_parse(const char *env, const char *fmt, int field,
+	long *param, long min, long max);
 
 #define fkey_map(fkeys, sfkeys) fkey_ctl(FKEY_MAP, (fkeys), (sfkeys))
 #define fkey_unmap(fkeys, sfkeys) fkey_ctl(FKEY_UNMAP, (fkeys), (sfkeys))

@@ -10,7 +10,7 @@ typedef void (*vfs_callback_t)(struct vmproc *vmp, message *m,
         void *, void *);
 
 typedef struct mem_type {
-	char *name;	/* human-readable name */
+	const char *name;	/* human-readable name */
 	int (*ev_new)(struct vir_region *region);
 	void (*ev_delete)(struct vir_region *region);
 	int (*ev_reference)(struct phys_region *pr, struct phys_region *newpr);
