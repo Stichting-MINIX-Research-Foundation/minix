@@ -1,0 +1,49 @@
+# $NetBSD: xorg.conf.uskbd,v 1.2 2011/05/20 16:35:38 tsutsui Exp $
+
+Section "ServerLayout"
+	Identifier	"wsfb"
+	Screen	0	"Screen0" 0 0
+	InputDevice	"Mouse0" "CorePointer"
+	InputDevice	"Keyboard0" "CoreKeyboard"
+EndSection
+	
+Section "Files"
+	FontPath	"/usr/pkg/lib/X11/fonts/TTF/"
+EndSection
+
+Section "InputDevice"
+	Identifier	"Keyboard0"
+	Driver		"kbd"
+	Option		"Protocol"	"wskbd"
+	Option		"Device"	"/dev/wskbd0"
+	Option		"XkbLayout"	"us"
+#	Option		"XkbLayout"	"jp(106)"
+#	Option		"XkbOptions"	"ctrl:swapcaps"
+EndSection
+
+Section "InputDevice"
+	Identifier	"Mouse0"
+	Driver		"mouse"
+	Option		"Protocol"	"wsmouse"
+	Option		"ButtonMapping"	"1 2 3 2"
+EndSection
+
+Section "Device"
+	Identifier	"Wsdisplay0"
+	Driver		"wsfb"
+EndSection
+
+Section "Monitor"
+	Identifier	"Monitor"
+EndSection
+
+Section "Screen"
+	Identifier	"Screen0"
+	Device		"Wsdisplay0"
+	Monitor		"Monitor"
+
+	SubSection "Display"
+		Viewport	0 0
+		Depth		16
+	EndSubSection
+EndSection

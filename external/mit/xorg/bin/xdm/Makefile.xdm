@@ -1,0 +1,53 @@
+#	$NetBSD: Makefile.xdm,v 1.8 2013/06/05 00:01:16 mrg Exp $
+
+XDMVARDIR=	/var/db/xdm
+XDMDIR=		${X11ETCDIR}/xdm
+XDMCHOOSERPATH=	${X11ROOTDIR}/libexec/chooser
+XDMGREETERLIB=	${X11ROOTDIR}/lib/libXdmGreet.so
+XDMLOGDIR=	/var/log
+XDMPIDDIR=	/var/run
+
+CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
+		-DHASXDMAUTH ${X11FLAGS.CONNECTION} \
+		-DBSD44SOCKETS \
+		-DFRAGILE_DEV_MEM -DARC4_RANDOM \
+		-DDEV_RANDOM=\"dev/urandom\" \
+		-DXPM -DUSE_XFT \
+		-DHAVE_GETIFADDRS \
+		-DHAVE_MKSTEMP \
+		-DHAVE_SETPROCTITLE \
+		-DHAVE_SETUSERCONTEXT \
+		-DHAVE_ARC4RANDOM \
+		-DHAVE_DAEMON \
+		-DHAVE_SIGACTION \
+		-DHAVE_ASPRINTF \
+		-DHAVE_OPENLOG \
+		-DUNIXCONN \
+		-DTCPCONN \
+		-DHAVE_WORKING_VFORK \
+		-DHAVE_VFORK_H \
+		-DHAVE_VFORK \
+		-DHAVE_INTTYPES_H \
+		-DHAVE_SYS_PARAM_H \
+		-DHAVE_GRP_H \
+		-I${X11SRCDIR.xdm} \
+		-I${X11SRCDIR.xdm}/include \
+		-I${DESTDIR}${X11INCDIR}/freetype2 \
+		${X11FLAGS.VERSION}
+
+LDFLAGS+=	-Wl,--export-dynamic
+
+.if (${USE_PAM} != "no")
+CPPFLAGS+=      -DUSE_PAM
+.endif
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=      -DIPv6
+.endif
+
+.PATH:		${X11SRCDIR.xdm}
+.PATH:		${X11SRCDIR.xdm}/xdm
+.PATH:		${X11SRCDIR.xdm}/man
+.PATH:		${X11SRCDIR.xdm}/chooser
+.PATH:		${X11SRCDIR.xdm}/greeter
+.PATH:		${X11SRCDIR.xdm}/app-defaults

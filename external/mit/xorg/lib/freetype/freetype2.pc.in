@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: FreeType 2
+Description: A free, high-quality, and portable font engine.
+Version: @VERSION@
+Requires:
+Libs: -L${libdir} -lfreetype -lz
+Cflags: -I${includedir}/freetype2 -I${includedir}

@@ -1,0 +1,30 @@
+#	$NetBSD: Makefile.nls,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+
+# install Compose XI18N_OBJS XLC_LOCALE for this subdir
+
+.include <bsd.own.mk>
+
+FILES=		XI18N_OBJS
+FILESDIR=	${X11LIBDIR}/locale/${NLS_SUBDIR}
+
+CTFILES=	Compose XLC_LOCALE
+
+.PATH:	${X11SRCDIR.X11}/nls/${NLS_SUBDIR}
+
+.for _F in ${CTFILES}
+${_F}.ct: ${_F}.pre
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	${CPP} -undef -traditional \
+	    < ${.ALLSRC} | ${X11TOOL_UNXCOMM} > ${.TARGET}
+
+FILES+=			${_F}.ct
+FILESDIR_${_F}.ct=	${X11LIBDIR}/locale/${NLS_SUBDIR}
+FILESNAME_${_F}.ct=	${_F:S/.pre$//}
+CLEANFILES+=		${_F}.ct
+.endfor
+
+realall: ${FILES}
+
+.include <bsd.x11.mk>
+.include <bsd.prog.mk>

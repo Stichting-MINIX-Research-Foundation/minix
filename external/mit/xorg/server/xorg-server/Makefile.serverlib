@@ -1,0 +1,19 @@
+#	$NetBSD: Makefile.serverlib,v 1.4 2008/08/24 13:43:57 rtr Exp $
+
+NOLINT=         1
+NOPROFILE=      1
+
+.include <bsd.own.mk>		# for NETBSDSRCDIR
+.include <bsd.endian.mk>
+
+.if ${TARGET_ENDIANNESS} == "1234"
+X_BYTE_ORDER=X_LITTLE_ENDIAN
+.elif ${TARGET_ENDIANNESS} == "4321"
+X_BYTE_ORDER=X_BIG_ENDIAN
+.else
+X_BYTE_ORDER=0
+.endif
+
+CPPFLAGS+=	${X11FLAGS.SERVER}
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+

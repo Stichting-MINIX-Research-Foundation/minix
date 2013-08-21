@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.utils,v 1.5 2008/08/15 15:55:06 rtr Exp $
+
+.include <bsd.own.mk>
+
+#SCANPCIINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/bin/xf86cfg && ${PRINTOBJDIR}
+#XF86OBJDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/xf86config && ${PRINTOBJDIR}
+#XLOADEROBJDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/xloader && ${PRINTOBJDIR}
+DUMMYOBJDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/hw/xfree86/dummy && ${PRINTOBJDIR}
+SCANPCIOBJDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/hw/xfree86/scanpci && ${PRINTOBJDIR}
+XORGOSOBJDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/hw/xfree86/xorgos && ${PRINTOBJDIR}
+
+LIBDUMMY=	${DUMMYOBJDIR}/libdummy.a
+LIBXORGOS=	${XORGOSOBJDIR}/libxorgos.a
+LIBSCANPCI=	${SCANPCIOBJDIR}/libscanpci.a

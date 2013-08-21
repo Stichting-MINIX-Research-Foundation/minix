@@ -1,0 +1,9 @@
+/* $NetBSD: xorgsite.def,v 1.2 2011/12/13 04:32:32 dholland Exp $ */
+
+#define HasSecureRPC NO
+#define InstallXdmConfig YES
+#define InstallXinitConfig YES
+#define UseGccMakeDepend NO
+
+#define BuildExpatLibrary YES
+#define BuildFreetype2Library YES

@@ -1,0 +1,15 @@
+#	$NetBSD: Makefile.sync,v 1.1 2011/08/02 07:41:02 mrg Exp $
+
+.PATH:          ${X11SRCDIR.xorg-server}/miext/sync
+SRCS.sync=	misync.c
+
+CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
+		${X11FLAGS.DIX} ${X11INCS.DIX}
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg
+
+.include <bsd.x11.mk>
+LIBDIR= ${XMODULEDIR}
+.include <bsd.lib.mk>

@@ -1,0 +1,77 @@
+# $NetBSD: xorg.conf.640x480-us,v 1.2 2011/05/20 16:35:38 tsutsui Exp $
+
+Section "ServerLayout"
+	Identifier	"wsfb"
+	Screen	0	"Screen0" 0 0
+	InputDevice	"TouchScreen0" "CorePointer"
+	InputDevice	"Mouse0"
+	InputDevice	"Keyboard0" "CoreKeyboard"
+EndSection
+	
+Section "Files"
+#	FontPath	"/usr/pkg/lib/X11/fonts/TTF/"
+EndSection
+
+Section "InputDevice"
+	Identifier	"Keyboard0"
+	Driver		"kbd"
+	Option		"XkbLayout"       "us"
+#	Option		"XkbLayout"       "jp"
+#	Option		"XkbModel" 	  "foo"
+EndSection
+
+Section "InputDevice"
+	Identifier	"TouchScreen0"
+	Driver		"ws"
+
+	Option		"Device"	"/dev/wsmouse0"
+
+	Option		"MinX"		"0"
+	Option		"MaxX"		"639"
+#	Option		"MaxX"		"799"
+
+	Option		"MinY"		"0"
+#	Option		"MaxY"		"239"
+	Option		"MaxY"		"479"
+
+#	Option		"Rotate"	"CCW"
+EndSection
+
+Section "InputDevice"
+	Identifier	"Mouse0"
+	Driver		"mouse"
+	Option		"Device"	"/dev/wsmouse"
+	Option		"ZAxisMapping"	"4 5"
+EndSection
+
+Section "Device"
+	Identifier	"Wsdisplay0"
+	Driver		"wsfb"
+
+#	Option		"Rotate"	"CCW"
+EndSection
+
+Section "Monitor"
+	Identifier	"Monitor"
+#	VendorName	"hpc"
+#	ModelName	"lcd"
+EndSection
+
+Section "Screen"
+	Identifier	"Screen0"
+	Device		"Wsdisplay0"
+	Monitor		"Monitor"
+
+	SubSection "Display"
+		Viewport	0 0
+		Depth		1
+	EndSubSection
+	SubSection "Display"
+		Viewport	0 0
+		Depth		8
+	EndSubSection
+	SubSection "Display"
+		Viewport	0 0
+		Depth		16
+	EndSubSection
+EndSection

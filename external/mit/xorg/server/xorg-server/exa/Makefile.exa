@@ -1,0 +1,33 @@
+#	$NetBSD: Makefile.exa,v 1.5 2011/01/15 13:54:53 jmcneill Exp $
+
+.PATH:		${X11SRCDIR.xorg-server}/exa
+
+SRCS.exa=\
+	exa.c \
+	exa_classic.c \
+	exa_migration_classic.c \
+	exa_driver.c \
+	exa_mixed.c \
+	exa_migration_mixed.c \
+	exa_accel.c \
+	exa_glyphs.c \
+	exa_offscreen.c \
+	exa_render.c \
+	exa_unaccel.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+		-I${X11SRCDIR.xorg-server}/Xext \
+		-I${X11SRCDIR.xorg-server}/exa \
+		-I${X11SRCDIR.xorg-server}/fb \
+		-I${X11SRCDIR.xorg-server}/miext/cw \
+		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/../include \
+		${X11FLAGS.DIX} ${X11INCS.DIX}
+
+.if !defined(XMODULEDIR)
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
+.endif

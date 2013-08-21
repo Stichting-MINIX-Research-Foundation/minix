@@ -84,6 +84,9 @@
 ./etc/devmand/scripts/singlechar	minix-sys
 ./etc/devmand/usb_hub.cfg		minix-sys
 ./etc/devmand/usb_storage.cfg		minix-sys
+./etc/fonts				minix-sys	xorg
+./etc/fonts/conf.avail			minix-sys	xorg
+./etc/fonts/conf.d			minix-sys	xorg
 ./etc/gettytab				minix-sys
 ./etc/group				minix-sys
 ./etc/hostname.file			minix-sys
@@ -122,6 +125,19 @@
 ./etc/termcap				minix-sys
 ./etc/ttys				minix-sys
 ./etc/utmp				minix-sys
+./etc/X11				minix-sys	xorg
+./etc/X11/fs				minix-sys	xorg
+./etc/X11/lbxproxy			minix-sys	xorg
+./etc/X11/proxymngr			minix-sys	xorg
+./etc/X11/rstart			minix-sys	xorg
+./etc/X11/rstart/commands		minix-sys	xorg
+./etc/X11/rstart/commands/x11r6		minix-sys	xorg
+./etc/X11/rstart/contexts		minix-sys	xorg
+./etc/X11/twm				minix-sys	xorg
+./etc/X11/xdm				minix-sys	xorg
+./etc/X11/xinit				minix-sys	xorg
+./etc/X11/xserver			minix-sys	xorg
+./etc/X11/xsm				minix-sys	xorg
 ./home					minix-sys
 ./home/ast				minix-sys	obsolete
 ./home/ast/.exrc			minix-sys	obsolete

@@ -1,0 +1,85 @@
+#	$NetBSD: Makefile.Xserver,v 1.13 2012/10/03 21:50:14 gsutre Exp $
+
+.for _SL in \
+	mi \
+	config \
+	fb \
+	xfixes \
+	Xext \
+	Xext/Xextbuiltin \
+	dbe \
+	record \
+	render \
+	randr \
+	damageext \
+	miext/damage \
+	miext/shadow \
+	miext/cw \
+	miext/sync \
+	Xi \
+	xkb \
+	xkbstubs \
+	composite \
+	dix/xpstubs \
+	os \
+	dix \
+	config \
+	glx \
+	hw/xnest \
+	hw/xfree86/common \
+	hw/xfree86/ddc \
+	hw/xfree86/dixmods \
+	hw/xfree86/dixmods/dbe \
+	hw/xfree86/dixmods/extmod \
+	hw/xfree86/dixmods/fb \
+	hw/xfree86/dixmods/freetype \
+	hw/xfree86/dixmods/record \
+	hw/xfree86/dixmods/shadow \
+	hw/xfree86/dixmods/type1 \
+	hw/xfree86/dixmods/wfb \
+	hw/xfree86/dixmods/xorgxkb \
+	hw/xfree86/dixmods/xtrap \
+	hw/xfree86/doc \
+	hw/xfree86/dri \
+	hw/xfree86/dri2 \
+	hw/xfree86/dummy \
+	hw/xfree86/i2c \
+	hw/xfree86/init \
+	hw/xfree86/int10 \
+	hw/xfree86/loader \
+	hw/xfree86/xorgos \
+	hw/xfree86/rac \
+	hw/xfree86/ramdac \
+	hw/xfree86/scanpci \
+	hw/xfree86/shadowfb \
+	hw/xfree86/utils \
+	hw/xfree86/vbe \
+	hw/xfree86/vgahw \
+	hw/xfree86/x86emu \
+	hw/xfree86/xaa \
+	hw/xfree86/xf8_16bpp \
+	hw/xfree86/xf8_32bpp \
+	hw/xfree86/xf86config \
+	hw/xfree86/xf86modes
+
+.if !defined(LIBDIR.${_SL})
+LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/${_SL} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDIR.${_SL}
+.endif
+LDADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
+DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
+.endfor
+
+LDADD.XORG_CORE=	${LDADD.dix} ${LDADD.config}
+DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
+
+# X servers need all symbols exported
+LDFLAGS+=	-Wl,--export-dynamic
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+		-I${X11SRCDIR.xorg-server}/Xext \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/../include
+
+LDADD+=		-lm
+DPADD+=		${LIBM}

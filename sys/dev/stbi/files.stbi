@@ -1,0 +1,4 @@
+# $NetBSD: files.stbi,v 1.1 2011/02/06 23:13:04 jmcneill Exp $
+
+define stbi
+file dev/stbi/stb_image.c	stbi

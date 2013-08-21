@@ -1,0 +1,57 @@
+# $NetBSD: xorg.conf.C7x0,v 1.1 2012/02/10 11:25:43 tsutsui Exp $
+
+Section "ServerLayout"
+	Identifier	"wsfb"
+	Screen	0	"Screen0" 0 0
+	InputDevice	"TouchScreen0" "CorePointer"
+	InputDevice	"Keyboard0" "CoreKeyboard"
+EndSection
+	
+Section "Files"
+#	FontPath	"/usr/pkg/lib/X11/fonts/TTF/"
+EndSection
+
+Section "InputDevice"
+	Identifier	"Keyboard0"
+	Driver		"kbd"
+	Option		"XkbModel" 	  "sl-c3x00"
+EndSection
+
+Section "InputDevice"
+	Identifier	"TouchScreen0"
+	Driver		"ws"
+
+	Option		"device"	"/dev/wsmouse"
+	Option		"ZAxisMapping"	"4 5"
+
+	Option		"MinX"		"0"
+	Option		"MaxX"		"639"
+	Option		"MinY"		"0"
+	Option		"MaxY"		"479"
+
+#	Option		"Rotate"	"CW"
+EndSection
+
+Section "Device"
+	Identifier	"Wsdisplay0"
+	Driver		"wsfb"
+
+#	Option		"Rotate"	"CW"
+EndSection
+
+Section "Monitor"
+	Identifier	"Monitor"
+	VendorName	"Sharp"
+	ModelName	"Zaurus"
+EndSection
+
+Section "Screen"
+	Identifier	"Screen0"
+	Device		"Wsdisplay0"
+	Monitor		"Monitor"
+	DefaultDepth	16
+
+	SubSection "Display"
+		Depth	16
+	EndSubSection
+EndSection

@@ -1,0 +1,72 @@
+#	$NetBSD: Makefile.glx,v 1.10 2012/10/03 21:50:14 gsutre Exp $
+
+.PATH:	${X11SRCDIR.xorg-server}/glx
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
+.PATH:	${X11SRCDIR.MesaLib}/src/glx
+
+SRCS.glx= \
+        indirect_dispatch.c \
+        indirect_dispatch_swap.c \
+        indirect_reqsize.c \
+        indirect_size_get.c \
+        indirect_table.c \
+        glapi.c \
+        glapi_gentable.c \
+        glthread.c \
+        glxdri.c \
+        glxdri2.c \
+        extension_string.c \
+        indirect_util.c \
+        indirect_program.c \
+        indirect_texture_compression.c \
+        glxcmds.c \
+        glxcmdsswap.c \
+        glxext.c \
+        glxdriswrast.c \
+        glxdricommon.c \
+        glxscreens.c \
+        render2.c \
+        render2swap.c \
+        renderpix.c \
+        renderpixswap.c \
+        rensize.c \
+        single2.c \
+        single2swap.c \
+        singlepix.c \
+        singlepixswap.c \
+        singlesize.c \
+        swap_interval.c \
+        xfont.c
+
+COPTS.glxcmds.c=		-Wno-error
+COPTS.indirect_dispatch.c=	-Wno-error
+COPTS.indirect_dispatch_swap.c=	-Wno-error
+COPTS.glxscreens.c=		-Wno-error
+COPTS.xfont.c=			-Wno-error
+
+CPPFLAGS+= \
+	-I${X11SRCDIR.xorg-server}/include \
+	-I${X11SRCDIR.xorg-server}/glx \
+	-I${X11SRCDIR.xorg-server}/Xext \
+	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri \
+	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri2 \
+	-I${X11SRCDIR.MesaLib}/include \
+	-I${X11SRCDIR.MesaLib}/src/glx \
+	-I${X11SRCDIR.MesaLib}/src/mesa \
+	-I${X11SRCDIR.MesaLib}/src/mesa/main \
+	-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
+	-I${DESTDIR}${X11INCDIR}/X11 \
+	-I${DESTDIR}${X11INCDIR}/libdrm \
+	-I${DESTDIR}${X11INCDIR}/xorg \
+	-I${DESTDIR}${X11INCDIR}/pixman-1 \
+	-I${X11SRCDIR.xorg-server}/../include
+
+CPPFLAGS+= \
+	-DGLXEXT \
+	-DGLX_USE_MESA \
+	-I${X11SRCDIR.xorg-server}/../include \
+	${X11FLAGS.DIX} ${X11INCS.DIX}
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

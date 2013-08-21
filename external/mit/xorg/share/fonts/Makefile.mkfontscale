@@ -1,0 +1,43 @@
+#	$NetBSD: Makefile.mkfontscale,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+
+# Note: needs "install" run in ./encodings  first
+# It depends upon FILESDIR being set.
+#
+
+.ifndef _MAKEFILE_MKFONTSCALE_
+_MAKEFILE_MKFONTSCALE_=1
+
+.include <bsd.own.mk>
+
+.include "${NETBSDSRCDIR}/external/mit/xorg/tools/fc-cache/Makefile.fc-cache"
+
+MKFONTSCALEDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/mkfontscale && ${PRINTOBJDIR}
+MKFONTSCALE=	${MKFONTSCALEDIR}/mkfontscale
+
+afterinstall: create.fonts.dir create.fonts.scale
+.if ${MKUNPRIVED} != "no"
+	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=root gname=operator" \
+	    | ${METALOG.add}
+	echo ".${FILESDIR}/fonts.scale type=file mode=0444 uname=root gname=operator" \
+	    | ${METALOG.add}
+.endif
+	${_MKMSG_INSTALL} ${DESTDIR}${FILESDIR}/encodings.dir
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+	    ${DESTDIR}${X11FONTDIR}/encodings/encodings.dir \
+	    ${DESTDIR}${FILESDIR}/encodings.dir
+
+create.fonts.dir: create.fonts.scale
+	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/fonts.dir
+	rm -f ${DESTDIR}${FILESDIR}/fonts.dir
+	${MKFONTSCALE} -b -s -l ${DESTDIR}${FILESDIR}
+
+.if !target(create.fonts.scale)
+create.fonts.scale:
+	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/fonts.scale
+	rm -f ${DESTDIR}${FILESDIR}/fonts.scale
+	${MKFONTSCALE} ${DESTDIR}${FILESDIR}
+.endif
+
+.PHONY: create.fonts.dir create.fonts.scale
+
+.endif # _MAKEFILE_MKFONTSCALE_

@@ -53,7 +53,7 @@
 ./usr/X11R6/man/man1/xdmxconfig.1			-unknown-	.man,x11
 ./usr/X11R6/man/man1/xvidtune.1				-unknown-	.man,x11
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
-./usr/X11R7/bin/Xvfb					-unknown-	xorg
+./usr/X11R7/bin/Xvfb					-unknown-	xorg,minix-false
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
@@ -71,5 +71,5 @@
 ./usr/X11R7/man/man1/Xmark.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xnest.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xserver.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg,minix-false
 ./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	obsolete

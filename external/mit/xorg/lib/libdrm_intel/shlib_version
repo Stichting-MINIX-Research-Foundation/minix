@@ -1,0 +1,4 @@
+#	$NetBSD: shlib_version,v 1.1 2009/06/09 03:05:37 mrg Exp $
+#
+major=0
+minor=0

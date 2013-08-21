@@ -1,0 +1,7 @@
+#	$NetBSD: Makefile.common,v 1.2 2009/06/18 02:45:46 mrg Exp $
+
+X11DEFAULTFONTPATH=	${X11FONTDIR}/misc/ \
+			${X11FONTDIR}/TTF/ \
+			${X11FONTDIR}/Type1/ \
+			${X11FONTDIR}/75dpi/ \
+			${X11FONTDIR}/100dpi/

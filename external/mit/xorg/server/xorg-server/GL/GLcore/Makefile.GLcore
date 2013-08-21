@@ -1,0 +1,239 @@
+#	$NetBSD: Makefile.GLcore,v 1.3 2010/07/19 05:34:27 mrg Exp $
+
+SRCS.GLcore= \
+	${SRCS.main} \
+	${SRCS.math} \
+	${SRCS.swrast} \
+	${SRCS.swrast_setup} \
+	${SRCS.tnl} \
+	${SRCS.shader} \
+	${SRCS.grammar} \
+	${SRCS.slang} \
+	${SRCS.vbo} \
+	${SRCS.X}
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/main
+SRCS.main= \
+	accum.c \
+	api_arrayelt.c \
+	api_loopback.c \
+	api_noop.c \
+	api_validate.c \
+	arrayobj.c \
+	attrib.c \
+	blend.c \
+	bufferobj.c \
+	buffers.c \
+	clip.c \
+	colortab.c \
+	context.c \
+	convolve.c \
+	debug.c \
+	depth.c \
+	depthstencil.c \
+	dlist.c \
+	drawpix.c \
+	enable.c \
+	enums.c \
+	eval.c \
+	execmem.c \
+	extensions.c \
+	fbobject.c \
+	feedback.c \
+	fog.c \
+	framebuffer.c \
+	get.c \
+	getstring.c \
+	hash.c \
+	hint.c \
+	histogram.c \
+	image.c \
+	imports.c \
+	light.c \
+	lines.c \
+	matrix.c \
+	mipmap.c \
+	mm.c \
+	pixel.c \
+	points.c \
+	polygon.c \
+	queryobj.c \
+	rastpos.c \
+	rbadaptors.c \
+	renderbuffer.c \
+	shaders.c \
+	state.c \
+	stencil.c \
+	texcompress.c \
+	texcompress_fxt1.c \
+	texcompress_s3tc.c \
+	texenvprogram.c \
+	texformat.c \
+	teximage.c \
+	texobj.c \
+	texrender.c \
+	texstate.c \
+	texstore.c \
+	varray.c \
+	vtxfmt.c
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/math
+SRCS.math= \
+	m_debug_clip.c \
+	m_debug_norm.c \
+	m_debug_xform.c \
+	m_eval.c \
+	m_matrix.c \
+	m_translate.c \
+	m_vector.c \
+	m_xform.c
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/swrast
+SRCS.swrast= \
+	s_aaline.c \
+	s_aatriangle.c \
+	s_accum.c \
+	s_alpha.c \
+	s_atifragshader.c \
+	s_bitmap.c \
+	s_blend.c \
+	s_blit.c \
+	s_buffers.c \
+	s_context.c \
+	s_copypix.c \
+	s_depth.c \
+	s_drawpix.c \
+	s_feedback.c \
+	s_fog.c \
+	s_fragprog.c \
+	s_imaging.c \
+	s_lines.c \
+	s_logic.c \
+	s_masking.c \
+	s_points.c \
+	s_readpix.c \
+	s_span.c \
+	s_stencil.c \
+	s_texcombine.c \
+	s_texfilter.c \
+	s_texstore.c \
+	s_triangle.c \
+	s_zoom.c
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/swrast_setup
+SRCS.swrast_setup= \
+	ss_context.c \
+	ss_triangle.c
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/tnl
+SRCS.tnl= \
+	t_context.c \
+	t_draw.c \
+	t_pipeline.c \
+	t_vb_cull.c \
+	t_vb_fog.c \
+	t_vb_light.c \
+	t_vb_normals.c \
+	t_vb_points.c \
+	t_vb_program.c \
+	t_vb_render.c \
+	t_vb_texgen.c \
+	t_vb_texmat.c \
+	t_vb_vertex.c \
+	t_vertex.c \
+	t_vertex_generic.c \
+	t_vertex_sse.c \
+	t_vp_build.c
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/shader
+SRCS.shader= \
+	arbprogparse.c \
+	arbprogram.c \
+	atifragshader.c \
+	nvfragparse.c \
+	nvprogram.c \
+	nvvertparse.c \
+	prog_debug.c \
+	prog_execute.c \
+	prog_instruction.c \
+	prog_parameter.c \
+	prog_print.c \
+	prog_statevars.c \
+	program.c \
+	programopt.c \
+	shader_api.c
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/shader/grammar
+SRCS.grammar= \
+	grammar_mesa.c
+SRCS.grammar=
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/shader/slang
+SRCS.slang= \
+	slang_builtin.c \
+	slang_codegen.c \
+	slang_compile.c \
+	slang_compile_function.c \
+	slang_compile_operation.c \
+	slang_compile_struct.c \
+	slang_compile_variable.c \
+	slang_emit.c \
+	slang_ir.c \
+	slang_label.c \
+	slang_link.c \
+	slang_log.c \
+	slang_mem.c \
+	slang_print.c \
+	slang_simplify.c \
+	slang_storage.c \
+	slang_typeinfo.c \
+	slang_utility.c \
+	slang_vartable.c
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/vbo
+SRCS.vbo= \
+	vbo_context.c \
+	vbo_exec.c \
+	vbo_exec_api.c \
+	vbo_exec_array.c \
+	vbo_exec_draw.c \
+	vbo_exec_eval.c \
+	vbo_rebase.c \
+	vbo_save.c \
+	vbo_save_api.c \
+	vbo_save_draw.c \
+	vbo_save_loopback.c \
+	vbo_split.c \
+	vbo_split_copy.c \
+	vbo_split_inplace.c
+
+COPTS.vbo_save_draw.c=	-Wno-error
+
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/drivers/common
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/drivers/x11
+SRCS.X= \
+	driverfuncs.c \
+	xm_api.c \
+	xm_buffer.c \
+	xm_dd.c \
+	xm_image.c \
+	xm_line.c \
+	xm_span.c \
+	xm_tri.c
+
+CPPFLAGS+= \
+	-I${DESTDIR}${X11INCDIR}/pixman-1 \
+	-I${DESTDIR}${X11INCDIR}/xorg \
+	-I${X11SRCDIR.MesaLib}/src/mesa \
+	-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
+	-I${X11SRCDIR.MesaLib}/src/mesa/main \
+	-I${X11SRCDIR.MesaLib}/src/mesa/shader \
+	-I${X11SRCDIR.MesaLib}/src/mesa/shader/slang \
+	-I${X11SRCDIR.xorg-server}/include
+
+CPPFLAGS+= \
+	${X11FLAGS.DIX}
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
