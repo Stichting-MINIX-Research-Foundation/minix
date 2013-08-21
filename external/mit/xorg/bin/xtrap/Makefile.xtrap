@@ -1,0 +1,22 @@
+#	$NetBSD: Makefile.xtrap,v 1.2 2011/07/01 01:25:52 mrg Exp $
+
+NOMAN=	1
+
+.include <bsd.own.mk>
+
+SRCS+=	${PROG}.c XEKeybCtrl.c
+
+MLINKS+=xtrap.1 ${PROG}.1
+
+LDADD+=	-lXTrap -lXt -lSM -lICE -lXext -lX11
+DPADD+=	${LIBXTRAP} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+
+.PATH:	${X11SRCDIR.xtrap}
+
+.include <bsd.x11.mk>
+.include <bsd.prog.mk>
+
+# XXX
+.if defined(HAVE_GCC)
+COPTS+= -Wno-error
+.endif

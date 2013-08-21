@@ -1,0 +1,57 @@
+#	$NetBSD: Makefile.bdf,v 1.2 2009/03/31 21:18:36 perry Exp $
+
+# Font files built using this makefile are cleaned in two ways:
+#
+#   * temporary build files are cleaned by 'make clean' (via CLEANFILES).
+#
+#   * Actual finished BDF and PCF files (BDFFILES and PCFFILES,
+#     respectively) are removed only by "cleandir" because they
+#     take a long time to build.  (See the 'cleanfonts' target.)
+#
+# Also, we *must* split these operations into multiple 'rm' commands
+# because of the number of files being removed.  Trying to 'rm' all of
+# these files with one command will cause some host systems to fail
+# (rm arg list too long).
+
+FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
+.PATH:  	${X11SRCDIR.${FONTSRCPKG}}
+
+FONTSUFFIX=	.gz
+FONTGZIP=	| gzip ${GZIPLEVEL:U-9} -ncf
+
+.include "${NETBSDSRCDIR}/external/mit/xorg/tools/bdftopcf/Makefile.bdftopcf"
+.include "${NETBSDSRCDIR}/external/mit/xorg/tools/ucs2any/Makefile.ucs2any"
+
+.for _F _M in ${UCSFILES}						# {
+${_F}-${_M}.bdf: ${_F}.bdf
+	${_MKTARGET_CREATE}
+	${UCS2ANY} ${.ALLSRC} ${DESTDIR}${X11FONTDIR}/util/map-${_M} ${_M}
+
+BDFFILES+=	${_F}-${_M}.bdf
+.endfor									# }
+
+.SUFFIXES: .bdf .pcf${FONTSUFFIX}
+
+.bdf.pcf${FONTSUFFIX}:
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	${BDFTOPCF} -t ${.IMPSRC} ${FONTGZIP} > ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
+
+PCFFILES+=	${BDFFILES:S/.bdf$/.pcf${FONTSUFFIX}/}
+CLEANFILES+=	${BDFFILES:S/.bdf$/.pcf${FONTSUFFIX}.tmp/}
+
+FILES+=		${PCFFILES}
+.if exists(fonts.alias)
+FILES+=		fonts.alias
+.endif
+
+realall:	${PCFFILES}
+
+cleandir: cleanfonts
+
+cleanfonts: .PHONY .NOTMAIN
+	rm -f ${BDFFILES}
+	rm -f ${PCFFILES}
+
+.include "../../Makefile.font"

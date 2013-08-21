@@ -1,0 +1,47 @@
+# $NetBSD: Makefile.ximcp,v 1.2 2008/10/06 16:24:33 tron Exp $
+
+.PATH:	${X11SRCDIR.X11}/modules/im/ximcp
+SRCS.ximcp= \
+	imCallbk.c \
+	imDefFlt.c \
+	imDefIc.c \
+	imDefIm.c \
+	imDefLkup.c \
+	imDispch.c \
+	imEvToWire.c \
+	imExten.c \
+	imImSw.c \
+	imInsClbk.c \
+	imInt.c \
+	imLcFlt.c \
+	imLcGIc.c \
+	imLcIc.c \
+	imLcIm.c \
+	imLcLkup.c \
+	imLcPrs.c \
+	imLcSIc.c \
+	imRmAttr.c \
+	imRm.c \
+	imThaiFlt.c \
+	imThaiIc.c \
+	imThaiIm.c \
+	imTrans.c \
+	imTransR.c \
+	imTrX.c
+
+CPPFLAGS+= \
+	-I${DESTDIR}${X11INCDIR}/X11 \
+	-I${X11SRCDIR.X11}/src/xlibi18n
+
+CPPFLAGS+= \
+	${X11FLAGS.CONNECTION} \
+	-DXIM_t \
+	-DTRANS_CLIENT \
+	-DHASXDMAUTH
+
+CPPFLAGS.imDefLkup.c=	-Wno-error
+CPPFLAGS.imRm.c=	-Wno-error
+CPPFLAGS.imTrans.c=	-Wno-error
+CPPFLAGS.imLcLkup.c=	-Wno-stack-protector
+
+.include <bsd.lib.mk>

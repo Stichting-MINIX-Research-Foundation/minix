@@ -1,0 +1,27 @@
+#	$NetBSD: Makefile.fb,v 1.8 2011/08/02 09:11:37 mrg Exp $
+
+.PATH:		${X11SRCDIR.xorg-server}/fb
+SRCS.fb=	fb24_32.c fballpriv.c fbarc.c fbbits.c fbblt.c \
+		fbbltone.c fbcopy.c \
+		fbfill.c fbfillrect.c fbfillsp.c fbgc.c fbgetsp.c \
+		fbglyph.c fbimage.c fbline.c fboverlay.c \
+		fbpict.c fbpixmap.c fbpoint.c fbpush.c fbscreen.c \
+		fbseg.c fbsetsp.c fbsolid.c fbstipple.c fbtile.c \
+		fbtrap.c fbutil.c fbwindow.c
+
+CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX} -DHAVE_DIX_CONFIG_H
+
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg
+
+CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
+
+# XXX
+COPTS.fbpict.c=		-Wno-error
+COPTS.fbwindow.c=	-Wno-error
+COPTS.colormap.c=	-Wno-error
+COPTS.fboverlay.c=	-Wno-error	# XXX shmstr.h
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

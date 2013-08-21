@@ -1,0 +1,8 @@
+#	$NetBSD: Makefile.fcarch,v 1.3 2013/06/03 06:46:54 mrg Exp $
+
+.ifndef _FONTCONFIG_FCARCH_MK_
+_FONTCONFIG_FCARCH_MK_=1
+
+CPPFLAGS+=	-DFC_ARCHITECTURE="\"${MACHINE_ARCH}\""
+
+.endif

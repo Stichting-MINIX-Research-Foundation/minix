@@ -1,0 +1,185 @@
+
+SRCS.mesa= \
+	api_arrayelt.c \
+	api_exec.c \
+	api_loopback.c \
+	api_noop.c \
+	api_validate.c \
+	accum.c \
+	attrib.c \
+	arrayobj.c \
+	blend.c \
+	bufferobj.c \
+	buffers.c \
+	clear.c \
+	clip.c \
+	colortab.c \
+	context.c \
+	convolve.c \
+	cpuinfo.c \
+	debug.c \
+	depth.c \
+	depthstencil.c \
+	dlist.c \
+	dlopen.c \
+	drawpix.c \
+	enable.c \
+	enums.c \
+	eval.c \
+	execmem.c \
+	extensions.c \
+	fbobject.c \
+	feedback.c \
+	ffvertex_prog.c \
+	fog.c \
+	formats.c \
+	framebuffer.c \
+	get.c \
+	getstring.c \
+	hash.c \
+	hint.c \
+	histogram.c \
+	image.c \
+	imports.c \
+	light.c \
+	lines.c \
+	matrix.c \
+	mipmap.c \
+	mm.c \
+	multisample.c \
+	pixel.c \
+	pixelstore.c \
+	points.c \
+	polygon.c \
+	queryobj.c \
+	rastpos.c \
+	rbadaptors.c \
+	readpix.c \
+	remap.c \
+	renderbuffer.c \
+	scissor.c \
+	shaders.c \
+	shared.c \
+	state.c \
+	stencil.c \
+	syncobj.c \
+	texcompress.c \
+	texcompress_s3tc.c \
+	texcompress_fxt1.c \
+	texenv.c \
+	texenvprogram.c \
+	texfetch.c \
+	texformat.c \
+	texgen.c \
+	texgetimage.c \
+	teximage.c \
+	texobj.c \
+	texparam.c \
+	texrender.c \
+	texstate.c \
+	texstore.c \
+	varray.c \
+	viewport.c \
+	vtxfmt.c
+
+
+# XXX  avoid source name clashes with glx
+.PATH:		${X11SRCDIR.MesaLib}/src/mesa/main
+BUILDSYMLINKS=	${X11SRCDIR.MesaLib}/src/mesa/main/pixel.c MESApixel.c \
+		${X11SRCDIR.MesaLib}/src/mesa/main/eval.c MESAeval.c
+
+
+
+# math
+.PATH:		${X11SRCDIR.MesaLib}/src/mesa/math
+SRCS.math= \
+	m_debug_clip.c \
+	m_debug_norm.c \
+	m_debug_xform.c \
+	m_eval.c \
+	m_matrix.c \
+	m_translate.c \
+	m_vector.c
+
+SRCS.math+= \
+	m_xform.c
+
+
+# swrast
+.PATH:		${X11SRCDIR.MesaLib}/src/mesa/swrast
+SRCS.swrast= \
+	s_aaline.c \
+	s_aatriangle.c \
+	s_accum.c \
+	s_alpha.c \
+	s_atifragshader.c \
+	s_bitmap.c \
+	s_blend.c \
+	s_blit.c \
+	s_clear.c \
+	s_copypix.c \
+	s_context.c \
+	s_depth.c \
+	s_drawpix.c \
+	s_feedback.c \
+	s_fog.c \
+	s_fragprog.c \
+	s_lines.c \
+	s_logic.c \
+	s_masking.c \
+	s_points.c \
+	s_readpix.c \
+	s_span.c \
+	s_stencil.c \
+	s_texcombine.c \
+	s_texfilter.c \
+	s_triangle.c \
+	s_zoom.c
+
+
+# swrast_setup
+.PATH:		${X11SRCDIR.MesaLib}/src/mesa/swrast_setup
+SRCS.ss= \
+	ss_context.c \
+	ss_triangle.c 
+
+
+# tnl
+.PATH:		${X11SRCDIR.MesaLib}/src/mesa/tnl
+SRCS.tnl= \
+	t_context.c \
+	t_pipeline.c \
+	t_draw.c \
+	t_rasterpos.c \
+	t_vb_program.c \
+	t_vb_render.c \
+	t_vb_texgen.c \
+	t_vb_texmat.c \
+	t_vb_vertex.c \
+	t_vb_cull.c \
+	t_vb_fog.c \
+	t_vb_light.c \
+	t_vb_normals.c \
+	t_vb_points.c \
+	t_vp_build.c \
+	t_vertex.c \
+	t_vertex_sse.c \
+	t_vertex_generic.c 
+
+
+.for fn in ${SRCS.glx} ${SRCS.dri} ${SRCS.mesa}
+CPPFLAGS.${fn}+=-I${X11SRCDIR.xc}/lib/GL/dri \
+		-I${X11SRCDIR.xc}/lib/GL/glx \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared/drm/kernel \
+		-I${X11SRCDIR.xc}/programs/Xserver/GL/dri \
+		-I${X11SRCDIR.MesaLib}/src/mesa/array_cache \
+		-I${X11SRCDIR.MesaLib}/src/mesa \
+		-I${X11SRCDIR.MesaLib}/src/mesa/swrast_setup \
+		-I${X11SRCDIR.MesaLib}/src/mesa/tnl \
+		-I${X11SRCDIR.MesaLib}/src/mesa/include
+CPPFLAGS.${fn}+=${X11FLAGS.DRI}
+.endfor
+
+SRCS+=	${SRCS.dri} ${SRCS.mesa} ${SRCS.ac} ${SRCS.math} \
+	${SRCS.swrast} ${SRCS.ss} ${SRCS.tnl}

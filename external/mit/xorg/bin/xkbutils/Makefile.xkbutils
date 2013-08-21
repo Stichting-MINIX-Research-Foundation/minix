@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.xkbutils,v 1.2 2009/11/09 00:36:12 mrg Exp $
+
+.include <bsd.own.mk>
+
+CPPFLAGS+=-DXKB
+
+LDADD+=	-lxkbfile -lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
+DPADD+=	${LIBXKBFILE} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
+	${LIBXPM} ${LIBXEXT} ${LIBX11}
+
+.PATH:	${X11SRCDIR.xkbutils}
+
+.include <bsd.x11.mk>
+.include <bsd.prog.mk>

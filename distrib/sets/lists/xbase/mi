@@ -1421,7 +1421,7 @@
 ./usr/X11R7/bin/xconsole				-unknown-	xorg
 ./usr/X11R7/bin/xcutsel					-unknown-	xorg
 ./usr/X11R7/bin/xditview				-unknown-	xorg
-./usr/X11R7/bin/xdm					-unknown-	xorg
+./usr/X11R7/bin/xdm					-unknown-	xorg,minix-false
 ./usr/X11R7/bin/xdpyinfo				-unknown-	xorg
 ./usr/X11R7/bin/xdriinfo				-unknown-	xorg
 ./usr/X11R7/bin/xedit					-unknown-	xorg
@@ -1448,7 +1448,7 @@
 ./usr/X11R7/bin/xload					-unknown-	xorg
 ./usr/X11R7/bin/xlogo					-unknown-	xorg
 ./usr/X11R7/bin/xlsatoms				-unknown-	xorg
-./usr/X11R7/bin/xlsclients				-unknown-	xorg
+./usr/X11R7/bin/xlsclients				-unknown-	xorg,minix-false
 ./usr/X11R7/bin/xlsfonts				-unknown-	xorg
 ./usr/X11R7/bin/xmag					-unknown-	xorg
 ./usr/X11R7/bin/xman					-unknown-	xorg
@@ -1508,14 +1508,14 @@
 ./usr/X11R7/include/X11/extensions			base-x11-root	xorg
 ./usr/X11R7/include/X11/fonts				base-x11-root	xorg
 ./usr/X11R7/include/X11/pixmaps				base-x11-root	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD-bw.xpm		-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD-flag.png		-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD-flag1.xpm	-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD-flag2.xpm	-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD-inv.xpm		-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/xorg-bw.xpm		-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-bw.xpm		-unknown-	xorg,minix-false
+./usr/X11R7/include/X11/pixmaps/NetBSD-flag.png		-unknown-	xorg,minix-false
+./usr/X11R7/include/X11/pixmaps/NetBSD-flag1.xpm	-unknown-	xorg,minix-false
+./usr/X11R7/include/X11/pixmaps/NetBSD-flag2.xpm	-unknown-	xorg,minix-false
+./usr/X11R7/include/X11/pixmaps/NetBSD-inv.xpm		-unknown-	xorg,minix-false
+./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg,minix-false
+./usr/X11R7/include/X11/pixmaps/xorg-bw.xpm		-unknown-	xorg,minix-false
+./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg,minix-false
 ./usr/X11R7/include/drm					base-x11-root	obsolete
 ./usr/X11R7/include/fontconfig				base-x11-root	xorg
 ./usr/X11R7/include/freetype2				base-x11-root	xorg
@@ -1538,7 +1538,7 @@
 ./usr/X11R7/lib/X11/app-defaults/Beforelight		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Bitmap			-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Bitmap-color		-unknown-	xorg
-./usr/X11R7/lib/X11/app-defaults/Chooser		-unknown-	xorg
+./usr/X11R7/lib/X11/app-defaults/Chooser		-unknown-	xorg,minix-false
 ./usr/X11R7/lib/X11/app-defaults/Clock-color		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Editres		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Editres-color		-unknown-	xorg
@@ -2478,7 +2478,7 @@
 ./usr/X11R7/lib/xorg					base-x11-root	xorg
 ./usr/X11R7/lib/xorg/protocol.txt			-unknown-	xorg
 ./usr/X11R7/libexec					base-x11-root	xorg
-./usr/X11R7/libexec/chooser				-unknown-	xorg
+./usr/X11R7/libexec/chooser				-unknown-	xorg,minix-false
 ./usr/X11R7/man						base-x11-root	xorg
 ./usr/X11R7/man/cat1					base-x11-root	xorg
 ./usr/X11R7/man/cat1/appres.0				-unknown-	.cat,xorg
@@ -2824,7 +2824,7 @@
 ./usr/X11R7/man/man1/xconsole.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xcutsel.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xditview.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xdm.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/xdm.1				-unknown-	.man,xorg,minix-false
 ./usr/X11R7/man/man1/xdpyinfo.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xdriinfo.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xedit.1				-unknown-	.man,xorg
@@ -2851,7 +2851,7 @@
 ./usr/X11R7/man/man1/xload.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xlogo.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xlsatoms.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xlsclients.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/xlsclients.1			-unknown-	.man,xorg,minix-false
 ./usr/X11R7/man/man1/xlsfonts.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmag.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xman.1				-unknown-	.man,xorg

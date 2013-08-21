@@ -1,4 +1,4 @@
-#
+#	$NetBSD: NetBSD.dist.earm,v 1.1 2013/04/27 07:59:09 matt Exp $
 
 ./usr/share/beaglebone
 ./usr/share/beaglebone/weather

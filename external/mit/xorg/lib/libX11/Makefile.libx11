@@ -1,0 +1,478 @@
+#	$NetBSD: Makefile.libx11,v 1.12 2013/10/18 01:12:00 riz Exp $
+
+LIB=	X11
+.PATH:	${X11SRCDIR.${LIB}}/src
+.PATH:	${X11SRCDIR.${LIB}}/src/xkb
+.PATH:	${X11SRCDIR.${LIB}}/src/xcms
+.PATH:	${X11SRCDIR.${LIB}}/src/xlibi18n
+
+#MINIX: LSC Not sure bsd.own.mk is always sourced...
+NOCLANGERROR=	yes
+NOGCCERROR=	yes
+
+SRCS=	\
+	AllCells.c \
+	AllowEv.c \
+	AllPlanes.c \
+	AutoRep.c \
+	Backgnd.c \
+	BdrWidth.c \
+	Bell.c \
+	Border.c \
+	ChAccCon.c \
+	ChActPGb.c \
+	ChClMode.c \
+	ChCmap.c \
+	ChGC.c \
+	ChKeyCon.c \
+	ChkIfEv.c \
+	ChkMaskEv.c \
+	ChkTypEv.c \
+	ChkTypWEv.c \
+	ChkWinEv.c \
+	ChPntCon.c \
+	ChProp.c \
+	ChSaveSet.c \
+	ChWAttrs.c \
+	ChWindow.c \
+	CirWin.c \
+	CirWinDn.c \
+	CirWinUp.c \
+	ClDisplay.c \
+	ClearArea.c \
+	Clear.c \
+	ConfWind.c \
+	Context.c \
+	ConvSel.c \
+	CopyArea.c \
+	CopyCmap.c \
+	CopyGC.c \
+	CopyPlane.c \
+	CrBFData.c \
+	CrCmap.c \
+	CrCursor.c \
+	CrGC.c \
+	CrGlCur.c \
+	CrPFBData.c \
+	CrPixmap.c \
+	CrWindow.c \
+	Cursor.c \
+	DefCursor.c \
+	DelProp.c \
+	Depths.c \
+	DestSubs.c \
+	DestWind.c \
+	DisName.c \
+	DrArc.c \
+	DrArcs.c \
+	DrLine.c \
+	DrLines.c \
+	DrPoint.c \
+	DrPoints.c \
+	DrRect.c \
+	DrRects.c \
+	DrSegs.c \
+	ErrDes.c \
+	ErrHndlr.c \
+	evtomask.c \
+	EvToWire.c \
+	FetchName.c \
+	FillArc.c \
+	FillArcs.c \
+	FillPoly.c \
+	FillRct.c \
+	FillRcts.c \
+	FilterEv.c \
+	Flush.c \
+	Font.c \
+	FontInfo.c \
+	FontNames.c \
+	FreeCmap.c \
+	FreeCols.c \
+	FreeCurs.c \
+	FreeEData.c \
+	FreeEventData.c \
+	FreeGC.c \
+	FreePix.c \
+	FSSaver.c \
+	FSWrap.c \
+	GCMisc.c \
+	Geom.c \
+	GetAtomNm.c \
+	GetColor.c \
+	GetDflt.c \
+	GetEventData.c \
+	GetFPath.c \
+	GetFProp.c \
+	GetGCVals.c \
+	GetGeom.c \
+	GetHColor.c \
+	GetHints.c \
+	GetIFocus.c \
+	GetImage.c \
+	GetKCnt.c \
+	GetMoEv.c \
+	GetNrmHint.c \
+	GetPCnt.c \
+	GetPntMap.c \
+	GetProp.c \
+	GetRGBCMap.c \
+	GetSOwner.c \
+	GetSSaver.c \
+	GetStCmap.c \
+	GetTxtProp.c \
+	GetWAttrs.c \
+	GetWMCMapW.c \
+	GetWMProto.c \
+	globals.c \
+	GrButton.c \
+	GrKeybd.c \
+	GrKey.c \
+	GrPointer.c \
+	GrServer.c \
+	Host.c \
+	Iconify.c \
+	IfEvent.c \
+	imConv.c \
+	ImText16.c \
+	ImText.c \
+	ImUtil.c \
+	InitExt.c \
+	InsCmap.c \
+	IntAtom.c \
+	KeyBind.c \
+	KeysymStr.c \
+	KillCl.c \
+	LiHosts.c \
+	LiICmaps.c \
+	LiProps.c \
+	ListExt.c \
+	LoadFont.c \
+	LockDis.c \
+	locking.c \
+	LookupCol.c \
+	LowerWin.c \
+	Macros.c \
+	MapRaised.c \
+	MapSubs.c \
+	MapWindow.c \
+	MaskEvent.c \
+	Misc.c \
+	ModMap.c \
+	MoveWin.c \
+	NextEvent.c \
+	OCWrap.c \
+	OMWrap.c \
+	OpenDis.c \
+	ParseCmd.c \
+	ParseCol.c \
+	ParseGeom.c \
+	PeekEvent.c \
+	PeekIfEv.c \
+	Pending.c \
+	PixFormats.c \
+	PmapBgnd.c \
+	PmapBord.c \
+	PolyReg.c \
+	PolyTxt16.c \
+	PolyTxt.c \
+	PropAlloc.c \
+	PutBEvent.c \
+	PutImage.c \
+	Quarks.c \
+	QuBest.c \
+	QuColor.c \
+	QuColors.c \
+	QuCurShp.c \
+	QuExt.c \
+	QuKeybd.c \
+	QuPntr.c \
+	QuStipShp.c \
+	QuTextE16.c \
+	QuTextExt.c \
+	QuTileShp.c \
+	QuTree.c \
+	RaiseWin.c \
+	RdBitF.c \
+	RecolorC.c \
+	ReconfWin.c \
+	ReconfWM.c \
+	Region.c \
+	RegstFlt.c \
+	RepWindow.c \
+	RestackWs.c \
+	RotProp.c \
+	ScrResStr.c \
+	SelInput.c \
+	SendEvent.c \
+	SetBack.c \
+	SetClMask.c \
+	SetClOrig.c \
+	SetCRects.c \
+	SetDashes.c \
+	SetFont.c \
+	SetFore.c \
+	SetFPath.c \
+	SetFunc.c \
+	SetHints.c \
+	SetIFocus.c \
+	SetLocale.c \
+	SetLStyle.c \
+	SetNrmHint.c \
+	SetPMask.c \
+	SetPntMap.c \
+	SetRGBCMap.c \
+	SetSOwner.c \
+	SetSSaver.c \
+	SetState.c \
+	SetStCmap.c \
+	SetStip.c \
+	SetTile.c \
+	SetTSOrig.c \
+	SetTxtProp.c \
+	SetWMCMapW.c \
+	SetWMProto.c \
+	StBytes.c \
+	StColor.c \
+	StColors.c \
+	StName.c \
+	StNColor.c \
+	StrKeysym.c \
+	StrToText.c \
+	Sync.c \
+	Synchro.c \
+	Text16.c \
+	Text.c \
+	TextExt16.c \
+	TextExt.c \
+	TextToStr.c \
+	TrCoords.c \
+	UndefCurs.c \
+	UngrabBut.c \
+	UngrabKbd.c \
+	UngrabKey.c \
+	UngrabPtr.c \
+	UngrabSvr.c \
+	UninsCmap.c \
+	UnldFont.c \
+	UnmapSubs.c \
+	UnmapWin.c \
+	VisUtil.c \
+	WarpPtr.c \
+	Window.c \
+	WinEvent.c \
+	Withdraw.c \
+	WMGeom.c \
+	WMProps.c \
+	WrBitF.c \
+	XlibAsync.c \
+	XlibInt.c \
+	Xrm.c \
+
+SRCS+=	\
+	UIThrStubs.c 
+
+SRCS+=	\
+	AddDIC.c \
+	AddSF.c \
+	CCC.c \
+	CvColW.c \
+	CvCols.c \
+	HVC.c \
+	HVCGcC.c \
+	HVCGcV.c \
+	HVCGcVC.c \
+	HVCMnV.c \
+	HVCMxC.c \
+	HVCMxV.c \
+	HVCMxVC.c \
+	HVCMxVs.c \
+	HVCWpAj.c \
+	IdOfPr.c \
+	LRGB.c \
+	Lab.c \
+	LabGcC.c \
+	LabGcL.c \
+	LabGcLC.c \
+	LabMnL.c \
+	LabMxC.c \
+	LabMxL.c \
+	LabMxLC.c \
+	LabWpAj.c \
+	Luv.c \
+	LuvGcC.c \
+	LuvGcL.c \
+	LuvGcLC.c \
+	LuvMnL.c \
+	LuvMxC.c \
+	LuvMxL.c \
+	LuvMxLC.c \
+	LuvWpAj.c \
+	OfCCC.c \
+	PrOfId.c \
+	QBlack.c \
+	QBlue.c \
+	QGreen.c \
+	QRed.c \
+	QWhite.c \
+	QuCol.c \
+	QuCols.c \
+	SetCCC.c \
+	SetGetCols.c \
+	StCol.c \
+	StCols.c \
+	UNDEFINED.c \
+	XRGB.c \
+	XYZ.c \
+	cmsAllCol.c \
+	cmsAllNCol.c \
+	cmsCmap.c \
+	cmsColNm.c \
+	cmsGlobls.c \
+	cmsInt.c \
+	cmsLkCol.c \
+	cmsMath.c \
+	cmsProp.c \
+	cmsTrig.c \
+	uvY.c \
+	xyY.c \
+
+SRCS+=	\
+	XKB.c \
+	XKBBind.c \
+	XKBCompat.c \
+	XKBCtrls.c \
+	XKBCvt.c \
+	XKBGetMap.c \
+	XKBGetByName.c \
+	XKBNames.c \
+	XKBRdBuf.c \
+	XKBSetMap.c \
+	XKBUse.c \
+	XKBleds.c \
+	XKBBell.c \
+	XKBGeom.c \
+	XKBSetGeom.c \
+	XKBExtDev.c \
+	XKBList.c \
+	XKBMisc.c \
+	XKBMAlloc.c \
+	XKBGAlloc.c \
+	XKBAlloc.c \
+
+SRCS+=	\
+	XDefaultIMIF.c \
+	XDefaultOMIF.c \
+	xim_trans.c \
+	ICWrap.c \
+	IMWrap.c \
+	imKStoUCS.c \
+	lcCT.c \
+	lcCharSet.c \
+	lcConv.c \
+	lcDB.c \
+	lcDynamic.c \
+	lcFile.c \
+	lcGeneric.c \
+	lcInit.c \
+	lcPrTxt.c \
+	lcPubWrap.c \
+	lcPublic.c \
+	lcRM.c \
+	lcStd.c \
+	lcTxtPr.c \
+	lcUTF8.c \
+	lcUtil.c \
+	lcWrap.c \
+	mbWMProps.c \
+	mbWrap.c \
+	utf8WMProps.c \
+	utf8Wrap.c \
+	wcWrap.c \
+
+CPPFLAGS+=	${X11FLAGS.THREADLIB} ${X11FLAGS.CONNECTION}
+CPPFLAGS+=	-I. -DHAS_SNPRINTF -DLIBX11 -DPOSTLOCALELIBDIR=\"lib\"
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
+CPPFLAGS+=	-I${X11SRCDIR.X11}/src
+CPPFLAGS+=	-I${X11SRCDIR.X11}/src/xkb
+CPPFLAGS+=	-I${X11SRCDIR.X11}/src/xcms
+CPPFLAGS+=	-I${X11SRCDIR.X11}/src/xlibi18n
+
+# From libX11's config.h
+CPPFLAGS+=	-DCOMPOSECACHE -DHAVE_DLOPEN -DHAVE_GETPAGESIZE
+CPPFLAGS+=	-DHAVE_INTTYPES_H -DHAVE_MEMORY_H -DHAVE_MMAP
+CPPFLAGS+=	-DHAVE_SOCKLEN_T -DHAVE_STDLIB_H -DHAVE_STRINGS_H
+CPPFLAGS+=	-DHAVE_STRING_H -DHAVE_STRTOL -DHAVE_SYS_PARAM_H
+CPPFLAGS+=	-DHAVE_SYS_SELECT_H -DHAVE_SYS_STAT_H -DHAVE_SYS_TYPES_H
+CPPFLAGS+=	-DHAVE_UNISTD_H
+
+CPPFLAGS+=	-DUSE_XCB
+SRCS+=	\
+	xcb_disp.c \
+	xcb_io.c
+
+CMS_DEFINES=		-DXCMS -DXCMSDB=\"${X11LIBDIR}/Xcms.txt\"
+CONN_DEFINES=		${X11FLAGS.CONNECTION}
+EDB_DEFINES=		-DERRORDB=\"${X11LIBDIR}/XErrorDB\"
+KDB_DEFINES=		-DKEYSYMDB=\"${X11LIBDIR}/XKeysymDB\"
+LC_DYNDEFINES=		-DUSE_DYNAMIC_LC
+OPEN_DEFINES=		-I${DESTDIR}${X11INCDIR}/X11/extensions
+.if !defined(__MINIX)
+POLL_DEFINES=		-DUSE_POLL
+.endif # !defined(__MINIX)
+SETID_DEFINES=		-DHASSETUGID
+SHM_DEFINES=		-DHAS_SHM
+SOCK_DEFINES=		-DBSD44SOCKETS
+TRANS_INCLUDES=		-I${X11SRCDIR.xc}/lib/xtrans
+XCURSOR_DEFINES=	-DUSE_DYNAMIC_XCURSOR -DLIBXCURSOR=\"libXcursor.so.1\"
+XDMAUTHDEFS=		-DHASXDMAUTH
+XF86BIGFONT_DEFINES=	-DXF86BIGFONT
+XKB_DEFINES=		-DXKB
+XLC_DEFINES=		${XLOCALE.DEFINES}
+XTRANS_XIM_DEFINES=	-DXIM_t -DTRANS_CLIENT
+XTRANS_X_DEFINES=	-DX11_t -DTRANS_CLIENT -DLOCAL_TRANSPORT_LIST=UNIX_TRANS,TCP_TRANS
+
+CPPFLAGS.CopyCmap.c=	$(CMS_DEFINES)
+CPPFLAGS.ConnDis.c=	$(XDMAUTHDEFS) $(CONN_DEFINES) $(SOCK_DEFINES) $(POLL_DEFINES) $(XTRANS_X_DEFINES)
+CPPFLAGS.CrCmap.c=	$(CMS_DEFINES)
+CPPFLAGS.ErrDes.c=	$(EDB_DEFINES)
+CPPFLAGS.Font.c=	$(SHM_DEFINES) $(XF86BIGFONT_DEFINES)
+CPPFLAGS.FontInfo.c=	$(SHM_DEFINES) $(XF86BIGFONT_DEFINES)
+CPPFLAGS.FreeCmap.c=	$(CMS_DEFINES)
+CPPFLAGS.GetColor.c=	$(CMS_DEFINES)
+CPPFLAGS.KeyBind.c=	$(XKB_DEFINES)
+CPPFLAGS.LookupCol.c=	$(CMS_DEFINES)
+CPPFLAGS.OpenDis.c=	$(OPEN_DEFINES) $(XTRANS_X_DEFINES) $(XKB_DEFINES)
+CPPFLAGS.ParseCol.c=	$(CMS_DEFINES)
+CPPFLAGS.SetStCmap.c=	$(CMS_DEFINES)
+CPPFLAGS.StNColor.c=	$(CMS_DEFINES)
+CPPFLAGS.StrKeysym.c=	$(KDB_DEFINES)
+CPPFLAGS.Wrap.c=	$(XDMAUTHDEFS)
+CPPFLAGS.XKBBind.c=	$(XKB_DEFINES)
+CPPFLAGS.XlibInt.c=	$(CONN_DEFINES) $(POLL_DEFINES) $(XTRANS_X_DEFINES)
+CPPFLAGS.cmsColNm.c=	$(CMS_DEFINES)
+CPPFLAGS.globals.c=	$(CONN_DEFINES)
+CPPFLAGS.imConv.c=	$(XKB_DEFINES)
+CPPFLAGS.imTrans.c=	$(CONN_DEFINES) $(XTRANS_XIM_DEFINES)
+CPPFLAGS.imTransR.c=	$(CONN_DEFINES) $(XTRANS_XIM_DEFINES)
+CPPFLAGS.lcFile.c=	$(XLC_DEFINES) $(SETID_DEFINES)
+CPPFLAGS.x11trans.c=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES) $(XTRANS_X_DEFINES) $(POLL_DEFINES)
+CPPFLAGS.ximtrans.c=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES) $(XTRANS_XIM_DEFINES) $(POLL_DEFINES)
+
+#BUILDSYMLINKS=	transport.c x11trans.c \
+#		transport.c ximtrans.c
+
+COPTS.StBytes.c+=	-Wno-error
+COPTS.lcUTF8.c+=	-Wno-error
+COPTS.Font.c+=		-Wno-error	# XXX xf86bigfstr.h
+COPTS.OpenDis.c+=	-Wno-error	# XXX xf86bigfstr.h
+COPTS.XlibInt.c+=	-Wno-error	# XXX xcmiscstr.h
+COPTS.XKBBind.c+=	-Wno-error	# uses XKeycodeToKeysym
+.if defined(HAVE_GCC) &&  ${HAVE_GCC} < 45
+COPTS.LiHosts.c+=	-Wno-error	# XXX: old gcc figures out that const
+					# cond because nHosts < max_hosts
+.endif
+
+CWARNFLAGS.clang+=	-Wno-string-plus-int
+
+.include "${NETBSDSRCDIR}/external/mit/xorg/tools/makekeys/Makefile.makekeys"

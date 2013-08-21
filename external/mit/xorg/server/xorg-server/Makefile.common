@@ -1,0 +1,93 @@
+#	$NetBSD: Makefile.common,v 1.26 2013/06/12 21:35:29 mrg Exp $
+
+# These define parts of the Xserver tree that are to be
+# conditionally compiled for different platforms.  See
+# below for descriptions of each variable.
+
+.include <bsd.own.mk>
+
+
+# XFree86 servers all need XFONT as well.
+.if ${MKXORG_SERVER} != "no"
+XSERVER_NEEDS_XFONT=	yes
+XSERVER_XFREE86=	yes
+.endif
+
+.if ${MACHINE} == "acorn32"
+XSERVER_XARM32VIDC=	yes
+.endif
+
+.if ${MACHINE} == "alpha"
+XSERVER_XALPHANETBSD=	yes
+XSERVER_XDECNETBSD=	yes
+.endif
+
+.if ${MACHINE} == "amiga"
+XSERVER_XAMIGA=		yes
+.endif
+
+.if ${MACHINE} == "atari"
+#XSERVER_XFREE68=	yes
+.endif
+
+.if ${MACHINE} == "mac68k"
+XSERVER_XMAC68K=	yes
+.endif
+
+.if ${MACHINE} == "macppc"
+XSERVER_XMACPPC=	yes
+.endif
+
+.if ${MACHINE} == "pmax"
+XSERVER_XDECNETBSD=	yes
+XSERVER_XPMAX=		no # XXX should be yes but may be obsoleted
+.endif
+
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+XSERVER_XSUN=		yes
+XSERVER_XSUNMONO=	yes
+XSERVER_XSUN24=		yes
+.endif
+
+.if ${MACHINE} == "sun3"
+XSERVER_XSUN=		yes
+XSERVER_XSUNMONO=	yes
+.endif
+
+.if ${MACHINE} == "x68k"
+XSERVER_X68K=		yes
+.endif
+
+
+# Does this server need Xfont/fontbase libraries?
+XSERVER_NEEDS_XFONT?=	no
+
+# Does this platform build XFree86 X server?
+XSERVER_XFREE86?=	no
+
+# Does this platform build the XalphaNetBSD server?
+XSERVER_XALPHANETBSD?=	no
+# Does this platform build the Xamiga server?
+XSERVER_XAMIGA?=	no
+# Does this platform build the Xarm32VIDC server?
+XSERVER_XARM32VIDC?=	no
+# Does this platform build the XdecNetBSD server?
+XSERVER_XDECNETBSD?=	no
+# Does this platform build the Xfree68 servers?
+XSERVER_XFREE68?=	no
+# Does this platform build the Xmac68k X server?
+XSERVER_XMAC68K?=	no
+# Does this platform build Xmacppc X server?
+XSERVER_XMACPPC?=	no
+# Does this platform build the Xnewsmips server?
+XSERVER_XNEWSMIPS?=	no
+# Does this platform build Xpmax X servers?
+XSERVER_XPMAX?=		no
+# Does this platform build Xsun* X servers?
+XSERVER_XSUN?=		no
+XSERVER_XSUNMONO?=	no
+XSERVER_XSUN24?=	no
+# Does this platform build X68k X servers?
+XSERVER_X68K?=		no
+# Does this platform build Xvfb X server?
+XSERVER_XVFB?=		yes

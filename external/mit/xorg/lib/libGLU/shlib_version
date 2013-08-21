@@ -1,0 +1,5 @@
+#	$NetBSD: shlib_version,v 1.2 2009/01/11 03:10:10 christos Exp $
+#
+# XXX netbsd-4 had minor=3
+major=2
+minor=0

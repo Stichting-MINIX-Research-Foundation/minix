@@ -1,0 +1,29 @@
+#! /bin/sh
+
+list='expat fontconfig freetype libFS libICE libSM libX11 libXScrnSaver libXTrap libXau libXcomposite libXcursor libXdamage libXdmcp libXevie libXext libXfixes libXfont libXft libXi libXinerama libXmu libXp libXpm libXrandr libXrender libXres libXt libXtst libXv libXvMC libXxf86dga libXxf86misc libXxf86vm libdrm libfontenc libxkbfile libxkbui'
+
+DISTFILES=${DISTFILES-/usr/pkgsrc/distfiles}
+
+for dist in $list; do
+	updist=$(echo $dist | tr a-z A-Z)
+	tarball=$(cd ${DISTFILES}; echo ${dist}-*tar*)
+	tarver=${tarball#${dist}-}
+	ext=bz2
+	case $tarball in
+		*.tar.bz2)
+			ver=${tarver%.tar.bz2}
+			;;
+		*.tar.gz)
+			ext=gz
+			ver=${tarver%.tar.gz}
+			;;
+		*)
+			ver=x
+			echo "dunno what $dist is -- $tarball" 1>&2
+			;;
+	esac
+	if [ "$ver" != x ]; then
+		echo "${updist}_VERSION	= ${ver}"
+		echo "${updist}_EXT	= ${ext}"
+	fi
+done

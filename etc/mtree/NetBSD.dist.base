@@ -18,6 +18,8 @@
 ./boot/minix_default
 ./dev
 ./etc
+./etc/fonts
+./etc/fonts/conf.d
 ./etc/defaults
 ./etc/devmand
 ./etc/devmand/scripts

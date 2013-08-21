@@ -12,10 +12,10 @@
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/ws_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/wsfb_drv.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/drivers/ws_drv.so.1		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/drivers/wsfb_drv.so.0		-unknown-	xorg,minix-false
 ./usr/X11R7/lib/modules/extensions/libdbe.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdbe.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdbe.so.0		-unknown-	xorg
@@ -103,7 +103,7 @@
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	obsolete
-./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg,minix-false
+./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg,minix-false
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg

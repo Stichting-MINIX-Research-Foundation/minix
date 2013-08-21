@@ -1,0 +1,23 @@
+# $NetBSD: Makefile.xomGeneric,v 1.1 2008/09/07 13:15:11 rtr Exp $
+
+.PATH:		${X11SRCDIR.X11}/modules/om/generic
+
+SRCS.xomGeneric= \
+	omDefault.c \
+	omGeneric.c \
+	omImText.c \
+	omText.c \
+	omTextEsc.c \
+	omTextExt.c \
+	omTextPer.c \
+	omXChar.c
+
+CPPFLAGS+= \
+	-I${DESTDIR}${X11INCDIR}/X11 \
+	-I${X11SRCDIR.X11}/src \
+	-I${X11SRCDIR.X11}/src/xlibi18n
+
+CPPFLAGS+= \
+	-DHASXDMAUTH
+
+.include <bsd.lib.mk>

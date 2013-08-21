@@ -1,0 +1,33 @@
+#	$NetBSD: Makefile.Xext,v 1.11 2011/08/02 09:11:37 mrg Exp $
+
+.PATH:		${X11SRCDIR.xorg-server}/Xext
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/Xext
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/Xi
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/xfixes
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/miext/sync
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/composite
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/damageext
+CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
+
+COPTS.panoramiX.c+=		-Wno-error
+COPTS.panoramiXprocs.c+=	-Wno-error
+COPTS.saver.c+=			-Wno-error
+COPTS.security.c+=		-Wno-error
+COPTS.shape.c+=			-Wno-error
+COPTS.shm.c+=			-Wno-error
+COPTS.sync.c+=			-Wno-error
+COPTS.xf86bigfont.c+=		-Wno-error
+COPTS.xres.c=			-Wno-error
+COPTS.xvdisp.c+=		-Wno-error
+COPTS.xvmain.c+=		-Wno-error
+COPTS.xvmc.c+=			-Wno-error
+COPTS.bigreq.c+=		-Wno-error	# XXX bigreqstr.h
+COPTS.xcmisc.c+=		-Wno-error	# XXX xcmiscstr.h
+
+.include <bsd.x11.mk>
+.include <bsd.lib.mk>

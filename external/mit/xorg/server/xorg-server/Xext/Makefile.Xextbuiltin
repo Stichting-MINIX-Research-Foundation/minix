@@ -1,0 +1,9 @@
+#	$NetBSD: Makefile.Xextbuiltin,v 1.6 2009/06/12 01:59:04 mrg Exp $
+
+SRCS.Xextbuiltin=	bigreq.c geext.c shape.c sleepuntil.c \
+			sync.c xcmisc.c xtest.c
+SRCS.Xextbuiltin+=	shm.c
+SRCS.Xextbuiltin+=	panoramiX.c panoramiXprocs.c panoramiXSwap.c
+SRCS.Xextbuiltin+=	xace.c
+SRCS.Xextbuiltin+=	security.c
+SRCS.Xextbuiltin+=	xf86bigfont.c

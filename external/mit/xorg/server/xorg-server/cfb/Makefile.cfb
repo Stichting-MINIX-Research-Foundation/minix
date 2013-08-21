@@ -1,0 +1,119 @@
+#	$NetBSD: Makefile.cfb,v 1.4 2008/10/24 19:47:24 macallan Exp $
+
+.PATH:		${X11SRCDIR.xorg-server}/cfb
+SRCS.cfb+=	cfbseg.c cfbfillarcC.c cfbfillarcG.c cfbzerarcC.c \
+		cfbzerarcX.c cfbzerarcG.c cfbbltC.c cfbbltX.c \
+		cfbbltO.c cfbbltG.c cfbsolidC.c cfbsolidX.c \
+		cfbsolidG.c cfbtileoddC.c cfbtileoddG.c cfbtile32C.c \
+		cfbtile32G.c cfb8lineCO.c cfb8lineCP.c cfb8lineX.c \
+		cfb8lineG.c cfb8segCS.c cfb8segC.c cfb8segX.c \
+		cfb8setG.c cfbply1rctC.c cfbply1rctG.c
+
+SRCS.cfb+=	cfbgc.c cfbrrop.c cfbwindow.c cfbpntwin.c \
+		cfbmskbits.c cfbpixmap.c cfbbitblt.c cfbfillsp.c \
+		cfbsetsp.c cfbscrinit.c cfballpriv.c cfbgetsp.c \
+		cfbfillrct.c cfbigblt8.c cfbglblt8.c cfbtegblt.c \
+		cfbbstore.c cfbpolypnt.c cfbbres.c cfbline.c \
+		cfbhrzvert.c cfbbresd.c cfbimage.c cfbcppl.c \
+		cfbcmap.c
+
+X11XSERVERDIR=	${X11SRCDIR.xorg-server}
+
+.if 0
+BUILDSYMLINKS=	cfbline.c cfbseg.c \
+		cfbfillarc.c cfbfillarcC.c \
+		cfbfillarc.c cfbfillarcG.c \
+		cfbzerarc.c cfbzerarcC.c \
+		cfbzerarc.c cfbzerarcX.c \
+		cfbzerarc.c cfbzerarcG.c \
+		cfbblt.c cfbbltC.c \
+		cfbblt.c cfbbltX.c \
+		cfbblt.c cfbbltO.c \
+		cfbblt.c cfbbltG.c \
+		cfbsolid.c cfbsolidC.c \
+		cfbsolid.c cfbsolidX.c \
+		cfbsolid.c cfbsolidG.c \
+		cfbtileodd.c cfbtileoddC.c \
+		cfbtileodd.c cfbtileoddG.c \
+		cfbtile32.c cfbtile32C.c \
+		cfbtile32.c cfbtile32G.c \
+		cfb8line.c cfb8lineCO.c \
+		cfb8line.c cfb8lineCP.c \
+		cfb8line.c cfb8lineX.c \
+		cfb8line.c cfb8lineG.c \
+		cfb8line.c cfb8segCS.c \
+		cfb8line.c cfb8segC.c \
+		cfb8line.c cfb8segX.c \
+		cfb8line.c cfb8segG.c \
+		cfbply1rct.c cfbply1rctC.c \
+		cfbply1rct.c cfbply1rctG.c \
+		${X11XSERVERDIR}/cfb32/cfbmodule.c cfbmodule32.c
+.endif
+		
+
+.if ${PIXELSIZE} == 8							# {
+SRCS.cfb+=	cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
+.if 0
+BUILDSYMLINKS+=	cfbglblt8.c cfbglrop8.c
+.endif
+.endif									# }
+
+.include "../Makefile.common"
+
+.if ${XSERVER_XAMIGA} != "no"
+CPPFLAGS+=	-DFORCE_SEPARATE_PRIVATE
+.endif
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/cfb \
+		-I${X11SRCDIR.xorg-server}/mfb \
+		-I${X11SRCDIR.xorg-server}/mi \
+		-I${X11SRCDIR.xorg-server}/include \
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/Xext
+
+# XXX some path so that "../../mfb/mfbblt.c" works
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86
+
+CPPFLAGS+=	-DPSZ=${PIXELSIZE} -DXFREE86
+
+
+.if 0
+CPPFLAGS.cfb8lineCO.c=	-DRROP=GXcopy
+CPPFLAGS.cfb8lineCP.c=	-DRROP=GXcopy -DPREVIOUS
+CPPFLAGS.cfb8lineG.c=	-DRROP=GXset
+CPPFLAGS.cfb8lineX.c=	-DRROP=GXxor
+CPPFLAGS.cfb8segC.c=	-DRROP=GXcopy -DPOLYSEGMENT
+CPPFLAGS.cfb8segCS.c=	-DRROP=GXcopy -DPOLYSEGMENT -DWIDTH_SHIFT
+CPPFLAGS.cfb8segG.c=	-DRROP=GXset -DPOLYSEGMENT
+CPPFLAGS.cfb8segX.c=	-DRROP=GXxor -DPOLYSEGMENT
+CPPFLAGS.cfbbltC.c=	-DMROP=Mcopy
+CPPFLAGS.cfbbltG.c=	-DMROP=0
+CPPFLAGS.cfbbltO.c=	-DMROP=Mor
+CPPFLAGS.cfbbltX.c=	-DMROP=Mxor
+CPPFLAGS.cfbcmap.c=	${X11FLAGS.EXTENSION} -DGLXEXT -DGLX_USE_MESA
+CPPFLAGS.cfbfillarcC.c=	-DRROP=GXcopy
+CPPFLAGS.cfbfillarcG.c=	-DRROP=GXset
+CPPFLAGS.cfbglrop8.c=	-DGLYPHROP
+CPPFLAGS.cfbply1rctC.c=	-DRROP=GXcopy
+CPPFLAGS.cfbply1rctG.c=	-DRROP=GXset
+CPPFLAGS.cfbseg.c=	-DPOLYSEGMENT
+CPPFLAGS.cfbsolidC.c=	-DRROP=GXcopy
+CPPFLAGS.cfbsolidG.c=	-DRROP=GXset
+CPPFLAGS.cfbsolidX.c=	-DRROP=GXxor
+CPPFLAGS.cfbtile32C.c=	-DMROP=Mcopy
+CPPFLAGS.cfbtile32G.c=	-DMROP=0
+CPPFLAGS.cfbtileoddC.c=	-DMROP=Mcopy
+CPPFLAGS.cfbtileoddG.c=	-DMROP=0
+CPPFLAGS.cfbzerarcC.c=	-DRROP=GXcopy
+CPPFLAGS.cfbzerarcG.c=	-DRROP=GXset
+CPPFLAGS.cfbzerarcX.c=	-DRROP=GXxor
+.endif
+
+# XXX
+COPTS.cfbgc.c=		-Wno-error
+COPTS.cfbscrinit.c=	-Wno-error
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

@@ -1,0 +1,17 @@
+#	$NetBSD: Makefile.servermod,v 1.2 2008/08/10 11:56:06 rtr Exp $
+
+.if defined(XMODULEDIR)
+SHLIB_MAJOR=0
+.endif
+
+# if these aren't defined the module being built is not installed
+# instead it is statically linked into the xserver
+.if !defined(XMODULEDIR) && !defined(XMODULE)
+libinstall::
+moduleinstall::
+.endif
+
+# x11 modules that are installed need the X11FLAGS.LOADABLE's defined
+.if defined(XMODULEDIR)
+CPPFLAGS+=	${X11FLAGS.LOADABLE}
+.endif

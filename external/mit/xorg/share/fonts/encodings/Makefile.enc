@@ -1,0 +1,30 @@
+#	$NetBSD: Makefile.enc,v 1.2 2009/03/31 21:21:48 perry Exp $
+
+FILESDIR=	${X11FONTDIR}/${ENCDIR}
+
+FILES+=		${GZFILES}
+CLEANFILES+=	${GZFILES}
+CLEANFILES+=	${GZFILES:S/.gz$/.gz.tmp/}
+
+.SUFFIXES: .enc .enc.gz
+.enc.enc.gz:
+	${_MKTARGET_CREATE}
+	gzip -9nfc ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+
+
+realall: ${FILES}
+
+MKFONTSCALEDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/mkfontscale && ${PRINTOBJDIR}
+MKFONTSCALE=	${MKFONTSCALEDIR}/mkfontscale
+
+afterinstall:
+	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/encodings.dir
+	(cd ${DESTDIR}${FILESDIR} && \
+	    rm -f encodings.dir ; \
+	    ${MKFONTSCALE} -b -s -l -n -r -p ${X11FONTDIR}/${ENCDIR}/ -e . ${ENCARGS} . ; \
+	)
+.if ${MKUNPRIVED} != "no"
+	echo ".${FILESDIR}/encodings.dir type=file mode=0644 uname=${BINOWN} gname=${BINGRP}" \
+	    | ${METALOG.add}
+.endif
+

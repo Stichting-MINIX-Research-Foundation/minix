@@ -1,0 +1,7 @@
+#	$NetBSD: Makefile.fc-cache,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+
+FCCACHEDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/fc-cache && ${PRINTOBJDIR}
+FCCACHE=	${FCCACHEDIR}/fc-cache
+
+${FCCACHE}:
+	(cd ${NETBSDSRCDIR}/external/mit/xorg/tools/fc-cache && ${MAKE})

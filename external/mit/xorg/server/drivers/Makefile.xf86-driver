@@ -1,0 +1,51 @@
+#	$NetBSD: Makefile.xf86-driver,v 1.19 2010/11/23 08:22:29 mrg Exp $
+
+LIBISMODULE=	yes
+SHLIB_MAJOR=	${PACKAGE_MAJOR}
+
+.include <bsd.own.mk>
+.include <bsd.x11.mk>
+
+LIB=	${DRIVER_NAME}
+LIBDIR=	${X11USRLIBDIR}/modules/drivers
+
+# Extract version from configure script if not set in makefile.
+#
+.if defined(DRIVER_VERSION)
+PACKAGE_VERSION=	${DRIVER_VERSION}
+.else
+PRINT_PACKAGE_VERSION=	${TOOL_AWK} '/^PACKAGE_VERSION=/ {		\
+				match($$1, "[0-9]+\\.[0-9]+\\.[0-9]+");	\
+				version = substr($$1, RSTART, RLENGTH);	\
+			} END { print version }'			\
+			${X11SRCDIR.${DRIVER}}/configure
+
+PACKAGE_VERSION!=	${PRINT_PACKAGE_VERSION}
+.endif
+
+PACKAGE_MAJOR=		${PACKAGE_VERSION:R:R}
+PACKAGE_MINOR=		${PACKAGE_VERSION:R:E}
+PACKAGE_PATCH=		${PACKAGE_VERSION:E}
+
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11/dri \
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/../include \
+		${X11FLAGS.EXTENSION} \
+		${X11FLAGS.SERVER} \
+		-DHAVE_XORG_SERVER_1_1_0 \
+		-DSERVER_1_5 \
+		-DXSERVER_LIBPCIACCESS \
+		-DXFree86LOADER \
+		-DHAVE_XEXTPROTO_71
+
+CPPFLAGS+=	-DPACKAGE_VERSION_MAJOR=${PACKAGE_MAJOR}
+CPPFLAGS+=	-DPACKAGE_VERSION_MINOR=${PACKAGE_MINOR}
+CPPFLAGS+=	-DPACKAGE_VERSION_PATCHLEVEL=${PACKAGE_PATCH}
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+.PATH:	${X11SRCDIR.${DRIVER}}/src
+.PATH:	${X11SRCDIR.${DRIVER}}/man
+
+.include <bsd.lib.mk>
