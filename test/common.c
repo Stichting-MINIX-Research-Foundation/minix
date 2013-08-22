@@ -111,7 +111,7 @@ void e_f(char *file, int line, int n)
   err_number = errno;	/* Store before printf can clobber it */
   if (errct == 0) printf("\n");	/* finish header */
   printf("%s:%d: Subtest %d,  error %d,  errno %d: %s\n",
-	file, line, subtest, n, errno, strerror(errno));
+	file, line, subtest, n, err_number, strerror(err_number));
   if (++errct > max_error) {
 	printf("Too many errors; test aborted\n");
 	cleanup();
