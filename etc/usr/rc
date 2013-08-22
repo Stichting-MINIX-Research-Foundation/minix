@@ -112,6 +112,70 @@ get_eth_labels() {
     grep -v '^vlan_'
 }
 
+# Detect expansion boards on the BeagleBone and load the proper drivers.
+capemgr() {
+
+    # Probe each possible cape EEPROM slave address for a BeagleBone cape.
+    for slave_addr in 54 55 56 57
+    do
+
+        # See if there is a readable EEPROM with address ${slave_addr}.
+        eepromread -f /dev/i2c-3 -a 0x${slave_addr} > /dev/null 2>&1
+        RESULT=$?
+	if [ $RESULT -eq 0 ]
+	then
+
+	    # Found an alive EEPROM. Try reading the cape name.
+            CAPE=`eepromread -i -f /dev/i2c-3 -a 0x${slave_addr} | \
+	        sed -n 's/^PART_NUMBER     : \(.*\)$/\1/p'`
+
+            # Load the drivers for the cape and do any other configuration.
+            case "${CAPE}" in
+
+                # Weather Cape
+	        BB-BONE-WTHR-01.)
+
+                    # CAT24C256 EEPROM
+		    test -e /dev/eepromb3s${slave_addr} || \
+		        (cd /dev && MAKEDEV eepromb3s${slave_addr})
+		    up cat24c256 -dev /dev/eepromb3s${slave_addr} \
+		        -label cat24c256.3.${slave_addr} \
+			-args "bus=3 address=0x${slave_addr}"
+
+                    # TSL2550 Ambient Light Sensor
+		    test -e /dev/tsl2550b3s39 || \
+		        (cd /dev && MAKEDEV tsl2550b3s39)
+		    up tsl2550 -dev /dev/tsl2550b3s39 \
+		        -label tsl2550.3.39 \
+			-args 'bus=3 address=0x39'
+
+		    # SHT21 Temperature and Humidity Sensor
+		    test -e /dev/sht21b3s40 || \
+		        (cd /dev && MAKEDEV sht21b3s40)
+		    up sht21 -dev /dev/sht21b3s40 \
+		        -label sht21.3.40 \
+			-args 'bus=3 address=0x40'
+
+		    # BMP085 Temperature and Pressure Sensor
+		    test -e /dev/bmp085b3s77 || \
+		        (cd /dev && MAKEDEV bmp085b3s77)
+		    up bmp085 -dev /dev/bmp085b3s77 \
+		        -label bmp085.3.77 \
+			-args 'bus=3 address=0x77'
+
+		    ;;
+
+                *)
+                    # Do nothing if the cape isn't recognized
+		    echo ""
+                    echo "** UNSUPPORTED CAPE: ${CAPE}"
+		    echo ""
+                    ;;
+	    esac
+	fi
+    done
+}
+
 DAEMONS=/etc/rc.daemons
 
 case $action in
@@ -230,6 +294,9 @@ start)
 				# fb hasn't been ported to AM335X yet.
 			fi
 
+			# Detect expansion boards and start drivers.
+			capemgr
+
 			;;
 
 		A335BNLT)
@@ -254,6 +321,9 @@ start)
 			# start frame buffer
 			#up fb -dev /dev/fb0 -args edid.0=tda19988.1.3470
 			# fb hasn't been ported to AM335X yet.
+
+			# Detect expansion boards and start drivers.
+			capemgr
 
 			;;
 
