@@ -458,6 +458,11 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	fi; \
 	${INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} ${sdir}${files} ${tdir};
 .endfor
+.if ${MACHINE_ARCH} == "earm"
+	${_MKMSG_INSTALL} ${DESTDIR}/etc/rc.capes
+	${INSTALL_DIR} ${DESTDIR}/etc/rc.capes
+	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/etc/rc.capes/* ${DESTDIR}/etc/rc.capes
+.endif # Minix/earm specific
 .for subdir in . defaults mtree
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor

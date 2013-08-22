@@ -4,6 +4,8 @@
 ./boot/minix/.temp/mod10_vm		minix-sys
 ./boot/minix/.temp/mod11_pfs		minix-sys
 ./boot/minix/.temp/mod12_init		minix-sys
+./etc/rc.capes				minix-sys
+./etc/rc.capes/BB-BONE-WTHR-01		minix-sys
 ./etc/system.conf.d/lan8710a		minix-sys
 ./multiboot/mod07_log			minix-sys
 ./multiboot/mod08_tty			minix-sys

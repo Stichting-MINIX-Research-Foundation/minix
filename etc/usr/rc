@@ -112,6 +112,49 @@ get_eth_labels() {
     grep -v '^vlan_'
 }
 
+# Detect expansion boards on the BeagleBone and load the proper drivers.
+capemgr() {
+
+    # Probe each possible cape EEPROM slave address for a BeagleBone cape.
+    for slave_addr in 54 55 56 57
+    do
+
+        # See if there is a readable EEPROM with address ${slave_addr}.
+        eepromread -f /dev/i2c-3 -a 0x${slave_addr} > /dev/null 2>&1
+        RESULT=$?
+	if [ $RESULT -eq 0 ]
+	then
+
+	    # Found an alive EEPROM. Try reading the cape name.
+            CAPE=`eepromread -i -f /dev/i2c-3 -a 0x${slave_addr} | \
+	        sed -n 's/^PART_NUMBER     : \(.*\)$/\1/p' | \
+		sed -e 's/\.*$//g'` # Strip trailing periods.
+
+	    # Look for a cape specific RC script.
+            if [ -x /etc/rc.capes/${CAPE} ]
+	    then
+
+	        # CAT24C256 EEPROM -- all capes have this chip.
+		test -e /dev/eepromb3s${slave_addr} || \
+		    (cd /dev && MAKEDEV eepromb3s${slave_addr})
+		up cat24c256 -dev /dev/eepromb3s${slave_addr} \
+		    -label cat24c256.3.${slave_addr} \
+		    -args "bus=3 address=0x${slave_addr}"
+
+                # Load the drivers for the cape and do any other configuration.
+		. "/etc/rc.capes/${CAPE}"
+
+	    else
+
+		echo ""
+	        echo "** UNSUPPORTED CAPE: ${CAPE}"
+		echo ""
+
+	    fi
+	fi
+    done
+}
+
 DAEMONS=/etc/rc.daemons
 
 case $action in
@@ -230,6 +273,9 @@ start)
 				# fb hasn't been ported to AM335X yet.
 			fi
 
+			# Detect expansion boards and start drivers.
+			capemgr
+
 			;;
 
 		A335BNLT)
@@ -254,6 +300,9 @@ start)
 			# start frame buffer
 			#up fb -dev /dev/fb0 -args edid.0=tda19988.1.3470
 			# fb hasn't been ported to AM335X yet.
+
+			# Detect expansion boards and start drivers.
+			capemgr
 
 			;;
 
