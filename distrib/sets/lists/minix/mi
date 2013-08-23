@@ -282,6 +282,7 @@
 ./usr/bin/dhcpd				minix-sys
 ./usr/bin/dhrystone			minix-sys
 ./usr/bin/diff				minix-sys
+./usr/bin/dirname			minix-sys
 ./usr/bin/diskctl			minix-sys
 ./usr/bin/du				minix-sys
 ./usr/bin/dumpcore			minix-sys
