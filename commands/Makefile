@@ -28,7 +28,7 @@ SUBDIR=	add_route arp ash at backup basename btrace \
 	syslogd tail tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time touch tr \
 	truncate tty udpstat umount uname unexpand \
-	unstack update uud uue version vol wc \
+	unstack update uud uue version vol \
 	whereis which write writeisofs fetch \
 	xargs zdump zmodem pkgin_cd pkgin_all \
 	worldstone updateboot update_bootcfg
