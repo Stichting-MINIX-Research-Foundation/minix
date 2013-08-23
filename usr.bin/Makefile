@@ -8,7 +8,7 @@ SUBDIR= \
 	bzip2 bzip2recover \
 	cal chpass cksum \
 	col ctags \
-	du \
+	dirname du \
 	finger \
 	from ftp \
 	genassym getopt head \
