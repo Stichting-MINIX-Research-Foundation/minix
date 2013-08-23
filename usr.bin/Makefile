@@ -9,10 +9,10 @@ SUBDIR= \
 	cal chpass cksum \
 	col ctags \
 	dirname du \
-	finger \
-	from ftp \
-	genassym getopt head \
-	indent infocmp join \
+	expand \
+	finger from \
+	ftp genassym getopt \
+	head indent infocmp join \
 	ldd \
 	login logname lorder m4 \
 	make man \
@@ -29,7 +29,6 @@ SUBDIR= \
 	tsort \
 	toproto \
 	uniq \
-	\
 	\
 	wc whatis who \
 	xinstall yes
