@@ -21,7 +21,7 @@ MAN=	ash.1 at.1 \
 	term.1 termcap.1 tget.1 time.1 tr.1 true.1 \
 	truncate.1 tty.1 umount.1 uname.1 \
 	uud.1 uue.1 vol.1 whereis.1 which.1 \
-	write.1 xargs.1 yap.1 linkfarm.1 pkg_view.1
+	write.1 yap.1 linkfarm.1 pkg_view.1
 
 MLINKS += ash.1 sh.1
 MLINKS += ash.1 ..1

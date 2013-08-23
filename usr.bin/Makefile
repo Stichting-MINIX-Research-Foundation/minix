@@ -31,7 +31,7 @@ SUBDIR= \
 	uniq \
 	\
 	wc whatis who \
-	xinstall yes
+	xargs xinstall yes
 
 .if !defined(__MINIX)
 SUBDIR+= ../external/zlib/pigz/bin/pigz
