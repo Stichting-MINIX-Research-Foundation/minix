@@ -7,7 +7,7 @@ SUBDIR=	add_route arp ash at backup basename btrace \
 	chmod chown ci cleantmp cmp co \
 	comm compress cp crc cron crontab cut \
 	dd decomp16 DESCRIBE devmand devsize df dhcpd \
-	dhrystone diff dirname diskctl dumpcore \
+	dhrystone diff diskctl dumpcore \
 	eject env expand factor fbdctl \
 	find fix fold format fortune fsck.mfs \
 	gcore gcov-pull getty grep hexdump host \

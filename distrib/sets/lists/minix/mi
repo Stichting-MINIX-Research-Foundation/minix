@@ -282,7 +282,6 @@
 ./usr/bin/dhcpd				minix-sys
 ./usr/bin/dhrystone			minix-sys
 ./usr/bin/diff				minix-sys
-./usr/bin/dirname			minix-sys
 ./usr/bin/diskctl			minix-sys
 ./usr/bin/du				minix-sys
 ./usr/bin/dumpcore			minix-sys
@@ -1824,6 +1823,7 @@
 ./usr/man/man1/dhrystone.1		minix-sys
 ./usr/man/man1/diff.1			minix-sys
 ./usr/man/man1/dosdir.1			minix-sys
+./usr/man/man1/dirname.1		minix-sys
 ./usr/man/man1/dosread.1		minix-sys
 ./usr/man/man1/doswrite.1		minix-sys
 ./usr/man/man1/du.1			minix-sys
