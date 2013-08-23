@@ -30,7 +30,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	truncate tty udpstat umount uname \
 	unstack update uud uue version vol \
 	whereis which write writeisofs fetch \
-	xargs zdump zmodem pkgin_cd pkgin_all \
+	zdump zmodem pkgin_cd pkgin_all \
 	worldstone updateboot update_bootcfg
 
 .if ${MACHINE_ARCH} == "i386"
