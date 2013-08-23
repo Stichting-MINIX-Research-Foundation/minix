@@ -49,7 +49,7 @@ rm -rf foo
 #Test cat
 cat num num num num num >y
 wc -c y >x1
-echo "     55 y" >x2
+echo "      55 y" >x2
 if cmp -s x1 x2; then : ; else bomb "Error on cat test 1"; fi
 cat <y >z
 if cmp -s y z; then : ; else bomb "Error on cat test 2"; fi
