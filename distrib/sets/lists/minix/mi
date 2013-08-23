@@ -1823,6 +1823,7 @@
 ./usr/man/man1/df.1			minix-sys
 ./usr/man/man1/dhrystone.1		minix-sys
 ./usr/man/man1/diff.1			minix-sys
+./usr/man/man1/dirname.1		minix-sys
 ./usr/man/man1/dosdir.1			minix-sys
 ./usr/man/man1/dosread.1		minix-sys
 ./usr/man/man1/doswrite.1		minix-sys
