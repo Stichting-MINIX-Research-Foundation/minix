@@ -26,7 +26,7 @@ SUBDIR= \
 	shuffle sed seq \
 	sort stat su \
 	tic tput \
-	tsort unexpand \
+	tr tsort unexpand \
 	toproto \
 	uniq \
 	\

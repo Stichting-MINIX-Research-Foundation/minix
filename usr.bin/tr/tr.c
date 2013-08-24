@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.8 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: tr.c,v 1.9 2011/09/06 18:33:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -30,21 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-#if 0
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
-#endif
 
-#if 0
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.8 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: tr.c,v 1.9 2011/09/06 18:33:46 joerg Exp $");
 #endif /* not lint */
-#endif
 
 #include <sys/types.h>
 
@@ -54,7 +50,7 @@ __RCSID("$NetBSD: tr.c,v 1.8 2008/07/21 14:19:27 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "tr.h"
+#include "extern.h"
 
 static int string1[NCHARS] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,		/* ASCII */
@@ -94,14 +90,11 @@ static int string1[NCHARS] = {
 STR s1 = { STRING1, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
 STR s2 = { STRING2, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
 
-int	main (int, char **);
-static void setup (int *, char *, STR *, int);
-static void usage (void);
+static void setup(int *, char *, STR *, int);
+__dead static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, cnt, lastch, *p;
 	int cflag, dflag, sflag, isstring2;
@@ -198,17 +191,15 @@ main(argc, argv)
 	if (!isstring2)
 		usage();
 
-	s1.str = (unsigned char *) argv[0];
-	s2.str = (unsigned char *) argv[1];
+	s1.str = argv[0];
+	s2.str = argv[1];
 
 	if (cflag)
 		for (cnt = NCHARS, p = string1; cnt--;)
 			*p++ = OOBCH;
 
-	if (!next(&s2)) {
-		fprintf(stderr, "empty string2\n");
-		exit(1);
-	}
+	if (!next(&s2))
+		errx(1, "empty string2");
 
 	/* If string2 runs out of characters, use the last one specified. */
 	if (sflag)
@@ -242,15 +233,11 @@ main(argc, argv)
 }
 
 static void
-setup(string, arg, str, cflag)
-	int *string;
-	char *arg;
-	STR *str;
-	int cflag;
+setup(int *string, char *arg, STR *str, int cflag)
 {
 	int cnt, *p;
 
-	str->str = (unsigned char *) arg;
+	str->str = arg;
 	memset(string, 0, NCHARS * sizeof(int));
 	while (next(str))
 		string[str->lastch] = 1;
@@ -260,7 +247,7 @@ setup(string, arg, str, cflag)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: tr [-cs] string1 string2\n");
 	(void)fprintf(stderr, "       tr [-c] -d string1\n");
