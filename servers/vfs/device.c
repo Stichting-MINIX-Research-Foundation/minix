@@ -559,8 +559,12 @@ int gen_opcl(
   if (op == DEV_OPEN && dp->dmap_style == STYLE_DEVA) {
 	fp->fp_task = dp->dmap_driver;
 	self->w_task = dp->dmap_driver;
+	self->w_drv_sendrec = &dev_mess;
+
 	worker_wait();
+
 	self->w_task = NONE;
+	self->w_drv_sendrec = NULL;
   }
 
   if (is_bdev)
@@ -770,7 +774,6 @@ int asyn_io(endpoint_t drv_e, message *mess_ptr)
   int r;
 
   assert(!IS_BDEV_RQ(mess_ptr->m_type));
-  self->w_drv_sendrec = mess_ptr; /* Remember where result should be stored */
 
   r = asynsend3(drv_e, mess_ptr, AMF_NOREPLY);
 
@@ -894,8 +897,12 @@ int clone_opcl(
 	/* Wait for reply when driver is asynchronous */
 	fp->fp_task = dp->dmap_driver;
 	self->w_task = dp->dmap_driver;
+	self->w_drv_sendrec = &dev_mess;
+
 	worker_wait();
+
 	self->w_task = NONE;
+	self->w_drv_sendrec = NULL;
   }
 
   if (op == DEV_OPEN && dev_mess.REP_STATUS >= 0) {
@@ -1071,7 +1078,6 @@ void open_reply(void)
 	return;
   }
   *wp->w_drv_sendrec = job_m_in;
-  wp->w_drv_sendrec = NULL;
   worker_signal(wp);	/* Continue open */
 }
 
