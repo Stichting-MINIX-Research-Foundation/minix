@@ -24,9 +24,6 @@
 
 struct dmap dmap[NR_DEVICES];
 
-#define DT_EMPTY { no_dev, no_dev_io, NONE, "", 0, STYLE_NDEV, NULL, NONE, \
-		   0, NULL, 0}
-
 /*===========================================================================*
  *				lock_dmap		 		     *
  *===========================================================================*/
@@ -281,10 +278,16 @@ void init_dmap()
 {
 /* Initialize the table with empty device <-> driver mappings. */
   int i;
-  struct dmap dmap_default = DT_EMPTY;
 
-  for (i = 0; i < NR_DEVICES; i++)
-	dmap[i] = dmap_default;
+  memset(dmap, 0, sizeof(dmap));
+
+  for (i = 0; i < NR_DEVICES; i++) {
+	dmap[i].dmap_opcl = no_dev;
+	dmap[i].dmap_io = no_dev_io;
+	dmap[i].dmap_driver = NONE;
+	dmap[i].dmap_style = STYLE_NDEV;
+	dmap[i].dmap_servicing = NONE;
+  }
 }
 
 /*===========================================================================*
