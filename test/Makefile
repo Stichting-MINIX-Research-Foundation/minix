@@ -1,4 +1,5 @@
 BINDIR?=	/usr/tests/minix-posix
+FILESDIR?=	/usr/tests/minix-posix
 WARNS?=		1
 
 # Tests have no manpages
@@ -6,6 +7,9 @@ MKMAN=		no
 
 # They are all bin-owned; by default normal executable mode
 BINOWN=		bin
+
+# Needed by testsh1.sh
+FILES=		test1.c
 
 CFLAGS+=	-fno-builtin
 LDADD+=		-lm -lcompat_minix
