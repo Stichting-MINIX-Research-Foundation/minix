@@ -360,7 +360,7 @@ int do_gcov_flush(void);
 int do_select(message *m_out);
 void init_select(void);
 void select_callback(struct filp *, int ops);
-void select_forget(endpoint_t proc_e);
+void select_forget(void);
 void select_reply1(endpoint_t driver_e, int minor, int status);
 void select_reply2(endpoint_t driver_e, int minor, int status);
 void select_timeout_check(timer_t *);

@@ -377,7 +377,7 @@ static int select_request_major(struct filp *f, int *ops, int block)
 	return(SUSPEND);
 
   dp = &dmap[major];
-  if (dp->dmap_sel_filp)
+  if (dp->dmap_sel_busy)
 	return(SUSPEND);
 
   f->filp_select_flags &= ~FSF_UPDATE;
@@ -385,6 +385,7 @@ static int select_request_major(struct filp *f, int *ops, int block)
   if (r != OK)
 	return(r);
 
+  dp->dmap_sel_busy = TRUE;
   dp->dmap_sel_filp = f;
   f->filp_select_flags |= FSF_BUSY;
 
@@ -573,11 +574,11 @@ static void select_cancel_all(struct selectentry *se)
 static void select_cancel_filp(struct filp *f)
 {
 /* Reduce number of select users of this filp */
+  dev_t major;
 
   assert(f);
-  assert(f->filp_selectors >= 0);
-  if (f->filp_selectors == 0) return;
-  if (f->filp_count == 0) return;
+  assert(f->filp_selectors > 0);
+  assert(f->filp_count > 0);
 
   select_lock_filp(f, f->filp_select_ops);
 
@@ -587,6 +588,17 @@ static void select_cancel_filp(struct filp *f)
 	f->filp_select_ops = 0;
 	f->filp_select_flags = 0;
 	f->filp_pipe_select_ops = 0;
+
+	/* If this filp is the subject of an ongoing select query to a
+	 * character device, mark the query as stale, so that this filp will
+	 * not be checked when the result arrives.
+	 */
+	if (is_supported_major(f)) {
+		major = major(f->filp_vno->v_sdev);
+		if (dmap[major].dmap_sel_busy &&
+			dmap[major].dmap_sel_filp == f)
+			dmap[major].dmap_sel_filp = NULL; /* leave _busy set */
+	}
   }
 
   unlock_filp(f);
@@ -638,24 +650,24 @@ void init_select(void)
 /*===========================================================================*
  *				select_forget			             *
  *===========================================================================*/
-void select_forget(endpoint_t proc_e)
+void select_forget(void)
 {
-/* Something has happened (e.g. signal delivered that interrupts select()).
- * Totally forget about the select(). */
-
+/* The calling thread's associated process is expected to be unpaused, due to
+ * a signal that is supposed to interrupt the current system call.
+ * Totally forget about the select().
+ */
   int slot;
   struct selectentry *se;
 
   for (slot = 0; slot < MAXSELECTS; slot++) {
 	se = &selecttab[slot];
-	if (se->requestor != NULL && se->req_endpt == proc_e)
+	if (se->requestor == fp)
 		break;
   }
 
   if (slot >= MAXSELECTS) return;	/* Entry not found */
-  se->error = EINTR;
-  if (is_deferred(se)) return;		/* Still awaiting initial reply */
 
+  /* Do NOT test on is_deferred here. We can safely cancel ongoing queries. */
   select_cancel_all(se);
 }
 
@@ -743,20 +755,25 @@ int status;
   dev = makedev(major, minor);
 
   /* Get filp belonging to character special file */
-  if ((f = dp->dmap_sel_filp) == NULL) {
+  if (!dp->dmap_sel_busy) {
 	printf("VFS (%s:%d): major %d was not expecting a DEV_SELECT reply\n",
 		__FILE__, __LINE__, major);
 	return;
   }
 
-  /* Is the filp still in use and busy waiting for a reply? The owner might
-   * have vanished before the driver was able to reply. */
-  if (f->filp_count >= 1 && (f->filp_select_flags & FSF_BUSY)) {
+  /* The select filp may have been set to NULL if the requestor has been
+   * unpaused in the meantime. In that case, we ignore the result, but we do
+   * look for other filps to restart later.
+   */
+  if ((f = dp->dmap_sel_filp) != NULL) {
 	/* Find vnode and check we got a reply from the device we expected */
 	vp = f->filp_vno;
 	assert(vp != NULL);
 	assert(S_ISCHR(vp->v_mode));
 	if (vp->v_sdev != dev) {
+		/* This should never happen. The driver may be misbehaving.
+		 * For now we assume that the reply we want will arrive later..
+		 */
 		printf("VFS (%s:%d): expected reply from dev %d not %d\n",
 			__FILE__, __LINE__, vp->v_sdev, dev);
 		return;
@@ -764,12 +781,14 @@ int status;
   }
 
   /* No longer waiting for a reply from this device */
+  dp->dmap_sel_busy = FALSE;
   dp->dmap_sel_filp = NULL;
 
-  /* Process select result only if requestor is still around. That is, the
-   * corresponding filp is still in use.
-   */
-  if (f->filp_count >= 1) {
+  /* Process the select result only if the filp is valid. */
+  if (f != NULL) {
+	assert(f->filp_count >= 1);
+	assert(f->filp_select_flags & FSF_BUSY);
+
 	select_lock_filp(f, f->filp_select_ops);
 	f->filp_select_flags &= ~FSF_BUSY;
 

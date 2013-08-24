@@ -557,7 +557,7 @@ void unpause(endpoint_t proc_e)
 		break;
 
 	case FP_BLOCKED_ON_SELECT:/* process blocking on select() */
-		select_forget(proc_e);
+		select_forget();
 		break;
 
 	case FP_BLOCKED_ON_POPEN:	/* process trying to open a fifo */
