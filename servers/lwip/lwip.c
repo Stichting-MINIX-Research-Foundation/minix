@@ -91,7 +91,7 @@ static int sef_cb_init_fresh(__unused int type, __unused sef_init_info_t *info)
 	set_timer(&tcp_stmr, tcp_sticks, tcp_swatchdog, 0);
 	
 	netif_init();
-	netif_lo = netif_find((char *) "lo0");
+	netif_lo = netif_find(__UNCONST("lo0"));
 
 	/* Read configuration. */
 #if 0
@@ -145,7 +145,7 @@ static int sef_cb_init_fresh(__unused int type, __unused sef_init_info_t *info)
 	return(OK);
 }
 
-static void sef_local_startup()
+static void sef_local_startup(void)
 {
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);

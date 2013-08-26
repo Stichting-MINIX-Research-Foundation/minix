@@ -45,7 +45,7 @@ omap3_reset_init(void)
 {
 #if defined(AM335X) || defined(DM37XX)
 	kern_phys_map_ptr(omap_reset.base, omap_reset.size, &reset_phys_map,
-	    &omap_reset.base);
+	    (vir_bytes) &omap_reset.base);
 #endif /* AM335X || DM37XX */
 }
 

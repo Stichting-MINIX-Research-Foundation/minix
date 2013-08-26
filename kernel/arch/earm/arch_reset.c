@@ -17,6 +17,7 @@
 #include "arch_proto.h"
 #include "serial.h"
 #include "omap_rtc.h"
+#include "omap_reset.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
 #include "direct_utils.h"

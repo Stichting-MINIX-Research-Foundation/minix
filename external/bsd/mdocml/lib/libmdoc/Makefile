@@ -2,6 +2,8 @@
 
 LIBISPRIVATE=	yes
 
+WARNS=
+
 LIB=		mdoc
 SRCS=		mdoc_macro.c mdoc.c mdoc_hash.c mdoc_strings.c \
 		mdoc_argv.c mdoc_validate.c lib.c att.c \

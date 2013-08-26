@@ -10,7 +10,7 @@ struct gpio
 #define GPIO_MODE_INPUT 0
 #define GPIO_MODE_OUTPUT 1
 
-int gpio_init();
+int gpio_init(void);
 
 /* request access to a gpio */
 int gpio_claim(char *owner, int nr, struct gpio **gpio);
@@ -30,5 +30,5 @@ int gpio_intr_read(struct gpio *gpio, int *value);
 /* Interrupt hook */
 int gpio_intr_message(message * m);
 
-int gpio_release();
+int gpio_release(void);
 #endif /* __INCLUDE_GPIO_H__ */

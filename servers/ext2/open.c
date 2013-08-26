@@ -171,7 +171,7 @@ int fs_mkdir()
 	  /* It was not possible to enter . or .. probably disk was full -
 	   * links counts haven't been touched. */
 	  if (search_dir(ldirp, lastc, NULL, DELETE, IGN_PERM, 0) != OK)
-		  panic("Dir disappeared: %d ", rip->i_num);
+		  panic("Dir disappeared: %d ", (int) rip->i_num);
 	  rip->i_links_count--;	/* undo the increment done in new_node() */
   }
   rip->i_dirt = IN_DIRTY;		/* either way, i_links_count has changed */

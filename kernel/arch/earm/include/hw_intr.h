@@ -1,6 +1,8 @@
 #ifndef __HW_INTR_ARM_H__
 #define __HW_INTR_ARM_H__
 
+#include "omap_intr.h"
+
 #include "kernel/kernel.h"
 void irq_handle(int irq);
 

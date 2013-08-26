@@ -246,6 +246,14 @@ typedef struct oplist {
 
 #ifdef HOSTPROG
 # include "pack_dev.h"			/* explicitly use NetBSD's macros */
+
+#if 0
+#ifdef __minix
+#undef MAJOR
+#undef MINOR
+#endif
+#endif
+
 # define MAJOR(x)	major_netbsd(x)
 # define MINOR(x)	minor_netbsd(x)
 # define TODEV(x, y)	makedev_netbsd((x), (y))

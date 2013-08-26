@@ -30,6 +30,8 @@ extern struct arch_watchdog *watchdog;
 /* let the arch code do whatever it needs to setup or quit the watchdog */
 int arch_watchdog_init(void);
 void arch_watchdog_stop(void);
+
+#ifdef __i386__
 /* if the watchdog detects lockup, let the arch code to handle it */
 void arch_watchdog_lockup(const struct nmi_frame * frame);
 
@@ -37,6 +39,7 @@ void arch_watchdog_lockup(const struct nmi_frame * frame);
  * specific low level handler dumped CPU information and can be inspected by the
  * arch specific code of the watchdog implementaion */
 void nmi_watchdog_handler(struct nmi_frame * frame);
+#endif
 
 /*
  * start and stop profiling using the NMI watchdog
