@@ -45,7 +45,7 @@ void
 arch_padconf_init(void)
 {
 	kern_phys_map_ptr(omap_padconf.base, omap_padconf.size,
-	    &padconf_phys_map, &omap_padconf.base);
+	     &padconf_phys_map, (vir_bytes) &omap_padconf.base);
 
 	return;
 }
