@@ -1,0 +1,17 @@
+body {
+	background-color: white;
+	font-family: verdana, helvetica, sans-serif;
+	color: #333333;
+	font-size: 12px;
+}
+
+#weatherstation {
+	display: none;
+}
+
+#loading {
+	/* Display in the center of the screen */
+	top: 50%;
+	left: 50%;
+	position: absolute;
+}

@@ -119,5 +119,16 @@
 ./usr/sbin/tps65217			minix-sys
 ./usr/sbin/tps65950			minix-sys
 ./usr/sbin/tsl2550			minix-sys
+./usr/share/beaglebone			minix-sys
+./usr/share/beaglebone/weather		minix-sys
+./usr/share/beaglebone/weather/LICENSE			minix-sys
+./usr/share/beaglebone/weather/README.txt		minix-sys
+./usr/share/beaglebone/weather/index.html		minix-sys
+./usr/share/beaglebone/weather/jquery.js		minix-sys
+./usr/share/beaglebone/weather/processing.js		minix-sys
+./usr/share/beaglebone/weather/spin.js			minix-sys
+./usr/share/beaglebone/weather/style.css		minix-sys
+./usr/share/beaglebone/weather/weatherstation.js	minix-sys
+./usr/share/beaglebone/weather/weatherstation.lua	minix-sys
 ./usr/tests/minix-posix/mod		minix-sys
 ./usr/tests/minix-posix/test63		minix-sys
