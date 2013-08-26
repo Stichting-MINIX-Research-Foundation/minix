@@ -14,6 +14,6 @@ SRCS=	\
 	scheduler.c \
 	key.c
 
-WARNS?=	5
+WARNS?=	4
 
 .include <bsd.lib.mk>
