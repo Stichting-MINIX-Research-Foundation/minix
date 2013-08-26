@@ -44,7 +44,7 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 COMMON_CONFIGURE_ARGS+=	\
 			--disable-libssp \
 			--disable-threads \
-			--disable-visibility \
+			--enable-visibility \
 			--disable-libunwind
 
 .if ${HOST_OSTYPE:C/\-.*//} == "Minix"
