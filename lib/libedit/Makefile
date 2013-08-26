@@ -12,7 +12,10 @@ LIBDPLIBS+=     terminfo ${.CURDIR}/../libterminfo
 .include "bsd.own.mk"
 
 COPTS+=	-Wunused-parameter
+
+.if !defined(__MINIX)
 CWARNFLAGS.gcc+=	-Wconversion
+.endif
 
 OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \

@@ -52,7 +52,11 @@ CPUFLAGS=  -march=i386 -mtune=i386
 CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
 
 COPTS+=    -ffreestanding
+.if defined(__MINIX)
+CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
+.else
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
+.endif
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
 

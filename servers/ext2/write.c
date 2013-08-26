@@ -24,16 +24,16 @@ static int empty_indir(struct buf *, struct super_block *);
 /*===========================================================================*
  *				write_map				     *
  *===========================================================================*/
-int write_map(rip, position, new_block, op)
+int write_map(rip, position, new_wblock, op)
 struct inode *rip;		/* pointer to inode to be changed */
 off_t position;			/* file address to be mapped */
-block_t new_block;		/* block # to be inserted */
+block_t new_wblock;		/* block # to be inserted */
 int op;				/* special actions */
 {
 /* Write a new block into an inode.
  *
  * If op includes WMAP_FREE, free the block corresponding to that position
- * in the inode ('new_block' is ignored then). Also free the indirect block
+ * in the inode ('new_wblock' is ignored then). Also free the indirect block
  * if that was the last entry in the indirect block.
  * Also free the double/triple indirect block if that was the last entry in
  * the double/triple indirect block.
@@ -73,7 +73,7 @@ int op;				/* special actions */
 		rip->i_block[block_pos] = NO_BLOCK;
 		rip->i_blocks -= rip->i_sp->s_sectors_in_block;
 	} else {
-		rip->i_block[block_pos] = new_block;
+		rip->i_block[block_pos] = new_wblock;
 		rip->i_blocks += rip->i_sp->s_sectors_in_block;
 	}
 	return(OK);
@@ -222,7 +222,7 @@ int op;				/* special actions */
 			}
 		}
 	} else {
-		wr_indir(bp, index1, new_block);
+		wr_indir(bp, index1, new_wblock);
 		rip->i_blocks += rip->i_sp->s_sectors_in_block;
 	}
 	/* b1 equals NO_BLOCK only when we are freeing up the indirect block. */
@@ -272,9 +272,9 @@ int op;				/* special actions */
 /*===========================================================================*
  *				wr_indir				     *
  *===========================================================================*/
-static void wr_indir(bp, index, block)
+static void wr_indir(bp, wrindex, block)
 struct buf *bp;			/* pointer to indirect block */
-int index;			/* index into *bp */
+int wrindex;			/* index into *bp */
 block_t block;			/* block to write */
 {
 /* Given a pointer to an indirect block, write one entry. */
@@ -283,7 +283,7 @@ block_t block;			/* block to write */
 	panic("wr_indir() on NULL");
 
   /* write a block into an indirect block */
-  b_ind(bp)[index] = conv4(le_CPU, block);
+  b_ind(bp)[wrindex] = conv4(le_CPU, block);
 }
 
 

@@ -19,6 +19,8 @@
 #include "kernel/debug.h"
 #include "omap_ccnt.h"
 #include "omap_padconf.h"
+#include "omap_rtc.h"
+#include "omap_reset.h"
 
 #include "glo.h"
 
