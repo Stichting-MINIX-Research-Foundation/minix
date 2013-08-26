@@ -5,7 +5,14 @@ NOLINT=		# defined
 NOPIC=		# defined
 NOPROFILE=	# defined
 
+.if defined(__MINIX)
+WARNS=
+NOGCCERROR=yes
+NOCLANGERROR=yes
+.else
 CWARNFLAGS.clang+=	-Wno-parentheses
+.endif
+
 UNSUPPORTED_COMPILER.clang=	# defined
 
 .include <bsd.own.mk>

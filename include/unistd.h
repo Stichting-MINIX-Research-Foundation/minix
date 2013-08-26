@@ -322,6 +322,10 @@ int	unlinkat(int, const char *, int);
  * Implementation-defined extensions
  */
 #ifdef __minix
+
+/* for struct ucred */
+#include <sys/ucred.h>
+
 int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
 #if defined(_NETBSD_SOURCE)
 #include <minix/type.h>

@@ -673,8 +673,8 @@ struct filp *f;
 	f->filp_mode = FILP_CLOSED;
 	f->filp_count = 0;
   } else if (f->filp_count < 0) {
-	panic("VFS: invalid filp count: %d ino %d/%u", f->filp_count,
-	      vp->v_dev, vp->v_inode_nr);
+	panic("VFS: invalid filp count: %d ino %d/%u",
+		(int) f->filp_count, (int) vp->v_dev, (unsigned int) vp->v_inode_nr);
   } else {
 	unlock_vnode(f->filp_vno);
   }

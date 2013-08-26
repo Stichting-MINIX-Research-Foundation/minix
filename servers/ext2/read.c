@@ -327,7 +327,7 @@ int opportunistic;
  */
 
   struct buf *bp;
-  int index;
+  int mindex;
   block_t b;
   unsigned long excess, block_pos;
   static char first_time = TRUE;
@@ -358,7 +358,7 @@ int opportunistic;
   /* It is not in the inode, so it must be single, double or triple indirect */
   if (block_pos < doub_ind_s) {
 	b = rip->i_block[EXT2_NDIR_BLOCKS]; /* address of single indirect block */
-	index = block_pos - EXT2_NDIR_BLOCKS;
+	mindex = block_pos - EXT2_NDIR_BLOCKS;
   } else if (block_pos >= out_range_s) { /* TODO: do we need it? */
 	return(NO_BLOCK);
   } else {
@@ -374,8 +374,8 @@ int opportunistic;
 		ASSERT(lmfs_dev(bp) != NO_DEV);
 		ASSERT(lmfs_dev(bp) == rip->i_dev);
 		excess = block_pos - triple_ind_s;
-		index = excess / addr_in_block2;
-		b = rd_indir(bp, index);	/* num of double ind block */
+		mindex = excess / addr_in_block2;
+		b = rd_indir(bp, mindex);	/* num of double ind block */
 		put_block(bp, INDIRECT_BLOCK);	/* release triple ind block */
 		excess = excess % addr_in_block2;
 	}
@@ -387,10 +387,10 @@ int opportunistic;
 	}
 	ASSERT(lmfs_dev(bp) != NO_DEV);
 	ASSERT(lmfs_dev(bp) == rip->i_dev);
-	index = excess / addr_in_block;
-	b = rd_indir(bp, index);	/* num of single ind block */
+	mindex = excess / addr_in_block;
+	b = rd_indir(bp, mindex);	/* num of single ind block */
 	put_block(bp, INDIRECT_BLOCK);	/* release double ind block */
-	index = excess % addr_in_block;	/* index into single ind blk */
+	mindex = excess % addr_in_block;	/* index into single ind blk */
   }
   if (b == NO_BLOCK) return(NO_BLOCK);
   bp = get_block(rip->i_dev, b, iomode);       /* get single indirect block */
@@ -401,7 +401,7 @@ int opportunistic;
 
   ASSERT(lmfs_dev(bp) != NO_DEV);
   ASSERT(lmfs_dev(bp) == rip->i_dev);
-  b = rd_indir(bp, index);
+  b = rd_indir(bp, mindex);
   put_block(bp, INDIRECT_BLOCK);	/* release single ind block */
 
   return(b);
@@ -421,14 +421,14 @@ struct buf *get_block_map(register struct inode *rip, u64_t position)
 /*===========================================================================*
  *				rd_indir				     *
  *===========================================================================*/
-block_t rd_indir(bp, index)
+block_t rd_indir(bp, mindex)
 struct buf *bp;                 /* pointer to indirect block */
-int index;                      /* index into *bp */
+int mindex;                      /* index into *bp */
 {
   if (bp == NULL)
 	panic("rd_indir() on NULL");
   /* TODO: use conv call */
-  return conv4(le_CPU, b_ind(bp)[index]);
+  return conv4(le_CPU, b_ind(bp)[mindex]);
 }
 
 
@@ -678,12 +678,21 @@ int fs_getdents(void)
 		if (d_desc->d_ino == 0)
 			continue; /* Entry is not in use */
 
+#if 0
+		/* read.c:682: error: comparison is always false due to
+		 * limited range of data type
+		 */
 		if (d_desc->d_name_len > NAME_MAX ||
 		    d_desc->d_name_len > EXT2_NAME_MAX) {
 			len = min(NAME_MAX, EXT2_NAME_MAX);
-		} else {
+		} else
+#endif
+		{
 			len = d_desc->d_name_len;
 		}
+
+		assert(len <= NAME_MAX);
+		assert(len <= EXT2_NAME_MAX);
 
 		/* Compute record length */
 		reclen = offsetof(struct dirent, d_name) + len + 1;

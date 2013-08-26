@@ -42,7 +42,7 @@
 #define OMAP_UART_FCR_RX_FIFO_TRIG_SHIFT	6
 #define OMAP_UART_FCR_RX_FIFO_TRIG_MASK		(0x3 << 6)
 #define OMAP_UART_FCR_TX_FIFO_TRIG_SHIFT	4
-#define OMAP_UART_FCR_RX_FIFO_TRIG_MASK		(0x3 << 4)
+#define OMAP_UART_FCR_TX_FIFO_TRIG_MASK		(0x3 << 4)
 #define UART_FCR_ENABLE_FIFO	0x01	/* Enable the fifo */
 #define UART_FCR_CLR_RCVR	0x02	/* Clear the RCVR FIFO */
 #define UART_FCR_CLR_XMIT	0x04	/* Clear the XMIT FIFO */
