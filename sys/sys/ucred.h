@@ -59,4 +59,9 @@ struct uucred {
 	gid_t		cr_groups[NGROUPS_MAX];	/* groups */
 };
 
+#ifdef __minix
+#include <minix/type.h>
+int getnucred(endpoint_t proc_ep, struct ucred *ucred);
+#endif
+
 #endif /* !_SYS_UCRED_H_ */

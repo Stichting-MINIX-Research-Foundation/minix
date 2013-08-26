@@ -230,12 +230,12 @@ static int print_memory(void)
 {
 	FILE *fp;
 	unsigned int pagesize;
-	unsigned long total, free, largest, cached;
+	unsigned long total, freemem, largest, cached;
 
 	if ((fp = fopen("meminfo", "r")) == NULL)
 		return 0;
 
-	if (fscanf(fp, "%u %lu %lu %lu %lu", &pagesize, &total, &free,
+	if (fscanf(fp, "%u %lu %lu %lu %lu", &pagesize, &total, &freemem,
 			&largest, &cached) != 5) {
 		fclose(fp);
 		return 0;
@@ -245,7 +245,7 @@ static int print_memory(void)
 
 	printf("main memory: %ldK total, %ldK free, %ldK contig free, "
 		"%ldK cached\n",
-		(pagesize * total)/1024, (pagesize * free)/1024,
+		(pagesize * total)/1024, (pagesize * freemem)/1024,
 		(pagesize * largest)/1024, (pagesize * cached)/1024);
 
 	return 1;
@@ -290,7 +290,8 @@ struct tp {
 
 static int cmp_procs(const void *v1, const void *v2)
 {
-	struct tp *p1 = (struct tp *) v1, *p2 = (struct tp *) v2;
+	const struct tp *p1 = (const struct tp *) v1,
+		*p2 = (const struct tp *) v2;
 	int p1blocked, p2blocked;
 
 	if(order == ORDER_MEMORY) {

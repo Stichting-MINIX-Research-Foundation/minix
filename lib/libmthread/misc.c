@@ -39,7 +39,7 @@ void mthread_panic_s(void)
   volatile int *sf;
 
   sf = NULL;
-  *((int *) sf ) = 1;	/* Cause segfault to generate trace */
+  *((volatile int *) sf ) = 1;	/* Cause segfault to generate trace */
   exit(1);
 }
 #endif

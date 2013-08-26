@@ -322,6 +322,7 @@ int	unlinkat(int, const char *, int);
  * Implementation-defined extensions
  */
 #ifdef __minix
+
 int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
 #if defined(_NETBSD_SOURCE)
 #include <minix/type.h>
@@ -334,7 +335,6 @@ int mapdriver(char *label, int major, int style, int flags);
 pid_t getnpid(endpoint_t proc_ep);
 uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);
-int getnucred(endpoint_t proc_ep, struct ucred *ucred);
 ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
 ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
 #endif /* defined(_NETBSD_SOURCE) */

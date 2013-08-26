@@ -947,6 +947,7 @@ MKLINT:=	no
 
 # LSC MINIX does not support these features ATM.
 USE_FORT:=	no
+USE_SSP:=	no
 MKYP:=		no
 MKPF:=		no
 MKNLS:=		no

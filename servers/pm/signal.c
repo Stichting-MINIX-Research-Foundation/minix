@@ -327,8 +327,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
-	printf("PM: signal %d sent to exiting process %d\n", signo, slot);
-	panic("");
+	panic("PM: signal %d sent to exiting process %d\n", signo, slot);
   }
 
 #if USE_TRACE

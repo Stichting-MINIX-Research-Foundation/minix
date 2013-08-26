@@ -146,14 +146,14 @@ static struct omap_gpio_bank omap_gpio_banks[] = {
 		    .irq_id = GPIO6_IRQ_HOOK_ID,
 		    .irq_hook_id = GPIO6_IRQ_HOOK_ID,
 	    },
-	{NULL, 0, 0}
+	{NULL, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 #define GPIO_REVISION 0x00
 #define GPIO_REVISION_MAJOR(X) ((X & 0xF0) >> 4)
 #define GPIO_REVISION_MINOR(X) (X & 0XF)
 
-struct omap_gpio_bank *
+static struct omap_gpio_bank *
 omap_gpio_bank_get(int gpio_nr)
 {
 	struct omap_gpio_bank *bank;
@@ -162,7 +162,7 @@ omap_gpio_bank_get(int gpio_nr)
 	return bank;
 }
 
-int
+static int
 omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
 {
 	log_trace(&log, "%s s claiming %d\n", owner, nr);
@@ -187,7 +187,7 @@ omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
 	return OK;
 }
 
-int
+static int
 omap_gpio_pin_mode(struct gpio *gpio, int mode)
 {
 	struct omap_gpio_bank *bank;
@@ -213,7 +213,7 @@ omap_gpio_pin_mode(struct gpio *gpio, int mode)
 	return 0;
 }
 
-int
+static int
 omap_gpio_set(struct gpio *gpio, int value)
 {
 	struct omap_gpio_bank *bank;
@@ -231,7 +231,7 @@ omap_gpio_set(struct gpio *gpio, int value)
 	return OK;
 }
 
-int
+static int
 omap_gpio_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
@@ -256,7 +256,7 @@ omap_gpio_read(struct gpio *gpio, int *value)
 	return OK;
 }
 
-int
+static int
 omap_gpio_intr_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
@@ -273,7 +273,7 @@ omap_gpio_intr_read(struct gpio *gpio, int *value)
 	return OK;
 }
 
-int
+static int
 omap_message_hook(message * m)
 {
 	unsigned long irq_set, i;
@@ -312,8 +312,8 @@ omap_message_hook(message * m)
 	return OK;
 }
 
-int
-omap_gpio_init(struct gpio_driver *drv)
+static int
+omap_gpio_init(struct gpio_driver *gpdrv)
 {
 	u32_t revision;
 	int i;
@@ -382,12 +382,12 @@ omap_gpio_init(struct gpio_driver *drv)
 	clkconf_release();
 
 
-	drv->claim = omap_gpio_claim;
-	drv->pin_mode = omap_gpio_pin_mode;
-	drv->set = omap_gpio_set;
-	drv->read = omap_gpio_read;
-	drv->intr_read = omap_gpio_intr_read;
-	drv->message_hook = omap_message_hook;
+	gpdrv->claim = omap_gpio_claim;
+	gpdrv->pin_mode = omap_gpio_pin_mode;
+	gpdrv->set = omap_gpio_set;
+	gpdrv->read = omap_gpio_read;
+	gpdrv->intr_read = omap_gpio_intr_read;
+	gpdrv->message_hook = omap_message_hook;
 	return 0;
 }
 
@@ -440,7 +440,7 @@ gpio_intr_message(message * m)
 }
 
 int
-gpio_release()
+gpio_release(void)
 {
 	return OK;
 }

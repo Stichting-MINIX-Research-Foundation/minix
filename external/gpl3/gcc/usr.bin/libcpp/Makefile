@@ -2,6 +2,11 @@
 
 LIBISPRIVATE=	yes
 
+.if defined(__MINIX)
+NOGCCERROR=yes
+NOCLANGERROR=yes
+.endif
+
 LIB=		cpp
 
 SRCS=		${G_libcpp_a_OBJS:.o=.c}

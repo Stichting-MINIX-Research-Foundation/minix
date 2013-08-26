@@ -51,7 +51,8 @@ void omap3_ser_init(){
     omap_serial.size = 0x1000 ; /* 4k */
 
 
-    kern_phys_map_ptr(omap_serial.base,omap_serial.size,&serial_phys_map,&omap_serial.base);
+    kern_phys_map_ptr(omap_serial.base,omap_serial.size,
+	&serial_phys_map, (vir_bytes) &omap_serial.base);
     assert(omap_serial.base);
 }
 

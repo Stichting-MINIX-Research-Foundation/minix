@@ -24,7 +24,11 @@ INCS+=	base.h bcj.h block.h check.h container.h delta.h \
 
 INCSDIR=	/usr/include/lzma
 
-LDFLAGS+=	-Wl,-z,defs
+LDFLAGS+=	-Wl,-z,defs 
+
+.if defined(__MINIX)
+LDFLAGS+=	-lc 
+.endif 
 
 CPPFLAGS+=	-I${XZSRCDIR}/src/liblzma/check
 CPPFLAGS+=	-I${XZSRCDIR}/src/liblzma/common

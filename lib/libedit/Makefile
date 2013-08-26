@@ -4,6 +4,12 @@
 USE_SHLIBDIR=	yes
 
 WIDECHAR ?= yes
+
+.if defined(__MINIX)
+NOGCCERROR=yes
+NOCLANGERROR=yes
+.endif
+
 WARNS?=	5
 LIB=	edit
 
@@ -12,7 +18,10 @@ LIBDPLIBS+=     terminfo ${.CURDIR}/../libterminfo
 .include "bsd.own.mk"
 
 COPTS+=	-Wunused-parameter
+
+.if !defined(__MINIX)
 CWARNFLAGS.gcc+=	-Wconversion
+.endif
 
 OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \

@@ -151,7 +151,9 @@ void omap3_frclock_init(void)
 {
     u32_t tisr;
 
-    kern_phys_map_ptr(fr_timer.base,ARM_PAGE_SIZE,&fr_timer_phys_map,&fr_timer.base);
+    kern_phys_map_ptr(fr_timer.base,ARM_PAGE_SIZE,
+	&fr_timer_phys_map, (vir_bytes) &fr_timer.base);
+
     /* enable the clock */
 #ifdef AM335X
     /* Disable the module and wait for the module to be disabled */
@@ -210,7 +212,8 @@ void omap3_frclock_stop()
 void omap3_timer_init(unsigned freq)
 {
     u32_t tisr;
-    kern_phys_map_ptr(timer.base,ARM_PAGE_SIZE,&timer_phys_map,&timer.base);
+    kern_phys_map_ptr(timer.base,ARM_PAGE_SIZE,
+		&timer_phys_map, (vir_bytes) &timer.base);
 #ifdef AM335X
     /* disable the module and wait for the module to be disabled */
     set32(CM_WKUP_TIMER1_CLKCTRL, CM_MODULEMODE_MASK,CM_MODULEMODE_DISABLED);

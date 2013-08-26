@@ -136,7 +136,7 @@ struct pbuf_custom {
 #endif /* PBUF_POOL_FREE_OOSEQ */
 #if NO_SYS && PBUF_POOL_FREE_OOSEQ
 extern volatile u8_t pbuf_free_ooseq_pending;
-void pbuf_free_ooseq();
+void pbuf_free_ooseq(void);
 /** When not using sys_check_timeouts(), call PBUF_CHECK_FREE_OOSEQ()
     at regular intervals from main level to check if ooseq pbufs need to be
     freed! */
