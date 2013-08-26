@@ -44,12 +44,15 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 COMMON_CONFIGURE_ARGS+=	\
 			--disable-libssp \
 			--disable-threads \
-			--disable-visibility \
+			--enable-visibility \
 			--disable-libunwind
+
+CONFIGURE_ENV+= gcc_cv_ld_hidden=yes 
 
 .if ${HOST_OSTYPE:C/\-.*//} == "Minix"
 CONFIGURE_ENV+= LDFLAGS=-lm
 .endif #  ${HOST_OSTYPE:C/\-.*//} == "Minix"
+
 .endif # defined(__MINIX)
 
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
