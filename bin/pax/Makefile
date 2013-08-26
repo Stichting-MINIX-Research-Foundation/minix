@@ -4,7 +4,7 @@
 .include <bsd.own.mk>
 
 .if defined(__MINIX)
-WARNS=3
+WARNS=2
 .endif
 
 PROG=   pax

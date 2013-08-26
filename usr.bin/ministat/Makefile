@@ -4,7 +4,7 @@ DPADD=	${LIBM}
 LDADD=	-lm
 
 # BJG
-WARNS=3
+WARNS=
 
 .include <bsd.prog.mk>
 

@@ -308,7 +308,7 @@ int fs_rename()
   struct inode *new_superdirp, *next_new_superdirp;
   int r = OK;				/* error flag; initially no error */
   int odir, ndir;			/* TRUE iff {old|new} file is dir */
-  int same_pdir;			/* TRUE iff parent dirs are the same */
+  int same_pdir = 0;			/* TRUE iff parent dirs are the same */
   char old_name[NAME_MAX + 1], new_name[NAME_MAX + 1];
   ino_t numb;
   phys_bytes len;

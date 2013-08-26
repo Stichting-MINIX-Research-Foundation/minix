@@ -19,7 +19,7 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-WARNS?=5
+WARNS?=2
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/lib/liblwip/include
 CPPFLAGS+= -I${NETBSDSRCDIR}/lib/liblwip/include/ipv4

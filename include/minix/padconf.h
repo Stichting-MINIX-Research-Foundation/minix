@@ -314,8 +314,8 @@
 #define CONTROL_CONF_PUDEN (1<<3)
 #define CONTROL_CONF_MUXMODE(X) (X&0x7)
 
-int padconf_init();
+int padconf_init(void);
 int padconf_set(u32_t padconf, u32_t mask, u32_t value);
-int padconf_release();
+int padconf_release(void);
 
 #endif /* __PADCONF_H__ */

@@ -290,18 +290,18 @@ static char * parse_mode(int mode){
 }
 
 static int
-dump_entry(FILE * out, int index, const char *base_dir)
+dump_entry(FILE * out, int mindex, const char *base_dir)
 {
 
 	int space;
 	int i;
-	struct entry *entry = &entries[index];
+	struct entry *entry = &entries[mindex];
 
 	if (entry->type == ENTRY_DIR) {
-		for (space = 0; space < entries[index].depth; space++) {
+		for (space = 0; space < entries[mindex].depth; space++) {
 			fprintf(out, " ");
 		}
-		if (entries[index].depth > 0) {
+		if (entries[mindex].depth > 0) {
 			fprintf(out, "%s ", entry->filename);
 		}
 		fprintf(out, "d%s", parse_mode(entry->mode));
@@ -313,12 +313,12 @@ dump_entry(FILE * out, int index, const char *base_dir)
 				dump_entry(out, i, base_dir);
 			}
 		}
-		for (space = 0; space < entries[index].depth; space++) {
+		for (space = 0; space < entries[mindex].depth; space++) {
 			fprintf(out, " ");
 		}
 		fprintf(out, "$\n");
 	} else if (entry->type == ENTRY_FILE) {
-		for (space = 0; space < entries[index].depth; space++) {
+		for (space = 0; space < entries[mindex].depth; space++) {
 			fprintf(out, " ");
 		}
 		/* hack skipping the first . in the path */
@@ -326,7 +326,7 @@ dump_entry(FILE * out, int index, const char *base_dir)
 		    parse_mode(entry->mode), entry->uid, entry->gid, base_dir,
 		    &entry->path[1]);
 	} else if (entry->type == ENTRY_LINK) {
-		for (space = 0; space < entries[index].depth; space++) {
+		for (space = 0; space < entries[mindex].depth; space++) {
 			fprintf(out, " ");
 		}
 		/* hack skipping the first . in the path */
@@ -335,7 +335,7 @@ dump_entry(FILE * out, int index, const char *base_dir)
 	} else {
 		/* missing "b" and "c" for block and char device? */
 		fprintf(out, "# ");
-		for (space = 1; space < entries[index].depth; space++) {
+		for (space = 1; space < entries[mindex].depth; space++) {
 			fprintf(out, " ");
 		}
 		fprintf(out, "%i %s\n", entry->type, entry->path);
@@ -360,7 +360,7 @@ dump_proto(FILE * out, const char *base_dir)
 }
 
 static void
-print_usage()
+print_usage(void)
 {
 	printf("Usage: toproto [OPTION]...\n");
 	printf
