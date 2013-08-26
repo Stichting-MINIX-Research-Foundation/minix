@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+
+	<title>Weather Station - Powered by Minix and BeagleBone</title>
+
+	<link rel="stylesheet" type="text/css" media="all" href="style.css"/>
+
+	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript" src="processing.js"></script>
+	<script type="text/javascript" src="spin.js"></script>
+
+	<script type="text/javascript">
+
+		// Refresh weather data every 3 seconds.
+		var weather_fetch_interval = 3 * 1000;
+
+		// Location of the weather data.
+		var weather_json_url = 'weather.json';
+
+		// Loading animation while the initial fetch is being performed.
+		var spinner = new Spinner().spin();
+
+		// Callback for fetching weather reports.
+		function weather_cb_fetch() {
+
+			var now;
+			var url;
+
+			// Make the URL of every request unique to help ensure
+			// that the browser doesn't cache the JSON data.
+			now = new Date();
+			url = weather_json_url + '?timestamp=' + now.getTime();
+
+			$.getJSON(url, weather_cb_process);
+		}
+
+		// Callback for processing weather reports.
+		function weather_cb_process(data) {
+
+			set_lux(data.illuminance);
+			set_temp(data.temperature);
+			set_humidity(data.humidity);
+			set_pressure(data.pressure/100); // Pa to hPa
+
+			// hide the loading message once everything is loaded
+			$("#loading").fadeOut("slow", function(){
+								spinner.stop();
+							});
+
+			// weather station is initially hidden
+			// fade in after first paint.
+			$("#weatherstation").fadeIn("slow");
+
+			// Queue the next server request.
+			setTimeout(weather_cb_fetch, weather_fetch_interval);
+		}
+
+		function weather_init() {
+
+			// Start the loading animation spinning.
+			$("#loading").append(spinner.el);
+
+			// Fetch the initial weather report.
+			weather_cb_fetch();
+		}
+
+		// Start getting weather reports.
+		$(weather_init);
+
+	</script>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+</head>
+<body>
+
+	<!--
+		Page loading animation (spin.js).
+		Hidden after weather canvases are loaded.
+	-->
+	<div id="loading"> </div>
+
+	<!--
+		Thermometer, gauges, and light level dot.
+		Initially hidden while loading/painting.
+	-->
+	<div id="weatherstation">
+		<canvas id="barometerCanvas"></canvas>
+		<canvas id="thermometerCanvas"></canvas>
+		<canvas id="lightCanvas"></canvas>
+	</div>
+
+	<script type="text/javascript" src="weatherstation.js"></script>
+
+</body>
+</html>

@@ -18,7 +18,8 @@ EXTRA_DIST_FILES+=	${.CURDIR}/Minix.gcccmds
 
 # XXX these are only used by compat currently, but they could be used
 # by something else; this may need to be fixed properly in the future.
-.if ${MKCOMPAT} != "no"
+# TAC these are used by Minix for arch-specific content.
+.if ${MKCOMPAT} != "no" || defined(__MINIX)
 .if exists(NetBSD.dist.${MACHINE_ARCH})
 EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.${MACHINE_ARCH}
 .endif

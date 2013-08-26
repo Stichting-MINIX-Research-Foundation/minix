@@ -17,3 +17,4 @@ test -e /dev/bmp085b3s77 || (cd /dev && MAKEDEV bmp085b3s77)
 /bin/service up /usr/sbin/bmp085 -dev /dev/bmp085b3s77 \
 	-label bmp085.3.77 -args 'bus=3 address=0x77' && echo -n " bmp085"
 
+daemonize tcpd http /usr/share/beaglebone/weather/weatherstation.lua
