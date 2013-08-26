@@ -9,6 +9,11 @@
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
 SUBDIR= misc mk \
 	terminfo zoneinfo
+
+.if ${MACHINE_ARCH} == "earm"
+SUBDIR+= beaglebone
+.endif
+
 .if ${MKNLS} != "no"
 SUBDIR+=i18n locale nls
 .endif
