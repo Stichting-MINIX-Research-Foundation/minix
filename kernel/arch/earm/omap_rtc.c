@@ -41,7 +41,7 @@ omap3_rtc_init(void)
 {
 #ifdef AM335X
 	kern_phys_map_ptr(omap_rtc.base, omap_rtc.size, &rtc_phys_map,
-	    &omap_rtc.base);
+	    (vir_bytes) &omap_rtc.base);
 #endif /* AM335X */
 }
 
