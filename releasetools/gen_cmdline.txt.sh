@@ -3,6 +3,7 @@
 CONSOLE=tty02 
 #verbosity
 VERBOSE=3 
+HZ=1000
 while getopts "c:v:?" c
 do
         case "$c" in
@@ -18,8 +19,12 @@ do
                 # genrate netbooting uEnv.txt
                 VERBOSE=$OPTARG
 		;;
+        h)
+                # system hz
+		HZ=$OPTARG
+		;;
         esac
 done
 
 
-echo console=$CONSOLE rootdevname=c0d0p1s0 verbose=$VERBOSE
+echo console=$CONSOLE rootdevname=c0d0p1s0 verbose=$VERBOSE hz=$HZ
