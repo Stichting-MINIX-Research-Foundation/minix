@@ -138,6 +138,8 @@ int omap3_register_timer_handler(const irq_handler_t handler)
 	omap3_timer_hook.irq = timer.irq_nr;
 
 	put_irq_handler(&omap3_timer_hook, timer.irq_nr, handler);
+	/* only unmask interrupts after registering */
+     	omap3_irq_unmask(timer.irq_nr);
 
 	return 0;
 }
@@ -211,6 +213,7 @@ void omap3_frclock_stop()
 
 void omap3_timer_init(unsigned freq)
 {
+    /* we only support 1ms resolution */
     u32_t tisr;
     kern_phys_map_ptr(timer.base,ARM_PAGE_SIZE,
 		&timer_phys_map, (vir_bytes) &timer.base);
@@ -239,15 +242,15 @@ void omap3_timer_init(unsigned freq)
     /* Use 1-ms tick mode for GPTIMER1 TRM 16.2.4.2.1 */
     mmio_write(timer.base + timer.regs->TPIR, 232000);
     mmio_write(timer.base + timer.regs->TNIR, -768000);
-    mmio_write(timer.base + timer.regs->TLDR, 0xffffffe0);
-    mmio_write(timer.base + timer.regs->TCRR, 0xffffffe0);
+    mmio_write(timer.base + timer.regs->TLDR, 0xffffffff - (32768 / freq) +1);
+    mmio_write(timer.base + timer.regs->TCRR, 0xffffffff - (32768 / freq) +1);
+
 
     /* Set up overflow interrupt */
     tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
 	   OMAP3_TISR_TCAR_IT_FLAG;
     mmio_write(timer.base + timer.regs->TISR, tisr); /* Clear interrupt status */
     mmio_write(timer.base + timer.regs->TIER, OMAP3_TIER_OVF_IT_ENA);
-    omap3_irq_unmask(timer.irq_nr);
 
     /* Start timer */
     mmio_set(timer.base + timer.regs->TCLR,
