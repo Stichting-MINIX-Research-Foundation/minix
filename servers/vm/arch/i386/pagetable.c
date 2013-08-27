@@ -1371,7 +1371,7 @@ int pt_mapkernel(pt_t *pt)
 		pt->pt_dir[kern_pde] = addr | ARCH_VM_PDE_PRESENT |
 			ARCH_VM_BIGPAGE | ARCH_VM_PTE_RW | global_bit;
 #elif defined(__arm__)
-		pt->pt_dir[kern_pde] = (addr & ARCH_VM_PDE_MASK)
+		pt->pt_dir[kern_pde] = (addr & ARM_VM_SECTION_MASK)
 			| ARM_VM_SECTION
 			| ARM_VM_SECTION_DOMAIN
 			| ARM_VM_SECTION_WT
