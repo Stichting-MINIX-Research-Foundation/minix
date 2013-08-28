@@ -811,19 +811,12 @@ static void service_pm_postponed(void)
 
     case PM_DUMPCORE:
 	{
-		endpoint_t proc_e, traced_proc_e;
+		endpoint_t proc_e;
 		int term_signal;
 		vir_bytes core_path;
 
 		proc_e = job_m_in.PM_PROC;
-		traced_proc_e = job_m_in.PM_TRACED_PROC;
-		if(job_m_in.PM_PROC != job_m_in.PM_TRACED_PROC) {
-			/* dumpcore request */
-			term_signal = 0;
-		} else {
-			/* dumpcore on exit */
-			term_signal = job_m_in.PM_TERM_SIG;
-		}
+		term_signal = job_m_in.PM_TERM_SIG;
 		core_path = (vir_bytes) job_m_in.PM_PATH;
 
 		r = pm_dumpcore(proc_e, term_signal, core_path);
@@ -831,7 +824,6 @@ static void service_pm_postponed(void)
 		/* Reply status to PM */
 		m_out.m_type = PM_CORE_REPLY;
 		m_out.PM_PROC = proc_e;
-		m_out.PM_TRACED_PROC = traced_proc_e;
 		m_out.PM_STATUS = r;
 	}
 	break;

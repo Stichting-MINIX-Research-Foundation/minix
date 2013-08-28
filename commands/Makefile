@@ -7,10 +7,10 @@ SUBDIR=	add_route arp ash at backup btrace \
 	chmod chown ci cleantmp cmp co \
 	comm compress cp crc cron crontab cut \
 	dd decomp16 DESCRIBE devmand devsize dhcpd \
-	dhrystone diff diskctl dumpcore \
+	dhrystone diff diskctl \
 	eject env factor fbdctl \
 	find fix fold format fortune fsck.mfs \
-	gcore gcov-pull getty grep hexdump host \
+	gcov-pull getty grep hexdump host \
 	hostaddr id ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread last \
 	less loadkeys loadramdisk logger look lp \
