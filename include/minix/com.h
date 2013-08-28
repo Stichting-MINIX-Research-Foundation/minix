@@ -817,7 +817,6 @@
 
 /* Additional parameters for PM_DUMPCORE */
 #  define PM_TERM_SIG		m7_i2	/* process's termination signal */
-#  define PM_TRACED_PROC	m7_i3	/* required for T_DUMPCORE */
 
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */
