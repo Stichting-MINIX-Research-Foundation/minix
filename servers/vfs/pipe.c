@@ -548,6 +548,15 @@ void unpause(void)
 
   switch (blocked_on) {
 	case FP_BLOCKED_ON_PIPE:/* process trying to read or write a pipe */
+		/* If the operation succeeded partially, return the bytes
+		 * processed so far, and clear the remembered state. Otherwise,
+		 * return EINTR as usual.
+		 */
+		if (fp->fp_cum_io_partial > 0) {
+			status = fp->fp_cum_io_partial;
+
+			fp->fp_cum_io_partial = 0;
+		}
 		break;
 
 	case FP_BLOCKED_ON_LOCK:/* process trying to set a lock with FCNTL */
