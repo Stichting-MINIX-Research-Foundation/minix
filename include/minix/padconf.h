@@ -1,10 +1,18 @@
-#ifndef __PADCONF_H__
-#define __PADCONF_H__
+#ifndef __MINIX_PADCONF_H
+#define __MINIX_PADCONF_H
 
+/* Define the start address of the padconf registers and the size of the block.
+ * The base must be page aligned, so we round down and the kernel adds the
+ * offset. The size must be a multiple of ARM_PAGE_SIZE, so we round up to 4KB.
+ */
 #ifdef AM335X
 #define PADCONF_REGISTERS_BASE 0x44E10000
+#define PADCONF_REGISTERS_OFFSET 0x0000
+#define PADCONF_REGISTERS_SIZE 0x1000 /* OFFSET + highest reg, rounded up */
 #elif DM37XX
-#define PADCONF_REGISTERS_BASE 0x48002030
+#define PADCONF_REGISTERS_BASE 0x48002000
+#define PADCONF_REGISTERS_OFFSET 0x0030
+#define PADCONF_REGISTERS_SIZE 0x1000 /* OFFSET + highest reg, rounded up */
 #endif
 
 #define PADCONF_MUXMODE(X)  (X & 0x7)	/* mode 1 til 7 [2:0] */
@@ -314,8 +322,4 @@
 #define CONTROL_CONF_PUDEN (1<<3)
 #define CONTROL_CONF_MUXMODE(X) (X&0x7)
 
-int padconf_init(void);
-int padconf_set(u32_t padconf, u32_t mask, u32_t value);
-int padconf_release(void);
-
-#endif /* __PADCONF_H__ */
+#endif /* __MINIX_PADCONF_H */

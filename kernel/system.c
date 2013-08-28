@@ -248,6 +248,11 @@ void system_init(void)
   map(SYS_CPROF, do_cprofile);         /* get/reset call profiling data */
   map(SYS_PROFBUF, do_profbuf);        /* announce locations to kernel */
 
+  /* arm-specific. */
+#if defined(__arm__)
+  map(SYS_PADCONF, do_padconf);		/* configure pinmux */
+#endif
+
   /* i386-specific. */
 #if defined(__i386__)
   map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */

@@ -6,8 +6,8 @@ PROG=   i2c
 
 SRCS+=   i2c.c
 
-DPADD+= ${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS} ${CLKCONF} ${PADCONF}
-LDADD+= -lchardriver -lsys -ltimers -lclkconf -lpadconf
+DPADD+= ${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS} ${CLKCONF}
+LDADD+= -lchardriver -lsys -ltimers -lclkconf
 
 MAN=
 

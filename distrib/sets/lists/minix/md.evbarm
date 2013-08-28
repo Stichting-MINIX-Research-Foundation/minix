@@ -103,8 +103,6 @@
 ./usr/lib/libgpio_pic.a			minix-sys
 ./usr/lib/libi2cdriver.a		minix-sys
 ./usr/lib/libi2cdriver_pic.a		minix-sys
-./usr/lib/libpadconf.a			minix-sys
-./usr/lib/libpadconf_pic.a		minix-sys
 ./usr/man/man1/eepromread.1		minix-sys
 ./usr/mdec				minix-sys
 ./usr/sbin/bmp085			minix-sys

@@ -169,18 +169,14 @@ init_hook(void)
 	add_gpio_inode("USR1", 150, GPIO_MODE_OUTPUT);
 	add_gpio_inode("Button", 4, GPIO_MODE_INPUT);
 
-	/* configure the padconf */
-	padconf_init();
-
 	/* configure GPIO_144 to be exported */
-	padconf_set(CONTROL_PADCONF_UART2_CTS, 0xff,
+	sys_padconf(CONTROL_PADCONF_UART2_CTS, 0xff,
 	    PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
 	    PADCONF_INPUT_ENABLE(1));
-	padconf_set(CONTROL_PADCONF_MMC2_DAT6, 0xff00,
+	sys_padconf(CONTROL_PADCONF_MMC2_DAT6, 0xff00,
 	    (PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
 		PADCONF_INPUT_ENABLE(1)) << 16);
 
-	padconf_release();
 	/* Added for demo purposes */
 	add_gpio_inode("BigRedButton", 144, GPIO_MODE_INPUT);
 	add_gpio_inode("BigRedButtonLed", 139, GPIO_MODE_OUTPUT);

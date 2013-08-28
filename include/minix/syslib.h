@@ -215,6 +215,9 @@ int sys_out(int port, u32_t value, int type);
 #define sys_inl(p,v)	sys_in((p), (v), _DIO_LONG)
 int sys_in(int port, u32_t *value, int type);
 
+/* arm pinmux */
+int sys_padconf(u32_t padconf, u32_t mask, u32_t value);
+
 /* pci.c */
 void pci_init(void);
 int pci_first_dev(int *devindp, u16_t *vidp, u16_t *didp);

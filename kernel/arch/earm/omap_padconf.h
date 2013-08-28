@@ -1,11 +1,10 @@
 #ifndef _OMAP_PADCONF_H
 #define _OMAP_PADCONF_H
 
-#include "omap_padconf_registers.h"
-
 #ifndef __ASSEMBLY__
 
-void omap3_padconf_init(void);
+void arch_padconf_init(void);
+int arch_padconf_set(u32_t padconf, u32_t mask, u32_t value);
 
 #endif /* __ASSEMBLY__ */
 

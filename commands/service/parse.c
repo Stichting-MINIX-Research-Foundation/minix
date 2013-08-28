@@ -828,6 +828,7 @@ struct
 	{ "STIME",		SYS_STIME },
 	{ "VMCTL",		SYS_VMCTL },
 	{ "MEMSET",		SYS_MEMSET },
+	{ "PADCONF",		SYS_PADCONF },
 	{ NULL,		0 }
 };
 

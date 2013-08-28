@@ -359,8 +359,10 @@
 
 #  define SYS_SAFEMEMSET (KERNEL_CALL + 56)	/* sys_safememset() */
 
+#  define SYS_PADCONF (KERNEL_CALL + 57)	/* sys_padconf() */
+
 /* Total */
-#define NR_SYS_CALLS	57	/* number of kernel calls */
+#define NR_SYS_CALLS	58	/* number of kernel calls */
 
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
@@ -683,6 +685,11 @@
 #define SCHEDCTL_QUANTUM	m9_l3   /* current scheduling quantum */
 #define SCHEDCTL_PRIORITY	m9_s4   /* current scheduling priority */
 #define SCHEDCTL_CPU		m9_l5   /* where to place this process */
+
+/* Field names for SYS_PADCONF */
+#define PADCONF_PADCONF		m2_i1	/* pad to configure */
+#define PADCONF_MASK		m2_i2	/* mask to apply */
+#define PADCONF_VALUE		m2_i3	/* value to write */
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *

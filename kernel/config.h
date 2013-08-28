@@ -43,6 +43,10 @@
 #define USE_MEMSET  	   1	/* write char to a given memory area */
 #define USE_RUNCTL         1	/* control stop flags of a process */
 
+#if defined(__arm__)
+#define USE_PADCONF        1	/* configure pinmux */
+#endif /* __arm__ */
+
 /* This section contains defines for valuable system resources that are used
  * by device drivers. The number of elements of the vectors is determined by 
  * the maximum needed by any given driver. The number of interrupt hooks may

@@ -217,9 +217,7 @@ static uint16_t omap_i2c_poll(uint16_t mask);
 static int omap_i2c_bus_is_free(void);
 static int omap_i2c_soft_reset(void);
 static void omap_i2c_bus_init(void);
-#if 0
 static void omap_i2c_padconf(int i2c_bus_id);
-#endif /* disable until libpadconf is fixed */
 static void omap_i2c_clkconf(int i2c_bus_id);
 static void omap_i2c_intr_enable(void);
 static uint16_t omap_i2c_read_status(void);
@@ -391,14 +389,11 @@ omap_i2c_clkconf(int i2c_bus_id)
 	clkconf_release();
 }
 
-#if 0
-/* re-enable this code when libpadconf is working */
 static void
 omap_i2c_padconf(int i2c_bus_id)
 {
+	int r;
 	u32_t pinopts;
-
-	padconf_init();
 
 	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
 
@@ -410,28 +405,55 @@ omap_i2c_padconf(int i2c_bus_id)
 		switch (i2c_bus_id) {
 		case 0:
 			pinopts |= CONTROL_CONF_MUXMODE(0);
-			padconf_set(CONTROL_CONF_I2C0_SDA, 0xffffffff,
+
+			r = sys_padconf(CONTROL_CONF_I2C0_SDA, 0xffffffff,
 			    pinopts);
-			padconf_set(CONTROL_CONF_I2C0_SCL, 0xffffffff,
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
+
+			r = sys_padconf(CONTROL_CONF_I2C0_SCL, 0xffffffff,
 			    pinopts);
-			log_info(&log, "pinopts=%x\n", pinopts);
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
+
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
 			break;
 
 		case 1:
 			pinopts |= CONTROL_CONF_MUXMODE(2);
-			padconf_set(CONTROL_CONF_SPI0_CS0, 0xffffffff,
+
+			r = sys_padconf(CONTROL_CONF_SPI0_CS0, 0xffffffff,
 			    pinopts);
-			padconf_set(CONTROL_CONF_SPI0_D1, 0xffffffff, pinopts);
-			log_info(&log, "pinopts=%x\n", pinopts);
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
+
+			r = sys_padconf(CONTROL_CONF_SPI0_D1, 0xffffffff,
+			    pinopts);
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
 			break;
 
 		case 2:
 			pinopts |= CONTROL_CONF_MUXMODE(3);
-			padconf_set(CONTROL_CONF_UART1_CTSN,
+
+			r = sys_padconf(CONTROL_CONF_UART1_CTSN, 0xffffffff,
+			    pinopts);
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
+
+			r = sys_padconf(CONTROL_CONF_UART1_RTSN,
 			    0xffffffff, pinopts);
-			padconf_set(CONTROL_CONF_UART1_RTSN,
-			    0xffffffff, pinopts);
-			log_info(&log, "pinopts=%x\n", pinopts);
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
+
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
 			break;
 
 		default:
@@ -441,10 +463,7 @@ omap_i2c_padconf(int i2c_bus_id)
 	}
 
 	/* nothing to do for the DM37XX */
-
-	padconf_release();
 }
-#endif
 
 static int
 omap_i2c_soft_reset(void)
@@ -787,6 +806,9 @@ omap_interface_setup(int (**process) (minix_i2c_ioctl_exec_t * ioctl_exec),
 	/* select the bus to operate on */
 	omap_i2c_bus = &omap_i2c_buses[i2c_bus_id];
 
+	/* Configure Pins */
+	omap_i2c_padconf(i2c_bus_id);
+
 	/*
 	 * Map I2C Registers
 	 */
@@ -810,12 +832,6 @@ omap_interface_setup(int (**process) (minix_i2c_ioctl_exec_t * ioctl_exec),
 
 	/* Enable Clocks */
 	omap_i2c_clkconf(i2c_bus_id);
-
-#if 0
-/* disable until libpadconf is fixed */
-	/* Configure Pins */
-	omap_i2c_padconf(i2c_bus_id);
-#endif
 
 	/* Perform a soft reset of the I2C module to ensure a fresh start */
 	r = omap_i2c_soft_reset();

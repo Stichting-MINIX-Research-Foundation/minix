@@ -128,8 +128,8 @@ void arch_init(void)
         value = OMAP_PMUSERENR_EN;
         asm volatile ("MCR p15, 0, %0, c9, c14, 0\t\n": : "r" (value));
 
-	/* configure i2c pinmux */
-	omap3_padconf_init();
+	/* map memory for padconf */
+	arch_padconf_init();
 
 	/* map memory for rtc */
 	omap3_rtc_init();

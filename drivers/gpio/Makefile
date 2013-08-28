@@ -3,7 +3,7 @@ PROG=	gpio
 SRCS=	gpio.c
 
 DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}
-LDADD+=	-lvtreefs -lsys -lgpio -lpadconf -lclkconf
+LDADD+=	-lvtreefs -lsys -lgpio -lclkconf
 
 #
 # This is a system driver.
