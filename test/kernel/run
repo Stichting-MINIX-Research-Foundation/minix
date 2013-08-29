@@ -1,5 +1,5 @@
 #!/bin/sh
 
-tests="sys_vumap"
+tests="sys_padconf sys_vumap"
 
 for i in $tests; do (cd $i && ./run); done

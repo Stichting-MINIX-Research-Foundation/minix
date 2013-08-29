@@ -40,11 +40,6 @@ SRCS+= 	\
 	do_schedctl.c \
 	do_statectl.c
 
-.if ${MACHINE_ARCH} == "earm"
-SRCS+=	\
-	do_padconf.c
-.endif
-
 .if ${MACHINE_ARCH} == "i386"
 SRCS+=  \
 	do_devio.c \
