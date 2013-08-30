@@ -117,8 +117,7 @@ int main(void)
 	if (IS_BDEV_RQ(msg.m_type))
 		blockdriver_process(&m_bdtab, &msg, ipc_status);
 	else
-		chardriver_process(&m_cdtab, CHARDRIVER_SYNC, &msg,
-			ipc_status);
+		chardriver_process(&m_cdtab, &msg, ipc_status);
   }
 
   return(OK);

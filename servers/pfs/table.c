@@ -61,10 +61,10 @@ int (*dev_call_vec[])(message *dev_m_in, message *dev_m_out) = {
         uds_close,          /* 7  DEV_CLOSE */
         no_sys,             /* 8   */
         no_sys,             /* 9   */
-        no_sys,             /* 10 TTY_SETPGRP */
-        no_sys,             /* 11 TTY_EXIT */
+        no_sys,             /* 10  */
+        no_sys,             /* 11  */
         uds_select,         /* 12 DEV_SELECT */
-        no_sys,             /* 13 DEV_STATUS */
+        no_sys,             /* 13  */
         uds_open,           /* 14 DEV_REOPEN */
         no_sys,             /* 15  */
 	no_sys,             /* 16  */

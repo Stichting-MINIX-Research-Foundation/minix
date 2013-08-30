@@ -1,7 +1,5 @@
 #include <minix/audio_fw.h>
 
-/* State management variables. */
-EXTERN int is_status_msg_expected;
 /*
  * - From audio_fw.h:
  * EXTERN drv_t drv;
@@ -60,8 +58,7 @@ int sef_cb_lu_prepare(int state)
       break;
 
       case SEF_LU_STATE_PROTOCOL_FREE:
-          is_ready = (!is_read_pending && !is_write_pending
-              && !is_status_msg_expected);
+          is_ready = (!is_read_pending && !is_write_pending);
       break;
 
       /* Custom states. */
@@ -95,8 +92,6 @@ void sef_cb_lu_state_dump(int state)
   load_state_info();
 
   sef_lu_dprint("audio: live update state = %d\n", state);
-  sef_lu_dprint("audio: is_status_msg_expected = %d\n",
-      is_status_msg_expected);
   sef_lu_dprint("audio: is_read_pending = %d\n", is_read_pending);
   sef_lu_dprint("audio: is_write_pending = %d\n", is_write_pending);
 
@@ -105,8 +100,7 @@ void sef_cb_lu_state_dump(int state)
   sef_lu_dprint("audio: SEF_LU_STATE_REQUEST_FREE(%d) reached = %d\n", 
       SEF_LU_STATE_REQUEST_FREE, (!is_read_pending && !is_write_pending));
   sef_lu_dprint("audio: SEF_LU_STATE_PROTOCOL_FREE(%d) reached = %d\n", 
-      SEF_LU_STATE_PROTOCOL_FREE, (!is_read_pending && !is_write_pending
-      && !is_status_msg_expected));
+      SEF_LU_STATE_PROTOCOL_FREE, (!is_read_pending && !is_write_pending));
   sef_lu_dprint("audio: AUDIO_STATE_READ_REQUEST_FREE(%d) reached = %d\n", 
       AUDIO_STATE_READ_REQUEST_FREE, (!is_read_pending));
   sef_lu_dprint("audio: AUDIO_STATE_WRITE_REQUEST_FREE(%d) reached = %d\n", 

@@ -73,9 +73,9 @@ void *data;
 		break;
   }
 
-  m.TTY_LINE = fd;
-  m.TTY_REQUEST = request;
-  m.ADDRESS = (char *) addr;
+  m.VFS_IOCTL_FD = fd;
+  m.VFS_IOCTL_REQ = request;
+  m.VFS_IOCTL_ARG = (char *) addr;
 
   r = _syscall(VFS_PROC_NR, IOCTL, &m);
 

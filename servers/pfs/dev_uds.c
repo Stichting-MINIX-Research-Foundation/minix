@@ -152,7 +152,7 @@ int uds_open(message *dev_m_in, message *dev_m_out)
 	uds_fd_table[minor].suspended = UDS_NOT_SUSPENDED;
 
 	/* and the socket doesn't have an I/O grant initially */
-	uds_fd_table[minor].io_gr = (cp_grant_id_t) 0;
+	uds_fd_table[minor].io_gr = GRANT_INVALID;
 
 	/* since there is no I/O grant it effectively has no size either */
 	uds_fd_table[minor].io_gr_size = 0;
@@ -813,6 +813,13 @@ int uds_ioctl(message *dev_m_in, message *dev_m_out)
 	/* update the owner endpoint - yes it's really stored in POSITION */
 	uds_fd_table[minor].owner = dev_m_in->POSITION;
 
+	/* update the process endpoint, which may well be different */
+	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
+
+	/* save I/O Grant info */
+	uds_fd_table[minor].io_gr = (cp_grant_id_t) dev_m_in->IO_GRANT;
+	uds_fd_table[minor].io_gr_size = 0; /* should not be used here */
+
 	switch (dev_m_in->COUNT) {	/* Handle the ioctl(2) command */
 
 		case NWIOSUDSCONN:
@@ -1074,14 +1081,8 @@ int uds_cancel(message *dev_m_in, message *dev_m_out)
 	minor = uds_minor(dev_m_in);
 
 	if (uds_fd_table[minor].state != UDS_INUSE) {
-
-		/* attempted to close a socket that hasn't been opened --
-		 * something is very wrong :(
-		 */
-		uds_set_reply(dev_m_out, DEV_NO_STATUS, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
-		return EINVAL;
+		/* attempted to cancel an unknown request - this happens */
+		return SUSPEND;
 	}
 
 	/* Update the process endpoint. */
@@ -1184,8 +1185,7 @@ int uds_cancel(message *dev_m_in, message *dev_m_out)
 		uds_fd_table[minor].syscall_done = 1;
 	}
 
-
-	uds_set_reply(dev_m_out, DEV_NO_STATUS, dev_m_in->USER_ENDPT,
+	uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
 			(cp_grant_id_t) dev_m_in->IO_GRANT, EINTR);
 
 	return EINTR;
