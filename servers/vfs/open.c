@@ -18,9 +18,7 @@
 #include <minix/com.h>
 #include <minix/u64.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
-#include "dmap.h"
 #include "lock.h"
 #include "param.h"
 #include <dirent.h>

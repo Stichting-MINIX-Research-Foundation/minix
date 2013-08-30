@@ -19,8 +19,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include "fproc.h"
-#include "param.h"
 #include "path.h"
 #include "vmnt.h"
 #include "vnode.h"

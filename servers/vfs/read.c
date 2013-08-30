@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"
-#include "fproc.h"
 #include "param.h"
 #include "scratchpad.h"
 #include "vnode.h"
@@ -42,20 +41,17 @@ int do_read(message *UNUSED(m_out))
  *===========================================================================*/
 void lock_bsf(void)
 {
-  struct fproc *org_fp;
   struct worker_thread *org_self;
 
   if (mutex_trylock(&bsf_lock) == 0)
 	return;
 
-  org_fp = fp;
-  org_self = self;
+  org_self = worker_suspend();
 
   if (mutex_lock(&bsf_lock) != 0)
 	panic("unable to lock block special file lock");
 
-  fp = org_fp;
-  self = org_self;
+  worker_resume(org_self);
 }
 
 /*===========================================================================*

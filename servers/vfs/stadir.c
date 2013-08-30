@@ -18,7 +18,6 @@
 #include <minix/u64.h>
 #include <string.h>
 #include "file.h"
-#include "fproc.h"
 #include "path.h"
 #include "param.h"
 #include <minix/vfsif.h>

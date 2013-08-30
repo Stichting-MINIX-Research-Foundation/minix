@@ -25,8 +25,6 @@
 #include <assert.h>
 
 #include "file.h"
-#include "fproc.h"
-#include "dmap.h"
 #include "vnode.h"
 
 /* max. number of simultaneously pending select() calls */
@@ -734,7 +732,6 @@ void select_timeout_check(timer_t *timer)
 
   se = &selecttab[s];
   if (se->requestor == NULL) return;
-  fp = se->requestor;
   if (se->expiry <= 0) return;	/* Strange, did we even ask for a timeout? */
   se->expiry = 0;
   if (is_deferred(se)) return;	/* Wait for initial replies to DEV_SELECT */

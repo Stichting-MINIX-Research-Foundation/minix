@@ -24,8 +24,6 @@
 #include <dirent.h>
 #include <assert.h>
 #include "file.h"
-#include "fproc.h"
-#include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"

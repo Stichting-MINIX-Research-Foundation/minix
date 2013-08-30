@@ -27,12 +27,9 @@
 #include <minix/debug.h>
 #include <minix/vfsif.h>
 #include "file.h"
-#include "dmap.h"
-#include "fproc.h"
 #include "scratchpad.h"
 #include "vmnt.h"
 #include "vnode.h"
-#include "job.h"
 #include "param.h"
 
 #if ENABLE_SYSCALL_STATS
@@ -40,23 +37,18 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 /* Thread related prototypes */
-static void *do_fs_reply(struct job *job);
-static void *do_work(void *arg);
-static void *do_pm(void *arg);
-static void *do_init_root(void *arg);
-static void handle_work(void *(*func)(void *arg));
+static void do_fs_reply(struct worker_thread *wp);
+static void do_work(void);
+static void do_init_root(void);
+static void handle_work(void (*func)(void));
 
 static void get_work(void);
-static void lock_pm(void);
-static void unlock_pm(void);
 static void service_pm(void);
-static void service_pm_postponed(void);
 static int unblock(struct fproc *rfp);
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static mutex_t pm_lock;
 static endpoint_t receive_from;
 
 /*===========================================================================*
@@ -69,7 +61,7 @@ int main(void)
  * the reply.  This loop never terminates as long as the file system runs.
  */
   int transid;
-  struct job *job;
+  struct worker_thread *wp;
 
   /* SEF local startup. */
   sef_local_startup();
@@ -83,33 +75,35 @@ int main(void)
   while (TRUE) {
 	yield_all();	/* let other threads run */
 	self = NULL;
-	job = NULL;
 	send_work();
 	get_work();
 
 	transid = TRNS_GET_ID(m_in.m_type);
 	if (IS_VFS_FS_TRANSID(transid)) {
-		job = worker_getjob( (thread_t) transid - VFS_TRANSID);
-		if (job == NULL) {
+		wp = worker_get((thread_t) transid - VFS_TRANSID);
+		if (wp == NULL || wp->w_fp == NULL) {
 			printf("VFS: spurious message %d from endpoint %d\n",
 				m_in.m_type, m_in.m_source);
 			continue;
 		}
 		m_in.m_type = TRNS_DEL_ID(m_in.m_type);
-	}
-
-	if (job != NULL) {
-		do_fs_reply(job);
+		do_fs_reply(wp);
 		continue;
 	} else if (who_e == PM_PROC_NR) { /* Calls from PM */
 		/* Special control messages from PM */
-		sys_worker_start(do_pm);
+		service_pm();
 		continue;
 	} else if (is_notify(call_nr)) {
 		/* A task notify()ed us */
 		switch (who_e) {
 		case DS_PROC_NR:
-			handle_work(ds_event);
+			/* Start a thread to handle DS events, if no thread
+			 * is pending or active for it already. DS is not
+			 * supposed to issue calls to VFS or be the subject of
+			 * postponed PM requests, so this should be no problem.
+			 */
+			if (worker_can_start(fp))
+				handle_work(ds_event);
 			break;
 		case KERNEL:
 			mthread_stacktraces();
@@ -169,140 +163,72 @@ int main(void)
 /*===========================================================================*
  *			       handle_work				     *
  *===========================================================================*/
-static void handle_work(void *(*func)(void *arg))
+static void handle_work(void (*func)(void))
 {
 /* Handle asynchronous device replies and new system calls. If the originating
  * endpoint is an FS endpoint, take extra care not to get in deadlock. */
   struct vmnt *vmp = NULL;
   endpoint_t proc_e;
+  int use_spare = FALSE;
 
   proc_e = m_in.m_source;
 
   if (fp->fp_flags & FP_SRV_PROC) {
 	vmp = find_vmnt(proc_e);
 	if (vmp != NULL) {
-		/* A call back or dev result from an FS
-		 * endpoint. Set call back flag. Can do only
-		 * one call back at a time.
-		 */
+		/* A callback from an FS endpoint. Can do only one at once. */
 		if (vmp->m_flags & VMNT_CALLBACK) {
 			replycode(proc_e, EAGAIN);
 			return;
 		}
+		/* Already trying to resolve a deadlock? Can't handle more. */
+		if (worker_available() == 0) {
+			replycode(proc_e, EAGAIN);
+			return;
+		}
+		/* A thread is available. Set callback flag. */
 		vmp->m_flags |= VMNT_CALLBACK;
 		if (vmp->m_flags & VMNT_MOUNTING) {
 			vmp->m_flags |= VMNT_FORCEROOTBSF;
 		}
 	}
 
-	if (worker_available() == 0) {
-		if (!deadlock_resolving) {
-			deadlock_resolving = 1;
-			dl_worker_start(func);
-			return;
-		}
-
-		if (vmp != NULL) {
-			/* Already trying to resolve a deadlock, can't
-			 * handle more, sorry */
-
-			replycode(proc_e, EAGAIN);
-			return;
-		}
-	}
+	/* Use the spare thread to handle this request if needed. */
+	use_spare = TRUE;
   }
 
-  worker_start(func);
+  worker_start(fp, func, &m_in, use_spare);
 }
 
 
 /*===========================================================================*
  *			       do_fs_reply				     *
  *===========================================================================*/
-static void *do_fs_reply(struct job *job)
+static void do_fs_reply(struct worker_thread *wp)
 {
   struct vmnt *vmp;
-  struct worker_thread *wp;
 
   if ((vmp = find_vmnt(who_e)) == NULL)
 	panic("Couldn't find vmnt for endpoint %d", who_e);
 
-  wp = worker_get(job->j_fp->fp_wtid);
-
-  if (wp == NULL) {
-	printf("VFS: spurious reply from %d\n", who_e);
-	return(NULL);
-  }
-
   if (wp->w_task != who_e) {
 	printf("VFS: expected %d to reply, not %d\n", wp->w_task, who_e);
-	return(NULL);
+	return;
   }
   *wp->w_fs_sendrec = m_in;
   wp->w_task = NONE;
   vmp->m_comm.c_cur_reqs--; /* We've got our reply, make room for others */
   worker_signal(wp); /* Continue this thread */
-  return(NULL);
-}
-
-/*===========================================================================*
- *				lock_pm					     *
- *===========================================================================*/
-static void lock_pm(void)
-{
-  struct fproc *org_fp;
-  struct worker_thread *org_self;
-
-  /* First try to get it right off the bat */
-  if (mutex_trylock(&pm_lock) == 0)
-	return;
-
-  org_fp = fp;
-  org_self = self;
-
-  if (mutex_lock(&pm_lock) != 0)
-	panic("Could not obtain lock on pm\n");
-
-  fp = org_fp;
-  self = org_self;
-}
-
-/*===========================================================================*
- *				unlock_pm				     *
- *===========================================================================*/
-static void unlock_pm(void)
-{
-  if (mutex_unlock(&pm_lock) != 0)
-	panic("Could not release lock on pm");
-}
-
-/*===========================================================================*
- *			       do_pm					     *
- *===========================================================================*/
-static void *do_pm(void *arg __unused)
-{
-  lock_pm();
-  service_pm();
-  unlock_pm();
-
-  thread_cleanup(NULL);
-  return(NULL);
 }
 
 /*===========================================================================*
  *			       do_pending_pipe				     *
  *===========================================================================*/
-static void *do_pending_pipe(void *arg)
+static void do_pending_pipe(void)
 {
   int r, op;
-  struct job my_job;
   struct filp *f;
   tll_access_t locktype;
-
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
-
-  lock_proc(fp, 1 /* force lock */);
 
   f = scratch(fp).file.filp;
   assert(f != NULL);
@@ -318,47 +244,17 @@ static void *do_pending_pipe(void *arg)
 	replycode(fp->fp_endpoint, r);
 
   unlock_filp(f);
-  thread_cleanup(fp);
-  unlock_proc(fp);
-  return(NULL);
-}
-
-/*===========================================================================*
- *			       do_dummy					     *
- *===========================================================================*/
-void *do_dummy(void *arg)
-{
-  struct job my_job;
-  int r;
-
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
-
-  if ((r = mutex_trylock(&fp->fp_lock)) == 0) {
-	thread_cleanup(fp);
-	unlock_proc(fp);
-  } else {
-	/* Proc is busy, let that worker thread carry out the work */
-	thread_cleanup(NULL);
-  }
-  return(NULL);
 }
 
 /*===========================================================================*
  *			       do_work					     *
  *===========================================================================*/
-static void *do_work(void *arg)
+static void do_work(void)
 {
   int error;
-  struct job my_job;
   message m_out;
 
   memset(&m_out, 0, sizeof(m_out));
-
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
-
-  lock_proc(fp, 0); /* This proc is busy */
 
   if (job_call_nr == MAPDRIVER) {
 	error = do_mapdriver();
@@ -395,10 +291,6 @@ static void *do_work(void *arg)
 
   /* Copy the results back to the user and send reply. */
   if (error != SUSPEND) reply(&m_out, fp->fp_endpoint, error);
-
-  thread_cleanup(fp);
-  unlock_proc(fp);
-  return(NULL);
 }
 
 /*===========================================================================*
@@ -427,7 +319,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   message mess;
   struct rprocpub rprocpub[NR_BOOT_PROCS];
 
-  force_sync = 0;
   receive_from = ANY;
   self = NULL;
   verbose = 0;
@@ -468,8 +359,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   s = send(PM_PROC_NR, &mess);		/* send synchronization message */
 
   /* All process table entries have been set. Continue with initialization. */
-  fp = &fproc[_ENDPOINT_P(VFS_PROC_NR)];/* During init all communication with
-					 * FSes is on behalf of myself */
   init_dmap();			/* Initialize device table. */
   system_hz = sys_hz();
 
@@ -491,28 +380,28 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   if (s != OK) panic("VFS: can't subscribe to driver events (%d)", s);
 
   /* Initialize worker threads */
-  for (i = 0; i < NR_WTHREADS; i++)  {
-	worker_init(&workers[i]);
-  }
-  worker_init(&sys_worker); /* exclusive system worker thread */
-  worker_init(&dl_worker); /* exclusive worker thread to resolve deadlocks */
+  worker_init();
 
   /* Initialize global locks */
-  if (mthread_mutex_init(&pm_lock, NULL) != 0)
-	panic("VFS: couldn't initialize pm lock mutex");
-  if (mthread_mutex_init(&exec_lock, NULL) != 0)
-	panic("VFS: couldn't initialize exec lock");
   if (mthread_mutex_init(&bsf_lock, NULL) != 0)
 	panic("VFS: couldn't initialize block special file lock");
 
-  /* Initialize event resources for boot procs and locks for all procs */
+  /* Initialize locks and initial values for all processes. */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	if (mutex_init(&rfp->fp_lock, NULL) != 0)
 		panic("unable to initialize fproc lock");
+	rfp->fp_worker = NULL;
 #if LOCK_DEBUG
 	rfp->fp_vp_rdlocks = 0;
 	rfp->fp_vmnt_rdlocks = 0;
 #endif
+
+	/* Initialize process directories. mount_fs will set them to the
+	 * correct values.
+	 */
+	FD_ZERO(&(rfp->fp_filp_inuse));
+	rfp->fp_rd = NULL;
+	rfp->fp_wd = NULL;
   }
 
   init_dmap_locks();		/* init dmap locks */
@@ -521,9 +410,11 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   init_select();		/* init select() structures */
   init_filps();			/* Init filp structures */
   mount_pfs();			/* mount Pipe File Server */
-  worker_start(do_init_root);	/* mount initial ramdisk as file system root */
-  yield();			/* force do_init_root to start */
-  self = NULL;
+
+  /* Mount initial ramdisk as file system root. */
+  receive_from = MFS_PROC_NR;
+  worker_start(fproc_addr(VFS_PROC_NR), do_init_root, &mess /*unused*/,
+	FALSE /*use_spare*/);
 
   return(OK);
 }
@@ -531,68 +422,36 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 /*===========================================================================*
  *			       do_init_root				     *
  *===========================================================================*/
-static void *do_init_root(void *arg)
+static void do_init_root(void)
 {
-  struct fproc *rfp;
-  struct job my_job;
   int r;
   char *mount_type = "mfs"; /* FIXME: use boot image process name instead */
   char *mount_label = "fs_imgrd"; /* FIXME: obtain this from RS */
 
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
-
-  lock_proc(fp, 1 /* force lock */); /* This proc is busy */
-  lock_pm();
-
-  /* Initialize process directories. mount_fs will set them to the correct
-   * values */
-  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	FD_ZERO(&(rfp->fp_filp_inuse));
-	rfp->fp_rd = NULL;
-	rfp->fp_wd = NULL;
-  }
-
-  receive_from = MFS_PROC_NR;
   r = mount_fs(DEV_IMGRD, "bootramdisk", "/", MFS_PROC_NR, 0, mount_type,
 	mount_label);
   if (r != OK)
 	panic("Failed to initialize root");
   receive_from = ANY;
-
-  unlock_pm();
-  thread_cleanup(fp);
-  unlock_proc(fp);
-  return(NULL);
 }
 
 /*===========================================================================*
  *				lock_proc				     *
  *===========================================================================*/
-void lock_proc(struct fproc *rfp, int force_lock)
+void lock_proc(struct fproc *rfp)
 {
   int r;
-  struct fproc *org_fp;
   struct worker_thread *org_self;
 
   r = mutex_trylock(&rfp->fp_lock);
-
-  /* Were we supposed to obtain this lock immediately? */
-  if (force_lock) {
-	assert(r == 0);
-	return;
-  }
-
   if (r == 0) return;
 
-  org_fp = fp;
-  org_self = self;
+  org_self = worker_suspend();
 
   if ((r = mutex_lock(&rfp->fp_lock)) != 0)
 	panic("unable to lock fproc lock: %d", r);
 
-  fp = org_fp;
-  self = org_self;
+  worker_resume(org_self);
 }
 
 /*===========================================================================*
@@ -609,47 +468,22 @@ void unlock_proc(struct fproc *rfp)
 /*===========================================================================*
  *				thread_cleanup				     *
  *===========================================================================*/
-void thread_cleanup(struct fproc *rfp)
+void thread_cleanup(void)
 {
-/* Clean up worker thread. Skip parts if this thread is not associated
- * with a particular process (i.e., rfp is NULL) */
+/* Perform cleanup actions for a worker thread. */
 
 #if LOCK_DEBUG
-  if (rfp != NULL) {
-	check_filp_locks_by_me();
-	check_vnode_locks_by_me(rfp);
-	check_vmnt_locks_by_me(rfp);
-  }
+  check_filp_locks_by_me();
+  check_vnode_locks_by_me(fp);
+  check_vmnt_locks_by_me(fp);
 #endif
 
-  if (rfp != NULL && rfp->fp_flags & FP_PM_PENDING) {	/* Postponed PM call */
-	job_m_in = rfp->fp_job.j_m_in;
-	rfp->fp_flags &= ~FP_PM_PENDING;
-	service_pm_postponed();
-  }
+  if (fp->fp_flags & FP_SRV_PROC) {
+	struct vmnt *vmp;
 
-#if LOCK_DEBUG
-  if (rfp != NULL) {
-	check_filp_locks_by_me();
-	check_vnode_locks_by_me(rfp);
-	check_vmnt_locks_by_me(rfp);
-  }
-#endif
-
-  if (rfp != NULL) {
-	rfp->fp_flags &= ~FP_DROP_WORK;
-	if (rfp->fp_flags & FP_SRV_PROC) {
-		struct vmnt *vmp;
-
-		if ((vmp = find_vmnt(rfp->fp_endpoint)) != NULL) {
-			vmp->m_flags &= ~VMNT_CALLBACK;
-		}
+	if ((vmp = find_vmnt(fp->fp_endpoint)) != NULL) {
+		vmp->m_flags &= ~VMNT_CALLBACK;
 	}
-  }
-
-  if (deadlock_resolving) {
-	if (self->w_tid == dl_worker.w_tid)
-		deadlock_resolving = 0;
   }
 }
 
@@ -760,75 +594,83 @@ void replycode(endpoint_t whom, int result)
 /*===========================================================================*
  *				service_pm_postponed			     *
  *===========================================================================*/
-static void service_pm_postponed(void)
+void service_pm_postponed(void)
 {
-  int r;
-  vir_bytes pc, newsp;
+  int r, term_signal;
+  vir_bytes core_path;
+  vir_bytes exec_path, stack_frame, pc, newsp, ps_str;
+  size_t exec_path_len, stack_frame_len;
+  endpoint_t proc_e;
   message m_out;
 
   memset(&m_out, 0, sizeof(m_out));
 
   switch(job_call_nr) {
-    case PM_EXEC:
-	{
-		endpoint_t proc_e;
-		vir_bytes exec_path, stack_frame, ps_str;
-		size_t exec_path_len, stack_frame_len;
+  case PM_EXEC:
+	proc_e = job_m_in.PM_PROC;
+	exec_path = (vir_bytes)job_m_in.PM_PATH;
+	exec_path_len = (size_t)job_m_in.PM_PATH_LEN;
+	stack_frame = (vir_bytes)job_m_in.PM_FRAME;
+	stack_frame_len = (size_t)job_m_in.PM_FRAME_LEN;
+	ps_str = (vir_bytes)job_m_in.PM_PS_STR;
 
-		proc_e = job_m_in.PM_PROC;
-		exec_path = (vir_bytes)job_m_in.PM_PATH;
-		exec_path_len = (size_t)job_m_in.PM_PATH_LEN;
-		stack_frame = (vir_bytes)job_m_in.PM_FRAME;
-		stack_frame_len = (size_t)job_m_in.PM_FRAME_LEN;
-		ps_str = (vir_bytes)job_m_in.PM_PS_STR;
+	assert(proc_e == fp->fp_endpoint);
 
-		r = pm_exec(proc_e, exec_path, exec_path_len, stack_frame,
-			    stack_frame_len, &pc, &newsp, &ps_str,
-			    job_m_in.PM_EXECFLAGS);
+	r = pm_exec(exec_path, exec_path_len, stack_frame, stack_frame_len,
+		&pc, &newsp, &ps_str, job_m_in.PM_EXECFLAGS);
 
-		/* Reply status to PM */
-		m_out.m_type = PM_EXEC_REPLY;
-		m_out.PM_PROC = proc_e;
-		m_out.PM_PC = (void *)pc;
-		m_out.PM_STATUS = r;
-		m_out.PM_NEWSP = (void *)newsp;
-		m_out.PM_NEWPS_STR = ps_str;
-	}
+	/* Reply status to PM */
+	m_out.m_type = PM_EXEC_REPLY;
+	m_out.PM_PROC = proc_e;
+	m_out.PM_PC = (void *)pc;
+	m_out.PM_STATUS = r;
+	m_out.PM_NEWSP = (void *)newsp;
+	m_out.PM_NEWPS_STR = ps_str;
+
 	break;
 
-    case PM_EXIT:
-	{
-		endpoint_t proc_e;
-		proc_e = job_m_in.PM_PROC;
+  case PM_EXIT:
+	proc_e = job_m_in.PM_PROC;
 
-		pm_exit(proc_e);
+	assert(proc_e == fp->fp_endpoint);
 
-		/* Reply dummy status to PM for synchronization */
-		m_out.m_type = PM_EXIT_REPLY;
-		m_out.PM_PROC = proc_e;
-	}
+	pm_exit();
+
+	/* Reply dummy status to PM for synchronization */
+	m_out.m_type = PM_EXIT_REPLY;
+	m_out.PM_PROC = proc_e;
+
 	break;
 
-    case PM_DUMPCORE:
-	{
-		endpoint_t proc_e;
-		int term_signal;
-		vir_bytes core_path;
+  case PM_DUMPCORE:
+	proc_e = job_m_in.PM_PROC;
+	term_signal = job_m_in.PM_TERM_SIG;
+	core_path = (vir_bytes) job_m_in.PM_PATH;
 
-		proc_e = job_m_in.PM_PROC;
-		term_signal = job_m_in.PM_TERM_SIG;
-		core_path = (vir_bytes) job_m_in.PM_PATH;
+	assert(proc_e == fp->fp_endpoint);
 
-		r = pm_dumpcore(proc_e, term_signal, core_path);
+	r = pm_dumpcore(term_signal, core_path);
 
-		/* Reply status to PM */
-		m_out.m_type = PM_CORE_REPLY;
-		m_out.PM_PROC = proc_e;
-		m_out.PM_STATUS = r;
-	}
+	/* Reply status to PM */
+	m_out.m_type = PM_CORE_REPLY;
+	m_out.PM_PROC = proc_e;
+	m_out.PM_STATUS = r;
+
 	break;
 
-    default:
+  case PM_UNPAUSE:
+	proc_e = job_m_in.PM_PROC;
+
+	assert(proc_e == fp->fp_endpoint);
+
+	unpause();
+
+	m_out.m_type = PM_UNPAUSE_REPLY;
+	m_out.PM_PROC = proc_e;
+
+	break;
+
+  default:
 	panic("Unhandled postponed PM call %d", job_m_in.m_type);
   }
 
@@ -840,22 +682,34 @@ static void service_pm_postponed(void)
 /*===========================================================================*
  *				service_pm				     *
  *===========================================================================*/
-static void service_pm()
+static void service_pm(void)
 {
+/* Process a request from PM. This function is called from the main thread, and
+ * may therefore not block. Any requests that may require blocking the calling
+ * thread must be executed in a separate thread. Aside from PM_REBOOT, all
+ * requests from PM involve another, target process: for example, PM tells VFS
+ * that a process is performing a setuid() call. For some requests however,
+ * that other process may not be idle, and in that case VFS must serialize the
+ * PM request handling with any operation is it handling for that target
+ * process. As it happens, the requests that may require blocking are also the
+ * ones where the target process may not be idle. For both these reasons, such
+ * requests are run in worker threads associated to the target process.
+ */
+  struct fproc *rfp;
   int r, slot;
   message m_out;
 
   memset(&m_out, 0, sizeof(m_out));
 
-  switch (job_call_nr) {
+  switch (call_nr) {
     case PM_SETUID:
 	{
 		endpoint_t proc_e;
 		uid_t euid, ruid;
 
-		proc_e = job_m_in.PM_PROC;
-		euid = job_m_in.PM_EID;
-		ruid = job_m_in.PM_RID;
+		proc_e = m_in.PM_PROC;
+		euid = m_in.PM_EID;
+		ruid = m_in.PM_RID;
 
 		pm_setuid(proc_e, euid, ruid);
 
@@ -869,9 +723,9 @@ static void service_pm()
 		endpoint_t proc_e;
 		gid_t egid, rgid;
 
-		proc_e = job_m_in.PM_PROC;
-		egid = job_m_in.PM_EID;
-		rgid = job_m_in.PM_RID;
+		proc_e = m_in.PM_PROC;
+		egid = m_in.PM_EID;
+		rgid = m_in.PM_RID;
 
 		pm_setgid(proc_e, egid, rgid);
 
@@ -884,7 +738,7 @@ static void service_pm()
 	{
 		endpoint_t proc_e;
 
-		proc_e = job_m_in.PM_PROC;
+		proc_e = m_in.PM_PROC;
 		pm_setsid(proc_e);
 
 		m_out.m_type = PM_SETSID_REPLY;
@@ -895,39 +749,22 @@ static void service_pm()
     case PM_EXEC:
     case PM_EXIT:
     case PM_DUMPCORE:
+    case PM_UNPAUSE:
 	{
-		endpoint_t proc_e = job_m_in.PM_PROC;
+		endpoint_t proc_e = m_in.PM_PROC;
 
 		if(isokendpt(proc_e, &slot) != OK) {
 			printf("VFS: proc ep %d not ok\n", proc_e);
 			return;
 		}
 
-		fp = &fproc[slot];
-
-		if (fp->fp_flags & FP_PENDING) {
-			/* This process has a request pending, but PM wants it
-			 * gone. Forget about the pending request and satisfy
-			 * PM's request instead. Note that a pending request
-			 * AND an EXEC request are mutually exclusive. Also, PM
-			 * should send only one request/process at a time.
-			 */
-			 assert(fp->fp_job.j_m_in.m_source != PM_PROC_NR);
-		}
+		rfp = &fproc[slot];
 
 		/* PM requests on behalf of a proc are handled after the
 		 * system call that might be in progress for that proc has
-		 * finished. If the proc is not busy, we start a dummy call.
+		 * finished. If the proc is not busy, we start a new thread.
 		 */
-		if (!(fp->fp_flags & FP_PENDING) &&
-					mutex_trylock(&fp->fp_lock) == 0) {
-			mutex_unlock(&fp->fp_lock);
-			worker_start(do_dummy);
-			fp->fp_flags |= FP_DROP_WORK;
-		}
-
-		fp->fp_job.j_m_in = job_m_in;
-		fp->fp_flags |= FP_PM_PENDING;
+		worker_start(rfp, NULL, &m_in, FALSE /*use_spare*/);
 
 		return;
 	}
@@ -939,16 +776,16 @@ static void service_pm()
 		uid_t reuid;
 		gid_t regid;
 
-		pproc_e = job_m_in.PM_PPROC;
-		proc_e = job_m_in.PM_PROC;
-		child_pid = job_m_in.PM_CPID;
-		reuid = job_m_in.PM_REUID;
-		regid = job_m_in.PM_REGID;
+		pproc_e = m_in.PM_PPROC;
+		proc_e = m_in.PM_PROC;
+		child_pid = m_in.PM_CPID;
+		reuid = m_in.PM_REUID;
+		regid = m_in.PM_REGID;
 
 		pm_fork(pproc_e, proc_e, child_pid);
 		m_out.m_type = PM_FORK_REPLY;
 
-		if (job_call_nr == PM_SRV_FORK) {
+		if (call_nr == PM_SRV_FORK) {
 			m_out.m_type = PM_SRV_FORK_REPLY;
 			pm_setuid(proc_e, reuid, reuid);
 			pm_setgid(proc_e, regid, regid);
@@ -963,9 +800,9 @@ static void service_pm()
 		int group_no;
 		gid_t *group_addr;
 
-		proc_e = job_m_in.PM_PROC;
-		group_no = job_m_in.PM_GROUP_NO;
-		group_addr = (gid_t *) job_m_in.PM_GROUP_ADDR;
+		proc_e = m_in.PM_PROC;
+		group_no = m_in.PM_GROUP_NO;
+		group_addr = (gid_t *) m_in.PM_GROUP_ADDR;
 
 		pm_setgroups(proc_e, group_no, group_addr);
 
@@ -974,29 +811,21 @@ static void service_pm()
 	}
 	break;
 
-    case PM_UNPAUSE:
-	{
-		endpoint_t proc_e;
-
-		proc_e = job_m_in.PM_PROC;
-
-		unpause(proc_e);
-
-		m_out.m_type = PM_UNPAUSE_REPLY;
-		m_out.PM_PROC = proc_e;
-	}
-	break;
-
     case PM_REBOOT:
-	pm_reboot();
+	/* Reboot requests are not considered postponed PM work and are instead
+	 * handled from a separate worker thread that is associated with PM's
+	 * process. PM makes no regular VFS calls, and thus, from VFS's
+	 * perspective, PM is always idle. Therefore, we can safely do this.
+	 * We do assume that PM sends us only one PM_REBOOT message at once,
+	 * or ever for that matter. :)
+	 */
+	worker_start(fproc_addr(PM_PROC_NR), pm_reboot, &m_in,
+		FALSE /*use_spare*/);
 
-	/* Reply dummy status to PM for synchronization */
-	m_out.m_type = PM_REBOOT_REPLY;
-
-	break;
+	return;
 
     default:
-	printf("VFS: don't know how to handle PM request %d\n", job_call_nr);
+	printf("VFS: don't know how to handle PM request %d\n", call_nr);
 
 	return;
   }
@@ -1004,7 +833,6 @@ static void service_pm()
   r = send(PM_PROC_NR, &m_out);
   if (r != OK)
 	panic("service_pm: send failed: %d", r);
-
 }
 
 
@@ -1014,33 +842,41 @@ static void service_pm()
 static int unblock(rfp)
 struct fproc *rfp;
 {
+/* Unblock a process that was previously blocked on a pipe or a lock.  This is
+ * done by reconstructing the original request and continuing/repeating it.
+ * This function returns TRUE when it has restored a request for execution, and
+ * FALSE if the caller should continue looking for work to do.
+ */
   int blocked_on;
 
-  fp = rfp;
   blocked_on = rfp->fp_blocked_on;
+
+  assert(blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_LOCK);
+
+  /* READ, WRITE, FCNTL requests all use the same message layout. */
   m_in.m_source = rfp->fp_endpoint;
   m_in.m_type = rfp->fp_block_callnr;
-  m_in.fd = scratch(fp).file.fd_nr;
-  m_in.buffer = scratch(fp).io.io_buffer;
-  m_in.nbytes = scratch(fp).io.io_nbytes;
+  m_in.fd = scratch(rfp).file.fd_nr;
+  m_in.buffer = scratch(rfp).io.io_buffer;
+  m_in.nbytes = scratch(rfp).io.io_nbytes;
 
   rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;	/* no longer blocked */
   rfp->fp_flags &= ~FP_REVIVED;
   reviving--;
   assert(reviving >= 0);
 
-  /* This should be a pipe I/O, not a device I/O. If it is, it'll 'leak'
-   * grants.
-   */
+  /* This should not be device I/O. If it is, it'll 'leak' grants. */
   assert(!GRANT_VALID(rfp->fp_grant));
 
-  /* Pending pipe reads/writes can be handled directly */
+  /* Pending pipe reads/writes cannot be repeated as is, and thus require a
+   * special resumption procedure.
+   */
   if (blocked_on == FP_BLOCKED_ON_PIPE) {
-	worker_start(do_pending_pipe);
-	yield();	/* Give thread a chance to run */
-	self = NULL;
-	return(0);	/* Retrieve more work */
+	worker_start(rfp, do_pending_pipe, &m_in, FALSE /*use_spare*/);
+	return(FALSE);	/* Retrieve more work */
   }
 
-  return(1);	/* We've unblocked a process */
+  /* A lock request. Repeat the original request as though it just came in. */
+  fp = rfp;
+  return(TRUE);	/* We've unblocked a process */
 }
