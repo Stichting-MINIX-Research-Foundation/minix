@@ -152,7 +152,7 @@ int uds_open(message *dev_m_in, message *dev_m_out)
 	uds_fd_table[minor].suspended = UDS_NOT_SUSPENDED;
 
 	/* and the socket doesn't have an I/O grant initially */
-	uds_fd_table[minor].io_gr = (cp_grant_id_t) 0;
+	uds_fd_table[minor].io_gr = GRANT_INVALID;
 
 	/* since there is no I/O grant it effectively has no size either */
 	uds_fd_table[minor].io_gr_size = 0;
@@ -812,6 +812,13 @@ int uds_ioctl(message *dev_m_in, message *dev_m_out)
 
 	/* update the owner endpoint - yes it's really stored in POSITION */
 	uds_fd_table[minor].owner = dev_m_in->POSITION;
+
+	/* update the process endpoint, which may well be different */
+	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
+
+	/* save I/O Grant info */
+	uds_fd_table[minor].io_gr = (cp_grant_id_t) dev_m_in->IO_GRANT;
+	uds_fd_table[minor].io_gr_size = 0; /* should not be used here */
 
 	switch (dev_m_in->COUNT) {	/* Handle the ioctl(2) command */
 
