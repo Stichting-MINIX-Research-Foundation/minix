@@ -122,10 +122,14 @@ void mthread_stacktrace(mthread_thread_t t)
   mcontext_t *mtx;
   struct stackframe_s *frame;
 
-  printf("thread %d: ", t);
-
   tcb = mthread_find_tcb(t);
   ctx = &tcb->m_context;
+
+  if (t != MAIN_THREAD && ctx->uc_stack.ss_size == 0)
+	return; /* no stack, no stacktrace */
+
+  printf("thread %d: ", t);
+
   mtx = &ctx->uc_mcontext;
   frame = &mtx->mc_p_reg;
   bp = frame->fp;

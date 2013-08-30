@@ -19,17 +19,12 @@ struct chardriver {
   int(*cdr_other) (message *m_ptr);
 };
 
-#define CHARDRIVER_SYNC		0	/* use the synchronous protocol */
-#define CHARDRIVER_ASYNC	1	/* use the asynchronous protocol */
-
-#define IS_CDEV_MINOR_RQ(type) (IS_DEV_RQ(type) && (type) != DEV_STATUS)
-
 /* Functions defined by libchardriver. */
 void chardriver_announce(void);
-void chardriver_process(struct chardriver *cdp, int driver_type, message
-	*m_ptr, int ipc_status);
+void chardriver_process(struct chardriver *cdp, message *m_ptr,
+	int ipc_status);
 void chardriver_terminate(void);
-void chardriver_task(struct chardriver *cdp, int driver_type);
+void chardriver_task(struct chardriver *cdp);
 
 int do_nop(message *m_ptr);
 void nop_cleanup(void);

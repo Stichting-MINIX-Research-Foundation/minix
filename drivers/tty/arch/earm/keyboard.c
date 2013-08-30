@@ -34,12 +34,6 @@ kb_init_once(void)
 }
 
 int
-kbd_status(message *m)
-{
-	return 0;
-}
-
-int
 kbd_loadmap(message *m)
 {
 	return 0;

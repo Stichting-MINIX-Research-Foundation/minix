@@ -1,7 +1,6 @@
 
 #include "fs.h"
 #include "file.h"
-#include "fproc.h"
 
 int gcov_flush(cp_grant_id_t grantid, size_t size );
 
