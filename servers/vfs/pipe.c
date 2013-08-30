@@ -436,7 +436,6 @@ int count;			/* max number of processes to release */
 		 */
 
 		if (rp->fp_blocked_on == FP_BLOCKED_ON_POPEN ||
-		    rp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_LOCK ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_OTHER) {
 			if (!FD_ISSET(scratch(rp).file.fd_nr,
@@ -474,7 +473,6 @@ void revive(endpoint_t proc_e, int returned)
   struct fproc *rfp;
   int blocked_on;
   int fd_nr, slot;
-  struct filp *fil_ptr;
 
   if (proc_e == NONE || isokendpt(proc_e, &slot) != OK) return;
 
@@ -492,26 +490,6 @@ void revive(endpoint_t proc_e, int returned)
 	/* Revive a process suspended on a pipe or lock. */
 	rfp->fp_flags |= FP_REVIVED;
 	reviving++;		/* process was waiting on pipe or lock */
-  } else if (blocked_on == FP_BLOCKED_ON_DOPEN) {
-	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	scratch(rfp).file.fd_nr = 0;
-	if (returned < 0) {
-		fil_ptr = rfp->fp_filp[fd_nr];
-		lock_filp(fil_ptr, VNODE_OPCL);
-		rfp->fp_filp[fd_nr] = NULL;
-		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
-		if (fil_ptr->filp_count != 1) {
-			panic("VFS: revive: bad count in filp: %d",
-				fil_ptr->filp_count);
-		}
-		fil_ptr->filp_count = 0;
-		unlock_filp(fil_ptr);
-		put_vnode(fil_ptr->filp_vno);
-		fil_ptr->filp_vno = NULL;
-		replycode(proc_e, returned);
-	} else {
-		replycode(proc_e, fd_nr);
-	}
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	scratch(rfp).file.fd_nr = 0;
@@ -585,10 +563,6 @@ void unpause(endpoint_t proc_e)
 
 	case FP_BLOCKED_ON_POPEN:	/* process trying to open a fifo */
 		break;
-
-	case FP_BLOCKED_ON_DOPEN:/* process trying to open a device */
-		/* Don't cancel OPEN. Just wait until the open completes. */
-		return;
 
 	case FP_BLOCKED_ON_OTHER:/* process trying to do device I/O (e.g. tty)*/
 		if (rfp->fp_flags & FP_SUSP_REOPEN) {
