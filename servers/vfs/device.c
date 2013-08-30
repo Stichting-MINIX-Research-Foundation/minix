@@ -361,32 +361,6 @@ u32_t *pos_lo;
   return(0);
 }
 
-static int cancel_nblock(struct dmap * dp,
-			int minor,
-			int call,
-			endpoint_t ioproc,
-			cp_grant_id_t gid)
-{
-  message dev_mess;
-
-  dev_mess.m_type = CANCEL;
-  dev_mess.USER_ENDPT = ioproc;
-  dev_mess.IO_GRANT = (char *) gid;
-
-  /* This R_BIT/W_BIT check taken from suspend()/unpause()
-   * logic. Mode is expected in the COUNT field.
-   */
-  dev_mess.COUNT = 0;
-  if (call == READ)
-	  dev_mess.COUNT = R_BIT;
-  else if (call == WRITE)
-	  dev_mess.COUNT = W_BIT;
-  dev_mess.DEVICE = minor;
-  (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-  
-  return dev_mess.REP_STATUS;
-}
-
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
@@ -480,33 +454,28 @@ int dev_io(
 
   ret = dev_mess.REP_STATUS;
 
+  /* Legacy support: translate EINTR to EAGAIN for nonblocking calls. */
+  if (ret == EINTR && (flags & O_NONBLOCK))
+	ret = EAGAIN;
+
   /* Task has completed.  See if call completed. */
   if (ret == SUSPEND) {
 	if ((flags & O_NONBLOCK) && !is_asyn) {
-		/* Not supposed to block. */
-		ret = cancel_nblock(dp, minor_dev, job_call_nr, ioproc, gid);
-		if (ret == EINTR)
-			ret = EAGAIN;
-	} else {
-		/* select() will do suspending itself. */
-		if(op != DEV_SELECT) {
-			/* Suspend user. */
-			wait_for(dp->dmap_driver);
-		}
-		assert(!GRANT_VALID(fp->fp_grant));
-		fp->fp_grant = gid;	/* revoke this when unsuspended. */
-		fp->fp_ioproc = ioproc;
-
-		if ((flags & O_NONBLOCK) && !is_asyn) {
-			/* Not supposed to block, send cancel message */
-			cancel_nblock(dp, minor_dev, job_call_nr, ioproc, gid);
-			/*
-			 * FIXME Should do something about EINTR -> EAGAIN
-			 * mapping
-			 */
-		}
-		return(SUSPEND);
+		printf("VFS: sync char driver %u sent SUSPEND on NONBLOCK\n",
+			dp->dmap_driver);
+		/* We'd cancel, but the other side won't play ball anyway.. */
 	}
+
+	/* select() will do suspending itself. */
+	if(op != DEV_SELECT) {
+		/* Suspend user. */
+		wait_for(dp->dmap_driver);
+	}
+	assert(!GRANT_VALID(fp->fp_grant));
+	fp->fp_grant = gid;	/* revoke this when unsuspended. */
+	fp->fp_ioproc = ioproc;
+
+	return(SUSPEND);
   }
 
   /* No suspend, or cancelled suspend, so I/O is over and can be cleaned up. */

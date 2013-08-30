@@ -282,7 +282,7 @@ static int log_transfer(
   iovec_t *iov,			/* pointer to read or write request vector */
   unsigned int nr_req,		/* length of request vector */
   endpoint_t user_endpt,	/* endpoint of user process */
-  unsigned int UNUSED(flags)
+  unsigned int flags
 )
 {
 /* Read or write one the driver's minor devices. */
@@ -317,6 +317,8 @@ static int log_transfer(
 	    	if (!log->log_size) {
 	    		if(accumulated_read)
 	    			return OK;
+			if (flags & FLG_OP_NONBLOCK)
+				return EAGAIN;
 	    		/* No data available; let caller block. */
 			log->log_source = endpt;
 	    		log->log_iosize = count;

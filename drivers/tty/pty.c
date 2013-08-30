@@ -118,7 +118,11 @@ void do_pty(tty_t *tp, message *m_ptr)
 		return;			/* already done */
 	}
 
-	{
+	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
+		r = pp->rdcum > 0 ? pp->rdcum : EAGAIN;
+		pp->rdleft = pp->rdcum = 0;
+		pp->rdgrant = GRANT_INVALID;
+	} else {
 		r = SUSPEND;				/* do suspend */
 		pp->rdsendreply = FALSE;
 	}
@@ -154,7 +158,12 @@ void do_pty(tty_t *tp, message *m_ptr)
 		return;			/* already done */
 	}
 
-	{
+	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
+		r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
+		pp->wrleft = pp->wrcum = 0;
+		pp->wrgrant = GRANT_INVALID;
+		r = EAGAIN;
+	} else {
 		pp->wrsendreply = FALSE;			/* do suspend */
 		r = SUSPEND;
 	}
