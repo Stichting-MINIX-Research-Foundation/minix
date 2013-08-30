@@ -415,8 +415,7 @@ static int select_request_major(struct filp *f, int *ops, int block)
   major = major(f->filp_vno->v_sdev);
   if (major < 0 || major >= NR_DEVICES) return(ENXIO);
 
-  if (dmap[major].dmap_style == STYLE_DEVA ||
-      dmap[major].dmap_style == STYLE_CLONE_A)
+  if (dev_style_asyn(dmap[major].dmap_style))
 	r = select_request_async(f, ops, block);
   else
 	r = select_request_sync(f, ops, block);

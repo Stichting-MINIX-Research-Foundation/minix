@@ -1074,14 +1074,8 @@ int uds_cancel(message *dev_m_in, message *dev_m_out)
 	minor = uds_minor(dev_m_in);
 
 	if (uds_fd_table[minor].state != UDS_INUSE) {
-
-		/* attempted to close a socket that hasn't been opened --
-		 * something is very wrong :(
-		 */
-		uds_set_reply(dev_m_out, DEV_NO_STATUS, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
-		return EINVAL;
+		/* attempted to cancel an unknown request - this happens */
+		return SUSPEND;
 	}
 
 	/* Update the process endpoint. */
@@ -1184,8 +1178,7 @@ int uds_cancel(message *dev_m_in, message *dev_m_out)
 		uds_fd_table[minor].syscall_done = 1;
 	}
 
-
-	uds_set_reply(dev_m_out, DEV_NO_STATUS, dev_m_in->USER_ENDPT,
+	uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
 			(cp_grant_id_t) dev_m_in->IO_GRANT, EINTR);
 
 	return EINTR;

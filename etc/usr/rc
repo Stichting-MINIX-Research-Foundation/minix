@@ -167,7 +167,7 @@ start)
 
     # Start servers and drivers set at the boot monitor.
     echo -n "Starting services:"
-    up -n random -dev /dev/random -devstyle STYLE_DEVA -period 3HZ
+    up -n random -dev /dev/random -period 3HZ
 
     # load random number generator
     if [ -f $RANDOM_FILE ]
@@ -188,9 +188,9 @@ start)
     done
     if [ X`/bin/sysenv lwip` = Xyes ]
     then
-    	up lwip -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE_A
+	up lwip -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
     else
-    	up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+	up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
     fi
 
     up -n ipc

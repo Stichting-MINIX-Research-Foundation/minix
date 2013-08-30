@@ -476,7 +476,7 @@ main(int argc, char *argv[])
 
 	sef_local_startup();
 
-	chardriver_task(&tsl2550_tab, CHARDRIVER_SYNC);
+	chardriver_task(&tsl2550_tab);
 
 	return 0;
 }

@@ -19,6 +19,7 @@
 #include <minix/input.h>
 #include <minix/keymap.h>
 #include <minix/reboot.h>
+#include <assert.h>
 #include "tty.h"
 #include "kernel/const.h"
 #include "kernel/config.h"
@@ -134,6 +135,7 @@ static struct kbd
 	int incaller;
 	int select_ops;
 	int select_proc;
+	int select_minor; /* sanity check only, can be removed */
 } kbd, kbdaux;
 
 /* Data that is to be sent to the keyboard. Each byte is ACKed by the
@@ -154,7 +156,6 @@ static long debug_fkeys = 1;
 static timer_t tmr_kbd_wd;
 
 static void handle_req(struct kbd *kbdp, message *m);
-static int handle_status(struct kbd *kbdp, message *m);
 static void kbc_cmd0(int cmd);
 static void kbc_cmd1(int cmd, int data);
 static int kbc_read(void);
@@ -187,20 +188,6 @@ void do_kbd(message *m)
 
 
 /*===========================================================================*
- *				kbd_status				     *
- *===========================================================================*/
-int kbd_status(message *m)
-{
-	int r;
-
-	r= handle_status(&kbd, m);
-	if (r)
-		return r;
-	return handle_status(&kbdaux, m);
-}
-
-
-/*===========================================================================*
  *				do_kbdaux				     *
  *===========================================================================*/
 void do_kbdaux(message *m)
@@ -224,8 +211,9 @@ message *m;
 	switch (m->m_type) {
 	    case DEV_OPEN:
 		kbdp->nr_open++;
-		r= OK;
-		break;
+		tty_reply(DEV_OPEN_REPL, m->m_source, m->USER_ENDPT,
+			(cp_grant_id_t) m->IO_GRANT, OK);
+		return;
 	    case DEV_CLOSE:
 		kbdp->nr_open--;
 		if (kbdp->nr_open < 0)
@@ -235,8 +223,9 @@ message *m;
 		}
 		if (kbdp->nr_open == 0)
 			kbdp->avail= 0;
-		r= OK;
-		break;
+		tty_reply(DEV_CLOSE_REPL, m->m_source, m->USER_ENDPT,
+			(cp_grant_id_t) m->IO_GRANT, OK);
+		return;
 	    case DEV_READ_S:
 		if (kbdp->req_size)
 		{
@@ -256,8 +245,7 @@ message *m;
 			kbdp->req_grant= (cp_grant_id_t) m->IO_GRANT;
 			kbdp->req_addr_offset= 0;
 			kbdp->incaller= m->m_source;
-			r= SUSPEND;
-			break;
+			return;
 		}
 
 		/* Handle read request */
@@ -306,11 +294,11 @@ message *m;
 
 	    case CANCEL:
 		kbdp->req_size= 0;
-		r= OK;
+		r= EAGAIN;
 		break;
 	    case DEV_SELECT:
-		ops = m->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
-		watch = (m->USER_ENDPT & SEL_NOTIFY) ? 1 : 0;
+		ops = m->DEV_SEL_OPS & (SEL_RD|SEL_WR|SEL_ERR);
+		watch = (m->DEV_SEL_OPS & SEL_NOTIFY) ? 1 : 0;
 		
 		r= 0;
 		if (kbdp->avail && (ops & SEL_RD))
@@ -323,10 +311,13 @@ message *m;
 		{
 			kbdp->select_ops |= ops;
 			kbdp->select_proc= m->m_source;
+			kbdp->select_minor= m->DEV_MINOR;
 		}
-		break;
+		assert(kbdp->minor == m->DEV_MINOR);
+		select_reply(DEV_SEL_REPL1, m->m_source, m->DEV_MINOR, r);
+		return;
 	    case DEV_IOCTL_S:
-		if (kbdp == &kbd && m->TTY_REQUEST == KIOCSLEDS)
+		if (kbdp == &kbd && m->REQUEST == KIOCSLEDS)
 		{
 			kio_leds_t leds;
 			unsigned char b;
@@ -362,7 +353,7 @@ message *m;
 			 r= OK;
 			 break;
 		}
-		if (kbdp == &kbd && m->TTY_REQUEST == KIOCBELL)
+		if (kbdp == &kbd && m->REQUEST == KIOCBELL)
 		{
 			kio_bell_t bell;
 			clock_t ticks;
@@ -390,59 +381,8 @@ message *m;
 			m->m_type, m->m_source);
 		r= EINVAL;
 	}
-	tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
-}
-
-
-/*===========================================================================*
- *				handle_status				     *
- *===========================================================================*/
-static int handle_status(kbdp, m)
-struct kbd *kbdp;
-message *m;
-{
-	int n, r;
-
-	if (kbdp->avail && kbdp->req_size && m->m_source == kbdp->incaller &&
-	    kbdp->req_grant != GRANT_INVALID)
-	{
-		/* Handle read request */
-		n= kbdp->avail;
-		if (n > kbdp->req_size)
-			n= kbdp->req_size;
-		if (kbdp->offset + n > KBD_BUFSZ)
-			n= KBD_BUFSZ-kbdp->offset;
-		if (n <= 0)
-			panic("kbd_status: bad n: %d", n);
-		kbdp->req_size= 0;
-		r= sys_safecopyto(kbdp->incaller, kbdp->req_grant, 0,
-			(vir_bytes)&kbdp->buf[kbdp->offset], n);
-		if (r == OK)
-		{
-			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
-			kbdp->avail -= n;
-			r= n;
-		} else printf("copy in revive kbd failed: %d\n", r);
-
-		m->m_type = DEV_REVIVE;
-  		m->REP_ENDPT= kbdp->req_proc;
-  		m->REP_IO_GRANT= kbdp->req_grant;
-  		m->REP_STATUS= r;
-		kbdp->req_grant = GRANT_INVALID;
-		return 1;
-	}
-	if (kbdp->avail && (kbdp->select_ops & SEL_RD) &&
-		m->m_source == kbdp->select_proc)
-	{
-		m->m_type = DEV_IO_READY;
-		m->DEV_MINOR = kbdp->minor;
-		m->DEV_SEL_OPS = SEL_RD;
-
-		kbdp->select_ops &= ~SEL_RD;
-		return 1;
-	}
-
-	return 0;
+	tty_reply(DEV_REVIVE, m->m_source, m->USER_ENDPT,
+		(cp_grant_id_t) m->IO_GRANT, r);
 }
 
 
@@ -490,7 +430,7 @@ int scode;
 void kbd_interrupt(message *UNUSED(m_ptr))
 {
 /* A keyboard interrupt has occurred.  Process it. */
-  int o, isaux;
+  int n, r, o, isaux;
   unsigned char scode;
   struct kbd *kbdp;
 
@@ -516,15 +456,40 @@ void kbd_interrupt(message *UNUSED(m_ptr))
 #endif
 		return;	/* Buffer is full */
 	}
-	 o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
-	 kbdp->buf[o]= scode;
-	 kbdp->avail++;
-	 if (kbdp->req_size) {
-		notify(kbdp->incaller);
-	 }
-	 if (kbdp->select_ops & SEL_RD)
-		notify(kbdp->select_proc);
-	 return;
+	o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
+	kbdp->buf[o]= scode;
+	kbdp->avail++;
+	if (kbdp->req_size) {
+		/* Reply to read request */
+		n= kbdp->avail;
+		if (n > kbdp->req_size)
+			n= kbdp->req_size;
+		if (kbdp->offset + n > KBD_BUFSZ)
+			n= KBD_BUFSZ-kbdp->offset;
+		if (n <= 0)
+			panic("kbd_interrupt: bad n: %d", n);
+		kbdp->req_size= 0;
+		r= sys_safecopyto(kbdp->incaller, kbdp->req_grant, 0,
+			(vir_bytes)&kbdp->buf[kbdp->offset], n);
+		if (r == OK)
+		{
+			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
+			kbdp->avail -= n;
+			r= n;
+		} else printf("copy in revive kbd failed: %d\n", r);
+
+		tty_reply(DEV_REVIVE, kbdp->incaller, kbdp->req_proc,
+			kbdp->req_grant, r);
+		kbdp->req_grant = GRANT_INVALID;
+	}
+	/* Only satisfy pending select if characters weren't just read. */
+	if (kbdp->avail && (kbdp->select_ops & SEL_RD)) {
+		assert(kbdp->select_minor == kbdp->minor);
+		select_reply(DEV_SEL_REPL2, kbdp->select_proc, kbdp->minor,
+			SEL_RD);
+		kbdp->select_ops &= ~SEL_RD;
+	}
+	return;
   }
 
   /* Store the scancode in memory so the task can get at it later. */

@@ -42,7 +42,6 @@ EXTERN unsigned long calls_stats[NCALLS];
 /* Thread related prototypes */
 static void *do_async_dev_result(void *arg);
 static void *do_control_msgs(void *arg);
-static void *do_dev_event(void *arg);
 static void *do_fs_reply(struct job *job);
 static void *do_work(void *arg);
 static void *do_pm(void *arg);
@@ -114,8 +113,6 @@ int main(void)
 			handle_work(ds_event);
 		else if (who_e == KERNEL)
 			mthread_stacktraces();
-		else if (fp != NULL && (fp->fp_flags & FP_SRV_PROC))
-			handle_work(do_dev_event);
 		else
 			sys_worker_start(do_control_msgs);
 		continue;
@@ -140,7 +137,8 @@ int main(void)
 
 		dp = get_dmap(who_e);
 		if (dp != NULL) {
-			if (dev_style_asyn(dp->dmap_style)) {
+			if (!IS_BDEV_RS(call_nr) &&
+			    dev_style_asyn(dp->dmap_style)) {
 				handle_work(do_async_dev_result);
 
 			} else {
@@ -269,23 +267,6 @@ static void *do_control_msgs(void *arg)
   }
 
   thread_cleanup(NULL);
-  return(NULL);
-}
-
-/*===========================================================================*
- *			       do_dev_event				     *
- *===========================================================================*/
-static void *do_dev_event(void *arg)
-{
-/* Device notifies us of an event. */
-  struct job my_job;
-
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
-
-  dev_status(job_m_in.m_source);
-
-  thread_cleanup(fp);
   return(NULL);
 }
 

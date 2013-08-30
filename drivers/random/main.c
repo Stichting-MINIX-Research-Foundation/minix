@@ -59,7 +59,7 @@ int main(void)
   sef_local_startup();
 
   /* Call the generic receive loop. */
-  chardriver_task(&r_dtab, CHARDRIVER_ASYNC);
+  chardriver_task(&r_dtab);
 
   return(OK);
 }

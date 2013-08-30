@@ -28,7 +28,7 @@
 #define fp_is_blocked(fp)	((fp)->fp_blocked_on != FP_BLOCKED_ON_NONE)
 
 /* test if reply is a driver reply */
-#define IS_DRV_REPLY(x)	(IS_DEV_RS(x) || IS_BDEV_RS(x) || (x) == TASK_REPLY)
+#define IS_DRV_REPLY(x)	(IS_DEV_RS(x) || IS_BDEV_RS(x))
 #define DUP_MASK        0100	/* mask to distinguish dup2 from dup */
 
 #define LOOK_UP            0 /* tells search_dir to lookup string */
@@ -49,5 +49,7 @@
 #define	VFS_DEV_WRITE	2002
 #define VFS_DEV_IOCTL	2005
 #define VFS_DEV_SELECT	2006
+
+#define dev_style_asyn(n)	(TRUE)
 
 #endif

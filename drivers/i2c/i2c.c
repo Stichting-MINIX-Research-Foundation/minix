@@ -553,7 +553,7 @@ main(int argc, char *argv[])
 
 	memset(i2cdev, '\0', sizeof(i2cdev));
 	sef_local_startup();
-	chardriver_task(&i2c_tab, CHARDRIVER_SYNC);
+	chardriver_task(&i2c_tab);
 
 	return OK;
 }

@@ -25,31 +25,10 @@
  * | DEV_SELECT  | minor dev | ops       |           |           |
  * |-------------+-----------+-----------+-----------+-----------|
  *
- *    m_type
- * --------------|
- * | DEV_STATUS  |
- * |-------------|
- * 
  *    m_type      DEVICE      USER_ENDPT    COUNT
  * --------------------------------------------------|
  * | CANCEL      | minor dev | proc nr   |  mode     |
  * |-------------+-----------+-----------+-----------|
- *
- * Replies:
- *
- *    m_type        REP_ENDPT   REP_STATUS  REP_IO_GRANT
- * -------------------------------------------------------|
- * | TASK_REPLY    |  proc nr  |  status   | grant ID     |
- * |---------------+-----------+-----------+--------------|
- *
- *    m_type        REP_ENDPT   REP_STATUS  REP_IO_GRANT
- * ----------------+-----------+--------------------------|
- * | DEV_REVIVE    |  proc nr  |           | grant ID     |
- * |---------------+-----------+-----------+--------------|
- * | DEV_IO_READY  | minor dev |  sel ops  |              |
- * |---------------+-----------+-----------+--------------|
- * | DEV_NO_STATUS |           |           |              |
- * |---------------+-----------+-----------+--------------|
  */
 
 #include "inet.h"
@@ -72,7 +51,6 @@ THIS_FILE
 
 sr_fd_t sr_fd_table[FD_NR];
 
-static mq_t *repl_queue, *repl_queue_tail;
 static struct vscp_vec s_cp_req[SCPVEC_NR];
 
 static int sr_open(message *m);
@@ -82,16 +60,14 @@ static int sr_restart_read(sr_fd_t *fdp);
 static int sr_restart_write(sr_fd_t *fdp);
 static int sr_restart_ioctl(sr_fd_t *fdp);
 static int sr_cancel(message *m);
-static int sr_select(message *m);
-static void sr_status(message *m);
-static void sr_reply_(mq_t *m, int reply, int is_revive);
+static void sr_select(message *m);
+static void sr_reply_(mq_t *m, int code, int reply, int is_revive);
 static sr_fd_t *sr_getchannel(int minor);
 static acc_t *sr_get_userdata(int fd, size_t offset, size_t count, int
 	for_ioctl);
 static int sr_put_userdata(int fd, size_t offset, acc_t *data, int
 	for_ioctl);
 static void sr_select_res(int fd, unsigned ops);
-static int sr_repl_queue(int proc, int ref, int operation);
 static int walk_queue(sr_fd_t *sr_fd, mq_t **q_head_ptr, mq_t
 	**q_tail_ptr, int type, int proc_nr, int ref, int first_flag);
 static void sr_event(event_t *evp, ev_arg_t arg);
@@ -111,44 +87,26 @@ void sr_init()
 		ev_init(&sr_fd_table[i].srf_read_ev);
 		ev_init(&sr_fd_table[i].srf_write_ev);
 	}
-	repl_queue= NULL;
 }
 
 void sr_rec(m)
 mq_t *m;
 {
-	int result;
+	int code = DEV_REVIVE, result;
 	int send_reply = 0, free_mess = 0;
-
-	if (repl_queue)
-	{
-		if (m->mq_mess.m_type == CANCEL)
-		{
-			result= sr_repl_queue(m->mq_mess.USER_ENDPT, 
-				(int)m->mq_mess.IO_GRANT, 0);
-
-			if (result)
-			{
-				mq_free(m);
-				return;	/* canceled request in queue */
-			}
-		}
-#if 0
-		else
-			sr_repl_queue(ANY, 0, 0);
-#endif
-	}
 
 	switch (m->mq_mess.m_type)
 	{
 	case DEV_OPEN:
 		result= sr_open(&m->mq_mess);
+		code= DEV_OPEN_REPL;
 		send_reply= 1;
 		free_mess= 1;
 		break;
 	case DEV_CLOSE:
 		sr_close(&m->mq_mess);
 		result= OK;
+		code= DEV_CLOSE_REPL;
 		send_reply= 1;
 		free_mess= 1;
 		break;
@@ -158,24 +116,17 @@ mq_t *m;
 		result= sr_rwio(m);
 		assert(result == OK || result == EAGAIN || result == EINTR ||
 			result == SUSPEND);
-		send_reply= (result == EAGAIN || result == SUSPEND);
+		send_reply= (result == EAGAIN);
 		free_mess= (result == EAGAIN);
 		break;
 	case CANCEL:
 		result= sr_cancel(&m->mq_mess);
-		assert(result == OK || result == EINTR);
+		assert(result == OK || result == EINTR || result == SUSPEND);
 		send_reply= (result == EINTR);
 		free_mess= 1;
-		m->mq_mess.m_type= 0;
 		break;
 	case DEV_SELECT:
-		result= sr_select(&m->mq_mess);
-		send_reply= 1;
-		free_mess= 1;
-		break;
-	case DEV_STATUS:
-		sr_status(&m->mq_mess);
-		result= OK;   /* Satisfy lint. */
+		sr_select(&m->mq_mess);
 		send_reply= 0;
 		free_mess= 1;
 		break;
@@ -185,7 +136,7 @@ mq_t *m;
 	}
 	if (send_reply)
 	{
-		sr_reply_(m, result, FALSE /* !is_revive */);
+		sr_reply_(m, code, result, FALSE /* !is_revive */);
 	}
 	if (free_mess)
 		mq_free(m);
@@ -469,7 +420,6 @@ message *m;
 	int result;
 	int proc_nr, ref;
 
-        result=EINTR;
 	proc_nr=  m->USER_ENDPT;
 	ref=  (int)m->IO_GRANT;
 	sr_fd= sr_getchannel(m->DEVICE);
@@ -493,27 +443,24 @@ message *m;
 	if (result != EAGAIN)
 		return result;
 
-	ip_panic((
-"request not found: from %d, type %d, MINOR= %d, PROC= %d, REF= %d",
-		m->m_source, m->m_type, m->DEVICE,
-		m->USER_ENDPT, (int) m->IO_GRANT));
-
-	return result;
+	/* We already replied to the request, so don't reply to the CANCEL. */
+	return SUSPEND;
 }
 
-static int sr_select(m)
+static void sr_select(m)
 message *m;
 {
+	message m_reply;
 	sr_fd_t *sr_fd;
 	int r;
 	unsigned m_ops, i_ops;
 
-	sr_fd= sr_getchannel(m->DEVICE);
+	sr_fd= sr_getchannel(m->DEV_MINOR);
 	assert (sr_fd);
 
 	sr_fd->srf_select_proc= m->m_source;
 
-	m_ops= m->USER_ENDPT;
+	m_ops= m->DEV_SEL_OPS;
 	i_ops= 0;
 	if (m_ops & SEL_RD) i_ops |= SR_SELECT_READ;
 	if (m_ops & SEL_WR) i_ops |= SR_SELECT_WRITE;
@@ -521,72 +468,22 @@ message *m;
 	if (!(m_ops & SEL_NOTIFY)) i_ops |= SR_SELECT_POLL;
 
 	r= (*sr_fd->srf_select)(sr_fd->srf_fd,  i_ops);
-	if (r < 0)
-		return r;
-	m_ops= 0;
-	if (r & SR_SELECT_READ) m_ops |= SEL_RD;
-	if (r & SR_SELECT_WRITE) m_ops |= SEL_WR;
-	if (r & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
-
-	return m_ops;
-}
-
-static void sr_status(m)
-message *m;
-{
-	int fd, result;
-	unsigned m_ops;
-	sr_fd_t *sr_fd;
-	mq_t *mq;
-
-	mq= repl_queue;
-	if (mq != NULL)
-	{
-		repl_queue= mq->mq_next;
-
-		mq->mq_mess.m_type= DEV_REVIVE;
-		result= send(mq->mq_mess.m_source, &mq->mq_mess);
-		if (result != OK)
-			ip_panic(("unable to send"));
-		mq_free(mq);
-
-		return;
-	}
-
-	for (fd=0, sr_fd= sr_fd_table; fd<FD_NR; fd++, sr_fd++)
-	{
-		if ((sr_fd->srf_flags &
-			(SFF_SELECT_R|SFF_SELECT_W|SFF_SELECT_X)) == 0)
-		{
-			/* Nothing to report */
-			continue;
-		}
-		if (sr_fd->srf_select_proc != m->m_source)
-		{
-			/* Wrong process */
-			continue;
-		}
-
+	if (r < 0) {
+		m_ops= r;
+	} else {
 		m_ops= 0;
-		if (sr_fd->srf_flags & SFF_SELECT_R) m_ops |= SEL_RD;
-		if (sr_fd->srf_flags & SFF_SELECT_W) m_ops |= SEL_WR;
-		if (sr_fd->srf_flags & SFF_SELECT_X) m_ops |= SEL_ERR;
-
-		sr_fd->srf_flags &= ~(SFF_SELECT_R|SFF_SELECT_W|SFF_SELECT_X);
-
-		m->m_type= DEV_IO_READY;
-		m->DEV_MINOR= fd;
-		m->DEV_SEL_OPS= m_ops;
-
-		result= send(m->m_source, m);
-		if (result != OK)
-			ip_panic(("unable to send"));
-		return;
+		if (r & SR_SELECT_READ) m_ops |= SEL_RD;
+		if (r & SR_SELECT_WRITE) m_ops |= SEL_WR;
+		if (r & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
 	}
 
-	m->m_type= DEV_NO_STATUS;
-	result= send(m->m_source, m);
-	if (result != OK)
+	memset(&m_reply, 0, sizeof(m_reply));
+	m_reply.m_type= DEV_SEL_REPL1;
+	m_reply.DEV_MINOR= m->DEV_MINOR;
+	m_reply.DEV_SEL_OPS= m_ops;
+
+	r= send(m->m_source, &m_reply);
+	if (r != OK)
 		ip_panic(("unable to send"));
 }
 
@@ -651,8 +548,9 @@ int minor;
 	return loc_fd;
 }
 
-static void sr_reply_(mq, status, is_revive)
+static void sr_reply_(mq, code, status, is_revive)
 mq_t *mq;
+int code;
 int status;
 int is_revive;
 {
@@ -667,30 +565,12 @@ int is_revive;
 	else
 		mp= &reply;
 
-	mp->m_type= TASK_REPLY;
+	mp->m_type= code;
 	mp->REP_ENDPT= proc;
 	mp->REP_STATUS= status;
 	mp->REP_IO_GRANT= ref;
-	if (is_revive)
-	{
-		notify(mq->mq_mess.m_source);
-		result= ELOCKED;
-	}
-	else
-	{
-		result= send(mq->mq_mess.m_source, mp);
-	}
+	result= send(mq->mq_mess.m_source, mp);
 
-	if (result == ELOCKED && is_revive)
-	{
-		mq->mq_next= NULL;
-		if (repl_queue)
-			repl_queue_tail->mq_next= mq;
-		else
-			repl_queue= mq;
-		repl_queue_tail= mq;
-		return;
-	}
 	if (result != OK)
 		ip_panic(("unable to send"));
 	if (is_revive)
@@ -739,7 +619,7 @@ int for_ioctl;
 		*head_ptr= mq;
 		result= (int)offset;
 		is_revive= !(loc_fd->srf_flags & first_flag);
-		sr_reply_(m, result, is_revive);
+		sr_reply_(m, DEV_REVIVE, result, is_revive);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
@@ -800,7 +680,7 @@ int for_ioctl;
 		*head_ptr= mq;
 		result= (int)offset;
 		is_revive= !(loc_fd->srf_flags & first_flag);
-		sr_reply_(m, result, is_revive);
+		sr_reply_(m, DEV_REVIVE, result, is_revive);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
@@ -820,15 +700,26 @@ int for_ioctl;
 
 static void sr_select_res(int fd, unsigned ops)
 {
+	message m;
 	sr_fd_t *sr_fd;
+	unsigned int m_ops;
+	int result;
 
 	sr_fd= &sr_fd_table[fd];
-	
-	if (ops & SR_SELECT_READ) sr_fd->srf_flags |= SFF_SELECT_R;
-	if (ops & SR_SELECT_WRITE) sr_fd->srf_flags |= SFF_SELECT_W;
-	if (ops & SR_SELECT_EXCEPTION) sr_fd->srf_flags |= SFF_SELECT_X;
 
-	notify(sr_fd->srf_select_proc);
+	m_ops= 0;
+	if (ops & SR_SELECT_READ) m_ops |= SEL_RD;
+	if (ops & SR_SELECT_WRITE) m_ops |= SEL_WR;
+	if (ops & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
+
+	memset(&m, 0, sizeof(m));
+	m.m_type= DEV_SEL_REPL2;
+	m.DEV_MINOR= fd;
+	m.DEV_SEL_OPS= m_ops;
+
+	result= send(sr_fd->srf_select_proc, &m);
+	if (result != OK)
+		ip_panic(("unable to send"));
 }
 
 static void sr_event(evp, arg)
@@ -996,45 +887,6 @@ vir_bytes offset;
 	}
 	bf_afree(acc_ptr);
 	return OK;
-}
-
-static int sr_repl_queue(proc, ref, operation)
-int proc;
-int ref;
-int operation;
-{
-	mq_t *m, *m_cancel, *m_tmp;
-	mq_t *new_queue;
-	int result;
-
-	m_cancel= NULL;
-	new_queue= NULL;
-
-	for (m= repl_queue; m;)
-	{
-		if (m->mq_mess.REP_ENDPT == proc &&
-			m->mq_mess.REP_IO_GRANT == ref)
-		{
-			assert(!m_cancel);
-			m_cancel= m;
-			m= m->mq_next;
-			continue;
-		}
-		m_tmp= m;
-		m= m->mq_next;
-		m_tmp->mq_next= new_queue;
-		new_queue= m_tmp;
-	}
-	repl_queue= new_queue;
-	if (m_cancel)
-	{
-		result= send(m_cancel->mq_mess.m_source, &m_cancel->mq_mess);
-		if (result != OK)
-			ip_panic(("unable to send: %d", result));
-		mq_free(m_cancel);
-		return 1;
-	}
-	return 0;
 }
 
 /*
