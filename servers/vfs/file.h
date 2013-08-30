@@ -19,6 +19,7 @@ EXTERN struct filp {
 
   /* the following fields are for select() and are owned by the generic
    * select() code (i.e., fd-type-specific select() code can't touch these).
+   * These fields may be changed without holding the filp lock.
    */
   int filp_selectors;		/* select()ing processes blocking on this fd */
   int filp_select_ops;		/* interested in these SEL_* operations */

@@ -468,7 +468,8 @@ int count;			/* max number of processes to release */
 void revive(endpoint_t proc_e, int returned)
 {
 /* Revive a previously blocked process. When a process hangs on tty, this
- * is the way it is eventually released.
+ * is the way it is eventually released. For processes blocked on _SELECT and
+ * _OTHER, this function MUST NOT block its calling thread.
  */
   struct fproc *rfp;
   int blocked_on;

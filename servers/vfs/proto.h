@@ -31,10 +31,11 @@ void send_work(void);
 /* device.c */
 int dev_open(dev_t dev, endpoint_t proc_e, int flags);
 int dev_reopen(dev_t dev, int filp_no, int flags);
-void dev_reply(struct dmap *dp);
 int dev_close(dev_t dev, int filp_no);
+void cdev_reply(void);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
+void bdev_reply(struct dmap *dp);
 int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
 	size_t bytes, int flags, int suspend_reopen);
 int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
@@ -51,9 +52,6 @@ int dev_cancel(dev_t dev);
 void pm_setsid(endpoint_t proc_e);
 void bdev_up(int major);
 void cdev_up(int major);
-void reopen_reply(void);
-void open_reply(void);
-void task_reply(void);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);
@@ -165,7 +163,6 @@ void unmount_all(int force);
 /* open.c */
 int do_close(message *m_out);
 int close_fd(struct fproc *rfp, int fd_nr);
-void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
 int do_lseek(message *m_out);

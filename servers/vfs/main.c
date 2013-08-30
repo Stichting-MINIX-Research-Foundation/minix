@@ -40,8 +40,6 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 /* Thread related prototypes */
-static void *do_char_dev_result(void *arg);
-static void *do_control_msgs(void *arg);
 static void *do_fs_reply(struct job *job);
 static void *do_work(void *arg);
 static void *do_pm(void *arg);
@@ -109,12 +107,20 @@ int main(void)
 		continue;
 	} else if (is_notify(call_nr)) {
 		/* A task notify()ed us */
-		if (who_e == DS_PROC_NR)
+		switch (who_e) {
+		case DS_PROC_NR:
 			handle_work(ds_event);
-		else if (who_e == KERNEL)
+			break;
+		case KERNEL:
 			mthread_stacktraces();
-		else
-			sys_worker_start(do_control_msgs);
+			break;
+		case CLOCK:
+			/* Timer expired. Used only for select(). Check it. */
+			expire_timers(m_in.NOTIFY_TIMESTAMP);
+			break;
+		default:
+			printf("VFS: ignoring notification from %d\n", who_e);
+		}
 		continue;
 	} else if (who_p < 0) { /* i.e., message comes from a task */
 		/* We're going to ignore this message. Tasks should
@@ -138,14 +144,14 @@ int main(void)
 		dp = get_dmap(who_e);
 		if (dp != NULL) {
 			if (!IS_BDEV_RS(call_nr)) {
-				handle_work(do_char_dev_result);
+				cdev_reply();
 
 			} else {
 				if (dp->dmap_servicing == NONE) {
 					printf("Got spurious dev reply from %d",
 					who_e);
 				} else {
-					dev_reply(dp);
+					bdev_reply(dp);
 				}
 			}
 			continue;
@@ -209,51 +215,6 @@ static void handle_work(void *(*func)(void *arg))
   worker_start(func);
 }
 
-/*===========================================================================*
- *			       do_char_dev_result			     *
- *===========================================================================*/
-static void *do_char_dev_result(void *arg)
-{
-  struct job my_job;
-
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
-
-  /* A character driver has results for us. */
-  if (job_call_nr == DEV_REVIVE) task_reply();
-  else if (job_call_nr == DEV_OPEN_REPL) open_reply();
-  else if (job_call_nr == DEV_REOPEN_REPL) reopen_reply();
-  else if (job_call_nr == DEV_CLOSE_REPL) close_reply();
-  else if (job_call_nr == DEV_SEL_REPL1)
-	select_reply1(job_m_in.m_source, job_m_in.DEV_MINOR,
-		      job_m_in.DEV_SEL_OPS);
-  else if (job_call_nr == DEV_SEL_REPL2)
-	select_reply2(job_m_in.m_source, job_m_in.DEV_MINOR,
-		      job_m_in.DEV_SEL_OPS);
-
-  thread_cleanup(fp);
-  return(NULL);
-}
-
-/*===========================================================================*
- *			       do_control_msgs				     *
- *===========================================================================*/
-static void *do_control_msgs(void *arg)
-{
-  struct job my_job;
-
-  my_job = *((struct job *) arg);
-  fp = my_job.j_fp;
-
-  /* Check for special control messages. */
-  if (job_m_in.m_source == CLOCK) {
-	/* Alarm timer expired. Used only for select(). Check it. */
-	expire_timers(job_m_in.NOTIFY_TIMESTAMP);
-  }
-
-  thread_cleanup(NULL);
-  return(NULL);
-}
 
 /*===========================================================================*
  *			       do_fs_reply				     *
