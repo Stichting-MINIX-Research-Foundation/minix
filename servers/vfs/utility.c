@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <time.h>
 #include "file.h"
-#include "fproc.h"
 #include "param.h"
 #include "vmnt.h"
 
