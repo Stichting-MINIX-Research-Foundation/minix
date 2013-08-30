@@ -143,21 +143,21 @@ thread is quite complicated. Consider Table 1.
 ---------------------------------------------------------
 | File Server reply    |  resume  |          |          |
 +----------------------+----------+----------+----------+
-| Sync. driver reply   |  resume  |          |          |
+| Block driver reply   |  resume  |          |          |
 +----------------------+----------+----------+----------+
-| Async. driver reply  | resume/X |    X     |          |
+| Char. driver reply   | resume/X |          |          |
 ---------------------------------------------------------
 }}}
 Table 1: VFS' message fetching main loop. X means 'start thread'.
 
-The reason why asynchronous driver replies get their own thread is for the
-following. In some cases, a reply has a thread blocked waiting for it which
-can be resumed (e.g., open). In another case there's a lot of work to be
-done which involves sending new messages (e.g., select replies). Finally,
-DEV_REVIVE replies unblock suspended processes which in turn generate new jobs
-to be handled by the main loop (e.g., suspended reads and writes). So depending
-on the reply a new thread has to be started. Having all this logic in the main
-loop is messy, so we start a thread regardless of the actual reply contents.
+Driver replies are processed directly from the main thread. As a consequence,
+these processing routines may not block their calling thread. In some cases,
+these routines may resume a thread that is blocked waiting for the reply. This
+is always the case for block driver replies, and may or may not be the case for
+character driver replies. The character driver reply processing routines may
+also unblock suspended processes which in turn generate new jobs to be handled
+by the main loop (e.g., suspended reads and writes on pipes). So depending
+on the reply a new thread may have to be started.
 When there are no worker threads available and there is no need to invoke
 the deadlock resolver (i.e., normal system calls), the request is queued in
 the fproc table. This works because a process can send only one system call
@@ -171,18 +171,17 @@ of pending requests. Moreover, this queueing mechanism is also the reason
 why notifications from the kernel are handled by the system worker; the
 kernel has no corresponding fproc table entry (so we can't store it there)
 and the linked list has no dependencies on that table.
-Communication with drivers is asynchronous even when the driver uses the
-synchronous driver protocol. However, to guarantee identical behavior,
-access to synchronous drivers is serialized. File Servers are treated
-differently. VFS was designed to be able to send requests concurrently to
-File Servers, although at the time of writing there are no File Servers that
-can actually make use of that functionality. To identify which reply from an
-FS belongs to which worker thread, all requests have an embedded transaction
-identification number (a magic number + thread id encoded in the mtype field
-of a message) which the FS has to echo upon reply. Because the range of valid
-transaction IDs is isolated from valid system call numbers, VFS can use that
-ID to differentiate between replies from File Servers and actual new system
-calls from FSes. Using this mechanism VFS is able to support FUSE and ProcFS.
+Communication with block drivers is asynchronous, but at this time, access to
+these drivers is serialized on a per-driver basis. File Servers are treated
+differently. VFS was designed to be able to send requests concurrently to File
+Servers, although at the time of writing there are no File Servers that can
+actually make use of that functionality. To identify which reply from an FS
+belongs to which worker thread, all requests have an embedded transaction
+identification number (a magic number + thread id encoded in the mtype field of
+a message) which the FS has to echo upon reply. Because the range of valid
+transaction IDs is isolated from valid system call numbers, VFS can use that ID
+to differentiate between replies from File Servers and actual new system calls
+from FSes. Using this mechanism VFS is able to support FUSE and ProcFS.
 
 == Locking ==
 ## 4 Locking

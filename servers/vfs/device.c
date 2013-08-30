@@ -5,8 +5,10 @@
  *   dev_open:   open a character device
  *   dev_reopen: reopen a character device after a driver crash
  *   dev_close:  close a character device
+ *   cdev_reply: process the result of a character driver request
  *   bdev_open:  open a block device
  *   bdev_close: close a block device
+ *   bdev_reply: process the result of a block driver request
  *   dev_io:	 FS does a read or write on a device
  *   gen_opcl:   generic call to a character driver to perform an open/close
  *   gen_io:     generic call to a character driver to initiate I/O
@@ -17,7 +19,6 @@
  *   ctty_io:    perform controlling-tty-specific processing for I/O
  *   pm_setsid:	 perform VFS's side of setsid system call
  *   do_ioctl:	 perform the IOCTL system call
- *   task_reply: process the result of a character driver I/O request
  *   dev_select: initiate a select call on a device
  *   dev_cancel: cancel an I/O request, blocking until it has been cancelled
  */
@@ -45,6 +46,7 @@ static int block_io(endpoint_t driver_e, message *mess_ptr);
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 	void *buf, size_t size);
 static void restart_reopen(int major);
+static void reopen_reply(message *m_ptr);
 
 static int dummyproc;
 
@@ -943,14 +945,17 @@ void cdev_up(int maj)
 /*===========================================================================*
  *				open_reply				     *
  *===========================================================================*/
-void open_reply(void)
+static void open_reply(message *m_ptr)
 {
+/* A character driver has replied to an open request. This function MUST NOT
+ * block its calling thread.
+ */
   struct fproc *rfp;
   struct worker_thread *wp;
   endpoint_t proc_e;
   int slot;
 
-  proc_e = job_m_in.REP_ENDPT;
+  proc_e = m_ptr->REP_ENDPT;
   if (isokendpt(proc_e, &slot) != OK) return;
   rfp = &fproc[slot];
   wp = worker_get(rfp->fp_wtid);
@@ -958,7 +963,7 @@ void open_reply(void)
 	printf("VFS: no worker thread waiting for a reply from %d\n", who_e);
 	return;
   }
-  *wp->w_drv_sendrec = job_m_in;
+  *wp->w_drv_sendrec = *m_ptr;
   worker_signal(wp);	/* Continue open */
 }
 
@@ -966,25 +971,29 @@ void open_reply(void)
 /*===========================================================================*
  *				task_reply				     *
  *===========================================================================*/
-void task_reply(void)
+static void task_reply(message *m_ptr)
 {
-/* A character driver has results for a read, write, or ioctl call. */
+/* A character driver has results for a read, write, or ioctl call. There may
+ * be a thread waiting for these results as part of an ongoing dev_cancel call.
+ * If so, wake up that thread; if not, send a reply to the requesting process.
+ * This function MUST NOT block its calling thread.
+ */
   struct fproc *rfp;
   struct worker_thread *wp;
   endpoint_t proc_e;
   int slot;
 
-  proc_e = job_m_in.REP_ENDPT;
+  proc_e = m_ptr->REP_ENDPT;
   if (proc_e == VFS_PROC_NR)
-	proc_e = find_suspended_ep(job_m_in.m_source, job_m_in.REP_IO_GRANT);
+	proc_e = find_suspended_ep(m_ptr->m_source, m_ptr->REP_IO_GRANT);
   else
 	printf("VFS: endpoint %u from %u is not VFS\n",
-		proc_e, job_m_in.m_source);
+		proc_e, m_ptr->m_source);
 
   if (proc_e == NONE) {
 	printf("VFS: proc with grant %d from %d not found\n",
-		job_m_in.REP_IO_GRANT, job_m_in.m_source);
-  } else if (job_m_in.REP_STATUS == SUSPEND) {
+		m_ptr->REP_IO_GRANT, m_ptr->m_source);
+  } else if (m_ptr->REP_STATUS == SUSPEND) {
 	printf("VFS: got SUSPEND on DEV_REVIVE: not reviving proc\n");
   } else {
 	/* If there is a thread active for this process, we assume that this
@@ -997,20 +1006,61 @@ void task_reply(void)
 	wp = worker_get(rfp->fp_wtid);
 	if (wp != NULL && wp->w_task == who_e) {
 		assert(!fp_is_blocked(rfp));
-		*wp->w_drv_sendrec = job_m_in;
+		*wp->w_drv_sendrec = *m_ptr;
 		worker_signal(wp);	/* Continue cancel */
 	} else {
-		revive(proc_e, job_m_in.REP_STATUS);
+		revive(proc_e, m_ptr->REP_STATUS);
 	}
   }
 }
 
 
 /*===========================================================================*
- *				dev_reply				     *
+ *				close_reply				     *
  *===========================================================================*/
-void dev_reply(struct dmap *dp)
+static void close_reply(message *m_ptr __unused)
 {
+/* A character driver replied to a close request. There is no need to do
+ * anything here, because we cheat: we assume that the close operation will
+ * succeed anyway, so we don't wait for the reply.
+ */
+
+  /* Nothing. */
+}
+
+
+/*===========================================================================*
+ *			       cdev_reply				     *
+ *===========================================================================*/
+void cdev_reply(void)
+{
+/* A character driver has results for us. */
+
+  switch (call_nr) {
+  case DEV_OPEN_REPL:	open_reply(&m_in);	break;
+  case DEV_REOPEN_REPL:	reopen_reply(&m_in);	break;
+  case DEV_CLOSE_REPL:	close_reply(&m_in);	break;
+  case DEV_REVIVE:	task_reply(&m_in);	break;
+  case DEV_SEL_REPL1:
+	select_reply1(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
+	break;
+  case DEV_SEL_REPL2:
+	select_reply2(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
+	break;
+  default:
+	printf("VFS: char driver %u sent unknown reply %x\n", who_e, call_nr);
+  }
+}
+
+
+/*===========================================================================*
+ *				bdev_reply				     *
+ *===========================================================================*/
+void bdev_reply(struct dmap *dp)
+{
+/* A block driver has results for a call. There must be a thread waiting for
+ * these results - wake it up. This function MUST NOT block its calling thread.
+ */
 	struct worker_thread *wp;
 
 	assert(dp != NULL);
@@ -1098,7 +1148,7 @@ int maj;
 /*===========================================================================*
  *				reopen_reply				     *
  *===========================================================================*/
-void reopen_reply()
+static void reopen_reply(message *m_ptr)
 {
   endpoint_t driver_e;
   int filp_no, status, maj;
@@ -1106,9 +1156,9 @@ void reopen_reply()
   struct vnode *vp;
   struct dmap *dp;
 
-  driver_e = job_m_in.m_source;
-  filp_no = job_m_in.REP_ENDPT;
-  status = job_m_in.REP_STATUS;
+  driver_e = m_ptr->m_source;
+  filp_no = m_ptr->REP_ENDPT;
+  status = m_ptr->REP_STATUS;
 
   if (filp_no < 0 || filp_no >= NR_FILPS) {
 	printf("VFS: reopen_reply: bad filp number %d from driver %d\n",
