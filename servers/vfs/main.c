@@ -40,7 +40,7 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 /* Thread related prototypes */
-static void *do_async_dev_result(void *arg);
+static void *do_char_dev_result(void *arg);
 static void *do_control_msgs(void *arg);
 static void *do_fs_reply(struct job *job);
 static void *do_work(void *arg);
@@ -137,9 +137,8 @@ int main(void)
 
 		dp = get_dmap(who_e);
 		if (dp != NULL) {
-			if (!IS_BDEV_RS(call_nr) &&
-			    dev_style_asyn(dp->dmap_style)) {
-				handle_work(do_async_dev_result);
+			if (!IS_BDEV_RS(call_nr)) {
+				handle_work(do_char_dev_result);
 
 			} else {
 				if (dp->dmap_servicing == NONE) {
@@ -211,31 +210,17 @@ static void handle_work(void *(*func)(void *arg))
 }
 
 /*===========================================================================*
- *			       do_async_dev_result			     *
+ *			       do_char_dev_result			     *
  *===========================================================================*/
-static void *do_async_dev_result(void *arg)
+static void *do_char_dev_result(void *arg)
 {
-  endpoint_t endpt;
   struct job my_job;
 
   my_job = *((struct job *) arg);
   fp = my_job.j_fp;
 
-  /* An asynchronous character driver has results for us */
-  if (job_call_nr == DEV_REVIVE) {
-	endpt = job_m_in.REP_ENDPT;
-	if (endpt == VFS_PROC_NR)
-		endpt = find_suspended_ep(job_m_in.m_source,
-					  job_m_in.REP_IO_GRANT);
-
-	if (endpt == NONE) {
-		printf("VFS: proc with grant %d from %d not found\n",
-			job_m_in.REP_IO_GRANT, job_m_in.m_source);
-	} else if (job_m_in.REP_STATUS == SUSPEND) {
-		printf("VFS: got SUSPEND on DEV_REVIVE: not reviving proc\n");
-	} else
-		revive(endpt, job_m_in.REP_STATUS);
-  }
+  /* A character driver has results for us. */
+  if (job_call_nr == DEV_REVIVE) task_reply();
   else if (job_call_nr == DEV_OPEN_REPL) open_reply();
   else if (job_call_nr == DEV_REOPEN_REPL) reopen_reply();
   else if (job_call_nr == DEV_CLOSE_REPL) close_reply();

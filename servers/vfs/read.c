@@ -151,7 +151,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 
   if (size > SSIZE_MAX) return(EINVAL);
 
-  op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
+  op = (rw_flag == READING ? DEV_READ_S : DEV_WRITE_S);
 
   if (S_ISFIFO(vp->v_mode)) {		/* Pipes */
 	if (rfp->fp_cum_io_partial != 0) {
@@ -165,7 +165,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   } else if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
 	dev_t dev;
 	int suspend_reopen;
-	int op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
+	int op = (rw_flag == READING ? DEV_READ_S : DEV_WRITE_S);
 
 	if(rw_flag == PEEKING) {
 	  	printf("read_write: peek on char device makes no sense\n");

@@ -8,8 +8,8 @@
  *   bdev_open:  open a block device
  *   bdev_close: close a block device
  *   dev_io:	 FS does a read or write on a device
- *   gen_opcl:   generic call to a task to perform an open/close
- *   gen_io:     generic call to a task to perform an I/O operation
+ *   gen_opcl:   generic call to a character driver to perform an open/close
+ *   gen_io:     generic call to a character driver to initiate I/O
  *   no_dev:     open/close processing for devices that don't exist
  *   no_dev_io:  i/o processing for devices that don't exist
  *   tty_opcl:   perform tty-specific processing for open/close
@@ -17,6 +17,9 @@
  *   ctty_io:    perform controlling-tty-specific processing for I/O
  *   pm_setsid:	 perform VFS's side of setsid system call
  *   do_ioctl:	 perform the IOCTL system call
+ *   task_reply: process the result of a character driver I/O request
+ *   dev_select: initiate a select call on a device
+ *   dev_cancel: cancel an I/O request, blocking until it has been cancelled
  */
 
 #include "fs.h"
@@ -38,9 +41,10 @@
 #include "vmnt.h"
 #include "param.h"
 
+static int block_io(endpoint_t driver_e, message *mess_ptr);
+static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
+	void *buf, size_t size);
 static void restart_reopen(int major);
-static int safe_io_conversion(endpoint_t, cp_grant_id_t *, int *,
-	endpoint_t *, void **, size_t, u32_t *);
 
 static int dummyproc;
 
@@ -157,10 +161,9 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
 {
 /* Perform an I/O control operation on a block device. */
   struct dmap *dp;
-  u32_t dummy;
   cp_grant_id_t gid;
   message dev_mess;
-  int op, major_dev, minor_dev;
+  int major_dev, minor_dev;
 
   major_dev = major(dev);
   minor_dev = minor(dev);
@@ -173,9 +176,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
   }
 
   /* Set up a grant if necessary. */
-  op = VFS_DEV_IOCTL;
-  (void) safe_io_conversion(dp->dmap_driver, &gid, &op, &proc_e, &buf, req,
-	&dummy);
+  gid = make_grant(dp->dmap_driver, proc_e, BDEV_IOCTL, buf, req);
 
   /* Set up the message passed to the task. */
   memset(&dev_mess, 0, sizeof(dev_mess));
@@ -187,7 +188,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
   dev_mess.BDEV_ID = 0;
 
   /* Call the task. */
-  gen_io(dp->dmap_driver, &dev_mess);
+  block_io(dp->dmap_driver, &dev_mess);
 
   /* Clean up. */
   if (GRANT_VALID(gid)) cpf_revoke(gid);
@@ -205,7 +206,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
 /*===========================================================================*
  *				find_suspended_ep			     *
  *===========================================================================*/
-endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
+static endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
 {
 /* A process is suspended on a driver for which VFS issued a grant. Find out
  * which process it was.
@@ -215,9 +216,11 @@ endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
 	if(rfp->fp_pid == PID_FREE)
 		continue;
 
-	if(rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER &&
-	   rfp->fp_task == driver && rfp->fp_grant == g)
+	if (rfp->fp_task == driver && rfp->fp_grant == g) {
+		assert(!fp_is_blocked(rfp) ||
+			rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER);
 		return(rfp->fp_endpoint);
+	}
   }
 
   return(NONE);
@@ -225,40 +228,29 @@ endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
 
 
 /*===========================================================================*
- *				safe_io_conversion			     *
+ *				make_grant				     *
  *===========================================================================*/
-static int safe_io_conversion(driver, gid, op, io_ept, buf, bytes, pos_lo)
-endpoint_t driver;
-cp_grant_id_t *gid;
-int *op;
-endpoint_t *io_ept;
-void **buf;
-size_t bytes;
-u32_t *pos_lo;
+static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
+	void *buf, size_t bytes)
 {
-/* Convert operation to the 'safe' variant (i.e., grant based) if applicable.
- * If no copying of data is involved, there is also no need to convert. */
-
-  int access = 0;
+/* Create a magic grant for the given operation and buffer. */
+  cp_grant_id_t gid;
+  int access;
   size_t size;
 
-  *gid = GRANT_INVALID;		/* Grant to buffer */
-
-  switch(*op) {
-    case VFS_DEV_READ:
-    case VFS_DEV_WRITE:
-	/* Change to safe op. */
-	*op = (*op == VFS_DEV_READ) ? DEV_READ_S : DEV_WRITE_S;
-	*gid = cpf_grant_magic(driver, *io_ept, (vir_bytes) *buf, bytes,
-			       *op == DEV_READ_S ? CPF_WRITE : CPF_READ);
-	if (*gid < 0)
-		panic("VFS: cpf_grant_magic of READ/WRITE buffer failed");
+  switch (op) {
+  case DEV_READ_S:
+  case DEV_WRITE_S:
+	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf, bytes,
+		op == DEV_READ_S ? CPF_WRITE : CPF_READ);
 	break;
-    case VFS_DEV_IOCTL:
-	*pos_lo = *io_ept; /* Old endpoint in POSITION field. */
-	*op = DEV_IOCTL_S;
+
+  case DEV_IOCTL_S:
+  case BDEV_IOCTL:
 	/* For IOCTLs, the bytes parameter encodes requested access method
-	 * and buffer size */
+	 * and buffer size
+	 */
+	access = 0;
 	if(_MINIX_IOCTL_IOR(bytes)) access |= CPF_WRITE;
 	if(_MINIX_IOCTL_IOW(bytes)) access |= CPF_READ;
 	if(_MINIX_IOCTL_BIG(bytes))
@@ -269,39 +261,27 @@ u32_t *pos_lo;
 	/* Grant access to the buffer even if no I/O happens with the ioctl, in
 	 * order to disambiguate requests with DEV_IOCTL_S.
 	 */
-	*gid = cpf_grant_magic(driver, *io_ept, (vir_bytes) *buf, size, access);
-	if (*gid < 0)
-		panic("VFS: cpf_grant_magic IOCTL buffer failed");
+	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf, size, access);
+	break;
 
-	break;
-    case VFS_DEV_SELECT:
-	*op = DEV_SELECT;
-	break;
-    default:
-	panic("VFS: unknown operation %d for safe I/O conversion", *op);
+  default:
+	panic("VFS: unknown operation %d", op);
   }
 
-  /* If we have converted to a safe operation, I/O endpoint becomes VFS if it
-   * wasn't already.
-   */
-  if(GRANT_VALID(*gid)) {
-	*io_ept = VFS_PROC_NR;
-	return(1);
-  }
+  if (!GRANT_VALID(gid))
+	panic("VFS: cpf_grant_magic failed");
 
-  /* Not converted to a safe operation (because there is no copying involved in
-   * this operation).
-   */
-  return(0);
+  return gid;
 }
+
 
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
 int dev_io(
-  int op,			/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
+  int op,			/* DEV_READ_S, DEV_WRITE_S, or DEV_IOCTL_S */
   dev_t dev,			/* major-minor device number */
-  endpoint_t proc_e,			/* in whose address space is buf? */
+  endpoint_t proc_e,		/* in whose address space is buf? */
   void *buf,			/* virtual address of the buffer */
   off_t pos,			/* byte position */
   size_t bytes,			/* how many bytes to transfer */
@@ -309,22 +289,17 @@ int dev_io(
   int suspend_reopen		/* Just suspend the process */
 )
 {
-/* Read from or write to a device.  The parameter 'dev' tells which one. */
+/* Initiate a read, write, or ioctl to a device. */
   struct dmap *dp;
-  u32_t pos_lo, pos_high;
   message dev_mess;
-  cp_grant_id_t gid = GRANT_INVALID;
-  int safe, minor_dev, major_dev;
-  void *buf_used;
-  endpoint_t ioproc;
-  int ret, is_asyn;
+  cp_grant_id_t gid;
+  int r, minor_dev, major_dev;
 
-  pos_lo = ex64lo(pos);
-  pos_high = ex64hi(pos);
-  major_dev = major(dev);
-  minor_dev = minor(dev);
+  assert(op == DEV_READ_S || op == DEV_WRITE_S || op == DEV_IOCTL_S);
 
   /* Determine task dmap. */
+  major_dev = major(dev);
+  minor_dev = minor(dev);
   dp = &dmap[major_dev];
 
   /* See if driver is roughly valid. */
@@ -345,77 +320,42 @@ int dev_io(
 	return(ENXIO);
   }
 
-  /* By default, these are right. */
-  dev_mess.USER_ENDPT = proc_e;
-  dev_mess.ADDRESS  = buf;
+  /* Create a grant for the buffer provided by the user process. */
+  gid = make_grant(dp->dmap_driver, proc_e, op, buf, bytes);
 
-  /* Convert DEV_* to DEV_*_S variants. */
-  buf_used = buf;
-  safe = safe_io_conversion(dp->dmap_driver, &gid, &op,
-			    (endpoint_t *) &dev_mess.USER_ENDPT, &buf_used,
-			    bytes, &pos_lo);
-
-  is_asyn = dev_style_asyn(dp->dmap_style);
-
-  /* If the safe conversion was done, set the IO_GRANT to
-   * the grant id.
-   */
-  if(safe) dev_mess.IO_GRANT = (char *) gid;
-
-  /* Set up the rest of the message passed to task. */
+  /* Set up the rest of the message that will be sent to the driver. */
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = minor_dev;
-  dev_mess.POSITION = pos_lo;
-  dev_mess.COUNT    = bytes;
-  dev_mess.HIGHPOS  = pos_high;
+  if (op == DEV_IOCTL_S) {
+	dev_mess.REQUEST  = bytes;
+	dev_mess.POSITION = proc_e;
+  } else {
+	dev_mess.POSITION = ex64lo(pos);
+	dev_mess.COUNT    = bytes;
+  }
+  dev_mess.HIGHPOS  = ex64hi(pos);
+  dev_mess.USER_ENDPT = VFS_PROC_NR;
+  dev_mess.IO_GRANT = (void *) gid;
   dev_mess.FLAGS    = 0;
-
   if (flags & O_NONBLOCK)
 	  dev_mess.FLAGS |= FLG_OP_NONBLOCK;
 
-  /* This will be used if the i/o is suspended. */
-  ioproc = dev_mess.USER_ENDPT;
+  /* Send the request to the driver. */
+  r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 
-  /* Call the task. */
-  (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+  if (r != OK) {
+	cpf_revoke(gid);
 
-  if(dp->dmap_driver == NONE) {
-	/* Driver has vanished. */
-	printf("VFS: driver gone?!\n");
-	if(safe) cpf_revoke(gid);
-	return(EIO);
+	return r;
   }
 
-  ret = dev_mess.REP_STATUS;
+  /* Suspend the calling process until a reply arrives. */
+  wait_for(dp->dmap_driver);
+  assert(!GRANT_VALID(fp->fp_grant));
+  fp->fp_grant = gid;	/* revoke this when unsuspended. */
+  fp->fp_ioproc = VFS_PROC_NR;
 
-  /* Legacy support: translate EINTR to EAGAIN for nonblocking calls. */
-  if (ret == EINTR && (flags & O_NONBLOCK))
-	ret = EAGAIN;
-
-  /* Task has completed.  See if call completed. */
-  if (ret == SUSPEND) {
-	if ((flags & O_NONBLOCK) && !is_asyn) {
-		printf("VFS: sync char driver %u sent SUSPEND on NONBLOCK\n",
-			dp->dmap_driver);
-		/* We'd cancel, but the other side won't play ball anyway.. */
-	}
-
-	/* select() will do suspending itself. */
-	if(op != DEV_SELECT) {
-		/* Suspend user. */
-		wait_for(dp->dmap_driver);
-	}
-	assert(!GRANT_VALID(fp->fp_grant));
-	fp->fp_grant = gid;	/* revoke this when unsuspended. */
-	fp->fp_ioproc = ioproc;
-
-	return(SUSPEND);
-  }
-
-  /* No suspend, or cancelled suspend, so I/O is over and can be cleaned up. */
-  if(safe) cpf_revoke(gid);
-
-  return ret;
+  return SUSPEND;
 }
 
 /*===========================================================================*
@@ -450,7 +390,7 @@ int gen_opcl(
 	dev_mess.BDEV_ID = 0;
 
 	/* Call the task. */
-	r = gen_io(dp->dmap_driver, &dev_mess);
+	r = block_io(dp->dmap_driver, &dev_mess);
   } else {
 	dev_mess.m_type = op;
 	dev_mess.DEVICE = minor_dev;
@@ -463,7 +403,7 @@ int gen_opcl(
 
   if (r != OK) return(r);
 
-  if (op == DEV_OPEN && dev_style_asyn(dp->dmap_style)) {
+  if (op == DEV_OPEN) {
 	fp->fp_task = dp->dmap_driver;
 	self->w_task = dp->dmap_driver;
 	self->w_drv_sendrec = &dev_mess;
@@ -593,7 +533,7 @@ int do_ioctl(message *UNUSED(m_out))
 	if (S_ISBLK(vp->v_mode))
 		r = bdev_ioctl(dev, who_e, ioctlrequest, argx);
 	else
-		r = dev_io(VFS_DEV_IOCTL, dev, who_e, argx, 0,
+		r = dev_io(DEV_IOCTL_S, dev, who_e, argx, 0,
 			   ioctlrequest, f->filp_flags, suspend_reopen);
   }
 
@@ -604,31 +544,100 @@ int do_ioctl(message *UNUSED(m_out))
 
 
 /*===========================================================================*
- *				gen_io					     *
+ *				dev_select				     *
  *===========================================================================*/
-int gen_io(driver_e, mess_ptr)
-endpoint_t driver_e;		/* which endpoint to call */
-message *mess_ptr;		/* pointer to message for task */
+int dev_select(dev_t dev, int ops)
 {
-/* All file system I/O ultimately comes down to I/O on major/minor device
- * pairs.  These lead to calls on the following routines via the dmap table.
+/* Initiate a select call on a device. Return OK iff the request was sent. */
+  int major_dev, minor_dev;
+  message dev_mess;
+  struct dmap *dp;
+
+  major_dev = major(dev);
+  minor_dev = minor(dev);
+  dp = &dmap[major_dev];
+
+  if (dp->dmap_driver == NONE) return ENXIO;
+
+  memset(&dev_mess, 0, sizeof(dev_mess));
+
+  dev_mess.m_type = DEV_SELECT;
+  dev_mess.DEV_MINOR = minor_dev;
+  dev_mess.DEV_SEL_OPS = ops;
+
+  /* Call the task. */
+  return (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+}
+
+
+/*===========================================================================*
+ *				dev_cancel				     *
+ *===========================================================================*/
+int dev_cancel(dev_t dev)
+{
+/* Cancel an I/O request, blocking until it has been cancelled. */
+  int r, minor_dev, major_dev;
+  message dev_mess;
+  struct dmap *dp;
+
+  major_dev = major(dev);
+  minor_dev = minor(dev);
+  dp = &dmap[major_dev];
+
+  memset(&dev_mess, 0, sizeof(dev_mess));
+
+  dev_mess.m_type = CANCEL;
+  dev_mess.DEVICE = minor_dev;
+  dev_mess.USER_ENDPT = fp->fp_ioproc;
+  dev_mess.IO_GRANT = (char *) fp->fp_grant;
+
+  /* Tell driver R or W. Mode is from current call, not open. */
+  /* FIXME: ioctls also pass through here! */
+  dev_mess.COUNT = fp->fp_block_callnr == READ ? R_BIT : W_BIT;
+
+  r = (*dp->dmap_io)(fp->fp_task, &dev_mess);
+  if (r != OK) return r; /* ctty_io returned an error? should be impossible */
+
+  /* Suspend this thread until we have received the response. */
+  fp->fp_task = dp->dmap_driver;
+  self->w_task = dp->dmap_driver;
+  self->w_drv_sendrec = &dev_mess;
+
+  worker_wait();
+
+  self->w_task = NONE;
+  self->w_drv_sendrec = NULL;
+
+  /* Clean up and return the result (note: the request may have completed). */
+  if (GRANT_VALID(fp->fp_grant)) {
+	(void) cpf_revoke(fp->fp_grant);
+	fp->fp_grant = GRANT_INVALID;
+  }
+
+  r = dev_mess.REP_STATUS;
+  return (r == EAGAIN) ? EINTR : r;
+}
+
+
+/*===========================================================================*
+ *				block_io				     *
+ *===========================================================================*/
+static int block_io(endpoint_t driver_e, message *mess_ptr)
+{
+/* Perform I/O on a block device. The current thread is suspended until a reply
+ * comes in from the driver.
  */
-  int r, status = OK, proc_e = NONE, is_bdev, retry_count;
+  int r, status, retry_count;
   message mess_retry;
 
-  is_bdev = IS_BDEV_RQ(mess_ptr->m_type);
+  assert(IS_BDEV_RQ(mess_ptr->m_type));
   mess_retry = *mess_ptr;
   retry_count = 0;
-
-  if (!is_bdev) proc_e = mess_ptr->USER_ENDPT;
 
   do {
 	r = drv_sendrec(driver_e, mess_ptr);
 	if (r == OK) {
-		if (is_bdev)
-			status = mess_ptr->BDEV_STATUS;
-		else
-			status = mess_ptr->REP_STATUS;
+		status = mess_ptr->BDEV_STATUS;
 		if (status == ERESTART) {
 			r = EDEADEPT;
 			*mess_ptr = mess_retry;
@@ -652,39 +661,26 @@ message *mess_ptr;		/* pointer to message for task */
 		printf("VFS: ELOCKED talking to %d\n", driver_e);
 		return(r);
 	}
-	panic("call_task: can't send/receive: %d", r);
+	panic("block_io: can't send/receive: %d", r);
   }
-
-  /* Did the process we did the sendrec() for get a result? */
-  if (!is_bdev && mess_ptr->REP_ENDPT != proc_e && mess_ptr->m_type != EIO) {
-	printf("VFS: strange device reply from %d, type = %d, "
-		"proc = %d (not %d) (2) ignored\n", mess_ptr->m_source,
-		mess_ptr->m_type, proc_e, mess_ptr->REP_ENDPT);
-
-	return(EIO);
-  } else if (!IS_DRV_REPLY(mess_ptr->m_type))
-	return(EIO);
 
   return(OK);
 }
 
 
 /*===========================================================================*
- *				asyn_io					     *
+ *				gen_io					     *
  *===========================================================================*/
-int asyn_io(endpoint_t drv_e, message *mess_ptr)
+int gen_io(endpoint_t drv_e, message *mess_ptr)
 {
-/* All file system I/O ultimately comes down to I/O on major/minor device
- * pairs. These lead to calls on the following routines via the dmap table.
- */
-
+/* Initiate I/O to a character driver. Do not wait for the reply. */
   int r;
 
   assert(!IS_BDEV_RQ(mess_ptr->m_type));
 
   r = asynsend3(drv_e, mess_ptr, AMF_NOREPLY);
 
-  if (r != OK) panic("VFS: asynsend in asyn_io failed: %d", r);
+  if (r != OK) panic("VFS: asynsend in gen_io failed: %d", r);
 
   /* Fake a SUSPEND */
   mess_ptr->REP_STATUS = SUSPEND;
@@ -709,7 +705,7 @@ int ctty_io(
 
   if (fp->fp_tty == 0) {
 	/* No controlling tty present anymore, return an I/O error. */
-	mess_ptr->REP_STATUS = EIO;
+	return(EIO);
   } else {
 	/* Substitute the controlling terminal device. */
 	dp = &dmap[major(fp->fp_tty)];
@@ -725,10 +721,8 @@ int ctty_io(
 		return(EIO);
 	}
 
-	(*dp->dmap_io)(dp->dmap_driver, mess_ptr);
+	return (*dp->dmap_io)(dp->dmap_driver, mess_ptr);
   }
-
-  return(OK);
 }
 
 
@@ -800,8 +794,8 @@ int clone_opcl(
   r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
   if (r != OK) return(r);
 
-  if (op == DEV_OPEN && dev_style_asyn(dp->dmap_style)) {
-	/* Wait for reply when driver is asynchronous */
+  if (op == DEV_OPEN) {
+	/* Wait for the reply. */
 	fp->fp_task = dp->dmap_driver;
 	self->w_task = dp->dmap_driver;
 	self->w_drv_sendrec = &dev_mess;
@@ -967,6 +961,50 @@ void open_reply(void)
   *wp->w_drv_sendrec = job_m_in;
   worker_signal(wp);	/* Continue open */
 }
+
+
+/*===========================================================================*
+ *				task_reply				     *
+ *===========================================================================*/
+void task_reply(void)
+{
+/* A character driver has results for a read, write, or ioctl call. */
+  struct fproc *rfp;
+  struct worker_thread *wp;
+  endpoint_t proc_e;
+  int slot;
+
+  proc_e = job_m_in.REP_ENDPT;
+  if (proc_e == VFS_PROC_NR)
+	proc_e = find_suspended_ep(job_m_in.m_source, job_m_in.REP_IO_GRANT);
+  else
+	printf("VFS: endpoint %u from %u is not VFS\n",
+		proc_e, job_m_in.m_source);
+
+  if (proc_e == NONE) {
+	printf("VFS: proc with grant %d from %d not found\n",
+		job_m_in.REP_IO_GRANT, job_m_in.m_source);
+  } else if (job_m_in.REP_STATUS == SUSPEND) {
+	printf("VFS: got SUSPEND on DEV_REVIVE: not reviving proc\n");
+  } else {
+	/* If there is a thread active for this process, we assume that this
+	 * thread aims to cancel the ongoing operation. In that case, wake up
+	 * the thread to let it finish unpausing the process. Otherwise, revive
+	 * the process as usual.
+	 */
+	if (isokendpt(proc_e, &slot) != OK) return;
+	rfp = &fproc[slot];
+	wp = worker_get(rfp->fp_wtid);
+	if (wp != NULL && wp->w_task == who_e) {
+		assert(!fp_is_blocked(rfp));
+		*wp->w_drv_sendrec = job_m_in;
+		worker_signal(wp);	/* Continue cancel */
+	} else {
+		revive(proc_e, job_m_in.REP_STATUS);
+	}
+  }
+}
+
 
 /*===========================================================================*
  *				dev_reply				     *
