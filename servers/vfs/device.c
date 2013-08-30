@@ -34,7 +34,6 @@
 #include <minix/ioctl.h>
 #include <minix/u64.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
 #include "dmap.h"
 #include <minix/vfsif.h>
@@ -49,7 +48,6 @@ static void restart_reopen(int major);
 static void reopen_reply(message *m_ptr);
 
 static int dummyproc;
-
 
 /*===========================================================================*
  *				dev_open				     *
@@ -958,7 +956,7 @@ static void open_reply(message *m_ptr)
   proc_e = m_ptr->REP_ENDPT;
   if (isokendpt(proc_e, &slot) != OK) return;
   rfp = &fproc[slot];
-  wp = worker_get(rfp->fp_wtid);
+  wp = rfp->fp_worker;
   if (wp == NULL || wp->w_task != who_e) {
 	printf("VFS: no worker thread waiting for a reply from %d\n", who_e);
 	return;
@@ -1003,7 +1001,7 @@ static void task_reply(message *m_ptr)
 	 */
 	if (isokendpt(proc_e, &slot) != OK) return;
 	rfp = &fproc[slot];
-	wp = worker_get(rfp->fp_wtid);
+	wp = rfp->fp_worker;
 	if (wp != NULL && wp->w_task == who_e) {
 		assert(!fp_is_blocked(rfp));
 		*wp->w_drv_sendrec = *m_ptr;
@@ -1080,6 +1078,20 @@ void bdev_reply(struct dmap *dp)
 }
 
 /*===========================================================================*
+ *				filp_gc_thread				     *
+ *===========================================================================*/
+static void filp_gc_thread(void)
+{
+/* Filp garbage collection thread function. Since new filps may be invalidated
+ * while the actual garbage collection procedure is running, we repeat the
+ * procedure until it can not find any more work to do.
+ */
+
+  while (do_filp_gc())
+	/* simply repeat */;
+}
+
+/*===========================================================================*
  *				restart_reopen				     *
  *===========================================================================*/
 static void restart_reopen(maj)
@@ -1126,9 +1138,14 @@ int maj;
 
 	/* We have to clean up this filp and vnode, but can't do that yet as
 	 * it's locked by a worker thread. Start a new job to garbage collect
-	 * invalidated filps associated with this device driver.
+	 * invalidated filps associated with this device driver. This thread
+	 * is associated with a process that we know is idle otherwise: VFS.
+	 * Be careful that we don't start two threads or lose work, though.
 	 */
-	sys_worker_start(do_filp_gc);
+	if (worker_can_start(fproc_addr(VFS_PROC_NR))) {
+		worker_start(fproc_addr(VFS_PROC_NR), filp_gc_thread,
+			&m_out /*unused*/, FALSE /*use_spare*/);
+	}
   }
 
   /* Nothing more to re-open. Restart suspended processes */

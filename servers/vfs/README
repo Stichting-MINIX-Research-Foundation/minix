@@ -106,50 +106,18 @@ know the details of the protocol.
 Upon start up, VFS spawns a configurable amount of worker threads. The
 main thread fetches requests and replies, and hands them off to idle or
 reply-pending workers, respectively. If no worker threads are available,
-the request is queued. There are 3 types of worker threads: normal, a system
-worker, and a deadlock resolver. All standard system calls are handled by
-normal worker threads. Jobs from PM and notifications from the kernel are taken
-care of by the system worker. The deadlock resolver handles jobs from system
+the request is queued. All standard system calls are handled by such worker
+threads. One of the threads is reserved to handle new requests from system
 processes (i.e., File Servers and drivers) when there are no normal worker
 threads available; all normal threads might be blocked on a single worker
 thread that caused a system process to send a request on its own. To unblock
-all normal threads, we need to reserve one thread to handle that situation.
-VFS drives all File Servers and drivers asynchronously. While waiting for
-a reply, a worker thread is blocked and other workers can keep processing
-requests. Upon reply the worker thread is unblocked.
-As mentioned above, the main thread is responsible for retrieving new jobs and
-replies to current jobs and start or unblock the proper worker thread. Given
-how many sources for new jobs and replies there are, the work for the main
-thread is quite complicated. Consider Table 1.
-{{{
----------------------------------------------------------
-| From                 |  normal  | deadlock |  system  |
----------------------------------------------------------
- msg is new job
----------------------------------------------------------
-| PM                   |          |          |    X     |
-+----------------------+----------+----------+----------+
-| Notification from    |          |          |          |
-| the kernel           |          |          |    X     |
-+----------------------+----------+----------+----------+
-| Notification from    |          |          |          |
-| DS or system process |    X     |    X     |          |
-+----------------------+----------+----------+----------+
-| User process         |    X     |          |          |
-+----------------------+----------+----------+----------+
-| Unsuspended process  |    X     |          |          |
----------------------------------------------------------
- msg is reply
----------------------------------------------------------
-| File Server reply    |  resume  |          |          |
-+----------------------+----------+----------+----------+
-| Block driver reply   |  resume  |          |          |
-+----------------------+----------+----------+----------+
-| Char. driver reply   | resume/X |          |          |
----------------------------------------------------------
-}}}
-Table 1: VFS' message fetching main loop. X means 'start thread'.
+all normal threads, we need to reserve one spare thread to handle that
+situation. VFS drives all File Servers and drivers asynchronously. While
+waiting for a reply, a worker thread is blocked and other workers can keep
+processing requests. Upon reply the worker thread is unblocked.
 
+As mentioned above, the main thread is responsible for retrieving new jobs and
+replies to current jobs and start or unblock the proper worker thread.
 Driver replies are processed directly from the main thread. As a consequence,
 these processing routines may not block their calling thread. In some cases,
 these routines may resume a thread that is blocked waiting for the reply. This
@@ -158,19 +126,56 @@ character driver replies. The character driver reply processing routines may
 also unblock suspended processes which in turn generate new jobs to be handled
 by the main loop (e.g., suspended reads and writes on pipes). So depending
 on the reply a new thread may have to be started.
-When there are no worker threads available and there is no need to invoke
-the deadlock resolver (i.e., normal system calls), the request is queued in
-the fproc table. This works because a process can send only one system call
-at a time. When implementing kernel threads, one has to take this assumption
-into account.
-The protocol PM speaks with VFS is asynchronous and PM is allowed to
-send as many request to VFS as it wants. It is impossible to use the same
-queueing mechanism as normal processes use, because that would allow for
-just 1 queued message. Instead, the system worker maintains a linked list
-of pending requests. Moreover, this queueing mechanism is also the reason
-why notifications from the kernel are handled by the system worker; the
-kernel has no corresponding fproc table entry (so we can't store it there)
-and the linked list has no dependencies on that table.
+
+Worker threads are strictly tied to a process, and each process can have at
+most one worker thread running for it. Generally speaking, there are two types
+of work supported by worker threads: normal work, and work from PM. The main
+subtype of normal work is the handling of a system call made by the process
+itself. The process is blocked while VFS is handling the system call, so no new
+system call can arrive from a process while VFS has not completed a previous
+system call from that process. For that reason, if there are no worker threads
+available to handle the work, the work is queued in the corresponding process
+entry of the fproc table.
+
+The other main type of work consists of requests from PM. The protocol PM
+speaks with VFS is asynchronous. PM is allowed to send up to one request per
+process to VFS, in addition to a request to initiate a reboot. Most jobs from
+PM are taken care of immediately by the main thread, but some jobs require a
+worker thread context (to be able to sleep) and/or serialization with normal
+work. Therefore, each process may have a PM request queued for execution, also
+in the fproc table. Managing proper queuing, addition, and execution of both
+normal and PM work is the responsibility of the worker thread infrastructure.
+
+There are several special tasks that require a worker thread, and these are
+implemented as normal work associated with a certain special process that does
+not make regular VFS calls anyway. For example, the initial ramdisk mount
+procedure and the post-crash filp garbage collector use a thread associated
+with the VFS process. Some of these special tasks require protection against
+being started multiple times at once, as this is not only undesirable but also
+disallowed. The full list of worker thread task types and subtypes is shown in
+Table 1.
+
+{{{
+-------------------------------------------------------------------------
+| Worker thread task        | Type   | Association     | May use spare? |
++---------------------------+--------+-----------------+----------------+
+| system call from process  | normal | calling process | if system proc |
++---------------------------+--------+-----------------+----------------+
+| resumed pipe operation    | normal | calling process | no             |
++---------------------------+--------+-----------------+----------------+
+| postponed PM request      | PM     | target process  | no             |
++---------------------------+--------+-----------------+----------------+
+| DS event notification     | normal | DS              | yes            |
++---------------------------+--------+-----------------+----------------+
+| filp garbage collection   | normal | VFS             | no             |
++---------------------------+--------+-----------------+----------------+
+| initial ramdisk mounting  | normal | VFS             | no             |
++---------------------------+--------+-----------------+----------------+
+| reboot sequence           | normal | PM              | no             |
+-------------------------------------------------------------------------
+}}}
+Table 1: worker thread work types and subtypes
+
 Communication with block drivers is asynchronous, but at this time, access to
 these drivers is serialized on a per-driver basis. File Servers are treated
 differently. VFS was designed to be able to send requests concurrently to File
@@ -305,22 +310,42 @@ fproc, vmnt, vnode, and filp objects. To prevent deadlocks as a result of
 object locking, we need to define a strict locking order. In VFS we use the
 following order:
 
-fproc -> [exec] -> vmnt -> vnode -> filp -> [block special file] -> [dmap]
+{{{
+fproc > [exec] > vmnt > vnode > filp > [block special file] > [dmap]
+}}}
 
 That is, no thread may lock an fproc object while holding a vmnt lock,
 and no thread may lock a vmnt object while holding an (associated) vnode, etc.
+
 Fproc needs protection because processes themselves can initiate system
 calls, but also PM can cause system calls that have to be executed in their
 name. For example, a process might be busy reading from a character device
 and another process sends a termination signal. The exit(2) that follows is
 sent by PM and is to be executed by the to-be-killed process itself. At this
 point there is contention for the fproc object that belongs to the process,
-hence the need for protection.
-The exec(2) call is protected by a mutex for the following reason. VFS uses a
-number of variables on the heap to read ELF headers. They are on the heap due
-to their size; putting them on the stack would increase stack size demands for
-worker threads. The exec call does blocking read calls and thus needs exclusive
-access to these variables. However, only the exec(2) syscall needs this lock.
+hence the need for protection. This problem is solved in a simple way. Recall
+that all worker threads are bound to a process. This also forms the basis of
+fproc locking: each worker thread acquires and holds the fproc lock for its
+associated process for as long as it is processing work for that process.
+
+There are two cases where a worker thread may hold the lock to more than one
+process. First, as mentioned, the reboot procedure is executed from a worker
+thread set in the context of the PM process, thus with the PM process entry
+lock held. The procedure itself then acquires a temporary lock on every other
+process in turn, in order to clean it up without interference. Thus, the PM
+process entry is higher up in the locking order than all other process entries.
+
+Second, the exec(2) call is protected by a lock, and this exec lock is
+currently implemented as a lock on the VM process entry. The exec lock is
+acquired by a worker thread for the process performing the exec(2) call, and
+thus, the VM process entry is below all other process entries in the locking
+order. The exec(2) call is protected by a lock for the following reason. VFS
+uses a number of variables on the heap to read ELF headers. They are on the
+heap due to their size; putting them on the stack would increase stack size
+demands for worker threads. The exec call does blocking read calls and thus
+needs exclusive access to these variables. However, only the exec(2) syscall
+needs this lock.
+
 Access to block special files needs to be exclusive. File Servers are
 responsible for handling reads from and writes to block special files; if
 a block special file is on a device that is mounted, the FS responsible for

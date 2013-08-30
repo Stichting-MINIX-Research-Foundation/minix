@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
 #include "lock.h"
 #include "vnode.h"

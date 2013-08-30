@@ -11,8 +11,6 @@
 #include <unistd.h>
 #include <minix/com.h>
 #include <minix/ds.h>
-#include "fproc.h"
-#include "dmap.h"
 #include "param.h"
 
 /* The order of the entries in the table determines the mapping between major
@@ -31,20 +29,17 @@ void lock_dmap(struct dmap *dp)
 {
 /* Lock a driver */
 	struct worker_thread *org_self;
-	struct fproc *org_fp;
 	int r;
 
 	assert(dp != NULL);
 	assert(dp->dmap_driver != NONE);
 
-	org_fp = fp;
-	org_self = self;
+	org_self = worker_suspend();
 
 	if ((r = mutex_lock(dp->dmap_lock_ref)) != 0)
 		panic("unable to get a lock on dmap: %d\n", r);
 
-	fp = org_fp;
-	self = org_self;
+	worker_resume(org_self);
 }
 
 /*===========================================================================*

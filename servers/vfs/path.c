@@ -18,11 +18,9 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <dirent.h>
-#include "threads.h"
 #include "vmnt.h"
 #include "vnode.h"
 #include "path.h"
-#include "fproc.h"
 #include "param.h"
 
 /* Set to following define to 1 if you really want to use the POSIX definition

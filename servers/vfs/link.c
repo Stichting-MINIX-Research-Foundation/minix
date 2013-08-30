@@ -20,7 +20,6 @@
 #include <dirent.h>
 #include <assert.h>
 #include "file.h"
-#include "fproc.h"
 #include "path.h"
 #include "vnode.h"
 #include "param.h"

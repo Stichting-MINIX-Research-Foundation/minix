@@ -27,9 +27,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
-#include "dmap.h"
 #include "param.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -523,29 +521,27 @@ void revive(endpoint_t proc_e, int returned)
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-void unpause(endpoint_t proc_e)
+void unpause(void)
 {
 /* A signal has been sent to a user who is paused on the file system.
  * Abort the system call with the EINTR error message.
  */
-
-  register struct fproc *rfp, *org_fp;
-  int slot, blocked_on, fild, status = EINTR;
+  int blocked_on, fild, status = EINTR;
   struct filp *f;
   dev_t dev;
   int wasreviving = 0;
 
-  if (isokendpt(proc_e, &slot) != OK) {
-	printf("VFS: ignoring unpause for bogus endpoint %d\n", proc_e);
-	return;
-  }
+  if (!fp_is_blocked(fp)) return;
+  blocked_on = fp->fp_blocked_on;
 
-  rfp = &fproc[slot];
-  if (!fp_is_blocked(rfp)) return;
-  blocked_on = rfp->fp_blocked_on;
+  /* Clear the block status now. The procedure below might make blocking calls
+   * and it is imperative that while at least dev_cancel() is executing, other
+   * parts of VFS do not perceive this process as blocked on something.
+   */
+  fp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 
-  if (rfp->fp_flags & FP_REVIVED) {
-	rfp->fp_flags &= ~FP_REVIVED;
+  if (fp->fp_flags & FP_REVIVED) {
+	fp->fp_flags &= ~FP_REVIVED;
 	reviving--;
 	wasreviving = 1;
   }
@@ -565,30 +561,27 @@ void unpause(endpoint_t proc_e)
 		break;
 
 	case FP_BLOCKED_ON_OTHER:/* process trying to do device I/O (e.g. tty)*/
-		if (rfp->fp_flags & FP_SUSP_REOPEN) {
+		if (fp->fp_flags & FP_SUSP_REOPEN) {
 			/* Process is suspended while waiting for a reopen.
 			 * Just reply EINTR.
 			 */
-			rfp->fp_flags &= ~FP_SUSP_REOPEN;
+			fp->fp_flags &= ~FP_SUSP_REOPEN;
 			status = EINTR;
 			break;
 		}
 
-		fild = scratch(rfp).file.fd_nr;
+		fild = scratch(fp).file.fd_nr;
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic("file descriptor out-of-range");
-		f = rfp->fp_filp[fild];
+		f = fp->fp_filp[fild];
 		if(!f) {
-			sys_sysctl_stacktrace(rfp->fp_endpoint);
+			sys_sysctl_stacktrace(fp->fp_endpoint);
 			panic("process %d blocked on empty fd %d",
-				rfp->fp_endpoint, fild);
+				fp->fp_endpoint, fild);
 		}
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
 
-		org_fp = fp;
-		fp = rfp;	/* hack - ctty_io uses fp */
 		status = dev_cancel(dev);
-		fp = org_fp;
 
 		break;
 	default :
@@ -600,9 +593,5 @@ void unpause(endpoint_t proc_e)
 	susp_count--;
   }
 
-  if(rfp->fp_blocked_on != FP_BLOCKED_ON_NONE) {
-	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	replycode(proc_e, status);	/* signal interrupted call */
-  }
+  replycode(fp->fp_endpoint, status);	/* signal interrupted call */
 }
-
