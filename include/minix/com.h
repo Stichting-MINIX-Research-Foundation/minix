@@ -196,7 +196,6 @@
 #define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
 #define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
-#define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
 #define DEV_REOPEN     	(DEV_RQ_BASE + 14) /* reopen a minor device */
 
 #define DEV_READ_S	(DEV_RQ_BASE + 20) /* (safecopy) read from minor */
@@ -208,8 +207,6 @@
 #define IS_DEV_RQ(type) (((type) & ~0xff) == DEV_RQ_BASE)
 
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
-#define DEV_IO_READY    (DEV_RS_BASE + 3) /* selected device ready */
-#define DEV_NO_STATUS   (DEV_RS_BASE + 4) /* empty status reply */
 #define DEV_REOPEN_REPL (DEV_RS_BASE + 5) /* reply to DEV_REOPEN */
 #define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
 #define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
@@ -240,12 +237,6 @@
 #define REP_STATUS	m2_i2	/* bytes transferred or error number */
 #define REP_IO_GRANT	m2_i3	/* DEV_REVIVE: grant by which I/O was done */
 #  define SUSPEND 	 -998 	/* status to suspend caller, reply later */
-
-/* Field names for messages to TTY driver. */
-#define TTY_LINE	DEVICE	/* message parameter: terminal line */
-#define TTY_REQUEST	COUNT	/* message parameter: ioctl request code */
-#define TTY_SPEK	POSITION/* message parameter: ioctl speed, erasing */
-#define TTY_PGRP 	m2_i3	/* message parameter: process group */	
 
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
@@ -825,7 +816,6 @@
 
 /* Additional parameters for PM_DUMPCORE */
 #  define PM_TERM_SIG		m7_i2	/* process's termination signal */
-#  define PM_TRACED_PROC	m7_i3	/* required for T_DUMPCORE */
 
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */
@@ -910,6 +900,11 @@
 #define STATVFS_LEN m1_i1
 #define STATVFS_NAME m1_p1
 #define STATVFS_BUF m1_p2
+
+/* Field names for the ioctl(2) call. */
+#define VFS_IOCTL_FD		m2_i1
+#define VFS_IOCTL_REQ		m2_i3
+#define VFS_IOCTL_ARG		m2_p1
 
 /*===========================================================================*
  *                Messages for VM server				     *
