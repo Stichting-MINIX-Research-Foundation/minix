@@ -106,7 +106,6 @@ OBJS.${o} += common.o
 
 # LSC Make sure there is not leftover after a failed testrun
 clean: .PHONY .MAKE
-	@${MAKE} -C select clean || true
 	@rm -rf DIR*
 
 .include <bsd.prog.mk>
