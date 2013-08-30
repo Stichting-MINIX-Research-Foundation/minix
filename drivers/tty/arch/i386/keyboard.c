@@ -246,6 +246,10 @@ message *m;
 		}
 		if (kbdp->avail == 0)
 		{
+			if (m->FLAGS & FLG_OP_NONBLOCK) {
+				r = EAGAIN;
+				break;
+			}
 			/* Should record proc */
 			kbdp->req_size= m->COUNT;
 			kbdp->req_proc= m->USER_ENDPT;

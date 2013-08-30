@@ -220,8 +220,9 @@ register message *m_ptr;	/* pointer to the newly arrived message */
     /* Reject command if last write is not yet finished, the count is not
      * positive, or the user address is bad.
      */
-    if (writing)  			r = EIO;
-    else if (m_ptr->COUNT <= 0)  	r = EINVAL;
+    if (writing)  				r = EIO;
+    else if (m_ptr->COUNT <= 0)  		r = EINVAL;
+    else if (m_ptr->FLAGS & FLG_OP_NONBLOCK)	r = EAGAIN; /* not supported */
 
     /* Reply to FS, no matter what happened, possible SUSPEND caller. */
     reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);

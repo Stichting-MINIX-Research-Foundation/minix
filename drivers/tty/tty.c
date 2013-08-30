@@ -309,6 +309,7 @@ set_color(tty_t *tp, int color)
 
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[1;%dm", color);
+	memset(&msg, 0, sizeof(msg));
 	msg.m_source = KERNEL;
 	msg.IO_GRANT = buf;
 	msg.COUNT = sizeof(buf);
@@ -324,6 +325,7 @@ reset_color(tty_t *tp)
 #define SGR_COLOR_RESET	39
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[0;%dm", SGR_COLOR_RESET);
+	memset(&msg, 0, sizeof(msg));
 	msg.m_source = KERNEL;
 	msg.IO_GRANT = buf;
 	msg.COUNT = sizeof(buf);
@@ -499,6 +501,7 @@ do_new_kmess(void)
 
 		if (kernel_msg_color != 0)
 			set_color(tp, kernel_msg_color);
+		memset(&print_kmsg, 0, sizeof(print_kmsg));
 		print_kmsg.m_source = KERNEL;
 		print_kmsg.IO_GRANT = kernel_buf_copy;
 		print_kmsg.COUNT = bytes;
@@ -685,11 +688,16 @@ register message *m_ptr;	/* pointer to message sent to the task */
 		return;			/* already done */
 	}
 
-	/* There were no bytes in the input queue available, so suspend
-	 * the caller.
-	 */
-	r = SUSPEND;				/* suspend the caller */
-	tp->tty_inrepcode = TTY_REVIVE;
+	/* There were no bytes in the input queue available. */
+	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
+		tty_icancel(tp);
+		r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
+		tp->tty_inleft = tp->tty_incum = tp->tty_inrevived = 0;
+		tp->tty_ingrant = GRANT_INVALID;
+	} else {
+		r = SUSPEND;			/* suspend the caller */
+		tp->tty_inrepcode = TTY_REVIVE;
+	}
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
   if (tp->tty_select_ops)
@@ -728,11 +736,15 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	if (tp->tty_outleft == 0)
 		return;	/* already done */
 
-	/* None or not all the bytes could be written, so suspend the
-	 * caller.
-	 */
-	r = SUSPEND;				/* suspend the caller */
-	tp->tty_outrepcode = TTY_REVIVE;
+	/* None or not all the bytes could be written. */
+	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
+		r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
+		tp->tty_outleft = tp->tty_outcum = tp->tty_outrevived = 0;
+		tp->tty_outgrant = GRANT_INVALID;
+	} else {
+		r = SUSPEND;			/* suspend the caller */
+		tp->tty_outrepcode = TTY_REVIVE;
+	}
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
 }
@@ -800,12 +812,16 @@ message *m_ptr;			/* pointer to message sent to task */
     case TCSETSF:
     case TCDRAIN:
 	if (tp->tty_outleft > 0) {
-		/* Wait for all ongoing output processing to finish. */
-		tp->tty_iocaller = m_ptr->m_source;
-		tp->tty_ioproc = m_ptr->USER_ENDPT;
-		tp->tty_ioreq = m_ptr->REQUEST;
-		tp->tty_iogrant = (cp_grant_id_t) m_ptr->IO_GRANT;
-		r = SUSPEND;
+		if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
+			r = EAGAIN;
+		} else {
+			/* Wait for all ongoing output processing to finish. */
+			tp->tty_iocaller = m_ptr->m_source;
+			tp->tty_ioproc = m_ptr->USER_ENDPT;
+			tp->tty_ioreq = m_ptr->REQUEST;
+			tp->tty_iogrant = (cp_grant_id_t) m_ptr->IO_GRANT;
+			r = SUSPEND;
+		}
 		break;
 	}
 	if (m_ptr->TTY_REQUEST == TCDRAIN) break;

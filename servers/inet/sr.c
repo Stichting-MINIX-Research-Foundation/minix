@@ -156,9 +156,10 @@ mq_t *m;
 	case DEV_WRITE_S:
 	case DEV_IOCTL_S:
 		result= sr_rwio(m);
-		assert(result == OK || result == SUSPEND);
-		send_reply= (result == SUSPEND);
-		free_mess= 0;
+		assert(result == OK || result == EAGAIN || result == EINTR ||
+			result == SUSPEND);
+		send_reply= (result == EAGAIN || result == SUSPEND);
+		free_mess= (result == EAGAIN);
 		break;
 	case CANCEL:
 		result= sr_cancel(&m->mq_mess);
@@ -323,6 +324,9 @@ mq_t *m;
 		assert(sr_fd->srf_flags & susp_flag);
 		assert(*q_head_ptr);
 
+		if (m->mq_mess.FLAGS & FLG_OP_NONBLOCK)
+			return EAGAIN;
+
 		(*q_tail_ptr)->mq_next= m;
 		*q_tail_ptr= m;
 		return SUSPEND;
@@ -368,9 +372,14 @@ mq_t *m;
 
 	assert(r == OK || r == SUSPEND || 
 		(printf("r= %d\n", r), 0));
-	if (r == SUSPEND)
+	if (r == SUSPEND) {
 		sr_fd->srf_flags |= susp_flag;
-	else
+		if (m->mq_mess.FLAGS & FLG_OP_NONBLOCK) {
+			r= sr_cancel(&m->mq_mess);
+			assert(r == OK); /* must have been head of queue */
+			return EINTR;
+		}
+	} else
 		mq_free(m);
 	return r;
 }
