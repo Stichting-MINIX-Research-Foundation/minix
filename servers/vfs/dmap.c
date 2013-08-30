@@ -180,11 +180,11 @@ int flags;			/* device flags */
   switch (style) {
     case STYLE_DEV:
 	dp->dmap_opcl = gen_opcl;
-	dp->dmap_io = asyn_io;
+	dp->dmap_io = gen_io;
 	break;
     case STYLE_TTY:
 	dp->dmap_opcl = tty_opcl;
-	dp->dmap_io = asyn_io;
+	dp->dmap_io = gen_io;
 	break;
     case STYLE_CTTY:
 	dp->dmap_opcl = ctty_opcl;
@@ -192,7 +192,7 @@ int flags;			/* device flags */
 	break;
     case STYLE_CLONE:
 	dp->dmap_opcl = clone_opcl;
-	dp->dmap_io = asyn_io;
+	dp->dmap_io = gen_io;
 	break;
     default:
 	return(EINVAL);

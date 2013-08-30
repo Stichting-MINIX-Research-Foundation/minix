@@ -38,8 +38,7 @@ int bdev_close(dev_t dev);
 int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
 	size_t bytes, int flags, int suspend_reopen);
 int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
-int gen_io(endpoint_t driver_e, message *mess_ptr);
-int asyn_io(endpoint_t drv_e, message *mess_ptr);
+int gen_io(endpoint_t drv_e, message *mess_ptr);
 int no_dev(int op, dev_t dev, endpoint_t proc, int flags);
 int no_dev_io(endpoint_t, message *);
 int tty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
@@ -47,12 +46,14 @@ int ctty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int clone_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int ctty_io(endpoint_t task_nr, message *mess_ptr);
 int do_ioctl(message *m_out);
+int dev_select(dev_t dev, int ops);
+int dev_cancel(dev_t dev);
 void pm_setsid(endpoint_t proc_e);
 void bdev_up(int major);
 void cdev_up(int major);
-endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g);
 void reopen_reply(void);
 void open_reply(void);
+void task_reply(void);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);

@@ -52,11 +52,9 @@ static int is_regular_file(struct filp *f);
 static int is_pipe(struct filp *f);
 static int is_supported_major(struct filp *f);
 static void select_lock_filp(struct filp *f, int ops);
-static int select_request_async(struct filp *f, int *ops, int block);
 static int select_request_file(struct filp *f, int *ops, int block);
 static int select_request_major(struct filp *f, int *ops, int block);
 static int select_request_pipe(struct filp *f, int *ops, int block);
-static int select_request_sync(struct filp *f, int *ops, int block);
 static void select_cancel_all(struct selectentry *e);
 static void select_cancel_filp(struct filp *f);
 static void select_return(struct selectentry *);
@@ -336,12 +334,15 @@ static int is_supported_major(struct filp *f)
 }
 
 /*===========================================================================*
- *				select_request_async			     *
+ *				select_request_major			     *
  *===========================================================================*/
-static int select_request_async(struct filp *f, int *ops, int block)
+static int select_request_major(struct filp *f, int *ops, int block)
 {
   int r, rops, major;
   struct dmap *dp;
+
+  major = major(f->filp_vno->v_sdev);
+  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
 
   rops = *ops;
 
@@ -375,19 +376,14 @@ static int select_request_async(struct filp *f, int *ops, int block)
   if (f->filp_select_flags & FSF_BUSY)
 	return(SUSPEND);
 
-  major = major(f->filp_vno->v_sdev);
-  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
   dp = &dmap[major];
   if (dp->dmap_sel_filp)
 	return(SUSPEND);
 
   f->filp_select_flags &= ~FSF_UPDATE;
-  r = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL, 0, 0, 0, FALSE);
-  if (r < 0 && r != SUSPEND)
+  r = dev_select(f->filp_vno->v_sdev, rops);
+  if (r != OK)
 	return(r);
-
-  if (r != SUSPEND)
-	panic("select_request_asynch: expected SUSPEND got: %d", r);
 
   dp->dmap_sel_filp = f;
   f->filp_select_flags |= FSF_BUSY;
@@ -402,40 +398,6 @@ static int select_request_file(struct filp *UNUSED(f), int *UNUSED(ops),
   int UNUSED(block))
 {
   /* Files are always ready, so output *ops is input *ops */
-  return(OK);
-}
-
-/*===========================================================================*
- *				select_request_major			     *
- *===========================================================================*/
-static int select_request_major(struct filp *f, int *ops, int block)
-{
-  int major, r;
-
-  major = major(f->filp_vno->v_sdev);
-  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
-
-  if (dev_style_asyn(dmap[major].dmap_style))
-	r = select_request_async(f, ops, block);
-  else
-	r = select_request_sync(f, ops, block);
-
-  return(r);
-}
-
-/*===========================================================================*
- *				select_request_sync			     *
- *===========================================================================*/
-static int select_request_sync(struct filp *f, int *ops, int block)
-{
-  int rops;
-
-  rops = *ops;
-  if (block) rops |= SEL_NOTIFY;
-  *ops = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL, 0, 0, 0,FALSE);
-  if (*ops < 0)
-	return(*ops);
-
   return(OK);
 }
 

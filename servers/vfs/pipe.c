@@ -529,10 +529,9 @@ void unpause(endpoint_t proc_e)
  */
 
   register struct fproc *rfp, *org_fp;
-  int slot, blocked_on, fild, status = EINTR, major_dev, minor_dev;
+  int slot, blocked_on, fild, status = EINTR;
   struct filp *f;
   dev_t dev;
-  message mess;
   int wasreviving = 0;
 
   if (isokendpt(proc_e, &slot) != OK) {
@@ -584,31 +583,12 @@ void unpause(endpoint_t proc_e)
 				rfp->fp_endpoint, fild);
 		}
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
-		major_dev = major(dev);
-		minor_dev = minor(dev);
-		mess.DEVICE = minor_dev;
-		mess.USER_ENDPT = rfp->fp_ioproc;
-		mess.IO_GRANT = (char *) rfp->fp_grant;
-
-		/* Tell kernel R or W. Mode is from current call, not open. */
-		mess.COUNT = rfp->fp_block_callnr == READ ? R_BIT : W_BIT;
-		mess.m_type = CANCEL;
 
 		org_fp = fp;
 		fp = rfp;	/* hack - ctty_io uses fp */
-		(*dmap[major_dev].dmap_io)(rfp->fp_task, &mess);
+		status = dev_cancel(dev);
 		fp = org_fp;
-		status = mess.REP_STATUS;
-		if (status == SUSPEND)
-			return;		/* Process will be revived at a
-					 * later time.
-					 */
 
-		if (status == EAGAIN) status = EINTR;
-		if (GRANT_VALID(rfp->fp_grant)) {
-			(void) cpf_revoke(rfp->fp_grant);
-			rfp->fp_grant = GRANT_INVALID;
-		}
 		break;
 	default :
 		panic("VFS: unknown block reason: %d", blocked_on);

@@ -43,12 +43,4 @@
 				 */
 #define FSTYPE_MAX	VFS_NAMELEN	/* maximum file system type size */
 
-/* Args to dev_io */
-#define VFS_DEV_READ	2001
-#define	VFS_DEV_WRITE	2002
-#define VFS_DEV_IOCTL	2005
-#define VFS_DEV_SELECT	2006
-
-#define dev_style_asyn(n)	(TRUE)
-
 #endif
