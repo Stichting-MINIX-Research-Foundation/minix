@@ -14,15 +14,13 @@
  *   DEV_WRITE:	a process wants to write on a terminal
  *   CANCEL:	terminate a previous incomplete system call immediately
  *
- *    m_type      TTY_LINE  USER_ENDPT  COUNT    ADDRESS
+ *    m_type       DEVICE   USER_ENDPT  COUNT    ADDRESS
  * |-------------+---------+---------+---------+---------|
  * | DEV_OPEN    |         |         |         |         |
  * |-------------+---------+---------+---------+---------|
  * | DEV_CLOSE   |         | proc nr |         |         |
- * -------------------------------------------------------
- * | HARD_INT    |         |         |         |         |
  * |-------------+---------+---------+---------+---------|
- * | SYS_EVENT   |         |         |         |         |
+ * | HARD_INT    |         |         |         |         |
  * |-------------+---------+---------+---------+---------|
  * | DEV_WRITE   |minor dev| proc nr |  count  | buf ptr |
  * |-------------+---------+---------+---------+---------|
@@ -87,8 +85,6 @@
  */
 
 static endpoint_t caller;	/* process to tell when printing done (FS) */
-static int revive_pending;	/* set to true if revive is pending */
-static int revive_status;	/* revive status */
 static int done_status;	/* status of last output completion */
 static int oleft;		/* bytes of output left in obuf */
 static unsigned char obuf[128];	/* output buffer */
@@ -105,11 +101,11 @@ static int irq_hook_id;	/* id of irq hook at kernel */
 static void do_cancel(message *m_ptr);
 static void output_done(void);
 static void do_write(message *m_ptr);
-static void do_status(message *m_ptr);
 static void prepare_output(void);
 static int do_probe(void);
 static void do_initialize(void);
-static void reply(int code,int replyee,int proc,int status);
+static void reply(int code, endpoint_t replyee, endpoint_t proc,
+	cp_grant_id_t grant, int status);
 static void do_printer_output(void);
 
 /* SEF functions and variables. */
@@ -118,7 +114,6 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
-int is_status_msg_expected = FALSE;
 
 /*===========================================================================*
  *				printer_task				     *
@@ -142,26 +137,25 @@ int main(void)
 			case HARDWARE:
 				do_printer_output();
 				break;
-			default:
-				reply(TASK_REPLY, pr_mess.m_source,
-						pr_mess.USER_ENDPT, EINVAL);
 		}
 		continue;
 	}
 
 	switch(pr_mess.m_type) {
 	    case DEV_OPEN:
-                 do_initialize();		/* initialize */
-	        /* fall through */
+                do_initialize();		/* initialize */
+		reply(DEV_OPEN_REPL, pr_mess.m_source, pr_mess.USER_ENDPT,
+			(cp_grant_id_t) pr_mess.IO_GRANT, OK);
+		break;
 	    case DEV_CLOSE:
-		reply(TASK_REPLY, pr_mess.m_source, pr_mess.USER_ENDPT, OK);
+		reply(DEV_CLOSE_REPL, pr_mess.m_source, pr_mess.USER_ENDPT,
+			(cp_grant_id_t) pr_mess.IO_GRANT, OK);
 		break;
 	    case DEV_WRITE_S:	do_write(&pr_mess);	break;
-	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL:	do_cancel(&pr_mess);	break;
 	    default:
-		reply(TASK_REPLY, pr_mess.m_source, pr_mess.USER_ENDPT,
-			EINVAL);
+		reply(DEV_REVIVE, pr_mess.m_source, pr_mess.USER_ENDPT,
+			(cp_grant_id_t) pr_mess.IO_GRANT, EINVAL);
 	}
   }
 }
@@ -213,7 +207,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 {
 /* The printer is used by sending DEV_WRITE messages to it. Process one. */
 
-    register int r = SUSPEND;
+    int r = OK;
     int retries;
     u32_t status;
 
@@ -224,13 +218,10 @@ register message *m_ptr;	/* pointer to the newly arrived message */
     else if (m_ptr->COUNT <= 0)  		r = EINVAL;
     else if (m_ptr->FLAGS & FLG_OP_NONBLOCK)	r = EAGAIN; /* not supported */
 
-    /* Reply to FS, no matter what happened, possible SUSPEND caller. */
-    reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
-
-    /* If no errors occurred, continue printing with SUSPENDED caller.
+    /* If no errors occurred, continue printing with the caller.
      * First wait until the printer is online to prevent stupid errors.
      */
-    if (SUSPEND == r) { 	
+    if (r == OK) {
 	caller = m_ptr->m_source;
 	proc_nr = m_ptr->USER_ENDPT;
 	user_left = m_ptr->COUNT;
@@ -255,6 +246,9 @@ register message *m_ptr;	/* pointer to the newly arrived message */
         /* If we reach this point, the printer was not online in time. */
         done_status = status;
         output_done();
+    } else {
+	reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
+		(cp_grant_id_t) m_ptr->IO_GRANT, r);
     }
 }
 
@@ -267,6 +261,7 @@ static void output_done()
  * Otherwise, reply to caller (FS).
  */
     register int status;
+    message m;
 
     if (!writing) return;	  	/* probably leftover interrupt */
     if (done_status != OK) {      	/* printer error occurred */
@@ -292,32 +287,15 @@ static void output_done()
     else {				/* done! report back to FS */
 	status = orig_count;
     }
-    is_status_msg_expected = TRUE;
-    revive_pending = TRUE;
-    revive_status = status;
-    notify(caller);
-}
 
-/*===========================================================================*
- *				do_status				     *
- *===========================================================================*/
-static void do_status(m_ptr)
-register message *m_ptr;	/* pointer to the newly arrived message */
-{
-  if (revive_pending) {
-	m_ptr->m_type = DEV_REVIVE;		/* build message */
-	m_ptr->REP_ENDPT = proc_nr;
-	m_ptr->REP_STATUS = revive_status;
-	m_ptr->REP_IO_GRANT = grant_nr;
+    memset(&m, 0, sizeof(m));
+    m.m_type = DEV_REVIVE;		/* build message */
+    m.REP_ENDPT = proc_nr;
+    m.REP_STATUS = status;
+    m.REP_IO_GRANT = grant_nr;
+    send(caller, &m);
 
-	writing = FALSE;			/* unmark event */
-	revive_pending = FALSE;			/* unmark event */
-  } else {
-	m_ptr->m_type = DEV_NO_STATUS;
-	
-	is_status_msg_expected = FALSE;
-  }
-  send(m_ptr->m_source, m_ptr);			/* send the message */
+    writing = FALSE;			/* unmark event */
 }
 
 /*===========================================================================*
@@ -332,30 +310,32 @@ register message *m_ptr;	/* pointer to the newly arrived message */
  * but rely on FS to handle the EINTR reply and de-suspension properly.
  */
 
-  if (writing && m_ptr->USER_ENDPT == proc_nr) {
+  if (writing && m_ptr->USER_ENDPT == proc_nr &&
+		(cp_grant_id_t) m_ptr->IO_GRANT == grant_nr) {
 	oleft = 0;		/* cancel output by interrupt handler */
 	writing = FALSE;
-	revive_pending = FALSE;
+	reply(DEV_REVIVE, m_ptr->m_source, proc_nr, grant_nr, EINTR);
   }
-  reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, EINTR);
 }
 
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-static void reply(code, replyee, process, status)
-int code;			/* TASK_REPLY or REVIVE */
-int replyee;			/* destination for message (normally FS) */
-int process;			/* which user requested the printing */
+static void reply(code, replyee, process, grant, status)
+int code;			/* DEV_OPEN_REPL, DEV_CLOSE_REPL, DEV_REVIVE */
+endpoint_t replyee;		/* destination for message (normally FS) */
+endpoint_t process;		/* which user requested the printing */
+cp_grant_id_t grant;		/* which grant was involved */
 int status;			/* number of  chars printed or error code */
 {
 /* Send a reply telling FS that printing has started or stopped. */
 
   message pr_mess;
 
-  pr_mess.m_type = code;		/* TASK_REPLY or REVIVE */
+  pr_mess.m_type = code;		/* reply code */
   pr_mess.REP_STATUS = status;		/* count or EIO */
-  pr_mess.REP_ENDPT = process;	/* which user does this pertain to */
+  pr_mess.REP_ENDPT = process;		/* which user does this pertain to */
+  pr_mess.REP_IO_GRANT = grant;		/* the grant */
   send(replyee, &pr_mess);		/* send the message */
 }
 

@@ -108,8 +108,5 @@
 
 #define VFS_VMCALL	117
 
-#define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
-				 * really a standalone call.
-				 */
 #define MAPDRIVER      122     /* to VFS, map a device */
 #define GETRUSAGE      123	/* to PM, VFS */

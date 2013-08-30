@@ -8,7 +8,6 @@
  *   bdev_open:  open a block device
  *   bdev_close: close a block device
  *   dev_io:	 FS does a read or write on a device
- *   dev_status: FS processes callback request alert
  *   gen_opcl:   generic call to a task to perform an open/close
  *   gen_io:     generic call to a task to perform an I/O operation
  *   no_dev:     open/close processing for devices that don't exist
@@ -169,7 +168,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
   /* Determine task dmap. */
   dp = &dmap[major_dev];
   if (dp->dmap_driver == NONE) {
-	printf("VFS: dev_io: no driver for major %d\n", major_dev);
+	printf("VFS: bdev_ioctl: no driver for major %d\n", major_dev);
 	return(ENXIO);
   }
 
@@ -188,7 +187,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
   dev_mess.BDEV_ID = 0;
 
   /* Call the task. */
-  (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+  gen_io(dp->dmap_driver, &dev_mess);
 
   /* Clean up. */
   if (GRANT_VALID(gid)) cpf_revoke(gid);
@@ -224,71 +223,6 @@ endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
   return(NONE);
 }
 
-
-/*===========================================================================*
- *				dev_status				     *
- *===========================================================================*/
-void dev_status(endpoint_t drv_e)
-{
-/* A device sent us a notification it has something for us. Retrieve it. */
-
-  message st;
-  int major, get_more = 1;
-  endpoint_t endpt;
-
-  for (major = 0; major < NR_DEVICES; major++)
-	if (dmap_driver_match(drv_e, major))
-		break; /* 'major' is the device that sent the message */
-
-  if (major >= NR_DEVICES)	/* Device endpoint not found; nothing to do */
-	return;
-
-  if (dev_style_asyn(dmap[major].dmap_style)) {
-	printf("VFS: not doing dev_status for async driver %d\n", drv_e);
-	return;
-  }
-
-  /* Continuously send DEV_STATUS messages until the device has nothing to
-   * say to us anymore. */
-  do {
-	int r;
-	st.m_type = DEV_STATUS;
-	r = drv_sendrec(drv_e, &st);
-	if (r == OK && st.REP_STATUS == ERESTART) r = EDEADEPT;
-	if (r != OK) {
-		printf("VFS: DEV_STATUS failed to %d: %d\n", drv_e, r);
-		if (r == EDEADSRCDST || r == EDEADEPT) return;
-		panic("VFS: couldn't sendrec for DEV_STATUS: %d", r);
-	}
-
-	switch(st.m_type) {
-	  case DEV_REVIVE:
-		/* We've got results for a read/write/ioctl call to a
-		 * synchronous character driver */
-		endpt = st.REP_ENDPT;
-		if (endpt == VFS_PROC_NR) {
-			endpt = find_suspended_ep(drv_e, st.REP_IO_GRANT);
-			if (endpt == NONE) {
-			  printf("VFS: proc with grant %d from %d not found\n",
-				 st.REP_IO_GRANT, st.m_source);
-			  continue;
-			}
-		}
-		revive(endpt, st.REP_STATUS);
-		break;
-	  case DEV_IO_READY:
-		/* Reply to a select request: driver is ready for I/O */
-		select_reply2(st.m_source, st.DEV_MINOR, st.DEV_SEL_OPS);
-		break;
-	  default:
-		printf("VFS: unrecognized reply %d to DEV_STATUS\n",st.m_type);
-		/* Fall through. */
-	  case DEV_NO_STATUS:
-		get_more = 0;
-		break;
-	}
-  } while(get_more);
-}
 
 /*===========================================================================*
  *				safe_io_conversion			     *
@@ -514,18 +448,22 @@ int gen_opcl(
 	dev_mess.BDEV_MINOR = minor_dev;
 	dev_mess.BDEV_ACCESS = flags;
 	dev_mess.BDEV_ID = 0;
+
+	/* Call the task. */
+	r = gen_io(dp->dmap_driver, &dev_mess);
   } else {
 	dev_mess.m_type = op;
 	dev_mess.DEVICE = minor_dev;
 	dev_mess.USER_ENDPT = proc_e;
 	dev_mess.COUNT = flags;
+
+	/* Call the task. */
+	r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
   }
 
-  /* Call the task. */
-  r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
   if (r != OK) return(r);
 
-  if (op == DEV_OPEN && dp->dmap_style == STYLE_DEVA) {
+  if (op == DEV_OPEN && dev_style_asyn(dp->dmap_style)) {
 	fp->fp_task = dp->dmap_driver;
 	self->w_task = dp->dmap_driver;
 	self->w_drv_sendrec = &dev_mess;
@@ -637,9 +575,9 @@ int do_ioctl(message *UNUSED(m_out))
   dev_t dev;
   void *argx;
 
-  scratch(fp).file.fd_nr = job_m_in.ls_fd;
-  ioctlrequest = job_m_in.REQUEST;
-  argx = job_m_in.ADDRESS;
+  scratch(fp).file.fd_nr = job_m_in.VFS_IOCTL_FD;
+  ioctlrequest = job_m_in.VFS_IOCTL_REQ;
+  argx = job_m_in.VFS_IOCTL_ARG;
 
   if ((f = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);

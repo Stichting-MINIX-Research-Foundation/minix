@@ -48,7 +48,6 @@ int clone_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int ctty_io(endpoint_t task_nr, message *mess_ptr);
 int do_ioctl(message *m_out);
 void pm_setsid(endpoint_t proc_e);
-void dev_status(endpoint_t drv_e);
 void bdev_up(int major);
 void cdev_up(int major);
 endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g);

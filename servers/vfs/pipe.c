@@ -612,7 +612,7 @@ void unpause(endpoint_t proc_e)
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
 		major_dev = major(dev);
 		minor_dev = minor(dev);
-		mess.TTY_LINE = minor_dev;
+		mess.DEVICE = minor_dev;
 		mess.USER_ENDPT = rfp->fp_ioproc;
 		mess.IO_GRANT = (char *) rfp->fp_grant;
 

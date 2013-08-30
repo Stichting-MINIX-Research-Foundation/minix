@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 	fb_edid_args_parse();
 
 	sef_local_startup();
-	chardriver_task(&fb_tab, CHARDRIVER_SYNC);
+	chardriver_task(&fb_tab);
 	return OK;
 }
 

@@ -28,6 +28,7 @@
  *   driver_receive:	message receive interface for drivers
  *
  * Changes:
+ *   Oct 20, 2013   retire synchronous protocol (D.C. van Moolenbroek)
  *   Oct 16, 2011   split character and block protocol  (D.C. van Moolenbroek)
  *   Aug 27, 2011   move common functions into driver.c  (A. Welzel)
  *   Jul 25, 2005   added SYS_SIG type for signals  (Jorrit N. Herder)
@@ -117,16 +118,19 @@ void chardriver_announce(void)
 }
 
 /*===========================================================================*
- *				async_reply				     *
+ *				send_reply				     *
  *===========================================================================*/
-static void async_reply(message *mess, int r)
+static void send_reply(message *mess, int ipc_status, int r)
 {
-/* Send a reply using the asynchronous character device protocol. */
+/* Prepare and send a reply message. */
   message reply_mess;
 
-  /* Do not reply with ERESTART in this protocol. The only possible caller,
-   * VFS, will find out through other means when we have restarted, and is not
-   * (fully) ready to deal with ERESTART errors.
+  if (r == EDONTREPLY)
+	return;
+
+  /* Do not reply with ERESTART. The only possible caller, VFS, will find out
+   * through other means when we have restarted, and is not (fully) ready to
+   * deal with ERESTART errors.
    */
   if (r == ERESTART)
 	return;
@@ -150,7 +154,7 @@ static void async_reply(message *mess, int r)
   case DEV_WRITE_S:
   case DEV_IOCTL_S:
 	if (r == SUSPEND)
-		printf("driver_task: reviving %d (%d) with SUSPEND\n",
+		printf("chardriver_task: reviving %d (%d) with SUSPEND\n",
 			mess->m_source, mess->USER_ENDPT);
 
 	reply_mess.m_type = DEV_REVIVE;
@@ -170,60 +174,22 @@ static void async_reply(message *mess, int r)
 	break;
 
   default:
-	reply_mess.m_type = TASK_REPLY;
+	reply_mess.m_type = DEV_REVIVE;
 	reply_mess.REP_ENDPT = mess->USER_ENDPT;
 	/* Status is # of bytes transferred or error code. */
 	reply_mess.REP_STATUS = r;
 	break;
   }
 
-  r = asynsend(mess->m_source, &reply_mess);
-
-  if (r != OK)
-	printf("asyn_reply: unable to asynsend reply to %d: %d\n",
-		mess->m_source, r);
-}
-
-/*===========================================================================*
- *				sync_reply				     *
- *===========================================================================*/
-static void sync_reply(message *m_ptr, int ipc_status, int reply)
-{
-/* Reply to a message sent to the driver. */
-  endpoint_t caller_e, user_e;
-  int r;
-
-  caller_e = m_ptr->m_source;
-  user_e = m_ptr->USER_ENDPT;
-
-  m_ptr->m_type = TASK_REPLY;
-  m_ptr->REP_ENDPT = user_e;
-  m_ptr->REP_STATUS = reply;
-
   /* If we would block sending the message, send it asynchronously. */
   if (IPC_STATUS_CALL(ipc_status) == SENDREC)
-	r = sendnb(caller_e, m_ptr);
+	r = sendnb(mess->m_source, &reply_mess);
   else
-	r = asynsend(caller_e, m_ptr);
+	r = asynsend3(mess->m_source, &reply_mess, AMF_NOREPLY);
 
   if (r != OK)
-	printf("driver_reply: unable to send reply to %d: %d\n", caller_e, r);
-}
-
-/*===========================================================================*
- *				send_reply				     *
- *===========================================================================*/
-static void send_reply(int type, message *m_ptr, int ipc_status, int reply)
-{
-/* Prepare and send a reply message. */
-
-  if (reply == EDONTREPLY)
-	return;
-
-  if (type == CHARDRIVER_ASYNC)
-	async_reply(m_ptr, reply);
-  else
-	sync_reply(m_ptr, ipc_status, reply);
+	printf("send_reply: unable to send reply to %d: %d\n",
+		mess->m_source, r);
 }
 
 /*===========================================================================*
@@ -343,7 +309,7 @@ static int handle_request(struct chardriver *cdp, message *m_ptr)
    * requests on devices that have not previously been opened, signaling the
    * caller that something went wrong.
    */
-  if (IS_CDEV_MINOR_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
+  if (IS_DEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
 	/* Reply ERESTART to spurious requests for unopened devices. */
 	if (m_ptr->m_type != DEV_OPEN)
 		return ERESTART;
@@ -380,8 +346,7 @@ static int handle_request(struct chardriver *cdp, message *m_ptr)
 /*===========================================================================*
  *				chardriver_process			     *
  *===========================================================================*/
-void chardriver_process(struct chardriver *cdp, int driver_type,
-  message *m_ptr, int ipc_status)
+void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
 {
 /* Handle the given received message. */
   int r;
@@ -394,14 +359,14 @@ void chardriver_process(struct chardriver *cdp, int driver_type,
   } else {
 	r = handle_request(cdp, m_ptr);
 
-	send_reply(driver_type, m_ptr, ipc_status, r);
+	send_reply(m_ptr, ipc_status, r);
   }
 }
 
 /*===========================================================================*
  *				chardriver_task				     *
  *===========================================================================*/
-void chardriver_task(struct chardriver *cdp, int driver_type)
+void chardriver_task(struct chardriver *cdp)
 {
 /* Main program of any device driver task. */
   int r, ipc_status;
@@ -416,7 +381,7 @@ void chardriver_task(struct chardriver *cdp, int driver_type)
 	if ((r = sef_receive_status(ANY, &mess, &ipc_status)) != OK)
 		panic("driver_receive failed: %d", r);
 
-	chardriver_process(cdp, driver_type, &mess, ipc_status);
+	chardriver_process(cdp, &mess, ipc_status);
   }
 }
 

@@ -33,7 +33,6 @@ typedef struct pty {
   char		state;		/* flags: busy, closed, ... */
 
   /* Read call on /dev/ptypX. */
-  char		rdsendreply;	/* send a reply (instead of notify) */
   int		rdcaller;	/* process making the call (usually FS) */
   int		rdproc;		/* process that wants to read from the pty */
   cp_grant_id_t	rdgrant;	/* grant for readers address space */
@@ -42,7 +41,6 @@ typedef struct pty {
   int		rdcum;		/* # bytes written so far */
 
   /* Write call to /dev/ptypX. */
-  char		wrsendreply;	/* send a reply (instead of notify) */
   int		wrcaller;	/* process making the call (usually FS) */
   int		wrproc;		/* process that wants to write to the pty */
   cp_grant_id_t	wrgrant;	/* grant for writers address space */
@@ -56,9 +54,9 @@ typedef struct pty {
   char		obuf[2048];	/* buffer for bytes going to the pty reader */
 
   /* select() data. */
-  int		select_ops,	/* Which operations do we want to know about? */
-  		select_proc,	/* Who wants to know about it? */
-  		select_ready_ops;	/* For callback. */
+  int		select_ops;	/* Which operations do we want to know about? */
+  int		select_proc;	/* Who wants to know about it? */
+  dev_t		select_minor;	/* sanity check only, can be removed */
 } pty_t;
 
 #define PTY_ACTIVE	0x01	/* pty is open/active */
@@ -75,7 +73,7 @@ static int pty_read(tty_t *tp, int try);
 static int pty_close(tty_t *tp, int try);
 static int pty_icancel(tty_t *tp, int try);
 static int pty_ocancel(tty_t *tp, int try);
-static int pty_select(tty_t *tp, message *m);
+static void pty_select(tty_t *tp, message *m);
 
 /*===========================================================================*
  *				do_pty					     *
@@ -105,7 +103,6 @@ void do_pty(tty_t *tp, message *m_ptr)
 		r = ENOBUFS;
 		break;
 	}
-	pp->rdsendreply = TRUE;
 	pp->rdcaller = m_ptr->m_source;
 	pp->rdproc = m_ptr->USER_ENDPT;
 	pp->rdgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
@@ -123,8 +120,7 @@ void do_pty(tty_t *tp, message *m_ptr)
 		pp->rdleft = pp->rdcum = 0;
 		pp->rdgrant = GRANT_INVALID;
 	} else {
-		r = SUSPEND;				/* do suspend */
-		pp->rdsendreply = FALSE;
+		return;			/* do suspend */
 	}
 	break;
 
@@ -146,7 +142,6 @@ void do_pty(tty_t *tp, message *m_ptr)
 		r = ENOBUFS;
 		break;
 	}
-	pp->wrsendreply = TRUE;
 	pp->wrcaller = m_ptr->m_source;
 	pp->wrproc = m_ptr->USER_ENDPT;
 	pp->wrgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
@@ -164,8 +159,7 @@ void do_pty(tty_t *tp, message *m_ptr)
 		pp->wrgrant = GRANT_INVALID;
 		r = EAGAIN;
 	} else {
-		pp->wrsendreply = FALSE;			/* do suspend */
-		r = SUSPEND;
+		return;			/* do suspend */
 	}
 	break;
 
@@ -174,21 +168,24 @@ void do_pty(tty_t *tp, message *m_ptr)
 	pp->state |= PTY_ACTIVE;
 	pp->rdcum = 0;
 	pp->wrcum = 0;
-	break;
+	tty_reply(DEV_OPEN_REPL, m_ptr->m_source, m_ptr->USER_ENDPT,
+		(cp_grant_id_t) m_ptr->IO_GRANT, r);
+	return;
 
     case DEV_CLOSE:
-	r = OK;
 	if (pp->state & TTY_CLOSED) {
 		pp->state = 0;
 	} else {
 		pp->state |= PTY_CLOSED;
 		sigchar(tp, SIGHUP, 1);
 	}
-	break;
+	tty_reply(DEV_CLOSE_REPL, m_ptr->m_source, m_ptr->USER_ENDPT,
+		(cp_grant_id_t) m_ptr->IO_GRANT, OK);
+	return;
 
     case DEV_SELECT:
-    	r = pty_select(tp, m_ptr);
-    	break;
+	pty_select(tp, m_ptr);
+	return;
 
     case CANCEL:
 	r = EINTR;
@@ -209,7 +206,8 @@ void do_pty(tty_t *tp, message *m_ptr)
     default:
 	r = EINVAL;
   }
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
+  tty_reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
+	(cp_grant_id_t) m_ptr->IO_GRANT, r);
 }
 
 /*===========================================================================*
@@ -228,14 +226,10 @@ static int pty_write(tty_t *tp, int try)
   if (pp->state & PTY_CLOSED) {
   	if (try) return 1;
 	if (tp->tty_outleft > 0) {
-		if(tp->tty_outrepcode == TTY_REVIVE) {
-			notify(tp->tty_outcaller);
-			tp->tty_outrevived = 1;
-		} else {
-			tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-							tp->tty_outproc, EIO);
-			tp->tty_outleft = tp->tty_outcum = 0;
-		}
+		tty_reply(DEV_REVIVE, tp->tty_outcaller, tp->tty_outproc,
+			tp->tty_outgrant, EIO);
+		tp->tty_outleft = tp->tty_outcum = 0;
+		tp->tty_outgrant = GRANT_INVALID;
 	}
 	return 0;
   }
@@ -281,14 +275,10 @@ static int pty_write(tty_t *tp, int try)
 	tp->tty_outcum += count;
 	if ((tp->tty_outleft -= count) == 0) {
 		/* Output is finished, reply to the writer. */
-		if(tp->tty_outrepcode == TTY_REVIVE) {
-			notify(tp->tty_outcaller);
-			tp->tty_outrevived = 1;
-		} else {
-			tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-					tp->tty_outproc, tp->tty_outcum);
-			tp->tty_outcum = 0;
-		}
+		tty_reply(DEV_REVIVE, tp->tty_outcaller, tp->tty_outproc,
+			tp->tty_outgrant, tp->tty_outcum);
+		tp->tty_outcum = 0;
+		tp->tty_outgrant = GRANT_INVALID;
 	}
   }
   pty_finish(pp);
@@ -358,12 +348,10 @@ static void pty_finish(pty_t *pp)
  * transferred.
  */
   if (pp->rdcum > 0) {
-        if (pp->rdsendreply) {
-		tty_reply(TASK_REPLY, pp->rdcaller, pp->rdproc, pp->rdcum);
-		pp->rdleft = pp->rdcum = 0;
-	}
-	else
-		notify(pp->rdcaller);
+	tty_reply(DEV_REVIVE, pp->rdcaller, pp->rdproc, pp->rdgrant,
+		pp->rdcum);
+	pp->rdleft = pp->rdcum = 0;
+	pp->rdgrant = GRANT_INVALID;
   }
 
 }
@@ -382,14 +370,10 @@ static int pty_read(tty_t *tp, int try)
   if (pp->state & PTY_CLOSED) {
 	if (try) return 1;
 	if (tp->tty_inleft > 0) {
-		if(tp->tty_inrepcode == TTY_REVIVE) {
-			notify(tp->tty_incaller);
-			tp->tty_inrevived = 1;
-		} else {
-			tty_reply(tp->tty_inrepcode, tp->tty_incaller,
-				tp->tty_inproc, tp->tty_incum);
-			tp->tty_inleft = tp->tty_incum = 0;
-		}
+		tty_reply(DEV_REVIVE, tp->tty_incaller, tp->tty_inproc,
+			tp->tty_ingrant, tp->tty_incum);
+		tp->tty_inleft = tp->tty_incum = 0;
+		tp->tty_ingrant = GRANT_INVALID;
 	}
 	return 1;
   }
@@ -417,13 +401,10 @@ static int pty_read(tty_t *tp, int try)
 	/* PTY writer bookkeeping. */
 	pp->wrcum++;
 	if (--pp->wrleft == 0) {
-		if (pp->wrsendreply) {
-			tty_reply(TASK_REPLY, pp->wrcaller, pp->wrproc,
-				pp->wrcum);
-			pp->wrcum = 0;
-		}
-		else
-			notify(pp->wrcaller);
+		tty_reply(DEV_REVIVE, pp->wrcaller, pp->wrproc, pp->wrgrant,
+			pp->wrcum);
+		pp->wrcum = 0;
+		pp->wrgrant = GRANT_INVALID;
 	}
   }
 
@@ -441,13 +422,17 @@ static int pty_close(tty_t *tp, int UNUSED(try))
   if (!(pp->state & PTY_ACTIVE)) return 0;
 
   if (pp->rdleft > 0) {
-  	assert(!pp->rdsendreply);
-  	notify(pp->rdcaller);
+	tty_reply(DEV_REVIVE, pp->rdcaller, pp->rdproc, pp->rdgrant,
+		pp->rdcum);
+	pp->rdleft = pp->rdcum = 0;
+	pp->rdgrant = GRANT_INVALID;
   }
 
   if (pp->wrleft > 0) {
-  	assert(!pp->wrsendreply);
-  	notify(pp->wrcaller);
+	tty_reply(DEV_REVIVE, pp->wrcaller, pp->wrproc, pp->wrgrant,
+		pp->wrcum);
+	pp->wrcum = 0;
+	pp->wrgrant = GRANT_INVALID;
   }
 
   if (pp->state & PTY_CLOSED) pp->state = 0; else pp->state |= TTY_CLOSED;
@@ -464,9 +449,10 @@ static int pty_icancel(tty_t *tp, int UNUSED(try))
   pty_t *pp = tp->tty_priv;
 
   if (pp->wrleft > 0) {
-  	pp->wrcum += pp->wrleft;
-  	pp->wrleft= 0;
-  	notify(pp->wrcaller);
+	tty_reply(DEV_REVIVE, pp->wrcaller, pp->wrproc, pp->wrgrant,
+		pp->wrcum + pp->wrleft);
+	pp->wrcum = pp->wrleft = 0;
+	pp->wrgrant = GRANT_INVALID;
   }
 
   return 0;
@@ -516,60 +502,6 @@ void pty_init(tty_t *tp)
 }
 
 /*===========================================================================*
- *				pty_status				     *
- *===========================================================================*/
-int pty_status(message *m_ptr)
-{
-	int i, event_found;
-	pty_t *pp;
-
-	event_found = 0;
-	for (i= 0, pp = pty_table; i<NR_PTYS; i++, pp++) {
-		if ((((pp->state & TTY_CLOSED) && pp->rdleft > 0) ||
-			pp->rdcum > 0) &&
-			pp->rdcaller == m_ptr->m_source)
-		{
-			m_ptr->m_type = DEV_REVIVE;
-			m_ptr->REP_ENDPT = pp->rdproc;
-			m_ptr->REP_IO_GRANT = pp->rdgrant;
-			m_ptr->REP_STATUS = pp->rdcum;
-			pp->rdleft = pp->rdcum = 0;
-			pp->rdgrant = GRANT_INVALID;
-			event_found = 1;
-			break;
-		}
-
-		if ((((pp->state & TTY_CLOSED) && pp->wrleft > 0) ||
-			pp->wrcum > 0) &&
-			pp->wrcaller == m_ptr->m_source)
-		{
-			m_ptr->m_type = DEV_REVIVE;
-			m_ptr->REP_ENDPT = pp->wrproc;
-			m_ptr->REP_IO_GRANT = pp->wrgrant;
-			if (pp->wrcum == 0)
-				m_ptr->REP_STATUS = EIO;
-			else
-				m_ptr->REP_STATUS = pp->wrcum;
-
-			pp->wrleft = pp->wrcum = 0;
-			pp->wrgrant = GRANT_INVALID;
-			event_found = 1;
-			break;
-		}
-
-		if (pp->select_ready_ops && pp->select_proc == m_ptr->m_source) {
-			m_ptr->m_type = DEV_IO_READY;
-			m_ptr->DEV_MINOR = PTYPX_MINOR + i;
-			m_ptr->DEV_SEL_OPS = pp->select_ready_ops;
-			pp->select_ready_ops = 0;
-			event_found = 1;
-			break;
-		}
-	}
-	return event_found;
-}
-
-/*===========================================================================*
  *				select_try_pty				     *
  *===========================================================================*/
 static int select_try_pty(tty_t *tp, int ops)
@@ -600,35 +532,38 @@ static int select_try_pty(tty_t *tp, int ops)
 void select_retry_pty(tty_t *tp)
 {
   	pty_t *pp = tp->tty_priv;
+	dev_t minor;
   	int r;
 
 	/* See if the pty side of a pty is ready to return a select. */
 	if (pp->select_ops && (r=select_try_pty(tp, pp->select_ops))) {
+		minor = PTYPX_MINOR + (int) (pp - pty_table);
+		assert(minor == pp->select_minor);
+		select_reply(DEV_SEL_REPL2, pp->select_proc, minor, r);
 		pp->select_ops &= ~r;
-		pp->select_ready_ops |= r;
-		notify(pp->select_proc);
 	}
 }
 
 /*===========================================================================*
  *				pty_select				     *
  *===========================================================================*/
-static int pty_select(tty_t *tp, message *m)
+static void pty_select(tty_t *tp, message *m)
 {
   	pty_t *pp = tp->tty_priv;
 	int ops, ready_ops = 0, watch;
 
-	ops = m->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
-	watch = (m->USER_ENDPT & SEL_NOTIFY) ? 1 : 0;
+	ops = m->DEV_SEL_OPS & (SEL_RD|SEL_WR|SEL_ERR);
+	watch = (m->DEV_SEL_OPS & SEL_NOTIFY) ? 1 : 0;
 
 	ready_ops = select_try_pty(tp, ops);
 
 	if (!ready_ops && ops && watch) {
 		pp->select_ops |= ops;
 		pp->select_proc = m->m_source;
+		pp->select_minor = m->DEV_MINOR;
 	}
 
-	return ready_ops;
+	select_reply(DEV_SEL_REPL1, m->m_source, m->DEV_MINOR, ready_ops);
 }
 
 #endif /* NR_PTYS > 0 */

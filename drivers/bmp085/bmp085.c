@@ -624,7 +624,7 @@ main(int argc, char *argv[])
 
 	sef_local_startup();
 
-	chardriver_task(&bmp085_tab, CHARDRIVER_SYNC);
+	chardriver_task(&bmp085_tab);
 
 	return 0;
 }

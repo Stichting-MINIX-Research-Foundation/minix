@@ -29,7 +29,6 @@ static int log_transfer(endpoint_t endpt, int opcode, u64_t position,
 static int log_do_open(message *m_ptr);
 static int log_cancel(message *m_ptr);
 static int log_select(message *m_ptr);
-static int log_other(message *m_ptr);
 static int subread(struct logdevice *log, int count, endpoint_t endpt,
 	cp_grant_id_t grant, size_t);
 
@@ -44,7 +43,7 @@ static struct chardriver log_dtab = {
   nop_alarm,	/* no alarm */
   log_cancel,	/* CANCEL request */
   log_select,	/* DEV_SELECT request */
-  log_other	/* Unrecognized messages */
+  NULL		/* Unrecognized messages */
 };
 
 /* SEF functions and variables. */
@@ -64,7 +63,7 @@ int main(void)
   sef_local_startup();
 
   /* Call the generic receive loop. */
-  chardriver_task(&log_dtab, CHARDRIVER_ASYNC);
+  chardriver_task(&log_dtab);
 
   return(OK);
 }
@@ -370,39 +369,16 @@ static int log_do_open(message *m_ptr)
 static int log_cancel(message *m_ptr)
 {
   int d;
-  d = m_ptr->TTY_LINE;
+  d = m_ptr->DEVICE;
   if(d < 0 || d >= NR_DEVS)
   	return EINVAL;
+  if (m_ptr->USER_ENDPT != logdevices[d].log_proc_nr)
+	return EDONTREPLY;
+  if ((cp_grant_id_t) m_ptr->IO_GRANT != logdevices[d].log_user_grant)
+	return EDONTREPLY;
   logdevices[d].log_proc_nr = NONE;
   logdevices[d].log_revive_alerted = 0;
   return(OK);
-}
-
-/*============================================================================*
- *				log_other				      *
- *============================================================================*/
-static int log_other(message *m_ptr)
-{
-	int r;
-
-	/* This function gets messages that the generic driver doesn't
-	 * understand.
-	 */
-	if (is_notify(m_ptr->m_type)) {
-		return EINVAL;
-	}
-
-	switch(m_ptr->m_type) {
-	case DEV_STATUS: {
-		printf("log_other: unexpected DEV_STATUS request\n");
-		r = EDONTREPLY;
-		break;
-	}
-	default:
-		r = EINVAL;
-		break;
-	}
-	return r;
 }
 
 /*============================================================================*
@@ -411,7 +387,7 @@ static int log_other(message *m_ptr)
 static int log_select(message *m_ptr)
 {
   int d, ready_ops = 0, ops = 0;
-  d = m_ptr->TTY_LINE;
+  d = m_ptr->DEV_MINOR;
   if(d < 0 || d >= NR_DEVS) {
 #if LOG_DEBUG
   	printf("line %d? EINVAL\n", d);
@@ -419,10 +395,10 @@ static int log_select(message *m_ptr)
   	return EINVAL;
   }
 
-  ops = m_ptr->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
+  ops = m_ptr->DEV_SEL_OPS & (SEL_RD|SEL_WR|SEL_ERR);
 
   /* Read blocks when there is no log. */
-  if((m_ptr->USER_ENDPT & SEL_RD) && logdevices[d].log_size > 0) {
+  if((m_ptr->DEV_SEL_OPS & SEL_RD) && logdevices[d].log_size > 0) {
 #if LOG_DEBUG
   	printf("log can read; size %d\n", logdevices[d].log_size);
 #endif
@@ -430,13 +406,13 @@ static int log_select(message *m_ptr)
   }
 
   /* Write never blocks. */
-  if(m_ptr->USER_ENDPT & SEL_WR) ready_ops |= SEL_WR;
+  if(m_ptr->DEV_SEL_OPS & SEL_WR) ready_ops |= SEL_WR;
 
 	/* Enable select calback if no operations were
 	 * ready to go, but operations were requested,
 	 * and notify was enabled.
 	 */
-  if((m_ptr->USER_ENDPT & SEL_NOTIFY) && ops && !ready_ops) {
+  if((m_ptr->DEV_SEL_OPS & SEL_NOTIFY) && ops && !ready_ops) {
   	logdevices[d].log_selected |= ops;
   	logdevices[d].log_select_proc = m_ptr->m_source;
 #if LOG_DEBUG
