@@ -30,5 +30,6 @@
 #include "glo.h"
 #include "comm.h"
 #include "vmnt.h"
+#include "fproc.h"
 
 #endif

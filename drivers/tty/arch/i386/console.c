@@ -215,14 +215,10 @@ int try;
 
   /* Reply to the writer if all output is finished or if an error occured. */
   if (tp->tty_outleft == 0 || result != OK) {
-	if(tp->tty_outrepcode == TTY_REVIVE) {
-		notify(tp->tty_outcaller);
-		tp->tty_outrevived = 1;
-	} else {
-		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-			tp->tty_outproc, tp->tty_outcum);
-		tp->tty_outcum = 0;
-	}
+	tty_reply(DEV_REVIVE, tp->tty_outcaller, tp->tty_outproc,
+		tp->tty_outgrant, result != OK ? result : tp->tty_outcum);
+	tp->tty_outcum = tp->tty_outleft = 0;
+	tp->tty_outgrant = GRANT_INVALID;
   }
 
   return 0;
@@ -825,14 +821,16 @@ void do_video(message *m)
 	    case DEV_OPEN:
 		/* Should grant IOPL */
 		disable_console();
-		r= OK;
-		break;
+		tty_reply(DEV_OPEN_REPL, m->m_source, m->USER_ENDPT,
+			(cp_grant_id_t) m->IO_GRANT, OK);
+		return;
 	    case DEV_CLOSE:
 		reenable_console();
-		r= OK;
-		break;
+		tty_reply(DEV_CLOSE_REPL, m->m_source, m->USER_ENDPT,
+			(cp_grant_id_t) m->IO_GRANT, OK);
+		return;
 	    case DEV_IOCTL_S:
-		switch(m->TTY_REQUEST) {
+		switch(m->REQUEST) {
 		  case TIOCMAPMEM:
 		  case TIOCUNMAPMEM: {
 			int r, do_map;
@@ -847,9 +845,7 @@ void do_video(message *m)
 			if (r != OK)
 			{
 				printf("tty: sys_safecopyfrom failed\n");
-				tty_reply(TASK_REPLY, m->m_source,
-					m->USER_ENDPT, r);
-				return;
+				break;
 			}
 
 			/* In safe ioctl mode, the POSITION field contains
@@ -870,20 +866,22 @@ void do_video(message *m)
 				r = vm_unmap_phys(m->POSITION, 
 					mapreqvm.vaddr, mapreqvm.size);
 			}
-			tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
-			return;
-		   }
+			break;
+		  }
+		default:
+			r= ENOTTY;
+			break;
 		}
-		r= ENOTTY;
 		break;
 
-	    default:		
+	    default:
 		printf(
 		"Warning, TTY(video) got unexpected request %d from %d\n",
 			m->m_type, m->m_source);
 		r= EINVAL;
 	}
-	tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
+	tty_reply(DEV_REVIVE, m->m_source, m->USER_ENDPT,
+		(cp_grant_id_t) m->IO_GRANT, r);
 }
 
 

@@ -181,7 +181,7 @@ int main(void)
     /*
      * Run the main loop.
      */
-    chardriver_task(&hello_tab, CHARDRIVER_SYNC);
+    chardriver_task(&hello_tab);
     return OK;
 }
 

@@ -18,7 +18,6 @@
 #include <minix/u64.h>
 #include <unistd.h>
 #include <time.h>
-#include "fproc.h"
 #include "vmnt.h"
 #include "vnode.h"
 #include "path.h"
