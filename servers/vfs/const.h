@@ -20,8 +20,7 @@
 #define FP_BLOCKED_ON_LOCK	2 /* susp'd on lock */
 #define FP_BLOCKED_ON_POPEN	3 /* susp'd on pipe open */
 #define FP_BLOCKED_ON_SELECT	4 /* susp'd on select */
-#define FP_BLOCKED_ON_DOPEN	5 /* susp'd on device open */
-#define FP_BLOCKED_ON_OTHER	6 /* blocked on other process, check
+#define FP_BLOCKED_ON_OTHER	5 /* blocked on other process, check
 				     fp_task to find out */
 
 /* test if the process is blocked on something */

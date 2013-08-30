@@ -928,29 +928,9 @@ void cdev_up(int maj)
 {
   /* A new character device driver has been mapped in.
   */
-  int needs_reopen, fd_nr;
+  int needs_reopen;
   struct filp *rfilp;
-  struct fproc *rfp;
   struct vnode *vp;
-
-  /* Look for processes that are suspended in an OPEN call. Set FP_SUSP_REOPEN
-   * to indicate that this process was suspended before the call to dev_up.
-   */
-  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if(rfp->fp_pid == PID_FREE) continue;
-	if(rfp->fp_blocked_on != FP_BLOCKED_ON_DOPEN) continue;
-
-	fd_nr = scratch(rfp).file.fd_nr;
-	printf("VFS: dev_up: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
-		fd_nr);
-	rfilp = rfp->fp_filp[fd_nr];
-	vp = rfilp->filp_vno;
-	if (!vp) panic("VFS: cdev_up: no vp");
-	if (!S_ISCHR(vp->v_mode)) continue;
-	if (major(vp->v_sdev) != maj) continue;
-
-	rfp->fp_flags |= FP_SUSP_REOPEN;
-  }
 
   needs_reopen= FALSE;
   for (rfilp = filp; rfilp < &filp[NR_FILPS]; rfilp++) {
@@ -1017,7 +997,7 @@ void dev_reply(struct dmap *dp)
 static void restart_reopen(maj)
 int maj;
 {
-  int n, r, minor_dev, major_dev, fd_nr;
+  int n, r, minor_dev, major_dev;
   endpoint_t driver_e;
   struct vnode *vp;
   struct filp *rfilp;
@@ -1073,34 +1053,6 @@ int maj;
 		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 		reply(&m_out, rfp->fp_endpoint, ERESTART);
 	}
-  }
-
-  /* Look for processes that are suspened in an OPEN call */
-  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if (rfp->fp_pid == PID_FREE) continue;
-	if (rfp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
-	    !(rfp->fp_flags & FP_SUSP_REOPEN)) continue;
-
-	fd_nr =	scratch(rfp).file.fd_nr;
-	printf("VFS: restart_reopen: process in FP_BLOCKED_ON_DOPEN fd=%d\n",
-		fd_nr);
-	rfilp = rfp->fp_filp[fd_nr];
-
-	if (!rfilp) {
-		/* Open failed, and automatic reopen was not requested */
-		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
-		reply(&m_out, rfp->fp_endpoint, EIO);
-		continue;
-	}
-
-	vp = rfilp->filp_vno;
-	if (!vp) panic("VFS: restart_reopen: no vp");
-	if (!S_ISCHR(vp->v_mode)) continue;
-	if (major(vp->v_sdev) != maj) continue;
-
-	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	reply(&m_out, rfp->fp_endpoint, fd_nr);
   }
 }
 
