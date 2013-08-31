@@ -93,7 +93,7 @@ int fs_statvfs()
   struct statvfs st;
   struct super_block *sp;
   int r, scale;
-  uint64_t used;
+  u64_t used;
 
   sp = get_super(fs_dev);
 
