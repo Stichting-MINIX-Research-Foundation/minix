@@ -203,7 +203,6 @@ static char *prrecv(struct pstat *ps)
 	case FSTATE_LOCK: blkstr = "flock"; break;
 	case FSTATE_POPEN: blkstr = "popen"; break;
 	case FSTATE_SELECT: blkstr = "select"; break;
-	case FSTATE_DOPEN: blkstr = "dopen"; break;
 	case FSTATE_TASK: blkstr = taskname(ps->ps_ftask); break;
 	default: blkstr = "??"; break;
 	}
