@@ -59,9 +59,10 @@ typedef struct pty {
   dev_t		select_minor;	/* sanity check only, can be removed */
 } pty_t;
 
-#define PTY_ACTIVE	0x01	/* pty is open/active */
-#define TTY_CLOSED	0x02	/* tty side has closed down */
-#define PTY_CLOSED	0x04	/* pty side has closed down */
+#define TTY_ACTIVE	0x01	/* tty is open/active */
+#define PTY_ACTIVE	0x02	/* pty is open/active */
+#define TTY_CLOSED	0x04	/* tty side has closed down */
+#define PTY_CLOSED	0x08	/* pty side has closed down */
 
 static pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
@@ -164,16 +165,20 @@ void do_pty(tty_t *tp, message *m_ptr)
 	break;
 
     case DEV_OPEN:
-	r = pp->state != 0 ? EIO : OK;
-	pp->state |= PTY_ACTIVE;
-	pp->rdcum = 0;
-	pp->wrcum = 0;
+	if (!(pp->state & PTY_ACTIVE)) {
+		pp->state |= PTY_ACTIVE;
+		pp->rdcum = 0;
+		pp->wrcum = 0;
+		r = OK;
+	} else {
+		r = EIO;
+	}
 	tty_reply(DEV_OPEN_REPL, m_ptr->m_source, m_ptr->USER_ENDPT,
 		(cp_grant_id_t) m_ptr->IO_GRANT, r);
 	return;
 
     case DEV_CLOSE:
-	if (pp->state & TTY_CLOSED) {
+	if ((pp->state & (TTY_ACTIVE | TTY_CLOSED)) != TTY_ACTIVE) {
 		pp->state = 0;
 	} else {
 		pp->state |= PTY_CLOSED;
@@ -412,6 +417,24 @@ static int pty_read(tty_t *tp, int try)
 }
 
 /*===========================================================================*
+ *				pty_open				     *
+ *===========================================================================*/
+static int pty_open(tty_t *tp, int UNUSED(try))
+{
+/* The tty side has been opened. */
+  pty_t *pp = tp->tty_priv;
+
+  /* TTY_ACTIVE may already be set, which would indicate that the slave is
+   * reopened after being fully closed while the master is still open. In that
+   * case TTY_CLOSED will also be set, so clear that one.
+   */
+  pp->state |= TTY_ACTIVE;
+  pp->state &= ~TTY_CLOSED;
+
+  return 0;
+}
+
+/*===========================================================================*
  *				pty_close				     *
  *===========================================================================*/
 static int pty_close(tty_t *tp, int UNUSED(try))
@@ -435,7 +458,8 @@ static int pty_close(tty_t *tp, int UNUSED(try))
 	pp->wrgrant = GRANT_INVALID;
   }
 
-  if (pp->state & PTY_CLOSED) pp->state = 0; else pp->state |= TTY_CLOSED;
+  if (pp->state & PTY_CLOSED) pp->state = 0;
+  else pp->state |= TTY_CLOSED;
 
   return 0;
 }
@@ -497,6 +521,7 @@ void pty_init(tty_t *tp)
   tp->tty_echo = pty_echo;
   tp->tty_icancel = pty_icancel;
   tp->tty_ocancel = pty_ocancel;
+  tp->tty_open = pty_open;
   tp->tty_close = pty_close;
   tp->tty_select_ops = 0;
 }
