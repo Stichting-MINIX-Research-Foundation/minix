@@ -74,11 +74,9 @@ static char * dmap_style(int dev_style)
 {
 	switch(dev_style) {
 	case STYLE_DEV:	     return "STYLE_DEV";
-	case STYLE_DEVA:     return "STYLE_DEVA";
 	case STYLE_TTY:      return "STYLE_TTY";
 	case STYLE_CTTY:     return "STYLE_CTTY";
 	case STYLE_CLONE:    return "STYLE_CLONE";
-	case STYLE_CLONE_A:  return "STYLE_CLONE_A";
 	default:             return "UNKNOWN";
 	}
 }

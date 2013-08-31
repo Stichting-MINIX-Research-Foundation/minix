@@ -20,11 +20,7 @@
  * |-------------+---------+---------+---------+---------+---------|
  * | DEV_IOCTL_S | device  | proc nr |func code|         | buf ptr |
  * |-------------+---------+---------+---------+---------+---------|
- * | DEV_STATUS  |         |         |         |         |         |
- * |-------------+---------+---------+---------+---------+---------|
  * | HARD_INT    |         |         |         |         |         | 
- * |-------------+---------+---------+---------+---------+---------|
- * | SIG_STOP    |         |         |         |         |         | 
  * ----------------------------------------------------------------- 
  * 
  * The file contains one entry point:
@@ -81,7 +77,6 @@ static void sef_cb_signal_handler(int signo);
 EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
-int is_status_msg_expected = FALSE;
 
 int main(void)
 {
@@ -121,8 +116,10 @@ int main(void)
 			case DEV_OPEN:
 				/* open the special file ( = parameter) */
 				r = msg_open(mess.DEVICE);
-				repl_mess.m_type = DEV_REVIVE;
+				repl_mess.m_type = DEV_OPEN_REPL;
 				repl_mess.REP_ENDPT = mess.USER_ENDPT;
+				repl_mess.REP_IO_GRANT =
+					(cp_grant_id_t) mess.IO_GRANT;
 				repl_mess.REP_STATUS = r;
 				send(caller, &repl_mess);
 
@@ -133,6 +130,8 @@ int main(void)
 				r = msg_close(mess.DEVICE);
 				repl_mess.m_type = DEV_CLOSE_REPL;
 				repl_mess.REP_ENDPT = mess.USER_ENDPT;
+				repl_mess.REP_IO_GRANT =
+					(cp_grant_id_t) mess.IO_GRANT;
 				repl_mess.REP_STATUS = r;
 				send(caller, &repl_mess);
 
@@ -146,7 +145,7 @@ int main(void)
 					repl_mess.m_type = DEV_REVIVE;
 					repl_mess.REP_ENDPT = mess.USER_ENDPT;
 					repl_mess.REP_IO_GRANT =
-						(unsigned)mess.IO_GRANT;
+						(cp_grant_id_t) mess.IO_GRANT;
 					repl_mess.REP_STATUS = r;
 					send(caller, &repl_mess);
 				}
@@ -156,13 +155,13 @@ int main(void)
 				msg_read(&mess); continue; /* don't reply */
 			case DEV_WRITE_S:		
 				msg_write(&mess); continue; /* don't reply */
-			case DEV_STATUS:	
-				msg_status(&mess);continue; /* don't reply */
 			case DEV_REOPEN:
 				/* reopen the special file ( = parameter) */
 				r = msg_open(mess.DEVICE);
 				repl_mess.m_type = DEV_REOPEN_REPL;
 				repl_mess.REP_ENDPT = mess.USER_ENDPT;
+				repl_mess.REP_IO_GRANT =
+					(cp_grant_id_t) mess.IO_GRANT;
 				repl_mess.REP_STATUS = r;
 				send(caller, &repl_mess);
 				continue;
@@ -626,35 +625,6 @@ static void msg_hardware(void) {
 }
 
 
-static void msg_status(message *m_ptr)
-{
-	int i; 
-
-	for (i = 0; i < drv.NrOfSubDevices; i++) {
-
-		if(sub_dev[i].ReadyToRevive) 
-		{
-			m_ptr->m_type = DEV_REVIVE;			/* build message */
-			m_ptr->REP_ENDPT = sub_dev[i].ReviveProcNr;
-			m_ptr->REP_IO_GRANT = sub_dev[i].ReviveGrant;
-			m_ptr->REP_STATUS = sub_dev[i].ReviveStatus;
-			send(m_ptr->m_source, m_ptr);			/* send the message */
-
-			/* reset variables */
-			sub_dev[i].ReadyToRevive = FALSE;
-			sub_dev[i].RevivePending = 0;
-
-			is_status_msg_expected = TRUE;
-			return; /* stop after one mess, 
-					   file system will get back for other processes */
-		}
-	}
-	m_ptr->m_type = DEV_NO_STATUS;
-	m_ptr->REP_STATUS = 0;
-	send(m_ptr->m_source, m_ptr);			/* send DEV_NO_STATUS message */
-	is_status_msg_expected = FALSE;
-}
-
 /* handle interrupt for specified sub device; DmaMode == DEV_WRITE_S*/
 static void handle_int_write(int sub_dev_nr) 
 {
@@ -712,6 +682,7 @@ static void handle_int_write(int sub_dev_nr)
 static void handle_int_read(int sub_dev_nr) 
 {
 	sub_dev_t *sub_dev_ptr;
+	message m;
 
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 
@@ -729,9 +700,14 @@ static void handle_int_read(int sub_dev_nr)
 			printf("All buffers full, we have a problem.\n");
 			drv_stop(sub_dev_nr);        /* stop the sub device */
 			sub_dev_ptr->DmaBusy = FALSE;
-			sub_dev_ptr->ReviveStatus = 0;   /* no data for user, 
-												this is a sad story */
-			sub_dev_ptr->ReadyToRevive = TRUE; /* wake user up */
+			sub_dev_ptr->ReviveStatus = 0;   /* no data for user,
+							  * this is a sad story
+							  */
+			m.m_type = DEV_REVIVE;
+			m.REP_ENDPT = sub_dev_ptr->ReviveProcNr;
+			m.REP_IO_GRANT = sub_dev_ptr->ReviveGrant;
+			m.REP_STATUS = sub_dev_ptr->ReviveStatus;
+			send(sub_dev_ptr->SourceProcNr, &m);
 			return;
 		} 
 		else { /* dma full, still room in extra buf; 
@@ -790,9 +766,6 @@ static void data_from_user(sub_dev_t *subdev)
 
 	if (!subdev->RevivePending) return; /* no new data waiting to be copied */
 
-	if (subdev->RevivePending && 
-			subdev->ReadyToRevive) return; /* we already got this data */
-
 	if (subdev->DmaLength < subdev->NrOfDmaFragments) { /* room in dma buf */
 
 		r = sys_safecopyfrom(subdev->SourceProcNr,
@@ -835,7 +808,6 @@ static void data_from_user(sub_dev_t *subdev)
 	}
 
 	subdev->ReviveStatus = subdev->FragSize;
-	subdev->ReadyToRevive = TRUE;
 
 	m.m_type = DEV_REVIVE;			/* build message */
 	m.REP_ENDPT = subdev->ReviveProcNr;
@@ -849,7 +821,6 @@ static void data_from_user(sub_dev_t *subdev)
 	}
 
 	/* reset variables */
-	subdev->ReadyToRevive = FALSE;
 	subdev->RevivePending = 0;
 }
 
@@ -860,7 +831,6 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 	message m;
 
 	if (!sub_dev_ptr->RevivePending) return; /* nobody is wating for data */
-	if (sub_dev_ptr->ReadyToRevive) return;/* we already filled user's buffer */
 	if (sub_dev_ptr->BufLength == 0 && sub_dev_ptr->DmaLength == 0) return; 
 		/* no data for user */
 
@@ -896,7 +866,6 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 	}
 
 	sub_dev_ptr->ReviveStatus = sub_dev_ptr->FragSize;
-	sub_dev_ptr->ReadyToRevive = TRUE; 
 		/* drv_status will send REVIVE mess to FS*/	
 
 	m.m_type = DEV_REVIVE;			/* build message */
@@ -911,7 +880,6 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 	}
 
 	/* reset variables */
-	sub_dev_ptr->ReadyToRevive = FALSE;
 	sub_dev_ptr->RevivePending = 0;
 }
 

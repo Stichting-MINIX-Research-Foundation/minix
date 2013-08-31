@@ -5,8 +5,6 @@
 #undef lock
 #undef unlock
 
-#define TTY_REVIVE	6767
-
 /* First minor numbers for the various classes of TTY devices. */
 #define CONS_MINOR	   0
 #define LOG_MINOR	  15
@@ -63,16 +61,12 @@ typedef struct tty {
   char tty_openct;		/* count of number of opens of this tty */
 
   /* Information about incomplete I/O requests is stored here. */
-  int tty_inrepcode;		/* reply code, TASK_REPLY or REVIVE */
-  char tty_inrevived;		/* set to 1 if revive callback is pending */
   endpoint_t tty_incaller;	/* process that made the call (usually VFS) */
   endpoint_t tty_inproc;	/* process that wants to read from tty */
   cp_grant_id_t tty_ingrant;	/* grant where data is to go */
   vir_bytes tty_inoffset;	/* offset into grant */
   int tty_inleft;		/* how many chars are still needed */
   int tty_incum;		/* # chars input so far */
-  int tty_outrepcode;		/* reply code, TASK_REPLY or REVIVE */
-  int tty_outrevived;		/* set to 1 if revive callback is pending */
   endpoint_t tty_outcaller;	/* process that made the call (usually VFS) */
   endpoint_t tty_outproc;	/* process that wants to write to tty */
   cp_grant_id_t tty_outgrant;	/* grant where data comes from */
@@ -80,15 +74,14 @@ typedef struct tty {
   int tty_outleft;		/* # chars yet to be output */
   int tty_outcum;		/* # chars output so far */
   endpoint_t tty_iocaller;	/* process that made the call (usually VFS) */
-  int tty_iorevived;		/* set to 1 if revive callback is pending */
   endpoint_t tty_ioproc;	/* process that wants to do an ioctl */
-  int tty_iostatus;		/* result */
   int tty_ioreq;		/* ioctl request code */
   cp_grant_id_t tty_iogrant;	/* virtual address of ioctl buffer or grant */
 
   /* select() data */
   int tty_select_ops;		/* which operations are interesting */
   endpoint_t tty_select_proc;	/* which process wants notification */
+  dev_t tty_select_minor;	/* sanity check only, can be removed */
 
   /* Miscellaneous. */
   devfun_t tty_ioctl;		/* set line speed, etc. at the device level */
@@ -146,9 +139,10 @@ int in_process(struct tty *tp, char *buf, int count, int scode);
 void out_process(struct tty *tp, char *bstart, char *bpos, char *bend,
 	int *icount, int *ocount);
 void tty_wakeup(clock_t now);
-#define tty_reply(c, r, p, s) tty_reply_f(__FILE__, __LINE__, (c), (r), (p), (s))
-void tty_reply_f(char *f, int l, int code, int replyee, int proc_nr, int
-	status);
+#define tty_reply(c, r, p, g, s) tty_reply_f(__FILE__, __LINE__, (c), (r), (p), (g), (s))
+void tty_reply_f(char *f, int l, int code, endpoint_t replyee,
+	endpoint_t proc_nr, cp_grant_id_t grant, int status);
+void select_reply(int code, endpoint_t replyee, dev_t minor, int ops);
 int select_try(struct tty *tp, int ops);
 int select_retry(struct tty *tp);
 
@@ -175,11 +169,8 @@ void kbd_interrupt(message *m);
 void do_kbd(message *m);
 void do_kb_inject(message *m);
 void do_kbdaux(message *m);
-int kbd_status(message *m_ptr);
 
 /* pty.c */
 void do_pty(struct tty *tp, message *m_ptr);
 void pty_init(struct tty *tp);
 void select_retry_pty(struct tty *tp);
-int pty_status(message *m_ptr);
-

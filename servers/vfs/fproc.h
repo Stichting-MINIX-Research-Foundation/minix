@@ -43,8 +43,11 @@ EXTERN struct fproc {
   mode_t fp_umask;		/* mask set by umask system call */
 
   mutex_t fp_lock;		/* mutex to lock fproc object */
-  struct job fp_job;		/* pending job */
-  thread_t fp_wtid;		/* Thread ID of worker */
+  struct worker_thread *fp_worker;/* active worker thread, or NULL */
+  void (*fp_func)();		/* handler function for pending work */
+  message fp_msg;		/* pending or active message from process */
+  message fp_pm_msg;		/* pending/active postponed PM request */
+
   char fp_name[PROC_NAME_LEN];	/* Last exec() */
 #if LOCK_DEBUG
   int fp_vp_rdlocks;		/* number of read-only locks on vnodes */
@@ -64,9 +67,8 @@ EXTERN struct fproc {
 #define FP_SESLDR	 0004	/* Set if process is session leader */
 #define FP_PENDING	 0010	/* Set if process has pending work */
 #define FP_EXITING	 0020	/* Set if process is exiting */
-#define FP_PM_PENDING	 0040	/* Set if process has pending PM request */
+#define FP_PM_WORK	 0040	/* Set if process has a postponed PM request */
 #define FP_SRV_PROC	 0100	/* Set if process is a service */
-#define FP_DROP_WORK	 0200	/* Set if process won't accept new work */
 
 /* Field values. */
 #define NOT_REVIVING       0xC0FFEEE	/* process is not being revived */
