@@ -153,14 +153,6 @@ struct flock {
   pid_t l_pid;			/* process id of the locks' owner */
 };
 
-struct flock_321 {
-  short l_type;			/* type: F_RDLCK, F_WRLCK, or F_UNLCK */
-  short l_whence;		/* flag for starting offset */
-  i32_t l_start;		/* relative offset in bytes */
-  i32_t l_len;			/* size; if 0, then until EOF */
-  pid_t l_pid;			/* process id of the locks' owner */
-};
-
 #if defined(_NETBSD_SOURCE)
 /* lock operations for flock(2) */
 #define LOCK_SH		F_RDLCK		/* Shared lock */

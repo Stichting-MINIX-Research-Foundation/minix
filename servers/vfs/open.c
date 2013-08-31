@@ -7,7 +7,6 @@
  *   do_mkdir:	perform the MKDIR system call
  *   do_close:	perform the CLOSE system call
  *   do_lseek:  perform the LSEEK system call
- *   do_llseek: perform the LLSEEK system call
  */
 
 #include "fs.h"
@@ -646,36 +645,9 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
 }
 
 /*===========================================================================*
- *				do_lseek_321				     *
- *===========================================================================*/
-int do_lseek_321(message *m_out)
-{
-	int r;
-
-	r = actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
-		make64(job_m_in.offset_lo, 0));
-	
-	/* check value is 32bit */
-	if (m_out->reply_l2 != 0) {
-		r = EOVERFLOW;
-	}
-
-	return r;
-}
-
-/*===========================================================================*
  *				do_lseek				     *
  *===========================================================================*/
 int do_lseek(message *m_out)
-{
-	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
-		make64(job_m_in.offset_lo, job_m_in.offset_high));
-}
-
-/*===========================================================================*
- *				do_llseek				     *
- *===========================================================================*/
-int do_llseek(message *m_out)
 {
 	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
 		make64(job_m_in.offset_lo, job_m_in.offset_high));

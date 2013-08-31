@@ -168,13 +168,10 @@ void close_reply(void);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
 int do_lseek(message *m_out);
-int do_lseek_321(message *m_out);
-int do_llseek(message *m_out);
 int do_mknod(message *m_out);
 int do_mkdir(message *m_out);
 int do_open(message *m_out);
 int do_slink(message *m_out);
-int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset);
 int actual_llseek(struct fproc *rfp, message *m_out, int seekfd,
 	int seekwhence, off_t offset);
 int do_vm_open(void);
