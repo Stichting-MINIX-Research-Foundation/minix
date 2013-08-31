@@ -318,7 +318,7 @@ int fs_slink()
   if (r != OK) return(r);
   target[fs_m_in.REQ_MEM_SIZE] = '\0';
 
-  if (strlen(target) != fs_m_in.REQ_MEM_SIZE) {
+  if (strlen(target) != (size_t) fs_m_in.REQ_MEM_SIZE) {
 	/* This can happen if the user provides a buffer
 	 * with a \0 in it. This can cause a lot of trouble
 	 * when the symlink is used later. We could just use

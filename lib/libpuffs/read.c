@@ -76,7 +76,7 @@ int fs_readwrite(void)
 		return(EINVAL);
 
 	puffs_vattr_null(&va);
-	if ( (pos + bytes_left) > pn->pn_va.va_size)
+	if ((u_quad_t)(pos + bytes_left) > pn->pn_va.va_size)
 		va.va_size = bytes_left + pos;
 	va.va_ctime = va.va_mtime = clock_timespec();
 	va.va_atime = pn->pn_va.va_atime;
