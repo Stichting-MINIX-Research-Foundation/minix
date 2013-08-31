@@ -67,7 +67,6 @@ int search_dir(struct inode *ldir_ptr, char string [MFS_NAME_MAX], pino_t
 int fs_chmod(void);
 int fs_chown(void);
 int fs_getdents(void);
-int fs_getdents_321(void);
 int forbidden(struct inode *rip, pmode_t access_desired);
 int read_only(struct inode *ip);
 

@@ -331,7 +331,7 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 		return EBADF;
 	}
 
-	if(!f->filp_vno->v_vmnt->m_haspeek) {
+	if(!(f->filp_vno->v_vmnt->m_fs_flags & RES_HASPEEK)) {
 		unlock_filp(f);
 #if 0	/* Noisy diagnostic for mmap() by ld.so */
 		printf("VFS dupvm: no peek available\n");

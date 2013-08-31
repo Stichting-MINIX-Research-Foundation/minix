@@ -18,13 +18,6 @@ int fs_readsuper(void)
 	if (fs_m_in.REQ_FLAGS & REQ_ISROOT)
 		return EINVAL;
 
-	/* Get VFS-FS protocol version */
-	if (!(fs_m_in.REQ_FLAGS & REQ_HASPROTO)) {
-		proto_version = 0;
-	} else {
-		proto_version = VFS_FS_PROTO_VERSION(fs_m_in.REQ_PROTO);
-	}
-
 	/* Get the root inode and increase its reference count. */
 	root = get_root_inode();
 	ref_inode(root);
@@ -41,10 +34,7 @@ int fs_readsuper(void)
 	fs_m_out.RES_UID = root->i_stat.uid;
 	fs_m_out.RES_GID = root->i_stat.gid;
 	fs_m_out.RES_DEV = NO_DEV;
-
-	fs_m_out.RES_PROTO = 0;
-	VFS_FS_PROTO_PUT_VERSION(fs_m_out.RES_PROTO, VFS_FS_CURRENT_VERSION);
-	VFS_FS_PROTO_PUT_CONREQS(fs_m_out.RES_PROTO, 1);
+	fs_m_out.RES_FLAGS = RES_NOFLAGS;
 
 	fs_mounted = TRUE;
 

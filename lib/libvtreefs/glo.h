@@ -8,7 +8,6 @@
 
 EXTERN struct fs_hooks *vtreefs_hooks;
 
-EXTERN int proto_version;
 EXTERN message fs_m_in;
 EXTERN message fs_m_out;
 

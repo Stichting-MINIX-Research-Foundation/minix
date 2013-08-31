@@ -242,7 +242,7 @@ int req_flush(endpoint_t fs_e, dev_t dev);
 int req_statvfs(endpoint_t fs_e, struct statvfs *buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
 int req_getdents(endpoint_t fs_e, ino_t inode_nr, off_t pos, char *buf,
-	size_t size, off_t *new_pos, int direct, int getdents_321);
+	size_t size, off_t *new_pos, int direct);
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
 int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,
 	ino_t linked_file);
@@ -260,7 +260,7 @@ int req_putnode(int fs_e, ino_t inode_nr, int count);
 int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 	vir_bytes buf, size_t len, int direct);
 int req_readsuper(struct vmnt *vmp, char *driver_name, dev_t dev, int readonly,
-	int isroot, struct node_details *res_nodep);
+	int isroot, struct node_details *res_nodep, unsigned int *fs_flags);
 int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos, int rw_flag,
 	endpoint_t user_e, vir_bytes user_addr, unsigned int num_of_bytes,
 	off_t *new_posp, unsigned int *cum_iop);

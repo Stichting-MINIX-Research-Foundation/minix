@@ -39,12 +39,6 @@ int fs_readsuper()
   readonly  = (fs_m_in.REQ_FLAGS & REQ_RDONLY) ? 1 : 0;
   isroot    = (fs_m_in.REQ_FLAGS & REQ_ISROOT) ? 1 : 0;
 
-  if (!(fs_m_in.REQ_FLAGS & REQ_HASPROTO)) {
-	proto_version = 0;
-  } else {
-	proto_version = VFS_FS_PROTO_VERSION(fs_m_in.REQ_PROTO);
-  }
-
   if (label_len > sizeof(fs_dev_label))
 	return(EINVAL);
 
@@ -163,9 +157,7 @@ int fs_readsuper()
   fs_m_out.RES_FILE_SIZE_LO = root_ip->i_size;
   fs_m_out.RES_UID = root_ip->i_uid;
   fs_m_out.RES_GID = root_ip->i_gid;
-  fs_m_out.RES_PROTO = 0;
-  VFS_FS_PROTO_PUT_VERSION(fs_m_out.RES_PROTO, VFS_FS_CURRENT_VERSION);
-  VFS_FS_PROTO_PUT_CONREQS(fs_m_out.RES_PROTO, 1);
+  fs_m_out.RES_FLAGS = RES_HASPEEK;
 
   return(r);
 }

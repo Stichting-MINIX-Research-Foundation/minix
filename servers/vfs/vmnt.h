@@ -10,14 +10,13 @@ EXTERN struct vmnt {
   comm_t m_comm;
   dev_t m_dev;			/* device number */
   unsigned int m_flags;		/* mount flags */
-  unsigned int m_proto;		/* vfs-fs protocol info */
+  unsigned int m_fs_flags;	/* capability flags returned by FS */
   struct vnode *m_mounted_on;	/* vnode on which the partition is mounted */
   struct vnode *m_root_node;	/* root vnode */
   char m_label[LABEL_MAX];	/* label of the file system process */
   char m_mount_path[PATH_MAX];	/* path on which vmnt is mounted */
   char m_mount_dev[PATH_MAX];	/* device from which vmnt is mounted */
   char m_fstype[FSTYPE_MAX];	/* file system type */
-  int m_haspeek;		/* supports REQ_PEEK, REQ_BPEEK */
   struct statvfs_cache m_stats;	/* cached file system statistics */
 } vmnt[NR_MNTS];
 

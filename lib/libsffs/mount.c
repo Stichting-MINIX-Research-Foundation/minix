@@ -62,9 +62,7 @@ int do_readsuper()
   m_out.RES_UID = sffs_params->p_uid;
   m_out.RES_GID = sffs_params->p_gid;
   m_out.RES_DEV = NO_DEV;
-  m_out.RES_PROTO = 0;
-  VFS_FS_PROTO_PUT_VERSION(m_out.RES_PROTO, VFS_FS_CURRENT_VERSION);
-  VFS_FS_PROTO_PUT_CONREQS(m_out.RES_PROTO, 1);
+  m_out.RES_FLAGS = RES_64BIT;
 
   state.s_mounted = TRUE;
 

@@ -39,8 +39,6 @@
 #define REQ_TRC_START_LO	m9_l3
 #define REQ_UCRED_SIZE		m9_s4 
 #define REQ_UID			m9_s4
-#define REQ_PROTO		m9_s4	/* For definition see RES_PROTO */
-
 
 /* VFS/FS reply fields */
 #define RES_DEV			m9_l4
@@ -55,35 +53,12 @@
 #define RES_SEEK_POS_LO		m9_l4
 #define RES_SYMLOOP		m9_s3
 #define RES_UID			m9_s4
-
-#define RES_PROTO		m9_s3
-/* RES_PROTO is defined as follows:
- *  |--------------------------------|
- *                   8O7 V   4  CR   0
- *  15                               0
- * mentioned bits are inclusive
- * CR: bits 4-0 encode no. concurrent requests are supported by FS
- * V:  bits 7-5 encode version of protocol
- * O:  bit 8 encodes support for 64-bit file offsets
- */
-#define RES_PROTO_CR_SHIFT	0
-#define RES_PROTO_CR_MASK	0x1F
-#define VFS_FS_PROTO_CONREQS(b)	(((b) & RES_PROTO_CR_MASK)>>RES_PROTO_CR_SHIFT)
-#define VFS_FS_PROTO_PUT_CONREQS(b,v) \
-	((b) |= (((v) << RES_PROTO_CR_SHIFT) & RES_PROTO_CR_MASK))
-#define RES_PROTO_V_SHIFT	5
-#define RES_PROTO_V_MASK	0x70
-#define VFS_FS_PROTO_VERSION(b)	(((b) & RES_PROTO_V_MASK) >> RES_PROTO_V_SHIFT)
-#define VFS_FS_PROTO_PUT_VERSION(b,v) \
-	((b) |= (((v) << RES_PROTO_V_SHIFT) & RES_PROTO_V_MASK))
-#define VFS_FS_CURRENT_VERSION	1 /* Current version */
-#define RES_PROTO_BIGOFFT_SHIFT 8
-#define VFS_FS_PROTO_BIGOFFT(b) (b & RES_PROTO_BIGOFFT_SHIFT)
+#define	RES_FLAGS		m9_s3
 
 /* VFS/FS flags */
-#define REQ_RDONLY		001
-#define REQ_ISROOT		002
-#define REQ_HASPROTO		004
+#define REQ_RDONLY		001	/* FS is mounted read-only */
+#define REQ_ISROOT		002	/* FS is root file system */
+
 #define PATH_NOFLAGS		000
 #define PATH_RET_SYMLINK	010	/* Return a symlink object (i.e.
 					 * do not continue with the contents
@@ -92,6 +67,11 @@
 #define PATH_GET_UCRED		020	/* Request provides a grant ID in m9_l1
 					 * and struct ucred size in m9_s4 (as
 					 * opposed to a REQ_UID). */
+
+#define RES_NOFLAGS		000
+#define RES_THREADED		001	/* FS supports multithreading */
+#define RES_HASPEEK		002	/* FS implements REQ_PEEK/REQ_BPEEK */
+#define RES_64BIT		004	/* FS can handle 64-bit file sizes */
 
 /* VFS/FS error messages */
 #define EENTERMOUNT              (-301)
