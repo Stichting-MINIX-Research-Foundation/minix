@@ -17,7 +17,6 @@
 #define CHMOD		  15 
 #define CHOWN		  16 
 #define BRK		  17
-#define LSEEK_321	  19
 #define MINIX_GETPID	  20
 #define MOUNT		  21 
 #define UMOUNT		  22 
@@ -48,7 +47,6 @@
 #define FSTAT		  52
 #define LSTAT		  53
 #define IOCTL		  54
-#define FCNTL_321	  55
 #define FS_READY	  57
 #define PIPE2		  58
 #define EXEC		  59
@@ -72,7 +70,6 @@
 #define REBOOT		  76
 #define SVRCTL		  77
 #define SYSUNAME	  78
-#define GETDENTS_321	  80	/* to VFS */
 #define LLSEEK		  81	/* to VFS */
 #define GETVFSSTAT	  82	/* to VFS */
 #define STATVFS1 	  83	/* to VFS */
@@ -85,8 +82,6 @@
 #define GETTIMEOFDAY      90	/* to PM */
 #define SETEUID		  91	/* to PM */
 #define SETEGID		  92	/* to PM */
-#define TRUNCATE_321	  93	/* to VFS */
-#define FTRUNCATE_321	  94	/* to VFS */
 #define FCHMOD		  95	/* to VFS */
 #define FCHOWN		  96	/* to VFS */
 #define LSEEK		  97
