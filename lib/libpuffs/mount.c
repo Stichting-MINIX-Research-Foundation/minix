@@ -33,9 +33,7 @@ int fs_readsuper()
   fs_m_out.RES_FILE_SIZE_LO = root_va->va_size;
   fs_m_out.RES_UID = root_va->va_uid;
   fs_m_out.RES_GID = root_va->va_gid;
-  fs_m_out.RES_PROTO = 0;
-  VFS_FS_PROTO_PUT_VERSION(fs_m_out.RES_PROTO, VFS_FS_CURRENT_VERSION);
-  VFS_FS_PROTO_PUT_CONREQS(fs_m_out.RES_PROTO, 1);
+  fs_m_out.RES_FLAGS = RES_NOFLAGS;
 
   return(OK);
 }

@@ -26,8 +26,6 @@
 #include "vnode.h"
 
 
-static size_t translate_dents(char *src, size_t size, char *dst, int direction);
-
 /*===========================================================================*
  *			req_breadwrite					     *
  *===========================================================================*/
@@ -194,7 +192,7 @@ int req_create(
   res->fs_e	= m.m_source;
   res->inode_nr	= (ino_t) m.RES_INODE_NR;
   res->fmode	= (mode_t) m.RES_MODE;
-  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+  if (vmp->m_fs_flags & RES_64BIT) {
 	res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
   } else {
 	res->fsize = m.RES_FILE_SIZE_LO;
@@ -264,7 +262,7 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
   m.REQ_INODE_NR = (pino_t) inode_nr;
 
   m.REQ_TRC_START_LO = ex64lo(start);
-  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+  if (vmp->m_fs_flags & RES_64BIT) {
 	m.REQ_TRC_START_HI = ex64hi(start);
   } else if (start > INT_MAX) {
 	/* FS does not support 64-bit off_t and 32 bits is not enough */
@@ -274,7 +272,7 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
   }
 
   m.REQ_TRC_END_LO = ex64lo(end);
-  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+  if (vmp->m_fs_flags & RES_64BIT) {
 	m.REQ_TRC_END_HI = ex64hi(end);
   } else if (end > INT_MAX) {
 	/* FS does not support 64-bit off_t and 32 bits is not enough */
@@ -298,61 +296,18 @@ int req_getdents(
   char *buf,
   size_t size,
   off_t *new_pos,
-  int direct,
-  int getdents_321	/* Set to 1 if user land expects old format */
+  int direct
 )
 {
   int r;
-  int fs_getdents_321 = 0, do_translation = 0;
   message m;
   cp_grant_id_t grant_id;
   struct vmnt *vmp;
-  char *indir_buf_src = NULL;
-  char *indir_buf_dst = NULL;
 
   vmp = find_vmnt(fs_e);
   assert(vmp != NULL);
 
-  if (VFS_FS_PROTO_VERSION(vmp->m_proto) == 0) {
-	fs_getdents_321 = 1;
-  }
-
-  /* When we have to translate new struct dirent to the old format or vice
-   * versa, we're going to have to ignore the user provided buffer and do only
-   * one entry at a time. We have to do the translation here and allocate
-   * space on the stack. This is a limited resource. Besides, we don't want to
-   * be dependent on crazy buffer sizes provided by user space (i.e., we'd have
-   * to allocate a similarly sized buffer here).
-   *
-   * We need to translate iff:
-   *  1. userland expects old format and FS provides new format
-   *  2. userland expects new format and FS provides old format
-   * We don't need to translate iff
-   *  3. userland expects old format and FS provides old format
-   *  4. userland expects new format and FS provides new format
-   *
-   * Note: VFS expects new format (when doing 'direct'), covered by case 2.
-   */
-  if (getdents_321 && !fs_getdents_321) {	/* case 1 */
-	do_translation = 1;
-  } else if (fs_getdents_321 && !getdents_321) {/* case 2 */
-	do_translation = 1;
-  }
-
-  if (do_translation) {
-	/* We're cutting down the buffer size in two so it's guaranteed we
-	 * have enough space for the translation (data structure has become
-	 * larger).
-	 */
-	size = size / 2;
-	indir_buf_src = malloc(size);
-	indir_buf_dst = malloc(size * 2); /* dst buffer keeps original size */
-	if (indir_buf_src == NULL || indir_buf_dst == NULL)
-		panic("Couldn't allocate temp buf space\n");
-
-	grant_id = cpf_grant_direct(fs_e, (vir_bytes) indir_buf_src, size,
-				CPF_WRITE);
-  } else if (direct) {
+  if (direct) {
 	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, size, CPF_WRITE);
   } else {
 	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size,
@@ -368,12 +323,10 @@ int req_getdents(
   m.REQ_GRANT = grant_id;
   m.REQ_MEM_SIZE = size;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
-  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+  if (vmp->m_fs_flags & RES_64BIT) {
 	m.REQ_SEEK_POS_HI = ex64hi(pos);
   } else if (pos > INT_MAX) {
 	/* FS does not support 64-bit off_t and 32 bits is not enough */
-	if (indir_buf_src != NULL) free(indir_buf_src);
-	if (indir_buf_dst != NULL) free(indir_buf_dst);
 	return EINVAL;
   } else {
 	m.REQ_SEEK_POS_HI = 0;
@@ -382,23 +335,8 @@ int req_getdents(
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
-  if (do_translation) {
-	if (r == OK) {
-		m.RES_NBYTES = translate_dents(indir_buf_src, m.RES_NBYTES,
-						indir_buf_dst, getdents_321);
-		if (direct) {
-			memcpy(buf, indir_buf_dst, m.RES_NBYTES);
-		} else {
-			r = sys_vircopy(SELF, (vir_bytes) indir_buf_dst, who_e,
-					(vir_bytes) buf, m.RES_NBYTES);
-		}
-	}
-	free(indir_buf_src);
-	free(indir_buf_dst);
-  }
-
   if (r == OK) {
-	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	if (vmp->m_fs_flags & RES_64BIT) {
 		*new_pos = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
 	} else {
 		*new_pos = m.RES_SEEK_POS_LO;
@@ -407,61 +345,6 @@ int req_getdents(
   }
 
   return(r);
-}
-
-/*===========================================================================*
- *				translate_dents	  			     *
- *===========================================================================*/
-static size_t
-translate_dents(char *src, size_t size, char *dst, int to_getdents_321)
-{
-/* Convert between 'struct dirent' and 'struct dirent_321' both ways and
- * return the size of the new buffer.
- */
-	int consumed = 0, newconsumed = 0;
-	struct dirent *dent;
-	struct dirent_321 *dent_321;
-#define DWORD_ALIGN(d) if((d) % sizeof(long)) (d)+=sizeof(long)-(d)%sizeof(long)
-
-	if (to_getdents_321) {
-		/* Provided format is struct dirent and has to be translated
-		 * to struct dirent_321 */
-		dent_321 = (struct dirent_321 *) dst;
-		dent     = (struct dirent *)     src;
-
-		while (consumed < size && dent->d_reclen > 0) {
-			dent_321->d_ino = (u32_t) dent->d_ino;
-			dent_321->d_off = (i32_t) dent->d_off;
-			dent_321->d_reclen = offsetof(struct dirent_321,d_name)+
-					     strlen(dent->d_name) + 1;
-			DWORD_ALIGN(dent_321->d_reclen);
-			strcpy(dent_321->d_name, dent->d_name);
-			consumed += dent->d_reclen;
-			newconsumed += dent_321->d_reclen;
-			dent     = (struct dirent *)     &src[consumed];
-			dent_321 = (struct dirent_321 *) &dst[newconsumed];
-		}
-	} else {
-		/* Provided format is struct dirent_321 and has to be
-		 * translated to struct dirent */
-		dent_321 = (struct dirent_321 *) src;
-		dent     = (struct dirent *)     dst;
-
-		while (consumed < size && dent_321->d_reclen > 0) {
-			dent->d_ino = (ino_t) dent_321->d_ino;
-			dent->d_off = (off_t) dent_321->d_off;
-			dent->d_reclen = offsetof(struct dirent, d_name) +
-					 strlen(dent_321->d_name) + 1;
-			DWORD_ALIGN(dent->d_reclen);
-			strcpy(dent->d_name, dent_321->d_name);
-			consumed += dent_321->d_reclen;
-			newconsumed += dent->d_reclen;
-			dent_321 = (struct dirent_321 *) &src[consumed];
-			dent     = (struct dirent *)     &dst[newconsumed];
-		}
-	}
-
-	return newconsumed;
 }
 
 /*===========================================================================*
@@ -592,7 +475,7 @@ int req_lookup(
   case OK:
 	res->inode_nr = (ino_t) m.RES_INODE_NR;
 	res->fmode = (mode_t) m.RES_MODE;
-	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	if (vmp->m_fs_flags & RES_64BIT) {
 		res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
 	} else {
 		res->fsize = m.RES_FILE_SIZE_LO;
@@ -749,7 +632,7 @@ int req_newnode(
   res->fs_e	= m.m_source;
   res->inode_nr = (ino_t) m.RES_INODE_NR;
   res->fmode	= (mode_t) m.RES_MODE;
-  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+  if (vmp->m_fs_flags & RES_64BIT) {
 	res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
   } else {
 	res->fsize = m.RES_FILE_SIZE_LO;
@@ -865,7 +748,8 @@ int req_readsuper(
   dev_t dev,
   int readonly,
   int isroot,
-  struct node_details *res
+  struct node_details *res,
+  unsigned int *fs_flags
 )
 {
   int r;
@@ -884,9 +768,6 @@ int req_readsuper(
   /* Fill in request message */
   m.m_type = REQ_READSUPER;
   m.REQ_FLAGS = 0;
-  m.REQ_PROTO = 0;
-  VFS_FS_PROTO_PUT_VERSION(m.REQ_PROTO, VFS_FS_CURRENT_VERSION);
-  m.REQ_FLAGS |= REQ_HASPROTO;
   if(readonly) m.REQ_FLAGS |= REQ_RDONLY;
   if(isroot)   m.REQ_FLAGS |= REQ_ISROOT;
   m.REQ_GRANT = grant_id;
@@ -901,15 +782,15 @@ int req_readsuper(
 	/* Fill in response structure */
 	res->fs_e = m.m_source;
 	res->inode_nr = (ino_t) m.RES_INODE_NR;
-	vmp->m_proto = m.RES_PROTO;
 	res->fmode = (mode_t) m.RES_MODE;
-	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	if (m.RES_FLAGS & RES_64BIT) {
 		res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
 	} else {
 		res->fsize = m.RES_FILE_SIZE_LO;
 	}
 	res->uid = (uid_t) m.RES_UID;
 	res->gid = (gid_t) m.RES_GID;
+	*fs_flags = m.RES_FLAGS;
   }
 
   return(r);
@@ -947,7 +828,7 @@ unsigned int *cum_iop)
   m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
-  if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+  if (vmp->m_fs_flags & RES_64BIT) {
 	m.REQ_SEEK_POS_HI = ex64hi(pos);
   } else if (pos > INT_MAX) {
 	return EINVAL;
@@ -962,7 +843,7 @@ unsigned int *cum_iop)
 
   if (r == OK) {
 	/* Fill in response structure */
-	if (VFS_FS_PROTO_BIGOFFT(vmp->m_proto)) {
+	if (vmp->m_fs_flags & RES_64BIT) {
 		*new_posp = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
 	} else {
 		*new_posp = m.RES_SEEK_POS_LO;

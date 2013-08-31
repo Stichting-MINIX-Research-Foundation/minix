@@ -343,7 +343,8 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   {
 	struct vnode *vp = execi.vp;
 	assert(vp);
-	if(vp->v_vmnt->m_haspeek && major(vp->v_dev) != MEMORY_MAJOR) {
+	if ((vp->v_vmnt->m_fs_flags & RES_HASPEEK) &&
+			major(vp->v_dev) != MEMORY_MAJOR) {
 		int newfd = -1;
 		if(get_fd(vmfp, 0, R_BIT, &newfd, &newfilp) == OK) {
 			assert(newfd >= 0 && newfd < OPEN_MAX);

@@ -184,6 +184,7 @@ char mount_label[LABEL_MAX] )
   struct node_details res;
   struct lookup resolve;
   struct statvfs statvfs_buf;
+  unsigned int fs_flags;
 
   /* Look up block device driver label when dev is not a pseudo-device */
   label = "";
@@ -281,15 +282,11 @@ char mount_label[LABEL_MAX] )
 
   /* Tell FS which device to mount */
   new_vmp->m_flags |= VMNT_MOUNTING;
-  r = req_readsuper(new_vmp, label, dev, !!(flags & MNT_RDONLY), isroot, &res);
+  r = req_readsuper(new_vmp, label, dev, !!(flags & MNT_RDONLY), isroot, &res,
+	&fs_flags);
   new_vmp->m_flags &= ~VMNT_MOUNTING;
 
-  if(req_peek(fs_e, 1, 0, PAGE_SIZE) != OK ||
-     req_bpeek(fs_e, dev, 0, PAGE_SIZE) != OK) {
-  	new_vmp->m_haspeek = 0;
-  } else {
-  	new_vmp->m_haspeek = 1;
-  }
+  new_vmp->m_fs_flags = fs_flags;
 
   /* Fill the statvfs cache with initial values. */
   if (r == OK)
@@ -322,10 +319,10 @@ char mount_label[LABEL_MAX] )
   /* Root node is indeed on the partition */
   root_node->v_vmnt = new_vmp;
   root_node->v_dev = new_vmp->m_dev;
-  if (VFS_FS_PROTO_CONREQS(new_vmp->m_proto) == 0)
-	new_vmp->m_comm.c_max_reqs = 1;	/* Default if FS doesn't tell us */
+  if (!(new_vmp->m_fs_flags & RES_THREADED))
+	new_vmp->m_comm.c_max_reqs = 1;
   else
-	new_vmp->m_comm.c_max_reqs = VFS_FS_PROTO_CONREQS(new_vmp->m_proto);
+	new_vmp->m_comm.c_max_reqs = NR_WTHREADS;
   new_vmp->m_comm.c_cur_reqs = 0;
 
   /* No more blocking operations, so we can now report on this file system. */
@@ -422,9 +419,7 @@ void mount_pfs(void)
 
   vmp->m_dev = dev;
   vmp->m_fs_e = PFS_PROC_NR;
-  vmp->m_proto = 0;
-  VFS_FS_PROTO_PUT_CONREQS(vmp->m_proto, 1);
-  VFS_FS_PROTO_PUT_VERSION(vmp->m_proto, VFS_FS_CURRENT_VERSION);
+  vmp->m_fs_flags = 0;
   strlcpy(vmp->m_label, "pfs", LABEL_MAX);
   strlcpy(vmp->m_mount_path, "pipe", PATH_MAX);
   strlcpy(vmp->m_mount_dev, "none", PATH_MAX);
