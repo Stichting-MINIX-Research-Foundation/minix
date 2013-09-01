@@ -390,7 +390,7 @@ virtio_blk_ioctl(dev_t minor, unsigned int req, endpoint_t endpt,
 
 	}
 
-	return EINVAL;
+	return ENOTTY;
 }
 
 static struct device *
