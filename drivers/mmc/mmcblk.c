@@ -469,7 +469,7 @@ block_ioctl(dev_t minor,
 		return OK;
 	}
 
-	return EINVAL;
+	return ENOTTY;
 }
 
 /*===========================================================================*

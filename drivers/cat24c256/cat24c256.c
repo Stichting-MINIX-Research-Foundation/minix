@@ -219,7 +219,7 @@ cat24c256_blk_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 {
 	log_trace(&log, "cat24c256_blk_ioctl(%d)\n", minor);
 	/* no supported ioctls for this device */
-	return EINVAL;
+	return ENOTTY;
 }
 
 static struct device *

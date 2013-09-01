@@ -2290,7 +2290,7 @@ static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 		return (w_wn->w_status & (STATUS_ERR|STATUS_WF)) ? EIO : OK;
 	}
 
-	return EINVAL;
+	return ENOTTY;
 }
 
 /*===========================================================================*

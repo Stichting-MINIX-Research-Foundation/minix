@@ -345,7 +345,7 @@ static int do_ioctl(struct blockdriver *bdp, message *mp)
 	if (bdp->bdr_ioctl)
 		r = (*bdp->bdr_ioctl)(minor, request, mp->m_source, grant);
 	else
-		r = EINVAL;
+		r = ENOTTY;
   }
 
   return r;

@@ -2685,7 +2685,7 @@ static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 			sizeof(val));
 	}
 
-	return EINVAL;
+	return ENOTTY;
 }
 
 /*===========================================================================*

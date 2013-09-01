@@ -178,7 +178,7 @@ struct blockdriver tda19988_tab = {
 	.bdr_open = tda19988_blk_open,
 	.bdr_close = tda19988_blk_close,
 	.bdr_transfer = tda19988_blk_transfer,
-	.bdr_ioctl = tda19988_blk_ioctl,	/* nop -- always returns EINVAL */
+	.bdr_ioctl = tda19988_blk_ioctl,	/* nop -- always returns ENOTTY */
 	.bdr_cleanup = NULL,	/* nothing allocated -- nothing to clean up */
 	.bdr_part = tda19988_blk_part,
 	.bdr_geometry = NULL,	/* no geometry (cylinders, heads, sectors, etc) */
@@ -324,7 +324,7 @@ tda19988_blk_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 {
 	log_trace(&log, "tda19988_blk_ioctl(%d)\n", minor);
 	/* no supported ioctls for this device */
-	return EINVAL;
+	return ENOTTY;
 }
 
 static struct device *
