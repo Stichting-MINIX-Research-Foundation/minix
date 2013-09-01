@@ -12,7 +12,7 @@
 #define M1                 1
 #define M3                 3
 #define M4                 4
-#define M3_STRING         14	/* legacy m3_ca1 size (must not be changed) */
+#define M3_STRING         16	/* legacy m3_ca1 size (must not be changed) */
 #define M3_LONG_STRING    16	/* current m3_ca1 size (may be increased) */
 
 typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3;} mess_1;
