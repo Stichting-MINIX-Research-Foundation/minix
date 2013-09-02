@@ -91,22 +91,23 @@ static unsigned char obuf[128];	/* output buffer */
 static unsigned const char *optr;	/* ptr to next char in obuf to print */
 static int orig_count;		/* original byte count */
 static int port_base;		/* I/O port for printer */
-static endpoint_t proc_nr;	/* user requesting the printing */
 static cp_grant_id_t grant_nr;	/* grant on which print happens */
 static int user_left;		/* bytes of output left in user buf */
 static vir_bytes user_vir_d;	/* offset in user buf */
 int writing;		/* nonzero while write is in progress */
+static cdev_id_t write_id;	/* request ID of ongoing write */
 static int irq_hook_id;	/* id of irq hook at kernel */
 
-static void do_cancel(message *m_ptr);
 static void output_done(void);
-static void do_write(message *m_ptr);
 static void prepare_output(void);
 static int do_probe(void);
 static void do_initialize(void);
-static void reply(int code, endpoint_t replyee, endpoint_t proc,
-	cp_grant_id_t grant, int status);
-static void do_printer_output(void);
+static int printer_open(devminor_t minor, int access, endpoint_t user_endpt);
+static ssize_t printer_write(devminor_t minor, u64_t position,
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id);
+static int printer_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+static void printer_intr(unsigned int mask);
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
@@ -115,49 +116,25 @@ EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
 
+/* Entry points to this driver. */
+static struct chardriver printer_tab = {
+  .cdr_open	= printer_open,
+  .cdr_write	= printer_write,
+  .cdr_cancel	= printer_cancel,
+  .cdr_intr	= printer_intr
+};
+
 /*===========================================================================*
  *				printer_task				     *
  *===========================================================================*/
 int main(void)
 {
 /* Main routine of the printer task. */
-  message pr_mess;		/* buffer for all incoming messages */
-  int ipc_status;
 
   /* SEF local startup. */
   sef_local_startup();
 
-  while (TRUE) {
-	if(driver_receive(ANY, &pr_mess, &ipc_status) != OK) {
-		panic("driver_receive failed");
-	}
-
-	if (is_ipc_notify(ipc_status)) {
-		switch (_ENDPOINT_P(pr_mess.m_source)) {
-			case HARDWARE:
-				do_printer_output();
-				break;
-		}
-		continue;
-	}
-
-	switch(pr_mess.m_type) {
-	    case DEV_OPEN:
-                do_initialize();		/* initialize */
-		reply(DEV_OPEN_REPL, pr_mess.m_source, pr_mess.USER_ENDPT,
-			(cp_grant_id_t) pr_mess.IO_GRANT, OK);
-		break;
-	    case DEV_CLOSE:
-		reply(DEV_CLOSE_REPL, pr_mess.m_source, pr_mess.USER_ENDPT,
-			(cp_grant_id_t) pr_mess.IO_GRANT, OK);
-		break;
-	    case DEV_WRITE_S:	do_write(&pr_mess);	break;
-	    case CANCEL:	do_cancel(&pr_mess);	break;
-	    default:
-		reply(DEV_REVIVE, pr_mess.m_source, pr_mess.USER_ENDPT,
-			(cp_grant_id_t) pr_mess.IO_GRANT, EINVAL);
-	}
-  }
+  chardriver_task(&printer_tab);
 }
 
 /*===========================================================================*
@@ -202,54 +179,49 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-static void do_write(m_ptr)
-register message *m_ptr;	/* pointer to the newly arrived message */
+static ssize_t printer_write(devminor_t UNUSED(minor), u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
 {
-/* The printer is used by sending DEV_WRITE messages to it. Process one. */
+/* The printer is used by sending write requests to it. Process one. */
+  int retries;
+  u32_t status;
 
-    int r = OK;
-    int retries;
-    u32_t status;
+  /* Reject command if last write is not yet finished, the count is not
+   * positive, or we're asked not to block.
+   */
+  if (writing)			return EIO;
+  if (size <= 0)		return EINVAL;
+  if (flags & FLG_OP_NONBLOCK)	return EAGAIN;	/* not supported */
 
-    /* Reject command if last write is not yet finished, the count is not
-     * positive, or the user address is bad.
-     */
-    if (writing)  				r = EIO;
-    else if (m_ptr->COUNT <= 0)  		r = EINVAL;
-    else if (m_ptr->FLAGS & FLG_OP_NONBLOCK)	r = EAGAIN; /* not supported */
+  /* If no errors occurred, continue printing with the caller.
+   * First wait until the printer is online to prevent stupid errors.
+   */
+  caller = endpt;
+  user_left = size;
+  orig_count = size;
+  user_vir_d = 0;	/* Offset. */
+  writing = TRUE;
+  grant_nr = grant;
+  write_id = id;
 
-    /* If no errors occurred, continue printing with the caller.
-     * First wait until the printer is online to prevent stupid errors.
-     */
-    if (r == OK) {
-	caller = m_ptr->m_source;
-	proc_nr = m_ptr->USER_ENDPT;
-	user_left = m_ptr->COUNT;
-	orig_count = m_ptr->COUNT;
-	user_vir_d = 0;				 	/* Offset. */
-	writing = TRUE;
-	grant_nr = (cp_grant_id_t) m_ptr->IO_GRANT;
-
-        retries = MAX_ONLINE_RETRIES + 1;  
-        while (--retries > 0) {
-            if(sys_inb(port_base + 1, &status) != OK) {
+  retries = MAX_ONLINE_RETRIES + 1;
+  while (--retries > 0) {
+        if (sys_inb(port_base + 1, &status) != OK) {
 		printf("printer: sys_inb of %x failed\n", port_base+1);
 		panic("sys_inb failed");
-	    }
-            if ((status & ON_LINE)) {		/* printer online! */
-	        prepare_output();
-	        do_printer_output();
-	        return;
-            }
-            micro_delay(500000);		/* wait before retry */
-        }
-        /* If we reach this point, the printer was not online in time. */
-        done_status = status;
-        output_done();
-    } else {
-	reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
-		(cp_grant_id_t) m_ptr->IO_GRANT, r);
-    }
+	}
+	if (status & ON_LINE) {		/* printer online! */
+		prepare_output();
+		printer_intr(0);
+		return EDONTREPLY;	/* we may already have sent a reply */
+	}
+	micro_delay(500000);		/* wait before retry */
+  }
+  /* If we reach this point, the printer was not online in time. */
+  done_status = status;
+  output_done();
+  return EDONTREPLY;
 }
 
 /*===========================================================================*
@@ -260,12 +232,11 @@ static void output_done()
 /* Previous chunk of printing is finished.  Continue if OK and more.
  * Otherwise, reply to caller (FS).
  */
-    register int status;
-    message m;
+  int status;
 
-    if (!writing) return;	  	/* probably leftover interrupt */
-    if (done_status != OK) {      	/* printer error occurred */
-        status = EIO;
+  if (!writing) return;	  	/* probably leftover interrupt */
+  if (done_status != OK) {      	/* printer error occurred */
+	status = EIO;
 	if ((done_status & ON_LINE) == 0) { 
 	    printf("Printer is not on line\n");
 	} else if ((done_status & NO_PAPER)) { 
@@ -279,64 +250,36 @@ static void output_done()
 		status = orig_count - user_left;
 	}
 	oleft = 0;			/* cancel further output */
-    } 
-    else if (user_left != 0) {		/* not yet done, continue! */
+  } else if (user_left != 0) {		/* not yet done, continue! */
 	prepare_output();
 	return;
-    } 
-    else {				/* done! report back to FS */
+  } else {				/* done! report back to FS */
 	status = orig_count;
-    }
+  }
 
-    memset(&m, 0, sizeof(m));
-    m.m_type = DEV_REVIVE;		/* build message */
-    m.REP_ENDPT = proc_nr;
-    m.REP_STATUS = status;
-    m.REP_IO_GRANT = grant_nr;
-    send(caller, &m);
+  chardriver_reply_task(caller, write_id, status);
 
-    writing = FALSE;			/* unmark event */
+  writing = FALSE;			/* unmark event */
 }
 
 /*===========================================================================*
- *				do_cancel				     *
+ *				printer_cancel				     *
  *===========================================================================*/
-static void do_cancel(m_ptr)
-register message *m_ptr;	/* pointer to the newly arrived message */
+static int printer_cancel(devminor_t UNUSED(minor), endpoint_t endpt,
+	cdev_id_t id)
 {
 /* Cancel a print request that has already started.  Usually this means that
  * the process doing the printing has been killed by a signal.  It is not
  * clear if there are race conditions.  Try not to cancel the wrong process,
- * but rely on FS to handle the EINTR reply and de-suspension properly.
+ * but rely on VFS to handle the EINTR reply and de-suspension properly.
  */
 
-  if (writing && m_ptr->USER_ENDPT == proc_nr &&
-		(cp_grant_id_t) m_ptr->IO_GRANT == grant_nr) {
+  if (writing && caller == endpt && write_id == id) {
 	oleft = 0;		/* cancel output by interrupt handler */
 	writing = FALSE;
-	reply(DEV_REVIVE, m_ptr->m_source, proc_nr, grant_nr, EINTR);
+	return EINTR;
   }
-}
-
-/*===========================================================================*
- *				reply					     *
- *===========================================================================*/
-static void reply(code, replyee, process, grant, status)
-int code;			/* DEV_OPEN_REPL, DEV_CLOSE_REPL, DEV_REVIVE */
-endpoint_t replyee;		/* destination for message (normally FS) */
-endpoint_t process;		/* which user requested the printing */
-cp_grant_id_t grant;		/* which grant was involved */
-int status;			/* number of  chars printed or error code */
-{
-/* Send a reply telling FS that printing has started or stopped. */
-
-  message pr_mess;
-
-  pr_mess.m_type = code;		/* reply code */
-  pr_mess.REP_STATUS = status;		/* count or EIO */
-  pr_mess.REP_ENDPT = process;		/* which user does this pertain to */
-  pr_mess.REP_IO_GRANT = grant;		/* the grant */
-  send(replyee, &pr_mess);		/* send the message */
+  return EDONTREPLY;
 }
 
 /*===========================================================================*
@@ -348,7 +291,7 @@ static int do_probe(void)
 
   /* Get the base port for first printer. */
   if(sys_readbios(LPT1_IO_PORT_ADDR, &port_base, LPT1_IO_PORT_SIZE) != OK) {
-	panic("do_initialize: sys_readbios failed");
+	panic("do_probe: sys_readbios failed");
   }
 
   /* If the port is zero, the parallel port is not available at all. */
@@ -361,10 +304,6 @@ static int do_probe(void)
 static void do_initialize()
 {
 /* Set global variables and initialize the printer. */
-  static int initialized = FALSE;
-  if (initialized) return;
-  initialized = TRUE;
-  
   if(sys_outb(port_base + 2, INIT_PRINTER) != OK) {
 	printf("printer: sys_outb of %x failed\n", port_base+2);
 	panic("do_initialize: sys_outb init failed");
@@ -379,6 +318,24 @@ static void do_initialize()
      sys_irqenable(&irq_hook_id) != OK) {
 	panic("do_initialize: irq enabling failed");
   }
+}
+
+/*==========================================================================*
+ *		    	      printer_open				    *
+ *==========================================================================*/
+static int printer_open(devminor_t UNUSED(minor), int UNUSED(access),
+	endpoint_t UNUSED(user_endpt))
+{
+/* Initialize on first open. */
+  static int initialized = FALSE;
+
+  if (!initialized) {
+	do_initialize();
+
+	initialized = TRUE;
+  }
+
+  return OK;
 }
 
 /*==========================================================================*
@@ -405,9 +362,9 @@ static void prepare_output()
 }
 
 /*===========================================================================*
- *				do_printer_output				     *
+ *				printer_intr				     *
  *===========================================================================*/
-static void do_printer_output()
+static void printer_intr(unsigned int UNUSED(mask))
 {
 /* This function does the actual output to the printer. This is called on an
  * interrupt message sent from the generic interrupt handler that 'forwards'
