@@ -34,7 +34,7 @@ static void update_reservation(endpoint_t endpt, char *key);
 static void ds_event(void);
 
 static int validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec);
-static int do_i2c_ioctl_exec(message * m);
+static int do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr);
 
 static int env_parse_instance(void);
 
@@ -253,15 +253,10 @@ validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec)
  * Performs the action in minix_i2c_ioctl_exec_t.
  */
 static int
-do_i2c_ioctl_exec(message * m)
+do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr)
 {
 	int r;
-	endpoint_t caller;
-	cp_grant_id_t grant_nr;
 	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	caller = (endpoint_t) m->m_source;
-	grant_nr = (cp_grant_id_t) m->IO_GRANT;
 
 	/* Copy the requested exection into the driver */
 	r = sys_safecopyfrom(caller, grant_nr, (vir_bytes) 0,
@@ -310,7 +305,7 @@ i2c_ioctl(message * m)
 
 	switch (m->COUNT) {
 	case MINIX_I2C_IOCTL_EXEC:
-		r = do_i2c_ioctl_exec(m);
+		r = do_i2c_ioctl_exec(m->m_source, (cp_grant_id_t)m->IO_GRANT);
 		break;
 	default:
 		log_warn(&log, "Invalid ioctl() 0x%x\n", m->COUNT);
@@ -324,25 +319,24 @@ i2c_ioctl(message * m)
 int
 i2c_other(message * m)
 {
+	message m_reply;
 	int r;
 
 	switch (m->m_type) {
 	case BUSC_I2C_RESERVE:
 		/* reserve a device on the bus for exclusive access */
-		r = do_reserve((endpoint_t) m->m_source, m->DEVICE);
+		r = do_reserve(m->m_source, m->BUSC_I2C_ADDR);
 		break;
 	case BUSC_I2C_EXEC:
 		/* handle request from another driver */
-		m->COUNT = MINIX_I2C_IOCTL_EXEC;
-		r = do_i2c_ioctl_exec(m);
+		r = do_i2c_ioctl_exec(m->m_source, m->BUSC_I2C_GRANT);
 		break;
 	case NOTIFY_MESSAGE:
 		/* handle notifications about drivers changing state */
 		if (m->m_source == DS_PROC_NR) {
 			ds_event();
 		}
-		r = OK;
-		break;
+		return EDONTREPLY;
 	default:
 		log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
 		r = EINVAL;
@@ -351,7 +345,14 @@ i2c_other(message * m)
 
 	log_trace(&log, "i2c_other() returning r=%d\n", r);
 
-	return r;
+	/* We cannot use libchardriver to reply, as it will send DEV_REVIVE. */
+	memset(&m_reply, 0, sizeof(m_reply));
+	m_reply.m_type = r;
+
+	if ((r = send(m->m_source, &m_reply)) != OK)
+		log_warn(&log, "send() to %d failed: %d\n", m->m_source, r);
+
+	return EDONTREPLY;
 }
 
 struct device *
