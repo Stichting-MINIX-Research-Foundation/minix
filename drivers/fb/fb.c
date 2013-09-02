@@ -23,17 +23,14 @@
 /*
  * Function prototypes for the fb driver.
  */
-static int fb_open(message *m);
-static int fb_close(message *m);
-static struct device * fb_prepare(dev_t device);
-static int fb_transfer(endpoint_t endpt, int opcode, u64_t position,
-	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
-	flags);
-static int fb_do_read(endpoint_t ep, iovec_t *iov, int minor, u64_t pos,
-	size_t *io_bytes);
-static int fb_do_write(endpoint_t ep, iovec_t *iov, int minor, u64_t pos,
-	size_t *io_bytes);
-static int fb_ioctl(message *m);
+static int fb_open(devminor_t minor, int access, endpoint_t user_endpt);
+static int fb_close(devminor_t minor);
+static ssize_t fb_read(devminor_t minor, u64_t pos, endpoint_t ep,
+	cp_grant_id_t gid, size_t size, int flags, cdev_id_t id);
+static ssize_t fb_write(devminor_t minor, u64_t pos, endpoint_t ep,
+	cp_grant_id_t gid, size_t size, int flags, cdev_id_t id);
+static int fb_ioctl(devminor_t minor, unsigned long request, endpoint_t ep,
+	cp_grant_id_t gid, int flags, endpoint_t user_ep, cdev_id_t id);
 static void paint_bootlogo(int minor);
 static void paint_restartlogo(int minor);
 static void paint_centered(int minor, char *data, int width, int height);
@@ -52,143 +49,90 @@ static int lu_state_restore(void);
 /* Entry points to the fb driver. */
 static struct chardriver fb_tab =
 {
-	fb_open,
-	fb_close,
-	fb_ioctl,
-	fb_prepare,
-	fb_transfer,
-	nop_cleanup,
-	nop_alarm,
-	nop_cancel,
-	nop_select,
-	NULL
+	.cdr_open	= fb_open,
+	.cdr_close	= fb_close,
+	.cdr_read	= fb_read,
+	.cdr_write	= fb_write,
+	.cdr_ioctl	= fb_ioctl
 };
 
 /** Represents the /dev/fb device. */
-static struct device fb_device[FB_DEV_NR];
-static int fb_minor, has_restarted = 0;
+static int has_restarted = 0;
 static u64_t has_restarted_t1, has_restarted_t2;
 
 static int open_counter[FB_DEV_NR];		/* Open count */
 
 static int
-fb_open(message *m)
+fb_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
 {
 	int r;
 	static int initialized = 0;
 	static struct edid_info info;
 	static struct edid_info *infop = NULL;
 
-	if (m->DEVICE < 0 || m->DEVICE >= FB_DEV_NR) return ENXIO;
+	if (minor < 0 || minor >= FB_DEV_NR) return ENXIO;
 
 	if (!initialized) {
-		r = fb_edid_read(m->DEVICE, &info);
+		r = fb_edid_read(minor, &info);
 		infop = (r == 0) ? &info : NULL;
 	}
 
-	if (arch_fb_init(m->DEVICE, &fb_device[m->DEVICE], infop) == OK) {
-		open_counter[m->DEVICE]++;
+	if (arch_fb_init(minor, infop) == OK) {
+		open_counter[minor]++;
 		if (!initialized) {
 			if (has_restarted) {
 				read_frclock_64(&has_restarted_t1);
-				paint_restartlogo(m->DEVICE);
+				paint_restartlogo(minor);
 			} else {
-				paint_bootlogo(m->DEVICE);
+				paint_bootlogo(minor);
 			}
 			initialized = 1;
 		}
 		return OK;
 	}
-	return ENXIO ;
+	return ENXIO;
 }
 
 static int
-fb_close(message *m)
+fb_close(devminor_t minor)
 {
-	if (m->DEVICE < 0 || m->DEVICE >= FB_DEV_NR) return ENXIO;
-	assert(open_counter[m->DEVICE] > 0);
-	open_counter[m->DEVICE]--;
+	if (minor < 0 || minor >= FB_DEV_NR) return ENXIO;
+	assert(open_counter[minor] > 0);
+	open_counter[minor]--;
 	return OK;
 }
 
-static struct device *
-fb_prepare(dev_t dev)
-{
-	if (dev < 0 || dev >= FB_DEV_NR) return NULL;
-	assert(open_counter[dev] > 0);
-	fb_minor = dev;
-	return &fb_device[dev];
-}
-
-static int
-fb_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t *iov, unsigned nr_req, endpoint_t UNUSED(user_endpt),
-    unsigned int UNUSED(flags))
-{
-	size_t io_bytes = 0, ret;
-
-	if (nr_req != 1) {
-		/* This should never trigger for char drivers at the moment. */
-		printf("fb: vectored transfer, using first element only\n");
-	}
-
-	switch (opcode) {
-	case DEV_GATHER_S:
-	    /* Userland read operation */
-	    ret = fb_do_read(endpt, iov, fb_minor, position, &io_bytes);
-	    iov->iov_size -= io_bytes;
-            break;
-	case DEV_SCATTER_S:
-	    /* Userland write operation */
-	    ret = fb_do_write(endpt, iov, fb_minor, position, &io_bytes);
-	    iov->iov_size -= io_bytes;
-	    break;
-	default:
-	    return EINVAL;
-	}
-	return ret;
-}
-
-static int
-fb_do_read(endpoint_t ep, iovec_t *iov, int minor, u64_t pos, size_t *io_bytes)
+static ssize_t
+fb_read(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
+	size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
 	struct device dev;
+	int r;
+
+	if (minor < 0 || minor >= FB_DEV_NR) return ENXIO;
+	assert(open_counter[minor] > 0);
 
 	arch_get_device(minor, &dev);
 
-	if (pos >= dev.dv_size) return EINVAL;
+	if (size == 0 || pos >= dev.dv_size) return 0;
+	if (pos + size > dev.dv_size)
+		size = (size_t)(dev.dv_size - pos);
 
-	if (dev.dv_size - pos < iov->iov_size) {
-		*io_bytes = dev.dv_size - pos;
-	} else {
-		*io_bytes = iov->iov_size;
-	}
+	r = sys_safecopyto(ep, gid, 0, (vir_bytes)(dev.dv_base + (size_t)pos),
+	    size);
 
-        if (*io_bytes <= 0) {
-                return OK;
-        }
-
-	return sys_safecopyto(ep, (cp_grant_id_t) iov->iov_addr, 0,
-				(vir_bytes) (dev.dv_base + ex64lo(pos)),
-				*io_bytes);
+	return (r != OK) ? r : size;
 }
 
 static int
-fb_ioctl(message *m)
+fb_ioctl(devminor_t minor, unsigned long request, endpoint_t ep,
+	cp_grant_id_t gid, int UNUSED(flags), endpoint_t UNUSED(user_ep),
+	cdev_id_t UNUSED(id))
 {
 /* Process I/O control requests */
-	endpoint_t ep;
-	cp_grant_id_t gid;
-	int minor;
-	unsigned int request;
 	int r;
 
-	minor = m->DEVICE;
-	request = m->COUNT;
-	ep = (endpoint_t) m->USER_ENDPT;
-	gid = (cp_grant_id_t) m->IO_GRANT;
-
-	if (minor != 0) return EINVAL;
+	if (minor < 0 || minor >= FB_DEV_NR) return ENXIO;
 
 	switch(request) {
 	case FBIOGET_VSCREENINFO:
@@ -205,7 +149,7 @@ fb_ioctl(message *m)
 		return r;
 	}
 
-	return EINVAL;
+	return ENOTTY;
 }
 
 static int
@@ -270,34 +214,29 @@ do_get_fixscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
         return r;
 }
 
-static int
-fb_do_write(endpoint_t ep, iovec_t *iov, int minor, u64_t pos, size_t *io_bytes)
+static ssize_t
+fb_write(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
+	size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
 	struct device dev;
+	int r;
+
+	if (minor < 0 || minor >= FB_DEV_NR) return ENXIO;
+	assert(open_counter[minor] > 0);
+
+	if (has_restarted && keep_displaying_restarted())
+		return EAGAIN;
 
 	arch_get_device(minor, &dev);
 
-	if (pos >= dev.dv_size) {
-		return EINVAL;
-	}
+	if (size == 0 || pos >= dev.dv_size) return 0;
+	if (pos + size > dev.dv_size)
+		size = (size_t)(dev.dv_size - pos);
 
-	if (dev.dv_size - pos < iov->iov_size) {
-		*io_bytes = dev.dv_size - pos;
-	} else {
-		*io_bytes = iov->iov_size;
-	}
+	r = sys_safecopyfrom(ep, gid, 0,
+	    (vir_bytes)(dev.dv_base + (size_t)pos), size);
 
-        if (*io_bytes <= 0) {
-                return OK;
-        }
-
-	if (has_restarted && keep_displaying_restarted()) {
-		return EAGAIN;
-	}
-
-	return sys_safecopyfrom(ep, (cp_grant_id_t) iov->iov_addr, 0,
-				(vir_bytes) (dev.dv_base + ex64lo(pos)),
-				*io_bytes);
+	return (r != OK) ? r : size;
 }
 
 static int
