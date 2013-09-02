@@ -177,9 +177,31 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	r = dev_io(op, dev, for_e, buf, position, size, f->filp_flags,
 		   suspend_reopen);
 	if (r >= 0) {
+		/* This should no longer happen: all calls are asynchronous. */
+		printf("VFS: I/O to device %x succeeded immediately!?\n", dev);
 		cum_io = r;
-		position += cum_io;
+		position += r;
 		r = OK;
+	} else if (r == SUSPEND) {
+		/* FIXME: multiple read/write operations on a single filp
+		 * should be serialized. They currently aren't; in order to
+		 * achieve a similar effect, we optimistically advance the file
+		 * position here. This works under the following assumptions:
+		 * - character drivers that use the seek position at all,
+		 *   expose a view of a statically-sized range of bytes, i.e.,
+		 *   they are basically byte-granular block devices;
+		 * - if short I/O or an error is returned, all subsequent calls
+		 *   will return (respectively) EOF and an error;
+		 * - the application never checks its own file seek position,
+		 *   or does not care that it may end up having seeked beyond
+		 *   the number of bytes it has actually read;
+		 * - communication to the character driver is FIFO (this one
+		 *   is actually true! whew).
+		 * Many improvements are possible here, but in the end,
+		 * anything short of queuing concurrent operations will be
+		 * suboptimal - so we settle for this hack for now.
+		 */
+		position += size;
 	}
   } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */
 	if (vp->v_sdev == NO_DEV)
