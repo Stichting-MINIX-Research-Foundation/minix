@@ -43,14 +43,16 @@
 #include <minix/ds.h>
 
 
-static int msg_open(int minor_dev_nr);
+static int msg_open(devminor_t minor_dev_nr, int access,
+	endpoint_t user_endpt);
 static int msg_close(int minor_dev_nr);
-static int msg_ioctl(const message *m_ptr);
-static void msg_write(const message *m_ptr);
-static void msg_read(message *m_ptr);
-static void msg_hardware(void);
-static void msg_status(message *m_ptr);
-static int init_driver(void);
+static ssize_t msg_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t msg_write(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static int msg_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
+static void msg_hardware(unsigned int mask);
 static int open_sub_dev(int sub_dev_nr, int operation);
 static int close_sub_dev(int sub_dev_nr);
 static void handle_int_write(int sub_dev_nr);
@@ -59,7 +61,6 @@ static void data_to_user(sub_dev_t *sub_dev_ptr);
 static void data_from_user(sub_dev_t *sub_dev_ptr);
 static int init_buffers(sub_dev_t *sub_dev_ptr);
 static int get_started(sub_dev_t *sub_dev_ptr);
-static void reply(int code, int replyee, int process,int status);
 static int io_ctl_length(int io_request);
 static special_file_t* get_special_file(int minor_dev_nr);
 static void tell_dev(vir_bytes buf, size_t size, int pci_bus, int
@@ -68,7 +69,6 @@ static void tell_dev(vir_bytes buf, size_t size, int pci_bus, int
 static char io_ctl_buf[_IOCPARM_MASK];
 static int irq_hook_id = 0;	/* id of irq hook at the kernel */
 static int irq_hook_set = FALSE;
-static int device_available = 0;/*todo*/
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
@@ -77,6 +77,15 @@ static void sef_cb_signal_handler(int signo);
 EXTERN int sef_cb_lu_prepare(int state);
 EXTERN int sef_cb_lu_state_isvalid(int state);
 EXTERN void sef_cb_lu_state_dump(int state);
+
+static struct chardriver audio_tab = {
+	.cdr_open	= msg_open,	/* open the special file */
+	.cdr_close	= msg_close,	/* close the special file */
+	.cdr_read	= msg_read,
+	.cdr_write	= msg_write,
+	.cdr_ioctl	= msg_ioctl,
+	.cdr_intr	= msg_hardware
+};
 
 int main(void)
 {
@@ -89,91 +98,9 @@ int main(void)
 
 	/* Here is the main loop of the dma driver.  It waits for a message, 
 	   carries it out, and sends a reply. */
+	chardriver_task(&audio_tab);
 
-	while(1) {
-		if(driver_receive(ANY, &mess, &ipc_status) != OK) {
-			panic("driver_receive failed");
-		}
-		caller = mess.m_source;
-
-		/* Now carry out the work. First check for notifications. */
-		if (is_ipc_notify(ipc_status)) {
-			switch (_ENDPOINT_P(mess.m_source)) {
-				case HARDWARE:
-					msg_hardware();
-					break;
-				default:
-					printf("%s: %d uncaught notify!\n",
-						drv.DriverName, mess.m_type);
-			}
-
-			/* get next message */
-			continue;
-		}
-
-		/* Normal messages. */
-		switch(mess.m_type) {
-			case DEV_OPEN:
-				/* open the special file ( = parameter) */
-				r = msg_open(mess.DEVICE);
-				repl_mess.m_type = DEV_OPEN_REPL;
-				repl_mess.REP_ENDPT = mess.USER_ENDPT;
-				repl_mess.REP_IO_GRANT =
-					(cp_grant_id_t) mess.IO_GRANT;
-				repl_mess.REP_STATUS = r;
-				send(caller, &repl_mess);
-
-				continue;
-
-			case DEV_CLOSE:
-				/* close the special file ( = parameter) */
-				r = msg_close(mess.DEVICE);
-				repl_mess.m_type = DEV_CLOSE_REPL;
-				repl_mess.REP_ENDPT = mess.USER_ENDPT;
-				repl_mess.REP_IO_GRANT =
-					(cp_grant_id_t) mess.IO_GRANT;
-				repl_mess.REP_STATUS = r;
-				send(caller, &repl_mess);
-
-				continue;
-
-			case DEV_IOCTL_S:		
-				r = msg_ioctl(&mess);
-
-				if (r != SUSPEND)
-				{
-					repl_mess.m_type = DEV_REVIVE;
-					repl_mess.REP_ENDPT = mess.USER_ENDPT;
-					repl_mess.REP_IO_GRANT =
-						(cp_grant_id_t) mess.IO_GRANT;
-					repl_mess.REP_STATUS = r;
-					send(caller, &repl_mess);
-				}
-				continue;
-
-			case DEV_READ_S:		
-				msg_read(&mess); continue; /* don't reply */
-			case DEV_WRITE_S:		
-				msg_write(&mess); continue; /* don't reply */
-			case DEV_REOPEN:
-				/* reopen the special file ( = parameter) */
-				r = msg_open(mess.DEVICE);
-				repl_mess.m_type = DEV_REOPEN_REPL;
-				repl_mess.REP_ENDPT = mess.USER_ENDPT;
-				repl_mess.REP_IO_GRANT =
-					(cp_grant_id_t) mess.IO_GRANT;
-				repl_mess.REP_STATUS = r;
-				send(caller, &repl_mess);
-				continue;
-			default:          
-				printf("%s: %d uncaught msg!\n",
-					drv.DriverName, mess.m_type);
-				continue;
-		}
-
-		/* Should not be here. Just continue. */
-	}
-	return 1;
+	return 0;
 }
 
 /*===========================================================================*
@@ -204,10 +131,6 @@ static void sef_local_startup()
 static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the audio driver framework. */
-  return init_driver();
-}
-
-static int init_driver(void) {
 	u32_t i; char irq;
 	static int executed = 0;
 	sub_dev_t* sub_dev_ptr;
@@ -294,7 +217,9 @@ static void sef_cb_signal_handler(int signo)
 	}
 }
 
-static int msg_open (int minor_dev_nr) {
+static int msg_open(devminor_t minor_dev_nr, int UNUSED(access),
+	endpoint_t UNUSED(user_endpt))
+{
 	int r, read_chan, write_chan, io_ctl;
 	special_file_t* special_file_ptr;
 
@@ -317,22 +242,13 @@ static int msg_open (int minor_dev_nr) {
 				drv.DriverName, minor_dev_nr);
 		return EIO;
 	}
-	/* init driver */
-	if (!device_available) {  
-		if (init_driver() != OK) {
-			printf("%s: Couldn't init driver!\n", drv.DriverName);
-			return EIO;
-		} else {
-			device_available = TRUE;
-		}
-	}  
 	/* open the sub devices specified in the interface header file */
 	if (write_chan != NO_CHANNEL) {
 		/* open sub device for writing */
-		if (open_sub_dev(write_chan, DEV_WRITE_S) != OK) return EIO;
+		if (open_sub_dev(write_chan, WRITE_DMA) != OK) return EIO;
 	}  
 	if (read_chan != NO_CHANNEL) {
-		if (open_sub_dev(read_chan, DEV_READ_S) != OK) return EIO;
+		if (open_sub_dev(read_chan, READ_DMA) != OK) return EIO;
 	}
 	if (read_chan == io_ctl || write_chan == io_ctl) {
 		/* io_ctl is already opened because it's the same as read or write */
@@ -382,7 +298,8 @@ static int open_sub_dev(int sub_dev_nr, int dma_mode) {
 }
 
 
-static int msg_close(int minor_dev_nr) {
+static int msg_close(devminor_t minor_dev_nr)
+{
 
 	int r, read_chan, write_chan, io_ctl; 
 	special_file_t* special_file_ptr;
@@ -421,7 +338,7 @@ static int close_sub_dev(int sub_dev_nr) {
 	size_t size;
 	sub_dev_t *sub_dev_ptr;
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
-	if (sub_dev_ptr->DmaMode == DEV_WRITE_S && !sub_dev_ptr->OutOfData) {
+	if (sub_dev_ptr->DmaMode == WRITE_DMA && !sub_dev_ptr->OutOfData) {
 		/* do nothing, still data in buffers that has to be transferred */
 		sub_dev_ptr->Opened = FALSE;  /* keep DMA busy */
 		return OK;
@@ -443,13 +360,14 @@ static int close_sub_dev(int sub_dev_nr) {
 }
 
 
-static int msg_ioctl(const message *m_ptr)
+static int msg_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
 {
 	int status, len, chan;
 	sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
-	special_file_ptr = get_special_file(m_ptr->DEVICE);
+	special_file_ptr = get_special_file(minor);
 	if(special_file_ptr == NULL) {
 		return EIO;
 	}
@@ -468,34 +386,24 @@ static int msg_ioctl(const message *m_ptr)
 		return EIO;
 	}
 
+	if (request & _IOC_IN) { /* if there is data for us, copy it */
+		len = io_ctl_length(request);
 
-	/* this is a hack...todo: may we intercept reset calls? */
-	/*
-	if(m_ptr->REQUEST == DSPIORESET) {
-		device_available = FALSE;
-	}
-	*/
-
-
-	if (m_ptr->REQUEST & _IOC_IN) { /* if there is data for us, copy it */
-		len = io_ctl_length(m_ptr->REQUEST);
-
-		if(sys_safecopyfrom(m_ptr->m_source, 
-					(vir_bytes)m_ptr->ADDRESS, 0,
-					(vir_bytes)io_ctl_buf, len) != OK) {
+		if (sys_safecopyfrom(endpt, grant, 0, (vir_bytes)io_ctl_buf,
+		    len) != OK) {
 			printf("%s:%d: safecopyfrom failed\n", __FILE__, __LINE__);
 		}
 	}
 
 	/* all ioctl's are passed to the device specific part of the driver */
-	status = drv_io_ctl(m_ptr->REQUEST, (void *)io_ctl_buf, &len, chan); 
+	status = drv_io_ctl(request, (void *)io_ctl_buf, &len, chan);
 
 	/* _IOC_OUT bit -> user expects data */
-	if (status == OK && m_ptr->REQUEST & _IOC_OUT) { 
+	if (status == OK && request & _IOC_OUT) {
 		/* copy result back to user */
 
-		if(sys_safecopyto(m_ptr->m_source, (vir_bytes)m_ptr->ADDRESS, 0, 
-					(vir_bytes)io_ctl_buf, len) != OK) {
+		if (sys_safecopyto(endpt, grant, 0, (vir_bytes)io_ctl_buf,
+		    len) != OK) {
 			printf("%s:%d: safecopyto failed\n", __FILE__, __LINE__);
 		}
 
@@ -504,18 +412,19 @@ static int msg_ioctl(const message *m_ptr)
 }
 
 
-static void msg_write(const message *m_ptr) 
+static ssize_t msg_write(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int UNUSED(flags),
+	cdev_id_t id)
 {
 	int chan; sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
-	special_file_ptr = get_special_file(m_ptr->DEVICE); 
+	special_file_ptr = get_special_file(minor);
 	chan = special_file_ptr->write_chan;
 
 	if (chan == NO_CHANNEL) {
 		printf("%s: No write channel specified!\n", drv.DriverName);
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EIO);
-		return;
+		return EIO;
 	}
 	/* get pointer to sub device data */
 	sub_dev_ptr = &sub_dev[chan];
@@ -523,47 +432,49 @@ static void msg_write(const message *m_ptr)
 	if (!sub_dev_ptr->DmaBusy) { /* get fragment size on first write */
 		if (drv_get_frag_size(&(sub_dev_ptr->FragSize), sub_dev_ptr->Nr) != OK){
 			printf("%s; Failed to get fragment size!\n", drv.DriverName);
-			return;	
+			return EIO;
 		}
 	}
-	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
+	if(size != sub_dev_ptr->FragSize) {
 		printf("Fragment size does not match user's buffer length\n");
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EINVAL);		
-		return;
+		return EINVAL;
 	}
 	/* if we are busy with something else than writing, return EBUSY */
-	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != DEV_WRITE_S) {
-		printf("Already busy with something else then writing\n");
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EBUSY);
-		return;
+	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != WRITE_DMA) {
+		printf("Already busy with something else than writing\n");
+		return EBUSY;
 	}
 
 	sub_dev_ptr->RevivePending = TRUE;
-	sub_dev_ptr->ReviveProcNr = m_ptr->USER_ENDPT;
-	sub_dev_ptr->ReviveGrant = (cp_grant_id_t) m_ptr->ADDRESS;
-	sub_dev_ptr->SourceProcNr = m_ptr->m_source;
+	sub_dev_ptr->ReviveId = id;
+	sub_dev_ptr->ReviveGrant = grant;
+	sub_dev_ptr->SourceProcNr = endpt;
 
 	data_from_user(sub_dev_ptr);
 
 	if(!sub_dev_ptr->DmaBusy) { /* Dma tranfer not yet started */
 		get_started(sub_dev_ptr);    
-		sub_dev_ptr->DmaMode = DEV_WRITE_S; /* Dma mode is writing */
-	} 
+		sub_dev_ptr->DmaMode = WRITE_DMA; /* Dma mode is writing */
+	}
+
+	/* We may already have replied by now. In any case don't reply here. */
+	return EDONTREPLY;
 }
 
 
-static void msg_read(message *m_ptr) 
+static ssize_t msg_read(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int UNUSED(flags),
+	cdev_id_t id)
 {
 	int chan; sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
-	special_file_ptr = get_special_file(m_ptr->DEVICE); 
+	special_file_ptr = get_special_file(minor);
 	chan = special_file_ptr->read_chan;
 
 	if (chan == NO_CHANNEL) {
 		printf("%s: No read channel specified!\n", drv.DriverName);
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EIO);
-		return;
+		return EIO;
 	}
 	/* get pointer to sub device data */
 	sub_dev_ptr = &sub_dev[chan];
@@ -571,39 +482,39 @@ static void msg_read(message *m_ptr)
 	if (!sub_dev_ptr->DmaBusy) { /* get fragment size on first read */
 		if (drv_get_frag_size(&(sub_dev_ptr->FragSize), sub_dev_ptr->Nr) != OK){
 			printf("%s: Could not retrieve fragment size!\n", drv.DriverName);
-			reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
-				EIO);      	
-			return;
+			return EIO;
 		}
 	}
-	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EINVAL);
+	if(size != sub_dev_ptr->FragSize) {
 		printf("fragment size does not match message size\n");
-		return;
+		return EINVAL;
 	}
 	/* if we are busy with something else than reading, reply EBUSY */
-	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != DEV_READ_S) {
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EBUSY);
-		return;
+	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != READ_DMA) {
+		return EBUSY;
 	}
 
 	sub_dev_ptr->RevivePending = TRUE;
-	sub_dev_ptr->ReviveProcNr = m_ptr->USER_ENDPT;
-	sub_dev_ptr->ReviveGrant = (cp_grant_id_t) m_ptr->ADDRESS;
-	sub_dev_ptr->SourceProcNr = m_ptr->m_source;
+	sub_dev_ptr->ReviveId = id;
+	sub_dev_ptr->ReviveGrant = grant;
+	sub_dev_ptr->SourceProcNr = endpt;
 
 	if(!sub_dev_ptr->DmaBusy) { /* Dma tranfer not yet started */
 		get_started(sub_dev_ptr);
-		sub_dev_ptr->DmaMode = DEV_READ_S; /* Dma mode is reading */
-		return;  /* no need to get data from DMA buffer at this point */
+		sub_dev_ptr->DmaMode = READ_DMA; /* Dma mode is reading */
+		/* no need to get data from DMA buffer at this point */
+		return EDONTREPLY;
 	}
 	/* check if data is available and possibly fill user's buffer */
 	data_to_user(sub_dev_ptr);
+
+	/* We may already have replied by now. In any case don't reply here. */
+	return EDONTREPLY;
 }
 
 
-static void msg_hardware(void) {
-
+static void msg_hardware(unsigned int UNUSED(mask))
+{
 	u32_t     i;
 
 	/* loop over all sub devices */
@@ -611,8 +522,10 @@ static void msg_hardware(void) {
 		/* if interrupt from sub device and Dma transfer 
 		   was actually busy, take care of business */
 		if( drv_int(i) && sub_dev[i].DmaBusy ) {
-			if (sub_dev[i].DmaMode == DEV_WRITE_S) handle_int_write(i);
-			if (sub_dev[i].DmaMode == DEV_READ_S) handle_int_read(i);  
+			if (sub_dev[i].DmaMode == WRITE_DMA)
+				handle_int_write(i);
+			if (sub_dev[i].DmaMode == READ_DMA)
+				handle_int_read(i);
 		}
 	}
 
@@ -625,7 +538,7 @@ static void msg_hardware(void) {
 }
 
 
-/* handle interrupt for specified sub device; DmaMode == DEV_WRITE_S*/
+/* handle interrupt for specified sub device; DmaMode == WRITE_DMA */
 static void handle_int_write(int sub_dev_nr) 
 {
 	sub_dev_t *sub_dev_ptr;
@@ -678,7 +591,7 @@ static void handle_int_write(int sub_dev_nr)
 }
 
 
-/* handle interrupt for specified sub device; DmaMode == DEV_READ_S */
+/* handle interrupt for specified sub device; DmaMode == READ_DMA */
 static void handle_int_read(int sub_dev_nr) 
 {
 	sub_dev_t *sub_dev_ptr;
@@ -700,14 +613,9 @@ static void handle_int_read(int sub_dev_nr)
 			printf("All buffers full, we have a problem.\n");
 			drv_stop(sub_dev_nr);        /* stop the sub device */
 			sub_dev_ptr->DmaBusy = FALSE;
-			sub_dev_ptr->ReviveStatus = 0;   /* no data for user,
-							  * this is a sad story
-							  */
-			m.m_type = DEV_REVIVE;
-			m.REP_ENDPT = sub_dev_ptr->ReviveProcNr;
-			m.REP_IO_GRANT = sub_dev_ptr->ReviveGrant;
-			m.REP_STATUS = sub_dev_ptr->ReviveStatus;
-			send(sub_dev_ptr->SourceProcNr, &m);
+			/* no data for user, this is a sad story */
+			chardriver_reply_task(sub_dev_ptr->SourceProcNr,
+				sub_dev_ptr->ReviveId, 0);
 			return;
 		} 
 		else { /* dma full, still room in extra buf; 
@@ -807,18 +715,8 @@ static void data_from_user(sub_dev_t *subdev)
 		drv_resume(subdev->Nr);  /* resume resume the sub device */
 	}
 
-	subdev->ReviveStatus = subdev->FragSize;
-
-	m.m_type = DEV_REVIVE;			/* build message */
-	m.REP_ENDPT = subdev->ReviveProcNr;
-	m.REP_IO_GRANT = subdev->ReviveGrant;
-	m.REP_STATUS = subdev->ReviveStatus;
-	r= send(subdev->SourceProcNr, &m);		/* send the message */
-	if (r != OK)
-	{
-		printf("audio_fw: send to %d failed: %d\n",
-			subdev->SourceProcNr, r);
-	}
+	chardriver_reply_task(subdev->SourceProcNr, subdev->ReviveId,
+		subdev->FragSize);
 
 	/* reset variables */
 	subdev->RevivePending = 0;
@@ -865,19 +763,8 @@ static void data_to_user(sub_dev_t *sub_dev_ptr)
 		sub_dev_ptr->DmaLength -= 1;
 	}
 
-	sub_dev_ptr->ReviveStatus = sub_dev_ptr->FragSize;
-		/* drv_status will send REVIVE mess to FS*/	
-
-	m.m_type = DEV_REVIVE;			/* build message */
-	m.REP_ENDPT = sub_dev_ptr->ReviveProcNr;
-	m.REP_IO_GRANT = sub_dev_ptr->ReviveGrant;
-	m.REP_STATUS = sub_dev_ptr->ReviveStatus;
-	r= send(sub_dev_ptr->SourceProcNr, &m);		/* send the message */
-	if (r != OK)
-	{
-		printf("audio_fw: send to %d failed: %d\n",
-			sub_dev_ptr->SourceProcNr, r);
-	}
+	chardriver_reply_task(sub_dev_ptr->SourceProcNr, sub_dev_ptr->ReviveId,
+		sub_dev_ptr->FragSize);
 
 	/* reset variables */
 	sub_dev_ptr->RevivePending = 0;
@@ -937,16 +824,6 @@ static int init_buffers(sub_dev_t *sub_dev_ptr)
 	printf("%s: init_buffers() failed, CHIP != INTEL", drv.DriverName);
 	return EIO;
 #endif /* defined(__i386__) */
-}
-
-
-static void reply(int code, int replyee, int process, int status) {
-	message m;
-
-	m.m_type = code;		/* DEV_REVIVE */
-	m.REP_STATUS = status;	/* result of device operation */
-	m.REP_ENDPT = process;	/* which user made the request */
-	send(replyee, &m);
 }
 
 

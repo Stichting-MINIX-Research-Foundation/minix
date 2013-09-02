@@ -286,7 +286,7 @@ int drv_stop(int sub_dev)
 
 
 /* all IO-ctl's sent to the upper driver are passed to this function */
-int drv_io_ctl(int request, void * val, int * len, int sub_dev) {
+int drv_io_ctl(unsigned long request, void * val, int * len, int sub_dev) {
 
 	int status;
 
