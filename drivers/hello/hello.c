@@ -8,12 +8,10 @@
 /*
  * Function prototypes for the hello driver.
  */
-static int hello_open(message *m);
-static int hello_close(message *m);
-static struct device * hello_prepare(dev_t device);
-static int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
-	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
-	flags);
+static int hello_open(devminor_t minor, int access, endpoint_t user_endpt);
+static int hello_close(devminor_t minor);
+static ssize_t hello_read(devminor_t minor, u64_t position, endpoint_t endpt,
+    cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
@@ -24,77 +22,54 @@ static int lu_state_restore(void);
 /* Entry points to the hello driver. */
 static struct chardriver hello_tab =
 {
-    hello_open,
-    hello_close,
-    nop_ioctl,
-    hello_prepare,
-    hello_transfer,
-    nop_cleanup,
-    nop_alarm,
-    nop_cancel,
-    nop_select,
-    NULL
+    .cdr_open	= hello_open,
+    .cdr_close	= hello_close,
+    .cdr_read	= hello_read,
 };
 
-/** Represents the /dev/hello device. */
-static struct device hello_device;
-
-/** State variable to count the number of times the device has been opened. */
+/** State variable to count the number of times the device has been opened.
+ * Note that this is not the regular type of open counter: it never decreases.
+ */
 static int open_counter;
 
-static int hello_open(message *UNUSED(m))
+static int hello_open(devminor_t UNUSED(minor), int UNUSED(access),
+    endpoint_t UNUSED(user_endpt))
 {
     printf("hello_open(). Called %d time(s).\n", ++open_counter);
     return OK;
 }
 
-static int hello_close(message *UNUSED(m))
+static int hello_close(devminor_t UNUSED(minor))
 {
     printf("hello_close()\n");
     return OK;
 }
 
-static struct device * hello_prepare(dev_t UNUSED(dev))
+static ssize_t hello_read(devminor_t UNUSED(minor), u64_t position,
+    endpoint_t endpt, cp_grant_id_t grant, size_t size, int UNUSED(flags),
+    cdev_id_t UNUSED(id))
 {
-    hello_device.dv_base = make64(0, 0);
-    hello_device.dv_size = make64(strlen(HELLO_MESSAGE), 0);
-    return &hello_device;
-}
+    u64_t dev_size;
+    char *ptr;
+    int ret;
 
-static int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t *iov, unsigned nr_req, endpoint_t UNUSED(user_endpt),
-    unsigned int UNUSED(flags))
-{
-    int bytes, ret;
+    printf("hello_read()\n");
 
-    printf("hello_transfer()\n");
+    /* This is the total size of our device. */
+    dev_size = (u64_t) strlen(HELLO_MESSAGE);
 
-    if (nr_req != 1)
-    {
-        /* This should never trigger for character drivers at the moment. */
-        printf("HELLO: vectored transfer request, using first element only\n");
-    }
+    /* Check for EOF, and possibly limit the read size. */
+    if (position >= dev_size) return 0;		/* EOF */
+    if (position + size > dev_size)
+        size = (size_t)(dev_size - position);	/* limit size */
 
-    bytes = strlen(HELLO_MESSAGE) - ex64lo(position) < iov->iov_size ?
-            strlen(HELLO_MESSAGE) - ex64lo(position) : iov->iov_size;
+    /* Copy the requested part to the caller. */
+    ptr = HELLO_MESSAGE + (size_t)position;
+    if ((ret = sys_safecopyto(endpt, grant, 0, (vir_bytes) ptr, size)) != OK)
+        return ret;
 
-    if (bytes <= 0)
-    {
-        return OK;
-    }
-    switch (opcode)
-    {
-        case DEV_GATHER_S:
-            ret = sys_safecopyto(endpt, (cp_grant_id_t) iov->iov_addr, 0,
-                                (vir_bytes) (HELLO_MESSAGE + ex64lo(position)),
-                                 bytes);
-            iov->iov_size -= bytes;
-            break;
-
-        default:
-            return EINVAL;
-    }
-    return ret;
+    /* Return the number of bytes read. */
+    return size;
 }
 
 static int sef_cb_lu_state_save(int UNUSED(state)) {

@@ -39,11 +39,9 @@ static int do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr);
 static int env_parse_instance(void);
 
 /* libchardriver callbacks */
-int i2c_ioctl(message * m);
-struct device *i2c_prepare(dev_t dev);
-int i2c_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t * iov, unsigned nr_req, endpoint_t user_endpt, unsigned int flags);
-int i2c_other(message * m);
+static int i2c_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
+static void i2c_other(message * m, int ipc_status);
 
 /* SEF callbacks and driver state management */
 static int sef_cb_lu_state_save(int);
@@ -69,8 +67,6 @@ static struct i2cdev
  */
 int (*process) (minix_i2c_ioctl_exec_t * ioctl_exec);
 
-struct device i2c_device;
-
 /* logging - use with log_warn(), log_info(), log_debug(), log_trace() */
 static struct log log = {
 	.name = "i2c",
@@ -82,16 +78,8 @@ static struct log log = {
  * Only i2c_ioctl() and i2c_other() are implemented. The rest are no-op.
  */
 static struct chardriver i2c_tab = {
-	.cdr_open = do_nop,
-	.cdr_close = do_nop,
-	.cdr_ioctl = i2c_ioctl,
-	.cdr_prepare = i2c_prepare,
-	.cdr_transfer = i2c_transfer,
-	.cdr_cleanup = nop_cleanup,
-	.cdr_alarm = nop_alarm,
-	.cdr_cancel = nop_cancel,
-	.cdr_select = nop_select,
-	.cdr_other = i2c_other
+	.cdr_ioctl	= i2c_ioctl,
+	.cdr_other	= i2c_other
 };
 
 /*
@@ -233,14 +221,14 @@ validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec)
 	}
 
 	len = ioctl_exec->iie_cmdlen;
-	if (len < 0 || len > I2C_EXEC_MAX_CMDLEN) {
+	if (len > I2C_EXEC_MAX_CMDLEN) {
 		log_warn(&log,
 		    "iie_cmdlen out of range 0-I2C_EXEC_MAX_CMDLEN\n");
 		return EINVAL;
 	}
 
 	len = ioctl_exec->iie_buflen;
-	if (len < 0 || len > I2C_EXEC_MAX_BUFLEN) {
+	if (len > I2C_EXEC_MAX_BUFLEN) {
 		log_warn(&log,
 		    "iie_buflen out of range 0-I2C_EXEC_MAX_BUFLEN\n");
 		return EINVAL;
@@ -298,29 +286,39 @@ do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr)
 	return OK;
 }
 
-int
-i2c_ioctl(message * m)
+static int
+i2c_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int UNUSED(flags), endpoint_t UNUSED(user_endpt),
+	cdev_id_t UNUSED(id))
 {
 	int r;
 
-	switch (m->COUNT) {
+	switch (request) {
 	case MINIX_I2C_IOCTL_EXEC:
-		r = do_i2c_ioctl_exec(m->m_source, (cp_grant_id_t)m->IO_GRANT);
+		r = do_i2c_ioctl_exec(endpt, grant);
 		break;
 	default:
-		log_warn(&log, "Invalid ioctl() 0x%x\n", m->COUNT);
-		r = EINVAL;
+		log_warn(&log, "Invalid ioctl() 0x%x\n", request);
+		r = ENOTTY;
 		break;
 	}
 
 	return r;
 }
 
-int
-i2c_other(message * m)
+static void
+i2c_other(message * m, int ipc_status)
 {
 	message m_reply;
 	int r;
+
+	if (is_ipc_notify(ipc_status)) {
+		/* handle notifications about drivers changing state */
+		if (m->m_source == DS_PROC_NR) {
+			ds_event();
+		}
+		return;
+	}
 
 	switch (m->m_type) {
 	case BUSC_I2C_RESERVE:
@@ -331,12 +329,6 @@ i2c_other(message * m)
 		/* handle request from another driver */
 		r = do_i2c_ioctl_exec(m->m_source, m->BUSC_I2C_GRANT);
 		break;
-	case NOTIFY_MESSAGE:
-		/* handle notifications about drivers changing state */
-		if (m->m_source == DS_PROC_NR) {
-			ds_event();
-		}
-		return EDONTREPLY;
 	default:
 		log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
 		r = EINVAL;
@@ -345,32 +337,12 @@ i2c_other(message * m)
 
 	log_trace(&log, "i2c_other() returning r=%d\n", r);
 
-	/* We cannot use libchardriver to reply, as it will send DEV_REVIVE. */
+	/* Send a reply. */
 	memset(&m_reply, 0, sizeof(m_reply));
 	m_reply.m_type = r;
 
 	if ((r = send(m->m_source, &m_reply)) != OK)
 		log_warn(&log, "send() to %d failed: %d\n", m->m_source, r);
-
-	return EDONTREPLY;
-}
-
-struct device *
-i2c_prepare(dev_t dev)
-{
-	/* NOP */
-	i2c_device.dv_base = make64(0, 0);
-	i2c_device.dv_size = make64(0, 0);
-
-	return &i2c_device;
-}
-
-int
-i2c_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t * iov, unsigned nr_req, endpoint_t user_endpt, unsigned int flags)
-{
-	/* NOP */
-	return OK;
 }
 
 /*

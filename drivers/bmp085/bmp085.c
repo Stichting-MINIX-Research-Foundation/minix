@@ -151,11 +151,9 @@ static int read_cal_coef(void);
 static int measure(int32_t * temperature, int32_t * pressure);
 
 /* libchardriver callbacks */
-static struct device *bmp085_prepare(dev_t UNUSED(dev));
-static int bmp085_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t * iov, unsigned nr_req, endpoint_t UNUSED(user_endpt),
-    unsigned int UNUSED(flags));
-static int bmp085_other(message * m);
+static ssize_t bmp085_read(devminor_t minor, u64_t position, endpoint_t endpt,
+    cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static void bmp085_other(message * m, int ipc_status);
 
 /* SEF Function */
 static int sef_cb_lu_state_save(int);
@@ -165,21 +163,8 @@ static void sef_local_startup(void);
 
 /* Entry points to this driver from libchardriver. */
 static struct chardriver bmp085_tab = {
-	.cdr_open = do_nop,
-	.cdr_close = do_nop,
-	.cdr_ioctl = nop_ioctl,
-	.cdr_prepare = bmp085_prepare,
-	.cdr_transfer = bmp085_transfer,
-	.cdr_cleanup = nop_cleanup,
-	.cdr_alarm = nop_alarm,
-	.cdr_cancel = nop_cancel,
-	.cdr_select = nop_select,
-	.cdr_other = bmp085_other
-};
-
-static struct device bmp085_device = {
-	.dv_base = 0,
-	.dv_size = 0
+	.cdr_read	= bmp085_read,
+	.cdr_other	= bmp085_other
 };
 
 /*
@@ -438,18 +423,12 @@ measure(int32_t * temperature, int32_t * pressure)
 	return OK;
 }
 
-static struct device *
-bmp085_prepare(dev_t UNUSED(dev))
+static ssize_t
+bmp085_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
+    cp_grant_id_t grant, size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
-	return &bmp085_device;
-}
-
-static int
-bmp085_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t * iov, unsigned nr_req, endpoint_t UNUSED(user_endpt),
-    unsigned int UNUSED(flags))
-{
-	int bytes, r;
+	u64_t dev_size;
+	int r;
 	uint32_t temperature, pressure;
 
 	r = measure(&temperature, &pressure);
@@ -464,48 +443,33 @@ bmp085_transfer(endpoint_t endpt, int opcode, u64_t position,
 
 	log_trace(&log, "%s", buffer);
 
-	bytes = strlen(buffer) - position < iov->iov_size ?
-	    strlen(buffer) - position : iov->iov_size;
+	dev_size = (u64_t)strlen(buffer);
+	if (position >= dev_size) return 0;
+	if (position + size > dev_size)
+		size = (size_t)(dev_size - position);
 
-	if (bytes <= 0) {
-		return OK;
-	}
+	r = sys_safecopyto(endpt, grant, 0,
+	    (vir_bytes)(buffer + (size_t)position), size);
 
-	switch (opcode) {
-	case DEV_GATHER_S:
-		r = sys_safecopyto(endpt, (cp_grant_id_t) iov->iov_addr, 0,
-		    (vir_bytes) (buffer + position), bytes);
-		iov->iov_size -= bytes;
-		break;
-	default:
-		return EINVAL;
-	}
-
-	return r;
+	return (r != OK) ? r : size;
 }
 
-static int
-bmp085_other(message * m)
+static void
+bmp085_other(message * m, int ipc_status)
 {
 	int r;
 
-	switch (m->m_type) {
-	case NOTIFY_MESSAGE:
+	if (is_ipc_notify(ipc_status)) {
 		if (m->m_source == DS_PROC_NR) {
 			log_debug(&log,
 			    "bus driver changed state, update endpoint\n");
 			i2cdriver_handle_bus_update(&bus_endpoint, bus,
 			    address);
 		}
-		r = OK;
-		break;
-	default:
-		log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
-		r = EINVAL;
-		break;
+		return;
 	}
 
-	return r;
+	log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
 }
 
 static int

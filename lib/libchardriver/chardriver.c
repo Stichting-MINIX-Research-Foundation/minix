@@ -23,12 +23,9 @@
  * | DEV_SELECT    | device |   ops   |         |        |        |           |
  * ----------------------------------------------------------------------------
  *
- * The entry points into this file are:
- *   driver_task:	the main message loop of the driver
- *   driver_receive:	message receive interface for drivers
- *
  * Changes:
- *   Oct 20, 2013   retire synchronous protocol (D.C. van Moolenbroek)
+ *   Sep 01, 2013   complete rewrite of the API  (D.C. van Moolenboek)
+ *   Aug 20, 2013   retire synchronous protocol  (D.C. van Moolenbroek)
  *   Oct 16, 2011   split character and block protocol  (D.C. van Moolenbroek)
  *   Aug 27, 2011   move common functions into driver.c  (A. Welzel)
  *   Jul 25, 2005   added SYS_SIG type for signals  (Jorrit N. Herder)
@@ -44,7 +41,7 @@
 static int running;
 
 /* Management data for opened devices. */
-static int open_devs[MAX_NR_OPEN_DEVICES];
+static devminor_t open_devs[MAX_NR_OPEN_DEVICES];
 static int next_open_devs_slot = 0;
 
 /*===========================================================================*
@@ -59,13 +56,13 @@ static void clear_open_devs(void)
 /*===========================================================================*
  *				is_open_dev				     *
  *===========================================================================*/
-static int is_open_dev(int device)
+static int is_open_dev(devminor_t minor)
 {
 /* Check whether the given minor device has previously been opened. */
   int i;
 
   for (i = 0; i < next_open_devs_slot; i++)
-	if (open_devs[i] == device)
+	if (open_devs[i] == minor)
 		return TRUE;
 
   return FALSE;
@@ -74,14 +71,14 @@ static int is_open_dev(int device)
 /*===========================================================================*
  *				set_open_dev				     *
  *===========================================================================*/
-static void set_open_dev(int device)
+static void set_open_dev(devminor_t minor)
 {
 /* Mark the given minor device as having been opened. */
 
   if (next_open_devs_slot >= MAX_NR_OPEN_DEVICES)
 	panic("out of slots for open devices");
 
-  open_devs[next_open_devs_slot] = device;
+  open_devs[next_open_devs_slot] = minor;
   next_open_devs_slot++;
 }
 
@@ -118,15 +115,102 @@ void chardriver_announce(void)
 }
 
 /*===========================================================================*
+ *				chardriver_reply_task			     *
+ *===========================================================================*/
+void chardriver_reply_task(endpoint_t endpt, cdev_id_t id, int r)
+{
+/* Reply to a (read, write, ioctl) task request that was suspended earlier.
+ * Not-so-well-written drivers may use this function to send a reply to a
+ * request that is being processed right now, and then return EDONTREPLY later.
+ */
+  message m_reply;
+
+  if (r == EDONTREPLY || r == SUSPEND)
+	panic("chardriver: bad task reply: %d", r);
+
+  memset(&m_reply, 0, sizeof(m_reply));
+
+  m_reply.m_type = DEV_REVIVE;
+  m_reply.REP_STATUS = r;
+  m_reply.REP_ENDPT = endpt; /* XXX FIXME: hack */
+  m_reply.REP_IO_GRANT = (cp_grant_id_t) id;
+
+  if ((r = asynsend3(endpt, &m_reply, AMF_NOREPLY)) != OK)
+	printf("chardriver_reply_task: send to %d failed: %d\n", endpt, r);
+}
+
+/*===========================================================================*
+ *				chardriver_reply_select			     *
+ *===========================================================================*/
+void chardriver_reply_select(endpoint_t endpt, devminor_t minor, int r)
+{
+/* Reply to a select request with a status update. This must not be used to
+ * reply to a select request that is being processed right now.
+ */
+  message m_reply;
+
+  /* Replying with an error is allowed (if unusual). */
+  if (r == EDONTREPLY || r == SUSPEND)
+	panic("chardriver: bad select reply: %d", r);
+
+  memset(&m_reply, 0, sizeof(m_reply));
+
+  m_reply.m_type = DEV_SEL_REPL2;
+  m_reply.DEV_MINOR = minor;
+  m_reply.DEV_SEL_OPS = r;
+
+  if ((r = asynsend3(endpt, &m_reply, AMF_NOREPLY)) != OK)
+	printf("chardriver_reply_select: send to %d failed: %d\n", endpt, r);
+}
+
+/*===========================================================================*
  *				send_reply				     *
  *===========================================================================*/
-static void send_reply(message *mess, int ipc_status, int r)
+static void send_reply(endpoint_t endpt, message *m_ptr, int ipc_status)
+{
+/* Send a reply message to a request. */
+  int r;
+
+  /* If we would block sending the message, send it asynchronously. */
+  if (IPC_STATUS_CALL(ipc_status) == SENDREC)
+	r = sendnb(endpt, m_ptr);
+  else
+	r = asynsend3(endpt, m_ptr, AMF_NOREPLY);
+
+  if (r != OK)
+	printf("chardriver: unable to send reply to %d: %d\n", endpt, r);
+}
+
+/*===========================================================================*
+ *				chardriver_reply			     *
+ *===========================================================================*/
+static void chardriver_reply(message *mess, int ipc_status, int r)
 {
 /* Prepare and send a reply message. */
   message reply_mess;
 
-  if (r == EDONTREPLY)
-	return;
+  /* If the EDONTREPLY pseudo-reply is given, we do not reply. This is however
+   * allowed only for blocking task calls. Perform a sanity check.
+   */
+  if (r == EDONTREPLY) {
+	switch (mess->m_type) {
+	case DEV_READ_S:
+	case DEV_WRITE_S:
+	case DEV_IOCTL_S:
+#if 0 /* XXX doesn't match lwip's model, disabled for now */
+		if (mess->FLAGS & FLG_OP_NONBLOCK)
+			panic("chardriver: cannot suspend nonblocking I/O");
+#endif
+		/*fall-through*/
+	case CANCEL:
+		return;	/* alright */
+	default:
+		panic("chardriver: cannot suspend request %d", mess->m_type);
+	}
+  }
+
+  if (r == SUSPEND)
+	panic("chardriver: SUSPEND should not be used anymore");
 
   /* Do not reply with ERESTART. The only possible caller, VFS, will find out
    * through other means when we have restarted, and is not (fully) ready to
@@ -144,6 +228,12 @@ static void send_reply(message *mess, int ipc_status, int r)
 	reply_mess.REP_STATUS = r;
 	break;
 
+  case DEV_REOPEN:
+	reply_mess.m_type = DEV_REOPEN_REPL;
+	reply_mess.REP_ENDPT = mess->USER_ENDPT;
+	reply_mess.REP_STATUS = r;
+	break;
+
   case DEV_CLOSE:
 	reply_mess.m_type = DEV_CLOSE_REPL;
 	reply_mess.REP_ENDPT = mess->USER_ENDPT;
@@ -153,19 +243,12 @@ static void send_reply(message *mess, int ipc_status, int r)
   case DEV_READ_S:
   case DEV_WRITE_S:
   case DEV_IOCTL_S:
-	if (r == SUSPEND)
-		printf("chardriver_task: reviving %d (%d) with SUSPEND\n",
-			mess->m_source, mess->USER_ENDPT);
-
+  case CANCEL: /* For CANCEL, this is a reply to the original request! */
 	reply_mess.m_type = DEV_REVIVE;
 	reply_mess.REP_ENDPT = mess->USER_ENDPT;
 	reply_mess.REP_IO_GRANT = (cp_grant_id_t) mess->IO_GRANT;
 	reply_mess.REP_STATUS = r;
 	break;
-
-  case CANCEL:
-	/* The original request should send a reply. */
-	return;
 
   case DEV_SELECT:
 	reply_mess.m_type = DEV_SEL_REPL1;
@@ -174,173 +257,182 @@ static void send_reply(message *mess, int ipc_status, int r)
 	break;
 
   default:
-	reply_mess.m_type = DEV_REVIVE;
-	reply_mess.REP_ENDPT = mess->USER_ENDPT;
-	/* Status is # of bytes transferred or error code. */
-	reply_mess.REP_STATUS = r;
-	break;
+	panic("chardriver: unknown request %d", mess->m_type);
   }
 
-  /* If we would block sending the message, send it asynchronously. */
-  if (IPC_STATUS_CALL(ipc_status) == SENDREC)
-	r = sendnb(mess->m_source, &reply_mess);
-  else
-	r = asynsend3(mess->m_source, &reply_mess, AMF_NOREPLY);
-
-  if (r != OK)
-	printf("send_reply: unable to send reply to %d: %d\n",
-		mess->m_source, r);
+  send_reply(mess->m_source, &reply_mess, ipc_status);
 }
 
 /*===========================================================================*
- *				do_rdwt					     *
+ *				do_open					     *
  *===========================================================================*/
-static int do_rdwt(struct chardriver *cdp, message *mp)
+static int do_open(struct chardriver *cdp, message *m_ptr, int is_reopen)
 {
-/* Carry out a single read or write request. */
-  iovec_t iovec1;
-  int r, opcode;
-  u64_t position;
+/* Open a minor device. */
+  endpoint_t user_endpt;
+  devminor_t minor;
+  int r, access;
 
-  /* Disk address?  Address and length of the user buffer? */
-  if (mp->COUNT < 0) return(EINVAL);
+  /* Default action if no open hook is in place. */
+  if (cdp->cdr_open == NULL)
+	return OK;
 
-  /* Prepare for I/O. */
-  if ((*cdp->cdr_prepare)(mp->DEVICE) == NULL) return(ENXIO);
+  /* Call the open hook. */
+  minor = m_ptr->DEVICE;
+  access = m_ptr->COUNT;
+  user_endpt = is_reopen ? NONE : m_ptr->USER_ENDPT; /* XXX FIXME */
 
-  /* Create a one element scatter/gather vector for the buffer. */
-  if(mp->m_type == DEV_READ_S)
-	  opcode = DEV_GATHER_S;
-  else
-	  opcode =  DEV_SCATTER_S;
+  r = cdp->cdr_open(minor, access, user_endpt);
 
-  iovec1.iov_addr = (vir_bytes) mp->IO_GRANT;
-  iovec1.iov_size = mp->COUNT;
-
-  /* Transfer bytes from/to the device. */
-  position= make64(mp->POSITION, mp->HIGHPOS);
-  r = (*cdp->cdr_transfer)(mp->m_source, opcode, position, &iovec1, 1,
-	mp->USER_ENDPT, mp->FLAGS);
-
-  /* Return the number of bytes transferred or an error code. */
-  return(r == OK ? (int) (mp->COUNT - iovec1.iov_size) : r);
-}
-
-/*===========================================================================*
- *				do_vrdwt				     *
- *===========================================================================*/
-static int do_vrdwt(struct chardriver *cdp, message *mp)
-{
-/* Carry out an device read or write to/from a vector of user addresses.
- * The "user addresses" are assumed to be safe, i.e. FS transferring to/from
- * its own buffers, so they are not checked.
- */
-  iovec_t iovec[NR_IOREQS];
-  phys_bytes iovec_size;
-  unsigned nr_req;
-  int r, opcode;
-  u64_t position;
-
-  nr_req = mp->COUNT;	/* Length of I/O vector */
-
-  /* Copy the vector from the caller to kernel space. */
-  if (nr_req > NR_IOREQS) nr_req = NR_IOREQS;
-  iovec_size = (phys_bytes) (nr_req * sizeof(iovec[0]));
-
-  if (OK != sys_safecopyfrom(mp->m_source, (vir_bytes) mp->IO_GRANT,
-		0, (vir_bytes) iovec, iovec_size)) {
-	printf("bad I/O vector by: %d\n", mp->m_source);
-	return(EINVAL);
-  }
-
-  /* Prepare for I/O. */
-  if ((*cdp->cdr_prepare)(mp->DEVICE) == NULL) return(ENXIO);
-
-  /* Transfer bytes from/to the device. */
-  opcode = mp->m_type;
-  position= make64(mp->POSITION, mp->HIGHPOS);
-  r = (*cdp->cdr_transfer)(mp->m_source, opcode, position, iovec, nr_req,
-	mp->USER_ENDPT, mp->FLAGS);
-
-  /* Copy the I/O vector back to the caller. */
-  if (OK != sys_safecopyto(mp->m_source, (vir_bytes) mp->IO_GRANT,
-		0, (vir_bytes) iovec, iovec_size)) {
-	printf("couldn't return I/O vector: %d\n", mp->m_source);
-	return(EINVAL);
-  }
-
-  return(r);
-}
-
-/*===========================================================================*
- *				handle_notify				     *
- *===========================================================================*/
-static void handle_notify(struct chardriver *cdp, message *m_ptr)
-{
-/* Take care of the notifications (interrupt and clock messages) by calling the
- * appropiate callback functions. Never send a reply.
- */
-
-  /* Call the appropriate function for this notification. */
-  switch (_ENDPOINT_P(m_ptr->m_source)) {
-  case CLOCK:
-	if (cdp->cdr_alarm)
-		cdp->cdr_alarm(m_ptr);
-	break;
-
-  default:
-	if (cdp->cdr_other)
-		(void) cdp->cdr_other(m_ptr);
-  }
-}
-
-/*===========================================================================*
- *				handle_request				     *
- *===========================================================================*/
-static int handle_request(struct chardriver *cdp, message *m_ptr)
-{
-/* Call the appropiate driver function, based on the type of request. Return
- * the result code that is to be sent back to the caller, or EDONTREPLY if no
- * reply is to be sent.
- */
-  int r;
-
-  /* We might get spurious requests if the driver has been restarted. Deny any
-   * requests on devices that have not previously been opened, signaling the
-   * caller that something went wrong.
-   */
-  if (IS_DEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
-	/* Reply ERESTART to spurious requests for unopened devices. */
-	if (m_ptr->m_type != DEV_OPEN)
-		return ERESTART;
-
-	/* Mark the device as opened otherwise. */
-	set_open_dev(m_ptr->DEVICE);
-  }
-
-  /* Call the appropriate function(s) for this request. */
-  switch (m_ptr->m_type) {
-  case DEV_OPEN:	r = (*cdp->cdr_open)(m_ptr);	break;
-  case DEV_CLOSE:	r = (*cdp->cdr_close)(m_ptr);	break;
-  case DEV_IOCTL_S:	r = (*cdp->cdr_ioctl)(m_ptr);	break;
-  case CANCEL:		r = (*cdp->cdr_cancel)(m_ptr);	break;
-  case DEV_SELECT:	r = (*cdp->cdr_select)(m_ptr);	break;
-  case DEV_READ_S:
-  case DEV_WRITE_S:	r = do_rdwt(cdp, m_ptr);	break;
-  case DEV_GATHER_S:
-  case DEV_SCATTER_S:	r = do_vrdwt(cdp, m_ptr);	break;
-  default:
-	if (cdp->cdr_other)
-		r = cdp->cdr_other(m_ptr);
-	else
-		r = EINVAL;
-  }
-
-  /* Let the driver perform any cleanup. */
-  if (cdp->cdr_cleanup)
-	(*cdp->cdr_cleanup)();
+  /* If the device has been cloned, mark the new minor as open too. */
+  if (r >= 0 && !is_open_dev(r)) /* XXX FIXME */
+	set_open_dev(r);
 
   return r;
+}
+
+/*===========================================================================*
+ *				do_close				     *
+ *===========================================================================*/
+static int do_close(struct chardriver *cdp, message *m_ptr)
+{
+/* Close a minor device. */
+  devminor_t minor;
+
+  /* Default action if no close hook is in place. */
+  if (cdp->cdr_close == NULL)
+	return OK;
+
+  /* Call the close hook. */
+  minor = m_ptr->DEVICE;
+
+  return cdp->cdr_close(minor);
+}
+
+/*===========================================================================*
+ *				do_trasnfer				     *
+ *===========================================================================*/
+static int do_transfer(struct chardriver *cdp, message *m_ptr, int do_write)
+{
+/* Carry out a read or write task request. */
+  devminor_t minor;
+  u64_t position;
+  endpoint_t endpt;
+  cp_grant_id_t grant;
+  size_t size;
+  int flags;
+  cdev_id_t id;
+  ssize_t r;
+
+  minor = m_ptr->DEVICE;
+  position = make64(m_ptr->POSITION, m_ptr->HIGHPOS);
+  endpt = m_ptr->m_source;
+  grant = (cp_grant_id_t) m_ptr->IO_GRANT;
+  size = m_ptr->COUNT;
+  flags = m_ptr->FLAGS;
+  id = (cdev_id_t) m_ptr->IO_GRANT;
+
+  /* Call the read/write hook, if the appropriate one is in place. */
+  if (!do_write && cdp->cdr_read != NULL)
+	r = cdp->cdr_read(minor, position, endpt, grant, size, flags, id);
+  else if (do_write && cdp->cdr_write != NULL)
+	r = cdp->cdr_write(minor, position, endpt, grant, size, flags, id);
+  else
+	r = EIO; /* Default action if no read/write hook is in place. */
+
+  return r;
+}
+
+/*===========================================================================*
+ *				do_ioctl				     *
+ *===========================================================================*/
+static int do_ioctl(struct chardriver *cdp, message *m_ptr)
+{
+/* Carry out an I/O control task request. */
+  devminor_t minor;
+  unsigned long request;
+  cp_grant_id_t grant;
+  endpoint_t endpt, user_endpt;
+  int flags;
+  cdev_id_t id;
+
+  /* Default action if no ioctl hook is in place. */
+  if (cdp->cdr_ioctl == NULL)
+	return ENOTTY;
+
+  /* Call the ioctl hook. */
+  minor = m_ptr->DEVICE;
+  request = m_ptr->REQUEST;
+  endpt = m_ptr->m_source;
+  grant = (cp_grant_id_t) m_ptr->IO_GRANT;
+  flags = m_ptr->FLAGS;
+  user_endpt = (endpoint_t) m_ptr->POSITION;
+  id = (cdev_id_t) m_ptr->IO_GRANT;
+
+  return cdp->cdr_ioctl(minor, request, endpt, grant, flags, user_endpt, id);
+}
+
+/*===========================================================================*
+ *				do_cancel				     *
+ *===========================================================================*/
+static int do_cancel(struct chardriver *cdp, message *m_ptr)
+{
+/* Cancel a suspended (read, write, ioctl) task request. The original request
+ * may already have finished, in which case no reply should be sent.
+ */
+  devminor_t minor;
+  endpoint_t endpt;
+  cdev_id_t id;
+
+  /* Default action if no cancel hook is in place: let the request finish. */
+  if (cdp->cdr_cancel == NULL)
+	return EDONTREPLY;
+
+  /* Call the cancel hook. */
+  minor = m_ptr->DEVICE;
+  endpt = m_ptr->m_source;
+  id = (cdev_id_t) m_ptr->IO_GRANT;
+
+  return cdp->cdr_cancel(minor, endpt, id);
+}
+
+/*===========================================================================*
+ *				do_select				     *
+ *===========================================================================*/
+static int do_select(struct chardriver *cdp, message *m_ptr)
+{
+/* Perform a select query on a minor device. */
+  devminor_t minor;
+  unsigned int ops;
+  endpoint_t endpt;
+
+  /* Default action if no select hook is in place. */
+  if (cdp->cdr_select == NULL)
+	return EBADF;
+
+  /* Call the select hook. */
+  minor = m_ptr->DEV_MINOR;
+  ops = m_ptr->DEV_SEL_OPS;
+  endpt = m_ptr->m_source;
+
+  return cdp->cdr_select(minor, ops, endpt);
+}
+
+/*===========================================================================*
+ *				do_block_open				     *
+ *===========================================================================*/
+static void do_block_open(message *m_ptr, int ipc_status)
+{
+/* Reply to a block driver open request stating there is no such device. */
+  message m_reply;
+
+  memset(&m_reply, 0, sizeof(m_reply));
+
+  m_reply.m_type = BDEV_REPLY;
+  m_reply.BDEV_STATUS = ENXIO;
+  m_reply.BDEV_ID = m_ptr->BDEV_ID;
+
+  send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }
 
 /*===========================================================================*
@@ -348,19 +440,83 @@ static int handle_request(struct chardriver *cdp, message *m_ptr)
  *===========================================================================*/
 void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
 {
-/* Handle the given received message. */
-  int r;
+/* Call the appropiate driver function, based on the type of request. Send a
+ * reply to the caller if necessary.
+ */
+  int r, reply;
 
-  /* Process the notification or request. */
+  /* Check for notifications first. We never reply to notifications. */
   if (is_ipc_notify(ipc_status)) {
-	handle_notify(cdp, m_ptr);
+	switch (_ENDPOINT_P(m_ptr->m_source)) {
+	case HARDWARE:
+		if (cdp->cdr_intr)
+			cdp->cdr_intr(m_ptr->NOTIFY_ARG);
+		break;
 
-	/* Do not reply to notifications. */
-  } else {
-	r = handle_request(cdp, m_ptr);
+	case CLOCK:
+		if (cdp->cdr_alarm)
+			cdp->cdr_alarm(m_ptr->NOTIFY_TIMESTAMP);
+		break;
 
-	send_reply(m_ptr, ipc_status, r);
+	default:
+		if (cdp->cdr_other)
+			cdp->cdr_other(m_ptr, ipc_status);
+	}
+
+	return; /* do not send a reply */
   }
+
+  /* Reply to block driver open requests with an error code. Otherwise, if
+   * someone creates a block device node for a character driver, opening that
+   * device node will cause the corresponding VFS thread to block forever.
+   */
+  if (m_ptr->m_type == BDEV_OPEN) {
+	do_block_open(m_ptr, ipc_status);
+
+	return;
+  }
+
+  /* We might get spurious requests if the driver has been restarted. Deny any
+   * requests on devices that have not previously been opened.
+   */
+  if (IS_DEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
+	/* Ignore spurious requests for unopened devices. */
+	if (m_ptr->m_type != DEV_OPEN && m_ptr->m_type != DEV_REOPEN)
+		return; /* do not send a reply */
+
+	/* Mark the device as opened otherwise. */
+	set_open_dev(m_ptr->DEVICE);
+  }
+
+  /* Call the appropriate function(s) for this request. */
+  switch (m_ptr->m_type) {
+  case DEV_OPEN:	r = do_open(cdp, m_ptr, FALSE);		break;
+  case DEV_REOPEN:	r = do_open(cdp, m_ptr, TRUE);		break;
+  case DEV_CLOSE:	r = do_close(cdp, m_ptr);		break;
+  case DEV_READ_S:	r = do_transfer(cdp, m_ptr, FALSE);	break;
+  case DEV_WRITE_S:	r = do_transfer(cdp, m_ptr, TRUE);	break;
+  case DEV_IOCTL_S:	r = do_ioctl(cdp, m_ptr);		break;
+  case CANCEL:		r = do_cancel(cdp, m_ptr);		break;
+  case DEV_SELECT:	r = do_select(cdp, m_ptr);		break;
+  default:
+	if (cdp->cdr_other)
+		cdp->cdr_other(m_ptr, ipc_status);
+	return; /* do not send a reply */
+  }
+
+  chardriver_reply(m_ptr, ipc_status, r);
+}
+
+/*===========================================================================*
+ *				chardriver_terminate			     *
+ *===========================================================================*/
+void chardriver_terminate(void)
+{
+/* Break out of the main loop after finishing the current request. */
+
+  running = FALSE;
+
+  sef_cancel();
 }
 
 /*===========================================================================*
@@ -378,59 +534,13 @@ void chardriver_task(struct chardriver *cdp)
    * it out, and sends a reply.
    */
   while (running) {
-	if ((r = sef_receive_status(ANY, &mess, &ipc_status)) != OK)
+	if ((r = sef_receive_status(ANY, &mess, &ipc_status)) != OK) {
+		if (r == EINTR && !running)
+			break;
+
 		panic("driver_receive failed: %d", r);
+	}
 
 	chardriver_process(cdp, &mess, ipc_status);
   }
-}
-
-/*===========================================================================*
- *				do_nop					     *
- *===========================================================================*/
-int do_nop(message *UNUSED(mp))
-{
-  return(OK);
-}
-
-/*===========================================================================*
- *				nop_ioctl				     *
- *===========================================================================*/
-int nop_ioctl(message *UNUSED(mp))
-{
-  return(ENOTTY);
-}
-
-/*===========================================================================*
- *				nop_alarm				     *
- *===========================================================================*/
-void nop_alarm(message *UNUSED(mp))
-{
-/* Ignore the leftover alarm. */
-}
-
-/*===========================================================================*
- *				nop_cleanup				     *
- *===========================================================================*/
-void nop_cleanup(void)
-{
-/* Nothing to clean up. */
-}
-
-/*===========================================================================*
- *				nop_cancel				     *
- *===========================================================================*/
-int nop_cancel(message *UNUSED(m))
-{
-/* Nothing to do for cancel. */
-   return(OK);
-}
-
-/*===========================================================================*
- *				nop_select				     *
- *===========================================================================*/
-int nop_select(message *UNUSED(m))
-{
-/* Nothing to do for select. */
-   return(OK);
 }

@@ -21,25 +21,20 @@ static dev_t m_device;			/* current device */
 extern int errno;			/* error number for PM calls */
 
 static struct device *r_prepare(dev_t device);
-static int r_transfer(endpoint_t endpt, int opcode, u64_t position,
-	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
-	flags);
-static int r_do_open(message *m_ptr);
-static void r_random(message *m_ptr);
+static ssize_t r_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t r_write(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static int r_open(devminor_t minor, int access, endpoint_t user_endpt);
+static void r_random(clock_t stamp);
 static void r_updatebin(int source, struct k_randomness_bin *rb);
 
 /* Entry points to this driver. */
 static struct chardriver r_dtab = {
-  r_do_open,	/* open or mount */
-  do_nop,	/* nothing on a close */
-  nop_ioctl,	/* no I/O controls supported */
-  r_prepare,	/* prepare for I/O on a given minor device */
-  r_transfer,	/* do the I/O */
-  nop_cleanup,	/* no need to clean up */
-  r_random, 	/* get randomness from kernel (alarm) */
-  nop_cancel,	/* cancel not supported */
-  nop_select,	/* select not supported */
-  NULL,		/* other messages not supported */
+  .cdr_open	= r_open,	/* open device */
+  .cdr_read	= r_read,	/* read from device */
+  .cdr_write	= r_write,	/* write to device (seeding it) */
+  .cdr_alarm	= r_random 	/* get randomness from kernel (alarm) */
 };
 
 /* Buffer for the /dev/random number generator. */
@@ -92,7 +87,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   int i, s;
 
   random_init();
-  r_random(NULL);				/* also set periodic timer */
+  r_random(0);				/* also set periodic timer */
 
   /* Retrieve first randomness buffer with parameters. */
   if (OK != (s=sys_getrandomness(&krandom))) {
@@ -120,103 +115,71 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 }
 
 /*===========================================================================*
- *				r_prepare				     *
+ *				r_read					     *
  *===========================================================================*/
-static struct device *r_prepare(dev_t device)
+static ssize_t r_read(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int UNUSED(flags),
+	cdev_id_t UNUSED(id))
 {
-/* Prepare for I/O on a device: check if the minor device number is ok. */
-
-  if (device >= NR_DEVS) return(NULL);
-  m_device = device;
-
-  return(&m_geom[device]);
-}
-
-/*===========================================================================*
- *				r_transfer				     *
- *===========================================================================*/
-static int r_transfer(
-  endpoint_t endpt,		/* endpoint of grant owner */
-  int opcode,			/* DEV_GATHER or DEV_SCATTER */
-  u64_t position,		/* offset on device to read or write */
-  iovec_t *iov,			/* pointer to read or write request vector */
-  unsigned int nr_req,		/* length of request vector */
-  endpoint_t UNUSED(user_endpt),/* endpoint of user process */
-  unsigned int UNUSED(flags)
-)
-{
-/* Read or write one the driver's minor devices. */
-  unsigned count, left, chunk;
-  cp_grant_id_t grant;
-  struct device *dv;
+/* Read from one of the driver's minor devices. */
+  size_t offset, chunk;
   int r;
-  size_t vir_offset = 0;
 
-  /* Get minor device number and check for /dev/null. */
-  dv = &m_geom[m_device];
+  if (minor != RANDOM_DEV) return(EIO);
 
-  while (nr_req > 0) {
+  if (!random_isseeded()) return(EAGAIN);
 
-	/* How much to transfer and where to / from. */
-	count = iov->iov_size;
-	grant = (cp_grant_id_t) iov->iov_addr;
-
-	switch (m_device) {
-
-	/* Random number generator. Character instead of block device. */
-	case RANDOM_DEV:
-	    if (opcode == DEV_GATHER_S && !random_isseeded())
-		    return(EAGAIN);
-	    left = count;
-	    while (left > 0) {
-	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
- 	        if (opcode == DEV_GATHER_S) {
-		    random_getbytes(random_buf, chunk);
-		    r= sys_safecopyto(endpt, grant, vir_offset,
-			(vir_bytes) random_buf, chunk);
-		    if (r != OK)
-		    {
-			printf("random: sys_safecopyto failed for proc %d, "
-				"grant %d\n", endpt, grant);
-			return r;
-		    }
- 	        } else if (opcode == DEV_SCATTER_S) {
-		    r= sys_safecopyfrom(endpt, grant, vir_offset,
-			(vir_bytes) random_buf, chunk);
-		    if (r != OK)
-		    {
-			printf("random: sys_safecopyfrom failed for proc %d, "
-				"grant %d\n", endpt, grant);
-			return r;
-		    }
-	    	    random_putbytes(random_buf, chunk);
- 	        }
- 	        vir_offset += chunk;
-	    	left -= chunk;
-	    }
-	    break;
-
-	/* Unknown (illegal) minor device. */
-	default:
-	    return(EINVAL);
+  for (offset = 0; offset < size; offset += chunk) {
+	chunk = MIN(size - offset, RANDOM_BUF_SIZE);
+	random_getbytes(random_buf, chunk);
+	r = sys_safecopyto(endpt, grant, offset, (vir_bytes)random_buf, chunk);
+	if (r != OK) {
+		printf("random: sys_safecopyto failed for proc %d, grant %d\n",
+			endpt, grant);
+		return r;
 	}
-
-	/* Book the number of bytes transferred. */
-	position += count;
-  	if ((iov->iov_size -= count) == 0) { iov++; nr_req--; vir_offset = 0; }
-
   }
-  return(OK);
+
+  return size;
 }
 
 /*===========================================================================*
- *				r_do_open				     *
+ *				r_write					     *
  *===========================================================================*/
-static int r_do_open(message *m_ptr)
+static ssize_t r_write(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int UNUSED(flags),
+	cdev_id_t UNUSED(id))
+{
+/* Write to one of the driver's minor devices. */
+  size_t offset, chunk;
+  int r;
+
+  if (minor != RANDOM_DEV) return(EIO);
+
+  for (offset = 0; offset < size; offset += chunk) {
+	chunk = MIN(size - offset, RANDOM_BUF_SIZE);
+	r = sys_safecopyfrom(endpt, grant, offset, (vir_bytes)random_buf,
+		chunk);
+	if (r != OK) {
+		printf("random: sys_safecopyfrom failed for proc %d,"
+			" grant %d\n", endpt, grant);
+		return r;
+	}
+	random_putbytes(random_buf, chunk);
+  }
+
+  return size;
+}
+
+/*===========================================================================*
+ *				r_open					     *
+ *===========================================================================*/
+static int r_open(devminor_t minor, int access, endpoint_t UNUSED(user_endpt))
 {
 /* Check device number on open.
  */
-  if (r_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
+
+  if (minor < 0 || minor >= NR_DEVS) return(ENXIO);
 
   return(OK);
 }
@@ -265,7 +228,7 @@ static void r_updatebin(int source, struct k_randomness_bin *rb)
 /*===========================================================================*
  *				r_random				     *
  *===========================================================================*/
-static void r_random(message *UNUSED(m_ptr))
+static void r_random(clock_t UNUSED(stamp))
 {
   /* Fetch random information from the kernel to update /dev/random. */
   int s;
