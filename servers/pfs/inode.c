@@ -237,7 +237,7 @@ struct inode *rip;	/* pointer to inode to be released */
 /*===========================================================================*
  *				alloc_inode				     *
  *===========================================================================*/
-struct inode *alloc_inode(dev_t dev, pmode_t bits)
+struct inode *alloc_inode(dev_t dev, pmode_t bits, uid_t uid, gid_t gid)
 {
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 
@@ -267,8 +267,8 @@ struct inode *alloc_inode(dev_t dev, pmode_t bits)
 
 	rip->i_mode = bits;		/* set up RWX bits */
 	rip->i_nlinks = NO_LINK;	/* initial no links */
-	rip->i_uid = caller_uid;	/* file's uid is owner's */
-	rip->i_gid = caller_gid;	/* ditto group id */
+	rip->i_uid = uid;		/* set file user id */
+	rip->i_gid = gid;		/* ditto group id */
 
 	/* Fields not cleared already are cleared in wipe_inode().  They have
 	 * been put there because truncate() needs to clear the same fields if

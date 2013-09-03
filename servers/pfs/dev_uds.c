@@ -4,18 +4,11 @@
  *
  * The entry points into this file are...
  *
- *   uds_open:   handles the   open(2) syscall on /dev/uds
- *   uds_close:  handles the  close(2) syscall on /dev/uds
- *   uds_select: handles the select(2) syscall on /dev/uds
- *   uds_read:   handles the   read(2) syscall on /dev/uds
- *   uds_write:  handles the  write(2) syscall on /dev/uds
- *   uds_ioctl:  handles the  ioctl(2) syscall on /dev/uds
- *   uds_status: handles status requests.
- *   uds_cancel: handles cancelled syscalls.
+ *   uds_request: process a character device request
  *
  * Also See...
  *
- *   table.c, uds.c, uds.h
+ *   uds.c, uds.h
  *
  * Overview
  *
@@ -32,23 +25,50 @@
 #include "glo.h"
 #include "uds.h"
 
-static int uds_perform_read(int minor, endpoint_t m_source, size_t
-	size, int pretend);
-static int uds_perform_write(int minor, endpoint_t m_source, size_t
-	size, int pretend);
+static ssize_t uds_perform_read(devminor_t minor, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int pretend);
+static ssize_t uds_perform_write(devminor_t minor, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int pretend);
 
-int uds_open(message *dev_m_in, message *dev_m_out)
+static int uds_open(devminor_t orig_minor, int access, endpoint_t user_endpt);
+static int uds_close(devminor_t minor);
+static ssize_t uds_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t uds_write(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static int uds_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
+static int uds_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+static int uds_select(devminor_t minor, unsigned int ops, endpoint_t endpt);
+
+static struct chardriver uds_tab = {
+	.cdr_open	= uds_open,
+	.cdr_close	= uds_close,
+	.cdr_read	= uds_read,
+	.cdr_write	= uds_write,
+	.cdr_ioctl	= uds_ioctl,
+	.cdr_cancel	= uds_cancel,
+	.cdr_select	= uds_select
+};
+
+void uds_request(message *m_ptr, int ipc_status)
+{
+	/* Use libchardriver to process character device requests. */
+	chardriver_process(&uds_tab, m_ptr, ipc_status);
+}
+
+static int uds_open(devminor_t UNUSED(orig_minor), int access,
+	endpoint_t user_endpt)
 {
 	message fs_m_in, fs_m_out;
 	struct uucred ucred;
+	devminor_t minor;
 	int rc, i;
-	int minor;
 
 #if DEBUG == 1
 	static int call_count = 0;
-	printf("(uds) [%d] uds_open() call_count=%d\n", uds_minor(dev_m_in),
-							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
+	printf("(uds) [-] uds_open() call_count=%d\n", ++call_count);
+	printf("Endpoint: 0x%x\n", user_endpt);
 #endif
 
 	/*
@@ -68,13 +88,8 @@ int uds_open(message *dev_m_in, message *dev_m_out)
 		}
 	}
 
-	if (minor == -1) {
-
-		/* descriptor table full */
-		uds_set_reply(dev_m_out, DEV_OPEN_REPL, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, ENFILE);
+	if (minor == -1)
 		return ENFILE;
-	}
 
 	/*
 	 * We found a slot in uds_fd_table, now initialize the descriptor
@@ -85,21 +100,12 @@ int uds_open(message *dev_m_in, message *dev_m_out)
 	 */
 	uds_fd_table[minor].state = UDS_INUSE;
 
-	/* track the system call we are performing in case it gets cancelled */
-	uds_fd_table[minor].call_nr = dev_m_in->m_type;
-	uds_fd_table[minor].ioctl = 0;
-	uds_fd_table[minor].syscall_done = 0;
-
 	/* set the socket owner */
-	uds_fd_table[minor].owner = dev_m_in->USER_ENDPT;
-	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
+	uds_fd_table[minor].owner = user_endpt;
 
 	/* setup select(2) framework */
-	uds_fd_table[minor].selecting = 0;
-	uds_fd_table[minor].select_proc = 0;
-	uds_fd_table[minor].sel_ops_in = 0;
-	uds_fd_table[minor].sel_ops_out = 0;
-	uds_fd_table[minor].status_updated = 0;
+	uds_fd_table[minor].sel_endpt = NONE;
+	uds_fd_table[minor].sel_ops = 0;
 
 	/* initialize the data pointer (pos) to the start of the PIPE */
 	uds_fd_table[minor].pos = 0;
@@ -151,26 +157,15 @@ int uds_open(message *dev_m_in, message *dev_m_out)
 	/* Initially the socket isn't suspended. */
 	uds_fd_table[minor].suspended = UDS_NOT_SUSPENDED;
 
-	/* and the socket doesn't have an I/O grant initially */
-	uds_fd_table[minor].io_gr = GRANT_INVALID;
-
-	/* since there is no I/O grant it effectively has no size either */
-	uds_fd_table[minor].io_gr_size = 0;
-
-	/* The process isn't suspended so we don't flag it as revivable */
-	uds_fd_table[minor].ready_to_revive = 0;
-
 	/* get the effective user id and effective group id from the endpoint */
 	/* this is needed in the REQ_NEWNODE request to PFS. */
-	rc = getnucred(uds_fd_table[minor].endpoint, &ucred);
+	rc = getnucred(user_endpt, &ucred);
 	if (rc == -1) {
 		/* roll back the changes we made to the descriptor */
 		memset(&(uds_fd_table[minor]), '\0', sizeof(uds_fd_t));
 
 		/* likely error: invalid endpoint / proc doesn't exist */
-		uds_set_reply(dev_m_out, DEV_OPEN_REPL, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, errno);
-		return errno;
+		return EIO;
 	}
 
 	/* Prepare Request to the FS side of PFS */
@@ -189,51 +184,33 @@ int uds_open(message *dev_m_in, message *dev_m_out)
 		memset(&(uds_fd_table[minor]), '\0', sizeof(uds_fd_t));
 
 		/* likely error: get_block() failed */
-		uds_set_reply(dev_m_out, DEV_OPEN_REPL, dev_m_in->USER_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
 		return rc;
 	}
 
 	/* Process the response */
-
 	uds_fd_table[minor].inode_nr = fs_m_out.RES_INODE_NR;
 
-	/* prepare the reply */
-
-	uds_fd_table[minor].syscall_done = 1;
-	uds_set_reply(dev_m_out, DEV_OPEN_REPL, dev_m_in->USER_ENDPT,
-		      (cp_grant_id_t) dev_m_in->IO_GRANT, minor);
-	return minor;
+	return minor;	/* cloned! */
 }
 
-int uds_close(message *dev_m_in, message *dev_m_out)
+static int uds_close(devminor_t minor)
 {
-	int minor;
 	message fs_m_in, fs_m_out;
 	int rc;
 
 #if DEBUG == 1
 	static int call_count = 0;
-	printf("(uds) [%d] uds_close() call_count=%d\n", uds_minor(dev_m_in),
-							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
+	printf("(uds) [%d] uds_close() call_count=%d\n", minor, ++call_count);
 #endif
 
-	minor = uds_minor(dev_m_in);
+	if (minor < 0 || minor >= NR_FDS) return ENXIO;
 
 	if (uds_fd_table[minor].state != UDS_INUSE) {
 		/* attempted to close a socket that hasn't been opened --
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, DEV_CLOSE_REPL, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
 		return EINVAL;
 	}
-
-	/* no need to track the syscall in case of cancellation. close() is
-	 * atomic and can't be cancelled. no need to update the endpoint here,
-	 * we won't be needing it to kill the socket
-	 */
 
 	/* if the socket is connected, disconnect it */
 	if (uds_fd_table[minor].peer != -1) {
@@ -246,14 +223,12 @@ int uds_close(message *dev_m_in, message *dev_m_out)
 		uds_fd_table[peer].err = ECONNRESET;
 
 		/* if peer was blocked on I/O revive peer */
-		if (uds_fd_table[peer].suspended) {
-			uds_fd_table[peer].ready_to_revive = 1;
-			uds_unsuspend(dev_m_in->m_source, peer);
-		}
+		if (uds_fd_table[peer].suspended != UDS_NOT_SUSPENDED)
+			uds_unsuspend(peer);
 	}
 
 	if (uds_fd_table[minor].ancillary_data.nfiledes > 0) {
-		clear_fds(minor, &(uds_fd_table[minor].ancillary_data));
+		uds_clear_fds(minor, &uds_fd_table[minor].ancillary_data);
 	}
 
 	/* Prepare Request to the FS side of PFS */
@@ -269,90 +244,84 @@ int uds_close(message *dev_m_in, message *dev_m_out)
 
 	rc = fs_putnode(&fs_m_in, &fs_m_out);
 	if (rc != OK) {
-		perror("fs_putnode");
-		/* likely error: get_block() failed */
+		printf("PFS: fs_putnode returned %d\n", rc);
+
 		return rc;
 	}
 
-	uds_set_reply(dev_m_out, DEV_CLOSE_REPL, dev_m_in->USER_ENDPT,
-		      (cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 	return OK;
 }
 
-int uds_select(message *dev_m_in, message *dev_m_out)
+static int uds_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 {
-	int i, bytes;
-	int minor;
+	unsigned int ready_ops;
+	int i, bytes, watch;
 
 #if DEBUG == 1
 	static int call_count = 0;
-	printf("(uds) [%d] uds_select() call_count=%d\n", uds_minor(dev_m_in),
-							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
+	printf("(uds) [%d] uds_select() call_count=%d\n", minor, ++call_count);
 #endif
 
-	minor = uds_minor(dev_m_in);
+	if (minor < 0 || minor >= NR_FDS) return ENXIO;
 
 	if (uds_fd_table[minor].state != UDS_INUSE) {
-
-		/* attempted to close a socket that hasn't been opened --
+		/* attempted to select on a socket that hasn't been opened --
 		 * something is very wrong :(
 		 */
-
-		uds_sel_reply(dev_m_out, DEV_SEL_REPL1, minor, EINVAL);
 		return EINVAL;
 	}
 
-	/* setup select(2) framework */
-	uds_fd_table[minor].selecting = 1;
-	uds_fd_table[minor].select_proc = dev_m_in->m_source;
+	watch = (ops & SEL_NOTIFY);
+	ops &= (SEL_RD | SEL_WR | SEL_ERR);
 
-	/* track the system call we are performing in case it gets cancelled */
-	uds_fd_table[minor].call_nr = dev_m_in->m_type;
-	uds_fd_table[minor].ioctl = 0;
-	uds_fd_table[minor].syscall_done = 0;
-
-	/* Can't update the process endpoint here, no info.  */
-
-	uds_fd_table[minor].sel_ops_in = dev_m_in->USER_ENDPT;
-	uds_fd_table[minor].sel_ops_out = 0;
+	ready_ops = 0;
 
 	/* check if there is data available to read */
-	bytes = uds_perform_read(minor, dev_m_in->m_source, 1, 1);
-	if (bytes > 0) {
-
-		/* there is data in the pipe for us to read */
-		uds_fd_table[minor].sel_ops_out |= SEL_RD;
-
-	} else if (uds_fd_table[minor].listening == 1) {
-
-		/* check for pending connections */
-		for (i = 0; i < uds_fd_table[minor].backlog_size; i++) {
-			if (uds_fd_table[minor].backlog[i] != -1) {
-				uds_fd_table[minor].sel_ops_out |= SEL_RD;
-				break;
+	if (ops & SEL_RD) {
+		bytes = uds_perform_read(minor, NONE, GRANT_INVALID, 1, 1);
+		if (bytes > 0) {
+			/* there is data in the pipe for us to read */
+			ready_ops |= SEL_RD;
+		} else if (uds_fd_table[minor].listening == 1) {
+			/* check for pending connections */
+			for (i = 0; i < uds_fd_table[minor].backlog_size; i++)
+			{
+				if (uds_fd_table[minor].backlog[i] != -1) {
+					ready_ops |= SEL_RD;
+					break;
+				}
 			}
+		} else if (bytes != SUSPEND) {
+			ready_ops |= SEL_RD;
 		}
-	} else if (bytes != SUSPEND) {
-		uds_fd_table[minor].sel_ops_out |= SEL_RD;
 	}
 
 	/* check if we can write without blocking */
-	bytes = uds_perform_write(minor, dev_m_in->m_source, PIPE_BUF, 1);
-	if (bytes != 0 && bytes != SUSPEND) {
-		/* There is room to write or there is an error condition */
-		uds_fd_table[minor].sel_ops_out |= SEL_WR;
+	if (ops & SEL_WR) {
+		bytes = uds_perform_write(minor, NONE, GRANT_INVALID, PIPE_BUF,
+			1);
+		if (bytes != 0 && bytes != SUSPEND) {
+			/* There is room to write or there is an error
+			 * condition.
+			 */
+			ready_ops |= SEL_WR;
+		}
 	}
 
-	uds_fd_table[minor].syscall_done = 1;
-	uds_sel_reply(dev_m_out, DEV_SEL_REPL1, minor,
-		      uds_fd_table[minor].sel_ops_out);
+	/* If not all requested ops were ready, and the caller requests to be
+	 * notified about changes, we add the remaining ops to the saved set.
+	 */
+	ops &= ~ready_ops;
+	if (ops && watch) {
+		uds_fd_table[minor].sel_endpt = endpt;
+		uds_fd_table[minor].sel_ops |= ops;
+	}
 
-	return uds_fd_table[minor].sel_ops_out;
+	return ready_ops;
 }
 
-static int uds_perform_read(int minor, endpoint_t m_source,
-	size_t size, int pretend)
+static ssize_t uds_perform_read(devminor_t minor, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int pretend)
 {
 	int rc, peer;
 	message fs_m_in;
@@ -366,20 +335,18 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 
 	peer = uds_fd_table[minor].peer;
 
+	/* skip reads and writes of 0 (or less!) bytes */
 	if (size <= 0) {
 		return 0;
 	}
 
 	/* check if we are allowed to read */
 	if (!(uds_fd_table[minor].mode & S_IRUSR)) {
-
 		/* socket is shutdown for reading */
 		return EPIPE;
 	}
 
-	/* skip reads and writes of 0 (or less!) bytes */
 	if (uds_fd_table[minor].size == 0) {
-
 		if (peer == -1) {
 			/* We're not connected. That's only a problem when this
 			 * socket is connection oriented. */
@@ -400,7 +367,6 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 			return 0;
 		}
 
-
 		if (pretend) {
 			return SUSPEND;
 		}
@@ -408,10 +374,9 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 		/* maybe a process is blocked waiting to write? if
 		 * needed revive the writer
 		 */
-		if (peer != -1 && uds_fd_table[peer].suspended) {
-			uds_fd_table[peer].ready_to_revive = 1;
-			uds_unsuspend(m_source, peer);
-		}
+		if (peer != -1 &&
+			uds_fd_table[peer].suspended == UDS_SUSPENDED_WRITE)
+			uds_unsuspend(peer);
 
 #if DEBUG == 1
 		printf("(uds) [%d] suspending read request\n", minor);
@@ -419,21 +384,19 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 		/* Process is reading from an empty pipe,
 		 * suspend it so some bytes can be written
 		 */
-		uds_fd_table[minor].suspended = UDS_SUSPENDED_READ;
-		return SUSPEND;
+		return EDONTREPLY;
 	}
 
 	if (pretend) {
-
 		return (size > uds_fd_table[minor].size) ?
 				uds_fd_table[minor].size : size;
 	}
 
-
 	/* Prepare Request to the FS side of PFS */
+	fs_m_in.m_source = endpt;
 	fs_m_in.m_type = REQ_READ;
 	fs_m_in.REQ_INODE_NR = uds_fd_table[minor].inode_nr;
-	fs_m_in.REQ_GRANT = uds_fd_table[minor].io_gr;
+	fs_m_in.REQ_GRANT = grant;
 	fs_m_in.REQ_SEEK_POS_HI = 0;
 	fs_m_in.REQ_SEEK_POS_LO = uds_fd_table[minor].pos;
 	fs_m_in.REQ_NBYTES = (size > uds_fd_table[minor].size) ?
@@ -442,7 +405,7 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 	/* perform the read */
 	rc = fs_readwrite(&fs_m_in, &fs_m_out);
 	if (rc != OK) {
-		perror("fs_readwrite");
+		printf("PFS: fs_readwrite returned %d\n", rc);
 		return rc;
 	}
 
@@ -469,35 +432,26 @@ static int uds_perform_read(int minor, endpoint_t m_source,
 	/* maybe a big write was waiting for us to read some data, if
 	 * needed revive the writer
 	 */
-	if (peer != -1 && uds_fd_table[peer].suspended) {
-		uds_fd_table[peer].ready_to_revive = 1;
-		uds_unsuspend(m_source, peer);
-	}
+	if (peer != -1 && uds_fd_table[peer].suspended == UDS_SUSPENDED_WRITE)
+		uds_unsuspend(peer);
 
-	/* see if peer is blocked on select() and a write is possible
-	 * (from peer to minor)
+	/* see if peer is blocked on select() and a write is possible (from
+	 * peer to minor); if the peer wants to know about write being possible
+	 * and it doesn't know about it already, then let the peer know.
 	 */
-	if (peer != -1 && uds_fd_table[peer].selecting == 1 &&
+	if (peer != -1 && (uds_fd_table[peer].sel_ops & SEL_WR) &&
 	    (uds_fd_table[minor].size+uds_fd_table[minor].pos + 1 < PIPE_BUF)){
-
-		/* if the peer wants to know about write being possible
-		 * and it doesn't know about it already, then let the peer know.
-		 */
-		if (peer != -1 && (uds_fd_table[peer].sel_ops_in & SEL_WR) &&
-		    !(uds_fd_table[peer].sel_ops_out & SEL_WR)) {
-
-			/* a write on peer is possible now */
-			uds_fd_table[peer].sel_ops_out |= SEL_WR;
-			uds_fd_table[peer].status_updated = 1;
-			uds_unsuspend(m_source, peer);
-		}
+		/* a write on peer is possible now */
+		chardriver_reply_select(uds_fd_table[peer].sel_endpt, peer,
+			SEL_WR);
+		uds_fd_table[peer].sel_ops &= ~SEL_WR;
 	}
 
 	return fs_m_out.RES_NBYTES; /* return number of bytes read */
 }
 
-static int uds_perform_write(int minor, endpoint_t m_source,
-						size_t size, int pretend)
+static ssize_t uds_perform_write(devminor_t minor, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int pretend)
 {
 	int rc, peer, i;
 	message fs_m_in;
@@ -516,20 +470,17 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 
 	/* check if we are allowed to write */
 	if (!(uds_fd_table[minor].mode & S_IWUSR)) {
-
 		/* socket is shutdown for writing */
 		return EPIPE;
 	}
 
 	if (size > PIPE_BUF) {
-
 		/* message is too big to ever write to the PIPE */
 		return EMSGSIZE;
 	}
 
 	if (uds_fd_table[minor].type == SOCK_STREAM ||
 			uds_fd_table[minor].type == SOCK_SEQPACKET) {
-
 		/* if we're writing with a connection oriented socket,
 		 * then it needs a peer to write to
 		 */
@@ -542,12 +493,9 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 				return ENOTCONN;
 			}
 		} else {
-
 			peer = uds_fd_table[minor].peer;
 		}
-
 	} else /* uds_fd_table[minor].type == SOCK_DGRAM */ {
-
 		peer = -1;
 
 		/* locate the "peer" we want to write to */
@@ -601,10 +549,8 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 		}
 
 		/* if needed revive the reader */
-		if (uds_fd_table[peer].suspended) {
-			uds_fd_table[peer].ready_to_revive = 1;
-			uds_unsuspend(m_source, peer);
-		}
+		if (uds_fd_table[peer].suspended == UDS_SUSPENDED_READ)
+			uds_unsuspend(peer);
 
 #if DEBUG == 1
 	printf("(uds) [%d] suspending write request\n", minor);
@@ -613,8 +559,7 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 		/* Process is reading from an empty pipe,
 		 * suspend it so some bytes can be written
 		 */
-		uds_fd_table[minor].suspended = UDS_SUSPENDED_WRITE;
-		return SUSPEND;
+		return EDONTREPLY;
 	}
 
 	if (pretend) {
@@ -622,9 +567,10 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 	}
 
 	/* Prepare Request to the FS side of PFS */
+	fs_m_in.m_source = endpt;
 	fs_m_in.m_type = REQ_WRITE;
 	fs_m_in.REQ_INODE_NR = uds_fd_table[peer].inode_nr;
-	fs_m_in.REQ_GRANT = uds_fd_table[minor].io_gr;
+	fs_m_in.REQ_GRANT = grant;
 	fs_m_in.REQ_SEEK_POS_HI = 0;
 	fs_m_in.REQ_SEEK_POS_LO = uds_fd_table[peer].pos +
 					uds_fd_table[peer].size;
@@ -633,7 +579,7 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 	/* Request the write */
 	rc = fs_readwrite(&fs_m_in, &fs_m_out);
 	if (rc != OK) {
-		perror("fs_readwrite");
+		printf("PFS: fs_readwrite returned %d\n", rc);
 		return rc;
 	}
 
@@ -644,7 +590,6 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 	/* increase the count of unread bytes */
 	uds_fd_table[peer].size += fs_m_out.RES_NBYTES;
 
-
 	/* fill in the source address to be returned by recvfrom & recvmsg */
 	if (uds_fd_table[minor].type == SOCK_DGRAM) {
 		memcpy(&uds_fd_table[peer].source, &uds_fd_table[minor].addr,
@@ -652,541 +597,269 @@ static int uds_perform_write(int minor, endpoint_t m_source,
 	}
 
 	/* revive peer that was waiting for us to write */
-	if (uds_fd_table[peer].suspended) {
-		uds_fd_table[peer].ready_to_revive = 1;
-		uds_unsuspend(m_source, peer);
-	}
+	if (uds_fd_table[peer].suspended == UDS_SUSPENDED_READ)
+		uds_unsuspend(peer);
 
-	/* see if peer is blocked on select()*/
-	if (uds_fd_table[peer].selecting == 1 && fs_m_out.RES_NBYTES > 0) {
-
-		/* if the peer wants to know about data ready to read
-		 * and it doesn't know about it already, then let the peer
-		 * know we have data for it.
-		 */
-		if ((uds_fd_table[peer].sel_ops_in & SEL_RD) &&
-				!(uds_fd_table[peer].sel_ops_out & SEL_RD)) {
-
-			/* a read on peer is possible now */
-			uds_fd_table[peer].sel_ops_out |= SEL_RD;
-			uds_fd_table[peer].status_updated = 1;
-			uds_unsuspend(m_source, peer);
-		}
+	/* see if peer is blocked on select(); if the peer wants to know about
+	 * data ready to read and it doesn't know about it already, then let
+	 * the peer know we have data for it.
+	 */
+	if ((uds_fd_table[peer].sel_ops & SEL_RD) && fs_m_out.RES_NBYTES > 0) {
+		/* a read on peer is possible now */
+		chardriver_reply_select(uds_fd_table[peer].sel_endpt, peer,
+			SEL_RD);
+		uds_fd_table[peer].sel_ops &= ~SEL_RD;
 	}
 
 	return fs_m_out.RES_NBYTES; /* return number of bytes written */
 }
 
-int uds_read(message *dev_m_in, message *dev_m_out)
+static ssize_t uds_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
 {
-	int bytes;
-	int minor;
+	ssize_t rc;
 
 #if DEBUG == 1
 	static int call_count = 0;
-	printf("(uds) [%d] uds_read() call_count=%d\n", uds_minor(dev_m_in),
-							++call_count);
-	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->USER_ENDPT,
-							dev_m_in->POSITION);
+	printf("(uds) [%d] uds_read() call_count=%d\n", minor, ++call_count);
 #endif
 
-	minor = uds_minor(dev_m_in);
+	if (minor < 0 || minor >= NR_FDS) return ENXIO;
 
 	if (uds_fd_table[minor].state != UDS_INUSE) {
-
-		/* attempted to close a socket that hasn't been opened --
+		/* attempted to read from a socket that hasn't been opened --
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
-	/* track the system call we are performing in case it gets cancelled */
-	uds_fd_table[minor].call_nr = dev_m_in->m_type;
-	uds_fd_table[minor].ioctl = 0;
-	uds_fd_table[minor].syscall_done = 0;
+	rc = uds_perform_read(minor, endpt, grant, size, 0);
 
-	/* Update the process endpoint. */
-	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
+	/* If the call couldn't complete, suspend the caller. */
+	if (rc == EDONTREPLY) {
+		uds_fd_table[minor].suspended = UDS_SUSPENDED_READ;
+		uds_fd_table[minor].susp_endpt = endpt;
+		uds_fd_table[minor].susp_grant = grant;
+		uds_fd_table[minor].susp_size = size;
+		uds_fd_table[minor].susp_id = id;
 
-	/* setup select(2) framework */
-	uds_fd_table[minor].selecting = 0;
+		/* If the call wasn't supposed to block, cancel immediately. */
+		if (flags & FLG_OP_NONBLOCK) {
+			uds_cancel(minor, endpt, id);
 
-	/* save I/O Grant info */
-	uds_fd_table[minor].io_gr = (cp_grant_id_t) dev_m_in->IO_GRANT;
-	uds_fd_table[minor].io_gr_size = dev_m_in->COUNT;
-
-	bytes = uds_perform_read(minor, dev_m_in->m_source,
-					uds_fd_table[minor].io_gr_size, 0);
-
-	uds_set_reply(dev_m_out, DEV_REVIVE, uds_fd_table[minor].endpoint,
-		      uds_fd_table[minor].io_gr, bytes);
-
-	return bytes;
-}
-
-int uds_write(message *dev_m_in, message *dev_m_out)
-{
-	int bytes;
-	int minor;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] uds_write() call_count=%d\n", uds_minor(dev_m_in),
-							++call_count);
-	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->USER_ENDPT,
-							dev_m_in->POSITION);
-#endif
-
-	minor = uds_minor(dev_m_in);
-
-	if (uds_fd_table[minor].state != UDS_INUSE) {
-
-		/* attempted to write to a socket that hasn't been opened --
-		 * something is very wrong :(
-		 */
-		uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
-		return EINVAL;
+			rc = EAGAIN;
+		}
 	}
-
-	/* track the system call we are performing in case it gets cancelled */
-	uds_fd_table[minor].call_nr = dev_m_in->m_type;
-	uds_fd_table[minor].ioctl = 0;
-	uds_fd_table[minor].syscall_done = 0;
-
-	/* Update the process endpoint. */
-	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
-
-	/* setup select(2) framework */
-	uds_fd_table[minor].selecting = 0;
-
-	/* save I/O Grant info */
-	uds_fd_table[minor].io_gr = (cp_grant_id_t) dev_m_in->IO_GRANT;
-	uds_fd_table[minor].io_gr_size = dev_m_in->COUNT;
-
-	bytes = uds_perform_write(minor, dev_m_in->m_source,
-					uds_fd_table[minor].io_gr_size, 0);
-
-	uds_set_reply(dev_m_out, DEV_REVIVE, uds_fd_table[minor].endpoint,
-		      uds_fd_table[minor].io_gr, bytes);
-
-	return bytes;
-}
-
-int uds_ioctl(message *dev_m_in, message *dev_m_out)
-{
-	int rc, minor;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] uds_ioctl() call_count=%d\n", uds_minor(dev_m_in),
-							++call_count);
-	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->USER_ENDPT,
-							dev_m_in->POSITION);
-#endif
-
-	minor = uds_minor(dev_m_in);
-
-	if (uds_fd_table[minor].state != UDS_INUSE) {
-
-		/* attempted to close a socket that hasn't been opened --
-		 * something is very wrong :(
-		 */
-		uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
-			      (cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
-		return EINVAL;
-	}
-
-	/* track the system call we are performing in case it gets cancelled */
-	uds_fd_table[minor].call_nr = dev_m_in->m_type;
-	uds_fd_table[minor].ioctl = dev_m_in->COUNT;
-	uds_fd_table[minor].syscall_done = 0;
-
-	/* setup select(2) framework */
-	uds_fd_table[minor].selecting = 0;
-
-	/* update the owner endpoint - yes it's really stored in POSITION */
-	uds_fd_table[minor].owner = dev_m_in->POSITION;
-
-	/* update the process endpoint, which may well be different */
-	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
-
-	/* save I/O Grant info */
-	uds_fd_table[minor].io_gr = (cp_grant_id_t) dev_m_in->IO_GRANT;
-	uds_fd_table[minor].io_gr_size = 0; /* should not be used here */
-
-	switch (dev_m_in->COUNT) {	/* Handle the ioctl(2) command */
-
-		case NWIOSUDSCONN:
-
-			/* connect to a listening socket -- connect() */
-			rc = do_connect(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSACCEPT:
-
-			/* accept an incoming connection -- accept() */
-			rc = do_accept(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSBLOG:
-
-			/* set the backlog_size and put the socket into the
-			 * listening state -- listen()
-			 */
-			rc = do_listen(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSTYPE:
-
-			/* set the type for this socket (i.e.
-			 * SOCK_STREAM, SOCK_DGRAM, etc) -- socket()
-			 */
-			rc = do_socket(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSADDR:
-
-			/* set the address for this socket -- bind() */
-			rc = do_bind(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSADDR:
-
-			/* get the address for this socket -- getsockname() */
-			rc = do_getsockname(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSPADDR:
-
-			/* get the address for the peer -- getpeername() */
-			rc = do_getpeername(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSSHUT:
-
-			/* shutdown a socket for reading, writing, or
-			 * both -- shutdown()
-			 */
-			rc = do_shutdown(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSPAIR:
-
-			/* connect two sockets -- socketpair() */
-			rc = do_socketpair(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSSOTYPE:
-
-			/* get socket type -- getsockopt(SO_TYPE) */
-			rc = do_getsockopt_sotype(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSPEERCRED:
-
-			/* get peer endpoint -- getsockopt(SO_PEERCRED) */
-			rc = do_getsockopt_peercred(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSTADDR:
-
-			/* set target address -- sendto() */
-			rc = do_sendto(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSFADDR:
-
-			/* get from address -- recvfrom() */
-			rc = do_recvfrom(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSSNDBUF:
-
-			/* get the send buffer size -- getsockopt(SO_SNDBUF) */
-			rc = do_getsockopt_sndbuf(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSSNDBUF:
-
-			/* set the send buffer size -- setsockopt(SO_SNDBUF) */
-			rc = do_setsockopt_sndbuf(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSRCVBUF:
-
-			/* get the send buffer size -- getsockopt(SO_SNDBUF) */
-			rc = do_getsockopt_rcvbuf(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSRCVBUF:
-
-			/* set the send buffer size -- setsockopt(SO_SNDBUF) */
-			rc = do_setsockopt_rcvbuf(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOSUDSCTRL:
-
-			/* set the control data -- sendmsg() */
-			rc = do_sendmsg(dev_m_in, dev_m_out);
-
-			break;
-
-		case NWIOGUDSCTRL:
-
-			/* set the control data -- recvmsg() */
-			rc = do_recvmsg(dev_m_in, dev_m_out);
-
-			break;
-
-		default:
-
-			/* the IOCTL command is not valid for /dev/uds --
-			 * this happens a lot and is normal. a lot of
-			 * libc functions determine the socket type with
-			 * IOCTLs. Any not for us simply get a EBADIOCTL
-			 * response.
-			 */
-
-			rc = EBADIOCTL;
-	}
-
-	if (rc != SUSPEND)
-		uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
-		      (cp_grant_id_t) dev_m_in->IO_GRANT, rc);
 
 	return rc;
 }
 
-int uds_unsuspend(endpoint_t m_source, int minor)
+static ssize_t uds_write(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
 {
-	int r = OK, bytes;
-	message m_out;
+	ssize_t rc;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] uds_write() call_count=%d\n", minor, ++call_count);
+#endif
+
+	if (minor < 0 || minor >= NR_FDS) return ENXIO;
+
+	if (uds_fd_table[minor].state != UDS_INUSE) {
+		/* attempted to write to a socket that hasn't been opened --
+		 * something is very wrong :(
+		 */
+		return EINVAL;
+	}
+
+	rc = uds_perform_write(minor, endpt, grant, size, 0);
+
+	/* If the call couldn't complete, suspend the caller. */
+	if (rc == EDONTREPLY) {
+		uds_fd_table[minor].suspended = UDS_SUSPENDED_WRITE;
+		uds_fd_table[minor].susp_endpt = endpt;
+		uds_fd_table[minor].susp_grant = grant;
+		uds_fd_table[minor].susp_size = size;
+		uds_fd_table[minor].susp_id = id;
+
+		/* If the call wasn't supposed to block, cancel immediately. */
+		if (flags & FLG_OP_NONBLOCK) {
+			uds_cancel(minor, endpt, id);
+
+			rc = EAGAIN;
+		}
+	}
+
+	return rc;
+}
+
+static int uds_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
+{
+	int rc;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] uds_ioctl() call_count=%d\n", minor, ++call_count);
+#endif
+
+	if (minor < 0 || minor >= NR_FDS) return ENXIO;
+
+	if (uds_fd_table[minor].state != UDS_INUSE) {
+		/* attempted to perform I/O control on a socket that hasn't
+		 * been opened -- something is very wrong :(
+		 */
+		return EINVAL;
+	}
+
+	/* update the owner endpoint */
+	uds_fd_table[minor].owner = user_endpt;
+
+	/* let the UDS subsystem handle the actual request */
+	rc = uds_do_ioctl(minor, request, endpt, grant);
+
+	/* If the call couldn't complete, suspend the caller. */
+	if (rc == EDONTREPLY) {
+		/* The suspension type is already set by the IOCTL handler. */
+		if (uds_fd_table[minor].suspended == UDS_NOT_SUSPENDED)
+			panic("IOCTL did not actually suspend?");
+		uds_fd_table[minor].susp_endpt = endpt;
+		uds_fd_table[minor].susp_grant = grant;
+		uds_fd_table[minor].susp_size = 0; /* irrelevant */
+		uds_fd_table[minor].susp_id = id;
+
+		/* If the call wasn't supposed to block, cancel immediately. */
+		if (flags & FLG_OP_NONBLOCK) {
+			uds_cancel(minor, endpt, id);
+
+			rc = EAGAIN;
+		}
+	}
+
+	return rc;
+}
+
+void uds_unsuspend(devminor_t minor)
+{
+	int r;
 	uds_fd_t *fdp;
 
 	fdp = &uds_fd_table[minor];
 
-	if (fdp->status_updated == 1) {
+	switch (fdp->suspended) {
+	case UDS_SUSPENDED_READ:
+		r = uds_perform_read(minor, fdp->susp_endpt, fdp->susp_grant,
+			fdp->susp_size, 0);
 
-		/* clear the status_updated flag */
-		fdp->status_updated = 0;
-		fdp->selecting = 0;
+		if (r == EDONTREPLY)
+			return;
 
-		/* prepare the response */
-		uds_sel_reply(&m_out, DEV_SEL_REPL2, minor, fdp->sel_ops_out);
-	} else if (fdp->ready_to_revive == 1) {
+		break;
 
-		/* clear the ready to revive flag */
-		fdp->ready_to_revive = 0;
+	case UDS_SUSPENDED_WRITE:
+		r = uds_perform_write(minor, fdp->susp_endpt, fdp->susp_grant,
+			fdp->susp_size, 0);
 
-		switch (fdp->suspended) {
+		if (r == EDONTREPLY)
+			return;
 
-			case UDS_SUSPENDED_READ:
+		break;
 
-				bytes = uds_perform_read(minor, m_source,
-							 fdp->io_gr_size, 0);
+	case UDS_SUSPENDED_CONNECT:
+	case UDS_SUSPENDED_ACCEPT:
+		/* In both cases, the caller already set up the connection.
+		 * The only thing to do here is unblock.
+		 */
+		r = OK;
 
-				if (bytes == SUSPEND) {
-					r = SUSPEND;
-					break;
-				}
+		break;
 
-				fdp->suspended = UDS_NOT_SUSPENDED;
-
-				uds_set_reply(&m_out, DEV_REVIVE, fdp->endpoint,
-					      fdp->io_gr, bytes);
-
-				break;
-
-			case UDS_SUSPENDED_WRITE:
-
-				bytes = uds_perform_write(minor, m_source,
-							  fdp->io_gr_size, 0);
-
-				if (bytes == SUSPEND) {
-					r = SUSPEND;
-					break;
-				}
-
-				fdp->suspended = UDS_NOT_SUSPENDED;
-
-				uds_set_reply(&m_out, DEV_REVIVE, fdp->endpoint,
-					      fdp->io_gr, bytes);
-
-				break;
-
-			case UDS_SUSPENDED_CONNECT:
-			case UDS_SUSPENDED_ACCEPT:
-
-				/* In both cases, the process
-				 * that send the notify()
-				 * already performed the connection.
-				 * The only thing to do here is
-				 * unblock.
-				 */
-
-				fdp->suspended = UDS_NOT_SUSPENDED;
-
-				uds_set_reply(&m_out, DEV_REVIVE, fdp->endpoint,
-					      fdp->io_gr, OK);
-
-				break;
-
-			default:
-				return(OK);
-		}
-
+	default:
+		panic("unknown suspension type %d", fdp->suspended);
 	}
 
-	if (r == OK) reply(m_source, &m_out);
-	return(r);
+	chardriver_reply_task(fdp->susp_endpt, fdp->susp_id, r);
+
+	fdp->suspended = UDS_NOT_SUSPENDED;
 }
 
-int uds_cancel(message *dev_m_in, message *dev_m_out)
+static int uds_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
+	uds_fd_t *fdp;
 	int i, j;
-	int minor;
-	/* XXX: should become a noop? */
+
 #if DEBUG == 1
 	static int call_count = 0;
-	printf("(uds) [%d] uds_cancel() call_count=%d\n", uds_minor(dev_m_in),
-							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
+	printf("(uds) [%d] uds_cancel() call_count=%d\n", minor, ++call_count);
 #endif
 
-	minor = uds_minor(dev_m_in);
+	if (minor < 0 || minor >= NR_FDS) return EDONTREPLY;
 
-	if (uds_fd_table[minor].state != UDS_INUSE) {
-		/* attempted to cancel an unknown request - this happens */
-		return SUSPEND;
+	fdp = &uds_fd_table[minor];
+
+	if (fdp->state != UDS_INUSE) {
+		printf("PFS: cancel request for closed minor %d\n", minor);
+		return EDONTREPLY;
 	}
 
-	/* Update the process endpoint. */
-	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
+	/* Make sure the cancel request is for a request we're hanging on. */
+	if (fdp->suspended == UDS_NOT_SUSPENDED || fdp->susp_endpt != endpt ||
+			fdp->susp_id != id) {
+		return EDONTREPLY;	/* this happens. */
+	}
 
-	/* setup select(2) framework */
-	uds_fd_table[minor].selecting = 0;
-
-	/* the system call was cancelled, so if the socket was suspended
-	 * (which is likely the case), then it is not suspended anymore.
+	/* The system call was cancelled, so the socket is not suspended
+	 * anymore.
 	 */
-	uds_fd_table[minor].suspended = UDS_NOT_SUSPENDED;
+	switch (fdp->suspended) {
+	case UDS_SUSPENDED_ACCEPT:	/* accept() */
+		/* partial accept() only changes
+		 * uds_fd_table[minorparent].child
+		 */
+		for (i = 0; i < NR_FDS; i++) {
+			if (uds_fd_table[i].child == minor) {
+				uds_fd_table[i].child = -1;
+			}
+		}
 
-	/* If there is a system call and it isn't complete, roll back */
-	if (uds_fd_table[minor].call_nr && !uds_fd_table[minor].syscall_done) {
+		break;
 
+	case UDS_SUSPENDED_CONNECT:	/* connect() */
+		/* partial connect() sets addr and adds minor to server backlog
+		 */
 
-		if  (uds_fd_table[minor].call_nr == DEV_IOCTL_S) {
+		for (i = 0; i < NR_FDS; i++) {
+			/* find a socket that is in use. */
+			if (uds_fd_table[i].state != UDS_INUSE)
+				continue;
 
-			switch (uds_fd_table[minor].ioctl) {
-
-				case NWIOSUDSACCEPT:	/* accept() */
-
-					/* partial accept() only changes
-					 * uds_fd_table[minorparent].child
-					 */
-
-					for (i = 0; i < NR_FDS; i++) {
-						if (uds_fd_table[i].child ==
-							minor) {
-
-						uds_fd_table[i].child = -1;
-
-						}
-					}
-
-					break;
-
-				case NWIOSUDSCONN:	/* connect() */
-
-					/* partial connect() sets addr
-					 * and adds minor to server backlog
-					 */
-
-					for (i = 0; i < NR_FDS; i++) {
-
-						/* find a socket that is in
-						 * use.
-						 */
-						if (uds_fd_table[i].state ==
-							UDS_INUSE) {
-
-							/* see if minor is in
-							 * the backlog
-							 */
+			/* see if minor is in the backlog */
 			for (j = 0; j < uds_fd_table[i].backlog_size; j++) {
-
 				if (uds_fd_table[i].backlog[j] == minor) {
 
 					/* remove from backlog */
 					uds_fd_table[i].backlog[j] = -1;
 				}
 			}
-
-						}
-					}
-
-					/* clear the address */
-					memset(&(uds_fd_table[minor].addr),
-						'\0',
-						sizeof(struct sockaddr_un));
-
-					break;
-
-				case NWIOSUDSTADDR:	/* sendto() */
-				case NWIOSUDSADDR:	/* bind() */
-				case NWIOGUDSADDR:	/* getsockname() */
-				case NWIOGUDSPADDR:	/* getpeername() */
-				case NWIOSUDSTYPE:	/* socket() */
-				case NWIOSUDSBLOG:	/* listen() */
-				case NWIOSUDSSHUT:	/* shutdown() */
-				case NWIOSUDSPAIR:	/* socketpair() */
-				case NWIOGUDSSOTYPE:	/* SO_TYPE */
-				case NWIOGUDSPEERCRED:	/* SO_PEERCRED */
-				default:
-					/* these are atomic, never suspend,
-					 * and can't be cancelled once called
-					 */
-					break;
-			}
-
 		}
 
-		/* DEV_READ_S or DEV_WRITE_S don't need to do anything
-		 * when cancelled. DEV_OPEN, DEV_REOPEN, DEV_SELECT,
-		 * DEV_CLOSE are atomic, never suspend, and can't
-		 * be cancelled once called.
-		 */
+		/* clear the address */
+		memset(&(uds_fd_table[minor].addr), '\0',
+			sizeof(struct sockaddr_un));
 
-		uds_fd_table[minor].syscall_done = 1;
+		break;
+
+	case UDS_SUSPENDED_READ:
+	case UDS_SUSPENDED_WRITE:
+		/* Nothing more to do. */
+		break;
+
+	default:
+		panic("unknown suspension type %d", fdp->suspended);
 	}
 
-	uds_set_reply(dev_m_out, DEV_REVIVE, dev_m_in->USER_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, EINTR);
+	fdp->suspended = UDS_NOT_SUSPENDED;
 
-	return EINTR;
+	return EINTR;	/* reply to the original request */
 }

@@ -17,7 +17,7 @@ void put_block(dev_t dev, pino_t inum);
 void buf_pool(void);
 
 /* inode.c */
-struct inode *alloc_inode(dev_t dev, pmode_t mode);
+struct inode *alloc_inode(dev_t dev, pmode_t mode, uid_t uid, gid_t gid);
 void dup_inode(struct inode *ip);
 struct inode *find_inode(pino_t numb);
 void free_inode(struct inode *rip);
@@ -61,37 +61,12 @@ bit_t alloc_bit(void);
 void free_bit(bit_t bit_returned);
 
 /* dev_uds.c */
-int uds_open(message *dev_m_in, message *dev_m_out);
-int uds_close(message *dev_m_in, message *dev_m_out);
-int uds_read(message *dev_m_in, message *dev_m_out);
-int uds_write(message *dev_m_in, message *dev_m_out);
-int uds_ioctl(message *dev_m_in, message *dev_m_out);
-int uds_select(message *dev_m_in, message *dev_m_out);
-int uds_unsuspend(endpoint_t m_source, int minor);
-int uds_cancel(message *dev_m_in, message *dev_m_out);
+void uds_request(message *m_ptr, int ipc_status);
+void uds_unsuspend(devminor_t minor);
 
 /* uds.c */
 void uds_init(void);
-int do_accept(message *dev_m_in, message *dev_m_out);
-int do_connect(message *dev_m_in, message *dev_m_out);
-int do_listen(message *dev_m_in, message *dev_m_out);
-int do_socket(message *dev_m_in, message *dev_m_out);
-int do_bind(message *dev_m_in, message *dev_m_out);
-int do_getsockname(message *dev_m_in, message *dev_m_out);
-int do_getpeername(message *dev_m_in, message *dev_m_out);
-int do_shutdown(message *dev_m_in, message *dev_m_out);
-int do_socketpair(message *dev_m_in, message *dev_m_out);
-int do_getsockopt_sotype(message *dev_m_in, message *dev_m_out);
-int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out);
-int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out);
-int do_setsockopt_sndbuf(message *dev_m_in, message *dev_m_out);
-int do_getsockopt_rcvbuf(message *dev_m_in, message *dev_m_out);
-int do_setsockopt_rcvbuf(message *dev_m_in, message *dev_m_out);
-int do_sendto(message *dev_m_in, message *dev_m_out);
-int do_recvfrom(message *dev_m_in, message *dev_m_out);
-int do_sendmsg(message *dev_m_in, message *dev_m_out);
-int do_recvmsg(message *dev_m_in, message *dev_m_out);
-int perform_connection(message *dev_m_in, message *dev_m_out, struct
-	sockaddr_un *addr, int minorx, int minory);
-int clear_fds(int minor, struct ancillary *data);
+int uds_clear_fds(devminor_t minor, struct ancillary *data);
+int uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant);
 #endif

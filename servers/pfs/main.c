@@ -12,7 +12,7 @@
 #include "inode.h"
 #include "uds.h"
 
-static void get_work(message *m_in);
+static void get_work(message *m_in, int *status);
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
@@ -28,20 +28,25 @@ int main(int argc, char *argv[])
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-  int ind, do_reply, transid;
+  int ind, transid, req_nr, ipc_status;
   message pfs_m_in;
   message pfs_m_out;
+  endpoint_t src;
 
   /* SEF local startup. */
   env_setargs(argc, argv);
   sef_local_startup();
 
   while(!unmountdone || !exitsignaled) {
-	endpoint_t src;
-
-	do_reply = 1;
 	/* Wait for request message. */
-	get_work(&pfs_m_in);
+	get_work(&pfs_m_in, &ipc_status);
+
+	/* If this is a UDS device request, process it and continue. */
+	if (IS_DEV_RQ(pfs_m_in.m_type)) {
+		uds_request(&pfs_m_in, ipc_status);
+
+		continue;
+	}
 
 	transid = TRNS_GET_ID(pfs_m_in.m_type);
 	pfs_m_in.m_type = TRNS_DEL_ID(pfs_m_in.m_type);
@@ -53,25 +58,9 @@ int main(int argc, char *argv[])
 		assert(IS_VFS_FS_TRANSID(transid) || transid == 0);
 
 	src = pfs_m_in.m_source;
-	caller_uid = INVAL_UID;	/* To trap errors */
-	caller_gid = INVAL_GID;
 	req_nr = pfs_m_in.m_type;
 
-	if (IS_DEV_RQ(req_nr)) {
-		ind = req_nr - DEV_RQ_BASE;
-		if (ind < 0 || ind >= DEV_CALL_VEC_SIZE) {
-			printf("pfs: bad DEV request %d\n", req_nr);
-			pfs_m_out.m_type = EINVAL;
-		} else {
-			int result;
-			result = (*dev_call_vec[ind])(&pfs_m_in, &pfs_m_out);
-			if (pfs_m_out.REP_STATUS == SUSPEND ||
-			    result == SUSPEND) {
-				/* Nothing to tell, so not replying */
-				do_reply = 0;
-			}
-		}
-	} else if (IS_VFS_RQ(req_nr)) {
+	if (IS_VFS_RQ(req_nr)) {
 		ind = req_nr - VFS_BASE;
 		if (ind < 0 || ind >= FS_CALL_VEC_SIZE) {
 			printf("pfs: bad FS request %d\n", req_nr);
@@ -85,13 +74,10 @@ int main(int argc, char *argv[])
 		pfs_m_out.m_type = EINVAL;
 	}
 
-	if (do_reply) {
-		if (IS_VFS_RQ(req_nr) && IS_VFS_FS_TRANSID(transid)) {
-			pfs_m_out.m_type = TRNS_ADD_ID(pfs_m_out.m_type,
-							transid);
-		}
-		reply(src, &pfs_m_out);
+	if (IS_VFS_RQ(req_nr) && IS_VFS_FS_TRANSID(transid)) {
+		pfs_m_out.m_type = TRNS_ADD_ID(pfs_m_out.m_type, transid);
 	}
+	reply(src, &pfs_m_out);
   }
   return(OK);
 }
@@ -145,8 +131,6 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	panic("unable to drop privileges");
   }
 
-  SELF_E = getprocnr();
-
   return(OK);
 }
 
@@ -165,15 +149,14 @@ static void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-static void get_work(m_in)
-message *m_in;				/* pointer to message */
+static void get_work(message * m_in, int *status)
 {
-  int r, srcok = 0, status;
+  int r, srcok = 0;
   endpoint_t src;
 
   do {
 	/* wait for a message */
-	if ((r = sef_receive_status(ANY, m_in, &status)) != OK)
+	if ((r = sef_receive_status(ANY, m_in, status)) != OK)
 		panic("sef_receive_status failed: %d", r);
 	src = m_in->m_source;
 
@@ -192,6 +175,8 @@ void reply(who, m_out)
 endpoint_t who;
 message *m_out;                       	/* report result */
 {
-  if (OK != send(who, m_out))	/* send the message */
-	printf("PFS(%d) was unable to send reply\n", SELF_E);
+  int r;
+
+  if (OK != (r = send(who, m_out)))	/* send the message */
+	printf("PFS: unable to send reply: %d\n", r);
 }
