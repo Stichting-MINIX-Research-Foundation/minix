@@ -1,10 +1,11 @@
 
-/* This file contains the table used to map system call numbers onto the
+/* This file contains the table used to map VFS/FS call numbers onto the
  * routines that perform them.
  */
 
 #define _TABLE
 
+#include "inc.h"
 #include "fs.h"
 #include "inode.h"
 #include "buf.h"
@@ -12,7 +13,6 @@
 
 /* File System Handlers (pfs) */
 int (*fs_call_vec[])(message *fs_m_in, message *fs_m_out) = {
-
         no_sys,             /* 0   not used */
         no_sys,             /* 1   */
         fs_putnode,         /* 2   */
@@ -46,35 +46,4 @@ int (*fs_call_vec[])(message *fs_m_in, message *fs_m_out) = {
         no_sys,	            /* 30  */
         no_sys,	            /* 31  */
 	no_sys,             /* 32 */
-};
-
-/* Device Handlers (/dev/uds) */
-int (*dev_call_vec[])(message *dev_m_in, message *dev_m_out) = {
-
-        uds_cancel,         /* 0  CANCEL */
-        no_sys,             /* 1   */
-        no_sys,             /* 2   */
-        no_sys,             /* 3   */
-        no_sys,             /* 4   */
-        no_sys,             /* 5   */
-	uds_open,           /* 6  DEV_OPEN */
-        uds_close,          /* 7  DEV_CLOSE */
-        no_sys,             /* 8   */
-        no_sys,             /* 9   */
-        no_sys,             /* 10  */
-        no_sys,             /* 11  */
-        uds_select,         /* 12 DEV_SELECT */
-        no_sys,             /* 13  */
-        uds_open,           /* 14 DEV_REOPEN */
-        no_sys,             /* 15  */
-	no_sys,             /* 16  */
-        no_sys,             /* 17  */
-        no_sys,	            /* 18  */
-        no_sys,		    /* 19  */
-        uds_read,	    /* 20 DEV_READ_S */
-        uds_write,          /* 21 DEV_WRITE_S */
-        no_sys,             /* 22 DEV_SCATTER_S */
-        no_sys,             /* 23 DEV_GATHER_S */
-        uds_ioctl,          /* 24 DEV_IOCTL_S */
-        no_sys,             /* 25 DEV_MMAP_S */
 };

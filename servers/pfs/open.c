@@ -13,15 +13,17 @@ int fs_newnode(message *fs_m_in, message *fs_m_out)
   register int r = OK;
   pmode_t bits;
   struct inode *rip;
+  uid_t uid;
+  gid_t gid;
   dev_t dev;
 
-  caller_uid = (uid_t) fs_m_in->REQ_UID;
-  caller_gid = (gid_t) fs_m_in->REQ_GID;
+  uid = (uid_t) fs_m_in->REQ_UID;
+  gid = (gid_t) fs_m_in->REQ_GID;
   bits = (pmode_t) fs_m_in->REQ_MODE;
   dev = (dev_t) fs_m_in->REQ_DEV;
 
   /* Try to allocate the inode */
-  if( (rip = alloc_inode(dev, bits) ) == NULL) return(err_code);
+  if( (rip = alloc_inode(dev, bits, uid, gid) ) == NULL) return(err_code);
 
   switch (bits & S_IFMT) {
 	case S_IFBLK:

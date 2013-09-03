@@ -15,6 +15,7 @@
 #include <sys/un.h>
 
 #include <minix/endpoint.h>
+#include <minix/chardriver.h>
 
 /* max connection backlog for incoming connections */
 #define UDS_SOMAXCONN 64
@@ -54,9 +55,6 @@ struct uds_fd {
 	/* Socket Owner */
 	endpoint_t owner;
 
-	/* endpoint for suspend/resume */
-	endpoint_t endpoint;
-
 /* Pipe Housekeeping */
 
 	/* inode number on PFS -- each descriptor is backed by 1
@@ -81,7 +79,6 @@ struct uds_fd {
 	pmode_t mode;
 
 /* Socket Info */
-
 
 	/* socket type - SOCK_STREAM, SOCK_DGRAM, or SOCK_SEQPACKET
 	 * Set by uds_ioctl(NWIOSUDSTYPE). It defaults to -1 in
@@ -144,7 +141,6 @@ struct uds_fd {
 
 /* Suspend/Revive Housekeeping */
 
-
 	/* SUSPEND State Flags */
 	enum UDS_SUSPENDED {
 
@@ -164,87 +160,32 @@ struct uds_fd {
 		UDS_SUSPENDED_ACCEPT  = 8
 	} suspended;
 
-	/* Flag (1 or 0) - thing socket was waiting for is ready.
-	 * If 1, then uds_status() will attempt the operation that
-	 * the socket was blocked on.
-	 */
-	int ready_to_revive;
+	/* source endpoint, saved for later use by suspended procs */
+	endpoint_t susp_endpt;
 
 	/* i/o grant, saved for later use by suspended procs */
-	cp_grant_id_t io_gr;
+	cp_grant_id_t susp_grant;
 
-	/* is of i/o grant, saved for later use by suspended procs */
-	size_t io_gr_size;
+	/* size of request, saved for later use by suspended procs */
+	size_t susp_size;
 
-	/* Save the call number so that uds_cancel() can unwind the
-	 * call properly.
-	 */
-	int call_nr;
-
-	/* Save the IOCTL so uds_cancel() knows what got cancelled. */
-	int ioctl;
-
-	/* Flag (1 or 0) - the system call completed.
-	 * A doc I read said DEV_CANCEL might be called even though
-	 * the operation is finished. We use this variable to
-	 * determine if we should rollback the changes or not.
-	 */
-	int syscall_done;
+	/* request ID, saved for later use by suspended procs */
+	cdev_id_t susp_id;
 
 /* select() */
-
-	/* Flag (1 or 0) - the process blocked on select(2). When
-	 * selecting is 1 and I/O happens on this socket, then
-	 * select_proc should be notified.
-	 */
-	int selecting;
 
 	/* when a select is in progress, we notify() this endpoint
 	 * of new data.
 	 */
-	endpoint_t select_proc;
+	endpoint_t sel_endpt;
 
 	/* Options (SEL_RD, SEL_WR, SEL_ERR) that are requested. */
-	int sel_ops_in;
-
-	/* Options that are available for this socket. */
-	int sel_ops_out;
-
-	/* Flag (1 or 0) to be set to one before calling notify().
-	 * uds_status() will use the flag to locate this descriptor.
-	 */
-	int status_updated;
+	unsigned int sel_ops;
 };
 
 typedef struct uds_fd uds_fd_t;
 
 /* File Descriptor Table -- Defined in uds.c */
 EXTERN uds_fd_t uds_fd_table[NR_FDS];
-
-/*
- * Take message m and get the index in uds_fd_table.
- */
-#define uds_minor(m)		(minor((dev_t) m->DEVICE))
-
-/*
- * Fill in a reply message.
- */
-#define uds_set_reply(msg,type,endpoint,io_gr,status)	\
-	do {						\
-		(msg)->m_type = type;			\
-		(msg)->REP_ENDPT = endpoint;		\
-		(msg)->REP_IO_GRANT = io_gr;		\
-		(msg)->REP_STATUS = status;		\
-	} while (0)
-
-#define uds_sel_reply(msg,type,minor,ops)		\
-	do {						\
-		(msg)->m_type = type;			\
-		(msg)->DEV_MINOR = minor;			\
-		(msg)->DEV_SEL_OPS = ops;			\
-	} while (0)
-
-
-
 
 #endif
