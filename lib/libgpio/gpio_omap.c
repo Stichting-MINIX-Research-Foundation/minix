@@ -5,6 +5,7 @@
 #include <minix/mmio.h>
 #include <minix/gpio.h>
 #include <minix/clkconf.h>
+#include <minix/type.h>
 
 /* system headers */
 #include <sys/mman.h>
@@ -19,6 +20,7 @@
 #include <assert.h>
 
 /* local headers */
+#include "gpio_omap.h"
 
 /* used for logging */
 static struct log log = {
@@ -57,107 +59,171 @@ struct omap_gpio_bank
 	uint32_t irq_nr;	/* irq number */
 	uint32_t base_address;
 	int32_t disabled;
-	int irq_id;		/* orignhal hook id??? */
+	int irq_id;		/* original hook id??? */
 	int irq_hook_id;	/* hook id */
 	uint32_t inter_values;	/* values when the interrupt was called */
 };
 
-#define GPIO1_BASE (0x48310000)
-#define GPIO2_BASE (0x49050000)
-#define GPIO3_BASE (0x49052000)
-#define GPIO4_BASE (0x49054000)
-#define GPIO5_BASE (0x49056000)
-#define GPIO6_BASE (0x49058000)
-#define GPIO1_IRQ  29		/* GPIO module 1 */
-#define GPIO2_IRQ  30		/* GPIO module 2 */
-#define GPIO3_IRQ  31		/* GPIO module 3 */
-#define GPIO4_IRQ  32		/* GPIO module 4 */
-#define GPIO5_IRQ  33		/* GPIO module 5 */
-#define GPIO6_IRQ  34		/* GPIO module 6 */
-#define GPIO1_IRQ_HOOK_ID 0
-#define GPIO2_IRQ_HOOK_ID 1
-#define GPIO3_IRQ_HOOK_ID 2
-#define GPIO4_IRQ_HOOK_ID 3
-#define GPIO5_IRQ_HOOK_ID 4
-#define GPIO6_IRQ_HOOK_ID 5
-
-#define GPIO_IRQSTATUS1 (0x18)
-#define GPIO_IRQENABLE1 (0x01C)
-#define GPIO_DATAOUT (0x3c)
-#define GPIO_DATAIN (0x38)
-#define GPIO_OE    (0x34)	/* Output Data Enable */
-#define GPIO_RISINGDETECT1 (0x048)
-#define GPIO_FALLINGDETECT1 (0x04c)
-#define GPIO_CLEARDATAOUT (0x90)
-#define GPIO_SETDATAOUT (0x94)
-
 static struct omap_gpio_bank omap_gpio_banks[] = {
+#ifdef AM335X
 	{
-		    .name = "GPIO1",
-		    .register_address = GPIO1_BASE,
-		    .irq_nr = GPIO1_IRQ,
+		    .name = "GPIO0",
+		    .register_address = AM335X_GPIO0_BASE,
+		    .irq_nr = AM335X_GPIO0A_IRQ,
 		    .base_address = 0,
 		    .disabled = 0,
-		    .irq_id = GPIO1_IRQ_HOOK_ID,
-		    .irq_hook_id = GPIO1_IRQ_HOOK_ID,
+		    .irq_id = AM335X_GPIO0A_IRQ_HOOK_ID,
+		    .irq_hook_id = AM335X_GPIO0A_IRQ_HOOK_ID,
+
+	    },
+	{
+		    .name = "GPIO1",
+		    .register_address = AM335X_GPIO1_BASE,
+		    .irq_nr = AM335X_GPIO1A_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = AM335X_GPIO1A_IRQ_HOOK_ID,
+		    .irq_hook_id = AM335X_GPIO1A_IRQ_HOOK_ID,
+
 	    },
 	{
 		    .name = "GPIO2",
-		    .register_address = GPIO2_BASE,
-		    .irq_nr = GPIO2_IRQ,
+		    .register_address = AM335X_GPIO2_BASE,
+		    .irq_nr = AM335X_GPIO2A_IRQ,
 		    .base_address = 0,
 		    .disabled = 0,
-		    .irq_id = GPIO2_IRQ_HOOK_ID,
-		    .irq_hook_id = GPIO2_IRQ_HOOK_ID,
+		    .irq_id = AM335X_GPIO2A_IRQ_HOOK_ID,
+		    .irq_hook_id = AM335X_GPIO2A_IRQ_HOOK_ID,
+
 	    },
 	{
 		    .name = "GPIO3",
-		    .register_address = GPIO3_BASE,
-		    .irq_nr = GPIO3_IRQ,
+		    .register_address = AM335X_GPIO3_BASE,
+		    .irq_nr = AM335X_GPIO3A_IRQ,
 		    .base_address = 0,
 		    .disabled = 0,
-		    .irq_id = GPIO3_IRQ_HOOK_ID,
-		    .irq_hook_id = GPIO3_IRQ_HOOK_ID,
+		    .irq_id = AM335X_GPIO3A_IRQ_HOOK_ID,
+		    .irq_hook_id = AM335X_GPIO3A_IRQ_HOOK_ID,
+
+	    },
+#elif DM37XX
+	{
+		    .name = "GPIO1",
+		    .register_address = DM37XX_GPIO1_BASE,
+		    .irq_nr = DM37XX_GPIO1_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = DM37XX_GPIO1_IRQ_HOOK_ID,
+		    .irq_hook_id = DM37XX_GPIO1_IRQ_HOOK_ID,
+	    },
+	{
+		    .name = "GPIO2",
+		    .register_address = DM37XX_GPIO2_BASE,
+		    .irq_nr = DM37XX_GPIO2_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = DM37XX_GPIO2_IRQ_HOOK_ID,
+		    .irq_hook_id = DM37XX_GPIO2_IRQ_HOOK_ID,
+	    },
+	{
+		    .name = "GPIO3",
+		    .register_address = DM37XX_GPIO3_BASE,
+		    .irq_nr = DM37XX_GPIO3_IRQ,
+		    .base_address = 0,
+		    .disabled = 0,
+		    .irq_id = DM37XX_GPIO3_IRQ_HOOK_ID,
+		    .irq_hook_id = DM37XX_GPIO3_IRQ_HOOK_ID,
 	    },
 	{
 		    .name = "GPIO4",
-		    .register_address = GPIO4_BASE,
-		    .irq_nr = GPIO4_IRQ,
+		    .register_address = DM37XX_GPIO4_BASE,
+		    .irq_nr = DM37XX_GPIO4_IRQ,
 		    .base_address = 0,
 		    .disabled = 0,
-		    .irq_id = GPIO4_IRQ_HOOK_ID,
-		    .irq_hook_id = GPIO4_IRQ_HOOK_ID,
+		    .irq_id = DM37XX_GPIO4_IRQ_HOOK_ID,
+		    .irq_hook_id = DM37XX_GPIO4_IRQ_HOOK_ID,
 	    },
 	{
 		    .name = "GPIO5",
-		    .register_address = GPIO5_BASE,
-		    .irq_nr = GPIO5_IRQ,
+		    .register_address = DM37XX_GPIO5_BASE,
+		    .irq_nr = DM37XX_GPIO5_IRQ,
 		    .base_address = 0,
 		    .disabled = 0,
-		    .irq_id = GPIO5_IRQ_HOOK_ID,
-		    .irq_hook_id = GPIO5_IRQ_HOOK_ID,
+		    .irq_id = DM37XX_GPIO5_IRQ_HOOK_ID,
+		    .irq_hook_id = DM37XX_GPIO5_IRQ_HOOK_ID,
 	    },
 	{
 		    .name = "GPIO6",
-		    .register_address = GPIO6_BASE,
-		    .irq_nr = GPIO6_IRQ,
+		    .register_address = DM37XX_GPIO6_BASE,
+		    .irq_nr = DM37XX_GPIO6_IRQ,
 		    .base_address = 0,
 		    .disabled = 0,
-		    .irq_id = GPIO6_IRQ_HOOK_ID,
-		    .irq_hook_id = GPIO6_IRQ_HOOK_ID,
+		    .irq_id = DM37XX_GPIO6_IRQ_HOOK_ID,
+		    .irq_hook_id = DM37XX_GPIO6_IRQ_HOOK_ID,
 	    },
+#endif /* DM37XX */
 	{NULL, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-#define GPIO_REVISION 0x00
-#define GPIO_REVISION_MAJOR(X) ((X & 0xF0) >> 4)
-#define GPIO_REVISION_MINOR(X) (X & 0XF)
+#define NBANKS ((int)((sizeof(omap_gpio_banks)/sizeof(omap_gpio_banks[0])) - 1))
+
+/*
+ * Defines the set of registers. There is a lot of commonality between the
+ * AM335X and DM37XX gpio registers. To avoid ifdefs everywhere, we define
+ * a central register set and only use ifdefs where they differ.
+ */
+typedef struct gpio_omap_registers {
+	vir_bytes REVISION;
+	vir_bytes IRQENABLE;
+	vir_bytes IRQSTATUS;
+	vir_bytes DATAOUT;
+	vir_bytes DATAIN;
+	vir_bytes OE;
+	vir_bytes RISINGDETECT;
+	vir_bytes FALLINGDETECT;
+	vir_bytes CLEARDATAOUT;
+	vir_bytes SETDATAOUT;
+} gpio_omap_regs_t;
+
+/* Define the registers for each chip */
+
+gpio_omap_regs_t gpio_omap_dm37xx = {
+	.REVISION = DM37XX_GPIO_REVISION,
+	.IRQENABLE = DM37XX_GPIO_IRQENABLE1,
+	.IRQSTATUS = DM37XX_GPIO_IRQSTATUS1,
+	.DATAOUT = DM37XX_GPIO_DATAOUT,
+	.DATAIN = DM37XX_GPIO_DATAIN,
+	.OE = DM37XX_GPIO_OE,
+	.RISINGDETECT = DM37XX_GPIO_RISINGDETECT1,
+	.FALLINGDETECT = DM37XX_GPIO_FALLINGDETECT1,
+	.CLEARDATAOUT = DM37XX_GPIO_CLEARDATAOUT,
+	.SETDATAOUT = DM37XX_GPIO_SETDATAOUT
+};
+
+gpio_omap_regs_t gpio_omap_am335x = {
+	.REVISION = AM335X_GPIO_REVISION,
+	.IRQENABLE = AM335X_GPIO_IRQSTATUS_SET_0,
+	.IRQSTATUS = AM335X_GPIO_IRQSTATUS_0,
+	.DATAOUT = AM335X_GPIO_DATAOUT,
+	.DATAIN = AM335X_GPIO_DATAIN,
+	.OE = AM335X_GPIO_OE,
+	.RISINGDETECT = AM335X_GPIO_RISINGDETECT,
+	.FALLINGDETECT = AM335X_GPIO_FALLINGDETECT,
+	.CLEARDATAOUT = AM335X_GPIO_CLEARDATAOUT,
+	.SETDATAOUT = AM335X_GPIO_SETDATAOUT
+};
+
+#ifdef AM335X
+static gpio_omap_regs_t *regs = &gpio_omap_am335x;
+#elif DM37XX
+static gpio_omap_regs_t *regs = &gpio_omap_dm37xx;
+#endif /* DM37XX */
 
 static struct omap_gpio_bank *
 omap_gpio_bank_get(int gpio_nr)
 {
 	struct omap_gpio_bank *bank;
-	assert(gpio_nr >= 0 && gpio_nr <= 32 * 6);
+	assert(gpio_nr >= 0 && gpio_nr <= 32 * NBANKS);
 	bank = &omap_gpio_banks[gpio_nr / 32];
 	return bank;
 }
@@ -167,7 +233,7 @@ omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
 {
 	log_trace(&log, "%s s claiming %d\n", owner, nr);
 
-	if (nr < 0 && nr >= 32 * 6) {
+	if (nr < 0 && nr >= 32 * NBANKS) {
 		log_warn(&log, "%s is claiming unknown GPIO number %d\n",
 		    owner, nr);
 		return EINVAL;
@@ -197,17 +263,17 @@ omap_gpio_pin_mode(struct gpio *gpio, int mode)
 	bank = omap_gpio_bank_get(gpio->nr);
 	log_debug(&log,
 	    "pin mode bank %s, base address 0x%x -> register address (0x%x,0x%x,0x%x)\n",
-	    bank->name, bank->base_address, bank->register_address, GPIO_OE,
-	    bank->register_address + GPIO_OE);
+	    bank->name, bank->base_address, bank->register_address, regs->OE,
+	    bank->register_address + regs->OE);
 
 	if (mode == GPIO_MODE_OUTPUT) {
-		set32(bank->base_address + GPIO_OE, BIT(gpio->nr % 32), 0);
+		set32(bank->base_address + regs->OE, BIT(gpio->nr % 32), 0);
 	} else {
-		set32(bank->base_address + GPIO_FALLINGDETECT1,
+		set32(bank->base_address + regs->FALLINGDETECT,
 		    BIT(gpio->nr % 32), 0xffffffff);
-		set32(bank->base_address + GPIO_IRQENABLE1, BIT(gpio->nr % 32),
+		set32(bank->base_address + regs->IRQENABLE, BIT(gpio->nr % 32),
 		    0xffffffff);
-		set32(bank->base_address + GPIO_OE, BIT(gpio->nr % 32),
+		set32(bank->base_address + regs->OE, BIT(gpio->nr % 32),
 		    0xffffffff);
 	}
 	return 0;
@@ -218,14 +284,14 @@ omap_gpio_set(struct gpio *gpio, int value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
-	assert(gpio->nr >= 0 && gpio->nr <= 32 * 6);
+	assert(gpio->nr >= 0 && gpio->nr <= 32 * NBANKS);
 
 	bank = omap_gpio_bank_get(gpio->nr);
 	if (value == 1) {
-		write32(bank->base_address + GPIO_SETDATAOUT,
+		write32(bank->base_address + regs->SETDATAOUT,
 		    BIT(gpio->nr % 32));
 	} else {
-		write32(bank->base_address + GPIO_CLEARDATAOUT,
+		write32(bank->base_address + regs->CLEARDATAOUT,
 		    BIT(gpio->nr % 32));
 	}
 	return OK;
@@ -236,21 +302,21 @@ omap_gpio_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
-	assert(gpio->nr >= 0 && gpio->nr <= 32 * 6);
+	assert(gpio->nr >= 0 && gpio->nr <= 32 * NBANKS);
 
 	bank = omap_gpio_bank_get(gpio->nr);
 	log_trace(&log, "mode=%d OU/IN 0x%08x 0x%08x\n", gpio->mode,
-	    read32(bank->base_address + GPIO_DATAIN),
-	    read32(bank->base_address + GPIO_DATAOUT));
+	    read32(bank->base_address + regs->DATAIN),
+	    read32(bank->base_address + regs->DATAOUT));
 
 	if (gpio->mode == GPIO_MODE_INPUT) {
 		*value =
 		    (read32(bank->base_address +
-			GPIO_DATAIN) >> (gpio->nr % 32)) & 0x1;
+			regs->DATAIN) >> (gpio->nr % 32)) & 0x1;
 	} else {
 		*value =
 		    (read32(bank->base_address +
-			GPIO_DATAOUT) >> (gpio->nr % 32)) & 0x1;
+			regs->DATAOUT) >> (gpio->nr % 32)) & 0x1;
 	}
 
 	return OK;
@@ -261,7 +327,7 @@ omap_gpio_intr_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
-	assert(gpio->nr >= 0 && gpio->nr <= 32 * 6);
+	assert(gpio->nr >= 0 && gpio->nr <= 32 * NBANKS);
 
 	bank = omap_gpio_bank_get(gpio->nr);
 	/* TODO: check if interrupt where enabled?? */
@@ -293,9 +359,9 @@ omap_message_hook(message * m)
 				    bank->name);
 				bank->inter_values |=
 				    read32(bank->base_address +
-				    GPIO_IRQSTATUS1);
+				    regs->IRQSTATUS);
 				/* clear the interrupts */
-				write32(bank->base_address + GPIO_IRQSTATUS1,
+				write32(bank->base_address + regs->IRQSTATUS,
 				    0xffffffff);
 				if (sys_irqenable(&bank->irq_hook_id) != OK) {
 					log_warn(&log,
@@ -306,7 +372,7 @@ omap_message_hook(message * m)
 		}
 		return OK;
 	default:
-		log_warn(&log, "Unknown message\n");
+		log_debug(&log, "Unknown message\n");
 		break;
 	}
 	return OK;
@@ -343,16 +409,25 @@ omap_gpio_init(struct gpio_driver *gpdrv)
 		}
 
 		revision = 0;
-		revision = read32(bank->base_address + GPIO_REVISION);
+		revision = read32(bank->base_address + regs->REVISION);
 		/* test if we can access it */
-		if (GPIO_REVISION_MAJOR(revision) != 2
-		    || GPIO_REVISION_MINOR(revision) != 5) {
+		if (
+#ifdef AM335X
+		    AM335X_GPIO_REVISION_MAJOR(revision) != 0
+		    || AM335X_GPIO_REVISION_MINOR(revision) != 1
+#elif DM37XX	    
+		    DM37XX_GPIO_REVISION_MAJOR(revision) != 2
+		    || DM37XX_GPIO_REVISION_MINOR(revision) != 5
+#endif /* DM37XX */
+		    ) {
 			log_warn(&log,
 			    "Failed to read the revision of GPIO bank %s.. disabling\n",
 			    bank->name);
+			log_warn(&log, "Got 0x%x\n", revision);
 			bank->disabled = 1;
+		} else {
+			bank->disabled = 0;
 		}
-		bank->disabled = 0;
 
 		if (sys_irqsetpolicy(bank->irq_nr, 0,
 			&bank->irq_hook_id) != OK) {
@@ -376,9 +451,13 @@ omap_gpio_init(struct gpio_driver *gpdrv)
 	};
 
 	clkconf_init();
+#ifdef AM335X
+	/* Nothing to enable for GPIO on AM335X */
+#elif DM37XX
 	/* enable the interface and functional clock on GPIO bank 1 */
 	clkconf_set(CM_FCLKEN_WKUP, BIT(3), 0xffffffff);
 	clkconf_set(CM_ICLKEN_WKUP, BIT(3), 0xffffffff);
+#endif /* DM37XX */
 	clkconf_release();
 
 

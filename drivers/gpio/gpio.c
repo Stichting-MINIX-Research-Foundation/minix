@@ -165,21 +165,42 @@ init_hook(void)
 		log_warn(&log, "Failed to init gpio driver\n");
 	}
 
+#ifdef AM335X
+
+	/* Export GPIO3_19 (P9-27 on BBB) output as LCD_EN */
+
+	sys_padconf(CONTROL_CONF_MCASP0_FSR, 0xffffffff,
+	    (CONTROL_CONF_PUTYPESEL | CONTROL_CONF_MUXMODE(7)));
+
+	add_gpio_inode("LCD_EN", (32 * 3) + 19, GPIO_MODE_OUTPUT);
+
+	/* Export GPIO1_17 (P9-23 on BBB) input as RIGHT */
+
+	/* assumes external pull-up resistor (10K) */
+	sys_padconf(CONTROL_CONF_SPI0_D0, 0xffffffff, (CONTROL_CONF_RXACTIVE |
+	    CONTROL_CONF_PUDEN | CONTROL_CONF_MUXMODE(7)));
+	
+	add_gpio_inode("RIGHT", (32 * 1) + 17, GPIO_MODE_INPUT);
+
+#elif DM37XX
+
 	add_gpio_inode("USR0", 149, GPIO_MODE_OUTPUT);
 	add_gpio_inode("USR1", 150, GPIO_MODE_OUTPUT);
 	add_gpio_inode("Button", 4, GPIO_MODE_INPUT);
 
 	/* configure GPIO_144 to be exported */
-	sys_padconf(CONTROL_PADCONF_UART2_CTS, 0xff,
+	sys_padconf(CONTROL_PADCONF_UART2_CTS, 0x0000ffff,
 	    PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
 	    PADCONF_INPUT_ENABLE(1));
-	sys_padconf(CONTROL_PADCONF_MMC2_DAT6, 0xff00,
+	sys_padconf(CONTROL_PADCONF_MMC2_DAT6, 0xffff0000,
 	    (PADCONF_MUXMODE(4) | PADCONF_PULL_MODE_PD_EN |
 		PADCONF_INPUT_ENABLE(1)) << 16);
 
 	/* Added for demo purposes */
 	add_gpio_inode("BigRedButton", 144, GPIO_MODE_INPUT);
 	add_gpio_inode("BigRedButtonLed", 139, GPIO_MODE_OUTPUT);
+
+#endif /* DM37XX */
 
 }
 
@@ -197,7 +218,7 @@ static int
 
 	if (gpio_cbdata->type == GPIO_CB_ON
 	    || gpio_cbdata->type == GPIO_CB_OFF) {
-		/* turn on or of */
+		/* turn on or off */
 		if (gpio_set(gpio_cbdata->gpio,
 			(gpio_cbdata->type == GPIO_CB_ON) ? 1 : 0)) {
 			*len = 0;

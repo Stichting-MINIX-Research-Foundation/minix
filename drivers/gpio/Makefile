@@ -2,7 +2,7 @@
 PROG=	gpio
 SRCS=	gpio.c
 
-DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}
+DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS} ${LIBGPIO} ${LIBCLKCONF}
 LDADD+=	-lvtreefs -lsys -lgpio -lclkconf
 
 #
@@ -11,6 +11,6 @@ CPPFLAGS+= -D_SYSTEM=1
 
 MAN=
 
-BINDIR?= /usr/sbin
+BINDIR?= /sbin
 
 .include <minix.service.mk>

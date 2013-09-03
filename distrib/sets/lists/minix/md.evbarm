@@ -13,6 +13,7 @@
 ./multiboot/mod10_vm			minix-sys
 ./multiboot/mod11_pfs			minix-sys
 ./multiboot/mod12_init			minix-sys
+./sbin/gpio				minix-sys
 ./usr/bin/eepromread			minix-sys
 ./usr/include/arm			minix-sys
 ./usr/include/arm/aeabi.h		minix-sys
@@ -108,7 +109,6 @@
 ./usr/sbin/bmp085			minix-sys
 ./usr/sbin/cat24c256			minix-sys
 ./usr/sbin/fb				minix-sys
-./usr/sbin/gpio				minix-sys
 ./usr/sbin/i2c				minix-sys
 ./usr/sbin/lan8710a			minix-sys
 ./usr/sbin/random			minix-sys

@@ -63,7 +63,7 @@
 #define NR_MEM_RANGE	20
 
 /* Max. number of IRQs that can be assigned to a process */
-#define NR_IRQ	8
+#define NR_IRQ	16
 
 /* Scheduling priorities. Values must start at zero (highest
  * priority) and increment.
