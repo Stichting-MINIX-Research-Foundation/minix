@@ -271,7 +271,7 @@ int main(__unused int argc, __unused char ** argv)
 		}
 
 		if (m.m_source == VFS_PROC_NR)
-			socket_request(&m);
+			socket_request(&m, ipc_status);
 		else if (is_ipc_notify(ipc_status)) {
 			switch (m.m_source) {
 			case CLOCK:
