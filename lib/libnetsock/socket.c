@@ -42,6 +42,30 @@ char * netsock_user_name = NULL;
 
 struct socket socket[MAX_SOCKETS];
 
+static int netsock_open(devminor_t minor, int access, endpoint_t user_endpt);
+static int netsock_close(devminor_t minor);
+static ssize_t netsock_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t netsock_write(devminor_t minor, u64_t position,
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id);
+static int netsock_ioctl(devminor_t minor, unsigned long request,
+	endpoint_t endpt, cp_grant_id_t grant, int flags,
+	endpoint_t user_endpt, cdev_id_t id);
+static int netsock_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+static int netsock_select(devminor_t minor, unsigned int ops,
+	endpoint_t endpt);
+
+static struct chardriver netsock_tab = {
+	.cdr_open	= netsock_open,
+	.cdr_close	= netsock_close,
+	.cdr_read	= netsock_read,
+	.cdr_write	= netsock_write,
+	.cdr_ioctl	= netsock_ioctl,
+	.cdr_cancel	= netsock_cancel,
+	.cdr_select	= netsock_select
+};
+
 #define recv_q_alloc()	debug_malloc(sizeof(struct recv_q))
 #define recv_q_free	debug_free
 
@@ -191,107 +215,30 @@ void sock_dequeue_data_all(struct socket * sock,
 	sock->recv_data_size = 0;
 }
 
-static void set_reply_msg(message * m, int status)
-{
-	int proc, ref;
-
-	proc= m->USER_ENDPT;
-	ref= (int)m->IO_GRANT;
-
-	m->REP_ENDPT= proc;
-	m->REP_STATUS= status;
-	m->REP_IO_GRANT= ref;
-}
-
-static void send_reply_type(message * m, int type, int status)
-{
-	int result;
-
-	set_reply_msg(m, status);
-
-	m->m_type = type;
-	result = send(m->m_source, m);
-	if (result != OK)
-		netsock_panic("unable to send (err %d)", result);
-}
-
 void send_req_reply(struct sock_req * req, int status)
 {
-	message m;
-	int result;
-
 	if (status == EDONTREPLY)
 		return;
 
-	m.m_type = DEV_REVIVE;
-	m.REP_STATUS = status;
-	m.REP_ENDPT = req->endpt; /* FIXME: HACK */
-	m.REP_IO_GRANT = req->id;
-
-	result = send(req->endpt, &m);
-	if (result != OK)
-		netsock_panic("unable to send (err %d)", result);
-}
-
-static void send_reply(message * m, int status)
-{
-	debug_sock_print("status %d", status);
-	send_reply_type(m, DEV_REVIVE, status);
-}
-
-static void send_reply_open(message * m, int status)
-{
-	debug_sock_print("status %d", status);
-	send_reply_type(m, DEV_OPEN_REPL, status);
-}
-
-static void send_reply_close(message * m, int status)
-{
-	debug_sock_print("status %d", status);
-	send_reply_type(m, DEV_CLOSE_REPL, status);
-}
-
-static void sock_reply_select(struct socket * sock, endpoint_t endpt,
-	unsigned selops)
-{
-	int result;
-	message msg;
-
-	debug_sock_select_print("selops %d", selops);
-
-	msg.m_type = DEV_SEL_REPL1;
-	msg.DEV_MINOR = get_sock_num(sock);
-	msg.DEV_SEL_OPS = selops;
-
-	result = send(endpt, &msg);
-	if (result != OK)
-		netsock_panic("unable to send (err %d)", result);
+	chardriver_reply_task(req->endpt, req->id, status);
 }
 
 void sock_select_notify(struct socket * sock)
 {
-	int result;
-	message msg;
+	unsigned int ops;
 
 	debug_sock_select_print("socket num %ld", get_sock_num(sock));
 	assert(sock->select_ep != NONE);
 
-	msg.DEV_SEL_OPS = sock->ops->select_reply(sock);
-	if (msg.DEV_SEL_OPS == 0) {
+	ops = sock->ops->select_reply(sock);
+	if (ops == 0) {
 		debug_sock_select_print("called from %p sflags 0x%x TXsz %d RXsz %d\n",
 				__builtin_return_address(0), sock->flags,
 				sock->buf_size, sock->recv_data_size);
 		return;
 	}
 
-	msg.m_type = DEV_SEL_REPL2;
-	msg.DEV_MINOR = get_sock_num(sock);
-
-	debug_sock_select_print("socket num %d select result 0x%x sent",
-			msg.DEV_MINOR, msg.DEV_SEL_OPS);
-	result = send(sock->select_ep, &msg);
-	if (result != OK)
-		netsock_panic("unable to send (err %d)", result);
+	chardriver_reply_select(sock->select_ep, get_sock_num(sock), ops);
 
 	sock_clear_select(sock);
 	sock->select_ep = NONE;
@@ -342,119 +289,183 @@ static int socket_request_socket(struct socket * sock, struct sock_req * req)
 	return r;
 }
 
-void socket_request(message * m)
+static int netsock_open(devminor_t minor, int UNUSED(access),
+	endpoint_t UNUSED(user_endpt))
 {
-	struct socket * sock;
+	return socket_open(minor);
+}
+
+static int netsock_close(devminor_t minor)
+{
+	struct socket *sock;
+
+	if (!(sock = get_sock(minor)))
+		return EINVAL;
+
+	if (sock->ops && sock->ops->close) {
+		sock->flags &= ~SOCK_FLG_OP_PENDING;
+
+		return sock->ops->close(sock);
+	} else
+		return EINVAL;
+}
+
+static int netsock_request(struct socket *sock, struct sock_req *req)
+{
+	char *o;
+
+	/*
+	 * If an operation is pending (blocking operation) or writing is
+	 * still going on and we're reading, suspend the new operation
+	 */
+	if ((sock->flags & SOCK_FLG_OP_PENDING) ||
+			(req->type == SOCK_REQ_READ &&
+			sock->flags & SOCK_FLG_OP_WRITING)) {
+		if (sock->flags & SOCK_FLG_OP_READING)
+			o = "READ";
+		else if (sock->flags & SOCK_FLG_OP_WRITING)
+			o = "WRITE";
+		else
+			o = "non R/W op";
+		debug_sock_print("socket %ld is busy by %s flgs 0x%x\n",
+			get_sock_num(sock), o, sock->flags);
+
+		if (mq_enqueue(req) != 0) {
+			debug_sock_print("Enqueuing suspended call failed");
+			return ENOMEM;
+		}
+
+		return EDONTREPLY;
+	}
+
+	return socket_request_socket(sock, req);
+}
+
+static ssize_t netsock_read(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
+{
+	struct socket *sock;
 	struct sock_req req;
+
+	if (!(sock = get_sock(minor)))
+		return EINVAL;
+
+	/* Build a request record for this request. */
+	req.type = SOCK_REQ_READ;
+	req.minor = minor;
+	req.endpt = endpt;
+	req.grant = grant;
+	req.size = size;
+	req.flags = flags;
+	req.id = id;
+
+	/* Process the request. */
+	return netsock_request(sock, &req);
+}
+
+static ssize_t netsock_write(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
+{
+	struct socket *sock;
+	struct sock_req req;
+
+	if (!(sock = get_sock(minor)))
+		return EINVAL;
+
+	/* Build a request record for this request. */
+	req.type = SOCK_REQ_WRITE;
+	req.minor = minor;
+	req.endpt = endpt;
+	req.grant = grant;
+	req.size = size;
+	req.flags = flags;
+	req.id = id;
+
+	/* Process the request. */
+	return netsock_request(sock, &req);
+}
+
+static int netsock_ioctl(devminor_t minor, unsigned long request,
+	endpoint_t endpt, cp_grant_id_t grant, int flags,
+	endpoint_t UNUSED(user_endpt), cdev_id_t id)
+{
+	struct socket *sock;
+	struct sock_req req;
+
+	if (!(sock = get_sock(minor)))
+		return EINVAL;
+
+	/* Build a request record for this request. */
+	req.type = SOCK_REQ_IOCTL;
+	req.minor = minor;
+	req.req = request;
+	req.endpt = endpt;
+	req.grant = grant;
+	req.flags = flags;
+	req.id = id;
+
+	/* Process the request. */
+	return netsock_request(sock, &req);
+}
+
+static int netsock_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
+{
+	struct socket *sock;
+
+	if (!(sock = get_sock(minor)))
+		return EDONTREPLY;
+
+	debug_sock_print("socket num %ld", get_sock_num(sock));
+
+	/* Cancel the last operation in the queue */
+	if (mq_cancel(minor, endpt, id))
+		return EINTR;
+
+	/* Cancel any ongoing blocked read */
+	if ((sock->flags & SOCK_FLG_OP_PENDING) &&
+			(sock->flags & SOCK_FLG_OP_READING) &&
+			endpt == sock->req.endpt && id == sock->req.id) {
+		sock->flags &= ~SOCK_FLG_OP_PENDING;
+		return EINTR;
+	}
+
+	/* The request may not be found. This is OK. Do not reply. */
+	return EDONTREPLY;
+}
+
+static int netsock_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
+{
+	struct socket *sock;
 	int r;
 
+	/*
+	 * Select is always executed immediately and is never suspended.
+	 * Although, it sets actions which must be monitored
+	 */
+	if (!(sock = get_sock(minor)))
+		return EBADF;
+
+	assert(sock->select_ep == NONE || sock->select_ep == endpt);
+
+	if (sock->ops && sock->ops->select) {
+		sock->select_ep = endpt;
+		r = sock->ops->select(sock, ops);
+		if (!sock_select_set(sock))
+			sock->select_ep = NONE;
+	} else
+		r = EINVAL;
+
+	return r;
+}
+
+void socket_request(message * m, int ipc_status)
+{
 	debug_sock_print("request %d", m->m_type);
-	switch (m->m_type) {
-	case DEV_OPEN:
-		r = socket_open(m->DEVICE);
-		send_reply_open(m, r);
-		return;
-	case DEV_CLOSE:
-		sock = get_sock(m->DEVICE);
-		if (sock->ops && sock->ops->close) {
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
-			r = sock->ops->close(sock);
-		} else
-			r = EINVAL;
-		send_reply_close(m, r);
-		return;
-	case DEV_READ_S:
-	case DEV_WRITE_S:
-	case DEV_IOCTL_S:
-		sock = get_sock(m->DEVICE);
-		if (!sock) {
-			send_reply(m, EINVAL);
-			return;
-		}
-		/* Build a request record for this request. */
-		req.minor = m->DEVICE;
-		req.endpt = m->m_source;
-		req.grant = (cp_grant_id_t) m->IO_GRANT;
-		req.id = (cdev_id_t) m->IO_GRANT;
-		req.flags = m->FLAGS;
-		switch (m->m_type) {
-		case DEV_READ_S:
-		case DEV_WRITE_S:
-			req.type = (m->m_type == DEV_READ_S) ?
-				SOCK_REQ_READ : SOCK_REQ_WRITE;
-			req.size = m->COUNT;
-			break;
-		case DEV_IOCTL_S:
-			req.type = SOCK_REQ_IOCTL;
-			req.req = m->REQUEST;
-			break;
-		}
-		/*
-		 * If an operation is pending (blocking operation) or writing is
-		 * still going and we want to read, suspend the new operation
-		 */
-		if ((sock->flags & SOCK_FLG_OP_PENDING) ||
-				(m->m_type == DEV_READ_S &&
-				 sock->flags & SOCK_FLG_OP_WRITING)) {
-			char * o = "\0";
-			if (sock->flags & SOCK_FLG_OP_READING)
-				o = "READ";
-			else if (sock->flags & SOCK_FLG_OP_WRITING)
-				o = "WRITE";
-			else
-				o = "non R/W op";
-			debug_sock_print("socket %ld is busy by %s flgs 0x%x\n",
-					get_sock_num(sock), o, sock->flags);
-			if (mq_enqueue(&req) != 0) {
-				debug_sock_print("Enqueuing suspended "
-							"call failed");
-				send_reply(m, ENOMEM);
-			}
-			return;
-		}
-		sock->req = req;
-		r = socket_request_socket(sock, &req);
-		send_req_reply(&req, r);
-		return;
-	case CANCEL:
-		sock = get_sock(m->DEVICE);
-		printf("socket num %ld\n", get_sock_num(sock));
-		debug_sock_print("socket num %ld", get_sock_num(sock));
-		/* Cancel the last operation in the queue */
-		if (mq_cancel(m->DEVICE, m->m_source,
-				(cdev_id_t) m->IO_GRANT)) {
-			send_reply(m, EINTR);
-		/* ... or a blocked read */
-		} else if (sock->flags & SOCK_FLG_OP_PENDING &&
-				sock->flags & SOCK_FLG_OP_READING) {
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
-			send_reply(m, EINTR);
-		}
-		/* The request may not be found. This is OK. Do not reply. */
-		return;
-	case DEV_SELECT:
-		/*
-		 * Select is always executed immediately and is never suspended.
-		 * Although, it sets actions which must be monitored
-		 */
-		sock = get_sock(m->DEVICE);
-		assert(sock->select_ep == NONE || sock->select_ep == m->m_source);
 
-		if (sock->ops && sock->ops->select) {
-			sock->select_ep = m->m_source;
-			r = sock->ops->select(sock, m->DEV_SEL_OPS);
-			if (!sock_select_set(sock))
-				sock->select_ep = NONE;
-		} else
-			r = EINVAL;
-
-		sock_reply_select(sock, m->m_source, r);
-		return;
-	default:
-		netsock_error("unknown message from VFS, type %d\n",
-							m->m_type);
-	}
-	send_reply(m, EGENERIC);
+	/* Let the chardriver library decode the request for us. */
+	chardriver_process(&netsock_tab, m, ipc_status);
 }
 
 void mq_process(void)

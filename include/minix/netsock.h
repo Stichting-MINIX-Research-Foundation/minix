@@ -118,7 +118,7 @@ int socket_open(devminor_t minor);
 
 extern struct socket socket[MAX_SOCKETS];
 
-void socket_request(message * m);
+void socket_request(message * m, int ipc_status);
 void mq_process(void);
 
 struct socket * get_unused_sock(void);
