@@ -1869,7 +1869,7 @@ echo $ECHO_N "checking for MINIX3... $ECHO_C" >&6
       cat >conftest.$ac_ext <<_ACEOF
 #line 1870 "configure"
 #include "confdefs.h"
-#ifdef __minix
+#if defined(__minix) || defined(__NetBSD__)
 	yes
 	#endif
 
