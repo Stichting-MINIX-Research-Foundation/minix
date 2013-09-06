@@ -715,6 +715,7 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	break;
 
     case TIOCSCTTY:
+	/* Process sets this tty as its controlling tty */
 	tp->tty_pgrp = user_endpt;
 	break;
 	

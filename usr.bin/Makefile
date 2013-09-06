@@ -30,10 +30,9 @@ SUBDIR= asa \
 	tr tsort tty uname unexpand unifdef \
 	uniq units unvis unzip users \
 	uuidgen vis \
-	uniq uname units unzip users \
-	wall wc what whatis who whois \
-	\
-	write xargs xinstall xstr yes
+	wall write \
+	xargs xinstall xstr yes \
+	wc what whatis who whois 
 
 .if !defined(__MINIX)
 SUBDIR+= ../external/zlib/pigz/bin/pigz
