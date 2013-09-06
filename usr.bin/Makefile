@@ -13,7 +13,9 @@ SUBDIR= \
 	finger from \
 	ftp genassym getopt \
 	head indent infocmp join \
-	ldd leave \
+	ldd \
+	leave \
+	last \
 	login logname lorder m4 \
 	machine make man \
 	mkdep mktemp \
@@ -28,8 +30,9 @@ SUBDIR= \
 	tee tic tput \
 	tr tsort unexpand \
 	toproto \
-	uniq uname units unzip users \
-	\
+	unzip users \
+	uname uniq units \
+	wall write \
 	wc whatis who \
 	xargs xinstall yes
 

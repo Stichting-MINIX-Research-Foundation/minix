@@ -10,18 +10,18 @@ SUBDIR=	add_route arp ash at backup btrace \
 	dhrystone diff diskctl \
 	eject factor fbdctl \
 	find fix fold format fortune fsck.mfs \
-	gcov-pull getty grep hexdump host \
+	gcov-pull grep hexdump host \
 	hostaddr id ifconfig ifdef \
-	intr ipcrm ipcs irdpd isoread last \
+	intr ipcrm ipcs irdpd isoread \
 	less loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	mesg mined mkfifo \
 	mount mt netconf \
 	nonamed od paste patch \
-	ping postinstall poweroff pr prep printroot \
+	ping postinstall pr prep printroot \
 	profile progressbar pr_routes ps pwdauth \
 	ramdisk rarpd rawspeed rcp readclock \
-	reboot remsync rget rlogin \
+	remsync rget rlogin \
 	rotate rsh rshd service setup shar \
 	sleep slip spell split sprofalyze sprofdiff srccrc \
 	stty svclog svrctl swifi synctree sysenv \
@@ -29,7 +29,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	telnetd term termcap tget time touch \
 	truncate tty udpstat umount \
 	unstack update uud uue version vol \
-	whereis which write writeisofs fetch \
+	whereis which writeisofs fetch \
 	zdump zmodem pkgin_cd pkgin_all \
 	worldstone updateboot update_bootcfg \
 	atnormalize dosread fdisk loadfont \
