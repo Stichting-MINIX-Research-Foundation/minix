@@ -33,10 +33,10 @@
 #include "kernel/proc.h"
 
 struct utsname uts_val = {
-  "Minix",		/* system name */
+  OS_NAME,		/* system name */
   "noname",		/* node/network name */
-  OS_RELEASE,		/* O.S. release (e.g. 1.5) */
-  OS_VERSION,		/* O.S. version (e.g. 10) */
+  OS_RELEASE,		/* O.S. release (e.g. 3.3.0) */
+  OS_VERSION,		/* O.S. version (e.g. Minix 3.3.0 (GENERIC)) */
   "xyzzy",		/* machine (cpu) type (filled in later) */
 #if defined(__i386__)
   "i386",		/* architecture */
