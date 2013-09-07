@@ -26,12 +26,12 @@ SUBDIR= asa \
 	sdiff sed seq shlock \
 	shuffle soelim sort split stat su \
 	tee tic tput \
-	tr tsort tty ul unexpand unifdef \
+	tr tsort tty ul uname unexpand unifdef \
 	toproto \
 	uniq units unvis unzip users \
 	uuidgen vis \
 	\
-	wc what whatis who whois \
+	wc what who whois \
 	write xargs xinstall xstr yes
 
 .if !defined(__MINIX)
@@ -42,10 +42,11 @@ SUBDIR+= ministat
 
 # Minix commands
 SUBDIR+= top 
+SUBDIR+= toproto
 
-# LSC FIXME For now we compile unconditionnaly apropos even if we 
+# LSC FIXME For now we compile unconditionnaly apropos and whatis even if we 
 # do not have whatis
-SUBDIR+= apropos
+SUBDIR+= apropos whatis
 .endif # defie
 
 .if (${MKMAKEMANDB} == "no")

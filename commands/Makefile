@@ -27,7 +27,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	stty svclog svrctl swifi synctree sysenv \
 	syslogd tail tcpd tcpdp tcpstat telnet \
 	telnetd term termcap tget time touch \
-	truncate udpstat umount uname \
+	truncate udpstat umount \
 	unstack update uud uue version vol \
 	whereis which writeisofs fetch \
 	zdump zmodem pkgin_cd pkgin_all \

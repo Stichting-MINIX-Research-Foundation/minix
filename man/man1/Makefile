@@ -19,7 +19,7 @@ MAN=	ash.1 at.1 \
 	stty.1 svc.1 svrctl.1 \
 	synctree.1 sysenv.1 sz.1 tail.1 telnet.1 template.1 \
 	term.1 termcap.1 tget.1 time.1 true.1 \
-	truncate.1 umount.1 uname.1 \
+	truncate.1 umount.1 \
 	uud.1 uue.1 vol.1 whereis.1 which.1 \
 	yap.1 linkfarm.1 pkg_view.1
 
