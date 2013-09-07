@@ -4,11 +4,11 @@
  * function:
  *
  *	system name		Minix
- *	node name		waddles
- *	release name		1.5
- *	version			10
- *	machine name		i86
- *	arch			i86	(Minix specific)
+ *	node name		10.0.2.15
+ *	release name		3.2.1
+ *	version			Minix 3.2.1 (GENERIC)
+ *	machine name		i686
+ *	arch			i386	(Minix specific)
  */
 
 #include <sys/types.h>
@@ -23,6 +23,7 @@
 #define SYSNAME  ((unsigned) 0x01)
 #define NODENAME ((unsigned) 0x02)
 #define RELEASE  ((unsigned) 0x04)
+#define VERSION  ((unsigned) 0x08)
 #define U_MACHINE  ((unsigned) 0x10)
 #define ARCH     ((unsigned) 0x20)
 
@@ -78,7 +79,7 @@ char **argv;
 				case 'n': info |= NODENAME; break;
 				case 'r': info |= RELEASE;  break;
 				case 's': info |= SYSNAME;  break;
-				case 'v': info |= RELEASE;  break;
+				case 'v': info |= VERSION;  break;
 				case 'p': info |= ARCH;     break;
 				default: usage();
   			}
@@ -106,16 +107,19 @@ char **argv;
 	if ((info & (SYSNAME|NODENAME)) != 0)
 		print(STDOUT_FILENO, " ", (char *) NULL);
 	print(STDOUT_FILENO, un.release, (char *) NULL);
-	print(STDOUT_FILENO, ".", (char *) NULL);
+  }
+  if ((info & VERSION) != 0) {
+	if ((info & (SYSNAME|NODENAME|RELEASE)) != 0)
+		print(STDOUT_FILENO, " ", (char *) NULL);
 	print(STDOUT_FILENO, un.version, (char *) NULL);
   }
   if ((info & U_MACHINE) != 0) {
-	if ((info & (SYSNAME|NODENAME|RELEASE)) != 0)
+	if ((info & (SYSNAME|NODENAME|RELEASE|VERSION)) != 0)
 		print(STDOUT_FILENO, " ", (char *) NULL);
 	print(STDOUT_FILENO, un.machine, (char *) NULL);
   }
   if ((info & ARCH) != 0) {
-	if ((info & (SYSNAME|NODENAME|RELEASE|U_MACHINE)) != 0)
+	if ((info & (SYSNAME|NODENAME|RELEASE|VERSION|U_MACHINE)) != 0)
 		print(STDOUT_FILENO, " ", (char *) NULL);
 	print(STDOUT_FILENO, un.arch, (char *) NULL);
   }

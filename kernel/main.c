@@ -325,12 +325,12 @@ void kmain(kinfo_t *local_cbi)
 static void announce(void)
 {
   /* Display the MINIX startup banner. */
-  printf("\nMINIX %s.%s. "
+  printf("\nMINIX %s. "
 #ifdef _VCS_REVISION
 	"(" _VCS_REVISION ")\n"
 #endif
       "Copyright 2012, Vrije Universiteit, Amsterdam, The Netherlands\n",
-      OS_RELEASE, OS_VERSION);
+      OS_RELEASE);
   printf("MINIX is open source software, see http://www.minix3.org\n");
 }
 
