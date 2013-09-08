@@ -256,24 +256,14 @@ static void do_work(void)
 
   memset(&m_out, 0, sizeof(m_out));
 
-  if (job_call_nr == MAPDRIVER) {
-	error = do_mapdriver();
-  } else if (job_call_nr == COMMON_GETSYSINFO) {
+  if (job_call_nr == COMMON_GETSYSINFO) {
 	error = do_getsysinfo();
-  } else if (IS_PFS_VFS_RQ(job_call_nr)) {
-	if (who_e != PFS_PROC_NR) {
-		printf("VFS: only PFS is allowed to make nested VFS calls\n");
-		error = ENOSYS;
-	} else if (job_call_nr <= PFS_BASE ||
-		   job_call_nr >= PFS_BASE + PFS_NREQS) {
-		error = ENOSYS;
-	} else {
-		job_call_nr -= PFS_BASE;
-		error = (*pfs_call_vec[job_call_nr])(&m_out);
-	}
   } else {
-	/* We're dealing with a POSIX system call from a normal
-	 * process. Call the internal function that does the work.
+	/* At this point we assume that we're dealing with a call that has been
+	 * made specifically to VFS. Typically it will be a POSIX call from a
+	 * normal process, but we also handle a few calls made by system
+	 * processes (such as PFS) through here. Call the internal function
+	 * that does the work.
 	 */
 	if (job_call_nr < 0 || job_call_nr >= NCALLS) {
 		error = ENOSYS;

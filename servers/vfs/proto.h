@@ -56,7 +56,7 @@ void cdev_up(int major);
 /* dmap.c */
 void lock_dmap(struct dmap *dp);
 void unlock_dmap(struct dmap *dp);
-int do_mapdriver(void);
+int do_mapdriver(message *m_out);
 void init_dmap(void);
 void init_dmap_locks(void);
 int dmap_driver_match(endpoint_t proc, int major);
@@ -64,7 +64,6 @@ void dmap_endpt_up(endpoint_t proc_nr, int is_blk);
 void dmap_unmap_by_endpt(endpoint_t proc_nr);
 struct dmap *get_dmap(endpoint_t proc_e);
 struct dmap *get_dmap_by_major(int major);
-int do_mapdriver(void);
 int map_service(struct rprocpub *rpub);
 void dmap_unmap_by_endpt(endpoint_t proc_nr);
 int map_driver(const char *label, int major, endpoint_t proc_nr, int

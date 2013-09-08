@@ -136,19 +136,14 @@ int (*call_vec[])(message *m_out) = {
 	no_sys,		/* 119 = unsused */
 	no_sys,		/* 120 = unsused */
 	no_sys,		/* 121 = (task reply) */
-	no_sys,		/* 122 = (map driver ) */
+	do_mapdriver,	/* 122 = mapdriver */
 	do_getrusage,	/* 123 = getrusage */
+	do_check_perms,	/* 124 = from PFS: check_perms */
+	do_verify_fd,	/* 125 = from PFS: verify_fd */
+	do_set_filp,	/* 126 = from PFS: set_filp */
+	do_copy_filp,	/* 127 = from PFS: copy_filp */
+	do_put_filp,	/* 128 = from PFS: put_filp */
+	do_cancel_fd,	/* 129 = from PFS: cancel_fd */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
-
-int (*pfs_call_vec[])(message *m_out) = {
-
-	no_sys,		/* 0 */
-	do_check_perms,	/* 1 */
-	do_verify_fd,	/* 2 */
-	do_set_filp,	/* 3 */
-	do_copy_filp,	/* 4 */
-	do_put_filp,	/* 5 */
-	do_cancel_fd	/* 6 */
-};

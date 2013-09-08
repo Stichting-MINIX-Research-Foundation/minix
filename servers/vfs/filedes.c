@@ -450,11 +450,14 @@ int do_verify_fd(message *m_out)
   endpoint_t proc_e;
   int fd;
 
-  proc_e = job_m_in.USER_ENDPT;
-  fd = job_m_in.COUNT;
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  proc_e = job_m_in.VFS_PFS_ENDPT;
+  fd = job_m_in.VFS_PFS_FD;
 
   rfilp = (struct filp *) verify_fd(proc_e, fd);
-  m_out->ADDRESS = (void *) rfilp;
+  m_out->VFS_PFS_FILP = (void *) rfilp;
   if (rfilp != NULL) unlock_filp(rfilp);
   return (rfilp != NULL) ? OK : EINVAL;
 }
@@ -480,7 +483,11 @@ filp_id_t sfilp;
 int do_set_filp(message *UNUSED(m_out))
 {
   filp_id_t f;
-  f = (filp_id_t) job_m_in.ADDRESS;
+
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  f = (filp_id_t) job_m_in.VFS_PFS_FILP;
   return set_filp(f);
 }
 
@@ -523,8 +530,11 @@ int do_copy_filp(message *UNUSED(m_out))
   endpoint_t proc_e;
   filp_id_t f;
 
-  proc_e = job_m_in.USER_ENDPT;
-  f = (filp_id_t) job_m_in.ADDRESS;
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  proc_e = job_m_in.VFS_PFS_ENDPT;
+  f = (filp_id_t) job_m_in.VFS_PFS_FILP;
 
   return copy_filp(proc_e, f);
 }
@@ -550,7 +560,11 @@ filp_id_t pfilp;
 int do_put_filp(message *UNUSED(m_out))
 {
   filp_id_t f;
-  f = (filp_id_t) job_m_in.ADDRESS;
+
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  f = (filp_id_t) job_m_in.VFS_PFS_FILP;
   return put_filp(f);
 }
 
@@ -597,8 +611,11 @@ int do_cancel_fd(message *UNUSED(m_out))
   endpoint_t proc_e;
   int fd;
 
-  proc_e = job_m_in.USER_ENDPT;
-  fd = job_m_in.COUNT;
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  proc_e = job_m_in.VFS_PFS_ENDPT;
+  fd = job_m_in.VFS_PFS_FD;
 
   return cancel_fd(proc_e, fd);
 }

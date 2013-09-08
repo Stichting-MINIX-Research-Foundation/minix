@@ -47,10 +47,10 @@ static int check_perms(devminor_t minor, struct sockaddr_un *addr)
 	/* ask the VFS to verify the permissions */
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = PFS_REQ_CHECK_PERMS;
-	vfs_m.USER_ENDPT = uds_fd_table[minor].owner;
-	vfs_m.IO_GRANT = (char *) grant_id;
-	vfs_m.COUNT = UNIX_PATH_MAX;
+	vfs_m.m_type = VFS_PFS_CHECK_PERMS;
+	vfs_m.VFS_PFS_ENDPT = uds_fd_table[minor].owner;
+	vfs_m.VFS_PFS_GRANT = grant_id;
+	vfs_m.VFS_PFS_COUNT = UNIX_PATH_MAX;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	cpf_revoke(grant_id);
@@ -82,9 +82,9 @@ static filp_id_t verify_fd(endpoint_t ep, int fd)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = PFS_REQ_VERIFY_FD;
-	vfs_m.USER_ENDPT = ep;
-	vfs_m.COUNT = fd;
+	vfs_m.m_type = VFS_PFS_VERIFY_FD;
+	vfs_m.VFS_PFS_ENDPT = ep;
+	vfs_m.VFS_PFS_FD = fd;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -97,7 +97,7 @@ static filp_id_t verify_fd(endpoint_t ep, int fd)
 	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
 #endif
 
-	return vfs_m.ADDRESS;
+	return vfs_m.VFS_PFS_FILP;
 }
 
 static int set_filp(filp_id_t sfilp)
@@ -112,8 +112,8 @@ static int set_filp(filp_id_t sfilp)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = PFS_REQ_SET_FILP;
-	vfs_m.ADDRESS = sfilp;
+	vfs_m.m_type = VFS_PFS_SET_FILP;
+	vfs_m.VFS_PFS_FILP = sfilp;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -141,9 +141,9 @@ static int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = PFS_REQ_COPY_FILP;
-	vfs_m.USER_ENDPT = to_ep;
-	vfs_m.ADDRESS = cfilp;
+	vfs_m.m_type = VFS_PFS_COPY_FILP;
+	vfs_m.VFS_PFS_ENDPT = to_ep;
+	vfs_m.VFS_PFS_FILP = cfilp;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -170,8 +170,8 @@ static int put_filp(filp_id_t pfilp)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = PFS_REQ_PUT_FILP;
-	vfs_m.ADDRESS = pfilp;
+	vfs_m.m_type = VFS_PFS_PUT_FILP;
+	vfs_m.VFS_PFS_FILP = pfilp;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -198,9 +198,9 @@ static int cancel_fd(endpoint_t ep, int fd)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = PFS_REQ_CANCEL_FD;
-	vfs_m.USER_ENDPT = ep;
-	vfs_m.COUNT = fd;
+	vfs_m.m_type = VFS_PFS_CANCEL_FD;
+	vfs_m.VFS_PFS_ENDPT = ep;
+	vfs_m.VFS_PFS_FD = fd;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {

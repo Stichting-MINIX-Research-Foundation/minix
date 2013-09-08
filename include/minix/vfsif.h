@@ -137,19 +137,5 @@ typedef u32_t	pino_t;		/* Protocol version of ino_t */
 #define TRNS_ADD_ID(t,id)	(((t) << 16) | ((id) & 0xFFFF))
 #define TRNS_DEL_ID(t)		((short)((t) >> 16))
 
-#define PFS_BASE		(VFS_BASE + 100)
-
-#define PFS_REQ_CHECK_PERMS	(PFS_BASE + 1)
-#define PFS_REQ_VERIFY_FD	(PFS_BASE + 2)
-#define PFS_REQ_SET_FILP	(PFS_BASE + 3)
-#define PFS_REQ_COPY_FILP	(PFS_BASE + 4)
-#define PFS_REQ_PUT_FILP	(PFS_BASE + 5)
-#define PFS_REQ_CANCEL_FD	(PFS_BASE + 6)
-
-#define PFS_NREQS		7
-
-#define IS_PFS_VFS_RQ(type)	(type >= PFS_BASE && \
-					type < (PFS_BASE + PFS_NREQS))
-
 #endif
 

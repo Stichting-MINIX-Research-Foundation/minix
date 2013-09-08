@@ -870,6 +870,9 @@ size_t pathlen;
  *===========================================================================*/
 int do_check_perms(message *UNUSED(m_out))
 {
-  return check_perms(job_m_in.USER_ENDPT, (cp_grant_id_t) job_m_in.IO_GRANT,
-		     (size_t) job_m_in.COUNT);
+  /* This should be replaced by an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  return check_perms(job_m_in.VFS_PFS_ENDPT, job_m_in.VFS_PFS_GRANT,
+		     (size_t) job_m_in.VFS_PFS_COUNT);
 }
