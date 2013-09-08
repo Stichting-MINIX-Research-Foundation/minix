@@ -934,6 +934,13 @@
 #define VFS_IOCTL_REQ		m2_i3
 #define VFS_IOCTL_ARG		m2_p1
 
+/* Field names for the PFS backcalls to VFS. */
+#define VFS_PFS_ENDPT		m2_i1
+#define VFS_PFS_GRANT		m2_i2
+#define VFS_PFS_COUNT		m2_i3
+#define VFS_PFS_FD		m2_i3
+#define VFS_PFS_FILP		m2_p1
+
 /*===========================================================================*
  *                Messages for VM server				     *
  *===========================================================================*/

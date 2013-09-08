@@ -59,7 +59,7 @@ void unlock_dmap(struct dmap *dp)
 /*===========================================================================*
  *				do_mapdriver		 		     *
  *===========================================================================*/
-int do_mapdriver()
+int do_mapdriver(message *UNUSED(m_out))
 {
 /* Create a device->driver mapping. RS will tell us which major is driven by
  * this driver, what type of device it is (regular, TTY, asynchronous, clone,
