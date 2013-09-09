@@ -3,7 +3,8 @@
 #include <minix/i2c.h>
 #include <minix/i2cdriver.h>
 #include <minix/log.h>
-#include <minix/reboot.h>
+
+#include <sys/signal.h>
 
 /* Register Addresses */
 #define CHIPID_REG 0x00
@@ -155,7 +156,7 @@ enable_pwr_off(void)
 	/* enable power off via the PWR_EN pin. just do the setup here.
 	 * the kernel will do the work to toggle the pin when the
 	 * system is ready to be powered off. Should be called during startup
-	 * so that shutdown(8) can do power-off with reboot(RBT_POWEROFF).
+	 * so that shutdown(8) can do power-off with reboot().
 	 */
 	r = i2creg_write8(bus_endpoint, address, STATUS_REG, PWR_OFF_MASK);
 	if (r != OK) {
@@ -228,10 +229,8 @@ intr_handler(void)
 
 	if ((val & PBI_MASK) != 0) {
 		log_info(&log, "Power Button Pressed\n");
-		reboot(RBT_POWEROFF);
-		log_warn(&log, "Failed to power off the system.");
-		sys_irqenable(&irq_hook_kernel_id);
-		return -1;
+		kill(1, SIGUSR1);	/* tell init to powerdwn */
+		return OK;
 	}
 
 	/* re-enable interrupt */

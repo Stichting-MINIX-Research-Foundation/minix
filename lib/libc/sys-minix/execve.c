@@ -50,7 +50,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 		argc++;
 	}
 
-	for (ep= envp; *ep != NULL; ep++) {
+	for (ep= envp; ep && *ep != NULL; ep++) {
 		n = sizeof(*ep) + strlen(*ep) + 1;
 		frame_size+= n;
 		if (frame_size < n) ov= 1;
@@ -97,7 +97,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	*vp++= NULL;
 
 	/* Load the environment vector and strings. */
-	for (ep= envp; *ep != NULL; ep++) {
+	for (ep= envp; ep && *ep != NULL; ep++) {
 		*vp++= (char *) (sp - frame);
 		n= strlen(*ep) + 1;
 		memcpy(sp, *ep, n);

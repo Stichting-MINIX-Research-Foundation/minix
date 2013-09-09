@@ -8,7 +8,7 @@ MAN=	ash.1 at.1 \
 	flexdoc.1 fold.1 format.1 fortune.1 \
 	fsck.mfs.1 host.1 hostaddr.1 ifdef.1 \
 	isodir.1 isoinfo.1 isoread.1 \
-	last.1 loadfont.1 loadkeys.1 logger.1 \
+	loadfont.1 loadkeys.1 logger.1 \
 	look.1 lp.1 lspci.1 mail.1  \
 	mesg.1 mixer.1 \
 	mkproto.1 mount.1 mt.1 nice.1 nohup.1 od.1 \
@@ -21,7 +21,7 @@ MAN=	ash.1 at.1 \
 	term.1 termcap.1 tget.1 time.1 true.1 \
 	truncate.1 tty.1 umount.1 uname.1 \
 	uud.1 uue.1 vol.1 whereis.1 which.1 \
-	write.1 yap.1 linkfarm.1 pkg_view.1
+	yap.1 linkfarm.1 pkg_view.1
 
 MLINKS += ash.1 sh.1
 MLINKS += ash.1 ..1

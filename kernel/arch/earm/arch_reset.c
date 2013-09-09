@@ -10,7 +10,8 @@
 #include <machine/vm.h>
 #include <io.h>
 
-#include <minix/reboot.h>
+#include <sys/reboot.h>
+
 #include <minix/u64.h>
 
 #include "archconst.h"
@@ -72,25 +73,22 @@ poweroff(void)
 __dead void
 arch_shutdown(int how)
 {
-	switch (how) {
-	case RBT_HALT:
+	if(how & RB_HALT) {
 		/* Hang */
 		for (; ; ) halt_cpu();
 		NOT_REACHABLE;
+	}
 
-	case RBT_POWEROFF:
+	if(how & RB_POWERDOWN) {
 		/* Power off if possible, hang otherwise */
 		poweroff();
 		NOT_REACHABLE;
-
-	default:
-	case RBT_DEFAULT:
-	case RBT_REBOOT:
-	case RBT_RESET:
-		/* Reset the system */
-		reset();
-		NOT_REACHABLE;
 	}
+
+	/* Reset the system */
+	reset();
+	NOT_REACHABLE;
+
 	while (1);
 }
 

@@ -9,7 +9,10 @@
 SUBDIR= \
 	\
 	fsck \
-	mknod
+	mknod \
+	init \
+	reboot \
+	shutdown
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs

@@ -97,7 +97,7 @@ BIN1+=	boot.cfg.default \
 	protocols rc rc.cd rc.subr \
 	rc.daemons.dist rs.inet rs.single \
 	services shells syslog.conf \
-	termcap utmp
+	termcap utmp gettytab rc.shutdown
 .else
 BIN1+=	bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf envsys.conf floppytab ftpchroot \
