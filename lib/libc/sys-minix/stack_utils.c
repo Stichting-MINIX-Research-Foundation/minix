@@ -99,7 +99,7 @@ void minix_stack_params(const char *path, char * const *argv, char * const *envp
 		(*argc)++;
 	}
 
-	for (p = envp; *p != NULL; p++) {
+	for (p = envp; p && *p != NULL; p++) {
 		size_t const n = sizeof(*p) + strlen(*p) + 1;
 		*stack_size += n;
 		if (*stack_size < n) {
@@ -156,7 +156,7 @@ void minix_stack_fill(const char *path, int argc, char * const *argv,
 	}
 	*fpw++ = NULL;
 
-	for (p = envp; *p != NULL; p++) {
+	for (p = envp; p && *p != NULL; p++) {
 		size_t const n = strlen(*p) + 1;
 		*fpw++= (char *)(*vsp + (fp - frame));
 		memcpy(fp, *p, n);

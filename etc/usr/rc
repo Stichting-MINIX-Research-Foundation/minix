@@ -25,10 +25,13 @@ fi
 bootcd="`/bin/sysenv bootcd`"
 
 case "$#:$1" in
+1:autoboot)
+    action=start
+    ;;
 1:start|1:stop|1:down)
     action=$1
     ;;
-*)  echo >&2 "Usage: $0 start|stop|down"
+*)  echo >&2 "Usage: $0 autoboot|start|stop|down"
     exit 1
 esac
 
@@ -158,7 +161,7 @@ capemgr() {
 DAEMONS=/etc/rc.daemons
 
 case $action in
-start)
+start|autoboot)
     # Select console font.
     test -f /etc/font && loadfont /etc/font </dev/console
 

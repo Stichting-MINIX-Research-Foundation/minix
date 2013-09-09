@@ -22,6 +22,7 @@
 #define	TIOCSWINSZ	_IOW('T', 17, struct winsize)
 #define	TIOCGPGRP	_IOW('T', 18, int)
 #define	TIOCSPGRP	_IOW('T', 19, int)
+#define TIOCSCTTY	_IO ('T', 20)		      /* controlling tty */
 #define TIOCSFON	_IOW_BIG(1, u8_t [8192])
 
 /* Keyboard ioctls. */

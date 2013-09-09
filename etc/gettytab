@@ -1,0 +1,154 @@
+#	$NetBSD: gettytab,v 1.18 2006/01/08 22:23:46 dsl Exp $
+#	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
+#
+# Most of the table entries here are just copies of the old getty table,
+# it is by no means certain, or even likely, that any of them are optimal
+# for any purpose whatever.  Nor is it likely that more than a couple are
+# even correct.
+#
+# The default gettytab entry, used to set defaults for all other
+# entries, and in cases where getty is called with no table name
+#
+default:\
+	:ce:ck:np:im=\r\n%s/%m (%h) (%t)\r\n\r\n:
+
+#
+# Fixed speed entries
+#
+#	The "std.NNN" names are known to the special case
+#	portselector code in getty, however they can
+#	be assigned to any table desired.
+#	The "NNN-baud" names are known to the special case
+#	autobaud code in getty, and likewise can
+#	be assigned to any table desired (hopefully the same speed).
+#
+std.110|110-baud:\
+	:sp#110:
+std.300|300-baud:\
+	:sp#300:
+std.600|600-baud:\
+	:sp#600:
+std.1200|1200-baud:\
+	:sp#1200:
+std.2400|2400-baud:\
+	:sp#2400:
+std.4800|4800-baud:\
+	:sp#4800:
+std.9600|9600-baud:\
+	:sp#9600:
+std.19200|19200-baud:\
+	:sp#19200:
+std.38400|38400-baud:\
+	:sp#38400:
+std.57600|57600-baud:\
+	:sp#57600:
+std.115200|115200-baud:\
+	:sp#115200:
+
+# PPP network link login
+#
+# these entries can be used by ISPs or others who want to be able
+# to offer both a "shell" and a PPP login on the same port. Setting
+# the "pp" attribute allows getty(8) to recognize a PPP link start
+# negotiation, and invoke the program listed, in addition to normal
+# login(1).
+#
+# N.B.: if PPP is recognized, this bypasses normal login/password
+# exchange; the expectation is that you'll configure pppd (or whatever)
+# to require a PAP or CHAP handshake for authentication after PPP is
+# started up.
+#
+# It is also recommended that you use hardware (CTS/RTS) flow control
+# on the port, and run the port as fast as possible, to allow modems
+# extra time to do data compression, if enabled.
+#
+ppp:np:ce:ck:pp=/usr/sbin/pppd:
+#
+ppp.19200|PPP-19200:sp#19200:tc=ppp:
+ppp.38400|PPP-38400:sp#38400:tc=ppp:
+ppp.57600|PPP-57600:sp#57600:tc=ppp:
+ppp.115200|PPP-115200:sp#115200:tc=ppp:
+ppp.230400|PPP-230400:sp#230400:tc=ppp:
+
+#
+# Dial in rotary tables, speed selection via 'break'
+#
+d1200|Dial-1200:\
+	:nx=d300:sp#1200:
+d300|Dial-300:\
+	:nx=d1200:sp#300:
+
+#
+# Fast dialup terminals, 2400/1200/300 rotary (can start either way)
+#
+D2400|d2400|Fast-Dial-2400:\
+	:nx=D1200:tc=2400-baud:
+D1200|Fast-Dial-1200:\
+	:nx=D300:tc=1200-baud:
+D300|Fast-Dial-300:\
+	:nx=D2400:tc=300-baud:
+
+#
+#telebit (19200)
+#
+t19200:\
+	:nx=t2400:tc=19200-baud:
+t2400:\
+	:nx=t1200:tc=2400-baud:
+t1200:\
+	:nx=t19200:tc=1200-baud:
+
+#
+#telebit (9600)
+#
+t9600:\
+	:nx=t2400a:tc=19200-baud:
+t2400a:\
+	:nx=t1200a:tc=2400-baud:
+t1200a:\
+	:nx=t9600:tc=1200-baud:
+
+#
+# Odd special case terminals
+#
+Console|Console Decwriter II:\
+	:rw:tc=300-baud:
+
+Console-1200|Console Decwriter III:\
+	:rw:tc=1200-baud:
+
+X|Xwindow|X window system:\
+	:rw:sp#9600:
+
+Pc|Pc console:\
+	:np:ig:ht:
+
+# 8 bit clean Sun console
+suncons|Sun Console:\
+	:np:sp#9600:
+
+#
+# Plugboard, and misc other terminals
+#
+plug-9600|Plugboard-9600:\
+	:pf#1:tc=9600-baud:
+P9600|Plugboard-9600-rotary:\
+	:pf#1:nx=P300:tc=9600-baud:
+P300|Plugboard-300:\
+	:pf#1:nx=P1200:tc=300-baud:
+P1200|Plugboard-1200:\
+	:pf#1:nx=P9600:tc=1200-baud:
+
+#
+# XXXX Port selector
+#
+DSW|Port Selector:\
+	:ps:sp#2400:
+
+#
+# Auto-baud speed detect entry for Micom 600.
+# Special code in getty will switch this out
+# to one of the NNN-baud entries.
+#
+Auto-baud:\
+	:ab:sp#2400:f0#040:
