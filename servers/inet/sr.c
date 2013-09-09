@@ -2,39 +2,9 @@
  *	system.
  *
  * Copyright 1995 Philip Homburg
- *
- * The valid messages and their parameters are:
- * 
- * Requests:
- *
- *    m_type      DEVICE      USER_ENDPT    COUNT
- * --------------------------------------------------
- * | DEV_OPEN    | minor dev | proc nr   |   mode   |
- * |-------------+-----------+-----------+----------+
- * | DEV_CLOSE   | minor dev | proc nr   |          |
- * |-------------+-----------+-----------+----------+
- *
- *    m_type      DEVICE      USER_ENDPT    COUNT      IO_GRANT
- * ---------------------------------------------------------------
- * | DEV_READ_S  | minor dev | proc nr   |  count    | grant ID  |
- * |-------------+-----------+-----------+-----------+-----------|
- * | DEV_WRITE_S | minor dev | proc nr   |  count    | grant ID  |
- * |-------------+-----------+-----------+-----------+-----------|
- * | DEV_IOCTL_S | minor dev | proc nr   |  command  | grant ID  |
- * |-------------+-----------+-----------+-----------+-----------|
- * | DEV_SELECT  | minor dev | ops       |           |           |
- * |-------------+-----------+-----------+-----------+-----------|
- *
- *    m_type      DEVICE      USER_ENDPT    COUNT
- * --------------------------------------------------|
- * | CANCEL      | minor dev | proc nr   |  mode     |
- * |-------------+-----------+-----------+-----------|
  */
 
 #include "inet.h"
-
-#include <sys/svrctl.h>
-#include <minix/callnr.h>
 
 #include "mq.h"
 #include "qp.h"
@@ -53,28 +23,43 @@ sr_fd_t sr_fd_table[FD_NR];
 
 static struct vscp_vec s_cp_req[SCPVEC_NR];
 
-static int sr_open(message *m);
-static void sr_close(message *m);
-static int sr_rwio(mq_t *m);
+static int sr_open(devminor_t minor, int access, endpoint_t user_endpt);
+static int sr_close(devminor_t minor);
+static ssize_t sr_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t sr_write(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static int sr_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
+static int sr_rwio(sr_req_t *req);
 static int sr_restart_read(sr_fd_t *fdp);
 static int sr_restart_write(sr_fd_t *fdp);
 static int sr_restart_ioctl(sr_fd_t *fdp);
-static int sr_cancel(message *m);
-static void sr_select(message *m);
-static void sr_reply_(mq_t *m, int code, int reply, int is_revive);
+static int sr_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+static int sr_select(devminor_t minor, unsigned int ops, endpoint_t endpt);
 static sr_fd_t *sr_getchannel(int minor);
 static acc_t *sr_get_userdata(int fd, size_t offset, size_t count, int
 	for_ioctl);
 static int sr_put_userdata(int fd, size_t offset, acc_t *data, int
 	for_ioctl);
 static void sr_select_res(int fd, unsigned ops);
-static int walk_queue(sr_fd_t *sr_fd, mq_t **q_head_ptr, mq_t
-	**q_tail_ptr, int type, int proc_nr, int ref, int first_flag);
+static int walk_queue(sr_fd_t *sr_fd, mq_t **q_head_ptr, mq_t **q_tail_ptr,
+	int type, endpoint_t endpt, cdev_id_t id, int first_flag);
 static void sr_event(event_t *evp, ev_arg_t arg);
 static int cp_u2b(endpoint_t proc, cp_grant_id_t gid, vir_bytes offset,
 	acc_t **var_acc_ptr, int size);
 static int cp_b2u(acc_t *acc_ptr, endpoint_t proc, cp_grant_id_t gid,
 	vir_bytes offset);
+
+static struct chardriver inet_tab = {
+	.cdr_open	= sr_open,
+	.cdr_close	= sr_close,
+	.cdr_read	= sr_read,
+	.cdr_write	= sr_write,
+	.cdr_ioctl	= sr_ioctl,
+	.cdr_cancel	= sr_cancel,
+	.cdr_select	= sr_select
+};
 
 void sr_init()
 {
@@ -89,57 +74,9 @@ void sr_init()
 	}
 }
 
-void sr_rec(m)
-mq_t *m;
+void sr_rec(message *m, int ipc_status)
 {
-	int code = DEV_REVIVE, result;
-	int send_reply = 0, free_mess = 0;
-
-	switch (m->mq_mess.m_type)
-	{
-	case DEV_OPEN:
-		result= sr_open(&m->mq_mess);
-		code= DEV_OPEN_REPL;
-		send_reply= 1;
-		free_mess= 1;
-		break;
-	case DEV_CLOSE:
-		sr_close(&m->mq_mess);
-		result= OK;
-		code= DEV_CLOSE_REPL;
-		send_reply= 1;
-		free_mess= 1;
-		break;
-	case DEV_READ_S:
-	case DEV_WRITE_S:
-	case DEV_IOCTL_S:
-		result= sr_rwio(m);
-		assert(result == OK || result == EAGAIN || result == EINTR ||
-			result == SUSPEND);
-		send_reply= (result == EAGAIN);
-		free_mess= (result == EAGAIN);
-		break;
-	case CANCEL:
-		result= sr_cancel(&m->mq_mess);
-		assert(result == OK || result == EINTR || result == SUSPEND);
-		send_reply= (result == EINTR);
-		free_mess= 1;
-		break;
-	case DEV_SELECT:
-		sr_select(&m->mq_mess);
-		send_reply= 0;
-		free_mess= 1;
-		break;
-	default:
-		ip_panic(("unknown message, from %d, type %d",
-				m->mq_mess.m_source, m->mq_mess.m_type));
-	}
-	if (send_reply)
-	{
-		sr_reply_(m, code, result, FALSE /* !is_revive */);
-	}
-	if (free_mess)
-		mq_free(m);
+	chardriver_process(&inet_tab, m, ipc_status);
 }
 
 void sr_add_minor(minor, port, openf, closef, readf, writef,
@@ -173,12 +110,10 @@ sr_select_t selectf;
 	sr_fd->srf_select= selectf;
 }
 
-static int sr_open(m)
-message *m;
+static int sr_open(devminor_t minor, int UNUSED(access),
+	endpoint_t UNUSED(user_endpt))
 {
 	sr_fd_t *sr_fd;
-
-	int minor= m->DEVICE;
 	int i, fd;
 
 	if (minor<0 || minor>FD_NR)
@@ -211,15 +146,14 @@ message *m;
 		return fd;
 	}
 	sr_fd->srf_fd= fd;
-	return i;
+	return i;	/* cloned! */
 }
 
-static void sr_close(m)
-message *m;
+static int sr_close(devminor_t minor)
 {
 	sr_fd_t *sr_fd;
 
-	sr_fd= sr_getchannel(m->DEVICE);
+	sr_fd= sr_getchannel(minor);
 	assert (sr_fd);
 
 	if (sr_fd->srf_flags & SFF_BUSY)
@@ -228,38 +162,43 @@ message *m;
 	assert (!(sr_fd->srf_flags & SFF_MINOR));
 	(*sr_fd->srf_close)(sr_fd->srf_fd);
 	sr_fd->srf_flags= SFF_FREE;
+
+	return OK;
 }
 
-static int sr_rwio(m)
-mq_t *m;
+static int sr_rwio(sr_req_t *req)
 {
 	sr_fd_t *sr_fd;
-	mq_t **q_head_ptr = NULL, **q_tail_ptr = NULL;
+	mq_t *m, **q_head_ptr = NULL, **q_tail_ptr = NULL;
 	int ip_flag = 0, susp_flag = 0, first_flag = 0;
 	int r = OK;
 	ioreq_t request;
 	size_t size;
 
-	sr_fd= sr_getchannel(m->mq_mess.DEVICE);
+	if (!(m = mq_get()))
+		ip_panic(("out of messages"));
+	m->mq_req = *req;
+
+	sr_fd= sr_getchannel(m->mq_req.srr_minor);
 	assert (sr_fd);
 
-	switch(m->mq_mess.m_type)
+	switch(m->mq_req.srr_type)
 	{
-	case DEV_READ_S:
+	case SRR_READ:
 		q_head_ptr= &sr_fd->srf_read_q;
 		q_tail_ptr= &sr_fd->srf_read_q_tail;
 		ip_flag= SFF_READ_IP;
 		susp_flag= SFF_READ_SUSP;
 		first_flag= SFF_READ_FIRST;
 		break;
-	case DEV_WRITE_S:
+	case SRR_WRITE:
 		q_head_ptr= &sr_fd->srf_write_q;
 		q_tail_ptr= &sr_fd->srf_write_q_tail;
 		ip_flag= SFF_WRITE_IP;
 		susp_flag= SFF_WRITE_SUSP;
 		first_flag= SFF_WRITE_FIRST;
 		break;
-	case DEV_IOCTL_S:
+	case SRR_IOCTL:
 		q_head_ptr= &sr_fd->srf_ioctl_q;
 		q_tail_ptr= &sr_fd->srf_ioctl_q_tail;
 		ip_flag= SFF_IOCTL_IP;
@@ -267,7 +206,7 @@ mq_t *m;
 		first_flag= SFF_IOCTL_FIRST;
 		break;
 	default:
-		ip_panic(("illegal case entry"));
+		ip_panic(("illegal request type"));
 	}
 
 	if (sr_fd->srf_flags & ip_flag)
@@ -275,12 +214,14 @@ mq_t *m;
 		assert(sr_fd->srf_flags & susp_flag);
 		assert(*q_head_ptr);
 
-		if (m->mq_mess.FLAGS & FLG_OP_NONBLOCK)
+		if (m->mq_req.srr_flags & FLG_OP_NONBLOCK) {
+			mq_free(m);
 			return EAGAIN;
+		}
 
 		(*q_tail_ptr)->mq_next= m;
 		*q_tail_ptr= m;
-		return SUSPEND;
+		return EDONTREPLY;
 	}
 	assert(!*q_head_ptr);
 
@@ -289,18 +230,16 @@ mq_t *m;
 	assert(!(sr_fd->srf_flags & first_flag));
 	sr_fd->srf_flags |= first_flag;
 
-	switch(m->mq_mess.m_type)
+	switch(m->mq_req.srr_type)
 	{
-	case DEV_READ_S:
-		r= (*sr_fd->srf_read)(sr_fd->srf_fd, 
-			m->mq_mess.COUNT);
+	case SRR_READ:
+		r= (*sr_fd->srf_read)(sr_fd->srf_fd, m->mq_req.srr_size);
 		break;
-	case DEV_WRITE_S:
-		r= (*sr_fd->srf_write)(sr_fd->srf_fd, 
-			m->mq_mess.COUNT);
+	case SRR_WRITE:
+		r= (*sr_fd->srf_write)(sr_fd->srf_fd, m->mq_req.srr_size);
 		break;
-	case DEV_IOCTL_S:
-		request= m->mq_mess.REQUEST;
+	case SRR_IOCTL:
+		request= m->mq_req.srr_req;
 		size= (request >> 16) & _IOCPARM_MASK;
 		if (size>MAX_IOCTL_S)
 		{
@@ -310,7 +249,7 @@ mq_t *m;
 			assert(r == OK);
 			assert(sr_fd->srf_flags & first_flag);
 			sr_fd->srf_flags &= ~first_flag;
-			return OK;
+			return EDONTREPLY;
 		}
 		r= (*sr_fd->srf_ioctl)(sr_fd->srf_fd, request);
 		break;
@@ -325,14 +264,65 @@ mq_t *m;
 		(printf("r= %d\n", r), 0));
 	if (r == SUSPEND) {
 		sr_fd->srf_flags |= susp_flag;
-		if (m->mq_mess.FLAGS & FLG_OP_NONBLOCK) {
-			r= sr_cancel(&m->mq_mess);
-			assert(r == OK); /* must have been head of queue */
-			return EINTR;
+		if (m->mq_req.srr_flags & FLG_OP_NONBLOCK) {
+			r= sr_cancel(m->mq_req.srr_minor, m->mq_req.srr_endpt,
+				m->mq_req.srr_id);
+			assert(r == EDONTREPLY);	/* head of the queue */
 		}
 	} else
 		mq_free(m);
-	return r;
+	return EDONTREPLY;		/* request already completed */
+}
+
+static ssize_t sr_read(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
+{
+	sr_req_t req;
+
+	req.srr_type = SRR_READ;
+	req.srr_minor = minor;
+	req.srr_endpt = endpt;
+	req.srr_grant = grant;
+	req.srr_size = size;
+	req.srr_flags = flags;
+	req.srr_id = id;
+
+	return sr_rwio(&req);
+}
+
+static ssize_t sr_write(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
+{
+	sr_req_t req;
+
+	req.srr_type = SRR_WRITE;
+	req.srr_minor = minor;
+	req.srr_endpt = endpt;
+	req.srr_grant = grant;
+	req.srr_size = size;
+	req.srr_flags = flags;
+	req.srr_id = id;
+
+	return sr_rwio(&req);
+}
+
+static int sr_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t UNUSED(user_endpt),
+	cdev_id_t id)
+{
+	sr_req_t req;
+
+	req.srr_type = SRR_IOCTL;
+	req.srr_minor = minor;
+	req.srr_req = request;
+	req.srr_endpt = endpt;
+	req.srr_grant = grant;
+	req.srr_flags = flags;
+	req.srr_id = id;
+
+	return sr_rwio(&req);
 }
 
 static int sr_restart_read(sr_fd)
@@ -351,8 +341,7 @@ sr_fd_t *sr_fd;
 	}
 	sr_fd->srf_flags |= SFF_READ_IP;
 
-	r= (*sr_fd->srf_read)(sr_fd->srf_fd, 
-		mp->mq_mess.COUNT);
+	r= (*sr_fd->srf_read)(sr_fd->srf_fd, mp->mq_req.srr_size);
 
 	assert(r == OK || r == SUSPEND || 
 		(printf("r= %d\n", r), 0));
@@ -377,8 +366,7 @@ sr_fd_t *sr_fd;
 	}
 	sr_fd->srf_flags |= SFF_WRITE_IP;
 
-	r= (*sr_fd->srf_write)(sr_fd->srf_fd, 
-		mp->mq_mess.COUNT);
+	r= (*sr_fd->srf_write)(sr_fd->srf_fd, mp->mq_req.srr_size);
 
 	assert(r == OK || r == SUSPEND || 
 		(printf("r= %d\n", r), 0));
@@ -403,8 +391,7 @@ sr_fd_t *sr_fd;
 	}
 	sr_fd->srf_flags |= SFF_IOCTL_IP;
 
-	r= (*sr_fd->srf_ioctl)(sr_fd->srf_fd, 
-		mp->mq_mess.COUNT);
+	r= (*sr_fd->srf_ioctl)(sr_fd->srf_fd, mp->mq_req.srr_req);
 
 	assert(r == OK || r == SUSPEND || 
 		(printf("r= %d\n", r), 0));
@@ -413,59 +400,52 @@ sr_fd_t *sr_fd;
 	return r;
 }
 
-static int sr_cancel(m)
-message *m;
+static int sr_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
 	sr_fd_t *sr_fd;
 	int result;
-	int proc_nr, ref;
 
-	proc_nr=  m->USER_ENDPT;
-	ref=  (int)m->IO_GRANT;
-	sr_fd= sr_getchannel(m->DEVICE);
+	sr_fd= sr_getchannel(minor);
 	assert (sr_fd);
 
 	result= walk_queue(sr_fd, &sr_fd->srf_ioctl_q,
 		&sr_fd->srf_ioctl_q_tail, SR_CANCEL_IOCTL,
-		proc_nr, ref, SFF_IOCTL_FIRST);
+		endpt, id, SFF_IOCTL_FIRST);
 	if (result != EAGAIN)
-		return result;
+		return (result == OK) ? EDONTREPLY : EINTR;
 
 	result= walk_queue(sr_fd, &sr_fd->srf_read_q, 
 		&sr_fd->srf_read_q_tail, SR_CANCEL_READ,
-		proc_nr, ref, SFF_READ_FIRST);
+		endpt, id, SFF_READ_FIRST);
 	if (result != EAGAIN)
-		return result;
+		return (result == OK) ? EDONTREPLY : EINTR;
 
 	result= walk_queue(sr_fd, &sr_fd->srf_write_q, 
 		&sr_fd->srf_write_q_tail, SR_CANCEL_WRITE,
-		proc_nr, ref, SFF_WRITE_FIRST);
+		endpt, id, SFF_WRITE_FIRST);
 	if (result != EAGAIN)
-		return result;
+		return (result == OK) ? EDONTREPLY : EINTR;
 
 	/* We already replied to the request, so don't reply to the CANCEL. */
-	return SUSPEND;
+	return EDONTREPLY;
 }
 
-static void sr_select(m)
-message *m;
+static int sr_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 {
-	message m_reply;
 	sr_fd_t *sr_fd;
-	int r;
-	unsigned m_ops, i_ops;
+	int r, m_ops;
+	unsigned int i_ops;
 
-	sr_fd= sr_getchannel(m->DEV_MINOR);
+	sr_fd= sr_getchannel(minor);
 	assert (sr_fd);
 
-	sr_fd->srf_select_proc= m->m_source;
+	sr_fd->srf_select_proc= endpt;
 
-	m_ops= m->DEV_SEL_OPS;
 	i_ops= 0;
-	if (m_ops & SEL_RD) i_ops |= SR_SELECT_READ;
-	if (m_ops & SEL_WR) i_ops |= SR_SELECT_WRITE;
-	if (m_ops & SEL_ERR) i_ops |= SR_SELECT_EXCEPTION;
-	if (!(m_ops & SEL_NOTIFY)) i_ops |= SR_SELECT_POLL;
+	if (ops & SEL_RD) i_ops |= SR_SELECT_READ;
+	if (ops & SEL_WR) i_ops |= SR_SELECT_WRITE;
+	if (ops & SEL_ERR) i_ops |= SR_SELECT_EXCEPTION;
+	if (!(ops & SEL_NOTIFY)) i_ops |= SR_SELECT_POLL;
 
 	r= (*sr_fd->srf_select)(sr_fd->srf_fd,  i_ops);
 	if (r < 0) {
@@ -477,24 +457,17 @@ message *m;
 		if (r & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
 	}
 
-	memset(&m_reply, 0, sizeof(m_reply));
-	m_reply.m_type= DEV_SEL_REPL1;
-	m_reply.DEV_MINOR= m->DEV_MINOR;
-	m_reply.DEV_SEL_OPS= m_ops;
-
-	r= send(m->m_source, &m_reply);
-	if (r != OK)
-		ip_panic(("unable to send"));
+	return m_ops;
 }
 
-static int walk_queue(sr_fd, q_head_ptr, q_tail_ptr, type, proc_nr, ref,
+static int walk_queue(sr_fd, q_head_ptr, q_tail_ptr, type, endpt, id,
 	first_flag)
 sr_fd_t *sr_fd;
 mq_t **q_head_ptr;
 mq_t **q_tail_ptr;
 int type;
-int proc_nr;
-int ref;
+endpoint_t endpt;
+cdev_id_t id;
 int first_flag;
 {
 	mq_t *q_ptr_prv, *q_ptr;
@@ -503,15 +476,16 @@ int first_flag;
 	for(q_ptr_prv= NULL, q_ptr= *q_head_ptr; q_ptr; 
 		q_ptr_prv= q_ptr, q_ptr= q_ptr->mq_next)
 	{
-		if (q_ptr->mq_mess.USER_ENDPT != proc_nr)
+		if (q_ptr->mq_req.srr_endpt != endpt)
 			continue;
-		if ((int)q_ptr->mq_mess.IO_GRANT != ref)
+		if (q_ptr->mq_req.srr_id != id)
 			continue;
 		if (!q_ptr_prv)
 		{
 			assert(!(sr_fd->srf_flags & first_flag));
 			sr_fd->srf_flags |= first_flag;
 
+			/* This will also send a reply. */
 			result= (*sr_fd->srf_cancel)(sr_fd->srf_fd, type);
 			assert(result == OK);
 
@@ -546,35 +520,6 @@ int minor;
 		(loc_fd->srf_flags & SFF_INUSE));
 
 	return loc_fd;
-}
-
-static void sr_reply_(mq, code, status, is_revive)
-mq_t *mq;
-int code;
-int status;
-int is_revive;
-{
-	int result, proc, ref;
-	message reply, *mp;
-
-	proc= mq->mq_mess.USER_ENDPT;
-	ref= (int)mq->mq_mess.IO_GRANT;
-
-	if (is_revive)
-		mp= &mq->mq_mess;
-	else
-		mp= &reply;
-
-	mp->m_type= code;
-	mp->REP_ENDPT= proc;
-	mp->REP_STATUS= status;
-	mp->REP_IO_GRANT= ref;
-	result= send(mq->mq_mess.m_source, mp);
-
-	if (result != OK)
-		ip_panic(("unable to send"));
-	if (is_revive)
-		mq_free(mq);
 }
 
 static acc_t *sr_get_userdata (fd, offset, count, for_ioctl)
@@ -619,7 +564,10 @@ int for_ioctl;
 		*head_ptr= mq;
 		result= (int)offset;
 		is_revive= !(loc_fd->srf_flags & first_flag);
-		sr_reply_(m, DEV_REVIVE, result, is_revive);
+		chardriver_reply_task(m->mq_req.srr_endpt, m->mq_req.srr_id,
+			result);
+		if (is_revive)
+			mq_free(m);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
@@ -633,8 +581,8 @@ int for_ioctl;
 		return NULL;
 	}
 
-	result= cp_u2b ((*head_ptr)->mq_mess.m_source,
-		(int)(*head_ptr)->mq_mess.IO_GRANT, offset, &acc, count);
+	result= cp_u2b ((*head_ptr)->mq_req.srr_endpt,
+		(*head_ptr)->mq_req.srr_grant, offset, &acc, count);
 
 	return result<0 ? NULL : acc;
 }
@@ -680,7 +628,10 @@ int for_ioctl;
 		*head_ptr= mq;
 		result= (int)offset;
 		is_revive= !(loc_fd->srf_flags & first_flag);
-		sr_reply_(m, DEV_REVIVE, result, is_revive);
+		chardriver_reply_task(m->mq_req.srr_endpt, m->mq_req.srr_id,
+			result);
+		if (is_revive)
+			mq_free(m);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
@@ -694,16 +645,14 @@ int for_ioctl;
 		return OK;
 	}
 
-	return cp_b2u (data, (*head_ptr)->mq_mess.m_source, 
-		(int)(*head_ptr)->mq_mess.IO_GRANT, offset);
+	return cp_b2u (data, (*head_ptr)->mq_req.srr_endpt,
+		(*head_ptr)->mq_req.srr_grant, offset);
 }
 
 static void sr_select_res(int fd, unsigned ops)
 {
-	message m;
 	sr_fd_t *sr_fd;
 	unsigned int m_ops;
-	int result;
 
 	sr_fd= &sr_fd_table[fd];
 
@@ -712,14 +661,7 @@ static void sr_select_res(int fd, unsigned ops)
 	if (ops & SR_SELECT_WRITE) m_ops |= SEL_WR;
 	if (ops & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
 
-	memset(&m, 0, sizeof(m));
-	m.m_type= DEV_SEL_REPL2;
-	m.DEV_MINOR= fd;
-	m.DEV_SEL_OPS= m_ops;
-
-	result= send(sr_fd->srf_select_proc, &m);
-	if (result != OK)
-		ip_panic(("unable to send"));
+	chardriver_reply_select(sr_fd->srf_select_proc, fd, m_ops);
 }
 
 static void sr_event(evp, arg)
