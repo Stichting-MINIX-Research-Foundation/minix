@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <sys/ioc_tty.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
@@ -266,6 +267,13 @@ int cdev_io(
   /* Determine task map. */
   if ((dp = cdev_get(dev, &minor_dev)) == NULL)
 	return(EIO);
+
+  /* Handle TIOCSCTTY ioctl: set controlling tty.
+   * TODO: cleaner implementation work in progress.
+   */
+  if (op == CDEV_IOCTL && bytes == TIOCSCTTY && major(dev) == TTY_MAJOR) {
+       fp->fp_tty = dev;
+  }
 
   /* Create a grant for the buffer provided by the user process. */
   gid = make_grant(dp->dmap_driver, proc_e, op, buf, bytes);

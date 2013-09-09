@@ -73,6 +73,7 @@
 2012/10/17 12:00:00,include
 2013/05/31 12:00:00,libexec/fingerd
 2012/10/17 12:00:00,libexec/ftpd
+2012/10/17 12:00:00,libexec/getty
 2012/10/17 12:00:00,libexec/ld.elf_so
 2012/10/17 12:00:00,libexec/Makefile
 2012/10/17 12:00:00,libexec/Makefile.inc
@@ -97,6 +98,9 @@
 2012/10/17 12:00:00,Makefile
 2011/06/09 21:23:29,sbin/fsck
 2011/09/16 16:13:18,sbin/fsck_ext2fs
+2012/10/17 12:00:00,sbin/init
+2012/10/17 12:00:00,sbin/reboot
+2012/10/17 12:00:00,sbin/shutdown
 2012/10/17 12:00:00,sbin/Makefile
 2012/10/17 12:00:00,sbin/Makefile.inc
 2012/10/10 16:16:12,sbin/mknod
@@ -188,6 +192,7 @@
 2012/10/17 12:00:00,usr.bin/join
 2012/10/17 12:00:00,usr.bin/jot
 2012/10/17 12:00:00,usr.bin/lam
+2012/10/17 12:00:00,usr.bin/last
 2011/01/17 18:11:10,usr.bin/ldd
 2013/10/18 12:00:00,usr.bin/leave
 2012/10/17 12:00:00,usr.bin/lock
@@ -248,11 +253,12 @@
 2013/10/14 12:00:00,usr.bin/users
 2013/10/23 12:00:00,usr.bin/uuidgen
 2012/10/17 12:00:00,usr.bin/vis
+2012/10/17 12:00:00,usr.bin/wall
 2012/10/17 12:00:00,usr.bin/wc
 2012/10/17 12:00:00,usr.bin/what
-2013/03/22 12:00:00,usr.bin/whatis
 2013/03/15 12:00:00,usr.bin/who
 2012/10/17 12:00:00,usr.bin/whois
+2013/03/22 12:00:00,usr.bin/whatis
 2012/10/17 12:00:00,usr.bin/write
 2012/10/17 12:00:00,usr.bin/xinstall
 2012/10/17 12:00:00,usr.bin/xstr

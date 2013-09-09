@@ -10,7 +10,7 @@
 #include <minix/com.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <minix/reboot.h>
+#include <sys/reboot.h>
 #include "string.h"
 #include "arch_proto.h"
 #include "direct_utils.h"
@@ -412,7 +412,7 @@ kinfo_t *pre_init(int argc, char **argv)
  * longer used and the "real" implementations are visible
  */
 void send_diag_sig(void) { }
-void minix_shutdown(minix_timer_t *t) { arch_shutdown(RBT_PANIC); }
+void minix_shutdown(minix_timer_t *t) { arch_shutdown(0); }
 void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }
 int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 

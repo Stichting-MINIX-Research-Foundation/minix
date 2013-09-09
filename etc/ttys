@@ -3,10 +3,10 @@
 #
 # name		getty		type	status		comments
 #
-console		getty		minix	on secure
-ttyc1		getty		minix	on secure
-ttyc2		getty		minix	on secure
-ttyc3		getty		minix	on secure
+console		"/usr/libexec/getty default"	minix	on secure
+ttyc1		"/usr/libexec/getty default"	minix	on secure
+ttyc2		"/usr/libexec/getty default"	minix	on secure
+ttyc3		"/usr/libexec/getty default"	minix	on secure
 tty00		""		unknown	off secure
 tty01		""		unknown off secure
 

@@ -13,11 +13,11 @@
 #include <minix/callnr.h>
 #include <signal.h>
 #include <sys/svrctl.h>
+#include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <minix/com.h>
 #include <minix/config.h>
-#include <minix/reboot.h>
 #include <minix/sysinfo.h>
 #include <minix/type.h>
 #include <minix/ds.h>
@@ -213,10 +213,9 @@ int do_reboot()
 
   /* See how the system should be aborted. */
   abort_flag = (unsigned) m_in.PM_REBOOT_HOW;
-  if (abort_flag >= RBT_INVALID) return(EINVAL); 
 
   /* notify readclock (some arm systems power off via RTC alarms) */
-  if (abort_flag == RBT_POWEROFF) {
+  if (abort_flag & RB_POWERDOWN) {
 	endpoint_t readclock_ep;
 	if (ds_retrieve_label_endpt("readclock.drv", &readclock_ep) == OK) {
 		message m; /* no params to set, nothing we can do if it fails */

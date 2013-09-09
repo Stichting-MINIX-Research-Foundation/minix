@@ -42,7 +42,7 @@ SRCS+=	efun.c \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
 	raise_default_signal.c \
 	secure_path.c stat_flags.c \
-	strpct.c ttyaction.c \
+	strpct.c ttyaction.c ttymsg.c \
 
 MAN=	efun.3 \
 	getmntopts.3 \

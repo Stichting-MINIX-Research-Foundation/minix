@@ -11,7 +11,7 @@
 #include <string.h>
 #include <sys/reboot.h>
 
-int reboot(int how)
+int reboot(int how, char *bootstr)
 {
   message m;
 

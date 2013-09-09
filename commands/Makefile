@@ -10,18 +10,18 @@ SUBDIR=	add_route arp ash at backup btrace \
 	dhrystone diff diskctl \
 	eject factor fbdctl \
 	find fix format fortune fsck.mfs \
-	gcov-pull getty grep host \
+	gcov-pull grep host \
 	hostaddr ifconfig ifdef \
-	intr ipcrm ipcs irdpd isoread last \
+	intr ipcrm ipcs irdpd isoread \
 	less loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	mined \
 	mount mt netconf \
 	nonamed patch \
-	ping postinstall poweroff prep printroot \
+	ping postinstall prep printroot \
 	profile progressbar pr_routes ps pwdauth \
 	ramdisk rarpd rawspeed rcp readclock \
-	reboot remsync rget rlogin \
+	remsync rget rlogin \
 	rotate rsh rshd service setup shar \
 	sleep slip spell sprofalyze sprofdiff srccrc \
 	stty svclog svrctl swifi synctree sysenv \

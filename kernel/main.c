@@ -18,7 +18,7 @@
 #include <minix/u64.h>
 #include <minix/board.h>
 #include <minix/type.h>
-#include <minix/reboot.h>
+#include <sys/reboot.h>
 #include "clock.h"
 #include "direct_utils.h"
 #include "hw_intr.h"
@@ -357,8 +357,7 @@ void prepare_shutdown(const int how)
 void minix_shutdown(minix_timer_t *tp)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
- * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
- * monitor), RBT_RESET (hard reset). 
+ * down MINIX.
  */
   int how;
 
@@ -376,25 +375,17 @@ void minix_shutdown(minix_timer_t *tp)
   hw_intr_disable_all();
   stop_local_timer();
 
-  how = tp ? tmr_arg(tp)->ta_int : RBT_PANIC;
+  how = tp ? tmr_arg(tp)->ta_int : 0;
 
   /* Show shutdown message */
   direct_cls();
-  switch(how) {
-  case RBT_HALT:
+  if((how & RB_POWERDOWN) == RB_POWERDOWN)
+	direct_print("MINIX has halted and will now power off.\n");
+  else if(how & RB_HALT)
 	direct_print("MINIX has halted. "
 		     "It is safe to turn off your computer.\n");
-	break;
-  case RBT_POWEROFF:
-	direct_print("MINIX has halted and will now power off.\n");
-	break;
-  case RBT_DEFAULT:
-  case RBT_REBOOT:
-  case RBT_RESET:
-  default:
+  else
 	direct_print("MINIX will now reset.\n");
-	break;
-  }
   arch_shutdown(how);
 }
 

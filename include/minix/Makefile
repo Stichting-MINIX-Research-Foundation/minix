@@ -16,7 +16,7 @@ INCS+=	acpi.h audio_fw.h bitmap.h \
 	keymap.h log.h mmio.h mount.h mthread.h minlib.h \
 	netdriver.h optset.h padconf.h partition.h portio.h \
 	priv.h procfs.h profile.h queryparam.h \
-	reboot.h rs.h safecopies.h sched.h sef.h sffs.h \
+	rs.h safecopies.h sched.h sef.h sffs.h \
 	sound.h spin.h sys_config.h sysinfo.h \
 	syslib.h sysutil.h termios.h timers.h type.h \
 	u64.h usb.h usb_ch9.h vbox.h \

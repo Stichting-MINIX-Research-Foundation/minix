@@ -21,7 +21,7 @@ ARCH="`sysenv arch`"
 
 usage()
 {
-    echo >&2 "Usage: $0 [-saf] start|stop|down"
+    echo >&2 "Usage: $0 [-saf] autoboot|start|stop|down"
     exec intr sh
 }
 
@@ -54,8 +54,12 @@ edit()
     service=$1
     shift
 
-    # Assume binaries are always in /usr/sbin
-    service $opt edit /usr/sbin/$service -label $service "$@" 
+    # Assume binaries are always in /sbin or /usr/sbin
+    binlocation=/usr/sbin/$service
+    if [ ! -x $binlocation ]
+    then	binlocation=/sbin/$service
+    fi
+    service $opt edit $binlocation -label $service "$@" 
 }
 
 while getopts 'saf' opt
@@ -70,14 +74,14 @@ done
 shift `expr $OPTIND - 1`
 
 case "$#:$1" in
-1:start|1:stop|1:down)
+1:start|1:stop|1:down|1:autoboot)
     action=$1
     ;;
 *)  usage
 esac
 
 case $action in
-start)
+autoboot|start)
 
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
@@ -104,8 +108,12 @@ start)
     up readclock.drv
     readclock -q || date 201301010000
 
+    # We are not shutting down.
+    rm -f /etc/nologin
+
     # Initialize files.
-    >/etc/utmp				# /etc/utmp keeps track of logins
+    >/var/run/utmp				# /etc/utmp keeps track of logins
+    >/var/run/utmpx				# /etc/utmpx keeps track of logins
 
     # Use MFS binary only from kernel image?
     if [ "`sysenv bin_img`" = 1 ]
@@ -146,10 +154,6 @@ start)
 	edit pfs
 	edit init
     fi
-
-    # This file is necessary for above 'shutdown -C' check.
-    # (Silence stderr in case of running from cd.)
-    touch /usr/adm/wtmp /etc/wtmp 2>/dev/null
 
     if [ "$sflag" ]
     then
@@ -212,6 +216,10 @@ test -f /usr/etc/rc && sh /usr/etc/rc $action
 test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
 
 # Any messages?
-test "$action" = start -a -f /etc/issue && cat /etc/issue
+if [ "$action" = start -o "$action" = autoboot ]
+then	if [ -f /etc/issue ]
+	then	cat /etc/issue
+	fi
+fi
 
 exit 0

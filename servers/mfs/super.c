@@ -258,9 +258,13 @@ int read_super(struct super_block *sp)
 
   magic = sp->s_magic;		/* determines file system type */
 
+  if(magic == SUPER_V2 || magic == SUPER_MAGIC) {
+	printf("MFS: only supports V3 filesystems.\n");
+	return EINVAL;
+  }
+
   /* Get file system version and type - only support v3. */
   if(magic != SUPER_V3) {
-	printf("MFS: only supports V3 filesystems.\n");
 	return EINVAL;
   }
   version = V3;

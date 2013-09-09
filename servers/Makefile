@@ -5,11 +5,11 @@
 
 .if ${MKIMAGEONLY} == "yes"
 
-SUBDIR=	ds init input mfs pfs pm rs sched vfs vm
+SUBDIR=	ds input mfs pfs pm rs sched vfs vm
 
 .else
 
-SUBDIR=	ds ext2 inet init input ipc is iso9660fs \
+SUBDIR=	ds ext2 inet input ipc is iso9660fs \
 	mfs pfs pm procfs rs sched vfs vm devman
 
 .if ${MACHINE_ARCH} == "i386"

@@ -24,8 +24,8 @@
 ./bin/expr				minix-sys
 ./bin/false				minix-sys
 ./bin/getopts				minix-sys
-./bin/getty				minix-sys
-./bin/halt				minix-sys
+./bin/getty				minix-sys	obsolete
+./bin/halt				minix-sys	obsolete
 ./bin/intr				minix-sys
 ./bin/kill				minix-sys
 ./bin/ksh				minix-sys
@@ -42,14 +42,14 @@
 ./bin/pwd				minix-sys
 ./bin/read				minix-sys
 ./bin/readclock				minix-sys
-./bin/reboot				minix-sys
+./bin/reboot				minix-sys	obsolete
 ./bin/rm				minix-sys
 ./bin/rmdir				minix-sys
 ./bin/sed				minix-sys
 ./bin/service				minix-sys
 ./bin/setup				minix-sys
 ./bin/sh				minix-sys
-./bin/shutdown				minix-sys
+./bin/shutdown				minix-sys	obsolete
 ./bin/sync				minix-sys
 ./bin/sysenv				minix-sys
 ./bin/tar				minix-sys
@@ -117,6 +117,8 @@
 ./etc/termcap				minix-sys
 ./etc/ttys				minix-sys
 ./etc/utmp				minix-sys
+./etc/gettytab				minix-sys
+./etc/rc.shutdown			minix-sys
 ./home					minix-sys
 ./home/ast				minix-sys
 ./home/ast/.exrc			minix-sys
@@ -146,6 +148,8 @@
 ./sbin/fsck_ext2fs			minix-sys
 ./sbin/fsck.mfs				minix-sys
 ./sbin/input				minix-sys
+./sbin/halt				minix-sys
+./sbin/init				minix-sys
 ./sbin/is				minix-sys
 ./sbin/isofs				minix-sys
 ./sbin/mfs				minix-sys
@@ -155,8 +159,11 @@
 ./sbin/newfs_ext2			minix-sys
 ./sbin/newfs_ext2fs			minix-sys
 ./sbin/nologin				minix-sys
+./sbin/poweroff				minix-sys
 ./sbin/procfs				minix-sys
 ./sbin/readclock.drv			minix-sys
+./sbin/reboot				minix-sys
+./sbin/shutdown				minix-sys
 ./sys					minix-sys
 ./tmp					minix-sys
 ./usr					minix-sys
@@ -336,7 +343,7 @@
 ./usr/bin/gzcat				minix-sys
 ./usr/bin/gzexe				minix-sys
 ./usr/bin/gzip				minix-sys
-./usr/bin/halt				minix-sys
+./usr/bin/halt				minix-sys	obsolete
 ./usr/bin/head				minix-sys
 ./usr/bin/hexdump			minix-sys
 ./usr/bin/host				minix-sys
@@ -437,7 +444,7 @@
 ./usr/bin/pkgin_cd			minix-sys
 ./usr/bin/playwave                      minix-sys
 ./usr/bin/postinstall			minix-sys
-./usr/bin/poweroff			minix-sys
+./usr/bin/poweroff			minix-sys	obsolete
 ./usr/bin/pr				minix-sys
 ./usr/bin/prep				minix-sys
 ./usr/bin/printenv			minix-sys
@@ -456,8 +463,8 @@
 ./usr/bin/readall			minix-sys	obsolete
 ./usr/bin/readelf			minix-sys	binutils
 ./usr/bin/readlink			minix-sys
-./usr/bin/reboot			minix-sys
 ./usr/bin/recwave                       minix-sys
+./usr/bin/reboot			minix-sys	obsolete
 ./usr/bin/ref				minix-sys	obsolete
 ./usr/bin/remsync			minix-sys
 ./usr/bin/repartition                   minix-sys
@@ -479,7 +486,7 @@
 ./usr/bin/shar				minix-sys
 ./usr/bin/shlock			minix-sys
 ./usr/bin/shuffle			minix-sys
-./usr/bin/shutdown			minix-sys
+./usr/bin/shutdown			minix-sys	obsolete
 ./usr/bin/size				minix-sys	binutils
 ./usr/bin/sleep				minix-sys
 ./usr/bin/slip				minix-sys
@@ -540,8 +547,8 @@
 ./usr/bin/unxz				minix-sys
 ./usr/bin/unzip				minix-sys
 ./usr/bin/update			minix-sys
-./usr/bin/uptime			minix-sys
 ./usr/bin/users				minix-sys
+./usr/bin/uptime			minix-sys	obsolete
 ./usr/bin/uud				minix-sys
 ./usr/bin/uudecode			minix-sys
 ./usr/bin/uue				minix-sys
@@ -552,6 +559,7 @@
 ./usr/bin/view				minix-sys
 ./usr/bin/vis				minix-sys
 ./usr/bin/vol				minix-sys
+./usr/bin/wall				minix-sys
 ./usr/bin/wc				minix-sys
 ./usr/bin/what				minix-sys
 ./usr/bin/whatis			minix-sys
@@ -1201,7 +1209,7 @@
 ./usr/include/minix/procfs.h		minix-sys
 ./usr/include/minix/profile.h		minix-sys
 ./usr/include/minix/queryparam.h	minix-sys
-./usr/include/minix/reboot.h		minix-sys
+./usr/include/minix/reboot.h		minix-sys	obsolete
 ./usr/include/minix/rs.h		minix-sys
 ./usr/include/minix/safecopies.h	minix-sys
 ./usr/include/minix/sched.h		minix-sys
@@ -1938,6 +1946,7 @@
 ./usr/libexec/atf-check			minix-sys	atf
 ./usr/libexec/fingerd			minix-sys
 ./usr/libexec/ftpd			minix-sys
+./usr/libexec/getty			minix-sys
 ./usr/libexec/kyua-atf-tester		minix-sys	kyua
 ./usr/libexec/kyua-plain-tester		minix-sys	kyua
 ./usr/libexec/ld.elf_so			minix-sys
@@ -2282,6 +2291,7 @@
 ./usr/man/man1/view.1			minix-sys
 ./usr/man/man1/vis.1			minix-sys
 ./usr/man/man1/vol.1			minix-sys
+./usr/man/man1/wall.1			minix-sys
 ./usr/man/man1/wait.1			minix-sys
 ./usr/man/man1/wc.1			minix-sys
 ./usr/man/man1/what.1			minix-sys
@@ -4696,6 +4706,7 @@
 ./usr/man/man5/ftpchroot.5				minix-sys
 ./usr/man/man5/ftpd.conf.5				minix-sys
 ./usr/man/man5/ftpusers.5				minix-sys
+./usr/man/man5/gettytab.5				minix-sys
 ./usr/man/man5/group.5					minix-sys
 ./usr/man/man5/hosts.5					minix-sys
 ./usr/man/man5/httpd.conf.5					minix-sys
@@ -4724,6 +4735,7 @@
 ./usr/man/man5/termcap.5					minix-sys
 ./usr/man/man5/terminfo.5					minix-sys
 ./usr/man/man5/texinfo.5		minix-sys
+./usr/man/man5/ttys.5				minix-sys
 ./usr/man/man5/ttytab.5					minix-sys
 ./usr/man/man5/TZ.5					minix-sys
 ./usr/man/man5/tzfile.5					minix-sys
@@ -4863,7 +4875,7 @@
 ./usr/sbin/groupmod			minix-sys
 ./usr/sbin/i2cscan			minix-sys
 ./usr/sbin/inet				minix-sys
-./usr/sbin/init				minix-sys
+./usr/sbin/init				minix-sys	obsolete
 ./usr/sbin/installboot_nbsd		minix-sys
 ./usr/sbin/ipc				minix-sys
 ./usr/sbin/kernel			minix-sys

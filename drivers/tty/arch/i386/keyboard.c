@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <sys/kbdio.h>
 #include <sys/time.h>
+#include <sys/reboot.h>
 #include <sys/select.h>
 #include <termios.h>
 #include <signal.h>
@@ -18,7 +19,6 @@
 #include <minix/com.h>
 #include <minix/input.h>
 #include <minix/keymap.h>
-#include <minix/reboot.h>
 #include <minix/ds.h>
 #include <assert.h>
 #include "tty.h"
@@ -295,7 +295,7 @@ static unsigned make_break(int scode)
   {
 	if (++CAD_count == 3) {
 		cons_stop();
-		sys_abort(RBT_DEFAULT);
+		sys_abort(RB_AUTOBOOT);
 	}
 	sys_kill(INIT_PROC_NR, SIGABRT);
 	rebooting = 1;

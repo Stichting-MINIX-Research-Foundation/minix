@@ -11,7 +11,7 @@
 #include <minix/com.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <minix/reboot.h>
+#include <sys/reboot.h>
 #include <machine/partition.h>
 #include "string.h"
 #include "arch_proto.h"
@@ -246,6 +246,6 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 }
 
 void send_diag_sig(void) { }
-void minix_shutdown(minix_timer_t *t) { arch_shutdown(RBT_PANIC); }
+void minix_shutdown(minix_timer_t *t) { arch_shutdown(0); }
 void busy_delay_ms(int x) { }
 int raise(int sig) { panic("raise(%d)\n", sig); }
