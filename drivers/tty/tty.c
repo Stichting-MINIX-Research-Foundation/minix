@@ -700,6 +700,10 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	if (isconsole(tp)) r = con_loadfont(endpt, grant);
 	break;
 
+    case TIOCSCTTY:
+	tp->tty_pgrp = user_endpt;
+	break;
+	
 /* These Posix functions are allowed to fail if _POSIX_JOB_CONTROL is 
  * not defined.
  */

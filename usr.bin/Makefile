@@ -14,6 +14,7 @@ SUBDIR= asa \
 	fsplit ftp genassym getopt \
 	head hexdump indent infocmp join \
 	lam ldd leave \
+	last \
 	lock login logname lorder m4 \
 	machine make man mesg \
 	mkdep mkstr mktemp \
@@ -31,8 +32,8 @@ SUBDIR= asa \
 	uname uniq units unvis unzip users \
 	uuidgen vis \
 	uniq uname units unzip users \
+	wall wc what whatis who whois \
 	\
-	wc what whatis who whois \
 	write xargs xinstall xstr yes
 
 .if !defined(__MINIX)
