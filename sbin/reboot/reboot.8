@@ -1,0 +1,168 @@
+.\"	$NetBSD: reboot.8,v 1.29 2011/02/16 19:32:26 wiz Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)reboot.8	8.1 (Berkeley) 6/9/93
+.\"
+.Dd February 16, 2011
+.Dt REBOOT 8
+.Os
+.Sh NAME
+.Nm reboot ,
+.Nm poweroff ,
+.Nm halt
+.Nd restarting, powering down and stopping the system
+.Sh SYNOPSIS
+.Nm halt
+.Op Fl dlnpqvxz
+.Nm poweroff
+.Op Fl dlnqvxz
+.Nm
+.Op Fl dlnqvxz
+.Op Ar arg ...
+.Sh DESCRIPTION
+The
+.Nm poweroff ,
+.Nm halt
+and
+.Nm
+utilities flush the file system cache to disk, send all running processes
+a
+.Dv SIGTERM ,
+wait for up to 30 seconds for them to die, send a
+.Dv SIGKILL
+to the survivors and, respectively, power down, halt or restart the system.
+The action is logged, including entering a shutdown record into the login
+accounting file and sending a message via
+.Xr syslog 3 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Create a dump before halting or restarting.
+This option is useful for debugging system dump procedures or
+capturing the state of a corrupted or misbehaving system.
+.It Fl l
+Suppress sending a message via
+.Xr syslog 3
+before halting or restarting.
+.It Fl n
+Do not flush the file system cache.
+This option should be used with extreme caution.
+It can be used if a disk or a processor is on fire.
+.It Fl p
+Attempt to powerdown the system.
+If the powerdown fails, or the system does not support
+software powerdown, the system will halt.
+This option is only valid for
+.Nm halt .
+.It Fl v
+To enable verbose messages on the console, pass the
+.Xr boothowto 9
+flag
+.Dv AB_VERBOSE
+to
+.Xr reboot 2 .
+.It Fl x
+To enable debugging messages on the console, pass the
+.Xr boothowto 9
+flag
+.Dv AB_DEBUG
+to
+.Xr reboot 2 .
+.It Fl z
+To silence some shutdown messages on the console, pass the
+.Xr boothowto 9
+flag
+.Dv AB_SILENT
+to
+.Xr reboot 2 .
+.It Fl q
+Do not give processes a chance to shut down before halting or restarting.
+This option should not normally be used.
+.El
+.Pp
+If there are any arguments passed to
+.Nm reboot
+they are concatenated with spaces and passed as
+.Fa bootstr
+to the
+.Xr reboot 2
+system call.
+The string is passed to the firmware on platforms that support it.
+.Pp
+Normally, the
+.Xr shutdown 8
+utility is used when the system needs to be halted or restarted, giving
+users advance warning of their impending doom.
+.Sh SEE ALSO
+.Xr reboot 2 ,
+.Xr syslog 3 ,
+.Xr utmp 5 ,
+.Xr boot 8 ,
+.Xr init 8 ,
+.Xr rescue 8 ,
+.Xr shutdown 8 ,
+.Xr sync 8
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v6 .
+.Pp
+The
+.Nm poweroff
+command first appeared in
+.Nx 1.5 .
+.Sh CAVEATS
+Once the command has begun its work, stopping it before it completes
+will probably result in a system so crippled it must be
+physically reset.
+To prevent premature termination, the command
+blocks many signals early in its execution.
+However, nothing can defend against deliberate attempts to evade this.
+.Pp
+This command will stop the system without running any
+.Xr shutdown 8
+scripts.
+Amongst other things, this means that swapping will not be
+disabled so that
+.Xr raid 4
+can shutdown cleanly.
+You should normally use
+.Xr shutdown 8
+unless you are running in single user mode.
+.Sh BUGS
+The single user shell will ignore the
+.Dv SIGTERM
+signal.
+To avoid waiting for the timeout when
+rebooting or halting from the single user shell, you have to
+.Ic exec reboot
+or
+.Ic exec halt .

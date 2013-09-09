@@ -376,8 +376,8 @@ int	 profil(char *, size_t, u_long, u_int);
 void	 psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
-#ifndef __minix
 int	 reboot(int, char *);
+#ifndef __minix
 int	 revoke(const char *);
 #endif
 int	 rresvport(int *);

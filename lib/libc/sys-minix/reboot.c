@@ -12,7 +12,7 @@
 #include <sys/reboot.h>
 #include <stdarg.h>
 
-int reboot(int how)
+int reboot(int how, char *bootstr)
 {
   message m;
 

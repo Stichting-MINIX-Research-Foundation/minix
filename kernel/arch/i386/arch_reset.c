@@ -8,7 +8,7 @@
 #include <machine/cpu.h>
 #include <minix/portio.h>
 #include <minix/cpufeature.h>
-#include <minix/reboot.h>
+#include <sys/reboot.h>
 #include <assert.h>
 #include <signal.h>
 #include <machine/vm.h>
@@ -134,30 +134,24 @@ __dead void arch_shutdown(int how)
 			;
 		reset();
 	}
-
-	switch (how) {
-		case RBT_HALT:
-			/* Hang */
-			for (; ; ) halt_cpu();
-			NOT_REACHABLE;
-			
-		case RBT_POWEROFF:
-			/* Power off if possible, hang otherwise */
-			poweroff();
-			NOT_REACHABLE;
-
-		default:
-		case RBT_DEFAULT:	
-		case RBT_REBOOT:
-		case RBT_RESET:
-			/* Reset the system by forcing a processor shutdown. 
-			 * First stop the BIOS memory test by setting a soft
-			 * reset flag.
-			 */
-			reset();
-			NOT_REACHABLE;
+		
+	if((how & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* Power off if possible, hang otherwise */
+		poweroff();
+		NOT_REACHABLE;
 	}
 
+	if(how & RB_HALT) {
+		/* Hang */
+		for (; ; ) halt_cpu();
+		NOT_REACHABLE;
+	}
+
+	/* Reset the system by forcing a processor shutdown. 
+	 * First stop the BIOS memory test by setting a soft
+	 * reset flag.
+	 */
+	reset();
 	NOT_REACHABLE;
 }
 

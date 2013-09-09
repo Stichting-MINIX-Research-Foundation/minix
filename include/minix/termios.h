@@ -152,6 +152,12 @@ int tcsetattr(int _filedes, int _opt_actions, const struct termios
 #define VLNEXT            12    /* cc_c[VLNEXT] (^V) */
 #define VDISCARD          13    /* cc_c[VDISCARD] (^O) */
 
+/* Non-functional additions */
+#define VDSUSP		14
+#define VWERASE		15
+#define VSTATUS		16
+#define VEOL2		17
+
 /* Extensions to baud rate settings. */
 #if defined(__minix) && defined(_NETBSD_SOURCE)
 #define B57600		0x0100	/* 57600 baud */
