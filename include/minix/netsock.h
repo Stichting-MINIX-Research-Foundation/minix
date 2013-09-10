@@ -5,6 +5,7 @@
 
 #include <minix/ipc.h>
 #include <minix/endpoint.h>
+#include <minix/chardriver.h>
 
 /*
  * User can set this variable to make the debugging output differ between
@@ -18,19 +19,21 @@ extern char * netsock_user_name;
 #define SOCK_TYPES	3
 
 struct socket;
+struct sock_req;
 
-typedef void (* sock_op_t)(struct socket *, message *);
-typedef void (* sock_op_io_t)(struct socket *, message *, int blk);
-typedef int (* sock_op_open_t)(struct socket *, message *);
+typedef int (* sock_op_opcl_t)(struct socket *);
+typedef int (* sock_op_io_t)(struct socket *, struct sock_req *, int blk);
+typedef int (* sock_op_select_t)(struct socket *, unsigned int);
+typedef int (* sock_op_select_reply_t)(struct socket *);
 
 struct sock_ops {
-	sock_op_open_t	open;
-	sock_op_t	close;
-	sock_op_io_t	read;
-	sock_op_io_t	write;
-	sock_op_io_t	ioctl;
-	sock_op_t	select;
-	sock_op_t	select_reply;
+	sock_op_opcl_t		open;
+	sock_op_opcl_t		close;
+	sock_op_io_t		read;
+	sock_op_io_t		write;
+	sock_op_io_t		ioctl;
+	sock_op_select_t	select;
+	sock_op_select_reply_t	select_reply;
 };
 
 struct recv_q {
@@ -63,6 +66,23 @@ struct recv_q {
 						SOCK_FLG_SEL_ERROR);	\
 } while (0)
 
+struct sock_req {
+	enum {
+		SOCK_REQ_READ,
+		SOCK_REQ_WRITE,
+		SOCK_REQ_IOCTL
+	}			type;
+	devminor_t		minor;
+	endpoint_t		endpt;
+	cp_grant_id_t		grant;
+	union {
+		size_t		size;	/* for SOCK_REQ_READ, SOCK_REQ_WRITE */
+		unsigned long	req;	/* for SOCK_REQ_IOCTL */
+	};
+	int			flags;
+	cdev_id_t		id;
+};
+
 struct socket {
 	int			type;
 	u32_t			flags;
@@ -71,9 +91,7 @@ struct socket {
 	struct sock_ops *	ops;
 	void *			buf;
 	size_t			buf_size;
-	message			mess; /* store the message which initiated the
-					 last operation on this socket in case
-					 we have to suspend the operation */
+	struct sock_req		req;
 	void *			shm;
 	size_t			shm_size;
 	endpoint_t		select_ep;
@@ -87,7 +105,7 @@ struct socket {
  * Each component needs to provide a method how to initially open a socket.
  * The rest is handled byt the socket library.
  */
-void socket_open(message * m);
+int socket_open(devminor_t minor);
 
 #define get_sock_num(x) ((long int) ((x) - socket))
 #define is_valid_sock_num(x) (x < MAX_SOCKETS)
@@ -103,16 +121,10 @@ extern struct socket socket[MAX_SOCKETS];
 void socket_request(message * m);
 void mq_process(void);
 
-
 struct socket * get_unused_sock(void);
 struct socket * get_nic_sock(unsigned dev);
 
-void send_reply(message * m, int status);
-void send_reply_open(message * m, int status);
-void send_reply_close(message * m, int status);
-void sock_reply(struct socket * sock, int status);
-void sock_reply_close(struct socket * sock, int status);
-void sock_reply_select(struct socket * sock, unsigned selops);
+void send_req_reply(struct sock_req * req, int status);
 
 typedef void (* recv_data_free_fn)(void *);
 
@@ -139,10 +151,8 @@ static inline void * debug_malloc(size_t s)
 	free(x);								\
 } while(0)
 
-void generic_op_select(struct socket * sock, message * m);
-void generic_op_select_reply(struct socket * sock, message * m);
-
-int mq_enqueue(message * m);
+int generic_op_select(struct socket * sock, unsigned int sel);
+int generic_op_select_reply(struct socket * sock);
 
 /* a function thr user has to provide to reply to the posix server */
 void posix_reply(endpoint_t ep, message * m);

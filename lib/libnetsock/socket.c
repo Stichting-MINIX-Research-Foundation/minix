@@ -46,7 +46,7 @@ struct socket socket[MAX_SOCKETS];
 #define recv_q_free	debug_free
 
 struct mq {
-	message		m;
+	struct sock_req	req;
 	struct mq *	prev;
 	struct mq *	next;
 };
@@ -56,18 +56,18 @@ struct mq {
 
 static struct mq * mq_head, *mq_tail;
 
-int mq_enqueue(message * m)
+int mq_enqueue(struct sock_req * req)
 {
 	struct mq * mq;
 
-	debug_sock_print("sock %d op %d", m->DEVICE, m->m_type);
+	debug_sock_print("sock %d op %d", req->minor, req->type);
 	mq = mq_alloc();
 
 	if (mq == NULL)
 		return -1;
 
 	mq->next = NULL;
-	mq->m = *m;
+	mq->req = *req;
 
 	if (mq_head) {
 		mq->prev = mq_tail;
@@ -97,7 +97,7 @@ __unused static struct mq * mq_dequeue_head(void)
 	} else
 		mq_head = mq_tail = NULL;
 
-	debug_sock_print("socket %d\n", ret->m.DEVICE);
+	debug_sock_print("socket %d\n", ret->req.minor);
 
 	return ret;
 }
@@ -120,15 +120,14 @@ static void mq_dequeue(struct mq * mq)
 	}
 }
 
-static int mq_cancel(message * m)
+static int mq_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
 	struct mq * mq;
 
 	for (mq = mq_tail; mq; mq = mq->prev) {
-		if (m->DEVICE == mq->m.DEVICE &&
-				m->USER_ENDPT == mq->m.USER_ENDPT &&
-				m->IO_GRANT == mq->m.IO_GRANT) {
-			debug_sock_print("socket %d\n", mq->m.DEVICE);
+		if (minor == mq->req.minor && endpt == mq->req.endpt &&
+				id == mq->req.id) {
+			debug_sock_print("socket %d\n", minor);
 			break;
 		}
 	}
@@ -138,6 +137,7 @@ static int mq_cancel(message * m)
 		mq_free(mq);
 	}
 
+	/* FIXME: shouldn't this return (!!mq) ? */
 	return 1;
 }
 
@@ -203,7 +203,7 @@ static void set_reply_msg(message * m, int status)
 	m->REP_IO_GRANT= ref;
 }
 
-void send_reply_type(message * m, int type, int status)
+static void send_reply_type(message * m, int type, int status)
 {
 	int result;
 
@@ -215,25 +215,44 @@ void send_reply_type(message * m, int type, int status)
 		netsock_panic("unable to send (err %d)", result);
 }
 
-void send_reply(message * m, int status)
+void send_req_reply(struct sock_req * req, int status)
+{
+	message m;
+	int result;
+
+	if (status == EDONTREPLY)
+		return;
+
+	m.m_type = DEV_REVIVE;
+	m.REP_STATUS = status;
+	m.REP_ENDPT = req->endpt; /* FIXME: HACK */
+	m.REP_IO_GRANT = req->id;
+
+	result = send(req->endpt, &m);
+	if (result != OK)
+		netsock_panic("unable to send (err %d)", result);
+}
+
+static void send_reply(message * m, int status)
 {
 	debug_sock_print("status %d", status);
 	send_reply_type(m, DEV_REVIVE, status);
 }
 
-void send_reply_open(message * m, int status)
+static void send_reply_open(message * m, int status)
 {
 	debug_sock_print("status %d", status);
 	send_reply_type(m, DEV_OPEN_REPL, status);
 }
 
-void send_reply_close(message * m, int status)
+static void send_reply_close(message * m, int status)
 {
 	debug_sock_print("status %d", status);
 	send_reply_type(m, DEV_CLOSE_REPL, status);
 }
 
-void sock_reply_select(struct socket * sock, unsigned selops)
+static void sock_reply_select(struct socket * sock, endpoint_t endpt,
+	unsigned selops)
 {
 	int result;
 	message msg;
@@ -244,7 +263,7 @@ void sock_reply_select(struct socket * sock, unsigned selops)
 	msg.DEV_MINOR = get_sock_num(sock);
 	msg.DEV_SEL_OPS = selops;
 
-	result = send(sock->select_ep, &msg);
+	result = send(endpt, &msg);
 	if (result != OK)
 		netsock_panic("unable to send (err %d)", result);
 }
@@ -257,8 +276,7 @@ void sock_select_notify(struct socket * sock)
 	debug_sock_select_print("socket num %ld", get_sock_num(sock));
 	assert(sock->select_ep != NONE);
 
-	msg.DEV_SEL_OPS = 0;
-	sock->ops->select_reply(sock, &msg);
+	msg.DEV_SEL_OPS = sock->ops->select_reply(sock);
 	if (msg.DEV_SEL_OPS == 0) {
 		debug_sock_select_print("called from %p sflags 0x%x TXsz %d RXsz %d\n",
 				__builtin_return_address(0), sock->flags,
@@ -279,25 +297,6 @@ void sock_select_notify(struct socket * sock)
 	sock->select_ep = NONE;
 }
 
-static void sock_reply_type(struct socket * sock, int type, int status)
-{
-	sock->mess.m_type = type;
-
-	send_reply_type(&sock->mess, type, status);
-}
-
-void sock_reply_close(struct socket * sock, int status)
-{
-	debug_sock_print("sock %ld status %d", get_sock_num(sock), status);
-	sock_reply_type(sock, DEV_CLOSE_REPL, status);
-}
-
-void sock_reply(struct socket * sock, int status)
-{
-	debug_sock_print("sock %ld status %d", get_sock_num(sock), status);
-	sock_reply_type(sock, DEV_REVIVE, status);
-}
-
 struct socket * get_unused_sock(void)
 {
 	int i;
@@ -313,51 +312,56 @@ struct socket * get_unused_sock(void)
 	return NULL;
 }
 
-static void socket_request_socket(struct socket * sock, message * m)
+static int socket_request_socket(struct socket * sock, struct sock_req * req)
 {
-	int blocking = m->FLAGS & FLG_OP_NONBLOCK ? 0 : 1;
+	int r, blocking = req->flags & FLG_OP_NONBLOCK ? 0 : 1;
 
-	switch (m->m_type) {
-	case DEV_READ_S:
+	switch (req->type) {
+	case SOCK_REQ_READ:
 		if (sock->ops && sock->ops->read)
-			sock->ops->read(sock, m, blocking);
+			r = sock->ops->read(sock, req, blocking);
 		else
-			send_reply(m, EINVAL);
-		return;
-	case DEV_WRITE_S:
+			r = EINVAL;
+		break;
+	case SOCK_REQ_WRITE:
 		if (sock->ops && sock->ops->write)
-			sock->ops->write(sock, m, blocking);
+			r = sock->ops->write(sock, req, blocking);
 		else
-			send_reply(m, EINVAL);
-		return;
-	case DEV_IOCTL_S:
+			r = EINVAL;
+		break;
+	case SOCK_REQ_IOCTL:
 		if (sock->ops && sock->ops->ioctl)
-			sock->ops->ioctl(sock, m, blocking);
+			r = sock->ops->ioctl(sock, req, blocking);
 		else
-			send_reply(m, EINVAL);
-		return;
+			r = EINVAL;
+		break;
 	default:
 		netsock_panic("cannot happen!");
 	}
+
+	return r;
 }
 
 void socket_request(message * m)
 {
 	struct socket * sock;
+	struct sock_req req;
+	int r;
 
 	debug_sock_print("request %d", m->m_type);
 	switch (m->m_type) {
 	case DEV_OPEN:
-		socket_open(m);
+		r = socket_open(m->DEVICE);
+		send_reply_open(m, r);
 		return;
 	case DEV_CLOSE:
 		sock = get_sock(m->DEVICE);
 		if (sock->ops && sock->ops->close) {
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
-			sock->mess = *m;
-			sock->ops->close(sock, m);
+			r = sock->ops->close(sock);
 		} else
-			send_reply_close(m, EINVAL);
+			r = EINVAL;
+		send_reply_close(m, r);
 		return;
 	case DEV_READ_S:
 	case DEV_WRITE_S:
@@ -366,6 +370,24 @@ void socket_request(message * m)
 		if (!sock) {
 			send_reply(m, EINVAL);
 			return;
+		}
+		/* Build a request record for this request. */
+		req.minor = m->DEVICE;
+		req.endpt = m->m_source;
+		req.grant = (cp_grant_id_t) m->IO_GRANT;
+		req.id = (cdev_id_t) m->IO_GRANT;
+		req.flags = m->FLAGS;
+		switch (m->m_type) {
+		case DEV_READ_S:
+		case DEV_WRITE_S:
+			req.type = (m->m_type == DEV_READ_S) ?
+				SOCK_REQ_READ : SOCK_REQ_WRITE;
+			req.size = m->COUNT;
+			break;
+		case DEV_IOCTL_S:
+			req.type = SOCK_REQ_IOCTL;
+			req.req = m->REQUEST;
+			break;
 		}
 		/*
 		 * If an operation is pending (blocking operation) or writing is
@@ -383,33 +405,32 @@ void socket_request(message * m)
 				o = "non R/W op";
 			debug_sock_print("socket %ld is busy by %s flgs 0x%x\n",
 					get_sock_num(sock), o, sock->flags);
-			if (mq_enqueue(m) != 0) {
+			if (mq_enqueue(&req) != 0) {
 				debug_sock_print("Enqueuing suspended "
 							"call failed");
 				send_reply(m, ENOMEM);
 			}
 			return;
 		}
-		sock->mess = *m;
-		socket_request_socket(sock, m);
+		sock->req = req;
+		r = socket_request_socket(sock, &req);
+		send_req_reply(&req, r);
 		return;
 	case CANCEL:
 		sock = get_sock(m->DEVICE);
 		printf("socket num %ld\n", get_sock_num(sock));
 		debug_sock_print("socket num %ld", get_sock_num(sock));
 		/* Cancel the last operation in the queue */
-		if (mq_cancel(m)) {
+		if (mq_cancel(m->DEVICE, m->m_source,
+				(cdev_id_t) m->IO_GRANT)) {
 			send_reply(m, EINTR);
-			return;
 		/* ... or a blocked read */
 		} else if (sock->flags & SOCK_FLG_OP_PENDING &&
 				sock->flags & SOCK_FLG_OP_READING) {
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			send_reply(m, EINTR);
-			return;
-		} else
-			netsock_panic("no operation to cancel");
-
+		}
+		/* The request may not be found. This is OK. Do not reply. */
 		return;
 	case DEV_SELECT:
 		/*
@@ -421,11 +442,13 @@ void socket_request(message * m)
 
 		if (sock->ops && sock->ops->select) {
 			sock->select_ep = m->m_source;
-			sock->ops->select(sock, m);
+			r = sock->ops->select(sock, m->DEV_SEL_OPS);
 			if (!sock_select_set(sock))
 				sock->select_ep = NONE;
 		} else
-			send_reply(m, EINVAL);
+			r = EINVAL;
+
+		sock_reply_select(sock, m->m_source, r);
 		return;
 	default:
 		netsock_error("unknown message from VFS, type %d\n",
@@ -438,20 +461,22 @@ void mq_process(void)
 {
 	struct mq * mq;
 	struct socket * sock;
+	int r;
 
 	mq = mq_head;
 
 	while(mq) {
 		struct mq * next = mq->next;
 
-		sock = get_sock(mq->m.DEVICE);
+		sock = get_sock(mq->req.minor);
 		if (!(sock->flags & SOCK_FLG_OP_PENDING) &&
-				!(mq->m.m_type == DEV_READ_S &&
+				!(mq->req.type == SOCK_REQ_READ &&
 					sock->flags & SOCK_FLG_OP_WRITING)) {
 			debug_sock_print("resuming op on sock %ld\n",
 					get_sock_num(sock));
-			sock->mess = mq->m;
-			socket_request_socket(sock, &sock->mess);
+			sock->req = mq->req;
+			r = socket_request_socket(sock, &sock->req);
+			send_req_reply(&sock->req, r);
 			mq_dequeue(mq);
 			mq_free(mq);
 			return;
@@ -461,13 +486,11 @@ void mq_process(void)
 	}
 }
 
-void generic_op_select(struct socket * sock, message * m)
+int generic_op_select(struct socket * sock, unsigned int sel)
 {
-	int retsel = 0, sel;
+	int retsel = 0;
 
-	debug_sock_print("socket num %ld 0x%x", get_sock_num(sock), m->USER_ENDPT);
-
-	sel = m->USER_ENDPT;
+	debug_sock_print("socket num %ld 0x%x", get_sock_num(sock), sel);
 
 	/* in this case any operation would block, no error */
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
@@ -478,8 +501,7 @@ void generic_op_select(struct socket * sock, message * m)
 				sock->flags |= SOCK_FLG_SEL_WRITE;
 			/* FIXME we do not monitor error */
 		}
-		sock_reply_select(sock, 0);
-		return;
+		return 0;
 	}
 
 	if (sel & SEL_RD) {
@@ -493,11 +515,13 @@ void generic_op_select(struct socket * sock, message * m)
 		retsel |= SEL_WR;
 	/* FIXME SEL_ERR is ignored, we do not generate exceptions */
 
-	sock_reply_select(sock, retsel);
+	return retsel;
 }
 
-void generic_op_select_reply(struct socket * sock, __unused message * m)
+int generic_op_select_reply(struct socket * sock)
 {
+	unsigned int sel = 0;
+
 	assert(sock->select_ep != NONE);
 	debug_sock_print("socket num %ld", get_sock_num(sock));
 
@@ -506,13 +530,15 @@ void generic_op_select_reply(struct socket * sock, __unused message * m)
 
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		debug_sock_print("WARNING socket still blocking!");
-		return;
+		return 0;
 	}
 
 	if (sock->flags & SOCK_FLG_SEL_READ && sock->recv_head)
-		m->DEV_SEL_OPS |= SEL_RD;
+		sel |= SEL_RD;
 
-	if (m->DEV_SEL_OPS)
+	if (sel)
 		sock->flags &= ~(SOCK_FLG_SEL_WRITE | SOCK_FLG_SEL_READ |
 							SOCK_FLG_SEL_ERROR);
+
+	return sel;
 }
