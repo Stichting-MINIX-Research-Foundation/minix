@@ -39,7 +39,7 @@ int getsockopt(int sock, int level, int option_name,
 	struct sockaddr_un uds_addr;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -51,7 +51,7 @@ int getsockopt(int sock, int level, int option_name,
 	}
 
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -63,7 +63,7 @@ int getsockopt(int sock, int level, int option_name,
 	}
 
 	r= ioctl(sock, NWIOGUDSADDR, &uds_addr);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
