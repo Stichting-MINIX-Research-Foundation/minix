@@ -48,7 +48,7 @@ static u32_t trace_gettime(void)
 /*===========================================================================*
  *				trace_ctl				     *
  *===========================================================================*/
-int trace_ctl(dev_t minor, unsigned int request, endpoint_t endpt,
+int trace_ctl(dev_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 /* Process a block trace control request.
@@ -195,7 +195,7 @@ void trace_start(thread_id_t id, message *m_ptr)
   switch (m_ptr->m_type) {
   case BDEV_OPEN:
   case BDEV_CLOSE:
-	pos = ((u64_t)(0));
+	pos = 0;
 	size = m_ptr->BDEV_ACCESS;
 	flags = 0;
 
@@ -212,7 +212,7 @@ void trace_start(thread_id_t id, message *m_ptr)
 	break;
 
   case BDEV_IOCTL:
-	pos = ((u64_t)(0));
+	pos = 0;
 	size = m_ptr->BDEV_REQUEST;
 	flags = 0;
 

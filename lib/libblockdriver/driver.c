@@ -4,29 +4,29 @@
  * Field names are prefixed with BDEV_. Separate field names are used for the
  * "access", "request", and "user" fields.
  *
- *    m_type        MINOR     COUNT     GRANT   FLAGS    ID   POS_LO POS_HI
- * +--------------+--------+----------+-------+-------+------+------+------+
- * | BDEV_OPEN    | minor  |  access  |       |       |  id  |      |      |
- * |--------------+--------+----------+-------+-------+------+------+------|
- * | BDEV_CLOSE   | minor  |          |       |       |  id  |      |      |
- * |--------------+--------+----------+-------+-------+------+------+------|
- * | BDEV_READ    | minor  |  bytes   | grant | flags |  id  |  position   |
- * |--------------+--------+----------+-------+-------+------+------+------|
- * | BDEV_WRITE   | minor  |  bytes   | grant | flags |  id  |  position   |
- * |--------------+--------+----------+-------+-------+------+------+------|
- * | BDEV_GATHER  | minor  | elements | grant | flags |  id  |  position   |
- * |--------------+--------+----------+-------+-------+------+------+------|
- * | BDEV_SCATTER | minor  | elements | grant | flags |  id  |  position   |
- * |--------------+--------+----------+-------+-------+------+------+------|
- * | BDEV_IOCTL   | minor  | request  | grant | user  |  id  |      |      |
- * -------------------------------------------------------------------------
+ *    m_type        MINOR     COUNT     GRANT   FLAGS    ID    POS_LO   POS_HI
+ * +--------------+--------+----------+-------+-------+------+---------+------+
+ * | BDEV_OPEN    | minor  |  access  |       |       |  id  |         |      |
+ * |--------------+--------+----------+-------+-------+------+---------+------|
+ * | BDEV_CLOSE   | minor  |          |       |       |  id  |         |      |
+ * |--------------+--------+----------+-------+-------+------+---------+------|
+ * | BDEV_READ    | minor  |  bytes   | grant | flags |  id  |     position   |
+ * |--------------+--------+----------+-------+-------+------+---------+------|
+ * | BDEV_WRITE   | minor  |  bytes   | grant | flags |  id  |     position   |
+ * |--------------+--------+----------+-------+-------+------+---------+------|
+ * | BDEV_GATHER  | minor  | elements | grant | flags |  id  |     position   |
+ * |--------------+--------+----------+-------+-------+------+---------+------|
+ * | BDEV_SCATTER | minor  | elements | grant | flags |  id  |     position   |
+ * |--------------+--------+----------+-------+-------+------+---------+------|
+ * | BDEV_IOCTL   | minor  |          | grant | user  |  id  | request |      |
+ * ----------------------------------------------------------------------------
  *
  * The following reply message is used for all requests.
  *
  *    m_type        STATUS				 ID
- * +--------------+--------+----------+-------+-------+------+------+------+
- * | BDEV_REPLY   | status |          |       |       |  id  |      |      |
- * -------------------------------------------------------------------------
+ * +--------------+--------+----------+-------+-------+------+---------+------+
+ * | BDEV_REPLY   | status |          |       |       |  id  |         |      |
+ * ----------------------------------------------------------------------------
  *
  * Changes:
  *   Oct 16, 2011   split character and block protocol  (D.C. van Moolenbroek)
@@ -263,7 +263,7 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
  *				do_dioctl				     *
  *===========================================================================*/
 static int do_dioctl(struct blockdriver *bdp, dev_t minor,
-  unsigned int request, endpoint_t endpt, cp_grant_id_t grant)
+  unsigned long request, endpoint_t endpt, cp_grant_id_t grant)
 {
 /* Carry out a disk-specific I/O control request. */
   struct device *dv;
@@ -318,7 +318,7 @@ static int do_ioctl(struct blockdriver *bdp, message *mp)
  * has specified that it is a disk driver.
  */
   dev_t minor;
-  unsigned int request;
+  unsigned long request;
   cp_grant_id_t grant;
   endpoint_t user_endpt;
   int r;
