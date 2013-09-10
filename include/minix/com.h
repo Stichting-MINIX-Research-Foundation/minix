@@ -198,7 +198,6 @@
 #define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
 #define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
-#define DEV_REOPEN     	(DEV_RQ_BASE + 14) /* reopen a minor device */
 
 #define DEV_READ_S	(DEV_RQ_BASE + 20) /* (safecopy) read from minor */
 #define DEV_WRITE_S   	(DEV_RQ_BASE + 21) /* (safecopy) write to minor */
@@ -209,7 +208,6 @@
 #define IS_DEV_RQ(type) (((type) & ~0xff) == DEV_RQ_BASE)
 
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
-#define DEV_REOPEN_REPL (DEV_RS_BASE + 5) /* reply to DEV_REOPEN */
 #define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
 #define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
 #define DEV_SEL_REPL2	(DEV_RS_BASE + 8) /* (opt) second reply to DEV_SELECT */

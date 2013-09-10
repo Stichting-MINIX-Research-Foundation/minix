@@ -105,11 +105,9 @@ static int create_pipe(int fil_des[2], int flags)
 	return(r);
   }
   rfp->fp_filp[fil_des[0]] = fil_ptr0;
-  FD_SET(fil_des[0], &rfp->fp_filp_inuse);
   fil_ptr0->filp_count = 1;		/* mark filp in use */
   if ((r = get_fd(fp, 0, W_BIT, &fil_des[1], &fil_ptr1)) != OK) {
 	rfp->fp_filp[fil_des[0]] = NULL;
-	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;	/* mark filp free */
 	unlock_filp(fil_ptr0);
 	unlock_vnode(vp);
@@ -117,7 +115,6 @@ static int create_pipe(int fil_des[2], int flags)
 	return(r);
   }
   rfp->fp_filp[fil_des[1]] = fil_ptr1;
-  FD_SET(fil_des[1], &rfp->fp_filp_inuse);
   fil_ptr1->filp_count = 1;
 
   /* Create a named pipe inode on PipeFS */
@@ -126,10 +123,8 @@ static int create_pipe(int fil_des[2], int flags)
 
   if (r != OK) {
 	rfp->fp_filp[fil_des[0]] = NULL;
-	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;
 	rfp->fp_filp[fil_des[1]] = NULL;
-	FD_CLR(fil_des[1], &rfp->fp_filp_inuse);
 	fil_ptr1->filp_count = 0;
 	unlock_filp(fil_ptr1);
 	unlock_filp(fil_ptr0);
@@ -332,9 +327,6 @@ void suspend(int why)
   fp->fp_blocked_on = why;
   assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
   fp->fp_block_callnr = job_call_nr;
-  fp->fp_flags &= ~FP_SUSP_REOPEN;		/* Clear this flag. The caller
-						 * can set it when needed.
-						 */
 }
 
 /*===========================================================================*
@@ -381,7 +373,7 @@ void unsuspend_by_endpt(endpoint_t proc_e)
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
 	if (rp->fp_pid == PID_FREE) continue;
 	if (rp->fp_blocked_on == FP_BLOCKED_ON_OTHER && rp->fp_task == proc_e)
-		revive(rp->fp_endpoint, EAGAIN);
+		revive(rp->fp_endpoint, EIO);
   }
 
   /* Revive processes waiting in drivers on select()s with EAGAIN too */
@@ -436,8 +428,8 @@ int count;			/* max number of processes to release */
 		if (rp->fp_blocked_on == FP_BLOCKED_ON_POPEN ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_LOCK ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_OTHER) {
-			if (!FD_ISSET(scratch(rp).file.fd_nr,
-							&rp->fp_filp_inuse))
+			f = rp->fp_filp[scratch(rp).file.fd_nr];
+			if (f == NULL || f->filp_mode == FILP_CLOSED)
 				continue;
 			if (rp->fp_filp[scratch(rp).file.fd_nr]->filp_vno != vp)
 				continue;
@@ -570,15 +562,6 @@ void unpause(void)
 		break;
 
 	case FP_BLOCKED_ON_OTHER:/* process trying to do device I/O (e.g. tty)*/
-		if (fp->fp_flags & FP_SUSP_REOPEN) {
-			/* Process is suspended while waiting for a reopen.
-			 * Just reply EINTR.
-			 */
-			fp->fp_flags &= ~FP_SUSP_REOPEN;
-			status = EINTR;
-			break;
-		}
-
 		fild = scratch(fp).file.fd_nr;
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic("file descriptor out-of-range");

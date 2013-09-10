@@ -8,7 +8,6 @@
 EXTERN struct filp {
   mode_t filp_mode;		/* RW bits, telling how file is opened */
   int filp_flags;		/* flags from open and fcntl */
-  int filp_state;		/* state for crash recovery */
   int filp_count;		/* how many file descriptors share this slot?*/
   struct vnode *filp_vno;	/* vnode belonging to this file */
   off_t filp_pos;		/* file position */
@@ -29,11 +28,7 @@ EXTERN struct filp {
   int filp_pipe_select_ops;
 } filp[NR_FILPS];
 
-#define FILP_CLOSED	0	/* filp_mode: associated device closed */
-
-#define FS_NORMAL	000	/* file descriptor can be used normally */
-#define FS_NEEDS_REOPEN	001	/* file descriptor needs to be re-opened */
-#define FS_INVALIDATED	002	/* file was invalidated */
+#define FILP_CLOSED	0	/* filp_mode: associated device closed/gone */
 
 #define FSF_UPDATE	001	/* The driver should be informed about new
 				 * state.

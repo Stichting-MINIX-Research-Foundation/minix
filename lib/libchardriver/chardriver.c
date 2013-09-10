@@ -228,12 +228,6 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
 	reply_mess.REP_STATUS = r;
 	break;
 
-  case DEV_REOPEN:
-	reply_mess.m_type = DEV_REOPEN_REPL;
-	reply_mess.REP_ENDPT = mess->USER_ENDPT;
-	reply_mess.REP_STATUS = r;
-	break;
-
   case DEV_CLOSE:
 	reply_mess.m_type = DEV_CLOSE_REPL;
 	reply_mess.REP_ENDPT = mess->USER_ENDPT;
@@ -266,7 +260,7 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-static int do_open(struct chardriver *cdp, message *m_ptr, int is_reopen)
+static int do_open(struct chardriver *cdp, message *m_ptr)
 {
 /* Open a minor device. */
   endpoint_t user_endpt;
@@ -280,7 +274,7 @@ static int do_open(struct chardriver *cdp, message *m_ptr, int is_reopen)
   /* Call the open hook. */
   minor = m_ptr->DEVICE;
   access = m_ptr->COUNT;
-  user_endpt = is_reopen ? NONE : m_ptr->USER_ENDPT; /* XXX FIXME */
+  user_endpt = m_ptr->USER_ENDPT;
 
   r = cdp->cdr_open(minor, access, user_endpt);
 
@@ -481,7 +475,7 @@ void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
    */
   if (IS_DEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
 	/* Ignore spurious requests for unopened devices. */
-	if (m_ptr->m_type != DEV_OPEN && m_ptr->m_type != DEV_REOPEN)
+	if (m_ptr->m_type != DEV_OPEN)
 		return; /* do not send a reply */
 
 	/* Mark the device as opened otherwise. */
@@ -490,8 +484,7 @@ void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
 
   /* Call the appropriate function(s) for this request. */
   switch (m_ptr->m_type) {
-  case DEV_OPEN:	r = do_open(cdp, m_ptr, FALSE);		break;
-  case DEV_REOPEN:	r = do_open(cdp, m_ptr, TRUE);		break;
+  case DEV_OPEN:	r = do_open(cdp, m_ptr);		break;
   case DEV_CLOSE:	r = do_close(cdp, m_ptr);		break;
   case DEV_READ_S:	r = do_transfer(cdp, m_ptr, FALSE);	break;
   case DEV_WRITE_S:	r = do_transfer(cdp, m_ptr, TRUE);	break;

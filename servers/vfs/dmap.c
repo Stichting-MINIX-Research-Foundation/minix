@@ -359,7 +359,7 @@ void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 				worker = worker_get(dp->dmap_servicing);
 				worker_stop(worker);
 			}
-			cdev_up(major);
+			invalidate_filp_by_char_major(major);
 		}
 	}
   }

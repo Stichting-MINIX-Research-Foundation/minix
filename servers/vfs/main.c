@@ -389,7 +389,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 	/* Initialize process directories. mount_fs will set them to the
 	 * correct values.
 	 */
-	FD_ZERO(&(rfp->fp_filp_inuse));
+	for (i = 0; i < OPEN_MAX; i++)
+		rfp->fp_filp[i] = NULL;
 	rfp->fp_rd = NULL;
 	rfp->fp_wd = NULL;
   }
