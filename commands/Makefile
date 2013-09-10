@@ -24,7 +24,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	remsync rget rlogin \
 	rotate rsh rshd service setup shar \
 	sleep slip spell sprofalyze sprofdiff srccrc \
-	stty svclog svrctl swifi synctree sysenv \
+	svclog svrctl swifi synctree sysenv \
 	syslogd tail tcpd tcpdp tcpstat telnet \
 	telnetd term termcap tget time touch \
 	truncate udpstat umount \

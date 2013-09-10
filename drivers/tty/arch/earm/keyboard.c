@@ -1,6 +1,6 @@
 /* Keyboard unsupport for ARM. Just stubs. */
 #include <minix/ipc.h>
-#include <termios.h>
+#include <sys/termios.h>
 #include "tty.h"
 
 void

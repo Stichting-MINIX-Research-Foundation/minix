@@ -128,6 +128,8 @@ show_path(int sig)
 	extern FTSENT *g_entry;
 	int errno_bak;
 
+	write(STDERR_FILENO, "find path.\n", 11);
+
 	if (g_entry == NULL) {
 		/*
 		 * not initialized yet.

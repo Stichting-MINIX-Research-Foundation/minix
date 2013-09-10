@@ -18,6 +18,8 @@
 
 #include <minix/drivers.h>
 #include <termios.h>
+#include <assert.h>
+#include <sys/termios.h>
 #include <signal.h>
 #include "tty.h"
 

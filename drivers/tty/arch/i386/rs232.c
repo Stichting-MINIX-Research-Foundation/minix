@@ -5,7 +5,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <minix/drivers.h>
-#include <termios.h>
+#include <sys/termios.h>
 #include <signal.h>
 #include "tty.h"
 
@@ -29,6 +29,10 @@
 #define IS_IDBITS		6
 
 /* Line control bits. */
+#define LC_CS5               0x00	/* LSB0 and LSB1 encoding for CS5 */
+#define LC_CS6               0x01	/* LSB0 and LSB1 encoding for CS6 */
+#define LC_CS7               0x02	/* LSB0 and LSB1 encoding for CS7 */
+#define LC_CS8               0x03	/* LSB0 and LSB1 encoding for CS8 */
 #define LC_2STOP_BITS        0x04
 #define LC_PARITY            0x08
 #define LC_PAREVEN           0x10
@@ -191,7 +195,8 @@ static int rs_read(tty_t *tp, int try);
 static int rs_icancel(tty_t *tp, int try);
 static int rs_ocancel(tty_t *tp, int try);
 static void rs_ostart(rs232_t *rs);
-static int rs_break(tty_t *tp, int try);
+static int rs_break_on(tty_t *tp, int try);
+static int rs_break_off(tty_t *tp, int try);
 static int rs_close(tty_t *tp, int try);
 static void out_int(rs232_t *rs);
 static void rs232_handler(rs232_t *rs);
@@ -384,8 +389,19 @@ static void rs_config(rs232_t *rs)
 	line_controls |= LC_PARITY;
 	if (!(tp->tty_termios.c_cflag & PARODD)) line_controls |= LC_PAREVEN;
   }
+
   if (divisor >= (UART_FREQ / 110)) line_controls |= LC_2STOP_BITS;
-  line_controls |= (tp->tty_termios.c_cflag & CSIZE) >> 2;
+
+  /* which word size is configured? set the bits explicitly. */
+  if((tp->tty_termios.c_cflag & CSIZE) == CS5)
+	line_controls |= LC_CS5;
+  else if((tp->tty_termios.c_cflag & CSIZE) == CS6)
+	line_controls |= LC_CS6;
+  else if((tp->tty_termios.c_cflag & CSIZE) == CS7)
+	line_controls |= LC_CS7;
+  else if((tp->tty_termios.c_cflag & CSIZE) == CS8)
+	line_controls |= LC_CS8;
+  else printf("rs232: warning: no known word size set\n");
 
   /* Select the baud rate divisor registers and change the rate. */
   sys_outb(rs->line_ctl_port, LC_ADDRESS_DIVISOR);
@@ -500,7 +516,8 @@ void rs_init(tty_t *tp)
   tp->tty_icancel = rs_icancel;
   tp->tty_ocancel = rs_ocancel;
   tp->tty_ioctl = rs_ioctl;
-  tp->tty_break = rs_break;
+  tp->tty_break_on = rs_break_on;
+  tp->tty_break_off = rs_break_off;
   tp->tty_close = rs_close;
 
   /* Tell external device we are ready. */
@@ -610,11 +627,11 @@ static void rs_ostart(rs232_t *rs)
 }
 
 /*===========================================================================*
- *				rs_break				     *
+ *				rs_break_on				     *
  *===========================================================================*/
-static int rs_break(tty_t *tp, int UNUSED(dummy))
+static int rs_break_on(tty_t *tp, int UNUSED(dummy))
 {
-/* Generate a break condition by setting the BREAK bit for 0.4 sec. */
+/* Raise break condition. */
   rs232_t *rs = tp->tty_priv;
   u32_t line_controls;
   int s;
@@ -622,10 +639,22 @@ static int rs_break(tty_t *tp, int UNUSED(dummy))
   if ((s = sys_inb(rs->line_ctl_port, &line_controls)) != OK)
 	printf("TTY: sys_inb() failed: %d", s);
   sys_outb(rs->line_ctl_port, line_controls | LC_BREAK);
-  /* XXX */
-  /* milli_delay(400); */				/* ouch */
-  printf("RS232 break\n");
-  sys_outb(rs->line_ctl_port, line_controls);
+  return 0;	/* dummy */
+}
+
+/*===========================================================================*
+ *				rs_break_off				     *
+ *===========================================================================*/
+static int rs_break_off(tty_t *tp, int UNUSED(dummy))
+{
+/* Clear break condition. */
+  rs232_t *rs = tp->tty_priv;
+  u32_t line_controls;
+  int s;
+
+  if ((s = sys_inb(rs->line_ctl_port, &line_controls)) != OK)
+	printf("TTY: sys_inb() failed: %d", s);
+  sys_outb(rs->line_ctl_port, line_controls & ~LC_BREAK);
   return 0;	/* dummy */
 }
 

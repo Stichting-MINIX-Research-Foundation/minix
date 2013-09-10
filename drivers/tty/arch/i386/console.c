@@ -18,10 +18,16 @@
 
 #include <minix/drivers.h>
 #include <termios.h>
+#include <assert.h>
 #include <sys/ioctl.h>
 #include <sys/vm.h>
 #include <sys/video.h>
 #include <sys/mman.h>
+#include <sys/termios.h>
+#include <minix/callnr.h>
+#include <minix/com.h>
+#include <minix/sys_config.h>
+#include <minix/vm.h>
 #include "tty.h"
 
 /* Set this to 1 if you want console output duplicated on the first
