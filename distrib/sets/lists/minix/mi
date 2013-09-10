@@ -5581,6 +5581,7 @@
 ./usr/tests/minix-posix/t40d		minix-sys
 ./usr/tests/minix-posix/t40e		minix-sys
 ./usr/tests/minix-posix/t40f		minix-sys
+./usr/tests/minix-posix/t40g		minix-sys
 ./usr/tests/minix-posix/t60a		minix-sys
 ./usr/tests/minix-posix/t60b		minix-sys
 ./usr/tests/minix-posix/t67a		minix-sys

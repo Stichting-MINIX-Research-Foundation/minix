@@ -55,10 +55,10 @@ static void restart_proc(struct selectentry *se);
 static void ops2tab(int ops, int fd, struct selectentry *e);
 static int is_regular_file(struct filp *f);
 static int is_pipe(struct filp *f);
-static int is_supported_major(struct filp *f);
+static int is_char_device(struct filp *f);
 static void select_lock_filp(struct filp *f, int ops);
 static int select_request_file(struct filp *f, int *ops, int block);
-static int select_request_major(struct filp *f, int *ops, int block);
+static int select_request_char(struct filp *f, int *ops, int block);
 static int select_request_pipe(struct filp *f, int *ops, int block);
 static void select_cancel_all(struct selectentry *e);
 static void select_cancel_filp(struct filp *f);
@@ -71,18 +71,11 @@ static struct fdtype {
 	int (*select_request)(struct filp *, int *ops, int block);
 	int (*type_match)(struct filp *f);
 } fdtypes[] = {
-	{ select_request_major, is_supported_major },
+	{ select_request_char, is_char_device },
 	{ select_request_file, is_regular_file },
 	{ select_request_pipe, is_pipe },
 };
 #define SEL_FDS		(sizeof(fdtypes) / sizeof(fdtypes[0]))
-static int select_majors[] = { /* List of majors that support selecting on */
-	TTY_MAJOR,
-	INET_MAJOR,
-	UDS_MAJOR,
-	LOG_MAJOR,
-};
-#define SEL_MAJORS	(sizeof(select_majors) / sizeof(select_majors[0]))
 
 /*===========================================================================*
  *				do_select				     *
@@ -197,9 +190,11 @@ int do_select(message *UNUSED(m_out))
 	 * TTY major and sockets by either INET major (socket type AF_INET) or
 	 * PFS major (socket type AF_UNIX). PFS acts as an FS when it handles
 	 * pipes and as a driver when it handles sockets. Additionally, we
-	 * support select on the LOG major to handle kernel logging, which is
-	 * beyond the POSIX spec. */
-
+	 * give other character drivers the chance to handle select for any of
+	 * their device nodes. Some may not implement support for select and
+	 * let libchardriver return EBADF, which we then pass to the calling
+	 * process once we receive the reply.
+	 */
 	se->type[fd] = -1;
 	for (type = 0; type < SEL_FDS; type++) {
 		if (fdtypes[type].type_match(f)) {
@@ -222,9 +217,21 @@ int do_select(message *UNUSED(m_out))
 	if (!(ops = tab2ops(fd, se)))
 		continue; /* No operations set; nothing to do for this fd */
 
+	/* File descriptors selected for reading that are not opened for
+	 * reading should be marked as readable, as read calls would fail
+	 * immediately. The same applies to writing.
+	 */
+	f = se->filps[fd];
+	if ((ops & SEL_RD) && !(f->filp_mode & R_BIT)) {
+		ops2tab(SEL_RD, fd, se);
+		ops &= ~SEL_RD;
+	}
+	if ((ops & SEL_WR) && !(f->filp_mode & W_BIT)) {
+		ops2tab(SEL_WR, fd, se);
+		ops &= ~SEL_WR;
+	}
 	/* Test filp for select operations if not already done so. e.g.,
 	 * processes sharing a filp and both doing a select on that filp. */
-	f = se->filps[fd];
 	if ((f->filp_select_ops & ops) != ops) {
 		int wantops;
 
@@ -235,7 +242,6 @@ int do_select(message *UNUSED(m_out))
 		unlock_filp(f);
 		if (r != OK && r != SUSPEND) {
 			se->error = r;
-			se->block = 0;	/* Stop blocking to return asap */
 			break; /* Error or bogus return code; abort */
 		}
 
@@ -250,20 +256,21 @@ int do_select(message *UNUSED(m_out))
   /* At this point there won't be any blocking calls anymore. */
   se->starting = FALSE;
 
-  if ((se->nreadyfds > 0 || !se->block) && !is_deferred(se)) {
-	/* fd's were found that were ready to go right away, and/or
-	 * we were instructed not to block at all. Must return
-	 * immediately.
+  if ((se->nreadyfds > 0 || se->error != OK || !se->block) &&
+		!is_deferred(se)) {
+	/* An error occurred, or fd's were found that were ready to go right
+	 * away, and/or we were instructed not to block at all. Must return
+	 * immediately. Do not copy FD sets if an error occurred.
 	 */
-	r = copy_fdsets(se, se->nfds, TO_PROC);
+	if (se->error != OK)
+		r = se->error;
+	else
+		r = copy_fdsets(se, se->nfds, TO_PROC);
 	select_cancel_all(se);
 	se->requestor = NULL;
 
 	if (r != OK)
 		return(r);
-	else if (se->error != OK)
-		return(se->error);
-
 	return(se->nreadyfds);
   }
 
@@ -335,35 +342,26 @@ static int is_pipe(struct filp *f)
 }
 
 /*===========================================================================*
- *				is_supported_major			     *
+ *				is_char_device				     *
  *===========================================================================*/
-static int is_supported_major(struct filp *f)
+static int is_char_device(struct filp *f)
 {
-/* See if this filp is a handle on a character device on which we support
- * select(). This function MUST NOT block its calling thread. The given filp
- * may or may not be locked.
+/* See if this filp is a handle on a character device. This function MUST NOT
+ * block its calling thread. The given filp may or may not be locked.
  */
-  unsigned int m;
 
-  if (!(f && f->filp_vno)) return(FALSE);
-  if (!S_ISCHR(f->filp_vno->v_mode)) return(FALSE);
-
-  for (m = 0; m < SEL_MAJORS; m++)
-	if (major(f->filp_vno->v_sdev) == select_majors[m])
-		return(TRUE);
-
-  return(FALSE);
+  return (f && f->filp_vno && S_ISCHR(f->filp_vno->v_mode));
 }
 
 /*===========================================================================*
- *				select_request_major			     *
+ *				select_request_char			     *
  *===========================================================================*/
-static int select_request_major(struct filp *f, int *ops, int block)
+static int select_request_char(struct filp *f, int *ops, int block)
 {
-/* Check readiness status on a supported character device. Unless suitable
- * results are available right now, this will only initiate the polling
- * process, causing result processing to be deferred. This function MUST NOT
- * block its calling thread. The given filp may or may not be locked.
+/* Check readiness status on a character device. Unless suitable results are
+ * available right now, this will only initiate the polling process, causing
+ * result processing to be deferred. This function MUST NOT block its calling
+ * thread. The given filp may or may not be locked.
  */
   int r, rops, major;
   struct dmap *dp;
@@ -450,12 +448,6 @@ static int select_request_pipe(struct filp *f, int *ops, int block)
 		r |= SEL_RD;
 	if (err < 0 && err != SUSPEND)
 		r |= SEL_ERR;
-	if (err == SUSPEND && !(f->filp_mode & R_BIT)) {
-		/* A "meaningless" read select, therefore ready
-		 * for reading and no error set. */
-		r |= SEL_RD;
-		r &= ~SEL_ERR;
-	}
   }
 
   if ((*ops & (SEL_WR|SEL_ERR))) {
@@ -467,12 +459,6 @@ static int select_request_pipe(struct filp *f, int *ops, int block)
 		r |= SEL_WR;
 	if (err < 0 && err != SUSPEND)
 		r |= SEL_ERR;
-	if (err == SUSPEND && !(f->filp_mode & W_BIT)) {
-		/* A "meaningless" write select, therefore ready
-                   for writing and no error set. */
-		r |= SEL_WR;
-		r &= ~SEL_ERR;
-	}
   }
 
   /* Some options we collected might not be requested. */
@@ -628,7 +614,7 @@ static void select_cancel_filp(struct filp *f)
 	 * character device, mark the query as stale, so that this filp will
 	 * not be checked when the result arrives.
 	 */
-	if (is_supported_major(f)) {
+	if (is_char_device(f)) {
 		major = major(f->filp_vno->v_sdev);
 		if (dmap[major].dmap_sel_busy &&
 			dmap[major].dmap_sel_filp == f)
@@ -645,18 +631,17 @@ static void select_return(struct selectentry *se)
 /* Return the results of a select call to the user process and revive the
  * process. This function MUST NOT block its calling thread.
  */
-  int r, r1;
+  int r;
 
   assert(!is_deferred(se));	/* Not done yet, first wait for async reply */
 
   select_cancel_all(se);
 
-  r1 = copy_fdsets(se, se->nfds, TO_PROC);
-  if (r1 != OK)
-	r = r1;
-  else if (se->error != OK)
+  if (se->error != OK)
 	r = se->error;
   else
+	r = copy_fdsets(se, se->nfds, TO_PROC);
+  if (r == OK)
 	r = se->nreadyfds;
 
   revive(se->req_endpt, r);
@@ -850,7 +835,7 @@ int status;
 	 */
 	if (!(f->filp_select_flags & (FSF_UPDATE|FSF_BLOCKED)))
 		f->filp_select_ops = 0;		/* done selecting */
-	else if (!(f->filp_select_flags & FSF_UPDATE))
+	else if (status > 0 && !(f->filp_select_flags & FSF_UPDATE))
 		/* there may be operations pending */
 		f->filp_select_ops &= ~status;
 
@@ -888,7 +873,7 @@ int status;
  * the select request is 'blocking' until an operation becomes ready. This
  * function MUST NOT block its calling thread.
  */
-  int major, slot, fd;
+  int major, slot, found, fd;
   dev_t dev;
   struct filp *f;
   struct dmap *dp;
@@ -915,6 +900,7 @@ int status;
 	se = &selecttab[slot];
 	if (se->requestor == NULL) continue;	/* empty slot */
 
+	found = FALSE;
 	for (fd = 0; fd < se->nfds; fd++) {
 		if ((f = se->filps[fd]) == NULL) continue;
 		if ((vp = f->filp_vno) == NULL) continue;
@@ -937,10 +923,16 @@ int status;
 			ops2tab(status, fd, se);
 		} else {
 			f->filp_select_flags &= ~FSF_BLOCKED;
-			ops2tab(SEL_RD|SEL_WR|SEL_ERR, fd, se);
+			se->error = status;
 		}
-		if (se->nreadyfds > 0) restart_proc(se);
+		found = TRUE;
 	}
+	/* Even if 'found' is set now, nothing may have changed for this call,
+	 * as it may not have been interested in the operations that were
+	 * reported as ready. Let restart_proc check.
+	 */
+	if (found)
+		restart_proc(se);
   }
 
   select_restart_filps();
@@ -984,13 +976,12 @@ static void select_restart_filps(void)
 		 * particular, checking pipes the same way would introduce a
 		 * serious locking problem.
 		 */
-		assert(is_supported_major(f));
+		assert(is_char_device(f));
 
 		wantops = ops = f->filp_select_ops;
-		r = select_request_major(f, &wantops, se->block);
+		r = select_request_char(f, &wantops, se->block);
 		if (r != OK && r != SUSPEND) {
 			se->error = r;
-			se->block = 0;	/* Stop blocking to return asap */
 			restart_proc(se);
 			break; /* Error or bogus return code; abort */
 		}
@@ -1009,21 +1000,24 @@ int status;
 /* Tell processes that need to know about the status of this filp. This
  * function MUST NOT block its calling thread.
  */
-  int fd, slot;
+  int fd, slot, found;
   struct selectentry *se;
 
   for (slot = 0; slot < MAXSELECTS; slot++) {
 	se = &selecttab[slot];
 	if (se->requestor == NULL) continue; /* empty slot */
 
+	found = FALSE;
 	for (fd = 0; fd < se->nfds; fd++) {
 		if (se->filps[fd] != f) continue;
 		if (status < 0)
-			ops2tab(SEL_RD|SEL_WR|SEL_ERR, fd, se);
+			se->error = status;
 		else
 			ops2tab(status, fd, se);
-		restart_proc(se);
+		found = TRUE;
 	}
+	if (found)
+		restart_proc(se);
   }
 }
 
@@ -1037,7 +1031,7 @@ struct selectentry *se;
  * pending. This function MUST NOT block its calling thread.
  */
 
-  if ((se->nreadyfds > 0 || !se->block) && !is_deferred(se))
+  if ((se->nreadyfds > 0 || se->error != OK || !se->block) && !is_deferred(se))
 	select_return(se);
 }
 

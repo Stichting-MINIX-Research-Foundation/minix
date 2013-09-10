@@ -16,9 +16,9 @@ int max_error = 5;
 
 
 int main(int argc, char **argv) {
-  char *tests[] = {"t40a", "t40b", "t40c", "t40d", "t40e", "t40f"};
+  char *tests[] = {"t40a", "t40b", "t40c", "t40d", "t40e", "t40f", "t40g"};
   char copy_command[8+PATH_MAX+1];
-  int no_tests, i, forkres, status = 0, errorct = 0;
+  int no_tests, i, forkres, status = 0;
 
   no_tests = sizeof(tests) / sizeof(char *);
   
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
       exit(-2);
     } else if(forkres > 0) { /* Parent */
       if(waitpid(forkres, &status, 0) > 0 && WEXITSTATUS(status) < 20) {
-	errorct += WEXITSTATUS(status); /* Count errors */
+	errct += WEXITSTATUS(status); /* Count errors */
       }
       status = 0; /* Reset */
     } else {
