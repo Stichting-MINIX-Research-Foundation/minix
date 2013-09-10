@@ -369,9 +369,9 @@ static void do_char_open(message *m_ptr, int ipc_status)
 
   memset(&m_reply, 0, sizeof(m_reply));
 
-  m_reply.m_type = DEV_OPEN_REPL;
-  m_reply.REP_ENDPT = m_ptr->USER_ENDPT;
-  m_reply.REP_STATUS = ENXIO;
+  m_reply.m_type = CDEV_REPLY;
+  m_reply.CDEV_STATUS = ENXIO;
+  m_reply.CDEV_ID = m_ptr->CDEV_ID;
 
   send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }
@@ -413,7 +413,7 @@ void blockdriver_process_on_thread(struct blockdriver *bdp, message *m_ptr,
    * someone creates a character device node for a block driver, opening that
    * device node will cause the corresponding VFS thread to block forever.
    */
-  if (m_ptr->m_type == DEV_OPEN) {
+  if (m_ptr->m_type == CDEV_OPEN) {
 	do_char_open(m_ptr, ipc_status);
 
 	return;

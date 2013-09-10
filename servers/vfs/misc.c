@@ -659,7 +659,7 @@ static void free_proc(int flags)
 		if (!S_ISCHR(vp->v_mode)) continue;
 		if ((dev_t) vp->v_sdev != dev) continue;
 		lock_filp(rfilp, VNODE_READ);
-		(void) dev_close(dev); /* Ignore any errors. */
+		(void) cdev_close(dev); /* Ignore any errors. */
 
 		rfilp->filp_mode = FILP_CLOSED;
 		unlock_filp(rfilp);

@@ -16,38 +16,6 @@
  * to, you guessed it, wake up the TTY to check if input or output can
  * continue.
  *
- * The valid messages and their parameters are:
- *
- *   notify from HARDWARE:       output has been completed or input has arrived
- *   notify from SYSTEM  :      e.g., MINIX wants to shutdown; run code to 
- *   				cleanly stop
- *   DEV_READ:       a process wants to read from a terminal
- *   DEV_WRITE:      a process wants to write on a terminal
- *   DEV_IOCTL:      a process wants to change a terminal's parameters
- *   DEV_OPEN:       a tty line has been opened
- *   DEV_CLOSE:      a tty line has been closed
- *   DEV_SELECT:     start select notification request
- *   CANCEL:         terminate a previous incomplete system call immediately
- *
- *    m_type       DEVICE  USER_ENDPT  COUNT    POSITION  IO_GRANT
- * -----------------------------------------------------------------
- * | HARD_INT    |         |         |         |         |         |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_READ    |minor dev| proc nr |  count  |         |  grant  |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_WRITE   |minor dev| proc nr |  count  |         |  grant  |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_IOCTL   |minor dev| proc nr |func code|user proc|         |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_OPEN    |minor dev| proc nr | O_NOCTTY|         |         |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_CLOSE   |minor dev| proc nr |         |         |         |
- * |-------------+---------+---------+---------+---------+---------|
- * | CANCEL      |minor dev| proc nr |         |         |         |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_SELECT  |minor dev| sel ops |         |         |         |
- * -----------------------------------------------------------------
- *
  * Changes:
  *   Jan 20, 2004   moved TTY driver to user-space  (Jorrit N. Herder)
  *   Sep 20, 2004   local timer management/ sync alarms  (Jorrit N. Herder)
@@ -235,7 +203,7 @@ int main(void)
 		;			/* do nothing; end switch */
 	}
 
-	if (!IS_DEV_RQ(tty_mess.m_type)) {
+	if (!IS_CDEV_RQ(tty_mess.m_type)) {
 		chardriver_process(&tty_tab, &tty_mess, ipc_status);
 		continue;
 	}
@@ -243,7 +211,7 @@ int main(void)
 	/* Only device requests should get to this point.
 	 * All requests have a minor device number.
 	 */
-	line = tty_mess.DEVICE;
+	line = tty_mess.CDEV_MINOR;
 	if (line == KBD_MINOR || line == KBDAUX_MINOR) {
 		do_kbd(&tty_mess, ipc_status);
 		continue;
@@ -251,7 +219,7 @@ int main(void)
 		do_video(&tty_mess, ipc_status);
 		continue;
 	} else if (line - PTYPX_MINOR < NR_PTYS &&
-			tty_mess.m_type != DEV_IOCTL_S) {
+			tty_mess.m_type != CDEV_IOCTL) {
 		/* Terminals and pseudo terminals belong together. We can only
 		 * make a distinction between the two based on position in the
 		 * tty_table and not on minor number (i.e., use ispty macro).
@@ -276,7 +244,7 @@ set_color(tty_t *tp, int color)
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[1;%dm", color);
 	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
-		FLG_OP_NONBLOCK, 0);
+		CDEV_NONBLOCK, 0);
 }
 
 static void
@@ -288,7 +256,7 @@ reset_color(tty_t *tp)
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[0;%dm", SGR_COLOR_RESET);
 	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
-		FLG_OP_NONBLOCK, 0);
+		CDEV_NONBLOCK, 0);
 }
 
 tty_t *
@@ -466,7 +434,7 @@ do_new_kmess(void)
 			set_color(tp, kernel_msg_color);
 		do_write(tp->tty_minor, 0, KERNEL,
 			(cp_grant_id_t) kernel_buf_copy, bytes,
-			FLG_OP_NONBLOCK, 0);
+			CDEV_NONBLOCK, 0);
 		if (kernel_msg_color != 0)
 			reset_color(tp);
 		if (restore) {
@@ -553,7 +521,7 @@ static ssize_t do_read(devminor_t minor, u64_t UNUSED(position),
 	return EDONTREPLY;	/* already done */
 
   /* There were no bytes in the input queue available. */
-  if (flags & FLG_OP_NONBLOCK) {
+  if (flags & CDEV_NONBLOCK) {
 	tty_icancel(tp);
 	r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
 	tp->tty_inleft = tp->tty_incum = 0;
@@ -602,7 +570,7 @@ static ssize_t do_write(devminor_t minor, u64_t UNUSED(position),
 	return EDONTREPLY;	/* already done */
 
   /* None or not all the bytes could be written. */
-  if (flags & FLG_OP_NONBLOCK) {
+  if (flags & CDEV_NONBLOCK) {
 	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 	tp->tty_outleft = tp->tty_outcum = 0;
 	tp->tty_outcaller = NONE;
@@ -677,7 +645,7 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     case TCSETSF:
     case TCDRAIN:
 	if (tp->tty_outleft > 0) {
-		if (flags & FLG_OP_NONBLOCK)
+		if (flags & CDEV_NONBLOCK)
 			return EAGAIN;
 		/* Wait for all ongoing output processing to finish. */
 		tp->tty_iocaller = endpt;
@@ -771,8 +739,8 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 static int do_open(devminor_t minor, int access, endpoint_t user_endpt)
 {
 /* A tty line has been opened.  Make it the callers controlling tty if
- * O_NOCTTY is *not* set and it is not the log device.  1 is returned if
- * the tty is made the controlling tty, otherwise OK or an error code.
+ * CDEV_NOCTTY is *not* set and it is not the log device. CDEV_CTTY is returned
+ * if the tty is made the controlling tty, otherwise OK or an error code.
  */
   tty_t *tp;
   int r = OK;
@@ -782,11 +750,11 @@ static int do_open(devminor_t minor, int access, endpoint_t user_endpt)
 
   if (minor == LOG_MINOR && isconsole(tp)) {
 	/* The log device is a write-only diagnostics device. */
-	if (access & R_BIT) return EACCES;
+	if (access & CDEV_R_BIT) return EACCES;
   } else {
-	if (!(access & O_NOCTTY)) {
+	if (!(access & CDEV_NOCTTY)) {
 		tp->tty_pgrp = user_endpt;
-		r = 1;
+		r = CDEV_CTTY;
 	}
 	tp->tty_openct++;
 	if (tp->tty_openct == 1) {
@@ -874,10 +842,10 @@ int select_try(struct tty *tp, int ops)
 		ready_ops |= ops;
 	}
 
-	if (ops & SEL_RD) {
+	if (ops & CDEV_OP_RD) {
 		/* will i/o not block on read? */
 		if (tp->tty_inleft > 0) {
-			ready_ops |= SEL_RD;	/* EIO - no blocking */
+			ready_ops |= CDEV_OP_RD; /* EIO - no blocking */
 		} else if (tp->tty_incount > 0) {
 			/* Is a regular read possible? tty_incount
 			 * says there is data. But a read will only succeed
@@ -885,14 +853,14 @@ int select_try(struct tty *tp, int ops)
 			 */
 			if (!(tp->tty_termios.c_lflag & ICANON) ||
 				tp->tty_eotct > 0) {
-				ready_ops |= SEL_RD;
+				ready_ops |= CDEV_OP_RD;
 			}
 		}
 	}
 
-	if (ops & SEL_WR)  {
-  		if (tp->tty_outleft > 0)  ready_ops |= SEL_WR;
-		else if ((*tp->tty_devwrite)(tp, 1)) ready_ops |= SEL_WR;
+	if (ops & CDEV_OP_WR)  {
+		if (tp->tty_outleft > 0)  ready_ops |= CDEV_OP_WR;
+		else if ((*tp->tty_devwrite)(tp, 1)) ready_ops |= CDEV_OP_WR;
 	}
 	return ready_ops;
 }
@@ -924,8 +892,8 @@ static int do_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
   if (tp->tty_minor != minor)
 	return EBADF;
 
-  watch = (ops & SEL_NOTIFY);
-  ops &= (SEL_RD | SEL_WR | SEL_ERR);
+  watch = (ops & CDEV_NOTIFY);
+  ops &= (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
 
   ready_ops = select_try(tp, ops);
 

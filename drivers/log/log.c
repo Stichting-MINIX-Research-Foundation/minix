@@ -167,17 +167,17 @@ subwrite(struct logdevice *log, size_t size, endpoint_t endpt,
 	log->log_source = NONE;
   }
 
-  if (log->log_size > 0 && (log->log_selected & SEL_RD)) {
+  if (log->log_size > 0 && (log->log_selected & CDEV_OP_RD)) {
 	/* Someone(s) who was/were select()ing can now be awoken. If there was
 	 * a blocking read (above), this can only happen if the blocking read
 	 * didn't swallow all the data (log_size > 0).
 	 */
 	minor = log-logdevices;
 #if LOG_DEBUG
-	printf("select sending DEV_SEL_REPL2\n");
+	printf("select sending CDEV_SEL2_REPLY\n");
 #endif
-	chardriver_reply_select(log->log_select_proc, minor, SEL_RD);
-	log->log_selected &= ~SEL_RD;
+	chardriver_reply_select(log->log_select_proc, minor, CDEV_OP_RD);
+	log->log_selected &= ~CDEV_OP_RD;
   }
 
   return r;
@@ -248,7 +248,7 @@ static ssize_t log_read(devminor_t minor, u64_t UNUSED(position),
   if (log->log_source != NONE) return OK;
 
   if (!log->log_size && size > 0) {
-	if (flags & FLG_OP_NONBLOCK) return EAGAIN;
+	if (flags & CDEV_NONBLOCK) return EAGAIN;
 
 	/* No data available; let caller block. */
 	log->log_source = endpt;
@@ -319,24 +319,24 @@ static int log_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
   if (minor < 0 || minor >= NR_DEVS)
 	return ENXIO;
 
-  want_ops = ops & (SEL_RD|SEL_WR|SEL_ERR);
+  want_ops = ops & (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
 
   /* Read blocks when there is no log. */
-  if ((want_ops & SEL_RD) && logdevices[minor].log_size > 0) {
+  if ((want_ops & CDEV_OP_RD) && logdevices[minor].log_size > 0) {
 #if LOG_DEBUG
 	printf("log can read; size %d\n", logdevices[minor].log_size);
 #endif
-	ready_ops |= SEL_RD;
+	ready_ops |= CDEV_OP_RD;
   }
 
   /* Write never blocks. */
-  if (want_ops & SEL_WR) ready_ops |= SEL_WR;
+  if (want_ops & CDEV_OP_WR) ready_ops |= CDEV_OP_WR;
 
   /* Enable select calback if not all requested operations were ready to go,
    * and notify was enabled.
    */
   want_ops &= ~ready_ops;
-  if ((ops & SEL_NOTIFY) && want_ops) {
+  if ((ops & CDEV_NOTIFY) && want_ops) {
 	logdevices[minor].log_selected |= want_ops;
 	logdevices[minor].log_select_proc = endpt;
 #if LOG_DEBUG

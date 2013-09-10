@@ -167,7 +167,7 @@ static ssize_t pty_master_read(devminor_t minor, u64_t UNUSED(position),
 	return EDONTREPLY;		/* already done */
   }
 
-  if (flags & FLG_OP_NONBLOCK) {
+  if (flags & CDEV_NONBLOCK) {
 	r = pp->rdcum > 0 ? pp->rdcum : EAGAIN;
 	pp->rdleft = pp->rdcum = 0;
 	pp->rdcaller = NONE;
@@ -214,7 +214,7 @@ static ssize_t pty_master_write(devminor_t minor, u64_t UNUSED(position),
 	return EDONTREPLY;		/* already done */
   }
 
-  if (flags & FLG_OP_NONBLOCK) {
+  if (flags & CDEV_NONBLOCK) {
 	r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
 	pp->wrleft = pp->wrcum = 0;
 	pp->wrcaller = NONE;
@@ -265,18 +265,18 @@ static int select_try_pty(tty_t *tp, int ops)
   pty_t *pp = tp->tty_priv;
   int r = 0;
 
-  if (ops & SEL_WR)  {
+  if (ops & CDEV_OP_WR)  {
 	/* Write won't block on error. */
-	if (pp->state & TTY_CLOSED) r |= SEL_WR;
-	else if (pp->wrleft != 0 || pp->wrcum != 0) r |= SEL_WR;
-	else if (tp->tty_inleft > 0) r |= SEL_WR;	/* There's a reader. */
+	if (pp->state & TTY_CLOSED) r |= CDEV_OP_WR;
+	else if (pp->wrleft != 0 || pp->wrcum != 0) r |= CDEV_OP_WR;
+	else if (tp->tty_inleft > 0) r |= CDEV_OP_WR;	/* There's a reader. */
   }
 
-  if (ops & SEL_RD) {
+  if (ops & CDEV_OP_RD) {
 	/* Read won't block on error. */
-	if (pp->state & TTY_CLOSED) r |= SEL_RD;
-	else if (pp->rdleft != 0 || pp->rdcum != 0) r |= SEL_RD;
-	else if (pp->ocount > 0) r |= SEL_RD;		/* Actual data. */
+	if (pp->state & TTY_CLOSED) r |= CDEV_OP_RD;
+	else if (pp->rdleft != 0 || pp->rdcum != 0) r |= CDEV_OP_RD;
+	else if (pp->ocount > 0) r |= CDEV_OP_RD;	/* Actual data. */
   }
 
   return r;
@@ -313,8 +313,8 @@ static int pty_master_select(devminor_t minor, unsigned int ops,
 	return ENXIO;
   pp = tp->tty_priv;
 
-  watch = (ops & SEL_NOTIFY);
-  ops &= (SEL_RD | SEL_WR | SEL_ERR);
+  watch = (ops & CDEV_NOTIFY);
+  ops &= (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
 
   ready_ops = select_try_pty(tp, ops);
 

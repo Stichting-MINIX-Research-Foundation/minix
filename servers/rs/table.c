@@ -48,7 +48,7 @@ struct boot_image_dev boot_image_dev_table[] = {
   { TTY_PROC_NR,     SRV_DF,  TTY_MAJOR,    STYLE_TTY,  STYLE_CTTY },
   { MEM_PROC_NR,     SRV_DF,  MEMORY_MAJOR, STYLE_DEV,  STYLE_NDEV },
   { LOG_PROC_NR,     SRV_DF,  LOG_MAJOR,    STYLE_DEV,  STYLE_NDEV },
-  { PFS_PROC_NR,     SRV_DF,  UDS_MAJOR,    STYLE_CLONE,STYLE_NDEV },
+  { PFS_PROC_NR,     SRV_DF,  UDS_MAJOR,    STYLE_DEV,  STYLE_NDEV },
   { DEFAULT_BOOT_NR, SRV_DF,  0,            STYLE_NDEV, STYLE_NDEV } /* default
                                                                       * entry
                                                                       */

@@ -579,7 +579,7 @@ struct filp *f;
 
 			(void) bdev_close(dev);	/* Ignore errors */
 		} else {
-			(void) dev_close(dev);	/* Ignore errors */
+			(void) cdev_close(dev);	/* Ignore errors */
 		}
 
 		f->filp_mode = FILP_CLOSED;

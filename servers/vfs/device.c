@@ -2,24 +2,25 @@
  * Special character files also require I/O.  The routines for these are here.
  *
  * The entry points in this file are:
- *   dev_open:   open a character device
- *   dev_close:  close a character device
- *   cdev_reply: process the result of a character driver request
- *   bdev_open:  open a block device
- *   bdev_close: close a block device
- *   bdev_reply: process the result of a block driver request
- *   dev_io:	 FS does a read or write on a device
- *   gen_opcl:   generic call to a character driver to perform an open/close
- *   gen_io:     generic call to a character driver to initiate I/O
- *   no_dev:     open/close processing for devices that don't exist
- *   no_dev_io:  i/o processing for devices that don't exist
- *   tty_opcl:   perform tty-specific processing for open/close
- *   ctty_opcl:  perform controlling-tty-specific processing for open/close
- *   ctty_io:    perform controlling-tty-specific processing for I/O
- *   pm_setsid:	 perform VFS's side of setsid system call
- *   do_ioctl:	 perform the IOCTL system call
- *   dev_select: initiate a select call on a device
- *   dev_cancel: cancel an I/O request, blocking until it has been cancelled
+ *   cdev_open:   open a character device
+ *   cdev_close:  close a character device
+ *   cdev_io:     initiate a read, write, or ioctl to a character device
+ *   cdev_select: initiate a select call on a device
+ *   cdev_cancel: cancel an I/O request, blocking until it has been cancelled
+ *   cdev_reply:  process the result of a character driver request
+ *   bdev_open:   open a block device
+ *   bdev_close:  close a block device
+ *   bdev_reply:  process the result of a block driver request
+ *   bdev_up:     a block driver has been mapped in
+ *   gen_opcl:    generic call to a character driver to perform an open/close
+ *   gen_io:      generic call to a character driver to initiate I/O
+ *   no_dev:      open/close processing for devices that don't exist
+ *   no_dev_io:   i/o processing for devices that don't exist
+ *   tty_opcl:    perform tty-specific processing for open/close
+ *   ctty_opcl:   perform controlling-tty-specific processing for open/close
+ *   ctty_io:     perform controlling-tty-specific processing for I/O
+ *   pm_setsid:   perform VFS's side of setsid system call
+ *   do_ioctl:    perform the IOCTL system call
  */
 
 #include "fs.h"
@@ -44,15 +45,10 @@ static int block_io(endpoint_t driver_e, message *mess_ptr);
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 	void *buf, unsigned long size);
 
-static int dummyproc;
-
 /*===========================================================================*
- *				dev_open				     *
+ *				cdev_open				     *
  *===========================================================================*/
-int dev_open(
-  dev_t dev,			/* device to open */
-  int flags			/* mode bits and flags */
-)
+int cdev_open(dev_t dev, int flags)
 {
 /* Open a character device. */
   devmajor_t major_dev;
@@ -65,17 +61,15 @@ int dev_open(
   major_dev = major(dev);
   if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
   if (dmap[major_dev].dmap_driver == NONE) return(ENXIO);
-  r = (*dmap[major_dev].dmap_opcl)(DEV_OPEN, dev, fp->fp_endpoint, flags);
+  r = (*dmap[major_dev].dmap_opcl)(CDEV_OPEN, dev, fp->fp_endpoint, flags);
   return(r);
 }
 
 
 /*===========================================================================*
- *				dev_close				     *
+ *				cdev_close				     *
  *===========================================================================*/
-int dev_close(
-  dev_t dev			/* device to close */
-)
+int cdev_close(dev_t dev)
 {
 /* Close a character device. */
   devmajor_t major_dev;
@@ -85,7 +79,7 @@ int dev_close(
   major_dev = major(dev);
   if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
   if (dmap[major_dev].dmap_driver == NONE) return(ENXIO);
-  r = (*dmap[major_dev].dmap_opcl)(DEV_CLOSE, dev, fp->fp_endpoint, 0);
+  r = (*dmap[major_dev].dmap_opcl)(CDEV_CLOSE, dev, fp->fp_endpoint, 0);
   return(r);
 }
 
@@ -205,30 +199,6 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
 
 
 /*===========================================================================*
- *				find_suspended_ep			     *
- *===========================================================================*/
-static endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
-{
-/* A process is suspended on a driver for which VFS issued a grant. Find out
- * which process it was.
- */
-  struct fproc *rfp;
-  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if(rfp->fp_pid == PID_FREE)
-		continue;
-
-	if (rfp->fp_task == driver && rfp->fp_grant == g) {
-		assert(!fp_is_blocked(rfp) ||
-			rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER);
-		return(rfp->fp_endpoint);
-	}
-  }
-
-  return(NONE);
-}
-
-
-/*===========================================================================*
  *				make_grant				     *
  *===========================================================================*/
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
@@ -240,13 +210,13 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
   size_t size;
 
   switch (op) {
-  case DEV_READ_S:
-  case DEV_WRITE_S:
+  case CDEV_READ:
+  case CDEV_WRITE:
 	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf,
-		(size_t) bytes, op == DEV_READ_S ? CPF_WRITE : CPF_READ);
+		(size_t) bytes, op == CDEV_READ ? CPF_WRITE : CPF_READ);
 	break;
 
-  case DEV_IOCTL_S:
+  case CDEV_IOCTL:
   case BDEV_IOCTL:
 	/* For IOCTLs, the bytes parameter contains the IOCTL request.
 	 * This request encodes the requested access method and buffer size.
@@ -259,8 +229,9 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 	else
 		size = _MINIX_IOCTL_SIZE(bytes);
 
-	/* Grant access to the buffer even if no I/O happens with the ioctl, in
-	 * order to disambiguate requests with DEV_IOCTL_S.
+	/* Grant access to the buffer even if no I/O happens with the ioctl,
+	 * although now that we no longer identify responses based on grants,
+	 * this is not strictly necessary.
 	 */
 	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf, size, access);
 	break;
@@ -277,27 +248,27 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 
 
 /*===========================================================================*
- *				dev_io					     *
+ *				cdev_io					     *
  *===========================================================================*/
-int dev_io(
-  int op,			/* DEV_READ_S, DEV_WRITE_S, or DEV_IOCTL_S */
+int cdev_io(
+  int op,			/* CDEV_READ, CDEV_WRITE, or CDEV_IOCTL */
   dev_t dev,			/* major-minor device number */
   endpoint_t proc_e,		/* in whose address space is buf? */
   void *buf,			/* virtual address of the buffer */
   off_t pos,			/* byte position */
-  size_t bytes,			/* how many bytes to transfer */
+  unsigned long bytes,		/* how many bytes to transfer, or request */
   int flags			/* special flags, like O_NONBLOCK */
 )
 {
-/* Initiate a read, write, or ioctl to a device. */
+/* Initiate a read, write, or ioctl to a character device. */
   struct dmap *dp;
   message dev_mess;
   cp_grant_id_t gid;
   devmajor_t major_dev;
   devminor_t minor_dev;
-  int r;
+  int r, slot;
 
-  assert(op == DEV_READ_S || op == DEV_WRITE_S || op == DEV_IOCTL_S);
+  assert(op == CDEV_READ || op == CDEV_WRITE || op == CDEV_IOCTL);
 
   /* Determine task dmap. */
   major_dev = major(dev);
@@ -307,7 +278,7 @@ int dev_io(
   /* See if driver is roughly valid. */
   if (dp->dmap_driver == NONE) return(ENXIO);
 
-  if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
+  if(isokendpt(dp->dmap_driver, &slot) != OK) {
 	printf("VFS: dev_io: old driver for major %x (%d)\n", major_dev,
 		dp->dmap_driver);
 	return(ENXIO);
@@ -318,21 +289,21 @@ int dev_io(
 
   /* Set up the rest of the message that will be sent to the driver. */
   memset(&dev_mess, 0, sizeof(dev_mess));
-  dev_mess.m_type   = op;
-  dev_mess.DEVICE   = minor_dev;
-  if (op == DEV_IOCTL_S) {
-	dev_mess.REQUEST  = bytes;
-	dev_mess.POSITION = proc_e;
+  dev_mess.m_type = op;
+  dev_mess.CDEV_MINOR = minor_dev;
+  if (op == CDEV_IOCTL) {
+	dev_mess.CDEV_REQUEST = bytes;
+	dev_mess.CDEV_USER = proc_e;
   } else {
-	dev_mess.POSITION = ex64lo(pos);
-	dev_mess.COUNT    = bytes;
+	dev_mess.CDEV_POS_LO = ex64lo(pos);
+	dev_mess.CDEV_POS_HI = ex64hi(pos);
+	dev_mess.CDEV_COUNT = (size_t) bytes;
   }
-  dev_mess.HIGHPOS  = ex64hi(pos);
-  dev_mess.USER_ENDPT = VFS_PROC_NR;
-  dev_mess.IO_GRANT = (void *) gid;
-  dev_mess.FLAGS    = 0;
+  dev_mess.CDEV_ID = proc_e;
+  dev_mess.CDEV_GRANT = gid;
+  dev_mess.CDEV_FLAGS = 0;
   if (flags & O_NONBLOCK)
-	  dev_mess.FLAGS |= FLG_OP_NONBLOCK;
+	  dev_mess.CDEV_FLAGS |= CDEV_NONBLOCK;
 
   /* Send the request to the driver. */
   r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -347,7 +318,6 @@ int dev_io(
   wait_for(dp->dmap_driver);
   assert(!GRANT_VALID(fp->fp_grant));
   fp->fp_grant = gid;	/* revoke this when unsuspended. */
-  fp->fp_ioproc = VFS_PROC_NR;
 
   return SUSPEND;
 }
@@ -374,14 +344,14 @@ static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
   r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
       ALL_MODES | I_CHAR_SPECIAL, dev, &res);
   if (r != OK) {
-	(void) gen_opcl(DEV_CLOSE, dev, proc_e, 0);
+	(void) gen_opcl(CDEV_CLOSE, dev, proc_e, 0);
 	return r;
   }
 
   /* Drop old node and use the new values */
   if ((vp = get_free_vnode()) == NULL) {
 	req_putnode(PFS_PROC_NR, res.inode_nr, 1); /* is this right? */
-	(void) gen_opcl(DEV_CLOSE, dev, proc_e, 0);
+	(void) gen_opcl(CDEV_CLOSE, dev, proc_e, 0);
 	return(err_code);
   }
   lock_vnode(vp, VNODE_OPCL);
@@ -409,7 +379,7 @@ static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
  *				gen_opcl				     *
  *===========================================================================*/
 int gen_opcl(
-  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  int op,			/* operation, CDEV_OPEN or CDEV_CLOSE */
   dev_t dev,			/* device to open or close */
   endpoint_t proc_e,		/* process to open/close for */
   int flags			/* mode bits and flags */
@@ -417,10 +387,10 @@ int gen_opcl(
 {
 /* Called from the dmap struct on opens & closes of special files.*/
   devmajor_t major_dev;
-  devminor_t minor_dev;
+  devminor_t minor_dev, new_minor;
   struct dmap *dp;
   message dev_mess;
-  int r;
+  int r, r2;
 
   /* Determine task dmap. */
   major_dev = major(dev);
@@ -435,9 +405,15 @@ int gen_opcl(
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = op;
-  dev_mess.DEVICE = minor_dev;
-  dev_mess.USER_ENDPT = proc_e;
-  dev_mess.COUNT = flags;
+  dev_mess.CDEV_MINOR = minor_dev;
+  dev_mess.CDEV_ID = proc_e;
+  if (op == CDEV_OPEN) {
+	dev_mess.CDEV_USER = proc_e;
+	dev_mess.CDEV_ACCESS = 0;
+	if (flags & R_BIT)	dev_mess.CDEV_ACCESS |= CDEV_R_BIT;
+	if (flags & W_BIT)	dev_mess.CDEV_ACCESS |= CDEV_W_BIT;
+	if (flags & O_NOCTTY)	dev_mess.CDEV_ACCESS |= CDEV_NOCTTY;
+  }
 
   /* Call the task. */
   r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -454,15 +430,33 @@ int gen_opcl(
   self->w_task = NONE;
   self->w_drv_sendrec = NULL;
 
+  r = dev_mess.CDEV_STATUS;
+
+  /* Some devices need special processing upon open. Such a device is "cloned",
+   * i.e. on a succesful open it is replaced by a new device with a new unique
+   * minor device number. This new device number identifies a new object (such
+   * as a new network connection) that has been allocated within a task.
+   */
+  if (op == CDEV_OPEN && r >= 0) {
+	if (r & CDEV_CLONED) {
+		new_minor = r & ~(CDEV_CLONED | CDEV_CTTY);
+		r &= CDEV_CTTY;
+		if ((r2 = cdev_clone(dev, proc_e, new_minor)) < 0)
+			r = r2;
+	} else
+		r &= CDEV_CTTY;
+	/* Upon success, we now return either OK or CDEV_CTTY. */
+  }
+
   /* Return the result from the driver. */
-  return(dev_mess.REP_STATUS);
+  return(r);
 }
 
 /*===========================================================================*
  *				tty_opcl				     *
  *===========================================================================*/
 int tty_opcl(
-  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  int op,			/* operation, CDEV_OPEN or CDEV_CLOSE */
   dev_t dev,			/* device to open or close */
   endpoint_t proc_e,		/* process to open/close for */
   int flags			/* mode bits and flags */
@@ -490,7 +484,7 @@ int tty_opcl(
   r = gen_opcl(op, dev, proc_e, flags);
 
   /* Did this call make the tty the controlling tty? */
-  if (r == 1) {
+  if (r >= 0 && (r & CDEV_CTTY)) {
 	fp->fp_tty = dev;
 	r = OK;
   }
@@ -503,7 +497,7 @@ int tty_opcl(
  *				ctty_opcl				     *
  *===========================================================================*/
 int ctty_opcl(
-  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  int op,			/* operation, CDEV_OPEN or CDEV_CLOSE */
   dev_t UNUSED(dev),		/* device to open or close */
   endpoint_t UNUSED(proc_e),	/* process to open/close for */
   int UNUSED(flags)		/* mode bits and flags */
@@ -569,8 +563,8 @@ int do_ioctl(message *UNUSED(m_out))
 	if (S_ISBLK(vp->v_mode))
 		r = bdev_ioctl(dev, who_e, ioctlrequest, argx);
 	else
-		r = dev_io(DEV_IOCTL_S, dev, who_e, argx, 0,
-			   ioctlrequest, f->filp_flags);
+		r = cdev_io(CDEV_IOCTL, dev, who_e, argx, 0, ioctlrequest,
+			f->filp_flags);
   }
 
   unlock_filp(f);
@@ -580,9 +574,9 @@ int do_ioctl(message *UNUSED(m_out))
 
 
 /*===========================================================================*
- *				dev_select				     *
+ *				cdev_select				     *
  *===========================================================================*/
-int dev_select(dev_t dev, int ops)
+int cdev_select(dev_t dev, int ops)
 {
 /* Initiate a select call on a device. Return OK iff the request was sent. */
   devmajor_t major_dev;
@@ -598,9 +592,9 @@ int dev_select(dev_t dev, int ops)
 
   memset(&dev_mess, 0, sizeof(dev_mess));
 
-  dev_mess.m_type = DEV_SELECT;
-  dev_mess.DEV_MINOR = minor_dev;
-  dev_mess.DEV_SEL_OPS = ops;
+  dev_mess.m_type = CDEV_SELECT;
+  dev_mess.CDEV_MINOR = minor_dev;
+  dev_mess.CDEV_OPS = ops;
 
   /* Call the task. */
   return (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -608,9 +602,9 @@ int dev_select(dev_t dev, int ops)
 
 
 /*===========================================================================*
- *				dev_cancel				     *
+ *				cdev_cancel				     *
  *===========================================================================*/
-int dev_cancel(dev_t dev)
+int cdev_cancel(dev_t dev)
 {
 /* Cancel an I/O request, blocking until it has been cancelled. */
   devmajor_t major_dev;
@@ -625,14 +619,9 @@ int dev_cancel(dev_t dev)
 
   memset(&dev_mess, 0, sizeof(dev_mess));
 
-  dev_mess.m_type = CANCEL;
-  dev_mess.DEVICE = minor_dev;
-  dev_mess.USER_ENDPT = fp->fp_ioproc;
-  dev_mess.IO_GRANT = (char *) fp->fp_grant;
-
-  /* Tell driver R or W. Mode is from current call, not open. */
-  /* FIXME: ioctls also pass through here! */
-  dev_mess.COUNT = fp->fp_block_callnr == READ ? R_BIT : W_BIT;
+  dev_mess.m_type = CDEV_CANCEL;
+  dev_mess.CDEV_MINOR = minor_dev;
+  dev_mess.CDEV_ID = fp->fp_endpoint;
 
   r = (*dp->dmap_io)(fp->fp_task, &dev_mess);
   if (r != OK) return r; /* ctty_io returned an error? should be impossible */
@@ -653,7 +642,7 @@ int dev_cancel(dev_t dev)
 	fp->fp_grant = GRANT_INVALID;
   }
 
-  r = dev_mess.REP_STATUS;
+  r = dev_mess.CDEV_STATUS;
   return (r == EAGAIN) ? EINTR : r;
 }
 
@@ -721,8 +710,6 @@ int gen_io(endpoint_t drv_e, message *mess_ptr)
 
   if (r != OK) panic("VFS: asynsend in gen_io failed: %d", r);
 
-  /* Fake a SUSPEND */
-  mess_ptr->REP_STATUS = SUSPEND;
   return(OK);
 }
 
@@ -740,6 +727,7 @@ int ctty_io(
  * major/minor pair for /dev/tty itself.
  */
   struct dmap *dp;
+  int slot;
 
   if (fp->fp_tty == 0) {
 	/* No controlling tty present anymore, return an I/O error. */
@@ -747,14 +735,14 @@ int ctty_io(
   } else {
 	/* Substitute the controlling terminal device. */
 	dp = &dmap[major(fp->fp_tty)];
-	mess_ptr->DEVICE = minor(fp->fp_tty);
+	mess_ptr->CDEV_MINOR = minor(fp->fp_tty);
 
 	if (dp->dmap_driver == NONE) {
 		printf("FS: ctty_io: no driver for dev\n");
 		return(EIO);
 	}
 
-	if (isokendpt(dp->dmap_driver, &dummyproc) != OK) {
+	if (isokendpt(dp->dmap_driver, &slot) != OK) {
 		printf("VFS: ctty_io: old driver %d\n", dp->dmap_driver);
 		return(EIO);
 	}
@@ -768,7 +756,7 @@ int ctty_io(
  *				no_dev					     *
  *===========================================================================*/
 int no_dev(
-  int UNUSED(op),		/* operation, DEV_OPEN or DEV_CLOSE */
+  int UNUSED(op),		/* operation, CDEV_OPEN or CDEV_CLOSE */
   dev_t UNUSED(dev),		/* device to open or close */
   endpoint_t UNUSED(proc),		/* process to open/close for */
   int UNUSED(flags)		/* mode bits and flags */
@@ -786,35 +774,6 @@ int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
 /* Called when doing i/o on a nonexistent device. */
   printf("VFS: I/O on unmapped device number\n");
   return(EIO);
-}
-
-/*===========================================================================*
- *				clone_opcl				     *
- *===========================================================================*/
-int clone_opcl(
-  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
-  dev_t dev,			/* device to open or close */
-  endpoint_t proc_e,		/* process to open/close for */
-  int flags			/* mode bits and flags */
-)
-{
-/* Some devices need special processing upon open.  Such a device is "cloned",
- * i.e. on a succesful open it is replaced by a new device with a new unique
- * minor device number.  This new device number identifies a new object (such
- * as a new network connection) that has been allocated within a task.
- */
-  int r;
-
-  r = gen_opcl(op, dev, proc_e, flags);
-
-  if (op == DEV_OPEN && r >= 0) {
-	if (r != minor(dev))
-		r = cdev_clone(dev, proc_e, r);
-	else
-		r = OK;
-  }
-
-  return r;
 }
 
 
@@ -881,74 +840,46 @@ void bdev_up(devmajor_t maj)
 
 
 /*===========================================================================*
- *				opcl_reply				     *
+ *				cdev_generic_reply			     *
  *===========================================================================*/
-static void opcl_reply(message *m_ptr)
+static void cdev_generic_reply(message *m_ptr)
 {
-/* A character driver has replied to an open or close request. This function
- * MUST NOT block its calling thread.
+/* A character driver has results for an open, close, read, write, or ioctl
+ * call (i.e., everything except select). There may be a thread waiting for
+ * these results as part of an ongoing open, close, or (for read/write/ioctl)
+ * cancel call. If so, wake up that thread; if not, send a reply to the
+ * requesting process. This function MUST NOT block its calling thread.
  */
   struct fproc *rfp;
   struct worker_thread *wp;
   endpoint_t proc_e;
   int slot;
 
-  proc_e = m_ptr->REP_ENDPT;
-  if (isokendpt(proc_e, &slot) != OK) return;
-  rfp = &fproc[slot];
-  wp = rfp->fp_worker;
-  if (wp == NULL || wp->w_task != who_e) {
-	printf("VFS: no worker thread waiting for a reply from %d\n", who_e);
+  proc_e = m_ptr->CDEV_ID;
+
+  if (m_ptr->CDEV_STATUS == SUSPEND) {
+	printf("VFS: got SUSPEND from %d, not reviving\n", m_ptr->m_source);
 	return;
   }
-  *wp->w_drv_sendrec = *m_ptr;
-  worker_signal(wp);	/* Continue open/close */
-}
 
-
-/*===========================================================================*
- *				task_reply				     *
- *===========================================================================*/
-static void task_reply(message *m_ptr)
-{
-/* A character driver has results for a read, write, or ioctl call. There may
- * be a thread waiting for these results as part of an ongoing dev_cancel call.
- * If so, wake up that thread; if not, send a reply to the requesting process.
- * This function MUST NOT block its calling thread.
- */
-  struct fproc *rfp;
-  struct worker_thread *wp;
-  endpoint_t proc_e;
-  int slot;
-
-  proc_e = m_ptr->REP_ENDPT;
-  if (proc_e == VFS_PROC_NR)
-	proc_e = find_suspended_ep(m_ptr->m_source, m_ptr->REP_IO_GRANT);
-  else
-	printf("VFS: endpoint %u from %u is not VFS\n",
-		proc_e, m_ptr->m_source);
-
-  if (proc_e == NONE) {
-	printf("VFS: proc with grant %d from %d not found\n",
-		m_ptr->REP_IO_GRANT, m_ptr->m_source);
-  } else if (m_ptr->REP_STATUS == SUSPEND) {
-	printf("VFS: got SUSPEND on DEV_REVIVE: not reviving proc\n");
-  } else {
-	/* If there is a thread active for this process, we assume that this
-	 * thread aims to cancel the ongoing operation. In that case, wake up
-	 * the thread to let it finish unpausing the process. Otherwise, revive
-	 * the process as usual.
+  if (isokendpt(proc_e, &slot) != OK) {
+	printf("VFS: proc %d from %d not found\n", proc_e, m_ptr->m_source);
+	return;
+  }
+  rfp = &fproc[slot];
+  wp = rfp->fp_worker;
+  if (wp != NULL && wp->w_task == who_e) {
+	assert(!fp_is_blocked(rfp));
+	*wp->w_drv_sendrec = *m_ptr;
+	worker_signal(wp);	/* Continue open/close/cancel */
+  } else if (rfp->fp_blocked_on != FP_BLOCKED_ON_OTHER ||
+		rfp->fp_task != m_ptr->m_source) {
+	/* This would typically be caused by a protocol error, i.e. a driver
+	 * not properly following the character driver protocol rules.
 	 */
-	if (isokendpt(proc_e, &slot) != OK) return;
-	rfp = &fproc[slot];
-	wp = rfp->fp_worker;
-	if (wp != NULL && wp->w_task == who_e) {
-		assert(!fp_is_blocked(rfp));
-		*wp->w_drv_sendrec = *m_ptr;
-		worker_signal(wp);	/* Continue cancel */
-	} else {
-		revive(proc_e, m_ptr->REP_STATUS);
-	}
+	printf("VFS: proc %d not blocked on %d\n", proc_e, m_ptr->m_source);
+  } else {
+	revive(proc_e, m_ptr->CDEV_STATUS);
   }
 }
 
@@ -960,15 +891,20 @@ void cdev_reply(void)
 {
 /* A character driver has results for us. */
 
+  if (get_dmap(who_e) == NULL) {
+	printf("VFS: ignoring char dev reply from unknown driver %d\n", who_e);
+	return;
+  }
+
   switch (call_nr) {
-  case DEV_OPEN_REPL:
-  case DEV_CLOSE_REPL:	opcl_reply(&m_in);	break;
-  case DEV_REVIVE:	task_reply(&m_in);	break;
-  case DEV_SEL_REPL1:
-	select_reply1(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
+  case CDEV_REPLY:
+	cdev_generic_reply(&m_in);
 	break;
-  case DEV_SEL_REPL2:
-	select_reply2(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
+  case CDEV_SEL1_REPLY:
+	select_reply1(m_in.m_source, m_in.CDEV_MINOR, m_in.CDEV_STATUS);
+	break;
+  case CDEV_SEL2_REPLY:
+	select_reply2(m_in.m_source, m_in.CDEV_MINOR, m_in.CDEV_STATUS);
 	break;
   default:
 	printf("VFS: char driver %u sent unknown reply %x\n", who_e, call_nr);
@@ -979,15 +915,24 @@ void cdev_reply(void)
 /*===========================================================================*
  *				bdev_reply				     *
  *===========================================================================*/
-void bdev_reply(struct dmap *dp)
+void bdev_reply(void)
 {
 /* A block driver has results for a call. There must be a thread waiting for
  * these results - wake it up. This function MUST NOT block its calling thread.
  */
   struct worker_thread *wp;
+  struct dmap *dp;
 
-  assert(dp != NULL);
-  assert(dp->dmap_servicing != NONE);
+  if ((dp = get_dmap(who_e)) == NULL) {
+	printf("VFS: ignoring block dev reply from unknown driver %d\n",
+		who_e);
+	return;
+  }
+
+  if (dp->dmap_servicing == INVALID_THREAD) {
+	printf("VFS: ignoring spurious block dev reply from %d\n", who_e);
+	return;
+  }
 
   wp = worker_get(dp->dmap_servicing);
   if (wp == NULL || wp->w_task != who_e) {

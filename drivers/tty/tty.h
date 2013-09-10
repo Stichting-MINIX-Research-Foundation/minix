@@ -25,9 +25,6 @@
 
 #define ESC             '\33'	/* escape */
 
-#define O_NOCTTY       00400	/* from <fcntl.h>, or cc will choke */
-#define O_NONBLOCK     04000
-
 struct tty;
 typedef int(*devfun_t) (struct tty *tp, int try_only);
 typedef void(*devfunarg_t) (struct tty *tp, int c);

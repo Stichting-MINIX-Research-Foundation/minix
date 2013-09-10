@@ -1082,22 +1082,22 @@ static int tcp_op_select(struct socket * sock, unsigned int sel)
 	/* in this case any operation would block, no error */
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		debug_tcp_print("SOCK_FLG_OP_PENDING");
-		if (sel & SEL_NOTIFY) {
-			if (sel & SEL_RD) {
+		if (sel & CDEV_NOTIFY) {
+			if (sel & CDEV_OP_RD) {
 				sock->flags |= SOCK_FLG_SEL_READ;
 				debug_tcp_print("monitor read");
 			}
-			if (sel & SEL_WR) {
+			if (sel & CDEV_OP_WR) {
 				sock->flags |= SOCK_FLG_SEL_WRITE;
 				debug_tcp_print("monitor write");
 			}
-			if (sel & SEL_ERR)
+			if (sel & CDEV_OP_ERR)
 				sock->flags |= SOCK_FLG_SEL_ERROR;
 		}
 		return 0;
 	}
 
-	if (sel & SEL_RD) {
+	if (sel & CDEV_OP_RD) {
 		/*
 		 * If recv_head is not NULL we can either read or accept a
 		 * connection which is the same for select()
@@ -1105,38 +1105,38 @@ static int tcp_op_select(struct socket * sock, unsigned int sel)
 		if (sock->pcb) {
 			if (sock->recv_head &&
 					!(sock->flags & SOCK_FLG_OP_WRITING))
-				retsel |= SEL_RD;
+				retsel |= CDEV_OP_RD;
 			else if (!(sock->flags & SOCK_FLG_OP_LISTENING) && 
 					((struct tcp_pcb *) sock->pcb)->state != ESTABLISHED)
-				retsel |= SEL_RD;
-			else if (sel & SEL_NOTIFY) {
+				retsel |= CDEV_OP_RD;
+			else if (sel & CDEV_NOTIFY) {
 				sock->flags |= SOCK_FLG_SEL_READ;
 				debug_tcp_print("monitor read");
 			}
-		} else
-			retsel |= SEL_RD; /* not connected read does not block */
+		} else	/* not connected read does not block */
+			retsel |= CDEV_OP_RD;
 	}
-	if (sel & SEL_WR) {
+	if (sel & CDEV_OP_WR) {
 		if (sock->pcb) {
 			if (((struct tcp_pcb *) sock->pcb)->state == ESTABLISHED)
-				retsel |= SEL_WR;
-			else if (sel & SEL_NOTIFY) {
+				retsel |= CDEV_OP_WR;
+			else if (sel & CDEV_NOTIFY) {
 				sock->flags |= SOCK_FLG_SEL_WRITE;
 				debug_tcp_print("monitor write");
 			}
-		} else
-			retsel |= SEL_WR; /* not connected write does not block */
+		} else	/* not connected write does not block */
+			retsel |= CDEV_OP_WR;
 	}
 
-	if (retsel & SEL_RD) {
+	if (retsel & CDEV_OP_RD) {
 		debug_tcp_print("read won't block");
 	}
-	if (retsel & SEL_WR) {
+	if (retsel & CDEV_OP_WR) {
 		debug_tcp_print("write won't block");
 	}
 
 	/* we only monitor if errors will happen in the future */
-	if (sel & SEL_ERR && sel & SEL_NOTIFY)
+	if (sel & CDEV_OP_ERR && sel & CDEV_NOTIFY)
 		sock->flags |= SOCK_FLG_SEL_ERROR;
 
 	return retsel;
@@ -1160,7 +1160,7 @@ static int tcp_op_select_reply(struct socket * sock)
 			 (!(sock->flags & SOCK_FLG_OP_LISTENING) && 
 			 ((struct tcp_pcb *) sock->pcb)->state !=
 			 ESTABLISHED)) {
-			sel |= SEL_RD;
+			sel |= CDEV_OP_RD;
 			debug_tcp_print("read won't block");
 		}
 	}
@@ -1169,7 +1169,7 @@ static int tcp_op_select_reply(struct socket * sock)
 			(sock->pcb == NULL ||
 			 ((struct tcp_pcb *) sock->pcb)->state ==
 			 ESTABLISHED)) {
-		sel |= SEL_WR;
+		sel |= CDEV_OP_WR;
 		debug_tcp_print("write won't block");
 	}
 

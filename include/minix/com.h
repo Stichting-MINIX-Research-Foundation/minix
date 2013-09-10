@@ -8,8 +8,8 @@
  *        1 -   0xFF	POSIX requests (see callnr.h)
  *    0x200 -  0x2FF	Data link layer requests and responses
  *    0x300 -  0x3FF	Bus controller requests and responses
- *    0x400 -  0x4FF	Character device requests
- *    0x500 -  0x5FF	Character device responses
+ *    0x400 -  0x4FF	Character device requests and responses
+ *    0x500 -  0x5FF	Block device requests and responses
  *    0x600 -  0x6FF	Kernel calls to SYSTEM task
  *    0x700 -  0x7FF	Reincarnation Server (RS) requests
  *    0x800 -  0x8FF	Data Store (DS) requests
@@ -25,7 +25,7 @@
  *   0x1200 - 0x12FF    Devman
  *   0x1300 - 0x13FF    TTY Requests
  *   0x1400 - 0x14FF	VFS-FS transaction IDs
- *   0x1500 - 0x15FF	Block device requests and responses
+ *   0x1500 - 0x15FF	(unused)
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
  *   0x1700 - 0x17FF	Real Time Clock requests and responses
  *
@@ -185,58 +185,6 @@
 #define   BUSC_I2C_ADDR		m2_i1			/* slave address */
 #define BUSC_I2C_EXEC		(BUSC_RQ_BASE + 65)	/* perform i2c action */
 #define   BUSC_I2C_GRANT	m2_i1			/* grant for request */
-
-/*===========================================================================*
- *                Messages for CHARACTER device drivers			     *
- *===========================================================================*/
-
-/* Message types for character device drivers. */
-#define DEV_RQ_BASE   0x400	/* base for character device request types */
-#define DEV_RS_BASE   0x500	/* base for character device response types */
-
-#define CANCEL       	(DEV_RQ_BASE +  0) /* force a task to cancel */
-#define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
-#define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
-#define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
-
-#define DEV_READ_S	(DEV_RQ_BASE + 20) /* (safecopy) read from minor */
-#define DEV_WRITE_S   	(DEV_RQ_BASE + 21) /* (safecopy) write to minor */
-#define DEV_SCATTER_S  	(DEV_RQ_BASE + 22) /* (safecopy) write from a vector */
-#define DEV_GATHER_S   	(DEV_RQ_BASE + 23) /* (safecopy) read into a vector */
-#define DEV_IOCTL_S    	(DEV_RQ_BASE + 24) /* (safecopy) I/O control code */
-
-#define IS_DEV_RQ(type) (((type) & ~0xff) == DEV_RQ_BASE)
-
-#define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
-#define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
-#define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
-#define DEV_SEL_REPL2	(DEV_RS_BASE + 8) /* (opt) second reply to DEV_SELECT */
-#define DEV_OPEN_REPL	(DEV_RS_BASE + 9) /* reply to DEV_OPEN */
-
-#define IS_DEV_RS(type) (((type) & ~0xff) == DEV_RS_BASE)
-
-/* Field names for messages to character device drivers. */
-#define DEVICE    	m2_i1	/* major-minor device */
-#define USER_ENDPT	m2_i2	/* which endpoint initiated this call? */
-#define COUNT   	m2_i3	/* how many bytes to transfer */
-#define REQUEST 	m2_i3 	/* ioctl request code */
-#define POSITION	m2_l1	/* file offset (low 4 bytes) */
-#define HIGHPOS		m2_l2	/* file offset (high 4 bytes) */
-#define ADDRESS 	m2_p1	/* core buffer address */
-#define IO_GRANT 	m2_p1	/* grant id (for DEV_*_S variants) */
-#define FLAGS		m2_s1   /* operation flags */
-
-#define FLG_OP_NONBLOCK	0x1 /* operation is non blocking */
-
-/* Field names for DEV_SELECT messages to character device drivers. */
-#define DEV_MINOR	m2_i1	/* minor device */
-#define DEV_SEL_OPS	m2_i2	/* which select operations are requested */
-
-/* Field names used in reply messages from tasks. */
-#define REP_ENDPT	m2_i1	/* # of proc on whose behalf I/O was done */
-#define REP_STATUS	m2_i2	/* bytes transferred or error number */
-#define REP_IO_GRANT	m2_i3	/* DEV_REVIVE: grant by which I/O was done */
-#  define SUSPEND 	 -998 	/* status to suspend caller, reply later */
 
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
@@ -939,6 +887,11 @@
 #define VFS_PFS_FD		m2_i3
 #define VFS_PFS_FILP		m2_p1
 
+/* Field names for GETRUSAGE related calls */
+#define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
+#define RU_WHO		m1_i1	/* who argument in getrusage call */
+#define RU_RUSAGE_ADDR	m1_p1	/* pointer to struct rusage */
+
 /*===========================================================================*
  *                Messages for VM server				     *
  *===========================================================================*/
@@ -1299,12 +1252,70 @@
 #define IS_VFS_FS_TRANSID(type) (((type) & ~0xff) == VFS_TRANSACTION_BASE)
 
 /*===========================================================================*
+ *			Messages for character devices			     *
+ *===========================================================================*/
+
+/* Base type for character device requests and responses. */
+#define CDEV_RQ_BASE	0x400
+#define CDEV_RS_BASE	0x480
+
+#define IS_CDEV_RQ(type) (((type) & ~0x7f) == CDEV_RQ_BASE)
+#define IS_CDEV_RS(type) (((type) & ~0x7f) == CDEV_RS_BASE)
+
+/* Message types for character device requests. */
+#define CDEV_OPEN	(CDEV_RQ_BASE + 0)	/* open a minor device */
+#define CDEV_CLOSE	(CDEV_RQ_BASE + 1)	/* close a minor device */
+#define CDEV_READ	(CDEV_RQ_BASE + 2)	/* read into a buffer */
+#define CDEV_WRITE	(CDEV_RQ_BASE + 3)	/* write from a buffer */
+#define CDEV_IOCTL	(CDEV_RQ_BASE + 4)	/* I/O control operation */
+#define CDEV_CANCEL	(CDEV_RQ_BASE + 5)	/* cancel suspended request */
+#define CDEV_SELECT	(CDEV_RQ_BASE + 6)	/* test for ready operations */
+
+/* Message types for character device responses. */
+#define CDEV_REPLY	(CDEV_RS_BASE + 0)	/* general reply code */
+#define CDEV_SEL1_REPLY	(CDEV_RS_BASE + 1)	/* immediate select reply */
+#define CDEV_SEL2_REPLY	(CDEV_RS_BASE + 2)	/* select notification reply */
+
+/* Field names for block device messages. */
+#define CDEV_MINOR	m10_i1	/* minor device number */
+#define CDEV_STATUS	m10_i2	/* OK, error code, minor device, operations */
+#define CDEV_ACCESS	m10_i2	/* access bits for open requests */
+#define CDEV_GRANT	m10_i2	/* grant ID of buffer */
+#define CDEV_OPS	m10_i2	/* requested select operations */
+#define CDEV_COUNT	m10_i3	/* number of bytes to transfer */
+#define CDEV_USER	m10_i3	/* endpoint of user process */
+#define CDEV_FLAGS	m10_i4	/* transfer flags */
+#define CDEV_ID		m10_l1	/* opaque request ID */
+#define CDEV_REQUEST	m10_l2	/* I/O control request */
+#define CDEV_POS_LO	m10_l2	/* transfer position (low bits) */
+#define CDEV_POS_HI	m10_l3	/* transfer position (high bits) */
+
+/* Bits in 'CDEV_ACCESS' field of block device open requests. */
+#  define CDEV_R_BIT		0x01	/* open with read access */
+#  define CDEV_W_BIT		0x02	/* open with write access */
+#  define CDEV_NOCTTY		0x04	/* not to become the controlling TTY */
+
+/* Bits in 'CDEV_FLAGS' field of block device transfer requests. */
+#  define CDEV_NOFLAGS		0x00	/* no flags are set */
+#  define CDEV_NONBLOCK		0x01	/* do not suspend I/O request */
+
+/* Bits in 'CDEV_OPS', 'CDEV_STATUS' fields of block device select messages. */
+#  define CDEV_OP_RD		0x01	/* selected for read operation */
+#  define CDEV_OP_WR		0x02	/* selected for write operation */
+#  define CDEV_OP_ERR		0x04	/* selected for error operation */
+#  define CDEV_NOTIFY		0x08	/* notification requested */
+
+/* Bits in 'CDEV_STATUS' field of block device open responses. */
+#  define CDEV_CLONED		0x20000000	/* device is cloned */
+#  define CDEV_CTTY		0x40000000	/* device is controlling TTY */
+
+/*===========================================================================*
  *			Messages for block devices			     *
  *===========================================================================*/
 
 /* Base type for block device requests and responses. */
-#define BDEV_RQ_BASE	0x1500
-#define BDEV_RS_BASE	0x1580
+#define BDEV_RQ_BASE	0x500
+#define BDEV_RS_BASE	0x580
 
 #define IS_BDEV_RQ(type) (((type) & ~0x7f) == BDEV_RQ_BASE)
 #define IS_BDEV_RS(type) (((type) & ~0x7f) == BDEV_RS_BASE)
@@ -1343,11 +1354,6 @@
 #  define BDEV_FORCEWRITE	0x01	/* force write to disk immediately */
 #  define BDEV_NOPAGE		0x02	/* eeprom: don't send page address */
 
-/* Field names for GETRUSAGE related calls */
-#define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
-#define RU_WHO		m1_i1	/* who argument in getrusage call */
-#define RU_RUSAGE_ADDR	m1_p1	/* pointer to struct rusage */
-
 /*===========================================================================*
  *			Messages for Real Time Clocks			     *
  *===========================================================================*/
@@ -1381,5 +1387,11 @@
 #define RTCDEV_NOFLAGS	0x00	/* no flags are set */
 #define RTCDEV_Y2KBUG	0x01	/* Interpret 1980 as 2000 for RTC w/Y2K bug */
 #define RTCDEV_CMOSREG	0x02	/* Also set the CMOS clock register bits. */
+
+/*===========================================================================*
+ *		Internal codes used by several services			     *
+ *===========================================================================*/
+
+#define SUSPEND 	 -998 	/* status to suspend caller, reply later */
 
 /* _MINIX_COM_H */

@@ -527,7 +527,7 @@ void unpause(void)
   blocked_on = fp->fp_blocked_on;
 
   /* Clear the block status now. The procedure below might make blocking calls
-   * and it is imperative that while at least dev_cancel() is executing, other
+   * and it is imperative that while at least cdev_cancel() is executing, other
    * parts of VFS do not perceive this process as blocked on something.
    */
   fp->fp_blocked_on = FP_BLOCKED_ON_NONE;
@@ -573,7 +573,7 @@ void unpause(void)
 		}
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
 
-		status = dev_cancel(dev);
+		status = cdev_cancel(dev);
 
 		break;
 	default :

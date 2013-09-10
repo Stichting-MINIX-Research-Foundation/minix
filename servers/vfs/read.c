@@ -137,6 +137,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   off_t position, res_pos;
   unsigned int cum_io, cum_io_incr, res_cum_io;
   int op, r;
+  dev_t dev;
 
   position = f->filp_pos;
   vp = f->filp_vno;
@@ -147,7 +148,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 
   if (size > SSIZE_MAX) return(EINVAL);
 
-  op = (rw_flag == READING ? DEV_READ_S : DEV_WRITE_S);
+  op = (rw_flag == READING ? CDEV_READ : CDEV_WRITE);
 
   if (S_ISFIFO(vp->v_mode)) {		/* Pipes */
 	if (rfp->fp_cum_io_partial != 0) {
@@ -159,9 +160,6 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	}
 	r = rw_pipe(rw_flag, for_e, f, buf, size);
   } else if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
-	dev_t dev;
-	int op = (rw_flag == READING ? DEV_READ_S : DEV_WRITE_S);
-
 	if(rw_flag == PEEKING) {
 	  	printf("read_write: peek on char device makes no sense\n");
 		return EINVAL;
@@ -172,7 +170,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 
 	dev = (dev_t) vp->v_sdev;
 
-	r = dev_io(op, dev, for_e, buf, position, size, f->filp_flags);
+	r = cdev_io(op, dev, for_e, buf, position, size, f->filp_flags);
 	if (r >= 0) {
 		/* This should no longer happen: all calls are asynchronous. */
 		printf("VFS: I/O to device %x succeeded immediately!?\n", dev);
