@@ -20,7 +20,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <sys/stat.h>
-#include <sys/ioc_tty.h>
+#include <sys/ttycom.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>

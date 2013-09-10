@@ -42,7 +42,7 @@
 #include <sys/featuretest.h>
 #include <sys/sigtypes.h>
 
-#define _NSIG		26
+#define _NSIG		27
 #define NSIG _NSIG
 
 
@@ -67,6 +67,7 @@
 #define SIGWINCH    	  21	/* window size has changed */
 #define SIGVTALRM         24	/* virtual alarm */
 #define SIGPROF           25	/* profiler alarm */
+#define SIGINFO           26    /* information request */
 
 /* POSIX requires the following signals to be defined, even if they are
  * not supported.  Here are the definitions, but they are not supported.
@@ -86,17 +87,17 @@
  * processes in user-space. Higher-priority signals should be first.
  */
 /* Signals delivered by a signal manager. */
-#define SIGSNDELAY	  26	/* end of delay for signal delivery */
+#define SIGSNDELAY	  27	/* end of delay for signal delivery */
 
 #define SIGS_FIRST	  SIGHUP      /* first system signal */
 #define SIGS_LAST	  SIGSNDELAY   /* last system signal */
 #define IS_SIGS(signo)    (signo>=SIGS_FIRST && signo<=SIGS_LAST)
 
 /* Signals delivered by the kernel. */
-#define SIGKMEM		  27	/* kernel memory request pending */
-#define SIGKMESS   	  28	/* new kernel message */
-#define SIGKSIGSM    	  29	/* kernel signal pending for signal manager */
-#define SIGKSIG    	  30	/* kernel signal pending */
+#define SIGKMEM		  28	/* kernel memory request pending */
+#define SIGKMESS   	  29	/* new kernel message */
+#define SIGKSIGSM    	  30	/* kernel signal pending for signal manager */
+#define SIGKSIG    	  31	/* kernel signal pending */
 
 #define SIGK_FIRST	  SIGKMEM      /* first kernel signal */
 #define SIGK_LAST	  SIGKSIG     /* last kernel signal */

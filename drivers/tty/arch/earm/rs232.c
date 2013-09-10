@@ -144,7 +144,8 @@ static int rs_read(tty_t *tp, int try);
 static int rs_icancel(tty_t *tp, int try);
 static int rs_ocancel(tty_t *tp, int try);
 static void rs_ostart(rs232_t *rs);
-static int rs_break(tty_t *tp, int try);
+static int rs_break_on(tty_t *tp, int try);
+static int rs_break_off(tty_t *tp, int try);
 static int rs_close(tty_t *tp, int try);
 static int rs_open(tty_t *tp, int try);
 static void rs232_handler(rs232_t *rs);
@@ -330,8 +331,11 @@ omap_get_divisor(rs232_t *rs, unsigned int baud)
 	switch(baud) {
 	case B460800:	/* Fall through */
 	case B921600:	/* Fall through */
+#if 0
 	case B1843200:	/* Fall through */
-	case B3686400:	oversampling = 13; break;
+	case B3686400:	
+#endif
+		oversampling = 13; break;
 	default:	oversampling = 16;
 	}
 
@@ -569,7 +573,8 @@ rs_init(tty_t *tp)
 	tp->tty_icancel = rs_icancel;
 	tp->tty_ocancel = rs_ocancel;
 	tp->tty_ioctl = rs_ioctl;
-	tp->tty_break = rs_break;
+	tp->tty_break_on = rs_break_on;
+	tp->tty_break_off = rs_break_off;
 	tp->tty_open = rs_open;
 	tp->tty_close = rs_close;
 
@@ -669,17 +674,26 @@ rs_ostart(rs232_t *rs)
 }
 
 static int
-rs_break(tty_t *tp, int UNUSED(dummy))
+rs_break_on(tty_t *tp, int UNUSED(dummy))
 {
-/* Generate a break condition by setting the BREAK bit for 0.4 sec. */
+/* Raise break condition */
 	rs232_t *rs = tp->tty_priv;
 	unsigned int lsr;
 
 	lsr = serial_in(rs, OMAP3_LSR);
 	serial_out(rs, OMAP3_LSR, lsr | UART_LSR_BI);
-	/* XXX */
-	/* milli_delay(400); */				/* ouch */
-  	serial_out(rs, OMAP3_LSR, lsr);
+	return 0;	/* dummy */
+}
+
+static int
+rs_break_off(tty_t *tp, int UNUSED(dummy))
+{
+/* Clear break condition */
+	rs232_t *rs = tp->tty_priv;
+	unsigned int lsr;
+
+	lsr = serial_in(rs, OMAP3_LSR);
+	serial_out(rs, OMAP3_LSR, lsr & ~UART_LSR_BI);
 	return 0;	/* dummy */
 }
 

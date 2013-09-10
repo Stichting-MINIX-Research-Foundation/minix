@@ -310,7 +310,7 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
   mp->mp_procgrp = rmp->mp_procgrp;	/* get process group right */
 
   /* For SIGVTALRM and SIGPROF, see if we need to restart a
-   * virtual timer. For SIGINT, SIGWINCH and SIGQUIT, use proc_id 0
+   * virtual timer. For SIGINT, SIGINFO, SIGWINCH and SIGQUIT, use proc_id 0
    * to indicate a broadcast to the recipient's process group.  For
    * SIGKILL, use proc_id -1 to indicate a systemwide broadcast.
    */
@@ -318,6 +318,7 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
       case SIGINT:
       case SIGQUIT:
       case SIGWINCH:
+      case SIGINFO:
   	id = 0; break;	/* broadcast to process group */
       case SIGVTALRM:
       case SIGPROF:

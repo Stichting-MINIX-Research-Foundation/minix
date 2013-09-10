@@ -135,7 +135,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   register struct boot_image *ip;
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 				SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
-  static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
+  static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT, SIGINFO };
   static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE, 
 				SIGBUS, SIGSEGV };
   register struct mproc *rmp;

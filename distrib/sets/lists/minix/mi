@@ -50,6 +50,7 @@
 ./bin/setup				minix-sys
 ./bin/sh				minix-sys
 ./bin/shutdown				minix-sys	obsolete
+./bin/stty				minix-sys
 ./bin/sync				minix-sys
 ./bin/sysenv				minix-sys
 ./bin/tar				minix-sys
@@ -501,7 +502,7 @@
 ./usr/bin/stat				minix-sys
 ./usr/bin/strings			minix-sys	binutils
 ./usr/bin/strip				minix-sys	binutils
-./usr/bin/stty				minix-sys
+./usr/bin/stty				minix-sys	obsolete
 ./usr/bin/su				minix-sys
 ./usr/bin/sum				minix-sys
 ./usr/bin/svclog			minix-sys
@@ -1455,7 +1456,7 @@
 ./usr/include/sys/ioc_tape.h		minix-sys
 ./usr/include/sys/ioctl_compat.h		minix-sys
 ./usr/include/sys/ioctl.h		minix-sys
-./usr/include/sys/ioc_tty.h		minix-sys
+./usr/include/sys/ioc_tty.h		minix-sys	obsolete
 ./usr/include/sys/iostat.h		minix-sys
 ./usr/include/sys/ipc.h			minix-sys
 ./usr/include/sys/jmp_buf.h		minix-sys

@@ -128,7 +128,7 @@ __RCSID("$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $");
 #include <stdio.h>
 #include <uuid.h>
 #include <assert.h>
-#include <minix/termios.h>
+#include <sys/termios.h>
 
 #include "extern.h"
 
