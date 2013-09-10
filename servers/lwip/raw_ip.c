@@ -30,7 +30,7 @@ static void raw_ip_recv_free(void * data)
 }
 
 
-static int raw_ip_op_open(struct socket * sock, __unused message * m)
+static int raw_ip_op_open(struct socket * sock)
 {
 	debug_print("socket num %ld", get_sock_num(sock));
 
@@ -56,31 +56,30 @@ static void raw_ip_close(struct socket * sock)
 	sock->ops = NULL;
 }
 
-static void raw_ip_op_close(struct socket * sock, __unused message * m)
+static int raw_ip_op_close(struct socket * sock)
 {
 	debug_print("socket num %ld", get_sock_num(sock));
 
 	raw_ip_close(sock);
 
-	sock_reply_close(sock, OK);
+	return OK;
 }
 
-static int raw_ip_do_receive(message * m,
+static int raw_ip_do_receive(struct sock_req *req,
 			struct pbuf *pbuf)
 {
 	struct pbuf * p;
-	unsigned int rem_len = m->COUNT;
+	size_t rem_len = req->size;
 	unsigned int written = 0, hdr_sz = 0;
 	int err;
 
-	debug_print("user buffer size : %d\n", rem_len);
+	debug_print("user buffer size : %u\n", rem_len);
 
 	for (p = pbuf; p && rem_len; p = p->next) {
 		size_t cp_len;
 
 		cp_len = (rem_len < p->len) ? rem_len : p->len;
-		err = copy_to_user(m->m_source,	p->payload, cp_len,
-				(cp_grant_id_t) m->IO_GRANT,
+		err = copy_to_user(req->endpt, p->payload, cp_len, req->grant,
 				hdr_sz + written);
 
 		if (err != OK)
@@ -108,19 +107,17 @@ static u8_t raw_ip_op_receive(void *arg,
 
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		/* we are resuming a suspended operation */
-		ret = raw_ip_do_receive(&sock->mess, pbuf);
+		ret = raw_ip_do_receive(&sock->req, pbuf);
+
+		send_req_reply(&sock->req, ret);
+		sock->flags &= ~SOCK_FLG_OP_PENDING;
 
 		if (ret > 0) {
-			sock_reply(sock, ret);
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			if (sock->usr_flags & NWIO_EXCL) {
 				pbuf_free(pbuf);
 				return 1;
 			} else
 				return 0;
-		} else {
-			sock_reply(sock, ret);
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
 		}
 	}
 
@@ -170,14 +167,12 @@ static u8_t raw_ip_op_receive(void *arg,
 	return ret;
 }
 
-static void raw_ip_op_read(struct socket * sock, message * m, int blk)
+static int raw_ip_op_read(struct socket * sock, struct sock_req * req, int blk)
 {
 	debug_print("socket num %ld", get_sock_num(sock));
 
-	if (sock->pcb == NULL) {
-		sock_reply(sock, EIO);
-		return;
-	}
+	if (sock->pcb == NULL)
+		return EIO;
 
 	if (sock->recv_head) {
 		/* data available receive immeditely */
@@ -187,62 +182,57 @@ static void raw_ip_op_read(struct socket * sock, message * m, int blk)
 
 		data = (struct raw_ip_recv_data *) sock->recv_head->data;
 
-		ret = raw_ip_do_receive(m,	data->pbuf);
+		ret = raw_ip_do_receive(req, data->pbuf);
 
 		if (ret > 0) {
 			sock_dequeue_data(sock);
 			sock->recv_data_size -= data->pbuf->tot_len;
 			raw_ip_recv_free(data);
 		}
-		sock_reply(sock, ret);
+		return ret;
 	} else if (!blk)
-		sock_reply(sock, EAGAIN);
+		return EAGAIN;
 	else {
-		/* store the message so we know how to reply */
-		sock->mess = *m;
+		/* store the request so we know how to reply */
+		sock->req = *req;
 		/* operation is being processes */
 		sock->flags |= SOCK_FLG_OP_PENDING;
 
 		debug_print("no data to read, suspending");
+		return EDONTREPLY;
 	}
 }
 
-static void raw_ip_op_write(struct socket * sock, message * m, __unused int blk)
+static int raw_ip_op_write(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
 	int ret;
 	struct pbuf * pbuf;
 	struct ip_hdr * ip_hdr;
 
-	debug_print("socket num %ld data size %d",
-			get_sock_num(sock), m->COUNT);
+	debug_print("socket num %ld data size %u",
+			get_sock_num(sock), req->size);
 
-	if (sock->pcb == NULL) {
-		ret = EIO;
-		goto write_err;
-	}
+	if (sock->pcb == NULL)
+		return EIO;
 
-	if ((size_t) m->COUNT > sock->buf_size) {
-		ret = ENOMEM;
-		goto write_err;
-	}
+	if (req->size > sock->buf_size)
+		return ENOMEM;
 
-	pbuf = pbuf_alloc(PBUF_LINK, m->COUNT, PBUF_RAM);
-	if (!pbuf) {
-		ret = ENOMEM;
-		goto write_err;
-	}
+	pbuf = pbuf_alloc(PBUF_LINK, req->size, PBUF_RAM);
+	if (!pbuf)
+		return ENOMEM;
 
-	if ((ret = copy_from_user(m->m_source, pbuf->payload, m->COUNT,
-				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
+	if ((ret = copy_from_user(req->endpt, pbuf->payload, req->size,
+				  req->grant, 0)) != OK) {
 		pbuf_free(pbuf);
-		goto write_err;
+		return ret;
 	}
 
 	ip_hdr = (struct ip_hdr *) pbuf->payload;
 	if (pbuf_header(pbuf, -IP_HLEN)) {
 		pbuf_free(pbuf);
-		ret = EIO;
-		goto write_err;
+		return EIO;
 	}
 
 	if ((ret = raw_sendto((struct raw_pcb *)sock->pcb, pbuf,
@@ -250,28 +240,27 @@ static void raw_ip_op_write(struct socket * sock, message * m, __unused int blk)
 		debug_print("raw_sendto failed %d", ret);
 		ret = EIO;
 	} else
-		ret = m->COUNT;
+		ret = req->size;
 	
 
 	pbuf_free(pbuf);
 	
-write_err:
-	sock_reply(sock, ret);
+	return ret;
 }
 
-static void raw_ip_set_opt(struct socket * sock, message * m)
+static int raw_ip_set_opt(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
 	int err;
 	nwio_ipopt_t ipopt;
 	struct raw_pcb * pcb;
 
-	err = copy_from_user(m->m_source, &ipopt, sizeof(ipopt),
-				(cp_grant_id_t) m->IO_GRANT, 0);
+	err = copy_from_user(endpt, &ipopt, sizeof(ipopt), grant, 0);
 
 	if (err != OK)
-		sock_reply(sock, err);
+		return err;
 
-	debug_print("ipopt.nwio_flags = 0x%lx", ipopt.nwio_flags);
+	debug_print("ipopt.nwio_flags = 0x%x", ipopt.nwio_flags);
 	debug_print("ipopt.nwio_proto = 0x%x", ipopt.nwio_proto);
 	debug_print("ipopt.nwio_rem = 0x%x",
 				(unsigned int) ipopt.nwio_rem);
@@ -279,8 +268,7 @@ static void raw_ip_set_opt(struct socket * sock, message * m)
 	if (sock->pcb == NULL) {
 		if (!(pcb = raw_new(ipopt.nwio_proto))) {
 			raw_ip_close(sock);
-			sock_reply(sock, ENOMEM);
-			return;
+			return ENOMEM;
 		}
 
 		sock->pcb = pcb;
@@ -289,7 +277,7 @@ static void raw_ip_set_opt(struct socket * sock, message * m)
 
 	if (pcb->protocol != ipopt.nwio_proto) {
 		debug_print("conflicting ip socket protocols\n");
-		sock_reply(sock, EBADIOCTL);
+		return EINVAL;
 	}
 
 	sock->usr_flags = ipopt.nwio_flags;
@@ -297,20 +285,19 @@ static void raw_ip_set_opt(struct socket * sock, message * m)
 #if 0
 	if (raw_bind(pcb, (ip_addr_t *)&ipopt.nwio_rem) == ERR_USE) {
 		raw_ip_close(sock);
-		sock_reply(sock, EADDRINUSE);
-		return;
+		return EADDRINUSE;
 	}
 #endif
 
 	/* register a receive hook */
 	raw_recv((struct raw_pcb *) sock->pcb, raw_ip_op_receive, sock);
 
-	sock_reply(sock, OK);
+	return OK;
 }
 
-static void raw_ip_get_opt(struct socket * sock, message * m)
+static int raw_ip_get_opt(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
-	int err;
 	nwio_ipopt_t ipopt;
 	struct raw_pcb * pcb = (struct raw_pcb *) sock->pcb;
 
@@ -319,43 +306,36 @@ static void raw_ip_get_opt(struct socket * sock, message * m)
 	ipopt.nwio_rem = pcb->remote_ip.addr;
 	ipopt.nwio_flags = sock->usr_flags;
 
-	if ((unsigned int) m->COUNT < sizeof(ipopt)) {
-		sock_reply(sock, EINVAL);
-		return;
-	}
-
-	err = copy_to_user(m->m_source, &ipopt, sizeof(ipopt),
-				(cp_grant_id_t) m->IO_GRANT, 0);
-
-	if (err != OK)
-		sock_reply(sock, err);
-
-	sock_reply(sock, OK);
+	return copy_to_user(endpt, &ipopt, sizeof(ipopt), grant, 0);
 }
 
-static void raw_ip_op_ioctl(struct socket * sock, message * m, __unused int blk)
+static int raw_ip_op_ioctl(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
-	debug_print("socket num %ld req %c %d %d",
+	int r;
+
+	debug_print("socket num %ld req %c %ld %ld",
 			get_sock_num(sock),
-			(m->REQUEST >> 8) & 0xff,
-			m->REQUEST & 0xff,
-			(m->REQUEST >> 16) & _IOCPARM_MASK);
+			(unsigned char) (req->req >> 8),
+			req->req & 0xff,
+			(req->req >> 16) & _IOCPARM_MASK);
 	
-	switch (m->REQUEST) {
+	switch (req->req) {
 	case NWIOSIPOPT:
-		raw_ip_set_opt(sock, m);
+		r = raw_ip_set_opt(sock, req->endpt, req->grant);
 		break;
 	case NWIOGIPOPT:
-		raw_ip_get_opt(sock, m);
+		r = raw_ip_get_opt(sock, req->endpt, req->grant);
 		break;
 	default:
 		/*
 		 * /dev/ip can be also accessed as a default device to be
 		 * configured
 		 */
-		nic_default_ioctl(m);
-		return;
+		r = nic_default_ioctl(req);
 	}
+
+	return r;
 }
 
 struct sock_ops sock_raw_ip_ops = {

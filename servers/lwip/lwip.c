@@ -206,13 +206,13 @@ static void netif_poll_lo(void)
 		netif_poll(netif_lo);
 }
 
-void socket_open(message * m)
+int socket_open(devminor_t minor)
 {
         struct sock_ops * ops;
         struct socket * sock;
         int ret = OK;
 
-        switch (m->DEVICE) {
+        switch (minor) {
         case SOCK_TYPE_TCP:
                 ops = &sock_tcp_ops;
                 break;
@@ -223,21 +223,17 @@ void socket_open(message * m)
                 ops = &sock_raw_ip_ops;
                 break;
         default:
-                if (m->DEVICE - SOCK_TYPES  < MAX_DEVS) {
-                        m->DEVICE -= SOCK_TYPES;
-                        nic_open(m);
-                        return;
-                }
-                printf("LWIP unknown socket type %d\n", m->DEVICE);
-                send_reply_open(m, EINVAL);
-                return;
+                if (minor - SOCK_TYPES  < MAX_DEVS)
+			return nic_open(minor - SOCK_TYPES);
+
+                printf("LWIP unknown socket type %d\n", minor);
+                return EINVAL;
         }
 
         sock = get_unused_sock();
         if (!sock) {
                 printf("LWIP : no free socket\n");
-                send_reply_open(m, EAGAIN);
-                return;
+                return EAGAIN;
         }
 
         sock->ops = ops;
@@ -245,15 +241,16 @@ void socket_open(message * m)
         sock->recv_data_size = 0;
 
         if (sock->ops && sock->ops->open)
-                ret = sock->ops->open(sock, m);
+                ret = sock->ops->open(sock);
 
         if (ret == OK) {
                 debug_print("new socket %ld", get_sock_num(sock));
-                send_reply_open(m, get_sock_num(sock));
+                ret = get_sock_num(sock);
         } else {
                 debug_print("failed %d", ret);
-                send_reply_open(m, ret);
+		/* FIXME: shouldn't sock be freed now? */
         }
+	return ret;
 }
 
 int main(__unused int argc, __unused char ** argv)
