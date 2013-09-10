@@ -12,15 +12,15 @@
 #define	L(c)	((c) | HASCAPS)	/* Add "Caps Lock has effect" attribute */
 
 #define EXT	0x0100		/* Normal function keys		*/
-#define CTRL	0x0200		/* Control key			*/
+#define CTRLKEY	0x0200		/* Control key			*/
 #define SHIFT	0x0400		/* Shift key			*/
 #define ALT	0x0800		/* Alternate key		*/
 #define HASNUM	0x4000		/* Num Lock has effect		*/
 #define HASCAPS	0x8000		/* Caps Lock has effect		*/
 
 /* The left and right versions for the actual keys in the keymap. */
-#define LCTRL	CTRL
-#define RCTRL	(CTRL | EXT)
+#define LCTRL	CTRLKEY
+#define RCTRL	(CTRLKEY | EXT)
 #define LSHIFT	SHIFT
 #define RSHIFT	(SHIFT | EXT)
 #define LALT	ALT
@@ -71,18 +71,18 @@
 #define AINSRT	(0x0C + ALT)
 
 /* Ctrl + Numeric keypad */
-#define CHOME	(0x01 + CTRL)
-#define CEND	(0x02 + CTRL)
-#define CUP	(0x03 + CTRL)
-#define CDOWN	(0x04 + CTRL)
-#define CLEFT	(0x05 + CTRL)
-#define CRIGHT	(0x06 + CTRL)
-#define CPGUP	(0x07 + CTRL)
-#define CPGDN	(0x08 + CTRL)
-#define CMID	(0x09 + CTRL)
-#define CMIN	(0x0A + CTRL)
-#define CPLUS	(0x0B + CTRL)
-#define CINSRT	(0x0C + CTRL)
+#define CHOME	(0x01 + CTRLKEY)
+#define CEND	(0x02 + CTRLKEY)
+#define CUP	(0x03 + CTRLKEY)
+#define CDOWN	(0x04 + CTRLKEY)
+#define CLEFT	(0x05 + CTRLKEY)
+#define CRIGHT	(0x06 + CTRLKEY)
+#define CPGUP	(0x07 + CTRLKEY)
+#define CPGDN	(0x08 + CTRLKEY)
+#define CMID	(0x09 + CTRLKEY)
+#define CNMIN	(0x0A + CTRLKEY)
+#define CPLUS	(0x0B + CTRLKEY)
+#define CINSRT	(0x0C + CTRLKEY)
 
 /* Lock keys */
 #define CALOCK	(0x0D + EXT)	/* caps lock	*/
@@ -118,18 +118,18 @@
 #define AF12	(0x1B + ALT)
 
 /* Ctrl+Fn */
-#define CF1	(0x10 + CTRL)
-#define CF2	(0x11 + CTRL)
-#define CF3	(0x12 + CTRL)
-#define CF4	(0x13 + CTRL)
-#define CF5	(0x14 + CTRL)
-#define CF6	(0x15 + CTRL)
-#define CF7	(0x16 + CTRL)
-#define CF8	(0x17 + CTRL)
-#define CF9	(0x18 + CTRL)
-#define CF10	(0x19 + CTRL)
-#define CF11	(0x1A + CTRL)
-#define CF12	(0x1B + CTRL)
+#define CF1	(0x10 + CTRLKEY)
+#define CF2	(0x11 + CTRLKEY)
+#define CF3	(0x12 + CTRLKEY)
+#define CF4	(0x13 + CTRLKEY)
+#define CF5	(0x14 + CTRLKEY)
+#define CF6	(0x15 + CTRLKEY)
+#define CF7	(0x16 + CTRLKEY)
+#define CF8	(0x17 + CTRLKEY)
+#define CF9	(0x18 + CTRLKEY)
+#define CF10	(0x19 + CTRLKEY)
+#define CF11	(0x1A + CTRLKEY)
+#define CF12	(0x1B + CTRLKEY)
 
 /* Shift+Fn */
 #define SF1	(0x10 + SHIFT)

@@ -1,7 +1,7 @@
-/*	$NetBSD: tcsendbreak.c,v 1.10 2012/06/25 22:32:46 abs Exp $	*/
+/* $NetBSD: extern.h,v 1.12 2011/08/29 14:51:19 joerg Exp $ */
 
 /*-
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,46 +27,25 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
-#else
-__RCSID("$NetBSD: tcsendbreak.c,v 1.10 2012/06/25 22:32:46 abs Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+#ifndef _EXTERN_H_
+#define _EXTERN_H_
 
-#include "namespace.h"
-#include <sys/types.h>
-#ifdef __minix
-#include <sys/time.h>
-#endif
-#include <sys/types.h>
-#include <sys/ioctl.h>
+int	c_cchars(const void *, const void *);
+int	c_modes(const void *, const void *);
+int	csearch(char ***, struct info *);
+void	checkredirect(void);
+void	gprint(struct termios *);
+void	gread(struct termios *, char *);
+int	ksearch(char ***, struct info *);
+int	msearch(char ***, struct info *);
+void	optlist(void);
+void	print(struct termios *, struct winsize *, int, enum FMT);
+__dead void	usage(void);
 
-#include <assert.h>
-#include <errno.h>
-#include <termios.h>
-#include <unistd.h>
+extern const struct cchar cchars1[], cchars2[];
 
-#ifdef __weak_alias
-__weak_alias(tcsendbreak,_tcsendbreak)
-#endif
-
-/*ARGSUSED*/
-int
-tcsendbreak(int fd, int len)
-{
-	static const struct timespec sleepytime = { 0, 400000000 };
-
-	_DIAGASSERT(fd != -1);
-
-	if (ioctl(fd, TIOCSBRK, 0) == -1)
-		return (-1);
-	(void)nanosleep(&sleepytime, NULL);
-	if (ioctl(fd, TIOCCBRK, 0) == -1)
-		return (-1);
-	return (0);
-}
+#endif /* !_EXTERN_H_ */

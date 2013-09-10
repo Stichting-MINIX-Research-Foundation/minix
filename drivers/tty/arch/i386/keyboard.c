@@ -12,7 +12,7 @@
 #include <sys/time.h>
 #include <sys/reboot.h>
 #include <sys/select.h>
-#include <termios.h>
+#include <sys/termios.h>
 #include <signal.h>
 #include <machine/archtypes.h>
 #include <minix/callnr.h>

@@ -85,7 +85,7 @@
    K(NUM_LOCK)      = {	NLOCK,	NLOCK,	NLOCK,	NLOCK,	NLOCK,	NLOCK	},
    K(KP_SLASH)      = {	'/',	'/',	'/',	A('/'),	'/',	C('@')	},
    K(KP_STAR)       = {	'*',	'*',	'*',	A('*'),	'*',	C('@')	},
-   K(KP_DASH)       = {	'-',	'-',	'-',	AMIN,	'-',	CMIN	},
+   K(KP_DASH)       = {	'-',	'-',	'-',	AMIN,	'-',	CNMIN	},
    K(KP_PLUS)       = {	'+',	'+',	'+',	APLUS,	'+',	CPLUS	},
    K(KP_ENTER)      = {	C('M'),	C('M'),	C('M'),	CA('M'),C('M'),	C('J')	},
    K(KP_1)          = {	NEND,	'1',	END,	AEND,	'1',	CEND	},
