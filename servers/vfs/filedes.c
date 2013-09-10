@@ -660,7 +660,7 @@ struct filp *f;
 		} else {
 			/* Attempt to close only when feasible */
 			if (!(f->filp_state & FS_INVALIDATED)) {
-				(void) dev_close(dev, f-filp);/*Ignore errors*/
+				(void) dev_close(dev);	/* Ignore errors */
 			}
 		}
 

@@ -29,9 +29,9 @@ void fs_sendmore(struct vmnt *vmp);
 void send_work(void);
 
 /* device.c */
-int dev_open(dev_t dev, endpoint_t proc_e, int flags);
+int dev_open(dev_t dev, int flags);
 int dev_reopen(dev_t dev, int filp_no, int flags);
-int dev_close(dev_t dev, int filp_no);
+int dev_close(dev_t dev);
 void cdev_reply(void);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
