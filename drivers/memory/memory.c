@@ -57,7 +57,7 @@ static int m_block_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
 static int m_block_open(devminor_t minor, int access);
 static int m_block_close(devminor_t minor);
-static int m_block_ioctl(devminor_t minor, unsigned int request, endpoint_t
+static int m_block_ioctl(devminor_t minor, unsigned long request, endpoint_t
 	endpt, cp_grant_id_t grant, endpoint_t user_endpt);
 
 /* Entry points to the CHARACTER part of this driver. */
@@ -511,7 +511,7 @@ static int m_block_close(devminor_t minor)
 /*===========================================================================*
  *				m_block_ioctl				     *
  *===========================================================================*/
-static int m_block_ioctl(devminor_t minor, unsigned int request,
+static int m_block_ioctl(devminor_t minor, unsigned long request,
 	endpoint_t endpt, cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 /* I/O controls for the block devices of the memory driver. Currently there is

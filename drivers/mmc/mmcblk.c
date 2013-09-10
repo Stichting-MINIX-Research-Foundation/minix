@@ -49,7 +49,7 @@ static int block_transfer(devminor_t minor,
     u64_t position,
     endpoint_t endpt, iovec_t * iov, unsigned int nr_req, int flags);
 
-static int block_ioctl(devminor_t minor, unsigned int request,
+static int block_ioctl(devminor_t minor, unsigned long request,
 	endpoint_t endpt, cp_grant_id_t grant, endpoint_t user_endpt);
 static struct device *block_part(devminor_t minor);
 
@@ -435,7 +435,7 @@ block_transfer(
  *				block_ioctl		                     *
  *===========================================================================*/
 static int
-block_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
+block_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	/* IOCTL handling */

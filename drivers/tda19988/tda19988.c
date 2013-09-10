@@ -167,7 +167,7 @@ static int tda19988_blk_open(devminor_t minor, int access);
 static int tda19988_blk_close(devminor_t minor);
 static ssize_t tda19988_blk_transfer(devminor_t minor, int do_write, u64_t pos,
     endpoint_t endpt, iovec_t * iov, unsigned int count, int flags);
-static int tda19988_blk_ioctl(devminor_t minor, unsigned int request,
+static int tda19988_blk_ioctl(devminor_t minor, unsigned long request,
     endpoint_t endpt, cp_grant_id_t grant, endpoint_t user_endpt);
 static struct device *tda19988_blk_part(devminor_t minor);
 static void tda19988_blk_other(message * m, int ipc_status);
@@ -314,7 +314,7 @@ tda19988_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
 }
 
 static int
-tda19988_blk_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
+tda19988_blk_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	log_trace(&log, "tda19988_blk_ioctl(%d)\n", minor);

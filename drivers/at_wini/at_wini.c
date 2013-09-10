@@ -156,7 +156,7 @@ static int setup_dma(unsigned *sizep, endpoint_t proc_nr, iovec_t *iov,
 static void w_need_reset(void);
 static void ack_irqs(unsigned int);
 static int w_do_close(devminor_t minor);
-static int w_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
+static int w_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, endpoint_t user_endpt);
 static void w_hw_int(unsigned int irqs);
 static int com_simple(struct command *cmd);
@@ -2211,7 +2211,7 @@ int do_dma;
 /*===========================================================================*
  *				w_ioctl					     *
  *===========================================================================*/
-static int w_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
+static int w_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	int r, timeout, prev, count;

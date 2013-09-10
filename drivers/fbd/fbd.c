@@ -19,7 +19,7 @@ static int fbd_open(devminor_t minor, int access);
 static int fbd_close(devminor_t minor);
 static int fbd_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
-static int fbd_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
+static int fbd_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, endpoint_t user_endpt);
 
 /* Variables. */
@@ -189,7 +189,7 @@ static int fbd_close(devminor_t UNUSED(minor))
 /*===========================================================================*
  *				fbd_ioctl				     *
  *===========================================================================*/
-static int fbd_ioctl(devminor_t UNUSED(minor), unsigned int request,
+static int fbd_ioctl(devminor_t UNUSED(minor), unsigned long request,
 	endpoint_t endpt, cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	/* Handle an I/O control request. */
