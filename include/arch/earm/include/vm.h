@@ -8,14 +8,14 @@ arm/vm.h
 /*
  * We are using the following setup
  * the system is configured to have the TRE (Tex remap enable bit) set to 0
- * The TEX[2:0] B and C bits are used to determins memoryt attributes.
- * These bits together with the S Bit (Shareability Bit) determins the 
+ * The TEX[2:0] B and C bits are used to determins memory attributes.
+ * These bits together with the S Bit (Shareability Bit) determines the 
  * memory attributes.
  *
  * The S bit is ignored when the other attribute define the memory as 
  * "device" or "strongly ordered"
  * 
- * We are setting the tex[2] bit to one to en up with the following 
+ * We are setting the tex[2] bit to one to end up with the following 
  * encoding
  * 
  * 00 00 Non cacheable 
@@ -95,10 +95,15 @@ arm/vm.h
 #define ARM_VM_PDE(v)	( (v) >> ARM_VM_DIR_ENT_SHIFT)
 #define ARM_VM_PFA(e)	( (e) & ARM_VM_ADDR_MASK)
 
+/* Second level small pages entry(Page Table Entry) points to 4K */
 #define ARM_VM_PTE_SHIFT	12
 #define ARM_VM_PTE_MASK		(~((1 << ARM_VM_PTE_SHIFT) - 1))
+
+/* First level entry(Page Directory Entry) to a second level small page PTE */
 #define ARM_VM_PDE_SHIFT	10
 #define ARM_VM_PDE_MASK		(~((1 << ARM_VM_PDE_SHIFT) - 1))
+
+/* First level entry(Page Directory Entry) to a 1MB section */
 #define ARM_VM_SECTION_SHIFT	20
 #define ARM_VM_SECTION_MASK	(~((1 << ARM_VM_SECTION_SHIFT) - 1))
 
