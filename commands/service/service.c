@@ -335,9 +335,9 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 		  }
           else if (strcmp(argv[i], ARG_DEVSTYLE)==0) {
               char* dev_style_keys[] = { "STYLE_DEV", "STYLE_TTY",
-                  "STYLE_CTTY", "STYLE_CLONE", NULL };
+                  "STYLE_CTTY", NULL };
               int dev_style_values[] = { STYLE_DEV, STYLE_TTY,
-                  STYLE_CTTY, STYLE_CLONE };
+                  STYLE_CTTY };
               for(j=0;dev_style_keys[j]!=NULL;j++) {
                   if(!strcmp(dev_style_keys[j], argv[i+1])) {
                       break;

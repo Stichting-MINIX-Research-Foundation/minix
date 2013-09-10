@@ -65,10 +65,10 @@ kill_by_name syslogd
 sleep 3
 if [ X`/bin/sysenv lwip` = Xyes ]
 then
-	service up /usr/sbin/lwip -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+	service up /usr/sbin/lwip -script /etc/rs.inet -dev /dev/ip
 	dhcpd --lwip &
 else
-	service up /usr/sbin/inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+	service up /usr/sbin/inet -script /etc/rs.inet -dev /dev/ip
 	daemonize dhcpd
 fi
 daemonize nonamed -L

@@ -156,9 +156,9 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
 			/* TTY needs to know about the O_NOCTTY flag. */
-			r = dev_open(dev, bits | (oflags & O_NOCTTY));
+			r = cdev_open(dev, bits | (oflags & O_NOCTTY));
 			vp = filp->filp_vno;	/* Might be updated by
-						 * dev_open/clone_opcl */
+						 * cdev_open after cloning */
 			break;
 		   case S_IFBLK:
 

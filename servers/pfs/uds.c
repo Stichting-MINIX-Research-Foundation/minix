@@ -464,7 +464,7 @@ static int do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 				}
 
 				/* see if the server is blocked on select() */
-				if (uds_fd_table[i].sel_ops & SEL_RD) {
+				if (uds_fd_table[i].sel_ops & CDEV_OP_RD) {
 					/* if the server wants to know about
 					 * data ready to read and it doesn't
 					 * doesn't know about it already, then
@@ -473,9 +473,9 @@ static int do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 					 */
 					chardriver_reply_select(
 						uds_fd_table[i].sel_endpt, i,
-						SEL_RD);
+						CDEV_OP_RD);
 
-					uds_fd_table[i].sel_ops &= ~SEL_RD;
+					uds_fd_table[i].sel_ops &= ~CDEV_OP_RD;
 				}
 
 				/* we found our server */

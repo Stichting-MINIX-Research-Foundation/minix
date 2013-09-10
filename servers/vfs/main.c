@@ -124,36 +124,14 @@ int main(void)
 		 continue;
 	}
 
-	/* At this point we either have results from an asynchronous device
-	 * or a new system call. In both cases a new worker thread has to be
-	 * started and there might not be one available from the pool. This is
-	 * not a problem (requests/replies are simply queued), except when
-	 * they're from an FS endpoint, because these can cause a deadlock.
-	 * handle_work() takes care of the details. */
-	if (IS_DRV_REPLY(call_nr)) {
-		/* We've got results for a device request */
-
-		struct dmap *dp;
-
-		dp = get_dmap(who_e);
-		if (dp != NULL) {
-			if (!IS_BDEV_RS(call_nr)) {
-				cdev_reply();
-
-			} else {
-				if (dp->dmap_servicing == NONE) {
-					printf("Got spurious dev reply from %d",
-					who_e);
-				} else {
-					bdev_reply(dp);
-				}
-			}
-			continue;
-		}
-		printf("VFS: ignoring dev reply from unknown driver %d\n",
-			who_e);
+	if (IS_BDEV_RS(call_nr)) {
+		/* We've got results for a block device request. */
+		bdev_reply();
+	} else if (IS_CDEV_RS(call_nr)) {
+		/* We've got results for a character device request. */
+		cdev_reply();
 	} else {
-		/* Normal syscall. */
+		/* Normal syscall. This spawns a new thread. */
 		handle_work(do_work);
 	}
   }

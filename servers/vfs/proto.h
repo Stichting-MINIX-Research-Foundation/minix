@@ -29,14 +29,17 @@ void fs_sendmore(struct vmnt *vmp);
 void send_work(void);
 
 /* device.c */
-int dev_open(dev_t dev, int flags);
-int dev_close(dev_t dev);
+int cdev_open(dev_t dev, int flags);
+int cdev_close(dev_t dev);
+int cdev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
+	unsigned long bytes, int flags);
+int cdev_select(dev_t dev, int ops);
+int cdev_cancel(dev_t dev);
 void cdev_reply(void);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
-void bdev_reply(struct dmap *dp);
-int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
-	size_t bytes, int flags);
+void bdev_reply(void);
+void bdev_up(int major);
 int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
 int gen_io(endpoint_t drv_e, message *mess_ptr);
 int no_dev(int op, dev_t dev, endpoint_t proc, int flags);
@@ -46,10 +49,7 @@ int ctty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int clone_opcl(int op, dev_t dev, endpoint_t proc, int flags);
 int ctty_io(endpoint_t task_nr, message *mess_ptr);
 int do_ioctl(message *m_out);
-int dev_select(dev_t dev, int ops);
-int dev_cancel(dev_t dev);
 void pm_setsid(endpoint_t proc_e);
-void bdev_up(int major);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);

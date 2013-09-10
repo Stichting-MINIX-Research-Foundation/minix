@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	get_work(&pfs_m_in, &ipc_status);
 
 	/* If this is a UDS device request, process it and continue. */
-	if (IS_DEV_RQ(pfs_m_in.m_type)) {
+	if (IS_CDEV_RQ(pfs_m_in.m_type)) {
 		uds_request(&pfs_m_in, ipc_status);
 
 		continue;

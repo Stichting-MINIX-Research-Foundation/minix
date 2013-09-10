@@ -406,7 +406,7 @@ static int select_request_char(struct filp *f, int *ops, int block)
 	return(SUSPEND);
 
   f->filp_select_flags &= ~FSF_UPDATE;
-  r = dev_select(f->filp_vno->v_sdev, rops);
+  r = cdev_select(f->filp_vno->v_sdev, rops);
   if (r != OK)
 	return(r);
 
@@ -719,7 +719,7 @@ void select_timeout_check(timer_t *timer)
   if (se->requestor == NULL) return;
   if (se->expiry <= 0) return;	/* Strange, did we even ask for a timeout? */
   se->expiry = 0;
-  if (is_deferred(se)) return;	/* Wait for initial replies to DEV_SELECT */
+  if (is_deferred(se)) return;	/* Wait for initial replies to CDEV_SELECT */
   select_return(se);
 }
 
@@ -771,7 +771,7 @@ endpoint_t driver_e;
 int minor;
 int status;
 {
-/* Handle the initial reply to DEV_SELECT request. This function MUST NOT
+/* Handle the initial reply to CDEV_SELECT request. This function MUST NOT
  * block its calling thread.
  */
   int major;
@@ -788,7 +788,7 @@ int status;
 
   /* Get filp belonging to character special file */
   if (!dp->dmap_sel_busy) {
-	printf("VFS (%s:%d): major %d was not expecting a DEV_SELECT reply\n",
+	printf("VFS (%s:%d): major %d was not expecting a CDEV_SELECT reply\n",
 		__FILE__, __LINE__, major);
 	return;
   }

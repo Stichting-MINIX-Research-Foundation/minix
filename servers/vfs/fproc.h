@@ -29,8 +29,6 @@ EXTERN struct fproc {
   int fp_block_callnr;		/* blocked call if rd/wr can't finish */
   int  fp_cum_io_partial;	/* partial byte count if rd/wr can't finish */
   endpoint_t fp_task;		/* which task is proc suspended on */
-  endpoint_t fp_ioproc;		/* proc no. in suspended-on i/o message */
-
   cp_grant_id_t fp_grant;	/* revoke this grant on unsuspend if > -1 */
 
   uid_t fp_realuid;		/* real user id */

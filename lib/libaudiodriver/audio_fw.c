@@ -5,23 +5,6 @@
  * extra buffer space beside the dma buffer.
  * This driver also support sub devices, which can be independently 
  * opened and closed.   
- *
- * The driver supports the following operations:
- *
- *    m_type      DEVICE    USER_ENDPT  COUNT    POSITION  ADRRESS
- * -----------------------------------------------------------------
- * | DEV_OPEN    | device  | proc nr |         |         |         |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_CLOSE   | device  | proc nr |         |         |         |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_READ_S  | device  | proc nr |  bytes  |         | buf ptr |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_WRITE_S | device  | proc nr |  bytes  |         | buf ptr |
- * |-------------+---------+---------+---------+---------+---------|
- * | DEV_IOCTL_S | device  | proc nr |func code|         | buf ptr |
- * |-------------+---------+---------+---------+---------+---------|
- * | HARD_INT    |         |         |         |         |         | 
- * ----------------------------------------------------------------- 
  * 
  * The file contains one entry point:
  *

@@ -1,27 +1,36 @@
 /* This file contains the device independent character driver interface.
  *
- * The drivers support the following operations (using message format m2):
+ * Charaxter drivers support the following requests. Message format m10 is
+ * used. Field names are prefixed with CDEV_. Separate field names are used for
+ * the "access", "ops", "user", and "request" fields.
  *
- *    m_type         DEVICE  USER_ENDPT  COUNT   POSITION  HIGHPOS   IO_GRANT
- * ----------------------------------------------------------------------------
- * | DEV_OPEN      | device | proc nr |  mode   |        |        |           |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | DEV_CLOSE     | device | proc nr |         |        |        |           |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | DEV_READ_S    | device | proc nr |  bytes  | off lo | off hi i buf grant |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | DEV_WRITE_S   | device | proc nr |  bytes  | off lo | off hi | buf grant |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | DEV_GATHER_S  | device | proc nr | iov len | off lo | off hi | iov grant |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | DEV_SCATTER_S | device | proc nr | iov len | off lo | off hi | iov grant |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | DEV_IOCTL_S   | device | proc nr | request |        |        | buf grant |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | CANCEL        | device | proc nr |   r/w   |        |        |   grant   |
- * |---------------+--------+---------+---------+--------+--------+-----------|
- * | DEV_SELECT    | device |   ops   |         |        |        |           |
- * ----------------------------------------------------------------------------
+ *     m_type      MINOR    GRANT   COUNT   FLAGS   ID     POS_LO    POS_HI
+ * +-------------+-------+--------+-------+-------+------+---------+--------+
+ * | CDEV_OPEN   | minor | access | user  |       |  id  |         |        |
+ * |-------------+-------+--------+-------+-------+------+---------+--------|
+ * | CDEV_CLOSE  | minor |        |       |       |  id  |         |        |
+ * |-------------+-------+--------+-------+-------+------+---------+--------|
+ * | CDEV_READ   | minor | grant  | bytes | flags |  id  |     position     |
+ * |-------------+-------+--------+-------+-------+------+---------+--------|
+ * | CDEV_WRITE  | minor | grant  | bytes | flags |  id  |     position     |
+ * |-------------+-------+--------+-------+-------+------+---------+--------|
+ * | CDEV_IOCTL  | minor | grant  | user  | flags |  id  | request |        |
+ * |-------------+-------+--------+-------+-------+------+---------+--------|
+ * | CDEV_CANCEL | minor |        |       |       |  id  |         |        |
+ * |-------------+-------+--------+-------+-------+------+---------+--------|
+ * | CDEV_SELECT | minor |  ops   |       |       |      |         |        |
+ * --------------------------------------------------------------------------
+ *
+ * The following reply messages are used.
+ *
+ *       m_type        MINOR   STATUS                ID
+ * +-----------------+-------+--------+-----+-----+------+---------+--------+
+ * | CDEV_REPLY      |       | status |     |     |  id  |         |        |
+ * |-----------------+-------+--------+-----+-----+------+---------+--------|
+ * | CDEV_SEL1_REPLY | minor | status |     |     |      |         |        |
+ * |-----------------+-------+--------+-----+-----+------+---------+--------|
+ * | CDEV_SEL2_REPLY | minor | status |     |     |      |         |        |
+ * --------------------------------------------------------------------------
  *
  * Changes:
  *   Sep 01, 2013   complete rewrite of the API  (D.C. van Moolenboek)
@@ -110,7 +119,7 @@ void chardriver_announce(void)
   if ((r = ds_publish_u32(key, DS_DRIVER_UP, DSF_OVERWRITE)) != OK)
 	panic("chardriver_init: unable to publish driver up event: %d", r);
 
-  /* Expect a DEV_OPEN for any device before serving regular driver requests. */
+  /* Expect an open for any device before serving regular driver requests. */
   clear_open_devs();
 }
 
@@ -130,10 +139,9 @@ void chardriver_reply_task(endpoint_t endpt, cdev_id_t id, int r)
 
   memset(&m_reply, 0, sizeof(m_reply));
 
-  m_reply.m_type = DEV_REVIVE;
-  m_reply.REP_STATUS = r;
-  m_reply.REP_ENDPT = endpt; /* XXX FIXME: hack */
-  m_reply.REP_IO_GRANT = (cp_grant_id_t) id;
+  m_reply.m_type = CDEV_REPLY;
+  m_reply.CDEV_STATUS = r;
+  m_reply.CDEV_ID = id;
 
   if ((r = asynsend3(endpt, &m_reply, AMF_NOREPLY)) != OK)
 	printf("chardriver_reply_task: send to %d failed: %d\n", endpt, r);
@@ -155,9 +163,9 @@ void chardriver_reply_select(endpoint_t endpt, devminor_t minor, int r)
 
   memset(&m_reply, 0, sizeof(m_reply));
 
-  m_reply.m_type = DEV_SEL_REPL2;
-  m_reply.DEV_MINOR = minor;
-  m_reply.DEV_SEL_OPS = r;
+  m_reply.m_type = CDEV_SEL2_REPLY;
+  m_reply.CDEV_MINOR = minor;
+  m_reply.CDEV_STATUS = r;
 
   if ((r = asynsend3(endpt, &m_reply, AMF_NOREPLY)) != OK)
 	printf("chardriver_reply_select: send to %d failed: %d\n", endpt, r);
@@ -194,15 +202,20 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
    */
   if (r == EDONTREPLY) {
 	switch (mess->m_type) {
-	case DEV_READ_S:
-	case DEV_WRITE_S:
-	case DEV_IOCTL_S:
-#if 0 /* XXX doesn't match lwip's model, disabled for now */
-		if (mess->FLAGS & FLG_OP_NONBLOCK)
+	case CDEV_READ:
+	case CDEV_WRITE:
+	case CDEV_IOCTL:
+		/* FIXME: we should be able to check CDEV_FLAGS against
+		 * CDEV_NONBLOCK here, but in practice, several drivers do not
+		 * send a reply through this path (eg TTY) or simply do not
+		 * implement nonblocking calls properly (eg audio, LWIP).
+		 */
+#if 0
+		if (mess->CDEV_FLAGS & CDEV_NONBLOCK)
 			panic("chardriver: cannot suspend nonblocking I/O");
 #endif
 		/*fall-through*/
-	case CANCEL:
+	case CDEV_CANCEL:
 		return;	/* alright */
 	default:
 		panic("chardriver: cannot suspend request %d", mess->m_type);
@@ -222,32 +235,21 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
   memset(&reply_mess, 0, sizeof(reply_mess));
 
   switch (mess->m_type) {
-  case DEV_OPEN:
-	reply_mess.m_type = DEV_OPEN_REPL;
-	reply_mess.REP_ENDPT = mess->USER_ENDPT;
-	reply_mess.REP_STATUS = r;
+  case CDEV_OPEN:
+  case CDEV_CLOSE:
+  case CDEV_READ:
+  case CDEV_WRITE:
+  case CDEV_IOCTL:
+  case CDEV_CANCEL: /* For cancel, this is a reply to the original request! */
+	reply_mess.m_type = CDEV_REPLY;
+	reply_mess.CDEV_STATUS = r;
+	reply_mess.CDEV_ID = mess->CDEV_ID;
 	break;
 
-  case DEV_CLOSE:
-	reply_mess.m_type = DEV_CLOSE_REPL;
-	reply_mess.REP_ENDPT = mess->USER_ENDPT;
-	reply_mess.REP_STATUS = r;
-	break;
-
-  case DEV_READ_S:
-  case DEV_WRITE_S:
-  case DEV_IOCTL_S:
-  case CANCEL: /* For CANCEL, this is a reply to the original request! */
-	reply_mess.m_type = DEV_REVIVE;
-	reply_mess.REP_ENDPT = mess->USER_ENDPT;
-	reply_mess.REP_IO_GRANT = (cp_grant_id_t) mess->IO_GRANT;
-	reply_mess.REP_STATUS = r;
-	break;
-
-  case DEV_SELECT:
-	reply_mess.m_type = DEV_SEL_REPL1;
-	reply_mess.DEV_MINOR = mess->DEVICE;
-	reply_mess.DEV_SEL_OPS = r;
+  case CDEV_SELECT:
+	reply_mess.m_type = CDEV_SEL1_REPLY;
+	reply_mess.CDEV_MINOR = mess->CDEV_MINOR;
+	reply_mess.CDEV_STATUS = r;
 	break;
 
   default:
@@ -272,15 +274,18 @@ static int do_open(struct chardriver *cdp, message *m_ptr)
 	return OK;
 
   /* Call the open hook. */
-  minor = m_ptr->DEVICE;
-  access = m_ptr->COUNT;
-  user_endpt = m_ptr->USER_ENDPT;
+  minor = m_ptr->CDEV_MINOR;
+  access = m_ptr->CDEV_ACCESS;
+  user_endpt = m_ptr->CDEV_USER;
 
   r = cdp->cdr_open(minor, access, user_endpt);
 
   /* If the device has been cloned, mark the new minor as open too. */
-  if (r >= 0 && !is_open_dev(r)) /* XXX FIXME */
-	set_open_dev(r);
+  if (r >= 0 && (r & CDEV_CLONED)) {
+	minor = r & ~(CDEV_CLONED | CDEV_CTTY);
+	if (!is_open_dev(minor))
+		set_open_dev(minor);
+  }
 
   return r;
 }
@@ -298,7 +303,7 @@ static int do_close(struct chardriver *cdp, message *m_ptr)
 	return OK;
 
   /* Call the close hook. */
-  minor = m_ptr->DEVICE;
+  minor = m_ptr->CDEV_MINOR;
 
   return cdp->cdr_close(minor);
 }
@@ -318,13 +323,13 @@ static int do_transfer(struct chardriver *cdp, message *m_ptr, int do_write)
   cdev_id_t id;
   ssize_t r;
 
-  minor = m_ptr->DEVICE;
-  position = make64(m_ptr->POSITION, m_ptr->HIGHPOS);
+  minor = m_ptr->CDEV_MINOR;
+  position = make64(m_ptr->CDEV_POS_LO, m_ptr->CDEV_POS_HI);
   endpt = m_ptr->m_source;
-  grant = (cp_grant_id_t) m_ptr->IO_GRANT;
-  size = m_ptr->COUNT;
-  flags = m_ptr->FLAGS;
-  id = (cdev_id_t) m_ptr->IO_GRANT;
+  grant = (cp_grant_id_t) m_ptr->CDEV_GRANT;
+  size = m_ptr->CDEV_COUNT;
+  flags = m_ptr->CDEV_FLAGS;
+  id = m_ptr->CDEV_ID;
 
   /* Call the read/write hook, if the appropriate one is in place. */
   if (!do_write && cdp->cdr_read != NULL)
@@ -355,13 +360,13 @@ static int do_ioctl(struct chardriver *cdp, message *m_ptr)
 	return ENOTTY;
 
   /* Call the ioctl hook. */
-  minor = m_ptr->DEVICE;
-  request = m_ptr->REQUEST;
+  minor = m_ptr->CDEV_MINOR;
+  request = m_ptr->CDEV_REQUEST;
   endpt = m_ptr->m_source;
-  grant = (cp_grant_id_t) m_ptr->IO_GRANT;
-  flags = m_ptr->FLAGS;
-  user_endpt = (endpoint_t) m_ptr->POSITION;
-  id = (cdev_id_t) m_ptr->IO_GRANT;
+  grant = m_ptr->CDEV_GRANT;
+  flags = m_ptr->CDEV_FLAGS;
+  user_endpt = m_ptr->CDEV_USER;
+  id = m_ptr->CDEV_ID;
 
   return cdp->cdr_ioctl(minor, request, endpt, grant, flags, user_endpt, id);
 }
@@ -383,9 +388,9 @@ static int do_cancel(struct chardriver *cdp, message *m_ptr)
 	return EDONTREPLY;
 
   /* Call the cancel hook. */
-  minor = m_ptr->DEVICE;
+  minor = m_ptr->CDEV_MINOR;
   endpt = m_ptr->m_source;
-  id = (cdev_id_t) m_ptr->IO_GRANT;
+  id = m_ptr->CDEV_ID;
 
   return cdp->cdr_cancel(minor, endpt, id);
 }
@@ -405,8 +410,8 @@ static int do_select(struct chardriver *cdp, message *m_ptr)
 	return EBADF;
 
   /* Call the select hook. */
-  minor = m_ptr->DEV_MINOR;
-  ops = m_ptr->DEV_SEL_OPS;
+  minor = m_ptr->CDEV_MINOR;
+  ops = m_ptr->CDEV_OPS;
   endpt = m_ptr->m_source;
 
   return cdp->cdr_select(minor, ops, endpt);
@@ -473,24 +478,24 @@ void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
   /* We might get spurious requests if the driver has been restarted. Deny any
    * requests on devices that have not previously been opened.
    */
-  if (IS_DEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
+  if (IS_CDEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->CDEV_MINOR)) {
 	/* Ignore spurious requests for unopened devices. */
-	if (m_ptr->m_type != DEV_OPEN)
+	if (m_ptr->m_type != CDEV_OPEN)
 		return; /* do not send a reply */
 
 	/* Mark the device as opened otherwise. */
-	set_open_dev(m_ptr->DEVICE);
+	set_open_dev(m_ptr->CDEV_MINOR);
   }
 
   /* Call the appropriate function(s) for this request. */
   switch (m_ptr->m_type) {
-  case DEV_OPEN:	r = do_open(cdp, m_ptr);		break;
-  case DEV_CLOSE:	r = do_close(cdp, m_ptr);		break;
-  case DEV_READ_S:	r = do_transfer(cdp, m_ptr, FALSE);	break;
-  case DEV_WRITE_S:	r = do_transfer(cdp, m_ptr, TRUE);	break;
-  case DEV_IOCTL_S:	r = do_ioctl(cdp, m_ptr);		break;
-  case CANCEL:		r = do_cancel(cdp, m_ptr);		break;
-  case DEV_SELECT:	r = do_select(cdp, m_ptr);		break;
+  case CDEV_OPEN:	r = do_open(cdp, m_ptr);		break;
+  case CDEV_CLOSE:	r = do_close(cdp, m_ptr);		break;
+  case CDEV_READ:	r = do_transfer(cdp, m_ptr, FALSE);	break;
+  case CDEV_WRITE:	r = do_transfer(cdp, m_ptr, TRUE);	break;
+  case CDEV_IOCTL:	r = do_ioctl(cdp, m_ptr);		break;
+  case CDEV_CANCEL:	r = do_cancel(cdp, m_ptr);		break;
+  case CDEV_SELECT:	r = do_select(cdp, m_ptr);		break;
   default:
 	if (cdp->cdr_other)
 		cdp->cdr_other(m_ptr, ipc_status);

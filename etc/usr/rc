@@ -188,9 +188,9 @@ start)
     done
     if [ X`/bin/sysenv lwip` = Xyes ]
     then
-	up lwip -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+	up lwip -script /etc/rs.inet -dev /dev/ip
     else
-	up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+	up inet -script /etc/rs.inet -dev /dev/ip
     fi
 
     up -n ipc

@@ -261,7 +261,7 @@ kbd_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
 
 	/* If no data is available, suspend the caller. */
 	if (kbdp->avail == 0) {
-		if (flags & FLG_OP_NONBLOCK)
+		if (flags & CDEV_NONBLOCK)
 			return EAGAIN;
 		kbdp->req_size = size;
 		kbdp->req_id = id;
@@ -420,14 +420,14 @@ kbd_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 	if ((kbdp = line2kbd(minor)) == NULL)
 		return ENXIO;
 
-	watch = (ops & SEL_NOTIFY);
-	ops &= (SEL_RD | SEL_WR | SEL_ERR);
+	watch = (ops & CDEV_NOTIFY);
+	ops &= (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
 
 	ready_ops = 0;
-	if (kbdp->avail && (ops & SEL_RD))
-		ready_ops |= SEL_RD;
-	if (ops & SEL_WR)
-		ready_ops |= SEL_WR;	/* writes never block */
+	if (kbdp->avail && (ops & CDEV_OP_RD))
+		ready_ops |= CDEV_OP_RD;
+	if (ops & CDEV_OP_WR)
+		ready_ops |= CDEV_OP_WR;	/* writes never block */
 
 	ops &= ~ready_ops;
 	if (ops && watch) {
@@ -543,10 +543,10 @@ void kbd_interrupt(message *UNUSED(m_ptr))
 		kbdp->req_caller = NONE;
 	}
 	/* Only satisfy pending select if characters weren't just read. */
-	if (kbdp->avail && (kbdp->select_ops & SEL_RD)) {
+	if (kbdp->avail && (kbdp->select_ops & CDEV_OP_RD)) {
 		chardriver_reply_select(kbdp->select_proc, kbdp->minor,
-			SEL_RD);
-		kbdp->select_ops &= ~SEL_RD;
+			CDEV_OP_RD);
+		kbdp->select_ops &= ~CDEV_OP_RD;
 	}
 	return;
   }
@@ -557,7 +557,7 @@ void kbd_interrupt(message *UNUSED(m_ptr))
 	if (ihead == ibuf + KB_IN_BYTES) ihead = ibuf;
 	icount++;
 	tty_table[ccurrent].tty_events = 1;
-	if (tty_table[ccurrent].tty_select_ops & SEL_RD) {
+	if (tty_table[ccurrent].tty_select_ops & CDEV_OP_RD) {
 		select_retry(&tty_table[ccurrent]);
 	}
   }
@@ -581,7 +581,7 @@ void do_kb_inject(message *msg)
 			if (injhead == injbuf + KB_IN_BYTES) injhead = injbuf;
 			injcount++;
 			tty_table[ccurrent].tty_events = 1;
-			if (tty_table[ccurrent].tty_select_ops & SEL_RD) {
+			if (tty_table[ccurrent].tty_select_ops & CDEV_OP_RD) {
 				select_retry(&tty_table[ccurrent]);
 			}
 		}

@@ -12,10 +12,9 @@
  *
  * Overview
  *
- * The interface to unix domain sockets is similar to the
- * the interface to network sockets. There is a character
- * device (/dev/uds) that uses STYLE_CLONE and this server
- * is a 'driver' for that device.
+ * The interface to unix domain sockets is similar to the interface to network
+ * sockets. There is a character device (/dev/uds) and this server is a
+ * 'driver' for that device.
  */
 
 #define DEBUG 0
@@ -190,7 +189,7 @@ static int uds_open(devminor_t UNUSED(orig_minor), int access,
 	/* Process the response */
 	uds_fd_table[minor].inode_nr = fs_m_out.RES_INODE_NR;
 
-	return minor;	/* cloned! */
+	return CDEV_CLONED | minor;
 }
 
 static int uds_close(devminor_t minor)
@@ -271,40 +270,40 @@ static int uds_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 		return EINVAL;
 	}
 
-	watch = (ops & SEL_NOTIFY);
-	ops &= (SEL_RD | SEL_WR | SEL_ERR);
+	watch = (ops & CDEV_NOTIFY);
+	ops &= (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
 
 	ready_ops = 0;
 
 	/* check if there is data available to read */
-	if (ops & SEL_RD) {
+	if (ops & CDEV_OP_RD) {
 		bytes = uds_perform_read(minor, NONE, GRANT_INVALID, 1, 1);
 		if (bytes > 0) {
 			/* there is data in the pipe for us to read */
-			ready_ops |= SEL_RD;
+			ready_ops |= CDEV_OP_RD;
 		} else if (uds_fd_table[minor].listening == 1) {
 			/* check for pending connections */
 			for (i = 0; i < uds_fd_table[minor].backlog_size; i++)
 			{
 				if (uds_fd_table[minor].backlog[i] != -1) {
-					ready_ops |= SEL_RD;
+					ready_ops |= CDEV_OP_RD;
 					break;
 				}
 			}
 		} else if (bytes != SUSPEND) {
-			ready_ops |= SEL_RD;
+			ready_ops |= CDEV_OP_RD;
 		}
 	}
 
 	/* check if we can write without blocking */
-	if (ops & SEL_WR) {
+	if (ops & CDEV_OP_WR) {
 		bytes = uds_perform_write(minor, NONE, GRANT_INVALID, PIPE_BUF,
 			1);
 		if (bytes != 0 && bytes != SUSPEND) {
 			/* There is room to write or there is an error
 			 * condition.
 			 */
-			ready_ops |= SEL_WR;
+			ready_ops |= CDEV_OP_WR;
 		}
 	}
 
@@ -439,12 +438,12 @@ static ssize_t uds_perform_read(devminor_t minor, endpoint_t endpt,
 	 * peer to minor); if the peer wants to know about write being possible
 	 * and it doesn't know about it already, then let the peer know.
 	 */
-	if (peer != -1 && (uds_fd_table[peer].sel_ops & SEL_WR) &&
+	if (peer != -1 && (uds_fd_table[peer].sel_ops & CDEV_OP_WR) &&
 	    (uds_fd_table[minor].size+uds_fd_table[minor].pos + 1 < PIPE_BUF)){
 		/* a write on peer is possible now */
 		chardriver_reply_select(uds_fd_table[peer].sel_endpt, peer,
-			SEL_WR);
-		uds_fd_table[peer].sel_ops &= ~SEL_WR;
+			CDEV_OP_WR);
+		uds_fd_table[peer].sel_ops &= ~CDEV_OP_WR;
 	}
 
 	return fs_m_out.RES_NBYTES; /* return number of bytes read */
@@ -604,11 +603,12 @@ static ssize_t uds_perform_write(devminor_t minor, endpoint_t endpt,
 	 * data ready to read and it doesn't know about it already, then let
 	 * the peer know we have data for it.
 	 */
-	if ((uds_fd_table[peer].sel_ops & SEL_RD) && fs_m_out.RES_NBYTES > 0) {
+	if ((uds_fd_table[peer].sel_ops & CDEV_OP_RD) &&
+			fs_m_out.RES_NBYTES > 0) {
 		/* a read on peer is possible now */
 		chardriver_reply_select(uds_fd_table[peer].sel_endpt, peer,
-			SEL_RD);
-		uds_fd_table[peer].sel_ops &= ~SEL_RD;
+			CDEV_OP_RD);
+		uds_fd_table[peer].sel_ops &= ~CDEV_OP_RD;
 	}
 
 	return fs_m_out.RES_NBYTES; /* return number of bytes written */
@@ -644,7 +644,7 @@ static ssize_t uds_read(devminor_t minor, u64_t position, endpoint_t endpt,
 		uds_fd_table[minor].susp_id = id;
 
 		/* If the call wasn't supposed to block, cancel immediately. */
-		if (flags & FLG_OP_NONBLOCK) {
+		if (flags & CDEV_NONBLOCK) {
 			uds_cancel(minor, endpt, id);
 
 			rc = EAGAIN;
@@ -684,7 +684,7 @@ static ssize_t uds_write(devminor_t minor, u64_t position, endpoint_t endpt,
 		uds_fd_table[minor].susp_id = id;
 
 		/* If the call wasn't supposed to block, cancel immediately. */
-		if (flags & FLG_OP_NONBLOCK) {
+		if (flags & CDEV_NONBLOCK) {
 			uds_cancel(minor, endpt, id);
 
 			rc = EAGAIN;
@@ -730,7 +730,7 @@ static int uds_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		uds_fd_table[minor].susp_id = id;
 
 		/* If the call wasn't supposed to block, cancel immediately. */
-		if (flags & FLG_OP_NONBLOCK) {
+		if (flags & CDEV_NONBLOCK) {
 			uds_cancel(minor, endpt, id);
 
 			rc = EAGAIN;

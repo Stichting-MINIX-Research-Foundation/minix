@@ -22,7 +22,7 @@ extern struct dmap {
   int dmap_style;
   int dmap_sel_busy;
   struct filp *dmap_sel_filp;
-  endpoint_t dmap_servicing;
+  thread_t dmap_servicing;
   mutex_t dmap_lock;
   mutex_t *dmap_lock_ref;
   int dmap_recovering;

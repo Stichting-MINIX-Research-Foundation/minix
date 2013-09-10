@@ -261,7 +261,7 @@ struct socket * get_unused_sock(void)
 
 static int socket_request_socket(struct socket * sock, struct sock_req * req)
 {
-	int r, blocking = req->flags & FLG_OP_NONBLOCK ? 0 : 1;
+	int r, blocking = (req->flags & CDEV_NONBLOCK) ? 0 : 1;
 
 	switch (req->type) {
 	case SOCK_REQ_READ:
@@ -292,7 +292,12 @@ static int socket_request_socket(struct socket * sock, struct sock_req * req)
 static int netsock_open(devminor_t minor, int UNUSED(access),
 	endpoint_t UNUSED(user_endpt))
 {
-	return socket_open(minor);
+	int r;
+
+	if ((r = socket_open(minor)) < 0)
+		return r;
+
+	return CDEV_CLONED | r;
 }
 
 static int netsock_close(devminor_t minor)
@@ -505,26 +510,26 @@ int generic_op_select(struct socket * sock, unsigned int sel)
 
 	/* in this case any operation would block, no error */
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
-		if (sel & SEL_NOTIFY) {
-			if (sel & SEL_RD)
+		if (sel & CDEV_NOTIFY) {
+			if (sel & CDEV_OP_RD)
 				sock->flags |= SOCK_FLG_SEL_READ;
-			if (sel & SEL_WR)
+			if (sel & CDEV_OP_WR)
 				sock->flags |= SOCK_FLG_SEL_WRITE;
 			/* FIXME we do not monitor error */
 		}
 		return 0;
 	}
 
-	if (sel & SEL_RD) {
+	if (sel & CDEV_OP_RD) {
 		if (sock->recv_head)
-			retsel |= SEL_RD;
-		else if (sel & SEL_NOTIFY)
+			retsel |= CDEV_OP_RD;
+		else if (sel & CDEV_NOTIFY)
 			sock->flags |= SOCK_FLG_SEL_READ;
 	}
 	/* FIXME generic packet socket never blocks on write */
-	if (sel & SEL_WR)
-		retsel |= SEL_WR;
-	/* FIXME SEL_ERR is ignored, we do not generate exceptions */
+	if (sel & CDEV_OP_WR)
+		retsel |= CDEV_OP_WR;
+	/* FIXME CDEV_OP_ERR is ignored, we do not generate exceptions */
 
 	return retsel;
 }
@@ -545,7 +550,7 @@ int generic_op_select_reply(struct socket * sock)
 	}
 
 	if (sock->flags & SOCK_FLG_SEL_READ && sock->recv_head)
-		sel |= SEL_RD;
+		sel |= CDEV_OP_RD;
 
 	if (sel)
 		sock->flags &= ~(SOCK_FLG_SEL_WRITE | SOCK_FLG_SEL_READ |

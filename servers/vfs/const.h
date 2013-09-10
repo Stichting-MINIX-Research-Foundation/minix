@@ -26,14 +26,7 @@
 /* test if the process is blocked on something */
 #define fp_is_blocked(fp)	((fp)->fp_blocked_on != FP_BLOCKED_ON_NONE)
 
-/* test if reply is a driver reply */
-#define IS_DRV_REPLY(x)	(IS_DEV_RS(x) || IS_BDEV_RS(x))
-#define DUP_MASK        0100	/* mask to distinguish dup2 from dup */
-
-#define LOOK_UP            0 /* tells search_dir to lookup string */
-#define ENTER              1 /* tells search_dir to make dir entry */
-#define DELETE             2 /* tells search_dir to delete entry */
-#define IS_EMPTY           3 /* tells search_dir to ret. OK or ENOTEMPTY */
+#define INVALID_THREAD	((thread_t) -1) 	/* known-invalid thread ID */
 
 #define SYMLOOP		16
 
@@ -42,5 +35,11 @@
 				 * M3_LONG_STRING.
 				 */
 #define FSTYPE_MAX	VFS_NAMELEN	/* maximum file system type size */
+
+/* possible select() operation types; read, write, errors */
+#define SEL_RD		CDEV_OP_RD
+#define SEL_WR		CDEV_OP_WR
+#define SEL_ERR		CDEV_OP_ERR
+#define SEL_NOTIFY	CDEV_NOTIFY /* not a real select operation */
 
 #endif

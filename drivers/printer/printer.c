@@ -5,27 +5,6 @@
  * Changes:
  *	May 07, 2004	fix: wait until printer is ready  (Jorrit N. Herder)
  *	May 06, 2004	printer driver moved to user-space  (Jorrit N. Herder) 
- *
- * The valid messages and their parameters are:
- *
- *   DEV_OPEN:	initializes the printer
- *   DEV_CLOSE:	does nothing
- *   HARD_INT:	interrupt handler has finished current chunk of output
- *   DEV_WRITE:	a process wants to write on a terminal
- *   CANCEL:	terminate a previous incomplete system call immediately
- *
- *    m_type       DEVICE   USER_ENDPT  COUNT    ADDRESS
- * |-------------+---------+---------+---------+---------|
- * | DEV_OPEN    |         |         |         |         |
- * |-------------+---------+---------+---------+---------|
- * | DEV_CLOSE   |         | proc nr |         |         |
- * |-------------+---------+---------+---------+---------|
- * | HARD_INT    |         |         |         |         |
- * |-------------+---------+---------+---------+---------|
- * | DEV_WRITE   |minor dev| proc nr |  count  | buf ptr |
- * |-------------+---------+---------+---------+---------|
- * | CANCEL      |minor dev| proc nr |         |         |
- * -------------------------------------------------------
  * 
  * Note: since only 1 printer is supported, minor dev is not used at present.
  */
@@ -192,7 +171,7 @@ static ssize_t printer_write(devminor_t UNUSED(minor), u64_t UNUSED(position),
    */
   if (writing)			return EIO;
   if (size <= 0)		return EINVAL;
-  if (flags & FLG_OP_NONBLOCK)	return EAGAIN;	/* not supported */
+  if (flags & CDEV_NONBLOCK)	return EAGAIN;	/* not supported */
 
   /* If no errors occurred, continue printing with the caller.
    * First wait until the printer is online to prevent stupid errors.

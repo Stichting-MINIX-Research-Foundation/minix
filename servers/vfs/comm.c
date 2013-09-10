@@ -93,7 +93,7 @@ int drv_sendrec(endpoint_t drv_e, message *reqmp)
 		panic("driver endpoint %d invalid", drv_e);
 
 	lock_dmap(dp);
-	if (dp->dmap_servicing != NONE)
+	if (dp->dmap_servicing != INVALID_THREAD)
 		panic("driver locking inconsistency");
 	dp->dmap_servicing = self->w_tid;
 	self->w_task = drv_e;
@@ -108,7 +108,7 @@ int drv_sendrec(endpoint_t drv_e, message *reqmp)
 		util_stacktrace();
 	}
 
-	dp->dmap_servicing = NONE;
+	dp->dmap_servicing = INVALID_THREAD;
 	self->w_task = NONE;
 	self->w_drv_sendrec = NULL;
 	unlock_dmap(dp);

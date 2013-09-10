@@ -146,7 +146,7 @@ static int sr_open(devminor_t minor, int UNUSED(access),
 		return fd;
 	}
 	sr_fd->srf_fd= fd;
-	return i;	/* cloned! */
+	return CDEV_CLONED | i;
 }
 
 static int sr_close(devminor_t minor)
@@ -214,7 +214,7 @@ static int sr_rwio(sr_req_t *req)
 		assert(sr_fd->srf_flags & susp_flag);
 		assert(*q_head_ptr);
 
-		if (m->mq_req.srr_flags & FLG_OP_NONBLOCK) {
+		if (m->mq_req.srr_flags & CDEV_NONBLOCK) {
 			mq_free(m);
 			return EAGAIN;
 		}
@@ -264,7 +264,7 @@ static int sr_rwio(sr_req_t *req)
 		(printf("r= %d\n", r), 0));
 	if (r == SUSPEND) {
 		sr_fd->srf_flags |= susp_flag;
-		if (m->mq_req.srr_flags & FLG_OP_NONBLOCK) {
+		if (m->mq_req.srr_flags & CDEV_NONBLOCK) {
 			r= sr_cancel(m->mq_req.srr_minor, m->mq_req.srr_endpt,
 				m->mq_req.srr_id);
 			assert(r == EDONTREPLY);	/* head of the queue */
@@ -442,19 +442,19 @@ static int sr_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 	sr_fd->srf_select_proc= endpt;
 
 	i_ops= 0;
-	if (ops & SEL_RD) i_ops |= SR_SELECT_READ;
-	if (ops & SEL_WR) i_ops |= SR_SELECT_WRITE;
-	if (ops & SEL_ERR) i_ops |= SR_SELECT_EXCEPTION;
-	if (!(ops & SEL_NOTIFY)) i_ops |= SR_SELECT_POLL;
+	if (ops & CDEV_OP_RD) i_ops |= SR_SELECT_READ;
+	if (ops & CDEV_OP_WR) i_ops |= SR_SELECT_WRITE;
+	if (ops & CDEV_OP_ERR) i_ops |= SR_SELECT_EXCEPTION;
+	if (!(ops & CDEV_NOTIFY)) i_ops |= SR_SELECT_POLL;
 
 	r= (*sr_fd->srf_select)(sr_fd->srf_fd,  i_ops);
 	if (r < 0) {
 		m_ops= r;
 	} else {
 		m_ops= 0;
-		if (r & SR_SELECT_READ) m_ops |= SEL_RD;
-		if (r & SR_SELECT_WRITE) m_ops |= SEL_WR;
-		if (r & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
+		if (r & SR_SELECT_READ) m_ops |= CDEV_OP_RD;
+		if (r & SR_SELECT_WRITE) m_ops |= CDEV_OP_WR;
+		if (r & SR_SELECT_EXCEPTION) m_ops |= CDEV_OP_ERR;
 	}
 
 	return m_ops;
@@ -657,9 +657,9 @@ static void sr_select_res(int fd, unsigned ops)
 	sr_fd= &sr_fd_table[fd];
 
 	m_ops= 0;
-	if (ops & SR_SELECT_READ) m_ops |= SEL_RD;
-	if (ops & SR_SELECT_WRITE) m_ops |= SEL_WR;
-	if (ops & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
+	if (ops & SR_SELECT_READ) m_ops |= CDEV_OP_RD;
+	if (ops & SR_SELECT_WRITE) m_ops |= CDEV_OP_WR;
+	if (ops & SR_SELECT_EXCEPTION) m_ops |= CDEV_OP_ERR;
 
 	chardriver_reply_select(sr_fd->srf_select_proc, fd, m_ops);
 }

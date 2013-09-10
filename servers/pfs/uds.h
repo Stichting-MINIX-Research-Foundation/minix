@@ -179,7 +179,7 @@ struct uds_fd {
 	 */
 	endpoint_t sel_endpt;
 
-	/* Options (SEL_RD, SEL_WR, SEL_ERR) that are requested. */
+	/* Options (CDEV_OP_RD,WR,ERR) that are requested. */
 	unsigned int sel_ops;
 };
 

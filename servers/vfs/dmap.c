@@ -182,9 +182,6 @@ int flags;			/* device flags */
 	dp->dmap_opcl = ctty_opcl;
 	dp->dmap_io = ctty_io;
 	break;
-    case STYLE_CLONE:
-	dp->dmap_opcl = clone_opcl;
-	dp->dmap_io = gen_io;
 	break;
     default:
 	return(EINVAL);
@@ -281,7 +278,7 @@ void init_dmap()
 	dmap[i].dmap_io = no_dev_io;
 	dmap[i].dmap_driver = NONE;
 	dmap[i].dmap_style = STYLE_NDEV;
-	dmap[i].dmap_servicing = NONE;
+	dmap[i].dmap_servicing = INVALID_THREAD;
   }
 }
 
@@ -344,7 +341,7 @@ void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 			if (dp->dmap_recovering) {
 				printf("VFS: driver recovery failure for"
 					" major %d\n", major);
-				if (dp->dmap_servicing != NONE) {
+				if (dp->dmap_servicing != INVALID_THREAD) {
 					worker = worker_get(dp->dmap_servicing);
 					worker_stop(worker);
 				}
@@ -355,7 +352,7 @@ void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 			bdev_up(major);
 			dp->dmap_recovering = 0;
 		} else {
-			if (dp->dmap_servicing != NONE) {
+			if (dp->dmap_servicing != INVALID_THREAD) {
 				worker = worker_get(dp->dmap_servicing);
 				worker_stop(worker);
 			}
