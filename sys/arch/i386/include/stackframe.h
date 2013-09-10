@@ -1,1 +1,1 @@
-/minix/src/include/arch/i386/include/stackframe.h
+/home/minix/minix/330/src/include/arch/i386/include/stackframe.h

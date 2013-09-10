@@ -26,8 +26,10 @@
 #include <minix/drivers.h>
 #include <minix/driver.h>
 #include <termios.h>
-#include <sys/ioc_tty.h>
 #include <sys/kbdio.h>
+#include <sys/ttycom.h>
+#include <sys/ttydefaults.h>
+#include <sys/fcntl.h>
 #include <signal.h>
 #include <minix/keymap.h>
 #include "tty.h"
@@ -103,12 +105,29 @@ static struct chardriver tty_tab = {
 
 /* Default attributes. */
 static struct termios termios_defaults = {
-  TINPUT_DEF, TOUTPUT_DEF, TCTRL_DEF, TLOCAL_DEF,
-  {
-	TEOF_DEF, TEOL_DEF, TERASE_DEF, TINTR_DEF, TKILL_DEF, TMIN_DEF,
-	TQUIT_DEF, TTIME_DEF, TSUSP_DEF, TSTART_DEF, TSTOP_DEF,
-	TREPRINT_DEF, TLNEXT_DEF, TDISCARD_DEF,
-  }, TSPEED_DEF, TSPEED_DEF,
+  .c_iflag = TTYDEF_IFLAG,
+  .c_oflag = TTYDEF_OFLAG,
+  .c_cflag = TTYDEF_CFLAG,
+  .c_lflag = TTYDEF_LFLAG,
+  .c_ispeed = TTYDEF_SPEED,
+  .c_ospeed = TTYDEF_SPEED,
+  .c_cc = {
+	[VEOF] = CEOF,
+	[VEOL] = CEOL,
+	[VERASE] = CERASE,
+	[VINTR] = CINTR,
+	[VKILL] = CKILL,
+	[VMIN] = CMIN,
+	[VQUIT] = CQUIT,
+	[VTIME] = CTIME,
+	[VSUSP] = CSUSP,
+	[VSTART] = CSTART,
+	[VSTOP] = CSTOP,
+	[VREPRINT] = CREPRINT,
+	[VLNEXT] = CLNEXT,
+	[VDISCARD] = CDISCARD,
+	[VSTATUS] = CSTATUS
+  }
 };
 static struct winsize winsize_defaults;	/* = all zeroes */
 
@@ -600,15 +619,15 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 
   r = OK;
   switch (request) {
-    case TCGETS:
+    case TIOCGETA:
 	/* Get the termios attributes. */
 	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &tp->tty_termios,
 		sizeof(struct termios));
 	break;
 
-    case TCSETSW:
-    case TCSETSF:
-    case TCDRAIN:
+    case TIOCSETAW:
+    case TIOCSETAF:
+    case TIOCDRAIN:
 	if (tp->tty_outleft > 0) {
 		if (flags & CDEV_NONBLOCK)
 			return EAGAIN;
@@ -619,10 +638,10 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		tp->tty_iogrant = grant;
 		return EDONTREPLY;	/* suspend the caller */
 	}
-	if (request == TCDRAIN) break;
-	if (request == TCSETSF) tty_icancel(tp);
+	if (request == TIOCDRAIN) break;
+	if (request == TIOCSETAF) tty_icancel(tp);
 	/*FALL THROUGH*/
-    case TCSETS:
+    case TIOCSETA:
 	/* Set the termios attributes. */
 	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &tp->tty_termios,
 		sizeof(struct termios));
@@ -630,39 +649,25 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	setattr(tp);
 	break;
 
-    case TCFLSH:
+    case TIOCFLUSH:
 	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
 	if (r != OK) break;
-	switch (i) {
-	case TCIFLUSH:	tty_icancel(tp);		 	    break;
-	case TCOFLUSH:	(*tp->tty_ocancel)(tp, 0);		    break;
-	case TCIOFLUSH:	tty_icancel(tp); (*tp->tty_ocancel)(tp, 0); break;
-	default:	r = EINVAL;
-	}
+	if(i & FREAD) {	tty_icancel(tp); }
+	if(i & FWRITE) { (*tp->tty_ocancel)(tp, 0); }
 	break;
-
-    case TCFLOW:
-	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
-	if (r != OK) break;
-	switch (i) {
-	    case TCOOFF:
-	    case TCOON:
-		tp->tty_inhibited = (i == TCOOFF);
-		tp->tty_events = 1;
-		break;
-	    case TCIOFF:
-		(*tp->tty_echo)(tp, tp->tty_termios.c_cc[VSTOP]);
-		break;
-	    case TCION:
-		(*tp->tty_echo)(tp, tp->tty_termios.c_cc[VSTART]);
-		break;
-	    default:
-		r = EINVAL;
-	}
+    case TIOCSTART:
+	tp->tty_inhibited = 0;
+	tp->tty_events = 1;
 	break;
-
-    case TCSBRK:
-	if (tp->tty_break != NULL) (*tp->tty_break)(tp,0);
+    case TIOCSTOP:
+	tp->tty_inhibited = 1;
+	tp->tty_events = 1;
+	break;
+    case TIOCSBRK:	/* tcsendbreak - turn break on */
+	if (tp->tty_break_on != NULL) (*tp->tty_break_on)(tp,0);
+	break;
+    case TIOCCBRK:	/* tcsendbreak - turn break off */
+	if (tp->tty_break_off != NULL) (*tp->tty_break_off)(tp,0);
 	break;
 
     case TIOCGWINSZ:
@@ -675,7 +680,6 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		sizeof(struct winsize));
 	sigchar(tp, SIGWINCH, 0);
 	break;
-
     case KIOCBELL:
 	/* Sound bell (only /dev/console). */
 	if (!isconsole(tp))
@@ -689,7 +693,17 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		ticks++;
 	beep_x(bell.kb_pitch, ticks);
 	break;
-
+    case TIOCGETD:	/* get line discipline */
+    {
+	int disc = TTYDISC;
+	r = sys_safecopyto(endpt, grant, 0,
+		(vir_bytes) &disc, (vir_bytes) sizeof(disc));
+	break;
+    }
+    case TIOCSETD:	/* set line discipline */
+	printf("TTY: TIOCSETD: can't set any other line discipline.\n");
+	r = ENOTTY;
+	break;
     case KIOCSMAP:
 	/* Load a new keymap (only /dev/console). */
 	if (isconsole(tp)) r = kbd_loadmap(endpt, grant);
@@ -1125,11 +1139,16 @@ int count;			/* number of input characters */
 	}
 
 	if (tp->tty_termios.c_lflag & ISIG) {
-		/* Check for INTR (^?) and QUIT (^\) characters. */
-		if (ch == tp->tty_termios.c_cc[VINTR]
-					|| ch == tp->tty_termios.c_cc[VQUIT]) {
+		/* Check for INTR, QUIT and STATUS characters. */
+		int sig = -1;
+		if (ch == tp->tty_termios.c_cc[VINTR])
 			sig = SIGINT;
-			if (ch == tp->tty_termios.c_cc[VQUIT]) sig = SIGQUIT;
+		else if(ch == tp->tty_termios.c_cc[VQUIT])
+			sig = SIGQUIT;
+		else if(ch == tp->tty_termios.c_cc[VSTATUS])
+			sig = SIGINFO;
+
+		if(sig >= 0) {
 			sigchar(tp, sig, 1);
 			(void) tty_echo(tp, ch);
 			continue;
@@ -1366,8 +1385,8 @@ int *ocount;			/* max output chars / output chars used */
 		/* Best guess for the tab length. */
 		tablen = TAB_SIZE - (pos & TAB_MASK);
 
-		if ((tp->tty_termios.c_oflag & (OPOST|XTABS))
-							== (OPOST|XTABS)) {
+		if ((tp->tty_termios.c_oflag & (OPOST|OXTABS))
+							== (OPOST|OXTABS)) {
 			/* Tabs must be expanded. */
 			if (oct >= tablen) {
 				pos += tablen;
@@ -1404,7 +1423,7 @@ out_done:
 static void dev_ioctl(tp)
 tty_t *tp;
 {
-/* The ioctl's TCSETSW, TCSETSF and TCDRAIN wait for output to finish to make
+/* The ioctl's TCSETSW, TCSETSF and TIOCDRAIN wait for output to finish to make
  * sure that an attribute change doesn't affect the processing of current
  * output.  Once output finishes the ioctl is executed as in do_ioctl().
  */
@@ -1412,8 +1431,8 @@ tty_t *tp;
 
   if (tp->tty_outleft > 0) return;		/* output not finished */
 
-  if (tp->tty_ioreq != TCDRAIN) {
-	if (tp->tty_ioreq == TCSETSF) tty_icancel(tp);
+  if (tp->tty_ioreq != TIOCDRAIN) {
+	if (tp->tty_ioreq == TIOCSETAF) tty_icancel(tp);
 	result = sys_safecopyfrom(tp->tty_iocaller, tp->tty_iogrant, 0,
 		(vir_bytes) &tp->tty_termios,
 		(vir_bytes) sizeof(tp->tty_termios));

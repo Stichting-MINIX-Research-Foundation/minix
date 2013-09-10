@@ -35,11 +35,6 @@
  *
  *	@(#)ttycom.h	8.1 (Berkeley) 3/28/94
  */
-#include <minix/termios.h>
-
-/* LSC FIXME: Wouldn't it be simpler to use that instead of including here 
-   termios? for now disabled, pending investigation. */
-#define _SYS_TTYCOM_H_
 
 #ifndef	_SYS_TTYCOM_H_
 #define	_SYS_TTYCOM_H_
@@ -167,5 +162,22 @@ typedef char linedn_t[TTLINEDNAMELEN];
 #define	PPPDISC		5		/* ppp discipline */
 #define	STRIPDISC	6		/* metricom wireless IP discipline */
 #define	HDLCDISC	9		/* HDLC discipline */
+
+#ifdef __minix
+
+#include <minix/ioctl.h>
+
+/* Terminal ioctls. Use big T. */
+#define TIOCSFON        _IOW_BIG(1, u8_t [8192])	/* new font */
+
+/* Keyboard ioctls. */
+#define KIOCBELL        _IOW('k', 1, struct kio_bell)
+#define KIOCSLEDS       _IOW('k', 2, struct kio_leds)
+#define KIOCSMAP        _IOW('k', 3, keymap_t)
+
+/* /dev/video ioctls. */
+#define TIOCMAPMEM      _IORW('v', 1, struct mapreqvm)
+#define TIOCUNMAPMEM    _IORW('v', 2, struct mapreqvm)
+#endif
 
 #endif /* !_SYS_TTYCOM_H_ */
