@@ -3,7 +3,6 @@
  *
  * The entry points in this file are:
  *   dev_open:   open a character device
- *   dev_reopen: reopen a character device after a driver crash
  *   dev_close:  close a character device
  *   cdev_reply: process the result of a character driver request
  *   bdev_open:  open a block device
@@ -44,8 +43,6 @@
 static int block_io(endpoint_t driver_e, message *mess_ptr);
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 	void *buf, unsigned long size);
-static void restart_reopen(devmajor_t major);
-static void reopen_reply(message *m_ptr);
 
 static int dummyproc;
 
@@ -69,34 +66,6 @@ int dev_open(
   if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
   if (dmap[major_dev].dmap_driver == NONE) return(ENXIO);
   r = (*dmap[major_dev].dmap_opcl)(DEV_OPEN, dev, fp->fp_endpoint, flags);
-  return(r);
-}
-
-
-/*===========================================================================*
- *				dev_reopen				     *
- *===========================================================================*/
-int dev_reopen(
-  dev_t dev,			/* device to open */
-  int filp_no,			/* filp to reopen for */
-  int flags			/* mode bits and flags */
-)
-{
-/* Reopen a character device after a failing device driver. */
-  devmajor_t major_dev;
-  struct dmap *dp;
-  int r;
-
-  /* Determine the major device number and call the device class specific
-   * open/close routine.  (This is the only routine that must check the device
-   * number for being in range.  All others can trust this check.)
-   */
-  major_dev = major(dev);
-  if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
-  dp = &dmap[major_dev];
-  if (dp->dmap_driver == NONE) return(ENXIO);
-  r = (*dp->dmap_opcl)(DEV_REOPEN, dev, filp_no, flags);
-  if (r == SUSPEND) r = OK;
   return(r);
 }
 
@@ -317,8 +286,7 @@ int dev_io(
   void *buf,			/* virtual address of the buffer */
   off_t pos,			/* byte position */
   size_t bytes,			/* how many bytes to transfer */
-  int flags,			/* special flags, like O_NONBLOCK */
-  int suspend_reopen		/* Just suspend the process */
+  int flags			/* special flags, like O_NONBLOCK */
 )
 {
 /* Initiate a read, write, or ioctl to a device. */
@@ -338,15 +306,6 @@ int dev_io(
 
   /* See if driver is roughly valid. */
   if (dp->dmap_driver == NONE) return(ENXIO);
-
-  if (suspend_reopen) {
-	/* Suspend user. */
-	fp->fp_grant = GRANT_INVALID;
-	fp->fp_ioproc = NONE;
-	wait_for(dp->dmap_driver);
-	fp->fp_flags |= FP_SUSP_REOPEN;
-	return(SUSPEND);
-  }
 
   if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
 	printf("VFS: dev_io: old driver for major %x (%d)\n", major_dev,
@@ -427,7 +386,7 @@ static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
   }
   lock_vnode(vp, VNODE_OPCL);
 
-  assert(FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse));
+  assert(fp->fp_filp[scratch(fp).file.fd_nr] != NULL);
   unlock_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
   put_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
 
@@ -450,7 +409,7 @@ static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
  *				gen_opcl				     *
  *===========================================================================*/
 int gen_opcl(
-  int op,			/* operation, DEV_OPEN/DEV_REOPEN/DEV_CLOSE */
+  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t dev,			/* device to open or close */
   endpoint_t proc_e,		/* process to open/close for */
   int flags			/* mode bits and flags */
@@ -485,17 +444,15 @@ int gen_opcl(
 
   if (r != OK) return(r);
 
-  if (op == DEV_OPEN || op == DEV_CLOSE) {
-	/* Block the thread waiting for a reply. */
-	fp->fp_task = dp->dmap_driver;
-	self->w_task = dp->dmap_driver;
-	self->w_drv_sendrec = &dev_mess;
+  /* Block the thread waiting for a reply. */
+  fp->fp_task = dp->dmap_driver;
+  self->w_task = dp->dmap_driver;
+  self->w_drv_sendrec = &dev_mess;
 
-	worker_wait();
+  worker_wait();
 
-	self->w_task = NONE;
-	self->w_drv_sendrec = NULL;
-  }
+  self->w_task = NONE;
+  self->w_drv_sendrec = NULL;
 
   /* Return the result from the driver. */
   return(dev_mess.REP_STATUS);
@@ -589,7 +546,7 @@ int do_ioctl(message *UNUSED(m_out))
 {
 /* Perform the ioctl(ls_fd, request, argx) system call */
   unsigned long ioctlrequest;
-  int r = OK, suspend_reopen;
+  int r = OK;
   struct filp *f;
   register struct vnode *vp;
   dev_t dev;
@@ -607,14 +564,13 @@ int do_ioctl(message *UNUSED(m_out))
   }
 
   if (r == OK) {
-	suspend_reopen = (f->filp_state & FS_NEEDS_REOPEN);
 	dev = (dev_t) vp->v_sdev;
 
 	if (S_ISBLK(vp->v_mode))
 		r = bdev_ioctl(dev, who_e, ioctlrequest, argx);
 	else
 		r = dev_io(DEV_IOCTL_S, dev, who_e, argx, 0,
-			   ioctlrequest, f->filp_flags, suspend_reopen);
+			   ioctlrequest, f->filp_flags);
   }
 
   unlock_filp(f);
@@ -925,31 +881,6 @@ void bdev_up(devmajor_t maj)
 
 
 /*===========================================================================*
- *				cdev_up					     *
- *===========================================================================*/
-void cdev_up(devmajor_t maj)
-{
-  /* A new character device driver has been mapped in.
-  */
-  int needs_reopen;
-  struct filp *rfilp;
-  struct vnode *vp;
-
-  needs_reopen= FALSE;
-  for (rfilp = filp; rfilp < &filp[NR_FILPS]; rfilp++) {
-	if (rfilp->filp_count < 1 || !(vp = rfilp->filp_vno)) continue;
-	if (major(vp->v_sdev) != maj) continue;
-	if (!S_ISCHR(vp->v_mode)) continue;
-
-	rfilp->filp_state |= FS_NEEDS_REOPEN;
-	needs_reopen = TRUE;
-  }
-
-  if (needs_reopen)
-	restart_reopen(maj);
-}
-
-/*===========================================================================*
  *				opcl_reply				     *
  *===========================================================================*/
 static void opcl_reply(message *m_ptr)
@@ -1032,7 +963,6 @@ void cdev_reply(void)
   switch (call_nr) {
   case DEV_OPEN_REPL:
   case DEV_CLOSE_REPL:	opcl_reply(&m_in);	break;
-  case DEV_REOPEN_REPL:	reopen_reply(&m_in);	break;
   case DEV_REVIVE:	task_reply(&m_in);	break;
   case DEV_SEL_REPL1:
 	select_reply1(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
@@ -1069,158 +999,4 @@ void bdev_reply(struct dmap *dp)
   *wp->w_drv_sendrec = m_in;
   wp->w_drv_sendrec = NULL;
   worker_signal(wp);
-}
-
-/*===========================================================================*
- *				filp_gc_thread				     *
- *===========================================================================*/
-static void filp_gc_thread(void)
-{
-/* Filp garbage collection thread function. Since new filps may be invalidated
- * while the actual garbage collection procedure is running, we repeat the
- * procedure until it can not find any more work to do.
- */
-
-  while (do_filp_gc())
-	/* simply repeat */;
-}
-
-/*===========================================================================*
- *				restart_reopen				     *
- *===========================================================================*/
-static void restart_reopen(devmajor_t maj)
-{
-  devmajor_t major_dev;
-  devminor_t minor_dev;
-  endpoint_t driver_e;
-  struct vnode *vp;
-  struct filp *rfilp;
-  struct fproc *rfp;
-  message m_out;
-  int n, r;
-
-  memset(&m_out, 0, sizeof(m_out));
-
-  if (maj < 0 || maj >= NR_DEVICES) panic("VFS: out-of-bound major");
-
-  for (rfilp = filp; rfilp < &filp[NR_FILPS]; rfilp++) {
-	if (rfilp->filp_count < 1 || !(vp = rfilp->filp_vno)) continue;
-	if (!(rfilp->filp_state & FS_NEEDS_REOPEN)) continue;
-	if (!S_ISCHR(vp->v_mode)) continue;
-
-	major_dev = major(vp->v_sdev);
-	minor_dev = minor(vp->v_sdev);
-	if (major_dev != maj) continue;
-
-	if (rfilp->filp_flags & O_REOPEN) {
-		/* Try to reopen a file upon driver restart */
-		r = dev_reopen(vp->v_sdev, rfilp-filp,
-			rfilp->filp_mode & (R_BIT|W_BIT));
-
-		if (r == OK)
-			return;
-
-		printf("VFS: file on dev %d/%d re-open failed: %d\n",
-			major_dev, minor_dev, r);
-	}
-
-	/* File descriptor is to be closed when driver restarts. */
-	n = invalidate_filp(rfilp);
-	if (n != rfilp->filp_count) {
-		printf("VFS: warning: invalidate/count "
-		       "discrepancy (%d, %d)\n", n, rfilp->filp_count);
-	}
-	rfilp->filp_count = 0;
-
-	/* We have to clean up this filp and vnode, but can't do that yet as
-	 * it's locked by a worker thread. Start a new job to garbage collect
-	 * invalidated filps associated with this device driver. This thread
-	 * is associated with a process that we know is idle otherwise: VFS.
-	 * Be careful that we don't start two threads or lose work, though.
-	 */
-	if (worker_can_start(fproc_addr(VFS_PROC_NR))) {
-		worker_start(fproc_addr(VFS_PROC_NR), filp_gc_thread,
-			&m_out /*unused*/, FALSE /*use_spare*/);
-	}
-  }
-
-  /* Nothing more to re-open. Restart suspended processes */
-  driver_e = dmap[maj].dmap_driver;
-  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if(rfp->fp_pid == PID_FREE) continue;
-	if(rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER &&
-	   rfp->fp_task == driver_e && (rfp->fp_flags & FP_SUSP_REOPEN)) {
-		rfp->fp_flags &= ~FP_SUSP_REOPEN;
-		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-		reply(&m_out, rfp->fp_endpoint, ERESTART);
-	}
-  }
-}
-
-
-/*===========================================================================*
- *				reopen_reply				     *
- *===========================================================================*/
-static void reopen_reply(message *m_ptr)
-{
-  endpoint_t driver_e;
-  devmajor_t maj;
-  int filp_no, status;
-  struct filp *rfilp;
-  struct vnode *vp;
-  struct dmap *dp;
-
-  driver_e = m_ptr->m_source;
-  filp_no = m_ptr->REP_ENDPT;
-  status = m_ptr->REP_STATUS;
-
-  if (filp_no < 0 || filp_no >= NR_FILPS) {
-	printf("VFS: reopen_reply: bad filp number %d from driver %d\n",
-		filp_no, driver_e);
-	return;
-  }
-
-  rfilp = &filp[filp_no];
-  if (rfilp->filp_count < 1) {
-	printf("VFS: reopen_reply: filp number %d not inuse (from driver %d)\n",
-	       filp_no, driver_e);
-	return;
-  }
-
-  vp = rfilp->filp_vno;
-  if (!vp) {
-	printf("VFS: reopen_reply: no vnode for filp number %d (from driver "
-		"%d)\n", filp_no, driver_e);
-	return;
-  }
-
-  if (!(rfilp->filp_state & FS_NEEDS_REOPEN)) {
-	printf("VFS: reopen_reply: bad state %d for filp number %d"
-	       " (from driver %d)\n", rfilp->filp_state, filp_no, driver_e);
-	return;
-  }
-
-  if (!S_ISCHR(vp->v_mode)) {
-	printf("VFS: reopen_reply: bad mode 0%o for filp number %d"
-	       " (from driver %d)\n", vp->v_mode, filp_no, driver_e);
-	return;
-  }
-
-  maj = major(vp->v_sdev);
-  dp = &dmap[maj];
-  if (dp->dmap_driver != driver_e) {
-	printf("VFS: reopen_reply: bad major %d for filp number %d "
-		"(from driver %d, current driver is %d)\n", maj, filp_no,
-		driver_e, dp->dmap_driver);
-	return;
-  }
-
-  if (status == OK) {
-	rfilp->filp_state &= ~FS_NEEDS_REOPEN;
-  } else {
-	printf("VFS: reopen_reply: should handle error status\n");
-	return;
-  }
-
-  restart_reopen(maj);
 }

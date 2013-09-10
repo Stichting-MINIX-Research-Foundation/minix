@@ -127,7 +127,6 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   /* Claim the file descriptor and filp slot and fill them in. */
   fp->fp_filp[scratch(fp).file.fd_nr] = filp;
-  FD_SET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
   filp->filp_count = 1;
   filp->filp_vno = vp;
   filp->filp_flags = oflags;
@@ -267,10 +266,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   if (r != OK) {
 	if (r != SUSPEND) {
 		fp->fp_filp[scratch(fp).file.fd_nr] = NULL;
-		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
 		filp->filp_count = 0;
 		filp->filp_vno = NULL;
-		filp->filp_state &= ~FS_INVALIDATED; /* Prevent garbage col. */
 		put_vnode(vp);
 	}
   } else {
@@ -687,7 +684,6 @@ int fd_nr;
   close_filp(rfilp);
 
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
-  FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
   /* Check to see if the file is locked.  If so, release all locks. */
   if (nr_locks > 0) {

@@ -20,8 +20,7 @@ EXTERN struct fproc {
   struct vnode *fp_wd;		/* working directory; NULL during reboot */
   struct vnode *fp_rd;		/* root directory; NULL during reboot */
 
-  struct filp *fp_filp[OPEN_MAX];/* the file descriptor table */
-  fd_set fp_filp_inuse;		/* which fd's are in use? */
+  struct filp *fp_filp[OPEN_MAX];/* the file descriptor table (free if NULL) */
   fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
 
   dev_t fp_tty;			/* major/minor of controlling tty */
@@ -59,16 +58,13 @@ EXTERN struct fproc {
 } fproc[NR_PROCS];
 
 /* fp_flags */
-#define FP_NOFLAGS	00
-#define FP_SUSP_REOPEN	01	/* Process is suspended until the reopens are
-				 * completed (after the restart of a driver).
-				 */
+#define FP_NOFLAGS	 0000
+#define FP_SRV_PROC	 0001	/* Set if process is a service */
 #define FP_REVIVED	 0002	/* Indicates process is being revived */
 #define FP_SESLDR	 0004	/* Set if process is session leader */
 #define FP_PENDING	 0010	/* Set if process has pending work */
 #define FP_EXITING	 0020	/* Set if process is exiting */
 #define FP_PM_WORK	 0040	/* Set if process has a postponed PM request */
-#define FP_SRV_PROC	 0100	/* Set if process is a service */
 
 /* Field values. */
 #define NOT_REVIVING       0xC0FFEEE	/* process is not being revived */

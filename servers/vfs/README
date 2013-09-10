@@ -149,11 +149,10 @@ normal and PM work is the responsibility of the worker thread infrastructure.
 There are several special tasks that require a worker thread, and these are
 implemented as normal work associated with a certain special process that does
 not make regular VFS calls anyway. For example, the initial ramdisk mount
-procedure and the post-crash filp garbage collector use a thread associated
-with the VFS process. Some of these special tasks require protection against
-being started multiple times at once, as this is not only undesirable but also
-disallowed. The full list of worker thread task types and subtypes is shown in
-Table 1.
+procedure uses a thread associated with the VFS process. Some of these special
+tasks require protection against being started multiple times at once, as this
+is not only undesirable but also disallowed. The full list of worker thread
+task types and subtypes is shown in Table 1.
 
 {{{
 -------------------------------------------------------------------------
@@ -166,8 +165,6 @@ Table 1.
 | postponed PM request      | PM     | target process  | no             |
 +---------------------------+--------+-----------------+----------------+
 | DS event notification     | normal | DS              | yes            |
-+---------------------------+--------+-----------------+----------------+
-| filp garbage collection   | normal | VFS             | no             |
 +---------------------------+--------+-----------------+----------------+
 | initial ramdisk mounting  | normal | VFS             | no             |
 +---------------------------+--------+-----------------+----------------+
@@ -677,15 +674,15 @@ a request. VFS does this with an arbitrary maximum of 5 attempts.
 
 === Recovery from character driver crashes ===
 ## 5.2 Recovery from character driver crashes
-Character special files are treated differently. Once VFS has found out a
-driver has been restarted, it will stop the current request (if there is
-any). It makes no sense to retry requests due to the nature of character
-special files. If a character special driver can restart without changing
-endpoints, this merely results in the current request (e.g., read, write, or
-ioctl) failing and allows the user process to reissue the same request. On
-the other hand, if a driver restart causes the driver to change endpoint
-number, all associated file descriptors are marked invalid and subsequent
-operations on them will always fail with a bad file descriptor error.
+While VFS used to support minimal recovery from character driver crashes, the
+added complexity has so far proven to outweigh the benefits, especially since
+such crash recovery can never be fully transparent: it depends entirely on the
+character device as to whether repeating an I/O request makes sense at all.
+Currently, all operations except close(2) on a file descriptor that identifies
+a device on a crashed character driver, will result in an EIO error. It is up
+to the application to reopen the character device and retry whatever it was
+doing in the appropriate manner. In the future, automatic reopen and I/O
+restart may be reintroduced for a limited subset of character drivers.
 
 === Recovery from File Server crashes ===
 ## 5.3 Recovery from File Server crashes

@@ -325,7 +325,6 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 			newfilp->filp_count = 1;
 			newfilp->filp_vno = vp;
 			newfilp->filp_flags = O_RDONLY;
-			FD_SET(newfd, &vmfp->fp_filp_inuse);
 			vmfp->fp_filp[newfd] = newfilp;
 			/* dup_vnode(vp); */
 			execi.vmfd = newfd;

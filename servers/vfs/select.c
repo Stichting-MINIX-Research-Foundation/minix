@@ -752,7 +752,7 @@ void select_unsuspend_by_endpt(endpoint_t proc_e)
 		major = major(f->filp_vno->v_sdev);
 		if (dmap_driver_match(proc_e, major)) {
 			se->filps[fd] = NULL;
-			se->error = EINTR;
+			se->error = EIO;
 			select_cancel_filp(f);
 			wakehim = 1;
 		}

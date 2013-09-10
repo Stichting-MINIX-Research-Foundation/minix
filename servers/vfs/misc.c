@@ -121,7 +121,6 @@ int do_fcntl(message *UNUSED(m_out))
 	else if ((r = get_fd(fp, fcntl_argx, 0, &new_fd, NULL)) == OK) {
 		f->filp_count++;
 		fp->fp_filp[new_fd] = f;
-		FD_SET(new_fd, &fp->fp_filp_inuse);
 		r = new_fd;
 	}
 	break;
@@ -336,9 +335,6 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 	f->filp_count++;
 	assert(f->filp_count > 0);
 	vmf->fp_filp[procfd] = f;
-
-	/* mmap FD's are inuse */
-	FD_SET(procfd, &vmf->fp_filp_inuse);
 
 	*newfilp = f;
 

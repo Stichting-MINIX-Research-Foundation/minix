@@ -105,7 +105,7 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
 
   if (((f->filp_mode) & (ro ? R_BIT : W_BIT)) == 0) {
 	unlock_filp(f);
-	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
+	return(EBADF);
   }
   if (scratch(rfp).io.io_nbytes == 0) {
 	unlock_filp(f);
@@ -160,7 +160,6 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	r = rw_pipe(rw_flag, for_e, f, buf, size);
   } else if (S_ISCHR(vp->v_mode)) {	/* Character special files. */
 	dev_t dev;
-	int suspend_reopen;
 	int op = (rw_flag == READING ? DEV_READ_S : DEV_WRITE_S);
 
 	if(rw_flag == PEEKING) {
@@ -171,11 +170,9 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access char dev NO_DEV");
 
-	suspend_reopen = (f->filp_state & FS_NEEDS_REOPEN);
 	dev = (dev_t) vp->v_sdev;
 
-	r = dev_io(op, dev, for_e, buf, position, size, f->filp_flags,
-		   suspend_reopen);
+	r = dev_io(op, dev, for_e, buf, position, size, f->filp_flags);
 	if (r >= 0) {
 		/* This should no longer happen: all calls are asynchronous. */
 		printf("VFS: I/O to device %x succeeded immediately!?\n", dev);

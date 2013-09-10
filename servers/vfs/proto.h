@@ -30,14 +30,13 @@ void send_work(void);
 
 /* device.c */
 int dev_open(dev_t dev, int flags);
-int dev_reopen(dev_t dev, int filp_no, int flags);
 int dev_close(dev_t dev);
 void cdev_reply(void);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
 void bdev_reply(struct dmap *dp);
 int dev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
-	size_t bytes, int flags, int suspend_reopen);
+	size_t bytes, int flags);
 int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
 int gen_io(endpoint_t drv_e, message *mess_ptr);
 int no_dev(int op, dev_t dev, endpoint_t proc, int flags);
@@ -51,7 +50,6 @@ int dev_select(dev_t dev, int ops);
 int dev_cancel(dev_t dev);
 void pm_setsid(endpoint_t proc_e);
 void bdev_up(int major);
-void cdev_up(int major);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);
@@ -78,7 +76,6 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 	vir_bytes *pc, vir_bytes *newsp, vir_bytes *ps_str, int flags);
 
 /* filedes.c */
-int do_filp_gc(void);
 void check_filp_locks(void);
 void check_filp_locks_by_me(void);
 void init_filps(void);
@@ -90,7 +87,7 @@ struct filp *get_filp2(struct fproc *rfp, int fild, tll_access_t locktype);
 void lock_filp(struct filp *filp, tll_access_t locktype);
 void unlock_filp(struct filp *filp);
 void unlock_filps(struct filp *filp1, struct filp *filp2);
-int invalidate_filp(struct filp *);
+void invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
 void invalidate_filp_by_char_major(int major);
 int do_verify_fd(message *m_out);
