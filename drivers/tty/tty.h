@@ -43,7 +43,8 @@ typedef struct tty {
   devfun_t tty_devwrite;	/* routine to start actual device output */
   devfunarg_t tty_echo;		/* routine to echo characters input */
   devfun_t tty_ocancel;		/* cancel any ongoing device output */
-  devfun_t tty_break;		/* let the device send a break */
+  devfun_t tty_break_on;	/* let the device assert a break */
+  devfun_t tty_break_off;	/* let the device de-assert a break */
 
   /* Terminal parameters and status. */
   int tty_position;		/* current position on the screen for echoing */

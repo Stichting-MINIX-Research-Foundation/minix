@@ -53,10 +53,6 @@ __weak_alias(tcflow,_tcflow)
 int
 tcflow(int fd, int action)
 {
-#ifdef __minix
-	_DIAGASSERT(fd != -1);
-	return ioctl(fd, TCFLOW, &action);
-#else /* !__minix */
 	struct termios term;
 	u_char c;
 
@@ -80,5 +76,4 @@ tcflow(int fd, int action)
 		return (-1);
 	}
 	/* NOTREACHED */
-#endif /* !__minix */
 }

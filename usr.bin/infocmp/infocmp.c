@@ -41,8 +41,9 @@ __RCSID("$NetBSD: infocmp.c,v 1.7 2010/02/22 23:05:39 roy Exp $");
 #include <term.h>
 #include <unistd.h>
 
-/* Specifically needed on MINIX, as struct winsize in not defined elsewhere */
-#include <minix/termios.h>
+#ifdef __minix
+#include <sys/ttycom.h>
+#endif
 
 #define SW 8
 

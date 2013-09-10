@@ -961,6 +961,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 		}
 	}
 #endif
+#ifndef __minix
 #ifdef TIOCGSIZE
 	{
 		struct ttysize ts;
@@ -971,6 +972,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 				*lins = ts.ts_lines;
 		}
 	}
+#endif
 #endif
 	return Val(T_co) != *cols || Val(T_li) != *lins;
 }

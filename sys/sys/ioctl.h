@@ -13,7 +13,7 @@
  * used in each header file are shown in the comment following.
  */
 
-#include <sys/ioc_tty.h>	/* 'T' 't' 'k'		*/
+#include <sys/ttycom.h>		/* 't'			*/
 #include <sys/ioc_net.h>	/* 'n'			*/
 #include <sys/ioc_disk.h>	/* 'd'			*/
 #include <sys/ioc_file.h>	/* 'f'			*/
@@ -25,12 +25,7 @@
 #include <sys/ioc_fb.h>		/* 'V'			*/
 #include <dev/vndvar.h>		/* 'F'			*/
 
-#if defined(_NETBSD_SOURCE)
-#define		TIOCDRAIN 	TCDRAIN
-#define		TIOCGETA	TCGETS
-#define		TIOCSETA	TCSETS
-#define		TIOCSETAW	TCSETSW
-#define		TIOCSETAF	TCSETSF
-#endif
+#define TIOCGSIZE       TIOCGWINSZ
+#define TIOCSSIZE       TIOCSWINSZ
 
 #endif /* _S_IOCTL_H */
