@@ -43,8 +43,8 @@
 
 static int block_io(endpoint_t driver_e, message *mess_ptr);
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
-	void *buf, size_t size);
-static void restart_reopen(int major);
+	void *buf, unsigned long size);
+static void restart_reopen(devmajor_t major);
 static void reopen_reply(message *m_ptr);
 
 static int dummyproc;
@@ -54,21 +54,21 @@ static int dummyproc;
  *===========================================================================*/
 int dev_open(
   dev_t dev,			/* device to open */
-  endpoint_t proc_e,		/* process to open for */
   int flags			/* mode bits and flags */
 )
 {
 /* Open a character device. */
-  int major, r;
+  devmajor_t major_dev;
+  int r;
 
   /* Determine the major device number so as to call the device class specific
    * open/close routine.  (This is the only routine that must check the
    * device number for being in range.  All others can trust this check.)
    */
-  major = major(dev);
-  if (major < 0 || major >= NR_DEVICES) major = 0;
-  if (dmap[major].dmap_driver == NONE) return(ENXIO);
-  r = (*dmap[major].dmap_opcl)(DEV_OPEN, dev, proc_e, flags);
+  major_dev = major(dev);
+  if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
+  if (dmap[major_dev].dmap_driver == NONE) return(ENXIO);
+  r = (*dmap[major_dev].dmap_opcl)(DEV_OPEN, dev, fp->fp_endpoint, flags);
   return(r);
 }
 
@@ -83,18 +83,17 @@ int dev_reopen(
 )
 {
 /* Reopen a character device after a failing device driver. */
-
-  int major, r;
+  devmajor_t major_dev;
   struct dmap *dp;
+  int r;
 
   /* Determine the major device number and call the device class specific
    * open/close routine.  (This is the only routine that must check the device
    * number for being in range.  All others can trust this check.)
    */
-
-  major = major(dev);
-  if (major < 0 || major >= NR_DEVICES) major = 0;
-  dp = &dmap[major];
+  major_dev = major(dev);
+  if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
+  dp = &dmap[major_dev];
   if (dp->dmap_driver == NONE) return(ENXIO);
   r = (*dp->dmap_opcl)(DEV_REOPEN, dev, filp_no, flags);
   if (r == SUSPEND) r = OK;
@@ -106,35 +105,52 @@ int dev_reopen(
  *				dev_close				     *
  *===========================================================================*/
 int dev_close(
-  dev_t dev,			/* device to close */
-  int filp_no
+  dev_t dev			/* device to close */
 )
 {
 /* Close a character device. */
-  int r, major;
+  devmajor_t major_dev;
+  int r;
 
   /* See if driver is roughly valid. */
-  major = major(dev);
-  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
-  if (dmap[major].dmap_driver == NONE) return(ENXIO);
-  r = (*dmap[major].dmap_opcl)(DEV_CLOSE, dev, filp_no, 0);
+  major_dev = major(dev);
+  if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
+  if (dmap[major_dev].dmap_driver == NONE) return(ENXIO);
+  r = (*dmap[major_dev].dmap_opcl)(DEV_CLOSE, dev, fp->fp_endpoint, 0);
   return(r);
 }
 
 
 /*===========================================================================*
- *				dev_open				     *
+ *				bdev_open				     *
  *===========================================================================*/
 int bdev_open(dev_t dev, int access)
 {
 /* Open a block device. */
-  int major;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
+  message dev_mess;
+  int r;
 
-  major = major(dev);
-  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
-  if (dmap[major].dmap_driver == NONE) return(ENXIO);
+  major_dev = major(dev);
+  minor_dev = minor(dev);
+  if (major_dev < 0 || major_dev >= NR_DEVICES) return ENXIO;
+  if (dmap[major_dev].dmap_driver == NONE) return ENXIO;
 
-  return (*dmap[major].dmap_opcl)(BDEV_OPEN, dev, 0, access);
+  memset(&dev_mess, 0, sizeof(dev_mess));
+  dev_mess.m_type = BDEV_OPEN;
+  dev_mess.BDEV_MINOR = minor_dev;
+  dev_mess.BDEV_ACCESS = 0;
+  if (access & R_BIT) dev_mess.BDEV_ACCESS |= BDEV_R_BIT;
+  if (access & W_BIT) dev_mess.BDEV_ACCESS |= BDEV_W_BIT;
+  dev_mess.BDEV_ID = 0;
+
+  /* Call the task. */
+  r = block_io(dmap[major_dev].dmap_driver, &dev_mess);
+  if (r != OK)
+	return r;
+
+  return dev_mess.BDEV_STATUS;
 }
 
 
@@ -144,26 +160,41 @@ int bdev_open(dev_t dev, int access)
 int bdev_close(dev_t dev)
 {
 /* Close a block device. */
-  int major;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
+  message dev_mess;
+  int r;
 
-  major = major(dev);
-  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
-  if (dmap[major].dmap_driver == NONE) return(ENXIO);
+  major_dev = major(dev);
+  minor_dev = minor(dev);
+  if (major_dev < 0 || major_dev >= NR_DEVICES) return ENXIO;
+  if (dmap[major_dev].dmap_driver == NONE) return ENXIO;
 
-  return (*dmap[major].dmap_opcl)(BDEV_CLOSE, dev, 0, 0);
+  memset(&dev_mess, 0, sizeof(dev_mess));
+  dev_mess.m_type = BDEV_CLOSE;
+  dev_mess.BDEV_MINOR = minor_dev;
+  dev_mess.BDEV_ID = 0;
+
+  r = block_io(dmap[major_dev].dmap_driver, &dev_mess);
+  if (r != OK)
+	return r;
+
+  return dev_mess.BDEV_STATUS;
 }
 
 
 /*===========================================================================*
  *				bdev_ioctl				     *
  *===========================================================================*/
-static int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
+static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
+	void *buf)
 {
 /* Perform an I/O control operation on a block device. */
   struct dmap *dp;
   cp_grant_id_t gid;
   message dev_mess;
-  int major_dev, minor_dev;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
 
   major_dev = major(dev);
   minor_dev = minor(dev);
@@ -232,7 +263,7 @@ static endpoint_t find_suspended_ep(endpoint_t driver, cp_grant_id_t g)
  *				make_grant				     *
  *===========================================================================*/
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
-	void *buf, size_t bytes)
+	void *buf, unsigned long bytes)
 {
 /* Create a magic grant for the given operation and buffer. */
   cp_grant_id_t gid;
@@ -242,14 +273,14 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
   switch (op) {
   case DEV_READ_S:
   case DEV_WRITE_S:
-	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf, bytes,
-		op == DEV_READ_S ? CPF_WRITE : CPF_READ);
+	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf,
+		(size_t) bytes, op == DEV_READ_S ? CPF_WRITE : CPF_READ);
 	break;
 
   case DEV_IOCTL_S:
   case BDEV_IOCTL:
-	/* For IOCTLs, the bytes parameter encodes requested access method
-	 * and buffer size
+	/* For IOCTLs, the bytes parameter contains the IOCTL request.
+	 * This request encodes the requested access method and buffer size.
 	 */
 	access = 0;
 	if(_MINIX_IOCTL_IOR(bytes)) access |= CPF_WRITE;
@@ -294,7 +325,9 @@ int dev_io(
   struct dmap *dp;
   message dev_mess;
   cp_grant_id_t gid;
-  int r, minor_dev, major_dev;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
+  int r;
 
   assert(op == DEV_READ_S || op == DEV_WRITE_S || op == DEV_IOCTL_S);
 
@@ -325,6 +358,7 @@ int dev_io(
   gid = make_grant(dp->dmap_driver, proc_e, op, buf, bytes);
 
   /* Set up the rest of the message that will be sent to the driver. */
+  memset(&dev_mess, 0, sizeof(dev_mess));
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = minor_dev;
   if (op == DEV_IOCTL_S) {
@@ -359,20 +393,75 @@ int dev_io(
   return SUSPEND;
 }
 
+
+/*===========================================================================*
+ *				clone_cdev				     *
+ *===========================================================================*/
+static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
+{
+/* A new minor device number has been returned. Request PFS to create a
+ * temporary device file to hold it.
+ */
+  struct vnode *vp;
+  struct node_details res;
+  int r;
+
+  assert(proc_e == fp->fp_endpoint);
+
+  /* Device number of the new device. */
+  dev = makedev(major(dev), new_minor);
+
+  /* Issue request */
+  r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
+      ALL_MODES | I_CHAR_SPECIAL, dev, &res);
+  if (r != OK) {
+	(void) gen_opcl(DEV_CLOSE, dev, proc_e, 0);
+	return r;
+  }
+
+  /* Drop old node and use the new values */
+  if ((vp = get_free_vnode()) == NULL) {
+	req_putnode(PFS_PROC_NR, res.inode_nr, 1); /* is this right? */
+	(void) gen_opcl(DEV_CLOSE, dev, proc_e, 0);
+	return(err_code);
+  }
+  lock_vnode(vp, VNODE_OPCL);
+
+  assert(FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse));
+  unlock_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
+  put_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
+
+  vp->v_fs_e = res.fs_e;
+  vp->v_vmnt = NULL;
+  vp->v_dev = NO_DEV;
+  vp->v_fs_e = res.fs_e;
+  vp->v_inode_nr = res.inode_nr;
+  vp->v_mode = res.fmode;
+  vp->v_sdev = dev;
+  vp->v_fs_count = 1;
+  vp->v_ref_count = 1;
+  fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno = vp;
+
+  return OK;
+}
+
+
 /*===========================================================================*
  *				gen_opcl				     *
  *===========================================================================*/
 int gen_opcl(
-  int op,			/* operation, (B)DEV_OPEN or (B)DEV_CLOSE */
+  int op,			/* operation, DEV_OPEN/DEV_REOPEN/DEV_CLOSE */
   dev_t dev,			/* device to open or close */
   endpoint_t proc_e,		/* process to open/close for */
   int flags			/* mode bits and flags */
 )
 {
 /* Called from the dmap struct on opens & closes of special files.*/
-  int r, minor_dev, major_dev, is_bdev;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
   struct dmap *dp;
   message dev_mess;
+  int r;
 
   /* Determine task dmap. */
   major_dev = major(dev);
@@ -381,32 +470,23 @@ int gen_opcl(
   dp = &dmap[major_dev];
   assert(dp->dmap_driver != NONE);
 
-  is_bdev = IS_BDEV_RQ(op);
+  assert(!IS_BDEV_RQ(op));
 
-  if (is_bdev) {
-	memset(&dev_mess, 0, sizeof(dev_mess));
-	dev_mess.m_type = op;
-	dev_mess.BDEV_MINOR = minor_dev;
-	dev_mess.BDEV_ACCESS = 0;
-	if (flags & R_BIT) dev_mess.BDEV_ACCESS |= BDEV_R_BIT;
-	if (flags & W_BIT) dev_mess.BDEV_ACCESS |= BDEV_W_BIT;
-	dev_mess.BDEV_ID = 0;
+  /* Prepare the request message. */
+  memset(&dev_mess, 0, sizeof(dev_mess));
 
-	/* Call the task. */
-	r = block_io(dp->dmap_driver, &dev_mess);
-  } else {
-	dev_mess.m_type = op;
-	dev_mess.DEVICE = minor_dev;
-	dev_mess.USER_ENDPT = proc_e;
-	dev_mess.COUNT = flags;
+  dev_mess.m_type = op;
+  dev_mess.DEVICE = minor_dev;
+  dev_mess.USER_ENDPT = proc_e;
+  dev_mess.COUNT = flags;
 
-	/* Call the task. */
-	r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-  }
+  /* Call the task. */
+  r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 
   if (r != OK) return(r);
 
-  if (op == DEV_OPEN) {
+  if (op == DEV_OPEN || op == DEV_CLOSE) {
+	/* Block the thread waiting for a reply. */
 	fp->fp_task = dp->dmap_driver;
 	self->w_task = dp->dmap_driver;
 	self->w_drv_sendrec = &dev_mess;
@@ -417,10 +497,8 @@ int gen_opcl(
 	self->w_drv_sendrec = NULL;
   }
 
-  if (is_bdev)
-	return(dev_mess.BDEV_STATUS);
-  else
-	return(dev_mess.REP_STATUS);
+  /* Return the result from the driver. */
+  return(dev_mess.REP_STATUS);
 }
 
 /*===========================================================================*
@@ -434,7 +512,6 @@ int tty_opcl(
 )
 {
 /* This procedure is called from the dmap struct on tty open/close. */
-
   int r;
   register struct fproc *rfp;
 
@@ -511,8 +588,8 @@ void pm_setsid(endpoint_t proc_e)
 int do_ioctl(message *UNUSED(m_out))
 {
 /* Perform the ioctl(ls_fd, request, argx) system call */
-
-  int r = OK, suspend_reopen, ioctlrequest;
+  unsigned long ioctlrequest;
+  int r = OK, suspend_reopen;
   struct filp *f;
   register struct vnode *vp;
   dev_t dev;
@@ -552,7 +629,8 @@ int do_ioctl(message *UNUSED(m_out))
 int dev_select(dev_t dev, int ops)
 {
 /* Initiate a select call on a device. Return OK iff the request was sent. */
-  int major_dev, minor_dev;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
   message dev_mess;
   struct dmap *dp;
 
@@ -579,9 +657,11 @@ int dev_select(dev_t dev, int ops)
 int dev_cancel(dev_t dev)
 {
 /* Cancel an I/O request, blocking until it has been cancelled. */
-  int r, minor_dev, major_dev;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
   message dev_mess;
   struct dmap *dp;
+  int r;
 
   major_dev = major(dev);
   minor_dev = minor(dev);
@@ -703,7 +783,6 @@ int ctty_io(
  * is to change the message to use the controlling terminal, instead of the
  * major/minor pair for /dev/tty itself.
  */
-
   struct dmap *dp;
 
   if (fp->fp_tty == 0) {
@@ -753,14 +832,13 @@ int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
   return(EIO);
 }
 
-
 /*===========================================================================*
  *				clone_opcl				     *
  *===========================================================================*/
 int clone_opcl(
   int op,			/* operation, DEV_OPEN or DEV_CLOSE */
   dev_t dev,			/* device to open or close */
-  endpoint_t proc_e,			/* process to open/close for */
+  endpoint_t proc_e,		/* process to open/close for */
   int flags			/* mode bits and flags */
 )
 {
@@ -769,96 +847,25 @@ int clone_opcl(
  * minor device number.  This new device number identifies a new object (such
  * as a new network connection) that has been allocated within a task.
  */
-  struct dmap *dp;
-  int r, minor_dev, major_dev;
-  message dev_mess;
+  int r;
 
-  assert(!IS_BDEV_RQ(op));
+  r = gen_opcl(op, dev, proc_e, flags);
 
-  /* Determine task dmap. */
-  minor_dev = minor(dev);
-  major_dev = major(dev);
-  assert(major_dev >= 0 && major_dev < NR_DEVICES);
-  dp = &dmap[major_dev];
-  assert(dp->dmap_driver != NONE);
-
-  dev_mess.m_type   = op;
-  dev_mess.DEVICE   = minor_dev;
-  dev_mess.USER_ENDPT = proc_e;
-  dev_mess.COUNT    = flags;
-
-  if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
-	printf("VFS clone_opcl: bad driver endpoint for major %d (%d)\n",
-	       major_dev, dp->dmap_driver);
-	return(ENXIO);
+  if (op == DEV_OPEN && r >= 0) {
+	if (r != minor(dev))
+		r = cdev_clone(dev, proc_e, r);
+	else
+		r = OK;
   }
 
-  /* Call the task. */
-  r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-  if (r != OK) return(r);
-
-  if (op == DEV_OPEN) {
-	/* Wait for the reply. */
-	fp->fp_task = dp->dmap_driver;
-	self->w_task = dp->dmap_driver;
-	self->w_drv_sendrec = &dev_mess;
-
-	worker_wait();
-
-	self->w_task = NONE;
-	self->w_drv_sendrec = NULL;
-  }
-
-  if (op == DEV_OPEN && dev_mess.REP_STATUS >= 0) {
-	if (dev_mess.REP_STATUS != minor_dev) {
-		struct vnode *vp;
-		struct node_details res;
-
-		/* A new minor device number has been returned.
-		 * Request PFS to create a temporary device file to hold it.
-		 */
-
-		/* Device number of the new device. */
-		dev = makedev(major(dev), minor(dev_mess.REP_STATUS)); 
-
-		/* Issue request */
-		r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
-		    ALL_MODES | I_CHAR_SPECIAL, dev, &res);
-		if (r != OK) {
-			(void) clone_opcl(DEV_CLOSE, dev, proc_e, 0);
-			return r;
-		}
-
-		/* Drop old node and use the new values */
-		if ((vp = get_free_vnode()) == NULL)
-			return(err_code);
-		lock_vnode(vp, VNODE_OPCL);
-
-		assert(FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse));
-		unlock_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
-		put_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
-
-                vp->v_fs_e = res.fs_e;
-                vp->v_vmnt = NULL;
-                vp->v_dev = NO_DEV;
-		vp->v_fs_e = res.fs_e;
-                vp->v_inode_nr = res.inode_nr;
-                vp->v_mode = res.fmode;
-                vp->v_sdev = dev;
-                vp->v_fs_count = 1;
-                vp->v_ref_count = 1;
-		fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno = vp;
-	}
-	dev_mess.REP_STATUS = OK;
-  }
-  return(dev_mess.REP_STATUS);
+  return r;
 }
 
 
 /*===========================================================================*
  *				bdev_up					     *
  *===========================================================================*/
-void bdev_up(int maj)
+void bdev_up(devmajor_t maj)
 {
   /* A new block device driver has been mapped in. This may affect both mounted
    * file systems and open block-special files.
@@ -914,14 +921,13 @@ void bdev_up(int maj)
 		printf("VFSdev_up: error sending new driver label to %d\n",
 			ROOT_FS_E);
   }
-
 }
 
 
 /*===========================================================================*
  *				cdev_up					     *
  *===========================================================================*/
-void cdev_up(int maj)
+void cdev_up(devmajor_t maj)
 {
   /* A new character device driver has been mapped in.
   */
@@ -944,12 +950,12 @@ void cdev_up(int maj)
 }
 
 /*===========================================================================*
- *				open_reply				     *
+ *				opcl_reply				     *
  *===========================================================================*/
-static void open_reply(message *m_ptr)
+static void opcl_reply(message *m_ptr)
 {
-/* A character driver has replied to an open request. This function MUST NOT
- * block its calling thread.
+/* A character driver has replied to an open or close request. This function
+ * MUST NOT block its calling thread.
  */
   struct fproc *rfp;
   struct worker_thread *wp;
@@ -965,7 +971,7 @@ static void open_reply(message *m_ptr)
 	return;
   }
   *wp->w_drv_sendrec = *m_ptr;
-  worker_signal(wp);	/* Continue open */
+  worker_signal(wp);	/* Continue open/close */
 }
 
 
@@ -1017,20 +1023,6 @@ static void task_reply(message *m_ptr)
 
 
 /*===========================================================================*
- *				close_reply				     *
- *===========================================================================*/
-static void close_reply(message *m_ptr __unused)
-{
-/* A character driver replied to a close request. There is no need to do
- * anything here, because we cheat: we assume that the close operation will
- * succeed anyway, so we don't wait for the reply.
- */
-
-  /* Nothing. */
-}
-
-
-/*===========================================================================*
  *			       cdev_reply				     *
  *===========================================================================*/
 void cdev_reply(void)
@@ -1038,9 +1030,9 @@ void cdev_reply(void)
 /* A character driver has results for us. */
 
   switch (call_nr) {
-  case DEV_OPEN_REPL:	open_reply(&m_in);	break;
+  case DEV_OPEN_REPL:
+  case DEV_CLOSE_REPL:	opcl_reply(&m_in);	break;
   case DEV_REOPEN_REPL:	reopen_reply(&m_in);	break;
-  case DEV_CLOSE_REPL:	close_reply(&m_in);	break;
   case DEV_REVIVE:	task_reply(&m_in);	break;
   case DEV_SEL_REPL1:
 	select_reply1(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
@@ -1062,22 +1054,21 @@ void bdev_reply(struct dmap *dp)
 /* A block driver has results for a call. There must be a thread waiting for
  * these results - wake it up. This function MUST NOT block its calling thread.
  */
-	struct worker_thread *wp;
+  struct worker_thread *wp;
 
-	assert(dp != NULL);
-	assert(dp->dmap_servicing != NONE);
+  assert(dp != NULL);
+  assert(dp->dmap_servicing != NONE);
 
-	wp = worker_get(dp->dmap_servicing);
-	if (wp == NULL || wp->w_task != who_e) {
-		printf("VFS: no worker thread waiting for a reply from %d\n",
-			who_e);
-		return;
-	}
+  wp = worker_get(dp->dmap_servicing);
+  if (wp == NULL || wp->w_task != who_e) {
+	printf("VFS: no worker thread waiting for a reply from %d\n", who_e);
+	return;
+  }
 
-	assert(wp->w_drv_sendrec != NULL);
-	*wp->w_drv_sendrec = m_in;
-	wp->w_drv_sendrec = NULL;
-	worker_signal(wp);
+  assert(wp->w_drv_sendrec != NULL);
+  *wp->w_drv_sendrec = m_in;
+  wp->w_drv_sendrec = NULL;
+  worker_signal(wp);
 }
 
 /*===========================================================================*
@@ -1097,15 +1088,17 @@ static void filp_gc_thread(void)
 /*===========================================================================*
  *				restart_reopen				     *
  *===========================================================================*/
-static void restart_reopen(maj)
-int maj;
+static void restart_reopen(devmajor_t maj)
 {
-  int n, r, minor_dev, major_dev;
+  devmajor_t major_dev;
+  devminor_t minor_dev;
   endpoint_t driver_e;
   struct vnode *vp;
   struct filp *rfilp;
   struct fproc *rfp;
   message m_out;
+  int n, r;
+
   memset(&m_out, 0, sizeof(m_out));
 
   if (maj < 0 || maj >= NR_DEVICES) panic("VFS: out-of-bound major");
@@ -1171,7 +1164,8 @@ int maj;
 static void reopen_reply(message *m_ptr)
 {
   endpoint_t driver_e;
-  int filp_no, status, maj;
+  devmajor_t maj;
+  int filp_no, status;
   struct filp *rfilp;
   struct vnode *vp;
   struct dmap *dp;
