@@ -741,11 +741,10 @@ int arch_phys_map(const int index,
 		*addr = AM335X_DMTIMER7_BASE;
 #endif
 		*len = ARM_PAGE_SIZE;
-		*flags = VMMF_USER;
+		*flags = VMMF_UNCACHED | VMMF_USER;
 		return OK;
 	} 
 	/* if this all fails loop over the maps */
-	/* list over the maps and index them */
 	phys_maps = kern_phys_map_head;
 	while(phys_maps != NULL){
 		if(phys_maps->index == index){
