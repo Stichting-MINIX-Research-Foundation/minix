@@ -9,20 +9,16 @@
  * This file takes care of copying data between the tty/pty device pairs and
  * the open/read/write/close calls on the pty devices.  The TTY task takes
  * care of the input and output processing (interrupt, backspace, raw I/O,
- * etc.) using the pty_read() and pty_write() functions as the "keyboard" and
- * "screen" functions of the ttypX devices.
+ * etc.) using the pty_slave_read() and pty_slave_write() functions as the
+ * "keyboard" and "screen" functions of the ttypX devices.
  * Be careful when reading this code, the terms "reading" and "writing" are
- * used both for the tty and the pty end of the pseudo tty.  Writes to one
- * end are to be read at the other end and vice-versa.
+ * used both for the tty (slave) and the pty (master) end of the pseudo tty.
+ * Writes to one end are to be read at the other end and vice-versa.
  */
 
 #include <minix/drivers.h>
-#include <assert.h>
 #include <termios.h>
 #include <signal.h>
-#include <minix/com.h>
-#include <minix/callnr.h>
-#include <sys/select.h>
 #include "tty.h"
 
 #if NR_PTYS > 0
@@ -32,21 +28,19 @@ typedef struct pty {
   tty_t		*tty;		/* associated TTY structure */
   char		state;		/* flags: busy, closed, ... */
 
-  /* Read call on /dev/ptypX. */
-  int		rdcaller;	/* process making the call (usually FS) */
-  int		rdproc;		/* process that wants to read from the pty */
-  cp_grant_id_t	rdgrant;	/* grant for readers address space */
-  vir_bytes	rdoffset;	/* offset in above grant */
-  int		rdleft;		/* # bytes yet to be read */
-  int		rdcum;		/* # bytes written so far */
+  /* Read call on master (/dev/ptypX). */
+  endpoint_t	rdcaller;	/* process making the call, or NONE if none */
+  cdev_id_t	rdid;		/* ID of suspended read request */
+  cp_grant_id_t	rdgrant;	/* grant for reader's address space */
+  size_t	rdleft;		/* # bytes yet to be read */
+  size_t	rdcum;		/* # bytes written so far */
 
-  /* Write call to /dev/ptypX. */
-  int		wrcaller;	/* process making the call (usually FS) */
-  int		wrproc;		/* process that wants to write to the pty */
-  cp_grant_id_t	wrgrant;	/* grant for writers address space */
-  vir_bytes	wroffset;	/* offset in above grant */
-  int		wrleft;		/* # bytes yet to be written */
-  int		wrcum;		/* # bytes written so far */
+  /* Write call to master (/dev/ptypX). */
+  endpoint_t	wrcaller;	/* process making the call, or NONE if none*/
+  cdev_id_t	wrid;		/* ID of suspended write request */
+  cp_grant_id_t	wrgrant;	/* grant for writer's address space */
+  size_t	wrleft;		/* # bytes yet to be written */
+  size_t	wrcum;		/* # bytes written so far */
 
   /* Output buffer. */
   int		ocount;		/* # characters in the buffer */
@@ -54,9 +48,8 @@ typedef struct pty {
   char		obuf[2048];	/* buffer for bytes going to the pty reader */
 
   /* select() data. */
-  int		select_ops;	/* Which operations do we want to know about? */
-  int		select_proc;	/* Who wants to know about it? */
-  dev_t		select_minor;	/* sanity check only, can be removed */
+  unsigned int	select_ops;	/* Which operations do we want to know about? */
+  endpoint_t	select_proc;	/* Who wants to know about it? */
 } pty_t;
 
 #define TTY_ACTIVE	0x01	/* tty is open/active */
@@ -66,159 +59,288 @@ typedef struct pty {
 
 static pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
-static int pty_write(tty_t *tp, int try);
-static void pty_echo(tty_t *tp, int c);
 static void pty_start(pty_t *pp);
 static void pty_finish(pty_t *pp);
-static int pty_read(tty_t *tp, int try);
-static int pty_close(tty_t *tp, int try);
-static int pty_icancel(tty_t *tp, int try);
-static int pty_ocancel(tty_t *tp, int try);
-static void pty_select(tty_t *tp, message *m);
+
+static int pty_master_open(devminor_t minor, int access,
+	endpoint_t user_endpt);
+static int pty_master_close(devminor_t minor);
+static ssize_t pty_master_read(devminor_t minor, u64_t position,
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id);
+static ssize_t pty_master_write(devminor_t minor, u64_t position,
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id);
+static int pty_master_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+static int pty_master_select(devminor_t minor, unsigned int ops,
+	endpoint_t endpt);
+
+static struct chardriver pty_master_tab = {
+  .cdr_open	= pty_master_open,
+  .cdr_close	= pty_master_close,
+  .cdr_read	= pty_master_read,
+  .cdr_write	= pty_master_write,
+  .cdr_cancel	= pty_master_cancel,
+  .cdr_select	= pty_master_select
+};
+
+/*===========================================================================*
+ *				pty_master_open				     *
+ *===========================================================================*/
+static int pty_master_open(devminor_t minor, int UNUSED(access),
+	endpoint_t UNUSED(user_endpt))
+{
+  tty_t *tp;
+  pty_t *pp;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+  pp = tp->tty_priv;
+
+  if (pp->state & PTY_ACTIVE)
+	return EIO;
+
+  pp->state |= PTY_ACTIVE;
+  pp->rdcum = 0;
+  pp->wrcum = 0;
+
+  return OK;
+}
+
+/*===========================================================================*
+ *				pty_master_close			     *
+ *===========================================================================*/
+static int pty_master_close(devminor_t minor)
+{
+  tty_t *tp;
+  pty_t *pp;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+  pp = tp->tty_priv;
+
+  if ((pp->state & (TTY_ACTIVE | TTY_CLOSED)) != TTY_ACTIVE) {
+	pp->state = 0;
+  } else {
+	pp->state |= PTY_CLOSED;
+	sigchar(tp, SIGHUP, 1);
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
+ *				pty_master_read				     *
+ *===========================================================================*/
+static ssize_t pty_master_read(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
+{
+  tty_t *tp;
+  pty_t *pp;
+  ssize_t r;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+  pp = tp->tty_priv;
+
+  /* Check, store information on the reader, do I/O. */
+  if (pp->state & TTY_CLOSED)
+	return 0; /* EOF */
+
+  if (pp->rdcaller != NONE || pp->rdleft != 0 || pp->rdcum != 0)
+	return EIO;
+
+  if (size <= 0)
+	return EINVAL;
+
+  pp->rdcaller = endpt;
+  pp->rdid = id;
+  pp->rdgrant = grant;
+  pp->rdleft = size;
+  pty_start(pp);
+
+  handle_events(tp);
+
+  if (pp->rdleft == 0) {
+	pp->rdcaller = NONE;
+	return EDONTREPLY;		/* already done */
+  }
+
+  if (flags & FLG_OP_NONBLOCK) {
+	r = pp->rdcum > 0 ? pp->rdcum : EAGAIN;
+	pp->rdleft = pp->rdcum = 0;
+	pp->rdcaller = NONE;
+	return r;
+  }
+
+  return EDONTREPLY;			/* do suspend */
+}
+
+/*===========================================================================*
+ *				pty_master_write			     *
+ *===========================================================================*/
+static ssize_t pty_master_write(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
+{
+  tty_t *tp;
+  pty_t *pp;
+  ssize_t r;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+  pp = tp->tty_priv;
+
+  /* Check, store information on the writer, do I/O. */
+  if (pp->state & TTY_CLOSED)
+	return EIO;
+
+  if (pp->wrcaller != NONE || pp->wrleft != 0 || pp->wrcum != 0)
+	return EIO;
+
+  if (size <= 0)
+	return EINVAL;
+
+  pp->wrcaller = endpt;
+  pp->wrid = id;
+  pp->wrgrant = grant;
+  pp->wrleft = size;
+
+  handle_events(tp);
+
+  if (pp->wrleft == 0) {
+	pp->wrcaller = NONE;
+	return EDONTREPLY;		/* already done */
+  }
+
+  if (flags & FLG_OP_NONBLOCK) {
+	r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
+	pp->wrleft = pp->wrcum = 0;
+	pp->wrcaller = NONE;
+	return r;
+  }
+
+  return EDONTREPLY;			/* do suspend */
+}
+
+/*===========================================================================*
+ *				pty_master_cancel			     *
+ *===========================================================================*/
+static int pty_master_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
+{
+  tty_t *tp;
+  pty_t *pp;
+  int r;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+  pp = tp->tty_priv;
+
+  if (pp->rdcaller == endpt && pp->rdid == id) {
+	/* Cancel a read from a PTY. */
+	r = pp->rdcum > 0 ? pp->rdcum : EINTR;
+	pp->rdleft = pp->rdcum = 0;
+	pp->rdcaller = NONE;
+	return r;
+  }
+
+  if (pp->wrcaller == endpt && pp->wrid == id) {
+	/* Cancel a write to a PTY. */
+	r = pp->wrcum > 0 ? pp->wrcum : EINTR;
+	pp->wrleft = pp->wrcum = 0;
+	pp->wrcaller = NONE;
+	return r;
+  }
+
+  /* Request not found. */
+  return EDONTREPLY;
+}
+
+/*===========================================================================*
+ *				select_try_pty				     *
+ *===========================================================================*/
+static int select_try_pty(tty_t *tp, int ops)
+{
+  pty_t *pp = tp->tty_priv;
+  int r = 0;
+
+  if (ops & SEL_WR)  {
+	/* Write won't block on error. */
+	if (pp->state & TTY_CLOSED) r |= SEL_WR;
+	else if (pp->wrleft != 0 || pp->wrcum != 0) r |= SEL_WR;
+	else if (tp->tty_inleft > 0) r |= SEL_WR;	/* There's a reader. */
+  }
+
+  if (ops & SEL_RD) {
+	/* Read won't block on error. */
+	if (pp->state & TTY_CLOSED) r |= SEL_RD;
+	else if (pp->rdleft != 0 || pp->rdcum != 0) r |= SEL_RD;
+	else if (pp->ocount > 0) r |= SEL_RD;		/* Actual data. */
+  }
+
+  return r;
+}
+
+/*===========================================================================*
+ *				select_retry_pty			     *
+ *===========================================================================*/
+void select_retry_pty(tty_t *tp)
+{
+  pty_t *pp = tp->tty_priv;
+  devminor_t minor;
+  int r;
+
+  /* See if the pty side of a pty is ready to return a select. */
+  if (pp->select_ops && (r = select_try_pty(tp, pp->select_ops))) {
+	minor = PTYPX_MINOR + (int) (pp - pty_table);
+	chardriver_reply_select(pp->select_proc, minor, r);
+	pp->select_ops &= ~r;
+  }
+}
+
+/*===========================================================================*
+ *				pty_master_select			     *
+ *===========================================================================*/
+static int pty_master_select(devminor_t minor, unsigned int ops,
+	endpoint_t endpt)
+{
+  tty_t *tp;
+  pty_t *pp;
+  int ready_ops, watch;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+  pp = tp->tty_priv;
+
+  watch = (ops & SEL_NOTIFY);
+  ops &= (SEL_RD | SEL_WR | SEL_ERR);
+
+  ready_ops = select_try_pty(tp, ops);
+
+  ops &= ~ready_ops;
+  if (ops && watch) {
+	pp->select_ops |= ops;
+	pp->select_proc = endpt;
+  }
+
+  return ready_ops;
+}
 
 /*===========================================================================*
  *				do_pty					     *
  *===========================================================================*/
-void do_pty(tty_t *tp, message *m_ptr)
+void do_pty(message *m_ptr, int ipc_status)
 {
-/* Perform an open/close/read/write call on a /dev/ptypX device. */
-  pty_t *pp = tp->tty_priv;
-  int r;
+/* Process a request for a PTY master (/dev/ptypX) device. */
 
-  switch (m_ptr->m_type) {
-    case DEV_READ_S:
-	/* Check, store information on the reader, do I/O. */
-	if (pp->state & TTY_CLOSED) {
-		r = 0;
-		break;
-	}
-	if (pp->rdleft != 0 || pp->rdcum != 0) {
-		r = EIO;
-		break;
-	}
-	if (m_ptr->COUNT <= 0) {
-		r = EINVAL;
-		break;
-	}
-	if (pp->rdgrant != GRANT_INVALID) {
-		r = ENOBUFS;
-		break;
-	}
-	pp->rdcaller = m_ptr->m_source;
-	pp->rdproc = m_ptr->USER_ENDPT;
-	pp->rdgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
-	pp->rdoffset = 0;
-	pp->rdleft = m_ptr->COUNT;
-	pty_start(pp);
-	handle_events(tp);
-	if (pp->rdleft == 0) {
-		pp->rdgrant = GRANT_INVALID;
-		return;			/* already done */
-	}
-
-	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
-		r = pp->rdcum > 0 ? pp->rdcum : EAGAIN;
-		pp->rdleft = pp->rdcum = 0;
-		pp->rdgrant = GRANT_INVALID;
-	} else {
-		return;			/* do suspend */
-	}
-	break;
-
-    case DEV_WRITE_S:
-	/* Check, store information on the writer, do I/O. */
-	if (pp->state & TTY_CLOSED) {
-		r = EIO;
-		break;
-	}
-	if (pp->wrleft != 0 || pp->wrcum != 0) {
-		r = EIO;
-		break;
-	}
-	if (m_ptr->COUNT <= 0) {
-		r = EINVAL;
-		break;
-	}
-	if (pp->wrgrant != GRANT_INVALID) {
-		r = ENOBUFS;
-		break;
-	}
-	pp->wrcaller = m_ptr->m_source;
-	pp->wrproc = m_ptr->USER_ENDPT;
-	pp->wrgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
-	pp->wroffset = 0;
-	pp->wrleft = m_ptr->COUNT;
-	handle_events(tp);
-	if (pp->wrleft == 0) {
-		pp->wrgrant = GRANT_INVALID;
-		return;			/* already done */
-	}
-
-	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
-		r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
-		pp->wrleft = pp->wrcum = 0;
-		pp->wrgrant = GRANT_INVALID;
-		r = EAGAIN;
-	} else {
-		return;			/* do suspend */
-	}
-	break;
-
-    case DEV_OPEN:
-	if (!(pp->state & PTY_ACTIVE)) {
-		pp->state |= PTY_ACTIVE;
-		pp->rdcum = 0;
-		pp->wrcum = 0;
-		r = OK;
-	} else {
-		r = EIO;
-	}
-	tty_reply(DEV_OPEN_REPL, m_ptr->m_source, m_ptr->USER_ENDPT,
-		(cp_grant_id_t) m_ptr->IO_GRANT, r);
-	return;
-
-    case DEV_CLOSE:
-	if ((pp->state & (TTY_ACTIVE | TTY_CLOSED)) != TTY_ACTIVE) {
-		pp->state = 0;
-	} else {
-		pp->state |= PTY_CLOSED;
-		sigchar(tp, SIGHUP, 1);
-	}
-	tty_reply(DEV_CLOSE_REPL, m_ptr->m_source, m_ptr->USER_ENDPT,
-		(cp_grant_id_t) m_ptr->IO_GRANT, OK);
-	return;
-
-    case DEV_SELECT:
-	pty_select(tp, m_ptr);
-	return;
-
-    case CANCEL:
-	r = EINTR;
-	if (m_ptr->USER_ENDPT == pp->rdproc) {
-		/* Cancel a read from a PTY. */
-		r = pp->rdcum > 0 ? pp->rdcum : EAGAIN;
-		pp->rdleft = pp->rdcum = 0;
-		pp->rdgrant = GRANT_INVALID;
-	}
-	if (m_ptr->USER_ENDPT == pp->wrproc) {
-		/* Cancel a write to a PTY. */
-		r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
-		pp->wrleft = pp->wrcum = 0;
-		pp->wrgrant = GRANT_INVALID;
-	}
-	break;
-
-    default:
-	r = EINVAL;
-  }
-  tty_reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
-	(cp_grant_id_t) m_ptr->IO_GRANT, r);
+  chardriver_process(&pty_master_tab, m_ptr, ipc_status);
 }
 
 /*===========================================================================*
- *				pty_write				     *
+ *				pty_slave_write				     *
  *===========================================================================*/
-static int pty_write(tty_t *tp, int try)
+static int pty_slave_write(tty_t *tp, int try)
 {
 /* (*dev_write)() routine for PTYs.  Transfer bytes from the writer on
  * /dev/ttypX to the output buffer.
@@ -226,15 +348,13 @@ static int pty_write(tty_t *tp, int try)
   pty_t *pp = tp->tty_priv;
   int count, ocount, s;
 
-
   /* PTY closed down? */
   if (pp->state & PTY_CLOSED) {
   	if (try) return 1;
 	if (tp->tty_outleft > 0) {
-		tty_reply(DEV_REVIVE, tp->tty_outcaller, tp->tty_outproc,
-			tp->tty_outgrant, EIO);
+		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid, EIO);
 		tp->tty_outleft = tp->tty_outcum = 0;
-		tp->tty_outgrant = GRANT_INVALID;
+		tp->tty_outcaller = NONE;
 	}
 	return 0;
   }
@@ -252,11 +372,11 @@ static int pty_write(tty_t *tp, int try)
 	/* Copy from user space to the PTY output buffer. */
 	if (tp->tty_outcaller == KERNEL) {
 		/* We're trying to print on kernel's behalf */
-		memcpy(pp->ohead, (void *) tp->tty_outgrant + tp->tty_outoffset,
+		memcpy(pp->ohead, (void *) tp->tty_outgrant + tp->tty_outcum,
 			count);
 	} else {
 		if ((s = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-				tp->tty_outoffset, (vir_bytes) pp->ohead,
+				tp->tty_outcum, (vir_bytes) pp->ohead,
 				count)) != OK) {
 			break;
 		}
@@ -275,15 +395,13 @@ static int pty_write(tty_t *tp, int try)
 		pp->ohead -= buflen(pp->obuf);
 	pty_start(pp);
 
-	tp->tty_outoffset += count;
-
 	tp->tty_outcum += count;
 	if ((tp->tty_outleft -= count) == 0) {
 		/* Output is finished, reply to the writer. */
-		tty_reply(DEV_REVIVE, tp->tty_outcaller, tp->tty_outproc,
-			tp->tty_outgrant, tp->tty_outcum);
+		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+			tp->tty_outcum);
 		tp->tty_outcum = 0;
-		tp->tty_outgrant = GRANT_INVALID;
+		tp->tty_outcaller = NONE;
 	}
   }
   pty_finish(pp);
@@ -291,9 +409,9 @@ static int pty_write(tty_t *tp, int try)
 }
 
 /*===========================================================================*
- *				pty_echo				     *
+ *				pty_slave_echo				     *
  *===========================================================================*/
-static void pty_echo(tty_t *tp, int c)
+static void pty_slave_echo(tty_t *tp, int c)
 {
 /* Echo one character.  (Like pty_write, but only one character, optionally.) */
 
@@ -330,11 +448,10 @@ static void pty_start(pty_t *pp)
 	if (count == 0) break;
 
 	/* Copy from the output buffer to the readers address space. */
-	if((s = sys_safecopyto(pp->rdcaller, pp->rdgrant,
-		pp->rdoffset, (vir_bytes) pp->otail, count)) != OK) {
+	if((s = sys_safecopyto(pp->rdcaller, pp->rdgrant, pp->rdcum,
+		(vir_bytes) pp->otail, count)) != OK) {
 		break;
  	}
-	pp->rdoffset += count;
 
 	/* Bookkeeping. */
 	pp->ocount -= count;
@@ -352,19 +469,18 @@ static void pty_finish(pty_t *pp)
 /* Finish the read request of a PTY reader if there is at least one byte
  * transferred.
  */
-  if (pp->rdcum > 0) {
-	tty_reply(DEV_REVIVE, pp->rdcaller, pp->rdproc, pp->rdgrant,
-		pp->rdcum);
-	pp->rdleft = pp->rdcum = 0;
-	pp->rdgrant = GRANT_INVALID;
-  }
 
+  if (pp->rdcum > 0) {
+	chardriver_reply_task(pp->rdcaller, pp->rdid, pp->rdcum);
+	pp->rdleft = pp->rdcum = 0;
+	pp->rdcaller = NONE;
+  }
 }
 
 /*===========================================================================*
- *				pty_read				     *
+ *				pty_slave_read				     *
  *===========================================================================*/
-static int pty_read(tty_t *tp, int try)
+static int pty_slave_read(tty_t *tp, int try)
 {
 /* Offer bytes from the PTY writer for input on the TTY.  (Do it one byte at
  * a time, 99% of the writes will be for one byte, so no sense in being smart.)
@@ -375,10 +491,10 @@ static int pty_read(tty_t *tp, int try)
   if (pp->state & PTY_CLOSED) {
 	if (try) return 1;
 	if (tp->tty_inleft > 0) {
-		tty_reply(DEV_REVIVE, tp->tty_incaller, tp->tty_inproc,
-			tp->tty_ingrant, tp->tty_incum);
+		chardriver_reply_task(tp->tty_incaller, tp->tty_inid,
+			tp->tty_incum);
 		tp->tty_inleft = tp->tty_incum = 0;
-		tp->tty_ingrant = GRANT_INVALID;
+		tp->tty_incaller = NONE;
 	}
 	return 1;
   }
@@ -393,12 +509,11 @@ static int pty_read(tty_t *tp, int try)
   	int s;
 
 	/* Transfer one character to 'c'. */
-	if ((s = sys_safecopyfrom(pp->wrcaller, pp->wrgrant, pp->wroffset,
+	if ((s = sys_safecopyfrom(pp->wrcaller, pp->wrgrant, pp->wrcum,
 		(vir_bytes) &c, 1)) != OK) {
 		printf("pty: safecopy failed (error %d)\n", s);
 		break;
 	}
-	pp->wroffset++;
 
 	/* Input processing. */
 	if (in_process(tp, &c, 1, -1) == 0) break;
@@ -406,10 +521,9 @@ static int pty_read(tty_t *tp, int try)
 	/* PTY writer bookkeeping. */
 	pp->wrcum++;
 	if (--pp->wrleft == 0) {
-		tty_reply(DEV_REVIVE, pp->wrcaller, pp->wrproc, pp->wrgrant,
-			pp->wrcum);
+		chardriver_reply_task(pp->wrcaller, pp->wrid, pp->wrcum);
 		pp->wrcum = 0;
-		pp->wrgrant = GRANT_INVALID;
+		pp->wrcaller = NONE;
 	}
   }
 
@@ -417,9 +531,9 @@ static int pty_read(tty_t *tp, int try)
 }
 
 /*===========================================================================*
- *				pty_open				     *
+ *				pty_slave_open				     *
  *===========================================================================*/
-static int pty_open(tty_t *tp, int UNUSED(try))
+static int pty_slave_open(tty_t *tp, int UNUSED(try))
 {
 /* The tty side has been opened. */
   pty_t *pp = tp->tty_priv;
@@ -435,9 +549,9 @@ static int pty_open(tty_t *tp, int UNUSED(try))
 }
 
 /*===========================================================================*
- *				pty_close				     *
+ *				pty_slave_close				     *
  *===========================================================================*/
-static int pty_close(tty_t *tp, int UNUSED(try))
+static int pty_slave_close(tty_t *tp, int UNUSED(try))
 {
 /* The tty side has closed, so shut down the pty side. */
   pty_t *pp = tp->tty_priv;
@@ -445,17 +559,15 @@ static int pty_close(tty_t *tp, int UNUSED(try))
   if (!(pp->state & PTY_ACTIVE)) return 0;
 
   if (pp->rdleft > 0) {
-	tty_reply(DEV_REVIVE, pp->rdcaller, pp->rdproc, pp->rdgrant,
-		pp->rdcum);
+	chardriver_reply_task(pp->rdcaller, pp->rdid, pp->rdcum);
 	pp->rdleft = pp->rdcum = 0;
-	pp->rdgrant = GRANT_INVALID;
+	pp->rdcaller = NONE;
   }
 
   if (pp->wrleft > 0) {
-	tty_reply(DEV_REVIVE, pp->wrcaller, pp->wrproc, pp->wrgrant,
-		pp->wrcum);
-	pp->wrcum = 0;
-	pp->wrgrant = GRANT_INVALID;
+	chardriver_reply_task(pp->wrcaller, pp->wrid, pp->wrcum);
+	pp->wrleft = pp->wrcum = 0;
+	pp->wrcaller = NONE;
   }
 
   if (pp->state & PTY_CLOSED) pp->state = 0;
@@ -465,27 +577,26 @@ static int pty_close(tty_t *tp, int UNUSED(try))
 }
 
 /*===========================================================================*
- *				pty_icancel				     *
+ *				pty_slave_icancel			     *
  *===========================================================================*/
-static int pty_icancel(tty_t *tp, int UNUSED(try))
+static int pty_slave_icancel(tty_t *tp, int UNUSED(try))
 {
 /* Discard waiting input. */
   pty_t *pp = tp->tty_priv;
 
   if (pp->wrleft > 0) {
-	tty_reply(DEV_REVIVE, pp->wrcaller, pp->wrproc, pp->wrgrant,
-		pp->wrcum + pp->wrleft);
+	chardriver_reply_task(pp->wrcaller, pp->wrid, pp->wrcum + pp->wrleft);
 	pp->wrcum = pp->wrleft = 0;
-	pp->wrgrant = GRANT_INVALID;
+	pp->wrcaller = NONE;
   }
 
   return 0;
 }
 
 /*===========================================================================*
- *				pty_ocancel				     *
+ *				pty_slave_ocancel			     *
  *===========================================================================*/
-static int pty_ocancel(tty_t *tp, int UNUSED(try))
+static int pty_slave_ocancel(tty_t *tp, int UNUSED(try))
 {
 /* Drain the output buffer. */
   pty_t *pp = tp->tty_priv;
@@ -509,86 +620,21 @@ void pty_init(tty_t *tp)
   pp = tp->tty_priv = &pty_table[line];
   pp->tty = tp;
   pp->select_ops = 0;
-  pp->rdgrant = GRANT_INVALID;
-  pp->wrgrant = GRANT_INVALID;
+  pp->rdcaller = NONE;
+  pp->wrcaller = NONE;
 
   /* Set up output queue. */
   pp->ohead = pp->otail = pp->obuf;
 
   /* Fill in TTY function hooks. */
-  tp->tty_devread = pty_read;
-  tp->tty_devwrite = pty_write;
-  tp->tty_echo = pty_echo;
-  tp->tty_icancel = pty_icancel;
-  tp->tty_ocancel = pty_ocancel;
-  tp->tty_open = pty_open;
-  tp->tty_close = pty_close;
+  tp->tty_devread = pty_slave_read;
+  tp->tty_devwrite = pty_slave_write;
+  tp->tty_echo = pty_slave_echo;
+  tp->tty_icancel = pty_slave_icancel;
+  tp->tty_ocancel = pty_slave_ocancel;
+  tp->tty_open = pty_slave_open;
+  tp->tty_close = pty_slave_close;
   tp->tty_select_ops = 0;
-}
-
-/*===========================================================================*
- *				select_try_pty				     *
- *===========================================================================*/
-static int select_try_pty(tty_t *tp, int ops)
-{
-  	pty_t *pp = tp->tty_priv;
-	int r = 0;
-
-	if (ops & SEL_WR)  {
-		/* Write won't block on error. */
-		if (pp->state & TTY_CLOSED) r |= SEL_WR;
-		else if (pp->wrleft != 0 || pp->wrcum != 0) r |= SEL_WR;
-		else r |= SEL_WR;
-	}
-
-	if (ops & SEL_RD) {
-		/* Read won't block on error. */
-		if (pp->state & TTY_CLOSED) r |= SEL_RD;
-		else if (pp->rdleft != 0 || pp->rdcum != 0) r |= SEL_RD;
-		else if (pp->ocount > 0) r |= SEL_RD;	/* Actual data. */
-	}
-
-	return r;
-}
-
-/*===========================================================================*
- *				select_retry_pty			     *
- *===========================================================================*/
-void select_retry_pty(tty_t *tp)
-{
-  	pty_t *pp = tp->tty_priv;
-	dev_t minor;
-  	int r;
-
-	/* See if the pty side of a pty is ready to return a select. */
-	if (pp->select_ops && (r=select_try_pty(tp, pp->select_ops))) {
-		minor = PTYPX_MINOR + (int) (pp - pty_table);
-		assert(minor == pp->select_minor);
-		select_reply(DEV_SEL_REPL2, pp->select_proc, minor, r);
-		pp->select_ops &= ~r;
-	}
-}
-
-/*===========================================================================*
- *				pty_select				     *
- *===========================================================================*/
-static void pty_select(tty_t *tp, message *m)
-{
-  	pty_t *pp = tp->tty_priv;
-	int ops, ready_ops = 0, watch;
-
-	ops = m->DEV_SEL_OPS & (SEL_RD|SEL_WR|SEL_ERR);
-	watch = (m->DEV_SEL_OPS & SEL_NOTIFY) ? 1 : 0;
-
-	ready_ops = select_try_pty(tp, ops);
-
-	if (!ready_ops && ops && watch) {
-		pp->select_ops |= ops;
-		pp->select_proc = m->m_source;
-		pp->select_minor = m->DEV_MINOR;
-	}
-
-	select_reply(DEV_SEL_REPL1, m->m_source, m->DEV_MINOR, ready_ops);
 }
 
 #endif /* NR_PTYS > 0 */
