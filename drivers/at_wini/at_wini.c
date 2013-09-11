@@ -140,14 +140,14 @@ static void init_params(void);
 static void init_drive(struct wini *w, int base_cmd, int base_ctl, int
 	base_dma, int irq, int ack, int hook, int drive);
 static void init_params_pci(int);
-static int w_do_open(dev_t minor, int access);
-static struct device *w_prepare(dev_t dev);
-static struct device *w_part(dev_t minor);
+static int w_do_open(devminor_t minor, int access);
+static struct device *w_prepare(devminor_t dev);
+static struct device *w_part(devminor_t minor);
 static int w_identify(void);
 static char *w_name(void);
 static int w_specify(void);
 static int w_io_test(void);
-static ssize_t w_transfer(dev_t minor, int do_write, u64_t position,
+static ssize_t w_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t proc_nr, iovec_t *iov, unsigned int nr_req, int flags);
 static int com_out(struct command *cmd);
 static int com_out_ext(struct command *cmd);
@@ -155,8 +155,8 @@ static int setup_dma(unsigned *sizep, endpoint_t proc_nr, iovec_t *iov,
 	size_t addr_offset, int do_write);
 static void w_need_reset(void);
 static void ack_irqs(unsigned int);
-static int w_do_close(dev_t minor);
-static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int w_do_close(devminor_t minor);
+static int w_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
 static void w_hw_int(unsigned int irqs);
 static int com_simple(struct command *cmd);
@@ -166,7 +166,7 @@ static void w_intr_wait(void);
 static int at_intr_wait(void);
 static int w_waitfor(int mask, int value);
 static int w_waitfor_dma(int mask, int value);
-static void w_geometry(dev_t minor, struct part_geom *entry);
+static void w_geometry(devminor_t minor, struct part_geom *entry);
 #if ENABLE_ATAPI
 static int atapi_sendpacket(u8_t *packet, unsigned cnt, int do_dma);
 static int atapi_intr_wait(int dma, size_t max);
@@ -196,18 +196,14 @@ static int at_in(int line, u32_t port, u32_t *value, char *typename,
 
 /* Entry points to this driver. */
 static struct blockdriver w_dtab = {
-  BLOCKDRIVER_TYPE_DISK,/* handle partition requests */
-  w_do_open,		/* open or mount request, initialize device */
-  w_do_close,		/* release device */
-  w_transfer,		/* do the I/O */
-  w_ioctl,		/* I/O control requests */
-  NULL,			/* nothing to clean up */
-  w_part,		/* return partition information */
-  w_geometry,		/* tell the geometry of the disk */
-  w_hw_int,		/* leftover hardware interrupts */
-  NULL,			/* ignore leftover alarms */
-  NULL,			/* ignore unrecognized messages */
-  NULL			/* no multithreading support */
+  .bdr_type	= BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
+  .bdr_open	= w_do_open,	/* open or mount request, initialize device */
+  .bdr_close	= w_do_close,	/* release device */
+  .bdr_transfer	= w_transfer,	/* do the I/O */
+  .bdr_ioctl	= w_ioctl,	/* I/O control requests */
+  .bdr_part	= w_part,	/* return partition information */
+  .bdr_geometry	= w_geometry,	/* tell the geometry of the disk */
+  .bdr_intr	= w_hw_int,	/* leftover hardware interrupts */
 };
 
 /* SEF functions and variables. */
@@ -583,7 +579,7 @@ static void init_params_pci(int skip)
 /*===========================================================================*
  *				w_do_open				     *
  *===========================================================================*/
-static int w_do_open(dev_t minor, int access)
+static int w_do_open(devminor_t minor, int access)
 {
 /* Device open: Initialize the controller and read the partition table. */
 
@@ -652,12 +648,12 @@ static int w_do_open(dev_t minor, int access)
 /*===========================================================================*
  *				w_prepare				     *
  *===========================================================================*/
-static struct device *w_prepare(dev_t device)
+static struct device *w_prepare(devminor_t device)
 {
   /* Prepare for I/O on a device. */
   w_device = (int) device;
 
-  if (device < NR_MINORS) {			/* d0, d0p[0-3], d1, ... */
+  if (device >= 0 && device < NR_MINORS) {	/* d0, d0p[0-3], d1, ... */
 	w_drive = device / DEV_PER_DRIVE;	/* save drive number */
 	w_wn = &wini[w_drive];
 	w_dv = &w_wn->part[device % DEV_PER_DRIVE];
@@ -676,7 +672,7 @@ static struct device *w_prepare(dev_t device)
 /*===========================================================================*
  *				w_part					     *
  *===========================================================================*/
-static struct device *w_part(dev_t device)
+static struct device *w_part(devminor_t device)
 {
 /* Return a pointer to the partition information of the given minor device. */
 
@@ -1172,7 +1168,7 @@ static int error_dma(const struct wini *wn)
  *				w_transfer				     *
  *===========================================================================*/
 static ssize_t w_transfer(
-  dev_t minor,			/* minor device to perform the transfer on */
+  devminor_t minor,		/* minor device to perform the transfer on */
   int do_write,			/* read or write? */
   u64_t position,		/* offset on device to read or write */
   endpoint_t proc_nr,		/* process doing the request */
@@ -1640,7 +1636,7 @@ static void w_need_reset(void)
 /*===========================================================================*
  *				w_do_close				     *
  *===========================================================================*/
-static int w_do_close(dev_t minor)
+static int w_do_close(devminor_t minor)
 {
 /* Device close: Release a device. */
   if (w_prepare(minor) == NULL)
@@ -1882,7 +1878,7 @@ int value;			/* required status */
 /*===========================================================================*
  *				w_geometry				     *
  *===========================================================================*/
-static void w_geometry(dev_t minor, struct part_geom *entry)
+static void w_geometry(devminor_t minor, struct part_geom *entry)
 {
   struct wini *wn;
 
@@ -2215,7 +2211,7 @@ int do_dma;
 /*===========================================================================*
  *				w_ioctl					     *
  *===========================================================================*/
-static int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int w_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 	int r, timeout, prev, count;

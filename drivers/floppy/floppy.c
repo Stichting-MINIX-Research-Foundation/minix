@@ -242,10 +242,10 @@ static void f_expire_tmrs(clock_t stamp);
 static void stop_motor(timer_t *tp);
 static void f_timeout(timer_t *tp);
 
-static struct device *f_prepare(dev_t device);
-static struct device *f_part(dev_t minor);
+static struct device *f_prepare(devminor_t device);
+static struct device *f_part(devminor_t minor);
 static void f_cleanup(void);
-static ssize_t f_transfer(dev_t minor, int do_write, u64_t position,
+static ssize_t f_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t proc_nr, iovec_t *iov, unsigned int nr_req, int flags);
 static int dma_setup(int do_write);
 static void start_motor(void);
@@ -258,25 +258,21 @@ static int recalibrate(void);
 static void f_reset(void);
 static int f_intr_wait(void);
 static int read_id(void);
-static int f_do_open(dev_t minor, int access);
-static int f_do_close(dev_t minor);
+static int f_do_open(devminor_t minor, int access);
+static int f_do_close(devminor_t minor);
 static int test_read(int density);
-static void f_geometry(dev_t minor, struct part_geom *entry);
+static void f_geometry(devminor_t minor, struct part_geom *entry);
 
 /* Entry points to this driver. */
 static struct blockdriver f_dtab = {
-  BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
-  f_do_open,	/* open or mount request, sense type of diskette */
-  f_do_close,	/* nothing on a close */
-  f_transfer,	/* do the I/O */
-  NULL,		/* no other I/O control requests are supported */
-  f_cleanup,	/* cleanup before sending reply to user process */
-  f_part,	/* return partition information structure */
-  f_geometry,	/* tell the geometry of the diskette */
-  NULL,		/* no processing of hardware interrupts */
-  f_expire_tmrs,/* expire all alarm timers */
-  NULL,		/* no processing of other messages */
-  NULL		/* no threading support */
+  .bdr_type	= BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
+  .bdr_open	= f_do_open,	/* open request, sense type of diskette */
+  .bdr_close	= f_do_close,	/* nothing on a close */
+  .bdr_transfer	= f_transfer,	/* do the I/O */
+  .bdr_cleanup	= f_cleanup,	/* cleanup before sending reply to caller */
+  .bdr_part	= f_part,	/* return partition information structure */
+  .bdr_geometry	= f_geometry,	/* tell the geometry of the diskette */
+  .bdr_alarm	= f_expire_tmrs /* expire all alarm timers */
 };
 
 static char *floppy_buf;
@@ -397,13 +393,13 @@ static void f_expire_tmrs(clock_t stamp)
 /*===========================================================================*
  *				f_prepare				     *
  *===========================================================================*/
-static struct device *f_prepare(dev_t device)
+static struct device *f_prepare(devminor_t device)
 {
 /* Prepare for I/O on a device. */
 
   f_device = device;
   f_drive = device & ~(DEV_TYPE_BITS | FORMAT_DEV_BIT);
-  if (f_drive >= NR_DRIVES) return(NULL);
+  if (device < 0 || f_drive >= NR_DRIVES) return(NULL);
 
   f_fp = &floppy[f_drive];
   f_dv = &f_fp->fl_geom;
@@ -424,7 +420,7 @@ static struct device *f_prepare(dev_t device)
 /*===========================================================================*
  *				f_part					     *
  *===========================================================================*/
-static struct device *f_part(dev_t minor)
+static struct device *f_part(devminor_t minor)
 {
 /* Return a pointer to the partition information of the given minor device. */
 
@@ -447,7 +443,7 @@ static void f_cleanup(void)
  *				f_transfer				     *
  *===========================================================================*/
 static ssize_t f_transfer(
-  dev_t minor,			/* minor device number */
+  devminor_t minor,		/* minor device number */
   int do_write,			/* read or write? */
   u64_t pos64,			/* offset on device to read or write */
   endpoint_t proc_nr,		/* process doing the request */
@@ -1251,7 +1247,7 @@ static int read_id(void)
 /*===========================================================================*
  *				f_do_open				     *
  *===========================================================================*/
-static int f_do_open(dev_t minor, int UNUSED(access))
+static int f_do_open(devminor_t minor, int UNUSED(access))
 {
 /* Handle an open on a floppy.  Determine diskette type if need be. */
 
@@ -1310,7 +1306,7 @@ static int f_do_open(dev_t minor, int UNUSED(access))
 /*===========================================================================*
  *				f_do_close				     *
  *===========================================================================*/
-static int f_do_close(dev_t UNUSED(minor))
+static int f_do_close(devminor_t UNUSED(minor))
 {
 /* Handle a close on a floppy.  Nothing to do here. */
 
@@ -1350,7 +1346,7 @@ static int test_read(int density)
 /*===========================================================================*
  *				f_geometry				     *
  *===========================================================================*/
-static void f_geometry(dev_t minor, struct part_geom *entry)
+static void f_geometry(devminor_t minor, struct part_geom *entry)
 {
   if (f_prepare(minor) == NULL) return;
 

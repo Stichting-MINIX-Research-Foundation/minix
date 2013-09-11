@@ -15,19 +15,19 @@ typedef enum {
 /* Entry points into the device dependent code of block drivers. */
 struct blockdriver {
   blockdriver_type_t bdr_type;
-  int(*bdr_open) (dev_t minor, int access);
-  int(*bdr_close) (dev_t minor);
-  ssize_t(*bdr_transfer) (dev_t minor, int do_write, u64_t pos,
-	  endpoint_t endpt, iovec_t *iov, unsigned count, int flags);
-  int(*bdr_ioctl) (dev_t minor, unsigned int request, endpoint_t endpt,
+  int (*bdr_open)(devminor_t minor, int access);
+  int (*bdr_close)(devminor_t minor);
+  ssize_t (*bdr_transfer)(devminor_t minor, int do_write, u64_t pos,
+	  endpoint_t endpt, iovec_t *iov, unsigned int count, int flags);
+  int (*bdr_ioctl)(devminor_t minor, unsigned int request, endpoint_t endpt,
 	  cp_grant_id_t grant);
-  void(*bdr_cleanup) (void);
-  struct device *(*bdr_part)(dev_t minor);
-  void(*bdr_geometry) (dev_t minor, struct part_geom *part);
-  void(*bdr_intr) (unsigned int irqs);
-  void(*bdr_alarm) (clock_t stamp);
-  int(*bdr_other) (message *m_ptr);
-  int(*bdr_device) (dev_t minor, device_id_t *id);
+  void (*bdr_cleanup)(void);
+  struct device *(*bdr_part)(devminor_t minor);
+  void (*bdr_geometry)(devminor_t minor, struct part_geom *part);
+  void (*bdr_intr)(unsigned int mask);
+  void (*bdr_alarm)(clock_t stamp);
+  void (*bdr_other)(message *m_ptr, int ipc_status);
+  int (*bdr_device)(devminor_t minor, device_id_t *id);
 };
 
 /* Functions defined by libblockdriver. These can be used for both

@@ -29,14 +29,14 @@ static int sef_cb_lu_state_save(int);
 static int lu_state_restore(void);
 
 /* libblockdriver callbacks */
-static int cat24c256_blk_open(dev_t minor, int access);
-static int cat24c256_blk_close(dev_t minor);
-static ssize_t cat24c256_blk_transfer(dev_t minor, int do_write, u64_t pos,
-    endpoint_t endpt, iovec_t * iov, unsigned count, int flags);
-static int cat24c256_blk_ioctl(dev_t minor, unsigned int request,
+static int cat24c256_blk_open(devminor_t minor, int access);
+static int cat24c256_blk_close(devminor_t minor);
+static ssize_t cat24c256_blk_transfer(devminor_t minor, int do_write,
+    u64_t pos, endpoint_t endpt, iovec_t * iov, unsigned int count, int flags);
+static int cat24c256_blk_ioctl(devminor_t minor, unsigned int request,
     endpoint_t endpt, cp_grant_id_t grant);
-static struct device *cat24c256_blk_part(dev_t minor);
-static int cat24c256_blk_other(message * m);
+static struct device *cat24c256_blk_part(devminor_t minor);
+static void cat24c256_blk_other(message * m, int ipc_status);
 
 /* Entry points into the device dependent code of block drivers. */
 struct blockdriver cat24c256_tab = {
@@ -44,14 +44,9 @@ struct blockdriver cat24c256_tab = {
 	.bdr_open = cat24c256_blk_open,
 	.bdr_close = cat24c256_blk_close,
 	.bdr_transfer = cat24c256_blk_transfer,
-	.bdr_ioctl = cat24c256_blk_ioctl,	/* nop -- always returns EINVAL */
-	.bdr_cleanup = NULL,	/* nothing allocated -- nothing to clean up */
+	.bdr_ioctl = cat24c256_blk_ioctl,	/* always returns ENOTTY */
 	.bdr_part = cat24c256_blk_part,
-	.bdr_geometry = NULL,	/* no geometry (cylinders, heads, sectors, etc) */
-	.bdr_intr = NULL,	/* i2c devices don't generate interrupts */
-	.bdr_alarm = NULL,	/* alarm not needed */
-	.bdr_other = cat24c256_blk_other,	/* to recv notify events from DS */
-	.bdr_device = NULL	/* 1 insance per bus, threads not needed */
+	.bdr_other = cat24c256_blk_other	/* for notify events from DS */
 };
 
 static int cat24c256_read128(uint16_t memaddr, void *buf, size_t buflen, int flags);
@@ -84,7 +79,7 @@ static struct log log = {
 };
 
 static int
-cat24c256_blk_open(dev_t minor, int access)
+cat24c256_blk_open(devminor_t minor, int access)
 {
 	log_trace(&log, "cat24c256_blk_open(%d,%d)\n", minor, access);
 	if (cat24c256_blk_part(minor) == NULL) {
@@ -97,7 +92,7 @@ cat24c256_blk_open(dev_t minor, int access)
 }
 
 static int
-cat24c256_blk_close(dev_t minor)
+cat24c256_blk_close(devminor_t minor)
 {
 	log_trace(&log, "cat24c256_blk_close(%d)\n", minor);
 	if (cat24c256_blk_part(minor) == NULL) {
@@ -114,11 +109,11 @@ cat24c256_blk_close(dev_t minor)
 }
 
 static ssize_t
-cat24c256_blk_transfer(dev_t minor, int do_write, u64_t pos64,
-    endpoint_t endpt, iovec_t * iov, unsigned nr_req, int flags)
+cat24c256_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
+    endpoint_t endpt, iovec_t * iov, unsigned int nr_req, int flags)
 {
 	/* Read or write one the driver's block devices. */
-	unsigned count;
+	unsigned int count;
 	struct device *dv;
 	u64_t dv_size;
 	int r;
@@ -214,7 +209,7 @@ cat24c256_blk_transfer(dev_t minor, int do_write, u64_t pos64,
 }
 
 static int
-cat24c256_blk_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+cat24c256_blk_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
     cp_grant_id_t grant)
 {
 	log_trace(&log, "cat24c256_blk_ioctl(%d)\n", minor);
@@ -223,41 +218,31 @@ cat24c256_blk_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 }
 
 static struct device *
-cat24c256_blk_part(dev_t minor)
+cat24c256_blk_part(devminor_t minor)
 {
 	log_trace(&log, "cat24c256_blk_part(%d)\n", minor);
 
-	if (minor >= NR_DEVS) {
+	if (minor < 0 || minor >= NR_DEVS) {
 		return NULL;
 	}
 
 	return &geom[minor];
 }
 
-static int
-cat24c256_blk_other(message * m)
+static void
+cat24c256_blk_other(message * m, int ipc_status)
 {
-	int r;
-
 	log_trace(&log, "cat24c256_blk_other(0x%x)\n", m->m_type);
 
-	switch (m->m_type) {
-	case NOTIFY_MESSAGE:
+	if (is_ipc_notify(ipc_status)) {
 		if (m->m_source == DS_PROC_NR) {
 			log_debug(&log,
 			    "bus driver changed state, update endpoint\n");
 			i2cdriver_handle_bus_update(&bus_endpoint, bus,
 			    address);
 		}
-		r = OK;
-		break;
-	default:
+	} else
 		log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
-		r = EINVAL;
-		break;
-	}
-
-	return r;
 }
 
 /* The lower level i2c interface can only read/write 128 bytes at a time.

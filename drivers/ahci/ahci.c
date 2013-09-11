@@ -236,32 +236,29 @@ static void port_timeout(struct timer *tp);
 static void port_disconnect(struct port_state *ps);
 
 static char *ahci_portname(struct port_state *ps);
-static int ahci_open(dev_t minor, int access);
-static int ahci_close(dev_t minor);
-static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
+static int ahci_open(devminor_t minor, int access);
+static int ahci_close(devminor_t minor);
+static ssize_t ahci_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iovec, unsigned int count, int flags);
-static struct device *ahci_part(dev_t minor);
+static struct device *ahci_part(devminor_t minor);
 static void ahci_alarm(clock_t stamp);
-static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int ahci_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
 static void ahci_intr(unsigned int mask);
-static int ahci_device(dev_t minor, device_id_t *id);
-static struct port_state *ahci_get_port(dev_t minor);
+static int ahci_device(devminor_t minor, device_id_t *id);
+static struct port_state *ahci_get_port(devminor_t minor);
 
 /* AHCI driver table. */
 static struct blockdriver ahci_dtab = {
-	BLOCKDRIVER_TYPE_DISK,
-	ahci_open,
-	ahci_close,
-	ahci_transfer,
-	ahci_ioctl,
-	NULL,		/* bdr_cleanup */
-	ahci_part,
-	NULL,		/* bdr_geometry */
-	ahci_intr,
-	ahci_alarm,
-	NULL,		/* bdr_other */
-	ahci_device
+	.bdr_type	= BLOCKDRIVER_TYPE_DISK,
+	.bdr_open	= ahci_open,
+	.bdr_close	= ahci_close,
+	.bdr_transfer	= ahci_transfer,
+	.bdr_ioctl	= ahci_ioctl,
+	.bdr_part	= ahci_part,
+	.bdr_intr	= ahci_intr,
+	.bdr_alarm	= ahci_alarm,
+	.bdr_device	= ahci_device
 };
 
 /*===========================================================================*
@@ -2422,7 +2419,7 @@ static char *ahci_portname(struct port_state *ps)
 /*===========================================================================*
  *				ahci_map_minor				     *
  *===========================================================================*/
-static struct port_state *ahci_map_minor(dev_t minor, struct device **dvp)
+static struct port_state *ahci_map_minor(devminor_t minor, struct device **dvp)
 {
 	/* Map a minor device number to a port and a pointer to the partition's
 	 * device structure. Return NULL if this minor device number does not
@@ -2433,7 +2430,7 @@ static struct port_state *ahci_map_minor(dev_t minor, struct device **dvp)
 
 	ps = NULL;
 
-	if (minor < NR_MINORS) {
+	if (minor >= 0 && minor < NR_MINORS) {
 		port = ahci_map[minor / DEV_PER_DRIVE];
 
 		if (port == NO_PORT)
@@ -2458,7 +2455,7 @@ static struct port_state *ahci_map_minor(dev_t minor, struct device **dvp)
 /*===========================================================================*
  *				ahci_part				     *
  *===========================================================================*/
-static struct device *ahci_part(dev_t minor)
+static struct device *ahci_part(devminor_t minor)
 {
 	/* Return a pointer to the partition information structure of the given
 	 * minor device.
@@ -2474,7 +2471,7 @@ static struct device *ahci_part(dev_t minor)
 /*===========================================================================*
  *				ahci_open				     *
  *===========================================================================*/
-static int ahci_open(dev_t minor, int access)
+static int ahci_open(devminor_t minor, int access)
 {
 	/* Open a device.
 	 */
@@ -2543,7 +2540,7 @@ static int ahci_open(dev_t minor, int access)
 /*===========================================================================*
  *				ahci_close				     *
  *===========================================================================*/
-static int ahci_close(dev_t minor)
+static int ahci_close(devminor_t minor)
 {
 	/* Close a device.
 	 */
@@ -2599,7 +2596,7 @@ static int ahci_close(dev_t minor)
 /*===========================================================================*
  *				ahci_transfer				     *
  *===========================================================================*/
-static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
+static ssize_t ahci_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iovec, unsigned int count, int flags)
 {
 	/* Perform data transfer on the selected device.
@@ -2634,7 +2631,7 @@ static ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 /*===========================================================================*
  *				ahci_ioctl				     *
  *===========================================================================*/
-static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int ahci_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 	/* Process I/O control requests.
@@ -2691,7 +2688,7 @@ static int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 /*===========================================================================*
  *				ahci_device				     *
  *===========================================================================*/
-static int ahci_device(dev_t minor, device_id_t *id)
+static int ahci_device(devminor_t minor, device_id_t *id)
 {
 	/* Map a minor device number to a device ID.
 	 */
@@ -2709,7 +2706,7 @@ static int ahci_device(dev_t minor, device_id_t *id)
 /*===========================================================================*
  *				ahci_get_port				     *
  *===========================================================================*/
-static struct port_state *ahci_get_port(dev_t minor)
+static struct port_state *ahci_get_port(devminor_t minor)
 {
 	/* Get the port structure associated with the given minor device.
 	 * Called only from worker threads, so the minor device is already
