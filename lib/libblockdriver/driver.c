@@ -128,26 +128,12 @@ void blockdriver_announce(int type)
 }
 
 /*===========================================================================*
- *				blockdriver_reply			     *
+ *				send_reply				     *
  *===========================================================================*/
-void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
+static void send_reply(endpoint_t endpt, message *m_ptr, int ipc_status)
 {
-/* Reply to a block request sent to the driver. */
-  endpoint_t caller_e;
-  long id;
+/* Send a reply message to a request. */
   int r;
-
-  if (reply == EDONTREPLY)
-	return;
-
-  caller_e = m_ptr->m_source;
-  id = m_ptr->BDEV_ID;
-
-  memset(m_ptr, 0, sizeof(*m_ptr));
-
-  m_ptr->m_type = BDEV_REPLY;
-  m_ptr->BDEV_STATUS = reply;
-  m_ptr->BDEV_ID = id;
 
   /* If we would block sending the message, send it asynchronously. The NOREPLY
    * flag is set because the caller may also issue a SENDREC (mixing sync and
@@ -155,13 +141,32 @@ void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
    * the SENDREC's receive part, after which our next SENDNB call would fail.
    */
   if (IPC_STATUS_CALL(ipc_status) == SENDREC)
-	r = sendnb(caller_e, m_ptr);
+	r = sendnb(endpt, m_ptr);
   else
-	r = asynsend3(caller_e, m_ptr, AMF_NOREPLY);
+	r = asynsend3(endpt, m_ptr, AMF_NOREPLY);
 
   if (r != OK)
-	printf("blockdriver_reply: unable to send reply to %d: %d\n",
-		caller_e, r);
+	printf("blockdriver: unable to send reply to %d: %d\n", endpt, r);
+}
+
+/*===========================================================================*
+ *				blockdriver_reply			     *
+ *===========================================================================*/
+void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
+{
+/* Reply to a block request sent to the driver. */
+  message m_reply;
+
+  if (reply == EDONTREPLY)
+	return;
+
+  memset(&m_reply, 0, sizeof(m_reply));
+
+  m_reply.m_type = BDEV_REPLY;
+  m_reply.BDEV_STATUS = reply;
+  m_reply.BDEV_ID = m_ptr->BDEV_ID;
+
+  send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }
 
 /*===========================================================================*
@@ -175,7 +180,7 @@ static int do_open(struct blockdriver *bdp, message *mp)
 }
 
 /*===========================================================================*
- *				do_close					     *
+ *				do_close				     *
  *===========================================================================*/
 static int do_close(struct blockdriver *bdp, message *mp)
 {
@@ -220,7 +225,7 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 {
 /* Carry out an device read or write to/from a vector of buffers. */
   iovec_t iovec[NR_IOREQS];
-  unsigned nr_req;
+  unsigned int nr_req;
   u64_t position;
   int i, do_write;
   ssize_t r, size;
@@ -290,7 +295,7 @@ static int do_dioctl(struct blockdriver *bdp, dev_t minor,
 		(*bdp->bdr_geometry)(minor, &entry);
 	} else {
 		/* The driver doesn't care -- make up fake geometry. */
-		entry.cylinders = div64u(entry.size, SECTOR_SIZE);
+		entry.cylinders = div64u(entry.size, SECTOR_SIZE) / (64 * 32);
 		entry.heads = 64;
 		entry.sectors = 32;
 	}
@@ -352,43 +357,64 @@ static int do_ioctl(struct blockdriver *bdp, message *mp)
 }
 
 /*===========================================================================*
- *				blockdriver_handle_notify		     *
+ *				do_char_open				     *
  *===========================================================================*/
-void blockdriver_handle_notify(struct blockdriver *bdp, message *m_ptr)
+static void do_char_open(message *m_ptr, int ipc_status)
 {
-/* Take care of the notifications (interrupt and clock messages) by calling
- * the appropiate callback functions. Never send a reply.
- */
+/* Reply to a character driver open request stating there is no such device. */
+  message m_reply;
 
-  /* Call the appropriate function for this notification. */
-  switch (_ENDPOINT_P(m_ptr->m_source)) {
-  case HARDWARE:
-	if (bdp->bdr_intr)
-		(*bdp->bdr_intr)(m_ptr->NOTIFY_ARG);
-	break;
+  memset(&m_reply, 0, sizeof(m_reply));
 
-  case CLOCK:
-	if (bdp->bdr_alarm)
-		(*bdp->bdr_alarm)(m_ptr->NOTIFY_TIMESTAMP);
-	break;
+  m_reply.m_type = DEV_OPEN_REPL;
+  m_reply.REP_ENDPT = m_ptr->USER_ENDPT;
+  m_reply.REP_STATUS = ENXIO;
 
-  default:
-	if (bdp->bdr_other)
-		(void) (*bdp->bdr_other)(m_ptr);
-  }
+  send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }
 
 /*===========================================================================*
- *				blockdriver_handle_request		     *
+ *				blockdriver_process_on_thread		     *
  *===========================================================================*/
-int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr,
-	thread_id_t id)
+void blockdriver_process_on_thread(struct blockdriver *bdp, message *m_ptr,
+	int ipc_status, thread_id_t id)
 {
-/* Call the appropiate driver function, based on the type of request. Return
- * the result code that is to be sent back to the caller, or EDONTREPLY if no
- * reply is to be sent.
+/* Call the appropiate driver function, based on the type of request. Send
+ * a result code to the caller. The call is processed in the context of the
+ * given thread ID, which may be SINGLE_THREAD for single-threaded callers.
  */
   int r;
+
+  /* Check for notifications first. We never reply to notifications. */
+  if (is_ipc_notify(ipc_status)) {
+	switch (_ENDPOINT_P(m_ptr->m_source)) {
+	case HARDWARE:
+		if (bdp->bdr_intr)
+			(*bdp->bdr_intr)(m_ptr->NOTIFY_ARG);
+		break;
+
+	case CLOCK:
+		if (bdp->bdr_alarm)
+			(*bdp->bdr_alarm)(m_ptr->NOTIFY_TIMESTAMP);
+		break;
+
+	default:
+		if (bdp->bdr_other)
+			(*bdp->bdr_other)(m_ptr, ipc_status);
+	}
+
+	return; /* do not send a reply */
+  }
+
+  /* Reply to character driver open requests with an error code. Otherwise, if
+   * someone creates a character device node for a block driver, opening that
+   * device node will cause the corresponding VFS thread to block forever.
+   */
+  if (m_ptr->m_type == DEV_OPEN) {
+	do_char_open(m_ptr, ipc_status);
+
+	return;
+  }
 
   /* We might get spurious requests if the driver has been restarted. Deny any
    * requests on devices that have not previously been opened, signaling the
@@ -396,8 +422,11 @@ int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr,
    */
   if (IS_BDEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->BDEV_MINOR)) {
 	/* Reply ERESTART to spurious requests for unopened devices. */
-	if (m_ptr->m_type != BDEV_OPEN)
-		return ERESTART;
+	if (m_ptr->m_type != BDEV_OPEN) {
+		blockdriver_reply(m_ptr, ipc_status, ERESTART);
+
+		return;
+	}
 
 	/* Mark the device as opened otherwise. */
 	set_open_dev(m_ptr->BDEV_MINOR);
@@ -415,10 +444,10 @@ int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr,
   case BDEV_SCATTER:	r = do_vrdwt(bdp, m_ptr, id);	break;
   case BDEV_IOCTL:	r = do_ioctl(bdp, m_ptr);	break;
   default:
-	if (bdp->bdr_other)
-		r = bdp->bdr_other(m_ptr);
-	else
-		r = EINVAL;
+	if (bdp->bdr_other != NULL)
+		(*bdp->bdr_other)(m_ptr, ipc_status);
+
+	return;	/* do not send a reply */
   }
 
   /* Let the driver perform any cleanup. */
@@ -427,5 +456,5 @@ int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr,
 
   trace_finish(id, r);
 
-  return r;
+  blockdriver_reply(m_ptr, ipc_status, r);
 }

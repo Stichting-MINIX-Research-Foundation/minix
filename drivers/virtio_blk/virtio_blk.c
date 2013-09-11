@@ -77,19 +77,19 @@ static u16_t *status_vir;
 static phys_bytes status_phys;
 
 /* Prototypes */
-static int virtio_blk_open(dev_t minor, int access);
-static int virtio_blk_close(dev_t minor);
-static ssize_t virtio_blk_transfer(dev_t minor, int write, u64_t position,
+static int virtio_blk_open(devminor_t minor, int access);
+static int virtio_blk_close(devminor_t minor);
+static ssize_t virtio_blk_transfer(devminor_t minor, int write, u64_t position,
 				   endpoint_t endpt, iovec_t *iovec,
 				   unsigned int cnt, int flags);
-static int virtio_blk_ioctl(dev_t minor, unsigned int req, endpoint_t endpt,
-			    cp_grant_id_t grant);
-static struct device * virtio_blk_part(dev_t minor);
-static void virtio_blk_geometry(dev_t minor, struct part_geom *entry);
+static int virtio_blk_ioctl(devminor_t minor, unsigned int req,
+			    endpoint_t endpt, cp_grant_id_t grant);
+static struct device * virtio_blk_part(devminor_t minor);
+static void virtio_blk_geometry(devminor_t minor, struct part_geom *entry);
 static void virtio_blk_device_intr(void);
 static void virtio_blk_spurious_intr(void);
 static void virtio_blk_intr(unsigned int irqs);
-static int virtio_blk_device(dev_t minor, device_id_t *id);
+static int virtio_blk_device(devminor_t minor, device_id_t *id);
 
 static int virtio_blk_flush(void);
 static void virtio_blk_terminate(void);
@@ -103,22 +103,19 @@ static int virtio_blk_probe(int skip);
 
 /* libblockdriver driver tab */
 static struct blockdriver virtio_blk_dtab  = {
-	BLOCKDRIVER_TYPE_DISK,
-	virtio_blk_open,
-	virtio_blk_close,
-	virtio_blk_transfer,
-	virtio_blk_ioctl,
-	NULL,		/* bdr_cleanup */
-	virtio_blk_part,
-	virtio_blk_geometry,
-	virtio_blk_intr,
-	NULL,		/* bdr_alarm */
-	NULL,		/* bdr_other */
-	virtio_blk_device
+	.bdr_type	= BLOCKDRIVER_TYPE_DISK,
+	.bdr_open	= virtio_blk_open,
+	.bdr_close	= virtio_blk_close,
+	.bdr_transfer	= virtio_blk_transfer,
+	.bdr_ioctl	= virtio_blk_ioctl,
+	.bdr_part	= virtio_blk_part,
+	.bdr_geometry	= virtio_blk_geometry,
+	.bdr_intr	= virtio_blk_intr,
+	.bdr_device	= virtio_blk_device
 };
 
 static int
-virtio_blk_open(dev_t minor, int access)
+virtio_blk_open(devminor_t minor, int access)
 {
 	struct device *dev = virtio_blk_part(minor);
 
@@ -146,7 +143,7 @@ virtio_blk_open(dev_t minor, int access)
 }
 
 static int
-virtio_blk_close(dev_t minor)
+virtio_blk_close(devminor_t minor)
 {
 	struct device *dev = virtio_blk_part(minor);
 
@@ -237,8 +234,9 @@ prepare_vir_vec(endpoint_t endpt, struct vumap_vir *vir, iovec_s_t *iv,
 }
 
 static ssize_t
-virtio_blk_transfer(dev_t minor, int write, u64_t position, endpoint_t endpt,
-		    iovec_t *iovec, unsigned int cnt, int flags)
+virtio_blk_transfer(devminor_t minor, int write, u64_t position,
+		    endpoint_t endpt, iovec_t *iovec, unsigned int cnt,
+		    int flags)
 {
 	/* Need to translate vir to phys */
 	struct vumap_vir vir[NR_IOREQS];
@@ -376,7 +374,7 @@ virtio_blk_transfer(dev_t minor, int write, u64_t position, endpoint_t endpt,
 }
 
 static int
-virtio_blk_ioctl(dev_t minor, unsigned int req, endpoint_t endpt,
+virtio_blk_ioctl(devminor_t minor, unsigned int req, endpoint_t endpt,
 		 cp_grant_id_t grant)
 {
 	switch (req) {
@@ -394,24 +392,22 @@ virtio_blk_ioctl(dev_t minor, unsigned int req, endpoint_t endpt,
 }
 
 static struct device *
-virtio_blk_part(dev_t minor)
+virtio_blk_part(devminor_t minor)
 {
 	/* There's only a single drive attached to this device, alyways.
 	 * Lets take some shortcuts...
 	 */
 
 	/* Take care of d0 d0p0 ... */
-	if (minor < 5)
+	if (minor >= 0 && minor < DEV_PER_DRIVE)
 		return &part[minor];
 
-	/* subparts start at 128 */
-	if (minor >= 128) {
-
-		/* Mask away upper bits */
-		minor = minor & 0x7F;
+	/* subparts start at MINOR_d0p0s0 */
+	if (minor >= MINOR_d0p0s0) {
+		minor -= MINOR_d0p0s0;
 
 		/* Only for the first disk */
-		if (minor > 15)
+		if (minor >= SUB_PER_DRIVE)
 			return NULL;
 
 		return &subpart[minor];
@@ -421,7 +417,7 @@ virtio_blk_part(dev_t minor)
 }
 
 static void
-virtio_blk_geometry(dev_t minor, struct part_geom *entry)
+virtio_blk_geometry(devminor_t minor, struct part_geom *entry)
 {
 	/* Only for the drive */
 	if (minor != 0)
@@ -470,7 +466,7 @@ virtio_blk_intr(unsigned int irqs)
 }
 
 static int
-virtio_blk_device(dev_t minor, device_id_t *id)
+virtio_blk_device(devminor_t minor, device_id_t *id)
 {
 	struct device *dev = virtio_blk_part(minor);
 

@@ -163,14 +163,14 @@ static int check_revision(void);
 static int read_edid(uint8_t * data, size_t count);
 
 /* libblockdriver callbacks */
-static int tda19988_blk_open(dev_t minor, int access);
-static int tda19988_blk_close(dev_t minor);
-static ssize_t tda19988_blk_transfer(dev_t minor, int do_write, u64_t pos,
-    endpoint_t endpt, iovec_t * iov, unsigned count, int flags);
-static int tda19988_blk_ioctl(dev_t minor, unsigned int request,
+static int tda19988_blk_open(devminor_t minor, int access);
+static int tda19988_blk_close(devminor_t minor);
+static ssize_t tda19988_blk_transfer(devminor_t minor, int do_write, u64_t pos,
+    endpoint_t endpt, iovec_t * iov, unsigned int count, int flags);
+static int tda19988_blk_ioctl(devminor_t minor, unsigned int request,
     endpoint_t endpt, cp_grant_id_t grant);
-static struct device *tda19988_blk_part(dev_t minor);
-static int tda19988_blk_other(message * m);
+static struct device *tda19988_blk_part(devminor_t minor);
+static void tda19988_blk_other(message * m, int ipc_status);
 
 /* Entry points into the device dependent code of block drivers. */
 struct blockdriver tda19988_tab = {
@@ -178,14 +178,9 @@ struct blockdriver tda19988_tab = {
 	.bdr_open = tda19988_blk_open,
 	.bdr_close = tda19988_blk_close,
 	.bdr_transfer = tda19988_blk_transfer,
-	.bdr_ioctl = tda19988_blk_ioctl,	/* nop -- always returns ENOTTY */
-	.bdr_cleanup = NULL,	/* nothing allocated -- nothing to clean up */
+	.bdr_ioctl = tda19988_blk_ioctl,	/* always returns ENOTTY */
 	.bdr_part = tda19988_blk_part,
-	.bdr_geometry = NULL,	/* no geometry (cylinders, heads, sectors, etc) */
-	.bdr_intr = NULL,	/* i2c devices don't generate interrupts */
-	.bdr_alarm = NULL,	/* alarm not needed */
-	.bdr_other = tda19988_blk_other,	/* to recv notify events from DS */
-	.bdr_device = NULL	/* 1 insance per device, threads not needed */
+	.bdr_other = tda19988_blk_other		/* for notify events from DS */
 };
 
 /* counts the number of times a device file is open */
@@ -195,7 +190,7 @@ static int openct[NR_DEVS];
 static struct device geom[NR_DEVS];
 
 static int
-tda19988_blk_open(dev_t minor, int access)
+tda19988_blk_open(devminor_t minor, int access)
 {
 	log_trace(&log, "tda19988_blk_open(%d,%d)\n", minor, access);
 	if (tda19988_blk_part(minor) == NULL) {
@@ -208,7 +203,7 @@ tda19988_blk_open(dev_t minor, int access)
 }
 
 static int
-tda19988_blk_close(dev_t minor)
+tda19988_blk_close(devminor_t minor)
 {
 	log_trace(&log, "tda19988_blk_close(%d)\n", minor);
 	if (tda19988_blk_part(minor) == NULL) {
@@ -225,8 +220,8 @@ tda19988_blk_close(dev_t minor)
 }
 
 static ssize_t
-tda19988_blk_transfer(dev_t minor, int do_write, u64_t pos64,
-    endpoint_t endpt, iovec_t * iov, unsigned nr_req, int flags)
+tda19988_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
+    endpoint_t endpt, iovec_t * iov, unsigned int nr_req, int flags)
 {
 	unsigned count;
 	struct device *dv;
@@ -319,7 +314,7 @@ tda19988_blk_transfer(dev_t minor, int do_write, u64_t pos64,
 }
 
 static int
-tda19988_blk_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+tda19988_blk_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
     cp_grant_id_t grant)
 {
 	log_trace(&log, "tda19988_blk_ioctl(%d)\n", minor);
@@ -328,26 +323,23 @@ tda19988_blk_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 }
 
 static struct device *
-tda19988_blk_part(dev_t minor)
+tda19988_blk_part(devminor_t minor)
 {
 	log_trace(&log, "tda19988_blk_part(%d)\n", minor);
 
-	if (minor >= NR_DEVS) {
+	if (minor < 0 || minor >= NR_DEVS) {
 		return NULL;
 	}
 
 	return &geom[minor];
 }
 
-static int
-tda19988_blk_other(message * m)
+static void
+tda19988_blk_other(message * m, int ipc_status)
 {
-	int r;
-
 	log_trace(&log, "tda19988_blk_other(0x%x)\n", m->m_type);
 
-	switch (m->m_type) {
-	case NOTIFY_MESSAGE:
+	if (is_ipc_notify(ipc_status)) {
 		if (m->m_source == DS_PROC_NR) {
 			log_debug(&log,
 			    "bus driver changed state, update endpoint\n");
@@ -356,15 +348,9 @@ tda19988_blk_other(message * m)
 			i2cdriver_handle_bus_update(&hdmi_bus_endpoint,
 			    hdmi_bus, hdmi_address);
 		}
-		r = OK;
-		break;
-	default:
+	} else {
 		log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
-		r = EINVAL;
-		break;
 	}
-
-	return r;
 }
 
 /*

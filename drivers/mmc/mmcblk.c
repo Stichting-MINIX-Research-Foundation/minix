@@ -39,19 +39,19 @@ static struct mmc_host host;
 #define COPYBUFF_SIZE 0x1000	/* 4k buff */
 static unsigned char copybuff[COPYBUFF_SIZE];
 
-static struct sd_slot *get_slot(dev_t minor);
+static struct sd_slot *get_slot(devminor_t minor);
 
 /* Prototypes for the block device */
-static int block_open(dev_t minor, int access);
-static int block_close(dev_t minor);
-static int block_transfer(dev_t minor,
+static int block_open(devminor_t minor, int access);
+static int block_close(devminor_t minor);
+static int block_transfer(devminor_t minor,
     int do_write,
     u64_t position,
     endpoint_t endpt, iovec_t * iov, unsigned int nr_req, int flags);
 
-static int block_ioctl(dev_t minor,
+static int block_ioctl(devminor_t minor,
     unsigned int request, endpoint_t endpt, cp_grant_id_t grant);
-static struct device *block_part(dev_t minor);
+static struct device *block_part(devminor_t minor);
 
 /* System even handling */
 static void sef_local_startup();
@@ -72,18 +72,14 @@ static void set_log_level(int level);
 
 /* Entry points for the BLOCK driver. */
 static struct blockdriver mmc_driver = {
-	BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
-	block_open,		/* open or mount */
-	block_close,		/* on a close */
-	block_transfer,		/* does the I/O */
-	block_ioctl,		/* ioclt's */
-	NULL,			/* no need to clean up (yet) */
-	block_part,		/* return partition information */
-	NULL,			/* no geometry */
-	hw_intr,		/* left over interrupts */
-	bdr_alarm,		/* no alarm processing */
-	NULL,			/* no processing of other messages */
-	NULL			/* no threading support */
+	.bdr_type 	= BLOCKDRIVER_TYPE_DISK,/* handle partition requests */
+	.bdr_open	= block_open,		/* device open */
+	.bdr_close	= block_close,		/* on a close */
+	.bdr_transfer	= block_transfer,	/* does the I/O */
+	.bdr_ioctl	= block_ioctl,		/* ioctls */
+	.bdr_part	= block_part,		/* get partition information */
+	.bdr_intr	= hw_intr,		/* left over interrupts */
+	.bdr_alarm	= bdr_alarm		/* no alarm processing */
 };
 
 static void
@@ -141,7 +137,7 @@ apply_env()
  *                    block_open                                             *
  *===========================================================================*/
 static int
-block_open(dev_t minor, int access)
+block_open(devminor_t minor, int access)
 {
 	struct sd_slot *slot;
 	slot = get_slot(minor);
@@ -213,7 +209,7 @@ block_open(dev_t minor, int access)
  *                    block_close                                            *
  *===========================================================================*/
 static int
-block_close(dev_t minor)
+block_close(devminor_t minor)
 {
 	struct sd_slot *slot;
 
@@ -280,7 +276,8 @@ copyfrom(endpoint_t src_e,
  *                    block_transfer                                         *
  *===========================================================================*/
 static int
-block_transfer(dev_t minor,	/* minor device number */
+block_transfer(
+    devminor_t minor,		/* minor device number */
     int do_write,		/* read or write? */
     u64_t position,		/* offset on device to read or write */
     endpoint_t endpt,		/* process doing the request */
@@ -438,7 +435,7 @@ block_transfer(dev_t minor,	/* minor device number */
  *				block_ioctl		                     *
  *===========================================================================*/
 static int
-block_ioctl(dev_t minor,
+block_ioctl(devminor_t minor,
     unsigned int request, endpoint_t endpt, cp_grant_id_t grant)
 {
 	/* IOCTL handling */
@@ -476,7 +473,7 @@ block_ioctl(dev_t minor,
  *                    block_part                                             *
  *===========================================================================*/
 static struct device *
-block_part(dev_t minor)
+block_part(devminor_t minor)
 {
 	/* 
 	 * Reuse the existing MINIX major/minor partitioning scheme.
@@ -614,7 +611,7 @@ block_signal_handler_cb(int signo)
 #define IS_MINIX_SUB_PARTITION_MINOR(minor) (minor >= MINOR_d0p0s0 )
 
 static struct sd_slot *
-get_slot(dev_t minor)
+get_slot(devminor_t minor)
 {
 	/* 
 	 * Get an sd_slot based on the minor number.
@@ -626,7 +623,7 @@ get_slot(dev_t minor)
 	 * number 128 till 144 for sub partitions.
 	 */
 	/* If this is a minor for the first disk (e.g. minor 0 till 5) */
-	if (minor / DEV_PER_DRIVE == 0) {
+	if (minor >= 0 && minor / DEV_PER_DRIVE == 0) {
 		/* we are talking about the first disk and that is all we
 		 * support */
 		return &host.slot[0];

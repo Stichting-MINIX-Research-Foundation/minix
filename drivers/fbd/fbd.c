@@ -15,34 +15,27 @@
 #define BUF_SIZE (NR_IOREQS * CLICK_SIZE)	/* 256k */
 
 /* Function declarations. */
-static int fbd_open(dev_t minor, int access);
-static int fbd_close(dev_t minor);
-static int fbd_transfer(dev_t minor, int do_write, u64_t position,
+static int fbd_open(devminor_t minor, int access);
+static int fbd_close(devminor_t minor);
+static int fbd_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
-static int fbd_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+static int fbd_ioctl(devminor_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
 
 /* Variables. */
 static char *fbd_buf;			/* scratch buffer */
 
 static char driver_label[32] = "";	/* driver DS label */
-static dev_t driver_minor = -1;	/* driver's partition minor to use */
-static endpoint_t driver_endpt;	/* driver endpoint */
+static devminor_t driver_minor = -1;	/* driver's partition minor to use */
+static endpoint_t driver_endpt;		/* driver endpoint */
 
 /* Entry points to this driver. */
 static struct blockdriver fbd_dtab = {
-	BLOCKDRIVER_TYPE_OTHER,	/* do not handle partition requests */
-	fbd_open,		/* open or mount request, initialize device */
-	fbd_close,		/* release device */
-	fbd_transfer,		/* do the I/O */
-	fbd_ioctl,		/* perform I/O control request */
-	NULL,			/* nothing to clean up */
-	NULL,			/* we will not be asked about partitions */
-	NULL,			/* we will not be asked for geometry */
-	NULL,			/* ignore leftover hardware interrupts */
-	NULL,			/* ignore alarms */
-	NULL,			/* ignore other messages */
-	NULL			/* no multithreading support */
+	.bdr_type	= BLOCKDRIVER_TYPE_OTHER,/* do not handle part. reqs */
+	.bdr_open	= fbd_open,	/* open request, initialize device */
+	.bdr_close	= fbd_close,	/* release device */
+	.bdr_transfer	= fbd_transfer,	/* do the I/O */
+	.bdr_ioctl	= fbd_ioctl	/* perform I/O control request */
 };
 
 /* Options supported by this driver. */
@@ -147,7 +140,7 @@ int main(int argc, char **argv)
 /*===========================================================================*
  *				fbd_open				     *
  *===========================================================================*/
-static int fbd_open(dev_t UNUSED(minor), int access)
+static int fbd_open(devminor_t UNUSED(minor), int access)
 {
 	/* Open a device. */
 	message m;
@@ -172,7 +165,7 @@ static int fbd_open(dev_t UNUSED(minor), int access)
 /*===========================================================================*
  *				fbd_close				     *
  *===========================================================================*/
-static int fbd_close(dev_t UNUSED(minor))
+static int fbd_close(devminor_t UNUSED(minor))
 {
 	/* Close a device. */
 	message m;
@@ -196,7 +189,7 @@ static int fbd_close(dev_t UNUSED(minor))
 /*===========================================================================*
  *				fbd_ioctl				     *
  *===========================================================================*/
-static int fbd_ioctl(dev_t UNUSED(minor), unsigned int request,
+static int fbd_ioctl(devminor_t UNUSED(minor), unsigned int request,
 	endpoint_t endpt, cp_grant_id_t grant)
 {
 	/* Handle an I/O control request. */
@@ -406,11 +399,11 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 /*===========================================================================*
  *				fbd_transfer				     *
  *===========================================================================*/
-static int fbd_transfer(dev_t UNUSED(minor), int do_write, u64_t position,
+static int fbd_transfer(devminor_t UNUSED(minor), int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags)
 {
 	/* Transfer data from or to the device. */
-	unsigned count;
+	unsigned int count;
 	size_t size, osize;
 	int i, hooks;
 	ssize_t r;
