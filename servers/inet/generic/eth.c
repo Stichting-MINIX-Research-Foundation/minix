@@ -412,7 +412,7 @@ printf("eth_ioctl: setting etp_getstat in port %d to %p\n",
 	default:
 		break;
 	}
-	reply_thr_put(eth_fd, EBADIOCTL, TRUE);
+	reply_thr_put(eth_fd, ENOTTY, TRUE);
 	return NW_OK;
 }
 

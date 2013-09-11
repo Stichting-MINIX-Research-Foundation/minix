@@ -91,27 +91,6 @@ int do_trace()
 	mp->mp_reply.reply_trace = 0;
 	return(OK);
 
-  case T_DUMPCORE:
-	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
-
-	/* Allow dumpcore only if traced! */
-	if (child->mp_tracer != who_p) return(EPERM);
-
-	/* Tell VFS to dump the core. */
-	m.m_type = PM_DUMPCORE;
-	m.PM_PROC = mp->mp_endpoint;
-	m.PM_TRACED_PROC = child->mp_endpoint;
-	/* Note that m.PM_PROC != m.PM_TRACED_PROC
-	 * (we use this to differentiate between a VFS core dump reply for a
-	 * an exiting process and the one for a traced process) */
-
-	m.PM_TERM_SIG = child->mp_sigstatus;
-	m.PM_PATH = child->mp_name;
-
-	tell_vfs(mp, &m);
-
-	return(SUSPEND); /* Suspend the process until we receive reply from VFS */
-
   case T_STOP:		/* stop the process */
 	/* This call is not exposed to user programs, because its effect can be
 	 * achieved better by sending the traced process a signal with kill(2).

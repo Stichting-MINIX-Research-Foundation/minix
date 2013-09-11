@@ -50,7 +50,7 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 #endif
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 			return r;
@@ -59,7 +59,7 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 	}
 
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 			return r;
@@ -68,7 +68,7 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 	}
 
 	r= ioctl(sock, NWIOGUDSSOTYPE, &uds_sotype);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 
 		if (r == -1) {

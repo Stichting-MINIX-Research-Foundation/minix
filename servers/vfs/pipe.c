@@ -27,9 +27,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
-#include "dmap.h"
 #include "param.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -107,11 +105,9 @@ static int create_pipe(int fil_des[2], int flags)
 	return(r);
   }
   rfp->fp_filp[fil_des[0]] = fil_ptr0;
-  FD_SET(fil_des[0], &rfp->fp_filp_inuse);
   fil_ptr0->filp_count = 1;		/* mark filp in use */
   if ((r = get_fd(fp, 0, W_BIT, &fil_des[1], &fil_ptr1)) != OK) {
 	rfp->fp_filp[fil_des[0]] = NULL;
-	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;	/* mark filp free */
 	unlock_filp(fil_ptr0);
 	unlock_vnode(vp);
@@ -119,7 +115,6 @@ static int create_pipe(int fil_des[2], int flags)
 	return(r);
   }
   rfp->fp_filp[fil_des[1]] = fil_ptr1;
-  FD_SET(fil_des[1], &rfp->fp_filp_inuse);
   fil_ptr1->filp_count = 1;
 
   /* Create a named pipe inode on PipeFS */
@@ -128,10 +123,8 @@ static int create_pipe(int fil_des[2], int flags)
 
   if (r != OK) {
 	rfp->fp_filp[fil_des[0]] = NULL;
-	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;
 	rfp->fp_filp[fil_des[1]] = NULL;
-	FD_CLR(fil_des[1], &rfp->fp_filp_inuse);
 	fil_ptr1->filp_count = 0;
 	unlock_filp(fil_ptr1);
 	unlock_filp(fil_ptr0);
@@ -334,9 +327,6 @@ void suspend(int why)
   fp->fp_blocked_on = why;
   assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
   fp->fp_block_callnr = job_call_nr;
-  fp->fp_flags &= ~FP_SUSP_REOPEN;		/* Clear this flag. The caller
-						 * can set it when needed.
-						 */
 }
 
 /*===========================================================================*
@@ -383,7 +373,7 @@ void unsuspend_by_endpt(endpoint_t proc_e)
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
 	if (rp->fp_pid == PID_FREE) continue;
 	if (rp->fp_blocked_on == FP_BLOCKED_ON_OTHER && rp->fp_task == proc_e)
-		revive(rp->fp_endpoint, EAGAIN);
+		revive(rp->fp_endpoint, EIO);
   }
 
   /* Revive processes waiting in drivers on select()s with EAGAIN too */
@@ -436,11 +426,10 @@ int count;			/* max number of processes to release */
 		 */
 
 		if (rp->fp_blocked_on == FP_BLOCKED_ON_POPEN ||
-		    rp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_LOCK ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_OTHER) {
-			if (!FD_ISSET(scratch(rp).file.fd_nr,
-							&rp->fp_filp_inuse))
+			f = rp->fp_filp[scratch(rp).file.fd_nr];
+			if (f == NULL || f->filp_mode == FILP_CLOSED)
 				continue;
 			if (rp->fp_filp[scratch(rp).file.fd_nr]->filp_vno != vp)
 				continue;
@@ -469,12 +458,12 @@ int count;			/* max number of processes to release */
 void revive(endpoint_t proc_e, int returned)
 {
 /* Revive a previously blocked process. When a process hangs on tty, this
- * is the way it is eventually released.
+ * is the way it is eventually released. For processes blocked on _SELECT and
+ * _OTHER, this function MUST NOT block its calling thread.
  */
   struct fproc *rfp;
   int blocked_on;
   int fd_nr, slot;
-  struct filp *fil_ptr;
 
   if (proc_e == NONE || isokendpt(proc_e, &slot) != OK) return;
 
@@ -492,26 +481,6 @@ void revive(endpoint_t proc_e, int returned)
 	/* Revive a process suspended on a pipe or lock. */
 	rfp->fp_flags |= FP_REVIVED;
 	reviving++;		/* process was waiting on pipe or lock */
-  } else if (blocked_on == FP_BLOCKED_ON_DOPEN) {
-	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	scratch(rfp).file.fd_nr = 0;
-	if (returned < 0) {
-		fil_ptr = rfp->fp_filp[fd_nr];
-		lock_filp(fil_ptr, VNODE_OPCL);
-		rfp->fp_filp[fd_nr] = NULL;
-		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
-		if (fil_ptr->filp_count != 1) {
-			panic("VFS: revive: bad count in filp: %d",
-				fil_ptr->filp_count);
-		}
-		fil_ptr->filp_count = 0;
-		unlock_filp(fil_ptr);
-		put_vnode(fil_ptr->filp_vno);
-		fil_ptr->filp_vno = NULL;
-		replycode(proc_e, returned);
-	} else {
-		replycode(proc_e, fd_nr);
-	}
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	scratch(rfp).file.fd_nr = 0;
@@ -544,97 +513,68 @@ void revive(endpoint_t proc_e, int returned)
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-void unpause(endpoint_t proc_e)
+void unpause(void)
 {
 /* A signal has been sent to a user who is paused on the file system.
  * Abort the system call with the EINTR error message.
  */
-
-  register struct fproc *rfp, *org_fp;
-  int slot, blocked_on, fild, status = EINTR, major_dev, minor_dev;
+  int blocked_on, fild, status = EINTR;
   struct filp *f;
   dev_t dev;
-  message mess;
   int wasreviving = 0;
 
-  if (isokendpt(proc_e, &slot) != OK) {
-	printf("VFS: ignoring unpause for bogus endpoint %d\n", proc_e);
-	return;
-  }
+  if (!fp_is_blocked(fp)) return;
+  blocked_on = fp->fp_blocked_on;
 
-  rfp = &fproc[slot];
-  if (!fp_is_blocked(rfp)) return;
-  blocked_on = rfp->fp_blocked_on;
+  /* Clear the block status now. The procedure below might make blocking calls
+   * and it is imperative that while at least cdev_cancel() is executing, other
+   * parts of VFS do not perceive this process as blocked on something.
+   */
+  fp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 
-  if (rfp->fp_flags & FP_REVIVED) {
-	rfp->fp_flags &= ~FP_REVIVED;
+  if (fp->fp_flags & FP_REVIVED) {
+	fp->fp_flags &= ~FP_REVIVED;
 	reviving--;
 	wasreviving = 1;
   }
 
   switch (blocked_on) {
 	case FP_BLOCKED_ON_PIPE:/* process trying to read or write a pipe */
+		/* If the operation succeeded partially, return the bytes
+		 * processed so far, and clear the remembered state. Otherwise,
+		 * return EINTR as usual.
+		 */
+		if (fp->fp_cum_io_partial > 0) {
+			status = fp->fp_cum_io_partial;
+
+			fp->fp_cum_io_partial = 0;
+		}
 		break;
 
 	case FP_BLOCKED_ON_LOCK:/* process trying to set a lock with FCNTL */
 		break;
 
 	case FP_BLOCKED_ON_SELECT:/* process blocking on select() */
-		select_forget(proc_e);
+		select_forget();
 		break;
 
 	case FP_BLOCKED_ON_POPEN:	/* process trying to open a fifo */
 		break;
 
-	case FP_BLOCKED_ON_DOPEN:/* process trying to open a device */
-		/* Don't cancel OPEN. Just wait until the open completes. */
-		return;
-
 	case FP_BLOCKED_ON_OTHER:/* process trying to do device I/O (e.g. tty)*/
-		if (rfp->fp_flags & FP_SUSP_REOPEN) {
-			/* Process is suspended while waiting for a reopen.
-			 * Just reply EINTR.
-			 */
-			rfp->fp_flags &= ~FP_SUSP_REOPEN;
-			status = EINTR;
-			break;
-		}
-
-		fild = scratch(rfp).file.fd_nr;
+		fild = scratch(fp).file.fd_nr;
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic("file descriptor out-of-range");
-		f = rfp->fp_filp[fild];
+		f = fp->fp_filp[fild];
 		if(!f) {
-			sys_sysctl_stacktrace(rfp->fp_endpoint);
+			sys_sysctl_stacktrace(fp->fp_endpoint);
 			panic("process %d blocked on empty fd %d",
-				rfp->fp_endpoint, fild);
+				fp->fp_endpoint, fild);
 		}
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
-		major_dev = major(dev);
-		minor_dev = minor(dev);
-		mess.TTY_LINE = minor_dev;
-		mess.USER_ENDPT = rfp->fp_ioproc;
-		mess.IO_GRANT = (char *) rfp->fp_grant;
 
-		/* Tell kernel R or W. Mode is from current call, not open. */
-		mess.COUNT = rfp->fp_block_callnr == READ ? R_BIT : W_BIT;
-		mess.m_type = CANCEL;
+		status = cdev_cancel(dev);
 
-		org_fp = fp;
-		fp = rfp;	/* hack - ctty_io uses fp */
-		(*dmap[major_dev].dmap_io)(rfp->fp_task, &mess);
-		fp = org_fp;
-		status = mess.REP_STATUS;
-		if (status == SUSPEND)
-			return;		/* Process will be revived at a
-					 * later time.
-					 */
-
-		if (status == EAGAIN) status = EINTR;
-		if (GRANT_VALID(rfp->fp_grant)) {
-			(void) cpf_revoke(rfp->fp_grant);
-			rfp->fp_grant = GRANT_INVALID;
-		}
 		break;
 	default :
 		panic("VFS: unknown block reason: %d", blocked_on);
@@ -645,9 +585,5 @@ void unpause(endpoint_t proc_e)
 	susp_count--;
   }
 
-  if(rfp->fp_blocked_on != FP_BLOCKED_ON_NONE) {
-	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	replycode(proc_e, status);	/* signal interrupted call */
-  }
+  replycode(fp->fp_endpoint, status);	/* signal interrupted call */
 }
-

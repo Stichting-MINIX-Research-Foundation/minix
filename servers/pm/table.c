@@ -135,6 +135,12 @@ int (*call_vec[])(void) = {
 	no_sys,		/* 121 = (task reply) */
 	no_sys,		/* 122 = (map driver ) */
 	do_getrusage,	/* 123 = getrusage */
+	no_sys,		/* 124 = (check_perms) */
+	no_sys,		/* 125 = (verify_fd) */
+	no_sys,		/* 126 = (set_filp) */
+	no_sys,		/* 127 = (copy_filp) */
+	no_sys,		/* 128 = (put_filp) */
+	no_sys,		/* 129 = (cancel_fd) */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

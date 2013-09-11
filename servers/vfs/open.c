@@ -19,9 +19,7 @@
 #include <minix/com.h>
 #include <minix/u64.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
-#include "dmap.h"
 #include "lock.h"
 #include "param.h"
 #include <dirent.h>
@@ -130,7 +128,6 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   /* Claim the file descriptor and filp slot and fill them in. */
   fp->fp_filp[scratch(fp).file.fd_nr] = filp;
-  FD_SET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
   filp->filp_count = 1;
   filp->filp_vno = vp;
   filp->filp_flags = oflags;
@@ -160,10 +157,9 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
 			/* TTY needs to know about the O_NOCTTY flag. */
-			r = dev_open(dev, who_e, bits | (oflags & O_NOCTTY));
-			if (r == SUSPEND) suspend(FP_BLOCKED_ON_DOPEN);
-			else vp = filp->filp_vno; /* Might be updated by
-						   * dev_open/clone_opcl */
+			r = cdev_open(dev, bits | (oflags & O_NOCTTY));
+			vp = filp->filp_vno;	/* Might be updated by
+						 * cdev_open after cloning */
 			break;
 		   case S_IFBLK:
 
@@ -271,10 +267,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   if (r != OK) {
 	if (r != SUSPEND) {
 		fp->fp_filp[scratch(fp).file.fd_nr] = NULL;
-		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
 		filp->filp_count = 0;
 		filp->filp_vno = NULL;
-		filp->filp_state &= ~FS_INVALIDATED; /* Prevent garbage col. */
 		put_vnode(vp);
 	}
   } else {
@@ -749,7 +743,6 @@ int fd_nr;
   close_filp(rfilp);
 
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
-  FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
   /* Check to see if the file is locked.  If so, release all locks. */
   if (nr_locks > 0) {
@@ -766,12 +759,4 @@ int fd_nr;
   }
 
   return(OK);
-}
-
-/*===========================================================================*
- *				close_reply				     *
- *===========================================================================*/
-void close_reply()
-{
-	/* No need to do anything */
 }
