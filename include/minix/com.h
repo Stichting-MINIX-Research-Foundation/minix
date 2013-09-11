@@ -1275,7 +1275,6 @@
 
 
 #define TTY_FKEY_CONTROL	(TTY_RQ_BASE + 1) /* control an F-key at TTY */
-#define OLD_FKEY_CONTROL	98  	/* previously used for TTY_FKEY_CONTROL */
 #  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
 #  define    FKEY_MAP		10	/* observe function key */
 #  define    FKEY_UNMAP		11	/* stop observing function key */

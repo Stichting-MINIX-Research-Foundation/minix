@@ -1221,7 +1221,7 @@
 ./usr/include/minix/sysutil.h		minix-sys
 ./usr/include/minix/termios.h		minix-sys
 ./usr/include/minix/timers.h		minix-sys
-./usr/include/minix/tty.h		minix-sys
+./usr/include/minix/tty.h		minix-sys	obsolete
 ./usr/include/minix/type.h		minix-sys
 ./usr/include/minix/types.h		minix-sys	obsolete
 ./usr/include/minix/u64.h		minix-sys

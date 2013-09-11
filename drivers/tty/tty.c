@@ -60,11 +60,7 @@
 #include <termios.h>
 #include <sys/ioc_tty.h>
 #include <signal.h>
-#include <minix/callnr.h>
-#include <minix/sys_config.h>
-#include <minix/tty.h>
 #include <minix/keymap.h>
-#include <minix/endpoint.h>
 #include "tty.h"
 
 #include <sys/time.h>
@@ -101,13 +97,6 @@ struct kmessages kmess;
 
 static void tty_timed_out(timer_t *tp);
 static void settimer(tty_t *tty_ptr, int enable);
-static void do_cancel(tty_t *tp, message *m_ptr);
-static void do_ioctl(tty_t *tp, message *m_ptr);
-static void do_open(tty_t *tp, message *m_ptr);
-static void do_close(tty_t *tp, message *m_ptr);
-static void do_read(tty_t *tp, message *m_ptr);
-static void do_write(tty_t *tp, message *m_ptr);
-static void do_select(tty_t *tp, message *m_ptr);
 static void in_transfer(tty_t *tp);
 static int tty_echo(tty_t *tp, int ch);
 static void rawecho(tty_t *tp, int ch);
@@ -118,11 +107,31 @@ static void setattr(tty_t *tp);
 static void tty_icancel(tty_t *tp);
 static void tty_init(void);
 static void do_new_kmess(void);
-static tty_t * line2tty(int line);
 static void set_console_line(char term[CONS_ARG]);
 static void set_kernel_color(char color[CONS_ARG]);
 static void set_color(tty_t *tp, int color);
 static void reset_color(tty_t *tp);
+
+static int do_open(devminor_t minor, int access, endpoint_t user_endpt);
+static int do_close(devminor_t minor);
+static ssize_t do_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t do_write(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
+static int do_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+static int do_select(devminor_t minor, unsigned int ops, endpoint_t endpt);
+
+static struct chardriver tty_tab = {
+	.cdr_open	= do_open,
+	.cdr_close	= do_close,
+	.cdr_read	= do_read,
+	.cdr_write	= do_write,
+	.cdr_ioctl	= do_ioctl,
+	.cdr_cancel	= do_cancel,
+	.cdr_select	= do_select
+};
 
 /* Default attributes. */
 static struct termios termios_defaults = {
@@ -160,7 +169,7 @@ int main(void)
   message tty_mess;		/* buffer for all incoming messages */
   int ipc_status;
   unsigned line;
-  int r, code;
+  int r;
   register tty_t *tp;
 
   /* SEF local startup. */
@@ -217,7 +226,6 @@ int main(void)
 
 	switch (tty_mess.m_type) { 
 	case TTY_FKEY_CONTROL:		/* (un)register a fkey observer */
-	case OLD_FKEY_CONTROL:		/* old number */
 		do_fkey_ctl(&tty_mess);
 		continue;
 	case INPUT_EVENT:
@@ -227,76 +235,34 @@ int main(void)
 		;			/* do nothing; end switch */
 	}
 
+	if (!IS_DEV_RQ(tty_mess.m_type)) {
+		chardriver_process(&tty_tab, &tty_mess, ipc_status);
+		continue;
+	}
+
 	/* Only device requests should get to this point.
 	 * All requests have a minor device number.
 	 */
 	line = tty_mess.DEVICE;
-	if (line == CONS_MINOR || line == LOG_MINOR) {
-		/* /dev/log output goes to /dev/console */
-		if (consoleline != CONS_MINOR) {
-			/* Console output must redirected */
-			line = consoleline;
-			tty_mess.DEVICE = line;
-		}
-	}
-	if (line == KBD_MINOR) {
-		do_kbd(&tty_mess);
-		continue;
-	} else if (line == KBDAUX_MINOR) {
-		do_kbdaux(&tty_mess);
+	if (line == KBD_MINOR || line == KBDAUX_MINOR) {
+		do_kbd(&tty_mess, ipc_status);
 		continue;
 	} else if (line == VIDEO_MINOR) {
-		do_video(&tty_mess);
+		do_video(&tty_mess, ipc_status);
 		continue;
-	} else {
-		tp = line2tty(line);
-
+	} else if (line - PTYPX_MINOR < NR_PTYS &&
+			tty_mess.m_type != DEV_IOCTL_S) {
 		/* Terminals and pseudo terminals belong together. We can only
 		 * make a distinction between the two based on position in the
 		 * tty_table and not on minor number (i.e., use ispty macro).
 		 * Hence this special case.
 		 */
-		if (line - PTYPX_MINOR < NR_PTYS &&
-						tty_mess.m_type != DEV_IOCTL_S){
-			do_pty(tp, &tty_mess);
-			continue;
-		}
-	}
-
-	/* If the device doesn't exist or is not configured return ENXIO. */
-	if (tp == NULL || ! tty_active(tp)) {
-		if (tty_mess.m_source == LOG_PROC_NR)
-			continue;
-
-		/* Can all of these occur? Probably not. We're by far most
-		 * likely to see DEV_OPEN, but better safe than sorry..
-		 */
-		switch (tty_mess.m_type) {
-		case DEV_OPEN:	code = DEV_OPEN_REPL; break;
-		case DEV_CLOSE:	code = DEV_CLOSE_REPL; break;
-		default:	code = DEV_REVIVE; break;
-		}
-
-		tty_reply(code, tty_mess.m_source, tty_mess.USER_ENDPT,
-			(cp_grant_id_t) tty_mess.IO_GRANT, ENXIO);
+		do_pty(&tty_mess, ipc_status);
 		continue;
 	}
 
 	/* Execute the requested device driver function. */
-	switch (tty_mess.m_type) {
-	    case DEV_READ_S:	 do_read(tp, &tty_mess);	  break;
-	    case DEV_WRITE_S:	 do_write(tp, &tty_mess);	  break;
-	    case DEV_IOCTL_S:	 do_ioctl(tp, &tty_mess);	  break;
-	    case DEV_OPEN:	 do_open(tp, &tty_mess);	  break;
-	    case DEV_CLOSE:	 do_close(tp, &tty_mess);	  break;
-	    case DEV_SELECT:	 do_select(tp, &tty_mess);	  break;
-	    case CANCEL:	 do_cancel(tp, &tty_mess);	  break;
-	    default:		
-		printf("Warning, TTY got unexpected request %d from %d\n",
-			tty_mess.m_type, tty_mess.m_source);
-		tty_reply(DEV_REVIVE, tty_mess.m_source, tty_mess.USER_ENDPT,
-			(cp_grant_id_t) tty_mess.IO_GRANT, EINVAL);
-	}
+	chardriver_process(&tty_tab, &tty_mess, ipc_status);
   }
 
   return 0;
@@ -305,47 +271,41 @@ int main(void)
 static void
 set_color(tty_t *tp, int color)
 {
-	message msg;
 	char buf[8];
 
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[1;%dm", color);
-	memset(&msg, 0, sizeof(msg));
-	msg.m_source = KERNEL;
-	msg.IO_GRANT = buf;
-	msg.COUNT = sizeof(buf);
-	do_write(tp, &msg);
+	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
+		FLG_OP_NONBLOCK, 0);
 }
 
 static void
 reset_color(tty_t *tp)
 {
-	message msg;
 	char buf[8];
 
 #define SGR_COLOR_RESET	39
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[0;%dm", SGR_COLOR_RESET);
-	memset(&msg, 0, sizeof(msg));
-	msg.m_source = KERNEL;
-	msg.IO_GRANT = buf;
-	msg.COUNT = sizeof(buf);
-	do_write(tp, &msg);
+	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
+		FLG_OP_NONBLOCK, 0);
 }
 
-static tty_t *
-line2tty(int line)
+tty_t *
+line2tty(devminor_t line)
 {
 /* Convert a terminal line to tty_table pointer */
 
 	tty_t* tp;
 
+	/* /dev/log goes to /dev/console, and both may be redirected. */
+	if (line == CONS_MINOR || line == LOG_MINOR)
+		line = consoleline;
+
 	if (line == KBD_MINOR || line == KBDAUX_MINOR || line == VIDEO_MINOR) {
 		return(NULL);
 	} else if ((line - CONS_MINOR) < NR_CONS) {
 		tp = tty_addr(line - CONS_MINOR);
-	} else if (line == LOG_MINOR) {
-		tp = tty_addr(consoleline);
 	} else if ((line - RS232_MINOR) < NR_RS_LINES) {
 		tp = tty_addr(line - RS232_MINOR + NR_CONS);
 	} else if ((line - TTYPX_MINOR) < NR_PTYS) {
@@ -355,6 +315,9 @@ line2tty(int line)
 	} else {
 		tp = NULL;
 	}
+
+	if (tp != NULL && !tty_active(tp))
+		tp = NULL;
 
 	return(tp);
 }
@@ -430,7 +393,7 @@ set_console_line(char term[CONS_ARG])
 	}
 
 	/* Serial lines */
-	assert(NR_RS_LINES <= 9);/* bellow assumes this is the case */
+	assert(NR_RS_LINES <= 9);/* below assumes this is the case */
 	for (i = 0; i < NR_RS_LINES; i++) {
 		char sercons[6];
 		strlcpy(sercons, "tty00", sizeof(sercons));
@@ -465,7 +428,6 @@ do_new_kmess(void)
 	static int prev_next = 0;
 	int next, bytes, copy, restore = 0;
 	tty_t *tp, rtp;
-	message print_kmsg;
 
 	assert(_minix_kerninfo);
 	kmess_ptr = _minix_kerninfo->kmessages;
@@ -491,7 +453,7 @@ do_new_kmess(void)
 		}
 
 		tp = line2tty(consoleline);
-		if (tp == NULL || !tty_active(tp))
+		if (tp == NULL)
 			panic("Don't know where to send kernel messages");
 		if (tp->tty_outleft > 0) {
 			/* Terminal is already printing */
@@ -502,11 +464,9 @@ do_new_kmess(void)
 
 		if (kernel_msg_color != 0)
 			set_color(tp, kernel_msg_color);
-		memset(&print_kmsg, 0, sizeof(print_kmsg));
-		print_kmsg.m_source = KERNEL;
-		print_kmsg.IO_GRANT = kernel_buf_copy;
-		print_kmsg.COUNT = bytes;
-		do_write(tp, &print_kmsg);
+		do_write(tp->tty_minor, 0, KERNEL,
+			(cp_grant_id_t) kernel_buf_copy, bytes,
+			FLG_OP_NONBLOCK, 0);
 		if (kernel_msg_color != 0)
 			reset_color(tp);
 		if (restore) {
@@ -541,141 +501,138 @@ static void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				do_read					     *
  *===========================================================================*/
-static void do_read(tp, m_ptr)
-register tty_t *tp;		/* pointer to tty struct */
-register message *m_ptr;	/* pointer to message sent to the task */
+static ssize_t do_read(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
 {
 /* A process wants to read from a terminal. */
+  tty_t *tp;
   int r;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
 
   /* Check if there is already a process hanging in a read, check if the
    * parameters are correct, do I/O.
    */
-  if (tp->tty_inleft > 0) {
-	r = EIO;
-  } else
-  if (m_ptr->COUNT <= 0) {
-	r = EINVAL;
-  } else if (tp->tty_ingrant != GRANT_INVALID) {
-	/* This is actually a fundamental problem with TTY; it can handle
-	 * only one reader per minor device. If we don't return an error,
-	 * we'll overwrite the previous reader and that process will get
-	 * stuck forever. */
-	r = ENOBUFS;
-  } else {
-	/* Copy information from the message to the tty struct. */
-	tp->tty_incaller = m_ptr->m_source;
-	tp->tty_inproc = m_ptr->USER_ENDPT;
-	tp->tty_ingrant = (cp_grant_id_t) m_ptr->IO_GRANT;
-	tp->tty_inoffset = 0;
-	tp->tty_inleft = m_ptr->COUNT;
+  if (tp->tty_incaller != NONE || tp->tty_inleft > 0)
+	return EIO;
+  if (size <= 0)
+	return EINVAL;
 
-	if (!(tp->tty_termios.c_lflag & ICANON)
-					&& tp->tty_termios.c_cc[VTIME] > 0) {
-		if (tp->tty_termios.c_cc[VMIN] == 0) {
-			/* MIN & TIME specify a read timer that finishes the
-			 * read in TIME/10 seconds if no bytes are available.
-			 */
-			settimer(tp, TRUE);
-			tp->tty_min = 1;
-		} else {
-			/* MIN & TIME specify an inter-byte timer that may
-			 * have to be cancelled if there are no bytes yet.
-			 */
-			if (tp->tty_eotct == 0) {
-				settimer(tp, FALSE);
-				tp->tty_min = tp->tty_termios.c_cc[VMIN];
-			}
+  /* Copy information from the message to the tty struct. */
+  tp->tty_incaller = endpt;
+  tp->tty_inid = id;
+  tp->tty_ingrant = grant;
+  assert(tp->tty_incum == 0);
+  tp->tty_inleft = size;
+
+  if (!(tp->tty_termios.c_lflag & ICANON) && tp->tty_termios.c_cc[VTIME] > 0) {
+	if (tp->tty_termios.c_cc[VMIN] == 0) {
+		/* MIN & TIME specify a read timer that finishes the
+		 * read in TIME/10 seconds if no bytes are available.
+		 */
+		settimer(tp, TRUE);
+		tp->tty_min = 1;
+	} else {
+		/* MIN & TIME specify an inter-byte timer that may
+		 * have to be cancelled if there are no bytes yet.
+		 */
+		if (tp->tty_eotct == 0) {
+			settimer(tp, FALSE);
+			tp->tty_min = tp->tty_termios.c_cc[VMIN];
 		}
 	}
-
-	/* Anything waiting in the input buffer? Clear it out... */
-	in_transfer(tp);
-	/* ...then go back for more. */
-	handle_events(tp);
-	if (tp->tty_inleft == 0)  {
-		return;			/* already done */
-	}
-
-	/* There were no bytes in the input queue available. */
-	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
-		tty_icancel(tp);
-		r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
-		tp->tty_inleft = tp->tty_incum = 0;
-		tp->tty_ingrant = GRANT_INVALID;
-	} else {
-		return;			/* suspend the caller */
-	}
   }
-  tty_reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
-	(cp_grant_id_t) m_ptr->IO_GRANT, r);
+
+  /* Anything waiting in the input buffer? Clear it out... */
+  in_transfer(tp);
+  /* ...then go back for more. */
+  handle_events(tp);
+  if (tp->tty_inleft == 0)
+	return EDONTREPLY;	/* already done */
+
+  /* There were no bytes in the input queue available. */
+  if (flags & FLG_OP_NONBLOCK) {
+	tty_icancel(tp);
+	r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
+	tp->tty_inleft = tp->tty_incum = 0;
+	tp->tty_incaller = NONE;
+	return r;
+  }
+
   if (tp->tty_select_ops)
-  	select_retry(tp);
+	select_retry(tp);
+
+  return EDONTREPLY;		/* suspend the caller */
 }
 
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-static void do_write(tp, m_ptr)
-register tty_t *tp;
-register message *m_ptr;	/* pointer to message sent to the task */
+static ssize_t do_write(devminor_t minor, u64_t UNUSED(position),
+	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
+	cdev_id_t id)
 {
 /* A process wants to write on a terminal. */
+  tty_t *tp;
   int r;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
 
   /* Check if there is already a process hanging in a write, check if the
    * parameters are correct, do I/O.
    */
-  if (tp->tty_outleft > 0) {
-	r = EIO;
-  } else
-  if (m_ptr->COUNT <= 0) {
-	r = EINVAL;
-  } else {
-	/* Copy message parameters to the tty structure. */
-	tp->tty_outcaller = m_ptr->m_source;
-	tp->tty_outproc = m_ptr->USER_ENDPT;
-	tp->tty_outgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
-	tp->tty_outoffset = 0;
-	tp->tty_outleft = m_ptr->COUNT;
+  if (tp->tty_outcaller != NONE || tp->tty_outleft > 0)
+	return EIO;
+  if (size <= 0)
+	return EINVAL;
 
-	/* Try to write. */
-	handle_events(tp);
-	if (tp->tty_outleft == 0)
-		return;	/* already done */
+  /* Copy message parameters to the tty structure. */
+  tp->tty_outcaller = endpt;
+  tp->tty_outid = id;
+  tp->tty_outgrant = grant;
+  assert(tp->tty_outcum == 0);
+  tp->tty_outleft = size;
 
-	/* None or not all the bytes could be written. */
-	if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
-		r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
-		tp->tty_outleft = tp->tty_outcum = 0;
-		tp->tty_outgrant = GRANT_INVALID;
-	} else {
-		return;			/* suspend the caller */
-	}
+  /* Try to write. */
+  handle_events(tp);
+  if (tp->tty_outleft == 0)
+	return EDONTREPLY;	/* already done */
+
+  /* None or not all the bytes could be written. */
+  if (flags & FLG_OP_NONBLOCK) {
+	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
+	tp->tty_outleft = tp->tty_outcum = 0;
+	tp->tty_outcaller = NONE;
+	return r;
   }
-  tty_reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
-	(cp_grant_id_t) m_ptr->IO_GRANT, r);
+
+  if (tp->tty_select_ops)
+	select_retry(tp);
+
+  return EDONTREPLY;		/* suspend the caller */
 }
 
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-static void do_ioctl(tp, m_ptr)
-register tty_t *tp;
-message *m_ptr;			/* pointer to message sent to task */
+static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
 {
-/* Perform an IOCTL on this terminal. Posix termios calls are handled
- * by the IOCTL system call
+/* Perform an IOCTL on this terminal. POSIX termios calls are handled
+ * by the IOCTL system call.
  */
-
-  int r;
-  union {
-	int i;
-  } param;
+  tty_t *tp;
+  int i, r;
   size_t size;
 
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+
   /* Size of the ioctl parameter. */
-  switch (m_ptr->REQUEST) {
+  switch (request) {
     case TCGETS:        /* Posix tcgetattr function */
     case TCSETS:        /* Posix tcsetattr function, TCSANOW option */ 
     case TCSETSW:       /* Posix tcsetattr function, TCSADRAIN option */
@@ -709,60 +666,55 @@ message *m_ptr;			/* pointer to message sent to task */
   }
 
   r = OK;
-  switch (m_ptr->REQUEST) {
+  switch (request) {
     case TCGETS:
 	/* Get the termios attributes. */
-	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
-		(vir_bytes) &tp->tty_termios, (vir_bytes) size);
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &tp->tty_termios,
+		size);
 	break;
 
     case TCSETSW:
     case TCSETSF:
     case TCDRAIN:
 	if (tp->tty_outleft > 0) {
-		if (m_ptr->FLAGS & FLG_OP_NONBLOCK) {
-			r = EAGAIN;
-		} else {
-			/* Wait for all ongoing output processing to finish. */
-			tp->tty_iocaller = m_ptr->m_source;
-			tp->tty_ioproc = m_ptr->USER_ENDPT;
-			tp->tty_ioreq = m_ptr->REQUEST;
-			tp->tty_iogrant = (cp_grant_id_t) m_ptr->IO_GRANT;
-			return;
-		}
-		break;
+		if (flags & FLG_OP_NONBLOCK)
+			return EAGAIN;
+		/* Wait for all ongoing output processing to finish. */
+		tp->tty_iocaller = endpt;
+		tp->tty_ioid = id;
+		tp->tty_ioreq = request;
+		tp->tty_iogrant = grant;
+		return EDONTREPLY;	/* suspend the caller */
 	}
-	if (m_ptr->REQUEST == TCDRAIN) break;
-	if (m_ptr->REQUEST == TCSETSF) tty_icancel(tp);
+	if (request == TCDRAIN) break;
+	if (request == TCSETSF) tty_icancel(tp);
 	/*FALL THROUGH*/
     case TCSETS:
 	/* Set the termios attributes. */
-	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &tp->tty_termios, (vir_bytes) size);
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &tp->tty_termios,
+		size);
 	if (r != OK) break;
 	setattr(tp);
 	break;
 
     case TCFLSH:
-	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &param.i, (vir_bytes) size);
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, size);
 	if (r != OK) break;
-	switch (param.i) {
-	    case TCIFLUSH:	tty_icancel(tp);		 	    break;
-	    case TCOFLUSH:	(*tp->tty_ocancel)(tp, 0);		    break;
-	    case TCIOFLUSH:	tty_icancel(tp); (*tp->tty_ocancel)(tp, 0); break;
-	    default:		r = EINVAL;
+	switch (i) {
+	case TCIFLUSH:	tty_icancel(tp);		 	    break;
+	case TCOFLUSH:	(*tp->tty_ocancel)(tp, 0);		    break;
+	case TCIOFLUSH:	tty_icancel(tp); (*tp->tty_ocancel)(tp, 0); break;
+	default:	r = EINVAL;
 	}
 	break;
 
     case TCFLOW:
-	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &param.i, (vir_bytes) size);
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, size);
 	if (r != OK) break;
-	switch (param.i) {
+	switch (i) {
 	    case TCOOFF:
 	    case TCOON:
-		tp->tty_inhibited = (param.i == TCOOFF);
+		tp->tty_inhibited = (i == TCOOFF);
 		tp->tty_events = 1;
 		break;
 	    case TCIOFF:
@@ -781,27 +733,24 @@ message *m_ptr;			/* pointer to message sent to task */
 	break;
 
     case TIOCGWINSZ:
-	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
-		(vir_bytes) &tp->tty_winsize, (vir_bytes) size);
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &tp->tty_winsize,
+		size);
 	break;
 
     case TIOCSWINSZ:
-	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
-		0, (vir_bytes) &tp->tty_winsize, (vir_bytes) size);
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &tp->tty_winsize,
+		size);
 	sigchar(tp, SIGWINCH, 0);
 	break;
 
     case KIOCSMAP:
 	/* Load a new keymap (only /dev/console). */
-	if (isconsole(tp)) r = kbd_loadmap(m_ptr);
+	if (isconsole(tp)) r = kbd_loadmap(endpt, grant);
 	break;
 
-    case TIOCSFON_OLD:
-	printf("TTY: old TIOCSFON ignored.\n");
-	break;
     case TIOCSFON:
 	/* Load a font into an EGA or VGA card (hs@hck.hr) */
-	if (isconsole(tp)) r = con_loadfont(m_ptr);
+	if (isconsole(tp)) r = con_loadfont(endpt, grant);
 	break;
 
 /* These Posix functions are allowed to fail if _POSIX_JOB_CONTROL is 
@@ -813,30 +762,30 @@ message *m_ptr;			/* pointer to message sent to task */
 	r = ENOTTY;
   }
 
-  /* Send the reply. */
-  tty_reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
-	(cp_grant_id_t) m_ptr->IO_GRANT, r);
+  return r;
 }
 
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-static void do_open(tp, m_ptr)
-register tty_t *tp;
-message *m_ptr;			/* pointer to message sent to task */
+static int do_open(devminor_t minor, int access, endpoint_t user_endpt)
 {
 /* A tty line has been opened.  Make it the callers controlling tty if
  * O_NOCTTY is *not* set and it is not the log device.  1 is returned if
  * the tty is made the controlling tty, otherwise OK or an error code.
  */
+  tty_t *tp;
   int r = OK;
 
-  if (m_ptr->DEVICE == LOG_MINOR) {
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+
+  if (minor == LOG_MINOR) {
 	/* The log device is a write-only diagnostics device. */
-	if (m_ptr->COUNT & R_BIT) r = EACCES;
+	if (access & R_BIT) return EACCES;
   } else {
-	if (!(m_ptr->COUNT & O_NOCTTY)) {
-		tp->tty_pgrp = m_ptr->USER_ENDPT;
+	if (!(access & O_NOCTTY)) {
+		tp->tty_pgrp = user_endpt;
 		r = 1;
 	}
 	tp->tty_openct++;
@@ -845,20 +794,22 @@ message *m_ptr;			/* pointer to message sent to task */
 		(*tp->tty_open)(tp, 0);
 	}
   }
-  tty_reply(DEV_OPEN_REPL, m_ptr->m_source, m_ptr->USER_ENDPT,
-	(cp_grant_id_t) m_ptr->IO_GRANT, r);
+
+  return r;
 }
 
 /*===========================================================================*
  *				do_close				     *
  *===========================================================================*/
-static void do_close(tp, m_ptr)
-register tty_t *tp;
-message *m_ptr;			/* pointer to message sent to task */
+static int do_close(devminor_t minor)
 {
 /* A tty line has been closed.  Clean up the line if it is the last close. */
+  tty_t *tp;
 
-  if (m_ptr->DEVICE != LOG_MINOR && --tp->tty_openct == 0) {
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+
+  if (minor != LOG_MINOR && --tp->tty_openct == 0) {
 	tp->tty_pgrp = 0;
 	tty_icancel(tp);
 	(*tp->tty_ocancel)(tp, 0);
@@ -867,53 +818,49 @@ message *m_ptr;			/* pointer to message sent to task */
 	tp->tty_winsize = winsize_defaults;
 	setattr(tp);
   }
-  tty_reply(DEV_CLOSE_REPL, m_ptr->m_source, m_ptr->USER_ENDPT,
-	(cp_grant_id_t) m_ptr->IO_GRANT, OK);
+
+  return OK;
 }
 
 /*===========================================================================*
  *				do_cancel				     *
  *===========================================================================*/
-static void do_cancel(tp, m_ptr)
-register tty_t *tp;
-message *m_ptr;			/* pointer to message sent to task */
+static int do_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
 /* A signal has been sent to a process that is hanging trying to read or write.
  * The pending read or write must be finished off immediately.
  */
-  endpoint_t proc_nr;
-  cp_grant_id_t grant;
-  int mode;
-  int r = EDONTREPLY;
+  tty_t *tp;
+  int r;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
 
   /* Check the parameters carefully, to avoid cancelling twice. */
-  proc_nr = m_ptr->USER_ENDPT;
-  grant = (cp_grant_id_t) m_ptr->IO_GRANT;
-  mode = m_ptr->COUNT;
-  if ((mode & R_BIT) && tp->tty_inleft != 0 && proc_nr == tp->tty_inproc &&
-	tp->tty_ingrant == grant) {
+  r = EDONTREPLY;
+  if (tp->tty_inleft != 0 && endpt == tp->tty_incaller && id == tp->tty_inid) {
 	/* Process was reading when killed.  Clean up input. */
 	tty_icancel(tp); 
 	r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
 	tp->tty_inleft = tp->tty_incum = 0;
-	tp->tty_ingrant = GRANT_INVALID;
-  } 
-  if ((mode & W_BIT) && tp->tty_outleft != 0 && proc_nr == tp->tty_outproc &&
-	tp->tty_outgrant == grant) {
+	tp->tty_incaller = NONE;
+  } else if (tp->tty_outleft != 0 && endpt == tp->tty_outcaller &&
+	id == tp->tty_outid) {
 	/* Process was writing when killed.  Clean up output. */
 	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 	tp->tty_outleft = tp->tty_outcum = 0;
-	tp->tty_outgrant = GRANT_INVALID;
-  } 
-  if (tp->tty_ioreq != 0 && proc_nr == tp->tty_ioproc) {
+	tp->tty_outcaller = NONE;
+  } else if (tp->tty_ioreq != 0 && endpt == tp->tty_iocaller &&
+	id == tp->tty_ioid) {
 	/* Process was waiting for output to drain. */
-	tp->tty_ioreq = 0;
 	r = EINTR;
+	tp->tty_ioreq = 0;
+	tp->tty_iocaller = NONE;
   }
-  tp->tty_events = 1;
-  /* Only reply if we found a matching request. */
   if (r != EDONTREPLY)
-	tty_reply(DEV_REVIVE, m_ptr->m_source, proc_nr, grant, r);
+	tp->tty_events = 1;
+  /* Only reply if we found a matching request. */
+  return r;
 }
 
 int select_try(struct tty *tp, int ops)
@@ -955,12 +902,41 @@ int select_retry(struct tty *tp)
 	int ops;
 
 	if (tp->tty_select_ops && (ops = select_try(tp, tp->tty_select_ops))) {
-		assert(tp->tty_select_minor == tp->tty_minor);
-		select_reply(DEV_SEL_REPL2, tp->tty_select_proc, tp->tty_minor,
+		chardriver_reply_select(tp->tty_select_proc, tp->tty_minor,
 			ops);
 		tp->tty_select_ops &= ~ops;
 	}
 	return OK;
+}
+
+/*===========================================================================*
+ *				do_select				     *
+ *===========================================================================*/
+static int do_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
+{
+  tty_t *tp;
+  int ready_ops, watch;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+
+  /* Translated minor numbers are a problem when sending late replies. */
+  if (tp->tty_minor != minor)
+	return EBADF;
+
+  watch = (ops & SEL_NOTIFY);
+  ops &= (SEL_RD | SEL_WR | SEL_ERR);
+
+  ready_ops = select_try(tp, ops);
+
+  ops &= ~ready_ops;
+  if (ops && watch) {
+	tp->tty_select_ops |= ops;
+	tp->tty_select_proc = endpt;
+  }
+
+  assert(tp->tty_minor == minor);
+  return ready_ops;
 }
 
 /*===========================================================================*
@@ -979,8 +955,8 @@ tty_t *tp;			/* TTY to check for events. */
  * to avoid swamping the TTY task.  Messages may be overwritten when the
  * lines are fast or when there are races between different lines, input
  * and output, because MINIX only provides single buffering for interrupt
- * messages (in proc.c).  This is handled by explicitly checking each line
- * for fresh input and completed output on each interrupt.
+ * messages.  This is handled by explicitly checking each line for fresh input
+ * and completed output on each interrupt.
  */
 
   do {
@@ -1001,10 +977,9 @@ tty_t *tp;			/* TTY to check for events. */
 
   /* Reply if enough bytes are available. */
   if (tp->tty_incum >= tp->tty_min && tp->tty_inleft > 0) {
-	tty_reply(DEV_REVIVE, tp->tty_incaller, tp->tty_inproc,
-		tp->tty_ingrant, tp->tty_incum);
+	chardriver_reply_task(tp->tty_incaller, tp->tty_inid, tp->tty_incum);
 	tp->tty_inleft = tp->tty_incum = 0;
-	tp->tty_ingrant = GRANT_INVALID;
+	tp->tty_incaller = NONE;
   }
   if (tp->tty_select_ops)
   {
@@ -1045,10 +1020,8 @@ register tty_t *tp;		/* pointer to terminal to read from */
 		if (++bp == bufend(buf)) {
 			/* Temp buffer full, copy to user space. */
 			sys_safecopyto(tp->tty_incaller,
-				tp->tty_ingrant, tp->tty_inoffset,
-				(vir_bytes) buf,
-				(vir_bytes) buflen(buf));
-			tp->tty_inoffset += buflen(buf);
+				tp->tty_ingrant, tp->tty_incum,
+				(vir_bytes) buf, (vir_bytes) buflen(buf));
 			tp->tty_incum += buflen(buf);
 			bp = buf;
 		}
@@ -1068,19 +1041,16 @@ register tty_t *tp;		/* pointer to terminal to read from */
   if (bp > buf) {
 	/* Leftover characters in the buffer. */
 	count = bp - buf;
-	sys_safecopyto(tp->tty_incaller,
-		tp->tty_ingrant, tp->tty_inoffset,
+	sys_safecopyto(tp->tty_incaller, tp->tty_ingrant, tp->tty_incum,
 		(vir_bytes) buf, (vir_bytes) count);
-	tp->tty_inoffset += count;
 	tp->tty_incum += count;
   }
 
   /* Usually reply to the reader, possibly even if incum == 0 (EOF). */
   if (tp->tty_inleft == 0) {
-	tty_reply(DEV_REVIVE, tp->tty_incaller, tp->tty_inproc,
-		tp->tty_ingrant, tp->tty_incum);
+	chardriver_reply_task(tp->tty_incaller, tp->tty_inid, tp->tty_incum);
 	tp->tty_inleft = tp->tty_incum = 0;
-	tp->tty_ingrant = GRANT_INVALID;
+	tp->tty_incaller = NONE;
   }
 }
 
@@ -1510,9 +1480,8 @@ tty_t *tp;
 	if (result == OK) setattr(tp);
   }
   tp->tty_ioreq = 0;
-  tty_reply(DEV_REVIVE, tp->tty_iocaller, tp->tty_ioproc, tp->tty_iogrant,
-	result);
-  tp->tty_iogrant = GRANT_INVALID;
+  chardriver_reply_task(tp->tty_iocaller, tp->tty_ioid, result);
+  tp->tty_iocaller = NONE;
 }
 
 /*===========================================================================*
@@ -1570,57 +1539,6 @@ tty_t *tp;
   /* Set new line speed, character size, etc at the device level. */
   (*tp->tty_ioctl)(tp, 0);
 }
-
-/*===========================================================================*
- *				tty_reply				     *
- *===========================================================================*/
-void 
-tty_reply_f(
-file, line, code, replyee, proc_nr, grant, status)
-char *file;
-int line;
-int code;			/* DEV_OPEN_REPL, DEV_CLOSE_REPL, DEV_REVIVE */
-endpoint_t replyee;		/* destination address for the reply */
-endpoint_t proc_nr;		/* to whom should the reply go? */
-cp_grant_id_t grant;		/* which grant was involved? */
-int status;			/* reply code */
-{
-  message m;
-
-  assert(code == DEV_OPEN_REPL || code == DEV_CLOSE_REPL || code == DEV_REVIVE);
-
-  /* Don't reply to KERNEL (kernel messages) */
-  if (replyee == KERNEL) return;
-
-  memset(&m, 0, sizeof(m));
-
-  m.REP_ENDPT = proc_nr;
-  m.REP_IO_GRANT = grant;
-  m.REP_STATUS = status;
-
-  status = _sendcall(replyee, code, &m);
-  if (status != OK)
-	printf("tty`tty_reply: send to %d failed: %d\n", replyee, status);
-}
-
-/*===========================================================================*
- *				select_reply				     *
- *===========================================================================*/
-void select_reply(int code, endpoint_t replyee, dev_t minor, int ops)
-{
-  message m;
-  int status;
-
-  memset(&m, 0, sizeof(m));
-
-  m.DEV_MINOR = minor;
-  m.DEV_SEL_OPS = ops;
-
-  status = _sendcall(replyee, code, &m);
-  if (status != OK)
-	printf("tty`select_reply: send to %d failed: %d\n", replyee, status);
-}
-
 
 /*===========================================================================*
  *				sigchar					     *
@@ -1696,7 +1614,7 @@ static void tty_init()
 
   	tp->tty_intail = tp->tty_inhead = tp->tty_inbuf;
   	tp->tty_min = 1;
-	tp->tty_ingrant = tp->tty_outgrant = tp->tty_iogrant = GRANT_INVALID;
+	tp->tty_incaller = tp->tty_outcaller = tp->tty_iocaller = NONE;
   	tp->tty_termios = termios_defaults;
   	tp->tty_icancel = tp->tty_ocancel = tp->tty_ioctl = tp->tty_close =
 			  tp->tty_open = tty_devnop;
@@ -1749,28 +1667,4 @@ int enable;			/* set timer if true, otherwise unset */
   	/* Remove the timer from the active and expired lists. */
   	cancel_timer(&tty_ptr->tty_tmr);
   }
-}
-
-/*===========================================================================*
- *				do_select				     *
- *===========================================================================*/
-static void do_select(tp, m_ptr)
-register tty_t *tp;		/* pointer to tty struct */
-register message *m_ptr;	/* pointer to message sent to the task */
-{
-	int ops, ready_ops = 0, watch;
-
-	ops = m_ptr->DEV_SEL_OPS & (SEL_RD|SEL_WR|SEL_ERR);
-	watch = (m_ptr->DEV_SEL_OPS & SEL_NOTIFY) ? 1 : 0;
-
-	ready_ops = select_try(tp, ops);
-
-	if (!ready_ops && ops && watch) {
-		tp->tty_select_ops |= ops;
-		tp->tty_select_proc = m_ptr->m_source;
-		tp->tty_select_minor = m_ptr->DEV_MINOR;
-	}
-
-	assert(tp->tty_minor == m_ptr->DEV_MINOR);
-	select_reply(DEV_SEL_REPL1, m_ptr->m_source, tp->tty_minor, ready_ops);
 }
