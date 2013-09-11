@@ -65,9 +65,10 @@ static void tcp_error_callback(void *arg, err_t err)
 	default:
 		perr = EIO;
 	}
-	
+
+	/* FIXME: what if this is for a write that was already replied to? */
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
-		sock_reply(sock, perr);
+		send_req_reply(&sock->req, perr);
 		sock->flags &= ~SOCK_FLG_OP_PENDING;
 	} else if (sock_select_set(sock))
 		sock_select_notify(sock);
@@ -98,7 +99,7 @@ static int tcp_fill_new_socket(struct socket * sock, struct tcp_pcb * pcb)
 	return OK;
 }
 
-static int tcp_op_open(struct socket * sock, __unused message * m)
+static int tcp_op_open(struct socket * sock)
 {
 	struct tcp_pcb * pcb;
 	int ret;
@@ -142,7 +143,7 @@ static void free_wbuf_chain(struct wbuf_chain * wc)
 	debug_free(wc);
 }
 
-static void tcp_op_close(struct socket * sock, __unused message * m)
+static int tcp_op_close(struct socket * sock)
 {
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
@@ -175,11 +176,12 @@ static void tcp_op_close(struct socket * sock, __unused message * m)
 	}
 	debug_tcp_print("freed TX data");
 
-	sock_reply_close(sock, OK);
 	debug_tcp_print("socket unused");
 
 	/* mark it as unused */
 	sock->ops = NULL;
+
+	return OK;
 }
 
 __unused static void print_tcp_payload(unsigned char * buf, int len)
@@ -195,14 +197,14 @@ __unused static void print_tcp_payload(unsigned char * buf, int len)
 	kputc('\n');
 }
 
-static int read_from_tcp(struct socket * sock, message * m)
+static int read_from_tcp(struct socket * sock, struct sock_req * req)
 {
 	unsigned int rem_buf, written = 0;
 	struct pbuf * p;
 
 	assert(!(sock->flags & SOCK_FLG_OP_LISTENING) && sock->recv_head);
 
-	rem_buf = m->COUNT;
+	rem_buf = req->size;
 
 	debug_tcp_print("socket num %ld recv buff sz %d", get_sock_num(sock), rem_buf);
 
@@ -220,8 +222,8 @@ static int read_from_tcp(struct socket * sock, message * m)
 #if 0
 			print_tcp_payload(p->payload, p->len);
 #endif
-			err = copy_to_user(m->m_source, p->payload, p->len,
-					(cp_grant_id_t) m->IO_GRANT, written);
+			err = copy_to_user(req->endpt, p->payload, p->len,
+					req->grant, written);
 			if (err != OK)
 				goto cp_error;
 			sock->recv_data_size -= p->len;
@@ -261,8 +263,8 @@ static int read_from_tcp(struct socket * sock, message * m)
 #if 0
 			print_tcp_payload(p->payload, rem_buf);
 #endif
-			err = copy_to_user(m->m_source, p->payload, rem_buf,
-					(cp_grant_id_t) m->IO_GRANT, written);
+			err = copy_to_user(req->endpt, p->payload, rem_buf,
+					req->grant, written);
 			if (err != OK)
 				goto cp_error;
 			sock->recv_data_size -= rem_buf;
@@ -292,37 +294,36 @@ cp_error:
 		return EFAULT;
 }
 
-static void tcp_op_read(struct socket * sock, message * m, int blk)
+static int tcp_op_read(struct socket * sock, struct sock_req * req, int blk)
 {
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
 	if (!sock->pcb || ((struct tcp_pcb *) sock->pcb)->state !=
 							ESTABLISHED) {
 		debug_tcp_print("Connection not established\n");
-		sock_reply(sock, ENOTCONN);
-		return;
+		return ENOTCONN;
 	}
 	if (sock->recv_head) {
 		/* data available receive immeditely */
-		int ret = read_from_tcp(sock,  m);
+		int ret = read_from_tcp(sock, req);
 		debug_tcp_print("read op finished");
-		sock_reply(sock, ret);
+		return ret;
 	} else {
 		if (sock->flags & SOCK_FLG_CLOSED) {
 			printf("socket %ld already closed!!! call from %d\n",
-					get_sock_num(sock), m->USER_ENDPT);
+					get_sock_num(sock), req->endpt);
 			do_tcp_debug = 1;
-			sock_reply(sock, 0);
-			return;
+			return 0;
 		}
                 if (!blk) {
                         debug_tcp_print("reading would block -> EAGAIN");
-                        sock_reply(sock, EAGAIN);
-                        return;
+                        return EAGAIN;
                 }
 		/* operation is being processed */
+		sock->req = *req;
 		debug_tcp_print("no data to read, suspending");
 		sock->flags |= SOCK_FLG_OP_PENDING | SOCK_FLG_OP_READING;
+		return EDONTREPLY;
 	}
 }
 
@@ -389,7 +390,8 @@ static struct wbuf * wbuf_ack_sent(struct socket * sock, unsigned int sz)
 	return wc->head;
 }
 
-static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
+static int tcp_op_write(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
 	int ret;
 	struct wbuf * wbuf;
@@ -397,12 +399,10 @@ static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
 	u8_t flgs = 0;
 
 
-	if (!sock->pcb) {
-		sock_reply(sock, ENOTCONN);
-		return;
-	}
+	if (!sock->pcb)
+		return ENOTCONN;
 
-	usr_buf_len = m->COUNT;
+	usr_buf_len = req->size;
 	debug_tcp_print("socket num %ld data size %d",
 			get_sock_num(sock), usr_buf_len);
 
@@ -413,8 +413,7 @@ static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
 	if (sock->buf_size >= TCP_BUF_SIZE) {
 		/* FIXME do not block for now */
 		debug_tcp_print("WARNING : tcp buffers too large, cannot allocate more");
-		sock_reply(sock, ENOMEM);
-		return;
+		return ENOMEM;
 	}
 	/*
 	 * Never let the allocated buffers grow more than to 2xTCP_BUF_SIZE and
@@ -426,13 +425,12 @@ static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
 	
 	if (!wbuf) {
 		debug_tcp_print("cannot allocate new buffer of %d bytes", usr_buf_len);
-		sock_reply(sock, ENOMEM);
+		return ENOMEM;
 	}
 
-	if ((ret = copy_from_user(m->m_source, wbuf->data, usr_buf_len,
-				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
-		sock_reply(sock, ret);
-		return;
+	if ((ret = copy_from_user(req->endpt, wbuf->data, usr_buf_len,
+				req->grant, 0)) != OK) {
+		return ret;
 	}
 
 	wbuf->written = 0;
@@ -453,15 +451,18 @@ static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
 			debug_tcp_print("unsent %p remains %d\n", wbuf, wbuf->rem_len);
 		}
 		debug_tcp_print("returns %d\n", usr_buf_len);
-		sock_reply(sock, usr_buf_len);
 		/*
 		 * We cannot accept new operations (write). We set the flag
 		 * after sending reply not to revive only. We could deadlock.
 		 */
+		/*
+		 * FIXME: this looks like bad logic. We acknowledge the write
+		 * operation, so we will never reply to it or cancel it later.
+		 */
 		if (sock->buf_size >= TCP_BUF_SIZE)
 			sock->flags |= SOCK_FLG_OP_PENDING;
 
-		return;
+		return usr_buf_len;
 	}
 
 	/*
@@ -496,15 +497,20 @@ static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
 		 * in this case, we are going to reply immediatly
 		 */
 		debug_tcp_print("returns %d\n", usr_buf_len);
-		sock_reply(sock, usr_buf_len);
 		sock->flags |= SOCK_FLG_OP_WRITING;
+		/*
+		 * FIXME: this looks like bad logic. We acknowledge the write
+		 * operation, so we will never reply to it or cancel it later.
+		 */
 		if (sock->buf_size >= TCP_BUF_SIZE)
 			sock->flags |= SOCK_FLG_OP_PENDING;
+		return usr_buf_len;
 	} else
-		sock_reply(sock, EIO);
+		return EIO;
 }
 
-static void tcp_set_conf(struct socket * sock, message * m)
+static int tcp_set_conf(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
 	int err;
 	nwio_tcpconf_t tconf;
@@ -514,13 +520,12 @@ static void tcp_set_conf(struct socket * sock, message * m)
 
 	assert(pcb);
 
-	err = copy_from_user(m->m_source, &tconf, sizeof(tconf),
-				(cp_grant_id_t) m->IO_GRANT, 0);
+	err = copy_from_user(endpt, &tconf, sizeof(tconf), grant, 0);
 
 	if (err != OK)
-		sock_reply(sock, err);
+		return err;
 
-	debug_tcp_print("tconf.nwtc_flags = 0x%lx", tconf.nwtc_flags);
+	debug_tcp_print("tconf.nwtc_flags = 0x%x", tconf.nwtc_flags);
 	debug_tcp_print("tconf.nwtc_remaddr = 0x%x",
 				(unsigned int) tconf.nwtc_remaddr);
 	debug_tcp_print("tconf.nwtc_remport = 0x%x", ntohs(tconf.nwtc_remport));
@@ -538,17 +543,16 @@ static void tcp_set_conf(struct socket * sock, message * m)
 	if (sock->usr_flags & NWTC_LP_SET) {
 		/* FIXME the user library can only bind to ANY anyway */
 		if (tcp_bind(pcb, IP_ADDR_ANY, ntohs(tconf.nwtc_locport)) == ERR_USE) {
-			sock_reply(sock, EADDRINUSE);
-			return;
+			return EADDRINUSE;
 		}
 	}
-	
-	sock_reply(sock, OK);
+
+	return OK;
 }
 
-static void tcp_get_conf(struct socket * sock, message * m)
+static int tcp_get_conf(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
-	int err;
 	nwio_tcpconf_t tconf;
 	struct tcp_pcb * pcb = (struct tcp_pcb *) sock->pcb;
 
@@ -562,7 +566,7 @@ static void tcp_get_conf(struct socket * sock, message * m)
 	tconf.nwtc_remport = htons(pcb->remote_port);
 	tconf.nwtc_flags = sock->usr_flags;
 
-	debug_tcp_print("tconf.nwtc_flags = 0x%lx", tconf.nwtc_flags);
+	debug_tcp_print("tconf.nwtc_flags = 0x%x", tconf.nwtc_flags);
 	debug_tcp_print("tconf.nwtc_remaddr = 0x%x",
 				(unsigned int) tconf.nwtc_remaddr);
 	debug_tcp_print("tconf.nwtc_remport = 0x%x", ntohs(tconf.nwtc_remport));
@@ -570,18 +574,7 @@ static void tcp_get_conf(struct socket * sock, message * m)
 				(unsigned int) tconf.nwtc_locaddr);
 	debug_tcp_print("tconf.nwtc_locport = 0x%x", ntohs(tconf.nwtc_locport));
 
-	if ((unsigned int) m->COUNT < sizeof(tconf)) {
-		sock_reply(sock, EINVAL);
-		return;
-	}
-	
-	err = copy_to_user(m->m_source, &tconf, sizeof(tconf),
-				(cp_grant_id_t) m->IO_GRANT, 0);
-
-	if (err != OK)
-		sock_reply(sock, err);
-
-	sock_reply(sock, OK);
+	return copy_to_user(endpt, &tconf, sizeof(tconf), grant, 0);
 }
 
 static int enqueue_rcv_data(struct socket * sock, struct pbuf * pbuf)
@@ -627,7 +620,7 @@ static err_t tcp_recv_callback(void *arg,
 		/* wake up the reader and report EOF */
 		if (sock->flags & SOCK_FLG_OP_PENDING &&
 				sock->flags & SOCK_FLG_OP_READING) {
-			sock_reply(sock, 0);
+			send_req_reply(&sock->req, 0);
 			sock->flags &= ~(SOCK_FLG_OP_PENDING |
 					SOCK_FLG_OP_READING);
 		}
@@ -655,9 +648,9 @@ static err_t tcp_recv_callback(void *arg,
 	 */
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		if (sock->flags & SOCK_FLG_OP_READING) {
-			ret = read_from_tcp(sock, &sock->mess);
+			ret = read_from_tcp(sock, &sock->req);
 			debug_tcp_print("read op finished");
-			sock_reply(sock, ret);
+			send_req_reply(&sock->req, ret);
 			sock->flags &= ~(SOCK_FLG_OP_PENDING |
 					SOCK_FLG_OP_READING);
 		}
@@ -692,7 +685,11 @@ static err_t tcp_sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len)
 	assert((struct tcp_pcb *)sock->pcb == tpcb);
 
 	/* operation must have been canceled, do not send any other data */
-	if (!sock->flags & SOCK_FLG_OP_PENDING)
+	/*
+	 * FIXME: this looks like bad logic. We already acknowledged the write
+	 * operation, so we should not set or check the OP_PENDING flag..
+	 */
+	if (!(sock->flags & SOCK_FLG_OP_PENDING))
 		return ERR_OK;
 
 	wbuf = wbuf_ack_sent(sock, len);
@@ -797,7 +794,7 @@ static err_t tcp_connected_callback(void *arg,
 
 	tcp_sent(tpcb, tcp_sent_callback);
 	tcp_recv(tpcb, tcp_recv_callback);
-	sock_reply(sock, OK);
+	send_req_reply(&sock->req, OK);
 	sock->flags &= ~(SOCK_FLG_OP_PENDING | SOCK_FLG_OP_CONNECTING);
 
 	/* revive does the sock_select_notify() for us */
@@ -805,7 +802,7 @@ static err_t tcp_connected_callback(void *arg,
 	return ERR_OK;
 }
 
-static void tcp_op_connect(struct socket * sock)
+static int tcp_op_connect(struct socket * sock, struct sock_req * req)
 {
 	ip_addr_t remaddr;
 	struct tcp_pcb * pcb;
@@ -821,16 +818,18 @@ static void tcp_op_connect(struct socket * sock)
 	/* try to connect now */
 	pcb = (struct tcp_pcb *) sock->pcb;
 	remaddr = pcb->remote_ip;
+	sock->req = *req;
 	err = tcp_connect(pcb, &remaddr, pcb->remote_port,
 				tcp_connected_callback);
 	if (err == ERR_VAL)
 		panic("Wrong tcp_connect arguments");
 	if (err != ERR_OK)
 		panic("Other tcp_connect error %d\n", err);
+	return EDONTREPLY;
 }
 
 static int tcp_do_accept(struct socket * listen_sock,
-			message * m,
+			struct sock_req * req,
 			struct tcp_pcb * newpcb)
 {
 	struct socket * newsock;
@@ -839,8 +838,8 @@ static int tcp_do_accept(struct socket * listen_sock,
 
 	debug_tcp_print("socket num %ld", get_sock_num(listen_sock));
 
-	if ((ret = copy_from_user(m->m_source, &sock_num, sizeof(sock_num),
-				(cp_grant_id_t) m->IO_GRANT, 0)) != OK)
+	if ((ret = copy_from_user(req->endpt, &sock_num, sizeof(sock_num),
+				req->grant, 0)) != OK)
 		return EFAULT;
 	if (!is_valid_sock_num(sock_num))
 		return EBADF;
@@ -877,8 +876,8 @@ static err_t tcp_accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err)
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		int ret;
 
-		ret = tcp_do_accept(sock, &sock->mess, newpcb);
-		sock_reply(sock, ret);
+		ret = tcp_do_accept(sock, &sock->req, newpcb);
+		send_req_reply(&sock->req, ret);
 		sock->flags &= ~SOCK_FLG_OP_PENDING;
 		if (ret == OK) {
 			return ERR_OK;
@@ -900,15 +899,18 @@ static err_t tcp_accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err)
 	return ERR_OK;
 }
 
-static void tcp_op_listen(struct socket * sock, message * m)
+static int tcp_op_listen(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
 	int backlog, err;
 	struct tcp_pcb * new_pcb;
 
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
-	err = copy_from_user(m->m_source, &backlog, sizeof(backlog),
-				(cp_grant_id_t) m->IO_GRANT, 0);
+	err = copy_from_user(endpt, &backlog, sizeof(backlog), grant, 0);
+
+	if (err != OK)
+		return err;
 
 	new_pcb = tcp_listen_with_backlog((struct tcp_pcb *) sock->pcb,
 							(u8_t) backlog);
@@ -916,8 +918,7 @@ static void tcp_op_listen(struct socket * sock, message * m)
 
 	if (!new_pcb) {
 		debug_tcp_print("Cannot listen on socket %ld", get_sock_num(sock));
-		sock_reply(sock, EGENERIC);
-		return;
+		return EIO;
 	}
 
 	/* advertise that this socket is willing to accept connections */
@@ -925,17 +926,16 @@ static void tcp_op_listen(struct socket * sock, message * m)
 	sock->flags |= SOCK_FLG_OP_LISTENING;
 
 	sock->pcb = new_pcb;
-	sock_reply(sock, OK);
+	return OK;
 }
 
-static void tcp_op_accept(struct socket * sock, message * m)
+static int tcp_op_accept(struct socket * sock, struct sock_req * req)
 {
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
 	if (!(sock->flags & SOCK_FLG_OP_LISTENING)) {
 		debug_tcp_print("socket %ld does not listen\n", get_sock_num(sock));
-		sock_reply(sock, EINVAL);
-		return;
+		return EINVAL;
 	}
 
 	/* there is a connection ready to be accepted */
@@ -946,19 +946,22 @@ static void tcp_op_accept(struct socket * sock, message * m)
 		pcb = (struct tcp_pcb *) sock->recv_head->data;
 		assert(pcb);
 
-		ret = tcp_do_accept(sock, m, pcb);
-		sock_reply(sock, ret);
+		ret = tcp_do_accept(sock, req, pcb);
 		if (ret == OK)
 			sock_dequeue_data(sock);
-		return;
+		return ret;
 	}
 
 	debug_tcp_print("no ready connection, suspending\n");
 
+	sock->req = *req;
+
 	sock->flags |= SOCK_FLG_OP_PENDING;
+
+	return EDONTREPLY;
 }
 
-static void tcp_op_shutdown_tx(struct socket * sock)
+static int tcp_op_shutdown_tx(struct socket * sock)
 {
 	err_t err;
 
@@ -968,17 +971,16 @@ static void tcp_op_shutdown_tx(struct socket * sock)
 
 	switch (err) {
 	case ERR_OK:
-		sock_reply(sock, OK);
-		break;
+		return OK;
 	case ERR_CONN:
-		sock_reply(sock, ENOTCONN);
-		break;
+		return ENOTCONN;
 	default:
-		sock_reply(sock, EGENERIC);
+		return EIO;
 	}
 }
 
-static void tcp_op_get_cookie(struct socket * sock, message * m)
+static int tcp_op_get_cookie(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
 	tcp_cookie_t cookie;
 	unsigned int sock_num;
@@ -988,43 +990,28 @@ static void tcp_op_get_cookie(struct socket * sock, message * m)
 	sock_num = get_sock_num(sock);
 	memcpy(&cookie, &sock_num, sizeof(sock_num));
 
-	if (copy_to_user(m->m_source, &cookie, sizeof(sock),
-			(cp_grant_id_t) m->IO_GRANT, 0) == OK)
-		sock_reply(sock, OK);
-	else
-		sock_reply(sock, EFAULT);
+	return copy_to_user(endpt, &cookie, sizeof(sock), grant, 0);
 }
 
-static void tcp_get_opt(struct socket * sock, message * m)
+static int tcp_get_opt(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
-	int err;
 	nwio_tcpopt_t tcpopt;
 	struct tcp_pcb * pcb = (struct tcp_pcb *) sock->pcb;
 
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
 	assert(pcb);
-
-	if ((unsigned int) m->COUNT < sizeof(tcpopt)) {
-		sock_reply(sock, EINVAL);
-		return;
-	}
 
 	/* FIXME : not used by the userspace library */
 	tcpopt.nwto_flags = 0;
 	
-	err = copy_to_user(m->m_source, &tcpopt, sizeof(tcpopt),
-				(cp_grant_id_t) m->IO_GRANT, 0);
-
-	if (err != OK)
-		sock_reply(sock, err);
-
-	sock_reply(sock, OK);
+	return copy_to_user(endpt, &tcpopt, sizeof(tcpopt), grant, 0);
 }
 
-static void tcp_set_opt(struct socket * sock, message * m)
+static int tcp_set_opt(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
-	int err;
 	nwio_tcpopt_t tcpopt;
 	struct tcp_pcb * pcb = (struct tcp_pcb *) sock->pcb;
 
@@ -1032,69 +1019,64 @@ static void tcp_set_opt(struct socket * sock, message * m)
 
 	assert(pcb);
 
-	err = copy_from_user(m->m_source, &tcpopt, sizeof(tcpopt),
-				(cp_grant_id_t) m->IO_GRANT, 0);
-
-	if (err != OK)
-		sock_reply(sock, err);
-
 	/* FIXME : The userspace library does not use this */
 
-	sock_reply(sock, OK);
+	return copy_from_user(endpt, &tcpopt, sizeof(tcpopt), grant, 0);
 }
 
-static void tcp_op_ioctl(struct socket * sock, message * m, __unused int blk)
+static int tcp_op_ioctl(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
-	if (!sock->pcb) {
-		sock_reply(sock, ENOTCONN);
-		return;
-	}
+	int r;
 
-	debug_tcp_print("socket num %ld req %c %d %d",
+	if (!sock->pcb)
+		return ENOTCONN;
+
+	debug_tcp_print("socket num %ld req %c %ld %ld",
 			get_sock_num(sock),
-			(m->REQUEST >> 8) & 0xff,
-			m->REQUEST & 0xff,
-			(m->REQUEST >> 16) & _IOCPARM_MASK);
+			(unsigned char) (req->req >> 8),
+			req->req & 0xff,
+			(req->req >> 16) & _IOCPARM_MASK);
 	
-	switch (m->REQUEST) {
+	switch (req->req) {
 	case NWIOGTCPCONF:
-		tcp_get_conf(sock, m);
+		r = tcp_get_conf(sock, req->endpt, req->grant);
 		break;
 	case NWIOSTCPCONF:
-		tcp_set_conf(sock, m);
+		r = tcp_set_conf(sock, req->endpt, req->grant);
 		break;
 	case NWIOTCPCONN:
-		tcp_op_connect(sock);
+		r = tcp_op_connect(sock, req);
 		break;
 	case NWIOTCPLISTENQ:
-		tcp_op_listen(sock, m);
+		r = tcp_op_listen(sock, req->endpt, req->grant);
 		break;
 	case NWIOGTCPCOOKIE:
-		tcp_op_get_cookie(sock, m);
+		r = tcp_op_get_cookie(sock, req->endpt, req->grant);
 		break;
 	case NWIOTCPACCEPTTO:
-		tcp_op_accept(sock, m);
+		r = tcp_op_accept(sock, req);
 		break;
 	case NWIOTCPSHUTDOWN:
-		tcp_op_shutdown_tx(sock);
+		r = tcp_op_shutdown_tx(sock);
 		break;
 	case NWIOGTCPOPT:
-		tcp_get_opt(sock, m);
+		r = tcp_get_opt(sock, req->endpt, req->grant);
 		break;
 	case NWIOSTCPOPT:
-		tcp_set_opt(sock, m);
+		r = tcp_set_opt(sock, req->endpt, req->grant);
 		break;
 	default:
-		sock_reply(sock, EBADIOCTL);
-		return;
+		r = ENOTTY;
 	}
+
+	return r;
 }
 
-static void tcp_op_select(struct socket * sock, __unused message * m)
+static int tcp_op_select(struct socket * sock, unsigned int sel)
 {
-	int retsel = 0, sel;
+	int retsel = 0;
 
-	sel = m->USER_ENDPT;
 	debug_tcp_print("socket num %ld 0x%x", get_sock_num(sock), sel);
 	
 	/* in this case any operation would block, no error */
@@ -1112,8 +1094,7 @@ static void tcp_op_select(struct socket * sock, __unused message * m)
 			if (sel & SEL_ERR)
 				sock->flags |= SOCK_FLG_SEL_ERROR;
 		}
-		sock_reply_select(sock, 0);
-		return;
+		return 0;
 	}
 
 	if (sel & SEL_RD) {
@@ -1158,18 +1139,19 @@ static void tcp_op_select(struct socket * sock, __unused message * m)
 	if (sel & SEL_ERR && sel & SEL_NOTIFY)
 		sock->flags |= SOCK_FLG_SEL_ERROR;
 
-	sock_reply_select(sock, retsel);
+	return retsel;
 }
 
-static void tcp_op_select_reply(struct socket * sock, message * m)
+static int tcp_op_select_reply(struct socket * sock)
 {
+	unsigned int sel = 0;
+
 	assert(sock->select_ep != NONE);
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
-
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		debug_tcp_print("WARNING socket still blocking!");
-		return;
+		return EDONTREPLY;
 	}
 
 	if (sock->flags & SOCK_FLG_SEL_READ) {
@@ -1178,7 +1160,7 @@ static void tcp_op_select_reply(struct socket * sock, message * m)
 			 (!(sock->flags & SOCK_FLG_OP_LISTENING) && 
 			 ((struct tcp_pcb *) sock->pcb)->state !=
 			 ESTABLISHED)) {
-			m->DEV_SEL_OPS |= SEL_RD;
+			sel |= SEL_RD;
 			debug_tcp_print("read won't block");
 		}
 	}
@@ -1187,13 +1169,15 @@ static void tcp_op_select_reply(struct socket * sock, message * m)
 			(sock->pcb == NULL ||
 			 ((struct tcp_pcb *) sock->pcb)->state ==
 			 ESTABLISHED)) {
-		m->DEV_SEL_OPS |= SEL_WR;
+		sel |= SEL_WR;
 		debug_tcp_print("write won't block");
 	}
 
-	if (m->DEV_SEL_OPS) 
+	if (sel)
 		sock->flags &= ~(SOCK_FLG_SEL_WRITE | SOCK_FLG_SEL_READ |
 							SOCK_FLG_SEL_ERROR);
+
+	return sel;
 }
 
 struct sock_ops sock_tcp_ops = {

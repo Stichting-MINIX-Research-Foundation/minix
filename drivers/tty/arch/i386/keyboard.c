@@ -19,6 +19,7 @@
 #include <minix/input.h>
 #include <minix/keymap.h>
 #include <minix/reboot.h>
+#include <assert.h>
 #include "tty.h"
 #include "kernel/const.h"
 #include "kernel/config.h"
@@ -122,18 +123,17 @@ static obs_t sfkey_obs[12];	/* observers for SHIFT F1-F12 */
 
 static struct kbd
 {
-	int minor;
+	devminor_t minor;
 	int nr_open;
 	char buf[KBD_BUFSZ];
 	int offset;
 	int avail;
-	int req_size;
-	int req_proc;
+	size_t req_size;
+	cdev_id_t req_id;
 	cp_grant_id_t req_grant;
-	vir_bytes req_addr_offset;
-	int incaller;
-	int select_ops;
-	int select_proc;
+	endpoint_t req_caller;
+	unsigned int select_ops;
+	endpoint_t select_proc;
 } kbd, kbdaux;
 
 /* Data that is to be sent to the keyboard. Each byte is ACKed by the
@@ -153,8 +153,6 @@ static long sticky_alt_mode = 0;
 static long debug_fkeys = 1;
 static timer_t tmr_kbd_wd;
 
-static void handle_req(struct kbd *kbdp, message *m);
-static int handle_status(struct kbd *kbdp, message *m);
 static void kbc_cmd0(int cmd);
 static void kbc_cmd1(int cmd, int data);
 static int kbc_read(void);
@@ -170,277 +168,284 @@ static int kb_read(struct tty *tp, int try);
 static unsigned map_key(int scode);
 static void kbd_watchdog(timer_t *tmrp);
 
-int micro_delay(u32_t usecs)
+static int kbd_open(devminor_t minor, int access, endpoint_t user_endpt);
+static int kbd_close(devminor_t minor);
+static ssize_t kbd_read(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t kbd_write(devminor_t minor, u64_t position, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static int kbd_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
+static int kbd_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+static int kbd_select(devminor_t minor, unsigned int ops, endpoint_t endpt);
+
+static struct chardriver kbd_tab = {
+	.cdr_open	= kbd_open,
+	.cdr_close	= kbd_close,
+	.cdr_read	= kbd_read,
+	.cdr_write	= kbd_write,
+	.cdr_ioctl	= kbd_ioctl,
+	.cdr_cancel	= kbd_cancel,
+	.cdr_select	= kbd_select
+};
+
+/*===========================================================================*
+ *				line2kbd				     *
+ *===========================================================================*/
+static struct kbd *
+line2kbd(devminor_t minor)
 {
-	/* TTY can't use the library micro_delay() as that calls PM. */
-	tickdelay(micros_to_ticks(usecs));
+	switch (minor) {
+	case KBD_MINOR:		return &kbd;
+	case KBDAUX_MINOR:	return &kbdaux;
+	default:		return NULL;
+	}
+}
+
+/*===========================================================================*
+ *				kbd_open				     *
+ *===========================================================================*/
+static int
+kbd_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
+{
+	struct kbd *kbdp;
+
+	if ((kbdp = line2kbd(minor)) == NULL)
+		return ENXIO;
+
+	kbdp->nr_open++;
 	return OK;
+}
+
+/*===========================================================================*
+ *				kbd_close				     *
+ *===========================================================================*/
+static int
+kbd_close(devminor_t minor)
+{
+	struct kbd *kbdp;
+
+	if ((kbdp = line2kbd(minor)) == NULL)
+		return ENXIO;
+
+	kbdp->nr_open--;
+	if (kbdp->nr_open < 0) {
+		printf("TTY(kbd): open count is negative\n");
+		kbdp->nr_open= 0;
+	}
+	if (kbdp->nr_open == 0)
+		kbdp->avail= 0;
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				kbd_read				     *
+ *===========================================================================*/
+static ssize_t
+kbd_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
+{
+	ssize_t n, r;
+	struct kbd *kbdp;
+
+	if ((kbdp = line2kbd(minor)) == NULL)
+		return ENXIO;
+
+	/* We handle only one request at a time. */
+	if (kbdp->req_size)
+		return EIO;
+
+	if ((ssize_t) size <= 0)
+		return EINVAL;
+
+	/* If no data is available, suspend the caller. */
+	if (kbdp->avail == 0) {
+		if (flags & CDEV_NONBLOCK)
+			return EAGAIN;
+		kbdp->req_size = size;
+		kbdp->req_id = id;
+		kbdp->req_grant = grant;
+		kbdp->req_caller = endpt;
+		return EDONTREPLY;
+	}
+
+	/* Handle read request. */
+	n = kbdp->avail;
+	if (n > (ssize_t) size)
+		n = size;
+	if (kbdp->offset + n > KBD_BUFSZ)
+		n = KBD_BUFSZ - kbdp->offset;
+	if (n <= 0)
+		panic("do_kbd(READ): bad n: %d", n);
+	r = sys_safecopyto(endpt, grant, 0,
+	    (vir_bytes) &kbdp->buf[kbdp->offset], n);
+	if (r == OK) {
+		kbdp->offset = (kbdp->offset + n) % KBD_BUFSZ;
+		kbdp->avail -= n;
+		r = n;
+	} else
+		printf("TTY(kbd): copy in read kbd failed: %d\n", r);
+
+	return r;
+}
+
+/*===========================================================================*
+ *				kbd_write				     *
+ *===========================================================================*/
+static ssize_t
+kbd_write(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
+{
+	struct kbd *kbdp;
+	unsigned char c;
+	size_t i;
+	int r;
+
+	if ((kbdp = line2kbd(minor)) == NULL)
+		return ENXIO;
+	if (kbdp != &kbdaux) {
+		printf("TTY(kbd): write to keyboard not implemented\n");
+		return EINVAL;
+	}
+
+	/*
+	 * Assume that output to AUX only happens during initialization and we
+	 * can afford to lose input. This should be fixed at a later time.
+	 */
+	for (i = 0; i < size; i++) {
+		r = sys_safecopyfrom(endpt, grant, i, (vir_bytes) &c, 1);
+		if (r != OK)
+			return i ? i : r;
+		kbc_cmd1(KBC_WRITE_AUX, c);
+	}
+
+	return r;
+}
+
+/*===========================================================================*
+ *				kbd_ioctl				     *
+ *===========================================================================*/
+static int
+kbd_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t UNUSED(user_endpt),
+	cdev_id_t id)
+{
+	struct kbd *kbdp;
+	kio_leds_t leds;
+	kio_bell_t bell;
+	clock_t ticks;
+	unsigned char b;
+	int r;
+
+	if ((kbdp = line2kbd(minor)) == NULL)
+		return ENXIO;
+	if (kbdp != &kbd)
+		return ENOTTY;	/* we only support ioctls on keyboards now */
+
+	switch (request) {
+	case KIOCSLEDS:
+		r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &leds,
+		    sizeof(leds));
+		if (r != OK)
+			return r;
+
+		b = 0;
+		if (leds.kl_bits & KBD_LEDS_NUM) b |= NUM_LOCK;
+		if (leds.kl_bits & KBD_LEDS_CAPS) b |= CAPS_LOCK;
+		if (leds.kl_bits & KBD_LEDS_SCROLL) b |= SCROLL_LOCK;
+		if (kbdout.avail == 0)
+			kbdout.offset = 0;
+		if (kbdout.offset + kbdout.avail + 2 > KBD_OUT_BUFSZ) {
+			/* Output buffer is full. Ignore this command.
+			 * Reset ACK flag.
+			 */
+			kbdout.expect_ack = 0;
+		} else {
+			kbdout.buf[kbdout.offset+kbdout.avail] = LED_CODE;
+			kbdout.buf[kbdout.offset+kbdout.avail+1] = b;
+			kbdout.avail += 2;
+		}
+		if (!kbdout.expect_ack)
+			kbd_send();
+
+		return OK;
+
+	case KIOCBELL:
+		r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &bell,
+		    sizeof(bell));
+		if (r != OK)
+			return r;
+
+		ticks = bell.kb_duration.tv_usec * system_hz / 1000000;
+		ticks += bell.kb_duration.tv_sec * system_hz;
+		if (!ticks)
+			ticks++;
+		beep_x(bell.kb_pitch, ticks);
+
+		return OK;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+/*===========================================================================*
+ *				kbd_cancel				     *
+ *===========================================================================*/
+static int
+kbd_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
+{
+	struct kbd *kbdp;
+
+	if ((kbdp = line2kbd(minor)) == NULL)
+		return ENXIO;
+
+	if (kbdp->req_size > 0 && endpt == kbdp->req_caller &&
+	    id == kbdp->req_id)
+		return EINTR;
+
+	return EDONTREPLY;
+}
+
+/*===========================================================================*
+ *				kbd_select				     *
+ *===========================================================================*/
+static int
+kbd_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
+{
+	struct kbd *kbdp;
+	int watch, ready_ops;
+
+	if ((kbdp = line2kbd(minor)) == NULL)
+		return ENXIO;
+
+	watch = (ops & CDEV_NOTIFY);
+	ops &= (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
+
+	ready_ops = 0;
+	if (kbdp->avail && (ops & CDEV_OP_RD))
+		ready_ops |= CDEV_OP_RD;
+	if (ops & SEL_WR)
+		ready_ops |= CDEV_OP_WR;	/* writes never block */
+
+	ops &= ~ready_ops;
+	if (ops && watch) {
+		kbdp->select_ops |= ops;
+		kbdp->select_proc = endpt;
+	}
+
+	return ready_ops;
 }
 
 /*===========================================================================*
  *				do_kbd					     *
  *===========================================================================*/
-void do_kbd(message *m)
+void
+do_kbd(message *m, int ipc_status)
 {
-	handle_req(&kbd, m);
+	chardriver_process(&kbd_tab, m, ipc_status);
 }
-
-
-/*===========================================================================*
- *				kbd_status				     *
- *===========================================================================*/
-int kbd_status(message *m)
-{
-	int r;
-
-	r= handle_status(&kbd, m);
-	if (r)
-		return r;
-	return handle_status(&kbdaux, m);
-}
-
-
-/*===========================================================================*
- *				do_kbdaux				     *
- *===========================================================================*/
-void do_kbdaux(message *m)
-{
-	handle_req(&kbdaux, m);
-}
-
-
-/*===========================================================================*
- *				handle_req				     *
- *===========================================================================*/
-static void handle_req(kbdp, m)
-struct kbd *kbdp;
-message *m;
-{
-	int i, n, r, ops, watch;
-	unsigned char c;
-
-	/* Execute the requested device driver function. */
-	r= EINVAL;	/* just in case */
-	switch (m->m_type) {
-	    case DEV_OPEN:
-		kbdp->nr_open++;
-		r= OK;
-		break;
-	    case DEV_CLOSE:
-		kbdp->nr_open--;
-		if (kbdp->nr_open < 0)
-		{
-			printf("TTY(kbd): open count is negative\n");
-			kbdp->nr_open= 0;
-		}
-		if (kbdp->nr_open == 0)
-			kbdp->avail= 0;
-		r= OK;
-		break;
-	    case DEV_READ_S:
-		if (kbdp->req_size)
-		{
-			/* We handle only request at a time */
-			r= EIO;
-			break;
-		}
-		if (kbdp->avail == 0)
-		{
-			/* Should record proc */
-			kbdp->req_size= m->COUNT;
-			kbdp->req_proc= m->USER_ENDPT;
-			kbdp->req_grant= (cp_grant_id_t) m->IO_GRANT;
-			kbdp->req_addr_offset= 0;
-			kbdp->incaller= m->m_source;
-			r= SUSPEND;
-			break;
-		}
-
-		/* Handle read request */
-		n= kbdp->avail;
-		if (n > m->COUNT)
-			n= m->COUNT;
-		if (kbdp->offset + n > KBD_BUFSZ)
-			n= KBD_BUFSZ-kbdp->offset;
-		if (n <= 0)
-			panic("do_kbd(READ): bad n: %d", n);
-		r= sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT, 0, 
-			(vir_bytes) &kbdp->buf[kbdp->offset], n);
-		if (r == OK)
-		{
-			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
-			kbdp->avail -= n;
-			r= n;
-		} else {
-			printf("copy in read kbd failed: %d\n", r);
-		}
-
-		break;
-
-	    case DEV_WRITE_S:
-		if (kbdp != &kbdaux)
-		{
-			printf("write to keyboard not implemented\n");
-			r= EINVAL;
-			break;
-		}
-
-		/* Assume that output to AUX only happens during
-		 * initialization and we can afford to lose input. This should
-		 * be fixed at a later time.
-		 */
-		for (i= 0; i<m->COUNT; i++)
-		{
-			r= sys_safecopyfrom(m->m_source, (cp_grant_id_t)
-				m->IO_GRANT, i, (vir_bytes) &c, 1);
-			if (r != OK)
-				break;
-			kbc_cmd1(KBC_WRITE_AUX, c);
-		}
-		r= i;
-		break;
-
-	    case CANCEL:
-		kbdp->req_size= 0;
-		r= OK;
-		break;
-	    case DEV_SELECT:
-		ops = m->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
-		watch = (m->USER_ENDPT & SEL_NOTIFY) ? 1 : 0;
-		
-		r= 0;
-		if (kbdp->avail && (ops & SEL_RD))
-		{
-			r |= SEL_RD;
-			break;
-		}
-
-		if (ops && watch)
-		{
-			kbdp->select_ops |= ops;
-			kbdp->select_proc= m->m_source;
-		}
-		break;
-	    case DEV_IOCTL_S:
-		if (kbdp == &kbd && m->TTY_REQUEST == KIOCSLEDS)
-		{
-			kio_leds_t leds;
-			unsigned char b;
-
-			
-			r= sys_safecopyfrom(m->m_source, (cp_grant_id_t)
-				m->IO_GRANT, 0, (vir_bytes) &leds,
-				sizeof(leds));
-			if (r != OK)
-				break;
-			b= 0;
-			if (leds.kl_bits & KBD_LEDS_NUM) b |= NUM_LOCK;
-			if (leds.kl_bits & KBD_LEDS_CAPS) b |= CAPS_LOCK;
-			if (leds.kl_bits & KBD_LEDS_SCROLL) b |= SCROLL_LOCK;
-			if (kbdout.avail == 0)
-				kbdout.offset= 0;
-			if (kbdout.offset + kbdout.avail + 2 > KBD_OUT_BUFSZ)
-			{
-				/* Output buffer is full. Ignore this command.
-				 * Reset ACK flag.
-				 */
-				kbdout.expect_ack= 0;
-			}
-			else
-			{
-				kbdout.buf[kbdout.offset+kbdout.avail]=
-					LED_CODE;
-				kbdout.buf[kbdout.offset+kbdout.avail+1]= b;
-				kbdout.avail += 2;
-			 }
-			 if (!kbdout.expect_ack)
-				kbd_send();
-			 r= OK;
-			 break;
-		}
-		if (kbdp == &kbd && m->TTY_REQUEST == KIOCBELL)
-		{
-			kio_bell_t bell;
-			clock_t ticks;
-
-			r = sys_safecopyfrom(m->m_source, (cp_grant_id_t)
-				m->IO_GRANT, 0, (vir_bytes) &bell,
-				sizeof(bell));
-			if (r != OK)
-				break;
-
-			ticks= bell.kb_duration.tv_usec * system_hz / 1000000;
-			ticks += bell.kb_duration.tv_sec * system_hz;
-			if (!ticks)
-				ticks++;
-			beep_x(bell.kb_pitch, ticks);
-
-			r= OK;
-			break;
-		}
-		r= ENOTTY;
-		break;
-
-	    default:		
-		printf("Warning, TTY(kbd) got unexpected request %d from %d\n",
-			m->m_type, m->m_source);
-		r= EINVAL;
-	}
-	tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
-}
-
-
-/*===========================================================================*
- *				handle_status				     *
- *===========================================================================*/
-static int handle_status(kbdp, m)
-struct kbd *kbdp;
-message *m;
-{
-	int n, r;
-
-	if (kbdp->avail && kbdp->req_size && m->m_source == kbdp->incaller &&
-	    kbdp->req_grant != GRANT_INVALID)
-	{
-		/* Handle read request */
-		n= kbdp->avail;
-		if (n > kbdp->req_size)
-			n= kbdp->req_size;
-		if (kbdp->offset + n > KBD_BUFSZ)
-			n= KBD_BUFSZ-kbdp->offset;
-		if (n <= 0)
-			panic("kbd_status: bad n: %d", n);
-		kbdp->req_size= 0;
-		r= sys_safecopyto(kbdp->incaller, kbdp->req_grant, 0,
-			(vir_bytes)&kbdp->buf[kbdp->offset], n);
-		if (r == OK)
-		{
-			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
-			kbdp->avail -= n;
-			r= n;
-		} else printf("copy in revive kbd failed: %d\n", r);
-
-		m->m_type = DEV_REVIVE;
-  		m->REP_ENDPT= kbdp->req_proc;
-  		m->REP_IO_GRANT= kbdp->req_grant;
-  		m->REP_STATUS= r;
-		kbdp->req_grant = GRANT_INVALID;
-		return 1;
-	}
-	if (kbdp->avail && (kbdp->select_ops & SEL_RD) &&
-		m->m_source == kbdp->select_proc)
-	{
-		m->m_type = DEV_IO_READY;
-		m->DEV_MINOR = kbdp->minor;
-		m->DEV_SEL_OPS = SEL_RD;
-
-		kbdp->select_ops &= ~SEL_RD;
-		return 1;
-	}
-
-	return 0;
-}
-
 
 /*===========================================================================*
  *				map_key					     *
@@ -486,7 +491,7 @@ int scode;
 void kbd_interrupt(message *UNUSED(m_ptr))
 {
 /* A keyboard interrupt has occurred.  Process it. */
-  int o, isaux;
+  int n, r, o, isaux;
   unsigned char scode;
   struct kbd *kbdp;
 
@@ -512,15 +517,38 @@ void kbd_interrupt(message *UNUSED(m_ptr))
 #endif
 		return;	/* Buffer is full */
 	}
-	 o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
-	 kbdp->buf[o]= scode;
-	 kbdp->avail++;
-	 if (kbdp->req_size) {
-		notify(kbdp->incaller);
-	 }
-	 if (kbdp->select_ops & SEL_RD)
-		notify(kbdp->select_proc);
-	 return;
+	o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
+	kbdp->buf[o]= scode;
+	kbdp->avail++;
+	if (kbdp->req_size) {
+		/* Reply to read request */
+		n= kbdp->avail;
+		if (n > kbdp->req_size)
+			n= kbdp->req_size;
+		if (kbdp->offset + n > KBD_BUFSZ)
+			n= KBD_BUFSZ-kbdp->offset;
+		if (n <= 0)
+			panic("kbd_interrupt: bad n: %d", n);
+		kbdp->req_size= 0;
+		r= sys_safecopyto(kbdp->req_caller, kbdp->req_grant, 0,
+			(vir_bytes)&kbdp->buf[kbdp->offset], n);
+		if (r == OK)
+		{
+			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
+			kbdp->avail -= n;
+			r= n;
+		} else printf("copy in revive kbd failed: %d\n", r);
+
+		chardriver_reply_task(kbdp->req_caller, kbdp->req_id, r);
+		kbdp->req_caller = NONE;
+	}
+	/* Only satisfy pending select if characters weren't just read. */
+	if (kbdp->avail && (kbdp->select_ops & CDEV_OP_RD)) {
+		chardriver_reply_select(kbdp->select_proc, kbdp->minor,
+			CDEV_OP_RD);
+		kbdp->select_ops &= ~CDEV_OP_RD;
+	}
+	return;
   }
 
   /* Store the scancode in memory so the task can get at it later. */
@@ -529,7 +557,7 @@ void kbd_interrupt(message *UNUSED(m_ptr))
 	if (ihead == ibuf + KB_IN_BYTES) ihead = ibuf;
 	icount++;
 	tty_table[ccurrent].tty_events = 1;
-	if (tty_table[ccurrent].tty_select_ops & SEL_RD) {
+	if (tty_table[ccurrent].tty_select_ops & CDEV_OP_RD) {
 		select_retry(&tty_table[ccurrent]);
 	}
   }
@@ -553,7 +581,7 @@ void do_kb_inject(message *msg)
 			if (injhead == injbuf + KB_IN_BYTES) injhead = injbuf;
 			injcount++;
 			tty_table[ccurrent].tty_events = 1;
-			if (tty_table[ccurrent].tty_select_ops & SEL_RD) {
+			if (tty_table[ccurrent].tty_select_ops & CDEV_OP_RD) {
 				select_retry(&tty_table[ccurrent]);
 			}
 		}
@@ -1055,12 +1083,10 @@ void kb_init_once(void)
 /*===========================================================================*
  *				kbd_loadmap				     *
  *===========================================================================*/
-int kbd_loadmap(m)
-message *m;
+int kbd_loadmap(endpoint_t endpt, cp_grant_id_t grant)
 {
 /* Load a new keymap. */
-  return sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT,
-	0, (vir_bytes) keymap, (vir_bytes) sizeof(keymap));
+  return sys_safecopyfrom(endpt, grant, 0, (vir_bytes) keymap, sizeof(keymap));
 }
 
 /*===========================================================================*

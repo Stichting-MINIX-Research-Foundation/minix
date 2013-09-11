@@ -194,7 +194,6 @@
 #define MAX_SECS	 256	/* controller can transfer this many sectors */
 #define MAX_ERRORS         4	/* how often to try rd/wt before quitting */
 #define NR_MINORS       (MAX_DRIVES * DEV_PER_DRIVE)
-#define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 #define DELAY_USECS     1000	/* controller timeout in microseconds */
 #define DELAY_TICKS 	   1	/* controller timeout in ticks */

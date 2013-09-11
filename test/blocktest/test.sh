@@ -22,15 +22,17 @@
 #              on other partitions and possibly other disks) WILL BE DESTROYED.
 #              Use "ro" for read-only mediums, such as CD-ROMs.
 # sector       Sector size, in bytes. This should be 512 for ATA devices, and
-#              2048 for ATAPI devices.
-# min_read     Minimum size of a read request. This must be at least 2 and at
+#              2048 for ATAPI devices. The default is 512.
+# min_read     Minimum size of a read request. This must be at least 1 and at
 #              most the sector size, and the sector size must be divisible by
 #              it. A value other than the sector size allows blocktest to test
-#              sub-sector reads. Sub-sector writes are currently not supported
-#              by any driver and hence not by blocktest, so there is no
-#              matching "min_write" (yet).
+#              sub-sector reads.
+# min_write    Minimum size of a write request. This must be at least 1 and at
+#              most the sector size. Sub-sector write support is not common in
+#              drivers, and therefore not yet well tested by blocktest. This
+#              parameter is optional; if omitted, the sector size is used.
 # element      Minimum size of a vector element within a larger I/O request.
-#              This must be at least 2 and at most min_read, and min_read must
+#              This must be at least 1 and at most min_read, and min_read must
 #              be divisible by this value. The idea is that several small
 #              elements may add up to the minimum read size.
 # max          Maximum size of any request. This should be a multiple of the
