@@ -1139,13 +1139,16 @@ void pt_init(void)
 #endif
 			if(flags & VMMF_WRITE)
 				kern_mappings[pindex].flags |= ARCH_VM_PTE_RW;
+#if defined(__arm__)
+			else 
+				kern_mappings[pindex].flags |= ARCH_VM_PTE_RO;
+#endif
+
 #if defined(__i386__)
 			if(flags & VMMF_GLO)
 				kern_mappings[pindex].flags |= I386_VM_GLOBAL;
-#elif defined(__arm__)
-			else
-				kern_mappings[pindex].flags |= ARCH_VM_PTE_RO;
 #endif
+
 			if(addr % VM_PAGE_SIZE)
                 		panic("VM: addr unaligned: %lu", addr);
 			if(len % VM_PAGE_SIZE)
