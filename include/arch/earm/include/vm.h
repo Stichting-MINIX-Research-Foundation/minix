@@ -48,6 +48,8 @@ arm/vm.h
 #define ARM_VM_PTE_WB		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX0 | ARM_VM_PTE_B)
 /* inner and outer write-through, no write-allocate */
 #define ARM_VM_PTE_WT		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX1 | ARM_VM_PTE_C)
+
+#define ARM_VM_PTE_CACHED ARM_VM_PTE_WT
 /* shareable device */
 #define ARM_VM_PTE_DEVICE	(ARM_VM_PTE_B)
 
@@ -75,6 +77,8 @@ arm/vm.h
 /* inner and outer write-through, no write-allocate */
 #define ARM_VM_SECTION_WT	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX1 | ARM_VM_SECTION_C)
 /* shareable device */
+
+#define ARM_VM_SECTION_CACHED ARM_VM_SECTION_WT
 #define ARM_VM_SECTION_DEVICE	(ARM_VM_SECTION_B)
 
 /* Page directory specific flags. */
