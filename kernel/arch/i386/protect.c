@@ -3,16 +3,17 @@
  * for local descriptors in the process table.
  */
 
-#include <string.h>
 #include <assert.h>
+#include <string.h>
+
 #include <minix/cpufeature.h>
 #include <machine/multiboot.h>
-
 #include "kernel/kernel.h"
-#include "archconst.h"
 
+#include "archconst.h"
 #include "arch_proto.h"
 
+#include <sys/exec.h>
 #include <libexec.h>
 
 #define INT_GATE_TYPE	(INT_286_GATE | DESC_386_BIT)
@@ -388,6 +389,8 @@ static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, size_t len
 void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 {
 	multiboot_module_t *mod;
+	struct ps_strings *psp;
+	char *sp;
 
 	if(rp->p_nr < 0) return;
 
@@ -404,7 +407,7 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 
 		/* exec parameters */
 		execi.stack_high = kinfo.user_sp;
-		execi.stack_size = 64 * 1024;   /* not too crazy as it must be preallocated */
+		execi.stack_size = 64 * 1024;	/* not too crazy as it must be preallocated */
 		execi.proc_e = ip->endpoint;
 		execi.hdr = (char *) mod->mod_start; /* phys mem direct */
 		execi.filesize = execi.hdr_len = mod->mod_end - mod->mod_start;
@@ -423,14 +426,30 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		if(libexec_load_elf(&execi) != OK)
 			panic("VM loading failed");
 
-	        /* Initialize the server stack pointer. Take it down three words
-		 * to give startup code something to use as "argc", "argv" and "envp".
+		/* Setup a ps_strings struct on the stack, pointing to the
+		 * following argv, envp. */
+		sp = (char *)execi.stack_high;
+		sp -= sizeof(struct ps_strings);
+		psp = (struct ps_strings *) sp;
+
+		/* Take the stack pointer down three words to give startup code
+		 * something to use as "argc", "argv" and "envp".
 		 */
-		arch_proc_init(rp, execi.pc, kinfo.user_sp - 3*4, ip->proc_name);
+		sp -= (sizeof(void *) + sizeof(void *) + sizeof(int));
+
+		// linear address space, so it is available.
+		psp->ps_argvstr = (char **)(sp + sizeof(int));
+		psp->ps_nargvstr = 0;
+		psp->ps_envstr = psp->ps_argvstr + sizeof(void *);
+		psp->ps_nenvstr = 0;
+
+		arch_proc_init(rp, execi.pc, (vir_bytes)sp,
+			execi.stack_high - sizeof(struct ps_strings),
+			ip->proc_name);
 
 		/* Free VM blob that was just copied into existence. */
 		add_memmap(&kinfo, mod->mod_start, mod->mod_end-mod->mod_start);
-                mod->mod_end = mod->mod_start = 0;
+		mod->mod_end = mod->mod_start = 0;
 
 		/* Remember them */
 		kinfo.vm_allocated_bytes = alloc_for_vm;

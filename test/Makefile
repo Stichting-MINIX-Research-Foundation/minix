@@ -61,12 +61,6 @@ MINIX_TESTS+= \
    62
 .endif #  ${MACHINE_ARCH} == "i386"
 
-.if ${MACHINE_ARCH} == "earm"
-# LSC Not yet supported on ARM
-MKPIC:=		no
-LDSTATIC:=	-static
-.endif
-
 .for t in ${MINIX_TESTS}
 PROGS+= test${t}
 .endfor

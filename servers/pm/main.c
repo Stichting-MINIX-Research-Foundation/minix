@@ -434,7 +434,7 @@ static void handle_vfs_reply()
 
   case PM_EXEC_REPLY:
 	exec_restart(rmp, m_in.PM_STATUS, (vir_bytes)m_in.PM_PC,
-		(vir_bytes)m_in.PM_NEWSP);
+		(vir_bytes)m_in.PM_NEWSP, (vir_bytes)m_in.PM_NEWPS_STR);
 
 	break;
 

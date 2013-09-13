@@ -78,7 +78,8 @@ void write_elf_core_file(struct filp *f, int csig, char *exe_name);
 
 /* exec.c */
 int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len, vir_bytes frame,
-	size_t frame_len, vir_bytes *pc, vir_bytes *newsp, int flags);
+	size_t frame_len, vir_bytes *pc, vir_bytes *newsp, vir_bytes *ps_str,
+	int flags);
 
 /* filedes.c */
 void *do_filp_gc(void *arg);

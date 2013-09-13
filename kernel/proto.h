@@ -192,7 +192,7 @@ void do_ser_debug(void);
 int arch_get_params(char *parm, int max);
 void memory_init(void);
 void mem_clear_mapcache(void);
-void arch_proc_init(struct proc *pr, u32_t, u32_t, char *);
+void arch_proc_init(struct proc *pr, u32_t, u32_t, u32_t, char *);
 int arch_do_vmctl(message *m_ptr, struct proc *p);
 int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf,
 	size_t count);

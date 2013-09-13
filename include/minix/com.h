@@ -549,6 +549,7 @@
 #define PR_STACK_PTR    m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
 #define PR_NAME_PTR     m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
+#define PR_PS_STR_PTR   m1_p4	/* pointer to ps_strings, expected by __start */
 #define PR_FORK_FLAGS	m1_i3	/* optional flags for fork operation */
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
 #define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
@@ -557,9 +558,7 @@
 #define PMEXEC_FLAGS	m1_i3	/* PMEF_* */
 
 #define PMEF_AUXVECTORS	20
-#define PMEF_EXECNAMELEN1 256
-#define PMEF_AUXVECTORSPACE 0x01 /* space for PMEF_AUXVECTORS on stack */
-#define PMEF_EXECNAMESPACE1 0x02 /* space for PMEF_EXECNAMELEN1 execname */
+#define PMEF_EXECNAMELEN1 PATH_MAX
 
 /* Flags for PR_FORK_FLAGS. */
 #define PFF_VMINHIBIT	0x01	/* Don't schedule until release by VM. */
@@ -811,11 +810,13 @@
 #  define PM_FRAME		m7_p2	/* arguments and environment */
 #  define PM_FRAME_LEN		m7_i3	/* size of frame */
 #  define PM_EXECFLAGS		m7_i4	/* PMEXEC_FLAGS */
+#  define PM_PS_STR		m7_i5	/* ps_strings pointer */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
 #  define PM_STATUS		m7_i2	/* OK or failure */
 #  define PM_PC			m7_p1	/* program counter */
 #  define PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
+#  define PM_NEWPS_STR		m7_i5	/* possibly-changed ps_strings ptr */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
 #  define PM_PPROC		m7_i2	/* parent process endpoint */
@@ -848,6 +849,7 @@
 #define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
 #define EXC_RS_RESULT	m1_i2		/* result of the exec */
 #define EXC_RS_PC	m1_p1		/* program counter */
+#define EXC_RS_PS_STR	m1_p2		/* ps_strings pointer */
 
 /*===========================================================================*
  *                Messages used from VFS to file servers		     *

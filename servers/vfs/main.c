@@ -845,24 +845,27 @@ static void service_pm_postponed(void)
     case PM_EXEC:
 	{
 		endpoint_t proc_e;
-		vir_bytes exec_path, stack_frame;
+		vir_bytes exec_path, stack_frame, ps_str;
 		size_t exec_path_len, stack_frame_len;
 
 		proc_e = job_m_in.PM_PROC;
-		exec_path = (vir_bytes) job_m_in.PM_PATH;
-		exec_path_len = (size_t) job_m_in.PM_PATH_LEN;
-		stack_frame = (vir_bytes) job_m_in.PM_FRAME;
-		stack_frame_len = (size_t) job_m_in.PM_FRAME_LEN;
+		exec_path = (vir_bytes)job_m_in.PM_PATH;
+		exec_path_len = (size_t)job_m_in.PM_PATH_LEN;
+		stack_frame = (vir_bytes)job_m_in.PM_FRAME;
+		stack_frame_len = (size_t)job_m_in.PM_FRAME_LEN;
+		ps_str = (vir_bytes)job_m_in.PM_PS_STR;
 
 		r = pm_exec(proc_e, exec_path, exec_path_len, stack_frame,
-			    stack_frame_len, &pc, &newsp, job_m_in.PM_EXECFLAGS);
+			    stack_frame_len, &pc, &newsp, &ps_str,
+			    job_m_in.PM_EXECFLAGS);
 
 		/* Reply status to PM */
 		m_out.m_type = PM_EXEC_REPLY;
 		m_out.PM_PROC = proc_e;
-		m_out.PM_PC = (void*) pc;
+		m_out.PM_PC = (void *)pc;
 		m_out.PM_STATUS = r;
-		m_out.PM_NEWSP = (void *) newsp;
+		m_out.PM_NEWSP = (void *)newsp;
+		m_out.PM_NEWPS_STR = ps_str;
 	}
 	break;
 
