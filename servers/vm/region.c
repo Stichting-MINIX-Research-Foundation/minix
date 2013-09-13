@@ -273,12 +273,12 @@ int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	else
 		flags |= PTF_READ;
 
+
+	if(vr->def_memtype->pt_flags)
+		flags |= vr->def_memtype->pt_flags(vr);
 #if  defined(__arm__)
-	if (pb->phys >= 0x80000000 && pb->phys < (0xc0000000 - VM_PAGE_SIZE)) {
-		// LSC Do this only for actual RAM
-		// KEJO:fishy will need to look into this 
+	else
 		flags |= ARM_VM_PTE_DEVICE;
-	}
 #endif
 
 	if(pt_writemap(vmp, &vmp->vm_pt, vr->vaddr + pr->offset,

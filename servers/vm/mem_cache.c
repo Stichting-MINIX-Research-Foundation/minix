@@ -31,6 +31,7 @@ static int cache_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static int cache_pagefault(struct vmproc *vmp, struct vir_region *region, 
         struct phys_region *ph, int write, vfs_callback_t cb, void *state,
 	int len, int *io);
+static int cache_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_cache = {
 	.name = "cache memory",
@@ -40,7 +41,17 @@ struct mem_type mem_type_cache = {
 	.ev_sanitycheck = cache_sanitycheck,
 	.ev_pagefault = cache_pagefault,
 	.writable = cache_writable,
+	.pt_flags = cache_pt_flags,
 };
+
+static int cache_pt_flags(struct vir_region *vr){
+#if defined(__arm__)
+	return ARM_VM_PTE_CACHED;
+#else
+	return 0;
+#endif
+}
+
 
 static int cache_reference(struct phys_region *pr, struct phys_region *pr2)
 {
