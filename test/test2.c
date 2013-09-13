@@ -318,10 +318,13 @@ void test2g()
 
   time_t t1, t2;
   clock_t t3, t4;
+  long clocks_per_sec;
   struct tms tmsbuf;
 
   subtest = 7;
   errno = -7000;
+
+  clocks_per_sec = sysconf(_SC_CLK_TCK);
 
   /* First time(). */
   t1 = -1;
@@ -341,7 +344,7 @@ void test2g()
   /* Now times(). */
   t4 = times(&tmsbuf);
   if ( t4 == (clock_t) -1) e(6);
-  if (t4 - t3 < CLOCKS_PER_SEC) e(7);
+  if (t4 - t3 < clocks_per_sec) e(7);
   if (tmsbuf.tms_utime < 0) e(8);
   if (tmsbuf.tms_stime < 0) e(9);
   if (tmsbuf.tms_cutime < 0) e(10);
