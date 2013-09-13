@@ -1131,6 +1131,9 @@ void pt_init(void)
 				kern_mappings[pindex].flags |= PTF_NOCACHE;
 #elif defined(__arm__)
 				kern_mappings[pindex].flags |= ARM_VM_PTE_DEVICE;
+			else {
+				kern_mappings[pindex].flags |= ARM_VM_PTE_CACHED;
+			}
 #endif
 			if(flags & VMMF_USER)
 				kern_mappings[pindex].flags |= ARCH_VM_PTE_USER;
