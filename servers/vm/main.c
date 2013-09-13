@@ -17,6 +17,8 @@
 #include <minix/bitmap.h>
 #include <minix/rs.h>
 
+#include <sys/exec.h>
+
 #include <libexec.h>
 #include <ctype.h>
 #include <errno.h>
@@ -41,6 +43,7 @@ extern int missing_spares;
 #include "kernel/proc.h"
 
 #include <signal.h>
+#include <lib.h>
 
 /* Table of calls and a macro to test for being in range. */
 struct {
@@ -214,13 +217,13 @@ struct vm_exec_info {
 };
 
 static int libexec_copy_physcopy(struct exec_info *execi,
-        off_t off, vir_bytes vaddr, size_t len)
+	off_t off, vir_bytes vaddr, size_t len)
 {
 	vir_bytes end;
 	struct vm_exec_info *ei = execi->opaque;
 	end = ei->ip->start_addr + ei->ip->len;
-        assert(ei->ip->start_addr + off + len <= end);
-        return sys_physcopy(NONE, ei->ip->start_addr + off,
+	assert(ei->ip->start_addr + off + len <= end);
+	return sys_physcopy(NONE, ei->ip->start_addr + off,
 		execi->proc_e, vaddr, len);
 }
 
@@ -256,6 +259,18 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 	struct exec_info *execi = &vmexeci.execi;
 	char hdr[VM_PAGE_SIZE];
 
+	size_t frame_size = 0;	/* Size of the new initial stack. */
+	int argc = 0;		/* Argument count. */
+	int envc = 0;		/* Environment count */
+	char overflow = 0;	/* No overflow yet. */
+	struct ps_strings *psp;
+
+	int vsp = 0;	/* (virtual) Stack pointer in new address space. */
+	char *argv[] = { ip->proc_name, NULL };
+	char *envp[] = { NULL };
+	char *path = ip->proc_name;
+	char frame[VM_PAGE_SIZE];
+
 	memset(&vmexeci, 0, sizeof(vmexeci));
 
 	if(pt_new(&vmp->vm_pt) != OK)
@@ -268,34 +283,55 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 		(vir_bytes) hdr, sizeof(hdr)) != OK)
 		panic("can't look at boot proc header");
 
-        execi->stack_high = kernel_boot_info.user_sp;
-        execi->stack_size = DEFAULT_STACK_LIMIT;
-        execi->proc_e = vmp->vm_endpoint;
-        execi->hdr = hdr;
-        execi->hdr_len = sizeof(hdr);
-        strlcpy(execi->progname, ip->proc_name, sizeof(execi->progname));
-        execi->frame_len = 0;
+	execi->stack_high = kernel_boot_info.user_sp;
+	execi->stack_size = DEFAULT_STACK_LIMIT;
+	execi->proc_e = vmp->vm_endpoint;
+	execi->hdr = hdr;
+	execi->hdr_len = sizeof(hdr);
+	strlcpy(execi->progname, ip->proc_name, sizeof(execi->progname));
+	execi->frame_len = 0;
 	execi->opaque = &vmexeci;
 	execi->filesize = ip->len;
 
 	vmexeci.ip = ip;
 	vmexeci.vmp = vmp;
 
-        /* callback functions and data */
-        execi->copymem = libexec_copy_physcopy;
-        execi->clearproc = NULL;
-        execi->clearmem = libexec_clear_sys_memset;
+	/* callback functions and data */
+	execi->copymem = libexec_copy_physcopy;
+	execi->clearproc = NULL;
+	execi->clearmem = libexec_clear_sys_memset;
 	execi->allocmem_prealloc_junk = libexec_alloc_vm_prealloc;
 	execi->allocmem_prealloc_cleared = libexec_alloc_vm_prealloc;
-        execi->allocmem_ondemand = libexec_alloc_vm_ondemand;
+	execi->allocmem_ondemand = libexec_alloc_vm_ondemand;
 
-	if(libexec_load_elf(execi) != OK)
+	if (libexec_load_elf(execi) != OK)
 		panic("vm: boot process load of process %s (ep=%d) failed\n", 
-			execi->progname,vmp->vm_endpoint);
+			execi->progname, vmp->vm_endpoint);
 
-        if(sys_exec(vmp->vm_endpoint, (char *) execi->stack_high - 12,
-		(char *) ip->proc_name, execi->pc) != OK)
-		panic("vm: boot process exec of process %s (ep=%d) failed\n", 
+	/* Setup a minimal stack. */
+	minix_stack_params(path, argv, envp, &frame_size, &overflow, &argc,
+		&envc);
+
+	/* The party is off if there is an overflow, or it is too big for our
+	 * pre-allocated space. */
+	if(overflow || frame_size > sizeof(frame))
+		panic("vm: could not alloc stack for boot process %s (ep=%d)\n",
+			execi->progname, vmp->vm_endpoint);
+
+	minix_stack_fill(path, argc, argv, envc, envp, frame_size, frame, &vsp,
+		&psp);
+
+	if(handle_memory(vmp, vsp, frame_size, 1, NULL, NULL, 0) != OK)
+		panic("vm: could not map stack for boot process %s (ep=%d)\n",
+			execi->progname, vmp->vm_endpoint);
+
+	if(sys_datacopy(SELF, (vir_bytes)frame, vmp->vm_endpoint, vsp, frame_size) != OK)
+		panic("vm: could not copy stack for boot process %s (ep=%d)\n",
+			execi->progname, vmp->vm_endpoint);
+
+	if(sys_exec(vmp->vm_endpoint, (char *)vsp, execi->progname, execi->pc,
+		vsp + ((int)psp - (int)frame)) != OK)
+		panic("vm: boot process exec of process %s (ep=%d) failed\n",
 			execi->progname,vmp->vm_endpoint);
 
 	/* make it runnable */
@@ -351,6 +387,11 @@ void init_vm(void)
 	/* Architecture-dependent initialization. */
 	init_proc(VM_PROC_NR);
 	pt_init();
+
+	/* Acquire kernel ipc vectors that weren't available
+	 * before VM had determined kernel mappings
+	 */
+	__minix_init();
 
 	/* The kernel's freelist does not include boot-time modules; let
 	 * the allocator know that the total memory is bigger.
@@ -450,15 +491,10 @@ void init_vm(void)
 
 	/* Initialize the structures for queryexit */
 	init_query_exit();
-
-	/* Acquire kernel ipc vectors that weren't available
-	 * before VM had determined kernel mappings
-	 */
-	__minix_init();
 }
 
 /*===========================================================================*
- *		            sef_cb_signal_handler                            *
+ *                         sef_cb_signal_handler                             *
  *===========================================================================*/
 static void sef_cb_signal_handler(int signo)
 {
@@ -482,7 +518,7 @@ static void sef_cb_signal_handler(int signo)
 }
 
 /*===========================================================================*
- *		               map_service                                   *
+ *                             map_service                                   *
  *===========================================================================*/
 static int map_service(struct rprocpub *rpub)
 {

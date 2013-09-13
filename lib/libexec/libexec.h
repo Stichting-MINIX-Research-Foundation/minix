@@ -55,7 +55,6 @@ struct exec_info {
 int elf_has_interpreter(char *exec_hdr, int hdr_len, char *interp, int maxsz);
 int elf_phdr(char *exec_hdr, int hdr_len, vir_bytes *phdr);
 
-void libexec_patch_ptr(char stack[ARG_MAX], vir_bytes base);
 int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *execi);
 
 typedef int (*libexec_exec_loadfunc_t)(struct exec_info *execi);

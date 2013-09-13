@@ -20,7 +20,8 @@ int do_brk(void);
 int do_exec(void);
 int do_newexec(void);
 int do_execrestart(void);
-void exec_restart(struct mproc *rmp, int result, vir_bytes pc, vir_bytes sp);
+void exec_restart(struct mproc *rmp, int result, vir_bytes pc, vir_bytes sp,
+	vir_bytes ps_str);
 
 /* forkexit.c */
 int do_fork(void);

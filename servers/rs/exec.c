@@ -1,14 +1,15 @@
 #include "inc.h"
 #include <assert.h>
+#include <sys/exec.h>
 #include <libexec.h>
+#include <minix/param.h>
 #include <machine/vmparam.h>
 
 static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
-	char *frame, int frame_len);
-static int exec_restart(int proc_e, int result, vir_bytes pc);
+	char *frame, int frame_len, vir_bytes ps_str);
+static int exec_restart(int proc_e, int result, vir_bytes pc, vir_bytes ps_str);
 static int read_seg(struct exec_info *execi, off_t off,
         vir_bytes seg_addr, size_t seg_bytes);
-static int exec_restart(int proc_e, int result, vir_bytes pc);
 
 /* Array of loaders for different object formats */
 static struct exec_loaders {
@@ -19,98 +20,51 @@ static struct exec_loaders {
 };
 
 int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
-	char **UNUSED(Xenvp))
+	char **envp)
 {
-	char * const *ap;
-	char * const *ep;
+	size_t frame_size = 0;	/* Size of the new initial stack. */
+	int argc = 0;		/* Argument count. */
+	int envc = 0;		/* Environment count */
+	char overflow = 0;	/* No overflow yet. */
 	char *frame;
-	char **vp;
-	char *sp, *progname;
-	size_t argc;
-	size_t frame_size;
-	size_t string_off;
-	size_t n;
-	int ov;
+	struct ps_strings *psp;
+	int vsp = 0;	/* (virtual) Stack pointer in new address space. */
+
+	char *progname;
 	int r;
 
-	/* Assumptions: size_t and char *, it's all the same thing. */
-
-	/* Create a stack image that only needs to be patched up slightly
-	 * by the kernel to be used for the process to be executed.
-	 */
-
-	ov= 0;			/* No overflow yet. */
-	frame_size= 0;		/* Size of the new initial stack. */
-	string_off= 0;		/* Offset to start of the strings. */
-	argc= 0;		/* Argument count. */
-
-	for (ap= argv; *ap != NULL; ap++) {
-		n = sizeof(*ap) + strlen(*ap) + 1;
-		frame_size+= n;
-		if (frame_size < n) ov= 1;
-		string_off+= sizeof(*ap);
-		argc++;
-	}
-
-	/* Add an argument count and two terminating nulls. */
-	frame_size+= sizeof(argc) + sizeof(*ap) + sizeof(*ep);
-	string_off+= sizeof(argc) + sizeof(*ap) + sizeof(*ep);
-
-	/* Align. */
-	frame_size= (frame_size + sizeof(char *) - 1) & ~(sizeof(char *) - 1);
+	minix_stack_params(argv[0], argv, envp, &frame_size, &overflow,
+		&argc, &envc);
 
 	/* The party is off if there is an overflow. */
-	if (ov || frame_size < 3 * sizeof(char *)) {
-		errno= E2BIG;
-		return -1;
-	}
-
-	/* Allocate space for the stack frame. */
-	frame = (char *) malloc(frame_size);
-	if (!frame) {
+	if (overflow) {
 		errno = E2BIG;
 		return -1;
 	}
 
-	/* Set arg count, init pointers to vector and string tables. */
-	* (size_t *) frame = argc;
-	vp = (char **) (frame + sizeof(argc));
-	sp = frame + string_off;
-
-	/* Load the argument vector and strings. */
-	for (ap= argv; *ap != NULL; ap++) {
-		*vp++= (char *) (sp - frame);
-		n= strlen(*ap) + 1;
-		memcpy(sp, *ap, n);
-		sp+= n;
+	/* Allocate space for the stack frame. */
+	if ((frame = (char *) sbrk(frame_size)) == (char *) -1) {
+		errno = E2BIG;
+		return -1;
 	}
-	*vp++= NULL;
 
-#if 0
-	/* Load the environment vector and strings. */
-	for (ep= envp; *ep != NULL; ep++) {
-		*vp++= (char *) (sp - frame);
-		n= strlen(*ep) + 1;
-		memcpy(sp, *ep, n);
-		sp+= n;
-	}
-#endif
-	*vp++= NULL;
-
-	/* Padding. */
-	while (sp < frame + frame_size) *sp++= 0;
+	minix_stack_fill(argv[0], argc, argv, envc, envp, frame_size, frame,
+		&vsp, &psp);
 
 	(progname=strrchr(argv[0], '/')) ? progname++ : (progname=argv[0]);
-	r = do_exec(proc_e, exec, exec_len, progname, frame, frame_size);
 
-	/* Return the memory used for the frame and exit. */
-	free(frame);
+	r = do_exec(proc_e, exec, exec_len, progname, frame, frame_size,
+		vsp + ((char *)psp - frame));
+
+	/* Failure, return the memory used for the frame and exit. */
+	(void) sbrk(-frame_size);
+
 	return r;
 }
 
 
 static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
-	char *frame, int frame_len)
+	char *frame, int frame_len, vir_bytes ps_str)
 {
 	int r;
 	vir_bytes vsp;
@@ -153,35 +107,36 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 		return r;
 
 	/* Patch up stack and copy it from RS to new core image. */
-	vsp = execi.stack_high;
-	vsp -= frame_len;
-	libexec_patch_ptr(frame, vsp);
+	vsp = execi.stack_high - frame_len;
 	r = sys_datacopy(SELF, (vir_bytes) frame,
 		proc_e, (vir_bytes) vsp, (phys_bytes)frame_len);
 	if (r != OK) {
 		printf("do_exec: copying out new stack failed: %d\n", r);
-		exec_restart(proc_e, r, execi.pc);
+		exec_restart(proc_e, r, execi.pc, ps_str);
 		return r;
 	}
 
-	return exec_restart(proc_e, OK, execi.pc);
+	return exec_restart(proc_e, OK, execi.pc, ps_str);
 }
 
 /*===========================================================================*
  *				exec_restart				     *
  *===========================================================================*/
-static int exec_restart(int proc_e, int result, vir_bytes pc)
+static int exec_restart(int proc_e, int result, vir_bytes pc, vir_bytes ps_str)
 {
 	int r;
 	message m;
 
-	m.m_type= EXEC_RESTART;
-	m.EXC_RS_PROC= proc_e;
-	m.EXC_RS_RESULT= result;
-	m.EXC_RS_PC= (void*)pc;
-	r= sendrec(PM_PROC_NR, &m);
+	m.m_type = EXEC_RESTART;
+	m.EXC_RS_PROC = proc_e;
+	m.EXC_RS_RESULT = result;
+	m.EXC_RS_PC = (void *)pc;
+	m.EXC_RS_PS_STR = (void *)ps_str;
+
+	r = sendrec(PM_PROC_NR, &m);
 	if (r != OK)
 		return r;
+
 	return m.m_type;
 }
 

@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <sys/exec.h>
 #include <sys/param.h>
 #include "fproc.h"
 #include "path.h"
@@ -56,13 +57,13 @@ struct vfs_exec_info {
 static void lock_exec(void);
 static void unlock_exec(void);
 static int patch_stack(struct vnode *vp, char stack[ARG_MAX],
-	size_t *stk_bytes, char path[PATH_MAX]);
+	size_t *stk_bytes, char path[PATH_MAX], vir_bytes *vsp);
 static int is_script(struct vfs_exec_info *execi);
 static int insert_arg(char stack[ARG_MAX], size_t *stk_bytes, char *arg,
-	int replace);
+	vir_bytes *vsp, char replace);
 static void clo_exec(struct fproc *rfp);
 static int stack_prepare_elf(struct vfs_exec_info *execi,
-	char *curstack, size_t *frame_len, vir_bytes *vsp, int *extrabase);
+	char *curstack, size_t *frame_len, vir_bytes *vsp);
 static int map_header(struct vfs_exec_info *execi);
 static int read_seg(struct exec_info *execi, off_t off, vir_bytes seg_addr, size_t seg_bytes);
 
@@ -71,7 +72,7 @@ static int read_seg(struct exec_info *execi, off_t off, vir_bytes seg_addr, size
 /* Array of loaders for different object file formats */
 typedef int (*exechook_t)(struct vfs_exec_info *execpackage);
 typedef int (*stackhook_t)(struct vfs_exec_info *execi, char *curstack,
-	size_t *frame_len, vir_bytes *, int *extrabase);
+	size_t *frame_len, vir_bytes *vsp);
 struct exec_loaders {
 	libexec_exec_loadfunc_t load_object;	 /* load executable into memory */
 	stackhook_t setup_stack; /* prepare stack before argc and argv push */
@@ -214,16 +215,19 @@ static int vfs_memmap(struct exec_info *execi,
  *===========================================================================*/
 int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 		   vir_bytes frame, size_t frame_len, vir_bytes *pc,
-		   vir_bytes *newsp, int user_exec_flags)
+		   vir_bytes *newsp, vir_bytes *UNUSED(ps_str), int user_exec_flags)
+		   //vir_bytes *newsp, vir_bytes *ps_str, int user_exec_flags)
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside VFS, and then to the new core image.
+ *
+ * ps_str is not currently used, but may be if the ps_strings structure has to
+ * be moved to another location.
  */
   int r, slot;
   vir_bytes vsp;
   struct fproc *rfp;
-  int extrabase = 0;
   static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
   struct vfs_exec_info execi;
   int i;
@@ -234,8 +238,6 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   struct lookup resolve;
   struct fproc *vmfp = &fproc[VM_PROC_NR];
   stackhook_t makestack = NULL;
-  static int n;
-  n++;
   struct filp *newfilp = NULL;
 
   lock_exec();
@@ -271,6 +273,10 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	FAILCHECK(r);
   }
 
+  /* Compute the current virtual stack pointer, has to be done before calling
+   * patch_stack, which needs it, and will adapt as required. */
+  vsp = execi.args.stack_high - frame_len;
+
   /* The default is to keep the original user and group IDs */
   execi.args.new_uid = rfp->fp_effuid;
   execi.args.new_gid = rfp->fp_effgid;
@@ -297,7 +303,8 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	 * name into fullpath.
 	 */
 	FAILCHECK(fetch_name(path, path_len, fullpath));
-	FAILCHECK(patch_stack(execi.vp, mbuf, &frame_len, fullpath));
+	FAILCHECK(patch_stack(execi.vp, mbuf, &frame_len, fullpath, &vsp));
+
 	strlcpy(finalexec, fullpath, PATH_MAX);
   	strlcpy(firstexec, fullpath, PATH_MAX);
 	Get_read_vp(execi, fullpath, 1, 0, &resolve, fp);
@@ -324,8 +331,10 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 
 	/* ld.so is linked at 0, but it can relocate itself; we
 	 * want it higher to trap NULL pointer dereferences. 
+	 * Let's put it below the stack, and reserve 10MB for ld.so.
 	 */
-	execi.args.load_offset = 0x10000;
+	execi.args.load_offset =
+		 execi.args.stack_high - execi.args.stack_size - 0xa00000;
 
 	/* Remember it */
 	strlcpy(execi.execname, finalexec, PATH_MAX);
@@ -389,11 +398,9 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   *pc = execi.args.pc;
 
   /* call a stack-setup function if this executable type wants it */
-  vsp = execi.args.stack_high - frame_len;
-  if(makestack) FAILCHECK(makestack(&execi, mbuf, &frame_len, &vsp, &extrabase));
+  if(makestack) FAILCHECK(makestack(&execi, mbuf, &frame_len, &vsp));
 
-  /* Patch up stack and copy it from VFS to new core image. */
-  libexec_patch_ptr(mbuf, vsp + extrabase);
+  /* Copy the stack from VFS to new core image. */
   FAILCHECK(sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
 		   (phys_bytes)frame_len));
 
@@ -433,101 +440,117 @@ pm_execfinal:
   return(r);
 }
 
-static int stack_prepare_elf(struct vfs_exec_info *execi, char *frame, size_t *framelen,
-	vir_bytes *newsp, int *extrabase)
-{
-	AuxInfo *a, *term;
-	Elf_Ehdr *elf_header;
-	int nulls;
-	char	**mysp = (char **) frame,
-		**mysp_end = (char **) ((char *)frame + *framelen);
+/* This is a copy-paste of the same macro in libc/sys-minix/stack_utils.c. Keep it
+ * synchronized. */
+#define STACK_MIN_SZ \
+( \
+       sizeof(int) + sizeof(void *) * 2 + \
+       sizeof(AuxInfo) * PMEF_AUXVECTORS + PMEF_EXECNAMELEN1 + \
+       sizeof(struct ps_strings) \
+)
 
-	if(!execi->is_dyn)
+static int stack_prepare_elf(struct vfs_exec_info *execi, char *frame, size_t *frame_size,
+	vir_bytes *vsp)
+{
+	AuxInfo *aux_vec, *aux_vec_end;
+	vir_bytes vap; /* Address in proc space of the first AuxVec. */
+	Elf_Ehdr const * const elf_header = (Elf_Ehdr *) execi->args.hdr;
+	struct ps_strings const * const psp = (struct ps_strings *)
+		(frame + (*frame_size - sizeof(struct ps_strings)));
+
+	size_t const execname_len = strlen(execi->execname);
+
+	if (!execi->is_dyn)
 		return OK;
 
-	assert(execi->args.hdr_len >= sizeof(*elf_header));
-	elf_header = (Elf_Ehdr *) execi->args.hdr;
+	if (execi->args.hdr_len < sizeof(*elf_header)) {
+		printf("VFS: malformed ELF headers for exec\n");
+		return ENOEXEC;
+	}
 
-	/* exec() promises stack space. Now find it. */
-	mysp++;	/* skip argc */
+	if (*frame_size < STACK_MIN_SZ) {
+		printf("VFS: malformed stack for exec(), smaller than minimum"
+			" possible size.\n");
+		return ENOEXEC;
+	}
 
-	/* find a terminating NULL entry twice: one for argv[], one for envp[]. */
-	for(nulls = 0; nulls < 2; nulls++) {
-		assert(mysp < mysp_end);
-		while(*mysp && mysp < mysp_end) mysp++;	/* find terminating NULL */
-		if(mysp >= mysp_end) {
-			printf("VFS: malformed stack for exec()\n");
-			return ENOEXEC;
-		}
-		assert(!*mysp);
-		mysp++;
+	/* Find first Aux vector in the stack frame. */ 
+	vap = (vir_bytes)(psp->ps_envstr + (psp->ps_nenvstr + 1));
+	aux_vec = (AuxInfo *) (frame + (vap - *vsp));
+	aux_vec_end = aux_vec + PMEF_AUXVECTORS;
+
+	if (((char *)aux_vec < frame) || 
+		((char *)aux_vec > (frame + *frame_size))) {
+		printf("VFS: malformed stack for exec(), first AuxVector is"
+		       " not on the stack.\n");
+		return ENOEXEC;
+	}
+
+	if (((char *)aux_vec_end < frame) ||
+		((char *)aux_vec_end > (frame + *frame_size))) {
+		printf("VFS: malformed stack for exec(), last AuxVector is"
+		       " not on the stack.\n");
+		return ENOEXEC;
 	}
 
 	/* Userland provides a fully filled stack frame, with argc, argv, envp
-	 * and then all the argv and envp strings; consistent with ELF ABI, except
-	 * for a list of Aux vectors that should be between envp points and the
-	 * start of the strings.
+	 * and then all the argv and envp strings; consistent with ELF ABI,
+	 * except for a list of Aux vectors that should be between envp points
+	 * and the start of the strings.
 	 *
-	 * It would take some very unpleasant hackery to insert the aux vectors before
-	 * the strings, and correct all the pointers, so the exec code in libc makes
-	 * space for us first and indicates the fact it did this with this flag.
+	 * It would take some very unpleasant hackery to insert the aux vectors
+	 * before the strings, and correct all the pointers, so the exec code
+	 * in libc makes space for us.
 	 */
-	if(!(execi->userflags & PMEF_AUXVECTORSPACE)) {
-		char *f = (char *) mysp;
-		int remain;
-		vir_bytes extrabytes = sizeof(*a) * PMEF_AUXVECTORS;
-		
-		/* Create extrabytes more space */
-		remain = *framelen - (int)(f - frame);
-		if(*framelen + extrabytes >= ARG_MAX)
-			return ENOMEM;
-		*framelen += extrabytes;
-		*newsp -= extrabytes;
-		*extrabase += extrabytes;
-		memmove(f+extrabytes, f, remain);
-		memset(f, 0, extrabytes);
-	}
 
-	/* Ok, what mysp points to now we can use for the aux vectors. */
-	a = (AuxInfo *) mysp;
-#define AUXINFO(type, value) \
-	{ assert((char *) a < (char *) mysp_end); a->a_type = type; a->a_v = value; a++; }
+#define AUXINFO(a, type, value) \
+	do { \
+		if (a < aux_vec_end) { \
+			a->a_type = type; \
+			a->a_v = value; \
+			a++; \
+		} else { \
+			printf("VFS: No more room for ELF AuxVec type %d, skipping it for %s\n", type, execi->execname); \
+			(aux_vec_end - 1)->a_type = AT_NULL; \
+			(aux_vec_end - 1)->a_v = 0; \
+		} \
+	} while(0)
+
+	AUXINFO(aux_vec, AT_BASE, execi->args.load_base);
+	AUXINFO(aux_vec, AT_ENTRY, execi->args.pc);
+	AUXINFO(aux_vec, AT_EXECFD, execi->elf_main_fd);
 #if 0
-	AUXINFO(AT_PHENT, elf_header->e_phentsize);
-	AUXINFO(AT_PHNUM, elf_header->e_phnum);
+	AUXINFO(aux_vec, AT_PHDR, XXX ); /* should be &phdr[0] */
+	AUXINFO(aux_vec, AT_PHENT, elf_header->e_phentsize);
+	AUXINFO(aux_vec, AT_PHNUM, elf_header->e_phnum);
+
+	AUXINFO(aux_vec, AT_RUID, XXX);
+	AUXINFO(aux_vec, AT_RGID, XXX);
 #endif
-	AUXINFO(AT_BASE, execi->args.load_base);
-	AUXINFO(AT_ENTRY, execi->args.pc);
-	AUXINFO(AT_PAGESZ, PAGE_SIZE);
-	AUXINFO(AT_EXECFD, execi->elf_main_fd);
+	AUXINFO(aux_vec, AT_EUID, execi->args.new_uid);
+	AUXINFO(aux_vec, AT_EGID, execi->args.new_gid);
+	AUXINFO(aux_vec, AT_PAGESZ, PAGE_SIZE);
 
-	/* This is where we add the AT_NULL */
-	term = a;
-
-	/* Always terminate with AT_NULL */
-	AUXINFO(AT_NULL, 0);
-
-	/* Empty space starts here, if any. */
-	if((execi->userflags & PMEF_EXECNAMESPACE1)
-	   && strlen(execi->execname) < PMEF_EXECNAMELEN1) {
+	if(execname_len < PMEF_EXECNAMELEN1) {
 		char *spacestart;
 		vir_bytes userp;
 
-		/* Make space for the real closing AT_NULL entry. */
-		AUXINFO(AT_NULL, 0);
-
-		/* Empty space starts here; we can put the name here. */
-		spacestart = (char *) a;
-		strlcpy(spacestart, execi->execname, PATH_MAX);
+		/* Empty space starts after aux_vec table; we can put the name
+		 * here. */
+		spacestart = (char *) aux_vec + 2 * sizeof(AuxInfo);
+		strlcpy(spacestart, execi->execname, PMEF_EXECNAMELEN1);
+		memset(spacestart + execname_len, '\0',
+			PMEF_EXECNAMELEN1 - execname_len);
 
 		/* What will the address of the string for the user be */
-		userp = *newsp + (spacestart-frame);
+		userp = *vsp + (spacestart - frame);
 
 		/* Move back to where the AT_NULL is */
-		a = term;
-		AUXINFO(AT_SUN_EXECNAME, userp);
-		AUXINFO(AT_NULL, 0);
+		AUXINFO(aux_vec, AT_SUN_EXECNAME, userp);
 	}
+
+	/* Always terminate with AT_NULL */
+	AUXINFO(aux_vec, AT_NULL, 0);
 
 	return OK;
 }
@@ -547,11 +570,12 @@ static int is_script(struct vfs_exec_info *execi)
 /*===========================================================================*
  *				patch_stack				     *
  *===========================================================================*/
-static int patch_stack(vp, stack, stk_bytes, path)
+static int patch_stack(vp, stack, stk_bytes, path, vsp)
 struct vnode *vp;		/* pointer for open script file */
 char stack[ARG_MAX];		/* pointer to stack image within VFS */
 size_t *stk_bytes;		/* size of initial stack */
 char path[PATH_MAX];		/* path to script file */
+vir_bytes *vsp;
 {
 /* Patch the argument vector to include the path name of the script to be
  * interpreted, and all strings on the #! line.  Returns the path name of
@@ -565,13 +589,14 @@ char path[PATH_MAX];		/* path to script file */
   char buf[_MAX_BLOCK_SIZE];
 
   /* Make 'path' the new argv[0]. */
-  if (!insert_arg(stack, stk_bytes, path, REPLACE)) return(ENOMEM);
+  if (!insert_arg(stack, stk_bytes, path, vsp, REPLACE)) return(ENOMEM);
 
   pos = 0;	/* Read from the start of the file */
 
   /* Issue request */
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, pos, READING, VFS_PROC_NR,
 			(vir_bytes) buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
+
   if (r != OK) return(r);
 
   n = vp->v_size;
@@ -600,7 +625,7 @@ char path[PATH_MAX];		/* path to script file */
 	while (sp > path && sp[-1] != ' ' && sp[-1] != '\t') --sp;
 
 	interp = sp;
-	if (!insert_arg(stack, stk_bytes, sp, INSERT)) {
+	if (!insert_arg(stack, stk_bytes, sp, vsp, INSERT)) {
 		printf("VFS: patch_stack: insert_arg failed\n");
 		return(ENOMEM);
 	}
@@ -609,71 +634,91 @@ char path[PATH_MAX];		/* path to script file */
   if(!interp)
   	return ENOEXEC;
 
-  /* Round *stk_bytes up to the size of a pointer for alignment contraints. */
-  *stk_bytes= ((*stk_bytes + PTRSIZE - 1) / PTRSIZE) * PTRSIZE;
-
   if (interp != path)
 	memmove(path, interp, strlen(interp)+1);
+
   return(OK);
 }
 
 /*===========================================================================*
  *				insert_arg				     *
  *===========================================================================*/
-static int insert_arg(
-char stack[ARG_MAX],		/* pointer to stack image within PM */
-size_t *stk_bytes,		/* size of initial stack */
-char *arg,			/* argument to prepend/replace as new argv[0] */
-int replace
-)
+static int insert_arg(char stack[ARG_MAX], size_t *stk_bytes, char *arg,
+	vir_bytes *vsp, char replace)
 {
-/* Patch the stack so that arg will become argv[0].  Be careful, the stack may
- * be filled with garbage, although it normally looks like this:
- *	nargs argv[0] ... argv[nargs-1] NULL envp[0] ... NULL
- * followed by the strings "pointed" to by the argv[i] and the envp[i].  The
- * pointers are really offsets from the start of stack.
- * Return true iff the operation succeeded.
- */
-  int offset;
-  vir_bytes a0, a1;
-  size_t old_bytes = *stk_bytes;
+	/* Patch the stack so that arg will become argv[0]. Be careful, the
+	 * stack may be filled with garbage, although it normally looks like
+	 * this:
+	 *	nargs argv[0] ... argv[nargs-1] NULL envp[0] ... NULL
+	 * followed by the strings "pointed" to by the argv[i] and the envp[i].
+	 * The * pointers are in the new process address space.
+	 *
+	 * Return true iff the operation succeeded.
+	 */
+	struct ps_strings *psp;
+	int offset;
+	size_t old_bytes = *stk_bytes;
 
-  /* Prepending arg adds at least one string and a zero byte. */
-  offset = strlen(arg) + 1;
+	int const arg_len = strlen(arg) + 1;
 
-  a0 = (int) ((char **) stack)[1];	/* argv[0] */
-  if (a0 < 4 * PTRSIZE || a0 >= old_bytes) return(FALSE);
+	/* Offset to argv[0][0] in the stack frame. */
+	int const a0 = (int)(((char **)stack)[1] - *vsp);
 
-  a1 = a0;			/* a1 will point to the strings to be moved */
-  if (replace) {
-	/* Move a1 to the end of argv[0][] (argv[1] if nargs > 1). */
-	do {
-		if (a1 == old_bytes) return(FALSE);
-		--offset;
-	} while (stack[a1++] != 0);
-  } else {
-	offset += PTRSIZE;	/* new argv[0] needs new pointer in argv[] */
-	a0 += PTRSIZE;		/* location of new argv[0][]. */
-  }
+	/* Check that argv[0] points within the stack frame. */
+	if ((a0 < 0) || (a0 >= old_bytes)) {
+		printf("vfs:: argv[0][] not within stack range!! %i\n", a0);
+		return FALSE;
+	}
 
-  /* stack will grow by offset bytes (or shrink by -offset bytes) */
-  if ((*stk_bytes += offset) > ARG_MAX) return(FALSE);
+	if (!replace) {
+		/* Prepending arg adds one pointer, one string and a zero byte. */
+		offset = arg_len + PTRSIZE;
+	} else {
+		/* replacing argv[0] with arg adds the difference in length of
+		 * the two strings. Make sure we don't go beyond the stack size
+		 * when computing the length of the current argv[0]. */
+		offset = arg_len - strnlen(stack + a0, ARG_MAX - a0 - 1);
+	}
 
-  /* Reposition the strings by offset bytes */
-  memmove(stack + a1 + offset, stack + a1, old_bytes - a1);
+	/* As ps_strings follows the strings, ensure the offset is word aligned. */
+	offset = offset + (PTRSIZE - ((PTRSIZE + offset) % PTRSIZE));
 
-  strlcpy(stack + a0, arg, PATH_MAX); /* Put arg in the new space. */
+	/* The stack will grow (or shrink) by offset bytes. */
+	if ((*stk_bytes += offset) > ARG_MAX) {
+		printf("vfs:: offset too big!! %d (max %d)\n", *stk_bytes,
+			ARG_MAX);
+		return FALSE;
+	}
 
-  if (!replace) {
-	/* Make space for a new argv[0]. */
-	memmove(stack + 2 * PTRSIZE, stack + 1 * PTRSIZE, a0 - 2 * PTRSIZE);
+	/* Reposition the strings by offset bytes */
+	memmove(stack + a0 + offset, stack + a0, old_bytes - a0);
 
-	((char **) stack)[0]++;	/* nargs++; */
-  }
-  /* Now patch up argv[] and envp[] by offset. */
-  libexec_patch_ptr(stack, (vir_bytes) offset);
-  ((char **) stack)[1] = (char *) a0;	/* set argv[0] correctly */
-  return(TRUE);
+	/* Put arg in the new space, leaving padding in front of it. */
+	strlcpy(stack + a0 + offset - arg_len, arg, arg_len);
+
+	if (!replace) {
+		/* Make space for a new argv[0]. */
+		memmove(stack + 2 * PTRSIZE,
+			stack + 1 * PTRSIZE, a0 - 2 * PTRSIZE);
+
+		((char **) stack)[0]++;	/* nargs++; */
+	}
+
+	/* set argv[0] correctly */
+	((char **) stack)[1] = (char *) a0 - arg_len + *vsp;
+
+	/* Update stack pointer in the process address space. */
+	*vsp -= offset;
+
+	/* Update argv and envp in ps_strings */
+	psp = (struct ps_strings *) (stack + *stk_bytes - sizeof(struct ps_strings));
+	psp->ps_argvstr -= (offset / PTRSIZE);
+	if (!replace) {
+		psp->ps_nargvstr++;
+	}
+	psp->ps_envstr = psp->ps_argvstr + psp->ps_nargvstr + 1;
+
+	return TRUE;
 }
 
 /*===========================================================================*

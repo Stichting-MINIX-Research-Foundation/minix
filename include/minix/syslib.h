@@ -30,8 +30,8 @@ int _sendcall(endpoint_t who, int type, message *msgptr);
 
 int sys_abort(int how);
 int sys_enable_iop(endpoint_t proc_ep);
-int sys_exec(endpoint_t proc_ep, char *ptr, char *aout, vir_bytes
-	initpc);
+int sys_exec(endpoint_t proc_ep, char *stack_ptr, char *progname,
+	vir_bytes pc, vir_bytes ps_str);
 int sys_fork(endpoint_t parent, endpoint_t child, endpoint_t *, 
 	u32_t vm, vir_bytes *);
 int sys_clear(endpoint_t proc_ep);

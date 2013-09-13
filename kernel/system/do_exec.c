@@ -41,7 +41,8 @@ int do_exec(struct proc * caller, message * m_ptr)
   name[sizeof(name)-1] = '\0';
 
   /* Set process state. */
-  arch_proc_init(rp, (u32_t) m_ptr->PR_IP_PTR, (u32_t) m_ptr->PR_STACK_PTR, name);
+  arch_proc_init(rp, (u32_t) m_ptr->PR_IP_PTR, (u32_t) m_ptr->PR_STACK_PTR,
+	(u32_t) m_ptr->PR_PS_STR_PTR, name);
 
   /* No reply to EXEC call */
   RTS_UNSET(rp, RTS_RECEIVING);
