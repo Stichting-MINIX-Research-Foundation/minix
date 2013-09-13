@@ -322,6 +322,7 @@ void init_vm(void)
 	}
 
 	/* Turn file mmap on? */
+	enable_filemap=1;	/* yes by default */
 	env_parse("filemap", "d", 0, &enable_filemap, 0, 1);
 
 	/* Sanity check */
