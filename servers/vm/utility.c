@@ -312,7 +312,7 @@ int brk(void *addr)
 			| ARCH_VM_PTE_USER
 			| ARCH_VM_PTE_RW
 #if defined(__arm__)
-			| ARM_VM_PTE_WB
+			| ARM_VM_PTE_CACHED // KEJO should depend on current mem type??
 #endif
 			, 0) != OK) {
 			free_mem(newpage, 1);
