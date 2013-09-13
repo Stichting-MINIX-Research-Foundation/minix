@@ -301,7 +301,7 @@ void *vm_mappages(phys_bytes p, int pages)
 	if((r=pt_writemap(vmprocess, pt, loc, p, VM_PAGE_SIZE*pages,
 		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
 #if defined(__arm__)
-		| ARM_VM_PTE_WT
+		| ARM_VM_PTE_CACHED
 #endif
 		, 0)) != OK) {
 		printf("vm_mappages writemap failed\n");
@@ -409,7 +409,8 @@ void vm_pagelock(void *vir, int lockflag)
 #if defined(__arm__)
 	else
 		flags |= ARCH_VM_PTE_RO;
-	flags |= ARM_VM_PTE_WT ;
+
+	flags |= ARM_VM_PTE_CACHED ;
 #endif
 
 	/* Update flags. */
@@ -689,7 +690,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #elif defined(__arm__)
 	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, ARCH_PAGEDIR_SIZE,
 		ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER |
-		ARM_VM_PTE_WT ,
+		ARM_VM_PTE_CACHED ,
 #endif
 		WMF_OVERWRITE)) != OK) {
 		return r;
@@ -715,7 +716,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, VM_PAGE_SIZE,
 			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
 #ifdef __arm__
-			| ARM_VM_PTE_WT
+			| ARM_VM_PTE_CACHED
 #endif
 			,
 			WMF_OVERWRITE)) != OK) {
@@ -1193,6 +1194,7 @@ void pt_init(void)
 #elif defined(__arm__)
 			pdm->val = (ph & ARCH_VM_PDE_MASK)
 				| ARCH_VM_PDE_PRESENT
+				| ARM_VM_PTE_CACHED
 				| ARM_VM_PDE_DOMAIN; //LSC FIXME
 #endif
 		}
@@ -1216,6 +1218,7 @@ void pt_init(void)
 #elif defined(__arm__)
 	if(sys_vmctl_get_pdbr(SELF, &myttbr) != OK)
 #endif
+
 		panic("VM: sys_vmctl_get_pdbr failed");
 #if defined(__i386__)
 	if(sys_vircopy(NONE, mypdbr, SELF,
@@ -1334,7 +1337,7 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 #endif
 
 	/* Tell kernel about new page table root. */
-	return sys_vmctl_set_addrspace(who->vm_endpoint, pt->pt_dir_phys, pdes);
+	return sys_vmctl_set_addrspace(who->vm_endpoint, pt->pt_dir_phys , pdes);
 }
 
 /*===========================================================================*
@@ -1377,7 +1380,7 @@ int pt_mapkernel(pt_t *pt)
 		pt->pt_dir[kern_pde] = (addr & ARM_VM_SECTION_MASK)
 			| ARM_VM_SECTION
 			| ARM_VM_SECTION_DOMAIN
-			| ARM_VM_SECTION_WT
+			| ARM_VM_SECTION_CACHED
 			| ARM_VM_SECTION_SUPER;
 #endif
 		kern_pde++;

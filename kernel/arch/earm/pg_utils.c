@@ -176,7 +176,7 @@ int pg_mapkernel(void)
 		pagedir[pde] = (kern_phys & ARM_VM_SECTION_MASK) | ARM_VM_SECTION
 			| ARM_VM_SECTION_SUPER
 			| ARM_VM_SECTION_DOMAIN
-			| ARM_VM_SECTION_WT;
+			| ARM_VM_SECTION_CACHED;
 		mapped += ARM_SECTION_SIZE;
 		kern_phys += ARM_SECTION_SIZE;
 		pde++;
@@ -270,7 +270,7 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 		assert(pt);
 		pt[pte] = (source & ARM_VM_PTE_MASK)
 			| ARM_VM_PAGETABLE
-			| ARM_VM_PTE_WT
+			| ARM_VM_PTE_CACHED
 			| ARM_VM_PTE_USER;
 		vaddr += ARM_PAGE_SIZE;
 		if(phys != PG_ALLOCATEME)

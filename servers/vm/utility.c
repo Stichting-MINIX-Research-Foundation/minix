@@ -295,6 +295,8 @@ int minix_munmap(void * addr, size_t len)
 
 int brk(void *addr)
 {
+	/* brk is a special case function to allow vm itself to
+	   allocate memory in it's own (cacheable) HEAP */
 	vir_bytes target = roundup((vir_bytes)addr, VM_PAGE_SIZE), v;
 	extern char _end;
 	extern char *_brksize;
@@ -312,7 +314,7 @@ int brk(void *addr)
 			| ARCH_VM_PTE_USER
 			| ARCH_VM_PTE_RW
 #if defined(__arm__)
-			| ARM_VM_PTE_WB
+			| ARM_VM_PTE_CACHED
 #endif
 			, 0) != OK) {
 			free_mem(newpage, 1);
