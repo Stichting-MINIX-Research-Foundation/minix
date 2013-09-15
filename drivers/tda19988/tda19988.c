@@ -993,6 +993,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 			i2cdriver_announce(hdmi_bus);
 		}
 
+		blockdriver_announce(type);
 		log_trace(&log, "announced\n");
 	}
 
