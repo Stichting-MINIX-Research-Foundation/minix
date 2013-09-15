@@ -521,14 +521,6 @@ measure(int32_t * temperature, int32_t * pressure)
 		log_warn(&log, "Failed to trigger temperature reading.\n");
 		return -1;
 	}
-	micro_delay(UDELAY_T);
-
-	/* trigger temperature reading */
-	r = reg_write(CTRL_REG, CMD_TRIG_T);
-	if (r != OK) {
-		log_warn(&log, "Failed to trigger temperature reading.\n");
-		return -1;
-	}
 
 	/* wait for sampling to be completed. */
 	micro_delay(UDELAY_T);
