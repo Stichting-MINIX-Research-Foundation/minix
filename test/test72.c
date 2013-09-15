@@ -224,16 +224,6 @@ panic(const char *fmt, ...)
 	exit(1);
 }
 
-int vm_forgetblock(u64_t id)
-{
-	return ENOSYS;
-}
-
-void vm_forgetblocks(void)
-{
-	return;
-}
-
 int
 vm_info_stats(struct vm_stats_info *vsi)
 {
@@ -272,6 +262,11 @@ void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
         u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
 {
 	return MAP_FAILED;
+}
+
+int vm_clear_cache(u32_t dev)
+{
+	return 0;
 }
 
 int
