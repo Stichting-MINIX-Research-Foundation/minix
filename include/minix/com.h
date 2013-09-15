@@ -978,6 +978,9 @@
 /* To VM: identify cache block in FS */
 #define VM_SETCACHEPAGE		(VM_RQ_BASE+27)
 
+/* To VM: clear all cache blocks for a device */
+#define VM_CLEARCACHE		(VM_RQ_BASE+28)
+
 /* To VFS: fields for request from VM. */
 #	define VFS_VMCALL_REQ		m10_i1
 #	define VFS_VMCALL_FD		m10_i2

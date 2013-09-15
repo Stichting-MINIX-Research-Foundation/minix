@@ -187,6 +187,9 @@ int fs_unmount()
   /* Close the device the file system lives on. */
   bdev_close(fs_dev);
 
+  /* Throw out blocks out of the VM cache, to prevent corruption later. */
+  lmfs_invalidate(fs_dev);
+
   /* Finish off the unmount. */
   superblock.s_dev = NO_DEV;
   unmountdone = TRUE;
