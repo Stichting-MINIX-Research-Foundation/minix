@@ -26,13 +26,14 @@ rtc_init(void)
 	uint8_t val;
 	struct tm t;
 
-	r = reg_set(ID4, RTC_CTRL_REG, (1 << STOP_RTC_BIT));
+	r = i2creg_set_bits8(bus_endpoint, addresses[ID4], RTC_CTRL_REG,
+	    (1 << STOP_RTC_BIT));
 	if (r != OK) {
 		log_warn(&log, "Failed to start RTC\n");
 		return -1;
 	}
 
-	r = reg_read(ID4, RTC_STATUS_REG, &val);
+	r = i2creg_read8(bus_endpoint, addresses[ID4], RTC_STATUS_REG, &val);
 	if (r != OK) {
 		log_warn(&log, "Failed to read RTC_STATUS_REG\n");
 		return -1;
@@ -59,7 +60,8 @@ rtc_get_time(struct tm *t, int flags)
 	/* Write GET_TIME_BIT to RTC_CTRL_REG to latch the RTC values into
 	 * the RTC registers. This is required before each read.
 	 */
-	r = reg_set(ID4, RTC_CTRL_REG, (1 << GET_TIME_BIT));
+	r = i2creg_set_bits8(bus_endpoint, addresses[ID4], RTC_CTRL_REG,
+	    (1 << GET_TIME_BIT));
 	if (r != OK) {
 		return -1;
 	}
@@ -67,42 +69,42 @@ rtc_get_time(struct tm *t, int flags)
 	/* Read and Convert BCD to binary (default RTC mode). */
 
 	/* Seconds - 0 to 59 */
-	r = reg_read(ID4, SECONDS_REG, &val);
+	r = i2creg_read8(bus_endpoint, addresses[ID4], SECONDS_REG, &val);
 	if (r != OK) {
 		return -1;
 	}
 	t->tm_sec = bcd_to_dec(val & 0x7f);
 
 	/* Minutes - 0 to 59 */
-	r = reg_read(ID4, MINUTES_REG, &val);
+	r = i2creg_read8(bus_endpoint, addresses[ID4], MINUTES_REG, &val);
 	if (r != OK) {
 		return -1;
 	}
 	t->tm_min = bcd_to_dec(val & 0x7f);
 
 	/* Hours - 0 to 23 */
-	r = reg_read(ID4, HOURS_REG, &val);
+	r = i2creg_read8(bus_endpoint, addresses[ID4], HOURS_REG, &val);
 	if (r != OK) {
 		return -1;
 	}
 	t->tm_hour = bcd_to_dec(val & 0x3f);
 
 	/* Days - 1 to 31 */
-	r = reg_read(ID4, DAYS_REG, &val);
+	r = i2creg_read8(bus_endpoint, addresses[ID4], DAYS_REG, &val);
 	if (r != OK) {
 		return -1;
 	}
 	t->tm_mday = bcd_to_dec(val & 0x3f);
 
 	/* Months - Jan=1 to Dec=12 */
-	r = reg_read(ID4, MONTHS_REG, &val);
+	r = i2creg_read8(bus_endpoint, addresses[ID4], MONTHS_REG, &val);
 	if (r != OK) {
 		return -1;
 	}
 	t->tm_mon = bcd_to_dec(val & 0x1f) - 1;
 
 	/* Years - last 2 digits of year */
-	r = reg_read(ID4, YEARS_REG, &val);
+	r = i2creg_read8(bus_endpoint, addresses[ID4], YEARS_REG, &val);
 	if (r != OK) {
 		return -1;
 	}
@@ -129,32 +131,38 @@ rtc_set_time(struct tm *t, int flags)
 	int r;
 
 	/* Write the date/time to the RTC registers. */
-	r = reg_write(ID4, SECONDS_REG, (dec_to_bcd(t->tm_sec) & 0x7f));
+	r = i2creg_write8(bus_endpoint, addresses[ID4], SECONDS_REG,
+	    (dec_to_bcd(t->tm_sec) & 0x7f));
 	if (r != OK) {
 		return -1;
 	}
 
-	r = reg_write(ID4, MINUTES_REG, (dec_to_bcd(t->tm_min) & 0x7f));
+	r = i2creg_write8(bus_endpoint, addresses[ID4], MINUTES_REG,
+	    (dec_to_bcd(t->tm_min) & 0x7f));
 	if (r != OK) {
 		return -1;
 	}
 
-	r = reg_write(ID4, HOURS_REG, (dec_to_bcd(t->tm_hour) & 0x3f));
+	r = i2creg_write8(bus_endpoint, addresses[ID4], HOURS_REG,
+	    (dec_to_bcd(t->tm_hour) & 0x3f));
 	if (r != OK) {
 		return -1;
 	}
 
-	r = reg_write(ID4, DAYS_REG, (dec_to_bcd(t->tm_mday) & 0x3f));
+	r = i2creg_write8(bus_endpoint, addresses[ID4], DAYS_REG,
+	    (dec_to_bcd(t->tm_mday) & 0x3f));
 	if (r != OK) {
 		return -1;
 	}
 
-	r = reg_write(ID4, MONTHS_REG, (dec_to_bcd(t->tm_mon + 1) & 0x1f));
+	r = i2creg_write8(bus_endpoint, addresses[ID4], MONTHS_REG,
+	    (dec_to_bcd(t->tm_mon + 1) & 0x1f));
 	if (r != OK) {
 		return -1;
 	}
 
-	r = reg_write(ID4, YEARS_REG, (dec_to_bcd(t->tm_year % 100) & 0xff));
+	r = i2creg_write8(bus_endpoint, addresses[ID4], YEARS_REG,
+	    (dec_to_bcd(t->tm_year % 100) & 0xff));
 	if (r != OK) {
 		return -1;
 	}

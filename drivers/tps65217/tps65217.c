@@ -101,10 +101,6 @@ static struct log log = {
 	.log_func = default_log
 };
 
-/* Register Access */
-static int reg_read(uint8_t reg, uint8_t * val);
-static int reg_write(uint8_t reg, uint8_t val);
-
 /* Device Specific Functions */
 static int check_revision(void);
 static int enable_pwr_off(void);
@@ -119,86 +115,12 @@ static int lu_state_restore(void);
 static int sef_cb_init(int type, sef_init_info_t * info);
 
 static int
-reg_read(uint8_t reg, uint8_t * val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (val == NULL) {
-		log_warn(&log, "Read called with NULL pointer\n");
-		return EINVAL;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* write the register address */
-	ioctl_exec.iie_cmd[0] = reg;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* read 1 byte */
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_read() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	*val = ioctl_exec.iie_buf[0];
-
-	log_trace(&log, "Read 0x%x from reg 0x%x", *val, reg);
-
-	return OK;
-}
-
-static int
-reg_write(uint8_t reg, uint8_t val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (reg >= 0x0d) {
-		/* TODO: writes to password protected registers hasn't
-		 * been implemented since nothing in this driver needs to
-		 * write to them. When needed, it should be implemented.
-		 */
-		log_warn(&log, "Cannot write to protected registers.");
-		return -1;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Write to chip */
-	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* write the register address and value */
-	ioctl_exec.iie_buf[0] = reg;
-	ioctl_exec.iie_buf[1] = val;
-	ioctl_exec.iie_buflen = 2;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_write() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	log_trace(&log, "Successfully wrote 0x%x to reg 0x%x\n", val, reg);
-
-	return OK;
-}
-
-static int
 check_revision(void)
 {
 	int r;
 	uint8_t chipid;
 
-	r = reg_read(CHIPID_REG, &chipid);
+	r = i2creg_read8(bus_endpoint, address, CHIPID_REG, &chipid);
 	if (r != OK) {
 		log_warn(&log, "Failed to read CHIPID\n");
 		return -1;
@@ -235,7 +157,7 @@ enable_pwr_off(void)
 	 * system is ready to be powered off. Should be called during startup
 	 * so that shutdown(8) can do power-off with reboot(RBT_POWEROFF).
 	 */
-	r = reg_write(STATUS_REG, PWR_OFF_MASK);
+	r = i2creg_write8(bus_endpoint, address, STATUS_REG, PWR_OFF_MASK);
 	if (r != OK) {
 		log_warn(&log, "Cannot set power off mask.");
 		return -1;
@@ -274,14 +196,14 @@ intr_enable(void)
 	}
 
 	/* Enable/Disable interrupts in the TPS65217 */
-	r = reg_write(INT_REG, DEFAULT_INT_MASK);
+	r = i2creg_write8(bus_endpoint, address, INT_REG, DEFAULT_INT_MASK);
 	if (r != OK) {
 		log_warn(&log, "Failed to set interrupt mask.\n");
 		return -1;
 	}
 
 	/* Read from the interrupt register to clear any pending interrupts */
-	r = reg_read(INT_REG, &val);
+	r = i2creg_read8(bus_endpoint, address, INT_REG, &val);
 	if (r != OK) {
 		log_warn(&log, "Failed to read interrupt register.\n");
 		return -1;
@@ -298,7 +220,7 @@ intr_handler(void)
 	struct tm t;
 
 	/* read interrupt register to get interrupt that fired and clear it */
-	r = reg_read(INT_REG, &val);
+	r = i2creg_read8(bus_endpoint, address, INT_REG, &val);
 	if (r != OK) {
 		log_warn(&log, "Failed to read interrupt register.\n");
 		return -1;
