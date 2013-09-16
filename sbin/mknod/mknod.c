@@ -333,6 +333,9 @@ callPack(pack_t *f, int n, u_long *numbers)
 static void
 get_device_info(void)
 {
+#ifdef __minix
+	err(1, "no kern.drivers on minix" );
+#else
 	static int mib[2] = {CTL_KERN, KERN_DRIVERS};
 	size_t len;
 
@@ -345,6 +348,7 @@ get_device_info(void)
 		err(1, "kern.drivers" );
 
 	num_drivers = len / sizeof *kern_drivers;
+#endif
 }
 
 static void

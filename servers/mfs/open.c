@@ -199,17 +199,23 @@ int fs_slink()
   /* Allocate a disk block for the contents of the symlink.
    * Copy contents of symlink (the name pointed to) into first disk block. */
   if( (r = err_code) == OK) {
+	size_t namelen = (size_t) fs_m_in.REQ_MEM_SIZE;
   	bp = new_block(sip, (off_t) 0);
   	if (bp == NULL)
   		r = err_code;
-  	else
-  		r = sys_safecopyfrom(VFS_PROC_NR,
+  	else {
+		if(get_block_size(sip->i_dev) <= namelen) {
+			r = ENAMETOOLONG;
+		} else {
+	  		r = sys_safecopyfrom(VFS_PROC_NR,
   				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
 				     (vir_bytes) 0, (vir_bytes) b_data(bp),
-				     (size_t) fs_m_in.REQ_MEM_SIZE);
+				     namelen);
+			b_data(bp)[namelen] = '\0';
+		}
+	}
 
 	if(bp != NULL && r == OK) {
-		b_data(bp)[_MIN_BLOCK_SIZE-1] = '\0';
 		sip->i_size = (off_t) strlen(b_data(bp));
 		if(sip->i_size != fs_m_in.REQ_MEM_SIZE) {
 			/* This can happen if the user provides a buffer

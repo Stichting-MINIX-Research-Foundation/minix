@@ -1127,7 +1127,7 @@
 ./usr/include/minix/debug.h		minix-sys
 ./usr/include/minix/devio.h		minix-sys
 ./usr/include/minix/devman.h		minix-sys
-./usr/include/minix/dirent.h		minix-sys
+./usr/include/minix/dirent.h		minix-sys	obsolete
 ./usr/include/minix/dmap.h		minix-sys
 ./usr/include/minix/driver.h		minix-sys
 ./usr/include/minix/drivers.h		minix-sys
@@ -1392,6 +1392,7 @@
 ./usr/include/sys/null.h		minix-sys
 ./usr/include/sys/param.h		minix-sys
 ./usr/include/sys/poll.h		minix-sys
+./usr/include/sys/proc.h		minix-sys
 ./usr/include/sys/procfs.h		minix-sys
 ./usr/include/sys/ptrace.h		minix-sys
 ./usr/include/sys/ptree.h		minix-sys

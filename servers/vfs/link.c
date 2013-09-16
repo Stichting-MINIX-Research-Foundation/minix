@@ -17,7 +17,7 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <minix/vfsif.h>
-#include <dirent.h>
+#include <sys/dirent.h>
 #include <assert.h>
 #include "file.h"
 #include "path.h"
