@@ -28,11 +28,10 @@ static i2c_addr_t valid_addrs[2] = {
 static uint32_t bus;
 
 /* endpoint for the driver for the bus itself. */
-static endpoint_t bus_endpoint;
+endpoint_t bus_endpoint;
 
 /* slave addresses of the device */
-#define NADDRESSES 4
-static i2c_addr_t addresses[NADDRESSES] = {
+i2c_addr_t addresses[NADDRESSES] = {
 	0x48, 0x49, 0x4a, 0x4b
 };
 
@@ -48,123 +47,6 @@ static int sef_cb_init(int type, sef_init_info_t * info);
 /* functions for transfering struct tm to/from this driver and calling proc. */
 static int fetch_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t);
 static int store_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t);
-
-int
-reg_read(uint8_t id, uint8_t reg, uint8_t * val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (id < 0 || id >= NADDRESSES) {
-		log_warn(&log, "id parameter out of range.\n");
-		return EINVAL;
-	}
-
-	if (val == NULL) {
-		log_warn(&log, "Read called with NULL pointer\n");
-		return EINVAL;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = addresses[id];
-
-	/* write the register address */
-	ioctl_exec.iie_cmd[0] = reg;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* read 1 byte */
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_read() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	*val = ioctl_exec.iie_buf[0];
-
-	log_trace(&log, "Read 0x%x from reg 0x%x", *val, reg);
-
-	return OK;
-}
-
-int
-reg_write(uint8_t id, uint8_t reg, uint8_t val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (id < 0 || id >= NADDRESSES) {
-		log_warn(&log, "id parameter out of range.\n");
-		return EINVAL;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Write to chip */
-	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
-	ioctl_exec.iie_addr = addresses[id];
-
-	/* write the register address and value */
-	ioctl_exec.iie_buf[0] = reg;
-	ioctl_exec.iie_buf[1] = val;
-	ioctl_exec.iie_buflen = 2;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_write() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	log_trace(&log, "Successfully wrote 0x%x to reg 0x%x\n", val, reg);
-
-	return OK;
-}
-
-int
-reg_set(uint8_t id, uint8_t reg, uint8_t mask)
-{
-	int r;
-	uint8_t val;
-
-	r = reg_read(id, reg, &val);
-	if (r != OK) {
-		return -1;
-	}
-
-	val |= mask;
-
-	r = reg_write(id, reg, val);
-	if (r != OK) {
-		return -1;
-	}
-
-	return OK;
-}
-
-int
-reg_clear(uint8_t id, uint8_t reg, uint8_t mask)
-{
-	int r;
-	uint8_t val;
-
-	r = reg_read(id, reg, &val);
-	if (r != OK) {
-		return -1;
-	}
-
-	val &= ~mask;
-
-	r = reg_write(id, reg, val);
-	if (r != OK) {
-		return -1;
-	}
-
-	return OK;
-}
 
 static int
 fetch_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t)
@@ -204,7 +86,8 @@ check_revision(void)
 	uint8_t idcode_7_0, idcode_15_8, idcode_23_16, idcode_31_24;
 
 	/* need to write a special code to unlock read protect on IDCODE */
-	r = reg_write(ID2, UNLOCK_TEST_REG, UNLOCK_TEST_CODE);
+	r = i2creg_write8(bus_endpoint, addresses[ID2], UNLOCK_TEST_REG,
+	    UNLOCK_TEST_CODE);
 	if (r != OK) {
 		log_warn(&log, "Failed to write unlock code to UNLOCK_TEST\n");
 		return -1;
@@ -213,22 +96,26 @@ check_revision(void)
 	/*
 	 * read each part of the IDCODE
 	 */
-	r = reg_read(ID2, IDCODE_7_0_REG, &idcode_7_0);
+	r = i2creg_read8(bus_endpoint, addresses[ID2], IDCODE_7_0_REG,
+	    &idcode_7_0);
 	if (r != OK) {
 		log_warn(&log, "Failed to read IDCODE part 1\n");
 	}
 
-	r = reg_read(ID2, IDCODE_15_8_REG, &idcode_15_8);
+	r = i2creg_read8(bus_endpoint, addresses[ID2], IDCODE_15_8_REG,
+	    &idcode_15_8);
 	if (r != OK) {
 		log_warn(&log, "Failed to read IDCODE part 2\n");
 	}
 
-	r = reg_read(ID2, IDCODE_23_16_REG, &idcode_23_16);
+	r = i2creg_read8(bus_endpoint, addresses[ID2], IDCODE_23_16_REG,
+	    &idcode_23_16);
 	if (r != OK) {
 		log_warn(&log, "Failed to read IDCODE part 3\n");
 	}
 
-	r = reg_read(ID2, IDCODE_31_24_REG, &idcode_31_24);
+	r = i2creg_read8(bus_endpoint, addresses[ID2], IDCODE_31_24_REG,
+	    &idcode_31_24);
 	if (r != OK) {
 		log_warn(&log, "Failed to read IDCODE part 4\n");
 	}

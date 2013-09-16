@@ -375,28 +375,15 @@ static int
 is_display_connected(void)
 {
 	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
+	uint8_t val;
 
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from CEC */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = cec_address;
-
-	/* write the register address */
-	ioctl_exec.iie_cmd[0] = CEC_STATUS_REG;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* read 1 byte */
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(cec_bus_endpoint, &ioctl_exec);
+	r = i2creg_read8(cec_bus_endpoint, cec_address, CEC_STATUS_REG, &val);
 	if (r != OK) {
 		log_warn(&log, "Reading connection status failed (r=%d)\n", r);
 		return -1;
 	}
 
-	if ((CEC_STATUS_CONNECTED_MASK & ioctl_exec.iie_buf[0]) == 0) {
+	if ((CEC_STATUS_CONNECTED_MASK & val) == 0) {
 		log_debug(&log, "No Display Detected\n");
 		return 0;
 	} else {
@@ -412,20 +399,9 @@ static int
 enable_hdmi_module(void)
 {
 	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
 
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Write to CEC */
-	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
-	ioctl_exec.iie_addr = cec_address;
-
-	/* write the register address and value */
-	ioctl_exec.iie_buf[0] = CEC_ENABLE_REG;
-	ioctl_exec.iie_buf[1] = CEC_ENABLE_ALL_MASK;
-	ioctl_exec.iie_buflen = 2;
-
-	r = i2cdriver_exec(cec_bus_endpoint, &ioctl_exec);
+	r = i2creg_write8(cec_bus_endpoint, cec_address, CEC_ENABLE_REG,
+	    CEC_ENABLE_ALL_MASK);
 	if (r != OK) {
 		log_warn(&log, "Writing enable bits failed (r=%d)\n", r);
 		return -1;
@@ -444,7 +420,8 @@ set_page(uint8_t page)
 
 	if (page != current_page) {
 
-		r = hdmi_write(HDMI_PAGELESS, HDMI_PAGE_SELECT_REG, page);
+		r = i2creg_write8(hdmi_bus_endpoint, hdmi_address,
+		    HDMI_PAGE_SELECT_REG, page);
 		if (r != OK) {
 			return r;
 		}
@@ -508,7 +485,6 @@ hdmi_read(uint8_t page, uint8_t reg, uint8_t * val)
 {
 
 	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
 
 	if (val == NULL) {
 		log_warn(&log, "Read called with NULL pointer\n");
@@ -523,26 +499,11 @@ hdmi_read(uint8_t page, uint8_t reg, uint8_t * val)
 		}
 	}
 
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from HDMI */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = hdmi_address;
-
-	/* write the register address */
-	ioctl_exec.iie_cmd[0] = reg;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* read 1 byte */
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(hdmi_bus_endpoint, &ioctl_exec);
+	r = i2creg_read8(hdmi_bus_endpoint, hdmi_address, reg, val);
 	if (r != OK) {
 		log_warn(&log, "hdmi_read() failed (r=%d)\n", r);
 		return -1;
 	}
-
-	*val = ioctl_exec.iie_buf[0];
 
 	log_trace(&log, "Read 0x%x from reg 0x%x in page 0x%x\n", *val, reg,
 	    page);
@@ -553,9 +514,7 @@ hdmi_read(uint8_t page, uint8_t reg, uint8_t * val)
 static int
 hdmi_write(uint8_t page, uint8_t reg, uint8_t val)
 {
-
 	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
 
 	if (page != HDMI_PAGELESS) {
 		r = set_page(page);
@@ -565,18 +524,7 @@ hdmi_write(uint8_t page, uint8_t reg, uint8_t val)
 		}
 	}
 
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Write to HDMI */
-	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
-	ioctl_exec.iie_addr = hdmi_address;
-
-	/* write the register address and value */
-	ioctl_exec.iie_buf[0] = reg;
-	ioctl_exec.iie_buf[1] = val;
-	ioctl_exec.iie_buflen = 2;
-
-	r = i2cdriver_exec(hdmi_bus_endpoint, &ioctl_exec);
+	r = i2creg_write8(hdmi_bus_endpoint, hdmi_address, reg, val);
 	if (r != OK) {
 		log_warn(&log, "hdmi_write() failed (r=%d)\n", r);
 		return -1;

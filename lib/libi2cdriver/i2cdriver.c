@@ -1,5 +1,6 @@
 /* This file contains device independent i2c device driver helpers. */
 
+#include <assert.h>
 #include <minix/drivers.h>
 #include <minix/endpoint.h>
 #include <minix/i2c.h>
@@ -192,4 +193,175 @@ i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
 	}
 
 	return m.REP_STATUS;
+}
+
+static int
+__i2creg_read(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
+    uint8_t reg, uint32_t * val, size_t vallen)
+{
+	int r, i;
+	minix_i2c_ioctl_exec_t ioctl_exec;
+
+	assert(val != NULL);
+	assert(vallen >= 1 && vallen <= 4);
+
+	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
+
+	/* Read from chip */
+	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
+	ioctl_exec.iie_addr = address;
+
+	if (!raw) {
+		/* write the register address */
+		ioctl_exec.iie_cmd[0] = reg;
+		ioctl_exec.iie_cmdlen = 1;
+	}
+
+	/* read vallen bytes */
+	ioctl_exec.iie_buflen = vallen;
+
+	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
+	if (r != OK) {
+		return -1;
+	}
+
+	for (*val = 0, i = 0; i < vallen; i++) {
+		*val = ((*val) << 8) | ioctl_exec.iie_buf[i];
+	}
+
+	return OK;
+}
+
+int
+i2creg_raw_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t * val)
+{
+	int r;
+	uint32_t val32;
+
+	r = __i2creg_read(bus_endpoint, address, 1, 0, &val32, 1);
+	*val = val32 & 0xff;
+
+	return r;
+}
+
+int
+i2creg_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+    uint8_t * val)
+{
+	int r;
+	uint32_t val32;
+
+	r = __i2creg_read(bus_endpoint, address, 0, reg, &val32, 1);
+	*val = val32 & 0xff;
+
+	return r;
+}
+
+int
+i2creg_read16(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+    uint16_t * val)
+{
+	int r;
+	uint32_t val32;
+
+	r = __i2creg_read(bus_endpoint, address, 0, reg, &val32, 2);
+	*val = val32 & 0xffff;
+
+	return r;
+}
+
+int
+i2creg_read24(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+    uint32_t * val)
+{
+	return __i2creg_read(bus_endpoint, address, 0, reg, val, 3);
+}
+
+static int
+__i2creg_write(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
+    uint8_t reg, uint8_t val)
+{
+	int r;
+	minix_i2c_ioctl_exec_t ioctl_exec;
+
+	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
+
+	/* Write to chip */
+	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
+	ioctl_exec.iie_addr = address;
+
+	if (raw) {
+		/* write just the value */
+		ioctl_exec.iie_buf[0] = val;
+		ioctl_exec.iie_buflen = 1;
+	} else {
+		/* write the register address and value */
+		ioctl_exec.iie_buf[0] = reg;
+		ioctl_exec.iie_buf[1] = val;
+		ioctl_exec.iie_buflen = 2;
+	}
+
+	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
+	if (r != OK) {
+		return -1;
+	}
+
+	return OK;
+}
+
+int
+i2creg_write8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+    uint8_t val)
+{
+	return __i2creg_write(bus_endpoint, address, 0, reg, val);
+}
+
+int
+i2creg_raw_write8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t val)
+{
+	return __i2creg_write(bus_endpoint, address, 1, 0, val);
+}
+
+int
+i2creg_set_bits8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+    uint8_t bits)
+{
+	int r;
+	uint8_t val;
+
+	r = i2creg_read8(bus_endpoint, address, reg, &val);
+	if (r != OK) {
+		return -1;
+	}
+
+	val |= bits;
+
+	r = i2creg_write8(bus_endpoint, address, reg, val);
+	if (r != OK) {
+		return -1;
+	}
+
+	return OK;
+}
+
+int
+i2creg_clear_bits8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+    uint8_t bits)
+{
+	int r;
+	uint8_t val;
+
+	r = i2creg_read8(bus_endpoint, address, reg, &val);
+	if (r != OK) {
+		return -1;
+	}
+
+	val &= ~bits;
+
+	r = i2creg_write8(bus_endpoint, address, reg, val);
+	if (r != OK) {
+		return -1;
+	}
+
+	return OK;
 }

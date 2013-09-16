@@ -157,12 +157,6 @@ static int bmp085_transfer(endpoint_t endpt, int opcode, u64_t position,
     unsigned int UNUSED(flags));
 static int bmp085_other(message * m);
 
-/* i2c bus access */
-static int reg_read(uint8_t reg, uint8_t * val);
-static int reg_read16(uint8_t reg, uint16_t * val);
-static int reg_read24(uint8_t reg, uint32_t * val);
-static int reg_write(uint8_t reg, uint8_t val);
-
 /* SEF Function */
 static int sef_cb_lu_state_save(int);
 static int lu_state_restore(void);
@@ -187,159 +181,6 @@ static struct device bmp085_device = {
 	.dv_base = 0,
 	.dv_size = 0
 };
-
-static int
-reg_read(uint8_t reg, uint8_t * val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (val == NULL) {
-		log_warn(&log, "reg_read() called with NULL pointer\n");
-		return -1;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* write the register address */
-	ioctl_exec.iie_cmd[0] = reg;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* read 1 byte */
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_read() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	*val = ioctl_exec.iie_buf[0];
-
-	log_trace(&log, "Read 0x%x from reg 0x%x\n", *val, reg);
-
-	return OK;
-}
-
-static int
-reg_read16(uint8_t reg, uint16_t * val)
-{
-	int r;
-	uint8_t msb, lsb;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (val == NULL) {
-		log_warn(&log, "reg_read16() called with NULL pointer\n");
-		return -1;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* write the register address */
-	ioctl_exec.iie_cmd[0] = reg;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* read 2 bytes */
-	ioctl_exec.iie_buflen = 2;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_read16() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	msb = ioctl_exec.iie_buf[0];
-	lsb = ioctl_exec.iie_buf[1];
-
-	*val = ((msb << 8) | lsb);
-
-	log_trace(&log, "Read 0x%x from reg 0x%x\n", *val, reg);
-
-	return OK;
-
-}
-
-static int
-reg_read24(uint8_t reg, uint32_t * val)
-{
-	int r;
-	uint8_t msb, lsb, xlsb;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (val == NULL) {
-		log_warn(&log, "reg_read24() called with NULL pointer\n");
-		return -1;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* write the register address */
-	ioctl_exec.iie_cmd[0] = reg;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* read 3 bytes */
-	ioctl_exec.iie_buflen = 3;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_read24() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	msb = ioctl_exec.iie_buf[0];
-	lsb = ioctl_exec.iie_buf[1];
-	xlsb = ioctl_exec.iie_buf[2];
-
-	*val = ((msb << 16) | (lsb << 8) | xlsb);
-
-	log_trace(&log, "Read 0x%x from reg 0x%x\n", *val, reg);
-
-	return OK;
-
-}
-
-static int
-reg_write(uint8_t reg, uint8_t val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* no commands here */
-	ioctl_exec.iie_cmdlen = 0;
-
-	/* write register and value */
-	ioctl_exec.iie_buf[0] = reg;
-	ioctl_exec.iie_buf[1] = val;
-	ioctl_exec.iie_buflen = 2;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_write() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	log_trace(&log, "Wrote 0x%x to reg 0x%x\n", val, reg);
-
-	return OK;
-}
 
 /*
  * Initialize the driver. Checks the CHIPID against a known value and
@@ -373,7 +214,7 @@ version_check(void)
 	int r;
 	uint8_t chipid;
 
-	r = reg_read(CHIPID_REG, &chipid);
+	r = i2creg_read8(bus_endpoint, address, CHIPID_REG, &chipid);
 	if (r != OK) {
 		log_warn(&log, "Couldn't read CHIPID\n");
 		return -1;
@@ -400,67 +241,67 @@ read_cal_coef(void)
 	int r;
 
 	/* Populate the calibration struct with values */
-	r = reg_read16(AC1_MSB_REG, &cal.ac1);
+	r = i2creg_read16(bus_endpoint, address, AC1_MSB_REG, &cal.ac1);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.ac1 = %d\n", cal.ac1);
 
-	r = reg_read16(AC2_MSB_REG, &cal.ac2);
+	r = i2creg_read16(bus_endpoint, address, AC2_MSB_REG, &cal.ac2);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.ac2 = %d\n", cal.ac2);
 
-	r = reg_read16(AC3_MSB_REG, &cal.ac3);
+	r = i2creg_read16(bus_endpoint, address, AC3_MSB_REG, &cal.ac3);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.ac3 = %d\n", cal.ac3);
 
-	r = reg_read16(AC4_MSB_REG, &cal.ac4);
+	r = i2creg_read16(bus_endpoint, address, AC4_MSB_REG, &cal.ac4);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.ac4 = %u\n", cal.ac4);
 
-	r = reg_read16(AC5_MSB_REG, &cal.ac5);
+	r = i2creg_read16(bus_endpoint, address, AC5_MSB_REG, &cal.ac5);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.ac5 = %u\n", cal.ac5);
 
-	r = reg_read16(AC6_MSB_REG, &cal.ac6);
+	r = i2creg_read16(bus_endpoint, address, AC6_MSB_REG, &cal.ac6);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.ac6 = %u\n", cal.ac6);
 
-	r = reg_read16(B1_MSB_REG, &cal.b1);
+	r = i2creg_read16(bus_endpoint, address, B1_MSB_REG, &cal.b1);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.b1 = %d\n", cal.b1);
 
-	r = reg_read16(B2_MSB_REG, &cal.b2);
+	r = i2creg_read16(bus_endpoint, address, B2_MSB_REG, &cal.b2);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.b2 = %d\n", cal.b2);
 
-	r = reg_read16(MB_MSB_REG, &cal.mb);
+	r = i2creg_read16(bus_endpoint, address, MB_MSB_REG, &cal.mb);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.mb = %d\n", cal.mb);
 
-	r = reg_read16(MC_MSB_REG, &cal.mc);
+	r = i2creg_read16(bus_endpoint, address, MC_MSB_REG, &cal.mc);
 	if (r != OK) {
 		return -1;
 	}
 	log_debug(&log, "cal.mc = %d\n", cal.mc);
 
-	r = reg_read16(MD_MSB_REG, &cal.md);
+	r = i2creg_read16(bus_endpoint, address, MD_MSB_REG, &cal.md);
 	if (r != OK) {
 		return -1;
 	}
@@ -516,7 +357,7 @@ measure(int32_t * temperature, int32_t * pressure)
 	log_debug(&log, "Triggering Temp Reading...\n");
 
 	/* trigger temperature reading */
-	r = reg_write(CTRL_REG, CMD_TRIG_T);
+	r = i2creg_write8(bus_endpoint, address, CTRL_REG, CMD_TRIG_T);
 	if (r != OK) {
 		log_warn(&log, "Failed to trigger temperature reading.\n");
 		return -1;
@@ -526,7 +367,7 @@ measure(int32_t * temperature, int32_t * pressure)
 	micro_delay(UDELAY_T);
 
 	/* read the uncompensated temperature */
-	r = reg_read16(SENSOR_VAL_MSB_REG, &ut);
+	r = i2creg_read16(bus_endpoint, address, SENSOR_VAL_MSB_REG, &ut);
 	if (r != OK) {
 		log_warn(&log, "Failed to read temperature.\n");
 		return -1;
@@ -537,7 +378,7 @@ measure(int32_t * temperature, int32_t * pressure)
 	log_debug(&log, "Triggering Pressure Reading...\n");
 
 	/* trigger pressure reading */
-	r = reg_write(CTRL_REG, p_cmd->cmd);
+	r = i2creg_write8(bus_endpoint, address, CTRL_REG, p_cmd->cmd);
 	if (r != OK) {
 		log_warn(&log, "Failed to trigger pressure reading.\n");
 		return -1;
@@ -547,7 +388,7 @@ measure(int32_t * temperature, int32_t * pressure)
 	micro_delay(p_cmd->udelay);
 
 	/* read the uncompensated pressure */
-	r = reg_read24(SENSOR_VAL_MSB_REG, &up);
+	r = i2creg_read24(bus_endpoint, address, SENSOR_VAL_MSB_REG, &up);
 	if (r != OK) {
 		log_warn(&log, "Failed to read pressure.\n");
 		return -1;
