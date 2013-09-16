@@ -45,6 +45,7 @@
 ./usr/include/arm/mcontext.h		minix-sys
 ./usr/include/arm/mutex.h		minix-sys
 ./usr/include/arm/param.h		minix-sys
+./usr/include/arm/proc.h		minix-sys
 ./usr/include/arm/profile.h		minix-sys
 ./usr/include/arm/rwlock.h		minix-sys
 ./usr/include/arm/setjmp.h		minix-sys
@@ -85,6 +86,7 @@
 ./usr/include/evbarm/mutex.h		minix-sys
 ./usr/include/evbarm/param.h		minix-sys
 ./usr/include/evbarm/partition.h	minix-sys
+./usr/include/evbarm/proc.h		minix-sys
 ./usr/include/evbarm/profile.h		minix-sys
 ./usr/include/evbarm/rwlock.h		minix-sys
 ./usr/include/evbarm/setjmp.h		minix-sys

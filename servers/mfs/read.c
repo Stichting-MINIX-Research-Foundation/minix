@@ -8,6 +8,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <minix/minlib.h>
 #include <sys/param.h>
 #include <assert.h>
 
@@ -420,13 +421,8 @@ zone_t rd_indir(bp, index)
 struct buf *bp;			/* pointer to indirect block */
 int index;			/* index into *bp */
 {
-/* Given a pointer to an indirect block, read one entry.  The reason for
- * making a separate routine out of this is that there are four cases:
- * V1 (IBM and 68000), and V2 (IBM and 68000).
- */
-
   struct super_block *sp;
-  zone_t zone;			/* V2 zones are longs (shorts in V1) */
+  zone_t zone;
 
   if(bp == NULL)
 	panic("rd_indir() on NULL");
@@ -434,10 +430,8 @@ int index;			/* index into *bp */
   sp = get_super(lmfs_dev(bp));	/* need super block to find file sys type */
 
   /* read a zone from an indirect block */
-  if (sp->s_version == V1)
-	zone = (zone_t) conv2(sp->s_native, (int)  b_v1_ind(bp)[index]);
-  else
-	zone = (zone_t) conv4(sp->s_native, (long) b_v2_ind(bp)[index]);
+  assert(sp->s_version == V3);
+  zone = (zone_t) conv4(sp->s_native, (long) b_v2_ind(bp)[index]);
 
   if (zone != NO_ZONE &&
 		(zone < (zone_t) sp->s_firstdatazone || zone >= sp->s_zones)) {
@@ -670,11 +664,8 @@ int fs_getdents(void)
 		  else
 			  len = cp - (dp->mfs_d_name);
 		
-		  /* Compute record length */
-		  reclen = offsetof(struct dirent, d_name) + len + 1;
-		  o = (reclen % sizeof(long));
-		  if (o != 0)
-			  reclen += sizeof(long) - o;
+		  /* Compute record length; also does alignment. */
+		  reclen = _DIRENT_RECLEN(dep, len);
 
 		  /* Need the position of this entry in the directory */
 		  ent_pos = block_pos + ((char *) dp - (char *) bp->data);
@@ -706,10 +697,17 @@ int fs_getdents(void)
 		}
 
 		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		dep->d_ino = (ino_t) dp->mfs_d_ino;
-		dep->d_off = (off_t) ent_pos;
+		dep->d_fileno = (ino_t) dp->mfs_d_ino;
 		dep->d_reclen = (unsigned short) reclen;
+		dep->d_namlen = len;
 		memcpy(dep->d_name, dp->mfs_d_name, len);
+		{
+			struct inode *entrip;
+			if(!(entrip = get_inode(fs_dev, dep->d_fileno)))
+				panic("unexpected get_inode failure");
+			dep->d_type = fs_mode_to_type(entrip->i_mode);
+			put_inode(entrip);
+		}
 		dep->d_name[len] = '\0';
 		tmpbuf_off += reclen;
 	}

@@ -44,6 +44,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	rewinddir.c scandir.c seekdir.c \
 	setjmperr.c setmode.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
+	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
 	siglist.c signal.c signame.c sigrelse.c \
 	sigset.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c \

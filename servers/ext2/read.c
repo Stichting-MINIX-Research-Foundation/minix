@@ -12,6 +12,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <minix/minlib.h>
 #include <sys/param.h>
 #include <assert.h>
 #include <sys/param.h>
@@ -619,7 +620,7 @@ int fs_getdents(void)
 #define GETDENTS_ENTRIES	8
   static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
   struct inode *rip;
-  int o, r, done;
+  int r, done;
   unsigned int block_size, len, reclen;
   pino_t ino;
   cp_grant_id_t gid;
@@ -694,11 +695,8 @@ int fs_getdents(void)
 		assert(len <= NAME_MAX);
 		assert(len <= EXT2_NAME_MAX);
 
-		/* Compute record length */
-		reclen = offsetof(struct dirent, d_name) + len + 1;
-		o = (reclen % sizeof(long));
-		if (o != 0)
-			reclen += sizeof(long) - o;
+		/* Compute record length, incl alignment. */
+                reclen = _DIRENT_RECLEN(dep, len);
 
 		/* Need the position of this entry in the directory */
 		ent_pos = block_pos + ((char *)d_desc - b_data(bp));
@@ -729,11 +727,18 @@ int fs_getdents(void)
 		}
 
 		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		dep->d_ino = (ino_t) conv4(le_CPU, d_desc->d_ino);
-		dep->d_off = (off_t) ent_pos;
+		dep->d_fileno = (ino_t) conv4(le_CPU, d_desc->d_ino);
 		dep->d_reclen = (unsigned short) reclen;
+		dep->d_namlen = len;
 		memcpy(dep->d_name, d_desc->d_name, len);
 		dep->d_name[len] = '\0';
+		{
+			struct inode *entrip;
+			if(!(entrip = get_inode(fs_dev, dep->d_fileno)))
+				panic("unexpected get_inode failure");
+			dep->d_type = fs_mode_to_type(entrip->i_mode);
+			put_inode(entrip);
+		}
 		tmpbuf_off += reclen;
 	}
 

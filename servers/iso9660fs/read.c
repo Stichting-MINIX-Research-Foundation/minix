@@ -1,6 +1,7 @@
 #include "inc.h"
 #include <minix/com.h>
 #include <minix/vfsif.h>
+#include <minix/minlib.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include "buf.h"
@@ -139,7 +140,8 @@ int fs_bread(void)
 /*===========================================================================*
  *				fs_getdents				     *
  *===========================================================================*/
-int fs_getdents(void) {
+int fs_getdents(void)
+{
   struct dir_record *dir;
   pino_t ino;
   cp_grant_id_t gid;
@@ -222,14 +224,13 @@ int fs_getdents(void) {
 
 			/* Compute the length of the name */
 			cp = memchr(name, '\0', NAME_MAX);
-			if (cp == NULL) len = NAME_MAX;
-			else len= cp - name;
+			if (cp == NULL)
+				len = NAME_MAX;
+			else
+				len= cp - name;
 
-			/* Compute record length */
-			reclen = offsetof(struct dirent, d_name) + len + 1;
-			o = (reclen % sizeof(long));
-			if (o != 0)
-				reclen += sizeof(long) - o;
+			/* Compute record length; also does alignment. */
+			reclen = _DIRENT_RECLEN(dirp, len);
 
 			/* If the new record does not fit, then copy the buffer
 			 * and start from the beginning. */
@@ -246,9 +247,10 @@ int fs_getdents(void) {
 			/* The standard data structure is created using the
 			 * data in the buffer. */
 			dirp = (struct dirent *) &getdents_buf[tmpbuf_offset];
-			dirp->d_ino = (u32_t)(b_data(bp) + (size_t)block_pos);
-			dirp->d_off= cur_pos;
+			dirp->d_fileno = (u32_t)(b_data(bp) + (size_t)block_pos);
 			dirp->d_reclen= reclen;
+			dirp->d_type = fs_mode_to_type(dir_tmp->d_mode);
+			dirp->d_namlen = len;
 			memcpy(dirp->d_name, name, len);
 			dirp->d_name[len]= '\0';
 			tmpbuf_offset += reclen;

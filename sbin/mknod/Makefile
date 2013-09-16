@@ -5,4 +5,8 @@ PROG=	mknod
 SRCS=	mknod.c pack_dev.c
 MAN=	mknod.8
 
+# LSC Does not compile without any warnings...
+NOGCCERROR:=yes
+NOCLANGERROR:=yes
+
 .include <bsd.prog.mk>

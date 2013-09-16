@@ -43,11 +43,9 @@
  */
 #include <sys/dirent.h>
 
-#ifndef __minix
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	d_ino		d_fileno	/* backward compatibility */
 #endif
-#endif /* !__minix */
 
 typedef struct _dirdesc DIR;
 

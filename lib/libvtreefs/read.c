@@ -2,6 +2,7 @@
 
 #include "inc.h"
 #include <dirent.h>
+#include <minix/minlib.h>
 
 #define GETDENTS_BUFSIZ 4096
 #define DWORD_ALIGN(len) (((len) + sizeof(long) - 1) & ~(sizeof(long) - 1))
@@ -161,7 +162,8 @@ int fs_getdents(void)
 			name = child->i_name;
 		}
 
-		len = DWORD_ALIGN(sizeof(struct dirent) + strlen(name));
+		/* record length incl. alignment. */
+                len = _DIRENT_RECLEN(dent, strlen(name));
 
 		/* Is the user buffer too small to store another record? */
 		if (user_off + off + len > user_left) {
@@ -190,8 +192,9 @@ int fs_getdents(void)
 		/* Fill in the actual directory entry. */
 		dent = (struct dirent *) &buf[off];
 		dent->d_ino = (ino_t) get_inode_number(child);
-		dent->d_off = (off_t) pos;
 		dent->d_reclen = len;
+		dent->d_type = fs_mode_to_type(child->i_stat.mode);
+		dent->d_namlen = strlen(name);
 		strcpy(dent->d_name, name);
 
 		off += len;
