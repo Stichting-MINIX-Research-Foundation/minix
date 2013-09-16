@@ -204,10 +204,8 @@ zone_t zone;			/* zone to write */
   sp = get_super(lmfs_dev(bp));	/* need super block to find file sys type */
 
   /* write a zone into an indirect block */
-  if (sp->s_version == V1)
-	b_v1_ind(bp)[index] = (zone1_t) conv2(sp->s_native, (int)  zone);
-  else
-	b_v2_ind(bp)[index] = (zone_t)  conv4(sp->s_native, (long) zone);
+  assert(sp->s_version == V3);
+  b_v2_ind(bp)[index] = (zone_t)  conv4(sp->s_native, (long) zone);
 }
 
 

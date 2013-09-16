@@ -21,7 +21,7 @@
 #include "scratchpad.h"
 #include "lock.h"
 #include "param.h"
-#include <dirent.h>
+#include <sys/dirent.h>
 #include <assert.h>
 #include <minix/vfsif.h>
 #include "vnode.h"

@@ -16,22 +16,18 @@
  * will eventually be rewritten to the disk.
  */
 
-#include <dirent.h>
+#include <sys/dirent.h>
 
 union fsdata_u {
-    char b__data[_MAX_BLOCK_SIZE];		     /* ordinary user data */
+    char b__data[1];		     /* ordinary user data */
 /* directory block */
-    struct direct b__dir[NR_DIR_ENTRIES(_MAX_BLOCK_SIZE)];    
-/* V1 indirect block */
-    zone1_t b__v1_ind[V1_INDIRECTS];	     
+    struct direct b__dir[1];    
 /* V2 indirect block */
-    zone_t  b__v2_ind[V2_INDIRECTS(_MAX_BLOCK_SIZE)];	     
-/* V1 inode block */
-    d1_inode b__v1_ino[V1_INODES_PER_BLOCK]; 
+    zone_t  b__v2_ind[1];	     
 /* V2 inode block */
-    d2_inode b__v2_ino[V2_INODES_PER_BLOCK(_MAX_BLOCK_SIZE)]; 
+    d2_inode b__v2_ino[1]; 
 /* bit map block */
-    bitchunk_t b__bitmap[FS_BITMAP_CHUNKS(_MAX_BLOCK_SIZE)];  
+    bitchunk_t b__bitmap[1];  
 };
 
 /* A block is free if b_dev == NO_DEV. */
@@ -40,9 +36,7 @@ union fsdata_u {
 /* These defs make it possible to use to bp->b_data instead of bp->b.b__data */
 #define b_data(b)   ((union fsdata_u *) b->data)->b__data
 #define b_dir(b)    ((union fsdata_u *) b->data)->b__dir
-#define b_v1_ind(b) ((union fsdata_u *) b->data)->b__v1_ind
 #define b_v2_ind(b) ((union fsdata_u *) b->data)->b__v2_ind
-#define b_v1_ino(b) ((union fsdata_u *) b->data)->b__v1_ino
 #define b_v2_ino(b) ((union fsdata_u *) b->data)->b__v2_ino
 #define b_bitmap(b) ((union fsdata_u *) b->data)->b__bitmap
 
