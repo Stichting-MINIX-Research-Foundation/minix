@@ -59,10 +59,6 @@ static i2c_addr_t address;
 /* endpoint for the driver for the bus itself. */
 static endpoint_t bus_endpoint;
 
-/* register access functions */
-static int reg_read(uint8_t * val);
-static int reg_write(uint8_t val);
-
 /* main driver functions */
 static int tsl2550_init(void);
 static int adc_read(int adc, uint8_t * val);
@@ -216,7 +212,7 @@ adc_read(int adc, uint8_t * val)
 	*val = (adc == 0) ? CMD_READ_ADC0 : CMD_READ_ADC1;
 
 	/* Select the ADC to read from */
-	r = reg_write(*val);
+	r = i2creg_raw_write8(bus_endpoint, address, *val);
 	if (r != OK) {
 		log_warn(&log, "Failed to write ADC read command.\n");
 		return -1;
@@ -230,7 +226,7 @@ adc_read(int adc, uint8_t * val)
 	 */
 	spin_init(&spin, 400000);
 	do {
-		r = reg_read(val);
+		r = i2creg_raw_read8(bus_endpoint, address, val);
 		if (r != OK) {
 			log_warn(&log, "Failed to read ADC%d value.\n", adc);
 			return -1;
@@ -247,7 +243,7 @@ adc_read(int adc, uint8_t * val)
 	 * before 400 ms) and left the loop. To ensure there is a final read
 	 * at or after the 400 ms mark, we try one last time here.
 	 */
-	r = reg_read(val);
+	r = i2creg_raw_read8(bus_endpoint, address, val);
 	if (r != OK) {
 		log_warn(&log, "Failed to read ADC%d value.\n", adc);
 		return -1;
@@ -262,101 +258,20 @@ adc_read(int adc, uint8_t * val)
 }
 
 static int
-reg_read(uint8_t * val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (val == NULL) {
-		log_warn(&log, "Read called with a NULL pointer.\n");
-		return EINVAL;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* No register address to write */
-	ioctl_exec.iie_cmdlen = 0;
-
-	/* Read one byte */
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_read() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	*val = ioctl_exec.iie_buf[0];
-
-	log_trace(&log, "Read 0x%x from reg\n", *val);
-
-	return OK;
-}
-
-static int
-reg_write(uint8_t val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	switch (val) {
-	case CMD_PWR_DOWN:
-	case CMD_PWR_UP:
-	case CMD_EXT_RANGE:
-	case CMD_NORM_RANGE:
-	case CMD_READ_ADC0:
-	case CMD_READ_ADC1:
-		/* Command is valid */
-		break;
-	default:
-		log_warn(&log,
-		    "reg_write() called with invalid command 0x%x\n", val);
-		return EINVAL;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Write to chip */
-	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* No command bytes for writing to this chip */
-	ioctl_exec.iie_cmdlen = 0;
-
-	/* Set the byte to write */
-	ioctl_exec.iie_buf[0] = val;
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "reg_write() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	log_trace(&log, "Wrote 0x%x to reg\n", val);
-
-	return OK;
-}
-
-static int
 tsl2550_init(void)
 {
 	int r;
 	uint8_t val;
 
 	/* Power on the device */
-	r = reg_write(CMD_PWR_UP);
+	r = i2creg_raw_write8(bus_endpoint, address, CMD_PWR_UP);
 	if (r != OK) {
 		log_warn(&log, "Power-up command failed.\n");
 		return -1;
 	}
 
 	/* Read power on test value */
-	r = reg_read(&val);
+	r = i2creg_raw_read8(bus_endpoint, address, &val);
 	if (r != OK) {
 		log_warn(&log, "Failed to read power on test value.\n");
 		return -1;
@@ -370,7 +285,7 @@ tsl2550_init(void)
 	}
 
 	/* Set range to normal */
-	r = reg_write(CMD_NORM_RANGE);
+	r = i2creg_raw_write8(bus_endpoint, address, CMD_NORM_RANGE);
 	if (r != OK) {
 		log_warn(&log, "Normal range command failed.\n");
 		return -1;
