@@ -63,10 +63,9 @@
 #define RTC_STATUS_REG 0x0000002A
 #define RUN_BIT 1
 
+#define NADDRESSES 4
 
-int reg_read(uint8_t id, uint8_t reg, uint8_t * val);
-int reg_write(uint8_t id, uint8_t reg, uint8_t val);
-int reg_set(uint8_t id, uint8_t reg, uint8_t mask);
-int reg_clear(uint8_t id, uint8_t reg, uint8_t mask);
+extern endpoint_t bus_endpoint;
+extern i2c_addr_t addresses[NADDRESSES];
 
 #endif /* __TPS65950_H */

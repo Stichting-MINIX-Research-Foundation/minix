@@ -106,8 +106,6 @@ static int32_t cached_rh = 0.0;
 
 /* main driver functions */
 static int sht21_init(void);
-static int soft_reset(void);
-static int usr_reg_read(uint8_t * usr_reg_val);
 static int sensor_read(enum sht21_sensors sensor, int32_t * measurement);
 static int measure(void);
 
@@ -148,82 +146,6 @@ static struct device sht21_device = {
 };
 
 /*
- * Sends the chip a soft reset command and waits 15 ms for the chip to reset.
- */
-static int
-soft_reset(void)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Write to chip */
-	ioctl_exec.iie_op = I2C_OP_WRITE_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* No command bytes for writing to this chip */
-	ioctl_exec.iie_cmdlen = 0;
-
-	/* Set the byte to write */
-	ioctl_exec.iie_buf[0] = CMD_SOFT_RESET;
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "soft_reset() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	/* soft reset takes up to 15 ms to complete. */
-	micro_delay(15000);
-
-	log_debug(&log, "Soft Reset Complete\n");
-
-	return OK;
-}
-
-/*
- * Obtain the contents of the usr register and store it in usr_reg_val.
- */
-static int
-usr_reg_read(uint8_t * usr_reg_val)
-{
-	int r;
-	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	if (usr_reg_val == NULL) {
-		log_warn(&log, "usr_reg_read() called with NULL pointer\n");
-		return -1;
-	}
-
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* Send the read from user register command */
-	ioctl_exec.iie_cmd[0] = CMD_RD_USR_REG;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* Read the register contents into iie_buf */
-	ioctl_exec.iie_buflen = 1;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
-	if (r != OK) {
-		log_warn(&log, "usr_reg_read() failed (r=%d)\n", r);
-		return -1;
-	}
-
-	*usr_reg_val = ioctl_exec.iie_buf[0];
-
-	log_trace(&log, "Read 0x%x from USR_REG\n", *usr_reg_val);
-
-	return OK;
-}
-
-/*
  * Performs a soft reset and reads the contents of the user register to ensure
  * that the chip is in a good state and working properly.
  */
@@ -233,12 +155,18 @@ sht21_init(void)
 	int r;
 	uint8_t usr_reg_val;
 
-	r = soft_reset();
+	/* Perform a soft-reset */
+	r = i2creg_raw_write8(bus_endpoint, address, CMD_SOFT_RESET);
 	if (r != OK) {
 		return -1;
 	}
 
-	r = usr_reg_read(&usr_reg_val);
+	/* soft reset takes up to 15 ms to complete. */
+	micro_delay(15000);
+
+	log_debug(&log, "Soft Reset Complete\n");
+
+	r = i2creg_read8(bus_endpoint, address, CMD_RD_USR_REG, &usr_reg_val);
 	if (r != OK) {
 		return -1;
 	}
@@ -270,10 +198,10 @@ sensor_read(enum sht21_sensors sensor, int32_t * measurement)
 {
 	int r;
 	uint8_t cmd;
-	uint8_t val_hi, val_lo;
 	uint16_t val;
+	uint8_t bytes[2];
+	uint32_t val32;
 	uint8_t expected_crc;
-	minix_i2c_ioctl_exec_t ioctl_exec;
 
 	switch (sensor) {
 	case SHT21_T:
@@ -292,35 +220,22 @@ sensor_read(enum sht21_sensors sensor, int32_t * measurement)
 		return -1;
 	}
 
-	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
-
-	/* Read from chip */
-	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
-	ioctl_exec.iie_addr = address;
-
-	/* Send the trigger command */
-	ioctl_exec.iie_cmd[0] = cmd;
-	ioctl_exec.iie_cmdlen = 1;
-
-	/* Read the results */
-	ioctl_exec.iie_buflen = 3;
-
-	r = i2cdriver_exec(bus_endpoint, &ioctl_exec);
+	r = i2creg_read24(bus_endpoint, address, cmd, &val32);
 	if (r != OK) {
 		log_warn(&log, "sensor_read() failed (r=%d)\n", r);
 		return -1;
 	}
 
-	expected_crc = ioctl_exec.iie_buf[2];
+	expected_crc = val32 & 0xff;
+	val = (val32 >> 8) & 0xffff;
 
-	r = checksum(ioctl_exec.iie_buf, 2, expected_crc);
+	bytes[0] = (val >> 8) & 0xff;
+	bytes[1] = val & 0xff;
+
+	r = checksum(bytes, 2, expected_crc);
 	if (r != OK) {
 		return -1;
 	}
-
-	val_hi = ioctl_exec.iie_buf[0];
-	val_lo = ioctl_exec.iie_buf[1];
-	val = ((val_hi << 8) | val_lo);
 
 	val &= ~STATUS_BITS_MASK;	/* clear status bits */
 
