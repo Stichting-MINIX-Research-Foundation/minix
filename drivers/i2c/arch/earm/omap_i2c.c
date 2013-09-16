@@ -319,8 +319,8 @@ omap_i2c_poll(uint16_t mask)
 	spin_t spin;
 	uint16_t status;
 
-	/* poll for up to 250 ms */
-	spin_init(&spin, 250000);
+	/* poll for up to 1 s */
+	spin_init(&spin, 1000000);
 	do {
 		status = omap_i2c_read_status();
 		if ((status & mask) != 0) {	/* any bits in mask set */
