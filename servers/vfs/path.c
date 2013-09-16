@@ -16,7 +16,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/un.h>
-#include <dirent.h>
+#include <sys/dirent.h>
 #include "vmnt.h"
 #include "vnode.h"
 #include "path.h"
@@ -640,7 +640,7 @@ char ename[NAME_MAX + 1];
 
 		if(cur->d_name + name_len+1 > &buf[sizeof(buf)])
 			return(EINVAL);	/* Rubbish in dir entry */
-		if (entry->v_inode_nr == cur->d_ino) {
+		if (entry->v_inode_nr == cur->d_fileno) {
 			/* found the entry we were looking for */
 			int copylen = MIN(name_len + 1, NAME_MAX + 1);
 			if (strlcpy(ename, cur->d_name, copylen) >= copylen) {

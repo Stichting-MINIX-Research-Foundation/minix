@@ -42,7 +42,6 @@
 #ifndef	_I386_NPX_H_
 #define	_I386_NPX_H_
 
-#ifndef __minix
 /* Environment information of floating point unit */
 struct env87 {
 	long	 en_cw;		/* control word (16bits) */
@@ -121,7 +120,6 @@ union savefpu {
 	struct save87 sv_87;
 	struct savexmm sv_xmm;
 };
-#endif /* !__minix */
 
 /*
  * The i387 defaults to Intel extended precision mode and round to nearest,
