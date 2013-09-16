@@ -1,0 +1,47 @@
+#	$NetBSD: files.uvm,v 1.20 2011/05/17 05:32:31 mrg Exp $
+
+#
+# UVM options
+# 
+defflag opt_uvmhist.h		UVMHIST UVMHIST_PRINT: KERNHIST
+defflag opt_uvm.h		USE_TOPDOWN_VM UVMMAP_COUNTERS
+defflag opt_vmswap.h		VMSWAP
+defflag opt_readahead.h		READAHEAD_STATS
+defflag opt_ubc.h		UBC_STATS
+defparam opt_pagermap.h		PAGER_MAP_SIZE
+defflag				PDPOLICY_CLOCKPRO
+defparam			USER_VA0_DISABLE_DEFAULT
+defflag opt_uvm_page_trkown.h	UVM_PAGE_TRKOWN
+
+file	uvm/uvm_amap.c
+file	uvm/uvm_anon.c
+file	uvm/uvm_aobj.c
+file	uvm/uvm_bio.c
+file	uvm/uvm_coredump.c		coredump
+file	uvm/uvm_device.c
+file	uvm/uvm_emap.c
+file	uvm/uvm_fault.c
+file	uvm/uvm_glue.c
+file	uvm/uvm_init.c
+file	uvm/uvm_io.c
+file	uvm/uvm_km.c
+file	uvm/uvm_kmguard.c		debug
+file	uvm/uvm_loan.c
+file	uvm/uvm_map.c
+file	uvm/uvm_meter.c
+file	uvm/uvm_mmap.c
+file	uvm/uvm_mremap.c
+file	uvm/uvm_object.c
+file	uvm/uvm_page.c
+file	uvm/uvm_pager.c
+file	uvm/uvm_pdaemon.c
+file	uvm/uvm_pdpolicy_clock.c	!pdpolicy_clockpro
+file	uvm/uvm_pdpolicy_clockpro.c	pdpolicy_clockpro
+file	uvm/uvm_pglist.c
+file	uvm/uvm_readahead.c
+file	uvm/uvm_stat.c                  
+file	uvm/uvm_swap.c			vmswap
+file	uvm/uvm_swapstub.c		!vmswap
+file	uvm/uvm_unix.c
+file	uvm/uvm_user.c
+file	uvm/uvm_vnode.c

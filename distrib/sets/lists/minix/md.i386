@@ -68,6 +68,7 @@
 ./usr/include/i386/fenv.h		minix-sys
 ./usr/include/i386/float.h		minix-sys
 ./usr/include/i386/fpu.h		minix-sys
+./usr/include/i386/frame.h		minix-sys
 ./usr/include/i386/ieeefp.h		minix-sys
 ./usr/include/i386/ieee.h		minix-sys
 ./usr/include/i386/int86.h		minix-sys
@@ -79,6 +80,7 @@
 ./usr/include/i386/int_types.h		minix-sys
 ./usr/include/i386/ipcconst.h		minix-sys
 ./usr/include/i386/limits.h		minix-sys
+./usr/include/i386/lock.h		minix-sys
 ./usr/include/i386/math.h		minix-sys
 ./usr/include/i386/mcontext.h		minix-sys
 ./usr/include/i386/memory.h		minix-sys
@@ -87,6 +89,7 @@
 ./usr/include/i386/npx.h		minix-sys
 ./usr/include/i386/param.h		minix-sys
 ./usr/include/i386/partition.h		minix-sys
+./usr/include/i386/pcb.h		minix-sys
 ./usr/include/i386/pci_amd.h		minix-sys
 ./usr/include/i386/pci.h		minix-sys
 ./usr/include/i386/pci_intel.h		minix-sys
@@ -94,11 +97,15 @@
 ./usr/include/i386/pci_via.h		minix-sys
 ./usr/include/i386/pio.h		minix-sys
 ./usr/include/i386/ports.h		minix-sys
+./usr/include/i386/proc.h		minix-sys
 ./usr/include/i386/profile.h		minix-sys
 ./usr/include/i386/rwlock.h		minix-sys
+./usr/include/i386/segments.h		minix-sys
 ./usr/include/i386/setjmp.h		minix-sys
 ./usr/include/i386/signal.h		minix-sys
 ./usr/include/i386/stackframe.h		minix-sys
+./usr/include/i386/sysarch.h		minix-sys
+./usr/include/i386/tss.h		minix-sys
 ./usr/include/i386/types.h		minix-sys
 ./usr/include/i386/vm.h			minix-sys
 ./usr/include/i386/vmparam.h		minix-sys

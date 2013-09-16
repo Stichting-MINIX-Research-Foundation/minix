@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <dirent.h>
+#include <sys/dirent.h>
 #include <assert.h>
 #include "file.h"
 #include <minix/vfsif.h>

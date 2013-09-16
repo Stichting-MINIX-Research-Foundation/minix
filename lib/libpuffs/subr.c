@@ -85,9 +85,6 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 	if (o != 0)
 		reclen += sizeof(long) - o;
 
-        /* FIXME: Set d_off?
-         * dep->d_off = 
-         */
 	d->d_reclen = (unsigned short) reclen;
         (void)memcpy(d->d_name, name, (size_t)len);
         d->d_name[len] = '\0';

@@ -3,8 +3,8 @@ PROG =	devman
 SRCS =  main.c device.c buf.c bind.c
 
 
-DPADD+=	${LIBSYS}
-LDADD =  -lvtreefs -lsys
+DPADD+=	${LIBSYS} ${LIBMINLIB}
+LDADD =  -lvtreefs -lsys -lminlib
 BINDIR?= /sbin
 
 MAN=

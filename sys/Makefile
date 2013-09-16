@@ -5,7 +5,7 @@
 SUBDIR=	arch dev \
 	net netinet netinet6 \
         \
-	sys ufs
+	sys ufs uvm
 
 .if !defined(__MINIX)
 # LSC the test is OR, but as it is not relevant to MINIX, we have
