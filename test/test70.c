@@ -43,7 +43,7 @@ doseeks(int seekbase)
 	 * sure we get the right return value back, while this happens
 	 * in a concurrent process too.
 	 */
-#define ITERATIONS 50000
+#define ITERATIONS 5000
 	for(iteration = 0; iteration < ITERATIONS; iteration++) {
 		int o;
 		for(o = seekbase; o < limit; o++) {
