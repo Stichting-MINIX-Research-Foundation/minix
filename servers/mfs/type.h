@@ -3,17 +3,6 @@
 
 #include <minix/libminixfs.h>
 
-/* Declaration of the V1 inode as it is on the disk (not in core). */
-typedef struct {		/* V1.x disk inode */
-  u16_t d1_mode;		/* file type, protection, etc. */
-  i16_t d1_uid;			/* user id of the file's owner */
-  i32_t d1_size;		/* current file size in bytes */
-  i32_t d1_mtime;		/* when was file data last changed */
-  u8_t d1_gid;			/* group number */
-  u8_t d1_nlinks;		/* how many links to this file */
-  u16_t d1_zone[V1_NR_TZONES];	/* block nums for direct, ind, and dbl ind */
-} d1_inode;
-
 /* Declaration of the V2 inode as it is on the disk (not in core). */
 typedef struct {		/* V2.x disk inode */
   u16_t d2_mode;		/* file type, protection, etc. */

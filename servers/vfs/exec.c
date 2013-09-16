@@ -24,7 +24,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
+#include <sys/dirent.h>
 #include <sys/exec.h>
 #include <sys/param.h>
 #include "path.h"
@@ -548,7 +548,7 @@ vir_bytes *vsp;
   off_t pos, new_pos;
   char *sp, *interp = NULL;
   unsigned int cum_io;
-  char buf[_MAX_BLOCK_SIZE];
+  char buf[PAGE_SIZE];
 
   /* Make 'path' the new argv[0]. */
   if (!insert_arg(stack, stk_bytes, path, vsp, REPLACE)) return(ENOMEM);
@@ -557,13 +557,13 @@ vir_bytes *vsp;
 
   /* Issue request */
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, pos, READING, VFS_PROC_NR,
-			(vir_bytes) buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
+			(vir_bytes) buf, sizeof(buf), &new_pos, &cum_io);
 
   if (r != OK) return(r);
 
   n = vp->v_size;
-  if (n > _MAX_BLOCK_SIZE)
-	n = _MAX_BLOCK_SIZE;
+  if (n > sizeof(buf))
+	n = sizeof(buf);
   if (n < 2) return ENOEXEC;
 
   sp = &(buf[2]);				/* just behind the #! */

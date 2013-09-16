@@ -7,8 +7,8 @@ INCS=	ansi.h asm.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	fenv.h float.h \
-	\
+	fenv.h float.h proc.h frame.h pcb.h segments.h tss.h sysarch.h \
+	lock.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	\

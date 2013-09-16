@@ -6,6 +6,10 @@
 
 LIB=		utils
 
+.if defined(__MINIX)
+WARNS=	# empty
+.endif
+
 WARNS?=		2
 
 SRCS=		datetime.cpp \

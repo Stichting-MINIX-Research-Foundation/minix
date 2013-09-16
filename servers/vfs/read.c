@@ -16,7 +16,7 @@
 #include <minix/u64.h>
 #include <minix/vfsif.h>
 #include <assert.h>
-#include <dirent.h>
+#include <sys/dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"

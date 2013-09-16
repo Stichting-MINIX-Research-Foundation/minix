@@ -17,6 +17,7 @@
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <minix/bdev.h>
+#include <machine/vmparam.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -204,7 +205,7 @@ static int rw_super(struct super_block *sp, int writing)
   	+ sizeof(sp->LAST_ONDISK_FIELD);
 
   assert(ondisk_bytes > 0);
-  assert(ondisk_bytes < _MIN_BLOCK_SIZE);
+  assert(ondisk_bytes < PAGE_SIZE);
   assert(ondisk_bytes < sizeof(struct super_block));
 
   if (sp->s_dev == NO_DEV)
@@ -219,7 +220,6 @@ static int rw_super(struct super_block *sp, int writing)
    * disk block.
    */
   assert(lmfs_fs_block_size() >= sizeof(struct super_block) + SUPER_BLOCK_BYTES);
-  assert(lmfs_fs_block_size() >= _MIN_BLOCK_SIZE + SUPER_BLOCK_BYTES);
   assert(SUPER_BLOCK_BYTES >= sizeof(struct super_block));
   assert(SUPER_BLOCK_BYTES >= ondisk_bytes);
   if(!(bp = get_block(sp->s_dev, 0, NORMAL)))
@@ -229,7 +229,7 @@ static int rw_super(struct super_block *sp, int writing)
   sbbuf = (char *) b_data(bp) + SUPER_BLOCK_BYTES;
 
   if(writing) {
-  	memset(sbbuf, 0, _MIN_BLOCK_SIZE);
+  	memset(b_data(bp), 0, lmfs_fs_block_size());
   	memcpy(sbbuf, sp, ondisk_bytes);
 	lmfs_markdirty(bp);
   } else {
@@ -258,19 +258,13 @@ int read_super(struct super_block *sp)
 
   magic = sp->s_magic;		/* determines file system type */
 
-  /* Get file system version and type. */
-  if (magic == SUPER_MAGIC || magic == conv2(BYTE_SWAP, SUPER_MAGIC)) {
-	version = V1;
-	native  = (magic == SUPER_MAGIC);
-  } else if (magic == SUPER_V2 || magic == conv2(BYTE_SWAP, SUPER_V2)) {
-	version = V2;
-	native  = (magic == SUPER_V2);
-  } else if (magic == SUPER_V3) {
-	version = V3;
-  	native = 1;
-  } else {
-	return(EINVAL);
+  /* Get file system version and type - only support v3. */
+  if(magic != SUPER_V3) {
+	printf("MFS: only supports V3 filesystems.\n");
+	return EINVAL;
   }
+  version = V3;
+  native = 1;
 
   /* If the super block has the wrong byte order, swap the fields; the magic
    * number doesn't need conversion. */
@@ -283,37 +277,17 @@ int read_super(struct super_block *sp)
   sp->s_max_size =          (off_t) conv4(native, sp->s_max_size);
   sp->s_zones =             (zone_t)conv4(native, sp->s_zones);
 
-  /* In V1, the device size was kept in a short, s_nzones, which limited
-   * devices to 32K zones.  For V2, it was decided to keep the size as a
-   * long.  However, just changing s_nzones to a long would not work, since
-   * then the position of s_magic in the super block would not be the same
-   * in V1 and V2 file systems, and there would be no way to tell whether
-   * a newly mounted file system was V1 or V2.  The solution was to introduce
-   * a new variable, s_zones, and copy the size there.
-   *
-   * Calculate some other numbers that depend on the version here too, to
+  /* Calculate some other numbers that depend on the version here too, to
    * hide some of the differences.
    */
-  if (version == V1) {
-  	sp->s_block_size = _STATIC_BLOCK_SIZE;
-	sp->s_zones = (zone_t) sp->s_nzones;	/* only V1 needs this copy */
-	sp->s_inodes_per_block = V1_INODES_PER_BLOCK;
-	sp->s_ndzones = V1_NR_DZONES;
-	sp->s_nindirs = V1_INDIRECTS;
-  } else {
-	if (version == V2) {
-  		sp->s_block_size = _STATIC_BLOCK_SIZE;
-	} else {
-		sp->s_block_size = (unsigned short)
-				conv2(native,(int) sp->s_block_size);
-	}
-  	if (sp->s_block_size < _MIN_BLOCK_SIZE) {
-  		return EINVAL;
-	}
-	sp->s_inodes_per_block = V2_INODES_PER_BLOCK(sp->s_block_size);
-	sp->s_ndzones = V2_NR_DZONES;
-	sp->s_nindirs = V2_INDIRECTS(sp->s_block_size);
+  assert(version == V3);
+  sp->s_block_size = (unsigned short) conv2(native,(int) sp->s_block_size);
+  if (sp->s_block_size < PAGE_SIZE) {
+ 	return EINVAL;
   }
+  sp->s_inodes_per_block = V2_INODES_PER_BLOCK(sp->s_block_size);
+  sp->s_ndzones = V2_NR_DZONES;
+  sp->s_nindirs = V2_INDIRECTS(sp->s_block_size);
 
   /* For even larger disks, a similar problem occurs with s_firstdatazone.
    * If the on-disk field contains zero, we assume that the value was too
@@ -330,7 +304,7 @@ int read_super(struct super_block *sp)
 	sp->s_firstdatazone = (zone_t) sp->s_firstdatazone_old;
   }
 
-  if (sp->s_block_size < _MIN_BLOCK_SIZE) 
+  if (sp->s_block_size < PAGE_SIZE) 
   	return(EINVAL);
   
   if ((sp->s_block_size % 512) != 0) 
@@ -339,8 +313,7 @@ int read_super(struct super_block *sp)
   if (SUPER_SIZE > sp->s_block_size) 
   	return(EINVAL);
   
-  if ((sp->s_block_size % V2_INODE_SIZE) != 0 ||
-     (sp->s_block_size % V1_INODE_SIZE) != 0) {
+  if ((sp->s_block_size % V2_INODE_SIZE) != 0) {
   	return(EINVAL);
   }
 
