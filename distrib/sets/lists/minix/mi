@@ -4713,6 +4713,8 @@
 ./usr/man/man8/usermod.8					minix-sys
 ./usr/man/man8/vbfs.8					minix-sys
 ./usr/man/man8/vipw.8					minix-sys
+./usr/man/man8/vnconfig.8				minix-sys
+./usr/man/man8/vndconfig.8				minix-sys
 ./usr/man/man8/zdump.8					minix-sys
 ./usr/man/man8/zic.8					minix-sys
 ./usr/man/man9					minix-sys
@@ -4767,6 +4769,8 @@
 ./usr/sbin/vfs				minix-sys
 ./usr/sbin/vipw				minix-sys
 ./usr/sbin/vm				minix-sys
+./usr/sbin/vnconfig			minix-sys
+./usr/sbin/vndconfig			minix-sys
 ./usr/sbin/vnd				minix-sys
 ./usr/sbin/zic				minix-sys
 ./usr/share				minix-sys

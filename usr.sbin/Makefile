@@ -12,6 +12,7 @@ SUBDIR= \
 	rdate \
 	unlink user \
 	vipw \
+	vnconfig \
 	zic
 
 # LSC MINIX Specific
