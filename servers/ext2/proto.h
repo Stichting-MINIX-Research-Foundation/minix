@@ -81,7 +81,6 @@ block_t read_map(struct inode *rip, off_t pos, int opportunistic);
 struct buf *get_block_map(register struct inode *rip, u64_t position);
 
 /* stadir.c */
-int fs_fstatfs(void);
 int fs_stat(void);
 int fs_statvfs(void);
 

@@ -35,7 +35,6 @@
 #define FSTATE_LOCK	'L'
 #define FSTATE_POPEN	'O'
 #define FSTATE_SELECT	'S'
-#define FSTATE_DOPEN	'D'
 #define FSTATE_TASK	'T'
 #define FSTATE_UNKNOWN	'?'
 

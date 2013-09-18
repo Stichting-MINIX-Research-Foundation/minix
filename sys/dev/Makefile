@@ -21,6 +21,8 @@ INCSDIR= /usr/include/dev
 # Only install includes which are used by userland
 INCS=	biovar.h ccdvar.h cgdvar.h fssvar.h keylock.h kttcpio.h lockstat.h \
 	md.h vndvar.h
+.else
+INCS=	vndvar.h
 .endif
 
 .include <bsd.kinc.mk>

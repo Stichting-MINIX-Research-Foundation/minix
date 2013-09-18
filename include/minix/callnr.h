@@ -1,4 +1,4 @@
-#define NCALLS		 124	/* number of system calls allowed */
+#define NCALLS		 130	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -49,6 +49,7 @@
 #define LSTAT		  53
 #define IOCTL		  54
 #define FCNTL		  55
+#define DUPFROM		  56
 #define FS_READY	  57
 #define PIPE2		  58
 #define EXEC		  59
@@ -72,9 +73,9 @@
 #define SYSUNAME	  78
 #define GETDENTS	  80	/* to VFS */
 #define LLSEEK		  81	/* to VFS */
-#define FSTATFS	 	  82	/* to VFS */
-#define STATVFS 	  83	/* to VFS */
-#define FSTATVFS 	  84	/* to VFS */
+#define GETVFSSTAT	  82	/* to VFS */
+#define STATVFS1 	  83	/* to VFS */
+#define FSTATVFS1 	  84	/* to VFS */
 #define SELECT            85	/* to VFS */
 #define FCHDIR            86	/* to VFS */
 #define FSYNC             87	/* to VFS */
@@ -109,8 +110,12 @@
 
 #define VFS_VMCALL	117
 
-#define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
-				 * really a standalone call.
-				 */
 #define MAPDRIVER      122     /* to VFS, map a device */
 #define GETRUSAGE      123	/* to PM, VFS */
+
+#define VFS_PFS_CHECK_PERMS	124	/* to VFS */
+#define VFS_PFS_VERIFY_FD	125	/* to VFS */
+#define VFS_PFS_SET_FILP	126	/* to VFS */
+#define VFS_PFS_COPY_FILP	127	/* to VFS */
+#define VFS_PFS_PUT_FILP	128	/* to VFS */
+#define VFS_PFS_CANCEL_FD	129	/* to VFS */

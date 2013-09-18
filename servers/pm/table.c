@@ -67,7 +67,7 @@ int (*call_vec[])(void) = {
 	no_sys,		/* 53 = (lstat)	*/
 	no_sys,		/* 54 = ioctl	*/
 	no_sys,		/* 55 = fcntl	*/
-	no_sys,		/* 56 = unused	*/
+	no_sys,		/* 56 = dupfrom	*/
 	no_sys,		/* 57 = unused	*/
 	no_sys,		/* 58 = unused	*/
 	do_exec,	/* 59 = execve	*/
@@ -93,7 +93,7 @@ int (*call_vec[])(void) = {
 	no_sys,		/* 79 = unused */
 	no_sys,		/* 80 = (getdents) */
 	no_sys, 	/* 81 = unused */
-	no_sys, 	/* 82 = (fstatfs) */
+	no_sys, 	/* 82 = (getvfsstat) */
 	no_sys, 	/* 83 = unused */
 	no_sys, 	/* 84 = unused */
 	no_sys,		/* 85 = (select) */
@@ -135,6 +135,12 @@ int (*call_vec[])(void) = {
 	no_sys,		/* 121 = (task reply) */
 	no_sys,		/* 122 = (map driver ) */
 	do_getrusage,	/* 123 = getrusage */
+	no_sys,		/* 124 = (check_perms) */
+	no_sys,		/* 125 = (verify_fd) */
+	no_sys,		/* 126 = (set_filp) */
+	no_sys,		/* 127 = (copy_filp) */
+	no_sys,		/* 128 = (put_filp) */
+	no_sys,		/* 129 = (cancel_fd) */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
