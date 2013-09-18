@@ -161,6 +161,7 @@
 
 /set type=dir uid=2 gid=0 mode=755
 ./usr/tests/minix-posix
+./usr/tests/minix-posix/blocktest
 
 # this one is for term(1)
 /set type=dir uid=0 gid=5 mode=775

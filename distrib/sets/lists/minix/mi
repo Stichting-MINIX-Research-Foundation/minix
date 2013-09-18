@@ -5668,6 +5668,12 @@
 ./usr/tests/minix-posix/testsh2		minix-sys
 ./usr/tests/minix-posix/testvm		minix-sys
 ./usr/tests/minix-posix/testvm.conf	minix-sys
+./usr/tests/minix-posix/blocktest		minix-sys
+./usr/tests/minix-posix/blocktest/README	minix-sys
+./usr/tests/minix-posix/blocktest/blocktest	minix-sys
+./usr/tests/minix-posix/blocktest/support.sh	minix-sys
+./usr/tests/minix-posix/blocktest/system.conf	minix-sys
+./usr/tests/minix-posix/blocktest/test.sh	minix-sys
 ./usr/tests/usr.bin/jot/Atffile		minix-sys	atf
 ./usr/tests/usr.bin/jot/d_basic.out	minix-sys	atf
 ./usr/tests/usr.bin/jot/t_jot		minix-sys	atf
