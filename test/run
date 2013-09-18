@@ -125,7 +125,7 @@ runtest() {
 		fi
 	else
 		if [ $needroot -eq 1 ]
-		then echo "skipping test$i, not root" >&2 && return 0
+		then echo "skipping test$i, not root." >&2 && return 0
 		else $NAME $ARG || return 1
 		fi
 	fi
