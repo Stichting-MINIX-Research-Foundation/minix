@@ -34,6 +34,7 @@
 				_IOC_IN)
 #define _IORW(x,y,t)	((x << 8) | y | ((sizeof(t) & _IOCPARM_MASK) << 16) |\
 				_IOC_INOUT)
+#define _IOWR(x,y,t)	_IORW(x,y,t)	/* NetBSD compatibility */
 
 #define _IOW_BIG(y,t)  (y | ((sizeof(t) & _IOCPARM_MASK_BIG) << 8) \
 	| _IOC_IN | _IOC_BIG)

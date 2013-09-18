@@ -71,7 +71,7 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_TTY, STYLE_CTTY };
 #define BMP085B1S77_MAJOR	  53	/* 53 = /dev/bmp085b1s77 (bmp085)     */
 #define BMP085B2S77_MAJOR	  54	/* 54 = /dev/bmp085b2s77 (bmp085)     */
 #define BMP085B3S77_MAJOR	  55	/* 55 = /dev/bmp085b3s77 (bmp085)     */
-
+					/* 56-63 = /dev/vnd[0-7] (vnd)	      */
 
 /* Minor device numbers for memory driver. */
 #  define RAM_DEV_OLD  		   0	/* minor device for /dev/ram */

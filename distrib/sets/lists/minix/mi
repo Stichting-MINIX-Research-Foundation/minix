@@ -668,6 +668,7 @@
 ./usr/include/dev			minix-sys
 ./usr/include/dev/i2c			minix-sys
 ./usr/include/dev/i2c/i2c_io.h		minix-sys
+./usr/include/dev/vndvar.h		minix-sys
 ./usr/include/dirent.h			minix-sys
 ./usr/include/disktab.h			minix-sys
 ./usr/include/dlfcn.h			minix-sys
@@ -4766,6 +4767,7 @@
 ./usr/sbin/vfs				minix-sys
 ./usr/sbin/vipw				minix-sys
 ./usr/sbin/vm				minix-sys
+./usr/sbin/vnd				minix-sys
 ./usr/sbin/zic				minix-sys
 ./usr/share				minix-sys
 ./usr/share/atf				minix-sys	atf
