@@ -37,7 +37,6 @@ int do_lookup(void);
 int main(int argc, char *argv[]);
 
 /* misc.c */
-int do_fstatfs(void);
 int do_statvfs(void);
 
 /* mount.c */

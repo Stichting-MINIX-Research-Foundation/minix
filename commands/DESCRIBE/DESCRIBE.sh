@@ -196,6 +196,22 @@ do
     18,0)
 	des="UNIX domain socket" dev=uds
 	;;
+    5[6-9],0|6[0-3],0)
+	drive=`expr $major - 56`
+	des="vnode disk $drive" dev=vnd$drive
+	;;
+    5[6-9],[1-4]|6[0-3],[1-4])
+	drive=`expr $major - 56`
+	par=`expr $minor - 1`
+	des="vnode disk $drive partition $par" dev=vnd${drive}p${par}
+	;;
+    5[6-9],12[89]|5[6-9],13[0-9]|5[6-9],14[0-3]|6[0-3],12[89]|5[6-9],13[0-9]|5[6-9],14[0-3])
+	drive=`expr $major - 56`
+	par=`expr \\( \\( $minor - 128 \\) / 4 \\) % 4`
+	sub=`expr \\( $minor - 128 \\) % 4`
+	des="vnode disk $drive partition $par slice $sub"
+	dev=vnd${drive}p${par}s${sub}
+	;;
     BAD,BAD)
 	des= dev=
 	;;

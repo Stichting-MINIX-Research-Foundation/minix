@@ -26,7 +26,6 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/param.h>
-#include "fproc.h"
 #include "path.h"
 #include "param.h"
 #include "vnode.h"
@@ -53,8 +52,6 @@ struct vfs_exec_info {
     int vmfd_used;
 };
 
-static void lock_exec(void);
-static void unlock_exec(void);
 static int patch_stack(struct vnode *vp, char stack[ARG_MAX],
 	size_t *stk_bytes, char path[PATH_MAX]);
 static int is_script(struct vfs_exec_info *execi);
@@ -82,36 +79,8 @@ static const struct exec_loaders exec_loaders[] = {
 	{ NULL, NULL }
 };
 
-/*===========================================================================*
- *				lock_exec				     *
- *===========================================================================*/
-static void lock_exec(void)
-{
-  struct fproc *org_fp;
-  struct worker_thread *org_self;
-
-  /* First try to get it right off the bat */
-  if (mutex_trylock(&exec_lock) == 0)
-	return;
-
-  org_fp = fp;
-  org_self = self;
-
-  if (mutex_lock(&exec_lock) != 0)
-	panic("Could not obtain lock on exec");
-
-  fp = org_fp;
-  self = org_self;
-}
-
-/*===========================================================================*
- *				unlock_exec				     *
- *===========================================================================*/
-static void unlock_exec(void)
-{
-  if (mutex_unlock(&exec_lock) != 0)
-	panic("Could not release lock on exec");
-}
+#define lock_exec() lock_proc(fproc_addr(VM_PROC_NR))
+#define unlock_exec() unlock_proc(fproc_addr(VM_PROC_NR))
 
 /*===========================================================================*
  *				get_read_vp				     *
@@ -212,17 +181,15 @@ static int vfs_memmap(struct exec_info *execi,
 /*===========================================================================*
  *				pm_exec					     *
  *===========================================================================*/
-int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
-		   vir_bytes frame, size_t frame_len, vir_bytes *pc,
-		   vir_bytes *newsp, int user_exec_flags)
+int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
+	vir_bytes *pc, vir_bytes *newsp, int user_exec_flags)
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside VFS, and then to the new core image.
  */
-  int r, slot;
+  int r;
   vir_bytes vsp;
-  struct fproc *rfp;
   int extrabase = 0;
   static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
   struct vfs_exec_info execi;
@@ -232,14 +199,13 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 	firstexec[PATH_MAX],
 	finalexec[PATH_MAX];
   struct lookup resolve;
-  struct fproc *vmfp = &fproc[VM_PROC_NR];
+  struct fproc *vmfp = fproc_addr(VM_PROC_NR);
   stackhook_t makestack = NULL;
   static int n;
   n++;
   struct filp *newfilp = NULL;
 
   lock_exec();
-  lock_proc(vmfp, 0);
 
   /* unset execi values are 0. */
   memset(&execi, 0, sizeof(execi));
@@ -250,10 +216,8 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   execi.args.stack_high = kinfo.user_sp;
   execi.args.stack_size = DEFAULT_STACK_LIMIT;
 
-  okendpt(proc_e, &slot);
-  rfp = fp = &fproc[slot];
-  rfp->text_size = 0;
-  rfp->data_size = 0;
+  fp->text_size = 0;
+  fp->data_size = 0;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
 
@@ -264,7 +228,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   if (frame_len > ARG_MAX)
 	FAILCHECK(ENOMEM); /* stack too big */
 
-  r = sys_datacopy(proc_e, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
+  r = sys_datacopy(fp->fp_endpoint, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
 		   (size_t) frame_len);
   if (r != OK) { /* can't fetch stack (e.g. bad virtual addr) */
         printf("VFS: pm_exec: sys_datacopy failed\n");
@@ -272,8 +236,8 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   }
 
   /* The default is to keep the original user and group IDs */
-  execi.args.new_uid = rfp->fp_effuid;
-  execi.args.new_gid = rfp->fp_effgid;
+  execi.args.new_uid = fp->fp_effuid;
+  execi.args.new_gid = fp->fp_effgid;
 
   /* Get the exec file name. */
   FAILCHECK(fetch_name(path, path_len, fullpath));
@@ -351,7 +315,6 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 			newfilp->filp_count = 1;
 			newfilp->filp_vno = vp;
 			newfilp->filp_flags = O_RDONLY;
-			FD_SET(newfd, &vmfp->fp_filp_inuse);
 			vmfp->fp_filp[newfd] = newfilp;
 			/* dup_vnode(vp); */
 			execi.vmfd = newfd;
@@ -369,7 +332,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   execi.args.allocmem_ondemand = libexec_alloc_mmap_ondemand;
   execi.args.opaque = &execi;
 
-  execi.args.proc_e = proc_e;
+  execi.args.proc_e = fp->fp_endpoint;
   execi.args.frame_len = frame_len;
   execi.args.filesize = execi.vp->v_size;
 
@@ -382,7 +345,7 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
   FAILCHECK(r);
 
   /* Inform PM */
-  FAILCHECK(libexec_pm_newexec(proc_e, &execi.args));
+  FAILCHECK(libexec_pm_newexec(fp->fp_endpoint, &execi.args));
 
   /* Save off PC */
   *pc = execi.args.pc;
@@ -393,25 +356,25 @@ int pm_exec(endpoint_t proc_e, vir_bytes path, size_t path_len,
 
   /* Patch up stack and copy it from VFS to new core image. */
   libexec_patch_ptr(mbuf, vsp + extrabase);
-  FAILCHECK(sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
-		   (phys_bytes)frame_len));
+  FAILCHECK(sys_datacopy(SELF, (vir_bytes) mbuf, fp->fp_endpoint,
+	(vir_bytes) vsp, (phys_bytes)frame_len));
 
   /* Return new stack pointer to caller */
   *newsp = vsp;
 
-  clo_exec(rfp);
+  clo_exec(fp);
 
   if (execi.args.allow_setuid) {
 	/* If after loading the image we're still allowed to run with
 	 * setuid or setgid, change credentials now */
-	rfp->fp_effuid = execi.args.new_uid;
-	rfp->fp_effgid = execi.args.new_gid;
+	fp->fp_effuid = execi.args.new_uid;
+	fp->fp_effgid = execi.args.new_gid;
   }
 
   /* Remember the new name of the process */
-  strlcpy(rfp->fp_name, execi.args.progname, PROC_NAME_LEN);
-  rfp->text_size = execi.args.text_size;
-  rfp->data_size = execi.args.data_size;
+  strlcpy(fp->fp_name, execi.args.progname, PROC_NAME_LEN);
+  fp->text_size = execi.args.text_size;
+  fp->data_size = execi.args.data_size;
 
 pm_execfinal:
   if(newfilp) unlock_filp(newfilp);
@@ -426,7 +389,6 @@ pm_execfinal:
 	}
   }
 
-  unlock_proc(vmfp);
   unlock_exec();
 
   return(r);

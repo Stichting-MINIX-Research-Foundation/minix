@@ -19,12 +19,7 @@ do_kb_inject(message *m)
 }
 
 void
-do_kbd(message *m)
-{
-}
-
-void
-do_kbdaux(message *m)
+do_kbd(message *m, int ipc_status)
 {
 }
 
@@ -34,13 +29,7 @@ kb_init_once(void)
 }
 
 int
-kbd_status(message *m)
-{
-	return 0;
-}
-
-int
-kbd_loadmap(message *m)
+kbd_loadmap(endpoint_t endpt, cp_grant_id_t grant)
 {
 	return 0;
 }
