@@ -23,6 +23,7 @@ EXTERN struct vnode {
 } vnode[NR_VNODES];
 
 /* vnode lock types mapping */
+#define VNODE_NONE TLL_NONE	/* used only for get_filp2 to avoid locking */
 #define VNODE_READ TLL_READ
 #define VNODE_OPCL TLL_READSER
 #define VNODE_WRITE TLL_WRITE

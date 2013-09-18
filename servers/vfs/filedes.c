@@ -13,6 +13,7 @@
  *   do_put_filp:   marks a filp as not in-flight anymore.
  *   do_cancel_fd:  cancel the transaction when something goes wrong for
  *                  the receiver.
+ *   do_dupfrom:    copies a filp from another endpoint.
  */
 
 #include <sys/select.h>
@@ -172,7 +173,7 @@ tll_access_t locktype;
 	err_code = EIO; /* disallow all use except close(2) */
   else if ((filp = rfp->fp_filp[fild]) == NULL)
 	err_code = EBADF;
-  else
+  else if (locktype != VNODE_NONE)	/* Only lock the filp if requested */
 	lock_filp(filp, locktype);	/* All is fine */
 
   return(filp);	/* may also be NULL */
@@ -613,4 +614,59 @@ struct filp *f;
   }
 
   mutex_unlock(&f->filp_lock);
+}
+
+/*===========================================================================*
+ *				do_dupfrom				     *
+ *===========================================================================*/
+int do_dupfrom(message *UNUSED(m_out))
+{
+/* Duplicate a file descriptor from another process into the calling process.
+ * The other process is identified by a magic grant created for it to make the
+ * initial (IOCTL) request to the calling process. This call has been added
+ * specifically for the VND driver.
+ */
+  struct fproc *rfp;
+  struct filp *rfilp;
+  struct vnode *vp;
+  endpoint_t endpt;
+  int r, fd, slot;
+
+  /* This should be replaced with an ACL check. */
+  if (!super_user) return(EPERM);
+
+  endpt = (endpoint_t) job_m_in.VFS_DUPFROM_ENDPT;
+  fd = job_m_in.VFS_DUPFROM_FD;
+
+  if (isokendpt(endpt, &slot) != OK) return(EINVAL);
+  rfp = &fproc[slot];
+
+  /* Obtain the filp, but do not lock it yet: we first need to make sure that
+   * locking it will not result in a deadlock.
+   */
+  if ((rfilp = get_filp2(rfp, fd, VNODE_NONE)) == NULL)
+	return(err_code);
+
+  /* For now, we do not allow remote duplication of device nodes.  In practice,
+   * only a block-special file can cause a deadlock for the caller (currently
+   * only the VND driver).  This would happen if a user process passes in the
+   * file descriptor to the device node on which it is performing the IOCTL.
+   * This would cause two VFS threads to deadlock on the same filp.  Since the
+   * VND driver does not allow device nodes to be used anyway, this somewhat
+   * rudimentary check eliminates such deadlocks.  A better solution would be
+   * to check if the given endpoint holds a lock to the target filp, but we
+   * currently do not have this information within VFS.
+   */
+  vp = rfilp->filp_vno;
+  if (S_ISCHR(vp->v_mode) || S_ISBLK(vp->v_mode))
+	return(EINVAL);
+
+  /* Now we can safely lock the filp, copy it, and unlock it again. */
+  lock_filp(rfilp, VNODE_READ);
+
+  r = copy_filp(who_e, (filp_id_t) rfilp);
+
+  unlock_filp(rfilp);
+
+  return(r);
 }

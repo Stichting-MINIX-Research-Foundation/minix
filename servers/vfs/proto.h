@@ -100,6 +100,7 @@ int do_put_filp(message *m_out);
 int cancel_fd(endpoint_t ep, int fd);
 int do_cancel_fd(message *m_out);
 void close_filp(struct filp *fp);
+int do_dupfrom(message *m_out);
 
 /* fscall.c */
 void nested_fs_call(message *m);

@@ -47,6 +47,7 @@
 #define FSTAT		  52
 #define LSTAT		  53
 #define IOCTL		  54
+#define DUPFROM		  56
 #define FS_READY	  57
 #define PIPE2		  58
 #define EXEC		  59
