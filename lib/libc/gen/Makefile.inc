@@ -12,7 +12,7 @@
 # 	closefrom.c confstr.c extattr.c getdevmajor.c \
 #	pthread_atfork.c setdomainname.c sethostname.c setproctitle.c \
 #	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
-#	devname.c wait3.c
+#	wait3.c
 
 # To be ported
 # nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c
@@ -26,7 +26,7 @@
 SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	closedir.c \
 	ctermid.c ctype_.c daemon.c \
-	dehumanize_number.c dirname.c err.c errx.c \
+	dehumanize_number.c devname.c dirname.c err.c errx.c \
 	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
