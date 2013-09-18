@@ -10,6 +10,7 @@ SUBDIR= \
 	pwd_mkdb postinstall \
 	rdate user \
 	vipw \
+	vnconfig \
 	zic
 
 # LSC MINIX Specific
