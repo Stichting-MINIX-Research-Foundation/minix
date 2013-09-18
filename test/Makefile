@@ -16,6 +16,8 @@ LDADD+=		-lm -lcompat_minix
 
 .include <bsd.own.mk>
 
+SUBDIR=		blocktest
+
 # Some have special flags compiling
 .if ${MACHINE_ARCH} == "i386"
 # LSC FIXME: Compilation error for now on ARM with that!
@@ -110,3 +112,4 @@ clean: .PHONY .MAKE
 	@rm -rf DIR*
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
