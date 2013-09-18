@@ -5674,6 +5674,8 @@
 ./usr/tests/minix-posix/testsh2		minix-sys
 ./usr/tests/minix-posix/testvm		minix-sys
 ./usr/tests/minix-posix/testvm.conf	minix-sys
+./usr/tests/minix-posix/testvnd		minix-sys
+./usr/tests/minix-posix/tvnd		minix-sys
 ./usr/tests/minix-posix/blocktest		minix-sys
 ./usr/tests/minix-posix/blocktest/README	minix-sys
 ./usr/tests/minix-posix/blocktest/blocktest	minix-sys

@@ -62,3 +62,7 @@
 # AHCI ATAPI TEST (for SATA CD-ROM devices)
 
 #block_test /dev/c2d1 "ro,sector=2048,min_read=2,element=2,max=4194304"
+
+# VND TEST (for configured vnode disk devices)
+
+#block_test /dev/vnd0 "rw,min_read=1,min_write=1,element=1,max=16777216"
