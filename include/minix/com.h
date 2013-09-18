@@ -887,6 +887,10 @@
 #define VFS_PFS_FD		m2_i3
 #define VFS_PFS_FILP		m2_p1
 
+/* Field names for the dupfrom(2) call. */
+#define VFS_DUPFROM_ENDPT	m1_i1
+#define VFS_DUPFROM_FD		m1_i2
+
 /* Field names for GETRUSAGE related calls */
 #define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
 #define RU_WHO		m1_i1	/* who argument in getrusage call */
