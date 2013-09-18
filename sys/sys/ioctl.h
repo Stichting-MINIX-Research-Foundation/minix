@@ -23,6 +23,7 @@
 #include <sys/ioc_block.h>	/* 'b'			*/
 #include <sys/ioc_fbd.h>	/* 'B'			*/
 #include <sys/ioc_fb.h>		/* 'V'			*/
+#include <dev/vndvar.h>		/* 'F'			*/
 
 #if defined(_NETBSD_SOURCE)
 #define		TIOCDRAIN 	TCDRAIN
