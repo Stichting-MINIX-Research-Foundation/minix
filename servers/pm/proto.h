@@ -5,7 +5,7 @@ struct stat;
 struct mem_map;
 struct memory;
 
-#include <timers.h>
+#include <minix/timers.h>
 
 /* alarm.c */
 int do_alarm(void);

@@ -17,14 +17,14 @@
  *
  * In addition to the main clock_task() entry point, which starts the main 
  * loop, there are several other minor entry points:
- *   clock_stop:	called just before MINIX shutdown
- *   get_realtime:	get wall time since boot in clock ticks
- *   set_realtime:	set wall time since boot in clock ticks
- *   set_adjtime_delta:	set the number of ticks to adjust realtime
- *   get_monotonic:	get monotonic time since boot in clock ticks
- *   set_timer:		set a watchdog timer (+)
- *   reset_timer:	reset a watchdog timer (+)
- *   read_clock:	read the counter of channel 0 of the 8253A timer
+ *   clock_stop:		called just before MINIX shutdown
+ *   get_realtime:		get wall time since boot in clock ticks
+ *   set_realtime:		set wall time since boot in clock ticks
+ *   set_adjtime_delta:		set the number of ticks to adjust realtime
+ *   get_monotonic:		get monotonic time since boot in clock ticks
+ *   set_kernel_timer:		set a watchdog timer (+)
+ *   reset_kernel_timer:	reset a watchdog timer (+)
+ *   read_clock:		read the counter of channel 0 of the 8253A timer
  *
  * (+) The CLOCK task keeps tracks of watchdog timers for the entire kernel.
  * It is crucial that watchdog functions not block, or the CLOCK task may
@@ -46,14 +46,14 @@
  */ 
 static void load_update(void);
 
-/* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
+/* The CLOCK's timers queue. The functions in <minix/timers.h> operate on this.
  * Each system process possesses a single synchronous alarm timer. If other 
  * kernel parts want to use additional timers, they must declare their own 
  * persistent (static) timer structure, which can be passed to the clock
- * via (re)set_timer().
+ * via (re)set_kernel_timer().
  * When a timer expires its watchdog function is run by the CLOCK task. 
  */
-static timer_t *clock_timers;	/* queue of CLOCK timers */
+static minix_timer_t *clock_timers;	/* queue of CLOCK timers */
 static clock_t next_timeout;	/* monotonic time that next timer expires */
 
 /* The time is incremented by the interrupt handler on each clock tick.
@@ -211,10 +211,10 @@ clock_t get_monotonic(void)
 }
 
 /*===========================================================================*
- *				set_timer				     *
+ *				set_kernel_timer			     *
  *===========================================================================*/
-void set_timer(tp, exp_time, watchdog)
-struct timer *tp;		/* pointer to timer structure */
+void set_kernel_timer(tp, exp_time, watchdog)
+minix_timer_t *tp;		/* pointer to timer structure */
 clock_t exp_time;		/* expiration monotonic time */
 tmr_func_t watchdog;		/* watchdog to be called */
 {
@@ -226,10 +226,10 @@ tmr_func_t watchdog;		/* watchdog to be called */
 }
 
 /*===========================================================================*
- *				reset_timer				     *
+ *				reset_kernel_timer			     *
  *===========================================================================*/
-void reset_timer(tp)
-struct timer *tp;		/* pointer to timer structure */
+void reset_kernel_timer(tp)
+minix_timer_t *tp;		/* pointer to timer structure */
 {
 /* The timer pointed to by 'tp' is no longer needed. Remove it from both the
  * active and expired lists. Always update the next timeout time by setting

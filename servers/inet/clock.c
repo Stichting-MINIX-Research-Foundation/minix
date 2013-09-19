@@ -16,10 +16,10 @@ int clck_call_expire;
 
 static clock_t curr_time;
 static clock_t prev_time;
-static timer_t *timer_chain;
+static minix_timer_t *timer_chain;
 static time_t next_timeout;
 
-static void clck_fast_release(timer_t *timer);
+static void clck_fast_release(minix_timer_t *timer);
 static void set_timer(void);
 
 void clck_init()
@@ -66,12 +66,12 @@ void reset_time()
 }
 
 void clck_timer(timer, timeout, func, fd)
-timer_t *timer;
+minix_timer_t *timer;
 time_t timeout;
 timer_func_t func;
 int fd;
 {
-	timer_t *timer_index;
+	minix_timer_t *timer_index;
 
 	if (timer->tim_active)
 		clck_fast_release(timer);
@@ -111,9 +111,9 @@ message *mess;
 }
 
 static void clck_fast_release (timer)
-timer_t *timer;
+minix_timer_t *timer;
 {
-	timer_t *timer_index;
+	minix_timer_t *timer_index;
 
 	if (!timer->tim_active)
 		return;
@@ -158,7 +158,7 @@ static void set_timer()
 }
 
 void clck_untimer (timer)
-timer_t *timer;
+minix_timer_t *timer;
 {
 	clck_fast_release (timer);
 	set_timer();
@@ -167,7 +167,7 @@ timer_t *timer;
 void clck_expire_timers()
 {
 	time_t now;
-	timer_t *timer_index;
+	minix_timer_t *timer_index;
 
 	clck_call_expire= 0;
 

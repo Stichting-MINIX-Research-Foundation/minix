@@ -10,7 +10,7 @@ struct phys_region;
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
 #include <minix/vm.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <stdio.h>
 
 #include "pt.h"

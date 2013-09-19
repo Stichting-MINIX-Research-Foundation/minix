@@ -45,7 +45,7 @@ static struct selectentry {
   char block;
   char starting;
   clock_t expiry;
-  timer_t timer;	/* if expiry > 0 */
+  minix_timer_t timer;	/* if expiry > 0 */
 } selecttab[MAXSELECTS];
 
 static int copy_fdsets(struct selectentry *se, int nfds, int direction);
@@ -704,7 +704,7 @@ void select_forget(void)
 /*===========================================================================*
  *				select_timeout_check	  	     	     *
  *===========================================================================*/
-void select_timeout_check(timer_t *timer)
+void select_timeout_check(minix_timer_t *timer)
 {
 /* An alarm has gone off for one of the select queries. This function MUST NOT
  * block its calling thread.

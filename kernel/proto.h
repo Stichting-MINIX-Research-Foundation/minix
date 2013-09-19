@@ -11,15 +11,14 @@
 
 /* Struct declarations. */
 struct proc;
-struct timer;
 
 /* clock.c */
 clock_t get_realtime(void);
 void set_realtime(clock_t);
 void set_adjtime_delta(int32_t);
 clock_t get_monotonic(void);
-void set_timer(struct timer *tp, clock_t t, tmr_func_t f);
-void reset_timer(struct timer *tp);
+void set_kernel_timer(minix_timer_t *tp, clock_t t, tmr_func_t f);
+void reset_kernel_timer(minix_timer_t *tp);
 void ser_dump_proc(void);
 
 void cycles_accounting_init(void);
@@ -45,7 +44,7 @@ void fpu_sigcontext(struct proc *, struct sigframe *fr, struct
 #endif
 void kmain(kinfo_t *cbi);
 void prepare_shutdown(int how);
-__dead void minix_shutdown(struct timer *tp);
+__dead void minix_shutdown(minix_timer_t *tp);
 void bsp_finish_booting(void);
 
 /* proc.c */

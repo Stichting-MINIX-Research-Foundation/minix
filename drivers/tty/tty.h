@@ -1,7 +1,7 @@
 /*	tty.h - Terminals	*/
 
 #include <minix/chardriver.h>
-#include <timers.h>
+#include <minix/timers.h>
 
 #undef lock
 #undef unlock
@@ -42,7 +42,7 @@ typedef struct tty {
   devfun_t tty_devread;		/* routine to read from low level buffers */
   devfun_t tty_icancel;		/* cancel any device input */
   int tty_min;			/* minimum requested #chars in input queue */
-  timer_t tty_tmr;		/* the timer for this tty */
+  minix_timer_t tty_tmr;		/* the timer for this tty */
 
   /* Output section. */
   devfun_t tty_devwrite;	/* routine to start actual device output */

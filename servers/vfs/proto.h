@@ -3,11 +3,12 @@
 
 /* Function prototypes. */
 
-#include "timers.h"
-#include "request.h"
-#include "tll.h"
-#include "threads.h"
 #include <minix/rs.h>
+#include <minix/timers.h>
+
+#include "request.h"
+#include "threads.h"
+#include "tll.h"
 
 /* Structs used in prototypes must be declared as such first. */
 struct filp;
@@ -357,7 +358,7 @@ void select_callback(struct filp *, int ops);
 void select_forget(void);
 void select_reply1(endpoint_t driver_e, int minor, int status);
 void select_reply2(endpoint_t driver_e, int minor, int status);
-void select_timeout_check(timer_t *);
+void select_timeout_check(minix_timer_t *);
 void select_unsuspend_by_endpt(endpoint_t proc);
 
 /* worker.c */

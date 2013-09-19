@@ -123,7 +123,7 @@ static void flush(console_t *cons);
 static void parse_escape(console_t *cons, int c);
 static void scroll_screen(console_t *cons, int dir);
 static void set_6845(int reg, unsigned val);
-static void stop_beep(timer_t *tmrp);
+static void stop_beep(minix_timer_t *tmrp);
 static void cons_org0(void);
 static void disable_console(void);
 static void reenable_console(void);
@@ -789,7 +789,7 @@ static void beep()
  * This routine works by turning on the bits 0 and 1 in port B of the 8255
  * chip that drive the speaker.
  */
-  static timer_t tmr_stop_beep;
+  static minix_timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
   u32_t port_b_val;
   
@@ -885,7 +885,7 @@ clock_t dur;
  * This routine works by turning on the bits 0 and 1 in port B of the 8255
  * chip that drive the speaker.
  */
-  static timer_t tmr_stop_beep;
+  static minix_timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
   u32_t port_b_val;
 
@@ -914,7 +914,7 @@ clock_t dur;
 /*===========================================================================*
  *				stop_beep				     *
  *===========================================================================*/
-static void stop_beep(timer_t *UNUSED(tmrp))
+static void stop_beep(minix_timer_t *UNUSED(tmrp))
 {
 /* Turn off the beeper by turning off bits 0 and 1 in PORT_B. */
   u32_t port_b_val;

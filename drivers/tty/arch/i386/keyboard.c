@@ -151,7 +151,7 @@ static int kbd_watchdog_set= 0;
 static int kbd_alive= 1;
 static long sticky_alt_mode = 0;
 static long debug_fkeys = 1;
-static timer_t tmr_kbd_wd;
+static minix_timer_t tmr_kbd_wd;
 
 static void kbc_cmd0(int cmd);
 static void kbc_cmd1(int cmd, int data);
@@ -166,7 +166,7 @@ static void set_leds(void);
 static void show_key_mappings(void);
 static int kb_read(struct tty *tp, int try);
 static unsigned map_key(int scode);
-static void kbd_watchdog(timer_t *tmrp);
+static void kbd_watchdog(minix_timer_t *tmrp);
 
 static int kbd_open(devminor_t minor, int access, endpoint_t user_endpt);
 static int kbd_close(devminor_t minor);
@@ -1323,7 +1323,7 @@ int *isauxp;
 /*===========================================================================*
  *				kbd_watchdog 				     *
  *===========================================================================*/
-static void kbd_watchdog(timer_t *UNUSED(tmrp))
+static void kbd_watchdog(minix_timer_t *UNUSED(tmrp))
 {
 
 	kbd_watchdog_set= 0;
