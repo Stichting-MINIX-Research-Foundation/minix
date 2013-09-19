@@ -8,7 +8,7 @@
  */
 
 #include "inc.h"
-#include <timers.h>
+#include <minix/timers.h>
 #include <minix/rs.h>
 #include "kernel/priv.h"
 #include "../rs/const.h"

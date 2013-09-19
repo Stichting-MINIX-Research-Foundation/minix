@@ -26,7 +26,7 @@ static void getset_vtimer(struct mproc *mp, int nwhich, struct
 	itimerval *value, struct itimerval *ovalue);
 static void get_realtimer(struct mproc *mp, struct itimerval *value);
 static void set_realtimer(struct mproc *mp, struct itimerval *value);
-static void cause_sigalrm(struct timer *tp);
+static void cause_sigalrm(minix_timer_t *tp);
 
 /*===========================================================================*
  *				ticks_from_timeval			     * 
@@ -345,7 +345,7 @@ clock_t ticks;			/* how many ticks delay before the signal */
  *				cause_sigalrm				     * 
  *===========================================================================*/
 static void cause_sigalrm(tp)
-struct timer *tp;
+minix_timer_t *tp;
 {
   int proc_nr_n;
   register struct mproc *rmp;

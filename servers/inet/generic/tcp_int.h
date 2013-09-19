@@ -160,7 +160,7 @@ typedef struct tcp_conn
 	u16_t tc_mtu;		/* discovered PMTU */
 	clock_t tc_mtutim;	/* Last time MTU/TCF_PMTU flag was changed */
 
-	struct timer tc_transmit_timer;
+	minix_timer_t tc_transmit_timer;
 	u32_t tc_transmit_seq;
 	clock_t tc_0wnd_to;
 	clock_t tc_stt;		/* time of first send after last ack */

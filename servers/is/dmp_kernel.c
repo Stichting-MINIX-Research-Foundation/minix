@@ -1,7 +1,7 @@
 /* Debugging dump procedures for the kernel. */
 
 #include "inc.h"
-#include <timers.h>
+#include <minix/timers.h>
 #include <assert.h>
 #include <machine/interrupt.h>
 #include <minix/endpoint.h>

@@ -9,7 +9,7 @@
 
 #include "inc.h"
 #include "../pm/mproc.h"
-#include <timers.h> 
+#include <minix/timers.h>
 #include <minix/config.h> 
 #include <minix/type.h> 
 

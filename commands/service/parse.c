@@ -26,7 +26,7 @@
 #include <configfile.h>
 
 #include <machine/archtypes.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include "kernel/proc.h"
 
 #include "config.h"

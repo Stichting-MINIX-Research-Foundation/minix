@@ -20,7 +20,7 @@ Copyright 1995 Philip Homburg
 THIS_FILE
 
 static acc_t *make_pack ARGS(( tcp_conn_t *tcp_conn ));
-static void tcp_send_timeout ARGS(( int conn, struct timer *timer ));
+static void tcp_send_timeout ARGS(( int conn, minix_timer_t *timer ));
 static void do_snd_event ARGS(( event_t *ev, ev_arg_t arg ));
 
 void tcp_conn_write (tcp_conn, enq)
@@ -812,7 +812,7 @@ tcp_send_timeout
 
 static void tcp_send_timeout(conn, timer)
 int conn;
-struct timer *timer;
+minix_timer_t *timer;
 {
 	tcp_conn_t *tcp_conn;
 	u16_t mss, mss2;

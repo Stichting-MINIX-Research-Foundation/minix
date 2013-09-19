@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <lib.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <dirent.h>
 
 #include <minix/callnr.h>

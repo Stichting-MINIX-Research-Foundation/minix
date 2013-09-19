@@ -23,7 +23,7 @@
  */
 
 #include "floppy.h"
-#include <timers.h>
+#include <minix/timers.h>
 #include <machine/diskparm.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
@@ -212,7 +212,7 @@ static struct floppy {		/* main drive struct, one entry per drive */
   char fl_calibration;		/* CALIBRATED or UNCALIBRATED */
   u8_t fl_density;		/* NO_DENS = ?, 0 = 360K; 1 = 360K/1.2M; etc.*/
   u8_t fl_class;		/* bitmap for possible densities */
-  timer_t fl_tmr_stop;		/* timer to stop motor */
+  minix_timer_t fl_tmr_stop;		/* timer to stop motor */
   struct device fl_geom;	/* Geometry of the drive */
   struct device fl_part[NR_PARTITIONS];  /* partition's base & size */
 } floppy[NR_DRIVES];
@@ -236,11 +236,11 @@ static u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
  * Besides the 'f_tmr_timeout' timer below, the floppy structure for each
  * floppy disk drive contains a 'fl_tmr_stop' timer. 
  */
-static timer_t f_tmr_timeout;		/* timer for various timeouts */
+static minix_timer_t f_tmr_timeout;		/* timer for various timeouts */
 static u32_t system_hz;		/* system clock frequency */
 static void f_expire_tmrs(clock_t stamp);
-static void stop_motor(timer_t *tp);
-static void f_timeout(timer_t *tp);
+static void stop_motor(minix_timer_t *tp);
+static void f_timeout(minix_timer_t *tp);
 
 static struct device *f_prepare(devminor_t device);
 static struct device *f_part(devminor_t minor);
@@ -785,7 +785,7 @@ static void start_motor(void)
 /*===========================================================================*
  *				stop_motor				     *
  *===========================================================================*/
-static void stop_motor(timer_t *tp)
+static void stop_motor(minix_timer_t *tp)
 {
 /* This routine is called from an alarm timer after several seconds have
  * elapsed with no floppy disk activity.  It turns the drive motor off.
@@ -1199,7 +1199,7 @@ static int f_intr_wait(void)
 /*===========================================================================*
  *				f_timeout				     *
  *===========================================================================*/
-static void f_timeout(timer_t *UNUSED(tp))
+static void f_timeout(minix_timer_t *UNUSED(tp))
 {
 /* This routine is called when a timer expires.  Usually to tell that a
  * motor has spun up, but also to forge an interrupt when it takes too long

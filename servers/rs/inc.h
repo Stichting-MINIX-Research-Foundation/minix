@@ -38,7 +38,7 @@
 #include <minix/priv.h>
 
 #include <machine/archtypes.h>
-#include <timers.h>				/* For priv.h */
+#include <minix/timers.h>				/* For priv.h */
 #include "kernel/priv.h"
 #include "kernel/ipc.h"
 

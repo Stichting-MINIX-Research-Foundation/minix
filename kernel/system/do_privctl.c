@@ -113,7 +113,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	      priv(rp)->s_notify_pending.chunk[i] = 0;	/* - notifications */
 	priv(rp)->s_int_pending = 0;			/* - interrupts */
 	(void) sigemptyset(&priv(rp)->s_sig_pending);	/* - signals */
-	reset_timer(&priv(rp)->s_alarm_timer);		/* - alarm */
+	reset_kernel_timer(&priv(rp)->s_alarm_timer);	/* - alarm */
 	priv(rp)->s_asyntab= -1;			/* - asynsends */
 	priv(rp)->s_asynsize= 0;
 

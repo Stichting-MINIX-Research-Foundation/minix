@@ -1487,7 +1487,7 @@
 ./usr/include/term.h			minix-sys
 ./usr/include/termios.h			minix-sys
 ./usr/include/time.h			minix-sys
-./usr/include/timers.h			minix-sys
+./usr/include/timers.h			minix-sys	obsolete
 ./usr/include/tools.h			minix-sys	obsolete
 ./usr/include/ttyent.h			minix-sys
 ./usr/include/tzfile.h			minix-sys

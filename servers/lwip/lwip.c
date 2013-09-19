@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <sys/svrctl.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
@@ -25,7 +25,7 @@
 
 endpoint_t lwip_ep;
 
-static timer_t tcp_ftmr, tcp_stmr, arp_tmr;
+static minix_timer_t tcp_ftmr, tcp_stmr, arp_tmr;
 static int arp_ticks, tcp_fticks, tcp_sticks;
 
 static struct netif * netif_lo;
@@ -38,19 +38,19 @@ static void sys_init(void)
 {
 }
 
-static void arp_watchdog(__unused timer_t *tp)
+static void arp_watchdog(__unused minix_timer_t *tp)
 {
 	etharp_tmr();
 	set_timer(&arp_tmr, arp_ticks, arp_watchdog, 0);
 }
 
-static void tcp_fwatchdog(__unused timer_t *tp)
+static void tcp_fwatchdog(__unused minix_timer_t *tp)
 {
 	tcp_fasttmr();
 	set_timer(&tcp_ftmr, tcp_fticks, tcp_fwatchdog, 0);
 }
 
-static void tcp_swatchdog(__unused timer_t *tp)
+static void tcp_swatchdog(__unused minix_timer_t *tp)
 {
 	tcp_slowtmr();
 	set_timer(&tcp_ftmr, tcp_sticks, tcp_swatchdog, 0);

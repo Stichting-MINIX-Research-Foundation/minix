@@ -63,7 +63,7 @@ unsigned long rs_irq_set = 0;
 
 struct kmessages kmess;
 
-static void tty_timed_out(timer_t *tp);
+static void tty_timed_out(minix_timer_t *tp);
 static void settimer(tty_t *tty_ptr, int enable);
 static void in_transfer(tty_t *tp);
 static int tty_echo(tty_t *tp, int ch);
@@ -1608,7 +1608,7 @@ static void tty_init()
 /*===========================================================================*
  *				tty_timed_out				     *
  *===========================================================================*/
-static void tty_timed_out(timer_t *tp)
+static void tty_timed_out(minix_timer_t *tp)
 {
 /* This timer has expired. Set the events flag, to force processing. */
   tty_t *tty_ptr;

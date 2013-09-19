@@ -170,7 +170,7 @@ static struct port_state {
 	struct device part[DEV_PER_DRIVE];	/* partition bases and sizes */
 	struct device subpart[SUB_PER_DRIVE];	/* same for subpartitions */
 
-	timer_t timer;		/* port-specific timeout timer */
+	minix_timer_t timer;		/* port-specific timeout timer */
 	int left;		/* number of tries left before giving up */
 				/* (only used for signature probing) */
 
@@ -178,7 +178,7 @@ static struct port_state {
 	u32_t pend_mask;	/* commands not yet complete */
 	struct {
 		thread_id_t tid;/* ID of the worker thread */
-		timer_t timer;	/* timer associated with each request */
+		minix_timer_t timer;	/* timer associated with each request */
 		int result;	/* success/failure result of the commands */
 	} cmd_info[NR_CMDS];
 } port_state[NR_PORTS];
@@ -232,7 +232,7 @@ static void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 	u8_t packet[ATAPI_PACKET_SIZE], prd_t *prdt, int nr_prds, int write);
 static void port_issue(struct port_state *ps, int cmd, clock_t timeout);
 static int port_exec(struct port_state *ps, int cmd, clock_t timeout);
-static void port_timeout(struct timer *tp);
+static void port_timeout(minix_timer_t *tp);
 static void port_disconnect(struct port_state *ps);
 
 static char *ahci_portname(struct port_state *ps);
@@ -1712,7 +1712,7 @@ static void port_intr(struct port_state *ps)
 /*===========================================================================*
  *				port_timeout				     *
  *===========================================================================*/
-static void port_timeout(struct timer *tp)
+static void port_timeout(minix_timer_t *tp)
 {
 	/* A timeout has occurred on this port. Figure out what the timeout is
 	 * for, and take appropriate action.

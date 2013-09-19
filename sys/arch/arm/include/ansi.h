@@ -55,10 +55,7 @@
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
 #define	_BSD_TIME_T_		int		/* time() */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
-#if !defined(__minix)
-/* Conflict with minix timer_t struct. */
 #define	_BSD_TIMER_T_		int		/* timer_t */
-#endif /* !defined(__minix) */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
