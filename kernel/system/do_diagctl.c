@@ -1,35 +1,35 @@
 /* The kernel call implemented in this file:
- *   m_type:	SYS_SYSCTL
+ *   m_type:	SYS_DIAGCTL
  *
  * The parameters for this kernel call are:
- *  	SYSCTL_CODE	request
- * and then request-specific arguments in SYSCTL_ARG1 and SYSCTL_ARG2.
+ *  	DIAGCTL_CODE	request
+ * and then request-specific arguments in DIAGCTL_ARG1 and DIAGCTL_ARG2.
  */
 
 #include "kernel/system.h"
 
 
 /*===========================================================================*
- *			        do_sysctl				     *
+ *			        do_diagctl				     *
  *===========================================================================*/
-int do_sysctl(struct proc * caller, message * m_ptr)
+int do_diagctl(struct proc * caller, message * m_ptr)
 {
   vir_bytes len, buf;
   static char mybuf[DIAG_BUFSIZE];
   int s, i, proc_nr;
 
-  switch (m_ptr->SYSCTL_CODE) {
-    case SYSCTL_CODE_DIAG:
-        buf = (vir_bytes) m_ptr->SYSCTL_ARG1;
-        len = (vir_bytes) m_ptr->SYSCTL_ARG2;
+  switch (m_ptr->DIAGCTL_CODE) {
+    case DIAGCTL_CODE_DIAG:
+        buf = (vir_bytes) m_ptr->DIAGCTL_ARG1;
+        len = (vir_bytes) m_ptr->DIAGCTL_ARG2;
 	if(len < 1 || len > DIAG_BUFSIZE) {
-		printf("do_sysctl: diag for %d: len %d out of range\n",
+		printf("do_diagctl: diag for %d: len %d out of range\n",
 			caller->p_endpoint, len);
 		return EINVAL;
 	}
 	if((s=data_copy_vmcheck(caller, caller->p_endpoint, buf, KERNEL,
 					(vir_bytes) mybuf, len)) != OK) {
-		printf("do_sysctl: diag for %d: len %d: copy failed: %d\n",
+		printf("do_diagctl: diag for %d: len %d: copy failed: %d\n",
 			caller->p_endpoint, len, s);
 		return s;
 	}
@@ -37,13 +37,13 @@ int do_sysctl(struct proc * caller, message * m_ptr)
 		kputc(mybuf[i]);
 	kputc(END_OF_KMESS);
 	return OK;
-    case SYSCTL_CODE_STACKTRACE:
-	if(!isokendpt(m_ptr->SYSCTL_ARG2, &proc_nr))
+    case DIAGCTL_CODE_STACKTRACE:
+	if(!isokendpt(m_ptr->DIAGCTL_ARG2, &proc_nr))
 		return EINVAL;
 	proc_stacktrace(proc_addr(proc_nr));
 	return OK;
     default:
-	printf("do_sysctl: invalid request %d\n", m_ptr->SYSCTL_CODE);
+	printf("do_diagctl: invalid request %d\n", m_ptr->DIAGCTL_CODE);
         return(EINVAL);
   }
 }

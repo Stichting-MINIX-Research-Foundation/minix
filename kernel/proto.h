@@ -137,8 +137,8 @@ void hook_ipc_clear(struct proc *proc);
 int verify_grant(endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes, int,
 	vir_bytes, vir_bytes *, endpoint_t *);
 
-/* system/do_sysctl.c */
-int do_sysctl(struct proc * caller, message *m);
+/* system/do_diagctl.c */
+int do_diagctl(struct proc * caller, message *m);
 
 #if SPROFILE
 /* profile.c */

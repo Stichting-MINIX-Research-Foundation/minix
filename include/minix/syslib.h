@@ -69,8 +69,8 @@ int sys_vmctl_enable_paging(void * data);
 int sys_readbios(phys_bytes address, void *buf, size_t size);
 int sys_settime(int now, clockid_t clk_id, time_t sec, long nsec);
 int sys_stime(time_t boottime);
-int sys_sysctl(int ctl, char *arg1, int arg2);
-int sys_sysctl_stacktrace(endpoint_t who);
+int sys_diagctl(int ctl, char *arg1, int arg2);
+int sys_diagctl_stacktrace(endpoint_t who);
 int sys_vmctl_get_mapping(int index, phys_bytes *addr, phys_bytes *len,
 	int *flags);
 int sys_vmctl_reply_mapping(int index, vir_bytes addr);

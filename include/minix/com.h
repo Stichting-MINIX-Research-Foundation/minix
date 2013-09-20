@@ -283,7 +283,8 @@
 #  define SYS_SETTIME    (KERNEL_CALL + 40)	/* sys_settime() */
 
 #  define SYS_VMCTL      (KERNEL_CALL + 43)	/* sys_vmctl() */
-#  define SYS_SYSCTL     (KERNEL_CALL + 44)	/* sys_sysctl() */
+
+#  define SYS_DIAGCTL    (KERNEL_CALL + 44)	/* sys_diagctl() */
 
 #  define SYS_VTIMER     (KERNEL_CALL + 45)	/* sys_vtimer() */
 #  define SYS_RUNCTL     (KERNEL_CALL + 46)	/* sys_runctl() */
@@ -309,7 +310,7 @@
 #define SYS_BASIC_CALLS \
     SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
     SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, \
-    SYS_PROFBUF, SYS_SYSCTL, SYS_STATECTL, SYS_SAFEMEMSET
+    SYS_PROFBUF, SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET
 
 /* Field names for SYS_MEMSET. */
 #define MEM_PTR		m2_p1	/* base */
@@ -582,12 +583,12 @@
 #define VMCTL_CLEARMAPCACHE	32
 #define VMCTL_BOOTINHIBIT_CLEAR	33
 
-/* Codes and field names for SYS_SYSCTL. */
-#define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */
-#define SYSCTL_ARG1		m1_p1
-#define SYSCTL_ARG2		m1_i2
-#define SYSCTL_CODE_DIAG	1	/* Print diagnostics. */
-#define SYSCTL_CODE_STACKTRACE	2	/* Print process stack. */
+/* Codes and field names for SYS_DIAGCTL. */
+#define DIAGCTL_CODE		m1_i1	/* DIAGCTL_CODE_* below */
+#define DIAGCTL_ARG1		m1_p1
+#define DIAGCTL_ARG2		m1_i2
+#define DIAGCTL_CODE_DIAG	1	/* Print diagnostics. */
+#define DIAGCTL_CODE_STACKTRACE	2	/* Print process stack. */
 #define DIAG_BUFSIZE	(80*25)
 
 /* Field names for SYS_VTIMER. */

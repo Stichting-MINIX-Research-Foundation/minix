@@ -182,7 +182,7 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 	if(replymsg->VMV_RESULT != OK) {
 #if 0   /* Noisy diagnostic for mmap() by ld.so */
 		printf("VM: VFS reply failed (%d)\n", replymsg->VMV_RESULT);
-		sys_sysctl_stacktrace(vmp->vm_endpoint);
+		sys_diagctl_stacktrace(vmp->vm_endpoint);
 #endif
 		result = origmsg->VMV_RESULT;
 	} else {
@@ -532,7 +532,7 @@ int do_munmap(message *m)
 	        if(!(vr = map_lookup(vmp, addr, NULL))) {
 			printf("VM: unmap: address 0x%lx not found in %d\n",
 	                       addr, target);
-			sys_sysctl_stacktrace(target);
+			sys_diagctl_stacktrace(target);
 	                return EFAULT;
 		}
 		len = vr->length;

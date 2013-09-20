@@ -370,7 +370,7 @@ void procstack_dmp()
   PROCLOOP(rp, oldrp)
 	PRINTRTS(rp);
 	printf("\n"); pagelines++;
-	sys_sysctl_stacktrace(rp->p_endpoint);
+	sys_diagctl_stacktrace(rp->p_endpoint);
   }
 }
 

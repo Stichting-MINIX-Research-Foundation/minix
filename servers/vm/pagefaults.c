@@ -87,7 +87,7 @@ static void handle_pagefault(endpoint_t ep, vir_bytes addr, u32_t err, int retry
 			assert(PFERR_NOPAGE(err));
 			printf("VM: pagefault: SIGSEGV %d bad addr 0x%lx; %s\n",
 					ep, addr, pf_errstr(err));
-			sys_sysctl_stacktrace(ep);
+			sys_diagctl_stacktrace(ep);
 		}
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
