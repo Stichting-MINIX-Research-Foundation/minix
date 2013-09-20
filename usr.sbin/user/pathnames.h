@@ -1,7 +1,8 @@
-/* $NetBSD: defs.h,v 1.7 2011/08/31 16:25:00 plunky Exp $ */
+/* $NetBSD: pathnames.h,v 1.1 2011/12/01 00:34:05 dholland Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
+ * Copyright (c) 2005 Liam J. Foy.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,33 +28,17 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DEFS_H_
-#define DEFS_H_
 
-#define NEWARRAY(type,ptr,size,action) do {				\
-	if ((ptr = (type *) calloc(sizeof(type), size)) == NULL) { 	\
-		warn("can't allocate %ld bytes", (long)(size * sizeof(type))); \
-		action;							\
-	}								\
-} while( /* CONSTCOND */ 0)
+#include <paths.h>
 
-#define RENEW(type,ptr,size,action) do {				\
-	if ((ptr = (type *) realloc(ptr, sizeof(type) * size)) == NULL) { \
-		warn("can't realloc %ld bytes", (long)(size * sizeof(type))); \
-		action;							\
-	}								\
-} while( /* CONSTCOND */ 0)
+/* Full paths of programs used here */
+#define _PATH_CHMOD		"/bin/chmod"
+#define _PATH_CHOWN		"/usr/sbin/chown"
+#define	_PATH_LOGINCONF		"/etc/login.conf"
+#define _PATH_MKDIR		"/bin/mkdir"
+#define _PATH_MV		"/bin/mv"
+/* note that there's a _PATH_NOLOGIN in <paths.h> that's for /etc/nologin */
+#define _PATH_SBIN_NOLOGIN	"/sbin/nologin"
+#define _PATH_PAX		"/bin/pax"
+#define _PATH_RM		"/bin/rm"
 
-#define NEW(type, ptr, action)	NEWARRAY(type, ptr, 1, action)
-
-#define FREE(ptr)	(void) free(ptr)
-
-#ifndef MIN
-#define MIN(a,b)	(((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a,b)	(((a) > (b)) ? (a) : (b))
-#endif
-
-#endif /* !DEFS_H_ */
