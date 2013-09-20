@@ -567,7 +567,7 @@ void unpause(void)
 			panic("file descriptor out-of-range");
 		f = fp->fp_filp[fild];
 		if(!f) {
-			sys_sysctl_stacktrace(fp->fp_endpoint);
+			sys_diagctl_stacktrace(fp->fp_endpoint);
 			panic("process %d blocked on empty fd %d",
 				fp->fp_endpoint, fild);
 		}

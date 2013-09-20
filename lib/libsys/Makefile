@@ -38,6 +38,7 @@ SRCS+=  \
 	sys_abort.c \
 	sys_clear.c \
 	sys_cprof.c \
+	sys_diagctl.c \
 	sys_endsig.c \
 	sys_exec.c \
 	sys_exit.c \
@@ -66,7 +67,6 @@ SRCS+=  \
 	sys_sprof.c \
 	sys_statectl.c \
 	sys_stime.c \
-	sys_sysctl.c \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \
