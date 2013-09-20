@@ -14,10 +14,11 @@ int futimens(int fd, const struct timespec tv[2])
 
   memset(&m, 0, sizeof(m));
   m.VFS_UTIMENS_FD = fd;
-  m.VFS_UTIMENS_ATIME = tv[0].tv_sec;
-  m.VFS_UTIMENS_MTIME = tv[1].tv_sec;
-  m.VFS_UTIMENS_ANSEC = tv[0].tv_nsec;
-  m.VFS_UTIMENS_MNSEC = tv[1].tv_nsec;
+  /* For now just truncate to 32bit time_t values. */
+  m.VFS_UTIMENS_ATIME = (int32_t)tv[0].tv_sec;
+  m.VFS_UTIMENS_MTIME = (int32_t)tv[1].tv_sec;
+  m.VFS_UTIMENS_ANSEC = (int32_t)tv[0].tv_nsec;
+  m.VFS_UTIMENS_MNSEC = (int32_t)tv[1].tv_nsec;
   m.VFS_UTIMENS_NAME = NULL;
   m.VFS_UTIMENS_FLAGS = 0;
 

@@ -4,7 +4,7 @@
  * The parameters for this kernel call are:
  *    m4_l2:	T_SETTIME_NOW
  *    m4_l3:	T_CLOCK_ID
- *    m4_l4:	T_TIME_SEC
+ *    m4_ll1:	T_TIME_SEC
  *    m4_l5:	T_TIME_NSEC
  */
 
@@ -19,8 +19,7 @@ int do_settime(struct proc * caller, message * m_ptr)
 {
   clock_t newclock;
   int32_t ticks;
-  time_t timediff;
-  signed long long timediff_ticks;
+  time_t timediff, timediff_ticks;
 
   if (m_ptr->T_CLOCK_ID != CLOCK_REALTIME) /* only realtime can change */
 	return EINVAL;
@@ -34,7 +33,7 @@ int do_settime(struct proc * caller, message * m_ptr)
   } /* else user wants to set the time */
 
   timediff = m_ptr->T_TIME_SEC - boottime;
-  timediff_ticks = (signed long long) timediff * system_hz;
+  timediff_ticks = timediff * system_hz;
 
   /* prevent a negative value for realtime */
   if (m_ptr->T_TIME_SEC <= boottime ||

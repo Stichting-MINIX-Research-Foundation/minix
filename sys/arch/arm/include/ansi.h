@@ -31,7 +31,6 @@
  *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-/* These types are Minix specific. */
 
 #ifndef	_ANSI_H_
 #define	_ANSI_H_
@@ -53,7 +52,7 @@
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
-#define	_BSD_TIME_T_		int		/* time() */
+#define	_BSD_TIME_T_		__int64_t	/* time() */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */

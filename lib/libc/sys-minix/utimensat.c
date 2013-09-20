@@ -46,10 +46,11 @@ int utimensat(int fd, const char *name, const struct timespec tv[2],
   memset(&m, 0, sizeof(m));
   m.VFS_UTIMENS_LEN = strlen(name) + 1;
   m.VFS_UTIMENS_NAME = (char *) __UNCONST(name);
-  m.VFS_UTIMENS_ATIME = tv[0].tv_sec;
-  m.VFS_UTIMENS_MTIME = tv[1].tv_sec;
-  m.VFS_UTIMENS_ANSEC = tv[0].tv_nsec;
-  m.VFS_UTIMENS_MNSEC = tv[1].tv_nsec;
+  /* For now just truncate time_t values to 32bits. */
+  m.VFS_UTIMENS_ATIME = (int32_t)tv[0].tv_sec;
+  m.VFS_UTIMENS_MTIME = (int32_t)tv[1].tv_sec;
+  m.VFS_UTIMENS_ANSEC = (int32_t)tv[0].tv_nsec;
+  m.VFS_UTIMENS_MNSEC = (int32_t)tv[1].tv_nsec;
   m.VFS_UTIMENS_FLAGS = flags;
 
   return(_syscall(VFS_PROC_NR, VFS_UTIMENS, &m));

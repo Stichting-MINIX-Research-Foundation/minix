@@ -53,8 +53,9 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_3);
 
 typedef struct {
+	int64_t m4ll1;
 	long m4l1, m4l2, m4l3, m4l4, m4l5;
-	uint8_t padding[36];
+	uint8_t padding[28];
 } mess_4;
 _ASSERT_MSG_SIZE(mess_4);
 
@@ -220,6 +221,7 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ?1 : -1];
 #define m3_p1  m_u.m_m3.m3p1
 #define m3_ca1 m_u.m_m3.m3ca1
 
+#define m4_ll1  m_u.m_m4.m4ll1
 #define m4_l1  m_u.m_m4.m4l1
 #define m4_l2  m_u.m_m4.m4l2
 #define m4_l3  m_u.m_m4.m4l3

@@ -17,8 +17,8 @@ int adjtime(const struct timeval *delta, struct timeval *olddelta)
   memset(&m, 0, sizeof(m));
   m.PM_TIME_CLK_ID = (clockid_t) CLOCK_REALTIME;
   m.PM_TIME_NOW = 0; /* use adjtime() method to slowly adjust the clock. */
-  m.PM_TIME_SEC = (time_t) delta->tv_sec;
-  m.PM_TIME_NSEC = (long) delta->tv_usec * 1000; /* convert usec to nsec */
+  m.PM_TIME_SEC = (int32_t)delta->tv_sec;
+  m.PM_TIME_NSEC = (int32_t)delta->tv_usec * 1000; /* convert usec to nsec */
 
   if (_syscall(PM_PROC_NR, PM_CLOCK_SETTIME, &m) < 0)
   	return -1;

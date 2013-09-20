@@ -144,7 +144,7 @@ struct timespec clock_timespec(void)
   if (r != OK)
 	panic("clock_timespec err: %d", r);
 
-  tv.tv_sec = (time_t) (boottime + (realtime/system_hz));
+  tv.tv_sec = boottime + (realtime/system_hz);
   /* We do not want to overflow, and system_hz can be as high as 50kHz */
   assert(system_hz < LONG_MAX/40000);
   tv.tv_nsec = (realtime%system_hz) * 40000 / system_hz * 25000;

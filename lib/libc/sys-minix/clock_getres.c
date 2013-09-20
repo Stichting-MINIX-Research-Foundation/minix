@@ -19,8 +19,8 @@ int clock_getres(clockid_t clock_id, struct timespec *res)
   if (_syscall(PM_PROC_NR, PM_CLOCK_GETRES, &m) < 0)
   	return -1;
 
-  res->tv_sec = (time_t) m.PM_TIME_SEC;
-  res->tv_nsec = (long) m.PM_TIME_NSEC;
+  res->tv_sec = m.PM_TIME_SEC;
+  res->tv_nsec = m.PM_TIME_NSEC;
 
   return 0;
 }

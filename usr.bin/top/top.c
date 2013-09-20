@@ -132,7 +132,7 @@ static void parse_file(pid_t pid)
 	p->p_endpoint = endpt;
 	p->p_pid = pid;
 
-	if (fscanf(fp, " %255s %c %d %d %u %*u %lu %lu",
+	if (fscanf(fp, " %255s %c %d %d %llu %*u %lu %lu",
 		name, &state, &p->p_blocked, &p->p_priority,
 		&p->p_user_time, &cycles_hi, &cycles_lo) != 7) {
 

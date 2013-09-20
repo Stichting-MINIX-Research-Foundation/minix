@@ -2,7 +2,7 @@
  *   m_type:	SYS_STIME
  *
  * The parameters for this kernel call are:
- *    m4_l3:	T_BOOTTIME
+ *    m4_ll1:	T_BOOTTIME
  */
 
 #include "kernel/system.h"

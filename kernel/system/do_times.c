@@ -5,7 +5,7 @@
  *    m4_l1:	T_ENDPT		(get info for this process)	
  *    m4_l1:	T_USER_TIME		(return values ...)	
  *    m4_l2:	T_SYSTEM_TIME	
- *    m4_l3:	T_BOOTTIME
+ *    m4_ll1:	T_BOOTTIME
  *    m4_l5:	T_BOOT_TICKS	
  */
 
@@ -37,7 +37,7 @@ int do_times(struct proc * caller, message * m_ptr)
   }
   m_ptr->T_BOOT_TICKS = get_monotonic();  
   m_ptr->T_REAL_TICKS = get_realtime();
-  m_ptr->T_BOOTTIME = boottime;  
+  m_ptr->T_BOOTTIME = boottime;
   return(OK);
 }
 

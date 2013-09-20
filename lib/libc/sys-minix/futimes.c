@@ -21,10 +21,10 @@ int futimes(int fd, const struct timeval tv[2])
 	m.VFS_UTIMENS_ANSEC = m.VFS_UTIMENS_MNSEC = UTIME_NOW;
   }
   else {
-	m.VFS_UTIMENS_ATIME = tv[0].tv_sec;
-	m.VFS_UTIMENS_MTIME = tv[1].tv_sec;
-	m.VFS_UTIMENS_ANSEC = tv[0].tv_usec * 1000;
-	m.VFS_UTIMENS_MNSEC = tv[1].tv_usec * 1000;
+	m.VFS_UTIMENS_ATIME = (int32_t)tv[0].tv_sec;
+	m.VFS_UTIMENS_MTIME = (int32_t)tv[1].tv_sec;
+	m.VFS_UTIMENS_ANSEC = (int32_t)tv[0].tv_usec * 1000;
+	m.VFS_UTIMENS_MNSEC = (int32_t)tv[1].tv_usec * 1000;
   }
   m.VFS_UTIMENS_NAME = NULL;
   m.VFS_UTIMENS_FLAGS = 0;
