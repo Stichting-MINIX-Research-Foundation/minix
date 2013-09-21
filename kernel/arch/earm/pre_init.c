@@ -411,7 +411,7 @@ kinfo_t *pre_init(int argc, char **argv)
  * ensure this). The following methods are used in that context. Once we jump to kmain they are no
  * longer used and the "real" implementations are visible
  */
-int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
+void send_diag_sig(void) { }
 void minix_shutdown(minix_timer_t *t) { arch_shutdown(RBT_PANIC); }
 void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }

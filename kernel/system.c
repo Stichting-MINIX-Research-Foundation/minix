@@ -18,6 +18,7 @@
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via a signal mgr
  *   sig_delay_done:	tell PM that a process is not sending
+ *   send_diag_sig:	send a diagnostics signal to interested processes
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
  *   sched_proc:	schedule a process
@@ -462,6 +463,25 @@ void sig_delay_done(struct proc *rp)
   rp->p_misc_flags &= ~MF_SIG_DELAY;
 
   cause_sig(proc_nr(rp), SIGSNDELAY);
+}
+
+/*===========================================================================*
+ *				send_diag_sig				     *
+ *===========================================================================*/
+void send_diag_sig(void)
+{
+/* Send a SIGKMESS signal to all processes in receiving updates about new
+ * diagnostics messages.
+ */
+  struct priv *privp;
+  endpoint_t ep;
+
+  for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; privp++) {
+	if (privp->s_proc_nr != NONE && privp->s_diag_sig == TRUE) {
+		ep = proc_addr(privp->s_proc_nr)->p_endpoint;
+		send_sig(ep, SIGKMESS);
+	}
+  }
 }
 
 /*===========================================================================*
