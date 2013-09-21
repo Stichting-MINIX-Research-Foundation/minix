@@ -22,7 +22,6 @@ struct boot_image_priv boot_image_priv_table[] = {
 {DS_PROC_NR,   "ds",     SRV_F  },
 {TTY_PROC_NR,  "tty",    SRV_F  },
 {MEM_PROC_NR,  "memory", SRV_F  },
-{LOG_PROC_NR,  "log",    SRV_F  },
 {MFS_PROC_NR,"fs_imgrd", SRV_F  },
 {PFS_PROC_NR,  "pfs",    SRV_F  },
 {INIT_PROC_NR, "init",   USR_F  },
@@ -36,7 +35,6 @@ struct boot_image_sys boot_image_sys_table[] = {
   { VM_PROC_NR,       VM_SF                             },
   { PM_PROC_NR,       SRVR_SF                           },
   { VFS_PROC_NR,      SRVR_SF                           },
-  { LOG_PROC_NR,      SRV_SF                            },
   { MFS_PROC_NR,      0                                 },
   { PFS_PROC_NR,      SRV_SF                            },
   { DEFAULT_BOOT_NR,  SRV_SF                            } /* default entry */
@@ -47,7 +45,6 @@ struct boot_image_dev boot_image_dev_table[] = {
   /*endpoint,        flags,   dev_nr,       dev_style,  dev_style2 */
   { TTY_PROC_NR,     SRV_DF,  TTY_MAJOR,    STYLE_TTY,  STYLE_CTTY },
   { MEM_PROC_NR,     SRV_DF,  MEMORY_MAJOR, STYLE_DEV,  STYLE_NDEV },
-  { LOG_PROC_NR,     SRV_DF,  LOG_MAJOR,    STYLE_DEV,  STYLE_NDEV },
   { PFS_PROC_NR,     SRV_DF,  UDS_MAJOR,    STYLE_DEV,  STYLE_NDEV },
   { DEFAULT_BOOT_NR, SRV_DF,  0,            STYLE_NDEV, STYLE_NDEV } /* default
                                                                       * entry

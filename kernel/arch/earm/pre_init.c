@@ -173,7 +173,7 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 }
 
 /* XXX: hard-coded stuff for modules */
-#define MB_MODS_NR 12
+#define MB_MODS_NR NR_BOOT_MODULES
 #define MB_MODS_BASE  0x82000000
 #define MB_MODS_ALIGN 0x00800000 /* 8 MB */
 #define MB_MMAP_START 0x80000000

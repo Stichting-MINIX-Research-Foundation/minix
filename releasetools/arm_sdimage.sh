@@ -181,7 +181,7 @@ do
     mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${f}.elf ::${f}.elf
 done
 
-for f in tty memory log
+for f in tty memory
 do
     cp ${OBJ}/drivers/${f}/${f} ${OBJ}/${f}.elf
     ${CROSS_PREFIX}strip -s ${OBJ}/${f}.elf

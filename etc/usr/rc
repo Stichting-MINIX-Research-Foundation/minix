@@ -195,6 +195,8 @@ start)
 
     up -n ipc
 
+    up log -dev /dev/klog
+
     if [ $ARCH = i386 ]
     then
 	up -n printer -dev /dev/lp -period 10HZ
