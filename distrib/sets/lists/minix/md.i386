@@ -1,10 +1,9 @@
 
-./boot/minix/.temp/mod07_log		minix-sys
-./boot/minix/.temp/mod08_tty		minix-sys
-./boot/minix/.temp/mod09_mfs		minix-sys
-./boot/minix/.temp/mod10_vm		minix-sys
-./boot/minix/.temp/mod11_pfs		minix-sys
-./boot/minix/.temp/mod12_init		minix-sys
+./boot/minix/.temp/mod07_tty		minix-sys
+./boot/minix/.temp/mod08_mfs		minix-sys
+./boot/minix/.temp/mod09_vm		minix-sys
+./boot/minix/.temp/mod10_pfs		minix-sys
+./boot/minix/.temp/mod11_init		minix-sys
 ./etc/system.conf.d/atl2		minix-sys
 ./etc/system.conf.d/dec21140A		minix-sys
 ./etc/system.conf.d/e1000		minix-sys
@@ -13,12 +12,11 @@
 ./etc/system.conf.d/rtl8139		minix-sys
 ./etc/system.conf.d/rtl8169		minix-sys
 ./etc/system.conf.d/virtio_net		minix-sys
-./multiboot/mod07_log			minix-sys
-./multiboot/mod08_tty			minix-sys
-./multiboot/mod09_mfs			minix-sys
-./multiboot/mod10_vm			minix-sys
-./multiboot/mod11_pfs			minix-sys
-./multiboot/mod12_init			minix-sys
+./multiboot/mod07_tty			minix-sys
+./multiboot/mod08_mfs			minix-sys
+./multiboot/mod09_vm			minix-sys
+./multiboot/mod10_pfs			minix-sys
+./multiboot/mod11_init			minix-sys
 ./sbin/ahci				minix-sys
 ./sbin/at_wini				minix-sys
 ./sbin/floppy				minix-sys

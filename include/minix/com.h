@@ -74,14 +74,13 @@
 #define VFS_PROC_NR  ((endpoint_t) 1)	/* file system */
 #define RS_PROC_NR   ((endpoint_t) 2)  	/* reincarnation server */
 #define MEM_PROC_NR  ((endpoint_t) 3)  	/* memory driver (RAM disk, null, etc.) */
-#define LOG_PROC_NR  ((endpoint_t) 4)	/* log device driver */
+#define SCHED_PROC_NR ((endpoint_t) 4)	/* scheduler */
 #define TTY_PROC_NR  ((endpoint_t) 5)	/* terminal (TTY) driver */
 #define DS_PROC_NR   ((endpoint_t) 6)   /* data store server */
 #define MFS_PROC_NR  ((endpoint_t) 7)   /* minix root filesystem */
 #define VM_PROC_NR   ((endpoint_t) 8)   /* memory server */
 #define PFS_PROC_NR  ((endpoint_t) 9)  /* pipe filesystem */
-#define SCHED_PROC_NR ((endpoint_t) 10)	/* scheduler */
-#define LAST_SPECIAL_PROC_NR	11	/* An untyped version for
+#define LAST_SPECIAL_PROC_NR	10	/* An untyped version for
                                            computation in macros.*/
 #define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
                                                         -- goes multiuser */

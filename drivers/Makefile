@@ -6,11 +6,11 @@
 .if ${MKIMAGEONLY} == "yes"
 
 .if ${MACHINE_ARCH} == "i386"
-SUBDIR=	at_wini floppy log tty pci
+SUBDIR=	at_wini floppy tty pci
 .endif
 
 .if ${MACHINE_ARCH} == "earm"
-SUBDIR= log tty
+SUBDIR= tty
 .endif
 
 .else # ${MKIMAGEONLY} != "yes"
