@@ -57,7 +57,6 @@ struct boot_image image[NR_BOOT_PROCS] = {
 {SCHED_PROC_NR, "sched" },
 {VFS_PROC_NR,   "vfs"   },
 {MEM_PROC_NR,   "memory"},
-{LOG_PROC_NR,   "log"   },
 {TTY_PROC_NR,   "tty"   },
 {MFS_PROC_NR,   "mfs"   },
 {VM_PROC_NR,    "vm"    },

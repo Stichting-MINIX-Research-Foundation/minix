@@ -218,6 +218,7 @@ void shared_setsource(struct vir_region *vr, endpoint_t ep, struct vir_region *s
 /* mem_cache.c */
 int do_mapcache(message *m);
 int do_setcache(message *m);
+int do_clearcache(message *m);
 
 /* cache.c */
 struct cached_page *find_cached_page_bydev(dev_t dev, u64_t dev_off,
@@ -229,6 +230,7 @@ int cache_freepages(int pages);
 void get_stats_info(struct vm_stats_info *vsi);
 void cache_lru_touch(struct cached_page *hb);
 void rmcache(struct cached_page *cp);
+void clear_cache_bydev(dev_t dev);
 
 /* vfs.c */
 int vfs_request(int reqno, int fd, struct vmproc *vmp, u64_t offset,

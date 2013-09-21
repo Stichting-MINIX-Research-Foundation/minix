@@ -72,6 +72,8 @@ int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
 void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
         u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
 
+int vm_clear_cache(u32_t dev);
+
 /* flags for vm cache functions */
 #define VMMC_FLAGS_LOCKED	0x01	/* someone is updating the flags; don't read/write */
 #define VMMC_DIRTY		0x02	/* dirty buffer and it may not be evicted */

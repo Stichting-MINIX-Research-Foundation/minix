@@ -4,12 +4,8 @@
 #include <minix/sys_config.h>
 #include <minix/ipc.h>
 
-enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
-	STYLE_CLONE, STYLE_CLONE_A };
-#define IS_DEV_STYLE(s) (s>=STYLE_NDEV && s<=STYLE_CLONE_A)
-
-#define dev_style_asyn(devstyle)	((devstyle) == STYLE_DEVA || \
-					(devstyle) == STYLE_CLONE_A)
+enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_TTY, STYLE_CTTY };
+#define IS_DEV_STYLE(s) (s>=STYLE_NDEV && s<=STYLE_CTTY)
 
 /*===========================================================================*
  *               	 Major and minor device numbers  		     *
@@ -75,7 +71,7 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define BMP085B1S77_MAJOR	  53	/* 53 = /dev/bmp085b1s77 (bmp085)     */
 #define BMP085B2S77_MAJOR	  54	/* 54 = /dev/bmp085b2s77 (bmp085)     */
 #define BMP085B3S77_MAJOR	  55	/* 55 = /dev/bmp085b3s77 (bmp085)     */
-
+					/* 56-63 = /dev/vnd[0-7] (vnd)	      */
 
 /* Minor device numbers for memory driver. */
 #  define RAM_DEV_OLD  		   0	/* minor device for /dev/ram */
