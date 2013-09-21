@@ -35,17 +35,6 @@
 /* DMA_SECTORS may be increased to speed up DMA based drivers. */
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */
 
-/* Which processes should receive diagnostics from the kernel and system? 
- * Directly sending it to TTY only displays the output. Sending it to the
- * log driver will cause the diagnostics to be buffered and displayed.
- * Messages are sent by src/lib/sysutil/kputc.c to these processes, in
- * the order of this array, which must be terminated by NONE. This is used
- * by drivers and servers that printf().
- * The kernel does this for its own kprintf() in kernel/utility.c, also using
- * this array, but a slightly different mechanism.
- */
-#define OUTPUT_PROCS_ARRAY	{ TTY_PROC_NR, LOG_PROC_NR, NONE }
-
 /* NR_CONS, NR_RS_LINES, and NR_PTYS determine the number of terminals the
  * system can handle.
  */

@@ -41,7 +41,7 @@ static void udp_recv_free(void * data)
 	debug_free(data);
 }
 
-static int udp_op_open(struct socket * sock, __unused message * m)
+static int udp_op_open(struct socket * sock)
 {
 	struct udp_pcb * pcb;
 
@@ -58,7 +58,7 @@ static int udp_op_open(struct socket * sock, __unused message * m)
 	return OK;
 }
 
-static void udp_op_close(struct socket * sock, __unused message * m)
+static int udp_op_close(struct socket * sock)
 {
 	debug_udp_print("socket num %ld", get_sock_num(sock));
 
@@ -72,22 +72,22 @@ static void udp_op_close(struct socket * sock, __unused message * m)
 	/* mark it as unused */
 	sock->ops = NULL;
 
-	sock_reply_close(sock, OK);
+	return OK;
 }
 
 static int udp_do_receive(struct socket * sock,
-			message * m,
+			struct sock_req * req,
 			struct udp_pcb *pcb,
 			struct pbuf *pbuf,
 			ip_addr_t *addr,
 			u16_t port)
 {
 	struct pbuf * p;
-	unsigned int rem_len = m->COUNT;
+	size_t rem_len = req->size;
 	unsigned int written = 0, hdr_sz = 0;
 	int err;
 
-	debug_udp_print("user buffer size : %d", rem_len);
+	debug_udp_print("user buffer size : %u", rem_len);
 
 	/* FIXME make it both a single copy */
 	if (!(sock->usr_flags & NWUO_RWDATONLY)) {
@@ -101,10 +101,8 @@ static int udp_do_receive(struct socket * sock,
 		hdr.uih_data_len = 0;
 		hdr.uih_ip_opt_len = 0;
 
-		err = copy_to_user(m->m_source,
-				&hdr, sizeof(hdr),
-				(cp_grant_id_t) m->IO_GRANT,
-				0);
+		err = copy_to_user(req->endpt, &hdr, sizeof(hdr), req->grant,
+			0);
 
 		if (err != OK)
 			return err;
@@ -116,8 +114,7 @@ static int udp_do_receive(struct socket * sock,
 		size_t cp_len;
 
 		cp_len = (rem_len < p->len) ? rem_len : p->len;
-		err = copy_to_user(m->m_source,	p->payload, cp_len,
-				(cp_grant_id_t) m->IO_GRANT,
+		err = copy_to_user(req->endpt, p->payload, cp_len, req->grant,
 				hdr_sz + written);
 
 		if (err != OK)
@@ -147,16 +144,14 @@ static void udp_recv_callback(void *arg,
 		/* we are resuming a suspended operation */
 		int ret;
 
-		ret = udp_do_receive(sock, &sock->mess, pcb, pbuf, addr, port);
+		ret = udp_do_receive(sock, &sock->req, pcb, pbuf, addr, port);
+
+		send_req_reply(&sock->req, ret);
+		sock->flags &= ~SOCK_FLG_OP_PENDING;
 
 		if (ret > 0) {
 			pbuf_free(pbuf);
-			sock_reply(sock, ret);
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			return;
-		} else {
-			sock_reply(sock, ret);
-			sock->flags &= ~SOCK_FLG_OP_PENDING;
 		}
 	}
 
@@ -193,7 +188,7 @@ static void udp_recv_callback(void *arg,
 		sock_select_notify(sock);
 }
 
-static void udp_op_read(struct socket * sock, message * m, int blk)
+static int udp_op_read(struct socket * sock, struct sock_req * req, int blk)
 {
 	debug_udp_print("socket num %ld", get_sock_num(sock));
 
@@ -205,7 +200,7 @@ static void udp_op_read(struct socket * sock, message * m, int blk)
 
 		data = (struct udp_recv_data *) sock->recv_head->data;
 
-		ret = udp_do_receive(sock, m, (struct udp_pcb *) sock->pcb,
+		ret = udp_do_receive(sock, req, (struct udp_pcb *) sock->pcb,
 					data->pbuf, &data->ip, data->port);
 
 		if (ret > 0) {
@@ -213,36 +208,37 @@ static void udp_op_read(struct socket * sock, message * m, int blk)
 			sock->recv_data_size -= data->pbuf->tot_len;
 			udp_recv_free(data);
 		}
-		sock_reply(sock, ret);
+		return ret;
 	} else if (!blk)
-		sock_reply(sock, EAGAIN);
+		return EAGAIN;
 	else {
 		/* store the message so we know how to reply */
-		sock->mess = *m;
+		sock->req = *req;
 		/* operation is being processes */
 		sock->flags |= SOCK_FLG_OP_PENDING;
 
 		debug_udp_print("no data to read, suspending\n");
+		return EDONTREPLY;
 	}
 }
 
 static int udp_op_send(struct socket * sock,
 			struct pbuf * pbuf,
-			message * m)
+			size_t size)
 {
 	int err;
 
 	debug_udp_print("pbuf len %d\n", pbuf->len);
 
 	if ((err = udp_send(sock->pcb, pbuf)) == ERR_OK)
-		return m->COUNT;
+		return size;
 	else {
 		debug_udp_print("udp_send failed %d", err);
 		return EIO;
 	}
 }
 
-static int udp_op_sendto(struct socket * sock, struct pbuf * pbuf, message * m)
+static int udp_op_sendto(struct socket * sock, struct pbuf * pbuf, size_t size)
 {
 	int err;
 	udp_io_hdr_t hdr;
@@ -256,47 +252,46 @@ static int udp_op_sendto(struct socket * sock, struct pbuf * pbuf, message * m)
 
 	if ((err = udp_sendto(sock->pcb, pbuf, (ip_addr_t *) &hdr.uih_dst_addr,
 						ntohs(hdr.uih_dst_port))) == ERR_OK)
-		return m->COUNT;
+		return size;
 	else {
 		debug_udp_print("udp_sendto failed %d", err);
 		return EIO;
 	}
 }
 
-static void udp_op_write(struct socket * sock, message * m, __unused int blk)
+static int udp_op_write(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
 	int ret;
 	struct pbuf * pbuf;
 
-	debug_udp_print("socket num %ld data size %d",
-			get_sock_num(sock), m->COUNT);
+	debug_udp_print("socket num %ld data size %u",
+			get_sock_num(sock), req->size);
 
-	pbuf = pbuf_alloc(PBUF_TRANSPORT, m->COUNT, PBUF_POOL);
-	if (!pbuf) {
-		ret = ENOMEM;
-		goto write_err;
-	}
+	pbuf = pbuf_alloc(PBUF_TRANSPORT, req->size, PBUF_POOL);
+	if (!pbuf)
+		return ENOMEM;
 
-	if ((ret = copy_from_user(m->m_source, pbuf->payload, m->COUNT,
-				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
+	if ((ret = copy_from_user(req->endpt, pbuf->payload, req->size,
+				req->grant, 0)) != OK) {
 		pbuf_free(pbuf);
-		goto write_err;
+		return ret;
 	}
 
 	if (sock->usr_flags & NWUO_RWDATONLY)
-		ret = udp_op_send(sock, pbuf, m);
+		ret = udp_op_send(sock, pbuf, req->size);
 	else
-		ret = udp_op_sendto(sock, pbuf, m);
+		ret = udp_op_sendto(sock, pbuf, req->size);
 
 	if (pbuf_free(pbuf) == 0) {
 		panic("We cannot buffer udp packets yet!");
 	}
-	
-write_err:
-	sock_reply(sock, ret);
+
+	return ret;
 }
 
-static void udp_set_opt(struct socket * sock, message * m)
+static int udp_set_opt(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
 	int err;
 	nwio_udpopt_t udpopt;
@@ -305,11 +300,10 @@ static void udp_set_opt(struct socket * sock, message * m)
 
 	assert(pcb);
 
-	err = copy_from_user(m->m_source, &udpopt, sizeof(udpopt),
-				(cp_grant_id_t) m->IO_GRANT, 0);
+	err = copy_from_user(endpt, &udpopt, sizeof(udpopt), grant, 0);
 
 	if (err != OK)
-		sock_reply(sock, err);
+		return err;
 
 	debug_udp_print("udpopt.nwuo_flags = 0x%lx", udpopt.nwuo_flags);
 	debug_udp_print("udpopt.nwuo_remaddr = 0x%x",
@@ -341,16 +335,15 @@ static void udp_set_opt(struct socket * sock, message * m)
 	if (sock->usr_flags & NWUO_LP_SEL)
 		udp_bind(pcb, &loc_ip, 0);
 
-	
 	/* register a receive hook */
 	udp_recv((struct udp_pcb *) sock->pcb, udp_recv_callback, sock);
 
-	sock_reply(sock, OK);
+	return OK;
 }
 
-static void udp_get_opt(struct socket * sock, message * m)
+static int udp_get_opt(struct socket * sock, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
-	int err;
 	nwio_udpopt_t udpopt;
 	struct udp_pcb * pcb = (struct udp_pcb *) sock->pcb;
 
@@ -372,39 +365,32 @@ static void udp_get_opt(struct socket * sock, message * m)
 	debug_udp_print("udpopt.nwuo_locport = 0x%x",
 				ntohs(udpopt.nwuo_locport));
 
-	if ((unsigned int) m->COUNT < sizeof(udpopt)) {
-		sock_reply(sock, EINVAL);
-		return;
-	}
-
-	err = copy_to_user(m->m_source, &udpopt, sizeof(udpopt),
-				(cp_grant_id_t) m->IO_GRANT, 0);
-
-	if (err != OK)
-		sock_reply(sock, err);
-
-	sock_reply(sock, OK);
+	return copy_to_user(endpt, &udpopt, sizeof(udpopt), grant, 0);
 }
 
-static void udp_op_ioctl(struct socket * sock, message * m, __unused int blk)
+static int udp_op_ioctl(struct socket * sock, struct sock_req * req,
+	__unused int blk)
 {
-	debug_udp_print("socket num %ld req %c %d %d",
-			get_sock_num(sock),
-			(m->REQUEST >> 8) & 0xff,
-			m->REQUEST & 0xff,
-			(m->REQUEST >> 16) & _IOCPARM_MASK);
+	int r;
 
-	switch (m->REQUEST) {
+	debug_udp_print("socket num %ld req %c %ld %ld",
+			get_sock_num(sock),
+			(unsigned char) (req->req >> 8),
+			req->req & 0xff,
+			(req->req >> 16) & _IOCPARM_MASK);
+
+	switch (req->req) {
 	case NWIOSUDPOPT:
-		udp_set_opt(sock, m);
+		r = udp_set_opt(sock, req->endpt, req->grant);
 		break;
 	case NWIOGUDPOPT:
-		udp_get_opt(sock, m);
+		r = udp_get_opt(sock, req->endpt, req->grant);
 		break;
 	default:
-		sock_reply(sock, EBADIOCTL);
-		return;
+		r = ENOTTY;
 	}
+
+	return r;
 }
 
 struct sock_ops sock_udp_ops = {

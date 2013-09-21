@@ -93,7 +93,7 @@ typedef struct {
 #define REQ_INHIBREAD	(VFS_BASE + 7)
 #define REQ_STAT	(VFS_BASE + 8)
 #define REQ_UTIME	(VFS_BASE + 9)
-#define REQ_FSTATFS	(VFS_BASE + 10)
+#define REQ_STATVFS	(VFS_BASE + 10)
 #define REQ_BREAD	(VFS_BASE + 11)
 #define REQ_BWRITE	(VFS_BASE + 12)
 #define REQ_UNLINK	(VFS_BASE + 13)
@@ -115,31 +115,16 @@ typedef struct {
 #define REQ_NEWNODE	(VFS_BASE + 29)
 #define REQ_RDLINK	(VFS_BASE + 30)
 #define REQ_GETDENTS	(VFS_BASE + 31)
-#define REQ_STATVFS	(VFS_BASE + 32)
-#define REQ_PEEK	(VFS_BASE + 33)
-#define REQ_BPEEK	(VFS_BASE + 34)
+#define REQ_PEEK	(VFS_BASE + 32)
+#define REQ_BPEEK	(VFS_BASE + 33)
 
-#define NREQS			    35
+#define NREQS			    34
 
 #define IS_VFS_RQ(type) (((type) & ~0xff) == VFS_BASE)
 
 #define TRNS_GET_ID(t)		((t) & 0xFFFF)
 #define TRNS_ADD_ID(t,id)	(((t) << 16) | ((id) & 0xFFFF))
 #define TRNS_DEL_ID(t)		((short)((t) >> 16))
-
-#define PFS_BASE		(VFS_BASE + 100)
-
-#define PFS_REQ_CHECK_PERMS	(PFS_BASE + 1)
-#define PFS_REQ_VERIFY_FD	(PFS_BASE + 2)
-#define PFS_REQ_SET_FILP	(PFS_BASE + 3)
-#define PFS_REQ_COPY_FILP	(PFS_BASE + 4)
-#define PFS_REQ_PUT_FILP	(PFS_BASE + 5)
-#define PFS_REQ_CANCEL_FD	(PFS_BASE + 6)
-
-#define PFS_NREQS		7
-
-#define IS_PFS_VFS_RQ(type)	(type >= PFS_BASE && \
-					type < (PFS_BASE + PFS_NREQS))
 
 #endif
 

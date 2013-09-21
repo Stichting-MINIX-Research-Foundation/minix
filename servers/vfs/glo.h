@@ -25,24 +25,17 @@ EXTERN u32_t system_hz;		/* system clock frequency. */
 /* The parameters of the call are kept here. */
 EXTERN message m_in;		/* the input message itself */
 # define who_p		((int) (fp - fproc))
-# define isokslot(p)	(p >= 0 && \
-			 p < (int)(sizeof(fproc) / sizeof(struct fproc)))
-# define who_e		(self != NULL && fp != NULL ? fp->fp_endpoint : \
-							m_in.m_source)
+# define fproc_addr(e)	(&fproc[_ENDPOINT_P(e)])
+# define who_e		(self != NULL ? fp->fp_endpoint : m_in.m_source)
 # define call_nr	(m_in.m_type)
-# define job_m_in	(self->w_job.j_m_in)
+# define job_m_in	(self->w_msg)
 # define job_call_nr	(job_m_in.m_type)
 # define super_user	(fp->fp_effuid == SU_UID ? 1 : 0)
 # define scratch(p)		(scratchpad[((int) ((p) - fproc))])
 EXTERN struct worker_thread *self;
-EXTERN int force_sync;		/* toggle forced synchronous communication */
 EXTERN int deadlock_resolving;
-EXTERN mutex_t exec_lock;
 EXTERN mutex_t bsf_lock;/* Global lock for access to block special files */
 EXTERN struct worker_thread workers[NR_WTHREADS];
-EXTERN struct worker_thread sys_worker;
-EXTERN struct worker_thread dl_worker;
-EXTERN thread_t invalid_thread_id;
 EXTERN char mount_label[LABEL_MAX];	/* label of file system to mount */
 
 /* The following variables are used for returning results to the caller. */

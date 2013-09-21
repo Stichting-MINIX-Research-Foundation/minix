@@ -44,12 +44,7 @@ __RCSID("$NetBSD: stat.c,v 1.33 2011/01/15 22:54:10 njoly Exp $");
 #define HAVE_STRUCT_STAT_ST_BIRTHTIME 1
 #define HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC 1
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
-#ifdef __minix
-/* Not supported in Minix. */
-#define HAVE_DEVNAME 0 
-#else /* __minix */
 #define HAVE_DEVNAME 1
-#endif /* __minx */
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include <sys/types.h>
