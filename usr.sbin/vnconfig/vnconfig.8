@@ -1,0 +1,195 @@
+.\"	$NetBSD: vnconfig.8,v 1.39 2013/06/09 18:39:31 christos Exp $
+.\"
+.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Copyright (c) 1993 University of Utah.
+.\" Copyright (c) 1980, 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Systems Programming Group of the University of Utah Computer
+.\" Science Department.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)vnconfig.8	8.1 (Berkeley) 6/5/93
+.\"
+.Dd June 9, 2013
+.Dt VNDCONFIG 8
+.Os
+.Sh NAME
+.Nm vndconfig
+.Nd configure vnode disks
+.Sh SYNOPSIS
+.Nm
+.Op Fl Scrv
+.Ar vnode_disk
+.Ar regular_file
+.Op Ar geomspec
+.Nm
+.Fl u
+.Op Fl SFv
+.Ar vnode_disk
+.Nm
+.Fl l
+.Op Ar vnode_disk
+.Sh DESCRIPTION
+The
+.Nm
+command configures vnode pseudo disk devices.
+It will associate the vnode disk
+.Ar vnode_disk
+with the regular file
+.Ar regular_file
+allowing the latter to be accessed as though it were a disk.
+Hence a regular file within the filesystem can be used for swapping
+or can contain a filesystem that is mounted in the name space.
+The
+.Ar vnode_disk
+is a special file of raw partition or name of vnode disk like
+.Pa vnd0 .
+.Pp
+Options indicate an action to be performed:
+.Bl -tag -width indent
+.It Fl c
+Configures the device.
+If successful, references to
+.Ar vnode_disk
+will access the contents of
+.Ar regular_file .
+.Pp
+If
+.Ar geomspec
+is specified, the vnode device will emulate the specified disk geometry.
+The format of the
+.Ar geomspec
+argument is:
+.Bd -ragged -offset indent
+.Sm off
+.Xo Ar secsize Li / Ar nsectors Li /
+.Ar ntracks Li / Ar ncylinders Xc
+.Sm on
+.Ed
+.Pp
+If geometry is not specified, the driver will choose a default based on 1MB
+cylinders.
+.Ar secsize
+is the number of bytes per sector.
+It must be an even multiple of 512.
+.Ar nsectors
+is the number of sectors per track.
+.Ar ntracks
+is the number of tracks per cylinder.
+.Ar ncylinders
+is the number of cylinders in the device.
+.It Fl S
+Do not start or stop the corresponding device driver instance.
+.It Fl F
+Force unconfiguration if the device is in use.
+Does not imply
+.Fl u .
+.It Fl l
+List the vnd devices and indicate which ones are in use.
+If a specific
+.Ar vnode_disk
+is given, then only that will be described.
+.It Fl r
+Configure the device as read-only.
+.It Fl u
+Unconfigures the device.
+.It Fl v
+Print messages to stdout describing actions taken.
+.El
+.Pp
+If no action option is given,
+.Fl c
+is assumed.
+.Sh FILES
+.Bl -tag -width /dev/vnd* -compact
+.It Pa /dev/vnd*
+.El
+.Sh EXAMPLES
+.Dl vndconfig vnd0 /tmp/diskimage
+or
+.Dl vndconfig /dev/vnd0 /tmp/diskimage
+.Pp
+Configures the vnode disk
+.Pa vnd0 .
+.Pp
+.Dl vndconfig vnd0 /tmp/floppy.img 512/18/2/80
+.Pp
+Configures the vnode disk
+.Pa vnd0
+emulating the geometry of 512 bytes per sector, 18 sectors per track,
+2 tracks per cylinder, and 80 cylinders total.
+.Pp
+.Dl vndconfig -u vnd0
+.Pp
+Unconfigures the
+.Pa vnd0
+device.
+.Sh NOTES
+If
+.Ic vnconfig -uF
+is used and the device was still in use, the driver instance
+will not be shut down, even if
+.Fl S
+was not given. One may manually shut down
+the service later with
+.Ic service down
+.Ar vndN
+where
+.Ar N
+is the instance number, or simply
+leave the driver running for later reuse.
+.Sh SEE ALSO
+.Xr opendisk 3 ,
+.Xr mount 8 ,
+.Xr umount 8

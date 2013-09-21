@@ -599,7 +599,11 @@ void test_listen(void)
 
 	errno = 0;
 	rc = listen(0, 0);
-	if (!(rc == -1 && errno == ENOTTY)) {
+	/* Test on errno disabled here: there's currently no telling what this
+	 * will return. POSIX says it should be ENOTSOCK, MINIX3 libc returns
+	 * ENOSYS, and we used to test for ENOTTY here..
+	 */
+	if (!(rc == -1)) {
 		test_fail("listen(0, 0) should have failed");
 	}
 

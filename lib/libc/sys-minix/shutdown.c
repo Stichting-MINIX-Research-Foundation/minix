@@ -27,7 +27,7 @@ int shutdown(int sock, int how)
 	nwio_tcpconf_t tcpconf;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -38,7 +38,7 @@ int shutdown(int sock, int how)
 	}
 
 	r= ioctl(sock, NWIOGUDSADDR, &uds_addr);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
