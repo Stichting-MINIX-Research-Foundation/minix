@@ -42,6 +42,21 @@ int do_diagctl(struct proc * caller, message * m_ptr)
 		return EINVAL;
 	proc_stacktrace(proc_addr(proc_nr));
 	return OK;
+    case DIAGCTL_CODE_REGISTER:
+	if (!(priv(caller)->s_flags & SYS_PROC))
+		return EPERM;
+	priv(caller)->s_diag_sig = TRUE;
+	/* If the message log is not empty, send a first notification
+	 * immediately. After bootup the log is basically never empty.
+	 */
+	if (kmess.km_size > 0 && !kinfo.do_serial_debug)
+		send_sig(caller->p_endpoint, SIGKMESS);
+	return OK;
+    case DIAGCTL_CODE_UNREGISTER:
+	if (!(priv(caller)->s_flags & SYS_PROC))
+		return EPERM;
+	priv(caller)->s_diag_sig = FALSE;
+	return OK;
     default:
 	printf("do_diagctl: invalid request %d\n", m_ptr->DIAGCTL_CODE);
         return(EINVAL);

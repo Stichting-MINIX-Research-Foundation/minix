@@ -589,6 +589,8 @@
 #define DIAGCTL_ARG2		m1_i2
 #define DIAGCTL_CODE_DIAG	1	/* Print diagnostics. */
 #define DIAGCTL_CODE_STACKTRACE	2	/* Print process stack. */
+#define DIAGCTL_CODE_REGISTER	3	/* Register for diagnostic signals */
+#define DIAGCTL_CODE_UNREGISTER	4	/* Unregister for diagnostic signals */
 #define DIAG_BUFSIZE	(80*25)
 
 /* Field names for SYS_VTIMER. */

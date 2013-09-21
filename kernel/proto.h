@@ -91,6 +91,7 @@ void fill_sendto_mask(const struct proc *rc, sys_map_t *map);
 int send_sig(endpoint_t proc_nr, int sig_nr);
 void cause_sig(proc_nr_t proc_nr, int sig_nr);
 void sig_delay_done(struct proc *rp);
+void send_diag_sig(void);
 void kernel_call(message *m_user, struct proc * caller);
 void system_init(void);
 void clear_endpoint(struct proc *rc);

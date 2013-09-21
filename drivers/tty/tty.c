@@ -336,6 +336,9 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   /* Final one-time keyboard initialization. */
   kb_init_once();
 
+  /* Register for diagnostics notifications. */
+  sys_diagctl_register();
+
   return(OK);
 }
 
