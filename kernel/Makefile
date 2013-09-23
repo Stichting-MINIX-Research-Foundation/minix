@@ -80,18 +80,18 @@ CPPFLAGS+= -DUSE_TRACE
 
 CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h
 
-debug.o: extracted-errno.h extracted-mfield.h extracted-mtype.h
+debug.o debug.d: extracted-errno.h extracted-mfield.h extracted-mtype.h
 
 extracted-errno.h: extract-errno.sh ../include/errno.h
 	${_MKTARGET_CREATE}
-	cd ${.CURDIR} ; ${HOST_SH} extract-errno.sh > ${.OBJDIR}/extracted-errno.h
+	cd ${.CURDIR} ; ${HOST_SH} extract-errno.sh > extracted-errno.h
 
 extracted-mfield.h: extract-mfield.sh ../lib/libc/sys-minix/*.c ../lib/libsys/*.c
 	${_MKTARGET_CREATE}
-	cd ${.CURDIR} ; ${HOST_SH} extract-mfield.sh > ${.OBJDIR}/extracted-mfield.h
+	cd ${.CURDIR} ; ${HOST_SH} extract-mfield.sh > extracted-mfield.h
 
 extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
 	${_MKTARGET_CREATE}
-	cd ${.CURDIR} ; ${HOST_SH} extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
+	cd ${.CURDIR} ; ${HOST_SH} extract-mtype.sh > extracted-mtype.h
 
 .include <minix.service.mk>
