@@ -44,7 +44,7 @@
  * virtual machine if you enable this; on the hardware it would take forever 
  * just to boot
  */
-#define DEBUG_DUMPIPC			0
+#define DEBUG_DUMPIPC			1
 
 /* If defined, restrict DEBUG_DUMPIPC to particular process names */
 /* #define DEBUG_DUMPIPC_NAMES		{ "tty", "inet" } */
