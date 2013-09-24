@@ -56,7 +56,6 @@ CDFILES=/usr/tmp/cdreleasefiles
 IMG_BASE=minix${version}_ide
 BS=4096
 
-HDEMU=0
 COPY=0
 JAILMODE=0
 REVTAG=""
@@ -80,16 +79,11 @@ while getopts "b:j:ls:pmMchu?f:L:e:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
+		echo "Usage: $0 [-l] [-p] [-c] [-m] [-M] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
 		exit 1
 	;;
 	b)
 		GITBRANCH=$OPTARG
-		;;
-	h)
-		echo " * Making HD image"
-		IMG_BASE=minix${version}_bios
-		HDEMU=1
 		;;
 	c)
 		echo " * Copying, not using GIT"
@@ -105,7 +99,6 @@ do
 	u)
 		echo " * Making live USB-stick image"
 		IMG_BASE=minix${version}_usb
-		HDEMU=1
 		USB=1
 		;;
 	f)
@@ -309,13 +302,6 @@ then
 root=/dev/c0d7p0s0
 usr=/dev/c0d7p0s2
 " > $RELEASEDIR/etc/fstab
-elif [ "$HDEMU" -ne 0 ]
-then
-	echo \
-"$fstab_marker
-root=/dev/c0d7p0s0
-usr=/dev/c0d7p0s2
-usr_roflag=\"-r\"" > $RELEASEDIR/etc/fstab
 fi
 
 ##########################################################################
@@ -344,13 +330,8 @@ umount $TMPDISKUSR || exit
 
 echo " * Making image bootable"
 if [ "$USB" -ne 0 ]
-then
-	usb_root_changes
-elif [ "$HDEMU" -ne 0 ]
-then
-	hdemu_root_changes
-else
-	cd_root_changes
+then	usb_root_changes
+else	cd_root_changes
 fi
 
 echo " * Unmounting $TMPDISKROOT from $RELEASEMNTDIR"
@@ -366,11 +347,6 @@ echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.
 
 boottype=-n
 bootimage=$IMAGE
-if [ "$HDEMU" -ne 0 ]; then
-	make_hdimage
-	boottype='-h'
-	bootimage=hdimage
-fi
 
 if [ "$USB" -ne 0 ]; then
 	mv $bootimage $IMG
@@ -380,25 +356,22 @@ else
 	gzip -d $CDFILES/*gz
 	writeisofs -s0x0 -l MINIX -B $bootimage $boottype $CDFILES $IMG || exit 1
 
-	if [ "$HDEMU" -eq 0 ]
-	then
-		echo "Appending Minix root and usr filesystem"
-		# Pad ISO out to cylinder boundary
-		isobytes=`stat -f %z $IMG`
-		isosects=`expr $isobytes / 512`
-		isopad=`expr $secs - '(' $isosects % $secs ')'`
-		dd if=/dev/zero count=$isopad >>$IMG
-		# number of sectors
-		isosects=`expr $isosects + $isopad`
-		( cat $IMG $ROOTIMAGE ;
-			dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
-		mv m $IMG
-		# Make CD partition table
-		installboot_nbsd -m $IMG /usr/mdec/mbr
-		# Make sure there is no hole..! Otherwise the ISO format is
-		# unreadable.
-		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
-	fi
+	echo "Appending Minix root and usr filesystem"
+	# Pad ISO out to cylinder boundary
+	isobytes=`stat -f %z $IMG`
+	isosects=`expr $isobytes / 512`
+	isopad=`expr $secs - '(' $isosects % $secs ')'`
+	dd if=/dev/zero count=$isopad >>$IMG
+	# number of sectors
+	isosects=`expr $isosects + $isopad`
+	( cat $IMG $ROOTIMAGE ;
+		dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
+	mv m $IMG
+	# Make CD partition table
+	installboot_nbsd -m $IMG /usr/mdec/mbr
+	# Make sure there is no hole..! Otherwise the ISO format is
+	# unreadable.
+	partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 fi
 
 # Clean up: RELEASEDIR no longer needed

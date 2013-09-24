@@ -100,22 +100,6 @@ load=/mod12_init
 END_BOOT_CFG
 }
 
-
-hdemu_root_changes()
-{
-	$RELEASEDIR/usr/sbin/installboot_nbsd $TMPDISKROOT \
-		$RELEASEDIR/usr/mdec/bootxx_minixfs3
-
-cat >$RELEASEMNTDIR/boot.cfg <<END_BOOT_CFG
-menu=Regular MINIX 3:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel bootcd=2 disable=inet bios_wini=yes bios_remap_first=1 ramimagedev=c0d7p0s0
-menu=Edit menu option:edit
-menu=Drop to boot prompt:prompt
-clear=1
-timeout=10
-default=1
-END_BOOT_CFG
-}
-
 usb_root_changes()
 {
 	$RELEASEDIR/usr/sbin/installboot_nbsd $TMPDISKROOT \
