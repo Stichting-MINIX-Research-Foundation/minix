@@ -206,6 +206,7 @@ static int bdev_vrdwt_setup(int req, dev_t dev, u64_t pos, iovec_t *vec,
 	gvec[i].iov_grant = grant;
 	gvec[i].iov_size = vec[i].iov_size;
 
+	assert(vec[i].iov_size > 0);
 	assert((ssize_t) (size + vec[i].iov_size) > size);
 
 	size += vec[i].iov_size;
