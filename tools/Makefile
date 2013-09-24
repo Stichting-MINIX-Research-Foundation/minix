@@ -76,7 +76,8 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		 cat cksum \
 		file \
 		.WAIT \
-		pwd_mkdb stat zic
+		pwd_mkdb stat zic \
+		partition
 
 .if ${MKLLVM} != "no"
 # .WAIT between llvm-tblgen and llvm-clang-tblgen ensures install
