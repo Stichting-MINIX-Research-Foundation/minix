@@ -80,7 +80,7 @@ CPPFLAGS+= -DUSE_TRACE
 
 CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h
 
-debug.o: extracted-errno.h extracted-mfield.h extracted-mtype.h
+debug.o debug.d: extracted-errno.h extracted-mfield.h extracted-mtype.h
 
 extracted-errno.h: extract-errno.sh ../include/errno.h
 	${_MKTARGET_CREATE}

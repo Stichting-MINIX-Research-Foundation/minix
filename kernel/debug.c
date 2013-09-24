@@ -326,12 +326,12 @@ static const char *mtypename(int mtype, int *possible_callname)
 	 */
 	switch(mtype) {
 #define IDENT(x) case x: callname = #x; *possible_callname = 1; break;
-#include "extracted-mtype.h"
+#include "kernel/extracted-mtype.h"
 #undef IDENT
 	}
 	switch(mtype) {
 #define IDENT(x) case x: errname = #x; break;
-#include "extracted-errno.h"
+#include "kernel/extracted-errno.h"
 #undef IDENT
 	}
 
@@ -419,7 +419,7 @@ static void printmsg(message *msg, struct proc *src, struct proc *dst,
 
 	if (mightbecall && printparams) {
 #define IDENT(x, y) if (mtype == x) printparam(#y, &msg->y, sizeof(msg->y));
-#include "extracted-mfield.h"
+#include "kernel/extracted-mfield.h"
 #undef IDENT
 	}
 	printf("\n");
