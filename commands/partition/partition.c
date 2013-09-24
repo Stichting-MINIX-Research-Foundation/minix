@@ -7,16 +7,24 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <minix/config.h>
-#include <minix/const.h>
-#include <minix/partition.h>
-#include <minix/u64.h>
-#include <machine/partition.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <limits.h>
+#include <stdint.h>
+#include <assert.h>
+
+#ifdef __minix
+#include <machine/partition.h>
+#include <minix/config.h>
+#include <minix/const.h>
+#include <minix/partition.h>
+#include <minix/u64.h>
+#else
+#include "partition.h"
+#define NR_PARTITIONS 4
+#endif
 
 #define SECTOR_SIZE	512
 
@@ -59,10 +67,10 @@ int npart;
 void find_exist(struct part_entry *exist, int sysind, int nr)
 {
 	int f;
-	u16_t signature;
+	uint16_t signature;
 	struct part_entry oldtable[NR_PARTITIONS];
 	int n, i;
-	u32_t minlow, curlow;
+	uint32_t minlow, curlow;
 	struct part_entry *cur;
 	char *nr_s[] = { "", "second ", "third ", "fourth" };
 
@@ -109,7 +117,7 @@ void find_exist(struct part_entry *exist, int sysind, int nr)
 void write_table(void)
 {
 	int f;
-	u16_t signature= 0xAA55;
+	uint16_t signature= 0xAA55;
 	struct part_entry newtable[NR_PARTITIONS];
 	int i;
 
@@ -119,6 +127,14 @@ void write_table(void)
 	}
 
 	for (i= 0; i < NR_PARTITIONS; i++) newtable[i]= table[1 + 2*i];
+
+	/* we have a abstract struct but it must conform to a certain
+	 * reality that will never change (in-MBR sizes and offsets).
+	 * each partition entry is 16 bytes and there are 4 of them.
+	 * this also determines the signature offset.
+	 */
+	assert(sizeof(struct part_entry) == 16);
+	assert(sizeof(newtable) == 64);
 
 	if ((f= open(device, O_WRONLY)) < 0
 
@@ -285,10 +301,13 @@ void geometry(void)
  */
 {
 	int fd;
-	struct part_geom geometry;
 	struct stat sb;
 
 	if ((fd= open(device, O_RDONLY)) < 0) fatal(device);
+
+#ifdef __minix
+	struct part_geom geometry;
+
 
 	/* Get the geometry of the drive, and the device's base and size. */
 	if (ioctl(fd, DIOCGETP, &geometry) < 0)
@@ -303,12 +322,21 @@ void geometry(void)
 		geometry.cylinders= (sb.st_size-1)/SECTOR_SIZE/
 			(geometry.sectors*geometry.heads) + 1;
 	}
-	close(fd);
 	primary.lowsec= div64u(geometry.base, SECTOR_SIZE);
 	primary.size= div64u(geometry.size, SECTOR_SIZE);
 	cylinders= geometry.cylinders;
 	heads= geometry.heads;
 	sectors= geometry.sectors;
+#else
+	if (fstat(fd, &sb) < 0) fatal(device);
+	primary.lowsec= 0;
+	primary.size= sb.st_size / SECTOR_SIZE;
+	heads= 64;
+	sectors= 32;
+	cylinders= (sb.st_size-1) / SECTOR_SIZE / (sectors*heads) + 1;
+#endif
+
+	close(fd);
 
 	/* Is this a primary partition table?  If so then pad partitions. */
 	pad= (!mflag && primary.lowsec == 0);
@@ -346,7 +374,7 @@ void distribute(void)
 			if (pe->bootind & EXIST_FLAG) {
 				if (base > pe->lowsec) {
 					fprintf(stderr,
-	"%s: fixed partition %d is preceded by too big partitions/holes\n",
+	"%s: fixed partition %ld is preceded by too big partitions/holes\n",
 						arg0, ((pe - table) - 1) / 2);
 					exit(1);
 				}
