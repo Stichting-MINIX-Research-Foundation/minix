@@ -163,6 +163,11 @@ arm/vm.h
 #define ARM_VM_PFE_FS4    (1<<10)  /* Fault status (bit 4) */
 #define ARM_VM_PFE_FS3_0   0xf     /* Fault status (bits 3:0) */
 
+
+/* Translation table base register specfic flags */
+#define TTBR_ADDR_MASK (0xffffc000)
+#define TTBR_FLAGS_CACHED (0x1 << 3)| (0x1)
+
 /* Fault status */
 #define ARM_VM_PFE_FS(s) \
     ((((s) & ARM_VM_PFE_FS4) >> 6) | ((s) & ARM_VM_PFE_FS3_0))
