@@ -75,11 +75,11 @@ fi
 
 FILENAMEOUT=""
 
-while getopts "b:j:ls:pmMchu?f:L:e:" c
+while getopts "b:j:ls:pmMch?f:L:e:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-l] [-p] [-c] [-m] [-M] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
+		echo "Usage: $0 [-l] [-p] [-c] [-m] [-M] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
 		exit 1
 	;;
 	b)
@@ -95,11 +95,6 @@ do
 	j)
 		RELEASEDIR=$OPTARG
 		JAILMODE=1
-		;;
-	u)
-		echo " * Making live USB-stick image"
-		IMG_BASE=minix${version}_usb
-		USB=1
 		;;
 	f)
 		FILENAMEOUT="$OPTARG"
@@ -193,11 +188,7 @@ then
 #endif" >>$CONFIGHEADER
 	DATE=`date +%Y%m%d`
 	# output image name
-	if [ "$USB" -ne 0 ]; then
-		IMG=${IMG_BASE}_${DATE}_${REVTAG}.img
-	else
-		IMG=${IMG_BASE}_${DATE}_${REVTAG}.iso
-	fi
+	IMG=${IMG_BASE}_${DATE}_${REVTAG}.iso
 else
 	echo "First cleaning current sourcedir.."
 	( cd .. && make cleandir >/dev/null )
@@ -211,9 +202,7 @@ else
 fi
 
 # Make sure the CD knows it's a CD, unless it's not
-if [ "$USB" -eq 0 ]
-then	date >$RELEASEDIR/CD
-fi
+date >$RELEASEDIR/CD
 
 rm -f $RELEASEDIR/usr/$SRC/releasetools/revision
 
@@ -293,17 +282,6 @@ extrakb=`du -ks $RELEASEDIR/usr/install | awk '{ print $1 }'`
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -print -path $RELEASEDIR/usr -prune | wc -l >$RELEASEDIR/.rootfiles
 
-fstab_marker="# Poor man's File System Table."
-echo " * Writing fstab"
-if [ "$USB" -ne 0 ]
-then
-	echo \
-"$fstab_marker
-root=/dev/c0d7p0s0
-usr=/dev/c0d7p0s2
-" > $RELEASEDIR/etc/fstab
-fi
-
 ##########################################################################
 echo " * Mounting $TMPDISKROOT as $RELEASEMNTDIR"
 ##########################################################################
@@ -329,10 +307,7 @@ echo " * Unmounting $TMPDISKUSR from $RELEASEMNTDIR/usr"
 umount $TMPDISKUSR || exit
 
 echo " * Making image bootable"
-if [ "$USB" -ne 0 ]
-then	usb_root_changes
-else	cd_root_changes
-fi
+cd_root_changes
 
 echo " * Unmounting $TMPDISKROOT from $RELEASEMNTDIR"
 umount $TMPDISKROOT || exit
@@ -348,31 +323,27 @@ echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.
 boottype=-n
 bootimage=$IMAGE
 
-if [ "$USB" -ne 0 ]; then
-	mv $bootimage $IMG
-else
-	cp $RELEASEDIR/usr/mdec/boot_monitor $CDFILES/boot
-	cp -rf $RELEASEDIR/boot/minix_latest/* $CDFILES/
-	gzip -d $CDFILES/*gz
-	writeisofs -s0x0 -l MINIX -B $bootimage $boottype $CDFILES $IMG || exit 1
+cp $RELEASEDIR/usr/mdec/boot_monitor $CDFILES/boot
+cp -rf $RELEASEDIR/boot/minix_latest/* $CDFILES/
+gzip -d $CDFILES/*gz
+writeisofs -s0x0 -l MINIX -B $bootimage $boottype $CDFILES $IMG || exit 1
 
-	echo "Appending Minix root and usr filesystem"
-	# Pad ISO out to cylinder boundary
-	isobytes=`stat -f %z $IMG`
-	isosects=`expr $isobytes / 512`
-	isopad=`expr $secs - '(' $isosects % $secs ')'`
-	dd if=/dev/zero count=$isopad >>$IMG
-	# number of sectors
-	isosects=`expr $isosects + $isopad`
-	( cat $IMG $ROOTIMAGE ;
-		dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
-	mv m $IMG
-	# Make CD partition table
-	installboot_nbsd -m $IMG /usr/mdec/mbr
-	# Make sure there is no hole..! Otherwise the ISO format is
-	# unreadable.
-	partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
-fi
+echo "Appending Minix root and usr filesystem"
+# Pad ISO out to cylinder boundary
+isobytes=`stat -f %z $IMG`
+isosects=`expr $isobytes / 512`
+isopad=`expr $secs - '(' $isosects % $secs ')'`
+dd if=/dev/zero count=$isopad >>$IMG
+# number of sectors
+isosects=`expr $isosects + $isopad`
+( cat $IMG $ROOTIMAGE ;
+	dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
+mv m $IMG
+# Make CD partition table
+installboot_nbsd -m $IMG /usr/mdec/mbr
+# Make sure there is no hole..! Otherwise the ISO format is
+# unreadable.
+partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 
 # Clean up: RELEASEDIR no longer needed
 rm -r $RELEASEDIR
