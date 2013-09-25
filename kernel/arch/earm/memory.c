@@ -309,17 +309,17 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 	assert(pde >= 0 && pde < ARM_VM_DIR_ENTRIES);
 	pde_v = phys_get32((u32_t) (root + pde));
 
-	if(!(pde_v & ARM_VM_PDE_PRESENT)) {
+	if(! ((pde_v & ARM_VM_PDE_PRESENT) 
+		|| (pde_v & ARM_VM_SECTION_PRESENT)
+	     )) {
 		return EFAULT;
 	}
 
-	/* We don't expect to ever see this. 
-	 * LSC Impossible with the previous test.
 	if(pde_v & ARM_VM_SECTION) {
 		*physical = pde_v & ARM_VM_SECTION_MASK;
 		if(ptent) *ptent = pde_v;
 		*physical += virtual & ARM_VM_OFFSET_MASK_1MB;
-	} else */ {
+	} else  {
 		/* Retrieve page table entry. */
 		pt = (u32_t *) (pde_v & ARM_VM_PDE_MASK);
 		assert(!((u32_t) pt % ARM_PAGETABLE_SIZE));
