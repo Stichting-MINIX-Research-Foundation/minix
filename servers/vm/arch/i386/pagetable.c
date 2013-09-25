@@ -1324,6 +1324,7 @@ int pt_bind(pt_t *pt, struct vmproc *who)
 			(phys+i*VM_PAGE_SIZE)
 			| ARCH_VM_PTE_PRESENT
 			| ARCH_VM_PTE_RW
+			| ARM_VM_PTE_CACHED
 			| ARCH_VM_PTE_USER; //LSC FIXME
 	}
 }
