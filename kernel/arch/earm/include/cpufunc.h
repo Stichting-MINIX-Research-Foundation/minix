@@ -42,6 +42,123 @@ static inline void barrier(void)
 	isb();
 }
 
+
+/* Read CLIDR, Cache Level ID Register */
+static inline u32_t read_clidr(){
+	u32_t clidr;
+	asm volatile("mrc p15, 1, %[clidr], c0, c0 , 1 @ READ CLIDR\n\t"
+				: [clidr] "=r" (clidr));
+	return clidr;
+}
+
+
+/* Read CSSELR, Cache Size Selection Register */
+static inline u32_t read_csselr(){
+	u32_t csselr;
+	asm volatile("mrc p15, 2, %[csselr], c0, c0 , 0 @ READ CSSELR\n\t"
+				: [csselr] "=r" (csselr));
+	return csselr;
+}
+
+/* Write CSSELR, Cache Size Selection Register */
+static inline void write_csselr(u32_t csselr){
+	asm volatile("mcr p15, 2, %[csselr], c0, c0 , 0 @ WRITE CSSELR\n\t"
+				: : [csselr] "r" (csselr));
+}
+
+/* Read Cache Size ID Register */
+static inline u32_t read_ccsidr()
+{
+	u32_t ccsidr;
+	asm volatile("mrc p15, 1, %[ccsidr], c0, c0, 0 @ Read CCSIDR\n\t"
+			: [ccsidr] "=r" (ccsidr));
+	return ccsidr;
+}
+
+/* Read TLBTR, TLB Type Register */
+static inline u32_t read_tlbtr()
+{
+	u32_t tlbtr;
+	asm volatile("mrc p15, 0, %[tlbtr], c0, c0, 3 @ Read TLBTR\n\t"
+			: [tlbtr] "=r" (tlbtr));
+	return tlbtr;
+}
+
+/* keesj:move these out */
+static inline u32_t ilog2(u32_t t)
+{
+	u32_t counter =0;
+	while( (t = t >> 1) ) counter ++;
+	return counter;
+}
+
+/* keesj:move these out */
+static inline u32_t ipow2(u32_t t)
+{
+	return 1 << t;
+}
+
+/*
+ * type = 1 == CLEAN
+ * type = 2 == INVALIDATE
+ */
+static inline void dcache_maint(int type){
+	u32_t cache_level ;
+	u32_t clidr;
+	u32_t ctype;
+	u32_t  ccsidr;
+	u32_t  line_size,line_length;
+	u32_t  number_of_sets,number_of_ways;
+	u32_t  set,way;
+
+	clidr = read_clidr();
+	u32_t loc =  ( clidr >> 24) & 0x7;
+	u32_t louu =  ( clidr >> 27) & 0x7;
+	u32_t louis =  ( clidr >> 21) & 0x7;
+	for (cache_level =0 ; cache_level < loc; cache_level++){
+		/* get current cache type */
+		ctype = ( clidr >> cache_level*3) & 0x7;
+		/* select data or unified or cache level */
+		write_csselr(cache_level << 1);
+		isb();
+		ccsidr = read_ccsidr();
+		line_size = ccsidr & 0x7;
+		line_length = 2 << (line_size + 1) ; /* 2**(line_size + 2) */
+		number_of_sets = ((ccsidr >> 13) & 0x7fff) + 1;
+		number_of_ways = ((ccsidr >> 3) & 0x3ff) + 1;
+
+		u32_t way_bits = ilog2(number_of_ways);
+		if(ipow2(ilog2(number_of_ways) < number_of_ways) ) {
+			way_bits++;
+		}
+
+		u32_t l = ilog2(line_length);
+		for (way =0 ; way < number_of_ways; way++) {
+			for (set =0 ; set < number_of_sets; set++) {
+				u32_t val = ( way << (32 - way_bits) ) |  (set << l) | (cache_level << 1 );
+				if (type == 1) {
+					/* DCCISW, Data Cache Clean and Invalidate by Set/Way */
+					asm volatile("mcr p15, 0, %[set], c7, c14, 2 @ DCCISW" 
+							: : [set] "r" (val));
+				} else if (type ==2 ){
+					/* DCISW, Data Cache Invalidate by Set/Way */
+					asm volatile("mcr p15, 0, %[set], c7, c6, 2" 
+							: : [set] "r" (val)); 
+				}
+			}
+		}
+	}
+	dsb();
+	isb();
+
+}
+static inline void dcache_clean(){
+	dcache_maint(1);
+}
+static inline void dcache_invalidate (){
+	dcache_maint(2);
+}
+
 static inline void refresh_tlb(void)
 {
 	dsb();
@@ -57,7 +174,6 @@ static inline void refresh_tlb(void)
 	asm volatile("mcr p15, 0, %[zero], c8, c5, 0" : : [zero] "r" (0));
 #endif
 
-#if 0
 	/*
 	 * Invalidate all instruction caches to PoU.
 	 * Also flushes branch target cache.
@@ -66,7 +182,6 @@ static inline void refresh_tlb(void)
 
 	/* Invalidate entire branch predictor array */
 	asm volatile("mcr p15, 0, %[zero], c7, c5, 6" : : [zero] "r" (0)); /* flush BTB */
-#endif
 
 	dsb();
 	isb();
@@ -118,7 +233,6 @@ static inline void write_ttbr0(u32_t bar)
 static inline void reload_ttbr0(void)
 {
 	reg_t ttbr = read_ttbr0();
-
 	write_ttbr0(ttbr);
 }
 
@@ -317,6 +431,7 @@ static inline u32_t read_actlr()
 /* Write Auxiliary Control Register */
 static inline void write_actlr(u32_t ctl)
 {
+//http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0344k/Babjbjbb.html
 	asm volatile("mcr p15, 0, %[ctl], c1, c0, 1 @ Write ACTLR\n\t"
 			: : [ctl] "r" (ctl));
 
