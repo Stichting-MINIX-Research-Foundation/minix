@@ -157,10 +157,15 @@ void pg_identity(kinfo_t *cbi)
 	 for(i = 0; i < ARM_VM_DIR_ENTRIES; i++) {
 		u32_t flags = ARM_VM_SECTION
 			| ARM_VM_SECTION_USER
-			| ARM_VM_SECTION_DEVICE
 			| ARM_VM_SECTION_DOMAIN;
+
 		phys = i * ARM_SECTION_SIZE;
-		pagedir[i] =  phys | flags;
+		/* mark mormal memory as cacheable. TODO: fix hard coded values */
+		if (phys >= PHYS_MEM_BEGIN && phys <= PHYS_MEM_END){
+			pagedir[i] =  phys | flags | ARM_VM_SECTION_CACHED;
+		} else {
+			pagedir[i] =  phys | flags | ARM_VM_SECTION_DEVICE;
+		}
         }
 }
 
