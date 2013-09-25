@@ -178,7 +178,8 @@ int pg_mapkernel(void)
 	assert(!(kern_phys_start % ARM_SECTION_SIZE));
 	pde = kern_vir_start / ARM_SECTION_SIZE; /* start pde */
 	while(mapped < kern_kernlen) {
-		pagedir[pde] = (kern_phys & ARM_VM_SECTION_MASK) | ARM_VM_SECTION
+		pagedir[pde] = (kern_phys & ARM_VM_SECTION_MASK) 
+			| ARM_VM_SECTION
 			| ARM_VM_SECTION_SUPER
 			| ARM_VM_SECTION_DOMAIN
 			| ARM_VM_SECTION_CACHED;
@@ -192,6 +193,7 @@ int pg_mapkernel(void)
 void vm_enable_paging(void)
 {
         u32_t sctlr;
+        u32_t actlr;
 
 	write_ttbcr(0);
 
@@ -209,9 +211,20 @@ void vm_enable_paging(void)
 	/* AFE set to zero (default reset value): not using simplified model. */
 	sctlr &= ~SCTLR_AFE;
 
-	/* Enable instruction and data cache */
+	/* Enable instruction ,data cache and branch prediction */
 	sctlr |= SCTLR_C;
 	sctlr |= SCTLR_I;
+	sctlr |= SCTLR_Z;
+
+	/* Enable barriers */
+	sctlr |= SCTLR_CP15BEN;
+
+	/* Enable L2 cache (cortex-a8) */
+	#define CORTEX_A8_L2EN   (0x02)
+	actlr = read_actlr();
+	actlr |= CORTEX_A8_L2EN;
+	write_actlr(actlr);
+
 	write_sctlr(sctlr);
 }
 
