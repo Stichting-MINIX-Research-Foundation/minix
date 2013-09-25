@@ -9,7 +9,7 @@ arm/vm.h
  * We are using the following setup
  * the system is configured to have the TRE (Tex remap enable bit) set to 0
  * The TEX[2:0] B and C bits are used to determins memory attributes.
- * These bits together with the S Bit (Shareability Bit) determines the 
+ * These bits together with the S Bit (Shareability Bit) determines the
  * memory attributes.
  *
  * The S bit is ignored when the other attribute define the memory as 
@@ -47,9 +47,11 @@ arm/vm.h
 /* inner and outer write-back, write-allocate */
 #define ARM_VM_PTE_WB		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX0 | ARM_VM_PTE_B)
 /* inner and outer write-through, no write-allocate */
-#define ARM_VM_PTE_WT		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX1 | ARM_VM_PTE_C)
+#define ARM_VM_PTE_WT		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX1 | ARM_VM_PTE_C )
+/* Inner , Write through, No Write Allocate Outer - Write Back, Write Allocate */
+#define ARM_VM_PTE_WTWB		(ARM_VM_PTE_TEX2 | ARM_VM_PTE_TEX0 | ARM_VM_PTE_C )
 
-#define ARM_VM_PTE_CACHED ARM_VM_PTE_WT
+#define ARM_VM_PTE_CACHED ARM_VM_PTE_WTWB
 /* shareable device */
 #define ARM_VM_PTE_DEVICE	(ARM_VM_PTE_B)
 
@@ -73,12 +75,15 @@ arm/vm.h
 #define ARM_VM_SECTION_NOTGLOBAL	(1 << 17)  /* Not Global */
 
 /* inner and outer write-back, write-allocate */
-#define ARM_VM_SECTION_WB	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX0 | ARM_VM_SECTION_B)
+#define ARM_VM_SECTION_WB	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX0 | ARM_VM_SECTION_B )
 /* inner and outer write-through, no write-allocate */
-#define ARM_VM_SECTION_WT	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX1 | ARM_VM_SECTION_C)
+#define ARM_VM_SECTION_WT	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX1 | ARM_VM_SECTION_C )
+/* Inner , Write through, No Write Allocate Outer - Write Back, Write Allocate */
+#define ARM_VM_SECTION_WTWB	(ARM_VM_SECTION_TEX2 | ARM_VM_SECTION_TEX0 | ARM_VM_SECTION_C )
 /* shareable device */
 
-#define ARM_VM_SECTION_CACHED ARM_VM_SECTION_WT
+#define ARM_VM_SECTION_CACHED ARM_VM_SECTION_WTWB
+
 #define ARM_VM_SECTION_DEVICE	(ARM_VM_SECTION_B)
 
 /* Page directory specific flags. */
