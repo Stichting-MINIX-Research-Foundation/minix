@@ -234,7 +234,7 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 
 static u32_t phys_get32(phys_bytes addr)
 {
-	const u32_t v;
+	u32_t v;
 	int r;
 
 	if((r=lin_lin_copy(NULL, addr, 
