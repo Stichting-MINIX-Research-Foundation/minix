@@ -240,27 +240,6 @@ programs do with mail boxes.  A "no locks available" error indicates that
 this table has run out.
 .PP
 .ti 2m
-.B kernel/bios_wini.c
-.ti 2m
-.B kernel/dosfile.c
-.ti 2m
-.B kernel/fatfile.c
-.br
-The number of disks each of these drivers can handle is specified by:
-.TP
-.B MAX_DRIVES
-This parameter is set to
-.B 4
-for the BIOS and "DOS file" drivers, and to
-.B 2
-for the "FAT file" driver.  It can be set as high as you need to allow for
-more disks, or files as disks.  (The "FAT" driver needs quite some memory per
-disk, which is why it by default only allows 2 disks.)  You will need to run
-.BR MAKEDEV (8)
-to create the extra disk devices in
-.BR /dev/ .
-.PP
-.ti 2m
 .B inet/inet_config.h
 .br
 The maximum number of TCP/IP networks is:
