@@ -215,16 +215,20 @@ static inline u32_t read_ttbr0()
 	asm volatile("mrc p15, 0, %[bar], c2, c0, 0 @ Read TTBR0\n\t"
 			: [bar] "=r" (bar));
 
-	return bar;
+	return bar & ARM_TTBR_ADDR_MASK;
 }
 
 /* Write Translation Table Base Register 0 */
 static inline void write_ttbr0(u32_t bar)
 {
 	barrier();
-
+	/* In our setup TTBR contains the base address *and* the flags
+	   but other pieces of the kernel code expect ttbr to be the 
+	   base address of the l1 page table. We therefore add the
+	   flags here and remove them in the read_ttbr0 */
+	u32_t v  =  (bar  & ARM_TTBR_ADDR_MASK ) | ARM_TTBR_FLAGS_CACHED;
 	asm volatile("mcr p15, 0, %[bar], c2, c0, 0 @ Write TTBR0\n\t"
-			: : [bar] "r" (bar));
+			: : [bar] "r" (v));
 
 	refresh_tlb();
 }

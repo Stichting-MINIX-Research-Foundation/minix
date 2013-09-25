@@ -303,7 +303,7 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 	assert(HASPT(proc));
 
 	/* Retrieve page directory entry. */
-	root = (u32_t *) proc->p_seg.p_ttbr;
+	root = (u32_t *) (proc->p_seg.p_ttbr & ARM_TTBR_ADDR_MASK);
 	assert(!((u32_t) root % ARM_PAGEDIR_SIZE));
 	pde = ARM_VM_PDE(virtual);
 	assert(pde >= 0 && pde < ARM_VM_DIR_ENTRIES);
