@@ -173,7 +173,7 @@ mmchs_init(uint32_t instance)
 	// set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CLKD,
 	// (0x20 << 6));
 	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CLKD,
-	    (0x5 << 6));
+	    (0x2 << 6));
 
 	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CEN,
 	    MMCHS_SD_SYSCTL_CEN_EN);
