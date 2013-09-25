@@ -276,6 +276,7 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 	 * to where it should be; but first a 1:1 mapping so
 	 * this code stays where it should be.
 	 */
+	dcache_clean(); /* clean the caches */
 	pg_clear();
 	pg_identity(&kinfo);
 	kinfo.freepde_start = pg_mapkernel();
