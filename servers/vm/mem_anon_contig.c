@@ -17,6 +17,7 @@ static int anon_contig_sanitycheck(struct phys_region *pr, char *file, int line)
 static int anon_contig_writable(struct phys_region *pr);
 static int anon_contig_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static int anon_contig_new(struct vir_region *vr);
+static int anon_contig_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_anon_contig = {
 	.name = "anonymous memory (physically contiguous)",
@@ -26,8 +27,17 @@ struct mem_type mem_type_anon_contig = {
 	.ev_pagefault = anon_contig_pagefault,
 	.ev_resize = anon_contig_resize,
 	.ev_sanitycheck = anon_contig_sanitycheck,
-	.writable = anon_contig_writable
+	.writable = anon_contig_writable,
+	.pt_flags = anon_contig_pt_flags,
 };
+
+static int anon_contig_pt_flags(struct vir_region *vr){
+#if defined(__arm__)
+	return  ARM_VM_PTE_DEVICE;
+#else
+	return  0;
+#endif
+}
 
 static int anon_contig_pagefault(struct vmproc *vmp, struct vir_region *region,
 	struct phys_region *ph, int write, vfs_callback_t cb, void *state,

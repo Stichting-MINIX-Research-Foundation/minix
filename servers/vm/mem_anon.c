@@ -29,6 +29,7 @@ static int anon_writable(struct phys_region *pr);
 static int anon_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static u32_t anon_regionid(struct vir_region *region);
 static int anon_refcount(struct vir_region *vr);
+static int anon_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_anon = {
 	.name = "anonymous memory",
@@ -40,8 +41,17 @@ struct mem_type mem_type_anon = {
 	.ev_split = anon_split,
 	.regionid = anon_regionid,
 	.writable = anon_writable,
-	.refcount = anon_refcount
+	.refcount = anon_refcount,
+	.pt_flags = anon_pt_flags,
 };
+
+static int anon_pt_flags(struct vir_region *vr){
+#if defined(__arm__)
+	return ARM_VM_PTE_CACHED;
+#else
+	return 0;
+#endif
+}
 
 static int anon_unreference(struct phys_region *pr)
 {

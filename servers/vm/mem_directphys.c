@@ -9,6 +9,8 @@
 
 #include "vm.h"
 #include "proto.h"
+#include "region.h"
+#include "glo.h"
 
 /* These functions are static so as to not pollute the
  * global namespace, and are accessed through their function
@@ -21,14 +23,24 @@ static int phys_pagefault(struct vmproc *vmp, struct vir_region *region,
         struct phys_region *ph, int write, vfs_callback_t cb, void *state,
 	int len, int *io);
 static int phys_copy(struct vir_region *vr, struct vir_region *newvr);
+static int phys_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_directphys = {
 	.name = "physical memory mapping",
 	.ev_copy = phys_copy,
 	.ev_unreference = phys_unreference,
 	.writable = phys_writable,
-	.ev_pagefault = phys_pagefault
+	.ev_pagefault = phys_pagefault,
+	.pt_flags = phys_pt_flags
 };
+
+static int phys_pt_flags(struct vir_region *vr){
+#if defined(__arm__)
+	return ARM_VM_PTE_DEVICE;
+#else
+	return 0;
+#endif
+}
 
 static int phys_unreference(struct phys_region *pr)
 {
