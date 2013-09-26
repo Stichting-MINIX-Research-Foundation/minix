@@ -27,4 +27,4 @@ do
 done
 
 
-echo console=$CONSOLE rootdevname=c0d0p1s0 verbose=$VERBOSE hz=$HZ
+echo console=$CONSOLE rootdevname=c0d0p1 verbose=$VERBOSE hz=$HZ
