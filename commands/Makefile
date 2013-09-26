@@ -31,13 +31,10 @@ SUBDIR=	add_route arp ash at backup btrace \
 	unstack update uud uue version vol \
 	whereis which write writeisofs fetch \
 	zdump zmodem pkgin_cd pkgin_all \
-	worldstone updateboot update_bootcfg
-
-.if ${MACHINE_ARCH} == "i386"
-SUBDIR+=	atnormalize dosread fdisk loadfont \
+	worldstone updateboot update_bootcfg \
+	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump
-.endif
 
 .if ${MACHINE_ARCH} == "earm"
 SUBDIR+=	eepromread
