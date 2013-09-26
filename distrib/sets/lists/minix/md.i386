@@ -25,19 +25,6 @@
 ./sbin/hgfs				minix-sys
 ./sbin/vbfs				minix-sys
 ./sbin/virtio_blk			minix-sys
-./usr/bin/atnormalize			minix-sys
-./usr/bin/autopart			minix-sys
-./usr/bin/dosdir			minix-sys
-./usr/bin/dosread			minix-sys
-./usr/bin/doswrite			minix-sys
-./usr/bin/fdisk				minix-sys
-./usr/bin/loadfont			minix-sys
-./usr/bin/part				minix-sys
-./usr/bin/partition			minix-sys
-./usr/bin/playwave			minix-sys
-./usr/bin/recwave			minix-sys
-./usr/bin/repartition			minix-sys
-./usr/bin/screendump			minix-sys
 ./usr/include/gcc-4.5/abmintrin.h	minix-sys	gcccmds
 ./usr/include/gcc-4.5/ammintrin.h	minix-sys	gcccmds
 ./usr/include/gcc-4.5/avxintrin.h	minix-sys	gcccmds
