@@ -51,7 +51,7 @@ fi
 
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
 
-for needed in sfdisk mcopy dd wget mkfs.vfat
+for needed in mcopy dd wget mkfs.vfat
 do
 	if ! which $needed 2>&1 > /dev/null
 	then
@@ -95,22 +95,19 @@ sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} 
 # All sized are written in 512 byte blocks
 #
 # we create a disk image of about 2 gig's
-# for alignement reasons, prefer sizes which are multiples of 4096 bytes
-#
-: ${IMG_SIZE= $((   2*(2**30) / 512))}
-: ${FAT_SIZE= $((  10*(2**20) / 512))}
-: ${ROOT_SIZE=$((  64*(2**20) / 512))}
-: ${HOME_SIZE=$(( 128*(2**20) / 512))}
-: ${USR_SIZE= $((1536*(2**20) / 512))}
+: ${IMG_SIZE=$((     2*(2**30) / 512))}
+: ${FAT_SIZE=$((    10*(2**20) / 512))}
+: ${ROOT_SIZE=$((   64*(2**20) / 512))}
+: ${HOME_SIZE=$((  128*(2**20) / 512))}
+: ${USR_SIZE=$((  1536*(2**20) / 512))}
 
 #
 # create a fstab entry in /etc this is normally done during the
 # setup phase on x86
 #
 cat >${FSTAB} <<END_FSTAB
-/dev/c0d0p1s0   /       mfs     rw                      0       1
-/dev/c0d0p1s1   /home   mfs     rw                      0       2
-/dev/c0d0p1s2   /usr    mfs     rw                      0       2
+/dev/c0d0p2   /home   mfs     rw                      0       2
+/dev/c0d0p3   /usr    mfs     rw                      0       2
 END_FSTAB
 
 rm -f ${DESTDIR}/SETS.*
@@ -131,38 +128,16 @@ dd if=/dev/zero of=${IMG_DIR}/usr.img bs=512 count=1 seek=$(($USR_SIZE -1)) 2>/d
 #
 dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
 
-#
 # Do some math to determine the start addresses of the partitions.
-# Ensure the start of the partitions are always aligned, the end will 
-# always be as we assume the sizes are multiples of 4096 bytes, which
-# is always true as soon as you have an integer multiple of 1MB.
-#
+# Don't leave holes so the 'partition' invocation later is easy.
 FAT_START=2048
-EXTENDED_START=$(($FAT_START + $FAT_SIZE))
-EXTENDED_START=$(($EXTENDED_START + 8 - ($EXTENDED_START % 8)))
-ROOT_START=$(($EXTENDED_START + 1))
-ROOT_START=$(($ROOT_START + 8 - ($ROOT_START % 8)))
-HOME_START=$(($ROOT_START + $ROOT_SIZE + 1))
-HOME_START=$(($HOME_START + 8 - ($HOME_START % 8)))
-USR_START=$(($HOME_START + $HOME_SIZE + 1))
-USR_START=$(($USR_START + 8 - ($USR_START % 8)))
-EXTENDED_SIZE=$(($USR_START + $USR_SIZE - $EXTENDED_START))
+ROOT_START=$(($FAT_START + $FAT_SIZE))
+HOME_START=$(($ROOT_START + $ROOT_SIZE))
+USR_START=$(($HOME_START + $HOME_SIZE))
 
-#
-# Generate the partitions using sfdisk to partition the
-#
-sfdisk -L --force --no-reread -q ${IMG} 1>/dev/null <<END_SFDISK
-# partition table of test.img
-unit: sectors
-
-test.img1 : start=     $FAT_START, size=    $FAT_SIZE, Id= c, bootable
-test.img2 : start=    $EXTENDED_START, size=  $EXTENDED_SIZE, Id= 5
-test.img3 : start=        0, size=        0, Id= 0
-test.img4 : start=        0, size=        0, Id= 0
-test.img5 : start=    $ROOT_START, size=   $ROOT_SIZE, Id=81
-test.img6 : start=   $HOME_START, size=   $HOME_SIZE, Id=81
-test.img7 : start=   $USR_START, size=   $USR_SIZE, Id=81
-END_SFDISK
+# Write the partition table using the natively compiled
+# minix partition utility
+${CROSS_TOOLS}/nbpartition -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" 81:${ROOT_SIZE} 81:${HOME_SIZE} 81:${USR_SIZE}
 
 #
 # Format the fat partition and put the bootloaders

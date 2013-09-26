@@ -224,6 +224,8 @@
 ./usr/bin/atf-run			minix-sys	atf
 ./usr/bin/atf-sh			minix-sys	atf
 ./usr/bin/atf-version			minix-sys	atf,!kyua
+./usr/bin/atnormalize                   minix-sys
+./usr/bin/autopart                      minix-sys
 ./usr/bin/awk				minix-sys
 ./usr/bin/backup			minix-sys
 ./usr/bin/badblocks			minix-sys	obsolete
@@ -284,6 +286,9 @@
 ./usr/bin/diff				minix-sys
 ./usr/bin/dirname			minix-sys
 ./usr/bin/diskctl			minix-sys
+./usr/bin/dosdir                        minix-sys
+./usr/bin/dosread                       minix-sys
+./usr/bin/doswrite                      minix-sys
 ./usr/bin/du				minix-sys
 ./usr/bin/dumpcore			minix-sys
 ./usr/bin/egrep				minix-sys
@@ -297,6 +302,7 @@
 ./usr/bin/expand			minix-sys
 ./usr/bin/factor			minix-sys
 ./usr/bin/fbdctl			minix-sys
+./usr/bin/fdisk                         minix-sys
 ./usr/bin/fetch				minix-sys
 ./usr/bin/fgrep				minix-sys
 ./usr/bin/file				minix-sys
@@ -360,6 +366,7 @@
 ./usr/bin/lessecho			minix-sys
 ./usr/bin/lesskey			minix-sys
 ./usr/bin/lex				minix-sys
+./usr/bin/loadfont                      minix-sys
 ./usr/bin/loadramdisk			minix-sys
 ./usr/bin/logger			minix-sys
 ./usr/bin/login				minix-sys
@@ -406,6 +413,8 @@
 ./usr/bin/objdump			minix-sys	binutils
 ./usr/bin/od				minix-sys
 ./usr/bin/page				minix-sys
+./usr/bin/part                          minix-sys
+./usr/bin/partition                     minix-sys
 ./usr/bin/passwd			minix-sys
 ./usr/bin/paste				minix-sys
 ./usr/bin/patch				minix-sys
@@ -413,6 +422,7 @@
 ./usr/bin/ping				minix-sys
 ./usr/bin/pkgin_all			minix-sys
 ./usr/bin/pkgin_cd			minix-sys
+./usr/bin/playwave                      minix-sys
 ./usr/bin/postinstall			minix-sys
 ./usr/bin/poweroff			minix-sys
 ./usr/bin/pr				minix-sys
@@ -433,8 +443,10 @@
 ./usr/bin/readelf			minix-sys	binutils
 ./usr/bin/readlink			minix-sys
 ./usr/bin/reboot			minix-sys
+./usr/bin/recwave                       minix-sys
 ./usr/bin/ref				minix-sys	obsolete
 ./usr/bin/remsync			minix-sys
+./usr/bin/repartition                   minix-sys
 ./usr/bin/restore			minix-sys
 ./usr/bin/rev				minix-sys
 ./usr/bin/rget				minix-sys
@@ -444,6 +456,7 @@
 ./usr/bin/rput				minix-sys
 ./usr/bin/rsh				minix-sys
 ./usr/bin/rz				minix-sys
+./usr/bin/screendump                    minix-sys
 ./usr/bin/sed				minix-sys
 ./usr/bin/seq				minix-sys
 ./usr/bin/sha1				minix-sys
