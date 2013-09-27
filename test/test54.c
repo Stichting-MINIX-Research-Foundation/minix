@@ -20,7 +20,7 @@ static void do_test(void)
 	size_t size;
 	ssize_t nwritten;
 	ssize_t nread;
-	char *filename = "pwrite_test_XXXXXXX";
+	char filename[] = "pwrite_test_XXXXXXX";
 	int i;
 
 	subtest = 1;
