@@ -28,20 +28,20 @@ static void spin()
 {
 	struct timeval start_time;
 	struct timeval end_time;
-	int loop = 0;
+	unsigned int loop = 0;
 	if (gettimeofday(&start_time, NULL) == -1) {
 		e(1);
 		exit(1);
 	}
 	memset(&end_time, 0, sizeof(end_time));
-	while (start_time.tv_sec + 10 > end_time.tv_sec) {
-		if ((++loop % 10000) == 0) {
+	do {
+		if ((++loop % 3000000000) == 0) {
 			if (gettimeofday(&end_time, NULL) == -1) {
 				e(1);
 				exit(1);
 			}
 		}
-	}
+	} while (start_time.tv_sec + 10 > end_time.tv_sec);
 }
 
 int
