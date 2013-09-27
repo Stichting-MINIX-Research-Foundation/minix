@@ -873,8 +873,8 @@ int select_retry(struct tty *tp)
 	int ops;
 
 	if (tp->tty_select_ops && (ops = select_try(tp, tp->tty_select_ops))) {
-		chardriver_reply_select(tp->tty_select_proc, tp->tty_minor,
-			ops);
+		chardriver_reply_select(tp->tty_select_proc,
+			tp->tty_select_minor, ops);
 		tp->tty_select_ops &= ~ops;
 	}
 	return OK;
@@ -891,10 +891,6 @@ static int do_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
 
-  /* Translated minor numbers are a problem when sending late replies. */
-  if (tp->tty_minor != minor)
-	return EBADF;
-
   watch = (ops & CDEV_NOTIFY);
   ops &= (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
 
@@ -902,11 +898,21 @@ static int do_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 
   ops &= ~ready_ops;
   if (ops && watch) {
+	/* Translated minor numbers are a problem with late select replies. We
+	 * have to save the minor number used to do the select, since otherwise
+	 * VFS won't be able to make sense of those late replies. We do not
+	 * support selecting on two different minors for the same object.
+	 */
+	if (tp->tty_select_ops != 0 && tp->tty_select_minor != minor) {
+		printf("TTY: select on one object with two minors (%d, %d)\n",
+			tp->tty_select_minor, minor);
+		return EBADF;
+	}
 	tp->tty_select_ops |= ops;
 	tp->tty_select_proc = endpt;
+	tp->tty_select_minor = minor;
   }
 
-  assert(tp->tty_minor == minor);
   return ready_ops;
 }
 

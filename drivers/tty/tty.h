@@ -75,8 +75,9 @@ typedef struct tty {
   cp_grant_id_t tty_iogrant;	/* virtual address of ioctl buffer or grant */
 
   /* select() data */
-  int tty_select_ops;		/* which operations are interesting */
+  unsigned int tty_select_ops;	/* which operations are interesting */
   endpoint_t tty_select_proc;	/* which process wants notification */
+  devminor_t tty_select_minor;	/* minor used to start select query */
 
   /* Miscellaneous. */
   devfun_t tty_ioctl;		/* set line speed, etc. at the device level */
