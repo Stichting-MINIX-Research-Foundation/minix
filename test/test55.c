@@ -13,7 +13,7 @@ int max_error = 3;
 
 
 int subtest;
-char *filename = "statvfs_test_XXXXXX";
+char filename[] = "statvfs_test_XXXXXX";
 
 static void create_file(void)
 {
