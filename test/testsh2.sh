@@ -20,7 +20,13 @@ OLDPWD=`pwd`
 export OLDPWD
 
 # CC="exec cc -wo -F"		# nonstandard flags for ACK :-(
-CC=clang
+if which clang 2>/dev/null
+then	CC=clang
+elif which gcc 2>/dev/null
+then	CC=gcc
+else	echo "Can't find a compiler, skipping test"
+	exit 0
+fi
 
 ARCH=`arch`
 
