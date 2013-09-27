@@ -269,11 +269,24 @@ static u32_t read_frc(void)
 	return mmio_read(fr_timer.base  +  fr_timer.regs->TCRR);
 }
 
-static void frc_overflow_check(void)
+/*
+ * Check if the free running clock has overflown and
+ * increase the high free running clock counter if
+ * so. This method takes the current timer value as
+ * parameter to ensure the overflow check is done
+ * on the current timer value.
+ *
+ * To compose the current timer value (64 bits) you
+ * need to follow the following sequence:
+ *  read the current timer value.
+ *  call the overflow check
+ *  compose the 64 bits time based on the current timer value
+ *   and high_frc.
+ */
+static void frc_overflow_check(u32_t cur_frc)
 {
 	static int prev_frc_valid;
 	static u32_t prev_frc;
-	u32_t cur_frc = read_frc();
 	if(prev_frc_valid && prev_frc > cur_frc)
 		high_frc++;
 	prev_frc = cur_frc;
@@ -283,7 +296,7 @@ static void frc_overflow_check(void)
 void omap3_timer_int_handler()
 {
     /* Clear all interrupts */
-    u32_t tisr;
+    u32_t tisr,now;
 
 
     /* when the kernel itself is running interrupts are disabled.
@@ -294,14 +307,15 @@ void omap3_timer_int_handler()
            OMAP3_TISR_TCAR_IT_FLAG;
     mmio_write(timer.base + timer.regs->TISR, tisr);
 
-   frc_overflow_check();
+    now = read_frc();
+    frc_overflow_check(now);
 }
 
 /* Use the free running clock as TSC */
 void read_tsc_64(u64_t *t)
 {
 	u32_t now;
-   	frc_overflow_check();
 	now = read_frc();
+	frc_overflow_check(now);
 	*t = (u64_t) now + (high_frc << 32);
 }
