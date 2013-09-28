@@ -1,3 +1,5 @@
+/*	$NetBSD: rev.c,v 1.12 2011/09/16 15:39:28 joerg Exp $	*/
+
 /*-
  * Copyright (c) 1987, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -10,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,33 +29,43 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1987, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1992, 1993\
+ The Regents of the University of California.  All rights reserved.");
+#endif /* not lint */
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
+#else
+__RCSID("$NetBSD: rev.c,v 1.12 2011/09/16 15:39:28 joerg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
+#include <err.h>
 #include <errno.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
-void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
 {
 	const char *filename;
-	char p[2000], *t;
+	wchar_t *p, *t;
 	FILE *fp;
 	size_t len;
 	int ch, rval;
 
 	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
@@ -75,24 +83,23 @@ main(int argc, char *argv[])
 	do {
 		if (*argv) {
 			if ((fp = fopen(*argv, "r")) == NULL) {
-				perror(*argv);
+				warn("%s", *argv);
 				rval = 1;
 				++argv;
 				continue;
 			}
 			filename = *argv++;
 		}
-		while ((fgets(p, sizeof(p)-1, fp)) != NULL) {
-			len = strlen(p);
-			if (p[len - 1] == '\n')
+		while ((p = fgetwln(fp, &len)) != NULL) {
+			if (p[len - 1] == L'\n')
 				--len;
 			t = p + len - 1;
 			for (t = p + len - 1; t >= p; --t)
-				putchar(*t);
-			putchar('\n');
+				putwchar(*t);
+			putwchar(L'\n');
 		}
 		if (ferror(fp)) {
-			perror(filename);
+			warn("%s", filename);
 			rval = 1;
 		}
 		(void)fclose(fp);
@@ -100,9 +107,9 @@ main(int argc, char *argv[])
 	exit(rval);
 }
 
-void
+static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: rev [file ...]\n");
-	exit(1);
+	(void)fprintf(stderr, "usage: %s [file ...]\n", getprogname());
+	exit(EXIT_FAILURE);
 }

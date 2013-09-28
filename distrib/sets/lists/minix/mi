@@ -2003,6 +2003,7 @@
 ./usr/man/man1/ref.1			minix-sys	obsolete
 ./usr/man/man1/remsync.1		minix-sys
 ./usr/man/man1/return.1			minix-sys
+./usr/man/man1/rev.1			minix-sys
 ./usr/man/man1/rget.1			minix-sys
 ./usr/man/man1/rlogin.1			minix-sys
 ./usr/man/man1/rm.1			minix-sys
