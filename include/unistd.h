@@ -320,6 +320,7 @@ int	unlinkat(int, const char *, int);
 
 /*
  * Implementation-defined extensions
+ * FIXME: most of these should be moved into syslib.h
  */
 #ifdef __minix
 
@@ -335,6 +336,7 @@ int mapdriver(char *label, int major, int style, int flags);
 pid_t getnpid(endpoint_t proc_ep);
 uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);
+int dupfrom(endpoint_t endpt, int fd);
 ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
 ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
 #endif /* defined(_NETBSD_SOURCE) */

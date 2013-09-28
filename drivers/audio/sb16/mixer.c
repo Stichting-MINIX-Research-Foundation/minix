@@ -14,7 +14,7 @@ static int get_set_output(struct inout_ctrl *output, int flag);
 /*=========================================================================*
  *				mixer_ioctl				   	
  *=========================================================================*/
-int mixer_ioctl(int request, void *val, int *UNUSED(len)) {
+int mixer_ioctl(unsigned long request, void *val, int *UNUSED(len)) {
 	int status;
 
 	switch(request) {

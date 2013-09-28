@@ -33,16 +33,14 @@ static void update_reservation(endpoint_t endpt, char *key);
 static void ds_event(void);
 
 static int validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec);
-static int do_i2c_ioctl_exec(message * m);
+static int do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr);
 
 static int env_parse_instance(void);
 
 /* libchardriver callbacks */
-int i2c_ioctl(message * m);
-struct device *i2c_prepare(dev_t dev);
-int i2c_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t * iov, unsigned nr_req, endpoint_t user_endpt, unsigned int flags);
-int i2c_other(message * m);
+static int i2c_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
+static void i2c_other(message * m, int ipc_status);
 
 /* SEF callbacks and driver state management */
 static int sef_cb_lu_state_save(int);
@@ -68,8 +66,6 @@ static struct i2cdev
  */
 int (*process) (minix_i2c_ioctl_exec_t * ioctl_exec);
 
-struct device i2c_device;
-
 /* logging - use with log_warn(), log_info(), log_debug(), log_trace() */
 static struct log log = {
 	.name = "i2c",
@@ -81,16 +77,8 @@ static struct log log = {
  * Only i2c_ioctl() and i2c_other() are implemented. The rest are no-op.
  */
 static struct chardriver i2c_tab = {
-	.cdr_open = do_nop,
-	.cdr_close = do_nop,
-	.cdr_ioctl = i2c_ioctl,
-	.cdr_prepare = i2c_prepare,
-	.cdr_transfer = i2c_transfer,
-	.cdr_cleanup = nop_cleanup,
-	.cdr_alarm = nop_alarm,
-	.cdr_cancel = nop_cancel,
-	.cdr_select = nop_select,
-	.cdr_other = i2c_other
+	.cdr_ioctl	= i2c_ioctl,
+	.cdr_other	= i2c_other
 };
 
 /*
@@ -232,14 +220,14 @@ validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec)
 	}
 
 	len = ioctl_exec->iie_cmdlen;
-	if (len < 0 || len > I2C_EXEC_MAX_CMDLEN) {
+	if (len > I2C_EXEC_MAX_CMDLEN) {
 		log_warn(&log,
 		    "iie_cmdlen out of range 0-I2C_EXEC_MAX_CMDLEN\n");
 		return EINVAL;
 	}
 
 	len = ioctl_exec->iie_buflen;
-	if (len < 0 || len > I2C_EXEC_MAX_BUFLEN) {
+	if (len > I2C_EXEC_MAX_BUFLEN) {
 		log_warn(&log,
 		    "iie_buflen out of range 0-I2C_EXEC_MAX_BUFLEN\n");
 		return EINVAL;
@@ -252,15 +240,10 @@ validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec)
  * Performs the action in minix_i2c_ioctl_exec_t.
  */
 static int
-do_i2c_ioctl_exec(message * m)
+do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr)
 {
 	int r;
-	endpoint_t caller;
-	cp_grant_id_t grant_nr;
 	minix_i2c_ioctl_exec_t ioctl_exec;
-
-	caller = (endpoint_t) m->m_source;
-	grant_nr = (cp_grant_id_t) m->IO_GRANT;
 
 	/* Copy the requested exection into the driver */
 	r = sys_safecopyfrom(caller, grant_nr, (vir_bytes) 0,
@@ -302,45 +285,48 @@ do_i2c_ioctl_exec(message * m)
 	return OK;
 }
 
-int
-i2c_ioctl(message * m)
+static int
+i2c_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int UNUSED(flags), endpoint_t UNUSED(user_endpt),
+	cdev_id_t UNUSED(id))
 {
 	int r;
 
-	switch (m->COUNT) {
+	switch (request) {
 	case MINIX_I2C_IOCTL_EXEC:
-		r = do_i2c_ioctl_exec(m);
+		r = do_i2c_ioctl_exec(endpt, grant);
 		break;
 	default:
-		log_warn(&log, "Invalid ioctl() 0x%x\n", m->COUNT);
-		r = EINVAL;
+		log_warn(&log, "Invalid ioctl() 0x%x\n", request);
+		r = ENOTTY;
 		break;
 	}
 
 	return r;
 }
 
-int
-i2c_other(message * m)
+static void
+i2c_other(message * m, int ipc_status)
 {
+	message m_reply;
 	int r;
 
-	switch (m->m_type) {
-	case BUSC_I2C_RESERVE:
-		/* reserve a device on the bus for exclusive access */
-		r = do_reserve((endpoint_t) m->m_source, m->DEVICE);
-		break;
-	case BUSC_I2C_EXEC:
-		/* handle request from another driver */
-		m->COUNT = MINIX_I2C_IOCTL_EXEC;
-		r = do_i2c_ioctl_exec(m);
-		break;
-	case NOTIFY_MESSAGE:
+	if (is_ipc_notify(ipc_status)) {
 		/* handle notifications about drivers changing state */
 		if (m->m_source == DS_PROC_NR) {
 			ds_event();
 		}
-		r = OK;
+		return;
+	}
+
+	switch (m->m_type) {
+	case BUSC_I2C_RESERVE:
+		/* reserve a device on the bus for exclusive access */
+		r = do_reserve(m->m_source, m->BUSC_I2C_ADDR);
+		break;
+	case BUSC_I2C_EXEC:
+		/* handle request from another driver */
+		r = do_i2c_ioctl_exec(m->m_source, m->BUSC_I2C_GRANT);
 		break;
 	default:
 		log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
@@ -350,25 +336,12 @@ i2c_other(message * m)
 
 	log_trace(&log, "i2c_other() returning r=%d\n", r);
 
-	return r;
-}
+	/* Send a reply. */
+	memset(&m_reply, 0, sizeof(m_reply));
+	m_reply.m_type = r;
 
-struct device *
-i2c_prepare(dev_t dev)
-{
-	/* NOP */
-	i2c_device.dv_base = make64(0, 0);
-	i2c_device.dv_size = make64(0, 0);
-
-	return &i2c_device;
-}
-
-int
-i2c_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t * iov, unsigned nr_req, endpoint_t user_endpt, unsigned int flags)
-{
-	/* NOP */
-	return OK;
+	if ((r = send(m->m_source, &m_reply)) != OK)
+		log_warn(&log, "send() to %d failed: %d\n", m->m_source, r);
 }
 
 /*
@@ -549,7 +522,7 @@ main(int argc, char *argv[])
 
 	memset(i2cdev, '\0', sizeof(i2cdev));
 	sef_local_startup();
-	chardriver_task(&i2c_tab, CHARDRIVER_SYNC);
+	chardriver_task(&i2c_tab);
 
 	return OK;
 }

@@ -356,7 +356,6 @@ int
 main(int argc, char *argv[])
 {
 	int r;
-	endpoint_t user, caller;
 	message m;
 	int ipc_status;
 
@@ -407,26 +406,8 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		caller = m.m_source;
-		user = m.USER_ENDPT;
-
-		/*
-		 * Handle Message
-		 *
-		 * So far this driver only deals with notifications
-		 * so it always replies to non-notifications with EINVAL.
-		 */
-
-		/* Send Reply */
-		m.m_type = TASK_REPLY;
-		m.REP_ENDPT = user;
-		m.REP_STATUS = EINVAL;
-
-		r = sendnb(caller, &m);
-		if (r != OK) {
-			log_warn(&log, "sendnb() failed\n");
-			continue;
-		}
+		log_warn(&log, "Ignoring message 0x%x from 0x%x\n", m.m_type,
+		    m.m_source);
 	}
 
 	return 0;
