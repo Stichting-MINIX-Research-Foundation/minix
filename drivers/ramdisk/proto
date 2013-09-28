@@ -21,6 +21,7 @@ d--755 0 0
 		ahci ---755 0 0 ahci
 		virtio_blk ---755 0 0 virtio_blk
 		at_wini ---755 0 0 at_wini
+		pckbd ---755 0 0 pckbd
 #if RAMDISK_SMALL == 1
 		ext2 ---755 0 0 ext2
 #endif
@@ -30,6 +31,7 @@ d--755 0 0
 #endif
 		mfs ---755 0 0 mfs
 		procfs ---755 0 0 procfs
+		input ---755 0 0 input
 	$
 	usr d--755 0 0
 		bin d--755 0 0

@@ -29,6 +29,8 @@ typedef struct {long m9l1, m9l2, m9l3, m9l4, m9l5;
 	short m9s1, m9s2, m9s3, m9s4; } mess_9;
 typedef struct {int m10i1, m10i2, m10i3, m10i4;
 	long m10l1, m10l2, m10l3; } mess_10;
+typedef struct {int m11i1; short m11s1, m11s2, m11s3, m11s4;
+	char *m11p1, *m11p2, *m11p3, *m11p4; } mess_11;
 
 typedef struct {
 	void *block;
@@ -68,6 +70,7 @@ typedef struct {
 	mess_6 m_m6;
 	mess_9 m_m9;
 	mess_10 m_m10;
+	mess_11 m_m11;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
 	mess_vm_vfs_mmap m_vm_vfs;
@@ -153,6 +156,16 @@ typedef struct {
 #define m10_l1 m_u.m_m10.m10l1
 #define m10_l2 m_u.m_m10.m10l2
 #define m10_l3 m_u.m_m10.m10l3
+
+#define m11_i1 m_u.m_m11.m11i1
+#define m11_s1 m_u.m_m11.m11s1
+#define m11_s2 m_u.m_m11.m11s2
+#define m11_s3 m_u.m_m11.m11s3
+#define m11_s4 m_u.m_m11.m11s4
+#define m11_p1 m_u.m_m11.m11p1
+#define m11_p2 m_u.m_m11.m11p2
+#define m11_p3 m_u.m_m11.m11p3
+#define m11_p4 m_u.m_m11.m11p4
 
 /*==========================================================================* 
  * Minix run-time system (IPC). 					    *

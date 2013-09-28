@@ -66,15 +66,36 @@ void usage()
   exit(-1);
 }
 
+int open_audio(unsigned int *fragment_size, unsigned int channels,
+	unsigned int samples_per_sec, unsigned int bits)
+{
+  unsigned int sign;
+  int audio;
+
+  /* Open DSP */
+  if ((audio = open("/dev/audio", O_RDWR | O_REOPEN)) < 0)
+  {
+    printf("Cannot open /dev/audio: %s\n", strerror(errno));
+    exit(-1);
+  }
+
+  ioctl(audio, DSPIOMAX, fragment_size); /* Get maximum fragment size. */
+
+  /* Set DSP parameters (should check return values..) */
+  ioctl(audio, DSPIOSIZE, fragment_size);	/* Use max. fragment size. */
+  ioctl(audio, DSPIOSTEREO, &channels);
+  ioctl(audio, DSPIORATE, &samples_per_sec);
+  ioctl(audio, DSPIOBITS, &bits);
+  sign = (bits == 16 ? 1 : 0);
+  ioctl(audio, DSPIOSIGN, &sign);
+  return audio;
+}
 
 int main ( int argc, char *argv[] )
 {
   int i, r, audio, file;
   char *buffer, *file_name = NULL;
-  unsigned int sign;
-  unsigned int fragment_size;
-  unsigned int channels;
-  unsigned int bits;
+  unsigned int fragment_size, fragment_size2;
   long data_pos;  
   int showinfo = 0;
 
@@ -90,22 +111,6 @@ int main ( int argc, char *argv[] )
       usage();
   }
   else file_name = argv[1];
-
-  /* Open DSP */
-  if ((audio = open("/dev/audio", O_RDWR | O_REOPEN)) < 0) 
-  {
-    printf("Cannot open /dev/audio: %s\n", strerror(errno));
-    exit(-1);
-  }
-
-  /* Get maximum fragment size and try to allocate a buffer */
-  ioctl(audio, DSPIOMAX, &fragment_size);
-  if ((buffer = malloc(fragment_size)) == (char *)0)
-  {
-    fprintf(stderr, "Cannot allocate buffer\n");
-    exit(-1);
-  } 
-  ioctl(audio, DSPIOSIZE, &fragment_size);
 
   /* Open wav file */
   if((file = open(file_name, O_RDONLY)) < 0)
@@ -141,15 +146,15 @@ int main ( int argc, char *argv[] )
     exit(1);
   }
 
-  /* Set DSP parameters */
-  channels = c_fields.Channels;
-  channels--;
-  bits = s_fields.BitsPerSample;
-  ioctl(audio, DSPIOSTEREO, &channels); 
-  ioctl(audio, DSPIORATE, &c_fields.SamplesPerSec);
-  ioctl(audio, DSPIOBITS, &bits); 
-  sign = (bits == 16 ? 1 : 0);
-  ioctl(audio, DSPIOSIGN, &sign); 
+  /* Open audio device and set DSP parameters */
+  audio = open_audio(&fragment_size, c_fields.Channels - 1,
+	c_fields.SamplesPerSec, s_fields.BitsPerSample);
+
+  if ((buffer = malloc(fragment_size)) == (char *)0)
+  {
+    fprintf(stderr, "Cannot allocate buffer\n");
+    exit(-1);
+  }
 
   /* Goto data chunk */
   lseek(file, data_pos, SEEK_SET);
@@ -203,6 +208,20 @@ int main ( int argc, char *argv[] )
 	{
 		fprintf(stderr, "playwave: write to audio device failed: %s\n",
 			strerror(errno));
+
+		/* If we get EIO, the driver might have restarted. Reopen the
+		 * audio device.
+		 */
+		if (errno == EIO) {
+			close(audio);
+			audio = open_audio(&fragment_size2,
+				c_fields.Channels - 1, c_fields.SamplesPerSec,
+				s_fields.BitsPerSample);
+			if (fragment_size2 != fragment_size) {
+			    fprintf(stderr, "Fragment size has changed\n");
+			    exit(1);
+			}
+		}
 	}
 	else
 	{

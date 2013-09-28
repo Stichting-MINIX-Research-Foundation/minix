@@ -32,7 +32,6 @@ long sdbm_hash(char *str, int len);
 
 /* stadir.c */
 int fs_stat(void);
-int fs_fstatfs(void);
 int fs_statvfs(void);
 
 /* utility.c */

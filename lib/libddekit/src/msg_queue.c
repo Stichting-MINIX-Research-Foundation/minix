@@ -93,19 +93,14 @@ _ddekit_minix_queue_msg (
 	full = ddekit_sem_down_try(mq->msg_w_sem);
 
 	if (full) {
-		/* Our message queue is full... inform the sender. */
+		/* Our message queue is full... */
 		int result;
-		DDEBUG_MSG_WARN("Receive queue is full. Ommiting ingoing msg.\n");
+		DDEBUG_MSG_WARN("Receive queue is full. Dropping request.\n");
 
-		m->m_type = TASK_REPLY;
-		m->REP_STATUS = EAGAIN;
-		result = asynsend(m->m_source, m);
-
-		if (result != 0) {
-			ddekit_panic("unable to send reply to %d: %d\n",
-					m->m_source, result);
-		}
-
+		/* XXX should reply to the sender with EIO or so, but for that
+		 * we would need to look at the request and find a suitable
+		 * reply code..
+		 */
 	} else {
 		/* queue the message */
 		memcpy(&mq->messages[mq->msg_w_pos], m, sizeof(message));
