@@ -21,7 +21,7 @@ SUBDIR= \
 	nbperf newgrp nvi \
 	passwd \
 	printf \
-	\
+	rev \
 	\
 	shuffle sed seq \
 	sort stat su \
