@@ -15,7 +15,7 @@ SUBDIR= \
 	head indent infocmp join \
 	ldd \
 	login logname lorder m4 \
-	make man \
+	machine make man \
 	mkdep mktemp \
 	\
 	nbperf newgrp nvi \

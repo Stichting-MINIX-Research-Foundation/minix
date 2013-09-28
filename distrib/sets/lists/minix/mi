@@ -383,6 +383,7 @@
 ./usr/bin/lzma				minix-sys
 ./usr/bin/lzmainfo			minix-sys
 ./usr/bin/m4				minix-sys
+./usr/bin/machine			minix-sys
 ./usr/bin/mail				minix-sys
 ./usr/bin/make				minix-sys
 ./usr/bin/MAKEDEV			minix-sys
@@ -1948,6 +1949,7 @@
 ./usr/man/man1/lzma.1			minix-sys
 ./usr/man/man1/lzmainfo.1		minix-sys
 ./usr/man/man1/m4.1			minix-sys
+./usr/man/man1/machine.1		minix-sys
 ./usr/man/man1/mail.1			minix-sys
 ./usr/man/man1/make.1			minix-sys
 ./usr/man/man1/makeinfo.1		minix-sys
