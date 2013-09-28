@@ -540,7 +540,7 @@ static int sef_cb_signal_manager(endpoint_t target, int signo)
 
   /* Print stacktrace if necessary. */
   if(SIGS_IS_STACKTRACE(signo)) {
-       sys_sysctl_stacktrace(target);
+       sys_diagctl_stacktrace(target);
   }
 
   /* In case of termination signal handle the event. */

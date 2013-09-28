@@ -30,13 +30,9 @@
 #define offset_lo     m2_l1
 #define offset_high   m2_l2
 #define ctl_req       m4_l1
-#define mount_flags   m1_i3
 #define pipe_flags    m1_i3
 #define request       m1_i2
 #define sig	      m1_i2
-#define endpt1	      m1_i1
-#define fs_label      m1_p3
-#define umount_label  m3_ca1
 #define tp	      m2_l1
 #define utime_actime  m2_l1
 #define utime_modtime m2_l2

@@ -2,7 +2,6 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <sys/statvfs.h>
 #include "inode.h"
 #include "super.h"
@@ -87,28 +86,6 @@ static int stat_inode(
 }
 
 /*===========================================================================*
- *				fs_fstatfs				     *
- *===========================================================================*/
-int fs_fstatfs()
-{
-  struct statfs st;
-  struct inode *rip;
-  int r;
-
-  if((rip = find_inode(fs_dev, ROOT_INODE)) == NULL)
-	  return(EINVAL);
-   
-  st.f_bsize = rip->i_sp->s_block_size;
-  
-  /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-  		     (vir_bytes) 0, (vir_bytes) &st, (size_t) sizeof(st));
-  
-  return(r);
-}
-
-
-/*===========================================================================*
  *				fs_statvfs				     *
  *===========================================================================*/
 int fs_statvfs()
@@ -122,16 +99,17 @@ int fs_statvfs()
 
   scale = sp->s_log_zone_size;
 
+  memset(&st, 0, sizeof(st));
+
   fs_blockstats((u32_t *) &st.f_blocks, (u32_t *) &st.f_bfree, &used);
   st.f_bavail = st.f_bfree;
 
   st.f_bsize =  sp->s_block_size << scale;
   st.f_frsize = sp->s_block_size;
+  st.f_iosize = st.f_frsize;
   st.f_files = sp->s_ninodes;
   st.f_ffree = count_free_bits(sp, IMAP);
   st.f_favail = st.f_ffree;
-  st.f_fsid = fs_dev;
-  st.f_flag = (sp->s_rd_only == 1 ? ST_RDONLY : 0);
   st.f_namemax = MFS_DIRSIZ;
 
   /* Copy the struct to user space. */

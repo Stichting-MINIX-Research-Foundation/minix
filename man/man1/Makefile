@@ -2,9 +2,8 @@ MAN=	ash.1 at.1 \
 	bsfilt.1 cawf.1 chgrp.1 \
 	chmod.1 cmp.1 comm.1 compress.1 \
 	cp.1 crc.1 crontab.1 dd.1 \
-	df.1 dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
-	dumpcore.1 eject.1 \
-	env.1 factor.1 \
+	dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
+	eject.1 env.1 factor.1 \
 	flexdoc.1 fold.1 format.1 fortune.1 \
 	fsck.mfs.1 host.1 hostaddr.1 ifdef.1 \
 	isodir.1 isoinfo.1 isoread.1 \

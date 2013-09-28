@@ -13,7 +13,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "file.h"
-#include "fproc.h"
 #include "path.h"
 #include "param.h"
 #include "vnode.h"

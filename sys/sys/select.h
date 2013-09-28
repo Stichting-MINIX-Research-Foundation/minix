@@ -75,13 +75,4 @@ int	select(int, fd_set * __restrict, fd_set * __restrict,
 __END_DECLS
 #endif /* _KERNEL */
 
-#if defined(__minix) && defined(_NETBSD_SOURCE)
-/* possible select() operation types; read, write, errors */
-/* (FS/driver internal use only) */
-#define SEL_RD		(1 << 0)
-#define SEL_WR		(1 << 1)
-#define SEL_ERR		(1 << 2)
-#define SEL_NOTIFY	(1 << 3) /* not a real select operation */
-#endif /* defined(__minix) && defined(_NETBSD_SOURCE) */
-
 #endif /* !_SYS_SELECT_H_ */

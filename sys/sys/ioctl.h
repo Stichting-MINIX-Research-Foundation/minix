@@ -20,7 +20,10 @@
 #include <sys/ioc_memory.h>	/* 'm'			*/
 #include <sys/ioc_tape.h>	/* 'M'			*/
 #include <sys/ioc_sound.h>	/* 's'			*/
-#include <sys/ioc_fb.h>		/* 'F'			*/
+#include <sys/ioc_block.h>	/* 'b'			*/
+#include <sys/ioc_fbd.h>	/* 'B'			*/
+#include <sys/ioc_fb.h>		/* 'V'			*/
+#include <dev/vndvar.h>		/* 'F'			*/
 
 #if defined(_NETBSD_SOURCE)
 #define		TIOCDRAIN 	TCDRAIN
