@@ -18,7 +18,6 @@ SRCS+=  \
 	getticks.c \
 	getsysinfo.c \
 	getuptime.c \
-	input.c \
 	kernel_call.c \
 	kprintf.c \
 	kputc.c \

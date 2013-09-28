@@ -21,6 +21,7 @@
 ./sbin/at_wini				minix-sys
 ./sbin/floppy				minix-sys
 ./sbin/hgfs				minix-sys
+./sbin/pckbd				minix-sys
 ./sbin/vbfs				minix-sys
 ./sbin/virtio_blk			minix-sys
 ./usr/include/gcc-4.5/abmintrin.h	minix-sys	gcccmds

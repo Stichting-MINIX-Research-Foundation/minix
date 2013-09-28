@@ -4,22 +4,12 @@
 #include "tty.h"
 
 void
-kbd_interrupt(message *m)
-{
-}
-
-void
 do_fkey_ctl(message *m)
 {
 }
 
 void
-do_kb_inject(message *m)
-{
-}
-
-void
-do_kbd(message *m, int ipc_status)
+do_input(message *m)
 {
 }
 

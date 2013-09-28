@@ -72,7 +72,6 @@
 ./boot/minix/.temp/mod06_memory		minix-sys
 ./boot/minix_default			minix-sys
 ./dev					minix-sys
-./dev/mouse				minix-sys
 ./etc					minix-sys
 ./etc/atf				minix-sys	atf
 ./etc/boot.cfg.default			minix-sys
@@ -153,6 +152,7 @@
 ./sbin/fsck.ext2			minix-sys
 ./sbin/fsck_ext2fs			minix-sys
 ./sbin/fsck.mfs				minix-sys
+./sbin/input				minix-sys
 ./sbin/is				minix-sys
 ./sbin/isofs				minix-sys
 ./sbin/mfs				minix-sys
@@ -1185,6 +1185,7 @@
 ./usr/include/minix/i2cdriver.h		minix-sys
 ./usr/include/minix/i2c.h		minix-sys
 ./usr/include/minix/input.h		minix-sys
+./usr/include/minix/inputdriver.h	minix-sys
 ./usr/include/minix/ioctl.h		minix-sys
 ./usr/include/minix/ipcconst.h		minix-sys
 ./usr/include/minix/ipc.h		minix-sys
@@ -1580,7 +1581,6 @@
 ./usr/lib/keymaps/italian.map		minix-sys
 ./usr/lib/keymaps/japanese.map		minix-sys
 ./usr/lib/keymaps/latin-america.map	minix-sys
-./usr/lib/keymaps/olivetti.map		minix-sys
 ./usr/lib/keymaps/polish.map		minix-sys
 ./usr/lib/keymaps/portuguese.map	minix-sys
 ./usr/lib/keymaps/russian-cp1251.map	minix-sys
@@ -1590,7 +1590,6 @@
 ./usr/lib/keymaps/spanish.map		minix-sys
 ./usr/lib/keymaps/uk.map		minix-sys
 ./usr/lib/keymaps/ukraine-koi8-u.map	minix-sys
-./usr/lib/keymaps/us-std-esc.map	minix-sys
 ./usr/lib/keymaps/us-std.map		minix-sys
 ./usr/lib/keymaps/us-swap.map		minix-sys
 ./usr/lib/libarchive.a			minix-sys
@@ -1678,6 +1677,8 @@
 ./usr/lib/libgcc_s.so			minix-sys	gcccmds
 ./usr/lib/libgcc_s.so.1.0		minix-sys	gcccmds
 ./usr/lib/libgcc_s.so.1			minix-sys	gcccmds
+./usr/lib/libinputdriver.a		minix-sys
+./usr/lib/libinputdriver_pic.a		minix-sys
 ./usr/lib/libl.a			minix-sys
 ./usr/lib/liblua.a			minix-sys
 ./usr/lib/liblua_pic.a			minix-sys

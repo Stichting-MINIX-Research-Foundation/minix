@@ -7,7 +7,6 @@
 #include <minix/const.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
-#include <minix/keymap.h>
 #include <minix/minlib.h>
 #include <minix/type.h>
 #include <minix/ipc.h>

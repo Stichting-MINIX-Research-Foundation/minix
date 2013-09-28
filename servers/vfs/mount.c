@@ -12,7 +12,6 @@
 #include <string.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
-#include <minix/keymap.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <minix/syslib.h>

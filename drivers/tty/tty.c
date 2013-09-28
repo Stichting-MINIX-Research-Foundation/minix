@@ -27,6 +27,7 @@
 #include <minix/driver.h>
 #include <termios.h>
 #include <sys/ioc_tty.h>
+#include <sys/kbdio.h>
 #include <signal.h>
 #include <minix/keymap.h>
 #include "tty.h"
@@ -34,7 +35,6 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
-unsigned long kbd_irq_set = 0;
 unsigned long rs_irq_set = 0;
 
 /* Address of a tty structure. */
@@ -171,10 +171,7 @@ int main(void)
 				break;
 			case HARDWARE: 
 				/* hardware interrupt notification */
-				
-				/* fetch chars from keyboard */
-				if (tty_mess.NOTIFY_ARG & kbd_irq_set)
-					kbd_interrupt(&tty_mess);
+
 #if NR_RS_LINES > 0
 				/* serial I/O */
 				if (tty_mess.NOTIFY_ARG & rs_irq_set)
@@ -196,8 +193,9 @@ int main(void)
 	case TTY_FKEY_CONTROL:		/* (un)register a fkey observer */
 		do_fkey_ctl(&tty_mess);
 		continue;
-	case INPUT_EVENT:
-		do_kb_inject(&tty_mess);
+	case TTY_INPUT_UP:
+	case TTY_INPUT_EVENT:
+		do_input(&tty_mess);
 		continue;
 	default:			/* should be a driver request */
 		;			/* do nothing; end switch */
@@ -212,10 +210,7 @@ int main(void)
 	 * All requests have a minor device number.
 	 */
 	line = tty_mess.CDEV_MINOR;
-	if (line == KBD_MINOR || line == KBDAUX_MINOR) {
-		do_kbd(&tty_mess, ipc_status);
-		continue;
-	} else if (line == VIDEO_MINOR) {
+	if (line == VIDEO_MINOR) {
 		do_video(&tty_mess, ipc_status);
 		continue;
 	} else if (line - PTYPX_MINOR < NR_PTYS &&
@@ -270,7 +265,7 @@ line2tty(devminor_t line)
 	if (line == CONS_MINOR || line == LOG_MINOR)
 		line = consoleline;
 
-	if (line == KBD_MINOR || line == KBDAUX_MINOR || line == VIDEO_MINOR) {
+	if (line == VIDEO_MINOR) {
 		return(NULL);
 	} else if ((line - CONS_MINOR) < NR_CONS) {
 		tp = tty_addr(line - CONS_MINOR);
@@ -595,53 +590,20 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 /* Perform an IOCTL on this terminal. POSIX termios calls are handled
  * by the IOCTL system call.
  */
+  kio_bell_t bell;
+  clock_t ticks;
   tty_t *tp;
   int i, r;
-  size_t size;
 
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
-
-  /* Size of the ioctl parameter. */
-  switch (request) {
-    case TCGETS:        /* Posix tcgetattr function */
-    case TCSETS:        /* Posix tcsetattr function, TCSANOW option */ 
-    case TCSETSW:       /* Posix tcsetattr function, TCSADRAIN option */
-    case TCSETSF:	/* Posix tcsetattr function, TCSAFLUSH option */
-        size = sizeof(struct termios);
-        break;
-
-    case TCSBRK:        /* Posix tcsendbreak function */
-    case TCFLOW:        /* Posix tcflow function */
-    case TCFLSH:        /* Posix tcflush function */
-    case TIOCGPGRP:     /* Posix tcgetpgrp function */
-    case TIOCSPGRP:	/* Posix tcsetpgrp function */
-        size = sizeof(int);
-        break;
-
-    case TIOCGWINSZ:    /* get window size (not Posix) */
-    case TIOCSWINSZ:	/* set window size (not Posix) */
-        size = sizeof(struct winsize);
-        break;
-
-    case KIOCSMAP:	/* load keymap (Minix extension) */
-        size = sizeof(keymap_t);
-        break;
-
-    case TIOCSFON:	/* load font (Minix extension) */
-        size = sizeof(u8_t [8192]);
-        break;
-
-    case TCDRAIN:	/* Posix tcdrain function -- no parameter */
-    default:		size = 0;
-  }
 
   r = OK;
   switch (request) {
     case TCGETS:
 	/* Get the termios attributes. */
 	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &tp->tty_termios,
-		size);
+		sizeof(struct termios));
 	break;
 
     case TCSETSW:
@@ -663,13 +625,13 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     case TCSETS:
 	/* Set the termios attributes. */
 	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &tp->tty_termios,
-		size);
+		sizeof(struct termios));
 	if (r != OK) break;
 	setattr(tp);
 	break;
 
     case TCFLSH:
-	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, size);
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
 	if (r != OK) break;
 	switch (i) {
 	case TCIFLUSH:	tty_icancel(tp);		 	    break;
@@ -680,7 +642,7 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	break;
 
     case TCFLOW:
-	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, size);
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
 	if (r != OK) break;
 	switch (i) {
 	    case TCOOFF:
@@ -705,13 +667,27 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 
     case TIOCGWINSZ:
 	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &tp->tty_winsize,
-		size);
+		sizeof(struct winsize));
 	break;
 
     case TIOCSWINSZ:
 	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &tp->tty_winsize,
-		size);
+		sizeof(struct winsize));
 	sigchar(tp, SIGWINCH, 0);
+	break;
+
+    case KIOCBELL:
+	/* Sound bell (only /dev/console). */
+	if (!isconsole(tp))
+		break;
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &bell, sizeof(bell));
+	if (r != OK)
+		break;
+	ticks = bell.kb_duration.tv_usec * system_hz / 1000000;
+	ticks += bell.kb_duration.tv_sec * system_hz;
+	if (!ticks)
+		ticks++;
+	beep_x(bell.kb_pitch, ticks);
 	break;
 
     case KIOCSMAP:
@@ -1034,27 +1010,10 @@ register tty_t *tp;		/* pointer to terminal to read from */
 /*===========================================================================*
  *				in_process				     *
  *===========================================================================*/
-static void in_process_send_byte(
-  tty_t *tp,	/* terminal on which character has arrived */
-  int ch	/* input character */
-)
-{
-	/* Save the character in the input queue. */
-	*tp->tty_inhead++ = ch;
-	if (tp->tty_inhead == bufend(tp->tty_inbuf))
-		tp->tty_inhead = tp->tty_inbuf;
-	tp->tty_incount++;
-	if (ch & IN_EOT) tp->tty_eotct++;
-
-	/* Try to finish input if the queue threatens to overflow. */
-	if (tp->tty_incount == buflen(tp->tty_inbuf)) in_transfer(tp);
-}
- 
-int in_process(tp, buf, count, scode)
+int in_process(tp, buf, count)
 register tty_t *tp;		/* terminal on which character has arrived */
 char *buf;			/* buffer with input characters */
 int count;			/* number of input characters */
-int scode;			/* scan code */
 {
 /* Characters have just been typed in.  Process, save, and echo them.  Return
  * the number of characters processed.
@@ -1062,11 +1021,6 @@ int scode;			/* scan code */
 
   int ch, sig, ct;
   int timeset = FALSE;
-
-  /* Send scancode if requested */
-  if (tp->tty_termios.c_iflag & SCANCODES) {
-	in_process_send_byte(tp, (scode & BYTE) | IN_EOT);
-  }
 
   for (ct = 0; ct < count; ct++) {
 	/* Take one character. */
@@ -1200,10 +1154,15 @@ int scode;			/* scan code */
 	/* Perform the intricate function of echoing. */
 	if (tp->tty_termios.c_lflag & (ECHO|ECHONL)) ch = tty_echo(tp, ch);
 
-	/* Send processed byte of input unless scancodes sent instead */
-	if (!(tp->tty_termios.c_iflag & SCANCODES)) {
-		in_process_send_byte(tp, ch);
-	}
+	/* Save the character in the input queue. */
+	*tp->tty_inhead++ = ch;
+	if (tp->tty_inhead == bufend(tp->tty_inbuf))
+		tp->tty_inhead = tp->tty_inbuf;
+	tp->tty_incount++;
+	if (ch & IN_EOT) tp->tty_eotct++;
+
+	/* Try to finish input if the queue threatens to overflow. */
+	if (tp->tty_incount == buflen(tp->tty_inbuf)) in_transfer(tp);
   }
   return ct;
 }
@@ -1509,9 +1468,6 @@ tty_t *tp;
 
   /* Setting the output speed to zero hangs up the phone. */
   if (tp->tty_termios.c_ospeed == B0) sigchar(tp, SIGHUP, 1);
-
-  /* SCANCODES is supported only for the console */
-  if (!isconsole(tp)) tp->tty_termios.c_iflag &= ~SCANCODES;
 
   /* Set new line speed, character size, etc at the device level. */
   (*tp->tty_ioctl)(tp, 0);

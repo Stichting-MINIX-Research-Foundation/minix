@@ -18,9 +18,13 @@ cons_stop(void)
 {
 }
 
+void
+beep_x(unsigned int freq, clock_t dur)
+{
+}
+
 int
 con_loadfont(endpoint_t endpt, cp_grant_id_t grant)
 {
 	return 0;
 }
-

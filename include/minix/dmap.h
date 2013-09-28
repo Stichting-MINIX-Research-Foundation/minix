@@ -11,9 +11,6 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_TTY, STYLE_CTTY };
  *               	 Major and minor device numbers  		     *
  *===========================================================================*/
 
-/* Total number of different devices. */
-#define NR_DEVICES   	NR_SYS_PROCS	/* number of (major) devices */
-
 /* Major device numbers. */
 #define NONE_MAJOR		   0	/*  0 = not used                      */
 #define MEMORY_MAJOR  		   1	/*  1 = /dev/mem    (memory devices)  */
@@ -72,6 +69,9 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_TTY, STYLE_CTTY };
 #define BMP085B2S77_MAJOR	  54	/* 54 = /dev/bmp085b2s77 (bmp085)     */
 #define BMP085B3S77_MAJOR	  55	/* 55 = /dev/bmp085b3s77 (bmp085)     */
 					/* 56-63 = /dev/vnd[0-7] (vnd)	      */
+#define INPUT_MAJOR		  64	/* 64 = /dev/input (input)            */
+
+#define NR_DEVICES   		  65	/* number of (major) devices */
 
 /* Minor device numbers for memory driver. */
 #  define RAM_DEV_OLD  		   0	/* minor device for /dev/ram */

@@ -10,7 +10,6 @@
  */
 
 #include "pm.h"
-#include <minix/keymap.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/ds.h>

@@ -19,78 +19,29 @@
 #include <minix/input.h>
 #include <minix/keymap.h>
 #include <minix/reboot.h>
+#include <minix/ds.h>
 #include <assert.h>
 #include "tty.h"
-#include "kernel/const.h"
-#include "kernel/config.h"
-#include "kernel/type.h"
-#include "kernel/proc.h"
 
-static u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
+static u16_t keymap[NR_SCAN_CODES][MAP_COLS] = {
 #include "keymaps/us-std.src"
 };
 
-static u16_t keymap_escaped[NR_SCAN_CODES * MAP_COLS] = {
-#include "keymaps/us-std-esc.src"
-};
-
-static int irq_hook_id = -1;
-static int aux_irq_hook_id = -1;
-
-/* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
-#define KEYBD		0x60	/* I/O port for keyboard data */
-
-/* AT keyboard. */
-#define KB_COMMAND	0x64	/* I/O port for commands on AT */
-#define KB_STATUS	0x64	/* I/O port for status on AT */
-#define KB_ACK		0xFA	/* keyboard ack response */
-#define KB_AUX_BYTE	0x20	/* Auxiliary Device Output Buffer Full */
-#define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
-#define KB_IN_FULL	0x02	/* status bit set when not ready to receive */
-#define KBC_RD_RAM_CCB	0x20	/* Read controller command byte */
-#define KBC_WR_RAM_CCB	0x60	/* Write controller command byte */
-#define KBC_DI_AUX	0xA7	/* Disable Auxiliary Device */
-#define KBC_EN_AUX	0xA8	/* Enable Auxiliary Device */
-#define KBC_DI_KBD	0xAD	/* Disable Keybard Interface */
-#define KBC_EN_KBD	0xAE	/* Enable Keybard Interface */
-#define KBC_WRITE_AUX	0xD4	/* Write to Auxiliary Device */
-#define LED_CODE	0xED	/* command to keyboard to set LEDs */
-#define MAX_KB_ACK_RETRIES 0x1000	/* max #times to wait for kb ack */
-#define MAX_KB_BUSY_RETRIES 0x1000	/* max #times to loop while kb busy */
-#define KBIT		0x80	/* bit used to ack characters to keyboard */
-
-#define KBC_IN_DELAY	7	/* wait 7 microseconds when polling */
-
-/* Miscellaneous. */
-#define ESC_SCAN	0x01	/* reboot key when panicking */
-#define SLASH_SCAN	0x35	/* to recognize numeric slash */
-#define RSHIFT_SCAN	0x36	/* to distinguish left and right shift */
-#define HOME_SCAN	0x47	/* first key on the numeric keypad */
-#define INS_SCAN	0x52	/* INS for use in CTRL-ALT-INS reboot */
-#define DEL_SCAN	0x53	/* DEL for use in CTRL-ALT-DEL reboot */
-
-#define KBD_BUFSZ	1024	/* Buffer size for raw scan codes */
-#define KBD_OUT_BUFSZ	16	/* Output buffer to sending data to the
-				 * keyboard.
-				 */
-
-#define CONSOLE		   0	/* line number for console */
 #define KB_IN_BYTES	  32	/* size of keyboard input buffer */
 
-static char injbuf[KB_IN_BYTES];
-static char *injhead = injbuf;
-static char *injtail = injbuf;
-static int injcount;
+/* Scan codes in the input buffer are in the 0000h-00E7h range inclusive, plus
+ * the following bit if the key was released rather than pressed.
+ */
+#define RELEASE_BIT	0x8000
 
-static char ibuf[KB_IN_BYTES];	/* input buffer */
-static char *ihead = ibuf;	/* next free spot in input buffer */
-static char *itail = ibuf;	/* scan code to return to TTY */
-static int icount;		/* # codes in buffer */
+static unsigned short inbuf[KB_IN_BYTES];
+static unsigned short *inhead = inbuf;
+static unsigned short *intail = inbuf;
+static int incount;
 
-static int esc;		/* escape scan code detected? */
 static int alt_l;		/* left alt key state */
 static int alt_r;		/* right alt key state */
-static int alt;		/* either alt key */
+static int alt;			/* either alt key */
 static int ctrl_l;		/* left control key state */
 static int ctrl_r;		/* right control key state */
 static int ctrl;		/* either control key */
@@ -99,15 +50,15 @@ static int shift_r;		/* right shift key state */
 static int shift;		/* either shift key */
 static int num_down;		/* num lock key depressed */
 static int caps_down;		/* caps lock key depressed */
-static int scroll_down;	/* scroll lock key depressed */
+static int scroll_down;		/* scroll lock key depressed */
 static int alt_down;	        /* alt key depressed */
 static int locks[NR_CONS];	/* per console lock keys state */
 
-/* Lock key active bits.  Chosen to be equal to the keyboard LED bits. */
-#define SCROLL_LOCK	0x01
-#define NUM_LOCK	0x02
-#define CAPS_LOCK	0x04
-#define ALT_LOCK	0x08
+/* Lock key active bits.  Chosen to be equal to the input LED mask bits. */
+#define SCROLL_LOCK	(1 << INPUT_LED_SCROLLLOCK)
+#define NUM_LOCK	(1 << INPUT_LED_NUMLOCK)
+#define CAPS_LOCK	(1 << INPUT_LED_CAPSLOCK)
+#define ALT_LOCK	0x10
 
 static char numpad_map[12] =
 		{'H', 'Y', 'A', 'B', 'D', 'C', 'V', 'U', 'G', 'S', 'T', '@'};
@@ -117,335 +68,20 @@ static char *fkey_map[12] =
 		 "18", "19", "20", "21", "23", "24"};	/* F7-F12 */
 
 /* Variables and definition for observed function keys. */
-typedef struct observer { int proc_nr; int events; } obs_t;
+typedef struct observer { endpoint_t proc_nr; int events; } obs_t;
 static obs_t  fkey_obs[12];	/* observers for F1-F12 */
 static obs_t sfkey_obs[12];	/* observers for SHIFT F1-F12 */
 
-static struct kbd
-{
-	devminor_t minor;
-	int nr_open;
-	char buf[KBD_BUFSZ];
-	int offset;
-	int avail;
-	size_t req_size;
-	cdev_id_t req_id;
-	cp_grant_id_t req_grant;
-	endpoint_t req_caller;
-	unsigned int select_ops;
-	endpoint_t select_proc;
-} kbd, kbdaux;
+static endpoint_t input_endpt = NONE;
 
-/* Data that is to be sent to the keyboard. Each byte is ACKed by the
- * keyboard.
- */
-static struct kbd_outack
-{
-	unsigned char buf[KBD_OUT_BUFSZ];
-	int offset;
-	int avail;
-	int expect_ack;
-} kbdout;
-
-static int kbd_watchdog_set= 0;
-static int kbd_alive= 1;
 static long sticky_alt_mode = 0;
 static long debug_fkeys = 1;
-static minix_timer_t tmr_kbd_wd;
 
-static void kbc_cmd0(int cmd);
-static void kbc_cmd1(int cmd, int data);
-static int kbc_read(void);
-static void kbd_send(void);
-static int kb_ack(void);
-static int kb_wait(void);
 static int func_key(int scode);
-static int scan_keyboard(unsigned char *bp, int *isauxp);
 static unsigned make_break(int scode);
 static void set_leds(void);
 static void show_key_mappings(void);
-static int kb_read(struct tty *tp, int try);
 static unsigned map_key(int scode);
-static void kbd_watchdog(minix_timer_t *tmrp);
-
-static int kbd_open(devminor_t minor, int access, endpoint_t user_endpt);
-static int kbd_close(devminor_t minor);
-static ssize_t kbd_read(devminor_t minor, u64_t position, endpoint_t endpt,
-	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
-static ssize_t kbd_write(devminor_t minor, u64_t position, endpoint_t endpt,
-	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
-static int kbd_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
-	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
-static int kbd_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
-static int kbd_select(devminor_t minor, unsigned int ops, endpoint_t endpt);
-
-static struct chardriver kbd_tab = {
-	.cdr_open	= kbd_open,
-	.cdr_close	= kbd_close,
-	.cdr_read	= kbd_read,
-	.cdr_write	= kbd_write,
-	.cdr_ioctl	= kbd_ioctl,
-	.cdr_cancel	= kbd_cancel,
-	.cdr_select	= kbd_select
-};
-
-/*===========================================================================*
- *				line2kbd				     *
- *===========================================================================*/
-static struct kbd *
-line2kbd(devminor_t minor)
-{
-	switch (minor) {
-	case KBD_MINOR:		return &kbd;
-	case KBDAUX_MINOR:	return &kbdaux;
-	default:		return NULL;
-	}
-}
-
-/*===========================================================================*
- *				kbd_open				     *
- *===========================================================================*/
-static int
-kbd_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
-{
-	struct kbd *kbdp;
-
-	if ((kbdp = line2kbd(minor)) == NULL)
-		return ENXIO;
-
-	kbdp->nr_open++;
-	return OK;
-}
-
-/*===========================================================================*
- *				kbd_close				     *
- *===========================================================================*/
-static int
-kbd_close(devminor_t minor)
-{
-	struct kbd *kbdp;
-
-	if ((kbdp = line2kbd(minor)) == NULL)
-		return ENXIO;
-
-	kbdp->nr_open--;
-	if (kbdp->nr_open < 0) {
-		printf("TTY(kbd): open count is negative\n");
-		kbdp->nr_open= 0;
-	}
-	if (kbdp->nr_open == 0)
-		kbdp->avail= 0;
-
-	return OK;
-}
-
-/*===========================================================================*
- *				kbd_read				     *
- *===========================================================================*/
-static ssize_t
-kbd_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
-	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
-{
-	ssize_t n, r;
-	struct kbd *kbdp;
-
-	if ((kbdp = line2kbd(minor)) == NULL)
-		return ENXIO;
-
-	/* We handle only one request at a time. */
-	if (kbdp->req_size)
-		return EIO;
-
-	if ((ssize_t) size <= 0)
-		return EINVAL;
-
-	/* If no data is available, suspend the caller. */
-	if (kbdp->avail == 0) {
-		if (flags & CDEV_NONBLOCK)
-			return EAGAIN;
-		kbdp->req_size = size;
-		kbdp->req_id = id;
-		kbdp->req_grant = grant;
-		kbdp->req_caller = endpt;
-		return EDONTREPLY;
-	}
-
-	/* Handle read request. */
-	n = kbdp->avail;
-	if (n > (ssize_t) size)
-		n = size;
-	if (kbdp->offset + n > KBD_BUFSZ)
-		n = KBD_BUFSZ - kbdp->offset;
-	if (n <= 0)
-		panic("do_kbd(READ): bad n: %d", n);
-	r = sys_safecopyto(endpt, grant, 0,
-	    (vir_bytes) &kbdp->buf[kbdp->offset], n);
-	if (r == OK) {
-		kbdp->offset = (kbdp->offset + n) % KBD_BUFSZ;
-		kbdp->avail -= n;
-		r = n;
-	} else
-		printf("TTY(kbd): copy in read kbd failed: %d\n", r);
-
-	return r;
-}
-
-/*===========================================================================*
- *				kbd_write				     *
- *===========================================================================*/
-static ssize_t
-kbd_write(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
-	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
-{
-	struct kbd *kbdp;
-	unsigned char c;
-	size_t i;
-	int r;
-
-	if ((kbdp = line2kbd(minor)) == NULL)
-		return ENXIO;
-	if (kbdp != &kbdaux) {
-		printf("TTY(kbd): write to keyboard not implemented\n");
-		return EINVAL;
-	}
-
-	/*
-	 * Assume that output to AUX only happens during initialization and we
-	 * can afford to lose input. This should be fixed at a later time.
-	 */
-	for (i = 0; i < size; i++) {
-		r = sys_safecopyfrom(endpt, grant, i, (vir_bytes) &c, 1);
-		if (r != OK)
-			return i ? i : r;
-		kbc_cmd1(KBC_WRITE_AUX, c);
-	}
-
-	return r;
-}
-
-/*===========================================================================*
- *				kbd_ioctl				     *
- *===========================================================================*/
-static int
-kbd_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
-	cp_grant_id_t grant, int flags, endpoint_t UNUSED(user_endpt),
-	cdev_id_t id)
-{
-	struct kbd *kbdp;
-	kio_leds_t leds;
-	kio_bell_t bell;
-	clock_t ticks;
-	unsigned char b;
-	int r;
-
-	if ((kbdp = line2kbd(minor)) == NULL)
-		return ENXIO;
-	if (kbdp != &kbd)
-		return ENOTTY;	/* we only support ioctls on keyboards now */
-
-	switch (request) {
-	case KIOCSLEDS:
-		r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &leds,
-		    sizeof(leds));
-		if (r != OK)
-			return r;
-
-		b = 0;
-		if (leds.kl_bits & KBD_LEDS_NUM) b |= NUM_LOCK;
-		if (leds.kl_bits & KBD_LEDS_CAPS) b |= CAPS_LOCK;
-		if (leds.kl_bits & KBD_LEDS_SCROLL) b |= SCROLL_LOCK;
-		if (kbdout.avail == 0)
-			kbdout.offset = 0;
-		if (kbdout.offset + kbdout.avail + 2 > KBD_OUT_BUFSZ) {
-			/* Output buffer is full. Ignore this command.
-			 * Reset ACK flag.
-			 */
-			kbdout.expect_ack = 0;
-		} else {
-			kbdout.buf[kbdout.offset+kbdout.avail] = LED_CODE;
-			kbdout.buf[kbdout.offset+kbdout.avail+1] = b;
-			kbdout.avail += 2;
-		}
-		if (!kbdout.expect_ack)
-			kbd_send();
-
-		return OK;
-
-	case KIOCBELL:
-		r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &bell,
-		    sizeof(bell));
-		if (r != OK)
-			return r;
-
-		ticks = bell.kb_duration.tv_usec * system_hz / 1000000;
-		ticks += bell.kb_duration.tv_sec * system_hz;
-		if (!ticks)
-			ticks++;
-		beep_x(bell.kb_pitch, ticks);
-
-		return OK;
-
-	default:
-		return ENOTTY;
-	}
-}
-
-/*===========================================================================*
- *				kbd_cancel				     *
- *===========================================================================*/
-static int
-kbd_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
-{
-	struct kbd *kbdp;
-
-	if ((kbdp = line2kbd(minor)) == NULL)
-		return ENXIO;
-
-	if (kbdp->req_size > 0 && endpt == kbdp->req_caller &&
-	    id == kbdp->req_id)
-		return EINTR;
-
-	return EDONTREPLY;
-}
-
-/*===========================================================================*
- *				kbd_select				     *
- *===========================================================================*/
-static int
-kbd_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
-{
-	struct kbd *kbdp;
-	int watch, ready_ops;
-
-	if ((kbdp = line2kbd(minor)) == NULL)
-		return ENXIO;
-
-	watch = (ops & CDEV_NOTIFY);
-	ops &= (CDEV_OP_RD | CDEV_OP_WR | CDEV_OP_ERR);
-
-	ready_ops = 0;
-	if (kbdp->avail && (ops & CDEV_OP_RD))
-		ready_ops |= CDEV_OP_RD;
-	if (ops & CDEV_OP_WR)
-		ready_ops |= CDEV_OP_WR;	/* writes never block */
-
-	ops &= ~ready_ops;
-	if (ops && watch) {
-		kbdp->select_ops |= ops;
-		kbdp->select_proc = endpt;
-	}
-
-	return ready_ops;
-}
-
-/*===========================================================================*
- *				do_kbd					     *
- *===========================================================================*/
-void
-do_kbd(message *m, int ipc_status)
-{
-	chardriver_process(&kbd_tab, m, ipc_status);
-}
 
 /*===========================================================================*
  *				map_key					     *
@@ -458,14 +94,11 @@ int scode;
   int caps, column, lk;
   u16_t *keyrow;
 
-  if(esc)
-	  keyrow = &keymap_escaped[scode * MAP_COLS];
-  else
-	  keyrow = &keymap[scode * MAP_COLS];
+  keyrow = keymap[scode];
 
   caps = shift;
   lk = locks[ccurrent];
-  if ((lk & NUM_LOCK) && HOME_SCAN <= scode && scode <= DEL_SCAN) caps = !caps;
+  if ((lk & NUM_LOCK) && (keyrow[0] & HASNUM)) caps = !caps;
   if ((lk & CAPS_LOCK) && (keyrow[0] & HASCAPS)) caps = !caps;
 
   if (alt) {
@@ -482,110 +115,67 @@ int scode;
 		if (ctrl) column = 5;
         }
   }
-  return keyrow[column] & ~HASCAPS;
+  return keyrow[column] & ~(HASNUM | HASCAPS);
 }
 
 /*===========================================================================*
- *				kbd_interrupt				     *
+ *				do_input				     *
  *===========================================================================*/
-void kbd_interrupt(message *UNUSED(m_ptr))
+void do_input(message *msg)
 {
-/* A keyboard interrupt has occurred.  Process it. */
-  int n, r, o, isaux;
-  unsigned char scode;
-  struct kbd *kbdp;
+  unsigned short scode;
+  endpoint_t endpt;
+  int r;
 
-  /* Fetch the character from the keyboard hardware and acknowledge it. */
-  if (!scan_keyboard(&scode, &isaux))
-	return;
-
-  if (isaux)
-	kbdp= &kbdaux;
-  else if (kbd.nr_open)
-	kbdp= &kbd;
-  else
-	kbdp= NULL;
-
-  if (kbdp)
-  {
-	/* raw scan codes or aux data */
-	if (kbdp->avail >= KBD_BUFSZ)
-	{
-#if 0
-		printf("kbd_interrupt: %s buffer is full\n",
-			isaux ? "kbdaux" : "keyboard");
-#endif
-		return;	/* Buffer is full */
+  switch (msg->m_type) {
+  case TTY_INPUT_UP:
+	if ((r = ds_retrieve_label_endpt("input", &endpt)) != OK) {
+		printf("TTY: unable to retrieve INPUT endpoint (%d)\n", r);
+		return;
 	}
-	o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
-	kbdp->buf[o]= scode;
-	kbdp->avail++;
-	if (kbdp->req_size) {
-		/* Reply to read request */
-		n= kbdp->avail;
-		if (n > kbdp->req_size)
-			n= kbdp->req_size;
-		if (kbdp->offset + n > KBD_BUFSZ)
-			n= KBD_BUFSZ-kbdp->offset;
-		if (n <= 0)
-			panic("kbd_interrupt: bad n: %d", n);
-		kbdp->req_size= 0;
-		r= sys_safecopyto(kbdp->req_caller, kbdp->req_grant, 0,
-			(vir_bytes)&kbdp->buf[kbdp->offset], n);
-		if (r == OK)
-		{
-			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
-			kbdp->avail -= n;
-			r= n;
-		} else printf("copy in revive kbd failed: %d\n", r);
+	if (endpt != msg->m_source) {
+		printf("TTY: up request from non-INPUT %u\n", msg->m_source);
+		return;
+	}
 
-		chardriver_reply_task(kbdp->req_caller, kbdp->req_id, r);
-		kbdp->req_caller = NONE;
+	input_endpt = msg->m_source;
+
+	/* Pass the current state of the LEDs to INPUT. */
+	set_leds();
+
+	break;
+
+  case TTY_INPUT_EVENT:
+	if (msg->m_source != input_endpt) {
+		printf("TTY: input event from non-INPUT %u\n", msg->m_source);
+		return;
 	}
-	/* Only satisfy pending select if characters weren't just read. */
-	if (kbdp->avail && (kbdp->select_ops & CDEV_OP_RD)) {
-		chardriver_reply_select(kbdp->select_proc, kbdp->minor,
-			CDEV_OP_RD);
-		kbdp->select_ops &= ~CDEV_OP_RD;
+
+	/* Only handle keyboard keys. */
+	if (msg->INPUT_PAGE != INPUT_PAGE_KEY)
+		return;
+
+	/* Only handle known USB HID keyboard codes (the 00h-E7h range). */
+	scode = msg->INPUT_CODE;
+	if (scode >= NR_SCAN_CODES)
+		return;
+
+	/* Is it a KEY RELEASE? */
+	if (msg->INPUT_VALUE == INPUT_RELEASE)
+		scode |= RELEASE_BIT;
+
+	if (incount < KB_IN_BYTES) {
+		*inhead++ = scode;
+		if (inhead == inbuf + KB_IN_BYTES) inhead = inbuf;
+		incount++;
+		tty_table[ccurrent].tty_events = 1;
 	}
-	return;
+
+	break;
+
+  default:
+	panic("do_input called for unknown message type %x", msg->m_type);
   }
-
-  /* Store the scancode in memory so the task can get at it later. */
-  if (icount < KB_IN_BYTES) {
-	*ihead++ = scode;
-	if (ihead == ibuf + KB_IN_BYTES) ihead = ibuf;
-	icount++;
-	tty_table[ccurrent].tty_events = 1;
-	if (tty_table[ccurrent].tty_select_ops & CDEV_OP_RD) {
-		select_retry(&tty_table[ccurrent]);
-	}
-  }
-}
-
-
-void do_kb_inject(message *msg)
-{
-	unsigned char scode;
-	/* only handle keyboard events */
-	if (msg->INPUT_TYPE == INPUT_EV_KEY) {
-		scode = msg->INPUT_CODE;
-		
-		/* is it a KEY RELEASE? */
-		if (msg->INPUT_VALUE == 0) {
-			scode |= KEY_RELEASE;	
-		}
-
-		if (injcount < KB_IN_BYTES) {
-			*injhead++ = scode;
-			if (injhead == injbuf + KB_IN_BYTES) injhead = injbuf;
-			injcount++;
-			tty_table[ccurrent].tty_events = 1;
-			if (tty_table[ccurrent].tty_select_ops & CDEV_OP_RD) {
-				select_retry(&tty_table[ccurrent]);
-			}
-		}
-	}
 }
 
 /*===========================================================================*
@@ -597,48 +187,38 @@ int try;
 {
 /* Process characters from the circular keyboard buffer. */
   char buf[7], *p, suffix;
-  int scode;
+  unsigned short scode;
   unsigned ch;
   
   /* always use the current console */
   tp = &tty_table[ccurrent];
 
-  if (try) {
-  	if (icount > 0) return 1;
-  	return 0;
-  }
+  if (try)
+	return (incount > 0);
 
-  while (icount > 0 || injcount > 0) {
-	  if (injcount > 0) { 
-		  /* take one key scan code */
-		  scode = *injtail++;
-		  if (injtail == injbuf + KB_IN_BYTES) injtail = injbuf;
-		  injcount--;
-	  } else {
-		  /* take one key scan code */
-		  scode = *itail++;			
-		  if (itail == ibuf + KB_IN_BYTES) itail = ibuf;
-		  icount--;
-	  }
+  while (incount > 0) {
+	/* Take one key scan code. */
+	scode = *intail++;
+	if (intail == inbuf + KB_IN_BYTES) intail = inbuf;
+	incount--;
 
 	/* Function keys are being used for debug dumps (if enabled). */
 	if (debug_fkeys && func_key(scode)) continue;
 
 	/* Perform make/break processing. */
-
 	ch = make_break(scode);
 
 	if (ch <= 0xFF) {
 		/* A normal character. */
 		buf[0] = ch;
-		(void) in_process(tp, buf, 1, scode);
+		(void) in_process(tp, buf, 1);
 	} else
 	if (HOME <= ch && ch <= INSRT) {
 		/* An ASCII escape sequence generated by the numeric pad. */
 		buf[0] = ESC;
 		buf[1] = '[';
 		buf[2] = numpad_map[ch - HOME];
-		(void) in_process(tp, buf, 3, scode);
+		(void) in_process(tp, buf, 3);
 	} else
 	if ((F1 <= ch && ch <= F12) || (SF1 <= ch && ch <= SF12) ||
 				(CF1 <= ch && ch <= CF12 && !debug_fkeys)) {
@@ -666,7 +246,7 @@ int try;
 			*p++ = suffix;
 		}
 		*p++ = '~';
-		(void) in_process(tp, buf, p - buf, scode);
+		(void) in_process(tp, buf, p - buf);
 	} else
 	if (ch == ALEFT) {
 		/* Choose lower numbered console as current console. */
@@ -687,13 +267,10 @@ int try;
 	    switch(ch) {
   		case CF1: show_key_mappings(); break; 
   		case CF3: toggle_scroll(); break; /* hardware <-> software */	
-  		case CF7: sigchar(&tty_table[CONSOLE], SIGQUIT, 1); break;
-  		case CF8: sigchar(&tty_table[CONSOLE], SIGINT, 1); break;
-  		case CF9: sigchar(&tty_table[CONSOLE], SIGKILL, 1); break;
+		case CF7: sigchar(line2tty(CONS_MINOR), SIGQUIT, 1); break;
+		case CF8: sigchar(line2tty(CONS_MINOR), SIGINT, 1); break;
+		case CF9: sigchar(line2tty(CONS_MINOR), SIGKILL, 1); break;
   	    }
-	} else {
-		/* pass on scancode even though there is no character code */
-		(void) in_process(tp, NULL, 0, scode);
 	}
   }
 
@@ -701,76 +278,20 @@ int try;
 }
 
 /*===========================================================================*
- *				kbd_send				     *
- *===========================================================================*/
-static void kbd_send()
-{
-	u32_t sb;
-	int r;
-
-	if (!kbdout.avail)
-		return;
-	if (kbdout.expect_ack)
-		return;
-
-	if((r=sys_inb(KB_STATUS, &sb)) != OK) {
-		printf("kbd_send: 1 sys_inb() failed: %d\n", r);
-	}
-	if (sb & (KB_OUT_FULL|KB_IN_FULL))
-	{
-		printf("not sending 1: sb = 0x%x\n", sb);
-		return;
-	}
-	micro_delay(KBC_IN_DELAY);
-	if((r=sys_inb(KB_STATUS, &sb)) != OK) {
-		printf("kbd_send: 2 sys_inb() failed: %d\n", r);
-	}
-	if (sb & (KB_OUT_FULL|KB_IN_FULL))
-	{
-		printf("not sending 2: sb = 0x%x\n", sb);
-		return;
-	}
-
-	/* Okay, buffer is really empty */
-#if 0
-	printf("sending byte 0x%x to keyboard\n", kbdout.buf[kbdout.offset]);
-#endif
-	if((r=sys_outb(KEYBD, kbdout.buf[kbdout.offset])) != OK) {
-		printf("kbd_send: 3 sys_outb() failed: %d\n", r);
-	}
-	kbdout.offset++;
-	kbdout.avail--;
-	kbdout.expect_ack= 1;
-
-	kbd_alive= 1;
-	if (kbd_watchdog_set)
-	{
-		/* Set a watchdog timer for one second. */
-		set_timer(&tmr_kbd_wd, system_hz, kbd_watchdog, 0);
-
-		kbd_watchdog_set= 1;
-	 }
-}
-
-/*===========================================================================*
  *				make_break				     *
  *===========================================================================*/
-static unsigned make_break(scode)
-int scode;			/* scan code of key just struck or released */
+static unsigned make_break(int scode)
 {
 /* This routine can handle keyboards that interrupt only on key depression,
  * as well as keyboards that interrupt on key depression and key release.
  * For efficiency, the interrupt routine filters out most key releases.
  */
-  int ch, make, escape;
+  int ch, make;
   static int CAD_count = 0;
   static int rebooting = 0;
 
-  /* Check for CTRL-ALT-DEL, and if found, halt the computer. This would
-   * be better done in keyboard() in case TTY is hung, except control and
-   * alt are set in the high level code.
-   */
-  if (ctrl && alt && (scode == DEL_SCAN || scode == INS_SCAN))
+  /* Check for CTRL-ALT-DEL, and if found, halt the computer. */
+  if (ctrl && alt && (scode == INPUT_KEY_DELETE || scode == INPUT_KEY_INSERT))
   {
 	if (++CAD_count == 3) {
 		cons_stop();
@@ -780,28 +301,28 @@ int scode;			/* scan code of key just struck or released */
 	rebooting = 1;
   }
   
-   if(rebooting)
-  	return -1;
+  if (rebooting)
+	return -1;
 
   /* High-order bit set on key release. */
-  make = (scode & KEY_RELEASE) == 0;		/* true if pressed */
+  make = !(scode & RELEASE_BIT);	/* true if pressed */
 
-  ch = map_key(scode &= ASCII_MASK);		/* map to ASCII */
-
-  escape = esc;		/* Key is escaped?  (true if added since the XT) */
-  esc = 0;
+  ch = map_key(scode &= ~RELEASE_BIT);	/* map to ASCII */
 
   switch (ch) {
-  	case CTRL:		/* Left or right control key */
-		*(escape ? &ctrl_r : &ctrl_l) = make;
+	case LCTRL:		/* Left or right control key */
+	case RCTRL:
+		*(ch == RCTRL ? &ctrl_r : &ctrl_l) = make;
 		ctrl = ctrl_l | ctrl_r;
 		break;
-  	case SHIFT:		/* Left or right shift key */
-		*(scode == RSHIFT_SCAN ? &shift_r : &shift_l) = make;
+	case LSHIFT:		/* Left or right shift key */
+	case RSHIFT:
+		*(ch == RSHIFT ? &shift_r : &shift_l) = make;
 		shift = shift_l | shift_r;
 		break;
-  	case ALT:		/* Left or right alt key */
-		*(escape ? &alt_r : &alt_l) = make;
+	case LALT:		/* Left or right alt key */
+	case RALT:
+		*(ch == RALT ? &alt_r : &alt_l) = make;
 		alt = alt_l | alt_r;
 		if (sticky_alt_mode && (alt_r && (alt_down < make))) {
 			locks[ccurrent] ^= ALT_LOCK;
@@ -829,30 +350,12 @@ int scode;			/* scan code of key just struck or released */
 		}
 		scroll_down = make;
 		break;
-  	case EXTKEY:		/* Escape keycode */
-		esc = 1;		/* Next key is escaped */
-		return(-1);
   	default:		/* A normal key */
 		if(!make)
 			return -1;
 		if(ch)
 			return ch;
-		{
-			static char seen[2][NR_SCAN_CODES];
-			int notseen = 0, ei;
-			ei = escape ? 1 : 0;
-			if(scode >= 0 && scode < NR_SCAN_CODES) {
-				notseen = !seen[ei][scode];
-				seen[ei][scode] = 1;
-			} else {
-				printf("tty: scode %d makes no sense\n", scode);
-			}
-			if(notseen) {
-		  		printf("tty: ignoring unrecognized %s "
-					"scancode 0x%x\n",
-  				escape ? "escaped" : "straight", scode);
-			}
-		}
+		/* Ignore unmapped key codes. */
   		return -1;
   }
 
@@ -863,150 +366,22 @@ int scode;			/* scan code of key just struck or released */
 /*===========================================================================*
  *				set_leds				     *
  *===========================================================================*/
-static void set_leds()
+static void set_leds(void)
 {
-/* Set the LEDs on the caps, num, and scroll lock keys */
-  int s;
+/* Make INPUT set the LEDs on the caps, num, and scroll lock keys. */
+  message m;
+  int r;
 
-  kb_wait();			/* wait for buffer empty  */
-  if ((s=sys_outb(KEYBD, LED_CODE)) != OK)
-      printf("Warning, sys_outb couldn't prepare for LED values: %d\n", s);
-   				/* prepare keyboard to accept LED values */
-  kb_ack();			/* wait for ack response  */
+  if (input_endpt == NONE)
+	return;
 
-  kb_wait();			/* wait for buffer empty  */
-  if ((s=sys_outb(KEYBD, locks[ccurrent])) != OK)
-      printf("Warning, sys_outb couldn't give LED values: %d\n", s);
-				/* give keyboard LED values */
-  kb_ack();			/* wait for ack response  */
-}
+  memset(&m, 0, sizeof(m));
 
-/*===========================================================================*
- *				kbc_cmd0				     *
- *===========================================================================*/
-static void kbc_cmd0(cmd)
-int cmd;
-{
-	kb_wait();
-	if(sys_outb(KB_COMMAND, cmd) != OK)
-		printf("kbc_cmd0: sys_outb failed\n");
-}
+  m.m_type = INPUT_SETLEDS;
+  m.INPUT_LED_MASK = locks[ccurrent] & ~ALT_LOCK;
 
-/*===========================================================================*
- *				kbc_cmd1				     *
- *===========================================================================*/
-static void kbc_cmd1(cmd, data)
-int cmd;
-int data;
-{
-	kb_wait();
-	if(sys_outb(KB_COMMAND, cmd) != OK)
-		printf("kbc_cmd1: 1 sys_outb failed\n");
-	kb_wait();
-	if(sys_outb(KEYBD, data) != OK)
-		printf("kbc_cmd1: 2 sys_outb failed\n");
-}
-
-
-/*===========================================================================*
-*                              kbc_read                                     *
-*===========================================================================*/
-static int kbc_read()
-{
-	int i;
-	u32_t byte, st;
-#if 0
-	struct micro_state ms;
-#endif
-
-#if DEBUG
-	printf("in kbc_read\n");
-#endif
-
-	/* Wait at most 1 second for a byte from the keyboard or
-	* the kbd controller, return -1 on a timeout.
-	*/
-	for (i= 0; i<1000000; i++)
-#if 0
-	micro_start(&ms);
-	do
-#endif
-	{
-		if(sys_inb(KB_STATUS, &st) != OK)
-			printf("kbc_read: 1 sys_inb failed\n");
-		if (st & KB_OUT_FULL)
-		{
-			micro_delay(KBC_IN_DELAY);
-			if(sys_inb(KEYBD, &byte) != OK)
-				printf("kbc_read: 2 sys_inb failed\n");
-			if (st & KB_AUX_BYTE)
-				printf("kbc_read: aux byte 0x%x\n", byte);
-#if DEBUG
-			printf("keyboard`kbc_read: returning byte 0x%x\n",
-				byte);
-#endif
-			return byte;
-		}
-	}
-#if 0
-	while (micro_elapsed(&ms) < 1000000);
-#endif
-	panic("kbc_read failed to complete");
-	return EINVAL;
-}
-
-
-/*===========================================================================*
- *				kb_wait					     *
- *===========================================================================*/
-static int kb_wait()
-{
-/* Wait until the controller is ready; return zero if this times out. */
-
-  int retries;
-  u32_t status;
-  int s, isaux;
-  unsigned char byte;
-
-  retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
-  do {
-      s = sys_inb(KB_STATUS, &status);
-      if(s != OK)
-	printf("kb_wait: sys_inb failed: %d\n", s);
-      if (status & KB_OUT_FULL) {
-	  if (scan_keyboard(&byte, &isaux))
-	  {
-#if 0
-		  printf("ignoring %sbyte in kb_wait\n", isaux ? "AUX " : "");
-#endif
-	  }
-      }
-      if (! (status & (KB_IN_FULL|KB_OUT_FULL)) )
-          break;			/* wait until ready */
-  } while (--retries != 0);		/* continue unless timeout */ 
-  return(retries);		/* zero on timeout, positive if ready */
-}
-
-/*===========================================================================*
- *				kb_ack					     *
- *===========================================================================*/
-static int kb_ack()
-{
-/* Wait until kbd acknowledges last command; return zero if this times out. */
-
-  int retries, s;
-  u32_t u8val;
-
-  retries = MAX_KB_ACK_RETRIES + 1;
-  do {
-      s = sys_inb(KEYBD, &u8val);
-	if(s != OK)
-		printf("kb_ack: sys_inb failed: %d\n", s);
-      if (u8val == KB_ACK)	
-          break;		/* wait for ack */
-  } while(--retries != 0);	/* continue unless timeout */
-
-  return(retries);		/* nonzero if ack received */
+  if ((r = asynsend3(input_endpt, &m, AMF_NOREPLY)) != OK)
+	printf("TTY: asynsend to INPUT %u failed (%d)\n", input_endpt, r);
 }
 
 /*===========================================================================*
@@ -1026,58 +401,17 @@ tty_t *tp;
 void kb_init_once(void)
 {
   int i;
-  u8_t ccb;
 
   env_parse("sticky_alt", "d", 0, &sticky_alt_mode, 0, 1);
   env_parse("debug_fkeys", "d", 0, &debug_fkeys, 0, 1);
 
-  set_leds();			/* turn off numlock led */
-  scan_keyboard(NULL, NULL);	/* discard leftover keystroke */
-
-      /* Clear the function key observers array. Also see func_key(). */
-      for (i=0; i<12; i++) {
-          fkey_obs[i].proc_nr = NONE;	/* F1-F12 observers */
-          fkey_obs[i].events = 0;	/* F1-F12 observers */
-          sfkey_obs[i].proc_nr = NONE;	/* Shift F1-F12 observers */
-          sfkey_obs[i].events = 0;	/* Shift F1-F12 observers */
-      }
-
-      kbd.minor= KBD_MINOR;
-      kbdaux.minor= KBDAUX_MINOR;
-
-      /* Set interrupt handler and enable keyboard IRQ. */
-      irq_hook_id = KEYBOARD_IRQ;	/* id to be returned on interrupt */
-      if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &irq_hook_id)) != OK)
-          panic("Couldn't set keyboard IRQ policy: %d", i);
-      if ((i=sys_irqenable(&irq_hook_id)) != OK)
-          panic("Couldn't enable keyboard IRQs: %d", i);
-      kbd_irq_set |= (1 << KEYBOARD_IRQ);
-
-      /* Set AUX interrupt handler and enable AUX IRQ. */
-      aux_irq_hook_id = KBD_AUX_IRQ;	/* id to be returned on interrupt */
-      if ((i=sys_irqsetpolicy(KBD_AUX_IRQ, IRQ_REENABLE,
-		&aux_irq_hook_id)) != OK)
-          panic("Couldn't set AUX IRQ policy: %d", i);
-      if ((i=sys_irqenable(&aux_irq_hook_id)) != OK)
-          panic("Couldn't enable AUX IRQs: %d", i);
-      kbd_irq_set |= (1 << KBD_AUX_IRQ);
-
-	/* Disable the keyboard and aux */
-	kbc_cmd0(KBC_DI_KBD);
-	kbc_cmd0(KBC_DI_AUX);
-
-	/* Get the current configuration byte */
-	kbc_cmd0(KBC_RD_RAM_CCB);
-	ccb= kbc_read();
-
-	/* Enable both interrupts. */
-	kbc_cmd1(KBC_WR_RAM_CCB, ccb | 3);
-
-	/* Re-enable the keyboard device. */
-	kbc_cmd0(KBC_EN_KBD);
-
-	/* Enable the aux device. */
-	kbc_cmd0(KBC_EN_AUX);
+  /* Clear the function key observers array. Also see func_key(). */
+  for (i = 0; i < 12; i++) {
+	fkey_obs[i].proc_nr = NONE;	/* F1-F12 observers */
+	fkey_obs[i].events = 0;		/* F1-F12 observers */
+	sfkey_obs[i].proc_nr = NONE;	/* Shift F1-F12 observers */
+	sfkey_obs[i].events = 0;	/* F1-F12 observers */
+  }
 }
 
 /*===========================================================================*
@@ -1207,7 +541,7 @@ int scode;			/* scan code for a function key */
   int proc_nr;
 
   /* Ignore key releases. If this is a key press, get full key code. */
-  if (scode & KEY_RELEASE) return(FALSE);	/* key release */
+  if (scode & RELEASE_BIT) return(FALSE);	/* key release */
   key = map_key(scode);		 		/* include modifiers */
 
   /* Key pressed, now see if there is an observer for the pressed key.
@@ -1242,7 +576,6 @@ int scode;			/* scan code for a function key */
 static void show_key_mappings()
 {
     int i,s;
-    struct proc proc;
 
     printf("\n");
     printf("System information.   Known function key mappings to request debug dumps:\n");
@@ -1251,20 +584,14 @@ static void show_key_mappings()
 
       printf(" %sF%d: ", i+1<10? " ":"", i+1);
       if (fkey_obs[i].proc_nr != NONE) {
-          if ((s = sys_getproc(&proc, fkey_obs[i].proc_nr))!=OK)
-              printf("%-14.14s", "<unknown>");
-          else
-              printf("%-14.14s", proc.p_name);
+          printf("%-14u", fkey_obs[i].proc_nr);
       } else {
           printf("%-14.14s", "<none>");
       }
 
       printf("    %sShift-F%d: ", i+1<10? " ":"", i+1);
       if (sfkey_obs[i].proc_nr != NONE) {
-          if ((s = sys_getproc(&proc, sfkey_obs[i].proc_nr))!=OK)
-              printf("%-14.14s", "<unknown>");
-          else
-              printf("%-14.14s", proc.p_name);
+          printf("%-14u", sfkey_obs[i].proc_nr);
       } else {
           printf("%-14.14s", "<none>");
       }
@@ -1273,69 +600,4 @@ static void show_key_mappings()
     printf("\n");
     printf("Press one of the registered function keys to trigger a debug dump.\n");
     printf("\n");
-}
-
-/*===========================================================================*
- *				scan_keyboard				     *
- *===========================================================================*/
-static int scan_keyboard(bp, isauxp)
-unsigned char *bp;
-int *isauxp;
-{
-  u32_t b, sb;
-
-  if(sys_inb(KB_STATUS, &sb) != OK)
-	printf("scan_keyboard: sys_inb failed\n");
-
-  if (!(sb & KB_OUT_FULL))
-  {
-	if (kbdout.avail && !kbdout.expect_ack)
-		kbd_send();
-	return 0;
-  }
-  if(sys_inb(KEYBD, &b) != OK)
-	printf("scan_keyboard: 2 sys_inb failed\n");
-#if 0
-  printf("got byte 0x%x from %s\n", b, (sb & KB_AUX_BYTE) ? "AUX" : "keyboard");
-#endif
-  if (!(sb & KB_AUX_BYTE) && b == KB_ACK && kbdout.expect_ack)
-  {
-#if 0
-	printf("got ACK from keyboard\n");
-#endif
-	kbdout.expect_ack= 0;
-	micro_delay(KBC_IN_DELAY);
-	kbd_send();
-	return 0;
-  }
-  if (bp)
-  	*bp= b;
-  if (isauxp)
-  	*isauxp= !!(sb & KB_AUX_BYTE);
-  if (kbdout.avail && !kbdout.expect_ack)
-  {
-	micro_delay(KBC_IN_DELAY);
-	kbd_send();
-  }
-  return 1;
-}
-
-/*===========================================================================*
- *				kbd_watchdog 				     *
- *===========================================================================*/
-static void kbd_watchdog(minix_timer_t *UNUSED(tmrp))
-{
-
-	kbd_watchdog_set= 0;
-	if (!kbdout.avail)
-		return;	/* Watchdog is no longer needed */
-	if (!kbd_alive)
-	{
-		printf("kbd_watchdog: should reset keyboard\n");
-	}
-	kbd_alive= 0;
-
-	set_timer(&tmr_kbd_wd, system_hz, kbd_watchdog, 0);
-
-	kbd_watchdog_set= 1;
 }

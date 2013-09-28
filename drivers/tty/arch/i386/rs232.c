@@ -588,7 +588,7 @@ static int rs_read(tty_t *tp, int try)
 	if (count > icount) count = icount;
 
 	/* Perform input processing on (part of) the input buffer. */
-	if ((count = in_process(tp, rs->itail, count, -1)) == 0) break;
+	if ((count = in_process(tp, rs->itail, count)) == 0) break;
 
 	rs->icount -= count;
 	if (!rs->idevready && rs->icount < RS_ILOWWATER) istart(rs);

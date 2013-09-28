@@ -23,9 +23,9 @@
  *   0x1000 - 0x10FF	Notify messages
  *   0x1100 - 0x11FF	USB  
  *   0x1200 - 0x12FF    Devman
- *   0x1300 - 0x13FF    TTY Requests
+ *   0x1300 - 0x13FF	TTY requests
  *   0x1400 - 0x14FF	VFS-FS transaction IDs
- *   0x1500 - 0x15FF	(unused)
+ *   0x1500 - 0x15FF	Input server messages
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
  *   0x1700 - 0x17FF	Real Time Clock requests and responses
  *
@@ -1229,17 +1229,10 @@
 #   define DEVMAN_RESULT         m4_l1
 
 /*===========================================================================*
- *              TTY REQUESTS	                                             *
+ *			Messages for TTY				     *
  *===========================================================================*/
 
 #define TTY_RQ_BASE 0x1300
-
-#define INPUT_EVENT      (TTY_RQ_BASE + 0)
-
-#	define INPUT_TYPE        m4_l1
-#	define INPUT_CODE        m4_l2
-#	define INPUT_VALUE       m4_l3
-
 
 #define TTY_FKEY_CONTROL	(TTY_RQ_BASE + 1) /* control an F-key at TTY */
 #  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
@@ -1249,7 +1242,35 @@
 #  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
 #  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
 
-#endif
+#define TTY_INPUT_UP		(TTY_RQ_BASE + 2) /* input server is up */
+/* This message uses no message fields. */
+
+#define TTY_INPUT_EVENT		(TTY_RQ_BASE + 3) /* relayed input event */
+/* This message shares its message fields with INPUT_EVENT. */
+
+/*===========================================================================*
+ *			Messages for input server and drivers		     *
+ *===========================================================================*/
+
+/* The input protocol has no real replies. All messages are one-way. */
+#define INPUT_RQ_BASE 0x1500	/* from TTY to server, or server to driver */
+#define INPUT_RS_BASE 0x1580	/* from input driver to input server */
+
+#define INPUT_CONF		(INPUT_RQ_BASE + 0)	/* configure driver */
+#  define INPUT_KBD_ID		m7_i1	/* keyboard device ID */
+#  define INPUT_MOUSE_ID	m7_i2	/* mouse device ID */
+#  define INPUT_RSVD1_ID	m7_i3	/* ID for as yet unallocated type */
+#  define INPUT_RSVD2_ID	m7_i4	/* ID for as yet unallocated type */
+
+#define INPUT_SETLEDS		(INPUT_RQ_BASE + 1)	/* set keyboard LEDs */
+#  define INPUT_LED_MASK	m7_i1	/* status mask of LEDs */
+
+#define INPUT_EVENT		(INPUT_RS_BASE + 0)	/* send input event */
+#  define INPUT_ID		m7_i1	/* device ID */
+#  define INPUT_PAGE		m7_i2	/* usage page */
+#  define INPUT_CODE		m7_i3	/* usage code */
+#  define INPUT_VALUE		m7_i4	/* event value */
+#  define INPUT_FLAGS		m7_i5	/* flags associated with value */
 
 /*===========================================================================*
  *			VFS-FS TRANSACTION IDs				     *
@@ -1403,4 +1424,4 @@
 
 #define SUSPEND 	 -998 	/* status to suspend caller, reply later */
 
-/* _MINIX_COM_H */
+#endif /* !_MINIX_COM_H */

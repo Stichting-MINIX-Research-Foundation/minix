@@ -3,15 +3,10 @@
 #include <minix/chardriver.h>
 #include <minix/timers.h>
 
-#undef lock
-#undef unlock
-
 /* First minor numbers for the various classes of TTY devices. */
 #define CONS_MINOR	   0
 #define LOG_MINOR	  15
 #define RS232_MINOR	  16
-#define KBD_MINOR	 127
-#define KBDAUX_MINOR	 126
 #define VIDEO_MINOR	 125
 #define TTYPX_MINOR	 128
 #define PTYPX_MINOR	 192
@@ -132,7 +127,7 @@ void handle_events(struct tty *tp);
 void sigchar(struct tty *tp, int sig, int mayflush);
 void tty_task(void);
 tty_t *line2tty(devminor_t minor);
-int in_process(struct tty *tp, char *buf, int count, int scode);
+int in_process(struct tty *tp, char *buf, int count);
 void out_process(struct tty *tp, char *bstart, char *bpos, char *bend,
 	int *icount, int *ocount);
 void tty_wakeup(clock_t now);
@@ -158,9 +153,7 @@ void kb_init(struct tty *tp);
 void kb_init_once(void);
 int kbd_loadmap(endpoint_t endpt, cp_grant_id_t grant);
 void do_fkey_ctl(message *m);
-void kbd_interrupt(message *m);
-void do_kbd(message *m, int ipc_status);
-void do_kb_inject(message *m);
+void do_input(message *m);
 
 /* pty.c */
 void do_pty(message *m_ptr, int ipc_status);

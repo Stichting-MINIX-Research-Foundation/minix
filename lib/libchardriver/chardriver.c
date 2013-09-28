@@ -1,6 +1,6 @@
 /* This file contains the device independent character driver interface.
  *
- * Charaxter drivers support the following requests. Message format m10 is
+ * Character drivers support the following requests. Message format m10 is
  * used. Field names are prefixed with CDEV_. Separate field names are used for
  * the "access", "ops", "user", and "request" fields.
  *
@@ -108,16 +108,16 @@ void chardriver_announce(void)
    */
 #if USE_STATECTL
   if ((r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK)
-	panic("chardriver_init: sys_statectl failed: %d", r);
+	panic("chardriver_announce: sys_statectl failed: %d", r);
 #endif
 
   /* Publish a driver up event. */
   if ((r = ds_retrieve_label_name(label, getprocnr())) != OK)
-	panic("chardriver_init: unable to get own label: %d", r);
+	panic("chardriver_announce: unable to get own label: %d", r);
 
   snprintf(key, DS_MAX_KEYLEN, "%s%s", driver_prefix, label);
   if ((r = ds_publish_u32(key, DS_DRIVER_UP, DSF_OVERWRITE)) != OK)
-	panic("chardriver_init: unable to publish driver up event: %d", r);
+	panic("chardriver_announce: unable to publish driver up event: %d", r);
 
   /* Expect an open for any device before serving regular driver requests. */
   clear_open_devs();
@@ -522,21 +522,21 @@ void chardriver_terminate(void)
  *===========================================================================*/
 void chardriver_task(struct chardriver *cdp)
 {
-/* Main program of any device driver task. */
+/* Main program of any character device driver task. */
   int r, ipc_status;
   message mess;
 
   running = TRUE;
 
-  /* Here is the main loop of the disk task.  It waits for a message, carries
-   * it out, and sends a reply.
+  /* Here is the main loop of the character driver task.  It waits for a
+   * message, carries it out, and sends a reply.
    */
   while (running) {
 	if ((r = sef_receive_status(ANY, &mess, &ipc_status)) != OK) {
 		if (r == EINTR && !running)
 			break;
 
-		panic("driver_receive failed: %d", r);
+		panic("chardriver: sef_receive_status failed: %d", r);
 	}
 
 	chardriver_process(cdp, &mess, ipc_status);

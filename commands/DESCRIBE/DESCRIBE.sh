@@ -126,10 +126,6 @@ do
 	;;
     4,125)	des="video output" dev=video
 	;;
-    4,126)	des="auxiliary input" dev=kbdaux
-	;;
-    4,127)	des="keyboard input" dev=kbd
-	;;
     4,12[89]|4,1[3-8]?|4,19[01])
 	p=`expr \\( $minor - 128 \\) / 16 | tr '0123' 'pqrs'`
 	n=`expr $minor % 16`
@@ -211,6 +207,24 @@ do
 	sub=`expr \\( $minor - 128 \\) % 4`
 	des="vnode disk $drive partition $par slice $sub"
 	dev=vnd${drive}p${par}s${sub}
+	;;
+    64,0)
+	des="keyboard input multiplexer"
+	dev=kbdmux
+	;;
+    64,[1-4])
+	n=`expr $minor - 1`
+	des="keyboard input $n"
+	dev=kbd$n
+	;;
+    64,64)
+	des="mouse input multiplexer"
+	dev=mousemux
+	;;
+    64,6[5-8])
+	n=`expr $minor - 65`
+	des="mouse input $n"
+	dev=mouse$n
 	;;
     BAD,BAD)
 	des= dev=
