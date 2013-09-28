@@ -29,5 +29,6 @@ extern int bdev_sendrec(dev_t dev, const message *m_orig);
 extern int bdev_minor_reopen(dev_t dev);
 extern void bdev_minor_add(dev_t dev, int access);
 extern void bdev_minor_del(dev_t dev);
+extern int bdev_minor_is_open(dev_t dev);
 
 #endif /* _BDEV_PROTO_H */

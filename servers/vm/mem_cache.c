@@ -238,3 +238,17 @@ do_setcache(message *msg)
 	return OK;
 }
 
+/*
+ * A file system wants to invalidate all pages belonging to a certain device.
+ */
+int
+do_clearcache(message *msg)
+{
+	dev_t dev;
+
+	dev = msg->m_u.m_vmmcp.dev;
+
+	clear_cache_bydev(dev);
+
+	return OK;
+}

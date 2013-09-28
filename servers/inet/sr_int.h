@@ -43,9 +43,6 @@ typedef struct sr_fd
 #define SFF_IOCTL_FIRST		 0x200
 #define SFF_READ_FIRST		 0x400
 #define SFF_WRITE_FIRST		 0x800
-#define SFF_SELECT_R		0x1000
-#define SFF_SELECT_W		0x2000
-#define SFF_SELECT_X		0x4000
 
 EXTERN sr_fd_t sr_fd_table[FD_NR];
 

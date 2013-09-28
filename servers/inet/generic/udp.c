@@ -183,7 +183,7 @@ assert (opt_acc->acc_length == sizeof(*udp_opt));
 		result= udp_peek(udp_fd);
 		break;
 	default:
-		reply_thr_get(udp_fd, EBADIOCTL, TRUE);
+		reply_thr_get(udp_fd, ENOTTY, TRUE);
 		result= NW_OK;
 		break;
 	}

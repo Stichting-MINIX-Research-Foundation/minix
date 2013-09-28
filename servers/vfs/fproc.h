@@ -20,8 +20,7 @@ EXTERN struct fproc {
   struct vnode *fp_wd;		/* working directory; NULL during reboot */
   struct vnode *fp_rd;		/* root directory; NULL during reboot */
 
-  struct filp *fp_filp[OPEN_MAX];/* the file descriptor table */
-  fd_set fp_filp_inuse;		/* which fd's are in use? */
+  struct filp *fp_filp[OPEN_MAX];/* the file descriptor table (free if NULL) */
   fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
 
   dev_t fp_tty;			/* major/minor of controlling tty */
@@ -30,8 +29,6 @@ EXTERN struct fproc {
   int fp_block_callnr;		/* blocked call if rd/wr can't finish */
   int  fp_cum_io_partial;	/* partial byte count if rd/wr can't finish */
   endpoint_t fp_task;		/* which task is proc suspended on */
-  endpoint_t fp_ioproc;		/* proc no. in suspended-on i/o message */
-
   cp_grant_id_t fp_grant;	/* revoke this grant on unsuspend if > -1 */
 
   uid_t fp_realuid;		/* real user id */
@@ -43,8 +40,11 @@ EXTERN struct fproc {
   mode_t fp_umask;		/* mask set by umask system call */
 
   mutex_t fp_lock;		/* mutex to lock fproc object */
-  struct job fp_job;		/* pending job */
-  thread_t fp_wtid;		/* Thread ID of worker */
+  struct worker_thread *fp_worker;/* active worker thread, or NULL */
+  void (*fp_func)();		/* handler function for pending work */
+  message fp_msg;		/* pending or active message from process */
+  message fp_pm_msg;		/* pending/active postponed PM request */
+
   char fp_name[PROC_NAME_LEN];	/* Last exec() */
 #if LOCK_DEBUG
   int fp_vp_rdlocks;		/* number of read-only locks on vnodes */
@@ -56,17 +56,13 @@ EXTERN struct fproc {
 } fproc[NR_PROCS];
 
 /* fp_flags */
-#define FP_NOFLAGS	00
-#define FP_SUSP_REOPEN	01	/* Process is suspended until the reopens are
-				 * completed (after the restart of a driver).
-				 */
+#define FP_NOFLAGS	 0000
+#define FP_SRV_PROC	 0001	/* Set if process is a service */
 #define FP_REVIVED	 0002	/* Indicates process is being revived */
 #define FP_SESLDR	 0004	/* Set if process is session leader */
 #define FP_PENDING	 0010	/* Set if process has pending work */
 #define FP_EXITING	 0020	/* Set if process is exiting */
-#define FP_PM_PENDING	 0040	/* Set if process has pending PM request */
-#define FP_SRV_PROC	 0100	/* Set if process is a service */
-#define FP_DROP_WORK	 0200	/* Set if process won't accept new work */
+#define FP_PM_WORK	 0040	/* Set if process has a postponed PM request */
 
 /* Field values. */
 #define NOT_REVIVING       0xC0FFEEE	/* process is not being revived */
