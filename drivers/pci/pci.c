@@ -70,6 +70,8 @@ static struct pcidev
 	u8_t pd_infclass;
 	u16_t pd_vid;
 	u16_t pd_did;
+	u16_t pd_sub_vid;
+	u16_t pd_sub_did;
 	u8_t pd_ilr;
 
 	u8_t pd_inuse;
@@ -737,7 +739,7 @@ static void pci_intel_init()
 		dstr= "unknown device";
 	if (debug)
 	{
-		printf("pci_intel_init: %s (%04X/%04X)\n",
+		printf("pci_intel_init: %s (%04X:%04X)\n",
 			dstr, vid, did);
 	}
 
@@ -774,7 +776,7 @@ static void pci_intel_init()
 static void probe_bus(int busind)
 {
 	u32_t dev, func, t3;
-	u16_t vid, did, sts;
+	u16_t vid, did, sts, sub_vid, sub_did;
 	u8_t headt;
 	u8_t baseclass, subclass, infclass;
 	int devind, busnr;
@@ -831,12 +833,15 @@ static void probe_bus(int busind)
 			    }
 			}
 
+			sub_vid= pci_attr_r16(devind, PCI_SUBVID);
+			sub_did= pci_attr_r16(devind, PCI_SUBDID);
+
 			dstr= pci_dev_name(vid, did);
 			if (debug)
 			{
 				if (dstr)
 				{
-					printf("%d.%lu.%lu: %s (%04X/%04X)\n",
+					printf("%d.%lu.%lu: %s (%04X:%04X)\n",
 						busnr, (unsigned long)dev,
 						(unsigned long)func, dstr,
 						vid, did);
@@ -851,8 +856,7 @@ static void probe_bus(int busind)
 				}
 				printf("Device index: %d\n", devind);
 				printf("Subsystem: Vid 0x%x, did 0x%x\n",
-					pci_attr_r16(devind, PCI_SUBVID),
-					pci_attr_r16(devind, PCI_SUBDID));
+					sub_vid, sub_did);
 			}
 
 			baseclass= pci_attr_r8_u(devind, PCI_BCR);
@@ -886,6 +890,8 @@ static void probe_bus(int busind)
 			pcidev[devind].pd_infclass= infclass;
 			pcidev[devind].pd_vid= vid;
 			pcidev[devind].pd_did= did;
+			pcidev[devind].pd_sub_vid= sub_vid;
+			pcidev[devind].pd_sub_did= sub_did;
 			pcidev[devind].pd_inuse= 0;
 			pcidev[devind].pd_bar_nr= 0;
 			record_irq(devind);
@@ -1531,7 +1537,7 @@ static void complete_bars(void)
 			if (debug)
 			{
 				printf(
-		"pci device %d (%04x/%04x), bar %d: base 0x%x, size 0x%x\n",
+		"pci device %d (%04x:%04x), bar %d: base 0x%x, size 0x%x\n",
 					i, pcidev[i].pd_vid, pcidev[i].pd_did,
 					j, base, size);
 			}
@@ -1765,7 +1771,7 @@ int busind;
 			dstr= "unknown device";
 		if (debug)
 		{
-			printf("found ISA bridge (%04X/%04X) %s\n",
+			printf("found ISA bridge (%04X:%04X) %s\n",
 				vid, did, dstr);
 		}
 		pcibus[busind].pb_isabridge_dev= bridge_dev;
@@ -1803,7 +1809,7 @@ int busind;
 	if (debug)
 	{
 		printf(
-		"(warning) unsupported ISA bridge %04X/%04X for bus %d\n",
+		"(warning) unsupported ISA bridge %04X:%04X for bus %d\n",
 			pcidev[unknown_bridge].pd_vid,
 			pcidev[unknown_bridge].pd_did, busind);
 	}
@@ -1899,7 +1905,7 @@ int busind;
 				t3 != PCI_T3_PCI2PCI_SUBTR)
 			{
 				printf(
-"Unknown PCI class %02x:%02x:%02x for PCI-to-PCI bridge, device %04X/%04X\n",
+"Unknown PCI class %02x/%02x/%02x for PCI-to-PCI bridge, device %04X:%04X\n",
 					baseclass, subclass, infclass,
 					vid, did);
 				continue;
@@ -1908,7 +1914,7 @@ int busind;
 				t3 != PCI_T3_CARDBUS)
 			{
 				printf(
-"Unknown PCI class %02x:%02x:%02x for Cardbus bridge, device %04X/%04X\n",
+"Unknown PCI class %02x/%02x/%02x for Cardbus bridge, device %04X:%04X\n",
 					baseclass, subclass, infclass,
 					vid, did);
 				continue;
@@ -1917,7 +1923,7 @@ int busind;
 
 		if (debug)
 		{
-			printf("%u.%u.%u: PCI-to-PCI bridge: %04X/%04X\n",
+			printf("%u.%u.%u: PCI-to-PCI bridge: %04X:%04X\n",
 				pcidev[devind].pd_busnr,
 				pcidev[devind].pd_dev, 
 				pcidev[devind].pd_func, vid, did);
@@ -2640,6 +2646,7 @@ static int visible(aclp, devind)
 struct rs_pci *aclp;
 int devind;
 {
+	u16_t acl_sub_vid, acl_sub_did;
 	int i;
 	u32_t class_id;
 
@@ -2651,8 +2658,14 @@ int devind;
 	/* Check whether the caller is allowed to get this device. */
 	for (i= 0; i<aclp->rsp_nr_device; i++)
 	{
+		acl_sub_vid = aclp->rsp_device[i].sub_vid;
+		acl_sub_did = aclp->rsp_device[i].sub_did;
 		if (aclp->rsp_device[i].vid == pcidev[devind].pd_vid &&
-			aclp->rsp_device[i].did == pcidev[devind].pd_did)
+			aclp->rsp_device[i].did == pcidev[devind].pd_did &&
+			(acl_sub_vid == NO_SUB_VID ||
+			acl_sub_vid == pcidev[devind].pd_sub_vid) &&
+			(acl_sub_did == NO_SUB_DID ||
+			acl_sub_did == pcidev[devind].pd_sub_did))
 		{
 			return TRUE;
 		}

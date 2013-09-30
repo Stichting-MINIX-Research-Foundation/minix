@@ -144,19 +144,22 @@ specifies the quantum size (ms) the scheduler must consider the service for.
 The default is specified in \fB<minix/priv.h>\fR (see macro \fBDSRV_QT\fR).
 .RE
 .PP
-\fBpci device\fR \fI<vid/did>\fR\fB;\fR
+\fBpci device\fR \fI<vid:did[/subvid:subdid]>\fR\fB;\fR
 .PP
 .RS
 specifies the PCI device IDs the system service is allowed to use
-(only used for device drivers).
+(only used for device drivers).  Optionally, a subsystem ID may be provided
+for more precise (limited) matching.
 The default is to allow no PCI device IDs.
 .RE
 .PP
-\fBpci class\fR \fI<class1/mask1 class2/mask2...classN/maskN>\fR\fB;\fR
+\fBpci class\fR \fI<class[/subclass[/progif]]>\fR\fB;\fR
 .PP
 .RS
 specifies the PCI classes the system service is allowed to use
 (only used for device drivers).
+Optionally, a subclass code and a programming interface code may be provided
+for more precise (limited) matching.
 The default is to allow no PCI classes.
 .RE
 .PP

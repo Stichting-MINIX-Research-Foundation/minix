@@ -1627,10 +1627,14 @@ endpoint_t source;
   for (i= 0; i<rpub->pci_acl.rsp_nr_device; i++) {
       rpub->pci_acl.rsp_device[i].vid= rs_start->rss_pci_id[i].vid;
       rpub->pci_acl.rsp_device[i].did= rs_start->rss_pci_id[i].did;
+      rpub->pci_acl.rsp_device[i].sub_vid= rs_start->rss_pci_id[i].sub_vid;
+      rpub->pci_acl.rsp_device[i].sub_did= rs_start->rss_pci_id[i].sub_did;
       if(rs_verbose)
-          printf("RS: init_slot: PCI %04x/%04x\n",
+          printf("RS: init_slot: PCI %04x/%04x (sub %04x:%04x)\n",
               rpub->pci_acl.rsp_device[i].vid,
-              rpub->pci_acl.rsp_device[i].did);
+              rpub->pci_acl.rsp_device[i].did,
+              rpub->pci_acl.rsp_device[i].sub_vid,
+              rpub->pci_acl.rsp_device[i].sub_did);
   }
   if (rs_start->rss_nr_pci_class > RS_NR_PCI_CLASS) {
       printf("RS: init_slot: too many PCI class IDs\n");
