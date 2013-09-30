@@ -47,6 +47,20 @@ struct rss_label
 	size_t l_len;
 };
 
+struct rs_pci_id {
+	u16_t vid;
+	u16_t did;
+	u16_t sub_vid;
+	u16_t sub_did;
+};
+#define NO_SUB_VID	0xffff
+#define NO_SUB_DID	0xffff
+
+struct rs_pci_class {
+	u32_t pciclass;
+	u32_t mask;
+};
+
 /* Arguments needed to start a new driver or server */
 struct rs_start
 {
@@ -68,9 +82,9 @@ struct rs_start
 	int rss_nr_io;
 	struct { unsigned base; unsigned len; } rss_io[RSS_NR_IO];
 	int rss_nr_pci_id;
-	struct { u16_t vid; u16_t did; } rss_pci_id[RS_NR_PCI_DEVICE];
+	struct rs_pci_id rss_pci_id[RS_NR_PCI_DEVICE];
 	int rss_nr_pci_class;
-	struct { u32_t pciclass; u32_t mask; } rss_pci_class[RS_NR_PCI_CLASS];
+	struct rs_pci_class rss_pci_class[RS_NR_PCI_CLASS];
 	bitchunk_t rss_system[SYS_CALL_MASK_SIZE];
 	struct rss_label rss_label;
 	char *rss_ipc;
@@ -94,9 +108,9 @@ struct rs_pci
 	char rsp_label[RS_MAX_LABEL_LEN];
 	int rsp_endpoint;
 	int rsp_nr_device;
-	struct { u16_t vid; u16_t did; } rsp_device[RS_NR_PCI_DEVICE];
+	struct rs_pci_id rsp_device[RS_NR_PCI_DEVICE];
 	int rsp_nr_class;
-	struct { u32_t pciclass; u32_t mask; } rsp_class[RS_NR_PCI_CLASS];
+	struct rs_pci_class rsp_class[RS_NR_PCI_CLASS];
 };
 
 /* Definition of a public entry of the system process table. */
