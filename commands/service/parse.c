@@ -519,7 +519,7 @@ static void do_io(config_t *cpe, struct rs_start *rs_start)
 
 static void do_pci_device(config_t *cpe, struct rs_start *rs_start)
 {
-	u16_t vid, did;
+	u16_t vid, did, sub_vid, sub_did;
 	char *check, *check2;
 
 	/* Process a list of PCI device IDs */
@@ -536,12 +536,25 @@ static void do_pci_device(config_t *cpe, struct rs_start *rs_start)
 				cpe->file, cpe->line);
 		}
 		vid= strtoul(cpe->word, &check, 0x10);
-		if (check[0] == '/')
-			did= strtoul(check+1, &check2, 0x10);
-		if (check[0] != '/' || check2[0] != '\0')
-		{
+		if (check[0] != ':' && /* LEGACY: */ check[0] != '/') {
 			fatal("do_pci_device: bad ID '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
+		}
+		did= strtoul(check+1, &check, 0x10);
+		if (check[0] == '/') {
+			sub_vid= strtoul(check+1, &check, 0x10);
+			if (check[0] == ':')
+				sub_did= strtoul(check+1, &check2, 0x10);
+			if (check[0] != ':' || check2[0] != '\0') {
+				fatal("do_pci_device: bad ID '%s' at %s:%d",
+					cpe->word, cpe->file, cpe->line);
+			}
+		} else if (check[0] != '\0') {
+			fatal("do_pci_device: bad ID '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		} else {
+			sub_vid = NO_SUB_VID;
+			sub_did = NO_SUB_DID;
 		}
 		if (rs_start->rss_nr_pci_id >= RS_NR_PCI_DEVICE)
 		{
@@ -550,6 +563,8 @@ static void do_pci_device(config_t *cpe, struct rs_start *rs_start)
 		}
 		rs_start->rss_pci_id[rs_start->rss_nr_pci_id].vid= vid;
 		rs_start->rss_pci_id[rs_start->rss_nr_pci_id].did= did;
+		rs_start->rss_pci_id[rs_start->rss_nr_pci_id].sub_vid= sub_vid;
+		rs_start->rss_pci_id[rs_start->rss_nr_pci_id].sub_did= sub_did;
 		rs_start->rss_nr_pci_id++;
 	}
 }
