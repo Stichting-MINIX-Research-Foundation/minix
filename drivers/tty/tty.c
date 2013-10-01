@@ -780,7 +780,7 @@ static int do_open(devminor_t minor, int access, endpoint_t user_endpt)
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
 
-  if (minor == LOG_MINOR) {
+  if (minor == LOG_MINOR && isconsole(tp)) {
 	/* The log device is a write-only diagnostics device. */
 	if (access & R_BIT) return EACCES;
   } else {
@@ -809,7 +809,7 @@ static int do_close(devminor_t minor)
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
 
-  if (minor != LOG_MINOR && --tp->tty_openct == 0) {
+  if ((minor != LOG_MINOR || !isconsole(tp)) && --tp->tty_openct == 0) {
 	tp->tty_pgrp = 0;
 	tty_icancel(tp);
 	(*tp->tty_ocancel)(tp, 0);
