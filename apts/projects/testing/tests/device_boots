@@ -1,0 +1,162 @@
+#!/usr/bin/expect -f
+#
+
+#
+# Parse arguments
+#
+set image minix.postinst.8g.tmp.img
+set send_human {.1 .3 1 .05 2}
+set passwd "dev"
+set kerneldir ""
+set arch "x86"
+set timeout 5
+if { $argc > 0 } {
+	set counter 0
+	while {$counter < $argc} {
+		if { [lindex $argv $counter] == "--image" }  {
+			set counter [expr {$counter +1}]
+			set image [lindex $argv $counter]
+			
+		}
+		if { [lindex $argv $counter] == "--kerneldir" }  {
+			set counter [expr {$counter +1}]
+			set kerneldir [lindex $argv $counter]
+		}
+		if { [lindex $argv $counter] == "--arch" }  {
+			set counter [expr {$counter +1}]
+			set arch [lindex $argv $counter]
+		}
+		set counter [expr {$counter +1}]
+	}
+}
+
+#
+# Try and read password from a file called ~/bin/.minix.passwd
+# if that is not present inform the user we are using a default
+# password. (This becomes nasty when we have ssh installed)
+#
+if { [file exists "~/bin/.minix.passwd" ] == 1} {
+        puts "**Reading password from file **"
+        set fd [open "~/bin/.minix.passwd" "r"]
+        set passwd [read $fd]
+        close $fd
+} 
+
+proc poweroff {} {
+	set timeout 20
+	send "poweroff\n"
+	expect  {
+		"MINIX will now be shut down" {
+			puts "\nTest worked\n"
+			exit 0
+		}
+	}
+	exit 1
+}
+
+proc last_chance {} {
+	puts "\nExit strategy\n"
+	send -h "poweroff\n"
+	set timeout 5
+	exit 1
+}
+
+proc startup {} {
+	global arch
+	global image
+	global kerneldir
+	global serial_spawn
+	if { "$arch" == "arm" } {
+		spawn ~/bin/qemu-system-arm  -M beaglexm -drive if=sd,cache=writeback,file=$image -clock unix -nographic
+	} else {
+		if {  "$kerneldir" == "."   } {
+			spawn ~/bin/qemu-system-x86_64 \
+					-kernel kernel \
+					-append "console=tty00 rootdevname=c0d0p0" \
+					-initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_log,mod08_tty,mod09_mfs,mod10_vm,mod11_pfs,mod12_init"  \
+					-hda $image -nographic
+		} else {
+			spawn ~/bin/qemu-system-x86_64 -enable-kvm -m 1024 -hda $image -curses -net nic,model=e1000 -net user
+		}
+	}
+	return $spawn_id
+}
+
+
+
+proc boot_to_prompt {} {
+	set timeout 120
+	for {} 1 {} {
+		puts "Waiting for a prompt"
+		expect {
+			#minix login: 
+			#but later if it worked ip-address login:
+			"login:" { 
+				send -h "root\n" 
+				break
+			}
+			"dirty, performing fsck" {puts "resetting timeout as the file system in dirty" }
+			timeout {
+				puts "Failed to catch login command"
+				last_chance
+			}
+		}
+	}
+
+	set timeout 20
+	expect {
+		"Password:" { 
+			send -h "$passwd\n" 
+		}
+		"#" {
+			puts "No password needed\n"
+			send "\n"
+		}
+		timeout {
+			puts "Failed to catch login command"
+			last_chance
+		}
+	}
+
+	set timeout 5
+	expect "#"
+}
+
+proc prepare_runcmd {} {
+	#
+	# put a run command in /tmp that echoes RESULT-OK or RESULT-FAIL based on the 
+	# return value of the command launched
+	#
+	#expect -re $
+	# the shell can't handle all this output at once so sending it as "human"
+	set b "echo \"#!/bin/sh\nif \\\"\\\$@\\\"\nthen echo RESULT-OK\nelse echo RESULT-FAIL\nfi\n\" > /tmp/runcmd.sh ; chmod +x /tmp/runcmd.sh\n"
+	send -h $b
+	expect "#"
+
+
+
+	#read the full buffer so the next line does not match RESULT-FAIL
+	set timeout 60
+	expect -re $
+	# passwd
+	send -h "/tmp/runcmd.sh pwd\n"
+	expect {
+		"RESULT-OK" { 
+			puts ""
+		}
+		timeout {
+			puts "Failed to run command"
+			last_chance
+		}
+	}
+}
+
+set myid [ startup ]
+set spawn_id $myid
+boot_to_prompt
+prepare_runcmd
+
+expect -re $
+#shutdown
+poweroff
+exit 1
