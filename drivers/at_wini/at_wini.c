@@ -1,11 +1,8 @@
 /* This file contains the device dependent part of a driver for the IBM-AT
  * winchester controller.  Written by Adri Koppes.
  *
- * The file contains one entry point:
- *
- *   at_winchester_task:	main entry when system is brought up
- *
  * Changes:
+ *   Oct  2, 2013   drop non-PCI support; one controller per instance  (David)
  *   Aug 19, 2005   ATA PCI support, supports SATA  (Ben Gras)
  *   Nov 18, 2004   moved AT disk driver to user-space  (Jorrit N. Herder)
  *   Aug 20, 2004   watchdogs replaced by sync alarms  (Jorrit N. Herder)
@@ -58,34 +55,24 @@ static long w_atapi_dma;
 static int w_testing = 0;
 static int w_silent = 0;
 
-static int w_next_drive = 0;
-
 static u32_t system_hz;
 
-/* The struct wini is indexed by controller first, then drive (0-3).
- * Controller 0 is always the 'compatability' ide controller, at
- * the fixed locations, whether present or not.
- */
+/* The struct wini is indexed by drive (0-3). */
 static struct wini {		/* main drive struct, one entry per drive */
   unsigned state;		/* drive state: deaf, initialized, dead */
   unsigned short w_status;	/* device status register */
   unsigned base_cmd;		/* command base register */
   unsigned base_ctl;		/* control base register */
   unsigned base_dma;		/* dma base register */
-  int dma_intseen;
-  unsigned irq;			/* interrupt request line */
-  unsigned irq_need_ack;	/* irq needs to be acknowledged */
+  unsigned char native;		/* if set, drive is native (not compat.) */
+  unsigned char lba48;		/* if set, drive supports lba48 */
+  unsigned char dma;		/* if set, drive supports dma */
+  unsigned char dma_intseen;	/* if set, drive has seen an interrupt */
   int irq_hook_id;		/* id of irq hook at the kernel */
-  int lba48;			/* supports lba48 */
-  int dma;			/* supports dma */
-  unsigned lcylinders;		/* logical number of cylinders (BIOS) */
-  unsigned lheads;		/* logical number of heads */
-  unsigned lsectors;		/* logical number of sectors per track */
-  unsigned pcylinders;		/* physical number of cylinders (translated) */
-  unsigned pheads;		/* physical number of heads */
-  unsigned psectors;		/* physical number of sectors per track */
+  unsigned cylinders;		/* physical number of cylinders */
+  unsigned heads;		/* physical number of heads */
+  unsigned sectors;		/* physical number of sectors per track */
   unsigned ldhpref;		/* top four bytes of the LDH (head) register */
-  unsigned precomp;		/* write precompensation cylinder / 4 */
   unsigned max_count;		/* max request for this drive */
   unsigned open_ct;		/* in-use count */
   struct device part[DEV_PER_DRIVE];	/* disks and partitions */
@@ -122,24 +109,9 @@ static phys_bytes prdt_phys;
 
 #define PRDTE_FL_EOT	0x80	/* End of table */
 
-/* IDE devices we trust are IDE devices. */
-static struct quirk
-{
-	int pci_class, pci_subclass, pci_interface;
-	u16_t vendor;
-	u16_t device;
-} quirk_table[]=
-{
-	{ 0x01,	0x04,	0x00,	0x1106,	0x3149	},	/* VIA VT6420 */
-	{ 0x01,	0x04,	0x00,	0x1095,	0x3512	},
-	{ 0x01,	0x80,	-1,	0x1095,	0x3114	},	/* Silicon Image SATA */
-	{ 0,	0,	0,	0,	0	}	/* end of list */
-};
-
-static void init_params(void);
-static void init_drive(struct wini *w, int base_cmd, int base_ctl, int
-	base_dma, int irq, int ack, int hook, int drive);
-static void init_params_pci(int);
+static int w_probe(int skip, u16_t *vidp, u16_t *didp);
+static void w_init(int devind, u16_t vid, u16_t did);
+static int init_params(void);
 static int w_do_open(devminor_t minor, int access);
 static struct device *w_prepare(devminor_t dev);
 static struct device *w_part(devminor_t minor);
@@ -154,7 +126,6 @@ static int com_out_ext(struct command *cmd);
 static int setup_dma(unsigned *sizep, endpoint_t proc_nr, iovec_t *iov,
 	size_t addr_offset, int do_write);
 static void w_need_reset(void);
-static void ack_irqs(unsigned int);
 static int w_do_close(devminor_t minor);
 static int w_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, endpoint_t user_endpt);
@@ -165,34 +136,14 @@ static int w_reset(void);
 static void w_intr_wait(void);
 static int at_intr_wait(void);
 static int w_waitfor(int mask, int value);
-static int w_waitfor_dma(int mask, int value);
+static int w_waitfor_dma(unsigned int mask, unsigned int value);
 static void w_geometry(devminor_t minor, struct part_geom *entry);
-#if ENABLE_ATAPI
 static int atapi_sendpacket(u8_t *packet, unsigned cnt, int do_dma);
 static int atapi_intr_wait(int dma, size_t max);
 static int atapi_open(void);
 static void atapi_close(void);
 static int atapi_transfer(int do_write, u64_t position, endpoint_t
 	endpt, iovec_t *iov, unsigned int nr_req);
-#endif
-
-#define sys_voutb(out, n) at_voutb((out), (n))
-static int at_voutb(pvb_pair_t *, int n);
-#define sys_vinb(in, n) at_vinb((in), (n))
-static int at_vinb(pvb_pair_t *, int n);
-
-#undef sys_outb
-#undef sys_inb
-#undef sys_outl
-
-static int at_out(int line, u32_t port, u32_t value, char *typename,
-	int type);
-static int at_in(int line, u32_t port, u32_t *value, char *typename,
-	int type);
-
-#define sys_outb(p, v) at_out(__LINE__, (p), (v), "outb", _DIO_BYTE)
-#define sys_inb(p, v) at_in(__LINE__, (p), (v), "inb", _DIO_BYTE)
-#define sys_outl(p, v) at_out(__LINE__, (p), (v), "outl", _DIO_LONG)
 
 /* Entry points to this driver. */
 static struct blockdriver w_dtab = {
@@ -209,9 +160,6 @@ static struct blockdriver w_dtab = {
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-EXTERN int sef_cb_lu_prepare(int state);
-EXTERN int sef_cb_lu_state_isvalid(int state);
-EXTERN void sef_cb_lu_state_dump(int state);
 
 /*===========================================================================*
  *				at_winchester_task			     *
@@ -252,6 +200,9 @@ static void sef_local_startup(void)
 static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the at_wini driver. */
+  int skip, devind;
+  u16_t vid, did;
+
   system_hz = sys_hz();
 
   if (!(tmp_buf = alloc_contig(2*DMA_BUF_SIZE, AC_ALIGN4K, NULL)))
@@ -261,7 +212,23 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
   wakeup_ticks = WAKEUP_TICKS;
 
   /* Set special disk parameters. */
-  init_params();
+  skip = init_params();
+
+  /* Find the PCI device to use. If none found, terminate immediately. */
+  devind = w_probe(skip, &vid, &did);
+  if (devind < 0) {
+	/* For now, complain only if even the first at_wini instance cannot
+	 * find a device. There may be only one IDE controller after all,
+	 * but if there are none, the system should probably be booted with
+	 * another driver, and that's something the user might want to know.
+	 */
+	if (w_instance == 0)
+		panic("no matching device found");
+	return ENODEV;	/* the actual error code doesn't matter */
+  }
+
+  /* Initialize the device. */
+  w_init(devind, vid, did);
 
   /* Announce we are up! */
   blockdriver_announce(type);
@@ -272,16 +239,10 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				init_params				     *
  *===========================================================================*/
-static void init_params(void)
+static int init_params(void)
 {
 /* This routine is called at startup to initialize the drive parameters. */
-
-  u16_t parv[2];
-  unsigned int vector, size;
-  int drive, nr_drives;
-  struct wini *wn;
-  u8_t params[16];
-  int s;
+  int drive;
   long wakeup_secs = WAKEUP_SECS;
 
   /* Boot variables. */
@@ -316,264 +277,177 @@ static void init_params(void)
 	}
   }
 
-  if (w_instance == 0) {
-	  /* Get the number of drives from the BIOS data area */
-	  s=sys_readbios(NR_HD_DRIVES_ADDR, params, NR_HD_DRIVES_SIZE);
-	  if (s != OK)
-  		panic("Couldn't read BIOS: %d", s);
-	  if ((nr_drives = params[0]) > 2) nr_drives = 2;
+  for (drive = 0; drive < MAX_DRIVES; drive++)
+	wini[drive].state = IGNORING;
 
-	  for (drive = 0, wn = wini; drive < COMPAT_DRIVES; drive++, wn++) {
-		if (drive < nr_drives) {
-		    /* Copy the BIOS parameter vector */
-		    vector = (drive == 0) ? BIOS_HD0_PARAMS_ADDR :
-			BIOS_HD1_PARAMS_ADDR;
-		    size = (drive == 0) ? BIOS_HD0_PARAMS_SIZE :
-			BIOS_HD1_PARAMS_SIZE;
-		    s=sys_readbios(vector, parv, size);
-		    if (s != OK)
-			panic("Couldn't read BIOS: %d", s);
-	
-		    /* Calculate the address of the parameters and copy them */
-		    s=sys_readbios(hclick_to_physb(parv[1]) + parv[0],
-			params, 16L);
-		    if (s != OK)
-			panic("Couldn't copy parameters: %d", s);
-	
-		    /* Copy the parameters to the structures of the drive */
-		    wn->lcylinders = bp_cylinders(params);
-		    wn->lheads = bp_heads(params);
-		    wn->lsectors = bp_sectors(params);
-		    wn->precomp = bp_precomp(params) >> 2;
-		}
-
-		/* Fill in non-BIOS parameters. */
-		init_drive(wn,
-			drive < 2 ? REG_CMD_BASE0 : REG_CMD_BASE1,
-			drive < 2 ? REG_CTL_BASE0 : REG_CTL_BASE1,
-			0 /* no DMA */, NO_IRQ, 0, 0, drive);
-		w_next_drive++;
-  	}
-  } 
-
-  /* Look for controllers on the pci bus. Skip none the first instance,
-   * skip one and then 2 for every instance, for every next instance.
-   */
-  if (w_instance == 0)
-  	init_params_pci(0);
-  else
-  	init_params_pci(w_instance*2-1);
-
+  return (int) w_instance;
 }
-
-#define ATA_IF_NOTCOMPAT1 (1L << 0)
-#define ATA_IF_NOTCOMPAT2 (1L << 2)
 
 /*===========================================================================*
  *				init_drive				     *
  *===========================================================================*/
-static void init_drive(struct wini *w, int base_cmd, int base_ctl,
-	int base_dma, int irq, int ack, int hook, int drive)
+static void init_drive(int drive, int base_cmd, int base_ctl, int base_dma,
+	int native, int hook)
 {
-	w->state = 0;
-	w->w_status = 0;
-	w->base_cmd = base_cmd;
-	w->base_ctl = base_ctl;
-	w->base_dma = base_dma;
-	if(w_pci_debug)
-	   printf("at_wini%ld: drive %d: base_cmd 0x%x, base_ctl 0x%x, base_dma 0x%x\n",
-		w_instance, w-wini, w->base_cmd, w->base_ctl, w->base_dma);
-	w->irq = irq;
-	w->irq_need_ack = ack;
-	w->irq_hook_id = hook;
-	w->ldhpref = ldh_init(drive);
-	w->max_count = MAX_SECS << SECTOR_SHIFT;
-	w->lba48 = 0;
-	w->dma = 0;
-}
+  struct wini *w;
 
-static int quirkmatch(struct quirk *table, u8_t bcr, u8_t scr, u8_t interface, u16_t vid, u16_t did) {
-	while(table->vendor) {
-		if(table->vendor == vid && table->device == did &&
-			table->pci_class == bcr &&
-			table->pci_subclass == scr &&
-			(table->pci_interface == -1 ||
-				table->pci_interface == interface)) {
-			return 1;
-		}
-		table++;
-	}
+  w = &wini[drive];
 
-	return 0;
-}
-
-static void
-pci_busmaster(int devind)
-{
-	u16_t cr;
-
-	/* Enable busmastering if necessary. */
-	cr = pci_attr_r16(devind, PCI_CR);
-	if (!(cr & PCI_CR_MAST_EN)) {
-		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
-	}
+  w->state = 0;
+  w->w_status = 0;
+  w->base_cmd = base_cmd;
+  w->base_ctl = base_ctl;
+  w->base_dma = base_dma;
+  if (w_pci_debug)
+	printf("at_wini%ld: drive %d: base_cmd 0x%x, base_ctl 0x%x, "
+		"base_dma 0x%x\n", w_instance, drive, w->base_cmd, w->base_ctl,
+		w->base_dma);
+  w->native = native;
+  w->irq_hook_id = hook;
+  w->ldhpref = ldh_init(drive);
+  w->max_count = MAX_SECS << SECTOR_SHIFT;
+  w->lba48 = 0;
+  w->dma = 0;
 }
 
 /*===========================================================================*
- *				init_params_pci				     *
+ *				w_probe					     *
  *===========================================================================*/
-static void init_params_pci(int skip)
+static int w_probe(int skip, u16_t *vidp, u16_t *didp)
 {
-  int i, r, devind, drive, pci_compat = 0;
-  int irq, irq_hook;
-  u8_t bcr, scr, interface;
-  u16_t vid, did;
-  u32_t base_dma, t3;
+/* Go through the PCI devices that have been made visible to us, skipping as
+ * many as requested and then reserving the first one after that. We assume
+ * that all visible devices are in fact devices we can handle.
+ */
+  int r, devind;
 
   pci_init();
-  for(drive = w_next_drive; drive < MAX_DRIVES; drive++)
-  	wini[drive].state = IGNORING;
-  for(r = pci_first_dev(&devind, &vid, &did); r != 0;
-	r = pci_next_dev(&devind, &vid, &did)) {
-	int quirk = 0;
 
-  	/* Except class 01h (mass storage), subclass be 01h (ATA).
-	 * Also check listed RAID controllers.
-  	 */
-	bcr= pci_attr_r8(devind, PCI_BCR);
-	scr= pci_attr_r8(devind, PCI_SCR);
-	interface= pci_attr_r8(devind, PCI_PIFR);
-	t3= ((bcr << 16) | (scr << 8) | interface);
-  	if (bcr == PCI_BCR_MASS_STORAGE && scr == PCI_MS_IDE)
-		;	/* Okay */
-	else if(quirkmatch(quirk_table, bcr, scr, interface, vid, did)) {
-		quirk = 1;
-	} else
-		continue;	/* Unsupported device class */
+  r = pci_first_dev(&devind, vidp, didp);
+  if (r <= 0)
+	return -1;
 
-  	/* Found a controller.
-  	 * Programming interface register tells us more.
-  	 */
-  	irq = pci_attr_r8(devind, PCI_ILR);
-
-  	/* Any non-compat drives? */
-  	if (quirk || (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2))) {
-		if (w_next_drive >= MAX_DRIVES)
-		{
-			/* We can't accept more drives, but have to search for
-			 * controllers operating in compatibility mode.
-			 */
-			continue;
-		}
-
-  		irq_hook = irq;
-  		if (skip > 0) {
-  			if (w_pci_debug)
-			{
-				printf(
-				"atapci skipping controller (remain %d)\n",
-					skip);
-			}
-  			skip--;
-  			continue;
-  		}
-		if(pci_reserve_ok(devind) != OK) {
-			printf("at_wini%ld: pci_reserve %d failed - "
-				"ignoring controller!\n",
-				w_instance, devind);
-			continue;
-		}
-		pci_busmaster(devind);
-  		if (sys_irqsetpolicy(irq, 0, &irq_hook) != OK) {
-		  	printf("atapci: couldn't set IRQ policy %d\n", irq);
-		  	continue;
-		}
-		if (sys_irqenable(&irq_hook) != OK) {
-			printf("atapci: couldn't enable IRQ line %d\n", irq);
-		  	continue;
-		}
-  	} 
-
-	base_dma = pci_attr_r32(devind, PCI_BAR_5) & PCI_BAR_IO_MASK;
-
-  	/* Primary channel not in compatability mode? */
-  	if (quirk || (interface & ATA_IF_NOTCOMPAT1)) {
-  		u32_t base_cmd, base_ctl;
-
-		base_cmd = pci_attr_r32(devind, PCI_BAR) & PCI_BAR_IO_MASK;
-		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & PCI_BAR_IO_MASK;
-  		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
-	  		init_drive(&wini[w_next_drive],
-	  			base_cmd, base_ctl+PCI_CTL_OFF,
-				base_dma, irq, 1, irq_hook, 0);
-  			init_drive(&wini[w_next_drive+1],
-  				base_cmd, base_ctl+PCI_CTL_OFF,
-				base_dma, irq, 1, irq_hook, 1);
-	  		if (w_pci_debug)
-				printf("at_wini%ld: atapci %d: 0x%x 0x%x irq %d\n",
-					w_instance, devind, base_cmd, base_ctl, irq);
-			w_next_drive += 2;
-		} else printf("at_wini%ld: atapci: ignored drives on primary channel, base %x\n", w_instance, base_cmd);
-  	}
-	else
-	{
-		/* Update base_dma for compatibility device */
-		for (i= 0; i<MAX_DRIVES; i++)
-		{
-			if (wini[i].base_cmd == REG_CMD_BASE0) {
-				wini[i].base_dma= base_dma;
-				if(w_pci_debug)
-					printf("at_wini%ld: drive %d: base_dma 0x%x\n",
-					w_instance, i, wini[i].base_dma);
-				pci_compat = 1;
-			}
-		}
-	}
-
-  	/* Secondary channel not in compatability mode? */
-  	if (quirk || (interface & ATA_IF_NOTCOMPAT2)) {
-  		u32_t base_cmd, base_ctl;
-
-		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & PCI_BAR_IO_MASK;
-		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & PCI_BAR_IO_MASK;
-		if (base_dma != 0)
-			base_dma += PCI_DMA_2ND_OFF;
-  		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
-  			init_drive(&wini[w_next_drive],
-  				base_cmd, base_ctl+PCI_CTL_OFF, base_dma,
-				irq, 1, irq_hook, 2);
-	  		init_drive(&wini[w_next_drive+1],
-	  			base_cmd, base_ctl+PCI_CTL_OFF, base_dma,
-				irq, 1, irq_hook, 3);
-	  		if (w_pci_debug)
-			  printf("at_wini%ld: atapci %d: 0x%x 0x%x irq %d\n",
-				w_instance, devind, base_cmd, base_ctl, irq);
-			w_next_drive += 2;
-		} else printf("at_wini%ld: atapci: ignored drives on "
-			"secondary channel, base %x\n", w_instance, base_cmd);
-  	}
-	else
-	{
-		/* Update base_dma for compatibility device */
-		for (i= 0; i<MAX_DRIVES; i++)
-		{
-			if (wini[i].base_cmd == REG_CMD_BASE1 && base_dma != 0) {
-				wini[i].base_dma= base_dma+PCI_DMA_2ND_OFF;
-	  			if (w_pci_debug)
-					printf("at_wini%ld: drive %d: base_dma 0x%x\n",
-					w_instance, i, wini[i].base_dma);
-				pci_compat = 1;
-			}
-		}
-	}
-
-	if(pci_compat) {
-		if(pci_reserve_ok(devind) != OK) {
-			printf("at_wini%ld (compat): pci_reserve %d failed!\n",
-				w_instance, devind);
-		} else pci_busmaster(devind);
-	}
+  while (skip--) {
+	r = pci_next_dev(&devind, vidp, didp);
+	if (r <= 0)
+		return -1;
   }
+
+  pci_reserve(devind);
+
+  return devind;
+}
+
+/*===========================================================================*
+ *				w_init					     *
+ *===========================================================================*/
+static void w_init(int devind, u16_t vid, u16_t did)
+{
+/* Initialize drives on the controller that we found and reserved. Each
+ * controller has two channels, each of which may have up to two disks
+ * attached, so the maximum number of disks per controller is always four.
+ * In this function, we always initialize the slots for all four disks; later,
+ * during normal operation, we determine whether the disks are actually there.
+ * For pure IDE devices (as opposed to e.g. RAID devices), each of the two
+ * channels on the controller may be in native or compatibility mode. The PCI
+ * interface field tells us which channel is in which mode. For native
+ * channels, we get the IRQ and the channel's base control and command
+ * addresses from the PCI slot, and we manually acknowledge interrupts. For
+ * compatibility channels, we use the hardcoded legacy IRQs and addresses, and
+ * enable automatic IRQ reenabling. In both cases, we get the base DMA address
+ * from the PCI slot if it is there.
+ */
+  int r, irq, native_hook, compat_hook, is_ide, nhooks;
+  u8_t bcr, scr, interface;
+  u16_t cr;
+  u32_t base_cmd, base_ctl, base_dma;
+
+  bcr= pci_attr_r8(devind, PCI_BCR);
+  scr= pci_attr_r8(devind, PCI_SCR);
+  interface= pci_attr_r8(devind, PCI_PIFR);
+
+  is_ide = (bcr == PCI_BCR_MASS_STORAGE && scr == PCI_MS_IDE);
+
+  irq = pci_attr_r8(devind, PCI_ILR);
+  base_dma = pci_attr_r32(devind, PCI_BAR_5) & PCI_BAR_IO_MASK;
+
+  nhooks = 0;	/* we don't care about notify IDs, but they must be unique */
+
+  /* Any native drives? Then register their native IRQ first. */
+  if (!is_ide || (interface & (ATA_IF_NATIVE0 | ATA_IF_NATIVE1))) {
+	native_hook = nhooks++;
+	if ((r = sys_irqsetpolicy(irq, 0, &native_hook)) != OK)
+		panic("couldn't set native IRQ policy %d: %d", irq, r);
+	if ((r = sys_irqenable(&native_hook)) != OK)
+		panic("couldn't enable native IRQ line %d: %d", irq, r);
+  }
+
+  /* Add drives on the primary channel. */
+  if (!is_ide || (interface & ATA_IF_NATIVE0)) {
+	base_cmd = pci_attr_r32(devind, PCI_BAR) & PCI_BAR_IO_MASK;
+	base_ctl = pci_attr_r32(devind, PCI_BAR_2) & PCI_BAR_IO_MASK;
+
+	init_drive(0, base_cmd, base_ctl+PCI_CTL_OFF, base_dma, TRUE,
+		native_hook);
+	init_drive(1, base_cmd, base_ctl+PCI_CTL_OFF, base_dma, TRUE,
+		native_hook);
+
+	if (w_pci_debug)
+		printf("at_wini%ld: native 0 on %d: 0x%x 0x%x irq %d\n",
+			w_instance, devind, base_cmd, base_ctl, irq);
+  } else {
+	/* Register first compatibility IRQ. */
+	compat_hook = nhooks++;
+	if ((r = sys_irqsetpolicy(AT_WINI_0_IRQ, IRQ_REENABLE,
+		&compat_hook)) != OK)
+		panic("couldn't set compat(0) IRQ policy: %d", r);
+	if ((r = sys_irqenable(&compat_hook)) != OK)
+		panic("couldn't enable compat(0) IRQ line: %d", r);
+
+	init_drive(0, REG_CMD_BASE0, REG_CTL_BASE0, base_dma, FALSE,
+		compat_hook);
+	init_drive(1, REG_CMD_BASE0, REG_CTL_BASE0, base_dma, FALSE,
+		compat_hook);
+
+	if (w_pci_debug)
+		printf("at_wini%ld: compat 0 on %d\n", w_instance, devind);
+  }
+
+  /* Add drives on the secondary channel. */
+  if (base_dma != 0)
+	base_dma += PCI_DMA_2ND_OFF;
+  if (!is_ide || (interface & ATA_IF_NATIVE1)) {
+	base_cmd = pci_attr_r32(devind, PCI_BAR_3) & PCI_BAR_IO_MASK;
+	base_ctl = pci_attr_r32(devind, PCI_BAR_4) & PCI_BAR_IO_MASK;
+	init_drive(2, base_cmd, base_ctl+PCI_CTL_OFF, base_dma, TRUE,
+		native_hook);
+	init_drive(3, base_cmd, base_ctl+PCI_CTL_OFF, base_dma, TRUE,
+		native_hook);
+	if (w_pci_debug)
+		printf("at_wini%ld: native 1 on %d: 0x%x 0x%x irq %d\n",
+			w_instance, devind, base_cmd, base_ctl, irq);
+  } else {
+	/* Register secondary compatibility IRQ. */
+	compat_hook = nhooks++;
+	if ((r = sys_irqsetpolicy(AT_WINI_1_IRQ, IRQ_REENABLE,
+		&compat_hook)) != OK)
+		panic("couldn't set compat(1) IRQ policy: %d", r);
+	if ((r = sys_irqenable(&compat_hook)) != OK)
+		panic("couldn't enable compat(1) IRQ line: %d", r);
+
+	init_drive(2, REG_CMD_BASE1, REG_CTL_BASE1, base_dma, FALSE,
+		compat_hook);
+	init_drive(3, REG_CMD_BASE1, REG_CTL_BASE1, base_dma, FALSE,
+		compat_hook);
+
+	if (w_pci_debug)
+		printf("at_wini%ld: compat 1 on %d\n", w_instance, devind);
+  }
+
+  /* Enable busmastering if necessary. */
+  cr = pci_attr_r16(devind, PCI_CR);
+  if (!(cr & PCI_CR_MAST_EN))
+	pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
 }
 
 /*===========================================================================*
@@ -599,7 +473,7 @@ static int w_do_open(devminor_t minor, int access)
 	/* Try to identify the device. */
 	if (w_identify() != OK) {
 #if VERBOSE
-  		printf("%s: probe failed\n", w_name());
+		printf("%s: identification failed\n", w_name());
 #endif
 		if (wn->state & DEAF){
 			int err = w_reset();
@@ -621,21 +495,17 @@ static int w_do_open(devminor_t minor, int access)
 	  }
   }
 
-#if ENABLE_ATAPI
    if ((wn->state & ATAPI) && (access & BDEV_W_BIT))
 	return(EACCES);
-#endif
 
   /* Partition the drive if it's being opened for the first time,
    * or being opened after being closed.
    */
   if (wn->open_ct == 0) {
-#if ENABLE_ATAPI
 	if (wn->state & ATAPI) {
 		int r;
 		if ((r = atapi_open()) != OK) return(r);
 	}
-#endif
 
 	/* Partition the disk. */
 	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY,
@@ -655,11 +525,13 @@ static struct device *w_prepare(devminor_t device)
 
   if (device >= 0 && device < NR_MINORS) {	/* d0, d0p[0-3], d1, ... */
 	w_drive = device / DEV_PER_DRIVE;	/* save drive number */
+	if (w_drive >= MAX_DRIVES) return(NULL);
 	w_wn = &wini[w_drive];
 	w_dv = &w_wn->part[device % DEV_PER_DRIVE];
   } else
   if ((unsigned) (device -= MINOR_d0p0s0) < NR_SUBDEVS) {/*d[0-7]p[0-3]s[0-3]*/
 	w_drive = device / SUB_PER_DRIVE;
+	if (w_drive >= MAX_DRIVES) return(NULL);
 	w_wn = &wini[w_drive];
 	w_dv = &w_wn->subpart[device % SUB_PER_DRIVE];
   } else {
@@ -806,24 +678,14 @@ static int w_identify(void)
 	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
 		panic("Call to sys_insw() failed: %d", s);
 
-#if 0
-	if (id_word(0) & ID_GEN_NOT_ATA)
-	{
-		printf("%s: not an ATA device?\n", w_name());
-  		wakeup_ticks = prev_wakeup;
-		w_testing = 0;
-		return ERR;
-	}
-#endif
-
 	/* This is an ATA device. */
 	wn->state |= SMART;
 
 	/* Preferred CHS translation mode. */
-	wn->pcylinders = id_word(1);
-	wn->pheads = id_word(3);
-	wn->psectors = id_word(6);
-	size = (u32_t) wn->pcylinders * wn->pheads * wn->psectors;
+	wn->cylinders = id_word(1);
+	wn->heads = id_word(3);
+	wn->sectors = id_word(6);
+	size = (u32_t) wn->cylinders * wn->heads * wn->sectors;
 
 	w= id_word(ID_CAPABILITIES);
 	if ((w & ID_CAP_LBA) && size > 512L*1024*2) {
@@ -856,20 +718,7 @@ static int w_identify(void)
 
 		check_dma(wn);
 	}
-
-	if (wn->lcylinders == 0 || wn->lheads == 0 || wn->lsectors == 0) {
-		/* No BIOS parameters?  Then make some up. */
-		wn->lcylinders = wn->pcylinders;
-		wn->lheads = wn->pheads;
-		wn->lsectors = wn->psectors;
-		while (wn->lcylinders > 1024) {
-			wn->lheads *= 2;
-			wn->lcylinders /= 2;
-		}
-	}
-#if ENABLE_ATAPI
-  } else
-  if (cmd.command = ATAPI_IDENTIFY,
+  } else if (cmd.command = ATAPI_IDENTIFY,
 	com_simple(&cmd) == OK && w_waitfor(STATUS_DRQ, STATUS_DRQ) &&
 	!(wn->w_status & (STATUS_ERR|STATUS_WF))) {
 	/* An ATAPI device. */
@@ -881,20 +730,13 @@ static int w_identify(void)
 
 	size = 0;	/* Size set later. */
 	check_dma(wn);
-#endif
   } else {
 	/* Not an ATA device; no translations, no special features.  Don't
-	 * touch it unless the BIOS knows about it.
+	 * touch it.
 	 */
-	if (wn->lcylinders == 0) { 
-  		wakeup_ticks = prev_wakeup;
-		w_testing = 0;
-		return(ERR);
-	}	/* no BIOS parameters */
-	wn->pcylinders = wn->lcylinders;
-	wn->pheads = wn->lheads;
-	wn->psectors = wn->lsectors;
-	size = (u32_t) wn->pcylinders * wn->pheads * wn->psectors;
+	wakeup_ticks = prev_wakeup;
+	w_testing = 0;
+	return(ERR);
   }
 
   /* Restore wakeup_ticks and unset testing mode. */
@@ -909,15 +751,6 @@ static int w_identify(void)
   	return(ERR);
   }
 
-  if (wn->irq == NO_IRQ) {
-	  /* Everything looks OK; register IRQ so we can stop polling. */
-	  wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
-	  wn->irq_hook_id = wn->irq;	/* id to be returned if interrupt occurs */
-	  if ((s=sys_irqsetpolicy(wn->irq, IRQ_REENABLE, &wn->irq_hook_id)) != OK) 
-	  	panic("couldn't set IRQ policy: %d", s);
-	  if ((s=sys_irqenable(&wn->irq_hook_id)) != OK)
-	  	panic("couldn't enable IRQ line: %d", s);
-  }
   wn->state |= IDENTIFIED;
   return(OK);
 }
@@ -946,11 +779,7 @@ static int w_io_test(void)
 	static char *buf;
 	ssize_t r;
 
-#ifdef CD_SECTOR_SIZE
 #define BUFSIZE CD_SECTOR_SIZE
-#else
-#define BUFSIZE SECTOR_SIZE
-#endif
 	STATICINIT(buf, BUFSIZE);
 
 	iov.iov_addr = (vir_bytes) buf;
@@ -971,7 +800,7 @@ static int w_io_test(void)
 	w_testing = 1;
 
 	/* Try I/O on the actual drive (not any (sub)partition). */
-	r = w_transfer(w_drive * DEV_PER_DRIVE, FALSE /*do_write*/, ((u64_t)(0)),
+	r = w_transfer(w_drive * DEV_PER_DRIVE, FALSE /*do_write*/, 0,
 		SELF, &iov, 1, BDEV_NOFLAGS);
 
 	/* Switch back. */
@@ -1009,9 +838,9 @@ static int w_specify(void)
 
   if (!(wn->state & ATAPI)) {
 	/* Specify parameters: precompensation, number of heads and sectors. */
-	cmd.precomp = wn->precomp;
-	cmd.count   = wn->psectors;
-	cmd.ldh     = w_wn->ldhpref | (wn->pheads - 1);
+	cmd.precomp = 0;
+	cmd.count   = wn->sectors;
+	cmd.ldh     = w_wn->ldhpref | (wn->heads - 1);
 	cmd.command = CMD_SPECIFY;		/* Specify some parameters */
 
 	/* Output command block and see if controller accepts the parameters. */
@@ -1035,13 +864,12 @@ static int w_specify(void)
 /*===========================================================================*
  *				do_transfer				     *
  *===========================================================================*/
-static int do_transfer(const struct wini *wn, unsigned int precomp,
-	unsigned int count, unsigned int sector,
-	unsigned int do_write, int do_dma)
+static int do_transfer(const struct wini *wn, unsigned int count,
+	unsigned int sector, unsigned int do_write, int do_dma)
 {
   	struct command cmd;
 	unsigned int sector_high;
-	unsigned secspcyl = wn->pheads * wn->psectors;
+	unsigned secspcyl = wn->heads * wn->sectors;
 	int do_lba48;
 
 	sector_high= 0;	/* For future extensions */
@@ -1058,7 +886,7 @@ static int do_transfer(const struct wini *wn, unsigned int precomp,
 		}
 	}
 
-	cmd.precomp = precomp;
+	cmd.precomp = 0;
 	cmd.count   = count;
 	if (do_dma)
 	{
@@ -1096,8 +924,8 @@ static int do_transfer(const struct wini *wn, unsigned int precomp,
 	} else {
   		int cylinder, head, sec;
 		cylinder = sector / secspcyl;
-		head = (sector % secspcyl) / wn->psectors;
-		sec = sector % wn->psectors;
+		head = (sector % secspcyl) / wn->sectors;
+		sec = sector % wn->sectors;
 		cmd.sector  = sec + 1;
 		cmd.cyl_lo  = cylinder & BYTE;
 		cmd.cyl_hi  = (cylinder >> 8) & BYTE;
@@ -1179,11 +1007,11 @@ static ssize_t w_transfer(
 {
   struct wini *wn;
   iovec_t *iop, *iov_end = iov + nr_req;
-  int n, r, s, errors, do_dma;
+  int r, s, errors, do_dma;
   unsigned long block;
   u32_t w_status;
   u64_t dv_size;
-  unsigned nbytes;
+  unsigned int n, nbytes;
   unsigned dma_buf_offset;
   ssize_t total = 0;
   size_t addr_offset = 0;
@@ -1193,11 +1021,9 @@ static ssize_t w_transfer(
   wn = w_wn;
   dv_size = w_dv->dv_size;
 
-#if ENABLE_ATAPI
   if (w_wn->state & ATAPI) {
 	return atapi_transfer(do_write, position, proc_nr, iov, nr_req);
   }
-#endif
 
   /* Check disk address. */
   if ((unsigned)(position % SECTOR_SIZE) != 0) return(EINVAL);
@@ -1237,8 +1063,7 @@ static ssize_t w_transfer(
 	}
 
 	/* Tell the controller to transfer nbytes bytes. */
-	r = do_transfer(wn, wn->precomp, (nbytes >> SECTOR_SHIFT),
-		block, do_write, do_dma);
+	r = do_transfer(wn, (nbytes >> SECTOR_SHIFT), block, do_write, do_dma);
 
 	if (do_dma)
 		start_dma(wn, do_write);
@@ -1427,7 +1252,7 @@ struct command *cmd;		/* Command block */
 
   wn->w_status = STATUS_ADMBSY;
   w_command = cmd->command;
-  pv_set(outbyte[0], base_ctl + REG_CTL, wn->pheads >= 8 ? CTL_EIGHTHEADS : 0);
+  pv_set(outbyte[0], base_ctl + REG_CTL, wn->heads >= 8 ? CTL_EIGHTHEADS : 0);
   pv_set(outbyte[1], base_cmd + REG_PRECOMP, cmd->precomp);
   pv_set(outbyte[2], base_cmd + REG_COUNT, cmd->count);
   pv_set(outbyte[3], base_cmd + REG_SECTOR, cmd->sector);
@@ -1642,9 +1467,7 @@ static int w_do_close(devminor_t minor)
   if (w_prepare(minor) == NULL)
   	return(ENXIO);
   w_wn->open_ct--;
-#if ENABLE_ATAPI
   if (w_wn->open_ct == 0 && (w_wn->state & ATAPI)) atapi_close();
-#endif
   return(OK);
 }
 
@@ -1733,7 +1556,7 @@ static int w_reset(void)
   for (wn = wini; wn < &wini[MAX_DRIVES]; wn++) {
 	if (wn->base_cmd == w_wn->base_cmd) {
 		wn->state &= ~DEAF;
-  		if (w_wn->irq_need_ack) {
+		if (w_wn->native) {
 		    	/* Make sure irq is actually enabled.. */
 	  		sys_irqenable(&w_wn->irq_hook_id);
 		}
@@ -1755,14 +1578,13 @@ static void w_intr_wait(void)
   message m;
   int ipc_status;
 
-  if (w_wn->irq != NO_IRQ) {
+  if (w_wn->state & IDENTIFIED) {
 	/* Wait for an interrupt that sets w_status to "not busy".
 	 * (w_timeout() also clears w_status.)
 	 */
 	while (w_wn->w_status & (STATUS_ADMBSY|STATUS_BSY)) {
-		int rr;
-		if((rr=driver_receive(ANY, &m, &ipc_status)) != OK)
-			panic("driver_receive failed: %d", rr);
+		if ((r=driver_receive(ANY, &m, &ipc_status)) != OK)
+			panic("driver_receive failed: %d", r);
 		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 				case CLOCK:
@@ -1776,7 +1598,7 @@ static void w_intr_wait(void)
 					if (r != 0)
 						panic("sys_inb failed: %d", r);
 					w_wn->w_status= w_status;
-					ack_irqs(m.NOTIFY_ARG);
+					w_hw_int(m.NOTIFY_ARG);
 					break;
 				default:
 					/* 
@@ -1795,7 +1617,7 @@ static void w_intr_wait(void)
 		}
 	}
   } else {
-	/* Interrupt not yet allocated; use polling. */
+	/* Device not yet identified; use polling. */
 	(void) w_waitfor(STATUS_BSY, 0);
   }
 }
@@ -1855,8 +1677,8 @@ int value;			/* required status */
  *				w_waitfor_dma				     *
  *===========================================================================*/
 static int w_waitfor_dma(mask, value)
-int mask;			/* status mask */
-int value;			/* required status */
+unsigned int mask;		/* status mask */
+unsigned value;			/* required status */
 {
 /* Wait until controller is in the required state.  Return zero on timeout.
  */
@@ -1891,13 +1713,16 @@ static void w_geometry(devminor_t minor, struct part_geom *entry)
 	entry->heads = 64;
 	entry->sectors = 32;
   } else {				/* Return logical geometry. */
-	entry->cylinders = wn->lcylinders;
-	entry->heads = wn->lheads;
-	entry->sectors = wn->lsectors;
+	entry->cylinders = wn->cylinders;
+	entry->heads = wn->heads;
+	entry->sectors = wn->sectors;
+	while (entry->cylinders > 1024) {
+		entry->heads *= 2;
+		entry->cylinders /= 2;
+	}
   }
 }
 
-#if ENABLE_ATAPI
 /*===========================================================================*
  *				atapi_open				     *
  *===========================================================================*/
@@ -2052,7 +1877,7 @@ static int atapi_transfer(
 		} else {
 			dmabytes += nbytes;
 			while (nbytes > 0) {
-				vir_bytes chunk = nbytes;
+				chunk = nbytes;
 
 				if (chunk > iov->iov_size)
 					chunk = iov->iov_size;
@@ -2205,9 +2030,6 @@ int do_dma;
   return(OK);
 }
 
-
-#endif /* ENABLE_ATAPI */
-
 /*===========================================================================*
  *				w_ioctl					     *
  *===========================================================================*/
@@ -2292,24 +2114,14 @@ static int w_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 /*===========================================================================*
  *				w_hw_int				     *
  *===========================================================================*/
-static void w_hw_int(unsigned int irqs)
+static void w_hw_int(unsigned int UNUSED(irqs))
 {
-  /* Leftover interrupt(s) received; ack it/them. */
-  ack_irqs(irqs);
-}
-
-
-/*===========================================================================*
- *				ack_irqs				     *
- *===========================================================================*/
-static void ack_irqs(unsigned int irqs)
-{
+  /* Leftover interrupt(s) received; ack it/them.  For native drives only. */
   unsigned int drive;
   u32_t w_status;
 
   for (drive = 0; drive < MAX_DRIVES; drive++) {
-  	if (!(wini[drive].state & IGNORING) && wini[drive].irq_need_ack &&
-		((1L << wini[drive].irq) & irqs)) {
+	if (!(wini[drive].state & IGNORING) && wini[drive].native) {
 		if (sys_inb((wini[drive].base_cmd + REG_STATUS),
 			&w_status) != OK)
 		{
@@ -2359,8 +2171,6 @@ static char *strerr(int e)
 
 	return str;
 }
-
-#if ENABLE_ATAPI
 
 /*===========================================================================*
  *				atapi_intr_wait				     *
@@ -2432,55 +2242,3 @@ static int atapi_intr_wait(int UNUSED(do_dma), size_t UNUSED(max))
   wn->w_status |= STATUS_ADMBSY;	/* Assume not done yet. */
   return(r);
 }
-
-#endif /* ENABLE_ATAPI */
-
-#undef sys_voutb
-#undef sys_vinb
-
-static int at_voutb(pvb_pair_t *pvb, int n)
-{
-  int s, i;
-  if ((s=sys_voutb(pvb,n)) == OK)
-	return OK;
-  printf("at_wini%ld: sys_voutb failed: %d pvb (%d):\n", w_instance, s, n);
-  for(i = 0; i < n; i++)
-	printf("%2d: %4x -> %4x\n", i, pvb[i].value, pvb[i].port);
-  panic("sys_voutb failed");
-}
-
-static int at_vinb(pvb_pair_t *pvb, int n)
-{
-  int s, i;
-  if ((s=sys_vinb(pvb,n)) == OK)
-	return OK;
-  printf("at_wini%ld: sys_vinb failed: %d pvb (%d):\n", w_instance, s, n);
-  for(i = 0; i < n; i++)
-	printf("%2d: %4x\n", i, pvb[i].port);
-  panic("sys_vinb failed");
-}
-
-static int at_out(int line, u32_t port, u32_t value, char *typename, int type)
-{
-	int s;
-	s = sys_out(port, value, type);
-	if(s == OK)
-		return OK;
-	printf("at_wini%ld: line %d: %s failed: %d; %x -> %x\n",
-		w_instance, line, typename, s, value, port);
-        panic("sys_out failed");
-}
-
-
-static int at_in(int line, u32_t port, u32_t *value, char *typename, int type)
-{
-	int s;
-	s = sys_in(port, value, type);
-	if(s == OK)
-		return OK;
-	printf("at_wini%ld: line %d: %s failed: %d; port %x\n",
-		w_instance, line, typename, s, port);
-        panic("sys_in failed");
-}
-
-
