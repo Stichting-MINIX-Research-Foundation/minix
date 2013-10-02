@@ -93,22 +93,8 @@
 */
 #define NR_MEMS            16
 
-
-/* Click to byte conversions (and vice versa). */
-#define HCLICK_SHIFT       4	/* log2 of HCLICK_SIZE */
-#define HCLICK_SIZE       16	/* hardware segment conversion magic */
-#if CLICK_SIZE >= HCLICK_SIZE
-#define click_to_hclick(n) ((n) << (CLICK_SHIFT - HCLICK_SHIFT))
-#else
-#define click_to_hclick(n) ((n) >> (HCLICK_SHIFT - CLICK_SHIFT))
-#endif
-#define hclick_to_physb(n) ((phys_bytes) (n) << HCLICK_SHIFT)
-#define physb_to_hclick(n) ((n) >> HCLICK_SHIFT)
-
 #define CLICK2ABS(v) ((v) << CLICK_SHIFT)
 #define ABS2CLICK(a) ((a) >> CLICK_SHIFT)
-
-#define ABS             -999	/* this process means absolute memory */
 
 /* Flag bits for i_mode in the inode. */
 #define I_TYPE          0170000	/* this field gives inode type */
