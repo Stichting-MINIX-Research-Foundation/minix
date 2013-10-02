@@ -3,7 +3,7 @@
 CONSOLE=tty02 
 #verbosity
 VERBOSE=3 
-HZ=1000
+HZ=100
 while getopts "c:v:?" c
 do
         case "$c" in
