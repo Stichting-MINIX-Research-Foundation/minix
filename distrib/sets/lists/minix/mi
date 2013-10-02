@@ -1581,6 +1581,7 @@
 ./usr/lib/keymaps/italian.map		minix-sys
 ./usr/lib/keymaps/japanese.map		minix-sys
 ./usr/lib/keymaps/latin-america.map	minix-sys
+./usr/lib/keymaps/norwegian.map		minix-sys
 ./usr/lib/keymaps/polish.map		minix-sys
 ./usr/lib/keymaps/portuguese.map	minix-sys
 ./usr/lib/keymaps/russian-cp1251.map	minix-sys
