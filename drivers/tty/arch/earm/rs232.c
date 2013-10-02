@@ -343,7 +343,6 @@ termios_baud_rate(struct termios *term)
 {
 	int baud;
 	switch(term->c_ospeed) {
-	case B0: term->c_ospeed = DFLT_BAUD; baud = termios_baud_rate(term);
 	case B300: baud = 300; break;
 	case B600: baud = 600; break;
 	case B1200: baud = 1200; break;
@@ -353,7 +352,14 @@ termios_baud_rate(struct termios *term)
 	case B38400: baud = 38400; break;
 	case B57600: baud = 57600; break;
 	case B115200: baud = 115200; break;
-	default: term->c_ospeed = DFLT_BAUD; baud = termios_baud_rate(term);
+	case B0:
+	default:
+		/* Reset the speed to the default speed, then call ourselves
+		 * to convert the default speed to a baudrate. This call will
+		 * always return a value without inducing another recursive
+		 * call. */
+		term->c_ospeed = DFLT_BAUD;
+		baud = termios_baud_rate(term);
 	}
 
 	return baud;
