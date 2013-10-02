@@ -83,7 +83,7 @@
    K(DOWN_ARROW)    = {	DOWN,	DOWN,	DOWN,	ADOWN,	DOWN,	CDOWN	},
    K(UP_ARROW)      = {	UP,	UP,	UP,	AUP,	UP,	CUP	},
    K(NUM_LOCK)      = {	NLOCK,	NLOCK,	NLOCK,	NLOCK,	NLOCK,	NLOCK	},
-   K(KP_SLASH)      = {	'/',	'/',	'.',	A('/'),	'.',	C('@')	},
+   K(KP_SLASH)      = {	'/',	'/',	'/',	A('/'),	'/',	C('@')	},
    K(KP_STAR)       = {	'*',	'*',	'*',	A('*'),	'*',	C('@')	},
    K(KP_DASH)       = {	'-',	'-',	'-',	AMIN,	'-',	CMIN	},
    K(KP_PLUS)       = {	'+',	'+',	'+',	APLUS,	'+',	CPLUS	},
