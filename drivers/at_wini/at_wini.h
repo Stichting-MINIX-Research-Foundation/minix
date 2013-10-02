@@ -4,7 +4,6 @@
 
 #define VERBOSE		   0	/* display identify messages during boot */
 #define VERBOSE_DMA	   0	/* display DMA debugging information */
-#define ENABLE_ATAPI	   1	/* add ATAPI cd-rom support to driver */
 
 #define ATAPI_DEBUG	    0	/* To debug ATAPI code. */
 
@@ -129,7 +128,6 @@
 						 * regular LBA.
 						 */
 
-#if ENABLE_ATAPI
 #define   ERROR_SENSE           0xF0    /* sense key mask */
 #define     SENSE_NONE          0x00    /* no sense key */
 #define     SENSE_RECERR        0x10    /* recovered error */
@@ -156,7 +154,6 @@
 #define REG_CNT_LO          4   /* low byte of cylinder number */
 #define REG_CNT_HI          5   /* high byte of cylinder number */
 #define REG_DRIVE           6   /* drive select */
-#endif
 
 #define REG_STATUS          7   /* status */
 #define   STATUS_BSY            0x80    /* controller busy */
@@ -167,15 +164,10 @@
 #define   STATUS_CORR           0x04    /* correctable error occurred */
 #define   STATUS_CHECK          0x01    /* check error */
 
-#if ENABLE_ATAPI
 #define   ATAPI_PACKETCMD       0xA0    /* packet command */
 #define   ATAPI_IDENTIFY        0xA1    /* identify drive */
 #define   SCSI_READ10           0x28    /* read from disk */
 #define   SCSI_SENSE            0x03    /* sense request */
-#endif /* ATAPI */
-
-/* Interrupt request lines. */
-#define NO_IRQ		 0	/* no IRQ set yet */
 
 #define ATAPI_PACKETSIZE	12
 #define SENSE_PACKETSIZE	18
@@ -185,16 +177,16 @@
 #define ERR_BAD_SECTOR	 (-2)	/* block marked bad detected */
 
 /* Some controllers don't interrupt, the clock will wake us up. */
-#define WAKEUP_SECS	32			/* drive may be out for 31 seconds max */
+#define WAKEUP_SECS	32	/* drive may be out for 31 seconds max */
 #define WAKEUP_TICKS	(WAKEUP_SECS*system_hz)
 
 /* Miscellaneous. */
-#define MAX_DRIVES         8
-#define COMPAT_DRIVES      4
+#define MAX_DRIVES         4	/* max number of actual drives per instance */
+#define MAX_DRIVENODES     8	/* number of drive nodes, for node numbering */
 #define MAX_SECS	 256	/* controller can transfer this many sectors */
 #define MAX_ERRORS         4	/* how often to try rd/wt before quitting */
-#define NR_MINORS       (MAX_DRIVES * DEV_PER_DRIVE)
-#define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
+#define NR_MINORS       (MAX_DRIVENODES * DEV_PER_DRIVE)
+#define NR_SUBDEVS	(MAX_DRIVENODES * SUB_PER_DRIVE)
 #define DELAY_USECS     1000	/* controller timeout in microseconds */
 #define DELAY_TICKS 	   1	/* controller timeout in ticks */
 #define DEF_TIMEOUT_USECS 5000000L  /* controller timeout in microseconds */
@@ -203,18 +195,15 @@
 #define INITIALIZED	0x01	/* drive is initialized */
 #define DEAF		0x02	/* controller must be reset */
 #define SMART		0x04	/* drive supports ATA commands */
-#if ENABLE_ATAPI
 #define ATAPI		0x08	/* it is an ATAPI device */
-#else
-#define ATAPI		   0	/* don't bother with ATAPI; optimise out */
-#endif
 #define IDENTIFIED	0x10	/* w_identify done successfully */
 #define IGNORING	0x20	/* w_identify failed once */
 
 #define NO_DMA_VAR 	"ata_no_dma"
 
-/* BIOS parameter table layout. */
-#define bp_cylinders(t)	(t[0] | (t[1] << 8))
-#define bp_heads(t)	(t[2])
-#define bp_precomp(t)	(t[5] | (t[6] << 8))
-#define bp_sectors(t)	(t[14])
+#define ATA_IF_NATIVE0	(1L << 0)	/* first channel is in native mode */
+#define ATA_IF_NATIVE1	(1L << 2)	/* second channel is in native mode */
+
+extern int sef_cb_lu_prepare(int state);
+extern int sef_cb_lu_state_isvalid(int state);
+extern void sef_cb_lu_state_dump(int state);
