@@ -1,0 +1,8 @@
+Verified+1: Jenkins
+Code-Review+2: Lionel Sambuc <lionel.sambuc@gmail.com>
+Code-Review+2: Thomas Cort <tcort@minix3.org>
+Submitted-by: Ben Gras <ben@minix3.org>
+Submitted-at: Wed, 02 Oct 2013 14:57:15 +0200
+Reviewed-on: http://gerrit-minix.few.vu.nl/1001
+Project: minix
+Branch: refs/heads/master
