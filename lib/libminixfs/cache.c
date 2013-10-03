@@ -616,11 +616,9 @@ void lmfs_rw_scattered(
   int gap;
   register int i;
   register iovec_t *iop;
-  static iovec_t *iovec = NULL;
+  static iovec_t iovec[NR_IOREQS];
   u64_t pos;
   int iov_per_block;
-
-  STATICINIT(iovec, NR_IOREQS);
 
   assert(dev != NO_DEV);
   assert(!(fs_block_size % PAGE_SIZE));
