@@ -27,9 +27,9 @@ RAMDISK_DEFINES= \
 PROTO=	proto
 
 # Common to all architectures
-ETC=		system.conf master.passwd
+ETC=		system.conf master.passwd group
 EXTRA=		rc
-PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
+PROTO_FILES=	proto.common.etc proto.common.dynamic
 PROG_DRIVERS=
 PROG_COMMANDS=	mount umount grep fsck.mfs sh service loadramdisk sysenv
 PROG_SERVERS=	input mfs procfs
@@ -80,8 +80,8 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 
 # LSC We have to take care of not erasing the source file, so never add EXTRA
 # to CLEANFILES
-CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${ETC} image image.c t proto.gen
-CLEANFILES += ${LIBRARIES}
+CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${ETC} image image.c t
+CLEANFILES += proto.gen proto.dev proto.dev.mtree
 CLEANFILES += ${PROG_LIBEXEC}
 CLEANFILES += ${.OBJDIR}/etc/*
 
@@ -93,7 +93,7 @@ CLEANFILES += ${.OBJDIR}/etc/*
 TOOL_PWD_MKDB?= ${NETBSDSRCDIR}/usr.sbin/pwd_mkdb/pwd_mkdb
 
 # Remove "drivers/ramdisk" component from path
-PROGROOT:= ${.OBJDIR:S,drivers/ramdisk,,}
+PROGROOT:= ${.OBJDIR:S,/drivers/ramdisk,,}
 
 # Generate dependencies rules for config files
 .for etc in ${ETC}
@@ -139,7 +139,7 @@ ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}:
 .endfor # prog
 .endfor # srcdir
 
-image:	proto.gen ${ETC} ${EXTRA} pwd.db spwd.db passwd
+realall image:	proto.gen ${ETC} ${EXTRA} pwd.db spwd.db passwd group
 	${_MKMSG_CREATE} "Generating ramdisk image"
 	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
 #	if fsck.mfs -s image | grep -q CLEAN;	\
@@ -160,12 +160,29 @@ etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
 pwd.db spwd.db passwd: etc/master.passwd
 	${INSTALL} etc/${@F} ${@F}
 
-proto.gen: ${PROTO} ${PROTO_FILES} ${PROGRAMS}
+proto.dev.mtree:
+	@echo ". type=dir uname=root gname=operator mode=0755" \
+		>${.TARGET}.tmp && \
+	echo "./dev type=dir uname=root gname=operator mode=0755" \
+		>>${.TARGET}.tmp && \
+	${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh -m -r \
+		>> ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+
+# We have to remove the two first entries of the generated proto file, as
+# well as the two last ones (closing $).
+# Do not forget to double $ so that make doesn't try to expand it.
+proto.dev: proto.dev.mtree pwd.db spwd.db passwd group
+	${TOOL_MTREE} -f ${.TARGET}.mtree -N ${.OBJDIR} -C -K device | \
+		${TOOL_TOPROTO} | ${TOOL_SED} -e '1,4d' | \
+		${TOOL_SED} -e '$$d' |${TOOL_SED} -e '$$d' > ${.TARGET}.tmp && \
+		mv ${.TARGET}.tmp ${.TARGET}
+
+proto.gen: ${PROTO} ${PROTO_FILES} proto.dev ${PROGRAMS}
 	${STRIP} ${PROGRAMS}
 	# We are using the c preprocessor to generate proto.gen
 	# used in the mkfs tool.
 	${TOOL_CAT} ${PROTO} | ${CC} \
 	    	${RAMDISK_DEFINES} \
-		-E - | grep -v "^$$" | grep -v "#" >${.OBJDIR}/${.TARGET}
+		-E - | grep -v "^$$" | grep -v "#" >${.TARGET}
 
 .include <minix.service.mk>
