@@ -192,8 +192,9 @@ static int rw_super(struct super_block *sp, int writing)
 {
 /* Read/write a superblock. */
   int r;
-  static char *sbbuf;
   dev_t save_dev = sp->s_dev;
+  struct buf *bp;
+  char *sbbuf;
 
 /* To keep the 1kb on disk clean, only read/write up to and including
  * this field.
@@ -202,8 +203,6 @@ static int rw_super(struct super_block *sp, int writing)
   int ondisk_bytes = (int) ((char *) &sp->LAST_ONDISK_FIELD - (char *) sp)
   	+ sizeof(sp->LAST_ONDISK_FIELD);
 
-  STATICINIT(sbbuf, _MIN_BLOCK_SIZE);
-
   assert(ondisk_bytes > 0);
   assert(ondisk_bytes < _MIN_BLOCK_SIZE);
   assert(ondisk_bytes < sizeof(struct super_block));
@@ -211,21 +210,36 @@ static int rw_super(struct super_block *sp, int writing)
   if (sp->s_dev == NO_DEV)
   	panic("request for super_block of NO_DEV");
 
+  /* we rely on the cache blocksize, before reading the
+   * superblock, being big enough that our complete superblock
+   * is in block 0.
+   *
+   * copy between the disk block and the superblock buffer (depending
+   * on direction). mark the disk block dirty if the copy is into the
+   * disk block.
+   */
+  assert(lmfs_fs_block_size() >= sizeof(struct super_block) + SUPER_BLOCK_BYTES);
+  assert(lmfs_fs_block_size() >= _MIN_BLOCK_SIZE + SUPER_BLOCK_BYTES);
+  assert(SUPER_BLOCK_BYTES >= sizeof(struct super_block));
+  assert(SUPER_BLOCK_BYTES >= ondisk_bytes);
+  if(!(bp = get_block(sp->s_dev, 0, NORMAL)))
+  	panic("get_block of superblock failed");
+
+  /* sbbuf points to the disk block at the superblock offset */
+  sbbuf = (char *) b_data(bp) + SUPER_BLOCK_BYTES;
+
   if(writing) {
   	memset(sbbuf, 0, _MIN_BLOCK_SIZE);
   	memcpy(sbbuf, sp, ondisk_bytes);
-  	r = bdev_write(sp->s_dev, ((u64_t)(SUPER_BLOCK_BYTES)), sbbuf, _MIN_BLOCK_SIZE,
-		BDEV_NOFLAGS);
+	lmfs_markdirty(bp);
   } else {
-  	r = bdev_read(sp->s_dev, ((u64_t)(SUPER_BLOCK_BYTES)), sbbuf, _MIN_BLOCK_SIZE,
-		BDEV_NOFLAGS);
 	memset(sp, 0, sizeof(*sp));
   	memcpy(sp, sbbuf, ondisk_bytes);
   	sp->s_dev = save_dev;
   }
 
-  if (r != _MIN_BLOCK_SIZE)
-  	return(EINVAL);
+  put_block(bp, FULL_DATA_BLOCK);
+  lmfs_flushall();
 
   return OK;
 }
