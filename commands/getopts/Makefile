@@ -1,4 +1,4 @@
-SCRIPTS= cd.sh
+SCRIPTS= getopts.sh
 BINDIR=	/bin
 MAN=
 

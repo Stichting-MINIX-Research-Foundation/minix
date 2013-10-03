@@ -1,4 +1,4 @@
-SCRIPTS= cd.sh
+SCRIPTS= echo.sh
 BINDIR=	/bin
 MAN=
 

@@ -1,4 +1,4 @@
-SCRIPTS= cd.sh
+SCRIPTS= read.sh
 BINDIR=	/bin
 MAN=
 

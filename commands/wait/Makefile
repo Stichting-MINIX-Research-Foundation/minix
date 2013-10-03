@@ -1,4 +1,4 @@
-SCRIPTS= cd.sh
+SCRIPTS= wait.sh
 BINDIR=	/bin
 MAN=
 

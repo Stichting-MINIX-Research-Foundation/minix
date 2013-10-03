@@ -34,7 +34,9 @@ SUBDIR=	add_route arp ash at backup btrace \
 	worldstone updateboot update_bootcfg \
 	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
-	recwave repartition screendump
+	recwave repartition screendump \
+	command echo expr false getopts read test true \
+       	umask wait
 
 .if ${MACHINE_ARCH} == "earm"
 SUBDIR+=	eepromread

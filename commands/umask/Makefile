@@ -1,4 +1,4 @@
-SCRIPTS= cd.sh
+SCRIPTS= umask.sh
 BINDIR=	/bin
 MAN=
 
