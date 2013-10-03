@@ -38,7 +38,7 @@ static struct buf **buf_hash;   /* the buffer hash table */
 static unsigned int nr_bufs;
 static int may_use_vmcache;
 
-static int fs_block_size = 1024;	/* raw i/o block size */
+static int fs_block_size = PAGE_SIZE;	/* raw i/o block size */
 
 static int rdwt_err;
 
@@ -616,11 +616,9 @@ void lmfs_rw_scattered(
   int gap;
   register int i;
   register iovec_t *iop;
-  static iovec_t *iovec = NULL;
+  static iovec_t iovec[NR_IOREQS];
   u64_t pos;
   int iov_per_block;
-
-  STATICINIT(iovec, NR_IOREQS);
 
   assert(dev != NO_DEV);
   assert(!(fs_block_size % PAGE_SIZE));
