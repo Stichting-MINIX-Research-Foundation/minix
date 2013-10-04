@@ -2783,10 +2783,8 @@ void test_select()
 	int res = 0;
 	char buf[1];
 
-	for (i = 0; i < OPEN_MAX; i++) {
-		FD_CLR(i, &readfds);
-		FD_CLR(i, &writefds);
-	}
+	FD_ZERO(&readfds);
+	FD_ZERO(&writefds);
 
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;	/* 2 sec time out */
@@ -2795,7 +2793,7 @@ void test_select()
 		test_fail("Can't open socket pair.");
 	}
 	FD_SET(socks[0], &readfds);
-	nfds = socks[1] + 1;
+	nfds = socks[0] + 1;
 
 	/* Close the write end of the socket to generate EOF on read end */
 	if ((res = shutdown(socks[1], SHUT_WR)) != 0) {
@@ -2853,7 +2851,47 @@ void test_select()
 	}
 
 	close(socks[1]);
+}
 
+void test_select_close(void)
+{
+	int res, socks[2];
+	fd_set readfds;
+	struct timeval tv;
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, socks) < 0) {
+		test_fail("Can't open socket pair.");
+	}
+
+	switch (fork()) {
+	case 0:
+		sleep(1);
+
+		exit(0);
+	case -1:
+		test_fail("Can't fork.");
+	default:
+		break;
+	}
+
+	close(socks[1]);
+
+	FD_ZERO(&readfds);
+	FD_SET(socks[0], &readfds);
+	tv.tv_sec = 2;
+	tv.tv_usec = 0;	/* 2 sec time out */
+
+	res = select(socks[0] + 1, &readfds, NULL, NULL, &tv);
+	if (res != 1) {
+		test_fail("select should've returned 1 ready fd\n");
+	}
+	if (!(FD_ISSET(socks[0], &readfds))) {
+		test_fail("The server didn't respond within 2 seconds");
+	}
+
+	wait(NULL);
+
+	close(socks[0]);
 }
 
 void test_fchmod()
@@ -2887,6 +2925,562 @@ void test_fchmod()
 
 	close(socks[0]);
 	close(socks[1]);
+}
+
+static void
+check_select(int sd, int rd, int wr, int block)
+{
+	fd_set read_set, write_set;
+	struct timeval tv;
+
+	FD_ZERO(&read_set);
+	if (rd != -1)
+		FD_SET(sd, &read_set);
+
+	FD_ZERO(&write_set);
+	if (wr != -1)
+		FD_SET(sd, &write_set);
+
+	tv.tv_sec = block ? 2 : 0;
+	tv.tv_usec = 0;
+
+	if (select(sd + 1, &read_set, &write_set, NULL, &tv) < 0)
+		test_fail("select() failed unexpectedly");
+
+	if (rd != -1 && !!FD_ISSET(sd, &read_set) != rd)
+		test_fail("select() mismatch on read operation");
+
+	if (wr != -1 && !!FD_ISSET(sd, &write_set) != wr)
+		test_fail("select() mismatch on write operation");
+}
+
+/*
+ * Verify that:
+ * - a nonblocking connecting socket for which there is no accepter, will
+ *   return EINPROGRESS and complete in the background later;
+ * - a nonblocking listening socket will return EAGAIN on accept;
+ * - connecting a connecting socket yields EALREADY;
+ * - connecting a connected socket yields EISCONN;
+ * - selecting for read and write on a connecting socket will only satisfy the
+ *   write only once it is connected;
+ * - doing a nonblocking write on a connecting socket yields EAGAIN;
+ * - doing a nonblocking read on a connected socket with no pending data yields
+ *   EAGAIN.
+ */
+static void
+test_nonblock(void)
+{
+	char buf[BUFSIZE];
+	socklen_t len;
+	int server_sd, client_sd;
+	struct sockaddr_un server_addr, client_addr, addr;
+	int status;
+
+	memset(buf, 0, sizeof(buf));
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	strlcpy(server_addr.sun_path, TEST_SUN_PATH,
+	    sizeof(server_addr.sun_path));
+	server_addr.sun_family = AF_UNIX;
+
+	client_addr = server_addr;
+
+	SOCKET(server_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	if (bind(server_sd, (struct sockaddr *) &server_addr,
+	    sizeof(struct sockaddr_un)) == -1)
+		test_fail("bind() should have worked");
+
+	if (listen(server_sd, 8) == -1)
+		test_fail("listen() should have worked");
+
+	fcntl(server_sd, F_SETFL, fcntl(server_sd, F_GETFL) | O_NONBLOCK);
+
+	check_select(server_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	len = sizeof(addr);
+	if (accept(server_sd, (struct sockaddr *) &addr, &len) != -1 ||
+	    errno != EAGAIN)
+		test_fail("accept() should have yielded EAGAIN");
+
+	SOCKET(client_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	fcntl(client_sd, F_SETFL, fcntl(client_sd, F_GETFL) | O_NONBLOCK);
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != -1 || errno != EINPROGRESS)
+		test_fail("connect() should have yielded EINPROGRESS");
+
+	check_select(client_sd, 0 /*read*/, 0 /*write*/, 0 /*block*/);
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != -1 || errno != EALREADY)
+		test_fail("connect() should have yielded EALREADY");
+
+	if (recv(client_sd, buf, sizeof(buf), 0) != -1 || errno != EAGAIN)
+		test_fail("recv() should have yielded EAGAIN");
+
+	/* This may be an implementation aspect, or even plain wrong (?). */
+	if (send(client_sd, buf, sizeof(buf), 0) != -1 || errno != EAGAIN)
+		test_fail("send() should have yielded EAGAIN");
+
+	switch (fork()) {
+	case 0:
+		close(client_sd);
+
+		check_select(server_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+		len = sizeof(addr);
+		client_sd = accept(server_sd, (struct sockaddr *) &addr, &len);
+		if (client_sd == -1)
+			test_fail("accept() should have succeeded");
+
+		check_select(server_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+		close(server_sd);
+
+		if (write(client_sd, buf, 1) != 1)
+			test_fail("write() should have succeeded");
+
+		/* Wait for the client side to close. */
+		check_select(client_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+		check_select(client_sd, 1 /*read*/, -1 /*write*/, 1 /*block*/);
+		check_select(client_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+		exit(errct);
+	case -1:
+		test_fail("can't fork");
+	default:
+		break;
+	}
+
+	close(server_sd);
+
+	check_select(client_sd, 0 /*read*/, 1 /*write*/, 1 /*block*/);
+	check_select(client_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != -1 || errno != EISCONN)
+		test_fail("connect() should have yielded EISCONN");
+
+	check_select(client_sd, 1 /*read*/, -1 /*write*/, 1 /*block*/);
+	check_select(client_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	if (read(client_sd, buf, 1) != 1)
+		test_fail("read() should have succeeded");
+
+	check_select(client_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	if (read(client_sd, buf, 1) != -1 || errno != EAGAIN)
+		test_fail("read() should have yielded EAGAIN");
+
+	/* Let the child process block on the select waiting for the close. */
+	sleep(1);
+
+	close(client_sd);
+
+	if (wait(&status) <= 0)
+		test_fail("wait() should have succeeded");
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		test_fail("child process failed the test");
+
+	UNLINK(TEST_SUN_PATH);
+}
+
+/*
+ * Verify that a nonblocking connect for which there is an accepter, succeeds
+ * immediately.  A pretty lame test, only here for completeness.
+ */
+static void
+test_connect_nb(void)
+{
+	socklen_t len;
+	int server_sd, client_sd;
+	struct sockaddr_un server_addr, client_addr, addr;
+	int status;
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	strlcpy(server_addr.sun_path, TEST_SUN_PATH,
+	    sizeof(server_addr.sun_path));
+	server_addr.sun_family = AF_UNIX;
+
+	client_addr = server_addr;
+
+	SOCKET(server_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	if (bind(server_sd, (struct sockaddr *) &server_addr,
+	    sizeof(struct sockaddr_un)) == -1)
+		test_fail("bind() should have worked");
+
+	if (listen(server_sd, 8) == -1)
+		test_fail("listen() should have worked");
+
+	switch (fork()) {
+	case 0:
+		len = sizeof(addr);
+		if (accept(server_sd, (struct sockaddr *) &addr, &len) == -1)
+			test_fail("accept() should have succeeded");
+
+		exit(errct);
+	case -1:
+		test_fail("can't fork");
+	default:
+		break;
+	}
+
+	close(server_sd);
+
+	sleep(1);
+
+	SOCKET(client_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	fcntl(client_sd, F_SETFL, fcntl(client_sd, F_GETFL) | O_NONBLOCK);
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != 0)
+		test_fail("connect() should have succeeded");
+
+	close(client_sd);
+
+	if (wait(&status) <= 0)
+		test_fail("wait() should have succeeded");
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		test_fail("child process failed the test");
+
+	UNLINK(TEST_SUN_PATH);
+}
+
+static void
+dummy_handler(int sig)
+{
+	/* Nothing. */
+}
+
+/*
+ * Verify that:
+ * - interrupting a blocking connect will return EINTR but complete in the
+ *   background later;
+ * - doing a blocking write on an asynchronously connecting socket succeeds
+ *   once the socket is connected.
+ * - doing a nonblocking write on a connected socket with lots of pending data
+ *   yields EAGAIN.
+ */
+static void
+test_intr(void)
+{
+	struct sigaction act, oact;
+	char buf[BUFSIZE];
+	socklen_t len;
+	int server_sd, client_sd;
+	struct sockaddr_un server_addr, client_addr, addr;
+	int r, status;
+
+	memset(buf, 0, sizeof(buf));
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	strlcpy(server_addr.sun_path, TEST_SUN_PATH,
+	    sizeof(server_addr.sun_path));
+	server_addr.sun_family = AF_UNIX;
+
+	client_addr = server_addr;
+
+	SOCKET(server_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	if (bind(server_sd, (struct sockaddr *) &server_addr,
+	    sizeof(struct sockaddr_un)) == -1)
+		test_fail("bind() should have worked");
+
+	if (listen(server_sd, 8) == -1)
+		test_fail("listen() should have worked");
+
+	SOCKET(client_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = dummy_handler;
+	if (sigaction(SIGALRM, &act, &oact) == -1)
+		test_fail("sigaction() should have succeeded");
+
+	alarm(1);
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != -1 || errno != EINTR)
+		test_fail("connect() should have yielded EINTR");
+
+	check_select(client_sd, 0 /*read*/, 0 /*write*/, 0 /*block*/);
+
+	switch (fork()) {
+	case 0:
+		close(client_sd);
+
+		check_select(server_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+		len = sizeof(addr);
+		client_sd = accept(server_sd, (struct sockaddr *) &addr, &len);
+		if (client_sd == -1)
+			test_fail("accept() should have succeeded");
+
+		check_select(server_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+		close(server_sd);
+
+		check_select(client_sd, 1 /*read*/, -1 /*write*/, 1 /*block*/);
+		check_select(client_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+		if (recv(client_sd, buf, sizeof(buf), 0) != sizeof(buf))
+			test_fail("recv() should have yielded bytes");
+
+		/* No partial transfers should be happening. */
+		check_select(client_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+		fcntl(client_sd, F_SETFL, fcntl(client_sd, F_GETFL) |
+		    O_NONBLOCK);
+
+		/* We can only test nonblocking writes by filling the pipe. */
+		while ((r = write(client_sd, buf, sizeof(buf))) > 0);
+
+		if (r != -1 || errno != EAGAIN)
+			test_fail("write() should have yielded EAGAIN");
+
+		check_select(client_sd, 0 /*read*/, 0 /*write*/, 0 /*block*/);
+
+		if (write(client_sd, buf, 1) != -1 || errno != EAGAIN)
+			test_fail("write() should have yielded EAGAIN");
+
+		exit(errct);
+	case -1:
+		test_fail("can't fork");
+	default:
+		break;
+	}
+
+	close(server_sd);
+
+	if (send(client_sd, buf, sizeof(buf), 0) != sizeof(buf))
+		test_fail("send() should have succeded");
+
+	check_select(client_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	if (wait(&status) <= 0)
+		test_fail("wait() should have succeeded");
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		test_fail("child process failed the test");
+
+	check_select(client_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	close(client_sd);
+
+	sigaction(SIGALRM, &oact, NULL);
+
+	UNLINK(TEST_SUN_PATH);
+}
+
+/*
+ * Verify that closing a connecting socket before it is accepted will result in
+ * no activity on the accepting side later.
+ */
+static void
+test_connect_close(void)
+{
+	int server_sd, client_sd;
+	struct sockaddr_un server_addr, client_addr;
+	socklen_t len;
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	strlcpy(server_addr.sun_path, TEST_SUN_PATH,
+	    sizeof(server_addr.sun_path));
+	server_addr.sun_family = AF_UNIX;
+
+	client_addr = server_addr;
+
+	SOCKET(server_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	if (bind(server_sd, (struct sockaddr *) &server_addr,
+	    sizeof(struct sockaddr_un)) == -1)
+		test_fail("bind() should have worked");
+
+	if (listen(server_sd, 8) == -1)
+		test_fail("listen() should have worked");
+
+	fcntl(server_sd, F_SETFL, fcntl(server_sd, F_GETFL) | O_NONBLOCK);
+
+	check_select(server_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	SOCKET(client_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	fcntl(client_sd, F_SETFL, fcntl(client_sd, F_GETFL) | O_NONBLOCK);
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != -1 || errno != EINPROGRESS)
+		test_fail("connect() should have yielded EINPROGRESS");
+
+	check_select(client_sd, 0 /*read*/, 0 /*write*/, 0 /*block*/);
+	check_select(server_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	close(client_sd);
+
+	check_select(server_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	len = sizeof(client_addr);
+	if (accept(server_sd, (struct sockaddr *) &client_addr, &len) != -1 ||
+	    errno != EAGAIN)
+		test_fail("accept() should have yielded EAGAIN");
+
+	close(server_sd);
+
+	UNLINK(TEST_SUN_PATH);
+}
+
+/*
+ * Verify that closing a listening socket will cause a blocking connect to fail
+ * with ECONNRESET, and that a subsequent write will yield EPIPE.
+ */
+static void
+test_listen_close(void)
+{
+	socklen_t len;
+	int server_sd, client_sd;
+	struct sockaddr_un server_addr, client_addr, addr;
+	int status;
+	char byte;
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	strlcpy(server_addr.sun_path, TEST_SUN_PATH,
+	    sizeof(server_addr.sun_path));
+	server_addr.sun_family = AF_UNIX;
+
+	client_addr = server_addr;
+
+	SOCKET(server_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	if (bind(server_sd, (struct sockaddr *) &server_addr,
+	    sizeof(struct sockaddr_un)) == -1)
+		test_fail("bind() should have worked");
+
+	if (listen(server_sd, 8) == -1)
+		test_fail("listen() should have worked");
+
+	switch (fork()) {
+	case 0:
+		sleep(1);
+
+		exit(0);
+	case -1:
+		test_fail("can't fork");
+	default:
+		break;
+	}
+
+	close(server_sd);
+
+	SOCKET(client_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	byte = 0;
+	if (write(client_sd, &byte, 1) != -1 || errno != ENOTCONN)
+		/* Yes, you fucked up the fix for the FIXME below. */
+		test_fail("write() should have yielded ENOTCONN");
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != -1 || errno != ECONNRESET)
+		test_fail("connect() should have yielded ECONNRESET");
+
+	/*
+	 * FIXME: currently UDS cannot distinguish between sockets that have
+	 * not yet been connected, and sockets that have been disconnected.
+	 * Thus, we get the same error for both: ENOTCONN instead of EPIPE.
+	 */
+#if 0
+	if (write(client_sd, &byte, 1) != -1 || errno != EPIPE)
+		test_fail("write() should have yielded EPIPE");
+#endif
+
+	close(client_sd);
+
+	if (wait(&status) <= 0)
+		test_fail("wait() should have succeeded");
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		test_fail("child process failed the test");
+
+	UNLINK(TEST_SUN_PATH);
+}
+
+/*
+ * Verify that closing a listening socket will cause a nonblocking connect to
+ * result in the socket becoming readable and writable, and yielding ECONNRESET
+ * and EPIPE on the next two writes, respectively.
+ */
+static void
+test_listen_close_nb(void)
+{
+	socklen_t len;
+	int server_sd, client_sd;
+	struct sockaddr_un server_addr, client_addr, addr;
+	int status;
+	char byte;
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	strlcpy(server_addr.sun_path, TEST_SUN_PATH,
+	    sizeof(server_addr.sun_path));
+	server_addr.sun_family = AF_UNIX;
+
+	client_addr = server_addr;
+
+	SOCKET(server_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	if (bind(server_sd, (struct sockaddr *) &server_addr,
+	    sizeof(struct sockaddr_un)) == -1)
+		test_fail("bind() should have worked");
+
+	if (listen(server_sd, 8) == -1)
+		test_fail("listen() should have worked");
+
+	switch (fork()) {
+	case 0:
+		sleep(1);
+
+		exit(0);
+	case -1:
+		test_fail("can't fork");
+	default:
+		break;
+	}
+
+	close(server_sd);
+
+	SOCKET(client_sd, PF_UNIX, SOCK_STREAM, 0);
+
+	fcntl(client_sd, F_SETFL, fcntl(client_sd, F_GETFL) | O_NONBLOCK);
+
+	if (connect(client_sd, (struct sockaddr *) &client_addr,
+	    sizeof(struct sockaddr_un)) != -1 || errno != EINPROGRESS)
+		test_fail("connect() should have yielded EINPROGRESS");
+
+	check_select(client_sd, 0 /*read*/, 0 /*write*/, 0 /*block*/);
+	check_select(client_sd, 1 /*read*/, 1 /*write*/, 1 /*block*/);
+
+	byte = 0;
+	if (write(client_sd, &byte, 1) != -1 || errno != ECONNRESET)
+		test_fail("write() should have yielded ECONNRESET");
+
+	/*
+	 * FIXME: currently UDS cannot distinguish between sockets that have
+	 * not yet been connected, and sockets that have been disconnected.
+	 * Thus, we get the same error for both: ENOTCONN instead of EPIPE.
+	 */
+#if 0
+	if (write(client_sd, &byte, 1) != -1 || errno != EPIPE)
+		test_fail("write() should have yielded EPIPE");
+#endif
+
+	check_select(client_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
+
+	close(client_sd);
+
+	if (wait(&status) <= 0)
+		test_fail("wait() should have succeeded");
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		test_fail("child process failed the test");
+
+	UNLINK(TEST_SUN_PATH);
 }
 
 int main(int argc, char *argv[])
@@ -2929,9 +3523,16 @@ int main(int argc, char *argv[])
 	test_scm_credentials();
 	test_fd_passing();
 	test_select();
+	test_select_close();
 	test_fchmod();
+	test_nonblock();
+	test_connect_nb();
+	test_intr();
+	test_connect_close();
+	test_listen_close();
+	test_listen_close_nb();
+
 	quit();
 
 	return -1;	/* we should never get here */
 }
-

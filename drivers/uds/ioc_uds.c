@@ -125,10 +125,20 @@ do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 
 	uds_fd_table[minorparent].child = -1;
 
-	/* If the peer is blocked on connect(), revive the peer. */
-	if (uds_fd_table[minorpeer].suspended) {
+	/* If the peer is blocked on connect() or write(), revive the peer. */
+	if (uds_fd_table[minorpeer].suspended == UDS_SUSPENDED_CONNECT ||
+	    uds_fd_table[minorpeer].suspended == UDS_SUSPENDED_WRITE) {
 		dprintf(("UDS: do_accept(%d): revive %d\n", minor, minorpeer));
 		uds_unsuspend(minorpeer);
+	}
+
+	/* See if we can satisfy an ongoing select. */
+	if ((uds_fd_table[minorpeer].sel_ops & CDEV_OP_WR) &&
+	    uds_fd_table[minorpeer].size < UDS_BUF) {
+		/* A write on the peer is possible now. */
+		chardriver_reply_select(uds_fd_table[minorpeer].sel_endpt,
+		    minorpeer, CDEV_OP_WR);
+		uds_fd_table[minorpeer].sel_ops &= ~CDEV_OP_WR;
 	}
 
 	return OK;
@@ -137,7 +147,7 @@ do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 static int
 do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int child;
+	int child, peer;
 	struct sockaddr_un addr;
 	int rc, i, j;
 
@@ -148,9 +158,14 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	    uds_fd_table[minor].type != SOCK_SEQPACKET)
 		return EINVAL;
 
-	/* The socket must not be connected already. */
-	if (uds_fd_table[minor].peer != -1)
-		return EISCONN;
+	/* The socket must not be connecting or connected already. */
+	peer = uds_fd_table[minor].peer;
+	if (peer != -1) {
+		if (uds_fd_table[peer].peer == -1)
+			return EALREADY;	/* connecting */
+		else
+			return EISCONN;		/* connected */
+	}
 
 	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
 	    sizeof(struct sockaddr_un))) != OK)
@@ -381,7 +396,7 @@ do_getsockname(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 static int
 do_getpeername(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc, peer_minor;
+	int peer_minor;
 
 	dprintf(("UDS: do_getpeername(%d)\n", minor));
 
@@ -479,8 +494,6 @@ do_socketpair(devminor_t minorx, endpoint_t endpt, cp_grant_id_t grant)
 static int
 do_getsockopt_sotype(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc;
-
 	dprintf(("UDS: do_getsockopt_sotype(%d)\n", minor));
 
 	/* If the type hasn't been set yet, we fail the call. */

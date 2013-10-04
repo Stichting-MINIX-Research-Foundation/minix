@@ -121,6 +121,9 @@ static int _uds_accept(int sock, struct sockaddr *__restrict address,
 	if (s1 == -1)
 		return s1;
 
+	/* Copy file descriptor flags from the listening socket. */
+	fcntl(s1, F_SETFL, fcntl(sock, F_GETFL));
+
 	r= ioctl(s1, NWIOSUDSACCEPT, address);
 	if (r == -1) {
 		int ioctl_errno = errno;
