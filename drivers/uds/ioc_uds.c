@@ -629,7 +629,7 @@ do_recvfrom(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 
 static int
 msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
-	devminor_t minor)
+	devminor_t minor, int *new_total)
 {
 	int i, rc, nfds, totalfds;
 	struct msghdr msghdr;
@@ -669,33 +669,35 @@ msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
 		}
 	}
 
-	data->nfiledes = totalfds;
+	*new_total = totalfds;
 
 	return OK;
 }
 
 static int
-send_fds(devminor_t minor, struct ancillary *data)
+send_fds(devminor_t minor, struct ancillary *data, int new_total)
 {
 	int rc, i, j;
 
 	dprintf(("UDS: send_fds(%d)\n", minor));
 
 	/* Verify the file descriptors and get their filps. */
-	for (i = 0; i < data->nfiledes; i++) {
+	for (i = data->nfiledes; i < new_total; i++) {
 		if ((rc = vfs_verify_fd(uds_fd_table[minor].owner,
 		    data->fds[i], &data->filps[i])) != OK)
 			return rc;
 	}
 
 	/* Set them as in-flight. */
-	for (i = 0; i < data->nfiledes; i++) {
+	for (i = data->nfiledes; i < new_total; i++) {
 		if ((rc = vfs_set_filp(data->filps[i])) != OK) {
-			for (j = i - 1; j >= 0; j--)
+			for (j = i - 1; j >= data->nfiledes; j--)
 				vfs_put_filp(data->filps[j]);	/* revert */
 			return rc;
 		}
 	}
+
+	data->nfiledes = new_total;
 
 	return OK;
 }
@@ -805,7 +807,7 @@ recv_cred(devminor_t minor, struct ancillary *data,
 static int
 do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int peer, rc, i;
+	int peer, rc, i, new_total;
 	struct msg_control msg_ctrl;
 
 	dprintf(("UDS: do_sendmsg(%d)\n", minor));
@@ -854,10 +856,10 @@ do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	 * ones.
 	 */
 	if ((rc = msg_control_read(&msg_ctrl,
-	    &uds_fd_table[peer].ancillary_data, minor)) != OK)
+	    &uds_fd_table[peer].ancillary_data, minor, &new_total)) != OK)
 		return rc;
 
-	return send_fds(minor, &uds_fd_table[peer].ancillary_data);
+	return send_fds(minor, &uds_fd_table[peer].ancillary_data, new_total);
 }
 
 static int
@@ -888,26 +890,30 @@ do_recvmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	clen_avail = MIN(msg_ctrl.msg_controllen, MSG_CONTROL_MAX);
 
 	if (uds_fd_table[minor].ancillary_data.nfiledes > 0) {
-		clen_needed = CMSG_LEN(sizeof(int) *
+		clen_needed = CMSG_SPACE(sizeof(int) *
 		    uds_fd_table[minor].ancillary_data.nfiledes);
 	}
 
 	/* if there is room we also include credentials */
-	clen_desired = clen_needed + CMSG_LEN(sizeof(struct uucred));
+	clen_desired = clen_needed + CMSG_SPACE(sizeof(struct uucred));
 
 	if (clen_needed > clen_avail)
 		return EOVERFLOW;
 
-	rc = recv_fds(minor, &uds_fd_table[minor].ancillary_data, &msg_ctrl);
-	if (rc != OK)
-		return rc;
+	if (uds_fd_table[minor].ancillary_data.nfiledes > 0) {
+		if ((rc = recv_fds(minor, &uds_fd_table[minor].ancillary_data,
+		    &msg_ctrl)) != OK)
+			return rc;
+	}
 
 	if (clen_desired <= clen_avail) {
 		rc = recv_cred(minor, &uds_fd_table[minor].ancillary_data,
 		    &msg_ctrl);
 		if (rc != OK)
 			return rc;
-	}
+		msg_ctrl.msg_controllen = clen_desired;
+	} else
+		msg_ctrl.msg_controllen = clen_needed;
 
 	/* Send the control data to the user. */
 	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &msg_ctrl,
