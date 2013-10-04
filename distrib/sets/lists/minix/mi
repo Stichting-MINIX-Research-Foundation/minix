@@ -127,10 +127,6 @@
 ./home/bin/.exrc			minix-sys
 ./home/bin/.profile			minix-sys
 ./lib					minix-sys
-./lib/cpp 				minix-sys
-./libexec				minix-sys
-./libexec/ld.elf_so			minix-sys
-./libexec/ld-elf.so.1			minix-sys
 ./mnt					minix-sys
 ./multiboot				minix-sys
 ./multiboot/kernel			minix-sys
@@ -246,7 +242,7 @@
 ./usr/bin/cal				minix-sys
 ./usr/bin/calendar			minix-sys
 ./usr/bin/cawf				minix-sys
-./usr/bin/cc				minix-sys
+./usr/bin/cc				minix-sys	gcccmds
 ./usr/bin/cc1				minix-sys	gcccmds
 ./usr/bin/cc1obj			minix-sys	gcccmds
 ./usr/bin/cc1plus			minix-sys	gcccmds
@@ -501,7 +497,7 @@
 ./usr/bin/srccrc			minix-sys
 ./usr/bin/stat				minix-sys
 ./usr/bin/strings			minix-sys	binutils
-./usr/bin/strip				minix-sys
+./usr/bin/strip				minix-sys	binutils
 ./usr/bin/stty				minix-sys
 ./usr/bin/su				minix-sys
 ./usr/bin/sum				minix-sys

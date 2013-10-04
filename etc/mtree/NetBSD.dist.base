@@ -25,7 +25,6 @@
 ./etc/system.conf.d
 ./home
 ./lib
-./libexec
 ./mnt
 ./proc
 ./root

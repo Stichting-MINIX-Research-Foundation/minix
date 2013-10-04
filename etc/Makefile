@@ -299,11 +299,8 @@ CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
 			/usr/sbin/rmt		/etc/rmt
 .else
 CONFIGSYMLINKS+=	\
-			/usr/lib/cpp		/lib/cpp \
 			/usr/log		/var/log \
 			/usr/tmp		/var/tmp \
-			/usr/pkg/bin/clang	/usr/bin/cc \
-			/usr/pkg/bin/strip	/usr/bin/strip \
 			/proc/mounts		/etc/mtab
 
 .endif # !defined(__MINIX)
