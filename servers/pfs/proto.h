@@ -6,8 +6,6 @@
 /* Structs used in prototypes must be declared as such first. */
 struct buf;
 struct inode;
-struct sockaddr_un;
-struct ancillary;
 
 /* buffer.c */
 struct buf *get_block(dev_t dev, pino_t inum);
@@ -31,7 +29,6 @@ void wipe_inode(struct inode *rip);
 /* link.c */
 int fs_ftrunc(message *fs_m_in, message *fs_m_out);
 int truncate_inode(struct inode *rip, off_t newsize);
-
 
 /* main.c */
 void reply(endpoint_t who, message *m_out);
@@ -60,13 +57,4 @@ int fs_stat(message *fs_m_in, message *fs_m_out);
 bit_t alloc_bit(void);
 void free_bit(bit_t bit_returned);
 
-/* dev_uds.c */
-void uds_request(message *m_ptr, int ipc_status);
-void uds_unsuspend(devminor_t minor);
-
-/* uds.c */
-void uds_init(void);
-int uds_clear_fds(devminor_t minor, struct ancillary *data);
-int uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
-	cp_grant_id_t grant);
 #endif
