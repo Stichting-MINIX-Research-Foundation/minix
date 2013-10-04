@@ -2,11 +2,6 @@
  * Unix Domain Sockets Implementation (PF_UNIX, PF_LOCAL)
  * This code handles ioctl(2) commands to implement the socket API.
  * Some helper functions are also present.
- *
- * The entry points into this file are...
- *
- *   uds_do_ioctl:           process an IOCTL request.
- *   uds_clear_fds:          calls vfs_put_filp for undelivered FDs.
  */
 
 #include "uds.h"
@@ -919,6 +914,20 @@ do_recvmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	    sizeof(struct msg_control));
 }
 
+static int
+do_fionread(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+{
+	int rc;
+
+	rc = uds_perform_read(minor, NONE, GRANT_INVALID, UDS_BUF, 1);
+
+	/* What should we do on error?  Just set to zero for now. */
+	if (rc < 0)
+		rc = 0;
+
+	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &rc, sizeof(rc));
+}
+
 int
 uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant)
@@ -1043,6 +1052,14 @@ uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	case NWIOGUDSCTRL:
 		/* Set the control data -- recvmsg(). */
 		rc = do_recvmsg(minor, endpt, grant);
+
+		break;
+
+	case FIONREAD:
+		/*
+		 * Get the number of bytes immediately available for reading.
+		 */
+		rc = do_fionread(minor, endpt, grant);
 
 		break;
 
