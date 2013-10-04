@@ -4758,6 +4758,7 @@
 ./usr/sbin/rs				minix-sys
 ./usr/sbin/sched			minix-sys
 ./usr/sbin/tty				minix-sys
+./usr/sbin/uds				minix-sys
 ./usr/sbin/unlink			minix-sys
 ./usr/sbin/user				minix-sys
 ./usr/sbin/useradd			minix-sys

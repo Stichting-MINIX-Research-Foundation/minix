@@ -10,7 +10,6 @@
 #include <pwd.h>
 #include "buf.h"
 #include "inode.h"
-#include "uds.h"
 
 static void get_work(message *m_in, int *status);
 
@@ -40,13 +39,6 @@ int main(int argc, char *argv[])
   while(!unmountdone || !exitsignaled) {
 	/* Wait for request message. */
 	get_work(&pfs_m_in, &ipc_status);
-
-	/* If this is a UDS device request, process it and continue. */
-	if (IS_CDEV_RQ(pfs_m_in.m_type)) {
-		uds_request(&pfs_m_in, ipc_status);
-
-		continue;
-	}
 
 	transid = TRNS_GET_ID(pfs_m_in.m_type);
 	pfs_m_in.m_type = TRNS_DEL_ID(pfs_m_in.m_type);
@@ -119,9 +111,7 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
   }
 
   init_inode_cache();
-  uds_init();
   buf_pool();
-
 
   /* Drop root privileges */
   if ((pw = getpwnam(SERVICE_LOGIN)) == NULL) {

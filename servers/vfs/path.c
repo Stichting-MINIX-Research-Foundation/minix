@@ -834,8 +834,8 @@ size_t pathlen;
   if (pathlen < UNIX_PATH_MAX || pathlen >= PATH_MAX) return(EINVAL);
 
   rfp = &(fproc[slot]);
-  r = sys_safecopyfrom(PFS_PROC_NR, io_gr, (vir_bytes) 0,
-				(vir_bytes) canon_path, pathlen);
+  r = sys_safecopyfrom(who_e, io_gr, (vir_bytes) 0, (vir_bytes) canon_path,
+	pathlen);
   if (r != OK) return(r);
   canon_path[pathlen] = '\0';
 
@@ -843,9 +843,9 @@ size_t pathlen;
   if ((r = canonical_path(canon_path, rfp)) != OK) return(r);
   if (strlen(canon_path) >= pathlen) return(ENAMETOOLONG);
 
-  /* copy canon_path back to PFS */
-  r = sys_safecopyto(PFS_PROC_NR, (cp_grant_id_t) io_gr, (vir_bytes) 0,
-				(vir_bytes) canon_path, pathlen);
+  /* copy canon_path back to the caller */
+  r = sys_safecopyto(who_e, (cp_grant_id_t) io_gr, (vir_bytes) 0,
+	(vir_bytes) canon_path, pathlen);
   if (r != OK) return(r);
 
   /* Now do permissions checking */
@@ -870,8 +870,8 @@ size_t pathlen;
 int do_check_perms(message *UNUSED(m_out))
 {
   /* This should be replaced by an ACL check. */
-  if (who_e != PFS_PROC_NR) return EPERM;
+  if (!super_user) return EPERM;
 
-  return check_perms(job_m_in.VFS_PFS_ENDPT, job_m_in.VFS_PFS_GRANT,
-		     (size_t) job_m_in.VFS_PFS_COUNT);
+  return check_perms(job_m_in.VFS_UDS_ENDPT, job_m_in.VFS_UDS_GRANT,
+	(size_t) job_m_in.VFS_UDS_COUNT);
 }

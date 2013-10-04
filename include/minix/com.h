@@ -882,12 +882,12 @@
 #define VFS_IOCTL_REQ		m2_i3
 #define VFS_IOCTL_ARG		m2_p1
 
-/* Field names for the PFS backcalls to VFS. */
-#define VFS_PFS_ENDPT		m2_i1
-#define VFS_PFS_GRANT		m2_i2
-#define VFS_PFS_COUNT		m2_i3
-#define VFS_PFS_FD		m2_i3
-#define VFS_PFS_FILP		m2_p1
+/* Field names for the UDS backcalls to VFS. */
+#define VFS_UDS_ENDPT		m2_i1
+#define VFS_UDS_GRANT		m2_i2
+#define VFS_UDS_COUNT		m2_i3
+#define VFS_UDS_FD		m2_i3
+#define VFS_UDS_FILP		m2_p1
 
 /* Field names for the dupfrom(2) call. */
 #define VFS_DUPFROM_ENDPT	m1_i1

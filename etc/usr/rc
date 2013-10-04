@@ -193,6 +193,8 @@ start)
 	up inet -script /etc/rs.inet -dev /dev/ip
     fi
 
+    up uds -dev /dev/uds
+
     up -n ipc
 
     up log -dev /dev/klog

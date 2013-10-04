@@ -238,9 +238,9 @@ static void do_work(void)
   } else {
 	/* At this point we assume that we're dealing with a call that has been
 	 * made specifically to VFS. Typically it will be a POSIX call from a
-	 * normal process, but we also handle a few calls made by system
-	 * processes (such as PFS) through here. Call the internal function
-	 * that does the work.
+	 * normal process, but we also handle a few calls made by drivers such
+	 * such as UDS and VND through here. Call the internal function that
+	 * does the work.
 	 */
 	if (job_call_nr < 0 || job_call_nr >= NCALLS) {
 		error = ENOSYS;
