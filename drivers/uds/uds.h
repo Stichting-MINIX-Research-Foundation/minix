@@ -1,24 +1,23 @@
-#ifndef __PFS_UDS_H__
-#define __PFS_UDS_H__
+#ifndef __UDS_UDS_H
+#define __UDS_UDS_H
 
-/*
- * Unix Domain Sockets Implementation (PF_UNIX, PF_LOCAL)
- *
- * Also See...
- *
- *   dev_uds.c, table.c, uds.c
- */
-
-#include <limits.h>
-#include <sys/types.h>
+#include <minix/drivers.h>
+#include <minix/chardriver.h>
+#undef send
+#include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <sys/ucred.h>
 #include <sys/un.h>
+#include <sys/mman.h>
 
-#include <minix/endpoint.h>
-#include <minix/chardriver.h>
+/* Maximum number of UNIX domain sockets. */
+#define NR_FDS		256
 
-/* max connection backlog for incoming connections */
-#define UDS_SOMAXCONN 64
+/* Connection backlog size for incoming connections. */
+#define UDS_SOMAXCONN	64
+
+/* Output debugging information? */
+#define DEBUG		0
 
 typedef void* filp_id_t;
 
@@ -57,26 +56,16 @@ struct uds_fd {
 
 /* Pipe Housekeeping */
 
-	/* inode number on PFS -- each descriptor is backed by 1
-	 * PIPE which is allocated in uds_open() and freed in
-	 * uds_close(). Data is sent/written to a peer's PIPE.
-	 * Data is recv/read from this PIPE.
-	 */
-	pino_t inode_nr;
-
-
-	/* position in the PIPE where the data starts */
-	off_t pos;
-
-	/* size of data in the PIPE */
-	size_t size;
+	char *buf;			/* ring buffer */
+	size_t pos;			/* tail position into ring buffer */
+	size_t size;			/* size of used part of ring buffer */
 
 	/* control read/write, set by uds_open() and shutdown(2).
-	 * Can be set to S_IRUSR|S_IWUSR, S_IRUSR, S_IWUSR, or 0
+	 * Can be set to R_BIT|W_BIT, R_BIT, W_BIT, or 0
 	 * for read and write, read only, write only, or neither.
-	 * default is S_IRUSR|S_IWUSR.
+	 * default is R_BIT|W_BIT.
 	 */
-	pmode_t mode;
+	int mode;
 
 /* Socket Info */
 
@@ -188,4 +177,14 @@ typedef struct uds_fd uds_fd_t;
 /* File Descriptor Table -- Defined in uds.c */
 EXTERN uds_fd_t uds_fd_table[NR_FDS];
 
-#endif
+/* Function prototypes. */
+
+/* dev_uds.c */
+void uds_unsuspend(devminor_t minor);
+
+/* uds.c */
+int uds_clear_fds(devminor_t minor, struct ancillary *data);
+int uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant);
+
+#endif /* !__UDS_UDS_H */
