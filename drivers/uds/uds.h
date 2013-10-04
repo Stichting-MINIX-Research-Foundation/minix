@@ -16,8 +16,17 @@
 /* Connection backlog size for incoming connections. */
 #define UDS_SOMAXCONN	64
 
+/* Maximum UDS socket buffer size. */
+#define UDS_BUF		PIPE_BUF
+
 /* Output debugging information? */
 #define DEBUG		0
+
+#if DEBUG
+#define dprintf(x)	printf x
+#else
+#define dprintf(x)
+#endif
 
 typedef void* filp_id_t;
 
@@ -28,6 +37,9 @@ struct ancillary {
 	int nfiledes;
 	struct uucred cred;
 };
+
+#define UDS_R	0x1
+#define UDS_W	0x2
 
 /*
  * Internal State Information for a socket descriptor.
@@ -61,9 +73,9 @@ struct uds_fd {
 	size_t size;			/* size of used part of ring buffer */
 
 	/* control read/write, set by uds_open() and shutdown(2).
-	 * Can be set to R_BIT|W_BIT, R_BIT, W_BIT, or 0
+	 * Can be set to UDS_R|UDS_W, UDS_R, UDS_W, or 0
 	 * for read and write, read only, write only, or neither.
-	 * default is R_BIT|W_BIT.
+	 * default is UDS_R|UDS_W.
 	 */
 	int mode;
 
@@ -179,12 +191,20 @@ EXTERN uds_fd_t uds_fd_table[NR_FDS];
 
 /* Function prototypes. */
 
-/* dev_uds.c */
-void uds_unsuspend(devminor_t minor);
-
-/* uds.c */
+/* ioc_uds.c */
 int uds_clear_fds(devminor_t minor, struct ancillary *data);
 int uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant);
+
+/* uds.c */
+void uds_unsuspend(devminor_t minor);
+
+/* vfs_uds.c */
+int vfs_check_perms(endpoint_t ep, struct sockaddr_un *addr);
+int vfs_verify_fd(endpoint_t ep, int fd, filp_id_t *filp);
+int vfs_set_filp(filp_id_t sfilp);
+int vfs_copy_filp(endpoint_t to_ep, filp_id_t cfilp);
+int vfs_put_filp(filp_id_t pfilp);
+int vfs_cancel_fd(endpoint_t ep, int fd);
 
 #endif /* !__UDS_UDS_H */
