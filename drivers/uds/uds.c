@@ -114,10 +114,31 @@ uds_open(devminor_t UNUSED(orig_minor), int access,
 	return CDEV_CLONED | minor;
 }
 
+static void
+uds_reset(devminor_t minor)
+{
+	/* Disconnect the socket from its peer. */
+	uds_fd_table[minor].peer = -1;
+
+	/* Set an error to pass to the caller. */
+	uds_fd_table[minor].err = ECONNRESET;
+
+	/* If a process was blocked on I/O, revive it. */
+	if (uds_fd_table[minor].suspended != UDS_NOT_SUSPENDED)
+		uds_unsuspend(minor);
+
+	/* All of the peer's calls will fail immediately now. */
+	if (uds_fd_table[minor].sel_ops != 0) {
+		chardriver_reply_select(uds_fd_table[minor].sel_endpt, minor,
+		    uds_fd_table[minor].sel_ops);
+		uds_fd_table[minor].sel_ops = 0;
+	}
+}
+
 static int
 uds_close(devminor_t minor)
 {
-	int peer;
+	int i, peer;
 
 	dprintf(("UDS: uds_close(%d)\n", minor));
 
@@ -126,18 +147,26 @@ uds_close(devminor_t minor)
 	if (uds_fd_table[minor].state != UDS_INUSE)
 		return EINVAL;
 
-	/* If the socket is connected, disconnect it. */
-	if (uds_fd_table[minor].peer != -1) {
-		peer = uds_fd_table[minor].peer;
+	peer = uds_fd_table[minor].peer;
+	if (peer != -1 && uds_fd_table[peer].peer == -1) {
+		/* Connecting socket: clear from server's backlog. */
+		if (!uds_fd_table[peer].listening)
+			panic("connecting socket attached to non-server");
 
-		uds_fd_table[peer].peer = -1;
-
-		/* The error to pass to the peer. */
-		uds_fd_table[peer].err = ECONNRESET;
-
-		/* If the peer was blocked on I/O, revive it. */
-		if (uds_fd_table[peer].suspended != UDS_NOT_SUSPENDED)
-			uds_unsuspend(peer);
+		for (i = 0; i < uds_fd_table[peer].backlog_size; i++) {
+			if (uds_fd_table[peer].backlog[i] == minor) {
+				uds_fd_table[peer].backlog[i] = -1;
+				break;
+			}
+		}
+	} else if (peer != -1) {
+		/* Connected socket: disconnect it. */
+		uds_reset(peer);
+	} else if (uds_fd_table[minor].listening) {
+		/* Listening socket: disconnect all sockets in the backlog. */
+		for (i = 0; i < uds_fd_table[minor].backlog_size; i++)
+			if (uds_fd_table[minor].backlog[i] != -1)
+				uds_reset(uds_fd_table[minor].backlog[i]);
 	}
 
 	if (uds_fd_table[minor].ancillary_data.nfiledes > 0)
@@ -190,7 +219,7 @@ uds_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 					break;
 				}
 			}
-		} else if (bytes != SUSPEND) {
+		} else if (bytes != EDONTREPLY) {
 			ready_ops |= CDEV_OP_RD;	/* error */
 		}
 	}
@@ -198,7 +227,7 @@ uds_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 	/* Check if we can write without blocking. */
 	if (ops & CDEV_OP_WR) {
 		bytes = uds_perform_write(minor, NONE, GRANT_INVALID, 1, 1);
-		if (bytes != 0 && bytes != SUSPEND)
+		if (bytes != 0 && bytes != EDONTREPLY)
 			ready_ops |= CDEV_OP_WR;
 	}
 
@@ -257,7 +286,7 @@ uds_perform_read(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 			return 0;
 
 		if (pretend)
-			return SUSPEND;
+			return EDONTREPLY;
 
 		if (peer != -1 &&
 			uds_fd_table[peer].suspended == UDS_SUSPENDED_WRITE)
@@ -335,15 +364,16 @@ uds_perform_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 	if (!(uds_fd_table[minor].mode & UDS_W))
 		return EPIPE;
 
-	/* We cannot handle input beyond the buffer size. */
-	if (size > UDS_BUF)
+	/* Datagram messages must fit in the buffer entirely. */
+	if (size > UDS_BUF && uds_fd_table[minor].type != SOCK_STREAM)
 		return EMSGSIZE;
 
 	if (uds_fd_table[minor].type == SOCK_STREAM ||
 	    uds_fd_table[minor].type == SOCK_SEQPACKET) {
 		/*
-		 * If we're writing to a connection-oriented socket,
-		 * then it needs a peer to write to.
+		 * If we're writing to a connection-oriented socket, then it
+		 * needs a peer to write to.  For disconnected sockets, writing
+		 * is an error; for connecting sockets, writes should suspend.
 		 */
 		peer = uds_fd_table[minor].peer;
 
@@ -354,7 +384,8 @@ uds_perform_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 				return ECONNRESET;
 			} else
 				return ENOTCONN;
-		}
+		} else if (uds_fd_table[peer].peer == -1) /* connecting */
+			return EDONTREPLY;
 	} else /* uds_fd_table[minor].type == SOCK_DGRAM */ {
 		peer = -1;
 
@@ -373,12 +404,8 @@ uds_perform_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 			}
 		}
 
-		if (peer == -1) {
-			if (pretend)
-				return SUSPEND;
-
+		if (peer == -1)
 			return ENOENT;
-		}
 	}
 
 	/* Check if we write to a closed pipe. */
@@ -401,7 +428,7 @@ uds_perform_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 	    (uds_fd_table[minor].type == SOCK_SEQPACKET &&
 	    uds_fd_table[peer].size > 0)) {
 		if (pretend)
-			return SUSPEND;
+			return EDONTREPLY;
 
 		if (uds_fd_table[peer].suspended == UDS_SUSPENDED_READ)
 			panic("reader blocked on full socket");
@@ -532,7 +559,7 @@ static int
 uds_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
 {
-	int rc;
+	int rc, s;
 
 	dprintf(("UDS: uds_ioctl(%d, %lu)\n", minor, request));
 
@@ -550,7 +577,7 @@ uds_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	/* If the call couldn't complete, suspend the caller. */
 	if (rc == EDONTREPLY) {
 		/* The suspension type is already set by the IOCTL handler. */
-		if (uds_fd_table[minor].suspended == UDS_NOT_SUSPENDED)
+		if ((s = uds_fd_table[minor].suspended) == UDS_NOT_SUSPENDED)
 			panic("IOCTL did not actually suspend?");
 		uds_fd_table[minor].susp_endpt = endpt;
 		uds_fd_table[minor].susp_grant = grant;
@@ -560,8 +587,10 @@ uds_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		/* If the call wasn't supposed to block, cancel immediately. */
 		if (flags & CDEV_NONBLOCK) {
 			uds_cancel(minor, endpt, id);
-
-			rc = EAGAIN;
+			if (s == UDS_SUSPENDED_CONNECT)
+				rc = EINPROGRESS;
+			else
+				rc = EAGAIN;
 		}
 	}
 
@@ -601,7 +630,8 @@ uds_unsuspend(devminor_t minor)
 		 * In both cases, the caller already set up the connection.
 		 * The only thing to do here is unblock.
 		 */
-		r = OK;
+		r = fdp->err;
+		fdp->err = 0;
 
 		break;
 
@@ -618,7 +648,7 @@ static int
 uds_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
 	uds_fd_t *fdp;
-	int i, j;
+	int i;
 
 	dprintf(("UDS: uds_cancel(%d)\n", minor));
 
@@ -641,7 +671,7 @@ uds_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 	 * anymore.
 	 */
 	switch (fdp->suspended) {
-	case UDS_SUSPENDED_ACCEPT:	/* accept() */
+	case UDS_SUSPENDED_ACCEPT:
 		/* A partial accept() only sets the server's child. */
 		for (i = 0; i < NR_FDS; i++)
 			if (uds_fd_table[i].child == minor)
@@ -649,26 +679,8 @@ uds_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 
 		break;
 
-	case UDS_SUSPENDED_CONNECT:	/* connect() */
-		/*
-		 * A partial connect() sets the address and adds the minor to
-		 * the server backlog.
-		 */
-		for (i = 0; i < NR_FDS; i++) {
-			if (uds_fd_table[i].state != UDS_INUSE)
-				continue;
-
-			/* Remove the minor from the backlog of any server. */
-			for (j = 0; j < uds_fd_table[i].backlog_size; j++) {
-				if (uds_fd_table[i].backlog[j] == minor)
-					uds_fd_table[i].backlog[j] = -1;
-			}
-		}
-
-		/* Clear the address. */
-		memset(&uds_fd_table[minor].addr, '\0',
-		    sizeof(struct sockaddr_un));
-
+	case UDS_SUSPENDED_CONNECT:
+		/* Connect requests should continue asynchronously. */
 		break;
 
 	case UDS_SUSPENDED_READ:
