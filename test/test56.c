@@ -302,8 +302,8 @@ void test_header(void)
 	sun.sun_path[2] = 'x';
 	sun.sun_path[3] = '\0';
 
-	if (SUN_LEN(&sun) != 4) {
-		test_fail("SUN_LEN(&sun) should be 4");
+	if (SUN_LEN(&sun) != 5) {
+		test_fail("SUN_LEN(&sun) should be 5");
 	}
 
 	if (PF_UNIX != PF_LOCAL || PF_UNIX != PF_FILE || PF_UNIX != AF_UNIX) {
