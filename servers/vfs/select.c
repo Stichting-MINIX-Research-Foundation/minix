@@ -188,11 +188,10 @@ int do_select(message *UNUSED(m_out))
 	 *
 	 * In our case, terminal and pseudo-terminal devices are handled by the
 	 * TTY major and sockets by either INET major (socket type AF_INET) or
-	 * PFS major (socket type AF_UNIX). PFS acts as an FS when it handles
-	 * pipes and as a driver when it handles sockets. Additionally, we
-	 * give other character drivers the chance to handle select for any of
-	 * their device nodes. Some may not implement support for select and
-	 * let libchardriver return EBADF, which we then pass to the calling
+	 * UDS major (socket type AF_UNIX). Additionally, we give other
+	 * character drivers the chance to handle select for any of their
+	 * device nodes. Some may not implement support for select and let
+	 * libchardriver return EBADF, which we then pass to the calling
 	 * process once we receive the reply.
 	 */
 	se->type[fd] = -1;

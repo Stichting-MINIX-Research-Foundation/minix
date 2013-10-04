@@ -5,37 +5,17 @@
  *
  * The entry points into this file are...
  *
- *   uds_init:               initialize the descriptor table.
  *   uds_do_ioctl:           process an IOCTL request.
  *   uds_clear_fds:          calls put_filp for undelivered FDs.
- *
- * Also see...
- *
- *   dev_uds.c, uds.h
  */
 
-#define DEBUG 0
-
-#include "inc.h"
-#include "const.h"
-#include "glo.h"
 #include "uds.h"
 
-/* File Descriptor Table */
-uds_fd_t uds_fd_table[NR_FDS];
-
-/* initialize the descriptor table */
-void uds_init(void)
-{
-	/*
-	 * Setting everything to NULL implicitly sets the
-	 * state to UDS_FREE.
-	 */
-	memset(uds_fd_table, '\0', sizeof(uds_fd_t) * NR_FDS);
-}
-
-/* check the permissions of a socket file */
-static int check_perms(devminor_t minor, struct sockaddr_un *addr)
+/*
+ * Check the permissions of a socket file.
+ */
+static int
+check_perms(devminor_t minor, struct sockaddr_un *addr)
 {
 	int rc;
 	message vfs_m;
@@ -47,10 +27,10 @@ static int check_perms(devminor_t minor, struct sockaddr_un *addr)
 	/* ask the VFS to verify the permissions */
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = VFS_PFS_CHECK_PERMS;
-	vfs_m.VFS_PFS_ENDPT = uds_fd_table[minor].owner;
-	vfs_m.VFS_PFS_GRANT = grant_id;
-	vfs_m.VFS_PFS_COUNT = UNIX_PATH_MAX;
+	vfs_m.m_type = VFS_UDS_CHECK_PERMS;
+	vfs_m.VFS_UDS_ENDPT = uds_fd_table[minor].owner;
+	vfs_m.VFS_UDS_GRANT = grant_id;
+	vfs_m.VFS_UDS_COUNT = UNIX_PATH_MAX;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	cpf_revoke(grant_id);
@@ -69,7 +49,8 @@ static int check_perms(devminor_t minor, struct sockaddr_un *addr)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-static filp_id_t verify_fd(endpoint_t ep, int fd)
+static filp_id_t
+verify_fd(endpoint_t ep, int fd)
 {
 	int rc;
 	message vfs_m;
@@ -82,9 +63,9 @@ static filp_id_t verify_fd(endpoint_t ep, int fd)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = VFS_PFS_VERIFY_FD;
-	vfs_m.VFS_PFS_ENDPT = ep;
-	vfs_m.VFS_PFS_FD = fd;
+	vfs_m.m_type = VFS_UDS_VERIFY_FD;
+	vfs_m.VFS_UDS_ENDPT = ep;
+	vfs_m.VFS_UDS_FD = fd;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -97,10 +78,11 @@ static filp_id_t verify_fd(endpoint_t ep, int fd)
 	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
 #endif
 
-	return vfs_m.VFS_PFS_FILP;
+	return vfs_m.VFS_UDS_FILP;
 }
 
-static int set_filp(filp_id_t sfilp)
+static int
+set_filp(filp_id_t sfilp)
 {
 	int rc;
 	message vfs_m;
@@ -112,8 +94,8 @@ static int set_filp(filp_id_t sfilp)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = VFS_PFS_SET_FILP;
-	vfs_m.VFS_PFS_FILP = sfilp;
+	vfs_m.m_type = VFS_UDS_SET_FILP;
+	vfs_m.VFS_UDS_FILP = sfilp;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -128,7 +110,8 @@ static int set_filp(filp_id_t sfilp)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-static int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
+static int
+copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 {
 	int rc;
 	message vfs_m;
@@ -141,9 +124,9 @@ static int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = VFS_PFS_COPY_FILP;
-	vfs_m.VFS_PFS_ENDPT = to_ep;
-	vfs_m.VFS_PFS_FILP = cfilp;
+	vfs_m.m_type = VFS_UDS_COPY_FILP;
+	vfs_m.VFS_UDS_ENDPT = to_ep;
+	vfs_m.VFS_UDS_FILP = cfilp;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -158,7 +141,8 @@ static int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 	return vfs_m.m_type;
 }
 
-static int put_filp(filp_id_t pfilp)
+static int
+put_filp(filp_id_t pfilp)
 {
 	int rc;
 	message vfs_m;
@@ -170,8 +154,8 @@ static int put_filp(filp_id_t pfilp)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = VFS_PFS_PUT_FILP;
-	vfs_m.VFS_PFS_FILP = pfilp;
+	vfs_m.m_type = VFS_UDS_PUT_FILP;
+	vfs_m.VFS_UDS_FILP = pfilp;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -186,7 +170,8 @@ static int put_filp(filp_id_t pfilp)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-static int cancel_fd(endpoint_t ep, int fd)
+static int
+cancel_fd(endpoint_t ep, int fd)
 {
 	int rc;
 	message vfs_m;
@@ -198,9 +183,9 @@ static int cancel_fd(endpoint_t ep, int fd)
 
 	memset(&vfs_m, '\0', sizeof(message));
 
-	vfs_m.m_type = VFS_PFS_CANCEL_FD;
-	vfs_m.VFS_PFS_ENDPT = ep;
-	vfs_m.VFS_PFS_FD = fd;
+	vfs_m.m_type = VFS_UDS_CANCEL_FD;
+	vfs_m.VFS_UDS_ENDPT = ep;
+	vfs_m.VFS_UDS_FD = fd;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
 	if (OK != rc) {
@@ -215,7 +200,8 @@ static int cancel_fd(endpoint_t ep, int fd)
 	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
-static int perform_connection(devminor_t minorx, devminor_t minory,
+static int
+perform_connection(devminor_t minorx, devminor_t minory,
 	struct sockaddr_un *addr)
 {
 	/* there are several places were a connection is established. */
@@ -251,7 +237,8 @@ static int perform_connection(devminor_t minorx, devminor_t minory,
 	return OK;
 }
 
-static int do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	devminor_t minorparent; /* minor number of parent (server) */
 	devminor_t minorpeer;
@@ -370,7 +357,8 @@ static int do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return OK;
 }
 
-static int do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int child;
 	struct sockaddr_un addr;
@@ -509,7 +497,8 @@ static int do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return EDONTREPLY;
 }
 
-static int do_listen(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_listen(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	int backlog_size;
@@ -585,7 +574,8 @@ static int do_listen(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return OK;
 }
 
-static int do_socket(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_socket(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 
@@ -629,7 +619,8 @@ static int do_socket(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	}
 }
 
-static int do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	struct sockaddr_un addr;
 	int rc, i;
@@ -690,8 +681,8 @@ static int do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return OK;
 }
 
-static int do_getsockname(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_getsockname(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 
@@ -714,8 +705,8 @@ static int do_getsockname(devminor_t minor, endpoint_t endpt,
 	return rc ? EIO : OK;
 }
 
-static int do_getpeername(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_getpeername(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 
@@ -748,7 +739,8 @@ static int do_getpeername(devminor_t minor, endpoint_t endpt,
 	}
 }
 
-static int do_shutdown(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_shutdown(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc, how;
 
@@ -784,12 +776,12 @@ static int do_shutdown(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	switch (how) {
 		case SHUT_RD:
 			/* take away read permission */
-			uds_fd_table[minor].mode &= ~S_IRUSR;
+			uds_fd_table[minor].mode &= ~R_BIT;
 			break;
 
 		case SHUT_WR:
 			/* take away write permission */
-			uds_fd_table[minor].mode &= ~S_IWUSR;
+			uds_fd_table[minor].mode &= ~W_BIT;
 			break;
 
 		case SHUT_RDWR:
@@ -805,8 +797,8 @@ static int do_shutdown(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return OK;
 }
 
-static int do_socketpair(devminor_t minorx, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_socketpair(devminor_t minorx, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	dev_t minorin;
@@ -848,8 +840,8 @@ static int do_socketpair(devminor_t minorx, endpoint_t endpt,
 	return perform_connection(minorx, minory, &addr);
 }
 
-static int do_getsockopt_sotype(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_getsockopt_sotype(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 
@@ -872,8 +864,8 @@ static int do_getsockopt_sotype(devminor_t minor, endpoint_t endpt,
 	return rc ? EIO : OK;
 }
 
-static int do_getsockopt_peercred(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_getsockopt_peercred(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int peer_minor;
 	int rc;
@@ -911,8 +903,8 @@ static int do_getsockopt_peercred(devminor_t minor, endpoint_t endpt,
 	return rc ? EIO : OK;
 }
 
-static int do_getsockopt_sndbuf(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_getsockopt_sndbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	size_t sndbuf = PIPE_BUF;
@@ -929,8 +921,8 @@ static int do_getsockopt_sndbuf(devminor_t minor, endpoint_t endpt,
 	return rc ? EIO : OK;
 }
 
-static int do_setsockopt_sndbuf(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_setsockopt_sndbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	size_t sndbuf;
@@ -959,8 +951,8 @@ static int do_setsockopt_sndbuf(devminor_t minor, endpoint_t endpt,
 	return OK;
 }
 
-static int do_getsockopt_rcvbuf(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_getsockopt_rcvbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	size_t rcvbuf = PIPE_BUF;
@@ -977,8 +969,8 @@ static int do_getsockopt_rcvbuf(devminor_t minor, endpoint_t endpt,
 	return rc ? EIO : OK;
 }
 
-static int do_setsockopt_rcvbuf(devminor_t minor, endpoint_t endpt,
-	cp_grant_id_t grant)
+static int
+do_setsockopt_rcvbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	size_t rcvbuf;
@@ -1007,7 +999,8 @@ static int do_setsockopt_rcvbuf(devminor_t minor, endpoint_t endpt,
 	return OK;
 }
 
-static int do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	struct sockaddr_un addr;
@@ -1046,7 +1039,8 @@ static int do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return OK;
 }
 
-static int do_recvfrom(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_recvfrom(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 
@@ -1063,8 +1057,9 @@ static int do_recvfrom(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return rc ? EIO : OK;
 }
 
-static int msg_control_read(struct msg_control *msg_ctrl,
-	struct ancillary *data, devminor_t minor)
+static int
+msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
+	devminor_t minor)
 {
 	int rc;
 	struct msghdr msghdr;
@@ -1122,7 +1117,8 @@ static int msg_control_read(struct msg_control *msg_ctrl,
 	return OK;
 }
 
-static int send_fds(devminor_t minor, struct ancillary *data)
+static int
+send_fds(devminor_t minor, struct ancillary *data)
 {
 	int rc, i, j;
 
@@ -1156,13 +1152,15 @@ static int send_fds(devminor_t minor, struct ancillary *data)
 	return OK;
 }
 
-int uds_clear_fds(devminor_t minor, struct ancillary *data)
-{
-/* This function calls put_filp() for all of the FDs in data.
+/*
+ * This function calls put_filp() for all of the FDs in data.
  * This is used when a Unix Domain Socket is closed and there
  * exists references to file descriptors that haven't been received
  * with recvmsg().
  */
+int
+uds_clear_fds(devminor_t minor, struct ancillary *data)
+{
 	int i;
 
 #if DEBUG == 1
@@ -1185,8 +1183,9 @@ int uds_clear_fds(devminor_t minor, struct ancillary *data)
 	return OK;
 }
 
-static int recv_fds(devminor_t minor, struct ancillary *data,
-					struct msg_control *msg_ctrl)
+static int
+recv_fds(devminor_t minor, struct ancillary *data,
+	struct msg_control *msg_ctrl)
 {
 	int rc, i, j;
 	struct msghdr msghdr;
@@ -1241,8 +1240,9 @@ static int recv_fds(devminor_t minor, struct ancillary *data,
 	return OK;
 }
 
-static int recv_cred(devminor_t minor, struct ancillary *data,
-					struct msg_control *msg_ctrl)
+static int
+recv_cred(devminor_t minor, struct ancillary *data,
+	struct msg_control *msg_ctrl)
 {
 	struct msghdr msghdr;
 	struct cmsghdr *cmsg;
@@ -1269,7 +1269,8 @@ static int recv_cred(devminor_t minor, struct ancillary *data,
 	return OK;
 }
 
-static int do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int peer, rc, i;
 	struct msg_control msg_ctrl;
@@ -1339,7 +1340,8 @@ static int do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return send_fds(minor, &uds_fd_table[peer].ancillary_data);
 }
 
-static int do_recvmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
+static int
+do_recvmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	struct msg_control msg_ctrl;
@@ -1403,7 +1405,8 @@ static int do_recvmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	return rc ? EIO : OK;
 }
 
-int uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+int
+uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 	int rc;
