@@ -269,7 +269,7 @@ static int select_try_pty(tty_t *tp, int ops)
 	/* Write won't block on error. */
 	if (pp->state & TTY_CLOSED) r |= CDEV_OP_WR;
 	else if (pp->wrleft != 0 || pp->wrcum != 0) r |= CDEV_OP_WR;
-	else if (tp->tty_inleft > 0) r |= CDEV_OP_WR;	/* There's a reader. */
+	else if (tp->tty_incount < buflen(tp->tty_inbuf)) r |= CDEV_OP_WR;
   }
 
   if (ops & CDEV_OP_RD) {
