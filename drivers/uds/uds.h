@@ -197,6 +197,8 @@ int uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant);
 
 /* uds.c */
+ssize_t uds_perform_read(devminor_t minor, endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int pretend);
 void uds_unsuspend(devminor_t minor);
 
 /* vfs_uds.c */
