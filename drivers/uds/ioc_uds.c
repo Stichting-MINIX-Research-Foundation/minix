@@ -6,233 +6,37 @@
  * The entry points into this file are...
  *
  *   uds_do_ioctl:           process an IOCTL request.
- *   uds_clear_fds:          calls put_filp for undelivered FDs.
+ *   uds_clear_fds:          calls vfs_put_filp for undelivered FDs.
  */
 
 #include "uds.h"
-
-/*
- * Check the permissions of a socket file.
- */
-static int
-check_perms(devminor_t minor, struct sockaddr_un *addr)
-{
-	int rc;
-	message vfs_m;
-	cp_grant_id_t grant_id;
-
-	grant_id = cpf_grant_direct(VFS_PROC_NR, (vir_bytes) addr->sun_path,
-					UNIX_PATH_MAX, CPF_READ | CPF_WRITE);
-
-	/* ask the VFS to verify the permissions */
-	memset(&vfs_m, '\0', sizeof(message));
-
-	vfs_m.m_type = VFS_UDS_CHECK_PERMS;
-	vfs_m.VFS_UDS_ENDPT = uds_fd_table[minor].owner;
-	vfs_m.VFS_UDS_GRANT = grant_id;
-	vfs_m.VFS_UDS_COUNT = UNIX_PATH_MAX;
-
-	rc = sendrec(VFS_PROC_NR, &vfs_m);
-	cpf_revoke(grant_id);
-	if (OK != rc) {
-                printf("(uds) sendrec error... req_nr: %d err: %d\n",
-			vfs_m.m_type, rc);
-
-		return EIO;
-	}
-
-#if DEBUG == 1
-	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
-	printf("(uds) Canonical Path => %s\n", addr->sun_path);
-#endif
-
-	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
-}
-
-static filp_id_t
-verify_fd(endpoint_t ep, int fd)
-{
-	int rc;
-	message vfs_m;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) verify_fd(%d,%d) call_count=%d\n", ep, fd,
-							++call_count);
-#endif
-
-	memset(&vfs_m, '\0', sizeof(message));
-
-	vfs_m.m_type = VFS_UDS_VERIFY_FD;
-	vfs_m.VFS_UDS_ENDPT = ep;
-	vfs_m.VFS_UDS_FD = fd;
-
-	rc = sendrec(VFS_PROC_NR, &vfs_m);
-	if (OK != rc) {
-                printf("(uds) sendrec error... req_nr: %d err: %d\n",
-			vfs_m.m_type, rc);
-		return NULL;
-	}
-
-#if DEBUG == 1
-	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
-#endif
-
-	return vfs_m.VFS_UDS_FILP;
-}
-
-static int
-set_filp(filp_id_t sfilp)
-{
-	int rc;
-	message vfs_m;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) set_filp(%p) call_count=%d\n", sfilp, ++call_count);
-#endif
-
-	memset(&vfs_m, '\0', sizeof(message));
-
-	vfs_m.m_type = VFS_UDS_SET_FILP;
-	vfs_m.VFS_UDS_FILP = sfilp;
-
-	rc = sendrec(VFS_PROC_NR, &vfs_m);
-	if (OK != rc) {
-                printf("(uds) sendrec error... req_nr: %d err: %d\n",
-			vfs_m.m_type, rc);
-		return EIO;
-	}
-
-#if DEBUG == 1
-	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
-#endif
-	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
-}
-
-static int
-copy_filp(endpoint_t to_ep, filp_id_t cfilp)
-{
-	int rc;
-	message vfs_m;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) copy_filp(%d, %p) call_count=%d\n",to_ep, cfilp,
-							++call_count);
-#endif
-
-	memset(&vfs_m, '\0', sizeof(message));
-
-	vfs_m.m_type = VFS_UDS_COPY_FILP;
-	vfs_m.VFS_UDS_ENDPT = to_ep;
-	vfs_m.VFS_UDS_FILP = cfilp;
-
-	rc = sendrec(VFS_PROC_NR, &vfs_m);
-	if (OK != rc) {
-                printf("(uds) sendrec error... req_nr: %d err: %d\n",
-			vfs_m.m_type, rc);
-		return EIO;
-	}
-
-#if DEBUG == 1
-	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
-#endif
-	return vfs_m.m_type;
-}
-
-static int
-put_filp(filp_id_t pfilp)
-{
-	int rc;
-	message vfs_m;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) put_filp(%p) call_count=%d\n", pfilp, ++call_count);
-#endif
-
-	memset(&vfs_m, '\0', sizeof(message));
-
-	vfs_m.m_type = VFS_UDS_PUT_FILP;
-	vfs_m.VFS_UDS_FILP = pfilp;
-
-	rc = sendrec(VFS_PROC_NR, &vfs_m);
-	if (OK != rc) {
-                printf("(uds) sendrec error... req_nr: %d err: %d\n",
-			vfs_m.m_type, rc);
-		return EIO;
-	}
-
-#if DEBUG == 1
-	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
-#endif
-	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
-}
-
-static int
-cancel_fd(endpoint_t ep, int fd)
-{
-	int rc;
-	message vfs_m;
-
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) cancel_fd(%d,%d) call_count=%d\n", ep, fd, ++call_count);
-#endif
-
-	memset(&vfs_m, '\0', sizeof(message));
-
-	vfs_m.m_type = VFS_UDS_CANCEL_FD;
-	vfs_m.VFS_UDS_ENDPT = ep;
-	vfs_m.VFS_UDS_FD = fd;
-
-	rc = sendrec(VFS_PROC_NR, &vfs_m);
-	if (OK != rc) {
-                printf("(uds) sendrec error... req_nr: %d err: %d\n",
-			vfs_m.m_type, rc);
-		return EIO;
-	}
-
-#if DEBUG == 1
-	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
-#endif
-	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
-}
 
 static int
 perform_connection(devminor_t minorx, devminor_t minory,
 	struct sockaddr_un *addr)
 {
-	/* there are several places were a connection is established. */
-	/* accept(2), connect(2), uds_status(2), socketpair(2)        */
-	/* This is a helper function to make sure it is done in the   */
-	/* same way in each place with the same validation checks.    */
+	/*
+	 * There are several places were a connection is established, the
+	 * initiating call being one of accept(2), connect(2), socketpair(2).
+	 */
+	dprintf(("UDS: perform_connection(%d, %d)\n", minorx, minory));
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] perform_connection() call_count=%d\n", minorx,
-		++call_count);
-#endif
-
-	/* only connection oriented types are acceptable and only like
-	 * types can connect to each other
+	/*
+	 * Only connection-oriented types are acceptable and only equal
+	 * types can connect to each other.
 	 */
 	if ((uds_fd_table[minorx].type != SOCK_SEQPACKET &&
-		uds_fd_table[minorx].type != SOCK_STREAM) ||
-		uds_fd_table[minorx].type != uds_fd_table[minory].type) {
-
-		/* sockets are not in a valid state */
+	    uds_fd_table[minorx].type != SOCK_STREAM) ||
+	    uds_fd_table[minorx].type != uds_fd_table[minory].type)
 		return EINVAL;
-	}
 
-	/* connect the pair of sockets */
+	/* Connect the pair of sockets. */
 	uds_fd_table[minorx].peer = minory;
 	uds_fd_table[minory].peer = minorx;
 
 	/* Set the address of both sockets */
-	memcpy(&(uds_fd_table[minorx].addr), addr, sizeof(struct sockaddr_un));
-	memcpy(&(uds_fd_table[minory].addr), addr, sizeof(struct sockaddr_un));
+	memcpy(&uds_fd_table[minorx].addr, addr, sizeof(struct sockaddr_un));
+	memcpy(&uds_fd_table[minory].addr, addr, sizeof(struct sockaddr_un));
 
 	return OK;
 }
@@ -245,12 +49,10 @@ do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int rc, i;
 	struct sockaddr_un addr;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_accept() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: do_accept(%d)\n", minor));
 
-	/* Somewhat weird logic is used in this function, so here's an
+	/*
+	 * Somewhat weird logic is used in this function, so here's an
 	 * overview... The minor number is the server's client socket
 	 * (the socket to be returned by accept()). The data waiting
 	 * for us in the IO Grant is the address that the server is
@@ -259,98 +61,73 @@ do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	 * connection or suspend and wait for a connect().
 	 */
 
-	if (uds_fd_table[minor].type != -1) {
-		/* this IOCTL must be called on a 'fresh' socket */
+	/* This IOCTL must be called on a 'fresh' socket. */
+	if (uds_fd_table[minor].type != -1)
 		return EINVAL;
-	}
 
 	/* Get the server's address */
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
-		sizeof(struct sockaddr_un));
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
+	    sizeof(struct sockaddr_un))) != OK)
+		return rc;
 
-	if (rc != OK) {
-		return EIO;
-	}
-
-	/* locate server socket */
-	rc = -1; /* to trap error */
-
+	/* Locate the server socket. */
 	for (i = 0; i < NR_FDS; i++) {
 		if (uds_fd_table[i].addr.sun_family == AF_UNIX &&
-				!strncmp(addr.sun_path,
-				uds_fd_table[i].addr.sun_path,
-				UNIX_PATH_MAX) &&
-				uds_fd_table[i].listening == 1) {
-
-			rc = 0;
+		    !strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
+		    UNIX_PATH_MAX) && uds_fd_table[i].listening == 1)
 			break;
-		}
 	}
 
-	if (rc == -1) {
-		/* there is no server listening on addr. Maybe someone
-		 * screwed up the ioctl()?
-		 */
+	if (i == NR_FDS)
 		return EINVAL;
-	}
 
 	minorparent = i; /* parent */
 
-	/* we are the parent's child */
+	/* We are the parent's child. */
 	uds_fd_table[minorparent].child = minor;
 
-	/* the peer has the same type as the parent. we need to be that
+	/*
+	 * The peer has the same type as the parent. we need to be that
 	 * type too.
 	 */
 	uds_fd_table[minor].type = uds_fd_table[minorparent].type;
 
-	/* locate peer to accept in the parent's backlog */
-	minorpeer = -1; /* to trap error */
+	/* Locate the peer to accept in the parent's backlog. */
+	minorpeer = -1;
 	for (i = 0; i < uds_fd_table[minorparent].backlog_size; i++) {
 		if (uds_fd_table[minorparent].backlog[i] != -1) {
 			minorpeer = uds_fd_table[minorparent].backlog[i];
 			uds_fd_table[minorparent].backlog[i] = -1;
-			rc = 0;
 			break;
 		}
 	}
 
 	if (minorpeer == -1) {
+		dprintf(("UDS: do_accept(%d): suspend\n", minor));
 
-#if DEBUG == 1
-		printf("(uds) [%d] {do_accept} suspend\n", minor);
-#endif
-
-		/* there are no peers in the backlog, suspend and wait
-		 * for some to show up
+		/*
+		 * There are no peers in the backlog, suspend and wait for one
+		 * to show up.
 		 */
 		uds_fd_table[minor].suspended = UDS_SUSPENDED_ACCEPT;
 
 		return EDONTREPLY;
 	}
 
-#if DEBUG == 1
-	printf("(uds) [%d] connecting to %d -- parent is %d\n", minor,
-						minorpeer, minorparent);
-#endif
+	dprintf(("UDS: connecting %d to %d -- parent is %d\n", minor,
+	    minorpeer, minorparent));
 
-	rc = perform_connection(minor, minorpeer, &addr);
-	if (rc != OK) {
-#if DEBUG == 1
-		printf("(uds) [%d] {do_accept} connection not performed\n",
-								minor);
-#endif
+	if ((rc = perform_connection(minor, minorpeer, &addr)) != OK) {
+		dprintf(("UDS: do_accept(%d): connection failed\n", minor));
+
 		return rc;
 	}
 
 	uds_fd_table[minorparent].child = -1;
 
-	/* if peer is blocked on connect() revive peer */
+	/* If the peer is blocked on connect(), revive the peer. */
 	if (uds_fd_table[minorpeer].suspended) {
-#if DEBUG == 1
-		printf("(uds) [%d] {do_accept} revive %d\n", minor,
-								minorpeer);
-#endif
+		dprintf(("UDS: do_accept(%d): revive %d\n", minor, minorpeer));
 		uds_unsuspend(minorpeer);
 	}
 
@@ -364,134 +141,96 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	struct sockaddr_un addr;
 	int rc, i, j;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_connect() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: do_connect(%d)\n", minor));
 
-	/* only connection oriented sockets can connect */
+	/* Only connection oriented sockets can connect. */
 	if (uds_fd_table[minor].type != SOCK_STREAM &&
-			uds_fd_table[minor].type != SOCK_SEQPACKET) {
+	    uds_fd_table[minor].type != SOCK_SEQPACKET)
 		return EINVAL;
-	}
 
-	if (uds_fd_table[minor].peer != -1) {
-		/* socket is already connected */
+	/* The socket must not be connected already. */
+	if (uds_fd_table[minor].peer != -1)
 		return EISCONN;
-	}
 
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
-		sizeof(struct sockaddr_un));
-
-	if (rc != OK) {
-		return EIO;
-	}
-
-	rc = check_perms(minor, &addr);
-	if (rc != OK) {
-		/* permission denied, socket file doesn't exist, etc. */
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
+	    sizeof(struct sockaddr_un))) != OK)
 		return rc;
-	}
 
-	/* look for a socket of the same type that is listening on the
-	 * address we want to connect to
+	if ((rc = vfs_check_perms(uds_fd_table[minor].owner, &addr)) != OK)
+		return rc;
+
+	/*
+	 * Look for a socket of the same type that is listening on the
+	 * address we want to connect to.
 	 */
 	for (i = 0; i < NR_FDS; i++) {
-		if (uds_fd_table[minor].type == uds_fd_table[i].type &&
-			uds_fd_table[i].listening &&
-			uds_fd_table[i].addr.sun_family == AF_UNIX &&
-			!strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
-			UNIX_PATH_MAX)) {
+		if (uds_fd_table[minor].type != uds_fd_table[i].type)
+			continue;
+		if (!uds_fd_table[i].listening)
+			continue;
+		if (uds_fd_table[i].addr.sun_family != AF_UNIX)
+			continue;
+		if (strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
+		    UNIX_PATH_MAX))
+			continue;
 
-			if ((child = uds_fd_table[i].child) != -1) {
+		/* Found a matching socket. */
+		break;
+	}
 
-				/* the server is blocked on accept(2) --
-				 * perform connection to the child
-				 */
+	if (i == NR_FDS)
+		return ECONNREFUSED;
 
-				rc = perform_connection(minor, child, &addr);
+	/* If the server is blocked on an accept, perform the connection. */
+	if ((child = uds_fd_table[i].child) != -1) {
+		rc = perform_connection(minor, child, &addr);
 
-				if (rc == OK) {
-					uds_fd_table[i].child = -1;
+		if (rc != OK)
+			return rc;
 
-#if DEBUG == 1
-		printf("(uds) [%d] {do_connect} revive %d\n", minor, child);
-#endif
+		uds_fd_table[i].child = -1;
 
-					/* wake the parent (server) */
-					uds_unsuspend(child);
-				}
+		dprintf(("UDS: do_connect(%d): revive %d\n", minor, child));
 
-				return rc;
-			} else {
-#if DEBUG == 1
-				printf("(uds) [%d] adding to %d's backlog\n",
-								minor, i);
-#endif
+		/* Wake up the accepting party. */
+		uds_unsuspend(child);
 
-				/* tell the server were waiting to be served */
+		return OK;
+	}
 
-				/* look for a free slot in the backlog */
-				rc = -1; /* to trap error */
-				for (j = 0; j < uds_fd_table[i].backlog_size;
-					j++) {
+	dprintf(("UDS: adding %d to %d's backlog\n", minor, i));
 
-					if (uds_fd_table[i].backlog[j] == -1) {
+	/* Look for a free slot in the backlog. */
+	rc = -1;
+	for (j = 0; j < uds_fd_table[i].backlog_size; j++) {
+		if (uds_fd_table[i].backlog[j] == -1) {
+			uds_fd_table[i].backlog[j] = minor;
 
-						uds_fd_table[i].backlog[j] =
-							minor;
-
-						rc = 0;
-						break;
-					}
-				}
-
-				if (rc == -1) {
-					/* backlog is full */
-					break;
-				}
-
-				/* see if the server is blocked on select() */
-				if (uds_fd_table[i].sel_ops & CDEV_OP_RD) {
-					/* if the server wants to know about
-					 * data ready to read and it doesn't
-					 * doesn't know about it already, then
-					 * let the server know we have data for
-					 * it.
-					 */
-					chardriver_reply_select(
-						uds_fd_table[i].sel_endpt, i,
-						CDEV_OP_RD);
-
-					uds_fd_table[i].sel_ops &= ~CDEV_OP_RD;
-				}
-
-				/* we found our server */
-				uds_fd_table[minor].peer = i;
-
-				/* set the address */
-				memcpy(&(uds_fd_table[minor].addr), &addr,
-					sizeof(struct sockaddr_un));
-
-				break;
-			}
+			rc = 0;
+			break;
 		}
 	}
 
-	if (uds_fd_table[minor].peer == -1) {
-		/* could not find another open socket listening on the
-		 * specified address with room in the backlog
-		 */
-		return ECONNREFUSED;
+	if (rc == -1)
+		return ECONNREFUSED;	/* backlog is full */
+
+	/* See if the server is blocked on select(). */
+	if (uds_fd_table[i].sel_ops & CDEV_OP_RD) {
+		/* Satisfy a read-type select on the server. */
+		chardriver_reply_select(uds_fd_table[i].sel_endpt, i,
+		    CDEV_OP_RD);
+
+		uds_fd_table[i].sel_ops &= ~CDEV_OP_RD;
 	}
 
-#if DEBUG == 1
-	printf("(uds) [%d] {do_connect} suspend\n", minor);
-#endif
+	/* We found our server. */
+	uds_fd_table[minor].peer = i;
 
-	/* suspend until the server side completes the connection with accept()
-	 */
+	memcpy(&uds_fd_table[minor].addr, &addr, sizeof(struct sockaddr_un));
 
+	dprintf(("UDS: do_connect(%d): suspend\n", minor));
+
+	/* Suspend until the server side accepts the connection. */
 	uds_fd_table[minor].suspended = UDS_SUSPENDED_CONNECT;
 
 	return EDONTREPLY;
@@ -503,72 +242,47 @@ do_listen(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int rc;
 	int backlog_size;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_listen() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: do_listen(%d)\n", minor));
 
-	/* ensure the socket has a type and is bound */
+	/* Ensure the socket has a type and is bound. */
 	if (uds_fd_table[minor].type == -1 ||
-		uds_fd_table[minor].addr.sun_family != AF_UNIX) {
-
-		/* probably trying to call listen() before bind() */
+	    uds_fd_table[minor].addr.sun_family != AF_UNIX)
 		return EINVAL;
-	}
 
-	/* the two supported types for listen(2) are SOCK_STREAM and
-	 * SOCK_SEQPACKET
-	 */
+	/* listen(2) supports only two socket types. */
 	if (uds_fd_table[minor].type != SOCK_STREAM &&
-			uds_fd_table[minor].type != SOCK_SEQPACKET) {
-
-		/* probably trying to call listen() with a SOCK_DGRAM */
+	    uds_fd_table[minor].type != SOCK_SEQPACKET)
 		return EOPNOTSUPP;
-	}
 
-	/* The POSIX standard doesn't say what to do if listen() has
-	 * already been called. Well, there isn't an errno. we silently
+	/*
+	 * The POSIX standard doesn't say what to do if listen() has
+	 * already been called.  Well, there isn't an errno.  We silently
 	 * let it happen, but if listen() has already been called, we
-	 * don't allow the backlog to shrink
+	 * don't allow the backlog to shrink.
 	 */
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &backlog_size,
-		sizeof(int));
-
-	if (rc != OK) {
-		return EIO;
-	}
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &backlog_size,
+	    sizeof(backlog_size))) != OK)
+		return rc;
 
 	if (uds_fd_table[minor].listening == 0) {
+		/* Set the backlog size to a reasonable value. */
+		if (backlog_size <= 0 || backlog_size > UDS_SOMAXCONN)
+			backlog_size = UDS_SOMAXCONN;
 
-		/* See if backlog_size is between 0 and UDS_SOMAXCONN */
-		if (backlog_size >= 0 && backlog_size < UDS_SOMAXCONN) {
-
-			/* use the user provided backlog_size */
-			uds_fd_table[minor].backlog_size = backlog_size;
-
-		} else {
-
-			/* the user gave an invalid size, use
-			 * UDS_SOMAXCONN instead
-			 */
-			uds_fd_table[minor].backlog_size = UDS_SOMAXCONN;
-		}
+		uds_fd_table[minor].backlog_size = backlog_size;
 	} else {
-
-		/* See if the user is trying to expand the backlog_size */
+		/* Allow the user to expand the backlog size. */
 		if (backlog_size > uds_fd_table[minor].backlog_size &&
-			backlog_size < UDS_SOMAXCONN) {
-
-			/* expand backlog_size */
+		    backlog_size < UDS_SOMAXCONN)
 			uds_fd_table[minor].backlog_size = backlog_size;
-		}
 
-		/* Don't let the user shrink the backlog_size (we might
-		 * have clients waiting in those slots
+		/*
+		 * Don't let the user shrink the backlog_size, as we might
+		 * have clients waiting in those slots.
 		 */
 	}
 
-	/* perform listen(2) */
+	/* This socket is now listening. */
 	uds_fd_table[minor].listening = 1;
 
 	return OK;
@@ -577,45 +291,29 @@ do_listen(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 static int
 do_socket(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc;
+	int rc, type;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_socket() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: do_socket(%d)\n", minor));
 
-	/* see if this socket already has a type */
-	if (uds_fd_table[minor].type != -1) {
-		/* socket type can only be set once */
+	/* The socket type can only be set once. */
+	if (uds_fd_table[minor].type != -1)
 		return EINVAL;
-	}
 
-	/* get the requested type */
-	rc = sys_safecopyfrom(endpt, grant, 0,
-		(vir_bytes) &uds_fd_table[minor].type, sizeof(int));
+	/* Get the requested type. */
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &type,
+	    sizeof(type))) != OK)
+		return rc;
 
-	if (rc != OK) {
-		/* something went wrong and we couldn't get the type */
-		return EIO;
-	}
+	/* Assign the type if it is valid only. */
+	switch (type) {
+	case SOCK_STREAM:
+	case SOCK_DGRAM:
+	case SOCK_SEQPACKET:
+		uds_fd_table[minor].type = type;
+		return OK;
 
-	/* validate the type */
-	switch (uds_fd_table[minor].type) {
-		case SOCK_STREAM:
-		case SOCK_DGRAM:
-		case SOCK_SEQPACKET:
-			/* the type is one of the 3 valid socket types */
-			return OK;
-
-		default:
-			/* if the type isn't one of the 3 valid socket
-			 * types, then it must be invalid.
-			 */
-
-			/* set the type back to '-1' (no type set) */
-			uds_fd_table[minor].type = -1;
-
-			return EINVAL;
+	default:
+		return EINVAL;
 	}
 }
 
@@ -625,58 +323,42 @@ do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	struct sockaddr_un addr;
 	int rc, i;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_bind() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: do_bind(%d)\n", minor));
 
+	/* If the type hasn't been set by do_socket() yet, OR an attempt
+	 * to re-bind() a non-SOCK_DGRAM socket is made, fail the call.
+	 */
 	if ((uds_fd_table[minor].type == -1) ||
-		(uds_fd_table[minor].addr.sun_family == AF_UNIX &&
-		uds_fd_table[minor].type != SOCK_DGRAM)) {
-
-		/* the type hasn't been set by do_socket() yet OR attempting
-		 * to re-bind() a non-SOCK_DGRAM socket
-		 */
+	    (uds_fd_table[minor].addr.sun_family == AF_UNIX &&
+	    uds_fd_table[minor].type != SOCK_DGRAM))
 		return EINVAL;
-	}
 
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
-		sizeof(struct sockaddr_un));
-
-	if (rc != OK) {
-		return EIO;
-	}
-
-	/* do some basic sanity checks on the address */
-	if (addr.sun_family != AF_UNIX) {
-		/* bad family */
-		return EAFNOSUPPORT;
-	}
-
-	if (addr.sun_path[0] == '\0') {
-		/* bad address */
-		return ENOENT;
-	}
-
-	rc = check_perms(minor, &addr);
-	if (rc != OK) {
-		/* permission denied, socket file doesn't exist, etc. */
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
+	    sizeof(struct sockaddr_un))) != OK)
 		return rc;
-	}
 
-	/* make sure the address isn't already in use by another socket. */
+	/* Do some basic sanity checks on the address. */
+	if (addr.sun_family != AF_UNIX)
+		return EAFNOSUPPORT;
+
+	if (addr.sun_path[0] == '\0')
+		return ENOENT;
+
+	if ((rc = vfs_check_perms(uds_fd_table[minor].owner, &addr)) != OK)
+		return rc;
+
+	/* Make sure the address isn't already in use by another socket. */
 	for (i = 0; i < NR_FDS; i++) {
-		if ((uds_fd_table[i].addr.sun_family == AF_UNIX) &&
-			!strncmp(addr.sun_path,
-			uds_fd_table[i].addr.sun_path, UNIX_PATH_MAX)) {
-
-			/* another socket is bound to this sun_path */
+		if (uds_fd_table[i].addr.sun_family == AF_UNIX &&
+		    !strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
+		    UNIX_PATH_MAX)) {
+			/* Another socket is bound to this sun_path. */
 			return EADDRINUSE;
 		}
 	}
 
-	/* looks good, perform the bind() */
-	memcpy(&(uds_fd_table[minor].addr), &addr, sizeof(struct sockaddr_un));
+	/* Looks good, perform the bind(). */
+	memcpy(&uds_fd_table[minor].addr, &addr, sizeof(struct sockaddr_un));
 
 	return OK;
 }
@@ -684,59 +366,39 @@ do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 static int
 do_getsockname(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc;
+	dprintf(("UDS: do_getsockname(%d)\n", minor));
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_getsockname() call_count=%d\n", minor,
-		++call_count);
-#endif
-
-	/* Unconditionally send the address we have assigned to this socket.
-	 * The POSIX standard doesn't say what to do if the address
-	 * hasn't been set. If the address isn't currently set, then
-	 * the user will get NULL bytes. Note: libc depends on this
-	 * behavior.
+	/*
+	 * Unconditionally send the address we have assigned to this socket.
+	 * The POSIX standard doesn't say what to do if the address hasn't been
+	 * set.  If the address isn't currently set, then the user will get
+	 * NULL bytes.  Note: libc depends on this behavior.
 	 */
-	rc = sys_safecopyto(endpt, grant, 0,
-		(vir_bytes) &uds_fd_table[minor].addr,
-		sizeof(struct sockaddr_un));
-
-	return rc ? EIO : OK;
+	return sys_safecopyto(endpt, grant, 0,
+	    (vir_bytes) &uds_fd_table[minor].addr, sizeof(struct sockaddr_un));
 }
 
 static int
 do_getpeername(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc;
+	int rc, peer_minor;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_getpeername() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_getpeername(%d)\n", minor));
 
-	/* check that the socket is connected with a valid peer */
+	/* Check that the socket is connected with a valid peer. */
 	if (uds_fd_table[minor].peer != -1) {
-		int peer_minor;
-
 		peer_minor = uds_fd_table[minor].peer;
 
-		/* copy the address from the peer */
-		rc = sys_safecopyto(endpt, grant, 0,
-			(vir_bytes) &uds_fd_table[peer_minor].addr,
-			sizeof(struct sockaddr_un));
+		/* Copy the address from the peer. */
+		return sys_safecopyto(endpt, grant, 0,
+		    (vir_bytes) &uds_fd_table[peer_minor].addr,
+		    sizeof(struct sockaddr_un));
+	} else if (uds_fd_table[minor].err == ECONNRESET) {
+		uds_fd_table[minor].err = 0;
 
-		return rc ? EIO : OK;
-	} else {
-		if (uds_fd_table[minor].err == ECONNRESET) {
-			uds_fd_table[minor].err = 0;
-
-			return ECONNRESET;
-		} else {
-			return ENOTCONN;
-		}
-	}
+		return ECONNRESET;
+	} else
+		return ENOTCONN;
 }
 
 static int
@@ -744,54 +406,41 @@ do_shutdown(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc, how;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_shutdown() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_shutdown(%d)\n", minor));
 
+	/* The socket must be connection oriented. */
 	if (uds_fd_table[minor].type != SOCK_STREAM &&
-			uds_fd_table[minor].type != SOCK_SEQPACKET) {
-
-		/* socket must be a connection oriented socket */
+	    uds_fd_table[minor].type != SOCK_SEQPACKET)
 		return EINVAL;
-	}
 
 	if (uds_fd_table[minor].peer == -1) {
-		/* shutdown(2) is only valid for connected sockets */
-		if (uds_fd_table[minor].err == ECONNRESET) {
+		/* shutdown(2) is only valid for connected sockets. */
+		if (uds_fd_table[minor].err == ECONNRESET)
 			return ECONNRESET;
-		} else {
+		else
 			return ENOTCONN;
-		}
 	}
 
-	/* get the 'how' parameter from the process */
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &how, sizeof(int));
-
-	if (rc != OK) {
-		return EIO;
-	}
+	/* Get the 'how' parameter from the caller. */
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &how,
+	    sizeof(how))) != OK)
+		return rc;
 
 	switch (how) {
-		case SHUT_RD:
-			/* take away read permission */
-			uds_fd_table[minor].mode &= ~R_BIT;
-			break;
+	case SHUT_RD:		/* Take away read permission. */
+		uds_fd_table[minor].mode &= ~UDS_R;
+		break;
 
-		case SHUT_WR:
-			/* take away write permission */
-			uds_fd_table[minor].mode &= ~W_BIT;
-			break;
+	case SHUT_WR:		/* Take away write permission. */
+		uds_fd_table[minor].mode &= ~UDS_W;
+		break;
 
-		case SHUT_RDWR:
-			/* completely shutdown */
-			uds_fd_table[minor].mode = 0;
-			break;
+	case SHUT_RDWR:		/* Shut down completely. */
+		uds_fd_table[minor].mode = 0;
+		break;
 
-		default:
-			/* the 'how' parameter is invalid */
-			return EINVAL;
+	default:
+		return EINVAL;
 	}
 
 	return OK;
@@ -805,33 +454,20 @@ do_socketpair(devminor_t minorx, endpoint_t endpt, cp_grant_id_t grant)
 	devminor_t minory;
 	struct sockaddr_un addr;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_socketpair() call_count=%d\n", minorx,
-		++call_count);
-#endif
+	dprintf(("UDS: do_socketpair(%d)\n", minorx));
 
-	/* ioctl argument is the minor number of the second socket */
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &minorin,
-		sizeof(dev_t));
-
-	if (rc != OK) {
-		return EIO;
-	}
+	/* The ioctl argument is the minor number of the second socket. */
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &minorin,
+	    sizeof(minorin))) != OK)
+		return rc;
 
 	minory = minor(minorin);
 
-#if DEBUG == 1
-	printf("socketpair() %d - %d\n", minorx, minory);
-#endif
+	dprintf(("UDS: socketpair(%d, %d,)\n", minorx, minory));
 
-	/* security check - both sockets must have the same endpoint (owner) */
-	if (uds_fd_table[minorx].owner != uds_fd_table[minory].owner) {
-		/* we won't allow you to magically connect your socket to
-		 * someone elses socket
-		 */
+	/* Security check: both sockets must have the same owner endpoint. */
+	if (uds_fd_table[minorx].owner != uds_fd_table[minory].owner)
 		return EPERM;
-	}
 
 	addr.sun_family = AF_UNIX;
 	addr.sun_path[0] = 'X';
@@ -845,23 +481,14 @@ do_getsockopt_sotype(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_getsockopt_sotype() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_getsockopt_sotype(%d)\n", minor));
 
-	if (uds_fd_table[minor].type == -1) {
-		/* the type hasn't been set yet. instead of returning an
-		 * invalid type, we fail with EINVAL
-		 */
+	/* If the type hasn't been set yet, we fail the call. */
+	if (uds_fd_table[minor].type == -1)
 		return EINVAL;
-	}
 
-	rc = sys_safecopyto(endpt, grant, 0,
-		(vir_bytes) &uds_fd_table[minor].type, sizeof(int));
-
-	return rc ? EIO : OK;
+	return sys_safecopyto(endpt, grant, 0,
+	    (vir_bytes) &uds_fd_table[minor].type, sizeof(int));
 }
 
 static int
@@ -871,54 +498,36 @@ do_getsockopt_peercred(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int rc;
 	struct uucred cred;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_getsockopt_peercred() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_getsockopt_peercred(%d)\n", minor));
 
 	if (uds_fd_table[minor].peer == -1) {
-
 		if (uds_fd_table[minor].err == ECONNRESET) {
 			uds_fd_table[minor].err = 0;
 
 			return ECONNRESET;
-		} else {
+		} else
 			return ENOTCONN;
-		}
 	}
 
 	peer_minor = uds_fd_table[minor].peer;
 
-	/* obtain the peer's credentials */
-	rc = getnucred(uds_fd_table[peer_minor].owner, &cred);
-	if (rc == -1) {
-		/* likely error: invalid endpoint / proc doesn't exist */
-		return errno;
-	}
+	/* Obtain the peer's credentials and copy them out. */
+	if ((rc = getnucred(uds_fd_table[peer_minor].owner, &cred)) < 0)
+		return -errno;
 
-	rc = sys_safecopyto(endpt, grant, 0, (vir_bytes) &cred,
-		sizeof(struct uucred));
-
-	return rc ? EIO : OK;
+	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &cred,
+	    sizeof(struct uucred));
 }
 
 static int
 do_getsockopt_sndbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc;
-	size_t sndbuf = PIPE_BUF;
+	size_t sndbuf = UDS_BUF;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_getsockopt_sndbuf() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_getsockopt_sndbuf(%d)\n", minor));
 
-	rc = sys_safecopyto(endpt, grant, 0, (vir_bytes) &sndbuf,
-		sizeof(size_t));
-
-	return rc ? EIO : OK;
+	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &sndbuf,
+	    sizeof(sndbuf));
 }
 
 static int
@@ -927,46 +536,29 @@ do_setsockopt_sndbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int rc;
 	size_t sndbuf;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_setsockopt_rcvbuf() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_setsockopt_sndbuf(%d)\n", minor));
 
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &sndbuf,
-		sizeof(size_t));
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &sndbuf,
+	    sizeof(sndbuf))) != OK)
+		return rc;
 
-	if (rc != OK) {
-		return EIO;
-	}
-
-	if (sndbuf > PIPE_BUF) {
-		/* The send buffer is limited to 32K at the moment. */
+	/* The send buffer is limited to 32KB at the moment. */
+	if (sndbuf > UDS_BUF)
 		return ENOSYS;
-	}
 
-	/* There is no way to reduce the send buffer, do we have to
-	 * let this call fail for smaller buffers?
-	 */
+	/* FIXME: actually shrink the buffer. */
 	return OK;
 }
 
 static int
 do_getsockopt_rcvbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc;
-	size_t rcvbuf = PIPE_BUF;
+	size_t rcvbuf = UDS_BUF;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_getsockopt_rcvbuf() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_getsockopt_rcvbuf(%d)\n", minor));
 
-	rc = sys_safecopyto(endpt, grant, 0, (vir_bytes) &rcvbuf,
-		sizeof(size_t));
-
-	return rc ? EIO : OK;
+	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &rcvbuf,
+	    sizeof(rcvbuf));
 }
 
 static int
@@ -975,27 +567,17 @@ do_setsockopt_rcvbuf(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int rc;
 	size_t rcvbuf;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_setsockopt_rcvbuf() call_count=%d\n", minor,
-		++call_count);
-#endif
+	dprintf(("UDS: do_setsockopt_rcvbuf(%d)\n", minor));
 
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &rcvbuf,
-		sizeof(size_t));
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &rcvbuf,
+	    sizeof(rcvbuf))) != OK)
+		return rc;
 
-	if (rc != OK) {
-		return EIO;
-	}
-
-	if (rcvbuf > PIPE_BUF) {
-		/* The send buffer is limited to 32K at the moment. */
+	/* The receive buffer is limited to 32KB at the moment. */
+	if (rcvbuf > UDS_BUF)
 		return ENOSYS;
-	}
 
-	/* There is no way to reduce the send buffer, do we have to
-	 * let this call fail for smaller buffers?
-	 */
+	/* FIXME: actually shrink the buffer. */
 	return OK;
 }
 
@@ -1005,36 +587,24 @@ do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int rc;
 	struct sockaddr_un addr;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_sendto() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: do_sendto(%d)\n", minor));
 
-	if (uds_fd_table[minor].type != SOCK_DGRAM) {
-		/* This IOCTL is only for SOCK_DGRAM sockets */
+	/* This IOCTL is only for SOCK_DGRAM sockets. */
+	if (uds_fd_table[minor].type != SOCK_DGRAM)
 		return EINVAL;
-	}
 
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
-		sizeof(struct sockaddr_un));
-
-	if (rc != OK) {
-		return EIO;
-	}
-
-	/* do some basic sanity checks on the address */
-	if (addr.sun_family != AF_UNIX || addr.sun_path[0] == '\0') {
-		/* bad address */
-		return EINVAL;
-	}
-
-	rc = check_perms(minor, &addr);
-	if (rc != OK) {
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &addr,
+	    sizeof(struct sockaddr_un))) != OK)
 		return rc;
-	}
 
-	memcpy(&(uds_fd_table[minor].target), &addr,
-					sizeof(struct sockaddr_un));
+	/* Do some basic sanity checks on the address. */
+	if (addr.sun_family != AF_UNIX || addr.sun_path[0] == '\0')
+		return EINVAL;
+
+	if ((rc = vfs_check_perms(uds_fd_table[minor].owner, &addr)) != OK)
+		return rc;
+
+	memcpy(&uds_fd_table[minor].target, &addr, sizeof(struct sockaddr_un));
 
 	return OK;
 }
@@ -1042,78 +612,57 @@ do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 static int
 do_recvfrom(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int rc;
+	dprintf(("UDS: do_recvfrom(%d)\n", minor));
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_recvfrom() call_count=%d\n", minor,
-		++call_count);
-#endif
-
-	rc = sys_safecopyto(endpt, grant, 0,
-		(vir_bytes) &uds_fd_table[minor].source,
-		sizeof(struct sockaddr_un));
-
-	return rc ? EIO : OK;
+	return sys_safecopyto(endpt, grant, 0,
+	    (vir_bytes) &uds_fd_table[minor].source,
+	    sizeof(struct sockaddr_un));
 }
 
 static int
 msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
 	devminor_t minor)
 {
-	int rc;
+	int i, rc, nfds, totalfds;
 	struct msghdr msghdr;
 	struct cmsghdr *cmsg = NULL;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] msg_control_read() call_count=%d\n", minor,
-							++call_count);
-#endif
+	dprintf(("UDS: msg_control_read(%d)\n", minor));
 
-	data->nfiledes = 0;
+	/* Obtain this socket's credentials. */
+	if ((rc = getnucred(uds_fd_table[minor].owner, &data->cred)) < 0)
+		return -errno;
+
+	dprintf(("UDS: minor=%d cred={%d,%d,%d}\n", minor, data->cred.pid,
+	    data->cred.uid, data->cred.gid));
+
+	totalfds = data->nfiledes;
 
 	memset(&msghdr, '\0', sizeof(struct msghdr));
 	msghdr.msg_control = msg_ctrl->msg_control;
 	msghdr.msg_controllen = msg_ctrl->msg_controllen;
 
-	for(cmsg = CMSG_FIRSTHDR(&msghdr); cmsg != NULL;
-					cmsg = CMSG_NXTHDR(&msghdr, cmsg)) {
+	for (cmsg = CMSG_FIRSTHDR(&msghdr); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(&msghdr, cmsg)) {
+		if (cmsg->cmsg_level != SOL_SOCKET ||
+		    cmsg->cmsg_type != SCM_RIGHTS)
+			continue;
 
-		if (cmsg->cmsg_level == SOL_SOCKET &&
-					cmsg->cmsg_type == SCM_RIGHTS) {
+		nfds = MIN((cmsg->cmsg_len-CMSG_LEN(0))/sizeof(int), OPEN_MAX);
 
-			int i;
-			int nfds =
-				MIN((cmsg->cmsg_len-CMSG_LEN(0))/sizeof(int),
-								OPEN_MAX);
+		for (i = 0; i < nfds; i++) {
+			if (totalfds == OPEN_MAX)
+				return EOVERFLOW;
 
-			for (i = 0; i < nfds; i++) {
-				if (data->nfiledes == OPEN_MAX) {
-					return EOVERFLOW;
-				}
-
-				data->fds[data->nfiledes] =
-					((int *) CMSG_DATA(cmsg))[i];
-#if DEBUG == 1
-				printf("(uds) [%d] fd[%d]=%d\n", minor,
-				data->nfiledes, data->fds[data->nfiledes]);
-#endif
-				data->nfiledes++;
-			}
+			data->fds[totalfds] = ((int *) CMSG_DATA(cmsg))[i];
+			dprintf(("UDS: minor=%d fd[%d]=%d\n", minor, totalfds,
+			    data->fds[totalfds]));
+			totalfds++;
 		}
 	}
 
-	/* obtain this socket's credentials */
-	rc = getnucred(uds_fd_table[minor].owner, &(data->cred));
-	if (rc == -1) {
-		return errno;
-	}
-#if DEBUG == 1
-	printf("(uds) [%d] cred={%d,%d,%d}\n", minor,
-		data->cred.pid, data->cred.uid,
-		data->cred.gid);
-#endif
+	data->nfiledes = totalfds;
+
 	return OK;
 }
 
@@ -1122,29 +671,20 @@ send_fds(devminor_t minor, struct ancillary *data)
 {
 	int rc, i, j;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] send_fds() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: send_fds(%d)\n", minor));
 
-	/* verify the file descriptors and get their filps. */
+	/* Verify the file descriptors and get their filps. */
 	for (i = 0; i < data->nfiledes; i++) {
-		data->filps[i] = verify_fd(uds_fd_table[minor].owner,
-						data->fds[i]);
-
-		if (data->filps[i] == NULL) {
-			return EINVAL;
-		}
+		if ((rc = vfs_verify_fd(uds_fd_table[minor].owner,
+		    data->fds[i], &data->filps[i])) != OK)
+			return rc;
 	}
 
-	/* set them as in-flight */
+	/* Set them as in-flight. */
 	for (i = 0; i < data->nfiledes; i++) {
-		rc = set_filp(data->filps[i]);
-		if (rc != OK) {
-			/* revert set_filp() calls */
-			for (j = i; j >= 0; j--) {
-				put_filp(data->filps[j]);
-			}
+		if ((rc = vfs_set_filp(data->filps[i])) != OK) {
+			for (j = i - 1; j >= 0; j--)
+				vfs_put_filp(data->filps[j]);	/* revert */
 			return rc;
 		}
 	}
@@ -1153,27 +693,22 @@ send_fds(devminor_t minor, struct ancillary *data)
 }
 
 /*
- * This function calls put_filp() for all of the FDs in data.
- * This is used when a Unix Domain Socket is closed and there
- * exists references to file descriptors that haven't been received
- * with recvmsg().
+ * This function calls put_filp() for all of the FDs in data.  This is used
+ * when a Unix Domain Socket is closed and there exists references to file
+ * descriptors that haven't been received with recvmsg().
  */
 int
 uds_clear_fds(devminor_t minor, struct ancillary *data)
 {
 	int i;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] uds_clear_fds() call_count=%d\n", minor,
-							++call_count);
-#endif
+	dprintf(("UDS: uds_clear_fds(%d)\n", minor));
 
 	for (i = 0; i < data->nfiledes; i++) {
-		put_filp(data->filps[i]);
-#if DEBUG == 1
-		printf("(uds) uds_clear_fds() => %d\n", data->fds[i]);
-#endif
+		dprintf(("UDS: uds_clear_fds() => %d\n", data->fds[i]));
+
+		vfs_put_filp(data->filps[i]);
+
 		data->fds[i] = -1;
 		data->filps[i] = NULL;
 	}
@@ -1192,11 +727,7 @@ recv_fds(devminor_t minor, struct ancillary *data,
 	struct cmsghdr *cmsg;
 	endpoint_t to_ep;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] recv_fds() call_count=%d\n", minor,
-							++call_count);
-#endif
+	dprintf(("UDS: recv_fds(%d)\n", minor));
 
 	msghdr.msg_control = msg_ctrl->msg_control;
 	msghdr.msg_controllen = msg_ctrl->msg_controllen;
@@ -1208,28 +739,27 @@ recv_fds(devminor_t minor, struct ancillary *data,
 
 	to_ep = uds_fd_table[minor].owner;
 
-	/* copy to the target endpoint */
+	/* Copy to the target endpoint. */
 	for (i = 0; i < data->nfiledes; i++) {
-		rc = copy_filp(to_ep, data->filps[i]);
-		if (rc < 0) {
-			/* revert set_filp() calls */
-			for (j = 0; j < data->nfiledes; j++) {
-				put_filp(data->filps[j]);
-			}
-			/* revert copy_filp() calls */
-			for (j = i; j >= 0; j--) {
-				cancel_fd(to_ep, data->fds[j]);
-			}
+		if ((rc = vfs_copy_filp(to_ep, data->filps[i])) < 0) {
+			/* Revert vfs_set_filp() calls. */
+			for (j = 0; j < data->nfiledes; j++)
+				vfs_put_filp(data->filps[j]);
+
+			/* Revert vfs_copy_filp() calls. */
+			for (j = i - 1; j >= 0; j--)
+				vfs_cancel_fd(to_ep, data->fds[j]);
+
 			return rc;
 		}
 		data->fds[i] = rc; /* data->fds[i] now has the new FD */
 	}
 
 	for (i = 0; i < data->nfiledes; i++) {
-		put_filp(data->filps[i]);
-#if DEBUG == 1
-		printf("(uds) recv_fds() => %d\n", data->fds[i]);
-#endif
+		vfs_put_filp(data->filps[i]);
+
+		dprintf(("UDS: recv_fds() => %d\n", data->fds[i]));
+
 		((int *)CMSG_DATA(cmsg))[i] = data->fds[i];
 		data->fds[i] = -1;
 		data->filps[i] = NULL;
@@ -1247,24 +777,19 @@ recv_cred(devminor_t minor, struct ancillary *data,
 	struct msghdr msghdr;
 	struct cmsghdr *cmsg;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] recv_cred() call_count=%d\n", minor,
-							++call_count);
-#endif
+	dprintf(("UDS: recv_cred(%d)\n", minor));
 
 	msghdr.msg_control = msg_ctrl->msg_control;
 	msghdr.msg_controllen = msg_ctrl->msg_controllen;
 
 	cmsg = CMSG_FIRSTHDR(&msghdr);
-	if (cmsg->cmsg_len > 0) {
+	if (cmsg->cmsg_len > 0)
 		cmsg = CMSG_NXTHDR(&msghdr, cmsg);
-	}
 
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct uucred));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_CREDENTIALS;
-	memcpy(CMSG_DATA(cmsg), &(data->cred), sizeof(struct uucred));
+	memcpy(CMSG_DATA(cmsg), &data->cred, sizeof(struct uucred));
 
 	return OK;
 }
@@ -1275,67 +800,54 @@ do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int peer, rc, i;
 	struct msg_control msg_ctrl;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_sendmsg() call_count=%d\n", minor, ++call_count);
-#endif
+	dprintf(("UDS: do_sendmsg(%d)\n", minor));
 
 	memset(&msg_ctrl, '\0', sizeof(struct msg_control));
 
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &msg_ctrl,
-		sizeof(struct msg_control));
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &msg_ctrl,
+	    sizeof(struct msg_control))) != OK)
+		return rc;
 
-	if (rc != OK) {
-		return EIO;
-	}
-
-	/* locate peer */
+	/* Locate the peer. */
 	peer = -1;
 	if (uds_fd_table[minor].type == SOCK_DGRAM) {
 		if (uds_fd_table[minor].target.sun_path[0] == '\0' ||
-			uds_fd_table[minor].target.sun_family != AF_UNIX) {
-
+		    uds_fd_table[minor].target.sun_family != AF_UNIX)
 			return EDESTADDRREQ;
-		}
 
 		for (i = 0; i < NR_FDS; i++) {
-
-			/* look for a SOCK_DGRAM socket that is bound on
-			 * the target address
+			/*
+			 * Look for a SOCK_DGRAM socket that is bound on the
+			 * target address.
 			 */
 			if (uds_fd_table[i].type == SOCK_DGRAM &&
-				uds_fd_table[i].addr.sun_family == AF_UNIX &&
-				!strncmp(uds_fd_table[minor].target.sun_path,
-				uds_fd_table[i].addr.sun_path, UNIX_PATH_MAX)){
-
+			    uds_fd_table[i].addr.sun_family == AF_UNIX &&
+			    !strncmp(uds_fd_table[minor].target.sun_path,
+			    uds_fd_table[i].addr.sun_path, UNIX_PATH_MAX)) {
 				peer = i;
 				break;
 			}
 		}
 
-		if (peer == -1) {
+		if (peer == -1)
 			return ENOENT;
-		}
 	} else {
 		peer = uds_fd_table[minor].peer;
-		if (peer == -1) {
+		if (peer == -1)
 			return ENOTCONN;
-		}
 	}
 
-#if DEBUG == 1
-	printf("(uds) [%d] sendmsg() -- peer=%d\n", minor, peer);
-#endif
-	/* note: it's possible that there is already some file
-	 * descriptors in ancillary_data if the peer didn't call
-	 * recvmsg() yet. That's okay. The receiver will
-	 * get the current file descriptors plus the new ones.
+	dprintf(("UDS: sendmsg(%d) -- peer=%d\n", minor, peer));
+
+	/*
+	 * Note: it's possible that there is already some file descriptors in
+	 * ancillary_data if the peer didn't call recvmsg() yet.  That's okay.
+	 * The receiver will get the current file descriptors plus the new
+	 * ones.
 	 */
-	rc = msg_control_read(&msg_ctrl, &uds_fd_table[peer].ancillary_data,
-								minor);
-	if (rc != OK) {
+	if ((rc = msg_control_read(&msg_ctrl,
+	    &uds_fd_table[peer].ancillary_data, minor)) != OK)
 		return rc;
-	}
 
 	return send_fds(minor, &uds_fd_table[peer].ancillary_data);
 }
@@ -1345,64 +857,53 @@ do_recvmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	struct msg_control msg_ctrl;
-	socklen_t controllen_avail = 0;
-	socklen_t controllen_needed = 0;
-	socklen_t controllen_desired = 0;
+	socklen_t clen_avail = 0;
+	socklen_t clen_needed = 0;
+	socklen_t clen_desired = 0;
 
-#if DEBUG == 1
-	static int call_count = 0;
-	printf("(uds) [%d] do_sendmsg() call_count=%d\n", minor, ++call_count);
-	printf("(uds) [%d] CREDENTIALS {pid:%d,uid:%d,gid:%d}\n", minor,
-				uds_fd_table[minor].ancillary_data.cred.pid,
-				uds_fd_table[minor].ancillary_data.cred.uid,
-				uds_fd_table[minor].ancillary_data.cred.gid);
-#endif
+	dprintf(("UDS: do_recvmsg(%d)\n", minor));
+	dprintf(("UDS: minor=%d credentials={pid:%d,uid:%d,gid:%d}\n", minor,
+	    uds_fd_table[minor].ancillary_data.cred.pid,
+	    uds_fd_table[minor].ancillary_data.cred.uid,
+	    uds_fd_table[minor].ancillary_data.cred.gid));
 
 	memset(&msg_ctrl, '\0', sizeof(struct msg_control));
 
-	/* get the msg_control from the user, it will include the
+	/*
+	 * Get the msg_control from the user.  It will include the
 	 * amount of space the user has allocated for control data.
 	 */
-	rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &msg_ctrl,
-		sizeof(struct msg_control));
+	if ((rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &msg_ctrl,
+	    sizeof(struct msg_control))) != OK)
+		return rc;
 
-	if (rc != OK) {
-		return EIO;
-	}
-
-	controllen_avail = MIN(msg_ctrl.msg_controllen, MSG_CONTROL_MAX);
+	clen_avail = MIN(msg_ctrl.msg_controllen, MSG_CONTROL_MAX);
 
 	if (uds_fd_table[minor].ancillary_data.nfiledes > 0) {
-		controllen_needed = CMSG_LEN(sizeof(int) *
-				(uds_fd_table[minor].ancillary_data.nfiledes));
+		clen_needed = CMSG_LEN(sizeof(int) *
+		    uds_fd_table[minor].ancillary_data.nfiledes);
 	}
 
 	/* if there is room we also include credentials */
-	controllen_desired = controllen_needed +
-				CMSG_LEN(sizeof(struct uucred));
+	clen_desired = clen_needed + CMSG_LEN(sizeof(struct uucred));
 
-	if (controllen_needed > controllen_avail) {
+	if (clen_needed > clen_avail)
 		return EOVERFLOW;
-	}
 
 	rc = recv_fds(minor, &uds_fd_table[minor].ancillary_data, &msg_ctrl);
-	if (rc != OK) {
+	if (rc != OK)
 		return rc;
-	}
 
-	if (controllen_desired <= controllen_avail) {
+	if (clen_desired <= clen_avail) {
 		rc = recv_cred(minor, &uds_fd_table[minor].ancillary_data,
-								&msg_ctrl);
-		if (rc != OK) {
+		    &msg_ctrl);
+		if (rc != OK)
 			return rc;
-		}
 	}
 
-	/* send the user the control data */
-	rc = sys_safecopyto(endpt, grant, 0, (vir_bytes) &msg_ctrl,
-		sizeof(struct msg_control));
-
-	return rc ? EIO : OK;
+	/* Send the control data to the user. */
+	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &msg_ctrl,
+	    sizeof(struct msg_control));
 }
 
 int
@@ -1411,132 +912,133 @@ uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 {
 	int rc;
 
-	switch (request) {	/* Handle the ioctl(2) command */
+	switch (request) {
 	case NWIOSUDSCONN:
-		/* connect to a listening socket -- connect() */
+		/* Connect to a listening socket -- connect(). */
 		rc = do_connect(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSACCEPT:
-		/* accept an incoming connection -- accept() */
+		/* Accept an incoming connection -- accept(). */
 		rc = do_accept(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSBLOG:
-		/* set the backlog_size and put the socket into the listening
-		 * state -- listen()
+		/*
+		 * Set the backlog_size and put the socket into the listening
+		 * state -- listen().
 		 */
 		rc = do_listen(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSTYPE:
-		/* set the type for this socket (i.e. SOCK_STREAM, SOCK_DGRAM,
-		 * etc) -- socket()
-		 */
+		/* Set the SOCK_ type for this socket -- socket(). */
 		rc = do_socket(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSADDR:
-		/* set the address for this socket -- bind() */
+		/* Set the address for this socket -- bind(). */
 		rc = do_bind(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSADDR:
-		/* get the address for this socket -- getsockname() */
+		/* Get the address for this socket -- getsockname(). */
 		rc = do_getsockname(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSPADDR:
-		/* get the address for the peer -- getpeername() */
+		/* Get the address for the peer -- getpeername(). */
 		rc = do_getpeername(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSSHUT:
-		/* shutdown a socket for reading, writing, or both --
-		 * shutdown()
+		/*
+		 * Shut down a socket for reading, writing, or both --
+		 * shutdown().
 		 */
 		rc = do_shutdown(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSPAIR:
-		/* connect two sockets -- socketpair() */
+		/* Connect two sockets -- socketpair(). */
 		rc = do_socketpair(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSSOTYPE:
-		/* get socket type -- getsockopt(SO_TYPE) */
+		/* Get socket type -- getsockopt(SO_TYPE). */
 		rc = do_getsockopt_sotype(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSPEERCRED:
-		/* get peer endpoint -- getsockopt(SO_PEERCRED) */
+		/* Get peer endpoint -- getsockopt(SO_PEERCRED). */
 		rc = do_getsockopt_peercred(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSTADDR:
-		/* set target address -- sendto() */
+		/* Set target address -- sendto(). */
 		rc = do_sendto(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSFADDR:
-		/* get from address -- recvfrom() */
+		/* Get from address -- recvfrom(). */
 		rc = do_recvfrom(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSSNDBUF:
-		/* get the send buffer size -- getsockopt(SO_SNDBUF) */
+		/* Get the send buffer size -- getsockopt(SO_SNDBUF). */
 		rc = do_getsockopt_sndbuf(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSSNDBUF:
-		/* set the send buffer size -- setsockopt(SO_SNDBUF) */
+		/* Set the send buffer size -- setsockopt(SO_SNDBUF). */
 		rc = do_setsockopt_sndbuf(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSRCVBUF:
-		/* get the send buffer size -- getsockopt(SO_SNDBUF) */
+		/* Get the send buffer size -- getsockopt(SO_SNDBUF). */
 		rc = do_getsockopt_rcvbuf(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSRCVBUF:
-		/* set the send buffer size -- setsockopt(SO_SNDBUF) */
+		/* Set the send buffer size -- setsockopt(SO_SNDBUF). */
 		rc = do_setsockopt_rcvbuf(minor, endpt, grant);
 
 		break;
 
 	case NWIOSUDSCTRL:
-		/* set the control data -- sendmsg() */
+		/* Set the control data -- sendmsg(). */
 		rc = do_sendmsg(minor, endpt, grant);
 
 		break;
 
 	case NWIOGUDSCTRL:
-		/* set the control data -- recvmsg() */
+		/* Set the control data -- recvmsg(). */
 		rc = do_recvmsg(minor, endpt, grant);
 
 		break;
 
 	default:
-		/* the IOCTL command is not valid for /dev/uds -- this happens
-		 * a lot and is normal. a lot of libc functions determine the
-		 * socket type with IOCTLs. Any not for us simply get an ENOTTY
-		 * response.
+		/*
+		 * The IOCTL command is not valid for /dev/uds -- this happens
+		 * a lot and is normal.  A lot of libc functions determine the
+		 * socket type with IOCTLs.  Any unrecognized requests simply
+		 * get an ENOTTY response.
 		 */
 
 		rc = ENOTTY;
