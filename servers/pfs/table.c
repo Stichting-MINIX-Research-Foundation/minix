@@ -5,11 +5,9 @@
 
 #define _TABLE
 
-#include "inc.h"
 #include "fs.h"
 #include "inode.h"
 #include "buf.h"
-#include "uds.h"
 
 /* File System Handlers (pfs) */
 int (*fs_call_vec[])(message *fs_m_in, message *fs_m_out) = {
