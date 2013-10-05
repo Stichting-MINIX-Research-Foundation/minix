@@ -23,7 +23,7 @@ VFS threads. Of course, this comes at the cost of having more VND driver
 processes; in order to avoid this cost in the common case, driver instances are
 dynamically started and stopped by vndconfig(8).
 
-dupfrom(2) instead of openas(2): Compared to the NetBSD interface, the MINIX3
+copyfd(2) instead of openas(2): Compared to the NetBSD interface, the MINIX3
 VND API requires that the user program configuring a device pass in a file
 descriptor in the vnd_ioctl structure instead of a pointer to a path name.
 While binary compatibility with NetBSD would be impossible anyway (MINIX3 can
@@ -62,24 +62,29 @@ MINIX3 userland happy.
 FUTURE IMPROVEMENTS
 
 Currently, the VND driver instances are run as root just and only because the
-dupfrom(2) call requires root. Obviously, nonroot user processes should never
+copyfd(2) call requires root. Obviously, nonroot user processes should never
 be able to copy file descriptors from arbitrary processes, and thus, some
 security check is required there. However, an access control list for VFS calls
 would be a much better solution: in that case, VND driver processes can be
-given exclusive rights to the use of the dupfrom(2) call, while they can be
+given exclusive rights to the use of the copyfd(2) call, while they can be
 given a normal driver UID at the same time.
 
 In MINIX3's dependability model, drivers are generally not considered to be
 malicious. However, the VND case is interesting because it is possible to
 isolate individual driver instances to the point of actual "least authority".
-The dupfrom(2) call currently allows any file descriptor to be copied, but it
+The copyfd(2) call currently allows any file descriptor to be copied, but it
 would be possible to extend the scheme to let user processes (and vndconfig(8)
-in particular) mark the file descriptors that may be the target of a dupfrom(2)
+in particular) mark the file descriptors that may be the target of a copyfd(2)
 call. One of several schemes may be implemented in VFS for this purpose. For
 example, each process could be allowed to mark one of its file descriptors as
-"copyable" using a new VFS call, and VFS would then allow dupfrom(2) only on a
+"copyable" using a new VFS call, and VFS would then allow copyfd(2) only on a
 "copyable" file descriptor from a process blocked on a call to the driver that
-invoked dupfrom(2). This approach precludes hiding a VND driver behind a RAID
+invoked copyfd(2). This approach precludes hiding a VND driver behind a RAID
 or FBD (etc) driver, but more sophisticated approaches can solve that as well.
 Regardless of the scheme, the end result would be a situation where the VND
 drivers are strictly limited to operating on the resources given to them.
+
+Note that copyfd(2) was originally called dupfrom(2), and then extended to copy
+file descriptors *to* remote processes as well. The latter is not as security
+sensitive, but may have to be restricted in a similar way. If this is not
+possible, copyfd(2) can always be split into multiple calls.

@@ -20,8 +20,6 @@ struct lookup;
 struct worker_thread;
 struct job;
 
-typedef struct filp * filp_id_t;
-
 /* comm.c */
 int drv_sendrec(endpoint_t drv_e, message *reqm);
 void fs_cancel(struct vmnt *vmp);
@@ -91,17 +89,8 @@ void unlock_filps(struct filp *filp1, struct filp *filp2);
 void invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
 void invalidate_filp_by_char_major(int major);
-int do_verify_fd(message *m_out);
-int set_filp(filp_id_t sfilp);
-int do_set_filp(message *m_out);
-int copy_filp(endpoint_t to_ep, filp_id_t cfilp);
-int do_copy_filp(message *m_out);
-int put_filp(filp_id_t pfilp);
-int do_put_filp(message *m_out);
-int cancel_fd(endpoint_t ep, int fd);
-int do_cancel_fd(message *m_out);
 void close_filp(struct filp *fp);
-int do_dupfrom(message *m_out);
+int do_copyfd(message *m_out);
 
 /* fscall.c */
 void nested_fs_call(message *m);
@@ -182,7 +171,7 @@ void lookup_init(struct lookup *resolve, char *path, int flags, struct
 	vmnt **vmp, struct vnode **vp);
 int get_name(struct vnode *dirp, struct vnode *entry, char *_name);
 int canonical_path(char *orig_path, struct fproc *rfp);
-int do_check_perms(message *m_out);
+int do_checkperms(message *m_out);
 
 /* pipe.c */
 int do_pipe(message *m_out);

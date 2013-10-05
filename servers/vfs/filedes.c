@@ -6,14 +6,7 @@
  *   find_filp:	    find a filp slot that points to a given vnode
  *   inval_filp:    invalidate a filp and associated fd's, only let close()
  *                  happen on it
- *   do_verify_fd:  verify whether the given file descriptor is valid for
- *                  the given endpoint.
- *   do_set_filp:   marks a filp as in-flight.
- *   do_copy_filp:  copies a filp to another endpoint.
- *   do_put_filp:   marks a filp as not in-flight anymore.
- *   do_cancel_fd:  cancel the transaction when something goes wrong for
- *                  the receiver.
- *   do_dupfrom:    copies a filp from another endpoint.
+ *   do_copyfd:     copies a file descriptor from or to another endpoint
  */
 
 #include <sys/select.h>
@@ -25,8 +18,6 @@
 #include "file.h"
 #include "vnode.h"
 
-
-static filp_id_t verify_fd(endpoint_t ep, int fd);
 
 #if LOCK_DEBUG
 /*===========================================================================*
@@ -350,203 +341,6 @@ struct filp *filp2;
 }
 
 /*===========================================================================*
- *				verify_fd				     *
- *===========================================================================*/
-static filp_id_t verify_fd(ep, fd)
-endpoint_t ep;
-int fd;
-{
-/* Verify whether the file descriptor 'fd' is valid for the endpoint 'ep'. When
- * the file descriptor is valid, verify_fd returns a pointer to that filp, else
- * it returns NULL.
- */
-  int slot;
-  struct filp *rfilp;
-
-  if (isokendpt(ep, &slot) != OK)
-	return(NULL);
-
-  rfilp = get_filp2(&fproc[slot], fd, VNODE_READ);
-
-  return(rfilp);
-}
-
-/*===========================================================================*
- *                              do_verify_fd                                 *
- *===========================================================================*/
-int do_verify_fd(message *m_out)
-{
-  struct filp *rfilp;
-  endpoint_t proc_e;
-  int fd;
-
-  /* This should be replaced with an ACL check. */
-  if (!super_user) return EPERM;
-
-  proc_e = job_m_in.VFS_UDS_ENDPT;
-  fd = job_m_in.VFS_UDS_FD;
-
-  rfilp = (struct filp *) verify_fd(proc_e, fd);
-  m_out->VFS_UDS_FILP = (void *) rfilp;
-  if (rfilp != NULL) unlock_filp(rfilp);
-  return (rfilp != NULL) ? OK : EINVAL;
-}
-
-/*===========================================================================*
- *                              set_filp                                     *
- *===========================================================================*/
-int set_filp(sfilp)
-filp_id_t sfilp;
-{
-  if (sfilp == NULL) return(EINVAL);
-
-  lock_filp(sfilp, VNODE_READ);
-  sfilp->filp_count++;
-  unlock_filp(sfilp);
-
-  return(OK);
-}
-
-/*===========================================================================*
- *                              do_set_filp                                  *
- *===========================================================================*/
-int do_set_filp(message *UNUSED(m_out))
-{
-  filp_id_t f;
-
-  /* This should be replaced with an ACL check. */
-  if (!super_user) return EPERM;
-
-  f = (filp_id_t) job_m_in.VFS_UDS_FILP;
-  return set_filp(f);
-}
-
-/*===========================================================================*
- *                              copy_filp                                    *
- *===========================================================================*/
-int copy_filp(to_ep, cfilp)
-endpoint_t to_ep;
-filp_id_t cfilp;
-{
-  int fd;
-  int slot;
-  struct fproc *rfp;
-
-  if (isokendpt(to_ep, &slot) != OK) return(EINVAL);
-  rfp = &fproc[slot];
-
-  /* Find an open slot in fp_filp */
-  for (fd = 0; fd < OPEN_MAX; fd++) {
-	if (rfp->fp_filp[fd] == NULL) {
-		/* Found a free slot, add descriptor */
-		rfp->fp_filp[fd] = cfilp;
-		rfp->fp_filp[fd]->filp_count++;
-		return(fd);
-	}
-  }
-
-  /* File descriptor table is full */
-  return(EMFILE);
-}
-
-/*===========================================================================*
- *                              do_copy_filp                                 *
- *===========================================================================*/
-int do_copy_filp(message *UNUSED(m_out))
-{
-  endpoint_t proc_e;
-  filp_id_t f;
-
-  /* This should be replaced with an ACL check. */
-  if (!super_user) return EPERM;
-
-  proc_e = job_m_in.VFS_UDS_ENDPT;
-  f = (filp_id_t) job_m_in.VFS_UDS_FILP;
-
-  return copy_filp(proc_e, f);
-}
-
-/*===========================================================================*
- *                              put_filp                                     *
- *===========================================================================*/
-int put_filp(pfilp)
-filp_id_t pfilp;
-{
-  if (pfilp == NULL) {
-	return EINVAL;
-  } else {
-	lock_filp(pfilp, VNODE_OPCL);
-	close_filp(pfilp);
-	return(OK);
-  }
-}
-
-/*===========================================================================*
- *                              do_put_filp                                  *
- *===========================================================================*/
-int do_put_filp(message *UNUSED(m_out))
-{
-  filp_id_t f;
-
-  /* This should be replaced with an ACL check. */
-  if (!super_user) return EPERM;
-
-  f = (filp_id_t) job_m_in.VFS_UDS_FILP;
-  return put_filp(f);
-}
-
-/*===========================================================================*
- *                             cancel_fd				     *
- *===========================================================================*/
-int cancel_fd(ep, fd)
-endpoint_t ep;
-int fd;
-{
-  int slot;
-  struct fproc *rfp;
-  struct filp *rfilp;
-
-  if (isokendpt(ep, &slot) != OK) return(EINVAL);
-  rfp = &fproc[slot];
-
-  /* Check that the input 'fd' is valid */
-  rfilp = (struct filp *) verify_fd(ep, fd);
-  if (rfilp != NULL) {
-	/* Found a valid descriptor, remove it */
-	if (rfp->fp_filp[fd]->filp_count == 0) {
-		unlock_filp(rfilp);
-		printf("VFS: filp_count for slot %d fd %d already zero", slot,
-		      fd);
-		return(EINVAL);
-	}
-	rfp->fp_filp[fd]->filp_count--;
-	rfp->fp_filp[fd] = NULL;
-	unlock_filp(rfilp);
-	return(fd);
-  }
-
-  /* File descriptor is not valid for the endpoint. */
-  return(EINVAL);
-}
-
-/*===========================================================================*
- *                              do_cancel_fd                                 *
- *===========================================================================*/
-int do_cancel_fd(message *UNUSED(m_out))
-{
-  endpoint_t proc_e;
-  int fd;
-
-  /* This should be replaced with an ACL check. */
-  if (!super_user) return EPERM;
-
-  proc_e = job_m_in.VFS_UDS_ENDPT;
-  fd = job_m_in.VFS_UDS_FD;
-
-  return cancel_fd(proc_e, fd);
-}
-
-/*===========================================================================*
  *				close_filp				     *
  *===========================================================================*/
 void close_filp(f)
@@ -618,33 +412,41 @@ struct filp *f;
 }
 
 /*===========================================================================*
- *				do_dupfrom				     *
+ *				do_copyfd				     *
  *===========================================================================*/
-int do_dupfrom(message *UNUSED(m_out))
+int do_copyfd(message *UNUSED(m_out))
 {
-/* Duplicate a file descriptor from another process into the calling process.
- * The other process is identified by a magic grant created for it to make the
- * initial (IOCTL) request to the calling process. This call has been added
- * specifically for the VND driver.
+/* Copy a file descriptor between processes, or close a remote file descriptor.
+ * This call is used as back-call by device drivers (UDS, VND), and is expected
+ * to be used in response to an IOCTL to such device drivers.
  */
   struct fproc *rfp;
   struct filp *rfilp;
   endpoint_t endpt;
-  int r, fd, slot;
+  int r, fd, what, slot;
 
   /* This should be replaced with an ACL check. */
   if (!super_user) return(EPERM);
 
-  endpt = (endpoint_t) job_m_in.VFS_DUPFROM_ENDPT;
-  fd = job_m_in.VFS_DUPFROM_FD;
+  endpt = (endpoint_t) job_m_in.VFS_COPYFD_ENDPT;
+  fd = job_m_in.VFS_COPYFD_FD;
+  what = job_m_in.VFS_COPYFD_WHAT;
 
   if (isokendpt(endpt, &slot) != OK) return(EINVAL);
   rfp = &fproc[slot];
 
-  /* Obtain the filp, but do not lock it yet: we first need to make sure that
+  /* FIXME: we should now check that the user process is indeed blocked on an
+   * IOCTL call, so that we can safely mess with its file descriptors.  We
+   * currently do not have the necessary state to verify this, so we assume
+   * that the call is always used in the right way.
+   */
+
+  /* Depending on the operation, get the file descriptor from the caller or the
+   * user process.  Do not lock the filp yet: we first need to make sure that
    * locking it will not result in a deadlock.
    */
-  if ((rfilp = get_filp2(rfp, fd, VNODE_NONE)) == NULL)
+  rfilp = get_filp2((what == COPYFD_TO) ? fp : rfp, fd, VNODE_NONE);
+  if (rfilp == NULL)
 	return(err_code);
 
   /* If the filp is involved in an IOCTL by the user process, locking the filp
@@ -657,10 +459,46 @@ int do_dupfrom(message *UNUSED(m_out))
   if (rfilp->filp_ioctl_fp == rfp)
 	return(EBADF);
 
-  /* Now we can safely lock the filp, copy it, and unlock it again. */
+  /* Now we can safely lock the filp, copy or close it, and unlock it again. */
   lock_filp(rfilp, VNODE_READ);
 
-  r = copy_filp(who_e, (filp_id_t) rfilp);
+  switch (what) {
+  case COPYFD_FROM:
+	rfp = fp;
+
+	/* FALLTHROUGH */
+  case COPYFD_TO:
+	/* Find a free file descriptor slot in the local or remote process. */
+	for (fd = 0; fd < OPEN_MAX; fd++)
+		if (rfp->fp_filp[fd] == NULL)
+			break;
+
+	/* If found, fill the slot and return the slot number. */
+	if (fd < OPEN_MAX) {
+		rfp->fp_filp[fd] = rfilp;
+		rfilp->filp_count++;
+		r = fd;
+	} else
+		r = EMFILE;
+
+	break;
+
+  case COPYFD_CLOSE:
+	/* This should be used ONLY to revert a successful copy-to operation,
+	 * and assumes that the filp is still in use by the caller as well.
+	 */
+	if (rfilp->filp_count > 1) {
+		rfilp->filp_count--;
+		rfp->fp_filp[fd] = NULL;
+		r = OK;
+	} else
+		r = EBADF;
+
+	break;
+
+  default:
+	r = EINVAL;
+  }
 
   unlock_filp(rfilp);
 

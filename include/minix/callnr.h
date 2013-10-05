@@ -1,4 +1,4 @@
-#define NCALLS		 130	/* number of system calls allowed */
+#define NCALLS		 125	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -47,7 +47,7 @@
 #define FSTAT		  52
 #define LSTAT		  53
 #define IOCTL		  54
-#define DUPFROM		  56
+#define COPYFD		  56
 #define FS_READY	  57
 #define PIPE2		  58
 #define EXEC		  59
@@ -112,9 +112,4 @@
 #define MAPDRIVER      122     /* to VFS, map a device */
 #define GETRUSAGE      123	/* to PM, VFS */
 
-#define VFS_UDS_CHECK_PERMS	124	/* to VFS */
-#define VFS_UDS_VERIFY_FD	125	/* to VFS */
-#define VFS_UDS_SET_FILP	126	/* to VFS */
-#define VFS_UDS_COPY_FILP	127	/* to VFS */
-#define VFS_UDS_PUT_FILP	128	/* to VFS */
-#define VFS_UDS_CANCEL_FD	129	/* to VFS */
+#define VFS_CHECKPERMS	124	/* to VFS */

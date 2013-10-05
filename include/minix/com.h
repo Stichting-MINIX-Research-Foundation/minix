@@ -882,16 +882,18 @@
 #define VFS_IOCTL_REQ		m2_i3
 #define VFS_IOCTL_ARG		m2_p1
 
-/* Field names for the UDS backcalls to VFS. */
-#define VFS_UDS_ENDPT		m2_i1
-#define VFS_UDS_GRANT		m2_i2
-#define VFS_UDS_COUNT		m2_i3
-#define VFS_UDS_FD		m2_i3
-#define VFS_UDS_FILP		m2_p1
+/* Field names for the checkperms(2) call. */
+#define VFS_CHECKPERMS_ENDPT	m2_i1
+#define VFS_CHECKPERMS_GRANT	m2_i2
+#define VFS_CHECKPERMS_COUNT	m2_i3
 
-/* Field names for the dupfrom(2) call. */
-#define VFS_DUPFROM_ENDPT	m1_i1
-#define VFS_DUPFROM_FD		m1_i2
+/* Field names for the copyfd(2) call. */
+#define VFS_COPYFD_ENDPT	m1_i1
+#define VFS_COPYFD_FD		m1_i2
+#define VFS_COPYFD_WHAT		m1_i3
+#  define COPYFD_FROM	0	/* copy file descriptor from remote process */
+#  define COPYFD_TO	1	/* copy file descriptor to remote process */
+#  define COPYFD_CLOSE	2	/* close file descriptor in remote process */
 
 /* Field names for GETRUSAGE related calls */
 #define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */

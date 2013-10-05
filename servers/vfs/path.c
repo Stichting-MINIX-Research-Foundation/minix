@@ -865,13 +865,13 @@ size_t pathlen;
 }
 
 /*===========================================================================*
- *				do_check_perms				     *
+ *				do_checkperms				     *
  *===========================================================================*/
-int do_check_perms(message *UNUSED(m_out))
+int do_checkperms(message *UNUSED(m_out))
 {
   /* This should be replaced by an ACL check. */
   if (!super_user) return EPERM;
 
-  return check_perms(job_m_in.VFS_UDS_ENDPT, job_m_in.VFS_UDS_GRANT,
-	(size_t) job_m_in.VFS_UDS_COUNT);
+  return check_perms(job_m_in.VFS_CHECKPERMS_ENDPT,
+	job_m_in.VFS_CHECKPERMS_GRANT, (size_t) job_m_in.VFS_CHECKPERMS_COUNT);
 }

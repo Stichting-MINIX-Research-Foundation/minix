@@ -166,8 +166,9 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	    sizeof(struct sockaddr_un))) != OK)
 		return rc;
 
-	if ((rc = vfs_check_perms(uds_fd_table[minor].owner, &addr)) != OK)
-		return rc;
+	if (checkperms(uds_fd_table[minor].owner, addr.sun_path,
+	    UNIX_PATH_MAX) != OK)
+		return -errno;
 
 	/*
 	 * Look for a socket of the same type that is listening on the
@@ -354,8 +355,9 @@ do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	if (addr.sun_path[0] == '\0')
 		return ENOENT;
 
-	if ((rc = vfs_check_perms(uds_fd_table[minor].owner, &addr)) != OK)
-		return rc;
+	if (checkperms(uds_fd_table[minor].owner, addr.sun_path,
+	    UNIX_PATH_MAX) != OK)
+		return -errno;
 
 	/* Make sure the address isn't already in use by another socket. */
 	for (i = 0; i < NR_FDS; i++) {
@@ -609,8 +611,9 @@ do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	if (addr.sun_family != AF_UNIX || addr.sun_path[0] == '\0')
 		return EINVAL;
 
-	if ((rc = vfs_check_perms(uds_fd_table[minor].owner, &addr)) != OK)
-		return rc;
+	if (checkperms(uds_fd_table[minor].owner, addr.sun_path,
+	    UNIX_PATH_MAX) != OK)
+		return -errno;
 
 	memcpy(&uds_fd_table[minor].target, &addr, sizeof(struct sockaddr_un));
 
@@ -628,17 +631,20 @@ do_recvfrom(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 }
 
 static int
-msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
-	devminor_t minor, int *new_total)
+send_fds(devminor_t minor, struct msg_control *msg_ctrl,
+	struct ancillary *data)
 {
 	int i, rc, nfds, totalfds;
+	endpoint_t from_ep;
 	struct msghdr msghdr;
 	struct cmsghdr *cmsg = NULL;
 
-	dprintf(("UDS: msg_control_read(%d)\n", minor));
+	dprintf(("UDS: send_fds(%d)\n", minor));
+
+	from_ep = uds_fd_table[minor].owner;
 
 	/* Obtain this socket's credentials. */
-	if ((rc = getnucred(uds_fd_table[minor].owner, &data->cred)) < 0)
+	if ((rc = getnucred(from_ep, &data->cred)) < 0)
 		return -errno;
 
 	dprintf(("UDS: minor=%d cred={%d,%d,%d}\n", minor, data->cred.pid,
@@ -669,41 +675,31 @@ msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
 		}
 	}
 
-	*new_total = totalfds;
+	for (i = data->nfiledes; i < totalfds; i++) {
+		if ((rc = copyfd(from_ep, data->fds[i], COPYFD_FROM)) < 0) {
+			rc = -errno;
 
-	return OK;
-}
+			printf("UDS: copyfd(COPYFD_FROM) failed: %d\n", rc);
 
-static int
-send_fds(devminor_t minor, struct ancillary *data, int new_total)
-{
-	int rc, i, j;
+			/* Revert the successful copyfd() calls made so far. */
+			for (i--; i >= data->nfiledes; i--)
+				close(data->fds[i]);
 
-	dprintf(("UDS: send_fds(%d)\n", minor));
-
-	/* Verify the file descriptors and get their filps. */
-	for (i = data->nfiledes; i < new_total; i++) {
-		if ((rc = vfs_verify_fd(uds_fd_table[minor].owner,
-		    data->fds[i], &data->filps[i])) != OK)
-			return rc;
-	}
-
-	/* Set them as in-flight. */
-	for (i = data->nfiledes; i < new_total; i++) {
-		if ((rc = vfs_set_filp(data->filps[i])) != OK) {
-			for (j = i - 1; j >= data->nfiledes; j--)
-				vfs_put_filp(data->filps[j]);	/* revert */
 			return rc;
 		}
+
+		dprintf(("UDS: send_fds(): %d -> %d\n", data->fds[i], rc));
+
+		data->fds[i] = rc;	/* this is now the local FD */
 	}
 
-	data->nfiledes = new_total;
+	data->nfiledes = totalfds;
 
 	return OK;
 }
 
 /*
- * This function calls put_filp() for all of the FDs in data.  This is used
+ * This function calls close() for all of the FDs in flight.  This is used
  * when a Unix Domain Socket is closed and there exists references to file
  * descriptors that haven't been received with recvmsg().
  */
@@ -717,10 +713,9 @@ uds_clear_fds(devminor_t minor, struct ancillary *data)
 	for (i = 0; i < data->nfiledes; i++) {
 		dprintf(("UDS: uds_clear_fds() => %d\n", data->fds[i]));
 
-		vfs_put_filp(data->filps[i]);
+		close(data->fds[i]);
 
 		data->fds[i] = -1;
-		data->filps[i] = NULL;
 	}
 
 	data->nfiledes = 0;
@@ -732,7 +727,7 @@ static int
 recv_fds(devminor_t minor, struct ancillary *data,
 	struct msg_control *msg_ctrl)
 {
-	int rc, i, j;
+	int rc, i, j, fds[OPEN_MAX];
 	struct msghdr msghdr;
 	struct cmsghdr *cmsg;
 	endpoint_t to_ep;
@@ -751,28 +746,30 @@ recv_fds(devminor_t minor, struct ancillary *data,
 
 	/* Copy to the target endpoint. */
 	for (i = 0; i < data->nfiledes; i++) {
-		if ((rc = vfs_copy_filp(to_ep, data->filps[i])) < 0) {
-			/* Revert vfs_set_filp() calls. */
-			for (j = 0; j < data->nfiledes; j++)
-				vfs_put_filp(data->filps[j]);
+		if ((rc = copyfd(to_ep, data->fds[i], COPYFD_TO)) < 0) {
+			rc = -errno;
 
-			/* Revert vfs_copy_filp() calls. */
-			for (j = i - 1; j >= 0; j--)
-				vfs_cancel_fd(to_ep, data->fds[j]);
+			printf("UDS: copyfd(COPYFD_TO) failed: %d\n", rc);
+
+			/* Revert the successful copyfd() calls made so far. */
+			for (i--; i >= 0; i--)
+				(void) copyfd(to_ep, fds[i], COPYFD_CLOSE);
 
 			return rc;
 		}
-		data->fds[i] = rc; /* data->fds[i] now has the new FD */
+
+		fds[i] = rc;		/* this is now the remote FD */
 	}
 
+	/* Close the local copies only once the entire procedure succeeded. */
 	for (i = 0; i < data->nfiledes; i++) {
-		vfs_put_filp(data->filps[i]);
+		dprintf(("UDS: recv_fds(): %d -> %d\n", data->fds[i], fds[i]));
 
-		dprintf(("UDS: recv_fds() => %d\n", data->fds[i]));
+		((int *)CMSG_DATA(cmsg))[i] = fds[i];
 
-		((int *)CMSG_DATA(cmsg))[i] = data->fds[i];
+		close(data->fds[i]);
+
 		data->fds[i] = -1;
-		data->filps[i] = NULL;
 	}
 
 	data->nfiledes = 0;
@@ -807,7 +804,7 @@ recv_cred(devminor_t minor, struct ancillary *data,
 static int
 do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
-	int peer, rc, i, new_total;
+	int peer, rc, i;
 	struct msg_control msg_ctrl;
 
 	dprintf(("UDS: do_sendmsg(%d)\n", minor));
@@ -855,11 +852,7 @@ do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	 * The receiver will get the current file descriptors plus the new
 	 * ones.
 	 */
-	if ((rc = msg_control_read(&msg_ctrl,
-	    &uds_fd_table[peer].ancillary_data, minor, &new_total)) != OK)
-		return rc;
-
-	return send_fds(minor, &uds_fd_table[peer].ancillary_data, new_total);
+	return send_fds(minor, &msg_ctrl, &uds_fd_table[peer].ancillary_data);
 }
 
 static int
