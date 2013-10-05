@@ -560,9 +560,13 @@ int do_ioctl(message *UNUSED(m_out))
   if (r == OK) {
 	dev = (dev_t) vp->v_sdev;
 
-	if (S_ISBLK(vp->v_mode))
+	if (S_ISBLK(vp->v_mode)) {
+		f->filp_ioctl_fp = fp;
+
 		r = bdev_ioctl(dev, who_e, ioctlrequest, argx);
-	else
+
+		f->filp_ioctl_fp = NULL;
+	} else
 		r = cdev_io(CDEV_IOCTL, dev, who_e, argx, 0, ioctlrequest,
 			f->filp_flags);
   }
