@@ -42,7 +42,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	if (errno != EINVAL) {
+	if (errno != EBADF) {
 		perror("ioctl(VNDIOCSET)");
 		return EXIT_FAILURE;
 	}
