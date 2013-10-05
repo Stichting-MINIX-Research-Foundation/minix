@@ -31,9 +31,9 @@ SRCS+= servxcheck.c
 SRCS+= paramvalue.c
 
 # Minix servers/drivers syscall. FIXME: these should be moved into libsys.
-SRCS+= 	dupfrom.c getngid.c getnpid.c getnprocnr.c getnucred.c getnuid.c \
-	getprocnr.c mapdriver.c vm_memctl.c vm_set_priv.c vm_query_exit.c \
-	vm_update.c
+SRCS+= 	checkperms.c copyfd.c getngid.c getnpid.c getnprocnr.c getnucred.c \
+	getnuid.c getprocnr.c mapdriver.c vm_memctl.c vm_set_priv.c \
+	vm_query_exit.c vm_update.c
 
 SRCS+= oneC_sum.c
 

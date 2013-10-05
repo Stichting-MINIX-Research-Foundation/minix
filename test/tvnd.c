@@ -10,7 +10,7 @@
  * For now, just test the most dreaded case: the driver being told to use the
  * file descriptor used to configure the device.  Without appropriate checks,
  * this would cause a deadlock in VFS, since the corresponding filp object is
- * locked to perform the ioctl(2) call when VFS gets the dupfrom(2) back-call.
+ * locked to perform the ioctl(2) call when VFS gets the copyfd(2) back-call.
  */
 int
 main(int argc, char **argv)
