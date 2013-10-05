@@ -28,11 +28,8 @@
 #define dprintf(x)
 #endif
 
-typedef void* filp_id_t;
-
 /* ancillary data to be sent */
 struct ancillary {
-	filp_id_t filps[OPEN_MAX];
 	int fds[OPEN_MAX];
 	int nfiledes;
 	struct uucred cred;
@@ -200,13 +197,5 @@ int uds_do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 ssize_t uds_perform_read(devminor_t minor, endpoint_t endpt,
 	cp_grant_id_t grant, size_t size, int pretend);
 void uds_unsuspend(devminor_t minor);
-
-/* vfs_uds.c */
-int vfs_check_perms(endpoint_t ep, struct sockaddr_un *addr);
-int vfs_verify_fd(endpoint_t ep, int fd, filp_id_t *filp);
-int vfs_set_filp(filp_id_t sfilp);
-int vfs_copy_filp(endpoint_t to_ep, filp_id_t cfilp);
-int vfs_put_filp(filp_id_t pfilp);
-int vfs_cancel_fd(endpoint_t ep, int fd);
 
 #endif /* !__UDS_UDS_H */
