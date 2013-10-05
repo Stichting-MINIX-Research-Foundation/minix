@@ -15,6 +15,9 @@ EXTERN struct filp {
   struct fproc *filp_softlock;	/* if not NULL; this filp didn't lock the
 				 * vnode. Another filp already holds a lock
 				 * for this thread */
+  struct fproc *filp_ioctl_fp;	/* if not NULL, this filp is locked by the
+				 * process for a currently ongoing IOCTL call
+				 */
 
   /* the following fields are for select() and are owned by the generic
    * select() code (i.e., fd-type-specific select() code can't touch these).

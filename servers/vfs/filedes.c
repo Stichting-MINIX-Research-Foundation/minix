@@ -131,6 +131,7 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 		f->filp_flags = 0;
 		f->filp_select_flags = 0;
 		f->filp_softlock = NULL;
+		f->filp_ioctl_fp = NULL;
 		*fpt = f;
 		return(OK);
 	}
@@ -628,7 +629,6 @@ int do_dupfrom(message *UNUSED(m_out))
  */
   struct fproc *rfp;
   struct filp *rfilp;
-  struct vnode *vp;
   endpoint_t endpt;
   int r, fd, slot;
 
@@ -647,19 +647,15 @@ int do_dupfrom(message *UNUSED(m_out))
   if ((rfilp = get_filp2(rfp, fd, VNODE_NONE)) == NULL)
 	return(err_code);
 
-  /* For now, we do not allow remote duplication of device nodes.  In practice,
-   * only a block-special file can cause a deadlock for the caller (currently
-   * only the VND driver).  This would happen if a user process passes in the
-   * file descriptor to the device node on which it is performing the IOCTL.
-   * This would cause two VFS threads to deadlock on the same filp.  Since the
-   * VND driver does not allow device nodes to be used anyway, this somewhat
-   * rudimentary check eliminates such deadlocks.  A better solution would be
-   * to check if the given endpoint holds a lock to the target filp, but we
-   * currently do not have this information within VFS.
+  /* If the filp is involved in an IOCTL by the user process, locking the filp
+   * here would result in a deadlock.  This would happen if a user process
+   * passes in the file descriptor to the device node on which it is performing
+   * the IOCTL.  We do not allow manipulation of such device nodes.  In
+   * practice, this only applies to block-special files (and thus VND), because
+   * character-special files (as used by UDS) are unlocked during the IOCTL.
    */
-  vp = rfilp->filp_vno;
-  if (S_ISCHR(vp->v_mode) || S_ISBLK(vp->v_mode))
-	return(EINVAL);
+  if (rfilp->filp_ioctl_fp == rfp)
+	return(EBADF);
 
   /* Now we can safely lock the filp, copy it, and unlock it again. */
   lock_filp(rfilp, VNODE_READ);
