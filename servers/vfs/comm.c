@@ -89,6 +89,16 @@ int drv_sendrec(endpoint_t drv_e, message *reqmp)
 	int r;
 	struct dmap *dp;
 
+	/* For the CTTY_MAJOR case, we would actually have to lock the device
+	 * entry being redirected to.  However, the CTTY major only hosts a
+	 * character device while this function is used only for block devices.
+	 * Thus, we can simply deny the request immediately.
+	 */
+	if (drv_e == CTTY_ENDPT) {
+		printf("VFS: /dev/tty is not a block device!\n");
+		return EIO;
+	}
+
 	if ((dp = get_dmap(drv_e)) == NULL)
 		panic("driver endpoint %d invalid", drv_e);
 

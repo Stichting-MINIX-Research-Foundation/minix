@@ -42,11 +42,8 @@ struct boot_image_sys boot_image_sys_table[] = {
 
 /* Definition of the boot image dev table. */
 struct boot_image_dev boot_image_dev_table[] = {
-  /*endpoint,        flags,   dev_nr,       dev_style,  dev_style2 */
-  { TTY_PROC_NR,     SRV_DF,  TTY_MAJOR,    STYLE_TTY,  STYLE_CTTY },
-  { MEM_PROC_NR,     SRV_DF,  MEMORY_MAJOR, STYLE_DEV,  STYLE_NDEV },
-  { DEFAULT_BOOT_NR, SRV_DF,  0,            STYLE_NDEV, STYLE_NDEV } /* default
-                                                                      * entry
-                                                                      */
+  /*endpoint,        dev_nr       */
+  { TTY_PROC_NR,     TTY_MAJOR    },
+  { MEM_PROC_NR,     MEMORY_MAJOR },
+  { DEFAULT_BOOT_NR, 0            } /* default entry */
 };
-
