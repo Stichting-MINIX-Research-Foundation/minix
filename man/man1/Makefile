@@ -17,7 +17,7 @@ MAN=	ash.1 at.1 \
 	remsync.1 rget.1 rlogin.1 rsh.1 rz.1 \
 	shar.1 sleep.1 spell.1 \
 	split.1 stty.1 svc.1 svrctl.1 \
-	synctree.1 sysenv.1 sz.1 tail.1 tee.1 telnet.1 template.1 \
+	synctree.1 sysenv.1 sz.1 tail.1 telnet.1 template.1 \
 	term.1 termcap.1 tget.1 time.1 true.1 \
 	truncate.1 tty.1 umount.1 uname.1 \
 	uud.1 uue.1 vol.1 whereis.1 which.1 \
