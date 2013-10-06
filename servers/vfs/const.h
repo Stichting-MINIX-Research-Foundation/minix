@@ -42,4 +42,7 @@
 #define SEL_ERR		CDEV_OP_ERR
 #define SEL_NOTIFY	CDEV_NOTIFY /* not a real select operation */
 
+/* special driver endpoint for CTTY_MAJOR; must be able to pass isokendpt() */
+#define CTTY_ENDPT	VFS_PROC_NR
+
 #endif

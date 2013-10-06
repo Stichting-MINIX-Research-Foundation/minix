@@ -59,30 +59,6 @@ void fproc_dmp()
 }
 
 /*===========================================================================*
- *				dmap_flags				     *
- *===========================================================================*/
-static char * dmap_flags(int flags)
-{
-	static char fl[10];
-	strlcpy(fl, "-----", sizeof(fl));
-	if(flags & DRV_FORCED)  fl[0] = 'F';
-	return fl;
-}
-
-/*===========================================================================*
- *				dmap_style				     *
- *===========================================================================*/
-static char * dmap_style(int dev_style)
-{
-	switch(dev_style) {
-	case STYLE_DEV:	     return "STYLE_DEV";
-	case STYLE_TTY:      return "STYLE_TTY";
-	case STYLE_CTTY:     return "STYLE_CTTY";
-	default:             return "UNKNOWN";
-	}
-}
-
-/*===========================================================================*
  *				dtab_dmp				     *
  *===========================================================================*/
 void dtab_dmp()
@@ -95,13 +71,10 @@ void dtab_dmp()
     }
     
     printf("File System (FS) device <-> driver mappings\n");
-    printf("    Label     Major Driver ept Flags     Style   \n");
-    printf("------------- ----- ---------- ----- -------------\n");
+    printf("    Label     Major Driver ept\n");
+    printf("------------- ----- ----------\n");
     for (i=0; i<NR_DEVICES; i++) {
         if (dmap[i].dmap_driver == NONE) continue;
-        printf("%13s %5d %10d %s %-13s\n",
-		dmap[i].dmap_label, i, dmap[i].dmap_driver,
-		dmap_flags(dmap[i].dmap_flags), dmap_style(dmap[i].dmap_style));
+        printf("%13s %5d %10d\n", dmap[i].dmap_label, i, dmap[i].dmap_driver);
     }
 }
-

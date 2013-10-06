@@ -36,7 +36,7 @@ void lock_dmap(struct dmap *dp)
 
 	org_self = worker_suspend();
 
-	if ((r = mutex_lock(dp->dmap_lock_ref)) != 0)
+	if ((r = mutex_lock(&dp->dmap_lock)) != 0)
 		panic("unable to get a lock on dmap: %d\n", r);
 
 	worker_resume(org_self);
@@ -52,8 +52,55 @@ void unlock_dmap(struct dmap *dp)
 
 	assert(dp != NULL);
 
-	if ((r = mutex_unlock(dp->dmap_lock_ref)) != 0)
+	if ((r = mutex_unlock(&dp->dmap_lock)) != 0)
 		panic("unable to unlock dmap lock: %d\n", r);
+}
+
+/*===========================================================================*
+ *				map_driver		 		     *
+ *===========================================================================*/
+static int map_driver(label, major, proc_nr_e)
+const char label[LABEL_MAX];	/* name of the driver */
+int major;			/* major number of the device */
+endpoint_t proc_nr_e;		/* process number of the driver */
+{
+/* Add a new device driver mapping in the dmap table. If the proc_nr is set to
+ * NONE, we're supposed to unmap it.
+ */
+  size_t len;
+  struct dmap *dp;
+
+  /* Get pointer to device entry in the dmap table. */
+  if (major < 0 || major >= NR_DEVICES) return(ENODEV);
+  dp = &dmap[major];
+
+  /* Check if we're supposed to unmap it. */
+ if (proc_nr_e == NONE) {
+	/* Even when a driver is now unmapped and is shortly to be mapped in
+	 * due to recovery, invalidate associated filps if they're character
+	 * special files. More sophisticated recovery mechanisms which would
+	 * reduce the need to invalidate files are possible, but would require
+	 * cooperation of the driver and more recovery framework between RS,
+	 * VFS, and DS.
+	 */
+	invalidate_filp_by_char_major(major);
+	dp->dmap_driver = NONE;
+	return(OK);
+  }
+
+  if (label != NULL) {
+	len = strlen(label);
+	if (len+1 > sizeof(dp->dmap_label)) {
+		printf("VFS: map_driver: label too long: %d\n", len);
+		return(EINVAL);
+	}
+	strlcpy(dp->dmap_label, label, sizeof(dp->dmap_label));
+  }
+
+  /* Store driver I/O routines based on type of device */
+  dp->dmap_driver = proc_nr_e;
+
+  return(OK);
 }
 
 /*===========================================================================*
@@ -66,7 +113,7 @@ int do_mapdriver(message *UNUSED(m_out))
  * etc), and its label. This label is registered with DS, and allows us to
  * retrieve the driver's endpoint.
  */
-  int r, flags, major, style, slot;
+  int r, major, slot;
   endpoint_t endpoint;
   vir_bytes label_vir;
   size_t label_len;
@@ -79,8 +126,6 @@ int do_mapdriver(message *UNUSED(m_out))
   label_vir = (vir_bytes) job_m_in.md_label;
   label_len = (size_t) job_m_in.md_label_len;
   major = job_m_in.md_major;
-  flags = job_m_in.md_flags;
-  style = job_m_in.md_style;
 
   /* Get the label */
   if (label_len+1 > sizeof(label)) { /* Can we store this label? */
@@ -110,88 +155,7 @@ int do_mapdriver(message *UNUSED(m_out))
   rfp->fp_flags |= FP_SRV_PROC;
 
   /* Try to update device mapping. */
-  return map_driver(label, major, endpoint, style, flags);
-}
-
-/*===========================================================================*
- *				map_driver		 		     *
- *===========================================================================*/
-int map_driver(label, major, proc_nr_e, style, flags)
-const char label[LABEL_MAX];	/* name of the driver */
-int major;			/* major number of the device */
-endpoint_t proc_nr_e;		/* process number of the driver */
-int style;			/* style of the device */
-int flags;			/* device flags */
-{
-/* Add a new device driver mapping in the dmap table. If the proc_nr is set to
- * NONE, we're supposed to unmap it.
- */
-
-  int slot, s;
-  size_t len;
-  struct dmap *dp;
-
-  /* Get pointer to device entry in the dmap table. */
-  if (major < 0 || major >= NR_DEVICES) return(ENODEV);
-  dp = &dmap[major];
-
-  /* Check if we're supposed to unmap it. */
- if (proc_nr_e == NONE) {
-	/* Even when a driver is now unmapped and is shortly to be mapped in
-	 * due to recovery, invalidate associated filps if they're character
-	 * special files. More sophisticated recovery mechanisms which would
-	 * reduce the need to invalidate files are possible, but would require
-	 * cooperation of the driver and more recovery framework between RS,
-	 * VFS, and DS.
-	 */
-	invalidate_filp_by_char_major(major);
-	dp->dmap_opcl = no_dev;
-	dp->dmap_io = no_dev_io;
-	dp->dmap_driver = NONE;
-	dp->dmap_flags = flags;
-	dp->dmap_lock_ref = &dp->dmap_lock;
-	return(OK);
-  }
-
-  /* Check process number of new driver if it was alive before mapping */
-  s = isokendpt(proc_nr_e, &slot);
-  if (s != OK) {
-	/* This is not a problem only when we force this driver mapping */
-	if (! (flags & DRV_FORCED))
-		return(EINVAL);
-  }
-
-  if (label != NULL) {
-	len = strlen(label);
-	if (len+1 > sizeof(dp->dmap_label))
-		panic("VFS: map_driver: label too long: %d", len);
-	strlcpy(dp->dmap_label, label, LABEL_MAX);
-  }
-
-  /* Store driver I/O routines based on type of device */
-  switch (style) {
-    case STYLE_DEV:
-	dp->dmap_opcl = gen_opcl;
-	dp->dmap_io = gen_io;
-	break;
-    case STYLE_TTY:
-	dp->dmap_opcl = tty_opcl;
-	dp->dmap_io = gen_io;
-	break;
-    case STYLE_CTTY:
-	dp->dmap_opcl = ctty_opcl;
-	dp->dmap_io = ctty_io;
-	break;
-	break;
-    default:
-	return(EINVAL);
-  }
-
-  dp->dmap_driver = proc_nr_e;
-  dp->dmap_flags = flags;
-  dp->dmap_style = style;
-
-  return(OK);
+  return map_driver(label, major, endpoint);
 }
 
 /*===========================================================================*
@@ -205,7 +169,7 @@ void dmap_unmap_by_endpt(endpoint_t proc_e)
   for (major = 0; major < NR_DEVICES; major++) {
 	if (dmap_driver_match(proc_e, major)) {
 		/* Found driver; overwrite it with a NULL entry */
-		if ((r = map_driver(NULL, major, NONE, 0, 0)) != OK) {
+		if ((r = map_driver(NULL, major, NONE)) != OK) {
 			printf("VFS: unmapping driver %d for major %d failed:"
 				" %d\n", proc_e, major, r);
 		}
@@ -220,7 +184,6 @@ int map_service(struct rprocpub *rpub)
 {
 /* Map a new service by storing its device driver properties. */
   int r, slot;
-  struct dmap *fdp, *sdp;
   struct fproc *rfp;
 
   if (IS_RPUB_BOOT_USR(rpub)) return(OK);
@@ -238,27 +201,8 @@ int map_service(struct rprocpub *rpub)
   if (rpub->dev_nr == NO_DEV) return(OK);
 
   /* Map driver. */
-  r = map_driver(rpub->label, rpub->dev_nr, rpub->endpoint, rpub->dev_style,
-		 rpub->dev_flags);
+  r = map_driver(rpub->label, rpub->dev_nr, rpub->endpoint);
   if(r != OK) return(r);
-
-  /* If driver has two major numbers associated, also map the other one. */
-  if(rpub->dev_style2 != STYLE_NDEV) {
-	r = map_driver(rpub->label, rpub->dev_nr+1, rpub->endpoint,
-		       rpub->dev_style2, rpub->dev_flags);
-	if(r != OK) return(r);
-
-	/* To ensure that future dmap lock attempts always lock the same driver
-	 * regardless of major number, refer the second dmap lock reference
-	 * to the first dmap entry.
-	 */
-	fdp = get_dmap_by_major(rpub->dev_nr);
-	sdp = get_dmap_by_major(rpub->dev_nr+1);
-	assert(fdp != NULL);
-	assert(sdp != NULL);
-	assert(fdp != sdp);
-	sdp->dmap_lock_ref = &fdp->dmap_lock;
-  }
 
   return(OK);
 }
@@ -266,34 +210,23 @@ int map_service(struct rprocpub *rpub)
 /*===========================================================================*
  *				init_dmap		 		     *
  *===========================================================================*/
-void init_dmap()
+void init_dmap(void)
 {
-/* Initialize the table with empty device <-> driver mappings. */
+/* Initialize the device mapping table. */
   int i;
 
   memset(dmap, 0, sizeof(dmap));
 
   for (i = 0; i < NR_DEVICES; i++) {
-	dmap[i].dmap_opcl = no_dev;
-	dmap[i].dmap_io = no_dev_io;
 	dmap[i].dmap_driver = NONE;
-	dmap[i].dmap_style = STYLE_NDEV;
 	dmap[i].dmap_servicing = INVALID_THREAD;
-  }
-}
-
-/*===========================================================================*
- *				init_dmap_locks		 		     *
- *===========================================================================*/
-void init_dmap_locks()
-{
-  int i;
-
-  for (i = 0; i < NR_DEVICES; i++) {
 	if (mutex_init(&dmap[i].dmap_lock, NULL) != 0)
 		panic("unable to initialize dmap lock");
-	dmap[i].dmap_lock_ref = &dmap[i].dmap_lock;
   }
+
+  /* CTTY_MAJOR is a special case, which is handled by VFS itself. */
+  if (map_driver("vfs", CTTY_MAJOR, CTTY_ENDPT) != OK)
+	panic("map_driver(CTTY_MAJOR) failed");
 }
 
 /*===========================================================================*
