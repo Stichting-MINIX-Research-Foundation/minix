@@ -12,14 +12,6 @@
  *   bdev_close:  close a block device
  *   bdev_reply:  process the result of a block driver request
  *   bdev_up:     a block driver has been mapped in
- *   gen_opcl:    generic call to a character driver to perform an open/close
- *   gen_io:      generic call to a character driver to initiate I/O
- *   no_dev:      open/close processing for devices that don't exist
- *   no_dev_io:   i/o processing for devices that don't exist
- *   tty_opcl:    perform tty-specific processing for open/close
- *   ctty_opcl:   perform controlling-tty-specific processing for open/close
- *   ctty_io:     perform controlling-tty-specific processing for I/O
- *   pm_setsid:   perform VFS's side of setsid system call
  *   do_ioctl:    perform the IOCTL system call
  */
 
@@ -41,48 +33,10 @@
 #include "vmnt.h"
 #include "param.h"
 
+static int cdev_opcl(int op, dev_t dev, int flags);
 static int block_io(endpoint_t driver_e, message *mess_ptr);
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 	void *buf, unsigned long size);
-
-/*===========================================================================*
- *				cdev_open				     *
- *===========================================================================*/
-int cdev_open(dev_t dev, int flags)
-{
-/* Open a character device. */
-  devmajor_t major_dev;
-  int r;
-
-  /* Determine the major device number so as to call the device class specific
-   * open/close routine.  (This is the only routine that must check the
-   * device number for being in range.  All others can trust this check.)
-   */
-  major_dev = major(dev);
-  if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
-  if (dmap[major_dev].dmap_driver == NONE) return(ENXIO);
-  r = (*dmap[major_dev].dmap_opcl)(CDEV_OPEN, dev, fp->fp_endpoint, flags);
-  return(r);
-}
-
-
-/*===========================================================================*
- *				cdev_close				     *
- *===========================================================================*/
-int cdev_close(dev_t dev)
-{
-/* Close a character device. */
-  devmajor_t major_dev;
-  int r;
-
-  /* See if driver is roughly valid. */
-  major_dev = major(dev);
-  if (major_dev < 0 || major_dev >= NR_DEVICES) return(ENXIO);
-  if (dmap[major_dev].dmap_driver == NONE) return(ENXIO);
-  r = (*dmap[major_dev].dmap_opcl)(CDEV_CLOSE, dev, fp->fp_endpoint, 0);
-  return(r);
-}
-
 
 /*===========================================================================*
  *				bdev_open				     *
@@ -158,6 +112,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
   message dev_mess;
   devmajor_t major_dev;
   devminor_t minor_dev;
+  int r;
 
   major_dev = major(dev);
   minor_dev = minor(dev);
@@ -183,17 +138,15 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
   dev_mess.BDEV_ID = 0;
 
   /* Call the task. */
-  block_io(dp->dmap_driver, &dev_mess);
+  r = block_io(dp->dmap_driver, &dev_mess);
 
   /* Clean up. */
   if (GRANT_VALID(gid)) cpf_revoke(gid);
 
-  if (dp->dmap_driver == NONE) {
-	printf("VFS: block driver gone!?\n");
-	return(EIO);
-  }
-
   /* Return the result. */
+  if (r != OK)
+	return(r);
+
   return(dev_mess.BDEV_STATUS);
 }
 
@@ -246,6 +199,48 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
   return gid;
 }
 
+/*===========================================================================*
+ *				cdev_get				     *
+ *===========================================================================*/
+static struct dmap *cdev_get(dev_t dev, devminor_t *minor_dev)
+{
+/* Obtain the dmap structure for the given device, if a valid driver exists for
+ * the major device. Perform redirection for CTTY_MAJOR.
+ */
+  devmajor_t major_dev;
+  struct dmap *dp;
+  int slot;
+
+  /* First cover one special case: /dev/tty, the magic device that translates
+   * to the controlling tty.
+   */
+  if (major(dev) == CTTY_MAJOR) {
+	/* No controlling terminal? Fail the request. */
+	if (fp->fp_tty == 0) return(NULL);
+
+	/* Substitute the controlling terminal device. */
+	dev = fp->fp_tty;
+  }
+
+  /* Determine task dmap. */
+  major_dev = major(dev);
+  if (major_dev < 0 || major_dev >= NR_DEVICES) return(NULL);
+
+  dp = &dmap[major_dev];
+
+  /* See if driver is roughly valid. */
+  if (dp->dmap_driver == NONE) return(NULL);
+
+  if (isokendpt(dp->dmap_driver, &slot) != OK) {
+	printf("VFS: cdev_get: old driver for major %x (%d)\n", major_dev,
+		dp->dmap_driver);
+	return(NULL);
+  }
+
+  /* Also return the (possibly redirected) minor number. */
+  *minor_dev = minor(dev);
+  return dp;
+}
 
 /*===========================================================================*
  *				cdev_io					     *
@@ -261,28 +256,17 @@ int cdev_io(
 )
 {
 /* Initiate a read, write, or ioctl to a character device. */
+  devminor_t minor_dev;
   struct dmap *dp;
   message dev_mess;
   cp_grant_id_t gid;
-  devmajor_t major_dev;
-  devminor_t minor_dev;
-  int r, slot;
+  int r;
 
   assert(op == CDEV_READ || op == CDEV_WRITE || op == CDEV_IOCTL);
 
-  /* Determine task dmap. */
-  major_dev = major(dev);
-  minor_dev = minor(dev);
-  dp = &dmap[major_dev];
-
-  /* See if driver is roughly valid. */
-  if (dp->dmap_driver == NONE) return(ENXIO);
-
-  if(isokendpt(dp->dmap_driver, &slot) != OK) {
-	printf("VFS: dev_io: old driver for major %x (%d)\n", major_dev,
-		dp->dmap_driver);
-	return(ENXIO);
-  }
+  /* Determine task map. */
+  if ((dp = cdev_get(dev, &minor_dev)) == NULL)
+	return(EIO);
 
   /* Create a grant for the buffer provided by the user process. */
   gid = make_grant(dp->dmap_driver, proc_e, op, buf, bytes);
@@ -306,13 +290,8 @@ int cdev_io(
 	  dev_mess.CDEV_FLAGS |= CDEV_NONBLOCK;
 
   /* Send the request to the driver. */
-  r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-
-  if (r != OK) {
-	cpf_revoke(gid);
-
-	return r;
-  }
+  if ((r = asynsend3(dp->dmap_driver, &dev_mess, AMF_NOREPLY)) != OK)
+	panic("VFS: asynsend in cdev_io failed: %d", r);
 
   /* Suspend the calling process until a reply arrives. */
   wait_for(dp->dmap_driver);
@@ -324,9 +303,9 @@ int cdev_io(
 
 
 /*===========================================================================*
- *				clone_cdev				     *
+ *				cdev_clone				     *
  *===========================================================================*/
-static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
+static int cdev_clone(dev_t dev, devminor_t new_minor)
 {
 /* A new minor device number has been returned. Request PFS to create a
  * temporary device file to hold it.
@@ -335,8 +314,6 @@ static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
   struct node_details res;
   int r;
 
-  assert(proc_e == fp->fp_endpoint);
-
   /* Device number of the new device. */
   dev = makedev(major(dev), new_minor);
 
@@ -344,14 +321,14 @@ static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
   r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
       ALL_MODES | I_CHAR_SPECIAL, dev, &res);
   if (r != OK) {
-	(void) gen_opcl(CDEV_CLOSE, dev, proc_e, 0);
+	(void) cdev_opcl(CDEV_CLOSE, dev, 0);
 	return r;
   }
 
   /* Drop old node and use the new values */
   if ((vp = get_free_vnode()) == NULL) {
 	req_putnode(PFS_PROC_NR, res.inode_nr, 1); /* is this right? */
-	(void) gen_opcl(CDEV_CLOSE, dev, proc_e, 0);
+	(void) cdev_opcl(CDEV_CLOSE, dev, 0);
 	return(err_code);
   }
   lock_vnode(vp, VNODE_OPCL);
@@ -376,49 +353,63 @@ static int cdev_clone(dev_t dev, endpoint_t proc_e, devminor_t new_minor)
 
 
 /*===========================================================================*
- *				gen_opcl				     *
+ *				cdev_opcl				     *
  *===========================================================================*/
-int gen_opcl(
+static int cdev_opcl(
   int op,			/* operation, CDEV_OPEN or CDEV_CLOSE */
   dev_t dev,			/* device to open or close */
-  endpoint_t proc_e,		/* process to open/close for */
   int flags			/* mode bits and flags */
 )
 {
-/* Called from the dmap struct on opens & closes of special files.*/
-  devmajor_t major_dev;
+/* Open or close a character device. */
   devminor_t minor_dev, new_minor;
   struct dmap *dp;
+  struct fproc *rfp;
   message dev_mess;
   int r, r2;
 
-  /* Determine task dmap. */
-  major_dev = major(dev);
-  minor_dev = minor(dev);
-  assert(major_dev >= 0 && major_dev < NR_DEVICES);
-  dp = &dmap[major_dev];
-  assert(dp->dmap_driver != NONE);
+  assert(op == CDEV_OPEN || op == CDEV_CLOSE);
 
-  assert(!IS_BDEV_RQ(op));
+  /* Determine task dmap. */
+  if ((dp = cdev_get(dev, &minor_dev)) == NULL)
+	return(ENXIO);
+
+  /* CTTY exception: do not actually send the open/close request for /dev/tty
+   * to the driver.  This avoids the case that the actual device will remain
+   * open forever if the process calls setsid() after opening /dev/tty.
+   */
+  if (major(dev) == CTTY_MAJOR) return(OK);
+
+  /* Add O_NOCTTY to the access flags if this process is not a session leader,
+   * or if it already has a controlling tty, or if it is someone else's
+   * controlling tty.  For performance reasons, only search the full process
+   * table if this driver has set controlling ttys before.
+   */
+  if (!(fp->fp_flags & FP_SESLDR) || fp->fp_tty != 0) {
+	flags |= O_NOCTTY;
+  } else if (!(flags & O_NOCTTY) && dp->dmap_seen_tty) {
+	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++)
+		if (rfp->fp_pid != PID_FREE && rfp->fp_tty == dev)
+			flags |= O_NOCTTY;
+  }
 
   /* Prepare the request message. */
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = op;
   dev_mess.CDEV_MINOR = minor_dev;
-  dev_mess.CDEV_ID = proc_e;
+  dev_mess.CDEV_ID = who_e;
   if (op == CDEV_OPEN) {
-	dev_mess.CDEV_USER = proc_e;
+	dev_mess.CDEV_USER = who_e;
 	dev_mess.CDEV_ACCESS = 0;
 	if (flags & R_BIT)	dev_mess.CDEV_ACCESS |= CDEV_R_BIT;
 	if (flags & W_BIT)	dev_mess.CDEV_ACCESS |= CDEV_W_BIT;
 	if (flags & O_NOCTTY)	dev_mess.CDEV_ACCESS |= CDEV_NOCTTY;
   }
 
-  /* Call the task. */
-  r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-
-  if (r != OK) return(r);
+  /* Send the request to the driver. */
+  if ((r = asynsend3(dp->dmap_driver, &dev_mess, AMF_NOREPLY)) != OK)
+	panic("VFS: asynsend in cdev_opcl failed: %d", r);
 
   /* Block the thread waiting for a reply. */
   fp->fp_task = dp->dmap_driver;
@@ -430,106 +421,55 @@ int gen_opcl(
   self->w_task = NONE;
   self->w_drv_sendrec = NULL;
 
+  /* Process the reply. */
   r = dev_mess.CDEV_STATUS;
 
-  /* Some devices need special processing upon open. Such a device is "cloned",
-   * i.e. on a succesful open it is replaced by a new device with a new unique
-   * minor device number. This new device number identifies a new object (such
-   * as a new network connection) that has been allocated within a task.
-   */
   if (op == CDEV_OPEN && r >= 0) {
+	/* Some devices need special processing upon open. Such a device is
+	 * "cloned", i.e. on a succesful open it is replaced by a new device
+	 * with a new unique minor device number. This new device number
+	 * identifies a new object (such as a new network connection) that has
+	 * been allocated within a driver.
+	 */
 	if (r & CDEV_CLONED) {
 		new_minor = r & ~(CDEV_CLONED | CDEV_CTTY);
-		r &= CDEV_CTTY;
-		if ((r2 = cdev_clone(dev, proc_e, new_minor)) < 0)
-			r = r2;
-	} else
-		r &= CDEV_CTTY;
-	/* Upon success, we now return either OK or CDEV_CTTY. */
+		if ((r2 = cdev_clone(dev, new_minor)) < 0)
+			return(r2);
+	}
+
+	/* Did this call make the tty the controlling tty? */
+	if (r & CDEV_CTTY) {
+		fp->fp_tty = dev;
+		dp->dmap_seen_tty = TRUE;
+	}
+
+	r = OK;
   }
 
   /* Return the result from the driver. */
   return(r);
 }
 
+
 /*===========================================================================*
- *				tty_opcl				     *
+ *				cdev_open				     *
  *===========================================================================*/
-int tty_opcl(
-  int op,			/* operation, CDEV_OPEN or CDEV_CLOSE */
-  dev_t dev,			/* device to open or close */
-  endpoint_t proc_e,		/* process to open/close for */
-  int flags			/* mode bits and flags */
-)
+int cdev_open(dev_t dev, int flags)
 {
-/* This procedure is called from the dmap struct on tty open/close. */
-  int r;
-  register struct fproc *rfp;
+/* Open a character device. */
 
-  assert(!IS_BDEV_RQ(op));
-
-  /* Add O_NOCTTY to the flags if this process is not a session leader, or
-   * if it already has a controlling tty, or if it is someone elses
-   * controlling tty.
-   */
-  if (!(fp->fp_flags & FP_SESLDR) || fp->fp_tty != 0) {
-	flags |= O_NOCTTY;
-  } else {
-	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-		if(rfp->fp_pid == PID_FREE) continue;
-		if (rfp->fp_tty == dev) flags |= O_NOCTTY;
-	}
-  }
-
-  r = gen_opcl(op, dev, proc_e, flags);
-
-  /* Did this call make the tty the controlling tty? */
-  if (r >= 0 && (r & CDEV_CTTY)) {
-	fp->fp_tty = dev;
-	r = OK;
-  }
-
-  return(r);
+  return cdev_opcl(CDEV_OPEN, dev, flags);
 }
 
 
 /*===========================================================================*
- *				ctty_opcl				     *
+ *				cdev_close				     *
  *===========================================================================*/
-int ctty_opcl(
-  int op,			/* operation, CDEV_OPEN or CDEV_CLOSE */
-  dev_t UNUSED(dev),		/* device to open or close */
-  endpoint_t UNUSED(proc_e),	/* process to open/close for */
-  int UNUSED(flags)		/* mode bits and flags */
-)
+int cdev_close(dev_t dev)
 {
-/* This procedure is called from the dmap struct on opening or closing
- * /dev/tty, the magic device that translates to the controlling tty.
- */
+/* Close a character device. */
 
-  if (IS_BDEV_RQ(op))
-	panic("ctty_opcl() called for block device request?");
-
-  return(fp->fp_tty == 0 ? ENXIO : OK);
-}
-
-
-/*===========================================================================*
- *				pm_setsid				     *
- *===========================================================================*/
-void pm_setsid(endpoint_t proc_e)
-{
-/* Perform the VFS side of the SETSID call, i.e. get rid of the controlling
- * terminal of a process, and make the process a session leader.
- */
-  register struct fproc *rfp;
-  int slot;
-
-  /* Make the process a session leader with no controlling tty. */
-  okendpt(proc_e, &slot);
-  rfp = &fproc[slot];
-  rfp->fp_flags |= FP_SESLDR;
-  rfp->fp_tty = 0;
+  return cdev_opcl(CDEV_CLOSE, dev, 0);
 }
 
 
@@ -583,25 +523,27 @@ int do_ioctl(message *UNUSED(m_out))
 int cdev_select(dev_t dev, int ops)
 {
 /* Initiate a select call on a device. Return OK iff the request was sent. */
-  devmajor_t major_dev;
   devminor_t minor_dev;
   message dev_mess;
   struct dmap *dp;
+  int r;
 
-  major_dev = major(dev);
-  minor_dev = minor(dev);
-  dp = &dmap[major_dev];
+  /* Determine task dmap. */
+  if ((dp = cdev_get(dev, &minor_dev)) == NULL)
+	return(EIO);
 
-  if (dp->dmap_driver == NONE) return ENXIO;
-
+  /* Prepare the request message. */
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = CDEV_SELECT;
   dev_mess.CDEV_MINOR = minor_dev;
   dev_mess.CDEV_OPS = ops;
 
-  /* Call the task. */
-  return (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+  /* Send the request to the driver. */
+  if ((r = asynsend3(dp->dmap_driver, &dev_mess, AMF_NOREPLY)) != OK)
+	panic("VFS: asynsend in cdev_select failed: %d", r);
+
+  return(OK);
 }
 
 
@@ -611,24 +553,25 @@ int cdev_select(dev_t dev, int ops)
 int cdev_cancel(dev_t dev)
 {
 /* Cancel an I/O request, blocking until it has been cancelled. */
-  devmajor_t major_dev;
   devminor_t minor_dev;
   message dev_mess;
   struct dmap *dp;
   int r;
 
-  major_dev = major(dev);
-  minor_dev = minor(dev);
-  dp = &dmap[major_dev];
+  /* Determine task dmap. */
+  if ((dp = cdev_get(dev, &minor_dev)) == NULL)
+	return(EIO);
 
+  /* Prepare the request message. */
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = CDEV_CANCEL;
   dev_mess.CDEV_MINOR = minor_dev;
   dev_mess.CDEV_ID = fp->fp_endpoint;
 
-  r = (*dp->dmap_io)(fp->fp_task, &dev_mess);
-  if (r != OK) return r; /* ctty_io returned an error? should be impossible */
+  /* Send the request to the driver. */
+  if ((r = asynsend3(dp->dmap_driver, &dev_mess, AMF_NOREPLY)) != OK)
+	panic("VFS: asynsend in cdev_cancel failed: %d", r);
 
   /* Suspend this thread until we have received the response. */
   fp->fp_task = dp->dmap_driver;
@@ -668,116 +611,34 @@ static int block_io(endpoint_t driver_e, message *mess_ptr)
 
   do {
 	r = drv_sendrec(driver_e, mess_ptr);
-	if (r == OK) {
-		status = mess_ptr->BDEV_STATUS;
-		if (status == ERESTART) {
-			r = EDEADEPT;
-			*mess_ptr = mess_retry;
-			retry_count++;
-		}
+	if (r != OK)
+		return r;
+
+	status = mess_ptr->BDEV_STATUS;
+	if (status == ERESTART) {
+		r = EDEADEPT;
+		*mess_ptr = mess_retry;
+		retry_count++;
 	}
   } while (status == ERESTART && retry_count < 5);
 
   /* If we failed to restart the request, return EIO */
-  if (status == ERESTART && retry_count >= 5) {
-	r = OK;
-	mess_ptr->m_type = EIO;
-  }
+  if (status == ERESTART && retry_count >= 5)
+	return EIO;
 
   if (r != OK) {
 	if (r == EDEADSRCDST || r == EDEADEPT) {
 		printf("VFS: dead driver %d\n", driver_e);
 		dmap_unmap_by_endpt(driver_e);
-		return(r);
+		return(EIO);
 	} else if (r == ELOCKED) {
 		printf("VFS: ELOCKED talking to %d\n", driver_e);
-		return(r);
+		return(EIO);
 	}
 	panic("block_io: can't send/receive: %d", r);
   }
 
   return(OK);
-}
-
-
-/*===========================================================================*
- *				gen_io					     *
- *===========================================================================*/
-int gen_io(endpoint_t drv_e, message *mess_ptr)
-{
-/* Initiate I/O to a character driver. Do not wait for the reply. */
-  int r;
-
-  assert(!IS_BDEV_RQ(mess_ptr->m_type));
-
-  r = asynsend3(drv_e, mess_ptr, AMF_NOREPLY);
-
-  if (r != OK) panic("VFS: asynsend in gen_io failed: %d", r);
-
-  return(OK);
-}
-
-
-/*===========================================================================*
- *				ctty_io					     *
- *===========================================================================*/
-int ctty_io(
-  endpoint_t UNUSED(task_nr),	/* not used - for compatibility with dmap_t */
-  message *mess_ptr		/* pointer to message for task */
-)
-{
-/* This routine is only called for one device, namely /dev/tty.  Its job
- * is to change the message to use the controlling terminal, instead of the
- * major/minor pair for /dev/tty itself.
- */
-  struct dmap *dp;
-  int slot;
-
-  if (fp->fp_tty == 0) {
-	/* No controlling tty present anymore, return an I/O error. */
-	return(EIO);
-  } else {
-	/* Substitute the controlling terminal device. */
-	dp = &dmap[major(fp->fp_tty)];
-	mess_ptr->CDEV_MINOR = minor(fp->fp_tty);
-
-	if (dp->dmap_driver == NONE) {
-		printf("FS: ctty_io: no driver for dev\n");
-		return(EIO);
-	}
-
-	if (isokendpt(dp->dmap_driver, &slot) != OK) {
-		printf("VFS: ctty_io: old driver %d\n", dp->dmap_driver);
-		return(EIO);
-	}
-
-	return (*dp->dmap_io)(dp->dmap_driver, mess_ptr);
-  }
-}
-
-
-/*===========================================================================*
- *				no_dev					     *
- *===========================================================================*/
-int no_dev(
-  int UNUSED(op),		/* operation, CDEV_OPEN or CDEV_CLOSE */
-  dev_t UNUSED(dev),		/* device to open or close */
-  endpoint_t UNUSED(proc),		/* process to open/close for */
-  int UNUSED(flags)		/* mode bits and flags */
-)
-{
-/* Called when opening a nonexistent device. */
-  return(ENODEV);
-}
-
-/*===========================================================================*
- *				no_dev_io				     *
- *===========================================================================*/
-int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
-{
-/* Called when doing i/o on a nonexistent device. */
-  printf("VFS: I/O on unmapped device number\n");
-  return(EIO);
 }
 
 

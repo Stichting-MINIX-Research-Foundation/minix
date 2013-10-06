@@ -71,10 +71,6 @@
 #define DSRV_SF  (0)                           /* dynamic system services */
 #define VM_SF    (SRVR_SF)     			/* vm */
 
-/* Define device flags for the various process types. */
-#define SRV_DF   (DRV_FORCED)            /* system services */
-#define DSRV_DF  (SRV_DF)                /* dynamic system services */
-
 /* Shorthands. */
 #define SRV_OR_USR(rp, X, Y) (rp->r_priv.s_flags & SYS_PROC ? X : Y)
 
