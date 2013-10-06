@@ -677,8 +677,7 @@ struct rproc *rp;				/* pointer to service slot */
        */
       setuid(0);
 
-      if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style,
-          rpub->dev_flags) != OK) {
+      if (mapdriver(rpub->label, rpub->dev_nr) != OK) {
           return kill_service(rp, "couldn't map driver", errno);
       }
   }
@@ -1225,10 +1224,7 @@ struct rproc *rp;
   rpub = rp->r_pub;
 
   /* Device and PCI settings. These properties cannot change. */
-  rpub->dev_flags = def_rpub->dev_flags;
   rpub->dev_nr = def_rpub->dev_nr;
-  rpub->dev_style = def_rpub->dev_style;
-  rpub->dev_style2 = def_rpub->dev_style2;
   rpub->pci_acl = def_rpub->pci_acl;
 
   /* Immutable system and privilege flags. */
@@ -1608,15 +1604,8 @@ endpoint_t source;
   rp->r_uid= rs_start->rss_uid;
 
   /* Initialize device driver settings. */
-  rpub->dev_flags = DSRV_DF;
   rpub->dev_nr = rs_start->rss_major;
-  rpub->dev_style = rs_start->rss_dev_style;
   rpub->devman_id = rs_start->devman_id;
-  if(rpub->dev_nr && !IS_DEV_STYLE(rs_start->rss_dev_style)) {
-      printf("RS: init_slot: bad device style\n");
-      return EINVAL;
-  }
-  rpub->dev_style2 = STYLE_NDEV;
 
   /* Initialize pci settings. */
   if (rs_start->rss_nr_pci_id > RS_NR_PCI_DEVICE) {

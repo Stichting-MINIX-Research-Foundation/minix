@@ -325,9 +325,20 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   mess.m_type = OK;			/* tell PM that we succeeded */
   s = send(PM_PROC_NR, &mess);		/* send synchronization message */
 
-  /* All process table entries have been set. Continue with initialization. */
-  init_dmap();			/* Initialize device table. */
   system_hz = sys_hz();
+
+  /* Subscribe to block and character driver events. */
+  s = ds_subscribe("drv\\.[bc]..\\..*", DSF_INITIAL | DSF_OVERWRITE);
+  if (s != OK) panic("VFS: can't subscribe to driver events (%d)", s);
+
+  /* Initialize worker threads */
+  worker_init();
+
+  /* Initialize global locks */
+  if (mthread_mutex_init(&bsf_lock, NULL) != 0)
+	panic("VFS: couldn't initialize block special file lock");
+
+  init_dmap();			/* Initialize device table. */
 
   /* Map all the services in the boot image. */
   if ((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
@@ -341,17 +352,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 		}
 	}
   }
-
-  /* Subscribe to block and character driver events. */
-  s = ds_subscribe("drv\\.[bc]..\\..*", DSF_INITIAL | DSF_OVERWRITE);
-  if (s != OK) panic("VFS: can't subscribe to driver events (%d)", s);
-
-  /* Initialize worker threads */
-  worker_init();
-
-  /* Initialize global locks */
-  if (mthread_mutex_init(&bsf_lock, NULL) != 0)
-	panic("VFS: couldn't initialize block special file lock");
 
   /* Initialize locks and initial values for all processes. */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
@@ -372,7 +372,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 	rfp->fp_wd = NULL;
   }
 
-  init_dmap_locks();		/* init dmap locks */
   init_vnodes();		/* init vnodes */
   init_vmnts();			/* init vmnt structures */
   init_select();		/* init select() structures */

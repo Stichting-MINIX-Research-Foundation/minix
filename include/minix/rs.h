@@ -73,7 +73,6 @@ struct rs_start
 	int rss_priority;
 	int rss_quantum;
 	int rss_major;
-	int rss_dev_style;
 	long rss_period;
 	char *rss_script;
 	size_t rss_scriptlen;
@@ -119,10 +118,7 @@ struct rprocpub {
   unsigned sys_flags; 		  /* sys flags */
   endpoint_t endpoint;		  /* process endpoint number */
 
-  int dev_flags;		  /* device flags */
-  dev_t dev_nr;			  /* major device number */
-  int dev_style;		  /* device style */
-  int dev_style2;		  /* device style for next major dev number */
+  dev_t dev_nr;			  /* major device number or NO_DEV */
 
   char label[RS_MAX_LABEL_LEN];	  /* label of this service */
   char proc_name[RS_MAX_LABEL_LEN]; /* process name of this service */
